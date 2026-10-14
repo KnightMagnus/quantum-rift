@@ -63,7 +63,7 @@ ok([...sp3.ships.values()].filter(x => x.owner === eid).length === 2, 'escorts l
 sp3.remove(P.s.ent); g.onPlayerDeath(P.s.ent.player, sp3, null);
 ok(![...sp3.ships.values()].some(x => x.owner === eid), 'escorts no longer linger after you are destroyed');
 // abandon removes bounty target
-land('qstation'); d.missions = []; const b = g.offers(STELLARS.qstation, d).find(o => o.type === 'bounty');
+d.missions = []; let b = null; for (const p of Object.values(STELLARS).filter(x => x.svc.includes('B') && !x.site)) { b = g.offers(p, d).find(o => o.type === 'bounty'); if (b) { land(p.id); break; } }   // job boards reroll every ten minutes
 P.send({ t: 'accept', id: b.id }); land(SYS[b.sys].stellars.find(p => p.svc.includes('L')).id); P.send({ t: 'depart' });
 const bsp = g.spaces[b.sys], bt = [...bsp.ships.values()].find(x => x.mission && x.mission.id === b.id); ok(bt, 'the bounty target appears');
 P.send({ t: 'abandon', id: b.id }); for (let i = 0; i < 30 * 30; i++) bsp.tick();

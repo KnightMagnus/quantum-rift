@@ -111,7 +111,28 @@ export class Game {
     p.tut = TUTORIAL.length;   // showcase captains skip the career guide
     if (c.storyPass) { this.storyInit(p); p.story.pass = true; }
     if (c.blueprints) { p.bp = p.bp || {}; for (const id of Object.keys(SPEC)) p.bp[id] = Math.max(p.bp[id] || 0, c.blueprints); }
+    if (c.fleet && !p.seedFleet) this.seedFleet(p, c.fleet);
     console.log('Synced seeded captain', c.name);
+  }
+  // 2.1 playtest seeds: fill the docks with ships and crew them, once ({ docks: [{ lead, name, wings: [hulls] }], crew: [...officers], spare: [...officers] })
+  seedFleet(p, F) {
+    this.docksInit(p); p.seedFleet = true;
+    const crew = [...(F.crew || [])], newOff = (o) => { const off = { id: this.uid(p), seed: true, name: o.name, race: o.race, role: o.role, rarity: o.rarity ?? 2, lv: o.lv || 10, xp: 0 }; p.officers.push(off); return off.id; };
+    (F.docks || []).forEach((D, i) => {
+      if (i >= p.docks.length) return;
+      if (D.lead) {
+        const ship = makeLoadout(this.A, D.lead, D.name || this.A.ships[D.lead].name); ship.uid = this.shipUid(p);
+        if (i === p.activeDock) { p.ship = ship; p.shipless = false; p.docks[i].lead = ship.uid; }   // a test account: the old ship is simply replaced
+        else { p.dock.push({ ship, bridge: {} }); p.docks[i].lead = ship.uid; }
+      }
+      p.docks[i].wings = (D.wings || []).map(h => {
+        const ship = makeLoadout(this.A, h, this.A.ships[h].name); ship.uid = this.shipUid(p); p.dock.push({ ship, bridge: {} });
+        const cap = crew.length ? newOff(crew.shift()) : null, mate = crew.length ? newOff(crew.shift()) : null;
+        return { uid: ship.uid, cap, crew: mate };
+      });
+    });
+    for (const o of F.spare || []) newOff(o);
+    this.docksInit(p);
   }
   // ------------------------------------------------------------------ sessions
   fresh() {
