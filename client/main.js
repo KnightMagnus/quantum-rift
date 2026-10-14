@@ -86,7 +86,7 @@ try { $('lname').value = localStorage.getItem('rift.name') || ''; } catch {}
 fetch('/api/status').then(r => r.json()).then(s => { $('lstat').textContent = `${s.players} captain${s.players === 1 ? '' : 's'} in the Rift right now.`; $('lver').textContent = 'Quantum Rift v' + s.version; if (s.solo) soloLogin(s); }).catch(() => {});
 // solo mode: no passwords; pick a save slot, start a new captain, or load a save file
 function soloLogin(s) {
-  G.solo = true; $('lpass').classList.add('hidden'); $('lstat').textContent = 'Solo game: your saves live on this computer.';
+  G.solo = true; document.body.classList.add('solo'); $('chatin').placeholder = 'Write a note in your log (Enter)'; $('lpass').classList.add('hidden'); $('lstat').textContent = 'Solo game: your saves live on this computer.';
   $('lname').placeholder = 'New captain name'; $('lbtn').textContent = 'START NEW CAPTAIN';
   const L = $('lslots'); L.classList.remove('hidden');
   L.innerHTML = `<div class="solotag">YOUR CAPTAINS</div>` + (s.slots.length ? s.slots.map(c => `<div class="slot"><div class="n"><b>${c.name.replace(/[<>&]/g, '')}</b><div class="dim small">${c.ship} · ${Math.round(c.credits).toLocaleString()} cr${c.ops ? ' · Ops ' + c.ops : ''} · ${c.sys}</div></div><a href="/api/export?name=${encodeURIComponent(c.name)}" download>EXPORT</a><button class="btn sm" data-slot="${c.name.replace(/"/g, '')}">PLAY</button></div>`).join('') : '<div class="dim small">No captains yet: name one above and start.</div>')
@@ -100,16 +100,25 @@ async function login() {
   $('lerr').textContent = ''; $('lbtn').disabled = true;
   if (!G.A) { const was = $('lstat').textContent; $('lstat').textContent = 'Loading the galaxy...'; G.A = augmentAssets(await (await fetch('/shared/assets.json')).json()); initUI(G, send); $('lstat').textContent = was; }   // 1.0.3: the status line comes back if login fails
   try { localStorage.setItem('rift.name', name); } catch {}
+  G._cred = { name, pass }; G._kicked = false; openSocket(0);
+}
+// 2.4: a dropped connection reconnects on its own, signing back in as the same captain
+function openSocket(tries) {
+  const { name, pass } = G._cred;
   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
   ws.onopen = () => send({ t: 'hello', name, pass });
   ws.onmessage = (ev) => onMessage(JSON.parse(ev.data));
-  ws.onclose = () => { $('lbtn').disabled = false; if (G.you) { toast('Connection lost. Reload to reconnect.'); $('login').classList.remove('hidden'); $('lerr').textContent = 'Disconnected from the server.'; } };
-  ws.onerror = () => { $('lerr').textContent = 'Could not reach the Quantum Rift server.'; $('lbtn').disabled = false; };
+  ws.onclose = () => {
+    $('lbtn').disabled = false; if (!G.you) return;
+    if (!G._kicked && tries < 30) { if (!tries) toast('Connection lost. Reconnecting...'); $('lstat').textContent = 'Reconnecting to the server...'; setTimeout(() => openSocket(tries + 1), Math.min(8000, 1000 + tries * 700)); return; }
+    $('login').classList.remove('hidden'); $('lerr').textContent = G._kicked ? 'Signed in somewhere else.' : 'Disconnected from the server. Sign in again when it is back.';
+  };
+  ws.onerror = () => { if (!G.you) { $('lerr').textContent = 'Could not reach the Quantum Rift server.'; $('lbtn').disabled = false; } };
 }
 function onMessage(m) {
   switch (m.t) {
-    case 'error': $('lerr').textContent = m.msg; $('lbtn').disabled = false; toast(m.msg); break;
-    case 'welcome': audio.stopMusic(); audio.preloadUi(); $('login').classList.add('hidden'); G.myName = m.name; toast(`Welcome to Quantum Rift, Captain ${m.name}.`);
+    case 'error': $('lerr').textContent = m.msg; $('lbtn').disabled = false; toast(m.msg); if (/somewhere else/.test(m.msg)) G._kicked = true; break;
+    case 'welcome': audio.stopMusic(); audio.preloadUi(); $('login').classList.add('hidden'); G.myName = m.name; toast(G.you ? 'Reconnected.' : `Welcome to Quantum Rift, Captain ${m.name}.`);
       break;
     case 'you': {
       const first = !G.you; G.you = m.d; G.sys = m.d.sys;
@@ -214,6 +223,7 @@ function onEvent(ev) {
     case 'flash': flash(ev[1], ev[2]); if (Math.hypot(dx, dy) > 80) audio.play('jumpfar', dx, dy, 0.8); break;   // 2.1: your own jump has its own sound
     case 'jump': if (ev[1] === G.myId && !G._jumping) { G._jumping = true; G._jumpStart = performance.now(); audio.ui(G.you && G.you.shipStats && G.you.shipStats.jumpFast ? 'jumpfast' : 'jump', 0.9); } break;   // 2.1: the spool starts the moment the server begins your jump
     case 'pickup': audio.play(10112, 0, 0, 0.6); break;
+    case 'flee': if (ev[1] === G.target) { const e = G.ents.get(ev[1]); toast(`${(e && e.name) || (e && G.A.ships[e.hull] ? 'The ' + G.A.ships[e.hull].name : 'Your target')} breaks off and runs for the jump point!`); } break;   // 2.4
   }
 }
 
@@ -315,7 +325,9 @@ function autopilot(inp) {
     inp.turn = Math.abs(da) < st.turn * DT ? 0 : Math.sign(da); inp.thrust = Math.abs(da) < 0.5 ? 1 : 0; inp.rev = 0;
   }
 }
-function sendChat() { const c = $('chatin'), v = c.value.trim(); c.value = ''; if (!v) return; if (v.startsWith('/s ')) send({ t: 'chat', msg: v.slice(3), ch: 'sys' }); else if (v.startsWith('/f ')) send({ t: 'chat', msg: v.slice(3), ch: 'fleet' }); else if (G.chan) send({ t: 'chat', msg: v, ch: G.chan }); else send({ t: 'chat', msg: v }); }
+function sendChat() { const c = $('chatin'), v = c.value.trim(); c.value = ''; if (!v) return;
+  if (G.solo) { send({ t: 'note', text: v }); toast('Added to your log.'); return; }   // 2.4: in a solo game the chat line writes notes in your captain's log
+  if (v.startsWith('/s ')) send({ t: 'chat', msg: v.slice(3), ch: 'sys' }); else if (v.startsWith('/f ')) send({ t: 'chat', msg: v.slice(3), ch: 'fleet' }); else if (G.chan) send({ t: 'chat', msg: v, ch: G.chan }); else send({ t: 'chat', msg: v }); }
 // 1.0.1 command bar: chat channel buttons, the controls card, and shortcuts to key bindings, options and the map
 $('cchan').addEventListener('click', (e) => { const b = e.target.closest('[data-ch]'); if (!b) return; G.chan = b.dataset.ch; $('cchan').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); $('chatin').placeholder = G.chan === 'sys' ? 'Press Enter to talk to this system' : G.chan === 'fleet' ? 'Press Enter to talk to your fleet' : 'Press Enter to chat'; $('chatin').focus(); });
 const BASICS = [['Left click', 'Target a ship, or plot a course on the map'], ['Double click', 'Land on a planet or station'], ['Mouse wheel', 'Zoom'], ['Enter', 'Chat'], ['O', 'Options'], ['Esc', 'Close a window, clear the target']];

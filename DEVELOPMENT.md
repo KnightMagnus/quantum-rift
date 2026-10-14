@@ -29,7 +29,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
     no more than the occupied ones.
 - **Feature mixins.** Each big feature is an object of methods mixed into `Game.prototype`, at the bottom of
   `server/game.js`:
-  `HangarMixin, FrontsMixin, FrontierMixin, SpecialistMixin, HostileMixin, StoryMixin, RivalsMixin, HailMixin, FleetCmdMixin, SyndicateMixin, ArcsMixin, DocksMixin`.
+  `HangarMixin, FrontsMixin, FrontierMixin, SpecialistMixin, HostileMixin, StoryMixin, RivalsMixin, HailMixin, FleetCmdMixin, SyndicateMixin, ArcsMixin, DocksMixin, LivingMixin, QuestMixin`.
   - Method names must not collide across mixins; a collision silently replaces a method.
   - `bonus(d)` is deliberately chained: several mixins wrap it to add their modifiers.
 - **Shared code.** `shared/` is imported by both server and client:
@@ -49,6 +49,15 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
   - `client/ui.js`: HUD, landing screens, companion tabs.
   - Feature screens live in their own modules: `hangar_ui`, `fronts_ui`, `frontier_ui`, `spec_ui`, `info_ui`, `syn_ui`,
     `missions`, `radio` and `planets`.
+- **Living galaxy (2.4).** `shared/living.js` defines the system states (famine, war, boom...). `server/living.js`
+  starts and ends them every 20 s (`livingTick`), moves prices (`livingMult`: the state times the fading trade impact of
+  what captains bought and sold at that world), and posts supply, patrol and passenger jobs (`stateOffers`). States go to
+  the client in the `world` message as `states`.
+- **Questlines (2.4).** `shared/quests.js` holds the contact story templates (`CHAINS`) and six handcrafted
+  `SIDE_STORIES`. `server/quests.js` gives every bar a seeded contact (`contactAt`), offers a `type:'quest'` job, and
+  turns each step into an ordinary job tagged `m.quest = {qid, step, of, name}`. `completeOnLanding` calls
+  `questAdvance`, which sends the story beat and posts the next step. A lost step is re-posted once by `questSweep`;
+  abandoning a step ends the story. Faction commissions still use `m.chain`, so quests must never set it.
 
 ## How to add a feature (the pattern every release used)
 
@@ -71,7 +80,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 
 ## Testing
 
-- **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `v21`, `v23`, `fuzz` and `balance`. They run in
+- **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `v21`, `v23`, `v24`, `fuzz` and `balance`. They run in
   process; no server needed.
 - **Networked bot:** `node test/bot.js ws://localhost:8090/ws` against a running server.
 - **Browser checks:** `python3 test/<name>_shot.py <outdir> http://127.0.0.1:8090/`. They need Playwright and Chromium.
@@ -111,6 +120,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 | 1.1 | Living Rift | 30 rival captains, hailing, fleet orders, multi-jump autopilot, I panel, jettison, combat rating, news and market flashes |
 | 1.2 | Syndicate and Officers | Syndicate and black market, officer ranks and traits, lower decks, bank, map views, passengers and rush jobs, faction arcs, Farside expeditions |
 | 2.0 | Polish | A synthesized audio pass (interface sounds, ambience, engine hum, login theme, mixer buses), HUD numbers, edge arrows, damage and jump feedback, styled toasts, tab hotkeys |
+| 2.4 | Living Galaxy | System states and a market that remembers trades, contact questlines and six side stories, varied background worlds, combat AI personalities, bar talk, a CAREER page, shipyard comparison, outfitter filters, auto-reconnect, multiplayer screens hidden in solo |
 | 2.3 | Busy Lanes | Ten new common Quantum hulls (shared/ships23.js, art from the hull pipeline), 60 new moons and more asteroid fields (gen.js addMoonsAndFields), busier traffic |
 | 2.2 | Living Skies | Seeded scenery in every system (star, galaxies, gas giants, black holes, nebulae, asteroid drifts, ion storms, wrecks, derelicts, ruins, crystals, debris, comets, satellites, pods), right-click look-ahead, four docks, K and F reworked |
 | 2.1 | Docks | Docks A–E with a lead ship and two wingmate ships each, officers crewing wingmates, buy-to-hangar, friendly fire, a new hyperspace effect and sounds, quick volume |
@@ -180,6 +190,7 @@ single-player focused for now.
 - `python3 test/v103_radio.py <outdir>`: the in-game radio, with iHeart mocked.
 - `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
 - `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
+- `node test/v24.js`: 2.4 checks (client scripts parse, system states and trade impact, contact stories at every bar, side stories, salvage, combat AI).
 - `node test/v23.js`: 2.3 checks (new hulls and their art, moons, fields, traffic).
 - `node test/v21.js`: 2.1 checks (docks, wingmate ships and crews, buying to the hangar, save upgrade, friendly fire).
 - `node test/fuzz.js [rounds]`: the message fuzzer and soak test; fails on any server error.

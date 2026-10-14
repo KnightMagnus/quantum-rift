@@ -342,3 +342,23 @@ input[type=range]{accent-color:#d02a22}
 #qvol::-moz-range-thumb,#rvol::-moz-range-thumb,.rng input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff8a7a,#b01810 60%,#600);border:1px solid #300}
 #qvol::-moz-range-progress,#rvol::-moz-range-progress,.rng input[type=range]::-moz-range-progress{background:#d02a22;height:6px;border-radius:3px}
 input[type=checkbox]{accent-color:#d02a22}
+
+/* 2.4: solo games hide the multiplayer chat channels */
+body.solo #cchan{display:none}
+
+/* 2.4 system states */
+.statecard{border:1px solid;border-left-width:4px;border-radius:4px;padding:6px 10px;margin-bottom:8px;background:rgba(0,0,0,.35)}
+.sbar{height:5px;background:#222;border-radius:3px;margin-top:4px;overflow:hidden}.sbar i{display:block;height:100%}
+.mv{font-size:11px;margin-left:4px}.mv.up{color:#ff9a7a}.mv.dn{color:#7ad08a}
+
+/* 2.4 quests */
+.card.quest .qintro,.barcard .qintro{font-style:italic;color:#e8dcc0;margin:4px 0 6px}
+.qtag{font:bold 10px Tahoma;letter-spacing:1px;color:#1b1406;background:#c9a24a;border-radius:3px;padding:1px 5px}
+.journal{margin:8px 4px;color:#c9b88a}.journal summary{cursor:pointer;font:bold 11px Tahoma;letter-spacing:2px;color:#c9a24a;padding:4px 0}
+.barcard{border:1px solid #3a3020;background:#14110b;border-radius:4px;padding:8px 10px;margin:6px 0}.barcard .rumor{color:#d8c89a;margin-top:3px}
+.spec{margin:4px 0 8px;color:#aab}
+.dlt{width:34px;text-align:right;font-size:11px;color:#889}.dlt.up{color:#6ae08a}.dlt.dn{color:#ff7a6a}
+.stat .bar{position:relative}.stat .bar .was{position:absolute;top:-2px;bottom:-2px;width:2px;background:#fff;opacity:.75}
+.ocats{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}.ocats .btn.on{background:#2a4a6a;color:#fff}
+.pgain{color:#6ae08a}.ploss{color:#ff8a6a}
+.aitag{white-space:nowrap}.tbl td:nth-child(2) .aitag{display:inline-block}

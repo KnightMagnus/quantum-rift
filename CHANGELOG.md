@@ -2,6 +2,41 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.4 "Living Galaxy"
+- **Questlines:**
+  - Every spaceport bar has a **contact**, a named character who remembers you. Each offers multi-step stories: a missing freighter, a fever run, an informant to hide, a ghost signal, a prospector's claim, a dignitary escort and an old debt.
+  - Each step is a job (deliveries, surveys, rescues, bounties, escorts, supply runs, patrols, and the new **salvage** step), and finishing one tells the next part of the story.
+  - Contacts warm to you as you finish their stories, from Stranger to Old Friend. Their rewards grow, and include material crates, new officers and specialist blueprints.
+  - **Six handcrafted side stories** start at particular worlds across the Rift, each with its own characters and a bigger reward.
+  - A lost step gets one more chance. The MISSIONS tab tags each step, and keeps a story journal.
+- **A living galaxy:**
+  - Systems pass through **states** that come and go: famine, plague, a boom, a border war, a pirate scourge, a festival, a mining rush, refugees.
+  - States move prices and traffic, post their own supply, patrol and passenger jobs, and make the news.
+  - Captains can end a state early by delivering what it needs or destroying the ships behind it, for a reward.
+  - **Markets remember what you trade:** selling a load lowers the local price, buying raises it, and the effect fades over a few minutes.
+  - The OPS tab lists "The Rift today", the galaxy map rings troubled systems, and the landing screen shows the local state.
+  - Cargo runs pay about a third more.
+- **More varied skies:** background worlds are now drawn from the procedural planet renderer in many types, sizes, colours and ring styles, so neighbouring systems no longer share the same gas giant.
+- **Combat AI:**
+  - NPC captains have personalities. Cautious and steady ones break off and run for the jump point when badly hurt; reckless ones fight on. Bounty, story and named targets always fight to the end.
+  - A ship under attack calls nearby ships of its side to help.
+  - Capital ships with turrets circle their target and fire broadsides instead of charging.
+  - Damaged ships trail smoke, and badly damaged ones burn.
+- **At the bar:** the contact greets you by standing and passes on a rumour: a troubled system nearby, or a trade run that pays. Each market shows what the world exports cheaply and what it pays well for.
+- **CAREER page** in the ship and captain panel (I): net worth, ships and docks, station, colonies, officers, blueprints, and your progress across every questline.
+- **Shipyard comparison:** every stat shows the difference from the ship you fly, with a tick on each bar.
+- **Outfitter categories:** weapons, ammo, defense, engines and utility.
+- **Solo games hide multiplayer screens:** fleets, the arena, the exchange, online lists and chat. In solo, the chat line writes notes in your log.
+- **Quality of life:**
+  - Auto-reconnect after a dropped connection.
+  - Jobs warn when they are further than your fuel range, and offer a PLOT button.
+  - The trade screen shows what you paid for the cargo in your hold.
+  - A warning two minutes before a rush deadline.
+  - Salvage points get edge arrows and map markers.
+  - The galaxy map legend can be hidden (LEGEND).
+  - The main story card stays folded while you work through the career steps.
+- **Fixes:** a comment that had swallowed the solo note code, and the missing "invasion" entry in the map legend.
+
 ### 2.3 "Busy Lanes"
 - **Ten new Quantum hulls** in the Concord yards, filling the gaps in the common lineup:
 

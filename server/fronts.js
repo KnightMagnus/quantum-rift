@@ -38,7 +38,7 @@ export const FrontsMixin = {
     const W = this.db.world, claims = {};
     for (const [sys, c] of Object.entries(W.claims)) { const F = W.fleets[c.fleet]; if (F) claims[sys] = { tag: F.tag, name: F.name, hp: Math.round(c.hp * 100), hull: c.hull }; }
     const inv = this.invasion ? { sys: this.invasion.sys, name: this.invasion.boss.name, until: this.invasion.until } : null;
-    return { t: 'world', claims, invasion: inv, anomalies: this.anomalies(), event: this.event(), calendar: eventCalendar(), front: frontHours(), vuln: frontWindowOpen(Date.now(), frontHours()) };
+    return { t: 'world', claims, invasion: inv, anomalies: this.anomalies(), event: this.event(), calendar: eventCalendar(), front: frontHours(), vuln: frontWindowOpen(Date.now(), frontHours()), states: this.statesPayload ? this.statesPayload() : {} };   // 2.4: system states
   },
   pushWorld() { this.broadcast(this.worldPayload()); },
 

@@ -5,7 +5,7 @@ import { SYN_TIERS, synTier, SYN_GAIN, BLACK_MARKET, RANKS_OFF, PROMOTE, TRAITS,
 import { credits } from '../shared/rules.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const DEST_TYPES = ['cargo', 'smuggle', 'passenger', 'expret'];
+const DEST_TYPES = ['cargo', 'smuggle', 'passenger', 'expret', 'supply'];   // 2.4: supply jobs complete at their destination
 export const destType = (m) => DEST_TYPES.includes(m.type);
 
 export const SyndicateMixin = {
@@ -122,6 +122,7 @@ export const SyndicateMixin = {
   },
   missionDeadlines(s) {
     const d = s.data, now = Date.now(); let gone = false;
+    for (const m of d.missions) if (m.deadline && !m.done && !m.warned && m.deadline - now < 120000 && now <= m.deadline) { m.warned = true; this.toast(s, `⏱ Two minutes left: ${m.title}.`); }   // 2.4
     for (const m of d.missions) if (m.deadline && !m.done && now > m.deadline) {
       m.failed = true; gone = true; const fac = SYS[m.sys] && SYS[m.sys].faction;
       if (m.qty && m.cid && d.cargo[m.cid]) {}   // the cargo stays yours

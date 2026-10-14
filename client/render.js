@@ -2,6 +2,7 @@
 import { planetSprite } from './planets.js';
 import { missionTargets } from './missions.js';
 import { ANOMALIES } from '/shared/fronts.js';
+import { STATES } from '/shared/living.js';
 import { SYS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
 import { weaponParams, BEAM_COLORS, weaponColor, weaponLook, price } from '/shared/rules.js';
 // 1.2 map views (after Endless Sky's map modes): colour each system by trade price, services, your standing, or danger
@@ -71,7 +72,15 @@ function decorFor(S) {
   for (let i = 0; i < ng; i++) D.gal.push({ img: 'galaxy_' + Math.floor(r() * 6), x: (r() - 0.5) * 2600, y: (r() - 0.5) * 2000, size: 120 + r() * 220, rot: r() * 6.283, squash: 0.35 + r() * 0.65, a: 0.28 + r() * 0.27, depth: 0.02 + r() * 0.03 });
   if (r() < (wild ? 0.25 : 0.04)) D.hole = { x: (r() - 0.5) * 2400, y: (r() - 0.5) * 1800, size: 260 + r() * 260, rot: (r() - 0.5) * 0.8, depth: 0.05 };
   else if (r() < 0.06) D.pulsar = { x: (r() - 0.5) * 2400, y: (r() - 0.5) * 1800, spin: 0.6 + r() * 1.4, len: 260 + r() * 260, depth: 0.05 };
-  if (r() < 0.32) D.giant = { img: 'giant_' + Math.floor(r() * 4), x: (r() - 0.5) * 3000, y: (r() - 0.5) * 2400, size: 320 + r() * 520, rot: (r() - 0.5) * 0.7, depth: 0.08 + r() * 0.06, a: 0.75 + r() * 0.2 };
+  D.bgp = [];   // 2.4: background worlds painted by the planet renderer, unique to every system
+  const BGT = [['gas giant ringed rings', 0, 360, 0.35, 0.65], ['gas giant storm bands', 0, 360, 0.3, 0.55], ['ice giant gas giant', 180, 230, 0.25, 0.6], ['volcanic lava world', 0, 25, 0.6, 0.4], ['ocean world seas', 190, 225, 0.55, 0.45],
+               ['desert dunes', 25, 45, 0.5, 0.55], ['toxic acid swamp', 70, 110, 0.5, 0.45], ['crystal glass world', 260, 320, 0.45, 0.6], ['barren airless rock', 0, 360, 0.05, 0.5], ['jungle garden world', 90, 140, 0.45, 0.4], ['frozen ice world', 185, 210, 0.15, 0.75]];
+  const hsl2hex = (h, s_, l) => { const k = (n) => (n + h / 30) % 12, a = s_ * Math.min(l, 1 - l), f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)); return '#' + [f(0), f(8), f(4)].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
+  const bgWorld = (k, big) => { const T = big && r() < 0.62 ? BGT[Math.floor(r() * 3)] : BGT[Math.floor(r() * BGT.length)], h = T[1] + r() * (T[2] - T[1]), sat = Math.max(0.03, T[3] + (r() - 0.5) * 0.2), lum = T[4] + (r() - 0.5) * 0.15;
+    return { p: { id: `bg:${S.id}:${k}`, kind: 'planet', color: hsl2hex(h, sat, lum), desc: T[0], name: '', r: big ? 120 + r() * 40 : 50 + r() * 40, svc: '', tech: 0 }, x: (r() - 0.5) * 3200, y: (r() - 0.5) * 2600, size: big ? 260 + r() * 460 : 70 + r() * 120, depth: big ? 0.08 + r() * 0.05 : 0.03 + r() * 0.03, a: 0.8 + r() * 0.15 }; };
+  if (r() < 0.62) D.bgp.push(bgWorld(0, true));
+  if (r() < 0.38) D.bgp.push(bgWorld(1, false));
+  if (r() < 0.12) D.bgp.push(bgWorld(2, false));
   if (r() < (wild ? 0.2 : 0.07)) D.arc = { img: 'arc_' + Math.floor(r() * 2), x: (r() - 0.5) * 4000, y: (r() - 0.5) * 3200, size: 1500 + r() * 1300, rot: r() * 6.283, depth: 0.14 };
   const fac = S.farside ? 'farside' : S.faction, pool = NEB_BY_FAC[fac] || [0, 1, 2, 3, 4, 5, 6, 7], nn = 1 + Math.floor(r() * 3) + (S.danger >= 3 ? 1 : 0);
   for (let i = 0; i < nn; i++) D.neb.push({ img: 'nebula_' + (r() < 0.7 ? pick(pool) : Math.floor(r() * 8)), x: (r() - 0.5) * 7000, y: (r() - 0.5) * 7000, size: 1300 + r() * 1900, rot: r() * 6.283, a: 0.5 + r() * 0.35, depth: 0.18 + r() * 0.3 });
@@ -112,7 +121,11 @@ function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
     ctx.fillStyle = 'rgba(230,240,255,.95)'; ctx.beginPath(); ctx.arc(x, y, 2.5, 0, 6.283); ctx.fill(); }
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   if (D.hole) { const h = D.hole, im = decorImg('blackhole_0'); if (ready(im)) { const [x, y] = farXY(h, W, H, cx, cy, zf), s = h.size * zf; if (x > -s && y > -s && x < W + s && y < H + s) { ctx.save(); ctx.translate(x, y); ctx.rotate(h.rot + Math.sin(t / 40) * 0.03); ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); } } }
-  if (D.giant) { const gp = D.giant, im = decorImg(gp.img); if (ready(im)) { const [x, y] = farXY(gp, W, H, cx, cy, zf), s = gp.size * zf; if (x > -s && y > -s && x < W + s && y < H + s) { ctx.save(); ctx.translate(x, y); ctx.rotate(gp.rot); ctx.globalAlpha = gp.a; ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); ctx.globalAlpha = 1; } } }
+  for (const bp of [...D.bgp].sort((a, b) => a.depth - b.depth)) {   // 2.4: unique background worlds, the farthest first
+    const [x, y] = farXY(bp, W, H, cx, cy, zf), s = bp.size * zf; if (x < -s * 2 || y < -s * 2 || x > W + s * 2 || y > H + s * 2) continue;
+    const P = planetSprite(bp.p, now); if (!P) continue; const w = s * P.S / P.D;
+    ctx.globalAlpha = bp.a; ctx.drawImage(P.canvas, x - w / 2, y - w / 2, w, w); ctx.globalAlpha = 1;
+  }
   if (D.arc) { const A_ = D.arc, im = decorImg(A_.img); if (ready(im)) { const k = Math.pow(z, 0.4), x = W / 2 + (A_.x - cx * A_.depth) * k, y = H / 2 + (A_.y - cy * A_.depth) * k, s = A_.size * k; if (x > -s && y > -s && x < W + s && y < H + s) { ctx.save(); ctx.translate(x, y); ctx.rotate(A_.rot); ctx.globalAlpha = 0.8; ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); ctx.globalAlpha = 1; } } }
   ctx.globalCompositeOperation = 'lighter';
   for (const n of D.neb) { const im = decorImg(n.img); if (!ready(im)) continue;
@@ -367,6 +380,7 @@ export function draw(G, ctx, W, H, dt, now) {
     ctx.drawImage(im, -s2 / 2, -s2 / 2, s2, s2); ctx.restore(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     if (k.hp < 100 && k.hp > 0) { ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x - R * 0.6, y + R + 4, R * 1.2, 3); ctx.fillStyle = '#e8c070'; ctx.fillRect(x - R * 0.6, y + R + 4, R * 1.2 * k.hp / 100, 3); }
   }
+  for (const [px_, py_] of salvagePoints(G)) { const x = sx(px_), y = sy(py_); ctx.strokeStyle = 'rgba(255,200,90,.6)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.arc(x, y, 160 * z, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#ffc85a'; ctx.font = '12px Tahoma'; ctx.textAlign = 'center'; ctx.fillText('SALVAGE', x, y - 160 * z - 6); }   // 2.4 quest salvage
   // survey points for an active survey job here
   for (const [px_, py_] of surveyPoints(G)) { const x = sx(px_), y = sy(py_); ctx.strokeStyle = 'rgba(90,216,255,.55)'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 8]); ctx.beginPath(); ctx.arc(x, y, 450 * z, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#5ad8ff'; ctx.font = '12px Tahoma'; ctx.textAlign = 'center'; ctx.fillText('SURVEY POINT', x, y); }
   // loot: credits (gold), salvage crates (blue), ore (brown), gas (green), crystal shards (violet)
@@ -477,6 +491,7 @@ function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
   // mission objectives in this system, your nav point, and your target
   const seen = new Set();
   for (const t of missionTargets(G)) if (t.stellar && !seen.has(t.stellar)) { const p = S.stellars.find(x => x.id === t.stellar); if (p) { seen.add(p.id); edgeArrow(ctx, W, H, sx(p.x), sy(p.y), t.kind === 'story' || t.kind === 'arc' ? '#ffd65a' : '#ffb86a', p.name, Math.hypot(p.x - me.rx, p.y - me.ry)); } }
+  for (const [x, y] of salvagePoints(G)) edgeArrow(ctx, W, H, sx(x), sy(y), '#ffc85a', 'Salvage', Math.hypot(x - me.rx, y - me.ry));   // 2.4
   if (G.navStellar && !seen.has(G.navStellar)) { const p = S.stellars.find(x => x.id === G.navStellar); if (p) edgeArrow(ctx, W, H, sx(p.x), sy(p.y), '#7ad0ff', p.name, Math.hypot(p.x - me.rx, p.y - me.ry)); }
   if (Math.hypot(G.lookX || 0, G.lookY || 0) > 50) edgeArrow(ctx, W, H, sx(me.rx), sy(me.ry), '#9fe0ff', 'You', Math.hypot(G.lookX, G.lookY));   // 2.1 look-ahead
   const T = G.target && G.ents.get(G.target); if (T) edgeArrow(ctx, W, H, sx(T.rx), sy(T.ry), G.hostile(T) ? G.pal.hostile : G.pal.friend, (T.name || (G.A.ships[T.hull] || {}).name || 'target').split(' · ')[0], Math.hypot(T.rx - me.rx, T.ry - me.ry));
@@ -506,6 +521,11 @@ function drawShip(G, ctx, e, x, y, z, now) {
   ctx.shadowBlur = 0;
   if (e.fl & 1 && H.glow) { const g = sheet(e.hull, true); if (g.complete && g.naturalWidth) { ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(g, (fr % 6) * sz, Math.floor(fr / 6) * sz, sz, sz, x - w / 2, y - w / 2, w, w); ctx.globalCompositeOperation = 'source-over'; } }
   ctx.globalAlpha = 1;
+  if (fx.length < 1200 && e.ar != null && e.ar < 50 && !(e.fl & 8) && e.rx != null && Math.random() < (50 - e.ar) / 50 * 0.4) {   // 2.4: damaged ships trail smoke, and badly damaged ones burn
+    const ox = (Math.random() - 0.5) * sz * 0.4, oy = (Math.random() - 0.5) * sz * 0.4;
+    fx.push({ x: e.rx + ox, y: e.ry + oy, vx: (e.vx || 0) * 0.3 + (Math.random() - 0.5) * 12, vy: (e.vy || 0) * 0.3 + (Math.random() - 0.5) * 12, smoke: true, life: 1.1, max: 1.1, r: 2.5 + sz * 0.03 });
+    if (e.ar < 25 && Math.random() < 0.45) fx.push({ x: e.rx + ox, y: e.ry + oy, vx: (Math.random() - 0.5) * 50, vy: (Math.random() - 0.5) * 50, life: 0.3, max: 0.3, c: Math.random() < 0.5 ? '#ffb040' : '#ff6a20', s: 1.4 });
+  }
   if (e.fl & 4) { ctx.fillStyle = 'rgba(255,120,60,.8)'; if (Math.random() < 0.3) ctx.fillRect(x + (Math.random() - 0.5) * w / 2, y + (Math.random() - 0.5) * w / 2, 2, 2); }
   if (G.hover === e.id && G.target !== e.id) { const r = w * 0.5 + 4; ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
   const tgt = G.target === e.id;
@@ -529,6 +549,7 @@ export function radar(G, ctx) {
   if (S) for (const p of S.stellars) { ctx.fillStyle = p.wormhole ? '#9ac8ff' : p.site ? (G.sites && G.sites[p.id] ? '#a8f' : '#776') : p.hub ? '#9ab' : '#556'; ctx.beginPath(); ctx.arc(px(p.x), py(p.y), Math.max(2.5, p.r * k), 0, 6.28); ctx.fill(); }
   for (const k of G.rocks || []) if (k.hp) { ctx.fillStyle = k.ore === 'gas' ? '#2a6a5a' : k.ore === 'shards' ? '#6a4a8a' : '#4a4640'; ctx.fillRect(px(k.x) - 1, py(k.y) - 1, 2, 2); }
   for (const l of G.loot) { ctx.fillStyle = l.kind === 5 ? '#ff5ae0' : '#fff'; const q = l.kind === 5 ? 2 : 1; ctx.fillRect(px(l.x) - q, py(l.y) - q, q * 2, q * 2); }
+  for (const [x, y] of salvagePoints(G)) { ctx.strokeStyle = '#ffc85a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.rect(px(x) - 4, py(y) - 4, 8, 8); ctx.stroke(); }
   for (const [x, y] of surveyPoints(G)) { ctx.strokeStyle = '#5ad8ff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(px(x), py(y), 5, 0, 6.28); ctx.stroke(); }
   if (neb) { ctx.fillStyle = 'rgba(150,120,255,.10)'; ctx.fillRect(0, 0, W, H); }
   for (const e of G.ents.values()) {
@@ -603,6 +624,9 @@ export function galaxy(G, ctx, opts = {}) {
     if (big) { ctx.font = 'bold 10px Tahoma'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#02030a'; ctx.strokeText(`[${c.tag}]`, x, y + 22); ctx.fillStyle = '#ffd27a'; ctx.fillText(`[${c.tag}]`, x, y + 22); } }
   for (const [sid, an] of Object.entries(Wd.anomalies || {})) { const S_ = SYS[sid], A_ = ANOMALIES[an]; if (!S_ || !A_) continue; const [x, y] = P(S_); if (!on(x, y)) continue;
     ctx.font = (big ? 'bold 13px' : '10px') + ' Tahoma'; ctx.textAlign = 'center'; ctx.fillStyle = A_.color; ctx.fillText(A_.icon, x + (big ? 12 : 8), y + (big ? 4 : 3)); }
+  for (const [sid, st] of Object.entries(Wd.states || {})) { const S_ = SYS[sid], X = STATES[st.k]; if (!S_ || !X) continue; const [x, y] = P(S_); if (!on(x, y)) continue;   // 2.4: system states
+    ctx.strokeStyle = X.color + 'aa'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, big ? 10 : 7, 0, 6.283); ctx.stroke();
+    if (big) { ctx.font = '12px Tahoma'; ctx.textAlign = 'center'; ctx.fillText(X.icon, x - 13, y + 4); } }
   if (Wd.invasion && SYS[Wd.invasion.sys]) { const [x, y] = P(SYS[Wd.invasion.sys]);
     ctx.strokeStyle = `rgba(255,60,40,${0.4 + 0.6 * pulse})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, (big ? 14 : 9) + pulse * 5, 0, 6.283); ctx.stroke();
     if (big) { ctx.font = 'bold 11px Tahoma'; ctx.textAlign = 'center'; ctx.fillStyle = '#ff5a40'; ctx.fillText('INVASION', x, y + 30); } }
@@ -612,6 +636,7 @@ export function galaxy(G, ctx, opts = {}) {
     ctx.strokeStyle = `rgba(${col},${0.55 + 0.45 * pulse})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y - q); ctx.lineTo(x + q, y); ctx.lineTo(x, y + q); ctx.lineTo(x - q, y); ctx.closePath(); ctx.stroke();
     if (big) { const lab = t.kind === 'story' ? '★ ' + t.title : '◆ ' + t.title; ctx.font = 'bold 11px Tahoma'; ctx.textAlign = 'left'; ctx.lineWidth = 3; ctx.strokeStyle = '#02030a'; ctx.strokeText(lab.length > 38 ? lab.slice(0, 36) + '…' : lab, x + q + 4, y + 4); ctx.fillStyle = `rgb(${col})`; ctx.fillText(lab.length > 38 ? lab.slice(0, 36) + '…' : lab, x + q + 4, y + 4); } }
   if (big) { const ch = SYS.coldharbor; if (ch) { const [x, y] = P(ch); ctx.font = 'italic 12px Tahoma'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(216,200,144,.55)'; ctx.fillText('beyond the Gateway', x - 20 * V.k, y + 50 * V.k + 14); } }
+  if (big && G.mapLegend === false) return;   // 2.4: the legend can be hidden
   if (big) { ctx.fillStyle = 'rgba(2,3,10,.82)'; ctx.fillRect(0, H - (G.mapMode && G.mapMode !== 'factions' ? 26 : 42), W, 42); }   // a backing strip so the legend never sits on top of system names
   if (big && G.mapMode && G.mapMode !== 'factions') {   // legend for the alternative views
     const L = { trade: [['#3ce66e', `cheap ${(COMMODITIES.find(c => c.id === (G.mapCid || 'food')) || {}).name || ''}`], ['#f0dc5a', 'average'], ['#ff503c', 'expensive'], ['#3a3e48', 'no market']], services: [['#5ab0ff', 'shipyard'], ['#ffaa4a', 'outfitter'], ['#c38aff', 'both'], ['#3a3e48', 'neither']],
@@ -623,7 +648,7 @@ export function galaxy(G, ctx, opts = {}) {
     let lx = 12, ly = H - 14; ctx.font = '11px Tahoma'; ctx.textAlign = 'left';
     for (const [id, F] of Object.entries(FACTIONS)) { if (F.hidden) continue; ctx.fillStyle = F.color; ctx.fillRect(lx, ly - 8, 8, 8); ctx.fillStyle = '#aaa'; ctx.fillText(F.short, lx + 12, ly); lx += ctx.measureText(F.short).width + 26; }
     ctx.strokeStyle = '#aaa'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(lx + 4, ly - 4, 3.5, 0, 6.283); ctx.stroke(); ctx.fillStyle = '#aaa'; ctx.fillText('not yet visited', lx + 12, ly);
-    lx = 12; ly -= 16; ctx.fillStyle = '#ffd65a'; ctx.fillText('◇ mission target', lx, ly); lx += 100; ctx.fillStyle = '#ffd27a'; ctx.fillText('◌ fleet claim', lx, ly); lx += 80; ctx.fillStyle = '#ff5a40'; ctx.fillText('◯ invasion', lx, ly); lx += 70;
+    lx = 12; ly -= 16; ctx.fillStyle = '#ffd65a'; ctx.fillText('◇ mission target', lx, ly); lx += 100; if (!G.solo) { ctx.fillStyle = '#ffd27a'; ctx.fillText('◌ fleet claim', lx, ly); lx += 80; } ctx.fillStyle = '#ff5a40'; ctx.fillText('◯ invasion', lx, ly); lx += 70;   // 2.4: no fleet claims in solo
     for (const A_ of Object.values(ANOMALIES)) { ctx.fillStyle = A_.color; ctx.fillText(`${A_.icon} ${A_.name}`, lx, ly); lx += ctx.measureText(`${A_.icon} ${A_.name}`).width + 14; }
   }
 }
@@ -632,6 +657,7 @@ export function mapHit(G, mx, my, mini) {
   for (const s of SYS_LIST) { const x = t.W / 2 + (s.x - t.cx) * t.k, y = t.H / 2 + (s.y - t.cy) * t.k, d = Math.hypot(mx - x, my - y); if (d < bd) { bd = d; best = s.id; } }
   return best;
 }
+export function salvagePoints(G) { const out = []; for (const m of (G.you && G.you.missions) || []) if (m.type === 'salvage' && m.sys === G.sys && !m.done && m.point) out.push(m.point); return out; }
 export function surveyPoints(G) {
   const out = []; if (!G.you) return out;
   for (const m of G.you.missions || []) if (m.type === 'survey' && m.sys === G.sys && !m.done) m.points.forEach((p, i) => { if (!(m.seen || []).includes(i)) out.push(p); });

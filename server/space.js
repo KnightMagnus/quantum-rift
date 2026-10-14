@@ -1,6 +1,7 @@
 // One star system's live simulation: ships (players, their escorts, NPC traffic), shots, beams, loot.
 import { SYS, TRAFFIC, FACTIONS, MATERIALS } from '../shared/galaxy.js';
 import { roleMult } from '../shared/roles.js';
+import { STATES } from '../shared/living.js';
 import { shipStats, weaponParams, weaponSound, step, wrap, angDiff, angleTo, hostileFactions, K, DT } from '../shared/rules.js';
 
 let NEXT = 1;
@@ -46,6 +47,7 @@ export class Space {
       name: o.name || null, target: null, aggro: new Set(), inp: { thrust: 0, turn: 0 }, guns: [], dead: false, born: this.t, think: 0, dest: null,
       state: o.state || 'fly', jumpT: 0, mission: o.mission || null, life: rnd(150, 300), cargo: o.cargo || 0, strength: this.A.ships[loadout.hull].strength || 10 };
     const H = this.A.ships[loadout.hull]; e.role = H.role;
+    if (!e.player) { const F = FACTIONS[e.faction] || {}, r = Math.random(); e.pers = o.pers || (F.pirate ? (r < 0.15 ? 'cautious' : r < 0.6 ? 'steady' : 'reckless') : r < 0.35 ? 'cautious' : r < 0.85 ? 'steady' : 'reckless'); }   // 2.4: how a captain fights
     const ob = o.bonus || {}; e.pw = Math.round((H.strength || 10) * (1 + ((ob.shieldPct || 0) + (ob.armorPct || 0) + (ob.damagePct || 0)) / 300));   // 0.9: effective strength (levels)
     const defAmmo = {}; for (const [w, , a] of H.weapons) defAmmo[w] = (defAmmo[w] || 0) + a;
     for (const [w, n] of Object.entries(st.weapons)) {
@@ -128,13 +130,16 @@ export class Space {
     }
     const T = TRAFFIC[fac];
     let kind, f = fac, roll = Math.random();
+    const st = this.game.stateOf ? this.game.stateOf(this.id) : null, SX = st ? STATES[st.kind] : null;   // 2.4: the system's state shapes its traffic
+    if (st && st.kind === 'war' && st.enemy && TRAFFIC[st.enemy] && Math.random() < 0.35) return this.spawnGroup('patrol', st.enemy, TRAFFIC[st.enemy].war, initial);
+    if (st && st.kind === 'pirates' && Math.random() < 0.3) roll = -1;   // force a raid roll below
     if (FACTIONS[fac].pirate) kind = 'raid';
-    else if (S.danger >= 2 && roll < 0.08 * S.danger * (this.m ? this.m.raid : 1)) { kind = 'raid'; f = Math.random() < 0.3 && S.danger >= 3 && !S.farside ? 'umbral' : 'hollow'; }
+    else if ((S.danger >= 2 || roll < 0) && roll < 0.08 * S.danger * (this.m ? this.m.raid : 1)) { kind = 'raid'; f = Math.random() < 0.3 && S.danger >= 3 && !S.farside ? 'umbral' : 'hollow'; }
     else if (roll < 0.68 && T.traders.length) kind = 'trade';
     else if (roll < 0.82) { kind = 'trade'; f = 'spacer'; }
     else kind = 'patrol';
     if (kind === 'raid' && FACTIONS[S.faction].pirate && [...this.ships.values()].filter(e => e.ai === 'raid' && !e.owner && !e.mission).length >= 3 + Math.floor(S.danger / 2)) { kind = 'trade'; f = 'spacer'; }   // 2.3: pirate havens get visiting smugglers and free traders too
-    else if (kind === 'raid' && !FACTIONS[S.faction].pirate && [...this.ships.values()].filter(e => e.ai === 'raid' && !e.owner && !e.mission).length >= (this.inner() ? 1 : 2) + Math.floor(S.danger / 2)) { kind = 'trade'; f = T.traders.length ? fac : 'spacer'; roll = 1; }   // 2.0.3: raiders don't pile up while traders come and go
+    else if (kind === 'raid' && !FACTIONS[S.faction].pirate && [...this.ships.values()].filter(e => e.ai === 'raid' && !e.owner && !e.mission).length >= (this.inner() ? 1 : 2) + Math.floor(S.danger / 2) + (SX && SX.raidCap || 0)) { kind = 'trade'; f = T.traders.length ? fac : 'spacer'; roll = 1; }   // 2.0.3: raiders don't pile up while traders come and go
     let pool = kind === 'trade' ? (TRAFFIC[f].traders.length ? TRAFFIC[f].traders : TRAFFIC.spacer.traders) : TRAFFIC[f].war;
     if (kind === 'raid' && this.inner() && pool.length > 2) pool = [...pool].sort((a, b) => ((this.A.ships[a] || {}).cost || 0) - ((this.A.ships[b] || {}).cost || 0)).slice(0, pool.length - 1);   // 2.0.3: no destroyers raiding inner space
     const hull = pick(pool); if (!this.A.ships[hull]) return;
@@ -151,6 +156,17 @@ export class Space {
       if (!initial) this.events.push(['flash', Math.round(e.x), Math.round(e.y)]);
       if (!lead) lead = e; else { e.ai = 'escort'; if (kind === 'trade') e.tradeMate = true; }
     }
+  }
+  // 2.4: a group of warships of one power (a border war's attackers)
+  spawnGroup(kind, f, pool, initial) {
+    const hull = pick(pool.filter(h => this.A.ships[h])); if (!hull) return; const ang = rnd(-Math.PI, Math.PI), n = 1 + (Math.random() < 0.5 ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
+    let lead = null;
+    for (let i = 0; i < n; i++) {
+      const x = initial ? rnd(-1800, 1800) : Math.sin(ang) * 2600, y = initial ? rnd(-1800, 1800) : -Math.cos(ang) * 2600, a = wrap(ang + Math.PI);
+      const e = this.makeShip({ hull: i ? pick(pool.filter(h => this.A.ships[h] && (this.A.ships[h].cost || 0) <= (this.A.ships[hull].cost || 1e9))) || hull : hull, faction: f, x: x + i * 70, y: y + i * 50, a, vx: Math.sin(a) * 120, vy: -Math.cos(a) * 120, ai: i ? 'escort' : kind, owner: lead ? lead.id : null });
+      if (!initial) this.events.push(['flash', Math.round(e.x), Math.round(e.y)]); if (!lead) lead = e;
+    }
+    return lead;
   }
   // 0.8: a Feral Swarm cluster: a Thrip Darter brood-leader and its drones, hostile to everyone
   spawnSwarm(initial) {
@@ -234,6 +250,8 @@ export class Space {
       } else if (e.ai === 'patrol' || e.ai === 'raid') e.target = e.target || this.findTarget(e, e.ai === 'raid' ? 2200 : 1500);
       else if (e.ai === 'trade' && e.aggro.size) e.ai = 'flee';
       if (this.t - e.born > e.life && (e.ai === 'patrol' || e.ai === 'raid') && !e.target) e.ai = 'leave';
+      if (e.target && (e.ai === 'patrol' || e.ai === 'raid') && this.mayFlee(e)) { e.ai = 'flee'; e.target = null; e.fled = true; this.events.push(['flee', e.id]); }   // 2.4: a beaten captain runs for the jump point
+      if (e.ai === 'flee') e.target = null;
       }   // (not recalled)
     }
     if (e.target) { e.catchup = null; return this.fight(e, e.target); }
@@ -287,13 +305,32 @@ export class Space {
       }
     }
   }
+  // 2.4 personalities: cautious captains run early, steady ones when badly hurt, reckless ones never; named and story ships fight to the end
+  mayFlee(e) {
+    const thr = { cautious: 0.45, steady: 0.27, reckless: 0 }[e.pers] || 0;
+    if (!thr || e.owner || e.mission || e.rival || e.boss || e.bossMinion || e.dread || e.arcOf || e.storyKill || e.fighterOf || e.noDisable || this.sys.arena) return false;
+    return e.armor < e.st.armor * thr && e.shield < e.st.shield * 0.15;
+  }
+  // 2.4: a ship under attack calls nearby ships of its own side to help
+  callHelp(s, attacker) {
+    if (s.player || this.sys.arena || (s.helpT || -99) > this.t - 5) return; s.helpT = this.t;
+    for (const o of this.ships.values()) {
+      if (o === s || o.player || o.owner || o.faction !== s.faction || o.target || o.dead || o.disabled || (o.ai !== 'patrol' && o.ai !== 'raid' && o.ai !== 'guard')) continue;
+      if (Math.hypot(o.x - s.x, o.y - s.y) > 1800 || this.spared(o, attacker)) continue;
+      o.aggro.add(attacker.id); o.target = attacker;
+    }
+  }
   dock(f, owner) { const g = owner.guns.find(g => g.p.bay && this.A.weapons[g.w].launch === f.hull); if (g && g.ammo !== Infinity) g.ammo++; this.remove(f); }
   fight(e, t) {
     const best = e.guns.filter(g => !g.p.pd && g.ammo > 0).reduce((m, g) => Math.max(m, g.p.range), 300);
     const dx = t.x - e.x, dy = t.y - e.y, d = Math.hypot(dx, dy);
     const lead = Math.min(1.2, d / 600);
     const lx = t.x + (t.vx - e.vx) * lead, ly = t.y + (t.vy - e.vy) * lead;
-    if (d > best * 0.75) this.steer(e, lx, ly, false);
+    if (!e.player && e.st.size >= 110 && e.st.turrets >= 2 && d < best * 1.1 && d > Math.max(140, e.st.size)) {   // 2.4: capitals with turrets circle and fire broadsides instead of ramming
+      const side = e.id % 2 ? 1 : -1, ta = Math.atan2(dx, -dy) + side * (Math.PI / 2 - (d > best * 0.8 ? 0.35 : d < best * 0.5 ? -0.35 : 0));
+      this.steer(e, e.x + Math.sin(ta) * 300, e.y - Math.cos(ta) * 300, false); e.inp.thrust = Math.hypot(e.vx, e.vy) < e.st.maxSpeed * 0.6 ? e.inp.thrust : 0;
+    }
+    else if (d > best * 0.75) this.steer(e, lx, ly, false);
     else if (d < Math.max(120, e.st.size * 0.9)) { const away = Math.atan2(-dx, dy) + 0.8; this.steer(e, e.x + Math.sin(away) * 300, e.y - Math.cos(away) * 300, false); }
     else { this.steer(e, lx, ly, false); e.inp.thrust = Math.hypot(e.vx, e.vy) < e.st.maxSpeed * 0.5 ? e.inp.thrust : 0; }
     e.fireAt = t;
@@ -405,7 +442,7 @@ export class Space {
   damage(s, dA, dS, src, ion) {
     if (s.dead) return;
     const srcRoot = src ? this.root(src) : null;
-    if (srcRoot && srcRoot !== this.root(s)) { this.root(s).aggro.add(srcRoot.id); if (!s.player && !s.target) s.target = srcRoot; }
+    if (srcRoot && srcRoot !== this.root(s)) { const first = !this.root(s).aggro.has(srcRoot.id); this.root(s).aggro.add(srcRoot.id); if (!s.player && !s.target && s.ai !== 'flee') s.target = srcRoot; if (first && !s.owner) this.callHelp(s, srcRoot); }
     if (s.dread && this.game.dreadInvulnerable()) { s.hitT = this.t; return [0, 1, srcRoot ? srcRoot.id : 0]; }   // outside the front window
     if (src && src.role && s.role) { const rm = roleMult(src.role, s.role); dA *= rm; dS *= rm; }   // the class triangle
     if (src && this.game.specMult) { const sm = this.game.specMult(this.root(src), src, s); dA *= sm; dS *= sm; }   // specialty ships
@@ -450,7 +487,8 @@ export class Space {
     const S = this.sys;
     if (this.players > 0 && !this.sys.arena) {
       this.spawnT -= DT;
-      const want = Math.min(24, 6 + this.ports().length * 2 + S.stellars.length * 0.5 + S.danger * 1.5);   // 2.3: more traffic everywhere
+      const SX = this.game.stateOf && this.game.stateOf(this.id), tm = SX ? (STATES[SX.kind].traders || 1) : 1;
+      const want = Math.min(28, (6 + this.ports().length * 2 + S.stellars.length * 0.5 + S.danger * 1.5) * tm);   // 2.3: more traffic everywhere; 2.4: booms and festivals bring more
       const npcs = [...this.ships.values()].filter(e => !e.player && !e.owner).length;
       if (this.spawnT <= 0) { this.spawnT = rnd(2, 5); if (npcs < want) this.spawnTraffic(false); }
     }

@@ -203,6 +203,7 @@ function renderDisk(P, ru, rc) {
 let budget = 0, budgetT = 0;
 export function planetSprite(p, now) {
   const P = cache.get(p.id) || advance(p, now); if (!P) return null;
+  if (cache.size > 70) for (const k of cache.keys()) { if (k !== p.id && k.startsWith('bg:')) { cache.delete(k); break; } }   // 2.4: forget old background worlds
   const ru = Math.floor(P.T.spinLon / 6.283 * TW + now / 1000 * P.T.spin) % TW, rc = Math.floor(now / 1000 * P.T.cspin) % TW;
   if (P.fresh) { P.fresh = false; return null; }   // the first render waits for the next frame
   if (ru !== P.lastU || rc !== P.lastC) {   // re-render only when the surface has turned a texel (a few times a second at most)

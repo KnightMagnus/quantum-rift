@@ -43,17 +43,23 @@ export function missionTargets(G) {
     else if (m.type === 'patrol') status = `${m.got || 0} / ${m.need} kills in ${there}.`;
     else if (m.type === 'survey') status = `${(m.seen || []).length} / ${m.points ? m.points.length : 3} points in ${there}, then land anywhere.`;
     else if (m.type === 'bounty' || m.type === 'assassinate') status = `Destroy ${m.targetName} in ${there}.`;
+    else if (m.type === 'salvage') status = `Recover the salvage at the marked point in ${there}, then land anywhere.`;
     else if (m.type === 'rescue') status = `Find and board the ${m.wreckName} in ${there}.`;
     else status = there ? `Go to ${there}.` : '';
     if (m.deadline) { const left = Math.max(0, Math.ceil((m.deadline - Date.now()) / 60000)); status = `⏱ ${left} min left · ${status}`; }
-    out.push({ stellar: m.done ? null : (m.dest || null), key: m.id, kind: m.exp ? 'arc' : 'job', tag: m.exp ? 'FARSIDE EXPEDITION' : null, title: m.title, text: m.text, status, sys, reward: m.reward, urgent: !!m.deadline });
+    out.push({ stellar: m.done ? null : (m.dest || null), key: m.id, kind: m.exp || m.quest ? 'arc' : 'job', quest: !!m.quest, tag: m.exp ? 'FARSIDE EXPEDITION' : m.quest ? `${m.quest.qid.startsWith('s:') ? 'SIDE STORY' : 'QUEST'} · ${m.quest.name.toUpperCase()} · STEP ${m.quest.step + 1}/${m.quest.of}` : null, title: m.title, text: m.text, status, sys, reward: m.reward, urgent: !!m.deadline });
   }
   return out;
 }
 
+// 2.4: the story journal under the active missions
+function journalHtml(G) {
+  const Q = G.you.quests; if (!Q || !Q.done || !Q.done.length) return '';
+  return `<details class="journal"><summary>STORY JOURNAL · ${Q.done.length} finished</summary>${Q.done.slice().reverse().map(x => `<div class="kv small"><span>${x.side ? '★' : '✦'} ${esc(x.name)}</span><span class="dim">${esc(x.giver)}</span></div>`).join('')}</details>`;
+}
 export function missionsHtml(G) {
   const T = missionTargets(G);
-  if (!T.length) return '<div class="dim small" style="padding:6px">No active missions. Mission boards (the JOBS tab when landed) post new work every ten minutes.</div>';
+  if (!T.length) return '<div class="dim small" style="padding:6px">No active missions. Mission boards (the JOBS tab when landed) post new work every ten minutes, and the contact at each spaceport bar has a story for you.</div>' + journalHtml(G);
   return T.map(t => {
     let jumps = '';
     if (t.sys && G.sys) { if (t.sys === G.sys) jumps = '<span style="color:var(--ok)">in this system</span>'; else { const r = route(SYS, G.sys, t.sys); jumps = r && r.length ? `${r.length} jump${r.length > 1 ? 's' : ''}` : 'no known route'; } }
@@ -61,8 +67,8 @@ export function missionsHtml(G) {
       ${t.kind === 'story' ? '<div class="storytag">MAIN STORY</div>' : t.kind === 'career' ? '<div class="careertag">CAREER</div>' : t.kind === 'arc' ? `<div class="storytag">${esc(t.tag || 'FACTION STORY')}</div>` : ''}
       <div class="t">${esc(t.title)}</div>
       <div class="mstat">${esc(t.status)}</div>
-      <div class="dim small">${esc(t.text)}</div>
-      <div class="mfoot">${t.reward ? `<span class="cr small">${Math.round(t.reward).toLocaleString()} cr</span>` : '<span></span>'}<span class="dim small">${jumps}</span>${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}${t.kind === 'job' || (t.kind === 'arc' && t.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${esc(t.key)}" title="Drop this job">✕</button>` : ''}</div>
+      ${t.kind === 'story' && T.some(x => x.kind === 'career') ? `<details class="small dim"><summary>The story can wait until you know the ropes. Read more</summary>${esc(t.text)}</details>` : `<div class="dim small">${esc(t.text)}</div>`}
+      <div class="mfoot">${t.reward ? `<span class="cr small">${Math.round(t.reward).toLocaleString()} cr</span>` : '<span></span>'}<span class="dim small">${jumps}</span>${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}${t.kind === 'job' || t.quest || (t.kind === 'arc' && t.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${esc(t.key)}" title="Drop this job">✕</button>` : ''}</div>
     </div>`;
-  }).join('');
+  }).join('') + journalHtml(G);
 }

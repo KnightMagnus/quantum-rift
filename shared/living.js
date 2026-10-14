@@ -1,0 +1,25 @@
+// Quantum Rift 2.4 "Living Galaxy": systems pass through states (famine, war, a boom...) that come and go over time and
+// that captains can end early. A state moves prices, changes the traffic, posts its own jobs and makes the news.
+// `need` is what ends a state early: tons of a good sold at the system's markets, or kills of a kind of ship there.
+export const STATES = {
+  famine:   { name: 'Famine',          icon: '🌾', color: '#e0a040', prices: { food: 2.1, medical: 1.2 }, need: { cid: 'food', qty: 140 }, weight: 3,
+              desc: 'Harvests have failed. Food sells for double, and relief deliveries end the famine.', end: 'The famine in {sys} is over: relief convoys got through.' },
+  plague:   { name: 'Plague',          icon: '☣', color: '#9ad050', prices: { medical: 2.3, luxury: 0.7 }, need: { cid: 'medical', qty: 100 }, weight: 2,
+              desc: 'A fever is spreading. Medical supplies are worth a fortune, and enough of them will stop it.', end: 'The fever in {sys} is broken. Medical crews thank every captain who flew in supplies.' },
+  boom:     { name: 'Boom',            icon: '📈', color: '#5ad08a', prices: { luxury: 1.5, equipment: 1.35, industrial: 1.25, metal: 1.2 }, traders: 1.6, weight: 3,
+              desc: 'Money is flowing. Luxuries and equipment fetch high prices, and the lanes are busy.', end: 'The boom in {sys} has cooled.' },
+  war:      { name: 'Border War',      icon: '⚔', color: '#ff6a50', prices: { metal: 1.5, equipment: 1.6, medical: 1.4, food: 1.2 }, need: { kills: 'enemy', qty: 10 }, weight: 2,
+              desc: 'Two powers are fighting over this system. War materiel sells high, and every enemy ship destroyed here helps end it.', end: 'The fighting in {sys} has ended. The {fac} hold the system.' },
+  pirates:  { name: 'Pirate Scourge',  icon: '☠', color: '#ff4a6a', prices: { food: 1.15, equipment: 1.2 }, need: { kills: 'pirate', qty: 8 }, raidCap: 2, bounty: 1.5, weight: 3,
+              desc: 'Raiders have the lanes. Bounties pay half again as much, and clearing them out lifts the scourge.', end: 'The pirate scourge in {sys} is broken. The lanes are safe again.' },
+  festival: { name: 'Festival',        icon: '🎆', color: '#d080ff', prices: { luxury: 1.8, food: 1.3, silk: 1.4 }, traders: 1.4, passengers: 2, weight: 2,
+              desc: 'A festival fills the spaceports. Luxuries and fine food sell well, and travellers want passage.', end: 'The festival in {sys} has ended. The crowds have gone home.' },
+  rush:     { name: 'Mining Rush',     icon: '⛏', color: '#ffb84a', prices: { ore: 1.7, gas: 1.5, shards: 1.8, equipment: 1.25 }, need: { cid: 'ore', qty: 160 }, weight: 2,
+              desc: 'Refineries are hungry. Ore, gas and shards sell high until the demand is met.', end: 'The mining rush in {sys} has run its course.' },
+  refugees: { name: 'Refugees',        icon: '⛺', color: '#7ab0ff', prices: { food: 1.45, medical: 1.35, industrial: 1.2 }, passengers: 3, need: { cid: 'food', qty: 100 }, weight: 2,
+              desc: 'Refugees crowd the stations. Food and medicine are short, and many need passage elsewhere.', end: 'The refugees in {sys} have been resettled.' },
+};
+export const STATE_SHARE = 0.16;            // about this share of systems with markets is in some state at a time
+export const STATE_MIN = [25, 60];          // a state lasts this many minutes (real time) unless it is ended early
+// player trading moves prices: each ton sold lowers the local price, each ton bought raises it, and the effect fades
+export const TRADE_IMPACT = { perTon: 0.0022, max: 0.4, halfLifeMin: 12 };

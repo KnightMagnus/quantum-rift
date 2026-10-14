@@ -17,15 +17,18 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 - Every system has its own scenery, generated from the system itself: its star, distant galaxies, gas giants, nebulae, ion storms, ancient wrecks, abandoned stations, crystal formations, comets and drifting debris.
 - Procedurally generated planets and moons, asteroid fields, gas clouds and crystal fields to mine.
 - Busy space lanes: traders, convoys, patrols, raiders and thirty named rival captains with careers of their own.
+- Systems pass through famines, plagues, booms, border wars, pirate scourges, festivals and mining rushes that move prices and post their own jobs. Markets remember what you trade.
 
 **Flight and combat in the EV style**
 - Newtonian flight with guns, turrets, beams, homing missiles, point defense and drone carriers.
 - Your guns hit anything you aim at. Shoot a friendly ship and it turns on you, and its faction remembers.
+- NPC captains have personalities: some run when beaten, some call friends for help, and capital ships fire broadsides.
 - Autopilot landing and multi-jump routes, a hyperspace jump with its own effect and sound, and hold-right-click to look ahead.
 - Roughly 120 ships, from a 30,000-credit Wasp Skirmisher to the Constitution, plus ten one-of-a-kind specialty ships.
 
 **A career to build**
 - Trade on living markets with shortages and gluts. Take cargo runs, bounties, patrols, passengers, rush deliveries, smuggling and Syndicate contracts.
+- **Questlines:** a contact in every spaceport bar who remembers you and has multi-step stories to offer, plus six handcrafted side stories.
 - Claim a derelict station hull and build it into your **Personal Station**: refinery, research lab, refits to Mk II and Mk III, and a station shipyard.
 - **Docks A to D:** each dock holds a lead ship and up to two wingmate ships, chosen from your hangar. You fly the active dock's lead, and its wingmates fly in formation and follow your orders.
 - Hire officers of every race, promote them, and assign them to your bridge or as captain and crew of your wingmates.
@@ -33,7 +36,7 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 - A main story waiting somewhere in the Rift. We won't spoil it.
 
 **Made to be comfortable**
-- Solo mode with pause, save slots and save files, or online play with accounts.
+- Solo mode with pause, save slots and save files, or online play with accounts. Solo games hide the multiplayer screens.
 - Newcomer protection: pirates in inner space leave new captains alone until their station reaches Ops 3.
 - An in-game radio with thousands of live stations, and a fully synthesized soundscape with a quick volume control.
 - Key remapping, a colour-blind palette, interface scaling, gamepad and touch controls.
