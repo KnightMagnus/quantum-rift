@@ -2,8 +2,10 @@
 // all chosen from your stored ships. You fly the lead of your active dock; its wingmates fly in formation with you.
 // Wingmates are crewed by officers (a captain and one crew member each), who boost that ship.
 import { WINGMATES, ARMADA } from './galaxy.js';
-export const DOCK_LETTERS = ['A', 'B', 'C', 'D', 'E'];
-export const DOCKS_BY_OPS = [1, 1, 2, 3, 4, 5];          // docks per Ops level (without a station you have Dock A only)
+export const DOCK_LETTERS = ['A', 'B', 'C', 'D'];
+export const MAX_DOCKS = 4;
+export const DOCKS_BY_OPS = [1, 1, 2, 3, 3, 4];          // docks per Ops level, A to D (without a station you have Dock A only)
+export const NEXT_DOCK_OPS = { 1: 2, 2: 3, 3: 5 };        // with this many docks, the next one opens at this Ops level
 export const HANGAR_BY_OPS = [0, 3, 5, 8, 11, 14];        // stored-ship berths per Ops level (the Drydock Annex research adds more)
 export const WINGS_PER_DOCK = 2;                          // a Herald in the lead slot commands one more
 export const WING_ONLY = [...WINGMATES, ...ARMADA];       // the station's escort hulls fly only as wingmates

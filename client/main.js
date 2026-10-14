@@ -32,7 +32,7 @@ const PALETTES = { normal: { own: '#3fd36b', player: '#5ad0ff', hostile: '#ff3a2
                    cb: { own: '#ffffff', player: '#4aa8ff', hostile: '#ff9f1a', neutral: '#9a9a9a', friend: '#4aa8ff' } };   // blue/orange: safe for red-green colour blindness
 G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
 export const ACTIONS = [['thrust', 'Thrust', 'KeyW'], ['left', 'Turn left', 'KeyA'], ['right', 'Turn right', 'KeyD'], ['rev', 'Reverse', 'KeyS'], ['ab', 'Afterburner', 'ShiftLeft'],
-  ['fire1', 'Fire primary', 'Space'], ['fire2', 'Fire secondary', 'KeyF'], ['target', 'Next target', 'Tab'], ['nearest', 'Nearest hostile', 'KeyR'], ['land', 'Land', 'KeyL'],
+  ['fire1', 'Fire primary', 'Space'], ['fire2', 'Fire secondary (tap to launch or recall drones)', 'KeyF'], ['target', 'Next target', 'Tab'], ['nearest', 'Nearest hostile', 'KeyR'], ['land', 'Land', 'KeyL'],
   ['jump', 'Hyperjump', 'KeyJ'], ['map', 'Galaxy map', 'KeyM'], ['board', 'Board', 'KeyB'], ['zoomin', 'Zoom in', 'KeyZ'], ['zoomout', 'Zoom out', 'KeyX'], ['pause', 'Pause (solo)', 'KeyP'], ['mute', 'Mute sound', 'KeyN'], ['hail', 'Hail target / planet', 'KeyT'], ['info', 'Ship and captain info', 'KeyI'], ['face', 'Turn to face target (hold)', 'KeyE'], ['stop', 'Full stop', 'KeyQ'],
   ['ordAttack', 'Fleet: attack my target', 'KeyK'], ['ordGather', 'Fleet: form up', 'KeyG'], ['ordHold', 'Fleet: hold position', 'KeyH'], ['ordFire', 'Fleet: hold fire', 'KeyY'], ['ordLoot', 'Fleet: collect loot', 'KeyU'], ['companion', 'Next companion tab', 'KeyC']];
 const ALT = { thrust: 'ArrowUp', left: 'ArrowLeft', right: 'ArrowRight', rev: 'ArrowDown', ab: 'ShiftRight' };   // the arrow keys always work too
@@ -380,6 +380,8 @@ function setCursor(c) { if (canvas.dataset.cur !== c) { canvas.dataset.cur = c; 
 function setTarget(id) { G.target = id; send({ t: 'target', id }); }
 canvas.addEventListener('mousemove', (e) => {
   mouse.x = e.clientX; mouse.y = e.clientY; mouse.in = true;
+  if (G._look) { const dx = e.clientX - G._look.x, dy = e.clientY - G._look.y; if (Math.hypot(dx, dy) > 6) G._look.moved = true;
+    const r = canvas.getBoundingClientRect(), k = canvas.width / r.width, m = 3200, L = 2.4 / G.zoom; G._lookT = [Math.max(-m, Math.min(m, dx * k * L)), Math.max(-m, Math.min(m, dy * k * L))]; }
   [mouse.wx, mouse.wy] = toWorld(e.clientX, e.clientY);
   const h = pickAt(mouse.wx, mouse.wy); G.hover = h && h.ship ? h.ship.id : 0; G.hoverStellar = h && h.stellar ? h.stellar.id : null; setCursor(cursorFor(h));
 });
@@ -388,13 +390,16 @@ canvas.addEventListener('mousedown', (e) => {
   if (!G.you || G.landed) return; audio.unlock();
   if (document.activeElement && document.activeElement.tagName === 'INPUT') document.activeElement.blur();
   const [wx, wy] = toWorld(e.clientX, e.clientY), h = pickAt(wx, wy);
-  if (e.button === 2) { setTarget(0); return; }
+  if (e.button === 2) { G._look = { t: performance.now(), x: e.clientX, y: e.clientY, moved: false }; return; }   // 2.1: hold right-click and move to look ahead (a quick click still clears your target)
   if (e.button !== 0) return;
   if (h && h.ship) { setTarget(h.ship.id); return; }
   if (h && h.stellar) { G.navStellar = h.stellar.id; toast(`Nav: ${h.stellar.name}${h.stellar.svc.includes('L') ? ' (double-click or L to land)' : ''}`); return; }
   if (G.opts.mouseAim) mouse.down = true;   // mouse-aim mode: hold the left button on open space to fire
 });
-window.addEventListener('mouseup', () => { mouse.down = false; });
+window.addEventListener('mouseup', (e) => {
+  mouse.down = false;
+  if (e.button === 2 && G._look) { if (!G._look.moved && performance.now() - G._look.t < 300) setTarget(0); G._look = null; G._lookT = null; }   // the view eases back to your ship
+});
 canvas.addEventListener('dblclick', (e) => {
   if (!G.you || G.landed) return;
   const [wx, wy] = toWorld(e.clientX, e.clientY), h = pickAt(wx, wy);
@@ -571,6 +576,7 @@ function fixedTick() {
 }
 function frame(t) {
   const dt = Math.min(0.1, (t - last) / 1000); last = t;
+  { const tg = G._look && G._lookT && !G.landed ? G._lookT : [0, 0], k = Math.min(1, dt * (G._look ? 7 : 5)); G.lookX = (G.lookX || 0) + (tg[0] - (G.lookX || 0)) * k; G.lookY = (G.lookY || 0) + (tg[1] - (G.lookY || 0)) * k; }   // 2.1 look-ahead
   acc += dt; while (acc >= DT) { fixedTick(); acc -= DT; }
   const me = G.view;
   if (me) {   // smooth out prediction corrections

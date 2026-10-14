@@ -1,6 +1,6 @@
 // 2.1 Docks: the DOCKS screen at your Personal Station, the dock switcher by the DEPART button, and the sidebar line.
 import { ROLES, RARITY } from '/shared/hangar.js';
-import { WING_REPAIR_COST } from '/shared/docks.js';
+import { WING_REPAIR_COST, NEXT_DOCK_OPS } from '/shared/docks.js';
 import { credits } from '/shared/rules.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -29,7 +29,7 @@ function crewPick(G, k, w, role, oid, interactive) {
 
 export function docksHtml(G, interactive) {
   const y = G.you, D = y.docks; if (!D) return '';
-  let h = `<div class="sect" style="margin-top:4px">DOCKS (${D.count} of 5)</div><div class="dim small">Each dock holds a lead ship and up to two wingmates, chosen from your stored ships. You fly the lead of your <b>active</b> dock, and its wingmates fly in formation with you. Officers you assign as a wingmate's captain and crew boost that ship. More docks open as your station's Ops level rises.</div>`;
+  let h = `<div class="sect" style="margin-top:4px">DOCKS (${D.count} of 4)</div><div class="dim small">Each dock holds a lead ship and up to two wingmates, chosen from your stored ships. You fly the lead of your <b>active</b> dock, and its wingmates fly in formation with you. Officers you assign as a wingmate's captain and crew boost that ship. More docks open as your station's Ops level rises.</div>`;
   h += `<div class="docks">` + D.list.map((k, i) => {
     const act = i === D.active;
     return `<div class="dock${act ? ' on' : ''}"><div class="dhead"><span class="dletter">DOCK ${k.letter}</span>${act ? '<span class="dact">ACTIVE</span>' : interactive && k.lead ? `<button class="btn sm" data-act="dockgo" data-k="${i}">FLY WITH DOCK ${k.letter}</button>` : ''}</div>
@@ -38,7 +38,7 @@ export function docksHtml(G, interactive) {
         ${w ? `<div class="dcrews">${crewPick(G, i, j, 'cap', w.cap, interactive)}${crewPick(G, i, j, 'crew', w.crew, interactive)}</div>${w.repairT ? `<button class="btn sm" data-act="wingrep" data-uid="${w.uid}">RUSH REPAIRS ${credits(Math.round((G.A.ships[w.hull].cost || 0) * WING_REPAIR_COST))}</button>` : ''}` : ''}`).join('')}
     </div>`;
   }).join('') + `</div>`;
-  if (D.count < 5) h += `<div class="dim small" style="margin-top:6px">Next dock opens at Ops ${[1, 2, 3, 4, 5][D.count]}.</div>`;
+  if (D.count < 4) h += `<div class="dim small" style="margin-top:6px">Next dock opens at Ops ${NEXT_DOCK_OPS[D.count]}.</div>`;
   h += `<div class="sect">STORED SHIPS (${D.stored.length} / ${D.cap} berths)</div>`;
   if (!D.cap) h += '<p class="dim">Your hangar opens at Ops 1. Ships you buy can then be sent straight to it (BUY TO HANGAR in any shipyard).</p>';
   h += D.stored.map(x => { const H = G.A.ships[x.hull] || {}; return `<div class="it dstore"><img src="assets/${H.img}"><div style="flex:1"><b>${esc(H.name)}</b> <span class="dim">"${esc(x.name)}"</span><div class="dim small">${x.at ? `Dock ${esc(x.at)}` : 'Unassigned'}${x.wingOnly ? ' · wingmate only' : ''}${x.repairT ? ` · <span class="rep">repairs ${mins(x.repairT)} min</span>` : ''}</div></div>${interactive ? `<button class="btn sm" data-act="dock" data-op="sell" data-uid="${x.uid}">SELL</button>` : ''}</div>`; }).join('') || (D.cap ? '<p class="dim small">No stored ships. Buy ships into your hangar at any shipyard, or capture them by boarding.</p>' : '');

@@ -44,6 +44,129 @@ function stars(sysId) {
   const neb = []; for (let i = 0; i < 4; i++) neb.push([r() * 6000 - 3000, r() * 6000 - 3000, 900 + r() * 1600, r()]);
   const v = { layers, neb }; starCache.set(sysId, v); return v;
 }
+// ------------------------------------------------------------------ 2.2 scenery: every system gets its own sky and its own clutter, seeded from its id.
+// Far (barely moves): the system's star, galaxies, a black hole or pulsar, gas giants, megastructure arcs. Middle: gas clouds,
+// asteroid drifts, ion storms. Near (in the system itself): abandoned stations, ancient wrecks, ring ruins, crystal formations,
+// debris fields, comets, relay satellites, cargo pods and nav beacons.
+const decorImgs = {}; function decorImg(n) { if (!decorImgs[n]) { const im = new Image(); im.src = `assets/decor/${n}.webp`; decorImgs[n] = im; } return decorImgs[n]; }
+const ready = (im) => im.complete && im.naturalWidth;
+const decorCache = new Map();
+const NEB_BY_FAC = { umbral: [7, 1], deep: [4, 7, 0], farside: [6, 5, 3], vashari: [3, 6], korrund: [2, 6], ylith: [0, 5, 3], thalassi: [0, 5], sarn: [2, 7], quevari: [6, 5, 0], hollow: [1, 7], frontier: [2, 3, 6] };
+const SUNS = [['255,244,220', '255,200,120'], ['255,230,170', '255,160,70'], ['255,190,140', '255,110,60'], ['210,230,255', '140,180,255'], ['255,255,255', '200,220,255']];
+let rockSprites = null;
+function rockSprite(k) {   // a few dark, lumpy background asteroids, drawn once
+  if (!rockSprites) rockSprites = Array.from({ length: 6 }, (_, i) => { const r = seeded(77 + i), c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+    x.beginPath(); const n = 9 + i; for (let j = 0; j < n; j++) { const a = j / n * 6.283, d = 18 + r() * 12; j ? x.lineTo(32 + Math.cos(a) * d, 32 + Math.sin(a) * d) : x.moveTo(32 + Math.cos(a) * d, 32 + Math.sin(a) * d); } x.closePath();
+    const g = x.createLinearGradient(10, 10, 54, 54); g.addColorStop(0, '#6a645e'); g.addColorStop(1, '#1c1a19'); x.fillStyle = g; x.fill(); return c; });
+  return rockSprites[k % 6];
+}
+function decorFor(S) {
+  if (decorCache.has(S.id)) return decorCache.get(S.id);
+  const r = seeded(hashStr('decor:' + S.id)), pick = (a) => a[Math.floor(r() * a.length)], wild = ['frontier', 'deep', 'umbral'].includes(S.faction) || S.farside;
+  const D = { sun: null, gal: [], hole: null, pulsar: null, giant: null, arc: null, neb: [], belt: null, storm: null, derelict: [], wreck: [], ruin: [], crystal: [], debris: [], comet: null, sats: [], pods: [], beacons: [], meteorT: r() * 10 };
+  const clear = (x, y, m) => S.stellars.every(p => Math.hypot(p.x - x, p.y - y) > (p.r || 80) + m) && Math.hypot(x, y) > 500;
+  const spot = (rmin, rmax, m) => { for (let i = 0; i < 30; i++) { const a = r() * 6.283, d = rmin + r() * (rmax - rmin), x = Math.cos(a) * d, y = Math.sin(a) * d; if (clear(x, y, m)) return [x, y]; } return null; };
+  const sc = pick(SUNS); D.sun = { x: (r() - 0.5) * 1800, y: (r() - 0.5) * 1400, size: 140 + r() * 220, core: sc[0], halo: sc[1], depth: 0.04 };
+  const ng = r() < 0.18 ? 0 : r() < 0.7 ? 1 : 2;
+  for (let i = 0; i < ng; i++) D.gal.push({ img: 'galaxy_' + Math.floor(r() * 6), x: (r() - 0.5) * 2600, y: (r() - 0.5) * 2000, size: 120 + r() * 220, rot: r() * 6.283, squash: 0.35 + r() * 0.65, a: 0.28 + r() * 0.27, depth: 0.02 + r() * 0.03 });
+  if (r() < (wild ? 0.25 : 0.04)) D.hole = { x: (r() - 0.5) * 2400, y: (r() - 0.5) * 1800, size: 260 + r() * 260, rot: (r() - 0.5) * 0.8, depth: 0.05 };
+  else if (r() < 0.06) D.pulsar = { x: (r() - 0.5) * 2400, y: (r() - 0.5) * 1800, spin: 0.6 + r() * 1.4, len: 260 + r() * 260, depth: 0.05 };
+  if (r() < 0.32) D.giant = { img: 'giant_' + Math.floor(r() * 4), x: (r() - 0.5) * 3000, y: (r() - 0.5) * 2400, size: 320 + r() * 520, rot: (r() - 0.5) * 0.7, depth: 0.08 + r() * 0.06, a: 0.75 + r() * 0.2 };
+  if (r() < (wild ? 0.2 : 0.07)) D.arc = { img: 'arc_' + Math.floor(r() * 2), x: (r() - 0.5) * 4000, y: (r() - 0.5) * 3200, size: 1500 + r() * 1300, rot: r() * 6.283, depth: 0.14 };
+  const fac = S.farside ? 'farside' : S.faction, pool = NEB_BY_FAC[fac] || [0, 1, 2, 3, 4, 5, 6, 7], nn = 1 + Math.floor(r() * 3) + (S.danger >= 3 ? 1 : 0);
+  for (let i = 0; i < nn; i++) D.neb.push({ img: 'nebula_' + (r() < 0.7 ? pick(pool) : Math.floor(r() * 8)), x: (r() - 0.5) * 7000, y: (r() - 0.5) * 7000, size: 1300 + r() * 1900, rot: r() * 6.283, a: 0.5 + r() * 0.35, depth: 0.18 + r() * 0.3 });
+  if (r() < 0.38) { const a0 = r() * 6.283, R = 1800 + r() * 2200; D.belt = { depth: 0.7 + r() * 0.15, rocks: Array.from({ length: 30 + Math.floor(r() * 40) }, () => { const a = a0 + (r() - 0.5) * 1.6; return { x: Math.cos(a) * (R + (r() - 0.5) * 500), y: Math.sin(a) * (R + (r() - 0.5) * 500), s: 8 + r() * 34, k: Math.floor(r() * 6), rot: r() * 6, sp: (r() - 0.5) * 0.4 }; }) }; }
+  if (r() < 0.08 + 0.05 * S.danger) D.storm = { x: (r() - 0.5) * 5000, y: (r() - 0.5) * 5000, R: 900 + r() * 900, img: 'nebula_' + pick([0, 5, 4]), depth: 0.9 };
+  if (r() < 0.26) { const p = spot(1300, 3200, 600); if (p) D.derelict.push({ img: 'derelict_' + Math.floor(r() * 4), x: p[0], y: p[1], size: 380 + r() * 260, rot: r() * 6.283, spin: (r() - 0.5) * 0.01 }); }
+  const wreckOdds = 0.32 + 0.1 * S.danger + (wild ? 0.2 : 0);
+  for (let i = 0; i < 2; i++) if (r() < wreckOdds * (i ? 0.4 : 1)) { const p = spot(1200, 3400, 700); if (p) D.wreck.push({ img: 'wreck_' + Math.floor(r() * 6), x: p[0], y: p[1], size: 650 + r() * 650, rot: r() * 6.283, spin: (r() - 0.5) * 0.004,
+    bits: Array.from({ length: 10 + Math.floor(r() * 10) }, () => ({ a: r() * 6.283, d: 0.35 + r() * 0.5, s: 3 + r() * 9, sp: (r() - 0.5) * 0.03, rot: r() * 6 })) }); }
+  if (r() < 0.13 + (S.farside ? 0.3 : 0)) { const p = spot(1600, 3600, 900); if (p) D.ruin.push({ img: 'ruin_' + Math.floor(r() * 2), x: p[0], y: p[1], size: 1100 + r() * 700, rot: r() * 6.283, spin: (r() - 0.5) * 0.002 }); }
+  if (r() < (['ylith', 'frontier', 'deep'].includes(S.faction) || S.farside ? 0.45 : 0.14)) { const p = spot(900, 3200, 400); if (p) for (let i = 0, n = 1 + Math.floor(r() * 3); i < n; i++) D.crystal.push({ img: 'crystal_' + Math.floor(r() * 3), x: p[0] + (r() - 0.5) * 500, y: p[1] + (r() - 0.5) * 500, size: 140 + r() * 220, rot: r() * 6.283, spin: (r() - 0.5) * 0.02, ph: r() * 6 }); }
+  if (r() < 0.3 + 0.06 * S.danger) { const p = spot(800, 3000, 300); if (p) D.debris.push({ x: p[0], y: p[1], spin: (r() - 0.5) * 0.01, bits: Array.from({ length: 25 + Math.floor(r() * 30) }, () => ({ a: r() * 6.283, d: r() * 420, s: 3 + r() * 14, rot: r() * 6, sp: (r() - 0.5) * 0.6, hot: r() < 0.12 })) }); }
+  if (r() < 0.3) { const a = r() * 6.283; D.comet = { x0: Math.cos(a) * 5200, y0: Math.sin(a) * 5200, vx: -Math.cos(a + (r() - 0.5) * 0.9) * (14 + r() * 16), vy: -Math.sin(a + (r() - 0.5) * 0.9) * (14 + r() * 16), len: 380 + r() * 520, hue: r() < 0.5 ? '170,220,255' : '190,255,230', period: 900 }; }
+  for (const p of S.stellars) {
+    if (p.svc && p.svc.includes('L') && r() < 0.7) for (let i = 0; i < 2; i++) D.beacons.push({ x: p.x + Math.cos(r() * 6.283) * ((p.r || 80) + 140 + r() * 140), y: p.y + Math.sin(r() * 6.283) * ((p.r || 80) + 140 + r() * 140), col: i ? '#ff4a3a' : '#5aff8a', ph: r() * 6.283 });
+    if ((p.kind === 'planet' || p.kind === 'moon') && r() < 0.55) D.sats.push({ cx: p.x, cy: p.y, R: (p.r || 100) + 90 + r() * 120, a: r() * 6.283, sp: (r() < 0.5 ? 1 : -1) * (0.02 + r() * 0.04), img: 'satellite_' + Math.floor(r() * 3), size: 30 + r() * 22 });
+  }
+  if (r() < 0.45) for (let i = 0, n = 2 + Math.floor(r() * 4); i < n; i++) D.pods.push({ x: (r() - 0.5) * 5000, y: (r() - 0.5) * 5000, vx: (r() - 0.5) * 6, vy: (r() - 0.5) * 6, img: 'pod_' + Math.floor(r() * 3), size: 24 + r() * 18, rot: r() * 6, sp: (r() - 0.5) * 0.4 });
+  decorCache.set(S.id, D); return D;
+}
+function farXY(o, W, H, cx, cy, zf) { return [W / 2 + (o.x - cx * o.depth) * zf, H / 2 + (o.y - cy * o.depth) * zf]; }
+function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
+  const D = decorFor(S), zf = Math.pow(z, 0.25), t = now / 1000;
+  { const s = D.sun, [x, y] = farXY(s, W, H, cx, cy, zf), R = s.size * zf;   // the system's star, far off, with a soft lens flare
+    if (x > -R * 3 && y > -R * 3 && x < W + R * 3 && y < H + R * 3) {
+      ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(x, y, 0, x, y, R * 2.4);
+      g.addColorStop(0, `rgba(${s.core},.95)`); g.addColorStop(0.06, `rgba(${s.core},.75)`); g.addColorStop(0.2, `rgba(${s.halo},.22)`); g.addColorStop(1, `rgba(${s.halo},0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R * 2.4, 0, 6.283); ctx.fill();
+      const L = R * 3.2, h = ctx.createLinearGradient(x - L, y, x + L, y); h.addColorStop(0, `rgba(${s.halo},0)`); h.addColorStop(0.5, `rgba(${s.core},.35)`); h.addColorStop(1, `rgba(${s.halo},0)`); ctx.fillStyle = h; ctx.fillRect(x - L, y - 1.5, L * 2, 3);
+      ctx.globalCompositeOperation = 'source-over';
+    } }
+  ctx.globalCompositeOperation = 'lighter';
+  for (const g of D.gal) { const im = decorImg(g.img); if (!ready(im)) continue; const [x, y] = farXY(g, W, H, cx, cy, zf), s = g.size * zf; if (x < -s || y < -s || x > W + s || y > H + s) continue;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(g.rot); ctx.scale(1, g.squash); ctx.globalAlpha = g.a; ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); }
+  if (D.pulsar) { const p = D.pulsar, [x, y] = farXY(p, W, H, cx, cy, zf), L = p.len * zf, a = t * p.spin;   // two lighthouse beams sweeping round
+    if (x > -L && y > -L && x < W + L && y < H + L) for (const s2 of [0, Math.PI]) { const ux = Math.cos(a + s2), uy = Math.sin(a + s2) * 0.45, g = ctx.createLinearGradient(x, y, x + ux * L, y + uy * L); g.addColorStop(0, 'rgba(200,225,255,.6)'); g.addColorStop(1, 'rgba(120,170,255,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + ux * L - uy * L * 0.08, y + uy * L + ux * L * 0.08); ctx.lineTo(x + ux * L + uy * L * 0.08, y + uy * L - ux * L * 0.08); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle = 'rgba(230,240,255,.95)'; ctx.beginPath(); ctx.arc(x, y, 2.5, 0, 6.283); ctx.fill(); }
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  if (D.hole) { const h = D.hole, im = decorImg('blackhole_0'); if (ready(im)) { const [x, y] = farXY(h, W, H, cx, cy, zf), s = h.size * zf; if (x > -s && y > -s && x < W + s && y < H + s) { ctx.save(); ctx.translate(x, y); ctx.rotate(h.rot + Math.sin(t / 40) * 0.03); ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); } } }
+  if (D.giant) { const gp = D.giant, im = decorImg(gp.img); if (ready(im)) { const [x, y] = farXY(gp, W, H, cx, cy, zf), s = gp.size * zf; if (x > -s && y > -s && x < W + s && y < H + s) { ctx.save(); ctx.translate(x, y); ctx.rotate(gp.rot); ctx.globalAlpha = gp.a; ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); ctx.globalAlpha = 1; } } }
+  if (D.arc) { const A_ = D.arc, im = decorImg(A_.img); if (ready(im)) { const k = Math.pow(z, 0.4), x = W / 2 + (A_.x - cx * A_.depth) * k, y = H / 2 + (A_.y - cy * A_.depth) * k, s = A_.size * k; if (x > -s && y > -s && x < W + s && y < H + s) { ctx.save(); ctx.translate(x, y); ctx.rotate(A_.rot); ctx.globalAlpha = 0.8; ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); ctx.globalAlpha = 1; } } }
+  ctx.globalCompositeOperation = 'lighter';
+  for (const n of D.neb) { const im = decorImg(n.img); if (!ready(im)) continue;
+    const k = Math.pow(z, 0.55), x = W / 2 + (n.x - cx * n.depth) * k * 0.6, y = H / 2 + (n.y - cy * n.depth) * k * 0.6, s = n.size * k; if (x < -s || y < -s || x > W + s || y > H + s) continue;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(n.rot + now / 600000); ctx.globalAlpha = n.a; ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); }
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  // a shooting star now and then, far behind everything
+  { const per = 14, ph = (t + D.meteorT) % per; if (ph < 0.7) { const r = seeded(Math.floor((t + D.meteorT) / per) + hashStr(S.id)), x0 = r() * W, y0 = r() * H * 0.6, a = 0.4 + r() * 1.2, L = 120 + r() * 160, k = ph / 0.7;
+    const x = x0 + Math.cos(a) * L * k * 2, y = y0 + Math.sin(a) * L * k * 2, g = ctx.createLinearGradient(x, y, x - Math.cos(a) * L, y - Math.sin(a) * L); g.addColorStop(0, `rgba(255,255,255,${0.7 * (1 - k)})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - Math.cos(a) * L, y - Math.sin(a) * L); ctx.stroke(); } }
+}
+function drawDecorMid(ctx, S, W, H, z, cx, cy, now) {
+  const D = decorFor(S), t = now / 1000;
+  if (D.belt) { const B = D.belt, k = z * B.depth + z * (1 - B.depth) * 0.6; ctx.globalAlpha = 0.6;   // a drift of distant asteroids, a little behind the play field
+    for (const rk of B.rocks) { const x = W / 2 + (rk.x - cx * B.depth) * k, y = H / 2 + (rk.y - cy * B.depth) * k, s = rk.s * k * 1.6; if (x < -s || y < -s || x > W + s || y > H + s) continue;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(rk.rot + t * rk.sp); ctx.drawImage(rockSprite(rk.k), -s / 2, -s / 2, s, s); ctx.restore(); }
+    ctx.globalAlpha = 1; }
+  if (D.storm) { const st = D.storm, k = z * st.depth + z * 0.1, x = W / 2 + (st.x - cx * st.depth) * k, y = H / 2 + (st.y - cy * st.depth) * k, R = st.R * k;   // an ion storm: a charged cloud with lightning
+    if (x > -R * 1.5 && y > -R * 1.5 && x < W + R * 1.5 && y < H + R * 1.5) {
+      const im = decorImg(st.img); ctx.globalCompositeOperation = 'lighter'; if (ready(im)) { ctx.globalAlpha = 0.55; ctx.drawImage(im, x - R, y - R, R * 2, R * 2); ctx.globalAlpha = 1; }
+      const slot = Math.floor(t * 3), r = seeded(slot * 131 + hashStr(S.id)); if (r() < 0.45) {
+        let px = x + (r() - 0.5) * R, py = y + (r() - 0.5) * R; const flick = 1 - (t * 3 - slot); ctx.strokeStyle = `rgba(190,225,255,${0.85 * flick})`; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(px, py);
+        for (let i = 0; i < 9; i++) { px += (r() - 0.5) * R * 0.25; py += (r() - 0.3) * R * 0.18; ctx.lineTo(px, py); } ctx.stroke();
+        const gl = ctx.createRadialGradient(x, y, 0, x, y, R); gl.addColorStop(0, `rgba(150,200,255,${0.12 * flick})`); gl.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(x, y, R, 0, 6.283); ctx.fill(); }
+      ctx.globalCompositeOperation = 'source-over'; } }
+}
+function drawDecorNear(ctx, S, W, H, z, sx, sy, now) {
+  const D = decorFor(S), t = now / 1000, onS = (x, y, s) => x > -s && y > -s && x < W + s && y < H + s;
+  const sprite = (o, alpha = 1, spin = o.spin || 0) => { const im = decorImg(o.img); if (!ready(im)) return; const x = sx(o.x), y = sy(o.y), s = o.size * z, sh = s * im.naturalHeight / im.naturalWidth; if (!onS(x, y, s)) return;
+    ctx.save(); ctx.translate(x, y); ctx.rotate((o.rot || 0) + t * spin); ctx.globalAlpha = alpha; ctx.drawImage(im, -s / 2, -sh / 2, s, sh); ctx.restore(); ctx.globalAlpha = 1; };
+  if (D.comet) {   // a comet crossing the system, its tail streaming away from the star
+    const c = D.comet, ph = (t % c.period) / c.period, x0 = c.x0 + c.vx * (t % c.period), y0 = c.y0 + c.vy * (t % c.period), x = sx(x0), y = sy(y0);
+    const d = Math.hypot(x0, y0) || 1, ux = x0 / d, uy = y0 / d, L = c.len * z * (0.6 + 0.4 * Math.min(1, 3000 / d)), w = 10 * z + 2;
+    if (onS(x, y, L) && ph < 0.98) {
+      ctx.globalCompositeOperation = 'lighter'; const g = ctx.createLinearGradient(x, y, x + ux * L, y + uy * L); g.addColorStop(0, `rgba(${c.hue},.55)`); g.addColorStop(1, `rgba(${c.hue},0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - uy * w, y + ux * w); ctx.lineTo(x + ux * L - uy * w * 3, y + uy * L + ux * w * 3); ctx.lineTo(x + ux * L + uy * w * 3, y + uy * L - ux * w * 3); ctx.lineTo(x + uy * w, y - ux * w); ctx.closePath(); ctx.fill();
+      const h = ctx.createRadialGradient(x, y, 0, x, y, w * 2.2); h.addColorStop(0, 'rgba(255,255,255,.95)'); h.addColorStop(1, `rgba(${c.hue},0)`); ctx.fillStyle = h; ctx.beginPath(); ctx.arc(x, y, w * 2.2, 0, 6.283); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+  for (const R of D.ruin) sprite(R, 0.92);
+  for (const o of D.derelict) sprite(o, 0.95);
+  for (const w of D.wreck) { const im = decorImg(w.img); if (!ready(im)) continue; const x = sx(w.x), y = sy(w.y), s = w.size * z, sh = s * im.naturalHeight / im.naturalWidth; if (!onS(x, y, s)) continue;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(w.rot + t * w.spin);
+    ctx.fillStyle = 'rgba(95,90,85,.9)'; for (const b of w.bits) { const a = b.a + t * b.sp, bx = Math.cos(a) * s * b.d * 0.7, by = Math.sin(a) * s * b.d * 0.6; ctx.save(); ctx.translate(bx, by); ctx.rotate(b.rot + t * b.sp * 8); ctx.fillRect(-b.s * z, -b.s * z * 0.4, b.s * 2 * z, b.s * 0.8 * z); ctx.restore(); }
+    ctx.drawImage(im, -s / 2, -sh / 2, s, sh); ctx.restore(); }
+  for (const f of D.debris) { const x = sx(f.x), y = sy(f.y); if (!onS(x, y, 480 * z)) continue;   // a battle's leftovers, slowly turning
+    for (const b of f.bits) { const a = b.a + t * f.spin, bx = x + Math.cos(a) * b.d * z, by = y + Math.sin(a) * b.d * z * 0.8; ctx.save(); ctx.translate(bx, by); ctx.rotate(b.rot + t * b.sp);
+      ctx.fillStyle = b.hot ? `rgba(255,${130 + 60 * Math.sin(t * 3 + b.rot)},60,.9)` : 'rgba(110,105,100,.95)'; ctx.beginPath(); ctx.moveTo(-b.s * z, -b.s * z * 0.3); ctx.lineTo(b.s * z * 0.7, -b.s * z * 0.5); ctx.lineTo(b.s * z, b.s * z * 0.4); ctx.lineTo(-b.s * z * 0.4, b.s * z * 0.3); ctx.closePath(); ctx.fill(); ctx.restore(); } }
+  for (const c of D.crystal) { sprite(c, 0.95); const im = decorImg(c.img); if (ready(im)) { const x = sx(c.x), y = sy(c.y), s = c.size * z * 1.25; if (onS(x, y, s)) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.18 + 0.14 * Math.sin(t * 1.3 + c.ph); ctx.translate(x, y); ctx.rotate(c.rot + t * c.spin); ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } } }
+  for (const sat of D.sats) { const a = sat.a + t * sat.sp; sprite({ img: sat.img, x: sat.cx + Math.cos(a) * sat.R, y: sat.cy + Math.sin(a) * sat.R * 0.8, size: sat.size, rot: a + 1.57 }); }
+  for (const p of D.pods) { const span = 6000, px = ((p.x + p.vx * t) % span + span * 1.5) % span - span / 2, py = ((p.y + p.vy * t) % span + span * 1.5) % span - span / 2; sprite({ img: p.img, x: px, y: py, size: p.size, rot: p.rot + t * p.sp }); }
+  for (const b of D.beacons) { const x = sx(b.x), y = sy(b.y); if (!onS(x, y, 20)) continue; const on = Math.sin(t * 2.2 + b.ph) > 0.55;
+    ctx.fillStyle = '#556'; ctx.fillRect(x - 1.5 * z - 1, y - 1.5 * z - 1, 3 * z + 2, 3 * z + 2); if (on) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(x, y, 0, x, y, 9 * z + 4); g.addColorStop(0, b.col); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 9 * z + 4, 0, 6.283); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; } }
+}
 const planetCache = new Map();
 function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
 function planetImage(p) {
@@ -188,7 +311,7 @@ const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae
 // ------------------------------------------------------------------ main draw
 export function draw(G, ctx, W, H, dt, now) {
   const me = G.view, z = G.zoom, S = SYS[G.sys];
-  let cx = me ? me.rx : 0, cy = me ? me.ry : 0;
+  let cx = (me ? me.rx : 0) + (G.lookX || 0), cy = (me ? me.ry : 0) + (G.lookY || 0);   // 2.1: hold right-click to look ahead
   Object.assign(cam, { cx, cy, z, W, H });   // un-shaken camera, used for mouse picking
   if (shake && G.opts && G.opts.shake !== false) { cx += (Math.random() - 0.5) * shake * 2 / z; cy += (Math.random() - 0.5) * shake * 2 / z; }
   const sx = (x) => (x - cx) * z + W / 2, sy = (y) => (y - cy) * z + H / 2;
@@ -200,6 +323,7 @@ export function draw(G, ctx, W, H, dt, now) {
     const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${fcol[0]},${fcol[1]},${fcol[2]},${0.05 + k * 0.05})`); g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
   }
+  drawDecorFar(ctx, S, W, H, z, cx, cy, now);   // 2.1: galaxies and gas clouds far behind the stars
   for (const { L, depth, size } of st.layers) {
     for (const [x0, y0, b, tw] of L) {
       let x = (x0 - cx * depth) % 2048, y = (y0 - cy * depth) % 2048; if (x < 0) x += 2048; if (y < 0) y += 2048;
@@ -209,6 +333,7 @@ export function draw(G, ctx, W, H, dt, now) {
       }
     }
   }
+  drawDecorMid(ctx, S, W, H, z, cx, cy, now); drawDecorNear(ctx, S, W, H, z, sx, sy, now);   // 2.2 scenery in the system itself
   // stellars
   let P_;
   for (const p of S.stellars) {
@@ -353,6 +478,7 @@ function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
   const seen = new Set();
   for (const t of missionTargets(G)) if (t.stellar && !seen.has(t.stellar)) { const p = S.stellars.find(x => x.id === t.stellar); if (p) { seen.add(p.id); edgeArrow(ctx, W, H, sx(p.x), sy(p.y), t.kind === 'story' || t.kind === 'arc' ? '#ffd65a' : '#ffb86a', p.name, Math.hypot(p.x - me.rx, p.y - me.ry)); } }
   if (G.navStellar && !seen.has(G.navStellar)) { const p = S.stellars.find(x => x.id === G.navStellar); if (p) edgeArrow(ctx, W, H, sx(p.x), sy(p.y), '#7ad0ff', p.name, Math.hypot(p.x - me.rx, p.y - me.ry)); }
+  if (Math.hypot(G.lookX || 0, G.lookY || 0) > 50) edgeArrow(ctx, W, H, sx(me.rx), sy(me.ry), '#9fe0ff', 'You', Math.hypot(G.lookX, G.lookY));   // 2.1 look-ahead
   const T = G.target && G.ents.get(G.target); if (T) edgeArrow(ctx, W, H, sx(T.rx), sy(T.ry), G.hostile(T) ? G.pal.hostile : G.pal.friend, (T.name || (G.A.ships[T.hull] || {}).name || 'target').split(' · ')[0], Math.hypot(T.rx - me.rx, T.ry - me.ry));
   // 2.1 hyperspace: spool rings, star streaks along your heading, a white bloom; arrival plays it in reverse with a shockwave
   if (G._jumping || (me.fl & 8)) hyperOut(G, ctx, W, H, now, sx(me.rx), sy(me.ry), me.a);

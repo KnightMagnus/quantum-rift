@@ -209,6 +209,7 @@ export class Game {
     const ids = new Set([e.id]); for (let k = 0; k < 3; k++) for (const x of space.ships.values()) if (x.owner && ids.has(x.owner)) ids.add(x.id);   // escorts, and their fighters
     for (const x of [...space.ships.values()]) {
       if (x === e || !ids.has(x.id)) continue;
+      if (x.fighterOf === e.id) { space.dock(x, e); continue; }   // 2.1: drones still out go back into their bays
       if (x.rival && x.owner === e.id) { x.owner = null; x.ai = x.rivalAi || 'patrol'; x.target = null; x.slot = null; x.state = 'fly'; continue; }
       space.remove(x, why);
     }
@@ -385,9 +386,9 @@ export class Game {
   finishJump(e, space) {
     if (!e.player) { space.remove(e, 'jump'); return; }
     const s = e.player.s, d = s.data, from = SYS[d.sys], to = SYS[e.jumpTo];
+    this.dropEscorts(space, e, 'jump');   // first, so drones still out are counted back into the bays
     d.fuel = e.fuel - (e.jumpCost || K.jumpFuel); for (const g of e.guns) if (g.ammo !== Infinity) d.ship.ammo[g.w] = g.ammo;
     d.shieldNow = e.shield; d.armorNow = e.armor;
-    this.dropEscorts(space, e, 'jump');
     space.remove(e, 'jump'); space.players--; s.ent = null;
     d.sys = to.id; d.stats.jumps++; this.officerXp(s, 4); this.goal(s, 'jumps'); this.mastery(s, 3);
     if (!d.explored.includes(to.id)) { d.explored.push(to.id); this.goal(s, 'charted'); this.specOnChart(s); if (to.gen) this.log(d, `Charted ${to.name} (${FACTIONS[to.faction].name}).`); }
@@ -404,9 +405,9 @@ export class Game {
   // 0.8: flying into the Sol Gateway (or its far mouth) crosses instantly, with no fuel cost
   wormholeTransit(e, space, p) {
     const s = e.player.s, d = s.data, to = SYS[p.wormhole], exit = to.stellars.find(x => x.id === p.exit);
+    this.dropEscorts(space, e);
     d.fuel = e.fuel; for (const g of e.guns) if (g.ammo !== Infinity) d.ship.ammo[g.w] = g.ammo;
     d.shieldNow = e.shield; d.armorNow = e.armor;
-    this.dropEscorts(space, e);
     space.events.push(['flash', Math.round(e.x), Math.round(e.y)]); space.remove(e); space.players--; s.ent = null;
     d.sys = to.id; d.stats.jumps++; this.goal(s, 'jumps'); this.mastery(s, 3);
     const first = !d.explored.includes(to.id);

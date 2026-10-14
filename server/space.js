@@ -75,8 +75,14 @@ export class Space {
   }
   // 2.1: can a's fire hurt b? Hostiles always; a captain's own guns also hit any ship not on their side (like EV Nova),
   // which angers it and costs standing. Escorts and NPCs still only hit their enemies.
+  // 2.1: your wingmates under an attack order (K) go after whatever you have targeted, hostile or not
+  ordered(e, t) {
+    const r = this.root(e); if (!e.owner || !r || !r.player || r.order !== 'attack' || !r.target || r.target.dead || this.sys.arena) return false;
+    const rt = this.root(t); return rt === this.root(r.target) && rt !== r && !rt.player;
+  }
   canHit(a, b) {
     if (this.isHostile(a, b)) return !this.spared(a, b);
+    if (this.ordered(a, b)) return true;
     if (!a || !b || !a.player || this.sys.arena) return false;
     const rb = this.root(b); if (rb === a || rb.player) return false;   // never your own wing; players only in lawless space (isHostile)
     if (rb.dread && a.player.s && a.player.s.data && a.player.s.data.fleet === rb.fleet) return false;
@@ -210,13 +216,14 @@ export class Space {
     }
     if (e.think <= 0) {
       e.think = 0.4 + Math.random() * 0.3;
-      if (e.target && (e.target.dead || e.target.state !== 'fly' || !this.isHostile(e, e.target) || this.spared(e, e.target))) e.target = null;
+      if (e.recall) { e.target = null; } else {
+      if (e.target && (e.target.dead || e.target.state !== 'fly' || !(this.isHostile(e, e.target) || this.ordered(e, e.target)) || this.spared(e, e.target))) e.target = null;
       if (e.rival && this.game.rivalThink && !e.owner) this.game.rivalThink(e, this);   // 1.1
       if (e.distractT > this.t) { e.target = null; if (e.dest) { this.steer(e, e.dest.x, e.dest.y, true); return; } }   // raiders chasing jettisoned cargo
       if (e.ai === 'escort' && owner) {
         const ord = owner.order || 'gather';   // 1.1 fleet commands: gather, attack, hold, holdfire, loot
         if (e.ordSeq !== owner.orderSeq) { e.ordSeq = owner.orderSeq; e.holdAt = { x: e.x, y: e.y }; if (ord === 'holdfire' || ord === 'loot') e.target = null; }
-        const ot = owner.target && !owner.target.dead && this.isHostile(e, owner.target) ? owner.target : null;
+        const ot = owner.target && !owner.target.dead && (this.isHostile(e, owner.target) || (ord === 'attack' && this.ordered(e, owner.target))) ? owner.target : null;
         const attacker = [...this.root(owner).aggro].map(id => this.ships.get(id)).find(s => s && !s.dead);
         if (ord === 'holdfire' || (ord === 'loot' && !attacker)) e.target = null;
         else if (ord === 'attack') e.target = ot || attacker || null;
@@ -225,6 +232,7 @@ export class Space {
       } else if (e.ai === 'patrol' || e.ai === 'raid') e.target = e.target || this.findTarget(e, e.ai === 'raid' ? 2200 : 1500);
       else if (e.ai === 'trade' && e.aggro.size) e.ai = 'flee';
       if (this.t - e.born > e.life && (e.ai === 'patrol' || e.ai === 'raid') && !e.target) e.ai = 'leave';
+      }   // (not recalled)
     }
     if (e.target) { e.catchup = null; return this.fight(e, e.target); }
     switch (e.ai) {
@@ -249,6 +257,7 @@ export class Space {
       }
       case 'escort': {
         if (!owner) break;
+        if (e.recall) { const d = this.steer(e, owner.x, owner.y, true, owner.vx, owner.vy); e.catchup = owner.st; if (d < Math.max(50, owner.st.size * 0.35)) this.dock(e, owner); break; }   // 2.1: drones flying home
         const ord = owner.order || 'gather';
         if (ord === 'hold' && e.holdAt) { const d = this.steer(e, e.holdAt.x, e.holdAt.y, true); if (d < 60) e.inp = { turn: 0, thrust: 0 }; break; }
         if (ord === 'loot') {   // sweep up nearby loot for the fleet's owner
@@ -266,7 +275,7 @@ export class Space {
         const d = this.steer(e, ox, oy, d0(e, ox, oy) > 250 ? false : true, owner.vx, owner.vy);
         e.catchup = d > 200 ? owner.st : null;   // escorts can always keep up with the ship they guard
         if (d < 120) { const sp = Math.hypot(owner.vx, owner.vy); if (sp > 30) { const da = angDiff(owner.a, e.a); e.inp = { turn: Math.sign(da), thrust: Math.hypot(e.vx, e.vy) < sp ? 1 : 0 }; } }
-        if (e.fighterOf && owner && !owner.target && d < 60 && this.t - e.born > 20) { this.dock(e, owner); }
+        if (e.fighterOf && owner && !owner.player && !owner.target && d < 60 && this.t - e.born > 20) { this.dock(e, owner); }   // a captain's drones stay out until recalled
         break;
       }
       case 'flee': case 'leave': {
@@ -344,8 +353,26 @@ export class Space {
     }
     return best;
   }
+  // 2.1: a captain's fighter bays work as a toggle on F: tap to launch every drone, tap again to call them all home
+  toggleDrones(e) {
+    const out = [...this.ships.values()].filter(s => s.fighterOf === e.id && !s.dead);
+    const say = (m) => { if (e.player && e.player.s && this.game.toast) this.game.toast(e.player.s, m); };
+    if (out.some(f => !f.recall)) { for (const f of out) { f.recall = true; f.target = null; } say(`Drones recalled (${out.length}). Tap F to launch them again.`); return; }
+    let n = 0;
+    for (const g of e.guns) {
+      if (!g.p.bay) continue; const W = this.A.weapons[g.w], launch = W && W.launch; if (!launch || !this.A.ships[launch]) continue;
+      const cap = Math.min(6, g.n * 4);
+      while (g.ammo > 0 && [...this.ships.values()].filter(s => s.fighterOf === e.id).length < cap) {
+        const a = e.a + (n % 2 ? 1 : -1) * (0.6 + 0.25 * n), f = this.makeShip({ hull: launch, faction: e.faction, x: e.x + Math.sin(a) * 30, y: e.y - Math.cos(a) * 30, a, vx: e.vx + Math.sin(a) * 60, vy: e.vy - Math.cos(a) * 60, ai: 'escort', owner: e.id });
+        f.fighterOf = e.id; f.life = 1e9; if (g.ammo !== Infinity) g.ammo--; n++;
+      }
+      if (n) this.sound(e, g);
+    }
+    say(n ? `Drones launched (${n}). Tap F to recall them.` : 'No drones left in the bays.');
+  }
   weapons(e) {
     const inp = e.inp || {}, t = e.player ? (e.target && this.ships.get(e.target.id) ? e.target : null) : e.fireAt;
+    if (e.player) { const f2 = inp.fire2 ? 1 : 0; if (f2 && !e._f2 && e.guns.some(g => g.p.bay)) this.toggleDrones(e); e._f2 = f2; }
     for (const g of e.guns) {
       g.cd -= DT; if (g.cd > 0 || g.ammo <= 0) continue;
       const p = g.p;
@@ -357,6 +384,7 @@ export class Space {
         if (f) this.fire(e, g, f, angleTo(e, f.x, f.y));
         continue;
       }
+      if (p.bay && e.player) continue;   // 2.1: bays launch and recall on a tap of F (toggleDrones)
       const wantFire = e.player ? (g.sec ? inp.fire2 : inp.fire1) : !!t;
       if (!wantFire) continue;
       const tgt = t && !t.dead ? t : null;

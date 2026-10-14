@@ -31,6 +31,10 @@ export const DocksMixin = {
     }
     d.escorts = [];
     while (d.docks.length < this.dockCount(d)) d.docks.push({ lead: null, wings: [] });
+    if (d.docks.length > this.dockCount(d)) {   // 2.1: five docks became four; ships in a dock that closed simply wait in the hangar
+      if (d.activeDock >= this.dockCount(d)) { const k = this.dockCount(d) - 1; d.docks[k] = { lead: d.shipless ? null : d.ship.uid, wings: d.docks[d.activeDock].wings }; d.activeDock = k; }
+      d.docks.length = this.dockCount(d);
+    }
     if (!(d.activeDock >= 0 && d.activeDock < d.docks.length)) d.activeDock = 0;
     // repair anything inconsistent: unknown ships, ships in two slots, the active lead must be the ship you fly
     const owned = new Set(d.dock.map(x => x.ship.uid)); if (!d.shipless) owned.add(d.ship.uid);
