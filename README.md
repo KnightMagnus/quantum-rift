@@ -160,6 +160,7 @@ simulated at full rate.
 - `python3 test/v103_radio.py <outdir>`: the in-game radio, with iHeart mocked.
 - `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
 - `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
+- `node test/v23.js`: 2.3 checks (new hulls and their art, moons, fields, traffic).
 - `node test/v21.js`: 2.1 checks (docks, wingmate ships and crews, buying to the hangar, save upgrade, friendly fire).
 - `node test/fuzz.js [rounds]`: the message fuzzer and soak test; fails on any server error.
 - `python3 test/crawl.py <outdir>`: the UI crawler (`SEEDS_FILE=test/seeds_crawl.json`).
@@ -253,11 +254,67 @@ The network protocol is JSON over one WebSocket:
 
 ## Changelog
 
+### 2.3 "Busy Lanes"
+- **Ten new Quantum hulls** in the Concord yards, filling the gaps in the common lineup:
+
+  | Hull | Price | What it is |
+  |---|---|---|
+  | Wasp Skirmisher | 30k | A cheap starter fighter |
+  | Swift Courier | 110k | A fast blockade runner with a quick-spooling drive |
+  | Pelican Salvage Tug | 170k | Grapple arms ahead, a towing frame behind |
+  | Sabre Corvette | 380k | The yards' all-rounder |
+  | Caravel Trader | 430k | An armed merchantman racked with containers |
+  | Talon Strike Fighter | 780k | A heavy fighter with rocket pods |
+  | Lighthouse Survey Cruiser | 950k | Huge fuel range and a fast drive |
+  | Monarch Executive Yacht | 1.9M | White and gold, very fast |
+  | Aegis Escort Cruiser | 2.2M | Studded with flak turrets |
+  | Vigil Heavy Cruiser | 5.2M | A spinal fusion cannon and broadside turrets, between the Tempest and the Bastion |
+
+  - The Wasp, Swift and Pelican are sold in common yards everywhere.
+  - All ten fly in NPC traffic.
+- **60 new moons** circling planets across the Rift. They are airless, and nobody lives there.
+- **More asteroids:** existing fields hold more rocks, and about half the systems gain an extra asteroid field, gas cloud or crystal field.
+- **Busier space:**
+  - Roughly twice the traffic in every system.
+  - Some traders run in small convoys.
+  - Traders only head for worlds they can land on.
+  - Pirate havens cap their raider packs and see visiting smugglers and free traders instead.
+
+### 2.2 "Living Skies"
+- **Every system has its own scenery**, seeded from the system, so each one always looks the same and no two look alike.
+  - **Far away:**
+    - the system's star with a lens flare
+    - distant spiral, barred, edge-on and elliptical galaxies
+    - ringed and banded gas giants
+    - now and then, a black hole with its accretion disc, or a sweeping pulsar
+    - fragments of an ancient megastructure ring
+  - **In between:**
+    - gas clouds in the local power's colours
+    - drifts of distant asteroids
+    - ion storms crackling with lightning
+    - the odd shooting star
+  - **In the system itself:**
+    - massive ancient wrecks: capital hulls broken in two, scorched, a few lights still burning, trailing debris
+    - abandoned station platforms
+    - broken ring ruins
+    - glowing crystal formations
+    - battle debris fields with hot fragments
+    - comets with streaming tails
+    - relay satellites orbiting planets
+    - drifting cargo pods
+    - blinking nav beacons by the spaceports
+  - Wild space (the Frontier, the Deep, Umbral space and the Farside) gets more wrecks, ruins, crystals and black holes.
+  - The scenery is decoration: you fly past it, and it never blocks you.
+- **Look ahead.** Hold the right mouse button and move the mouse to slide your view up to about 3,000 units that way, without zooming out. An arrow shows where your ship is, and the view eases back when you let go. A quick right-click still clears your target.
+- **Four docks.** Docks are A to D: one at Ops 0–1, two at Ops 2, three at Ops 3–4 and four at Ops 5. Saves with a fifth dock fold it in, and you keep flying your ship.
+- **K sends your wingmates in.** The attack order now sends wingmates out to weapons range of whatever you've targeted, including a ship that isn't hostile, now that your guns can hit anyone.
+- **Drones on F.** Tap F to launch every drone in your bays at once, and tap again to call them all home. Drones stay out until recalled, and any still out when you land or jump go back into the bays.
+
 ### 2.1 "Docks"
-- **Docks A to E.** Your Personal Station has lettered docks: one at Ops 0–1, then one more per Ops level, up to five at Ops 5.
+- **Docks.** Your Personal Station has lettered docks (A to D since 2.2).
   - Each dock holds a **lead ship** and up to **two wingmate ships**, all picked from your stored ships. A Herald in the lead slot commands a third wingmate.
   - You fly the lead of your **active** dock, and its wingmates fly in formation with their own outfits.
-  - Switch docks with the DOCK A–E buttons beside DEPART, or on the new STATION → DOCKS screen, where you assign every slot.
+  - Switch docks with the DOCK buttons beside DEPART, or on the new STATION → DOCKS screen, where you assign every slot.
   - The sidebar shows your active dock and how its wingmates are doing.
 - **Wingmates are ships now.** Hiring wingmates at the station is gone.
   - The wingmate hulls are sold at your station shipyard (Ops 4, Armada hulls at Ops 5) and go straight to your hangar. They fly only as wingmates.

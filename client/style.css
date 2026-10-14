@@ -328,7 +328,7 @@ body:has(#land:not(.hidden)) #toasts{top:auto;bottom:calc(var(--cbar, 46px) + 78
 .dstore{display:flex;gap:8px;align-items:center;padding:3px 0}.dstore img{width:56px;height:40px;object-fit:contain}
 .dchips{display:inline-flex;gap:3px;align-items:center;margin:0 8px}.dchip{min-width:26px;padding:2px 6px}.dchip.on{background:#7a5a1a;border-color:#c9a24a;color:#fff}
 #dockrow{font:11px Tahoma,sans-serif;letter-spacing:1px;color:#c8ccd6;margin-top:4px;text-align:center}
-.btn.dchip.on,.btn.dchip.on:disabled{background:linear-gradient(#d8b25a,#8a6a1a);border-color:#ffd27a;color:#1a1000;opacity:1;font-weight:bold}
+.btn.dchip.on,.btn.dchip.on:disabled{background:linear-gradient(#d8b25a,#8a6a1a) !important;border-color:#ffd27a !important;color:#1a1000 !important;opacity:1 !important;font-weight:bold;filter:none !important}
 .btn.dchip:disabled:not(.on){opacity:.45}
 
 /* 2.1 quick volume */

@@ -14,7 +14,7 @@ export class Space {
   constructor(game, sysId) {
     this.game = game; this.A = game.A; this.sys = SYS[sysId]; this.id = sysId;
     this.ships = new Map(); this.shots = []; this.beams = []; this.loot = []; this.events = []; this.t = 0; this.spawnT = 1; this.players = 0;
-    if (!this.sys.arena) for (let i = 0; i < 3 + this.sys.danger; i++) this.spawnTraffic(true);
+    if (!this.sys.arena) for (let i = 0, n = 5 + this.sys.danger + Math.floor(this.ports().length / 2); i < n; i++) this.spawnTraffic(true);   // 2.3: busier systems
     // asteroids and gas pockets in the system's mining fields: they break into ore that ships scoop up, and regrow
     this.rocks = [];
     for (const f of this.sys.fields || []) for (let i = 0; i < f.rocks; i++) {
@@ -60,6 +60,7 @@ export class Space {
   }
   remove(e, why) { e.dead = true; this.ships.delete(e.id); if (why) this.events.push(['flash', Math.round(e.x), Math.round(e.y)]); }
   root(e) { let r = e, k = 0; while (r && r.owner && k++ < 4) r = this.ships.get(r.owner) || null; return r || e; }
+  ports() { return this._ports || (this._ports = this.sys.stellars.filter(p => p.svc && p.svc.includes('L') && !p.site)); }   // 2.3: where traffic can land
   pid(e) { const r = this.root(e); return r && r.player ? r.player.id : null; }
   // 2.0.3: newcomer protection. Pirates, raiders, swarms and other always-hostile ships never pick a fight with a protected
   // captain (Personal Station below Ops 3) in inner space (danger 0-2), and nobody targets a captain in the first seconds
@@ -75,8 +76,14 @@ export class Space {
   }
   // 2.1: can a's fire hurt b? Hostiles always; a captain's own guns also hit any ship not on their side (like EV Nova),
   // which angers it and costs standing. Escorts and NPCs still only hit their enemies.
+  // 2.1: your wingmates under an attack order (K) go after whatever you have targeted, hostile or not
+  ordered(e, t) {
+    const r = this.root(e); if (!e.owner || !r || !r.player || r.order !== 'attack' || !r.target || r.target.dead || this.sys.arena) return false;
+    const rt = this.root(t); return rt === this.root(r.target) && rt !== r && !rt.player;
+  }
   canHit(a, b) {
     if (this.isHostile(a, b)) return !this.spared(a, b);
+    if (this.ordered(a, b)) return true;
     if (!a || !b || !a.player || this.sys.arena) return false;
     const rb = this.root(b); if (rb === a || rb.player) return false;   // never your own wing; players only in lawless space (isHostile)
     if (rb.dread && a.player.s && a.player.s.data && a.player.s.data.fleet === rb.fleet) return false;
@@ -123,25 +130,26 @@ export class Space {
     let kind, f = fac, roll = Math.random();
     if (FACTIONS[fac].pirate) kind = 'raid';
     else if (S.danger >= 2 && roll < 0.08 * S.danger * (this.m ? this.m.raid : 1)) { kind = 'raid'; f = Math.random() < 0.3 && S.danger >= 3 && !S.farside ? 'umbral' : 'hollow'; }
-    else if (roll < 0.62 && T.traders.length) kind = 'trade';
-    else if (roll < 0.75) { kind = 'trade'; f = 'spacer'; }
+    else if (roll < 0.68 && T.traders.length) kind = 'trade';
+    else if (roll < 0.82) { kind = 'trade'; f = 'spacer'; }
     else kind = 'patrol';
-    if (kind === 'raid' && !FACTIONS[S.faction].pirate && [...this.ships.values()].filter(e => e.ai === 'raid' && !e.owner && !e.mission).length >= (this.inner() ? 1 : 2) + Math.floor(S.danger / 2)) { kind = 'trade'; f = T.traders.length ? fac : 'spacer'; roll = 1; }   // 2.0.3: raiders don't pile up while traders come and go
+    if (kind === 'raid' && FACTIONS[S.faction].pirate && [...this.ships.values()].filter(e => e.ai === 'raid' && !e.owner && !e.mission).length >= 3 + Math.floor(S.danger / 2)) { kind = 'trade'; f = 'spacer'; }   // 2.3: pirate havens get visiting smugglers and free traders too
+    else if (kind === 'raid' && !FACTIONS[S.faction].pirate && [...this.ships.values()].filter(e => e.ai === 'raid' && !e.owner && !e.mission).length >= (this.inner() ? 1 : 2) + Math.floor(S.danger / 2)) { kind = 'trade'; f = T.traders.length ? fac : 'spacer'; roll = 1; }   // 2.0.3: raiders don't pile up while traders come and go
     let pool = kind === 'trade' ? (TRAFFIC[f].traders.length ? TRAFFIC[f].traders : TRAFFIC.spacer.traders) : TRAFFIC[f].war;
     if (kind === 'raid' && this.inner() && pool.length > 2) pool = [...pool].sort((a, b) => ((this.A.ships[a] || {}).cost || 0) - ((this.A.ships[b] || {}).cost || 0)).slice(0, pool.length - 1);   // 2.0.3: no destroyers raiding inner space
     const hull = pick(pool); if (!this.A.ships[hull]) return;
-    const n = kind === 'trade' ? 1 : (Math.random() < 0.4 ? 2 : 1) + (kind === 'raid' && S.danger > 3 ? 1 : 0);
+    const n = kind === 'trade' ? (Math.random() < 0.22 ? 2 + (Math.random() < 0.4 ? 1 : 0) : 1) : (Math.random() < 0.4 ? 2 : 1) + (kind === 'raid' && S.danger > 3 ? 1 : 0);   // 2.3: some traders run in small convoys
     let lead = null;
     for (let i = 0; i < n; i++) {
       const h = i === 0 ? hull : pick(pool.filter(x => (this.A.ships[x].cost || 0) <= (this.A.ships[hull].cost || 1e9)) || pool);
       let x, y, a, v;
       if (initial) { x = rnd(-1800, 1800); y = rnd(-1800, 1800); a = rnd(-Math.PI, Math.PI); v = 30; }
-      else if (kind === 'trade' && S.stellars.length && Math.random() < 0.4) {   // take off from a planet
-        const s = pick(S.stellars); x = s.x + rnd(-40, 40); y = s.y + rnd(-40, 40); a = rnd(-Math.PI, Math.PI); v = 10;
+      else if (kind === 'trade' && this.ports().length && Math.random() < 0.45) {   // take off from a spaceport
+        const s = pick(this.ports()); x = s.x + rnd(-40, 40); y = s.y + rnd(-40, 40); a = rnd(-Math.PI, Math.PI); v = 10;
       } else { const ang = rnd(-Math.PI, Math.PI); x = Math.sin(ang) * 2600; y = -Math.cos(ang) * 2600; a = wrap(ang + Math.PI); v = 140; }
       const e = this.makeShip({ hull: h, faction: f, x: x + i * 60, y: y + i * 50, a, vx: Math.sin(a) * v, vy: -Math.cos(a) * v, ai: kind, owner: lead ? lead.id : null });
       if (!initial) this.events.push(['flash', Math.round(e.x), Math.round(e.y)]);
-      if (!lead) lead = e; else e.ai = 'escort';
+      if (!lead) lead = e; else { e.ai = 'escort'; if (kind === 'trade') e.tradeMate = true; }
     }
   }
   // 0.8: a Feral Swarm cluster: a Thrip Darter brood-leader and its drones, hostile to everyone
@@ -201,7 +209,7 @@ export class Space {
     if (e.player) return;
     e.think -= DT;
     const owner = e.owner ? this.ships.get(e.owner) : null;
-    if (e.ai === 'escort' && !owner) e.ai = e.fighterOf ? 'leave' : 'patrol';
+    if (e.ai === 'escort' && !owner) e.ai = e.fighterOf ? 'leave' : e.tradeMate ? 'trade' : 'patrol';   // 2.3: a convoy whose leader landed goes about its own trade
     if (e.armor < e.st.armor * 0.15 && !e.player && !e.noDisable) {   // disabled: drifts; unclaimed wrecks are towed away after a while
       if (!e.disabled) e.disT = this.t;
       e.inp = { thrust: 0, turn: 0 }; e.disabled = true;
@@ -210,13 +218,14 @@ export class Space {
     }
     if (e.think <= 0) {
       e.think = 0.4 + Math.random() * 0.3;
-      if (e.target && (e.target.dead || e.target.state !== 'fly' || !this.isHostile(e, e.target) || this.spared(e, e.target))) e.target = null;
+      if (e.recall) { e.target = null; } else {
+      if (e.target && (e.target.dead || e.target.state !== 'fly' || !(this.isHostile(e, e.target) || this.ordered(e, e.target)) || this.spared(e, e.target))) e.target = null;
       if (e.rival && this.game.rivalThink && !e.owner) this.game.rivalThink(e, this);   // 1.1
       if (e.distractT > this.t) { e.target = null; if (e.dest) { this.steer(e, e.dest.x, e.dest.y, true); return; } }   // raiders chasing jettisoned cargo
       if (e.ai === 'escort' && owner) {
         const ord = owner.order || 'gather';   // 1.1 fleet commands: gather, attack, hold, holdfire, loot
         if (e.ordSeq !== owner.orderSeq) { e.ordSeq = owner.orderSeq; e.holdAt = { x: e.x, y: e.y }; if (ord === 'holdfire' || ord === 'loot') e.target = null; }
-        const ot = owner.target && !owner.target.dead && this.isHostile(e, owner.target) ? owner.target : null;
+        const ot = owner.target && !owner.target.dead && (this.isHostile(e, owner.target) || (ord === 'attack' && this.ordered(e, owner.target))) ? owner.target : null;
         const attacker = [...this.root(owner).aggro].map(id => this.ships.get(id)).find(s => s && !s.dead);
         if (ord === 'holdfire' || (ord === 'loot' && !attacker)) e.target = null;
         else if (ord === 'attack') e.target = ot || attacker || null;
@@ -225,11 +234,12 @@ export class Space {
       } else if (e.ai === 'patrol' || e.ai === 'raid') e.target = e.target || this.findTarget(e, e.ai === 'raid' ? 2200 : 1500);
       else if (e.ai === 'trade' && e.aggro.size) e.ai = 'flee';
       if (this.t - e.born > e.life && (e.ai === 'patrol' || e.ai === 'raid') && !e.target) e.ai = 'leave';
+      }   // (not recalled)
     }
     if (e.target) { e.catchup = null; return this.fight(e, e.target); }
     switch (e.ai) {
       case 'trade': {
-        if (!e.dest) e.dest = this.sys.stellars.length && Math.random() < 0.75 ? pick(this.sys.stellars) : { x: rnd(-3000, 3000), y: rnd(-3000, 3000), out: true };
+        if (!e.dest) e.dest = this.ports().length && Math.random() < 0.75 ? pick(this.ports()) : { x: rnd(-3000, 3000), y: rnd(-3000, 3000), out: true };   // 2.3: traders fly to worlds they can land on
         const d = this.steer(e, e.dest.x, e.dest.y, !e.dest.out);
         if (!e.dest.out && d < Math.max(40, (e.dest.r || 60) * 0.5) && Math.hypot(e.vx, e.vy) < 45) {   // settled over the pad: land
           this.events.push(['land', e.id]); if (e.convoyOf) this.game.onConvoyLanded(e); if (e.rival && this.game.rivalDocked) this.game.rivalDocked(e); this.remove(e);
@@ -249,6 +259,7 @@ export class Space {
       }
       case 'escort': {
         if (!owner) break;
+        if (e.recall) { const d = this.steer(e, owner.x, owner.y, true, owner.vx, owner.vy); e.catchup = owner.st; if (d < Math.max(50, owner.st.size * 0.35)) this.dock(e, owner); break; }   // 2.1: drones flying home
         const ord = owner.order || 'gather';
         if (ord === 'hold' && e.holdAt) { const d = this.steer(e, e.holdAt.x, e.holdAt.y, true); if (d < 60) e.inp = { turn: 0, thrust: 0 }; break; }
         if (ord === 'loot') {   // sweep up nearby loot for the fleet's owner
@@ -266,7 +277,7 @@ export class Space {
         const d = this.steer(e, ox, oy, d0(e, ox, oy) > 250 ? false : true, owner.vx, owner.vy);
         e.catchup = d > 200 ? owner.st : null;   // escorts can always keep up with the ship they guard
         if (d < 120) { const sp = Math.hypot(owner.vx, owner.vy); if (sp > 30) { const da = angDiff(owner.a, e.a); e.inp = { turn: Math.sign(da), thrust: Math.hypot(e.vx, e.vy) < sp ? 1 : 0 }; } }
-        if (e.fighterOf && owner && !owner.target && d < 60 && this.t - e.born > 20) { this.dock(e, owner); }
+        if (e.fighterOf && owner && !owner.player && !owner.target && d < 60 && this.t - e.born > 20) { this.dock(e, owner); }   // a captain's drones stay out until recalled
         break;
       }
       case 'flee': case 'leave': {
@@ -344,8 +355,26 @@ export class Space {
     }
     return best;
   }
+  // 2.1: a captain's fighter bays work as a toggle on F: tap to launch every drone, tap again to call them all home
+  toggleDrones(e) {
+    const out = [...this.ships.values()].filter(s => s.fighterOf === e.id && !s.dead);
+    const say = (m) => { if (e.player && e.player.s && this.game.toast) this.game.toast(e.player.s, m); };
+    if (out.some(f => !f.recall)) { for (const f of out) { f.recall = true; f.target = null; } say(`Drones recalled (${out.length}). Tap F to launch them again.`); return; }
+    let n = 0;
+    for (const g of e.guns) {
+      if (!g.p.bay) continue; const W = this.A.weapons[g.w], launch = W && W.launch; if (!launch || !this.A.ships[launch]) continue;
+      const cap = Math.min(6, g.n * 4);
+      while (g.ammo > 0 && [...this.ships.values()].filter(s => s.fighterOf === e.id).length < cap) {
+        const a = e.a + (n % 2 ? 1 : -1) * (0.6 + 0.25 * n), f = this.makeShip({ hull: launch, faction: e.faction, x: e.x + Math.sin(a) * 30, y: e.y - Math.cos(a) * 30, a, vx: e.vx + Math.sin(a) * 60, vy: e.vy - Math.cos(a) * 60, ai: 'escort', owner: e.id });
+        f.fighterOf = e.id; f.life = 1e9; if (g.ammo !== Infinity) g.ammo--; n++;
+      }
+      if (n) this.sound(e, g);
+    }
+    say(n ? `Drones launched (${n}). Tap F to recall them.` : 'No drones left in the bays.');
+  }
   weapons(e) {
     const inp = e.inp || {}, t = e.player ? (e.target && this.ships.get(e.target.id) ? e.target : null) : e.fireAt;
+    if (e.player) { const f2 = inp.fire2 ? 1 : 0; if (f2 && !e._f2 && e.guns.some(g => g.p.bay)) this.toggleDrones(e); e._f2 = f2; }
     for (const g of e.guns) {
       g.cd -= DT; if (g.cd > 0 || g.ammo <= 0) continue;
       const p = g.p;
@@ -357,6 +386,7 @@ export class Space {
         if (f) this.fire(e, g, f, angleTo(e, f.x, f.y));
         continue;
       }
+      if (p.bay && e.player) continue;   // 2.1: bays launch and recall on a tap of F (toggleDrones)
       const wantFire = e.player ? (g.sec ? inp.fire2 : inp.fire1) : !!t;
       if (!wantFire) continue;
       const tgt = t && !t.dead ? t : null;
@@ -420,9 +450,9 @@ export class Space {
     const S = this.sys;
     if (this.players > 0 && !this.sys.arena) {
       this.spawnT -= DT;
-      const want = Math.min(14, 3 + S.stellars.length + S.danger * 1.5);
+      const want = Math.min(24, 6 + this.ports().length * 2 + S.stellars.length * 0.5 + S.danger * 1.5);   // 2.3: more traffic everywhere
       const npcs = [...this.ships.values()].filter(e => !e.player && !e.owner).length;
-      if (this.spawnT <= 0) { this.spawnT = rnd(3, 8); if (npcs < want) this.spawnTraffic(false); }
+      if (this.spawnT <= 0) { this.spawnT = rnd(2, 5); if (npcs < want) this.spawnTraffic(false); }
     }
     for (const e of this.ships.values()) {
       if (e.state === 'jumpout') {
