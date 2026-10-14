@@ -172,3 +172,63 @@ single-player focused for now.
 - Playwright with Chromium for browser tests.
 - Python with Pillow and numpy for the art pipeline and asset tools; numpy, scipy and ffmpeg for the synthesized audio.
 - hls.js (loaded from cdnjs only when a radio station needs HLS).
+
+## Test suites (full list)
+
+- `python3 test/v103_shot.py <outdir>`: 1.0.3 browser check (jobs, trade MAX and SELL ALL, outfitter, career card, L to depart,
+  autopilot landing).
+- `python3 test/v103_radio.py <outdir>`: the in-game radio, with iHeart mocked.
+- `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
+- `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
+- `node test/v23.js`: 2.3 checks (new hulls and their art, moons, fields, traffic).
+- `node test/v21.js`: 2.1 checks (docks, wingmate ships and crews, buying to the hangar, save upgrade, friendly fire).
+- `node test/fuzz.js [rounds]`: the message fuzzer and soak test; fails on any server error.
+- `python3 test/crawl.py <outdir>`: the UI crawler (`SEEDS_FILE=test/seeds_crawl.json`).
+- `node test/v201.js`: 2.0.1 checks (traders settle and land; escorts keep formation on a moving leader).
+- `python3 test/v20_shot.py <outdir>`: 2.0 browser check (HUD numbers and speed, edge arrows, damage flash, tab hotkeys and
+  remembered tabs).
+- `python3 test/v20_audio.py`: the audio pipeline (login theme, interface sounds, station and space ambience, the mixer).
+- `node test/v12.js`: 1.2 checks (Syndicate, black market, promotions, lower decks, bank, passengers and rush jobs,
+  contracts, faction arcs, expeditions).
+- `python3 test/v12_shot.py <outdir>`: browser check of the black market, an arc pop-up, the bank, crew ranks and map views
+  (start the server with `SEEDS_FILE=test/seeds_test12.json`).
+- `node test/v11.js`: 1.1 checks (rival captains, hailing, fleet orders, jettison, combat rating, news, market flashes).
+- `python3 test/v11_shot.py <outdir>`: browser check of hailing a rival, the I panel, fleet orders, full stop and multi-jump
+  (place rivals r7 and r21 in `qgate` in `DATA_DIR/world.json` before starting the server).
+- `node test/v101.js`: 1.0.1 checks (respawn at your own station hull or the hub).
+- `python3 test/v101_shot.py <outdir>`: browser check of the command bar, the controls card, the MISSIONS tab, the map
+  marker and planets (start the server with `SEEDS_FILE=test/seeds_test10.json`).
+- `node test/v10.js`: 1.0 checks (the main story chain and the Deep gate, solo mode with slots, pause, import and
+  backups, the 20-step career).
+- `node test/balance.js`: the balance report: shipyard ladders by role, value for money, rough income per hour,
+  hours to afford the big milestones, and event rewards. Fails on outliers.
+- `python3 test/v10_shot.py <outdir>`: browser check of the loading bar, a story pop-up, key remapping, the colour-blind
+  palette and interface size (start the server with `SEEDS_FILE=test/seeds_test10.json`).
+- `node test/v09.js`: 0.9 checks (levels and odds, loot chests, directives and armadas, Station Holdout, weekly events,
+  the Umbral Eclipse).
+- `python3 test/v09_shot.py <outdir>`: browser check of a Holdout and the OPS tab (fresh `DATA_DIR`, `SEEDS_FILE=test/seeds_knight.json`).
+- `node test/v08.js`: 0.8 checks (Sol, the Gateway and Farside, routes through the wormhole, no racial ships there, the
+  class triangle, the ten specialists, blueprints, parts, components, tier-ups and each specialty).
+- `python3 test/v08_shot.py <outdir>`: browser check of the Personal Stations, building a specialist, the faction store
+  menu, options and the map (fresh `DATA_DIR`, `SEEDS_FILE=test/seeds_knight.json`).
+- `node test/v07.js`: 0.7 checks (colonies, raids and live waves, mastery, the arena and ratings, the exchange,
+  transfers, leaderboards, profiles).
+- `python3 test/v07_shot.py <outdir>`: browser check of colonies, the exchange and the arena (start the server with
+  `SEEDS_FILE=test/seeds_test07.json`).
+- `node test/v06.js`: 0.6 checks (Umbral fix, fleets, Dreadnought claims and the front window, trade tax, invasions,
+  anomalies, events, goals, stores, convoy, rescue, survey, smuggling, commissions).
+- `python3 test/v06_shot.py <outdir>`: browser check of the fleet, OPS tab and map overlays (start the server with `INVASION_NOW=1`).
+- `node test/v05.js`: 0.5 checks (shuttles, officers, synergy and experience, research queue, refining, drydock, boarding).
+- `python3 test/v05_shot.py <outdir>`: browser check of a maxed station, hangar and crew screens and a shuttle launch (`SEEDS_FILE=test/seeds_knight.json`).
+- `node test/v04.js`: 0.4 checks (200 systems, all reachable, deterministic generation, sleeping systems, mining, ore
+  processing, charting, routes).
+- `python3 test/v04_shot.py <outdir>`: browser check of the new map and mining. Start the server with a fresh `DATA_DIR`
+  and `SEEDS_FILE=test/seeds_test.json` first.
+- `node test/v03.js`: 0.3 checks (weapon colours, hit events, escort slots, wreck clean-up, tutorial, login throttle).
+- `python3 test/v03_shot.py <outdir>`: browser check of the guide, click targeting and a Constitution firing (`SEEDS_FILE=test/seeds_knight.json`).
+- `node test/sim.js`: an in-process test of station progression to Ops 5, research, the refinery, the
+  Mk II and Mk III refits, wingmates (formation and combat), fighter bays, bounties, death and respawn, and
+  saving.
+- `node test/bot.js ws://localhost:8080/ws`: two networked captains with the server running. They log in,
+  trade, buy outfits, build Ops 1, chat, see each other, fly, fire, jump, land, refuel and take a job.
+- `python3 test/shots.py <outdir>`: a Playwright browser walk-through that saves screenshots.
