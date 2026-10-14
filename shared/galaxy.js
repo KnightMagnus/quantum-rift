@@ -219,6 +219,8 @@ export const EXTRA_OUTFITS = [
   { id: 9018, name: 'Mining Laser', eff: { weapon: 9101 }, cost: 45000, mass: 4, max: 4, tech: 2, gun: true, desc: 'A continuous cutting beam for asteroid work. Weak against shields.' },
   { id: 9019, name: 'Heavy Mining Laser', eff: { weapon: 9102 }, cost: 160000, mass: 9, max: 2, tech: 4, turret: true, desc: 'A turret-mounted industrial cutter. Strips a rock in seconds.' },
 ];
+for (const o of EXTRA_OUTFITS) o.icon = o.icon || `icons/${o.id}.png`;   // 2.5: rendered outfitter pictures (tools/rift_icons.py)
+
 // weapons added by Quantum Rift (merged into the asset weapons by augmentAssets)
 export const EXTRA_WEAPONS = [
   { id: 9101, name: 'Mining Laser', type: 'beam', dmgA: 3, dmgS: 1, reload: 0, speed: 0, duration: 0, inacc: 0, sound: 0, blast: 0, beamLen: 300, color: '#ffe27a', ion: 0, burst: 0, ammo: -1, mining: true },

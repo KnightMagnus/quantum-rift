@@ -2,6 +2,24 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.5 "Rendered Rift"
+An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
+- **Rendered planets:** 56 worlds ray-traced in the old 3D style: continents and biomes, mountains with bump lighting, oceans with a sun glint, cloud layers with shadows, city lights on the night side, lava glow, craters, gas bands and storms, atmospheres and rings. Each world picks the render of its type closest to its own colour. Background worlds use them too.
+- **Rendered space stations:** the 78 station worlds were flat drawn rings. Now there are twelve 3D designs, chosen by who built them: ring, spindle, cross-dock, asteroid base, twin ring, shipyard frame, saucer, Vashari hive, Ylith crystal, Thalassi reef, Korrund forge and outlaw junk.
+- **Landing pictures for every world:** about 180 worlds showed only a colour blur. Now 41 Bryce-style scenes cover them all: terrain with water reflections and haze, rendered cities, domes, arcologies, foundries, crystals and cloud platforms, and skies with suns, clouds, aurorae and neighbouring planets. Stations get an exterior view of their own design. Earth and the Que'vari worlds have their own scenes.
+- **Combat effects:** rendered fireball animations (and a bigger one for capital ships), tumbling hull fragments, a lens flare on hits, glowing bolts with trails, and damage numbers that add up instead of piling on top of each other.
+- **Asteroids and loot:** rendered rocks and crystal-studded rocks, and real-looking credits, salvage crates, ore, gas canisters, crystals and loot chests.
+- **Outfitter pictures** for the 19 outfits that had none: blasters, turrets, the pulse laser, railguns, missiles, mining tools and the alien guns.
+- **Login screen:** a rendered backdrop (a city-lit world, its moon, nebulae and a Quantum patrol) with a slow drift, and a captain's log-in panel.
+- **Interface touches:** framed landing pictures, red indicator lights on section headings.
+- **Polish:**
+  - Styled confirmation dialogs replace the browser's plain pop-ups (Enter confirms, Esc cancels).
+  - A narrower sidebar on small screens (1024x640 and below), and chat lines no longer show through the landing screen.
+  - Market depth: a big load moves the price as you trade it, so huge haulers earn less per ton than small ones. A balance simulation showed 400-ton freighters making over 4 million credits an hour before; now about 1.4 million, while small and medium holds earn 90,000 to 130,000 an hour.
+  - Three new career steps: meet a contact, help a troubled system, finish a story. Existing captains keep their place.
+  - New sounds: a sting for story beats and a beacon when trouble starts nearby, with a line of news.
+- **Tools:** `rift_planets.py`, `rift_stations.py`, `rift_landscapes.py`, `rift_fx.py`, `rift_objects.py`, `rift_icons.py`, `rift_login.py`, `rift_audio25.py`, with `rift_render3d.py` (the hull pipeline's renderer) and `rift_noise.py`.
+
 ### 2.4 "Living Galaxy"
 - **Questlines:**
   - Every spaceport bar has a **contact**, a named character who remembers you. Each offers multi-step stories: a missing freighter, a fever run, an informant to hide, a ghost signal, a prospector's claim, a dignitary escort and an old debt.

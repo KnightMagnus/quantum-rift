@@ -1,4 +1,4 @@
-import { TUTORIAL } from '../shared/tutorial.js';
+import { TUTORIAL, tutMigrate, TUT_VERSION } from '../shared/tutorial.js';
 import fs from 'node:fs';
 // Quantum Rift game server: sessions, the galaxy's systems, landing services, missions, Quantum Station.
 import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES, START, FACTION_HULLS, FACTION_OUTFITS, EXTRA_OUTFITS,
@@ -20,7 +20,7 @@ import { ArcsMixin } from './arcs.js';
 import { DocksMixin } from './docks.js';
 import { LivingMixin } from './living.js';
 import { QuestMixin } from './quests.js';
-import { STATES } from '../shared/living.js';
+import { STATES, TRADE_IMPACT } from '../shared/living.js';
 import { WING_ONLY } from '../shared/docks.js';
 import { ARCS } from '../shared/arcs.js';
 const ARCS_NAME = (f) => ARCS[f] ? ARCS[f].name : '';
@@ -142,7 +142,7 @@ export class Game {
     const rep = Object.fromEntries(Object.keys(FACTIONS).map(f => [f, 0])); rep.quantum = 10;
     return { credits: START.credits, sys: START.system, stellar: START.stellar, ship: makeLoadout(this.A, START.ship, 'Rift Runner'),
              cargo: {}, mats: Object.fromEntries(MATERIALS.map(m => [m, [0, 0, 0, 0, 0]])), rep, missions: [], escorts: [], log: [],
-             station: { claimed: false, ops: 0, refUnits: 0, refT: Date.now(), active: null, done: [] }, stats: { kills: 0, jumps: 0, earned: 0 }, tut: 0, explored: [START.system] };
+             station: { claimed: false, ops: 0, refUnits: 0, refT: Date.now(), active: null, done: [] }, stats: { kills: 0, jumps: 0, earned: 0 }, tut: 0, tutV: TUT_VERSION, explored: [START.system] };
   }
   connect(sock, ip = '?') {
     const s = { id: this.nextSid++, sock, ip, data: null, ent: null, inputs: [], lastInput: null, name: null, chatT: 0, msgs: 0, msgT: Date.now() };
@@ -307,7 +307,7 @@ export class Game {
     if (p) { if (!this.solo && !this.db.check(p, pass)) { for (const k of fk) { const f = this.fails.get(k) || { n: 0, t: now }; f.n++; this.fails.set(k, f); } return this.send(s, { t: 'error', msg: 'Wrong password for that captain.' }); } }
     else { p = this.db.create(name, pass || 'solo', this.fresh()); this.log(p, 'Took command of the Gnat Skiff "Rift Runner" at Quantum Station.'); s.isNew = true; }
     for (const o of this.sessions.values()) if (o !== s && o.data === p) { this.send(o, { t: 'error', msg: 'Signed in somewhere else.' }); o.sock.close(); this.disconnect(o); }
-    s.data = p; s.name = p.name; p.id = s.id; this.hangarInit(p); this.docksInit(p); this.hostInit(p); this.storyInit(p); this.synInit(p); this.arcsInit(p);
+    s.data = p; s.name = p.name; p.id = s.id; tutMigrate(p); this.hangarInit(p); this.docksInit(p); this.hostInit(p); this.storyInit(p); this.synInit(p); this.arcsInit(p);
     if (!p.explored) p.explored = SYSTEMS.filter(x => x.anchor).map(x => x.id);   // captains from before 0.4 know the old 30 systems
     s.rep = p.rep; s.id = s.id;
     if (!STELLARS[p.stellar]) { p.sys = START.system; p.stellar = START.stellar; }
@@ -519,13 +519,16 @@ export class Game {
     const pr0 = price(p.site ? { ...p, prices: SITE_PRICES } : p, cid); if (pr0 === null || !qty || !this.market(p)) return; const pr = p.site ? pr0 : Math.round(pr0 * this.flashMult(p.id, cid) * this.livingMult(p, cid));
     const st = this.stats(d), used = this.holdUsed(d);
     if (qty > 0) {
-      const tb = (this.bonus(d).tradePct || 0) / 100, bp = Math.max(1, Math.round(pr * (1 - tb)));   // 1.2: haggling officers and crew
-      qty = Math.min(qty, st.cargo - used, Math.floor(d.credits / bp)); if (qty <= 0) return this.toast(s, 'No room or no money for that.');
+      const tb = (this.bonus(d).tradePct || 0) / 100; let bp = Math.max(1, Math.round(pr * (1 - tb)));   // 1.2: haggling officers and crew
+      qty = Math.min(qty, st.cargo - used); const depth = (n) => p.site ? 1 : 1 + Math.min(TRADE_IMPACT.max, n * TRADE_IMPACT.perTon) / 2;   // 2.5: a big lot pushes the price up as you buy it
+      while (qty > 0 && qty * Math.round(bp * depth(qty)) > d.credits) qty = Math.min(qty - 1, Math.floor(d.credits / Math.round(bp * depth(qty))));
+      bp = Math.round(bp * depth(qty)); if (qty <= 0) return this.toast(s, 'No room or no money for that.');
       d.paid = d.paid || {}; d.paid[cid] = Math.round(((d.paid[cid] || bp) * (d.cargo[cid] || 0) + bp * qty) / ((d.cargo[cid] || 0) + qty));   // 2.4: what you paid, on average
       d.credits -= qty * bp; d.cargo[cid] = (d.cargo[cid] || 0) + qty; this.tradeTax(d, p.system, qty * pr); if (!p.site) this.addImpact(p.id, cid, -qty);   // 2.4: buying raises the local price
     } else {
       const have = d.cargo[cid] || 0; qty = Math.min(-qty, have); if (!qty) return;
-      const sale = Math.round(qty * pr * this.mods(p.system).sell * (1 + (this.bonus(d).tradePct || 0) / 100)), tax = this.tradeTax(d, p.system, sale); this.goal(s, 'trade', sale - tax);
+      const depth = p.site ? 1 : 1 - Math.min(TRADE_IMPACT.max, qty * TRADE_IMPACT.perTon) / 2;   // 2.5: and down as you sell it
+      const sale = Math.round(qty * pr * depth * this.mods(p.system).sell * (1 + (this.bonus(d).tradePct || 0) / 100)), tax = this.tradeTax(d, p.system, sale); this.goal(s, 'trade', sale - tax);
       d.credits += sale - tax - qty * pr;
       d.credits += qty * pr; d.cargo[cid] = have - qty; if (!d.cargo[cid]) { delete d.cargo[cid]; if (d.paid) delete d.paid[cid]; } d.stats.earned += qty * pr;
       this.tut(s, 'sell'); if (!p.site) { this.addImpact(p.id, cid, qty); this.stateProgress(s, p.system, 'cid:' + cid, qty); }   // 2.4: selling lowers it, and feeds a famine or a rush

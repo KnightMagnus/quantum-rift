@@ -1,0 +1,394 @@
+{
+"earth": {
+"type": "earth",
+"hue": 210,
+"r": 0.82,
+"rings": false,
+"lights": true
+},
+"terran0": {
+"type": "terran",
+"hue": 100,
+"r": 0.82,
+"rings": false,
+"lights": true
+},
+"terran1": {
+"type": "terran",
+"hue": 120,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"terran2": {
+"type": "terran",
+"hue": 85,
+"r": 0.82,
+"rings": false,
+"lights": true
+},
+"terran3": {
+"type": "terran",
+"hue": 140,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"terran4": {
+"type": "terran",
+"hue": 70,
+"r": 0.82,
+"rings": false,
+"lights": true
+},
+"ocean0": {
+"type": "ocean",
+"hue": 200,
+"r": 0.82,
+"rings": false,
+"lights": true
+},
+"ocean1": {
+"type": "ocean",
+"hue": 185,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"ocean2": {
+"type": "ocean",
+"hue": 215,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"ocean3": {
+"type": "ocean",
+"hue": 170,
+"r": 0.82,
+"rings": false,
+"lights": true
+},
+"ocean4": {
+"type": "ocean",
+"hue": 230,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"jungle0": {
+"type": "jungle",
+"hue": 95,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"jungle1": {
+"type": "jungle",
+"hue": 125,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"jungle2": {
+"type": "jungle",
+"hue": 75,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"city0": {
+"type": "city",
+"hue": 0,
+"r": 0.82,
+"rings": false,
+"lights": true
+},
+"city1": {
+"type": "city",
+"hue": 40,
+"r": 0.82,
+"rings": false,
+"lights": true
+},
+"desert0": {
+"type": "desert",
+"hue": 30,
+"r": 0.82,
+"rings": false,
+"lights": true
+},
+"desert1": {
+"type": "desert",
+"hue": 12,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"desert2": {
+"type": "desert",
+"hue": 45,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"desert3": {
+"type": "desert",
+"hue": 0,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"desert4": {
+"type": "desert",
+"hue": 60,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"ice0": {
+"type": "ice",
+"hue": 205,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"ice1": {
+"type": "ice",
+"hue": 180,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"ice2": {
+"type": "ice",
+"hue": 225,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"ice3": {
+"type": "ice",
+"hue": 30,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"ice4": {
+"type": "ice",
+"hue": 200,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"lava0": {
+"type": "lava",
+"hue": 15,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"lava1": {
+"type": "lava",
+"hue": 0,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"lava2": {
+"type": "lava",
+"hue": 30,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"lava3": {
+"type": "lava",
+"hue": 330,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"barren0": {
+"type": "barren",
+"hue": 0,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"barren1": {
+"type": "barren",
+"hue": 30,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"barren2": {
+"type": "barren",
+"hue": 15,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"barren3": {
+"type": "barren",
+"hue": 210,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"barren4": {
+"type": "barren",
+"hue": 45,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"barren5": {
+"type": "barren",
+"hue": 0,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"sulfur0": {
+"type": "sulfur",
+"hue": 50,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"toxic0": {
+"type": "toxic",
+"hue": 75,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"toxic1": {
+"type": "toxic",
+"hue": 100,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"toxic2": {
+"type": "toxic",
+"hue": 45,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"toxic3": {
+"type": "toxic",
+"hue": 285,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"crystal0": {
+"type": "crystal",
+"hue": 275,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"crystal1": {
+"type": "crystal",
+"hue": 180,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"crystal2": {
+"type": "crystal",
+"hue": 330,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"gas_jovian": {
+"type": "gas",
+"hue": 30,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"gas_jovian2": {
+"type": "gas",
+"hue": 30,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"gas_saturn": {
+"type": "gas",
+"hue": 45,
+"r": 0.42,
+"rings": true,
+"lights": false
+},
+"gas_neptune": {
+"type": "gas",
+"hue": 220,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"gas_neptune2": {
+"type": "gas",
+"hue": 220,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"gas_uranus": {
+"type": "gas",
+"hue": 185,
+"r": 0.42,
+"rings": true,
+"lights": false
+},
+"gas_violet": {
+"type": "gas",
+"hue": 280,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"gas_ember": {
+"type": "gas",
+"hue": 10,
+"r": 0.42,
+"rings": true,
+"lights": false
+},
+"gas_ember2": {
+"type": "gas",
+"hue": 10,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"gas_jade": {
+"type": "gas",
+"hue": 140,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"gas_jade2": {
+"type": "gas",
+"hue": 140,
+"r": 0.82,
+"rings": false,
+"lights": false
+},
+"gas_amber": {
+"type": "gas",
+"hue": 50,
+"r": 0.42,
+"rings": true,
+"lights": false
+}
+}

@@ -4,7 +4,8 @@ import { playStation, stopRadio } from './radio.js';
 import { blackMarketHtml, bankHtml, arcCardsHtml, bunkInfo, synBadge } from './syn_ui.js';
 import { SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES, OPS, RESEARCH, REFINERY, ORE_PROCESS, WINGMATES, ARMADA, MK2_OF, MK3_OF, FACTION_HULLS, STATION_SHIPS, SITES } from '/shared/galaxy.js';
 import { shipStats, researchBonus, allOutfits, credits, repLabel, weaponParams, K, route, price } from '/shared/rules.js';
-import { galaxy, mapHit, mapFit } from './render.js';
+import { galaxy, mapHit, mapFit, stationDesign } from './render.js';
+import { planetType } from './planets.js';
 import { crewHtml, hangarHtml, shuttleSummary, researchHtml, materialsHtml } from './hangar_ui.js';
 import { specialistsHtml } from './spec_ui.js';
 import { docksHtml, dockChips, dockLine } from './docks_ui.js';
@@ -34,7 +35,7 @@ export function initUI(g, sender) {
     const dc = e.target.closest('select[data-role]'); if (dc) { send({ t: 'docks', op: 'crew', k: +dc.dataset.dk, w: +dc.dataset.w, role: dc.dataset.role, oid: dc.value ? +dc.value : null }); return; }
  const c = e.target.closest('select[data-crew]'); if (c) send({ t: 'shuttle', op: 'crew', sid: +c.dataset.crew, oid: c.value ? +c.value : null }); });
   $('mlist').addEventListener('click', (e) => { const b = e.target.closest('[data-plot]'); if (b) { plot(b.dataset.plot); openMap(b.dataset.plot); }
-    const a = e.target.closest('[data-abandon]'); if (a) { const m = (G.you.missions || []).find(x => x.id === a.dataset.abandon); if (m && confirm(m.quest ? `Abandon "${m.title}"? That ends the story "${m.quest.name}".` : `Abandon "${m.title}"? You won't be paid for it.`)) send({ t: 'abandon', id: m.id }); } });   // 2.0.3
+    const a = e.target.closest('[data-abandon]'); if (a) { const m = (G.you.missions || []).find(x => x.id === a.dataset.abandon); if (m) ask(m.quest ? `Abandon "${m.title}"? That ends the story "${m.quest.name}".` : `Abandon "${m.title}"? You won't be paid for it.`, () => send({ t: 'abandon', id: m.id })); } });   // 2.0.3
   // galaxy map: drag to pan, wheel to zoom around the cursor, click a system to plot a course
   const gc = $('gcanvas'), mp = (e) => { const r = gc.getBoundingClientRect(); return [(e.clientX - r.left) * gc.width / r.width, (e.clientY - r.top) * gc.height / r.height]; };
   let drag = null;
@@ -67,6 +68,28 @@ export function initUI(g, sender) {
 // 2.0: toasts pick a sound from what they say
 const TOAST_SND = [[/hired guns|raid|invasion|closing in|under attack|price on your head|ambush/i, 'alert'], [/reached level|promoted|takes notice|is now your ally|career guide complete|joins your crew/i, 'levelup'],
   [/complete|collected|delivered|paid off|job done|bounty:|rewards?/i, 'complete'], [/not enough|can't|cannot|refuses|too far|no room|denied|only at|only in|needs |you need|missed/i, 'error']];
+// 2.5: which rendered landing picture (tools/rift_landscapes.py) a world shows
+const LAND_SCENES = { terran: ['terran_city1', 'terran_city2', 'terran_wild1', 'terran_wild2', 'jungle1', 'jungle2'], city: ['city1', 'city2', 'terran_city1'], ocean: ['ocean1', 'ocean2'], desert: ['desert1', 'desert2', 'desert3'], ice: ['ice1', 'ice2'],
+  lava: ['lava1', 'lava2'], barren: ['moon1', 'moon2', 'moon3'], gas: ['gas1', 'gas2'], toxic: ['toxic1', 'toxic2'], crystal: ['crystal1', 'crystal2'] };
+function landScene(p) {
+  if (p.id === 'earth') return 'l_earth';
+  if (p.kind === 'station') return 'l_st_' + stationDesign(p);
+  let h = 2166136261; for (const c of p.id) h = Math.imul(h ^ c.charCodeAt(0), 16777619); h >>>= 0;
+  if (p.outlaw) return ['l_moon2', 'l_lava2', 'l_desert2'][h % 3];   // outlaw dens look the part
+  let t = planetType(p); const d = ((p.desc || '') + ' ' + p.name).toLowerCase();
+  if (t === 'terran' && /(city|capital|sprawl|metropol|towers|arcolog)/.test(d)) t = 'city';
+  if (t === 'terran' && /(jungle|forest|garden)/.test(d)) return ['l_jungle1', 'l_jungle2'][h % 2];
+  const L = LAND_SCENES[t] || LAND_SCENES.barren; return 'l_' + L[h % L.length];
+}
+// 2.5: a styled confirmation dialog in place of the browser's own confirm box
+export function ask(msg, yes, opts = {}) {
+  const box = document.getElementById('askbox'); document.getElementById('askx').textContent = msg;
+  document.getElementById('askyes').textContent = opts.yes || 'CONFIRM'; box.classList.remove('hidden');
+  const done = (ok) => { box.classList.add('hidden'); window.removeEventListener('keydown', key, true); document.getElementById('askyes').onclick = document.getElementById('askno').onclick = null; if (ok) yes(); };
+  const key = (e) => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); done(false); } else if (e.key === 'Enter') { e.stopPropagation(); e.preventDefault(); done(true); } };
+  window.addEventListener('keydown', key, true);
+  document.getElementById('askyes').onclick = () => done(true); document.getElementById('askno').onclick = () => done(false);
+}
 export function toast(msg) { const k = TOAST_SND.find(([re]) => re.test(msg)), kind = k ? k[1] : 'toast'; window.dispatchEvent(new CustomEvent('rift-toast-sound', { detail: kind })); G._toastKind = kind; const d = document.createElement('div'); d.textContent = msg; d.className = 't-' + kind; $('toasts').appendChild(d); setTimeout(() => d.remove(), 5200); while ($('toasts').children.length > 4) $('toasts').firstChild.remove(); }
 export function chatLine(m) {
   const d = document.createElement('div');
@@ -272,7 +295,7 @@ export function showLanded() {
   $('landname').textContent = site ? (site.owner ? `${site.owner}'s Personal Station` : 'Derelict Station Hull') : p.name;
   $('landfac').textContent = `${SYS[p.system].name} system · ${site ? (site.owner ? `Personal Station · Ops ${site.ops}` : 'unclaimed') : FACTIONS[SYS[p.system].faction].name}`;
   $('landdesc').textContent = site ? (site.own ? 'Your Personal Station. Build it up through Ops 1-5: refinery, research lab, drydock, wingmates and the station shipyard.' : site.owner ? `A Personal Station claimed and run by Captain ${site.owner}. Visitors may refuel and trade here.` : p.desc) : (p.desc || '');
-  $('landpic').style.backgroundImage = site ? `url(assets/land/${10951 + Math.min(5, site.ops)}.jpg)` : p.land ? `url(assets/land/${p.land}.jpg)` : `radial-gradient(circle at 40% 40%, ${p.color}, #000 75%)`;
+  $('landpic').style.backgroundImage = site ? `url(assets/land/${10951 + Math.min(5, site.ops)}.jpg)` : p.land && p.land !== 'earth' ? `url(assets/land/${({ 10957: 'l_inalumen', 10958: 'l_threshold' })[p.land] || p.land}.jpg)` : `url(assets/land/${landScene(p)}.jpg), radial-gradient(circle at 40% 40%, ${p.color}, #000 75%)`;   // 2.5: rendered landing pictures
   const avail = TABS.filter(([k]) => (k === 'blackmarket' && L.blackmarket) || (k === 'bank' && L.bank) || k === 'overview' || (k === 'community' && L.community) || (k === 'trade' && (L.market || L.mats.length)) || (k === 'yard' && L.yard) || (k === 'outfit' && L.outfitter) || (k === 'jobs' && (L.offers.length || L.story || (L.arcs && L.arcs.length) || (G.you && (G.you.missions.length || (G.you.story && G.you.story.active))))) || (k === 'station' && site && (site.own || !site.owner)) || k === 'crew' || (!G.solo && (k === 'fleet' || k === 'arena' || (k === 'exchange' && L.exchange))) ||   // 2.4: multiplayer tabs hidden in solo
        (k === 'colony' && L.colony));
   G.lastTab = G.lastTab || {}; if (G._landedAt !== L.stellar) { G._landedAt = L.stellar; if (G.lastTab[L.stellar] && avail.some(([k]) => k === G.lastTab[L.stellar])) G.ltab = G.lastTab[L.stellar]; }   // 2.0: each world remembers your last tab
@@ -429,11 +452,11 @@ function onAct(e) {
     case 'sellall': for (const c of G.landed.market || []) if (G.you.cargo[c.id]) send({ t: 'trade', cid: c.id, qty: -999 }); break;
     case 'mat': send({ t: 'buymat', mat: d.m, grade: +d.g, n: +d.q }); break;
     case 'sel': G.sel = +d.h; renderLanded(); break;
-    case 'buyhangar': if (confirm(`Buy the ${G.A.ships[d.h].name} for ${credits(G.A.ships[d.h].cost)} credits and send her to your Personal Station's hangar?`)) send({ t: 'buyship', hull: +d.h, store: true }); break;
-    case 'buyship': if (confirm(`Buy the ${G.A.ships[d.h].name}?\n\n${G.you.shipless ? 'You have no active ship to trade in.' : `Your ${G.A.ships[G.you.ship.hull].name} and its outfits are traded in for ${credits(tradeIn(G.you))} credits. To keep her instead, store her in your Personal Station's drydock first.`}`)) send({ t: 'buyship', hull: +d.h }); break;
+    case 'buyhangar': ask(`Buy the ${G.A.ships[d.h].name} for ${credits(G.A.ships[d.h].cost)} credits and send her to your Personal Station's hangar?`, () => send({ t: 'buyship', hull: +d.h, store: true })); break;
+    case 'buyship': ask(`Buy the ${G.A.ships[d.h].name}?\n\n${G.you.shipless ? 'You have no active ship to trade in.' : `Your ${G.A.ships[G.you.ship.hull].name} and its outfits are traded in for ${credits(tradeIn(G.you))} credits. To keep her instead, store her in your Personal Station's drydock first.`}`, () => send({ t: 'buyship', hull: +d.h })); break;
     case 'outfit': send({ t: 'outfit', id: +d.id, n: +d.n }); break;
     case 'accept': send({ t: 'accept', id: d.id }); break;
-    case 'abandon': { const mm = (G.you.missions || []).find(x => x.id === d.id); if (confirm(mm && mm.quest ? `Abandon this step? That ends the story "${mm.quest.name}".` : 'Abandon this job? You will not be paid for it.')) send({ t: 'abandon', id: d.id }); break; }
+    case 'abandon': { const mm = (G.you.missions || []).find(x => x.id === d.id); ask(mm && mm.quest ? `Abandon this step? That ends the story "${mm.quest.name}".` : 'Abandon this job? You will not be paid for it.', () => send({ t: 'abandon', id: d.id })); break; }
     case 'st': e.preventDefault(); send({ t: 'station', op: d.op, id: d.id, hull: d.hull ? +d.hull : undefined, i: d.i ? +d.i : undefined, all: d.all ? 1 : undefined, mat: d.mat, g: d.g ? +d.g : undefined, n: d.n ? +d.n : undefined }); break;
     case 'rename': send({ t: 'rename', name: $('rename').value }); break;
     case 'off': send({ t: 'officer', op: d.op, id: d.id, oid: d.oid ? (isNaN(+d.oid) ? d.oid : +d.oid) : undefined, slot: d.slot }); break;
@@ -444,10 +467,10 @@ function onAct(e) {
     case 'arcopen': { const o = (G.landed.arcs || []).find(x => x.fac === d.f); if (o) window.dispatchEvent(new CustomEvent('rift-story', { detail: { arc: o.fac, id: o.fac, title: o.title, tag: `${FACTIONS[o.fac].name.toUpperCase()} · ${o.arc}`, text: o.text, acc: 'Accept', ref: 'Not now' } })); break; }
     case 'sh': { const m = { t: 'shuttle', op: d.op, sid: d.sid ? +d.sid : undefined, kind: d.kind, job: d.job };
       if (d.op === 'send') { const sel = document.querySelector(`select[data-job="${d.job}"]`); m.sid = sel ? +sel.value : undefined; }
-      if (d.op === 'scrap' && !confirm('Scrap this shuttle for 30% of its price?')) break; send(m); break; }
-    case 'dock': if (d.op === 'sell') { const x = d.uid ? G.you.dock.find(z => z.ship.uid === d.uid) : G.you.dock[+d.i], O = allOutfits(G.A); let v = (G.A.ships[x.ship.hull].cost || 0) * 0.5; for (const [id, n] of Object.entries(x.ship.outfits || {})) v += (O[id] ? O[id].cost : 0) * n * 0.5; if (!confirm(`Sell the stored ${G.A.ships[x.ship.hull].name} and its outfits for ${credits(Math.round(v))} credits?`)) break; } send({ t: 'dock', op: d.op, i: +d.i, uid: d.uid || undefined }); break;
+      if (d.op === 'scrap') { ask('Scrap this shuttle for 30% of its price?', () => send(m)); break; } send(m); break; }
+    case 'dock': if (d.op === 'sell') { const x = d.uid ? G.you.dock.find(z => z.ship.uid === d.uid) : G.you.dock[+d.i], O = allOutfits(G.A); let v = (G.A.ships[x.ship.hull].cost || 0) * 0.5; for (const [id, n] of Object.entries(x.ship.outfits || {})) v += (O[id] ? O[id].cost : 0) * n * 0.5; ask(`Sell the stored ${G.A.ships[x.ship.hull].name} and its outfits for ${credits(Math.round(v))} credits?`, () => send({ t: 'dock', op: d.op, i: +d.i, uid: d.uid || undefined })); break; } send({ t: 'dock', op: d.op, i: +d.i, uid: d.uid || undefined }); break;
     case 'goal': send({ t: 'goal', period: d.p, i: +d.i }); break;
-    case 'anchor': if (confirm('Anchor this Dreadnought here? It is paid from the fleet bank.')) send({ t: 'fleet', op: 'anchor', model: +d.m }); break;
+    case 'anchor': ask('Anchor this Dreadnought here? It is paid from the fleet bank.', () => send({ t: 'fleet', op: 'anchor', model: +d.m })); break;
     case 'plotto': plot(d.sys); break;
     case 'fcreate': send({ t: 'fleet', op: 'create', tag: $('ftag').value, name: $('fname').value }); break;
     case 'fjoin': send({ t: 'fleet', op: 'join', tag: d.tag }); break;
@@ -456,21 +479,21 @@ function onAct(e) {
     case 'fwd': send({ t: 'fleet', op: 'withdraw', n: +$('famt').value }); break;
     case 'facc': send({ t: 'fleet', op: 'accept', name: d.n }); break;
     case 'fdeny': send({ t: 'fleet', op: 'deny', name: d.n }); break;
-    case 'fkick': if (confirm(`Remove ${d.n} from the fleet?`)) send({ t: 'fleet', op: 'kick', name: d.n }); break;
-    case 'fleave': if (confirm('Leave your fleet?')) send({ t: 'fleet', op: 'leave' }); break;
+    case 'fkick': ask(`Remove ${d.n} from the fleet?`, () => send({ t: 'fleet', op: 'kick', name: d.n })); break;
+    case 'fleave': ask('Leave your fleet?', () => send({ t: 'fleet', op: 'leave' })); break;
     case 'buystore': send({ t: 'store', id: d.id, fac: d.f }); break;
     case 'stores': openStores(); break;
     case 'storyopen': { const SO = G.landed.story; if (SO) window.dispatchEvent(new CustomEvent('rift-story', { detail: { id: SO.id, title: SO.title, text: SO.text, acc: SO.acc } })); break; }
     case 'summon': send({ t: 'armada', tier: +d.tier }); break;
-    case 'holdout': if (confirm('Start a Holdout? You launch to defend your station against ten waves.')) send({ t: 'holdout' }); break;
+    case 'holdout': ask('Start a Holdout? You launch to defend your station against ten waves.', () => send({ t: 'holdout' })); break;
     case 'sfac': G.storeFac = d.f; openStores(); break;
     case 'sclose': $('storebox').classList.add('hidden'); break;
-    case 'col': if (d.op === 'abandon' && !confirm('Abandon this colony and everything on it?')) break; send({ t: 'colony', op: d.op, kind: d.kind, i: d.i !== undefined ? +d.i : undefined }); break;
+    case 'col': { const go = () => send({ t: 'colony', op: d.op, kind: d.kind, i: d.i !== undefined ? +d.i : undefined }); if (d.op === 'abandon') ask('Abandon this colony and everything on it?', go); else go(); } break;
     case 'arena': send({ t: 'arena', op: d.op, mode: d.mode }); break;
     case 'xplace': { const [k, a, b] = $('xitem').value.split(':'); send({ t: 'exchange', op: 'place', side: $('xside').value, kind: k, mat: k === 'mat' ? a : undefined, grade: k === 'mat' ? +b : undefined, cid: k === 'com' ? a : undefined, qty: +$('xqty').value, price: +$('xprice').value }); break; }
     case 'xcancel': send({ t: 'exchange', op: 'cancel', id: +d.id }); break;
     case 'xcollect': send({ t: 'exchange', op: 'collect' }); break;
-    case 'xsend': if (confirm(`Send ${$('xamt').value} credits to ${$('xto').value}?`)) send({ t: 'exchange', op: 'transfer', to: $('xto').value, n: +$('xamt').value }); break;
+    case 'xsend': ask(`Send ${$('xamt').value} credits to ${$('xto').value}?`, () => send({ t: 'exchange', op: 'transfer', to: $('xto').value, n: +$('xamt').value })); break;
     case 'board': G.boardCat = d.cat; send({ t: 'boards', cat: d.cat }); renderLanded(); break;
     case 'prof': send({ t: 'profile', name: d.n }); break;
     case 'profgo': send({ t: 'profile', name: $('profq').value }); break;

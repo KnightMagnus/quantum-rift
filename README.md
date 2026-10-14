@@ -14,8 +14,9 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 
 **A big, living galaxy**
 - 211 star systems across 14 powers: the Quantum Concord, free traders, pirates, five alien races and stranger things at the edges.
-- Every system has its own scenery, generated from the system itself: its star, distant galaxies, gas giants, nebulae, ion storms, ancient wrecks, abandoned stations, crystal formations, comets and drifting debris.
-- Procedurally generated planets and moons, asteroid fields, gas clouds and crystal fields to mine.
+- Pre-rendered planets, stations and landing pictures in the style of EV Nova: oceans that catch the sun, city lights on the night side, ringed giants, and a rendered scene for every world you land on.
+- Every system has its own scenery, generated from the system itself: its star, distant galaxies, nebulae, ion storms, ancient wrecks, abandoned stations, crystal formations, comets and drifting debris.
+- Moons, asteroid fields, gas clouds and crystal fields to mine.
 - Busy space lanes: traders, convoys, patrols, raiders and thirty named rival captains with careers of their own.
 - Systems pass through famines, plagues, booms, border wars, pirate scourges, festivals and mining rushes that move prices and post their own jobs. Markets remember what you trade.
 
@@ -48,6 +49,8 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 | *Every system looks different* | *Docks A to D, with crewed wingmates* |
 | ![The galaxy map](docs/screenshots/galaxy-map.jpg) | ![A hyperspace jump, start to finish](docs/screenshots/hyperspace.jpg) |
 | *The galaxy map, with trade, standing and danger views* | *A hyperspace jump* |
+| ![Rendered landing pictures](docs/screenshots/landing-pictures.jpg) | ![Rendered planets](docs/screenshots/planets.jpg) |
+| *A landing picture for every world* | *Pre-rendered planets* |
 
 ![The ten new Quantum ships of version 2.3](docs/screenshots/new-ships.png)
 
@@ -129,7 +132,7 @@ One small CPU handles dozens of players; only systems with players in them run a
 
 - **Server:** plain Node.js ES modules with no dependencies. It has its own small WebSocket implementation and JSON save files written atomically. Each star system is simulated at 30 Hz, and systems nobody is in go to sleep.
 - **Client:** HTML canvas and vanilla JavaScript. Your own ship is predicted locally, so it responds instantly. Planets are rendered procedurally in the browser.
-- **Art and audio:** ship sprites come from a small Python 3D pipeline, and system scenery from procedural renderers (`tools/rift_decor*.py`). All interface sounds, ambience and the login theme are synthesized from scratch (`tools/rift_audio*.py`).
+- **Art and audio:** ship sprites come from a small Python 3D pipeline. Planets, stations, landing pictures, effects, asteroids, loot, outfit pictures and the login backdrop are rendered by the tools in `tools/` (`rift_planets.py`, `rift_stations.py`, `rift_landscapes.py` and others), and system scenery by `tools/rift_decor*.py`. All interface sounds, ambience and the login theme are synthesized from scratch (`tools/rift_audio*.py`).
 - **Tests:** in-process suites for every release, a message fuzzer, a balance report, and a Playwright UI crawler that clicks every screen.
 
 **[DEVELOPMENT.md](DEVELOPMENT.md)** is the guide for anyone, or any AI assistant, picking up the code: the architecture, how to add a feature, how to test it, and the full list of test suites. **[CHANGELOG.md](CHANGELOG.md)** has every release from 0.3 to today.

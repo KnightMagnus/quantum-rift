@@ -201,7 +201,32 @@ function renderDisk(P, ru, rc) {
   if (P.ringFront) c.drawImage(P.ringFront, 0, 0);
 }
 let budget = 0, budgetT = 0;
+// 2.5: pre-rendered planets (tools/rift_planets.py) in the EV Nova manner. Each world picks the rendered planet of its type
+// whose colour is closest to its own; the procedural sphere above stays as the fallback while images load.
+let MAN = null; const imgs = new Map(), pick = new Map();
+fetch('assets/planets/planets.json').then(r => r.json()).then(j => { MAN = j; }).catch(() => { MAN = {}; });
+const TYPE_POOL = { earth: ['earth'], terran: ['terran', 'jungle'], ocean: ['ocean'], desert: ['desert'], ice: ['ice'], lava: ['lava'], barren: ['barren', 'sulfur'], gas: ['gas'], toxic: ['toxic'], crystal: ['crystal'] };
+function chooseRendered(p) {
+  if (pick.has(p.id)) return pick.get(p.id); if (!MAN) return null;
+  let type = planetType(p); const d = ((p.desc || '') + ' ' + (p.name || '')).toLowerCase();
+  if (type === 'terran' && /(city|capital|sprawl|metropol|ecumen|arcolog)/.test(d) && (p.tech || 0) >= 3) type = 'city';
+  const pool = Object.entries(MAN).filter(([, m]) => (type === 'city' ? m.type === 'city' : (TYPE_POOL[type] || [type]).includes(m.type)) && (p.kind !== 'moon' || !m.rings));
+  if (!pool.length) { pick.set(p.id, null); return null; }
+  const hue = hsl(hexToRgb(p.color))[0], hd = (a) => Math.min(Math.abs(a - hue), 360 - Math.abs(a - hue));
+  pool.sort((a, b) => hd(a[1].hue) - hd(b[1].hue)); const h = hashStr(p.id), top = pool.slice(0, Math.min(pool.length, p.id.startsWith('bg:') ? 4 : 2));
+  const want = /ring/.test(d) && type === 'gas' ? top.find(([, m]) => m.rings) || top[h % top.length] : top[h % top.length];
+  const o = { id: want[0], ...want[1] }; pick.set(p.id, o); return o;
+}
 export function planetSprite(p, now) {
+  const R = chooseRendered(p);
+  if (R) {
+    let im = imgs.get(R.id); if (!im) { im = new Image(); im.src = `assets/planets/${R.id}.webp`; imgs.set(R.id, im); }
+    if (im.complete && im.naturalWidth) { const S = im.naturalWidth, D = R.r * S; return { canvas: im, S, D, scale: (2 * p.r) / D, rendered: true }; }
+    if (MAN) return null;
+  }
+  return procSprite(p, now);
+}
+function procSprite(p, now) {
   const P = cache.get(p.id) || advance(p, now); if (!P) return null;
   if (cache.size > 70) for (const k of cache.keys()) { if (k !== p.id && k.startsWith('bg:')) { cache.delete(k); break; } }   // 2.4: forget old background worlds
   const ru = Math.floor(P.T.spinLon / 6.283 * TW + now / 1000 * P.T.spin) % TW, rc = Math.floor(now / 1000 * P.T.cspin) % TW;

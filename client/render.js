@@ -3,7 +3,7 @@ import { planetSprite } from './planets.js';
 import { missionTargets } from './missions.js';
 import { ANOMALIES } from '/shared/fronts.js';
 import { STATES } from '/shared/living.js';
-import { SYS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
+import { SYS, STELLARS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
 import { weaponParams, BEAM_COLORS, weaponColor, weaponLook, price } from '/shared/rules.js';
 // 1.2 map views (after Endless Sky's map modes): colour each system by trade price, services, your standing, or danger
 const lerpC = (a, b, t) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * Math.max(0, Math.min(1, t)))).join(',')})`;
@@ -54,6 +54,8 @@ const ready = (im) => im.complete && im.naturalWidth;
 const decorCache = new Map();
 const NEB_BY_FAC = { umbral: [7, 1], deep: [4, 7, 0], farside: [6, 5, 3], vashari: [3, 6], korrund: [2, 6], ylith: [0, 5, 3], thalassi: [0, 5], sarn: [2, 7], quevari: [6, 5, 0], hollow: [1, 7], frontier: [2, 3, 6] };
 const SUNS = [['255,244,220', '255,200,120'], ['255,230,170', '255,160,70'], ['255,190,140', '255,110,60'], ['210,230,255', '140,180,255'], ['255,255,255', '200,220,255']];
+const objImgs = {};   // 2.5: rendered asteroids and loot (tools/rift_objects.py)
+function objImg(n) { let im = objImgs[n]; if (!im) { im = objImgs[n] = new Image(); im.src = `assets/objects/${n}.webp`; } return im; }
 let rockSprites = null;
 function rockSprite(k) {   // a few dark, lumpy background asteroids, drawn once
   if (!rockSprites) rockSprites = Array.from({ length: 6 }, (_, i) => { const r = seeded(77 + i), c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
@@ -182,6 +184,17 @@ function drawDecorNear(ctx, S, W, H, z, sx, sy, now) {
 }
 const planetCache = new Map();
 function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+// 2.5: rendered station designs (tools/rift_stations.py), chosen by who built the station and what it is
+const stImgs = {}, stPick = new Map();
+export function stationDesign(p) {
+  if (stPick.has(p.id)) return stPick.get(p.id);
+  const sysId = p.system || (STELLARS[p.id] && STELLARS[p.id].system), f = SYS[sysId] ? SYS[sysId].faction : '', d = ((p.desc || '') + ' ' + p.id).toLowerCase(), h = hashStr(p.id);
+  const by = { vashari: 'hive', ylith: 'crystal', thalassi: 'reef', sarn: 'ring', quevari: 'spindle', umbral: 'disc', lamp: h % 2 ? 'twin' : 'disc' }[f]
+    || (f === 'korrund' ? (h % 3 ? 'rock' : 'forge') : null) || (p.outlaw || (STELLARS[p.id] && STELLARS[p.id].outlaw) || f === 'hollow' ? 'junk' : null) || (f === 'farside' ? (h % 2 ? 'junk' : 'twin') : null)
+    || (/shipyard|slipway|yards/.test(d) && f === 'quantum' ? 'yard' : null) || ['cross', 'ring', 'spindle', 'disc', 'twin'][h % 5];
+  stPick.set(p.id, by); return by;
+}
+function stationSprite(p) { const k = stationDesign(p); let im = stImgs[k]; if (!im) { im = stImgs[k] = new Image(); im.src = `assets/stations/s_${k}.webp`; } return im.complete && im.naturalWidth ? im : null; }
 function planetImage(p) {
   if (planetCache.has(p.id)) return planetCache.get(p.id);
   const R = p.r, S = Math.ceil(R * 2.6), c = document.createElement('canvas'); c.width = c.height = S;
@@ -218,17 +231,21 @@ function planetImage(p) {
 
 // ------------------------------------------------------------------ effects
 export const fx = [];
+const fxImgs = {};   // 2.5: rendered effects (tools/rift_fx.py)
+function fxImg(n) { let im = fxImgs[n]; if (!im) { im = fxImgs[n] = new Image(); im.src = `assets/fx/${n}.webp`; } return im; }
+for (const n of ['boom_a', 'boom_b', 'boom_big', 'shards', 'flare']) fxImg(n);
 export function boom(x, y, size) {
   size = Math.max(20, size || 40);
   const n = Math.min(70, 14 + size / 3);
-  fx.push({ x, y, ball: true, life: 0.55 + size / 600, max: 0.55 + size / 600, r: size * 0.75 });                       // fireball
+  fx.push({ x, y, ball: true, life: 0.35 + size / 900, max: 0.35 + size / 900, r: size * 0.6 });                       // flash
+  { const big = size > 120, L = (big ? 1.5 : 0.95) + size / 700; fx.push({ x, y, anim: big ? 'boom_big' : Math.random() < 0.5 ? 'boom_a' : 'boom_b', life: L, max: L, r: size * (big ? 1.35 : 1.1), rot: Math.random() * 6.283 }); }   // 2.5: a rendered fireball
   for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = 30 + Math.random() * (60 + size); fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.9, max: 1.4, c: Math.random() < 0.5 ? '#ffd27a' : '#ff6a3a', s: 1 + Math.random() * 2.5 }); }
   for (let i = 0; i < Math.min(14, 3 + size / 25); i++) { const a = Math.random() * 6.283, v = 20 + Math.random() * 60; fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, smoke: true, life: 1.2 + Math.random(), max: 2.2, r: 8 + size * 0.15 }); }
   for (let i = 0; i < Math.min(10, 2 + size / 30); i++) { const a = Math.random() * 6.283, v = 40 + Math.random() * 120; fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, debris: true, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 12, life: 1.5 + Math.random(), max: 2.5, s: 2 + Math.random() * size / 40 }); }
   fx.push({ x, y, ring: true, life: 0.5, max: 0.5, r: size * 1.1, c: '#fff1c0' });
   if (size > 120) fx.push({ x, y, ring: true, life: 0.9, max: 0.9, r: size * 2, c: '#ffb070' });
 }
-export function spark(x, y, col) { for (let i = 0; i < 6; i++) { const a = Math.random() * 6.283, v = 40 + Math.random() * 90; fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.25, max: 0.25, c: col || '#fff', s: 1.6 }); } }
+export function spark(x, y, col) { fx.push({ x, y, flare: true, life: 0.16, max: 0.16, r: 26, c: col }); for (let i = 0; i < 6; i++) { const a = Math.random() * 6.283, v = 40 + Math.random() * 90; fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.25, max: 0.25, c: col || '#fff', s: 1.6 }); } }
 export function flash(x, y) {   // 2.1: a ship entering or leaving hyperspace: a hot core, a lens streak and two shock rings
   fx.push({ x, y, hyper: true, life: 0.75, max: 0.75, r: 70 });
   fx.push({ x, y, ring: true, life: 0.55, max: 0.55, r: 150, c: '#bfe2ff' }); fx.push({ x, y, ring: true, life: 0.9, max: 0.9, r: 260, c: '#7aa8ff' });
@@ -237,15 +254,25 @@ export function blast(x, y, r) { fx.push({ x, y, ring: true, life: 0.35, max: 0.
 // shield shimmer on the ship that was hit, and floating damage numbers
 export const shieldHits = new Map();
 export function shieldHit(id, x, y) { shieldHits.set(id, { t: 0.35, hx: x, hy: y }); }
-export function dmgNumber(x, y, n, mine) { if (n < 1) return; fx.push({ x: x + (Math.random() - 0.5) * 16, y, vx: 0, vy: -45, num: Math.round(n), mine, life: 0.9, max: 0.9 }); }
+export function dmgNumber(x, y, n, mine) { if (n < 1) return;
+  for (let i = fx.length - 1; i >= Math.max(0, fx.length - 300); i--) { const f = fx[i]; if (f.num && f.mine === mine && f.life > f.max - 0.45 && Math.hypot(f.x - x, f.y - y) < 70) { f.num += Math.round(n); f.life = f.max; return; } }   // 2.5: hits close together add up into one number
+  fx.push({ x: x + (Math.random() - 0.5) * 16, y, vx: 0, vy: -45, num: Math.round(n), mine, life: 0.9, max: 0.9 }); }
 export let shake = 0;
 export const cam = { cx: 0, cy: 0, z: 1, W: 1, H: 1 };
 export function addShake(k) { shake = Math.max(shake, k); }
 
 // projectile drawing by look
+const glowC = new Map();   // 2.5: a soft additive glow behind every bolt, and a fading trail
+function glowSprite(col) { let c = glowC.get(col); if (!c) { c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, col); gr.addColorStop(0.25, col + 'aa'); gr.addColorStop(1, col + '00'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); glowC.set(col, c); } return c; }
 function drawShot(ctx, s, x, y, z, now) {
   const W_ = s.W, col = s.col, look = s.look, sp = Math.hypot(s.vx, s.vy) || 1, ux = s.vx / sp, uy = s.vy / sp;
   const zz = Math.max(0.7, z);
+  if (/^#[0-9a-f]{6}$/i.test(col) && look !== 'missile' && look !== 'rocket') {
+    ctx.globalCompositeOperation = 'lighter'; const gs = (look === 'torp' || look === 'sing' ? 46 : 22) * zz; ctx.globalAlpha = 0.55; ctx.drawImage(glowSprite(col), x - gs / 2, y - gs / 2, gs, gs);
+    if (look !== 'rail') { const L = Math.min(40, sp * 0.03) * z, gr = ctx.createLinearGradient(x, y, x - ux * L, y - uy * L); gr.addColorStop(0, col + 'cc'); gr.addColorStop(1, col + '00'); ctx.strokeStyle = gr; ctx.lineWidth = 3 * zz; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - ux * L, y - uy * L); ctx.stroke(); }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
   ctx.shadowColor = col; ctx.shadowBlur = 8;
   switch (look) {
     case 'rail': {
@@ -366,6 +393,7 @@ export function draw(G, ctx, W, H, dt, now) {
       if (im.complete && im.naturalWidth) { const s = p.r * (2.2 + ops * 0.25) * z; ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(im, x - s / 2, y - s / 2, s, s); ctx.globalCompositeOperation = 'source-over'; }
       label = st ? `${st.owner}'s Personal Station · Ops ${ops}` : 'Derelict Station Hull (unclaimed)';
     } else if ((p.kind === 'planet' || p.kind === 'moon') && (P_ = planetSprite(p, now))) { const w = P_.S * P_.scale * z; ctx.drawImage(P_.canvas, x - w / 2, y - w / 2, w, w); }   // 1.0.1: procedural planets (old art until built)
+    else if (p.kind === 'station' && (P_ = stationSprite(p))) { const s2 = p.r * 2.5 * z; ctx.drawImage(P_, x - s2 / 2, y - s2 / 2, s2, s2); }   // 2.5: rendered stations
     else { const im = planetImage(p); ctx.drawImage(im, x - im.width * z / 2, y - im.height * z / 2, im.width * z, im.height * z); }
     if (G.hoverStellar === p.id && G.navStellar !== p.id) { ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.setLineDash([3, 6]); ctx.beginPath(); ctx.arc(x, y, p.r * z * 1.15 + 8, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
     if (G.navStellar === p.id) { ctx.strokeStyle = 'rgba(120,200,255,.6)'; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(x, y, p.r * z * 1.15 + 8, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
@@ -375,7 +403,8 @@ export function draw(G, ctx, W, H, dt, now) {
   // asteroids, gas pockets and crystal clusters
   for (const k of G.rocks || []) {
     if (!k.hp) continue; const x = sx(k.x), y = sy(k.y), R = k.r * z; if (x < -R * 2 || y < -R * 2 || x > W + R * 2 || y > H + R * 2) continue;
-    const im = rockImage(k), s2 = im.width * z; ctx.save(); ctx.translate(x, y); ctx.rotate((now / 1000) * (k.ore === 'gas' ? 0.05 : 0.12) * ((k.id % 2) ? 1 : -1) + k.id);
+    const ri = k.ore !== 'gas' && objImg(k.ore === 'shards' ? 'crys' + (k.id % 4) : 'rock' + (k.id % 10)), rr = ri && ri.complete && ri.naturalWidth;   // 2.5: rendered asteroids
+    const im = rr ? ri : rockImage(k), s2 = rr ? k.r * 2.35 * z : im.width * z; ctx.save(); ctx.translate(x, y); ctx.rotate((now / 1000) * (k.ore === 'gas' ? 0.05 : 0.12) * ((k.id % 2) ? 1 : -1) + k.id);
     ctx.globalAlpha = 0.45 + 0.55 * k.hp / 100; if (k.ore === 'gas') ctx.globalCompositeOperation = 'lighter';
     ctx.drawImage(im, -s2 / 2, -s2 / 2, s2, s2); ctx.restore(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     if (k.hp < 100 && k.hp > 0) { ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x - R * 0.6, y + R + 4, R * 1.2, 3); ctx.fillStyle = '#e8c070'; ctx.fillRect(x - R * 0.6, y + R + 4, R * 1.2 * k.hp / 100, 3); }
@@ -384,7 +413,10 @@ export function draw(G, ctx, W, H, dt, now) {
   // survey points for an active survey job here
   for (const [px_, py_] of surveyPoints(G)) { const x = sx(px_), y = sy(py_); ctx.strokeStyle = 'rgba(90,216,255,.55)'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 8]); ctx.beginPath(); ctx.arc(x, y, 450 * z, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#5ad8ff'; ctx.font = '12px Tahoma'; ctx.textAlign = 'center'; ctx.fillText('SURVEY POINT', x, y); }
   // loot: credits (gold), salvage crates (blue), ore (brown), gas (green), crystal shards (violet)
-  for (const l of G.loot) { const x = sx(l.x), y = sy(l.y); ctx.save(); ctx.translate(x, y); ctx.rotate(now / 600 + l.id); ctx.fillStyle = LOOT_COL[l.kind] || '#fff'; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = l.kind === 5 ? 16 : 8; const q = l.kind === 5 ? 6 + Math.sin(now / 200) : l.kind >= 2 ? 3 : 4; ctx.fillRect(-q * z, -q * z, q * 2 * z, q * 2 * z); ctx.restore(); }
+  for (const l of G.loot) { const x = sx(l.x), y = sy(l.y), li = objImg('loot' + Math.min(5, l.kind || 0));   // 2.5: rendered loot
+    if (li.complete && li.naturalWidth) { const q = (l.kind === 5 ? 30 + Math.sin(now / 200) * 2 : 18) * Math.max(0.6, z); ctx.save(); ctx.translate(x, y); ctx.rotate(now / 900 + l.id);
+      ctx.shadowColor = LOOT_COL[l.kind] || '#fff'; ctx.shadowBlur = l.kind === 5 ? 18 : 9; ctx.drawImage(li, -q / 2, -q / 2, q, q); ctx.restore(); continue; }
+    ctx.save(); ctx.translate(x, y); ctx.rotate(now / 600 + l.id); ctx.fillStyle = LOOT_COL[l.kind] || '#fff'; ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = l.kind === 5 ? 16 : 8; const q = l.kind === 5 ? 6 + Math.sin(now / 200) : l.kind >= 2 ? 3 : 4; ctx.fillRect(-q * z, -q * z, q * 2 * z, q * 2 * z); ctx.restore(); }
   // shots
   ctx.lineCap = 'round';
   for (const s of G.shots) {
@@ -428,6 +460,11 @@ export function draw(G, ctx, W, H, dt, now) {
       ctx.fillStyle = hg; ctx.fillRect(x - L, y - Math.max(1, 2.2 * z * k), L * 2, Math.max(2, 4.4 * z * k)); ctx.globalCompositeOperation = 'source-over'; continue;
     }
     if (f.ring) { ctx.globalAlpha = k; ctx.strokeStyle = f.c; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, f.r * (1 - k) * z + 4, 0, Math.PI * 2); f.fill ? (ctx.fillStyle = f.c, ctx.globalAlpha = k * 0.5, ctx.fill()) : ctx.stroke(); ctx.globalAlpha = 1; continue; }
+    if (f.anim) { const im = fxImg(f.anim); if (im.complete && im.naturalWidth) { const fs = im.naturalWidth / 6, fr = Math.min(23, Math.floor((1 - k) * 24)), sz = f.r * 2.6 * z;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(f.rot); ctx.drawImage(im, (fr % 6) * fs, Math.floor(fr / 6) * fs, fs, fs, -sz / 2, -sz / 2, sz, sz); ctx.restore(); } continue; }
+    if (f.flare) { const im = fxImg('flare'); if (im.complete && im.naturalWidth) { const sz = f.r * 2 * z * (0.6 + 0.4 * k); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = k; ctx.drawImage(im, x - sz / 2, y - sz / 2, sz, sz); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } continue; }
+    if (f.debris && fxImg('shards').complete && fxImg('shards').naturalWidth) { f.rot += f.vr * dt; const im = fxImg('shards'), si = f.si ?? (f.si = Math.floor(Math.random() * 8)), sz = Math.max(6, f.s * 5) * z;
+      ctx.save(); ctx.translate(x, y); ctx.rotate(f.rot); ctx.globalAlpha = Math.min(1, k * 2); ctx.drawImage(im, si * 48, 0, 48, 48, -sz / 2, -sz / 2, sz, sz); if (k > 0.7) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (k - 0.7) * 2; ctx.drawImage(im, si * 48, 0, 48, 48, -sz / 2, -sz / 2, sz, sz); ctx.globalCompositeOperation = 'source-over'; } ctx.restore(); ctx.globalAlpha = 1; continue; }
     if (f.ball) {
       const r = f.r * (0.35 + 0.65 * (1 - k * k)) * z, g = ctx.createRadialGradient(x, y, 0, x, y, r);
       g.addColorStop(0, `rgba(255,255,230,${k})`); g.addColorStop(0.35, `rgba(255,200,90,${k * 0.9})`); g.addColorStop(0.7, `rgba(255,90,30,${k * 0.6})`); g.addColorStop(1, 'rgba(80,20,0,0)');

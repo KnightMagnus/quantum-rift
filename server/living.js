@@ -60,6 +60,7 @@ export const LivingMixin = {
     const st = this.stateOf(sys); if (!st || !st.need) return; const X = STATES[st.kind];
     const counts = (X.need.cid && what === 'cid:' + X.need.cid) || (X.need.kills === 'pirate' && what === 'kill:pirate') || (X.need.kills === 'enemy' && what === 'kill:' + st.enemy);
     if (!counts) return;
+    s.data.stats.stateHelp = (s.data.stats.stateHelp || 0) + 1;   // 2.5: the career step
     const before = st.got; st.got = Math.min(st.need, st.got + n); this.db.touch();
     if (st.got >= st.need) return this.resolveState(s, sys);
     if (Math.floor(before / (st.need / 4)) !== Math.floor(st.got / (st.need / 4))) this.toast(s, `${X.name} in ${SYS[sys].name}: ${st.got} / ${st.need} ${X.need.cid ? 't delivered' : 'destroyed'}.`);

@@ -1,7 +1,8 @@
 // Quantum Rift client: connection, input, client-side prediction, render loop.
 import { SYS, STELLARS, FACTIONS, FACTION_HULLS } from '/shared/galaxy.js';
 import { TUTORIAL } from '/shared/tutorial.js';
-import { step, DT, TICK, hostileFactions, weaponColor, augmentAssets, K, wrap } from '/shared/rules.js';
+import { step, DT, TICK, hostileFactions, weaponColor, augmentAssets, K, wrap, route } from '/shared/rules.js';
+import { STATES } from '/shared/living.js';
 import { draw, radar, boom, spark, flash, blast, shieldHit, dmgNumber, addShake, cam, FAC } from './render.js';
 import * as audio from './audio.js';
 import { setRadioLevel } from './radio.js';
@@ -11,7 +12,7 @@ import { boardHtml } from './hangar_ui.js';
 import { ANOMALIES } from '/shared/fronts.js';
 import { arenaSystem } from '/shared/frontier.js';
 import { refreshStores } from './ui.js';
-import { initUI, hud, toast, chatLine, showLanded, hideLanded, renderLanded, refreshCompanion, drawMini, openMap, closeMap, plot, showDead, ctab } from './ui.js';
+import { initUI, hud, toast, ask, chatLine, showLanded, hideLanded, renderLanded, refreshCompanion, drawMini, openMap, closeMap, plot, showDead, ctab } from './ui.js';
 
 const $ = (id) => document.getElementById(id);
 const G = window.G = {
@@ -143,7 +144,10 @@ function onMessage(m) {
     case 'hail': if ($('hailbox').classList.contains('hidden')) audio.ui('hail'); showHail(m); break;                       // 1.1
     case 'order': G.order = m.o; break;
     case 'rivals': G.rivals = m.list; if (!$('infobox').classList.contains('hidden')) renderInfo(); break;
-    case 'world': G.world = m; drawMini(); refreshCompanion(); break;
+    case 'world': {   // 2.5: a new trouble close by gets a beacon and a line of news
+      const was = G.world && G.world.states; G.world = m; drawMini(); refreshCompanion();
+      if (was && m.states && G.sys) for (const [sys, st] of Object.entries(m.states)) if (!was[sys] && SYS[sys]) { const r = sys === G.sys ? [] : route(SYS, G.sys, sys); if (r && r.length <= 3) { audio.ui('state', 0.6); toast(`News: ${STATES[st.k] ? STATES[st.k].name.toLowerCase() : 'trouble'} in ${SYS[sys].name}${r.length ? `, ${r.length} jump${r.length > 1 ? 's' : ''} away` : ''}.`); break; } }
+      break; }
     case 'arena': if (m.id) { SYS[m.id] = SYS[m.id] || arenaSystem(m.id); G.arena = m; } else G.arena = null; break;
     case 'boards': G.boards = G.boards || {}; G.boards[m.cat] = m.list; if (G.landed) renderLanded(); break;
     case 'profile': G.prof = m.p; if (!m.p) toast('No captain by that name.'); if (G.landed) renderLanded(); break;
@@ -158,7 +162,7 @@ function showStory(m) {
   if (!$('storybox').classList.contains('hidden')) { storyQ.push(m); return; }   // one pop-up at a time: the rest wait their turn
   $('storyt').textContent = m.title; $('storyx').textContent = m.text; document.querySelector('#storybox .storytag').textContent = m.tag || 'STORY';
   $('storyb').innerHTML = m.done ? '<button class="btn" id="storyok">CONTINUE</button>' : `<button class="btn sm" id="storyno">${m.ref || 'Not now'}</button><button class="btn" id="storyyes">${m.acc || 'Accept'}</button>`;
-  $('storybox').classList.remove('hidden'); audio.ui(m.done ? 'complete' : 'ping', 0.7);
+  $('storybox').classList.remove('hidden'); audio.ui(/QUEST|SIDE STORY/.test(m.tag || '') ? 'quest' : m.done ? 'complete' : 'ping', 0.7);   // 2.5: story beats have their own sting
   const close = () => { $('storybox').classList.add('hidden'); if (storyQ.length) setTimeout(() => showStory(storyQ.shift()), 150); };
   if (m.done) $('storyok').onclick = close; else { $('storyno').onclick = close; $('storyyes').onclick = () => { send(m.arc ? { t: 'arcacc', fac: m.arc } : { t: 'storyacc', id: m.id }); close(); }; }
 }
@@ -459,7 +463,7 @@ function renderTut() {
 $('tutn').parentElement.style.cursor = 'pointer'; $('tutn').title = 'Click to collapse or expand';
 $('tutn').onclick = () => { G.opts.tutMin = !G.opts.tutMin; saveOpts(); $('tut').classList.toggle('mini', !!G.opts.tutMin); };   // 2.0: the career panel folds away
 $('tut').classList.toggle('mini', !!G.opts.tutMin);
-$('tutskip').onclick = () => { if (confirm('Hide the career guide? You will not get the remaining rewards.')) send({ t: 'tutskip' }); };
+$('tutskip').onclick = () => { ask('Hide the career guide? You will not get the remaining rewards.', () => send({ t: 'tutskip' })); };
 
 // ------------------------------------------------------------------ options
 const CHECKS = ['dmg', 'shake', 'mouseAim', 'notify', 'cb', 'mute'];
