@@ -1,0 +1,68 @@
+// 1.0.1: active mission tracking. Works out where each mission (and the main story) wants you to go, for the MISSIONS
+// companion tab and the gold target markers on the galaxy map.
+import { SYS, STELLARS } from '/shared/galaxy.js';
+import { STORY } from '/shared/story.js';
+import { route } from '/shared/rules.js';
+import { TUTORIAL } from '/shared/tutorial.js';
+
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const sysOf = (stellar) => STELLARS[stellar] ? STELLARS[stellar].system : null;
+const placeName = (stellar) => STELLARS[stellar] ? `${STELLARS[stellar].name} (${SYS[sysOf(stellar)].name})` : '';
+
+// [{ key, kind: 'story'|'job', title, text, status, sys, done }]  sys = the system to fly to next (null when anywhere will do)
+export function missionTargets(G) {
+  const y = G.you; if (!y) return [];
+  const out = [], S = y.story;
+  const ti = y.tut ?? TUTORIAL.length, T = TUTORIAL[ti];   // 1.0.3: the current career step leads the list
+  if (T) out.push({ key: 'career', kind: 'career', title: T.title, text: T.text, status: `Career step ${ti + 1} of ${TUTORIAL.length} · reward ${T.reward.toLocaleString()} cr${T.mat ? ' + a crate' : ''}`, sys: null });
+  if (S && !S.pass) {
+    if (S.active) {
+      const st = STORY.find(x => x.id === S.active.id);
+      if (st) {
+        let sys, status, stl = null;
+        if (st.type === 'carry') { sys = sysOf(st.dest); status = `Land at ${placeName(st.dest)}.`; stl = st.dest; }
+        else if (S.active.ready) { sys = sysOf(st.back); status = `Return to ${placeName(st.back)}.`; stl = st.back; }
+        else { sys = st.sys; status = `Go to the ${SYS[st.sys].name} system.` + (st.count ? ` ${S.active.got || 0} / ${st.count} done.` : ''); }
+        out.push({ key: 'story', kind: 'story', title: st.title, text: st.brief, status, sys, stellar: stl });
+      }
+    } else if (STORY[S.step]) {
+      const st = STORY[S.step];
+      out.push({ key: 'story', kind: 'story', title: st.title, text: 'The next part of the main story is waiting.', status: `Land at ${placeName(st.at)}.`, sys: sysOf(st.at), stellar: st.at });
+    }
+  }
+  for (const X of y.arcs || []) if (X.active) {   // 1.2 faction arcs
+    const a = X.active, sys = a.type === 'carry' ? sysOf(a.dest) : a.ready ? sysOf(a.back) : a.sys;
+    const status = a.type === 'carry' ? `Land at ${placeName(a.dest)}.` : a.ready ? `Return to ${placeName(a.back)}.` : `Go to the ${SYS[a.sys].name} system.${a.count ? ` ${a.got || 0} / ${a.count} done.` : ''}`;
+    out.push({ key: 'arc-' + X.fac, kind: 'arc', title: a.title, text: a.brief, status, sys, tag: X.name, stellar: a.type === 'carry' ? a.dest : a.ready ? a.back : null });
+  }
+  for (const m of y.missions || []) {
+    const there = m.sys && SYS[m.sys] ? SYS[m.sys].name : '';
+    let status, sys = m.sys || null;
+    if (m.done) { status = 'Complete: land anywhere to collect the reward.'; sys = null; }
+    else if (m.dest && STELLARS[m.dest]) { status = `Land at ${placeName(m.dest)}.`; sys = sysOf(m.dest); }
+    else if (m.type === 'patrol') status = `${m.got || 0} / ${m.need} kills in ${there}.`;
+    else if (m.type === 'survey') status = `${(m.seen || []).length} / ${m.points ? m.points.length : 3} points in ${there}, then land anywhere.`;
+    else if (m.type === 'bounty' || m.type === 'assassinate') status = `Destroy ${m.targetName} in ${there}.`;
+    else if (m.type === 'rescue') status = `Find and board the ${m.wreckName} in ${there}.`;
+    else status = there ? `Go to ${there}.` : '';
+    if (m.deadline) { const left = Math.max(0, Math.ceil((m.deadline - Date.now()) / 60000)); status = `⏱ ${left} min left · ${status}`; }
+    out.push({ stellar: m.done ? null : (m.dest || null), key: m.id, kind: m.exp ? 'arc' : 'job', tag: m.exp ? 'FARSIDE EXPEDITION' : null, title: m.title, text: m.text, status, sys, reward: m.reward, urgent: !!m.deadline });
+  }
+  return out;
+}
+
+export function missionsHtml(G) {
+  const T = missionTargets(G);
+  if (!T.length) return '<div class="dim small" style="padding:6px">No active missions. Mission boards (the JOBS tab when landed) post new work every ten minutes.</div>';
+  return T.map(t => {
+    let jumps = '';
+    if (t.sys && G.sys) { if (t.sys === G.sys) jumps = '<span style="color:var(--ok)">in this system</span>'; else { const r = route(SYS, G.sys, t.sys); jumps = r && r.length ? `${r.length} jump${r.length > 1 ? 's' : ''}` : 'no known route'; } }
+    return `<div class="mcard${t.kind === 'story' || t.kind === 'arc' ? ' story' : t.kind === 'career' ? ' career' : ''}${t.urgent ? ' urgent' : ''}">
+      ${t.kind === 'story' ? '<div class="storytag">MAIN STORY</div>' : t.kind === 'career' ? '<div class="careertag">CAREER</div>' : t.kind === 'arc' ? `<div class="storytag">${esc(t.tag || 'FACTION STORY')}</div>` : ''}
+      <div class="t">${esc(t.title)}</div>
+      <div class="mstat">${esc(t.status)}</div>
+      <div class="dim small">${esc(t.text)}</div>
+      <div class="mfoot">${t.reward ? `<span class="cr small">${Math.round(t.reward).toLocaleString()} cr</span>` : '<span></span>'}<span class="dim small">${jumps}</span>${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}${t.kind === 'job' || (t.kind === 'arc' && t.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${esc(t.key)}" title="Drop this job">✕</button>` : ''}</div>
+    </div>`;
+  }).join('');
+}

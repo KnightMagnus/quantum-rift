@@ -1,0 +1,48 @@
+[
+  {
+    "name": "KNIGHT",
+    "pass": "1234",
+    "credits": 30000000,
+    "ship": 736,
+    "shipName": "Excalibur",
+    "station": {
+      "ops": 5,
+      "research": "all",
+      "site": "site-qgate",
+      "shuttles": "all"
+    },
+    "mats": [
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "system": "qgate",
+    "stellar": "site-qgate",
+    "log": "Took command of the Constitution \"Excalibur\" and a fully built Personal Station at Quantum Gate.",
+    "sync": true,
+    "officers": [
+      {
+        "name": "Admiral Selene Castell",
+        "race": "quantum",
+        "role": "captain",
+        "slot": "captain"
+      },
+      {
+        "name": "Brakka Anvilhand",
+        "race": "korrund",
+        "role": "engineer",
+        "slot": "bridge1"
+      },
+      {
+        "name": "Thrix Wingsworn",
+        "race": "vashari",
+        "role": "gunner",
+        "slot": "bridge2"
+      }
+    ],
+    "blueprints": 40,
+    "storyPass": true
+  }
+]

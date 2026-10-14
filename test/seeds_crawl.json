@@ -1,0 +1,224 @@
+[
+ {
+  "name": "KNIGHT",
+  "pass": "1234",
+  "credits": 30000000,
+  "ship": 736,
+  "shipName": "Excalibur",
+  "station": {
+   "ops": 5,
+   "research": "all",
+   "site": "site-qgate",
+   "shuttles": "all"
+  },
+  "mats": [
+   5,
+   5,
+   5,
+   5,
+   5
+  ],
+  "system": "qgate",
+  "stellar": "site-qgate",
+  "log": "Took command of the Constitution \"Excalibur\" and a fully built Personal Station at Quantum Gate.",
+  "sync": true,
+  "officers": [
+   {
+    "name": "Admiral Selene Castell",
+    "race": "quantum",
+    "role": "captain",
+    "slot": "captain"
+   },
+   {
+    "name": "Brakka Anvilhand",
+    "race": "korrund",
+    "role": "engineer",
+    "slot": "bridge1"
+   },
+   {
+    "name": "Thrix Wingsworn",
+    "race": "vashari",
+    "role": "gunner",
+    "slot": "bridge2"
+   }
+  ],
+  "blueprints": 40,
+  "storyPass": true
+ },
+ {
+  "name": "CrawlHub",
+  "pass": "secret",
+  "credits": 20000000,
+  "ship": 736,
+  "system": "qgate",
+  "stellar": "qstation",
+  "log": "Crawl.",
+  "extra": {
+   "shards": 50,
+   "syn": 2500
+  },
+  "rep": {
+   "korrund": 50,
+   "quantum": 50,
+   "spacer": 50,
+   "vashari": 50,
+   "ylith": 50,
+   "sarn": 50,
+   "thalassi": 50
+  }
+ },
+ {
+  "name": "CrawlYard",
+  "pass": "secret",
+  "credits": 20000000,
+  "ship": 736,
+  "system": "qgate",
+  "stellar": "concordia",
+  "log": "Crawl.",
+  "extra": {
+   "shards": 50,
+   "syn": 2500
+  },
+  "rep": {
+   "korrund": 50,
+   "quantum": 50,
+   "spacer": 50,
+   "vashari": 50,
+   "ylith": 50,
+   "sarn": 50,
+   "thalassi": 50
+  }
+ },
+ {
+  "name": "CrawlOutlaw",
+  "pass": "secret",
+  "credits": 20000000,
+  "ship": 736,
+  "system": "gloam",
+  "stellar": "gloam-remnant",
+  "log": "Crawl.",
+  "extra": {
+   "shards": 50,
+   "syn": 2500
+  },
+  "rep": {
+   "korrund": 50,
+   "quantum": 50,
+   "spacer": 50,
+   "vashari": 50,
+   "ylith": 50,
+   "sarn": 50,
+   "thalassi": 50
+  }
+ },
+ {
+  "name": "CrawlFar",
+  "pass": "secret",
+  "credits": 20000000,
+  "ship": 736,
+  "system": "coldharbor",
+  "stellar": "coldharbor",
+  "log": "Crawl.",
+  "extra": {
+   "shards": 50,
+   "syn": 2500
+  },
+  "rep": {
+   "korrund": 50,
+   "quantum": 50,
+   "spacer": 50,
+   "vashari": 50,
+   "ylith": 50,
+   "sarn": 50,
+   "thalassi": 50
+  }
+ },
+ {
+  "name": "CrawlMoon",
+  "pass": "secret",
+  "credits": 20000000,
+  "ship": 736,
+  "system": "longhaul",
+  "stellar": "cartwheel",
+  "log": "Crawl.",
+  "extra": {
+   "shards": 50,
+   "syn": 2500
+  },
+  "rep": {
+   "korrund": 50,
+   "quantum": 50,
+   "spacer": 50,
+   "vashari": 50,
+   "ylith": 50,
+   "sarn": 50,
+   "thalassi": 50
+  }
+ },
+ {
+  "name": "CrawlStation",
+  "pass": "secret",
+  "credits": 20000000,
+  "ship": 736,
+  "system": "meridian",
+  "stellar": "meridian-yards",
+  "log": "Crawl.",
+  "extra": {
+   "shards": 50,
+   "syn": 2500
+  },
+  "rep": {
+   "korrund": 50,
+   "quantum": 50,
+   "spacer": 50,
+   "vashari": 50,
+   "ylith": 50,
+   "sarn": 50,
+   "thalassi": 50
+  }
+ },
+ {
+  "name": "CrawlCap",
+  "pass": "secret",
+  "credits": 20000000,
+  "ship": 736,
+  "system": "mountainhold",
+  "stellar": "hold",
+  "log": "Crawl.",
+  "extra": {
+   "shards": 50,
+   "syn": 2500
+  },
+  "rep": {
+   "korrund": 50,
+   "quantum": 50,
+   "spacer": 50,
+   "vashari": 50,
+   "ylith": 50,
+   "sarn": 50,
+   "thalassi": 50
+  }
+ },
+ {
+  "name": "CrawlEarth",
+  "pass": "secret",
+  "credits": 20000000,
+  "ship": 736,
+  "system": "sol",
+  "stellar": "earth",
+  "log": "Crawl.",
+  "extra": {
+   "shards": 50,
+   "syn": 2500
+  },
+  "rep": {
+   "korrund": 50,
+   "quantum": 50,
+   "spacer": 50,
+   "vashari": 50,
+   "ylith": 50,
+   "sarn": 50,
+   "thalassi": 50
+  }
+ }
+]

@@ -1,0 +1,15 @@
+{
+  "name": "quantum-rift",
+  "version": "2.0.3",
+  "description": "Quantum Rift: an online multiplayer space trading and combat game built from the EV Quantum assets.",
+  "type": "module",
+  "main": "server/main.js",
+  "scripts": {
+    "start": "node server/main.js",
+    "test": "node test/bot.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED"
+}

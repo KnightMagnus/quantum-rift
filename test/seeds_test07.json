@@ -1,0 +1,23 @@
+[
+ {
+  "name": "Colonist",
+  "pass": "secret",
+  "credits": 20000000,
+  "ship": 713,
+  "shipName": "Homestead",
+  "mats": [
+   10,
+   10,
+   10,
+   10,
+   10
+  ],
+  "system": "wild-landing",
+  "stellar": "wild-minor",
+  "station": {
+   "ops": 3,
+   "research": "all"
+  },
+  "log": "Test colonist."
+ }
+]
