@@ -2,7 +2,8 @@
 // refining crates up a grade, the drydock, and boarding disabled ships.
 import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES, RESEARCH } from '../shared/galaxy.js';
 import { SHUTTLES, SHUTTLE_JOBS, BAYS_BY_OPS, SHUTTLE_REPAIR, JOB_WINDOW_H, ROLES, RARITY, RACE_ROLES, OFFICER_NAMES, BRIDGE_SLOTS, ROSTER_MAX,
-         XP_LEVEL, MAX_LEVEL, RESEARCH_QUEUE_MAX, REFINE_UP, DOCK_BY_OPS, CAPTURE_SELL } from '../shared/hangar.js';
+         XP_LEVEL, MAX_LEVEL, RESEARCH_QUEUE_MAX, REFINE_UP, CAPTURE_SELL } from '../shared/hangar.js';
+import { HANGAR_BY_OPS } from '../shared/docks.js';
 import { researchBonus, captainBonus, shipStats, makeLoadout, credits } from '../shared/rules.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -28,7 +29,7 @@ export const HangarMixin = {
   bonus(d) { return captainBonus(d); },
   stats(d) { return shipStats(this.A, d.ship, captainBonus(d)); },
   bays(d) { const b = researchBonus(d.station); return d.station.site ? BAYS_BY_OPS[d.station.ops] + (b.bays || 0) : 0; },
-  dockSlots(d) { const b = researchBonus(d.station); return d.station.site ? DOCK_BY_OPS[d.station.ops] + (b.dockSlots || 0) : 0; },
+  dockSlots(d) { const b = researchBonus(d.station); return d.station.site ? HANGAR_BY_OPS[d.station.ops] + (b.dockSlots || 0) : 0; },   // 2.1: stored-ship berths
 
   // ------------------------------------------------------------------ officers
   // a bar on any inhabited world with a job board posts three officers of the local race each hour
@@ -66,6 +67,7 @@ export const HangarMixin = {
         if (d.shuttles.some(sh => sh.crew === o.id && sh.state === 'out')) return this.toast(s, `${o.name} is out on a shuttle job.`);
         for (const k of BRIDGE_SLOTS) if (d.bridge[k] === o.id) delete d.bridge[k];
         for (const sh of d.shuttles) if (sh.crew === o.id) sh.crew = null;
+        if (this.unwingOfficer) this.unwingOfficer(d, o.id);   // 2.1: one post at a time
         if (BRIDGE_SLOTS.includes(m.slot)) d.bridge[m.slot] = o.id;
         break;
       }
@@ -74,7 +76,7 @@ export const HangarMixin = {
         if (d.shuttles.some(sh => sh.crew === o.id && sh.state === 'out')) return this.toast(s, `${o.name} is out on a shuttle job.`);
         for (const k of BRIDGE_SLOTS) if (d.bridge[k] === o.id) delete d.bridge[k];
         for (const sh of d.shuttles) if (sh.crew === o.id) sh.crew = null;
-        d.officers = d.officers.filter(x => x !== o); this.log(d, `${o.name} left your crew.`);
+        if (this.unwingOfficer) this.unwingOfficer(d, o.id); d.officers = d.officers.filter(x => x !== o); this.log(d, `${o.name} left your crew.`);
         break;
       }
       default: return;
@@ -278,32 +280,15 @@ export const HangarMixin = {
     const d = s.data, p = STELLARS[d.stellar];
     if (!p || s.ent || !this.ownSite(d, p)) return this.toast(s, 'The drydock is at your Personal Station.');
     switch (m.op) {
-      case 'store': {   // put the current ship in the drydock and fly a stored one (or a fresh Gnat if none chosen)
-        const i = m.i | 0, slots = this.dockSlots(d);
-        const used = Object.values(d.cargo).reduce((a, b) => a + b, 0); if (used) return this.toast(s, 'Unload your cargo first.');
-        const cur = { ship: d.ship, escorts: d.escorts, bridge: d.bridge };
-        if (m.i === undefined || m.i === null || m.i < 0) {
-          if (d.shipless) return this.toast(s, 'You have no active ship to store.');
-          if (d.dock.length >= slots) return this.toast(s, 'Every berth is taken.');
-          // 1.0.2: no free station Gnat any more: you are left without an active ship until you choose one
-          d.dock.push(cur); d.ship = makeLoadout(this.A, 703, ''); d.shipless = true; d.escorts = []; d.bridge = {};
-          this.toast(s, `${this.A.ships[cur.ship.hull].name} stored. You have no active ship: choose FLY THIS on a stored ship, or buy one at a shipyard.`);
-        } else {
-          const st = d.dock[i]; if (!st) return;
-          { const why = this.fitsJobs(d, st.ship.hull, false); if (why) return this.toast(s, why + ' Finish those jobs first.'); }   // 2.0.3
-          if (d.shipless) d.dock.splice(i, 1); else d.dock[i] = cur;   // 2.0.3: no more 'Tender' special case (it deleted ships renamed Tender)   // nothing to swap in (or an old station Gnat): the berth is freed
-          d.shipless = false; d.ship = st.ship; d.escorts = st.escorts || []; d.bridge = st.bridge || {};
-          for (const k of BRIDGE_SLOTS) if (d.bridge[k] && !d.officers.some(o => o.id === d.bridge[k])) delete d.bridge[k];
-          this.toast(s, `Now flying the ${this.A.ships[d.ship.hull].name} "${d.ship.name}".`);
-        }
-        // an officer can only serve on one bridge: clear them from stored presets
-        const onBridge = new Set(BRIDGE_SLOTS.map(k => d.bridge[k]).filter(Boolean));
-        for (const x of d.dock) for (const k of BRIDGE_SLOTS) if (x.bridge && onBridge.has(x.bridge[k])) delete x.bridge[k];
-        d.fuel = undefined; break;
+      case 'store': {   // 2.1: kept for older clients: FLY THIS = make it the active dock's lead; no index = store the ship you fly
+        const st = m.i === undefined || m.i === null || m.i < 0 ? null : d.dock[m.i | 0];
+        if (m.i >= 0 && !st) return;
+        if (!st && d.shipless) return this.toast(s, 'You have no active ship to store.');
+        return this.docksOp(s, { op: 'assign', k: d.activeDock, slot: 'lead', uid: st ? st.ship.uid : null });
       }
       case 'sell': {
-        const st = d.dock[m.i | 0]; if (!st) return;
-        const v = this.storedValue(st); d.credits += v; d.dock.splice(m.i | 0, 1);
+        const st = m.uid ? d.dock.find(x => x.ship.uid === m.uid) : d.dock[m.i | 0]; if (!st) return;
+        const v = this.storedValue(st); d.credits += v; d.dock = d.dock.filter(x => x !== st); this.unassign(d, st.ship.uid);
         this.toast(s, `Sold the ${this.A.ships[st.ship.hull].name} for ${credits(v)} credits.`); break;
       }
       default: return;
@@ -344,7 +329,7 @@ export const HangarMixin = {
         }
         const loadout = makeLoadout(this.A, t.hull, `Prize ${H.name.split(' ')[0]}`);
         if (d.dock.length < this.dockSlots(d)) {
-          d.dock.push({ ship: loadout, escorts: [], bridge: {} });
+          loadout.uid = this.shipUid(d); d.dock.push({ ship: loadout, bridge: {} });
           this.toast(s, `Captured the ${H.name}! A prize crew takes her to your drydock.${repHit(15)}`);
         } else {
           const v = Math.round((H.cost || 0) * CAPTURE_SELL); d.credits += v;

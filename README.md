@@ -160,6 +160,7 @@ simulated at full rate.
 - `python3 test/v103_radio.py <outdir>`: the in-game radio, with iHeart mocked.
 - `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
 - `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
+- `node test/v21.js`: 2.1 checks (docks, wingmate ships and crews, buying to the hangar, save upgrade, friendly fire).
 - `node test/fuzz.js [rounds]`: the message fuzzer and soak test; fails on any server error.
 - `python3 test/crawl.py <outdir>`: the UI crawler (`SEEDS_FILE=test/seeds_crawl.json`).
 - `node test/v201.js`: 2.0.1 checks (traders settle and land; escorts keep formation on a moving leader).
@@ -251,6 +252,35 @@ The network protocol is JSON over one WebSocket:
 - Your own ship is reconciled against the server by replaying the inputs the server has not processed yet.
 
 ## Changelog
+
+### 2.1 "Docks"
+- **Docks A to E.** Your Personal Station has lettered docks: one at Ops 0–1, then one more per Ops level, up to five at Ops 5.
+  - Each dock holds a **lead ship** and up to **two wingmate ships**, all picked from your stored ships. A Herald in the lead slot commands a third wingmate.
+  - You fly the lead of your **active** dock, and its wingmates fly in formation with their own outfits.
+  - Switch docks with the DOCK A–E buttons beside DEPART, or on the new STATION → DOCKS screen, where you assign every slot.
+  - The sidebar shows your active dock and how its wingmates are doing.
+- **Wingmates are ships now.** Hiring wingmates at the station is gone.
+  - The wingmate hulls are sold at your station shipyard (Ops 4, Armada hulls at Ops 5) and go straight to your hangar. They fly only as wingmates.
+  - Any ship can be a wingmate.
+  - A wingmate knocked out in a fight is towed home and repaired in ten minutes, or at once for a fee. Wingmates are no longer lost when you die.
+- **Officers crew wingmates.** Each wingmate has a captain and a crew slot, and the officers there boost that ship. An officer serves one post at a time. The roster grows from 12 to 24.
+- **More stored ships.** The hangar holds 3 / 5 / 8 / 11 / 14 ships at Ops 1–5, plus the Drydock Annex research.
+  - Every shipyard has **BUY TO HANGAR**, which skips the trade-in.
+  - Stored ships sell for half the hull plus half the outfits.
+  - Saves from 2.0.x are upgraded: hired escorts become stored ships flying as Dock A's wingmates.
+- **Fire at will.** Your own guns now hit any ship, as in EV Nova, not just hostile ones.
+  - A ship you hit turns on you, and its faction holds it against you.
+  - Your wingmates are never hit, and other players only in lawless space as before.
+- **New hyperspace jump.**
+  - Rings of energy close in as the drive spools, the stars smear into streaks along your heading, and you leave in a white bloom with a lens streak.
+  - Arrival plays it in reverse with a shockwave.
+  - Other ships leave a blue ghost trail as they jump, and flash as they go.
+  - New synthesized jump, arrival and distant-jump sounds replace the old sweep. Ships with the fast hyperdrive get their own short version.
+- **Quieter, with an easy volume control.**
+  - Default levels are lower, and older saved settings are turned down once.
+  - A speaker button in the command bar opens a master volume slider with MUTE, and **N** mutes from anywhere.
+  - Volume sliders (options, quick volume, radio) are red to match the interface.
+- **Interface:** the station's ACADEMY section is replaced by DOCKS; HANGAR is now SHUTTLES and DRYDOCK is now REFITS. Assigning ships no longer floods the screen with messages.
 
 ### 2.0.3
 - **Newcomer protection.**

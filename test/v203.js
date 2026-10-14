@@ -27,7 +27,7 @@ ok(lost === 0, `a fresh Gnat survives eight arrivals in Far Mouth, where 2.0.2 l
 const sp = g.spaces.farmouth, me = arrive(N, 'farmouth');
 const pir = sp.makeShip({ hull: TRAFFIC.hollow.war[0], faction: 'hollow', x: me.x + 300, y: me.y, a: 0, ai: 'raid' });
 ok(sp.spared(pir, me), 'a pirate next to a newly arrived captain leaves them alone');
-me.graceT = 0; ok(sp.spared(pir, me) && !sp.findTarget(pir, 2200), 'protected captains are never picked as targets in inner space');
+me.graceT = 0; ok(sp.spared(pir, me) && sp.findTarget(pir, 2200) !== me, 'protected captains are never picked as targets in inner space');
 pir.aggro.add(me.id); ok(!sp.spared(pir, me), 'shooting first ends the truce for that fight');
 sp.remove(pir);
 const tgt = sp.makeShip({ hull: TRAFFIC.hollow.war[0], faction: 'hollow', x: me.x + 300, y: me.y, a: 0, ai: 'raid', mission: { id: 'x', owner: N.s.id } });
@@ -57,7 +57,7 @@ const noO = Object.values(STELLARS).find(p => p.svc.includes('L') && !p.svc.incl
 const oid = Object.keys(d.ship.outfits)[0], had = d.ship.outfits[oid]; P.send({ t: 'outfit', id: +oid, n: -1 });
 ok(d.ship.outfits[oid] === had, 'outfits can only be sold where there is an outfitter');
 P.send({ t: 'rename', name: '  <>  ' }); ok(d.ship.name === A.ships[d.ship.hull].name, 'a blank ship name falls back to the hull name');
-land('qstation'); d.escorts = [703, 704]; P.send({ t: 'station', op: 'dismiss', i: -1 }); // not own site: ignored anyway
+land('qstation'); g.docksInit(d); for (const h of [703, 704]) { const ship = (await import('../shared/rules.js')).makeLoadout(A, h, 'W' + h); ship.uid = g.shipUid(d); d.dock.push({ ship, bridge: {} }); d.docks[d.activeDock].wings.push({ uid: ship.uid }); }
 P.send({ t: 'depart' }); const sp3 = g.spaces[d.sys], eid = P.s.ent.id;
 ok([...sp3.ships.values()].filter(x => x.owner === eid).length === 2, 'escorts launch with you');
 sp3.remove(P.s.ent); g.onPlayerDeath(P.s.ent.player, sp3, null);
@@ -70,9 +70,9 @@ P.send({ t: 'abandon', id: b.id }); for (let i = 0; i < 30 * 30; i++) bsp.tick()
 ok(!bt.mission && (bt.dead || bt.ai === 'leave'), 'abandoning the bounty sends its target away');
 // drydock: Tender name no longer deletes, ship swaps check job cargo
 const site = Object.values(STELLARS).find(p => p.site && !g.siteOwner(p.id)); land(site.id); P.send({ t: 'station', op: 'claim' });
-d.credits = 1e6; d.station.ops = 3; g.hangarInit(d);
+d.credits = 1e6; d.station.ops = 3; d.dock = []; d.docks = null; g.docksInit(d);
 d.ship.name = 'Tender'; d.cargo = {}; P.send({ t: 'dock', op: 'store' }); ok(d.shipless && d.dock.length === 1, 'store the ship named Tender');
-d.dock.push({ ship: { ...d.dock[0].ship, name: 'Second' }, escorts: [], bridge: {} });
+d.dock.push({ ship: { ...d.dock[0].ship, name: 'Second', uid: g.shipUid(d) }, bridge: {} });
 P.send({ t: 'dock', op: 'store', i: 1 }); ok(d.ship.name === 'Second' && d.dock.some(x => x.ship.name === 'Tender'), 'a ship named Tender survives a drydock swap');
 P.send({ t: 'dock', op: 'store', i: 0 }); ok(d.dock.some(x => x.ship.name === 'Second'), 'swapping back stores the other ship');
 d.missions = [{ id: 'jc', type: 'cargo', qty: 999, dest: 'qstation', sys: STELLARS.qstation.system, title: 'heavy' }];
@@ -80,7 +80,6 @@ P.send({ t: 'dock', op: 'store', i: 0 }); ok(d.ship.name === 'Tender' && P.toast
 d.missions = [];
 const before = d.credits, sx = d.dock[0], O = g.O, want = Math.round(A.ships[sx.ship.hull].cost * 0.5 + Object.entries(sx.ship.outfits).reduce((a, [id, n]) => a + O[id].cost * n * 0.5, 0)); P.send({ t: 'dock', op: 'sell', i: 0 });
 ok(d.credits - before === want && want > A.ships[sx.ship.hull].cost * 0.5, 'stored ships sell for half the hull plus half the outfits');
-P.send({ t: 'station', op: 'dismiss', i: -1 }); d.escorts = [703]; P.send({ t: 'station', op: 'dismiss', i: -1 }); ok(d.escorts.length === 1, 'a bad escort index is ignored');
 // lower deck
 d.lower = ['medic']; P.send({ t: 'lower', op: 'hire', kind: Object.keys((await import('../shared/syndicate.js')).LOWER_DECK).find(k => k !== 'medic'), i: 0 }); ok(d.lower[0] === 'medic', 'hiring into a filled lower-deck berth is refused');
 // save import ignores __proto__

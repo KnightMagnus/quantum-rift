@@ -85,19 +85,6 @@ export function hangarHtml(G, atHome) {
   return h;
 }
 
-export function dockHtml(G, atHome) {
-  const y = G.you; let h = '';
-  {
-    h += `<div class="sect">DRYDOCK (${y.dock.length}/${y.dockSlots} berths)</div>`;
-    if (!y.dockSlots) h += '<p class="dim">The drydock opens at Ops 3. Stored ships keep their escorts and bridge crew, so each berth is a fleet preset.</p>';
-    else {
-      h += y.dock.map((x, i) => { const H = G.A.ships[x.ship.hull]; return `<div class="it" style="display:flex;gap:6px;align-items:center;padding:3px 0"><img src="assets/${H.img}" style="width:56px;height:40px;object-fit:contain"><div style="flex:1"><b>${esc(H.name)}</b> <span class="dim">"${esc(x.ship.name)}"</span><div class="dim small">${(x.escorts || []).length} escorts · ${Object.values(x.bridge || {}).filter(Boolean).length} officers</div></div><button class="btn sm" data-act="dock" data-op="store" data-i="${i}">FLY THIS</button> <button class="btn sm" data-act="dock" data-op="sell" data-i="${i}">SELL ${credits(Math.round((H.cost || 0) * 0.4))}</button></div>`; }).join('');
-      if (y.shipless) h += `<div class="dim small" style="color:#ff8a7a">${y.dock.length ? 'No active ship: choose FLY THIS on a stored ship.' : 'No active ship and no stored ships: buy one at a shipyard.'}</div>`;
-      else if (y.dock.length < y.dockSlots) h += '<button class="btn sm" data-act="dock" data-op="store" data-i="-1">STORE CURRENT SHIP</button> <span class="dim small">(you will have no active ship until you choose one)</span>';
-    }
-  }
-  return h;
-}
 
 // ------------------------------------------------------------------ research trees with a queue
 export function researchHtml(G, interactive) {

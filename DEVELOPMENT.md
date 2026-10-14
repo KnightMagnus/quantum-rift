@@ -29,7 +29,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
     no more than the occupied ones.
 - **Feature mixins.** Each big feature is an object of methods mixed into `Game.prototype`, at the bottom of
   `server/game.js`:
-  `HangarMixin, FrontsMixin, FrontierMixin, SpecialistMixin, HostileMixin, StoryMixin, RivalsMixin, HailMixin, FleetCmdMixin, SyndicateMixin, ArcsMixin`.
+  `HangarMixin, FrontsMixin, FrontierMixin, SpecialistMixin, HostileMixin, StoryMixin, RivalsMixin, HailMixin, FleetCmdMixin, SyndicateMixin, ArcsMixin, DocksMixin`.
   - Method names must not collide across mixins; a collision silently replaces a method.
   - `bonus(d)` is deliberately chained: several mixins wrap it to add their modifiers.
 - **Shared code.** `shared/` is imported by both server and client:
@@ -71,7 +71,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 
 ## Testing
 
-- **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `fuzz` and `balance`. They run in
+- **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `v21`, `fuzz` and `balance`. They run in
   process; no server needed.
 - **Networked bot:** `node test/bot.js ws://localhost:8090/ws` against a running server.
 - **Browser checks:** `python3 test/<name>_shot.py <outdir> http://127.0.0.1:8090/`. They need Playwright and Chromium.
@@ -111,6 +111,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 | 1.1 | Living Rift | 30 rival captains, hailing, fleet orders, multi-jump autopilot, I panel, jettison, combat rating, news and market flashes |
 | 1.2 | Syndicate and Officers | Syndicate and black market, officer ranks and traits, lower decks, bank, map views, passengers and rush jobs, faction arcs, Farside expeditions |
 | 2.0 | Polish | A synthesized audio pass (interface sounds, ambience, engine hum, login theme, mixer buses), HUD numbers, edge arrows, damage and jump feedback, styled toasts, tab hotkeys |
+| 2.1 | Docks | Docks A–E with a lead ship and two wingmate ships each, officers crewing wingmates, buy-to-hangar, friendly fire, a new hyperspace effect and sounds, quick volume |
 | 2.0.1–2.0.3 | Fixes | NPC landing, crash-proofing (fuzzer, UI crawler), newcomer protection in inner space, a bug backlog |
 
 The project docs (outside this zip) also hold the roadmap. Multiplayer group features are deferred, and the game is
@@ -127,6 +128,7 @@ single-player focused for now.
   - `ui_*.wav` interface sounds
   - `amb_*.mp3` ambient loops
   - `music_login.mp3`, the login theme
+  - `tools/rift_audio_jump.py` makes the hyperspace sounds (`ui_jump`, `ui_jumpfast`, `ui_arrive`, `jumpfar`)
 - `client/audio.js` routes sound through buses (effects, interface, ambience, music) under a master gain.
   - MP3 loops are played as overlapping copies with cross-fades, because MP3 padding makes simple loops click.
   - The radio is a separate `<audio>` element.

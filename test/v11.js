@@ -5,8 +5,10 @@ import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
 import { SYS, STELLARS, SYSTEMS, FACTIONS, START } from '../shared/galaxy.js';
 import { RIVALS, combatRank } from '../shared/rivals.js';
+import { makeLoadout } from '../shared/rules.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB('/tmp/rift-v11-' + Date.now()));
+const wingUp = (game, d, hulls) => { d.docks[d.activeDock].wings = hulls.map(h => { const ship = makeLoadout(A, h, 'Wing'); ship.uid = game.shipUid(d); d.dock.push({ ship, bridge: {} }); return { uid: ship.uid }; }); };   // 2.1: wingmates are stored ships in your dock
 const ok = (c, m) => { if (!c) { console.error('FAIL:', m); process.exit(1); } console.log('ok -', m); };
 let ip = 1;
 function fake(name) {
@@ -66,7 +68,7 @@ a.send({ t: 'hailopt', stellar: planet.id, k: 'bribe' }); ok(d.landPass[planet.i
 me.x = planet.x; me.y = planet.y; me.vx = me.vy = 0; a.send({ t: 'land', stellar: planet.id }); ok(d.stellar === planet.id, 'and the captain can land');
 d.rep[SYS.meridian.faction] = 0;
 // fleet commands
-const b = fake('Commander'), bd = b.s.data; bd.ship.hull = 736; bd.escorts = [751, 751]; const bm = toSpace(b, 'halcyon', 0, 0), sp3 = game.spaces.halcyon;
+const b = fake('Commander'), bd = b.s.data; bd.ship.hull = 736; wingUp(game, bd, [751, 751]); const bm = toSpace(b, 'halcyon', 0, 0), sp3 = game.spaces.halcyon;
 const esc = [...sp3.ships.values()].filter(x => x.owner === bm.id);
 ok(esc.length === 2, 'two escorts fly with the commander');
 b.send({ t: 'order', o: 'hold' }); ok(bm.order === 'hold', 'order: hold position');

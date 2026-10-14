@@ -5,8 +5,10 @@ import { blackMarketHtml, bankHtml, arcCardsHtml, bunkInfo, synBadge } from './s
 import { SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES, OPS, RESEARCH, REFINERY, ORE_PROCESS, WINGMATES, ARMADA, MK2_OF, MK3_OF, FACTION_HULLS, STATION_SHIPS, SITES } from '/shared/galaxy.js';
 import { shipStats, researchBonus, allOutfits, credits, repLabel, weaponParams, K, route, price } from '/shared/rules.js';
 import { galaxy, mapHit, mapFit } from './render.js';
-import { crewHtml, hangarHtml, shuttleSummary, researchHtml, materialsHtml, dockHtml } from './hangar_ui.js';
+import { crewHtml, hangarHtml, shuttleSummary, researchHtml, materialsHtml } from './hangar_ui.js';
 import { specialistsHtml } from './spec_ui.js';
+import { docksHtml, dockChips, dockLine } from './docks_ui.js';
+import { WING_ONLY } from '/shared/docks.js';
 import { REFINE_UP } from '/shared/hangar.js';
 import { opsHtml, fleetHtml, storeMenuHtml } from './fronts_ui.js';
 import { colonyHtml, defenseHtml, masteryHtml, arenaHtml, exchangeHtml, boardsHtml } from './frontier_ui.js';
@@ -22,8 +24,11 @@ export function initUI(g, sender) {
   document.querySelectorAll('#ctabs button').forEach(b => b.onclick = () => ctab(b.dataset.tab));
   $('depart').onclick = () => send({ t: 'depart' });
   $('storein').addEventListener('click', onAct); $('storesbtn').onclick = () => openStores();
-  $('landbody').addEventListener('click', onAct); $('stview').addEventListener('click', onAct); $('opsview').addEventListener('click', onAct);
-  $('landbody').addEventListener('change', (e) => { const c = e.target.closest('select[data-crew]'); if (c) send({ t: 'shuttle', op: 'crew', sid: +c.dataset.crew, oid: c.value ? +c.value : null }); });
+  $('landbody').addEventListener('click', onAct); $('dockchips').addEventListener('click', onAct); $('stview').addEventListener('click', onAct); $('opsview').addEventListener('click', onAct);
+  $('landbody').addEventListener('change', (e) => {   // 2.1: dock pickers
+    const dp = e.target.closest('select.dpick'); if (dp) { send({ t: 'docks', op: 'assign', k: +dp.dataset.dk, slot: dp.dataset.slot === 'lead' ? 'lead' : +dp.dataset.slot, uid: dp.value || null }); return; }
+    const dc = e.target.closest('select[data-role]'); if (dc) { send({ t: 'docks', op: 'crew', k: +dc.dataset.dk, w: +dc.dataset.w, role: dc.dataset.role, oid: dc.value ? +dc.value : null }); return; }
+ const c = e.target.closest('select[data-crew]'); if (c) send({ t: 'shuttle', op: 'crew', sid: +c.dataset.crew, oid: c.value ? +c.value : null }); });
   $('mlist').addEventListener('click', (e) => { const b = e.target.closest('[data-plot]'); if (b) { plot(b.dataset.plot); openMap(b.dataset.plot); }
     const a = e.target.closest('[data-abandon]'); if (a) { const m = (G.you.missions || []).find(x => x.id === a.dataset.abandon); if (m && confirm(`Abandon "${m.title}"? You won't be paid for it.`)) send({ t: 'abandon', id: m.id }); } });   // 2.0.3
   // galaxy map: drag to pan, wheel to zoom around the cursor, click a system to plot a course
@@ -78,6 +83,7 @@ export function hud() {
   G._crSeen = y.credits;
   $('spd').textContent = me ? `SPD ${Math.round(Math.hypot(me.vx, me.vy) / 0.45)} / ${Math.round(st.maxSpeed / 0.45)}` : ''; $('spd').title = 'Speed: current / top';   // 2.0.3: labelled
   { const S = SYS[G.sys], on = !!(y.newcomer && S && S.danger <= 2 && !S.farside && !['umbral', 'deep'].includes(S.faction)), el = $('prot');   // 2.0.3 newcomer protection badge
+    { const dl = dockLine(G), r = $('dockrow'); if (r) { r.classList.toggle('hidden', !dl); if (dl !== r._h) { r._h = dl; r.innerHTML = dl; } } }   // 2.1
     if (el) { el.classList.toggle('hidden', !y.newcomer); el.classList.toggle('off', !on); el.textContent = on ? '🛡 NEWCOMER PROTECTION' : '🛡 PROTECTION: NOT IN LAWLESS SPACE'; } }
   $('cr').textContent = credits(y.credits) + ' cr'; $('shipnm').textContent = y.shipless ? 'No active ship' : `${st.name} "${y.ship.name}"`;
   $('sysname').textContent = (SYS[G.sys] ? SYS[G.sys].name.toUpperCase() : '') + (SYS[G.sys] ? ' · ' + FACTIONS[SYS[G.sys].faction].short : '');
@@ -94,7 +100,7 @@ export function hud() {
   const fj = Math.floor(((G.view && G.view.fuel) ?? y.fuel ?? 0) / 100), shortFuel = G.route && G.route.length > fj;   // 1.0.3: warn when the route is longer than your fuel
   $('navto').classList.toggle('warnf', !!shortFuel);
   $('navto').textContent = G.route && G.route.length ? `${SYS[G.route[G.route.length - 1]].name} (${G.route.length} jump${G.route.length > 1 ? 's' : ''}, J to jump)${shortFuel ? ` · fuel for ${fj}: refuel on the way` : ''}` : (G.navStellar && STELLARS[G.navStellar] ? STELLARS[G.navStellar].name + ' (L to land)' : 'None (press M)');
-  const hasFleet = (y.escorts || []).length > 0 || (G.order && G.order !== 'gather');   // 1.1: current fleet order
+  const hasFleet = !!(y.docks && y.docks.list[y.docks.active] && y.docks.list[y.docks.active].wings.some(Boolean)) || (G.order && G.order !== 'gather');   // 1.1: current fleet order
   $('fleetrow').classList.toggle('hidden', !hasFleet); if (hasFleet) $('fleetord').textContent = ({ gather: 'Formation', attack: 'Attacking your target', hold: 'Holding position', holdfire: 'Holding fire', loot: 'Collecting loot' })[G.order || 'gather'];
   const sec = Object.keys(st.weapons).map(w => G.A.weapons[w]).filter(w => w && ['homing', 'rocket', 'bay'].includes(w.type));
   $('secw').textContent = sec.length ? sec.map(w => `${w.name} (${G.ammo[w.id] ?? '?'})`).join(', ') : 'None';
@@ -186,8 +192,8 @@ function unclaimedList() {
   return free.length ? `<div class="sect">UNCLAIMED HULLS (${free.length})</div>` + free.map(s => `<div class="kv"><span>${esc(SYS[s.system].name)}</span><span class="dim">${esc(FACTIONS[SYS[s.system].faction].short)} space</span></div>`).join('') : '<p class="dim">Every hull has been claimed.</p>';
 }
 // the station screen: one button per department, like rooms of the station
-const STATION_SECTIONS = [['ops', 'OPS', 0], ['refinery', 'REFINERY', 1], ['research', 'RESEARCH LAB', 2], ['academy', 'ACADEMY', 4], ['hangar', 'HANGAR', 2],
-                          ['drydock', 'DRYDOCK', 3], ['defense', 'DEFENSE', 2], ['specialists', 'SPECIALISTS', 0]];
+const STATION_SECTIONS = [['ops', 'OPS', 0], ['docks', 'DOCKS', 0], ['refinery', 'REFINERY', 1], ['research', 'RESEARCH LAB', 2], ['hangar', 'SHUTTLES', 2],
+                          ['drydock', 'REFITS', 3], ['defense', 'DEFENSE', 2], ['specialists', 'SPECIALISTS', 0]];
 function stationHtml(interactive) {
   const y = G.you, S = y.station, now = Date.now(), L = G.landed, here = L && L.site;
   if (!S.site) {
@@ -214,7 +220,7 @@ function stationHtml(interactive) {
       if (S.ops >= 2) h += `<div class="kv"><span>Research</span><span>${S.active ? esc(RESEARCH.find(r => r.id === S.active.id).name) + ' · ' + Math.max(0, Math.ceil((S.active.ends - now) / 60000)) + ' min' : 'idle'}${S.queue && S.queue.length ? ` (+${S.queue.length} queued)` : ''}</span></div>`;
       if (y.shuttles.length) h += `<div class="kv"><span>Hangar</span><span>${y.shuttles.filter(x => x.state === 'out').length} of ${y.shuttles.length} shuttles out</span></div>`;
       if (S.ops >= 2) h += `<div class="kv"><span>Defense rating</span><span>${y.defense}</span></div>`;
-      if (y.dock.length) h += `<div class="kv"><span>Drydock</span><span>${y.dock.length} stored</span></div>`;
+      if (y.dock.length) h += `<div class="kv"><span>Docks</span><span>${y.docks ? `${y.docks.count} docks · ${y.dock.length} stored ship${y.dock.length === 1 ? '' : 's'}` : y.dock.length + ' stored'}</span></div>`;
       h += materialsHtml(G, false);
       break;
     }
@@ -232,20 +238,11 @@ function stationHtml(interactive) {
       break;
     }
     case 'research': h += researchHtml(G, interactive); break;
-    case 'academy': {
-      h += `<div class="sect" style="margin-top:4px">ACADEMY: WINGMATES ${S.ops >= 5 ? '& ARMADA' : ''}</div><div class="dim small">Custom escort ships and their pilots. You can lead four escorts (five in a Herald).</div>`;
-      for (const w of [...WINGMATES, ...(S.ops >= 5 ? ARMADA : [])]) {
-        const s_ = G.A.ships[w], have = y.escorts.includes(w);
-        h += `<div class="it" style="display:flex;gap:6px;align-items:center;padding:3px 0"><img src="assets/${s_.img}" style="width:48px;height:36px;object-fit:contain"><div style="flex:1"><b>${esc(s_.name)}</b> ${roleTag(s_)}<div class="dim small">${esc(s_.sub)}</div></div>${interactive && !have ? `<button class="btn sm" data-act="st" data-op="hire" data-hull="${w}">HIRE ${WINGMATES.includes(w) ? '500' : '2,500'}</button>` : have ? '<span class="dim small">flying with you</span>' : ''}</div>`;
-      }
-      h += `<div class="sect">YOUR ESCORTS</div>` + (y.escorts.map((e, i) => `<div class="kv"><span>${esc(G.A.ships[e].name)}</span><span>${interactive ? `<button class="btn sm" data-act="st" data-op="dismiss" data-i="${i}">DISMISS</button>` : ''}</span></div>`).join('') || '<p class="dim small">None.</p>');
-      break;
-    }
+    case 'docks': h += docksHtml(G, interactive); break;   // 2.1
     case 'hangar': h += hangarHtml(G, interactive); break;
     case 'drydock': {
       const to = !y.shipless && (MK2_OF[y.ship.hull] || (S.ops >= 5 && MK3_OF[y.ship.hull]));
       h += `<div class="sect" style="margin-top:4px">REFITS</div>` + (to ? `<div class="kv"><span>Refit your ${esc(G.A.ships[y.ship.hull].name)} to</span><span>${esc(G.A.ships[to].name)} ${interactive ? '<button class="btn sm" data-act="st" data-op="refit">REFIT</button>' : ''}</span></div>` : '<div class="dim small">No refit for your current hull at this Ops level.</div>');
-      h += dockHtml(G, interactive);
       break;
     }
     case 'defense': h += defenseHtml(G, interactive); break;
@@ -283,14 +280,15 @@ export function hideLanded() { $('land').classList.add('hidden'); }
 export function renderLanded() {
   if (!G.landed || !G.you) return;
   const L = G.landed, y = G.you, p = STELLARS[L.stellar], body = $('landbody'), st = y.shipStats;
+  $('dockchips').innerHTML = dockChips(G, !!(G.landed && G.landed.site && G.landed.site.own));   // 2.1
   $('landcr').textContent = credits(y.credits) + ' credits'; $('landcargo').textContent = y.shipless ? 'No active ship: choose one to depart' : `Cargo ${y.cargoUsed + (y.jobCargo || 0)}/${st.cargo} t${y.jobCargo ? ` (${y.jobCargo} t for jobs)` : ''} · Outfit space ${st.free} t free`;
-  $('depart').disabled = !!y.shipless; $('depart').title = y.shipless ? 'Choose a ship first: FLY THIS in your drydock, or buy one at the shipyard' : '';
+  $('depart').disabled = !!y.shipless; $('depart').title = y.shipless ? 'Choose a ship first: a lead ship for your active dock (STATION, then DOCKS), or buy one at a shipyard' : '';
   let h = '';
   switch (G.ltab) {
     case 'overview': {
       const fac = SYS[p.system].faction;
       if (L.news && L.news.length) h += `<div class="newsbox"><div class="sect" style="margin-top:0">SPACEPORT NEWS</div>${L.news.slice(0, 4).map(n => `<div class="newsit">${esc(n)}</div>`).join('')}</div>`;   // 1.1
-      if (y.shipless) h += `<div class="noship"><b>NO ACTIVE SHIP</b><div>You can't depart until you choose a ship. ${y.dock && y.dock.length ? 'Open STATION, then DRYDOCK, and choose FLY THIS on a stored ship.' : 'Buy one at a SHIPYARD.'}</div><div>${y.dock && y.dock.length ? '<button class="btn sm" data-act="gotodock">OPEN DRYDOCK</button> ' : ''}${L.yard ? '<button class="btn sm" data-act="ltab" data-t="yard">SHIPYARD</button>' : ''}</div></div>`;
+      if (y.shipless) h += `<div class="noship"><b>NO ACTIVE SHIP</b><div>You can't depart until you choose a ship. ${y.dock && y.dock.length ? 'Open STATION, then DOCKS, and choose a lead ship for your active dock.' : 'Buy one at a SHIPYARD.'}</div><div>${y.dock && y.dock.length ? '<button class="btn sm" data-act="gotodock">OPEN DRYDOCK</button> ' : ''}${L.yard ? '<button class="btn sm" data-act="ltab" data-t="yard">SHIPYARD</button>' : ''}</div></div>`;
       if (!y.shipless) h += `<div class="detail"><img src="assets/${G.A.ships[y.ship.hull].img}"><div><div class="sect" style="margin-top:0">YOUR SHIP</div><b style="font-size:15px;color:#fff">${esc(st.name)}</b> <span class="dim">"${esc(y.ship.name)}"</span> ${roleTag(G.A.ships[y.ship.hull])}
         <div class="kv"><span>Shield / Armor</span><span>${st.shield} / ${st.armor}</span></div><div class="kv"><span>Speed</span><span>${Math.round(st.maxSpeed)}</span></div><div class="kv"><span>Fuel</span><span>${Math.floor(st.fuel / 100)} jumps (refuelled)</span></div>
         <div class="kv"><span>Cargo</span><span>${Object.entries(y.cargo).map(([c, n]) => `${n}t ${COMMODITIES.find(x => x.id === c).name}`).join(', ') || 'empty'}</span></div>
@@ -308,8 +306,11 @@ export function renderLanded() {
       const sel = G.sel && L.yard.includes(G.sel) ? G.sel : L.yard[0];
       const s = G.A.ships[sel], trade = tradeIn(y);
       h = `<div class="detail"><img src="assets/${s.img}"><div><b style="font-size:16px;color:#fff">${esc(s.name)}</b> <span class="dim">${esc(s.sub)}</span> ${roleTag(s)}${statLines(s)}
-        <div class="kv"><span>Price</span><span class="cr">${credits(s.cost)}</span></div><div class="kv"><span>Trade-in of your ${esc(st.name)}</span><span>-${credits(trade)}</span></div>
-        <div class="kv"><span>You pay</span><span class="cr">${credits(Math.max(0, s.cost - trade))}</span></div>${s.id === y.ship.hull ? '<p class="dim">You fly this ship.</p>' : `<button class="btn" data-act="buyship" data-h="${s.id}">BUY</button>`}
+        <div class="kv"><span>Price</span><span class="cr">${credits(s.cost)}</span></div>${WING_ONLY.includes(s.id) || (!y.shipless && s.id === y.ship.hull) || y.shipless ? '' : `<div class="kv"><span>Trade-in of your ${esc(st.name)}</span><span>-${credits(trade)}</span></div>
+        <div class="kv"><span>You pay to fly her</span><span class="cr">${credits(Math.max(0, s.cost - trade))}</span></div>`}${(() => { const D = y.docks, room = D && D.cap > D.stored.length, wo = WING_ONLY.includes(s.id);   // 2.1: buy to fly, or buy into your hangar
+          const toH = y.station && y.station.site ? `<button class="btn" data-act="buyhangar" data-h="${s.id}"${room ? '' : ' disabled title="Your hangar is full"'}>BUY TO HANGAR${D ? ` (${D.stored.length}/${D.cap})` : ''}</button>` : '';
+          if (wo) return `<p class="dim small">Flies only as a wingmate: it goes to your hangar, then assign it to a dock.</p>${toH}`;
+          return (!y.shipless && s.id === y.ship.hull ? '<p class="dim">You fly this ship.</p>' : `<button class="btn" data-act="buyship" data-h="${s.id}">BUY AND FLY</button>`) + ' ' + toH; })()}
         <p style="white-space:pre-wrap;line-height:1.4;color:#ccc">${esc(s.desc)}</p></div></div><div class="cards">${L.yard.map(h_ => { const x = G.A.ships[h_]; return `<div class="card ${h_ === sel ? 'sel' : ''}" data-act="sel" data-h="${h_}"><img src="assets/${x.img}"><div class="t">${esc(x.name)}</div><div class="dim small">${esc(x.sub)}</div><div class="small">${roleTag(x)}</div><div class="p">${credits(x.cost)}</div></div>`; }).join('')}</div>`;
       break;
     }
@@ -380,6 +381,7 @@ function onAct(e) {
     case 'sellall': for (const c of G.landed.market || []) if (G.you.cargo[c.id]) send({ t: 'trade', cid: c.id, qty: -999 }); break;
     case 'mat': send({ t: 'buymat', mat: d.m, grade: +d.g, n: +d.q }); break;
     case 'sel': G.sel = +d.h; renderLanded(); break;
+    case 'buyhangar': if (confirm(`Buy the ${G.A.ships[d.h].name} for ${credits(G.A.ships[d.h].cost)} credits and send her to your Personal Station's hangar?`)) send({ t: 'buyship', hull: +d.h, store: true }); break;
     case 'buyship': if (confirm(`Buy the ${G.A.ships[d.h].name}?\n\n${G.you.shipless ? 'You have no active ship to trade in.' : `Your ${G.A.ships[G.you.ship.hull].name} and its outfits are traded in for ${credits(tradeIn(G.you))} credits. To keep her instead, store her in your Personal Station's drydock first.`}`)) send({ t: 'buyship', hull: +d.h }); break;
     case 'outfit': send({ t: 'outfit', id: +d.id, n: +d.n }); break;
     case 'accept': send({ t: 'accept', id: d.id }); break;
@@ -395,7 +397,7 @@ function onAct(e) {
     case 'sh': { const m = { t: 'shuttle', op: d.op, sid: d.sid ? +d.sid : undefined, kind: d.kind, job: d.job };
       if (d.op === 'send') { const sel = document.querySelector(`select[data-job="${d.job}"]`); m.sid = sel ? +sel.value : undefined; }
       if (d.op === 'scrap' && !confirm('Scrap this shuttle for 30% of its price?')) break; send(m); break; }
-    case 'dock': if (d.op === 'sell') { const x = G.you.dock[+d.i], O = allOutfits(G.A); let v = (G.A.ships[x.ship.hull].cost || 0) * 0.5; for (const [id, n] of Object.entries(x.ship.outfits || {})) v += (O[id] ? O[id].cost : 0) * n * 0.5; if (!confirm(`Sell the stored ${G.A.ships[x.ship.hull].name} and its outfits for ${credits(Math.round(v))} credits?`)) break; } send({ t: 'dock', op: d.op, i: +d.i }); break;
+    case 'dock': if (d.op === 'sell') { const x = d.uid ? G.you.dock.find(z => z.ship.uid === d.uid) : G.you.dock[+d.i], O = allOutfits(G.A); let v = (G.A.ships[x.ship.hull].cost || 0) * 0.5; for (const [id, n] of Object.entries(x.ship.outfits || {})) v += (O[id] ? O[id].cost : 0) * n * 0.5; if (!confirm(`Sell the stored ${G.A.ships[x.ship.hull].name} and its outfits for ${credits(Math.round(v))} credits?`)) break; } send({ t: 'dock', op: d.op, i: +d.i, uid: d.uid || undefined }); break;
     case 'goal': send({ t: 'goal', period: d.p, i: +d.i }); break;
     case 'anchor': if (confirm('Anchor this Dreadnought here? It is paid from the fleet bank.')) send({ t: 'fleet', op: 'anchor', model: +d.m }); break;
     case 'plotto': plot(d.sys); break;
@@ -425,7 +427,9 @@ function onAct(e) {
     case 'prof': send({ t: 'profile', name: d.n }); break;
     case 'profgo': send({ t: 'profile', name: $('profq').value }); break;
     case 'stab': G.stab = d.k; renderLanded(); renderStationTab(); break;
-    case 'gotodock': G.ltab = 'station'; G.stab = 'drydock'; showLanded(); break;   // 1.0.2: from the no-ship notice
+    case 'gotodock': G.ltab = 'station'; G.stab = 'docks'; showLanded(); break;
+    case 'dockgo': send({ t: 'docks', op: 'activate', k: +d.k }); break;   // 2.1
+    case 'wingrep': send({ t: 'docks', op: 'repair', uid: d.uid }); break;   // 1.0.2: from the no-ship notice
     case 'ltab': G.ltab = d.t; G.sel = null; showLanded(); break;
     case 'spec': send({ t: 'spec', op: d.op, id: d.id ? +d.id : undefined, c: d.c }); break;
     case 'rtree': G.rtree = d.t; renderLanded(); renderStationTab(); break;
@@ -476,5 +480,5 @@ export function plot(to) {
   G.route = r; drawGMap(); drawMini();
   toast(`Course plotted to ${SYS[to].name}: ${r.length} jump${r.length > 1 ? 's' : ''}. Fly clear of planets and press J.`);
 }
-export function showDead(m) { $('deadmsg').textContent = `Your ship was destroyed. The insurers rebuilt it at ${m.at} for ${credits(m.fee)} credits. Your cargo and escorts were lost.`; $('deadbox').classList.remove('hidden'); }
+export function showDead(m) { $('deadmsg').textContent = `Your ship was destroyed. The insurers rebuilt it at ${m.at} for ${credits(m.fee)} credits. Your cargo was lost; your wingmates flew home.`; $('deadbox').classList.remove('hidden'); }
 export { esc };

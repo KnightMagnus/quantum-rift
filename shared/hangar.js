@@ -64,7 +64,7 @@ export const OFFICER_NAMES = {
   thalassi: [['Coralie', 'Ebb', 'Nerys', 'Pelagia', 'Tethys', 'Marin'], ['Deepcurrent', 'of the Reef', 'Brinesong', 'Tidewarden']],
 };
 export const BRIDGE_SLOTS = ['captain', 'bridge1', 'bridge2'];
-export const ROSTER_MAX = 12;
+export const ROSTER_MAX = 24;   // 2.1: room for wingmate captains and crews
 export const XP_LEVEL = (lv) => 100 * lv * lv;   // xp needed to reach the next level
 export const MAX_LEVEL = 10;
 

@@ -73,6 +73,15 @@ export class Space {
     if (!(F.pirate || F.alwaysHostile || re.boss || re.bossMinion)) return false;
     return !!(this.game.newcomer && this.game.newcomer(ro.player.s && ro.player.s.data));
   }
+  // 2.1: can a's fire hurt b? Hostiles always; a captain's own guns also hit any ship not on their side (like EV Nova),
+  // which angers it and costs standing. Escorts and NPCs still only hit their enemies.
+  canHit(a, b) {
+    if (this.isHostile(a, b)) return !this.spared(a, b);
+    if (!a || !b || !a.player || this.sys.arena) return false;
+    const rb = this.root(b); if (rb === a || rb.player) return false;   // never your own wing; players only in lawless space (isHostile)
+    if (rb.dread && a.player.s && a.player.s.data && a.player.s.data.fleet === rb.fleet) return false;
+    return !b.dead && b.state === 'fly';
+  }
   inner() { const S = this.sys; return S.danger <= 2 && !S.farside && !S.arena && !['umbral', 'deep'].includes(S.faction); }
 
   isHostile(a, b) {
@@ -320,7 +329,7 @@ export class Space {
   ray(e, ang, len) {
     const dx = Math.sin(ang), dy = -Math.cos(ang); let best = null;
     for (const s of this.ships.values()) {
-      if (s === e || s.state !== 'fly' || !this.isHostile(e, s)) continue;
+      if (s === e || s.state !== 'fly' || !this.canHit(e, s)) continue;
       const rx = s.x - e.x, ry = s.y - e.y, along = rx * dx + ry * dy; if (along < 0 || along > len) continue;
       const perp = Math.abs(rx * dy - ry * dx), r = Math.max(10, s.st.size * 0.32);
       if (perp < r && (!best || along < best.d)) best = { s, d: along, x: e.x + dx * along, y: e.y + dy * along };
@@ -390,6 +399,7 @@ export class Space {
     if (s.dread) this.game.onDreadKilled(s, this, by);
     if (s.boss) this.game.onBossKilled(s, this);
     if (s.convoyOf) this.game.onConvoyLost(s);
+    if (s.wingUid && this.game.onWingLost) this.game.onWingLost(s);   // 2.1
     if (s.wave) this.game.onWaveKill(s);
     if (s.armada && this.game.onArmadaKilled) this.game.onArmadaKilled(s, this);
     if (this.game.maybeChest) this.game.maybeChest(this, s, by);
@@ -440,13 +450,13 @@ export class Space {
       const owner = this.ships.get(s.owner);
       for (const e of this.ships.values()) {
         if (e.id === s.owner || e.state !== 'fly') continue;
-        if (owner ? !this.isHostile(owner, e) || this.spared(owner, e) : false) continue;
+        if (owner ? !this.canHit(owner, e) : false) continue;
         const r = Math.max(9, e.st.size * 0.32);
         if (Math.abs(e.x - s.x) < r && Math.abs(e.y - s.y) < r && Math.hypot(e.x - s.x, e.y - s.y) < r) {
           const r = this.damage(e, s.dmgA, s.dmgS, owner || null, s.p.ion); s.life = 0;
           this.hitEv(s.x, s.y, s.w, e, r);
           if (s.p.blast) this.events.push(['blast', Math.round(s.x), Math.round(s.y), s.p.blast]);
-          if (s.p.blast) for (const o of this.ships.values()) if (o !== e && owner && this.isHostile(owner, o) && !this.spared(owner, o) && Math.hypot(o.x - s.x, o.y - s.y) < s.p.blast) this.damage(o, s.dmgA * 0.5, s.dmgS * 0.5, owner);
+          if (s.p.blast) for (const o of this.ships.values()) if (o !== e && owner && this.canHit(owner, o) && Math.hypot(o.x - s.x, o.y - s.y) < s.p.blast) this.damage(o, s.dmgA * 0.5, s.dmgS * 0.5, owner);
           break;
         }
       }

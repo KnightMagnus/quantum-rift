@@ -12,7 +12,8 @@ function panel(state, s, extra = '') {
   box.innerHTML = `<div class="onair ${state}"><div class="oa-top"><span class="oa-led"></span>${state === 'live' ? 'ON AIR' : state === 'tune' ? 'TUNING' : state === 'embed' ? 'ON AIR · EXTERNAL PLAYER' : 'NO SIGNAL'}</div>
     <div class="oa-name">${esc(s ? s.name : '')}</div><div class="oa-sub">${esc(s ? s.sub : '')}</div><div class="oa-track" id="rtrack">${extra}</div>
     ${state === 'live' ? `<div class="oa-ctrl"><span class="dim small">VOL</span><input type="range" id="rvol" min="0" max="1" step="0.05" value="${shown}"></div>` : ''}</div>`;
-  const r = box.querySelector('#rvol'); if (r) r.oninput = () => window.dispatchEvent(new CustomEvent('rift-radio-vol', { detail: +r.value }));
+  const r = box.querySelector('#rvol'); const paint = () => { if (r) { const p = r.value * 100; r.style.background = `linear-gradient(90deg,#e0362a ${p}%,#3a0808 ${p}%)`; } };   // 2.1: red fill
+  if (r) { paint(); r.oninput = () => { paint(); window.dispatchEvent(new CustomEvent('rift-radio-vol', { detail: +r.value })); }; }
 }
 async function nowPlaying(id, my) {
   try { const m = await (await fetch('/api/radio/meta?id=' + encodeURIComponent(id))).json(); if (my !== token) return;
