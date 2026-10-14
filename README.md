@@ -1,6 +1,6 @@
 # Quantum Rift
 
-**A space trading and combat game in your browser, in the spirit of the classic *Escape Velocity Nova*.**
+**A space trading and combat game in your browser, in the spirit of the classic *Escape Velocity Nova*.** Made using Claude Opus 5.5.
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server so friends can share the same galaxy.
 
