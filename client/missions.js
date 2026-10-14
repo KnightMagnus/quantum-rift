@@ -46,6 +46,7 @@ export function missionTargets(G) {
     else if (m.type === 'salvage') status = `Recover the salvage at the marked point in ${there}, then land anywhere.`;
     else if (m.type === 'rescue') status = `Find and board the ${m.wreckName} in ${there}.`;
     else status = there ? `Go to ${there}.` : '';
+    if (!m.done && m.quest && !y.shipless && y.shipStats && (m.type === 'cargo' || m.type === 'smuggle' || m.type === 'supply') && m.qty > (y.shipStats.cargo || 0)) status = `⚠ Needs ${m.qty} t of hold: switch ships for this step. ${status}`;   // 2.5.2: the step waits for a ship that can do it
     if (m.deadline) { const left = Math.max(0, Math.ceil((m.deadline - Date.now()) / 60000)); status = `⏱ ${left} min left · ${status}`; }
     out.push({ stellar: m.done ? null : (m.dest || null), key: m.id, kind: m.exp || m.quest ? 'arc' : 'job', quest: !!m.quest, tag: m.exp ? 'FARSIDE EXPEDITION' : m.quest ? `${m.quest.qid.startsWith('s:') ? 'SIDE STORY' : 'QUEST'} · ${m.quest.name.toUpperCase()} · STEP ${m.quest.step + 1}/${m.quest.of}` : null, title: m.title, text: m.text, status, sys, reward: m.reward, urgent: !!m.deadline });
   }

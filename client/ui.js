@@ -30,6 +30,7 @@ export function initUI(g, sender) {
   $('depart').onclick = () => send({ t: 'depart' });
   $('storein').addEventListener('click', onAct); $('storesbtn').onclick = () => openStores();
   $('landbody').addEventListener('click', onAct); $('landbody').addEventListener('click', (e) => { const b = e.target.closest('[data-plot]'); if (b) { plot(b.dataset.plot); toast(`Course plotted to ${SYS[b.dataset.plot].name}. Press J in space to jump.`); } });   // 2.4 $('dockchips').addEventListener('click', onAct); $('stview').addEventListener('click', onAct); $('opsview').addEventListener('click', onAct); $('opsview').addEventListener('click', (e) => { const b = e.target.closest('[data-plot]'); if (b) { plot(b.dataset.plot); openMap(b.dataset.plot); } });   // 2.4
+  $('landbody').addEventListener('change', (e) => { if (e.target.id === 'ysort') { G.ysort = e.target.value; renderLanded(); } else if (e.target.id === 'ofit') { G.ofit = e.target.checked; renderLanded(); } });   // 2.5.2: shipyard sort, outfitter filter
   $('landbody').addEventListener('change', (e) => {   // 2.1: dock pickers
     const dp = e.target.closest('select.dpick'); if (dp) { send({ t: 'docks', op: 'assign', k: +dp.dataset.dk, slot: dp.dataset.slot === 'lead' ? 'lead' : +dp.dataset.slot, uid: dp.value || null }); return; }
     const dc = e.target.closest('select[data-role]'); if (dc) { send({ t: 'docks', op: 'crew', k: +dc.dataset.dk, w: +dc.dataset.w, role: dc.dataset.role, oid: dc.value ? +dc.value : null }); return; }
@@ -53,6 +54,7 @@ export function initUI(g, sender) {
   }, { passive: false });
   $('gfit').onclick = () => { const f = mapFit(gc.width, gc.height); Object.assign(G.mapView, f); drawGMap(); };
   $('ghere').onclick = () => centerOn(G.sys, 3);
+  $('ghome').onclick = () => { const st = G.you && G.you.station, p = st && st.claimed && st.site && STELLARS[st.site]; if (p) { centerOn(p.system, 3); G.hoverSys = p.system; drawGMap(); } else toast('You have no Personal Station yet. Claim a derelict station hull (the purple diamonds) to build one.'); };   // 2.5.2
   $('gsearch').oninput = searchMap; $('gsearch').onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') { const f = $('gresults').querySelector('[data-sys]'); if (f) f.click(); } if (e.key === 'Escape') { $('gsearch').blur(); } };
   $('gresults').onclick = (e) => { const t = e.target.closest('[data-sys]'); if (!t) return; centerOn(t.dataset.sys, 3.5); plot(t.dataset.sys); $('gresults').innerHTML = ''; $('gsearch').value = ''; };
   $('deadok').onclick = () => $('deadbox').classList.add('hidden');
@@ -338,20 +340,21 @@ export function renderLanded() {
     case 'yard': {
       const sel = G.sel && L.yard.includes(G.sel) ? G.sel : L.yard[0];
       const s = G.A.ships[sel], trade = tradeIn(y);
-      h = `<div class="detail"><img src="assets/${s.img}"><div><b style="font-size:16px;color:#fff">${esc(s.name)}</b> <span class="dim">${esc(s.sub)}</span> ${roleTag(s)}${statLines(s, y.shipless ? null : G.A.ships[y.ship.hull])}
+      h = `<div class="detail"><img src="assets/${s.img}"><div><b style="font-size:16px;color:#fff">${esc(s.name)}</b> <span class="dim">${esc(s.sub)}</span> ${roleTag(s)}${s.cargo ? "" : " <span class=\"nocargo\">NO CARGO HOLD</span>"}${statLines(s, y.shipless ? null : G.A.ships[y.ship.hull])}
         <div class="kv"><span>Price</span><span class="cr">${credits(s.cost)}</span></div>${WING_ONLY.includes(s.id) || (!y.shipless && s.id === y.ship.hull) || y.shipless ? '' : `<div class="kv"><span>Trade-in of your ${esc(st.name)}</span><span>-${credits(trade)}</span></div>
         <div class="kv"><span>You pay to fly her</span><span class="cr">${credits(Math.max(0, s.cost - trade))}</span></div>`}${(() => { const D = y.docks, room = D && D.cap > D.stored.length, wo = WING_ONLY.includes(s.id);   // 2.1: buy to fly, or buy into your hangar
           const toH = y.station && y.station.site ? `<button class="btn" data-act="buyhangar" data-h="${s.id}"${room ? '' : ' disabled title="Your hangar is full"'}>BUY TO HANGAR${D ? ` (${D.stored.length}/${D.cap})` : ''}</button>` : '';
           if (wo) return `<p class="dim small">Flies only as a wingmate: it goes to your hangar, then assign it to a dock.</p>${toH}`;
           return (!y.shipless && s.id === y.ship.hull ? '<p class="dim">You fly this ship.</p>' : `<button class="btn" data-act="buyship" data-h="${s.id}">BUY AND FLY</button>`) + ' ' + toH; })()}
-        <p style="white-space:pre-wrap;line-height:1.4;color:#ccc">${esc(s.desc)}</p></div></div><div class="cards">${L.yard.map(h_ => { const x = G.A.ships[h_]; return `<div class="card ${h_ === sel ? 'sel' : ''}" data-act="sel" data-h="${h_}"><img src="assets/${x.img}"><div class="t">${esc(x.name)}</div><div class="dim small">${esc(x.sub)}</div><div class="small">${roleTag(x)}</div><div class="p">${credits(x.cost)}</div></div>`; }).join('')}</div>`;
+        <p style="white-space:pre-wrap;line-height:1.4;color:#ccc">${esc(s.desc)}</p></div></div><div class="ysort small">Sort by <select id="ysort">${[["cost", "price"], ["cargo", "cargo"], ["speed", "speed"], ["strength", "fighting strength"], ["shield", "shields"]].map(([k, n]) => `<option value="${k}"${(G.ysort || "cost") === k ? " selected" : ""}>${n}</option>`).join("")}</select></div><div class="cards">${yardSorted(L.yard).map(h_ => { const x = G.A.ships[h_]; return `<div class="card ${h_ === sel ? 'sel' : ''}" data-act="sel" data-h="${h_}"><img src="assets/${x.img}"><div class="t">${esc(x.name)}</div><div class="dim small">${esc(x.sub)}</div><div class="small">${roleTag(x)}${x.cargo ? "" : " <span class=\"nocargo\">NO CARGO HOLD</span>"}</div><div class="p">${credits(x.cost)}</div></div>`; }).join('')}</div>`;
       break;
     }
     case 'outfit': {
       const O = allOutfits(G.A);
       const cat = G.ocat || 'all', cats = [['all', 'ALL'], ['weapons', 'WEAPONS'], ['ammo', 'AMMO'], ['defense', 'DEFENSE'], ['engines', 'ENGINES'], ['utility', 'UTILITY']];   // 2.4: outfitter categories
-      const list = L.outfitter.filter(id => cat === 'all' || outfitCat(O[id]) === cat);
-      h = `<div class="ocats">${cats.filter(([k]) => k === 'all' || L.outfitter.some(id => outfitCat(O[id]) === k)).map(([k, n]) => `<button class="btn sm${k === cat ? ' on' : ''}" data-act="ocat" data-k="${k}">${n}</button>`).join('')}</div><p class="dim small">Outfit space ${st.free} t free · guns ${st.guns}/${st.maxGuns} · turrets ${st.turrets}/${st.maxTurrets}</p><table class="tbl"><tr><th></th><th>OUTFIT</th><th>EFFECT</th><th>MASS</th><th>PRICE</th><th>OWNED</th><th></th></tr>${list.map(id => {
+      const fits = (o) => { if (o.eff.ammo) return !!(st.weapons && st.weapons[o.eff.ammo]) || Object.keys(y.ship.outfits).some(k => O[k] && O[k].eff.weapon === o.eff.ammo); if ((o.mass || 0) > st.free) return false; if (o.eff.weapon) return o.turret ? st.turrets < st.maxTurrets : st.guns < st.maxGuns; return true; };   // 2.5.2
+      const list = L.outfitter.filter(id => (cat === 'all' || outfitCat(O[id]) === cat) && (!G.ofit || fits(O[id])));
+      h = `<div class="ocats"><label class="small ofit"><input type="checkbox" id="ofit"${G.ofit ? ' checked' : ''}> only what fits</label>${cats.filter(([k]) => k === 'all' || L.outfitter.some(id => outfitCat(O[id]) === k)).map(([k, n]) => `<button class="btn sm${k === cat ? ' on' : ''}" data-act="ocat" data-k="${k}">${n}</button>`).join('')}</div><p class="dim small">Outfit space ${st.free} t free · guns ${st.guns}/${st.maxGuns} · turrets ${st.turrets}/${st.maxTurrets}</p><table class="tbl"><tr><th></th><th>OUTFIT</th><th>EFFECT</th><th>MASS</th><th>PRICE</th><th>OWNED</th><th></th></tr>${list.map(id => {
         const o = O[id], own = o.eff.ammo ? (G.ammo[o.eff.ammo] ?? (y.ship.ammo[o.eff.ammo] ?? 0)) : (y.ship.outfits[id] || 0);
         const W = o.eff.weapon && G.A.weapons[o.eff.weapon], wp = W ? weaponParams(W) : null;   // 1.0.3: guns show damage and range; ammo says if you have a launcher
         const hasLauncher = o.eff.ammo && ((st.weapons && st.weapons[o.eff.ammo]) || Object.keys(y.ship.outfits).some(k => O[k] && O[k].eff.weapon === o.eff.ammo));   // 2.0.3: fixed launchers count too
@@ -416,13 +419,21 @@ function barCard(L) {
   }
   return h;
 }
+// 2.5.2: warn when a story will ask for more hold space or bunks than the ship you fly
+function questNeeds(o) {
+  const y = G.you, N = o.needs; if (!N || y.shipless) return ''; const w = [];
+  if (N.hold && (y.shipStats.cargo || 0) < N.hold) w.push(`one step needs ${N.hold} t of hold space and your ship has ${y.shipStats.cargo || 0} t`);
+  if (N.pax && bunkInfo(G, { type: 'passenger', pax: N.pax })) w.push(`one step carries ${N.pax} passenger${N.pax > 1 ? 's' : ''}`);
+  return w.length ? `<div class="jwarn" style="color:#ffb070">⚠ ${esc(w.join('; '))}. You can take it on and switch ships for that step.</div>` : '';
+}
 // 2.4: a contact's story or a side story on the job board
 function questCard(o) {
   const n = o.sys === G.sys ? 0 : (route(SYS, G.sys, o.sys) || []).length;
   return `<div class="card story quest" style="cursor:default"><div class="storytag">${o.side ? 'SIDE STORY' : 'CONTACT'} · ${esc(o.giver)}${o.standing ? ` · <span class="dim">${esc(o.standing)}</span>` : ''}</div><div class="t">${esc(o.title)}</div><div class="qintro">${esc(o.text)}</div>
     <div class="p">${o.steps} steps, starting in ${SYS[o.sys] ? esc(SYS[o.sys].name) : 'nearby'}${n ? ` (${n} jump${n > 1 ? 's' : ''})` : ''} · each step pays, and finishing earns <span class="cr">${esc(o.rewardText)}</span></div>
-    ${o.full ? '<div class="jwarn">You are already following three stories.</div>' : ''}<div><button class="btn sm" data-act="accept" data-id="${esc(o.id)}"${o.full ? ' disabled' : ''}>TAKE IT ON</button>${o.sys && o.sys !== G.sys ? ` <button class="btn sm" data-plot="${o.sys}">PLOT</button>` : ''}</div></div>`;
+    ${o.full ? '<div class="jwarn">You are already following three stories.</div>' : ''}${questNeeds(o)}<div><button class="btn sm" data-act="accept" data-id="${esc(o.id)}"${o.full ? ' disabled' : ''}>TAKE IT ON</button>${o.sys && o.sys !== G.sys ? ` <button class="btn sm" data-plot="${o.sys}">PLOT</button>` : ''}</div></div>`;
 }
+function yardSorted(list) { const k = G.ysort || 'cost', A = G.A.ships; return list.slice().sort((a, b) => k === 'cost' ? (A[a].cost || 0) - (A[b].cost || 0) : ((A[b][k] || 0) - (A[a][k] || 0))); }   // 2.5.2
 function outfitCat(o) {
   if (!o) return 'utility'; const e = o.eff || {};
   if (e.weapon) return 'weapons'; if (e.ammo) return 'ammo';
@@ -439,6 +450,7 @@ function jobInfo(o, y) {
     if (r > 1.6) note = `Target: ${G.A.ships[o.hull].name}, ${r > 4 ? 'far stronger than' : 'stronger than'} your ${G.A.ships[y.ship.hull].name}.`;
   }
   if (!note && !y.shipless && y.shipStats && n > Math.floor(y.shipStats.fuel / 100)) note = `${n} jumps away, but your tanks hold ${Math.floor(y.shipStats.fuel / 100)}. Plan a stop to land and refuel on the way.`;   // 2.4
+  if (!note && o.type === 'supply' && !y.shipless && o.qty > (y.shipStats.cargo || 0)) note = `You buy and carry the ${o.qty} t yourself, and your hold takes ${y.shipStats.cargo || 0} t.`;   // 2.5.2
   if (!warn && (o.type === 'cargo' || o.type === 'smuggle') && o.qty > holdFree(y)) warn = `Needs ${o.qty} t of hold space; you have ${Math.max(0, holdFree(y))} t free.`;
   return { where, warn, note };
 }
@@ -543,7 +555,8 @@ function drawGMap() {
     if (seen && G.mapMode === 'trade') { const cid = G.mapCid || 'food', C = COMMODITIES.find(c => c.id === cid), ps = s.stellars.filter(p => p.svc && p.svc.includes('T') && !p.site); extra = ps.length ? `<br><span>${esc(C.name)}: ${ps.map(p => { const v = price(p, cid); return v === null ? '' : `${esc(p.name)} <b class="${v < C.base * 0.92 ? 'lo' : v > C.base * 1.08 ? 'hi' : ''}">${v.toLocaleString()}</b>`; }).filter(Boolean).join(' · ')} <span class="dim">(average ${C.base})</span></span>` : '<br><span class="dim">No market here.</span>'; }
     if (seen && G.mapMode === 'services') extra = `<br><span>${s.stellars.filter(p => p.svc && /[YO]/.test(p.svc)).map(p => `${esc(p.name)}: ${[p.svc.includes('Y') ? 'shipyard' : '', p.svc.includes('O') ? 'outfitter' : ''].filter(Boolean).join(' + ')}`).join(' · ') || '<span class="dim">No shipyard or outfitter.</span>'}</span>`;
     if (G.mapMode === 'standing' && G.you) extra = `<br><span>Your standing with ${FACTIONS[s.faction].name}: <b>${G.you.rep[s.faction] || 0}</b></span>`;
-    $('ginfo').innerHTML = `<b style="color:${FACTIONS[s.faction].color}">${esc(s.name)}</b> · ${FACTIONS[s.faction].name}${stateOfSys(s.id) ? ' · ' + stateLine(s.id) : ''} · danger <span class="dgr">${Array.from({ length: 7 }, (_, i) => `<i class="${i < s.danger ? 'on' : ''}"></i>`).join('')}</span> ${s.danger}${law}${jumps}${seen ? '' : ' · <i>not yet visited</i>'}${extra}<br><span class="dim">${s.stellars.map(p => p.site ? `${p.name}${G.sites && G.sites[p.id] ? ' (' + esc(G.sites[p.id].owner) + ', Ops ' + G.sites[p.id].ops + ')' : ' (unclaimed)'}` : `${p.name} (${[p.svc.includes('Y') && 'shipyard', p.svc.includes('O') && 'outfitter', p.svc.includes('T') && 'market', p.svc.includes('B') && 'jobs'].filter(Boolean).join(', ') || 'no services'})`).join(' · ') || 'No inhabited worlds.'}${fields ? ' · Mining: ' + fields : ''}</span>`;
+    const myHome = G.you && G.you.station && G.you.station.claimed && STELLARS[G.you.station.site] && STELLARS[G.you.station.site].system === s.id;
+    $('ginfo').innerHTML = `${myHome ? '<span style="color:#ffd27a">◎ YOUR STATION · </span>' : ''}<b style="color:${FACTIONS[s.faction].color}">${esc(s.name)}</b> · ${FACTIONS[s.faction].name}${stateOfSys(s.id) ? ' · ' + stateLine(s.id) : ''} · danger <span class="dgr">${Array.from({ length: 7 }, (_, i) => `<i class="${i < s.danger ? 'on' : ''}"></i>`).join('')}</span> ${s.danger}${law}${jumps}${seen ? '' : ' · <i>not yet visited</i>'}${extra}<br><span class="dim">${s.stellars.map(p => p.site ? `${p.name}${G.sites && G.sites[p.id] ? ' (' + esc(G.sites[p.id].owner) + ', Ops ' + G.sites[p.id].ops + ')' : ' (unclaimed)'}` : `${p.name} (${[p.svc.includes('Y') && 'shipyard', p.svc.includes('O') && 'outfitter', p.svc.includes('T') && 'market', p.svc.includes('B') && 'jobs'].filter(Boolean).join(', ') || 'no services'})`).join(' · ') || 'No inhabited worlds.'}${fields ? ' · Mining: ' + fields : ''}${(() => { const cg = Object.keys((G.you && G.you.cargo) || {}).filter(c => G.you.cargo[c] > 0), buys = cg.filter(c => s.stellars.some(sp => { const p = STELLARS[sp.id]; return p && !p.site && (p.svc || '').includes('T') && price(p, c) !== null; })); return buys.length ? ` · <span style="color:var(--ok)">buys your ${buys.map(c => COMMODITIES.find(x => x.id === c).name.toLowerCase()).join(', ')}</span>` : ''; })()}</span>`;   // 2.5.2
   }
 }
 export function plot(to) {

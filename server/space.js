@@ -73,7 +73,7 @@ export class Space {
     if (re.aggro.has(ro.id) || (re.mission && re.mission.owner === ro.player.id) || re.storyKill || re.arcOf || re.huntOf) return false;
     if (!this.inner()) return false;
     const F = FACTIONS[re.faction] || {};
-    if (!(F.pirate || F.alwaysHostile || re.boss || re.bossMinion)) return false;
+    if (!(F.pirate || F.alwaysHostile || re.boss || re.bossMinion || re.warFleet)) return false;
     return !!(this.game.newcomer && this.game.newcomer(ro.player.s && ro.player.s.data));
   }
   // 2.1: can a's fire hurt b? Hostiles always; a captain's own guns also hit any ship not on their side (like EV Nova),
@@ -131,7 +131,7 @@ export class Space {
     const T = TRAFFIC[fac];
     let kind, f = fac, roll = Math.random();
     const st = this.game.stateOf ? this.game.stateOf(this.id) : null, SX = st ? STATES[st.kind] : null;   // 2.4: the system's state shapes its traffic
-    if (st && st.kind === 'war' && st.enemy && TRAFFIC[st.enemy] && Math.random() < 0.35) return this.spawnGroup('patrol', st.enemy, TRAFFIC[st.enemy].war, initial);
+    if (st && st.kind === 'war' && st.enemy && TRAFFIC[st.enemy] && Math.random() < 0.35) { const lead = this.spawnGroup('patrol', st.enemy, TRAFFIC[st.enemy].war, initial); if (lead) for (const e of this.ships.values()) if (e === lead || e.owner === lead.id) e.warFleet = true; return lead; }   // 2.5.2: tagged, so newcomers are spared
     if (st && st.kind === 'pirates' && Math.random() < 0.3) roll = -1;   // force a raid roll below
     if (FACTIONS[fac].pirate) kind = 'raid';
     else if ((S.danger >= 2 || roll < 0) && roll < 0.08 * S.danger * (this.m ? this.m.raid : 1)) { kind = 'raid'; f = Math.random() < 0.3 && S.danger >= 3 && !S.farside ? 'umbral' : 'hollow'; }

@@ -384,3 +384,5 @@ body:has(#land:not(.hidden)) #chatlog{visibility:hidden}
 .sect::before{content:'';display:inline-block;width:6px;height:6px;margin-right:7px;vertical-align:1px;border-radius:1px;background:#b30000;box-shadow:0 0 4px rgba(255,60,40,.7)}
 .sect{border-bottom:1px solid;border-image:linear-gradient(90deg,#5a1a1a,#2a2a2e 40%,transparent) 1}
 @media (max-width:1150px),(max-height:700px){#ctabs{gap:2px}#ctabs button{padding:0 4px;font-size:10.5px;letter-spacing:0;min-width:0;flex:1 1 auto}}
+.nocargo{font:bold 10px Tahoma;letter-spacing:1px;color:#ffb070;border:1px solid #7a4a20;border-radius:3px;padding:0 4px;white-space:nowrap}
+.ysort{margin:6px 0 4px}.ysort select{margin-left:6px}.ofit{display:inline-flex;align-items:center;gap:4px;margin-right:8px;color:#ccc}

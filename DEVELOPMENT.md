@@ -80,7 +80,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 
 ## Testing
 
-- **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `v21`, `v23`, `v24`, `v25`, `fuzz` and `balance`. They run in
+- **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `v21`, `v23`, `v24`, `v25`, `v252`, `fuzz` and `balance`. They run in
   process; no server needed.
 - **Networked bot:** `node test/bot.js ws://localhost:8090/ws` against a running server.
 - **Browser checks:** `python3 test/<name>_shot.py <outdir> http://127.0.0.1:8090/`. They need Playwright and Chromium.
@@ -141,6 +141,7 @@ single-player focused for now.
     - `tools/rift_planets.py`: 56 ray-cast planets into `client/assets/planets/` plus `planets.json` (type, hue, sphere radius as a fraction of the image). `client/planets.js` picks one per world (`chooseRendered`). Since 2.5.1 each planet also has surface maps (`_tex` albedo, `_aux` four stacked grey maps: height, water, emissive, cloud) and fixed `_back` (halo, far ring) and `_front` (near ring, ring shadow) layers; `renderRendered` lights the turning sphere whenever it moves a texel, showing the still render (`<id>.webp`) until the maps load.
     - `tools/rift_stations.py`: twelve station designs (`s_<design>.webp`); `client/render.js` `stationDesign(p)` picks one by faction and description.
     - `tools/rift_landscapes.py`: landing pictures (`client/assets/land/l_*.jpg`): a voxel-space height-field terrain with reflective water and haze, depth-tested 3D structures, and skies that reuse the planet renders. `client/ui.js` `landScene(p)` maps worlds to scenes.
+    - `tools/rift_ruins.py` (the drifting ring ruins and megastructure arcs, `ruin_*` and `arc_*` in `client/assets/decor/`)
     - `tools/rift_fx.py` (fireball sheets, shards, flare), `tools/rift_objects.py` (asteroids, loot), `tools/rift_icons.py` (outfitter pictures for `EXTRA_OUTFITS`), `tools/rift_login.py` (the login backdrop).
     - `tools/rift_render3d.py` is the hull pipeline's software renderer (lofts, tori, blocks, materials with panels, windows and glow); `tools/rift_noise.py` has the shared 3D Perlin noise.
   - System scenery is rendered by `tools/rift_decor.py` (galaxies, nebulae, wrecks, ring ruins) and `tools/rift_decor2.py` (gas giants, derelicts, crystals, black hole, arcs, satellites, pods) into `client/assets/decor/*.webp`. `client/render.js` places it per system (`decorFor`, seeded from the system id) in far, middle and near layers.
@@ -198,6 +199,7 @@ single-player focused for now.
 - `python3 test/v103_radio.py <outdir>`: the in-game radio, with iHeart mocked.
 - `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
 - `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
+- `node test/v252.js`: 2.5.2 checks (story needs, supply warnings, mining hints, markets for mined goods, war fleets and newcomers, the map station marker, the ring art).
 - `node test/v25.js`: 2.5 checks (every art asset exists and is referenced, planet manifest, station and landing scene coverage, the art budget, styled dialogs, career migration, market depth).
 - `node test/v24.js`: 2.4 checks (client scripts parse, system states and trade impact, contact stories at every bar, side stories, salvage, combat AI).
 - `node test/v23.js`: 2.3 checks (new hulls and their art, moons, fields, traffic).

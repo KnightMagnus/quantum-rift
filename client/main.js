@@ -234,6 +234,7 @@ function onEvent(ev) {
 // ------------------------------------------------------------------ input
 const typing = () => document.activeElement && (document.activeElement.tagName === 'INPUT');
 window.addEventListener('keydown', (e) => {
+  if ((e.key === 'Enter' || e.key === ' ') && !$('storybox').classList.contains('hidden') && $('storyok')) { e.preventDefault(); $('storyok').click(); return; }   // 2.5.2: Enter or Space continues a story pop-up
   if (e.key === 'Enter' && G.you) { const c = $('chatin'); if (document.activeElement === c) { sendChat(); c.blur(); } else if (!typing()) { c.focus(); } e.preventDefault(); return; }
   if (typing()) { if (e.key === 'Escape') document.activeElement.blur(); return; }
   if (!G.you) return;
@@ -298,7 +299,7 @@ function openInfo() { audio.ui('open', 0.6); $('infobox').classList.remove('hidd
 function closeInfo() { audio.ui('close', 0.6); $('infobox').classList.add('hidden'); }
 function renderInfo() { $('infobody').innerHTML = infoHtml(G, G.itab || 'ship'); }
 $('itabs').addEventListener('click', (e) => { const b = e.target.closest('[data-it]'); if (!b) return; G.itab = b.dataset.it; $('itabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); renderInfo(); });
-$('infobody').addEventListener('click', (e) => { const b = e.target.closest('[data-jet],[data-ord]'); if (!b) return; if (b.dataset.jet) send({ t: 'jettison', cid: b.dataset.jet, n: +b.dataset.n || 0 }); else send({ t: 'order', o: b.dataset.ord }); setTimeout(renderInfo, 250); });
+$('infobody').addEventListener('click', (e) => { const pl = e.target.closest('[data-plot]'); if (pl) { plot(pl.dataset.plot); toast(`Course plotted to ${SYS[pl.dataset.plot].name}.`); return; } const b = e.target.closest('[data-jet],[data-ord]'); if (!b) return; if (b.dataset.jet) send({ t: 'jettison', cid: b.dataset.jet, n: +b.dataset.n || 0 }); else send({ t: 'order', o: b.dataset.ord }); setTimeout(renderInfo, 250); });
 window.addEventListener('keydown', (e) => { if (!$('infobox').classList.contains('hidden') && (e.key === 'Escape' || e.code === 'KeyI') && !typing()) { closeInfo(); e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 // ------------------------------------------------------------------ 1.0.3 autopilot: fly to a planet, turn, brake and land; or fly clear and jump
 function setAuto(a, msg) { if (a && !G.auto) audio.ui('autopilot', 0.8); G.auto = a; if (!a) G.autoRoute = G.autoRoute && G.autoKeep; G.autoKeep = false; $('autobadge').classList.toggle('hidden', !a); if (a) { $('autobadge').textContent = a.mode === 'land' ? 'AUTOPILOT · LANDING' : a.mode === 'stop' ? 'FULL STOP' : G.autoRoute && G.route.length > 1 ? `AUTOPILOT · ${G.route.length} JUMPS` : 'AUTOPILOT · JUMP'; if (msg) toast(msg); } }

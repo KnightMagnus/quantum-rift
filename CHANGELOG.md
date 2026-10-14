@@ -2,6 +2,22 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.5.2
+- **Fixes:**
+  - Contact stories warn on the job board when a step will need more hold space or bunks than your ship has, and a stuck step tells you to switch ships instead of quietly waiting.
+  - Supply jobs warn when your hold is too small to carry the goods.
+  - The "Mine 10 tons" career step explains that ships with no hold need a Cargo Compression outfit.
+  - More markets buy what you mine: ore at 96 markets, gas at 82 and crystal shards at 75 (shards were bought at only 27).
+  - Fleets brought in by a border war leave newcomers alone in inner space, like pirates do.
+- **Quality of life:**
+  - The galaxy map marks your Personal Station (with its Ops level), lists it in the legend, and has a HOME button to centre on it. Hovering a system says if it buys what you carry.
+  - The cargo panel (I) shows the best nearby price for each good in your hold, with a PLOT button.
+  - A full hold while mining names the nearest buyer, and ships with no hold say what to fit.
+  - The shipyard tags ships with NO CARGO HOLD and can sort by price, cargo, speed, strength or shields.
+  - The outfitter can show only what fits.
+  - Enter or Space continues a story pop-up.
+- **Scenery:** the broken ring stations are now rendered wreckage that has drifted apart, with tumbling pieces, torn spars and debris. The giant megastructure arcs are detailed frameworks with docking bays and lights, and are drawn smaller.
+
 ### 2.5.1
 - **The planets turn again.** The rendered planets now rotate slowly, as they did before 2.5. Each world is baked into surface maps (colour, relief, water, night lights and clouds), and the game lights them as they turn: bump relief, the soft terminator, the ocean glint, cloud shadows, city lights on the night side and the atmosphere rim. Clouds drift a little faster than the ground, rings and halos stay put, and each world keeps its own tilt and speed.
 - Softer, rounder cloud shapes on the rendered worlds, and greener continents on Earth-like planets.

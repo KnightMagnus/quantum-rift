@@ -479,6 +479,13 @@ export class Game {
     if (by && by.player) this.broadcast({ t: 'chat', from: '', msg: `${by.player.name} destroyed ${s.name} in ${SYS[space.id].name}.` });
     this.db.touch(); this.you(s); this.landed(s);
   }
+  nearestBuyer(sys, cid) {   // 2.5.2: the closest market that buys a good (by jumps)
+    const dist = { [sys]: 0 }, q = [sys];
+    while (q.length) { const x = q.shift(); const j = dist[x];
+      for (const sp of SYS[x].stellars) { const p = STELLARS[sp.id]; if (p && !p.site && (p.svc || '').includes('T') && price(p, cid) !== null) return { p, j }; }
+      if (j < 5) for (const l of SYS[x].links) if (dist[l] === undefined) { dist[l] = j + 1; q.push(l); } }
+    return null;
+  }
   onLoot(pref, it) {
     const s = pref.s, d = s.data; if (!d) return;
     if (it.cargo) return this.lootCargo(s, it);   // 1.1: jettisoned cargo
@@ -486,7 +493,10 @@ export class Game {
     if (it.ore) {   // mined ore goes into the cargo hold, if there is room
       const b = this.bonus(d), raw = it.n * (1 + (b.miningPct || 0) / 100) * this.mods(d.sys).mining, want = Math.floor(raw) + (Math.random() < raw % 1 ? 1 : 0);
       const st = this.stats(d), used = this.holdUsed(d), n = Math.min(want, st.cargo - used);
-      if (n <= 0) { if (!s.fullT || Date.now() - s.fullT > 8000) { s.fullT = Date.now(); this.toast(s, 'Cargo hold full: sell or process your ore.'); } return false; }
+      if (n <= 0) { if (!s.fullT || Date.now() - s.fullT > 8000) { s.fullT = Date.now();   // 2.5.2: say where it can go
+          const C = COMMODITIES.find(c => c.id === it.ore), B = this.nearestBuyer(d.sys, it.ore);
+          this.toast(s, !st.cargo ? 'This ship has no cargo hold. Fit a Cargo Compression outfit (it takes no space) to keep what you mine.'
+            : `Cargo hold full. ${C.name} sells at ${B ? `${B.p.name}${B.j ? ` (${B.j} jump${B.j > 1 ? 's' : ''})` : ' in this system'}` : 'markets further out'}${d.station && d.station.ops >= 1 ? ', or process it at your station' : ''}.`); } return false; }
       d.cargo[it.ore] = (d.cargo[it.ore] || 0) + n; d.stats.mined = (d.stats.mined || 0) + n; this.goal(s, 'mined', n); this.mastery(s, n * 0.3); this.specOnMine(s, it);
       this.toast(s, `+${n} t ${COMMODITIES.find(c => c.id === it.ore).name}`); this.you(s); return true;
     }
