@@ -1,0 +1,112 @@
+// Quantum Rift 2.4 "Living Galaxy": system states that come and go, a market that remembers what captains sold, and
+// supply jobs that pay you to bring what a troubled system needs. Mixed into Game.
+import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.js';
+import { STATES, STATE_SHARE, STATE_MIN, TRADE_IMPACT } from '../shared/living.js';
+import { credits } from '../shared/rules.js';
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const START_NEWS = {
+  famine: (S) => `Famine grips ${S.name}: food prices have doubled and relief is needed.`,
+  plague: (S) => `A fever spreads through ${S.name}. Medical supplies are urgently needed.`,
+  boom: (S) => `${S.name} is booming: luxuries and equipment are selling high.`,
+  war: (S, st) => `War in ${S.name}: ${FACTIONS[st.enemy].name} ships are attacking the ${FACTIONS[S.faction].short}.`,
+  pirates: (S) => `Raiders have the lanes in ${S.name}. Bounties there pay half again.`,
+  festival: (S) => `A festival fills the spaceports of ${S.name}.`,
+  rush: (S) => `A mining rush in ${S.name}: refineries are paying top price for ore.`,
+  refugees: (S) => `Refugees are pouring into ${S.name}. Food, medicine and passage are scarce.`,
+};
+
+export const LivingMixin = {
+  livingInit() { const W = this.db.world; W.states = W.states || {}; W.stateCool = W.stateCool || {}; W.tradeImpact = W.tradeImpact || {}; },
+  marketSystems() { return this._mkt || (this._mkt = SYSTEMS.filter(S => !S.arena && S.stellars.some(p => p.svc && p.svc.includes('T') && !p.site)).map(S => S.id)); },
+  stateOf(sysId) { const st = this.db.world.states && this.db.world.states[sysId]; return st && st.until > Date.now() ? st : null; },
+  // a war needs an enemy: a power hostile to the system's owner, preferably one next door
+  warEnemy(S) {
+    const F = FACTIONS[S.faction]; if (!F || F.region || F.pirate || S.faction === 'umbral') return null;
+    const next = new Set(S.links.map(l => SYS[l].faction).filter(f => f !== S.faction && FACTIONS[f] && !FACTIONS[f].region && F.hostile.includes(f)));
+    const pool = next.size ? [...next] : F.hostile.filter(f => FACTIONS[f] && !FACTIONS[f].region && f !== 'umbral');
+    return pool.length ? pick(pool) : null;
+  },
+  livingTick() {
+    this.livingInit(); const W = this.db.world, now = Date.now(); let changed = false;
+    for (const [sys, st] of Object.entries(W.states)) if (st.until <= now) { delete W.states[sys]; W.stateCool[sys] = now + 20 * 60000; this.news(STATES[st.kind].end.replace('{sys}', SYS[sys].name).replace('{fac}', FACTIONS[SYS[sys].faction].name)); changed = true; }
+    const want = Math.round(this.marketSystems().length * STATE_SHARE);
+    for (let tries = 0, lim = this._livingStarted ? 6 : want * 3; Object.keys(W.states).length < want && tries < lim; tries++) {
+      const sys = pick(this.marketSystems()), S = SYS[sys]; if (W.states[sys] || (W.stateCool[sys] || 0) > now) continue;
+      const kinds = Object.entries(STATES).filter(([k]) => !((k === 'war' || k === 'pirates') && S.stellars.some(x => x.hub)) && (k !== 'war' || this.warEnemy(S)) && (k !== 'rush' || (S.fields || []).length) && (k !== 'pirates' || !FACTIONS[S.faction].pirate));
+      let tot = kinds.reduce((a, [, X]) => a + X.weight, 0), roll = Math.random() * tot, kind = kinds[0][0];
+      for (const [k, X] of kinds) { roll -= X.weight; if (roll <= 0) { kind = k; break; } }
+      const X = STATES[kind], st = { kind, start: now, until: now + (STATE_MIN[0] + Math.random() * (STATE_MIN[1] - STATE_MIN[0])) * 60000, got: 0, need: X.need ? X.need.qty : 0 };
+      if (kind === 'war') st.enemy = this.warEnemy(S);
+      W.states[sys] = st; this.news(START_NEWS[kind](S, st)); changed = true;
+    }
+    this._livingStarted = true;
+    if (changed) { this.db.touch(); this.worldKey = null; }
+  },
+  statesPayload() { const out = {}; for (const [sys, st] of Object.entries(this.db.world.states || {})) if (st.until > Date.now()) out[sys] = { k: st.kind, got: st.got, need: st.need, until: st.until, enemy: st.enemy || null }; return out; },
+  // ---- prices: the system's state and what captains have been selling or buying at this world
+  impact(sid, cid) {
+    const T = (this.db.world.tradeImpact || {})[sid]; const x = T && T[cid]; if (!x) return 0;
+    const v = x.v * Math.pow(0.5, (Date.now() - x.t) / (TRADE_IMPACT.halfLifeMin * 60000)); if (Math.abs(v) < 0.004) { delete T[cid]; return 0; } return v;
+  },
+  addImpact(sid, cid, tons) {   // tons > 0: sold here (the price falls); < 0: bought here (the price rises)
+    const W = this.db.world; W.tradeImpact = W.tradeImpact || {}; const T = W.tradeImpact[sid] = W.tradeImpact[sid] || {};
+    T[cid] = { v: clamp(this.impact(sid, cid) + tons * TRADE_IMPACT.perTon, -TRADE_IMPACT.max, TRADE_IMPACT.max), t: Date.now() };
+  },
+  livingMult(p, cid) { const st = this.stateOf(p.system), sm = st ? (STATES[st.kind].prices[cid] || 1) : 1; return sm * (1 - this.impact(p.id, cid)); },
+  // ---- captains ending states early
+  stateProgress(s, sys, what, n) {
+    const st = this.stateOf(sys); if (!st || !st.need) return; const X = STATES[st.kind];
+    const counts = (X.need.cid && what === 'cid:' + X.need.cid) || (X.need.kills === 'pirate' && what === 'kill:pirate') || (X.need.kills === 'enemy' && what === 'kill:' + st.enemy);
+    if (!counts) return;
+    s.data.stats.stateHelp = (s.data.stats.stateHelp || 0) + 1;   // 2.5: the career step
+    const before = st.got; st.got = Math.min(st.need, st.got + n); this.db.touch();
+    if (st.got >= st.need) return this.resolveState(s, sys);
+    if (Math.floor(before / (st.need / 4)) !== Math.floor(st.got / (st.need / 4))) this.toast(s, `${X.name} in ${SYS[sys].name}: ${st.got} / ${st.need} ${X.need.cid ? 't delivered' : 'destroyed'}.`);
+  },
+  resolveState(s, sys) {
+    const W = this.db.world, st = W.states[sys], X = STATES[st.kind], S = SYS[sys], d = s.data;
+    delete W.states[sys]; W.stateCool[sys] = Date.now() + 30 * 60000; this.worldKey = null;
+    const reward = 15000 + st.need * 120; d.credits += reward; d.stats.earned += reward; d.rep[S.faction] = clamp((d.rep[S.faction] || 0) + 6, -100, 100);
+    this.news(`${X.end.replace('{sys}', S.name).replace('{fac}', FACTIONS[S.faction].name)} ${d.name} led the effort.`);
+    this.toast(s, `You ended the ${X.name.toLowerCase()} in ${S.name}! The ${FACTIONS[S.faction].short} pay you ${credits(reward)} credits (+6 standing).`);
+    this.log(d, `Ended the ${X.name.toLowerCase()} in ${S.name}.`); this.db.touch(); this.you(s);
+  },
+  stateOnKill(s, npc, space) {
+    const F = FACTIONS[npc.faction] || {};
+    if (F.pirate || npc.faction === 'hollow') this.stateProgress(s, space.id, 'kill:pirate', 1);
+    this.stateProgress(s, space.id, 'kill:' + npc.faction, 1);
+  },
+  // ---- the jobs a troubled system posts (merged into nearby job boards)
+  stateOffers(p, d, r, near, win) {
+    const out = [], here = [[p.system, 0], ...near];
+    for (const [sys, jumps] of here) {
+      const st = this.stateOf(sys); if (!st) continue; const S = SYS[sys], X = STATES[st.kind];
+      const ports = S.stellars.filter(x => x.svc && x.svc.includes('T') && !x.site); if (!ports.length) continue;
+      const dest = ports[Math.floor(r() * ports.length)], id = `${p.id}-${win}-st-${sys}`;
+      const supply = { famine: 'food', refugees: 'food', plague: 'medical', rush: 'ore', war: 'equipment', boom: 'luxury', festival: 'luxury' }[st.kind];
+      if (supply) {
+        const c = COMMODITIES.find(x => x.id === supply), qty = 8 + Math.floor(r() * 18);
+        out.push({ id, type: 'supply', state: st.kind, cid: supply, qty, sys, dest: dest.id, reward: Math.round((c.base * qty * 1.6 + 3000 + jumps * 1200) * (X.need ? 1.25 : 1)),
+          title: `${X.icon} ${X.name}: bring ${qty} t of ${c.name.toLowerCase()} to ${dest.name}`,
+          text: `${X.desc} Buy ${qty} tons of ${c.name.toLowerCase()} wherever it is cheap and deliver it from your own hold to ${dest.name} in ${S.name} (${jumps ? jumps + ' jump' + (jumps > 1 ? 's' : '') : 'this system'}). Pays well above market.` });
+      }
+      if (st.kind === 'pirates' || st.kind === 'war') {
+        const need = 3 + Math.floor(r() * 3);
+        out.push({ id: id + 'p', type: 'patrol', state: st.kind, sys, need, got: 0, reward: Math.round((4000 + need * 2400 + S.danger * 1800) * 1.4),
+          title: st.kind === 'war' ? `⚔ Hold the line in ${S.name}` : `☠ Clear the lanes of ${S.name}`,
+          text: st.kind === 'war' ? `Destroy ${need} ${FACTIONS[st.enemy].name} warships in ${S.name}, then land anywhere to be paid.` : `Destroy ${need} raiders in ${S.name}, then land anywhere to be paid. Every kill helps break the scourge.` });
+      }
+      if (X.passengers) {
+        const other = near.filter(([s2]) => s2 !== sys)[Math.floor(r() * Math.max(1, near.length - 1))]; const to = other && SYS[other[0]].stellars.find(x => x.svc && x.svc.includes('L') && !x.site);
+        if (to) { const pax = 2 + Math.floor(r() * 4) * X.passengers / 2;
+          out.push({ id: id + 'x', type: 'passenger', state: st.kind, sys: other[0], dest: to.id, pax: Math.round(pax), reward: Math.round(2500 + other[1] * 1600 + pax * 1300),
+            title: `${X.icon} Passage for ${Math.round(pax)} from ${S.name} to ${to.name}`, text: `${st.kind === 'refugees' ? 'Refugees' : 'Festival-goers'} need passage to ${to.name}. Each passenger needs a bunk.` }); }
+      }
+    }
+    return out;
+  },
+  // a supply job completes when you land at its destination with the goods in your hold
+  supplyReady(d, m) { return m.type === 'supply' && (d.cargo[m.cid] || 0) >= m.qty; },
+};

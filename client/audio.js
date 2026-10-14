@@ -50,7 +50,7 @@ export function ui(name, gain = 1, rate = 1) {
   const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate * (1 + (Math.random() - 0.5) * 0.04);
   const g = ctx.createGain(); g.gain.value = gain; src.connect(g); g.connect(bus.ui || master); src.start();
 }
-export function preloadUi() { if (!ctx) return; load('jumpfar'); for (const n of ['click', 'hover', 'tab', 'open', 'close', 'error', 'buy', 'sell', 'toast', 'accept', 'complete', 'levelup', 'alert', 'lock', 'ping', 'chat', 'dock', 'undock', 'jump', 'arrive', 'autopilot', 'jumpfast', 'lowshield', 'pickup', 'hail', 'type']) load('ui_' + n); }
+export function preloadUi() { if (!ctx) return; load('jumpfar'); for (const n of ['click', 'hover', 'tab', 'open', 'close', 'error', 'buy', 'sell', 'toast', 'accept', 'complete', 'levelup', 'alert', 'lock', 'ping', 'chat', 'dock', 'undock', 'jump', 'arrive', 'autopilot', 'jumpfast', 'lowshield', 'pickup', 'hail', 'type', 'quest', 'state']) load('ui_' + n); }
 
 // ------------------------------------------------------------------ ambience: looping beds cross-faded so mp3 padding never clicks
 let wantAmb = null; const ambNow = {};

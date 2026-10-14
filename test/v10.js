@@ -61,7 +61,7 @@ sdb.dirty = true; sdb.flush(); sdb.backup(); ok(fs.readdirSync(sdir + '/backups'
 const mp = fake('Online Only'); mp.send({ t: 'pause' }); ok(!game.paused, 'pause only works in solo mode');
 // --- career guide
 const { TUTORIAL } = await import('../shared/tutorial.js');
-ok(TUTORIAL.length === 20, 'the career guide has twenty goals');
+ok(TUTORIAL.length === 23, 'the career guide has twenty-three goals (2.5)');
 const cg = fake('Rookie'), cd = cg.s.data; ok(cd.tut === 0, 'new captains start the career at goal 1');
 cd.tut = 5; Object.assign(cd.station, { claimed: true, site: 'site-halcyon' }); game.idleCheck(cg.s); ok(cd.tut === 6, 'state goals complete on their own (claimed a hull)');
 console.log('ALL 1.0 TESTS PASSED'); process.exit(0);

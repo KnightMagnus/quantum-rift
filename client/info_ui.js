@@ -1,6 +1,8 @@
 // 1.1: the ship and captain panel (I), after Endless Sky's player info: your ship, cargo (with jettison), combat
 // rating, fleet orders, and the rival captains of the Rift with how they feel about you.
-import { SYS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
+import { SYS, SYSTEMS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES } from '/shared/galaxy.js';
+import { SPEC, BP_NEED } from '/shared/specialty.js';
+import { RARITY } from '/shared/hangar.js';
 import { RANKS } from '/shared/rivals.js';
 import { synBadge } from './syn_ui.js';
 
@@ -34,6 +36,7 @@ export function infoHtml(G, tab) {
       <div class="sect">MISSION CARGO</div>${(y.missions || []).filter(m => m.qty).map(m => `<div class="kv"><span>${esc(m.title)}</span><span>${m.qty} t</span></div>`).join('') || '<p class="dim">None.</p>'}
     </div></div>`;
   }
+  if (tab === 'career') return careerHtml(G);   // 2.4
   if (tab === 'fleet') {
     const ord = G.order || 'gather';
     return `<div class="sect" style="margin-top:0">FLEET ORDERS</div><div class="dim small" style="margin-bottom:6px">Orders apply to your escorts, wingmates and fighters. Give the same order again to cancel it.</div>
@@ -45,4 +48,36 @@ export function infoHtml(G, tab) {
   return `<div class="dim small" style="margin-bottom:6px">Thirty captains with careers of their own. Hail them (T) to talk. Help them in a fight and they warm to you; fire on them and they will remember.</div>
     <table class="tbl"><tr><th>CAPTAIN</th><th>CAREER</th><th>FLAG</th><th>SHIP</th><th>LAST SEEN</th><th>STANDING</th></tr>${list.map(r => `<tr><td><b>${esc(r.name)}</b></td><td>${esc(r.kind)}</td><td><span style="color:${FACTIONS[r.fac] ? FACTIONS[r.fac].color : '#aaa'}">${esc(FACTIONS[r.fac] ? FACTIONS[r.fac].short : r.fac)}</span></td><td>${esc(r.ship)}</td>
       <td>${r.sys ? (seen.has(r.sys) ? esc(SYS[r.sys].name) : '<span class="dim">uncharted space</span>') : '<span class="dim">grounded</span>'}</td><td style="color:${MOODC[r.mood]}">${r.mood[0].toUpperCase() + r.mood.slice(1)} (${r.rel})</td></tr>`).join('')}</table>`;
+}
+
+// 2.4: everything you own and everything you have done, on one page
+function careerHtml(G) {
+  const y = G.you, A = G.A, shipVal = (sh) => sh && A.ships[sh.hull] ? A.ships[sh.hull].cost || 0 : 0;
+  const stored = (y.dock || []).map(x => x.ship).filter(Boolean), cargoVal = Object.entries(y.cargo || {}).reduce((a, [c, n]) => a + (COMMODITIES.find(x => x.id === c) || { base: 0 }).base * n, 0);
+  const crates = MATERIALS.reduce((a, m) => a + (y.mats[m] || []).reduce((b, n) => b + n, 0), 0);
+  const worth = y.credits + (y.shipless ? 0 : shipVal(y.ship)) + stored.reduce((a, sh) => a + shipVal(sh), 0) + cargoVal - (y.loan ? y.loan.bal : 0);
+  const kv = (k, v) => `<div class="kv"><span>${k}</span><span>${v}</span></div>`;
+  const S = y.station || {}, site = S.site && STELLARS[S.site], st = y.stats || {}, Q = y.quests || { done: [], active: [] }, SY = y.story || {};
+  const offs = (y.officers || []).reduce((a, o) => (a[o.rarity] = (a[o.rarity] || 0) + 1, a), {});
+  const bps = Object.entries(y.bp || {}).filter(([id, n]) => n > 0 && SPEC[id]).map(([id, n]) => `<div class="kv small"><span>${esc(SPEC[id].name)}</span><span>${Math.min(n, BP_NEED)} / ${BP_NEED}${n >= BP_NEED ? ' <b style="color:var(--ok)">ready</b>' : ''}</span></div>`).join('');
+  const docks = y.docks ? y.docks.list.map(k => `<div class="kv small"><span>Dock ${k.letter}${k.letter === y.docks.list[y.docks.active].letter ? ' <span style="color:var(--ok)">(active)</span>' : ''}</span><span>${k.lead && A.ships[k.lead.hull] ? esc(A.ships[k.lead.hull].name) : '<span class="dim">no lead</span>'}${k.wings.filter(Boolean).length ? ` + ${k.wings.filter(Boolean).length} wing` : ''}</span></div>`).join('') : '';
+  return `<div class="igrid"><div>
+    <div class="sect" style="margin-top:0">HOLDINGS</div>
+    ${kv('<b>Net worth</b>', `<b class="cr">${cr(worth)} cr</b>`)}${kv('Credits', cr(y.credits))}${y.loan ? kv('Loan', `−${cr(y.loan.bal)}`) : ''}
+    ${kv('Ships', `${(y.shipless ? 0 : 1) + stored.length} <span class="dim small">(${cr((y.shipless ? 0 : shipVal(y.ship)) + stored.reduce((a, sh) => a + shipVal(sh), 0))} cr)</span>`)}${docks}
+    ${kv('Personal Station', site ? `Ops ${S.ops} · ${esc(SYS[site.system].name)}` : '<span class="dim">none yet</span>')}
+    ${kv('Colonies', (y.colonies || []).length ? y.colonies.map(c => `${esc(c.name)} (Lv ${c.lv})`).join(', ') : '<span class="dim">none</span>')}
+    ${kv('Officers', (y.officers || []).length ? Object.entries(offs).sort((a, b) => b[0] - a[0]).map(([r, n]) => `<span style="color:${RARITY[r].color}">${n} ${RARITY[r].name}</span>`).join(', ') : '<span class="dim">none</span>')}
+    ${kv('Material crates', crates)}${kv('Cargo', `${y.cargoUsed || 0} t <span class="dim small">(about ${cr(cargoVal)} cr)</span>`)}
+    ${bps ? `<div class="sect">BLUEPRINTS</div>${bps}` : ''}
+  </div><div>
+    <div class="sect" style="margin-top:0">PROGRESS</div>
+    ${kv('Main story', SY.pass ? 'complete' : `chapter ${Math.min((SY.step || 0) + 1, SY.total || 1)} of ${SY.total || '?'}`)}
+    ${kv('Side stories', `${Q.done.filter(x => x.side).length} of 6`)}${kv('Contact stories', `${Q.done.filter(x => !x.side).length} finished · ${Object.values(Q.contacts || {}).filter(c => c.n >= 2).length} trusted contacts`)}
+    ${kv('Faction stories', `${(y.arcs || []).filter(a => a.done).length} of ${(y.arcs || []).length}`)}${kv('Farside expeditions', (y.expd && y.expd.n) || 0)}
+    ${kv('Combat rating', `<b style="color:#ffd27a">${esc((y.rank || {}).name || 'Harmless')}</b>`)}${kv('Ships destroyed', cr(st.kills || 0))}
+    ${kv('Systems explored', `${(y.explored || []).length} of ${SYSTEMS.filter(x => !x.arena).length}`)}${kv('Jumps made', cr(st.jumps || 0))}
+    ${kv('Credits earned', cr(st.earned || 0))}${st.mined ? kv('Ore mined', `${cr(st.mined)} t`) : ''}
+    ${(Q.active || []).length ? `<div class="sect">STORIES UNDER WAY</div>${Q.active.map(a => `<div class="kv small"><span>${a.side ? '★' : '✦'} ${esc(a.name)}</span><span class="dim">step ${a.step + 1} of ${a.of}</span></div>`).join('')}` : ''}
+  </div></div>`;
 }
