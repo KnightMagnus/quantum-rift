@@ -13,7 +13,7 @@ export const TUTORIAL = [
   { ev: 'job', title: 'Do a job', text: 'Take any job from a job board and finish it.', reward: 8000 },
   { check: (d) => !!(d.quests && (Object.keys(d.quests.active || {}).length || (d.quests.done || []).length)), title: 'Meet a contact', text: 'Every spaceport bar has a contact (see AT THE BAR on the landing overview). Take on their story from the JOBS tab.', reward: 8000 },
   { check: (d) => (d.stats.stateHelp || 0) >= 1, title: 'Help a troubled system', text: 'The OPS tab lists famines, wars and other troubles near you. Sell what a troubled system needs there, take one of its jobs, or fight its raiders.', reward: 10000 },
-  { check: (d) => (d.stats.mined || 0) >= 10, title: 'Mine 10 tons', text: 'Buy a Mining Laser and break rocks in an asteroid field. Fly over the ore to scoop it.', reward: 8000 },
+  { check: (d) => (d.stats.mined || 0) >= 10, title: 'Mine 10 tons', text: 'Buy a Mining Laser and break rocks in an asteroid field. Fly over the ore to scoop it into your hold (ships with no hold need a Cargo Compression outfit first).', reward: 8000 },
   { check: (d, A) => (A.ships[d.ship.hull].strength || 0) >= 80, title: 'A real warship', text: 'Buy a fighting ship: a Cutlass Interceptor or better.', reward: 15000 },
   { check: (d) => (d.officers || []).length >= 1, title: 'Hire an officer', text: 'Visit the CREW tab on an inhabited world and hire an officer for your bridge.', reward: 10000 },
   { check: (d) => d.station.ops >= 2, title: 'Market and refinery (Ops 2)', text: 'Build Ops 2 at your station: it opens the research lab and the hangar.', reward: 20000 },

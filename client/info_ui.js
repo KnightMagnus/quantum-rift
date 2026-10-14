@@ -5,6 +5,7 @@ import { SPEC, BP_NEED } from '/shared/specialty.js';
 import { RARITY } from '/shared/hangar.js';
 import { RANKS } from '/shared/rivals.js';
 import { synBadge } from './syn_ui.js';
+import { price } from '/shared/rules.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const cr = (n) => Math.round(n).toLocaleString();
@@ -31,7 +32,7 @@ export function infoHtml(G, tab) {
       <div class="kv"><span>Farside expeditions</span><span>${(y.expd && y.expd.n) || 0} decoded</span></div>
     </div><div>
       <div class="sect" style="margin-top:0">CARGO</div>
-      ${cargo.length ? cargo.map(([c, n]) => { const C = COMMODITIES.find(x => x.id === c); return `<div class="kv"><span>${esc(C ? C.name : c)}</span><span>${n} t ${inSpace ? `<button class="btn sm" data-jet="${c}" data-n="${Math.min(5, n)}">DUMP 5</button> <button class="btn sm" data-jet="${c}" data-n="0">DUMP ALL</button>` : ''}</span></div>`; }).join('') : '<p class="dim">The hold is empty.</p>'}
+      ${cargo.length ? cargo.map(([c, n]) => { const C = COMMODITIES.find(x => x.id === c); const B = bestSale(G, c); return `<div class="kv"><span>${esc(C ? C.name : c)}${B ? `<div class="small dim">Best nearby: <b style="color:var(--cr)">${cr(B.price)}</b> at ${esc(B.p.name)}${B.jumps ? ` (${B.jumps} jump${B.jumps > 1 ? 's' : ''})` : ' (this system)'}${y.paid && y.paid[c] ? ` · you paid ${cr(y.paid[c])}` : ''} ${B.jumps ? `<button class="btn sm" data-plot="${B.p.system}">PLOT</button>` : ''}</div>` : '<div class="small dim">No market you have visited nearby buys this.</div>'}</span><span>${n} t ${inSpace ? `<button class="btn sm" data-jet="${c}" data-n="${Math.min(5, n)}">DUMP 5</button> <button class="btn sm" data-jet="${c}" data-n="0">DUMP ALL</button>` : ''}</span></div>`; }).join('') : '<p class="dim">The hold is empty.</p>'}
       ${cargo.length ? `<div class="dim small">${inSpace ? 'Jettisoned cargo floats free. Raiders chasing you often go for it instead.' : 'You can jettison cargo in space.'}</div>` : ''}
       <div class="sect">MISSION CARGO</div>${(y.missions || []).filter(m => m.qty).map(m => `<div class="kv"><span>${esc(m.title)}</span><span>${m.qty} t</span></div>`).join('') || '<p class="dim">None.</p>'}
     </div></div>`;
@@ -80,4 +81,14 @@ function careerHtml(G) {
     ${kv('Credits earned', cr(st.earned || 0))}${st.mined ? kv('Ore mined', `${cr(st.mined)} t`) : ''}
     ${(Q.active || []).length ? `<div class="sect">STORIES UNDER WAY</div>${Q.active.map(a => `<div class="kv small"><span>${a.side ? '★' : '✦'} ${esc(a.name)}</span><span class="dim">step ${a.step + 1} of ${a.of}</span></div>`).join('')}` : ''}
   </div></div>`;
+}
+
+// 2.5.2: where a good in your hold sells best, among the markets you have visited within four jumps
+export function bestSale(G, cid) {
+  const y = G.you, seen = new Set(y.explored || []), dist = { [G.sys]: 0 }, q = [G.sys], now = Date.now(); let best = null;
+  while (q.length) { const s = q.shift(); if (dist[s] >= 4) continue; for (const l of (SYS[s] ? SYS[s].links : [])) if (dist[l] === undefined) { dist[l] = dist[s] + 1; q.push(l); } }
+  for (const [sid, j] of Object.entries(dist)) { if (!seen.has(sid) && sid !== G.sys) continue;
+    for (const sp of SYS[sid].stellars) { const p = STELLARS[sp.id]; if (!p || p.site || !(p.svc || '').includes('T')) continue; const pr = price(p, cid, now); if (pr === null) continue;
+      if (!best || pr - j * 6 > best.price - best.jumps * 6) best = { p, price: pr, jumps: j }; } }
+  return best;
 }

@@ -83,7 +83,7 @@ function decorFor(S) {
   if (r() < 0.62) D.bgp.push(bgWorld(0, true));
   if (r() < 0.38) D.bgp.push(bgWorld(1, false));
   if (r() < 0.12) D.bgp.push(bgWorld(2, false));
-  if (r() < (wild ? 0.2 : 0.07)) D.arc = { img: 'arc_' + Math.floor(r() * 2), x: (r() - 0.5) * 4000, y: (r() - 0.5) * 3200, size: 1500 + r() * 1300, rot: r() * 6.283, depth: 0.14 };
+  if (r() < (wild ? 0.2 : 0.07)) D.arc = { img: 'arc_' + Math.floor(r() * 2), x: (r() - 0.5) * 4000, y: (r() - 0.5) * 3200, size: 900 + r() * 700, rot: r() * 6.283, depth: 0.14 };   // 2.5.2: smaller, now that it is detailed
   const fac = S.farside ? 'farside' : S.faction, pool = NEB_BY_FAC[fac] || [0, 1, 2, 3, 4, 5, 6, 7], nn = 1 + Math.floor(r() * 3) + (S.danger >= 3 ? 1 : 0);
   for (let i = 0; i < nn; i++) D.neb.push({ img: 'nebula_' + (r() < 0.7 ? pick(pool) : Math.floor(r() * 8)), x: (r() - 0.5) * 7000, y: (r() - 0.5) * 7000, size: 1300 + r() * 1900, rot: r() * 6.283, a: 0.5 + r() * 0.35, depth: 0.18 + r() * 0.3 });
   if (r() < 0.38) { const a0 = r() * 6.283, R = 1800 + r() * 2200; D.belt = { depth: 0.7 + r() * 0.15, rocks: Array.from({ length: 30 + Math.floor(r() * 40) }, () => { const a = a0 + (r() - 0.5) * 1.6; return { x: Math.cos(a) * (R + (r() - 0.5) * 500), y: Math.sin(a) * (R + (r() - 0.5) * 500), s: 8 + r() * 34, k: Math.floor(r() * 6), rot: r() * 6, sp: (r() - 0.5) * 0.4 }; }) }; }
@@ -637,7 +637,7 @@ export function galaxy(G, ctx, opts = {}) {
     ctx.strokeStyle = 'rgba(154,200,255,.55)'; ctx.lineWidth = big ? 2 : 1.5; ctx.setLineDash([3, 6]); ctx.beginPath(); ctx.moveTo(a, b); ctx.quadraticCurveTo((a + c) / 2 - (d - b) * 0.15, (b + d) / 2 + (c - a) * 0.15, c, d); ctx.stroke(); ctx.setLineDash([]); }
   const route = G.route || [];
   if (route.length && SYS[G.sys]) { ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = big ? 2.5 : 2; ctx.beginPath(); let [a, b] = P(SYS[G.sys]); ctx.moveTo(a, b); for (const r of route) { [a, b] = P(SYS[r]); ctx.lineTo(a, b); } ctx.stroke(); }
-  const onRoute = new Set(route), sites = G.sites || {};
+  const onRoute = new Set(route), sites = G.sites || {}, myStSys = G.you && G.you.station && G.you.station.claimed && G.you.station.site && STELLARS[G.you.station.site] ? STELLARS[G.you.station.site].system : null;
   for (const s of SYS_LIST) {
     const [x, y] = P(s); if (!on(x, y)) continue;
     const F = FACTIONS[s.faction], here = s.id === G.sys, seen = explored.has(s.id) || !G.you, r = big ? Math.max(3, Math.min(8, 3.2 * Math.sqrt(zoom))) : 4;
@@ -645,6 +645,11 @@ export function galaxy(G, ctx, opts = {}) {
     else { ctx.strokeStyle = F.color; ctx.globalAlpha = 0.7; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, r - 0.5, 0, 6.283); ctx.stroke(); ctx.globalAlpha = 1; }
     const site = s.stellars.find(p => p.site);
     if (site && (big ? zoom > 0.9 : true)) { const own = sites[site.id]; ctx.fillStyle = own ? '#c0a0ff' : '#8a70b0'; const q = r + 2; ctx.beginPath(); ctx.moveTo(x + q + 4, y - q); ctx.lineTo(x + q + 7, y - q + 3); ctx.lineTo(x + q + 4, y - q + 6); ctx.lineTo(x + q + 1, y - q + 3); ctx.fill(); }
+    if (myStSys === s.id) {   // 2.5.2: your Personal Station: a gold station mark with its Ops level
+      const q = r + 9, pulse2 = 0.6 + 0.4 * Math.sin(performance.now() / 500); ctx.strokeStyle = `rgba(255,210,110,${0.75 + 0.25 * pulse2})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, q, 0, 6.283); ctx.stroke(); for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * (q - 3), y + Math.sin(a) * (q - 3)); ctx.lineTo(x + Math.cos(a) * (q + 4), y + Math.sin(a) * (q + 4)); ctx.stroke(); }
+      if (big) { ctx.font = 'bold 11px Tahoma'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#02030a'; const t = `YOUR STATION · OPS ${(G.you.station && G.you.station.ops) || 0}`; ctx.strokeText(t, x, y - q - 6); ctx.fillStyle = '#ffd27a'; ctx.fillText(t, x, y - q - 6); }
+    }
     if (here) { ctx.strokeStyle = '#ff3a2a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 5, 0, 6.283); ctx.stroke(); }
     if (G.hoverSys === s.id) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r + 3, 0, 6.283); ctx.stroke(); }
     const label = here || G.hoverSys === s.id || onRoute.has(s.id) || (big ? (zoom > 1.6 || (s.anchor && zoom > 0.95)) : (SYS[G.sys] && SYS[G.sys].links.includes(s.id)));
@@ -685,7 +690,7 @@ export function galaxy(G, ctx, opts = {}) {
     let lx = 12, ly = H - 14; ctx.font = '11px Tahoma'; ctx.textAlign = 'left';
     for (const [id, F] of Object.entries(FACTIONS)) { if (F.hidden) continue; ctx.fillStyle = F.color; ctx.fillRect(lx, ly - 8, 8, 8); ctx.fillStyle = '#aaa'; ctx.fillText(F.short, lx + 12, ly); lx += ctx.measureText(F.short).width + 26; }
     ctx.strokeStyle = '#aaa'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(lx + 4, ly - 4, 3.5, 0, 6.283); ctx.stroke(); ctx.fillStyle = '#aaa'; ctx.fillText('not yet visited', lx + 12, ly);
-    lx = 12; ly -= 16; ctx.fillStyle = '#ffd65a'; ctx.fillText('◇ mission target', lx, ly); lx += 100; if (!G.solo) { ctx.fillStyle = '#ffd27a'; ctx.fillText('◌ fleet claim', lx, ly); lx += 80; } ctx.fillStyle = '#ff5a40'; ctx.fillText('◯ invasion', lx, ly); lx += 70;   // 2.4: no fleet claims in solo
+    lx = 12; ly -= 16; ctx.fillStyle = '#ffd65a'; ctx.fillText('◇ mission target', lx, ly); lx += 100; ctx.fillStyle = '#ffd27a'; ctx.fillText('◎ your station', lx, ly); lx += 92; ctx.fillStyle = '#a890d0'; ctx.fillText('◆ station hull', lx, ly); lx += 90; if (!G.solo) { ctx.fillStyle = '#ffd27a'; ctx.fillText('◌ fleet claim', lx, ly); lx += 80; } ctx.fillStyle = '#ff5a40'; ctx.fillText('◯ invasion', lx, ly); lx += 70;   // 2.4: no fleet claims in solo
     for (const A_ of Object.values(ANOMALIES)) { ctx.fillStyle = A_.color; ctx.fillText(`${A_.icon} ${A_.name}`, lx, ly); lx += ctx.measureText(`${A_.icon} ${A_.name}`).width + 14; }
   }
 }

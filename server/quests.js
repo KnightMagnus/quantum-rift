@@ -21,6 +21,9 @@ const JCACHE = {};
 const jumpsFrom = (a) => JCACHE[a] || (JCACHE[a] = (() => { const d = { [a]: 0 }, q = [a]; while (q.length) { const x = q.shift(); for (const l of SYS[x].links) if (d[l] === undefined) { d[l] = d[x] + 1; q.push(l); } } return d; })());
 const raceOf = (fac) => RACE_ROLES[fac] ? fac : 'quantum';
 
+// 2.5.2: the most hold space and bunks any step of a story will ask for, so the job board can warn before you take it on
+export const needsOf = (steps) => ({ hold: Math.max(0, ...steps.map(st => st.type === 'cargo' ? st.qty || 4 : st.type === 'smuggle' ? st.qty || 3 : st.type === 'supply' ? st.qty || 0 : 0)),
+  pax: Math.max(0, ...steps.map(st => st.type === 'passenger' ? st.pax || 1 : 0)) });
 export const QuestMixin = {
   questInit(d) { const q = d.quests = d.quests || {}; q.active = q.active || {}; q.done = q.done || []; q.contacts = q.contacts || {}; q.sides = q.sides || {}; return q; },
   // every bar has a contact; who they are depends only on the world
@@ -42,14 +45,14 @@ export const QuestMixin = {
     const full = Object.keys(q.active).length >= QUEST_MAX;
     for (const X of SIDE_STORIES) if (X.at === p.id && !q.sides[X.id] && !q.active['s:' + X.id])
       out.push({ id: 'q:s:' + X.id, type: 'quest', side: X.id, title: `★ ${X.name}`, giver: X.giver, sys: STELLARS[X.steps[0].sys] ? STELLARS[X.steps[0].sys].system : X.steps[0].sys,
-        steps: X.steps.length, reward: X.reward.credits, full, text: X.intro, rewardText: this.questRewardText(X.reward) });
+        steps: X.steps.length, reward: X.reward.credits, full, text: X.intro, rewardText: this.questRewardText(X.reward), needs: needsOf(X.steps) });
     const C = this.contactAt(p); if (!C) return out;
     const cs = q.contacts[C.id] || {}, busy = Object.values(q.active).some(a => a.contact === C.id);
     if (busy || (cs.cool || 0) > Date.now()) return out;
     const cur = this.contactStory(p, d, C); if (!cur) return out; const { X, plan } = cur;
     const lvl = Math.min(STANDING.length - 1, cs.n || 0), reward = this.chainReward(X, lvl);
     out.push({ id: 'q:c:' + C.id + ':' + X.id + ':' + (cs.n || 0), type: 'quest', story: X.id, title: `✦ ${X.name}`, giver: `${C.name}, ${C.title}`, standing: STANDING[lvl],
-      sys: plan.A, steps: X.steps.length, reward: reward.credits, full, text: this.fill(X.intro, plan), rewardText: this.questRewardText(reward) });
+      sys: plan.A, steps: X.steps.length, reward: reward.credits, full, text: this.fill(X.intro, plan), rewardText: this.questRewardText(reward), needs: needsOf(X.steps) });
     return out;
   },
   // which story this contact has for you next, and where it happens (the same every time you ask, until you finish one)
