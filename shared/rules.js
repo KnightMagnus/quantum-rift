@@ -1,5 +1,6 @@
 // Quantum Rift shared rules: stat conversion, loadouts, crew and research bonuses, flight physics, prices.
 import { COMMODITIES, FACTIONS, RESEARCH, EXTRA_OUTFITS , EXTRA_WEAPONS, MINING_WEAPONS, MK2_OF, MK3_OF } from "./galaxy.js";
+import { SHIPS23 } from './ships23.js';
 import { ROLES, RARITY, STAT_BASE, SYNERGY, BRIDGE_SLOTS } from "./hangar.js";
 import { roleOf } from "./roles.js";
 import { SPECIALISTS } from "./specialty.js";
@@ -15,6 +16,7 @@ export function augmentAssets(A) {
   for (const w of EXTRA_WEAPONS) if (!A.weapons[w.id]) A.weapons[w.id] = w;
   for (const id of MINING_WEAPONS) if (A.weapons[id]) A.weapons[id].mining = true;
   for (const S of SPECIALISTS) if (!A.ships[S.id]) A.ships[S.id] = { ...S, img: `ships/${S.id}_yard.png` };   // 0.8: specialty ships
+  for (const S of SHIPS23) if (!A.ships[S.id]) A.ships[S.id] = { ...S };   // 2.3: new common Quantum hulls
   for (const H of Object.values(A.ships)) H.role = roleOf(H, A.weapons);   // 0.8: class triangle roles
   for (const M of [MK2_OF, MK3_OF]) for (const [b, mk] of Object.entries(M)) if (A.ships[b] && A.ships[mk]) A.ships[mk].role = A.ships[b].role;   // refits keep their role
   return A;

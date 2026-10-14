@@ -285,3 +285,43 @@ export function addSolGateway(SYSTEMS) {
   for (const [a, b] of FARSIDE_LINKS) { by[a].links.push(b); by[b].links.push(a); }
   return { sol, farside: added };
 }
+
+// ------------------------------------------------------------------ 2.3: more moons and more asteroid fields
+// A separate pass after the galaxy is built, seeded per system, so no existing world, field or id changes.
+const MOON_COLORS = ['#9a948c', '#b8b2a8', '#7d7871', '#a89c88', '#c9d4dc', '#8e8a9a', '#a7a08f'];
+const MOON_DESC = ['An airless moon, cratered and quiet.', 'A small ice moon, its surface cracked into plates.', 'A grey moon of dust and old impact basins.',
+  'A captured asteroid, too small to be round.', 'A dark moon streaked with frozen gas.', 'A tidally locked moon, one face forever toward its planet.'];
+const MOON_NUM = ['I', 'II', 'III'];
+function hashId(str) { let h = 2166136261; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+export function addMoonsAndFields(SYSTEMS) {
+  for (const s of SYSTEMS) {
+    if (s.arena) continue;
+    const r = rng(hashId('moons:' + s.id) ^ GEN_SEED), free = (x, y, rad, pad) => s.stellars.every(o => Math.hypot(o.x - x, o.y - y) > (o.r || 60) + rad + pad);
+    for (const p of [...s.stellars]) {
+      if (p.kind !== 'planet' || p.hub || p.site || p.wormhole) continue;
+      const n = r() < 0.62 ? (r() < 0.3 ? 2 : 1) : 0, have = s.stellars.filter(o => o.id.startsWith(p.id + '-m')).length;
+      for (let k = 0; k < n; k++) {
+        const rad = 30 + Math.round(r() * 24);
+        for (let tries = 0; tries < 12; tries++) {
+          const a = r() * Math.PI * 2, d = (p.r || 120) + 170 + r() * 160 + k * 90, x = Math.round(p.x + Math.cos(a) * d), y = Math.round(p.y + Math.sin(a) * d);
+          if (!free(x, y, rad, 130) || Math.hypot(x, y) > 3300) continue;
+          s.stellars.push({ id: `${p.id}-m${have + k + 1}`, name: /\s([IVX]+|\d+|Prime|Alpha|Beta|Gamma|Major|Minor)$/.test(p.name) ? `${p.name}-${'abc'[have + k] || have + k + 1}` : `${p.name} ${MOON_NUM[have + k] || have + k + 1}`, kind: 'moon', color: MOON_COLORS[Math.floor(r() * MOON_COLORS.length)], r: rad, x, y, svc: '', tech: 0,
+            desc: MOON_DESC[Math.floor(r() * MOON_DESC.length)] + ` It circles ${p.name}. Nobody lives there.` });
+          break;
+        }
+      }
+    }
+    // a few more rocks in the existing fields, and sometimes a whole new field
+    for (const f of s.fields || []) f.rocks = Math.round(f.rocks * 1.35);
+    const kinds = FIELD_ORE[s.faction] || ['ore', 'gas', 'shards'];
+    const extra = s.farside ? (r() < 0.5 ? 1 : 0) : r() < 0.5 ? 1 : 0;
+    for (let k = 0; k < extra; k++) {
+      for (let tries = 0; tries < 12; tries++) {
+        const a = r() * Math.PI * 2, d = 1100 + r() * 1500, x = Math.round(Math.cos(a) * d), y = Math.round(Math.sin(a) * d);
+        if (!free(x, y, 320, 200) || (s.fields || []).some(f => Math.hypot(f.x - x, f.y - y) < 900)) continue;
+        (s.fields = s.fields || []).push({ id: `${s.id}-x${k}`, x, y, r: 280 + Math.round(r() * 200), ore: kinds[Math.floor(r() * kinds.length)], rich: Math.min(3, 1 + Math.floor(((s.danger || 0) + r() * 3) / 3)), rocks: 10 + Math.floor(r() * 8) });
+        break;
+      }
+    }
+  }
+}

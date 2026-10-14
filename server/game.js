@@ -551,7 +551,7 @@ export class Game {
     if (!p.svc.includes('Y')) return null;
     const fac = SYS[p.system].faction, list = new Set();
     for (const h of FACTION_HULLS[fac] || []) { const H = this.A.ships[h]; if (H && (H.tech <= p.tech || H.tech >= 400)) list.add(h); }
-    if (fac !== 'quevari' && fac !== 'umbral') for (const h of [703, 704, 705, 706, 707, 708, 709, 710]) if (this.A.ships[h].tech <= p.tech) list.add(h);
+    if (fac !== 'quevari' && fac !== 'umbral') for (const h of [703, 704, 705, 706, 707, 708, 709, 710, 820, 821, 822]) if (this.A.ships[h].tech <= p.tech) list.add(h);   // 2.3: the Wasp, Swift and Pelican are sold everywhere
     return [...list].sort((a, b) => this.A.ships[a].cost - this.A.ships[b].cost);
   }
   tradeIn(d) {

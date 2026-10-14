@@ -160,6 +160,7 @@ simulated at full rate.
 - `python3 test/v103_radio.py <outdir>`: the in-game radio, with iHeart mocked.
 - `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
 - `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
+- `node test/v23.js`: 2.3 checks (new hulls and their art, moons, fields, traffic).
 - `node test/v21.js`: 2.1 checks (docks, wingmate ships and crews, buying to the hangar, save upgrade, friendly fire).
 - `node test/fuzz.js [rounds]`: the message fuzzer and soak test; fails on any server error.
 - `python3 test/crawl.py <outdir>`: the UI crawler (`SEEDS_FILE=test/seeds_crawl.json`).
@@ -252,6 +253,32 @@ The network protocol is JSON over one WebSocket:
 - Your own ship is reconciled against the server by replaying the inputs the server has not processed yet.
 
 ## Changelog
+
+### 2.3 "Busy Lanes"
+- **Ten new Quantum hulls** in the Concord yards, filling the gaps in the common lineup:
+
+  | Hull | Price | What it is |
+  |---|---|---|
+  | Wasp Skirmisher | 30k | A cheap starter fighter |
+  | Swift Courier | 110k | A fast blockade runner with a quick-spooling drive |
+  | Pelican Salvage Tug | 170k | Grapple arms ahead, a towing frame behind |
+  | Sabre Corvette | 380k | The yards' all-rounder |
+  | Caravel Trader | 430k | An armed merchantman racked with containers |
+  | Talon Strike Fighter | 780k | A heavy fighter with rocket pods |
+  | Lighthouse Survey Cruiser | 950k | Huge fuel range and a fast drive |
+  | Monarch Executive Yacht | 1.9M | White and gold, very fast |
+  | Aegis Escort Cruiser | 2.2M | Studded with flak turrets |
+  | Vigil Heavy Cruiser | 5.2M | A spinal fusion cannon and broadside turrets, between the Tempest and the Bastion |
+
+  - The Wasp, Swift and Pelican are sold in common yards everywhere.
+  - All ten fly in NPC traffic.
+- **60 new moons** circling planets across the Rift. They are airless, and nobody lives there.
+- **More asteroids:** existing fields hold more rocks, and about half the systems gain an extra asteroid field, gas cloud or crystal field.
+- **Busier space:**
+  - Roughly twice the traffic in every system.
+  - Some traders run in small convoys.
+  - Traders only head for worlds they can land on.
+  - Pirate havens cap their raider packs and see visiting smugglers and free traders instead.
 
 ### 2.2 "Living Skies"
 - **Every system has its own scenery**, seeded from the system, so each one always looks the same and no two look alike.

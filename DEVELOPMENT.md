@@ -71,7 +71,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 
 ## Testing
 
-- **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `v21`, `fuzz` and `balance`. They run in
+- **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `v21`, `v23`, `fuzz` and `balance`. They run in
   process; no server needed.
 - **Networked bot:** `node test/bot.js ws://localhost:8090/ws` against a running server.
 - **Browser checks:** `python3 test/<name>_shot.py <outdir> http://127.0.0.1:8090/`. They need Playwright and Chromium.
@@ -111,6 +111,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 | 1.1 | Living Rift | 30 rival captains, hailing, fleet orders, multi-jump autopilot, I panel, jettison, combat rating, news and market flashes |
 | 1.2 | Syndicate and Officers | Syndicate and black market, officer ranks and traits, lower decks, bank, map views, passengers and rush jobs, faction arcs, Farside expeditions |
 | 2.0 | Polish | A synthesized audio pass (interface sounds, ambience, engine hum, login theme, mixer buses), HUD numbers, edge arrows, damage and jump feedback, styled toasts, tab hotkeys |
+| 2.3 | Busy Lanes | Ten new common Quantum hulls (shared/ships23.js, art from the hull pipeline), 60 new moons and more asteroid fields (gen.js addMoonsAndFields), busier traffic |
 | 2.2 | Living Skies | Seeded scenery in every system (star, galaxies, gas giants, black holes, nebulae, asteroid drifts, ion storms, wrecks, derelicts, ruins, crystals, debris, comets, satellites, pods), right-click look-ahead, four docks, K and F reworked |
 | 2.1 | Docks | Docks A–E with a lead ship and two wingmate ships each, officers crewing wingmates, buy-to-hangar, friendly fire, a new hyperspace effect and sounds, quick volume |
 | 2.0.1–2.0.3 | Fixes | NPC landing, crash-proofing (fuzzer, UI crawler), newcomer protection in inner space, a bug backlog |

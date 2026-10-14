@@ -1,4 +1,4 @@
-import { expandGalaxy, frontierSites, addSolGateway } from './gen.js';
+import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from './gen.js';
 // Quantum Rift: the galaxy. 30 hand-made anchor systems, grown to ~200 by shared/gen.js (deterministic).
 // Shared by the server (authoritative) and the browser client (map, landing screens).
 
@@ -156,6 +156,7 @@ export const SITES = [
   desc: 'A gutted Concord station hull, adrift but sound. Claim it and it becomes your Personal Station: dock, refinery, lab and shipyard.' }));
 for (const st of SITES) SYSTEMS.find(s => s.id === st.system).stellars.push(st);
 addSolGateway(SYSTEMS);   // 0.8: Sol (with Earth and the Gateway wormhole) and the ten Farside systems
+addMoonsAndFields(SYSTEMS);   // 2.3: more moons and asteroid fields (a separate seeded pass: no existing ids change)
 export const SYS = Object.fromEntries(SYSTEMS.map(s => [s.id, s]));
 export const STELLARS = Object.fromEntries(SYSTEMS.flatMap(s => s.stellars.map(p => [p.id, { ...p, system: s.id }])));
 // prices at a built Personal Station (Ops 1+)
@@ -163,7 +164,7 @@ export const SITE_PRICES = { food: 0, industrial: 0, medical: 0, equipment: 0, m
 export const START = { system: 'qgate', stellar: 'qstation', credits: 30000, ship: 703 };
 
 // Which hulls each faction builds and flies (ship IDs from the EV Quantum roster)
-export const COMMON_HULLS = [703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716, 717];
+export const COMMON_HULLS = [703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716, 717, 820, 821, 822, 823, 824, 825, 826, 827, 828, 829];   // 2.3: ten new hulls (shared/ships23.js)
 export const FACTION_HULLS = {
   quantum: COMMON_HULLS, spacer: [703, 704, 706, 707, 709, 710, 712, 714], lamp: [705, 706, 707, 711, 713, 715],
   hollow: [705, 708, 711, 716], quevari: [738, 739, 740, 741, 742, 743], umbral: [760, 761, 762, 763, 764],
@@ -173,8 +174,8 @@ export const FACTION_HULLS = {
 };
 // NPC roles per faction: trader ships and warships (for traffic generation)
 export const TRAFFIC = {
-  quantum: { traders: [704, 706, 712, 714, 703], war: [708, 711, 713, 716, 717] },
-  spacer: { traders: [703, 704, 706, 710, 712, 714, 709], war: [705, 708, 711] },
+  quantum: { traders: [704, 706, 712, 714, 703, 821, 824, 824, 822, 827], war: [708, 711, 713, 716, 717, 823, 825, 828, 829] },
+  spacer: { traders: [703, 704, 706, 710, 712, 714, 709, 821, 822, 824], war: [705, 708, 711, 820, 823] },
   lamp: { traders: [706, 707], war: [711, 713, 715] },
   hollow: { traders: [], war: [705, 708, 711, 716] },
   quevari: { traders: [738, 739], war: [740, 741, 742, 743] },
@@ -184,9 +185,9 @@ export const TRAFFIC = {
   ylith: { traders: [794, 776, 775], war: [793, 777, 778, 779, 795] },
   sarn: { traders: [780, 781, 783, 784], war: [796, 782, 797] },
   thalassi: { traders: [799, 800], war: [801, 802, 803, 804] },
-  frontier: { traders: [703, 704, 706, 710, 712, 780, 770], war: [705, 708, 711] },
+  frontier: { traders: [703, 704, 706, 710, 712, 780, 770, 822, 824], war: [705, 708, 711, 820] },
   deep: { traders: [], war: [760, 761, 762, 763, 764] },
-  farside: { traders: [703, 704, 706, 707, 712, 714], war: [705, 708, 709, 710, 711, 713] },
+  farside: { traders: [703, 704, 706, 707, 712, 714, 826, 824], war: [705, 708, 709, 710, 711, 713, 823, 825] },
   swarm: { traders: [], war: [765, 718] },
   eclipse: { traders: [], war: [761, 762, 763] },
 };
