@@ -17,6 +17,8 @@ const man = JSON.parse(fs.readFileSync(AS + 'planets/planets.json'));
 ok(Object.keys(man).length >= 50 && Object.keys(man).every(id => fs.existsSync(AS + `planets/${id}.webp`)), `${Object.keys(man).length} pre-rendered planets, every one on disk`);
 const types = new Set(Object.values(man).map(m => m.type));
 for (const t of ['earth', 'terran', 'ocean', 'desert', 'ice', 'lava', 'barren', 'gas', 'toxic', 'crystal', 'city', 'jungle']) ok(types.has(t), `planet type ${t} has renders`);
+ok(Object.entries(man).every(([id, m]) => ['_tex', '_aux', '_back'].every(x => fs.existsSync(AS + `planets/${id}${x}.webp`)) && (!m.rings || fs.existsSync(AS + `planets/${id}_front.webp`)) && m.tw > 0 && m.bk >= 0), 'every planet has surface maps to turn (2.5.1), and ringed ones a front ring layer');
+ok(/function renderRendered/.test(read('planets.js')) && /P\.off \+ t \* P\.spin/.test(read('planets.js')), 'the client turns the rendered planets');
 ok(Object.values(man).some(m => m.rings) && Object.values(man).every(m => m.r > 0.3 && m.r < 0.9), 'ringed giants are included and every render records its sphere size');
 // stations
 const designs = [...read('render.js').matchAll(/'(ring|spindle|cross|rock|twin|yard|disc|hive|crystal|reef|forge|junk)'/g)].map(m => m[1]);
@@ -32,7 +34,7 @@ for (const f of ['fx/boom_a.webp', 'fx/boom_b.webp', 'fx/boom_big.webp', 'fx/sha
 ok(EXTRA_OUTFITS.every(o => o.icon && fs.existsSync(AS + o.icon)), `all ${EXTRA_OUTFITS.length} web-game outfits have outfitter pictures`);
 const all = Object.values(A.outfits).concat(EXTRA_OUTFITS); ok(all.every(o => o.icon), 'no outfit is left without a picture');
 const size = (d) => fs.readdirSync(d, { withFileTypes: true }).reduce((a, e) => a + (e.isDirectory() ? size(d + e.name + '/') : fs.statSync(d + e.name).size), 0);
-ok(size(AS) < 26e6, `client art stays small enough to ship (${(size(AS) / 1e6).toFixed(1)} MB)`);
+ok(size(AS) < 29e6, `client art stays small enough to ship (${(size(AS) / 1e6).toFixed(1)} MB)`);
 // polish
 ok(!/[^.\w]confirm\(/.test(read('ui.js') + read('main.js')), 'native confirm() dialogs are gone (styled dialog instead)');
 ok(TUTORIAL.length === 23 && TUTORIAL.some(t => t.title === 'Meet a contact') && TUTORIAL.some(t => t.title === 'Finish a story'), 'the career guide teaches contacts, troubled systems and stories');

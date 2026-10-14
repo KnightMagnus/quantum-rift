@@ -2,6 +2,10 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.5.1
+- **The planets turn again.** The rendered planets now rotate slowly, as they did before 2.5. Each world is baked into surface maps (colour, relief, water, night lights and clouds), and the game lights them as they turn: bump relief, the soft terminator, the ocean glint, cloud shadows, city lights on the night side and the atmosphere rim. Clouds drift a little faster than the ground, rings and halos stay put, and each world keeps its own tilt and speed.
+- Softer, rounder cloud shapes on the rendered worlds, and greener continents on Earth-like planets.
+
 ### 2.5 "Rendered Rift"
 An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Rendered planets:** 56 worlds ray-traced in the old 3D style: continents and biomes, mountains with bump lighting, oceans with a sun glint, cloud layers with shadows, city lights on the night side, lava glow, craters, gas bands and storms, atmospheres and rings. Each world picks the render of its type closest to its own colour. Background worlds use them too.

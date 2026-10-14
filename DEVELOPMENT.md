@@ -138,7 +138,7 @@ single-player focused for now.
   - Sprite PNGs are quantized to 256 colours to keep the zip small.
   - Planets are procedural (`client/planets.js`): a 3D-noise texture wrapped onto a lit, rotating sphere.
   - **2.5 rendered art** (numpy and Pillow; each tool's docstring has its usage):
-    - `tools/rift_planets.py`: 56 ray-cast planets into `client/assets/planets/` plus `planets.json` (type, hue, sphere radius as a fraction of the image). `client/planets.js` picks one per world (`chooseRendered`) and falls back to the old procedural sphere while images load.
+    - `tools/rift_planets.py`: 56 ray-cast planets into `client/assets/planets/` plus `planets.json` (type, hue, sphere radius as a fraction of the image). `client/planets.js` picks one per world (`chooseRendered`). Since 2.5.1 each planet also has surface maps (`_tex` albedo, `_aux` four stacked grey maps: height, water, emissive, cloud) and fixed `_back` (halo, far ring) and `_front` (near ring, ring shadow) layers; `renderRendered` lights the turning sphere whenever it moves a texel, showing the still render (`<id>.webp`) until the maps load.
     - `tools/rift_stations.py`: twelve station designs (`s_<design>.webp`); `client/render.js` `stationDesign(p)` picks one by faction and description.
     - `tools/rift_landscapes.py`: landing pictures (`client/assets/land/l_*.jpg`): a voxel-space height-field terrain with reflective water and haze, depth-tested 3D structures, and skies that reuse the planet renders. `client/ui.js` `landScene(p)` maps worlds to scenes.
     - `tools/rift_fx.py` (fireball sheets, shards, flare), `tools/rift_objects.py` (asteroids, loot), `tools/rift_icons.py` (outfitter pictures for `EXTRA_OUTFITS`), `tools/rift_login.py` (the login backdrop).
