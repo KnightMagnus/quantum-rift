@@ -19,6 +19,7 @@
     <div class="row"><span class="lbl">ARMOR</span><div class="bar"><i id="b-ar" class="ar"></i><b id="v-ar" class="bv"></b></div></div>
     <div class="row"><span class="lbl">FUEL</span><div class="bar"><i id="b-fu" class="fu"></i></div><span id="jumps" class="dim"></span></div>
     <div class="row two"><span id="cr" class="cr">0 cr</span><span id="spd" class="dim small"></span><span id="shipnm" class="dim"></span></div>
+    <div id="dockrow" class="hidden"></div>
     <div id="prot" class="prot hidden" title="Raiders, pirates and swarms in inner space (danger 0-2) won't start a fight with you until your Personal Station reaches Ops 3. Shooting first ends the truce for that fight. Jobs' own targets still attack.">🛡 NEWCOMER PROTECTION</div>
   </div>
   <div class="well box" id="target">
@@ -54,8 +55,9 @@
 <div id="cbar" class="metal">
   <div class="cchan" id="cchan"><button data-ch="" class="on" title="Everyone">ALL</button><button data-ch="sys" title="Only this system">SYSTEM</button><button data-ch="fleet" title="Only your fleet">FLEET</button></div>
   <input id="chatin" placeholder="Press Enter to chat" maxlength="240">
-  <div class="cbtns"><button class="cb" id="cbmap" title="Galaxy map (M)">MAP</button><button class="cb" id="cbkeys" title="Change your key bindings">KEYS</button><button class="cb" id="optbtn" title="Options (O)">&#9881;</button><button class="cb q" id="cbhelp" title="Controls (?)">?</button></div>
+  <div class="cbtns"><button class="cb" id="cbmap" title="Galaxy map (M)">MAP</button><button class="cb" id="cbkeys" title="Change your key bindings">KEYS</button><button class="cb" id="cbvol" title="Volume (N mutes)">🔉</button><button class="cb" id="optbtn" title="Options (O)">&#9881;</button><button class="cb q" id="cbhelp" title="Controls (?)">?</button></div>
 </div>
+<div id="qvolbox" class="metal hidden"><div class="qvt">VOLUME <span id="qvoln" class="dim small"></span></div><input type="range" id="qvol" min="0" max="100" step="1"><div class="qvb"><button class="btn sm" id="qmute">MUTE</button><button class="btn sm" id="qmore">MIXER…</button></div></div>
 <div id="hailbox" class="overlay hidden"><div class="loginbox metal hailin"><div class="hailtag">HAILING <span id="hailsub"></span></div><h2 id="hailwho"></h2><p id="hailtext"></p><div class="hailbtns" id="hailopts"></div></div></div>
 <div id="infobox" class="overlay hidden"><div class="gbox metal infoin"><h2>SHIP AND CAPTAIN <span class="dim small">I or Esc to close</span></h2><nav class="itabs" id="itabs"><button class="btn sm on" data-it="ship">SHIP</button><button class="btn sm" data-it="fleet">FLEET</button><button class="btn sm" data-it="captains">CAPTAINS</button></nav><div class="well infobody" id="infobody"></div></div></div>
 <div id="ctrlbox" class="overlay hidden"><div class="loginbox metal ctrlin"><h1>CONTROLS</h1><div id="ctrllist"></div><div class="ctrlfoot"><button class="btn" id="ctrlkeys">CHANGE KEYS</button><button class="btn big" id="ctrlclose">CLOSE</button></div></div></div>
@@ -91,7 +93,7 @@
     <div class="landhead"><h2 id="landname"></h2><div id="landfac" class="dim"></div><p id="landdesc"></p></div>
     <nav id="ltabs"></nav>
     <div class="landbody well" id="landbody"></div>
-    <div class="landfoot"><span id="landcr" class="cr"></span><span id="landcargo" class="dim"></span><button class="btn" id="storesbtn">FACTION STORES</button><button class="btn big" id="depart" title="Depart (L)">DEPART</button></div>
+    <div class="landfoot"><span id="landcr" class="cr"></span><span id="landcargo" class="dim"></span><span id="dockchips"></span><button class="btn" id="storesbtn">FACTION STORES</button><button class="btn big" id="depart" title="Depart (L)">DEPART</button></div>
   </div>
 </div>
 

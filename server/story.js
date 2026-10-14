@@ -44,9 +44,9 @@ export const StoryMixin = {
   },
   storyGift(s, st) {
     const d = s.data, S = this.storyInit(d), old = d.ship, H = this.A.ships[old.hull];
-    if (d.shipless) {} else if (d.dock.length < this.dockSlots(d)) d.dock.push({ ship: old, escorts: d.escorts, bridge: d.bridge });
+    if (d.shipless) {} else if (d.dock.length < this.dockSlots(d)) d.dock.push({ ship: old, bridge: d.bridge });
     else { const v = this.tradeIn(d); d.credits += v; }
-    d.ship = makeLoadout(this.A, STORY_SHIP, 'Ina Que\'var'); d.shipless = false; d.fuel = undefined;
+    d.ship = makeLoadout(this.A, STORY_SHIP, 'Ina Que\'var'); d.shipless = false; d.fuel = undefined; if (this.leadChanged) this.leadChanged(d);
     S.done.push(st.id); S.step++; d.rep.quevari = clamp((d.rep.quevari || 0) + st.rep, -100, 100);
     this.log(d, 'Took the helm of the Ina Que\'var.');
     this.broadcast({ t: 'chat', from: '', msg: `Over Ina Lumen, a great white sail-ship wakes for ${d.name}.` });

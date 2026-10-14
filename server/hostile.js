@@ -10,7 +10,7 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 export const HostileMixin = {
   hostInit(d) { d.directives = d.directives || { 1: 0, 2: 0, 3: 0 }; d.holdout = d.holdout || { best: 0, lastT: 0 }; },
-  myPower(d) { return playerPower(this.A, d.ship.hull, this.bonus(d), d.escorts); },
+  myPower(d) { return playerPower(this.A, d.ship.hull, this.bonus(d), this.wingHulls ? this.wingHulls(d) : []); },
 
   // ------------------------------------------------------------------ chests (called from Space.kill)
   maybeChest(space, s, by) {

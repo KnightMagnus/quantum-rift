@@ -69,9 +69,7 @@ wav('ui_dock', verb(mix(lp(noise(0.15), 400) * env(int(0.15 * SR), 0.001, 0.05) 
                         at(hp(noise(0.7), 2000) * adsr(int(0.7 * SR), 0.05, 0.2, 0.4, 0.4) * 0.35, 0.2, 1.0)), 0.8, 0.25))
 wav('ui_undock', verb(mix(hp(noise(0.6), 1800) * adsr(int(0.6 * SR), 0.02, 0.2, 0.5, 0.3) * 0.4, at(lp(noise(0.12), 500) * env(int(0.12 * SR), 0.001, 0.04) * 1.4, 0.45, 0.8),
                           at(blip(90, 0.2, 'sine', d=0.1), 0.45, 0.8)), 0.8, 0.25))
-jt = t(1.6); wav('ui_jump', verb(mix(sine(np.linspace(60, 900, len(jt)) ** 1.0, 1.6) * adsr(len(jt), 1.1, 0.2, 0.6, 0.3) * 0.6,
-                                    bp(noise(1.6), 200, 4000) * adsr(len(jt), 1.2, 0.1, 0.7, 0.3) * 0.5, at(lp(noise(0.4), 300) * env(int(0.4 * SR), 0.005, 0.2) * 1.5, 1.3, 1.6)), 1.0, 0.3))
-wav('ui_arrive', verb(mix(lp(noise(0.9), 600) * env(int(0.9 * SR), 0.003, 0.4) * 1.2, blip(900, 0.8, 'sine', d=0.3, f2=80) * 0.5), 1.2, 0.35))
+# ui_jump and ui_arrive: see tools/rift_audio_jump.py (2.1)
 wav('ui_autopilot', mix(blip(988, 0.12, 'tri', d=0.05), at(blip(1319, 0.16, 'tri', d=0.07), 0.1, 0.3)) * 0.7, peak=0.6)
 wav('ui_lowshield', mix(blip(1760, 0.1, 'square' if False else 'tri', d=0.06), at(blip(1760, 0.1, 'tri', d=0.06), 0.15, 0.3)), peak=0.6)
 wav('ui_pickup', verb(mix(blip(2349, 0.12, 'sine', d=0.05), at(blip(3136, 0.14, 'sine', d=0.06), 0.04, 0.2)), 0.5, 0.2), peak=0.5)

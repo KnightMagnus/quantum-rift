@@ -93,7 +93,10 @@ export function boom(x, y, size) {
   if (size > 120) fx.push({ x, y, ring: true, life: 0.9, max: 0.9, r: size * 2, c: '#ffb070' });
 }
 export function spark(x, y, col) { for (let i = 0; i < 6; i++) { const a = Math.random() * 6.283, v = 40 + Math.random() * 90; fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.25, max: 0.25, c: col || '#fff', s: 1.6 }); } }
-export function flash(x, y) { fx.push({ x, y, ring: true, life: 0.6, max: 0.6, r: 90, c: '#cfe8ff', fill: true }); }
+export function flash(x, y) {   // 2.1: a ship entering or leaving hyperspace: a hot core, a lens streak and two shock rings
+  fx.push({ x, y, hyper: true, life: 0.75, max: 0.75, r: 70 });
+  fx.push({ x, y, ring: true, life: 0.55, max: 0.55, r: 150, c: '#bfe2ff' }); fx.push({ x, y, ring: true, life: 0.9, max: 0.9, r: 260, c: '#7aa8ff' });
+}
 export function blast(x, y, r) { fx.push({ x, y, ring: true, life: 0.35, max: 0.35, r, c: '#ffcf8a' }); }
 // shield shimmer on the ship that was hit, and floating damage numbers
 export const shieldHits = new Map();
@@ -278,6 +281,13 @@ export function draw(G, ctx, W, H, dt, now) {
     const f = fx[i]; f.life -= dt; if (f.life <= 0) { fx.splice(i, 1); continue; }
     const k = f.life / f.max, x = sx(f.x), y = sy(f.y);
     if (f.vx !== undefined) { f.x += f.vx * dt; f.y += f.vy * dt; }
+    if (f.hyper) {   // 2.1 hyperspace flash
+      const e = 1 - k, R = f.r * z * (0.6 + e * 0.8), g = ctx.createRadialGradient(x, y, 0, x, y, R);
+      g.addColorStop(0, `rgba(255,255,255,${k})`); g.addColorStop(0.25, `rgba(200,230,255,${k * 0.85})`); g.addColorStop(1, 'rgba(80,140,255,0)');
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, 6.283); ctx.fill();
+      const L = f.r * z * (2.5 + e * 5), hg = ctx.createLinearGradient(x - L, y, x + L, y); hg.addColorStop(0, 'rgba(120,180,255,0)'); hg.addColorStop(0.5, `rgba(235,245,255,${k * 0.9})`); hg.addColorStop(1, 'rgba(120,180,255,0)');
+      ctx.fillStyle = hg; ctx.fillRect(x - L, y - Math.max(1, 2.2 * z * k), L * 2, Math.max(2, 4.4 * z * k)); ctx.globalCompositeOperation = 'source-over'; continue;
+    }
     if (f.ring) { ctx.globalAlpha = k; ctx.strokeStyle = f.c; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, f.r * (1 - k) * z + 4, 0, Math.PI * 2); f.fill ? (ctx.fillStyle = f.c, ctx.globalAlpha = k * 0.5, ctx.fill()) : ctx.stroke(); ctx.globalAlpha = 1; continue; }
     if (f.ball) {
       const r = f.r * (0.35 + 0.65 * (1 - k * k)) * z, g = ctx.createRadialGradient(x, y, 0, x, y, r);
@@ -300,6 +310,43 @@ function edgeArrow(ctx, W, H, x, y, col, label, dist) {
   ctx.font = '11px Tahoma'; ctx.textAlign = 'center'; ctx.fillStyle = col; ctx.globalAlpha = 0.85;
   const lx = ex - Math.cos(a) * 26, ly = ey - Math.sin(a) * 22 + 4; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.7)'; const t = `${label} · ${Math.round(dist)} km`; ctx.strokeText(t, lx, ly); ctx.fillText(t, lx, ly); ctx.globalAlpha = 1;
 }
+const STARS = Array.from({ length: 170 }, (_, i) => { const r = (n) => { const v = Math.sin(i * 127.1 + n * 311.7) * 43758.5453; return v - Math.floor(v); }; return { x: r(1), y: r(2), z: 0.35 + r(3) * 0.65, c: r(4) < 0.12 ? 'w' : r(4) < 0.4 ? 'b' : 'n' }; });
+const STAR_COL = { n: '220,235,255', b: '150,195,255', w: '255,215,170' };
+function streaks(ctx, W, H, a, len, alpha, drift) {   // star streaks lying along heading a, sliding backwards past you
+  const ux = Math.sin(a), uy = -Math.cos(a), span = W + H; ctx.lineCap = 'round';
+  for (const st of STARS) {
+    let px = (st.x * span - ux * drift * st.z) % span, py = (st.y * span - uy * drift * st.z) % span; if (px < 0) px += span; if (py < 0) py += span;
+    px -= (span - W) / 2; py -= (span - H) / 2; if (px < -200 || py < -200 || px > W + 200 || py > H + 200) continue;
+    const l = len * st.z; ctx.strokeStyle = `rgba(${STAR_COL[st.c]},${alpha * st.z})`; ctx.lineWidth = 0.8 + st.z * 1.4;
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - ux * l, py - uy * l); ctx.stroke();
+  }
+}
+function hyperOut(G, ctx, W, H, now, x, y, a) {
+  const st = G.you && G.you.shipStats, dur = st && st.jumpFast ? 600 : 1600, k = Math.min(1, (now - (G._jumpStart || now)) / dur);
+  // the edges darken as the drive spools
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.25, W / 2, H / 2, Math.max(W, H) * 0.7); vg.addColorStop(0, 'rgba(0,0,10,0)'); vg.addColorStop(1, `rgba(0,4,20,${0.55 * Math.min(1, k * 2)})`); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'lighter';
+  if (k < 0.55) for (let i = 0; i < 3; i++) {   // rings of energy closing in on the ship
+    const q = ((k / 0.55) + i / 3) % 1, r = 22 + (1 - q) * 170; ctx.strokeStyle = `rgba(150,200,255,${0.55 * q * (1 - k / 0.55 * 0.6)})`; ctx.lineWidth = 1.5 + q * 2; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.stroke();
+  }
+  const core = ctx.createRadialGradient(x, y, 0, x, y, 40 + 90 * k); core.addColorStop(0, `rgba(220,240,255,${0.35 + 0.5 * k})`); core.addColorStop(1, 'rgba(90,140,255,0)'); ctx.fillStyle = core; ctx.beginPath(); ctx.arc(x, y, 40 + 90 * k, 0, 6.283); ctx.fill();
+  const s2 = Math.max(0, (k - 0.25) / 0.75);   // the stars stretch into streaks along your heading
+  if (s2 > 0) streaks(ctx, W, H, a, 6 + s2 * s2 * Math.max(W, H) * 0.9, 0.25 + 0.6 * s2, s2 * s2 * 2600);
+  if (k > 0.82) {   // the bloom and lens streak as you leave
+    const b = (k - 0.82) / 0.18; ctx.fillStyle = `rgba(225,238,255,${0.85 * b * b})`; ctx.fillRect(0, 0, W, H);
+    const L = W * (0.3 + b), hg = ctx.createLinearGradient(x - L, y, x + L, y); hg.addColorStop(0, 'rgba(120,180,255,0)'); hg.addColorStop(0.5, `rgba(255,255,255,${0.9 * b})`); hg.addColorStop(1, 'rgba(120,180,255,0)'); ctx.fillStyle = hg; ctx.fillRect(x - L, y - 3 - 6 * b, L * 2, 6 + 12 * b);
+  }
+  ctx.globalCompositeOperation = 'source-over';
+}
+function hyperIn(G, ctx, W, H, t, x, y, a) {
+  const k = t / 1100;   // 0 at arrival .. 1 settled
+  ctx.globalCompositeOperation = 'lighter';
+  const s2 = Math.max(0, 1 - k / 0.45); if (s2 > 0) streaks(ctx, W, H, a, 4 + s2 * s2 * Math.max(W, H) * 0.7, 0.8 * s2, 2600 + (1 - s2) * 900);   // streaks collapse back into stars
+  for (const [d, col] of [[0, '170,215,255'], [6, '255,170,200']]) { const r = 30 + k * Math.max(W, H) * 0.6 + d, al = 0.6 * (1 - k); ctx.strokeStyle = `rgba(${col},${al})`; ctx.lineWidth = 3 * (1 - k) + 1; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.stroke(); }
+  if (k < 0.5) { const c = ctx.createRadialGradient(x, y, 0, x, y, 160); c.addColorStop(0, `rgba(235,245,255,${0.8 * (1 - k * 2)})`); c.addColorStop(1, 'rgba(120,170,255,0)'); ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, 160, 0, 6.283); ctx.fill(); }
+  ctx.globalCompositeOperation = 'source-over';
+  if (k < 0.35) { ctx.fillStyle = `rgba(225,238,255,${0.75 * (1 - k / 0.35) ** 2})`; ctx.fillRect(0, 0, W, H); }
+}
 function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
   if (!me) return; const S = SYS[G.sys]; if (!S) return;
   // mission objectives in this system, your nav point, and your target
@@ -307,10 +354,9 @@ function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
   for (const t of missionTargets(G)) if (t.stellar && !seen.has(t.stellar)) { const p = S.stellars.find(x => x.id === t.stellar); if (p) { seen.add(p.id); edgeArrow(ctx, W, H, sx(p.x), sy(p.y), t.kind === 'story' || t.kind === 'arc' ? '#ffd65a' : '#ffb86a', p.name, Math.hypot(p.x - me.rx, p.y - me.ry)); } }
   if (G.navStellar && !seen.has(G.navStellar)) { const p = S.stellars.find(x => x.id === G.navStellar); if (p) edgeArrow(ctx, W, H, sx(p.x), sy(p.y), '#7ad0ff', p.name, Math.hypot(p.x - me.rx, p.y - me.ry)); }
   const T = G.target && G.ents.get(G.target); if (T) edgeArrow(ctx, W, H, sx(T.rx), sy(T.ry), G.hostile(T) ? G.pal.hostile : G.pal.friend, (T.name || (G.A.ships[T.hull] || {}).name || 'target').split(' · ')[0], Math.hypot(T.rx - me.rx, T.ry - me.ry));
-  // hyperspace: streaks while jumping, a flash on arrival
-  if (me.fl & 8) { const k = Math.min(1, (now - (G._jumpStart || now)) / 1200); ctx.strokeStyle = `rgba(200,225,255,${0.25 + 0.5 * k})`; ctx.lineWidth = 1.5; const rr = Math.max(W, H);
-    for (let i = 0; i < 90; i++) { const a = (i * 2.399) % 6.283, r0 = ((i * 97) % 300) + 40 + k * 200, r1 = r0 + 40 + k * rr * 0.5; ctx.beginPath(); ctx.moveTo(W / 2 + Math.cos(a) * r0, H / 2 + Math.sin(a) * r0); ctx.lineTo(W / 2 + Math.cos(a) * r1, H / 2 + Math.sin(a) * r1); ctx.stroke(); } }
-  if (G._arriveT && now - G._arriveT < 700) { ctx.fillStyle = `rgba(220,235,255,${0.55 * (1 - (now - G._arriveT) / 700)})`; ctx.fillRect(0, 0, W, H); }
+  // 2.1 hyperspace: spool rings, star streaks along your heading, a white bloom; arrival plays it in reverse with a shockwave
+  if (G._jumping || (me.fl & 8)) hyperOut(G, ctx, W, H, now, sx(me.rx), sy(me.ry), me.a);
+  if (G._arriveT && now - G._arriveT < 1100) hyperIn(G, ctx, W, H, now - G._arriveT, sx(me.rx), sy(me.ry), me.a);
   // damage: a red flash when your hull is hit, and a slow pulse when armour is low
   const st = G.you && G.you.shipStats, ar = st ? me.armor / Math.max(1, st.armor) : 1, hurt = G._hurtT ? Math.max(0, 1 - (now - G._hurtT) / 450) : 0, low = ar < 0.3 ? (0.35 + 0.25 * Math.sin(now / 260)) * (1 - ar / 0.3) : 0, v = Math.max(hurt * 0.55, low);
   if (v > 0.01) { const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75); g.addColorStop(0, 'rgba(255,0,0,0)'); g.addColorStop(1, `rgba(200,10,0,${v})`); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
@@ -321,7 +367,13 @@ function drawShip(G, ctx, e, x, y, z, now) {
   if (x < -w || y < -w || x > ctx.canvas.width + w || y > ctx.canvas.height + w) return;
   const fr = ((Math.round(e.a / (Math.PI / 18)) % 36) + 36) % 36;
   const im = sheet(e.hull);
-  if (e.fl & 8) { ctx.globalAlpha = 0.6; }
+  if (e.fl & 8 && im.complete && im.naturalWidth) {   // 2.1: a ship in hyperspace leaves a stretched, blue-shifted ghost trail
+    const ux = Math.sin(e.a), uy = -Math.cos(e.a); ctx.globalCompositeOperation = 'lighter';
+    for (let i = 6; i >= 1; i--) { ctx.globalAlpha = 0.22 * (1 - i / 7); const o = i * w * 0.32; ctx.drawImage(im, (fr % 6) * sz, Math.floor(fr / 6) * sz, sz, sz, x - ux * o - w / 2, y - uy * o - w / 2, w, w); }
+    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    const g = ctx.createRadialGradient(x + ux * w * 0.35, y + uy * w * 0.35, 0, x + ux * w * 0.35, y + uy * w * 0.35, w * 0.6); g.addColorStop(0, 'rgba(220,240,255,.85)'); g.addColorStop(1, 'rgba(120,170,255,0)');
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x + ux * w * 0.35, y + uy * w * 0.35, w * 0.6, 0, 6.283); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+  }
   if (e.fl & 32) { ctx.shadowColor = 'rgba(255,205,90,.95)'; ctx.shadowBlur = Math.max(6, 16 * z); }   // mastery Tier 5 gold trim
   if (im.complete && im.naturalWidth) ctx.drawImage(im, (fr % 6) * sz, Math.floor(fr / 6) * sz, sz, sz, x - w / 2, y - w / 2, w, w);
   else { ctx.fillStyle = '#888'; ctx.beginPath(); ctx.arc(x, y, w / 4, 0, 6.28); ctx.fill(); }

@@ -20,7 +20,7 @@ ok(Array.isArray(d.shuttles) && Array.isArray(d.officers) && d.bridge && Array.i
 d.credits = 5e7; for (const m of ['alloy', 'crystal', 'isotope']) d.mats[m] = [20, 20, 20, 20, 20];
 Object.assign(d.station, { claimed: true, ops: 2, site: 'site-meridian' }); game.db.world.sites['site-meridian'] = game.db.key(d.name);
 d.sys = 'meridian'; d.stellar = 'site-meridian';
-ok(game.bays(d) === 1 && game.dockSlots(d) === 0, 'Ops 2: one hangar bay, no drydock berth');
+ok(game.bays(d) === 1 && game.dockSlots(d) === 5, 'Ops 2: one shuttle bay, five stored-ship berths');
 a.send({ t: 'shuttle', op: 'build', kind: 'salvage' }); ok(d.shuttles.length === 0, 'the Salvage Tender needs Ops 3');
 a.send({ t: 'shuttle', op: 'build', kind: 'courier' }); ok(d.shuttles.length === 1 && d.shuttles[0].state === 'idle', 'built a Courier Shuttle');
 a.send({ t: 'shuttle', op: 'build', kind: 'survey' }); ok(d.shuttles.length === 1, 'one bay means one shuttle');
@@ -69,13 +69,13 @@ ok(RESEARCH.length >= 25 && new Set(RESEARCH.map(r => r.tree)).size === 4, `${RE
 // refining
 d.mats.crystal[0] = 9; a.send({ t: 'station', op: 'refine', mat: 'crystal', g: 0, n: 3 });
 ok(d.mats.crystal[0] === 0 && d.mats.crystal[1] === 23, 'refined 9 crystal I into 3 crystal II');
-// drydock presets
-d.station.ops = 4; ok(game.dockSlots(d) === 3, 'Ops 4: three drydock berths');
-d.cargo = {}; if (d.ship.hull === 703) d.ship.hull = 708; const hull0 = d.ship.hull; d.escorts = [751];
+// stored ships (2.1: the drydock became docks; FLY THIS / STORE still work through the old messages)
+d.station.ops = 4; ok(game.dockSlots(d) === 11, 'Ops 4: eleven stored-ship berths');
+d.cargo = {}; if (d.ship.hull === 703) d.ship.hull = 708; const hull0 = d.ship.hull;
 a.send({ t: 'dock', op: 'store' });
-ok(d.dock.length === 1 && d.dock[0].ship.hull === hull0 && d.dock[0].escorts[0] === 751 && d.shipless, 'stored the ship with its escorts and bridge; no active ship until you choose one');
+ok(d.dock.length === 1 && d.dock[0].ship.hull === hull0 && d.dock[0].bridge.captain === g1.id && d.shipless, 'stored the ship with its bridge crew; no active ship until you choose one');
 a.send({ t: 'dock', op: 'store', i: 0 });
-ok(d.ship.hull === hull0 && d.escorts[0] === 751 && d.bridge.captain === g1.id && d.dock.length === 0, 'swapping back restores the escorts and bridge crew; the Gnat goes back to the station');
+ok(d.ship.hull === hull0 && d.bridge.captain === g1.id && d.dock.length === 0, 'flying her again restores the bridge crew');
 a.send({ t: 'dock', op: 'store' }); a.send({ t: 'dock', op: 'store' }); a.send({ t: 'dock', op: 'store' });
 ok(d.dock.length === 1 && d.shipless, 'spam-storing does nothing once you have no active ship');
 a.send({ t: 'dock', op: 'store', i: 0 });

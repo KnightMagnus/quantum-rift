@@ -48,7 +48,7 @@ export const SpecialistMixin = {
     if (npc.faction === 'swarm') this.specGain(s, 'swarmbreaker', 1 + (Math.random() < 0.4 ? 1 : 0), 0.18);
     if (npc.faction === 'umbral') this.specGain(s, 'nightglass', 1 + Math.floor((npc.strength || 10) / 300), 0.12);
     if ((FACTIONS[npc.faction] || {}).pirate) this.specGain(s, 'vanguard', npc.mission ? 3 : 1, npc.mission ? 0.6 : 0.03, npc.mission ? 3 : 1);
-    if (byEscort && d.escorts.length) this.specGain(s, 'herald', 1, 0.1);
+    if (byEscort && this.wingHulls(d).length) this.specGain(s, 'herald', 1, 0.1);
     if (npc.wave) this.specGain(s, 'bulwark', 1, 0.2);
   },
   specOnBoard(s) { this.specGain(s, 'corsair', 2, 0.3, 1 + Math.floor(Math.random() * 3)); },

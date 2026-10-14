@@ -17,7 +17,7 @@ const $ = (id) => document.getElementById(id);
 const G = window.G = {
   A: null, you: null, sys: null, landed: null, view: null, ents: new Map(), shots: [], beams: [], loot: [], target: 0, zoom: 1, spriteScale: 1.25,
   route: [], navStellar: null, ammo: {}, FAC, ctab: 'missions', ltab: null, myId: 0, myHull: 0, hover: 0,
-  opts: Object.assign({ dmg: true, shake: true, mouseAim: false, notify: false, cb: false, scale: 1, vol: 0.6, sfx: 1, radio: 0.8, ui: 0.8, amb: 0.5, music: 0.6, mute: false, keys: {} }, (() => { try { return JSON.parse(localStorage.getItem('rift.opts') || '{}'); } catch { return {}; } })()),
+  opts: Object.assign({ dmg: true, shake: true, mouseAim: false, notify: false, cb: false, scale: 1, vol: 0.35, sfx: 0.75, radio: 0.8, ui: 0.55, amb: 0.35, music: 0.45, mute: false, keys: {} }, (() => { try { return JSON.parse(localStorage.getItem('rift.opts') || '{}'); } catch { return {}; } })()),
   hostile(e) {
     if (!e || !G.you) return false; if (e.owner === G.myId || e.id === G.myId) return false;
     const f = FAC[e.fac]; if (e.fl & 16) return SYS[G.sys] && SYS[G.sys].danger >= 3;
@@ -33,12 +33,13 @@ const PALETTES = { normal: { own: '#3fd36b', player: '#5ad0ff', hostile: '#ff3a2
 G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
 export const ACTIONS = [['thrust', 'Thrust', 'KeyW'], ['left', 'Turn left', 'KeyA'], ['right', 'Turn right', 'KeyD'], ['rev', 'Reverse', 'KeyS'], ['ab', 'Afterburner', 'ShiftLeft'],
   ['fire1', 'Fire primary', 'Space'], ['fire2', 'Fire secondary', 'KeyF'], ['target', 'Next target', 'Tab'], ['nearest', 'Nearest hostile', 'KeyR'], ['land', 'Land', 'KeyL'],
-  ['jump', 'Hyperjump', 'KeyJ'], ['map', 'Galaxy map', 'KeyM'], ['board', 'Board', 'KeyB'], ['zoomin', 'Zoom in', 'KeyZ'], ['zoomout', 'Zoom out', 'KeyX'], ['pause', 'Pause (solo)', 'KeyP'], ['hail', 'Hail target / planet', 'KeyT'], ['info', 'Ship and captain info', 'KeyI'], ['face', 'Turn to face target (hold)', 'KeyE'], ['stop', 'Full stop', 'KeyQ'],
+  ['jump', 'Hyperjump', 'KeyJ'], ['map', 'Galaxy map', 'KeyM'], ['board', 'Board', 'KeyB'], ['zoomin', 'Zoom in', 'KeyZ'], ['zoomout', 'Zoom out', 'KeyX'], ['pause', 'Pause (solo)', 'KeyP'], ['mute', 'Mute sound', 'KeyN'], ['hail', 'Hail target / planet', 'KeyT'], ['info', 'Ship and captain info', 'KeyI'], ['face', 'Turn to face target (hold)', 'KeyE'], ['stop', 'Full stop', 'KeyQ'],
   ['ordAttack', 'Fleet: attack my target', 'KeyK'], ['ordGather', 'Fleet: form up', 'KeyG'], ['ordHold', 'Fleet: hold position', 'KeyH'], ['ordFire', 'Fleet: hold fire', 'KeyY'], ['ordLoot', 'Fleet: collect loot', 'KeyU'], ['companion', 'Next companion tab', 'KeyC']];
 const ALT = { thrust: 'ArrowUp', left: 'ArrowLeft', right: 'ArrowRight', rev: 'ArrowDown', ab: 'ShiftRight' };   // the arrow keys always work too
 const bound = (a) => G.opts.keys[a] || ACTIONS.find(x => x[0] === a)[2];
 const held = (a) => !!(keys[bound(a)] || (ALT[a] && keys[ALT[a]]));
 const actionOf = (code) => { for (const [a] of ACTIONS) if (bound(a) === code || ALT[a] === code) return a; return null; };
+if (!G.opts.v21) { G.opts.v21 = true; G.opts.vol = Math.min(G.opts.vol, 0.35); G.opts.ui = Math.min(G.opts.ui ?? 0.55, 0.55); G.opts.amb = Math.min(G.opts.amb ?? 0.35, 0.35); try { localStorage.setItem('rift.opts', JSON.stringify(G.opts)); } catch {} }   // 2.1: quieter defaults, applied once to older settings
 function saveOpts() { try { localStorage.setItem('rift.opts', JSON.stringify(G.opts)); } catch {} }
 function applyOpts() {
   G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
@@ -119,7 +120,7 @@ function onMessage(m) {
     case 'landed': if (!G.landed) audio.ui('dock', 0.8); audio.setAmbience('station'); setAuto(null); G.landed = m; G.view = null; G.ents.clear(); G.shots = []; G.beams = []; G.loot = []; G.target = 0; history = []; showLanded(); refreshCompanion();
       audio.play(10110, 0, 0, 0.5); break;
     case 'space': if (String(m.sys).startsWith('arena-') && !SYS[m.sys]) SYS[m.sys] = arenaSystem(m.sys);
-      { const fromSpace = !!G.view && !G.landed; if (G.landed) audio.ui('undock', 0.8); else if (fromSpace) { audio.ui('arrive', 0.7); G._arriveT = performance.now(); } audio.setAmbience('space'); const go = G.autoRoute; G.autoKeep = true; setAuto(null); G.autoRoute = go; } G.landed = null; hideLanded(); G.sys = m.sys; G.myId = m.id; G.view = null; G.ents.clear(); G.shots = []; G.beams = []; history = [];
+      { const fromSpace = !!G.view && !G.landed; if (G.landed) audio.ui('undock', 0.8); else if (fromSpace) { audio.ui('arrive', 0.8); G._arriveT = performance.now(); G._jumping = false; } audio.setAmbience('space'); const go = G.autoRoute; G.autoKeep = true; setAuto(null); G.autoRoute = go; } G.landed = null; hideLanded(); G.sys = m.sys; G.myId = m.id; G.view = null; G.ents.clear(); G.shots = []; G.beams = []; history = [];
       G.rocks = (m.rocks || []).map(([id, x, y, r, ore, hp]) => ({ id, x, y, r, ore, hp })); G.rockById = new Map(G.rocks.map(k => [k.id, k]));
       if (G.route.length && G.route[0] === m.sys) G.route.shift(); drawMini();
       if (G.autoRoute && G.route.length) setTimeout(() => { if (G.autoRoute && G.view && G.route.length && !G.auto) { G.autoKeep = true; setAuto({ mode: 'jump' }, `Autopilot: next jump to ${SYS[G.route[0]].name}.`); } }, 1500); else G.autoRoute = false;
@@ -188,7 +189,7 @@ function onSnap(m) {
     const st2 = G.you && G.you.shipStats, shp = st2 ? v.shield / Math.max(1, st2.shield) : 1;
     if (shp < 0.25 && !G._lowSh && v.armor < (st2 ? st2.armor : 1)) { G._lowSh = true; audio.ui('lowshield'); } else if (shp > 0.45) G._lowSh = false;
     if (G.target && G.target !== G._lastTgt) audio.ui('lock', 0.7); G._lastTgt = G.target;
-    if ((v.fl & 8) && !G._jumping) { G._jumping = true; G._jumpStart = performance.now(); audio.ui('jump', 0.8); } else if (!(v.fl & 8)) G._jumping = false;
+    if ((v.fl & 8) && !G._jumping) { G._jumping = true; G._jumpStart = performance.now(); audio.ui(G.you && G.you.shipStats && G.you.shipStats.jumpFast ? 'jumpfast' : 'jump', 0.9); } else if (!(v.fl & 8) && G._jumping && performance.now() - G._jumpStart > 2500) G._jumping = false;   // 2.1: the jump event usually starts it first
     if (G._lastAr != null && v.armor < G._lastAr - 0.5) { G._hurtT = performance.now(); } G._lastAr = v.armor;
   }
   for (const ev of m.ev) onEvent(ev);
@@ -210,8 +211,8 @@ function onEvent(ev) {
     }
     case 'blast': blast(ev[1], ev[2], ev[3]); break;
     case 'rock': { const k = G.rockById && G.rockById.get(ev[1]); if (k) k.hp = ev[2]; break; }
-    case 'flash': flash(ev[1], ev[2]); audio.play(10111, dx, dy, 0.6); break;
-    case 'jump': { const e = G.ents.get(ev[1]); if (e && e.id === G.myId) audio.play(10111, 0, 0, 0.9); break; }
+    case 'flash': flash(ev[1], ev[2]); if (Math.hypot(dx, dy) > 80) audio.play('jumpfar', dx, dy, 0.8); break;   // 2.1: your own jump has its own sound
+    case 'jump': if (ev[1] === G.myId && !G._jumping) { G._jumping = true; G._jumpStart = performance.now(); audio.ui(G.you && G.you.shipStats && G.you.shipStats.jumpFast ? 'jumpfast' : 'jump', 0.9); } break;   // 2.1: the spool starts the moment the server begins your jump
     case 'pickup': audio.play(10112, 0, 0, 0.6); break;
   }
 }
@@ -240,6 +241,7 @@ window.addEventListener('keydown', (e) => {
     case 'zoomin': G.zoom = Math.min(2, G.zoom * 1.15); break;
     case 'zoomout': G.zoom = Math.max(0.35, G.zoom / 1.15); break;
     case 'pause': if (G.solo) send({ t: 'pause' }); break;
+    case 'mute': G.opts.mute = !G.opts.mute; applyOpts(); saveOpts(); volUi(); toast(G.opts.mute ? 'Sound muted (N to unmute).' : 'Sound on.'); break;   // 2.1
     case 'board': openBoard(); break;
     case 'hail': hailTarget(); break;
     case 'info': $('infobox').classList.contains('hidden') ? openInfo() : closeInfo(); break;
@@ -453,10 +455,24 @@ function renderKeys() {
 function openOpts(keysFirst) { audio.ui('open', 0.6);
   $('opts').classList.remove('hidden'); for (const k of CHECKS) $('opt-' + k).checked = !!G.opts[k];
   $('opt-scale').value = G.opts.scale; $('opt-vol').value = G.opts.vol; $('opt-sfx').value = G.opts.sfx; $('opt-radio').value = G.opts.radio; $('opt-ui').value = G.opts.ui ?? 0.8; $('opt-amb').value = G.opts.amb ?? 0.5; $('opt-music').value = G.opts.music ?? 0.6; rebinding = null; renderKeys();
+  document.querySelectorAll('#opts input[type=range]').forEach(paintRange);
   if (keysFirst === true) setTimeout(() => $('optkeys').scrollIntoView({ block: 'start' }), 0);
 }
 function closeOpts() { audio.ui('close', 0.6); $('opts').classList.add('hidden'); rebinding = null; }
 $('optclose').onclick = closeOpts; $('optbtn').onclick = openOpts;
+// 2.1: the quick volume control in the command bar: one master slider and a mute button
+function paintRange(el) { if (!el) return; const p = (el.value - el.min) / ((el.max - el.min) || 1) * 100; el.style.background = `linear-gradient(90deg,#e0362a ${p}%,#3a0808 ${p}%)`; }   // 2.1: red fill
+document.addEventListener('input', (e) => { if (e.target.matches && e.target.matches('input[type=range]')) paintRange(e.target); });
+function volUi() {
+  const b = $('cbvol'); if (!b) return; b.textContent = G.opts.mute || G.opts.vol <= 0.001 ? '🔇' : G.opts.vol < 0.3 ? '🔈' : G.opts.vol < 0.65 ? '🔉' : '🔊';
+  $('qvol').value = Math.round(G.opts.vol * 100); paintRange($('qvol')); $('qvoln').textContent = G.opts.mute ? 'muted' : Math.round(G.opts.vol * 100) + '%'; $('qmute').textContent = G.opts.mute ? 'UNMUTE' : 'MUTE';
+}
+$('cbvol').onclick = (e) => { e.stopPropagation(); $('qvolbox').classList.toggle('hidden'); volUi(); };
+$('qvol').oninput = (e) => { G.opts.vol = +e.target.value / 100; if (G.opts.mute && G.opts.vol > 0) G.opts.mute = false; applyOpts(); saveOpts(); volUi(); };
+$('qmute').onclick = () => { G.opts.mute = !G.opts.mute; applyOpts(); saveOpts(); volUi(); };
+$('qmore').onclick = () => { $('qvolbox').classList.add('hidden'); openOpts(); };
+document.addEventListener('click', (e) => { if (!e.target.closest('#qvolbox') && e.target.id !== 'cbvol') $('qvolbox').classList.add('hidden'); });
+volUi();
 for (const k of CHECKS) $('opt-' + k).onchange = (e) => { G.opts[k] = e.target.checked; if (k === 'notify' && e.target.checked && window.Notification && Notification.permission === 'default') Notification.requestPermission(); applyOpts(); saveOpts(); };
 for (const k of ['scale', 'vol', 'sfx', 'radio', 'ui', 'amb', 'music']) $('opt-' + k).oninput = (e) => { G.opts[k] = +e.target.value; applyOpts(); saveOpts(); audio.unlock(); if (k === 'vol' || k === 'sfx') audio.play('10100', 0, 0, 1); if (k === 'ui') audio.ui('click'); };
 window.addEventListener('rift-radio-vol', (e) => { G.opts.radio = e.detail; applyOpts(); saveOpts(); });
