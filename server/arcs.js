@@ -8,7 +8,7 @@ import { credits } from '../shared/rules.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-export const ArcsMixin = {
+export const ArcsOperations = {
   arcsInit(d) { d.arcs = d.arcs || {}; return d.arcs; },
   arcState(d, f) { const A = this.arcsInit(d); if (!Object.prototype.hasOwnProperty.call(ARCS, f)) return { step: 0, active: null, done: true }; return A[f] = A[f] || { step: 0, active: null, done: false }; },   // unknown arcs never touch the save
   // the arc step on offer at this world, if any

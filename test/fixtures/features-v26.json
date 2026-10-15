@@ -1,0 +1,657 @@
+{
+  "baseline": "47bea35a9f3d773efa9a9f075e5b361d9533b390",
+  "worldInit": [
+    "frontsInit",
+    "coopInit",
+    "frontierInit",
+    "rivalsInit",
+    "livingInit",
+    "livingTick",
+    "livingInit"
+  ],
+  "login": [
+    "hangarInit",
+    "coopMigrate",
+    "docksInit",
+    "hangarInit",
+    "hostInit",
+    "storyInit",
+    "synInit",
+    "arcsInit",
+    "coopLogin",
+    "hangarInit",
+    "docksInit",
+    "hangarInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "storyInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "synInit",
+    "storyInit",
+    "storyInit",
+    "storyInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit",
+    "arcsInit"
+  ],
+  "saved": {
+    "name": "Mixed Case",
+    "created": 1781503200000,
+    "credits": 30000,
+    "sys": "qgate",
+    "stellar": "qstation",
+    "ship": {
+      "hull": 703,
+      "outfits": {
+        "9001": 1
+      },
+      "ammo": {},
+      "fixed": [],
+      "bonusSpace": 2,
+      "name": "Rift Runner",
+      "uid": "s1"
+    },
+    "cargo": {},
+    "mats": {
+      "alloy": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "crystal": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "isotope": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "rep": {
+      "quantum": 10,
+      "spacer": 0,
+      "lamp": 0,
+      "hollow": 0,
+      "quevari": 0,
+      "umbral": 0,
+      "vashari": 0,
+      "korrund": 0,
+      "ylith": 0,
+      "sarn": 0,
+      "thalassi": 0,
+      "frontier": 0,
+      "farside": 0,
+      "deep": 0,
+      "swarm": 0,
+      "eclipse": 0
+    },
+    "missions": [],
+    "escorts": [],
+    "log": [
+      {
+        "t": 1781503200000,
+        "text": "Took command of the Gnat Skiff \"Rift Runner\" at Quantum Station."
+      }
+    ],
+    "station": {
+      "claimed": false,
+      "ops": 0,
+      "refUnits": 0,
+      "refT": 1781503200000,
+      "active": null,
+      "done": [],
+      "queue": []
+    },
+    "stats": {
+      "kills": 0,
+      "jumps": 0,
+      "earned": 0
+    },
+    "tut": 0,
+    "tutV": 2,
+    "explored": [
+      "qgate"
+    ],
+    "id": 1,
+    "shuttles": [],
+    "officers": [],
+    "bridge": {},
+    "dock": [],
+    "nextUid": 2,
+    "v26": true,
+    "docks": [
+      {
+        "lead": "s1",
+        "wings": []
+      }
+    ],
+    "activeDock": 0,
+    "holdout": {
+      "best": 0,
+      "lastT": 0
+    },
+    "story": {
+      "step": 0,
+      "active": null,
+      "done": []
+    },
+    "syn": 0,
+    "shards": 0,
+    "lower": [],
+    "credit": 600,
+    "arcs": {
+      "quantum": {
+        "step": 0,
+        "active": null,
+        "done": false
+      },
+      "spacer": {
+        "step": 0,
+        "active": null,
+        "done": false
+      },
+      "vashari": {
+        "step": 0,
+        "active": null,
+        "done": false
+      },
+      "korrund": {
+        "step": 0,
+        "active": null,
+        "done": false
+      },
+      "ylith": {
+        "step": 0,
+        "active": null,
+        "done": false
+      },
+      "sarn": {
+        "step": 0,
+        "active": null,
+        "done": false
+      },
+      "thalassi": {
+        "step": 0,
+        "active": null,
+        "done": false
+      }
+    },
+    "friends": [],
+    "freqIn": [],
+    "freqOut": [],
+    "blocks": [],
+    "mail": [],
+    "spec": {},
+    "bp": {},
+    "parts": {},
+    "specState": {},
+    "goals": {
+      "day": 20619,
+      "daily": [
+        {
+          "type": "jumps",
+          "n": 11,
+          "got": 0,
+          "claimed": false
+        },
+        {
+          "type": "trade",
+          "n": 54000,
+          "got": 0,
+          "claimed": false
+        },
+        {
+          "type": "boarded",
+          "n": 1,
+          "got": 0,
+          "claimed": false
+        }
+      ],
+      "week": 2946,
+      "weekly": [
+        {
+          "type": "trade",
+          "n": 534000,
+          "got": 0,
+          "claimed": false
+        },
+        {
+          "type": "mined",
+          "n": 218,
+          "got": 0,
+          "claimed": false
+        },
+        {
+          "type": "boarded",
+          "n": 6,
+          "got": 0,
+          "claimed": false
+        }
+      ]
+    },
+    "quests": {
+      "active": {},
+      "done": [],
+      "contacts": {},
+      "sides": {}
+    },
+    "arena": {
+      "rating": 1000,
+      "w": 0,
+      "l": 0
+    }
+  },
+  "samples": [
+    {
+      "hull": 704,
+      "bonus": {
+        "miningPct": 110,
+        "shieldPct": 5,
+        "armorPct": 5,
+        "damagePct": 5,
+        "speedPct": 5,
+        "turnPct": 5
+      },
+      "stats": {
+        "hull": 704,
+        "name": "Dory Hauler",
+        "size": 54,
+        "mass": 80,
+        "maxSpeed": 118.125,
+        "accel": 143,
+        "turn": 1.5393804002589986,
+        "shield": 63,
+        "armor": 95,
+        "shieldRe": 0.8,
+        "armorRe": 0,
+        "fuel": 450,
+        "fuelRe": 0,
+        "cargo": 70,
+        "space": 22,
+        "used": 4,
+        "free": 18,
+        "guns": 0,
+        "turrets": 1,
+        "maxGuns": 1,
+        "maxTurrets": 1,
+        "afterburner": 0,
+        "cloak": 0,
+        "multiJump": 1,
+        "jumpFast": 0,
+        "weapons": {
+          "130": 1
+        },
+        "damageMul": 1.05
+      }
+    },
+    {
+      "hull": 812,
+      "bonus": {
+        "miningPct": 60,
+        "shieldPct": 5,
+        "armorPct": 5,
+        "damagePct": 5,
+        "speedPct": 5,
+        "turnPct": 5
+      },
+      "stats": {
+        "hull": 812,
+        "name": "Bulwark",
+        "size": 172,
+        "mass": 1100,
+        "maxSpeed": 103.95,
+        "accel": 88,
+        "turn": 0.8796459430051422,
+        "shield": 3360,
+        "armor": 3150,
+        "shieldRe": 9.6,
+        "armorRe": 0,
+        "fuel": 700,
+        "fuelRe": 0,
+        "cargo": 60,
+        "space": 240,
+        "used": 60,
+        "free": 180,
+        "guns": 0,
+        "turrets": 6,
+        "maxGuns": 2,
+        "maxTurrets": 6,
+        "afterburner": 0,
+        "cloak": 0,
+        "multiJump": 1,
+        "jumpFast": 0,
+        "weapons": {
+          "132": 4,
+          "197": 2,
+          "347": 2
+        },
+        "damageMul": 1.05
+      }
+    }
+  ],
+  "world": {
+    "t": "world",
+    "invasion": null,
+    "anomalies": {
+      "free-claim": "nebula",
+      "dunpeak": "solar",
+      "gloammark-night": "veins",
+      "fathomtrench": "veins",
+      "caravantrack": "nebula",
+      "the-pale-eye": "solar",
+      "iridell": "shear",
+      "sparvane": "veins",
+      "flickerglow": "nebula"
+    },
+    "event": {
+      "id": "rush",
+      "day": 1,
+      "name": "Prospector's Rush",
+      "desc": "Mining yields 50% more and rocks regrow twice as fast.",
+      "mods": {
+        "mining": 1.5,
+        "regrow": 2
+      }
+    },
+    "calendar": [
+      {
+        "id": "rush",
+        "day": 1,
+        "name": "Prospector's Rush",
+        "desc": "Mining yields 50% more and rocks regrow twice as fast.",
+        "mods": {
+          "mining": 1.5,
+          "regrow": 2
+        },
+        "start": 1781481600000,
+        "end": 1781568000000
+      },
+      {
+        "id": "hangar",
+        "day": 2,
+        "name": "Hangar Days",
+        "desc": "Shuttle jobs finish 30% faster and pay 25% more.",
+        "mods": {
+          "shuttleSpeed": 1.3,
+          "shuttleYield": 1.25
+        },
+        "start": 1781568000000,
+        "end": 1781654400000
+      },
+      {
+        "id": "bounty",
+        "day": 3,
+        "name": "Bounty Week",
+        "desc": "Bounties pay double, and more raiders are out to earn them.",
+        "mods": {
+          "bounty": 2,
+          "raid": 1.5
+        },
+        "start": 1781654400000,
+        "end": 1781740800000
+      },
+      {
+        "id": "eclipse",
+        "day": 4,
+        "name": "Umbral Eclipse",
+        "desc": "Eclipse cells roam far from Umbral space. Their caches spill Umbral Shards.",
+        "mods": {
+          "eclipse": 2.5
+        },
+        "start": 1781740800000,
+        "end": 1781827200000
+      },
+      {
+        "id": "salvage",
+        "day": 5,
+        "name": "Salvage Night",
+        "desc": "Hostiles drop loot chests twice as often, and Armadas earn 50% more bounty together.",
+        "mods": {
+          "chest": 2,
+          "armadaBounty": 1.5
+        },
+        "start": 1781827200000,
+        "end": 1781913600000
+      },
+      {
+        "id": "sweep",
+        "day": 6,
+        "name": "Clean Sweep",
+        "desc": "Hostiles drop loot chests 50% more often, and festival markets buy at 15% over.",
+        "mods": {
+          "chest": 1.5,
+          "sell": 1.15
+        },
+        "start": 1781913600000,
+        "end": 1782000000000
+      },
+      {
+        "id": "swarm",
+        "day": 0,
+        "name": "Swarm Sunday",
+        "desc": "Feral Swarm clusters everywhere they roam, and every swarm kill counts double for chitin and blueprints.",
+        "mods": {
+          "swarm": 3,
+          "swarmLoot": 2
+        },
+        "start": 1782000000000,
+        "end": 1782086400000
+      }
+    ],
+    "states": {
+      "meridian": {
+        "k": "refugees",
+        "got": 0,
+        "need": 100,
+        "until": 1781506347925.5845,
+        "enemy": null
+      },
+      "cinderverge": {
+        "k": "plague",
+        "got": 0,
+        "need": 100,
+        "until": 1781505848145.8237,
+        "enemy": null
+      },
+      "coralwake": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781504932623.0461,
+        "enemy": null
+      },
+      "flickerglow": {
+        "k": "war",
+        "got": 0,
+        "need": 10,
+        "until": 1781504806319.8818,
+        "enemy": "hollow"
+      },
+      "hearthlight": {
+        "k": "plague",
+        "got": 0,
+        "need": 100,
+        "until": 1781505575548.4763,
+        "enemy": null
+      },
+      "anchorreach": {
+        "k": "famine",
+        "got": 0,
+        "need": 140,
+        "until": 1781505847330.7559,
+        "enemy": null
+      },
+      "facetfall": {
+        "k": "plague",
+        "got": 0,
+        "need": 100,
+        "until": 1781504932161.9883,
+        "enemy": null
+      },
+      "halcyon": {
+        "k": "festival",
+        "got": 0,
+        "need": 0,
+        "until": 1781506539876.936,
+        "enemy": null
+      },
+      "chimeith-facet": {
+        "k": "famine",
+        "got": 0,
+        "need": 140,
+        "until": 1781506076508.5696,
+        "enemy": null
+      },
+      "astita": {
+        "k": "war",
+        "got": 0,
+        "need": 10,
+        "until": 1781505118053.8103,
+        "enemy": "hollow"
+      },
+      "tapermere": {
+        "k": "plague",
+        "got": 0,
+        "need": 100,
+        "until": 1781505028779.5278,
+        "enemy": null
+      },
+      "thrumhive": {
+        "k": "festival",
+        "got": 0,
+        "need": 0,
+        "until": 1781505231494.8022,
+        "enemy": null
+      },
+      "far-reach": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781504707182.792,
+        "enemy": null
+      },
+      "ironpost": {
+        "k": "pirates",
+        "got": 0,
+        "need": 8,
+        "until": 1781505090098.812,
+        "enemy": null
+      },
+      "saddlerest-market": {
+        "k": "plague",
+        "got": 0,
+        "need": 100,
+        "until": 1781505622037.0908,
+        "enemy": null
+      },
+      "wild-signal": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781506151067.0762,
+        "enemy": null
+      },
+      "broken-landing": {
+        "k": "festival",
+        "got": 0,
+        "need": 0,
+        "until": 1781504916938.0952,
+        "enemy": null
+      },
+      "slagforge": {
+        "k": "pirates",
+        "got": 0,
+        "need": 8,
+        "until": 1781504889177.644,
+        "enemy": null
+      },
+      "serita": {
+        "k": "plague",
+        "got": 0,
+        "need": 100,
+        "until": 1781506367970.272,
+        "enemy": null
+      },
+      "mountainhold": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781505519166.6423,
+        "enemy": null
+      },
+      "chitinreach": {
+        "k": "refugees",
+        "got": 0,
+        "need": 100,
+        "until": 1781506603333.3936,
+        "enemy": null
+      },
+      "wild-hope": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781504801316.5334,
+        "enemy": null
+      },
+      "valora": {
+        "k": "festival",
+        "got": 0,
+        "need": 0,
+        "until": 1781505959034.5825,
+        "enemy": null
+      },
+      "wagonrest": {
+        "k": "festival",
+        "got": 0,
+        "need": 0,
+        "until": 1781506009347.8887,
+        "enemy": null
+      },
+      "flickerfall": {
+        "k": "rush",
+        "got": 0,
+        "need": 160,
+        "until": 1781505398514.5625,
+        "enemy": null
+      }
+    },
+    "colonies": {}
+  },
+  "lookup": [
+    true,
+    true,
+    true,
+    false
+  ]
+}

@@ -24,7 +24,7 @@ const raceOf = (fac) => RACE_ROLES[fac] ? fac : 'quantum';
 // 2.5.2: the most hold space and bunks any step of a story will ask for, so the job board can warn before you take it on
 export const needsOf = (steps) => ({ hold: Math.max(0, ...steps.map(st => st.type === 'cargo' ? st.qty || 4 : st.type === 'smuggle' ? st.qty || 3 : st.type === 'supply' ? st.qty || 0 : 0)),
   pax: Math.max(0, ...steps.map(st => st.type === 'passenger' ? st.pax || 1 : 0)) });
-export const QuestMixin = {
+export const QuestOperations = {
   questInit(d) { const q = d.quests = d.quests || {}; q.active = q.active || {}; q.done = q.done || []; q.contacts = q.contacts || {}; q.sides = q.sides || {}; return q; },
   // every bar has a contact; who they are depends only on the world
   contactAt(p) {

@@ -13,7 +13,7 @@ Give an assistant this file plus `README.md` and it has the context to continue.
 
 Quantum Rift is a 2D space trading and combat game in the browser. It is inspired by the classic Escape Velocity Nova,
 and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
-- It runs as a small Node.js server with **no npm dependencies**: plain ES modules, its own WebSocket implementation, and
+- It runs as a small Node.js server with **no runtime npm dependencies**: plain ES modules, its own WebSocket implementation, and
   JSON save files.
 - The same build hosts an online game or runs a private single-player game (`SOLO=1`).
 - Players connect with any modern browser.
@@ -21,18 +21,19 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 ## How it fits together
 
 - **Authoritative server.**
-  - `server/game.js` holds the `Game` class: sessions, accounts, landing, markets, jobs, the message switch and the main
+  - `server/game.js` holds the `Game` class: sessions, accounts, landing, markets, jobs, explicit message routes and the main
     loop.
   - Each star system is a `Space` (`server/space.js`) simulated at 30 Hz. It holds ships, AI, shots, beams, loot and
     asteroids.
   - Systems are created lazily, on first access through a Proxy, and put to sleep after two quiet minutes. 211 systems cost
     no more than the occupied ones.
-- **Feature mixins.** Each big feature is an object of methods mixed into `Game.prototype`, at the bottom of
-  `server/game.js`:
-  `HangarMixin, FrontsMixin, FrontierMixin, SpecialistMixin, HostileMixin, StoryMixin, RivalsMixin, HailMixin, FleetCmdMixin, SyndicateMixin, ArcsMixin, DocksMixin, LivingMixin, QuestMixin, CoopMixin`.
-  - `CoopMixin` (`server/coop.js`, 2.6) holds friends and DMs, the Armada, trading between stations, duels, rescue, co-op Holdout, Armada contracts and the 2.6 save migration (`coopMigrate`, flagged `d.v26`). Its `sessionOf` deliberately replaces FrontierMixin's (same result, case-insensitive).
-  - Method names must not collide across mixins; a collision silently replaces a method.
-  - `bonus(d)` is deliberately chained: several mixins wrap it to add their modifiers.
+- **Explicit feature services.** `server/features.js` assembles 15 namespaced services under
+  `game.features`. Each gets only its listed capability facade; no feature methods are installed on `Game.prototype`.
+  - `server/coop.js` owns friends/DMs, Armada, station trading, duels, rescue, co-op Holdout, contracts and v2.6 migration.
+  - Effective bonus/stats/world/session services have explicit owners and ordered calculations, not method overrides.
+  - Composition and Fleet Commands are JSDoc-checked with development-only `tsc --noEmit`; other legacy bodies migrate gradually.
+  - See [feature architecture, ownership, typing coverage and checks](docs/FEATURES.md) and the machine-readable
+    [feature inventory](docs/feature-inventory.json) before changing integration points.
 - **Shared code.** `shared/` is imported by both server and client:
   - data tables, the galaxy generator, prices
   - flight physics in `shared/rules.js`, so the client can predict its own ship
@@ -60,16 +61,17 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
   `questAdvance`, which sends the story beat and posts the next step. A lost step is re-posted once by `questSweep`;
   abandoning a step ends the story. Faction commissions still use `m.chain`, so quests must never set it.
 
-## How to add a feature (the pattern every release used)
+## How to add a feature
 
 1. **Data:** a `shared/<feature>.js` file with the tables: costs, tiers, names, text.
-2. **Server:** a `server/<feature>.js` mixin with `xxxInit(d)` (fill in save fields), the operations, and payload helpers.
-   Then wire it into `server/game.js`:
-   - the import, and `Object.assign(Game.prototype, …)`
-   - init on login (in `hello`, next to `storyInit` and `synInit`)
-   - a case in the `onMessage` switch for each client message
-   - periodic work in `tick()` (the 2-second per-session loop or the 20-second loop)
-   - fields in the `you()` payload, and in the `landed()` payload for docked services
+2. **Server:** a `server/<feature>.js` operations module with typed capabilities, operations and payload helpers.
+   Follow [the composition workflow](docs/FEATURES.md):
+   - add a named service and explicit checked facade in `server/features.js`, never prototype writes
+   - initialize/migrate on login or world startup in the existing explicit phase
+   - add fixed routes in `Game.createMessageHandlers()` (duplicate types are rejected)
+   - wire periodic work in `tick()` at its declared cadence and position
+   - add fields in `you()` and `landed()` without changing existing payload/save semantics
+   - update `docs/feature-inventory.json`; one feature owner and one integration owner per change
 3. **Client:** a module that renders HTML strings from `G.you` and `G.landed`. Then add a landing tab to `TABS` and its
    `avail` condition in `ui.js`, plus `data-act` handlers in the `ui.js` click switch. For new keys, add the action to
    `ACTIONS` in `main.js`; it then appears in key remapping and on the controls card automatically.
@@ -80,6 +82,10 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
    `tools/package.sh`. It unpacks into a "Quantum Rift vX.Y.Z" folder.
 
 ## Testing
+
+- `npm run typecheck`: development-only JSDoc checking, no emitted files. See the explicit gradual coverage boundary in `docs/FEATURES.md`.
+- `npm run test:features`: original-baseline characterization, capability/inventory and dispatch/security regression checks.
+- `npm run test:types`: prove valid calls compile and invalid arguments/missing capabilities fail.
 
 - **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `v21`, `v23`, `v24`, `v25`, `v252`, `v26`, `fuzz` and `balance`. They run in
   process; no server needed.

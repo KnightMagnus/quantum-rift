@@ -1,4 +1,4 @@
-// Quantum Rift 2.6 "Co-op" server logic, mixed into Game:
+// Quantum Rift 2.6 "Co-op" server feature operations:
 //   Captain Friends (requests, online status, DMs with an offline mailbox, blocks)
 //   the Armada: a short co-op group of up to five captains and their wingmates (private chat, no friendly fire,
 //     small buffs, shared kill credit, follow-the-leader jumps). It replaces the 0.6 fleets.
@@ -17,7 +17,7 @@ for (const [m2, m3] of Object.entries(MK3_OF)) BASE_OF[m3] = { base: BASE_OF[m2]
 const DIRECTIVE_VALUE = { 1: 90000, 2: 240000, 3: 600000 };
 const cleanName = (n) => String(n || '').trim().slice(0, 20);
 
-export const CoopMixin = {
+export const CoopOperations = {
   // ------------------------------------------------------------------ start-up and save migration
   coopInit() {
     const W = this.db.world; W.armadas = W.armadas || {};

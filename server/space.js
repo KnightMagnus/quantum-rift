@@ -98,13 +98,13 @@ export class Space {
     if (ra.rescueT > this.t || rb.rescueT > this.t) return false;   // 2.6: a downed captain waiting for rescue is left alone
     const pa = ra.player, pb = rb.player;
     if (this.sys.arena) return !!(ra.team && rb.team && ra.team !== rb.team);   // arena: teams only
-    if (pa && pb && this.game.sameArmada(pa, pb)) return false;   // 2.6: Armada members and their wingmates never fight
-    if (pa && pb) return !!(this.game.dueling && this.game.dueling(pa, pb));   // 2.6: no open-galaxy PvP, whatever was fired; only agreed duels (and the Crucible, above)
+    if (pa && pb && this.game.features.coop.sameArmada(pa, pb)) return false;   // 2.6: Armada members and their wingmates never fight
+    if (pa && pb) return !!(this.game.features.coop.dueling && this.game.features.coop.dueling(pa, pb));   // 2.6: no open-galaxy PvP, whatever was fired; only agreed duels (and the Crucible, above)
     if (ra.aggro.has(rb.id) || rb.aggro.has(ra.id)) return true;
     if ((ra.boss || ra.bossMinion || ra.kingpin) && pb || (rb.boss || rb.bossMinion || rb.kingpin) && pa) return true;   // 2.6: Armada contract kingpins too   // invasion bosses attack everyone
     if (pa || pb) {
       const p = pa || pb, npc = pa ? rb : ra, rep = p.rep[npc.faction] || 0, F = FACTIONS[npc.faction];
-      const rh = this.game.rivalHostile ? this.game.rivalHostile(npc, p) : undefined; if (rh !== undefined) return rh;   // 1.1: rivals, hired guns, bribes
+      const rh = this.game.features.rivals.rivalHostile ? this.game.features.rivals.rivalHostile(npc, p) : undefined; if (rh !== undefined) return rh;   // 1.1: rivals, hired guns, bribes
       if (F && F.pirate) return rep < 30;
       if (F && F.alwaysHostile) return true;
       if (npc.mission && npc.mission.owner === p.id) return true;
@@ -117,7 +117,7 @@ export class Space {
   spawnTraffic(initial) {
     const S = this.sys;
     if ((S.faction === 'vashari' || S.faction === 'frontier') && Math.random() < 0.14 * (this.m ? this.m.swarm : 1)) return this.spawnSwarm(initial);
-    if (this.game.eclipseChance && Math.random() < this.game.eclipseChance(S, this.m)) return this.spawnEclipse(initial);
+    if (this.game.features.hostile.eclipseChance && Math.random() < this.game.features.hostile.eclipseChance(S, this.m)) return this.spawnEclipse(initial);
     let fac = S.faction;
     if (FACTIONS[fac].region) {   // Frontier and the Deep fly no flag: traffic comes from the neighbours, raiders and scavengers
       if (!this.nearFacs) { const ns = new Set(); for (const l of S.links) { const f = SYS[l].faction; if (!FACTIONS[f].region && !FACTIONS[f].pirate) ns.add(f); } this.nearFacs = [...ns, 'spacer', 'spacer']; }
@@ -127,7 +127,7 @@ export class Space {
     }
     const T = TRAFFIC[fac];
     let kind, f = fac, roll = Math.random();
-    const st = this.game.stateOf ? this.game.stateOf(this.id) : null, SX = st ? STATES[st.kind] : null;   // 2.4: the system's state shapes its traffic
+    const st = this.game.features.living.stateOf ? this.game.features.living.stateOf(this.id) : null, SX = st ? STATES[st.kind] : null;   // 2.4: the system's state shapes its traffic
     if (st && st.kind === 'war' && st.enemy && TRAFFIC[st.enemy] && Math.random() < 0.35) { const lead = this.spawnGroup('patrol', st.enemy, TRAFFIC[st.enemy].war, initial); if (lead) for (const e of this.ships.values()) if (e === lead || e.owner === lead.id) e.warFleet = true; return lead; }   // 2.5.2: tagged, so newcomers are spared
     if (st && st.kind === 'pirates' && Math.random() < 0.3) roll = -1;   // force a raid roll below
     if (FACTIONS[fac].pirate) kind = 'raid';
@@ -233,7 +233,7 @@ export class Space {
       e.think = 0.4 + Math.random() * 0.3;
       if (e.recall) { e.target = null; } else {
       if (e.target && (e.target.dead || e.target.state !== 'fly' || !(this.isHostile(e, e.target) || this.ordered(e, e.target)) || this.spared(e, e.target))) e.target = null;
-      if (e.rival && this.game.rivalThink && !e.owner) this.game.rivalThink(e, this);   // 1.1
+      if (e.rival && this.game.features.rivals.rivalThink && !e.owner) this.game.features.rivals.rivalThink(e, this);   // 1.1
       if (e.distractT > this.t) { e.target = null; if (e.dest) { this.steer(e, e.dest.x, e.dest.y, true); return; } }   // raiders chasing jettisoned cargo
       if (e.ai === 'escort' && owner) {
         const ord = owner.order || 'gather';   // 1.1 fleet commands: gather, attack, hold, holdfire, loot
@@ -257,7 +257,7 @@ export class Space {
         if (!e.dest) e.dest = this.ports().length && Math.random() < 0.75 ? pick(this.ports()) : { x: rnd(-3000, 3000), y: rnd(-3000, 3000), out: true };   // 2.3: traders fly to worlds they can land on
         const d = this.steer(e, e.dest.x, e.dest.y, !e.dest.out);
         if (!e.dest.out && d < Math.max(40, (e.dest.r || 60) * 0.5) && Math.hypot(e.vx, e.vy) < 45) {   // settled over the pad: land
-          this.events.push(['land', e.id]); if (e.convoyOf) this.game.onConvoyLanded(e); if (e.rival && this.game.rivalDocked) this.game.rivalDocked(e); this.remove(e);
+          this.events.push(['land', e.id]); if (e.convoyOf) this.game.features.fronts.onConvoyLanded(e); if (e.rival && this.game.features.rivals.rivalDocked) this.game.features.rivals.rivalDocked(e); this.remove(e);
         }
         if (e.dest.out && d < 200) e.ai = 'leave';
         break;
@@ -441,16 +441,16 @@ export class Space {
     const srcRoot = src ? this.root(src) : null;
     if (srcRoot && srcRoot !== this.root(s)) { const first = !this.root(s).aggro.has(srcRoot.id); this.root(s).aggro.add(srcRoot.id); if (!s.player && !s.target && s.ai !== 'flee') s.target = srcRoot; if (first && !s.owner) this.callHelp(s, srcRoot); }
     if (src && src.role && s.role) { const rm = roleMult(src.role, s.role); dA *= rm; dS *= rm; }   // the class triangle
-    if (src && this.game.specMult) { const sm = this.game.specMult(this.root(src), src, s); dA *= sm; dS *= sm; }   // specialty ships
+    if (src && this.game.features.specialists.specMult) { const sm = this.game.features.specialists.specMult(this.root(src), src, s); dA *= sm; dS *= sm; }   // specialty ships
     const sh0 = s.shield, ar0 = s.armor, hadShield = s.shield > 0;
     if (s.shield > 0) { s.shield -= dS; if (s.shield < 0) { s.armor += s.shield * (dA / Math.max(1, dS)) * 0.5; s.shield = 0; } }
     else s.armor -= dA;
     s.hitT = this.t; if (src) s.lastHitBy = src.id;
     if (srcRoot && srcRoot.player && !s.player) this.game.onHit(srcRoot.player, s, this);
     const done = Math.max(0, sh0 - s.shield) + Math.max(0, ar0 - s.armor);
-    if (s.boss) this.game.onBossDamage(s, srcRoot, done);
-    if (srcRoot && srcRoot.player && this.root(s).player && !this.sys.arena && this.game.duelHit && this.game.duelHit(srcRoot, s, this)) return [done, hadShield ? 1 : 0, srcRoot.id];   // 2.6: a duel stops at disabled
-    if (s.armor <= 0 && s.player && this.game.rescueHold && this.game.rescueHold(s, srcRoot, this)) return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0];   // 2.6: an Armada can rescue a downed captain
+    if (s.boss) this.game.features.fronts.onBossDamage(s, srcRoot, done);
+    if (srcRoot && srcRoot.player && this.root(s).player && !this.sys.arena && this.game.features.coop.duelHit && this.game.features.coop.duelHit(srcRoot, s, this)) return [done, hadShield ? 1 : 0, srcRoot.id];   // 2.6: a duel stops at disabled
+    if (s.armor <= 0 && s.player && this.game.features.coop.rescueHold && this.game.features.coop.rescueHold(s, srcRoot, this)) return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0];   // 2.6: an Armada can rescue a downed captain
     if (s.armor <= 0) this.kill(s, srcRoot);
     return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0];
   }
@@ -461,11 +461,11 @@ export class Space {
     this.remove(s);
     for (const f of this.ships.values()) if (f.fighterOf === s.id) f.ai = 'leave';
     if (s.player) { this.game.onPlayerDeath(s.player, this, by); return; }
-    if (s.boss) this.game.onBossKilled(s, this);
-    if (s.convoyOf) this.game.onConvoyLost(s);
-    if (s.wingUid && this.game.onWingLost) this.game.onWingLost(s);   // 2.1
-    if (s.wave) this.game.onWaveKill(s);
-    if (this.game.maybeChest) this.game.maybeChest(this, s, by);
+    if (s.boss) this.game.features.fronts.onBossKilled(s, this);
+    if (s.convoyOf) this.game.features.fronts.onConvoyLost(s);
+    if (s.wingUid && this.game.features.docks.onWingLost) this.game.features.docks.onWingLost(s);   // 2.1
+    if (s.wave) this.game.features.frontier.onWaveKill(s);
+    if (this.game.features.hostile.maybeChest) this.game.features.hostile.maybeChest(this, s, by);
     if (by && by.player) this.game.onKill(by.player, s, this, s.lastHitBy && s.lastHitBy !== by.id);
     if (!s.fighterOf && Math.random() < (by && by.hull === 810 ? 0.82 : 0.55)) this.dropLoot(s);
   }
@@ -479,11 +479,11 @@ export class Space {
   // ------------------------------------------------------------------ tick
   tick() {
     this.t += DT;
-    if (!this.m || ++this.mT % 30 === 0) { this.m = this.game.mods ? this.game.mods(this.id) : null; this.mT = this.mT || 1; }
+    if (!this.m || ++this.mT % 30 === 0) { this.m = this.game.features.fronts.mods ? this.game.features.fronts.mods(this.id) : null; this.mT = this.mT || 1; }
     const S = this.sys;
     if (this.players > 0 && !this.sys.arena) {
       this.spawnT -= DT;
-      const SX = this.game.stateOf && this.game.stateOf(this.id), tm = SX ? (STATES[SX.kind].traders || 1) : 1;
+      const SX = this.game.features.living.stateOf && this.game.features.living.stateOf(this.id), tm = SX ? (STATES[SX.kind].traders || 1) : 1;
       const want = Math.min(28, (6 + this.ports().length * 2 + S.stellars.length * 0.5 + S.danger * 1.5) * tm);   // 2.3: more traffic everywhere; 2.4: booms and festivals bring more
       const npcs = [...this.ships.values()].filter(e => !e.player && !e.owner).length;
       if (this.spawnT <= 0) { this.spawnT = rnd(2, 5); if (npcs < want) this.spawnTraffic(false); }

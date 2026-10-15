@@ -19,10 +19,10 @@ function fake(name) { const sock = new EventEmitter(); sock.open = true; sock.ba
 const at = (P, id) => { P.d.stellar = id; P.d.sys = STELLARS[id].system; };
 
 // ---- living galaxy
-g.livingTick();
-const st = g.statesPayload(), n = Object.keys(st).length;
+g.features.living.livingTick();
+const st = g.features.living.statesPayload(), n = Object.keys(st).length;
 ok(n >= 3 && Object.values(st).every(x => STATES[x.k]), `${n} systems start in a state (famine, war, boom...)`);
-const famSys = g.marketSystems().find(s => SYS[s].stellars.some(p => p.svc.includes('T') && !p.site && p.svc.includes('B')) && !st[s]);
+const famSys = g.features.living.marketSystems().find(s => SYS[s].stellars.some(p => p.svc.includes('T') && !p.site && p.svc.includes('B')) && !st[s]);
 g.db.world.states[famSys] = { kind: 'famine', start: Date.now(), until: Date.now() + 3e6, got: 0, need: 140 };
 const port = STELLARS[SYS[famSys].stellars.find(p => p.svc.includes('T') && !p.site && p.svc.includes('B')).id];
 const F = fake('Famine Runner'); at(F, port.id); F.d.credits = 1e6;
@@ -35,14 +35,14 @@ const offs = g.offers(port, F.d); ok(offs.some(o => o.type === 'supply' && o.sta
 
 // ---- contacts and generated stories
 const bars = Object.values(STELLARS).filter(p => p.svc.includes('B') && !p.site && !SYS[p.system].arena);
-const C1 = g.contactAt(bars[0]), C2 = g.contactAt(bars[0]);
+const C1 = g.features.quests.contactAt(bars[0]), C2 = g.features.quests.contactAt(bars[0]);
 ok(C1 && C1.name === C2.name && C1.title, `every bar has a contact who stays the same (${C1.name}, ${C1.title})`);
-ok(new Set(bars.slice(0, 40).map(p => g.contactAt(p).name)).size >= 25, 'contacts are different people from bar to bar');
+ok(new Set(bars.slice(0, 40).map(p => g.features.quests.contactAt(p).name)).size >= 25, 'contacts are different people from bar to bar');
 let built = 0, bad = [];
 for (const p of bars) {
-  const d = g.fresh(); d.name = 'Plan ' + p.id; const C = g.contactAt(p), cur = g.contactStory(p, d, C); if (!cur) continue;
+  const d = g.fresh(); d.name = 'Plan ' + p.id; const C = g.features.quests.contactAt(p), cur = g.features.quests.contactStory(p, d, C); if (!cur) continue;
   const Q = { qid: 'test', plan: cur.plan, steps: cur.X.steps, started: 1, name: cur.X.name };
-  cur.X.steps.forEach((s0, i) => { const m = g.questStepJob(d, Q, i); built++;
+  cur.X.steps.forEach((s0, i) => { const m = g.features.quests.questStepJob(d, Q, i); built++;
     if (!SYS[m.sys] || (m.dest && !STELLARS[m.dest]) || !(m.reward > 0) || /\{\w+\}/.test(m.title + m.text) || ((m.hull && !g.A.ships[m.hull]))) bad.push(`${p.id}:${cur.X.id}:${i}`); });
 }
 ok(built > 300 && !bad.length, `${built} generated story steps across every bar are valid jobs${bad.length ? ' BAD ' + bad.slice(0, 5) : ''}`);
@@ -71,9 +71,9 @@ qd.quests.contacts['c:concordia'].cool = 0; at(Q, 'concordia');
 const qo2 = g.offers(STELLARS.concordia, qd).find(o => o.type === 'quest' && o.story);
 ok(qo2 && qo2.standing === 'Acquaintance' && qo2.story !== qo.story, `the next story is a different one, and you are now an ${qo2 && qo2.standing}`);
 Q.send({ t: 'accept', id: qo2.id }); const qid2 = Object.keys(qd.quests.active)[0];
-qd.missions = qd.missions.filter(m => !(m.quest && m.quest.qid === qid2)); g.questSweep(Q.s);
+qd.missions = qd.missions.filter(m => !(m.quest && m.quest.qid === qid2)); g.features.quests.questSweep(Q.s);
 ok(qd.quests.active[qid2] && qd.missions.some(m => m.quest && m.quest.qid === qid2), 'a step lost with your ship gets a second chance');
-qd.missions = qd.missions.filter(m => !(m.quest && m.quest.qid === qid2)); g.questSweep(Q.s);
+qd.missions = qd.missions.filter(m => !(m.quest && m.quest.qid === qid2)); g.features.quests.questSweep(Q.s);
 ok(!qd.quests.active[qid2], 'losing it twice ends the story');
 qd.quests.contacts['c:concordia'].cool = 0;
 const qo3 = g.offers(STELLARS.concordia, qd).find(o => o.type === 'quest' && o.story); Q.send({ t: 'accept', id: qo3.id });
@@ -90,7 +90,7 @@ let sm = sd.missions.find(m => m.quest); sm.done = true; at(S, 'earth'); g.compl
 sm = sd.missions.find(m => m.quest); ok(sm && sm.type === 'salvage' && sm.point, 'step 2 is a salvage job with a marked point');
 // fly there and pick it up
 at(S, 'coldharbor'); S.send({ t: 'depart' }); const sp = g.spaces.coldharbor, me = S.s.ent; ok(me, 'launched in Coldharbor');
-me.x = sm.point[0] + 400; me.y = sm.point[1]; g.questSalvageIdle(S.s);
+me.x = sm.point[0] + 400; me.y = sm.point[1]; g.features.quests.questSalvageIdle(S.s);
 const crate = sp.loot.find(l => l.it.salvage === sm.id); ok(crate, 'coming close puts the salvage crate on the scanner');
 const other = fake('Claim Jumper'); ok(g.onLoot({ s: other.s }, crate.it) === false, 'nobody else can scoop up your salvage');
 me.x = crate.x; me.y = crate.y; for (let i = 0; i < 10 && !sm.done; i++) sp.tick();

@@ -1,10 +1,10 @@
-// Quantum Rift 0.5 "Hangar Deck" server logic, mixed into Game: shuttles, officers, the research queue,
+// Quantum Rift 0.5 "Hangar Deck" server feature operations: shuttles, officers, the research queue,
 // refining crates up a grade, the drydock, and boarding disabled ships.
 import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES, RESEARCH } from '../shared/galaxy.js';
 import { SHUTTLES, SHUTTLE_JOBS, BAYS_BY_OPS, SHUTTLE_REPAIR, JOB_WINDOW_H, ROLES, RARITY, RACE_ROLES, OFFICER_NAMES, BRIDGE_SLOTS, ROSTER_MAX,
          XP_LEVEL, MAX_LEVEL, RESEARCH_QUEUE_MAX, REFINE_UP, CAPTURE_SELL } from '../shared/hangar.js';
 import { HANGAR_BY_OPS } from '../shared/docks.js';
-import { researchBonus, captainBonus, shipStats, makeLoadout, credits } from '../shared/rules.js';
+import { researchBonus, captainBonus, makeLoadout, credits } from '../shared/rules.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function rng(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
@@ -19,15 +19,13 @@ function jumps(from) {
 }
 const RACES = Object.keys(RACE_ROLES);
 
-export const HangarMixin = {
+export const HangarOperations = {
   // ------------------------------------------------------------------ save upgrades
   hangarInit(d) {
     d.shuttles = d.shuttles || []; d.officers = d.officers || []; d.bridge = d.bridge || {}; d.dock = d.dock || [];
     d.station.queue = d.station.queue || []; d.nextUid = d.nextUid || 1;
   },
   uid(d) { return (d.nextUid = (d.nextUid || 1) + 1) - 1; },
-  bonus(d) { return captainBonus(d); },
-  stats(d) { return shipStats(this.A, d.ship, captainBonus(d)); },
   bays(d) { const b = researchBonus(d.station); return d.station.site ? BAYS_BY_OPS[d.station.ops] + (b.bays || 0) : 0; },
   dockSlots(d) { const b = researchBonus(d.station); return d.station.site ? HANGAR_BY_OPS[d.station.ops] + (b.dockSlots || 0) : 0; },   // 2.1: stored-ship berths
 

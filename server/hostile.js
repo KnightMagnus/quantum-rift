@@ -1,4 +1,4 @@
-// Quantum Rift 0.9 "Hostile Space" server logic, mixed into Game: loot chests (2.6: directives and solo armadas removed),
+// Quantum Rift 0.9 "Hostile Space" server feature operations: loot chests (2.6: directives and solo armadas removed),
 // Station Holdout, and Umbral Eclipse cells. Hostile levels are computed in Space (e.pw) and shown by the client.
 import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES } from '../shared/galaxy.js';
 import { CHESTS, CHEST_CHANCE, HOLDOUT, ECLIPSE, levelOf, playerPower } from '../shared/hostile.js';
@@ -9,7 +9,7 @@ import { COOP_HOLDOUT } from '../shared/coop.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
-export const HostileMixin = {
+export const HostileOperations = {
   hostInit(d) { d.holdout = d.holdout || { best: 0, lastT: 0 }; },
   myPower(d) { return playerPower(this.A, d.ship.hull, this.bonus(d), this.wingHulls ? this.wingHulls(d) : []); },
 

@@ -1,21 +1,20 @@
-// Quantum Rift 0.7 "Frontier Life" server logic, mixed into Game: planetary colonies, station defense raids, ship
+// Quantum Rift 0.7 "Frontier Life" server feature operations: planetary colonies, station defense raids, ship
 // mastery, the arena, the player exchange, leaderboards, captain profiles and browser notifications.
 import { SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES } from '../shared/galaxy.js';
 import { COLONY, COLONY_LEVELS, BUILDINGS, BUFF_CAP, DEFENSE, MASTERY, masteryTier, ARENA, arenaSystem, elo, EXCHANGE, BOARDS } from '../shared/frontier.js';
-import { FrontsMixin } from './fronts.js';
 import { credits } from '../shared/rules.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const comName = (id) => (COMMODITIES.find(c => c.id === id) || { name: id }).name;
 
-export const FrontierMixin = {
+export const FrontierOperations = {
   frontierInit() {
     const W = this.db.world; W.colonies = W.colonies || {}; W.orders = W.orders || []; W.nextOrder = W.nextOrder || 1;
     this.arenaQ = { '1v1': [], '2v2': [], '4v4': [] }; this.matches = {}; this.nextMatch = 1; this.waves = {};
   },
   // ------------------------------------------------------------------ bonuses: + ship mastery tier + colony buildings
   bonus(d) {
-    const b = FrontsMixin.bonus.call(this, d);
+    const b = this.frontsBonus(d);
     const tier = masteryTier((d.mastery || {})[d.ship.hull] || 0);
     for (const [k, v] of Object.entries(MASTERY.bonus[tier] || {})) b[k] = (b[k] || 0) + v;
     for (const [k, v] of Object.entries(this.colonyBuffs(d))) b[k] = (b[k] || 0) + v;
@@ -23,10 +22,9 @@ export const FrontierMixin = {
     return b;
   },
   notify(s, title, body) { if (s) this.send(s, { t: 'notify', title, body }); },
-  sessionOf(name) { for (const o of this.sessions.values()) if (o.data && o.data.name === name) return o; return null; },
 
   worldPayload() {
-    const w = FrontsMixin.worldPayload.call(this), col = {};
+    const w = this.frontsWorldPayload(), col = {};
     for (const [id, c] of Object.entries(this.db.world.colonies || {})) { const o = this.db.players[c.owner]; if (o) col[id] = o.name; }
     w.colonies = col; return w;
   },

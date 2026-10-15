@@ -8,7 +8,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const DEST_TYPES = ['cargo', 'smuggle', 'passenger', 'expret', 'supply'];   // 2.4: supply jobs complete at their destination
 export const destType = (m) => DEST_TYPES.includes(m.type);
 
-export const SyndicateMixin = {
+export const SyndicateOperations = {
   synInit(d) { d.syn = d.syn || 0; d.shards = d.shards || 0; d.lower = d.lower || []; d.credit = d.credit || BANK.credit0; return d; },
   synGain(s, kind, mult = 1) {
     const d = this.synInit(s.data), before = synTier(d.syn).i; d.syn += Math.round((SYN_GAIN[kind] || 0) * mult);

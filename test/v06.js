@@ -30,7 +30,7 @@ ok(da.credits > cr0 && da.rep.umbral === rep0, 'destroying Umbral pays a bounty 
 // 2.6: the Armada replaces fleets (the full co-op suite is test/v26.js)
 const fr = SYSTEMS.find(s => s.faction === 'frontier' && s.stellars.some(p => p.svc.includes('T')));
 toSpace(a, 'qgate'); toSpace(b, 'qgate');
-a.send({ t: 'armada', op: 'form', name: 'Expanse Wardens' }); const AR = game.armadaOf(da);
+a.send({ t: 'armada', op: 'form', name: 'Expanse Wardens' }); const AR = game.features.coop.armadaOf(da);
 ok(AR && AR.name === 'Expanse Wardens', 'formed an Armada');
 a.send({ t: 'armada', op: 'invite', name: 'Wing Two' }); b.send({ t: 'armada', op: 'accept', id: AR.id }); ok(db_.armada === AR.id && AR.members.length === 2, 'a captain in the same system joined by invite');
 const c = fake('Outsider'); a.send({ t: 'chat', msg: 'form up', ch: 'armada' });
@@ -42,7 +42,7 @@ const crB = db_.credits, pir = spP.makeShip({ hull: 711, faction: 'hollow', x: 2
 ok(db_.credits > crB, 'Armada members in the same system share bounties');
 // invasion
 const invSys = SYSTEMS.find(s => s.danger >= 2 && s.faction !== 'quantum' && s.stellars.length && s.id !== fr.id);
-const boss = game.startInvasion(1, invSys.id); ok(boss && game.invasion && game.live[invSys.id].keep, `the ${game.invasion.boss.name} invades ${invSys.name}`);
+const boss = game.features.fronts.startInvasion(1, invSys.id); ok(boss && game.invasion && game.live[invSys.id].keep, `the ${game.invasion.boss.name} invades ${invSys.name}`);
 ok(a.all('chat').some(m => /INVASION/.test(m.msg)) && a.last('world').invasion.sys === invSys.id, 'the invasion is announced and shown on the map');
 const ia = toSpace(a, invSys.id, boss.x + 200, boss.y), ib = toSpace(b, invSys.id, boss.x - 200, boss.y), spI = game.spaces[invSys.id];
 ok(spI.isHostile(boss, ia), 'the boss attacks every captain');
@@ -52,17 +52,17 @@ ok(!game.invasion && da.credits - c1 > db_.credits - c2 && db_.credits > c2, 'ki
 // anomalies and events
 const an = anomaliesAt(SYSTEMS); ok(Object.keys(an).length === 9 && JSON.stringify(anomaliesAt(SYSTEMS)) === JSON.stringify(an), 'nine anomalies, the same for everyone in a 6-hour window');
 const shearSys = Object.entries(an).find(([, k]) => k === 'shear');
-if (shearSys) ok(game.mods(shearSys[0]).jumpFuel === 2, 'gravity shear doubles jump fuel');
+if (shearSys) ok(game.features.fronts.mods(shearSys[0]).jumpFuel === 2, 'gravity shear doubles jump fuel');
 ok(eventAt() && eventCalendar().length === 7, `server event now: ${eventAt().name}`);
 // goals
-const G0 = game.goalsFor(da); ok(G0.daily.length === 3 && G0.weekly.length === 3, 'three daily and three weekly goals');
+const G0 = game.features.fronts.goalsFor(da); ok(G0.daily.length === 3 && G0.weekly.length === 3, 'three daily and three weekly goals');
 G0.daily[0].got = G0.daily[0].n; const c3 = da.credits; a.send({ t: 'goal', period: 'daily', i: 0 });
 ok(da.credits > c3 && G0.daily[0].claimed && da.tokens.any >= 2, 'claimed a daily goal: credits and Rift scrip');
 const gj = G0.weekly.find(g => g.type === 'jumps') || G0.daily.find(g => g.type === 'jumps');
-if (gj) { const n0 = gj.got; game.goal(a.s, 'jumps'); ok(gj.got === n0 + 1, 'jumps count toward goals'); }
+if (gj) { const n0 = gj.got; game.features.fronts.goal(a.s, 'jumps'); ok(gj.got === n0 + 1, 'jumps count toward goals'); }
 // stores
 const kw = STELLARS['meridian-yards']; da.sys = 'meridian'; if (a.s.ent) { game.spaces[invSys.id].remove(a.s.ent); game.spaces[invSys.id].players--; a.s.ent = null; } da.stellar = kw.id;
-ok(game.storeFor(kw) === 'quantum', 'Concord worlds run a Concord store');
+ok(game.features.fronts.storeFor(kw) === 'quantum', 'Concord worlds run a Concord store');
 da.tokens = { quantum: 3, any: 20 }; da.rep.quantum = 35; const al = da.mats.alloy[2];
 a.send({ t: 'store', id: 'crate3' }); ok(da.mats.alloy[2] === al + 1 && da.tokens.quantum === 0 && da.tokens.any === 9, 'bought a grade III crate with tokens topped up by scrip');
 a.send({ t: 'store', id: 'epic' }); ok(!da.officers.some(o => o.rarity === 3), 'Epic contracts need Exalted standing');
@@ -86,7 +86,7 @@ ok(wreck && wreck.disabled, 'the stranded ship is waiting, disabled');
 er.x = wreck.x + 30; er.y = wreck.y; er.vx = wreck.vx; er.vy = wreck.vy; a.send({ t: 'board', id: wreck.id, act: 'rescue' }); ok(da.missions[0].done, 'boarding and rescuing completes the job');
 // survey
 const sv = offers.find(o => o.type === 'survey' && !o.chain); da.missions = [{ ...sv, owner: a.s.id }];
-const es = toSpace(a, sv.sys, 0, 0); for (const p of sv.points) { es.x = p[0]; es.y = p[1]; game.missionIdle(a.s); }
+const es = toSpace(a, sv.sys, 0, 0); for (const p of sv.points) { es.x = p[0]; es.y = p[1]; game.features.fronts.missionIdle(a.s); }
 ok(da.missions[0].done, 'flew over every survey point');
 const land = SYS[sv.sys].stellars.find(p => p.svc.includes('L')) || STELLARS['meridian-yards'];
 const c5 = da.credits; game.completeOnLanding(a.s, STELLARS[land.id]); ok(da.credits > c5 && !da.missions.length, 'paid on landing, with faction tokens');
@@ -94,7 +94,7 @@ const c5 = da.credits; game.completeOnLanding(a.s, STELLARS[land.id]); ok(da.cre
 const sm = offers.find(o => o.type === 'smuggle'); da.missions = [{ ...sm, owner: a.s.id }];
 const lawSys = SYSTEMS.find(s => !FACTIONS[s.faction].region && !FACTIONS[s.faction].pirate && s.danger <= 2 && s.faction !== 'umbral');
 const em = toSpace(a, lawSys.id, 0, 0), cop = game.spaces[lawSys.id].makeShip({ hull: 711, faction: lawSys.faction, x: 60, y: 0, ai: 'patrol' });
-SCAN.chance = 1; const rp = da.rep[lawSys.faction]; game.missionIdle(a.s);
+SCAN.chance = 1; const rp = da.rep[lawSys.faction]; game.features.fronts.missionIdle(a.s);
 ok(!da.missions.length && da.rep[lawSys.faction] === rp - 5, 'a patrol scan catches smugglers: fined, cargo seized, standing lost');
 // chain
 const ch = offers.find(o => o.chain); da.missions = [{ ...ch, owner: a.s.id, done: true }]; da.chains = {};

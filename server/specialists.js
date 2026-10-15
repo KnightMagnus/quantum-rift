@@ -1,20 +1,19 @@
-// Quantum Rift 0.8 "Specialists" server logic, mixed into Game: specialty-ship abilities, unique resources, blueprints,
+// Quantum Rift 0.8 "Specialists" server feature operations: specialty-ship abilities, unique resources, blueprints,
 // building, parts, components and timed tier-ups.
 import { SYS, STELLARS, FACTIONS, GRADES } from '../shared/galaxy.js';
 import { SPEC, SPEC_RES, BP_NEED, BUILD, PART_RATE, COMPONENTS, TIER_MAX, COMP_COST, TIER_UP_MIN, specPower } from '../shared/specialty.js';
-import { FrontierMixin } from './frontier.js';
 import { makeLoadout, credits } from '../shared/rules.js';
 
 const KEY = Object.fromEntries(Object.values(SPEC).map(s => [s.key, s.id]));
 
-export const SpecialistMixin = {
+export const SpecialistOperations = {
   specInit(d) { d.spec = d.spec || {}; d.bp = d.bp || {}; d.parts = d.parts || {}; d.specState = d.specState || {}; },
   // the specialist the captain is flying, with its power (components + tier)
   specOf(d) { const S_ = SPEC[d.ship.hull]; if (!S_) return null; this.specInit(d); return { ...S_, power: specPower(d.specState[S_.id]) }; },
   flying(d, key) { return d && d.ship && d.ship.hull === KEY[key]; },
   power(d) { const s = this.specOf(d); return s ? s.power : 1; },
   bonus(d) {
-    const b = FrontierMixin.bonus.call(this, d), sp = this.specOf(d);
+    const b = this.frontierBonus(d), sp = this.specOf(d);
     if (!sp) return b;
     const st = d.specState[sp.id] || { comp: {} };
     for (const [c, lv] of Object.entries(st.comp || {})) for (const [k, v] of Object.entries(COMPONENTS[c].bonus)) if (k !== 'ability') b[k] = (b[k] || 0) + v * lv;
