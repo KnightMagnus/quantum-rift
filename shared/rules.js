@@ -1,8 +1,9 @@
 // Quantum Rift shared rules: stat conversion, loadouts, crew and research bonuses, flight physics, prices.
-import { COMMODITIES, FACTIONS, RESEARCH, EXTRA_OUTFITS , EXTRA_WEAPONS, MINING_WEAPONS, MK2_OF, MK3_OF } from "./galaxy.js";
+import { COMMODITIES, FACTIONS, RESEARCH, EXTRA_OUTFITS , EXTRA_WEAPONS, MINING_WEAPONS, MK2_OF, MK3_OF, ARMADA_HULLS } from "./galaxy.js";
 import { SHIPS23 } from './ships23.js';
 import { ROLES, RARITY, STAT_BASE, SYNERGY, BRIDGE_SLOTS } from "./hangar.js";
 import { roleOf } from "./roles.js";
+import { SPRITES } from './sprites26.js';
 import { SPECIALISTS } from "./specialty.js";
 import { RANK_MULT, TRAITS, LOWER_DECK } from "./syndicate.js";
 
@@ -19,6 +20,8 @@ export function augmentAssets(A) {
   for (const S of SHIPS23) if (!A.ships[S.id]) A.ships[S.id] = { ...S };   // 2.3: new common Quantum hulls
   for (const H of Object.values(A.ships)) H.role = roleOf(H, A.weapons);   // 0.8: class triangle roles
   for (const M of [MK2_OF, MK3_OF]) for (const [b, mk] of Object.entries(M)) if (A.ships[b] && A.ships[mk]) A.ships[mk].role = A.ships[b].role;   // refits keep their role
+  for (const id of [...Object.values(MK2_OF), ...Object.values(MK3_OF), ...ARMADA_HULLS]) if (A.ships[id]) A.ships[id].npcOnly = true;   // 2.6: enemy ships only
+  for (const [id, s] of Object.entries(SPRITES)) if (A.ships[id]) A.ships[id].spr = s;   // 2.6: sharper sheets with banking
   return A;
 }
 export function allOutfits(A) {

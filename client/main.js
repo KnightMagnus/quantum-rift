@@ -11,6 +11,8 @@ import { infoHtml } from './info_ui.js';
 import { boardHtml } from './hangar_ui.js';
 import { ANOMALIES } from '/shared/fronts.js';
 import { arenaSystem } from '/shared/frontier.js';
+import { initCoop, onCoopMsg, coopYou, renderCaptains, openDm } from './coop_ui.js';
+import { SPRITES } from '/shared/sprites26.js';
 import { refreshStores } from './ui.js';
 import { initUI, hud, toast, ask, chatLine, showLanded, hideLanded, renderLanded, refreshCompanion, drawMini, openMap, closeMap, plot, showDead, ctab } from './ui.js';
 
@@ -21,16 +23,17 @@ const G = window.G = {
   opts: Object.assign({ dmg: true, shake: true, mouseAim: false, notify: false, cb: false, scale: 1, vol: 0.35, sfx: 0.75, radio: 0.8, ui: 0.55, amb: 0.35, music: 0.45, mute: false, keys: {} }, (() => { try { return JSON.parse(localStorage.getItem('rift.opts') || '{}'); } catch { return {}; } })()),
   hostile(e) {
     if (!e || !G.you) return false; if (e.owner === G.myId || e.id === G.myId) return false;
-    const f = FAC[e.fac]; if (e.fl & 16) return SYS[G.sys] && SYS[G.sys].danger >= 3;
+    const f = FAC[e.fac];
     if (G.arena && e.fl & 16) return !!e.name && !e.name.startsWith(G.arena.team === 'A' ? 'Azure' : 'Crimson');
-    if (e.fl & 16 && G.you.fleet && e.name && e.name.startsWith(`[${G.you.fleet.tag}] `)) return false;
+    if (e.fl & 16) return !!(G.you.duel && G.you.duel.with === e.name);   // 2.6: no open-galaxy PvP; only your duel opponent
+    if (G.isAlly && G.isAlly(e)) return false;   // 2.6: Armada members' wingmates
     const F = FACTIONS[f]; if (!F) return false; if (F.alwaysHostile) return true; const rep = G.you.rep[f] || 0;
     return F.pirate ? rep < 30 : rep <= -30;
   },
 };
 // 1.0 accessibility: palettes, key bindings, UI scale
-const PALETTES = { normal: { own: '#3fd36b', player: '#5ad0ff', hostile: '#ff3a2a', neutral: '#c8c060', friend: '#7ad0ff' },
-                   cb: { own: '#ffffff', player: '#4aa8ff', hostile: '#ff9f1a', neutral: '#9a9a9a', friend: '#4aa8ff' } };   // blue/orange: safe for red-green colour blindness
+const PALETTES = { normal: { own: '#3fd36b', player: '#5ad0ff', hostile: '#ff3a2a', neutral: '#c8c060', friend: '#7ad0ff', ally: '#7af0a0' },
+                   cb: { own: '#ffffff', player: '#4aa8ff', hostile: '#ff9f1a', neutral: '#9a9a9a', friend: '#4aa8ff', ally: '#d6b4ff' } };   // blue/orange: safe for red-green colour blindness
 G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
 export const ACTIONS = [['thrust', 'Thrust', 'KeyW'], ['left', 'Turn left', 'KeyA'], ['right', 'Turn right', 'KeyD'], ['rev', 'Reverse', 'KeyS'], ['ab', 'Afterburner', 'ShiftLeft'],
   ['fire1', 'Fire primary', 'Space'], ['fire2', 'Fire secondary (tap to launch or recall drones)', 'KeyF'], ['target', 'Next target', 'Tab'], ['nearest', 'Nearest hostile', 'KeyR'], ['land', 'Land', 'KeyL'],
@@ -52,7 +55,7 @@ applyOpts();
 // loading screen: warm the browser cache with the common ship sprites and station art while the login is shown
 (function preloadArt() {
   const hulls = [...new Set(Object.values(FACTION_HULLS).flat())];
-  const urls = [...hulls.map(h => `assets/ships/${h}.png`), ...[0, 1, 2, 3, 4, 5].map(k => `assets/stations/${k}.png`), 'assets/hub.png', 'assets/wormhole.png'];
+  const urls = [...hulls.map(h => `assets/ships/${h}.${SPRITES[h] ? 'webp' : 'png'}`), ...[0, 1, 2, 3, 4, 5].map(k => `assets/stations/${k}.png`), 'assets/hub.png', 'assets/wormhole.png'];
   let n = 0; const done = () => { n++; $('lloadbar').style.width = (100 * n / urls.length) + '%'; $('lloadt').textContent = `Loading ships… ${n} / ${urls.length}`; if (n >= urls.length) $('lload').classList.add('done'); };
   for (const u of urls) { const im = new Image(); im.onload = im.onerror = done; im.src = u; }
   setTimeout(() => $('lload').classList.add('done'), 20000);
@@ -99,7 +102,7 @@ async function login() {
   audio.unlock();
   const name = $('lname').value.trim(), pass = G.solo ? '' : $('lpass').value;
   $('lerr').textContent = ''; $('lbtn').disabled = true;
-  if (!G.A) { const was = $('lstat').textContent; $('lstat').textContent = 'Loading the galaxy...'; G.A = augmentAssets(await (await fetch('/shared/assets.json')).json()); initUI(G, send); $('lstat').textContent = was; }   // 1.0.3: the status line comes back if login fails
+  if (!G.A) { const was = $('lstat').textContent; $('lstat').textContent = 'Loading the galaxy...'; G.A = augmentAssets(await (await fetch('/shared/assets.json')).json()); initUI(G, send); initCoop(G, send, { toast, ask, plot }); $('lstat').textContent = was; }   // 1.0.3: the status line comes back if login fails
   try { localStorage.setItem('rift.name', name); } catch {}
   G._cred = { name, pass }; G._kicked = false; openSocket(0);
 }
@@ -122,7 +125,7 @@ function onMessage(m) {
     case 'welcome': audio.stopMusic(); audio.preloadUi(); $('login').classList.add('hidden'); G.myName = m.name; toast(G.you ? 'Reconnected.' : `Welcome to Quantum Rift, Captain ${m.name}.`);
       break;
     case 'you': {
-      const first = !G.you; G.you = m.d; G.sys = m.d.sys;
+      const first = !G.you; G.you = m.d; G.sys = m.d.sys; coopYou();   // 2.6
       for (const [w, n] of Object.entries(m.d.ship.ammo || {})) if (!G.view) G.ammo[w] = n;
       if (G.landed) renderLanded(); refreshCompanion(); refreshStores(); if (first) ctab('missions'); renderTut();
       break;
@@ -138,6 +141,7 @@ function onMessage(m) {
       G.navStellar = SYS[m.sys].stellars.find(p => p.svc.includes('L')) ? SYS[m.sys].stellars.find(p => p.svc.includes('L')).id : null; break;
     case 'snap': onSnap(m); break;
     case 'toast': toast(m.msg); break;
+    case 'social': case 'dm': case 'dms': case 'trade2': case 'follow': case 'rally': onCoopMsg(m); break;   // 2.6: friends, messages, trades, follow the leader
     case 'paused': G.paused = m.on; $('pausebox').classList.toggle('hidden', !m.on); break;
     case 'chat': chatLine(m); if (m.from && m.from !== G.myName) audio.ui('chat', 0.7); break;
     case 'story': showStory(m); break;
@@ -148,7 +152,7 @@ function onMessage(m) {
       const was = G.world && G.world.states; G.world = m; drawMini(); refreshCompanion();
       if (was && m.states && G.sys) for (const [sys, st] of Object.entries(m.states)) if (!was[sys] && SYS[sys]) { const r = sys === G.sys ? [] : route(SYS, G.sys, sys); if (r && r.length <= 3) { audio.ui('state', 0.6); toast(`News: ${STATES[st.k] ? STATES[st.k].name.toLowerCase() : 'trouble'} in ${SYS[sys].name}${r.length ? `, ${r.length} jump${r.length > 1 ? 's' : ''} away` : ''}.`); break; } }
       break; }
-    case 'arena': if (m.id) { SYS[m.id] = SYS[m.id] || arenaSystem(m.id); G.arena = m; } else G.arena = null; break;
+    case 'arena': if (m.id) { SYS[m.id] = SYS[m.id] || arenaSystem(m.id); G.arena = m; } else G.arena = null; renderTut(); break;
     case 'boards': G.boards = G.boards || {}; G.boards[m.cat] = m.list; if (G.landed) renderLanded(); break;
     case 'profile': G.prof = m.p; if (!m.p) toast('No captain by that name.'); if (G.landed) renderLanded(); break;
     case 'notify': if (G.opts.notify && document.hidden && window.Notification && Notification.permission === 'granted') { try { new Notification('Quantum Rift: ' + m.title, { body: m.body, icon: 'assets/stations/5.png' }); } catch {} } break;
@@ -266,7 +270,7 @@ window.addEventListener('keydown', (e) => {
     case 'ordHold': send({ t: 'order', o: 'hold' }); break;
     case 'ordFire': send({ t: 'order', o: 'holdfire' }); break;
     case 'ordLoot': send({ t: 'order', o: 'loot' }); break;
-    case 'companion': { const T = ['radio', 'codex', 'missions', 'station', 'ops', 'log']; ctab(T[(T.indexOf(G.ctab) + 1) % T.length]); break; }
+    case 'companion': { const T = ['radio', 'codex', 'missions', 'station', 'ops', ...(G.solo ? [] : ['captains']), 'log']; ctab(T[(T.indexOf(G.ctab) + 1) % T.length]); break; }
   }
 });
 window.addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -302,6 +306,7 @@ $('itabs').addEventListener('click', (e) => { const b = e.target.closest('[data-
 $('infobody').addEventListener('click', (e) => { const pl = e.target.closest('[data-plot]'); if (pl) { plot(pl.dataset.plot); toast(`Course plotted to ${SYS[pl.dataset.plot].name}.`); return; } const b = e.target.closest('[data-jet],[data-ord]'); if (!b) return; if (b.dataset.jet) send({ t: 'jettison', cid: b.dataset.jet, n: +b.dataset.n || 0 }); else send({ t: 'order', o: b.dataset.ord }); setTimeout(renderInfo, 250); });
 window.addEventListener('keydown', (e) => { if (!$('infobox').classList.contains('hidden') && (e.key === 'Escape' || e.code === 'KeyI') && !typing()) { closeInfo(); e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 // ------------------------------------------------------------------ 1.0.3 autopilot: fly to a planet, turn, brake and land; or fly clear and jump
+G.startAutoJump = () => setTimeout(() => { if (G.view && G.route.length && !G.auto) { G.autoKeep = true; setAuto({ mode: 'jump' }, `Autopilot: following to ${SYS[G.route[0]].name}.`); } }, 300);   // 2.6: follow the leader
 function setAuto(a, msg) { if (a && !G.auto) audio.ui('autopilot', 0.8); G.auto = a; if (!a) G.autoRoute = G.autoRoute && G.autoKeep; G.autoKeep = false; $('autobadge').classList.toggle('hidden', !a); if (a) { $('autobadge').textContent = a.mode === 'land' ? 'AUTOPILOT · LANDING' : a.mode === 'stop' ? 'FULL STOP' : G.autoRoute && G.route.length > 1 ? `AUTOPILOT · ${G.route.length} JUMPS` : 'AUTOPILOT · JUMP'; if (msg) toast(msg); } }
 function arrive(inp, me, st, tx, ty, stopR) {
   const dx = tx - me.x, dy = ty - me.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
@@ -332,7 +337,7 @@ function autopilot(inp) {
 }
 function sendChat() { const c = $('chatin'), v = c.value.trim(); c.value = ''; if (!v) return;
   if (G.solo) { send({ t: 'note', text: v }); toast('Added to your log.'); return; }   // 2.4: in a solo game the chat line writes notes in your captain's log
-  if (v.startsWith('/s ')) send({ t: 'chat', msg: v.slice(3), ch: 'sys' }); else if (v.startsWith('/f ')) send({ t: 'chat', msg: v.slice(3), ch: 'fleet' }); else if (G.chan) send({ t: 'chat', msg: v, ch: G.chan }); else send({ t: 'chat', msg: v }); }
+  if (v.startsWith('/s ')) send({ t: 'chat', msg: v.slice(3), ch: 'sys' }); else if (v.startsWith('/a ') || v.startsWith('/f ')) send({ t: 'chat', msg: v.slice(3), ch: 'armada' }); else if (/^\/r \S/.test(v) && G.lastDmFrom) send({ t: 'social', op: 'dm', name: G.lastDmFrom, msg: v.slice(3) }); else if (/^\/w \S/.test(v)) { const m = v.match(/^\/w ("[^"]+"|\S+) (.+)$/); if (m) send({ t: 'social', op: 'dm', name: m[1].replace(/"/g, ''), msg: m[2] }); } else if (G.chan) send({ t: 'chat', msg: v, ch: G.chan }); else send({ t: 'chat', msg: v }); }
 // 1.0.1 command bar: chat channel buttons, the controls card, and shortcuts to key bindings, options and the map
 $('cchan').addEventListener('click', (e) => { const b = e.target.closest('[data-ch]'); if (!b) return; G.chan = b.dataset.ch; $('cchan').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); $('chatin').placeholder = G.chan === 'sys' ? 'Press Enter to talk to this system' : G.chan === 'fleet' ? 'Press Enter to talk to your fleet' : 'Press Enter to chat'; $('chatin').focus(); });
 const BASICS = [['Left click', 'Target a ship, or plot a course on the map'], ['Double click', 'Land on a planet or station'], ['Mouse wheel', 'Zoom'], ['Enter', 'Chat'], ['O', 'Options'], ['Esc', 'Close a window, clear the target']];
@@ -456,7 +461,7 @@ window.addEventListener('keydown', (e) => {
 // ------------------------------------------------------------------ tutorial panel
 function renderTut() {
   const i = G.you ? G.you.tut : TUTORIAL.length, T = TUTORIAL[i];
-  $('tut').classList.toggle('hidden', !T);
+  $('tut').classList.toggle('hidden', !T || !!G.arena || !!(G.you && G.you.duel && G.you.duel.on));   // 2.6: out of the way in the Crucible and in duels
   if (!T) return;
   $('tutn').textContent = `CAREER ${i + 1} / ${TUTORIAL.length}`; $('tutt').textContent = T.title; $('tutx').textContent = T.text;
   $('tutr').textContent = `Reward: ${T.reward.toLocaleString()} cr${T.mat ? ` + ${T.mat[0]} crate` : ''}`;

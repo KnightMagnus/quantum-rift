@@ -9,7 +9,7 @@ import { STATES } from '../shared/living.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => { if (!c) { console.error('FAIL:', m); process.exit(1); } console.log('ok -', m); };
 process.env.SEEDS_FILE = '/nonexistent';
-{ const { execFileSync } = await import('node:child_process'); const cdir = new URL('../client/', import.meta.url).pathname; const bad = [];
+{ const { execFileSync } = await import('node:child_process'); const cdir = decodeURIComponent(new URL('../client/', import.meta.url).pathname); const bad = [];
   for (const f of fs.readdirSync(cdir).filter(f => f.endsWith('.js'))) { try { execFileSync(process.execPath, ['--input-type=module', '--check'], { input: fs.readFileSync(cdir + f), stdio: ['pipe', 'ignore', 'ignore'] }); } catch { bad.push(f); } }
   ok(!bad.length, `every client script parses${bad.length ? ': BAD ' + bad.join(', ') : ''}`); }
 const g = new Game(A, new DB('/tmp/rift-v24-' + Date.now()));

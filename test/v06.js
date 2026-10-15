@@ -1,11 +1,11 @@
-// 0.6 tests: Umbral hostility fix, fleets, territory and Dreadnoughts, invasions, anomalies, events, goals,
+// 0.6 tests: Umbral hostility fix, the Armada (2.6: replaced fleets; territory removed), invasions, anomalies, events, goals,
 // faction stores and the new job types.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
 import { SYS, STELLARS, SYSTEMS, FACTIONS } from '../shared/galaxy.js';
-import { anomaliesAt, eventAt, eventCalendar, SCAN, CLAIM, DREADNOUGHTS } from '../shared/fronts.js';
+import { anomaliesAt, eventAt, eventCalendar, SCAN } from '../shared/fronts.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB('/tmp/rift-v06-' + Date.now()));
 const ok = (c, m) => { if (!c) { console.error('FAIL:', m); process.exit(1); } console.log('ok -', m); };
@@ -27,46 +27,19 @@ const um = sp0.makeShip({ hull: 761, faction: 'umbral', x: 300, y: 0, ai: 'raid'
 ok(sp0.isHostile(um, ea), 'Umbral ships now attack captains on sight (they were peaceful before)');
 const cr0 = da.credits, rep0 = da.rep.umbral; sp0.kill(um, ea);
 ok(da.credits > cr0 && da.rep.umbral === rep0, 'destroying Umbral pays a bounty and costs no standing');
-// fleets
-a.send({ t: 'fleet', op: 'create', tag: 'ex', name: 'Expanse Wardens' });
-ok(da.fleet === 'EX' && game.db.world.fleets.EX && da.credits < cr0 + 1e7, 'founded fleet [EX] for 50,000 credits');
-b.send({ t: 'fleet', op: 'join', tag: 'EX' }); ok(db_.fleet === 'EX' && game.db.world.fleets.EX.members.length === 2, 'joined an open fleet');
-const c = fake('Outsider'); c.send({ t: 'chat', msg: 'hello fleet', ch: 'fleet' });
-a.send({ t: 'chat', msg: 'form up', ch: 'fleet' });
-ok(b.all('chat').some(m => m.msg === 'form up' && m.ch === 'fleet') && !c.all('chat').some(m => m.msg === 'form up'), 'fleet chat reaches only fleetmates');
+// 2.6: the Armada replaces fleets (the full co-op suite is test/v26.js)
+const fr = SYSTEMS.find(s => s.faction === 'frontier' && s.stellars.some(p => p.svc.includes('T')));
+toSpace(a, 'qgate'); toSpace(b, 'qgate');
+a.send({ t: 'armada', op: 'form', name: 'Expanse Wardens' }); const AR = game.armadaOf(da);
+ok(AR && AR.name === 'Expanse Wardens', 'formed an Armada');
+a.send({ t: 'armada', op: 'invite', name: 'Wing Two' }); b.send({ t: 'armada', op: 'accept', id: AR.id }); ok(db_.armada === AR.id && AR.members.length === 2, 'a captain in the same system joined by invite');
+const c = fake('Outsider'); a.send({ t: 'chat', msg: 'form up', ch: 'armada' });
+ok(b.all('chat').some(m => m.msg === 'form up' && m.ch === 'armada') && !c.all('chat').some(m => m.msg === 'form up'), 'Armada chat reaches only members');
 const pvp = SYSTEMS.find(s => s.danger >= 3 && s.faction === 'frontier');
 const e1 = toSpace(a, pvp.id, 0, 0), e2 = toSpace(b, pvp.id, 50, 0), e3 = toSpace(c, pvp.id, 100, 0), spP = game.spaces[pvp.id];
-ok(!spP.isHostile(e1, e2) && spP.isHostile(e1, e3), 'fleetmates never fight; outsiders are fair game in lawless space');
-const snapName = spP.snapshot().ships.find(r => r[0] === e1.id)[11]; ok(snapName === '[EX] Fleet Admiral', 'fleet tags show on names in space');
+ok(!spP.isHostile(e1, e2) && !spP.isHostile(e1, e3), 'Armada members never fight, and there is no open-galaxy PvP even in lawless space');
 const crB = db_.credits, pir = spP.makeShip({ hull: 711, faction: 'hollow', x: 20, y: 20 }); spP.kill(pir, e1);
-ok(db_.credits > crB, 'fleetmates in the same system share bounties');
-// closed fleet
-a.send({ t: 'fleet', op: 'open', open: false }); c.send({ t: 'fleet', op: 'join', tag: 'EX' });
-ok(!c.s.data.fleet && game.db.world.fleets.EX.pending.includes('Outsider'), 'a closed fleet takes join requests');
-a.send({ t: 'fleet', op: 'accept', name: 'Outsider' }); ok(c.s.data.fleet === 'EX', 'the leader accepted the request');
-c.send({ t: 'fleet', op: 'leave' }); ok(!c.s.data.fleet && game.db.world.fleets.EX.members.length === 2, 'left the fleet');
-// territory
-a.send({ t: 'fleet', op: 'deposit', n: 2e7 }); ok(game.db.world.fleets.EX.bank === 2e7, 'paid 20M into the fleet bank');
-const lawfulSys = 'meridian'; toSpace(a, lawfulSys); a.send({ t: 'fleet', op: 'anchor', model: 0 }); ok(!game.db.world.claims[lawfulSys], 'only Frontier systems can be claimed');
-const fr = SYSTEMS.find(s => s.faction === 'frontier' && s.stellars.some(p => p.svc.includes('T')));
-toSpace(a, fr.id, 500, 500); a.send({ t: 'fleet', op: 'anchor', model: 1 });
-const spF = game.spaces[fr.id], dread = [...spF.ships.values()].find(e => e.dread);
-ok(game.db.world.claims[fr.id] && dread && dread.st.armor > A.ships[DREADNOUGHTS[1].hull].armor * 5, `anchored a ${DREADNOUGHTS[1].name} in ${fr.name} (armor ${dread.st.armor})`);
-ok(a.last('world').claims[fr.id].tag === 'EX', 'the claim is broadcast to everyone');
-const buffed = game.bonus(da); ok(buffed.damagePct >= CLAIM.buff.damagePct, 'fleet members get the territory buff in a held system');
-const h = new Date().getUTCHours();
-process.env.FRONT_HOURS = `${(h + 2) % 24}-${(h + 3) % 24}`; const ar0 = dread.armor; const e3b = toSpace(c, fr.id, 520, 520);
-spF.damage(dread, 5000, 5000, e3b); ok(dread.armor === ar0, 'outside the front window a Dreadnought cannot be hurt');
-ok(!spF.isHostile(dread, a.s.ent) && spF.isHostile(dread, e3b), 'the Dreadnought defends against those who attack it, never its own fleet');
-// tax
-const tp = fr.stellars.find(p => p.svc.includes('T')); const bank0 = game.db.world.fleets.EX.bank;
-spF.remove(e3b); spF.players--; c.s.ent = null; c.s.data.sys = fr.id; c.s.data.stellar = tp.id; c.s.data.credits = 1e6;
-const cid = game.market(tp)[0].id; c.send({ t: 'trade', cid, qty: 10 });
-ok(game.db.world.fleets.EX.bank > bank0, `outsiders trading in ${fr.name} pay ${CLAIM.taxPct}% to the holding fleet`);
-process.env.FRONT_HOURS = `${h}-${(h + 1) % 24}`; const e4 = toSpace(c, fr.id, 520, 520);
-dread.shield = 0; dread.armor = 10; spF.damage(dread, 50, 50, e4);
-ok(!game.db.world.claims[fr.id], 'during the front window the Dreadnought can be destroyed, and the claim falls');
-delete process.env.FRONT_HOURS;
+ok(db_.credits > crB, 'Armada members in the same system share bounties');
 // invasion
 const invSys = SYSTEMS.find(s => s.danger >= 2 && s.faction !== 'quantum' && s.stellars.length && s.id !== fr.id);
 const boss = game.startInvasion(1, invSys.id); ok(boss && game.invasion && game.live[invSys.id].keep, `the ${game.invasion.boss.name} invades ${invSys.name}`);

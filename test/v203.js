@@ -8,6 +8,7 @@ const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.met
 const ok = (c, m) => { if (!c) { console.error('FAIL:', m); process.exit(1); } console.log('ok -', m); };
 process.env.SEEDS_FILE = '/nonexistent';
 const g = new Game(A, new DB('/tmp/rift-v203-' + Date.now()));
+g.event = () => null; g.anomalies = () => ({});   // 2.6: traffic counts must not depend on the weekday's event (Bounty Week brings 50% more raiders)
 let ipn = 1;
 function fake(name) { const sock = new EventEmitter(); sock.open = true; sock.backlog = 0; const out = []; sock.send = (m) => out.push(typeof m === 'string' ? JSON.parse(m) : m); sock.close = () => {};
   g.connect(sock, '9.9.9.' + (ipn++)); const send = (m) => sock.emit('message', JSON.stringify(m)); send({ t: 'hello', name, pass: 'secret' });

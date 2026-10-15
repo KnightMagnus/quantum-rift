@@ -1,8 +1,9 @@
-// Quantum Rift 0.6 "Fleets and Fronts" server logic, mixed into Game: fleets, territory (Dreadnoughts), invasions,
+// Quantum Rift 0.6 "Fleets and Fronts" server logic, mixed into Game: invasions,
 // anomalies and server events, daily and weekly goals, faction stores, and the expanded job types.
+// (2.6: fleets became the Armada, see server/coop.js; territory and Dreadnoughts were removed.)
 import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES } from '../shared/galaxy.js';
-import { FLEET, DREADNOUGHTS, DREAD_MULT, CLAIM, FRONT_HOURS, BOSSES, INVASION, ANOMALIES, GOAL_TYPES, GOAL_REWARD, STORE_ITEMS, STORE_MAT,
-         SCAN, CHAIN_STEPS, frontWindowOpen, anomaliesAt, eventAt, eventCalendar, dayKey, weekKey } from '../shared/fronts.js';
+import { BOSSES, INVASION, ANOMALIES, GOAL_TYPES, GOAL_REWARD, STORE_ITEMS, STORE_MAT,
+         SCAN, CHAIN_STEPS, anomaliesAt, eventAt, eventCalendar, dayKey, weekKey } from '../shared/fronts.js';
 import { ROLES, RARITY, RACE_ROLES, OFFICER_NAMES, ROSTER_MAX } from '../shared/hangar.js';
 import { captainBonus, shipStats, credits } from '../shared/rules.js';
 
@@ -10,11 +11,9 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function rng(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
 function hash(str) { let h = 2166136261; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 const pick = (r, a) => a[Math.floor(r() * a.length)];
-const frontHours = () => { const e = process.env.FRONT_HOURS; if (e && /^\d+-\d+$/.test(e)) return e.split('-').map(Number); return FRONT_HOURS; };
 
 export const FrontsMixin = {
   frontsInit() {
-    const W = this.db.world; W.fleets = W.fleets || {}; W.claims = W.claims || {}; W.cooldown = W.cooldown || {};
     this.invasion = null; this.lastInvWin = Math.floor(Date.now() / (INVASION.everyMin * 60000));
     if (process.env.INVASION_NOW) setTimeout(() => this.startInvasion(this.lastInvWin, SYS[process.env.INVASION_NOW] ? process.env.INVASION_NOW : undefined), 500);   // testing: start one at boot
   },
@@ -22,146 +21,23 @@ export const FrontsMixin = {
   anomalies() { const w = Math.floor(Date.now() / (6 * 3600000)); if (this._anW !== w) { this._anW = w; this._an = anomaliesAt(SYSTEMS); } return this._an; },
   event() { return eventAt(); },
   mods(sysId) {
-    const m = { shieldRe: 1, radar: 1, raid: 1, beam: 1, jumpFuel: 1, mining: 1, bounty: 1, sell: 1, regrow: 1, xp: 1, rarity: 0, shuttleSpeed: 1, shuttleYield: 1, swarm: 1, swarmLoot: 1, eclipse: 1, directive: 1, armada: 1, chest: 1, riftore: 1 };
+    const m = { shieldRe: 1, radar: 1, raid: 1, beam: 1, jumpFuel: 1, mining: 1, bounty: 1, sell: 1, regrow: 1, xp: 1, rarity: 0, shuttleSpeed: 1, shuttleYield: 1, swarm: 1, swarmLoot: 1, eclipse: 1, chest: 1, armadaBounty: 1, riftore: 1 };
     const an = sysId && this.anomalies()[sysId], ev = this.event();
     for (const src of [an ? ANOMALIES[an].mods : null, ev ? ev.mods : null]) if (src) for (const [k, v] of Object.entries(src)) m[k] = k === 'rarity' ? m[k] + v : m[k] * v;
     return m;
   },
-  // everything that modifies a captain's ship: research + bridge crew + the fleet's territory buff where it holds the system
+  // everything that modifies a captain's ship: research + bridge crew + the Armada buff while a member shares the system (2.6)
   bonus(d) {
-    const b = captainBonus(d), c = d.fleet && this.db.world.claims[d.sys];
-    if (c && c.fleet === d.fleet) for (const [k, v] of Object.entries(CLAIM.buff)) b[k] = (b[k] || 0) + v;
+    const b = captainBonus(d);
+    if (this.armadaBonus) this.armadaBonus(d, b);
     return b;
   },
   stats(d) { return shipStats(this.A, d.ship, this.bonus(d)); },
   worldPayload() {
-    const W = this.db.world, claims = {};
-    for (const [sys, c] of Object.entries(W.claims)) { const F = W.fleets[c.fleet]; if (F) claims[sys] = { tag: F.tag, name: F.name, hp: Math.round(c.hp * 100), hull: c.hull }; }
     const inv = this.invasion ? { sys: this.invasion.sys, name: this.invasion.boss.name, until: this.invasion.until } : null;
-    return { t: 'world', claims, invasion: inv, anomalies: this.anomalies(), event: this.event(), calendar: eventCalendar(), front: frontHours(), vuln: frontWindowOpen(Date.now(), frontHours()), states: this.statesPayload ? this.statesPayload() : {} };   // 2.4: system states
+    return { t: 'world', invasion: inv, anomalies: this.anomalies(), event: this.event(), calendar: eventCalendar(), states: this.statesPayload ? this.statesPayload() : {} };   // 2.4: system states
   },
   pushWorld() { this.broadcast(this.worldPayload()); },
-
-  // ------------------------------------------------------------------ fleets
-  fleetOf(d) { return d && d.fleet ? this.db.world.fleets[d.fleet] || null : null; },
-  fleetPayload(d) {
-    const F = this.fleetOf(d); if (!F) return null;
-    const online = new Set([...this.sessions.values()].filter(x => x.data).map(x => x.data.name));
-    return { tag: F.tag, name: F.name, leader: F.leader, open: F.open, bank: F.bank, members: F.members.map(n => ({ name: n, online: online.has(n), sys: this.db.get(n) ? SYS[this.db.get(n).sys].name : '' })),
-             pending: F.leader === d.name ? F.pending : [], claims: Object.entries(this.db.world.claims).filter(([, c]) => c.fleet === F.tag).map(([sys, c]) => ({ sys, name: SYS[sys].name, hp: Math.round(c.hp * 100), hull: c.hull })) };
-  },
-  fleetList() { return Object.values(this.db.world.fleets).map(F => ({ tag: F.tag, name: F.name, members: F.members.length, open: F.open, claims: Object.values(this.db.world.claims).filter(c => c.fleet === F.tag).length })); },
-  fleetOp(s, m) {
-    const d = s.data, W = this.db.world, F = this.fleetOf(d);
-    const say = (msg) => this.toast(s, msg);
-    switch (m.op) {
-      case 'create': {
-        if (F) return say('Leave your fleet first.');
-        const tag = String(m.tag || '').toUpperCase(), name = String(m.name || '').trim();
-        if (!FLEET.tagRe.test(tag)) return say('A fleet tag is 2-4 letters or numbers.');
-        if (!FLEET.nameRe.test(name)) return say('A fleet name is 3-24 letters.');
-        if (W.fleets[tag]) return say('That tag is taken.');
-        if (d.credits < FLEET.createCost) return say(`Founding a fleet costs ${credits(FLEET.createCost)} credits.`);
-        d.credits -= FLEET.createCost;
-        W.fleets[tag] = { tag, name, leader: d.name, members: [d.name], pending: [], open: true, bank: 0, created: Date.now() };
-        d.fleet = tag; this.log(d, `Founded the fleet [${tag}] ${name}.`);
-        this.broadcast({ t: 'chat', from: '', msg: `${d.name} founded the fleet [${tag}] ${name}.` });
-        break;
-      }
-      case 'join': {
-        if (F) return say('Leave your fleet first.');
-        const T = W.fleets[String(m.tag || '').toUpperCase()]; if (!T) return say('No fleet with that tag.');
-        if (T.members.length >= FLEET.maxMembers) return say('That fleet is full.');
-        if (T.open) { T.members.push(d.name); d.fleet = T.tag; this.fleetChat(T, `${d.name} joined the fleet.`); this.log(d, `Joined [${T.tag}] ${T.name}.`); }
-        else { if (!T.pending.includes(d.name)) T.pending.push(d.name); say(`Request sent to [${T.tag}].`); }
-        break;
-      }
-      case 'accept': case 'deny': {
-        if (!F || F.leader !== d.name) return;
-        const who = String(m.name || ''); if (!F.pending.includes(who)) return;
-        F.pending = F.pending.filter(x => x !== who);
-        const p = this.db.get(who);
-        if (m.op === 'accept' && p && !p.fleet && F.members.length < FLEET.maxMembers) { F.members.push(p.name); p.fleet = F.tag; this.fleetChat(F, `${p.name} joined the fleet.`); this.refreshPlayer(p.name); }
-        break;
-      }
-      case 'leave': {
-        if (!F) return;
-        F.members = F.members.filter(x => x !== d.name); d.fleet = null; this.fleetChat(F, `${d.name} left the fleet.`);
-        if (!F.members.length) this.disband(F); else if (F.leader === d.name) F.leader = F.members[0];
-        break;
-      }
-      case 'kick': {
-        if (!F || F.leader !== d.name || m.name === d.name) return;
-        const p = this.db.get(String(m.name || '')); if (!p || p.fleet !== F.tag) return;
-        F.members = F.members.filter(x => x !== p.name); p.fleet = null; this.fleetChat(F, `${p.name} was removed from the fleet.`); this.refreshPlayer(p.name);
-        break;
-      }
-      case 'open': if (F && F.leader === d.name) F.open = !!m.open; break;
-      case 'deposit': {
-        if (!F) return; const n = Math.min(d.credits, Math.max(0, m.n | 0)); if (!n) return;
-        d.credits -= n; F.bank += n; this.fleetChat(F, `${d.name} paid ${credits(n)} credits into the fleet bank.`); break;
-      }
-      case 'withdraw': {
-        if (!F || F.leader !== d.name) return; const n = Math.min(F.bank, Math.max(0, m.n | 0)); if (!n) return;
-        F.bank -= n; d.credits += n; this.fleetChat(F, `${d.name} drew ${credits(n)} credits from the fleet bank.`); break;
-      }
-      case 'anchor': return this.anchorDread(s, m);
-      default: return;
-    }
-    this.db.touch(); this.you(s); this.pushWorld();
-  },
-  disband(F) { for (const [sys, c] of Object.entries(this.db.world.claims)) if (c.fleet === F.tag) this.dropClaim(sys); delete this.db.world.fleets[F.tag]; },
-  fleetChat(F, msg) { this.broadcast({ t: 'chat', from: '', msg: `[${F.tag}] ${msg}`, ch: 'fleet' }, o => o.data.fleet === F.tag); },
-  refreshPlayer(name) { for (const o of this.sessions.values()) if (o.data && o.data.name === name) this.you(o); },
-  sameFleet(pa, pb) { const a = pa && pa.s && pa.s.data, b = pb && pb.s && pb.s.data; return !!(a && b && a.fleet && a.fleet === b.fleet); },
-  // fleetmates in the same system share a quarter of each bounty (paid on top, not taken from the killer)
-  shareBounty(s, amount, space) {
-    const d = s.data; if (!d.fleet) return;
-    for (const o of this.sessions.values()) if (o !== s && o.data && o.data.fleet === d.fleet && o.ent && o.data.sys === space.id) {
-      const k = Math.round(amount * FLEET.shareBounty); o.data.credits += k; o.data.stats.earned += k; this.toast(o, `Fleet share: ${credits(k)} credits from ${d.name}'s kill.`);
-    }
-  },
-
-  // ------------------------------------------------------------------ territory: Dreadnoughts in Frontier systems
-  anchorDread(s, m) {
-    const d = s.data, F = this.fleetOf(d), W = this.db.world;
-    if (!F || F.leader !== d.name) return this.toast(s, 'Only a fleet leader can anchor a Dreadnought.');
-    if (!s.ent) return this.toast(s, 'Fly into the system you want to claim first.');
-    const S = SYS[d.sys]; if (S.faction !== 'frontier') return this.toast(s, 'Only unclaimed Frontier systems can be held by a fleet.');
-    if (W.claims[d.sys]) return this.toast(s, 'Another fleet holds this system. Destroy their Dreadnought during the front window.');
-    if ((W.cooldown[d.sys] || 0) > Date.now()) return this.toast(s, `The wreckage is still settling. This system can be claimed again in ${Math.ceil((W.cooldown[d.sys] - Date.now()) / 3600000)} h.`);
-    if (Object.values(W.claims).filter(c => c.fleet === F.tag).length >= CLAIM.maxPerFleet) return this.toast(s, `A fleet can hold ${CLAIM.maxPerFleet} systems.`);
-    const D = DREADNOUGHTS[m.model | 0] || DREADNOUGHTS[0]; if (F.bank < D.cost) return this.toast(s, `The ${D.name} costs ${credits(D.cost)} from the fleet bank.`);
-    F.bank -= D.cost;
-    W.claims[d.sys] = { fleet: F.tag, hull: D.hull, hp: 1, since: Date.now(), t: Date.now(), x: Math.round(s.ent.x), y: Math.round(s.ent.y) };
-    this.spawnDread(this.spaces[d.sys]);
-    this.broadcast({ t: 'chat', from: '', msg: `[${F.tag}] ${F.name} anchored a ${D.name} in ${S.name} and claims the system.` });
-    this.db.touch(); this.you(s); this.pushWorld();
-  },
-  spawnDread(sp) {
-    const c = this.db.world.claims[sp.id]; if (!c || [...sp.ships.values()].some(e => e.dread)) return;
-    const F = this.db.world.fleets[c.fleet]; if (!F) return;
-    // repairs while nobody was looking
-    c.hp = clamp(c.hp + CLAIM.repairPerHour * (Date.now() - (c.t || Date.now())) / 3600000, 0.05, 1); c.t = Date.now();
-    const k = (DREAD_MULT - 1) * 100, e = sp.makeShip({ hull: c.hull, faction: 'quantum', x: c.x, y: c.y, a: 0, ai: 'guard', name: `[${F.tag}] ${this.A.ships[c.hull].name}`, bonus: { shieldPct: k, armorPct: k } });
-    e.armor = e.st.armor * c.hp; e.dread = sp.id; e.fleet = F.tag; e.life = 1e9; e.noDisable = true; e.home = { x: c.x, y: c.y };
-  },
-  dropClaim(sys) { delete this.db.world.claims[sys]; const sp = this.live[sys]; if (sp) for (const e of [...sp.ships.values()]) if (e.dread) sp.remove(e, 'jump'); },
-  onDreadKilled(e, space, by) {
-    const c = this.db.world.claims[space.id]; if (!c) return;
-    const F = this.db.world.fleets[c.fleet], who = by && by.player ? by.player.name : 'raiders';
-    delete this.db.world.claims[space.id];   // the victors may anchor their own Dreadnought at once
-    this.broadcast({ t: 'chat', from: '', msg: `The ${e.name} has fallen in ${SYS[space.id].name} (destroyed by ${who}). ${F ? `[${F.tag}] lost the system.` : ''}` });
-    if (by && by.player) { const d = by.player.s.data, cr = 250000; d.credits += cr; this.toast(by.player.s, `Dreadnought destroyed: ${credits(cr)} credits salvage.`); }
-    this.db.touch(); this.pushWorld();
-  },
-  dreadInvulnerable() { return !frontWindowOpen(Date.now(), frontHours()); },
-  // a share of every trade in a held system goes to the holding fleet's bank
-  tradeTax(d, sysId, amount) {
-    const c = this.db.world.claims[sysId]; if (!c || c.fleet === d.fleet) return 0;
-    const F = this.db.world.fleets[c.fleet]; if (!F) return 0;
-    const t = Math.round(Math.abs(amount) * CLAIM.taxPct / 100); F.bank += t; return t;
-  },
 
   // ------------------------------------------------------------------ invasions
   invasionTick() {
@@ -229,7 +105,7 @@ export const FrontsMixin = {
     const R = GOAL_REWARD[m.period === 'weekly' ? 'weekly' : 'daily'];
     g.claimed = true; d.credits += R.credits; d.tokens = d.tokens || {}; d.tokens.any = (d.tokens.any || 0) + R.tokens;
     this.toast(s, `Goal reward: ${credits(R.credits)} credits and ${R.tokens} Rift scrip.`);
-    if (m.period === 'weekly') { this.hostInit(d); d.directives[1]++; this.toast(s, 'Weekly goal bonus: a Hollow Directive.'); }
+    if (m.period === 'weekly') { const mt = MATERIALS[Math.floor(Math.random() * 3)]; d.mats[mt][2]++; this.toast(s, `Weekly goal bonus: a ${mt} III crate.`); }   // 2.6: was a Hollow Directive
     if (list.every(x => x.claimed)) { const mt = MATERIALS[Math.floor(Math.random() * 3)], gr = m.period === 'weekly' ? 3 : 1; d.mats[mt][gr]++; this.toast(s, `All ${m.period === 'weekly' ? 'weekly' : 'daily'} goals done: bonus ${mt} ${GRADES[gr]} crate.`); }
     this.db.touch(); this.you(s);
   },
@@ -256,7 +132,6 @@ export const FrontsMixin = {
       d.officers.push(o); this.toast(s, `${RARITY[o.rarity].name} ${ROLES[role].name.toLowerCase()} ${o.name} signs on.`); this.log(d, `Signed ${o.name} through a ${FACTIONS[fac].short} contract.`);
     }
     if (G_.xp) { this.officerXp(s, G_.xp); this.toast(s, 'Your bridge crew study the manuals.'); }
-    if (G_.directive) { this.hostInit(d); d.directives[G_.directive]++; this.toast(s, 'A directive: summon its armada from space (OPS tab).'); }
     if (G_.rep) { d.rep[fac] = clamp((d.rep[fac] || 0) + G_.rep, -100, 100); this.toast(s, `${FACTIONS[fac].short} standing +${G_.rep}.`); }
     this.db.touch(); this.you(s);
   },

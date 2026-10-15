@@ -15,10 +15,8 @@ export const BLACK_MARKET = [
   { id: 'corsairbp', tier: 2, name: 'Corsair blueprints (5)', price: 140000, desc: 'Plans for the Corsair boarding ship, five at a time.', give: { bp: [808, 5] } },
   { id: 'wraithpt', tier: 3, name: 'Wraith parts (4)', price: 160000, desc: 'Machined parts for the Wraith\'s components.', give: { parts: [813, 4] } },
   { id: 'corsairpt', tier: 3, name: 'Corsair parts (4)', price: 180000, desc: 'Machined parts for the Corsair\'s components.', give: { parts: [808, 4] } },
-  { id: 'directive', tier: 3, name: 'Hollow Directive', price: 90000, desc: 'Summons a solo Hollow armada (from the OPS tab).', give: { directive: 1 } },
   { id: 'crate4', tier: 4, name: 'Unmarked crate (grade IV)', price: 260000, desc: 'A random grade IV material crate.', give: { crate: 3 } },
-  { id: 'umbraldir', tier: 4, name: 'Umbral Directive', price: 240000, desc: 'Summons a solo Umbral armada.', give: { directive: 2 } },
-  { id: 'eclipsedir', tier: 5, name: 'Eclipse Directive', price: 600000, desc: 'Summons the Eclipse armada. Kingpins only.', give: { directive: 3 } },
+  { id: 'crate5', tier: 5, name: 'Unmarked crate (grade V)', price: 650000, desc: 'A random grade V material crate. Kingpins only.', give: { crate: 4 } },   // 2.6: replaces the Eclipse Directive
 ];
 
 // ------------------------------------------------------------------ officer ranks and traits

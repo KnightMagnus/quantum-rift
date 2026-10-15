@@ -38,8 +38,10 @@ async def main():
                 n = min(3, await pg.locator('#storebox [data-act="sfac"]').count())
                 for i in range(n): await pg.locator('#storebox [data-act="sfac"]').nth(i).click(); await pg.wait_for_timeout(120)
                 await pg.keyboard.press('Escape')
-            for t in ['radio', 'codex', 'missions', 'station', 'ops', 'log']:
+            for t in ['radio', 'codex', 'missions', 'station', 'ops', 'captains', 'log']:
                 await pg.click(f'#ctabs button[data-tab="{t}"]'); await pg.wait_for_timeout(150)
+                if t == 'captains':   # 2.6: every ALLIES sub-tab
+                    for cs in ['friends', 'dm', 'armada', 'trade']: await pg.click(f'#capview [data-cs="{cs}"]'); await pg.wait_for_timeout(120)
             if who in ('CrawlHub', 'KNIGHT'):
                 await pg.click('#cbmap'); await pg.wait_for_timeout(300)
                 for m in ['trade', 'services', 'standing', 'danger', 'factions']: await pg.click(f'#gmodes [data-mm="{m}"]'); await pg.wait_for_timeout(150)

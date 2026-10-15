@@ -5,7 +5,7 @@ import { FACTION_HULLS, OPS, COMMODITIES, SYSTEMS, MK2_OF, MK3_OF } from '../sha
 import { augmentAssets } from '../shared/rules.js';
 import { RESEARCH2 } from '../shared/hangar.js';
 import { SPECIALISTS, BP_NEED } from '../shared/specialty.js';
-import { DIRECTIVES, HOLDOUT } from '../shared/hostile.js';
+import { HOLDOUT } from '../shared/hostile.js';
 const A = augmentAssets(JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url))));
 let bad = 0; const warn = (m) => { console.log('  ! ' + m); bad++; };
 const fmt = (n) => Math.round(n).toLocaleString();
@@ -21,7 +21,7 @@ for (const [f, hs] of Object.entries(FACTION_HULLS)) {
 }
 // 2) value for money across every buyable hull: strength per 100k credits should stay within a sane band
 console.log('== value for money (strength per 100k cr)');
-const buyable = Object.values(A.ships).filter(s => s.cost > 0 && s.kind !== 'wingmate' && s.kind !== 'armada' && s.id !== 744);
+const buyable = Object.values(A.ships).filter(s => s.cost > 0 && s.kind !== 'wingmate' && !s.npcOnly && s.id !== 744);
 const vfm = buyable.map(s => [s.strength / (s.cost / 1e5), s]).sort((a, b) => b[0] - a[0]);
 console.log('  best:', vfm.slice(0, 4).map(([v, s]) => `${s.name} ${v.toFixed(1)}`).join(', '));
 console.log('  worst:', vfm.slice(-4).map(([v, s]) => `${s.name} ${v.toFixed(2)}`).join(', '));
@@ -44,11 +44,8 @@ console.log(`== hours to afford at ~${fmt(typical)} cr/h`);
 for (const [n, c] of milestones) console.log(`  ${n.padEnd(30)} ${fmt(c).padStart(12)} cr  ~${(c / typical).toFixed(1)} h`);
 if (milestones[0][1] / typical > 40) warn('Ops 1-5 takes over 40 hours of typical income');
 if (milestones[2][1] / typical > 30) warn('an average specialist takes over 30 hours of typical income');
-// 4) the armada and holdout rewards should beat plain bounty hunting for the time they take
+// 4) the holdout rewards should beat plain bounty hunting for the time they take (2.6: solo armadas retired)
 console.log('== event rewards');
-for (const D of DIRECTIVES.slice(1)) console.log(`  ${D.name}: ${fmt(D.reward)} cr + ${D.tier} crates + ${D.bp} blueprints (~10 min)`);
 console.log(`  Holdout all 10 waves: ${fmt(HOLDOUT.reward(10).credits)} cr`);
-if (DIRECTIVES[1].reward < bountyPerHour / 6) warn('a tier 1 armada pays less than ten minutes of bounty hunting');
-// 5) refits should cost less than buying the Mk II outright
-for (const [b, mk] of Object.entries(MK2_OF)) { const B = A.ships[b], M = A.ships[mk]; if (!B || !M) continue; if (M.cost * 0.3 > M.cost - B.cost * 0.5 && M.cost > B.cost) {} }
+if (HOLDOUT.reward(10).credits < bountyPerHour / 2) warn('a full Holdout pays less than half an hour of bounty hunting');
 console.log(bad ? `BALANCE: ${bad} warning(s)` : 'BALANCE OK'); process.exit(bad ? 1 : 0);

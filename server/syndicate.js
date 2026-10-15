@@ -33,7 +33,6 @@ export const SyndicateMixin = {
     if (g.shards) d.shards += g.shards;
     if (g.bp) { d.bp = d.bp || {}; d.bp[g.bp[0]] = (d.bp[g.bp[0]] || 0) + g.bp[1]; }
     if (g.parts) { d.parts = d.parts || {}; d.parts[g.parts[0]] = (d.parts[g.parts[0]] || 0) + g.parts[1]; }
-    if (g.directive) { d.directives = d.directives || { 1: 0, 2: 0, 3: 0 }; d.directives[g.directive] = (d.directives[g.directive] || 0) + 1; }
     if (g.crate != null) { const m = MATERIALS[Math.floor(Math.random() * MATERIALS.length)]; d.mats[m][g.crate]++; this.toast(s, `Inside: a ${m} ${GRADES[g.crate]} crate.`); }
     d.credits -= it.price; if (!g.papers && g.crate == null) this.toast(s, `Bought: ${it.name}.`);
     this.log(d, `Black market: ${it.name} for ${credits(it.price)} credits.`); this.db.touch(); this.you(s); this.landed(s);

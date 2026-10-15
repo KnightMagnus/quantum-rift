@@ -43,6 +43,7 @@ export function missionTargets(G) {
     else if (m.type === 'patrol') status = `${m.got || 0} / ${m.need} kills in ${there}.`;
     else if (m.type === 'survey') status = `${(m.seen || []).length} / ${m.points ? m.points.length : 3} points in ${there}, then land anywhere.`;
     else if (m.type === 'bounty' || m.type === 'assassinate') status = `Destroy ${m.targetName} in ${there}.`;
+    else if (m.type === 'warband') status = `Armada contract: destroy ${m.targetName} in ${there}, together.`;   // 2.6
     else if (m.type === 'salvage') status = `Recover the salvage at the marked point in ${there}, then land anywhere.`;
     else if (m.type === 'rescue') status = `Find and board the ${m.wreckName} in ${there}.`;
     else status = there ? `Go to ${there}.` : '';

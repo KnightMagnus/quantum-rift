@@ -300,6 +300,7 @@ export const HangarMixin = {
   board(s, m) {
     const d = s.data, e = s.ent; if (!e || e.state !== 'fly') return;
     const sp = this.spaces[d.sys], t = sp.ships.get(m.id);
+    if (t && t.player && t.rescueT && this.rescueBoard) return this.rescueBoard(s, t);   // 2.6: patch up a downed Armada captain
     if (!t || !t.disabled || t.player || t.boarded) return this.toast(s, 'Only disabled ships can be boarded.');
     const dist = Math.hypot(t.x - e.x, t.y - e.y), rel = Math.hypot(t.vx - e.vx, t.vy - e.vy);
     if (dist > Math.max(120, (t.st.size + e.st.size) * 0.5)) return this.toast(s, 'Move alongside to board.');

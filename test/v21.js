@@ -13,7 +13,7 @@ const dir = '/tmp/rift-v21-' + Date.now();
 // an old (2.0.3) save with two hired escorts and a stored ship preset
 { const g0 = new Game(A, new DB(dir)); const p = g0.db.create('Old Hand', 'secret', g0.fresh());
   p.station.claimed = true; p.station.ops = 4; p.station.site = 'site-qgate'; g0.db.world.sites['site-qgate'] = g0.db.key('Old Hand');
-  p.escorts = [751, 757]; p.ship = makeLoadout(A, 708, 'Old Blade'); p.dock = [{ ship: makeLoadout(A, 704, 'Hauler'), escorts: [752], bridge: {} }]; p.stellar = 'site-qgate'; p.sys = STELLARS['site-qgate'].system;
+  p.escorts = [751, 752]; p.ship = makeLoadout(A, 708, 'Old Blade'); p.dock = [{ ship: makeLoadout(A, 704, 'Hauler'), escorts: [752], bridge: {} }]; p.stellar = 'site-qgate'; p.sys = STELLARS['site-qgate'].system;
   g0.db.touch(); g0.db.flush(); }
 const g = new Game(A, new DB(dir));
 function fake(name) { const sock = new EventEmitter(); sock.open = true; sock.backlog = 0; const out = []; sock.send = (m) => out.push(typeof m === 'string' ? JSON.parse(m) : m); sock.close = () => {};
@@ -22,7 +22,7 @@ function fake(name) { const sock = new EventEmitter(); sock.open = true; sock.ba
 const P = fake('Old Hand'), d = P.d;
 ok(Array.isArray(d.docks) && d.docks.length === 3 && d.activeDock === 0, 'an Ops 4 captain gets three docks, Dock A active');
 ok(d.docks[0].lead === d.ship.uid, 'Dock A leads with the ship you fly');
-ok(d.docks[0].wings.filter(Boolean).length === 2 && d.dock.some(x => x.ship.hull === 751) && d.dock.some(x => x.ship.hull === 757), 'hired escorts became stored ships flying as Dock A wingmates');
+ok(d.docks[0].wings.filter(Boolean).length === 2 && d.dock.some(x => x.ship.hull === 751) && d.dock.some(x => x.ship.hull === 752), 'hired escorts became stored ships flying as Dock A wingmates');
 ok(!d.escorts.length && !d.dock.some(x => x.escorts), 'old escort lists are retired (a stored preset escort is refunded)');
 const Y = P.you(); ok(Y.docks && Y.docks.list.length === 3 && Y.docks.list[0].wings.length === 2 && Y.docks.cap === 11, 'the client gets docks, wing slots and berth count');
 // wingmates launch with their own loadouts and officers

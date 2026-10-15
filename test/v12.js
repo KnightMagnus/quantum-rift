@@ -32,7 +32,7 @@ ok(bm && bm.items.length === BLACK_MARKET.length && bm.items.some(x => x.locked)
 d.rep.korrund = -70; a.send({ t: 'bm', id: 'papers' }); ok(d.rep.korrund === -10, 'forged papers wipe your worst grudge back to -10');
 const sh0 = d.shards; a.send({ t: 'bm', id: 'shard' }); ok(d.shards === sh0 + 1, 'commendations are sold to Associates');
 a.send({ t: 'bm', id: 'wraithbp' }); ok(!(d.bp && d.bp[813]), 'Made-tier stock is refused to an Associate');
-d.syn = 2500; a.send({ t: 'bm', id: 'eclipsedir' }); ok(d.directives[3] >= 1, 'a Kingpin can buy an Eclipse Directive');
+d.syn = 2500; { const n0 = Object.values(d.mats).reduce((x, m) => x + m[4], 0); a.send({ t: 'bm', id: 'crate5' }); ok(Object.values(d.mats).reduce((x, m) => x + m[4], 0) === n0 + 1, 'a Kingpin can buy a grade V crate (2.6: replaces the Eclipse Directive)'); }
 const plain = STELLARS.earth || Object.values(STELLARS).find(p => p.svc.includes('B') && !p.outlaw && !p.site);
 d.syn = 0; ok(!game.blackMarketAt(plain, d), 'no black market at a lawful bar for unknowns'); d.syn = 450; ok(game.blackMarketAt(plain, d), 'but a Lieutenant finds one in any spaceport bar');
 // officer ranks and traits

@@ -13,7 +13,7 @@ import { TUTORIAL } from '../shared/tutorial.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => { if (!c) { console.error('FAIL:', m); process.exit(1); } console.log('ok -', m); };
 process.env.SEEDS_FILE = '/nonexistent';
-const C = new URL('../client/', import.meta.url).pathname, read = (f) => fs.readFileSync(C + f, 'utf8');
+const C = decodeURIComponent(new URL('../client/', import.meta.url).pathname), read = (f) => fs.readFileSync(C + f, 'utf8');
 { const bad = []; for (const f of fs.readdirSync(C).filter(f => f.endsWith('.js'))) { try { execFileSync(process.execPath, ['--input-type=module', '--check'], { input: fs.readFileSync(C + f), stdio: ['pipe', 'ignore', 'ignore'] }); } catch { bad.push(f); } }
   ok(!bad.length, `every client script parses${bad.length ? ': BAD ' + bad : ''}`); }
 // markets for mined goods
