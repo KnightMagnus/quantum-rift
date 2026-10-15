@@ -440,6 +440,8 @@ function onMessage(m) {
       break;
     }
     case 'landed':
+      $('combatcontrols').classList.add('hidden');
+      G.combat = {};
       if (!G.landed) audio.ui('dock', 0.8);
       audio.setAmbience('station');
       setAuto(null);
@@ -638,6 +640,16 @@ setInterval(() => {
 }, 10000); // keeps rush countdowns current
 // ------------------------------------------------------------------ snapshots and prediction
 function onSnap(m) {
+  G.combat = m.combat || {};
+  $('combatcontrols').classList.remove('hidden');
+  $('combatstatus').textContent =
+    ' · ' +
+    (G.combat.status || 'OFF') +
+    (G.combat.target ? ' · Target #' + G.combat.target : '') +
+    (G.combat.reason ? ' · ' + G.combat.reason : '');
+  $('combatassist').textContent = G.combat.on ? 'ASSIST ON' : 'COMBAT ASSIST';
+  $('combatdelegate').checked = !!G.combat.consent;
+  $('combatcoordinate').checked = !!G.combat.coordinating;
   const now = performance.now();
   lastSnapT = now;
   const [id, ack, x, y, vx, vy, a, sh, ar, fu, tgt, ammo] = m.me;
@@ -688,7 +700,8 @@ function onSnap(m) {
   Object.assign(v, { id, x, y, vx, vy, a, shield: sh, armor: ar, fuel: fu, fl: me0 ? me0.fl : 0 });
   history = history.filter((h) => h.seq > ack);
   const st = G.you && G.you.shipStats;
-  if (st && me0 && !(me0.fl & 8)) for (const h of history) step(v, st, h.inp);
+  if (st && me0 && !(me0.fl & 8) && !(G.combat.on || G.combat.delegated))
+    for (const h of history) step(v, st, h.inp);
   if (G.view) {
     v.ox += prevX - v.x;
     v.oy += prevY - v.y;
@@ -1041,6 +1054,10 @@ G.startAutoJump = () =>
     }
   }, 300); // 2.6: follow the leader
 function setAuto(a, msg) {
+  if (a) {
+    send({ t: 'combat', op: 'off' });
+    G.combat = {};
+  }
   if (a && !G.auto) audio.ui('autopilot', 0.8);
   G.auto = a;
   if (!a) G.autoRoute = G.autoRoute && G.autoKeep;
@@ -1308,6 +1325,15 @@ function setTarget(id) {
   send({ t: 'target', id });
 }
 canvas.addEventListener('mousemove', (e) => {
+  if (
+    G.opts.mouseAim &&
+    (e.movementX || e.movementY) &&
+    G.combat &&
+    (G.combat.on || G.combat.delegated)
+  ) {
+    send({ t: 'combat', op: 'manual' });
+    G.combat.on = G.combat.delegated = false;
+  }
   mouse.x = e.clientX;
   mouse.y = e.clientY;
   mouse.in = true;
@@ -1823,7 +1849,11 @@ function fixedTick() {
     fire1: held('fire1') ? 1 : 0,
     fire2: held('fire2') ? 1 : 0,
   };
-  if (G.opts.mouseAim && mouse.in) {
+  if (
+    G.opts.mouseAim &&
+    mouse.in &&
+    (mouse.down || !(G.combat && (G.combat.on || G.combat.delegated)))
+  ) {
     // mouse-aim: the ship turns toward the cursor unless you steer with the keys
     if (!inp.turn) {
       const want = Math.atan2(mouse.wx - G.view.x, -(mouse.wy - G.view.y));
@@ -1838,6 +1868,10 @@ function fixedTick() {
     before = inp.thrust + '|' + inp.turn;
   padInput(inp);
   touchInput(inp);
+  if (G.combat && (G.combat.on || G.combat.delegated)) {
+    G.autoRoute = false;
+    if (G.auto) setAuto(null);
+  }
   if (G.auto) {
     if (manual0 || before !== inp.thrust + '|' + inp.turn) {
       G.autoRoute = false;
@@ -1874,7 +1908,8 @@ function fixedTick() {
   history.push({ seq, inp });
   if (history.length > 90) history.shift();
   const me0 = G.ents.get(G.myId);
-  if (G.you && !(me0 && me0.fl & 8)) step(G.view, G.you.shipStats, inp);
+  if (G.you && !(me0 && me0.fl & 8) && !(G.combat && (G.combat.on || G.combat.delegated)))
+    step(G.view, G.you.shipStats, inp);
   G.view.fl = (inp.thrust ? 1 : 0) | (inp.ab ? 2 : 0);
 }
 function frame(t) {
@@ -1942,3 +1977,13 @@ requestAnimationFrame(frame);
 setInterval(() => {
   if ((G.ctab === 'station' || G.ctab === 'ops') && G.you) refreshCompanion();
 }, 15000);
+
+$('combatassist').onclick = () => {
+  G.autoRoute = false;
+  setAuto(null);
+  send({ t: 'combat', op: 'assist', on: !(G.combat && G.combat.on) });
+};
+$('combatstop').onclick = () => send({ t: 'combat', op: 'off' });
+$('combatdelegate').onchange = (e) => send({ t: 'combat', op: 'delegate', on: e.target.checked });
+$('combatcoordinate').onchange = (e) =>
+  send({ t: 'combat', op: 'coordinate', on: e.target.checked });

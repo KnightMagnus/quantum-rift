@@ -1,3 +1,4 @@
+import { CombatAssist } from './combat-assist.js';
 import { createMessageRegistry } from './message-registry.js';
 import { createFeatures } from './features.js';
 import { TUTORIAL, tutMigrate, TUT_VERSION } from '../shared/tutorial.js';
@@ -157,6 +158,7 @@ export class Game {
     });
     /** @type {import('./features.js').FeatureServices} */
     this.features = createFeatures(this);
+    this.combatAssist = new CombatAssist(this);
     this.messageHandlers = this.createMessageHandlers();
     this.features.fronts.frontsInit();
     this.features.coop.coopInit();
@@ -693,8 +695,20 @@ export class Game {
   createMessageHandlers() {
     return createMessageRegistry([
       [
+        'combat',
+        (s, m) => {
+          this.combatAssist.command(s, m);
+        },
+      ],
+      [
         'input',
         (s, m) => {
+          if (
+            (m.th || m.tu || m.ab || m.rv || m.f1 || m.f2) &&
+            s.combat &&
+            (s.combat.on || s.combat.consent)
+          )
+            this.combatAssist.manual(s);
           if (s.ent && s.inputs.length < 8)
             s.inputs.push({
               seq: m.seq | 0,
@@ -715,6 +729,7 @@ export class Game {
           if (s.ent) {
             const sp = this.spaces[d.sys];
             s.ent.target = m.id ? sp.ships.get(m.id) || null : null;
+            this.combatAssist.selected(s, s.ent.target, sp);
             if (s.ent.target) this.tut(s, 'target');
           }
           return;
@@ -734,6 +749,7 @@ export class Game {
       [
         'land',
         (s, m) => {
+          this.combatAssist.stop(s, 'Travel or boarding');
           this.land(s, m.stellar);
           return;
         },
@@ -748,6 +764,7 @@ export class Game {
       [
         'jump',
         (s, m) => {
+          this.combatAssist.stop(s, 'Travel or boarding');
           this.jump(s, m.to);
           return;
         },
@@ -896,6 +913,7 @@ export class Game {
       [
         'board',
         (s, m) => {
+          this.combatAssist.stop(s, 'Travel or boarding');
           this.features.hangar.board(s, m);
           return;
         },
@@ -1026,6 +1044,11 @@ export class Game {
       [
         'order',
         (s, m) => {
+          if (s.ent) {
+            if (m.o === 'attack' && s.ent.order !== 'attack')
+              this.combatAssist.attack(s, this.spaces[s.data.sys]);
+            else this.combatAssist.stop(s, 'Fleet order');
+          }
           this.features.fleetcmd.fleetOrder(s, m.o);
           return;
         },
@@ -1207,6 +1230,7 @@ export class Game {
 
   // ------------------------------------------------------------------ space: depart, land, jump
   spawnPlayer(s, x, y, a, v) {
+    if (s.combat) this.combatAssist.stop(s, 'New flight state; rearm explicitly');
     const d = s.data,
       sp = this.spaces[d.sys];
     const e = sp.makeShip({
@@ -2590,6 +2614,7 @@ export class Game {
           JSON.stringify({
             t: 'snap',
             ...snap,
+            combat: this.combatAssist.payload(s, this.spaces[sys]),
             me: [
               e.id,
               e.seq || 0,
