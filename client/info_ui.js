@@ -40,7 +40,7 @@ export function infoHtml(G, tab) {
   if (tab === 'career') return careerHtml(G);   // 2.4
   if (tab === 'fleet') {
     const ord = G.order || 'gather';
-    return `<div class="sect" style="margin-top:0">FLEET ORDERS</div><div class="dim small" style="margin-bottom:6px">Orders apply to your escorts, wingmates and fighters. Give the same order again to cancel it.</div>
+    return `<div class="sect" style="margin-top:0">WINGMATE ORDERS</div><div class="dim small" style="margin-bottom:6px">Orders apply to your escorts, wingmates and fighters. Give the same order again to cancel it.</div>
       <div class="ords">${ORD.map(([k, n, key]) => `<button class="btn ${ord === k ? 'on' : ''}" data-ord="${k}">${n} <span class="dim small">(${key})</span></button>`).join('')}</div>
       <div class="sect">WINGMATES${y.docks ? ` · DOCK ${y.docks.list[y.docks.active].letter}` : ''}</div>${(() => { const k = y.docks && y.docks.list[y.docks.active], ws = k ? k.wings.filter(Boolean) : []; return ws.length ? ws.map(w => { const E = G.A.ships[w.hull] || {}; return `<div class="kv"><span><img src="assets/${E.img}" style="width:40px;height:28px;object-fit:contain;vertical-align:middle"> ${esc(w.name)}</span><span class="dim">${w.repairT ? 'under repair' : esc(E.name)}</span></div>`; }).join('') : '<p class="dim">No wingmates in your active dock. Assign stored ships as wingmates at your Personal Station (STATION, then DOCKS).</p>'; })()}`;
   }

@@ -2,6 +2,31 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.6 "Together"
+Co-op play for online games, sharper ships that bank into their turns, and a clear-out of systems that no longer fit.
+- **Captain Friends:** add captains as friends from the ALLIES tab, the captains list at Quantum Station, your target panel or the chat. See who is online, away or offline, where they are and when they were last seen. A short note tells you when a friend comes online.
+- **Messages:** private messages to friends (or anyone who allows it), in the ALLIES tab or with `/w name message` in chat, and `/r` to reply. Messages to offline captains wait for them. Click a name in chat to message them. Block a captain to stop their messages, requests, invites and chat.
+- **The Armada:** a short co-op group of up to five captains, each bringing their own wingmates. Invite any captain online, from anywhere: from their ship in space, the friends list or the station list (inviting forms an Armada if you have none).
+  - Members and their wingmates can't hurt each other, and show in green: a marker on their ships, green name tags, green radar dots, and their systems on the galaxy map.
+  - A private chat (the ARMADA channel, or `/a`), a member list with live shields and armor, and **Call the Armada** to plot every member a course to you.
+  - While another member shares your system: +5% shield recharge and +5% bounties. Members in the system get kill credit and a quarter share of each other's bounties.
+  - Follow the leader: members who opt in jump after the leader by autopilot.
+  - It disbands when everyone has been offline for 30 minutes.
+- **Co-op Holdout:** your Armada is called when you start a Station Holdout. Each helper who flies in adds hostiles to every wave and shares the rewards.
+- **Armada contracts:** job boards post group kingpins who deserted with the Concord's old Mk II and Mk III refits. Take one for your whole Armada; the pay is shared out and everyone gets standing.
+- **Rescue:** if your ship is destroyed while an Armada member is in the system, it is disabled instead and left alone for 60 seconds. A member can board you to patch you up; otherwise the insurers take over as before.
+- **Trading between captains:** trade credits, goods, crates, blueprints and parts with friends and Armada members, each of you docked at your own Personal Station. Both sides lock their offer and both confirm, and everything swaps at once (a 2% fee on credits).
+- **Duels and Armada Duels:** challenge a captain to a duel, or have two Armada leaders agree an Armada Duel where every member in the system fights for their side. Duels stop at disabled; nobody loses a ship.
+- **No open-galaxy PvP:** captains can no longer attack each other in lawless space. PvP is now only in the Crucible and in agreed duels.
+- **The Crucible:** its own look (a red star, crimson and violet nebulae, a megastructure and a ring of Azure and Crimson pylons), no newcomer badge or career panel during matches, and name tags that stack instead of overlapping.
+- **Relocate Station:** warp your Personal Station to any unclaimed hull, keeping Ops, research, refinery, docks and stored ships. It costs credits and an alloy II crate, and the warp core needs 24 hours to recharge.
+- **Sharper ships that bank:** every ship was re-rendered from its 3D design in full colour, at up to twice the old resolution, so small ships stay crisp when you zoom in. Ships up to 200 px now bank into their turns. The sheets are WebP.
+- **Retired:**
+  - Mk II and Mk III refits. Old saves get the base hull back with the refit cost and materials refunded, and outfits that no longer fit are bought back.
+  - The station's Armada escorts, solo armadas and directives. Directives no longer drop or sell; unused ones are bought back. Holdout and weekly-goal rewards give crates instead, the Syndicate sells a grade V crate in place of the Eclipse Directive, and Armada Night became Salvage Night.
+  - Fleets, territory, Dreadnoughts and the front window. Fleet banks were shared out between members and founders got their fee back. The FLEET tab is gone, and the old fleet chat channel is the Armada's.
+- **Fixes:** the traffic tests no longer fail on Wednesdays, when Bounty Week brings extra raiders.
+
 ### 2.5.2
 - **Fixes:**
   - Contact stories warn on the job board when a step will need more hold space or bunks than your ship has, and a stuck step tells you to switch ships instead of quietly waiting.

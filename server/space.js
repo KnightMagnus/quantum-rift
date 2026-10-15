@@ -88,7 +88,6 @@ export class Space {
     if (this.ordered(a, b)) return true;
     if (!a || !b || !a.player || this.sys.arena) return false;
     const rb = this.root(b); if (rb === a || rb.player) return false;   // never your own wing; players only in lawless space (isHostile)
-    if (rb.dread && a.player.s && a.player.s.data && a.player.s.data.fleet === rb.fleet) return false;
     return !b.dead && b.state === 'fly';
   }
   inner() { const S = this.sys; return S.danger <= 2 && !S.farside && !S.arena && !['umbral', 'deep'].includes(S.faction); }
@@ -96,15 +95,13 @@ export class Space {
   isHostile(a, b) {
     if (!a || !b || a === b || a.dead || b.dead) return false;
     const ra = this.root(a), rb = this.root(b); if (ra === rb) return false;
+    if (ra.rescueT > this.t || rb.rescueT > this.t) return false;   // 2.6: a downed captain waiting for rescue is left alone
     const pa = ra.player, pb = rb.player;
     if (this.sys.arena) return !!(ra.team && rb.team && ra.team !== rb.team);   // arena: teams only
-    if (pa && pb && this.game.sameFleet(pa, pb)) return false;   // fleetmates never fight
-    const dr = ra.dread ? ra : rb.dread ? rb : null, other = dr === ra ? rb : ra;
-    if (dr && other.player && other.player.s && other.player.s.data.fleet === dr.fleet) return false;   // a fleet's own Dreadnought
+    if (pa && pb && this.game.sameArmada(pa, pb)) return false;   // 2.6: Armada members and their wingmates never fight
+    if (pa && pb) return !!(this.game.dueling && this.game.dueling(pa, pb));   // 2.6: no open-galaxy PvP, whatever was fired; only agreed duels (and the Crucible, above)
     if (ra.aggro.has(rb.id) || rb.aggro.has(ra.id)) return true;
-    if ((ra.boss || ra.bossMinion) && pb || (rb.boss || rb.bossMinion) && pa) return true;   // invasion bosses attack everyone
-    if (dr) return false;                                         // Dreadnoughts only fight those who attack them
-    if (pa && pb) return this.sys.danger >= 3;                 // PvP only in lawless space
+    if ((ra.boss || ra.bossMinion || ra.kingpin) && pb || (rb.boss || rb.bossMinion || rb.kingpin) && pa) return true;   // 2.6: Armada contract kingpins too   // invasion bosses attack everyone
     if (pa || pb) {
       const p = pa || pb, npc = pa ? rb : ra, rep = p.rep[npc.faction] || 0, F = FACTIONS[npc.faction];
       const rh = this.game.rivalHostile ? this.game.rivalHostile(npc, p) : undefined; if (rh !== undefined) return rh;   // 1.1: rivals, hired guns, bribes
@@ -308,7 +305,7 @@ export class Space {
   // 2.4 personalities: cautious captains run early, steady ones when badly hurt, reckless ones never; named and story ships fight to the end
   mayFlee(e) {
     const thr = { cautious: 0.45, steady: 0.27, reckless: 0 }[e.pers] || 0;
-    if (!thr || e.owner || e.mission || e.rival || e.boss || e.bossMinion || e.dread || e.arcOf || e.storyKill || e.fighterOf || e.noDisable || this.sys.arena) return false;
+    if (!thr || e.owner || e.mission || e.rival || e.boss || e.bossMinion || e.arcOf || e.storyKill || e.fighterOf || e.noDisable || this.sys.arena) return false;
     return e.armor < e.st.armor * thr && e.shield < e.st.shield * 0.15;
   }
   // 2.4: a ship under attack calls nearby ships of its own side to help
@@ -443,7 +440,6 @@ export class Space {
     if (s.dead) return;
     const srcRoot = src ? this.root(src) : null;
     if (srcRoot && srcRoot !== this.root(s)) { const first = !this.root(s).aggro.has(srcRoot.id); this.root(s).aggro.add(srcRoot.id); if (!s.player && !s.target && s.ai !== 'flee') s.target = srcRoot; if (first && !s.owner) this.callHelp(s, srcRoot); }
-    if (s.dread && this.game.dreadInvulnerable()) { s.hitT = this.t; return [0, 1, srcRoot ? srcRoot.id : 0]; }   // outside the front window
     if (src && src.role && s.role) { const rm = roleMult(src.role, s.role); dA *= rm; dS *= rm; }   // the class triangle
     if (src && this.game.specMult) { const sm = this.game.specMult(this.root(src), src, s); dA *= sm; dS *= sm; }   // specialty ships
     const sh0 = s.shield, ar0 = s.armor, hadShield = s.shield > 0;
@@ -453,6 +449,8 @@ export class Space {
     if (srcRoot && srcRoot.player && !s.player) this.game.onHit(srcRoot.player, s, this);
     const done = Math.max(0, sh0 - s.shield) + Math.max(0, ar0 - s.armor);
     if (s.boss) this.game.onBossDamage(s, srcRoot, done);
+    if (srcRoot && srcRoot.player && this.root(s).player && !this.sys.arena && this.game.duelHit && this.game.duelHit(srcRoot, s, this)) return [done, hadShield ? 1 : 0, srcRoot.id];   // 2.6: a duel stops at disabled
+    if (s.armor <= 0 && s.player && this.game.rescueHold && this.game.rescueHold(s, srcRoot, this)) return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0];   // 2.6: an Armada can rescue a downed captain
     if (s.armor <= 0) this.kill(s, srcRoot);
     return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0];
   }
@@ -463,12 +461,10 @@ export class Space {
     this.remove(s);
     for (const f of this.ships.values()) if (f.fighterOf === s.id) f.ai = 'leave';
     if (s.player) { this.game.onPlayerDeath(s.player, this, by); return; }
-    if (s.dread) this.game.onDreadKilled(s, this, by);
     if (s.boss) this.game.onBossKilled(s, this);
     if (s.convoyOf) this.game.onConvoyLost(s);
     if (s.wingUid && this.game.onWingLost) this.game.onWingLost(s);   // 2.1
     if (s.wave) this.game.onWaveKill(s);
-    if (s.armada && this.game.onArmadaKilled) this.game.onArmadaKilled(s, this);
     if (this.game.maybeChest) this.game.maybeChest(this, s, by);
     if (by && by.player) this.game.onKill(by.player, s, this, s.lastHitBy && s.lastHitBy !== by.id);
     if (!s.fighterOf && Math.random() < (by && by.hull === 810 ? 0.82 : 0.55)) this.dropLoot(s);
@@ -502,7 +498,7 @@ export class Space {
       else this.ai(e);
       const st = e.catchup ? { ...e.st, maxSpeed: Math.max(e.st.maxSpeed, e.catchup.maxSpeed * 1.15), accel: Math.max(e.st.accel, e.catchup.accel * 1.1), turn: Math.max(e.st.turn, e.catchup.turn) } : e.st;
       step(e, st, e.disabled ? {} : e.inp);
-      e.shield = Math.min(e.st.shield, e.shield + e.st.shieldRe * DT * (this.t - (e.hitT || -9) > 2 ? 1 : 0.4) * (this.m ? this.m.shieldRe : 1));
+      e.shield = Math.min(e.st.shield, e.shield + e.st.shieldRe * DT * (this.t - (e.hitT || -9) > 2 ? 1 : 0.4) * (this.m ? this.m.shieldRe : 1) * (e.coopRe || 1));   // 2.6: coopRe is the Armada buff
       if (e.st.armorRe) e.armor = Math.min(e.st.armor, e.armor + e.st.armorRe * DT);
       if (e.st.fuelRe) e.fuel = Math.min(e.st.fuel, e.fuel + e.st.fuelRe * DT);
       if (!e.disabled) this.weapons(e);
@@ -547,7 +543,7 @@ export class Space {
       const fl = (e.inp && e.inp.thrust ? 1 : 0) | (e.inp && e.inp.ab ? 2 : 0) | (e.disabled ? 4 : 0) | (e.state === 'jumpout' ? 8 : 0) | (e.player ? 16 : 0) | (e.elite ? 32 : 0) | (e.rival ? 64 : 0);
       ships.push([e.id, e.hull, Math.round(e.x), Math.round(e.y), Math.round(e.a * 1000), Math.round(e.vx), Math.round(e.vy), fl,
                   Math.round(100 * e.shield / Math.max(1, e.st.shield)), Math.round(100 * e.armor / Math.max(1, e.st.armor)), FAC.indexOf(e.faction),
-                  e.player ? (this.sys.arena ? `${e.team === 'A' ? 'Azure' : 'Crimson'} · ` : e.player.s && e.player.s.data && e.player.s.data.fleet ? `[${e.player.s.data.fleet}] ` : '') + e.player.name : (e.name || null), e.owner || 0, e.pw || 0]);
+                  e.player ? (this.sys.arena ? `${e.team === 'A' ? 'Azure' : 'Crimson'} · ` : '') + e.player.name : (e.name || null), e.owner || 0, e.pw || 0]);
     }
     const shots = this.shots.map(s => [Math.round(s.x), Math.round(s.y), Math.round(s.vx), Math.round(s.vy), s.w]);
     const beams = this.beams.map(b => [b.id, Math.round(b.a * 1000), Math.round(b.len), b.w]);

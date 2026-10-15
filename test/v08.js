@@ -55,7 +55,7 @@ import('../shared/roles.js').then(async ({ ROLES_INFO, roleMult }) => {
   const b = fake('Hauler'), dd = b.s.data; dd.ship.hull = 704; ok(game.bonus(dd).miningPct >= 50, 'survey ships mine 50% better');
   // --- specialists
   const { SPECIALISTS, SPEC, BP_NEED, PART_RATE, COMPONENTS } = await import('../shared/specialty.js');
-  ok(SPECIALISTS.length === 10 && SPECIALISTS.every(sp => A.ships[sp.id] && fs.existsSync(new URL(`../client/assets/ships/${sp.id}.png`, import.meta.url)) && fs.existsSync(new URL(`../client/assets/ships/${sp.id}_yard.png`, import.meta.url))), 'ten specialists, each with a rendered sprite sheet and shipyard picture');
+  ok(SPECIALISTS.length === 10 && SPECIALISTS.every(sp => A.ships[sp.id] && fs.existsSync(new URL(`../client/assets/ships/${sp.id}.webp`, import.meta.url)) && fs.existsSync(new URL(`../client/assets/ships/${sp.id}_yard.png`, import.meta.url))), 'ten specialists, each with a rendered sprite sheet and shipyard picture');
   ok(SPECIALISTS.every(sp => sp.weapons.every(([w]) => A.weapons[w])), 'every specialist weapon exists');
   const c = fake('Specialist'), d2 = c.s.data; d2.credits = 5e8; for (const m of ['alloy', 'crystal', 'isotope']) d2.mats[m] = [20, 20, 20, 20, 20];
   Object.assign(d2.station, { claimed: true, ops: 5, site: 'site-meridian' }); game.db.world.sites['site-meridian'] = game.db.key(d2.name); d2.sys = 'meridian'; d2.stellar = 'site-meridian';

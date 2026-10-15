@@ -22,8 +22,8 @@ export const TUTORIAL = [
   { ev: 'chest', title: 'Open a loot chest', text: 'Hostiles sometimes drop glowing pink loot chests. Destroy pirates or the Swarm and fly over one.', reward: 15000 },
   { check: (d) => !!(d.quests && (d.quests.done || []).length), title: 'Finish a story', text: 'See a contact\'s story through to its end. Your progress is on the CAREER page of the ship and captain panel (I).', reward: 20000 },
   { check: (d) => !!(d.story && d.story.done && d.story.done.includes('qv1')), title: 'The Threshold Spire', text: 'Someone is waiting at the Threshold Spire in Far Mouth. Land there.', reward: 20000 },
-  { check: (d) => d.station.ops >= 3, title: 'Shipyard and lab (Ops 3)', text: 'Build Ops 3: refits, the drydock and specialist building.', reward: 40000, mat: ['crystal', 1, 1] },
-  { check: (d) => (d.holdout && d.holdout.best >= 3) || (d.stats.armadas || 0) >= 1, title: 'Hold the line', text: 'Clear three waves of a Station Holdout (station DEFENSE), or destroy an armada summoned with a directive.', reward: 50000 },
+  { check: (d) => d.station.ops >= 3, title: 'Shipyard and lab (Ops 3)', text: 'Build Ops 3: the drydock, the station shipyard and specialist building.', reward: 40000, mat: ['crystal', 1, 1] },
+  { check: (d) => (d.holdout && d.holdout.best >= 3), title: 'Hold the line', text: 'Clear three waves of a Station Holdout (station DEFENSE). Your Armada can defend it with you.', reward: 50000 },
   { check: (d, A) => (A.ships[d.ship.hull].cost || 0) >= 1000000 || A.ships[d.ship.hull].kind === 'specialist', title: 'Captain of a capital', text: 'Fly a ship worth a million credits or more, or build a specialist.', reward: 100000, mat: ['alloy', 3, 1] },
 ];
 // 2.5: three steps were added; saves from before move to the same goal in the longer list

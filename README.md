@@ -2,11 +2,11 @@
 
 **A space trading and combat game in your browser, in the spirit of the classic *Escape Velocity Nova*.**
 
-Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server so friends can share the same galaxy.
+Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
 Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. Its ships, weapons, sounds and the Quantum Station come from that plug-in, and the game has grown far beyond it since.
 
-![Flying past Concordia, with a Caravel Trader crossing the system](docs/screenshots/flight.jpg)
+![A Caravel Trader flying past Concordia and its moon](docs/screenshots/flight.jpg)
 
 ---
 
@@ -25,16 +25,23 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 - Your guns hit anything you aim at. Shoot a friendly ship and it turns on you, and its faction remembers.
 - NPC captains have personalities: some run when beaten, some call friends for help, and capital ships fire broadsides.
 - Autopilot landing and multi-jump routes, a hyperspace jump with its own effect and sound, and hold-right-click to look ahead.
-- Roughly 120 ships, from a 30,000-credit Wasp Skirmisher to the Constitution, plus ten one-of-a-kind specialty ships.
+- Roughly 100 ships to fly, from a 15,000-credit Mite Drone to the Constitution, plus ten one-of-a-kind specialty ships. Every ship is rendered from a 3D model, and smaller ships bank into their turns.
 
 **A career to build**
 - Trade on living markets with shortages and gluts. Take cargo runs, bounties, patrols, passengers, rush deliveries, smuggling and Syndicate contracts.
 - **Questlines:** a contact in every spaceport bar who remembers you and has multi-step stories to offer, plus six handcrafted side stories.
-- Claim a derelict station hull and build it into your **Personal Station**: refinery, research lab, refits to Mk II and Mk III, and a station shipyard.
+- Claim a derelict station hull and build it into your **Personal Station**: refinery, research lab, station shipyard, Station Holdouts, and a warp core to relocate it to another hull.
 - **Docks A to D:** each dock holds a lead ship and up to two wingmate ships, chosen from your hangar. You fly the active dock's lead, and its wingmates fly in formation and follow your orders.
 - Hire officers of every race, promote them, and assign them to your bridge or as captain and crew of your wingmates.
-- Combat ratings, faction story arcs, a Syndicate career, colonies, an arena and leaderboards.
+- Combat ratings, faction story arcs, a Syndicate career, colonies and leaderboards.
 - A main story waiting somewhere in the Rift. We won't spoil it.
+
+**Better together (online games)**
+- **Captain Friends:** see who's online and where, and send private messages that wait for offline captains.
+- **The Armada:** team up with up to four other captains and all your wingmates. Allies show in green and can't hurt each other. You get a private chat, small buffs, shared bounties, a rescue if your ship goes down, and follow-the-leader jumps.
+- **Armada contracts and co-op Holdouts:** group kingpins with refitted squadrons, and Station Holdouts your friends can fly in to defend.
+- **Trading:** swap credits, goods, crates, blueprints and parts with friends, each of you docked at your own station.
+- **PvP only when you agree to it:** no ganking in the open galaxy. Duels and Armada Duels end at disabled, and the Crucible arena has rated 1v1, 2v2 and 4v4 matches.
 
 **Made to be comfortable**
 - Solo mode with pause, save slots and save files, or online play with accounts. Solo games hide the multiplayer screens.
@@ -51,8 +58,10 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 | *The galaxy map, with trade, standing and danger views* | *A hyperspace jump* |
 | ![Rendered landing pictures](docs/screenshots/landing-pictures.jpg) | ![Rendered planets](docs/screenshots/planets.jpg) |
 | *A landing picture for every world* | *Pre-rendered planets* |
+| ![Two captains in an Armada, with the ALLIES tab](docs/screenshots/coop.jpg) | ![A duel in the Crucible arena](docs/screenshots/crucible.jpg) |
+| *An Armada: allies and their wingmates show in green* | *The Crucible arena* |
 
-![The ten new Quantum ships of version 2.3](docs/screenshots/new-ships.png)
+![Ships re-rendered in 2.6, and a Cutlass rolling into its turns](docs/screenshots/ships.png)
 
 ---
 
@@ -97,11 +106,11 @@ On the same network, friends can join at `http://<your-computer's-address>:8080`
 | I | ship and captain panel |
 | E (hold) | face your target |
 | Q | full stop |
-| K / G / H / Y / U | fleet orders: attack my target, form up, hold position, hold fire, collect loot |
+| K / G / H / Y / U | wingmate orders: attack my target, form up, hold position, hold fire, collect loot |
 | Z / X | zoom |
 | N | mute |
 | P | pause (solo) |
-| Enter | chat (`/s` system, `/f` fleet) |
+| Enter | chat (`/s` system, `/a` Armada, `/w name message` private, `/r` reply) |
 | ? or F1 | the controls card |
 | Mouse | click to target, click a planet to set your nav point, double-click to land; **hold right-click and move** to look ahead; wheel to zoom |
 
@@ -143,5 +152,5 @@ One small CPU handles dozens of players; only systems with players in them run a
 
 - *Escape Velocity Nova* (Ambrosia Software / ATMOS): the game that started it all. Quantum Rift is an unofficial fan project and is not affiliated with them.
 - **EV Quantum**, the EV Nova plug-in whose ships, weapons, sounds and stations Quantum Rift was rebuilt from.
-- *Endless Sky* and *Star Trek Fleet Command*, for ideas: hailing, fleet orders and map views from the first; specialty ships, docks and armadas from the second.
+- *Endless Sky* and *Star Trek Fleet Command*, for ideas: hailing, fleet orders and map views from the first; specialty ships and docks from the second.
 - The in-game radio uses the public iHeartRadio station directory.

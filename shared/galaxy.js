@@ -244,15 +244,20 @@ export const ORE_PROCESS = { per: 12, cost: 1500, to: { ore: 'alloy', gas: 'isot
 export const OPS = [
   { lv: 1, title: 'Restore Docking', cost: 10000, mats: [['alloy', 0, 1]], unlock: 'Refinery and the station market' },
   { lv: 2, title: 'Market & Refinery', cost: 60000, mats: [['alloy', 1, 1], ['crystal', 0, 1]], unlock: 'Research lab, faster refinery' },
-  { lv: 3, title: 'Shipyard, Lab & Warp Core', cost: 180000, mats: [['alloy', 2, 1], ['crystal', 1, 1], ['isotope', 0, 1]], unlock: 'Mk II refits, Halo Surveyor' },
+  { lv: 3, title: 'Shipyard, Lab & Warp Core', cost: 180000, mats: [['alloy', 2, 1], ['crystal', 1, 1], ['isotope', 0, 1]], unlock: 'Halo Surveyor, drydock, specialist building' },
   { lv: 4, title: 'Academy & Refinery Mk II', cost: 400000, mats: [['alloy', 3, 1], ['crystal', 2, 1], ['isotope', 1, 1]], unlock: 'Wingmates, refinery Mk II' },
-  { lv: 5, title: 'Defense Grid', cost: 900000, mats: [['alloy', 4, 1], ['crystal', 3, 1], ['isotope', 2, 1]], unlock: 'Mk III rebuilds, Armada, Exotics, Constitution' },
+  { lv: 5, title: 'Defense Grid', cost: 900000, mats: [['alloy', 4, 1], ['crystal', 3, 1], ['isotope', 2, 1]], unlock: 'Exotics, Constitution' },
 ];
+// 2.6: warp your Personal Station to another unclaimed hull, keeping everything (Ops, research, refinery, docks, stored ships)
+export const RELOCATE = { base: 100000, perOps: 60000, mats: [['alloy', 1, 1]], cooldownH: 24 };
+export const relocateCost = (ops) => RELOCATE.base + RELOCATE.perOps * (ops || 0);
 export { RESEARCH2 as RESEARCH } from './hangar.js';   // 0.5: four research trees (see shared/hangar.js)
 export const REFINERY = { minutes: [0, 20, 15, 15, 10, 8], silo: 3 };   // minutes per unit by Ops level
-// Ships the station sells by Ops level (Halo Surveyor, Mk II refits at 3; wingmates at 4; armada, Mk III, Exotics, Constitution at 5)
+// Ships the station sells by Ops level (Halo Surveyor at 3; wingmates at 4; Exotics and the Constitution at 5)
 export const STATION_SHIPS = { 3: [735], 5: [736, 785, 786, 787] };
+// 2.6: the Mk II and Mk III refits are no longer available to captains. The hulls stay as enemy ships (kingpins' rogue
+// refits in Armada contracts), and these tables map them back to their base hulls for old saves.
 export const MK2_OF = { 703: 720, 705: 721, 704: 722, 708: 723, 706: 724, 707: 725, 709: 726, 710: 727, 711: 728, 712: 729, 713: 730, 714: 731, 715: 732, 716: 733, 717: 734 };
 export const MK3_OF = { 723: 745, 730: 746, 728: 747, 732: 748, 733: 749, 734: 750 };
 export const WINGMATES = [751, 752, 753, 754, 755, 756];
-export const ARMADA = [757, 758, 759];
+export const ARMADA_HULLS = [757, 758, 759];   // 2.6: the old station Armada escorts, now enemy-only

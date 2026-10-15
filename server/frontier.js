@@ -304,12 +304,12 @@ export const FrontierMixin = {
       colonies: p => this.coloniesOf(p).length, mastery: p => Object.values(p.mastery || {}).reduce((a, b) => a + b, 0),
     }; const val = Object.prototype.hasOwnProperty.call(vals, cat) ? vals[cat] : null;
     if (!val) return [];
-    return all.map(p => ({ name: p.name, fleet: p.fleet || null, v: Math.round(val(p)) })).concat(this.rivalBoard ? this.rivalBoard(cat) : []).filter(x => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 20);   // 1.1: rival captains compete too
+    return all.map(p => ({ name: p.name, fleet: null, v: Math.round(val(p)) })).concat(this.rivalBoard ? this.rivalBoard(cat) : []).filter(x => x.v > 0).sort((a, b) => b.v - a.v).slice(0, 20);   // 1.1: rival captains compete too
   },
   profile(name) {
     const p = this.db.get(String(name || '')); if (!p) return null;
     const top = Object.entries(p.mastery || {}).sort((a, b) => b[1] - a[1])[0];
-    return { name: p.name, fleet: p.fleet || null, ship: this.A.ships[p.ship.hull].name, shipName: p.ship.name, ops: p.station.ops, site: p.station.site ? SYS[STELLARS[p.station.site].system].name : null,
+    return { name: p.name, fleet: null, ship: this.A.ships[p.ship.hull].name, shipName: p.ship.name, ops: p.station.ops, site: p.station.site ? SYS[STELLARS[p.station.site].system].name : null,
              colonies: this.coloniesOf(p).map(([id]) => STELLARS[id].name), kills: p.stats.kills, earned: p.stats.earned, jumps: p.stats.jumps, mined: p.stats.mined || 0,
              arena: p.arena || null, mastery: top ? { ship: this.A.ships[top[0]].name, tier: masteryTier(top[1]) } : null, officers: (p.officers || []).length, online: !!this.sessionOf(p.name), created: p.created || null };
   },

@@ -8,10 +8,11 @@ const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.met
 const ok = (c, m) => { if (!c) { console.error('FAIL:', m); process.exit(1); } console.log('ok -', m); };
 process.env.SEEDS_FILE = '/nonexistent';
 const g = new Game(A, new DB('/tmp/rift-v23-' + Date.now()));
+g.event = () => null; g.anomalies = () => ({});   // 2.6: traffic counts must not depend on the weekday's event (Bounty Week brings 50% more raiders)
 // new hulls
 ok(SHIPS23.length === 10 && SHIPS23.every(H => g.A.ships[H.id] && g.A.ships[H.id].role), 'ten new hulls are in the game, each with a class role');
-const dir = new URL('../client/assets/ships/', import.meta.url).pathname;
-ok(SHIPS23.every(H => ['', '_glow', '_yard'].every(s => fs.existsSync(`${dir}${H.id}${s}.png`))), 'each has its 36-heading sprite sheet, engine glow and shipyard picture');
+const dir = decodeURIComponent(new URL('../client/assets/ships/', import.meta.url).pathname);
+ok(SHIPS23.every(H => ['', '_glow'].every(s => fs.existsSync(`${dir}${H.id}${s}.webp`)) && fs.existsSync(`${dir}${H.id}_yard.png`)), 'each has its sprite sheet (2.6: WebP with banking), engine glow and shipyard picture');
 ok(SHIPS23.every(H => COMMON_HULLS.includes(H.id) && FACTION_HULLS.quantum.includes(H.id)), 'they are sold in Concord yards');
 const yardP = Object.values(STELLARS).find(p => p.svc.includes('Y') && p.tech >= 2 && !p.hub && !p.site && SYSTEMS.find(s => s.id === p.system).faction === 'spacer');
 ok(yardP && [820, 821].every(h => g.yard(yardP, g.fresh()).includes(h)), 'the cheapest new hulls are sold in common yards everywhere');

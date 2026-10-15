@@ -33,10 +33,9 @@ function fake(name) {
   d.station.active.ends = Date.now() - 1; game.checkStation(d); ok(d.station.done.includes('shield1'), 'research completes on time');
   d.station.refT -= 60 * 60000; game.checkStation(d); ok(d.station.refUnits === 3, 'refinery filled its silos while away');
   a.send({ t: 'station', op: 'collect' }); ok(d.station.refUnits === 0, 'collected refinery output');
-  // ---- refit chain: Cutlass -> Mk II -> Mk III
+  // ---- 2.6: refits are retired
   a.send({ t: 'buyship', hull: 708 }); ok(d.ship.hull === 708, 'bought a Cutlass');
-  a.send({ t: 'station', op: 'refit' }); ok(d.ship.hull === 723, 'refit to Cutlass Mk II');
-  a.send({ t: 'station', op: 'refit' }); ok(d.ship.hull === 745, 'rebuilt to Cutlass Mk III');
+  a.send({ t: 'station', op: 'refit' }); ok(d.ship.hull === 708, 'refits are retired: the Cutlass stays a Cutlass');
   // ---- wingmates
   a.send({ t: 'buyship', hull: 753, store: true }); a.send({ t: 'buyship', hull: 754, store: true });   // 2.1: wingmates are ships in a dock
   for (const [j, x] of d.dock.filter(x => [753, 754].includes(x.ship.hull)).entries()) a.send({ t: 'docks', op: 'assign', k: d.activeDock, slot: j, uid: x.ship.uid });

@@ -21,10 +21,16 @@ function viewColor(G, s, seen) {
 const FAC = Object.keys(FACTIONS);
 const wormImg = new Image(); wormImg.src = 'assets/wormhole.png';
 const sheets = new Map();
-export function sheet(hull, glow) {
-  const k = hull + (glow ? 'g' : '');
-  if (!sheets.has(k)) { const im = new Image(); im.src = `assets/ships/${hull}${glow ? '_glow' : ''}.png`; sheets.set(k, im); }
+export function sheet(H, glow) {   // 2.6: the sharper full-colour sheets (12 wide, with banking frames) where a hull has them
+  const k = H.id + (glow ? 'g' : '');
+  if (!sheets.has(k)) { const im = new Image(); im.src = `assets/ships/${H.id}${glow ? '_glow' : ''}.${H.spr ? 'webp' : 'png'}`; sheets.set(k, im); }
   return sheets.get(k);
+}
+// 2.6: banking. Ships roll into the turn: turning clockwise (right) shows the set rolled right, anticlockwise the set rolled left.
+function bankOf(e, now) {
+  const pa = e._pa ?? e.a, dtm = Math.max(1, now - (e._pt || now - 16)); let d = e.a - pa; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+  e._pa = e.a; e._pt = now; e._br = (e._br || 0) * 0.82 + (d / dtm * 1000) * 0.18;
+  return e._br > 0.55 ? 1 : e._br < -0.55 ? 2 : 0;
 }
 const stationImgs = [0, 1, 2, 3, 4, 5].map(k => { const im = new Image(); im.src = `assets/stations/${k}.png`; return im; });
 const hubImg = new Image(); hubImg.src = 'assets/hub.png';
@@ -65,6 +71,15 @@ function rockSprite(k) {   // a few dark, lumpy background asteroids, drawn once
 }
 function decorFor(S) {
   if (decorCache.has(S.id)) return decorCache.get(S.id);
+  if (S.arena) {   // 2.6: the Crucible has its own look: a ring of pylons in Azure and Crimson, dark crimson nebulae, no borrowed worlds
+    const r = seeded(hashStr('crucible')), D = { sun: { x: 380, y: -260, size: 110, core: '255,216,208', halo: '255,90,80', depth: 0.03 }, gal: [], hole: null, pulsar: null, giant: null, arc: null, neb: [], belt: null, storm: null,
+      derelict: [], wreck: [], ruin: [], crystal: [], debris: [], comet: null, sats: [], pods: [], beacons: [], bgp: [], meteorT: 99, arena: { R: 1150 } };
+    D.neb.push({ img: 'nebula_7', x: -700, y: 100, size: 2600, rot: 0.4, a: 0.6, depth: 0.25 }, { img: 'nebula_1', x: 800, y: 200, size: 2400, rot: 2.1, a: 0.5, depth: 0.25 });
+    D.arc = { img: 'arc_1', x: 0, y: -700, size: 1400, rot: 0, depth: 0.14 };
+    for (let i = 0; i < 36; i++) { const a = i / 36 * 6.283; D.beacons.push({ x: Math.cos(a) * 1150, y: Math.sin(a) * 1150, col: Math.cos(a) < 0 ? '#5aa8ff' : '#ff5a4a', ph: i * 0.35 }); }
+    D.debris.push({ x: 0, y: 0, spin: 0.002, bits: Array.from({ length: 18 }, () => ({ a: r() * 6.283, d: 420 + r() * 700, s: 3 + r() * 6, sp: (r() - 0.5) * 0.03, rot: r() * 6 })) });
+    decorCache.set(S.id, D); return D;
+  }
   const r = seeded(hashStr('decor:' + S.id)), pick = (a) => a[Math.floor(r() * a.length)], wild = ['frontier', 'deep', 'umbral'].includes(S.faction) || S.farside;
   const D = { sun: null, gal: [], hole: null, pulsar: null, giant: null, arc: null, neb: [], belt: null, storm: null, derelict: [], wreck: [], ruin: [], crystal: [], debris: [], comet: null, sats: [], pods: [], beacons: [], meteorT: r() * 10 };
   const clear = (x, y, m) => S.stellars.every(p => Math.hypot(p.x - x, p.y - y) > (p.r || 80) + m) && Math.hypot(x, y) > 500;
@@ -179,6 +194,7 @@ function drawDecorNear(ctx, S, W, H, z, sx, sy, now) {
   for (const c of D.crystal) { sprite(c, 0.95); const im = decorImg(c.img); if (ready(im)) { const x = sx(c.x), y = sy(c.y), s = c.size * z * 1.25; if (onS(x, y, s)) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.18 + 0.14 * Math.sin(t * 1.3 + c.ph); ctx.translate(x, y); ctx.rotate(c.rot + t * c.spin); ctx.drawImage(im, -s / 2, -s / 2, s, s); ctx.restore(); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } } }
   for (const sat of D.sats) { const a = sat.a + t * sat.sp; sprite({ img: sat.img, x: sat.cx + Math.cos(a) * sat.R, y: sat.cy + Math.sin(a) * sat.R * 0.8, size: sat.size, rot: a + 1.57 }); }
   for (const p of D.pods) { const span = 6000, px = ((p.x + p.vx * t) % span + span * 1.5) % span - span / 2, py = ((p.y + p.vy * t) % span + span * 1.5) % span - span / 2; sprite({ img: p.img, x: px, y: py, size: p.size, rot: p.rot + t * p.sp }); }
+  if (D.arena) { ctx.save(); ctx.setLineDash([10 * z + 4, 14 * z + 6]); ctx.lineWidth = 1.5; for (const [col, a0] of [['rgba(90,168,255,.35)', Math.PI / 2], ['rgba(255,90,74,.35)', -Math.PI / 2]]) { ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(sx(0), sy(0), D.arena.R * z, a0, a0 + Math.PI); ctx.stroke(); } ctx.restore(); }   // 2.6: the Crucible's bounds
   for (const b of D.beacons) { const x = sx(b.x), y = sy(b.y); if (!onS(x, y, 20)) continue; const on = Math.sin(t * 2.2 + b.ph) > 0.55;
     ctx.fillStyle = '#556'; ctx.fillRect(x - 1.5 * z - 1, y - 1.5 * z - 1, 3 * z + 2, 3 * z + 2); if (on) { ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(x, y, 0, x, y, 9 * z + 4); g.addColorStop(0, b.col); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 9 * z + 4, 0, 6.283); ctx.fill(); ctx.globalCompositeOperation = 'source-over'; } }
 }
@@ -349,7 +365,9 @@ function rockImage(k) {
 const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae0'];   // 5: hostile loot chest
 
 // ------------------------------------------------------------------ main draw
+let tagRects = [];   // 2.6: name tags already drawn this frame, so close ships' tags stack instead of overlapping
 export function draw(G, ctx, W, H, dt, now) {
+  tagRects = [];
   const me = G.view, z = G.zoom, S = SYS[G.sys];
   let cx = (me ? me.rx : 0) + (G.lookX || 0), cy = (me ? me.ry : 0) + (G.lookY || 0);   // 2.1: hold right-click to look ahead
   Object.assign(cam, { cx, cy, z, W, H });   // un-shaken camera, used for mouse picking
@@ -531,7 +549,7 @@ function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
   for (const [x, y] of salvagePoints(G)) edgeArrow(ctx, W, H, sx(x), sy(y), '#ffc85a', 'Salvage', Math.hypot(x - me.rx, y - me.ry));   // 2.4
   if (G.navStellar && !seen.has(G.navStellar)) { const p = S.stellars.find(x => x.id === G.navStellar); if (p) edgeArrow(ctx, W, H, sx(p.x), sy(p.y), '#7ad0ff', p.name, Math.hypot(p.x - me.rx, p.y - me.ry)); }
   if (Math.hypot(G.lookX || 0, G.lookY || 0) > 50) edgeArrow(ctx, W, H, sx(me.rx), sy(me.ry), '#9fe0ff', 'You', Math.hypot(G.lookX, G.lookY));   // 2.1 look-ahead
-  const T = G.target && G.ents.get(G.target); if (T) edgeArrow(ctx, W, H, sx(T.rx), sy(T.ry), G.hostile(T) ? G.pal.hostile : G.pal.friend, (T.name || (G.A.ships[T.hull] || {}).name || 'target').split(' · ')[0], Math.hypot(T.rx - me.rx, T.ry - me.ry));
+  const T = G.target && G.ents.get(G.target); if (T) edgeArrow(ctx, W, H, sx(T.rx), sy(T.ry), G.isAlly && G.isAlly(T) ? G.pal.ally : G.hostile(T) ? G.pal.hostile : G.pal.friend, (T.name || (G.A.ships[T.hull] || {}).name || 'target').split(' · ')[0], Math.hypot(T.rx - me.rx, T.ry - me.ry));
   // 2.1 hyperspace: spool rings, star streaks along your heading, a white bloom; arrival plays it in reverse with a shockwave
   if (G._jumping || (me.fl & 8)) hyperOut(G, ctx, W, H, now, sx(me.rx), sy(me.ry), me.a);
   if (G._arriveT && now - G._arriveT < 1100) hyperIn(G, ctx, W, H, now - G._arriveT, sx(me.rx), sy(me.ry), me.a);
@@ -543,20 +561,21 @@ function drawShip(G, ctx, e, x, y, z, now) {
   const H = G.A.ships[e.hull]; if (!H) return;
   const sz = H.size, scale = z * G.spriteScale, w = sz * scale;
   if (x < -w || y < -w || x > ctx.canvas.width + w || y > ctx.canvas.height + w) return;
-  const fr = ((Math.round(e.a / (Math.PI / 18)) % 36) + 36) % 36;
-  const im = sheet(e.hull);
+  const fr0 = ((Math.round(e.a / (Math.PI / 18)) % 36) + 36) % 36, SP = H.spr, fs = SP ? SP.fs : sz, cols = SP ? SP.cols : 6;
+  const fr = fr0 + (SP && SP.banks && !(e.fl & 4) ? bankOf(e, now) * 36 : 0), srcX = (fr % cols) * fs, srcY = Math.floor(fr / cols) * fs;
+  const im = sheet(H);
   if (e.fl & 8 && im.complete && im.naturalWidth) {   // 2.1: a ship in hyperspace leaves a stretched, blue-shifted ghost trail
     const ux = Math.sin(e.a), uy = -Math.cos(e.a); ctx.globalCompositeOperation = 'lighter';
-    for (let i = 6; i >= 1; i--) { ctx.globalAlpha = 0.22 * (1 - i / 7); const o = i * w * 0.32; ctx.drawImage(im, (fr % 6) * sz, Math.floor(fr / 6) * sz, sz, sz, x - ux * o - w / 2, y - uy * o - w / 2, w, w); }
+    for (let i = 6; i >= 1; i--) { ctx.globalAlpha = 0.22 * (1 - i / 7); const o = i * w * 0.32; ctx.drawImage(im, srcX, srcY, fs, fs, x - ux * o - w / 2, y - uy * o - w / 2, w, w); }
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
     const g = ctx.createRadialGradient(x + ux * w * 0.35, y + uy * w * 0.35, 0, x + ux * w * 0.35, y + uy * w * 0.35, w * 0.6); g.addColorStop(0, 'rgba(220,240,255,.85)'); g.addColorStop(1, 'rgba(120,170,255,0)');
     ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x + ux * w * 0.35, y + uy * w * 0.35, w * 0.6, 0, 6.283); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
   }
   if (e.fl & 32) { ctx.shadowColor = 'rgba(255,205,90,.95)'; ctx.shadowBlur = Math.max(6, 16 * z); }   // mastery Tier 5 gold trim
-  if (im.complete && im.naturalWidth) ctx.drawImage(im, (fr % 6) * sz, Math.floor(fr / 6) * sz, sz, sz, x - w / 2, y - w / 2, w, w);
+  if (im.complete && im.naturalWidth) ctx.drawImage(im, srcX, srcY, fs, fs, x - w / 2, y - w / 2, w, w);
   else { ctx.fillStyle = '#888'; ctx.beginPath(); ctx.arc(x, y, w / 4, 0, 6.28); ctx.fill(); }
   ctx.shadowBlur = 0;
-  if (e.fl & 1 && H.glow) { const g = sheet(e.hull, true); if (g.complete && g.naturalWidth) { ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(g, (fr % 6) * sz, Math.floor(fr / 6) * sz, sz, sz, x - w / 2, y - w / 2, w, w); ctx.globalCompositeOperation = 'source-over'; } }
+  if (e.fl & 1 && H.glow && (!SP || SP.glow)) { const g = sheet(H, true); if (g.complete && g.naturalWidth) { ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(g, srcX, srcY, fs, fs, x - w / 2, y - w / 2, w, w); ctx.globalCompositeOperation = 'source-over'; } }
   ctx.globalAlpha = 1;
   if (fx.length < 1200 && e.ar != null && e.ar < 50 && !(e.fl & 8) && e.rx != null && Math.random() < (50 - e.ar) / 50 * 0.4) {   // 2.4: damaged ships trail smoke, and badly damaged ones burn
     const ox = (Math.random() - 0.5) * sz * 0.4, oy = (Math.random() - 0.5) * sz * 0.4;
@@ -566,12 +585,20 @@ function drawShip(G, ctx, e, x, y, z, now) {
   if (e.fl & 4) { ctx.fillStyle = 'rgba(255,120,60,.8)'; if (Math.random() < 0.3) ctx.fillRect(x + (Math.random() - 0.5) * w / 2, y + (Math.random() - 0.5) * w / 2, 2, 2); }
   if (G.hover === e.id && G.target !== e.id) { const r = w * 0.5 + 4; ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
   const tgt = G.target === e.id;
+  const ally = G.isAlly && G.isAlly(e);
+  if (ally && !tgt) {   // 2.6: Armada members and their wingmates carry a green marker
+    const r = w * 0.55 + 5; ctx.strokeStyle = G.pal.ally; ctx.globalAlpha = 0.75; ctx.lineWidth = 1.2;
+    for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4; ctx.beginPath(); ctx.arc(x, y, r, a - 0.28, a + 0.28); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  }
   if (tgt) {
-    const r = w * 0.55 + 6; ctx.strokeStyle = G.hostile(e) ? G.pal.hostile : G.pal.friend; ctx.lineWidth = 1.5;
+    const r = w * 0.55 + 6; ctx.strokeStyle = ally ? G.pal.ally : G.hostile(e) ? G.pal.hostile : G.pal.friend; ctx.lineWidth = 1.5;
     for (const [dx, dy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.beginPath(); ctx.moveTo(x + dx * r, y + dy * r * 0.6); ctx.lineTo(x + dx * r, y + dy * r); ctx.lineTo(x + dx * r * 0.6, y + dy * r); ctx.stroke(); }
   }
-  if (e.name && (e.fl & 16 || e.fl & 64 || tgt)) { ctx.fillStyle = e.fl & 16 ? '#9cf' : e.fl & 64 ? '#f2c66a' : '#ddd';   // 1.1: rival captains carry gold name tags
-    ctx.font = '13px Tahoma'; ctx.textAlign = 'center'; ctx.fillText(e.name, x, y - w * 0.55 - 6); }
+  if (e.name && (e.fl & 16 || e.fl & 64 || tgt || ally)) { ctx.fillStyle = ally ? G.pal.ally : e.fl & 16 ? (G.hostile(e) ? G.pal.hostile : '#9cf') : e.fl & 64 ? '#f2c66a' : '#ddd';   // 1.1: rival captains carry gold name tags
+    ctx.font = '13px Tahoma'; ctx.textAlign = 'center'; const tw = ctx.measureText(e.name).width; let ty = y - w * 0.55 - 6;
+    for (let k = 0; k < 6 && tagRects.some(q => Math.abs(q[0] - x) < (q[2] + tw) / 2 + 4 && Math.abs(q[1] - ty) < 14); k++) ty -= 14;
+    tagRects.push([x, ty, tw]); ctx.fillText(e.name, x, ty); }
 }
 
 // ------------------------------------------------------------------ radar
@@ -592,8 +619,8 @@ export function radar(G, ctx) {
   for (const e of G.ents.values()) {
     if (e.id === me.id) continue;
     const x = px(e.rx), y = py(e.ry); if (x < 0 || y < 0 || x > W || y > H) continue;
-    const hos = G.hostile(e); ctx.fillStyle = e.owner === me.id ? G.pal.own : e.fl & 16 ? G.pal.player : hos ? G.pal.hostile : G.pal.neutral;
-    const s = e.id === G.target ? 4 : 2.5;
+    const hos = G.hostile(e), al = G.isAlly && G.isAlly(e); ctx.fillStyle = e.owner === me.id ? G.pal.own : al ? G.pal.ally : e.fl & 16 ? (hos ? G.pal.hostile : G.pal.player) : hos ? G.pal.hostile : G.pal.neutral;
+    const s = e.id === G.target ? 4 : al ? 3.2 : 2.5;
     if (hos && G.opts.cb) { ctx.beginPath(); ctx.moveTo(x, y - s); ctx.lineTo(x + s, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s, y); ctx.fill(); }   // colour-blind mode: hostiles are diamonds too
     else ctx.fillRect(x - s / 2, y - s / 2, s, s);
   }
@@ -638,6 +665,7 @@ export function galaxy(G, ctx, opts = {}) {
   const route = G.route || [];
   if (route.length && SYS[G.sys]) { ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = big ? 2.5 : 2; ctx.beginPath(); let [a, b] = P(SYS[G.sys]); ctx.moveTo(a, b); for (const r of route) { [a, b] = P(SYS[r]); ctx.lineTo(a, b); } ctx.stroke(); }
   const onRoute = new Set(route), sites = G.sites || {}, myStSys = G.you && G.you.station && G.you.station.claimed && G.you.station.site && STELLARS[G.you.station.site] ? STELLARS[G.you.station.site].system : null;
+  const allySys = {}; for (const m of (G.you && G.you.armada && G.you.armada.members) || []) if (m.sysId && m.name !== G.myName) (allySys[m.sysId] = allySys[m.sysId] || []).push(m.name);   // 2.6: where your Armada is
   for (const s of SYS_LIST) {
     const [x, y] = P(s); if (!on(x, y)) continue;
     const F = FACTIONS[s.faction], here = s.id === G.sys, seen = explored.has(s.id) || !G.you, r = big ? Math.max(3, Math.min(8, 3.2 * Math.sqrt(zoom))) : 4;
@@ -650,6 +678,8 @@ export function galaxy(G, ctx, opts = {}) {
       ctx.beginPath(); ctx.arc(x, y, q, 0, 6.283); ctx.stroke(); for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * (q - 3), y + Math.sin(a) * (q - 3)); ctx.lineTo(x + Math.cos(a) * (q + 4), y + Math.sin(a) * (q + 4)); ctx.stroke(); }
       if (big) { ctx.font = 'bold 11px Tahoma'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#02030a'; const t = `YOUR STATION · OPS ${(G.you.station && G.you.station.ops) || 0}`; ctx.strokeText(t, x, y - q - 6); ctx.fillStyle = '#ffd27a'; ctx.fillText(t, x, y - q - 6); }
     }
+    if (allySys[s.id]) { ctx.fillStyle = G.pal.ally; for (let k = 0; k < Math.min(5, allySys[s.id].length); k++) { ctx.beginPath(); ctx.arc(x - r - 4 - k * 6, y + r + 3, 2.6, 0, 6.283); ctx.fill(); }
+      if (big && zoom > 0.8) { ctx.font = '10px Tahoma'; ctx.textAlign = 'right'; ctx.lineWidth = 3; ctx.strokeStyle = '#02030a'; const t = allySys[s.id].join(', '); ctx.strokeText(t, x - r - 4, y + r + 15); ctx.fillText(t, x - r - 4, y + r + 15); } }
     if (here) { ctx.strokeStyle = '#ff3a2a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 5, 0, 6.283); ctx.stroke(); }
     if (G.hoverSys === s.id) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r + 3, 0, 6.283); ctx.stroke(); }
     const label = here || G.hoverSys === s.id || onRoute.has(s.id) || (big ? (zoom > 1.6 || (s.anchor && zoom > 0.95)) : (SYS[G.sys] && SYS[G.sys].links.includes(s.id)));
@@ -659,11 +689,8 @@ export function galaxy(G, ctx, opts = {}) {
       ctx.fillStyle = here ? '#fff' : seen ? '#c8ccd8' : '#80869a'; ctx.fillText(s.name, x, y - r - 5);
     }
   }
-  // 0.6 overlays: fleet claims, the invasion, anomalies
+  // 0.6 overlays: the invasion, anomalies (2.6: territory claims removed)
   const Wd = G.world || {}, pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);
-  for (const [sid, c] of Object.entries(Wd.claims || {})) { const S_ = SYS[sid]; if (!S_) continue; const [x, y] = P(S_); if (!on(x, y)) continue;
-    ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.arc(x, y, (big ? 11 : 8), 0, 6.283); ctx.stroke(); ctx.setLineDash([]);
-    if (big) { ctx.font = 'bold 10px Tahoma'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#02030a'; ctx.strokeText(`[${c.tag}]`, x, y + 22); ctx.fillStyle = '#ffd27a'; ctx.fillText(`[${c.tag}]`, x, y + 22); } }
   for (const [sid, an] of Object.entries(Wd.anomalies || {})) { const S_ = SYS[sid], A_ = ANOMALIES[an]; if (!S_ || !A_) continue; const [x, y] = P(S_); if (!on(x, y)) continue;
     ctx.font = (big ? 'bold 13px' : '10px') + ' Tahoma'; ctx.textAlign = 'center'; ctx.fillStyle = A_.color; ctx.fillText(A_.icon, x + (big ? 12 : 8), y + (big ? 4 : 3)); }
   for (const [sid, st] of Object.entries(Wd.states || {})) { const S_ = SYS[sid], X = STATES[st.k]; if (!S_ || !X) continue; const [x, y] = P(S_); if (!on(x, y)) continue;   // 2.4: system states
@@ -690,7 +717,7 @@ export function galaxy(G, ctx, opts = {}) {
     let lx = 12, ly = H - 14; ctx.font = '11px Tahoma'; ctx.textAlign = 'left';
     for (const [id, F] of Object.entries(FACTIONS)) { if (F.hidden) continue; ctx.fillStyle = F.color; ctx.fillRect(lx, ly - 8, 8, 8); ctx.fillStyle = '#aaa'; ctx.fillText(F.short, lx + 12, ly); lx += ctx.measureText(F.short).width + 26; }
     ctx.strokeStyle = '#aaa'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(lx + 4, ly - 4, 3.5, 0, 6.283); ctx.stroke(); ctx.fillStyle = '#aaa'; ctx.fillText('not yet visited', lx + 12, ly);
-    lx = 12; ly -= 16; ctx.fillStyle = '#ffd65a'; ctx.fillText('◇ mission target', lx, ly); lx += 100; ctx.fillStyle = '#ffd27a'; ctx.fillText('◎ your station', lx, ly); lx += 92; ctx.fillStyle = '#a890d0'; ctx.fillText('◆ station hull', lx, ly); lx += 90; if (!G.solo) { ctx.fillStyle = '#ffd27a'; ctx.fillText('◌ fleet claim', lx, ly); lx += 80; } ctx.fillStyle = '#ff5a40'; ctx.fillText('◯ invasion', lx, ly); lx += 70;   // 2.4: no fleet claims in solo
+    lx = 12; ly -= 16; ctx.fillStyle = '#ffd65a'; ctx.fillText('◇ mission target', lx, ly); lx += 100; ctx.fillStyle = '#ffd27a'; ctx.fillText('◎ your station', lx, ly); lx += 92; ctx.fillStyle = '#a890d0'; ctx.fillText('◆ station hull', lx, ly); lx += 90; if (!G.solo && G.you && G.you.armada && G.you.armada.members) { ctx.fillStyle = G.pal.ally; ctx.fillText('● Armada member', lx, ly); lx += 104; } ctx.fillStyle = '#ff5a40'; ctx.fillText('◯ invasion', lx, ly); lx += 70;   // 2.4: no fleet claims in solo
     for (const A_ of Object.values(ANOMALIES)) { ctx.fillStyle = A_.color; ctx.fillText(`${A_.icon} ${A_.name}`, lx, ly); lx += ctx.measureText(`${A_.icon} ${A_.name}`).width + 14; }
   }
 }

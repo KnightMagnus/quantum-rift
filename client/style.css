@@ -386,3 +386,16 @@ body:has(#land:not(.hidden)) #chatlog{visibility:hidden}
 @media (max-width:1150px),(max-height:700px){#ctabs{gap:2px}#ctabs button{padding:0 4px;font-size:10.5px;letter-spacing:0;min-width:0;flex:1 1 auto}}
 .nocargo{font:bold 10px Tahoma;letter-spacing:1px;color:#ffb070;border:1px solid #7a4a20;border-radius:3px;padding:0 4px;white-space:nowrap}
 .ysort{margin:6px 0 4px}.ysort select{margin-left:6px}.ofit{display:inline-flex;align-items:center;gap:4px;margin-right:8px;color:#ccc}
+/* 2.6 co-op: the ALLIES tab */
+body.solo .mp{display:none}
+#ctabs button[data-n]:not([data-n=""])::after{content:attr(data-n);display:inline-block;margin-left:3px;padding:0 4px;border-radius:7px;background:#e0b040;color:#000;font-size:9px;line-height:13px}
+.capsub{margin:2px 0 6px;flex-wrap:wrap}.capsub .btn{flex:1 1 auto;padding:0 6px}
+.frow{border-bottom:1px solid rgba(255,255,255,.06);padding:3px 0}.frbtn{display:flex;gap:4px;flex-wrap:wrap;margin:2px 0 2px 16px}.frbtn .btn{height:20px;font-size:10px;padding:0 6px}
+.dmlog{max-height:300px;overflow:auto;background:rgba(0,0,0,.25);border:1px solid #222;padding:4px;margin:4px 0}
+.dm{margin:3px 0;padding:3px 6px;border-radius:6px;background:#1a1d26;max-width:88%}.dm.me{margin-left:auto;background:#14361f}
+.dmrow{cursor:pointer}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:rgba(0,0,0,.25);padding:6px;border:1px solid #222;font-size:12px}
+.bars2{display:grid;gap:2px;margin:2px 0 0 16px;max-width:160px}
+#capview input[type=number]{width:110px}#capview select{max-width:200px}
+.tgacts{display:flex;gap:3px;flex-wrap:wrap;margin-top:3px}.tgacts .btn{height:19px;font-size:10px;padding:0 6px}
+#chatlog b[data-dm]{cursor:pointer;pointer-events:auto}#chatlog b[data-dm]:hover{text-decoration:underline}#chatlog b.armada{color:#7af0a0}

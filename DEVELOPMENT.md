@@ -29,7 +29,8 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
     no more than the occupied ones.
 - **Feature mixins.** Each big feature is an object of methods mixed into `Game.prototype`, at the bottom of
   `server/game.js`:
-  `HangarMixin, FrontsMixin, FrontierMixin, SpecialistMixin, HostileMixin, StoryMixin, RivalsMixin, HailMixin, FleetCmdMixin, SyndicateMixin, ArcsMixin, DocksMixin, LivingMixin, QuestMixin`.
+  `HangarMixin, FrontsMixin, FrontierMixin, SpecialistMixin, HostileMixin, StoryMixin, RivalsMixin, HailMixin, FleetCmdMixin, SyndicateMixin, ArcsMixin, DocksMixin, LivingMixin, QuestMixin, CoopMixin`.
+  - `CoopMixin` (`server/coop.js`, 2.6) holds friends and DMs, the Armada, trading between stations, duels, rescue, co-op Holdout, Armada contracts and the 2.6 save migration (`coopMigrate`, flagged `d.v26`). Its `sessionOf` deliberately replaces FrontierMixin's (same result, case-insensitive).
   - Method names must not collide across mixins; a collision silently replaces a method.
   - `bonus(d)` is deliberately chained: several mixins wrap it to add their modifiers.
 - **Shared code.** `shared/` is imported by both server and client:
@@ -80,7 +81,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 
 ## Testing
 
-- **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `v21`, `v23`, `v24`, `v25`, `v252`, `fuzz` and `balance`. They run in
+- **Server suites:** run `node test/<suite>.js` for `sim`, `v03` to `v10`, `v101`, `v11`, `v12`, `v201` to `v203`, `v21`, `v23`, `v24`, `v25`, `v252`, `v26`, `fuzz` and `balance`. They run in
   process; no server needed.
 - **Networked bot:** `node test/bot.js ws://localhost:8090/ws` against a running server.
 - **Browser checks:** `python3 test/<name>_shot.py <outdir> http://127.0.0.1:8090/`. They need Playwright and Chromium.
@@ -102,6 +103,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 - Ships were designed in a Python 3D pipeline: a small hull-building language over a software renderer, producing
   sprite sheets.
 - The sprites, weapons, outfits, sounds and landscapes were exported to `shared/assets.json` and `client/assets/`.
+- 2.6 re-rendered every ship from those 3D designs (`rift_ships26.py` in the development workspace, not shipped): full colour, frames up to twice the old size (200 px cap), and three roll sets (level, rolled right, rolled left) for ships up to 200 px. Sheets are `client/assets/ships/<id>.webp` and `<id>_glow.webp`, 12 frames wide; `shared/sprites26.js` lists frame size, columns and banking, and `augmentAssets` attaches it as `ship.spr`. The client picks the roll set from the ship's turn rate (`bankOf` in `client/render.js`), so ships bank into the turn. The old PNG sheets stay as a fallback for any hull without `spr`.
 
 **Quantum Rift (the web game)**
 
@@ -111,7 +113,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 | 0.3 | Clean Fire | Weapon looks, mouse targeting, custom cursors, effects, the tutorial, escort slots, security hardening |
 | 0.4 | The Wide Rift | A seeded generator growing 30 systems into 200 with territories; map pan, zoom and search; mining; sleeping systems |
 | 0.5 | Hangar Deck | Shuttles, officers with synergies, research trees, refining, drydock presets, boarding (plunder, capture, rescue) |
-| 0.6 | Fleets and Fronts | Fleets, territory and Dreadnoughts, invasions, anomalies, events, goals, faction stores, new job types |
+| 0.6 | Fleets and Fronts | Fleets, territory and Dreadnoughts (all retired in 2.6), invasions, anomalies, events, goals, faction stores, new job types |
 | 0.7 | Frontier Life | Colonies, station raids, ship mastery, the arena, the exchange, leaderboards, profiles |
 | 0.8 | Specialists | The class triangle, ten specialty ships (blueprints, parts, components, tiers), the Sol Gateway and Farside, the Feral Swarm |
 | 0.9 | Hostile Space | Hostile levels and odds, loot chests, solo armadas, Station Holdout, weekly events, the Umbral Eclipse |
@@ -120,6 +122,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 | 1.1 | Living Rift | 30 rival captains, hailing, fleet orders, multi-jump autopilot, I panel, jettison, combat rating, news and market flashes |
 | 1.2 | Syndicate and Officers | Syndicate and black market, officer ranks and traits, lower decks, bank, map views, passengers and rush jobs, faction arcs, Farside expeditions |
 | 2.0 | Polish | A synthesized audio pass (interface sounds, ambience, engine hum, login theme, mixer buses), HUD numbers, edge arrows, damage and jump feedback, styled toasts, tab hotkeys |
+| 2.6 | Together | Captain Friends, DMs, the Armada (five captains and their wingmates), trading between stations, duels and Armada Duels, rescue, co-op Holdout, Armada contracts, Relocate Station, a new Crucible look; no open-galaxy PvP; sharper re-rendered ships with banking (WebP sheets, shared/sprites26.js); refits, solo armadas, directives, fleets and territory retired |
 | 2.5 | Rendered Rift | Pre-rendered planets, stations, landing pictures for every world, fireballs and combat effects, asteroids, loot, outfit pictures and a login backdrop; styled dialogs, small-screen sidebar, market depth, new career steps and story sounds |
 | 2.4 | Living Galaxy | System states and a market that remembers trades, contact questlines and six side stories, varied background worlds, combat AI personalities, bar talk, a CAREER page, shipyard comparison, outfitter filters, auto-reconnect, multiplayer screens hidden in solo |
 | 2.3 | Busy Lanes | Ten new common Quantum hulls (shared/ships23.js, art from the hull pipeline), 60 new moons and more asteroid fields (gen.js addMoonsAndFields), busier traffic |
@@ -200,6 +203,7 @@ single-player focused for now.
 - `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
 - `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
 - `node test/v252.js`: 2.5.2 checks (story needs, supply warnings, mining hints, markets for mined goods, war fleets and newcomers, the map station marker, the ring art).
+- `node test/v26.js`: 2.6 checks with many connected captains (the save migration for refits, escorts, directives and fleets; friends, DMs and the offline mailbox; the Armada, no friendly fire, buffs, shares, follow and rally; rescue; duels and Armada Duels; trading between stations; co-op Holdout; Armada contracts; Relocate Station; every client import resolving).
 - `node test/v25.js`: 2.5 checks (every art asset exists and is referenced, planet manifest, station and landing scene coverage, the art budget, styled dialogs, career migration, market depth).
 - `node test/v24.js`: 2.4 checks (client scripts parse, system states and trade impact, contact stories at every bar, side stories, salvage, combat AI).
 - `node test/v23.js`: 2.3 checks (new hulls and their art, moons, fields, traffic).

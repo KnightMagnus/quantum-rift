@@ -1,6 +1,6 @@
-// Quantum Rift 0.6 interface pieces: the OPS companion tab (event, invasion, anomaly, goals, fleet), the FLEET and STORE landing tabs.
+// Quantum Rift 0.6 interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
 import { SYS, FACTIONS, GRADES } from '/shared/galaxy.js';
-import { ANOMALIES, GOAL_TYPES, GOAL_REWARD, DREADNOUGHTS, CLAIM, FLEET, STORE_ITEMS, STORE_TIERS, STORE_MAT } from '/shared/fronts.js';
+import { ANOMALIES, GOAL_TYPES, GOAL_REWARD, STORE_ITEMS, STORE_TIERS, STORE_MAT } from '/shared/fronts.js';
 import { credits, route } from '/shared/rules.js';
 import { STATES } from '/shared/living.js';
 
@@ -20,49 +20,20 @@ export function opsHtml(G) {
   if (an) h += `<div class="evbox" style="border-color:${ANOMALIES[an].color}66"><b style="color:${ANOMALIES[an].color}">${ANOMALIES[an].icon} ${esc(ANOMALIES[an].name)}</b> in this system<div class="small">${esc(ANOMALIES[an].desc)}</div></div>`;
   { const near = Object.entries(W.states || {}).filter(([sys, st]) => SYS[sys] && STATES[st.k] && st.until > Date.now()).map(([sys, st]) => [sys, st, sys === G.sys ? 0 : ((route(SYS, G.sys, sys) || []).length || 99)]).filter(x => x[2] <= 8).sort((a, b) => a[2] - b[2]).slice(0, 8);   // 2.4: the Rift today
     if (near.length) h += `<div class="sect">THE RIFT TODAY <span class="dim small">troubled systems near you</span></div>` + near.map(([sys, st, j]) => { const X = STATES[st.k]; return `<div class="kv"><span><span style="color:${X.color}">${X.icon} ${X.name}</span> · ${esc(SYS[sys].name)}${st.need ? ` <span class="dim small">${st.got}/${st.need}</span>` : ''}</span><span class="small dim">${j ? j + ' jump' + (j > 1 ? 's' : '') : 'here'} <button class="btn sm" data-plot="${sys}">PLOT</button></span></div>`; }).join(''); }
-  { const D = y.directives || {}, inSpace = !!G.view; h += `<div class="sect">DIRECTIVES <span class="dim small">summon a solo armada, scaled to your ship</span></div>`;
-    for (const t of [1, 2, 3]) h += `<div class="kv"><span>${['', 'Hollow', 'Umbral', 'Eclipse'][t]} Directive <span class="dim small">tier ${t}</span></span><span>${D[t] || 0} ${inSpace && D[t] ? `<button class="btn sm" data-act="summon" data-tier="${t}">SUMMON</button>` : ''}</span></div>`;
-    h += `<div class="dim small">Directives drop from loot chests and armadas, and come with weekly goals and from faction stores. You get ten minutes to destroy the flagship.</div>`;
+  {
     if (y.holdout && y.holdout.active) h += `<div class="evbox inv"><b>HOLDOUT</b> · wave ${y.holdout.wave} of 10 · stay in your station's system</div>`; }
   if (y.goals) {
     h += `<div class="sect">DAILY GOALS <span class="dim small">${credits(GOAL_REWARD.daily.credits)} cr + ${GOAL_REWARD.daily.tokens} scrip each</span></div>` + goalRows(y.goals.daily, 'daily');
     h += `<div class="sect">WEEKLY GOALS <span class="dim small">${credits(GOAL_REWARD.weekly.credits)} cr + ${GOAL_REWARD.weekly.tokens} scrip each</span></div>` + goalRows(y.goals.weekly, 'weekly');
   }
-  // fleet summary + anchoring (from space, as leader, in an unclaimed Frontier system); multiplayer only (2.4)
-  const F = y.fleet;
+  // 2.6: the Armada at a glance (full controls in the ALLIES tab); multiplayer only
+  const A = y.armada;
   if (!G.solo) {
-  h += `<div class="sect">FLEET</div>`;
-  if (!F) h += '<p class="dim small">You are not in a fleet. Found or join one from the FLEET tab when landed.</p>';
-  else {
-    h += `<div class="kv"><span><b>[${esc(F.tag)}] ${esc(F.name)}</b></span><span class="small">${F.members.filter(m => m.online).length}/${F.members.length} online · bank ${credits(F.bank)}</span></div>`;
-    h += F.claims.map(c => `<div class="kv"><span>Holds <b>${esc(c.name)}</b></span><span class="small">Dreadnought ${c.hp}%</span></div>`).join('');
-    const claimed = W.claims && W.claims[G.sys];
-    if (F.leader === y.name && G.view && here && here.faction === 'frontier' && !claimed) {
-      h += `<div class="dim small">Anchor a Dreadnought here to claim ${esc(here.name)} (paid from the fleet bank):</div>` + DREADNOUGHTS.map((D, i) => `<div class="kv"><span>${esc(D.name)}</span><span><button class="btn sm" data-act="anchor" data-m="${i}" ${F.bank < D.cost ? 'disabled' : ''}>${credits(D.cost)}</button></span></div>`).join('');
-    }
+    h += `<div class="sect">ARMADA</div>`;
+    if (!A) h += '<p class="dim small">You are not in an Armada. Form one, or accept an invite, from the ALLIES tab.</p>';
+    else h += `<div class="kv"><span><b>${esc(A.name)}</b></span><span class="small">${A.members.filter(m => m.online).length}/${A.members.length} online</span></div>` + A.members.map(m => `<div class="kv"><span>${m.online ? '<b style="color:var(--ok)">●</b>' : '<span class="dim">○</span>'} ${esc(m.name)}${m.name === A.leader ? ' <span class="dim small">leader</span>' : ''}</span><span class="dim small">${esc(m.sys || '')}</span></div>`).join('');
   }
-  }
-  if (W.front && !G.solo) h += `<div class="dim small" style="margin-top:6px">Front window: ${W.front[0]}:00-${W.front[1]}:00 UTC, when Dreadnoughts can be damaged. ${W.vuln ? '<b style="color:#ff8a70">OPEN NOW</b>' : ''}</div>`;
   if (W.calendar) h += '<div class="sect">EVENT CALENDAR</div>' + W.calendar.map((e, i) => `<div class="kv"><span>${i === 0 ? '<b>' : ''}${esc(e.name)}${i === 0 ? '</b>' : ''}</span><span class="dim small">${i === 0 ? 'ends in ' + left(e.end) : new Date(e.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span></div>`).join('');
-  return h;
-}
-
-export function fleetHtml(G) {
-  const y = G.you, F = y.fleet, L = G.landed;
-  if (!F) {
-    let h = `<div class="sect" style="margin-top:0">FOUND A FLEET</div><div class="rrow"><input id="ftag" placeholder="TAG (2-4)" maxlength="4" style="width:90px;text-transform:uppercase"><input id="fname" placeholder="Fleet name" maxlength="24"><button class="btn sm" data-act="fcreate">FOUND · ${credits(FLEET.createCost)}</button></div>
-      <div class="dim small">Fleetmates never fight each other, share a quarter of each other's bounties in the same system, get their own chat (/f) and a shared bank, and can claim Frontier systems with a Dreadnought.</div>`;
-    h += `<div class="sect">FLEETS IN THE RIFT</div>` + ((L && L.fleets) || []).map(f => `<div class="kv"><span><b>[${esc(f.tag)}]</b> ${esc(f.name)} <span class="dim small">${f.members} members · ${f.claims} systems held</span></span><span><button class="btn sm" data-act="fjoin" data-tag="${f.tag}">${f.open ? 'JOIN' : 'REQUEST'}</button></span></div>`).join('') || '<p class="dim">No fleets yet. Be the first.</p>';
-    return h;
-  }
-  const lead = F.leader === y.name;
-  let h = `<div class="sect" style="margin-top:0">[${esc(F.tag)}] ${esc(F.name)}</div><div class="kv"><span>Leader</span><span>${esc(F.leader)}</span></div><div class="kv"><span>Recruiting</span><span>${F.open ? 'open to all' : 'by request'} ${lead ? `<button class="btn sm" data-act="fopen" data-v="${F.open ? 0 : 1}">${F.open ? 'CLOSE' : 'OPEN'}</button>` : ''}</span></div>`;
-  h += `<div class="kv"><span>Fleet bank</span><span class="cr">${credits(F.bank)}</span></div><div class="rrow"><input id="famt" placeholder="credits" type="number" min="0" style="width:140px"><button class="btn sm" data-act="fdep">DEPOSIT</button>${lead ? '<button class="btn sm" data-act="fwd">WITHDRAW</button>' : ''}</div>`;
-  if (lead && F.pending.length) h += '<div class="sect">REQUESTS</div>' + F.pending.map(n => `<div class="kv"><span>${esc(n)}</span><span><button class="btn sm" data-act="facc" data-n="${esc(n)}">ACCEPT</button> <button class="btn sm" data-act="fdeny" data-n="${esc(n)}">DENY</button></span></div>`).join('');
-  h += `<div class="sect">MEMBERS (${F.members.length}/${FLEET.maxMembers})</div>` + F.members.map(m => `<div class="kv"><span>${m.online ? '<b style="color:var(--ok)">●</b>' : '<span class="dim">○</span>'} ${esc(m.name)}</span><span class="dim small">${esc(m.sys)} ${lead && m.name !== y.name ? `<button class="btn sm" data-act="fkick" data-n="${esc(m.name)}">REMOVE</button>` : ''}</span></div>`).join('');
-  h += `<div class="sect">TERRITORY</div>` + (F.claims.length ? F.claims.map(c => `<div class="kv"><span>${esc(c.name)}</span><span class="small">Dreadnought ${c.hp}%</span></div>`).join('') : '<p class="dim small">No systems held.</p>');
-  h += `<div class="dim small">To claim a Frontier system, the leader flies there and anchors a Dreadnought from the OPS companion tab. Held systems give members +${CLAIM.buff.damagePct}% damage and shields there, and outsiders' trades pay ${CLAIM.taxPct}% into the fleet bank. Rivals can only damage a Dreadnought during the daily front window.</div>`;
-  h += '<div style="margin-top:8px"><button class="btn sm" data-act="fleave">LEAVE FLEET</button></div>';
   return h;
 }
 

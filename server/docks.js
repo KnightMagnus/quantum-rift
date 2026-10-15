@@ -1,7 +1,7 @@
 // 2.1 "Docks": lettered docks at your Personal Station, each with a lead ship and wingmate ships chosen from your stored
 // ships. The lead of the active dock is the ship you fly (d.ship); everything else waits in the hangar (d.dock).
 // Wingmate slots carry their own officers (a captain and a crew member), who boost that ship.
-import { STELLARS, WINGMATES, ARMADA } from '../shared/galaxy.js';
+import { STELLARS, WINGMATES } from '../shared/galaxy.js';
 import { DOCK_LETTERS, DOCKS_BY_OPS, HANGAR_BY_OPS, WINGS_PER_DOCK, WING_ONLY, WING_REPAIR_MIN, WING_REPAIR_COST, WING_CREW } from '../shared/docks.js';
 import { BRIDGE_SLOTS } from '../shared/hangar.js';
 import { researchBonus, officerBonus, makeLoadout, credits } from '../shared/rules.js';
@@ -23,6 +23,7 @@ export const DocksMixin = {
       d.docks = [{ lead: d.shipless ? null : d.ship.uid, wings: [] }]; d.activeDock = 0;
       for (const h of d.escorts || []) {
         if (!this.A.ships[h]) continue;
+        if (this.A.ships[h].npcOnly) { d.credits += 2500; this.log(d, `${this.A.ships[h].name} stood down (retired in 2.6). 2,500 credits refunded.`); continue; }
         if (d.dock.length < this.dockSlots(d)) {
           const ship = makeLoadout(this.A, h, this.A.ships[h].name); ship.uid = this.shipUid(d); d.dock.push({ ship, bridge: {} });
           if (d.docks[0].wings.length < WINGS_PER_DOCK) d.docks[0].wings.push({ uid: ship.uid, cap: null, crew: null });

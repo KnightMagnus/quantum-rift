@@ -1,5 +1,5 @@
-// Quantum Rift 0.9 "Hostile Space" data: hostile levels and the "can I win?" scan, loot chests, directives and solo
-// armadas, Station Holdout waves, and the Umbral Eclipse.
+// Quantum Rift 0.9 "Hostile Space" data: hostile levels and the "can I win?" scan, loot chests, Station Holdout
+// waves, and the Umbral Eclipse. (2.6: directives and solo armadas were removed.)
 
 // ------------------------------------------------------------------ levels: from a ship's effective strength
 export function levelOf(power) { return Math.max(1, Math.round(4 * Math.log2(1 + Math.max(0, power) / 12))); }
@@ -19,16 +19,8 @@ export const CHESTS = {
   swarm:   { name: 'Swarm Nodule',        color: '#a8c840', bp: 'swarmbreaker', res: 'chitin',   mats: ['isotope'] },
   eclipse: { name: 'Eclipse Shard Cache', color: '#e682fa', bp: 'nightglass',   res: 'umbra',    mats: ['crystal'] },
 };
-export const CHEST_CHANCE = 0.3;   // per hostile kill (bosses and armadas always drop one)
+export const CHEST_CHANCE = 0.3;   // per hostile kill (bosses and kingpins always drop one)
 
-// ------------------------------------------------------------------ directives and solo armadas
-export const DIRECTIVES = [
-  null,
-  { tier: 1, name: 'Hollow Directive',  faction: 'hollow',  lead: 717, escorts: [711, 716, 711], mult: 2.5, reward: 60000,  grade: 2, bp: 3 },
-  { tier: 2, name: 'Umbral Directive',  faction: 'umbral',  lead: 763, escorts: [762, 762, 761, 761], mult: 3.5, reward: 160000, grade: 3, bp: 5 },
-  { tier: 3, name: 'Eclipse Directive', faction: 'eclipse', lead: 764, escorts: [763, 762, 762, 761, 761], mult: 4.5, reward: 400000, grade: 4, bp: 8 },
-];
-export const ARMADA = { minutes: 10, scaleToPlayer: true };
 
 // ------------------------------------------------------------------ Station Holdout: ten escalating waves at your own station
 export const HOLDOUT = { waves: 10, cooldownH: 2, waveGap: 6, timeoutMin: 3,

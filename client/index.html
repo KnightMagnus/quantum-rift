@@ -25,11 +25,11 @@
   <div class="well box" id="target">
     <div class="tgimg" id="tg-img"></div>
     <div class="tginfo"><div id="tg-name" class="nm">No target</div><div id="tg-sub" class="dim">Tab: next ship &middot; R: nearest hostile</div>
-      <div id="tg-bars"><div class="bar thin"><i id="tg-sh"></i></div><div class="bar thin"><i id="tg-ar" class="ar"></i></div></div><div id="tg-dist" class="dim"></div></div>
+      <div id="tg-bars"><div class="bar thin"><i id="tg-sh"></i></div><div class="bar thin"><i id="tg-ar" class="ar"></i></div></div><div id="tg-dist" class="dim"></div><div id="tg-acts" class="tgacts hidden"></div></div>
   </div>
-  <div class="well box" id="nav"><div><span class="lbl">NAV</span> <span id="navto">None (press M)</span></div><div><span class="lbl">SEC</span> <span id="secw">None</span></div><div id="fleetrow" class="hidden"><span class="lbl">FLEET</span> <span id="fleetord">Formation</span></div></div>
+  <div class="well box" id="nav"><div><span class="lbl">NAV</span> <span id="navto">None (press M)</span></div><div><span class="lbl">SEC</span> <span id="secw">None</span></div><div id="fleetrow" class="hidden"><span class="lbl">WINGS</span> <span id="fleetord">Formation</span></div></div>
   <nav id="ctabs">
-    <button data-tab="radio">RADIO</button><button data-tab="codex">CODEX</button><button data-tab="missions" class="on">MISSIONS</button><button data-tab="station">STATION</button><button data-tab="ops">OPS</button><button data-tab="log">LOG</button>
+    <button data-tab="radio">RADIO</button><button data-tab="codex">CODEX</button><button data-tab="missions" class="on">MISSIONS</button><button data-tab="station">STATION</button><button data-tab="ops">OPS</button><button data-tab="captains" class="mp" title="Captain Friends, messages, the Armada, trading and duels">ALLIES</button><button data-tab="log">LOG</button>
   </nav>
   <section class="well" id="cpanel">
     <div class="tab" id="t-radio">
@@ -46,6 +46,7 @@
     <div class="tab on" id="t-missions"><div class="mhead">ACTIVE MISSIONS <span class="dim small">· M opens the galaxy map</span></div><div id="mlist" class="mlist"></div></div>
     <div class="tab" id="t-station"><div id="stview"></div></div>
     <div class="tab" id="t-ops"><div id="opsview"></div></div>
+    <div class="tab" id="t-captains"><div id="capview"></div></div>
     <div class="tab" id="t-log"><div class="rrow"><input id="lq" placeholder="Captain's log..."><button class="btn sm" id="lgo">LOG</button></div><div class="list" id="llist"></div></div>
   </section>
 </aside>
@@ -53,13 +54,13 @@
 <div id="chat"><div id="chatlog"></div></div>
 <!-- 1.0.1: the command bar: chat with channels, controls help, key bindings, options, map -->
 <div id="cbar" class="metal">
-  <div class="cchan" id="cchan"><button data-ch="" class="on" title="Everyone">ALL</button><button data-ch="sys" title="Only this system">SYSTEM</button><button data-ch="fleet" title="Only your fleet">FLEET</button></div>
+  <div class="cchan" id="cchan"><button data-ch="" class="on" title="Everyone">ALL</button><button data-ch="sys" title="Only this system">SYSTEM</button><button data-ch="armada" title="Only your Armada (/a)">ARMADA</button></div>
   <input id="chatin" placeholder="Press Enter to chat" maxlength="240">
   <div class="cbtns"><button class="cb" id="cbmap" title="Galaxy map (M)">MAP</button><button class="cb" id="cbkeys" title="Change your key bindings">KEYS</button><button class="cb" id="cbvol" title="Volume (N mutes)">🔉</button><button class="cb" id="optbtn" title="Options (O)">&#9881;</button><button class="cb q" id="cbhelp" title="Controls (?)">?</button></div>
 </div>
 <div id="qvolbox" class="metal hidden"><div class="qvt">VOLUME <span id="qvoln" class="dim small"></span></div><input type="range" id="qvol" min="0" max="100" step="1"><div class="qvb"><button class="btn sm" id="qmute">MUTE</button><button class="btn sm" id="qmore">MIXER…</button></div></div>
 <div id="hailbox" class="overlay hidden"><div class="loginbox metal hailin"><div class="hailtag">HAILING <span id="hailsub"></span></div><h2 id="hailwho"></h2><p id="hailtext"></p><div class="hailbtns" id="hailopts"></div></div></div>
-<div id="infobox" class="overlay hidden"><div class="gbox metal infoin"><h2>SHIP AND CAPTAIN <span class="dim small">I or Esc to close</span></h2><nav class="itabs" id="itabs"><button class="btn sm on" data-it="ship">SHIP</button><button class="btn sm" data-it="career">CAREER</button><button class="btn sm" data-it="fleet">FLEET</button><button class="btn sm" data-it="captains">CAPTAINS</button></nav><div class="well infobody" id="infobody"></div></div></div>
+<div id="infobox" class="overlay hidden"><div class="gbox metal infoin"><h2>SHIP AND CAPTAIN <span class="dim small">I or Esc to close</span></h2><nav class="itabs" id="itabs"><button class="btn sm on" data-it="ship">SHIP</button><button class="btn sm" data-it="career">CAREER</button><button class="btn sm" data-it="fleet">WINGMATES</button><button class="btn sm" data-it="captains">CAPTAINS</button></nav><div class="well infobody" id="infobody"></div></div></div>
 <div id="ctrlbox" class="overlay hidden"><div class="loginbox metal ctrlin"><h1>CONTROLS</h1><div id="ctrllist"></div><div class="ctrlfoot"><button class="btn" id="ctrlkeys">CHANGE KEYS</button><button class="btn big" id="ctrlclose">CLOSE</button></div></div></div>
 <div id="toasts"></div>
 <div id="autobadge" class="hidden"></div>

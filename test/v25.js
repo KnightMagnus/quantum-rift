@@ -8,7 +8,7 @@ import { TUTORIAL, tutMigrate } from '../shared/tutorial.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => { if (!c) { console.error('FAIL:', m); process.exit(1); } console.log('ok -', m); };
 process.env.SEEDS_FILE = '/nonexistent';
-const C = new URL('../client/', import.meta.url).pathname, AS = C + 'assets/';
+const C = decodeURIComponent(new URL('../client/', import.meta.url).pathname), AS = C + 'assets/';
 const read = (f) => fs.readFileSync(C + f, 'utf8');
 { const bad = []; for (const f of fs.readdirSync(C).filter(f => f.endsWith('.js'))) { try { execFileSync(process.execPath, ['--input-type=module', '--check'], { input: fs.readFileSync(C + f), stdio: ['pipe', 'ignore', 'ignore'] }); } catch { bad.push(f); } }
   ok(!bad.length, `every client script parses${bad.length ? ': BAD ' + bad : ''}`); }
@@ -34,7 +34,7 @@ for (const f of ['fx/boom_a.webp', 'fx/boom_b.webp', 'fx/boom_big.webp', 'fx/sha
 ok(EXTRA_OUTFITS.every(o => o.icon && fs.existsSync(AS + o.icon)), `all ${EXTRA_OUTFITS.length} web-game outfits have outfitter pictures`);
 const all = Object.values(A.outfits).concat(EXTRA_OUTFITS); ok(all.every(o => o.icon), 'no outfit is left without a picture');
 const size = (d) => fs.readdirSync(d, { withFileTypes: true }).reduce((a, e) => a + (e.isDirectory() ? size(d + e.name + '/') : fs.statSync(d + e.name).size), 0);
-ok(size(AS) < 29e6, `client art stays small enough to ship (${(size(AS) / 1e6).toFixed(1)} MB)`);
+{ const ships = size(AS + 'ships/'); ok(size(AS) - ships < 29e6, `client art besides the ship sheets stays small enough for one zip (${((size(AS) - ships) / 1e6).toFixed(1)} MB; 2.6 ship sheets ${(ships / 1e6).toFixed(1)} MB ship as part 2)`); }
 // polish
 ok(!/[^.\w]confirm\(/.test(read('ui.js') + read('main.js')), 'native confirm() dialogs are gone (styled dialog instead)');
 ok(TUTORIAL.length === 23 && TUTORIAL.some(t => t.title === 'Meet a contact') && TUTORIAL.some(t => t.title === 'Finish a story'), 'the career guide teaches contacts, troubled systems and stories');
