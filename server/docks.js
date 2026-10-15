@@ -16,10 +16,17 @@ import { BRIDGE_SLOTS } from '../shared/hangar.js';
 import { researchBonus, officerBonus, makeLoadout, credits } from '../shared/rules.js';
 import { SPEC } from '../shared/specialty.js';
 
+/** @type {number | undefined} Hull ID for the Herald specialty ship. */
 const HERALD = (Object.values(SPEC).find((s) => s.key === 'herald') || {}).id;
 
 export const DocksOperations = {
   // ------------------------------------------------------------------ save upgrade and bookkeeping
+  /**
+   * Migrate or repair docks structure in player data.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Record<string, any>} Initialized player data.
+   */
   docksInit(d) {
     this.hangarInit(d);
     if (!d.shipless && d.ship && !d.ship.uid) d.ship.uid = this.shipUid(d);
@@ -110,15 +117,41 @@ export const DocksOperations = {
     });
     return d;
   },
+  /**
+   * Generate a unique ship UID.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {string} Unique ship identifier.
+   */
   shipUid(d) {
     return 's' + this.uid(d);
   },
+  /**
+   * Get the number of available docks based on station Ops level.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {number} Number of docks.
+   */
   dockCount(d) {
     return d.station && d.station.site ? DOCKS_BY_OPS[d.station.ops] || 1 : 1;
   },
+  /**
+   * Look up a stored ship entry by its unique identifier.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string | null | undefined} uid - Ship unique identifier.
+   * @returns {Record<string, any> | null} Stored ship record or null if not found.
+   */
   stored(d, uid) {
     return uid ? d.dock.find((x) => x.ship.uid === uid) || null : null;
   },
+  /**
+   * Determine the maximum number of wingmates allowed for a dock.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {number} k - Dock index.
+   * @returns {number} Maximum wingmate count.
+   */
   wingMax(d, k) {
     const D = d.docks[k];
     if (!D) return 0;
@@ -126,6 +159,13 @@ export const DocksOperations = {
       k === d.activeDock ? (d.shipless ? null : d.ship) : (this.stored(d, D.lead) || {}).ship;
     return WINGS_PER_DOCK + (lead && lead.hull === HERALD ? 1 : 0);
   },
+  /**
+   * Find the dock index and slot where a ship UID is assigned.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string} uid - Ship unique identifier.
+   * @returns {{k: number, slot: string | number} | null} Slot coordinates or null.
+   */
   slotOf(d, uid) {
     for (const [i, k] of d.docks.entries()) {
       if (k.lead === uid) return { k: i, slot: 'lead' };
@@ -134,16 +174,37 @@ export const DocksOperations = {
     }
     return null;
   },
+  /**
+   * Remove a ship UID from all dock assignments (lead and wing slots).
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string} uid - Ship unique identifier to unassign.
+   * @returns {void}
+   */
   unassign(d, uid) {
     for (const k of d.docks) {
       if (k.lead === uid) k.lead = null;
       k.wings = k.wings.map((w) => (w && w.uid === uid ? null : w));
     }
   },
+  /**
+   * Remove an officer from all wingmate crew assignments.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string} oid - Officer identifier.
+   * @returns {void}
+   */
   unwingOfficer(d, oid) {
     for (const k of d.docks)
       for (const w of k.wings) if (w) for (const r of WING_CREW) if (w[r] === oid) w[r] = null;
   },
+  /**
+   * Look up where an officer is assigned among wingmates.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string} oid - Officer identifier.
+   * @returns {{k: number, w: number, r: string} | null} Assignment location or null.
+   */
   wingOfficerAt(d, oid) {
     for (const [i, k] of d.docks.entries())
       for (const [j, w] of k.wings.entries())
@@ -151,6 +212,12 @@ export const DocksOperations = {
     return null;
   },
   // the wingmates of the active dock that are ready to fly
+  /**
+   * Retrieve active dock wingmates that are currently repaired and ready to fly.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Array<{w: any, i: number, x: any}>} Array of active wingmate info objects.
+   */
   activeWings(d) {
     const D = d.docks && d.docks[d.activeDock];
     if (!D || d.shipless) return [];
@@ -161,19 +228,44 @@ export const DocksOperations = {
       .map((w, i) => ({ w, i, x: w && this.stored(d, w.uid) }))
       .filter((o) => o.x && !(o.x.repairT > now));
   },
+  /**
+   * Get an array of hull IDs for the active dock's ready wingmates.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {number[]} Array of hull IDs.
+   */
   wingHulls(d) {
     return this.activeWings(d).map((o) => o.x.ship.hull);
   },
+  /**
+   * Calculate officer bonuses provided to a wingmate.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {{cap?: string | null, crew?: string | null}} w - Wingmate slot configuration.
+   * @returns {Record<string, number>} Computed stat bonuses.
+   */
   wingBonus(d, w) {
     return officerBonus(d.officers, { captain: w.cap, bridge1: w.crew });
   },
   // the new ship you fly took the active dock's lead slot (bought, rebuilt, rewarded)
+  /**
+   * Handle changes when the player's active ship changes lead slot.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {void}
+   */
   leadChanged(d) {
     if (!d.ship.uid) d.ship.uid = this.shipUid(d);
     this.docksInit(d);
   },
 
   // ------------------------------------------------------------------ payload
+  /**
+   * Build the network payload for docks and hangar status.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Record<string, any>} Docks and stored ship overview payload.
+   */
   docksPayload(d) {
     const now = Date.now(),
       info = (x) =>
@@ -218,6 +310,13 @@ export const DocksOperations = {
   },
 
   // ------------------------------------------------------------------ operations (at your Personal Station)
+  /**
+   * Handle dock management operations (activate, assign, crew, repair).
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} m - Inbound operation message.
+   * @returns {void}
+   */
   docksOp(s, m) {
     const d = this.docksInit(s.data),
       p = STELLARS[d.stellar];
@@ -341,6 +440,13 @@ export const DocksOperations = {
     this.landed(s);
   },
   // stored bridge presets may name officers who now serve elsewhere
+  /**
+   * Clean and validate bridge assignments against available officers.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {Record<string, string>} b - Bridge slot officer map.
+   * @returns {Record<string, string>} Sanitized bridge map.
+   */
   cleanBridge(d, b) {
     const out = {};
     for (const k of BRIDGE_SLOTS)
@@ -351,6 +457,13 @@ export const DocksOperations = {
       for (const k of BRIDGE_SLOTS) if (x.bridge && used.has(x.bridge[k])) delete x.bridge[k];
     return out;
   },
+  /**
+   * Instantly repair a damaged wingmate ship for a credit fee.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {any} s - Player session.
+   * @param {string} uid - Unique ship identifier.
+   * @returns {void}
+   */
   wingRepair(s, uid) {
     const d = s.data,
       X = this.stored(d, uid);
@@ -364,6 +477,12 @@ export const DocksOperations = {
     this.you(s);
   },
   // a wingmate knocked out in a fight is towed home for repairs
+  /**
+   * Handle a wingmate ship being disabled or destroyed in combat, setting repair timer.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {any} e - Wingmate ship entity that was defeated.
+   * @returns {void}
+   */
   onWingLost(e) {
     const s = [...this.sessions.values()].find((x) => x.id === e.wingOf);
     if (!s || !s.data) return;
@@ -379,6 +498,13 @@ export const DocksOperations = {
     this.you(s);
   },
   // buying a ship straight into your hangar (no trade-in)
+  /**
+   * Purchase a new ship directly into the hangar without trading in the active vessel.
+   * @this {import('./features.js').DocksCapabilities}
+   * @param {any} s - Player session.
+   * @param {number} hull - Hull ID to purchase.
+   * @returns {void}
+   */
   buyToHangar(s, hull) {
     const d = this.docksInit(s.data),
       p = STELLARS[d.stellar];

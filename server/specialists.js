@@ -15,9 +15,16 @@ import {
 } from '../shared/specialty.js';
 import { makeLoadout, credits } from '../shared/rules.js';
 
+/** @type {Record<string, number>} Map of specialist keys to hull IDs. */
 const KEY = Object.fromEntries(Object.values(SPEC).map((s) => [s.key, s.id]));
 
 export const SpecialistOperations = {
+  /**
+   * Initialize specialist ship state and inventory on player data.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {void}
+   */
   specInit(d) {
     d.spec = d.spec || {};
     d.bp = d.bp || {};
@@ -25,19 +32,44 @@ export const SpecialistOperations = {
     d.specState = d.specState || {};
   },
   // the specialist the captain is flying, with its power (components + tier)
+  /**
+   * Get the specialist configuration and power rating of the player's active ship.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {(Record<string, any> & {power: number}) | null} Active specialist object or null.
+   */
   specOf(d) {
     const S_ = SPEC[d.ship.hull];
     if (!S_) return null;
     this.specInit(d);
     return { ...S_, power: specPower(d.specState[S_.id]) };
   },
+  /**
+   * Check whether the player is currently piloting a specialist ship of the specified key.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string} key - Specialist key.
+   * @returns {boolean} True if flying the specified specialist.
+   */
   flying(d, key) {
     return d && d.ship && d.ship.hull === KEY[key];
   },
+  /**
+   * Get the current specialist power multiplier.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {number} Power multiplier.
+   */
   power(d) {
     const s = this.specOf(d);
     return s ? s.power : 1;
   },
+  /**
+   * Compute aggregated stat bonuses from base frontier stats plus active specialist components and traits.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Record<string, number>} Combined ship stat bonuses.
+   */
   bonus(d) {
     const b = this.frontierBonus(d),
       sp = this.specOf(d);
@@ -54,6 +86,16 @@ export const SpecialistOperations = {
     return b;
   },
   // earn a specialty resource (only while flying that specialist) and/or blueprints (flying anything)
+  /**
+   * Award specialty resource and/or blueprint drops for activities.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} s - Player session.
+   * @param {string} key - Specialist key.
+   * @param {number} resN - Resource amount.
+   * @param {number} bpChance - Blueprint chance.
+   * @param {number} [bpN=1] - Number of blueprints.
+   * @returns {void}
+   */
   specGain(s, key, resN, bpChance, bpN = 1) {
     const d = s.data;
     this.specInit(d);
@@ -76,6 +118,14 @@ export const SpecialistOperations = {
     if (msg.length) this.toast(s, msg.join(' · '));
   },
   // damage multiplier from the attacker's specialty against this target (called by Space.damage)
+  /**
+   * Compute specialist weapon damage multiplier against a target.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} srcRoot - Attacking root entity.
+   * @param {any} src - Direct projectile or damage source entity.
+   * @param {any} t - Target entity taking damage.
+   * @returns {number} Damage multiplier factor.
+   */
   specMult(srcRoot, src, t) {
     if (!srcRoot || !srcRoot.player) return 1;
     const d = srcRoot.player.s && srcRoot.player.s.data;
@@ -93,6 +143,15 @@ export const SpecialistOperations = {
     return 1;
   },
   // hooks from the rest of the game
+  /**
+   * Hook called when an NPC ship is destroyed to grant specialist rewards.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} s - Player session.
+   * @param {any} npc - Defeated NPC entity.
+   * @param {any} space - Space instance.
+   * @param {boolean} [byEscort] - True if escort ship scored the final blow.
+   * @returns {void}
+   */
   specOnKill(s, npc, space, byEscort) {
     const d = s.data;
     if (npc.faction === 'swarm')
@@ -110,22 +169,61 @@ export const SpecialistOperations = {
     if (byEscort && this.wingHulls(d).length) this.specGain(s, 'herald', 1, 0.1);
     if (npc.wave) this.specGain(s, 'bulwark', 1, 0.2);
   },
+  /**
+   * Hook called when player boards a disabled vessel to reward Corsair materials.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} s - Player session.
+   * @returns {void}
+   */
   specOnBoard(s) {
     this.specGain(s, 'corsair', 2, 0.3, 1 + Math.floor(Math.random() * 3));
   },
+  /**
+   * Hook called when player scoops cargo loot to reward Tidecaller resources.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} s - Player session.
+   * @returns {void}
+   */
   specOnLoot(s) {
     this.specGain(s, 'tidecaller', 1, 0.06);
   },
+  /**
+   * Hook called when mining asteroid chunks to reward Lodestar resources.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} s - Player session.
+   * @param {{rich?: number}} it - Mined item details.
+   * @returns {void}
+   */
   specOnMine(s, it) {
     if ((it.rich || 1) >= 2 && Math.random() < 0.5)
       this.specGain(s, 'lodestar', 1, 0.15, 1 + (Math.random() < 0.3 ? 1 : 0));
   },
+  /**
+   * Hook called when charting uncharted sectors to reward Pathfinder resources.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} s - Player session.
+   * @returns {void}
+   */
   specOnChart(s) {
     this.specGain(s, 'pathfinder', 2, 0.25);
   },
+  /**
+   * Hook called when defending or winning an outpost raid to reward Bulwark blueprints.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} s - Player session.
+   * @param {boolean} won - True if raid was successful.
+   * @returns {void}
+   */
   specOnRaid(s, won) {
     if (won) this.specGain(s, 'bulwark', 3, 1, 3 + Math.floor(Math.random() * 3));
   },
+  /**
+   * Hook called upon completing jobs to reward specialized blueprints and resources.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} m - Mission object.
+   * @returns {void}
+   */
   specOnJob(s, m) {
     if (m.type === 'smuggle') this.specGain(s, 'wraith', 3, 1, 3 + Math.floor(Math.random() * 4));
     if (m.type === 'bounty' || m.type === 'assassinate')
@@ -138,6 +236,12 @@ export const SpecialistOperations = {
       );
   },
   // every two seconds in space: the Pathfinder harvests samples while flying through an anomaly
+  /**
+   * Periodic idle check in space for Pathfinder research sample harvesting in anomalies.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} s - Player session.
+   * @returns {void}
+   */
   specIdle(s) {
     const d = s.data;
     if (!s.ent || !this.flying(d, 'pathfinder')) return;
@@ -150,6 +254,14 @@ export const SpecialistOperations = {
     }
   },
   // can this captain jump straight to `to`? (the Pathfinder skips one system along a route)
+  /**
+   * Evaluate whether Pathfinder ability can skip an intermediate hyperspace link.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string} from - Departure system.
+   * @param {string} to - Destination system.
+   * @returns {string | null} Intermediate system skipped, or null if jump not possible.
+   */
   pathfinderJump(d, from, to) {
     if (!this.flying(d, 'pathfinder')) return null;
     const mid = SYS[from].links.find((m) => SYS[m].links.includes(to));
@@ -157,6 +269,13 @@ export const SpecialistOperations = {
   },
 
   // ------------------------------------------------------------------ the station: build, refine parts, upgrade, tier up
+  /**
+   * Handle personal station specialist shipyard actions (build, parts, comp, tierup).
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} m - Inbound operation message.
+   * @returns {void}
+   */
   specOp(s, m) {
     const d = s.data,
       p = STELLARS[d.stellar];
@@ -263,6 +382,12 @@ export const SpecialistOperations = {
     this.landed(s);
   },
   // tier-ups finish on their own (checked with the station)
+  /**
+   * Check and finalize completed drydock tier-ups for specialist ships.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {boolean} True if any tier-up was completed.
+   */
   specCheck(d) {
     this.specInit(d);
     for (const [id, st] of Object.entries(d.specState))
@@ -274,6 +399,12 @@ export const SpecialistOperations = {
       }
     return false;
   },
+  /**
+   * Check whether the player's active ship is currently undergoing a drydock tier-up.
+   * @this {import('./features.js').SpecialistsCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {boolean} True if active ship is in drydock.
+   */
   inDrydock(d) {
     const st = d.specState && d.specState[d.ship.hull];
     return !!(st && st.upT && Date.now() < st.upT);

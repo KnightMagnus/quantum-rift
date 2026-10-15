@@ -3,18 +3,44 @@ import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES } from '../shared/galaxy.js'
 import { STORY, STORY_SHIP, DEEP_UNLOCK } from '../shared/story.js';
 import { makeLoadout, credits } from '../shared/rules.js';
 
+/**
+ * Clamp a numeric value between minimum and maximum bounds.
+ * @param {number} v - Value to clamp.
+ * @param {number} a - Minimum value.
+ * @param {number} b - Maximum value.
+ * @returns {number} Clamped value.
+ */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export const StoryOperations = {
+  /**
+   * Initialize or retrieve player story progress state.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Record<string, any>} Story progress state object.
+   */
   storyInit(d) {
     d.story = d.story || { step: 0, active: null, done: [] };
     d.story.done = d.story.done || [];
     return d.story;
   },
+  /**
+   * Check whether a specific storyline mission has been completed.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string} id - Story mission identifier.
+   * @returns {boolean} True if mission is completed.
+   */
   storyDone(d, id) {
     const S = this.storyInit(d);
     return S.pass || S.done.includes(id);
   },
+  /**
+   * Construct story progress overview payload for client synchronization.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Record<string, any>} Story overview payload.
+   */
   storyPayload(d) {
     const S = this.storyInit(d),
       cur = STORY[S.step];
@@ -34,6 +60,13 @@ export const StoryOperations = {
     };
   },
   // the story step on offer at this landing (if any)
+  /**
+   * Evaluate the story mission step on offer at a stellar landing.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {{id: string} | null} p - Landed stellar body.
+   * @returns {Record<string, any> | null} Available story step or null.
+   */
   storyOffer(d, p) {
     const S = this.storyInit(d),
       st = STORY[S.step];
@@ -45,6 +78,13 @@ export const StoryOperations = {
       };
     return st;
   },
+  /**
+   * Check active story mission completion or send landing mission offer.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {any} s - Player session.
+   * @param {{id: string}} p - Landed stellar body.
+   * @returns {void}
+   */
   storyOnLand(s, p) {
     const d = s.data,
       S = this.storyInit(d),
@@ -65,6 +105,13 @@ export const StoryOperations = {
         ref: off.ref,
       });
   },
+  /**
+   * Accept an offered story mission.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {any} s - Player session.
+   * @param {{id: string}} m - Accept message.
+   * @returns {void}
+   */
   storyAccept(s, m) {
     const d = s.data,
       S = this.storyInit(d),
@@ -79,6 +126,13 @@ export const StoryOperations = {
     this.you(s);
     this.landed(s);
   },
+  /**
+   * Conclude a story mission, distributing credits, standing, and rewards.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} st - Story step definition.
+   * @returns {void}
+   */
   storyComplete(s, st) {
     const d = s.data,
       S = this.storyInit(d);
@@ -104,6 +158,13 @@ export const StoryOperations = {
     this.db.touch();
     this.you(s);
   },
+  /**
+   * Award the unique Que'vari flagship reward as part of the storyline culmination.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} st - Story step definition.
+   * @returns {void}
+   */
   storyGift(s, st) {
     const d = s.data,
       S = this.storyInit(d),
@@ -134,6 +195,13 @@ export const StoryOperations = {
     this.landed(s);
   },
   // arriving in a story system spawns what the step needs
+  /**
+   * Spawn story encounter ships, derelicts, boss vessels, or choir allies upon arriving in target system.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {any} s - Player session.
+   * @param {any} sp - Current space system instance.
+   * @returns {void}
+   */
   storyArrive(s, sp) {
     const d = s.data,
       S = this.storyInit(d),
@@ -229,6 +297,13 @@ export const StoryOperations = {
     if (st.type === 'kill')
       this.toast(s, `${left} Umbral hunter${left > 1 ? 's' : ''} are closing in.`);
   },
+  /**
+   * Advance active story mission progress after a relevant kill or rescue.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {any} s - Player session.
+   * @param {any} e - Defeated or rescued entity associated with the story mission.
+   * @returns {void}
+   */
   storyProgress(s, e) {
     const d = s.data,
       S = this.storyInit(d),
@@ -244,6 +319,13 @@ export const StoryOperations = {
     this.db.touch();
     this.you(s);
   },
+  /**
+   * Check whether a destination system is in deep space and locked behind story progression.
+   * @this {import('./features.js').StoryCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string} to - Destination system ID.
+   * @returns {boolean} True if jump to Deep system is locked.
+   */
   deepLocked(d, to) {
     return SYS[to] && SYS[to].faction === 'deep' && !this.storyDone(d, DEEP_UNLOCK);
   },

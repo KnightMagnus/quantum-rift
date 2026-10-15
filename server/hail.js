@@ -2,17 +2,41 @@
 // bribe pirates, ask traders for fuel or repairs when stranded, bribe a planet for landing rights, trade words with rivals.
 import { SYS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.js';
 import { RIVAL, HAIL_LINES, HAIL_SPECIAL, MOOD } from '../shared/rivals.js';
+/**
+ * Look up the dialogue line for a rival based on their current mood.
+ * @param {{name: string, kind: string}} R - Rival configuration object.
+ * @param {string} mood - Current mood key.
+ * @returns {string} Dialogue text for the rival.
+ */
 const lineFor = (R, mood) => (HAIL_SPECIAL[R.name] || HAIL_LINES[R.kind])[mood];
 import { credits } from '../shared/rules.js';
 
+/**
+ * Clamp a numeric value between minimum and maximum bounds.
+ * @param {number} v - Value to clamp.
+ * @param {number} a - Minimum value.
+ * @param {number} b - Maximum value.
+ * @returns {number} Clamped value.
+ */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/**
+ * Select a random element from an array.
+ * @template T
+ * @param {T[]} a - Array of items.
+ * @returns {T} Selected item.
+ */
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+/** @type {string[]} Ambient dialogue lines for trader hails. */
 const TRADER_LINES = [
   'Just hauling, Captain. Nothing worth your time.',
   'Clear skies. Mind the lanes past the third planet, raiders were spotted.',
   'Have you tried the food prices out on the Frontier? Robbery.',
   'If you are heading spinward, the jump beacons there are acting up.',
 ];
+
+/** @type {string[]} Ambient dialogue lines for patrol hails. */
 const PATROL_LINES = [
   'Patrol here. Keep it clean, Captain.',
   'This system is under our protection. Fly safe.',
@@ -20,6 +44,12 @@ const PATROL_LINES = [
 ];
 
 export const HailOperations = {
+  /**
+   * Calculate credit cost to bribe hostile forces based on player ship and cargo.
+   * @this {import('./features.js').HailCapabilities}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {number} Credit cost to bribe.
+   */
   bribeCost(d) {
     const H = this.A.ships[d.ship.hull],
       cargo = Object.entries(d.cargo).reduce(
@@ -28,6 +58,13 @@ export const HailOperations = {
       );
     return Math.max(800, Math.round(((H && H.cost) || 0) * 0.02 + cargo * 0.4) / 100) * 100;
   },
+  /**
+   * Find and validate the targeted ship for a hail within comms range.
+   * @this {import('./features.js').HailCapabilities}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} m - Target hail message.
+   * @returns {{sp: any, e: any, root: any} | null} Target context or null if unreachable.
+   */
   hailTarget(s, m) {
     const d = s.data,
       me = s.ent;
@@ -41,6 +78,13 @@ export const HailOperations = {
     }
     return { sp, e, root: sp.root(e) };
   },
+  /**
+   * Open communications with a targeted ship or selected planet.
+   * @this {import('./features.js').HailCapabilities}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} m - Inbound hail message.
+   * @returns {void}
+   */
   hail(s, m) {
     const d = s.data;
     if (m.stellar) return this.hailPlanet(s, m.stellar);
@@ -140,6 +184,13 @@ export const HailOperations = {
       opts,
     );
   },
+  /**
+   * Process a player's selected dialogue response or negotiation option in a hail.
+   * @this {import('./features.js').HailCapabilities}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} m - Inbound dialogue choice message.
+   * @returns {void}
+   */
   hailOpt(s, m) {
     const d = s.data;
     if (m.stellar) return this.hailPlanetOpt(s, m);
@@ -255,6 +306,13 @@ export const HailOperations = {
     }
   },
   // planets: docking control. When your standing is too low to land, docking control can be persuaded.
+  /**
+   * Hail a planet's docking control for landing clearance.
+   * @this {import('./features.js').HailCapabilities}
+   * @param {any} s - Player session.
+   * @param {string} id - Stellar body identifier.
+   * @returns {void}
+   */
   hailPlanet(s, id) {
     const d = s.data,
       p = STELLARS[id];
@@ -280,6 +338,13 @@ export const HailOperations = {
           ]),
     );
   },
+  /**
+   * Handle dialogue response for planetary docking control (such as paying bribes for clearance).
+   * @this {import('./features.js').HailCapabilities}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} m - Inbound option message.
+   * @returns {void}
+   */
   hailPlanetOpt(s, m) {
     const d = s.data,
       p = STELLARS[m.stellar];
