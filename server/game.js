@@ -1,3 +1,132 @@
+/**
+ * @typedef {import('./space.js').Entity} Entity
+ *
+ * @typedef {object} Session
+ * @property {number} id Unique session ID.
+ * @property {import('node:events').EventEmitter & {send: (data: any) => void, close: () => void, open: boolean, backlog: number}} sock Client WebSocket connection.
+ * @property {string} ip Remote client IP address.
+ * @property {any} data Player account save data from DB.
+ * @property {Entity | null} ent Currently active ship entity in space, or null if docked.
+ * @property {Array<{seq: number, thrust: number, turn: number, ab: number, rev: number, fire1: number, fire2: number}>} inputs Pending input commands queue.
+ * @property {any} [lastInput] Most recent input processed.
+ * @property {string | null} name Captain name.
+ * @property {number} chatT Timestamp of last chat message sent.
+ * @property {number} msgs Number of messages received in current rate-limiting window.
+ * @property {number} msgT Timestamp start of current rate-limiting window.
+ * @property {number} [actT] Timestamp of last user activity.
+ * @property {number} [loginT] Timestamp when user logged in.
+ * @property {boolean} [isNew] Whether this account was newly created during login.
+ * @property {any} [combat] Combat assist state for this session.
+ * @property {number} [fullT] Timestamp of last cargo-full notification.
+ *
+ * @typedef {object} PlayerReference
+ * @property {number} id Session ID.
+ * @property {string} name Captain name.
+ * @property {Record<string, number>} rep Faction reputation map.
+ * @property {Array<{seq: number, thrust: number, turn: number, ab: number, rev: number, fire1: number, fire2: number}>} inputs Input commands queue.
+ * @property {any} lastInput Last processed input.
+ * @property {Session} s Reference to the parent session.
+ *
+ * @typedef {object} SpaceSystem
+ * @property {string} id Unique system ID (e.g. 'sol', 'meridian').
+ * @property {string} name Display name of the system.
+ * @property {number} x Coordinate on galaxy map.
+ * @property {number} y Coordinate on galaxy map.
+ * @property {number} danger Danger level (0-5).
+ * @property {string[]} links Connected hyperlanes system IDs.
+ * @property {string} faction System controlling faction ID.
+ * @property {StellarBody[]} stellars Planets, stations, sites, and wormholes in this system.
+ * @property {boolean} [farside] True if located on the far side of the Sol Gateway.
+ * @property {boolean} [arena] True if this is a combat arena system.
+ * @property {boolean} [anchor] True if anchor system for exploration.
+ * @property {boolean} [gate] True if system contains a wormhole or gateway.
+ * @property {Array<{x: number, y: number, r: number, ore: string, rich: number, rocks: number}>} [fields] Mining asteroid fields.
+ *
+ * @typedef {object} StellarBody
+ * @property {string} id Stellar identifier.
+ * @property {string} name Stellar display name.
+ * @property {string} [type] Type of stellar ('planet', 'station', 'site', 'wormhole').
+ * @property {number} x Position X in system.
+ * @property {number} y Position Y in system.
+ * @property {number} r Radius of body.
+ * @property {string} svc Service flags string ('L' for land, 'T' for trade, 'Y' for shipyard, 'O' for outfitter, 'B' for bar/bounty, etc.).
+ * @property {string} system System ID where this stellar is located.
+ * @property {number} [tech] Tech level available for purchase.
+ * @property {boolean} [site] True if this is a derelict/claimable Personal Station site.
+ * @property {boolean} [hub] True if this is the central hub station (Quantum Station).
+ * @property {boolean} [outlaw] True if outlaw haven with no reputation restrictions.
+ * @property {Record<string, number>} [prices] Custom commodity price overrides.
+ * @property {string} [wormhole] Destination system ID for wormhole transit.
+ * @property {string} [exit] Destination stellar ID for wormhole transit.
+ *
+ * @typedef {object} MarketItem
+ * @property {string} id Commodity ID.
+ * @property {string} name Commodity display name.
+ * @property {number | null} price Unit price in credits, or null if not traded.
+ * @property {boolean} [flash] Whether a temporary flash market price is active.
+ * @property {number} [moved] Percentage price shift due to system state or trade volume.
+ *
+ * @typedef {object} Mission
+ * @property {string} id Unique mission ID.
+ * @property {string} type Mission type ('cargo', 'bounty', 'patrol', 'supply', 'smuggle', 'assassinate', 'quest', 'warband').
+ * @property {string} title Mission display title.
+ * @property {string} sys Target system ID.
+ * @property {string} [dest] Destination stellar ID for delivery/landing.
+ * @property {string} [cid] Commodity ID to transport.
+ * @property {number} [qty] Quantity of cargo/passengers.
+ * @property {number} [pax] Number of passengers.
+ * @property {number} [need] Target kill count needed for patrol.
+ * @property {number} [got] Current kill count achieved for patrol.
+ * @property {number} [hull] Target ship hull ID.
+ * @property {string} [faction] Target faction ID.
+ * @property {string} [targetName] Target NPC name for bounty.
+ * @property {number} reward Payout upon completion in credits.
+ * @property {string} text Narrative brief/description.
+ * @property {boolean} [done] Whether mission objectives are fulfilled.
+ * @property {boolean} [paid] Whether payout has been disbursed.
+ * @property {number} [owner] Session ID of mission contractor.
+ * @property {number} [taken] Timestamp when accepted.
+ * @property {number} [deadline] Timestamp deadline if time-sensitive.
+ * @property {number} [rush] Duration in minutes if rush delivery.
+ * @property {any} [quest] Linked quest metadata.
+ * @property {boolean} [elite] True for elite dangerous bounties.
+ * @property {boolean} [spawned] True if bounty target is currently spawned in-system.
+ *
+ * @typedef {object} SaveSlotSummary
+ * @property {string} name Captain name.
+ * @property {string} ship Current ship name.
+ * @property {number} credits Balance in credits.
+ * @property {number} ops Personal Station Ops level.
+ * @property {string} sys Current system name.
+ *
+ * @typedef {object} CommunityPayload
+ * @property {string[]} docked Names of captains currently docked at Quantum Station.
+ * @property {Array<{name: string, earned: number, kills: number, ship: string, ai?: boolean}>} top Leaderboard of top earners.
+ * @property {Array<{system: string, owner: string | null, ops: number}>} stations List of claimable station hulls and their owners.
+ * @property {Array<{name: string, sys: string}>} online Captains currently online and their systems.
+ *
+ * @typedef {object} ShipStats
+ * @property {number} shield Maximum shield capacity.
+ * @property {number} shieldRe Shield recharge rate per second.
+ * @property {number} armor Maximum armor / hull points.
+ * @property {number} [armorRe] Armor repair rate per second.
+ * @property {number} maxSpeed Maximum forward speed.
+ * @property {number} accel Acceleration rating.
+ * @property {number} turn Turn rate in radians per second.
+ * @property {number} cargo Cargo capacity in metric tons.
+ * @property {number} free Unallocated outfit mass / space.
+ * @property {number} fuel Fuel capacity for hyperjumps.
+ * @property {number} [fuelRe] Fuel ramscoop regeneration rate.
+ * @property {number} size Collision bounding radius.
+ * @property {number} mass Total ship mass.
+ * @property {Record<number, number>} weapons Installed weapon mount counts by weapon ID.
+ * @property {number} guns Forward gun mount count.
+ * @property {number} maxGuns Maximum gun mounts.
+ * @property {number} turrets Turret mount count.
+ * @property {number} maxTurrets Maximum turret mounts.
+ * @property {boolean} [jumpFast] Fast jump drive charge capability.
+ */
+
 import { CombatAssist } from './combat-assist.js';
 import { createMessageRegistry } from './message-registry.js';
 import { createFeatures } from './features.js';
@@ -47,6 +176,11 @@ import { synTier } from '../shared/syndicate.js';
 import { STATES, TRADE_IMPACT } from '../shared/living.js';
 import { WING_ONLY } from '../shared/docks.js';
 import { ARCS } from '../shared/arcs.js';
+/**
+ * Resolves the display name for a faction story arc.
+ * @param {string} f Faction identifier.
+ * @returns {string} Story arc title.
+ */
 const ARCS_NAME = (f) => (ARCS[f] ? ARCS[f].name : '');
 import { masteryTier } from '../shared/frontier.js';
 import { SHUTTLES } from '../shared/hangar.js';
@@ -73,7 +207,19 @@ const NAMES = [
   'Quill',
   'Drey',
 ];
+/**
+ * Clamps a numeric value between minimum and maximum bounds.
+ * @param {number} v Input value.
+ * @param {number} a Minimum bound.
+ * @param {number} b Maximum bound.
+ * @returns {number} Clamped value.
+ */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+/**
+ * Deterministic pseudo-random number generator (xorshift32) from seed.
+ * @param {number} seed Initial numeric seed.
+ * @returns {() => number} Generator returning float in [0, 1).
+ */
 function rng(seed) {
   let s = seed >>> 0 || 1;
   return () => {
@@ -85,6 +231,11 @@ function rng(seed) {
     return s / 4294967296;
   };
 }
+/**
+ * Computes 32-bit FNV-1a hash of a string.
+ * @param {string} str Input string.
+ * @returns {number} Unsigned 32-bit hash.
+ */
 function hash(str) {
   let h = 2166136261;
   for (const c of str) {
@@ -93,6 +244,11 @@ function hash(str) {
   }
   return h >>> 0;
 }
+/**
+ * Computes shortest jump distances from a given system to all reachable systems via BFS.
+ * @param {string} a Starting system ID.
+ * @returns {Record<string, number>} Map of system IDs to jump counts.
+ */
 function jumpsFrom(a) {
   const d = { [a]: 0 },
     q = [a];
@@ -108,6 +264,27 @@ function jumpsFrom(a) {
 }
 const JUMPS = Object.fromEntries(SYSTEMS.map((s) => [s.id, jumpsFrom(s.id)]));
 
+/**
+ * Quantum Rift master game engine.
+ * Manages player accounts, client network sessions, world and system state,
+ * trade markets, mission boards, station management, and game loops.
+ * @property {any} A Game assets object containing ships, weapons, outfits, and commodities.
+ * @property {import('./db.js').DB} db Persistent JSON database instance for player accounts and world state.
+ * @property {Record<number, any>} O Outfit definitions lookup by ID.
+ * @property {Record<string, any>} spaces Active simulated spaces by system ID, backed by live proxy.
+ * @property {Map<number, Session>} sessions Connected client sessions by session ID.
+ * @property {number} nextSid Next session identifier sequence number.
+ * @property {number} tickN Server tick counter.
+ * @property {Record<string, import('./space.js').Space>} live Cache of currently instantiated systems.
+ * @property {any} features Modular feature service delegations.
+ * @property {any} combatAssist Combat assist controller.
+ * @property {any} messageHandlers Registered client message handlers.
+ * @property {Map<string, {n: number, t: number}>} fails Failed sign-in attempt tracking map.
+ * @property {boolean} paused Solo-mode pause flag.
+ * @property {number} [pausedAt] Timestamp when solo mode was paused.
+ * @property {number} [tickErr] Error count during server ticks.
+ * @property {string} [worldKey] Cache key for deduplicating world status broadcasts.
+ */
 export class Game {
   /** Legacy feature state; see docs/FEATURES.md. @type {unknown} */
   _an;
@@ -139,6 +316,11 @@ export class Game {
   nextCoopId;
   /** Legacy feature state; see docs/FEATURES.md. @type {boolean | undefined} */
   solo;
+  /**
+   * Initializes the game server, assets, storage, features, and tick loop.
+   * @param {any} A Game assets object containing ships, weapons, outfits, and commodities.
+   * @param {import('./db.js').DB} db Persistent JSON database instance for player accounts and world state.
+   */
   constructor(A, db) {
     augmentAssets(A);
     this.A = A;
@@ -179,6 +361,10 @@ export class Game {
   }
 
   // solo mode: save slots and save files
+  /**
+   * Summarizes all stored player saves for solo slot selection.
+   * @returns {SaveSlotSummary[]} Array of save summaries.
+   */
   slots() {
     return Object.values(this.db.players).map((p) => ({
       name: p.name,
@@ -188,6 +374,11 @@ export class Game {
       sys: SYS[p.sys] ? SYS[p.sys].name : '',
     }));
   }
+  /**
+   * Imports an external save file object into the database.
+   * @param {any} sv Raw save object to import.
+   * @returns {string} Sanitized name of imported captain.
+   */
   importSave(sv) {
     if (!sv || typeof sv.name !== 'string' || !sv.ship || !sv.station)
       throw new Error('That is not a Quantum Rift save file.');
@@ -204,10 +395,19 @@ export class Game {
     this.db.flush();
     return name; // 2.0.3: own keys only
   }
+  /**
+   * System wake hook called when a space is accessed.
+   * @param {import('./space.js').Space} sp Newly awakened space instance.
+   * @returns {import('./space.js').Space} The space instance.
+   */
   wake(sp) {
     return sp;
   }
   // Accounts listed in server/seeds.json are created on start-up if they don't exist yet (existing saves are never touched).
+  /**
+   * Populates showcase and developer seed accounts defined in seeds.json.
+   * @returns {void}
+   */
   seed() {
     let list = [];
     try {
@@ -264,6 +464,11 @@ export class Game {
   }
   // "sync": true keeps a showcase captain's station fully upgraded across new versions (every research project done,
   // Ops 5, a full hangar and, if listed, an elite bridge crew). Credits, ships and cargo are left alone.
+  /**
+   * Retires an account, disconnecting active sessions and freeing claimed stations and colonies.
+   * @param {string} name Captain name of the account to retire.
+   * @returns {void}
+   */
   retireAccount(name) {
     const k = this.db.key(name),
       p = this.db.get(name);
@@ -286,6 +491,12 @@ export class Game {
     this.db.flush();
     console.log(`Retired seeded captain ${p.name}; their station hull is unclaimed again.`);
   }
+  /**
+   * Synchronizes a showcase captain's station, officers, and progress to version spec.
+   * @param {any} p Player save record.
+   * @param {any} c Seed definition configuration.
+   * @returns {void}
+   */
   syncSeed(p, c) {
     this.features.hangar.hangarInit(p);
     const st = p.station,
@@ -344,6 +555,12 @@ export class Game {
     console.log('Synced seeded captain', c.name);
   }
   // 2.1 playtest seeds: fill the docks with ships and crew them, once ({ docks: [{ lead, name, wings: [hulls] }], crew: [...officers], spare: [...officers] })
+  /**
+   * Sets up a test seed captain's docks with ships, wingmates, and officers.
+   * @param {any} p Player save record.
+   * @param {any} F Seed fleet configuration with docks, crew, and ships.
+   * @returns {void}
+   */
   seedFleet(p, F) {
     this.features.docks.docksInit(p);
     p.seedFleet = true;
@@ -390,6 +607,10 @@ export class Game {
     this.features.docks.docksInit(p);
   }
   // ------------------------------------------------------------------ sessions
+  /**
+   * Creates a fresh default captain save state with starter ship, credits, and tutorial.
+   * @returns {any} Fresh initial player save state.
+   */
   fresh() {
     const rep = Object.fromEntries(Object.keys(FACTIONS).map((f) => [f, 0]));
     rep.quantum = 10;
@@ -411,6 +632,12 @@ export class Game {
       explored: [START.system],
     };
   }
+  /**
+   * Handles incoming WebSocket client connection and binds message/close events.
+   * @param {any} sock WebSocket client connection.
+   * @param {string} [ip='?'] Remote client IP address.
+   * @returns {void}
+   */
   connect(sock, ip = '?') {
     const s = {
       id: this.nextSid++,
@@ -435,6 +662,11 @@ export class Game {
     });
     sock.on('close', () => this.disconnect(s));
   }
+  /**
+   * Disconnects and unregisters a client session, saving flight state and docking in-system.
+   * @param {Session} s Session disconnecting.
+   * @returns {void}
+   */
   disconnect(s) {
     if (s.data && this.sessions.has(s.id)) this.features.coop.coopLogout(s); // 2.6: duels, trades, presence
     this.sessions.delete(s.id);
@@ -473,19 +705,46 @@ export class Game {
       if (!this.solo) this.broadcast({ t: 'chat', from: '', msg: `${s.name} left the Rift.` });
     }
   }
+  /**
+   * Sends a message payload to a client session if socket is open and backlog is acceptable.
+   * @param {any} s Destination session.
+   * @param {any} m Message object or string to send.
+   * @returns {void}
+   */
   send(s, m) {
     if (s.sock.open && s.sock.backlog < 4e6) s.sock.send(m);
   }
+  /**
+   * Sends a transient toast banner message to the player's UI.
+   * @param {any} s Recipient session.
+   * @param {string} msg Notification banner message text.
+   * @returns {void}
+   */
   toast(s, msg) {
     this.send(s, { t: 'toast', msg });
   }
+  /**
+   * Broadcasts a JSON message to all authenticated sessions matching an optional predicate.
+   * @param {any} m Message payload to broadcast.
+   * @param {((s: Session) => boolean)} [filter] Optional predicate to filter sessions.
+   * @returns {void}
+   */
   broadcast(m, filter) {
     const str = JSON.stringify(m);
     for (const s of this.sessions.values()) if (s.data && (!filter || filter(s))) this.send(s, str);
   }
+  /**
+   * Legacy reputation getter.
+   * @returns {null}
+   */
   get rep() {
     return null;
   }
+  /**
+   * Sends full updated player state ('you' packet) to client session.
+   * @param {any} s Player session.
+   * @returns {void}
+   */
   you(s) {
     const d = s.data;
     this.features.docks.docksInit(d);
@@ -566,10 +825,19 @@ export class Game {
     });
   }
   // ---- claimable station hulls
+  /**
+   * Finds the player account owning a claimable station site hull.
+   * @param {string} id Stellar station site ID.
+   * @returns {any | null} Player record of owner, or null if unclaimed.
+   */
   siteOwner(id) {
     const k = this.db.world.sites[id];
     return k ? this.db.players[k] || null : null;
   }
+  /**
+   * Compiles map of all claimed station sites and their current owners/Ops levels.
+   * @returns {Record<string, {owner: string, ops: number}>} Map of claimed sites and owner information.
+   */
   sitesPayload() {
     const out = {};
     for (const st of SITES) {
@@ -578,12 +846,28 @@ export class Game {
     }
     return out;
   }
+  /**
+   * Checks whether player owns the station hull at stellar body p.
+   * @param {any} d Player save data.
+   * @param {StellarBody} p Stellar body.
+   * @returns {boolean} True if player owns this station site.
+   */
   ownSite(d, p) {
     return !!(p && p.site && d.station.site === p.id);
   }
+  /**
+   * Broadcasts claimed station sites update to all players.
+   * @returns {void}
+   */
   pushSites() {
     this.broadcast({ t: 'sites', sites: this.sitesPayload() });
   }
+  /**
+   * Advances the career guide / tutorial when the current milestone event occurs.
+   * @param {Session} s Player session.
+   * @param {string} ev Tutorial trigger event identifier.
+   * @returns {void}
+   */
   tut(s, ev) {
     // advance the first-flight tutorial if this event is the current goal
     const d = s.data;
@@ -606,20 +890,42 @@ export class Game {
   }
   // 2.0.3: newcomer protection lasts until your Personal Station reaches Ops 3 (see Space.spared)
   // 2.0.3: cargo carried for jobs takes up real hold space
+  /**
+   * Calculates total cargo tonnage allocated to active delivery and smuggling jobs.
+   * @param {any} d Player save data.
+   * @returns {number} Cargo space currently allocated to active cargo and smuggling missions.
+   */
   jobCargo(d) {
     return (d.missions || [])
       .filter((m) => m.type === 'cargo' || m.type === 'smuggle')
       .reduce((a, m) => a + (m.qty || 0), 0);
   }
+  /**
+   * Calculates total hold space currently used by commodities and job cargo.
+   * @param {any} d Player save data.
+   * @returns {number} Total cargo hold tonnage used by trade commodities and mission cargo.
+   */
   holdUsed(d) {
     return Object.values(d.cargo).reduce((a, b) => a + b, 0) + this.jobCargo(d);
   }
+  /**
+   * Calculates passenger berths occupied by active passenger missions.
+   * @param {any} d Player save data.
+   * @returns {number} Passenger berths occupied by active passenger missions.
+   */
   jobBunks(d) {
     return (d.missions || [])
       .filter((m) => m.type === 'passenger')
       .reduce((a, m) => a + (m.pax || 0), 0);
   }
   // can this hull carry your current job cargo, goods and passengers? returns a reason, or null
+  /**
+   * Checks if candidate hull can accommodate current cargo, missions, and passengers.
+   * @param {any} d Player save data.
+   * @param {number} hull Candidate ship hull ID.
+   * @param {boolean} [goods=true] Whether to include commodities in calculation.
+   * @returns {string | null} Failure explanation reason, or null if ship fits.
+   */
   fitsJobs(d, hull, goods = true) {
     const H = this.A.ships[hull];
     if (!H) return 'Unknown hull.';
@@ -633,6 +939,13 @@ export class Game {
     return null;
   }
   // 2.0.3: when you leave a system, your escorts go with you; a rival flying alongside goes back to their own business
+  /**
+   * Cleans up or returns escort wingmates and fighter drones when a ship leaves space.
+   * @param {import('./space.js').Space} space Active system space simulation.
+   * @param {Entity} e Leader entity leaving or destroyed.
+   * @param {string} [why] Removal reason (e.g. 'jump').
+   * @returns {void}
+   */
   dropEscorts(space, e, why) {
     const ids = new Set([e.id]);
     for (let k = 0; k < 3; k++)
@@ -655,6 +968,11 @@ export class Game {
     }
   }
   // 2.0.3: pausing a solo game stops the clock on rush deadlines and loan payments (station timers still run in real time)
+  /**
+   * Toggles pause state for solo play, freezing mission deadlines and loans.
+   * @param {boolean} on Pause state.
+   * @returns {void}
+   */
   setPaused(on) {
     if (on === !!this.paused) return;
     this.paused = on;
@@ -671,9 +989,20 @@ export class Game {
     }
     this.db.touch();
   }
+  /**
+   * Checks whether a captain qualifies for newcomer protection (station below Ops 3).
+   * @param {any} d Player save data.
+   * @returns {boolean} True if player qualifies for newcomer protection.
+   */
   newcomer(d) {
     return !!d && !d.noShield && !((d.station && d.station.ops) >= 3);
   }
+  /**
+   * Warns protected captains when jumping into lawless or dangerous systems.
+   * @param {Session} s Player session.
+   * @param {SpaceSystem} S Destination space system.
+   * @returns {void}
+   */
   protectNote(s, S) {
     // tell protected captains once when they leave the safety of inner space
     const d = s.data;
@@ -686,22 +1015,42 @@ export class Game {
       );
     }
   }
+  /**
+   * Appends an entry to the captain's log history (capped at 200 entries).
+   * @param {any} d Player save data.
+   * @param {string} text Entry text to append.
+   * @returns {void}
+   */
   log(d, text) {
     d.log.push({ t: Date.now(), text });
     if (d.log.length > 200) d.log.shift();
   }
 
   // Fixed routes; authentication, flood and activity gates remain in onMessage.
+  /**
+   * Builds the message router table binding route actions to feature services and handlers.
+   * @returns {any} Initialized message registry dispatcher.
+   */
   createMessageHandlers() {
     return createMessageRegistry([
       [
         'combat',
+        /**
+         * Dispatches combat assist autopilot mode command.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.combatAssist.command(s, m);
         },
       ],
       [
         'input',
+        /**
+         * Processes raw ship flight controls (thrust, turn, afterburner, weapons fire).
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           if (
             (m.th || m.tu || m.ab || m.rv || m.f1 || m.f2) &&
@@ -724,6 +1073,11 @@ export class Game {
       ],
       [
         'target',
+        /**
+         * Selects or clears current combat target entity.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           const d = s.data;
           if (s.ent) {
@@ -737,6 +1091,11 @@ export class Game {
       ],
       [
         'tutskip',
+        /**
+         * Skips career tutorial guide to completion.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           const d = s.data;
           if (d.tut != null && d.tut < TUTORIAL.length) {
@@ -748,6 +1107,11 @@ export class Game {
       ],
       [
         'land',
+        /**
+         * Requests landing at target stellar body.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.combatAssist.stop(s, 'Travel or boarding');
           this.land(s, m.stellar);
@@ -756,6 +1120,11 @@ export class Game {
       ],
       [
         'depart',
+        /**
+         * Requests launch from currently docked stellar body into space.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.depart(s);
           return;
@@ -763,6 +1132,11 @@ export class Game {
       ],
       [
         'jump',
+        /**
+         * Initiates hyperjump to connected system.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.combatAssist.stop(s, 'Travel or boarding');
           this.jump(s, m.to);
@@ -771,6 +1145,11 @@ export class Game {
       ],
       [
         'trade',
+        /**
+         * Executes commodity buy or sell transaction at docked market.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.trade(s, m.cid, m.qty | 0);
           return;
@@ -778,6 +1157,11 @@ export class Game {
       ],
       [
         'buyship',
+        /**
+         * Purchases a ship from shipyard for flagship or hangar storage.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           if (m.store) this.features.docks.buyToHangar(s, m.hull | 0);
           else this.buyShip(s, m.hull | 0);
@@ -786,6 +1170,11 @@ export class Game {
       ],
       [
         'docks',
+        /**
+         * Dispatches drydock operations (ship loadouts, wing assignments).
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.docks.docksOp(s, m);
           return; // 2.1
@@ -793,6 +1182,11 @@ export class Game {
       ],
       [
         'questdrop',
+        /**
+         * Abandons an active story quest.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           const d = s.data;
           if (typeof m.qid === 'string') {
@@ -805,6 +1199,11 @@ export class Game {
       ],
       [
         'outfit',
+        /**
+         * Purchases or sells ship outfits and ammunition.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.outfit(s, m.id | 0, m.n | 0);
           return;
@@ -812,6 +1211,11 @@ export class Game {
       ],
       [
         'accept',
+        /**
+         * Accepts mission from stellar job board.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.accept(s, m.id);
           return;
@@ -819,6 +1223,11 @@ export class Game {
       ],
       [
         'abandon',
+        /**
+         * Abandons an active mission.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           const d = s.data;
           {
@@ -847,6 +1256,11 @@ export class Game {
       ],
       [
         'station',
+        /**
+         * Performs Personal Station operations (claim, upgrade, refinery, research, relocate).
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.station(s, m);
           return;
@@ -854,6 +1268,11 @@ export class Game {
       ],
       [
         'buymat',
+        /**
+         * Purchases or sells engineering materials at station or commodity hub.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.buyMat(s, m.mat, m.grade | 0, m.n | 0);
           return;
@@ -861,6 +1280,11 @@ export class Game {
       ],
       [
         'rename',
+        /**
+         * Renames current flagship.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           const d = s.data;
           if (typeof m.name === 'string' && !d.shipless) {
@@ -873,6 +1297,11 @@ export class Game {
       ],
       [
         'note',
+        /**
+         * Adds a custom captain's log note entry.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           const d = s.data;
           if (typeof m.text === 'string' && m.text.trim()) {
@@ -884,6 +1313,11 @@ export class Game {
       ],
       [
         'chat',
+        /**
+         * Sends chat message to system, global, or Armada channels.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.chat(s, m);
           return;
@@ -891,6 +1325,11 @@ export class Game {
       ],
       [
         'officer',
+        /**
+         * Performs bridge officer assignments, recruitment, and promotions.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.hangar.officerOp(s, m);
           return;
@@ -898,6 +1337,11 @@ export class Game {
       ],
       [
         'shuttle',
+        /**
+         * Dispatches or manages automated trade and mining shuttles.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.hangar.shuttleOp(s, m);
           return;
@@ -905,6 +1349,11 @@ export class Game {
       ],
       [
         'dock',
+        /**
+         * Manages hangar ship storage and swap operations.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.hangar.dockOp(s, m);
           return;
@@ -912,6 +1361,11 @@ export class Game {
       ],
       [
         'board',
+        /**
+         * Boards disabled enemy ship or performs rescue operation.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.combatAssist.stop(s, 'Travel or boarding');
           this.features.hangar.board(s, m);
@@ -920,6 +1374,11 @@ export class Game {
       ],
       [
         'spec',
+        /**
+         * Performs ship specialization tier upgrades and modification.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.specialists.specOp(s, m);
           return;
@@ -927,6 +1386,11 @@ export class Game {
       ],
       [
         'armada',
+        /**
+         * Performs co-op Armada formation, invites, and group commands.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.coop.armadaOp(s, m);
           return; // 2.6: the co-op group (was the solo-armada summon)
@@ -934,6 +1398,11 @@ export class Game {
       ],
       [
         'holdout',
+        /**
+         * Initiates survival holdout wave combat event.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.hostile.holdoutStart(s);
           return;
@@ -941,6 +1410,11 @@ export class Game {
       ],
       [
         'storyacc',
+        /**
+         * Accepts main storyline progression chapter.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.story.storyAccept(s, m);
           return;
@@ -948,6 +1422,11 @@ export class Game {
       ],
       [
         'social',
+        /**
+         * Dispatches social operations: friend requests, direct messages, blocks.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.coop.socialOp(s, m);
           return; // 2.6: friends, DMs, blocks
@@ -955,6 +1434,11 @@ export class Game {
       ],
       [
         'trade2',
+        /**
+         * Conducts secure station-to-station cargo and credit trade between captains.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.coop.tradeOp(s, m);
           return; // 2.6: trading between stations
@@ -962,6 +1446,11 @@ export class Game {
       ],
       [
         'duel',
+        /**
+         * Initiates or accepts formal non-lethal captain duel challenge.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.coop.duelOp(s, m);
           return; // 2.6: agreed duels
@@ -969,6 +1458,11 @@ export class Game {
       ],
       [
         'goal',
+        /**
+         * Claims milestone reward for faction war front goal.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.fronts.claimGoal(s, m);
           return;
@@ -976,6 +1470,11 @@ export class Game {
       ],
       [
         'store',
+        /**
+         * Purchases items from faction front milestone store.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.fronts.storeBuy(s, m);
           return;
@@ -983,6 +1482,11 @@ export class Game {
       ],
       [
         'colony',
+        /**
+         * Dispatches frontier planet colonization and outpost development operations.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.frontier.colonyOp(s, m);
           return;
@@ -990,6 +1494,11 @@ export class Game {
       ],
       [
         'arena',
+        /**
+         * Enters matchmaking queue or manages combat arena operations.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.frontier.arenaOp(s, m);
           return;
@@ -997,6 +1506,11 @@ export class Game {
       ],
       [
         'exchange',
+        /**
+         * Exchanges faction victory tokens and currencies.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.frontier.exchangeOp(s, m);
           return;
@@ -1004,6 +1518,11 @@ export class Game {
       ],
       [
         'boards',
+        /**
+         * Requests community competitive leaderboard data.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.send(s, {
             t: 'boards',
@@ -1015,6 +1534,11 @@ export class Game {
       ],
       [
         'profile',
+        /**
+         * Requests public captain career and combat profile.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.send(s, { t: 'profile', p: this.features.frontier.profile(m.name) });
           return;
@@ -1022,6 +1546,11 @@ export class Game {
       ],
       [
         'ping',
+        /**
+         * Responds to client latency measurement ping with pong.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.send(s, { t: 'pong', c: m.c });
           return;
@@ -1029,6 +1558,11 @@ export class Game {
       ],
       [
         'hail',
+        /**
+         * Initiates radio comms hail to target stellar or ship.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.hail.hail(s, m);
           return; // 1.1
@@ -1036,6 +1570,11 @@ export class Game {
       ],
       [
         'hailopt',
+        /**
+         * Selects dialogue conversation choice during active radio hail.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.hail.hailOpt(s, m);
           return;
@@ -1043,6 +1582,11 @@ export class Game {
       ],
       [
         'order',
+        /**
+         * Issues fleet command order to escort wingmates.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           if (s.ent) {
             if (m.o === 'attack' && s.ent.order !== 'attack')
@@ -1055,6 +1599,11 @@ export class Game {
       ],
       [
         'jettison',
+        /**
+         * Jettisons cargo into space to lighten ship or distract raiders.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.fleetcmd.jettison(s, m.cid, m.n | 0);
           return;
@@ -1062,6 +1611,11 @@ export class Game {
       ],
       [
         'rivals',
+        /**
+         * Requests status payload of active AI rival captains.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           const d = s.data;
           this.send(s, { t: 'rivals', list: this.features.rivals.rivalsPayload(d) });
@@ -1070,6 +1624,11 @@ export class Game {
       ],
       [
         'bm',
+        /**
+         * Purchases illicit contraband from syndicate black market.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.syndicate.bmBuy(s, m.id);
           return;
@@ -1077,6 +1636,11 @@ export class Game {
       ],
       [
         'arcacc',
+        /**
+         * Accepts faction campaign story arc.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.arcs.arcAccept(s, m.fac);
           return; // 1.2
@@ -1084,6 +1648,11 @@ export class Game {
       ],
       [
         'promote',
+        /**
+         * Claims syndicate crime tier promotion.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.syndicate.promote(s, m.id);
           return;
@@ -1091,6 +1660,11 @@ export class Game {
       ],
       [
         'lower',
+        /**
+         * Dispatches lower deck syndicate crew operations.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.syndicate.lowerDeck(s, m);
           return;
@@ -1098,6 +1672,11 @@ export class Game {
       ],
       [
         'bank',
+        /**
+         * Performs Syndicate bank loan borrowing and repayment.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           this.features.syndicate.bankOp(s, m);
           return;
@@ -1105,6 +1684,11 @@ export class Game {
       ],
       [
         'pause',
+        /**
+         * Toggles solo play game pause state.
+         * @param {Session} s Player session.
+         * @param {any} m Message payload.
+         */
         (s, m) => {
           if (this.solo && [...this.sessions.values()].filter((x) => x.data).length === 1) {
             this.setPaused(!this.paused);
@@ -1116,6 +1700,12 @@ export class Game {
     ]);
   }
 
+  /**
+   * Ingests, rate-limits, authenticates, and dispatches an incoming client message.
+   * @param {Session} s Source session.
+   * @param {any} m Incoming parsed client message.
+   * @returns {void}
+   */
   onMessage(s, m) {
     const now = Date.now();
     if (now - s.msgT > 1000) {
@@ -1130,6 +1720,12 @@ export class Game {
     if (m.t !== 'ping') s.actT = now; // 2.6: for Online / Away
     this.messageHandlers.dispatch(m.t, s, m);
   }
+  /**
+   * Handles player login authentication and new account registration.
+   * @param {Session} s Unauthenticated session.
+   * @param {{name: string, pass: string}} m Authentication handshake payload.
+   * @returns {void}
+   */
   hello(s, m) {
     const name = String(m.name || '').trim(),
       pass = String(m.pass || '');
@@ -1210,6 +1806,11 @@ export class Game {
       );
   }
   // player-facing reference used by Space (id, name, rep, inputs)
+  /**
+   * Constructs player reference descriptor used by Space simulation to bridge entity and session.
+   * @param {Session} s Player session.
+   * @returns {PlayerReference} Player reference descriptor for Space.
+   */
   pref(s) {
     return {
       id: s.id,
@@ -1229,6 +1830,15 @@ export class Game {
   }
 
   // ------------------------------------------------------------------ space: depart, land, jump
+  /**
+   * Spawns player ship and active wingmates into space system simulation.
+   * @param {Session} s Player session.
+   * @param {number} x Coordinate X.
+   * @param {number} y Coordinate Y.
+   * @param {number} a Heading angle in radians.
+   * @param {number} v Initial velocity magnitude.
+   * @returns {void}
+   */
   spawnPlayer(s, x, y, a, v) {
     if (s.combat) this.combatAssist.stop(s, 'New flight state; rearm explicitly');
     const d = s.data,
@@ -1303,6 +1913,11 @@ export class Game {
       }
     } // 2.6: members see where you are
   }
+  /**
+   * Launches player ship from docked stellar body into active space flight.
+   * @param {Session} s Player session launching from stellar.
+   * @returns {void}
+   */
   depart(s) {
     const d = s.data;
     if (s.ent || !d.stellar) return;
@@ -1324,6 +1939,12 @@ export class Game {
     this.spawnPlayer(s, p.x + Math.sin(a) * (p.r + 30), p.y - Math.cos(a) * (p.r + 30), a, 40);
     this.you(s);
   }
+  /**
+   * Lands player ship at a stellar body, repairing, refueling, and completing missions.
+   * @param {Session} s Player session landing.
+   * @param {string} sid Target stellar ID.
+   * @returns {void}
+   */
   land(s, sid) {
     const d = s.data,
       e = s.ent;
@@ -1365,6 +1986,11 @@ export class Game {
       if (A) this.features.coop.armadaPush(A);
     } // 2.6
   }
+  /**
+   * Transmits docked port services payload (market, shipyard, jobs, outfitter) to client.
+   * @param {Session} s Player session currently docked.
+   * @returns {void}
+   */
   landed(s) {
     const d = s.data,
       p = STELLARS[d.stellar];
@@ -1415,6 +2041,12 @@ export class Game {
           : null,
     });
   }
+  /**
+   * Initiates hyperjump to connected system, charging jump drive.
+   * @param {Session} s Player session initiating hyperjump.
+   * @param {string} to Destination system ID.
+   * @returns {void}
+   */
   jump(s, to) {
     const d = s.data,
       e = s.ent;
@@ -1464,6 +2096,12 @@ export class Game {
       }
     this.features.coop.armadaLeaderJump(s, to); // 2.6: members who follow the leader get the destination
   }
+  /**
+   * Finalizes hyperjump: deducts fuel, explores destination, and spawns ship in new system.
+   * @param {Entity} e Jumping ship entity.
+   * @param {import('./space.js').Space} space Origin space simulation.
+   * @returns {void}
+   */
   finishJump(e, space) {
     if (!e.player) {
       space.remove(e, 'jump');
@@ -1506,6 +2144,13 @@ export class Game {
   }
 
   // 0.8: flying into the Sol Gateway (or its far mouth) crosses instantly, with no fuel cost
+  /**
+   * Handles instantaneous transit through Sol Gateway wormholes without fuel consumption.
+   * @param {Entity} e Ship entity entering wormhole.
+   * @param {import('./space.js').Space} space Origin space.
+   * @param {StellarBody} p Wormhole gateway stellar body.
+   * @returns {void}
+   */
   wormholeTransit(e, space, p) {
     const s = e.player.s,
       d = s.data,
@@ -1557,6 +2202,13 @@ export class Game {
     this.you(s);
   }
   // ------------------------------------------------------------------ combat outcomes
+  /**
+   * Handles weapon impact against NPC ship, updating faction reputation and rival state.
+   * @param {PlayerReference} pref Attacking player reference.
+   * @param {Entity} npc Target entity hit.
+   * @param {import('./space.js').Space} space Space simulation.
+   * @returns {void}
+   */
   onHit(pref, npc, space) {
     const s = pref.s,
       d = s.data;
@@ -1577,6 +2229,14 @@ export class Game {
       d.rep[npc.faction] = clamp((d.rep[npc.faction] || 0) - 1, -100, 100);
     }
   }
+  /**
+   * Resolves combat kill: awards bounties, increases combat rating, and fulfills mission objectives.
+   * @param {PlayerReference} pref Killing player reference.
+   * @param {Entity} npc Entity destroyed.
+   * @param {import('./space.js').Space} space Space simulation.
+   * @param {boolean} [byEscort] Whether final blow was landed by an escort.
+   * @returns {void}
+   */
   onKill(pref, npc, space, byEscort) {
     const s = pref.s,
       d = s.data;
@@ -1655,6 +2315,13 @@ export class Game {
     }
     this.you(s);
   }
+  /**
+   * Handles player ship destruction: charges insurance fee, clears cargo, and respawns at station.
+   * @param {PlayerReference} pref Player reference destroyed.
+   * @param {import('./space.js').Space} space Space simulation.
+   * @param {Entity | null} [by] Killer entity, if any.
+   * @returns {void}
+   */
   onPlayerDeath(pref, space, by) {
     const s = pref.s,
       d = s.data;
@@ -1693,6 +2360,12 @@ export class Game {
     this.you(s);
     this.landed(s);
   }
+  /**
+   * Finds the nearest market port that purchases a specific commodity.
+   * @param {string} sys Starting system ID.
+   * @param {string} cid Commodity ID.
+   * @returns {{p: StellarBody, j: number} | null} Nearest purchasing stellar port and jump distance, or null.
+   */
   nearestBuyer(sys, cid) {
     // 2.5.2: the closest market that buys a good (by jumps)
     const dist = { [sys]: 0 },
@@ -1713,6 +2386,12 @@ export class Game {
     }
     return null;
   }
+  /**
+   * Handles player scooping floating salvage canister, ore chunk, or credits.
+   * @param {PlayerReference} pref Player scooping loot.
+   * @param {any} it Loot item payload.
+   * @returns {boolean | void} Returns false if cargo hold full when mining ore.
+   */
   onLoot(pref, it) {
     const s = pref.s,
       d = s.data;
@@ -1766,6 +2445,10 @@ export class Game {
     this.you(s);
   }
 
+  /**
+   * Compiles social hub statistics: docked captains, top earners, and station claim statuses.
+   * @returns {CommunityPayload} Active social / leaderboard statistics payload.
+   */
   community() {
     const docked = [...this.sessions.values()]
       .filter((x) => x.data && x.data.stellar === 'qstation')
@@ -1799,6 +2482,11 @@ export class Game {
     return { docked, top, stations, online };
   }
   // ------------------------------------------------------------------ markets
+  /**
+   * Generates commodity market prices for a stellar port, applying flash and state modifiers.
+   * @param {StellarBody} p Stellar port.
+   * @returns {MarketItem[] | null} Array of traded commodities and pricing, or null.
+   */
   market(p) {
     if (p.site) {
       const o = this.siteOwner(p.id);
@@ -1825,6 +2513,13 @@ export class Game {
       };
     }).filter((x) => x.price !== null); // 1.1: market flashes; 2.4: system states and what captains sold here
   }
+  /**
+   * Executes commodity purchase or sale transaction with market depth price impact.
+   * @param {Session} s Player session.
+   * @param {string} cid Commodity ID.
+   * @param {number} qty Amount to buy (>0) or sell (<0).
+   * @returns {void}
+   */
   trade(s, cid, qty) {
     const d = s.data,
       p = STELLARS[d.stellar];
@@ -1886,6 +2581,12 @@ export class Game {
     this.you(s);
     this.landed(s);
   }
+  /**
+   * Lists upgrade materials for sale at a stellar body based on faction specialization.
+   * @param {StellarBody} p Stellar body.
+   * @param {any} [d] Player data.
+   * @returns {Array<{mat: string, grade: number, price: number}>} Upgrade materials available.
+   */
   matsFor(p, d) {
     const fac = SYS[p.system].faction,
       out = [];
@@ -1904,6 +2605,14 @@ export class Game {
       out.push({ mat: special[0], grade: special[1], price: MAT_PRICE[special[1]] });
     return out;
   }
+  /**
+   * Executes purchase or sale of crafting and upgrade materials.
+   * @param {Session} s Player session.
+   * @param {string} mat Material name ('alloy', 'crystal', 'isotope').
+   * @param {number} grade Material grade index (0-4).
+   * @param {number} n Quantity to buy (>0) or sell (<0).
+   * @returns {void}
+   */
   buyMat(s, mat, grade, n) {
     const d = s.data,
       p = STELLARS[d.stellar];
@@ -1925,6 +2634,12 @@ export class Game {
   }
 
   // ------------------------------------------------------------------ shipyard and outfitter
+  /**
+   * Compiles list of ship hulls available for purchase at shipyard.
+   * @param {StellarBody} p Stellar port.
+   * @param {any} [d] Player data.
+   * @returns {number[] | null} Array of hull IDs for sale, or null.
+   */
   yard(p, d) {
     if (p.site) {
       // your Personal Station sells the station ships for its Ops level
@@ -1948,6 +2663,11 @@ export class Game {
         if (this.A.ships[h].tech <= p.tech) list.add(h); // 2.3: the Wasp, Swift and Pelican are sold everywhere
     return [...list].sort((a, b) => this.A.ships[a].cost - this.A.ships[b].cost);
   }
+  /**
+   * Calculates credit trade-in value for captain's current ship and outfits (50% value).
+   * @param {any} d Player save data.
+   * @returns {number} Credit trade-in value of current ship and installed outfits.
+   */
   tradeIn(d) {
     if (d.shipless) return 0;
     const H = this.A.ships[d.ship.hull];
@@ -1956,6 +2676,12 @@ export class Game {
       v += (this.O[id] ? this.O[id].cost : 0) * n * 0.5;
     return Math.round(v);
   }
+  /**
+   * Purchases a new flagship hull, applying trade-in credit for previous ship.
+   * @param {Session} s Player session.
+   * @param {number} hull Hull ID to purchase.
+   * @returns {void}
+   */
   buyShip(s, hull) {
     const d = s.data,
       p = STELLARS[d.stellar];
@@ -1982,6 +2708,12 @@ export class Game {
     this.landed(s);
     this.toast(s, `The ${H.name} is yours.`);
   }
+  /**
+   * Compiles list of ship outfits available for purchase at outfitter.
+   * @param {StellarBody} p Stellar port.
+   * @param {any} [d] Player data.
+   * @returns {number[] | null} Array of outfit IDs for sale, or null.
+   */
   outfitter(p, d) {
     if (p.site && !(d && this.ownSite(d, p) && d.station.ops >= 2)) return null;
     if (!p.site && !p.svc.includes('O')) return null;
@@ -1997,6 +2729,13 @@ export class Game {
     }
     return list.sort((a, b) => this.O[a].cost - this.O[b].cost);
   }
+  /**
+   * Purchases or sells a ship outfit or ammunition batch.
+   * @param {Session} s Player session.
+   * @param {number} id Outfit ID.
+   * @param {number} n Quantity to buy (>0) or sell (<0).
+   * @returns {void}
+   */
   outfit(s, id, n) {
     const d = s.data,
       p = STELLARS[d.stellar];
@@ -2052,6 +2791,12 @@ export class Game {
   }
 
   // ------------------------------------------------------------------ missions
+  /**
+   * Generates procedural job board mission offers for a stellar port.
+   * @param {StellarBody} p Stellar port.
+   * @param {any} d Player data.
+   * @returns {Mission[]} Available job board missions.
+   */
   offers(p, d) {
     if (!p.svc.includes('B')) return [];
     const win = Math.floor(Date.now() / 600000),
@@ -2168,6 +2913,12 @@ export class Game {
       (o) => !d.missions.some((m) => m.id === o.id) && !(o.type === 'assassinate' && rank < 3),
     );
   }
+  /**
+   * Accepts a mission from the local stellar job board.
+   * @param {Session} s Player session.
+   * @param {string} id Mission ID to accept.
+   * @returns {void}
+   */
   accept(s, id) {
     const d = s.data,
       p = STELLARS[d.stellar];
@@ -2194,6 +2945,12 @@ export class Game {
     this.you(s);
     this.landed(s);
   }
+  /**
+   * Evaluates active missions upon landing, paying rewards and logging completions.
+   * @param {Session} s Player session landing.
+   * @param {StellarBody} p Landed stellar port.
+   * @returns {void}
+   */
   completeOnLanding(s, p) {
     const d = s.data;
     d.lastStellar = p.id;
@@ -2246,6 +3003,11 @@ export class Game {
   }
 
   // ------------------------------------------------------------------ Quantum Station (each captain's own)
+  /**
+   * Updates Personal Station timers: refinery generation, active research, and construction.
+   * @param {any} d Player save data.
+   * @returns {void}
+   */
   checkStation(d) {
     const S = d.station;
     if (!S.claimed) return;
@@ -2268,12 +3030,30 @@ export class Game {
     }
     this.features.hangar.startQueued(d);
   }
+  /**
+   * Verifies if player has required material quantities.
+   * @param {any} d Player save data.
+   * @param {Array<[string, number, number]>} mats Required materials tuple [name, grade, count].
+   * @returns {boolean} True if inventory satisfies all material requirements.
+   */
   hasMats(d, mats) {
     return mats.every(([m, g, n]) => d.mats[m][g] >= n);
   }
+  /**
+   * Deducts specified material quantities from player inventory.
+   * @param {any} d Player save data.
+   * @param {Array<[string, number, number]>} mats Materials to consume [name, grade, count].
+   * @returns {void}
+   */
   takeMats(d, mats) {
     for (const [m, g, n] of mats) d.mats[m][g] -= n;
   }
+  /**
+   * Processes Personal Station operations: claiming derelicts, upgrades, refinery, and relocation.
+   * @param {Session} s Player session.
+   * @param {any} m Station operation payload.
+   * @returns {void}
+   */
   station(s, m) {
     const d = s.data,
       p = STELLARS[d.stellar],
@@ -2479,6 +3259,12 @@ export class Game {
   }
 
   // ------------------------------------------------------------------ chat
+  /**
+   * Broadcasts chat message across system, global, or Armada channels.
+   * @param {Session} s Sending session.
+   * @param {{msg: string, ch?: string}} m Chat message payload.
+   * @returns {void}
+   */
   chat(s, m) {
     const msg = String(m.msg || '')
       .slice(0, 240)
@@ -2503,10 +3289,20 @@ export class Game {
     );
   }
 
+  /**
+   * Suspends and deallocates an idle space simulation when no players are present.
+   * @param {import('./space.js').Space} sp Space instance to suspend.
+   * @returns {void}
+   */
   sleep(sp) {
     delete this.live[sp.id];
   }
   // every two seconds: shuttles that have come home report in, finished research hands over to the queue
+  /**
+   * Periodic maintenance check per session: shuttle missions, research queue, and station ticks.
+   * @param {Session} s Active session.
+   * @returns {void}
+   */
   idleCheck(s) {
     const d = s.data;
     this.features.hangar.hangarInit(d);
@@ -2543,6 +3339,10 @@ export class Game {
     }
   }
   // ------------------------------------------------------------------ loop
+  /**
+   * Main server engine simulation tick loop: ticks spaces, features, and sends state snapshots.
+   * @returns {void}
+   */
   tick() {
     if (this.paused) {
       if (![...this.sessions.values()].some((x) => x.data)) this.setPaused(false);

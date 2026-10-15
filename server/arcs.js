@@ -18,7 +18,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const ArcsOperations = {
   /**
    * Initialize or retrieve the player's arc state dictionary.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {Record<string, any>} Player arcs state dictionary.
    */
@@ -28,7 +28,7 @@ export const ArcsOperations = {
   },
   /**
    * Get or initialize the progress state for a specific faction arc.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @param {string} f - Faction key.
    * @returns {{step: number, active: any, done: boolean}} Arc progress state.
@@ -42,7 +42,7 @@ export const ArcsOperations = {
   // the arc step on offer at this world, if any
   /**
    * Evaluate the next arc mission step on offer at a stellar body.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @param {{id: string}} p - Current stellar body.
    * @param {string} f - Faction key.
@@ -63,7 +63,7 @@ export const ArcsOperations = {
   },
   /**
    * List all available arc mission offers at a stellar body.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @param {{id: string}} p - Current stellar body.
    * @returns {Array<Record<string, any>>} List of arc mission offers.
@@ -75,7 +75,7 @@ export const ArcsOperations = {
   },
   /**
    * Build the network payload representing arc progress for the client.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {Array<Record<string, any>>} Arc states summary for client.
    */
@@ -109,7 +109,7 @@ export const ArcsOperations = {
   },
   /**
    * Handle player landing event to check arc step completion or trigger offers.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {{id: string}} p - Landed stellar body.
    * @returns {void}
@@ -139,7 +139,7 @@ export const ArcsOperations = {
   },
   /**
    * Accept an active faction arc mission offer.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {string} f - Faction key.
    * @returns {void}
@@ -160,7 +160,7 @@ export const ArcsOperations = {
   },
   /**
    * Complete the active step of a faction arc, awarding credits, reputation, and rewards.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {string} f - Faction key.
    * @returns {void}
@@ -218,7 +218,7 @@ export const ArcsOperations = {
   // arriving in an arc system spawns what the step needs
   /**
    * Spawn encounter ships or derelicts upon arriving in a system required by an active arc.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {any} sp - Current space system instance.
    * @returns {void}
@@ -278,7 +278,7 @@ export const ArcsOperations = {
   },
   /**
    * Record combat or rescue progress for an encounter associated with an active arc.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {any} x - Destroyed or rescued entity.
    * @returns {void}
@@ -306,7 +306,7 @@ export const ArcsOperations = {
   // Offered on Farside job boards: survey a system, board the derelict the survey finds, bring its data core back.
   /**
    * Generate a procedural Farside survey expedition mission if eligible.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {any} p - Current stellar body.
    * @param {Record<string, any>} d - Saved player data.
    * @returns {Record<string, any> | null} Expedition mission object or null if ineligible.
@@ -339,7 +339,7 @@ export const ArcsOperations = {
   // a finished expedition stage becomes the next one
   /**
    * Advance a completed expedition stage to the next stage or final reward.
-   * @this {import('./features.js').ArcsCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {Record<string, any>} m - Completed expedition mission.
    * @returns {void}

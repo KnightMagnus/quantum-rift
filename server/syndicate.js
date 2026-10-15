@@ -40,7 +40,7 @@ export const destType = (m) => DEST_TYPES.includes(m.type);
 export const SyndicateOperations = {
   /**
    * Initialize or default Syndicate standing, commendations, lower deck crew, and credit rating.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {Record<string, any>} Initialized player data.
    */
@@ -53,7 +53,7 @@ export const SyndicateOperations = {
   },
   /**
    * Award Syndicate standing and notify player of rank increases.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {string} kind - Standing gain category.
    * @param {number} [mult=1] - Standing gain multiplier.
@@ -73,7 +73,7 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ black market: outlaw worlds, and any spaceport bar once you are a Lieutenant
   /**
    * Check whether black market services are accessible at a given stellar body.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} p - Stellar body or station.
    * @param {Record<string, any>} d - Saved player data.
    * @returns {boolean} True if black market is accessible.
@@ -83,7 +83,7 @@ export const SyndicateOperations = {
   },
   /**
    * Retrieve black market stock and tier access details for a stellar body.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} p - Stellar body or station.
    * @param {Record<string, any>} d - Saved player data.
    * @returns {Record<string, any> | null} Black market inventory payload or null.
@@ -98,7 +98,7 @@ export const SyndicateOperations = {
   },
   /**
    * Purchase an item or service from the black market fence.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {string} id - Black market item identifier.
    * @returns {void}
@@ -152,7 +152,7 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ officer promotions and the lower decks
   /**
    * Promote an officer to the next rank, consuming commendations and credits and granting a trait.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {string} id - Officer identifier.
    * @returns {void}
@@ -189,7 +189,7 @@ export const SyndicateOperations = {
   },
   /**
    * Hire or dismiss lower-deck crew members.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {{i: number, op: 'hire' | 'dismiss', kind: string}} m - Lower deck management message.
    * @returns {void}
@@ -219,7 +219,7 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ the bank
   /**
    * Check whether banking services are available at a stellar body.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} p - Stellar body or station.
    * @returns {boolean} True if banking services are available.
    */
@@ -228,7 +228,7 @@ export const SyndicateOperations = {
   },
   /**
    * Retrieve bank account, loan balance, and payment schedule details.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {Record<string, any>} Bank account and loan information.
    */
@@ -247,7 +247,7 @@ export const SyndicateOperations = {
   },
   /**
    * Process borrowing or loan repayment bank operations.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {{op: 'borrow' | 'pay', amt: number | string}} m - Bank operation message.
    * @returns {void}
@@ -289,7 +289,7 @@ export const SyndicateOperations = {
   },
   /**
    * Process periodic loan interest, scheduled payment deduction, and credit score changes.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @returns {void}
    */
@@ -328,7 +328,7 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ extra jobs: passengers, rush deliveries, Syndicate contracts
   /**
    * Generate extra mission offers including passenger transport, rush cargo deliveries, and Syndicate contracts.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} p - Current stellar body.
    * @param {Record<string, any>} d - Saved player data.
    * @param {() => number} r - Random number generator function.
@@ -422,7 +422,7 @@ export const SyndicateOperations = {
   },
   /**
    * Verify whether the player meets requirements to accept a mission offer (e.g. passenger bunks).
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {Record<string, any>} o - Mission offer being accepted.
    * @returns {boolean} True if offer requirements are met.
@@ -444,7 +444,7 @@ export const SyndicateOperations = {
   },
   /**
    * Check active missions against their deadlines, notifying of impending expiration or penalizing failures.
-   * @this {import('./features.js').SyndicateCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @returns {void}
    */

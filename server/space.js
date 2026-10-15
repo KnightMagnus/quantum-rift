@@ -1,3 +1,159 @@
+/**
+ * @typedef {import('./game.js').Session} Session
+ * @typedef {import('./game.js').PlayerReference} PlayerReference
+ * @typedef {import('./game.js').SpaceSystem} SpaceSystem
+ * @typedef {import('./game.js').ShipStats} ShipStats
+ *
+ * @typedef {object} WeaponMount
+ * @property {number} w Weapon item ID.
+ * @property {number} n Number of mounted weapon instances.
+ * @property {any} p Precomputed weapon parameters (range, reload, speed, homing, etc.).
+ * @property {number} cd Current weapon cooldown time remaining in seconds.
+ * @property {number} ammo Current ammunition count or Infinity if unlimited.
+ * @property {string} snd Sound effect identifier.
+ * @property {boolean} sec True if secondary weapon (missile, torpedo, drone bay).
+ * @property {number} sndT Timestamp of last sound effect emission.
+ *
+ * @typedef {object} Entity
+ * @property {number} id Unique entity simulation ID.
+ * @property {number} hull Hull ID of the ship.
+ * @property {string} faction Faction identifier string.
+ * @property {number} x Coordinate X in 2D space.
+ * @property {number} y Coordinate Y in 2D space.
+ * @property {number} vx Velocity vector X component.
+ * @property {number} vy Velocity vector Y component.
+ * @property {number} a Heading orientation angle in radians.
+ * @property {ShipStats} st Computed live ship stats.
+ * @property {number} shield Current shield hitpoints.
+ * @property {number} armor Current armor hitpoints.
+ * @property {number} fuel Current hyperspace fuel.
+ * @property {string | null} ai AI behavior mode ('patrol', 'trade', 'raid', 'escort', 'flee', 'leave').
+ * @property {PlayerReference | null} player Player reference if this is a player-controlled ship.
+ * @property {number | null} owner Entity ID of the commanding or parent ship.
+ * @property {string | null} name Custom or display ship name.
+ * @property {Entity | null} target Current combat target entity.
+ * @property {Set<number>} aggro Set of hostile entity IDs that have attacked or engaged this ship.
+ * @property {{thrust?: number, turn?: number, ab?: number, rev?: number, fire1?: number, fire2?: number}} inp Input control state.
+ * @property {WeaponMount[]} guns Array of installed weapon mounts and turrets.
+ * @property {boolean} dead True if the ship is destroyed or decommissioned.
+ * @property {number} born Simulation timestamp when entity was spawned.
+ * @property {number} think Time until next AI decision cycle.
+ * @property {{x: number, y: number} | null} dest Target destination point for navigation or docking.
+ * @property {string} state Entity flight state ('fly', 'jumpout', 'landed').
+ * @property {number} jumpT Countdown timer for hyperjump execution.
+ * @property {string} [jumpTo] Destination system ID during jump.
+ * @property {any} [mission] Mission data object if this is a spawned mission target.
+ * @property {number} life Lifespan in seconds before departure.
+ * @property {number} cargo Cargo capacity or cargo indicator.
+ * @property {number} strength Base strength rating of the ship.
+ * @property {string} [role] Combat role class ('interceptor', 'fighter', 'corvette', 'frigate', 'destroyer', 'cruiser').
+ * @property {string} [pers] AI combat personality ('cautious', 'steady', 'reckless').
+ * @property {number} pw Effective power rating.
+ * @property {boolean} [disabled] True if ship is disabled and drifting.
+ * @property {number} [disT] Simulation timestamp when ship was disabled.
+ * @property {number} [hitT] Simulation timestamp when ship was last damaged.
+ * @property {number} [lastHitBy] Entity ID of last attacker.
+ * @property {number} [graceT] Grace period timestamp protecting newly arrived players.
+ * @property {number} [wormT] Wormhole transit cooldown timestamp.
+ * @property {number} [rescueT] Rescue grace period timestamp.
+ * @property {number} [fighterOf] Parent carrier entity ID if this is a launched fighter drone.
+ * @property {boolean} [recall] True if fighter drone is recalled to dock.
+ * @property {boolean} [elite] True if player ship has elite mastery.
+ * @property {boolean} [rival] True if this is an AI rival captain.
+ * @property {string} [rivalAi] Fallback AI behavior for rival.
+ * @property {boolean} [autoCombat] True if automated combat assist is active.
+ * @property {Entity | null} [combatTarget] Target entity selected by combat assist.
+ * @property {string} [order] Current fleet command order ('gather', 'attack', 'hold', 'holdfire', 'loot').
+ * @property {number} [orderSeq] Sequence counter for fleet orders.
+ * @property {boolean} [boss] True if invasion boss entity.
+ * @property {boolean} [bossMinion] True if escort minion of an invasion boss.
+ * @property {boolean} [kingpin] True if Armada contract kingpin target.
+ * @property {boolean} [warFleet] True if spawned as part of a system state war fleet.
+ * @property {number} [coopRe] Armada shield recharge multiplier bonus.
+ * @property {any} [catchup] Speed catchup boost when escort falls behind.
+ * @property {boolean} [tradeMate] True if accompanying a trader convoy.
+ * @property {number} [escortSlot] Formation slot index for wingmates.
+ * @property {string} [wingUid] Saved wingmate unique identifier.
+ * @property {number} [wingOf] Player session ID of commanding player.
+ * @property {number} [distractT] Timestamp until distraction by jettisoned cargo expires.
+ * @property {Entity | null} [fireAt] Current target entity to aim weapons at.
+ * @property {number} [seq] Sequence number of last applied player input packet.
+ * @property {number} [_f2] Previous state of secondary fire button.
+ * @property {boolean} [noDisable] True if entity is destroyed immediately without disability threshold.
+ * @property {number} [helpT] Timestamp of last distress call for reinforcements.
+ * @property {boolean} [dread] True if dreadnought boss entity.
+ * @property {number} [repHitT] Timestamp of last reputation penalty hit.
+ * @property {number} [storyKill] Linked story objective ID.
+ * @property {string} [arcOf] Faction arc objective identifier.
+ * @property {string} [huntOf] Hunt mission identifier.
+ * @property {string} [team] Arena combat team designation ('A' or 'B').
+ * @property {boolean} [convoyOf] Convoy fleet identifier.
+ * @property {boolean} [wave] Frontier wave encounter entity.
+ * @property {number} [slot] Formation slot assigned.
+ * @property {number} [jumpCost] Calculated fuel requirement for hyperjump.
+ *
+ * @typedef {object} Rock
+ * @property {number} id Unique asteroid rock ID.
+ * @property {number} x Coordinate X.
+ * @property {number} y Coordinate Y.
+ * @property {number} r Asteroid rock collision radius.
+ * @property {string} ore Ore commodity type mined ('gas', 'shards', 'ore', etc.).
+ * @property {number} rich Ore richness multiplier.
+ * @property {number} hp Current rock durability hitpoints.
+ * @property {number} max Maximum rock durability hitpoints.
+ * @property {number} down Timestamp when depleted rock will respawn, or 0 if active.
+ * @property {number} evT Event tracking timestamp.
+ *
+ * @typedef {object} Shot
+ * @property {number} id Unique projectile ID.
+ * @property {number} w Weapon ID used to fire this shot.
+ * @property {number} owner Entity ID of shooting ship.
+ * @property {number} x Current position X.
+ * @property {number} y Current position Y.
+ * @property {number} vx Velocity X component.
+ * @property {number} vy Velocity Y component.
+ * @property {number} life Remaining projectile lifetime in seconds.
+ * @property {number} dmgA Armor / hull damage dealt on impact.
+ * @property {number} dmgS Shield damage dealt on impact.
+ * @property {any} p Precomputed weapon properties.
+ * @property {Entity | null} [target] Guided missile target entity, if homing.
+ *
+ * @typedef {object} Beam
+ * @property {number} id Entity ID of beam emitter.
+ * @property {number} w Weapon ID.
+ * @property {number} a Beam direction angle in radians.
+ * @property {number} len Beam length in world units.
+ * @property {number} until Simulation timestamp until beam expires.
+ *
+ * @typedef {object} LootItem
+ * @property {number} [credits] Credits salvage value.
+ * @property {string} [mat] Material commodity type.
+ * @property {number} [grade] Material grade index (0-4).
+ * @property {string} [ore] Mined ore commodity ID.
+ * @property {number} [n] Quantity of ore or units.
+ * @property {string} [cargo] Jettisoned commodity ID.
+ * @property {any} [salvage] Quest salvage payload.
+ * @property {any} [chest] Pirate treasure chest payload.
+ *
+ * @typedef {object} FloatingLoot
+ * @property {number} id Unique loot canister ID.
+ * @property {number} x Position X.
+ * @property {number} y Position Y.
+ * @property {number} vx Drift velocity X.
+ * @property {number} vy Drift velocity Y.
+ * @property {LootItem} it Item contents.
+ * @property {number} t Spawn simulation timestamp.
+ * @property {number} kind Visual kind (0: canister/credits, 1: material crate, 2: jettisoned cargo).
+ * @property {boolean} [taken] True if already collected by a ship.
+ *
+ * @typedef {object} SpaceSnapshot
+ * @property {Array<Array<number | string | null>>} ships Array of serialized ship state tuples.
+ * @property {Array<number[]>} shots Serialized projectile positions and weapon types.
+ * @property {Array<number[]>} beams Serialized active laser beam vectors.
+ * @property {Array<number[]>} loot Serialized floating salvage canisters.
+ * @property {Array<any[]>} ev Transient visual/audio simulation events.
+ */
+
 // One star system's live simulation: ships (players, their escorts, NPC traffic), shots, beams, loot.
 import { SYS, TRAFFIC, FACTIONS, MATERIALS } from '../shared/galaxy.js';
 import { roleMult } from '../shared/roles.js';
@@ -27,12 +183,62 @@ const SLOTS = [
   [-1, 3],
   [1, 3],
 ]; // escort formation: [lateral, behind]
+/**
+ * Calculates Euclidean distance between an entity and coordinates.
+ * @param {Entity} e Source entity.
+ * @param {number} x Target X coordinate.
+ * @param {number} y Target Y coordinate.
+ * @returns {number} Distance in world units.
+ */
 const d0 = (e, x, y) => Math.hypot(x - e.x, y - e.y);
 const FAC = Object.keys(FACTIONS);
+/**
+ * Generates a random float in range [a, b).
+ * @param {number} a Minimum bound.
+ * @param {number} b Maximum bound.
+ * @returns {number} Random float.
+ */
 const rnd = (a, b) => a + Math.random() * (b - a);
+/**
+ * Picks a random element from an array.
+ * @template T
+ * @param {T[]} arr Source array.
+ * @returns {T} Randomly selected element.
+ */
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+/**
+ * Live 2D space simulation for a single star system.
+ * Simulates ships, physics, weapons fire, projectile trajectories, laser beams,
+ * floating debris/loot, asteroid fields, and NPC combat AI.
+ *
+ * @property {any} game Parent game server engine instance.
+ * @property {any} A Global game asset definitions.
+ * @property {SpaceSystem} sys System definition and stellar data from galaxy database.
+ * @property {string} id Unique system identifier string.
+ * @property {Map<number, Entity>} ships Active ships, escorts, drones, and traffic in this system.
+ * @property {Shot[]} shots Active ballistic and guided weapon projectiles.
+ * @property {Beam[]} beams Active continuous beam weapons currently firing.
+ * @property {FloatingLoot[]} loot Floating cargo canisters, mined ore chunks, and salvage crates.
+ * @property {Array<any[]>} events Transient visual and audio events accumulated for next client network update.
+ * @property {number} t Simulation timestamp in seconds.
+ * @property {number} spawnT Countdown until next background traffic spawn check.
+ * @property {number} players Number of human player-piloted ships currently flying in this system.
+ * @property {Rock[]} rocks Mining field asteroids and gas pockets.
+ * @property {any} m Cached system-wide modifiers from active fronts or living states.
+ * @property {number} mT Counter for modifier recalculation cadence.
+ * @property {number} quietT Quiet duration timer for system sleep deallocation.
+ * @property {boolean} keep Prevent deallocation flag.
+ * @property {number} errs Count of tick simulation errors.
+ * @property {string[]} nearFacs Cached list of neighboring faction IDs for frontier traffic generation.
+ * @property {any[]} _ports Cached landing-capable spaceports in this system.
+ */
 export class Space {
+  /**
+   * Initializes a live system space simulation.
+   * @param {any} game Server game instance.
+   * @param {string} sysId Unique star system ID.
+   */
   constructor(game, sysId) {
     this.game = game;
     this.A = game.A;
@@ -73,6 +279,10 @@ export class Space {
         });
       }
   }
+  /**
+   * Generates compact serialized state array of asteroid field rocks for client rendering.
+   * @returns {Array<[number, number, number, number, string, number]>} Compact array of [id, x, y, radius, ore, hpPct].
+   */
   rocksPayload() {
     return this.rocks.map((k) => [
       k.id,
@@ -83,6 +293,13 @@ export class Space {
       k.down ? 0 : Math.round((100 * k.hp) / k.max),
     ]);
   }
+  /**
+   * Applies weapon damage to an asteroid rock, spawning floating ore chunks when broken.
+   * @param {Rock} k Target asteroid rock.
+   * @param {number} dmg Incoming weapon damage.
+   * @param {boolean} mining Whether damage originates from a mining laser.
+   * @returns {void}
+   */
   hitRock(k, dmg, mining) {
     if (k.down) return;
     k.hp -= dmg * (mining ? 6 : 1);
@@ -107,6 +324,13 @@ export class Space {
       this.events.push(['rock', k.id, Math.round((100 * k.hp) / k.max)]);
     }
   }
+  /**
+   * Finds an active asteroid rock intersecting coordinates.
+   * @param {number} x Coordinate X.
+   * @param {number} y Coordinate Y.
+   * @param {number} [pad=0] Hitbox expansion padding.
+   * @returns {Rock | null} Colliding rock, or null if none.
+   */
   rockAt(x, y, pad = 0) {
     for (const k of this.rocks)
       if (
@@ -120,6 +344,32 @@ export class Space {
   }
 
   // ------------------------------------------------------------------ ships
+  /**
+   * Spawns and registers a new ship entity in this space simulation.
+   * @param {object} o Ship initialization parameters.
+   * @param {any} [o.loadout] Ship loadout with hull, outfits, weapons, and ammo.
+   * @param {number} [o.hull] Hull ID if no loadout specified.
+   * @param {string} [o.faction] Faction affiliation ID.
+   * @param {number} [o.x=0] Initial position X.
+   * @param {number} [o.y=0] Initial position Y.
+   * @param {number} [o.vx=0] Initial velocity X.
+   * @param {number} [o.vy=0] Initial velocity Y.
+   * @param {number} [o.a=0] Initial heading angle in radians.
+   * @param {any} [o.bonus] Stat multiplier bonuses.
+   * @param {number} [o.shield] Override initial shields.
+   * @param {number} [o.armor] Override initial armor.
+   * @param {number} [o.fuel] Override initial fuel.
+   * @param {string | null} [o.ai] AI behavior mode.
+   * @param {PlayerReference | null} [o.player] Player reference if player-piloted.
+   * @param {number | null} [o.owner] Commanding parent entity ID.
+   * @param {string | null} [o.name] Display name.
+   * @param {string} [o.state='fly'] Initial flight state.
+   * @param {any} [o.mission] Linked mission payload.
+   * @param {number} [o.cargo] Carried cargo count.
+   * @param {string} [o.pers] Combat personality override.
+   * @param {Record<number, number>} [o.ammo] Weapon ammo counts.
+   * @returns {Entity} The initialized and registered ship entity.
+   */
   makeShip(o) {
     const loadout = o.loadout || { hull: o.hull, outfits: {} };
     const st = shipStats(this.A, loadout, o.bonus || {});
@@ -205,23 +455,43 @@ export class Space {
     this.ships.set(e.id, e);
     return e;
   }
+  /**
+   * Removes a ship entity from simulation and flags it as dead.
+   * @param {Entity} e Ship entity to remove.
+   * @param {string} [why] Visual flash effect trigger reason (e.g. 'jump').
+   * @returns {void}
+   */
   remove(e, why) {
     e.dead = true;
     this.ships.delete(e.id);
     if (why) this.events.push(['flash', Math.round(e.x), Math.round(e.y)]);
   }
+  /**
+   * Resolves the top-level owner or wing leader for an entity (traversing up to 4 levels).
+   * @param {Entity} e Candidate entity.
+   * @returns {Entity} Root leader entity, or the entity itself.
+   */
   root(e) {
     let r = e,
       k = 0;
     while (r && r.owner && k++ < 4) r = this.ships.get(r.owner) || null;
     return r || e;
   }
+  /**
+   * Gets cached list of landing-capable ports in this system.
+   * @returns {any[]} Array of stellar bodies with landing services.
+   */
   ports() {
     return (
       this._ports ||
       (this._ports = this.sys.stellars.filter((p) => p.svc && p.svc.includes('L') && !p.site))
     );
   } // 2.3: where traffic can land
+  /**
+   * Gets the player session ID owning an entity or its root escort group.
+   * @param {Entity} e Candidate entity.
+   * @returns {number | null} Player session ID, or null if NPC.
+   */
   pid(e) {
     const r = this.root(e);
     return r && r.player ? r.player.id : null;
@@ -229,6 +499,12 @@ export class Space {
   // 2.0.3: newcomer protection. Pirates, raiders, swarms and other always-hostile ships never pick a fight with a protected
   // captain (Personal Station below Ops 3) in inner space (danger 0-2), and nobody targets a captain in the first seconds
   // after a jump. Firing on them, or a job's own target, ends the truce for that fight.
+  /**
+   * Checks whether target entity is spared from attack by newcomer or arrival protection.
+   * @param {Entity} e Attacking entity.
+   * @param {Entity} o Target candidate entity.
+   * @returns {boolean} True if target enjoys truce protection against attacker.
+   */
   spared(e, o) {
     const ro = this.root(o),
       re = this.root(e);
@@ -250,6 +526,12 @@ export class Space {
   // 2.1: can a's fire hurt b? Hostiles always; a captain's own guns also hit any ship not on their side (like EV Nova),
   // which angers it and costs standing. Escorts and NPCs still only hit their enemies.
   // 2.1: your wingmates under an attack order (K) go after whatever you have targeted, hostile or not
+  /**
+   * Checks whether an escort entity is ordered by its player leader to attack target.
+   * @param {Entity} e Escort entity.
+   * @param {Entity} t Candidate target entity.
+   * @returns {boolean} True if escort is explicitly ordered to attack target.
+   */
   ordered(e, t) {
     const r = this.root(e);
     if (
@@ -265,6 +547,12 @@ export class Space {
     const rt = this.root(t);
     return rt === this.root(r.target) && rt !== r && !rt.player;
   }
+  /**
+   * Determines whether weapon fire from entity a can damage entity b.
+   * @param {Entity} a Attacking ship entity.
+   * @param {Entity} b Target ship entity.
+   * @returns {boolean} True if attacks can connect and damage target.
+   */
   canHit(a, b) {
     if (this.isHostile(a, b)) return !this.spared(a, b);
     if (this.ordered(a, b)) return true;
@@ -273,11 +561,21 @@ export class Space {
     if (rb === a || rb.player) return false; // never your own wing; players only in lawless space (isHostile)
     return !b.dead && b.state === 'fly';
   }
+  /**
+   * Checks whether this system is classified as safe inner Concord space (danger <= 2).
+   * @returns {boolean} True if inner territory.
+   */
   inner() {
     const S = this.sys;
     return S.danger <= 2 && !S.farside && !S.arena && !['umbral', 'deep'].includes(S.faction);
   }
 
+  /**
+   * Evaluates mutual hostility between two ships based on factions, aggro, duels, and missions.
+   * @param {Entity} a First entity.
+   * @param {Entity} b Second entity.
+   * @returns {boolean} True if ships are hostile to one another.
+   */
   isHostile(a, b) {
     if (!a || !b || a === b || a.dead || b.dead) return false;
     const ra = this.root(a),
@@ -314,6 +612,11 @@ export class Space {
   }
 
   // ------------------------------------------------------------------ traffic
+  /**
+   * Spawns ambient civilian traders, faction patrols, or pirate raiders based on system danger.
+   * @param {boolean} [initial] True if spawning initial population on system spin-up.
+   * @returns {Entity | void} The lead spawned ship entity, if any.
+   */
   spawnTraffic(initial) {
     const S = this.sys;
     if (
@@ -452,6 +755,14 @@ export class Space {
     }
   }
   // 2.4: a group of warships of one power (a border war's attackers)
+  /**
+   * Spawns a coordinated group of ships flying in formation.
+   * @param {string} kind AI behavior ('patrol', 'raid', 'trade').
+   * @param {string} f Faction identifier.
+   * @param {number[]} pool Available hull ID options.
+   * @param {boolean} [initial] True if spawning initial population.
+   * @returns {Entity | null} Lead ship entity, or null.
+   */
   spawnGroup(kind, f, pool, initial) {
     const hull = pick(pool.filter((h) => this.A.ships[h]));
     if (!hull) return;
@@ -487,6 +798,11 @@ export class Space {
     return lead;
   }
   // 0.8: a Feral Swarm cluster: a Thrip Darter brood-leader and its drones, hostile to everyone
+  /**
+   * Spawns a hostile Vashari alien drone swarm.
+   * @param {boolean} [initial] True if spawning initial population.
+   * @returns {Entity | null} Lead swarm entity, or null.
+   */
   spawnSwarm(initial) {
     const ang = Math.random() * Math.PI * 2,
       d = initial ? 600 + Math.random() * 1400 : 2400,
@@ -518,6 +834,11 @@ export class Space {
     return lead;
   }
   // 0.9: an Umbral Eclipse cell, violet-lit and far from home
+  /**
+   * Spawns an Eclipse cultist strike group.
+   * @param {boolean} [initial] True if spawning initial population.
+   * @returns {Entity | null} Lead cultist entity, or null.
+   */
   spawnEclipse(initial) {
     const ang = Math.random() * Math.PI * 2,
       d = initial ? 700 + Math.random() * 1300 : 2400,
@@ -545,9 +866,18 @@ export class Space {
     if (!initial) this.events.push(['flash', Math.round(x), Math.round(y)]);
     return lead;
   }
+  /**
+   * Generates a unique sequential identifier for floating loot canisters.
+   * @returns {number} Next loot ID.
+   */
   nextLootId() {
     return NEXT++;
   }
+  /**
+   * Spawns a named bounty mission target and its defensive escort wing.
+   * @param {any} m Bounty mission specification.
+   * @returns {Entity | null} Spawned mission target entity.
+   */
   spawnMissionTarget(m) {
     const hull = m.hull,
       ang = rnd(-Math.PI, Math.PI);
@@ -567,6 +897,16 @@ export class Space {
   }
 
   // ------------------------------------------------------------------ AI
+  /**
+   * Computes steering heading and thrust inputs for an entity navigating to coordinates.
+   * @param {Entity} e Ship entity to steer.
+   * @param {number} tx Target X coordinate.
+   * @param {number} ty Target Y coordinate.
+   * @param {boolean} arrive Whether to brake and bring velocity to zero at target.
+   * @param {number} [tvx=0] Target velocity X for formation matching.
+   * @param {number} [tvy=0] Target velocity Y for formation matching.
+   * @returns {number} Distance remaining to target coordinates.
+   */
   steer(e, tx, ty, arrive, tvx = 0, tvy = 0) {
     const st = e.st,
       dx = tx - e.x,
@@ -607,6 +947,12 @@ export class Space {
     if (Math.abs(diff) < st.turn * DT) e.a = want;
     return d;
   }
+  /**
+   * Scans nearby space for the closest valid hostile target entity.
+   * @param {Entity} e Searching ship entity.
+   * @param {number} [range=1800] Maximum search radius.
+   * @returns {Entity | null} Closest hostile entity, or null if none in range.
+   */
   findTarget(e, range = 1800) {
     let best = null,
       bd = range;
@@ -620,6 +966,11 @@ export class Space {
     }
     return best;
   }
+  /**
+   * Executes AI logic for an NPC ship: target selection, fleet commands, navigation, and retreat.
+   * @param {Entity} e NPC ship entity to update.
+   * @returns {void}
+   */
   ai(e) {
     if (e.player) return;
     e.think -= DT;
@@ -849,6 +1200,11 @@ export class Space {
     }
   }
   // 2.4 personalities: cautious captains run early, steady ones when badly hurt, reckless ones never; named and story ships fight to the end
+  /**
+   * Checks whether ship's personality and damage state warrant tactical retreat.
+   * @param {Entity} e Ship entity to test.
+   * @returns {boolean} True if ship should disengage and flee.
+   */
   mayFlee(e) {
     const thr = { cautious: 0.45, steady: 0.27, reckless: 0 }[e.pers] || 0;
     if (
@@ -868,6 +1224,12 @@ export class Space {
     return e.armor < e.st.armor * thr && e.shield < e.st.shield * 0.15;
   }
   // 2.4: a ship under attack calls nearby ships of its own side to help
+  /**
+   * Broadcasts a distress call to nearby allied NPC ships when taking fire.
+   * @param {Entity} s Attacked ship entity.
+   * @param {Entity} attacker Enemy ship inflicting damage.
+   * @returns {void}
+   */
   callHelp(s, attacker) {
     if (s.player || this.sys.arena || (s.helpT || -99) > this.t - 5) return;
     s.helpT = this.t;
@@ -888,11 +1250,23 @@ export class Space {
       o.target = attacker;
     }
   }
+  /**
+   * Docks a returned fighter drone into its carrier bay and replenishes bay ammo.
+   * @param {Entity} f Drone fighter entity returning.
+   * @param {Entity} owner Carrier parent entity.
+   * @returns {void}
+   */
   dock(f, owner) {
     const g = owner.guns.find((g) => g.p.bay && this.A.weapons[g.w].launch === f.hull);
     if (g && g.ammo !== Infinity) g.ammo++;
     this.remove(f);
   }
+  /**
+   * Computes combat maneuvering, broadside circling, and attack vectoring toward target.
+   * @param {Entity} e Attacking ship entity.
+   * @param {Entity} t Target enemy ship entity.
+   * @returns {void}
+   */
   fight(e, t) {
     const primaryOnly = e.autoCombat || (e.owner && this.root(e).sharedCombat);
     const best = e.guns
@@ -924,6 +1298,14 @@ export class Space {
   }
 
   // ------------------------------------------------------------------ combat
+  /**
+   * Discharges a weapon mount, creating ballistic projectiles, guided missiles, or drone fighters.
+   * @param {Entity} e Firing ship entity.
+   * @param {WeaponMount} g Weapon mount being discharged.
+   * @param {Entity | null} t Target entity, if guided.
+   * @param {number} angle Fire orientation heading in radians.
+   * @returns {void}
+   */
   fire(e, g, t, angle) {
     const p = g.p,
       W = this.A.weapons[g.w];
@@ -1016,12 +1398,25 @@ export class Space {
     });
     this.sound(e, g);
   }
+  /**
+   * Emits a weapon discharge sound effect event, rate-limited to avoid audio flood.
+   * @param {Entity} e Firing ship entity.
+   * @param {WeaponMount} g Weapon mount producing sound.
+   * @returns {void}
+   */
   sound(e, g) {
     if (this.t - g.sndT > 0.12) {
       g.sndT = this.t;
       this.events.push(['snd', g.snd, Math.round(e.x), Math.round(e.y)]);
     }
   }
+  /**
+   * Performs raycast collision check for instant-hit continuous beam lasers against ships.
+   * @param {Entity} e Firing ship entity.
+   * @param {number} ang Beam trajectory heading in radians.
+   * @param {number} len Maximum beam range.
+   * @returns {{s: Entity, d: number, x: number, y: number} | null} Hit ship and intersection point, or null.
+   */
   ray(e, ang, len) {
     const dx = Math.sin(ang),
       dy = -Math.cos(ang);
@@ -1039,6 +1434,13 @@ export class Space {
     }
     return best;
   }
+  /**
+   * Performs raycast collision check for mining laser beams against asteroid rocks.
+   * @param {Entity} e Firing ship entity.
+   * @param {number} ang Beam trajectory heading in radians.
+   * @param {number} len Maximum beam range.
+   * @returns {{k: Rock, d: number} | null} Hit rock and distance, or null.
+   */
   rayRock(e, ang, len) {
     const dx = Math.sin(ang),
       dy = -Math.cos(ang);
@@ -1054,6 +1456,11 @@ export class Space {
     return best;
   }
   // 2.1: a captain's fighter bays work as a toggle on F: tap to launch every drone, tap again to call them all home
+  /**
+   * Toggles carrier fighter bays: launches all bay drones, or recalls active drones to dock.
+   * @param {Entity} e Carrier ship entity.
+   * @returns {void}
+   */
   toggleDrones(e) {
     const out = [...this.ships.values()].filter((s) => s.fighterOf === e.id && !s.dead);
     const say = (m) => {
@@ -1099,6 +1506,11 @@ export class Space {
     }
     say(n ? `Drones launched (${n}). Tap F to recall them.` : 'No drones left in the bays.');
   }
+  /**
+   * Evaluates weapon mount cooldowns, target alignment, point defense, and triggers firing.
+   * @param {Entity} e Ship entity updating weapons.
+   * @returns {void}
+   */
   weapons(e) {
     const inp = e.inp || {},
       automated = e.autoCombat || (e.owner && this.root(e).sharedCombat),
@@ -1174,6 +1586,15 @@ export class Space {
       this.fire(e, g, tgt, e.a);
     }
   }
+  /**
+   * Applies armor and shield damage to a ship, resolving role multipliers and kill thresholds.
+   * @param {Entity} s Ship entity receiving damage.
+   * @param {number} dA Base armor / hull damage.
+   * @param {number} dS Base shield damage.
+   * @param {Entity | null} [src] Attacker entity source.
+   * @param {boolean} [ion] Whether weapon inflicts ion damage.
+   * @returns {[number, number, number] | void} Tuple [damageDealt, hitShieldsFlag, shooterRootId].
+   */
   damage(s, dA, dS, src, ion) {
     if (s.dead) return;
     const srcRoot = src ? this.root(src) : null;
@@ -1228,9 +1649,24 @@ export class Space {
     return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0];
   }
   // hit event: x, y, weapon, target id, damage dealt, shooter (root) id, 1 if it hit shields
+  /**
+   * Emits a hit event packet for client particle effects and damage numbers.
+   * @param {number} x Hit position X.
+   * @param {number} y Hit position Y.
+   * @param {number} w Weapon ID that scored the hit.
+   * @param {Entity} s Target ship entity.
+   * @param {[number, number, number]} r Damage outcome tuple.
+   * @returns {void}
+   */
   hitEv(x, y, w, s, r) {
     this.events.push(['hit', Math.round(x), Math.round(y), w, s.id, Math.round(r[0]), r[2], r[1]]);
   }
+  /**
+   * Destroys a ship entity, triggering explosions, bounty rewards, death handling, and salvage drop.
+   * @param {Entity} s Ship entity destroyed.
+   * @param {Entity | null} [by] Killer root entity, if any.
+   * @returns {void}
+   */
   kill(s, by) {
     this.events.push(['boom', Math.round(s.x), Math.round(s.y), s.st.size]);
     this.remove(s);
@@ -1247,6 +1683,11 @@ export class Space {
     if (by && by.player) this.game.onKill(by.player, s, this, s.lastHitBy && s.lastHitBy !== by.id);
     if (!s.fighterOf && Math.random() < (by && by.hull === 810 ? 0.82 : 0.55)) this.dropLoot(s);
   }
+  /**
+   * Spawns floating credit canisters and material salvage crates at destroyed ship's position.
+   * @param {Entity} s Destroyed ship entity.
+   * @returns {void}
+   */
   dropLoot(s) {
     const str = s.strength || 10,
       items = [];
@@ -1270,6 +1711,10 @@ export class Space {
   }
 
   // ------------------------------------------------------------------ tick
+  /**
+   * Advances the simulation by one discrete timestep: moves entities, checks collisions, updates weapons and loot.
+   * @returns {void}
+   */
   tick() {
     this.t += DT;
     if (!this.m || ++this.mT % 30 === 0) {
@@ -1425,6 +1870,10 @@ export class Space {
       }
     this.loot = this.loot.filter((l) => !l.taken);
   }
+  /**
+   * Compiles compact network snapshot of all ships, shots, beams, and loot in this system.
+   * @returns {SpaceSnapshot} Serialized system state payload.
+   */
   snapshot() {
     const ships = [];
     for (const e of this.ships.values()) {

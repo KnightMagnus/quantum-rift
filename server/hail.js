@@ -46,7 +46,7 @@ const PATROL_LINES = [
 export const HailOperations = {
   /**
    * Calculate credit cost to bribe hostile forces based on player ship and cargo.
-   * @this {import('./features.js').HailCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {number} Credit cost to bribe.
    */
@@ -60,7 +60,7 @@ export const HailOperations = {
   },
   /**
    * Find and validate the targeted ship for a hail within comms range.
-   * @this {import('./features.js').HailCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {Record<string, any>} m - Target hail message.
    * @returns {{sp: any, e: any, root: any} | null} Target context or null if unreachable.
@@ -80,7 +80,7 @@ export const HailOperations = {
   },
   /**
    * Open communications with a targeted ship or selected planet.
-   * @this {import('./features.js').HailCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {Record<string, any>} m - Inbound hail message.
    * @returns {void}
@@ -186,7 +186,7 @@ export const HailOperations = {
   },
   /**
    * Process a player's selected dialogue response or negotiation option in a hail.
-   * @this {import('./features.js').HailCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {Record<string, any>} m - Inbound dialogue choice message.
    * @returns {void}
@@ -308,7 +308,7 @@ export const HailOperations = {
   // planets: docking control. When your standing is too low to land, docking control can be persuaded.
   /**
    * Hail a planet's docking control for landing clearance.
-   * @this {import('./features.js').HailCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {string} id - Stellar body identifier.
    * @returns {void}
@@ -340,7 +340,7 @@ export const HailOperations = {
   },
   /**
    * Handle dialogue response for planetary docking control (such as paying bribes for clearance).
-   * @this {import('./features.js').HailCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {Record<string, any>} m - Inbound option message.
    * @returns {void}

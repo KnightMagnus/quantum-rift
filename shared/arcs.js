@@ -3,6 +3,71 @@
 // blueprints. Places are worked out from the map, so text uses {home}, {dest}, {s1} and {s2} placeholders.
 import { SYSTEMS, SYS } from './galaxy.js';
 
+/**
+ * @typedef {Object} ArcStepRaw
+ * @property {'carry'|'kill'|'board'|'boss'|string} type - Mission step archetype.
+ * @property {string} title - Mission step title.
+ * @property {string} text - Raw narrative text template.
+ * @property {string} brief - Concise objective description template.
+ * @property {string} done - Narrative epilogue upon completion.
+ * @property {string} [progress] - Status message displayed during mission progress.
+ * @property {number} [count] - Target count for kill or board objectives.
+ * @property {number} [hull] - Target hull ID.
+ * @property {string} [faction] - Faction allegiance of target ships.
+ * @property {string} [bossName] - Display name of the boss flagship.
+ */
+
+/**
+ * @typedef {Object} ArcTemplate
+ * @property {string} name - Title of the faction story arc.
+ * @property {number} spec - Blueprint hull ID unlocked upon arc completion.
+ * @property {[string, string]} officer - Epic officer reward tuple [officerName, officerRole].
+ * @property {ArcStepRaw[]} steps - Raw mission steps in the storyline arc.
+ */
+
+/**
+ * @typedef {Object} ArcPlaces
+ * @property {string} at - Stellar body ID of the faction capital station where missions originate.
+ * @property {string} home - Name of the home station.
+ * @property {string} homeSys - System ID of the faction capital.
+ * @property {string} s1 - System ID of a friendly neighbouring system.
+ * @property {string} s2 - System ID of a nearby dangerous system.
+ * @property {string} dest - Destination stellar body ID.
+ * @property {string} destName - Name of the destination stellar body.
+ */
+
+/**
+ * @typedef {Object} ArcStep
+ * @property {number} i - Step index (0, 1, or 2).
+ * @property {string} title - Step title.
+ * @property {string} text - Resolved story dialog text with placeholders filled.
+ * @property {string} brief - Resolved mission brief text.
+ * @property {string} done - Resolved completion text.
+ * @property {string} [progress] - Step progress status text.
+ * @property {string} at - Origin station ID.
+ * @property {string} back - Turn-in station ID.
+ * @property {string|null} dest - Destination station ID (for carry missions).
+ * @property {string} sys - System ID where the mission objective is located.
+ * @property {number} minRep - Minimum faction reputation required to accept this step.
+ * @property {number} pay - Credit reward awarded upon completion.
+ * @property {'carry'|'kill'|'board'|'boss'|string} type - Mission objective archetype.
+ * @property {number} [count] - Target count of ships to defeat or board.
+ * @property {number} [hull] - Target ship hull ID.
+ * @property {string} [faction] - Target faction ID.
+ * @property {string} [bossName] - Boss ship display name.
+ */
+
+/**
+ * @typedef {Object} FactionArc
+ * @property {string} fac - Faction identifier key.
+ * @property {string} name - Title of the faction story arc.
+ * @property {number} spec - Specialist blueprint hull ID awarded.
+ * @property {[string, string]} officer - Unique Epic officer reward [name, role].
+ * @property {ArcPlaces} places - Geographic locations where arc missions take place.
+ * @property {ArcStep[]} steps - Instantiated 3-step storyline mission definitions.
+ */
+
+
 const ARC_TEXT = {
   quantum: {
     name: 'The Concord Ledger',
@@ -258,11 +323,30 @@ const ARC_TEXT = {
     ],
   },
 };
+/**
+ * Faction keys possessing custom faction storyline arcs.
+ * @type {string[]}
+ */
 export const ARC_FACS = Object.keys(ARC_TEXT);
+
+/**
+ * Minimum faction reputation prerequisite per arc progression step [step1, step2, step3].
+ * @type {number[]}
+ */
 export const ARC_MIN_REP = [15, 25, 35];
+
+/**
+ * Credit reward payout per arc progression step [step1, step2, step3].
+ * @type {number[]}
+ */
 export const ARC_PAY = [20000, 45000, 120000];
 
 // work out each arc's places: the capital (highest-tech world with a bar), a friendly neighbour, and a rougher system nearby
+/**
+ * Resolves origin, transit, and destination stations and systems for a faction's arc based on the galaxy map.
+ * @param {string} fac - Faction ID key.
+ * @returns {ArcPlaces|null} Resolved places for the storyline missions, or null if faction lacks valid worlds.
+ */
 function placesFor(fac) {
   const mine = SYSTEMS.filter((S) => S.faction === fac && !S.farside);
   const worlds = mine
@@ -310,12 +394,24 @@ function placesFor(fac) {
     destName: dest.name,
   };
 }
+
+/**
+ * Replaces geographic template placeholders ({home}, {dest}, {s1}, {s2}) with resolved station and system names.
+ * @param {string} t - Narrative text template containing placeholders.
+ * @param {ArcPlaces} P - Resolved location metadata.
+ * @returns {string} Text with all location placeholders populated.
+ */
 const fill = (t, P) =>
   (t || '')
     .replace(/\{home\}/g, P.home)
     .replace(/\{dest\}/g, P.destName)
     .replace(/\{s1\}/g, SYS[P.s1].name)
     .replace(/\{s2\}/g, SYS[P.s2].name);
+
+/**
+ * Complete collection of faction storyline arcs keyed by faction identifier.
+ * @type {Object.<string, FactionArc>}
+ */
 export const ARCS = Object.fromEntries(
   ARC_FACS.map((f) => {
     const P = placesFor(f),
@@ -348,3 +444,4 @@ export const ARCS = Object.fromEntries(
     ];
   }).filter(([, v]) => v),
 );
+

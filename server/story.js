@@ -15,7 +15,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const StoryOperations = {
   /**
    * Initialize or retrieve player story progress state.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {Record<string, any>} Story progress state object.
    */
@@ -26,7 +26,7 @@ export const StoryOperations = {
   },
   /**
    * Check whether a specific storyline mission has been completed.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @param {string} id - Story mission identifier.
    * @returns {boolean} True if mission is completed.
@@ -37,7 +37,7 @@ export const StoryOperations = {
   },
   /**
    * Construct story progress overview payload for client synchronization.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {Record<string, any>} Story overview payload.
    */
@@ -62,7 +62,7 @@ export const StoryOperations = {
   // the story step on offer at this landing (if any)
   /**
    * Evaluate the story mission step on offer at a stellar landing.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @param {{id: string} | null} p - Landed stellar body.
    * @returns {Record<string, any> | null} Available story step or null.
@@ -80,7 +80,7 @@ export const StoryOperations = {
   },
   /**
    * Check active story mission completion or send landing mission offer.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {{id: string}} p - Landed stellar body.
    * @returns {void}
@@ -107,7 +107,7 @@ export const StoryOperations = {
   },
   /**
    * Accept an offered story mission.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {{id: string}} m - Accept message.
    * @returns {void}
@@ -128,7 +128,7 @@ export const StoryOperations = {
   },
   /**
    * Conclude a story mission, distributing credits, standing, and rewards.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {Record<string, any>} st - Story step definition.
    * @returns {void}
@@ -160,7 +160,7 @@ export const StoryOperations = {
   },
   /**
    * Award the unique Que'vari flagship reward as part of the storyline culmination.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {Record<string, any>} st - Story step definition.
    * @returns {void}
@@ -197,7 +197,7 @@ export const StoryOperations = {
   // arriving in a story system spawns what the step needs
   /**
    * Spawn story encounter ships, derelicts, boss vessels, or choir allies upon arriving in target system.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {any} sp - Current space system instance.
    * @returns {void}
@@ -299,7 +299,7 @@ export const StoryOperations = {
   },
   /**
    * Advance active story mission progress after a relevant kill or rescue.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {any} e - Defeated or rescued entity associated with the story mission.
    * @returns {void}
@@ -321,7 +321,7 @@ export const StoryOperations = {
   },
   /**
    * Check whether a destination system is in deep space and locked behind story progression.
-   * @this {import('./features.js').StoryCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @param {string} to - Destination system ID.
    * @returns {boolean} True if jump to Deep system is locked.

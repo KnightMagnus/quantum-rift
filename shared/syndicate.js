@@ -1,8 +1,60 @@
 // 1.2 "Syndicate and Officers": the Syndicate crime path and black market, officer ranks and traits, lower-deck crew,
 // the bank (after Endless Sky's mortgages), and passenger and rush jobs.
 
+/**
+ * @typedef {Object} SyndicateTierInfo
+ * @property {number} i - Tier index (0-5).
+ * @property {string} name - Tier title name.
+ * @property {number} pts - Current standing points.
+ * @property {number|null} next - Points required for the next tier, or null if maximum tier reached.
+ */
+
+/**
+ * @typedef {Object} BlackMarketItem
+ * @property {string} id - Unique item identifier.
+ * @property {number} tier - Minimum Syndicate tier required to purchase.
+ * @property {string} name - Display name of the item or bundle.
+ * @property {number} price - Purchase cost in credits.
+ * @property {string} desc - In-game description of item utility.
+ * @property {Object.<string, any>} give - Reward payload granted upon purchase (e.g. papers, shards, bp, parts, crate).
+ */
+
+/**
+ * @typedef {Object} OfficerPromotionCost
+ * @property {number} shards - Commendation shards required.
+ * @property {number} credits - Credit cost for promotion.
+ * @property {number} lv - Minimum officer level required.
+ */
+
+/**
+ * @typedef {Object} OfficerTrait
+ * @property {string} name - Trait display name.
+ * @property {Object.<string, number>} bonus - Percentage or flat stat modifications granted by the trait.
+ */
+
+/**
+ * @typedef {Object} LowerDeckRole
+ * @property {string} name - Crew member title.
+ * @property {number} cost - Hiring fee in credits.
+ * @property {Object.<string, number>} bonus - Passive stat modifications granted by this crew member.
+ * @property {string} desc - Summary description of granted bonuses.
+ */
+
+/**
+ * @typedef {Object} BankConfig
+ * @property {number} periodMin - Loan compounding and payment period in minutes.
+ * @property {number} credit0 - Starting credit score baseline.
+ * @property {number} creditMin - Minimum credit score floor.
+ * @property {number} creditMax - Maximum credit score ceiling.
+ * @property {number} minPay - Minimum periodic payment amount in credits.
+ */
+
 // ------------------------------------------------------------------ the Syndicate
 // Standing earned through smuggling, plunder, capture and Syndicate contracts. Each tier opens more of the black market.
+/**
+ * Syndicate progression thresholds as [requiredPoints, tierTitle] pairs.
+ * @type {Array<[number, string]>}
+ */
 export const SYN_TIERS = [
   [0, 'Unknown'],
   [40, 'Associate'],
@@ -11,6 +63,12 @@ export const SYN_TIERS = [
   [900, 'Underboss'],
   [2000, 'Kingpin'],
 ];
+
+/**
+ * Computes the Syndicate tier, title, and progress toward next rank from standing points.
+ * @param {number} pts - Total Syndicate reputation/standing points.
+ * @returns {SyndicateTierInfo} Current tier details and points to next tier.
+ */
 export function synTier(pts) {
   let i = 0;
   for (let k = 0; k < SYN_TIERS.length; k++) if ((pts || 0) >= SYN_TIERS[k][0]) i = k;
@@ -21,8 +79,18 @@ export function synTier(pts) {
     next: SYN_TIERS[i + 1] ? SYN_TIERS[i + 1][0] : null,
   };
 }
+
+/**
+ * Syndicate standing points awarded per unlawful action.
+ * @type {Object.<string, number>}
+ */
 export const SYN_GAIN = { smuggle: 15, plunder: 4, capture: 10, contract: 25, hit: 30 };
+
 // black market stock: tier needed, price, what you get
+/**
+ * Black market inventory, unlocking progressively with Syndicate tier.
+ * @type {BlackMarketItem[]}
+ */
 export const BLACK_MARKET = [
   {
     id: 'papers',
@@ -99,7 +167,16 @@ export const BLACK_MARKET = [
 ];
 
 // ------------------------------------------------------------------ officer ranks and traits
+/**
+ * Officer rank title designations in ascending hierarchy order.
+ * @type {string[]}
+ */
 export const RANKS_OFF = ['Ensign', 'Lieutenant', 'Lt. Commander', 'Commander', 'Captain'];
+
+/**
+ * Requirements (shards, credits, officer level) needed to promote an officer to rank index i.
+ * @type {Array<OfficerPromotionCost|null>}
+ */
 export const PROMOTE = [
   null,
   { shards: 3, credits: 20000, lv: 3 },
@@ -107,8 +184,19 @@ export const PROMOTE = [
   { shards: 12, credits: 150000, lv: 7 },
   { shards: 24, credits: 400000, lv: 9 },
 ]; // to reach rank i
+
+/**
+ * Calculates effectiveness multiplier based on officer rank index (0 through 4).
+ * @param {number} rank - Officer rank index.
+ * @returns {number} Multiplier value (e.g. 1.0 for Ensign, up to 1.48 for Captain).
+ */
 export const RANK_MULT = (rank) => 1 + 0.12 * (rank || 0);
+
 // one trait is learned at every promotion
+/**
+ * Available officer traits and their corresponding passive stat buffs.
+ * @type {Object.<string, OfficerTrait>}
+ */
 export const TRAITS = {
   sharpshooter: { name: 'Sharpshooter', bonus: { damagePct: 4 } },
   ironclad: { name: 'Ironclad', bonus: { armorPct: 5 } },
@@ -123,6 +211,11 @@ export const TRAITS = {
   ghost: { name: 'Ghost', bonus: { scanPct: 30 } },
   inspiring: { name: 'Inspiring', bonus: { officerXp: 25 } },
 };
+
+/**
+ * Human-readable display labels for specialized trait stat bonuses.
+ * @type {Object.<string, string>}
+ */
 export const STAT_NAME_EXTRA = {
   tradePct: 'better trade prices',
   scanPct: 'patrol scan evasion',
@@ -130,6 +223,10 @@ export const STAT_NAME_EXTRA = {
 };
 
 // ------------------------------------------------------------------ lower decks: two crew slots with small passive bonuses
+/**
+ * Lower deck specialist crew roles that can be hired for passive boosts.
+ * @type {Object.<string, LowerDeckRole>}
+ */
 export const LOWER_DECK = {
   medic: { name: "Ship's Medic", cost: 6000, bonus: { armorPct: 3 }, desc: '+3% armor' },
   mechanic: {
@@ -165,13 +262,42 @@ export const LOWER_DECK = {
     desc: '+1% trade prices, harder to scan',
   },
 };
+
+/**
+ * Number of lower deck crew slots available on player ships.
+ * @type {number}
+ */
 export const LOWER_SLOTS = 2;
 
 // ------------------------------------------------------------------ the bank
+/**
+ * Global banking parameters, interest period, credit limits and minimum payments.
+ * @type {BankConfig}
+ */
 export const BANK = { periodMin: 15, credit0: 600, creditMin: 300, creditMax: 850, minPay: 1000 };
+
+/**
+ * Calculates interest rate per bank period as a function of credit rating.
+ * @param {number} credit - Player credit score (typically 300 to 850).
+ * @returns {number} Periodic interest rate (0.006 to 0.022).
+ */
 export const loanRate = (credit) => Math.round((2.2 - (1.6 * (credit - 300)) / 550) * 100) / 10000; // per period: 2.2% at 300 down to 0.6% at 850
+
+/**
+ * Computes the maximum loan amount available based on credit score and lifetime earnings.
+ * @param {number} credit - Player credit score.
+ * @param {number} [earned] - Total lifetime earned credits.
+ * @returns {number} Maximum borrowable amount rounded to the nearest thousand.
+ */
 export const maxLoan = (credit, earned) =>
   Math.round(((50000 + (earned || 0) * 0.3) * (credit / 600)) / 1000) * 1000;
+
+/**
+ * Calculates required periodic loan installment payment.
+ * @param {number} bal - Current outstanding loan principal balance.
+ * @param {number} credit - Player credit score.
+ * @returns {number} Payment amount due for the current period.
+ */
 export const loanPayment = (bal, credit) =>
   bal <= 0
     ? 0
@@ -181,6 +307,14 @@ export const loanPayment = (bal, credit) =>
       );
 
 // ------------------------------------------------------------------ passengers (bunks) and rush jobs
+/**
+ * Calculates passenger bunk capacity for a given ship hull.
+ * @param {Object} H - Ship hull configuration object.
+ * @param {string} [H.kind] - Hull category (e.g. 'specialist').
+ * @param {number} [H.crew] - Hull base crew capacity.
+ * @param {string} [H.role] - Ship hull role (e.g. 'survey', 'explorer').
+ * @returns {number} Available passenger bunks (clamped between 1 and 40).
+ */
 export function bunks(H) {
   if (!H) return 0;
   const base =
@@ -191,4 +325,10 @@ export function bunks(H) {
         (H.role === 'explorer' ? 1 : 0);
   return Math.max(1, Math.min(40, base));
 }
+
+/**
+ * Payout multiplier applied to timed rush delivery jobs.
+ * @type {number}
+ */
 export const RUSH_BONUS = 1.8;
+

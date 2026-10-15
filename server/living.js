@@ -37,7 +37,7 @@ const START_NEWS = {
 export const LivingOperations = {
   /**
    * Initialize living world state containers in the database.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @returns {void}
    */
   livingInit() {
@@ -48,7 +48,7 @@ export const LivingOperations = {
   },
   /**
    * Get all non-arena systems with active trade ports.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @returns {string[]} List of system IDs.
    */
   marketSystems() {
@@ -61,7 +61,7 @@ export const LivingOperations = {
   },
   /**
    * Look up the currently active event state for a system.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @param {string} sysId - System ID.
    * @returns {Record<string, any> | null} System state object or null if none active.
    */
@@ -72,7 +72,7 @@ export const LivingOperations = {
   // a war needs an enemy: a power hostile to the system's owner, preferably one next door
   /**
    * Select a hostile enemy faction for a system entering a war state.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @param {Record<string, any>} S - System metadata.
    * @returns {string | null} Hostile enemy faction key or null.
    */
@@ -93,7 +93,7 @@ export const LivingOperations = {
   },
   /**
    * Advance the living galaxy simulation tick, updating system states and generating news.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @returns {void}
    */
   livingTick() {
@@ -159,7 +159,7 @@ export const LivingOperations = {
   },
   /**
    * Compile a summary payload of all active system states for client sync.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @returns {Record<string, any>} Active system states map.
    */
   statesPayload() {
@@ -178,7 +178,7 @@ export const LivingOperations = {
   // ---- prices: the system's state and what captains have been selling or buying at this world
   /**
    * Calculate decayed trade impact factor on prices for a commodity at a stellar port.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @param {string} sid - Stellar port ID.
    * @param {string} cid - Commodity ID.
    * @returns {number} Fractional impact on price.
@@ -196,7 +196,7 @@ export const LivingOperations = {
   },
   /**
    * Record trade volume and apply price impact for a commodity at a stellar port.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @param {string} sid - Stellar port ID.
    * @param {string} cid - Commodity ID.
    * @param {number} tons - Traded volume (positive for sales, negative for purchases).
@@ -218,7 +218,7 @@ export const LivingOperations = {
   },
   /**
    * Calculate effective price multiplier from active system event and player trade impact.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @param {Record<string, any>} p - Stellar body object.
    * @param {string} cid - Commodity ID.
    * @returns {number} Price multiplier.
@@ -231,7 +231,7 @@ export const LivingOperations = {
   // ---- captains ending states early
   /**
    * Contribute progress towards resolving an active troubled system event.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {string} sys - System ID.
    * @param {string} what - Progress category key (e.g. 'cid:food', 'kill:pirate').
@@ -260,7 +260,7 @@ export const LivingOperations = {
   },
   /**
    * Conclude an active system state early due to player contribution, distributing rewards.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @param {any} s - Player session that triggered resolution.
    * @param {string} sys - System ID.
    * @returns {void}
@@ -291,7 +291,7 @@ export const LivingOperations = {
   },
   /**
    * Check killed NPC to progress pirate or war crisis states in the system.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @param {any} s - Player session scoring the kill.
    * @param {any} npc - Killed NPC entity.
    * @param {any} space - Space instance where the kill occurred.
@@ -305,7 +305,7 @@ export const LivingOperations = {
   // ---- the jobs a troubled system posts (merged into nearby job boards)
   /**
    * Generate emergency relief, patrol, or evacuation jobs for nearby troubled systems.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @param {Record<string, any>} p - Landed stellar body.
    * @param {Record<string, any>} d - Saved player data.
    * @param {() => number} r - Seeded RNG function.
@@ -395,7 +395,7 @@ export const LivingOperations = {
   // a supply job completes when you land at its destination with the goods in your hold
   /**
    * Check whether player currently carries sufficient cargo to complete a supply relief mission.
-   * @this {import('./features.js').LivingCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @param {Record<string, any>} m - Mission object.
    * @returns {boolean} True if required goods are in cargo.

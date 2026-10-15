@@ -2,6 +2,68 @@
 // The loop: the ship's activity drops its blueprints (flying anything) and its unique resource (flying the specialist).
 // The station refines the resource into that ship's parts; parts upgrade five components; a full set unlocks a timed tier-up.
 
+/**
+ * @typedef {Object} SpecialistResource
+ * @property {string} name - Resource item name.
+ * @property {string} icon - Symbol icon representing the resource.
+ * @property {string} color - Hex color code for UI and inventory display.
+ */
+
+/**
+ * @typedef {Object} SpecialistShip
+ * @property {number} id - Unique ship hull ID (805-814).
+ * @property {string} key - String identifier key (e.g. 'lodestar', 'swarmbreaker').
+ * @property {string} name - Ship hull name.
+ * @property {string} sub - Subtitle / classification.
+ * @property {string} role - Tactical role profile.
+ * @property {string} res - Associated unique resource key.
+ * @property {number} cost - Base credit purchase/build cost.
+ * @property {number} cargo - Cargo hold capacity.
+ * @property {number} shield - Maximum shield strength.
+ * @property {number} shieldRe - Shield recharge rate.
+ * @property {number} armor - Maximum armor plating.
+ * @property {number} accel - Engine acceleration rating.
+ * @property {number} speed - Top sublight speed.
+ * @property {number} turn - Maneuverability / turn rate.
+ * @property {number} fuel - Hyperdrive fuel tank capacity.
+ * @property {number} space - Free outfit expansion space.
+ * @property {number} guns - Fixed gun mount hardpoints.
+ * @property {number} turrets - Turret hardpoints.
+ * @property {number} mass - Ship hull displacement mass.
+ * @property {number} strength - Combat strength rating.
+ * @property {number} size - Visual sprite scale.
+ * @property {Array<[number, number, number]>} weapons - Default weapon loadout tuples [weaponId, count, ammo].
+ * @property {string} ability - Special innate ship capability description.
+ * @property {string} loop - Gameplay gameplay loop description for collecting blueprints and resources.
+ * @property {string} desc - Lore background and flavor text.
+ * @property {string} cat - Category classification ('Specialist').
+ * @property {string} faction - Faction identifier ('specialist').
+ * @property {string} kind - Classification key ('specialist').
+ * @property {number} buy - Purchase availability flag (0).
+ * @property {number} ai - Default AI profile level.
+ * @property {number} tech - Tech level rating.
+ * @property {number} fuelRe - Passive fuel generation rate.
+ * @property {number} armorRe - Passive armor repair rate.
+ * @property {boolean} glow - Visual engine flare flag.
+ * @property {number} crew - Crew complement requirement.
+ */
+
+/**
+ * @typedef {Object} SpecialistComponent
+ * @property {string} name - Component name.
+ * @property {Object.<string, number>} bonus - Stat bonuses granted per component upgrade level.
+ */
+
+/**
+ * @typedef {Object} SpecialistUpgradeState
+ * @property {number} [tier] - Current specialist tier level (1 to 5).
+ * @property {Object.<string, number>} [comp] - Mapping of component keys ('weapons', 'shields', etc.) to current upgrade levels.
+ */
+
+/**
+ * Unique refined resources dropped by each specialist ship archetype.
+ * @type {Object.<string, SpecialistResource>}
+ */
 export const SPEC_RES = {
   riftore: { name: 'Riftore', icon: '◆', color: '#ffb84a' },
   chitin: { name: 'Chitin Resonators', icon: '⬢', color: '#8ad84a' },
@@ -14,6 +76,7 @@ export const SPEC_RES = {
   contacts: { name: 'Black-Market Contacts', icon: '☍', color: '#5ad0b0' },
   warrants: { name: 'Warrant Seals', icon: '⚖', color: '#ff9a3a' },
 };
+
 
 // base EV-style stats (same units as the mod's ships)
 const S = (o) => ({
@@ -30,6 +93,11 @@ const S = (o) => ({
   ...o,
   cost: Math.round((o.cost * 0.7) / 10000) * 10000,
 }); // 1.0 balance: blueprints already gate these, so credits are 70%
+
+/**
+ * Roster of the ten distinct specialist ship hulls and their baseline attributes.
+ * @type {SpecialistShip[]}
+ */
 export const SPECIALISTS = [
   S({
     id: 805,
@@ -344,9 +412,28 @@ export const SPECIALISTS = [
     desc: "A bounty hunter's gunship: a long spinal cannon between two heavy engine pods. The Concord pays her captains by the head, and she has paid for herself many times over.",
   }),
 ];
+/**
+ * Specialist ship configurations keyed by numeric hull ID.
+ * @type {Object.<number, SpecialistShip>}
+ */
 export const SPEC = Object.fromEntries(SPECIALISTS.map((s) => [s.id, s]));
+
+/**
+ * Specialist ship configurations keyed by string identifier key.
+ * @type {Object.<string, SpecialistShip>}
+ */
 export const SPEC_BY_KEY = Object.fromEntries(SPECIALISTS.map((s) => [s.key, s]));
+
+/**
+ * Blueprint fragments required to construct a specialist ship.
+ * @type {number}
+ */
 export const BP_NEED = 40; // blueprints to build a specialist
+
+/**
+ * Station facility level and material requirements to construct specialist hulls.
+ * @type {{ ops: number, mats: Array<[string, number, number]> }}
+ */
 export const BUILD = {
   ops: 3,
   mats: [
@@ -355,7 +442,17 @@ export const BUILD = {
     ['isotope', 1, 1],
   ],
 };
+
+/**
+ * Ratio of raw specialist resource units consumed per refined component part.
+ * @type {number}
+ */
 export const PART_RATE = 5; // unique resource units per part at the station refinery
+
+/**
+ * Specialist component upgrade categories and their respective stat enhancements.
+ * @type {Object.<string, SpecialistComponent>}
+ */
 export const COMPONENTS = {
   weapons: { name: 'Weapons', bonus: { damagePct: 4 } },
   shields: { name: 'Shields', bonus: { shieldPct: 5, shieldRePct: 5 } },
@@ -363,11 +460,34 @@ export const COMPONENTS = {
   drive: { name: 'Drive', bonus: { speedPct: 3, turnPct: 4 } },
   special: { name: 'Specialty', bonus: { ability: 10 } }, // +10% to the ship's specialty per upgrade
 };
+
+/**
+ * Maximum specialist upgrade tier limit.
+ * @type {number}
+ */
 export const TIER_MAX = 5;
+
+/**
+ * Calculates component upgrade part and credit costs for a given tier.
+ * @param {number} tier - Current tier level of the specialist.
+ * @returns {{ parts: number, credits: number }} Required refined parts and credits.
+ */
 export const COMP_COST = (tier) => ({ parts: 4 + tier * 4, credits: 40000 * tier * tier });
+
+/**
+ * Drydock upgrade duration in minutes required to advance from tier t to t+1.
+ * @type {number[]}
+ */
 export const TIER_UP_MIN = [0, 10, 20, 40, 80]; // minutes in drydock to go from tier t to t+1
+
 // the specialty strength multiplier (1.0 at tier 1 with no special upgrades)
+/**
+ * Calculates effective specialist ability bonus multiplier based on tier and component upgrades.
+ * @param {SpecialistUpgradeState|null|undefined} st - Specialist component and tier upgrade state.
+ * @returns {number} Effectiveness multiplier (1.0 baseline).
+ */
 export function specPower(st) {
   if (!st) return 1;
   return 1 + 0.1 * (st.comp && st.comp.special ? st.comp.special : 0) + 0.05 * ((st.tier || 1) - 1);
 }
+

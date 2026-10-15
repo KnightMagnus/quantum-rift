@@ -48,7 +48,7 @@ function okSystem(r, S) {
 export const RivalsOperations = {
   /**
    * Initialize rival captains state and ambient spaceport news in world database.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @returns {void}
    */
   rivalsInit() {
@@ -103,7 +103,7 @@ export const RivalsOperations = {
   },
   /**
    * Look up persistent state for a rival captain.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {string} id - Rival identifier.
    * @returns {Record<string, any> | undefined} Persistent rival record.
    */
@@ -112,7 +112,7 @@ export const RivalsOperations = {
   },
   /**
    * Look up full name of a rival captain.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {string} id - Rival identifier.
    * @returns {string} Rival name.
    */
@@ -121,7 +121,7 @@ export const RivalsOperations = {
   },
   /**
    * Look up relationship score between a player and a rival captain.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @param {string} id - Rival identifier.
    * @returns {number} Relationship score (-100 to 100).
@@ -132,7 +132,7 @@ export const RivalsOperations = {
   },
   /**
    * Modify relationship score with a rival, logging changes and broadcasting news on threshold shifts.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {string} id - Rival identifier.
    * @param {number} delta - Delta to apply.
@@ -162,7 +162,7 @@ export const RivalsOperations = {
   },
   /**
    * Add a headline to the persistent galaxy news feed.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {string} text - Headline text.
    * @returns {void}
    */
@@ -173,7 +173,7 @@ export const RivalsOperations = {
   },
   /**
    * Retrieve recent headlines from the world news feed.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {number} [n=6] - Number of items to retrieve.
    * @returns {string[]} Array of recent news strings.
    */
@@ -185,7 +185,7 @@ export const RivalsOperations = {
   },
   /**
    * Get active flash market price multiplier for a commodity at a stellar port.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {string} stellar - Stellar port ID.
    * @param {string} cid - Commodity ID.
    * @returns {number} Price multiplier.
@@ -200,7 +200,7 @@ export const RivalsOperations = {
   // every 20 s: careers move on, ships get upgraded, news is made, grudges turn into hunters
   /**
    * Advance rival captains simulation tick: upgrade ships, trigger news, move between systems, spawn hunters.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @returns {void}
    */
   rivalsTick() {
@@ -308,7 +308,7 @@ export const RivalsOperations = {
   },
   /**
    * Spawn bounty hunter escort ships targeting a player with a severe nemesis grudge.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {any} s - Player session.
    * @param {Record<string, any>} R - Rival configuration object.
    * @returns {void}
@@ -344,7 +344,7 @@ export const RivalsOperations = {
   // keep live systems in step with where the rivals are
   /**
    * Synchronize rival ships within an active space sector.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {any} sp - Space sector instance.
    * @returns {void}
    */
@@ -396,7 +396,7 @@ export const RivalsOperations = {
   // think hook: rivals pick fights with their rivals and stand by their allies
   /**
    * AI decision loop for rival ships in space (attack nemeses, assist allies).
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {any} e - Rival ship entity.
    * @param {any} sp - Space sector instance.
    * @returns {void}
@@ -428,7 +428,7 @@ export const RivalsOperations = {
   // hostility hook (undefined = normal faction rules)
   /**
    * Determine hostility override between an NPC and a player based on rival status and relations.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {any} npc - NPC entity.
    * @param {any} p - Player entity.
    * @returns {boolean | undefined} True/false if override applies, undefined to defer to faction rules.
@@ -445,7 +445,7 @@ export const RivalsOperations = {
   },
   /**
    * Handle weapon impact on a rival ship, reducing player relationship score.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {any} s - Player session that fired.
    * @param {any} npc - Targeted entity that was hit.
    * @param {any} space - Space sector instance.
@@ -464,7 +464,7 @@ export const RivalsOperations = {
   },
   /**
    * Handle ship destruction involving rivals, penalizing killer or rewarding helpful bystanders.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {any} s - Player session scoring the kill.
    * @param {any} npc - Destroyed NPC entity.
    * @param {any} space - Space sector instance.
@@ -495,7 +495,7 @@ export const RivalsOperations = {
   // a rival trader who lands stays docked a while, then takes off again from that world
   /**
    * Handle rival ship landing at a planetary spaceport.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {any} e - Landing ship entity.
    * @returns {void}
    */
@@ -508,7 +508,7 @@ export const RivalsOperations = {
   },
   /**
    * Generate leaderboard entries for rival captains in a given category.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {string} cat - Metric category ('earned' or 'kills').
    * @returns {Array<{name: string, ai: boolean, v: number}>} Leaderboard ranking entries.
    */
@@ -523,7 +523,7 @@ export const RivalsOperations = {
   },
   /**
    * Compile the client payload listing all rival captains, locations, and relationship states.
-   * @this {import('./features.js').RivalsCapabilities}
+   * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {Array<Record<string, any>>} Rivals summary list for client.
    */
