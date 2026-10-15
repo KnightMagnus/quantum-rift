@@ -5,7 +5,7 @@ import { makeLoadout, credits } from '../shared/rules.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-export const StoryMixin = {
+export const StoryOperations = {
   storyInit(d) { d.story = d.story || { step: 0, active: null, done: [] }; d.story.done = d.story.done || []; return d.story; },
   storyDone(d, id) { const S = this.storyInit(d); return S.pass || S.done.includes(id); },
   storyPayload(d) { const S = this.storyInit(d), cur = STORY[S.step]; return { step: S.step, total: STORY.length, done: S.done, active: S.active ? { ...S.active, title: STORY.find(x => x.id === S.active.id).title, brief: STORY.find(x => x.id === S.active.id).brief } : null, next: cur && !S.active ? { title: cur.title, at: STELLARS[cur.at].name } : null, pass: !!S.pass }; },

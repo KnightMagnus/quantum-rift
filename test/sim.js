@@ -39,7 +39,7 @@ function fake(name) {
   // ---- wingmates
   a.send({ t: 'buyship', hull: 753, store: true }); a.send({ t: 'buyship', hull: 754, store: true });   // 2.1: wingmates are ships in a dock
   for (const [j, x] of d.dock.filter(x => [753, 754].includes(x.ship.hull)).entries()) a.send({ t: 'docks', op: 'assign', k: d.activeDock, slot: j, uid: x.ship.uid });
-  ok(game.activeWings(d).length === 2, 'bought Ines Varro and Old Mags Pell into the hangar and assigned them as wingmates');
+  ok(game.features.docks.activeWings(d).length === 2, 'bought Ines Varro and Old Mags Pell into the hangar and assigned them as wingmates');
   a.send({ t: 'depart' }); await sleep(300);
   const sp = game.spaces[d.sys], me = a.s.ent;
   const esc = [...sp.ships.values()].filter(e => e.owner === me.id);
@@ -70,7 +70,7 @@ function fake(name) {
   sp.damage(a.s.ent, 1e7, 1e7, null);
   await sleep(200);
   ok(!a.s.ent && d.stellar && a.last('dead'), 'player death: rebuilt at the last landing point');
-  ok(game.activeWings(d).length === 2 && ![...sp.ships.values()].some(e => e.wingOf === a.s.id), 'wingmates fly home with the insurers, not lost');
+  ok(game.features.docks.activeWings(d).length === 2 && ![...sp.ships.values()].some(e => e.wingOf === a.s.id), 'wingmates fly home with the insurers, not lost');
   game.completeOnLanding(a.s, { id: d.stellar, system: d.sys });
   ok(d.credits > credits0 - 1e6 && !d.missions.some(m => m.id === 'test-bounty'), 'bounty paid on landing');
   // ---- persistence

@@ -1,4 +1,4 @@
-// Quantum Rift 0.6 "Fleets and Fronts" server logic, mixed into Game: invasions,
+// Quantum Rift 0.6 "Fleets and Fronts" server feature operations: invasions,
 // anomalies and server events, daily and weekly goals, faction stores, and the expanded job types.
 // (2.6: fleets became the Armada, see server/coop.js; territory and Dreadnoughts were removed.)
 import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES } from '../shared/galaxy.js';
@@ -12,7 +12,7 @@ function rng(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s >>>
 function hash(str) { let h = 2166136261; for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 const pick = (r, a) => a[Math.floor(r() * a.length)];
 
-export const FrontsMixin = {
+export const FrontsOperations = {
   frontsInit() {
     this.invasion = null; this.lastInvWin = Math.floor(Date.now() / (INVASION.everyMin * 60000));
     if (process.env.INVASION_NOW) setTimeout(() => this.startInvasion(this.lastInvWin, SYS[process.env.INVASION_NOW] ? process.env.INVASION_NOW : undefined), 500);   // testing: start one at boot

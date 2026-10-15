@@ -8,7 +8,7 @@ const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.met
 const ok = (c, m) => { if (!c) { console.error('FAIL:', m); process.exit(1); } console.log('ok -', m); };
 process.env.SEEDS_FILE = '/nonexistent';
 const g = new Game(A, new DB('/tmp/rift-v23-' + Date.now()));
-g.event = () => null; g.anomalies = () => ({});   // 2.6: traffic counts must not depend on the weekday's event (Bounty Week brings 50% more raiders)
+g.features.fronts.event = () => null; g.features.fronts.anomalies = () => ({});   // 2.6: traffic counts must not depend on the weekday's event (Bounty Week brings 50% more raiders)
 // new hulls
 ok(SHIPS23.length === 10 && SHIPS23.every(H => g.A.ships[H.id] && g.A.ships[H.id].role), 'ten new hulls are in the game, each with a class role');
 const dir = decodeURIComponent(new URL('../client/assets/ships/', import.meta.url).pathname);

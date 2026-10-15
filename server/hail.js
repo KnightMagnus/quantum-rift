@@ -10,7 +10,7 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const TRADER_LINES = ['Just hauling, Captain. Nothing worth your time.', 'Clear skies. Mind the lanes past the third planet, raiders were spotted.', 'Have you tried the food prices out on the Frontier? Robbery.', 'If you are heading spinward, the jump beacons there are acting up.'];
 const PATROL_LINES = ['Patrol here. Keep it clean, Captain.', 'This system is under our protection. Fly safe.', 'Report any Hollow activity on this channel.'];
 
-export const HailMixin = {
+export const HailOperations = {
   bribeCost(d) {
     const H = this.A.ships[d.ship.hull], cargo = Object.entries(d.cargo).reduce((a, [c, n]) => a + n * ((COMMODITIES.find(x => x.id === c) || {}).base || 100), 0);
     return Math.max(800, Math.round(((H && H.cost) || 0) * 0.02 + cargo * 0.4) / 100) * 100;

@@ -8,7 +8,7 @@ import { SYS } from '../shared/galaxy.js';
 import { makeLoadout } from '../shared/rules.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB('/tmp/rift-v201-' + Date.now()));
-const wingUp = (game, d, hulls) => { d.docks[d.activeDock].wings = hulls.map(h => { const ship = makeLoadout(A, h, 'Wing'); ship.uid = game.shipUid(d); d.dock.push({ ship, bridge: {} }); return { uid: ship.uid }; }); };   // 2.1: wingmates are stored ships in your dock
+const wingUp = (game, d, hulls) => { d.docks[d.activeDock].wings = hulls.map(h => { const ship = makeLoadout(A, h, 'Wing'); ship.uid = game.features.docks.shipUid(d); d.dock.push({ ship, bridge: {} }); return { uid: ship.uid }; }); };   // 2.1: wingmates are stored ships in your dock
 const ok = (c, m) => { if (!c) { console.error('FAIL:', m); process.exit(1); } console.log('ok -', m); };
 const sp = game.spaces.meridian; for (const e of [...sp.ships.values()]) sp.remove(e);
 const planets = SYS.meridian.stellars.filter(p => p.svc.includes('L')), hulls = [704, 706, 712, 703, 713, 736].filter(h => A.ships[h]);

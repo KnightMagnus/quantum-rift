@@ -15,7 +15,7 @@ export function fake(name, g = game) {
   const c = { sock, s, send: (m) => sock.emit('message', JSON.stringify(m)), last: (t) => [...sock.out].reverse().find(m => m.t === t), all: (t) => sock.out.filter(m => m.t === t) };
   c.send({ t: 'hello', name, pass: 'secret' }); return c;
 }
-const land = (c, sid) => { const d = c.s.data, p = STELLARS[sid]; if (c.s.ent) { const sp = game.spaces[d.sys]; sp.remove(c.s.ent); sp.players--; c.s.ent = null; } d.sys = p.system; d.stellar = sid; game.landed(c.s); game.storyOnLand(c.s, p); };
+const land = (c, sid) => { const d = c.s.data, p = STELLARS[sid]; if (c.s.ent) { const sp = game.spaces[d.sys]; sp.remove(c.s.ent); sp.players--; c.s.ent = null; } d.sys = p.system; d.stellar = sid; game.landed(c.s); game.features.story.storyOnLand(c.s, p); };
 const toSpace = (c, sys) => { const d = c.s.data; if (c.s.ent) { const sp = game.spaces[d.sys]; sp.remove(c.s.ent); sp.players--; c.s.ent = null; } d.sys = sys; d.stellar = null; game.spawnPlayer(c.s, 0, 0, 0, 0); return c.s.ent; };
 const a = fake('Lightbearer'), d = a.s.data; d.credits = 1e6; d.ship.hull = 736;
 // the Deep is locked until the Que'vari charts
@@ -36,7 +36,7 @@ d.rep.quevari = 10; const n3 = a.all('story').length; land(a, 'inalumen'); ok(a.
 d.rep.quevari = 30; land(a, 'inalumen'); a.send({ t: 'storyacc', id: 'qv3' }); toSpace(a, 'shoalight');
 const hunters = [...game.spaces.shoalight.ships.values()].filter(x => x.storyKill); ok(hunters.length === 4, 'four Umbral hunters close in at Shoalight');
 for (const h of hunters) game.spaces.shoalight.kill(h, a.s.ent); ok(d.story.active.ready, 'all four destroyed');
-land(a, 'inalumen'); ok(d.story.done.includes('qv3') && !game.deepLocked(d, deep.id), 'Shades on the Wind complete, and the Deep is open');
+land(a, 'inalumen'); ok(d.story.done.includes('qv3') && !game.features.story.deepLocked(d, deep.id), 'Shades on the Wind complete, and the Deep is open');
 d.rep.quevari = 60; land(a, 'inalumen'); a.send({ t: 'storyacc', id: 'qv4' }); const e4 = toSpace(a, 'umbra'), sp4 = game.spaces.umbra;
 const anchor = [...sp4.ships.values()].find(x => x.storyKill), allies = [...sp4.ships.values()].filter(x => x.storyAlly);
 ok(anchor && anchor.hull === 764 && allies.length === 4 && allies.every(x => !sp4.isHostile(x, e4)), 'the Night Anchor waits in Umbra, and four Que\'vari choirs fight beside you');
@@ -44,7 +44,7 @@ anchor.shield = 0; anchor.armor = 1; sp4.damage(anchor, 10, 10, e4); ok(d.story.
 land(a, 'inalumen'); ok(d.story.done.includes('qv4'), 'The Night Anchor complete');
 const old = d.ship.hull; land(a, 'inalumen'); a.send({ t: 'storyacc', id: 'qv5' });
 ok(d.ship.hull === 744 && d.story.done.includes('qv5') && d.story.step === 5, 'the final reward is yours');
-ok(!game.storyOffer(d, STELLARS.inalumen), 'the story is complete');
+ok(!game.features.story.storyOffer(d, STELLARS.inalumen), 'the story is complete');
 console.log('ok - (story section done)');
 // --- solo mode
 const sdir = '/tmp/rift-v10solo-' + Date.now(), sdb = new DB(sdir), solo = new Game(A, sdb); solo.solo = true;

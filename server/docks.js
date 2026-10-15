@@ -9,7 +9,7 @@ import { SPEC } from '../shared/specialty.js';
 
 const HERALD = (Object.values(SPEC).find(s => s.key === 'herald') || {}).id;
 
-export const DocksMixin = {
+export const DocksOperations = {
   // ------------------------------------------------------------------ save upgrade and bookkeeping
   docksInit(d) {
     this.hangarInit(d);

@@ -19,6 +19,6 @@ ok(JSON.parse(fs.readFileSync(dir + '/players.json', 'utf8')).knight === undefin
 const sock = new EventEmitter(); sock.open = true; sock.backlog = 0; const out = []; sock.send = (m) => out.push(typeof m === 'string' ? JSON.parse(m) : m); sock.close = () => {};
 g2.connect(sock, '17.0.0.1'); sock.emit('message', JSON.stringify({ t: 'hello', name: '__proto__', pass: 'secret' }));
 ok(out.some(m => m.t === 'error') && !Object.prototype.hasOwnProperty.call(g2.db.players, '__proto__'), 'names like __proto__ are refused');
-ok(g2.db.get('constructor') === null && g2.profile('constructor') === null, 'lookups never reach object internals');
-ok(Array.isArray(g2.leaderboard('constructor')) && g2.leaderboard('constructor').length === 0, 'unknown leaderboard categories are empty, not errors');
+ok(g2.db.get('constructor') === null && g2.features.frontier.profile('constructor') === null, 'lookups never reach object internals');
+ok(Array.isArray(g2.features.frontier.leaderboard('constructor')) && g2.features.frontier.leaderboard('constructor').length === 0, 'unknown leaderboard categories are empty, not errors');
 console.log('ALL 2.0.2 TESTS PASSED'); process.exit(0);

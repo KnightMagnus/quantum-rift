@@ -26,7 +26,7 @@ ok(d.docks[0].wings.filter(Boolean).length === 2 && d.dock.some(x => x.ship.hull
 ok(!d.escorts.length && !d.dock.some(x => x.escorts), 'old escort lists are retired (a stored preset escort is refunded)');
 const Y = P.you(); ok(Y.docks && Y.docks.list.length === 3 && Y.docks.list[0].wings.length === 2 && Y.docks.cap === 11, 'the client gets docks, wing slots and berth count');
 // wingmates launch with their own loadouts and officers
-const o1 = { id: g.uid(d), name: 'Wing Boss', race: 'quantum', role: 'captain', rarity: 3, lv: 10, xp: 0 }; d.officers.push(o1);
+const o1 = { id: g.features.hangar.uid(d), name: 'Wing Boss', race: 'quantum', role: 'captain', rarity: 3, lv: 10, xp: 0 }; d.officers.push(o1);
 P.send({ t: 'docks', op: 'crew', k: 0, w: 0, role: 'cap', oid: o1.id });
 ok(d.docks[0].wings[0].cap === o1.id, 'an officer captains a wingmate');
 d.bridge.captain = o1.id; P.send({ t: 'officer', op: 'assign', oid: o1.id, slot: 'captain' });
@@ -41,7 +41,7 @@ ok(w0.st.shield > plain.st.shield, 'the captained wingmate is stronger than a ba
 // a wingmate knocked out goes in for repairs
 sp.damage(w0, 1e7, 1e7, null);
 const X = d.dock.find(x => x.ship.uid === w0.wingUid); ok(X.repairT > Date.now() && P.toasts().some(t => t.includes('towed home')), 'a wingmate knocked out is towed home for repairs');
-ok(g.activeWings(d).length === 1, 'and sits out until repaired');
+ok(g.features.docks.activeWings(d).length === 1, 'and sits out until repaired');
 d.credits = 1e7; P.send({ t: 'docks', op: 'repair', uid: X.ship.uid }); ok(!X.repairT, 'rush repairs put her back in service');
 // back at the station: build Dock B and switch
 g.land(P.s, d.stellar || 'site-qgate'); if (P.s.ent) { const s2 = g.spaces[d.sys]; g.dropEscorts(s2, P.s.ent); s2.remove(P.s.ent); s2.players--; P.s.ent = null; } d.stellar = 'site-qgate'; d.sys = STELLARS['site-qgate'].system;
@@ -60,19 +60,19 @@ const old = d.ship; d.cargo = { food: 9999 };
 P.send({ t: 'docks', op: 'activate', k: 1 }); ok(d.activeDock === 0, "switching docks checks your cargo fits the new lead");
 d.cargo = {}; P.send({ t: 'docks', op: 'activate', k: 1 });
 ok(d.activeDock === 1 && d.ship === nb.ship && d.dock.includes(d.dock.find(x => x.ship === old)) && d.docks[0].lead === old.uid, 'fly with Dock B: its lead is your ship, the old one waits as Dock A lead');
-ok(g.activeWings(d).map(o => o.x.ship.uid).sort().join() === [wm.ship.uid, aw].sort().join(), "Dock B's wingmates now fly with you");
+ok(g.features.docks.activeWings(d).map(o => o.x.ship.uid).sort().join() === [wm.ship.uid, aw].sort().join(), "Dock B's wingmates now fly with you");
 P.send({ t: 'docks', op: 'activate', k: 0 }); ok(d.activeDock === 0 && d.ship === old, 'and back to Dock A');
 // Herald leads command a third wingmate
-const her = makeLoadout(A, Object.values(SPEC).find(s => s.key === 'herald').id, 'Halo'); her.uid = g.shipUid(d); d.dock.push({ ship: her, bridge: {} });
-P.send({ t: 'docks', op: 'assign', k: 2, slot: 'lead', uid: her.uid }); ok(g.wingMax(d, 2) === 3 && g.wingMax(d, 1) === 2, 'a Herald lead opens a third wingmate slot');
+const her = makeLoadout(A, Object.values(SPEC).find(s => s.key === 'herald').id, 'Halo'); her.uid = g.features.docks.shipUid(d); d.dock.push({ ship: her, bridge: {} });
+P.send({ t: 'docks', op: 'assign', k: 2, slot: 'lead', uid: her.uid }); ok(g.features.docks.wingMax(d, 2) === 3 && g.features.docks.wingMax(d, 1) === 2, 'a Herald lead opens a third wingmate slot');
 // selling a stored ship frees its slot; hangar capacity is enforced
 P.send({ t: 'dock', op: 'sell', uid: wm.ship.uid }); ok(!d.dock.some(x => x === wm) && !d.docks[1].wings.some(w => w && w.uid === wm.ship.uid), 'selling a stored ship empties its slot');
-while (d.dock.length < g.dockSlots(d)) { const sh = makeLoadout(A, 703, 'filler'); sh.uid = g.shipUid(d); d.dock.push({ ship: sh, bridge: {} }); }
+while (d.dock.length < g.features.hangar.dockSlots(d)) { const sh = makeLoadout(A, 703, 'filler'); sh.uid = g.features.docks.shipUid(d); d.dock.push({ ship: sh, bridge: {} }); }
 P.send({ t: 'buyship', hull: 704, store: true }); ok(P.toasts().pop().includes('hangar is full'), 'the hangar holds only so many ships');
 // the hire op is retired
 P.send({ t: 'station', op: 'hire', hull: 751 }); ok(P.toasts().pop().includes('Wingmates are ships now'), 'hiring wingmates at the station is retired');
 // a fresh captain without a station: Dock A only, no wingmates
-const N = fake('New Pilot'); ok(N.d.docks.length === 1 && N.you().docks.cap === 0 && g.activeWings(N.d).length === 0, 'a captain without a station has Dock A and no hangar');
+const N = fake('New Pilot'); ok(N.d.docks.length === 1 && N.you().docks.cap === 0 && g.features.docks.activeWings(N.d).length === 0, 'a captain without a station has Dock A and no hangar');
 // your own guns hit any ship now (EV-style): a friendly trader takes damage, turns hostile, and you lose standing
 { const T = fake('Trigger Happy'); T.send({ t: 'depart' }); const sp4 = g.spaces[T.d.sys], me4 = T.s.ent;
   const tr = sp4.makeShip({ hull: 704, faction: 'quantum', x: me4.x + Math.sin(me4.a) * 150, y: me4.y - Math.cos(me4.a) * 150, a: 0, ai: 'trade' }); tr.dest = { x: tr.x, y: tr.y, out: true };
@@ -81,20 +81,20 @@ const N = fake('New Pilot'); ok(N.d.docks.length === 1 && N.you().docks.cap === 
   const esc = sp4.makeShip({ hull: 704, faction: 'quantum', x: me4.x, y: me4.y, ai: 'escort', owner: me4.id }); ok(!sp4.canHit(me4, esc), 'but never your own wingmates'); }
 // a save with five docks (an earlier 2.1 build), flying Dock E: it folds into four, and you keep flying your ship
 { const F = fake('Five Docks'), fd = F.d; fd.station.claimed = true; fd.station.ops = 5; fd.station.site = 'site-halcyon'; g.db.world.sites['site-halcyon'] = g.db.key('Five Docks');
-  const mk = (h) => { const sh = makeLoadout(A, h, 'S' + h); sh.uid = g.shipUid(fd); fd.dock.push({ ship: sh, bridge: {} }); return sh.uid; };
+  const mk = (h) => { const sh = makeLoadout(A, h, 'S' + h); sh.uid = g.features.docks.shipUid(fd); fd.dock.push({ ship: sh, bridge: {} }); return sh.uid; };
   fd.docks = [{ lead: null, wings: [] }, { lead: mk(710), wings: [] }, { lead: mk(711), wings: [] }, { lead: mk(712), wings: [] }, { lead: fd.ship.uid, wings: [{ uid: mk(751) }] }]; fd.activeDock = 4;
-  g.docksInit(fd);
-  ok(fd.docks.length === 4 && fd.activeDock === 3 && fd.docks[3].lead === fd.ship.uid && fd.docks[3].wings[0] && g.stored(fd, fd.docks[3].wings[0].uid).ship.hull === 751, 'five docks fold into four: you keep flying your ship and its wingmate, now in Dock D');
-  ok(fd.dock.some(x => x.ship.hull === 712) && !g.slotOf(fd, fd.dock.find(x => x.ship.hull === 712).ship.uid), "Dock D's old lead waits in the hangar, unassigned"); }
+  g.features.docks.docksInit(fd);
+  ok(fd.docks.length === 4 && fd.activeDock === 3 && fd.docks[3].lead === fd.ship.uid && fd.docks[3].wings[0] && g.features.docks.stored(fd, fd.docks[3].wings[0].uid).ship.hull === 751, 'five docks fold into four: you keep flying your ship and its wingmate, now in Dock D');
+  ok(fd.dock.some(x => x.ship.hull === 712) && !g.features.docks.slotOf(fd, fd.dock.find(x => x.ship.hull === 712).ship.uid), "Dock D's old lead waits in the hangar, unassigned"); }
 // K: wingmates go after your target even when it is not hostile; F: drones launch and recall as a toggle
-{ const K = fake('Wing Leader'), kd = K.d; g.docksInit(kd);
-  for (const h of [751, 752]) { const sh = makeLoadout(A, h, 'W'); sh.uid = g.shipUid(kd); kd.dock.push({ ship: sh, bridge: {} }); kd.docks[0].wings.push({ uid: sh.uid }); }
+{ const K = fake('Wing Leader'), kd = K.d; g.features.docks.docksInit(kd);
+  for (const h of [751, 752]) { const sh = makeLoadout(A, h, 'W'); sh.uid = g.features.docks.shipUid(kd); kd.dock.push({ ship: sh, bridge: {} }); kd.docks[0].wings.push({ uid: sh.uid }); }
   K.send({ t: 'depart' }); const sp5 = g.spaces[kd.sys], me5 = K.s.ent;
   const t = sp5.makeShip({ hull: 711, faction: 'spacer', x: me5.x + 1600, y: me5.y, a: 0, ai: 'guard' }); t.home = { x: t.x, y: t.y };
   me5.target = t; K.send({ t: 'order', o: 'attack' }); const W = [...sp5.ships.values()].filter(x => x.wingUid), d0 = W.map(w => Math.hypot(w.x - t.x, w.y - t.y));
   for (let i = 0; i < 30 * 6; i++) { me5.vx = me5.vy = 0; sp5.tick(); }
   ok(W.every((w, i) => w.target === t && Math.hypot(w.x - t.x, w.y - t.y) < d0[i] - 400), 'K sends your wingmates out to attack your target, even a neutral one'); }
-{ const C = fake('Carrier Ace'), cd = C.d; cd.ship = makeLoadout(A, 715, 'Hive'); g.leadChanged(cd); C.send({ t: 'depart' }); const sp6 = g.spaces[cd.sys], me6 = C.s.ent;
+{ const C = fake('Carrier Ace'), cd = C.d; cd.ship = makeLoadout(A, 715, 'Hive'); g.features.docks.leadChanged(cd); C.send({ t: 'depart' }); const sp6 = g.spaces[cd.sys], me6 = C.s.ent;
   const fighters = () => [...sp6.ships.values()].filter(x => x.fighterOf === me6.id), bay = () => me6.guns.find(x => x.p.bay).ammo;
   const tap = () => { C.s.inputs.push({ seq: 1, thrust: 0, turn: 0, ab: 0, rev: 0, fire1: 0, fire2: 1 }); sp6.tick(); for (let i = 0; i < 3; i++) { C.s.inputs.push({ seq: 2, thrust: 0, turn: 0, ab: 0, rev: 0, fire1: 0, fire2: 0 }); sp6.tick(); } };
   const full = bay(); tap(); ok(fighters().length === full && bay() === 0, 'one tap of F launches every drone at once');

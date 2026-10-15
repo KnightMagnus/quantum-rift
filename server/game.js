@@ -1,3 +1,5 @@
+import { createMessageRegistry } from './message-registry.js';
+import { createFeatures } from './features.js';
 import { TUTORIAL, tutMigrate, TUT_VERSION } from '../shared/tutorial.js';
 import fs from 'node:fs';
 // Quantum Rift game server: sessions, the galaxy's systems, landing services, missions, Quantum Station.
@@ -5,22 +7,8 @@ import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES, START
          OPS, RESEARCH, REFINERY, ORE_PROCESS, STATION_SHIPS, WINGMATES, TRAFFIC, RELOCATE, relocateCost, SITES, SITE_PRICES } from '../shared/galaxy.js';
 import { augmentAssets, shipStats, researchBonus, price, allOutfits, makeLoadout, K, DT, TICK, angleTo, credits } from '../shared/rules.js';
 import { Space } from './space.js';
-import { HangarMixin } from './hangar.js';
-import { FrontsMixin } from './fronts.js';
-import { FrontierMixin } from './frontier.js';
-import { SpecialistMixin } from './specialists.js';
-import { HostileMixin } from './hostile.js';
-import { StoryMixin } from './story.js';
-import { RivalsMixin } from './rivals.js';
-import { HailMixin } from './hail.js';
-import { FleetCmdMixin } from './fleetcmd.js';
-import { SyndicateMixin, destType } from './syndicate.js';
+import { destType } from './syndicate.js';
 import { synTier } from '../shared/syndicate.js';
-import { ArcsMixin } from './arcs.js';
-import { DocksMixin } from './docks.js';
-import { LivingMixin } from './living.js';
-import { QuestMixin } from './quests.js';
-import { CoopMixin } from './coop.js';
 import { STATES, TRADE_IMPACT } from '../shared/living.js';
 import { WING_ONLY } from '../shared/docks.js';
 import { ARCS } from '../shared/arcs.js';
@@ -40,13 +28,46 @@ function jumpsFrom(a) { const d = { [a]: 0 }, q = [a]; while (q.length) { const 
 const JUMPS = Object.fromEntries(SYSTEMS.map(s => [s.id, jumpsFrom(s.id)]));
 
 export class Game {
+  /** Legacy feature state; see docs/FEATURES.md. @type {unknown} */
+  _an;
+  /** Legacy feature state; see docs/FEATURES.md. @type {number | undefined} */
+  _anW;
+  /** Legacy feature state; see docs/FEATURES.md. @type {unknown} */
+  invasion;
+  /** Legacy feature state; see docs/FEATURES.md. @type {number | undefined} */
+  lastInvWin;
+  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, number[]> | undefined} */
+  arenaQ;
+  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, unknown> | undefined} */
+  matches;
+  /** Legacy feature state; see docs/FEATURES.md. @type {number | undefined} */
+  nextMatch;
+  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, unknown> | undefined} */
+  waves;
+  /** Legacy feature state; see docs/FEATURES.md. @type {Map<string, {sys: string, id: number}> | undefined} */
+  rivalEnts;
+  /** Legacy feature state; see docs/FEATURES.md. @type {boolean | undefined} */
+  _livingStarted;
+  /** Legacy feature state; see docs/FEATURES.md. @type {string[] | undefined} */
+  _mkt;
+  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, unknown> | undefined} */
+  duels;
+  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, unknown> | undefined} */
+  trades;
+  /** Legacy feature state; see docs/FEATURES.md. @type {number | undefined} */
+  nextCoopId;
+  /** Legacy feature state; see docs/FEATURES.md. @type {boolean | undefined} */
+  solo;
   constructor(A, db) {
     augmentAssets(A); this.A = A; this.db = db; this.O = allOutfits(A); this.spaces = {}; this.sessions = new Map(); this.nextSid = 1; this.tickN = 0;
     // Systems are simulated only while someone is there (or was, recently): a space is created on first access
     // and dropped after two quiet minutes, so 200 systems cost no more than the handful that are occupied.
     const live = this.live = {};
     this.spaces = new Proxy(live, { get: (t, k) => t[k] || (typeof k === 'string' && SYS[k] ? this.wake(t[k] = new Space(this, k)) : undefined) });
-    this.frontsInit(); this.coopInit(); this.frontierInit(); this.rivalsInit(); this.livingInit(); this.livingTick();
+    /** @type {import('./features.js').FeatureServices} */
+    this.features = createFeatures(this);
+    this.messageHandlers = this.createMessageHandlers();
+    this.features.fronts.frontsInit(); this.features.coop.coopInit(); this.features.frontier.frontierInit(); this.features.rivals.rivalsInit(); this.features.living.livingInit(); this.features.living.livingTick();
     this.seed();
     setInterval(() => { try { this.tick(); } catch (e) { this.tickErr = (this.tickErr || 0) + 1; if (this.tickErr < 20 || this.tickErr % 500 === 0) console.error('tick error', this.tickErr, e); } }, 1000 / TICK);   // 2.0.2: one bad ship never takes the server down
   }
@@ -97,46 +118,46 @@ export class Game {
     for (const [site, owner] of Object.entries(W.sites || {})) if (owner === k) delete W.sites[site];                 // the station hull is a derelict again
     for (const [id, c] of Object.entries(W.colonies || {})) if (c.owner === k) delete W.colonies[id];
     if (Array.isArray(W.orders)) W.orders = W.orders.filter(o => o.owner !== p.name);
-    if (this.armadaForget) this.armadaForget(p.name);   // 2.6
+    if (this.features.coop.armadaForget) this.features.coop.armadaForget(p.name);   // 2.6
     delete this.db.players[k]; this.db.touch(); this.db.flush(); console.log(`Retired seeded captain ${p.name}; their station hull is unclaimed again.`);
   }
   syncSeed(p, c) {
-    this.hangarInit(p);
+    this.features.hangar.hangarInit(p);
     const st = p.station, want = c.station || {};
     st.claimed = true; st.ops = Math.max(st.ops || 0, want.ops || 5);
     if (want.research === 'all') { st.done = RESEARCH.map(r => r.id); st.active = null; st.queue = []; }
     if (!st.site && want.site && STELLARS[want.site] && !this.siteOwner(want.site)) { st.site = want.site; this.db.world.sites[want.site] = this.db.key(p.name); }
-    if (want.shuttles === 'all') for (const kind of Object.keys(SHUTTLES)) if (!p.shuttles.some(x => x.kind === kind) && p.shuttles.length < this.bays(p)) p.shuttles.push({ id: this.uid(p), kind, state: 'idle', crew: null, runs: 0 });
+    if (want.shuttles === 'all') for (const kind of Object.keys(SHUTTLES)) if (!p.shuttles.some(x => x.kind === kind) && p.shuttles.length < this.features.hangar.bays(p)) p.shuttles.push({ id: this.features.hangar.uid(p), kind, state: 'idle', crew: null, runs: 0 });
     if (c.officers && !p.officers.some(o => o.seed)) for (const [i, o] of c.officers.entries()) {
-      const off = { id: this.uid(p), seed: true, name: o.name, race: o.race, role: o.role, rarity: o.rarity ?? 3, lv: o.lv || 10, xp: 0 };
+      const off = { id: this.features.hangar.uid(p), seed: true, name: o.name, race: o.race, role: o.role, rarity: o.rarity ?? 3, lv: o.lv || 10, xp: 0 };
       p.officers.push(off); if (o.slot) p.bridge[o.slot] = off.id;
     }
     if (c.mats) for (const m of MATERIALS) p.mats[m] = p.mats[m].map((n, g) => Math.max(n, c.mats[g]));
     p.tut = TUTORIAL.length;   // showcase captains skip the career guide
-    if (c.storyPass) { this.storyInit(p); p.story.pass = true; }
+    if (c.storyPass) { this.features.story.storyInit(p); p.story.pass = true; }
     if (c.blueprints) { p.bp = p.bp || {}; for (const id of Object.keys(SPEC)) p.bp[id] = Math.max(p.bp[id] || 0, c.blueprints); }
     if (c.fleet && !p.seedFleet) this.seedFleet(p, c.fleet);
     console.log('Synced seeded captain', c.name);
   }
   // 2.1 playtest seeds: fill the docks with ships and crew them, once ({ docks: [{ lead, name, wings: [hulls] }], crew: [...officers], spare: [...officers] })
   seedFleet(p, F) {
-    this.docksInit(p); p.seedFleet = true;
-    const crew = [...(F.crew || [])], newOff = (o) => { const off = { id: this.uid(p), seed: true, name: o.name, race: o.race, role: o.role, rarity: o.rarity ?? 2, lv: o.lv || 10, xp: 0 }; p.officers.push(off); return off.id; };
+    this.features.docks.docksInit(p); p.seedFleet = true;
+    const crew = [...(F.crew || [])], newOff = (o) => { const off = { id: this.features.hangar.uid(p), seed: true, name: o.name, race: o.race, role: o.role, rarity: o.rarity ?? 2, lv: o.lv || 10, xp: 0 }; p.officers.push(off); return off.id; };
     (F.docks || []).forEach((D, i) => {
       if (i >= p.docks.length) return;
       if (D.lead) {
-        const ship = makeLoadout(this.A, D.lead, D.name || this.A.ships[D.lead].name); ship.uid = this.shipUid(p);
+        const ship = makeLoadout(this.A, D.lead, D.name || this.A.ships[D.lead].name); ship.uid = this.features.docks.shipUid(p);
         if (i === p.activeDock) { p.ship = ship; p.shipless = false; p.docks[i].lead = ship.uid; }   // a test account: the old ship is simply replaced
         else { p.dock.push({ ship, bridge: {} }); p.docks[i].lead = ship.uid; }
       }
       p.docks[i].wings = (D.wings || []).map(h => {
-        const ship = makeLoadout(this.A, h, this.A.ships[h].name); ship.uid = this.shipUid(p); p.dock.push({ ship, bridge: {} });
+        const ship = makeLoadout(this.A, h, this.A.ships[h].name); ship.uid = this.features.docks.shipUid(p); p.dock.push({ ship, bridge: {} });
         const cap = crew.length ? newOff(crew.shift()) : null, mate = crew.length ? newOff(crew.shift()) : null;
         return { uid: ship.uid, cap, crew: mate };
       });
     });
     for (const o of F.spare || []) newOff(o);
-    this.docksInit(p);
+    this.features.docks.docksInit(p);
   }
   // ------------------------------------------------------------------ sessions
   fresh() {
@@ -152,7 +173,7 @@ export class Game {
     sock.on('close', () => this.disconnect(s));
   }
   disconnect(s) {
-    if (s.data && this.sessions.has(s.id)) this.coopLogout(s);   // 2.6: duels, trades, presence
+    if (s.data && this.sessions.has(s.id)) this.features.coop.coopLogout(s);   // 2.6: duels, trades, presence
     this.sessions.delete(s.id);
     for (const q of Object.values(this.arenaQ || {})) { const i = q.indexOf(s.id); if (i >= 0) q.splice(i, 1); }
     if (s.data && this.matches && this.matches[s.data.sys]) { this.matches[s.data.sys].alive.delete(s.data.name); s.data.stellar = s.data.arenaReturn || 'qstation'; }
@@ -173,13 +194,13 @@ export class Game {
   broadcast(m, filter) { const str = JSON.stringify(m); for (const s of this.sessions.values()) if (s.data && (!filter || filter(s))) this.send(s, str); }
   get rep() { return null; }
   you(s) {
-    const d = s.data; this.docksInit(d); this.checkStation(d);
-    const st = this.stats(d);
+    const d = s.data; this.features.docks.docksInit(d); this.checkStation(d);
+    const st = this.features.shipStats.stats(d);
     this.send(s, { t: 'you', d: { name: d.name, credits: d.credits, sys: d.sys, stellar: d.stellar, ship: d.ship, cargo: d.cargo, paid: d.paid || {}, mats: d.mats, rep: d.rep,
-      shipless: !!d.shipless, docks: this.docksPayload(d), newcomer: this.newcomer(d), arcs: this.arcsPayload(d), expd: d.expd || { n: 0 }, rank: this.rankOf(d), syn: synTier(d.syn), shards: d.shards || 0, lower: d.lower || [], loan: d.loan || null, credit: d.credit || 600, missions: d.missions, escorts: d.escorts, shuttles: d.shuttles, officers: d.officers, bridge: d.bridge, dock: d.dock, bays: this.bays(d), dockSlots: this.dockSlots(d),
-      board: this.shuttleBoard(d), bonus: this.bonus(d), armada: this.armadaPayload(d), social: this.socialPayload(d), goals: this.goalsFor(d), tokens: d.tokens || {}, chains: d.chains || {}, quests: this.questsPayload(d),
-      arena: this.arenaPayload(d, s), spec: d.spec || {}, bp: d.bp || {}, story: this.storyPayload(d), holdout: d.holdout ? { best: d.holdout.best || 0, lastT: d.holdout.lastT || 0, wave: d.holdout.active ? d.holdout.active.wave : 0, active: !!d.holdout.active } : null, power: this.myPower(d), parts: d.parts || {}, specState: d.specState || {}, mastery: d.mastery || {}, colonies: this.coloniesOf(d).map(([id, c]) => ({ id, name: c.name, lv: c.lv, sys: STELLARS[id].system })), defense: this.defenseRating(d), storage: d.storage || {}, explored: d.explored, tut: d.tut ?? TUTORIAL.length, station: d.station, stats: d.stats, log: d.log.slice(-60), shipStats: st, fuel: s.ent ? s.ent.fuel : (d.fuel ?? st.fuel),
-      cargoUsed: Object.values(d.cargo).reduce((a, b) => a + b, 0), jobCargo: this.jobCargo(d), duel: this.duelPayload(s), duels: d.duels || null } });
+      shipless: !!d.shipless, docks: this.features.docks.docksPayload(d), newcomer: this.newcomer(d), arcs: this.features.arcs.arcsPayload(d), expd: d.expd || { n: 0 }, rank: this.features.fleetcmd.rankOf(d), syn: synTier(d.syn), shards: d.shards || 0, lower: d.lower || [], loan: d.loan || null, credit: d.credit || 600, missions: d.missions, escorts: d.escorts, shuttles: d.shuttles, officers: d.officers, bridge: d.bridge, dock: d.dock, bays: this.features.hangar.bays(d), dockSlots: this.features.hangar.dockSlots(d),
+      board: this.features.hangar.shuttleBoard(d), bonus: this.features.bonuses.bonus(d), armada: this.features.coop.armadaPayload(d), social: this.features.coop.socialPayload(d), goals: this.features.fronts.goalsFor(d), tokens: d.tokens || {}, chains: d.chains || {}, quests: this.features.quests.questsPayload(d),
+      arena: this.features.frontier.arenaPayload(d, s), spec: d.spec || {}, bp: d.bp || {}, story: this.features.story.storyPayload(d), holdout: d.holdout ? { best: d.holdout.best || 0, lastT: d.holdout.lastT || 0, wave: d.holdout.active ? d.holdout.active.wave : 0, active: !!d.holdout.active } : null, power: this.features.hostile.myPower(d), parts: d.parts || {}, specState: d.specState || {}, mastery: d.mastery || {}, colonies: this.features.frontier.coloniesOf(d).map(([id, c]) => ({ id, name: c.name, lv: c.lv, sys: STELLARS[id].system })), defense: this.features.frontier.defenseRating(d), storage: d.storage || {}, explored: d.explored, tut: d.tut ?? TUTORIAL.length, station: d.station, stats: d.stats, log: d.log.slice(-60), shipStats: st, fuel: s.ent ? s.ent.fuel : (d.fuel ?? st.fuel),
+      cargoUsed: Object.values(d.cargo).reduce((a, b) => a + b, 0), jobCargo: this.jobCargo(d), duel: this.features.coop.duelPayload(s), duels: d.duels || null } });
   }
   // ---- claimable station hulls
   siteOwner(id) { const k = this.db.world.sites[id]; return k ? this.db.players[k] || null : null; }
@@ -237,67 +258,119 @@ export class Game {
   }
   log(d, text) { d.log.push({ t: Date.now(), text }); if (d.log.length > 200) d.log.shift(); }
 
+  // Fixed routes; authentication, flood and activity gates remain in onMessage.
+  createMessageHandlers() {
+    return createMessageRegistry([
+      ['input', (s, m) => { if (s.ent && s.inputs.length < 8) s.inputs.push({ seq: m.seq | 0, thrust: m.th ? 1 : 0, turn: clamp(m.tu | 0, -1, 1), ab: m.ab ? 1 : 0, rev: m.rv ? 1 : 0, fire1: m.f1 ? 1 : 0, fire2: m.f2 ? 1 : 0 }); return;
+      }],
+      ['target', (s, m) => { const d = s.data; if (s.ent) { const sp = this.spaces[d.sys]; s.ent.target = m.id ? sp.ships.get(m.id) || null : null; if (s.ent.target) this.tut(s, 'target'); } return;
+      }],
+      ['tutskip', (s, m) => { const d = s.data; if (d.tut != null && d.tut < TUTORIAL.length) { d.tut = TUTORIAL.length; this.you(s); } return;
+      }],
+      ['land', (s, m) => { this.land(s, m.stellar); return;
+      }],
+      ['depart', (s, m) => { this.depart(s); return;
+      }],
+      ['jump', (s, m) => { this.jump(s, m.to); return;
+      }],
+      ['trade', (s, m) => { this.trade(s, m.cid, m.qty | 0); return;
+      }],
+      ['buyship', (s, m) => { if (m.store) this.features.docks.buyToHangar(s, m.hull | 0); else this.buyShip(s, m.hull | 0); return;
+      }],
+      ['docks', (s, m) => { this.features.docks.docksOp(s, m); return;   // 2.1
+      }],
+      ['questdrop', (s, m) => { const d = s.data; if (typeof m.qid === 'string') { this.features.quests.questFail(s, m.qid, 'abandoned'); this.you(s); if (d.stellar) this.landed(s); } return;   // 2.4
+      }],
+      ['outfit', (s, m) => { this.outfit(s, m.id | 0, m.n | 0); return;
+      }],
+      ['accept', (s, m) => { this.accept(s, m.id); return;
+      }],
+      ['abandon', (s, m) => { const d = s.data; {   // 2.0.3: an abandoned bounty's target leaves too
+        const gone = d.missions.find(x => x.id === m.id); if (!gone) return;
+        d.missions = d.missions.filter(x => x !== gone);
+        if (gone.quest) this.features.quests.questFail(s, gone.quest.qid, 'abandoned');   // 2.4: abandoning a step ends the story
+        if (gone.sys && this.live[gone.sys]) { const sp = this.live[gone.sys]; for (const x of [...sp.ships.values()]) if (x.mission && x.mission.id === gone.id) { x.mission = null; x.ai = 'leave'; x.target = null; x.life = 0; } }
+        this.log(d, `Abandoned: ${gone.title}.`); this.db.touch(); this.you(s); if (d.stellar) this.landed(s); return;
+      }
+      }],
+      ['station', (s, m) => { this.station(s, m); return;
+      }],
+      ['buymat', (s, m) => { this.buyMat(s, m.mat, m.grade | 0, m.n | 0); return;
+      }],
+      ['rename', (s, m) => { const d = s.data; if (typeof m.name === 'string' && !d.shipless) { d.ship.name = m.name.replace(/[<>]/g, '').trim().slice(0, 28) || this.A.ships[d.ship.hull].name; this.you(s); } return;
+      }],
+      ['note', (s, m) => { const d = s.data; if (typeof m.text === 'string' && m.text.trim()) { this.log(d, m.text.slice(0, 500)); this.you(s); } return;
+      }],
+      ['chat', (s, m) => { this.chat(s, m); return;
+      }],
+      ['officer', (s, m) => { this.features.hangar.officerOp(s, m); return;
+      }],
+      ['shuttle', (s, m) => { this.features.hangar.shuttleOp(s, m); return;
+      }],
+      ['dock', (s, m) => { this.features.hangar.dockOp(s, m); return;
+      }],
+      ['board', (s, m) => { this.features.hangar.board(s, m); return;
+      }],
+      ['spec', (s, m) => { this.features.specialists.specOp(s, m); return;
+      }],
+      ['armada', (s, m) => { this.features.coop.armadaOp(s, m); return;      // 2.6: the co-op group (was the solo-armada summon)
+      }],
+      ['holdout', (s, m) => { this.features.hostile.holdoutStart(s); return;
+      }],
+      ['storyacc', (s, m) => { this.features.story.storyAccept(s, m); return;
+      }],
+      ['social', (s, m) => { this.features.coop.socialOp(s, m); return;      // 2.6: friends, DMs, blocks
+      }],
+      ['trade2', (s, m) => { this.features.coop.tradeOp(s, m); return;       // 2.6: trading between stations
+      }],
+      ['duel', (s, m) => { this.features.coop.duelOp(s, m); return;          // 2.6: agreed duels
+      }],
+      ['goal', (s, m) => { this.features.fronts.claimGoal(s, m); return;
+      }],
+      ['store', (s, m) => { this.features.fronts.storeBuy(s, m); return;
+      }],
+      ['colony', (s, m) => { this.features.frontier.colonyOp(s, m); return;
+      }],
+      ['arena', (s, m) => { this.features.frontier.arenaOp(s, m); return;
+      }],
+      ['exchange', (s, m) => { this.features.frontier.exchangeOp(s, m); return;
+      }],
+      ['boards', (s, m) => { this.send(s, { t: 'boards', cat: m.cat, list: this.features.frontier.leaderboard(m.cat) }); return;
+      }],
+      ['profile', (s, m) => { this.send(s, { t: 'profile', p: this.features.frontier.profile(m.name) }); return;
+      }],
+      ['ping', (s, m) => { this.send(s, { t: 'pong', c: m.c }); return;
+      }],
+      ['hail', (s, m) => { this.features.hail.hail(s, m); return;            // 1.1
+      }],
+      ['hailopt', (s, m) => { this.features.hail.hailOpt(s, m); return;
+      }],
+      ['order', (s, m) => { this.features.fleetcmd.fleetOrder(s, m.o); return;
+      }],
+      ['jettison', (s, m) => { this.features.fleetcmd.jettison(s, m.cid, m.n | 0); return;
+      }],
+      ['rivals', (s, m) => { const d = s.data; this.send(s, { t: 'rivals', list: this.features.rivals.rivalsPayload(d) }); return;
+      }],
+      ['bm', (s, m) => { this.features.syndicate.bmBuy(s, m.id); return;
+      }],
+      ['arcacc', (s, m) => { this.features.arcs.arcAccept(s, m.fac); return;                 // 1.2
+      }],
+      ['promote', (s, m) => { this.features.syndicate.promote(s, m.id); return;
+      }],
+      ['lower', (s, m) => { this.features.syndicate.lowerDeck(s, m); return;
+      }],
+      ['bank', (s, m) => { this.features.syndicate.bankOp(s, m); return;
+      }],
+      ['pause', (s, m) => { if (this.solo && [...this.sessions.values()].filter(x => x.data).length === 1) { this.setPaused(!this.paused); this.send(s, { t: 'paused', on: this.paused }); } return;
+      }],
+    ]);
+  }
+
   onMessage(s, m) {
     const now = Date.now(); if (now - s.msgT > 1000) { s.msgT = now; s.msgs = 0; } if (++s.msgs > 120) return;   // flood guard
     if (!s.data) { if (m.t === 'hello') this.hello(s, m); return; }
     if (m.t !== 'ping') s.actT = now;   // 2.6: for Online / Away
-    const d = s.data;
-    switch (m.t) {
-      case 'input': if (s.ent && s.inputs.length < 8) s.inputs.push({ seq: m.seq | 0, thrust: m.th ? 1 : 0, turn: clamp(m.tu | 0, -1, 1), ab: m.ab ? 1 : 0, rev: m.rv ? 1 : 0, fire1: m.f1 ? 1 : 0, fire2: m.f2 ? 1 : 0 }); break;
-      case 'target': if (s.ent) { const sp = this.spaces[d.sys]; s.ent.target = m.id ? sp.ships.get(m.id) || null : null; if (s.ent.target) this.tut(s, 'target'); } break;
-      case 'tutskip': if (d.tut != null && d.tut < TUTORIAL.length) { d.tut = TUTORIAL.length; this.you(s); } break;
-      case 'land': this.land(s, m.stellar); break;
-      case 'depart': this.depart(s); break;
-      case 'jump': this.jump(s, m.to); break;
-      case 'trade': this.trade(s, m.cid, m.qty | 0); break;
-      case 'buyship': if (m.store) this.buyToHangar(s, m.hull | 0); else this.buyShip(s, m.hull | 0); break;
-      case 'docks': this.docksOp(s, m); break;   // 2.1
-      case 'questdrop': if (typeof m.qid === 'string') { this.questFail(s, m.qid, 'abandoned'); this.you(s); if (d.stellar) this.landed(s); } break;   // 2.4
-      case 'outfit': this.outfit(s, m.id | 0, m.n | 0); break;
-      case 'accept': this.accept(s, m.id); break;
-      case 'abandon': {   // 2.0.3: an abandoned bounty's target leaves too
-        const gone = d.missions.find(x => x.id === m.id); if (!gone) break;
-        d.missions = d.missions.filter(x => x !== gone);
-        if (gone.quest) this.questFail(s, gone.quest.qid, 'abandoned');   // 2.4: abandoning a step ends the story
-        if (gone.sys && this.live[gone.sys]) { const sp = this.live[gone.sys]; for (const x of [...sp.ships.values()]) if (x.mission && x.mission.id === gone.id) { x.mission = null; x.ai = 'leave'; x.target = null; x.life = 0; } }
-        this.log(d, `Abandoned: ${gone.title}.`); this.db.touch(); this.you(s); if (d.stellar) this.landed(s); break;
-      }
-      case 'station': this.station(s, m); break;
-      case 'buymat': this.buyMat(s, m.mat, m.grade | 0, m.n | 0); break;
-      case 'rename': if (typeof m.name === 'string' && !d.shipless) { d.ship.name = m.name.replace(/[<>]/g, '').trim().slice(0, 28) || this.A.ships[d.ship.hull].name; this.you(s); } break;
-      case 'note': if (typeof m.text === 'string' && m.text.trim()) { this.log(d, m.text.slice(0, 500)); this.you(s); } break;
-      case 'chat': this.chat(s, m); break;
-      case 'officer': this.officerOp(s, m); break;
-      case 'shuttle': this.shuttleOp(s, m); break;
-      case 'dock': this.dockOp(s, m); break;
-      case 'board': this.board(s, m); break;
-      case 'spec': this.specOp(s, m); break;
-      case 'armada': this.armadaOp(s, m); break;      // 2.6: the co-op group (was the solo-armada summon)
-      case 'holdout': this.holdoutStart(s); break;
-      case 'storyacc': this.storyAccept(s, m); break;
-      case 'social': this.socialOp(s, m); break;      // 2.6: friends, DMs, blocks
-      case 'trade2': this.tradeOp(s, m); break;       // 2.6: trading between stations
-      case 'duel': this.duelOp(s, m); break;          // 2.6: agreed duels
-      case 'goal': this.claimGoal(s, m); break;
-      case 'store': this.storeBuy(s, m); break;
-      case 'colony': this.colonyOp(s, m); break;
-      case 'arena': this.arenaOp(s, m); break;
-      case 'exchange': this.exchangeOp(s, m); break;
-      case 'boards': this.send(s, { t: 'boards', cat: m.cat, list: this.leaderboard(m.cat) }); break;
-      case 'profile': this.send(s, { t: 'profile', p: this.profile(m.name) }); break;
-      case 'ping': this.send(s, { t: 'pong', c: m.c }); break;
-      case 'hail': this.hail(s, m); break;            // 1.1
-      case 'hailopt': this.hailOpt(s, m); break;
-      case 'order': this.fleetOrder(s, m.o); break;
-      case 'jettison': this.jettison(s, m.cid, m.n | 0); break;
-      case 'rivals': this.send(s, { t: 'rivals', list: this.rivalsPayload(d) }); break;
-      case 'bm': this.bmBuy(s, m.id); break;
-      case 'arcacc': this.arcAccept(s, m.fac); break;                 // 1.2
-      case 'promote': this.promote(s, m.id); break;
-      case 'lower': this.lowerDeck(s, m); break;
-      case 'bank': this.bankOp(s, m); break;
-      case 'pause': if (this.solo && [...this.sessions.values()].filter(x => x.data).length === 1) { this.setPaused(!this.paused); this.send(s, { t: 'paused', on: this.paused }); } break;
-    }
+    this.messageHandlers.dispatch(m.t, s, m);
   }
   hello(s, m) {
     const name = String(m.name || '').trim(), pass = String(m.pass || '');
@@ -312,14 +385,14 @@ export class Game {
     if (p) { if (!this.solo && !this.db.check(p, pass)) { for (const k of fk) { const f = this.fails.get(k) || { n: 0, t: now }; f.n++; this.fails.set(k, f); } return this.send(s, { t: 'error', msg: 'Wrong password for that captain.' }); } }
     else { p = this.db.create(name, pass || 'solo', this.fresh()); this.log(p, 'Took command of the Gnat Skiff "Rift Runner" at Quantum Station.'); s.isNew = true; }
     for (const o of this.sessions.values()) if (o !== s && o.data === p) { this.send(o, { t: 'error', msg: 'Signed in somewhere else.' }); o.sock.close(); this.disconnect(o); }
-    s.data = p; s.name = p.name; p.id = s.id; tutMigrate(p); this.hangarInit(p); this.coopMigrate(p); this.docksInit(p); this.hostInit(p); this.storyInit(p); this.synInit(p); this.arcsInit(p);
+    s.data = p; s.name = p.name; p.id = s.id; tutMigrate(p); this.features.hangar.hangarInit(p); this.features.coop.coopMigrate(p); this.features.docks.docksInit(p); this.features.hostile.hostInit(p); this.features.story.storyInit(p); this.features.syndicate.synInit(p); this.features.arcs.arcsInit(p);
     if (!p.explored) p.explored = SYSTEMS.filter(x => x.anchor).map(x => x.id);   // captains from before 0.4 know the old 30 systems
     s.rep = p.rep; s.id = s.id;
     if (!STELLARS[p.stellar]) { p.sys = START.system; p.stellar = START.stellar; }
     if (STELLARS[p.stellar].system !== p.sys) p.sys = STELLARS[p.stellar].system;   // repair saves from the old log-off bug
-    this.send(s, { t: 'welcome', id: s.id, name: p.name }); this.send(s, { t: 'sites', sites: this.sitesPayload() }); this.send(s, this.worldPayload());
-    this.coopLogin(s);   // 2.6: Armada membership, offline DMs, friends' status
-    this.idleCheck(s); this.you(s); this.landed(s); this.storyOnLand(s, STELLARS[p.stellar]); this.arcOnLand(s, STELLARS[p.stellar]);   // a story step waiting where you logged off still pops up
+    this.send(s, { t: 'welcome', id: s.id, name: p.name }); this.send(s, { t: 'sites', sites: this.sitesPayload() }); this.send(s, this.features.world.worldPayload());
+    this.features.coop.coopLogin(s);   // 2.6: Armada membership, offline DMs, friends' status
+    this.idleCheck(s); this.you(s); this.landed(s); this.features.story.storyOnLand(s, STELLARS[p.stellar]); this.features.arcs.arcOnLand(s, STELLARS[p.stellar]);   // a story step waiting where you logged off still pops up
     if (!this.solo) this.broadcast({ t: 'chat', from: '', msg: `${p.name} entered the Rift.` });   // 2.4: no join messages in a solo game
     if (s.isNew) this.toast(s, 'Newcomer protection: raiders in inner space (danger 0-2) leave you alone until your Personal Station reaches Ops 3, unless you shoot first.');
   }
@@ -329,25 +402,25 @@ export class Game {
   // ------------------------------------------------------------------ space: depart, land, jump
   spawnPlayer(s, x, y, a, v) {
     const d = s.data, sp = this.spaces[d.sys];
-    const e = sp.makeShip({ loadout: d.ship, bonus: this.bonus(d), faction: 'quantum', x, y, a, vx: Math.sin(a) * v, vy: -Math.cos(a) * v, player: this.pref(s),
+    const e = sp.makeShip({ loadout: d.ship, bonus: this.features.bonuses.bonus(d), faction: 'quantum', x, y, a, vx: Math.sin(a) * v, vy: -Math.cos(a) * v, player: this.pref(s),
                             fuel: d.fuel, ammo: d.ship.ammo, shield: d.shieldNow, armor: d.armorNow });
     s.ent = e; s.inputs = []; sp.players++; e.elite = masteryTier((d.mastery || {})[d.ship.hull] || 0) >= 5;
-    const eb = this.flying(d, 'herald') ? { shieldPct: 25 * this.power(d) } : this.flying(d, 'tidecaller') ? { shieldRePct: 40 * this.power(d) } : {};
-    for (const { w, i, x: W } of this.activeWings(d)) {   // 2.1: the active dock's wingmates, with their own outfits and officers
-      const wb = this.wingBonus(d, w); for (const [k, v] of Object.entries(eb)) wb[k] = (wb[k] || 0) + v;
+    const eb = this.features.specialists.flying(d, 'herald') ? { shieldPct: 25 * this.features.specialists.power(d) } : this.features.specialists.flying(d, 'tidecaller') ? { shieldRePct: 40 * this.features.specialists.power(d) } : {};
+    for (const { w, i, x: W } of this.features.docks.activeWings(d)) {   // 2.1: the active dock's wingmates, with their own outfits and officers
+      const wb = this.features.docks.wingBonus(d, w); for (const [k, v] of Object.entries(eb)) wb[k] = (wb[k] || 0) + v;
       const m = sp.makeShip({ loadout: W.ship, ammo: { ...(W.ship.ammo || {}) }, faction: 'quantum', bonus: wb, x: x - Math.sin(a) * 120 + (i - 1) * 70, y: y + Math.cos(a) * 120, a, vx: e.vx, vy: e.vy, ai: 'escort', owner: e.id,
                               name: W.ship.name || this.A.ships[W.ship.hull].name });
       m.escortSlot = i; m.wingUid = W.ship.uid; m.wingOf = s.id;
     }
     for (const m of d.missions) if (m.type === 'bounty' && m.sys === d.sys && !m.done && ![...sp.ships.values()].some(x => x.mission && x.mission.id === m.id)) { m.spawned = true; sp.spawnMissionTarget({ ...m, owner: s.id }); this.toast(s, `Your bounty target, ${m.targetName}, is in this system.`); }
     this.send(s, { t: 'space', sys: d.sys, id: e.id, rocks: sp.rocksPayload() });
-    this.missionArrive(s, sp); this.storyArrive(s, sp); this.arcArrive(s, sp);
-    if (!this.solo) { this.warbandArrive(s, sp); const A = this.armadaOf(d); if (A) { this.armadaRefresh(A); this.armadaPush(A); } }   // 2.6: members see where you are
+    this.features.fronts.missionArrive(s, sp); this.features.story.storyArrive(s, sp); this.features.arcs.arcArrive(s, sp);
+    if (!this.solo) { this.features.coop.warbandArrive(s, sp); const A = this.features.coop.armadaOf(d); if (A) { this.features.coop.armadaRefresh(A); this.features.coop.armadaPush(A); } }   // 2.6: members see where you are
   }
   depart(s) {
     const d = s.data; if (s.ent || !d.stellar) return;
     if (d.shipless) return this.toast(s, 'You have no active ship. Choose FLY THIS in your drydock, or buy one at a shipyard.');
-    if (this.inDrydock(d)) { const st = d.specState[d.ship.hull]; return this.toast(s, `The ${this.A.ships[d.ship.hull].name} is in the drydock for her tier-up: ${Math.ceil((st.upT - Date.now()) / 60000)} minutes left.`); }
+    if (this.features.specialists.inDrydock(d)) { const st = d.specState[d.ship.hull]; return this.toast(s, `The ${this.A.ships[d.ship.hull].name} is in the drydock for her tier-up: ${Math.ceil((st.upT - Date.now()) / 60000)} minutes left.`); }
     const p = STELLARS[d.stellar]; const a = Math.random() * Math.PI * 2;
     d.stellar = null; this.spawnPlayer(s, p.x + Math.sin(a) * (p.r + 30), p.y - Math.cos(a) * (p.r + 30), a, 40);
     this.you(s);
@@ -367,36 +440,36 @@ export class Game {
     d.fuel = e.fuel; for (const g of e.guns) if (g.ammo !== Infinity) d.ship.ammo[g.w] = g.ammo;
     space.remove(e); space.players--; s.ent = null; d.stellar = sid;
     // free refuel and repair
-    const st = this.stats(d); d.fuel = st.fuel; d.shieldNow = undefined; d.armorNow = undefined;
+    const st = this.features.shipStats.stats(d); d.fuel = st.fuel; d.shieldNow = undefined; d.armorNow = undefined;
     this.completeOnLanding(s, p);
     if (d.sys !== START.system) this.tut(s, 'land2');
     if (p.site) this.tut(s, 'site');
-    this.db.touch(); this.you(s); this.landed(s); this.storyOnLand(s, p); this.arcOnLand(s, p);
-    if (!this.solo) { const A = this.armadaOf(d); if (A) this.armadaPush(A); }   // 2.6
+    this.db.touch(); this.you(s); this.landed(s); this.features.story.storyOnLand(s, p); this.features.arcs.arcOnLand(s, p);
+    if (!this.solo) { const A = this.features.coop.armadaOf(d); if (A) this.features.coop.armadaPush(A); }   // 2.6
   }
   landed(s) {
     const d = s.data, p = STELLARS[d.stellar];
     if (!p) return;
     const own = this.ownSite(d, p), so = p.site ? this.siteOwner(p.id) : null;
     this.send(s, { t: 'landed', stellar: p.id, market: this.market(p), offers: this.offers(p, d), yard: this.yard(p, d), outfitter: this.outfitter(p, d), mats: this.matsFor(p, d),
-                   site: p.site ? { owner: so ? so.name : null, ops: so ? so.station.ops : 0, own } : null, community: p.hub ? this.community() : null, news: p.svc.includes('B') || p.hub ? this.newsFeed(6) : null, contact: this.barTalk(p, d), blackmarket: this.blackMarket(p, d), arcs: this.arcOffersAt(d, p).map(o => ({ fac: o.fac, title: o.title, brief: o.brief, text: o.text, locked: o.locked || null, arc: ARCS_NAME(o.fac) })), bank: this.bankAt(p) ? this.bankInfo(d) : null, bar: this.barOffers(p, d), store: this.storeFor(p), colony: this.colonyPayload(p, d), story: (() => { const o = this.storyOffer(d, p); return o ? { id: o.id, title: o.title, brief: o.brief, text: o.text, acc: o.acc, locked: o.locked || null } : null; })(), exchange: p.hub || (p.svc.includes('T') && !p.site) ? this.exchangePayload(d) : null });
+                   site: p.site ? { owner: so ? so.name : null, ops: so ? so.station.ops : 0, own } : null, community: p.hub ? this.community() : null, news: p.svc.includes('B') || p.hub ? this.features.rivals.newsFeed(6) : null, contact: this.features.quests.barTalk(p, d), blackmarket: this.features.syndicate.blackMarket(p, d), arcs: this.features.arcs.arcOffersAt(d, p).map(o => ({ fac: o.fac, title: o.title, brief: o.brief, text: o.text, locked: o.locked || null, arc: ARCS_NAME(o.fac) })), bank: this.features.syndicate.bankAt(p) ? this.features.syndicate.bankInfo(d) : null, bar: this.features.hangar.barOffers(p, d), store: this.features.fronts.storeFor(p), colony: this.features.frontier.colonyPayload(p, d), story: (() => { const o = this.features.story.storyOffer(d, p); return o ? { id: o.id, title: o.title, brief: o.brief, text: o.text, acc: o.acc, locked: o.locked || null } : null; })(), exchange: p.hub || (p.svc.includes('T') && !p.site) ? this.features.frontier.exchangePayload(d) : null });
   }
   jump(s, to) {
     const d = s.data, e = s.ent; if (!e || e.state !== 'fly') return;
     if (e.disabled) return this.toast(s, 'Your ship is disabled.');
     const S = SYS[d.sys];
-    const skip = !S.links.includes(to) ? this.pathfinderJump(d, d.sys, to) : null;
+    const skip = !S.links.includes(to) ? this.features.specialists.pathfinderJump(d, d.sys, to) : null;
     if (!S.links.includes(to) && !skip) return this.toast(s, 'No hyperspace route there.');
-    if (this.inDrydock(d)) return this.toast(s, 'Your ship is booked into the drydock for her tier-up. Land and wait for it to finish.');
-    if (this.deepLocked(d, to)) return this.toast(s, 'The Deep is uncharted: ships that jump in blind are never seen again. The Que\'vari are said to keep charts of the dark.');
-    const fuelCost = K.jumpFuel * this.mods(d.sys).jumpFuel * (skip ? 1.5 : 1); e.jumpCost = fuelCost;
-    if (e.fuel < fuelCost) return this.toast(s, skip ? `A Pathfinder skip-jump needs ${Math.round(fuelCost / K.jumpFuel * 10) / 10} jumps of fuel.` : this.mods(d.sys).jumpFuel > 1 ? 'Gravity shear: this jump needs double fuel.' : 'Not enough fuel to jump.');
+    if (this.features.specialists.inDrydock(d)) return this.toast(s, 'Your ship is booked into the drydock for her tier-up. Land and wait for it to finish.');
+    if (this.features.story.deepLocked(d, to)) return this.toast(s, 'The Deep is uncharted: ships that jump in blind are never seen again. The Que\'vari are said to keep charts of the dark.');
+    const fuelCost = K.jumpFuel * this.features.fronts.mods(d.sys).jumpFuel * (skip ? 1.5 : 1); e.jumpCost = fuelCost;
+    if (e.fuel < fuelCost) return this.toast(s, skip ? `A Pathfinder skip-jump needs ${Math.round(fuelCost / K.jumpFuel * 10) / 10} jumps of fuel.` : this.features.fronts.mods(d.sys).jumpFuel > 1 ? 'Gravity shear: this jump needs double fuel.' : 'Not enough fuel to jump.');
     for (const p of S.stellars) if (Math.hypot(e.x - p.x, e.y - p.y) < K.jumpClear) return this.toast(s, 'Too close to ' + p.name + ' to jump. Fly further out.');
     const T = SYS[to];
     e.a = Math.atan2(T.x - S.x, -(T.y - S.y)); e.state = 'jumpout'; e.jumpT = e.st.jumpFast ? 0.6 : 1.6; e.jumpTo = to;
     this.spaces[d.sys].events.push(['jump', e.id]);
     for (const x of this.spaces[d.sys].ships.values()) if (x.owner === e.id && !x.fighterOf && !x.rival) { x.state = 'jumpout'; x.jumpT = e.jumpT + 0.3; x.a = e.a; x.jumpTo = '-'; }
-    this.armadaLeaderJump(s, to);   // 2.6: members who follow the leader get the destination
+    this.features.coop.armadaLeaderJump(s, to);   // 2.6: members who follow the leader get the destination
   }
   finishJump(e, space) {
     if (!e.player) { space.remove(e, 'jump'); return; }
@@ -405,8 +478,8 @@ export class Game {
     d.fuel = e.fuel - (e.jumpCost || K.jumpFuel); for (const g of e.guns) if (g.ammo !== Infinity) d.ship.ammo[g.w] = g.ammo;
     d.shieldNow = e.shield; d.armorNow = e.armor;
     space.remove(e, 'jump'); space.players--; s.ent = null;
-    d.sys = to.id; d.stats.jumps++; this.officerXp(s, 4); this.goal(s, 'jumps'); this.mastery(s, 3);
-    if (!d.explored.includes(to.id)) { d.explored.push(to.id); this.goal(s, 'charted'); this.specOnChart(s); if (to.gen) this.log(d, `Charted ${to.name} (${FACTIONS[to.faction].name}).`); }
+    d.sys = to.id; d.stats.jumps++; this.features.hangar.officerXp(s, 4); this.features.fronts.goal(s, 'jumps'); this.features.frontier.mastery(s, 3);
+    if (!d.explored.includes(to.id)) { d.explored.push(to.id); this.features.fronts.goal(s, 'charted'); this.features.specialists.specOnChart(s); if (to.gen) this.log(d, `Charted ${to.name} (${FACTIONS[to.faction].name}).`); }
     const ang = Math.atan2(from.x - to.x, -(from.y - to.y));   // arrive from the direction we came
     const a = ang + Math.PI;
     this.spawnPlayer(s, Math.sin(ang) * 2200, -Math.cos(ang) * 2200, a, e.st.maxSpeed);
@@ -424,9 +497,9 @@ export class Game {
     d.fuel = e.fuel; for (const g of e.guns) if (g.ammo !== Infinity) d.ship.ammo[g.w] = g.ammo;
     d.shieldNow = e.shield; d.armorNow = e.armor;
     space.events.push(['flash', Math.round(e.x), Math.round(e.y)]); space.remove(e); space.players--; s.ent = null;
-    d.sys = to.id; d.stats.jumps++; this.goal(s, 'jumps'); this.mastery(s, 3);
+    d.sys = to.id; d.stats.jumps++; this.features.fronts.goal(s, 'jumps'); this.features.frontier.mastery(s, 3);
     const first = !d.explored.includes(to.id);
-    if (first) { d.explored.push(to.id); this.goal(s, 'charted'); this.log(d, to.farside ? 'Passed through the Sol Gateway. The stars on the far side match no chart.' : 'Came home through the Gateway to Sol.'); }
+    if (first) { d.explored.push(to.id); this.features.fronts.goal(s, 'charted'); this.log(d, to.farside ? 'Passed through the Sol Gateway. The stars on the far side match no chart.' : 'Came home through the Gateway to Sol.'); }
     const a = Math.random() * Math.PI * 2;
     this.spawnPlayer(s, exit.x + Math.sin(a) * (exit.r + 90), exit.y - Math.cos(a) * (exit.r + 90), a, 140);
     d.shieldNow = d.armorNow = undefined; s.ent.wormT = this.spaces[d.sys].t + 4; s.ent.graceT = this.spaces[d.sys].t + 6; this.protectNote(s, to);
@@ -437,7 +510,7 @@ export class Game {
   // ------------------------------------------------------------------ combat outcomes
   onHit(pref, npc, space) {
     const s = pref.s, d = s.data; if (!d) return;
-    this.rivalOnHit(s, npc, space);
+    this.features.rivals.rivalOnHit(s, npc, space);
     if (space.isHostile(npc, s.ent || npc) && npc.aggro.size <= 1 && FACTIONS[npc.faction].pirate) return;
     if (!FACTIONS[npc.faction].pirate && !FACTIONS[npc.faction].alwaysHostile && !npc.dread && !npc.boss && !(npc.mission) && (d.rep[npc.faction] || 0) > -100 && (!npc.repHitT || space.t - npc.repHitT > 1.5)) {
       npc.repHitT = space.t; d.rep[npc.faction] = clamp((d.rep[npc.faction] || 0) - 1, -100, 100);
@@ -446,18 +519,18 @@ export class Game {
   onKill(pref, npc, space, byEscort) {
     const s = pref.s, d = s.data; if (!d) return;
     d.stats.kills++; d.stats.combat = (d.stats.combat || 0) + (npc.pw || npc.strength || 10);   // 1.1: combat rating
-    this.officerXp(s, 8 + Math.round((npc.strength || 10) / 40)); this.mastery(s, (npc.strength || 10) / 8); this.specOnKill(s, npc, space, byEscort);
+    this.features.hangar.officerXp(s, 8 + Math.round((npc.strength || 10) / 40)); this.features.frontier.mastery(s, (npc.strength || 10) / 8); this.features.specialists.specOnKill(s, npc, space, byEscort);
     const F = FACTIONS[npc.faction];
-    if (this.rivalOnKill(s, npc, space)) { this.toast(s, `You destroyed ${npc.name.split(' · ')[0]}'s ship. They will not forget it.`); this.you(s); return; }   // 1.1
-    if (npc.storyKill) this.storyProgress(s, npc);
-    if (npc.kingpin) this.warbandDown(npc);   // 2.6: an Armada contract's kingpin
-    this.stateOnKill(s, npc, space);   // 2.4
-    if (npc.arcOf) this.arcProgress(s, npc);   // 1.2 faction arcs
-    if (npc.boss || npc.bossMinion) { this.goal(s, 'kills'); this.you(s); return; }
+    if (this.features.rivals.rivalOnKill(s, npc, space)) { this.toast(s, `You destroyed ${npc.name.split(' · ')[0]}'s ship. They will not forget it.`); this.you(s); return; }   // 1.1
+    if (npc.storyKill) this.features.story.storyProgress(s, npc);
+    if (npc.kingpin) this.features.coop.warbandDown(npc);   // 2.6: an Armada contract's kingpin
+    this.features.living.stateOnKill(s, npc, space);   // 2.4
+    if (npc.arcOf) this.features.arcs.arcProgress(s, npc);   // 1.2 faction arcs
+    if (npc.boss || npc.bossMinion) { this.features.fronts.goal(s, 'kills'); this.you(s); return; }
     if (F.pirate || F.alwaysHostile || npc.mission) {
-      const stB = (() => { const st = this.stateOf(space.id); return st && STATES[st.kind].bounty || 1; })();   // 2.4: a pirate scourge pays more
-      const bounty = Math.round(((npc.strength || 10) * 25 + 500) * (1 + (this.bonus(d).lootPct || 0) / 100) * this.mods(space.id).bounty * stB * (this.flying(d, 'vanguard') ? 1 + 0.5 * this.power(d) : 1));
-      this.shareBounty(s, bounty, space, npc); this.goal(s, 'kills');   // 2.6: Armada members present get kill credit and a share
+      const stB = (() => { const st = this.features.living.stateOf(space.id); return st && STATES[st.kind].bounty || 1; })();   // 2.4: a pirate scourge pays more
+      const bounty = Math.round(((npc.strength || 10) * 25 + 500) * (1 + (this.features.bonuses.bonus(d).lootPct || 0) / 100) * this.features.fronts.mods(space.id).bounty * stB * (this.features.specialists.flying(d, 'vanguard') ? 1 + 0.5 * this.features.specialists.power(d) : 1));
+      this.features.coop.shareBounty(s, bounty, space, npc); this.features.fronts.goal(s, 'kills');   // 2.6: Armada members present get kill credit and a share
       d.credits += bounty; d.stats.earned += bounty;
       d.rep.quantum = clamp(d.rep.quantum + 1, -100, 100); d.rep.spacer = clamp(d.rep.spacer + 1, -100, 100);
       this.toast(s, `Destroyed ${npc.name || this.A.ships[npc.hull].name}. Bounty: ${credits(bounty)} credits.`);
@@ -476,11 +549,11 @@ export class Game {
   }
   onPlayerDeath(pref, space, by) {
     const s = pref.s, d = s.data; if (!d) return;
-    if (space.sys.arena && this.onArenaDeath(s, space)) return;
+    if (space.sys.arena && this.features.frontier.onArenaDeath(s, space)) return;
     if (s.ent) this.dropEscorts(space, s.ent, 'jump');   // 2.0.3: escorts no longer linger after you are destroyed
     space.players--; s.ent = null;
     const fee = Math.min(d.credits, Math.round((this.A.ships[d.ship.hull].cost || 0) * 0.05));
-    d.credits -= fee; if (!this.flying(d, 'lodestar')) d.cargo = {};   // the Lodestar's hold is protected; wingmates fly home
+    d.credits -= fee; if (!this.features.specialists.flying(d, 'lodestar')) d.cargo = {};   // the Lodestar's hold is protected; wingmates fly home
     const back = d.station && d.station.site && STELLARS[d.station.site] && this.ownSite(d, STELLARS[d.station.site]) ? d.station.site : START.stellar;   // 1.0.1: your own station hull if you have one, otherwise the hub
     d.stellar = back; d.sys = STELLARS[back].system; d.fuel = undefined;
     for (const m of d.missions) if (m.type === 'cargo') m.lost = true;
@@ -499,21 +572,21 @@ export class Game {
   }
   onLoot(pref, it) {
     const s = pref.s, d = s.data; if (!d) return;
-    if (it.cargo) return this.lootCargo(s, it);   // 1.1: jettisoned cargo
-    if (it.salvage) return this.questLoot(s, it);   // 2.4: a quest's salvage
+    if (it.cargo) return this.features.fleetcmd.lootCargo(s, it);   // 1.1: jettisoned cargo
+    if (it.salvage) return this.features.quests.questLoot(s, it);   // 2.4: a quest's salvage
     if (it.ore) {   // mined ore goes into the cargo hold, if there is room
-      const b = this.bonus(d), raw = it.n * (1 + (b.miningPct || 0) / 100) * this.mods(d.sys).mining, want = Math.floor(raw) + (Math.random() < raw % 1 ? 1 : 0);
-      const st = this.stats(d), used = this.holdUsed(d), n = Math.min(want, st.cargo - used);
+      const b = this.features.bonuses.bonus(d), raw = it.n * (1 + (b.miningPct || 0) / 100) * this.features.fronts.mods(d.sys).mining, want = Math.floor(raw) + (Math.random() < raw % 1 ? 1 : 0);
+      const st = this.features.shipStats.stats(d), used = this.holdUsed(d), n = Math.min(want, st.cargo - used);
       if (n <= 0) { if (!s.fullT || Date.now() - s.fullT > 8000) { s.fullT = Date.now();   // 2.5.2: say where it can go
           const C = COMMODITIES.find(c => c.id === it.ore), B = this.nearestBuyer(d.sys, it.ore);
           this.toast(s, !st.cargo ? 'This ship has no cargo hold. Fit a Cargo Compression outfit (it takes no space) to keep what you mine.'
             : `Cargo hold full. ${C.name} sells at ${B ? `${B.p.name}${B.j ? ` (${B.j} jump${B.j > 1 ? 's' : ''})` : ' in this system'}` : 'markets further out'}${d.station && d.station.ops >= 1 ? ', or process it at your station' : ''}.`); } return false; }
-      d.cargo[it.ore] = (d.cargo[it.ore] || 0) + n; d.stats.mined = (d.stats.mined || 0) + n; this.goal(s, 'mined', n); this.mastery(s, n * 0.3); this.specOnMine(s, it);
+      d.cargo[it.ore] = (d.cargo[it.ore] || 0) + n; d.stats.mined = (d.stats.mined || 0) + n; this.features.fronts.goal(s, 'mined', n); this.features.frontier.mastery(s, n * 0.3); this.features.specialists.specOnMine(s, it);
       this.toast(s, `+${n} t ${COMMODITIES.find(c => c.id === it.ore).name}`); this.you(s); return true;
     }
-    if (it.credits) { it.credits = Math.round(it.credits * (1 + (this.bonus(d).lootPct || 0) / 100)); d.credits += it.credits; this.toast(s, `Salvaged ${credits(it.credits)} credits.`); }
-    if (it.chest) return this.openChest(s, it);
-    if (it.credits || it.mat) this.specOnLoot(s);
+    if (it.credits) { it.credits = Math.round(it.credits * (1 + (this.features.bonuses.bonus(d).lootPct || 0) / 100)); d.credits += it.credits; this.toast(s, `Salvaged ${credits(it.credits)} credits.`); }
+    if (it.chest) return this.features.hostile.openChest(s, it);
+    if (it.credits || it.mat) this.features.specialists.specOnLoot(s);
     if (it.mat) { d.mats[it.mat][it.grade]++; this.toast(s, `Salvaged a ${it.mat} crate (grade ${GRADES[it.grade]}).`); }
     this.you(s);
   }
@@ -522,7 +595,7 @@ export class Game {
     const docked = [...this.sessions.values()].filter(x => x.data && x.data.stellar === 'qstation').map(x => x.name);
     const all = Object.values(this.db.players);
     const top = all.map(p => ({ name: p.name, earned: (p.stats && p.stats.earned) || 0, kills: (p.stats && p.stats.kills) || 0, ship: this.A.ships[p.ship.hull] ? this.A.ships[p.ship.hull].name : '' }))
-      .concat(Object.values(this.db.world.rivals || {}).map(r => ({ name: (this.rivalName || (() => ''))(r.id), ai: true, earned: r.earned, kills: r.kills, ship: this.A.ships[r.hull] ? this.A.ships[r.hull].name : '' })))
+      .concat(Object.values(this.db.world.rivals || {}).map(r => ({ name: (this.features.rivals.rivalName || (() => ''))(r.id), ai: true, earned: r.earned, kills: r.kills, ship: this.A.ships[r.hull] ? this.A.ships[r.hull].name : '' })))
       .sort((a, b) => b.earned - a.earned).slice(0, 10);
     const stations = SITES.map(st => { const o = this.siteOwner(st.id); return { system: SYS[st.system].name, owner: o ? o.name : null, ops: o ? o.station.ops : 0 }; });
     const online = [...this.sessions.values()].filter(x => x.data).map(x => ({ name: x.name, sys: SYS[x.data.sys].name }));
@@ -533,26 +606,26 @@ export class Game {
     if (p.site) { const o = this.siteOwner(p.id); return o && o.station.ops >= 1 ? COMMODITIES.map(c => ({ id: c.id, name: c.name, price: price({ ...p, prices: SITE_PRICES }, c.id) })).filter(x => x.price !== null) : null; }
     if (!p.svc.includes('T')) return null;
     const now = Date.now();
-    return COMMODITIES.map(c => { const pr = price(p, c.id, now), lm = this.livingMult(p, c.id); return { id: c.id, name: c.name, price: pr === null ? null : Math.round(pr * this.flashMult(p.id, c.id) * lm), flash: this.flashMult(p.id, c.id) !== 1, moved: Math.round((lm - 1) * 100) }; }).filter(x => x.price !== null);   // 1.1: market flashes; 2.4: system states and what captains sold here
+    return COMMODITIES.map(c => { const pr = price(p, c.id, now), lm = this.features.living.livingMult(p, c.id); return { id: c.id, name: c.name, price: pr === null ? null : Math.round(pr * this.features.rivals.flashMult(p.id, c.id) * lm), flash: this.features.rivals.flashMult(p.id, c.id) !== 1, moved: Math.round((lm - 1) * 100) }; }).filter(x => x.price !== null);   // 1.1: market flashes; 2.4: system states and what captains sold here
   }
   trade(s, cid, qty) {
     const d = s.data, p = STELLARS[d.stellar]; if (!p || s.ent) return;
-    const pr0 = price(p.site ? { ...p, prices: SITE_PRICES } : p, cid); if (pr0 === null || !qty || !this.market(p)) return; const pr = p.site ? pr0 : Math.round(pr0 * this.flashMult(p.id, cid) * this.livingMult(p, cid));
-    const st = this.stats(d), used = this.holdUsed(d);
+    const pr0 = price(p.site ? { ...p, prices: SITE_PRICES } : p, cid); if (pr0 === null || !qty || !this.market(p)) return; const pr = p.site ? pr0 : Math.round(pr0 * this.features.rivals.flashMult(p.id, cid) * this.features.living.livingMult(p, cid));
+    const st = this.features.shipStats.stats(d), used = this.holdUsed(d);
     if (qty > 0) {
-      const tb = (this.bonus(d).tradePct || 0) / 100; let bp = Math.max(1, Math.round(pr * (1 - tb)));   // 1.2: haggling officers and crew
+      const tb = (this.features.bonuses.bonus(d).tradePct || 0) / 100; let bp = Math.max(1, Math.round(pr * (1 - tb)));   // 1.2: haggling officers and crew
       qty = Math.min(qty, st.cargo - used); const depth = (n) => p.site ? 1 : 1 + Math.min(TRADE_IMPACT.max, n * TRADE_IMPACT.perTon) / 2;   // 2.5: a big lot pushes the price up as you buy it
       while (qty > 0 && qty * Math.round(bp * depth(qty)) > d.credits) qty = Math.min(qty - 1, Math.floor(d.credits / Math.round(bp * depth(qty))));
       bp = Math.round(bp * depth(qty)); if (qty <= 0) return this.toast(s, 'No room or no money for that.');
       d.paid = d.paid || {}; d.paid[cid] = Math.round(((d.paid[cid] || bp) * (d.cargo[cid] || 0) + bp * qty) / ((d.cargo[cid] || 0) + qty));   // 2.4: what you paid, on average
-      d.credits -= qty * bp; d.cargo[cid] = (d.cargo[cid] || 0) + qty; if (!p.site) this.addImpact(p.id, cid, -qty);   // 2.4: buying raises the local price
+      d.credits -= qty * bp; d.cargo[cid] = (d.cargo[cid] || 0) + qty; if (!p.site) this.features.living.addImpact(p.id, cid, -qty);   // 2.4: buying raises the local price
     } else {
       const have = d.cargo[cid] || 0; qty = Math.min(-qty, have); if (!qty) return;
       const depth = p.site ? 1 : 1 - Math.min(TRADE_IMPACT.max, qty * TRADE_IMPACT.perTon) / 2;   // 2.5: and down as you sell it
-      const sale = Math.round(qty * pr * depth * this.mods(p.system).sell * (1 + (this.bonus(d).tradePct || 0) / 100)); this.goal(s, 'trade', sale);
+      const sale = Math.round(qty * pr * depth * this.features.fronts.mods(p.system).sell * (1 + (this.features.bonuses.bonus(d).tradePct || 0) / 100)); this.features.fronts.goal(s, 'trade', sale);
       d.credits += sale - qty * pr;
       d.credits += qty * pr; d.cargo[cid] = have - qty; if (!d.cargo[cid]) { delete d.cargo[cid]; if (d.paid) delete d.paid[cid]; } d.stats.earned += qty * pr;
-      this.tut(s, 'sell'); if (!p.site) { this.addImpact(p.id, cid, qty); this.stateProgress(s, p.system, 'cid:' + cid, qty); }   // 2.4: selling lowers it, and feeds a famine or a rush
+      this.tut(s, 'sell'); if (!p.site) { this.features.living.addImpact(p.id, cid, qty); this.features.living.stateProgress(s, p.system, 'cid:' + cid, qty); }   // 2.4: selling lowers it, and feeds a famine or a rush
     }
     this.db.touch(); this.you(s); this.landed(s);
   }
@@ -596,12 +669,12 @@ export class Game {
   buyShip(s, hull) {
     const d = s.data, p = STELLARS[d.stellar]; if (!p || s.ent) return;
     const yard = this.yard(p, d) || []; if (!yard.includes(hull)) return;
-    if (WING_ONLY.includes(hull)) return this.buyToHangar(s, hull);   // 2.1: escort hulls go straight to the hangar
+    if (WING_ONLY.includes(hull)) return this.features.docks.buyToHangar(s, hull);   // 2.1: escort hulls go straight to the hangar
     const H = this.A.ships[hull], cost = H.cost - this.tradeIn(d);
     if (d.credits < cost) return this.toast(s, `You need ${credits(cost)} credits (after your trade-in).`);
     { const why = this.fitsJobs(d, hull); if (why) return this.toast(s, why + ' Sell cargo or finish jobs first.'); }
     d.credits -= cost; this.log(d, `Bought a ${H.name} at ${p.name}.`);
-    d.ship = makeLoadout(this.A, hull, d.shipless ? 'Rift Runner' : d.ship.name); d.shipless = false; d.fuel = undefined; this.leadChanged(d);
+    d.ship = makeLoadout(this.A, hull, d.shipless ? 'Rift Runner' : d.ship.name); d.shipless = false; d.fuel = undefined; this.features.docks.leadChanged(d);
     this.db.touch(); this.you(s); this.landed(s); this.toast(s, `The ${H.name} is yours.`);
   }
   outfitter(p, d) {
@@ -623,7 +696,7 @@ export class Game {
     const o = this.O[id]; if (!o) return;
     if (d.shipless) return this.toast(s, 'You have no active ship. Choose FLY THIS in your drydock, or buy one at a shipyard.');
     const list = this.outfitter(p, d); if (!list) return this.toast(s, 'There is no outfitter here.'); if (n > 0 && !list.includes(id)) return;
-    const st = this.stats(d);
+    const st = this.features.shipStats.stats(d);
     if (n > 0) {
       if (o.eff.ammo) {   // ammunition: needs the launcher
         const w = o.eff.ammo, H = this.A.ships[d.ship.hull];
@@ -675,13 +748,13 @@ export class Game {
                    text: `Destroy ${need} pirate or hostile ships in the ${S.name} system, then land anywhere to be paid.` });
       }
     }
-    out.push(...this.moreOffers(p, d, r, near, win));
-    out.push(...this.coopOffers(p, d, r, near, win));   // 2.6: Armada contracts (online games)
-    { const X = this.expeditionOffer(p, d); if (X) out.push(X); }   // 1.2 Farside expeditions
-    out.unshift(...this.stateOffers(p, d, r, near, win));   // 2.4: jobs posted by troubled systems nearby
-    out.push(...this.extraOffers(p, d, r, near, win, (sys) => { const ls = SYS[sys].stellars.filter(x => x.svc.includes('L') && !x.site); return ls.length ? ls[Math.floor(r() * ls.length)] : null; }));   // 1.2
+    out.push(...this.features.fronts.moreOffers(p, d, r, near, win));
+    out.push(...this.features.coop.coopOffers(p, d, r, near, win));   // 2.6: Armada contracts (online games)
+    { const X = this.features.arcs.expeditionOffer(p, d); if (X) out.push(X); }   // 1.2 Farside expeditions
+    out.unshift(...this.features.living.stateOffers(p, d, r, near, win));   // 2.4: jobs posted by troubled systems nearby
+    out.push(...this.features.syndicate.extraOffers(p, d, r, near, win, (sys) => { const ls = SYS[sys].stellars.filter(x => x.svc.includes('L') && !x.site); return ls.length ? ls[Math.floor(r() * ls.length)] : null; }));   // 1.2
     // 1.1 combat rating: Wanted contracts need Competent; bounties pay more as your rank rises; Dangerous captains get elite contracts
-    const rank = this.rankOf(d).i;
+    const rank = this.features.fleetcmd.rankOf(d).i;
     for (const o of out) if (o.type === 'bounty' || o.type === 'assassinate') o.reward = Math.round(o.reward * (1 + 0.06 * rank));
     if (rank >= 5 && near.length) {
       const [sys] = near[Math.floor(r() * near.length)], S = SYS[sys], pool = [...TRAFFIC.umbral.war, ...TRAFFIC.hollow.war].filter(h => this.A.ships[h]).sort((a, b) => (this.A.ships[b].strength || 0) - (this.A.ships[a].strength || 0));
@@ -689,20 +762,20 @@ export class Game {
       out.push({ id: `${p.id}-${win}-elite`, type: 'bounty', elite: true, title: `ELITE CONTRACT: ${nm}`, sys, hull, faction: TRAFFIC.umbral.war.includes(hull) ? 'umbral' : 'hollow', targetName: nm, reward: Math.round(45000 + (H.strength || 200) * 160),
                  text: `Only captains rated Dangerous or better are offered this one. ${nm} flies a ${H.name} out of ${S.name}. The Concord wants it gone.` });
     }
-    out.unshift(...this.questOffers(p, d));   // 2.4: contacts and side stories lead the board
+    out.unshift(...this.features.quests.questOffers(p, d));   // 2.4: contacts and side stories lead the board
     return out.filter(o => !d.missions.some(m => m.id === o.id) && !(o.type === 'assassinate' && rank < 3));
   }
   accept(s, id) {
     const d = s.data, p = STELLARS[d.stellar]; if (!p) return;
     if (d.missions.length >= 6) return this.toast(s, 'You already have six jobs.');
     const o = this.offers(p, d).find(x => x.id === id); if (!o) return;
-    if (o.type === 'quest') return this.questStart(s, o);   // 2.4
-    if (o.type === 'warband') return this.warbandAccept(s, o);   // 2.6: Armada contracts go to the whole Armada
+    if (o.type === 'quest') return this.features.quests.questStart(s, o);   // 2.4
+    if (o.type === 'warband') return this.features.coop.warbandAccept(s, o);   // 2.6: Armada contracts go to the whole Armada
     if (o.type === 'cargo' || o.type === 'smuggle') {
-      const st = this.stats(d), used = this.holdUsed(d);
+      const st = this.features.shipStats.stats(d), used = this.holdUsed(d);
       if (used + o.qty > st.cargo) return this.toast(s, 'Not enough cargo space for that job.');
     }
-    if (!this.acceptCheck(s, o)) return;
+    if (!this.features.syndicate.acceptCheck(s, o)) return;
     d.missions.push({ ...o, owner: s.id, taken: Date.now(), ...(o.rush ? { deadline: Date.now() + o.rush * 60000 } : {}) });
     this.log(d, `Accepted: ${o.title}.`);
     this.db.touch(); this.you(s); this.landed(s);
@@ -710,17 +783,17 @@ export class Game {
   completeOnLanding(s, p) {
     const d = s.data; d.lastStellar = p.id;
     for (const m of [...d.missions]) {   // a snapshot: follow-up jobs added on this landing wait for the next one
-      if (m.type === 'supply' && m.dest === p.id && !this.supplyReady(d, m)) { this.toast(s, `${m.title}: you need ${m.qty} t of ${m.cid} in your hold.`); continue; }
+      if (m.type === 'supply' && m.dest === p.id && !this.features.living.supplyReady(d, m)) { this.toast(s, `${m.title}: you need ${m.qty} t of ${m.cid} in your hold.`); continue; }
       if ((destType(m) && m.dest === p.id) || (!destType(m) && m.done)) {
-        if (m.type === 'supply') { d.cargo[m.cid] -= m.qty; if (!d.cargo[m.cid]) delete d.cargo[m.cid]; this.stateProgress(s, p.system, 'cid:' + m.cid, m.qty); }   // 2.4: your goods are unloaded
-        if (m.type === 'smuggle') this.synGain(s, m.syn ? 'contract' : 'smuggle'); if (m.syn === 'hit') this.synGain(s, 'hit');   // 1.2
-        this.jobDone(s, m, p); if (m.exp) this.expeditionNext(s, m); this.mastery(s, 15); this.specOnJob(s, m); this.tut(s, 'job');
-        if ((m.type === 'bounty' || m.type === 'assassinate') && this.flying(d, 'vanguard')) { const extra = Math.round(m.reward * 0.5 * this.power(d)); d.credits += extra; this.toast(s, `Vanguard bonus: +${credits(extra)} credits.`); }
+        if (m.type === 'supply') { d.cargo[m.cid] -= m.qty; if (!d.cargo[m.cid]) delete d.cargo[m.cid]; this.features.living.stateProgress(s, p.system, 'cid:' + m.cid, m.qty); }   // 2.4: your goods are unloaded
+        if (m.type === 'smuggle') this.features.syndicate.synGain(s, m.syn ? 'contract' : 'smuggle'); if (m.syn === 'hit') this.features.syndicate.synGain(s, 'hit');   // 1.2
+        this.features.fronts.jobDone(s, m, p); if (m.exp) this.features.arcs.expeditionNext(s, m); this.features.frontier.mastery(s, 15); this.features.specialists.specOnJob(s, m); this.tut(s, 'job');
+        if ((m.type === 'bounty' || m.type === 'assassinate') && this.features.specialists.flying(d, 'vanguard')) { const extra = Math.round(m.reward * 0.5 * this.features.specialists.power(d)); d.credits += extra; this.toast(s, `Vanguard bonus: +${credits(extra)} credits.`); }
         d.credits += m.reward; d.stats.earned += m.reward; m.paid = true;
         d.rep[SYS[p.system].faction] = clamp((d.rep[SYS[p.system].faction] || 0) + 2, -100, 100);
         if (Math.random() < 0.35) { const mt = MATERIALS[Math.floor(Math.random() * 3)], g = Math.min(4, Math.floor(m.reward / 9000)); d.mats[mt][g]++; this.toast(s, `Bonus: a ${mt} crate (grade ${GRADES[g]}).`); }
-        this.officerXp(s, 20); this.toast(s, `Job complete: ${m.title}. Paid ${credits(m.reward)} credits.`); this.log(d, `Completed: ${m.title} (+${credits(m.reward)}).`);
-        if (m.quest) this.questAdvance(s, m);   // 2.4: the story goes on
+        this.features.hangar.officerXp(s, 20); this.toast(s, `Job complete: ${m.title}. Paid ${credits(m.reward)} credits.`); this.log(d, `Completed: ${m.title} (+${credits(m.reward)}).`);
+        if (m.quest) this.features.quests.questAdvance(s, m);   // 2.4: the story goes on
       }
     }
     d.missions = d.missions.filter(m => !m.paid);
@@ -730,14 +803,14 @@ export class Game {
   // ------------------------------------------------------------------ Quantum Station (each captain's own)
   checkStation(d) {
     const S = d.station; if (!S.claimed) return;
-    this.hangarInit(d);
+    this.features.hangar.hangarInit(d);
     const rb = researchBonus(S), now = Date.now(), per = REFINERY.minutes[S.ops] * 60000 / (1 + (rb.refineSpeed || 0) / 100), cap = REFINERY.silo + (rb.silo || 0);
     if (S.ops >= 1 && per > 0) {
       while (S.refUnits < cap && now - S.refT >= per) { S.refUnits++; S.refT += per; }
       if (S.refUnits >= cap) S.refT = now;
     }
     if (S.active && now >= S.active.ends) { S.done.push(S.active.id); this.log(d, `Research complete: ${RESEARCH.find(r => r.id === S.active.id).name}.`); S.active = null; }
-    this.startQueued(d);
+    this.features.hangar.startQueued(d);
   }
   hasMats(d, mats) { return mats.every(([m, g, n]) => d.mats[m][g] >= n); }
   takeMats(d, mats) { for (const [m, g, n] of mats) d.mats[m][g] -= n; }
@@ -785,7 +858,7 @@ export class Game {
         this.toast(s, `Collected ${n} refinery unit${n > 1 ? 's' : ''}: ${credits(cr)} credits and ${got.join(', ')}.`); break;
       }
       case 'research': {
-        if (S.active || (RESEARCH.find(x => x.id === m.id) || {}).needs && !S.done.includes(RESEARCH.find(x => x.id === m.id).needs)) { this.queueResearch(s, m.id); break; }
+        if (S.active || (RESEARCH.find(x => x.id === m.id) || {}).needs && !S.done.includes(RESEARCH.find(x => x.id === m.id).needs)) { this.features.hangar.queueResearch(s, m.id); break; }
         const r = RESEARCH.find(x => x.id === m.id); if (!r || S.done.includes(r.id) || S.ops < r.ops) break;
         if (d.credits < r.cost || !this.hasMats(d, r.mats)) return this.toast(s, 'You need the credits and materials listed.');
         d.credits -= r.cost; this.takeMats(d, r.mats); S.active = { id: r.id, ends: Date.now() + r.minutes * 60000 };
@@ -793,8 +866,8 @@ export class Game {
       }
       case 'hire': case 'dismiss': return this.toast(s, 'Wingmates are ships now: buy them at your station shipyard and assign them to a dock (STATION, then DOCKS).');   // 2.1
       case 'unqueue': S.queue = S.queue.filter(x => x !== m.id); break;
-      case 'defense': this.defenseUpgrade(s); break;
-      case 'refine': this.refineUp(s, m.mat, m.g | 0, m.n | 0); break;
+      case 'defense': this.features.frontier.defenseUpgrade(s); break;
+      case 'refine': this.features.hangar.refineUp(s, m.mat, m.g | 0, m.n | 0); break;
       case 'refit': return this.toast(s, 'Refits were retired in 2.6.');
       case 'relocate': {   // 2.6: warp the station to another unclaimed hull; you ride along
         const to = STELLARS[m.site], cost = relocateCost(S.ops), wait = (S.relocT || 0) + RELOCATE.cooldownH * 3600000 - Date.now();
@@ -803,7 +876,7 @@ export class Game {
         if (wait > 0) return this.toast(s, `The station's warp core is recharging: ${Math.ceil(wait / 3600000)} h left.`);
         if (d.holdout && d.holdout.active) return this.toast(s, 'Not during a Holdout.');
         if (d.credits < cost || !this.hasMats(d, RELOCATE.mats)) return this.toast(s, `Relocating needs ${credits(cost)} credits and ${RELOCATE.mats.map(([a, g]) => a + ' ' + GRADES[g]).join(', ')}.`);
-        if (s.trade) this.tradeCancel(s.trade, 'The station is warping away.');
+        if (s.trade) this.features.coop.tradeCancel(s.trade, 'The station is warping away.');
         const from = STELLARS[S.site]; d.credits -= cost; this.takeMats(d, RELOCATE.mats);
         delete this.db.world.sites[S.site]; S.site = to.id; S.relocT = Date.now(); this.db.world.sites[to.id] = this.db.key(d.name);
         d.stellar = to.id; d.sys = to.system;
@@ -820,22 +893,22 @@ export class Game {
   chat(s, m) {
     const msg = String(m.msg || '').slice(0, 240).trim(); if (!msg) return;
     const now = Date.now(); if (now - s.chatT < 700) return; s.chatT = now;
-    const sys = m.ch === 'sys', A = (m.ch === 'armada' || m.ch === 'fleet') && this.armadaOf(s.data);   // 2.6: the fleet channel is now the Armada's
+    const sys = m.ch === 'sys', A = (m.ch === 'armada' || m.ch === 'fleet') && this.features.coop.armadaOf(s.data);   // 2.6: the fleet channel is now the Armada's
     if ((m.ch === 'armada' || m.ch === 'fleet') && !A) return this.toast(s, 'You are not in an Armada.');
-    const deaf = (o) => this.blocked && this.blocked(o.data, s.data.name);   // 2.6: blocked captains are not heard
+    const deaf = (o) => this.features.coop.blocked && this.features.coop.blocked(o.data, s.data.name);   // 2.6: blocked captains are not heard
     this.broadcast({ t: 'chat', from: s.name, msg, ch: A ? 'armada' : sys ? 'sys' : 'all', sys: s.data.sys }, A ? (o => o.data.armada === A.id && !deaf(o)) : sys ? (o => o.data.sys === s.data.sys && !deaf(o)) : (o => !deaf(o)));
   }
 
   sleep(sp) { delete this.live[sp.id]; }
   // every two seconds: shuttles that have come home report in, finished research hands over to the queue
   idleCheck(s) {
-    const d = s.data; this.hangarInit(d);
+    const d = s.data; this.features.hangar.hangarInit(d);
     const before = (d.station.active && d.station.active.id) + '|' + d.station.queue.length + '|' + d.station.done.length + '|' + d.station.refUnits;
     this.checkStation(d);
     if (d.tut != null && d.tut < TUTORIAL.length && TUTORIAL[d.tut].check) this.tut(s, '*check');
-    let changed = this.specCheck(d) || before !== (d.station.active && d.station.active.id) + '|' + d.station.queue.length + '|' + d.station.done.length + '|' + d.station.refUnits;
+    let changed = this.features.specialists.specCheck(d) || before !== (d.station.active && d.station.active.id) + '|' + d.station.queue.length + '|' + d.station.done.length + '|' + d.station.refUnits;
     const now = Date.now(), back = d.shuttles.filter(x => x.state === 'out' && now >= x.ends);
-    for (const sh of back) this.resolveShuttle(s, sh);
+    for (const sh of back) this.features.hangar.resolveShuttle(s, sh);
     if (back.length) { d.shuttles = d.shuttles.filter(x => x.state !== 'gone'); changed = true; }
     if (changed) { this.db.touch(); this.you(s); }
   }
@@ -843,10 +916,10 @@ export class Game {
   tick() {
     if (this.paused) { if (![...this.sessions.values()].some(x => x.data)) this.setPaused(false); return; }   // solo pause
     this.tickN++;
-    if (this.tickN % (TICK * 2) === 0) { for (const s of this.sessions.values()) if (s.data) { this.idleCheck(s); this.missionIdle(s); this.missionDeadlines(s); this.questSweep(s); this.questSalvageIdle(s); this.bankTick(s); this.raidCheck(s); this.specIdle(s); this.holdoutTick(s); } this.invasionTick(); this.waveTick(); this.arenaTick(); this.coopTick(); }
-    if (this.tickN % (TICK * 20) === 0) { this.rivalsTick(); this.livingTick(); }   // 2.4: system states come and go   // 1.1: rival careers, news, market flashes, hired guns
-    if (this.tickN % (TICK * 2) === 1) for (const sp of Object.values(this.live)) if (sp.players > 0) this.rivalSync(sp);
-    if (this.tickN % (TICK * 30) === 0) { const v = this.worldPayload(), k = JSON.stringify([v.anomalies, v.event.id, v.states]); if (k !== this.worldKey) { this.worldKey = k; this.broadcast(v); } }
+    if (this.tickN % (TICK * 2) === 0) { for (const s of this.sessions.values()) if (s.data) { this.idleCheck(s); this.features.fronts.missionIdle(s); this.features.syndicate.missionDeadlines(s); this.features.quests.questSweep(s); this.features.quests.questSalvageIdle(s); this.features.syndicate.bankTick(s); this.features.frontier.raidCheck(s); this.features.specialists.specIdle(s); this.features.hostile.holdoutTick(s); } this.features.fronts.invasionTick(); this.features.frontier.waveTick(); this.features.frontier.arenaTick(); this.features.coop.coopTick(); }
+    if (this.tickN % (TICK * 20) === 0) { this.features.rivals.rivalsTick(); this.features.living.livingTick(); }   // 2.4: system states come and go   // 1.1: rival careers, news, market flashes, hired guns
+    if (this.tickN % (TICK * 2) === 1) for (const sp of Object.values(this.live)) if (sp.players > 0) this.features.rivals.rivalSync(sp);
+    if (this.tickN % (TICK * 30) === 0) { const v = this.features.world.worldPayload(), k = JSON.stringify([v.anomalies, v.event.id, v.states]); if (k !== this.worldKey) { this.worldKey = k; this.broadcast(v); } }
     for (const sp of Object.values(this.live)) {
       const safeTick = () => { try { sp.tick(); } catch (e) { sp.errs = (sp.errs || 0) + 1; if (sp.errs < 5) console.error('space tick error', sp.id, e); } };
       if (sp.players > 0) { sp.quietT = 0; safeTick(); }
@@ -866,5 +939,3 @@ export class Game {
     for (const sp of Object.values(this.live)) if (!bySys[sp.id]) sp.events = [];
   }
 }
-
-Object.assign(Game.prototype, HangarMixin, FrontsMixin, FrontierMixin, SpecialistMixin, HostileMixin, StoryMixin, RivalsMixin, HailMixin, FleetCmdMixin, SyndicateMixin, ArcsMixin, DocksMixin, LivingMixin, QuestMixin, CoopMixin);

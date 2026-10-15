@@ -6,10 +6,17 @@
   "main": "server/main.js",
   "scripts": {
     "start": "node server/main.js",
-    "test": "node test/bot.js"
+    "test": "node test/bot.js",
+    "typecheck": "tsc --noEmit",
+    "test:features": "node test/features.js",
+    "test:types": "node test/typecheck-contracts.js"
   },
   "engines": {
     "node": ">=18"
   },
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
 }

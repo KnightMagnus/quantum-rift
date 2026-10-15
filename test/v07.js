@@ -18,35 +18,35 @@ function fake(name) {
 const rich = (d) => { d.credits = 5e8; for (const m of ['alloy', 'crystal', 'isotope']) d.mats[m] = [30, 30, 30, 30, 30]; };
 const a = fake('Settler'), da = a.s.data; rich(da);
 // colonies
-const planet = Object.values(STELLARS).find(p => game.colonizable(p));
+const planet = Object.values(STELLARS).find(p => game.features.frontier.colonizable(p));
 ok(planet && FACTIONS[SYS[planet.system].faction].region, `${planet.name} in ${SYS[planet.system].name} can be settled`);
-ok(!game.colonizable(STELLARS['meridian-yards']), 'core worlds cannot be settled');
+ok(!game.features.frontier.colonizable(STELLARS['meridian-yards']), 'core worlds cannot be settled');
 da.sys = planet.system; da.stellar = planet.id; a.send({ t: 'colony', op: 'found' });
 const col = game.db.world.colonies[planet.id]; ok(col && col.lv === 1, 'founded a colony');
 ok(a.last('landed').colony.own && a.last('world').colonies[planet.id] === 'Settler', 'the colony shows on landing and on the world map');
 a.send({ t: 'colony', op: 'build', kind: 'habitat' }); a.send({ t: 'colony', op: 'build', kind: 'mine' }); a.send({ t: 'colony', op: 'build', kind: 'farm' });
 ok(col.buildings.length === 2, 'level 1 colonies have two building slots');
 a.send({ t: 'colony', op: 'upgrade' }); a.send({ t: 'colony', op: 'build', kind: 'shieldgen' }); ok(col.lv === 2 && col.buildings.includes('shieldgen'), 'upgraded to level 2 and built a Shield Array');
-ok(game.bonus(da).shieldPct >= 3, 'the Shield Array gives a permanent shield bonus');
+ok(game.features.bonuses.bonus(da).shieldPct >= 3, 'the Shield Array gives a permanent shield bonus');
 col.t = Date.now() - 3 * 3600000; const c0 = da.credits; a.send({ t: 'colony', op: 'collect' });
 ok(da.credits - c0 >= 2500 * 1.25 * 2.9 && (da.cargo.ore || 0) >= 14, `collected three hours of production (${da.credits - c0} cr, ${da.cargo.ore} t ore)`);
-const p2 = Object.values(STELLARS).filter(p => game.colonizable(p) && p.id !== planet.id);
+const p2 = Object.values(STELLARS).filter(p => game.features.frontier.colonizable(p) && p.id !== planet.id);
 da.stellar = p2[0].id; da.sys = p2[0].system; a.send({ t: 'colony', op: 'found' }); da.stellar = p2[1].id; da.sys = p2[1].system; a.send({ t: 'colony', op: 'found' });
-ok(game.coloniesOf(da).length === 2, 'two colonies until Ops 5');
+ok(game.features.frontier.coloniesOf(da).length === 2, 'two colonies until Ops 5');
 // station defense
 Object.assign(da.station, { claimed: true, ops: 3, site: 'site-meridian', defense: 0 }); game.db.world.sites['site-meridian'] = game.db.key(da.name);
-const r0 = game.defenseRating(da); da.stellar = 'site-meridian'; da.sys = 'meridian'; a.send({ t: 'station', op: 'defense' });
-ok(da.station.defense === 1 && game.defenseRating(da) > r0, `upgraded the station turrets (defense ${r0} -> ${game.defenseRating(da)})`);
-da.station.raidWin = 0; da.station.refUnits = 3; game.raidCheck(a.s);
+const r0 = game.features.frontier.defenseRating(da); da.stellar = 'site-meridian'; da.sys = 'meridian'; a.send({ t: 'station', op: 'defense' });
+ok(da.station.defense === 1 && game.features.frontier.defenseRating(da) > r0, `upgraded the station turrets (defense ${r0} -> ${game.features.frontier.defenseRating(da)})`);
+da.station.raidWin = 0; da.station.refUnits = 3; game.features.frontier.raidCheck(a.s);
 ok(da.log.some(l => /raid/i.test(l.text)) && a.all('notify').length >= 1, 'an offline raid resolves against the station defense, with a notification');
 // live wave: the owner is in the station system
-da.stellar = null; game.spawnPlayer(a.s, 0, 0, 0, 0); da.station.raidWin = 0; game.raidCheck(a.s);
+da.stellar = null; game.spawnPlayer(a.s, 0, 0, 0, 0); da.station.raidWin = 0; game.features.frontier.raidCheck(a.s);
 const w = game.waves[da.name], spW = game.spaces.meridian; ok(w && w.ids.size >= 2, `a live raid wave of ${w.ids.size} ships attacks while you are there`);
 const credW = da.credits; for (const id of [...w.ids]) spW.kill(spW.ships.get(id), a.s.ent);
 ok(!game.waves[da.name] && da.credits > credW, 'destroying the whole wave wins the raid');
 // mastery
-const h = da.ship.hull; da.mastery = { [h]: MASTERY.tiers[4] - 1 }; const sh0 = game.stats(da).shield;
-game.mastery(a.s, 5); ok(game.stats(da).shield > sh0 && a.s.ent.elite, 'reaching mastery Tier 5 raises stats and adds the gold trim');
+const h = da.ship.hull; da.mastery = { [h]: MASTERY.tiers[4] - 1 }; const sh0 = game.features.shipStats.stats(da).shield;
+game.features.frontier.mastery(a.s, 5); ok(game.features.shipStats.stats(da).shield > sh0 && a.s.ent.elite, 'reaching mastery Tier 5 raises stats and adds the gold trim');
 ok(game.spaces.meridian.snapshot().ships.find(r => r[0] === a.s.ent.id)[7] & 32, 'the trim is sent to other players');
 // arena
 const sp0 = game.spaces.meridian; sp0.remove(a.s.ent); sp0.players--; a.s.ent = null; da.stellar = 'meridian-yards';

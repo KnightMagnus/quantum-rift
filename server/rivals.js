@@ -15,7 +15,7 @@ function okSystem(r, S) {
   return S.danger <= 3 && S.faction !== 'hollow' && S.faction !== 'umbral';
 }
 
-export const RivalsMixin = {
+export const RivalsOperations = {
   rivalsInit() {
     const W = this.db.world; W.rivals = W.rivals || {}; W.news = W.news || []; W.flash = W.flash || [];
     for (const R of RIVALS) {

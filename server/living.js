@@ -17,7 +17,7 @@ const START_NEWS = {
   refugees: (S) => `Refugees are pouring into ${S.name}. Food, medicine and passage are scarce.`,
 };
 
-export const LivingMixin = {
+export const LivingOperations = {
   livingInit() { const W = this.db.world; W.states = W.states || {}; W.stateCool = W.stateCool || {}; W.tradeImpact = W.tradeImpact || {}; },
   marketSystems() { return this._mkt || (this._mkt = SYSTEMS.filter(S => !S.arena && S.stellars.some(p => p.svc && p.svc.includes('T') && !p.site)).map(S => S.id)); },
   stateOf(sysId) { const st = this.db.world.states && this.db.world.states[sysId]; return st && st.until > Date.now() ? st : null; },

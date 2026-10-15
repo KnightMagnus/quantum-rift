@@ -69,7 +69,7 @@ c.send({ t: 'social', op: 'dm', name: 'Bram Cole', msg: 'hi stranger' }); ok(!b.
 b.sock.emit('close');
 a.s.dmT = 0; a.send({ t: 'social', op: 'dm', name: 'Bram Cole', msg: 'you there?' });
 ok(g.db.get('Bram Cole').mail.some(m => m.msg === 'you there?'), 'a DM to an offline captain waits in their mailbox');
-ok(a.last('social').social.friends.find(f => f.name === 'Bram Cole').status === 'offline' || g.statusOf('Bram Cole') === 'offline', 'and they show as offline');
+ok(a.last('social').social.friends.find(f => f.name === 'Bram Cole').status === 'offline' || g.features.coop.statusOf('Bram Cole') === 'offline', 'and they show as offline');
 const b2 = fake('Bram Cole');
 ok(b2.last('dms') && b2.last('dms').list.some(m => m.msg === 'you there?') && !b2.d.mail.length, 'it is delivered at their next login');
 c.send({ t: 'social', op: 'block', name: 'Ada Vance' }); a.send({ t: 'social', op: 'add', name: 'Cass Orr' });
@@ -79,7 +79,7 @@ c.send({ t: 'social', op: 'unblock', name: 'Ada Vance' });
 
 // ------------------------------------------------------------------ the Armada
 const toSpace = (P, sys, x = 0, y = 0) => { const d = P.s.data; if (P.s.ent) { const s0 = g.spaces[d.sys]; s0.remove(P.s.ent); s0.players--; P.s.ent = null; } d.sys = sys; d.stellar = null; g.spawnPlayer(P.s, x, y, 0, 0); return P.s.ent; };
-a.send({ t: 'armada', op: 'form', name: 'Night Wardens' }); const AR = g.armadaOf(a.d);
+a.send({ t: 'armada', op: 'form', name: 'Night Wardens' }); const AR = g.features.coop.armadaOf(a.d);
 ok(AR && AR.leader === 'Ada Vance' && a.last('you').d.armada.name === 'Night Wardens', 'formed an Armada');
 toSpace(c, 'halcyon'); toSpace(a, 'qgate');
 a.send({ t: 'armada', op: 'invite', name: 'Bram Cole' }); ok(AR.invites[g.db.key('Bram Cole')] > Date.now() && b2.last('social').armada.invites.length === 1, 'a friend can be invited');
@@ -88,7 +88,7 @@ a.send({ t: 'armada', op: 'invite', name: 'Cass Orr' }); c.send({ t: 'armada', o
 ok(a.last('social').armada.members.find(m => m.name === 'Cass Orr').sysId === 'halcyon', 'the Armada list says where each member is (shown on the galaxy map)');
 toSpace(c, 'qgate');
 { const q1 = fake('Quick One'), q2 = fake('Quick Two'); q1.send({ t: 'armada', op: 'invite', name: 'Quick Two' });
-  ok(g.armadaOf(q1.d) && q2.last('social').armada.invites.length === 1, 'inviting with no Armada forms one on the spot');
+  ok(g.features.coop.armadaOf(q1.d) && q2.last('social').armada.invites.length === 1, 'inviting with no Armada forms one on the spot');
   q1.send({ t: 'armada', op: 'leave' }); }
 const extra = [1, 2, 3].map(i => { const x = fake('Spare ' + i); toSpace(x, 'qgate'); return x; });
 for (const x of extra) { a.send({ t: 'armada', op: 'invite', name: x.d.name }); x.send({ t: 'armada', op: 'accept', id: AR.id }); }
@@ -102,7 +102,7 @@ const wing = sL.makeShip({ hull: 711, faction: 'quantum', x: 80, y: 30, ai: 'esc
 ok(!sL.isHostile(ea, ec) && !sL.canHit(ea, ec) && !sL.isHostile(ea, wing) && !sL.canHit(ea, wing) && !sL.isHostile(wing, ea), 'members and their wingmates cannot hurt each other');
 const out = extra[2]; toSpace(out, lawless.id, 120, 0); a.send({ t: 'armada', op: 'kick', name: out.d.name });
 ok(!sL.isHostile(ea, out.s.ent) && !sL.canHit(ea, out.s.ent), 'and there is no open-galaxy PvP against anyone else, even in lawless space');
-g.coopTick(); ok(ea.coopRe === ARMADA.buff.shieldRe && ec.coopRe === ARMADA.buff.shieldRe, 'members sharing a system get +5% shield recharge');
+g.features.coop.coopTick(); ok(ea.coopRe === ARMADA.buff.shieldRe && ec.coopRe === ARMADA.buff.shieldRe, 'members sharing a system get +5% shield recharge');
 const crC = c.d.credits, crA = a.d.credits, pir = sL.makeShip({ hull: 711, faction: 'hollow', x: 30, y: 30 }); sL.kill(pir, ea);
 ok(c.d.credits > crC && c.toasts().some(t => /Armada share/.test(t)), 'members in the system get a share of the bounty');
 // follow the leader
@@ -121,7 +121,7 @@ a.send({ t: 'armada', op: 'lead', name: 'Cass Orr' }); ok(AR.leader === 'Cass Or
   a.s.ent.x = e.x + 20; a.s.ent.y = e.y; a.s.ent.vx = e.vx; a.s.ent.vy = e.vy;
   a.send({ t: 'board', id: e.id }); ok(!e.disabled && !e.rescueT && e.armor >= e.st.armor * RESCUE.repair - 1, 'a member boards them and patches them up');
   sL.remove(raider); }
-{ const e = c.s.ent; e.shield = 0; e.armor = 5; sL.damage(e, 500, 500, null); e.rescueT = sL.t - 1; g.rescueTick();
+{ const e = c.s.ent; e.shield = 0; e.armor = 5; sL.damage(e, 500, 500, null); e.rescueT = sL.t - 1; g.features.coop.rescueTick();
   ok(!sL.ships.has(e.id) && c.last('dead'), 'if nobody comes in time, the insurers take over'); }
 
 // ------------------------------------------------------------------ duels
@@ -132,7 +132,7 @@ ok(!sD.isHostile(e1, e2), 'captains are not hostile to each other');
 x1.send({ t: 'duel', op: 'challenge', name: x2.d.name }); ok(x2.s.duelInv && x2.s.duelInv.from === x1.d.name, 'a duel challenge arrives');
 x2.send({ t: 'duel', op: 'accept' }); const D = g.duels[x1.s.duel];
 ok(D && !D.on && !sD.isHostile(e1, e2), 'accepted: a short countdown first');
-D.startT = 0; g.duelTick(); ok(D.on && sD.isHostile(e1, e2) && sD.canHit(e1, e2), 'then weapons free between the two');
+D.startT = 0; g.features.coop.duelTick(); ok(D.on && sD.isHostile(e1, e2) && sD.canHit(e1, e2), 'then weapons free between the two');
 e2.shield = 0; e2.armor = e2.st.armor * 0.2; sD.damage(e2, 9999, 9999, e1);
 ok(sD.ships.has(e2.id) && Math.round(e2.armor) === Math.round(e2.st.armor * DUEL.floor), 'a duel stops at disabled: nobody loses a ship');
 ok(!g.duels[D.id] && x1.d.duels.w === 1 && x2.d.duels.l === 1 && !sD.isHostile(e1, e2), 'the winner is called and the duel is over');
@@ -143,7 +143,7 @@ ok(!g.duels[D.id] && x1.d.duels.w === 1 && x2.d.duels.l === 1 && !sD.isHostile(e
   e2.armor = e2.st.armor;
   x1.send({ t: 'duel', op: 'challenge', name: 'Blue Lead', armada: true }); B2.send({ t: 'duel', op: 'accept' });
   const AD = g.duels[B2.s.duel]; ok(AD && AD.armada && AD.sides.A.length === 2 && AD.sides.B.length === 2, 'an Armada Duel puts every member in the system on their side');
-  AD.startT = 0; g.duelTick();
+  AD.startT = 0; g.features.coop.duelTick();
   ok(sD.isHostile(e1, B3.s.ent) && sD.isHostile(e2, B2.s.ent) && !sD.isHostile(e1, e2) && !sD.isHostile(B2.s.ent, B3.s.ent), 'each side fights the other, never itself');
   for (const P of [B2, B3]) { const e = P.s.ent; e.shield = 0; e.armor = 1; sD.damage(e, 999, 999, e1); }
   ok(!g.duels[AD.id] && x1.d.duels.w === 2 && B2.d.duels.l === 1, 'the last side flying wins'); }
@@ -175,9 +175,9 @@ ok(!g.duels[D.id] && x1.d.duels.w === 1 && x2.d.duels.l === 1 && !sD.isHostile(e
   H.send({ t: 'social', op: 'add', name: 'Kit Helper' }); K.send({ t: 'social', op: 'accept', name: 'Host Hale' });
   H.send({ t: 'armada', op: 'form' }); H.send({ t: 'armada', op: 'invite', name: 'Kit Helper' }); K.send({ t: 'armada', op: 'accept', id: H.d.armada });
   H.send({ t: 'holdout' }); ok(H.d.holdout.active && K.all('chat').some(m => /Station Holdout/.test(m.msg)), 'starting a Holdout calls the Armada');
-  toSpace(K, 'meridian', 300, 0); const Hh = H.d.holdout.active; Hh.nextT = Date.now() - 1; g.holdoutTick(H.s); g.holdoutTick(H.s);
+  toSpace(K, 'meridian', 300, 0); const Hh = H.d.holdout.active; Hh.nextT = Date.now() - 1; g.features.hostile.holdoutTick(H.s); g.features.hostile.holdoutTick(H.s);
   const solo = 2 + Math.ceil(1 / 2); ok(Hh.ids.length === solo + 1 && Hh.helpers.includes('Kit Helper'), 'each helper adds a hostile to every wave');
-  const spM = g.spaces.meridian; for (const id of Hh.ids) spM.remove(spM.ships.get(id)); Hh.cleared = 3; const kc = K.d.credits; g.holdoutEnd(H.s, false, 'test');
+  const spM = g.spaces.meridian; for (const id of Hh.ids) spM.remove(spM.ships.get(id)); Hh.cleared = 3; const kc = K.d.credits; g.features.hostile.holdoutEnd(H.s, false, 'test');
   ok(K.d.credits > kc && K.toasts().some(t => /Your share/.test(t)), 'helpers share the Holdout rewards'); }
 
 // ------------------------------------------------------------------ Armada contracts
@@ -211,7 +211,7 @@ ok(!g.duels[D.id] && x1.d.duels.w === 1 && x2.d.duels.l === 1 && !sD.isHostile(e
 
 // ------------------------------------------------------------------ solo hides it all
 { const gs = new Game(A, new DB('/tmp/rift-v26s-' + Date.now())); gs.solo = true; const p = STELLARS.concordia;
-  ok(!gs.offers(p, gs.fresh()).some(o => o.type === 'warband') && gs.armadaPayload(gs.fresh()) === null && gs.socialPayload(gs.fresh()) === null, 'a solo game has no Armada, friends or contracts'); }
+  ok(!gs.offers(p, gs.fresh()).some(o => o.type === 'warband') && gs.features.coop.armadaPayload(gs.fresh()) === null && gs.features.coop.socialPayload(gs.fresh()) === null, 'a solo game has no Armada, friends or contracts'); }
 const read = (f) => fs.readFileSync(C + f, 'utf8');
 ok(/data-tab="captains"/.test(read('index.html')) && /body\.solo \.mp\{display:none\}/.test(read('style.css')), 'the CAPTAINS tab exists and hides in solo');
 ok(!/FLEET<\/button>|fleetHtml|anchor a Dreadnought/i.test(read('index.html') + read('ui.js') + read('fronts_ui.js')), 'no fleet or territory interface is left');

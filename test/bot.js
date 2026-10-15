@@ -1,4 +1,5 @@
 // Headless test: two captains log in, trade, depart, fly, fight, jump and land. Run with the server up: node test/bot.js [url]
+import { TRADE_IMPACT } from '../shared/living.js';
 const URL_ = process.argv[2] || 'ws://localhost:8080/ws';
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 function bot(name) {
@@ -23,8 +24,13 @@ const ok = (c, msg) => { if (!c) fail(msg); console.log('ok -', msg); };
   ok(a.you && a.you.credits === 30000 && a.landed && a.landed.stellar === 'qstation', 'new captain starts landed at Quantum Station with 30,000 credits');
   ok(a.landed.market && a.landed.yard && a.landed.outfitter && a.landed.offers.length > 0, 'station has market, shipyard, outfitter and jobs');
   // trade
-  const food = a.landed.market.find(c => c.id === 'equipment'); a.send({ t: 'trade', cid: 'equipment', qty: 5 }); await sleep(300);
-  ok(a.you.cargo.equipment === 5 && a.you.credits === 30000 - 5 * food.price, 'bought 5 tons of equipment');
+  const equipment = a.landed.market.find(c => c.id === 'equipment');
+  // Since v2.5, the quoted single-ton price also has a bulk-buy depth premium.
+  const buyUnit = Math.max(1, Math.round(equipment.price * (1 - (a.you.bonus.tradePct || 0) / 100)));
+  const bulkUnit = Math.round(buyUnit * (1 + Math.min(TRADE_IMPACT.max, 5 * TRADE_IMPACT.perTon) / 2));
+  const creditsBeforeTrade = a.you.credits;
+  a.send({ t: 'trade', cid: 'equipment', qty: 5 }); await sleep(300);
+  ok(a.you.cargo.equipment === 5 && a.you.credits === creditsBeforeTrade - 5 * bulkUnit, 'bought 5 tons of equipment at the bulk-adjusted price');
   // outfit
   a.send({ t: 'outfit', id: 9001, n: 1 }); await sleep(300); ok(a.you.ship.outfits[9001] === 1, 'bought a Light Blaster');
   // station claim + Ops 1

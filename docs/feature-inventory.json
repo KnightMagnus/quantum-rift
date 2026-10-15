@@ -1,0 +1,947 @@
+{
+  "baseline": "47bea35a9f3d773efa9a9f075e5b361d9533b390",
+  "sharedServices": {
+    "bonus": {
+      "namespace": "bonuses",
+      "implementation": "specialists"
+    },
+    "stats": {
+      "namespace": "shipStats",
+      "implementation": "fronts"
+    },
+    "worldPayload": {
+      "namespace": "world",
+      "implementation": "frontier"
+    },
+    "sessionOf": {
+      "namespace": "sessions",
+      "implementation": "coop"
+    }
+  },
+  "features": [
+    {
+      "file": "hangar",
+      "methods": [
+        "hangarInit",
+        "uid",
+        "bays",
+        "dockSlots",
+        "barOffers",
+        "officerOp",
+        "officerXp",
+        "shuttleBoard",
+        "shuttleReward",
+        "shuttleChance",
+        "shuttleOp",
+        "resolveShuttle",
+        "shuttleTraffic",
+        "researchChain",
+        "queueResearch",
+        "startQueued",
+        "refineUp",
+        "storedValue",
+        "dockOp",
+        "board"
+      ],
+      "uses": [
+        "A",
+        "O",
+        "arcProgress",
+        "barOffers",
+        "bays",
+        "bonus",
+        "db",
+        "dockSlots",
+        "docksOp",
+        "flying",
+        "goal",
+        "hasMats",
+        "landed",
+        "live",
+        "log",
+        "mods",
+        "notify",
+        "officerXp",
+        "ownSite",
+        "power",
+        "rescueBoard",
+        "researchChain",
+        "resolveShuttle",
+        "shipUid",
+        "shuttleBoard",
+        "shuttleChance",
+        "shuttleReward",
+        "shuttleTraffic",
+        "spaces",
+        "specOnBoard",
+        "startQueued",
+        "stats",
+        "storedValue",
+        "storyProgress",
+        "synGain",
+        "takeMats",
+        "toast",
+        "tut",
+        "uid",
+        "unassign",
+        "unwingOfficer",
+        "you"
+      ],
+      "baselineExport": "HangarMixin",
+      "exportName": "HangarOperations",
+      "stateWrites": [],
+      "hooks": {
+        "login": [
+          "hangarInit"
+        ],
+        "tick2s": [
+          "resolveShuttle"
+        ]
+      },
+      "owner": "server/hangar.js"
+    },
+    {
+      "file": "fronts",
+      "methods": [
+        "frontsInit",
+        "anomalies",
+        "event",
+        "mods",
+        "bonus",
+        "stats",
+        "worldPayload",
+        "pushWorld",
+        "invasionTick",
+        "startInvasion",
+        "onBossDamage",
+        "onBossKilled",
+        "goalsFor",
+        "goal",
+        "claimGoal",
+        "token",
+        "storeFor",
+        "storeBuy",
+        "missionArrive",
+        "onConvoyLanded",
+        "onConvoyLost",
+        "missionIdle",
+        "moreOffers",
+        "jobDone"
+      ],
+      "uses": [
+        "A",
+        "_an",
+        "_anW",
+        "anomalies",
+        "armadaBonus",
+        "bonus",
+        "broadcast",
+        "db",
+        "event",
+        "goal",
+        "goalsFor",
+        "invasion",
+        "lastInvWin",
+        "log",
+        "officerXp",
+        "pushWorld",
+        "refreshPlayer",
+        "sessions",
+        "spaces",
+        "startInvasion",
+        "statesPayload",
+        "storeFor",
+        "toast",
+        "token",
+        "uid",
+        "worldPayload",
+        "you"
+      ],
+      "baselineExport": "FrontsMixin",
+      "exportName": "FrontsOperations",
+      "stateWrites": [
+        "_an",
+        "_anW",
+        "invasion",
+        "lastInvWin"
+      ],
+      "hooks": {
+        "worldInit": [
+          "frontsInit"
+        ],
+        "tick2s": [
+          "invasionTick"
+        ],
+        "login": []
+      },
+      "owner": "server/fronts.js"
+    },
+    {
+      "file": "frontier",
+      "methods": [
+        "frontierInit",
+        "bonus",
+        "notify",
+        "worldPayload",
+        "mastery",
+        "colonizable",
+        "coloniesOf",
+        "colonyMax",
+        "colonyBuffs",
+        "accrue",
+        "colonyPayload",
+        "colonyOp",
+        "defenseRating",
+        "defenseUpgrade",
+        "raidStrength",
+        "raidCheck",
+        "startWave",
+        "onWaveKill",
+        "waveTick",
+        "resolveRaid",
+        "arenaOp",
+        "arenaPayload",
+        "tryMatch",
+        "arenaExit",
+        "onArenaDeath",
+        "arenaCheck",
+        "arenaTick",
+        "exchangeOp",
+        "itemName",
+        "sameItem",
+        "deliver",
+        "pay",
+        "refundOrder",
+        "matchOrder",
+        "exchangePayload",
+        "leaderboard",
+        "profile"
+      ],
+      "uses": [
+        "A",
+        "accrue",
+        "arenaCheck",
+        "arenaExit",
+        "arenaQ",
+        "broadcast",
+        "coloniesOf",
+        "colonizable",
+        "colonyBuffs",
+        "colonyMax",
+        "db",
+        "defenseRating",
+        "deliver",
+        "flying",
+        "frontsBonus",
+        "frontsWorldPayload",
+        "hasMats",
+        "itemName",
+        "landed",
+        "live",
+        "log",
+        "matchOrder",
+        "matches",
+        "nextMatch",
+        "notify",
+        "pay",
+        "pushWorld",
+        "raidStrength",
+        "refundOrder",
+        "resolveRaid",
+        "rivalBoard",
+        "sameItem",
+        "send",
+        "sessionOf",
+        "sessions",
+        "spaces",
+        "spawnPlayer",
+        "specOnRaid",
+        "startWave",
+        "stats",
+        "takeMats",
+        "toast",
+        "tryMatch",
+        "waves",
+        "you"
+      ],
+      "baselineExport": "FrontierMixin",
+      "exportName": "FrontierOperations",
+      "stateWrites": [
+        "arenaQ",
+        "matches",
+        "nextMatch",
+        "waves"
+      ],
+      "hooks": {
+        "worldInit": [
+          "frontierInit"
+        ],
+        "tick2s": [
+          "raidCheck",
+          "waveTick",
+          "arenaTick"
+        ],
+        "tick30s": [
+          "worldPayload"
+        ]
+      },
+      "owner": "server/frontier.js"
+    },
+    {
+      "file": "specialists",
+      "methods": [
+        "specInit",
+        "specOf",
+        "flying",
+        "power",
+        "bonus",
+        "specGain",
+        "specMult",
+        "specOnKill",
+        "specOnBoard",
+        "specOnLoot",
+        "specOnMine",
+        "specOnChart",
+        "specOnRaid",
+        "specOnJob",
+        "specIdle",
+        "pathfinderJump",
+        "specOp",
+        "specCheck",
+        "inDrydock"
+      ],
+      "uses": [
+        "A",
+        "anomalies",
+        "broadcast",
+        "db",
+        "flying",
+        "frontierBonus",
+        "hasMats",
+        "landed",
+        "log",
+        "ownSite",
+        "power",
+        "specGain",
+        "specInit",
+        "specOf",
+        "takeMats",
+        "toast",
+        "tradeIn",
+        "wingHulls",
+        "you"
+      ],
+      "baselineExport": "SpecialistMixin",
+      "exportName": "SpecialistOperations",
+      "stateWrites": [],
+      "hooks": {
+        "tick2s": [
+          "specIdle",
+          "specCheck"
+        ]
+      },
+      "owner": "server/specialists.js"
+    },
+    {
+      "file": "hostile",
+      "methods": [
+        "hostInit",
+        "myPower",
+        "maybeChest",
+        "openChest",
+        "holdoutStart",
+        "holdoutTick",
+        "holdoutEnd",
+        "onHoldoutKill",
+        "eclipseChance"
+      ],
+      "uses": [
+        "A",
+        "bonus",
+        "db",
+        "depart",
+        "holdoutAnnounce",
+        "holdoutEnd",
+        "holdoutHelpers",
+        "holdoutReward",
+        "hostInit",
+        "live",
+        "log",
+        "mods",
+        "myPower",
+        "notify",
+        "ownSite",
+        "spaces",
+        "specInit",
+        "toast",
+        "tut",
+        "wingHulls",
+        "you"
+      ],
+      "baselineExport": "HostileMixin",
+      "exportName": "HostileOperations",
+      "stateWrites": [],
+      "hooks": {
+        "login": [
+          "hostInit"
+        ],
+        "tick2s": [
+          "holdoutTick"
+        ]
+      },
+      "owner": "server/hostile.js"
+    },
+    {
+      "file": "story",
+      "methods": [
+        "storyInit",
+        "storyDone",
+        "storyPayload",
+        "storyOffer",
+        "storyOnLand",
+        "storyAccept",
+        "storyComplete",
+        "storyGift",
+        "storyArrive",
+        "storyProgress",
+        "deepLocked"
+      ],
+      "uses": [
+        "A",
+        "broadcast",
+        "db",
+        "dockSlots",
+        "landed",
+        "leadChanged",
+        "log",
+        "send",
+        "storyComplete",
+        "storyDone",
+        "storyGift",
+        "storyInit",
+        "storyOffer",
+        "toast",
+        "tradeIn",
+        "you"
+      ],
+      "baselineExport": "StoryMixin",
+      "exportName": "StoryOperations",
+      "stateWrites": [],
+      "hooks": {
+        "login": [
+          "storyInit",
+          "storyOnLand"
+        ]
+      },
+      "owner": "server/story.js"
+    },
+    {
+      "file": "rivals",
+      "methods": [
+        "rivalsInit",
+        "rivalState",
+        "rivalName",
+        "relOf",
+        "rivalRel",
+        "news",
+        "newsFeed",
+        "flashMult",
+        "rivalsTick",
+        "spawnHunters",
+        "rivalSync",
+        "rivalThink",
+        "rivalHostile",
+        "rivalOnHit",
+        "rivalOnKill",
+        "rivalDocked",
+        "rivalBoard",
+        "rivalsPayload"
+      ],
+      "uses": [
+        "A",
+        "db",
+        "live",
+        "log",
+        "news",
+        "relOf",
+        "rivalEnts",
+        "rivalRel",
+        "rivalState",
+        "sessions",
+        "spaces",
+        "spawnHunters",
+        "toast"
+      ],
+      "baselineExport": "RivalsMixin",
+      "exportName": "RivalsOperations",
+      "stateWrites": [
+        "rivalEnts"
+      ],
+      "hooks": {
+        "worldInit": [
+          "rivalsInit"
+        ],
+        "tick20s": [
+          "rivalsTick"
+        ],
+        "tick2sOffset": [
+          "rivalSync"
+        ]
+      },
+      "owner": "server/rivals.js"
+    },
+    {
+      "file": "hail",
+      "methods": [
+        "bribeCost",
+        "hailTarget",
+        "hail",
+        "hailOpt",
+        "hailPlanet",
+        "hailPlanetOpt"
+      ],
+      "uses": [
+        "A",
+        "bribeCost",
+        "db",
+        "hailPlanet",
+        "hailPlanetOpt",
+        "hailTarget",
+        "log",
+        "myPower",
+        "relOf",
+        "rivalRel",
+        "send",
+        "spaces",
+        "toast",
+        "you"
+      ],
+      "baselineExport": "HailMixin",
+      "exportName": "HailOperations",
+      "stateWrites": [],
+      "hooks": {},
+      "owner": "server/hail.js"
+    },
+    {
+      "file": "fleetcmd",
+      "methods": [
+        "fleetOrder",
+        "jettison",
+        "lootCargo",
+        "rankOf"
+      ],
+      "uses": [
+        "send",
+        "spaces",
+        "stats",
+        "toast",
+        "you"
+      ],
+      "baselineExport": "FleetCmdMixin",
+      "exportName": "FleetCmdOperations",
+      "stateWrites": [],
+      "hooks": {},
+      "owner": "server/fleetcmd.js"
+    },
+    {
+      "file": "syndicate",
+      "methods": [
+        "synInit",
+        "synGain",
+        "blackMarketAt",
+        "blackMarket",
+        "bmBuy",
+        "promote",
+        "lowerDeck",
+        "bankAt",
+        "bankInfo",
+        "bankOp",
+        "bankTick",
+        "extraOffers",
+        "acceptCheck",
+        "missionDeadlines"
+      ],
+      "uses": [
+        "A",
+        "bankAt",
+        "bankInfo",
+        "blackMarketAt",
+        "db",
+        "landed",
+        "log",
+        "notify",
+        "synInit",
+        "toast",
+        "you"
+      ],
+      "baselineExport": "SyndicateMixin",
+      "exportName": "SyndicateOperations",
+      "stateWrites": [],
+      "hooks": {
+        "login": [
+          "synInit"
+        ],
+        "tick2s": [
+          "missionDeadlines",
+          "bankTick"
+        ]
+      },
+      "owner": "server/syndicate.js"
+    },
+    {
+      "file": "arcs",
+      "methods": [
+        "arcsInit",
+        "arcState",
+        "arcOffer",
+        "arcOffersAt",
+        "arcsPayload",
+        "arcOnLand",
+        "arcAccept",
+        "arcComplete",
+        "arcArrive",
+        "arcProgress",
+        "expeditionOffer",
+        "expeditionNext"
+      ],
+      "uses": [
+        "A",
+        "arcComplete",
+        "arcOffer",
+        "arcOffersAt",
+        "arcState",
+        "arcsInit",
+        "db",
+        "expeditionNext",
+        "landed",
+        "log",
+        "send",
+        "toast",
+        "you"
+      ],
+      "baselineExport": "ArcsMixin",
+      "exportName": "ArcsOperations",
+      "stateWrites": [],
+      "hooks": {
+        "login": [
+          "arcsInit",
+          "arcOnLand"
+        ]
+      },
+      "owner": "server/arcs.js"
+    },
+    {
+      "file": "docks",
+      "methods": [
+        "docksInit",
+        "shipUid",
+        "dockCount",
+        "stored",
+        "wingMax",
+        "slotOf",
+        "unassign",
+        "unwingOfficer",
+        "wingOfficerAt",
+        "activeWings",
+        "wingHulls",
+        "wingBonus",
+        "leadChanged",
+        "docksPayload",
+        "docksOp",
+        "cleanBridge",
+        "wingRepair",
+        "onWingLost",
+        "buyToHangar"
+      ],
+      "uses": [
+        "A",
+        "activeWings",
+        "cleanBridge",
+        "db",
+        "dockCount",
+        "dockSlots",
+        "docksInit",
+        "fitsJobs",
+        "hangarInit",
+        "jobCargo",
+        "landed",
+        "log",
+        "ownSite",
+        "sessions",
+        "shipUid",
+        "slotOf",
+        "stored",
+        "toast",
+        "uid",
+        "unassign",
+        "unwingOfficer",
+        "wingMax",
+        "wingOfficerAt",
+        "wingRepair",
+        "yard",
+        "you"
+      ],
+      "baselineExport": "DocksMixin",
+      "exportName": "DocksOperations",
+      "stateWrites": [],
+      "hooks": {
+        "login": [
+          "docksInit"
+        ]
+      },
+      "owner": "server/docks.js"
+    },
+    {
+      "file": "living",
+      "methods": [
+        "livingInit",
+        "marketSystems",
+        "stateOf",
+        "warEnemy",
+        "livingTick",
+        "statesPayload",
+        "impact",
+        "addImpact",
+        "livingMult",
+        "stateProgress",
+        "resolveState",
+        "stateOnKill",
+        "stateOffers",
+        "supplyReady"
+      ],
+      "uses": [
+        "_livingStarted",
+        "_mkt",
+        "db",
+        "impact",
+        "livingInit",
+        "log",
+        "marketSystems",
+        "news",
+        "resolveState",
+        "stateOf",
+        "stateProgress",
+        "toast",
+        "warEnemy",
+        "worldKey",
+        "you"
+      ],
+      "baselineExport": "LivingMixin",
+      "exportName": "LivingOperations",
+      "stateWrites": [
+        "_livingStarted",
+        "_mkt",
+        "worldKey"
+      ],
+      "hooks": {
+        "worldInit": [
+          "livingInit",
+          "livingTick"
+        ],
+        "tick20s": [
+          "livingTick"
+        ]
+      },
+      "owner": "server/living.js"
+    },
+    {
+      "file": "quests",
+      "methods": [
+        "questInit",
+        "contactAt",
+        "questsPayload",
+        "questOffers",
+        "contactStory",
+        "chainReward",
+        "questRewardText",
+        "questPlan",
+        "fill",
+        "questStart",
+        "questStepJob",
+        "questPush",
+        "questAdvance",
+        "questFinish",
+        "questFail",
+        "questSweep",
+        "barTalk",
+        "questSalvageIdle",
+        "questLoot"
+      ],
+      "uses": [
+        "A",
+        "chainReward",
+        "contactAt",
+        "contactStory",
+        "db",
+        "fill",
+        "holdUsed",
+        "landed",
+        "log",
+        "market",
+        "questFail",
+        "questFinish",
+        "questInit",
+        "questPlan",
+        "questPush",
+        "questRewardText",
+        "questStepJob",
+        "send",
+        "spaces",
+        "stateOf",
+        "stats",
+        "toast",
+        "uid",
+        "you"
+      ],
+      "baselineExport": "QuestMixin",
+      "exportName": "QuestOperations",
+      "stateWrites": [],
+      "hooks": {
+        "tick2s": [
+          "questSweep",
+          "questSalvageIdle"
+        ]
+      },
+      "owner": "server/quests.js"
+    },
+    {
+      "file": "coop",
+      "methods": [
+        "coopInit",
+        "coopMigrate",
+        "sessionOf",
+        "socialInit",
+        "has",
+        "drop",
+        "blocked",
+        "statusOf",
+        "refreshPlayer",
+        "pushSocial",
+        "socialPayload",
+        "presence",
+        "coopLogin",
+        "coopLogout",
+        "socialOp",
+        "dm",
+        "armadaOf",
+        "sameArmada",
+        "armadaChat",
+        "armadaPayload",
+        "armadaPush",
+        "armadaOp",
+        "armadaLeave",
+        "armadaForget",
+        "armadaRefresh",
+        "armadaNear",
+        "armadaBonus",
+        "shareBounty",
+        "armadaLeaderJump",
+        "atOwnStation",
+        "tradeOp",
+        "tradeClean",
+        "tradePush",
+        "tradeCancel",
+        "tradeDo",
+        "duelOf",
+        "duelSide",
+        "dueling",
+        "duelPayload",
+        "duelOp",
+        "duelHit",
+        "duelOut",
+        "duelSay",
+        "duelEnd",
+        "duelTick",
+        "rescueHold",
+        "rescueBoard",
+        "rescueTick",
+        "holdoutHelpers",
+        "holdoutAnnounce",
+        "holdoutReward",
+        "coopOffers",
+        "warbandAccept",
+        "warbandArrive",
+        "warbandDown",
+        "coopTick"
+      ],
+      "uses": [
+        "A",
+        "armadaChat",
+        "armadaLeave",
+        "armadaNear",
+        "armadaOf",
+        "armadaPayload",
+        "armadaPush",
+        "armadaRefresh",
+        "atOwnStation",
+        "blocked",
+        "broadcast",
+        "db",
+        "dm",
+        "drop",
+        "duelEnd",
+        "duelOf",
+        "duelOut",
+        "duelSay",
+        "duelSide",
+        "duelTick",
+        "dueling",
+        "duels",
+        "goal",
+        "has",
+        "holdUsed",
+        "landed",
+        "live",
+        "log",
+        "mods",
+        "nextCoopId",
+        "notify",
+        "officerXp",
+        "ownSite",
+        "presence",
+        "pushSocial",
+        "rescueTick",
+        "send",
+        "sessionOf",
+        "sessions",
+        "socialInit",
+        "socialOp",
+        "socialPayload",
+        "solo",
+        "spaces",
+        "stats",
+        "statusOf",
+        "toast",
+        "tradeCancel",
+        "tradeClean",
+        "tradeDo",
+        "tradePush",
+        "trades",
+        "you"
+      ],
+      "baselineExport": "CoopMixin",
+      "exportName": "CoopOperations",
+      "stateWrites": [
+        "duels",
+        "nextCoopId",
+        "trades"
+      ],
+      "hooks": {
+        "worldInit": [
+          "coopInit"
+        ],
+        "login": [
+          "coopMigrate",
+          "coopLogin"
+        ],
+        "logout": [
+          "coopLogout"
+        ],
+        "tick2s": [
+          "coopTick"
+        ]
+      },
+      "owner": "server/coop.js"
+    }
+  ]
+}

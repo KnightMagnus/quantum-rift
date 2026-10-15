@@ -34,13 +34,13 @@ d.ship.hull = 736;
 Object.assign(d.station, { claimed: true, ops: 4, site: 'site-meridian', defense: 2 }); game.db.world.sites['site-meridian'] = game.db.key(d.name);
 game.spaces.qgate.remove(a.s.ent); game.spaces.qgate.players--; a.s.ent = null; d.sys = 'meridian'; d.stellar = 'site-meridian';
 a.send({ t: 'holdout' }); ok(d.holdout.active && a.s.ent, 'started a Holdout: you launch to defend the station');
-d.holdout.active.nextT = Date.now() - 1; game.holdoutTick(a.s); game.holdoutTick(a.s);
+d.holdout.active.nextT = Date.now() - 1; game.features.hostile.holdoutTick(a.s); game.features.hostile.holdoutTick(a.s);
 const spH = game.spaces.meridian, plats = [...spH.ships.values()].filter(x => x.platform);
 ok(plats.length === HOLDOUT.platforms(2) && plats.every(p => !spH.isHostile(p, a.s.ent)), `${plats.length} defense platforms deploy on your side`);
 ok(d.holdout.active.wave === 1 && d.holdout.active.ids.length >= 2, `wave 1: ${d.holdout.active.ids.length} hostiles`);
-for (let w = 1; w <= 3; w++) { for (const id of d.holdout.active.ids) { const x = spH.ships.get(id); if (x) spH.kill(x, a.s.ent); } game.holdoutTick(a.s); if (w < 3) { d.holdout.active.nextT = Date.now() - 1; game.holdoutTick(a.s); } }
+for (let w = 1; w <= 3; w++) { for (const id of d.holdout.active.ids) { const x = spH.ships.get(id); if (x) spH.kill(x, a.s.ent); } game.features.hostile.holdoutTick(a.s); if (w < 3) { d.holdout.active.nextT = Date.now() - 1; game.features.hostile.holdoutTick(a.s); } }
 ok(d.holdout.active.cleared === 3, 'cleared three waves');
-const cr2 = d.credits; spH.remove(a.s.ent); spH.players--; a.s.ent = null; game.holdoutTick(a.s);
+const cr2 = d.credits; spH.remove(a.s.ent); spH.players--; a.s.ent = null; game.features.hostile.holdoutTick(a.s);
 ok(!d.holdout.active && d.holdout.best === 3 && d.credits > cr2 && !plats.some(p => spH.ships.has(p.id)), 'leaving ends the Holdout: paid for three waves, platforms withdrawn');
 d.stellar = 'site-meridian'; a.send({ t: 'holdout' }); ok(!d.holdout.active, 'Holdouts have a cooldown');
 // weekly events

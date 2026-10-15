@@ -8,7 +8,7 @@ const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.met
 const ok = (c, m) => { if (!c) { console.error('FAIL:', m); process.exit(1); } console.log('ok -', m); };
 process.env.SEEDS_FILE = '/nonexistent';
 const g = new Game(A, new DB('/tmp/rift-v203-' + Date.now()));
-g.event = () => null; g.anomalies = () => ({});   // 2.6: traffic counts must not depend on the weekday's event (Bounty Week brings 50% more raiders)
+g.features.fronts.event = () => null; g.features.fronts.anomalies = () => ({});   // 2.6: traffic counts must not depend on the weekday's event (Bounty Week brings 50% more raiders)
 let ipn = 1;
 function fake(name) { const sock = new EventEmitter(); sock.open = true; sock.backlog = 0; const out = []; sock.send = (m) => out.push(typeof m === 'string' ? JSON.parse(m) : m); sock.close = () => {};
   g.connect(sock, '9.9.9.' + (ipn++)); const send = (m) => sock.emit('message', JSON.stringify(m)); send({ t: 'hello', name, pass: 'secret' });
@@ -49,16 +49,16 @@ ok(![...cal.ships.values()].some(e => e.faction === 'hollow' && e.hull === [...T
 // ---- backlog fixes
 const P = fake('Bug Hunter'), d = P.d; const land = (id) => { if (P.s.ent) { const sp = g.spaces[d.sys]; g.dropEscorts(sp, P.s.ent); sp.remove(P.s.ent); sp.players--; P.s.ent = null; } d.stellar = id; d.sys = STELLARS[id].system; };
 land('qstation');
-d.ship = (await import('../shared/rules.js')).makeLoadout(A, 704, 'Hauler'); const job = g.offers(STELLARS.qstation, d).find(o => o.type === 'cargo' && o.qty < g.stats(d).cargo); P.send({ t: 'accept', id: job.id });
+d.ship = (await import('../shared/rules.js')).makeLoadout(A, 704, 'Hauler'); const job = g.offers(STELLARS.qstation, d).find(o => o.type === 'cargo' && o.qty < g.features.shipStats.stats(d).cargo); P.send({ t: 'accept', id: job.id });
 const cid = g.market(STELLARS.qstation)[0].id; P.send({ t: 'trade', cid, qty: 99 });
-ok(d.missions.length === 1 && (d.cargo[cid] || 0) + job.qty <= g.stats(d).cargo, 'job cargo takes up hold space when buying goods');
+ok(d.missions.length === 1 && (d.cargo[cid] || 0) + job.qty <= g.features.shipStats.stats(d).cargo, 'job cargo takes up hold space when buying goods');
 ok(P.out.filter(m => m.t === 'you').pop().d.jobCargo === job.qty, 'and the HUD is told about it');
 d.cargo = {}; d.missions = [];
 const noO = Object.values(STELLARS).find(p => p.svc.includes('L') && !p.svc.includes('O') && !p.site); land(noO.id);
 const oid = Object.keys(d.ship.outfits)[0], had = d.ship.outfits[oid]; P.send({ t: 'outfit', id: +oid, n: -1 });
 ok(d.ship.outfits[oid] === had, 'outfits can only be sold where there is an outfitter');
 P.send({ t: 'rename', name: '  <>  ' }); ok(d.ship.name === A.ships[d.ship.hull].name, 'a blank ship name falls back to the hull name');
-land('qstation'); g.docksInit(d); for (const h of [703, 704]) { const ship = (await import('../shared/rules.js')).makeLoadout(A, h, 'W' + h); ship.uid = g.shipUid(d); d.dock.push({ ship, bridge: {} }); d.docks[d.activeDock].wings.push({ uid: ship.uid }); }
+land('qstation'); g.features.docks.docksInit(d); for (const h of [703, 704]) { const ship = (await import('../shared/rules.js')).makeLoadout(A, h, 'W' + h); ship.uid = g.features.docks.shipUid(d); d.dock.push({ ship, bridge: {} }); d.docks[d.activeDock].wings.push({ uid: ship.uid }); }
 P.send({ t: 'depart' }); const sp3 = g.spaces[d.sys], eid = P.s.ent.id;
 ok([...sp3.ships.values()].filter(x => x.owner === eid).length === 2, 'escorts launch with you');
 sp3.remove(P.s.ent); g.onPlayerDeath(P.s.ent.player, sp3, null);
@@ -71,9 +71,9 @@ P.send({ t: 'abandon', id: b.id }); for (let i = 0; i < 30 * 30; i++) bsp.tick()
 ok(!bt.mission && (bt.dead || bt.ai === 'leave'), 'abandoning the bounty sends its target away');
 // drydock: Tender name no longer deletes, ship swaps check job cargo
 const site = Object.values(STELLARS).find(p => p.site && !g.siteOwner(p.id)); land(site.id); P.send({ t: 'station', op: 'claim' });
-d.credits = 1e6; d.station.ops = 3; d.dock = []; d.docks = null; g.docksInit(d);
+d.credits = 1e6; d.station.ops = 3; d.dock = []; d.docks = null; g.features.docks.docksInit(d);
 d.ship.name = 'Tender'; d.cargo = {}; P.send({ t: 'dock', op: 'store' }); ok(d.shipless && d.dock.length === 1, 'store the ship named Tender');
-d.dock.push({ ship: { ...d.dock[0].ship, name: 'Second', uid: g.shipUid(d) }, bridge: {} });
+d.dock.push({ ship: { ...d.dock[0].ship, name: 'Second', uid: g.features.docks.shipUid(d) }, bridge: {} });
 P.send({ t: 'dock', op: 'store', i: 1 }); ok(d.ship.name === 'Second' && d.dock.some(x => x.ship.name === 'Tender'), 'a ship named Tender survives a drydock swap');
 P.send({ t: 'dock', op: 'store', i: 0 }); ok(d.dock.some(x => x.ship.name === 'Second'), 'swapping back stores the other ship');
 d.missions = [{ id: 'jc', type: 'cargo', qty: 999, dest: 'qstation', sys: STELLARS.qstation.system, title: 'heavy' }];
