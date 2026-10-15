@@ -1,4 +1,4 @@
-# Quantum Rift v2.8 — Open channels
+# Quantum Rift v2.8 — Hail to the Code
 
 ## Release summary
 

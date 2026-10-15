@@ -2,7 +2,7 @@
 
 Every release, newest first. The main story is left out on purpose.
 
-### 2.8 "Open channels"
+### 2.8 "Hail to the Code"
 
 Cumulative changes since 2.6, including previously merged engineering and combat-assist work. Publication and the final tested commit are tracked in [the release summary](docs/RELEASE-v2.8.md).
 

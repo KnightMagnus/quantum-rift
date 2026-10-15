@@ -4,7 +4,7 @@
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
-## v2.8 — Open channels
+## v2.8 — Hail to the Code
 
 Contextual ship conversations, incoming NPC calls and short player hails bring the traffic lanes to life. System-only chat now appears above the sender's active ship as well as in the chat log. Combat assist can fly and fire for your fleet; opted-in Follow Leader members can delegate combat without taking control away from independent Armada captains.
 
