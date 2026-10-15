@@ -477,11 +477,11 @@ export function hud() {
     $('tg-sh').style.width = t.sh + '%';
     $('tg-ar').style.width = t.ar + '%';
     {
-      const od = winOdds(G.you.power || 10, t.pw || 10),
+      const od = winOdds((G.combat ? G.combat.power : G.you.power) || 10, t.pw || 10),
         col = od >= 0.6 ? '#8ff0ad' : od >= 0.4 ? '#ffd27a' : '#ff8a7a';
       $('tg-dist').innerHTML =
         (me ? Math.round(Math.hypot(t.rx - me.rx, t.ry - me.ry)) + ' km · ' : '') +
-        `Lv ${levelOf(t.pw || 10)} · <span style="color:${col}">${Math.round(od * 100)}% odds</span>`;
+        `Lv ${levelOf(t.pw || 10)} · <span style="color:${col}">${Math.round(od * 100)}% estimated odds</span>`;
     }
     $('tg-bars').style.visibility = 'visible';
     {

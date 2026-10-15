@@ -699,6 +699,16 @@ export class Space {
         if (e.ai === 'flee') e.target = null;
       } // (not recalled)
     }
+    if (owner && this.root(owner).sharedCombat) {
+      const root = this.root(owner);
+      e.target =
+        !e.recall &&
+        !['hold', 'holdfire', 'loot'].includes(root.order) &&
+        this.game.combatAssist.valid(this, root, root.combatTarget)
+          ? root.combatTarget
+          : null;
+      e.fireAt = null;
+    }
     if (e.target) {
       e.catchup = null;
       return this.fight(e, e.target);
@@ -884,8 +894,9 @@ export class Space {
     this.remove(f);
   }
   fight(e, t) {
+    const primaryOnly = e.autoCombat || (e.owner && this.root(e).sharedCombat);
     const best = e.guns
-      .filter((g) => !g.p.pd && g.ammo > 0)
+      .filter((g) => !g.p.pd && g.ammo > 0 && (!primaryOnly || !g.sec))
       .reduce((m, g) => Math.max(m, g.p.range), 300);
     const dx = t.x - e.x,
       dy = t.y - e.y,
@@ -893,13 +904,7 @@ export class Space {
     const lead = Math.min(1.2, d / 600);
     const lx = t.x + (t.vx - e.vx) * lead,
       ly = t.y + (t.vy - e.vy) * lead;
-    if (
-      !e.player &&
-      e.st.size >= 110 &&
-      e.st.turrets >= 2 &&
-      d < best * 1.1 &&
-      d > Math.max(140, e.st.size)
-    ) {
+    if (e.st.size >= 110 && e.st.turrets >= 2 && d < best * 1.1 && d > Math.max(140, e.st.size)) {
       // 2.4: capitals with turrets circle and fire broadsides instead of ramming
       const side = e.id % 2 ? 1 : -1,
         ta =
@@ -1096,8 +1101,15 @@ export class Space {
   }
   weapons(e) {
     const inp = e.inp || {},
-      t = e.player ? (e.target && this.ships.get(e.target.id) ? e.target : null) : e.fireAt;
-    if (e.player) {
+      automated = e.autoCombat || (e.owner && this.root(e).sharedCombat),
+      t = e.autoCombat
+        ? e.combatTarget
+        : e.player
+          ? e.target && this.ships.get(e.target.id)
+            ? e.target
+            : null
+          : e.fireAt;
+    if (e.player && !automated) {
       const f2 = inp.fire2 ? 1 : 0;
       if (f2 && !e._f2 && e.guns.some((g) => g.p.bay)) this.toggleDrones(e);
       e._f2 = f2;
@@ -1134,8 +1146,10 @@ export class Space {
         if (f) this.fire(e, g, f, angleTo(e, f.x, f.y));
         continue;
       }
+      if (automated && g.sec) continue;
+      if (automated && (!t || !this.game.combatAssist.valid(this, this.root(e), t))) continue;
       if (p.bay && e.player) continue; // 2.1: bays launch and recall on a tap of F (toggleDrones)
-      const wantFire = e.player ? (g.sec ? inp.fire2 : inp.fire1) : !!t;
+      const wantFire = e.autoCombat ? !!t : e.player ? (g.sec ? inp.fire2 : inp.fire1) : !!t;
       if (!wantFire) continue;
       const tgt = t && !t.dead ? t : null;
       if (p.bay || p.homing) {
@@ -1144,18 +1158,18 @@ export class Space {
       }
       if (tgt) {
         const d = Math.hypot(tgt.x - e.x, tgt.y - e.y);
-        if (!e.player && d > p.range * 1.05) continue;
+        if ((!e.player || automated) && d > p.range * 1.05) continue;
         const tt = p.beam ? 0 : d / p.speed;
         const aim = angleTo(e, tgt.x + (tgt.vx - e.vx) * tt, tgt.y + (tgt.vy - e.vy) * tt);
         if (p.turret) {
-          if (d < p.range * 1.1 || e.player) this.fire(e, g, tgt, aim);
+          if (d < p.range * 1.1 || (e.player && !automated)) this.fire(e, g, tgt, aim);
           continue;
         }
         if (p.arc && Math.abs(angDiff(aim, e.a)) < p.arc) {
           this.fire(e, g, tgt, aim);
           continue;
         }
-        if (!e.player && Math.abs(angDiff(aim, e.a)) > 0.18) continue;
+        if ((!e.player || automated) && Math.abs(angDiff(aim, e.a)) > 0.18) continue;
       } else if (!e.player) continue;
       this.fire(e, g, tgt, e.a);
     }
@@ -1277,6 +1291,7 @@ export class Space {
         if (npcs < want) this.spawnTraffic(false);
       }
     }
+    this.game.combatAssist?.resolve(this);
     for (const e of this.ships.values()) {
       if (e.state === 'jumpout') {
         e.jumpT -= DT;
@@ -1297,6 +1312,16 @@ export class Space {
           e.seq = inp.seq;
         }
       } else this.ai(e);
+      if (e.player && e.autoCombat) {
+        e.inp = {};
+        e.fireAt = null;
+        if (this.game.combatAssist.valid(this, e, e.combatTarget)) {
+          this.fight(e, e.combatTarget);
+          e.inp.fire1 = 1;
+        }
+      }
+      if (e.player && e.autoCombat && !this.game.combatAssist.valid(this, e, e.combatTarget))
+        e.inp = {};
       const st = e.catchup
         ? {
             ...e.st,

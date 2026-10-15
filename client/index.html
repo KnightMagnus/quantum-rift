@@ -179,6 +179,27 @@
       </div>
     </div>
     <div id="toasts"></div>
+    <div
+      class="well box hidden"
+      id="combatcontrols"
+      style="
+        position: absolute;
+        bottom: 80px;
+        left: 12px;
+        max-width: calc(100vw - var(--hud) - 24px);
+        z-index: 5;
+      "
+    >
+      <button class="btn sm" id="combatassist">COMBAT ASSIST</button>
+      <button class="btn sm" id="combatstop">STOP</button
+      ><span class="small" id="combatstatus">OFF</span>
+      <div class="small">
+        <label><input type="checkbox" id="combatdelegate" />Allow Follow Leader combat</label>
+        <label
+          ><input type="checkbox" id="combatcoordinate" />Coordinate consenting followers</label
+        >
+      </div>
+    </div>
     <div id="autobadge" class="hidden"></div>
     <div id="touch" class="hidden">
       <div id="tstick"><i></i></div>
