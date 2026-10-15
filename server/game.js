@@ -1,3 +1,4 @@
+import { HailService } from './hail-service.js';
 import { CombatAssist } from './combat-assist.js';
 import { createMessageRegistry } from './message-registry.js';
 import { createFeatures } from './features.js';
@@ -159,6 +160,7 @@ export class Game {
     /** @type {import('./features.js').FeatureServices} */
     this.features = createFeatures(this);
     this.combatAssist = new CombatAssist(this);
+    this.hails = new HailService(this);
     this.messageHandlers = this.createMessageHandlers();
     this.features.fronts.frontsInit();
     this.features.coop.coopInit();
@@ -1034,6 +1036,7 @@ export class Game {
           return; // 1.1
         },
       ],
+      ['hailin', (s, m) => this.hails.request(s, m)],
       [
         'hailopt',
         (s, m) => {
@@ -2494,7 +2497,14 @@ export class Game {
     const deaf = (o) =>
       this.features.coop.blocked && this.features.coop.blocked(o.data, s.data.name); // 2.6: blocked captains are not heard
     this.broadcast(
-      { t: 'chat', from: s.name, msg, ch: A ? 'armada' : sys ? 'sys' : 'all', sys: s.data.sys },
+      {
+        t: 'chat',
+        from: s.name,
+        msg,
+        ch: A ? 'armada' : sys ? 'sys' : 'all',
+        sys: s.data.sys,
+        ship: sys && !A && s.ent?.state === 'fly' ? s.ent.id : null,
+      },
       A
         ? (o) => o.data.armada === A.id && !deaf(o)
         : sys
@@ -2566,6 +2576,7 @@ export class Game {
       this.features.frontier.waveTick();
       this.features.frontier.arenaTick();
       this.features.coop.coopTick();
+      this.hails.tick();
     }
     if (this.tickN % (TICK * 20) === 0) {
       this.features.rivals.rivalsTick();

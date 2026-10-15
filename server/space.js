@@ -731,6 +731,7 @@ export class Space {
           if (e.convoyOf) this.game.features.fronts.onConvoyLanded(e);
           if (e.rival && this.game.features.rivals.rivalDocked)
             this.game.features.rivals.rivalDocked(e);
+          this.game.hails?.landed(e, this);
           this.remove(e);
         }
         if (e.dest.out && d < 200) e.ai = 'leave';

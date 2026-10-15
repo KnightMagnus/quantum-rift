@@ -1,6 +1,7 @@
-// Quantum Rift renderer: starfield, stellars, ships (EV Quantum sprite sheets), shots, beams, effects, radar.
+// Quantum Rift renderer: starfield, stellars, ship sprite sheets, shots, beams, effects, radar.
 import { planetSprite } from './planets.js';
 import { missionTargets } from './missions.js';
+import { drawShipChat } from './chat_bubbles.js';
 import { ANOMALIES } from '/shared/fronts.js';
 import { STATES } from '/shared/living.js';
 import { SYS, STELLARS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
@@ -2245,6 +2246,7 @@ function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
       (T.name || (G.A.ships[T.hull] || {}).name || 'target').split(' · ')[0],
       Math.hypot(T.rx - me.rx, T.ry - me.ry),
     );
+  drawShipChat(G, ctx, W, H, sx, sy, now);
   // 2.1 hyperspace: spool rings, star streaks along your heading, a white bloom; arrival plays it in reverse with a shockwave
   if (G._jumping || me.fl & 8) hyperOut(G, ctx, W, H, now, sx(me.rx), sy(me.ry), me.a);
   if (G._arriveT && now - G._arriveT < 1100)

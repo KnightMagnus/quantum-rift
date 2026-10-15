@@ -585,7 +585,7 @@ function renderDisk(P, ru, rc) {
 }
 let budget = 0,
   budgetT = 0;
-// 2.5: pre-rendered planets (tools/rift_planets.py) in the EV Nova manner. Each world picks the rendered planet of its type
+// 2.5: pre-rendered planets (tools/rift_planets.py) in a pre-rendered space-art style. Each world picks the rendered planet of its type
 // whose colour is closest to its own; the procedural sphere above stays as the fallback while images load.
 let MAN = null;
 const imgs = new Map(),

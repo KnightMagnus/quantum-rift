@@ -1,4 +1,4 @@
-// Quantum Rift 1.0: the Que'vari storyline (from EV Quantum 3.6), as golden main-story missions.
+// Quantum Rift: the Que'vari storyline, as golden main-story missions.
 // Each step: where it is offered, what you must do, and what it pays. Text is shown in landing pop-ups.
 export const STORY = [
   {

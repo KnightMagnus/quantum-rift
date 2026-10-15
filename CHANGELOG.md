@@ -2,6 +2,20 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.8 "Open channels"
+
+Cumulative changes since 2.6, including previously merged engineering and combat-assist work. Publication and the final tested commit are tracked in [the release summary](docs/RELEASE-v2.8.md).
+
+- **Livelier hailing:** outgoing responses use ship identity, task, status and system context, with visit-local repetition avoidance and distinct named-captain voices.
+- **Incoming calls:** ordinary traffic and named captains can hail you. An amber communications badge stays at the flight-view perimeter; opening a conversation is always your choice. Queues, cooldowns and expiry keep calls bounded.
+- **Encounter assistance:** fuel requests, hardship donations, named greetings and security warnings; local-port escorts, approximate nearby-threat intelligence and distress repair rendezvous. Explicit acceptance and server-side resource/reward checks prevent duplicate payouts.
+- **Player hails:** short same-system messages, up to 100 Unicode codepoints, through the hail dialog. Privacy, blocking and rate limits apply. No in-flight trading and no replacement of normal chat.
+- **Ship speech bubbles:** system-only player chat appears briefly above the sender's active ship while remaining in the chat log. Private, Armada and global messages do not become bubbles.
+- **Combat assist:** optional automatic steering and primary fire, fleet focus and target succession, and consent-based Follow Leader coordination. Manual takeover and Hold Fire prevail; independent Armada members keep their own controls. Combat odds account for participating fleet/Armada ships.
+- **Weapon refresh:** fifteen inherited weapon records receive new names, descriptions and tuning while retaining stable IDs, mounts and ammunition references for existing saves. Updated outfitter/story terminology and README, title-screen and game-data branding. See [the weapon mapping and balance limits](docs/WEAPON-REFRESH.md).
+- **Engineering, already merged since 2.6:** explicit feature composition replaces prototype mixins, with JSDoc/type contracts and a feature inventory. Prettier, a Husky pre-commit hook, Git LFS asset rules and a GitHub formatting/type/feature-contract workflow support maintenance.
+- **Documentation:** README feature coverage and actual communications/combat screenshots refreshed; cumulative release notes added. The radio remains unchanged.
+
 ### 2.6 "Together"
 
 Co-op play for online games, sharper ships that bank into their turns, and a clear-out of systems that no longer fit.

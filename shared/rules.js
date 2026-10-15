@@ -19,7 +19,7 @@ import { RANK_MULT, TRAITS, LOWER_DECK } from './syndicate.js';
 
 export const TICK = 30; // simulation steps per second
 export const DT = 1 / TICK;
-// EV Nova units -> Rift units
+// Asset-space units -> simulation units
 export const K = {
   speed: 0.45,
   accel: 0.55,
@@ -268,7 +268,7 @@ export const BEAM_COLORS = {
   161: '#ffe060',
   181: '#d0d0ff',
 };
-// Sound for each weapon: EV Quantum's own sounds where the weapon has one, otherwise the closest match from the pack
+// Stable sound references for weapon effects, with a nearest-match fallback.
 export function weaponSound(w) {
   if (w.sound >= 36) return 200 + w.sound;
   const p = weaponParams(w);
@@ -352,7 +352,7 @@ export function credits(n) {
   return n >= 1e6 ? (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M' : n.toLocaleString('en-US');
 }
 
-// Weapon colours: the mod exports projectile weapons with colour #000000 (they used sprites in EV Nova), so black counts as "unset".
+// Legacy projectile records can use black as an unset colour; supply a visible fallback.
 const isBlack = (c) => !c || /^#?0{3}(0{3})?$/i.test(c);
 export function weaponColor(w) {
   if (!w) return '#ffd27a';

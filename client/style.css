@@ -2937,3 +2937,66 @@ body.solo .mp {
 #chatlog b.armada {
   color: #7af0a0;
 }
+
+/* Communications stay inside the flight viewport as the adjustable sidebar changes width. */
+#hailindicator {
+  position: fixed;
+  z-index: 65;
+  top: 22px;
+  right: calc(var(--hud) + 22px);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #ffd36a;
+  background: #35280c;
+  color: #ffdc7b;
+  cursor: pointer;
+  font-size: 24px;
+}
+#hailindicator:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 4px;
+}
+#hailcount {
+  position: absolute;
+  right: -5px;
+  top: -6px;
+  font: bold 13px Tahoma;
+  background: #ffdc7b;
+  color: #161309;
+  border-radius: 12px;
+  min-width: 20px;
+  padding: 3px;
+}
+#hailmarker {
+  position: fixed;
+  z-index: 40;
+  max-width: 185px;
+  padding: 5px;
+  border: 1px solid #d9b956;
+  background: #17130cdd;
+  color: #ffdc7b;
+  font-size: 12px;
+  pointer-events: none;
+}
+#hailcompose {
+  width: 100%;
+  padding: 10px;
+  background: #11141d;
+  color: var(--text);
+  border: 1px solid var(--warn);
+  user-select: text;
+}
+#hailopts {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+#hailopts label {
+  display: block;
+  font-size: 12px;
+  margin: 8px 0;
+}
+#hailtext {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
