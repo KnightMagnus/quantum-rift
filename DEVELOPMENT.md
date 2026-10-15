@@ -1,6 +1,7 @@
 # Quantum Rift: developer guide
 
 This guide is for anyone (or any AI assistant) picking up Quantum Rift's code. It covers:
+
 - how the game is built
 - the stages it went through
 - how to add a feature
@@ -13,6 +14,7 @@ Give an assistant this file plus `README.md` and it has the context to continue.
 
 Quantum Rift is a 2D space trading and combat game in the browser. It is inspired by the classic Escape Velocity Nova,
 and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
+
 - It runs as a small Node.js server with **no runtime npm dependencies**: plain ES modules, its own WebSocket implementation, and
   JSON save files.
 - The same build hosts an online game or runs a private single-player game (`SOLO=1`).
@@ -104,6 +106,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 ## Programming stages so far
 
 **EV Quantum (the desktop mod)**
+
 - The EV Nova plug-in was extended through versions 4.0 to 5.2: new ships, the Quantum Station, the Que'vari region and
   the Sol Gateway idea.
 - Ships were designed in a Python 3D pipeline: a small hull-building language over a software renderer, producing
@@ -113,28 +116,28 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 
 **Quantum Rift (the web game)**
 
-| Version | Name | What it added |
-|---|---|---|
-| 0.1–0.2 | Core | The online engine: accounts, 30 hand-made systems, trading, outfitting, combat, jobs, the Quantum Station, chat and a companion HUD |
-| 0.3 | Clean Fire | Weapon looks, mouse targeting, custom cursors, effects, the tutorial, escort slots, security hardening |
-| 0.4 | The Wide Rift | A seeded generator growing 30 systems into 200 with territories; map pan, zoom and search; mining; sleeping systems |
-| 0.5 | Hangar Deck | Shuttles, officers with synergies, research trees, refining, drydock presets, boarding (plunder, capture, rescue) |
-| 0.6 | Fleets and Fronts | Fleets, territory and Dreadnoughts (all retired in 2.6), invasions, anomalies, events, goals, faction stores, new job types |
-| 0.7 | Frontier Life | Colonies, station raids, ship mastery, the arena, the exchange, leaderboards, profiles |
-| 0.8 | Specialists | The class triangle, ten specialty ships (blueprints, parts, components, tiers), the Sol Gateway and Farside, the Feral Swarm |
-| 0.9 | Hostile Space | Hostile levels and odds, loot chests, solo armadas, Station Holdout, weekly events, the Umbral Eclipse |
-| 1.0 | Launch | The main story, a 20-step career, solo mode with slots and backups, a balance pass, accessibility options |
-| 1.0.1–1.0.3 | Fixes and QoL | Procedural planets, MISSIONS tab and map markers, command bar, autopilot landing and jumping, in-game radio, many fixes |
-| 1.1 | Living Rift | 30 rival captains, hailing, fleet orders, multi-jump autopilot, I panel, jettison, combat rating, news and market flashes |
-| 1.2 | Syndicate and Officers | Syndicate and black market, officer ranks and traits, lower decks, bank, map views, passengers and rush jobs, faction arcs, Farside expeditions |
-| 2.0 | Polish | A synthesized audio pass (interface sounds, ambience, engine hum, login theme, mixer buses), HUD numbers, edge arrows, damage and jump feedback, styled toasts, tab hotkeys |
-| 2.6 | Together | Captain Friends, DMs, the Armada (five captains and their wingmates), trading between stations, duels and Armada Duels, rescue, co-op Holdout, Armada contracts, Relocate Station, a new Crucible look; no open-galaxy PvP; sharper re-rendered ships with banking (WebP sheets, shared/sprites26.js); refits, solo armadas, directives, fleets and territory retired |
-| 2.5 | Rendered Rift | Pre-rendered planets, stations, landing pictures for every world, fireballs and combat effects, asteroids, loot, outfit pictures and a login backdrop; styled dialogs, small-screen sidebar, market depth, new career steps and story sounds |
-| 2.4 | Living Galaxy | System states and a market that remembers trades, contact questlines and six side stories, varied background worlds, combat AI personalities, bar talk, a CAREER page, shipyard comparison, outfitter filters, auto-reconnect, multiplayer screens hidden in solo |
-| 2.3 | Busy Lanes | Ten new common Quantum hulls (shared/ships23.js, art from the hull pipeline), 60 new moons and more asteroid fields (gen.js addMoonsAndFields), busier traffic |
-| 2.2 | Living Skies | Seeded scenery in every system (star, galaxies, gas giants, black holes, nebulae, asteroid drifts, ion storms, wrecks, derelicts, ruins, crystals, debris, comets, satellites, pods), right-click look-ahead, four docks, K and F reworked |
-| 2.1 | Docks | Docks A–E with a lead ship and two wingmate ships each, officers crewing wingmates, buy-to-hangar, friendly fire, a new hyperspace effect and sounds, quick volume |
-| 2.0.1–2.0.3 | Fixes | NPC landing, crash-proofing (fuzzer, UI crawler), newcomer protection in inner space, a bug backlog |
+| Version     | Name                   | What it added                                                                                                                                                                                                                                                                                                                                                         |
+| ----------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1–0.2     | Core                   | The online engine: accounts, 30 hand-made systems, trading, outfitting, combat, jobs, the Quantum Station, chat and a companion HUD                                                                                                                                                                                                                                   |
+| 0.3         | Clean Fire             | Weapon looks, mouse targeting, custom cursors, effects, the tutorial, escort slots, security hardening                                                                                                                                                                                                                                                                |
+| 0.4         | The Wide Rift          | A seeded generator growing 30 systems into 200 with territories; map pan, zoom and search; mining; sleeping systems                                                                                                                                                                                                                                                   |
+| 0.5         | Hangar Deck            | Shuttles, officers with synergies, research trees, refining, drydock presets, boarding (plunder, capture, rescue)                                                                                                                                                                                                                                                     |
+| 0.6         | Fleets and Fronts      | Fleets, territory and Dreadnoughts (all retired in 2.6), invasions, anomalies, events, goals, faction stores, new job types                                                                                                                                                                                                                                           |
+| 0.7         | Frontier Life          | Colonies, station raids, ship mastery, the arena, the exchange, leaderboards, profiles                                                                                                                                                                                                                                                                                |
+| 0.8         | Specialists            | The class triangle, ten specialty ships (blueprints, parts, components, tiers), the Sol Gateway and Farside, the Feral Swarm                                                                                                                                                                                                                                          |
+| 0.9         | Hostile Space          | Hostile levels and odds, loot chests, solo armadas, Station Holdout, weekly events, the Umbral Eclipse                                                                                                                                                                                                                                                                |
+| 1.0         | Launch                 | The main story, a 20-step career, solo mode with slots and backups, a balance pass, accessibility options                                                                                                                                                                                                                                                             |
+| 1.0.1–1.0.3 | Fixes and QoL          | Procedural planets, MISSIONS tab and map markers, command bar, autopilot landing and jumping, in-game radio, many fixes                                                                                                                                                                                                                                               |
+| 1.1         | Living Rift            | 30 rival captains, hailing, fleet orders, multi-jump autopilot, I panel, jettison, combat rating, news and market flashes                                                                                                                                                                                                                                             |
+| 1.2         | Syndicate and Officers | Syndicate and black market, officer ranks and traits, lower decks, bank, map views, passengers and rush jobs, faction arcs, Farside expeditions                                                                                                                                                                                                                       |
+| 2.0         | Polish                 | A synthesized audio pass (interface sounds, ambience, engine hum, login theme, mixer buses), HUD numbers, edge arrows, damage and jump feedback, styled toasts, tab hotkeys                                                                                                                                                                                           |
+| 2.6         | Together               | Captain Friends, DMs, the Armada (five captains and their wingmates), trading between stations, duels and Armada Duels, rescue, co-op Holdout, Armada contracts, Relocate Station, a new Crucible look; no open-galaxy PvP; sharper re-rendered ships with banking (WebP sheets, shared/sprites26.js); refits, solo armadas, directives, fleets and territory retired |
+| 2.5         | Rendered Rift          | Pre-rendered planets, stations, landing pictures for every world, fireballs and combat effects, asteroids, loot, outfit pictures and a login backdrop; styled dialogs, small-screen sidebar, market depth, new career steps and story sounds                                                                                                                          |
+| 2.4         | Living Galaxy          | System states and a market that remembers trades, contact questlines and six side stories, varied background worlds, combat AI personalities, bar talk, a CAREER page, shipyard comparison, outfitter filters, auto-reconnect, multiplayer screens hidden in solo                                                                                                     |
+| 2.3         | Busy Lanes             | Ten new common Quantum hulls (shared/ships23.js, art from the hull pipeline), 60 new moons and more asteroid fields (gen.js addMoonsAndFields), busier traffic                                                                                                                                                                                                        |
+| 2.2         | Living Skies           | Seeded scenery in every system (star, galaxies, gas giants, black holes, nebulae, asteroid drifts, ion storms, wrecks, derelicts, ruins, crystals, debris, comets, satellites, pods), right-click look-ahead, four docks, K and F reworked                                                                                                                            |
+| 2.1         | Docks                  | Docks A–E with a lead ship and two wingmate ships each, officers crewing wingmates, buy-to-hangar, friendly fire, a new hyperspace effect and sounds, quick volume                                                                                                                                                                                                    |
+| 2.0.1–2.0.3 | Fixes                  | NPC landing, crash-proofing (fuzzer, UI crawler), newcomer protection in inner space, a bug backlog                                                                                                                                                                                                                                                                   |
 
 The project docs (outside this zip) also hold the roadmap. Multiplayer group features are deferred, and the game is
 single-player focused for now.
@@ -170,9 +173,11 @@ single-player focused for now.
 ## Resources and inspirations
 
 **Escape Velocity Nova (Ambrosia Software / ATMOS)**
+
 - The genre and feel. EV Quantum is a plug-in for it.
 
 **Endless Sky**
+
 - The open-source spiritual successor to EV Nova, and the inspiration for 1.1 and 1.2:
   - autopilot landing and jumping, multi-jump routes
   - hailing and bribes, fleet commands
@@ -183,6 +188,7 @@ single-player focused for now.
   - Player's Manual: https://github.com/endless-sky/endless-sky/wiki/PlayersManual
 
 **Star Trek Fleet Command**
+
 - Older solo-relevant loops inspired 0.8 to 1.2: the class triangle, specialty ships with blueprint and part chains,
   component tiers, solo armadas, wave defense, the Syndicate, and officer ranks.
 - References:
@@ -190,6 +196,7 @@ single-player focused for now.
   - https://hackmd.io/@hawks/infos_en
 
 **iHeartRadio public API**
+
 - Used by the in-game radio:
   - station search: `api.iheart.com/api/v3/search/all`
   - stream URLs: `api.iheart.com/api/v2/content/liveStations/{id}`
@@ -197,6 +204,7 @@ single-player focused for now.
 - The server proxies these requests (`/api/radio…`).
 
 **Tools**
+
 - Playwright with Chromium for browser tests.
 - Python with Pillow and numpy for the art pipeline and asset tools; numpy, scipy and ffmpeg for the synthesized audio.
 - hls.js (loaded from cdnjs only when a radio station needs HLS).

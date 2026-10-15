@@ -9,7 +9,10 @@
     "test": "node test/bot.js",
     "typecheck": "tsc --noEmit",
     "test:features": "node test/features.js",
-    "test:types": "node test/typecheck-contracts.js"
+    "test:types": "node test/typecheck-contracts.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=18"
@@ -17,6 +20,8 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "husky": "^9.1.7",
+    "prettier": "^3.9.10",
     "typescript": "^7.0.2"
   }
 }

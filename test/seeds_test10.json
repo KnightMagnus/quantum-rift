@@ -1,2 +1,20 @@
-[{ "name": "Wayfarer", "pass": "secret", "credits": 500000, "ship": 713, "system": "quevar", "stellar": "inalumen", "log": "Test." },
- { "name": "Seeker", "pass": "secret", "credits": 500000, "ship": 713, "system": "farmouth", "stellar": "threshold", "log": "Test." }]
+[
+  {
+    "name": "Wayfarer",
+    "pass": "secret",
+    "credits": 500000,
+    "ship": 713,
+    "system": "quevar",
+    "stellar": "inalumen",
+    "log": "Test."
+  },
+  {
+    "name": "Seeker",
+    "pass": "secret",
+    "credits": 500000,
+    "ship": 713,
+    "system": "farmouth",
+    "stellar": "threshold",
+    "log": "Test."
+  }
+]

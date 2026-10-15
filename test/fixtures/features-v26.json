@@ -76,27 +76,9 @@
     },
     "cargo": {},
     "mats": {
-      "alloy": [
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "crystal": [
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "isotope": [
-        0,
-        0,
-        0,
-        0,
-        0
-      ]
+      "alloy": [0, 0, 0, 0, 0],
+      "crystal": [0, 0, 0, 0, 0],
+      "isotope": [0, 0, 0, 0, 0]
     },
     "rep": {
       "quantum": 10,
@@ -140,9 +122,7 @@
     },
     "tut": 0,
     "tutV": 2,
-    "explored": [
-      "qgate"
-    ],
+    "explored": ["qgate"],
     "id": 1,
     "shuttles": [],
     "officers": [],
@@ -648,10 +628,5 @@
     },
     "colonies": {}
   },
-  "lookup": [
-    true,
-    true,
-    true,
-    false
-  ]
+  "lookup": [true, true, true, false]
 }

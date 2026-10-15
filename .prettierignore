@@ -1,0 +1,7 @@
+# Local saves, dependencies, and logs (not source).
+data/
+solo-data/
+node_modules/
+*.log
+.artifacts/
+out/

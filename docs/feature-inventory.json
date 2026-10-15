@@ -91,12 +91,8 @@
       "exportName": "HangarOperations",
       "stateWrites": [],
       "hooks": {
-        "login": [
-          "hangarInit"
-        ],
-        "tick2s": [
-          "resolveShuttle"
-        ]
+        "login": ["hangarInit"],
+        "tick2s": ["resolveShuttle"]
       },
       "owner": "server/hangar.js"
     },
@@ -159,19 +155,10 @@
       ],
       "baselineExport": "FrontsMixin",
       "exportName": "FrontsOperations",
-      "stateWrites": [
-        "_an",
-        "_anW",
-        "invasion",
-        "lastInvWin"
-      ],
+      "stateWrites": ["_an", "_anW", "invasion", "lastInvWin"],
       "hooks": {
-        "worldInit": [
-          "frontsInit"
-        ],
-        "tick2s": [
-          "invasionTick"
-        ],
+        "worldInit": ["frontsInit"],
+        "tick2s": ["invasionTick"],
         "login": []
       },
       "owner": "server/fronts.js"
@@ -266,24 +253,11 @@
       ],
       "baselineExport": "FrontierMixin",
       "exportName": "FrontierOperations",
-      "stateWrites": [
-        "arenaQ",
-        "matches",
-        "nextMatch",
-        "waves"
-      ],
+      "stateWrites": ["arenaQ", "matches", "nextMatch", "waves"],
       "hooks": {
-        "worldInit": [
-          "frontierInit"
-        ],
-        "tick2s": [
-          "raidCheck",
-          "waveTick",
-          "arenaTick"
-        ],
-        "tick30s": [
-          "worldPayload"
-        ]
+        "worldInit": ["frontierInit"],
+        "tick2s": ["raidCheck", "waveTick", "arenaTick"],
+        "tick30s": ["worldPayload"]
       },
       "owner": "server/frontier.js"
     },
@@ -335,10 +309,7 @@
       "exportName": "SpecialistOperations",
       "stateWrites": [],
       "hooks": {
-        "tick2s": [
-          "specIdle",
-          "specCheck"
-        ]
+        "tick2s": ["specIdle", "specCheck"]
       },
       "owner": "server/specialists.js"
     },
@@ -382,12 +353,8 @@
       "exportName": "HostileOperations",
       "stateWrites": [],
       "hooks": {
-        "login": [
-          "hostInit"
-        ],
-        "tick2s": [
-          "holdoutTick"
-        ]
+        "login": ["hostInit"],
+        "tick2s": ["holdoutTick"]
       },
       "owner": "server/hostile.js"
     },
@@ -428,10 +395,7 @@
       "exportName": "StoryOperations",
       "stateWrites": [],
       "hooks": {
-        "login": [
-          "storyInit",
-          "storyOnLand"
-        ]
+        "login": ["storyInit", "storyOnLand"]
       },
       "owner": "server/story.js"
     },
@@ -474,32 +438,17 @@
       ],
       "baselineExport": "RivalsMixin",
       "exportName": "RivalsOperations",
-      "stateWrites": [
-        "rivalEnts"
-      ],
+      "stateWrites": ["rivalEnts"],
       "hooks": {
-        "worldInit": [
-          "rivalsInit"
-        ],
-        "tick20s": [
-          "rivalsTick"
-        ],
-        "tick2sOffset": [
-          "rivalSync"
-        ]
+        "worldInit": ["rivalsInit"],
+        "tick20s": ["rivalsTick"],
+        "tick2sOffset": ["rivalSync"]
       },
       "owner": "server/rivals.js"
     },
     {
       "file": "hail",
-      "methods": [
-        "bribeCost",
-        "hailTarget",
-        "hail",
-        "hailOpt",
-        "hailPlanet",
-        "hailPlanetOpt"
-      ],
+      "methods": ["bribeCost", "hailTarget", "hail", "hailOpt", "hailPlanet", "hailPlanetOpt"],
       "uses": [
         "A",
         "bribeCost",
@@ -524,19 +473,8 @@
     },
     {
       "file": "fleetcmd",
-      "methods": [
-        "fleetOrder",
-        "jettison",
-        "lootCargo",
-        "rankOf"
-      ],
-      "uses": [
-        "send",
-        "spaces",
-        "stats",
-        "toast",
-        "you"
-      ],
+      "methods": ["fleetOrder", "jettison", "lootCargo", "rankOf"],
+      "uses": ["send", "spaces", "stats", "toast", "you"],
       "baselineExport": "FleetCmdMixin",
       "exportName": "FleetCmdOperations",
       "stateWrites": [],
@@ -578,13 +516,8 @@
       "exportName": "SyndicateOperations",
       "stateWrites": [],
       "hooks": {
-        "login": [
-          "synInit"
-        ],
-        "tick2s": [
-          "missionDeadlines",
-          "bankTick"
-        ]
+        "login": ["synInit"],
+        "tick2s": ["missionDeadlines", "bankTick"]
       },
       "owner": "server/syndicate.js"
     },
@@ -623,10 +556,7 @@
       "exportName": "ArcsOperations",
       "stateWrites": [],
       "hooks": {
-        "login": [
-          "arcsInit",
-          "arcOnLand"
-        ]
+        "login": ["arcsInit", "arcOnLand"]
       },
       "owner": "server/arcs.js"
     },
@@ -685,9 +615,7 @@
       "exportName": "DocksOperations",
       "stateWrites": [],
       "hooks": {
-        "login": [
-          "docksInit"
-        ]
+        "login": ["docksInit"]
       },
       "owner": "server/docks.js"
     },
@@ -728,19 +656,10 @@
       ],
       "baselineExport": "LivingMixin",
       "exportName": "LivingOperations",
-      "stateWrites": [
-        "_livingStarted",
-        "_mkt",
-        "worldKey"
-      ],
+      "stateWrites": ["_livingStarted", "_mkt", "worldKey"],
       "hooks": {
-        "worldInit": [
-          "livingInit",
-          "livingTick"
-        ],
-        "tick20s": [
-          "livingTick"
-        ]
+        "worldInit": ["livingInit", "livingTick"],
+        "tick20s": ["livingTick"]
       },
       "owner": "server/living.js"
     },
@@ -797,10 +716,7 @@
       "exportName": "QuestOperations",
       "stateWrites": [],
       "hooks": {
-        "tick2s": [
-          "questSweep",
-          "questSalvageIdle"
-        ]
+        "tick2s": ["questSweep", "questSalvageIdle"]
       },
       "owner": "server/quests.js"
     },
@@ -921,25 +837,12 @@
       ],
       "baselineExport": "CoopMixin",
       "exportName": "CoopOperations",
-      "stateWrites": [
-        "duels",
-        "nextCoopId",
-        "trades"
-      ],
+      "stateWrites": ["duels", "nextCoopId", "trades"],
       "hooks": {
-        "worldInit": [
-          "coopInit"
-        ],
-        "login": [
-          "coopMigrate",
-          "coopLogin"
-        ],
-        "logout": [
-          "coopLogout"
-        ],
-        "tick2s": [
-          "coopTick"
-        ]
+        "worldInit": ["coopInit"],
+        "login": ["coopMigrate", "coopLogin"],
+        "logout": ["coopLogout"],
+        "tick2s": ["coopTick"]
       },
       "owner": "server/coop.js"
     }

@@ -1,6 +1,6 @@
 # Quantum Rift
 
-**A space trading and combat game in your browser, in the spirit of the classic *Escape Velocity Nova*.**
+**A space trading and combat game in your browser, in the spirit of the classic _Escape Velocity Nova_.**
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
@@ -13,6 +13,7 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 ## Features
 
 **A big, living galaxy**
+
 - 211 star systems across 14 powers: the Quantum Concord, free traders, pirates, five alien races and stranger things at the edges.
 - Pre-rendered planets, stations and landing pictures in the style of EV Nova: oceans that catch the sun, city lights on the night side, ringed giants, and a rendered scene for every world you land on.
 - Every system has its own scenery, generated from the system itself: its star, distant galaxies, nebulae, ion storms, ancient wrecks, abandoned stations, crystal formations, comets and drifting debris.
@@ -21,6 +22,7 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 - Systems pass through famines, plagues, booms, border wars, pirate scourges, festivals and mining rushes that move prices and post their own jobs. Markets remember what you trade.
 
 **Flight and combat in the EV style**
+
 - Newtonian flight with guns, turrets, beams, homing missiles, point defense and drone carriers.
 - Your guns hit anything you aim at. Shoot a friendly ship and it turns on you, and its faction remembers.
 - NPC captains have personalities: some run when beaten, some call friends for help, and capital ships fire broadsides.
@@ -28,6 +30,7 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 - Roughly 100 ships to fly, from a 15,000-credit Mite Drone to the Constitution, plus ten one-of-a-kind specialty ships. Every ship is rendered from a 3D model, and smaller ships bank into their turns.
 
 **A career to build**
+
 - Trade on living markets with shortages and gluts. Take cargo runs, bounties, patrols, passengers, rush deliveries, smuggling and Syndicate contracts.
 - **Questlines:** a contact in every spaceport bar who remembers you and has multi-step stories to offer, plus six handcrafted side stories.
 - Claim a derelict station hull and build it into your **Personal Station**: refinery, research lab, station shipyard, Station Holdouts, and a warp core to relocate it to another hull.
@@ -37,6 +40,7 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 - A main story waiting somewhere in the Rift. We won't spoil it.
 
 **Better together (online games)**
+
 - **Captain Friends:** see who's online and where, and send private messages that wait for offline captains.
 - **The Armada:** team up with up to four other captains and all your wingmates. Allies show in green and can't hurt each other. You get a private chat, small buffs, shared bounties, a rescue if your ship goes down, and follow-the-leader jumps.
 - **Armada contracts and co-op Holdouts:** group kingpins with refitted squadrons, and Station Holdouts your friends can fly in to defend.
@@ -44,22 +48,23 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 - **PvP only when you agree to it:** no ganking in the open galaxy. Duels and Armada Duels end at disabled, and the Crucible arena has rated 1v1, 2v2 and 4v4 matches.
 
 **Made to be comfortable**
+
 - Solo mode with pause, save slots and save files, or online play with accounts. Solo games hide the multiplayer screens.
 - Newcomer protection: pirates in inner space leave new captains alone until their station reaches Ops 3.
 - An in-game radio with thousands of live stations, and a fully synthesized soundscape with a quick volume control.
 - Key remapping, a colour-blind palette, interface scaling, gamepad and touch controls.
 - No installs beyond Node.js: no npm packages, no build step.
 
-| | |
-|---|---|
-| ![Six different systems](docs/screenshots/systems.jpg) | ![The DOCKS screen at a Personal Station](docs/screenshots/docks.jpg) |
-| *Every system looks different* | *Docks A to D, with crewed wingmates* |
-| ![The galaxy map](docs/screenshots/galaxy-map.jpg) | ![A hyperspace jump, start to finish](docs/screenshots/hyperspace.jpg) |
-| *The galaxy map, with trade, standing and danger views* | *A hyperspace jump* |
-| ![Rendered landing pictures](docs/screenshots/landing-pictures.jpg) | ![Rendered planets](docs/screenshots/planets.jpg) |
-| *A landing picture for every world* | *Pre-rendered planets* |
-| ![Two captains in an Armada, with the ALLIES tab](docs/screenshots/coop.jpg) | ![A duel in the Crucible arena](docs/screenshots/crucible.jpg) |
-| *An Armada: allies and their wingmates show in green* | *The Crucible arena* |
+|                                                                              |                                                                        |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| ![Six different systems](docs/screenshots/systems.jpg)                       | ![The DOCKS screen at a Personal Station](docs/screenshots/docks.jpg)  |
+| _Every system looks different_                                               | _Docks A to D, with crewed wingmates_                                  |
+| ![The galaxy map](docs/screenshots/galaxy-map.jpg)                           | ![A hyperspace jump, start to finish](docs/screenshots/hyperspace.jpg) |
+| _The galaxy map, with trade, standing and danger views_                      | _A hyperspace jump_                                                    |
+| ![Rendered landing pictures](docs/screenshots/landing-pictures.jpg)          | ![Rendered planets](docs/screenshots/planets.jpg)                      |
+| _A landing picture for every world_                                          | _Pre-rendered planets_                                                 |
+| ![Two captains in an Armada, with the ALLIES tab](docs/screenshots/coop.jpg) | ![A duel in the Crucible arena](docs/screenshots/crucible.jpg)         |
+| _An Armada: allies and their wingmates show in green_                        | _The Crucible arena_                                                   |
 
 ![Ships re-rendered in 2.6, and a Cutlass rolling into its turns](docs/screenshots/ships.png)
 
@@ -88,31 +93,31 @@ On the same network, friends can join at `http://<your-computer's-address>:8080`
 
 ## Controls
 
-| Key | Action |
-|---|---|
-| W / ↑ | thrust |
-| A, D / ←, → | turn |
-| S / ↓ | turn to reverse |
-| Shift | afterburner |
-| Space | fire primary weapons |
-| F | fire secondary weapons; **tap** to launch or recall all drones |
-| Tab / Shift+Tab | cycle targets |
-| R | nearest hostile |
-| L | land (the autopilot flies you in); also departs when docked |
-| M | galaxy map: click a system to plot a course |
-| J | jump along the plotted course, all the way to the destination |
-| T | hail your target or a planet: bribe, beg fuel, talk to rival captains |
-| B | board a disabled ship: plunder, capture or rescue |
-| I | ship and captain panel |
-| E (hold) | face your target |
-| Q | full stop |
-| K / G / H / Y / U | wingmate orders: attack my target, form up, hold position, hold fire, collect loot |
-| Z / X | zoom |
-| N | mute |
-| P | pause (solo) |
-| Enter | chat (`/s` system, `/a` Armada, `/w name message` private, `/r` reply) |
-| ? or F1 | the controls card |
-| Mouse | click to target, click a planet to set your nav point, double-click to land; **hold right-click and move** to look ahead; wheel to zoom |
+| Key               | Action                                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| W / ↑             | thrust                                                                                                                                  |
+| A, D / ←, →       | turn                                                                                                                                    |
+| S / ↓             | turn to reverse                                                                                                                         |
+| Shift             | afterburner                                                                                                                             |
+| Space             | fire primary weapons                                                                                                                    |
+| F                 | fire secondary weapons; **tap** to launch or recall all drones                                                                          |
+| Tab / Shift+Tab   | cycle targets                                                                                                                           |
+| R                 | nearest hostile                                                                                                                         |
+| L                 | land (the autopilot flies you in); also departs when docked                                                                             |
+| M                 | galaxy map: click a system to plot a course                                                                                             |
+| J                 | jump along the plotted course, all the way to the destination                                                                           |
+| T                 | hail your target or a planet: bribe, beg fuel, talk to rival captains                                                                   |
+| B                 | board a disabled ship: plunder, capture or rescue                                                                                       |
+| I                 | ship and captain panel                                                                                                                  |
+| E (hold)          | face your target                                                                                                                        |
+| Q                 | full stop                                                                                                                               |
+| K / G / H / Y / U | wingmate orders: attack my target, form up, hold position, hold fire, collect loot                                                      |
+| Z / X             | zoom                                                                                                                                    |
+| N                 | mute                                                                                                                                    |
+| P                 | pause (solo)                                                                                                                            |
+| Enter             | chat (`/s` system, `/a` Armada, `/w name message` private, `/r` reply)                                                                  |
+| ? or F1           | the controls card                                                                                                                       |
+| Mouse             | click to target, click a planet to set your nav point, double-click to land; **hold right-click and move** to look ahead; wheel to zoom |
 
 Every key can be remapped in Options (the gear button, or **O**). A standard **gamepad** works out of the box, and touch screens get an on-screen stick and buttons.
 
@@ -128,12 +133,12 @@ Any host that runs a long-lived Node process with WebSockets will do:
 
 One small CPU handles dozens of players; only systems with players in them run at full rate.
 
-| Setting | What it does |
-|---|---|
-| `PORT` | port to listen on (default 8080) |
-| `DATA_DIR` | where saves go (default `./data`) |
-| `SOLO=1` | single-player mode: local only, no passwords, pause, save slots |
-| `SEEDS_FILE` | a file of ready-made captains to create on start-up |
+| Setting      | What it does                                                    |
+| ------------ | --------------------------------------------------------------- |
+| `PORT`       | port to listen on (default 8080)                                |
+| `DATA_DIR`   | where saves go (default `./data`)                               |
+| `SOLO=1`     | single-player mode: local only, no passwords, pause, save slots |
+| `SEEDS_FILE` | a file of ready-made captains to create on start-up             |
 
 ---
 
@@ -150,7 +155,7 @@ One small CPU handles dozens of players; only systems with players in them run a
 
 ## Credits
 
-- *Escape Velocity Nova* (Ambrosia Software / ATMOS): the game that started it all. Quantum Rift is an unofficial fan project and is not affiliated with them.
+- _Escape Velocity Nova_ (Ambrosia Software / ATMOS): the game that started it all. Quantum Rift is an unofficial fan project and is not affiliated with them.
 - **EV Quantum**, the EV Nova plug-in whose ships, weapons, sounds and stations Quantum Rift was rebuilt from.
-- *Endless Sky* and *Star Trek Fleet Command*, for ideas: hailing, fleet orders and map views from the first; specialty ships and docks from the second.
+- _Endless Sky_ and _Star Trek Fleet Command_, for ideas: hailing, fleet orders and map views from the first; specialty ships and docks from the second.
 - The in-game radio uses the public iHeartRadio station directory.

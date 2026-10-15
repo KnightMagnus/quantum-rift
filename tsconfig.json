@@ -10,5 +10,10 @@
     "types": ["node"],
     "skipLibCheck": true
   },
-  "include": ["server/features.js", "server/feature-service.js", "server/fleetcmd.js", "server/contracts.js"]
+  "include": [
+    "server/features.js",
+    "server/feature-service.js",
+    "server/fleetcmd.js",
+    "server/contracts.js"
+  ]
 }
