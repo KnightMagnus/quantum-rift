@@ -47,7 +47,7 @@ import { CoopOperations } from './coop.js';
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'depart' | 'live' | 'log' | 'ownSite' | 'spaces' | 'toast' | 'tut' | 'you'> & Pick<typeof SpecialistOperations, 'bonus' | 'specInit'> & Pick<typeof CoopOperations, 'holdoutAnnounce' | 'holdoutHelpers' | 'holdoutReward'> & Pick<typeof HostileOperations, 'holdoutEnd' | 'hostInit' | 'myPower'> & Pick<typeof FrontsOperations, 'mods'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof DocksOperations, 'wingHulls'>} HostileCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'broadcast' | 'db' | 'landed' | 'log' | 'send' | 'toast' | 'tradeIn' | 'you'> & Pick<typeof HangarOperations, 'dockSlots'> & Pick<typeof DocksOperations, 'leadChanged'> & Pick<typeof StoryOperations, 'storyComplete' | 'storyDone' | 'storyGift' | 'storyInit' | 'storyOffer'>} StoryCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'live' | 'log' | 'rivalEnts' | 'sessions' | 'spaces' | 'toast'> & Pick<typeof RivalsOperations, 'news' | 'relOf' | 'rivalRel' | 'rivalState' | 'spawnHunters'>} RivalsCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'log' | 'send' | 'spaces' | 'toast' | 'you'> & Pick<typeof HailOperations, 'bribeCost' | 'hailPlanet' | 'hailPlanetOpt' | 'hailTarget'> & Pick<typeof HostileOperations, 'myPower'> & Pick<typeof RivalsOperations, 'relOf' | 'rivalRel'>} HailCapabilities */
+/** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'hails' | 'log' | 'send' | 'spaces' | 'toast' | 'you'> & Pick<typeof HailOperations, 'bribeCost' | 'hailPlanet' | 'hailPlanetOpt' | 'hailTarget'> & Pick<typeof HostileOperations, 'myPower'> & Pick<typeof RivalsOperations, 'relOf' | 'rivalRel'>} HailCapabilities */
 /** @typedef {import('./contracts.js').FleetCommandsCapabilities} FleetCommandsCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'landed' | 'log' | 'toast' | 'you'> & Pick<typeof SyndicateOperations, 'bankAt' | 'bankInfo' | 'blackMarketAt' | 'synInit'> & Pick<typeof FrontierOperations, 'notify'>} SyndicateCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'landed' | 'log' | 'send' | 'toast' | 'you'> & Pick<typeof ArcsOperations, 'arcComplete' | 'arcOffer' | 'arcOffersAt' | 'arcState' | 'arcsInit' | 'expeditionNext'>} ArcsCapabilities */
@@ -657,6 +657,9 @@ export function createFeatures(core) {
   features.rivals = bindOperations(RivalsOperations, rivalsCapabilities);
   /** @type {HailCapabilities} */
   const hailCapabilities = {
+    get hails() {
+      return core.hails;
+    },
     get A() {
       return core.A;
     },

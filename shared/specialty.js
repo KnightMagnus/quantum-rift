@@ -15,7 +15,7 @@ export const SPEC_RES = {
   warrants: { name: 'Warrant Seals', icon: '⚖', color: '#ff9a3a' },
 };
 
-// base EV-style stats (same units as the mod's ships)
+// Base hull stats in asset-space units.
 const S = (o) => ({
   cat: 'Specialist',
   faction: 'specialist',

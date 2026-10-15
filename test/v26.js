@@ -689,7 +689,7 @@ ok(
 const read = (f) => fs.readFileSync(C + f, 'utf8');
 ok(
   /data-tab="captains"/.test(read('index.html')) &&
-    /body\.solo \.mp\{display:none\}/.test(read('style.css')),
+    /body\.solo\s+\.mp\s*\{\s*display:\s*none;?\s*\}/.test(read('style.css')),
   'the CAPTAINS tab exists and hides in solo',
 );
 ok(
