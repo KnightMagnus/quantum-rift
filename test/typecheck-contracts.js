@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-types-'));
-const modulePath = file => path.join(root, 'server', file).replaceAll('\\', '/');
+const modulePath = (file) => path.join(root, 'server', file).replaceAll('\\', '/');
 const common = `// @ts-check
 /** @type {import('${modulePath('features.js')}').FeatureServices} */
 const features = /** @type {import('${modulePath('features.js')}').FeatureServices} */ ({});
@@ -20,17 +20,27 @@ try {
   config.compilerOptions.typeRoots = [path.join(root, 'node_modules/@types')];
   config.include = [path.join(dir, 'fixture.js')];
   fs.writeFileSync(path.join(dir, 'tsconfig.json'), JSON.stringify(config));
-  const check = body => {
+  const check = (body) => {
     fs.writeFileSync(path.join(dir, 'fixture.js'), common + body);
-    return spawnSync(process.execPath, [path.join(root, 'node_modules/typescript/bin/tsc'), '-p', path.join(dir, 'tsconfig.json')], {encoding: 'utf8'});
+    return spawnSync(
+      process.execPath,
+      [path.join(root, 'node_modules/typescript/bin/tsc'), '-p', path.join(dir, 'tsconfig.json')],
+      { encoding: 'utf8' },
+    );
   };
-  let result = check("features.fleetcmd.fleetOrder(session, 'hold');\nfeatures.fleetcmd.jettison(session, 'food', 3);\n");
+  let result = check(
+    "features.fleetcmd.fleetOrder(session, 'hold');\nfeatures.fleetcmd.jettison(session, 'food', 3);\n",
+  );
   assert.equal(result.status, 0, result.stdout + result.stderr);
   result = check('features.fleetcmd.fleetOrder(session, 42);\n');
   assert.notEqual(result.status, 0, 'numeric fleet order must be rejected');
   assert.match(result.stdout + result.stderr, /number.*string/);
-  result = check(`/** @type {import('${modulePath('contracts.js')}').FleetCommandsCapabilities} */\nconst incomplete = {toast() {}, send() {}, you() {}, stats() { return {cargo: 5}; }};\n`);
+  result = check(
+    `/** @type {import('${modulePath('contracts.js')}').FleetCommandsCapabilities} */\nconst incomplete = {toast() {}, send() {}, you() {}, stats() { return {cargo: 5}; }};\n`,
+  );
   assert.notEqual(result.status, 0, 'missing spaces capability must be rejected');
   assert.match(result.stdout + result.stderr, /spaces.*missing|missing.*spaces/);
   console.log('Typed valid calls pass; invalid argument and missing capability are rejected.');
-} finally { fs.rmSync(dir, {recursive: true, force: true}); }
+} finally {
+  fs.rmSync(dir, { recursive: true, force: true });
+}

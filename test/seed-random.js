@@ -2,4 +2,7 @@
 // Example: node --import ./test/seed-random.js test/v203.js
 // Override RIFT_TEST_SEED to explore/reproduce another scenario.
 let seed = Number(process.env.RIFT_TEST_SEED || 123456789) >>> 0;
-Math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+Math.random = () => {
+  seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+  return seed / 4294967296;
+};

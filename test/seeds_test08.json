@@ -1,1 +1,11 @@
-[{ "name": "Earthling", "pass": "secret", "credits": 100000, "ship": 708, "system": "sol", "stellar": "earth", "log": "Test." }]
+[
+  {
+    "name": "Earthling",
+    "pass": "secret",
+    "credits": 100000,
+    "ship": 708,
+    "system": "sol",
+    "stellar": "earth",
+    "log": "Test."
+  }
+]

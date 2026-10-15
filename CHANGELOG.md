@@ -3,7 +3,9 @@
 Every release, newest first. The main story is left out on purpose.
 
 ### 2.6 "Together"
+
 Co-op play for online games, sharper ships that bank into their turns, and a clear-out of systems that no longer fit.
+
 - **Captain Friends:** add captains as friends from the ALLIES tab, the captains list at Quantum Station, your target panel or the chat. See who is online, away or offline, where they are and when they were last seen. A short note tells you when a friend comes online.
 - **Messages:** private messages to friends (or anyone who allows it), in the ALLIES tab or with `/w name message` in chat, and `/r` to reply. Messages to offline captains wait for them. Click a name in chat to message them. Block a captain to stop their messages, requests, invites and chat.
 - **The Armada:** a short co-op group of up to five captains, each bringing their own wingmates. Invite any captain online, from anywhere: from their ship in space, the friends list or the station list (inviting forms an Armada if you have none).
@@ -28,6 +30,7 @@ Co-op play for online games, sharper ships that bank into their turns, and a cle
 - **Fixes:** the traffic tests no longer fail on Wednesdays, when Bounty Week brings extra raiders.
 
 ### 2.5.2
+
 - **Fixes:**
   - Contact stories warn on the job board when a step will need more hold space or bunks than your ship has, and a stuck step tells you to switch ships instead of quietly waiting.
   - Supply jobs warn when your hold is too small to carry the goods.
@@ -44,11 +47,14 @@ Co-op play for online games, sharper ships that bank into their turns, and a cle
 - **Scenery:** the broken ring stations are now rendered wreckage that has drifted apart, with tumbling pieces, torn spars and debris. The giant megastructure arcs are detailed frameworks with docking bays and lights, and are drawn smaller.
 
 ### 2.5.1
+
 - **The planets turn again.** The rendered planets now rotate slowly, as they did before 2.5. Each world is baked into surface maps (colour, relief, water, night lights and clouds), and the game lights them as they turn: bump relief, the soft terminator, the ocean glint, cloud shadows, city lights on the night side and the atmosphere rim. Clouds drift a little faster than the ground, rings and halos stay put, and each world keeps its own tilt and speed.
 - Softer, rounder cloud shapes on the rendered worlds, and greener continents on Earth-like planets.
 
 ### 2.5 "Rendered Rift"
+
 An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
+
 - **Rendered planets:** 56 worlds ray-traced in the old 3D style: continents and biomes, mountains with bump lighting, oceans with a sun glint, cloud layers with shadows, city lights on the night side, lava glow, craters, gas bands and storms, atmospheres and rings. Each world picks the render of its type closest to its own colour. Background worlds use them too.
 - **Rendered space stations:** the 78 station worlds were flat drawn rings. Now there are twelve 3D designs, chosen by who built them: ring, spindle, cross-dock, asteroid base, twin ring, shipyard frame, saucer, Vashari hive, Ylith crystal, Thalassi reef, Korrund forge and outlaw junk.
 - **Landing pictures for every world:** about 180 worlds showed only a colour blur. Now 41 Bryce-style scenes cover them all: terrain with water reflections and haze, rendered cities, domes, arcologies, foundries, crystals and cloud platforms, and skies with suns, clouds, aurorae and neighbouring planets. Stations get an exterior view of their own design. Earth and the Que'vari worlds have their own scenes.
@@ -66,6 +72,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Tools:** `rift_planets.py`, `rift_stations.py`, `rift_landscapes.py`, `rift_fx.py`, `rift_objects.py`, `rift_icons.py`, `rift_login.py`, `rift_audio25.py`, with `rift_render3d.py` (the hull pipeline's renderer) and `rift_noise.py`.
 
 ### 2.4 "Living Galaxy"
+
 - **Questlines:**
   - Every spaceport bar has a **contact**, a named character who remembers you. Each offers multi-step stories: a missing freighter, a fever run, an informant to hide, a ghost signal, a prospector's claim, a dignitary escort and an old debt.
   - Each step is a job (deliveries, surveys, rescues, bounties, escorts, supply runs, patrols, and the new **salvage** step), and finishing one tells the next part of the story.
@@ -101,23 +108,24 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Fixes:** a comment that had swallowed the solo note code, and the missing "invasion" entry in the map legend.
 
 ### 2.3 "Busy Lanes"
+
 - **Ten new Quantum hulls** in the Concord yards, filling the gaps in the common lineup:
 
-  | Hull | Price | What it is |
-  |---|---|---|
-  | Wasp Skirmisher | 30k | A cheap starter fighter |
-  | Swift Courier | 110k | A fast blockade runner with a quick-spooling drive |
-  | Pelican Salvage Tug | 170k | Grapple arms ahead, a towing frame behind |
-  | Sabre Corvette | 380k | The yards' all-rounder |
-  | Caravel Trader | 430k | An armed merchantman racked with containers |
-  | Talon Strike Fighter | 780k | A heavy fighter with rocket pods |
-  | Lighthouse Survey Cruiser | 950k | Huge fuel range and a fast drive |
-  | Monarch Executive Yacht | 1.9M | White and gold, very fast |
-  | Aegis Escort Cruiser | 2.2M | Studded with flak turrets |
-  | Vigil Heavy Cruiser | 5.2M | A spinal fusion cannon and broadside turrets, between the Tempest and the Bastion |
-
+  | Hull                      | Price | What it is                                                                        |
+  | ------------------------- | ----- | --------------------------------------------------------------------------------- |
+  | Wasp Skirmisher           | 30k   | A cheap starter fighter                                                           |
+  | Swift Courier             | 110k  | A fast blockade runner with a quick-spooling drive                                |
+  | Pelican Salvage Tug       | 170k  | Grapple arms ahead, a towing frame behind                                         |
+  | Sabre Corvette            | 380k  | The yards' all-rounder                                                            |
+  | Caravel Trader            | 430k  | An armed merchantman racked with containers                                       |
+  | Talon Strike Fighter      | 780k  | A heavy fighter with rocket pods                                                  |
+  | Lighthouse Survey Cruiser | 950k  | Huge fuel range and a fast drive                                                  |
+  | Monarch Executive Yacht   | 1.9M  | White and gold, very fast                                                         |
+  | Aegis Escort Cruiser      | 2.2M  | Studded with flak turrets                                                         |
+  | Vigil Heavy Cruiser       | 5.2M  | A spinal fusion cannon and broadside turrets, between the Tempest and the Bastion |
   - The Wasp, Swift and Pelican are sold in common yards everywhere.
   - All ten fly in NPC traffic.
+
 - **60 new moons** circling planets across the Rift. They are airless, and nobody lives there.
 - **More asteroids:** existing fields hold more rocks, and about half the systems gain an extra asteroid field, gas cloud or crystal field.
 - **Busier space:**
@@ -127,6 +135,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   - Pirate havens cap their raider packs and see visiting smugglers and free traders instead.
 
 ### 2.2 "Living Skies"
+
 - **Every system has its own scenery**, seeded from the system, so each one always looks the same and no two look alike.
   - **Far away:**
     - the system's star with a lens flare
@@ -157,6 +166,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Drones on F.** Tap F to launch every drone in your bays at once, and tap again to call them all home. Drones stay out until recalled, and any still out when you land or jump go back into the bays.
 
 ### 2.1 "Docks"
+
 - **Docks.** Your Personal Station has lettered docks (A to D since 2.2).
   - Each dock holds a **lead ship** and up to **two wingmate ships**, all picked from your stored ships. A Herald in the lead slot commands a third wingmate.
   - You fly the lead of your **active** dock, and its wingmates fly in formation with their own outfits.
@@ -186,6 +196,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Interface:** the station's ACADEMY section is replaced by DOCKS; HANGAR is now SHUTTLES and DRYDOCK is now REFITS. Assigning ships no longer floods the screen with messages.
 
 ### 2.0.3
+
 - **Newcomer protection.**
   - Until your Personal Station reaches Ops 3, pirates, raiders, swarms and other always-hostile ships in inner space (danger 0 to 2) won't start a fight with you.
   - Shooting first ends the truce for that fight, and a job's own targets still attack.
@@ -217,6 +228,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   - Arrow keys can't be bound to other actions.
 
 ### 2.0.2
+
 - **KNIGHT retired.** The showcase account is gone, and on first start any existing KNIGHT save is removed and his Ops 5
   station hull at Quantum Gate becomes an unclaimed derelict again.
 - **Crash-proofing.** A fuzzer (`test/fuzz.js`) sent tens of thousands of random and malformed messages from many clients.
@@ -229,12 +241,14 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   view, checking for errors and for content spilling out of frames. It came back clean.
 
 ### 2.0.1
+
 - **NPC ships land properly.** Traders heading for a planet or station now slow down, settle over it and land. Before,
   they circled it forever. The fix is new arrival steering that plans a speed falling to zero at the target.
   - Escorts and wingmates use the same steering, now matching their leader's speed in formation.
   - Rival captains who land stay docked for a minute or so, then take off again from the same world.
 
 ### 2.0 "Polish"
+
 - **A full audio pass.** Every new sound is original, synthesized by `tools/rift_audio.py`.
   - **Interface sounds:**
     - button clicks and hovers, tabs, opening and closing windows
@@ -260,6 +274,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Career panel.** Click its header to fold it away.
 
 ### 1.2 "Syndicate and Officers"
+
 - **The Syndicate.** A crime path with tiers from Unknown to Kingpin. Smuggling, plunder, capture and Syndicate contracts
   raise it. Outlaw worlds post Syndicate smuggling runs and hits.
 - **The black market.** Found on outlaw worlds, and in any spaceport bar once you are a Lieutenant. It sells:
@@ -267,7 +282,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   - officer commendations
   - Wraith and Corsair blueprints and parts
   - directives and unmarked crates
-  Stock unlocks by tier.
+    Stock unlocks by tier.
 - **Officer ranks and traits.** Promote officers from Ensign to Captain with commendations and credits. Each rank adds 12%
   to their stats and teaches a trait: Sharpshooter, Ironclad, Ace Pilot, Haggler, Ghost and more.
 - **Lower deck.** Two crew berths for small passives: medic, mechanic, cargo rigger, cook, lookout, fuel tech, gunner's mate,
@@ -287,6 +302,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   progress.
 
 ### 1.1 "Living Rift"
+
 - **Rival captains.** Thirty named AI captains (including Madcow Soul and Six Flash) with careers of their own. They
   trade, hunt, mine, explore and raid, buy better ships, and fly through the systems you visit with gold name tags.
   - They remember you: compliments and help in a fight win friends, while taunts and stray shots make rivals.
@@ -307,6 +323,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   price for twenty minutes, tagged in the trade screen.
 
 ### 1.0.3 "Quality of Life"
+
 - **Autopilot.** Double-click any planet or station (or press L when you are far away) and your ship flies there, turns,
   brakes and lands. Pressing J near a planet flies you clear, then jumps. Any steering key hands control back.
   An AUTOPILOT badge shows while it flies.
@@ -334,18 +351,20 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Packaging.** The zip now unpacks into its own "Quantum Rift vX.X.X" folder.
 
 ### 1.0.2
+
 - **No free Gnat Skiffs.** Storing your current ship in the drydock now leaves you with no active ship.
   - DEPART is greyed out, and the overview explains how to choose a ship (FLY THIS in the drydock, or the shipyard).
   - Outfitting, refits and renaming wait until you have a ship.
 - **Personal Station.** "Station section" is now called your **Personal Station** everywhere.
 
 ### 1.0.1 "Fixes"
+
 - **New planets.** Every planet and moon is now generated from its type and colour:
   - ocean and terran worlds with continents, ice caps, drifting clouds and city lights on the night side
   - deserts with dunes, cracked ice worlds, and lava worlds with glowing fissures
   - banded gas giants with storms, some with rings
   - toxic, crystal and cratered barren worlds
-  Planets turn slowly, are lit from one side, and have atmosphere glow.
+    Planets turn slowly, are lit from one side, and have atmosphere glow.
 - **Respawn.** A destroyed ship is rebuilt at your own station hull, or at Quantum Station if you don't have one. It no
   longer turns up wherever you last landed, which could be another player's base.
 - **Missions tab.** MISSIONS replaces the MAP tab in the sidebar. It lists each active job and the main story with what to
@@ -360,6 +379,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Galaxy map zoom.** The map keeps its zoom when the window size changes.
 
 ### 1.0 "Launch"
+
 - **The main story.** Somewhere in the Rift, someone has been waiting a very long time for a visitor.
   - Main-story missions are marked in gold. They arrive as pop-ups when you land in the right place.
   - They lead through a five-part chain with its own rewards, ending in something unique.
@@ -382,6 +402,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Story fix.** A story step that is waiting where you logged off now pops up when you log back in.
 
 ### 0.9 "Hostile Space"
+
 - **Hostile levels and the "can I win?" scan.** Every ship has a level based on its effective strength. The target box
   shows the level and your odds in a straight fight, coloured green, amber or red, next to the class-triangle hint.
 - **Loot chests.** Each hostile type drops its own chest: Hollow Caches, Umbral Reliquaries, Swarm Nodules and Eclipse
@@ -408,6 +429,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   appear across the galaxy.
 
 ### 0.8 "Specialists"
+
 - **The Sol Gateway.**
   - **Sol** is a new system near the centre of the map, with **Earth** (full services and its own landing picture)
     and **Luna Station**.
@@ -451,6 +473,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   another copy is already using the port.
 
 ### 0.7 "Frontier Life"
+
 - **Planetary colonies.** Settle unclaimed planets in Frontier space and the Deep. You can run two colonies, or three
   at Ops 5.
   - Colony levels 1 to 5 bring more building slots and higher production.
@@ -482,6 +505,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Gamepad and touch controls.**
 
 ### 0.6 "Fleets and Fronts"
+
 - **Fleets.** Found a fleet (50,000 credits) with a 2-4 letter tag that shows on members' names in space, or join
   one: open fleets take anyone, closed ones take requests.
   - Fleets have a shared bank, their own chat (`/f`), and up to 30 members.
@@ -520,6 +544,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - The danger meter on the map is drawn rather than typed, so it shows correctly on every system font.
 
 ### 0.5 "Hangar Deck"
+
 - **Shuttles.** The hangar opens at Ops 2, with one bay per Ops level from 2 to 5 and two more from research.
   - Five types: Courier, Survey, Salvage Tender, Envoy Yacht and Prospector Hauler.
   - The hangar job board posts six jobs every three hours: deliveries, surveys, salvage, diplomatic visits and
@@ -552,9 +577,10 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   - Plunder: take credits, cargo and maybe a crate.
   - Capture: needs an officer on the bridge. The ship goes to your drydock, or is sold if no berth is free.
   - Rescue (lawful ships) or arrest (pirates): earns standing or a Concord reward.
-  Lawful factions remember plunder and capture.
+    Lawful factions remember plunder and capture.
 
 ### 0.4 "The Wide Rift"
+
 - The galaxy grows from 30 to 200 systems. It is generated from a fixed seed around the 30 hand-made systems,
   so it is the same for everyone and survives restarts.
   - Each power holds a territory: 14 systems for most powers, 13 Lamplighter, 12 Hollow, 9 Umbral, and 6 for the
@@ -574,6 +600,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - 27 claimable station hulls, up from 17: 10 new ones sit in Frontier space.
 
 ### 0.3 "Clean Fire"
+
 - Fixed black lasers: 30 projectile weapons were exported with colour #000000, which overrode the palette.
 - Every weapon class now looks different: bolts, railgun streaks, plasma pulses, missiles and rockets with smoke
   trails, glowing torpedoes, the Singularity Torpedo, blinking mines, flak, Ylith prism shards, venom and magma.

@@ -10,7 +10,8 @@
 export function createMessageRegistry(entries) {
   const handlers = new Map();
   for (const [type, handler] of entries) {
-    if (!type || typeof type !== 'string' || typeof handler !== 'function') throw new TypeError('Invalid message route');
+    if (!type || typeof type !== 'string' || typeof handler !== 'function')
+      throw new TypeError('Invalid message route');
     if (handlers.has(type)) throw new Error(`Duplicate message route: ${type}`);
     handlers.set(type, handler);
   }
@@ -19,6 +20,6 @@ export function createMessageRegistry(entries) {
     /** @param {unknown} type @param {object} session @param {object} message */
     dispatch(type, session, message) {
       if (typeof type === 'string') handlers.get(type)?.(session, message);
-    }
+    },
   });
 }

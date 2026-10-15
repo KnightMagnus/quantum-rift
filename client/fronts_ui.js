@@ -1,53 +1,150 @@
 // Quantum Rift 0.6 interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
 import { SYS, FACTIONS, GRADES } from '/shared/galaxy.js';
-import { ANOMALIES, GOAL_TYPES, GOAL_REWARD, STORE_ITEMS, STORE_TIERS, STORE_MAT } from '/shared/fronts.js';
+import {
+  ANOMALIES,
+  GOAL_TYPES,
+  GOAL_REWARD,
+  STORE_ITEMS,
+  STORE_TIERS,
+  STORE_MAT,
+} from '/shared/fronts.js';
 import { credits, route } from '/shared/rules.js';
 import { STATES } from '/shared/living.js';
 
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const left = (t) => { const m = Math.max(0, Math.round((t - Date.now()) / 60000)); return m >= 1440 ? `${Math.floor(m / 1440)}d ${Math.floor(m % 1440 / 60)}h` : m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`; };
+const esc = (s) =>
+  String(s ?? '').replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+  );
+const left = (t) => {
+  const m = Math.max(0, Math.round((t - Date.now()) / 60000));
+  return m >= 1440
+    ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h`
+    : m >= 60
+      ? `${Math.floor(m / 60)}h ${m % 60}m`
+      : `${m}m`;
+};
 
 function goalRows(list, period) {
-  return list.map((g, i) => `<div class="goal ${g.claimed ? 'claimed' : ''}"><div class="kv"><span>${esc(GOAL_TYPES[g.type].text(g.n))}</span><span class="small">${g.claimed ? '✓ claimed' : g.got >= g.n ? `<button class="btn sm" data-act="goal" data-p="${period}" data-i="${i}">CLAIM</button>` : `${g.type === 'trade' ? credits(g.got) : g.got} / ${g.type === 'trade' ? credits(g.n) : g.n}`}</span></div><div class="xpbar"><i style="width:${Math.min(100, 100 * g.got / g.n)}%"></i></div></div>`).join('');
+  return list
+    .map(
+      (g, i) =>
+        `<div class="goal ${g.claimed ? 'claimed' : ''}"><div class="kv"><span>${esc(GOAL_TYPES[g.type].text(g.n))}</span><span class="small">${g.claimed ? '✓ claimed' : g.got >= g.n ? `<button class="btn sm" data-act="goal" data-p="${period}" data-i="${i}">CLAIM</button>` : `${g.type === 'trade' ? credits(g.got) : g.got} / ${g.type === 'trade' ? credits(g.n) : g.n}`}</span></div><div class="xpbar"><i style="width:${Math.min(100, (100 * g.got) / g.n)}%"></i></div></div>`,
+    )
+    .join('');
 }
 export function opsHtml(G) {
-  const y = G.you, W = G.world || {}, ev = W.event, here = SYS[G.sys];
-  let h = '<button class="btn sm" data-act="stores" style="margin-bottom:6px">FACTION STORES</button>';
-  const SY = y.story; if (SY && (SY.active || SY.next)) h += `<div class="evbox" style="border-color:#c9a24a"><div class="small" style="color:#c9a24a;letter-spacing:2px">MAIN STORY ${SY.step + 1}/${SY.total}</div><b style="color:#ffe2a0">${esc(SY.active ? SY.active.title : SY.next.title)}</b><div class="small">${esc(SY.active ? (SY.active.ready ? 'Done: return to collect.' : SY.active.brief) : 'Waiting for you at ' + SY.next.at + '.')}</div></div>`;
-  if (ev) h += `<div class="evbox"><div class="dim small">${G.solo ? 'EVENT' : 'SERVER EVENT'}</div><b>${esc(ev.name)}</b><div class="small">${esc(ev.desc)}</div></div>`;
-  if (W.invasion) { const S = SYS[W.invasion.sys]; h += `<div class="evbox inv"><div class="small" style="color:#ff8a70">INVASION · ${left(W.invasion.until)} left</div><b>${esc(W.invasion.name)}</b> in <a href="#" data-act="plotto" data-sys="${S.id}">${esc(S.name)}</a><div class="dim small">Everyone who damages it shares the bounty.</div></div>`; }
+  const y = G.you,
+    W = G.world || {},
+    ev = W.event,
+    here = SYS[G.sys];
+  let h =
+    '<button class="btn sm" data-act="stores" style="margin-bottom:6px">FACTION STORES</button>';
+  const SY = y.story;
+  if (SY && (SY.active || SY.next))
+    h += `<div class="evbox" style="border-color:#c9a24a"><div class="small" style="color:#c9a24a;letter-spacing:2px">MAIN STORY ${SY.step + 1}/${SY.total}</div><b style="color:#ffe2a0">${esc(SY.active ? SY.active.title : SY.next.title)}</b><div class="small">${esc(SY.active ? (SY.active.ready ? 'Done: return to collect.' : SY.active.brief) : 'Waiting for you at ' + SY.next.at + '.')}</div></div>`;
+  if (ev)
+    h += `<div class="evbox"><div class="dim small">${G.solo ? 'EVENT' : 'SERVER EVENT'}</div><b>${esc(ev.name)}</b><div class="small">${esc(ev.desc)}</div></div>`;
+  if (W.invasion) {
+    const S = SYS[W.invasion.sys];
+    h += `<div class="evbox inv"><div class="small" style="color:#ff8a70">INVASION · ${left(W.invasion.until)} left</div><b>${esc(W.invasion.name)}</b> in <a href="#" data-act="plotto" data-sys="${S.id}">${esc(S.name)}</a><div class="dim small">Everyone who damages it shares the bounty.</div></div>`;
+  }
   const an = W.anomalies && W.anomalies[G.sys];
-  if (an) h += `<div class="evbox" style="border-color:${ANOMALIES[an].color}66"><b style="color:${ANOMALIES[an].color}">${ANOMALIES[an].icon} ${esc(ANOMALIES[an].name)}</b> in this system<div class="small">${esc(ANOMALIES[an].desc)}</div></div>`;
-  { const near = Object.entries(W.states || {}).filter(([sys, st]) => SYS[sys] && STATES[st.k] && st.until > Date.now()).map(([sys, st]) => [sys, st, sys === G.sys ? 0 : ((route(SYS, G.sys, sys) || []).length || 99)]).filter(x => x[2] <= 8).sort((a, b) => a[2] - b[2]).slice(0, 8);   // 2.4: the Rift today
-    if (near.length) h += `<div class="sect">THE RIFT TODAY <span class="dim small">troubled systems near you</span></div>` + near.map(([sys, st, j]) => { const X = STATES[st.k]; return `<div class="kv"><span><span style="color:${X.color}">${X.icon} ${X.name}</span> · ${esc(SYS[sys].name)}${st.need ? ` <span class="dim small">${st.got}/${st.need}</span>` : ''}</span><span class="small dim">${j ? j + ' jump' + (j > 1 ? 's' : '') : 'here'} <button class="btn sm" data-plot="${sys}">PLOT</button></span></div>`; }).join(''); }
+  if (an)
+    h += `<div class="evbox" style="border-color:${ANOMALIES[an].color}66"><b style="color:${ANOMALIES[an].color}">${ANOMALIES[an].icon} ${esc(ANOMALIES[an].name)}</b> in this system<div class="small">${esc(ANOMALIES[an].desc)}</div></div>`;
   {
-    if (y.holdout && y.holdout.active) h += `<div class="evbox inv"><b>HOLDOUT</b> · wave ${y.holdout.wave} of 10 · stay in your station's system</div>`; }
+    const near = Object.entries(W.states || {})
+      .filter(([sys, st]) => SYS[sys] && STATES[st.k] && st.until > Date.now())
+      .map(([sys, st]) => [
+        sys,
+        st,
+        sys === G.sys ? 0 : (route(SYS, G.sys, sys) || []).length || 99,
+      ])
+      .filter((x) => x[2] <= 8)
+      .sort((a, b) => a[2] - b[2])
+      .slice(0, 8); // 2.4: the Rift today
+    if (near.length)
+      h +=
+        `<div class="sect">THE RIFT TODAY <span class="dim small">troubled systems near you</span></div>` +
+        near
+          .map(([sys, st, j]) => {
+            const X = STATES[st.k];
+            return `<div class="kv"><span><span style="color:${X.color}">${X.icon} ${X.name}</span> · ${esc(SYS[sys].name)}${st.need ? ` <span class="dim small">${st.got}/${st.need}</span>` : ''}</span><span class="small dim">${j ? j + ' jump' + (j > 1 ? 's' : '') : 'here'} <button class="btn sm" data-plot="${sys}">PLOT</button></span></div>`;
+          })
+          .join('');
+  }
+  {
+    if (y.holdout && y.holdout.active)
+      h += `<div class="evbox inv"><b>HOLDOUT</b> · wave ${y.holdout.wave} of 10 · stay in your station's system</div>`;
+  }
   if (y.goals) {
-    h += `<div class="sect">DAILY GOALS <span class="dim small">${credits(GOAL_REWARD.daily.credits)} cr + ${GOAL_REWARD.daily.tokens} scrip each</span></div>` + goalRows(y.goals.daily, 'daily');
-    h += `<div class="sect">WEEKLY GOALS <span class="dim small">${credits(GOAL_REWARD.weekly.credits)} cr + ${GOAL_REWARD.weekly.tokens} scrip each</span></div>` + goalRows(y.goals.weekly, 'weekly');
+    h +=
+      `<div class="sect">DAILY GOALS <span class="dim small">${credits(GOAL_REWARD.daily.credits)} cr + ${GOAL_REWARD.daily.tokens} scrip each</span></div>` +
+      goalRows(y.goals.daily, 'daily');
+    h +=
+      `<div class="sect">WEEKLY GOALS <span class="dim small">${credits(GOAL_REWARD.weekly.credits)} cr + ${GOAL_REWARD.weekly.tokens} scrip each</span></div>` +
+      goalRows(y.goals.weekly, 'weekly');
   }
   // 2.6: the Armada at a glance (full controls in the ALLIES tab); multiplayer only
   const A = y.armada;
   if (!G.solo) {
     h += `<div class="sect">ARMADA</div>`;
-    if (!A) h += '<p class="dim small">You are not in an Armada. Form one, or accept an invite, from the ALLIES tab.</p>';
-    else h += `<div class="kv"><span><b>${esc(A.name)}</b></span><span class="small">${A.members.filter(m => m.online).length}/${A.members.length} online</span></div>` + A.members.map(m => `<div class="kv"><span>${m.online ? '<b style="color:var(--ok)">●</b>' : '<span class="dim">○</span>'} ${esc(m.name)}${m.name === A.leader ? ' <span class="dim small">leader</span>' : ''}</span><span class="dim small">${esc(m.sys || '')}</span></div>`).join('');
+    if (!A)
+      h +=
+        '<p class="dim small">You are not in an Armada. Form one, or accept an invite, from the ALLIES tab.</p>';
+    else
+      h +=
+        `<div class="kv"><span><b>${esc(A.name)}</b></span><span class="small">${A.members.filter((m) => m.online).length}/${A.members.length} online</span></div>` +
+        A.members
+          .map(
+            (m) =>
+              `<div class="kv"><span>${m.online ? '<b style="color:var(--ok)">●</b>' : '<span class="dim">○</span>'} ${esc(m.name)}${m.name === A.leader ? ' <span class="dim small">leader</span>' : ''}</span><span class="dim small">${esc(m.sys || '')}</span></div>`,
+          )
+          .join('');
   }
-  if (W.calendar) h += '<div class="sect">EVENT CALENDAR</div>' + W.calendar.map((e, i) => `<div class="kv"><span>${i === 0 ? '<b>' : ''}${esc(e.name)}${i === 0 ? '</b>' : ''}</span><span class="dim small">${i === 0 ? 'ends in ' + left(e.end) : new Date(e.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span></div>`).join('');
+  if (W.calendar)
+    h +=
+      '<div class="sect">EVENT CALENDAR</div>' +
+      W.calendar
+        .map(
+          (e, i) =>
+            `<div class="kv"><span>${i === 0 ? '<b>' : ''}${esc(e.name)}${i === 0 ? '</b>' : ''}</span><span class="dim small">${i === 0 ? 'ends in ' + left(e.end) : new Date(e.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span></div>`,
+        )
+        .join('');
   return h;
 }
 
-export const STORE_FACS = (FACTIONS_) => Object.entries(FACTIONS_).filter(([k, F]) => !F.region && !F.hidden && k !== 'umbral').map(([k]) => k);
+export const STORE_FACS = (FACTIONS_) =>
+  Object.entries(FACTIONS_)
+    .filter(([k, F]) => !F.region && !F.hidden && k !== 'umbral')
+    .map(([k]) => k);
 export function storeMenuHtml(G, FACTIONS_) {
-  const y = G.you, facs = STORE_FACS(FACTIONS_), fac = G.storeFac && facs.includes(G.storeFac) ? G.storeFac : (G.landed && G.landed.store) || 'quantum';
+  const y = G.you,
+    facs = STORE_FACS(FACTIONS_),
+    fac =
+      G.storeFac && facs.includes(G.storeFac)
+        ? G.storeFac
+        : (G.landed && G.landed.store) || 'quantum';
   G.storeFac = fac;
-  const side = facs.map(k => { const F = FACTIONS_[k], rep = y.rep[k] || 0, tok = (y.tokens && y.tokens[k]) || 0;
-    return `<div class="sfac ${k === fac ? 'on' : ''}" data-act="sfac" data-f="${k}"><b style="color:${F.color}">${esc(F.short)}</b><span class="dim small">${rep} · ${tok} tokens</span></div>`; }).join('');
+  const side = facs
+    .map((k) => {
+      const F = FACTIONS_[k],
+        rep = y.rep[k] || 0,
+        tok = (y.tokens && y.tokens[k]) || 0;
+      return `<div class="sfac ${k === fac ? 'on' : ''}" data-act="sfac" data-f="${k}"><b style="color:${F.color}">${esc(F.short)}</b><span class="dim small">${rep} · ${tok} tokens</span></div>`;
+    })
+    .join('');
   return `<h2>FACTION STORES <span class="dim small">Rift scrip: ${(y.tokens && y.tokens.any) || 0} · ${G.landed ? 'purchases are delivered to you here' : 'land anywhere to buy'}</span></h2><div class="sgrid"><div class="sfacs">${side}</div><div class="sbody well">${storeHtml(G, fac)}</div></div><button class="btn sm" data-act="sclose">CLOSE (Esc)</button>`;
 }
 export function storeHtml(G, facArg) {
-  const y = G.you, fac = facArg || G.landed.store, F = FACTIONS[fac], rep = y.rep[fac] || 0, tok = (y.tokens && y.tokens[fac]) || 0, scrip = (y.tokens && y.tokens.any) || 0, landed = !!G.landed;
-  const tier = [...STORE_TIERS].reverse().find(t => rep >= t.rep);
+  const y = G.you,
+    fac = facArg || G.landed.store,
+    F = FACTIONS[fac],
+    rep = y.rep[fac] || 0,
+    tok = (y.tokens && y.tokens[fac]) || 0,
+    scrip = (y.tokens && y.tokens.any) || 0,
+    landed = !!G.landed;
+  const tier = [...STORE_TIERS].reverse().find((t) => rep >= t.rep);
   let h = `<div class="sect" style="margin-top:0">${esc(F.name.toUpperCase())} QUARTERMASTER</div><div class="kv"><span>Your standing</span><span style="color:${F.color}">${rep} ${tier ? '· ' + tier.name : ''}</span></div>
     <div class="kv"><span>${F.short} tokens</span><span>${tok}</span></div><div class="kv"><span>Rift scrip <span class="dim small">(any store)</span></span><span>${scrip}</span></div>
     <div class="dim small">Earn ${F.short} tokens by finishing jobs in ${F.short} space and their commissions. Daily and weekly goals pay Rift scrip, which any store accepts.</div><table class="tbl"><tr><th>ITEM</th><th>STANDING</th><th>TOKENS</th><th>CREDITS</th><th></th></tr>`;

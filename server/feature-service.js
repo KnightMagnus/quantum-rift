@@ -13,9 +13,12 @@
 export function bindOperations(operations, capabilities) {
   const entries = Object.entries(operations);
   for (const [name, operation] of entries) {
-    if (typeof operation !== 'function') throw new TypeError(`Feature operation ${name} must be a function`);
+    if (typeof operation !== 'function')
+      throw new TypeError(`Feature operation ${name} must be a function`);
   }
-  return /** @type {BoundOperations<T>} */ (Object.seal(Object.fromEntries(
-    entries.map(([name, operation]) => [name, operation.bind(capabilities)])
-  )));
+  return /** @type {BoundOperations<T>} */ (
+    Object.seal(
+      Object.fromEntries(entries.map(([name, operation]) => [name, operation.bind(capabilities)])),
+    )
+  );
 }
