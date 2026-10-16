@@ -124,10 +124,10 @@ const p2 = g.spaces[lawless].makeShip({
   a: 0,
   ai: 'raid',
 });
-ok(!g.spaces[lawless].spared(p2, me2), 'protection does not reach lawless space');
+ok(g.spaces[lawless].spared(p2, me2), 'main-map lawless space now has newcomer targeting truce');
 ok(
-  N.toasts().some((t) => t.includes('does not reach')),
-  'and the captain is warned once when they enter it',
+  !N.toasts().some((t) => t.includes('does not reach')),
+  'main-map lawless entry no longer gives an inaccurate protection warning',
 );
 const p3 = g.spaces[lawless].makeShip({
   hull: TRAFFIC.hollow.war[0],

@@ -96,6 +96,7 @@ import { winOdds } from '../shared/hostile.js';
  * @property {(lead: any, target: any) => boolean} isHostile Checks hostile relationship between entities.
  * @property {(attacker: any, target: any) => boolean} canHit Checks whether attacks can connect and damage target.
  * @property {(source: any, target: any) => boolean} spared Checks whether source faction spares target.
+ * @property {(source: any, target: any) => boolean} [newcomerTruce] Checks ambient targeting truce without arrival grace.
  */
 
 /**
@@ -437,6 +438,9 @@ export class CombatAssist {
             // Passive Assist only defends against hostile attackers; it never hunts
             // neutral traffic merely because our primary guns could damage it.
             sp.isHostile(s.ent, t) &&
+            // Stray fire during protected travel must not silently turn passive
+            // Assist into an opt-in faction battle. Explicit selection above still can.
+            !sp.newcomerTruce?.(t, s.ent) &&
             ((t.target && roots.has(sp.root(t.target))) ||
               [...sp.ships.values()].some(
                 (v) => roots.has(sp.root(v)) && v.lastHitBy === t.id && sp.t - v.hitT < 8,

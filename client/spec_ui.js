@@ -133,7 +133,7 @@ export function specialistsHtml(G, interactive) {
         st = ss[sp.id];
       const btn = interactive
         ? y.station.ops < BUILD.ops
-          ? `<span class="dim small">Ops ${BUILD.ops}</span>`
+          ? `<span class="dim small">Station Tier ${BUILD.ops}</span>`
           : n >= BP_NEED
             ? `<button class="btn sm" data-act="spec" data-op="build" data-id="${sp.id}">BUILD · ${credits(sp.cost)}</button>`
             : ''

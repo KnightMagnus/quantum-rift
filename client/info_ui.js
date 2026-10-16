@@ -222,7 +222,7 @@ function careerHtml(G) {
     <div class="sect" style="margin-top:0">HOLDINGS</div>
     ${kv('<b>Net worth</b>', `<b class="cr">${cr(worth)} cr</b>`)}${kv('Credits', cr(y.credits))}${y.loan ? kv('Loan', `−${cr(y.loan.bal)}`) : ''}
     ${kv('Ships', `${(y.shipless ? 0 : 1) + stored.length} <span class="dim small">(${cr((y.shipless ? 0 : shipVal(y.ship)) + stored.reduce((a, sh) => a + shipVal(sh), 0))} cr)</span>`)}${docks}
-    ${kv('Personal Station', site ? `Ops ${S.ops} · ${esc(SYS[site.system].name)}` : '<span class="dim">none yet</span>')}
+    ${kv('Personal Station', site ? `Station Tier ${S.ops} · ${esc(SYS[site.system].name)}` : '<span class="dim">none yet</span>')}
     ${kv('Colonies', (y.colonies || []).length ? y.colonies.map((c) => `${esc(c.name)} (Lv ${c.lv})`).join(', ') : '<span class="dim">none</span>')}
     ${kv(
       'Officers',

@@ -2,6 +2,13 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.9.1 — Independent captains
+
+- **Main-galaxy newcomer truce:** before Station Tier 3 (T-3), ambient factions and pirates overlook you throughout the main map, including Umbral and high-danger space. This changes NPC targeting, not ship damage or spawn rates: stray fire remains dangerous. Short arrival grace is unchanged. Your combat contracts, deliberate attacks and current-visit faction retaliation remain real fights; Farside and the Crucible retain their normal rules.
+- **Passive wingmates:** gathering/holding escorts no longer start unwanted fights with ambient NPCs while their captain is overlooked. Explicit attack orders and Combat Assist still work.
+- **Outfitter wingmate repairs:** disabled wingmates can be rush-repaired at landed planets and stations with outfitters. Existing fees, free ten-minute timers and DOCKS repairs are retained; service, ownership and credit checks prevent invalid or duplicate charges.
+- **Station Tier terminology:** station progression uses Station Tier and compact T-# labels instead of Ops. Existing saves, message keys and progression thresholds are unchanged; the separate OPS companion/operations tab retains its meaning.
+
 ### 2.9.0 — The Eventide Chain
 
 - **Six authored Farside systems:** follow the new branch from Vesper Gate through Lantern Twins, Aureole, Reliquary, Nightjar, Glasswake and Palinode. Provision expedition stations, rescue stranded survey crews, mine the shattered world's fields, and recover readings through the existing expedition loop.

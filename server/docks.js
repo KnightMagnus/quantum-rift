@@ -127,7 +127,7 @@ export const DocksOperations = {
     return 's' + this.uid(d);
   },
   /**
-   * Get the number of available docks based on station Ops level.
+   * Get the number of available docks based on station Station Tier.
    * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {number} Number of docks.
@@ -321,6 +321,11 @@ export const DocksOperations = {
     const d = this.docksInit(s.data),
       p = STELLARS[d.stellar];
     if (m.op === 'repair') return this.wingRepair(s, m.uid);
+    if (m.op === 'outfitterRepair') {
+      if (!p || s.ent || p.system !== d.sys || !this.outfitter(p, d))
+        return this.toast(s, 'Land at a planet or station with an outfitter to repair wingmates.');
+      return this.wingRepair(s, m.uid);
+    }
     if (!p || s.ent || !this.ownSite(d, p))
       return this.toast(s, 'Dock assignments are made at your Personal Station.');
     const k = m.k | 0,
@@ -495,7 +500,7 @@ export const DocksOperations = {
     X.repairT = Date.now() + WING_REPAIR_MIN * 60000;
     this.toast(
       s,
-      `Wingmate ${X.ship.name} was knocked out and towed home. Repairs take ${WING_REPAIR_MIN} minutes (or pay to rush them at the DOCKS screen).`,
+      `Wingmate ${X.ship.name} was knocked out and towed home. Repairs take ${WING_REPAIR_MIN} minutes (or pay to rush them at DOCKS or any landed outfitter).`,
     );
     this.log(s.data, `Wingmate ${X.ship.name} was knocked out of the fight.`);
     this.db.touch();
@@ -519,7 +524,7 @@ export const DocksOperations = {
     if (d.dock.length >= this.dockSlots(d))
       return this.toast(
         s,
-        `Your hangar is full (${this.dockSlots(d)} berths). Sell a stored ship or raise your station's Ops level.`,
+        `Your hangar is full (${this.dockSlots(d)} berths). Sell a stored ship or raise your station's Station Tier.`,
       );
     const H = this.A.ships[hull];
     if (

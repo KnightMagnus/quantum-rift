@@ -120,7 +120,7 @@ export const HostileOperations = {
     this.hostInit(d);
     if (!p || s.ent || !this.ownSite(d, p))
       return this.toast(s, 'Start a Holdout from your Personal Station.');
-    if (d.station.ops < 2) return this.toast(s, 'Holdouts need Ops 2.');
+    if (d.station.ops < 2) return this.toast(s, 'Holdouts need Station Tier 2.');
     const wait = d.holdout.lastT + HOLDOUT.cooldownH * 3600000 - Date.now();
     if (wait > 0)
       return this.toast(
@@ -221,6 +221,8 @@ export const HostileOperations = {
           });
         e.life = 1e9;
         e.holdout = d.name;
+        // Opt-in defense participants, not unrelated passing newcomers.
+        e.combatOwners = defenders.map((defender) => defender.player.id);
         e.target = defenders[i % defenders.length];
         if (H.wave === 10 && i === 0) {
           e.holdoutBoss = true;

@@ -49,7 +49,7 @@ import { credits } from '/shared/rules.js';
  * @property {string} ship Current ship hull name
  * @property {string} shipName Custom ship name
  * @property {string} [site] Personal station site name
- * @property {number} [ops] Station Ops level
+ * @property {number} [ops] Station Tier
  * @property {string[]} colonies List of settled colony names
  * @property {number} kills Total kills
  * @property {number} jumps Total jumps
@@ -283,7 +283,7 @@ export function boardsHtml(G) {
   const P = G.prof;
   if (P)
     h += `<div class="ocard"><div class="oname"><b style="font-size:15px">${esc(P.name)}</b> ${P.online ? '<span style="color:var(--ok)">● online</span>' : '<span class="dim">offline</span>'}</div>
-    <div class="kv"><span>Flies</span><span>${esc(P.ship)} "${esc(P.shipName)}"</span></div><div class="kv"><span>Station</span><span>${P.site ? `${esc(P.site)} · Ops ${P.ops}` : 'none'}</span></div>
+    <div class="kv"><span>Flies</span><span>${esc(P.ship)} "${esc(P.shipName)}"</span></div><div class="kv"><span>Station</span><span>${P.site ? `${esc(P.site)} · Station Tier ${P.ops}` : 'none'}</span></div>
     <div class="kv"><span>Colonies</span><span>${P.colonies.map(esc).join(', ') || 'none'}</span></div><div class="kv"><span>Record</span><span>${P.kills} kills · ${P.jumps} jumps · ${P.mined} t mined · ${credits(P.earned)} earned</span></div>
     <div class="kv"><span>Arena</span><span>${P.arena ? `${P.arena.rating} (${P.arena.w}-${P.arena.l})` : 'unrated'}</span></div>${P.mastery ? `<div class="kv"><span>Best mastery</span><span>${esc(P.mastery.ship)} · Tier ${P.mastery.tier}</span></div>` : ''}<div class="kv"><span>Officers</span><span>${P.officers}</span></div></div>`;
   return h;

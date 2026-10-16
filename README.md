@@ -70,7 +70,7 @@ These four captures show the v2.8 development build with disposable captains. Ex
 **Made to be comfortable**
 
 - Solo mode with pause, save slots and save files, or online play with accounts. Solo games hide the multiplayer screens.
-- Newcomer protection: pirates in inner space leave new captains alone until their station reaches Ops 3.
+- Newcomer truce: below Station Tier 3 (T-3), ambient factions and pirates overlook captains throughout the main galaxy, including dangerous systems. This prevents targeting, not stray-fire damage. Combat missions, deliberate aggression, Farside and the Crucible keep normal combat rules. Station save fields remain compatible.
 - An in-game radio with thousands of live stations, and a fully synthesized soundscape with a quick volume control.
 - Key remapping, a colour-blind palette, interface scaling, gamepad and touch controls.
 - No installs beyond Node.js: no npm packages, no build step.

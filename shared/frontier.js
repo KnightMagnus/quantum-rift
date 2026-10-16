@@ -4,7 +4,7 @@
 /**
  * @typedef {Object} ColonyConfig
  * @property {number} max - Base maximum number of colonies allowed per captain.
- * @property {number} maxAtOps5 - Colony cap when Station Ops reaches level 5.
+ * @property {number} maxAtOps5 - Colony cap when Station Tier reaches level 5.
  * @property {number} cost - Founding cost in credits.
  * @property {Array<[string, number, number]>} mats - Required crafting materials as [materialKey, gradeIndex, quantity].
  * @property {number} storeHours - Storage buffer capacity in hours before colony warehouses fill up.
@@ -37,10 +37,10 @@
 /**
  * @typedef {Object} DefenseConfig
  * @property {number} everyH - Interval in hours between automated station raid attempts.
- * @property {number} minOps - Minimum Ops level required before station raids begin.
+ * @property {number} minOps - Minimum Station Tier required before station raids begin.
  * @property {DefenseLevelInfo[]} levels - Defense upgrades and defensive ratings.
- * @property {number} opsRating - Defense rating contributed per Ops level.
- * @property {number} gridBonus - Defense rating bonus provided by Ops 5 Defense Grid research.
+ * @property {number} opsRating - Defense rating contributed per Station Tier.
+ * @property {number} gridBonus - Defense rating bonus provided by Station Tier 5 Defense Grid research.
  * @property {number} waveMin - Live raid wave encounter duration in minutes.
  */
 
@@ -264,7 +264,7 @@ export const DEFENSE = {
     },
   ],
   opsRating: 120,
-  gridBonus: 400, // per Ops level, and the Ops 5 Defense Grid
+  gridBonus: 400, // per Station Tier, and the Station Tier 5 Defense Grid
   waveMin: 4, // live waves last up to four minutes
 };
 
@@ -361,7 +361,7 @@ export const BOARDS = {
   kills: { name: 'Ships destroyed' },
   mined: { name: 'Tons mined' },
   arena: { name: 'Arena rating' },
-  station: { name: 'Station Ops' },
+  station: { name: 'Station Tier' },
   colonies: { name: 'Colonies' },
   mastery: { name: 'Mastery' },
 };

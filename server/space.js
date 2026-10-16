@@ -507,33 +507,48 @@ export class Space {
     const visit = player?.player?.s?.retaliationVisit;
     return !!(visit?.sys === this.id && visit.factions.has(npc.faction));
   }
-  // 2.0.3: newcomer protection. Pirates, raiders, swarms and other always-hostile ships never pick a fight with a protected
-  // captain (Personal Station below Ops 3) in inner space (danger 0-2), and nobody targets a captain in the first seconds
-  // after a jump. Firing on them, or a job's own target, ends the truce for that fight.
-  /**
-   * Checks whether target entity is spared from attack by newcomer or arrival protection.
-   * @param {Entity} e Attacking entity.
-   * @param {Entity} o Target candidate entity.
-   * @returns {boolean} True if target enjoys truce protection against attacker.
-   */
+  // Ambient NPCs overlook below-Tier-3 captains throughout the main galaxy.
+  // This is target-acquisition protection, not immunity to stray fire.
+  newcomerTruce(e, o) {
+    const ro = this.root(o),
+      re = this.root(e);
+    if (!ro?.player || !re || re.player || this.sys.farside || this.sys.arena) return false;
+    if (!this.game.newcomer?.(ro.player.s?.data) || this.localRetaliation(re, ro)) return false;
+    if (
+      re.aggro.has(ro.id) ||
+      ro.aggro.has(re.id) ||
+      re.mission?.owner === ro.player.id ||
+      (re.storyKill && re.story === ro.player.id) ||
+      re.arcOf?.sid === ro.player.id ||
+      re.huntOf === ro.player.id ||
+      re.combatOwners?.includes(ro.player.id) ||
+      (re.kingpin &&
+        ro.player.s?.data.missions?.some(
+          (m) => m.type === 'warband' && m.id === re.kingpin && !m.done,
+        ))
+    )
+      return false;
+    return true;
+  }
+  /** Targeting truce; short arrival grace remains separate from newcomer eligibility. */
   spared(e, o) {
     const ro = this.root(o),
       re = this.root(e);
-    if (!ro || !ro.player || !re || re.player) return false;
+    if (!ro?.player || !re || re.player) return false;
     if (this.localRetaliation(re, ro)) return false;
-    if (ro.graceT > this.t) return true; // just arrived
-    if (
-      re.aggro.has(ro.id) ||
-      (re.mission && re.mission.owner === ro.player.id) ||
-      re.storyKill ||
-      re.arcOf ||
-      re.huntOf
-    )
-      return false;
-    if (!this.inner()) return false;
-    const F = FACTIONS[re.faction] || {};
-    if (!(F.pirate || F.alwaysHostile || re.boss || re.bossMinion || re.warFleet)) return false;
-    return !!(this.game.newcomer && this.game.newcomer(ro.player.s && ro.player.s.data));
+    return ro.graceT > this.t || this.newcomerTruce(e, o);
+  }
+  // Idle wingmates must not turn a captain's protected passage into an unsolicited fight.
+  canAcquire(e, o) {
+    if (this.spared(e, o)) return false;
+    const lead = this.root(e);
+    return !(
+      !e.player &&
+      lead?.player &&
+      !this.ordered(e, o) &&
+      !(lead.sharedCombat && lead.combatTarget === o) &&
+      this.newcomerTruce(o, e)
+    );
   }
   // 2.1: can a's fire hurt b? Hostiles always; a captain's own guns also hit any ship not on their side (like EV Nova),
   // which angers it and costs standing. Escorts and NPCs still only hit their enemies.
@@ -566,7 +581,18 @@ export class Space {
    * @returns {boolean} True if attacks can connect and damage target.
    */
   canHit(a, b) {
-    if (this.isHostile(a, b)) return !this.spared(a, b);
+    if (this.isHostile(a, b)) {
+      // Only arrival grace blocks physical damage. Ambient newcomer truce blocks
+      // acquisition, while existing shots/beams can still hit a crossing captain.
+      const target = this.root(b),
+        source = this.root(a);
+      return !(
+        target?.player &&
+        !source?.player &&
+        target.graceT > this.t &&
+        !this.localRetaliation(source, target)
+      );
+    }
     if (this.ordered(a, b)) return true;
     if (!a || !b || !a.player || this.sys.arena) return false;
     const rb = this.root(b);
@@ -970,7 +996,7 @@ export class Space {
     let best = null,
       bd = range;
     for (const o of this.ships.values()) {
-      if (o === e || o.state !== 'fly' || !this.isHostile(e, o) || this.spared(e, o)) continue;
+      if (o === e || o.state !== 'fly' || !this.isHostile(e, o) || !this.canAcquire(e, o)) continue;
       const d = Math.hypot(o.x - e.x, o.y - e.y) * (o.hull === 813 && o.player ? 3 : 1); // the Wraith is noticed at a third of the range
       if (d < bd) {
         bd = d;
@@ -1009,7 +1035,7 @@ export class Space {
           (e.target.dead ||
             e.target.state !== 'fly' ||
             !(this.isHostile(e, e.target) || this.ordered(e, e.target)) ||
-            this.spared(e, e.target))
+            !this.canAcquire(e, e.target))
         )
           e.target = null;
         if (e.rival && this.game.features.rivals.rivalThink && !e.owner)
@@ -1071,6 +1097,12 @@ export class Space {
         this.game.combatAssist.valid(this, root, root.combatTarget)
           ? root.combatTarget
           : null;
+      e.fireAt = null;
+    }
+    // Also covers targets assigned directly by rivals, NPC escorts, hunts or stories,
+    // and retained targets between AI think cycles.
+    if (e.target && !this.canAcquire(e, e.target)) {
+      e.target = null;
       e.fireAt = null;
     }
     if (e.target) {
@@ -1535,6 +1567,10 @@ export class Space {
             ? e.target
             : null
           : e.fireAt;
+    if (t && !e.player && !this.canAcquire(e, t)) {
+      e.fireAt = null;
+      return;
+    }
     if (e.player && !automated) {
       const f2 = inp.fire2 ? 1 : 0;
       if (f2 && !e._f2 && e.guns.some((g) => g.p.bay)) this.toggleDrones(e);
@@ -1567,7 +1603,11 @@ export class Space {
           continue;
         }
         const f = [...this.ships.values()].find(
-          (s) => s.fighterOf && this.isHostile(e, s) && Math.hypot(s.x - e.x, s.y - e.y) < p.range,
+          (s) =>
+            s.fighterOf &&
+            this.isHostile(e, s) &&
+            this.canAcquire(e, s) &&
+            Math.hypot(s.x - e.x, s.y - e.y) < p.range,
         );
         if (f) this.fire(e, g, f, angleTo(e, f.x, f.y));
         continue;
@@ -1635,7 +1675,10 @@ export class Space {
     s.hitT = this.t;
     if (src) s.lastHitBy = src.id;
     const done = Math.max(0, sh0 - s.shield) + Math.max(0, ar0 - s.armor);
-    if (done > 0 && srcRoot && srcRoot !== this.root(s)) {
+    // Incidental NPC fire does not make an overlooked captain's wing initiate
+    // retaliation and thereby attract the entire faction. Deliberate outgoing
+    // damage still creates normal visit-local hostility and reputation costs.
+    if (done > 0 && srcRoot && srcRoot !== this.root(s) && !this.newcomerTruce(src, s)) {
       const victim = this.root(s),
         first = !victim.aggro.has(srcRoot.id);
       if (srcRoot.player?.s && !victim.player && !this.sys.arena)

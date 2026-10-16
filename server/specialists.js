@@ -287,7 +287,8 @@ export const SpecialistOperations = {
       case 'build': {
         const sp = SPEC[m.id | 0];
         if (!sp) return;
-        if (S.ops < BUILD.ops) return this.toast(s, `Specialists are built at Ops ${BUILD.ops}.`);
+        if (S.ops < BUILD.ops)
+          return this.toast(s, `Specialists are built at Station Tier ${BUILD.ops}.`);
         if ((d.bp[sp.id] || 0) < BP_NEED)
           return this.toast(
             s,
