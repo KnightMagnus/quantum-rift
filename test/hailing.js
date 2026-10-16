@@ -95,6 +95,7 @@ service.player(a, b.ent, 'blocked');
 assert.equal(st.queue[0].text, 'second');
 service.tick();
 assert.equal(st.queue.length, 0);
+assert.equal(st.history.length, 0, 'blocked player messages never enter archive');
 b.data.blocks = [];
 a.data.blocks.push(b.data.name);
 assert.equal(service.canContact(a, b), false);
@@ -202,10 +203,31 @@ assert.equal(sta.queue.filter((q) => q.kind === 'npc').length, HAIL_LIMITS.npc);
 now += HAIL_LIMITS.expires + 1;
 service.tick();
 assert.equal(sta.queue.length, 0);
+assert.ok(sta.history.length > 0, 'expired incoming transmissions stay readable');
+const archived = sta.history[0],
+  creditsBeforeArchive = a.data.credits;
+service.request(a, { op: 'open', key: archived.key });
+assert.ok(sent.at(-1).text.includes(archived.text), 'opening inbox recovers original text');
+assert.deepEqual(sent.at(-1).opts, [], 'archive has no actionable offers');
+service.request(a, { op: 'answer', key: archived.key, k: 'gift' });
+assert.equal(a.data.credits, creditsBeforeArchive, 'expired actions cannot spend credits');
+service.request(a, { op: 'dismiss', key: archived.key });
+assert.ok(!sta.history.some((q) => q.key === archived.key), 'archive can be dismissed');
+for (let i = 0; i < HAIL_LIMITS.history + 2; i++)
+  service.archive(sta, { key: `old-${i}`, text: 'Archived', kind: 'npc' });
+assert.equal(sta.history.length, HAIL_LIMITS.history, 'archived history stays bounded');
 service.enqueue(a, npc(30), 'greeting', 'Hello');
+const pendingBeforePause = sta.queue[0],
+  expiryBeforePause = pendingBeforePause.expires;
+now += HAIL_LIMITS.expires * 2;
+service.resume(HAIL_LIMITS.expires * 2);
+assert.equal(pendingBeforePause.expires, expiryBeforePause + HAIL_LIMITS.expires * 2);
+service.tick();
+assert.ok(sta.queue.includes(pendingBeforePause), 'long solo pause preserves pending call');
 a.ent = { ...a.ent, id: 31 };
 service.state(a);
 assert.equal(sta.queue.length, 0, 'respawn resets calls');
+assert.equal(sta.history.length, 0, 'respawn clears archive');
 assert.ok(!service.offer(a, npc(32, { owner: 10 }), 'beg'));
 assert.ok(!service.offer(a, npc(33, { mission: {} }), 'beg'));
 // Selecting a friendly ship to hail is not combat and must not suppress ordinary calls.

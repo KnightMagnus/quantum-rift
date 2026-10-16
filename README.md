@@ -4,11 +4,11 @@
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
-## v2.8 — Hail to the Code
+## v2.9 — The Eventide Chain
 
-Contextual ship conversations, incoming NPC calls and short player hails bring the traffic lanes to life. System-only chat now appears above the sender's active ship as well as in the chat log. Combat assist can fly and fire for your fleet; opted-in Follow Leader members can delegate combat without taking control away from independent Armada captains.
+A six-system exploration branch beyond Vesper Gate adds twin suns, a black-hole research ring, a pulsar graveyard, a rogue-world refuge, shattered-world mining and a remote builders' observatory. Expedition surveys, supply runs and rescue contracts support the new route. These are authored sky and landing perspectives with stable docks, not simulated orbits.
 
-[Release summary](docs/RELEASE-v2.8.md) · [Changelog](CHANGELOG.md) · [Communications guide](docs/HAILING.md)
+[Release summary](docs/RELEASE-v2.9.md) · [Changelog](CHANGELOG.md) · [Communications guide](docs/HAILING.md)
 
 ![Incoming communications inbox in the running game](docs/screenshots/hail-inbox.png)
 ![A short player-to-player hail in the running game](docs/screenshots/hail-composer.png)
@@ -25,7 +25,7 @@ These four captures show the v2.8 development build with disposable captains. Ex
 
 **A big, living galaxy**
 
-- 211 star systems across 14 powers: the Quantum Concord, free traders, pirates, five alien races and stranger things at the edges.
+- 217 star systems across 14 powers: the Quantum Concord, free traders, pirates, five alien races and stranger things at the edges.
 - Pre-rendered planets, stations and landing pictures with oceans that catch the sun, city lights on the night side, ringed giants, and a rendered scene for every world you land on.
 - Every system has its own scenery, generated from the system itself: its star, distant galaxies, nebulae, ion storms, ancient wrecks, abandoned stations, crystal formations, comets and drifting debris.
 - Moons, asteroid fields, gas clouds and crystal fields to mine.

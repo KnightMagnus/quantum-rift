@@ -1,6 +1,7 @@
 // Quantum Rift renderer: starfield, stellars, ship sprite sheets, shots, beams, effects, radar.
 import { planetSprite } from './planets.js';
 import { drawStar } from './stars.js';
+import { drawExoticSky, drawPulseBoundary } from './exotic_scenery.js';
 import { missionTargets } from './missions.js';
 import { drawShipChat } from './chat_bubbles.js';
 import { loopFrames } from './animation_frames.js';
@@ -543,6 +544,9 @@ function decorFor(S) {
         rot: r() * 6,
         sp: (r() - 0.5) * 0.4,
       });
+  // Authored Eventide sightlines are fixed after seeded generation: legacy scenery
+  // consumes precisely the same RNG and new ports always frame their signature sky.
+  if (S.eventide) D.sun = { ...D.sun, x: 0, y: -210, size: 190, depth: 0.025 };
   decorCache.set(S.id, D);
   return D;
 }
@@ -558,7 +562,12 @@ function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
       [x, y] = farXY(s, W, H, cx, cy, zf),
       R = s.size * zf; // the system's star, far off, with a soft lens flare
     if (x > -R * 3 && y > -R * 3 && x < W + R * 3 && y < H + R * 3) {
-      drawStar(ctx, S, s, x, y, R, now);
+      if (S.scene && ['binary', 'blackhole', 'rogue', 'pulsar'].includes(S.scene.kind))
+        drawExoticSky(ctx, S, x, y, R, now);
+      else {
+        drawStar(ctx, S, s, x, y, R, now);
+        if (S.scene) drawExoticSky(ctx, S, x + R * 2, y + R * 0.8, R * 0.7, now);
+      }
     }
   }
   ctx.globalCompositeOperation = 'lighter';
@@ -576,7 +585,7 @@ function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
     ctx.drawImage(im, -s / 2, -s / 2, s, s);
     ctx.restore();
   }
-  if (D.pulsar) {
+  if (D.pulsar && !S.scene) {
     const p = D.pulsar,
       [x, y] = farXY(p, W, H, cx, cy, zf),
       L = p.len * zf,
@@ -603,7 +612,7 @@ function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
   }
   ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = 'source-over';
-  if (D.hole) {
+  if (D.hole && !S.scene) {
     const h = D.hole,
       im = decorImg('blackhole_0');
     if (ready(im)) {
@@ -917,7 +926,16 @@ export function stationDesign(p) {
     f = SYS[sysId] ? SYS[sysId].faction : '',
     d = ((p.desc || '') + ' ' + p.id).toLowerCase(),
     h = hashStr(p.id);
+  const authored = {
+    'twins-exchange': 'twin',
+    'aureole-ring': 'ring',
+    'reliquary-watch': 'disc',
+    'nightjar-beacon': 'spindle',
+    'glasswake-foundry': 'forge',
+    'palinode-observatory': 'crystal',
+  };
   const by =
+    authored[p.id] ||
     {
       vashari: 'hive',
       ylith: 'crystal',
@@ -1560,6 +1578,7 @@ export function draw(G, ctx, W, H, dt, now) {
   }
   drawDecorMid(ctx, S, W, H, z, cx, cy, now);
   drawDecorNear(ctx, S, W, H, z, sx, sy, now); // 2.2 scenery in the system itself
+  drawPulseBoundary(ctx, S, sx, sy, z);
   // stellars
   let P_;
   for (const p of S.stellars) {

@@ -217,7 +217,9 @@ export const LivingOperations = {
       if (!st) continue;
       const S = SYS[sys],
         X = STATES[st.kind];
-      const ports = S.stellars.filter((x) => x.svc && x.svc.includes('T') && !x.site);
+      const ports = S.stellars.filter(
+        (x) => x.id !== p.id && x.svc && x.svc.includes('T') && !x.site,
+      );
       if (!ports.length) continue;
       const dest = ports[Math.floor(r() * ports.length)],
         id = `${p.id}-${win}-st-${sys}`;

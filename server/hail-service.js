@@ -6,6 +6,7 @@ export const HAIL_LIMITS = Object.freeze({
   npc: 3,
   player: 8,
   expires: 180000,
+  history: 8,
   sender: 5000,
   pair: 10000,
   named: 900000,
@@ -38,6 +39,7 @@ export class HailService {
         space: null,
         ent: null,
         queue: [],
+        history: [],
         next: 0,
         named: new Map(),
         pairs: new Map(),
@@ -54,6 +56,7 @@ export class HailService {
       st.space = sp;
       st.ent = s.ent;
       st.queue = [];
+      st.history = [];
       st.next = this.now() + 180000 + this.random() * 180000;
       s.hailLedger = null;
       this.push(s, st);
@@ -65,14 +68,40 @@ export class HailService {
     this.game.send(s, {
       t: 'hailinbox',
       allow: s.data.playerHails !== false,
-      entries: st.queue.map((q) => ({
+      entries: [...st.queue, ...st.history].map((q) => ({
         key: q.key,
         who: q.who,
         kind: q.kind,
         unread: !q.read,
         expires: q.expires,
+        archived: !!q.archived,
       })),
     });
+  }
+  archive(st, q) {
+    st.queue = st.queue.filter((x) => x !== q);
+    if (q.kind === 'player') return; // Player privacy/blocks retain their original removal semantics.
+    q.archived = true;
+    st.history = [q, ...st.history.filter((x) => x !== q)].slice(0, HAIL_LIMITS.history);
+  }
+  // Solo pause stops encounter time as well as the simulation. Opening a menu
+  // must not consume a caller's remaining response window.
+  resume(dt) {
+    const spaces = new Set();
+    for (const st of this.states.values()) {
+      st.next += dt;
+      for (const q of st.queue) {
+        q.expires += dt;
+        if (q.opened) q.opened += dt;
+      }
+      if (st.escort) st.escort.expires += dt;
+      if (st.space) spaces.add(st.space);
+    }
+    for (const sp of spaces)
+      for (const e of sp.ships.values()) {
+        if (e.hailOfferUntil) e.hailOfferUntil += dt;
+        if (e.hailEscort) e.hailEscort.expires += dt;
+      }
   }
   source(s, q) {
     if (!flying(s) || s.data.sys !== q.sys) return null;
@@ -173,20 +202,26 @@ export class HailService {
     if (m.op === 'list') return this.push(s, st);
     if (m.op === 'send')
       return this.player(s, this.game.live[s.data.sys]?.ships.get(Number(m.id)), m.text);
-    const q = st.queue.find((q) => q.key === m.key);
+    const q = [...st.queue, ...st.history].find((q) => q.key === m.key);
     if (!q) return this.game.toast(s, 'That hail has ended.');
     if (m.op === 'dismiss') {
       st.queue = st.queue.filter((x) => x !== q);
+      st.history = st.history.filter((x) => x !== q);
       return this.push(s, st);
     }
     const e = this.source(s, q);
-    if (!e || q.expires < now) {
-      st.queue = st.queue.filter((x) => x !== q);
+    if (q.archived || !e || q.expires <= now) {
+      this.archive(st, q);
+      if (q.kind === 'player') {
+        this.push(s, st);
+        return this.game.toast(s, 'That hail has ended.');
+      }
+      if (m.op === 'open') q.read = true;
       this.push(s, st);
       return this.game.send(s, {
         t: 'hail',
         who: q.who,
-        text: 'This hail has expired or the sender is no longer available.',
+        text: `${q.text}\n\n[Archived transmission: this hail has expired or the sender is no longer available. No actions remain available.]`,
         opts: [],
       });
     }
@@ -460,7 +495,8 @@ export class HailService {
       const st = this.state(s),
         sp = st.space;
       const before = st.queue.length;
-      st.queue = st.queue.filter((q) => q.expires > now && this.source(s, q));
+      for (const q of [...st.queue])
+        if (q.expires <= now || !this.source(s, q)) this.archive(st, q);
       if (before !== st.queue.length) this.push(s, st);
       if (st.escort) {
         const e = sp?.ships.get(st.escort.source);

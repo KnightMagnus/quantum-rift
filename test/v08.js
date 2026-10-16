@@ -54,8 +54,8 @@ ok(
 );
 const far = SYSTEMS.filter((s) => s.farside);
 ok(
-  far.length === 10 && far.every((s) => s.x < Math.min(...xs) && s.y < Math.min(...ys) + 60),
-  'ten Farside systems lie off the north-west edge of the map',
+  far.length === 16 && far.every((s) => s.x < Math.min(...xs) && s.y < Math.min(...ys) + 60),
+  'sixteen Farside systems lie off the north-west edge of the map',
 );
 ok(
   far.every((s) => s.links.every((l) => SYS[l].farside)) &&
@@ -70,7 +70,7 @@ while (q.length)
       fseen.add(l);
       q.push(l);
     }
-ok(fseen.size === 10, 'all ten Farside systems connect to each other');
+ok(fseen.size === 16, 'all sixteen Farside systems connect to each other');
 ok(
   STELLARS['sol-gateway'].wormhole === 'coldharbor' &&
     STELLARS['coldharbor-gate'].wormhole === 'sol',

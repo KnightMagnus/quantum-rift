@@ -826,7 +826,7 @@ export function addSolGateway(SYSTEMS) {
     stellars: [
       {
         id: 'earth',
-        name: 'Earth',
+        name: 'Terra',
         kind: 'planet',
         color: '#3a7ad0',
         r: 165,
@@ -836,7 +836,7 @@ export function addSolGateway(SYSTEMS) {
         tech: 7,
         land: 'earth',
         prices: { food: -1, medical: -1, luxury: 1, crystal: 1 },
-        desc: 'Earth. Cradle of the Concord and still its beating heart: blue oceans, shining arcologies, and the old orbital rings. Every captain comes home eventually.',
+        desc: 'Terra. Cradle of the Concord and still its beating heart: blue oceans, shining arcologies, and the old orbital rings. Every captain comes home eventually.',
       },
       {
         id: 'luna',

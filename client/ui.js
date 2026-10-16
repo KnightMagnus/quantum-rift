@@ -1,4 +1,5 @@
 import { artworkUrl } from './artwork.js';
+import { stationLanding } from './exotic_scenery.js';
 import { passengerSeats, occupiedPassengerSeats } from '/shared/passengers.js';
 // Quantum Rift interface: HUD, landing screens (trade, shipyard, outfitter, jobs, Quantum Station), companion tabs, galaxy map, chat.
 import { missionsHtml } from './missions.js';
@@ -982,6 +983,13 @@ export function showLanded() {
     : p.land && p.land !== 'earth'
       ? `url(assets/land/${{ 10957: 'l_inalumen', 10958: 'l_threshold' }[p.land] || p.land}.jpg)`
       : `url(assets/land/${landScene(p)}.jpg), radial-gradient(circle at 40% 40%, ${p.color}, #000 75%)`; // 2.5: rendered landing pictures
+  if (!site && p.kind === 'station') {
+    const stellarId = p.id;
+    stationLanding(p, SYS[p.system], stationDesign(p)).then((url) => {
+      if (url && G.landed?.stellar === stellarId)
+        $('landpic').style.backgroundImage = `url("${url}")`;
+    });
+  }
   const avail = TABS.filter(
     ([k]) =>
       (k === 'blackmarket' && L.blackmarket) ||

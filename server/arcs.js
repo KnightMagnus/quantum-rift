@@ -233,8 +233,8 @@ export const ArcsOperations = {
     d.expd = d.expd || { n: 0 };
     if (d.missions.some((m) => m.exp)) return null;
     const n = d.expd.n,
-      fs = SYSTEMS.filter((S) => S.farside),
-      a = fs[(n * 3 + 1) % fs.length],
+      fs = SYSTEMS.filter((S) => S.farside && !!S.eventide === !!SYS[p.system].eventide),
+      a = fs[(n * (SYS[p.system].eventide ? 1 : 3) + 1) % fs.length],
       b = fs[(n * 5 + 4) % fs.length];
     const pts = [];
     for (let i = 0; i < 3; i++) {
@@ -250,7 +250,7 @@ export const ArcsOperations = {
       sys: a.id,
       points: pts,
       reward: 12000 + n * 6000,
-      text: `The Farside Settlers' survey office wants readings from ${a.name}: pass close to three marked points. Every survey out here turns up something.`,
+      text: `The ${SYS[p.system].eventide ? 'Eventide research annex' : 'Farside Settlers’ survey office'} wants readings from ${a.name}: pass close to three marked points. Every survey out here turns up something.`,
     };
   },
   // a finished expedition stage becomes the next one

@@ -1,3 +1,4 @@
+import { addEventide } from './eventide.js';
 import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from './gen.js';
 // Quantum Rift: the galaxy. 30 hand-made anchor systems, grown to ~200 by shared/gen.js (deterministic).
 // Shared by the server (authoritative) and the browser client (map, landing screens).
@@ -977,6 +978,7 @@ addMoonsAndFields(SYSTEMS); // 2.3: more moons and asteroid fields (a separate s
       if (!('gas' in p.prices) && near && roll > 0.55 && roll < 0.75) p.prices.gas = 0;
     }
 }
+addEventide(SYSTEMS); // Append authored v2.9 content without consuming legacy generation RNG.
 export const SYS = Object.fromEntries(SYSTEMS.map((s) => [s.id, s]));
 export const STELLARS = Object.fromEntries(
   SYSTEMS.flatMap((s) => s.stellars.map((p) => [p.id, { ...p, system: s.id }])),

@@ -1,3 +1,4 @@
+import { eventideOffers } from '../shared/eventide.js';
 import { HailService } from './hail-service.js';
 import { CombatAssist } from './combat-assist.js';
 import { createMessageRegistry } from './message-registry.js';
@@ -671,6 +672,7 @@ export class Game {
     const dt = Date.now() - (this.pausedAt || Date.now());
     this.pausedAt = 0;
     if (dt <= 0) return;
+    this.hails.resume(dt);
     for (const p of Object.values(this.db.players)) {
       for (const m of p.missions || []) if (m.deadline) m.deadline += dt;
       if (p.loan && p.loan.next) p.loan.next += dt;
@@ -2131,6 +2133,7 @@ export class Game {
         });
       }
     }
+    out.push(...eventideOffers(p, d, win));
     out.push(...this.features.fronts.moreOffers(p, d, r, near, win));
     out.push(...this.features.coop.coopOffers(p, d, r, near, win)); // 2.6: Armada contracts (online games)
     {
@@ -2175,7 +2178,10 @@ export class Game {
     }
     out.unshift(...this.features.quests.questOffers(p, d)); // 2.4: contacts and side stories lead the board
     return out.filter(
-      (o) => !d.missions.some((m) => m.id === o.id) && !(o.type === 'assassinate' && rank < 3),
+      (o) =>
+        !d.missions.some((m) => m.id === o.id) &&
+        !(destType(o) && o.dest === p.id) &&
+        !(o.type === 'assassinate' && rank < 3),
     );
   }
   accept(s, id) {

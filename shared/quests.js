@@ -441,7 +441,7 @@ export const SIDE_STORIES = [
         sys: 'halcyon',
         title: 'The abandoned courier',
         brief: 'Board the abandoned courier in Halcyon.',
-        beat: "The courier's pilot was left to die by the thief. In exchange for rescue, she gives up her employer: a collector on Earth.",
+        beat: "The courier's pilot was left to die by the thief. In exchange for rescue, she gives up her employer: a collector on Terra.",
       },
       {
         type: 'cargo',
@@ -449,7 +449,7 @@ export const SIDE_STORIES = [
         qty: 1,
         cid: 'luxury',
         title: 'Bait for a collector',
-        brief: 'Carry a forged "lost archive" to Earth to draw the collector out.',
+        brief: 'Carry a forged "lost archive" to Terra to draw the collector out.',
         beat: 'The collector takes the bait, and the Concord Watch takes the collector. The stolen records are recovered.',
       },
       {
@@ -492,7 +492,7 @@ export const SIDE_STORIES = [
         qty: 1,
         cid: 'crystal',
         title: 'Bring the core to Dr. Feld',
-        brief: "Carry the buoy's memory core back to Earth.",
+        brief: "Carry the buoy's memory core back to Terra.",
       },
     ],
     end: 'Dr. Feld plays the message for hours. "It\'s not a warning. I think it\'s a greeting." She looks up at you. "Whatever is out there, it has been waiting a long time for someone to answer."',

@@ -2,6 +2,17 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.9.0 — The Eventide Chain
+
+- **Six authored Farside systems:** follow the new branch from Vesper Gate through Lantern Twins, Aureole, Reliquary, Nightjar, Glasswake and Palinode. Provision expedition stations, rescue stranded survey crews, mine the shattered world's fields, and recover readings through the existing expedition loop.
+- **Exotic vistas:** adjacent red/blue stars, an inhabited research ring overlooking a black-hole accretion disk, a pulsar graveyard, a starless refuge, a broken-world foundry and an ancient observatory. Docking destinations remain stationary; there is no orbital or gravity simulation. Selected new scenery also enriches Meridian, Gloam and Slagforge in the main galaxy.
+- **Readable radiation:** Reliquary's marked, avoidable pocket warns before each pulse and drains shields only. Stable docks and authored rescue locations are outside it. No hull damage or forced gravity hazards.
+- **Station identity:** landed station views use their actual in-space station design against the system's own sky, including Luna Station.
+- **Terra:** the player-facing Earth name is now Terra; old save IDs, quest references and artwork filenames remain compatible.
+- **Incoming hails:** Solo pause preserves call deadlines. Expired or departed NPC callers remain as bounded read-only transmission history until dismissed or the system visit ends; archived calls cannot transfer resources or award rewards.
+- **Travel required:** relief deliveries cannot target their offering port, and the board defensively rejects self-deliveries. Different destinations within one system remain valid.
+- Existing Combat Assist, map sizing, planet opacity, comets and versioned catalog artwork fixes are retained. All legacy generated systems, object IDs and coordinates remain unchanged.
+
 ### 2.8.3
 
 - **Catalog artwork:** ship portraits and outfit icons now use release-versioned URLs in Codex, shipyards, outfitters and related ship panels. This bypasses stale cached responses from before artwork repairs. Unversioned catalog artwork revalidates instead of remaining fresh for a day; WebP files have their proper image content type.
