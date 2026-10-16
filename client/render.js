@@ -1,7 +1,12 @@
 // Quantum Rift renderer: starfield, stellars, ship sprite sheets, shots, beams, effects, radar.
 import { planetSprite } from './planets.js';
+import { drawStar } from './stars.js';
 import { missionTargets } from './missions.js';
 import { drawShipChat } from './chat_bubbles.js';
+import { loopFrames } from './animation_frames.js';
+import { WORMHOLE } from './wormhole_animation.js';
+import { shipBank } from './ship_banking.js';
+import { backgroundScale } from './background_scale.js';
 import { ANOMALIES } from '/shared/fronts.js';
 import { STATES } from '/shared/living.js';
 import { SYS, STELLARS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
@@ -62,18 +67,6 @@ export function sheet(H, glow) {
     sheets.set(k, im);
   }
   return sheets.get(k);
-}
-// 2.6: banking. Ships roll into the turn: turning clockwise (right) shows the set rolled right, anticlockwise the set rolled left.
-function bankOf(e, now) {
-  const pa = e._pa ?? e.a,
-    dtm = Math.max(1, now - (e._pt || now - 16));
-  let d = e.a - pa;
-  while (d > Math.PI) d -= 2 * Math.PI;
-  while (d < -Math.PI) d += 2 * Math.PI;
-  e._pa = e.a;
-  e._pt = now;
-  e._br = (e._br || 0) * 0.82 + (d / dtm) * 1000 * 0.18;
-  return e._br > 0.55 ? 1 : e._br < -0.55 ? 2 : 0;
 }
 const stationImgs = [0, 1, 2, 3, 4, 5].map((k) => {
   const im = new Image();
@@ -564,24 +557,7 @@ function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
       [x, y] = farXY(s, W, H, cx, cy, zf),
       R = s.size * zf; // the system's star, far off, with a soft lens flare
     if (x > -R * 3 && y > -R * 3 && x < W + R * 3 && y < H + R * 3) {
-      ctx.globalCompositeOperation = 'lighter';
-      const g = ctx.createRadialGradient(x, y, 0, x, y, R * 2.4);
-      g.addColorStop(0, `rgba(${s.core},.95)`);
-      g.addColorStop(0.06, `rgba(${s.core},.75)`);
-      g.addColorStop(0.2, `rgba(${s.halo},.22)`);
-      g.addColorStop(1, `rgba(${s.halo},0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(x, y, R * 2.4, 0, 6.283);
-      ctx.fill();
-      const L = R * 3.2,
-        h = ctx.createLinearGradient(x - L, y, x + L, y);
-      h.addColorStop(0, `rgba(${s.halo},0)`);
-      h.addColorStop(0.5, `rgba(${s.core},.35)`);
-      h.addColorStop(1, `rgba(${s.halo},0)`);
-      ctx.fillStyle = h;
-      ctx.fillRect(x - L, y - 1.5, L * 2, 3);
-      ctx.globalCompositeOperation = 'source-over';
+      drawStar(ctx, S, s, x, y, R, now);
     }
   }
   ctx.globalCompositeOperation = 'lighter';
@@ -644,7 +620,7 @@ function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
   for (const bp of [...D.bgp].sort((a, b) => a.depth - b.depth)) {
     // 2.4: unique background worlds, the farthest first
     const [x, y] = farXY(bp, W, H, cx, cy, zf),
-      s = bp.size * zf;
+      s = bp.size * zf * backgroundScale('world', bp.p.desc);
     if (x < -s * 2 || y < -s * 2 || x > W + s * 2 || y > H + s * 2) continue;
     const P = planetSprite(bp.p, now);
     if (!P) continue;
@@ -840,7 +816,7 @@ function drawDecorNear(ctx, S, W, H, z, sx, sy, now) {
     if (!ready(im)) continue;
     const x = sx(w.x),
       y = sy(w.y),
-      s = w.size * z,
+      s = w.size * z * backgroundScale('wreck'),
       sh = (s * im.naturalHeight) / im.naturalWidth;
     if (!onS(x, y, s)) continue;
     ctx.save();
@@ -1621,16 +1597,33 @@ export function draw(G, ctx, W, H, dt, now) {
       continue;
     let label = p.name;
     if (p.wormhole) {
-      // the Sol Gateway: the mod's animated vortex, slowly turning
+      // Original periodic Gateway frames; interpolate only to smooth display cadence.
       if (wormImg.complete && wormImg.naturalWidth) {
-        const f = Math.floor(now / 55) % 32,
-          fs = wormImg.naturalWidth / 8,
+        const frames = loopFrames(now, WORMHOLE.frames, WORMHOLE.frameMs),
+          fs = wormImg.naturalWidth / WORMHOLE.columns,
           s = p.r * 2.6 * z;
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(now / 9000);
         ctx.globalCompositeOperation = 'lighter';
-        ctx.drawImage(wormImg, (f % 8) * fs, Math.floor(f / 8) * fs, fs, fs, -s / 2, -s / 2, s, s);
+        // Additive weights preserve brightness, including the wrap from frame 31 to 0.
+        for (const [f, weight] of [
+          [frames.first, 1 - frames.mix],
+          [frames.second, frames.mix],
+        ]) {
+          ctx.globalAlpha = weight;
+          ctx.drawImage(
+            wormImg,
+            (f % WORMHOLE.columns) * fs,
+            Math.floor(f / WORMHOLE.columns) * fs,
+            fs,
+            fs,
+            -s / 2,
+            -s / 2,
+            s,
+            s,
+          );
+        }
         ctx.restore();
       }
     } else if (p.hub) {
@@ -2283,7 +2276,15 @@ function drawShip(G, ctx, e, x, y, z, now) {
     SP = H.spr,
     fs = SP ? SP.fs : sz,
     cols = SP ? SP.cols : 6;
-  const fr = fr0 + (SP && SP.banks && !(e.fl & 4) ? bankOf(e, now) * 36 : 0),
+  const fr =
+      fr0 +
+      (SP && SP.banks && !(e.fl & 4)
+        ? shipBank(
+            e,
+            now,
+            e.id === G.myId && !(e.fl & 8) && !(G.combat?.on || G.combat?.delegated),
+          ) * 36
+        : 0),
     srcX = (fr % cols) * fs,
     srcY = Math.floor(fr / cols) * fs;
   const im = sheet(H);

@@ -57,9 +57,20 @@ jobs:
       - name: Contract types test
         run: npm run test:types
 
-      - name: Communications, speech bubbles and weapon compatibility
+      - name: Communications, equipment and passenger regressions
         run: |
           node test/hailing.js
           node test/chat-bubbles.js
           node test/original-weapons.js
           node test/combat-assist.js
+          node test/ship-economy.js
+          node test/passengers.js
+          node test/outfitter-icons.js
+          node test/ship-banking.js
+          node test/animation-frames.js
+          node test/wormhole-loop.js
+          node test/stars.js
+          node test/background-scale.js
+          node test/passenger-quests.js
+          node test/local-retaliation.js
+          node test/fuzz.js

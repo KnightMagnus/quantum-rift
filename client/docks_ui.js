@@ -1,7 +1,7 @@
 // 2.1 Docks: the DOCKS screen at your Personal Station, the dock switcher by the DEPART button, and the sidebar line.
 import { ROLES, RARITY } from '/shared/hangar.js';
 import { WING_REPAIR_COST, NEXT_DOCK_OPS } from '/shared/docks.js';
-import { credits } from '/shared/rules.js';
+import { credits, repairBasis } from '/shared/rules.js';
 
 const esc = (s) =>
   String(s ?? '').replace(
@@ -64,7 +64,7 @@ export function docksHtml(G, interactive) {
             w,
             j,
           ) => `<div class="drole">WINGMATE ${j + 1}</div>${shipBox(G, w, 'Empty wing slot')}${shipPick(G, D, i, j, w, interactive)}
-        ${w ? `<div class="dcrews">${crewPick(G, i, j, 'cap', w.cap, interactive)}${crewPick(G, i, j, 'crew', w.crew, interactive)}</div>${w.repairT ? `<button class="btn sm" data-act="wingrep" data-uid="${w.uid}">RUSH REPAIRS ${credits(Math.round((G.A.ships[w.hull].cost || 0) * WING_REPAIR_COST))}</button>` : ''}` : ''}`,
+        ${w ? `<div class="dcrews">${crewPick(G, i, j, 'cap', w.cap, interactive)}${crewPick(G, i, j, 'crew', w.crew, interactive)}</div>${w.repairT ? `<button class="btn sm" data-act="wingrep" data-uid="${w.uid}">RUSH REPAIRS ${credits(Math.round(repairBasis(G.A, w.hull) * WING_REPAIR_COST))}</button>` : ''}` : ''}`,
         )
         .join('')}
     </div>`;

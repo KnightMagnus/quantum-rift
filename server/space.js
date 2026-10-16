@@ -226,6 +226,16 @@ export class Space {
     const r = this.root(e);
     return r && r.player ? r.player.id : null;
   }
+  // Session-only hostility lasts through landing/relaunch, but not the next system visit.
+  beginVisit(session) {
+    if (session.retaliationVisit?.sys !== this.id)
+      session.retaliationVisit = { sys: this.id, factions: new Set() };
+    return session.retaliationVisit;
+  }
+  localRetaliation(npc, player) {
+    const visit = player?.player?.s?.retaliationVisit;
+    return !!(visit?.sys === this.id && visit.factions.has(npc.faction));
+  }
   // 2.0.3: newcomer protection. Pirates, raiders, swarms and other always-hostile ships never pick a fight with a protected
   // captain (Personal Station below Ops 3) in inner space (danger 0-2), and nobody targets a captain in the first seconds
   // after a jump. Firing on them, or a job's own target, ends the truce for that fight.
@@ -233,6 +243,7 @@ export class Space {
     const ro = this.root(o),
       re = this.root(e);
     if (!ro || !ro.player || !re || re.player) return false;
+    if (this.localRetaliation(re, ro)) return false;
     if (ro.graceT > this.t) return true; // just arrived
     if (
       re.aggro.has(ro.id) ||
@@ -301,6 +312,7 @@ export class Space {
         npc = pa ? rb : ra,
         rep = p.rep[npc.faction] || 0,
         F = FACTIONS[npc.faction];
+      if (this.localRetaliation(npc, pa ? ra : rb)) return true;
       const rh = this.game.features.rivals.rivalHostile
         ? this.game.features.rivals.rivalHostile(npc, p)
         : undefined;
@@ -1178,12 +1190,6 @@ export class Space {
   damage(s, dA, dS, src, ion) {
     if (s.dead) return;
     const srcRoot = src ? this.root(src) : null;
-    if (srcRoot && srcRoot !== this.root(s)) {
-      const first = !this.root(s).aggro.has(srcRoot.id);
-      this.root(s).aggro.add(srcRoot.id);
-      if (!s.player && !s.target && s.ai !== 'flee') s.target = srcRoot;
-      if (first && !s.owner) this.callHelp(s, srcRoot);
-    }
     if (src && src.role && s.role) {
       const rm = roleMult(src.role, s.role);
       dA *= rm;
@@ -1206,8 +1212,17 @@ export class Space {
     } else s.armor -= dA;
     s.hitT = this.t;
     if (src) s.lastHitBy = src.id;
-    if (srcRoot && srcRoot.player && !s.player) this.game.onHit(srcRoot.player, s, this);
     const done = Math.max(0, sh0 - s.shield) + Math.max(0, ar0 - s.armor);
+    if (done > 0 && srcRoot && srcRoot !== this.root(s)) {
+      const victim = this.root(s),
+        first = !victim.aggro.has(srcRoot.id);
+      if (srcRoot.player?.s && !victim.player && !this.sys.arena)
+        this.beginVisit(srcRoot.player.s).factions.add(victim.faction);
+      victim.aggro.add(srcRoot.id);
+      if (!s.player && !s.target && s.ai !== 'flee') s.target = srcRoot;
+      if (first && !s.owner) this.callHelp(s, srcRoot);
+    }
+    if (srcRoot && srcRoot.player && !s.player) this.game.onHit(srcRoot.player, s, this);
     if (s.boss) this.game.features.fronts.onBossDamage(s, srcRoot, done);
     if (
       srcRoot &&

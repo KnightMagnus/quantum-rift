@@ -1264,6 +1264,16 @@ export const EXTRA_OUTFITS = [
     turret: true,
     desc: 'A turret-mounted industrial cutter. Strips a rock in seconds.',
   },
+  {
+    id: 9020,
+    name: 'Passenger Seating Pack',
+    eff: { passengerSeats: 5 },
+    cost: 15000,
+    mass: 3,
+    max: 20,
+    tech: 1,
+    desc: 'Five dedicated passenger seats with restraint and life-support fittings. Uses three tons of outfit space; bridge officers and working crew do not occupy passenger seats.',
+  },
 ];
 for (const o of EXTRA_OUTFITS) o.icon = o.icon || `icons/${o.id}.png`; // 2.5: rendered outfitter pictures (tools/rift_icons.py)
 

@@ -1,3 +1,4 @@
+import { passengerSeats } from './passengers.js';
 // 1.2 "Syndicate and Officers": the Syndicate crime path and black market, officer ranks and traits, lower-deck crew,
 // the bank (after Endless Sky's mortgages), and passenger and rush jobs.
 
@@ -180,15 +181,8 @@ export const loanPayment = (bal, credit) =>
         Math.max(BANK.minPay, Math.ceil(bal * 0.06 + bal * loanRate(credit))),
       );
 
-// ------------------------------------------------------------------ passengers (bunks) and rush jobs
-export function bunks(H) {
-  if (!H) return 0;
-  const base =
-    H.kind === 'specialist'
-      ? 2
-      : Math.round((H.crew || 1) / 4) +
-        (H.role === 'survey' ? 2 : 0) +
-        (H.role === 'explorer' ? 1 : 0);
-  return Math.max(1, Math.min(40, base));
+// Keep the historical helper name for existing mission and save integrations.
+export function bunks(H, loadout) {
+  return passengerSeats(H, loadout);
 }
 export const RUSH_BONUS = 1.8;

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { CombatAssist } from '../server/combat-assist.js';
 import { Space } from '../server/space.js';
+import { Game } from '../server/game.js';
 import { winOdds } from '../shared/hostile.js';
 let n = 1;
 const ship = (pw = 100) => ({
@@ -234,6 +235,240 @@ assert.equal(fired.length, 1, 'in-range aligned primary fires');
 foe.disabled = true;
 Space.prototype.weapons.call(weaponSpace, shooter);
 assert.equal(fired.length, 1, 'disabled target gets no new intentional shot');
+// A target selected BEFORE enabling assist must initiate combat without being an attacker.
+const selectedLead = ship(),
+  selectedFoe = ship();
+selectedLead.a = 0;
+selectedFoe.y = -1000;
+selectedFoe.enemy = true;
+selectedFoe.target = null;
+selectedLead.target = selectedFoe;
+selectedLead.shield = selectedFoe.shield = 100;
+selectedLead.st.shield = selectedFoe.st.shield = 100;
+selectedLead.st.shieldRe = selectedFoe.st.shieldRe = 0;
+selectedLead.guns = [
+  { p: { range: 300, speed: 600, reload: 1 }, ammo: Infinity, cd: 0, sec: false },
+];
+const selectedSession = {
+  data: { name: 'Selected', sys: 'selected' },
+  ent: selectedLead,
+  inputs: [],
+  lastInput: null,
+};
+selectedLead.player = selectedSession;
+const selectedGame = {
+  sessions: new Map([['Selected', selectedSession]]),
+  spaces: {},
+  features: { fronts: { mods: () => null }, coop: { armadaOf: () => null } },
+};
+const selectedSpace = Object.assign(Object.create(Space.prototype), {
+  game: selectedGame,
+  id: 'selected',
+  sys: { stellars: [] },
+  ships: new Map([
+    [selectedLead.id, selectedLead],
+    [selectedFoe.id, selectedFoe],
+  ]),
+  t: 0,
+  players: 0,
+  m: { shieldRe: 1 },
+  mT: 1,
+  shots: [],
+  beams: [],
+  rocks: [],
+  loot: [],
+  events: [],
+  isHostile: (a, b) => !!b.enemy,
+  spared: () => false,
+  ai() {},
+});
+selectedGame.spaces.selected = selectedSpace;
+const selectionAssist = (selectedGame.combatAssist = new CombatAssist(selectedGame));
+selectionAssist.selected(selectedSession, selectedFoe, selectedSpace);
+assert.equal(
+  selectionAssist.state(selectedSession).target,
+  0,
+  'ordinary selection alone does not arm combat',
+);
+selectionAssist.command(selectedSession, { op: 'assist', on: true });
+assert.equal(
+  selectedSession.combat.target,
+  selectedFoe.id,
+  'explicit enable adopts valid existing selection',
+);
+const selectedShots = [];
+selectedSpace.fire = (...args) => selectedShots.push(args);
+selectedSpace.tick();
+assert.equal(
+  selectedLead.combatTarget,
+  selectedFoe,
+  'nonattacking selected hostile becomes combat target',
+);
+assert.ok(
+  selectedLead.inp.thrust && selectedLead.vy < 0,
+  'actual Space tick pursues the selected hostile',
+);
+assert.equal(selectedShots.length, 0, 'pursuit does not fire beyond primary range');
+selectedFoe.y = selectedLead.y - 200;
+selectedSpace.tick();
+assert.equal(
+  selectedShots.length,
+  1,
+  'actual Space tick fires an aligned in-range primary without a prior attack order',
+);
+selectionAssist.manual(selectedSession);
+assert.equal(
+  selectedSession.combat.on,
+  false,
+  'manual takeover still disarms selection-started assist',
+);
+// Invalid preselection cannot override a valid existing handoff or bypass target safeguards.
+const handoffFoe = ship();
+handoffFoe.enemy = true;
+handoffFoe.y = selectedLead.y - 200;
+selectedSpace.ships.set(handoffFoe.id, handoffFoe);
+for (const [label, apply, undo] of [
+  [
+    'neutral',
+    () => {
+      selectedFoe.enemy = false;
+    },
+    () => {
+      selectedFoe.enemy = true;
+    },
+  ],
+  [
+    'disabled',
+    () => {
+      selectedFoe.disabled = true;
+    },
+    () => {
+      selectedFoe.disabled = false;
+    },
+  ],
+  [
+    'destroyed',
+    () => {
+      selectedFoe.dead = true;
+    },
+    () => {
+      selectedFoe.dead = false;
+    },
+  ],
+  [
+    'protected',
+    () => {
+      selectedSpace.spared = (a, b) => a === selectedFoe || b === selectedFoe;
+    },
+    () => {
+      selectedSpace.spared = () => false;
+    },
+  ],
+  [
+    'out of range',
+    () => {
+      selectedFoe.y = selectedLead.y - 2201;
+    },
+    () => {
+      selectedFoe.y = selectedLead.y - 200;
+    },
+  ],
+  [
+    'player',
+    () => {
+      selectedFoe.player = {};
+    },
+    () => {
+      delete selectedFoe.player;
+    },
+  ],
+]) {
+  selectedSession.combat.target = handoffFoe.id;
+  apply();
+  selectionAssist.command(selectedSession, { op: 'assist', on: true });
+  assert.equal(
+    selectedSession.combat.target,
+    handoffFoe.id,
+    label + ' preselection does not replace existing handoff',
+  );
+  selectionAssist.resolve(selectedSpace);
+  assert.equal(
+    selectedLead.combatTarget,
+    handoffFoe,
+    label + ' preselection preserves valid handoff on resolve',
+  );
+  selectedSession.combat.target = 0;
+  selectionAssist.command(selectedSession, { op: 'assist', on: true });
+  selectionAssist.resolve(selectedSpace);
+  assert.equal(
+    selectedLead.combatTarget,
+    null,
+    label + ' preselection does not start a new engagement',
+  );
+  undo();
+}
+// Use actual Space hostility/protection methods: a player's own newcomer/jump truce
+// protects them from NPC initiation, not from deliberately returning fire first.
+delete selectedSpace.isHostile;
+delete selectedSpace.spared;
+selectedSpace.sys.faction = 'quantum';
+selectedSpace.sys.danger = 1;
+selectedGame.newcomer = Game.prototype.newcomer;
+selectedGame.features.rivals = {};
+selectedLead.player = { id: 1, rep: {}, inputs: [], lastInput: null, s: selectedSession };
+selectedFoe.faction = 'hollow';
+selectedLead.faction = 'quantum';
+selectedFoe.target = null;
+handoffFoe.target = null;
+for (const scenario of ['newcomer', 'jump grace']) {
+  selectedSession.data.station = { ops: scenario === 'newcomer' ? 0 : 3 };
+  selectedLead.graceT = scenario === 'jump grace' ? selectedSpace.t + 5 : 0;
+  assert.equal(
+    selectedSpace.isHostile(selectedLead, selectedFoe),
+    true,
+    scenario + ': genuine faction hostility',
+  );
+  assert.equal(
+    selectedSpace.spared(selectedFoe, selectedLead),
+    true,
+    scenario + ': NPC cannot initiate',
+  );
+  assert.equal(
+    selectedSpace.canHit(selectedFoe, selectedLead),
+    false,
+    scenario + ': NPC fire is prevented',
+  );
+  assert.equal(
+    selectedSpace.canHit(selectedLead, selectedFoe),
+    true,
+    scenario + ': manual player fire is legal',
+  );
+  selectionAssist.stop(selectedSession);
+  selectedLead.target = selectedFoe;
+  selectionAssist.command(selectedSession, { op: 'assist', on: true });
+  assert.equal(
+    selectedSession.combat.target,
+    selectedFoe.id,
+    scenario + ': explicit assist honors the same legal attack',
+  );
+  const beforeShots = selectedShots.length;
+  selectedSpace.tick();
+  assert.equal(selectedLead.combatTarget, selectedFoe);
+  assert.equal(
+    selectedShots.length,
+    beforeShots + 1,
+    scenario + ': actual tick fires primary without prior NPC aggression',
+  );
+  selectionAssist.stop(selectedSession);
+  selectedLead.target = null;
+  selectionAssist.command(selectedSession, { op: 'assist', on: true });
+  selectionAssist.resolve(selectedSpace);
+  assert.equal(
+    selectedLead.combatTarget,
+    null,
+    scenario + ': passive enable does not hunt nonattacking hostiles',
+  );
+}
 console.log(
-  'Combat assist: fleet/group power, focus/handoff, authority revocation, stop orders, stale aggression, range/arc and primary-only firing passed.',
+  'Combat assist: fleet/group power, focus/handoff, authority revocation, stop orders, stale aggression, range/arc, preselected-target pursuit and primary-only firing passed.',
 );

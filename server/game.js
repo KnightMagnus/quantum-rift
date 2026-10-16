@@ -36,6 +36,10 @@ import {
   price,
   allOutfits,
   makeLoadout,
+  loadoutValue,
+  ensureStockOutfits,
+  outfitSaleValue,
+  stockOutfitLimit,
   K,
   DT,
   TICK,
@@ -53,7 +57,7 @@ import { masteryTier } from '../shared/frontier.js';
 import { SHUTTLES } from '../shared/hangar.js';
 import { SPEC } from '../shared/specialty.js';
 import { captainBonus } from '../shared/rules.js';
-import { bunks } from '../shared/syndicate.js';
+import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.js';
 
 const MAT_PRICE = [6000, 18000, 45000, 110000, 260000];
 const NAMES = [
@@ -617,21 +621,21 @@ export class Game {
     return Object.values(d.cargo).reduce((a, b) => a + b, 0) + this.jobCargo(d);
   }
   jobBunks(d) {
-    return (d.missions || [])
-      .filter((m) => m.type === 'passenger')
-      .reduce((a, m) => a + (m.pax || 0), 0);
+    return occupiedPassengerSeats(d.missions);
   }
-  // can this hull carry your current job cargo, goods and passengers? returns a reason, or null
-  fitsJobs(d, hull, goods = true) {
+  // Check the actual destination loadout for swaps; purchases use the stock loadout.
+  fitsJobs(d, hullOrShip, goods = true) {
+    const hull = typeof hullOrShip === 'object' ? hullOrShip.hull : hullOrShip;
     const H = this.A.ships[hull];
     if (!H) return 'Unknown hull.';
+    const ship = typeof hullOrShip === 'object' ? hullOrShip : makeLoadout(this.A, hull, '');
     const need = (goods ? Object.values(d.cargo).reduce((a, b) => a + b, 0) : 0) + this.jobCargo(d),
-      cap = shipStats(this.A, makeLoadout(this.A, hull, '')).cargo;
+      cap = shipStats(this.A, ship).cargo;
     if (need > cap)
       return `The ${H.name} can't hold your ${need} t of cargo${this.jobCargo(d) ? ' (including job cargo)' : ''}.`;
     const pax = this.jobBunks(d);
-    if (pax && pax > bunks(H))
-      return `The ${H.name} doesn't have bunks for your ${pax} passenger${pax > 1 ? 's' : ''}.`;
+    if (pax > passengerSeats(H, ship))
+      return `The ${H.name} doesn't have seats for your ${pax} passenger${pax > 1 ? 's' : ''}.`;
     return null;
   }
   // 2.0.3: when you leave a system, your escorts go with you; a rival flying alongside goes back to their own business
@@ -1236,6 +1240,7 @@ export class Game {
     if (s.combat) this.combatAssist.stop(s, 'New flight state; rearm explicitly');
     const d = s.data,
       sp = this.spaces[d.sys];
+    sp.beginVisit(s);
     const e = sp.makeShip({
       loadout: d.ship,
       bonus: this.features.bonuses.bonus(d),
@@ -1678,6 +1683,7 @@ export class Game {
         : START.stellar; // 1.0.1: your own station hull if you have one, otherwise the hub
     d.stellar = back;
     d.sys = STELLARS[back].system;
+    if (s.retaliationVisit?.sys !== d.sys) s.retaliationVisit = undefined;
     d.fuel = undefined;
     for (const m of d.missions) if (m.type === 'cargo') m.lost = true;
     d.missions = d.missions.filter((m) => !m.lost);
@@ -1953,11 +1959,7 @@ export class Game {
   }
   tradeIn(d) {
     if (d.shipless) return 0;
-    const H = this.A.ships[d.ship.hull];
-    let v = (H.cost || 0) * 0.5;
-    for (const [id, n] of Object.entries(d.ship.outfits))
-      v += (this.O[id] ? this.O[id].cost : 0) * n * 0.5;
-    return Math.round(v);
+    return loadoutValue(this.A, d.ship);
   }
   buyShip(s, hull) {
     const d = s.data,
@@ -2029,8 +2031,10 @@ export class Game {
         d.ship.ammo[w] = have + k;
         d.credits -= k * o.cost;
       } else {
+        ensureStockOutfits(this.A, d.ship);
         const cur = d.ship.outfits[id] || 0;
-        if (cur + n > (o.max || 1)) return this.toast(s, `You can carry at most ${o.max || 1}.`);
+        const limit = stockOutfitLimit(this.A, d.ship, id);
+        if (cur + n > limit) return this.toast(s, `You can carry at most ${limit}.`);
         if ((o.mass || 0) * n > st.free) return this.toast(s, 'Not enough free space.');
         if (o.eff.weapon && o.turret && st.turrets + n > st.maxTurrets)
           return this.toast(s, 'No free turret mounts.');
@@ -2046,9 +2050,12 @@ export class Game {
       if (!k) return;
       if (o.eff.cargo && this.holdUsed(d) > st.cargo - o.eff.cargo * k)
         return this.toast(s, 'Sell cargo first.');
+      if (o.eff.passengerSeats && this.jobBunks(d) > st.passengerSeats - o.eff.passengerSeats * k)
+        return this.toast(s, 'Deliver your passengers before removing their seats.');
+      const refund = outfitSaleValue(this.A, d.ship, id, k);
       d.ship.outfits[id] = cur - k;
       if (!d.ship.outfits[id]) delete d.ship.outfits[id];
-      d.credits += Math.round(o.cost * k * 0.5);
+      d.credits += refund;
     }
     this.db.touch();
     this.you(s);
@@ -2461,6 +2468,7 @@ export class Game {
         this.db.world.sites[to.id] = this.db.key(d.name);
         d.stellar = to.id;
         d.sys = to.system;
+        if (from.system !== to.system) s.retaliationVisit = undefined;
         this.log(
           d,
           `Warped your Personal Station from ${SYS[from.system].name} to ${SYS[to.system].name}. Everything came along.`,

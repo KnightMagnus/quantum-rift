@@ -45,7 +45,6 @@
       ],
       "uses": [
         "A",
-        "O",
         "arcProgress",
         "barOffers",
         "bays",
