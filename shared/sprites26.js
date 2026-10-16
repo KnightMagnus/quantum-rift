@@ -1,5 +1,20 @@
 // Quantum Rift 2.6: the re-rendered ship sheets (tools: scratchpad rift_ships26.py). fs = frame size in pixels, cols = frames per
 // row; banks = three roll sets of 36 headings (level, rolled right, rolled left), otherwise the level set only.
+
+/**
+ * Rendering configuration for a re-rendered 2.6 ship sprite sheet.
+ * @typedef {Object} SpriteSheetConfig
+ * @property {number} fs - Frame size in pixels (both width and height of each sprite frame).
+ * @property {number} cols - Number of frames per row in the packed sheet texture.
+ * @property {boolean} banks - Whether the sheet contains 3 roll angles (level, rolled right, rolled left) of 36 headings.
+ * @property {boolean} glow - Whether the ship includes engine/light glow overlays.
+ * @property {boolean} packed - Whether sprite frames use tight packed layout.
+ */
+
+/**
+ * Sprite sheet rendering configurations mapped by ship hull ID.
+ * @type {Record<number, SpriteSheetConfig>}
+ */
 export const SPRITES = {
   703: { fs: 60, cols: 12, banks: true, glow: true, packed: true },
   704: { fs: 108, cols: 12, banks: true, glow: true, packed: true },

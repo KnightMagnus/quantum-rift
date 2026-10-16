@@ -1,6 +1,30 @@
 // 1.0.3: the in-HUD radio plays a station's own audio stream in an <audio> element, so the game's mixer controls its
 // volume and a click starts it straight away. The display is an in-game "on air" panel with the current song.
 // If a station only offers streams this browser can't play, it falls back to the iHeart embed (whose volume is its own).
+
+/**
+ * @typedef {Object} RadioStation
+ * @property {string|number} id Unique radio station identifier
+ * @property {string} name Radio station name
+ * @property {string} [sub] Station tagline or frequency callsign
+ * @property {string} [img] Station logo or artwork URL
+ */
+
+/**
+ * @typedef {'live' | 'tune' | 'embed' | 'nosig'} RadioState
+ */
+
+/**
+ * @typedef {Object} RadioMeta
+ * @property {string} [title] Track title
+ * @property {string} [artist] Artist name
+ */
+
+/**
+ * HTML-escapes a string safely for insertion into template strings.
+ * @param {any} s Input value
+ * @returns {string} Escaped HTML string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"]/g,
@@ -14,6 +38,11 @@ let el = null,
   token = 0,
   box = null,
   cur = null;
+
+/**
+ * Returns or lazily creates the singleton HTMLAudioElement for radio playback.
+ * @returns {HTMLAudioElement}
+ */
 const audio = () => {
   if (!el) {
     el = new Audio();
@@ -22,6 +51,13 @@ const audio = () => {
   }
   return el;
 };
+
+/**
+ * Sets radio playback volume and updates the UI slider.
+ * @param {number} v Effective volume (master x radio, 0 when muted)
+ * @param {number} [show=v] Slider position value
+ * @returns {void}
+ */
 export function setRadioLevel(v, show = v) {
   level = Math.max(0, Math.min(1, v));
   shown = show;
@@ -29,10 +65,22 @@ export function setRadioLevel(v, show = v) {
   const r = box && box.querySelector('#rvol');
   if (r && document.activeElement !== r) r.value = shown;
 } // v: effective (master x radio, 0 when muted); show: the radio slider
+
+/**
+ * Returns whether a radio station is currently playing or tuned in.
+ * @returns {boolean}
+ */
 export function radioOn() {
   return !!cur;
 }
 
+/**
+ * Renders the radio status and controls panel into the current box element.
+ * @param {RadioState} state Current tuner state
+ * @param {RadioStation|null} s Active station metadata
+ * @param {string} [extra=''] Status or song information HTML
+ * @returns {void}
+ */
 function panel(state, s, extra = '') {
   if (!box) return;
   box.innerHTML = `<div class="onair ${state}"><div class="oa-top"><span class="oa-led"></span>${state === 'live' ? 'ON AIR' : state === 'tune' ? 'TUNING' : state === 'embed' ? 'ON AIR · EXTERNAL PLAYER' : 'NO SIGNAL'}</div>
@@ -53,6 +101,13 @@ function panel(state, s, extra = '') {
     };
   }
 }
+
+/**
+ * Fetches and updates the currently playing track metadata for the active station.
+ * @param {string|number} id Station identifier
+ * @param {number} my Playback session token to discard stale responses
+ * @returns {Promise<void>}
+ */
 async function nowPlaying(id, my) {
   try {
     const m = await (await fetch('/api/radio/meta?id=' + encodeURIComponent(id))).json();
@@ -64,6 +119,11 @@ async function nowPlaying(id, my) {
         : '<span class="dim">Live</span>';
   } catch {}
 }
+
+/**
+ * Asynchronously loads the Hls.js library if not already present on window.
+ * @returns {Promise<any>}
+ */
 function loadHls() {
   if (window.Hls) return Promise.resolve(window.Hls);
   return new Promise((ok, no) => {
@@ -74,6 +134,13 @@ function loadHls() {
     document.head.appendChild(sc);
   });
 }
+
+/**
+ * Attempts to play an audio stream URL via native Audio or Hls.js.
+ * @param {string} url Stream URL
+ * @param {boolean} isHls Whether the URL is an HLS m3u8 playlist
+ * @returns {Promise<void>}
+ */
 function tryPlay(url, isHls) {
   const a = audio();
   return new Promise(async (ok, no) => {
@@ -107,6 +174,14 @@ function tryPlay(url, isHls) {
     }
   });
 }
+
+/**
+ * Tunes into and begins playback for a given radio station, trying stream URLs and falling back to iHeart embed.
+ * @param {RadioStation} s Station object
+ * @param {HTMLElement} target Container element for radio panel
+ * @param {string} slug Station URL slug for fallback iframe
+ * @returns {Promise<void>}
+ */
 export async function playStation(s, target, slug) {
   box = target;
   cur = s;
@@ -157,6 +232,11 @@ export async function playStation(s, target, slug) {
   note.textContent = 'This station plays in its own player: use its volume control.';
   box.appendChild(note);
 }
+
+/**
+ * Tears down active Hls.js instance and stops native Audio playback.
+ * @returns {void}
+ */
 function stopAudio() {
   if (hls) {
     hls.destroy();
@@ -168,6 +248,12 @@ function stopAudio() {
     el.load();
   }
 }
+
+/**
+ * Stops radio stream playback and resets the UI container to "RADIO OFF".
+ * @param {HTMLElement} [target] Optional container DOM element to clear
+ * @returns {void}
+ */
 export function stopRadio(target) {
   token++;
   clearInterval(metaTimer);

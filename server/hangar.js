@@ -31,7 +31,20 @@ import {
 import { HANGAR_BY_OPS } from '../shared/docks.js';
 import { researchBonus, captainBonus, makeLoadout, credits } from '../shared/rules.js';
 
+/**
+ * Clamp a numeric value between a lower and an upper bound.
+ * @param {number} v - Value to clamp.
+ * @param {number} a - Lower bound.
+ * @param {number} b - Upper bound.
+ * @returns {number} Clamped value.
+ */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/**
+ * Create a seeded pseudo-random number generator function.
+ * @param {number} seed - Initial random seed.
+ * @returns {() => number} Generator returning floats in [0, 1).
+ */
 function rng(seed) {
   let s = seed >>> 0 || 1;
   return () => {
@@ -43,6 +56,12 @@ function rng(seed) {
     return s / 4294967296;
   };
 }
+
+/**
+ * 32-bit FNV-1a string hash function.
+ * @param {string} str - Input string to hash.
+ * @returns {number} 32-bit unsigned integer hash.
+ */
 function hash(str) {
   let h = 2166136261;
   for (const c of str) {
@@ -51,8 +70,24 @@ function hash(str) {
   }
   return h >>> 0;
 }
+
+/**
+ * Pick a random element from an array using a random generator function.
+ * @template T
+ * @param {() => number} r - Random generator function returning [0, 1).
+ * @param {T[]} a - Array of items to choose from.
+ * @returns {T} Selected element.
+ */
 const pick = (r, a) => a[Math.floor(r() * a.length)];
+
+/** @type {Record<string, Record<string, number>>} Cache of shortest jump distance maps by starting system ID. */
 const DIST = {};
+
+/**
+ * Compute or retrieve cached shortest jump distances from a given system to all connected systems.
+ * @param {string} from - Origin system ID.
+ * @returns {Record<string, number>} Map of system IDs to jump count distance.
+ */
 function jumps(from) {
   if (DIST[from]) return DIST[from];
   const d = { [from]: 0 },
@@ -67,10 +102,18 @@ function jumps(from) {
   }
   return (DIST[from] = d);
 }
+
+/** @type {string[]} List of playable and NPC race identifiers. */
 const RACES = Object.keys(RACE_ROLES);
 
 export const HangarOperations = {
   // ------------------------------------------------------------------ save upgrades
+  /**
+   * Initialize hangar, officer, bridge, dock, and station queue data on player record.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {void}
+   */
   hangarInit(d) {
     d.shuttles = d.shuttles || [];
     d.officers = d.officers || [];
@@ -79,13 +122,31 @@ export const HangarOperations = {
     d.station.queue = d.station.queue || [];
     d.nextUid = d.nextUid || 1;
   },
+  /**
+   * Allocate a monotonically increasing unique identifier for player entities.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {number} Newly allocated unique ID.
+   */
   uid(d) {
     return (d.nextUid = (d.nextUid || 1) + 1) - 1;
   },
+  /**
+   * Calculate total shuttle bay capacity based on station Ops level and research bonuses.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {number} Total available shuttle bays.
+   */
   bays(d) {
     const b = researchBonus(d.station);
     return d.station.site ? BAYS_BY_OPS[d.station.ops] + (b.bays || 0) : 0;
   },
+  /**
+   * Calculate total stored-ship dock slots based on station Ops level and research bonuses.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {number} Total stored-ship berths.
+   */
   dockSlots(d) {
     const b = researchBonus(d.station);
     return d.station.site ? HANGAR_BY_OPS[d.station.ops] + (b.dockSlots || 0) : 0;
@@ -93,6 +154,13 @@ export const HangarOperations = {
 
   // ------------------------------------------------------------------ officers
   // a bar on any inhabited world with a job board posts three officers of the local race each hour
+  /**
+   * Generate three candidate officers for hire at an inhabited world with a bar service.
+   * @this {any}
+   * @param {{id: string, svc: string, system: string, tech?: number, site?: any}} p - Current stellar body.
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Array<Record<string, any>>} List of generated officer offers.
+   */
   barOffers(p, d) {
     if (!p || !p.svc.includes('B') || p.site) return [];
     const fac = SYS[p.system].faction,
@@ -122,6 +190,13 @@ export const HangarOperations = {
     }
     return out;
   },
+  /**
+   * Handle officer operations including hiring from bars, assigning to bridge/shuttles, and dismissing.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {{op: string, id?: string, oid?: number, slot?: string}} m - Officer action payload.
+   * @returns {void}
+   */
   officerOp(s, m) {
     const d = s.data,
       p = STELLARS[d.stellar];
@@ -183,6 +258,14 @@ export const HangarOperations = {
     this.landed(s);
   },
   // experience for the bridge crew (kills, jumps, jobs) or one officer (shuttle runs)
+  /**
+   * Award experience points to all active bridge officers or a single designated officer.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {number} amount - Base XP amount.
+   * @param {Record<string, any>} [only] - Specific officer to award XP to (optional).
+   * @returns {void}
+   */
   officerXp(s, amount, only) {
     const d = s.data,
       b = this.bonus ? this.bonus(d) : researchBonus(d.station),
@@ -203,6 +286,12 @@ export const HangarOperations = {
   },
 
   // ------------------------------------------------------------------ shuttles
+  /**
+   * Generate available shuttle mission offerings from the player's personal station.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Array<Record<string, any>>} List of active shuttle job offers.
+   */
   shuttleBoard(d) {
     if (!d.station.site) return [];
     const home = STELLARS[d.station.site].system,
@@ -235,6 +324,13 @@ export const HangarOperations = {
     }
     return out;
   },
+  /**
+   * Determine credit and item rewards for a generated shuttle job.
+   * @this {any}
+   * @param {{kind: string, jumps: number, danger: number, sys: string}} job - Shuttle job specification.
+   * @param {() => number} r - Random generator function.
+   * @returns {{credits: number, chart?: boolean, mats?: Array<[string, number, number]>, rep?: [string, number]}} Reward descriptor.
+   */
   shuttleReward(job, r) {
     const n = job.jumps,
       dg = job.danger,
@@ -267,6 +363,15 @@ export const HangarOperations = {
     }
     return rw;
   },
+  /**
+   * Calculate probability of success for a shuttle mission.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {{kind: string}} sh - Shuttle state.
+   * @param {{kind: string, danger: number}} job - Shuttle job details.
+   * @param {Record<string, any> | null} crew - Assigned officer, if any.
+   * @returns {number} Success chance probability in [0.15, 0.97].
+   */
   shuttleChance(d, sh, job, crew) {
     const b = researchBonus(d.station),
       J = SHUTTLE_JOBS[job.kind];
@@ -280,6 +385,13 @@ export const HangarOperations = {
     }
     return clamp(c, 0.15, 0.97);
   },
+  /**
+   * Handle shuttle construction, crew assignment, dispatch, return claiming, repair, and scrapping.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {{op: string, kind?: string, sid?: number, oid?: number, job?: string}} m - Shuttle operation payload.
+   * @returns {void}
+   */
   shuttleOp(s, m) {
     const d = s.data,
       p = STELLARS[d.stellar],
@@ -398,6 +510,13 @@ export const HangarOperations = {
     this.you(s);
     this.landed(s);
   },
+  /**
+   * Resolve an accomplished or failed shuttle mission and grant rewards or report losses.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} sh - Completed shuttle state.
+   * @returns {void}
+   */
   resolveShuttle(s, sh) {
     const d = s.data,
       T = SHUTTLES[sh.kind],
@@ -464,6 +583,14 @@ export const HangarOperations = {
     if (sh.state !== 'gone') this.shuttleTraffic(d, sh, 'in');
   },
   // shuttles visibly launch from (and return to) the Personal Station when its system is live
+  /**
+   * Spawn ambient space entity representing shuttle departure or arrival at personal station.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {{kind: string}} sh - Shuttle state.
+   * @param {'out' | 'in'} dir - Traffic direction ('out' or 'in').
+   * @returns {void}
+   */
   shuttleTraffic(d, sh, dir) {
     if (!d.station.site) return;
     const site = STELLARS[d.station.site],
@@ -501,6 +628,13 @@ export const HangarOperations = {
   },
 
   // ------------------------------------------------------------------ research queue (prerequisites are queued first)
+  /**
+   * Resolve prerequisite chain for a research project.
+   * @this {any}
+   * @param {{done: string[]}} S - Player station state.
+   * @param {string} id - Research project ID.
+   * @returns {string[]} Ordered list of research IDs needed.
+   */
   researchChain(S, id) {
     const chain = [];
     let r = RESEARCH.find((x) => x.id === id);
@@ -510,6 +644,13 @@ export const HangarOperations = {
     }
     return chain;
   },
+  /**
+   * Queue a research project along with any unfulfilled prerequisites.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {string} id - Research project ID.
+   * @returns {void}
+   */
   queueResearch(s, id) {
     const d = s.data,
       S = d.station;
@@ -531,6 +672,12 @@ export const HangarOperations = {
     this.startQueued(d);
   },
   // start the next queued project if the lab is free and the captain can pay for it (called on every station check)
+  /**
+   * Start the next research project in queue if station lab is idle and funds/materials allow.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {void}
+   */
   startQueued(d) {
     const S = d.station;
     if (S.active || !S.queue.length) return;
@@ -560,6 +707,15 @@ export const HangarOperations = {
   },
 
   // ------------------------------------------------------------------ refining: three crates make one of the next grade
+  /**
+   * Refine multiple material crates of grade g into grade g+1.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {string} mat - Material identifier ('alloy', 'crystal', 'isotope').
+   * @param {number} g - Current grade level (0 to 3).
+   * @param {number} n - Number of refining operations to execute.
+   * @returns {void}
+   */
   refineUp(s, mat, g, n) {
     const d = s.data;
     if (!MATERIALS.includes(mat) || !(g >= 0 && g < 4)) return;
@@ -586,6 +742,12 @@ export const HangarOperations = {
   },
 
   // ------------------------------------------------------------------ drydock: stored ships keep their escorts and bridge crew (fleet presets)
+  /**
+   * Calculate scrap/resale value of a stored ship (half hull cost + half outfit costs).
+   * @this {any}
+   * @param {{ship: {hull: number, outfits?: Record<string, number>}}} st - Stored ship structure.
+   * @returns {number} Credit value.
+   */
   storedValue(st) {
     // 2.0.3: a stored ship sells like a trade-in: half the hull and half its outfits
     let v = (this.A.ships[st.ship.hull].cost || 0) * 0.5;
@@ -593,6 +755,13 @@ export const HangarOperations = {
       v += (this.O[id] ? this.O[id].cost : 0) * n * 0.5;
     return Math.round(v);
   },
+  /**
+   * Handle drydock operations including storing and selling stored ships.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {{op: string, i?: number, uid?: number}} m - Drydock operation payload.
+   * @returns {void}
+   */
   dockOp(s, m) {
     const d = s.data,
       p = STELLARS[d.stellar];
@@ -630,6 +799,13 @@ export const HangarOperations = {
   },
 
   // ------------------------------------------------------------------ boarding
+  /**
+   * Handle boarding interactions with disabled ships or downed Armada captains (plunder, capture, rescue).
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {{id: number, act: 'plunder' | 'capture' | 'rescue'}} m - Boarding action payload.
+   * @returns {void}
+   */
   board(s, m) {
     const d = s.data,
       e = s.ent;

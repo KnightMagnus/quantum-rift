@@ -3,20 +3,77 @@ import { ROLES, RARITY } from '/shared/hangar.js';
 import { WING_REPAIR_COST, NEXT_DOCK_OPS } from '/shared/docks.js';
 import { credits } from '/shared/rules.js';
 
+/**
+ * @typedef {Object} DockShip
+ * @property {string} [uid] Unique identifier of the ship instance
+ * @property {string} [name] Custom ship name
+ * @property {string} hull Hull type identifier
+ * @property {number} [repairT] Timestamp when repair completes
+ * @property {boolean} [flying] Whether the ship is currently deployed/flying
+ * @property {boolean} [wingOnly] Whether restricted to wingmate slot only
+ * @property {string} [at] Dock assignment label (e.g. 'A', 'B')
+ * @property {number|string} [cap] Assigned captain officer ID
+ * @property {number|string} [crew] Assigned crew officer ID
+ */
+
+/**
+ * @typedef {Object} DockBay
+ * @property {string} letter Dock letter identifier (A, B, C, D)
+ * @property {DockShip|null} lead Lead ship assigned to this dock
+ * @property {Array<DockShip|null>} wings Wingmate ships assigned to this dock
+ */
+
+/**
+ * @typedef {Object} DocksState
+ * @property {number} count Total number of unlocked docks
+ * @property {number} active Index of currently active dock
+ * @property {number} cap Maximum hangar storage berth capacity
+ * @property {DockBay[]} list List of dock bays
+ * @property {DockShip[]} stored List of ships stored in hangar
+ */
+
+/**
+ * HTML-escapes a string safely for insertion into template strings.
+ * @param {any} s Input value
+ * @returns {string} Escaped HTML string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
+
+/**
+ * Returns remaining time in minutes until the specified timestamp.
+ * @param {number} t Completion timestamp in ms
+ * @returns {number} Remaining whole minutes (at least 1)
+ */
 const mins = (t) => Math.max(1, Math.ceil((t - Date.now()) / 60000));
 
+/**
+ * Renders a visual slot card for a lead or wingmate ship.
+ * @param {any} G Game state object
+ * @param {DockShip|null} s Ship data
+ * @param {string} empty Placeholder text when slot is empty
+ * @returns {string} HTML markup
+ */
 function shipBox(G, s, empty) {
   if (!s)
     return `<div class="dslot empty"><div class="dimg"></div><div class="dsn dim">${empty}</div></div>`;
   const H = G.A.ships[s.hull] || {};
   return `<div class="dslot${s.repairT ? ' repair' : ''}"><img class="dimg" src="assets/${H.img}"><div class="dsn"><b>${esc(H.name)}</b><div class="dim small">"${esc(s.name)}"${s.flying ? ' · flying' : ''}${s.repairT ? ` · <span class="rep">repairs ${mins(s.repairT)} min</span>` : ''}</div></div></div>`;
 }
-// a picker of stored ships for one slot
+
+/**
+ * Renders a drop-down selector of stored ships for an individual dock slot.
+ * @param {any} G Game state object
+ * @param {DocksState} D Docks state
+ * @param {number} k Dock index
+ * @param {string|number} slot Slot identifier ('lead' or wingmate index)
+ * @param {DockShip|null} cur Currently assigned ship
+ * @param {boolean} interactive Whether controls are interactive
+ * @returns {string} HTML markup
+ */
 function shipPick(G, D, k, slot, cur, interactive) {
   if (!interactive) return '';
   const opts = D.stored
@@ -32,6 +89,17 @@ function shipPick(G, D, k, slot, cur, interactive) {
       : '';
   return `<select class="dpick" data-dk="${k}" data-slot="${slot}"><option value="">${cur ? '— empty this slot —' : '— choose a stored ship —'}</option>${curOpt}${opts}</select>`;
 }
+
+/**
+ * Renders an officer assignment selector for a wingmate captain or crew role.
+ * @param {any} G Game state object
+ * @param {number} k Dock index
+ * @param {number} w Wing slot index
+ * @param {'cap'|'crew'} role Officer assignment role
+ * @param {number|string|null} oid Assigned officer ID
+ * @param {boolean} interactive Whether controls are interactive
+ * @returns {string} HTML markup
+ */
 function crewPick(G, k, w, role, oid, interactive) {
   const y = G.you,
     o = y.officers.find((x) => x.id === oid);
@@ -46,6 +114,12 @@ function crewPick(G, k, w, role, oid, interactive) {
   return `<label class="dcrew"><span>${role === 'cap' ? 'CAPTAIN' : 'CREW'}</span><select data-dk="${k}" data-w="${w}" data-role="${role}"><option value="">none</option>${opts}</select></label>`;
 }
 
+/**
+ * Renders the full Personal Station Docks interface including bays, wingmates, and stored ships.
+ * @param {any} G Game state object
+ * @param {boolean} [interactive] Whether interactive buttons and select elements are enabled
+ * @returns {string} HTML markup
+ */
 export function docksHtml(G, interactive) {
   const y = G.you,
     D = y.docks;
@@ -92,14 +166,23 @@ export function docksHtml(G, interactive) {
   return h;
 }
 
-// the chips beside DEPART: switch docks while at your station, or just show which dock you are flying
+/**
+ * Renders the dock switcher chips beside the DEPART button on landing screens.
+ * @param {any} G Game state object
+ * @param {boolean} atHome Whether landed at personal station
+ * @returns {string} HTML markup
+ */
 export function dockChips(G, atHome) {
   const D = G.you && G.you.docks;
   if (!D || D.count < 2) return '';
   return `<span class="dchips"><span class="dim small">DOCK</span>${D.list.map((k, i) => `<button class="btn sm dchip${i === D.active ? ' on' : ''}" ${atHome && i !== D.active && k.lead ? `data-act="dockgo" data-k="${i}"` : 'disabled'} title="${k.lead ? esc((G.A.ships[k.lead.hull] || {}).name) + ` + ${k.wings.filter(Boolean).length} wingmate(s)` : 'No lead ship'}">${k.letter}</button>`).join('')}</span>`;
 }
 
-// the sidebar line: which dock you fly, and how its wingmates are doing
+/**
+ * Renders the compact sidebar status line for active dock and wingmate health.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup or empty string
+ */
 export function dockLine(G) {
   const D = G.you && G.you.docks;
   if (!D) return '';

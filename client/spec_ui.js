@@ -16,18 +16,67 @@ import {
 import { ROLES_INFO } from '/shared/roles.js';
 import { credits } from '/shared/rules.js';
 
+/**
+ * @typedef {Object} SpecialistComponent
+ * @property {string} name Display name of component
+ * @property {Record<string, number>} bonus Stat bonuses
+ */
+
+/**
+ * @typedef {Object} SpecialistDef
+ * @property {string} id Unique hull identifier
+ * @property {string} name Ship name
+ * @property {string} sub Ship subtitle / designation
+ * @property {string} role Ship role identifier
+ * @property {string} res Unique specialist resource key
+ * @property {string} ability Description of special ability
+ * @property {string} loop Primary gameplay loop description
+ * @property {number} cost Credit cost to build
+ */
+
+/**
+ * @typedef {Object} SpecialistProgress
+ * @property {number} tier Current specialist tier (1..5)
+ * @property {Record<string, number>} comp Current component upgrade levels
+ * @property {number} [upT] Timestamp when tier-up in drydock completes
+ */
+
+/**
+ * HTML-escapes a string safely for insertion into template strings.
+ * @param {any} s Input value
+ * @returns {string} Escaped HTML string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
+
+/**
+ * Formats duration in milliseconds to a human-readable minutes and hours string.
+ * @param {number} ms Duration in milliseconds
+ * @returns {string} Formatted duration (e.g. '15m' or '2h 10m')
+ */
 const mins = (ms) => {
   const m = Math.max(0, Math.ceil(ms / 60000));
   return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
 };
+
+/**
+ * Formats a specialist resource icon, amount, and name with faction color.
+ * @param {string} k Resource identifier
+ * @param {number} n Resource quantity
+ * @returns {string} HTML markup
+ */
 const res = (k, n) =>
   `<span style="color:${SPEC_RES[k].color}">${SPEC_RES[k].icon} ${n} ${esc(SPEC_RES[k].name)}</span>`;
 
+/**
+ * Renders the full Specialists screen at the Personal Station or docked view.
+ * @param {any} G Game state object
+ * @param {boolean} [interactive] Whether interactive buttons are enabled
+ * @returns {string} HTML markup
+ */
 export function specialistsHtml(G, interactive) {
   const y = G.you,
     bp = y.bp || {},

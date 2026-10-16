@@ -1,5 +1,44 @@
 // Quantum Rift 2.3: ten new common Quantum hulls, filling the gaps in the Concord yards (art: scratchpad tools/hulls22.py).
 // Same units and fields as the mod's own ships.
+
+/**
+ * Hull specifications input for 2.3 Quantum ship definitions.
+ * @typedef {Object} Ship23Input
+ * @property {number} id - Unique ship hull identifier.
+ * @property {string} name - Ship model name.
+ * @property {string} sub - Subtitle / classification.
+ * @property {number} cost - Base purchase cost in credits.
+ * @property {number} tech - Tech tier required to purchase (1-6).
+ * @property {number} cargo - Cargo capacity in tons.
+ * @property {number} shield - Maximum shield capacity.
+ * @property {number} shieldRe - Shield recharge rate.
+ * @property {number} armor - Maximum armor hit points.
+ * @property {number} accel - Acceleration capability in EV units.
+ * @property {number} speed - Top flight speed in EV units.
+ * @property {number} turn - Maneuverability / turning speed in EV units.
+ * @property {number} fuel - Maximum hyperdrive jump fuel.
+ * @property {number} space - Internal outfit expansion space.
+ * @property {number} guns - Fixed gun hardpoint count.
+ * @property {number} turrets - Turret mount count.
+ * @property {number} mass - Unladen hull mass.
+ * @property {number} crew - Crew complement required.
+ * @property {number} strength - Overall combat power score.
+ * @property {number} size - Target collision and sprite visual scale.
+ * @property {Array<[number, number, number]>} weapons - Default weapon loadout tuples [weaponId, count, ammo].
+ * @property {string} desc - Lore description displayed in shipyards.
+ * @property {boolean} [fastJump] - Whether this hull spools hyperdrive jumps in half time.
+ */
+
+/**
+ * Complete Quantum ship hull record with default yard properties.
+ * @typedef {Ship23Input & { cat: string, faction: string, kind: string, armorRe: number, fuelRe: number, buy: number, ai: number, fastJump: boolean, glow: boolean, pilot: string, img: string }} Ship23Hull
+ */
+
+/**
+ * Factory helper generating common Quantum hull records with standardized defaults.
+ * @param {Ship23Input} o - Raw hull attributes.
+ * @returns {Ship23Hull} Fully-specified hull object.
+ */
 const Q = (o) => ({
   cat: 'Quantum',
   faction: 'common',
@@ -14,6 +53,11 @@ const Q = (o) => ({
   ...o,
   img: `ships/${o.id}_yard.png`,
 });
+
+/**
+ * Roster of ten common Quantum hulls introduced in 2.3.
+ * @type {Ship23Hull[]}
+ */
 export const SHIPS23 = [
   Q({
     id: 820,

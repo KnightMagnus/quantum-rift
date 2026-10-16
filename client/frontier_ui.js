@@ -13,11 +13,70 @@ import {
 } from '/shared/frontier.js';
 import { credits } from '/shared/rules.js';
 
+/**
+ * @typedef {Object} ColonyData
+ * @property {boolean} [open] Whether world is unsettled
+ * @property {boolean} [own] Whether settled by player
+ * @property {string} name Colony name
+ * @property {string} [owner] Owner captain name
+ * @property {number} lv Colony level
+ * @property {string[]} buildings Installed building types
+ * @property {Record<string, number>} store Stockpile resource amounts
+ */
+
+/**
+ * @typedef {Object} ExchangeOrder
+ * @property {string} id Order ID
+ * @property {'buy'|'sell'} side Order side
+ * @property {any} item Order item specification
+ * @property {number} qty Quantity
+ * @property {number} price Unit price
+ */
+
+/**
+ * @typedef {Object} ExchangeBookEntry
+ * @property {any} item Item spec
+ * @property {number} [bid] Best bid price
+ * @property {number} bids Number of bids
+ * @property {number} [ask] Best ask price
+ * @property {number} asks Number of asks
+ */
+
+/**
+ * @typedef {Object} CaptainProfile
+ * @property {string} name Captain name
+ * @property {boolean} online Online status
+ * @property {string} ship Current ship hull name
+ * @property {string} shipName Custom ship name
+ * @property {string} [site] Personal station site name
+ * @property {number} [ops] Station Ops level
+ * @property {string[]} colonies List of settled colony names
+ * @property {number} kills Total kills
+ * @property {number} jumps Total jumps
+ * @property {number} mined Total ore mined in tons
+ * @property {number} earned Total credits earned
+ * @property {{ rating: number, w: number, l: number }} [arena] Arena stats
+ * @property {{ ship: string, tier: number }} [mastery] Best ship mastery
+ * @property {number} officers Total officers
+ */
+
+/**
+ * HTML-escapes a string safely for insertion into template strings.
+ * @param {any} s Input value
+ * @returns {string} Escaped HTML string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
+
+/**
+ * Formats a list of required material tuples with availability coloring.
+ * @param {any} y Player state object
+ * @param {Array<[string, number, number]>} list Array of [material, grade, quantity] tuples
+ * @returns {string} HTML markup
+ */
 const mats = (y, list) =>
   list
     .map(
@@ -25,14 +84,32 @@ const mats = (y, list) =>
         `<span style="color:${y.mats[m][g] >= n ? '#8ff0ad' : '#ff9a8a'}">${n > 1 ? n + ' ' : ''}${m} ${GRADES[g]}</span>`,
     )
     .join(', ');
+
+/**
+ * Returns commodity display name by ID or 'credits'.
+ * @param {string} id Commodity ID or 'credits'
+ * @returns {string} Display name
+ */
 const com = (id) =>
   id === 'credits' ? 'credits' : (COMMODITIES.find((c) => c.id === id) || { name: id }).name;
+
+/**
+ * Formats buff percentage bonus properties into readable summary text.
+ * @param {Record<string, number>} b Buff definition object
+ * @returns {string} Formatted bonus text
+ */
 const buffText = (b) =>
   Object.entries(b)
     .map(([k, v]) => `+${v}${k === 'fuel' ? '' : '%'} ${k.replace('Pct', '')}`)
     .join(', ');
 
 // ------------------------------------------------------------------ COLONY tab
+
+/**
+ * Renders the COLONY landed tab for founding, managing, stockpiling, and constructing buildings.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function colonyHtml(G) {
   const y = G.you,
     L = G.landed,
@@ -58,7 +135,7 @@ export function colonyHtml(G) {
         (b, i) =>
           `<div class="kv"><span><b>${esc(BUILDINGS[b].name)}</b> <span class="dim small">${
             BUILDINGS[b].produce
-              ? Object.entries(BUILDINGS[b].produce)
+               ? Object.entries(BUILDINGS[b].produce)
                   .map(
                     ([k, v]) =>
                       `${k === 'credits' ? credits(v * Lv.mult) + ' cr' : (v * Lv.mult).toFixed(1) + ' t ' + com(k)}/h`,
@@ -84,6 +161,13 @@ export function colonyHtml(G) {
 }
 
 // ------------------------------------------------------------------ station defense (inside the station dashboard)
+
+/**
+ * Renders the Station Defense rating, turret upgrades, and Station Holdout wave defense interface.
+ * @param {any} G Game state object
+ * @param {boolean} [interactive] Whether interactive actions are enabled
+ * @returns {string} HTML markup
+ */
 export function defenseHtml(G, interactive) {
   const y = G.you,
     S = y.station;
@@ -101,6 +185,12 @@ export function defenseHtml(G, interactive) {
 }
 
 // ------------------------------------------------------------------ mastery (overview)
+
+/**
+ * Renders the ship mastery overview tier stars, XP progress bar, and active hull bonuses.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function masteryHtml(G) {
   const y = G.you,
     xp = (y.mastery || {})[y.ship.hull] || 0,
@@ -111,6 +201,12 @@ export function masteryHtml(G) {
 }
 
 // ------------------------------------------------------------------ ARENA tab
+
+/**
+ * Renders the Crucible arena queue, current matchmaking rating, and record.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function arenaHtml(G) {
   const A = G.you.arena || { rating: ARENA.start, w: 0, l: 0, sizes: {} };
   let h = `<div class="sect" style="margin-top:0">THE CRUCIBLE</div><p>Rated team fights in an instanced arena, away from the open galaxy. You fly your current ship without wingmates or escorts. Losing costs no insurance, and the arena crew repair you for free. The last team flying wins. If time runs out, the team with the most hull and shields left wins.</p>
@@ -122,6 +218,12 @@ export function arenaHtml(G) {
 }
 
 // ------------------------------------------------------------------ EXCHANGE tab
+
+/**
+ * Renders the player-to-player market exchange order book, active orders, and storage hold.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function exchangeHtml(G) {
   const y = G.you,
     X = G.landed.exchange;
@@ -159,6 +261,12 @@ export function exchangeHtml(G) {
 }
 
 // ------------------------------------------------------------------ leaderboards + profile (community tab)
+
+/**
+ * Renders the galactic community leaderboards and captain profile lookup.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function boardsHtml(G) {
   const cat = G.boardCat || 'earned',
     B = G.boards && G.boards[cat];

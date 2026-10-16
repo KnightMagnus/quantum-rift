@@ -2,6 +2,24 @@ import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from '.
 // Quantum Rift: the galaxy. 30 hand-made anchor systems, grown to ~200 by shared/gen.js (deterministic).
 // Shared by the server (authoritative) and the browser client (map, landing screens).
 
+/**
+ * Faction organization attributes and diplomatic relationships.
+ * @typedef {Object} FactionDef
+ * @property {string} name - Full display name of the faction.
+ * @property {string} short - Short colloquial moniker.
+ * @property {string} color - Hex color code representing this faction.
+ * @property {string[]} hostile - IDs of factions considered hostile.
+ * @property {boolean} [pirate] - Whether this faction engages in piracy.
+ * @property {boolean} [alwaysHostile] - Hostile by default to all standard factions.
+ * @property {boolean} [region] - Marker indicating this is an unaligned territorial region.
+ * @property {boolean} [farside] - Marker indicating Farside sector alignment.
+ * @property {boolean} [hidden] - Whether this faction is excluded from standing reputation views.
+ */
+
+/**
+ * Master catalog of all galactic factions and territorial powers.
+ * @type {Record<string, FactionDef>}
+ */
 export const FACTIONS = {
   quantum: {
     name: 'Quantum Concord',
@@ -121,6 +139,19 @@ export const FACTIONS = {
   },
 };
 
+/**
+ * Tradable market commodity specification.
+ * @typedef {Object} CommodityDef
+ * @property {string} id - Unique commodity identifier.
+ * @property {string} name - Display name.
+ * @property {number} base - Standard baseline price in credits.
+ * @property {boolean} [mined] - Whether this commodity is mined directly from asteroid fields or gas clouds.
+ */
+
+/**
+ * List of commodities traded across markets and harvested from asteroids.
+ * @type {CommodityDef[]}
+ */
 export const COMMODITIES = [
   { id: 'food', name: 'Food', base: 120 },
   { id: 'industrial', name: 'Industrial Goods', base: 260 },
@@ -135,13 +166,66 @@ export const COMMODITIES = [
   { id: 'gas', name: 'Volatile Gas', base: 140, mined: true },
   { id: 'shards', name: 'Crystal Shards', base: 230, mined: true },
 ];
+
+/**
+ * Station crafting material types stored in the materials hold.
+ * @type {string[]}
+ */
 // Quantum Station materials (kept in the materials hold, not cargo). Grades I-V.
 export const MATERIALS = ['alloy', 'crystal', 'isotope'];
+
+/**
+ * Material grade designation roman numerals (Grades I through V).
+ * @type {string[]}
+ */
 export const GRADES = ['I', 'II', 'III', 'IV', 'V'];
 
+/**
+ * Helper function normalizing price level definitions for stellar bodies.
+ * @param {Record<string, number>} o - Map of commodity ID to price tier (-1, 0, 1).
+ * @returns {Record<string, number>} Normalized price map.
+ */
 // price levels per stellar: -1 low (they produce it), 0 normal, 1 high (they want it). Unlisted = not traded.
 const P = (o) => o;
 
+/**
+ * Celestial body (planet, moon, station, asteroid field, or claimable site) orbiting within a star system.
+ * @typedef {Object} StellarBody
+ * @property {string} id - Unique stellar identifier.
+ * @property {string} name - Display name of the body.
+ * @property {string} kind - Category of body (e.g. 'planet', 'station', 'moon', 'field', 'site').
+ * @property {string} [color] - Display render hex color.
+ * @property {number} r - Collision and render radius.
+ * @property {number} x - Relative system orbit coordinate X.
+ * @property {number} y - Relative system orbit coordinate Y.
+ * @property {string} [svc] - Port services available: L (land), T (trade), O (outfitter), Y (shipyard), B (bar), R (repair/refuel).
+ * @property {number} [tech] - Outfitter tech level.
+ * @property {string} [desc] - Lore description text.
+ * @property {Record<string, number>} [prices] - Market trading price offsets (-1 low, 0 standard, 1 high).
+ * @property {boolean} [site] - True if this stellar body is a claimable derelict station hull.
+ * @property {string} [system] - ID of parent star system.
+ */
+
+/**
+ * Star system record defining coordinates, hyperlane links, and celestial bodies.
+ * @typedef {Object} StarSystem
+ * @property {string} id - Unique system identifier.
+ * @property {string} name - Display name.
+ * @property {string} faction - Dominant faction ID.
+ * @property {number} x - Map coordinate X.
+ * @property {number} y - Map coordinate Y.
+ * @property {string[]} links - Hyperlane destination system IDs.
+ * @property {StellarBody[]} stellars - Orbiting planets, stations, and derelict sites.
+ * @property {number} danger - Threat level / security rating.
+ * @property {string} [gate] - Wormhole destination system if a gateway is present.
+ * @property {any[]} [fields] - Asteroid or resource field locations.
+ * @property {string} [desc] - System lore notes.
+ */
+
+/**
+ * Roster of core anchor systems in the galaxy, expanded programmatically to ~200 systems by expandGalaxy.
+ * @type {StarSystem[]}
+ */
 // services: L land, T trade, O outfitter, Y shipyard, B bar (mission board), R refuel/repair (always with L)
 export const SYSTEMS = [
   // ---- Quantum Concord: the heart of the Rift, home of Quantum Station
@@ -914,6 +998,11 @@ export const SYSTEMS = [
   },
 ];
 expandGalaxy(SYSTEMS, FACTIONS);
+
+/**
+ * Claimable derelict station hull sites across the galaxy.
+ * @type {StellarBody[]}
+ */
 // Derelict station hulls scattered across the galaxy: each can be claimed by one captain and built up through Ops 1-5.
 export const SITES = [
   ['site-qgate', 'qgate', -600, -1000],
@@ -977,10 +1066,25 @@ addMoonsAndFields(SYSTEMS); // 2.3: more moons and asteroid fields (a separate s
       if (!('gas' in p.prices) && near && roll > 0.55 && roll < 0.75) p.prices.gas = 0;
     }
 }
+
+/**
+ * Fast lookup map of star systems keyed by system ID.
+ * @type {Record<string, StarSystem>}
+ */
 export const SYS = Object.fromEntries(SYSTEMS.map((s) => [s.id, s]));
+
+/**
+ * Fast lookup map of all celestial bodies keyed by stellar ID.
+ * @type {Record<string, StellarBody>}
+ */
 export const STELLARS = Object.fromEntries(
   SYSTEMS.flatMap((s) => s.stellars.map((p) => [p.id, { ...p, system: s.id }])),
 );
+
+/**
+ * Baseline commodity price levels at an established Personal Station (Ops 1+).
+ * @type {Record<string, number>}
+ */
 // prices at a built Personal Station (Ops 1+)
 export const SITE_PRICES = {
   food: 0,
@@ -993,13 +1097,27 @@ export const SITE_PRICES = {
   gas: 0,
   shards: 0,
 };
+
+/**
+ * Initial starting player state parameters upon beginning a new game.
+ * @type {{ system: string, stellar: string, credits: number, ship: number }}
+ */
 export const START = { system: 'qgate', stellar: 'qstation', credits: 30000, ship: 703 };
 
+/**
+ * Ship hull IDs universally available across Concord and general human yards.
+ * @type {number[]}
+ */
 // Which hulls each faction builds and flies (ship IDs from the EV Quantum roster)
 export const COMMON_HULLS = [
   703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716, 717, 820, 821, 822, 823,
   824, 825, 826, 827, 828, 829,
 ]; // 2.3: ten new hulls (shared/ships23.js)
+
+/**
+ * Hull catalog available to each faction in shipyards and defense fleets.
+ * @type {Record<string, number[]>}
+ */
 export const FACTION_HULLS = {
   quantum: COMMON_HULLS,
   spacer: [703, 704, 706, 707, 709, 710, 712, 714],
@@ -1014,6 +1132,11 @@ export const FACTION_HULLS = {
   thalassi: [798, 799, 800, 801, 802, 803, 804],
   farside: COMMON_HULLS, // beyond the Sol Gateway: common hulls only, no racial designs
 };
+
+/**
+ * NPC traffic generation pools per faction, separating civilian traders from warships.
+ * @type {Record<string, { traders: number[], war: number[] }>}
+ */
 // NPC roles per faction: trader ships and warships (for traffic generation)
 export const TRAFFIC = {
   quantum: {
@@ -1042,12 +1165,22 @@ export const TRAFFIC = {
   swarm: { traders: [], war: [765, 718] },
   eclipse: { traders: [], war: [761, 762, 763] },
 };
+
+/**
+ * Faction-exclusive outfit catalogs offered at cultural outfitters.
+ * @type {Record<string, number[]>}
+ */
 // weapons each faction's outfitters sell, on top of the generic ones
 export const FACTION_OUTFITS = {
   quevari: [444, 445, 446, 447, 448, 449, 450, 451, 452, 453],
   lamp: [604],
   quantum: [605, 606, 608, 609, 610, 611, 612],
 };
+
+/**
+ * Custom outfit definitions complementing EV Nova outfits.
+ * @type {Array<any>}
+ */
 // Generic Rift weapon outfits for the classic weapons the hulls carry (the mod used Nova's own outfits for these)
 export const EXTRA_OUTFITS = [
   {
@@ -1268,6 +1401,11 @@ export const EXTRA_OUTFITS = [
 for (const o of EXTRA_OUTFITS) o.icon = o.icon || `icons/${o.id}.png`; // 2.5: rendered outfitter pictures (tools/rift_icons.py)
 
 // weapons added by Quantum Rift (merged into the asset weapons by augmentAssets)
+
+/**
+ * Custom weapon asset definitions added by Quantum Rift.
+ * @type {Array<any>}
+ */
 export const EXTRA_WEAPONS = [
   {
     id: 9101,
@@ -1308,7 +1446,17 @@ export const EXTRA_WEAPONS = [
     mining: true,
   },
 ];
+
+/**
+ * Weapon IDs with specialized high damage efficiency against asteroid rocks.
+ * @type {number[]}
+ */
 export const MINING_WEAPONS = [181, 9101, 9102];
+
+/**
+ * Ore processing and refinery conversion rules at a Personal Station.
+ * @type {{ per: number, cost: number, to: Record<string, string>, grade: number[] }}
+ */
 // ore processing at your Personal Station (Ops 1+): 12 units make one material crate; better stations refine higher grades
 export const ORE_PROCESS = {
   per: 12,
@@ -1316,6 +1464,21 @@ export const ORE_PROCESS = {
   to: { ore: 'alloy', gas: 'isotope', shards: 'crystal' },
   grade: [0, 0, 0, 1, 1, 2],
 };
+
+/**
+ * Station Ops upgrade milestone level definition.
+ * @typedef {Object} OpsLevelDef
+ * @property {number} lv - Ops tier index (1 through 5).
+ * @property {string} title - Milestone level name.
+ * @property {number} cost - Construction credit cost.
+ * @property {Array<[string, number, number]>} mats - Material crates required [matType, gradeIndex, quantity].
+ * @property {string} unlock - Feature unlock summary.
+ */
+
+/**
+ * Specifications, costs, and materials required for Personal Station Ops upgrade levels 1-5.
+ * @type {OpsLevelDef[]}
+ */
 // Quantum Station: Ops levels, research, refinery
 export const OPS = [
   {
@@ -1369,13 +1532,40 @@ export const OPS = [
     unlock: 'Exotics, Constitution',
   },
 ];
+
+/**
+ * Parameters and requirements for relocating a Personal Station to another derelict hull site.
+ * @type {{ base: number, perOps: number, mats: Array<[string, number, number]>, cooldownH: number }}
+ */
 // 2.6: warp your Personal Station to another unclaimed hull, keeping everything (Ops, research, refinery, docks, stored ships)
 export const RELOCATE = { base: 100000, perOps: 60000, mats: [['alloy', 1, 1]], cooldownH: 24 };
+
+/**
+ * Calculates credit cost to relocate a Personal Station based on current Ops level.
+ * @param {number} [ops=0] - Current station Ops level.
+ * @returns {number} Credit relocation cost.
+ */
 export const relocateCost = (ops) => RELOCATE.base + RELOCATE.perOps * (ops || 0);
+
 export { RESEARCH2 as RESEARCH } from './hangar.js'; // 0.5: four research trees (see shared/hangar.js)
+
+/**
+ * Refinery processing speed in minutes per unit by Ops level, and silo batch size.
+ * @type {{ minutes: number[], silo: number }}
+ */
 export const REFINERY = { minutes: [0, 20, 15, 15, 10, 8], silo: 3 }; // minutes per unit by Ops level
+
+/**
+ * Special ship hulls unlocked for construction in the Personal Station shipyard by Ops level.
+ * @type {Record<number, number[]>}
+ */
 // Ships the station sells by Ops level (Halo Surveyor at 3; wingmates at 4; Exotics and the Constitution at 5)
 export const STATION_SHIPS = { 3: [735], 5: [736, 785, 786, 787] };
+
+/**
+ * Mapping of base hulls to their Mk II refit hull IDs.
+ * @type {Record<number, number>}
+ */
 // 2.6: the Mk II and Mk III refits are no longer available to captains. The hulls stay as enemy ships (kingpins' rogue
 // refits in Armada contracts), and these tables map them back to their base hulls for old saves.
 export const MK2_OF = {
@@ -1395,6 +1585,21 @@ export const MK2_OF = {
   716: 733,
   717: 734,
 };
+
+/**
+ * Mapping of base or Mk II hulls to their Mk III refit hull IDs.
+ * @type {Record<number, number>}
+ */
 export const MK3_OF = { 723: 745, 730: 746, 728: 747, 732: 748, 733: 749, 734: 750 };
+
+/**
+ * Hull IDs designated as Personal Station escort wingmates.
+ * @type {number[]}
+ */
 export const WINGMATES = [751, 752, 753, 754, 755, 756];
+
+/**
+ * Armada escort hull IDs (now enemy-only in 2.6).
+ * @type {number[]}
+ */
 export const ARMADA_HULLS = [757, 758, 759]; // 2.6: the old station Armada escorts, now enemy-only
