@@ -1,3 +1,4 @@
+import { passengerSeats, occupiedPassengerSeats } from '/shared/passengers.js';
 // Quantum Rift interface: HUD, landing screens (trade, shipyard, outfitter, jobs, Quantum Station), companion tabs, galaxy map, chat.
 import { missionsHtml } from './missions.js';
 import { playStation, stopRadio } from './radio.js';
@@ -24,6 +25,8 @@ import {
   shipStats,
   researchBonus,
   allOutfits,
+  loadoutValue,
+  stockOutfitLimit,
   credits,
   repLabel,
   weaponParams,
@@ -255,6 +258,13 @@ export function initUI(g, sender) {
     if (b) {
       plot(b.dataset.plot);
       openMap(b.dataset.plot);
+    }
+    const pending = e.target.closest('[data-questdrop]');
+    if (pending) {
+      ask('Abandon this story and its waiting passenger booking?', () =>
+        send({ t: 'questdrop', qid: pending.dataset.questdrop }),
+      );
+      return;
     }
     const a = e.target.closest('[data-abandon]');
     if (a) {
@@ -959,7 +969,7 @@ function statLines(s, cmp) {
     (cmp && cmp !== s
       ? `<div class="dim small">Compared with your ${esc(cmp.name)} (the white tick on each bar).</div>`
       : '') +
-    `<div class="kv"><span>Hardpoints</span><span>${s.guns} guns · ${s.turrets} turrets</span></div><div class="kv"><span>Armament</span><span style="text-align:right">${s.weapons.map(([w, n]) => `${G.A.weapons[w] ? G.A.weapons[w].name : w} ×${n}`).join(', ') || 'none'}</span></div>`
+    `<div class="kv"><span>Passenger seats</span><span>${passengerSeats(s)} dedicated${cmp && cmp !== s ? ` (your stock hull: ${passengerSeats(cmp)})` : ''}</span></div><div class="kv"><span>Hardpoints</span><span>${s.guns} guns · ${s.turrets} turrets</span></div><div class="kv"><span>Armament</span><span style="text-align:right">${s.weapons.map(([w, n]) => `${G.A.weapons[w] ? G.A.weapons[w].name : w} ×${n}`).join(', ') || 'none'}</span></div>`
   );
 }
 /**
@@ -1256,7 +1266,7 @@ export function renderLanded() {
   $('landcr').textContent = credits(y.credits) + ' credits';
   $('landcargo').textContent = y.shipless
     ? 'No active ship: choose one to depart'
-    : `Cargo ${y.cargoUsed + (y.jobCargo || 0)}/${st.cargo} t${y.jobCargo ? ` (${y.jobCargo} t for jobs)` : ''} · Outfit space ${st.free} t free`;
+    : `Cargo ${y.cargoUsed + (y.jobCargo || 0)}/${st.cargo} t${y.jobCargo ? ` (${y.jobCargo} t for jobs)` : ''} · Passengers ${occupiedPassengerSeats(y.missions)}/${passengerSeats(G.A.ships[y.ship.hull], y.ship)} seats · Outfit space ${st.free} t free`;
   $('depart').disabled = !!y.shipless;
   $('depart').title = y.shipless
     ? 'Choose a ship first: a lead ship for your active dock (STATION, then DOCKS), or buy one at a shipyard'
@@ -1386,7 +1396,7 @@ export function renderLanded() {
         )
         .join(
           '',
-        )}</div><p class="dim small">Outfit space ${st.free} t free · guns ${st.guns}/${st.maxGuns} · turrets ${st.turrets}/${st.maxTurrets}</p><table class="tbl"><tr><th></th><th>OUTFIT</th><th>EFFECT</th><th>MASS</th><th>PRICE</th><th>OWNED</th><th></th></tr>${list
+        )}</div><p class="dim small">Outfit space ${st.free} t free · guns ${st.guns}/${st.maxGuns} · turrets ${st.turrets}/${st.maxTurrets} · passenger seats ${occupiedPassengerSeats(y.missions)}/${passengerSeats(G.A.ships[y.ship.hull], y.ship)}</p><p class="dim small">Factory equipment is included in the hull price and sells at its factory value. Separately purchased equipment sells for half its retail price.</p><table class="tbl"><tr><th></th><th>OUTFIT</th><th>EFFECT</th><th>MASS</th><th>PRICE</th><th>OWNED</th><th></th></tr>${list
         .map((id) => {
           const o = O[id],
             own = o.eff.ammo
@@ -1405,19 +1415,24 @@ export function renderLanded() {
                 ? 'ammunition'
                 : 'ammunition · needs its launcher'
               : Object.entries(o.eff)
-                  .map(([k, v]) => `${k} ${v > 0 ? '+' : ''}${v}`)
+                  .map(
+                    ([k, v]) =>
+                      `${k === 'passengerSeats' ? 'Passenger seats' : k} ${v > 0 ? '+' : ''}${v}`,
+                  )
                   .join(', ');
           const n1 = o.eff.ammo ? 10 : 1,
             why =
-              o.eff.ammo && !hasLauncher
-                ? 'You have nothing that fires this'
-                : y.credits < o.cost * n1
-                  ? 'Not enough credits'
-                  : !o.eff.ammo && (o.mass || 0) > st.free
-                    ? 'Not enough outfit space'
-                    : W && (o.turret ? st.turrets >= st.maxTurrets : st.guns >= st.maxGuns)
-                      ? `No free ${o.turret ? 'turret' : 'gun'} mounts`
-                      : '';
+              !o.eff.ammo && own >= stockOutfitLimit(G.A, y.ship, id)
+                ? `Maximum fitted: ${stockOutfitLimit(G.A, y.ship, id)}`
+                : o.eff.ammo && !hasLauncher
+                  ? 'You have nothing that fires this'
+                  : y.credits < o.cost * n1
+                    ? 'Not enough credits'
+                    : !o.eff.ammo && (o.mass || 0) > st.free
+                      ? 'Not enough outfit space'
+                      : W && (o.turret ? st.turrets >= st.maxTurrets : st.guns >= st.maxGuns)
+                        ? `No free ${o.turret ? 'turret' : 'gun'} mounts`
+                        : '';
           return `<tr><td>${o.icon ? `<img src="assets/${o.icon}" style="width:32px;height:32px">` : ''}</td><td title="${esc(o.desc)}">${esc(o.name)}</td><td class="dim small">${esc(eff)}</td><td>${o.mass || 0}</td><td class="cr">${credits(o.cost)}</td><td>${own}</td>
           <td style="text-align:right"><button class="btn sm" data-act="outfit" data-id="${id}" data-n="${n1}"${why ? ` disabled title="${why}"` : ''}>BUY${o.eff.ammo ? ' 10' : ''}</button>${o.eff.ammo ? '' : ` <button class="btn sm" data-act="outfit" data-id="${id}" data-n="-1"${own ? '' : ' disabled'}>SELL</button>`}</td></tr>`;
         })
@@ -1430,7 +1445,7 @@ export function renderLanded() {
     case 'jobs': {
       const SO = L.story,
         SA = y.story && y.story.active;
-      h = '';
+      h = `<div class="dim small">Passenger seats: ${occupiedPassengerSeats(y.missions)} occupied / ${passengerSeats(G.A.ships[y.ship.hull], y.ship)} total. Bridge officers and working crew have separate accommodation.</div>`;
       if (SO)
         h += `<div class="card story" style="cursor:default"><div class="storytag">MAIN STORY</div><div class="t">${esc(SO.title)}</div><div>${esc(SO.brief)}</div>${SO.locked ? `<div class="dim small">${esc(SO.locked)}</div>` : `<div><button class="btn sm" data-act="storyopen">READ</button></div>`}</div>`;
       h += arcCardsHtml(G); // 1.2 faction arcs
@@ -1699,11 +1714,7 @@ function jobInfo(o, y) {
  * @returns {number} Credit refund value
  */
 function tradeIn(y) {
-  if (y.shipless) return 0;
-  const O = allOutfits(G.A);
-  let v = (G.A.ships[y.ship.hull].cost || 0) * 0.5;
-  for (const [id, n] of Object.entries(y.ship.outfits)) v += (O[id] ? O[id].cost : 0) * n * 0.5;
-  return Math.round(v);
+  return y.shipless ? 0 : loadoutValue(G.A, y.ship);
 }
 /**
  * Global click event dispatcher for interactive buttons and links across all landing screens and companion tabs.

@@ -1,10 +1,21 @@
 # Quantum Rift
 
-**A space trading and combat game in your browser, in the spirit of the classic _Escape Velocity Nova_.**
+**A space trading and combat game in your browser.**
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
-Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. Its ships, weapons, sounds and the Quantum Station come from that plug-in, and the game has grown far beyond it since.
+## v2.8 — Hail to the Code
+
+Contextual ship conversations, incoming NPC calls and short player hails bring the traffic lanes to life. System-only chat now appears above the sender's active ship as well as in the chat log. Combat assist can fly and fire for your fleet; opted-in Follow Leader members can delegate combat without taking control away from independent Armada captains.
+
+[Release summary](docs/RELEASE-v2.8.md) · [Changelog](CHANGELOG.md) · [Communications guide](docs/HAILING.md)
+
+![Incoming communications inbox in the running game](docs/screenshots/hail-inbox.png)
+![A short player-to-player hail in the running game](docs/screenshots/hail-composer.png)
+![System chat speech bubble above the active ship](docs/screenshots/system-chat.png)
+![Combat assist controls in flight](docs/screenshots/combat-assist.png)
+
+These four captures show the v2.8 development build with disposable captains. Existing flight, fleet, scenery and arena screenshots below remain as a broader tour.
 
 ![A Caravel Trader flying past Concordia and its moon](docs/screenshots/flight.jpg)
 
@@ -15,16 +26,17 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 **A big, living galaxy**
 
 - 211 star systems across 14 powers: the Quantum Concord, free traders, pirates, five alien races and stranger things at the edges.
-- Pre-rendered planets, stations and landing pictures in the style of EV Nova: oceans that catch the sun, city lights on the night side, ringed giants, and a rendered scene for every world you land on.
+- Pre-rendered planets, stations and landing pictures with oceans that catch the sun, city lights on the night side, ringed giants, and a rendered scene for every world you land on.
 - Every system has its own scenery, generated from the system itself: its star, distant galaxies, nebulae, ion storms, ancient wrecks, abandoned stations, crystal formations, comets and drifting debris.
 - Moons, asteroid fields, gas clouds and crystal fields to mine.
 - Busy space lanes: traders, convoys, patrols, raiders and thirty named rival captains with careers of their own.
 - Systems pass through famines, plagues, booms, border wars, pirate scourges, festivals and mining rushes that move prices and post their own jobs. Markets remember what you trade.
 
-**Flight and combat in the EV style**
+**Flight and combat**
 
 - Newtonian flight with guns, turrets, beams, homing missiles, point defense and drone carriers.
 - Your guns hit anything you aim at. Shoot a friendly ship and it turns on you, and its faction remembers.
+- Optional **combat assist** handles steering and primary fire, with manual takeover and Hold Fire taking priority. Fleet odds include participating wingmates; Follow Leader coordination includes participating local Armada fleets, not just their leads.
 - NPC captains have personalities: some run when beaten, some call friends for help, and capital ships fire broadsides.
 - Autopilot landing and multi-jump routes, a hyperspace jump with its own effect and sound, and hold-right-click to look ahead.
 - Roughly 100 ships to fly, from a 15,000-credit Mite Drone to the Constitution, plus ten one-of-a-kind specialty ships. Every ship is rendered from a 3D model, and smaller ships bank into their turns.
@@ -46,6 +58,14 @@ Quantum Rift began as a rebuild of **EV Quantum**, a fan plug-in for EV Nova. It
 - **Armada contracts and co-op Holdouts:** group kingpins with refitted squadrons, and Station Holdouts your friends can fly in to defend.
 - **Trading:** swap credits, goods, crates, blueprints and parts with friends, each of you docked at your own station.
 - **PvP only when you agree to it:** no ganking in the open galaxy. Duels and Armada Duels end at disabled, and the Crucible arena has rated 1v1, 2v2 and 4v4 matches.
+
+**Communications**
+
+- Contextual outgoing hails reflect ship identity, activity, location and damage, with repetition avoidance during a system visit.
+- Ordinary traffic and named captains can initiate calls. An amber perimeter badge opens the inbox only when you choose; arriving hails never interrupt flight.
+- Fuel assistance, hardship requests, friendly greetings and security warnings, plus local-port escort, hazard intelligence and distress rendezvous encounters. Transfers and rewards require acceptance and server checks.
+- Hail another player in the same system with up to 100 characters. Existing privacy and blocking rules apply; trading stays at player stations.
+- System-only chat also appears briefly above each sender's active ship. Other chat channels remain in the log only.
 
 **Made to be comfortable**
 
@@ -91,6 +111,12 @@ On the same network, friends can join at `http://<your-computer's-address>:8080`
 
 ---
 
+## Screenshots and release maintenance
+
+README screenshots live in `docs/screenshots/`; keep this gallery current when the interface changes. Capture actual gameplay with disposable saves, inspect the resulting images, and keep captions explicit about what is shown. The new communications captures use the retained matching art binaries because the upstream Git LFS server could not supply its existing objects; no replacement art is included in this update.
+
+For each release, update `CHANGELOG.md`, the package versions and a release summary together. Tag the final tested commit on upstream `main`, not an earlier PR head. [v2.8 release notes and publication instructions](docs/RELEASE-v2.8.md) record the intended release scope.
+
 ## Controls
 
 | Key               | Action                                                                                                                                  |
@@ -107,6 +133,7 @@ On the same network, friends can join at `http://<your-computer's-address>:8080`
 | M                 | galaxy map: click a system to plot a course                                                                                             |
 | J                 | jump along the plotted course, all the way to the destination                                                                           |
 | T                 | hail your target or a planet: bribe, beg fuel, talk to rival captains                                                                   |
+| U                 | incoming hail inbox (remappable)                                                                                                        |
 | B                 | board a disabled ship: plunder, capture or rescue                                                                                       |
 | I                 | ship and captain panel                                                                                                                  |
 | E (hold)          | face your target                                                                                                                        |
@@ -155,7 +182,5 @@ One small CPU handles dozens of players; only systems with players in them run a
 
 ## Credits
 
-- _Escape Velocity Nova_ (Ambrosia Software / ATMOS): the game that started it all. Quantum Rift is an unofficial fan project and is not affiliated with them.
-- **EV Quantum**, the EV Nova plug-in whose ships, weapons, sounds and stations Quantum Rift was rebuilt from.
 - _Endless Sky_ and _Star Trek Fleet Command_, for ideas: hailing, fleet orders and map views from the first; specialty ships and docks from the second.
 - The in-game radio uses the public iHeartRadio station directory.

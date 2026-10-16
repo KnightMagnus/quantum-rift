@@ -109,7 +109,7 @@ export function infoHtml(G, tab) {
           ? '<p class="dim">No active ship.</p>'
           : `<div style="display:flex;gap:10px;align-items:center"><img src="assets/${H.img}" style="width:120px;height:90px;object-fit:contain"><div><b style="color:#fff;font-size:15px">${esc(H.name)}</b><div class="dim">"${esc(y.ship.name)}"</div></div></div>
       <div class="kv"><span>Shield / armor</span><span>${cr(st.shield)} / ${cr(st.armor)}</span></div><div class="kv"><span>Speed / turn</span><span>${cr(st.maxSpeed / 0.45)} / ${cr((st.turn * 57.3) / 3)}</span></div>
-      <div class="kv"><span>Cargo</span><span>${y.cargoUsed} / ${st.cargo} t</span></div><div class="kv"><span>Outfit space</span><span>${st.free} of ${st.space} free</span></div>
+      <div class="kv"><span>Cargo</span><span>${y.cargoUsed} / ${st.cargo} t</span></div><div class="kv"><span>Passenger seats</span><span>${(y.missions || []).filter((m) => m.type === 'passenger').reduce((sum, m) => sum + (m.pax || 0), 0)} / ${st.passengerSeats} occupied</span></div><div class="kv"><span>Outfit space</span><span>${st.free} of ${st.space} free</span></div>
       <div class="kv"><span>Guns / turrets</span><span>${st.guns}/${st.maxGuns} · ${st.turrets}/${st.maxTurrets}</span></div><div class="kv"><span>Fuel</span><span>${Math.floor(((G.view && G.view.fuel) ?? y.fuel) / 100)} jumps</span></div>`
       }
       <div class="sect">COMBAT RATING</div><div class="kv"><span><b style="color:#ffd27a">${esc(rank.name)}</b></span><span class="dim">${cr(rank.score)}${rank.next ? ` / ${cr(rank.next)}` : ''}</span></div>

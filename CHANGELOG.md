@@ -2,6 +2,37 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.8.1
+
+- **Passenger transport:** dedicated passenger seats, independent of captain and bridge crew; larger yacht and liner cabins, several passenger offers per board and group charters for school, science, business and cultural trips. Multiple accepted missions share the available seats.
+- **Story passenger bookings:** groups wait at their boarding port until seats are available, without overbooking or consuming a story retry.
+- **Seating refits:** repeatable five-seat outfitter packs use fitting space; occupied seats cannot be removed, and ship changes must retain enough room for existing passengers.
+- **Ship economy:** factory equipment is included in hull valuation rather than refunded a second time; bought upgrades retain normal resale. Named wingmates cannot be recruited twice while owned, and rush repairs reflect their equipment.
+- **Combat-assist activation:** selecting a legal hostile before enabling assist now starts pursuit and primary fire without requiring a prior Attack order. Player newcomer/jump protection no longer incorrectly prevents initiating that attack.
+- **Planet recovery:** Earth’s original image files ship directly; bounded asset/manifest retries recover detailed planets after transient download or decode failures.
+- **Stellar visuals:** textured photospheres, sunspots, atmospheric corona and animated prominences; deterministic color/size variety while preserving Sol and authored system identities.
+- **Gateway animation:** a newly generated 32-frame, 320 px periodic vortex replaces the discontinuous original, retaining the original animation cadence.
+- **Background readability:** decorative gas giants and large wrecks are shown at 60% and 50% of their previous sizes using unchanged artwork. Foreground planets, ships and suns are unaffected.
+- **Banking animation:** snapshot-aware turn sampling and separate entry/exit thresholds keep NPC ships banked through a turn instead of flickering between level and tilted frames.
+- **Local retaliation:** landing a hit permits the target faction to retaliate during the current system visit, without permanently removing below-Ops-3 protection.
+- **Test coverage:** the fuzzer discovers registered message routes directly and verifies dispatch coverage instead of silently missing handlers.
+- **Legal stock fittings:** mount limits accommodate factory loadouts, so removed stock weapons can be reinstalled.
+- **Outfitter imagery:** fresh higher-resolution equipment renders and a dedicated passenger seating icon. Pelican description no longer promises unimplemented towing equipment.
+
+### 2.8 "Hail to the Code"
+
+Cumulative changes since 2.6, including previously merged engineering and combat-assist work. Publication and the final tested commit are tracked in [the release summary](docs/RELEASE-v2.8.md).
+
+- **Livelier hailing:** outgoing responses use ship identity, task, status and system context, with visit-local repetition avoidance and distinct named-captain voices.
+- **Incoming calls:** ordinary traffic and named captains can hail you. An amber communications badge stays at the flight-view perimeter; opening a conversation is always your choice. Queues, cooldowns and expiry keep calls bounded.
+- **Encounter assistance:** fuel requests, hardship donations, named greetings and security warnings; local-port escorts, approximate nearby-threat intelligence and distress repair rendezvous. Explicit acceptance and server-side resource/reward checks prevent duplicate payouts.
+- **Player hails:** short same-system messages, up to 100 Unicode codepoints, through the hail dialog. Privacy, blocking and rate limits apply. No in-flight trading and no replacement of normal chat.
+- **Ship speech bubbles:** system-only player chat appears briefly above the sender's active ship while remaining in the chat log. Private, Armada and global messages do not become bubbles.
+- **Combat assist:** optional automatic steering and primary fire, fleet focus and target succession, and consent-based Follow Leader coordination. Manual takeover and Hold Fire prevail; independent Armada members keep their own controls. Combat odds account for participating fleet/Armada ships.
+- **Weapon refresh:** fifteen inherited weapon records receive new names, descriptions and tuning while retaining stable IDs, mounts and ammunition references for existing saves. Updated outfitter/story terminology and README, title-screen and game-data branding. See [the weapon mapping and balance limits](docs/WEAPON-REFRESH.md).
+- **Engineering, already merged since 2.6:** explicit feature composition replaces prototype mixins, with JSDoc/type contracts and a feature inventory. Prettier, a Husky pre-commit hook, Git LFS asset rules and a GitHub formatting/type/feature-contract workflow support maintenance.
+- **Documentation:** README feature coverage and actual communications/combat screenshots refreshed; cumulative release notes added. The radio remains unchanged.
+
 ### 2.6 "Together"
 
 Co-op play for online games, sharper ships that bank into their turns, and a clear-out of systems that no longer fit.

@@ -1,4 +1,4 @@
-// Audio (WebAudio). Positional combat effects come from the EV Quantum sound pack; 2.0 adds generated interface sounds,
+// Audio (WebAudio). Positional combat effects come from the combat sound pack; 2.0 adds generated interface sounds,
 // ambient loops (open space, station interior, your engine) and a login-screen theme. Separate buses feed the mixer:
 // master > effects | interface | ambience | music. The radio is an <audio> element with its own level (radio.js).
 
@@ -132,7 +132,7 @@ function load(id) {
 }
 let recent = 0,
   recentT = 0;
-// positional combat effects (EV Quantum pack)
+// positional combat effects (combat sound pack)
 
 /**
  * Plays a positional combat sound effect with distance attenuation and stereo panning.

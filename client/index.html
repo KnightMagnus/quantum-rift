@@ -148,6 +148,15 @@
         ><button class="btn sm" id="qmore">MIXER…</button>
       </div>
     </div>
+    <button
+      id="hailindicator"
+      class="hidden"
+      aria-label="Incoming hails"
+      title="Incoming hails (U)"
+    >
+      <span aria-hidden="true">◉</span><span id="hailcount">0</span>
+    </button>
+    <div id="hailmarker" class="hidden" aria-live="polite"></div>
     <div id="hailbox" class="overlay hidden">
       <div class="loginbox metal hailin">
         <div class="hailtag">HAILING <span id="hailsub"></span></div>
@@ -229,7 +238,7 @@
       <button id="musicbtn" class="cb" title="Login music on/off">&#9835;</button>
       <div class="splash-col">
         <img class="splash-title" src="assets/ui/title.png" alt="Quantum Rift" />
-        <div class="splash-tag">Inspired by the classic game <b>Escape Velocity Nova</b></div>
+        <div class="splash-tag">Your ship. Your crew. An open galaxy.</div>
         <div class="loginbox metal">
           <input id="lname" placeholder="Captain name" maxlength="20" autocomplete="username" />
           <input

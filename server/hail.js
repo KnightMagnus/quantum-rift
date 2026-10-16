@@ -1,14 +1,8 @@
+import { contextualHail } from './hail-dialogue.js';
 // 1.1: hailing (inspired by Endless Sky). Talk to the ship you have targeted or the planet you have selected:
 // bribe pirates, ask traders for fuel or repairs when stranded, bribe a planet for landing rights, trade words with rivals.
 import { SYS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.js';
-import { RIVAL, HAIL_LINES, HAIL_SPECIAL, MOOD } from '../shared/rivals.js';
-/**
- * Look up the dialogue line for a rival based on their current mood.
- * @param {{name: string, kind: string}} R - Rival configuration object.
- * @param {string} mood - Current mood key.
- * @returns {string} Dialogue text for the rival.
- */
-const lineFor = (R, mood) => (HAIL_SPECIAL[R.name] || HAIL_LINES[R.kind])[mood];
+import { RIVAL, MOOD } from '../shared/rivals.js';
 import { credits } from '../shared/rules.js';
 
 /**
@@ -27,21 +21,6 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
  * @returns {T} Selected item.
  */
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
-
-/** @type {string[]} Ambient dialogue lines for trader hails. */
-const TRADER_LINES = [
-  'Just hauling, Captain. Nothing worth your time.',
-  'Clear skies. Mind the lanes past the third planet, raiders were spotted.',
-  'Have you tried the food prices out on the Frontier? Robbery.',
-  'If you are heading spinward, the jump beacons there are acting up.',
-];
-
-/** @type {string[]} Ambient dialogue lines for patrol hails. */
-const PATROL_LINES = [
-  'Patrol here. Keep it clean, Captain.',
-  'This system is under our protection. Fly safe.',
-  'Report any Hollow activity on this channel.',
-];
 
 export const HailOperations = {
   /**
@@ -72,6 +51,7 @@ export const HailOperations = {
     const sp = this.spaces[d.sys],
       e = sp.ships.get(m.id | 0);
     if (!e || e.dead || e === me) return null;
+    if (e.player) return { sp, e, root: sp.root(e) };
     if (Math.hypot(e.x - me.x, e.y - me.y) > 3500) {
       this.toast(s, 'Too far away to hail.');
       return null;
@@ -90,14 +70,15 @@ export const HailOperations = {
     if (m.stellar) return this.hailPlanet(s, m.stellar);
     const T = this.hailTarget(s, m);
     if (!T) return;
-    const { sp, e, root } = T,
-      F = FACTIONS[root.faction] || {},
+    const { sp, e, root } = T;
+    if (e.player) return this.hails.player(s, e);
+    const F = FACTIONS[root.faction] || {},
       name = (e.name || this.A.ships[e.hull].name).split(' · ')[0],
       me = s.ent;
     const say = (text, opts = []) =>
       this.send(s, { t: 'hail', id: e.id, who: name, sub: F.name || '', text, opts });
-    if (sp.root(e) === me) return say('Standing by, Captain. Give the order.');
-    if (e.disabled) return say('...static... a weak distress beacon, repeating on every channel.');
+    if (sp.root(e) === me) return say(`${name}: standing by, Captain. Give the order.`);
+    if (e.disabled) return say(contextualHail(s, e, sp));
     if (root.huntOf)
       return say(
         root.huntOf === s.id
@@ -122,7 +103,7 @@ export const HailOperations = {
       );
       if (rel >= 60 && !e.owner) opts.push({ k: 'fly', label: 'Ask them to fly with you' });
       return say(
-        `${lineFor(R, mood)}\n\n(${R.name} · ${mood === 'neutral' ? 'neutral' : mood} · relation ${rel})`,
+        `${contextualHail(s, root, sp, rel)}\n\n(${R.name} · ${mood} · relation ${rel})`,
         opts,
       );
     }
@@ -150,21 +131,25 @@ export const HailOperations = {
       }
       return say(
         root.rival
-          ? lineFor(RIVAL[root.rival], MOOD(this.relOf(d, root.rival)))
-          : pick([
-              'Cargo or coffin, Captain. Your call.',
-              'Nice ship. Be a shame if something happened to it. Unless you pay.',
-              'Power down your weapons and send the toll.',
-            ]),
+          ? contextualHail(s, root, sp, this.relOf(d, root.rival))
+          : contextualHail(s, root, sp) +
+              ' ' +
+              pick([
+                'Cargo or coffin, Captain. Your call.',
+                'Nice ship. Be a shame if something happened to it. Unless you pay.',
+                'Power down your weapons and send the toll.',
+              ]),
         opts,
       );
     }
     if (hostile) {
       // a lawful patrol that wants you dead
       const cost = 3000 + Math.abs(d.rep[root.faction] || 0) * 150;
-      return say('You are wanted in this space, Captain. Power down and prepare to be boarded.', [
-        { k: 'bribe', label: `Offer a "fine" (${credits(cost)} cr)` },
-      ]);
+      return say(
+        contextualHail(s, root, sp) +
+          ' You are wanted in this space, Captain. Power down and prepare to be boarded.',
+        [{ k: 'bribe', label: `Offer a "fine" (${credits(cost)} cr)` }],
+      );
     }
     const opts = [],
       fuelLow = me.fuel < 100,
@@ -175,14 +160,7 @@ export const HailOperations = {
         label: `Ask for fuel (${(d.rep[root.faction] || 0) >= 30 ? 'free, friends help friends' : '600 cr'})`,
       });
     if (hurt) opts.push({ k: 'repair', label: 'Ask for emergency repairs (1,500 cr)' });
-    return say(
-      fuelLow
-        ? 'You sound stranded, Captain. We can spare a little fuel.'
-        : root.ai === 'patrol'
-          ? pick(PATROL_LINES)
-          : pick(TRADER_LINES),
-      opts,
-    );
+    return say(contextualHail(s, e, sp), opts);
   },
   /**
    * Process a player's selected dialogue response or negotiation option in a hail.
@@ -196,8 +174,9 @@ export const HailOperations = {
     if (m.stellar) return this.hailPlanetOpt(s, m);
     const T = this.hailTarget(s, m);
     if (!T) return;
-    const { sp, e, root } = T,
-      me = s.ent,
+    const { sp, e, root } = T;
+    if (e.player || e.disabled) return;
+    const me = s.ent,
       name = (e.name || this.A.ships[e.hull].name).split(' · ')[0];
     const say = (text) => this.send(s, { t: 'hail', id: e.id, who: name, text, opts: [] });
     const group = [root, ...[...sp.ships.values()].filter((x) => x.owner === root.id)];

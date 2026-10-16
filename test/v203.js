@@ -286,14 +286,19 @@ d.missions = [];
 const before = d.credits,
   sx = d.dock[0],
   O = g.O,
-  want = Math.round(
-    A.ships[sx.ship.hull].cost * 0.5 +
-      Object.entries(sx.ship.outfits).reduce((a, [id, n]) => a + O[id].cost * n * 0.5, 0),
-  );
+  stockValue = Math.round(A.ships[sx.ship.hull].cost * 0.5);
+ok(
+  g.features.hangar.storedValue(sx) === stockValue,
+  'stored factory equipment is already included in half the hull purchase price',
+);
+// A separately purchased upgrade still contributes its own half-retail resale value.
+const upgrade = Object.values(O).find((o) => o.eff.shield && !sx.ship.outfits[o.id]);
+sx.ship.outfits[upgrade.id] = 1;
+const want = Math.round(A.ships[sx.ship.hull].cost * 0.5 + upgrade.cost * 0.5);
 P.send({ t: 'dock', op: 'sell', i: 0 });
 ok(
-  d.credits - before === want && want > A.ships[sx.ship.hull].cost * 0.5,
-  'stored ships sell for half the hull plus half the outfits',
+  d.credits - before === want && want > stockValue,
+  'stored ships sell for half the inclusive hull price plus half separately purchased outfits',
 );
 // lower deck
 d.lower = ['medic'];

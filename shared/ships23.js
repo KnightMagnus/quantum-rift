@@ -130,7 +130,7 @@ export const SHIPS23 = [
     strength: 35,
     size: 60,
     weapons: [[130, 1, 0]],
-    desc: 'A squat, scarred tug with two grapple arms reaching ahead and a towing frame behind. Salvage crews swear by them; everybody else swears at them, usually while being towed.',
+    desc: 'A squat, scarred utility hull with a roomy hold and a reputation for surviving rough working conditions. Its simple machinery is easy to service at even the smallest port.',
   }),
   Q({
     id: 823,

@@ -112,7 +112,7 @@ const stoppedOrders = new Set(['hold', 'holdfire', 'loot']);
 /**
  * Determines whether a ship entity is alive, flight-ready, and capable of combat.
  * @param {CombatEntity | any} e Candidate ship entity to check.
- * @returns {boolean} True if the entity is available for combat operations.
+ * @returns {e is CombatEntity} True if the entity is available for combat operations.
  */
 export const available = (e) =>
   !!e &&
@@ -226,7 +226,10 @@ export class CombatAssist {
       c.focus = c.on;
       c.status = c.on ? 'READY' : 'OFF';
       c.reason = '';
-      if (!c.on) this.stop(s, 'Combat assist off');
+      // Selection can precede arming: adopt it only on explicit enable, using the
+      // same hostility, protection and acquisition-range checks as active selection.
+      if (c.on) this.selected(s, e.target, this.game.spaces[s.data.sys]);
+      else this.stop(s, 'Combat assist off');
     }
     if (m.op === 'coordinate') {
       c.coordinating = m.on === true;
@@ -250,7 +253,7 @@ export class CombatAssist {
   /**
    * Selects an explicit target entity if valid and assist or coordination is enabled.
    * @param {CombatSession} s Player session selecting a target.
-   * @param {CombatEntity} t Candidate target entity.
+   * @param {CombatEntity | null | undefined} t Candidate target entity.
    * @param {CombatSpace} sp Active space system instance.
    * @returns {void}
    */
@@ -281,8 +284,8 @@ export class CombatAssist {
    * Validates whether a target entity is hostile, in range, and eligible for engagement.
    * @param {CombatSpace} sp Active space system instance.
    * @param {CombatEntity | any} lead Lead attacking entity.
-   * @param {CombatEntity | any} t Candidate target entity.
-   * @returns {boolean} True if the target is valid for engagement.
+   * @param {CombatEntity | null | undefined} t Candidate target entity.
+   * @returns {t is CombatEntity} True if the target is valid for engagement.
    */
   valid(sp, lead, t) {
     return (
@@ -292,8 +295,9 @@ export class CombatAssist {
       !sp.root(t).player &&
       !sp.sys.arena &&
       sp.isHostile(lead, t) &&
+      // Protection is directional: our arrival/newcomer truce limits NPC initiation,
+      // not an explicitly selected player attack. Match the player-to-target canHit direction.
       !sp.spared(lead, t) &&
-      !sp.spared(t, lead) &&
       Math.hypot(t.x - lead.x, t.y - lead.y) <= BOUNDARY
     );
   }

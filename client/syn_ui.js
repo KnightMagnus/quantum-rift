@@ -1,4 +1,5 @@
 // 1.2 screens: black market, bank, officer ranks and traits, lower decks, and faction-arc cards.
+import { occupiedPassengerSeats } from '/shared/passengers.js';
 import { FACTIONS } from '/shared/galaxy.js';
 import {
   RANKS_OFF,
@@ -225,9 +226,9 @@ export function arcCardsHtml(G) {
 export function bunkInfo(G, o) {
   if (o.type !== 'passenger') return '';
   const y = G.you,
-    cap = bunks(G.A.ships[y.ship.hull]),
-    used = (y.missions || []).filter((m) => m.type === 'passenger').reduce((a, m) => a + m.pax, 0);
+    cap = bunks(G.A.ships[y.ship.hull], y.ship),
+    used = occupiedPassengerSeats(y.missions);
   return o.pax > cap - used
-    ? `Needs ${o.pax} bunk${o.pax > 1 ? 's' : ''}; your ship has ${Math.max(0, cap - used)} free.`
+    ? `Needs ${o.pax} passenger seats; your ship has ${Math.max(0, cap - used)} free.`
     : '';
 }

@@ -1,3 +1,4 @@
+import { passengerSeats } from './passengers.js';
 // 1.2 "Syndicate and Officers": the Syndicate crime path and black market, officer ranks and traits, lower-deck crew,
 // the bank (after Endless Sky's mortgages), and passenger and rush jobs.
 
@@ -308,22 +309,14 @@ export const loanPayment = (bal, credit) =>
 
 // ------------------------------------------------------------------ passengers (bunks) and rush jobs
 /**
- * Calculates passenger bunk capacity for a given ship hull.
+ * Calculates passenger bunk capacity for a given ship hull or loadout.
  * @param {Object} H - Ship hull configuration object.
- * @param {string} [H.kind] - Hull category (e.g. 'specialist').
- * @param {number} [H.crew] - Hull base crew capacity.
- * @param {string} [H.role] - Ship hull role (e.g. 'survey', 'explorer').
- * @returns {number} Available passenger bunks (clamped between 1 and 40).
+ * @param {Object} [loadout] - Fitted ship loadout.
+ * @returns {number} Available passenger seats/bunks.
  */
-export function bunks(H) {
-  if (!H) return 0;
-  const base =
-    H.kind === 'specialist'
-      ? 2
-      : Math.round((H.crew || 1) / 4) +
-        (H.role === 'survey' ? 2 : 0) +
-        (H.role === 'explorer' ? 1 : 0);
-  return Math.max(1, Math.min(40, base));
+// Keep the historical helper name for existing mission and save integrations.
+export function bunks(H, loadout) {
+  return passengerSeats(H, loadout);
 }
 
 /**

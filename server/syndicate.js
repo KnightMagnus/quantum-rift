@@ -19,6 +19,7 @@ import {
   RUSH_BONUS,
 } from '../shared/syndicate.js';
 import { credits } from '../shared/rules.js';
+import { occupiedPassengerSeats } from '../shared/passengers.js';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
@@ -341,23 +342,46 @@ export const SyndicateOperations = {
     const out = [];
     if (!near.length) return out;
     const one = (k) => near[Math.floor(r() * near.length)];
-    if (r() < 0.7) {
-      // passengers
+    // Each board has both small parties and group charters, regardless of the current hull.
+    // A captain can combine destinations and fill a liner with several accepted missions.
+    const passengerGroups = [
+      {
+        key: 'pax',
+        label: 'Independent travellers',
+        min: 1,
+        span: 6,
+        reason: 'Travellers are sharing the fare for a scheduled passage.',
+      },
+      {
+        key: 'science',
+        label: 'Science delegation',
+        min: 8,
+        span: 11,
+        reason: 'A research team and its support staff are travelling to a symposium.',
+      },
+      {
+        key: 'charter',
+        label: ['Class trip', 'Business convention', 'Cultural exchange'][Math.floor(r() * 3)],
+        min: 20,
+        span: 21,
+        reason: 'A group booking needs everyone transported together on the same ship.',
+      },
+    ];
+    for (const group of passengerGroups) {
       const [sys, jumps] = one(),
         dest = pickDest(sys);
-      if (dest) {
-        const pax = 1 + Math.floor(r() * 6);
-        out.push({
-          id: `${p.id}-${win}-pax`,
-          type: 'passenger',
-          title: `Ferry ${pax} passenger${pax > 1 ? 's' : ''} to ${dest.name}`,
-          sys,
-          dest: dest.id,
-          pax,
-          reward: Math.round(1500 + jumps * 1500 + pax * 900),
-          text: `${pax > 1 ? `${pax} travellers need` : 'A traveller needs'} passage to ${dest.name} in the ${SYS[sys].name} system (${jumps} jump${jumps > 1 ? 's' : ''}). Each passenger needs a bunk.`,
-        });
-      }
+      if (!dest) continue;
+      const pax = group.min + Math.floor(r() * group.span);
+      out.push({
+        id: `${p.id}-${win}-${group.key}`,
+        type: 'passenger',
+        title: `${group.label}: ${pax} passengers to ${dest.name}`,
+        sys,
+        dest: dest.id,
+        pax,
+        reward: Math.round(1500 + jumps * 1500 + pax * (600 + jumps * 150)),
+        text: `${group.reason} Carry ${pax} passengers to ${dest.name} in the ${SYS[sys].name} system (${jumps} jump${jumps > 1 ? 's' : ''}). Each traveller occupies one dedicated passenger seat. Other passenger missions may share any remaining seats.`,
+      });
     }
     if (r() < 0.5) {
       // rush delivery
@@ -430,12 +454,12 @@ export const SyndicateOperations = {
   acceptCheck(s, o) {
     const d = s.data;
     if (o.type === 'passenger') {
-      const cap = bunks(this.A.ships[d.ship.hull]),
-        used = d.missions.filter((m) => m.type === 'passenger').reduce((a, m) => a + m.pax, 0);
+      const cap = bunks(this.A.ships[d.ship.hull], d.ship),
+        used = occupiedPassengerSeats(d.missions);
       if (used + o.pax > cap) {
         this.toast(
           s,
-          `Not enough bunks: your ship sleeps ${cap} passenger${cap === 1 ? '' : 's'} and ${used} are aboard.`,
+          `Not enough passenger seats: ${used} of ${cap} are occupied; this mission needs ${o.pax} more.`,
         );
         return false;
       }

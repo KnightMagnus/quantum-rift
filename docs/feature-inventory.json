@@ -45,7 +45,6 @@
       ],
       "uses": [
         "A",
-        "O",
         "arcProgress",
         "barOffers",
         "bays",
@@ -456,6 +455,7 @@
         "hailPlanet",
         "hailPlanetOpt",
         "hailTarget",
+        "hails",
         "log",
         "myPower",
         "relOf",

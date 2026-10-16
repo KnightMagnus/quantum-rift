@@ -1,3 +1,5 @@
+import { initHails } from './hails_ui.js';
+import { receiveShipChat } from './chat_bubbles.js';
 // Quantum Rift client: connection, input, client-side prediction, render loop.
 import { SYS, STELLARS, FACTIONS, FACTION_HULLS } from '/shared/galaxy.js';
 import { TUTORIAL } from '/shared/tutorial.js';
@@ -156,6 +158,7 @@ export const ACTIONS = [
   ['pause', 'Pause (solo)', 'KeyP'],
   ['mute', 'Mute sound', 'KeyN'],
   ['hail', 'Hail target / planet', 'KeyT'],
+  ['hailInbox', 'Incoming hail inbox', 'KeyU'],
   ['info', 'Ship and captain info', 'KeyI'],
   ['face', 'Turn to face target (hold)', 'KeyE'],
   ['stop', 'Full stop', 'KeyQ'],
@@ -412,6 +415,7 @@ function openSocket(tries) {
   };
 }
 function onMessage(m) {
+  if (hailUI.onMessage(m)) return;
   switch (m.t) {
     case 'error':
       $('lerr').textContent = m.msg;
@@ -523,6 +527,7 @@ function onMessage(m) {
       break;
     case 'chat':
       chatLine(m);
+      receiveShipChat(G, m);
       if (m.from && m.from !== G.myName) audio.ui('chat', 0.7);
       break;
     case 'story':
@@ -890,6 +895,10 @@ window.addEventListener('keydown', (e) => {
     case 'board':
       openBoard();
       break;
+    case 'hailInbox':
+      send({ t: 'hailin', op: 'list' });
+      hailUI.inbox();
+      break;
     case 'hail':
       hailTarget();
       break;
@@ -963,30 +972,18 @@ function hailTarget() {
   if (G.navStellar) return send({ t: 'hail', stellar: G.navStellar });
   toast('Target a ship (click or Tab) or select a planet (click it) to hail.');
 }
+const hailUI = initHails({ G, send, toast, cam });
 function showHail(m) {
-  $('hailwho').textContent = m.who || '';
-  $('hailsub').textContent = m.sub ? '· ' + m.sub : '';
-  $('hailtext').textContent = m.text || '';
-  const key = m.stellar ? { stellar: m.stellar } : { id: m.id };
-  $('hailopts').innerHTML =
-    (m.opts || [])
-      .map((o) => `<button class="btn" data-k="${o.k}">${o.label.replace(/[<>&]/g, '')}</button>`)
-      .join('') + '<button class="btn sm" data-k="">CLOSE</button>';
-  $('hailopts')
-    .querySelectorAll('button')
-    .forEach(
-      (b) =>
-        (b.onclick = () => {
-          if (b.dataset.k) send({ t: 'hailopt', ...key, k: b.dataset.k });
-          else $('hailbox').classList.add('hidden');
-        }),
-    );
-  $('hailbox').classList.remove('hidden');
+  hailUI.show(m);
 }
+
 window.addEventListener(
   'keydown',
   (e) => {
-    if (!$('hailbox').classList.contains('hidden') && (e.key === 'Escape' || e.code === 'KeyT')) {
+    if (
+      !$('hailbox').classList.contains('hidden') &&
+      (e.key === 'Escape' || (e.code === 'KeyT' && !typing()))
+    ) {
       $('hailbox').classList.add('hidden');
       e.stopImmediatePropagation();
       e.preventDefault();

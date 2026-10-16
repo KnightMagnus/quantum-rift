@@ -1,6 +1,7 @@
 // 2.0.2 fuzzer: many fake clients send every message type the server knows, with random and malformed fields, while
-// the systems tick. Any error the server logs is a bug. Run: node test/fuzz.js [rounds]
+// the systems tick. Any error the server logs is a bug. Run: node test/fuzz.js [rounds] [seed]
 import fs from 'node:fs';
+import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
@@ -12,12 +13,26 @@ console.error = (...a) => {
   errors.push(a.map((x) => (x && x.stack ? x.stack : String(x))).join(' '));
 };
 const game = new Game(A, new DB('/tmp/rift-fuzz-' + Date.now()));
-const src = fs.readFileSync(new URL('../server/game.js', import.meta.url), 'utf8');
-const TYPES = [...src.matchAll(/case '([a-z]+)':/g)]
-  .map((m) => m[1])
-  .filter((v, i, a) => a.indexOf(v) === i && !['hello'].includes(v));
-const R = () => Math.random(),
-  pick = (a) => a[Math.floor(R() * a.length)];
+// The registry is authoritative; source-code switch patterns stopped reflecting routes.
+const TYPES = [...game.messageHandlers.types];
+assert.ok(TYPES.length, 'the authenticated message registry must not be empty');
+assert.equal(new Set(TYPES).size, TYPES.length, 'registered message types must be unique');
+const seed = Number(process.argv[3] || 123456789) >>> 0;
+let randomState = seed;
+const R = () => {
+  randomState = (Math.imul(1664525, randomState) + 1013904223) >>> 0;
+  return randomState / 4294967296;
+};
+const dispatch = game.messageHandlers.dispatch,
+  covered = new Set();
+game.messageHandlers = {
+  ...game.messageHandlers,
+  dispatch(type, ...args) {
+    if (TYPES.includes(type)) covered.add(type);
+    return dispatch(type, ...args);
+  },
+};
+const pick = (a) => a[Math.floor(R() * a.length)];
 const STL = Object.keys(STELLARS),
   SYSI = SYSTEMS.map((s) => s.id),
   HULLS = Object.keys(A.ships).map(Number);
@@ -90,9 +105,8 @@ const OPS = [
   'fuel',
   'repair',
 ];
-function msg() {
-  const t = pick(TYPES),
-    m = { t };
+function msg(t = pick(TYPES)) {
+  const m = { t };
   for (const k of [
     'id',
     'op',
@@ -146,7 +160,15 @@ function fake(name) {
   game.connect(sock, '16.0.' + Math.floor(ip / 250) + '.' + (ip++ % 250));
   const s = [...game.sessions.values()].pop();
   sock.emit('message', JSON.stringify({ t: 'hello', name, pass: 'secret' }));
-  return { sock, s, send: (m) => sock.emit('message', JSON.stringify(m)) };
+  return {
+    sock,
+    s,
+    send: (m) => {
+      // Exercise handlers, not just the first 120 packets allowed by the flood guard.
+      s.msgs = 0;
+      sock.emit('message', JSON.stringify(m));
+    },
+  };
 }
 for (let i = 0; i < 12; i++) {
   const c = fake('Fuzz' + i),
@@ -159,6 +181,9 @@ for (let i = 0; i < 12; i++) {
   clients.push(c);
 }
 const rounds = +(process.argv[2] || 4000);
+// Guarantee every registered route reaches authenticated dispatch before random sampling.
+for (const [i, type] of TYPES.entries()) clients[i % clients.length].send(msg(type));
+assert.deepEqual([...covered].sort(), [...TYPES].sort(), 'all registered routes must be exercised');
 for (let r = 0; r < rounds; r++) {
   const c = pick(clients),
     d = c.s.data;
@@ -227,7 +252,7 @@ for (const c of clients) {
 console.error = origErr;
 const uniq = [...new Set(errors.map((e) => e.split('\n').slice(0, 3).join(' | ')))];
 console.log(
-  `${rounds} messages, ${TYPES.length} message types: ${errors.length} errors, ${uniq.length} distinct`,
+  `${rounds} random messages + ${TYPES.length} coverage probes, seed ${seed}, ${covered.size}/${TYPES.length} registered message types: ${errors.length} errors, ${uniq.length} distinct`,
 );
 for (const u of uniq.slice(0, 25)) console.log(' -', u.slice(0, 400));
 process.exit(errors.length ? 1 : 0);

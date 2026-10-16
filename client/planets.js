@@ -608,19 +608,35 @@ function renderDisk(P, ru, rc) {
 }
 let budget = 0,
   budgetT = 0;
-// 2.5: pre-rendered planets (tools/rift_planets.py) in the EV Nova manner. Each world picks the rendered planet of its type
+// 2.5: pre-rendered planets (tools/rift_planets.py) in a pre-rendered space-art style. Each world picks the rendered planet of its type
 // whose colour is closest to its own; the procedural sphere above stays as the fallback while images load.
 let MAN = null;
 const imgs = new Map(),
   pick = new Map();
-fetch('assets/planets/planets.json')
-  .then((r) => r.json())
-  .then((j) => {
-    MAN = j;
-  })
-  .catch(() => {
-    MAN = {};
-  });
+// A transient failed response must not permanently strand the renderer in its fallback.
+// Retry only twice, with a cache-busting URL, then leave the procedural world usable.
+const ASSET_RETRY_DELAYS = [1000, 4000];
+const ASSET_TIMEOUT = 8000;
+async function loadManifest(attempt = 0) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ASSET_TIMEOUT);
+  try {
+    const src = 'assets/planets/planets.json' + (attempt ? `?retry=${attempt}` : '');
+    const response = await fetch(src, { signal: controller.signal });
+    if (!response.ok) throw new Error('Planet manifest unavailable');
+    const manifest = await response.json();
+    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest))
+      throw new Error('Invalid planet manifest');
+    MAN = manifest;
+    pick.clear();
+  } catch {
+    if (attempt < ASSET_RETRY_DELAYS.length)
+      setTimeout(() => loadManifest(attempt + 1), ASSET_RETRY_DELAYS[attempt]);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+loadManifest();
 const TYPE_POOL = {
   earth: ['earth'],
   terran: ['terran', 'jungle'],
@@ -674,7 +690,31 @@ const TEX = new Map(),
   RCACHE = new Map();
 function loadImg(src) {
   const im = new Image();
-  im.src = src;
+  let attempt = 0;
+  const load = () => {
+    let settled = false;
+    const timeout = setTimeout(failed, ASSET_TIMEOUT);
+    function failed() {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      im.onload = im.onerror = null;
+      if (attempt < ASSET_RETRY_DELAYS.length) {
+        const delay = ASSET_RETRY_DELAYS[attempt++];
+        setTimeout(load, delay);
+      }
+    }
+    im.onload = () => {
+      if (!im.naturalWidth) return failed();
+      settled = true;
+      clearTimeout(timeout);
+      im.onload = im.onerror = null;
+    };
+    im.onerror = failed;
+    // Also recovers HTTP 200 LFS-pointer responses: those fail image decoding.
+    im.src = src + (attempt ? `?retry=${attempt}` : '');
+  };
+  load();
   return im;
 }
 function texFor(R) {
@@ -1029,7 +1069,7 @@ export function planetSprite(p, now) {
             D = R.r * S;
           return { canvas: im, S, D, scale: (2 * p.r) / D };
         }
-        return null;
+        return procSprite(p, now);
       }
       P = setupRendered(p, T);
     } else texFor(R);

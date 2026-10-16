@@ -29,7 +29,13 @@ import {
   CAPTURE_SELL,
 } from '../shared/hangar.js';
 import { HANGAR_BY_OPS } from '../shared/docks.js';
-import { researchBonus, captainBonus, makeLoadout, credits } from '../shared/rules.js';
+import {
+  researchBonus,
+  captainBonus,
+  makeLoadout,
+  loadoutValue,
+  credits,
+} from '../shared/rules.js';
 
 /**
  * Clamp a numeric value between a lower and an upper bound.
@@ -749,11 +755,7 @@ export const HangarOperations = {
    * @returns {number} Credit value.
    */
   storedValue(st) {
-    // 2.0.3: a stored ship sells like a trade-in: half the hull and half its outfits
-    let v = (this.A.ships[st.ship.hull].cost || 0) * 0.5;
-    for (const [id, n] of Object.entries(st.ship.outfits || {}))
-      v += (this.O[id] ? this.O[id].cost : 0) * n * 0.5;
-    return Math.round(v);
+    return loadoutValue(this.A, st.ship);
   },
   /**
    * Handle drydock operations including storing and selling stored ships.

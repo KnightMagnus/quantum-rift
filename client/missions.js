@@ -189,6 +189,21 @@ export function missionTargets(G) {
       urgent: !!m.deadline,
     });
   }
+  for (const q of y.quests?.active || []) {
+    const waiting = q.awaitingSeats;
+    if (!waiting) continue;
+    out.push({
+      key: 'waiting:' + q.qid,
+      kind: 'arc',
+      pendingQuest: q.qid,
+      tag: `${q.side ? 'SIDE STORY' : 'QUEST'} · ${q.name.toUpperCase()} · STEP ${q.step + 1}/${q.of}`,
+      title: waiting.title,
+      text: waiting.text,
+      status: `Awaiting boarding: free ${waiting.pax} passenger seats and a mission slot, then land at ${placeName(waiting.at)}. No passengers have boarded yet.`,
+      sys: sysOf(waiting.at),
+      stellar: waiting.at,
+    });
+  }
   return out;
 }
 
@@ -239,7 +254,7 @@ export function missionsHtml(G) {
       <div class="t">${esc(t.title)}</div>
       <div class="mstat">${esc(t.status)}</div>
       ${t.kind === 'story' && T.some((x) => x.kind === 'career') ? `<details class="small dim"><summary>The story can wait until you know the ropes. Read more</summary>${esc(t.text)}</details>` : `<div class="dim small">${esc(t.text)}</div>`}
-      <div class="mfoot">${t.reward ? `<span class="cr small">${Math.round(t.reward).toLocaleString()} cr</span>` : '<span></span>'}<span class="dim small">${jumps}</span>${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}${t.kind === 'job' || t.quest || (t.kind === 'arc' && t.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${esc(t.key)}" title="Drop this job">✕</button>` : ''}</div>
+      <div class="mfoot">${t.reward ? `<span class="cr small">${Math.round(t.reward).toLocaleString()} cr</span>` : '<span></span>'}<span class="dim small">${jumps}</span>${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}${t.pendingQuest ? `<button class="btn sm mab" data-questdrop="${esc(t.pendingQuest)}" title="Abandon this story">✕</button>` : t.kind === 'job' || t.quest || (t.kind === 'arc' && t.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${esc(t.key)}" title="Drop this job">✕</button>` : ''}</div>
     </div>`;
     }).join('') + journalHtml(G)
   );

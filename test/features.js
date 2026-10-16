@@ -11,7 +11,9 @@ import { Game } from '../server/game.js';
 
 // Characterization from the untouched baseline: catches ordering, stacking,
 // schema, payload, and session-normalization changes without running both against
-// one mutable state. capture-features runs in its own process with fixed time/RNG.
+// one mutable state. The passenger/economy update adds passengerSeats and stockOutfits
+// to this fixture; all pre-existing snapshot values remain unchanged. capture-features
+// runs in its own process with fixed time/RNG.
 const actual = JSON.parse(
   execFileSync(
     process.execPath,

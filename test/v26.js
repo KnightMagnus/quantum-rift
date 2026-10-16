@@ -649,7 +649,9 @@ ok(
   const to = Object.values(STELLARS).find(
     (p) => p.site && !g.siteOwner(p.id) && p.id !== 'site-halcyon',
   );
+  R.s.retaliationVisit = { sys: 'halcyon', factions: new Set(['hollow']) };
   R.send({ t: 'station', op: 'relocate', site: to.id });
+  ok(!R.s.retaliationVisit, 'landed station relocation ends the previous system retaliation visit');
   ok(
     d.station.site === to.id &&
       W.sites[to.id] === g.db.key(d.name) &&
