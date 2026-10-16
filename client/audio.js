@@ -369,6 +369,7 @@ export function setAmbience(where, force) {
  * @param {number} level Throttle level (0 idle .. 1 thrust, 1.6 afterburner)
  * @returns {void}
  */
+let engT = 0;
 export function engine(level) {
   const b = ambNow.engine;
   if (!ctx || !b) return;
