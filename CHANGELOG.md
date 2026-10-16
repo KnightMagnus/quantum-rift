@@ -2,7 +2,7 @@
 
 Every release, newest first. The main story is left out on purpose.
 
-### Unreleased
+### 2.8.1
 
 - **Passenger transport:** dedicated passenger seats, independent of captain and bridge crew; larger yacht and liner cabins, several passenger offers per board and group charters for school, science, business and cultural trips. Multiple accepted missions share the available seats.
 - **Story passenger bookings:** groups wait at their boarding port until seats are available, without overbooking or consuming a story retry.
