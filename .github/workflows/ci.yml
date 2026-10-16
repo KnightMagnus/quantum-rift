@@ -59,6 +59,8 @@ jobs:
 
       - name: Communications, equipment and passenger regressions
         run: |
+          node test/eventide.js
+          node test/companion-fixes.js
           node test/hailing.js
           node test/chat-bubbles.js
           node test/original-weapons.js

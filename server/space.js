@@ -1,3 +1,4 @@
+import { eventideDrain } from '../shared/eventide.js';
 /**
  * @typedef {import('./game.js').Session} Session
  * @typedef {import('./game.js').PlayerReference} PlayerReference
@@ -1801,6 +1802,8 @@ export class Space {
             (this.m ? this.m.shieldRe : 1) *
             (e.coopRe || 1),
       ); // 2.6: coopRe is the Armada buff
+      const radiation = eventideDrain(this.sys, e, Date.now() / 1000);
+      if (radiation) e.shield = Math.max(0, e.shield - radiation * DT);
       if (e.st.armorRe) e.armor = Math.min(e.st.armor, e.armor + e.st.armorRe * DT);
       if (e.st.fuelRe) e.fuel = Math.min(e.st.fuel, e.fuel + e.st.fuelRe * DT);
       if (!e.disabled) this.weapons(e);

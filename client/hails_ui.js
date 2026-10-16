@@ -22,12 +22,13 @@ export function initHails({ G, send, toast, cam }) {
     $('hailwho').textContent = 'Incoming hails';
     $('hailsub').textContent = '· communications';
     $('hailtext').textContent = entries.length
-      ? 'Choose a sender. Calls expire if you leave or the source becomes unavailable.'
+      ? 'Choose a sender. Unavailable calls remain readable as archived transmissions until you leave or dismiss them.'
       : 'No pending hails.';
     $('hailopts').replaceChildren();
     for (const q of entries) {
-      button(`${q.unread ? '● ' : ''}${q.who} · ${q.kind === 'player' ? 'captain' : 'NPC'}`, () =>
-        send({ t: 'hailin', op: 'open', key: q.key }),
+      button(
+        `${q.unread ? '● ' : ''}${q.who} · ${q.archived ? 'archived' : q.kind === 'player' ? 'captain' : 'NPC'}`,
+        () => send({ t: 'hailin', op: 'open', key: q.key }),
       );
       button(`Dismiss ${q.who}`, () => send({ t: 'hailin', op: 'dismiss', key: q.key }));
     }
@@ -109,10 +110,16 @@ export function initHails({ G, send, toast, cam }) {
       $('hailcount').textContent = String(unread || entries.length);
       $('hailindicator').setAttribute(
         'aria-label',
-        `${entries.length} pending hails, ${unread} unread. Open communications inbox.`,
+        `${entries.filter((q) => !q.archived).length} pending hails, ${entries.filter((q) => q.archived).length} archived, ${unread} unread. Open communications inbox.`,
       );
       if (!$('hailbox').classList.contains('hidden') && !active) inbox();
-      if (active?.key && !entries.some((q) => q.key === active.key)) {
+      const current = active?.key && entries.find((q) => q.key === active.key);
+      if (current?.archived) {
+        $('hailopts').replaceChildren();
+        button('INBOX', inbox);
+        button('CLOSE', close);
+      }
+      if (active?.key && !current) {
         $('hailtext').textContent = 'This hail has ended or expired.';
         $('hailopts').replaceChildren();
         button('INBOX', inbox);

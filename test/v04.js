@@ -35,8 +35,8 @@ function fake(name) {
 }
 // galaxy
 ok(
-  SYSTEMS.filter((s) => s.anchor || s.gen).length === 200 && SYSTEMS.length === 211,
-  `200 generated systems, plus Sol and the 10 Farside systems (${SYSTEMS.length})`,
+  SYSTEMS.filter((s) => s.anchor || s.gen).length === 200 && SYSTEMS.length === 217,
+  `200 generated systems, plus Sol and the 16 Farside systems (${SYSTEMS.length})`,
 );
 const seen = new Set(['qgate']),
   q = ['qgate'];
@@ -59,7 +59,7 @@ ok(
 const by = {};
 for (const s of SYSTEMS) by[s.faction] = (by[s.faction] || 0) + 1;
 ok(
-  by.farside === 10 &&
+  by.farside === 16 &&
     by.frontier >= 25 &&
     by.frontier <= 70 &&
     by.deep >= 6 &&

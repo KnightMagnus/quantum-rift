@@ -602,8 +602,8 @@ export const FrontsOperations = {
         const w = sp.makeShip({
           hull: m.hull,
           faction: m.faction,
-          x: Math.cos(ang) * 1300,
-          y: Math.sin(ang) * 1300,
+          x: m.eventide ? m.rescuePoint[0] : Math.cos(ang) * 1300,
+          y: m.eventide ? m.rescuePoint[1] : Math.sin(ang) * 1300,
           name: m.wreckName,
         });
         w.disabled = true;
