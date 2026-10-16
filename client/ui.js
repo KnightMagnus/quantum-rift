@@ -1592,7 +1592,7 @@ function barCard(L) {
   }
   if (L.market && L.market.length) {
     const r = L.market
-      .map((c) => ({ c, k: c.price / COMMODITIES.find((x) => x.id === c).base }))
+      .map((c) => ({ c, k: c.price / COMMODITIES.find((x) => x.id === c.id).base }))
       .sort((a, b) => a.k - b.k);
     const cheap = r.filter((x) => x.k < 0.9).slice(0, 2),
       dear = r
