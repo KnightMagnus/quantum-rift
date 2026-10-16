@@ -1,3 +1,4 @@
+import { artworkUrl } from './artwork.js';
 // 1.1: the ship and captain panel (I), after Endless Sky's player info: your ship, cargo (with jettison), combat
 // rating, fleet orders, and the rival captains of the Rift with how they feel about you.
 import {
@@ -107,7 +108,7 @@ export function infoHtml(G, tab) {
       ${
         y.shipless
           ? '<p class="dim">No active ship.</p>'
-          : `<div style="display:flex;gap:10px;align-items:center"><img src="assets/${H.img}" style="width:120px;height:90px;object-fit:contain"><div><b style="color:#fff;font-size:15px">${esc(H.name)}</b><div class="dim">"${esc(y.ship.name)}"</div></div></div>
+          : `<div style="display:flex;gap:10px;align-items:center"><img src="${artworkUrl(H.img)}" style="width:120px;height:90px;object-fit:contain"><div><b style="color:#fff;font-size:15px">${esc(H.name)}</b><div class="dim">"${esc(y.ship.name)}"</div></div></div>
       <div class="kv"><span>Shield / armor</span><span>${cr(st.shield)} / ${cr(st.armor)}</span></div><div class="kv"><span>Speed / turn</span><span>${cr(st.maxSpeed / 0.45)} / ${cr((st.turn * 57.3) / 3)}</span></div>
       <div class="kv"><span>Cargo</span><span>${y.cargoUsed} / ${st.cargo} t</span></div><div class="kv"><span>Passenger seats</span><span>${(y.missions || []).filter((m) => m.type === 'passenger').reduce((sum, m) => sum + (m.pax || 0), 0)} / ${st.passengerSeats} occupied</span></div><div class="kv"><span>Outfit space</span><span>${st.free} of ${st.space} free</span></div>
       <div class="kv"><span>Guns / turrets</span><span>${st.guns}/${st.maxGuns} · ${st.turrets}/${st.maxTurrets}</span></div><div class="kv"><span>Fuel</span><span>${Math.floor(((G.view && G.view.fuel) ?? y.fuel) / 100)} jumps</span></div>`
@@ -152,7 +153,7 @@ export function infoHtml(G, tab) {
           ? ws
               .map((w) => {
                 const E = G.A.ships[w.hull] || {};
-                return `<div class="kv"><span><img src="assets/${E.img}" style="width:40px;height:28px;object-fit:contain;vertical-align:middle"> ${esc(w.name)}</span><span class="dim">${w.repairT ? 'under repair' : esc(E.name)}</span></div>`;
+                return `<div class="kv"><span><img src="${artworkUrl(E.img)}" style="width:40px;height:28px;object-fit:contain;vertical-align:middle"> ${esc(w.name)}</span><span class="dim">${w.repairT ? 'under repair' : esc(E.name)}</span></div>`;
               })
               .join('')
           : '<p class="dim">No wingmates in your active dock. Assign stored ships as wingmates at your Personal Station (STATION, then DOCKS).</p>';

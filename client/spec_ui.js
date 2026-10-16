@@ -1,3 +1,4 @@
+import { artworkUrl } from './artwork.js';
 // Quantum Rift 0.8 interface: the Specialists section of the station (blueprints, building, parts, components, tier-ups).
 import { GRADES } from '/shared/galaxy.js';
 import {
@@ -91,7 +92,7 @@ export function specialistsHtml(G, interactive) {
       pw = specPower(st),
       cost = COMP_COST(st.tier),
       full = Object.keys(COMPONENTS).every((c) => (st.comp[c] || 0) >= st.tier);
-    h += `<div class="ocard" style="border-color:#c9a24a88;margin-top:6px"><div class="oname"><img src="assets/${G.A.ships[cur.id].img}" style="width:84px;height:64px;object-fit:contain;float:left;margin-right:8px"><b style="font-size:15px;color:#fff">${esc(cur.name)}</b> <span class="dim">${esc(cur.sub)}</span> <span style="color:${ROLES_INFO[cur.role].color}">${ROLES_INFO[cur.role].icon} ${ROLES_INFO[cur.role].name}</span>
+    h += `<div class="ocard" style="border-color:#c9a24a88;margin-top:6px"><div class="oname"><img src="${artworkUrl(G.A.ships[cur.id].img)}" style="width:84px;height:64px;object-fit:contain;float:left;margin-right:8px"><b style="font-size:15px;color:#fff">${esc(cur.name)}</b> <span class="dim">${esc(cur.sub)}</span> <span style="color:${ROLES_INFO[cur.role].color}">${ROLES_INFO[cur.role].icon} ${ROLES_INFO[cur.role].name}</span>
       <div style="color:#ffd27a">${'★'.repeat(st.tier)}${'☆'.repeat(TIER_MAX - st.tier)} Tier ${st.tier} · specialty ${Math.round(pw * 100)}%</div><div class="small">${esc(cur.ability)}</div></div>
       <div class="kv" style="clear:both"><span>${res(cur.res, spec[cur.res] || 0)}</span><span>${parts[cur.id] || 0} parts ${interactive && (spec[cur.res] || 0) >= PART_RATE ? `<button class="btn sm" data-act="spec" data-op="parts" data-id="${cur.id}">REFINE ${Math.floor((spec[cur.res] || 0) / PART_RATE)}</button>` : ''}</span></div>`;
     if (st.upT && st.upT > Date.now())
@@ -137,7 +138,7 @@ export function specialistsHtml(G, interactive) {
             ? `<button class="btn sm" data-act="spec" data-op="build" data-id="${sp.id}">BUILD · ${credits(sp.cost)}</button>`
             : ''
         : '';
-      return `<div class="ocard"><div class="oname"><img src="assets/${G.A.ships[sp.id].img}" style="width:64px;height:48px;object-fit:contain;float:left;margin-right:6px"><b>${esc(sp.name)}</b> <span class="small" style="color:${R.color}">${R.icon} ${R.name}</span>${st ? ` <span style="color:#ffd27a" class="small">T${st.tier}</span>` : ''}<div class="dim small">${esc(sp.sub)}</div></div>
+      return `<div class="ocard"><div class="oname"><img src="${artworkUrl(G.A.ships[sp.id].img)}" style="width:64px;height:48px;object-fit:contain;float:left;margin-right:6px"><b>${esc(sp.name)}</b> <span class="small" style="color:${R.color}">${R.icon} ${R.name}</span>${st ? ` <span style="color:#ffd27a" class="small">T${st.tier}</span>` : ''}<div class="dim small">${esc(sp.sub)}</div></div>
       <div class="small" style="clear:both">${esc(sp.ability)}</div><div class="dim small">Loop: ${esc(sp.loop)}</div>
       <div class="kv"><span class="small">Blueprints ${Math.min(n, BP_NEED)}/${BP_NEED}</span><span class="small">${res(sp.res, spec[sp.res] || 0)} · ${parts[sp.id] || 0} parts</span></div><div class="xpbar"><i style="width:${Math.min(100, (100 * n) / BP_NEED)}%;background:#c9a24a"></i></div>${btn}</div>`;
     }).join('') +

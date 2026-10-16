@@ -7,6 +7,7 @@ import { loopFrames } from './animation_frames.js';
 import { WORMHOLE } from './wormhole_animation.js';
 import { shipBank } from './ship_banking.js';
 import { backgroundScale } from './background_scale.js';
+import { drawComet } from './comet.js';
 import { ANOMALIES } from '/shared/fronts.js';
 import { STATES } from '/shared/living.js';
 import { SYS, STELLARS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
@@ -811,6 +812,11 @@ function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
       }
     }
   }
+  // Distant comet behind worlds and navigable scenery; use the rendered sun's parallax.
+  if (D.comet) {
+    const [x, y] = farXY(D.sun, W, H, cx, cy, zf);
+    drawComet(ctx, D.comet, W, H, z, cx, cy, now, { x, y });
+  }
   for (const bp of [...D.bgp].sort((a, b) => a.depth - b.depth)) {
     // 2.4: unique background worlds, the farthest first
     const [x, y] = farXY(bp, W, H, cx, cy, zf),
@@ -819,7 +825,9 @@ function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
     const P = planetSprite(bp.p, now);
     if (!P) continue;
     const w = (s * P.S) / P.D;
-    ctx.globalAlpha = bp.a;
+    // Distance changes apparent size, not opacity: the solid disk must occlude
+    // stars behind it. The sprite itself supplies soft atmosphere/ring alpha.
+    ctx.globalAlpha = 1;
     ctx.drawImage(P.canvas, x - w / 2, y - w / 2, w, w);
     ctx.globalAlpha = 1;
   }
@@ -991,42 +999,6 @@ function drawDecorNear(ctx, S, W, H, z, sx, sy, now) {
     ctx.restore();
     ctx.globalAlpha = 1;
   };
-  if (D.comet) {
-    // a comet crossing the system, its tail streaming away from the star
-    const c = D.comet,
-      ph = (t % c.period) / c.period,
-      x0 = c.x0 + c.vx * (t % c.period),
-      y0 = c.y0 + c.vy * (t % c.period),
-      x = sx(x0),
-      y = sy(y0);
-    const d = Math.hypot(x0, y0) || 1,
-      ux = x0 / d,
-      uy = y0 / d,
-      L = c.len * z * (0.6 + 0.4 * Math.min(1, 3000 / d)),
-      w = 10 * z + 2;
-    if (onS(x, y, L) && ph < 0.98) {
-      ctx.globalCompositeOperation = 'lighter';
-      const g = ctx.createLinearGradient(x, y, x + ux * L, y + uy * L);
-      g.addColorStop(0, `rgba(${c.hue},.55)`);
-      g.addColorStop(1, `rgba(${c.hue},0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(x - uy * w, y + ux * w);
-      ctx.lineTo(x + ux * L - uy * w * 3, y + uy * L + ux * w * 3);
-      ctx.lineTo(x + ux * L + uy * w * 3, y + uy * L - ux * w * 3);
-      ctx.lineTo(x + uy * w, y - ux * w);
-      ctx.closePath();
-      ctx.fill();
-      const h = ctx.createRadialGradient(x, y, 0, x, y, w * 2.2);
-      h.addColorStop(0, 'rgba(255,255,255,.95)');
-      h.addColorStop(1, `rgba(${c.hue},0)`);
-      ctx.fillStyle = h;
-      ctx.beginPath();
-      ctx.arc(x, y, w * 2.2, 0, 6.283);
-      ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
-    }
-  }
   for (const R of D.ruin) sprite(R, 0.92);
   for (const o of D.derelict) sprite(o, 0.95);
   for (const w of D.wreck) {

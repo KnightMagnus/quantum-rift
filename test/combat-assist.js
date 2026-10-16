@@ -42,6 +42,7 @@ const sp = {
     return e.owner ? this.root(this.ships.get(e.owner)) : e;
   },
   isHostile: (a, b) => !!b.enemy,
+  canHit: Space.prototype.canHit,
   spared: () => false,
 };
 game.spaces.s = sp;
@@ -329,12 +330,12 @@ handoffFoe.y = selectedLead.y - 200;
 selectedSpace.ships.set(handoffFoe.id, handoffFoe);
 for (const [label, apply, undo] of [
   [
-    'neutral',
+    'own wing',
     () => {
-      selectedFoe.enemy = false;
+      selectedFoe.owner = selectedLead.id;
     },
     () => {
-      selectedFoe.enemy = true;
+      delete selectedFoe.owner;
     },
   ],
   [
@@ -469,6 +470,41 @@ for (const scenario of ['newcomer', 'jump grace']) {
     scenario + ': passive enable does not hunt nonattacking hostiles',
   );
 }
+// Inner neutral traffic is a deliberate, legal target, not an automatic enemy.
+selectedLead.graceT = 0;
+selectedFoe.faction = 'quantum';
+selectedSession.data.station = { ops: 0 };
+selectedFoe.target = selectedLead;
+assert.equal(selectedSpace.isHostile(selectedLead, selectedFoe), false);
+assert.equal(selectedSpace.canHit(selectedLead, selectedFoe), true);
+selectionAssist.stop(selectedSession);
+selectedLead.target = null;
+selectionAssist.command(selectedSession, { op: 'assist', on: true });
+selectionAssist.resolve(selectedSpace);
+assert.equal(selectedLead.combatTarget, null, 'passive assist does not acquire neutral traffic');
+selectionAssist.stop(selectedSession);
+selectedLead.target = selectedFoe;
+selectedFoe.target = null;
+selectedFoe.y = selectedLead.y - 1000;
+selectionAssist.command(selectedSession, { op: 'assist', on: true });
+selectedSpace.tick();
+assert.equal(
+  selectedLead.combatTarget,
+  selectedFoe,
+  'explicit assist adopts preselected neutral NPC',
+);
+assert.ok(selectedLead.inp.thrust, 'explicit neutral attack pursues');
+selectedFoe.y = selectedLead.y - 200;
+for (const g of selectedLead.guns) g.cd = 0;
+const beforeNeutralShots = selectedShots.length;
+selectedSpace.tick();
+assert.equal(
+  selectedShots.length,
+  beforeNeutralShots + 1,
+  'explicit neutral attack fires primaries',
+);
+selectionAssist.stop(selectedSession);
+assert.equal(selectedLead.autoCombat, false);
 console.log(
   'Combat assist: fleet/group power, focus/handoff, authority revocation, stop orders, stale aggression, range/arc, preselected-target pursuit and primary-only firing passed.',
 );

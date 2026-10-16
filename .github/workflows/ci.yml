@@ -63,9 +63,11 @@ jobs:
           node test/chat-bubbles.js
           node test/original-weapons.js
           node test/combat-assist.js
+          node test/comet.js
           node test/ship-economy.js
           node test/passengers.js
           node test/outfitter-icons.js
+          node test/catalog-artwork.js
           node test/ship-banking.js
           node test/animation-frames.js
           node test/wormhole-loop.js
