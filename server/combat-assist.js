@@ -94,6 +94,7 @@ import { winOdds } from '../shared/hostile.js';
  * @property {number} t Current simulation timestamp.
  * @property {(entity: any) => any} root Resolves fleet root or parent commanding entity.
  * @property {(lead: any, target: any) => boolean} isHostile Checks hostile relationship between entities.
+ * @property {(attacker: any, target: any) => boolean} canHit Checks whether attacks can connect and damage target.
  * @property {(source: any, target: any) => boolean} spared Checks whether source faction spares target.
  */
 
