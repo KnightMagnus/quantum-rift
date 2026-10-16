@@ -72,6 +72,9 @@
       "fixed": [],
       "bonusSpace": 2,
       "name": "Rift Runner",
+      "stockOutfits": {
+        "9001": 1
+      },
       "uid": "s1"
     },
     "cargo": {},
@@ -278,6 +281,7 @@
         "fuel": 450,
         "fuelRe": 0,
         "cargo": 70,
+        "passengerSeats": 3,
         "space": 22,
         "used": 4,
         "free": 18,
@@ -320,6 +324,7 @@
         "fuel": 700,
         "fuelRe": 0,
         "cargo": 60,
+        "passengerSeats": 2,
         "space": 240,
         "used": 60,
         "free": 180,

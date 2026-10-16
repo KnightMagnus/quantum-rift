@@ -15,6 +15,7 @@ import { CHAINS, SIDE_STORIES, CONTACT_TITLES } from '../shared/quests.js';
 import { OFFICER_NAMES, RACE_ROLES, ROLES } from '../shared/hangar.js';
 import { SPECIALISTS } from '../shared/specialty.js';
 import { credits } from '../shared/rules.js';
+import { occupiedPassengerSeats } from '../shared/passengers.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const hash = (str) => {
@@ -131,6 +132,7 @@ export const QuestOperations = {
         step: a.step,
         of: a.steps.length,
         side: !!a.side,
+        ...(a.awaitingSeats ? { awaitingSeats: { ...a.awaitingSeats } } : {}),
       })),
       done: q.done.slice(-30),
       contacts: Object.fromEntries(
@@ -461,6 +463,24 @@ export const QuestOperations = {
     const d = s.data,
       m = this.questStepJob(d, Q, Q.step);
     m.owner = s.id;
+    if (m.type === 'passenger') {
+      const waiting = Q.awaitingSeats,
+        at = waiting?.at || d.stellar || d.lastStellar || Q.at,
+        others = d.missions.filter((x) => x.id !== m.id && !x.paid),
+        free =
+          (d.shipless ? 0 : this.stats(d).passengerSeats || 0) - occupiedPassengerSeats(others);
+      if (waiting && (s.ent || d.stellar !== at)) return false;
+      if (free < m.pax || others.length >= 6) {
+        Q.awaitingSeats = { at, pax: m.pax, title: m.title, text: m.text };
+        if (!waiting)
+          this.toast(
+            s,
+            `${Q.name}: passengers are waiting at ${STELLARS[at]?.name || at}. Free ${m.pax} passenger seats and a mission slot, then board here.`,
+          );
+        return false;
+      }
+      delete Q.awaitingSeats;
+    }
     d.missions = d.missions.filter((x) => x.id !== m.id);
     d.missions.push(m);
     if (m.type === 'cargo' || m.type === 'smuggle') {
@@ -469,6 +489,7 @@ export const QuestOperations = {
         this.toast(s, `${Q.name}: this step needs ${m.qty} t of hold space. Clear some room.`);
     }
     if (!first) this.toast(s, `${Q.name}, step ${Q.step + 1} of ${Q.steps.length}: ${m.title}.`);
+    return true;
   },
   // a step was paid (called from completeOnLanding)
   questAdvance(s, m) {
@@ -589,6 +610,16 @@ export const QuestOperations = {
       q = d.quests;
     if (!q || !q.active) return;
     for (const Q of Object.values(q.active)) {
+      if (Q.awaitingSeats) {
+        if (!s.ent && d.stellar === Q.awaitingSeats.at && this.questPush(s, Q, true)) {
+          this.toast(s, `${Q.name}: your waiting passengers have boarded.`);
+          this.db.touch();
+          this.you(s);
+          this.landed(s);
+        }
+        // Waiting for a suitable ship is not a lost mission and consumes no retry.
+        continue;
+      }
       if (d.missions.some((m) => m.quest && m.quest.qid === Q.qid)) continue;
       if (Q.tries >= 1) {
         this.questFail(s, Q.qid, 'the job failed twice');

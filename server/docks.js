@@ -13,7 +13,7 @@ import {
   WING_CREW,
 } from '../shared/docks.js';
 import { BRIDGE_SLOTS } from '../shared/hangar.js';
-import { researchBonus, officerBonus, makeLoadout, credits } from '../shared/rules.js';
+import { researchBonus, officerBonus, makeLoadout, repairBasis, credits } from '../shared/rules.js';
 import { SPEC } from '../shared/specialty.js';
 
 const HERALD = (Object.values(SPEC).find((s) => s.key === 'herald') || {}).id;
@@ -234,7 +234,7 @@ export const DocksOperations = {
         if (k === d.activeDock) return;
         const L = this.stored(d, D.lead);
         if (!L) return this.toast(s, `Dock ${DOCK_LETTERS[k]} has no lead ship. Assign one first.`);
-        const why = this.fitsJobs(d, L.ship.hull);
+        const why = this.fitsJobs(d, L.ship);
         if (why) return this.toast(s, why);
         if (d.specState && d.specState[L.ship.hull] && d.specState[L.ship.hull].upT > Date.now())
           return this.toast(s, 'That ship is in the drydock for her tier-up.');
@@ -268,12 +268,16 @@ export const DocksOperations = {
           if (k === d.activeDock) {
             // changing the ship you fly
             if (X) {
-              const why = this.fitsJobs(d, X.ship.hull);
+              const why = this.fitsJobs(d, X.ship);
               if (why) return this.toast(s, why);
-            } else if (Object.values(d.cargo).reduce((a, b) => a + b, 0) || this.jobCargo(d))
+            } else if (
+              Object.values(d.cargo).reduce((a, b) => a + b, 0) ||
+              this.jobCargo(d) ||
+              (d.missions || []).some((m) => m.type === 'passenger' && m.pax > 0)
+            )
               return this.toast(
                 s,
-                'Unload your cargo and finish cargo jobs before storing the ship you fly.',
+                'Unload your cargo and complete passenger and cargo missions before storing the ship you fly.',
               );
             if (!d.shipless) {
               if (!X && d.dock.length >= this.dockSlots(d))
@@ -355,7 +359,7 @@ export const DocksOperations = {
     const d = s.data,
       X = this.stored(d, uid);
     if (!X || !(X.repairT > Date.now())) return;
-    const cost = Math.round((this.A.ships[X.ship.hull].cost || 0) * WING_REPAIR_COST);
+    const cost = Math.round(repairBasis(this.A, X.ship.hull) * WING_REPAIR_COST);
     if (d.credits < cost) return this.toast(s, `Rush repairs cost ${credits(cost)} credits.`);
     d.credits -= cost;
     X.repairT = 0;
@@ -392,6 +396,14 @@ export const DocksOperations = {
         `Your hangar is full (${this.dockSlots(d)} berths). Sell a stored ship or raise your station's Ops level.`,
       );
     const H = this.A.ships[hull];
+    if (
+      WINGMATES.includes(hull) &&
+      ((!d.shipless && d.ship.hull === hull) || d.dock.some((x) => x.ship.hull === hull))
+    )
+      return this.toast(
+        s,
+        `${H.name} is already in your fleet. Each named companion can be recruited once.`,
+      );
     if (d.credits < H.cost) return this.toast(s, `You need ${credits(H.cost)} credits.`);
     d.credits -= H.cost;
     const ship = makeLoadout(this.A, hull, H.name);

@@ -9,8 +9,10 @@ import {
   MK2_OF,
   MK3_OF,
   ARMADA_HULLS,
+  WINGMATES,
 } from './galaxy.js';
 import { SHIPS23 } from './ships23.js';
+import { passengerSeats } from './passengers.js';
 import { ROLES, RARITY, STAT_BASE, SYNERGY, BRIDGE_SLOTS } from './hangar.js';
 import { roleOf } from './roles.js';
 import { SPRITES } from './sprites26.js';
@@ -71,7 +73,85 @@ export function makeLoadout(A, hull, name) {
     } else L.fixed.push([w, n, a]);
     if (a) L.ammo[w] = (L.ammo[w] || 0) + a;
   }
+  L.stockOutfits = { ...L.outfits };
   return L;
+}
+
+// A factory weapon bank is refittable even where its authored count exceeds a generic shop limit.
+export function stockOutfitLimit(A, ship, id) {
+  const o = allOutfits(A)[id];
+  return Math.max(o?.max || 1, o?.eff?.weapon ? makeLoadout(A, ship.hull).outfits[id] || 0 : 0);
+}
+
+// Factory equipment is included in the hull price, not a second retail purchase.
+// Reserve at most half that price for removable stock gear; the rest is chassis.
+export function loadoutBasis(A, hull) {
+  const stock = makeLoadout(A, hull),
+    O = allOutfits(A);
+  const retail = Object.entries(stock.outfits).reduce(
+    (v, [id, n]) => v + (O[id]?.cost || 0) * n,
+    0,
+  );
+  const gear = Math.min(retail, Math.max(0, A.ships[hull]?.cost || 0) * 0.5);
+  return {
+    stock: stock.outfits,
+    chassis: Math.max(0, (A.ships[hull]?.cost || 0) - gear),
+    scale: retail ? gear / retail : 0,
+  };
+}
+
+// Named hull prices are recruitment fees; rush repairs use actual factory kit replacement value.
+export function repairBasis(A, hull) {
+  const cost = A.ships[hull]?.cost || 0;
+  if (!WINGMATES.includes(hull)) return cost;
+  const O = allOutfits(A),
+    stock = makeLoadout(A, hull);
+  return Math.max(
+    cost,
+    Object.entries(stock.outfits).reduce((v, [id, n]) => v + (O[id]?.cost || 0) * n, 0),
+  );
+}
+
+// Old saves predate provenance: count only equipment still present, up to the factory kit.
+// Initialize before buying/removing equipment so subsequent paid replacements remain retail-valued.
+export function ensureStockOutfits(A, ship) {
+  const { stock } = loadoutBasis(A, ship.hull);
+  if (!ship.stockOutfits || typeof ship.stockOutfits !== 'object') ship.stockOutfits = { ...stock };
+  for (const id of Object.keys(ship.stockOutfits)) {
+    const n = Math.max(
+      0,
+      Math.min(Math.floor(ship.stockOutfits[id]) || 0, stock[id] || 0, ship.outfits?.[id] || 0),
+    );
+    if (n) ship.stockOutfits[id] = n;
+    else delete ship.stockOutfits[id];
+  }
+  return ship.stockOutfits;
+}
+
+export function loadoutValue(A, ship) {
+  const { stock, chassis, scale } = loadoutBasis(A, ship.hull),
+    O = allOutfits(A);
+  let value = chassis;
+  for (const [id, n] of Object.entries(ship.outfits || {})) {
+    const original = Math.max(
+      0,
+      Math.min(n, stock[id] || 0, ship.stockOutfits ? ship.stockOutfits[id] || 0 : stock[id] || 0),
+    );
+    value += (O[id]?.cost || 0) * (n - original + original * scale);
+  }
+  return Math.round(value * 0.5);
+}
+
+// Call before decrementing outfits. Stock is sold first; paid additions retain normal resale.
+export function outfitSaleValue(A, ship, id, count) {
+  const originals = ensureStockOutfits(A, ship),
+    { scale } = loadoutBasis(A, ship.hull);
+  const n = Math.max(0, Math.min(count, ship.outfits?.[id] || 0));
+  const original = Math.min(n, originals[id] || 0),
+    o = allOutfits(A)[id];
+  originals[id] = (originals[id] || 0) - original;
+  if (!originals[id]) delete originals[id];
+  return Math.round((o?.cost || 0) * (n - original + original * scale) * 0.5);
 }
 // The ship a player is flying: hull + bought outfits (+ research bonuses) -> live stats.
 export function shipStats(A, ship, bonus = {}) {
@@ -148,6 +228,7 @@ export function shipStats(A, ship, bonus = {}) {
     fuel,
     fuelRe: fuelRe / 30,
     cargo,
+    passengerSeats: passengerSeats(H, ship),
     space: H.space + (ship.bonusSpace || 0),
     used,
     free: H.space + (ship.bonusSpace || 0) - used,

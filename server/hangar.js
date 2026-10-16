@@ -29,7 +29,13 @@ import {
   CAPTURE_SELL,
 } from '../shared/hangar.js';
 import { HANGAR_BY_OPS } from '../shared/docks.js';
-import { researchBonus, captainBonus, makeLoadout, credits } from '../shared/rules.js';
+import {
+  researchBonus,
+  captainBonus,
+  makeLoadout,
+  loadoutValue,
+  credits,
+} from '../shared/rules.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function rng(seed) {
@@ -587,11 +593,7 @@ export const HangarOperations = {
 
   // ------------------------------------------------------------------ drydock: stored ships keep their escorts and bridge crew (fleet presets)
   storedValue(st) {
-    // 2.0.3: a stored ship sells like a trade-in: half the hull and half its outfits
-    let v = (this.A.ships[st.ship.hull].cost || 0) * 0.5;
-    for (const [id, n] of Object.entries(st.ship.outfits || {}))
-      v += (this.O[id] ? this.O[id].cost : 0) * n * 0.5;
-    return Math.round(v);
+    return loadoutValue(this.A, st.ship);
   },
   dockOp(s, m) {
     const d = s.data,

@@ -81,7 +81,10 @@ export class CombatAssist {
       c.focus = c.on;
       c.status = c.on ? 'READY' : 'OFF';
       c.reason = '';
-      if (!c.on) this.stop(s, 'Combat assist off');
+      // Selection can precede arming: adopt it only on explicit enable, using the
+      // same hostility, protection and acquisition-range checks as active selection.
+      if (c.on) this.selected(s, e.target, this.game.spaces[s.data.sys]);
+      else this.stop(s, 'Combat assist off');
     }
     if (m.op === 'coordinate') {
       c.coordinating = m.on === true;
@@ -124,8 +127,9 @@ export class CombatAssist {
       !sp.root(t).player &&
       !sp.sys.arena &&
       sp.isHostile(lead, t) &&
+      // Protection is directional: our arrival/newcomer truce limits NPC initiation,
+      // not an explicitly selected player attack. Match the player-to-target canHit direction.
       !sp.spared(lead, t) &&
-      !sp.spared(t, lead) &&
       Math.hypot(t.x - lead.x, t.y - lead.y) <= BOUNDARY
     );
   }
