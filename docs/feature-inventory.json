@@ -596,6 +596,7 @@
         "jobCargo",
         "landed",
         "log",
+        "outfitter",
         "ownSite",
         "sessions",
         "shipUid",

@@ -77,4 +77,6 @@ jobs:
           node test/background-scale.js
           node test/passenger-quests.js
           node test/local-retaliation.js
+          node test/main-map-protection.js
+          node test/outfitter-wing-repairs.js
           node test/fuzz.js

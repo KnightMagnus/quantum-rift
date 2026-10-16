@@ -347,7 +347,7 @@ function soloLogin(s) {
       ? s.slots
           .map(
             (c) =>
-              `<div class="slot"><div class="n"><b>${c.name.replace(/[<>&]/g, '')}</b><div class="dim small">${c.ship} · ${Math.round(c.credits).toLocaleString()} cr${c.ops ? ' · Ops ' + c.ops : ''} · ${c.sys}</div></div><a href="/api/export?name=${encodeURIComponent(c.name)}" download>EXPORT</a><button class="btn sm" data-slot="${c.name.replace(/"/g, '')}">PLAY</button></div>`,
+              `<div class="slot"><div class="n"><b>${c.name.replace(/[<>&]/g, '')}</b><div class="dim small">${c.ship} · ${Math.round(c.credits).toLocaleString()} cr${c.ops ? ' · Station Tier ' + c.ops : ''} · ${c.sys}</div></div><a href="/api/export?name=${encodeURIComponent(c.name)}" download>EXPORT</a><button class="btn sm" data-slot="${c.name.replace(/"/g, '')}">PLAY</button></div>`,
           )
           .join('')
       : '<div class="dim small">No captains yet: name one above and start.</div>') +

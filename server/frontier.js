@@ -145,7 +145,7 @@ export const FrontierOperations = {
     return Object.entries(this.db.world.colonies).filter(([, c]) => c.owner === k);
   },
   /**
-   * Compute maximum allowed colonies for player based on personal station Ops level.
+   * Compute maximum allowed colonies for player based on personal station Station Tier.
    * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {number} Maximum colonies.
@@ -234,7 +234,7 @@ export const FrontierOperations = {
         if (this.coloniesOf(d).length >= this.colonyMax(d))
           return this.toast(
             s,
-            `You can run ${this.colonyMax(d)} colonies${d.station.ops < 5 ? ' (3 at Ops 5)' : ''}.`,
+            `You can run ${this.colonyMax(d)} colonies${d.station.ops < 5 ? ' (3 at Station Tier 5)' : ''}.`,
           );
         if (d.credits < COLONY.cost || !this.hasMats(d, COLONY.mats))
           return this.toast(s, 'You need the credits and materials listed.');
@@ -336,7 +336,7 @@ export const FrontierOperations = {
 
   // ------------------------------------------------------------------ station defense
   /**
-   * Calculate personal station defense rating from turret level and Ops rating.
+   * Calculate personal station defense rating from turret level and Station Tier rating.
    * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {number} Defense rating score.

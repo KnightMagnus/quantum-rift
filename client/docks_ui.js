@@ -1,7 +1,7 @@
 import { artworkUrl } from './artwork.js';
 // 2.1 Docks: the DOCKS screen at your Personal Station, the dock switcher by the DEPART button, and the sidebar line.
 import { ROLES, RARITY } from '/shared/hangar.js';
-import { WING_REPAIR_COST, NEXT_DOCK_OPS } from '/shared/docks.js';
+import { WING_REPAIR_COST, WING_REPAIR_MIN, NEXT_DOCK_OPS } from '/shared/docks.js';
 import { credits, repairBasis } from '/shared/rules.js';
 
 /**
@@ -125,7 +125,7 @@ export function docksHtml(G, interactive) {
   const y = G.you,
     D = y.docks;
   if (!D) return '';
-  let h = `<div class="sect" style="margin-top:4px">DOCKS (${D.count} of 4)</div><div class="dim small">Each dock holds a lead ship and up to two wingmates, chosen from your stored ships. You fly the lead of your <b>active</b> dock, and its wingmates fly in formation with you. Officers you assign as a wingmate's captain and crew boost that ship. More docks open as your station's Ops level rises.</div>`;
+  let h = `<div class="sect" style="margin-top:4px">DOCKS (${D.count} of 4)</div><div class="dim small">Each dock holds a lead ship and up to two wingmates, chosen from your stored ships. You fly the lead of your <b>active</b> dock, and its wingmates fly in formation with you. Officers you assign as a wingmate's captain and crew boost that ship. More docks open as your station's Station Tier rises.</div>`;
   h +=
     `<div class="docks">` +
     D.list
@@ -147,11 +147,11 @@ export function docksHtml(G, interactive) {
       .join('') +
     `</div>`;
   if (D.count < 4)
-    h += `<div class="dim small" style="margin-top:6px">Next dock opens at Ops ${NEXT_DOCK_OPS[D.count]}.</div>`;
+    h += `<div class="dim small" style="margin-top:6px">Next dock opens at Station Tier ${NEXT_DOCK_OPS[D.count]}.</div>`;
   h += `<div class="sect">STORED SHIPS (${D.stored.length} / ${D.cap} berths)</div>`;
   if (!D.cap)
     h +=
-      '<p class="dim">Your hangar opens at Ops 1. Ships you buy can then be sent straight to it (BUY TO HANGAR in any shipyard).</p>';
+      '<p class="dim">Your hangar opens at Station Tier 1. Ships you buy can then be sent straight to it (BUY TO HANGAR in any shipyard).</p>';
   h +=
     D.stored
       .map((x) => {
@@ -204,4 +204,24 @@ export function dockLine(G) {
         ` ${ws.filter((w) => !w.repairT).length} wingmate${ws.filter((w) => !w.repairT).length === 1 ? '' : 's'}`
       : ' · no wingmates')
   );
+}
+
+/**
+ * Quoted rush repairs at landed outfitter ports. Uses the same stored ships and fee as DOCKS.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
+export function outfitterRepairsHtml(G) {
+  const y = G.you,
+    disabled = (y.docks?.stored || []).filter((w) => w.repairT > Date.now());
+  return `<div class="sect">WINGMATE REPAIRS</div><p class="dim small">Disabled wingmates repair automatically for free after ${WING_REPAIR_MIN} minutes. Pay the quoted fee to finish repairs now; the ship remains in your hangar until launch.</p>${
+    disabled.length
+      ? disabled
+          .map((w) => {
+            const cost = Math.round(repairBasis(G.A, w.hull) * WING_REPAIR_COST);
+            return `<div class="kv"><span><b>${esc(w.name)}</b> · ${esc(G.A.ships[w.hull].name)} <span class="dim small">· ${mins(w.repairT)} min remaining</span></span><button class="btn sm" data-act="outfitterrep" data-uid="${esc(w.uid)}"${y.credits < cost ? ' disabled title="Not enough credits"' : ''}>RUSH REPAIRS ${credits(cost)}</button></div>`;
+          })
+          .join('')
+      : '<p class="dim small">No disabled wingmates awaiting repairs.</p>'
+  }`;
 }

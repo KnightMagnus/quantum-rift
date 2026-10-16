@@ -10,6 +10,7 @@ import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
 import { augmentAssets, makeLoadout } from '../shared/rules.js';
 
+const protection = process.env.RIFT_BROWSER_PROTECTION === '1';
 const neutral = process.env.RIFT_BROWSER_TARGET === 'neutral';
 const drift = process.env.RIFT_BROWSER_DRIFT === '1';
 const named = process.env.RIFT_BROWSER_NAMED === '1';
@@ -38,12 +39,19 @@ fs.writeFileSync(
 import fs from 'node:fs';
 import { Game } from ${JSON.stringify(moduleUrl('server/game.js'))};
 import { Space } from ${JSON.stringify(moduleUrl('server/space.js'))};
+import { SYS } from ${JSON.stringify(moduleUrl('shared/galaxy.js'))};
 import { RIVALS } from ${JSON.stringify(moduleUrl('shared/rivals.js'))};
 let active, foe, space, shots = 0, previousWrite = 0;
 const spawnPlayer = Game.prototype.spawnPlayer;
 Game.prototype.spawnPlayer = function(s, ...args) {
   spawnPlayer.call(this, s, ...args);
   if (s.data.name !== 'Browser Assist') return;
+  if (${protection} && s.data.sys !== 'dimmer') {
+    const prior = this.spaces[s.data.sys];
+    this.dropEscorts(prior, s.ent); prior.remove(s.ent); prior.players--;
+    s.ent = null; s.data.sys = 'dimmer'; s.data.stellar = null;
+    spawnPlayer.call(this, s, 0, 0, 0, 0);
+  }
   active = s; space = this.spaces[s.data.sys];
   for (const e of [...space.ships.values()]) if (!e.player) space.remove(e);
   s.ent.x = 0; s.ent.y = 0; s.ent.vx = ${drift ? 80 : 0}; s.ent.vy = ${drift ? 40 : 0}; s.ent.a = ${drift ? Math.PI / 2 : 0};
@@ -61,6 +69,13 @@ Game.prototype.spawnPlayer = function(s, ...args) {
   } else if (${live}) {
     foe.ai = 'trade'; foe.dest = {x: 6000, y: -1100, out: true};
   } else foe._browserInert = true;
+  if (${protection}) {
+    s.ent.graceT = 0;
+    foe.faction = 'umbral'; foe.ai = 'raid'; delete foe._browserInert;
+    foe.dest = null; foe.pers = 'reckless';
+    const ally = space.makeShip({hull:704, faction:'umbral', ai:'raid', name:'Ambient Ally', x:300, y:-1000});
+    ally.pers = 'reckless';
+  }
   foe.st.shield = 1000; foe.shield = 1000; foe.st.armor = 2000; foe.armor = 2000;
   foe.st.shieldRe = 0; foe.st.armorRe = 0;
 };
@@ -74,11 +89,14 @@ Game.prototype.tick = function(...args) {
   if (active?.ent && foe && Date.now() - previousWrite > 75) {
     previousWrite = Date.now();
     fs.writeFileSync(${JSON.stringify(telemetry)}, JSON.stringify({
-      time: Date.now(), newcomer: this.newcomer(active.data), ops: active.data.station.ops,
-      state: active.ent.state, player: {hull: active.ent.hull, a: active.ent.a, vx: active.ent.vx, vy: active.ent.vy, inp: active.ent.inp, x: active.ent.x, y: active.ent.y, target: active.ent.target?.id || 0},
+      time: Date.now(), sys: space.id, newcomer: this.newcomer(active.data), ops: active.data.station.ops,
+      state: active.ent.state, player: {hull: active.ent.hull, a: active.ent.a, vx: active.ent.vx, vy: active.ent.vy, inp: active.ent.inp, x: active.ent.x, y: active.ent.y, id: active.ent.id, target: active.ent.target?.id || 0},
       foe: {id: foe.id, state: foe.state, hull: foe.hull, name: foe.name, rival: foe.rival, ai: foe.ai, x: foe.x, y: foe.y, shield: foe.shield, armor: foe.armor, target: foe.target?.id || 0, aggro: [...foe.aggro]},
       distance: Math.hypot(active.ent.x-foe.x, active.ent.y-foe.y), shots,
       combat: this.combatAssist.payload(active, space),
+      playerHealth: {shield:active.ent.shield, armor:active.ent.armor},
+      retaliating: [...(active.retaliationVisit?.factions || [])],
+      npcTargets: [...space.ships.values()].filter(e=>!e.player).map(e=>[e.name,e.target?.id||0]),
       hostile: space.isHostile(active.ent, foe), canHit: space.canHit(active.ent, foe), reverseSpared: space.spared(foe, active.ent)
     }));
   }
@@ -172,14 +190,29 @@ try {
   assert.equal(initial.foe.target, 0);
   assert.deepEqual(initial.foe.aggro, []);
   assert.equal(initial.hostile, !neutral, 'fixture uses requested relationship');
-  assert.equal(initial.reverseSpared, !neutral, 'hostile fixture exercises newcomer protection');
+  assert.equal(initial.reverseSpared, true, 'ambient NPC fixture exercises newcomer truce');
+  let passive;
+  if (protection) {
+    assert.equal(initial.sys, 'dimmer');
+    await new Promise((resolve) => setTimeout(resolve, 8000));
+    passive = read();
+    assert.ok(
+      passive.npcTargets.every(([, id]) => id !== passive.player.id),
+      'ambient NPCs ignore passive captain after arrival grace',
+    );
+    assert.equal(passive.foe.target, 0);
+    assert.equal(passive.playerHealth.armor, initial.playerHealth.armor);
+    assert.deepEqual(passive.retaliating, []);
+    assert.match(await page.locator('#prot').innerText(), /NEWCOMER TRUCE/);
+    await page.screenshot({ path: path.join(evidence, 'dimmer-passive.png') });
+  }
   assert.equal(initial.canHit, true, 'normal player primary fire could legally hit this hostile');
   // A passive enable must not hunt an idle hostile merely because it exists nearby.
   await page.click('#combatassist');
   await page.waitForFunction(() => G.combat.on && G.combat.status === 'READY');
   await new Promise((resolve) => setTimeout(resolve, 350));
   assert.equal(read().shots, 0);
-  if (!drift && !named) assert.ok(read().distance > 1090);
+  if (!drift && !named && !protection) assert.ok(read().distance > 1090);
   await page.click('#combatstop');
   await page.waitForFunction(() => !G.combat.on);
   // Click the visible radar blip, exercising the user's real target-selection UI.
@@ -230,6 +263,13 @@ try {
     20000,
   );
   assert.equal(fired.combat.status, 'ENGAGING');
+  if (protection) {
+    assert.ok(
+      fired.retaliating.includes('umbral'),
+      'Assist actual hit permits faction retaliation',
+    );
+    await until((t) => t.foe.target === t.player.id, 'NPC responds to actual outgoing damage');
+  }
   assert.ok(fired.distance < initial.distance - 200);
   await page.screenshot({ path: path.join(evidence, 'combat-assist-engaging.png') });
   await page.keyboard.down('w');
@@ -289,6 +329,7 @@ try {
   assert.deepEqual(errors, []);
   const result = {
     scenery: sceneryResult,
+    passive,
     initial,
     approached,
     fired,

@@ -69,8 +69,8 @@ export const TUTORIAL = [
   },
   {
     check: (d) => d.station.ops >= 1,
-    title: 'Restore docking (Ops 1)',
-    text: 'At your station, build Ops 1. It needs credits and an Alloy I crate.',
+    title: 'Restore docking (Station Tier 1)',
+    text: 'At your station, build Station Tier 1. It needs credits and an Alloy I crate.',
     reward: 10000,
   },
   {
@@ -112,8 +112,8 @@ export const TUTORIAL = [
   },
   {
     check: (d) => d.station.ops >= 2,
-    title: 'Market and refinery (Ops 2)',
-    text: 'Build Ops 2 at your station: it opens the research lab and the hangar.',
+    title: 'Market and refinery (Station Tier 2)',
+    text: 'Build Station Tier 2 at your station: it opens the research lab and the hangar.',
     reward: 20000,
   },
   {
@@ -148,8 +148,8 @@ export const TUTORIAL = [
   },
   {
     check: (d) => d.station.ops >= 3,
-    title: 'Shipyard and lab (Ops 3)',
-    text: 'Build Ops 3: the drydock, the station shipyard and specialist building.',
+    title: 'Shipyard and lab (Station Tier 3)',
+    text: 'Build Station Tier 3: the drydock, the station shipyard and specialist building.',
     reward: 40000,
     mat: ['crystal', 1, 1],
   },

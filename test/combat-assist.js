@@ -436,8 +436,8 @@ for (const scenario of ['newcomer', 'jump grace']) {
   );
   assert.equal(
     selectedSpace.canHit(selectedFoe, selectedLead),
-    false,
-    scenario + ': NPC fire is prevented',
+    scenario === 'newcomer',
+    scenario + ': only arrival grace blocks incidental damage',
   );
   assert.equal(
     selectedSpace.canHit(selectedLead, selectedFoe),
@@ -470,6 +470,29 @@ for (const scenario of ['newcomer', 'jump grace']) {
     scenario + ': passive enable does not hunt nonattacking hostiles',
   );
 }
+// Accidental crossfire while protected must not silently opt passive Assist in.
+selectedLead.graceT = 0;
+selectedSession.data.station = { ops: 2 };
+selectedSpace.sys.faction = 'umbral';
+selectedSpace.sys.danger = 5;
+selectedFoe.faction = 'umbral';
+selectedFoe.target = null;
+selectedLead.lastHitBy = selectedFoe.id;
+selectedLead.hitT = selectedSpace.t;
+selectionAssist.stop(selectedSession);
+selectedLead.target = null;
+selectionAssist.command(selectedSession, { op: 'assist', on: true });
+selectionAssist.resolve(selectedSpace);
+assert.equal(
+  selectedLead.combatTarget,
+  null,
+  'passive Assist does not escalate incidental crossfire',
+);
+selectedFoe.mission = { owner: selectedLead.player.id };
+selectionAssist.resolve(selectedSpace);
+assert.equal(selectedLead.combatTarget, selectedFoe, 'own accepted bounty remains a real fight');
+delete selectedFoe.mission;
+selectedLead.lastHitBy = 0;
 // Inner neutral traffic is a deliberate, legal target, not an automatic enemy.
 selectedLead.graceT = 0;
 selectedFoe.faction = 'quantum';

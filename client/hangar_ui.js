@@ -234,7 +234,7 @@ export function hangarHtml(G, atHome) {
   if (!S.site)
     return '<p class="dim">Claim a station hull first. Its hangar launches shuttles on jobs while you fly.</p>';
   let h = `<div class="sect" style="margin-top:0">HANGAR BAYS (${y.shuttles.length}/${y.bays})</div>`;
-  if (!y.bays) h += '<p class="dim">The hangar opens at Ops 2.</p>';
+  if (!y.bays) h += '<p class="dim">The hangar opens at Station Tier 2.</p>';
   const idle = y.shuttles.filter((s) => s.state === 'idle'),
     crewFree = y.officers.filter(
       (o) => !where(G, o) || y.shuttles.some((s) => s.crew === o.id && s.state !== 'out'),
@@ -272,7 +272,7 @@ export function hangarHtml(G, atHome) {
       Object.entries(SHUTTLES)
         .map(
           ([k, T]) =>
-            `<div class="kv"><span><b>${esc(T.name)}</b> <span class="dim small">${esc(T.desc)}</span></span><span class="small">${S.ops >= T.ops ? `${credits(T.cost)} + ${T.mats.map(([m, g]) => `<span style="color:${y.mats[m][g] >= 1 ? '#8ff0ad' : '#ff9a8a'}">${m} ${GRADES[g]}</span>`).join(', ')} <button class="btn sm" data-act="sh" data-op="build" data-kind="${k}">BUILD</button>` : `<span class="dim">Ops ${T.ops}</span>`}</span></div>`,
+            `<div class="kv"><span><b>${esc(T.name)}</b> <span class="dim small">${esc(T.desc)}</span></span><span class="small">${S.ops >= T.ops ? `${credits(T.cost)} + ${T.mats.map(([m, g]) => `<span style="color:${y.mats[m][g] >= 1 ? '#8ff0ad' : '#ff9a8a'}">${m} ${GRADES[g]}</span>`).join(', ')} <button class="btn sm" data-act="sh" data-op="build" data-kind="${k}">BUILD</button>` : `<span class="dim">Station Tier ${T.ops}</span>`}</span></div>`,
         )
         .join('');
   }
@@ -334,7 +334,7 @@ export function researchHtml(G, interactive) {
     const eff = Object.entries(r.bonus)
       .map(([k, v]) => `${k}+${v}`)
       .join(' ');
-    h += `<div class="kv"><span style="color:${done ? '#8ff0ad' : avail ? '#ddd' : '#555'}">${done ? '✓ ' : ''}${esc(r.name)}${r.needs ? ` <span class="dim small">after ${esc(RESEARCH.find((x) => x.id === r.needs).name)}</span>` : ''}<div class="dim small">${esc(eff)}</div></span><span class="small">${done ? 'done' : queued ? 'queued' : avail ? `${credits(r.cost)} + ${r.mats.map(([m, g]) => m + ' ' + GRADES[g]).join(', ')} · ${r.minutes}m ${interactive ? `<button class="btn sm" data-act="st" data-op="research" data-id="${r.id}">${S.active || (r.needs && !S.done.includes(r.needs)) ? 'QUEUE' : 'START'}</button>` : ''}` : `Ops ${r.ops}`}</span></div>`;
+    h += `<div class="kv"><span style="color:${done ? '#8ff0ad' : avail ? '#ddd' : '#555'}">${done ? '✓ ' : ''}${esc(r.name)}${r.needs ? ` <span class="dim small">after ${esc(RESEARCH.find((x) => x.id === r.needs).name)}</span>` : ''}<div class="dim small">${esc(eff)}</div></span><span class="small">${done ? 'done' : queued ? 'queued' : avail ? `${credits(r.cost)} + ${r.mats.map(([m, g]) => m + ' ' + GRADES[g]).join(', ')} · ${r.minutes}m ${interactive ? `<button class="btn sm" data-act="st" data-op="research" data-id="${r.id}">${S.active || (r.needs && !S.done.includes(r.needs)) ? 'QUEUE' : 'START'}</button>` : ''}` : `Station Tier ${r.ops}`}</span></div>`;
   }
   return h;
 }

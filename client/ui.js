@@ -40,7 +40,7 @@ import { galaxy, mapHit, mapFit, stationDesign } from './render.js';
 import { planetType } from './planets.js';
 import { crewHtml, hangarHtml, shuttleSummary, researchHtml, materialsHtml } from './hangar_ui.js';
 import { specialistsHtml } from './spec_ui.js';
-import { docksHtml, dockChips, dockLine } from './docks_ui.js';
+import { docksHtml, dockChips, dockLine, outfitterRepairsHtml } from './docks_ui.js';
 import { WING_ONLY } from '/shared/docks.js';
 import { STATES } from '/shared/living.js';
 import { REFINE_UP } from '/shared/hangar.js';
@@ -546,13 +546,7 @@ export function hud() {
   $('spd').title = 'Speed: current / top'; // 2.0.3: labelled
   {
     const S = SYS[G.sys],
-      on = !!(
-        y.newcomer &&
-        S &&
-        S.danger <= 2 &&
-        !S.farside &&
-        !['umbral', 'deep'].includes(S.faction)
-      ),
+      on = !!(y.newcomer && S && !S.farside && !S.arena),
       el = $('prot'); // 2.0.3 newcomer protection badge
     {
       const dl = dockLine(G),
@@ -568,7 +562,7 @@ export function hud() {
     if (el) {
       el.classList.toggle('hidden', !y.newcomer || !!(S && S.arena)); // 2.6: meaningless in the Crucible
       el.classList.toggle('off', !on);
-      el.textContent = on ? '🛡 NEWCOMER PROTECTION' : '🛡 PROTECTION: NOT IN LAWLESS SPACE';
+      el.textContent = on ? '🛡 NEWCOMER TRUCE · PRE T-3' : '🛡 NO NEWCOMER TRUCE: FARSIDE';
     }
   }
   $('cr').textContent = credits(y.credits) + ' cr';
@@ -904,11 +898,11 @@ function codexDetail(k) {
     const s = G.A.ships[id],
       where =
         s.kind === 'specialist'
-          ? `Build at your Personal Station (Ops 3) with 40 blueprints. Loop: ${s.loop}`
+          ? `Build at your Personal Station (Station Tier 3) with 40 blueprints. Loop: ${s.loop}`
           : s.kind === 'wingmate'
-            ? 'Hire at Quantum Station (Ops 4)'
+            ? 'Hire at Quantum Station (Station Tier 4)'
             : s.faction === 'exotic'
-              ? 'Quantum Station shipyard (Ops 5)'
+              ? 'Quantum Station shipyard (Station Tier 5)'
               : s.faction === 'umbral'
                 ? 'Not for sale: Umbral only'
                 : [735, 736].includes(id)
@@ -1004,7 +998,7 @@ function unclaimedList() {
 }
 // the station screen: one button per department, like rooms of the station
 const STATION_SECTIONS = [
-  ['ops', 'OPS', 0],
+  ['ops', 'STATION TIER', 0],
   ['docks', 'DOCKS', 0],
   ['refinery', 'REFINERY', 1],
   ['research', 'RESEARCH LAB', 2],
@@ -1025,15 +1019,15 @@ function stationHtml(interactive) {
     here = L && L.site;
   if (!S.site) {
     const canClaim = here && !here.owner;
-    return `<p>Derelict Concord station hulls drift in systems across the Rift. Land on one and claim it, and it becomes your Personal Station: build it up through five Ops levels for a refinery that works while you fly, a research lab, wingmates and Exotic ships.</p>
-      ${S.claimed ? `<p style="color:var(--cr)">Your station progress (Ops ${S.ops}) is kept and moves to the hull you claim.</p>` : ''}
+    return `<p>Derelict Concord station hulls drift in systems across the Rift. Land on one and claim it, and it becomes your Personal Station: build it up through five Station Tiers for a refinery that works while you fly, a research lab, wingmates and Exotic ships.</p>
+      ${S.claimed ? `<p style="color:var(--cr)">Your station progress (Station Tier ${S.ops}) is kept and moves to the hull you claim.</p>` : ''}
       ${canClaim ? '<button class="btn big" data-act="st" data-op="claim">CLAIM THIS HULL</button>' : '<p class="dim">Fly to an unclaimed hull (shown on your radar in grey-violet) and land on it.</p>'}${unclaimedList()}
       <div class="sect">SPECIALISTS</div>${specialistsHtml(G, false)}`;
   }
   interactive = interactive && here && here.own;
   const where = STELLARS[S.site],
     sec = (G.stab = STATION_SECTIONS.some(([k]) => k === G.stab) ? G.stab : 'ops');
-  let h = `<div class="stnav">${STATION_SECTIONS.map(([k, n, ops]) => `<button class="btn sm ${k === sec ? 'on' : ''}" data-act="stab" data-k="${k}" ${S.ops < ops ? 'disabled title="Opens at Ops ' + ops + '"' : ''}>${n}</button>`).join('')}</div>`;
+  let h = `<div class="stnav">${STATION_SECTIONS.map(([k, n, ops]) => `<button class="btn sm ${k === sec ? 'on' : ''}" data-act="stab" data-k="${k}" ${S.ops < ops ? 'disabled title="Opens at Station Tier ' + ops + '"' : ''}>${n}</button>`).join('')}</div>`;
   if (!interactive)
     h += `<div class="dim small" style="margin:4px 0">Your Personal Station is in ${esc(SYS[where.system].name)}. Land there to manage it.</div>`;
   const cap = REFINERY.silo + (researchBonus(S).silo || 0),
@@ -1041,12 +1035,12 @@ function stationHtml(interactive) {
   switch (sec) {
     case 'ops': {
       const next = OPS[S.ops];
-      h += `<div class="kv"><span>Location</span><span>${esc(SYS[where.system].name)}</span></div><div class="ops">${[1, 2, 3, 4, 5].map((k) => `<div class="${S.ops >= k ? 'on' : ''}">OPS ${k}</div>`).join('')}</div>`;
+      h += `<div class="kv"><span>Location</span><span>${esc(SYS[where.system].name)}</span></div><div class="ops">${[1, 2, 3, 4, 5].map((k) => `<div class="${S.ops >= k ? 'on' : ''}">T-${k}</div>`).join('')}</div>`;
       if (next)
         h +=
-          `<div class="kv"><span>Next: Ops ${next.lv}</span><span>${esc(next.title)}</span></div><div class="kv"><span>Cost</span><span>${credits(next.cost)} cr + ${next.mats.map(([m, g, n]) => `<span style="color:${y.mats[m][g] >= n ? '#8ff0ad' : '#ff9a8a'}">${m} ${GRADES[g]}</span>`).join(', ')}</span></div><div class="dim small">Unlocks: ${esc(next.unlock)}</div>` +
+          `<div class="kv"><span>Next: Station Tier ${next.lv}</span><span>${esc(next.title)}</span></div><div class="kv"><span>Cost</span><span>${credits(next.cost)} cr + ${next.mats.map(([m, g, n]) => `<span style="color:${y.mats[m][g] >= n ? '#8ff0ad' : '#ff9a8a'}">${m} ${GRADES[g]}</span>`).join(', ')}</span></div><div class="dim small">Unlocks: ${esc(next.unlock)}</div>` +
           (interactive
-            ? `<button class="btn sm" data-act="st" data-op="upgrade">BUILD OPS ${next.lv}</button>`
+            ? `<button class="btn sm" data-act="st" data-op="upgrade">BUILD T-${next.lv}</button>`
             : '');
       else
         h +=
@@ -1068,7 +1062,7 @@ function stationHtml(interactive) {
         const free = SITES.filter((s_) => !(G.sites && G.sites[s_.id]) && s_.id !== S.site),
           cost = relocateCost(S.ops),
           wait = (S.relocT || 0) + RELOCATE.cooldownH * 3600000 - now;
-        h += `<div class="sect">RELOCATE STATION</div><div class="dim small">Warp your Personal Station to any unclaimed hull. Everything comes with it: Ops, research, refinery, docks and stored ships. The old hull is left for someone else to claim. Costs ${credits(cost)} cr + ${RELOCATE.mats.map(([m, g]) => m + ' ' + GRADES[g]).join(', ')}; once every ${RELOCATE.cooldownH} hours.</div>`;
+        h += `<div class="sect">RELOCATE STATION</div><div class="dim small">Warp your Personal Station to any unclaimed hull. Everything comes with it: Station Tier, research, refinery, docks and stored ships. The old hull is left for someone else to claim. Costs ${credits(cost)} cr + ${RELOCATE.mats.map(([m, g]) => m + ' ' + GRADES[g]).join(', ')}; once every ${RELOCATE.cooldownH} hours.</div>`;
         h +=
           wait > 0
             ? `<p class="dim small">Warp core recharging: ${Math.ceil(wait / 3600000)} h.</p>`
@@ -1084,7 +1078,7 @@ function stationHtml(interactive) {
       h += `<div class="sect" style="margin-top:4px">REFINERY</div><div class="meter">${Array.from({ length: cap }, (_, i) => `<i class="${i < S.refUnits ? 'on' : ''}"></i>`).join('')}</div>
         <div class="kv"><span>${S.refUnits} of ${cap} units</span><span>${S.refUnits >= cap ? 'Silos full' : `next in ~${eta} min`}</span></div>${interactive && S.refUnits ? '<button class="btn sm" data-act="st" data-op="collect">COLLECT</button>' : ''}`;
       const g = Math.min(4, ORE_PROCESS.grade[S.ops] + (researchBonus(S).processGrade || 0));
-      h += `<div class="sect">ORE PROCESSING</div><div class="dim small">${ORE_PROCESS.per} t of mined ore + ${credits(ORE_PROCESS.cost)} cr make one grade ${GRADES[g]} crate. Higher Ops levels refine better grades.</div>`;
+      h += `<div class="sect">ORE PROCESSING</div><div class="dim small">${ORE_PROCESS.per} t of mined ore + ${credits(ORE_PROCESS.cost)} cr make one grade ${GRADES[g]} crate. Higher Station Tiers refine better grades.</div>`;
       for (const [ore, mat] of Object.entries(ORE_PROCESS.to)) {
         const have = (y.cargo && y.cargo[ore]) || 0,
           n = Math.floor(have / ORE_PROCESS.per),
@@ -1169,10 +1163,10 @@ export function showLanded() {
       : 'Derelict Station Hull'
     : p.name;
   $('landfac').textContent =
-    `${SYS[p.system].name} system · ${site ? (site.owner ? `Personal Station · Ops ${site.ops}` : 'unclaimed') : FACTIONS[SYS[p.system].faction].name}`;
+    `${SYS[p.system].name} system · ${site ? (site.owner ? `Personal Station · Station Tier ${site.ops}` : 'unclaimed') : FACTIONS[SYS[p.system].faction].name}`;
   $('landdesc').textContent = site
     ? site.own
-      ? 'Your Personal Station. Build it up through Ops 1-5: refinery, research lab, drydock, wingmates and the station shipyard.'
+      ? 'Your Personal Station. Build it up through Station Tier 1-5: refinery, research lab, drydock, wingmates and the station shipyard.'
       : site.owner
         ? `A Personal Station claimed and run by Captain ${site.owner}. Visitors may refuel and trade here.`
         : p.desc
@@ -1449,6 +1443,7 @@ export function renderLanded() {
       const owned = Object.entries(y.ship.outfits).filter(([id]) => !L.outfitter.includes(+id));
       if (owned.length)
         h += `<div class="sect">FITTED ELSEWHERE</div>${owned.map(([id, n]) => `<div class="kv"><span>${esc(O[id].name)} ×${n}</span><span><button class="btn sm" data-act="outfit" data-id="${id}" data-n="-1">SELL</button></span></div>`).join('')}`;
+      h = outfitterRepairsHtml(G) + h;
       break;
     }
     case 'jobs': {
@@ -1513,7 +1508,7 @@ export function renderLanded() {
       const C = L.community;
       h = `<div class="detail" style="grid-template-columns:1fr 1fr"><div>${G.solo ? '' : `<div class="sect" style="margin-top:0">CAPTAINS ONLINE (${C.online.length})</div>`}${G.solo ? '' : C.online.map((o) => `<div class="kv"><span>${esc(o.name)}${o.name !== G.myName ? ` <button class="btn sm" data-act="ainvite" data-n="${esc(o.name)}">INVITE</button>` : ''}${o.name !== G.myName && !(G.social && G.social.friends.some((f) => f.name === o.name)) ? ` <button class="btn sm" data-act="addfriend" data-n="${esc(o.name)}">+ FRIEND</button>` : ''}</span><span>${esc(o.sys)}</span></div>`).join('')}
         ${G.solo ? '' : `<div class="sect">DOCKED HERE</div><div>${C.docked.map((n) => `<span class="pill on">${esc(n)}</span>`).join('') || '<span class="dim">Nobody else right now.</span>'}</div>`}
-        <div class="sect"${G.solo ? ' style="margin-top:0"' : ''}>STATION REGISTRY</div>${C.stations.map((s_) => `<div class="kv"><span>${esc(s_.system)}</span><span>${s_.owner ? `${esc(s_.owner)} · Ops ${s_.ops}` : '<span class="dim">unclaimed hull</span>'}</span></div>`).join('')}</div>
+        <div class="sect"${G.solo ? ' style="margin-top:0"' : ''}>STATION REGISTRY</div>${C.stations.map((s_) => `<div class="kv"><span>${esc(s_.system)}</span><span>${s_.owner ? `${esc(s_.owner)} · Station Tier ${s_.ops}` : '<span class="dim">unclaimed hull</span>'}</span></div>`).join('')}</div>
         <div><div class="sect" style="margin-top:0">TOP CAPTAINS (credits earned)</div><table class="tbl"><tr><th>#</th><th>CAPTAIN</th><th>SHIP</th><th>EARNED</th><th>KILLS</th></tr>${C.top.map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.name)}${t.ai ? ' <span class="aitag">captain</span>' : ''}</td><td class="dim">${esc(t.ship)}</td><td class="cr">${credits(t.earned)}</td><td>${t.kills}</td></tr>`).join('')}</table>
         ${boardsHtml(G)}<p class="dim">Quantum Station is the Rift's meeting place. Claim one of the derelict station hulls listed in the registry to build your Personal Station.</p></div></div>`;
       break;
@@ -1984,6 +1979,9 @@ function onAct(e) {
     case 'dockgo':
       send({ t: 'docks', op: 'activate', k: +d.k });
       break; // 2.1
+    case 'outfitterrep':
+      send({ t: 'docks', op: 'outfitterRepair', uid: d.uid });
+      break;
     case 'wingrep':
       send({ t: 'docks', op: 'repair', uid: d.uid });
       break; // 1.0.2: from the no-ship notice
@@ -2171,7 +2169,7 @@ function drawGMap() {
       STELLARS[G.you.station.site] &&
       STELLARS[G.you.station.site].system === s.id;
     $('ginfo').innerHTML =
-      `${myHome ? '<span style="color:#ffd27a">◎ YOUR STATION · </span>' : ''}<b style="color:${FACTIONS[s.faction].color}">${esc(s.name)}</b> · ${FACTIONS[s.faction].name}${stateOfSys(s.id) ? ' · ' + stateLine(s.id) : ''} · danger <span class="dgr">${Array.from({ length: 7 }, (_, i) => `<i class="${i < s.danger ? 'on' : ''}"></i>`).join('')}</span> ${s.danger}${law}${jumps}${seen ? '' : ' · <i>not yet visited</i>'}${extra}<br><span class="dim">${s.stellars.map((p) => (p.site ? `${p.name}${G.sites && G.sites[p.id] ? ' (' + esc(G.sites[p.id].owner) + ', Ops ' + G.sites[p.id].ops + ')' : ' (unclaimed)'}` : `${p.name} (${[p.svc.includes('Y') && 'shipyard', p.svc.includes('O') && 'outfitter', p.svc.includes('T') && 'market', p.svc.includes('B') && 'jobs'].filter(Boolean).join(', ') || 'no services'})`)).join(' · ') || 'No inhabited worlds.'}${fields ? ' · Mining: ' + fields : ''}${(() => {
+      `${myHome ? '<span style="color:#ffd27a">◎ YOUR STATION · </span>' : ''}<b style="color:${FACTIONS[s.faction].color}">${esc(s.name)}</b> · ${FACTIONS[s.faction].name}${stateOfSys(s.id) ? ' · ' + stateLine(s.id) : ''} · danger <span class="dgr">${Array.from({ length: 7 }, (_, i) => `<i class="${i < s.danger ? 'on' : ''}"></i>`).join('')}</span> ${s.danger}${law}${jumps}${seen ? '' : ' · <i>not yet visited</i>'}${extra}<br><span class="dim">${s.stellars.map((p) => (p.site ? `${p.name}${G.sites && G.sites[p.id] ? ' (' + esc(G.sites[p.id].owner) + ', Station Tier ' + G.sites[p.id].ops + ')' : ' (unclaimed)'}` : `${p.name} (${[p.svc.includes('Y') && 'shipyard', p.svc.includes('O') && 'outfitter', p.svc.includes('T') && 'market', p.svc.includes('B') && 'jobs'].filter(Boolean).join(', ') || 'no services'})`)).join(' · ') || 'No inhabited worlds.'}${fields ? ' · Mining: ' + fields : ''}${(() => {
         const cg = Object.keys((G.you && G.you.cargo) || {}).filter((c) => G.you.cargo[c] > 0),
           buys = cg.filter((c) =>
             s.stellars.some((sp) => {

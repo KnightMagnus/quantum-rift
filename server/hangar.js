@@ -138,7 +138,7 @@ export const HangarOperations = {
     return (d.nextUid = (d.nextUid || 1) + 1) - 1;
   },
   /**
-   * Calculate total shuttle bay capacity based on station Ops level and research bonuses.
+   * Calculate total shuttle bay capacity based on station Station Tier and research bonuses.
    * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {number} Total available shuttle bays.
@@ -148,7 +148,7 @@ export const HangarOperations = {
     return d.station.site ? BAYS_BY_OPS[d.station.ops] + (b.bays || 0) : 0;
   },
   /**
-   * Calculate total stored-ship dock slots based on station Ops level and research bonuses.
+   * Calculate total stored-ship dock slots based on station Station Tier and research bonuses.
    * @this {any}
    * @param {Record<string, any>} d - Saved player data.
    * @returns {number} Total stored-ship berths.
@@ -408,11 +408,11 @@ export const HangarOperations = {
         if (!atHome) return this.toast(s, 'Shuttles are built at your Personal Station.');
         const T = SHUTTLES[m.kind];
         if (!T) return;
-        if (S.ops < T.ops) return this.toast(s, `The ${T.name} needs Ops ${T.ops}.`);
+        if (S.ops < T.ops) return this.toast(s, `The ${T.name} needs Station Tier ${T.ops}.`);
         if (d.shuttles.length >= this.bays(d))
           return this.toast(
             s,
-            'Every hangar bay is full. Build Ops levels or research bay extensions.',
+            'Every hangar bay is full. Build Station Tiers or research bay extensions.',
           );
         if (d.credits < T.cost || !this.hasMats(d, T.mats))
           return this.toast(s, 'You need the credits and materials listed.');
@@ -665,7 +665,7 @@ export const HangarOperations = {
     );
     if (!chain.length) return this.toast(s, 'Already researched or queued.');
     if (chain.some((x) => RESEARCH.find((r) => r.id === x).ops > S.ops))
-      return this.toast(s, 'That needs a higher Ops level.');
+      return this.toast(s, 'That needs a higher Station Tier.');
     if (S.queue.length + chain.length > RESEARCH_QUEUE_MAX)
       return this.toast(s, `The lab queue holds ${RESEARCH_QUEUE_MAX} projects.`);
     S.queue.push(...chain);

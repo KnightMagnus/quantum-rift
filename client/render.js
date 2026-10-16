@@ -1998,7 +1998,7 @@ export function draw(G, ctx, W, H, dt, now) {
         ctx.globalCompositeOperation = 'source-over';
       }
       label = st
-        ? `${st.owner}'s Personal Station · Ops ${ops}`
+        ? `${st.owner}'s Personal Station · Station Tier ${ops}`
         : 'Derelict Station Hull (unclaimed)';
     } else if ((p.kind === 'planet' || p.kind === 'moon') && (P_ = planetSprite(p, now))) {
       const w = P_.S * P_.scale * z;
@@ -3113,7 +3113,7 @@ export function galaxy(G, ctx, opts = {}) {
       ctx.fill();
     }
     if (myStSys === s.id) {
-      // 2.5.2: your Personal Station: a gold station mark with its Ops level
+      // 2.5.2: your Personal Station: a gold station mark with its Station Tier
       const q = r + 9,
         pulse2 = 0.6 + 0.4 * Math.sin(performance.now() / 500);
       ctx.strokeStyle = `rgba(255,210,110,${0.75 + 0.25 * pulse2})`;
@@ -3133,7 +3133,7 @@ export function galaxy(G, ctx, opts = {}) {
         ctx.textAlign = 'center';
         ctx.lineWidth = 3;
         ctx.strokeStyle = '#02030a';
-        const t = `YOUR STATION · OPS ${(G.you.station && G.you.station.ops) || 0}`;
+        const t = `YOUR STATION · T-${(G.you.station && G.you.station.ops) || 0}`;
         ctx.strokeText(t, x, y - q - 6);
         ctx.fillStyle = '#ffd27a';
         ctx.fillText(t, x, y - q - 6);

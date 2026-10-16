@@ -97,7 +97,7 @@ import { eventideOffers } from '../shared/eventide.js';
  * @property {string} name Captain name.
  * @property {string} ship Current ship name.
  * @property {number} credits Balance in credits.
- * @property {number} ops Personal Station Ops level.
+ * @property {number} ops Personal Station Tier.
  * @property {string} sys Current system name.
  *
  * @typedef {object} CommunityPayload
@@ -470,7 +470,7 @@ export class Game {
     this.db.flush();
   }
   // "sync": true keeps a showcase captain's station fully upgraded across new versions (every research project done,
-  // Ops 5, a full hangar and, if listed, an elite bridge crew). Credits, ships and cargo are left alone.
+  // Station Tier 5, a full hangar and, if listed, an elite bridge crew). Credits, ships and cargo are left alone.
   /**
    * Retires an account, disconnecting active sessions and freeing claimed stations and colonies.
    * @param {string} name Captain name of the account to retire.
@@ -842,7 +842,7 @@ export class Game {
     return k ? this.db.players[k] || null : null;
   }
   /**
-   * Compiles map of all claimed station sites and their current owners/Ops levels.
+   * Compiles map of all claimed station sites and their current owners/Station Tiers.
    * @returns {Record<string, {owner: string, ops: number}>} Map of claimed sites and owner information.
    */
   sitesPayload() {
@@ -895,7 +895,7 @@ export class Game {
     this.db.touch();
     this.you(s);
   }
-  // 2.0.3: newcomer protection lasts until your Personal Station reaches Ops 3 (see Space.spared)
+  // 2.0.3: newcomer protection lasts until your Personal Station reaches Station Tier 3 (see Space.spared)
   // 2.0.3: cargo carried for jobs takes up real hold space
   /**
    * Calculates total cargo tonnage allocated to active delivery and smuggling jobs.
@@ -998,7 +998,7 @@ export class Game {
     this.db.touch();
   }
   /**
-   * Checks whether a captain qualifies for newcomer protection (station below Ops 3).
+   * Checks whether a captain qualifies for newcomer protection (station below Station Tier 3).
    * @param {any} d Player save data.
    * @returns {boolean} True if player qualifies for newcomer protection.
    */
@@ -1012,14 +1012,14 @@ export class Game {
    * @returns {void}
    */
   protectNote(s, S) {
-    // tell protected captains once when they leave the safety of inner space
+    // Warn once on crossing the Gateway: the main-map truce does not reach Farside.
     const d = s.data;
     if (!this.newcomer(d) || d.protWarned) return;
-    if (S.danger >= 3 || S.farside || ['umbral', 'deep'].includes(S.faction)) {
+    if (S.farside) {
       d.protWarned = true;
       this.toast(
         s,
-        `Newcomer protection does not reach ${S.name}: this is lawless space, and raiders here will attack you.`,
+        `Newcomer protection does not reach ${S.name}: this is Farside, where normal hostility applies.`,
       );
     }
   }
@@ -1811,7 +1811,7 @@ export class Game {
     if (s.isNew)
       this.toast(
         s,
-        'Newcomer protection: raiders in inner space (danger 0-2) leave you alone until your Personal Station reaches Ops 3, unless you shoot first.',
+        'Newcomer protection: ambient factions and pirates across the main galaxy overlook you until Station Tier 3. Stray fire can still hurt; attacking or taking combat jobs permits retaliation. Farside is unprotected.',
       );
   }
   // player-facing reference used by Space (id, name, rep, inputs)
@@ -2653,7 +2653,7 @@ export class Game {
    */
   yard(p, d) {
     if (p.site) {
-      // your Personal Station sells the station ships for its Ops level
+      // your Personal Station sells the station ships for its Station Tier
       if (!this.ownSite(d, p) || d.station.ops < 3) return null;
       const list = new Set();
       for (const [lv, hs] of Object.entries(STATION_SHIPS))
@@ -3099,7 +3099,7 @@ export class Game {
         d,
         `Claimed a derelict station hull in ${SYS[p.system].name}.${first ? ' Its last crew left an Alloy I crate aboard.' : ' Your station progress moved with you.'}`,
       );
-      this.toast(s, 'This hull is yours. Start Ops 1 when ready.');
+      this.toast(s, 'This hull is yours. Start Station Tier 1 when ready.');
       this.broadcast({
         t: 'chat',
         from: '',
@@ -3122,24 +3122,24 @@ export class Game {
         this.takeMats(d, o.mats);
         S.ops++;
         S.refT = Date.now();
-        this.log(d, `Quantum Station reached Ops ${S.ops}: ${o.title}.`);
-        this.toast(s, `Ops ${S.ops} complete: ${o.unlock}.`);
+        this.log(d, `Quantum Station reached Station Tier ${S.ops}: ${o.title}.`);
+        this.toast(s, `Station Tier ${S.ops} complete: ${o.unlock}.`);
         if (S.ops === 3)
           this.toast(
             s,
-            'Newcomer protection has ended: raiders in inner space now treat you like any other captain.',
+            'Newcomer protection has ended at Station Tier 3: factions across the main galaxy now treat you like any other captain.',
           );
         this.broadcast({
           t: 'chat',
           from: '',
-          msg: `${s.name}'s Personal Station reached Ops ${S.ops}.`,
+          msg: `${s.name}'s Personal Station reached Station Tier ${S.ops}.`,
         });
         this.pushSites();
         break;
       }
       case 'process': {
         // ore -> material crates
-        if (S.ops < 1) return this.toast(s, 'Build Ops 1 first.');
+        if (S.ops < 1) return this.toast(s, 'Build Station Tier 1 first.');
         const ore = m.id,
           mat = ORE_PROCESS.to[ore];
         if (!mat) break;
