@@ -471,4 +471,3 @@ export function dayKey(now = Date.now()) {
 export function weekKey(now = Date.now()) {
   return Math.floor((now / 86400000 + 3) / 7);
 } // weeks start Monday 00:00 UTC
-

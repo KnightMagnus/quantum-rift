@@ -178,4 +178,3 @@ export const HOLDOUT = {
  * @type {EclipseConfig}
  */
 export const ECLIPSE = { hulls: [761, 762, 763], chance: 0.1, thursday: 0.25 };
-

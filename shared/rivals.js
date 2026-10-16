@@ -384,4 +384,3 @@ export const HAIL_SPECIAL = {
     ally: 'Call it in, partner. I will be there before you finish the sentence.',
   },
 };
-

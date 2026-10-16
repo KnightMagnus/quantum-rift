@@ -141,4 +141,3 @@ export const STATE_MIN = [25, 60]; // a state lasts this many minutes (real time
  * @type {TradeImpactConfig}
  */
 export const TRADE_IMPACT = { perTon: 0.0022, max: 0.4, halfLifeMin: 12 };
-

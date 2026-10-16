@@ -137,4 +137,3 @@ export const STORY_SHIP = 744;
  * @type {string}
  */
 export const DEEP_UNLOCK = 'qv3'; // the Que'vari charts of the dark open the Deep
-

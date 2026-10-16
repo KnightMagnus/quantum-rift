@@ -324,4 +324,3 @@ export function bunks(H, loadout) {
  * @type {number}
  */
 export const RUSH_BONUS = 1.8;
-

@@ -79,4 +79,3 @@ export const WING_REPAIR_COST = 0.08; // ...or repaired at once for this share o
  * @type {string[]}
  */
 export const WING_CREW = ['cap', 'crew'];
-

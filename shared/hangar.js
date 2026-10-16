@@ -741,4 +741,3 @@ export const DOCK_BY_OPS = [0, 0, 0, 2, 3, 4]; // stored ships per Ops level (re
  * @type {number}
  */
 export const CAPTURE_SELL = 0.25; // a captured hull with no free berth is sold for this share
-

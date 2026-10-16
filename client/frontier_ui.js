@@ -135,7 +135,7 @@ export function colonyHtml(G) {
         (b, i) =>
           `<div class="kv"><span><b>${esc(BUILDINGS[b].name)}</b> <span class="dim small">${
             BUILDINGS[b].produce
-               ? Object.entries(BUILDINGS[b].produce)
+              ? Object.entries(BUILDINGS[b].produce)
                   .map(
                     ([k, v]) =>
                       `${k === 'credits' ? credits(v * Lv.mult) + ' cr' : (v * Lv.mult).toFixed(1) + ' t ' + com(k)}/h`,

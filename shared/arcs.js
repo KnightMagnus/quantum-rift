@@ -67,7 +67,6 @@ import { SYSTEMS, SYS } from './galaxy.js';
  * @property {ArcStep[]} steps - Instantiated 3-step storyline mission definitions.
  */
 
-
 const ARC_TEXT = {
   quantum: {
     name: 'The Concord Ledger',
@@ -444,4 +443,3 @@ export const ARCS = Object.fromEntries(
     ];
   }).filter(([, v]) => v),
 );
-

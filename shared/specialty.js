@@ -489,4 +489,3 @@ export function specPower(st) {
   if (!st) return 1;
   return 1 + 0.1 * (st.comp && st.comp.special ? st.comp.special : 0) + 0.05 * ((st.tier || 1) - 1);
 }
-

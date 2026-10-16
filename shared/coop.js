@@ -153,4 +153,3 @@ export const WARBAND = {
   rewardDanger: 15000, // shared out between the members who take it
   minMembers: 2,
 };
-

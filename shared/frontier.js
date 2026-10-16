@@ -365,4 +365,3 @@ export const BOARDS = {
   colonies: { name: 'Colonies' },
   mastery: { name: 'Mastery' },
 };
-
