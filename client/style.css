@@ -785,7 +785,12 @@ table.tbl {
   cursor: crosshair;
 }
 #ginfo {
-  min-height: 44px;
+  /* Hover text may wrap or add market/service rows. Reserve a stable footer
+     so its content never steals height from the map canvas. */
+  flex: 0 0 6em;
+  height: 6em;
+  min-height: 0;
+  overflow: auto;
   font-size: 14px;
 }
 @media (max-width: 900px) {

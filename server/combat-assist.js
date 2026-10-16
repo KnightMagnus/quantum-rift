@@ -82,7 +82,7 @@ export class CombatAssist {
       c.status = c.on ? 'READY' : 'OFF';
       c.reason = '';
       // Selection can precede arming: adopt it only on explicit enable, using the
-      // same hostility, protection and acquisition-range checks as active selection.
+      // same legal-NPC, protection and acquisition-range checks as active selection.
       if (c.on) this.selected(s, e.target, this.game.spaces[s.data.sys]);
       else this.stop(s, 'Combat assist off');
     }
@@ -126,7 +126,9 @@ export class CombatAssist {
       sp.ships.get(t.id) === t &&
       !sp.root(t).player &&
       !sp.sys.arena &&
-      sp.isHostile(lead, t) &&
+      // Selecting a target and arming Assist is an explicit attack order, just like
+      // manual primary fire or K/Attack: neutral NPCs are legal too. Never PvP/own wing.
+      sp.canHit(lead, t) &&
       // Protection is directional: our arrival/newcomer truce limits NPC initiation,
       // not an explicitly selected player attack. Match the player-to-target canHit direction.
       !sp.spared(lead, t) &&
@@ -229,6 +231,9 @@ export class CombatAssist {
         const attackers = [...sp.ships.values()].filter(
           (t) =>
             this.valid(sp, s.ent, t) &&
+            // Passive Assist only defends against hostile attackers; it never hunts
+            // neutral traffic merely because our primary guns could damage it.
+            sp.isHostile(s.ent, t) &&
             ((t.target && roots.has(sp.root(t.target))) ||
               [...sp.ships.values()].some(
                 (v) => roots.has(sp.root(v)) && v.lastHitBy === t.id && sp.t - v.hitT < 8,

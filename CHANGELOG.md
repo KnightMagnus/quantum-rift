@@ -2,6 +2,13 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.8.2
+
+- **Combat Assist:** selecting an ordinary NPC or named captain before enabling Assist now initiates legal neutral-target pursuit and primary fire in Solo inner space. Steering and thrust change existing drift; passive defense still acquires only actual hostile attackers. PvP and own-wing protections remain intact.
+- **Galaxy map:** system-detail text now has a fixed-height, scrollable, keyboard-accessible footer. Hovering short or long system descriptions no longer resizes the map canvas.
+- **Gas giants:** solid background planet disks fully occlude suns and scenery behind them while retaining their soft atmosphere and ring edges.
+- **Comets:** slow continuous background drift, a richer procedural nucleus and separate dust/ion tails pointing away from the rendered sun; planets and foreground scenery occlude them.
+
 ### 2.8.1
 
 - **Passenger transport:** dedicated passenger seats, independent of captain and bridge crew; larger yacht and liner cabins, several passenger offers per board and group charters for school, science, business and cultural trips. Multiple accepted missions share the available seats.
