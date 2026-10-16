@@ -1,5 +1,44 @@
 // Quantum Rift 0.8: ship roles and the class triangle (after STFC). Interceptors beat Battleships, Battleships beat
 // Explorers, Explorers beat Interceptors. Survey ships are the miners and haulers; Carriers launch fighters.
+
+/**
+ * Valid ship combat and utility roles.
+ * @typedef {'interceptor' | 'explorer' | 'battleship' | 'survey' | 'carrier'} RoleId
+ */
+
+/**
+ * Display metadata and combat description for a ship role.
+ * @typedef {Object} RoleInfo
+ * @property {string} name - Display name of the role.
+ * @property {string} short - Short 3-letter abbreviation.
+ * @property {string} color - Hex color code representing this role.
+ * @property {string} icon - Unicode icon symbol for UI badges.
+ * @property {string} desc - Description of tactical strengths and weaknesses.
+ */
+
+/**
+ * Minimal ship hull interface required for role resolution.
+ * @typedef {Object} ShipHullRef
+ * @property {number} [id] - Hull identifier.
+ * @property {RoleId|string} [role] - Explicit role if already assigned.
+ * @property {Array<[number|string, number, number?]>} [weapons] - Ship weapon slots tuple [id, count, ammo].
+ * @property {number} [shield] - Base shield strength.
+ * @property {number} [armor] - Base armor hit points.
+ * @property {number} [cargo] - Cargo capacity in tons.
+ * @property {number} [strength] - Combat rating / strength score.
+ * @property {number} [speed] - Maximum flight speed in EV units.
+ */
+
+/**
+ * Weapon definition metadata for carrier detection.
+ * @typedef {Object} WeaponRef
+ * @property {string} [type] - Weapon mount type (e.g. 'bay', 'beam', 'turret').
+ */
+
+/**
+ * Information and UI presentation definitions for all ship roles.
+ * @type {Record<RoleId, RoleInfo>}
+ */
 export const ROLES_INFO = {
   interceptor: {
     name: 'Interceptor',
@@ -37,9 +76,31 @@ export const ROLES_INFO = {
     desc: 'Launch fighters. Outside the triangle.',
   },
 };
+
+/**
+ * The combat advantage triangle mapping attacker role to the role it beats.
+ * @type {Record<string, RoleId>}
+ */
 export const BEATS = { interceptor: 'battleship', battleship: 'explorer', explorer: 'interceptor' };
+
+/**
+ * Multipliers for role advantage and disadvantage.
+ * @type {{ dmg: number, taken: number, survey: number, surveyMining: number }}
+ */
 export const COUNTER = { dmg: 1.15, taken: 0.9, survey: 0.8, surveyMining: 50 };
+
+/**
+ * Hardcoded role overrides for specific legacy hull IDs.
+ * @type {Record<number, RoleId>}
+ */
 const OVERRIDE = { 735: 'explorer', 716: 'battleship' }; // the Halo Surveyor is a scout, the Tempest a destroyer
+
+/**
+ * Determines the role of a ship hull from its attributes or hardcoded overrides.
+ * @param {ShipHullRef|null|undefined} H - Ship hull definition or ship instance.
+ * @param {Record<string|number, WeaponRef>|null|undefined} [W] - Weapon definitions map keyed by weapon ID.
+ * @returns {RoleId|string} The resolved ship role.
+ */
 export function roleOf(H, W) {
   if (!H) return 'explorer';
   if (H.role) return H.role;
@@ -51,6 +112,13 @@ export function roleOf(H, W) {
   if (dur >= 1900 && (H.speed || 0) <= 430) return 'battleship';
   return 'explorer';
 }
+
+/**
+ * Calculates the damage multiplier for an attacker of role `a` hitting a target of role `t`.
+ * @param {RoleId|string|null|undefined} a - Attacker role.
+ * @param {RoleId|string|null|undefined} t - Target role.
+ * @returns {number} Damage multiplier.
+ */
 // damage multiplier for an attacker of role a hitting a target of role t
 export function roleMult(a, t) {
   if (!a || !t) return 1;

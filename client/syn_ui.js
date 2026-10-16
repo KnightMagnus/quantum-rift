@@ -11,17 +11,89 @@ import {
   bunks,
 } from '/shared/syndicate.js';
 
+/**
+ * @typedef {Object} SyndicateStanding
+ * @property {string} name Tier name
+ * @property {number} pts Current reputation points
+ * @property {number} i Tier index
+ * @property {number} [next] Points required for next tier
+ */
+
+/**
+ * @typedef {Object} BlackMarketItem
+ * @property {string} id Unique item key
+ * @property {string} name Display item name
+ * @property {string} desc Description
+ * @property {number} price Price in credits
+ * @property {string} [locked] Requirement text if locked
+ */
+
+/**
+ * @typedef {Object} BankState
+ * @property {number} [credit] Current player credit score
+ * @property {number} rate Interest rate per cycle
+ * @property {number} period Billing interval in minutes
+ * @property {number} max Maximum loan capacity
+ * @property {number} pay Estimated periodic payment
+ */
+
+/**
+ * @typedef {Object} Officer
+ * @property {number|string} id Officer unique ID
+ * @property {string} name Officer name
+ * @property {number} [rank] Promotion rank index
+ * @property {number} lv Current level
+ * @property {string[]} [traits] Acquired trait keys
+ */
+
+/**
+ * @typedef {Object} ArcCard
+ * @property {string} fac Faction identifier
+ * @property {string} arc Arc name
+ * @property {string} title Arc headline
+ * @property {string} brief Narrative summary
+ * @property {string} [locked] Lock condition text
+ */
+
+/**
+ * @typedef {Object} PassengerMissionOffer
+ * @property {string} [type] Mission type
+ * @property {number} [pax] Number of passengers to carry
+ */
+
+/**
+ * HTML-escapes a string safely for insertion into template strings.
+ * @param {any} s Input value
+ * @returns {string} Escaped HTML string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"]/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
   );
+
+/**
+ * Formats a number to rounded, localized string.
+ * @param {number} n Input number
+ * @returns {string}
+ */
 const cr = (n) => Math.round(n).toLocaleString();
 
+/**
+ * Renders the Syndicate standing badge showing current rank and points progress.
+ * @param {any} y Player state object
+ * @returns {string} HTML markup
+ */
 export function synBadge(y) {
   const t = y.syn || { name: 'Unknown', pts: 0, i: 0 };
   return `<div class="kv"><span>Syndicate standing</span><span><b style="color:#d88aff">${esc(t.name)}</b> <span class="dim">${cr(t.pts)}${t.next ? ` / ${cr(t.next)}` : ''}</span></span></div>`;
 }
+
+/**
+ * Renders the Black Market screen at a Syndicate-affiliated spaceport.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function blackMarketHtml(G) {
   const B = G.landed.blackmarket,
     y = G.you;
@@ -37,6 +109,12 @@ export function blackMarketHtml(G) {
       )
       .join('')}</table>`;
 }
+
+/**
+ * Renders the Bank of the Rift loan and repayment screen.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function bankHtml(G) {
   const B = G.landed.bank,
     y = G.you;
@@ -54,7 +132,16 @@ export function bankHtml(G) {
       <div class="rrow"><input id="bankamt" type="number" min="1000" step="1000" placeholder="Amount" value="${Math.min(room, 50000)}"><button class="btn sm" data-act="bank" data-op="borrow"${room < 1000 ? ' disabled' : ''}>BORROW</button>${bal ? `<button class="btn sm" data-act="bank" data-op="pay">PAY</button><button class="btn sm" data-act="bank" data-op="payall">PAY ALL</button>` : ''}</div>
     </div></div>`;
 }
+
 // officer rank, traits and the promote button (added to each officer card in the CREW tab)
+
+/**
+ * Renders the rank, traits badges, and promotion button for an officer card.
+ * @param {any} G Game state object
+ * @param {Officer} o Officer instance
+ * @param {boolean} [interactive] Whether promotion button is active
+ * @returns {string} HTML markup
+ */
 export function rankLine(G, o, interactive) {
   const r = o.rank || 0,
     P = PROMOTE[r + 1],
@@ -76,6 +163,12 @@ export function rankLine(G, o, interactive) {
       : '';
   return `<div class="rankrow"><span class="rank">${RANKS_OFF[r]}</span>${traits}${btn}</div>`;
 }
+
+/**
+ * Renders the Lower Deck berths section with passive crew assignment and hiring.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function lowerDeckHtml(G) {
   const y = G.you,
     L = y.lower || [],
@@ -107,6 +200,12 @@ export function lowerDeckHtml(G) {
     `</div><div class="dim small">Commendations for promotions: <b>${y.shards || 0}</b>. Find them in loot chests and on the black market.</div>`
   );
 }
+
+/**
+ * Renders faction arc cards available at the current landing location.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function arcCardsHtml(G) {
   const L = G.landed;
   if (!L || !L.arcs || !L.arcs.length) return '';
@@ -117,6 +216,13 @@ export function arcCardsHtml(G) {
     )
     .join('');
 }
+
+/**
+ * Computes bunk availability warning for passenger missions.
+ * @param {any} G Game state object
+ * @param {PassengerMissionOffer} o Mission offer data
+ * @returns {string} Warning text if insufficient bunks, else empty string
+ */
 export function bunkInfo(G, o) {
   if (o.type !== 'passenger') return '';
   const y = G.you,

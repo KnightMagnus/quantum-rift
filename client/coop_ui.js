@@ -4,12 +4,78 @@ import { SYS, COMMODITIES, MATERIALS, GRADES } from '/shared/galaxy.js';
 import { ARMADA, TRADE, DUEL } from '/shared/coop.js';
 import { credits } from '/shared/rules.js';
 
+/**
+ * @typedef {Object} CoopHelpers
+ * @property {(msg: string) => void} toast Show toast notification function
+ * @property {(msg: string, onYes: () => void) => void} ask Prompt confirmation modal function
+ * @property {(sysId: string) => void} plot Plot course function
+ */
+
+/**
+ * @typedef {Object} DirectMessage
+ * @property {string} from Sender captain name
+ * @property {string} msg Message text
+ * @property {number} t Timestamp
+ * @property {boolean} [off] Delivered while offline flag
+ */
+
+/**
+ * @typedef {Object} FriendEntry
+ * @property {string} name Friend captain name
+ * @property {'online'|'away'|'offline'} status Online status
+ * @property {number} [last] Last seen timestamp
+ * @property {string} [sys] System display name
+ * @property {string} [sysId] System ID
+ */
+
+/**
+ * @typedef {Object} SocialState
+ * @property {FriendEntry[]} friends List of friends
+ * @property {string[]} inReq Inbound friend request captain names
+ * @property {string[]} outReq Outbound friend request captain names
+ * @property {string[]} blocks Blocked captain names
+ * @property {boolean} [dmAll] Allow messages from non-friends
+ * @property {boolean} [hideSys] Hide current location from friends
+ */
+
+/**
+ * @typedef {Object} TradeOffer
+ * @property {number} [credits] Credits offered
+ * @property {Record<string, number>} [items] Items offered
+ */
+
+/**
+ * @typedef {Object} TradeState
+ * @property {string} with Other captain name
+ * @property {TradeOffer} mine Current player offer
+ * @property {TradeOffer} theirs Other captain offer
+ * @property {{ me: boolean, them: boolean }} lock Offer lock states
+ * @property {{ me: boolean, them: boolean }} ok Offer confirm states
+ */
+
+/**
+ * HTML-escapes a string safely for insertion into template strings.
+ * @param {any} s Input value
+ * @returns {string} Escaped HTML string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
+
+/**
+ * Shorthand helper for document.getElementById.
+ * @param {string} id Element ID
+ * @returns {any} DOM element or null
+ */
 const $ = (id) => document.getElementById(id);
+
+/**
+ * Formats past timestamp to relative time ago string.
+ * @param {number} t Past timestamp in ms
+ * @returns {string} Formatted relative time string
+ */
 const ago = (t) => {
   if (!t) return '';
   const m = Math.round((Date.now() - t) / 60000);
@@ -28,6 +94,13 @@ const DOT = {
 };
 let G, send, toast, ask, plot;
 
+/**
+ * Initializes the Co-op subsystem, event listeners, and helper callbacks.
+ * @param {any} g Shared game state object
+ * @param {(msg: any) => void} sender Network send message function
+ * @param {CoopHelpers} helpers UI helper callbacks
+ * @returns {void}
+ */
 export function initCoop(g, sender, helpers) {
   G = g;
   send = sender;
@@ -52,6 +125,11 @@ export function initCoop(g, sender, helpers) {
       send({ t: 'social', op: 'prefs', dmAll: $('pdmall').checked, hideSys: $('phide').checked });
   });
 }
+
+/**
+ * Loads direct messages for the current captain from localStorage.
+ * @returns {void}
+ */
 function loadDms() {
   if (!G.myName || G._dmFor === G.myName) return;
   G._dmFor = G.myName;
@@ -61,11 +139,21 @@ function loadDms() {
     G.dms = {};
   }
 }
+
+/**
+ * Saves direct messages for the current captain to localStorage.
+ * @returns {void}
+ */
 function saveDms() {
   try {
     localStorage.setItem('rift.dms.' + G.myName.toLowerCase(), JSON.stringify(G.dms));
   } catch {}
 }
+
+/**
+ * Updates the unread notification badge count on the CAPTAINS tab button.
+ * @returns {void}
+ */
 function badge() {
   const n =
     Object.values(G.unread).reduce((a, b) => a + b, 0) +
@@ -77,6 +165,12 @@ function badge() {
 }
 
 // ------------------------------------------------------------------ messages from the server
+
+/**
+ * Handles inbound real-time social messages from the server (friend changes, DMs, trades, rally calls, follow jumps).
+ * @param {any} m Message payload received via WebSocket
+ * @returns {void}
+ */
 export function onCoopMsg(m) {
   loadDms();
   switch (m.t) {
@@ -146,6 +240,11 @@ export function onCoopMsg(m) {
   badge();
   if (G.ctab === 'captains') renderCaptains();
 }
+
+/**
+ * Synchronizes local social state and badges when the 'you' payload is received.
+ * @returns {void}
+ */
 export function coopYou() {
   loadDms();
   if (G.you && G.you.social !== undefined) G.social = G.you.social;
@@ -154,6 +253,12 @@ export function coopYou() {
 
 // ------------------------------------------------------------------ allies in space
 // an Armada member's ship, or one of their wingmates (escorts and fighters follow their owner chain)
+
+/**
+ * Checks whether a space entity belongs to an allied Armada member or one of their wingmates.
+ * @param {any} e Space entity object
+ * @returns {boolean} True if entity is an allied Armada captain or wingmate
+ */
 export function isAlly(e) {
   const A = G.you && G.you.armada;
   if (!A || !A.members || !e) return false;
@@ -166,6 +271,11 @@ export function isAlly(e) {
 }
 
 // ------------------------------------------------------------------ the ALLIES tab
+
+/**
+ * Renders the CAPTAINS companion tab (friends, messages, Armada roster, player trading).
+ * @returns {void}
+ */
 export function renderCaptains() {
   if (!G.you) return;
   loadDms();
@@ -200,6 +310,11 @@ export function renderCaptains() {
   const log = $('dmlog');
   if (log) log.scrollTop = log.scrollHeight;
 }
+
+/**
+ * Renders the active duel banner or incoming challenge acceptance box.
+ * @returns {string} HTML markup
+ */
 function duelBox() {
   const D = G.you.duel;
   if (!D) return '';
@@ -207,6 +322,11 @@ function duelBox() {
     return `<div class="evbox inv"><b>${esc(D.invite.from)}</b> challenges ${D.invite.armada ? 'your Armada to an <b>Armada Duel</b>' : 'you to a <b>duel</b>'}. A fight to disabled; nobody loses a ship.<div style="margin-top:4px"><button class="btn sm" data-cact="duelok">ACCEPT</button> <button class="btn sm" data-cact="duelno">DECLINE</button></div></div>`;
   return `<div class="evbox inv"><b>${D.armada ? 'ARMADA DUEL' : 'DUEL'}</b> ${D.on ? '· weapons free' : '· starting'} · against ${esc(D.foes.join(', '))}<div class="dim small">It ends at disabled, or as a draw after ${DUEL.minutes} minutes. Leaving the system or landing counts as yielding.</div><button class="btn sm" data-cact="yield">YIELD</button></div>`;
 }
+
+/**
+ * Renders the FRIENDS sub-tab (targeted captain actions, friend requests, friends list, privacy).
+ * @returns {string} HTML markup
+ */
 function friendsHtml() {
   const S = G.social;
   if (!S) return '<p class="dim">Loading...</p>';

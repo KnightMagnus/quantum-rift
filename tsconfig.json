@@ -14,6 +14,8 @@
     "server/features.js",
     "server/feature-service.js",
     "server/fleetcmd.js",
-    "server/contracts.js"
+    "server/contracts.js",
+    "server/combat-assist.js",
+    "server/message-registry.js"
   ]
 }

@@ -16,11 +16,59 @@ import { RANKS } from '/shared/rivals.js';
 import { synBadge } from './syn_ui.js';
 import { price } from '/shared/rules.js';
 
+/**
+ * @typedef {'ship' | 'career' | 'fleet' | 'captains'} InfoTab
+ */
+
+/**
+ * @typedef {Object} BestSaleResult
+ * @property {any} p Stellar body object
+ * @property {number} price Commodity price per ton
+ * @property {number} jumps Jumps distance
+ */
+
+/**
+ * @typedef {Object} RivalCaptain
+ * @property {string} name Captain name
+ * @property {string} kind Career type
+ * @property {string} fac Faction identifier
+ * @property {string} ship Ship hull name
+ * @property {string|null} [sys] Current system ID
+ * @property {'nemesis'|'rival'|'neutral'|'friendly'|'ally'} mood Standing category
+ * @property {number} rel Standing relationship score
+ */
+
+/**
+ * @typedef {Object} ShipStats
+ * @property {number} shield Shield strength
+ * @property {number} armor Armor strength
+ * @property {number} maxSpeed Maximum forward speed
+ * @property {number} turn Turn rate
+ * @property {number} cargo Cargo capacity in tons
+ * @property {number} space Total outfit space
+ * @property {number} free Available free outfit space
+ * @property {number} guns Equipped gun count
+ * @property {number} maxGuns Maximum gun mounts
+ * @property {number} turrets Equipped turret count
+ * @property {number} maxTurrets Maximum turret mounts
+ */
+
+/**
+ * HTML-escapes a string safely for insertion into template strings.
+ * @param {any} s Input value
+ * @returns {string} Escaped HTML string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"]/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
   );
+
+/**
+ * Formats a number to rounded, localized string.
+ * @param {number} n Input number
+ * @returns {string} Formatted number string
+ */
 const cr = (n) => Math.round(n).toLocaleString();
 const ORD = [
   ['gather', 'Form up', 'G'],
@@ -37,6 +85,12 @@ const MOODC = {
   ally: '#6aff9a',
 };
 
+/**
+ * Renders the Info panel (I key) including ship stats, cargo jettison, career ledger, wingmate orders, and rival captains.
+ * @param {any} G Game state object
+ * @param {InfoTab|string} [tab] Sub-tab to render ('ship', 'career', 'fleet', or 'captains')
+ * @returns {string} HTML markup
+ */
 export function infoHtml(G, tab) {
   const y = G.you;
   if (!y) return '';
@@ -120,6 +174,12 @@ export function infoHtml(G, tab) {
 }
 
 // 2.4: everything you own and everything you have done, on one page
+
+/**
+ * Renders the comprehensive career overview ledger (holdings, net worth, story progress, exploration record).
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 function careerHtml(G) {
   const y = G.you,
     A = G.A,
@@ -188,6 +248,13 @@ function careerHtml(G) {
 }
 
 // 2.5.2: where a good in your hold sells best, among the markets you have visited within four jumps
+
+/**
+ * Finds the nearby explored trade port within four jumps offering the best sale price for a commodity.
+ * @param {any} G Game state object
+ * @param {string} cid Commodity identifier
+ * @returns {BestSaleResult|null} Best sale location, price, and jumps distance or null
+ */
 export function bestSale(G, cid) {
   const y = G.you,
     seen = new Set(y.explored || []),

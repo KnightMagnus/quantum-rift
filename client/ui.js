@@ -57,19 +57,111 @@ import {
 
 import { ROLES_INFO, BEATS } from '/shared/roles.js';
 import { levelOf, winOdds, HOLDOUT } from '/shared/hostile.js';
+
+// ------------------------------------------------------------------ type definitions
+/**
+ * @typedef {Object} AskOptions
+ * @property {string} [yes] Confirm button label
+ */
+
+/**
+ * @typedef {Object} RadioStation
+ * @property {string} id Unique station identifier
+ * @property {string} name Station name
+ * @property {string} sub Station subtitle or call letters
+ * @property {string} [img] Station logo image URL
+ */
+
+/**
+ * @typedef {Object} CodexItem
+ * @property {string} id Unique codex entry key
+ * @property {string} name Title of the codex item
+ * @property {string} [sub] Subtitle or categorization
+ * @property {string} [cat] Category identifier ('factions' | 'ships' | 'outfits' | 'galaxy')
+ * @property {string} [desc] Detailed entry narrative
+ * @property {string} [img] Associated asset image filename
+ */
+
+/**
+ * @typedef {Object} LandedMarketItem
+ * @property {string} id Commodity identifier
+ * @property {string} name Commodity name
+ * @property {number} price Current port price
+ * @property {number} base Base galactic price
+ * @property {number} [hold] Quantity currently held in player cargo
+ */
+
+/**
+ * @typedef {Object} LandedMatItem
+ * @property {string} id Material identifier
+ * @property {string} name Material display name
+ * @property {number} count Owned amount
+ * @property {number} [tier] Material rarity tier
+ */
+
+/**
+ * @typedef {Object} LandedOffer
+ * @property {string} id Mission or trade offer identifier
+ * @property {string} title Mission headline
+ * @property {string} [desc] Mission brief
+ * @property {number} reward Credit payout
+ * @property {string} [to] Destination system or planet
+ */
+
+/**
+ * @typedef {Object} LandedState
+ * @property {string} sys Current system identifier
+ * @property {string} stellar Landed stellar body identifier
+ * @property {string[]} tabs Available interaction tab keys
+ * @property {string} tab Currently active tab
+ */
+
+/**
+ * @typedef {Object} SystemState
+ * @property {string} k State kind key (e.g. 'boom', 'war', 'plague')
+ * @property {string} name Human-friendly state name
+ * @property {string} desc Description of systemic event effects
+ * @property {string} icon Emoji or glyph
+ * @property {string} color Badge CSS color
+ */
+
+/**
+ * @typedef {Object} JobInfo
+ * @property {number} dist Distance in galactic coordinates
+ * @property {number} jumps Number of hyperspace hops required
+ * @property {boolean} [rush] Whether the job has a short delivery deadline
+ * @property {number} [rewardPerJump] Efficiency payout per jump
+ */
+
 const $ = (id) => document.getElementById(id);
+/**
+ * Generates an HTML badge element displaying a ship's combat tactical role.
+ * @param {{ role?: string }} H Ship hull or outfit object with role attribute
+ * @returns {string} HTML span tag or empty string
+ */
 export const roleTag = (H) => {
   const R = ROLES_INFO[H && H.role];
   return R
     ? `<span class="role" style="color:${R.color}" title="${R.desc}">${R.icon} ${R.name}</span>`
     : '';
 };
+/**
+ * Escapes unsafe characters for HTML element text or attributes.
+ * @param {any} s Input string or value
+ * @returns {string} HTML-escaped string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
 let G, send;
+/**
+ * Binds DOM event listeners and initializes UI state managers with global game state.
+ * @param {Record<string, any>} g Global client game state
+ * @param {(msg: Record<string, any>) => void} sender Network send dispatch function
+ * @returns {void}
+ */
 export function initUI(g, sender) {
   G = g;
   send = sender;
@@ -333,6 +425,11 @@ const LAND_SCENES = {
   toxic: ['toxic1', 'toxic2'],
   crystal: ['crystal1', 'crystal2'],
 };
+/**
+ * Selects the landscape illustration image key for a landed planetary or station body.
+ * @param {Record<string, any>} p Landed stellar body definition
+ * @returns {string} Image asset key name
+ */
 function landScene(p) {
   if (p.id === 'earth') return 'l_earth';
   if (p.kind === 'station') return 'l_st_' + stationDesign(p);
@@ -348,6 +445,13 @@ function landScene(p) {
   return 'l_' + L[h % L.length];
 }
 // 2.5: a styled confirmation dialog in place of the browser's own confirm box
+/**
+ * Displays a styled confirmation modal dialog with confirm/cancel action handlers.
+ * @param {string} msg Confirmation message prompt
+ * @param {() => void} yes Callback function executed when confirmed
+ * @param {AskOptions} [opts={}] Optional configuration including button labels
+ * @returns {void}
+ */
 export function ask(msg, yes, opts = {}) {
   const box = document.getElementById('askbox');
   document.getElementById('askx').textContent = msg;
@@ -374,6 +478,11 @@ export function ask(msg, yes, opts = {}) {
   document.getElementById('askyes').onclick = () => done(true);
   document.getElementById('askno').onclick = () => done(false);
 }
+/**
+ * Renders a transient notification toast banner on screen with an audio sting.
+ * @param {string} msg Notification message text
+ * @returns {void}
+ */
 export function toast(msg) {
   const k = TOAST_SND.find(([re]) => re.test(msg)),
     kind = k ? k[1] : 'toast';
@@ -386,6 +495,11 @@ export function toast(msg) {
   setTimeout(() => d.remove(), 5200);
   while ($('toasts').children.length > 4) $('toasts').firstChild.remove();
 }
+/**
+ * Appends a message entry or system notification to the in-game chat log.
+ * @param {{ msg: string, from?: string, ch?: string }} m Chat message payload
+ * @returns {void}
+ */
 export function chatLine(m) {
   const d = document.createElement('div');
   if (!m.from) {
@@ -398,6 +512,10 @@ export function chatLine(m) {
 }
 
 // ------------------------------------------------------------------ HUD (every frame)
+/**
+ * Updates primary HUD elements: shield/armor/fuel meters, speed, target card, and nav waypoint.
+ * @returns {void}
+ */
 export function hud() {
   if (!G) return;
   const me = G.view,
@@ -559,6 +677,11 @@ export function hud() {
 }
 
 // ------------------------------------------------------------------ companion tabs
+/**
+ * Switches the active sidebar companion tab panel by name.
+ * @param {string} name Tab key ('radio' | 'codex' | 'missions' | 'station' | 'ops' | 'captains' | 'log')
+ * @returns {void}
+ */
 export function ctab(name) {
   G.ctab = name;
   document
@@ -569,6 +692,10 @@ export function ctab(name) {
     .forEach((t) => t.classList.toggle('on', t.id === 't-' + name));
   refreshCompanion();
 }
+/**
+ * Triggers a DOM re-render of whichever companion tab is currently active.
+ * @returns {void}
+ */
 export function refreshCompanion() {
   if (G.ctab === 'codex') renderCodex();
   else if (G.ctab === 'station') renderStationTab();
@@ -578,6 +705,10 @@ export function refreshCompanion() {
   else if (G.ctab === 'missions') drawMini();
   else if (G.ctab === 'captains') renderCaptains();
 }
+/**
+ * Re-renders the mission contracts list inside the missions companion tab.
+ * @returns {void}
+ */
 export function drawMini() {
   if (G.ctab === 'missions' && G.you) {
     const h = missionsHtml(G);
@@ -588,6 +719,11 @@ export function drawMini() {
   }
 } // 1.0.1: the MISSIONS tab replaced the minimap
 // radio (iHeartRadio, as in the Quantum Companion)
+/**
+ * Generates a URL-friendly slug identifier from a station name string.
+ * @param {string} n Input station name
+ * @returns {string} URL slug string
+ */
 function slug(n) {
   return (
     String(n || '')
@@ -599,6 +735,10 @@ function slug(n) {
       .replace(/^-+|-+$/g, '') || 'station'
   );
 }
+/**
+ * Loads favorite radio stations from localStorage.
+ * @returns {RadioStation[]} Stored favorite radio stations
+ */
 function favs() {
   try {
     return JSON.parse(localStorage.getItem('rift.favs') || '[]');
@@ -606,11 +746,20 @@ function favs() {
     return [];
   }
 }
+/**
+ * Persists favorite radio stations list to localStorage.
+ * @param {RadioStation[]} f Array of radio stations
+ * @returns {void}
+ */
 function setFavs(f) {
   try {
     localStorage.setItem('rift.favs', JSON.stringify(f));
   } catch {}
 }
+/**
+ * Performs a search query against the radio API and renders the search results.
+ * @returns {Promise<void>}
+ */
 async function radioSearch() {
   const q = $('rq').value.trim();
   if (!q) return;
@@ -631,6 +780,10 @@ async function radioSearch() {
   }
   renderRadio();
 }
+/**
+ * Renders the radio tab stations list (favorites or search results).
+ * @returns {void}
+ */
 function renderRadio() {
   $('rfav').classList.toggle('on', G.radioTab !== 'res');
   $('rres').classList.toggle('on', G.radioTab === 'res');
@@ -665,11 +818,20 @@ function renderRadio() {
 }
 // codex
 let codexCat = 'Ships';
+/**
+ * Lists the short names of factions whose shipyards offer a specific ship hull.
+ * @param {number} h Ship hull ID
+ * @returns {string[]} Faction short names array
+ */
 function factionsSelling(h) {
   return Object.entries(FACTION_HULLS)
     .filter(([f, hs]) => hs.includes(h))
     .map(([f]) => FACTIONS[f].short);
 }
+/**
+ * Renders the filtered list of ships, outfits, or weapons in the codex companion tab.
+ * @returns {void}
+ */
 function renderCodex() {
   const q = $('cq').value.trim().toLowerCase(),
     O = allOutfits(G.A);
@@ -731,6 +893,11 @@ function renderCodex() {
     .querySelectorAll('.it')
     .forEach((el) => (el.onclick = () => codexDetail(el.dataset.k)));
 }
+/**
+ * Renders the detail view for an individual ship or outfit item within the codex tab.
+ * @param {string} k Item key prefix + ID (e.g. 's701' for ship, 'o50' for outfit)
+ * @returns {void}
+ */
 function codexDetail(k) {
   const id = +k.slice(1);
   if (k[0] === 's') {
@@ -775,6 +942,12 @@ const STATMAX = {
   fuel: 4000,
   space: 320,
 };
+/**
+ * Generates HTML stat bar lines comparing ship statistics.
+ * @param {import('./render.js').ShipHull} s Ship hull definition
+ * @param {import('./render.js').ShipHull} [cmp] Comparison hull definition to show deltas
+ * @returns {string} Rendered HTML string of stat comparison bars
+ */
 function statLines(s, cmp) {
   // 2.4: cmp = the hull you fly, to show the difference
   const fmt = (k, v) => (k === 'fuel' ? Math.floor(v / 100) + 'j' : v);
@@ -801,6 +974,11 @@ function statLines(s, cmp) {
     `<div class="kv"><span>Passenger seats</span><span>${passengerSeats(s)} dedicated${cmp && cmp !== s ? ` (your stock hull: ${passengerSeats(cmp)})` : ''}</span></div><div class="kv"><span>Hardpoints</span><span>${s.guns} guns · ${s.turrets} turrets</span></div><div class="kv"><span>Armament</span><span style="text-align:right">${s.weapons.map(([w, n]) => `${G.A.weapons[w] ? G.A.weapons[w].name : w} ×${n}`).join(', ') || 'none'}</span></div>`
   );
 }
+/**
+ * Renders weapon summary lines for an outfit item.
+ * @param {Object} o Outfit item definition
+ * @returns {string} Rendered HTML string of weapon attributes or empty string
+ */
 function weaponLines(o) {
   const w = o.eff.weapon ? G.A.weapons[o.eff.weapon] : null;
   if (!w) return '';
@@ -808,6 +986,10 @@ function weaponLines(o) {
   return `<div class="kv"><span>Type</span><span>${w.type}</span></div><div class="kv"><span>Damage</span><span>${w.dmgS} shield · ${w.dmgA} armor${p.continuous ? ' per tick' : ''}</span></div><div class="kv"><span>Range</span><span>${Math.round(p.range)}</span></div>`;
 }
 // station dashboard
+/**
+ * Generates an HTML list of systems with unclaimed derelict station hulls.
+ * @returns {string} HTML string displaying unclaimed hulls
+ */
 function unclaimedList() {
   const free = SITES.filter((s) => !(G.sites && G.sites[s.id]));
   return free.length
@@ -830,6 +1012,11 @@ const STATION_SECTIONS = [
   ['defense', 'DEFENSE', 2],
   ['specialists', 'SPECIALISTS', 0],
 ]; // 2.6: REFITS removed
+/**
+ * Generates the full HTML markup for the personal station overview and department tabs.
+ * @param {boolean} [interactive] Whether interactive management controls are enabled
+ * @returns {string} HTML string of station UI
+ */
 function stationHtml(interactive) {
   const y = G.you,
     S = y.station,
@@ -925,10 +1112,18 @@ function stationHtml(interactive) {
   }
   return h;
 }
+/**
+ * Renders the personal station management companion tab.
+ * @returns {void}
+ */
 function renderStationTab() {
   if (!G.you) return;
   $('stview').innerHTML = stationHtml(true);
 }
+/**
+ * Renders the player event log history in the companion log tab.
+ * @returns {void}
+ */
 function renderLog() {
   const y = G.you;
   if (!y) return;
@@ -959,6 +1154,10 @@ const TABS = [
   ['blackmarket', 'BLACK MARKET'],
   ['bank', 'BANK'],
 ];
+/**
+ * Opens and populates the landed view for the current stellar body or personal station.
+ * @returns {void}
+ */
 export function showLanded() {
   const L = G.landed,
     p = STELLARS[L.stellar];
@@ -1037,18 +1236,34 @@ export function showLanded() {
     );
   renderLanded();
 }
+/**
+ * Opens the faction storehouse / item storage dialog.
+ * @returns {void}
+ */
 export function openStores() {
   if (!G.you) return;
   $('storein').innerHTML = storeMenuHtml(G, FACTIONS);
   $('storebox').classList.remove('hidden');
 }
+/**
+ * Refreshes the faction storehouse UI if it is currently open.
+ * @returns {void}
+ */
 export function refreshStores() {
   if (!$('storebox').classList.contains('hidden'))
     $('storein').innerHTML = storeMenuHtml(G, FACTIONS);
 }
+/**
+ * Hides the landed screen dialog.
+ * @returns {void}
+ */
 export function hideLanded() {
   $('land').classList.add('hidden');
 }
+/**
+ * Renders the contents of the currently active landing tab (overview, shipyard, trade, jobs, etc.).
+ * @returns {void}
+ */
 export function renderLanded() {
   if (!G.landed || !G.you) return;
   const L = G.landed,
@@ -1306,17 +1521,32 @@ export function renderLanded() {
   }
   body.innerHTML = h;
 }
-// 2.4: a system's state as a line of text, and as a card
+// // 2.4: a system's state as a line of text, and as a card
+/**
+ * Retrieves the currently active economic or military state of a star system.
+ * @param {number|string} sys System ID
+ * @returns {SystemState|null} Active system state or null
+ */
 export function stateOfSys(sys) {
   const st = G.world && G.world.states && G.world.states[sys];
   return st && st.until > Date.now() && STATES[st.k] ? st : null;
 }
+/**
+ * Formats a short colored text summary line of a system's active state.
+ * @param {number|string} sys System ID
+ * @returns {string} Rendered HTML string of system state
+ */
 function stateLine(sys) {
   const st = stateOfSys(sys);
   if (!st) return '';
   const X = STATES[st.k];
   return `<span style="color:${X.color}">${X.icon} ${X.name}${st.k === 'war' && st.enemy ? ` with the ${esc(FACTIONS[st.enemy].short)}` : ''}</span>${st.need ? ` <span class="dim">(${st.got}/${st.need})</span>` : ''}`;
 }
+/**
+ * Renders an informational card showing system state details, price shifts, and goals.
+ * @param {number|string} sys System ID
+ * @returns {string} Rendered HTML string of state card
+ */
 function stateCard(sys) {
   const st = stateOfSys(sys);
   if (!st) return '';
@@ -1336,6 +1566,11 @@ function stateCard(sys) {
   return `<div class="statecard" style="border-color:${X.color}"><div><b style="color:${X.color}">${X.icon} ${X.name.toUpperCase()}</b> <span class="dim small">· about ${left} min left</span></div><div class="small">${esc(X.desc)}</div><div class="small dim">${prices}</div>${goal ? `<div class="small">${goal}${st.need ? ` <b>${st.got} / ${st.need}</b>` : ''}</div><div class="sbar"><i style="width:${Math.round((100 * st.got) / Math.max(1, st.need))}%;background:${X.color}"></i></div>` : ''}</div>`;
 }
 // 1.0.3: how far a job is and whether its cargo fits your hold
+/**
+ * Calculates remaining available cargo capacity accounting for active cargo missions.
+ * @param {import('./main.js').ClientGameState} y Player state object
+ * @returns {number} Free cargo capacity in tons
+ */
 function holdFree(y) {
   const mc = (y.missions || [])
     .filter((m) => m.type === 'cargo' || m.type === 'smuggle')
@@ -1343,6 +1578,11 @@ function holdFree(y) {
   return y.shipStats.cargo - y.cargoUsed - mc;
 }
 // 2.4: the bar contact's greeting and rumour, and the world's trade specialties
+/**
+ * Renders the bar contact and trade export/import highlights on the landed overview screen.
+ * @param {LandedState} L Current landed state
+ * @returns {string} Rendered HTML string of bar card
+ */
 function barCard(L) {
   let h = '';
   if (L.contact) {
@@ -1352,7 +1592,7 @@ function barCard(L) {
   }
   if (L.market && L.market.length) {
     const r = L.market
-      .map((c) => ({ c, k: c.price / COMMODITIES.find((x) => x.id === c.id).base }))
+      .map((c) => ({ c, k: c.price / COMMODITIES.find((x) => x.id === c).base }))
       .sort((a, b) => a.k - b.k);
     const cheap = r.filter((x) => x.k < 0.9).slice(0, 2),
       dear = r
@@ -1365,6 +1605,11 @@ function barCard(L) {
   return h;
 }
 // 2.5.2: warn when a story will ask for more hold space or bunks than the ship you fly
+/**
+ * Generates warning HTML if a quest or story mission requires more hold or bunk capacity than current ship has.
+ * @param {LandedOffer} o Job or quest offer
+ * @returns {string} Rendered HTML warning string or empty string
+ */
 function questNeeds(o) {
   const y = G.you,
     N = o.needs;
@@ -1381,12 +1626,22 @@ function questNeeds(o) {
     : '';
 }
 // 2.4: a contact's story or a side story on the job board
+/**
+ * Renders the HTML card for an available story or quest mission offer.
+ * @param {LandedOffer} o Story/quest offer definition
+ * @returns {string} Rendered HTML string of quest card
+ */
 function questCard(o) {
   const n = o.sys === G.sys ? 0 : (route(SYS, G.sys, o.sys) || []).length;
   return `<div class="card story quest" style="cursor:default"><div class="storytag">${o.side ? 'SIDE STORY' : 'CONTACT'} · ${esc(o.giver)}${o.standing ? ` · <span class="dim">${esc(o.standing)}</span>` : ''}</div><div class="t">${esc(o.title)}</div><div class="qintro">${esc(o.text)}</div>
     <div class="p">${o.steps} steps, starting in ${SYS[o.sys] ? esc(SYS[o.sys].name) : 'nearby'}${n ? ` (${n} jump${n > 1 ? 's' : ''})` : ''} · each step pays, and finishing earns <span class="cr">${esc(o.rewardText)}</span></div>
     ${o.full ? '<div class="jwarn">You are already following three stories.</div>' : ''}${questNeeds(o)}<div><button class="btn sm" data-act="accept" data-id="${esc(o.id)}"${o.full ? ' disabled' : ''}>TAKE IT ON</button>${o.sys && o.sys !== G.sys ? ` <button class="btn sm" data-plot="${o.sys}">PLOT</button>` : ''}</div></div>`;
 }
+/**
+ * Sorts shipyard hull IDs by the current sort criterion (cost, cargo, speed, strength, shield).
+ * @param {number[]} list Array of ship hull IDs
+ * @returns {number[]} Sorted copy of hull IDs array
+ */
 function yardSorted(list) {
   const k = G.ysort || 'cost',
     A = G.A.ships;
@@ -1396,6 +1651,11 @@ function yardSorted(list) {
       k === 'cost' ? (A[a].cost || 0) - (A[b].cost || 0) : (A[b][k] || 0) - (A[a][k] || 0),
     );
 } // 2.5.2
+/**
+ * Determines the category of an outfit for outfitter filtering.
+ * @param {Object} o Outfit item definition
+ * @returns {string} Category name ('weapons', 'ammo', 'defense', 'engines', or 'utility')
+ */
 function outfitCat(o) {
   if (!o) return 'utility';
   const e = o.eff || {};
@@ -1420,6 +1680,12 @@ function outfitCat(o) {
     return 'engines';
   return 'utility';
 }
+/**
+ * Evaluates route distance, cargo/bunk space warnings, and threat notes for a job offer.
+ * @param {LandedOffer} o Job offer definition
+ * @param {import('./main.js').ClientGameState} y Player state object
+ * @returns {JobInfo} Evaluated location description, warning, and note strings
+ */
 function jobInfo(o, y) {
   const n = o.sys === G.sys ? 0 : (route(SYS, G.sys, o.sys) || []).length;
   const where = `${SYS[o.sys] ? SYS[o.sys].name : ''}${n ? ` · ${n} jump${n > 1 ? 's' : ''}` : ' · this system'}`;
@@ -1451,10 +1717,19 @@ function jobInfo(o, y) {
     warn = `Needs ${o.qty} t of hold space; you have ${Math.max(0, holdFree(y))} t free.`;
   return { where, warn, note };
 }
+/**
+ * Calculates the total trade-in refund value for the player's current ship and outfits (50% value).
+ * @param {import('./main.js').ClientGameState} y Player state object
+ * @returns {number} Credit refund value
+ */
 function tradeIn(y) {
   return y.shipless ? 0 : loadoutValue(G.A, y.ship);
 }
-
+/**
+ * Global click event dispatcher for interactive buttons and links across all landing screens and companion tabs.
+ * @param {MouseEvent} e Click event
+ * @returns {void}
+ */
 function onAct(e) {
   const el = e.target.closest('[data-act]');
   if (!el) return;
@@ -1740,6 +2015,11 @@ function onAct(e) {
 }
 
 // ------------------------------------------------------------------ galaxy map overlay and routes
+/**
+ * Opens the full-screen galaxy map overlay, optionally centering on a given system.
+ * @param {number|string} [focus] Star system ID to center view on
+ * @returns {void}
+ */
 export function openMap(focus) {
   window.dispatchEvent(new CustomEvent('rift-toast-sound', { detail: 'open' }));
   $('gmap').classList.remove('hidden');
@@ -1762,6 +2042,12 @@ export function openMap(focus) {
     }
   }); // re-measure once layout has settled
 }
+/**
+ * Centers the galaxy map viewport on the specified star system coordinate.
+ * @param {number|string} id Star system ID
+ * @param {number} [zoom] Relative zoom factor
+ * @returns {void}
+ */
 function centerOn(id, zoom) {
   const s = SYS[id];
   if (!s || !G.mapView) return;
@@ -1770,6 +2056,10 @@ function centerOn(id, zoom) {
   if (zoom) G.mapView.k = Math.max(G.mapView.k, G.mapView.fit * zoom);
   drawGMap();
 }
+/**
+ * Searches systems and stellar bodies by name query and updates the search results list.
+ * @returns {void}
+ */
 function searchMap() {
   const q = $('gsearch').value.trim().toLowerCase();
   if (!q) {
@@ -1791,6 +2081,10 @@ function searchMap() {
       )
       .join('') || '<div class="dim">No match.</div>';
 }
+/**
+ * Closes the galaxy map overlay.
+ * @returns {void}
+ */
 export function closeMap() {
   if (!$('gmap').classList.contains('hidden'))
     window.dispatchEvent(new CustomEvent('rift-toast-sound', { detail: 'close' }));
@@ -1813,12 +2107,20 @@ $('gmodes').addEventListener('click', (e) => {
   syncModes();
   drawGMap();
 });
+/**
+ * Synchronizes the visual active state of the galaxy map filter mode buttons.
+ * @returns {void}
+ */
 function syncModes() {
   $('gmodes')
     .querySelectorAll('[data-mm]')
     .forEach((b) => b.classList.toggle('on', b.dataset.mm === (G.mapMode || 'factions')));
   $('gcid').classList.toggle('dimsel', G.mapMode !== 'trade');
 }
+/**
+ * Redraws the galaxy map canvas and updates the system info tooltip/panel.
+ * @returns {void}
+ */
 function drawGMap() {
   const c = $('gcanvas');
   galaxy(G, c.getContext('2d'), { big: true });
@@ -1883,6 +2185,11 @@ function drawGMap() {
       })()}</span>`; // 2.5.2
   }
 }
+/**
+ * Plots a navigational jump hyperspace route to a target destination system.
+ * @param {number|string} to Target star system ID
+ * @returns {void}
+ */
 export function plot(to) {
   if (to === G.sys) {
     G.route = [];
@@ -1897,6 +2204,11 @@ export function plot(to) {
     `Course plotted to ${SYS[to].name}: ${r.length} jump${r.length > 1 ? 's' : ''}. Fly clear of planets and press J.`,
   );
 }
+/**
+ * Displays the ship destruction and insurance reconstruction notice modal.
+ * @param {{ at: string, fee: number }} m Rebuild event payload containing location and insurance fee
+ * @returns {void}
+ */
 export function showDead(m) {
   $('deadmsg').textContent =
     `Your ship was destroyed. The insurers rebuilt it at ${m.at} for ${credits(m.fee)} credits. Your cargo was lost; your wingmates flew home.`;

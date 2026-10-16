@@ -12,9 +12,30 @@ import {
 } from '../shared/rivals.js';
 import { credits } from '../shared/rules.js';
 
+/**
+ * Clamp a numeric value between minimum and maximum bounds.
+ * @param {number} v - Value to clamp.
+ * @param {number} a - Minimum value.
+ * @param {number} b - Maximum value.
+ * @returns {number} Clamped value.
+ */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/**
+ * Select a random item from an array.
+ * @template T
+ * @param {T[]} a - Array of items.
+ * @returns {T} Selected item.
+ */
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
 // where each career likes to fly
+/**
+ * Check whether a system is appropriate for a rival's career archetype.
+ * @param {{fac: string, kind: string}} r - Rival configuration.
+ * @param {Record<string, any>} S - System definition object.
+ * @returns {boolean} True if system is valid for the rival.
+ */
 function okSystem(r, S) {
   if (!S || S.arena || S.faction === 'deep' || FACTIONS[S.faction].hidden) return false;
   if (r.fac === 'farside') return !!S.farside;
@@ -25,6 +46,11 @@ function okSystem(r, S) {
 }
 
 export const RivalsOperations = {
+  /**
+   * Initialize rival captains state and ambient spaceport news in world database.
+   * @this {any}
+   * @returns {void}
+   */
   rivalsInit() {
     const W = this.db.world;
     W.rivals = W.rivals || {};
@@ -75,16 +101,44 @@ export const RivalsOperations = {
       } // a fresh Rift starts with a few headlines
     this.rivalEnts = new Map(); // rival id -> { sys, id } while they are present in a live system
   },
+  /**
+   * Look up persistent state for a rival captain.
+   * @this {any}
+   * @param {string} id - Rival identifier.
+   * @returns {Record<string, any> | undefined} Persistent rival record.
+   */
   rivalState(id) {
     return this.db.world.rivals[id];
   },
+  /**
+   * Look up full name of a rival captain.
+   * @this {any}
+   * @param {string} id - Rival identifier.
+   * @returns {string} Rival name.
+   */
   rivalName(id) {
     return RIVAL[id] ? RIVAL[id].name : '';
   },
+  /**
+   * Look up relationship score between a player and a rival captain.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string} id - Rival identifier.
+   * @returns {number} Relationship score (-100 to 100).
+   */
   relOf(d, id) {
     const r = this.rivalState(id);
     return r ? r.rel[this.db.key(d.name)] || 0 : 0;
   },
+  /**
+   * Modify relationship score with a rival, logging changes and broadcasting news on threshold shifts.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {string} id - Rival identifier.
+   * @param {number} delta - Delta to apply.
+   * @param {string} [why] - Reason description.
+   * @returns {void}
+   */
   rivalRel(s, id, delta, why) {
     const d = s.data,
       r = this.rivalState(id);
@@ -106,17 +160,36 @@ export const RivalsOperations = {
     }
     this.db.touch();
   },
+  /**
+   * Add a headline to the persistent galaxy news feed.
+   * @this {any}
+   * @param {string} text - Headline text.
+   * @returns {void}
+   */
   news(text) {
     const W = this.db.world;
     W.news.push({ t: Date.now(), text });
     if (W.news.length > 60) W.news.splice(0, W.news.length - 60);
   },
+  /**
+   * Retrieve recent headlines from the world news feed.
+   * @this {any}
+   * @param {number} [n=6] - Number of items to retrieve.
+   * @returns {string[]} Array of recent news strings.
+   */
   newsFeed(n = 6) {
     return this.db.world.news
       .slice(-n)
       .reverse()
       .map((x) => x.text);
   },
+  /**
+   * Get active flash market price multiplier for a commodity at a stellar port.
+   * @this {any}
+   * @param {string} stellar - Stellar port ID.
+   * @param {string} cid - Commodity ID.
+   * @returns {number} Price multiplier.
+   */
   flashMult(stellar, cid) {
     const f = (this.db.world.flash || []).find(
       (x) => x.stellar === stellar && x.cid === cid && x.until > Date.now(),
@@ -125,6 +198,11 @@ export const RivalsOperations = {
   },
 
   // every 20 s: careers move on, ships get upgraded, news is made, grudges turn into hunters
+  /**
+   * Advance rival captains simulation tick: upgrade ships, trigger news, move between systems, spawn hunters.
+   * @this {any}
+   * @returns {void}
+   */
   rivalsTick() {
     const W = this.db.world,
       now = Date.now();
@@ -228,6 +306,13 @@ export const RivalsOperations = {
     }
     if (any) this.db.touch();
   },
+  /**
+   * Spawn bounty hunter escort ships targeting a player with a severe nemesis grudge.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} R - Rival configuration object.
+   * @returns {void}
+   */
   spawnHunters(s, R) {
     const sp = this.spaces[s.data.sys],
       me = s.ent,
@@ -257,6 +342,12 @@ export const RivalsOperations = {
     this.toast(s, `Hired guns are closing in: ${R.name} put a price on your head.`);
   },
   // keep live systems in step with where the rivals are
+  /**
+   * Synchronize rival ships within an active space sector.
+   * @this {any}
+   * @param {any} sp - Space sector instance.
+   * @returns {void}
+   */
   rivalSync(sp) {
     if (sp.sys.arena) return;
     for (const R of RIVALS) {
@@ -303,6 +394,13 @@ export const RivalsOperations = {
     }
   },
   // think hook: rivals pick fights with their rivals and stand by their allies
+  /**
+   * AI decision loop for rival ships in space (attack nemeses, assist allies).
+   * @this {any}
+   * @param {any} e - Rival ship entity.
+   * @param {any} sp - Space sector instance.
+   * @returns {void}
+   */
   rivalThink(e, sp) {
     let best = null,
       bd = 2600;
@@ -328,6 +426,13 @@ export const RivalsOperations = {
     if (best && !e.target) e.target = best;
   },
   // hostility hook (undefined = normal faction rules)
+  /**
+   * Determine hostility override between an NPC and a player based on rival status and relations.
+   * @this {any}
+   * @param {any} npc - NPC entity.
+   * @param {any} p - Player entity.
+   * @returns {boolean | undefined} True/false if override applies, undefined to defer to faction rules.
+   */
   rivalHostile(npc, p) {
     if (npc.huntOf) return npc.huntOf === p.id;
     if (npc.bribed && npc.bribed.has(p.id)) return false;
@@ -338,6 +443,14 @@ export const RivalsOperations = {
     }
     return undefined;
   },
+  /**
+   * Handle weapon impact on a rival ship, reducing player relationship score.
+   * @this {any}
+   * @param {any} s - Player session that fired.
+   * @param {any} npc - Targeted entity that was hit.
+   * @param {any} space - Space sector instance.
+   * @returns {void}
+   */
   rivalOnHit(s, npc, space) {
     if (!npc.rival) return;
     if (!npc.relHitT || space.t - npc.relHitT > 3) {
@@ -349,6 +462,14 @@ export const RivalsOperations = {
       }
     }
   },
+  /**
+   * Handle ship destruction involving rivals, penalizing killer or rewarding helpful bystanders.
+   * @this {any}
+   * @param {any} s - Player session scoring the kill.
+   * @param {any} npc - Destroyed NPC entity.
+   * @param {any} space - Space sector instance.
+   * @returns {boolean} True if the destroyed NPC was a rival.
+   */
   rivalOnKill(s, npc, space) {
     if (npc.rival) {
       const R = RIVAL[npc.rival],
@@ -372,6 +493,12 @@ export const RivalsOperations = {
     return false;
   },
   // a rival trader who lands stays docked a while, then takes off again from that world
+  /**
+   * Handle rival ship landing at a planetary spaceport.
+   * @this {any}
+   * @param {any} e - Landing ship entity.
+   * @returns {void}
+   */
   rivalDocked(e) {
     const r = this.rivalState(e.rival);
     if (!r) return;
@@ -379,6 +506,12 @@ export const RivalsOperations = {
     r.dockAt = e.dest && e.dest.id;
     this.rivalEnts.delete(e.rival);
   },
+  /**
+   * Generate leaderboard entries for rival captains in a given category.
+   * @this {any}
+   * @param {string} cat - Metric category ('earned' or 'kills').
+   * @returns {Array<{name: string, ai: boolean, v: number}>} Leaderboard ranking entries.
+   */
   rivalBoard(cat) {
     const v = cat === 'earned' ? (r) => r.earned : cat === 'kills' ? (r) => r.kills : null;
     if (!v) return [];
@@ -388,6 +521,12 @@ export const RivalsOperations = {
       v: Math.round(v(this.rivalState(R.id)) || 0),
     }));
   },
+  /**
+   * Compile the client payload listing all rival captains, locations, and relationship states.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Array<Record<string, any>>} Rivals summary list for client.
+   */
   rivalsPayload(d) {
     return RIVALS.map((R) => {
       const r = this.rivalState(R.id),

@@ -1,5 +1,35 @@
 // Quantum Rift: the Que'vari storyline, as golden main-story missions.
 // Each step: where it is offered, what you must do, and what it pays. Text is shown in landing pop-ups.
+
+/**
+ * @typedef {Object} StoryMission
+ * @property {string} id - Unique storyline step identifier (e.g. 'qv1').
+ * @property {string} title - Mission title displayed in dialogs and mission log.
+ * @property {string} at - Station or location ID where the mission is offered.
+ * @property {'carry'|'board'|'kill'|'boss'|'gift'|string} type - Mission objective archetype.
+ * @property {string} [dest] - Destination station ID for courier/transport missions.
+ * @property {string} [sys] - Target system ID where the objective takes place.
+ * @property {number} [count] - Target count of ships to defeat or board.
+ * @property {number} [hull] - Target or reward hull ID.
+ * @property {string} [faction] - Faction identifier of targets or allies.
+ * @property {number[]} [allies] - Array of friendly escort hull IDs spawned during boss encounter.
+ * @property {string} [back] - Station ID to return to upon objective completion.
+ * @property {number} pay - Credit reward awarded on completion.
+ * @property {number} rep - Reputation points awarded on completion.
+ * @property {number} [minRep] - Minimum faction reputation prerequisite to accept the mission.
+ * @property {[string, number]} [crate] - Special item or commodity reward tuple [itemType, quantity].
+ * @property {string} text - Narrative dialog text presented when offered.
+ * @property {string} brief - Concise objective summary for UI displays.
+ * @property {string} acc - Acceptance button prompt text.
+ * @property {string} ref - Rejection or postponement button prompt text.
+ * @property {string} [progress] - Status message displayed during mission progress.
+ * @property {string} done - Narrative epilogue displayed when claiming mission rewards.
+ */
+
+/**
+ * Main Que'vari golden story mission chain progression.
+ * @type {StoryMission[]}
+ */
 export const STORY = [
   {
     id: 'qv1',
@@ -95,5 +125,15 @@ export const STORY = [
     done: "The Ina Que'var is yours. Your old ship is waiting in your drydock (or was sold for you, if every berth was full).",
   },
 ];
+
+/**
+ * Hull ID of the legendary Ina Que'var reward ship awarded at the conclusion of the story.
+ * @type {number}
+ */
 export const STORY_SHIP = 744;
+
+/**
+ * Storyline step identifier that unlocks navigation access to the Deep systems.
+ * @type {string}
+ */
 export const DEEP_UNLOCK = 'qv3'; // the Que'vari charts of the dark open the Deep

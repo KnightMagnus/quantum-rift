@@ -2,6 +2,7 @@
 // and DMs; the Armada; trading between Personal Stations; no open-galaxy PvP; duels and Armada Duels; rescue; co-op
 // Holdout; Armada contracts.
 import fs from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
@@ -18,7 +19,7 @@ const ok = (c, m) => {
   console.log('ok -', m);
 };
 process.env.SEEDS_FILE = '/nonexistent';
-const C = decodeURIComponent(new URL('../client/', import.meta.url).pathname);
+const C = fileURLToPath(new URL('../client/', import.meta.url));
 {
   const bad = [];
   for (const f of fs.readdirSync(C).filter((f) => f.endsWith('.js'))) {
@@ -38,9 +39,9 @@ const C = decodeURIComponent(new URL('../client/', import.meta.url).pathname);
   for (const f of fs.readdirSync(C).filter((f) => f.endsWith('.js')))
     for (const m of fs.readFileSync(C + f, 'utf8').matchAll(/import \{([^}]+)\} from '([^']+)'/g)) {
       const path = m[2].startsWith('/shared/')
-        ? decodeURIComponent(new URL('..' + m[2], import.meta.url).pathname)
+        ? new URL('..' + m[2], import.meta.url).href
         : m[2].startsWith('./')
-          ? C + m[2].slice(2)
+          ? pathToFileURL(C + m[2].slice(2)).href
           : null;
       if (!path) continue;
       const mod = await import(path).catch(() => null);
