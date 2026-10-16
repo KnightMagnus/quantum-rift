@@ -2,6 +2,11 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.8.3
+
+- **Catalog artwork:** ship portraits and outfit icons now use release-versioned URLs in Codex, shipyards, outfitters and related ship panels. This bypasses stale cached responses from before artwork repairs. Unversioned catalog artwork revalidates instead of remaining fresh for a day; WebP files have their proper image content type.
+- **Regression coverage:** actual browser checks cover catalog lists, ship details, shipyard selection and outfitters, including mixed good/bad cached artwork. The complete v2.8.2 package decoded correctly on a cold load; the user's exact existing browser cache was unavailable.
+
 ### 2.8.2
 
 - **Combat Assist:** selecting an ordinary NPC or named captain before enabling Assist now initiates legal neutral-target pursuit and primary fire in Solo inner space. Steering and thrust change existing drift; passive defense still acquires only actual hostile attackers. PvP and own-wing protections remain intact.

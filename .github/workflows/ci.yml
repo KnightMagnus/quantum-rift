@@ -67,6 +67,7 @@ jobs:
           node test/ship-economy.js
           node test/passengers.js
           node test/outfitter-icons.js
+          node test/catalog-artwork.js
           node test/ship-banking.js
           node test/animation-frames.js
           node test/wormhole-loop.js

@@ -1,3 +1,4 @@
+import { artworkUrl } from './artwork.js';
 // Quantum Rift 0.5 interface pieces: crew (bar, roster, bridge), hangar (shuttles, job board, drydock), research trees, boarding.
 import { rankLine, lowerDeckHtml } from './syn_ui.js';
 import { SYS, FACTIONS, MATERIALS, GRADES, RESEARCH } from '/shared/galaxy.js';
@@ -180,7 +181,7 @@ export function hangarHtml(G, atHome) {
                 `<option value="${o.id}" ${o.id === sh.crew ? 'selected' : ''}>${esc(o.name)} (${ROLES[o.role].name} ${o.lv})</option>`,
             )
             .join('')}</select></div>`;
-        return `<div class="ocard"><div class="oname"><img src="assets/${G.A.ships[T.hull].img}" style="width:44px;height:30px;object-fit:contain;vertical-align:middle"> <b>${esc(T.name)}</b> <span class="dim small">${sh.runs} runs</span></div>${crew && sh.state !== 'idle' ? `<div class="dim small">Crew: ${esc(crew.name)}</div>` : ''}${body}${atHome && sh.state !== 'out' ? ` <button class="btn sm" data-act="sh" data-op="scrap" data-sid="${sh.id}">SCRAP</button>` : ''}</div>`;
+        return `<div class="ocard"><div class="oname"><img src="${artworkUrl(G.A.ships[T.hull].img)}" style="width:44px;height:30px;object-fit:contain;vertical-align:middle"> <b>${esc(T.name)}</b> <span class="dim small">${sh.runs} runs</span></div>${crew && sh.state !== 'idle' ? `<div class="dim small">Crew: ${esc(crew.name)}</div>` : ''}${body}${atHome && sh.state !== 'out' ? ` <button class="btn sm" data-act="sh" data-op="scrap" data-sid="${sh.id}">SCRAP</button>` : ''}</div>`;
       })
       .join('') +
     '</div>';

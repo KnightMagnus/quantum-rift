@@ -1,3 +1,4 @@
+import { setArtworkVersion } from './artwork.js';
 import { initHails } from './hails_ui.js';
 import { receiveShipChat } from './chat_bubbles.js';
 // Quantum Rift client: connection, input, client-side prediction, render loop.
@@ -322,6 +323,7 @@ try {
 fetch('/api/status')
   .then((r) => r.json())
   .then((s) => {
+    setArtworkVersion(s.version);
     $('lstat').textContent =
       `${s.players} captain${s.players === 1 ? '' : 's'} in the Rift right now.`;
     $('lver').textContent = 'Quantum Rift v' + s.version;

@@ -1,3 +1,4 @@
+import { artworkUrl } from './artwork.js';
 import { passengerSeats, occupiedPassengerSeats } from '/shared/passengers.js';
 // Quantum Rift interface: HUD, landing screens (trade, shipyard, outfitter, jobs, Quantum Station), companion tabs, galaxy map, chat.
 import { missionsHtml } from './missions.js';
@@ -464,7 +465,7 @@ export function hud() {
   if (t) {
     const H = G.A.ships[t.hull];
     if ($('tg-img').dataset.h != t.hull) {
-      $('tg-img').innerHTML = `<img src="assets/${H.img}" alt="">`;
+      $('tg-img').innerHTML = `<img src="${artworkUrl(H.img)}" alt="">`;
       $('tg-img').dataset.h = t.hull;
     }
     $('tg-name').textContent = t.name || H.name;
@@ -691,7 +692,7 @@ function renderCodex() {
       .filter((s) => s.id !== 744 || (G.you && G.you.story && G.you.story.done.includes('qv5')))
       .sort((a, b) => a.cost - b.cost)
       .map((s) => ({
-        img: 'assets/' + s.img,
+        img: artworkUrl(s.img),
         name: s.name,
         sub: `${s.sub} · ${s.cat}`,
         cost: s.kind === 'wingmate' ? 'hire' : credits(s.cost),
@@ -704,7 +705,7 @@ function renderCodex() {
       )
       .sort((a, b) => a.cost - b.cost)
       .map((o) => ({
-        img: o.icon ? 'assets/' + o.icon : '',
+        img: o.icon ? artworkUrl(o.icon) : '',
         name: o.name,
         sub: Object.entries(o.eff)
           .map(([k, v]) =>
@@ -746,14 +747,14 @@ function codexDetail(k) {
                   ? 'Quantum Station shipyard'
                   : 'Shipyards of: ' + (factionsSelling(id).join(', ') || 'none');
     $('clist').innerHTML =
-      `<div style="padding:6px"><a href="#" id="cback" style="color:#d88">&lsaquo; back</a><div style="text-align:center"><img src="assets/${s.img}" style="max-width:100%;max-height:150px"></div>
+      `<div style="padding:6px"><a href="#" id="cback" style="color:#d88">&lsaquo; back</a><div style="text-align:center"><img src="${artworkUrl(s.img)}" style="max-width:100%;max-height:150px"></div>
       <b style="color:#fff;font-size:14px">${esc(s.name)}</b> <span class="cr" style="float:right">${s.kind === 'wingmate' ? 'hire' : credits(s.cost) + ' cr'}</span><div class="dim">${esc(s.sub)} · ${roleTag(s)}</div><div class="dim small">${esc((ROLES_INFO[s.role] || {}).desc || '')}</div>
       ${statLines(s)}<div class="sect">WHERE TO GET IT</div><div style="color:#bfe0ff">${esc(where)}</div>
       ${s.pilot ? `<div class="sect">PILOT</div><div style="white-space:pre-wrap;line-height:1.4">${esc(s.pilot)}</div>` : ''}<div class="sect">DESCRIPTION</div><div style="white-space:pre-wrap;line-height:1.4">${esc(s.desc)}</div></div>`;
   } else {
     const o = allOutfits(G.A)[id];
     $('clist').innerHTML =
-      `<div style="padding:6px"><a href="#" id="cback" style="color:#d88">&lsaquo; back</a><div style="text-align:center">${o.icon ? `<img src="assets/${o.icon}">` : ''}</div>
+      `<div style="padding:6px"><a href="#" id="cback" style="color:#d88">&lsaquo; back</a><div style="text-align:center">${o.icon ? `<img src="${artworkUrl(o.icon)}">` : ''}</div>
       <b style="color:#fff;font-size:14px">${esc(o.name)}</b> <span class="cr" style="float:right">${credits(o.cost)} cr</span>
       <div class="kv"><span>Mass</span><span>${o.mass || 0} t</span></div><div class="kv"><span>Max</span><span>${o.max || 1}</span></div>${weaponLines(o)}
       <div class="sect">DESCRIPTION</div><div style="white-space:pre-wrap;line-height:1.4">${esc(o.desc)}</div></div>`;
@@ -1070,7 +1071,7 @@ export function renderLanded() {
       if (y.shipless)
         h += `<div class="noship"><b>NO ACTIVE SHIP</b><div>You can't depart until you choose a ship. ${y.dock && y.dock.length ? 'Open STATION, then DOCKS, and choose a lead ship for your active dock.' : 'Buy one at a SHIPYARD.'}</div><div>${y.dock && y.dock.length ? '<button class="btn sm" data-act="gotodock">OPEN DRYDOCK</button> ' : ''}${L.yard ? '<button class="btn sm" data-act="ltab" data-t="yard">SHIPYARD</button>' : ''}</div></div>`;
       if (!y.shipless)
-        h += `<div class="detail"><img src="assets/${G.A.ships[y.ship.hull].img}"><div><div class="sect" style="margin-top:0">YOUR SHIP</div><b style="font-size:15px;color:#fff">${esc(st.name)}</b> <span class="dim">"${esc(y.ship.name)}"</span> ${roleTag(G.A.ships[y.ship.hull])}
+        h += `<div class="detail"><img src="${artworkUrl(G.A.ships[y.ship.hull].img)}"><div><div class="sect" style="margin-top:0">YOUR SHIP</div><b style="font-size:15px;color:#fff">${esc(st.name)}</b> <span class="dim">"${esc(y.ship.name)}"</span> ${roleTag(G.A.ships[y.ship.hull])}
         <div class="kv"><span>Shield / Armor</span><span>${st.shield} / ${st.armor}</span></div><div class="kv"><span>Speed</span><span>${Math.round(st.maxSpeed)}</span></div><div class="kv"><span>Fuel</span><span>${Math.floor(st.fuel / 100)} jumps (refuelled)</span></div>
         <div class="kv"><span>Cargo</span><span>${
           Object.entries(y.cargo)
@@ -1106,7 +1107,7 @@ export function renderLanded() {
       const sel = G.sel && L.yard.includes(G.sel) ? G.sel : L.yard[0];
       const s = G.A.ships[sel],
         trade = tradeIn(y);
-      h = `<div class="detail"><img src="assets/${s.img}"><div><b style="font-size:16px;color:#fff">${esc(s.name)}</b> <span class="dim">${esc(s.sub)}</span> ${roleTag(s)}${s.cargo ? '' : ' <span class="nocargo">NO CARGO HOLD</span>'}${statLines(s, y.shipless ? null : G.A.ships[y.ship.hull])}
+      h = `<div class="detail"><img src="${artworkUrl(s.img)}"><div><b style="font-size:16px;color:#fff">${esc(s.name)}</b> <span class="dim">${esc(s.sub)}</span> ${roleTag(s)}${s.cargo ? '' : ' <span class="nocargo">NO CARGO HOLD</span>'}${statLines(s, y.shipless ? null : G.A.ships[y.ship.hull])}
         <div class="kv"><span>Price</span><span class="cr">${credits(s.cost)}</span></div>${
           WING_ONLY.includes(s.id) || (!y.shipless && s.id === y.ship.hull) || y.shipless
             ? ''
@@ -1144,7 +1145,7 @@ export function renderLanded() {
           .join('')}</select></div><div class="cards">${yardSorted(L.yard)
           .map((h_) => {
             const x = G.A.ships[h_];
-            return `<div class="card ${h_ === sel ? 'sel' : ''}" data-act="sel" data-h="${h_}"><img src="assets/${x.img}"><div class="t">${esc(x.name)}</div><div class="dim small">${esc(x.sub)}</div><div class="small">${roleTag(x)}${x.cargo ? '' : ' <span class="nocargo">NO CARGO HOLD</span>'}</div><div class="p">${credits(x.cost)}</div></div>`;
+            return `<div class="card ${h_ === sel ? 'sel' : ''}" data-act="sel" data-h="${h_}"><img src="${artworkUrl(x.img)}"><div class="t">${esc(x.name)}</div><div class="dim small">${esc(x.sub)}</div><div class="small">${roleTag(x)}${x.cargo ? '' : ' <span class="nocargo">NO CARGO HOLD</span>'}</div><div class="p">${credits(x.cost)}</div></div>`;
           })
           .join('')}</div>`;
       break;
@@ -1218,7 +1219,7 @@ export function renderLanded() {
                       : W && (o.turret ? st.turrets >= st.maxTurrets : st.guns >= st.maxGuns)
                         ? `No free ${o.turret ? 'turret' : 'gun'} mounts`
                         : '';
-          return `<tr><td>${o.icon ? `<img src="assets/${o.icon}" style="width:32px;height:32px">` : ''}</td><td title="${esc(o.desc)}">${esc(o.name)}</td><td class="dim small">${esc(eff)}</td><td>${o.mass || 0}</td><td class="cr">${credits(o.cost)}</td><td>${own}</td>
+          return `<tr><td>${o.icon ? `<img src="${artworkUrl(o.icon)}" style="width:32px;height:32px">` : ''}</td><td title="${esc(o.desc)}">${esc(o.name)}</td><td class="dim small">${esc(eff)}</td><td>${o.mass || 0}</td><td class="cr">${credits(o.cost)}</td><td>${own}</td>
           <td style="text-align:right"><button class="btn sm" data-act="outfit" data-id="${id}" data-n="${n1}"${why ? ` disabled title="${why}"` : ''}>BUY${o.eff.ammo ? ' 10' : ''}</button>${o.eff.ammo ? '' : ` <button class="btn sm" data-act="outfit" data-id="${id}" data-n="-1"${own ? '' : ' disabled'}>SELL</button>`}</td></tr>`;
         })
         .join('')}</table>`;
