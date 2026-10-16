@@ -1,3 +1,4 @@
+import { artworkUrl } from './artwork.js';
 // 2.1 Docks: the DOCKS screen at your Personal Station, the dock switcher by the DEPART button, and the sidebar line.
 import { ROLES, RARITY } from '/shared/hangar.js';
 import { WING_REPAIR_COST, NEXT_DOCK_OPS } from '/shared/docks.js';
@@ -14,7 +15,7 @@ function shipBox(G, s, empty) {
   if (!s)
     return `<div class="dslot empty"><div class="dimg"></div><div class="dsn dim">${empty}</div></div>`;
   const H = G.A.ships[s.hull] || {};
-  return `<div class="dslot${s.repairT ? ' repair' : ''}"><img class="dimg" src="assets/${H.img}"><div class="dsn"><b>${esc(H.name)}</b><div class="dim small">"${esc(s.name)}"${s.flying ? ' · flying' : ''}${s.repairT ? ` · <span class="rep">repairs ${mins(s.repairT)} min</span>` : ''}</div></div></div>`;
+  return `<div class="dslot${s.repairT ? ' repair' : ''}"><img class="dimg" src="${artworkUrl(H.img)}"><div class="dsn"><b>${esc(H.name)}</b><div class="dim small">"${esc(s.name)}"${s.flying ? ' · flying' : ''}${s.repairT ? ` · <span class="rep">repairs ${mins(s.repairT)} min</span>` : ''}</div></div></div>`;
 }
 // a picker of stored ships for one slot
 function shipPick(G, D, k, slot, cur, interactive) {
@@ -81,7 +82,7 @@ export function docksHtml(G, interactive) {
     D.stored
       .map((x) => {
         const H = G.A.ships[x.hull] || {};
-        return `<div class="it dstore"><img src="assets/${H.img}"><div style="flex:1"><b>${esc(H.name)}</b> <span class="dim">"${esc(x.name)}"</span><div class="dim small">${x.at ? `Dock ${esc(x.at)}` : 'Unassigned'}${x.wingOnly ? ' · wingmate only' : ''}${x.repairT ? ` · <span class="rep">repairs ${mins(x.repairT)} min</span>` : ''}</div></div>${interactive ? `<button class="btn sm" data-act="dock" data-op="sell" data-uid="${x.uid}">SELL</button>` : ''}</div>`;
+        return `<div class="it dstore"><img src="${artworkUrl(H.img)}"><div style="flex:1"><b>${esc(H.name)}</b> <span class="dim">"${esc(x.name)}"</span><div class="dim small">${x.at ? `Dock ${esc(x.at)}` : 'Unassigned'}${x.wingOnly ? ' · wingmate only' : ''}${x.repairT ? ` · <span class="rep">repairs ${mins(x.repairT)} min</span>` : ''}</div></div>${interactive ? `<button class="btn sm" data-act="dock" data-op="sell" data-uid="${x.uid}">SELL</button>` : ''}</div>`;
       })
       .join('') ||
     (D.cap

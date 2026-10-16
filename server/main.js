@@ -23,6 +23,7 @@ const TYPES = {
   '.json': 'application/json',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.webp': 'image/webp',
   '.wav': 'audio/wav',
   '.css': 'text/css',
   '.svg': 'image/svg+xml',
@@ -163,7 +164,7 @@ const server = http.createServer(async (req, res) => {
     res.end();
     return;
   }
-  serve(res, file, p.startsWith('/assets/'));
+  serve(res, file, p.startsWith('/assets/') && url.searchParams.get('v') === VERSION);
 });
 server.on('upgrade', (req, sock) => {
   if (req.url.startsWith('/ws'))
