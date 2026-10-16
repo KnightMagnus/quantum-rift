@@ -1193,6 +1193,10 @@ const BASICS = [
   ['O', 'Options'],
   ['Esc', 'Close a window, clear the target'],
 ];
+/**
+ * Opens the flight and keyboard controls reference dialog modal.
+ * @returns {void}
+ */
 function openControls() {
   audio.ui('open', 0.6);
   $('ctrllist').innerHTML =
@@ -1207,6 +1211,10 @@ function openControls() {
     '</div>';
   $('ctrlbox').classList.remove('hidden');
 }
+/**
+ * Closes the flight controls reference dialog modal.
+ * @returns {void}
+ */
 const closeControls = () => $('ctrlbox').classList.add('hidden');
 $('cbhelp').onclick = openControls;
 $('ctrlclose').onclick = closeControls;
@@ -1216,6 +1224,11 @@ $('ctrlkeys').onclick = () => {
 };
 $('cbkeys').onclick = () => openOpts(true);
 $('cbmap').onclick = () => ($('gmap').classList.contains('hidden') ? openMap() : closeMap());
+/**
+ * Cycles target lock through visible ships sorted by distance.
+ * @param {number} dir Direction offset in target list (-1 for previous, 1 for next)
+ * @returns {void}
+ */
 function cycleTarget(dir) {
   const me = G.view;
   if (!me) return;
@@ -1230,6 +1243,10 @@ function cycleTarget(dir) {
   G.target = n.id;
   send({ t: 'target', id: n.id });
 }
+/**
+ * Finds and targets the nearest hostile ship in the current system.
+ * @returns {void}
+ */
 function nearestHostile() {
   const me = G.view;
   if (!me) return;
@@ -1243,6 +1260,11 @@ function nearestHostile() {
     send({ t: 'target', id: list[0].id });
   } else toast('No hostiles nearby.');
 }
+/**
+ * Requests docking/landing on a specified or nearest landable stellar object.
+ * @param {{ id: string, name: string, x: number, y: number, r: number, svc: string[] }} [pick] Optional targeted stellar body
+ * @returns {void}
+ */
 function landRequest(pick) {
   const me = G.view,
     S = SYS[G.sys];
@@ -1266,6 +1288,12 @@ function landRequest(pick) {
 
 // ------------------------------------------------------------------ mouse: click to target, click a planet to set nav, double-click to land
 const mouse = { x: 0, y: 0, wx: 0, wy: 0, in: false, down: false };
+/**
+ * Converts screen/canvas client coordinates to game world space coordinates.
+ * @param {number} cx Client X coordinate
+ * @param {number} cy Client Y coordinate
+ * @returns {[number, number]} World coordinates [wx, wy]
+ */
 function toWorld(cx, cy) {
   const r = window.devicePixelRatio || 1,
     rect = canvas.getBoundingClientRect();
@@ -1274,6 +1302,12 @@ function toWorld(cx, cy) {
     ((cy - rect.top) * r - cam.H / 2) / cam.z + cam.cy,
   ];
 }
+/**
+ * Identifies the nearest interactive ship or stellar body under the given world coordinates.
+ * @param {number} wx World X coordinate
+ * @param {number} wy World Y coordinate
+ * @returns {{ ship?: ClientEntity, stellar?: any } | null} Picked target or null
+ */
 function pickAt(wx, wy) {
   if (!G.view || G.landed) return null;
   let best = null,
@@ -1300,6 +1334,11 @@ function pickAt(wx, wy) {
   }
   return best;
 }
+/**
+ * Determines the appropriate mouse cursor style based on hover target.
+ * @param {{ ship?: ClientEntity, stellar?: any } | null} h Picked object under cursor
+ * @returns {string} CSS cursor identifier class suffix
+ */
 function cursorFor(h) {
   if (G.opts.mouseAim && !h) return 'aim';
   if (!h) return '';
@@ -1313,12 +1352,22 @@ function cursorFor(h) {
           : 'neutral';
   return h.stellar.svc.includes('L') ? 'land' : '';
 }
+/**
+ * Applies a cursor CSS class to the canvas element.
+ * @param {string} c Cursor type name
+ * @returns {void}
+ */
 function setCursor(c) {
   if (canvas.dataset.cur !== c) {
     canvas.dataset.cur = c;
     canvas.className = c ? 'cur-' + c : '';
   }
 }
+/**
+ * Sets the active target ID and notifies the server.
+ * @param {number} id Target entity ID or 0 to clear
+ * @returns {void}
+ */
 function setTarget(id) {
   G.target = id;
   send({ t: 'target', id });
@@ -1435,6 +1484,10 @@ $('radar').addEventListener('mousedown', (e) => {
 $('radar').addEventListener('contextmenu', (e) => e.preventDefault());
 
 // ------------------------------------------------------------------ boarding (B next to a disabled ship)
+/**
+ * Opens the ship boarding interface modal if alongside a disabled ship.
+ * @returns {void}
+ */
 function openBoard() {
   const t = G.target ? G.ents.get(G.target) : null,
     me = G.view;
@@ -1447,10 +1500,19 @@ function openBoard() {
   $('boardbox').classList.remove('hidden');
   G.boarding = t.id;
 }
+/**
+ * Closes the ship boarding action modal.
+ * @returns {void}
+ */
 function closeBoard() {
   $('boardbox').classList.add('hidden');
   G.boarding = 0;
 }
+/**
+ * Sends a boarding action command (plunder, capture, rescue) to the server.
+ * @param {string} act Boarding action type ('plunder' | 'capture' | 'rescue')
+ * @returns {void}
+ */
 function doBoard(act) {
   if (act && G.boarding) send({ t: 'board', id: G.boarding, act });
   closeBoard();
@@ -1479,6 +1541,10 @@ window.addEventListener(
 );
 
 // ------------------------------------------------------------------ tutorial panel
+/**
+ * Updates the career tutorial guide widget with current stage info.
+ * @returns {void}
+ */
 function renderTut() {
   const i = G.you ? G.you.tut : TUTORIAL.length,
     T = TUTORIAL[i];
@@ -1507,6 +1573,11 @@ $('tutskip').onclick = () => {
 // ------------------------------------------------------------------ options
 const CHECKS = ['dmg', 'shake', 'mouseAim', 'notify', 'cb', 'mute'];
 let rebinding = null;
+/**
+ * Formats a KeyboardEvent.code string into a readable label.
+ * @param {string} c KeyboardEvent code
+ * @returns {string} Human-friendly key name
+ */
 const keyName = (c) =>
   ({
     ArrowUp: '↑',
@@ -1524,6 +1595,10 @@ const keyName = (c) =>
     .replace(/^Key/, '')
     .replace(/^Digit/, '')
     .replace(/^Numpad/, 'Num ');
+/**
+ * Renders keybinding assignment rows in the options menu.
+ * @returns {void}
+ */
 function renderKeys() {
   $('optkeys').innerHTML = ACTIONS.map(
     ([a, n]) =>
@@ -1539,6 +1614,11 @@ function renderKeys() {
         }),
     );
 }
+/**
+ * Opens the settings modal dialog and populates current configuration values.
+ * @param {boolean} [keysFirst] Whether to scroll directly down to the keybinding section
+ * @returns {void}
+ */
 function openOpts(keysFirst) {
   audio.ui('open', 0.6);
   $('opts').classList.remove('hidden');
@@ -1555,6 +1635,10 @@ function openOpts(keysFirst) {
   document.querySelectorAll('#opts input[type=range]').forEach(paintRange);
   if (keysFirst === true) setTimeout(() => $('optkeys').scrollIntoView({ block: 'start' }), 0);
 }
+/**
+ * Closes the settings modal dialog.
+ * @returns {void}
+ */
 function closeOpts() {
   audio.ui('close', 0.6);
   $('opts').classList.add('hidden');
@@ -1563,6 +1647,11 @@ function closeOpts() {
 $('optclose').onclick = closeOpts;
 $('optbtn').onclick = openOpts;
 // 2.1: the quick volume control in the command bar: one master slider and a mute button
+/**
+ * Updates an HTML range input's background fill gradient according to its value.
+ * @param {HTMLInputElement} el Input slider element
+ * @returns {void}
+ */
 function paintRange(el) {
   if (!el) return;
   const p = ((el.value - el.min) / (el.max - el.min || 1)) * 100;
@@ -1571,6 +1660,10 @@ function paintRange(el) {
 document.addEventListener('input', (e) => {
   if (e.target.matches && e.target.matches('input[type=range]')) paintRange(e.target);
 });
+/**
+ * Syncs the volume quick-slider and mute button with current volume settings.
+ * @returns {void}
+ */
 function volUi() {
   const b = $('cbvol');
   if (!b) return;
@@ -1695,6 +1788,10 @@ window.addEventListener(
 );
 
 // ------------------------------------------------------------------ loops
+/**
+ * Synchronizes canvas and radar internal pixel resolutions with device pixel ratio.
+ * @returns {void}
+ */
 function resize() {
   const r = window.devicePixelRatio || 1;
   canvas.width = canvas.clientWidth * r;
@@ -1706,6 +1803,11 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 // the sidebar can be dragged wider or narrower; the width is remembered
+/**
+ * Updates the companion sidebar HUD width CSS variable within bounds.
+ * @param {number} w Requested width in CSS pixels
+ * @returns {number} Clamped width in CSS pixels
+ */
 function setHud(w) {
   w = Math.max(280, Math.min(Math.min(760, window.innerWidth * 0.6), w));
   document.documentElement.style.setProperty('--hud', w + 'px');
@@ -1739,6 +1841,11 @@ resize();
 // ------------------------------------------------------------------ gamepad and touch controls
 const pad = { prev: [] },
   touch = { keys: {}, stick: null };
+/**
+ * Reads standard Gamepad API state and maps buttons/axes to ship inputs and commands.
+ * @param {InputState} inp Mutable input state object
+ * @returns {void}
+ */
 function padInput(inp) {
   const gp = navigator.getGamepads ? [...navigator.getGamepads()].find(Boolean) : null;
   if (!gp) return;
@@ -1761,6 +1868,11 @@ function padInput(inp) {
   if (edge(12)) jumpNext();
   pad.prev = gp.buttons.map((b) => b.pressed);
 }
+/**
+ * Polls on-screen virtual joystick and touch action buttons for input state.
+ * @param {InputState} inp Mutable input state object
+ * @returns {void}
+ */
 function touchInput(inp) {
   for (const k of ['fire1', 'fire2', 'ab']) if (touch.keys[k]) inp[k] = 1;
   const st = touch.stick;
@@ -1838,6 +1950,10 @@ if ('ontouchstart' in window || (window.matchMedia && matchMedia('(pointer: coar
 }
 let acc = 0,
   last = performance.now();
+/**
+ * Fixed physics and input update tick executed at fixed timestep (DT).
+ * @returns {void}
+ */
 function fixedTick() {
   if (!G.view || G.landed || G.paused) return;
   const inp = {
@@ -1911,6 +2027,11 @@ function fixedTick() {
     step(G.view, G.you.shipStats, inp);
   G.view.fl = (inp.thrust ? 1 : 0) | (inp.ab ? 2 : 0);
 }
+/**
+ * Main animation and rendering frame loop driven by requestAnimationFrame.
+ * @param {number} t High-resolution timestamp from requestAnimationFrame
+ * @returns {void}
+ */
 function frame(t) {
   const dt = Math.min(0.1, (t - last) / 1000);
   last = t;

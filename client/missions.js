@@ -5,16 +5,56 @@ import { STORY } from '/shared/story.js';
 import { route } from '/shared/rules.js';
 import { TUTORIAL } from '/shared/tutorial.js';
 
+/**
+ * @typedef {'story' | 'career' | 'arc' | 'job'} MissionKind
+ */
+
+/**
+ * @typedef {Object} MissionTarget
+ * @property {string} key Mission unique key or ID
+ * @property {MissionKind} kind Category of mission
+ * @property {string} title Headline or mission name
+ * @property {string} text Mission description or briefing
+ * @property {string} status Progress or destination instructions
+ * @property {string|null} sys System ID to fly to (or null if anywhere)
+ * @property {string|null} [stellar] Destination stellar body ID
+ * @property {string|null} [tag] Mission card tag or category badge
+ * @property {number} [reward] Credit reward
+ * @property {boolean} [urgent] Whether mission has a deadline
+ * @property {boolean} [quest] Whether mission is part of a quest line
+ */
+
+/**
+ * HTML-escapes a string safely for insertion into template strings.
+ * @param {any} s Input value
+ * @returns {string} Escaped HTML string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"]/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
   );
+
+/**
+ * Resolves the parent system ID for a given stellar body.
+ * @param {string} stellar Stellar body ID
+ * @returns {string|null} System ID or null
+ */
 const sysOf = (stellar) => (STELLARS[stellar] ? STELLARS[stellar].system : null);
+
+/**
+ * Returns formatted location string "StellarName (SystemName)".
+ * @param {string} stellar Stellar body ID
+ * @returns {string} Location display string
+ */
 const placeName = (stellar) =>
   STELLARS[stellar] ? `${STELLARS[stellar].name} (${SYS[sysOf(stellar)].name})` : '';
 
-// [{ key, kind: 'story'|'job', title, text, status, sys, done }]  sys = the system to fly to next (null when anywhere will do)
+/**
+ * Computes active mission target entries including career steps, main story, faction arcs, and job board contracts.
+ * @param {any} G Game state object
+ * @returns {MissionTarget[]} Array of mission target objectives
+ */
 export function missionTargets(G) {
   const y = G.you;
   if (!y) return [];
@@ -168,6 +208,12 @@ export function missionTargets(G) {
 }
 
 // 2.4: the story journal under the active missions
+
+/**
+ * Renders the completed quests and stories journal section.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 function journalHtml(G) {
   const Q = G.you.quests;
   if (!Q || !Q.done || !Q.done.length) return '';
@@ -180,6 +226,12 @@ function journalHtml(G) {
     )
     .join('')}</details>`;
 }
+
+/**
+ * Renders the MISSIONS companion tab showing active missions, plot course buttons, and journal.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function missionsHtml(G) {
   const T = missionTargets(G);
   if (!T.length)

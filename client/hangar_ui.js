@@ -20,28 +20,90 @@ import {
 } from '/shared/hangar.js';
 import { officerStats, credits } from '/shared/rules.js';
 
+/**
+ * @typedef {Object} OfficerEntry
+ * @property {number|string} id Unique officer ID
+ * @property {string} name Officer name
+ * @property {string} race Faction / race identifier
+ * @property {string} role Role key (e.g. 'pilot', 'engineer')
+ * @property {number} rarity Rarity index (0..4)
+ * @property {number} lv Officer level
+ * @property {number} [xp] Current experience points
+ * @property {number} [cost] Credit hiring cost
+ */
+
+/**
+ * @typedef {Object} ShuttleInstance
+ * @property {number|string} id Shuttle instance ID
+ * @property {string} kind Shuttle model key
+ * @property {'idle'|'out'|'damaged'} state Current shuttle status
+ * @property {number|string|null} [crew] Assigned officer ID
+ * @property {number} [runs] Number of completed runs
+ * @property {number} [ends] Timestamp when current job finishes
+ * @property {number} [chance] Success probability (0..1)
+ * @property {any} [job] Active job details
+ */
+
+/**
+ * @typedef {Object} BoardedTarget
+ * @property {string} hull Hull identifier
+ * @property {string|number} fac Faction index or identifier
+ * @property {string} [name] Custom target name
+ */
+
+/**
+ * HTML-escapes a string safely for insertion into template strings.
+ * @param {any} s Input value
+ * @returns {string} Escaped HTML string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
+
+/**
+ * Formats duration in milliseconds to whole minutes or hours + minutes.
+ * @param {number} ms Duration in milliseconds
+ * @returns {string} Formatted duration string
+ */
 const mins = (ms) => {
   const m = Math.max(0, Math.ceil(ms / 60000));
   return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
 };
 const SLOT_NAME = { captain: 'Captain', bridge1: 'Bridge', bridge2: 'Bridge' };
 
+/**
+ * Formats an officer's passive stat bonuses into readable text.
+ * @param {OfficerEntry} o Officer object
+ * @returns {string} Formatted stat bonus text
+ */
 function statText(o) {
   return Object.entries(officerStats(o))
     .map(([k, v]) => `+${v}${k === 'fuel' ? '' : '%'} ${STAT_NAME[k]}`)
     .join(', ');
 }
+
+/**
+ * Renders an officer card with rarity color, stats, level, and optional actions.
+ * @param {any} G Game state object
+ * @param {OfficerEntry} o Officer object
+ * @param {string} [extra] Additional HTML content or buttons
+ * @returns {string} HTML markup
+ */
 function officerCard(G, o, extra) {
   const R = RARITY[o.rarity],
     F = FACTIONS[o.race];
   return `<div class="ocard" style="border-color:${R.color}55"><div class="oname"><b style="color:${R.color}">${esc(o.name)}</b> <span class="dim small">${R.name} ${ROLES[o.role].name} · <span style="color:${F.color}">${F.short}</span> · Lv ${o.lv}</span></div>
     <div class="small">${statText(o)}</div>${o.xp !== undefined && o.lv < MAX_LEVEL && o.id !== undefined && typeof o.id === 'number' ? `<div class="xpbar"><i style="width:${Math.min(100, (100 * o.xp) / XP_LEVEL(o.lv))}%"></i></div>` : ''}${extra || ''}</div>`;
 }
+
+/**
+ * Determines current assignment location or shuttle duty for an officer.
+ * @param {any} G Game state object
+ * @param {OfficerEntry} o Officer object
+ * @returns {string|null} Assignment description or null if off duty
+ */
 function where(G, o) {
   const y = G.you;
   for (const k of BRIDGE_SLOTS) if (y.bridge[k] === o.id) return SLOT_NAME[k];
@@ -51,6 +113,12 @@ function where(G, o) {
 }
 
 // ------------------------------------------------------------------ CREW tab (any landing): bar + roster + bridge
+
+/**
+ * Renders the CREW tab interface (bridge officers, species synergy, bar hires, roster, lower deck).
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function crewHtml(G) {
   const y = G.you,
     L = G.landed;
@@ -126,6 +194,12 @@ export function crewHtml(G) {
 }
 
 // ------------------------------------------------------------------ HANGAR: shuttles + job board (remote: send and track) + drydock (at the station)
+
+/**
+ * Renders compact sidebar shuttle activity status list.
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function shuttleSummary(G) {
   const y = G.you,
     now = Date.now();
@@ -146,6 +220,13 @@ export function shuttleSummary(G) {
       .join('')
   );
 }
+
+/**
+ * Renders the Hangar interface including active shuttles, shuttle construction, and the remote Job Board.
+ * @param {any} G Game state object
+ * @param {boolean} atHome Whether player is currently docked at their Personal Station
+ * @returns {string} HTML markup
+ */
 export function hangarHtml(G, atHome) {
   const y = G.you,
     now = Date.now(),
@@ -225,6 +306,13 @@ export function hangarHtml(G, atHome) {
 }
 
 // ------------------------------------------------------------------ research trees with a queue
+
+/**
+ * Renders the Research Lab tech trees, active research countdown, and research queue.
+ * @param {any} G Game state object
+ * @param {boolean} [interactive] Whether research actions are enabled
+ * @returns {string} HTML markup
+ */
 export function researchHtml(G, interactive) {
   const y = G.you,
     S = y.station,
@@ -250,6 +338,13 @@ export function researchHtml(G, interactive) {
   }
   return h;
 }
+
+/**
+ * Renders the Material crates inventory grid and crate refinement actions.
+ * @param {any} G Game state object
+ * @param {boolean} [interactive] Whether refining actions are interactive
+ * @returns {string} HTML markup
+ */
 export function materialsHtml(G, interactive) {
   const y = G.you;
   let h = `<div class="sect">MATERIALS</div><table class="tbl"><tr><th></th>${GRADES.map((g) => `<th>${g}</th>`).join('')}</tr>${MATERIALS.map((m) => `<tr><td>${m}</td>${y.mats[m].map((n, g) => `<td style="color:${n ? '#fff' : '#444'}">${n}${interactive && g < 4 && n >= REFINE_UP.need ? ` <a href="#" class="small" data-act="st" data-op="refine" data-mat="${m}" data-g="${g}" data-n="1" title="Refine ${REFINE_UP.need} into one grade ${GRADES[g + 1]} (${credits(REFINE_UP.cost[g])} cr)">▲</a>` : ''}</td>`).join('')}</tr>`).join('')}</table>`;
@@ -259,6 +354,13 @@ export function materialsHtml(G, interactive) {
 }
 
 // ------------------------------------------------------------------ boarding dialog
+
+/**
+ * Renders the modal dialog for boarding a disabled ship (plunder, capture, rescue/arrest).
+ * @param {any} G Game state object
+ * @param {BoardedTarget} t Target ship entity
+ * @returns {string} HTML markup
+ */
 export function boardHtml(G, t) {
   const H = G.A.ships[t.hull],
     F = FACTIONS[G.FAC[t.fac]],

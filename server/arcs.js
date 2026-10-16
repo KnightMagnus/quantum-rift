@@ -6,13 +6,33 @@ import { EXPEDITION_LORE } from '../shared/expeditions.js';
 import { TRAITS } from '../shared/syndicate.js';
 import { credits } from '../shared/rules.js';
 
+/**
+ * Clamp a numeric value between a lower and an upper bound.
+ * @param {number} v - Value to clamp.
+ * @param {number} a - Minimum allowed value.
+ * @param {number} b - Maximum allowed value.
+ * @returns {number} The clamped numeric value.
+ */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export const ArcsOperations = {
+  /**
+   * Initialize or retrieve the player's arc state dictionary.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Record<string, any>} Player arcs state dictionary.
+   */
   arcsInit(d) {
     d.arcs = d.arcs || {};
     return d.arcs;
   },
+  /**
+   * Get or initialize the progress state for a specific faction arc.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {string} f - Faction key.
+   * @returns {{step: number, active: any, done: boolean}} Arc progress state.
+   */
   arcState(d, f) {
     const A = this.arcsInit(d);
     if (!Object.prototype.hasOwnProperty.call(ARCS, f))
@@ -20,6 +40,14 @@ export const ArcsOperations = {
     return (A[f] = A[f] || { step: 0, active: null, done: false });
   }, // unknown arcs never touch the save
   // the arc step on offer at this world, if any
+  /**
+   * Evaluate the next arc mission step on offer at a stellar body.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {{id: string}} p - Current stellar body.
+   * @param {string} f - Faction key.
+   * @returns {Record<string, any> | null} Arc step offer details, or null if unavailable.
+   */
   arcOffer(d, p, f) {
     const X = ARCS[f],
       S = this.arcState(d, f),
@@ -33,11 +61,24 @@ export const ArcsOperations = {
       };
     return { ...st, fac: f };
   },
+  /**
+   * List all available arc mission offers at a stellar body.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @param {{id: string}} p - Current stellar body.
+   * @returns {Array<Record<string, any>>} List of arc mission offers.
+   */
   arcOffersAt(d, p) {
     return Object.keys(ARCS)
       .map((f) => this.arcOffer(d, p, f))
       .filter(Boolean);
   },
+  /**
+   * Build the network payload representing arc progress for the client.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Array<Record<string, any>>} Arc states summary for client.
+   */
   arcsPayload(d) {
     this.arcsInit(d);
     return Object.keys(ARCS).map((f) => {
@@ -66,6 +107,13 @@ export const ArcsOperations = {
       };
     });
   },
+  /**
+   * Handle player landing event to check arc step completion or trigger offers.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {{id: string}} p - Landed stellar body.
+   * @returns {void}
+   */
   arcOnLand(s, p) {
     const d = s.data;
     for (const f of Object.keys(ARCS)) {
@@ -89,6 +137,13 @@ export const ArcsOperations = {
           ref: 'Not now',
         });
   },
+  /**
+   * Accept an active faction arc mission offer.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {string} f - Faction key.
+   * @returns {void}
+   */
   arcAccept(s, f) {
     if (typeof f !== 'string' || !Object.prototype.hasOwnProperty.call(ARCS, f)) return;
     const d = s.data,
@@ -103,6 +158,13 @@ export const ArcsOperations = {
     this.you(s);
     this.landed(s);
   },
+  /**
+   * Complete the active step of a faction arc, awarding credits, reputation, and rewards.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {string} f - Faction key.
+   * @returns {void}
+   */
   arcComplete(s, f) {
     const d = s.data,
       X = ARCS[f],
@@ -154,6 +216,13 @@ export const ArcsOperations = {
     this.you(s);
   },
   // arriving in an arc system spawns what the step needs
+  /**
+   * Spawn encounter ships or derelicts upon arriving in a system required by an active arc.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {any} sp - Current space system instance.
+   * @returns {void}
+   */
   arcArrive(s, sp) {
     const d = s.data,
       e = s.ent;
@@ -207,6 +276,13 @@ export const ArcsOperations = {
       );
     }
   },
+  /**
+   * Record combat or rescue progress for an encounter associated with an active arc.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {any} x - Destroyed or rescued entity.
+   * @returns {void}
+   */
   arcProgress(s, x) {
     if (!x.arcOf || x.arcOf.sid !== s.id) return;
     const d = s.data,
@@ -228,6 +304,13 @@ export const ArcsOperations = {
 
   // ------------------------------------------------------------------ Farside expeditions
   // Offered on Farside job boards: survey a system, board the derelict the survey finds, bring its data core back.
+  /**
+   * Generate a procedural Farside survey expedition mission if eligible.
+   * @this {any}
+   * @param {any} p - Current stellar body.
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {Record<string, any> | null} Expedition mission object or null if ineligible.
+   */
   expeditionOffer(p, d) {
     if (!SYS[p.system].farside || !p.svc.includes('B')) return null;
     d.expd = d.expd || { n: 0 };
@@ -254,6 +337,13 @@ export const ArcsOperations = {
     };
   },
   // a finished expedition stage becomes the next one
+  /**
+   * Advance a completed expedition stage to the next stage or final reward.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {Record<string, any>} m - Completed expedition mission.
+   * @returns {void}
+   */
   expeditionNext(s, m) {
     const d = s.data,
       E = m.exp;

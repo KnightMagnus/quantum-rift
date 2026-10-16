@@ -12,9 +12,127 @@ import { ANOMALIES } from '/shared/fronts.js';
 import { STATES } from '/shared/living.js';
 import { SYS, STELLARS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
 import { weaponParams, BEAM_COLORS, weaponColor, weaponLook, price } from '/shared/rules.js';
+// ------------------------------------------------------------------ type definitions
+/**
+ * @typedef {Object} StellarBody
+ * @property {string} id Unique identifier for the stellar body
+ * @property {string} name Display name of the planet, station, or wormhole
+ * @property {number} x World X coordinate
+ * @property {number} y World Y coordinate
+ * @property {number} r Radius in game units
+ * @property {string[]} svc Service flags (e.g. 'L' land, 'T' trade, 'Y' shipyard, 'O' outfit)
+ * @property {string} [desc] Lore description
+ * @property {string} [faction] Controlling faction identifier
+ * @property {number} [station] Station visual design index
+ * @property {boolean} [hub] Whether this is a central hub station
+ * @property {boolean} [wormhole] Whether this stellar body is a wormhole gate
+ * @property {boolean} [site] Whether this is a special POI site
+ */
+
+/**
+ * @typedef {Object} GalaxySystem
+ * @property {string} id System identifier
+ * @property {string} name System display name
+ * @property {number} x Galactic coordinate X
+ * @property {number} y Galactic coordinate Y
+ * @property {string} faction Controlling faction ID
+ * @property {number} danger Danger rating index
+ * @property {string[]} links Connected system IDs
+ * @property {StellarBody[]} stellars Stellar bodies located in this system
+ * @property {string} [gate] Wormhole destination system ID if present
+ */
+
+/**
+ * @typedef {Object} CameraState
+ * @property {number} cx Camera center X world position
+ * @property {number} cy Camera center Y world position
+ * @property {number} z Zoom scale factor
+ * @property {number} W Viewport width in pixels
+ * @property {number} H Viewport height in pixels
+ */
+
+/**
+ * @typedef {Object} VisualEffect
+ * @property {string} type Effect kind ('boom' | 'spark' | 'flash' | 'blast' | 'dmg')
+ * @property {number} x World X coordinate
+ * @property {number} y World Y coordinate
+ * @property {number} t Spawn timestamp (performance.now())
+ * @property {number} d Duration in milliseconds
+ * @property {number} [size] Radius or scale of explosion/blast
+ * @property {string} [col] Color hex or CSS string for sparks
+ * @property {number} [r] Blast radius
+ * @property {number} [n] Damage number amount
+ * @property {boolean} [mine] Whether damage was dealt by or to the local player
+ */
+
+/**
+ * @typedef {Object} ShieldHit
+ * @property {number} t Hit timestamp (performance.now())
+ * @property {number} x World X coordinate of impact
+ * @property {number} y World Y coordinate of impact
+ */
+
+/**
+ * @typedef {Object} MapFit
+ * @property {number} k Scale multiplier
+ * @property {number} ox Pixel horizontal offset
+ * @property {number} oy Pixel vertical offset
+ */
+
+/**
+ * @typedef {Object} MapTransform
+ * @property {(gx: number) => number} tx Transform galactic X to canvas X
+ * @property {(gy: number) => number} ty Transform galactic Y to canvas Y
+ * @property {number} k Zoom / scale factor
+ */
+
+/**
+ * @typedef {Object} ShipHull
+ * @property {string} id Hull identifier
+ * @property {string} name Ship model display name
+ * @property {number} size Hull collision / rendering radius
+ * @property {boolean} [spr] True if rendered using multi-frame sprite sheet
+ * @property {number} [frames] Total rotation frames (typically 36)
+ * @property {number} [banks] Banking animation frames count
+ */
+
+/**
+ * @typedef {Object} RenderEntity
+ * @property {number} id Unique entity ID
+ * @property {string} hull Hull design identifier
+ * @property {number} rx Smoothed / interpolated world X coordinate
+ * @property {number} ry Smoothed / interpolated world Y coordinate
+ * @property {number} x Raw world X coordinate
+ * @property {number} y Raw world Y coordinate
+ * @property {number} a Heading angle in radians
+ * @property {number} vx Velocity X component
+ * @property {number} vy Velocity Y component
+ * @property {number} fl Entity status flags (thrust, ab, disabled, friendly, etc.)
+ * @property {number} sh Current shield amount
+ * @property {number} ar Current armor amount
+ * @property {string} fac Faction identifier
+ * @property {string} [name] Captain or ship name
+ * @property {number} [owner] Player owner ID if companion or drone
+ * @property {number} [pw] Power level or aura
+ * @property {number} [t] Timestamp of last update
+ */
+
 // 1.2 map views (after Endless Sky's map modes): colour each system by trade price, services, your standing, or danger
+/**
+ * Interpolates between two RGB color tuples.
+ * @param {[number, number, number]} a Start RGB tuple
+ * @param {[number, number, number]} b End RGB tuple
+ * @param {number} t Interpolation factor (0 to 1)
+ * @returns {string} Formatted rgb(r, g, b) string
+ */
 const lerpC = (a, b, t) =>
   `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * Math.max(0, Math.min(1, t)))).join(',')})`;
+/**
+ * Computes the best price-to-base ratio for a given commodity across a system's trade ports.
+ * @param {GalaxySystem} s System object
+ * @param {string} cid Commodity identifier
+ * @returns {number | null} Price ratio or null if no trade service available
+ */
 export function tradeRatio(s, cid) {
   const ps = s.stellars.filter((p) => p.svc && p.svc.includes('T') && !p.site);
   if (!ps.length) return null;
@@ -26,6 +144,13 @@ export function tradeRatio(s, cid) {
   }
   return best === null ? null : best / base;
 }
+/**
+ * Determines system display color on the map according to the selected map mode.
+ * @param {Record<string, any>} G Global client game state
+ * @param {GalaxySystem} s System object
+ * @param {boolean} seen Whether the system has been visited or discovered
+ * @returns {string} CSS color string
+ */
 function viewColor(G, s, seen) {
   const mode = G.mapMode || 'factions';
   if (mode === 'factions') return FACTIONS[s.faction].color;
@@ -59,6 +184,12 @@ const FAC = Object.keys(FACTIONS);
 const wormImg = new Image();
 wormImg.src = 'assets/wormhole.png';
 const sheets = new Map();
+/**
+ * Loads or retrieves a cached sprite sheet image for a given ship hull.
+ * @param {ShipHull} H Ship hull specification object
+ * @param {boolean} [glow] Whether to load the thruster glow variant
+ * @returns {HTMLImageElement} Cached or newly requested HTML Image
+ */
 export function sheet(H, glow) {
   // 2.6: the sharper full-colour sheets (12 wide, with banking frames) where a hull has them
   const k = H.id + (glow ? 'g' : '');
@@ -79,6 +210,11 @@ hubImg.src = 'assets/hub.png';
 const HUB_FRAMES = 18,
   HUB_PERIOD = 150; // seconds for one full turn
 
+/**
+ * Creates a deterministic pseudorandom number generator function from a seed.
+ * @param {number} seed Integer seed value
+ * @returns {() => number} Generator returning floats in [0, 1)
+ */
 function seeded(seed) {
   let s = seed >>> 0 || 7;
   return () => {
@@ -86,6 +222,11 @@ function seeded(seed) {
     return s / 4294967296;
   };
 }
+/**
+ * Hashes a string using 32-bit FNV-1a.
+ * @param {string} str Input string
+ * @returns {number} Unsigned 32-bit hash value
+ */
 function hashStr(str) {
   let h = 2166136261;
   for (const c of str) {
@@ -97,6 +238,11 @@ function hashStr(str) {
 
 // ------------------------------------------------------------------ backdrops
 const starCache = new Map();
+/**
+ * Generates and caches parallax star layers and faint nebulae for a solar system.
+ * @param {string} sysId System identifier
+ * @returns {{ layers: Array<{ L: Array<[number, number, number, number]>, depth: number, size: number }>, neb: Array<[number, number, number, number]> }} Star backdrop model
+ */
 function stars(sysId) {
   if (starCache.has(sysId)) return starCache.get(sysId);
   const r = seeded(hashStr(sysId)),
@@ -118,10 +264,16 @@ function stars(sysId) {
   return v;
 }
 // ------------------------------------------------------------------ 2.2 scenery: every system gets its own sky and its own clutter, seeded from its id.
+// 2.2 scenery: every system gets its own sky and its own clutter, seeded from its id.
 // Far (barely moves): the system's star, galaxies, a black hole or pulsar, gas giants, megastructure arcs. Middle: gas clouds,
 // asteroid drifts, ion storms. Near (in the system itself): abandoned stations, ancient wrecks, ring ruins, crystal formations,
 // debris fields, comets, relay satellites, cargo pods and nav beacons.
 const decorImgs = {};
+/**
+ * Loads and caches background decor assets by filename.
+ * @param {string} n Asset filename key
+ * @returns {HTMLImageElement} HTML Image instance
+ */
 function decorImg(n) {
   if (!decorImgs[n]) {
     const im = new Image();
@@ -130,6 +282,11 @@ function decorImg(n) {
   }
   return decorImgs[n];
 }
+/**
+ * Checks whether an image has completely loaded and has positive natural dimensions.
+ * @param {HTMLImageElement} im Image element to test
+ * @returns {boolean} True if ready to draw
+ */
 const ready = (im) => im.complete && im.naturalWidth;
 const decorCache = new Map();
 const NEB_BY_FAC = {
@@ -153,6 +310,11 @@ const SUNS = [
   ['255,255,255', '200,220,255'],
 ];
 const objImgs = {}; // 2.5: rendered asteroids and loot (tools/rift_objects.py)
+/**
+ * Loads and caches rendered 3D object images (asteroids, minerals, crates).
+ * @param {string} n Object name identifier
+ * @returns {HTMLImageElement} Cached or newly created image
+ */
 function objImg(n) {
   let im = objImgs[n];
   if (!im) {
@@ -162,6 +324,11 @@ function objImg(n) {
   return im;
 }
 let rockSprites = null;
+/**
+ * Generates or retrieves procedural procedural canvas textures for background asteroids.
+ * @param {number} k Asteroid variant index
+ * @returns {HTMLCanvasElement} Off-screen canvas sprite
+ */
 function rockSprite(k) {
   // a few dark, lumpy background asteroids, drawn once
   if (!rockSprites)
@@ -189,6 +356,11 @@ function rockSprite(k) {
     });
   return rockSprites[k % 6];
 }
+/**
+ * Procedurally generates and caches all ambient scenery and backdrop objects for a solar system.
+ * @param {GalaxySystem} S Solar system specification
+ * @returns {Record<string, any>} System scenery definitions object
+ */
 function decorFor(S) {
   if (decorCache.has(S.id)) return decorCache.get(S.id);
   if (S.arena) {
@@ -546,9 +718,31 @@ function decorFor(S) {
   decorCache.set(S.id, D);
   return D;
 }
+/**
+ * Projects a distant background object's coordinates into screen space using parallax depth.
+ * @param {{ x: number, y: number, depth: number }} o Object with position and depth factor
+ * @param {number} W Viewport width
+ * @param {number} H Viewport height
+ * @param {number} cx Camera center X
+ * @param {number} cy Camera center Y
+ * @param {number} zf Zoom scale factor for far objects
+ * @returns {[number, number]} Screen coordinates [x, y]
+ */
 function farXY(o, W, H, cx, cy, zf) {
   return [W / 2 + (o.x - cx * o.depth) * zf, H / 2 + (o.y - cy * o.depth) * zf];
 }
+/**
+ * Renders deepest background elements: primary star, distant galaxies, pulsars, and nebulae.
+ * @param {CanvasRenderingContext2D} ctx 2D rendering context
+ * @param {GalaxySystem} S Solar system specification
+ * @param {number} W Viewport width
+ * @param {number} H Viewport height
+ * @param {number} z Camera zoom level
+ * @param {number} cx Camera center X
+ * @param {number} cy Camera center Y
+ * @param {number} now Timestamp in milliseconds
+ * @returns {void}
+ */
 function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
   const D = decorFor(S),
     zf = Math.pow(z, 0.25),
@@ -699,6 +893,18 @@ function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
     }
   }
 }
+/**
+ * Renders mid-distance background clutter: asteroid drift belts and ion storm fields with lightning.
+ * @param {CanvasRenderingContext2D} ctx 2D rendering context
+ * @param {GalaxySystem} S Solar system specification
+ * @param {number} W Viewport width
+ * @param {number} H Viewport height
+ * @param {number} z Camera zoom factor
+ * @param {number} cx Camera center X
+ * @param {number} cy Camera center Y
+ * @param {number} now Timestamp in milliseconds
+ * @returns {void}
+ */
 function drawDecorMid(ctx, S, W, H, z, cx, cy, now) {
   const D = decorFor(S),
     t = now / 1000;
@@ -761,6 +967,18 @@ function drawDecorMid(ctx, S, W, H, z, cx, cy, now) {
     }
   }
 }
+/**
+ * Renders in-system foreground clutter: comets, derelicts, ancient ruins, satellites, and nav beacons.
+ * @param {CanvasRenderingContext2D} ctx 2D rendering context
+ * @param {GalaxySystem} S Solar system specification
+ * @param {number} W Viewport width
+ * @param {number} H Viewport height
+ * @param {number} z Camera zoom factor
+ * @param {(wx: number) => number} sx Screen X projector function
+ * @param {(wy: number) => number} sy Screen Y projector function
+ * @param {number} now Timestamp in milliseconds
+ * @returns {void}
+ */
 function drawDecorNear(ctx, S, W, H, z, sx, sy, now) {
   const D = decorFor(S),
     t = now / 1000,
@@ -904,6 +1122,11 @@ function drawDecorNear(ctx, S, W, H, z, sx, sy, now) {
   }
 }
 const planetCache = new Map();
+/**
+ * Converts a hexadecimal color string to an RGB number triplet.
+ * @param {string} h Hex color code (e.g. '#ff8800')
+ * @returns {[number, number, number]} RGB color values [r, g, b]
+ */
 function hexToRgb(h) {
   const n = parseInt(h.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -911,6 +1134,11 @@ function hexToRgb(h) {
 // 2.5: rendered station designs (tools/rift_stations.py), chosen by who built the station and what it is
 const stImgs = {},
   stPick = new Map();
+/**
+ * Determines the architectural 3D station sprite model name for a station.
+ * @param {StellarBody} p Station stellar body definition
+ * @returns {string} Station design archetype name
+ */
 export function stationDesign(p) {
   if (stPick.has(p.id)) return stPick.get(p.id);
   const sysId = p.system || (STELLARS[p.id] && STELLARS[p.id].system),
@@ -935,6 +1163,11 @@ export function stationDesign(p) {
   stPick.set(p.id, by);
   return by;
 }
+/**
+ * Retrieves the loaded HTMLImageElement for a station's rendered sprite model.
+ * @param {StellarBody} p Station stellar body
+ * @returns {HTMLImageElement | null} Loaded image or null if loading
+ */
 function stationSprite(p) {
   const k = stationDesign(p);
   let im = stImgs[k];
@@ -944,6 +1177,11 @@ function stationSprite(p) {
   }
   return im.complete && im.naturalWidth ? im : null;
 }
+/**
+ * Generates or retrieves a pre-rendered off-screen canvas sprite for a planet or station.
+ * @param {StellarBody} p Stellar body specification
+ * @returns {HTMLCanvasElement} Off-screen canvas containing the rendered body
+ */
 function planetImage(p) {
   if (planetCache.has(p.id)) return planetCache.get(p.id);
   const R = p.r,
@@ -1074,8 +1312,17 @@ function planetImage(p) {
 }
 
 // ------------------------------------------------------------------ effects
+/**
+ * Active transient visual effect particle objects.
+ * @type {VisualEffect[]}
+ */
 export const fx = [];
 const fxImgs = {}; // 2.5: rendered effects (tools/rift_fx.py)
+/**
+ * Loads or returns cached visual effect sprites.
+ * @param {string} n Effect sprite name
+ * @returns {HTMLImageElement} Effect sprite image
+ */
 function fxImg(n) {
   let im = fxImgs[n];
   if (!im) {
@@ -1085,6 +1332,13 @@ function fxImg(n) {
   return im;
 }
 for (const n of ['boom_a', 'boom_b', 'boom_big', 'shards', 'flare']) fxImg(n);
+/**
+ * Spawns an explosion visual effect with fireballs, shockwaves, smoke, and debris.
+ * @param {number} x World coordinate X
+ * @param {number} y World coordinate Y
+ * @param {number} [size=40] Explosion radius / size
+ * @returns {void}
+ */
 export function boom(x, y, size) {
   size = Math.max(20, size || 40);
   const n = Math.min(70, 14 + size / 3);
@@ -1149,6 +1403,13 @@ export function boom(x, y, size) {
   fx.push({ x, y, ring: true, life: 0.5, max: 0.5, r: size * 1.1, c: '#fff1c0' });
   if (size > 120) fx.push({ x, y, ring: true, life: 0.9, max: 0.9, r: size * 2, c: '#ffb070' });
 }
+/**
+ * Spawns directional weapon impact sparks and a momentary flash flare.
+ * @param {number} x World coordinate X
+ * @param {number} y World coordinate Y
+ * @param {string} [col='#fff'] Spark color code
+ * @returns {void}
+ */
 export function spark(x, y, col) {
   fx.push({ x, y, flare: true, life: 0.16, max: 0.16, r: 26, c: col });
   for (let i = 0; i < 6; i++) {
@@ -1166,20 +1427,52 @@ export function spark(x, y, col) {
     });
   }
 }
+/**
+ * Spawns a hyperspace jump departure or arrival visual flash effect.
+ * @param {number} x World coordinate X
+ * @param {number} y World coordinate Y
+ * @returns {void}
+ */
 export function flash(x, y) {
   // 2.1: a ship entering or leaving hyperspace: a hot core, a lens streak and two shock rings
   fx.push({ x, y, hyper: true, life: 0.75, max: 0.75, r: 70 });
   fx.push({ x, y, ring: true, life: 0.55, max: 0.55, r: 150, c: '#bfe2ff' });
   fx.push({ x, y, ring: true, life: 0.9, max: 0.9, r: 260, c: '#7aa8ff' });
 }
+/**
+ * Spawns an expanding circular blast wave effect.
+ * @param {number} x World coordinate X
+ * @param {number} y World coordinate Y
+ * @param {number} r Maximum blast radius
+ * @returns {void}
+ */
 export function blast(x, y, r) {
   fx.push({ x, y, ring: true, life: 0.35, max: 0.35, r, c: '#ffcf8a' });
 }
 // shield shimmer on the ship that was hit, and floating damage numbers
+/**
+ * Active shield hit shimmer animations mapped by entity ID.
+ * @type {Map<number, ShieldHit>}
+ */
 export const shieldHits = new Map();
+/**
+ * Triggers a shield impact ripple shimmer effect on the target ship.
+ * @param {number} id Ship entity ID
+ * @param {number} x Impact world X
+ * @param {number} y Impact world Y
+ * @returns {void}
+ */
 export function shieldHit(id, x, y) {
   shieldHits.set(id, { t: 0.35, hx: x, hy: y });
 }
+/**
+ * Creates or aggregates floating combat damage numbers on screen.
+ * @param {number} x World coordinate X
+ * @param {number} y World coordinate Y
+ * @param {number} n Damage points
+ * @param {boolean} mine Whether this damage was dealt by the local player
+ * @returns {void}
+ */
 export function dmgNumber(x, y, n, mine) {
   if (n < 1) return;
   for (let i = fx.length - 1; i >= Math.max(0, fx.length - 300); i--) {
@@ -1201,14 +1494,32 @@ export function dmgNumber(x, y, n, mine) {
     max: 0.9,
   });
 }
+/**
+ * Current camera screen shake intensity factor.
+ * @type {number}
+ */
 export let shake = 0;
+/**
+ * Global active camera state.
+ * @type {CameraState}
+ */
 export const cam = { cx: 0, cy: 0, z: 1, W: 1, H: 1 };
+/**
+ * Adds an impulse to the camera screen shake intensity.
+ * @param {number} k Shake magnitude to add/clamp
+ * @returns {void}
+ */
 export function addShake(k) {
   shake = Math.max(shake, k);
 }
 
 // projectile drawing by look
 const glowC = new Map(); // 2.5: a soft additive glow behind every bolt, and a fading trail
+/**
+ * Generates or retrieves a radial glow sprite for projectile weapons.
+ * @param {string} col Color hex string
+ * @returns {HTMLCanvasElement} Radial glow canvas sprite
+ */
 function glowSprite(col) {
   let c = glowC.get(col);
   if (!c) {
@@ -1225,6 +1536,16 @@ function glowSprite(col) {
   }
   return c;
 }
+/**
+ * Draws an individual projectile or missile shot on the canvas.
+ * @param {CanvasRenderingContext2D} ctx 2D rendering context
+ * @param {Record<string, any>} s Shot object definition
+ * @param {number} x Screen coordinate X
+ * @param {number} y Screen coordinate Y
+ * @param {number} z Zoom scale factor
+ * @param {number} now Timestamp in milliseconds
+ * @returns {void}
+ */
 function drawShot(ctx, s, x, y, z, now) {
   const W_ = s.W,
     col = s.col,
@@ -1417,6 +1738,11 @@ function drawShot(ctx, s, x, y, z, now) {
 
 // ------------------------------------------------------------------ mining fields
 const rockCache = new Map();
+/**
+ * Generates and caches an off-screen canvas sprite for a minable asteroid or gas deposit.
+ * @param {Record<string, any>} k Mining rock or gas pocket definition
+ * @returns {HTMLCanvasElement} Off-screen canvas sprite
+ */
 function rockImage(k) {
   const key = k.id;
   if (rockCache.has(key)) return rockCache.get(key);
@@ -1512,6 +1838,16 @@ const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae
 
 // ------------------------------------------------------------------ main draw
 let tagRects = []; // 2.6: name tags already drawn this frame, so close ships' tags stack instead of overlapping
+/**
+ * Master rendering pipeline: backdrop, stellar bodies, mining fields, loot, shots, beams, ships, effects, and HUD overlays.
+ * @param {Record<string, any>} G Game state object
+ * @param {CanvasRenderingContext2D} ctx Destination canvas rendering context
+ * @param {number} W Viewport width in pixels
+ * @param {number} H Viewport height in pixels
+ * @param {number} dt Delta time in seconds since previous frame
+ * @param {number} now Timestamp in milliseconds
+ * @returns {void}
+ */
 export function draw(G, ctx, W, H, dt, now) {
   tagRects = [];
   const me = G.view,
@@ -2003,6 +2339,18 @@ export function draw(G, ctx, W, H, dt, now) {
   hudOverlay(G, ctx, W, H, now, sx, sy, me);
 }
 // ------------------------------------------------------------------ 2.0 screen-space feedback: edge arrows, damage, jumps
+/**
+ * Renders an off-screen pointing arrow and label at the viewport perimeter.
+ * @param {CanvasRenderingContext2D} ctx 2D rendering context
+ * @param {number} W Viewport width
+ * @param {number} H Viewport height
+ * @param {number} x World-to-screen projected X coordinate
+ * @param {number} y World-to-screen projected Y coordinate
+ * @param {string} col CSS color string
+ * @param {string} label Display text
+ * @param {number} dist Distance in kilometers
+ * @returns {void}
+ */
 function edgeArrow(ctx, W, H, x, y, col, label, dist) {
   const m = 46,
     cxs = W / 2,
@@ -2048,6 +2396,17 @@ const STARS = Array.from({ length: 170 }, (_, i) => {
   return { x: r(1), y: r(2), z: 0.35 + r(3) * 0.65, c: r(4) < 0.12 ? 'w' : r(4) < 0.4 ? 'b' : 'n' };
 });
 const STAR_COL = { n: '220,235,255', b: '150,195,255', w: '255,215,170' };
+/**
+ * Renders directional starfield velocity streaks during hyperspace transitions.
+ * @param {CanvasRenderingContext2D} ctx 2D rendering context
+ * @param {number} W Viewport width
+ * @param {number} H Viewport height
+ * @param {number} a Ship heading angle
+ * @param {number} len Streak length
+ * @param {number} alpha Opacity factor
+ * @param {number} drift Drift distance
+ * @returns {void}
+ */
 function streaks(ctx, W, H, a, len, alpha, drift) {
   // star streaks lying along heading a, sliding backwards past you
   const ux = Math.sin(a),
@@ -2071,6 +2430,18 @@ function streaks(ctx, W, H, a, len, alpha, drift) {
     ctx.stroke();
   }
 }
+/**
+ * Renders hyperspace jump departure spool animation, rings, and flash.
+ * @param {Record<string, any>} G Game state
+ * @param {CanvasRenderingContext2D} ctx 2D context
+ * @param {number} W Viewport width
+ * @param {number} H Viewport height
+ * @param {number} now Timestamp in milliseconds
+ * @param {number} x Ship screen X
+ * @param {number} y Ship screen Y
+ * @param {number} a Ship heading angle
+ * @returns {void}
+ */
 function hyperOut(G, ctx, W, H, now, x, y, a) {
   const st = G.you && G.you.shipStats,
     dur = st && st.jumpFast ? 600 : 1600,
@@ -2125,6 +2496,18 @@ function hyperOut(G, ctx, W, H, now, x, y, a) {
   }
   ctx.globalCompositeOperation = 'source-over';
 }
+/**
+ * Renders hyperspace jump arrival deceleration bloom and shockwave rings.
+ * @param {Record<string, any>} G Game state
+ * @param {CanvasRenderingContext2D} ctx 2D context
+ * @param {number} W Viewport width
+ * @param {number} H Viewport height
+ * @param {number} t Milliseconds elapsed since arrival
+ * @param {number} x Ship screen X
+ * @param {number} y Ship screen Y
+ * @param {number} a Ship heading angle
+ * @returns {void}
+ */
 function hyperIn(G, ctx, W, H, t, x, y, a) {
   const k = t / 1100; // 0 at arrival .. 1 settled
   ctx.globalCompositeOperation = 'lighter';
@@ -2158,6 +2541,18 @@ function hyperIn(G, ctx, W, H, t, x, y, a) {
     ctx.fillRect(0, 0, W, H);
   }
 }
+/**
+ * Renders screen-space HUD indicators, off-screen arrows, and damage vignettes.
+ * @param {Record<string, any>} G Game state
+ * @param {CanvasRenderingContext2D} ctx 2D context
+ * @param {number} W Viewport width
+ * @param {number} H Viewport height
+ * @param {number} now Timestamp in milliseconds
+ * @param {(wx: number) => number} sx Screen X projector function
+ * @param {(wy: number) => number} sy Screen Y projector function
+ * @param {ClientView | null} me Current player view state
+ * @returns {void}
+ */
 function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
   if (!me) return;
   const S = SYS[G.sys];
@@ -2237,6 +2632,17 @@ function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
     ctx.fillRect(0, 0, W, H);
   }
 }
+/**
+ * Renders an individual ship sprite, engine trails, shield/armor bars, and name tags.
+ * @param {Record<string, any>} G Game state
+ * @param {CanvasRenderingContext2D} ctx Destination canvas rendering context
+ * @param {RenderEntity} e Ship entity to draw
+ * @param {number} x Screen coordinate X
+ * @param {number} y Screen coordinate Y
+ * @param {number} z Zoom scale factor
+ * @param {number} now Timestamp in milliseconds
+ * @returns {void}
+ */
 function drawShip(G, ctx, e, x, y, z, now) {
   const H = G.A.ships[e.hull];
   if (!H) return;
@@ -2419,6 +2825,12 @@ function drawShip(G, ctx, e, x, y, z, now) {
 }
 
 // ------------------------------------------------------------------ radar
+/**
+ * Renders the circular cockpit radar display with blips for ships, planets, loot, and asteroids.
+ * @param {Record<string, any>} G Game state object
+ * @param {CanvasRenderingContext2D} ctx Radar canvas rendering context
+ * @returns {void}
+ */
 export function radar(G, ctx) {
   const W = ctx.canvas.width,
     H = ctx.canvas.height,
@@ -2531,11 +2943,24 @@ const BOUNDS = (() => {
     y1: Math.max(...ys) + 60,
   };
 })();
+/**
+ * Calculates optimal galaxy map viewport centering and zoom factor to fit all systems.
+ * @param {number} W Canvas pixel width
+ * @param {number} H Canvas pixel height
+ * @returns {MapFit & { cx: number, cy: number, fit: number }} Map bounds fit object
+ */
 export function mapFit(W, H) {
   const B = BOUNDS,
     k = Math.min(W / (B.x1 - B.x0), H / (B.y1 - B.y0));
   return { cx: (B.x0 + B.x1) / 2, cy: (B.y0 + B.y1) / 2, k, fit: k };
 }
+/**
+ * Renders the 2D galaxy starmap or minimap including hyperspace lanes, faction territories, and route plots.
+ * @param {Record<string, any>} G Game state object
+ * @param {CanvasRenderingContext2D} ctx Starmap canvas rendering context
+ * @param {{ big?: boolean }} [opts={}] Map render options (big: full interactive starmap)
+ * @returns {void}
+ */
 export function galaxy(G, ctx, opts = {}) {
   const W = ctx.canvas.width,
     H = ctx.canvas.height,
@@ -2923,6 +3348,14 @@ export function galaxy(G, ctx, opts = {}) {
     }
   }
 }
+/**
+ * Tests for system click selection hit at given screen coordinates on galaxy map or minimap.
+ * @param {Record<string, any>} G Game state
+ * @param {number} mx Screen X coordinate
+ * @param {number} my Screen Y coordinate
+ * @param {boolean} [mini] Whether testing against companion minimap
+ * @returns {string | null} Hit solar system ID or null
+ */
 export function mapHit(G, mx, my, mini) {
   const t = mini ? G.miniXform : G.mapXform;
   if (!t) return null;
@@ -2939,12 +3372,22 @@ export function mapHit(G, mx, my, mini) {
   }
   return best;
 }
+/**
+ * Retrieves active salvage mission beacon world coordinates in current system.
+ * @param {Record<string, any>} G Game state
+ * @returns {Array<[number, number]>} Array of salvage point world coordinates [x, y]
+ */
 export function salvagePoints(G) {
   const out = [];
   for (const m of (G.you && G.you.missions) || [])
     if (m.type === 'salvage' && m.sys === G.sys && !m.done && m.point) out.push(m.point);
   return out;
 }
+/**
+ * Retrieves unvisited planetary survey beacon coordinates for active missions in current system.
+ * @param {Record<string, any>} G Game state
+ * @returns {Array<[number, number]>} Array of survey point world coordinates [x, y]
+ */
 export function surveyPoints(G) {
   const out = [];
   if (!G.you) return out;

@@ -222,6 +222,15 @@ const ROLE_FIT = {
   miner: (s) => s.role === 'survey' || s.cargo >= 40,
   explorer: (s) => s.role === 'explorer' || s.role === 'interceptor',
 };
+
+/**
+ * Determines the best ship hull a rival captain can afford and fly according to their career and wealth.
+ * @param {Object} A - Game assets database containing ship hull definitions.
+ * @param {string} fac - Faction allegiance.
+ * @param {number} wealth - Total net worth / credits available to the rival.
+ * @param {string} [kind] - Rival career kind (e.g. 'hunter', 'trader', 'miner').
+ * @returns {number} Hull ID of the chosen ship.
+ */
 export function rivalHull(A, fac, wealth, kind) {
   const all = (FACTION_HULLS[fac] || FACTION_HULLS.spacer)
     .map((h) => A.ships[h])
@@ -232,6 +241,12 @@ export function rivalHull(A, fac, wealth, kind) {
   for (const s of pool) if (s.cost <= wealth * 0.6) best = s;
   return best ? best.id : 703;
 }
+
+/**
+ * Evaluates rival captain disposition mood based on player relationship standing.
+ * @param {number} rel - Relationship standing score between player and rival (-100 to +100).
+ * @returns {RivalMood} Disposition mood classification.
+ */
 export const MOOD = (rel) =>
   rel <= -60
     ? 'nemesis'
@@ -242,6 +257,11 @@ export const MOOD = (rel) =>
         : rel >= 25
           ? 'friendly'
           : 'neutral';
+
+/**
+ * Display names corresponding to rival relationship mood states.
+ * @type {Object.<string, string>}
+ */
 export const MOOD_LABEL = {
   nemesis: 'Nemesis',
   rival: 'Rival',
@@ -251,6 +271,10 @@ export const MOOD_LABEL = {
 };
 
 // what they say when hailed, by career and mood
+/**
+ * Dynamic hailing dialogue responses categorized by career path and mood disposition.
+ * @type {Object.<string, Object.<string, string>>}
+ */
 export const HAIL_LINES = {
   trader: {
     nemesis: 'You cost me a fortune, and I keep my ledgers. Every line of them.',
@@ -288,6 +312,11 @@ export const HAIL_LINES = {
     ally: 'Fly with me a while. The Hollow takes care of its own.',
   },
 };
+
+/**
+ * Formatting templates for galaxy newsfeed broadcasts about rival captain activities.
+ * @type {Object.<string, function(...any): string>}
+ */
 export const NEWS_TEMPLATES = {
   upgrade: (n, ship, place) => `${n} was seen at ${place} taking delivery of a new ${ship}.`,
   bounty: (n, target) => `${n} collected the bounty on ${target}.`,
@@ -303,6 +332,10 @@ export const NEWS_TEMPLATES = {
 
 // combat rating (Endless Sky style): earned from the strength of every ship you destroy; higher ranks unlock tougher,
 // better-paid bounty contracts
+/**
+ * Combat rating progression thresholds as [requiredScore, rankTitle] pairs.
+ * @type {Array<[number, string]>}
+ */
 export const RANKS = [
   [0, 'Harmless'],
   [400, 'Mostly Harmless'],
@@ -313,6 +346,12 @@ export const RANKS = [
   [90000, 'Deadly'],
   [220000, 'Elite'],
 ];
+
+/**
+ * Computes current player combat rating rank and progress to next rank.
+ * @param {number} score - Accumulated combat rating points.
+ * @returns {CombatRankInfo} Rank information and target score.
+ */
 export function combatRank(score) {
   let i = 0;
   for (let k = 0; k < RANKS.length; k++) if (score >= RANKS[k][0]) i = k;
@@ -323,7 +362,12 @@ export function combatRank(score) {
     score: Math.round(score),
   };
 }
+
 // personal lines for the two named-by-request captains
+/**
+ * Custom hailing dialogue for specially-named captains.
+ * @type {Object.<string, Object.<string, string>>}
+ */
 export const HAIL_SPECIAL = {
   'Madcow Soul': {
     nemesis: 'MOOOO-ve aside, Captain, or I go straight through you. The Stampede does not brake.',

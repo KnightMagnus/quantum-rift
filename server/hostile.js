@@ -6,18 +6,52 @@ import { SPECIALISTS, SPEC_BY_KEY, BP_NEED } from '../shared/specialty.js';
 import { credits } from '../shared/rules.js';
 import { COOP_HOLDOUT } from '../shared/coop.js';
 
+/**
+ * Clamp a numeric value between minimum and maximum bounds.
+ * @param {number} v - Value to clamp.
+ * @param {number} a - Minimum value.
+ * @param {number} b - Maximum value.
+ * @returns {number} Clamped value.
+ */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/**
+ * Select a random element from an array.
+ * @template T
+ * @param {T[]} a - Array of items.
+ * @returns {T} Selected item.
+ */
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 export const HostileOperations = {
+  /**
+   * Initialize holdout tracking state on player data.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {void}
+   */
   hostInit(d) {
     d.holdout = d.holdout || { best: 0, lastT: 0 };
   },
+  /**
+   * Calculate effective combat power of the player's active ship and wingmates.
+   * @this {any}
+   * @param {Record<string, any>} d - Saved player data.
+   * @returns {number} Player power rating.
+   */
   myPower(d) {
     return playerPower(this.A, d.ship.hull, this.bonus(d), this.wingHulls ? this.wingHulls(d) : []);
   },
 
   // ------------------------------------------------------------------ chests (called from Space.kill)
+  /**
+   * Roll for and spawn a faction loot chest when an NPC ship is destroyed.
+   * @this {any}
+   * @param {any} space - Space instance where the kill occurred.
+   * @param {any} s - Destroyed ship entity.
+   * @param {any} by - Attacking entity that destroyed the ship.
+   * @returns {void}
+   */
   maybeChest(space, s, by) {
     const C = CHESTS[s.faction];
     if (!C || !by || !by.player) return;
@@ -34,6 +68,13 @@ export const HostileOperations = {
       kind: 5,
     });
   },
+  /**
+   * Open a loot chest, awarding credits, crafting materials, blueprints, and specialty items.
+   * @this {any}
+   * @param {any} s - Player session opening the chest.
+   * @param {{chest: string, lvl?: number}} it - Loot item details.
+   * @returns {boolean} True if opened successfully.
+   */
   openChest(s, it) {
     const d = s.data,
       C = CHESTS[it.chest],
@@ -67,6 +108,12 @@ export const HostileOperations = {
   },
 
   // ------------------------------------------------------------------ Station Holdout (solo wave defense at your own station)
+  /**
+   * Start a Station Holdout wave defense activity from the player's personal station.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @returns {void}
+   */
   holdoutStart(s) {
     const d = s.data,
       p = STELLARS[d.stellar];
@@ -90,6 +137,12 @@ export const HostileOperations = {
     this.db.touch();
     this.you(s);
   },
+  /**
+   * Update the active holdout state, managing waves, platform defense, and completion checks.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @returns {void}
+   */
   holdoutTick(s) {
     const d = s.data;
     this.hostInit(d);
@@ -181,6 +234,14 @@ export const HostileOperations = {
       this.you(s);
     }
   },
+  /**
+   * Conclude a holdout event, despawn platforms/enemies, and distribute rewards.
+   * @this {any}
+   * @param {any} s - Player session.
+   * @param {boolean} won - Whether all ten waves were completed.
+   * @param {string} [why] - Reason for termination if incomplete.
+   * @returns {void}
+   */
   holdoutEnd(s, won, why) {
     const d = s.data,
       H = d.holdout.active;
@@ -231,9 +292,22 @@ export const HostileOperations = {
     this.db.touch();
     this.you(s);
   },
+  /**
+   * Callback invoked when a ship is destroyed during a holdout.
+   * @this {any}
+   * @param {any} e - Defeated ship entity.
+   * @returns {void}
+   */
   onHoldoutKill(e) {}, // waves are tracked by id each tick
 
   // ------------------------------------------------------------------ the Umbral Eclipse (spawned by Space.spawnTraffic)
+  /**
+   * Compute the spawn probability for an Umbral Eclipse cell in a system.
+   * @this {any}
+   * @param {Record<string, any>} S - System metadata.
+   * @param {Record<string, any>} [m] - Active sector modifiers.
+   * @returns {number} Spawn probability.
+   */
   eclipseChance(S, m) {
     if (S.farside) return 0;
     let c =

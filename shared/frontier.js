@@ -1,7 +1,96 @@
 // Quantum Rift 0.7 "Frontier Life" data: planetary colonies, station defense, ship mastery, the arena, the player
 // exchange and leaderboards. Shared by server and client.
 
+/**
+ * @typedef {Object} ColonyConfig
+ * @property {number} max - Base maximum number of colonies allowed per captain.
+ * @property {number} maxAtOps5 - Colony cap when Station Ops reaches level 5.
+ * @property {number} cost - Founding cost in credits.
+ * @property {Array<[string, number, number]>} mats - Required crafting materials as [materialKey, gradeIndex, quantity].
+ * @property {number} storeHours - Storage buffer capacity in hours before colony warehouses fill up.
+ */
+
+/**
+ * @typedef {Object} ColonyLevelInfo
+ * @property {number} slots - Number of building plots available at this level.
+ * @property {number} mult - Production rate multiplier.
+ * @property {number} [cost] - Credit cost to upgrade to this level.
+ * @property {Array<[string, number, number]>} [mats] - Required materials to upgrade.
+ */
+
+/**
+ * @typedef {Object} ColonyBuilding
+ * @property {string} name - Building display name.
+ * @property {number} cost - Construction cost in credits.
+ * @property {Object.<string, number>} [produce] - Commodity tons or credits produced per hour.
+ * @property {Object.<string, number>} [buff] - Permanent player ship stat bonuses while owned.
+ * @property {string} desc - In-game description of building output or benefits.
+ */
+
+/**
+ * @typedef {Object} DefenseLevelInfo
+ * @property {number} rating - Station defense rating score.
+ * @property {number} [cost] - Credit upgrade cost.
+ * @property {Array<[string, number, number]>} [mats] - Upgrade crafting materials.
+ */
+
+/**
+ * @typedef {Object} DefenseConfig
+ * @property {number} everyH - Interval in hours between automated station raid attempts.
+ * @property {number} minOps - Minimum Ops level required before station raids begin.
+ * @property {DefenseLevelInfo[]} levels - Defense upgrades and defensive ratings.
+ * @property {number} opsRating - Defense rating contributed per Ops level.
+ * @property {number} gridBonus - Defense rating bonus provided by Ops 5 Defense Grid research.
+ * @property {number} waveMin - Live raid wave encounter duration in minutes.
+ */
+
+/**
+ * @typedef {Object} MasteryConfig
+ * @property {number[]} tiers - XP thresholds required to reach mastery tiers 1 through 5.
+ * @property {Array<Object.<string, number>>} bonus - Cumulative stat buffs per mastery tier.
+ * @property {Object.<string, number>} xp - XP granted per gameplay action.
+ */
+
+/**
+ * @typedef {Object} ArenaConfig
+ * @property {Object.<string, number>} modes - Team sizes supported per arena game mode.
+ * @property {number} matchMin - Match time limit in minutes.
+ * @property {number} k - Standard ELO rating K-factor.
+ * @property {number} start - Default baseline starting rating.
+ * @property {number} size - Combat arena combat boundary dimension in units.
+ */
+
+/**
+ * @typedef {Object} ArenaSystem
+ * @property {string} id - Unique system ID for the arena match instance.
+ * @property {string} name - Display name of the arena system.
+ * @property {string} faction - Faction controlling the instance.
+ * @property {number} x - Galactic map X coordinate.
+ * @property {number} y - Galactic map Y coordinate.
+ * @property {string[]} links - Hyperspace jump route connections.
+ * @property {number} danger - System danger rating.
+ * @property {any[]} stellars - Celestial bodies and stations.
+ * @property {any[]} fields - Asteroid or dust fields.
+ * @property {boolean} arena - Flag indicating this system is an instanced arena combat zone.
+ */
+
+/**
+ * @typedef {Object} ExchangeConfig
+ * @property {number} fee - Player transaction fee fraction (e.g. 0.02 = 2%).
+ * @property {number} maxOrders - Maximum active trade orders permitted per captain.
+ * @property {number} maxPrice - Absolute maximum listing price in credits.
+ */
+
+/**
+ * @typedef {Object} LeaderboardCategory
+ * @property {string} name - Human-readable leaderboard title.
+ */
+
 // ------------------------------------------------------------------ planetary colonies (unsettled planets in Frontier and the Deep)
+/**
+ * Planetary colony foundation limits, costs, and warehouse limits.
+ * @type {ColonyConfig}
+ */
 export const COLONY = {
   max: 2,
   maxAtOps5: 3,
@@ -12,6 +101,11 @@ export const COLONY = {
   ],
   storeHours: 24,
 };
+
+/**
+ * Colony progression tiers detailing building slots, multipliers, and upgrade requirements.
+ * @type {Array<ColonyLevelInfo|null>}
+ */
 export const COLONY_LEVELS = [
   // level -> building slots, production multiplier, upgrade cost
   null,
@@ -55,7 +149,12 @@ export const COLONY_LEVELS = [
     ],
   },
 ];
+
 // produce: commodity tons per hour (or credits per hour); buff: permanent ship bonus while you own the building (capped per stat)
+/**
+ * Constructible colony infrastructure buildings, outputs, and passive player bonuses.
+ * @type {Object.<string, ColonyBuilding>}
+ */
 export const BUILDINGS = {
   farm: {
     name: 'Hydroponic Farms',
@@ -118,9 +217,18 @@ export const BUILDINGS = {
     desc: 'Permanent +2% speed and +50 fuel.',
   },
 };
+
+/**
+ * Maximum cumulative stat bonuses attainable from colony structures.
+ * @type {Object.<string, number>}
+ */
 export const BUFF_CAP = { shieldPct: 9, armorPct: 9, damagePct: 6, speedPct: 6, fuel: 150 };
 
 // ------------------------------------------------------------------ station defense: raids on Personal Stations
+/**
+ * Station security and defense parameters against periodic raider attacks.
+ * @type {DefenseConfig}
+ */
 export const DEFENSE = {
   everyH: 8,
   minOps: 2,
@@ -161,6 +269,10 @@ export const DEFENSE = {
 };
 
 // ------------------------------------------------------------------ ship mastery (per hull)
+/**
+ * Ship mastery configuration, tier XP thresholds, bonuses, and XP sources.
+ * @type {MasteryConfig}
+ */
 export const MASTERY = {
   tiers: [0, 300, 1000, 2500, 6000], // xp to reach tiers 1-5
   bonus: [
@@ -173,6 +285,12 @@ export const MASTERY = {
   ],
   xp: { kill: 1 / 8, jump: 3, job: 15, mined: 0.3 },
 };
+
+/**
+ * Calculates current ship mastery tier (1-5) achieved based on earned XP.
+ * @param {number} xp - Accumulated hull mastery experience points.
+ * @returns {number} Mastery tier level (1 to 5).
+ */
 export function masteryTier(xp) {
   let t = 1;
   for (let i = 1; i < MASTERY.tiers.length; i++) if (xp >= MASTERY.tiers[i]) t = i + 1;
@@ -180,6 +298,10 @@ export function masteryTier(xp) {
 }
 
 // ------------------------------------------------------------------ the arena: instanced, rated PvP away from the open galaxy
+/**
+ * Arena instanced combat rules and rating parameters.
+ * @type {ArenaConfig}
+ */
 export const ARENA = {
   modes: { '1v1': 1, '2v2': 2, '4v4': 4 },
   matchMin: 5,
@@ -187,6 +309,12 @@ export const ARENA = {
   start: 1000,
   size: 1600,
 };
+
+/**
+ * Instantiates a temporary star system structure to host an arena match.
+ * @param {string} id - Unique match or session identifier.
+ * @returns {ArenaSystem} Stand-in star system data for the arena combat instance.
+ */
 export function arenaSystem(id) {
   // a stand-in system for an arena instance (registered on demand on both server and client)
   return {
@@ -202,15 +330,32 @@ export function arenaSystem(id) {
     arena: true,
   };
 }
+
+/**
+ * Calculates standard Elo rating point change following a match outcome.
+ * @param {number} ra - Rating of player A.
+ * @param {number} rb - Rating of player B.
+ * @param {boolean} aWon - True if player A won; false if player B won.
+ * @param {number} [k=32] - Rating change sensitivity factor.
+ * @returns {number} Net rating points gained or lost by player A.
+ */
 export function elo(ra, rb, aWon, k = ARENA.k) {
   const ea = 1 / (1 + Math.pow(10, (rb - ra) / 400));
   return Math.round(k * ((aWon ? 1 : 0) - ea));
 }
 
 // ------------------------------------------------------------------ the exchange (player market)
+/**
+ * Player-to-player trade exchange rules and transaction constraints.
+ * @type {ExchangeConfig}
+ */
 export const EXCHANGE = { fee: 0.02, maxOrders: 12, maxPrice: 1e9 };
 
 // ------------------------------------------------------------------ leaderboards
+/**
+ * Ranked leaderboard categories and display labels.
+ * @type {Object.<string, LeaderboardCategory>}
+ */
 export const BOARDS = {
   earned: { name: 'Credits earned' },
   kills: { name: 'Ships destroyed' },

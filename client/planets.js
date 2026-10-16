@@ -3,6 +3,24 @@
 // clouds, night-side city lights or lava glow, an atmosphere rim and, for some giants, rings.
 // planetSprite(p, now) -> { canvas, scale }: scale is world units per canvas pixel.
 
+/**
+ * @typedef {object} PlanetDef
+ * @property {string} id - World celestial identifier.
+ * @property {string} [name] - Display name of the world.
+ * @property {string} [desc] - Descriptive text lore for planet classification.
+ * @property {string} [kind] - Body type (e.g., 'planet', 'moon', 'station').
+ * @property {string} [color] - Hex color code.
+ * @property {number} r - Celestial radius in world units.
+ */
+
+/**
+ * @typedef {object} PlanetSprite
+ * @property {HTMLCanvasElement | HTMLImageElement} canvas - Canvas or image buffer for rendering.
+ * @property {number} S - Canvas diameter dimension in pixels.
+ * @property {number} D - Projected planetary disk diameter in pixels.
+ * @property {number} scale - Scaling factor converting canvas pixels to world units.
+ */
+
 const TW = 512,
   TH = 256;
 
@@ -108,6 +126,11 @@ function hsl(c) {
 }
 
 // ---------------------------------------------------------------- what kind of world is it?
+/**
+ * Classifies a stellar body into a procedural or visual planet category.
+ * @param {PlanetDef} p - Stellar object descriptor.
+ * @returns {string} Planet biome category (e.g. 'earth', 'lava', 'gas', 'ocean', 'terran', 'desert', 'ice', 'crystal', 'toxic', 'barren').
+ */
 export function planetType(p) {
   if (p.id === 'earth') return 'earth';
   if (p.id === 'luna') return 'barren';
@@ -1023,6 +1046,12 @@ function renderRendered(P, uOff, cOff) {
   c.drawImage(P.disk, (S - D) / 2, (S - D) / 2);
   if (T.front) c.drawImage(T.front, 0, 0, S, S);
 }
+/**
+ * Generates or retrieves the lit, rotating canvas sprite for a planet or moon.
+ * @param {PlanetDef} p - Stellar object descriptor.
+ * @param {number} now - High-resolution timestamp in milliseconds.
+ * @returns {PlanetSprite | null} Active planet sprite buffer with rendering metrics, or null if loading.
+ */
 export function planetSprite(p, now) {
   const R = chooseRendered(p);
   if (R) {

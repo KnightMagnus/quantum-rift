@@ -11,11 +11,65 @@ import {
 import { credits, route } from '/shared/rules.js';
 import { STATES } from '/shared/living.js';
 
+/**
+ * @typedef {Object} GoalEntry
+ * @property {string} type Goal type key
+ * @property {number} n Required count or target amount
+ * @property {number} got Current progress count or amount
+ * @property {boolean} [claimed] Whether reward has been claimed
+ */
+
+/**
+ * @typedef {Object} WorldEvent
+ * @property {string} name Event name
+ * @property {string} desc Event description
+ * @property {number} [until] End timestamp
+ */
+
+/**
+ * @typedef {Object} WorldInvasion
+ * @property {string} name Boss / fleet name
+ * @property {string} sys System identifier
+ * @property {number} until Expiration timestamp
+ */
+
+/**
+ * @typedef {Object} ArmadaMember
+ * @property {string} name Member captain name
+ * @property {boolean} online Online status
+ * @property {string} [sys] Current system name
+ */
+
+/**
+ * @typedef {Object} ArmadaState
+ * @property {string} name Armada group name
+ * @property {string} leader Group leader captain name
+ * @property {ArmadaMember[]} members Member roster
+ */
+
+/**
+ * @typedef {Object} CalendarEvent
+ * @property {string} name Event title
+ * @property {number} start Start timestamp
+ * @property {number} end End timestamp
+ */
+
+/**
+ * HTML-escapes a string safely for insertion into template strings.
+ * @param {any} s Input value
+ * @returns {string} Escaped HTML string
+ */
 const esc = (s) =>
   String(s ?? '').replace(
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
+
+/**
+ * Formats time remaining until a timestamp into days, hours, or minutes.
+ * @param {number} t Future timestamp in ms
+ * @returns {string} Formatted duration (e.g. '2d 5h', '3h 12m', or '45m')
+ */
 const left = (t) => {
   const m = Math.max(0, Math.round((t - Date.now()) / 60000));
   return m >= 1440
@@ -25,6 +79,12 @@ const left = (t) => {
       : `${m}m`;
 };
 
+/**
+ * Renders daily or weekly goal progression cards and claim buttons.
+ * @param {GoalEntry[]} list List of goal items
+ * @param {'daily'|'weekly'} period Period identifier
+ * @returns {string} HTML markup
+ */
 function goalRows(list, period) {
   return list
     .map(
@@ -33,6 +93,12 @@ function goalRows(list, period) {
     )
     .join('');
 }
+
+/**
+ * Renders the OPS companion tab (server events, invasions, system anomalies, goals, Armada summary, and calendar).
+ * @param {any} G Game state object
+ * @returns {string} HTML markup
+ */
 export function opsHtml(G) {
   const y = G.you,
     W = G.world || {},
@@ -114,10 +180,22 @@ export function opsHtml(G) {
   return h;
 }
 
+/**
+ * Returns array of eligible faction keys that offer Quartermaster stores.
+ * @param {Record<string, any>} FACTIONS_ Faction definitions dictionary
+ * @returns {string[]} Faction keys
+ */
 export const STORE_FACS = (FACTIONS_) =>
   Object.entries(FACTIONS_)
     .filter(([k, F]) => !F.region && !F.hidden && k !== 'umbral')
     .map(([k]) => k);
+
+/**
+ * Renders the modal Faction Stores quartermaster dialog with faction selector tabs.
+ * @param {any} G Game state object
+ * @param {Record<string, any>} FACTIONS_ Faction definitions
+ * @returns {string} HTML markup
+ */
 export function storeMenuHtml(G, FACTIONS_) {
   const y = G.you,
     facs = STORE_FACS(FACTIONS_),
@@ -136,6 +214,13 @@ export function storeMenuHtml(G, FACTIONS_) {
     .join('');
   return `<h2>FACTION STORES <span class="dim small">Rift scrip: ${(y.tokens && y.tokens.any) || 0} · ${G.landed ? 'purchases are delivered to you here' : 'land anywhere to buy'}</span></h2><div class="sgrid"><div class="sfacs">${side}</div><div class="sbody well">${storeHtml(G, fac)}</div></div><button class="btn sm" data-act="sclose">CLOSE (Esc)</button>`;
 }
+
+/**
+ * Renders the items and standing table for a specific faction store.
+ * @param {any} G Game state object
+ * @param {string} [facArg] Faction key to display
+ * @returns {string} HTML markup
+ */
 export function storeHtml(G, facArg) {
   const y = G.you,
     fac = facArg || G.landed.store,

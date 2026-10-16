@@ -2,14 +2,30 @@
 import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 
+/**
+ * RFC 6455 magic GUID constant appended to client Sec-WebSocket-Key to generate Sec-WebSocket-Accept.
+ * @type {string}
+ */
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
+/**
+ * Minimal RFC 6455 WebSocket connection wrapper built over Node's net.Socket.
+ * Implements frame parsing, unmasking, fragmentation reassembly, and UTF-8 transmission.
+ */
 export class Socket extends EventEmitter {
+  /**
+   * Initializes a WebSocket connection around a raw TCP network socket.
+   * @param {import('node:net').Socket} sock Raw TCP network stream socket.
+   */
   constructor(sock) {
     super();
+    /** @type {import('node:net').Socket} */
     this.sock = sock;
+    /** @type {Buffer} */
     this.buf = Buffer.alloc(0);
+    /** @type {boolean} */
     this.open = true;
+    /** @type {Buffer[] | null} */
     this.frag = null;
     sock.setNoDelay(true);
     sock.on('data', (d) => {
@@ -19,12 +35,23 @@ export class Socket extends EventEmitter {
     sock.on('close', () => this.closed());
     sock.on('error', () => this.closed());
   }
+
+  /**
+   * Transitions socket state to closed and emits the 'close' event once.
+   * @returns {void}
+   */
   closed() {
     if (this.open) {
       this.open = false;
       this.emit('close');
     }
   }
+
+  /**
+   * Parses inbound RFC 6455 WebSocket frames from the internal stream buffer and emits unmasked message events.
+   * Enforces 1 MB frame size limit and responds to ping control frames automatically.
+   * @returns {void}
+   */
   parse() {
     while (this.buf.length >= 2) {
       const b0 = this.buf[0],
@@ -81,6 +108,13 @@ export class Socket extends EventEmitter {
       }
     }
   }
+
+  /**
+   * Constructs and writes an RFC 6455 binary frame to the client TCP stream.
+   * @param {number} op Opcode (0x1 text, 0x2 binary, 0x8 close, 0x9 ping, 0xa pong).
+   * @param {Buffer} data Payload buffer to transmit.
+   * @returns {void}
+   */
   frame(op, data) {
     if (!this.open) return;
     const len = data.length;
@@ -104,9 +138,20 @@ export class Socket extends EventEmitter {
       this.closed();
     }
   }
+
+  /**
+   * Serializes and transmits a text message or JSON object over the WebSocket connection.
+   * @param {string | object} obj UTF-8 string or JSON-serializable object payload.
+   * @returns {void}
+   */
   send(obj) {
     this.frame(0x1, Buffer.from(typeof obj === 'string' ? obj : JSON.stringify(obj), 'utf8'));
   }
+
+  /**
+   * Sends an RFC 6455 close control frame (0x8) and gracefully terminates the underlying TCP socket.
+   * @returns {void}
+   */
   close() {
     if (!this.open) return;
     try {
@@ -115,11 +160,23 @@ export class Socket extends EventEmitter {
     } catch {}
     this.closed();
   }
+
+  /**
+   * Number of buffered bytes waiting in the underlying TCP write queue.
+   * @returns {number}
+   */
   get backlog() {
     return this.sock.writableLength || 0;
   }
 }
 
+/**
+ * Validates and upgrades an incoming HTTP 1.1 upgrade request to the RFC 6455 WebSocket protocol.
+ * @param {import('node:http').IncomingMessage} req Inbound HTTP upgrade request.
+ * @param {import('node:net').Socket} sock Underlying client network socket stream.
+ * @param {(ws: Socket) => void} onSocket Callback invoked with the initialized WebSocket wrapper.
+ * @returns {void}
+ */
 export function upgrade(req, sock, onSocket) {
   const key = req.headers['sec-websocket-key'];
   if (!key || (req.headers.upgrade || '').toLowerCase() !== 'websocket') {

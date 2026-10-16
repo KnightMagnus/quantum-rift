@@ -8,15 +8,53 @@ import { upgrade } from './ws.js';
 import { DB } from './db.js';
 import { Game } from './game.js';
 
+/**
+ * Root directory path of the Quantum Rift repository.
+ * @type {string}
+ */
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * HTTP and WebSocket listener port number.
+ * @type {number}
+ */
 const PORT = +process.env.PORT || 8080;
+
+/**
+ * Solo play mode flag: private offline game on local computer with no passwords and save slots.
+ * @type {boolean}
+ */
 const SOLO = !!process.env.SOLO; // solo mode: a private game on this computer only, no passwords, save slots
+
+/**
+ * Server version string parsed from package.json.
+ * @type {string}
+ */
 const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+
+/**
+ * Static game asset catalog loaded from shared/assets.json.
+ * @type {any}
+ */
 const A = JSON.parse(fs.readFileSync(path.join(ROOT, 'shared', 'assets.json'), 'utf8'));
+
+/**
+ * Database persistence manager for player accounts and world state.
+ * @type {DB}
+ */
 const db = new DB(process.env.DATA_DIR || path.join(ROOT, 'data'));
+
+/**
+ * Primary game engine instance managing active systems, entities, and client sessions.
+ * @type {Game}
+ */
 const game = new Game(A, db);
 game.solo = SOLO;
 
+/**
+ * MIME content-type lookup table indexed by file extension.
+ * @type {Record<string, string>}
+ */
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -30,6 +68,14 @@ const TYPES = {
   '.ico': 'image/x-icon',
   '.webmanifest': 'application/manifest+json',
 };
+
+/**
+ * Streams a local static file to an HTTP response with appropriate MIME headers and caching.
+ * @param {import('node:http').ServerResponse} res Outgoing HTTP server response.
+ * @param {string} file Absolute filesystem path to the target static file.
+ * @param {boolean} cache Whether to enable client-side 1-day public caching.
+ * @returns {void}
+ */
 function serve(res, file, cache) {
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) {
@@ -45,6 +91,11 @@ function serve(res, file, cache) {
     fs.createReadStream(file).pipe(res);
   });
 }
+
+/**
+ * Main HTTP application server handling REST API endpoints, static assets, and WebSocket handshakes.
+ * @type {import('node:http').Server}
+ */
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   let p = decodeURIComponent(url.pathname);
@@ -168,6 +219,7 @@ const server = http.createServer(async (req, res) => {
     (p.startsWith('/assets/ships/') && p.endsWith('_yard.png')) || p.startsWith('/assets/icons/');
   serve(res, file, p.startsWith('/assets/') && (!catalog || url.searchParams.get('v') === VERSION));
 });
+
 server.on('upgrade', (req, sock) => {
   if (req.url.startsWith('/ws'))
     upgrade(req, sock, (ws) =>
@@ -178,6 +230,7 @@ server.on('upgrade', (req, sock) => {
     );
   else sock.destroy();
 });
+
 server.on('error', (e) => {
   if (e.code === 'EADDRINUSE')
     console.error(
@@ -186,15 +239,18 @@ server.on('error', (e) => {
   else console.error(e);
   process.exit(1);
 });
+
 server.listen(PORT, SOLO ? '127.0.0.1' : undefined, () =>
   console.log(
     `Quantum Rift ${VERSION}${SOLO ? ' (solo game)' : ''} running at http://localhost:${PORT}`,
   ),
 );
+
 process.on('SIGINT', () => {
   db.flush();
   process.exit(0);
 });
+
 process.on('SIGTERM', () => {
   db.flush();
   process.exit(0);

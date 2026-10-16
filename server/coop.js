@@ -19,19 +19,50 @@ import {
 import { SOCIAL, ARMADA, TRADE, DUEL, RESCUE, COOP_HOLDOUT, WARBAND } from '../shared/coop.js';
 import { credits, makeLoadout, shipStats, allOutfits } from '../shared/rules.js';
 
+/**
+ * Clamps a numeric value between a minimum and maximum bound.
+ * @param {number} v - Numeric value to clamp.
+ * @param {number} a - Minimum bound.
+ * @param {number} b - Maximum bound.
+ * @returns {number} Clamped value.
+ */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/**
+ * Mapping from refit hull ID to base hull info and refit generation.
+ * @type {Record<number, { base: number, mk: number, via?: number }>}
+ */
 const BASE_OF = {};
 for (const [b, m] of Object.entries(MK2_OF)) BASE_OF[m] = { base: +b, mk: 2 };
 for (const [m2, m3] of Object.entries(MK3_OF))
   BASE_OF[m3] = { base: BASE_OF[m2] ? BASE_OF[m2].base : +m2, mk: 3, via: +m2 };
+
+/**
+ * Credit refund valuation for retired unused directive tiers.
+ * @type {Record<number, number>}
+ */
 const DIRECTIVE_VALUE = { 1: 90000, 2: 240000, 3: 600000 };
+
+/**
+ * Sanitizes and truncates a captain name to 20 characters.
+ * @param {string} [n] - Raw name string.
+ * @returns {string} Trimmed and sanitized name.
+ */
 const cleanName = (n) =>
   String(n || '')
     .trim()
     .slice(0, 20);
 
+/**
+ * Server operations for cooperative play, captain friends, armadas, trading, duels, and group encounters.
+ */
 export const CoopOperations = {
   // ------------------------------------------------------------------ start-up and save migration
+  /**
+   * Initializes co-op state on the world database, migrates legacy 0.6 fleets, and cleans obsolete tables.
+   * @this {any}
+   * @returns {void}
+   */
   coopInit() {
     const W = this.db.world;
     W.armadas = W.armadas || {};
@@ -61,6 +92,12 @@ export const CoopOperations = {
     for (const k of ['fleets', 'claims', 'cooldown']) delete W[k];
     this.db.touch();
   },
+  /**
+   * Migrates a player save to version 2.6, refunding retired refits, Armada escorts, and directives.
+   * @this {any}
+   * @param {Record<string, any>} d - Player save data.
+   * @returns {void}
+   */
   coopMigrate(d) {
     if (d.v26) return;
     d.v26 = true;
@@ -157,11 +194,23 @@ export const CoopOperations = {
   },
 
   // ------------------------------------------------------------------ helpers
+  /**
+   * Finds an active player session matching the specified captain name.
+   * @this {any}
+   * @param {string} name - Captain name to look up.
+   * @returns {Record<string, any>|null} Active session or null if not online.
+   */
   sessionOf(name) {
     const k = this.db.key(name);
     for (const o of this.sessions.values()) if (o.data && this.db.key(o.data.name) === k) return o;
     return null;
   },
+  /**
+   * Ensures social data structures (friends, requests, blocks, mailbox) exist on a player profile.
+   * @this {any}
+   * @param {Record<string, any>} d - Player profile data.
+   * @returns {Record<string, any>} The initialized player profile data.
+   */
   socialInit(d) {
     d.friends = d.friends || [];
     d.freqIn = d.freqIn || [];
@@ -170,26 +219,65 @@ export const CoopOperations = {
     d.mail = d.mail || [];
     return d;
   },
+  /**
+   * Checks if a case-insensitive captain name is present in a list of names.
+   * @this {any}
+   * @param {string[]} list - List of captain names.
+   * @param {string} name - Captain name to check.
+   * @returns {boolean} True if the name is found in the list.
+   */
   has(list, name) {
     const k = this.db.key(name);
     return list.some((n) => this.db.key(n) === k);
   },
+  /**
+   * Removes all entries matching a captain name from a list of names.
+   * @this {any}
+   * @param {string[]} list - List of captain names.
+   * @param {string} name - Captain name to remove.
+   * @returns {string[]} New list with matching names removed.
+   */
   drop(list, name) {
     const k = this.db.key(name);
     return list.filter((n) => this.db.key(n) !== k);
   },
+  /**
+   * Checks whether a captain is blocked by the target player profile.
+   * @this {any}
+   * @param {Record<string, any>} [d] - Player profile data.
+   * @param {string} name - Captain name to check against blocks.
+   * @returns {boolean} True if the captain is blocked.
+   */
   blocked(d, name) {
     return !!(d && d.blocks && this.has(d.blocks, name));
   },
+  /**
+   * Determines the online, away, or offline status of a captain.
+   * @this {any}
+   * @param {string} name - Captain name to check.
+   * @returns {'online'|'away'|'offline'} Captain presence status.
+   */
   statusOf(name) {
     const o = this.sessionOf(name);
     if (!o) return 'offline';
     return Date.now() - (o.actT || 0) > SOCIAL.awayMin * 60000 ? 'away' : 'online';
   },
+  /**
+   * Sends updated player state payload to an active captain session if online.
+   * @this {any}
+   * @param {string} name - Captain name to refresh.
+   * @returns {void}
+   */
   refreshPlayer(name) {
     const o = this.sessionOf(name);
     if (o) this.you(o);
   },
+  /**
+   * Pushes the latest social and Armada payload to an active captain session.
+   * @this {any}
+   * @param {string} name - Captain name to push social data to.
+   * @returns {void}
+   */
   pushSocial(name) {
     const o = this.sessionOf(name);
     if (o)

@@ -1,6 +1,28 @@
 // The career guide (1.0): twenty goals from first flight to your first capital ship. The first five are the original
 // first-flight tutorial (event goals); the rest are checked against your progress. The client shows the current one.
+
+/**
+ * Career guide tutorial milestone definition.
+ * @typedef {Object} TutorialStep
+ * @property {string} [ev] - Event code triggering step completion (e.g. 'target', 'land2', 'sell', 'kill', 'site', 'job', 'chest').
+ * @property {function(any, any=): boolean} [check] - State condition evaluator receiving player data and asset registry.
+ * @property {string} title - Display title of the milestone.
+ * @property {string} text - Guidance instructions displayed to the player.
+ * @property {number} reward - Credit reward awarded on completion.
+ * @property {[string, number, number]} [mat] - Optional material reward tuple [matName, gradeIndex, quantity].
+ */
+
+/**
+ * Computes the total number of installed outfits on the player's active ship.
+ * @param {any} d - Player save data containing active ship state.
+ * @returns {number} Total count of equipped outfits.
+ */
 const outfits = (d) => Object.values(d.ship.outfits || {}).reduce((a, b) => a + b, 0);
+
+/**
+ * Ordered sequence of career guide tutorial steps.
+ * @type {TutorialStep[]}
+ */
 export const TUTORIAL = [
   {
     ev: 'target',
@@ -147,7 +169,18 @@ export const TUTORIAL = [
   },
 ];
 // 2.5: three steps were added; saves from before move to the same goal in the longer list
+
+/**
+ * Current version number of the tutorial progression sequence.
+ * @type {number}
+ */
 export const TUT_VERSION = 2;
+
+/**
+ * Migrates a player save file's tutorial index if saved under an older tutorial version.
+ * @param {any} d - Player save data object containing tutorial progress.
+ * @returns {void}
+ */
 export function tutMigrate(d) {
   if ((d.tutV || 1) >= TUT_VERSION) return;
   if (d.tut != null) d.tut = d.tut <= 8 ? d.tut : d.tut <= 15 ? d.tut + 2 : d.tut + 3;
