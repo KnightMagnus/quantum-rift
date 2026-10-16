@@ -1177,7 +1177,7 @@ export const FACTION_OUTFITS = {
   quantum: [605, 606, 608, 609, 610, 611, 612],
 };
 /**
- * Custom outfit definitions complementing EV Nova outfits.
+ * Custom outfit definitions complementing standard outfits.
  * @type {Array<any>}
  */
 // Generic weapon outfits. Stable weapon IDs keep existing ship loadouts and saves compatible.

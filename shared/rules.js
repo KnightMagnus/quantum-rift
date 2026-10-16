@@ -32,7 +32,7 @@ export const TICK = 30; // simulation steps per second
 export const DT = 1 / TICK;
 
 /**
- * EV Nova physics units to Quantum Rift physics scaling factors.
+ * Raw asset physics units to Quantum Rift physics scaling factors.
  * @typedef {Object} PhysicsConstants
  * @property {number} speed - Velocity multiplier.
  * @property {number} accel - Acceleration multiplier.
@@ -46,7 +46,7 @@ export const DT = 1 / TICK;
  */
 
 /**
- * Scaling constants for translating EV Nova engine units to Rift units.
+ * Scaling constants for translating raw engine units to Rift units.
  * @type {PhysicsConstants}
  */
 // Asset-space units -> simulation units
