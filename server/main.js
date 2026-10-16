@@ -164,7 +164,9 @@ const server = http.createServer(async (req, res) => {
     res.end();
     return;
   }
-  serve(res, file, p.startsWith('/assets/') && url.searchParams.get('v') === VERSION);
+  const catalog =
+    (p.startsWith('/assets/ships/') && p.endsWith('_yard.png')) || p.startsWith('/assets/icons/');
+  serve(res, file, p.startsWith('/assets/') && (!catalog || url.searchParams.get('v') === VERSION));
 });
 server.on('upgrade', (req, sock) => {
   if (req.url.startsWith('/ws'))

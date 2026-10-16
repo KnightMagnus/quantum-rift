@@ -24,9 +24,9 @@ const db = new DB(dir),
   fresh = Game.prototype.fresh.call({ A });
 fresh.tut = 999;
 db.create('Release Smoke', 'isolated-smoke', fresh);
-const port = 18896,
+const port = Number(process.env.CATALOG_TEST_PORT || 18896),
   upstream = `http://127.0.0.1:${port}`,
-  origin = 'http://127.0.0.1:18897';
+  origin = `http://127.0.0.1:${port + 1}`;
 let poison = false,
   served = [];
 const proxy = http.createServer((req, res) => {
@@ -67,7 +67,7 @@ proxy.on('upgrade', (req, socket, head) => {
   });
   r.end();
 });
-await new Promise((r) => proxy.listen(18897, '127.0.0.1', r));
+await new Promise((r) => proxy.listen(port + 1, '127.0.0.1', r));
 const server = spawn(process.execPath, ['server/main.js'], {
   cwd: root,
   env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: dir },
@@ -107,13 +107,14 @@ try {
       const { augmentAssets, allOutfits } = await import('/shared/rules.js');
       const A = augmentAssets(await (await fetch('/shared/assets.json')).json());
       const ships = Object.values(A.ships)
-          .filter((_, i) => i % 2 === 0)
+          .filter((x) => ![703, 704, 708, 714, 821, 823, 827].includes(x.id))
           .map((x) => x.img),
         outfits = Object.values(allOutfits(A))
-          .filter((x) => ![9001, 9002, 9003, 9004, 9005].includes(x.id))
+          .filter((x) => ![564, 569, 602, 603, 9020].includes(x.id))
           .map((x) => x.icon);
       return await Promise.all(
         [...ships, ...outfits].map(async (path) => {
+          await (await fetch('/assets/' + path)).arrayBuffer();
           const im = new Image();
           im.src = '/assets/' + path;
           try {
@@ -179,8 +180,8 @@ try {
     await page.screenshot({ path: path.join(evidence, name + '.png') });
   };
   await inspect('codex-ships');
-  await page.locator('#clist [data-k="s703"]').click();
-  await inspect('codex-gnat-detail');
+  await page.locator('#clist [data-k="s706"]').click();
+  await inspect('codex-missing-detail');
   await page.click('#cback');
   await page.click('[data-lt="yard"]');
   await inspect('shipyard');
@@ -225,17 +226,20 @@ try {
     }
 
   if (process.env.POISON_CACHE && !process.env.EXPECT_FIXED) {
-    assert.equal(surfaces['codex-ships'].filter((x) => x.ok).length, 48);
+    assert.equal(surfaces['codex-ships'].filter((x) => x.ok).length, 7);
     assert.equal(surfaces.outfitter.filter((x) => x.ok).length, 5);
     const failedCodex = new Set(surfaces['codex-ships'].filter((x) => !x.ok).map((x) => x.src));
     assert.ok(surfaces.shipyard.filter((x) => !x.ok).every((x) => failedCodex.has(x.src)));
-    assert.equal(surfaces['codex-gnat-detail'][0].ok, false);
+    assert.equal(surfaces['codex-missing-detail'][0].ok, false);
+    assert.equal(surfaces.shipyard.filter((x) => x.ok).length, 8);
   }
   if (process.env.EXPECT_FIXED) {
     assert.ok(
       assets.every((x) => x.ok),
       'All 194 catalog assets decode',
     );
+    const sprite = await fetch(origin + '/assets/ships/704.webp');
+    assert.equal(sprite.headers.get('cache-control'), 'public, max-age=86400');
     const bare = await fetch(origin + '/assets/icons/9001.png');
     assert.equal(bare.headers.get('cache-control'), 'no-cache');
     const versioned = await fetch(origin + '/assets/icons/9001.png?v=' + status.version);
