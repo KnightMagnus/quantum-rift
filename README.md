@@ -12,59 +12,45 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 
 ## Features
 
-**A big, living galaxy**
+### Explore the galaxy
 
-- 217 star systems across 14 powers: the Quantum Concord, free traders, pirates, five alien races and stranger things at the edges.
-- Explore the six-system **Eventide Chain** beyond Vesper Gate: twin suns, a black-hole research ring, a pulsar graveyard, a rogue-world refuge, shattered-world mining and a remote builders' observatory.
-- Pre-rendered planets, stations and landing pictures with oceans that catch the sun, city lights on the night side, ringed giants, and a rendered scene for every world you land on.
-- Every system has its own scenery, generated from the system itself: its star, distant galaxies, nebulae, ion storms, ancient wrecks, abandoned stations, crystal formations, comets and drifting debris.
-- Moons, asteroid fields, gas clouds and crystal fields to mine. Survey persistent seams, make clean cuts, haul exact common/rich/pure lots, refine trade goods and deliver finite motherlodes.
-- Busy space lanes: traders, convoys, patrols, raiders and thirty named rival captains with careers of their own.
-- Systems pass through famines, plagues, booms, border wars, pirate scourges, festivals and mining rushes that move prices and post their own jobs. Markets remember what you trade.
+- Travel between distinctive star systems, rendered planets and stations, from busy trade routes to the remote Eventide frontier.
+- Meet traders, convoys, patrols, pirates and rival captains with their own personalities and careers.
+- Discover faction stories, spaceport questlines and a main story hidden in the Rift.
+- Hail passing ships for conversation, assistance and encounters. Incoming calls wait until you choose to answer.
 
-**Flight and combat**
+### Trade, mine and take jobs
 
-- Newtonian flight with guns, turrets, beams, homing missiles, point defense and drone carriers.
-- Your guns hit anything you aim at. Shoot a friendly ship and it turns on you, and its faction remembers.
-- Optional **combat assist** handles steering and primary fire, with manual takeover and Hold Fire taking priority. Coordinate with wingmates and nearby Armada fleets.
-- NPC captains have personalities: some run when beaten, some call friends for help, and capital ships fire broadsides.
-- Autopilot landing and multi-jump routes, a hyperspace jump with its own effect and sound, and hold-right-click to look ahead.
-- Roughly 100 ships to fly, from a 15,000-credit Mite Drone to the Constitution, plus eleven one-of-a-kind specialty ships. Every ship is rendered from a 3D model, and smaller ships bank into their turns.
+- Trade on markets shaped by shortages, local events and what captains buy and sell.
+- Earn your way through deliveries, passenger runs, bounties, patrols, rescues and smuggling.
+- Mine asteroid, gas and crystal fields; survey deposits, refine your haul and tow large finds home with specialized equipment.
+- Follow faction and Syndicate careers, develop colonies, earn combat ratings and climb the leaderboards.
 
-**A career to build**
+### Fly and fight
 
-- Trade on living markets with shortages and gluts. Take cargo runs, bounties, patrols, passengers, rush deliveries, smuggling and Syndicate contracts.
-- Expedition surveys, supply runs and rescue contracts connect the Eventide frontier.
-- **Questlines:** a contact in every spaceport bar who remembers you and has multi-step stories to offer, plus six handcrafted side stories.
-- Claim a derelict station hull and build it into your **Personal Station**: refinery, research lab, station shipyard, Station Holdouts, and a warp core to relocate it to another hull.
-- **Docks A to D:** each dock holds a lead ship and up to two wingmate ships, chosen from your hangar. You fly the active dock's lead, and its wingmates fly in formation and follow your orders.
-- Hire officers of every race, promote them, and assign them to your bridge or as captain and crew of your wingmates.
-- Combat ratings, faction story arcs, a Syndicate career, colonies and leaderboards.
-- A main story waiting somewhere in the Rift. We won't spoil it.
+- Choose from a wide range of ships, including specialty vessels, with guns, beams, missiles, point defense and drones.
+- Master momentum-based flight or use optional combat assist. Autopilot handles landing and plotted jump routes.
+- Face enemies that retreat, call for help or bring capital-ship firepower. Friendly fire has consequences.
 
-**Better together (online games)**
+### Build a station and crew
 
-- **Captain Friends:** see who's online and where, and send private messages that wait for offline captains.
-- **The Armada:** team up with up to four other captains and all your wingmates. Allies show in green and can't hurt each other. You get a private chat, small buffs, shared bounties, a rescue if your ship goes down, and follow-the-leader jumps.
-- **Armada contracts and co-op Holdouts:** group kingpins with refitted squadrons, and Station Holdouts your friends can fly in to defend.
-- **Trading:** swap credits, goods, crates, blueprints and parts with friends, each of you docked at your own station.
-- **PvP only when you agree to it:** no ganking in the open galaxy. Duels and Armada Duels end at disabled, and the Crucible arena has rated 1v1, 2v2 and 4v4 matches.
+- Turn a derelict hull into your own **Personal Station**, with refining, research, shipbuilding and defenses. Upgrade it or relocate to another hull.
+- Store ships in your hangar and organize docks around a lead ship and crewed wingmates that fly in formation and follow orders.
+- Hire and promote officers for your bridge and fleet, then defend your station in Holdout battles.
 
-**Communications**
+### Play with friends
 
-- Hail passing ships for conversations shaped by their identity, activity, location and damage.
-- Ordinary traffic and named captains can initiate calls. Open incoming hails when you choose; arriving calls never interrupt flight.
-- Fuel assistance, hardship requests, friendly greetings and security warnings, plus local-port escort, hazard intelligence and distress rendezvous encounters.
-- Hail another player in the same system with up to 100 characters. Privacy and blocking controls let you choose who can contact you.
-- System-only chat also appears briefly above each sender's active ship. Other chat channels remain in the log only.
+- Form an **Armada** to travel together, share bounties and take on co-op contracts and station defenses.
+- Keep in touch through friends lists, private messages, local chat and player hails, with privacy and blocking controls.
+- Trade credits, cargo and crafting supplies between captains.
+- Choose your PvP: consensual duels or rated team matches in the **Crucible** arena, rather than open-world player hunting.
 
-**Made to be comfortable**
+### Play your way
 
-- Solo mode with pause, save slots and save files, or online play with accounts. Solo games hide the multiplayer screens.
-- Newcomer truce: below Station Tier 3 (T-3), ambient factions and pirates overlook captains throughout the main galaxy, including dangerous systems. This prevents targeting, not stray-fire damage. Combat missions, deliberate aggression, Farside and the Crucible keep normal combat rules.
-- An in-game radio with thousands of live stations, and a fully synthesized soundscape with a quick volume control.
-- Key remapping, a colour-blind palette, interface scaling, gamepad and touch controls.
-- No installs beyond Node.js: no npm packages, no build step.
+- Solo mode includes pause, save slots and save-file import and export. A newcomer truce limits ambient hostility while you establish your station; missions and deliberate aggression can still lead to combat.
+- Remap controls, adjust interface scale, use a colour-blind palette, or play with a gamepad or touch controls.
+- Tune into live radio stations alongside the game's synthesized soundscape.
+- Run locally in your browser with Node.js—no package installation or build step required.
 
 ![A Caravel Trader flying past Concordia and its moon](docs/screenshots/flight.jpg)
 
