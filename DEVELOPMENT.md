@@ -183,33 +183,6 @@ single-player focused for now.
 
 - The genre and feel. EV Quantum is a plug-in for it.
 
-**Endless Sky**
-
-- The open-source spiritual successor to EV Nova, and the inspiration for 1.1 and 1.2:
-  - autopilot landing and jumping, multi-jump routes
-  - hailing and bribes, fleet commands
-  - map views, the bank and passengers
-  - jettisoning cargo, the player info panel
-- Links:
-  - https://endless-sky.github.io/
-  - Player's Manual: https://github.com/endless-sky/endless-sky/wiki/PlayersManual
-
-**Star Trek Fleet Command**
-
-- Older solo-relevant loops inspired 0.8 to 1.2: the class triangle, specialty ships with blueprint and part chains,
-  component tiers, solo armadas, wave defense, the Syndicate, and officer ranks.
-- References:
-  - https://startrekfleetcommand.com/academy/academy-ships-combat/
-  - https://hackmd.io/@hawks/infos_en
-
-**iHeartRadio public API**
-
-- Used by the in-game radio:
-  - station search: `api.iheart.com/api/v3/search/all`
-  - stream URLs: `api.iheart.com/api/v2/content/liveStations/{id}`
-  - now playing: `api.iheart.com/api/v3/live-meta/stream/{id}/currentTrackMeta`
-- The server proxies these requests (`/api/radio…`).
-
 **Tools**
 
 - Playwright with Chromium for browser tests.
@@ -220,7 +193,7 @@ single-player focused for now.
 
 - `python3 test/v103_shot.py <outdir>`: 1.0.3 browser check (jobs, trade MAX and SELL ALL, outfitter, career card, L to depart,
   autopilot landing).
-- `python3 test/v103_radio.py <outdir>`: the in-game radio, with iHeart mocked.
+- `python3 test/v103_radio.py <outdir>`: the in-game radio, with the station directory mocked.
 - `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
 - `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
 - `node test/v252.js`: 2.5.2 checks (story needs, supply warnings, mining hints, markets for mined goods, war fleets and newcomers, the map station marker, the ring art).

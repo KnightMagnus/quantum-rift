@@ -1,6 +1,6 @@
 import { passengerSeats } from './passengers.js';
 // 1.2 "Syndicate and Officers": the Syndicate crime path and black market, officer ranks and traits, lower-deck crew,
-// the bank (after Endless Sky's mortgages), and passenger and rush jobs.
+// the bank (credit-based mortgages), and passenger and rush jobs.
 
 /**
  * @typedef {Object} SyndicateTierInfo

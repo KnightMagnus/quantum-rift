@@ -59,6 +59,7 @@
     "cargo-lots.js",
     "cargo-flows.js",
     "mining.js",
+    "mining-renewal.js",
     "mining-network.mjs",
     "refinery.js",
     "refinery-economy.js",
@@ -75,7 +76,8 @@
     "field-evolution.js",
     "towing-network.mjs",
     "mining-panel.js",
-    "towing-auto-delivery.js"
+    "towing-auto-delivery.js",
+    "motherlode-art.js"
   ],
   "browser": [
     "sidebar-browser.mjs",
@@ -95,7 +97,9 @@
     "logout-browser.mjs",
     "mining-keys-browser.mjs",
     "landing-autopilot-browser.mjs",
-    "dropdowns-browser.mjs"
+    "dropdowns-browser.mjs",
+    "trade-amount-browser.mjs",
+    "motherlode-art-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -225,9 +229,10 @@
         "outfitter-wing-repairs.js",
         "ship-economy.js",
         "companion-fixes.js",
-        "knight-profile.mjs"
+        "knight-profile.mjs",
+        "dropdowns-browser.mjs"
       ],
-      "asserts": "Save migration/dock capacity, storing/flying/swapping, wing loadouts/officers/repairs, ship purchases and resale. Creation-only KNIGHT storage includes every current specialist and each can be selected through real dock assignment."
+      "asserts": "Save migration/dock capacity, storing/flying/swapping, wing loadouts/officers/repairs, ship purchases and resale. Creation-only KNIGHT storage includes every current specialist and each can be selected through real dock assignment. Dock lead/wing selectors omit missing, empty and default names; custom names remain quoted and escaped, preserving selection and wing-only eligibility."
     },
     {
       "id": "living-galaxy",
@@ -276,7 +281,7 @@
       "owners": ["server/space.js"],
       "services": [],
       "tests": ["v04.js", "v201.js", "v23.js", "v24.js", "sim.js"],
-      "asserts": "Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn."
+      "asserts": "Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn. NPC planet/station landing cruise remains target-facing at the speed ceiling, with real landing events, settled arrival, unchanged fuel and escort formation."
     },
     {
       "id": "mining-existing",
@@ -385,7 +390,7 @@
       "owners": ["client/login_scene.js"],
       "services": [],
       "tests": ["login-scene-browser.mjs"],
-      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced-motion static pose/no recurring draws despite suppressed native change delivery, normal resume and rendering lifecycle."
+      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced-motion static pose/no recurring draws despite suppressed native change delivery, normal resume and rendering lifecycle. Actual hub sprite cross-fade and navigation-light pulses, shared rotating/cloud planet pixels, 30% smaller apparent planet diameter. Displayed lamp pixel brightness changes; real logout resumes shared planet motion and reduced-motion freezes again after gameplay."
     },
     {
       "id": "sidebar-scrollbars",
@@ -475,9 +480,10 @@
         "mining-controls-browser.mjs",
         "mining-ui-browser.mjs",
         "mining-panel.js",
-        "mining-panel-browser.mjs"
+        "mining-panel-browser.mjs",
+        "mining-renewal.js"
       ],
-      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion. Role/capacity-gated drill toggle, default collapse, full holds, lifecycle transitions, independent hails, keyboard dismissal and bounded responsive panel."
+      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion. Role/capacity-gated drill toggle, default collapse, full holds, lifecycle transitions, independent hails, keyboard dismissal and bounded responsive panel. Full-health idle renewal across ore/gas/shards, active-work and stale-identity denial, original parcel conservation, bounded history and version-1 restart migration."
     },
     {
       "id": "mining-refinery",
@@ -547,9 +553,11 @@
         "towing-network.mjs",
         "towing-browser.mjs",
         "towing-auto-delivery.js",
-        "mining-keys-browser.mjs"
+        "mining-keys-browser.mjs",
+        "motherlode-art.js",
+        "motherlode-art-browser.mjs"
       ],
-      "asserts": "Finite authored source conservation, surveyed rig authority, hard 60/30 physical limits, consensual transfer, logical grace/recovery, transit and lifecycle denials, capacity-first exact-grade delivery and real journal fault recovery. Browser uses custom/unbound controls, F fighter bay, static reduced-motion artwork, scaled controls and actual two-captain transfer/delivery. Moving transfers check relative speed and immediate object cap; real production scaling, new raster hash/alpha decode and bounded mute/effects-aware tether audio are browser-verified."
+      "asserts": "Finite authored source conservation, surveyed rig authority, hard 60/30 physical limits, consensual transfer, logical grace/recovery, transit and lifecycle denials, capacity-first exact-grade delivery and real journal fault recovery. Browser uses custom/unbound controls, F fighter bay, static reduced-motion artwork, scaled controls and actual two-captain transfer/delivery. Moving transfers check relative speed and immediate object cap; real production scaling, new raster hash/alpha decode and bounded mute/effects-aware tether audio are browser-verified. Resource-specific material geometry and decoded existing rasters; all generated resources, hidden/unknown neutral fallback and attached/free pixel parity including unavailable images."
     },
     {
       "id": "native-dropdown-theme",
@@ -564,6 +572,13 @@
       "services": [],
       "tests": ["dropdowns-browser.mjs"],
       "asserts": "Explicit ship selection resets the actual landing scroll container after rendering; selected details and purchase controls visible, background renderer preserves scroll, no purchase or wallet change."
+    },
+    {
+      "id": "trade-custom-amount",
+      "owners": ["client/ui.js", "client/style.css"],
+      "services": [],
+      "tests": ["trade-amount-browser.mjs"],
+      "asserts": "Accessible native dark numeric quantities; invalid/empty/overflow denial before wire, real buy/sell settlement, common-first grades, hold/inventory and authoritative funds limits, preset compatibility, async draft/focus retention, narrow viewport interaction."
     }
   ],
   "routes": {
@@ -595,7 +610,13 @@
       "v24.js"
     ],
     "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
-    "trade": ["bot.js", "cargo-flows.js", "v203.js", "cargo-ui-browser.mjs"],
+    "trade": [
+      "bot.js",
+      "cargo-flows.js",
+      "v203.js",
+      "cargo-ui-browser.mjs",
+      "trade-amount-browser.mjs"
+    ],
     "buyship": ["sim.js", "v21.js"],
     "docks": [
       "outfitter-wing-repairs.js",

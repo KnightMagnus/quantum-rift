@@ -75,6 +75,11 @@ function validate(w) {
       ])
         if (!Number.isFinite(n)) throw new Error('Invalid mining geometry/state');
       if (
+        r.lastActivity !== undefined &&
+        (!Number.isFinite(r.lastActivity) || r.lastActivity < 0 || r.lastActivity > w.clock)
+      )
+        throw new Error('Invalid mining activity clock');
+      if (
         (r.dredgeToken !== undefined && typeof r.dredgeToken !== 'boolean') ||
         (r.sweepCut !== undefined && typeof r.sweepCut !== 'boolean') ||
         (r.dredgeWork !== undefined && (!Number.isFinite(r.dredgeWork) || r.dredgeWork < 0))
@@ -213,6 +218,7 @@ function generate(w, sp, fi, i, f, generation) {
     heat: 0,
     work: 0,
     updated: w.clock,
+    lastActivity: w.clock,
     releaseAt: 0,
     releaseHeat: 0,
     ready: false,
@@ -421,7 +427,12 @@ export const MiningOperations = {
     if (this.db.world.mining) {
       validate(this.db.world.mining); // No offline work from stale saved collision leases.
       for (const f of Object.values(this.db.world.mining.systems))
-        for (const r of [...f.rocks, ...f.history]) r.leases = [];
+        for (const r of [...f.rocks, ...f.history]) {
+          r.leases = [];
+          // Legacy saves have no reliable last-hit time: grant a full quiet interval.
+          r.lastActivity ??= this.db.world.mining.clock;
+        }
+      this.db.touch();
     } else {
       this.db.world.mining = { version: 1, clock: 0, nextId: -1, systems: {} };
       this.db.touch();
@@ -488,6 +499,7 @@ export const MiningOperations = {
       update(this, sp, r, Math.max(r.updated, from));
       if (r.down) return;
     }
+    r.lastActivity = now;
     r.seen[key] = now;
     r.captain = hit.source.captain;
     const angle = Math.atan2(hit.y - r.y, hit.x - r.x),
@@ -517,6 +529,7 @@ export const MiningOperations = {
       damage <= 0
     )
       return 0;
+    r.lastActivity = world(this).clock;
     const spent = Math.min(r.hp, damage);
     r.hp -= spent;
     r.captain = captain;
@@ -531,6 +544,7 @@ export const MiningOperations = {
   ordinary(sp, rock, damage, captain = null) {
     const r = world(this).systems[sp.id]?.rocks.find((r) => r === rock);
     if (!r || r.down || !Number.isFinite(damage) || damage <= 0) return;
+    r.lastActivity = world(this).clock;
     r.hp = Math.max(0, r.hp - damage);
     if (!r.hp) {
       r.captain = captain;
@@ -545,8 +559,22 @@ export const MiningOperations = {
     if (!f) return;
     for (let i = 0; i < f.rocks.length; i++) {
       const r = f.rocks[i];
-      if (r.down && w.clock >= r.down) {
-        f.history.push(r);
+      update(this, sp, r);
+      const abandoned =
+        !r.down &&
+        (r.hp < r.max || r.stage > 0 || r.work > 0 || r.ready) &&
+        w.clock - (r.lastActivity ?? r.updated) >= MINING.idleRenewal &&
+        !r.ready &&
+        r.leases.every((l) => l.to + MINING.grace < w.clock);
+      if ((r.down && w.clock >= r.down) || abandoned) {
+        // Retire, never reset, a generation: original parcels retain their ledger,
+        // while unextracted material is explicitly discarded before natural renewal.
+        // Unissued generations have no escrow/progression to retain in history.
+        if (r.budget >= 0) {
+          r.discarded += r.pending;
+          r.pending = 0;
+          f.history.push(r);
+        }
         const [sys, fi, ri] = r.key.split(':');
         f.rocks[i] = generate(
           w,
@@ -558,7 +586,7 @@ export const MiningOperations = {
         );
         sp.events.push(['rock', r.id, 0]);
         this.db.touch();
-      } else update(this, sp, r);
+      }
     }
     sp.rocks = f.rocks;
     for (const p of f.parcels) {

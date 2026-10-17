@@ -243,7 +243,7 @@ export const SYSTEMS = [
   // ---- Quantum Concord: the heart of the Rift, home of Quantum Station
   {
     id: 'qgate',
-    name: 'Quantum Gate',
+    name: 'Concordia',
     faction: 'quantum',
     x: 500,
     y: 350,

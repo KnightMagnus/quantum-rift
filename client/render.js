@@ -121,7 +121,7 @@ import { weaponParams, BEAM_COLORS, weaponColor, weaponLook, price } from '/shar
  * @property {number} [t] Timestamp of last update
  */
 
-// 1.2 map views (after Endless Sky's map modes): colour each system by trade price, services, your standing, or danger
+// 1.2 map views (system map modes): colour each system by trade price, services, your standing, or danger
 /**
  * Interpolates between two RGB color tuples.
  * @param {[number, number, number]} a Start RGB tuple

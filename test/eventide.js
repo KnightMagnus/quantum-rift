@@ -22,6 +22,11 @@ assert.equal(
 // Scenes and the one new Vesper branch are additions; every legacy generated property stays exact.
 const legacy = JSON.parse(JSON.stringify(SYSTEMS.filter((s) => !s.eventide)));
 for (const s of legacy) {
+  // v3.0.4 changes only this display name; retain the strict legacy-world golden.
+  if (s.id === 'qgate') {
+    assert.equal(s.name, 'Concordia');
+    s.name = 'Quantum Gate';
+  }
   delete s.scene;
   // Mining3.0 intentionally adds only four processed-good price entries; compare
   // every legacy property/price exactly against the existing generation golden.

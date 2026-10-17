@@ -1,5 +1,5 @@
 import { STELLARS } from '/shared/galaxy.js';
-import { MOTHERLODE_ART, TOW } from '/shared/towing-rules.js';
+import { motherlodeArt, TOW } from '/shared/towing-rules.js';
 const images = new Map();
 function image(name) {
   if (!images.has(name)) {
@@ -23,7 +23,7 @@ export function drawTowing(G, ctx, sx, sy, z, W, H) {
     if (x < -150 || x > W + 150 || y < -150 || y > H + 150) continue;
     const selected = o.id === G.towTarget,
       own = o.id === w.attached,
-      art = MOTHERLODE_ART[o.ore] || MOTHERLODE_ART.ore,
+      art = motherlodeArt(o),
       R = 42 * z;
     const tug = own && G.view ? G.view : o.tug;
     if (o.status === 'attached' && tug) {
@@ -54,11 +54,69 @@ export function drawTowing(G, ctx, sx, sy, z, W, H) {
       else ctx.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
     }
     ctx.closePath();
-    const im = image(art.base);
-    if (im.complete && im.naturalWidth) ctx.drawImage(im, x - R, y - R, R * 2, R * 2);
+    const im = art.base ? image(art.base) : null;
+    if (im?.complete && im.naturalWidth) ctx.drawImage(im, x - R, y - R, R * 2, R * 2);
     else {
-      ctx.fillStyle = art.color;
+      ctx.fillStyle = art.kind === 'unknown' ? art.color : '#333943';
       ctx.fill();
+    }
+    // Material geometry stays recognizable at flight zoom, even without rasters.
+    ctx.translate(x, y);
+    ctx.scale(R, R);
+    ctx.strokeStyle = art.color;
+    ctx.fillStyle = art.color;
+    ctx.lineWidth = 0.045;
+    ctx.setLineDash([]);
+    if (art.kind === 'ore') {
+      for (const [dx, dy] of [
+        [-0.4, -0.25],
+        [0.12, 0.05],
+        [-0.25, 0.4],
+      ]) {
+        ctx.beginPath();
+        ctx.moveTo(dx - 0.18, dy + 0.12);
+        ctx.lineTo(dx, dy - 0.12);
+        ctx.lineTo(dx + 0.27, dy - 0.02);
+        ctx.stroke();
+      }
+    } else if (art.kind === 'gas') {
+      for (const [dx, dy, r] of [
+        [-0.5, -0.35, 0.24],
+        [0.4, 0.2, 0.3],
+        [-0.2, 0.5, 0.2],
+      ]) {
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.arc(dx, dy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.stroke();
+      }
+    } else if (art.kind === 'shards') {
+      for (const [dx, dy, tilt] of [
+        [-0.35, 0.1, -0.4],
+        [0, -0.08, 0.1],
+        [0.35, 0.2, 0.5],
+      ]) {
+        ctx.save();
+        ctx.translate(dx, dy);
+        ctx.rotate(tilt);
+        ctx.beginPath();
+        ctx.moveTo(0, -0.85);
+        ctx.lineTo(0.16, -0.25);
+        ctx.lineTo(0.12, 0.25);
+        ctx.lineTo(-0.12, 0.25);
+        ctx.lineTo(-0.16, -0.25);
+        ctx.closePath();
+        ctx.fillStyle = '#563973';
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, -0.85);
+        ctx.lineTo(0, 0.2);
+        ctx.stroke();
+        ctx.restore();
+      }
     }
     ctx.restore();
     ctx.strokeStyle = G.opts.cb ? '#fff0a0' : art.color;

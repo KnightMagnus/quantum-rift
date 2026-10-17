@@ -32,6 +32,7 @@ g.db.world.mining.clock = nextAt;
 g.features.towing.ensure('meridian');
 assert.ok(slot.object.id > oldId);
 assert.equal(slot.object.mass, 24);
+assert.equal(slot.object.hp, 100, 'renewed motherlode is full health');
 assert.equal(slot.issued, slot.delivered + slot.discarded + slot.object.mass);
 const liveId = slot.object.id;
 g.db.world.mining.clock += 1e9;

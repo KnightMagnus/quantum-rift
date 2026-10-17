@@ -1,5 +1,5 @@
 import { contextualHail } from './hail-dialogue.js';
-// 1.1: hailing (inspired by Endless Sky). Talk to the ship you have targeted or the planet you have selected:
+// 1.1: hailing. Talk to the ship you have targeted or the planet you have selected:
 // bribe pirates, ask traders for fuel or repairs when stranded, bribe a planet for landing rights, trade words with rivals.
 import { SYS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.js';
 import { RIVAL, MOOD } from '../shared/rivals.js';

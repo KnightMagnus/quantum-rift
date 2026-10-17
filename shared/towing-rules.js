@@ -16,10 +16,23 @@ export const TOW = Object.freeze({
   receiptLimit: 64,
 });
 export const MOTHERLODE_ART = Object.freeze({
-  ore: { base: 'motherlode-ore.webp', sides: 7, color: '#aa9574' },
-  gas: { base: 'motherlode-gas.webp', sides: 8, color: '#77bca8' },
-  shards: { base: 'motherlode-shards.webp', sides: 5, color: '#ba91d1' },
+  ore: { base: 'motherlode-ore.webp', sides: 7, color: '#d8ac66', kind: 'ore' },
+  gas: { base: 'motherlode-gas.webp', sides: 8, color: '#77ddc2', kind: 'gas' },
+  shards: { base: 'motherlode-shards.webp', sides: 5, color: '#d5a0ff', kind: 'shards' },
 });
+// Unscanned/unknown deposits share a neutral silhouette, independent of attachment.
+export const UNKNOWN_MOTHERLODE_ART = Object.freeze({
+  base: null,
+  sides: 9,
+  color: '#929aa5',
+  kind: 'unknown',
+});
+/** @param {{ore?:string, revealed?:boolean}} object */
+export function motherlodeArt(object) {
+  if (!object.revealed || !Object.hasOwn(MOTHERLODE_ART, object.ore || ''))
+    return UNKNOWN_MOTHERLODE_ART;
+  return MOTHERLODE_ART[/** @type {keyof typeof MOTHERLODE_ART} */ (object.ore)];
+}
 /** @param {number|string} hull */
 export function towSpeed(hull) {
   return Number(hull) === 815 ? TOW.dredgeCap : TOW.otherCap;

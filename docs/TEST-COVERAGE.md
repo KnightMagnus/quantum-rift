@@ -53,7 +53,7 @@ owner. Legacy `vNN` names are retained for traceability, and now run in CI.
 | `cooperative-social`      | `server/coop.js`                                                               | [v26.js](../test/v26.js), [network-systems.mjs](../test/network-systems.mjs)                                                                                                                                                             | Friends/offline DM/blocking, Armada formation/leadership/chat/buffs/shared bounties, rescue, contracts and co-op Holdout.                                                                                                                                                 |
 | `consensual-pvp`          | `server/coop.js`, `server/frontier.js`                                         | [v26.js](../test/v26.js), [v07.js](../test/v07.js)                                                                                                                                                                                       | Open-galaxy friendly-fire prevention, solo/Armada duel consent/nonlethal outcomes and arena team matching.                                                                                                                                                                |
 | `station-trading`         | `server/coop.js`                                                               | [v26.js](../test/v26.js)                                                                                                                                                                                                                 | Two-party credits/cargo/crates/blueprint/part escrow, accept/cancel and location guards.                                                                                                                                                                                  |
-| `galaxy-navigation`       | `shared/galaxy.js`, `shared/gen.js`, `shared/rules.js`                         | [v04.js](../test/v04.js), [v08.js](../test/v08.js), [v23.js](../test/v23.js), [eventide.js](../test/eventide.js)                                                                                                                         | Seeded galaxy generation, reachable routes, Sol/Farside gates and authored Eventide landmarks.                                                                                                                                                                            |
+| `galaxy-navigation`       | `shared/galaxy.js`, `shared/gen.js`, `shared/rules.js`                         | [v04.js](../test/v04.js), [v08.js](../test/v08.js), [v23.js](../test/v23.js), [eventide.js](../test/eventide.js)                                                                                                                         | Seeded galaxy generation, reachable routes, Sol/Farside gates, authored Eventide landmarks, and Concordia display naming with stable home-system/station IDs.                                                                                                             |
 | `sleep-traffic-ai`        | `server/space.js`                                                              | [v04.js](../test/v04.js), [v201.js](../test/v201.js), [v23.js](../test/v23.js), [v24.js](../test/v24.js), [sim.js](../test/sim.js)                                                                                                       | Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn.                                                                                                                                               |
 | `cargo-grade-ledger`      | `shared/cargo-lots.js`, `shared/cargo-contracts.js`                            | [cargo-lots.js](../test/cargo-lots.js)                                                                                                                                                                                                   | Versioned/idempotent cargo + storage migration, exact grade denial, immutable single-use withdrawals, atomic bounded transfers, fixed partial pickups, seeded per-grade conservation and real DB roundtrip. Pure prerequisite; production writer integration is separate. |
 | `mining-existing`         | `server/space.js`, `server/game.js`                                            | [v04.js](../test/v04.js), [v05.js](../test/v05.js), [v252.js](../test/v252.js)                                                                                                                                                           | Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Staged cutting/survey coverage is listed separately under `mining-cutting`.                                                                                    |
@@ -68,7 +68,7 @@ owner. Legacy `vNN` names are retained for traceability, and now run in CI.
 | `ships-catalog-art`       | `shared/rules.js`, `client/artwork.js`, `client/render.js`                     | [catalog-artwork.js](../test/catalog-artwork.js), [outfitter-icons.js](../test/outfitter-icons.js), [animation-frames.js](../test/animation-frames.js), [ship-banking.js](../test/ship-banking.js), [v25.js](../test/v25.js)             | Versioned catalog URL/cache semantics, shipped icon headers/dimensions and asset wiring, animation bounds and banked sprite selection.                                                                                                                                    |
 | `world-scenery`           | `client/render.js`, `client/exotic_scenery.js`                                 | [eventide.js](../test/eventide.js), [comet.js](../test/comet.js), [stars.js](../test/stars.js), [background-scale.js](../test/background-scale.js), [v25.js](../test/v25.js)                                                             | Authored scenery configuration, comets/stars/background scaling, atmosphere/artwork invariants.                                                                                                                                                                           |
 | `station-art-identity`    | `client/station_wheel.js`, `client/exotic_scenery.js`, `client/render.js`      | [station-landing-browser.mjs](../test/station-landing-browser.mjs)                                                                                                                                                                       | 14 real landing/departure sessions, 110 stations/245 tier variants, actual flight-source identity, transient load recovery and frozen original Luna wheel pixels.                                                                                                         |
-| `login-scene`             | `client/login_scene.js`                                                        | [login-scene-browser.mjs](../test/login-scene-browser.mjs)                                                                                                                                                                               | Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced motion (including dropped-change-event fallback) and rendering lifecycle.                                                                                                 |
+| `login-scene`             | `client/login_scene.js`                                                        | [login-scene-browser.mjs](../test/login-scene-browser.mjs)                                                                                                                                                                               | Starting-system landmarks, six actual moving ship sheets, rotating/cloud planet frames, animated hub sheet and beacon pulses, 30% smaller planet disk, high-DPI resize, usable form, reduced motion (including dropped-change-event fallback) and rendering lifecycle.    |
 | `sidebar-scrollbars`      | `client/style.css`, `client/ui.js`                                             | [sidebar-browser.mjs](../test/sidebar-browser.mjs)                                                                                                                                                                                       | Eight viewport/scale/width cases, horizontal wheel and keyboard end-tab reachability, saved width and red menu scrollbar/accent styles.                                                                                                                                   |
 | `client-options-map-save` | `client/main.js`, `client/ui.js`                                               | [client-systems-browser.mjs](../test/client-systems-browser.mjs)                                                                                                                                                                         | Real browser options/key remapping/scaling/palette, map routes and Solo pause/save workflows; see test assertions for exact exercised controls.                                                                                                                           |
 | `communications-log`      | `server/game.js`, `client/ui.js`                                               | [chat-bubbles.js](../test/chat-bubbles.js), [v26.js](../test/v26.js), [core-actions.js](../test/core-actions.js)                                                                                                                         | Chat channel scoping, plain-text transient ship bubbles, bounded captain notes and non-idle-resetting ping/pong.                                                                                                                                                          |
@@ -313,3 +313,53 @@ Login-scene coverage also rejects the removed bottom-left location caption and
 checks the title banner’s centered flex alignment, measured text fit and retained
 30px horizontal inset at desktop/mobile widths and 0.8×/1.4× UI scales. The Solo
 client-system test checks the same banner while exercising save/login workflows.
+
+## `trade-custom-amount` — entered market quantities
+
+`trade-amount-browser.mjs` runs in the browser CI lane against isolated deterministic
+Solo saves. Native black/white number fields submit actual buys and sells; empty,
+zero, negative, fractional and int32-overflow values never reach the wire. Tests
+exercise exact quantities, common-first graded cargo, hold/inventory caps, authoritative
+insufficient-funds denial, unchanged presets, and draft/focus retention across a
+market repaint. A 390px viewport exercises controls, but the game's existing
+narrow-screen sidebar/landing layout is not claimed to be fully responsive.
+The server retains authority for bulk discounts, specialist bonuses and finite
+buyer demand; browser amounts do not guess an affordable limit from list prices.
+
+## Natural mining renewal
+
+`mining-renewal.js` (canonical unit lane, `mining-cutting`) exercises exact 300-second
+quiet renewal and existing depletion deadlines for ore, gas and shards through
+production mining operations. It checks full-health new identities, no stale-object
+damage/reward, active/recent cutting and sweep protection, lazy late-stage escrow
+conservation, bounded history, stable restart and version-1 migration, paused clock
+and no healthy-generation churn. `field-evolution.js` additionally checks renewed
+motherlode full health; `dredge-corona.js` verifies an exhausted plasma source
+replenishes enough for another actual harvest. Their existing timing/budget rules
+are unchanged. Fixtures are isolated deterministic simulation cases, not exhaustive
+seed coverage, rendered resource-reappearance certification or long-run balance.
+
+## Concordia legacy-world compatibility
+
+The Eventide legacy-world fingerprint normalizes only the intentional qgate display-name change after explicitly asserting Concordia; all other legacy properties retain the existing golden hash. The home-system regression preserves stable qgate and qstation IDs.
+
+## Dock selection names
+
+Dropdowns browser coverage uses production dock markup for missing, empty, whitespace,
+default and custom names in lead/wing selectors. It checks HTML escaping, selected
+IDs, flying-current labels and wing-only eligibility, then exercises actual server
+assignment and re-rendering through the existing live browser case.
+
+### Motherlode material artwork
+
+`motherlode-art.js` checks authoritative generated ore/gas/shards and visibility-safe mapping.
+`motherlode-art-browser.mjs` exercises production canvas material pixels (not labels),
+free/attached parity, neutral undiscovered/unknown objects and failed-image geometry.
+The same renderer handles detached objects. Screenshots show all three states plus
+unscanned objects. Existing towing browser tests retain real survey/attach/delivery coverage.
+No new message actions or save fields. Server payload already exposes resource IDs;
+artwork now respects its `revealed` flag rather than disclosing composition before survey.
+
+## NPC landing orientation
+
+The registered v201.js case reproduces perpendicular cruise with three hulls and three speed-ceiling fractions at both planet and station destinations (18 deterministic cases). Production NPC AI and shared physics must align toward the destination, then emit a real landing event within the original radius/speed bounds without fuel consumption. Existing randomized trader arrival and moving-leader escort checks remain. This tests simulation headings and arrival, not every device or rendered bank animation.

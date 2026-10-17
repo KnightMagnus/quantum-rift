@@ -36,6 +36,11 @@ function fake(name) {
   return c;
 }
 // galaxy
+ok(SYS.qgate.name === 'Concordia', 'home system displays Concordia under its stable save ID');
+ok(
+  SYS.qgate.stellars.some((body) => body.id === 'qstation' && body.name === 'Quantum Station'),
+  'Concordia retains Quantum Station and its stable body ID',
+);
 ok(
   SYSTEMS.filter((s) => s.anchor || s.gen).length === 200 && SYSTEMS.length === 217,
   `200 generated systems, plus Sol and the 16 Farside systems (${SYSTEMS.length})`,
@@ -52,7 +57,7 @@ while (q.length) {
 }
 ok(
   seen.size === SYSTEMS.length,
-  'every system can be reached from Quantum Gate (Farside through the Sol Gateway)',
+  'every system can be reached from Concordia (Farside through the Sol Gateway)',
 );
 ok(
   SYSTEMS.every((s) => s.links.every((l) => SYS[l].links.includes(s.id))),
