@@ -6,6 +6,7 @@ import { addLots, assertLots } from '../shared/cargo-lots.js';
 /** @typedef {import('./towing-contracts.js').TowWorld} W */
 /** @typedef {import('./towing-contracts.js').Motherlode} ObjectRecord */
 /** @typedef {import('./towing-contracts.js').Session} Session */
+class DeliveryHoldFull extends Error {}
 /** @type {WeakMap<Session, string>} */
 const deliveryNotices = new WeakMap();
 /** @param {C} c @returns {W} */
@@ -269,7 +270,7 @@ function deliver(c, s, o, port, previous = o) {
   if (!p.outlaw && (s.data.rep?.[SYS[o.sys].faction] || 0) <= -30 && pass <= Date.now())
     throw Error('Port refuses delivery permission');
   if (c.room(s.data) < o.mass)
-    throw Error(`Need ${o.mass}t free hold; store cargo or detach first`);
+    throw new DeliveryHoldFull(`Need ${o.mass}t free hold; store cargo or detach first`);
   transaction(c, s, () => {
     const ws = state(c),
       ss = ws.slots.find((x) => x.object?.id === o.id);
@@ -440,7 +441,7 @@ export const TowingOperations = {
         } catch (error) {
           // No room: leave the intact, owned load safely at the port so the pilot
           // can land, unload and reattach. Never discard cargo or mint partial output.
-          if (!this.db.economicFrozen && this.room(s.data) < o.mass) {
+          if (error instanceof DeliveryHoldFull && !this.db.economicFrozen) {
             release(this, o);
             e.towCap = undefined;
             this.toast(

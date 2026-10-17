@@ -80,6 +80,13 @@ for (const a of [0, Math.PI / 2, Math.PI, 4.2]) {
   assert.equal(refusals(), 1, 'automatic refusal is explained');
   f.g.features.towing.towingTick(f.sp);
   assert.equal(refusals(), 1, 'no per-tick refusal toast spam');
+  f.s.data.missions = [{ type: 'cargo', qty: f.g.features.shipStats.stats(f.s.data).cargo }];
+  f.g.features.towing.towingTick(f.sp);
+  assert.equal(
+    live(f).status,
+    'attached',
+    'full hold cannot auto-release at a port that refuses permission',
+  );
   f.s.data.rep[SYS[f.o.sys].faction] = 10;
   f.s.data.missions = [{ type: 'cargo', qty: f.g.features.shipStats.stats(f.s.data).cargo }];
   f.g.features.towing.towingTick(f.sp);
