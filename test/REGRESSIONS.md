@@ -16,8 +16,9 @@ npm run test:regression
 `test:regression:unit` runs all registered legacy/recent gameplay, deterministic
 simulation/balance, persistence/authentication, protocol, HTTP and real network
 client regressions. `test:regression:browser` runs registered Chromium workflows
-for existing settings/audio/emulated input, map and Solo save workflows. New
-3.0-specific regression cases are registered by later feature layers. CI runs
+for existing settings/audio/emulated input, map/Solo saves, sidebar/red
+scrollbars, the new login scene and station artwork identity. New Armada V and
+direct-center Gateway acceptance tests arrive with the next flight layer. CI runs
 the groups independently, preserving the original characterization/type checks.
 
 The shared runner isolates subprocesses and temporary saves, seeds fixture RNG,
@@ -32,5 +33,11 @@ To debug one case, run for example:
 
 ```sh
 node --import ./test/seed-random.js test/v24.js
-node test/client-systems-browser.mjs
+node test/sidebar-browser.mjs
 ```
+
+The frozen Luna wheel fingerprint protects the requested original purple-wheel
+identity. Change it only for an intentional artwork requirement change, not to
+clear a failure. It compares raw canvas pixels, not PNG compression bytes, and
+CI pins Playwright/Chromium. Screenshots are supporting evidence, not substitutes
+for assertions or human artistic review.
