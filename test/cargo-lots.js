@@ -32,6 +32,153 @@ const transfer = (cid, common, rich = 0, pure = 0) => ({
   grades: { common, rich, pure },
 });
 
+// Descriptor hardening: every denial is atomic on the actual records, not clones.
+const hardeningFailures = [];
+function hardeningCase(name, fn) {
+  try {
+    fn();
+  } catch (error) {
+    hardeningFailures.push(new Error(name, { cause: error }));
+  }
+}
+for (const block of [
+  (p) => Object.freeze(p.cargo),
+  (p) => Object.preventExtensions(p.cargo),
+  (p) => Object.defineProperty(p.cargo, 'ore', { value: 0, writable: false, enumerable: true }),
+  (p) => Object.freeze(p.cargoLots.byCommodity),
+  (p) => Object.preventExtensions(p.cargoLots.byCommodity),
+  (p) =>
+    Object.defineProperty(p.cargoLots.byCommodity, 'ore', {
+      value: { common: 0, rich: 0, pure: 0 },
+      writable: false,
+      enumerable: true,
+    }),
+]) {
+  hardeningCase('add blocked destination', () => {
+    const p = inventory();
+    block(p);
+    deniedUnchanged(p, () => addLots(p.cargo, p.cargoLots, commonLots('ore', 1)));
+  });
+  hardeningCase('move blocked actual destination', () => {
+    const source = inventory({ ore: 2 }),
+      target = inventory();
+    block(target);
+    deniedUnchanged([source, target], () =>
+      moveLots(source.cargo, source.cargoLots, target.cargo, target.cargoLots, 'ore', 1),
+    );
+  });
+}
+for (const block of [
+  (p) => Object.freeze(p.cargo),
+  (p) => Object.defineProperty(p.cargo, 'ore', { writable: false }),
+  (p) => Object.freeze(p.cargoLots.byCommodity),
+])
+  hardeningCase('withdrawal and move blocked source', () => {
+    const source = inventory({ ore: 2 }),
+      target = inventory();
+    const plan = planTake(source.cargo, source.cargoLots, 'ore', 1);
+    block(source);
+    deniedUnchanged(source, () => applyTake(source.cargo, source.cargoLots, plan));
+    deniedUnchanged([source, target], () =>
+      moveLots(source.cargo, source.cargoLots, target.cargo, target.cargoLots, 'ore', 1),
+    );
+  });
+for (const block of [
+  (p) => Object.freeze(p),
+  (p) => Object.preventExtensions(p),
+  (p) =>
+    Object.defineProperty(p, 'storageLots', {
+      value: undefined,
+      writable: false,
+      enumerable: true,
+    }),
+  (p) =>
+    Object.defineProperty(p, 'storage', { value: undefined, writable: false, enumerable: true }),
+])
+  hardeningCase('migration blocked owner destination', () => {
+    const p = { cargo: { ore: 2 } };
+    block(p);
+    deniedUnchanged(p, () => migrateCargoLots(p));
+  });
+for (const block of [
+  (p) => Object.defineProperty(p.cargo, 'food', { configurable: false }),
+  (p) => Object.freeze(p.cargo),
+  (p) => Object.defineProperty(p.cargoLots, 'byCommodity', { writable: false }),
+])
+  hardeningCase('clear blocked deletion or ledger replacement', () => {
+    const p = inventory({ ore: 2, food: 3 });
+    block(p);
+    deniedUnchanged(p, () => clearLots(p.cargo, p.cargoLots));
+  });
+hardeningCase('forged plan getter never executes', () => {
+  const p = inventory({ ore: 2 });
+  let reads = 0;
+  const forged = {
+    get cid() {
+      reads++;
+      p.cargo.ore = 99;
+      return 'ore';
+    },
+  };
+  deniedUnchanged(p, () => applyTake(p.cargo, p.cargoLots, forged), /untrusted/);
+  assert.equal(reads, 0);
+});
+for (const key of ['cargo', 'storage', 'cargoLots', 'storageLots']) {
+  hardeningCase('owner ' + key + ' getter never executes', () => {
+    let reads = 0;
+    const p = { cargo: { ore: 2 } };
+    Object.defineProperty(p, key, {
+      enumerable: true,
+      get() {
+        reads++;
+        return undefined;
+      },
+    });
+    const before = Object.getOwnPropertyDescriptors(p);
+    assert.throws(() => migrateCargoLots(p), /data properties/);
+    assert.equal(reads, 0);
+    assert.deepEqual(Object.getOwnPropertyDescriptors(p), before);
+  });
+}
+hardeningCase('normal player fields need not be cargo records', () => {
+  let reads = 0;
+  const p = {
+    cargo: { ore: 2 },
+    name: 'Captain',
+    items: [],
+    save() {},
+    get unrelated() {
+      reads++;
+      return 42;
+    },
+  };
+  migrateCargoLots(p);
+  assert.equal(reads, 0);
+  assertLots(p.cargo, p.cargoLots);
+});
+hardeningCase('nonplain owner rejected before inherited getter', () => {
+  let reads = 0;
+  const p = Object.create({
+    get cargo() {
+      reads++;
+      return {};
+    },
+  });
+  assert.throws(() => migrateCargoLots(p), /plain record/);
+  assert.equal(reads, 0);
+});
+hardeningCase('sealed existing destinations remain supported when writable', () => {
+  const p = inventory({ ore: 2 });
+  Object.seal(p.cargo);
+  Object.seal(p.cargoLots.byCommodity);
+  addLots(p.cargo, p.cargoLots, commonLots('ore', 1));
+  assert.equal(p.cargo.ore, 3);
+  applyTake(p.cargo, p.cargoLots, planTake(p.cargo, p.cargoLots, 'ore', 1));
+  assert.equal(p.cargo.ore, 2);
+});
+if (hardeningFailures.length)
+  throw new AggregateError(hardeningFailures, 'Cargo descriptor regressions');
+
 // Old raw cargo and off-ship storage migrate without altering unrelated goods,
 // existing field richness, material crate numeric grade, or cargo cost basis.
 const old = {

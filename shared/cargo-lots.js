@@ -25,6 +25,39 @@ function record(value) {
       throw new Error('Cargo ledger: expected serializable data properties');
   }
 }
+/** Owner validation is limited to inventory fields: real players have unrelated data/methods.
+ * @param {import('./cargo-contracts.js').CargoOwner} player
+ */
+function owner(player) {
+  if (
+    !player ||
+    typeof player !== 'object' ||
+    ![Object.prototype, null].includes(Object.getPrototypeOf(player))
+  )
+    throw new Error('Cargo ledger: expected plain record');
+  for (const key of ['cargo', 'storage', 'cargoLots', 'storageLots']) {
+    const descriptor = Object.getOwnPropertyDescriptor(player, key);
+    if (descriptor && (!descriptor.enumerable || !Object.hasOwn(descriptor, 'value')))
+      throw new Error('Cargo ledger: expected serializable data properties');
+  }
+}
+/** Check the real assignment target before any transaction writes.
+ * @param {object} target @param {string} key
+ */
+function writable(target, key) {
+  const descriptor = Object.getOwnPropertyDescriptor(target, key);
+  if (
+    descriptor
+      ? !Object.hasOwn(descriptor, 'value') || !descriptor.writable
+      : !Object.isExtensible(target)
+  )
+    throw new Error('Cargo ledger: destination is not writable');
+}
+/** @param {CargoTotals} totals @param {CargoLedger} ledger @param {string} cid */
+function writableLots(totals, ledger, cid) {
+  writable(totals, cid);
+  if (RAW_COMMODITIES.includes(cid)) writable(ledger.byCommodity, cid);
+}
 /** @param {number} value */
 function count(value) {
   if (!Number.isSafeInteger(value) || value < 0) throw new Error('Cargo ledger: invalid quantity');
@@ -76,6 +109,7 @@ export function assertLots(totals, ledger) {
  * @returns {{changed:boolean}}
  */
 export function migrateCargoLots(player) {
+  owner(player);
   const pairs = /** @type {const} */ ([
     ['cargo', 'cargoLots'],
     ['storage', 'storageLots'],
@@ -92,6 +126,10 @@ export function migrateCargoLots(player) {
       pending.push({ totalKey, lotKey, totals, ledger });
     }
     assertLots(totals, ledger);
+  }
+  for (const p of pending) {
+    writable(player, p.totalKey);
+    writable(player, p.lotKey);
   }
   for (const p of pending) {
     player[p.totalKey] = p.totals;
@@ -141,6 +179,7 @@ export function planTake(totals, ledger, cid, qty, selection = 'common-first') {
 }
 /** @param {CargoTotals} totals @param {CargoLedger} ledger @param {string} cid @param {GradeLots} lots */
 function write(totals, ledger, cid, lots) {
+  writableLots(totals, ledger, cid);
   totals[cid] = sum(lots);
   if (RAW_COMMODITIES.includes(cid)) ledger.byCommodity[cid] = lots;
 }
@@ -148,15 +187,12 @@ function write(totals, ledger, cid, lots) {
  * @param {CargoTotals} totals @param {CargoLedger} ledger @param {LotTransfer} plan @returns {LotTransfer}
  */
 export function applyTake(totals, ledger, plan) {
+  const saved = plans.get(plan);
+  if (!saved || saved.totals !== totals || saved.ledger !== ledger)
+    throw new Error('Cargo ledger: stale or untrusted withdrawal plan');
   assertLots(totals, ledger);
-  const saved = plans.get(plan),
-    current = owned(totals, ledger, plan.cid);
-  if (
-    !saved ||
-    saved.totals !== totals ||
-    saved.ledger !== ledger ||
-    RAW_GRADES.some((g) => current[g] !== saved.before[g])
-  )
+  const current = owned(totals, ledger, plan.cid);
+  if (RAW_GRADES.some((g) => current[g] !== saved.before[g]))
     throw new Error('Cargo ledger: stale or untrusted withdrawal plan');
   if (plan.qty === 0) {
     plans.delete(plan);
@@ -199,7 +235,7 @@ export function addLots(totals, ledger, transfer, room = Infinity) {
   count(sum(next));
   write(totals, ledger, transfer.cid, next);
 }
-/** Preflight destination on copies before debiting source; no await/callback in commit.
+/** Preflight quantities on copies and real destinations before debiting source; no await/callback in commit.
  * @param {CargoTotals} source @param {CargoLedger} sourceLedger
  * @param {CargoTotals} target @param {CargoLedger} targetLedger
  * @param {string} cid @param {number} qty @param {GradeLots|'common-first'} [selection]
@@ -226,6 +262,10 @@ export function moveLots(
   const trialTotals = { ...target },
     trialLedger = structuredClone(targetLedger);
   addLots(trialTotals, trialLedger, plan, room);
+  if (qty !== 0) {
+    writableLots(source, sourceLedger, cid);
+    writableLots(target, targetLedger, cid);
+  }
   applyTake(source, sourceLedger, plan);
   if (qty === 0) return plan;
   write(target, targetLedger, cid, owned(trialTotals, trialLedger, cid));
@@ -234,6 +274,11 @@ export function moveLots(
 /** @param {CargoTotals} totals @param {CargoLedger} ledger */
 export function clearLots(totals, ledger) {
   assertLots(totals, ledger);
+  for (const cid of Object.keys(totals)) {
+    if (!Object.getOwnPropertyDescriptor(totals, cid)?.configurable)
+      throw new Error('Cargo ledger: destination is not configurable');
+  }
+  writable(ledger, 'byCommodity');
   for (const cid of Object.keys(totals)) delete totals[cid];
   ledger.byCommodity = {};
 }
