@@ -95,7 +95,8 @@
     "logout-browser.mjs",
     "mining-keys-browser.mjs",
     "landing-autopilot-browser.mjs",
-    "dropdowns-browser.mjs"
+    "dropdowns-browser.mjs",
+    "trade-amount-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -385,7 +386,7 @@
       "owners": ["client/login_scene.js"],
       "services": [],
       "tests": ["login-scene-browser.mjs"],
-      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced-motion static pose/no recurring draws despite suppressed native change delivery, normal resume and rendering lifecycle."
+      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced-motion static pose/no recurring draws despite suppressed native change delivery, normal resume and rendering lifecycle. Actual hub sprite cross-fade and navigation-light pulses, shared rotating/cloud planet pixels, 30% smaller apparent planet diameter. Displayed lamp pixel brightness changes; real logout resumes shared planet motion and reduced-motion freezes again after gameplay."
     },
     {
       "id": "sidebar-scrollbars",
@@ -564,6 +565,13 @@
       "services": [],
       "tests": ["dropdowns-browser.mjs"],
       "asserts": "Explicit ship selection resets the actual landing scroll container after rendering; selected details and purchase controls visible, background renderer preserves scroll, no purchase or wallet change."
+    },
+    {
+      "id": "trade-custom-amount",
+      "owners": ["client/ui.js", "client/style.css"],
+      "services": [],
+      "tests": ["trade-amount-browser.mjs"],
+      "asserts": "Accessible native dark numeric quantities; invalid/empty/overflow denial before wire, real buy/sell settlement, common-first grades, hold/inventory and authoritative funds limits, preset compatibility, async draft/focus retention, narrow viewport interaction."
     }
   ],
   "routes": {
@@ -595,7 +603,13 @@
       "v24.js"
     ],
     "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
-    "trade": ["bot.js", "cargo-flows.js", "v203.js", "cargo-ui-browser.mjs"],
+    "trade": [
+      "bot.js",
+      "cargo-flows.js",
+      "v203.js",
+      "cargo-ui-browser.mjs",
+      "trade-amount-browser.mjs"
+    ],
     "buyship": ["sim.js", "v21.js"],
     "docks": [
       "outfitter-wing-repairs.js",

@@ -3,6 +3,7 @@
 import { START, SYS, STELLARS } from '/shared/galaxy.js';
 import { SPRITES } from '/shared/sprites26.js';
 import { planetSprite } from './planets.js';
+import { loopFrames } from './animation_frames.js';
 
 const TRAFFIC = [
   { hull: 703, lane: 0.19, phase: 0.12, speed: 0.019, size: 60, right: true },
@@ -52,6 +53,7 @@ export function initLoginScene(login) {
     elapsed = 0,
     last = 0,
     drawn = 0,
+    staticPlanetTime = performance.now(),
     settle = [];
   const visible = () => !login.classList.contains('hidden') && !document.hidden;
   const loaded = (im) => im?.complete && im.naturalWidth > 0;
@@ -64,15 +66,34 @@ export function initLoginScene(login) {
     images.set(file, im);
     return im;
   }
-  const hub = image('hub_still.png');
+  const hub = image('hub.png');
+  // Extract the actual asset's red/green navigation lights once, not each frame.
+  const hubLights = document.createElement('canvas');
+  const lights = hubLights.getContext('2d');
+  hub.addEventListener('load', () => {
+    // Half-resolution glow mask is enough for tiny lamps, at one quarter the memory.
+    hubLights.width = hub.naturalWidth / 2;
+    hubLights.height = hub.naturalHeight / 2;
+    lights.drawImage(hub, 0, 0, hubLights.width, hubLights.height);
+    const pixels = lights.getImageData(0, 0, hubLights.width, hubLights.height);
+    for (let i = 0; i < pixels.data.length; i += 4) {
+      const r = pixels.data[i],
+        g = pixels.data[i + 1],
+        b = pixels.data[i + 2];
+      if (!((r > 180 && g < 130 && b < 130) || (g > 180 && r < 150 && b < 160)))
+        pixels.data[i + 3] = 0;
+    }
+    lights.putImageData(pixels, 0, 0);
+    if (visible()) paint();
+  });
   const nebula = image('decor/nebula_2.webp');
   for (const { hull } of TRAFFIC) image(`ships/${hull}.webp`);
 
   // A crisp, deterministic star field is cached at display resolution.
   function resize() {
-    const rect = canvas.getBoundingClientRect();
-    width = Math.max(1, rect.width);
-    height = Math.max(1, rect.height);
+    // Layout dimensions exclude the opening overlay's transient scale animation.
+    width = Math.max(1, canvas.clientWidth);
+    height = Math.max(1, canvas.clientHeight);
     ratio = Math.min(devicePixelRatio || 1, 2);
     canvas.width = sky.width = Math.round(width * ratio);
     canvas.height = sky.height = Math.round(height * ratio);
@@ -119,7 +140,7 @@ export function initLoginScene(login) {
       ctx.globalAlpha = 1;
     }
     // Concordia and Quantum Station are the landmarks a new captain starts beside.
-    const radius = Math.min(width * 0.32, height * 0.57),
+    const radius = Math.min(width * 0.32, height * 0.57) * 0.7,
       px = width * 0.08,
       py = height * 1.02,
       atmosphere = ctx.createRadialGradient(px, py, radius * 0.8, px, py, radius * 1.11);
@@ -130,7 +151,10 @@ export function initLoginScene(login) {
     ctx.beginPath();
     ctx.arc(px, py, radius * 1.11, 0, Math.PI * 2);
     ctx.fill();
-    const world = planetSprite(planet, 0);
+    const seconds = motion.matches ? 0 : elapsed;
+    // Match the shared game's monotonic renderer/budget clock, including after logout.
+    // Reduced motion captures one pose; texture-settling repaints never advance it.
+    const world = planetSprite(planet, motion.matches ? staticPlanetTime : performance.now());
     if (world) {
       const size = (2 * radius * world.S) / world.D;
       ctx.drawImage(world.canvas, px - size / 2, py - size / 2, size, size);
@@ -143,7 +167,53 @@ export function initLoginScene(login) {
       ctx.rotate(-0.12);
       ctx.shadowColor = '#72bbff';
       ctx.shadowBlur = 24;
-      ctx.drawImage(hub, -size / 2, -size / 2, size, size);
+      const frames = loopFrames(seconds * 1000, 18, 150000 / 18);
+      const fs = hub.naturalWidth / 6;
+      for (const [f, weight] of [
+        [frames.first, 1 - frames.mix],
+        [frames.second, frames.mix],
+      ]) {
+        const sx = (f % 6) * fs,
+          sy = Math.floor(f / 6) * fs;
+        ctx.globalAlpha = f === frames.first ? 1 : weight;
+        ctx.drawImage(hub, sx, sy, fs, fs, -size / 2, -size / 2, size, size);
+        if (hubLights.width * 2 === hub.naturalWidth) {
+          // Dim the baked-in lamps first so bright source pixels can visibly pulse
+          // instead of immediately saturating under an additive overlay.
+          ctx.shadowBlur = 0;
+          ctx.filter = 'brightness(0)';
+          ctx.globalAlpha = weight * 0.8;
+          ctx.drawImage(
+            hubLights,
+            sx / 2,
+            sy / 2,
+            fs / 2,
+            fs / 2,
+            -size / 2,
+            -size / 2,
+            size,
+            size,
+          );
+          ctx.filter = 'none';
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.shadowBlur = 5;
+          ctx.globalAlpha = weight * (0.2 + 0.75 * (0.5 + 0.5 * Math.sin(seconds * 2)));
+          ctx.drawImage(
+            hubLights,
+            sx / 2,
+            sy / 2,
+            fs / 2,
+            fs / 2,
+            -size / 2,
+            -size / 2,
+            size,
+            size,
+          );
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.shadowBlur = 24;
+        }
+      }
+      ctx.globalAlpha = 1;
       ctx.restore();
     }
     for (const ship of loginTraffic(motion.matches ? 0 : elapsed, width, height)) {
@@ -193,6 +263,7 @@ export function initLoginScene(login) {
     for (const timer of settle) clearTimeout(timer);
     settle = [];
     const active = visible();
+    staticPlanetTime = performance.now();
     canvas.dataset.running = String(active && !motion.matches);
     if (!active) return;
     paint();
