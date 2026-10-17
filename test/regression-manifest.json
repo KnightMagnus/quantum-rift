@@ -59,6 +59,7 @@
     "cargo-lots.js",
     "cargo-flows.js",
     "mining.js",
+    "mining-renewal.js",
     "mining-network.mjs",
     "refinery.js",
     "refinery-economy.js",
@@ -476,9 +477,10 @@
         "mining-controls-browser.mjs",
         "mining-ui-browser.mjs",
         "mining-panel.js",
-        "mining-panel-browser.mjs"
+        "mining-panel-browser.mjs",
+        "mining-renewal.js"
       ],
-      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion. Role/capacity-gated drill toggle, default collapse, full holds, lifecycle transitions, independent hails, keyboard dismissal and bounded responsive panel."
+      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion. Role/capacity-gated drill toggle, default collapse, full holds, lifecycle transitions, independent hails, keyboard dismissal and bounded responsive panel. Full-health idle renewal across ore/gas/shards, active-work and stale-identity denial, original parcel conservation, bounded history and version-1 restart migration."
     },
     {
       "id": "mining-refinery",
