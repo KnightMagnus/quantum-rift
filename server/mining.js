@@ -81,6 +81,18 @@ function validate(w) {
       )
         throw Error('Invalid industrial mining provenance');
       if (
+        r.dredgeContributors !== undefined &&
+        (!r.dredgeContributors ||
+          typeof r.dredgeContributors !== 'object' ||
+          Array.isArray(r.dredgeContributors) ||
+          Object.keys(r.dredgeContributors).length > 64 ||
+          !Object.entries(r.dredgeContributors).every(
+            ([name, n]) =>
+              name.length > 0 && name.length <= 64 && Number.isFinite(n) && n >= 0 && n <= 1.5,
+          ))
+      )
+        throw Error('Invalid industrial mining contributors');
+      if (
         r.stage > r.stages ||
         r.stages < 1 ||
         r.stages > 3 ||
@@ -225,11 +237,17 @@ function generate(w, sp, fi, i, f, generation) {
 function emit(c, sp, r, clean) {
   const w = world(c),
     f = w.systems[sp.id];
-  if (!r.dredgeToken && r.stages > 1 && (r.dredgeWork || 0) >= 1.5 && r.captain) {
-    const d = c.db.get(r.captain);
+  // One generation opportunity: qualifying useful-contact contributor, never last damage.
+  // Cap each of the first 64 participants at the 1.5s threshold; ties use account order.
+  const contributor = Object.entries(r.dredgeContributors || {})
+    .filter(([, seconds]) => seconds >= 1.5 - 1e-9)
+    .map(([name]) => name)
+    .sort()[0];
+  if (!r.dredgeToken && r.stages > 1 && contributor) {
+    const d = c.db.get(contributor);
     if (d) {
       r.dredgeToken = true;
-      c.dredgeBlueprint(r.captain, INDUSTRIAL.blueprintChance);
+      c.dredgeBlueprint(contributor, INDUSTRIAL.blueprintChance);
     }
   }
   r.lastCut = r.sweepCut ? 'sweep' : r.heat >= 100 ? 'overheat' : clean ? 'clean' : 'ordinary';
@@ -330,6 +348,26 @@ function update(c, sp, r, now = world(c).clock) {
             .map((l) => /** @type {string} */ (l.captain)),
         ),
       ];
+      const contributions = (r.dredgeContributors ||= Object.create(null));
+      for (const name of captains) {
+        if (!Object.hasOwn(contributions, name) && Object.keys(contributions).length >= 64)
+          continue;
+        const own = contactTime(
+          r.leases.filter((l) => l.captain === name),
+          from,
+          to,
+        ).seconds;
+        Object.defineProperty(contributions, name, {
+          value: Math.min(
+            1.5,
+            (Object.hasOwn(contributions, name) ? contributions[name] : 0) +
+              (own * useful) / seconds,
+          ),
+          writable: true,
+          configurable: true,
+          enumerable: true,
+        });
+      }
       c.pressureWork(sp, r, useful, captains);
       r.heat = crosses ? MINING.overheat : heated;
       r.releaseHeat = r.heat;

@@ -23,7 +23,7 @@
  *
  * @typedef {import('./space.js').Rock & {
  * key:string, generation:number, seed:number, stage:number, stages:number,
- * dredgeToken?:boolean,dredgeWork?:number,sweepCut?:boolean,heat:number,work:number,updated:number,releaseAt:number,releaseHeat:number,
+ * dredgeToken?:boolean,dredgeWork?:number,dredgeContributors?:Record<string,number>,sweepCut?:boolean,heat:number,work:number,updated:number,releaseAt:number,releaseHeat:number,
  * ready:boolean,penalty:boolean,penaltyApplied:boolean,baseBudget:number,budget:number,pending:number,
  * accepted:number,expired:number,discarded:number,emitted:number,
  * tokens:boolean[],leases:MiningLease[],seen:Record<string,number>,captain:string|null,

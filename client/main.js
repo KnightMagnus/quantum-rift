@@ -1,3 +1,4 @@
+import { coronaRouteBlocked } from '/shared/industrial-rules.js';
 import { initRefineryUI } from './refinery_ui.js';
 import { binding, migrateBindings, RESERVED_KEYS } from './action-bindings.js';
 import { initMiningUI, receiveMining } from './mining_ui.js';
@@ -1195,6 +1196,33 @@ function autopilot(inp) {
     A = G.auto,
     S = SYS[G.sys];
   if (!me || !st || !S) return setAuto(null);
+  if (A.mode !== 'stop') {
+    const destination =
+      A.mode === 'land' || A.mode === 'gateway'
+        ? S.stellars.find((p) => p.id === A.id)
+        : (() => {
+            const to = SYS[G.route[0]];
+            if (!to) return null;
+            const a = Math.atan2(to.x - S.x, -(to.y - S.y));
+            return {
+              x: me.x + Math.sin(a) * (K.jumpClear + 1000),
+              y: me.y - Math.cos(a) * (K.jumpClear + 1000),
+            };
+          })();
+    const speed = Math.hypot(me.vx, me.vy);
+    const stoppingMargin =
+      1000 +
+      (speed * Math.PI) / Math.max(0.1, st.turn) +
+      (speed * speed) / (2 * Math.max(1, st.accel));
+    if (destination && coronaRouteBlocked(G.sys, me, destination, stoppingMargin)) {
+      G.autoRoute = false;
+      setAuto({ mode: 'stop' });
+      toast(
+        'Autopilot blocked: stellar collector keep-out. Braking; use manual flight to exit or harvest.',
+      );
+      return autopilot(inp);
+    }
+  }
   if (A.mode === 'stop') {
     // 1.1: full stop: turn against your drift and burn until still
     const sp = Math.hypot(me.vx, me.vy);

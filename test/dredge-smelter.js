@@ -86,3 +86,26 @@ for (const after of [false, true]) {
     assert.equal(f.s.data.cargo.ore, 4);
   }
 }
+
+// Actual jettison can remove unreserved input. Switching then discards time only.
+{
+  const f = dredgePilot(undefined, 'JettisonWork');
+  seed(f.s.data, { ore: lots(1), gas: lots(6) });
+  control(f, 'smelter');
+  industrialStep(f, 3);
+  f.s.data.ship.industrial.outputs.alloy_ingots = 70;
+  f.g.features.fleetcmd.jettison(f.s, 'ore', 1);
+  assert.equal(f.s.data.cargo.ore || 0, 0);
+  control(f, 'off');
+  control(f, 'recipe', { recipe: 'cells', grade: 'common' });
+  assert.equal(f.s.data.ship.industrial.recipe, 'cells');
+  assert.equal(f.s.data.ship.industrial.workMs, 0);
+  assert.equal(f.s.data.ship.industrial.outputs.alloy_ingots, 70);
+  assert.ok(f.s.sock.out.some((m) => JSON.stringify(m).includes('discarded partial smelter work')));
+  control(f, 'smelter');
+  industrialStep(f, 7);
+  assert.equal(f.s.data.cargo.gas, 6, 'discarded ore time never transfers to gas');
+  industrialStep(f, 3);
+  assert.equal(f.s.data.cargo.gas, 5);
+  assert.equal(f.s.data.ship.industrial.outputs.fuel_cells, 70);
+}

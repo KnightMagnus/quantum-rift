@@ -83,3 +83,20 @@ export function inSweep(e, target, dt) {
   }
   return false;
 }
+
+/** Conservative autopilot keep-out: route segments must clear the whole collector.
+ * A margin includes stock stopping drift; manual harvesting flight remains available.
+ * @param {string} sys @param {{x:number,y:number}} start
+ * @param {{x:number,y:number}} end @param {number} [margin] */
+export function coronaRouteBlocked(sys, start, end, margin = 1000) {
+  const dx = end.x - start.x,
+    dy = end.y - start.y,
+    length = dx * dx + dy * dy;
+  return CORONA_BANDS.some((b) => {
+    if (b.sys !== sys) return false;
+    const t = length
+      ? Math.max(0, Math.min(1, ((b.x - start.x) * dx + (b.y - start.y) * dy) / length))
+      : 0;
+    return Math.hypot(start.x + t * dx - b.x, start.y + t * dy - b.y) <= b.outer + margin;
+  });
+}

@@ -105,7 +105,7 @@ export function initMiningUI({ G, send, bound, label, blocked, industrialAudio =
   const off = document.createElement('button');
   off.className = 'btn sm';
   off.id = 'industrialoff';
-  off.textContent = 'ALL OFF / COOL';
+  off.textContent = 'ALL OFF';
   off.onclick = () => send({ t: 'industrial', op: 'off' });
   industrial.append(recipes, grade, choose, off);
   root.append(industrial);

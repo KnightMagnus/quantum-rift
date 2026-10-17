@@ -190,3 +190,78 @@ console.log(
   assert.throws(() => g.features.mining.openSpace(sp), /explicit migration/);
   w.config = valid;
 }
+
+// Useful-work provenance survives restart and cooperative contact; ordinary finishing
+// damage never steals another captain's generation opportunity.
+for (const restart of [false, true]) {
+  let f = dredgePilot(undefined, 'UsefulWorker', 704);
+  const { refineryPilot, refineryGame } = await import('./helpers/refinery-fixture.js');
+  const { DB } = await import('../server/db.js');
+  const finisher = refineryPilot(f.g, 'OnlyFinisher');
+  const r = f.sp.rocks.find((r) => r.stages > 1);
+  r.hp = r.max = 1800;
+  for (let i = 0; i < 60; i++) {
+    f.g.features.mining.advanceClock(1 / 30);
+    // Both useful contributors overlap: one opportunity, deterministic account order.
+    for (const name of [f.s.data.name, finisher.data.name]) {
+      if (name === finisher.data.name && i >= 15) continue;
+      f.g.features.mining.contact(f.sp, r, {
+        source: {
+          captain: f.g.db.key(name),
+          source: 1,
+          mount: 0,
+          weapon: 9102,
+          cadence: 1 / 30,
+          contactId: `${name}-${i}`,
+        },
+        damage: 0.01,
+        x: r.x,
+        y: r.y,
+        projectile: false,
+      });
+    }
+    f.g.features.mining.endTick(f.sp);
+  }
+  assert.equal(r.dredgeContributors[f.g.db.key(finisher.data.name)] < 1.5, true);
+  let g = f.g,
+    sp = f.sp,
+    rock = r;
+  const workerName = f.s.data.name,
+    finisherName = finisher.data.name;
+  if (restart) {
+    g.db.flush();
+    g = refineryGame(new DB(g.db.dir));
+    const resumed = dredgePilot(g, workerName, 704);
+    sp = resumed.sp;
+    rock = sp.rocks.find((x) => x.key === r.key);
+  }
+  const random = Math.random;
+  try {
+    Math.random = () => 0;
+    g.features.mining.ordinary(sp, rock, rock.hp, g.db.key(finisherName));
+  } finally {
+    Math.random = random;
+  }
+  assert.equal(g.db.get(workerName).bp[815], 1);
+  assert.equal(g.db.get(finisherName).bp[815] || 0, 0);
+  g.features.mining.ordinary(sp, rock, rock.hp, g.db.key(finisherName));
+  assert.equal(g.db.get(workerName).bp[815], 1, 'once per generation, not once per stage');
+}
+
+// Persisted provenance fails closed; legacy unattributed totals cannot mint a winner.
+{
+  const f = dredgePilot(undefined, 'Provenance', 704),
+    r = f.sp.rocks.find((r) => r.stages > 1);
+  r.dredgeContributors = { [f.g.db.key(f.s.data.name)]: -1 };
+  assert.throws(() => f.g.features.mining.init(), /industrial mining contributors/);
+  delete r.dredgeContributors;
+  r.dredgeWork = 99;
+  const random = Math.random;
+  try {
+    Math.random = () => 0;
+    f.g.features.mining.ordinary(f.sp, r, r.hp, f.g.db.key(f.s.data.name));
+  } finally {
+    Math.random = random;
+  }
+  assert.equal(f.s.data.bp[815] || 0, 0);
+}

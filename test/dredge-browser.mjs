@@ -55,11 +55,27 @@ try {
   await page.waitForFunction(() => G.industrial.sweep);
   await page.locator('#industrialoff').click();
   await page.waitForFunction(() => !G.industrial.sweep);
+  assert.equal(await page.locator('#industrialoff').textContent(), 'ALL OFF');
+  // Actual production autopilot refuses an inside-band start and visibly brakes.
+  await page.evaluate(async () => {
+    const { SYS } = await import('/shared/galaxy.js');
+    G.auto = { mode: 'land', id: SYS[G.sys].stellars[0].id };
+  });
+  await page.waitForFunction(() =>
+    document.getElementById('toasts').textContent.includes('stellar collector keep-out'),
+  );
+  await page.waitForFunction(() => !G.auto);
+  assert.equal(await page.evaluate(() => G.industrial.harvest), false);
+
   await page.locator('#dredgeHarvest').click();
   await page.waitForFunction(() => G.industrial.harvest);
   await page.waitForFunction(() => G.you.cargo.plasma >= 5, {}, { timeout: 20000 });
   await page.locator('#industrialoff').click();
   await page.waitForFunction(() => !G.industrial.harvest);
+  await page.waitForFunction(() =>
+    document.getElementById('industrialheat').textContent.includes('CORONA HEATING — EXIT BAND'),
+  );
+
   await page.keyboard.press('KeyF', { delay: 150 });
   await until(
     () => f.read()?.pilots.find((p) => p.name === 'Dredge Alpha')?.fighters.length > 0,

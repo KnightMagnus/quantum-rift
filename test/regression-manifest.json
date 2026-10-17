@@ -477,7 +477,8 @@
         "server/industrial.js",
         "shared/industrial-rules.js",
         "server/specialists.js",
-        "client/mining_ui.js"
+        "client/mining_ui.js",
+        "client/main.js"
       ],
       "tests": [
         "dredge.js",
@@ -487,7 +488,7 @@
         "dredge-network.mjs",
         "dredge-browser.mjs"
       ],
-      "asserts": "No-plasma real specialist build; finite root-only sweep mass and two utility collectors; exact mobile grade/remainder/checkpoint ownership; stock real flight plasma escape and thermal damage ordering; finite one-way economy, private checked WS modes and actual production sprite/control rendering."
+      "asserts": "No-plasma real specialist build; finite root-only sweep mass and two utility collectors; exact mobile grade/remainder/checkpoint ownership; stock real flight plasma escape and thermal damage ordering; finite one-way economy, private checked WS modes and actual production sprite/control rendering. Per-captain cooperative/restart blueprint qualification, missing-input work discard without transfer, passive corona exit warnings and automatic route keep-out."
     }
   ],
   "routes": {

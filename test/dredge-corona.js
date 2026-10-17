@@ -103,3 +103,56 @@ industrialStep(finite, 3);
 assert.equal(finite.s.data.cargo.plasma, plasma);
 finite.g.db.flush();
 assert.equal(finite.s.data.spec.plasma || 0, 0);
+
+// ALL OFF is not cooling while passive corona exceeds cooling capacity.
+{
+  const f = dredgePilot(undefined, 'OffHeat'),
+    e = f.s.ent,
+    b = CORONA_BANDS[0];
+  e.x = b.entry.x;
+  e.y = b.entry.y;
+  control(f, 'harvest');
+  industrialStep(f, 15);
+  control(f, 'off');
+  const before = f.s.data.ship.industrial.heat;
+  industrialStep(f, 2);
+  assert.ok(Math.abs(f.s.data.ship.industrial.heat - before - 6) < 1e-6);
+  assert.match(f.s.data.ship.industrial.reason, /CORONA HEATING — EXIT BAND/);
+  f.s.data.ship.industrial.heat = 105;
+  industrialStep(f, 1);
+  assert.match(f.s.data.ship.industrial.reason, /THERMAL CUTOFF.*CORONA HEATING — EXIT BAND/);
+  e.x = b.x + b.outer + 2000;
+  const hot = f.s.data.ship.industrial.heat;
+  industrialStep(f, 1);
+  assert.ok(f.s.data.ship.industrial.heat < hot);
+  assert.doesNotMatch(f.s.data.ship.industrial.reason, /CORONA HEATING/);
+  f.s.data.ship.industrial.heat = 60;
+  industrialStep(f, 1);
+  assert.equal(f.s.data.ship.industrial.reason, 'OFF / COOLING');
+}
+// Arbitrary automatic route segments, not just authored stellar-to-stellar routes.
+{
+  const { coronaRouteBlocked } = await import('../shared/industrial-rules.js');
+  const { step } = await import('../shared/rules.js');
+  const { landingGuidance } = await import('../client/landing_autopilot.js');
+  const b = CORONA_BANDS[0],
+    f = dredgePilot(undefined, 'Keepout'),
+    e = f.s.ent;
+  const start = { x: b.x + 7000, y: b.y },
+    target = { x: b.x - 7000, y: b.y, r: 100 };
+  assert.equal(coronaRouteBlocked(b.sys, start, target), true);
+  assert.equal(coronaRouteBlocked(b.sys, b.entry, target), true, 'inside-start also rejected');
+  let refused = false;
+  Object.assign(e, start, { vx: 0, vy: 0 });
+  for (let i = 0; i < 300; i++) {
+    const inp = {};
+    if (coronaRouteBlocked(b.sys, e, target)) refused = true;
+    else landingGuidance({}, e, e.st, target, inp);
+    step(e, e.st, inp);
+    assert.equal(coronaAt(b.sys, e.x, e.y), null, 'rejected route never enters collector');
+  }
+  assert.equal(refused, true);
+  for (const a of SYS[b.sys].stellars)
+    for (const z of SYS[b.sys].stellars)
+      assert.equal(coronaRouteBlocked(b.sys, a, z), false, 'authored safe routes unaffected');
+}

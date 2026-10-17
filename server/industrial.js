@@ -165,8 +165,15 @@ export const IndustrialOperations = {
           !['common', 'rich', 'pure'].includes(q.grade || '')
         )
           throw Error('Choose a mobile recipe and exact input grade');
-        if (m.workMs > 0 && (q.recipe !== m.recipe || q.grade !== m.grade))
-          throw Error('Finish earned work before switching input recipe/grade');
+        if (m.workMs > 0 && (q.recipe !== m.recipe || q.grade !== m.grade)) {
+          const old = RECIPES.find((r) => r.id === m.recipe)?.inputs[0];
+          const player = /** @type {Player} */ (s.data);
+          if (old && (player.cargoLots?.byCommodity[old]?.[m.grade] || 0) > 0)
+            throw Error('Finish earned work before switching input recipe/grade');
+          // Unreserved input can be traded/jettisoned. Discard time, never transfer it.
+          m.workMs = 0;
+          this.toast(s, 'Previous input is gone: discarded partial smelter work; outputs retained');
+        }
         m.recipe = /** @type {string} */ (q.recipe);
         m.grade = /** @type {'common'|'rich'|'pure'} */ (q.grade);
       } else if (q.op === 'sweep' || q.op === 'smelter' || q.op === 'harvest') {
@@ -272,7 +279,11 @@ export const IndustrialOperations = {
                 ? 'SWEEP: move forward above 20'
                 : room <= 0
                   ? 'HOLD FULL'
-                  : 'OFF / COOLING';
+                  : band
+                    ? 'ALL OFF'
+                    : 'OFF / COOLING';
+      if (band && R.coronaHeat > R.cooling && !sweep && !smelt && !harvest)
+        m.reason += ' · CORONA HEATING — EXIT BAND';
       support(sp, e, sweep);
       if (sweep && work > 0) {
         // Root cap shared across ship and both drones, not one cap per collector.
