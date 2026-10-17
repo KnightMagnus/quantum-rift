@@ -91,7 +91,7 @@ const VILLAINS = [
 /**
  * Retrieve landable spaceports in a star system.
  * @param {string} sys - System ID.
- * @returns {Array<Record<string, unknown>>} List of stellar port objects.
+ * @returns {Array<{id: string, name: string, system: string}>} List of stellar port objects.
  */
 const portsOf = (sys) => SYS[sys].stellars.filter((x) => x.svc.includes('L') && !x.site);
 
@@ -129,7 +129,7 @@ const raceOf = (fac) => (RACE_ROLES[fac] ? fac : 'quantum');
 // 2.5.2: the most hold space and bunks any step of a story will ask for, so the job board can warn before you take it on
 /**
  * Compute the maximum cargo hold and passenger bunks required across all steps of a quest chain.
- * @param {Array<Record<string, unknown>>} steps - Quest chain steps.
+ * @param {Array<import("../shared/quests.js").QuestStep>} steps - Quest chain steps.
  * @returns {{hold: number, pax: number}} Peak required hold and passenger capacity.
  */
 export const needsOf = (steps) => ({
@@ -151,9 +151,8 @@ export const needsOf = (steps) => ({
 export const QuestOperations = {
   /**
    * Initialize quest tracking structures on player data.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Record<string, unknown>} Initialized quests dictionary.
+   * @returns {Record<string, import("../shared/quests.js").QuestRecord>} Initialized quests dictionary.
    */
   questInit(d) {
     const q = (d.quests = d.quests || {});
@@ -166,9 +165,8 @@ export const QuestOperations = {
   // every bar has a contact; who they are depends only on the world
   /**
    * Determine the unique bar contact stationed at a stellar body.
-   * @this {Record<string, unknown>}
-   * @param {{id: string, site?: boolean | Record<string, unknown>, svc: string, system: string, outlaw?: boolean} | null} p - Stellar body.
-   * @returns {Record<string, unknown> | null} Contact descriptor or null if no bar available.
+   * @param {{id: string, site?: boolean | Record<string, string | number>, svc: string, system: string, outlaw?: boolean} | null} p - Stellar body.
+   * @returns {Record<string, string | number> | null} Contact descriptor or null if no bar available.
    */
   contactAt(p) {
     if (!p || p.site || !p.svc.includes('B')) return null;
@@ -190,9 +188,8 @@ export const QuestOperations = {
   },
   /**
    * Build network telemetry payload describing active quests, completed quests, and contact standings.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Record<string, unknown>} Quests telemetry payload.
+   * @returns {Record<string, string | number | boolean>} Quests telemetry payload.
    */
   questsPayload(d) {
     const q = this.questInit(d);
@@ -216,10 +213,9 @@ export const QuestOperations = {
   // ---- what a bar offers you: a side story that starts here, or this contact's next story
   /**
    * Generate available quest offerings at a stellar bar (side stories and procedural contact chains).
-   * @this {Record<string, unknown>}
-   * @param {{id: string, site?: boolean | Record<string, unknown>, svc: string, system: string} | null} p - Stellar body.
+   * @param {{id: string, site?: boolean | Record<string, string | number>, svc: string, system: string} | null} p - Stellar body.
    * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Array<Record<string, unknown>>} List of quest offers.
+   * @returns {Array<import("./game.js").Mission>} List of quest offers.
    */
   questOffers(p, d) {
     const q = this.questInit(d),
@@ -272,11 +268,10 @@ export const QuestOperations = {
   // which story this contact has for you next, and where it happens (the same every time you ask, until you finish one)
   /**
    * Determine next story chain and plan locations offered by a specific contact.
-   * @this {Record<string, unknown>}
    * @param {{system: string, id: string}} p - Stellar body.
    * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @param {Record<string, unknown>} C - Bar contact descriptor.
-   * @returns {{X: Record<string, unknown>, plan: Record<string, unknown>} | null} Selected chain and route plan, or null.
+   * @param {Record<string, string | number>} C - Bar contact descriptor.
+   * @returns {{X: Record<string, string | number | boolean>, plan: Record<string, string | number>} | null} Selected chain and route plan, or null.
    */
   contactStory(p, d, C) {
     const cs = this.questInit(d).contacts[C.id] || {},
@@ -289,8 +284,7 @@ export const QuestOperations = {
   },
   /**
    * Calculate credit and item rewards for completing a quest chain at a given standing level.
-   * @this {Record<string, unknown>}
-   * @param {{steps: Array<Record<string, unknown>>}} X - Story chain template.
+   * @param {{steps: Array<import("../shared/quests.js").QuestStep>}} X - Story chain template.
    * @param {number} lvl - Contact standing level (0-4).
    * @returns {{credits: number, crate: [string | null, number], officer: string | null, bp: number}} Reward descriptor.
    */
@@ -305,7 +299,6 @@ export const QuestOperations = {
   },
   /**
    * Format a textual summary of quest rewards for UI presentation.
-   * @this {Record<string, unknown>}
    * @param {{credits: number, crate?: [string | null, number], officer?: string | null, bp?: number}} R - Reward descriptor.
    * @returns {string} Comma-separated reward description text.
    */
@@ -319,13 +312,12 @@ export const QuestOperations = {
   // the places a generated story happens: A is close (1-2 jumps), B a little further and different from A
   /**
    * Select candidate stellar worlds, ships, and targets for a procedural quest chain.
-   * @this {Record<string, unknown>}
    * @param {{id: string, system: string}} p - Starting stellar body.
    * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @param {Record<string, unknown>} X - Quest chain template.
-   * @param {Record<string, unknown>} C - Contact descriptor.
+   * @param {Record<string, string | number | boolean>} X - Quest chain template.
+   * @param {Record<string, string | number>} C - Contact descriptor.
    * @param {() => number} r - Random generator function.
-   * @returns {Record<string, unknown> | null} Spatial and narrative plan variables, or null.
+   * @returns {Record<string, string | number> | null} Spatial and narrative plan variables, or null.
    */
   questPlan(p, d, X, C, r) {
     const all = Object.entries(jumpsFrom(p.system)).filter(
@@ -357,9 +349,8 @@ export const QuestOperations = {
   },
   /**
    * Substitute template placeholders with concrete planetary and narrative variables.
-   * @this {Record<string, unknown>}
    * @param {string} t - Template text with {placeholders}.
-   * @param {Record<string, unknown>} P - Quest plan parameters.
+   * @param {Record<string, string | number>} P - Quest plan parameters.
    * @returns {string} Interpolated narrative text.
    */
   fill(t, P) {
@@ -379,7 +370,6 @@ export const QuestOperations = {
   // ---- accepting
   /**
    * Accept and start an active side story or procedural contact quest.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @param {{side?: string, story?: string}} o - Quest offer descriptor.
    * @returns {void}
@@ -442,11 +432,10 @@ export const QuestOperations = {
   // turn a step into a concrete job
   /**
    * Instantiate a concrete mission job object for a given quest step.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @param {Record<string, unknown>} Q - Active quest state.
+   * @param {import("../shared/quests.js").QuestRecord} Q - Active quest state.
    * @param {number} i - Step index.
-   * @returns {Record<string, unknown>} Concrete mission specification.
+   * @returns {import("./game.js").Mission} Concrete mission specification.
    */
   questStepJob(d, Q, i) {
     const st = Q.steps[i],
@@ -594,9 +583,8 @@ export const QuestOperations = {
   },
   /**
    * Push current step's job onto the player's active mission list.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
-   * @param {Record<string, unknown>} Q - Active quest state.
+   * @param {import("../shared/quests.js").QuestRecord} Q - Active quest state.
    * @param {boolean} [first] - True if first step initiation.
    * @returns {void}
    */
@@ -635,9 +623,8 @@ export const QuestOperations = {
   // a step was paid (called from completeOnLanding)
   /**
    * Advance an active quest chain to its next step after completing the current step's job.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
-   * @param {Record<string, unknown>} m - Completed mission record.
+   * @param {import("./game.js").Mission} m - Completed mission record.
    * @returns {void}
    */
   questAdvance(s, m) {
@@ -663,9 +650,8 @@ export const QuestOperations = {
   },
   /**
    * Complete a quest chain, awarding credits, crates, blueprints, officers, and standing.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
-   * @param {Record<string, unknown>} Q - Completed quest structure.
+   * @param {import("../shared/quests.js").QuestRecord} Q - Completed quest structure.
    * @returns {void}
    */
   questFinish(s, Q) {
@@ -743,7 +729,6 @@ export const QuestOperations = {
   },
   /**
    * Terminate and fail an active quest chain.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @param {string} qid - Quest ID string.
    * @param {string} why - Explanation of failure.
@@ -770,7 +755,6 @@ export const QuestOperations = {
   // every two seconds: a step lost with your ship, a missed deadline or a destroyed convoy gets one more chance
   /**
    * Periodic check on active quest steps to allow second chance or mark failure.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
@@ -808,10 +792,9 @@ export const QuestOperations = {
   // ---- the contact's talk at the bar: a greeting that knows you, and a rumour worth acting on
   /**
    * Retrieve dynamic conversation dialogue and trade/system rumors from a bar contact.
-   * @this {Record<string, unknown>}
    * @param {{id: string, system: string}} p - Landed stellar body.
    * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Record<string, unknown> | null} Bar dialogue descriptor, or null.
+   * @returns {Record<string, string | number> | null} Bar dialogue descriptor, or null.
    */
   barTalk(p, d) {
     const C = this.contactAt(p);
@@ -905,7 +888,6 @@ export const QuestOperations = {
   // ---- salvage steps: a crate appears at the marked point when you come close
   /**
    * Spawn a floating salvage container when player ship nears marked quest coordinates.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
@@ -934,7 +916,6 @@ export const QuestOperations = {
   },
   /**
    * Handle collecting a quest salvage floating loot entity.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @param {{salvage: string}} it - Collected loot cargo item.
    * @returns {boolean} True if matching salvage quest was completed.

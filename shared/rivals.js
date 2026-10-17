@@ -315,7 +315,7 @@ export const HAIL_LINES = {
 
 /**
  * Formatting templates for galaxy newsfeed broadcasts about rival captain activities.
- * @type {Record<string, (...args: unknown[]) => string>}
+ * @type {Record<string, (...args: (string | number)[]) => string>}
  */
 export const NEWS_TEMPLATES = {
   upgrade: (n, ship, place) => `${n} was seen at ${place} taking delivery of a new ${ship}.`,

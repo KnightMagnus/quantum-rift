@@ -593,7 +593,7 @@ function segDist(p, a, b) {
  * Procedurally expands the hand-made anchor star systems into a full ~200-system galaxy.
  * Places systems deterministically, establishes hyperlane routes, assigns territories and worlds.
  * @param {import('../server/game.js').SpaceSystem[]} SYSTEMS - Base anchor systems array, modified and expanded in place.
- * @param {Record<string, unknown>} FACTIONS - Galaxy factions registry.
+ * @param {Record<string, import("./galaxy.js").FactionDef>} FACTIONS - Galaxy factions registry.
  * @returns {import('../server/game.js').SpaceSystem[]} Array of all newly generated star systems.
  */
 export function expandGalaxy(SYSTEMS, FACTIONS) {

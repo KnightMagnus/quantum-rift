@@ -26,7 +26,6 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 export const HostileOperations = {
   /**
    * Initialize holdout tracking state on player data.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {void}
    */
@@ -35,7 +34,6 @@ export const HostileOperations = {
   },
   /**
    * Calculate effective combat power of the player's active ship and wingmates.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {number} Player power rating.
    */
@@ -46,7 +44,6 @@ export const HostileOperations = {
   // ------------------------------------------------------------------ chests (called from Space.kill)
   /**
    * Roll for and spawn a faction loot chest when an NPC ship is destroyed.
-   * @this {Record<string, unknown>}
    * @param {import('./space.js').Space} space - Space instance where the kill occurred.
    * @param {import('./game.js').Session} s - Destroyed ship entity.
    * @param {import('./space.js').Entity} by - Attacking entity that destroyed the ship.
@@ -70,7 +67,6 @@ export const HostileOperations = {
   },
   /**
    * Open a loot chest, awarding credits, crafting materials, blueprints, and specialty items.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session opening the chest.
    * @param {{chest: string, lvl?: number}} it - Loot item details.
    * @returns {boolean} True if opened successfully.
@@ -110,7 +106,6 @@ export const HostileOperations = {
   // ------------------------------------------------------------------ Station Holdout (solo wave defense at your own station)
   /**
    * Start a Station Holdout wave defense activity from the player's personal station.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
@@ -139,7 +134,6 @@ export const HostileOperations = {
   },
   /**
    * Update the active holdout state, managing waves, platform defense, and completion checks.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
@@ -238,7 +232,6 @@ export const HostileOperations = {
   },
   /**
    * Conclude a holdout event, despawn platforms/enemies, and distribute rewards.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @param {boolean} won - Whether all ten waves were completed.
    * @param {string} [why] - Reason for termination if incomplete.
@@ -296,7 +289,6 @@ export const HostileOperations = {
   },
   /**
    * Callback invoked when a ship is destroyed during a holdout.
-   * @this {Record<string, unknown>}
    * @param {import('./space.js').Entity} e - Defeated ship entity.
    * @returns {void}
    */
@@ -305,7 +297,6 @@ export const HostileOperations = {
   // ------------------------------------------------------------------ the Umbral Eclipse (spawned by Space.spawnTraffic)
   /**
    * Compute the spawn probability for an Umbral Eclipse cell in a system.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').SpaceSystem} S - System metadata.
    * @param {Record<string, number>} [m] - Active sector modifiers.
    * @returns {number} Spawn probability.

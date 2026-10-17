@@ -135,8 +135,8 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {string} [ore] Mined ore commodity ID.
  * @property {number} [n] Quantity of ore or units.
  * @property {string} [cargo] Jettisoned commodity ID.
- * @property {Record<string, unknown>} [salvage] Quest salvage payload.
- * @property {Record<string, unknown>} [chest] Pirate treasure chest payload.
+ * @property {{id: string, name: string, xp?: number, credits?: number}} [salvage] Quest salvage payload.
+ * @property {{credits?: number, tokens?: number, shards?: number, rep?: Record<string, number>}} [chest] Pirate treasure chest payload.
  *
  * @typedef {object} FloatingLoot
  * @property {number} id Unique loot canister ID.

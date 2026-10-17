@@ -17,7 +17,7 @@ import { passengerSeats } from './passengers.js';
  * @property {string} name - Display name of the item or bundle.
  * @property {number} price - Purchase cost in credits.
  * @property {string} desc - In-game description of item utility.
- * @property {Record<string, unknown>} give - Reward payload granted upon purchase (e.g. papers, shards, bp, parts, crate).
+ * @property {Record<string, number | string | boolean>} give - Reward payload granted upon purchase (e.g. papers, shards, bp, parts, crate).
  */
 
 /**

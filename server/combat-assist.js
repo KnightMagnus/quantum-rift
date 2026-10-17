@@ -71,7 +71,7 @@ import { winOdds } from '../shared/hostile.js';
  * @property {string} state Entity flight state ('fly', 'jumpout', 'landed').
  * @property {number} armor Current armor hitpoints.
  * @property {CombatShipStats} st Live computed ship stats containing max armor.
- * @property {unknown} [player] Player reference if this is a player-controlled ship.
+ * @property {import('./game.js').Session | null} [player] Player reference if this is a player-controlled ship.
  * @property {boolean} [noDisable] Exemption flag preventing disablement threshold.
  * @property {number} [rescueT] Rescue protection countdown timestamp.
  * @property {number | null} [owner] Entity ID of the commanding or parent ship.
@@ -156,7 +156,7 @@ import { winOdds } from '../shared/hostile.js';
  * @property {Record<string, CombatSpace>} spaces Active solar system space instances.
  * @property {import('./features.js').FeatureServices} features Server feature services.
  * @property {Map<number, CombatSession>} sessions Active client sessions.
- * @property {(session: CombatSession, msg: Record<string, unknown>) => void} [send] Message transmitter.
+ * @property {(session: CombatSession, msg: import('./message-registry.js').NetworkMessage) => void} [send] Message transmitter.
  */
 
 /**

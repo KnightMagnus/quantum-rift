@@ -48,7 +48,6 @@ function okSystem(r, S) {
 export const RivalsOperations = {
   /**
    * Initialize rival captains state and ambient spaceport news in world database.
-   * @this {Record<string, unknown>}
    * @returns {void}
    */
   rivalsInit() {
@@ -103,16 +102,14 @@ export const RivalsOperations = {
   },
   /**
    * Look up persistent state for a rival captain.
-   * @this {Record<string, unknown>}
    * @param {string} id - Rival identifier.
-   * @returns {Record<string, unknown> | undefined} Persistent rival record.
+   * @returns {Record<string, string | number | boolean> | undefined} Persistent rival record.
    */
   rivalState(id) {
     return this.db.world.rivals[id];
   },
   /**
    * Look up full name of a rival captain.
-   * @this {Record<string, unknown>}
    * @param {string} id - Rival identifier.
    * @returns {string} Rival name.
    */
@@ -121,7 +118,6 @@ export const RivalsOperations = {
   },
   /**
    * Look up relationship score between a player and a rival captain.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').PlayerData} d - Saved player data.
    * @param {string} id - Rival identifier.
    * @returns {number} Relationship score (-100 to 100).
@@ -132,7 +128,6 @@ export const RivalsOperations = {
   },
   /**
    * Modify relationship score with a rival, logging changes and broadcasting news on threshold shifts.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @param {string} id - Rival identifier.
    * @param {number} delta - Delta to apply.
@@ -162,7 +157,6 @@ export const RivalsOperations = {
   },
   /**
    * Add a headline to the persistent galaxy news feed.
-   * @this {Record<string, unknown>}
    * @param {string} text - Headline text.
    * @returns {void}
    */
@@ -173,7 +167,6 @@ export const RivalsOperations = {
   },
   /**
    * Retrieve recent headlines from the world news feed.
-   * @this {Record<string, unknown>}
    * @param {number} [n=6] - Number of items to retrieve.
    * @returns {string[]} Array of recent news strings.
    */
@@ -185,7 +178,6 @@ export const RivalsOperations = {
   },
   /**
    * Get active flash market price multiplier for a commodity at a stellar port.
-   * @this {Record<string, unknown>}
    * @param {string} stellar - Stellar port ID.
    * @param {string} cid - Commodity ID.
    * @returns {number} Price multiplier.
@@ -200,7 +192,6 @@ export const RivalsOperations = {
   // every 20 s: careers move on, ships get upgraded, news is made, grudges turn into hunters
   /**
    * Advance rival captains simulation tick: upgrade ships, trigger news, move between systems, spawn hunters.
-   * @this {Record<string, unknown>}
    * @returns {void}
    */
   rivalsTick() {
@@ -308,9 +299,8 @@ export const RivalsOperations = {
   },
   /**
    * Spawn bounty hunter escort ships targeting a player with a severe nemesis grudge.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
-   * @param {Record<string, unknown>} R - Rival configuration object.
+   * @param {Record<string, string | number>} R - Rival configuration object.
    * @returns {void}
    */
   spawnHunters(s, R) {
@@ -344,7 +334,6 @@ export const RivalsOperations = {
   // keep live systems in step with where the rivals are
   /**
    * Synchronize rival ships within an active space sector.
-   * @this {Record<string, unknown>}
    * @param {import('./space.js').Space} sp - Space sector instance.
    * @returns {void}
    */
@@ -396,7 +385,6 @@ export const RivalsOperations = {
   // think hook: rivals pick fights with their rivals and stand by their allies
   /**
    * AI decision loop for rival ships in space (attack nemeses, assist allies).
-   * @this {Record<string, unknown>}
    * @param {import('./space.js').Entity} e - Rival ship entity.
    * @param {import('./space.js').Space} sp - Space sector instance.
    * @returns {void}
@@ -428,7 +416,6 @@ export const RivalsOperations = {
   // hostility hook (undefined = normal faction rules)
   /**
    * Determine hostility override between an NPC and a player based on rival status and relations.
-   * @this {Record<string, unknown>}
    * @param {import('./space.js').Entity} npc - NPC entity.
    * @param {import('./game.js').StellarBody} p - Player entity.
    * @returns {boolean | undefined} True/false if override applies, undefined to defer to faction rules.
@@ -445,7 +432,6 @@ export const RivalsOperations = {
   },
   /**
    * Handle weapon impact on a rival ship, reducing player relationship score.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session that fired.
    * @param {import('./space.js').Entity} npc - Targeted entity that was hit.
    * @param {import('./space.js').Space} space - Space sector instance.
@@ -464,7 +450,6 @@ export const RivalsOperations = {
   },
   /**
    * Handle ship destruction involving rivals, penalizing killer or rewarding helpful bystanders.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session scoring the kill.
    * @param {import('./space.js').Entity} npc - Destroyed NPC entity.
    * @param {import('./space.js').Space} space - Space sector instance.
@@ -495,7 +480,6 @@ export const RivalsOperations = {
   // a rival trader who lands stays docked a while, then takes off again from that world
   /**
    * Handle rival ship landing at a planetary spaceport.
-   * @this {Record<string, unknown>}
    * @param {import('./space.js').Entity} e - Landing ship entity.
    * @returns {void}
    */
@@ -508,7 +492,6 @@ export const RivalsOperations = {
   },
   /**
    * Generate leaderboard entries for rival captains in a given category.
-   * @this {Record<string, unknown>}
    * @param {string} cat - Metric category ('earned' or 'kills').
    * @returns {Array<{name: string, ai: boolean, v: number}>} Leaderboard ranking entries.
    */
@@ -523,9 +506,8 @@ export const RivalsOperations = {
   },
   /**
    * Compile the client payload listing all rival captains, locations, and relationship states.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Array<Record<string, unknown>>} Rivals summary list for client.
+   * @returns {Array<Record<string, string | number>>} Rivals summary list for client.
    */
   rivalsPayload(d) {
     return RIVALS.map((R) => {

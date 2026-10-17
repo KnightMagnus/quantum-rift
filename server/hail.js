@@ -25,7 +25,6 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 export const HailOperations = {
   /**
    * Calculate credit cost to bribe hostile forces based on player ship and cargo.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {number} Credit cost to bribe.
    */
@@ -39,9 +38,8 @@ export const HailOperations = {
   },
   /**
    * Find and validate the targeted ship for a hail within comms range.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
-   * @param {Record<string, unknown>} m - Target hail message.
+   * @param {import("./message-registry.js").NetworkMessage} m - Target hail message.
    * @returns {{sp: import('./space.js').Space, e: import('./space.js').Entity, root: import('./space.js').Entity} | null} Target context or null if unreachable.
    */
   hailTarget(s, m) {
@@ -60,9 +58,8 @@ export const HailOperations = {
   },
   /**
    * Open communications with a targeted ship or selected planet.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
-   * @param {Record<string, unknown>} m - Inbound hail message.
+   * @param {import("./message-registry.js").NetworkMessage} m - Inbound hail message.
    * @returns {void}
    */
   hail(s, m) {
@@ -164,9 +161,8 @@ export const HailOperations = {
   },
   /**
    * Process a player's selected dialogue response or negotiation option in a hail.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
-   * @param {Record<string, unknown>} m - Inbound dialogue choice message.
+   * @param {import("./message-registry.js").NetworkMessage} m - Inbound dialogue choice message.
    * @returns {void}
    */
   hailOpt(s, m) {
@@ -287,7 +283,6 @@ export const HailOperations = {
   // planets: docking control. When your standing is too low to land, docking control can be persuaded.
   /**
    * Hail a planet's docking control for landing clearance.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @param {string} id - Stellar body identifier.
    * @returns {void}
@@ -319,9 +314,8 @@ export const HailOperations = {
   },
   /**
    * Handle dialogue response for planetary docking control (such as paying bribes for clearance).
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
-   * @param {Record<string, unknown>} m - Inbound option message.
+   * @param {import("./message-registry.js").NetworkMessage} m - Inbound option message.
    * @returns {void}
    */
   hailPlanetOpt(s, m) {

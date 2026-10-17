@@ -544,7 +544,7 @@ export function officerBonus(officers, bridge) {
 
 /**
  * Aggregates all active player modifications: station research, bridge officers, and lower-deck crew.
- * @param {Record<string, unknown> | {station?: StationState, officers?: Officer[], bridge?: Record<string, number>, lower?: string[]}} d - Full player save state.
+ * @param {import("../server/game.js").PlayerData} d - Full player save state.
  * @returns {Record<string, number>} Total unified stat bonuses.
  */
 // everything that modifies a captain's ship: research + bridge crew

@@ -22,7 +22,8 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
  */
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
-/** @type {Record<string, (system: import('./game.js').SpaceSystem | Record<string, unknown>, state?: Record<string, unknown>) => string>} Headline generators for system events. */
+/** @type {Record<string, (system: import("./game.js").SpaceSystem | Record<string, string | number>, state?: Record<string, string | number>) => string>} Headline generators for system events. */
+/** @type {Record<string, (system: import("./game.js").SpaceSystem | Record<string, string | number>, state?: Record<string, string | number>) => string>} */
 const START_NEWS = {
   famine: (S) => `Famine grips ${S.name}: food prices have doubled and relief is needed.`,
   plague: (S) => `A fever spreads through ${S.name}. Medical supplies are urgently needed.`,
@@ -38,7 +39,6 @@ const START_NEWS = {
 export const LivingOperations = {
   /**
    * Initialize living world state containers in the database.
-   * @this {Record<string, unknown>}
    * @returns {void}
    */
   livingInit() {
@@ -49,7 +49,6 @@ export const LivingOperations = {
   },
   /**
    * Get all non-arena systems with active trade ports.
-   * @this {Record<string, unknown>}
    * @returns {string[]} List of system IDs.
    */
   marketSystems() {
@@ -62,9 +61,8 @@ export const LivingOperations = {
   },
   /**
    * Look up the currently active event state for a system.
-   * @this {Record<string, unknown>}
    * @param {string} sysId - System ID.
-   * @returns {Record<string, unknown> | null} System state object or null if none active.
+   * @returns {Record<string, string | number | boolean> | null} System state object or null if none active.
    */
   stateOf(sysId) {
     const st = this.db.world.states && this.db.world.states[sysId];
@@ -73,7 +71,6 @@ export const LivingOperations = {
   // a war needs an enemy: a power hostile to the system's owner, preferably one next door
   /**
    * Select a hostile enemy faction for a system entering a war state.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').SpaceSystem} S - System metadata.
    * @returns {string | null} Hostile enemy faction key or null.
    */
@@ -94,7 +91,6 @@ export const LivingOperations = {
   },
   /**
    * Advance the living galaxy simulation tick, updating system states and generating news.
-   * @this {Record<string, unknown>}
    * @returns {void}
    */
   livingTick() {
@@ -160,8 +156,7 @@ export const LivingOperations = {
   },
   /**
    * Compile a summary payload of all active system states for client sync.
-   * @this {Record<string, unknown>}
-   * @returns {Record<string, unknown>} Active system states map.
+   * @returns {Record<string, Record<string, string | number>>} Active system states map.
    */
   statesPayload() {
     const out = {};
@@ -179,7 +174,6 @@ export const LivingOperations = {
   // ---- prices: the system's state and what captains have been selling or buying at this world
   /**
    * Calculate decayed trade impact factor on prices for a commodity at a stellar port.
-   * @this {Record<string, unknown>}
    * @param {string} sid - Stellar port ID.
    * @param {string} cid - Commodity ID.
    * @returns {number} Fractional impact on price.
@@ -197,7 +191,6 @@ export const LivingOperations = {
   },
   /**
    * Record trade volume and apply price impact for a commodity at a stellar port.
-   * @this {Record<string, unknown>}
    * @param {string} sid - Stellar port ID.
    * @param {string} cid - Commodity ID.
    * @param {number} tons - Traded volume (positive for sales, negative for purchases).
@@ -219,7 +212,6 @@ export const LivingOperations = {
   },
   /**
    * Calculate effective price multiplier from active system event and player trade impact.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').StellarBody} p - Stellar body object.
    * @param {string} cid - Commodity ID.
    * @returns {number} Price multiplier.
@@ -232,7 +224,6 @@ export const LivingOperations = {
   // ---- captains ending states early
   /**
    * Contribute progress towards resolving an active troubled system event.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session.
    * @param {string} sys - System ID.
    * @param {string} what - Progress category key (e.g. 'cid:food', 'kill:pirate').
@@ -261,7 +252,6 @@ export const LivingOperations = {
   },
   /**
    * Conclude an active system state early due to player contribution, distributing rewards.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session that triggered resolution.
    * @param {string} sys - System ID.
    * @returns {void}
@@ -292,7 +282,6 @@ export const LivingOperations = {
   },
   /**
    * Check killed NPC to progress pirate or war crisis states in the system.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').Session} s - Player session scoring the kill.
    * @param {import('./space.js').Entity} npc - Killed NPC entity.
    * @param {import('./space.js').Space} space - Space instance where the kill occurred.
@@ -306,13 +295,12 @@ export const LivingOperations = {
   // ---- the jobs a troubled system posts (merged into nearby job boards)
   /**
    * Generate emergency relief, patrol, or evacuation jobs for nearby troubled systems.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').StellarBody} p - Landed stellar body.
    * @param {import('./game.js').PlayerData} d - Saved player data.
    * @param {() => number} r - Seeded RNG function.
    * @param {Array<[string, number]>} near - Array of [systemId, jumps] tuples.
    * @param {number} win - Time window seed.
-   * @returns {Array<Record<string, unknown>>} Generated mission objects.
+   * @returns {Array<import("./game.js").Mission>} Generated mission objects.
    */
   stateOffers(p, d, r, near, win) {
     const out = [],
@@ -398,9 +386,8 @@ export const LivingOperations = {
   // a supply job completes when you land at its destination with the goods in your hold
   /**
    * Check whether player currently carries sufficient cargo to complete a supply relief mission.
-   * @this {Record<string, unknown>}
    * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @param {Record<string, unknown>} m - Mission object.
+   * @param {import("./game.js").Mission} m - Mission object.
    * @returns {boolean} True if required goods are in cargo.
    */
   supplyReady(d, m) {

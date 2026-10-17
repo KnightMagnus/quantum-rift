@@ -4,8 +4,8 @@ import { DT, wrap } from '../shared/rules.js';
 /**
  * Steer toward a landing volume, then commit to a retrograde braking pass.
  * Retain the phase instead of repeatedly alternating approach and brake headings.
- * @param {Record<string, unknown>} state Autopilot state retained across ticks.
- * @param {Record<string, unknown>} ship Predicted player ship.
+ * @param {{mode?: string, t?: number, vx?: number, vy?: number, dest?: {x: number, y: number}}} state Autopilot state retained across ticks.
+ * @param {import("./render.js").RenderEntity} ship Predicted player ship.
  * @param {import('../shared/rules.js').ComputedShipStats} stats Computed hull/outfit flight stats.
  * @param {import('../server/game.js').StellarBody} port Target landable body.
  * @param {Record<string, number>} input Controls modified in place.
@@ -49,9 +49,9 @@ export function landingGuidance(state, ship, stats, port, input) {
 /**
  * Require a settled prediction AND a recent authoritative snapshot well inside
  * the server's radius/speed limits before sending the one landing request.
- * @param {Record<string, unknown>} state Retained autopilot state.
- * @param {Record<string, unknown>} ship Predicted ship.
- * @param {Record<string, unknown>} authority Last server ship snapshot.
+ * @param {{mode?: string, t?: number, vx?: number, vy?: number, dest?: {x: number, y: number}}} state Retained autopilot state.
+ * @param {import("./render.js").RenderEntity} ship Predicted ship.
+ * @param {import("./render.js").RenderEntity} authority Last server ship snapshot.
  * @param {import('../shared/rules.js').ComputedShipStats} stats Computed flight stats.
  * @param {import('../server/game.js').StellarBody} port Landing target.
  * @param {number} now Monotonic browser time in milliseconds.

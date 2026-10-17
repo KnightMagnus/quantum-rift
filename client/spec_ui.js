@@ -74,7 +74,7 @@ const res = (k, n) =>
 
 /**
  * Renders the full Specialists screen at the Personal Station or docked view.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether interactive buttons are enabled
  * @returns {string} HTML markup
  */

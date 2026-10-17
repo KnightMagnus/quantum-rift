@@ -3,7 +3,7 @@ import { DT, wrap } from '../shared/rules.js';
 
 /**
  * Direct center-seeking flight, with no arrival braking or retrograde phase.
- * @param {Record<string, unknown>} ship Current predicted ship.
+ * @param {import("./render.js").RenderEntity} ship Current predicted ship.
  * @param {import('../shared/rules.js').ComputedShipStats} stats Normal flight stats.
  * @param {import('../server/game.js').StellarBody} gate Gateway center.
  * @param {Record<string, number>} input Controls modified in place.

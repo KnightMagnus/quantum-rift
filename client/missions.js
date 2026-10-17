@@ -52,7 +52,7 @@ const placeName = (stellar) =>
 
 /**
  * Computes active mission target entries including career steps, main story, faction arcs, and job board contracts.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @returns {MissionTarget[]} Array of mission target objectives
  */
 export function missionTargets(G) {
@@ -211,7 +211,7 @@ export function missionTargets(G) {
 
 /**
  * Renders the completed quests and stories journal section.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 function journalHtml(G) {
@@ -229,7 +229,7 @@ function journalHtml(G) {
 
 /**
  * Renders the MISSIONS companion tab showing active missions, plot course buttons, and journal.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function missionsHtml(G) {

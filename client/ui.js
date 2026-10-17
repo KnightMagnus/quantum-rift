@@ -158,8 +158,8 @@ const esc = (s) =>
 let G, send;
 /**
  * Binds DOM event listeners and initializes UI state managers with global game state.
- * @param {Record<string, unknown>} g Global client game state
- * @param {(msg: Record<string, unknown>) => void} sender Network send dispatch function
+ * @param {import("./main.js").ClientGameState} g Global client game state
+ * @param {(msg: import("../server/message-registry.js").NetworkMessage) => void} sender Network send dispatch function
  * @returns {void}
  */
 export function initUI(g, sender) {

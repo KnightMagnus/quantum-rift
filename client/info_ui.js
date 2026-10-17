@@ -87,7 +87,7 @@ const MOODC = {
 
 /**
  * Renders the Info panel (I key) including ship stats, cargo jettison, career ledger, wingmate orders, and rival captains.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {InfoTab|string} [tab] Sub-tab to render ('ship', 'career', 'fleet', or 'captains')
  * @returns {string} HTML markup
  */
@@ -177,7 +177,7 @@ export function infoHtml(G, tab) {
 
 /**
  * Renders the comprehensive career overview ledger (holdings, net worth, story progress, exploration record).
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 function careerHtml(G) {
@@ -251,7 +251,7 @@ function careerHtml(G) {
 
 /**
  * Finds the nearby explored trade port within four jumps offering the best sale price for a commodity.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {string} cid Commodity identifier
  * @returns {BestSaleResult|null} Best sale location, price, and jumps distance or null
  */

@@ -148,7 +148,7 @@ export function tradeRatio(s, cid) {
 }
 /**
  * Determines system display color on the map according to the selected map mode.
- * @param {Record<string, unknown>} G Global client game state
+ * @param {import("./main.js").ClientGameState} G Global client game state
  * @param {GalaxySystem} s System object
  * @param {boolean} seen Whether the system has been visited or discovered
  * @returns {string} CSS color string
@@ -361,7 +361,7 @@ function rockSprite(k) {
 /**
  * Procedurally generates and caches all ambient scenery and backdrop objects for a solar system.
  * @param {GalaxySystem} S Solar system specification
- * @returns {Record<string, unknown>} System scenery definitions object
+ * @returns {Record<string, {x: number, y: number, r: number, color?: string}>} System scenery definitions object
  */
 function decorFor(S) {
   if (decorCache.has(S.id)) return decorCache.get(S.id);
@@ -1560,7 +1560,7 @@ function glowSprite(col) {
 /**
  * Draws an individual projectile or missile shot on the canvas.
  * @param {CanvasRenderingContext2D} ctx 2D rendering context
- * @param {Record<string, unknown>} s Shot object definition
+ * @param {{x: number, y: number, vx: number, vy: number, c: string, w: number, life: number}} s Shot object definition
  * @param {number} x Screen coordinate X
  * @param {number} y Screen coordinate Y
  * @param {number} z Zoom scale factor
@@ -1761,7 +1761,7 @@ function drawShot(ctx, s, x, y, z, now) {
 const rockCache = new Map();
 /**
  * Generates and caches an off-screen canvas sprite for a minable asteroid or gas deposit.
- * @param {Record<string, unknown>} k Mining rock or gas pocket definition
+ * @param {{x: number, y: number, r: number, mat: string, qty: number}} k Mining rock or gas pocket definition
  * @returns {HTMLCanvasElement} Off-screen canvas sprite
  */
 function rockImage(k) {
@@ -1861,7 +1861,7 @@ const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae
 let tagRects = []; // 2.6: name tags already drawn this frame, so close ships' tags stack instead of overlapping
 /**
  * Master rendering pipeline: backdrop, stellar bodies, mining fields, loot, shots, beams, ships, effects, and HUD overlays.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {CanvasRenderingContext2D} ctx Destination canvas rendering context
  * @param {number} W Viewport width in pixels
  * @param {number} H Viewport height in pixels
@@ -2454,7 +2454,7 @@ function streaks(ctx, W, H, a, len, alpha, drift) {
 }
 /**
  * Renders hyperspace jump departure spool animation, rings, and flash.
- * @param {Record<string, unknown>} G Game state
+ * @param {import("./main.js").ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx 2D context
  * @param {number} W Viewport width
  * @param {number} H Viewport height
@@ -2520,7 +2520,7 @@ function hyperOut(G, ctx, W, H, now, x, y, a) {
 }
 /**
  * Renders hyperspace jump arrival deceleration bloom and shockwave rings.
- * @param {Record<string, unknown>} G Game state
+ * @param {import("./main.js").ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx 2D context
  * @param {number} W Viewport width
  * @param {number} H Viewport height
@@ -2565,7 +2565,7 @@ function hyperIn(G, ctx, W, H, t, x, y, a) {
 }
 /**
  * Renders screen-space HUD indicators, off-screen arrows, and damage vignettes.
- * @param {Record<string, unknown>} G Game state
+ * @param {import("./main.js").ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx 2D context
  * @param {number} W Viewport width
  * @param {number} H Viewport height
@@ -2656,7 +2656,7 @@ function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
 }
 /**
  * Renders an individual ship sprite, engine trails, shield/armor bars, and name tags.
- * @param {Record<string, unknown>} G Game state
+ * @param {import("./main.js").ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx Destination canvas rendering context
  * @param {RenderEntity} e Ship entity to draw
  * @param {number} x Screen coordinate X
@@ -2849,7 +2849,7 @@ function drawShip(G, ctx, e, x, y, z, now) {
 // ------------------------------------------------------------------ radar
 /**
  * Renders the circular cockpit radar display with blips for ships, planets, loot, and asteroids.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {CanvasRenderingContext2D} ctx Radar canvas rendering context
  * @returns {void}
  */
@@ -2978,7 +2978,7 @@ export function mapFit(W, H) {
 }
 /**
  * Renders the 2D galaxy starmap or minimap including hyperspace lanes, faction territories, and route plots.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {CanvasRenderingContext2D} ctx Starmap canvas rendering context
  * @param {{ big?: boolean }} [opts={}] Map render options (big: full interactive starmap)
  * @returns {void}
@@ -3372,7 +3372,7 @@ export function galaxy(G, ctx, opts = {}) {
 }
 /**
  * Tests for system click selection hit at given screen coordinates on galaxy map or minimap.
- * @param {Record<string, unknown>} G Game state
+ * @param {import("./main.js").ClientGameState} G Game state
  * @param {number} mx Screen X coordinate
  * @param {number} my Screen Y coordinate
  * @param {boolean} [mini] Whether testing against companion minimap
@@ -3396,7 +3396,7 @@ export function mapHit(G, mx, my, mini) {
 }
 /**
  * Retrieves active salvage mission beacon world coordinates in current system.
- * @param {Record<string, unknown>} G Game state
+ * @param {import("./main.js").ClientGameState} G Game state
  * @returns {Array<[number, number]>} Array of salvage point world coordinates [x, y]
  */
 export function salvagePoints(G) {
@@ -3407,7 +3407,7 @@ export function salvagePoints(G) {
 }
 /**
  * Retrieves unvisited planetary survey beacon coordinates for active missions in current system.
- * @param {Record<string, unknown>} G Game state
+ * @param {import("./main.js").ClientGameState} G Game state
  * @returns {Array<[number, number]>} Array of survey point world coordinates [x, y]
  */
 export function surveyPoints(G) {

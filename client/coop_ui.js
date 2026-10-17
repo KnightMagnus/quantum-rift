@@ -96,8 +96,8 @@ let G, send, toast, ask, plot;
 
 /**
  * Initializes the Co-op subsystem, event listeners, and helper callbacks.
- * @param {Record<string, unknown>} g Shared game state object
- * @param {(msg: Record<string, unknown>) => void} sender Network send message function
+ * @param {import("./main.js").ClientGameState} g Shared game state object
+ * @param {(msg: import("../server/message-registry.js").NetworkMessage) => void} sender Network send message function
  * @param {CoopHelpers} helpers UI helper callbacks
  * @returns {void}
  */
@@ -168,7 +168,7 @@ function badge() {
 
 /**
  * Handles inbound real-time social messages from the server (friend changes, DMs, trades, rally calls, follow jumps).
- * @param {Record<string, unknown>} m Message payload received via WebSocket
+ * @param {import("../server/message-registry.js").NetworkMessage} m Message payload received via WebSocket
  * @returns {void}
  */
 export function onCoopMsg(m) {
@@ -256,7 +256,7 @@ export function coopYou() {
 
 /**
  * Checks whether a space entity belongs to an allied Armada member or one of their wingmates.
- * @param {Record<string, unknown>} e Space entity object
+ * @param {import("./render.js").RenderEntity} e Space entity object
  * @returns {boolean} True if entity is an allied Armada captain or wingmate
  */
 export function isAlly(e) {

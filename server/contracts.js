@@ -3,7 +3,7 @@
  * Incremental contracts: these describe only Fleet Commands' boundary, not a
  * complete save schema, a wire validator, or all the fields on a live entity.
  *
- * @typedef {{cargo: Record<string, number>, sys: string, ship?: import('../shared/rules.js').ShipLoadout, stats?: {combat?: number}, [key: string]: unknown}} CargoPlayer
+ * @typedef {{cargo: Record<string, number>, sys: string, ship?: import('../shared/rules.js').ShipLoadout, stats?: {combat?: number}}} CargoPlayer
  *
  * @typedef {object} CommandEntity
  * Live ship entity interacting with fleet commands and AI maneuvers.
@@ -16,7 +16,7 @@
  * @property {number} a Heading orientation angle in radians.
  * @property {string} [order] Active fleet order mode ('hold', 'holdfire', 'loot', 'gather', etc.).
  * @property {number} [orderSeq] Monotonic sequence counter for fleet order changes.
- * @property {unknown} [player] Session reference if this is a player-controlled ship.
+ * @property {import('./game.js').Session | null} [player] Session reference if this is a player-controlled ship.
  * @property {CommandEntity | null} [target] Current active combat or navigation target entity.
  * @property {Set<number>} aggro Set of hostile entity IDs that have engaged this ship.
  * @property {number} [distractT] Timestamp until which entity is distracted.

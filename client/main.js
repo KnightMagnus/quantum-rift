@@ -60,8 +60,37 @@ import {
   ctab,
 } from './ui.js';
 
-const $ = (id) => document.getElementById(id);
-initLoginScene($('login'));
+/**
+ * @typedef {object} ClientGameState
+ * @property {import('../shared/rules.js').GameAssets | null} A Game assets dictionary.
+ * @property {import('../server/game.js').PlayerData | null} you Current player save data.
+ * @property {string | null} sys Current system ID.
+ * @property {string | null} landed Currently docked stellar body or null if flying.
+ * @property {string | null} view Current UI view mode.
+ * @property {Map<number, import('./render.js').RenderEntity>} ents Active entities in current space.
+ * @property {Array<{id: number, x: number, y: number, vx: number, vy: number, w: number, c: string, life: number}>} shots Active projectile shots.
+ * @property {Array<{id: number, from: {x: number, y: number}, to: {x: number, y: number}, c: string, life: number}>} beams Active beam weapon animations.
+ * @property {Array<{id: number, x: number, y: number, it: {cargo?: string, n?: number, mat?: string, credits?: number}}>} loot Floating loot canisters.
+ * @property {number} target Current target entity ID.
+ * @property {number} zoom Camera zoom scale.
+ * @property {number} spriteScale Sprite rendering scale.
+ * @property {string[]} route Active hyperspace route system IDs.
+ * @property {string | null} navStellar Navigation target stellar ID.
+ * @property {Record<string, number>} ammo Ammunition counts.
+ * @property {Record<string, string>} FAC Faction ID mapping.
+ * @property {string} ctab Active console tab.
+ * @property {string | null} ltab Active landed tab.
+ * @property {number} myId Player entity simulation ID.
+ * @property {number} myHull Player ship hull chassis ID.
+ * @property {number} hover Hovered entity ID.
+ * @property {Record<string, boolean | number | string | Record<string, string>>} opts Client preferences and configuration.
+ * @property {Record<string, string>} [pal] Color palette mapping.
+ * @property {Record<string, number>} [tokens] Current player token balances.
+ * @property {Array<{name: string, sys: string, ship: string}>} [captains] Active online captains list.
+ * @property {{team: string} | null} [arena] Crucible arena state.
+ * @property {((e: import('./render.js').RenderEntity) => boolean)} [isAlly] Checks if entity is an allied wingmate.
+ * @property {((e: import('./render.js').RenderEntity) => boolean)} [hostile] Checks if entity is hostile to player.
+ */
 const G = (window.G = {
   A: null,
   you: null,

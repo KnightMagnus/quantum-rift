@@ -53,7 +53,7 @@ const mins = (t) => Math.max(1, Math.ceil((t - Date.now()) / 60000));
 
 /**
  * Renders a visual slot card for a lead or wingmate ship.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {DockShip|null} s Ship data
  * @param {string} empty Placeholder text when slot is empty
  * @returns {string} HTML markup
@@ -67,7 +67,7 @@ function shipBox(G, s, empty) {
 
 /**
  * Renders a drop-down selector of stored ships for an individual dock slot.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {DocksState} D Docks state
  * @param {number} k Dock index
  * @param {string|number} slot Slot identifier ('lead' or wingmate index)
@@ -93,7 +93,7 @@ function shipPick(G, D, k, slot, cur, interactive) {
 
 /**
  * Renders an officer assignment selector for a wingmate captain or crew role.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {number} k Dock index
  * @param {number} w Wing slot index
  * @param {'cap'|'crew'} role Officer assignment role
@@ -117,7 +117,7 @@ function crewPick(G, k, w, role, oid, interactive) {
 
 /**
  * Renders the full Personal Station Docks interface including bays, wingmates, and stored ships.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether interactive buttons and select elements are enabled
  * @returns {string} HTML markup
  */
@@ -169,7 +169,7 @@ export function docksHtml(G, interactive) {
 
 /**
  * Renders the dock switcher chips beside the DEPART button on landing screens.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {boolean} atHome Whether landed at personal station
  * @returns {string} HTML markup
  */
@@ -181,7 +181,7 @@ export function dockChips(G, atHome) {
 
 /**
  * Renders the compact sidebar status line for active dock and wingmate health.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @returns {string} HTML markup or empty string
  */
 export function dockLine(G) {
@@ -208,7 +208,7 @@ export function dockLine(G) {
 
 /**
  * Quoted rush repairs at landed outfitter ports. Uses the same stored ships and fee as DOCKS.
- * @param {Record<string, unknown>} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function outfitterRepairsHtml(G) {
