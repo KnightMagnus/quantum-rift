@@ -118,6 +118,39 @@ try {
   await capture('docks-keyboard-focus');
   await page.locator('[data-lt="yard"]').click();
   await audit('shipyard sort', '#ysort');
+  const wallet = await page.evaluate(() => ({ credits: G.you.credits, hull: G.you.ship.hull }));
+  const card = page.locator('#landbody [data-act="sel"]').last();
+  await card.scrollIntoViewIfNeeded();
+  const selectedHull = Number(await card.getAttribute('data-h'));
+  assert.ok(await page.locator('#landbody').evaluate((e) => e.scrollTop > 100));
+  await capture('shipyard-scrolled-before-selection');
+  await card.click();
+  await page.waitForFunction((h) => G.sel === h, selectedHull);
+  await capture('shipyard-selected-top');
+  if (!baseline) assert.equal(await page.locator('#landbody').evaluate((e) => e.scrollTop), 0);
+  if (!baseline) {
+    const bounds = await page.locator('#landbody').evaluate((e) => {
+      const r = e.getBoundingClientRect();
+      return [...e.querySelectorAll('.detail .kv, .detail button[data-act="buyhangar"]')].map(
+        (n) => {
+          const b = n.getBoundingClientRect();
+          return b.top >= r.top && b.bottom <= r.bottom;
+        },
+      );
+    });
+    assert.ok(bounds.length > 3 && bounds.every(Boolean), 'purchase button and stats visible');
+  }
+  await page.locator('#landbody [data-act="sel"]').last().scrollIntoViewIfNeeded();
+  const browsingTop = await page.locator('#landbody').evaluate((e) => e.scrollTop);
+  // The production background renderer must not jump a captain back to details.
+  await page.evaluate(async () => (await import('/ui.js')).renderLanded());
+  assert.equal(await page.locator('#landbody').evaluate((e) => e.scrollTop), browsingTop);
+  assert.equal(await page.evaluate(() => G.sel), selectedHull);
+  assert.deepEqual(
+    await page.evaluate(() => ({ credits: G.you.credits, hull: G.you.ship.hull })),
+    wallet,
+  );
+  await page.locator('#ysort').scrollIntoViewIfNeeded();
   await page.locator('#ysort').focus();
   await page.keyboard.press('End');
   await page.keyboard.press('Tab');

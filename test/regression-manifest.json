@@ -543,6 +543,13 @@
       "services": [],
       "tests": ["dropdowns-browser.mjs"],
       "asserts": "Black/white native selects/options across dynamic docks, hangar, shipyard, refinery, map and initialized mining/towing controls; real dock assignment/re-render, keyboard sort/focus and disabled/group styling. OS popup painting remains platform-owned."
+    },
+    {
+      "id": "shipyard-selection-scroll",
+      "owners": ["client/ui.js"],
+      "services": [],
+      "tests": ["dropdowns-browser.mjs"],
+      "asserts": "Explicit ship selection resets the actual landing scroll container after rendering; selected details and purchase controls visible, background renderer preserves scroll, no purchase or wallet change."
     }
   ],
   "routes": {

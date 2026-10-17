@@ -255,3 +255,10 @@ and initialized mining/towing controls. Real dock assignment survives a server
 re-render; keyboard sorting and focus outlines remain functional. Synthetic
 optgroup/disabled cases cover future controls. Native OS popup rendering and
 forced-colors overrides are platform-owned, not cross-platform screenshot proof.
+
+The same browser program covers `shipyard-selection-scroll`: selecting a ship
+from the bottom of the actual catalog immediately resets `#landbody` to the top,
+exposes stats and purchase controls, and preserves the selected hull and money.
+An unrelated production renderer refresh preserves the browsing scroll offset.
+Ship cards currently have no keyboard-selection handler; native sort keyboard
+interaction remains covered. No purchasing is performed by selection.
