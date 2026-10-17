@@ -180,6 +180,38 @@ export function initUI(g, sender) {
   document
     .querySelectorAll('#ctabs button')
     .forEach((b) => (b.onclick = () => ctab(b.dataset.tab)));
+  $('ctabs').addEventListener('keydown', (e) => {
+    // Keep native focus traversal and button activation out of the flight hotkeys.
+    if (['Tab', 'Enter', ' '].includes(e.key)) e.stopPropagation();
+  });
+  $('ctabs').addEventListener('focusin', (e) => {
+    requestAnimationFrame(() => {
+      const tabs = $('ctabs'),
+        bounds = tabs.getBoundingClientRect(),
+        target = e.target.getBoundingClientRect(),
+        scale = bounds.width / tabs.offsetWidth;
+      // Native focus scrolling under CSS zoom can leave the last tab clipped.
+      if (target.right > bounds.right) tabs.scrollLeft += (target.right - bounds.right) / scale;
+      else if (target.left < bounds.left) tabs.scrollLeft -= (bounds.left - target.left) / scale;
+    });
+  });
+  // Ordinary mouse wheels can reach tabs when the user narrows the sidebar.
+  $('ctabs').addEventListener(
+    'wheel',
+    (e) => {
+      const tabs = $('ctabs');
+      if (
+        e.ctrlKey ||
+        tabs.scrollWidth <= tabs.clientWidth ||
+        Math.abs(e.deltaX) > Math.abs(e.deltaY)
+      )
+        return;
+      e.preventDefault();
+      tabs.scrollLeft +=
+        e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? tabs.clientWidth : 1);
+    },
+    { passive: false },
+  );
   $('depart').onclick = () => send({ t: 'depart' });
   $('chatlog').addEventListener('click', (e) => {
     const b = e.target.closest('[data-dm]');

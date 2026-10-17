@@ -1,0 +1,72 @@
+/* The starting-system observation window is drawn at device resolution. */
+#login {
+  background: #030711;
+}
+#login::before {
+  display: none;
+}
+#login .splash-stars,
+#login .splash-hub {
+  display: none;
+}
+#login .login-scene {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+#login .splash::after {
+  inset: 14px;
+  border: 2px solid #778ca04d;
+  border-radius: 28px;
+  box-shadow:
+    0 0 0 12px #090c12c9,
+    inset 0 0 24px #060a16,
+    inset 0 1px 2px #a7b8c366;
+  background:
+    linear-gradient(90deg, #01040a22, transparent 30%, transparent 70%, #01040a22),
+    radial-gradient(ellipse at 50% 42%, #03050cd9, #03050c88 24%, transparent 53%);
+}
+.login-location {
+  position: absolute;
+  left: 38px;
+  bottom: 34px;
+  color: #a5bdd0;
+  font:
+    10px Tahoma,
+    sans-serif;
+  letter-spacing: 3px;
+  text-shadow: 0 1px 6px #000;
+}
+.login-location strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #dce9ee;
+  font-size: 12px;
+  font-weight: normal;
+}
+@media (max-width: 600px) {
+  #login .splash::after {
+    inset: 5px;
+    border-radius: 16px;
+  }
+  .login-location {
+    left: 22px;
+    bottom: 20px;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+  }
+  #login .splash-tag {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #login *,
+  #login *::before,
+  #login *::after {
+    animation: none !important;
+  }
+}

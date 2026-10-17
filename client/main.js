@@ -1,4 +1,5 @@
 import { landingGuidance, landingReady } from './landing_autopilot.js';
+import { initLoginScene } from './login_scene.js';
 import { setArtworkVersion } from './artwork.js';
 import { initHails } from './hails_ui.js';
 import { receiveShipChat } from './chat_bubbles.js';
@@ -59,6 +60,7 @@ import {
 } from './ui.js';
 
 const $ = (id) => document.getElementById(id);
+initLoginScene($('login'));
 const G = (window.G = {
   A: null,
   you: null,
@@ -654,7 +656,7 @@ window.addEventListener('rift-toast-sound', (e) =>
   audio.ui(e.detail, e.detail === 'complete' || e.detail === 'alert' ? 0.8 : 0.55),
 );
 setInterval(() => {
-  if (G.ctab === 'missions') drawMini();
+  if (G.you && G.ctab === 'missions') drawMini();
 }, 10000); // keeps rush countdowns current
 // ------------------------------------------------------------------ snapshots and prediction
 function onSnap(m) {

@@ -1,4 +1,5 @@
 // Quantum Rift renderer: starfield, stellars, ship sprite sheets, shots, beams, effects, radar.
+import { stationWheel } from './station_wheel.js';
 import { planetSprite } from './planets.js';
 import { drawStar } from './stars.js';
 import { drawExoticSky, drawPulseBoundary } from './exotic_scenery.js';
@@ -1184,9 +1185,11 @@ export function stationDesign(p) {
 /**
  * Retrieves the loaded HTMLImageElement for a station's rendered sprite model.
  * @param {StellarBody} p Station stellar body
- * @returns {HTMLImageElement | null} Loaded image or null if loading
+ * @returns {HTMLImageElement | HTMLCanvasElement | null} Loaded image or null if loading
  */
 function stationSprite(p) {
+  // Luna keeps the original glowing wheel rather than inheriting the generic shipyard.
+  if (p.id === 'luna') return stationWheel(p);
   const k = stationDesign(p);
   let im = stImgs[k];
   if (!im) {

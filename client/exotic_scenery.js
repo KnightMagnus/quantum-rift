@@ -1,4 +1,5 @@
 // Authored distant vistas. Decorative only: no moving orbits, collision or gravity changes.
+import { stationWheel } from './station_wheel.js';
 import { drawStar } from './stars.js';
 import { artworkUrl } from './artwork.js';
 import { eventidePulse } from '/shared/eventide.js';
@@ -262,6 +263,7 @@ export function drawExoticSky(ctx, system, x, y, radius, now = 0) {
 // Match all three flight-renderer branches: the unique hub, tiered personal hulls,
 // and faction/authored stations. A hub must never inherit Personal Station artwork.
 export function stationLandingSource(p, design, site) {
+  if (p.id === 'luna') return stationWheel(p).toDataURL('image/png');
   if (p.hub) return artworkUrl('hub.png');
   if (p.site) return artworkUrl(`stations/${Math.max(0, Math.min(5, site?.ops || 0))}.png`);
   return artworkUrl(`stations/s_${design}.webp`);

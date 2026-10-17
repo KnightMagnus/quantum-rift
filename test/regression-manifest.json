@@ -54,7 +54,13 @@
     "http-api.mjs",
     "network-systems.mjs"
   ],
-  "browser": ["client-systems-browser.mjs", "input-audio-browser.mjs"],
+  "browser": [
+    "client-systems-browser.mjs",
+    "input-audio-browser.mjs",
+    "sidebar-browser.mjs",
+    "station-landing-browser.mjs",
+    "login-scene-browser.mjs"
+  ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
   },
@@ -338,6 +344,27 @@
       "services": [],
       "tests": ["input-audio-browser.mjs"],
       "asserts": "Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification."
+    },
+    {
+      "id": "station-art-identity",
+      "owners": ["client/station_wheel.js", "client/exotic_scenery.js", "client/render.js"],
+      "services": [],
+      "tests": ["station-landing-browser.mjs"],
+      "asserts": "14 real landing/departure sessions, 110 stations/245 tier variants, actual flight-source identity, transient load recovery and frozen original Luna wheel pixels."
+    },
+    {
+      "id": "login-scene",
+      "owners": ["client/login_scene.js"],
+      "services": [],
+      "tests": ["login-scene-browser.mjs"],
+      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced motion and rendering lifecycle."
+    },
+    {
+      "id": "sidebar-scrollbars",
+      "owners": ["client/style.css", "client/ui.js"],
+      "services": [],
+      "tests": ["sidebar-browser.mjs"],
+      "asserts": "Eight viewport/scale/width cases, horizontal wheel and keyboard end-tab reachability, saved width and red menu scrollbar/accent styles."
     }
   ],
   "routes": {
@@ -427,7 +454,6 @@
     "passengers-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
     "planet-assets-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
     "ship-banking-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "stars-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "station-landing-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage."
+    "stars-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage."
   }
 }

@@ -6,6 +6,7 @@
     <title>Quantum Rift</title>
     <link rel="icon" href="assets/stations/5.png" />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="login_scene.css" />
   </head>
   <body>
     <canvas id="view"></canvas>
@@ -231,9 +232,9 @@
 
     <!-- login -->
     <div id="login" class="overlay">
-      <div class="splash">
-        <div class="splash-hub"></div>
-        <div class="splash-stars"></div>
+      <div class="splash" aria-hidden="true">
+        <canvas class="login-scene"></canvas>
+        <div class="login-location"><strong>QUANTUM GATE</strong>QUANTUM STATION · CONCORDIA</div>
       </div>
       <button id="musicbtn" class="cb" title="Login music on/off">&#9835;</button>
       <div class="splash-col">
