@@ -2083,6 +2083,8 @@ let acc = 0,
  */
 function fixedTick() {
   if (!G.view || G.landed || G.paused) return;
+  // Preserve automatic-control intent even if guidance completes or refuses this tick.
+  const navigationRequested = !!G.auto;
   const inp = {
     thrust: held('thrust') ? 1 : 0,
     turn: (held('right') ? 1 : 0) - (held('left') ? 1 : 0),
@@ -2159,7 +2161,7 @@ function fixedTick() {
     rv: inp.rev,
     f1: inp.fire1,
     f2: inp.fire2,
-    nav: !!G.auto,
+    nav: navigationRequested || !!G.auto,
   });
   history.push({ seq, inp });
   if (history.length > 90) history.shift();

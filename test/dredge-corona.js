@@ -1,4 +1,9 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import { K, wrap, step } from '../shared/rules.js';
+import { landingGuidance, landingReady } from '../client/landing_autopilot.js';
+import { gatewayGuidance } from '../client/gateway_autopilot.js';
 import {
   dredgePilot,
   control,
@@ -155,4 +160,97 @@ assert.equal(finite.s.data.spec.plasma || 0, 0);
   for (const a of SYS[b.sys].stellars)
     for (const z of SYS[b.sys].stellars)
       assert.equal(coronaRouteBlocked(b.sys, a, z), false, 'authored safe routes unaffected');
+}
+
+// Run the actual production input tick, including recursive keep-out/full-stop completion.
+// UI/audio adapters are inert; authoritative industrial work uses the real fixture.
+{
+  const source = fs.readFileSync(new URL('../client/main.js', import.meta.url), 'utf8');
+  const productionFunction = (name) => {
+    const start = source.indexOf(`function ${name}(`);
+    assert.ok(start >= 0);
+    return source.slice(start, source.indexOf('\n}', start) + 2);
+  };
+  const { coronaRouteBlocked } = await import('../shared/industrial-rules.js');
+  for (const scenario of ['stationary', 'low-speed', 'moving', 'manual', 'normal-route']) {
+    const f = dredgePilot(undefined, 'Intent' + scenario),
+      e = f.s.ent;
+    Object.assign(e, CORONA_BANDS[0].entry, {
+      vx: scenario === 'moving' ? 80 : scenario === 'low-speed' ? 5 : 0,
+      vy: 0,
+    });
+    control(f, 'harvest');
+    industrialStep(f, 1);
+    assert.equal(f.s.data.ship.industrial.harvest, true);
+    const G = {
+      view: { ...e },
+      you: { shipStats: e.st },
+      sys: f.s.data.sys,
+      opts: {},
+      combat: {},
+      ents: new Map([[e.id, e]]),
+      myId: e.id,
+      route: [],
+      auto: scenario === 'manual' ? null : { mode: 'land', id: SYS[f.s.data.sys].stellars[0].id },
+    };
+    if (scenario === 'normal-route') Object.assign(G.view, { x: 0, y: 0 });
+    const sent = [],
+      warnings = [];
+    const context = vm.createContext({
+      G,
+      SYS,
+      K,
+      DT,
+      wrap,
+      step,
+      coronaRouteBlocked,
+      landingGuidance,
+      landingReady,
+      gatewayGuidance,
+      performance,
+      mouse: {},
+      history: [],
+      seq: 0,
+      held: () => false,
+      typing: () => false,
+      padInput() {},
+      touchInput() {},
+      audio: { engine() {}, ui() {} },
+      toast: (s) => warnings.push(s),
+      $: () => ({ classList: { toggle() {} } }),
+      send: (m) => sent.push(m),
+    });
+    vm.runInContext(
+      ['setAuto', 'autopilot', 'fixedTick'].map(productionFunction).join('\n'),
+      context,
+    );
+    vm.runInContext('fixedTick()', context);
+    const input = sent.find((m) => m.t === 'input');
+    assert.ok(input, 'production fixedTick sends input');
+    assert.equal(input.nav, scenario !== 'manual', scenario + ' preserves navigation intent');
+    if (['stationary', 'low-speed', 'moving'].includes(scenario)) {
+      assert.ok(warnings.some((s) => s.includes('stellar collector keep-out')));
+      assert.equal(G.auto?.mode || null, scenario === 'moving' ? 'stop' : null);
+    }
+    if (scenario === 'normal-route') assert.equal(G.auto?.mode, 'land');
+    f.s.lastInput = { navigation: input.nav };
+    const earned = f.s.data.ship.industrial.harvestMs;
+    industrialStep(f, 1);
+    assert.equal(f.s.data.ship.industrial.harvest, scenario === 'manual');
+    if (scenario === 'manual') {
+      assert.ok(f.s.data.ship.industrial.harvestMs > earned, 'manual opt-in work continues');
+    } else {
+      assert.equal(
+        f.s.data.ship.industrial.harvestMs,
+        earned,
+        'navigation earns no further harvest',
+      );
+      vm.runInContext('G.auto = null; fixedTick()', context);
+      assert.equal(
+        sent.filter((m) => m.t === 'input').at(-1).nav,
+        false,
+        'intent clears next tick',
+      );
+    }
+  }
 }

@@ -56,7 +56,11 @@ try {
   await page.locator('#industrialoff').click();
   await page.waitForFunction(() => !G.industrial.sweep);
   assert.equal(await page.locator('#industrialoff').textContent(), 'ALL OFF');
-  // Actual production autopilot refuses an inside-band start and visibly brakes.
+  // Already-active harvesting must stop even when stationary keep-out completes
+  // FULL STOP in the same production input tick (the final auto mode is null).
+  assert.ok(await page.evaluate(() => Math.hypot(G.view.vx, G.view.vy) < 6));
+  await page.locator('#dredgeHarvest').click();
+  await page.waitForFunction(() => G.industrial.harvest);
   await page.evaluate(async () => {
     const { SYS } = await import('/shared/galaxy.js');
     G.auto = { mode: 'land', id: SYS[G.sys].stellars[0].id };
@@ -65,7 +69,11 @@ try {
     document.getElementById('toasts').textContent.includes('stellar collector keep-out'),
   );
   await page.waitForFunction(() => !G.auto);
-  assert.equal(await page.evaluate(() => G.industrial.harvest), false);
+  await page.waitForFunction(() => !G.industrial.harvest);
+  await until(
+    () => f.read()?.pilots.find((p) => p.name === 'Dredge Alpha')?.industrial.harvest === false,
+    'authoritative harvest cancelled after stationary rejected navigation',
+  );
 
   await page.locator('#dredgeHarvest').click();
   await page.waitForFunction(() => G.industrial.harvest);
