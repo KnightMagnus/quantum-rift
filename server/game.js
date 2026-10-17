@@ -798,6 +798,8 @@ export class Game {
       d.fuel = e.fuel;
     }
     if (s.data) {
+      // End a Solo confirmation pause before another captain can sign in between ticks.
+      if (this.solo && ![...this.sessions.values()].some((x) => x.data)) this.setPaused(false);
       this.db.touch();
       this.db.flush(); // Commit the final dock/flight state before a deliberate account switch.
       if (!this.solo) this.broadcast({ t: 'chat', from: '', msg: `${s.name} left the Rift.` });
