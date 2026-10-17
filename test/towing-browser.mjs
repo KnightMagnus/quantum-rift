@@ -44,6 +44,7 @@ try {
       await page.locator('#storyb button').first().click();
     await page.locator('#depart').click();
     await page.waitForFunction(() => G.view && G.towing?.objects.length);
+    await page.locator('#miningindicator').click();
     await page.waitForFunction(() => document.getElementById('towtoggle').textContent.length > 0);
     return page;
   }
@@ -66,9 +67,9 @@ try {
   await page.keyboard.press('Backquote');
   await page.waitForFunction(() => !!G.towing.attached);
   await page.waitForFunction(() =>
-    document.getElementById('towstatus').textContent.includes('HARD TOW CAP 60'),
+    document.getElementById('towstatus').textContent.includes('speed limit 60'),
   );
-  assert.match(await page.locator('#towstatus').textContent(), /HARD TOW CAP 60/);
+  assert.match(await page.locator('#towstatus').textContent(), /speed limit 60/);
   const voice = await page.evaluate(async () => {
     const a = await import('/audio.js');
     for (let i = 0; i < 20; i++) a.towing(true, 0.5);
@@ -144,6 +145,7 @@ try {
   assert.ok(zoomWidths[2] > zoomWidths[0] * 1.5, 'actual scaled overlay geometry changed');
   const other = await pilot('Tow Bravo', { fire2: 'KeyF', towToggle: null });
   assert.match(await other.locator('#towtoggle').textContent(), /assign key/);
+  await page.getByText('Transfer & towing help', { exact: true }).click();
   await page.locator('#towrecipient').fill('Tow Bravo');
   await page.locator('#towoffer').click();
   await other.waitForSelector('#towaccept:not([hidden])');
@@ -151,17 +153,17 @@ try {
   await other.locator('#towaccept').click();
   await other.waitForFunction(() => !!G.towing.attached);
   await other.waitForFunction(() =>
-    document.getElementById('towstatus').textContent.includes('HARD TOW CAP 30'),
+    document.getElementById('towstatus').textContent.includes('speed limit 30'),
   );
-  assert.match(await other.locator('#towstatus').textContent(), /HARD TOW CAP 30/);
+  assert.match(await other.locator('#towstatus').textContent(), /speed limit 30/);
   await other.locator('#towtoggle').click();
   await other.waitForFunction(
     () => !G.towing.attached && G.towing.objects[0].status === 'detached',
   );
   await other.waitForFunction(() =>
-    document.getElementById('towstatus').textContent.includes('GRACE'),
+    document.getElementById('towstatus').textContent.includes('Reserved for'),
   );
-  assert.match(await other.locator('#towstatus').textContent(), /GRACE/);
+  assert.match(await other.locator('#towstatus').textContent(), /Reserved for/);
   await other.locator('#towtoggle').click();
   await other.waitForFunction(() => !!G.towing.attached);
   await other.keyboard.press('i');

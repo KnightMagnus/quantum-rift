@@ -209,7 +209,7 @@ export const ACTIONS = [
   ['ordFire', 'Fleet: hold fire', 'KeyY'],
   ['ordLoot', 'Fleet: collect loot', 'KeyU'],
   ['companion', 'Next companion tab', 'KeyC'],
-  ['surveyPulse', 'Survey Pulse', 'KeyV'],
+  ['surveyPulse', 'Scan nearby rocks', 'KeyV'],
   ['dredgeSweep', 'Dredge Sweep', null],
   ['dredgeHarvest', 'Dredge Harvest Plasma', null],
   ['dredgeSmelter', 'Dredge Mobile Smelter', null],

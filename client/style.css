@@ -3030,26 +3030,87 @@ body.solo .mp {
   overflow-wrap: anywhere;
 }
 
-/* Text + patterned seam display remain legible independently of color. */
-#miningcontrols {
+/* Mining is opt-in, anchored where the old panel sat in the flight viewport. */
+#miningindicator {
   position: absolute;
   left: 12px;
   bottom: 170px;
-  z-index: 5;
+  z-index: 6;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #ffd36a;
+  background: #35280c;
+  color: #ffdc7b;
+  cursor: pointer;
+}
+#miningindicator svg {
+  width: 30px;
+  height: 30px;
+}
+#miningindicator.active {
+  box-shadow: 0 0 0 3px #ffd36a66;
+}
+#miningindicator.warning::after {
+  content: '!';
+  position: absolute;
+  top: -5px;
+  right: -2px;
+  background: #ffd36a;
+  color: #17130c;
+  border-radius: 50%;
+  width: 18px;
+  font-weight: bold;
+}
+#miningindicator:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 3px;
+}
+#miningcontrols {
+  position: absolute;
+  left: 12px;
+  bottom: 226px;
+  z-index: 6;
+  width: 380px;
   max-width: calc(100vw - var(--hud) - 24px);
+  max-height: calc(100vh - 250px);
+  overflow: auto;
+  overflow-wrap: anywhere;
   font-size: 13px;
   line-height: 1.6;
-  background: #111a26ed;
+  background: #111a2bf5;
+}
+#miningcontrols header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#miningcontrols select,
+#miningcontrols input {
+  max-width: 100%;
+}
+#miningcontrols details {
+  margin-top: 8px;
+}
+#miningcontrols summary {
+  cursor: pointer;
+  color: #ffd36a;
+}
+#miningcontrols [hidden] {
+  display: none;
 }
 #miningmeter {
   display: block;
-  max-width: 480px;
   color: #fff1c9;
+  margin: 8px 0;
 }
 @media (max-width: 850px) {
-  #miningcontrols {
+  #miningindicator {
     bottom: 180px;
-    max-width: 60vw;
+  }
+  #miningcontrols {
+    bottom: 236px;
+    max-height: calc(100vh - 260px);
     font-size: 12px;
   }
 }

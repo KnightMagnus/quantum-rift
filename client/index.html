@@ -189,8 +189,43 @@
       </div>
     </div>
     <div id="toasts"></div>
+    <button
+      id="miningindicator"
+      class="hidden"
+      aria-label="Mining controls"
+      aria-controls="miningcontrols"
+      aria-expanded="false"
+      title="Open mining controls"
+    >
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <!-- Spiral-cone hand drill: broad flutes and a short grip stay legible at HUD size. -->
+        <g transform="rotate(35 16 16)">
+          <path d="M13 23h6v6h-6z" fill="#bd8239" stroke="currentColor" stroke-width="1.3" />
+          <path
+            d="M16 2 5 22q11 5 22 0Z"
+            fill="currentColor"
+            stroke="#fff1bd"
+            stroke-width="1"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M14 6q2 2 5 1M11.5 10q3 4 10 2M9 14q5 5 15 3M6.5 18q7 6 20 4"
+            fill="none"
+            stroke="#76501d"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path d="M14.5 24v4" stroke="#ffe3a0" stroke-width="1.2" />
+        </g>
+      </svg>
+    </button>
     <div class="well box hidden" id="miningcontrols" aria-label="Mining controls">
-      <button class="btn sm" id="miningsurvey">SURVEY</button>
+      <header>
+        <strong>Mining</strong
+        ><button class="btn sm" id="miningclose" aria-label="Close mining controls">Close</button>
+      </header>
+      <div id="miningcargo" role="status"></div>
+      <button class="btn sm" id="miningsurvey">Scan nearby rocks</button>
       <span id="miningmeter" role="status">Aim a mining tool</span>
     </div>
     <div

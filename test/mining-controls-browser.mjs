@@ -132,6 +132,7 @@ try {
   );
   await b.page.locator('#depart').click();
   await b.page.waitForFunction(() => G.view && !G.landed);
+  await b.page.locator('#miningindicator').click();
   await b.page.locator('#miningsurvey').click();
   await b.page.waitForFunction(() => G.mining.revealUntil > G.mining.now);
   assert.deepEqual(

@@ -47,6 +47,7 @@ try {
   assert.equal(await page.evaluate(() => G.you.cargo.plasma || 0), 0);
   await page.screenshot({ path: path.join(f.out, 'stock-built-shipyard.png') });
   await page.locator('#depart').click();
+  await page.locator('#miningindicator').click();
   await page.waitForSelector('#industrialcontrols:not([hidden])');
   await page.waitForFunction(() => G.industrial?.version === 1);
   assert.match(await page.locator('#dredgeSweep').textContent(), /Backquote/);
@@ -110,11 +111,15 @@ try {
     () => f.read()?.pilots.find((p) => p.name === 'Dredge Alpha')?.drones.length === 0,
     'utility recall',
   );
+  assert.match(await page.locator('#industrialheat').textContent(), /SHIP HEAT.*cutoff/);
+  assert.equal(await page.locator('#industrialproperty').isVisible(), false);
+  await page.getByText('Processing details', { exact: true }).click();
+  assert.match(await page.locator('#industrialproperty').textContent(), /SWEEP.*SMELTER.*CORONA/);
+  await page.getByText('Processing details', { exact: true }).click();
   assert.match(
-    await page.locator('#industrialheat').textContent(),
-    /SHIP HEAT.*SWEEP.*SMELTER.*CORONA/,
+    await page.locator('#miningmeter').textContent(),
+    /heat|contact|material|Scan to reveal/i,
   );
-  assert.match(await page.locator('#miningmeter').textContent(), /heat|contact|material/i);
   assert.equal(await page.evaluate(() => G.opts.keys.fire2), 'KeyF');
   assert.equal(await page.evaluate(() => G.opts.preset), 'industrial-custom');
   for (const scale of [0.8, 1, 1.4]) {
