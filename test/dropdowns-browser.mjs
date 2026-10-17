@@ -93,6 +93,62 @@ try {
   await page.locator('#landbody [data-act="stab"][data-k="docks"]').click();
   const pick = page.locator('#landbody .dpick[data-dk="0"][data-slot="0"]');
   await pick.waitFor();
+  // Render production selectors with controlled names without mutating live game state.
+  const labels = await page.evaluate(async () => {
+    const { docksHtml } = await import('/docks_ui.js');
+    const stored = [
+      { uid: 'default', hull: 'fixture', name: 'Lodestar' },
+      { uid: 'empty', hull: 'fixture', name: '' },
+      { uid: 'missing', hull: 'fixture' },
+      { uid: 'space', hull: 'fixture', name: '   ' },
+      { uid: 'custom', hull: 'fixture', name: 'Aurora' },
+      { uid: 'escaped', hull: 'fixture', name: '<Aurora & "Nova">' },
+      { uid: 'wing', hull: 'fixture', name: 'Lodestar', wingOnly: true },
+    ];
+    const flying = { uid: 'flying', hull: 'fixture', name: 'Lodestar', flying: true };
+    const fixture = {
+      A: { ships: { fixture: { name: 'Lodestar', img: '' } } },
+      you: {
+        officers: [],
+        docks: {
+          count: 1,
+          active: 0,
+          cap: 10,
+          stored,
+          list: [{ letter: 'A', lead: flying, wings: [stored[4], null] }],
+        },
+      },
+    };
+    const host = document.createElement('div');
+    host.innerHTML = docksHtml(fixture, true);
+    return [...host.querySelectorAll('.dpick')].map((select) => ({
+      slot: select.dataset.slot,
+      selected: select.value,
+      injected: !!select.querySelector('aurora'),
+      options: [...select.options].map((o) => ({ value: o.value, text: o.textContent })),
+    }));
+  });
+  for (const select of labels) {
+    assert.equal(select.injected, false, 'Custom names remain escaped text');
+    for (const uid of ['default', 'empty', 'missing', 'space'])
+      assert.equal(select.options.find((o) => o.value === uid).text, 'Lodestar');
+    assert.equal(select.options.find((o) => o.value === 'custom').text, 'Lodestar "Aurora"');
+    assert.equal(
+      select.options.find((o) => o.value === 'escaped').text,
+      'Lodestar "<Aurora & "Nova">"',
+    );
+    assert.equal(
+      select.options.some((o) => o.value === 'wing'),
+      select.slot !== 'lead',
+    );
+  }
+  assert.equal(labels[0].selected, 'flying');
+  assert.equal(labels[0].options.find((o) => o.value === 'flying').text, 'Lodestar (flying)');
+  assert.equal(labels[1].selected, 'custom');
+  inventory.push({
+    surface: 'dock labels: default/empty/missing/custom/escaped and selection',
+    labels,
+  });
   await audit('dynamic docks ship selectors', '#landbody select');
   await pick.hover();
   if (!baseline)

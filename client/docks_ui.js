@@ -76,17 +76,21 @@ function shipBox(G, s, empty) {
  * @returns {string} HTML markup
  */
 function shipPick(G, D, k, slot, cur, interactive) {
+  const label = (ship) => {
+    const hull = (G.A.ships[ship.hull] || {}).name;
+    const custom = ship.name?.trim();
+    return esc(hull) + (custom && custom !== hull ? ` "${esc(ship.name)}"` : '');
+  };
   if (!interactive) return '';
   const opts = D.stored
     .filter((x) => slot !== 'lead' || !x.wingOnly)
     .map((x) => {
-      const H = G.A.ships[x.hull] || {};
-      return `<option value="${x.uid}"${cur && cur.uid === x.uid ? ' selected' : ''}>${esc(H.name)} "${esc(x.name)}"${x.at ? ` (${x.at})` : ''}</option>`;
+      return `<option value="${esc(x.uid)}"${cur && cur.uid === x.uid ? ' selected' : ''}>${label(x)}${x.at ? ` (${esc(x.at)})` : ''}</option>`;
     })
     .join('');
   const curOpt =
     cur && cur.flying
-      ? `<option value="${cur.uid}" selected>${esc((G.A.ships[cur.hull] || {}).name)} "${esc(cur.name)}" (flying)</option>`
+      ? `<option value="${esc(cur.uid)}" selected>${label(cur)} (flying)</option>`
       : '';
   return `<select class="dpick" data-dk="${k}" data-slot="${slot}"><option value="">${cur ? '— empty this slot —' : '— choose a stored ship —'}</option>${curOpt}${opts}</select>`;
 }

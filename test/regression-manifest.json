@@ -227,9 +227,10 @@
         "outfitter-wing-repairs.js",
         "ship-economy.js",
         "companion-fixes.js",
-        "knight-profile.mjs"
+        "knight-profile.mjs",
+        "dropdowns-browser.mjs"
       ],
-      "asserts": "Save migration/dock capacity, storing/flying/swapping, wing loadouts/officers/repairs, ship purchases and resale. Creation-only KNIGHT storage includes every current specialist and each can be selected through real dock assignment."
+      "asserts": "Save migration/dock capacity, storing/flying/swapping, wing loadouts/officers/repairs, ship purchases and resale. Creation-only KNIGHT storage includes every current specialist and each can be selected through real dock assignment. Dock lead/wing selectors omit missing, empty and default names; custom names remain quoted and escaped, preserving selection and wing-only eligibility."
     },
     {
       "id": "living-galaxy",
