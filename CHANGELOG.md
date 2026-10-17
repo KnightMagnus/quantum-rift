@@ -2,8 +2,9 @@
 
 Every release, newest first. The main story is left out on purpose.
 
-### Unreleased — KNIGHT testing profile
+### 3.0.2 — Mining controls and KNIGHT testing profile
 
+- Collapse mining controls behind a bottom-left gold spiral-drill button. Hide controls on unsuitable ships, keep full-hold guidance and active-operation safety controls, and move detailed help out of the main panel.
 - Restore KNIGHT (`1234`) for testing: 30M credits, Constitution Excalibur, completed T5 station/research and all eleven specialty ships prebuilt in storage, including Star Dredge.
 - Create the preset once per save folder; preserve existing captains, credentials and progress. Use an available station hull without stealing another captain’s site.
 - Add registered real online/Solo login, ship-selection, restart and save-preservation regressions.
