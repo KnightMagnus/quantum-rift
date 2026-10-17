@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { DB } from '../server/db.js';
 import { tempDataDir } from './helpers/temp-data.js';
@@ -117,17 +118,21 @@ fs.fsyncSync = (fd) => {
   const port = await availablePort();
   const origin = `http://127.0.0.1:${port}`;
   const out = evidenceDir(solo ? 'windows-solo' : 'windows-online');
-  const server = spawn(process.execPath, ['--import', preload, 'server/main.js'], {
-    cwd: root,
-    env: {
-      ...process.env,
-      PORT: String(port),
-      SOLO: solo ? '1' : '',
-      DATA_DIR: path.join(dir, 'data'),
-      SEEDS_FILE: seeds,
+  const server = spawn(
+    process.execPath,
+    ['--import', pathToFileURL(preload).href, 'server/main.js'],
+    {
+      cwd: root,
+      env: {
+        ...process.env,
+        PORT: String(port),
+        SOLO: solo ? '1' : '',
+        DATA_DIR: path.join(dir, 'data'),
+        SEEDS_FILE: seeds,
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
     },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  );
   const log = fs.createWriteStream(path.join(out, 'server.log'));
   server.stdout.pipe(log);
   server.stderr.pipe(log);
