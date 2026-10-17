@@ -1,5 +1,9 @@
 # Quantum Rift
 
+## [Download latest complete game ZIP](https://github.com/KnightMagnus/quantum-rift/releases/latest/download/Quantum-Rift-latest.zip)
+
+Includes all artwork and Solo/server launchers. Extract before playing. [Release notes and SHA-256 checksums](https://github.com/KnightMagnus/quantum-rift/releases/latest). GitHub source archives are not the complete game download.
+
 **A space trading and combat game in your browser.**
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.

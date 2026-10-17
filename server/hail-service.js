@@ -1,3 +1,4 @@
+import { clampStanding } from '../shared/reputation.js';
 import { SYS, FACTIONS } from '../shared/galaxy.js';
 import { RIVAL } from '../shared/rivals.js';
 import { contextualHail } from './hail-dialogue.js';
@@ -439,7 +440,7 @@ export class HailService {
       e.disT = 0;
       e.hailRepaired = true;
       if (e.rival) g.features.rivals.rivalRel(s, e.rival, 6, 'you supplied emergency repairs');
-      else s.data.rep[e.faction] = Math.min(100, (s.data.rep[e.faction] || 0) + 1);
+      else s.data.rep[e.faction] = clampStanding((s.data.rep[e.faction] || 0) + 1);
     } else return;
     e.hailResolved = true;
     g.db.touch();

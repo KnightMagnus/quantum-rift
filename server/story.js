@@ -1,16 +1,8 @@
+import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift 1.0: the Que'vari storyline as golden main-story missions (offered in landing pop-ups), and the Deep gate.
 import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES } from '../shared/galaxy.js';
 import { STORY, STORY_SHIP, DEEP_UNLOCK } from '../shared/story.js';
 import { makeLoadout, credits } from '../shared/rules.js';
-
-/**
- * Clamp a numeric value between minimum and maximum bounds.
- * @param {number} v - Value to clamp.
- * @param {number} a - Minimum value.
- * @param {number} b - Maximum value.
- * @returns {number} Clamped value.
- */
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export const StoryOperations = {
   /**
@@ -141,7 +133,7 @@ export const StoryOperations = {
     S.step++;
     d.credits += st.pay;
     d.stats.earned += st.pay;
-    d.rep.quevari = clamp((d.rep.quevari || 0) + st.rep, -100, 100);
+    d.rep.quevari = clampStanding((d.rep.quevari || 0) + st.rep);
     const got = [st.pay ? `${credits(st.pay)} credits` : '', `+${st.rep} Que'vari standing`];
     if (st.crate) {
       d.mats[st.crate[0]][st.crate[1]]++;
@@ -182,7 +174,7 @@ export const StoryOperations = {
     if (this.leadChanged) this.leadChanged(d);
     S.done.push(st.id);
     S.step++;
-    d.rep.quevari = clamp((d.rep.quevari || 0) + st.rep, -100, 100);
+    d.rep.quevari = clampStanding((d.rep.quevari || 0) + st.rep);
     this.log(d, "Took the helm of the Ina Que'var.");
     this.broadcast({
       t: 'chat',

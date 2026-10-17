@@ -1,3 +1,4 @@
+import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift 0.5 "Hangar Deck" server feature operations: shuttles, officers, the research queue,
 // refining crates up a grade, the drydock, and boarding disabled ships.
 import {
@@ -547,7 +548,7 @@ export const HangarOperations = {
           got.push(`${q} ${mt} ${GRADES[g]}`);
         }
       if (rw.rep) {
-        d.rep[rw.rep[0]] = clamp((d.rep[rw.rep[0]] || 0) + rw.rep[1], -100, 100);
+        d.rep[rw.rep[0]] = clampStanding((d.rep[rw.rep[0]] || 0) + rw.rep[1]);
         got.push(`+${rw.rep[1]} ${FACTIONS[rw.rep[0]].short} standing`);
       }
       if (rw.chart && !d.explored.includes(job.sys)) {
@@ -828,7 +829,7 @@ export const HangarOperations = {
       b = captainBonus(d);
     const repHit = (n) => {
       if (lawful && !t.mission && (d.rep[t.faction] || 0) > -100) {
-        d.rep[t.faction] = clamp((d.rep[t.faction] || 0) - n, -100, 100);
+        d.rep[t.faction] = clampStanding((d.rep[t.faction] || 0) - n);
         return ` ${F.short} standing -${n}.`;
       }
       return '';
@@ -929,7 +930,7 @@ export const HangarOperations = {
           }
         }
         if (lawful) {
-          d.rep[t.faction] = clamp((d.rep[t.faction] || 0) + 6, -100, 100);
+          d.rep[t.faction] = clampStanding((d.rep[t.faction] || 0) + 6);
           const cr = 500 + Math.round((t.strength || 10) * 5);
           d.credits += cr;
           this.toast(
@@ -942,7 +943,7 @@ export const HangarOperations = {
           );
           d.credits += cr;
           d.stats.earned += cr;
-          d.rep.quantum = clamp(d.rep.quantum + 2, -100, 100);
+          d.rep.quantum = clampStanding(d.rep.quantum + 2);
           this.toast(
             s,
             `Arrested the ${H.name}'s crew for the Concord. Reward: ${credits(cr)} credits.`,

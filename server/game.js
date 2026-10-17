@@ -1,3 +1,4 @@
+import { clampStanding } from '../shared/reputation.js';
 import { eventideOffers } from '../shared/eventide.js';
 /**
  * @typedef {import('./space.js').Entity} Entity
@@ -2193,13 +2194,14 @@ export class Game {
     const a = Math.random() * Math.PI * 2;
     this.spawnPlayer(
       s,
-      exit.x + Math.sin(a) * (exit.r + 90),
-      exit.y - Math.cos(a) * (exit.r + 90),
+      exit.x + Math.sin(a) * (exit.r * 0.15),
+      exit.y - Math.cos(a) * (exit.r * 0.15),
       a,
       140,
     );
     d.shieldNow = d.armorNow = undefined;
     s.ent.wormT = this.spaces[d.sys].t + 4;
+    s.ent.wormExit = exit.id; // Rearm only after leaving the arrival aperture.
     s.ent.graceT = this.spaces[d.sys].t + 6;
     this.protectNote(s, to);
     this.spaces[d.sys].events.push(['flash', Math.round(s.ent.x), Math.round(s.ent.y)]);
@@ -2236,7 +2238,7 @@ export class Game {
       (!npc.repHitT || space.t - npc.repHitT > 1.5)
     ) {
       npc.repHitT = space.t;
-      d.rep[npc.faction] = clamp((d.rep[npc.faction] || 0) - 1, -100, 100);
+      d.rep[npc.faction] = clampStanding((d.rep[npc.faction] || 0) - 1);
     }
   }
   /**
@@ -2289,17 +2291,17 @@ export class Game {
       this.features.fronts.goal(s, 'kills'); // 2.6: Armada members present get kill credit and a share
       d.credits += bounty;
       d.stats.earned += bounty;
-      d.rep.quantum = clamp(d.rep.quantum + 1, -100, 100);
-      d.rep.spacer = clamp(d.rep.spacer + 1, -100, 100);
+      d.rep.quantum = clampStanding(d.rep.quantum + 1);
+      d.rep.spacer = clampStanding(d.rep.spacer + 1);
       this.toast(
         s,
         `Destroyed ${npc.name || this.A.ships[npc.hull].name}. Bounty: ${credits(bounty)} credits.`,
       );
       this.tut(s, 'kill');
     } else {
-      d.rep[npc.faction] = clamp((d.rep[npc.faction] || 0) - 10, -100, 100);
+      d.rep[npc.faction] = clampStanding((d.rep[npc.faction] || 0) - 10);
       for (const [f, X] of Object.entries(FACTIONS))
-        if (X.hostile.includes(npc.faction)) d.rep[f] = clamp((d.rep[f] || 0) + 2, -100, 100);
+        if (X.hostile.includes(npc.faction)) d.rep[f] = clampStanding((d.rep[f] || 0) + 2);
       this.toast(s, `Destroyed a ${F.short} ship. ${F.name} will remember that.`);
     }
     for (const m of d.missions) {
@@ -3001,7 +3003,7 @@ export class Game {
         d.credits += m.reward;
         d.stats.earned += m.reward;
         m.paid = true;
-        d.rep[SYS[p.system].faction] = clamp((d.rep[SYS[p.system].faction] || 0) + 2, -100, 100);
+        d.rep[SYS[p.system].faction] = clampStanding((d.rep[SYS[p.system].faction] || 0) + 2);
         if (Math.random() < 0.35) {
           const mt = MATERIALS[Math.floor(Math.random() * 3)],
             g = Math.min(4, Math.floor(m.reward / 9000));

@@ -1,3 +1,4 @@
+import { clampStanding } from '../shared/reputation.js';
 // 1.2 "Syndicate and Officers": Syndicate standing and the black market, officer promotions and traits, lower-deck
 // crew, the bank (loans with a credit rating), passenger and rush jobs, and Syndicate contracts.
 import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES, TRAFFIC } from '../shared/galaxy.js';
@@ -69,7 +70,7 @@ export const SyndicateOperations = {
       this.toast(s, `The Syndicate takes notice: you are now ${t.i === 1 ? 'an' : 'a'} ${t.name}.`);
       this.log(d, `Syndicate standing: ${t.name}.`);
     }
-    if (t.i >= 2 && Math.random() < 0.5) d.rep.quantum = clamp((d.rep.quantum || 0) - 1, -100, 100); // the Concord notices too
+    if (t.i >= 2 && Math.random() < 0.5) d.rep.quantum = clampStanding((d.rep.quantum || 0) - 1); // the Concord notices too
   },
   // ------------------------------------------------------------------ black market: outlaw worlds, and any spaceport bar once you are a Lieutenant
   /**
@@ -488,7 +489,7 @@ export const SyndicateOperations = {
         const fac = SYS[m.sys] && SYS[m.sys].faction;
         if (m.qty && m.cid && d.cargo[m.cid]) {
         } // the cargo stays yours
-        if (fac && d.rep[fac] != null) d.rep[fac] = clamp(d.rep[fac] - 3, -100, 100);
+        if (fac && d.rep[fac] != null) d.rep[fac] = clampStanding(d.rep[fac] - 3);
         this.toast(s, `Job failed: ${m.title}. You missed the deadline.`);
         this.log(d, `Failed (deadline): ${m.title}.`);
       }

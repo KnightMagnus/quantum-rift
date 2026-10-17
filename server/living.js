@@ -1,3 +1,4 @@
+import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift 2.4 "Living Galaxy": system states that come and go, a market that remembers what captains sold, and
 // supply jobs that pay you to bring what a troubled system needs. Mixed into Game.
 import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.js';
@@ -277,7 +278,7 @@ export const LivingOperations = {
     const reward = 15000 + st.need * 120;
     d.credits += reward;
     d.stats.earned += reward;
-    d.rep[S.faction] = clamp((d.rep[S.faction] || 0) + 6, -100, 100);
+    d.rep[S.faction] = clampStanding((d.rep[S.faction] || 0) + 6);
     this.news(
       `${X.end.replace('{sys}', S.name).replace('{fac}', FACTIONS[S.faction].name)} ${d.name} led the effort.`,
     );

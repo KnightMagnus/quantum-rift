@@ -1,3 +1,4 @@
+import { EXALTED_STANDING } from './reputation.js';
 // Quantum Rift 0.6 "Fleets and Fronts" data: invasions, anomalies, goals,
 // server events and faction stores. Shared by server and client.
 
@@ -275,7 +276,7 @@ export const STORE_TIERS = [
   { rep: 10, name: 'Known' },
   { rep: 30, name: 'Friendly' },
   { rep: 60, name: 'Honored' },
-  { rep: 90, name: 'Exalted' },
+  { rep: EXALTED_STANDING, name: 'Exalted' },
 ];
 
 /**
@@ -320,7 +321,7 @@ export const STORE_ITEMS = [
     name: 'Epic officer contract',
     tokens: 70,
     credits: 250000,
-    rep: 90,
+    rep: EXALTED_STANDING,
     give: { officer: 3 },
   },
   {

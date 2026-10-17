@@ -23,6 +23,12 @@ assert.equal(
 const legacy = JSON.parse(JSON.stringify(SYSTEMS.filter((s) => !s.eventide)));
 for (const s of legacy) {
   delete s.scene;
+  // v2.9.2 deliberately moves only the Far Gateway; preserve the generation golden.
+  for (const p of s.stellars)
+    if (p.id === 'coldharbor-gate') {
+      p.x = 600;
+      p.y = 600;
+    }
   s.links = s.links.filter((id) => !ids.has(id));
 }
 assert.equal(
