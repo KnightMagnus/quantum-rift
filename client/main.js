@@ -1,3 +1,4 @@
+import { landingGuidance, landingReady } from './landing_autopilot.js';
 import { setArtworkVersion } from './artwork.js';
 import { initHails } from './hails_ui.js';
 import { receiveShipChat } from './chat_bubbles.js';
@@ -513,6 +514,16 @@ function onMessage(m) {
       onSnap(m);
       break;
     case 'toast':
+      // A refused/invalid landing must release the pending autopilot rather than
+      // leave a captain parked indefinitely or repeatedly request permission.
+      if (
+        G.auto?.mode === 'land' &&
+        G.auto.sent &&
+        /Too far from |Slow down to land|refuses you permission to land|Your ship is disabled/.test(
+          m.msg,
+        )
+      )
+        setAuto(null);
       toast(m.msg);
       break;
     case 'social':
@@ -1066,39 +1077,15 @@ function setAuto(a, msg) {
     $('autobadge').textContent =
       a.mode === 'land'
         ? 'AUTOPILOT · LANDING'
-        : a.mode === 'stop'
-          ? 'FULL STOP'
-          : G.autoRoute && G.route.length > 1
-            ? `AUTOPILOT · ${G.route.length} JUMPS`
-            : 'AUTOPILOT · JUMP';
+        : a.mode === 'gateway'
+          ? 'AUTOPILOT · GATEWAY'
+          : a.mode === 'stop'
+            ? 'FULL STOP'
+            : G.autoRoute && G.route.length > 1
+              ? `AUTOPILOT · ${G.route.length} JUMPS`
+              : 'AUTOPILOT · JUMP';
     if (msg) toast(msg);
   }
-}
-function arrive(inp, me, st, tx, ty, stopR) {
-  const dx = tx - me.x,
-    dy = ty - me.y,
-    d = Math.hypot(dx, dy) || 1,
-    ux = dx / d,
-    uy = dy / d;
-  const sp = Math.hypot(me.vx, me.vy),
-    tflip = Math.PI / st.turn,
-    rem = Math.max(0, d - stopR);
-  const vAllow = Math.min(
-    st.maxSpeed * 0.98,
-    Math.sqrt(2 * st.accel * Math.max(0, rem - sp * tflip)) * 0.85,
-  );
-  const ex = ux * vAllow - me.vx,
-    ey = uy * vAllow - me.vy;
-  if (Math.hypot(ex, ey) < 12) {
-    inp.thrust = 0;
-    inp.turn = 0;
-    return;
-  }
-  const da = wrap(Math.atan2(ex, -ey) - me.a);
-  inp.turn = Math.abs(da) < st.turn * DT ? 0 : Math.sign(da);
-  inp.thrust = Math.abs(da) < 0.35 ? 1 : 0;
-  inp.rev = 0;
-  inp.ab = 0;
 }
 function autopilot(inp) {
   const me = G.view,
@@ -1119,16 +1106,19 @@ function autopilot(inp) {
     inp.rev = 0;
     return;
   }
+  if (A.mode === 'gateway') {
+    const p = S.stellars.find((x) => x.id === A.id && x.wormhole);
+    if (!p || A.sys !== G.sys) return setAuto(null);
+    // Aim inside the transit aperture; never send a landing request.
+    landingGuidance(A, me, st, { ...p, r: 0 }, inp);
+    return;
+  }
   if (A.mode === 'land') {
     const p = S.stellars.find((x) => x.id === A.id);
     if (!p) return setAuto(null);
-    arrive(inp, me, st, p.x, p.y, p.r * 0.6);
-    const d = Math.hypot(p.x - me.x, p.y - me.y),
-      sp = Math.hypot(me.vx, me.vy);
-    if (d < p.r + 50 && sp < 70 && performance.now() - (A.sent || 0) > 800) {
-      A.sent = performance.now();
+    landingGuidance(A, me, st, p, inp);
+    if (landingReady(A, me, G.ents.get(G.myId), st, p, performance.now()))
       send({ t: 'land', stellar: p.id });
-    }
   } else {
     const to = SYS[G.route[0]];
     if (!to) return setAuto(null);
@@ -1187,7 +1177,7 @@ $('cchan').addEventListener('click', (e) => {
 });
 const BASICS = [
   ['Left click', 'Target a ship, or plot a course on the map'],
-  ['Double click', 'Land on a planet or station'],
+  ['Double click', 'Land on a planet/station, or fly through a Gateway'],
   ['Mouse wheel', 'Zoom'],
   ['Enter', 'Chat'],
   ['O', 'Options'],
@@ -1269,21 +1259,16 @@ function landRequest(pick) {
   const me = G.view,
     S = SYS[G.sys];
   if (!me || !S) return;
-  const nav =
-    pick || (G.navStellar && S.stellars.find((p) => p.id === G.navStellar && p.svc.includes('L')));
   const near = S.stellars
     .filter((p) => p.svc.includes('L'))
     .sort((a, b) => Math.hypot(a.x - me.x, a.y - me.y) - Math.hypot(b.x - me.x, b.y - me.y))[0];
-  // L lands on the nav point if one is set (by clicking it), otherwise on the nearest landable body
-  const p = nav && (pick || Math.hypot(nav.x - me.x, nav.y - me.y) < 1500) ? nav : near;
+  // L always chooses the nearest landable body; explicit double-clicks keep their destination.
+  const p = pick || near;
   if (!p) return toast('Nowhere to land in this system.');
   G.navStellar = p.id;
-  const d = Math.hypot(p.x - me.x, p.y - me.y);
-  if (d > p.r + 60 || Math.hypot(me.vx, me.vy) > 80) {
-    setAuto({ mode: 'land', id: p.id }, `Autopilot: landing on ${p.name}. Steer to take over.`);
-    return;
-  } // 1.0.3
-  send({ t: 'land', stellar: p.id });
+  // Even a nearby click must settle first: predicted distance alone can race
+  // the server at the edge of its landing radius while the ship is drifting.
+  setAuto({ mode: 'land', id: p.id }, `Autopilot: landing on ${p.name}. Steer to take over.`);
 }
 
 // ------------------------------------------------------------------ mouse: click to target, click a planet to set nav, double-click to land
@@ -1426,7 +1411,7 @@ canvas.addEventListener('mousedown', (e) => {
   if (h && h.stellar) {
     G.navStellar = h.stellar.id;
     toast(
-      `Nav: ${h.stellar.name}${h.stellar.svc.includes('L') ? ' (double-click or L to land)' : ''}`,
+      `Nav: ${h.stellar.name}${h.stellar.svc.includes('L') ? ' (double-click to land; L chooses nearest)' : ''}`,
     );
     return;
   }
@@ -1444,7 +1429,13 @@ canvas.addEventListener('dblclick', (e) => {
   if (!G.you || G.landed) return;
   const [wx, wy] = toWorld(e.clientX, e.clientY),
     h = pickAt(wx, wy);
-  if (h && h.stellar && h.stellar.svc.includes('L')) landRequest(h.stellar);
+  if (h?.stellar?.wormhole) {
+    G.navStellar = h.stellar.id;
+    setAuto(
+      { mode: 'gateway', id: h.stellar.id, sys: G.sys },
+      `Autopilot: through ${h.stellar.name}. Steer to take over.`,
+    );
+  } else if (h && h.stellar && h.stellar.svc.includes('L')) landRequest(h.stellar);
 });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener(

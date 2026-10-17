@@ -1,3 +1,4 @@
+import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift 2.4: questlines. Contacts at spaceport bars offer multi-step jobs that tell a small story, and six
 // handcrafted side stories wait at particular worlds. Each step is an ordinary job tagged with `m.quest`; finishing it
 // tells the next part of the story and posts the next step. Mixed into Game.
@@ -16,15 +17,6 @@ import { OFFICER_NAMES, RACE_ROLES, ROLES } from '../shared/hangar.js';
 import { SPECIALISTS } from '../shared/specialty.js';
 import { credits } from '../shared/rules.js';
 import { occupiedPassengerSeats } from '../shared/passengers.js';
-
-/**
- * Clamp a numeric value between a lower and an upper bound.
- * @param {number} v - Value to clamp.
- * @param {number} a - Lower bound.
- * @param {number} b - Upper bound.
- * @returns {number} Clamped value.
- */
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /**
  * 32-bit FNV-1a string hash function.
@@ -736,7 +728,7 @@ export const QuestOperations = {
     }
     const fac = SYS[STELLARS[Q.at].system].faction;
     if (FACTIONS[fac] && !FACTIONS[fac].pirate)
-      d.rep[fac] = clamp((d.rep[fac] || 0) + (Q.side ? 8 : 4), -100, 100);
+      d.rep[fac] = clampStanding((d.rep[fac] || 0) + (Q.side ? 8 : 4));
     q.done.push({ id: Q.qid, name: Q.name, giver: Q.giver, side: !!Q.side, t: Date.now() });
     this.log(d, `Story complete: ${Q.name}.`);
     this.send(s, {

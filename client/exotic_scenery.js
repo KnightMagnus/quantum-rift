@@ -259,9 +259,18 @@ export function drawExoticSky(ctx, system, x, y, radius, now = 0) {
   }
   ctx.restore();
 }
+// Match all three flight-renderer branches: the unique hub, tiered personal hulls,
+// and faction/authored stations. A hub must never inherit Personal Station artwork.
+export function stationLandingSource(p, design, site) {
+  if (p.hub) return artworkUrl('hub.png');
+  if (p.site) return artworkUrl(`stations/${Math.max(0, Math.min(5, site?.ops || 0))}.png`);
+  return artworkUrl(`stations/s_${design}.webp`);
+}
+
 // Use the very same station silhouette as flight, avoiding unrelated stock landscapes.
-export function stationLanding(p, system, design) {
-  const key = p.id + ':' + design + ':' + (system.scene?.kind || 'normal');
+export function stationLanding(p, system, design, site) {
+  const source = stationLandingSource(p, design, site);
+  const key = p.id + ':' + source + ':' + (system.scene?.kind || 'normal');
   if (landings.has(key)) return landings.get(key);
   const promise = new Promise((resolve) => {
     const im = new Image();
@@ -289,12 +298,21 @@ export function stationLanding(p, system, design) {
       g.addColorStop(1, 'transparent');
       ctx.fillStyle = g;
       ctx.fillRect(0, 280, 620, 370);
-      const size = 380;
-      ctx.drawImage(im, 360 - size / 2, 320 - size / 2, size, size);
+      const size = p.hub ? 560 : p.site ? 480 : 380;
+      // The landing card crops wide panoramas on narrow windows; keep the
+      // complete station silhouette within its central safe area.
+      if (p.hub) {
+        const frame = im.naturalWidth / 6;
+        ctx.drawImage(im, 0, 0, frame, frame, 600 - size / 2, 320 - size / 2, size, size);
+      } else ctx.drawImage(im, 600 - size / 2, 320 - size / 2, size, size);
       resolve(c.toDataURL('image/png'));
     };
-    im.onerror = () => resolve(null);
-    im.src = artworkUrl(`stations/s_${design}.webp`);
+    im.onerror = () => {
+      // A transient failure must not poison this station's cached landing forever.
+      landings.delete(key);
+      resolve(null);
+    };
+    im.src = source;
   });
   landings.set(key, promise);
   if (landings.size > 24) landings.delete(landings.keys().next().value);

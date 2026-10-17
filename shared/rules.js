@@ -1,3 +1,4 @@
+import { EXALTED_STANDING } from './reputation.js';
 // Quantum Rift shared rules: stat conversion, loadouts, crew and research bonuses, flight physics, prices.
 import {
   COMMODITIES,
@@ -721,18 +722,20 @@ export function hostileFactions(a, b) {
 /**
  * Returns descriptive standing tier label corresponding to a numerical reputation score.
  * @param {number} v - Reputation value.
- * @returns {'Honored' | 'Friendly' | 'Neutral' | 'Wanted' | 'Hunted'} Reputation label.
+ * @returns {'Exalted' | 'Honored' | 'Friendly' | 'Neutral' | 'Wanted' | 'Hunted'} Reputation label.
  */
 export function repLabel(v) {
-  return v >= 50
-    ? 'Honored'
-    : v >= 20
-      ? 'Friendly'
-      : v > -20
-        ? 'Neutral'
-        : v > -50
-          ? 'Wanted'
-          : 'Hunted';
+  return v >= EXALTED_STANDING
+    ? 'Exalted'
+    : v >= 50
+      ? 'Honored'
+      : v >= 20
+        ? 'Friendly'
+        : v > -20
+          ? 'Neutral'
+          : v > -50
+            ? 'Wanted'
+            : 'Hunted';
 }
 
 /**

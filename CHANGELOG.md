@@ -2,6 +2,15 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 2.9.2 — Clear approaches
+
+- **Landing:** autopilot commits to retrograde braking and settles before requesting landing. L chooses the nearest landable object; double-click retains the explicit destination.
+- **Gateway:** double-click either mouth to fly into its center and transit automatically, without landing. The Far Gateway is farther from Coldharbor’s ports; arrivals emerge near the center with cooldown and leave-before-reentry protection.
+- **Station identity:** Quantum Station, Personal Station tiers and ordinary stations use their actual flight artwork on landing. Planet scenes are unchanged.
+- **Standing:** general Exalted starts at 200 and faction standing caps at 300. Existing Epic officer purchases require 200; other thresholds, negative standing and named rivals are unchanged. No store fragments added.
+- **BULLETIN:** the operations bulletin has a clearer tab label.
+- **Complete download:** the README’s latest ZIP link includes all artwork and stays current across releases.
+
 ### 2.9.1 — Independent captains
 
 - **Main-galaxy newcomer truce:** before Station Tier 3 (T-3), ambient factions and pirates overlook you throughout the main map, including Umbral and high-danger space. This changes NPC targeting, not ship damage or spawn rates: stray fire remains dangerous. Short arrival grace is unchanged. Your combat contracts, deliberate attacks and current-visit faction retaliation remain real fights; Farside and the Crucible retain their normal rules.

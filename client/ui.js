@@ -1171,16 +1171,18 @@ export function showLanded() {
         ? `A Personal Station claimed and run by Captain ${site.owner}. Visitors may refuel and trade here.`
         : p.desc
     : p.desc || '';
-  $('landpic').style.backgroundImage = site
-    ? `url(assets/land/${10951 + Math.min(5, site.ops)}.jpg)`
+  const station = p.hub || p.site || p.kind === 'station';
+  // Keep a neutral backdrop while matching artwork loads, never an unrelated
+  // legacy stock station or Personal Station photograph.
+  $('landpic').style.backgroundImage = station
+    ? `radial-gradient(circle at 40% 40%, ${p.color}, #000 75%)`
     : p.land && p.land !== 'earth'
       ? `url(assets/land/${{ 10957: 'l_inalumen', 10958: 'l_threshold' }[p.land] || p.land}.jpg)`
-      : `url(assets/land/${landScene(p)}.jpg), radial-gradient(circle at 40% 40%, ${p.color}, #000 75%)`; // 2.5: rendered landing pictures
-  if (!site && p.kind === 'station') {
-    const stellarId = p.id;
-    stationLanding(p, SYS[p.system], stationDesign(p)).then((url) => {
-      if (url && G.landed?.stellar === stellarId)
-        $('landpic').style.backgroundImage = `url("${url}")`;
+      : `url(assets/land/${landScene(p)}.jpg), radial-gradient(circle at 40% 40%, ${p.color}, #000 75%)`;
+  if (station) {
+    const landing = L;
+    stationLanding(p, SYS[p.system], stationDesign(p), site).then((url) => {
+      if (url && G.landed === landing) $('landpic').style.backgroundImage = `url("${url}")`;
     });
   }
   const avail = TABS.filter(

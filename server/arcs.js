@@ -1,3 +1,4 @@
+import { clampStanding } from '../shared/reputation.js';
 // 1.2: faction story arcs (three missions per power, offered at its capital) and Farside expeditions (procedural
 // survey -> derelict -> data-core chains beyond the Sol Gateway that hint at the region's purpose).
 import { SYS, SYSTEMS, STELLARS, FACTIONS, GRADES } from '../shared/galaxy.js';
@@ -5,15 +6,6 @@ import { ARCS } from '../shared/arcs.js';
 import { EXPEDITION_LORE } from '../shared/expeditions.js';
 import { TRAITS } from '../shared/syndicate.js';
 import { credits } from '../shared/rules.js';
-
-/**
- * Clamp a numeric value between a lower and an upper bound.
- * @param {number} v - Value to clamp.
- * @param {number} a - Minimum allowed value.
- * @param {number} b - Maximum allowed value.
- * @returns {number} The clamped numeric value.
- */
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export const ArcsOperations = {
   /**
@@ -174,7 +166,7 @@ export const ArcsOperations = {
     S.step++;
     d.credits += st.pay;
     d.stats.earned += st.pay;
-    d.rep[f] = clamp((d.rep[f] || 0) + 6, -100, 100);
+    d.rep[f] = clampStanding((d.rep[f] || 0) + 6);
     const got = [`${credits(st.pay)} credits`, `+6 ${FACTIONS[f].short} standing`];
     if (S.step >= X.steps.length) {
       // the finale: a unique Epic officer and specialist blueprints

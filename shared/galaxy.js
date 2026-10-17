@@ -1068,6 +1068,14 @@ addMoonsAndFields(SYSTEMS); // 2.3: more moons and asteroid fields (a separate s
     }
 }
 addEventide(SYSTEMS); // Append authored v2.9 content without consuming legacy generation RNG.
+// Move only the authored mouth AFTER generation so collision rejection and RNG stay stable.
+{
+  const gate = SYSTEMS.find((s) => s.id === 'coldharbor').stellars.find(
+    (p) => p.id === 'coldharbor-gate',
+  );
+  gate.x = 2200;
+  gate.y = 2200;
+}
 
 /**
  * Fast lookup map of star systems keyed by system ID.

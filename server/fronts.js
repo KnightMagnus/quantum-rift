@@ -1,3 +1,4 @@
+import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift 0.6 "Fleets and Fronts" server feature operations: invasions,
 // anomalies and server events, daily and weekly goals, faction stores, and the expanded job types.
 // (2.6: fleets became the Armada, see server/coop.js; territory and Dreadnoughts were removed.)
@@ -540,7 +541,7 @@ export const FrontsOperations = {
       this.toast(s, 'Your bridge crew study the manuals.');
     }
     if (G_.rep) {
-      d.rep[fac] = clamp((d.rep[fac] || 0) + G_.rep, -100, 100);
+      d.rep[fac] = clampStanding((d.rep[fac] || 0) + G_.rep);
       this.toast(s, `${FACTIONS[fac].short} standing +${G_.rep}.`);
     }
     this.db.touch();
@@ -724,7 +725,7 @@ export const FrontsOperations = {
           // 1.2: ghosts and fixers slip past scans
           const fine = Math.round(m.reward * SCAN.fine);
           d.credits = Math.max(0, d.credits - fine);
-          d.rep[S.faction] = clamp((d.rep[S.faction] || 0) - 5, -100, 100);
+          d.rep[S.faction] = clampStanding((d.rep[S.faction] || 0) - 5);
           d.missions = d.missions.filter((x) => x !== m);
           this.toast(
             s,
@@ -918,7 +919,7 @@ export const FrontsOperations = {
       d.chains[m.chain.fac] = m.chain.step + 1;
       if (m.chain.step + 1 >= CHAIN_STEPS) {
         const F = FACTIONS[m.chain.fac];
-        d.rep[m.chain.fac] = clamp((d.rep[m.chain.fac] || 0) + 12, -100, 100);
+        d.rep[m.chain.fac] = clampStanding((d.rep[m.chain.fac] || 0) + 12);
         this.token(d, m.chain.fac, 10);
         this.toast(s, `Commission complete: the ${F.name} honour you (+12 standing, 10 tokens).`);
         this.log(d, `Completed the ${F.short} Commission.`);

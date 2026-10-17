@@ -55,6 +55,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {number} [hitT] Simulation timestamp when ship was last damaged.
  * @property {number} [lastHitBy] Entity ID of last attacker.
  * @property {number} [graceT] Grace period timestamp protecting newly arrived players.
+ * @property {string} [wormExit] Arrival aperture inhibited until cleared.
  * @property {number} [wormT] Wormhole transit cooldown timestamp.
  * @property {number} [rescueT] Rescue grace period timestamp.
  * @property {number} [fighterOf] Parent carrier entity ID if this is a launched fighter drone.
@@ -1850,7 +1851,12 @@ export class Space {
       if (e.st.armorRe) e.armor = Math.min(e.st.armor, e.armor + e.st.armorRe * DT);
       if (e.st.fuelRe) e.fuel = Math.min(e.st.fuel, e.fuel + e.st.fuelRe * DT);
       if (!e.disabled) this.weapons(e);
-      if (e.player && e.state === 'fly' && this.sys.gate && !(e.wormT > this.t))
+      if (e.wormExit) {
+        const mouth = this.sys.stellars.find((p) => p.id === e.wormExit);
+        if (!mouth || Math.hypot(mouth.x - e.x, mouth.y - e.y) > mouth.r * 0.65)
+          e.wormExit = undefined;
+      }
+      if (e.player && e.state === 'fly' && this.sys.gate && !e.wormExit && !(e.wormT > this.t))
         for (const p of this.sys.stellars)
           if (p.wormhole && Math.hypot(p.x - e.x, p.y - e.y) < p.r * 0.5) {
             this.game.wormholeTransit(e, this, p);
