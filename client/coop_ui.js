@@ -440,7 +440,7 @@ function armadaHtml() {
   if (A.members.length + (A.pending || []).length < A.max)
     h += `<div class="rrow"><input id="ainv" placeholder="Invite any captain online, by name" maxlength="20"><button class="btn sm" data-cact="ainv2">INVITE</button></div>`;
   h += `<div class="rrow"><button class="btn sm" data-cact="rally" title="Plot a course to you for every member">📣 CALL THE ARMADA TO ME</button></div>`;
-  h += `<label class="small"><input type="checkbox" id="afollow" data-cact="afollow" ${A.follow ? 'checked' : ''}> Follow the leader's jumps (autopilot, when in the same system)</label>`;
+  h += `<label class="small"><input type="checkbox" id="afollow" data-cact="afollow" ${A.follow ? 'checked' : ''}> Follow the Leader (V formation + jumps)</label><div class="dim small">Manual flight or weapons input turns Follow off. Combat Assist takes priority. Re-enable after reconnecting or a leader change.</div>`;
   if (lead && G.view) {
     const t = G.target && G.ents.get(G.target),
       tn = t && t.fl & 16 ? String(t.name || '') : '';
