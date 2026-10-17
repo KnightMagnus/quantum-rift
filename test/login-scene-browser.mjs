@@ -188,6 +188,36 @@ try {
         clickable: document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2)?.id === 'lbtn',
       };
     });
+    const banner = await page.evaluate(() => {
+      const box = document.querySelector('#login .loginbox');
+      const s = getComputedStyle(box, '::before');
+      // Pseudo-elements have no DOM rect: mirror the computed text style into a
+      // measured inline probe, then compare its line box to the actual banner.
+      const probe = document.createElement('span');
+      probe.textContent = 'CAPTAIN’S LOG-IN';
+      probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap';
+      probe.style.font = s.font;
+      probe.style.letterSpacing = s.letterSpacing;
+      box.append(probe);
+      const text = probe.getBoundingClientRect();
+      probe.remove();
+      return {
+        display: s.display,
+        align: s.alignItems,
+        height: parseFloat(s.height),
+        paddingLeft: parseFloat(s.paddingLeft),
+        textHeight: text.height,
+        textWidth: text.width,
+        width: box.clientWidth,
+      };
+    });
+    assert.equal(banner.display, 'flex');
+    assert.equal(banner.align, 'center');
+    assert.equal(banner.height, 26);
+    assert.equal(banner.paddingLeft, 30, 'horizontal title position unchanged');
+    assert.ok(banner.textHeight < banner.height - 1, 'text fits banner vertically');
+    assert.ok(banner.textWidth + banner.paddingLeft < banner.width, 'text not clipped');
+    results.push({ check: 'centered login banner', status: 'pass', banner });
     assert.equal(layout.width, width * 2);
     assert.equal(layout.height, height * 2);
     assert.equal(layout.overflow, false);
@@ -201,6 +231,29 @@ try {
     });
   }
   await page.setViewportSize({ width: 1440, height: 960 });
+  for (const scale of [0.8, 1.4]) {
+    await page.evaluate((scale) => {
+      document.body.classList.add('scaled');
+      document.documentElement.style.setProperty('--ui', scale);
+    }, scale);
+    const scaled = await page.locator('#login .loginbox').evaluate((e) => {
+      const s = getComputedStyle(e, '::before'),
+        r = e.getBoundingClientRect();
+      return {
+        center: s.alignItems,
+        height: s.height,
+        visible: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
+      };
+    });
+    assert.equal(scaled.center, 'center');
+    assert.equal(scaled.visible, true);
+    assert.ok(Math.abs(parseFloat(scaled.height) - 26) < 0.02, 'zoom subpixel rounding only');
+    await page.screenshot({ path: path.join(out, 'banner-scale-' + scale + '.png') });
+  }
+  await page.evaluate(() => {
+    document.body.classList.remove('scaled');
+    document.documentElement.style.removeProperty('--ui');
+  });
   await page.evaluate(() => {
     window.sceneTest.suppressReduceChange = true;
   });

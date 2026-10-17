@@ -59,6 +59,13 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   page.on('pageerror', (error) => errors.push(String(error)));
   await page.goto(origin);
+  const banner = await page.locator('#login .loginbox').evaluate((e) => {
+    const s = getComputedStyle(e, '::before');
+    return { display: s.display, align: s.alignItems, height: s.height, padding: s.paddingLeft };
+  });
+  assert.deepEqual(banner, { display: 'flex', align: 'center', height: '26px', padding: '30px' });
+  assert.equal(await page.locator('#login .login-location').count(), 0);
+  await page.screenshot({ path: path.join(out, 'solo-login-centered-banner.png') });
   const exported = page.waitForEvent('download');
   await page.locator('a[download]').click();
   const downloaded = await exported;
