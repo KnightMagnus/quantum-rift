@@ -173,7 +173,11 @@ export function initLoginScene(login) {
 
   function tick(now) {
     frame = 0;
-    if (!visible() || motion.matches) return;
+    if (!visible() || motion.matches) {
+      // Reconcile even if a browser drops/coalesces the media/visibility change event.
+      sync();
+      return;
+    }
     if (last) elapsed += Math.min((now - last) / 1000, 0.1);
     last = now;
     if (now - drawn >= 1000 / 30) {

@@ -331,7 +331,7 @@
       "owners": ["client/login_scene.js"],
       "services": [],
       "tests": ["login-scene-browser.mjs"],
-      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced motion and rendering lifecycle."
+      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced-motion static pose/no recurring draws despite suppressed native change delivery, normal resume and rendering lifecycle."
     },
     {
       "id": "sidebar-scrollbars",
