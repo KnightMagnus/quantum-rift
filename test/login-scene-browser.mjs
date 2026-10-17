@@ -124,6 +124,11 @@ try {
       failedAssets.push(`${r.status()} ${r.url()}`);
   });
   await page.goto(origin);
+  assert.equal(await page.locator('#login .login-location').count(), 0);
+  assert.doesNotMatch(
+    await page.locator('#login').innerText(),
+    /QUANTUM GATE|QUANTUM STATION · CONCORDIA/,
+  );
   const canvas = page.locator('.login-scene');
   await page.waitForFunction(
     () => document.querySelector('.login-scene')?.dataset.ready === 'true',
