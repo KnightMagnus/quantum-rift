@@ -17,6 +17,36 @@
   scrollbar-color: #d02a22 var(--well);
   scrollbar-width: thin;
 }
+/* Native dropdowns share the hangar's dark treatment on every dynamic screen.
+   Keep the native arrow, keyboard behavior and OS selection highlight. */
+select {
+  color-scheme: dark;
+  background-color: #000;
+  color: #fff;
+  border: 1px solid #666;
+  font:
+    13px Tahoma,
+    sans-serif;
+  padding: 2px;
+}
+select option,
+select optgroup {
+  background-color: #000;
+  color: #fff;
+}
+select:hover:not(:disabled) {
+  border-color: #aaa;
+}
+select:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+select:disabled,
+select option:disabled,
+select optgroup:disabled {
+  color: #aaa;
+  opacity: 1;
+}
 /* Shared menu chrome, including nested panels, lists and modal content. */
 ::-webkit-scrollbar {
   width: 10px;
@@ -1105,11 +1135,6 @@ body.busy * {
 }
 .ocard select,
 .card select {
-  background: #111;
-  color: #ddd;
-  border: 1px solid #444;
-  font: 13px Tahoma;
-  padding: 2px;
   max-width: 220px;
 }
 .bopts {
@@ -2136,9 +2161,6 @@ body.scaled #ctabs button {
   gap: 4px;
 }
 .lslot select {
-  background: #05060a;
-  color: #ddd;
-  border: 1px solid #444;
   padding: 3px;
 }
 .card.arc {
@@ -2160,13 +2182,10 @@ body.scaled #ctabs button {
   background: linear-gradient(#3a8ad2, #1a4a7a);
 }
 #gcid {
-  background: #05060a;
-  color: #ddd;
-  border: 1px solid #444;
   height: 25px;
 }
 #gcid.dimsel {
-  opacity: 0.5;
+  border-style: dashed;
 }
 #ginfo .lo {
   color: var(--ok);
