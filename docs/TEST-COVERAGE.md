@@ -349,3 +349,13 @@ Dropdowns browser coverage uses production dock markup for missing, empty, white
 default and custom names in lead/wing selectors. It checks HTML escaping, selected
 IDs, flying-current labels and wing-only eligibility, then exercises actual server
 assignment and re-rendering through the existing live browser case.
+
+### Motherlode material artwork
+
+`motherlode-art.js` checks authoritative generated ore/gas/shards and visibility-safe mapping.
+`motherlode-art-browser.mjs` exercises production canvas material pixels (not labels),
+free/attached parity, neutral undiscovered/unknown objects and failed-image geometry.
+The same renderer handles detached objects. Screenshots show all three states plus
+unscanned objects. Existing towing browser tests retain real survey/attach/delivery coverage.
+No new message actions or save fields. Server payload already exposes resource IDs;
+artwork now respects its `revealed` flag rather than disclosing composition before survey.
