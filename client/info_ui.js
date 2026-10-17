@@ -1,5 +1,5 @@
 import { artworkUrl } from './artwork.js';
-// 1.1: the ship and captain panel (I), after Endless Sky's player info: your ship, cargo (with jettison), combat
+// 1.1: the ship and captain panel (I), the player information view: your ship, cargo (with jettison), combat
 // rating, fleet orders, and the rival captains of the Rift with how they feel about you.
 import {
   SYS,

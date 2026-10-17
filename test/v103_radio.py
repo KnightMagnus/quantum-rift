@@ -1,4 +1,4 @@
-"""1.0.3 radio check with iHeart mocked: a click starts the stream in-game (no embed), the on-air panel shows the song,
+"""1.0.3 radio check with the station directory mocked: a click starts the stream in-game (no embed), the on-air panel shows the song,
 and the mixer's Radio slider and mute change the stream's volume."""
 import asyncio, sys, json
 from playwright.async_api import async_playwright

@@ -235,10 +235,3 @@ One small CPU handles dozens of players; only systems with players in them run a
 For development checks: `npm ci`, `npm run typecheck`, `npm run test:types`, `npm run test:features`, `npm run format:check` and `npm run test:regression`. Browser checks use the pinned Playwright Chromium (`npx playwright install --with-deps chromium`). See `docs/TEST-COVERAGE.md` for covered behavior and limits; these fixtures do not establish multi-hour human balance.
 
 **[DEVELOPMENT.md](DEVELOPMENT.md)** is the guide for anyone, or any AI assistant, picking up the code: the architecture, how to add a feature, how to test it, and the full list of test suites. **[CHANGELOG.md](CHANGELOG.md)** has every release from 0.3 to today.
-
----
-
-## Credits
-
-- _Endless Sky_ and _Star Trek Fleet Command_, for ideas: hailing, fleet orders and map views from the first; specialty ships and docks from the second.
-- The in-game radio uses the public iHeartRadio station directory.

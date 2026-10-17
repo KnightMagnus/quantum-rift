@@ -330,7 +330,7 @@ export const NEWS_TEMPLATES = {
   allied: (n, you) => `${n} and Captain ${you} have been seen flying together.`,
 };
 
-// combat rating (Endless Sky style): earned from the strength of every ship you destroy; higher ranks unlock tougher,
+// combat rating (ranked by target strength): earned from the strength of every ship you destroy; higher ranks unlock tougher,
 // better-paid bounty contracts
 /**
  * Combat rating progression thresholds as [requiredScore, rankTitle] pairs.

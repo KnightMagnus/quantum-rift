@@ -2,6 +2,15 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.0.4 — Living resources and trading controls
+
+- Enter exact commodity buy/sell amounts in black-and-white counters; preserve presets and server-authoritative prices, inventory and capacity checks.
+- Animate the login station and its lights, restore planet rotation and cloud drift after logout, and reduce the planet's apparent size by 30%. Respect reduced motion and hidden screens.
+- Renew abandoned partially mined ore, gas and shard deposits after five quiet simulation minutes, preserving active cutting, finite rewards, original parcel ledgers and existing depletion/motherlode/plasma recovery rates.
+- Omit redundant default ship names from dock lead/wing selectors while preserving quoted custom names and selections.
+- Name the home system Concordia without changing saved system or station identities.
+- Refresh the README login screenshot from the integrated 3.0.4 screen.
+
 ### 3.0.3 — Flight, mining and menu polish
 
 - Add an Escape logout confirmation and return to login without refreshing, preserving saves and clearing previous-account state.
@@ -389,9 +398,9 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   to their stats and teaches a trait: Sharpshooter, Ironclad, Ace Pilot, Haggler, Ghost and more.
 - **Lower deck.** Two crew berths for small passives: medic, mechanic, cargo rigger, cook, lookout, fuel tech, gunner's mate,
   fixer.
-- **The bank** (inspired by Endless Sky). Borrow against your credit rating. Payments are taken every 15 minutes of play.
+- **The bank**. Borrow against your credit rating. Payments are taken every 15 minutes of play.
   Paying on time raises your rating, and missing a payment adds interest.
-- **Galaxy map views** (from Endless Sky): POWERS, TRADE (colour systems by one commodity's price, with prices on hover),
+- **Galaxy map views**: POWERS, TRADE (colour systems by one commodity's price, with prices on hover),
   SERVICES (shipyards and outfitters), STANDING and DANGER.
 - **Passenger and rush jobs.** Passenger jobs need bunks. Rush deliveries pay much more but fail past their deadline, with a
   countdown in MISSIONS.
@@ -410,7 +419,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   - They remember you: compliments and help in a fight win friends, while taunts and stray shots make rivals.
   - Allies fight beside you and will fly with you. Nemeses send hired guns after you.
   - They appear on the leaderboards and in the news.
-- **Hailing** (T, from Endless Sky):
+- **Hailing** (T):
   - bribe pirates, or tell them to run if you outgun them
   - ask traders for fuel or emergency repairs when stranded
   - buy landing clearance from planets that refuse you
@@ -433,7 +442,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   - a click starts the music straight away
   - a Radio slider in the options mixer and in the radio panel; mute covers it too
   - an in-game ON AIR panel shows the station and the song playing
-  - stations that only offer streams your browser can't play fall back to iHeart's own player
+  - stations that only offer streams your browser can't play fall back to an external station player
 - **Jobs.**
   - Each job shows its destination and jump count.
   - Cargo jobs that won't fit your hold say so, and their ACCEPT button is greyed out.
