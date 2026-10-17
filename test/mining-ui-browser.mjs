@@ -78,12 +78,13 @@ try {
     rock.id,
   );
   await page.waitForFunction((id) => G.miningRocks.rocks.find((r) => r.id === id)?.ready, rock.id);
+  // Release before DOM/screenshot evidence: capture latency must not keep the beam firing.
+  await page.mouse.up();
   assert.match(await page.locator('#miningmeter').textContent(), /READY/);
   await page.screenshot({
-    path: path.join(f.out, 'clean-release-ready-hidpi.png'),
+    path: path.join(f.out, 'clean-release-after-mouseup-hidpi.png'),
     animations: 'disabled',
   });
-  await page.mouse.up();
   await until(
     () => f.read()?.rocks.rocks.find((r) => r.id === rock.id)?.lastCut === 'clean',
     'actual mouse aim clean release',
