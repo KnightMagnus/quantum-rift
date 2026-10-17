@@ -42,6 +42,7 @@ function scope(c, owner, sys) {
     (x) =>
       x.owner === owner &&
       x.session === own.id &&
+      x.entity === own.ent?.id &&
       x.sys === sys &&
       x.until > now(c) &&
       x.group === String(own.data.armada),
@@ -60,6 +61,7 @@ function scope(c, owner, sys) {
             (x) =>
               x.owner === c.db.key(s.data.name) &&
               x.session === s.id &&
+              x.entity === s.ent?.id &&
               x.sys === sys &&
               x.group === consent.group &&
               x.group === String(s.data.armada) &&
@@ -85,6 +87,8 @@ function eligible(c, sp, owners, sessions, e) {
         (x) =>
           x.owner === owners[0] &&
           x.session === owner.id &&
+          x.entity === owner.ent?.id &&
+          x.sys === sp.id &&
           x.group === String(owner.data.armada) &&
           x.until > now(c),
       );
@@ -96,6 +100,7 @@ function eligible(c, sp, owners, sessions, e) {
         (x) =>
           x.owner === key &&
           x.session === s.id &&
+          x.entity === s.ent?.id &&
           x.sys === sp.id &&
           x.group === ownerConsent.group &&
           x.group === String(s.data.armada) &&
@@ -385,7 +390,13 @@ export const MiningPressureOperations = {
       noise: p.noise,
       warn: p.noise >= P.warn,
       groupConsent: state(this).consent.some(
-        (x) => x.owner === p.owner && x.session === s.id && x.until > now(this),
+        (x) =>
+          x.owner === p.owner &&
+          x.session === s.id &&
+          x.entity === s.ent?.id &&
+          x.sys === s.data.sys &&
+          x.group === String(s.data.armada) &&
+          x.until > now(this),
       ),
       cooldown: Math.max(0, P.cooldown - (now(this) - p.lastEncounter)),
     };
@@ -418,6 +429,7 @@ export const MiningPressureOperations = {
       w.consent.push({
         owner,
         session: s.id,
+        entity: s.ent.id,
         sys: s.data.sys,
         group: String(s.data.armada),
         until: now(this) + P.consent,

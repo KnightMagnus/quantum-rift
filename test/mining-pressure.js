@@ -230,3 +230,23 @@ for (const [sys, expected] of [
   assert.ok(Math.abs(na + nb - DT * 7) < 1e-10, 'one real union, split attribution');
 }
 console.log('ALL REAL MINING PRESSURE / TELEGRAPH / CONSENT / NEWCOMER / PERSISTENCE TESTS PASSED');
+
+// A new hull/flight never inherits the old Armada hazard opt-in.
+{
+  const h = refineryGame(),
+    captain = refineryPilot(h, 'Flight Consent');
+  fly(h, captain);
+  captain.data.armada = 'flight-group';
+  h.features.pressure.consent(captain, { op: 'join' });
+  assert.equal(h.features.pressure.payload(captain).groupConsent, true);
+  const previousHull = captain.ent;
+  fly(h, captain);
+  assert.notEqual(captain.ent.id, previousHull.id);
+  assert.equal(
+    h.features.pressure.payload(captain).groupConsent,
+    false,
+    'new flight requires explicit opt-in',
+  );
+  h.features.pressure.consent(captain, { op: 'join' });
+  assert.equal(h.features.pressure.payload(captain).groupConsent, true);
+}

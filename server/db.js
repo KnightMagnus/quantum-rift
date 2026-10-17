@@ -182,6 +182,8 @@ export class DB {
     }
   }
   flush() {
+    if (this.economicFrozen)
+      throw new Error('Database frozen; checkpoint requires recovery by restart');
     if (!this.dirty) return;
     // Journal commit point precedes both renames. Recovery rolls both halves forward.
     // Never overwrite a committed journal after a failed flush: require restart/recovery.
@@ -190,15 +192,22 @@ export class DB {
     const players = JSON.stringify(this.players),
       world = JSON.stringify(this.world);
     this.writeDurable(this.journal + '.tmp', JSON.stringify({ version: 1, players, world }));
-    fs.renameSync(this.journal + '.tmp', this.journal);
-    this.syncDirectory();
-    this.writeDurable(this.file + '.tmp', players);
-    fs.renameSync(this.file + '.tmp', this.file);
-    this.writeDurable(this.wfile + '.tmp', world);
-    fs.renameSync(this.wfile + '.tmp', this.wfile);
-    this.syncDirectory();
-    fs.unlinkSync(this.journal);
-    this.syncDirectory();
+    // Once journal installation is attempted its outcome may be uncertain, even
+    // if an error arrives after unlink. Never roll memory back or autosave over it.
+    try {
+      fs.renameSync(this.journal + '.tmp', this.journal);
+      this.syncDirectory();
+      this.writeDurable(this.file + '.tmp', players);
+      fs.renameSync(this.file + '.tmp', this.file);
+      this.writeDurable(this.wfile + '.tmp', world);
+      fs.renameSync(this.wfile + '.tmp', this.wfile);
+      this.syncDirectory();
+      fs.unlinkSync(this.journal);
+      this.syncDirectory();
+    } catch (error) {
+      this.economicFrozen = true;
+      throw error;
+    }
     this.dirty = false;
   }
 }

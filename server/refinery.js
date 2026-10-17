@@ -23,6 +23,10 @@ function state(c) {
 function integer(n) {
   if (!Number.isSafeInteger(n) || n < 0) throw Error('Invalid refinery integer');
 }
+/** @param {unknown} value */
+function identity(value) {
+  if (typeof value !== 'string' || !value.trim()) throw Error('Invalid refinery identity');
+}
 /** @param {W} w */
 function validate(w) {
   if (
@@ -38,7 +42,10 @@ function validate(w) {
     throw Error('Invalid refinery save/version');
   integer(w.nextId);
   for (const q of w.fuelQuotes) {
-    for (const n of [q.n, q.gain, q.before, q.capacity, q.issuedAt, q.expires]) integer(n);
+    for (const value of [q.id, q.owner, q.ship]) identity(value);
+    for (const n of [q.n, q.gain, q.issuedAt, q.expires]) integer(n);
+    if (![q.before, q.capacity].every((n) => Number.isFinite(n) && n >= 0))
+      throw Error('Invalid fuel state');
     if (
       !q.owner ||
       q.n < 1 ||
@@ -50,6 +57,7 @@ function validate(w) {
   }
 
   for (const q of [...w.quotes, ...w.batches.map((b) => b.quote)]) {
+    for (const value of [q.id, q.owner, q.port, q.fingerprint]) identity(value);
     if (
       q.version !== 1 ||
       !RECIPES.some((r) => r.id === q.recipe && r.output === q.output) ||
@@ -84,10 +92,13 @@ function validate(w) {
         throw Error('Invalid pure recipe');
       tonnes += Object.values(input.lots).reduce((a, b) => a + b, 0);
     }
+    if (recipe.pure && q.inputs.some((i) => i.lots.pure !== q.inputs[0].lots.pure))
+      throw Error('Invalid unequal composite inputs');
     if (tonnes !== q.inputTonnes || q.units !== outputUnits(tonnes, q.recovery, recipe.pure))
       throw Error('Invalid refinery entitlement');
   }
   for (const b of w.batches) {
+    identity(b.id);
     if (
       !['queued', 'processing', 'ready', 'collected', 'cancelled'].includes(b.status) ||
       typeof b.credited !== 'boolean' ||
@@ -96,7 +107,29 @@ function validate(w) {
     )
       throw Error('Invalid refinery batch');
     for (const n of [b.submittedAt, b.startAt, b.readyAt]) integer(n);
-    for (const i of b.returns) for (const n of Object.values(i.lots)) integer(n);
+    if (
+      !Array.isArray(b.returns) ||
+      b.startAt !== b.submittedAt + (b.quote.mode === 'stored' ? R.queueMs : 0) ||
+      b.readyAt !== b.startAt + b.quote.duration ||
+      b.credited !== ['ready', 'collected'].includes(b.status) ||
+      (b.status !== 'cancelled' && b.returns.length) ||
+      (b.status === 'cancelled' && b.returns.length !== b.quote.inputs.length)
+    )
+      throw Error('Invalid batch state');
+    for (const [index, i] of b.returns.entries()) {
+      const source = b.quote.inputs[index];
+      if (
+        !source ||
+        i.cid !== source.cid ||
+        !i.lots ||
+        Object.keys(i.lots).sort().join(',') !== 'common,pure,rich'
+      )
+        throw Error('Invalid return escrow');
+      for (const grade of /** @type {const} */ (['common', 'rich', 'pure'])) {
+        integer(i.lots[grade]);
+        if (i.lots[grade] > source.lots[grade]) throw Error('Invalid return entitlement');
+      }
+    }
   }
   for (const r of w.ready) {
     for (const n of [r.units, r.producedUnits, r.claimedUnits]) integer(n);
@@ -109,6 +142,8 @@ function validate(w) {
       throw Error('Invalid ready ledger');
   }
   for (const values of [
+    w.fuelQuotes.map((q) => q.id),
+    w.operations.map((o) => `${o.owner}:${o.kind}:${o.id}`),
     w.quotes.map((q) => q.id),
     w.batches.map((b) => b.id),
     w.ready.map((r) => `${r.owner}:${r.port}:${r.cid}`),
@@ -116,7 +151,17 @@ function validate(w) {
     w.orders.map((o) => o.id),
   ])
     if (new Set(values).size !== values.length) throw Error('Duplicate refinery identity');
+  for (const o of w.operations) {
+    for (const value of [o.id, o.owner, o.result]) identity(value);
+    integer(o.time);
+    if (!['submit', 'cancel', 'fuel', 'accept', 'deliver', 'cancelOrder'].includes(o.kind))
+      throw Error('Invalid refinery receipt');
+  }
   for (const d of w.demand) {
+    identity(d.key);
+    if (!Array.isArray(d.usedOffers) || new Set(d.usedOffers).size !== d.usedOffers.length)
+      throw Error('Invalid used offers');
+    for (const id of d.usedOffers) identity(id);
     for (const n of [d.input, d.composite, d.reserved, d.paid, d.sold]) integer(n);
     if (
       d.reserved !==
@@ -284,7 +329,7 @@ function transaction(c, s, fn) {
   try {
     c.db.flush();
   } catch (e) {
-    if (fs.existsSync(c.db.journal)) c.db.economicFrozen = true;
+    if (c.db.economicFrozen || fs.existsSync(c.db.journal)) c.db.economicFrozen = true;
     else {
       Object.assign(d, prior);
       c.db.world.refinery = old;
@@ -572,7 +617,9 @@ function fuel(c, s, m) {
       !q ||
       now < q.issuedAt ||
       now >= q.expires ||
-      q.before !== current ||
+      !Number.isFinite(current) ||
+      current < 0 ||
+      current + q.gain > q.capacity ||
       q.capacity !== c.fuelCapacity(d) ||
       q.ship !== `${d.ship.hull}:${d.ship.uid || ''}`
     )

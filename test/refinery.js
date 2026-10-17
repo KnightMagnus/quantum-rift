@@ -123,6 +123,29 @@ try {
   w(g).operations = w(g).operations.filter((o) => o.kind !== 'fuel');
   command(g, s, { op: 'fuel', id: fq.id });
   assert.equal(s.data.cargo.fuel_cells, 1, 'pruned receipt cannot resurrect consumed server quote');
+  // Real flight fuel is continuous and keeps regenerating while a quote is visible.
+  s.ent.fuel = 100.5;
+  const flightQuote = fuelQuote(g, s);
+  const space = g.spaces[s.data.sys];
+  assert.ok(space);
+  const regen = (s.ent.st.fuelRe = 2);
+  assert.ok(regen > 0);
+  space.tick(0.1);
+  assert.ok(s.ent.fuel > 100.5 && s.ent.fuel < 101.5);
+  const liveFuel = s.ent.fuel;
+  command(g, s, { op: 'fuel', id: flightQuote.id });
+  assert.equal(s.ent.fuel, liveFuel + 100, 'binding fixed gain survives ordinary regeneration');
+  assert.equal(s.data.cargo.fuel_cells, 0);
+  seed(s.data, { fuel_cells: lots(1) });
+  s.ent.fuel = 0.5;
+  const clippedQuote = fuelQuote(g, s);
+  s.ent.fuel = g.features.shipStats.stats(s.data).fuel - 99;
+  command(g, s, { op: 'fuel', id: clippedQuote.id });
+  assert.equal(
+    s.data.cargo.fuel_cells,
+    1,
+    'confirmation cannot waste a cell after regeneration fills room',
+  );
   s.ent.fuel = g.features.shipStats.stats(s.data).fuel - 1;
   command(g, s, { op: 'fuelQuote', n: 1 });
   assert.equal(s.data.cargo.fuel_cells, 1, 'reject cell that wouldclip');
@@ -253,6 +276,22 @@ try {
       (w) => w.ready[0].units++,
       (w) => w.batches[0].quote.units++,
       (w) => w.ready.push({ ...w.ready[0] }),
+      (w) => (w.batches[0].credited = false),
+      (w) => w.batches[0].startAt++,
+      (w) => (w.batches[0].returns = structuredClone(w.batches[0].quote.inputs)),
+      (w) => (w.operations[0].kind = 'invented'),
+      (w) => (w.operations[0].owner = ''),
+      (w) => (
+        (w.batches[0].quote.inputs = [
+          { cid: 'ore', lots: lots(0, 0, 3) },
+          { cid: 'gas', lots: lots(0, 0, 3) },
+          { cid: 'shards', lots: lots(0, 0, 6) },
+        ]),
+        (w.batches[0].quote.recipe = 'plating'),
+        (w.batches[0].quote.output = 'composite_plating'),
+        (w.batches[0].quote.inputTonnes = 12),
+        (w.batches[0].quote.units = outputUnits(12, 85, true))
+      ),
     ]) {
       const invalid = structuredClone(valid);
       mutate(invalid);
