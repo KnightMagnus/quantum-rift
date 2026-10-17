@@ -94,6 +94,12 @@ try {
   const pick = page.locator('#landbody .dpick[data-dk="0"][data-slot="0"]');
   await pick.waitFor();
   await audit('dynamic docks ship selectors', '#landbody select');
+  await pick.hover();
+  if (!baseline)
+    assert.equal(
+      await pick.evaluate((e) => getComputedStyle(e).borderTopColor),
+      'rgb(170, 170, 170)',
+    );
   await capture('docks-closed');
   await pick.click();
   await capture('docks-open-attempt');
