@@ -2401,7 +2401,11 @@ async function logOut() {
     'hailopts',
   ])
     $(id).replaceChildren();
-  $('chatin').value = $('lpass').value = '';
+  // Clear persistent panel drafts too (for example, a former captain's tow recipient).
+  document.querySelectorAll('input, textarea').forEach((el) => {
+    if (el.id !== 'lname' && ['text', 'search', 'password', 'textarea'].includes(el.type))
+      el.value = '';
+  });
   $('cchan')
     .querySelectorAll('button')
     .forEach((b) => b.classList.toggle('on', b.dataset.ch === ''));

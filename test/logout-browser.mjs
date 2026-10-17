@@ -143,6 +143,7 @@ for (const solo of [false, true]) {
       G.chan = 'armada';
       G.autoRoute = false;
       document.querySelector('#chatlog').textContent = 'PRIVATE ALPHA CHAT';
+      document.querySelector('#towrecipient').value = 'Private transfer recipient';
     });
     await page.keyboard.down('w');
     await page.keyboard.press('Escape');
@@ -153,6 +154,7 @@ for (const solo of [false, true]) {
     assert.equal(await page.evaluate(() => sameDocument), 'still here', 'no page reload');
     assert.equal(await page.inputValue('#lpass'), '');
     assert.equal(await page.inputValue('#chatin'), '');
+    assert.equal(await page.inputValue('#towrecipient'), '', 'persistent transfer draft cleared');
     assert.equal(await page.locator('#chatlog').textContent(), '');
     assert.deepEqual(
       await page.evaluate(() =>
