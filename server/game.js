@@ -406,6 +406,7 @@ export class Game {
     this.features.refinery.init();
     this.features.pressure.init();
     this.features.industrial.init();
+    this.features.towing.init();
     this.features.fronts.frontsInit();
     this.features.coop.coopInit();
     this.features.frontier.frontierInit();
@@ -738,6 +739,7 @@ export class Game {
    * @returns {void}
    */
   disconnect(s) {
+    if (s.data) this.features.towing.detach(s);
     if (s.data) this.features.industrial.stop(s);
     if (s.data && this.sessions.has(s.id)) this.features.coop.coopLogout(s); // 2.6: duels, trades, presence
     this.sessions.delete(s.id);
@@ -848,6 +850,7 @@ export class Game {
         missions: d.missions,
         refinery: this.features.refinery.payload(s),
         industrial: this.features.industrial.payload(s),
+        towing: this.features.towing.payload(s),
         escorts: d.escorts,
         shuttles: d.shuttles,
         officers: d.officers,
@@ -1111,6 +1114,7 @@ export class Game {
    */
   createMessageHandlers() {
     return createMessageRegistry([
+      ['towing', (s, m) => this.features.towing.command(s, m)],
       ['industrial', (s, m) => this.features.industrial.command(s, m)],
       ['miningPressure', (s, m) => this.features.pressure.consent(s, m)],
       ['refinery', (s, m) => this.features.refinery.command(s, m)],
@@ -1947,6 +1951,8 @@ export class Game {
    * @returns {void}
    */
   spawnPlayer(s, x, y, a, v) {
+    this.features.towing.detach(s);
+    if (!s.data.ship.uid) s.data.ship.uid = this.features.docks.shipUid(s.data);
     if (s.combat) this.combatAssist.stop(s, 'New flight state; rearm explicitly');
     const d = s.data,
       sp = this.spaces[d.sys];
@@ -2016,6 +2022,7 @@ export class Game {
       miningRocks: this.features.mining.rocksPayload(sp),
       mining: this.features.mining.payload(s, sp),
       industrial: this.features.industrial.payload(s),
+      towing: this.features.towing.payload(s),
       miningPressure: this.features.pressure.payload(s),
       miningHazards: this.features.pressure.hazards(sp.id),
     });
@@ -2067,6 +2074,8 @@ export class Game {
     const d = s.data,
       e = s.ent;
     if (!e) return;
+    if (this.features.towing.attached(s))
+      return this.toast(s, 'Deliver or detach the motherlode before landing.');
     if (e.disabled) return this.toast(s, 'Your ship is disabled.');
     const p = STELLARS[sid];
     if (!p || p.system !== d.sys) return;
@@ -2167,6 +2176,8 @@ export class Game {
    * @returns {void}
    */
   jump(s, to) {
+    if (this.features.towing.attached(s))
+      return this.toast(s, 'Detach the motherlode before jumping.');
     const d = s.data,
       e = s.ent;
     if (!e || e.state !== 'fly') return;
@@ -2222,6 +2233,10 @@ export class Game {
    * @returns {void}
    */
   finishJump(e, space) {
+    if (e.player && this.features.towing.attached(e.player.s)) {
+      e.state = 'fly';
+      return this.toast(e.player.s, 'Detach the motherlode before jumping.');
+    }
     if (!e.player) {
       space.remove(e, 'jump');
       return;
@@ -2271,6 +2286,8 @@ export class Game {
    * @returns {void}
    */
   wormholeTransit(e, space, p) {
+    if (e.player && this.features.towing.attached(e.player.s))
+      return this.toast(e.player.s, 'Detach the motherlode before Gateway transit.');
     const s = e.player.s,
       d = s.data,
       to = SYS[p.wormhole],
@@ -2446,6 +2463,7 @@ export class Game {
     const s = pref.s,
       d = s.data;
     if (!d) return;
+    this.features.towing.detach(s);
     if (space.sys.arena && this.features.frontier.onArenaDeath(s, space)) return;
     if (s.ent) this.dropEscorts(space, s.ent, 'jump'); // 2.0.3: escorts no longer linger after you are destroyed
     space.players--;
@@ -2909,6 +2927,11 @@ export class Game {
     if (n > 0 && !list.includes(id)) return;
     const st = this.features.shipStats.stats(d);
     if (n > 0) {
+      if (
+        o.eff.towRig &&
+        (st.cargo < 60 || ['fighter', 'interceptor'].includes(this.A.ships[d.ship.hull].role))
+      )
+        return this.toast(s, 'Tow Rig requires a non-fighter hull with at least 60t cargo.');
       if (o.eff.ammo) {
         // ammunition: needs the launcher
         const w = o.eff.ammo,
@@ -3474,6 +3497,8 @@ export class Game {
    * @returns {void}
    */
   sleep(sp) {
+    for (const s of this.sessions.values())
+      if (s.data?.sys === sp.id) this.features.towing.detach(s);
     this.features.mining.suspendSpace(sp);
     delete this.live[sp.id];
   }
@@ -3622,6 +3647,7 @@ export class Game {
             miningRocks: this.features.mining.rocksPayload(this.spaces[sys]),
             mining: this.features.mining.payload(s, this.spaces[sys]),
             industrial: this.features.industrial.payload(s),
+            towing: this.features.towing.payload(s),
             miningPressure: this.features.pressure.payload(s),
             miningHazards: this.features.pressure.hazards(sys),
             combat: this.combatAssist.payload(s, this.spaces[sys]),

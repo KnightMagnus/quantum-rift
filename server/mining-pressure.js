@@ -239,6 +239,16 @@ export const MiningPressureOperations = {
     const f = field(this, sp, rock.key.split(':').slice(0, 2).join(':'));
     return (1 + f.recovery / 100) * (this.rush(sp.id) ? 0.85 : 1);
   },
+  /** Public bounded field evolution reuses the existing recovery owner, not a second ledger.
+   * @this {C} @param {string} sys @param {number} index */
+  fieldState(sys, index) {
+    const f = field(this, { id: sys }, `${sys}:${index}`);
+    return {
+      recovery: f.recovery,
+      label: f.recovery >= 20 ? 'RECOVERING' : f.recovery >= 5 ? 'STEADY' : 'RICH OPPORTUNITY',
+      factor: (1 + f.recovery / 100) * (this.rush(sys) ? 0.85 : 1),
+    };
+  },
   /** @this {C} @param {Space} sp */
   pressureTick(sp) {
     const w = state(this),

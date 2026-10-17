@@ -1,9 +1,20 @@
+import { initTowingUI } from './towing_ui.js';
 // One action entry point for keyboard and contextual cockpit button.
-export function initMiningUI({ G, send, bound, label, blocked, industrialAudio = () => {} }) {
+export function initMiningUI({
+  G,
+  send,
+  bound,
+  label,
+  blocked,
+  contextBlocked = blocked,
+  industrialAudio = () => {},
+}) {
   const root = document.getElementById('miningcontrols'),
     button = document.getElementById('miningsurvey'),
     meter = document.getElementById('miningmeter');
+  const towUI = initTowingUI({ G, send, bound, label, blocked: contextBlocked, root });
   function invokeMiningAction(action) {
+    if (action === 'towToggle') return towUI.invoke();
     if (['dredgeSweep', 'dredgeHarvest', 'dredgeSmelter'].includes(action)) {
       if (blocked() || G.paused || G.landed || !G.view) return false;
       send({
@@ -20,6 +31,7 @@ export function initMiningUI({ G, send, bound, label, blocked, industrialAudio =
     return true;
   }
   function refresh() {
+    towUI.refresh();
     const fly = !!G.you && !G.landed && !!G.view;
     root.classList.toggle('hidden', !fly);
     if (!fly) {
@@ -124,6 +136,7 @@ export function initMiningUI({ G, send, bound, label, blocked, industrialAudio =
   return { invokeMiningAction, refresh };
 }
 export function receiveMining(G, message) {
+  if (Object.hasOwn(message, 'towing')) G.towing = message.towing;
   if (Object.hasOwn(message, 'industrial')) G.industrial = message.industrial;
   if (message.miningPressure) G.miningPressure = message.miningPressure;
   if (message.miningHazards) G.miningHazards = message.miningHazards;

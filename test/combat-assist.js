@@ -264,6 +264,8 @@ const selectedGame = {
     fronts: { mods: () => null },
     coop: { armadaOf: () => null },
     mining: { endTick() {} },
+    // This combat-only Space fixture has no persisted motherlodes.
+    towing: { towingTick() {} },
     pressure: { pressureTick() {} },
   },
 };

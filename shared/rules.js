@@ -342,6 +342,7 @@ export function outfitSaleValue(A, ship, id, count) {
 /**
  * Live calculated flight, combat, and capacity attributes for an equipped ship.
  * @typedef {Object} ComputedShipStats
+ * @property {boolean} towRig - Installed industrial towing capability.
  * @property {number} hull - Hull identifier.
  * @property {string} name - Ship model name.
  * @property {number} size - Visual sprite size.
@@ -439,6 +440,11 @@ export function shipStats(A, ship, bonus = {}) {
   fuel += bonus.fuel || 0;
   if (bonus.jumpFast) jumpFast = 1;
   return {
+    towRig:
+      Number(H.id) === 815 ||
+      (cargo >= 60 &&
+        !['fighter', 'interceptor'].includes(H.role) &&
+        Object.entries(ship.outfits || {}).some(([id, n]) => n > 0 && !!O[id]?.eff?.towRig)),
     hull: H.id,
     name: H.name,
     size: H.size,
@@ -678,6 +684,7 @@ export function weaponSound(w) {
  * @property {number} vy - Current velocity vector Y component.
  * @property {number} a - Heading angle in radians (0 = up, clockwise).
  * @property {number} fuel - Current remaining fuel.
+ * @property {number} [towCap] Hard attached velocity cap.
  */
 
 /**
@@ -723,6 +730,14 @@ export function step(e, st, inp, dt = DT) {
     const k = Math.max(max / sp, 1 - 2 * dt);
     e.vx *= k;
     e.vy *= k;
+  }
+  // Tow is a hard physical limit after all acceleration/afterburner/catchup, before displacement.
+  if (Number.isFinite(e.towCap) && e.towCap > 0) {
+    const speed = Math.hypot(e.vx, e.vy);
+    if (speed > e.towCap) {
+      e.vx *= e.towCap / speed;
+      e.vy *= e.towCap / speed;
+    }
   }
   e.x += e.vx * dt;
   e.y += e.vy * dt;

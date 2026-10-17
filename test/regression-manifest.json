@@ -67,7 +67,11 @@
     "dredge-smelter.js",
     "dredge-corona.js",
     "dredge-economy.js",
-    "dredge-network.mjs"
+    "dredge-network.mjs",
+    "towing.js",
+    "towing-persistence.js",
+    "field-evolution.js",
+    "towing-network.mjs"
   ],
   "browser": [
     "sidebar-browser.mjs",
@@ -81,7 +85,8 @@
     "mining-controls-browser.mjs",
     "mining-ui-browser.mjs",
     "refinery-ui-browser.mjs",
-    "dredge-browser.mjs"
+    "dredge-browser.mjs",
+    "towing-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -489,6 +494,25 @@
         "dredge-browser.mjs"
       ],
       "asserts": "No-plasma real specialist build; finite root-only sweep mass and two utility collectors; exact mobile grade/remainder/checkpoint ownership; stock real flight plasma escape and thermal damage ordering; finite one-way economy, private checked WS modes and actual production sprite/control rendering. Per-captain cooperative/restart blueprint qualification, missing-input work discard without transfer, passive corona exit warnings and automatic route keep-out."
+    },
+    {
+      "id": "towing-motherlodes",
+      "owners": [
+        "server/towing.js",
+        "server/towing-contracts.js",
+        "shared/towing-rules.js",
+        "client/towing_ui.js",
+        "client/towing_render.js"
+      ],
+      "services": ["towing"],
+      "tests": [
+        "towing.js",
+        "towing-persistence.js",
+        "field-evolution.js",
+        "towing-network.mjs",
+        "towing-browser.mjs"
+      ],
+      "asserts": "Finite authored source conservation, surveyed rig authority, hard 60/30 physical limits, consensual transfer, logical grace/recovery, transit and lifecycle denials, capacity-first exact-grade delivery and real journal fault recovery. Browser uses custom/unbound controls, F fighter bay, static reduced-motion artwork, scaled controls and actual two-captain transfer/delivery."
     }
   ],
   "routes": {
@@ -575,7 +599,8 @@
     "refinery": ["refinery-network.mjs", "refinery-ui-browser.mjs"],
     "miningOrder": ["refinery-network.mjs", "refinery.js"],
     "miningPressure": ["mining-pressure.js", "refinery-ui-browser.mjs"],
-    "industrial": ["dredge-network.mjs", "dredge-browser.mjs"]
+    "industrial": ["dredge-network.mjs", "dredge-browser.mjs"],
+    "towing": ["towing-network.mjs", "towing-browser.mjs"]
   },
   "tooling": [
     "capture-features.js",

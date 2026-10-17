@@ -213,6 +213,7 @@ export const ACTIONS = [
   ['dredgeSweep', 'Dredge Sweep', null],
   ['dredgeHarvest', 'Dredge Harvest Plasma', null],
   ['dredgeSmelter', 'Dredge Mobile Smelter', null],
+  ['towToggle', 'Attach / Detach Motherlode', null],
 ];
 const ALT = {
   thrust: 'ArrowUp',
@@ -242,18 +243,20 @@ function saveOpts() {
     localStorage.setItem('rift.opts', JSON.stringify(G.opts));
   } catch {}
 }
+function miningModalBlocked() {
+  return ['opts', 'gmap', 'storybox', 'ctrlbox', 'storebox'].some((id) => {
+    const el = $(id);
+    return el && !el.classList.contains('hidden');
+  });
+}
 const miningUI = initMiningUI({
   industrialAudio: audio.industrial,
   G,
   send,
   bound,
   label: (c) => (c ? c.replace(/^Key/, '') : 'assign key'),
-  blocked: () =>
-    typing() ||
-    ['opts', 'gmap', 'storybox', 'ctrlbox', 'storebox'].some((id) => {
-      const el = $(id);
-      return el && !el.classList.contains('hidden');
-    }),
+  blocked: () => typing() || miningModalBlocked(),
+  contextBlocked: miningModalBlocked,
 });
 initRefineryUI(G, send);
 setInterval(() => miningUI.refresh(), 100);
@@ -965,6 +968,7 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   switch (actionOf(e.code)) {
+    case 'towToggle':
     case 'dredgeSweep':
     case 'dredgeHarvest':
     case 'dredgeSmelter':
@@ -1167,6 +1171,10 @@ G.startAutoJump = () =>
     }
   }, 300); // 2.6: follow the leader
 function setAuto(a, msg) {
+  if (a && (G.towing || G.you?.towing)?.attached) {
+    toast('Towing: manual flight only; detach before automatic transit.');
+    return;
+  }
   if (a) {
     send({ t: 'combat', op: 'off' });
     G.combat = {};
@@ -1547,6 +1555,13 @@ canvas.addEventListener('mousedown', (e) => {
   }
   const rock = (G.rocks || []).find((k) => k.hp && Math.hypot(k.x - wx, k.y - wy) <= k.r + 8);
   if (rock) G.miningTarget = rock.id;
+  const tow = (G.towing || G.you?.towing)?.objects.find(
+    (o) => !['delivered', 'destroyed'].includes(o.status) && Math.hypot(o.x - wx, o.y - wy) < 52,
+  );
+  if (tow) {
+    G.towTarget = tow.id;
+    return;
+  }
   if (G.opts.mouseAim) mouse.down = true; // mouse-aim mode: hold the left button on open space to fire
 });
 window.addEventListener('mouseup', (e) => {
@@ -2084,6 +2099,10 @@ let acc = 0,
 function fixedTick() {
   if (!G.view || G.landed || G.paused) return;
   // Preserve automatic-control intent even if guidance completes or refuses this tick.
+  if ((G.towing || G.you?.towing)?.attached) G.auto = null;
+  G.view.towCap = (G.towing || G.you?.towing)?.attached
+    ? (G.towing || G.you?.towing).cap
+    : undefined;
   const navigationRequested = !!G.auto;
   const inp = {
     thrust: held('thrust') ? 1 : 0,

@@ -1,5 +1,6 @@
 // @ts-check
 // Explicit feature composition. No method is installed on Game or another feature.
+import { TowingOperations } from './towing.js';
 import { IndustrialOperations } from './industrial.js';
 import { MiningOperations } from './mining.js';
 import { RefineryOperations } from './refinery.js';
@@ -26,6 +27,7 @@ import { CoopOperations } from './coop.js';
 
 /**
  * @typedef {object} FeatureServices
+ * @property {import("./feature-service.js").BoundOperations<typeof TowingOperations>} towing
  * @property {import("./feature-service.js").BoundOperations<typeof IndustrialOperations>} industrial
  * @property {import("./feature-service.js").BoundOperations<typeof MiningOperations>} mining
  * @property {import("./feature-service.js").BoundOperations<typeof RefineryOperations>} refinery
@@ -1326,5 +1328,31 @@ export function createFeatures(core) {
     toast: core.toast.bind(core),
   };
   features.industrial = bindOperations(IndustrialOperations, industrialCapabilities);
+  /** @type {import('./towing-contracts.js').TowCapabilities} */
+  const towingCapabilities = {
+    get db() {
+      return core.db;
+    },
+    paused: () => !!core.paused,
+    sessions: () => core.sessions.values(),
+    refresh: core.you.bind(core),
+    toast: core.toast.bind(core),
+    stopCombat: (s) => {
+      if (s.ent)
+        core.combatAssist?.stop(
+          /** @type {import('./combat-assist.js').CombatSession} */ (s),
+          'Towing: manual flight required',
+        );
+    },
+    room: (d) =>
+      Math.max(
+        0,
+        (features.shipStats.stats(d)?.cargo || 0) -
+          core.holdUsed(/** @type {import('./refinery-contracts.js').RefineryPlayer} */ (d)),
+      ),
+    stats: (d) => features.shipStats.stats(d),
+    field: (sys, field) => features.pressure.fieldState(sys, field),
+  };
+  features.towing = bindOperations(TowingOperations, towingCapabilities);
   return Object.freeze(features);
 }

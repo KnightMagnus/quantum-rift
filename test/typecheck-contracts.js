@@ -92,6 +92,19 @@ const missing={paused(){return false;}};
     0,
     'industrial requires checkpoint/capacity/root mining capabilities',
   );
+  result = check(`/** @type {import('${modulePath('towing-contracts.js')}').TowRequest} */
+const tow={op:'attach',id:1,revision:2};`);
+  assert.equal(result.status, 0, 'typed tow request');
+  result = check(`/** @type {import('${modulePath('towing-contracts.js')}').TowRequest} */
+const forged={op:'deliver',id:1,revision:2,lots:{pure:999},owner:'other'};`);
+  assert.notEqual(result.status, 0, 'tow lots/owner authority rejected');
+  result = check(`/** @type {import('${modulePath('towing-contracts.js')}').TowCapabilities} */
+const missing={paused(){return false;}};`);
+  assert.notEqual(
+    result.status,
+    0,
+    'tow requires explicit checkpoint/session/capacity capabilities',
+  );
   console.log(
     'Typed valid calls/grade selections pass; invalid argument, grade quantity and missing capability are rejected.',
   );

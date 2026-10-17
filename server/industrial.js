@@ -215,7 +215,7 @@ export const IndustrialOperations = {
         continue;
       }
       const band = coronaAt(d.sys, e.x, e.y);
-      if (s.lastInput?.navigation || e.autoCombat) {
+      if (s.lastInput?.navigation || e.autoCombat || e.towCap) {
         m.harvest = false;
       }
       if (m.heat >= R.cutoff) m.cutoff = true;

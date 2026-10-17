@@ -199,6 +199,8 @@ const P = (o) => o;
 /**
  * Celestial body (planet, moon, station, asteroid field, or claimable site) orbiting within a star system.
  * @typedef {Object} StellarBody
+ * @property {string} [wormhole] Gateway destination system.
+ * @property {boolean} [outlaw] Outlaw port access.
  * @property {string} id - Unique stellar identifier.
  * @property {string} name - Display name of the body.
  * @property {string} kind - Category of body (e.g. 'planet', 'station', 'moon', 'field', 'site').
@@ -217,6 +219,7 @@ const P = (o) => o;
 /**
  * Star system record defining coordinates, hyperlane links, and celestial bodies.
  * @typedef {Object} StarSystem
+ * @property {boolean} [arena] Isolated arena space.
  * @property {boolean} [farside] Gateway far-side system, without ambient newcomer truce.
  * @property {string} id - Unique system identifier.
  * @property {string} name - Display name.
@@ -1200,6 +1203,17 @@ export const FACTION_OUTFITS = {
  */
 // Generic weapon outfits. Stable weapon IDs keep existing ship loadouts and saves compatible.
 export const EXTRA_OUTFITS = [
+  {
+    id: 9920,
+    name: 'Tow Rig',
+    cost: 45000,
+    mass: 4,
+    max: 1,
+    tech: 1,
+    icon: 'icons/9020.png',
+    eff: { towRig: 1 },
+    desc: 'Finite motherlode tether. Requires a hull with at least 60t cargo. Hard tow speed 30 (stock Star Dredge 60). No jump/Gateway while attached.',
+  },
   {
     id: 9001,
     name: 'Mica Dart',

@@ -917,7 +917,8 @@
         "extracted",
         "payload",
         "hazards",
-        "consent"
+        "consent",
+        "fieldState"
       ],
       "uses": ["db", "newcomer", "rush", "sessions", "toast"]
     },
@@ -927,6 +928,32 @@
       "exportName": "IndustrialOperations",
       "methods": ["init", "stop", "command", "industrialTick", "payload"],
       "uses": ["db", "loot", "paused", "power", "refresh", "room", "sweep", "toast"]
+    },
+    {
+      "file": "towing",
+      "module": "towing",
+      "exportName": "TowingOperations",
+      "methods": [
+        "init",
+        "ensure",
+        "attached",
+        "detach",
+        "towingTick",
+        "command",
+        "destroy",
+        "payload"
+      ],
+      "uses": [
+        "db",
+        "field",
+        "paused",
+        "refresh",
+        "room",
+        "sessions",
+        "stats",
+        "stopCombat",
+        "toast"
+      ]
     }
   ]
 }

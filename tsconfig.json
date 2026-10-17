@@ -35,6 +35,9 @@
     "shared/mining-pressure-rules.js",
     "server/industrial.js",
     "server/industrial-contracts.js",
-    "shared/industrial-rules.js"
+    "shared/industrial-rules.js",
+    "server/towing.js",
+    "server/towing-contracts.js",
+    "shared/towing-rules.js"
   ]
 }

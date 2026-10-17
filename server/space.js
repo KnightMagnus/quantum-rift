@@ -78,6 +78,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {number} [escortSlot] Formation slot index for wingmates.
  * @property {string} [wingUid] Saved wingmate unique identifier.
  * @property {number} [wingOf] Player session ID of commanding player.
+ * @property {number} [towCap] Hard attached towing velocity limit.
  * @property {number} [distractT] Timestamp until distraction by jettisoned cargo expires.
  * @property {Entity | null} [fireAt] Current target entity to aim weapons at.
  * @property {number} [seq] Sequence number of last applied player input packet.
@@ -437,6 +438,8 @@ export class Space {
    * @returns {void}
    */
   remove(e, why) {
+    if (e.player && e.player.s.ent === e && this.game.db.world.towing)
+      this.game.features.towing.detach(e.player.s);
     e.dead = true;
     this.ships.delete(e.id);
     if (why) this.events.push(['flash', Math.round(e.x), Math.round(e.y)]);
@@ -1826,6 +1829,12 @@ export class Space {
     this.game.combatAssist?.resolve(this);
     const formations = formationTargets(this);
     for (const e of this.ships.values()) {
+      if (e.towCap && e.player) {
+        formations.delete(e.id);
+        e.catchup = null;
+        if (e.autoCombat) this.game.combatAssist.stop(e.player.s, 'Towing requires manual flight');
+        if (e.state === 'jumpout') e.state = 'fly';
+      }
       if (e.state === 'jumpout') {
         e.jumpT -= DT;
         const sp = e.st.maxSpeed * 3;
@@ -1899,7 +1908,7 @@ export class Space {
       }
       if (e.player && e.state === 'fly' && this.sys.gate && !e.wormExit && !(e.wormT > this.t))
         for (const p of this.sys.stellars)
-          if (p.wormhole && Math.hypot(p.x - e.x, p.y - e.y) < p.r * 0.5) {
+          if (p.wormhole && !e.towCap && Math.hypot(p.x - e.x, p.y - e.y) < p.r * 0.5) {
             this.game.wormholeTransit(e, this, p);
             break;
           }
@@ -1970,6 +1979,7 @@ export class Space {
     }
     this.shots = this.shots.filter((s) => s.life > 0);
     this.beams = this.beams.filter((b) => b.until > this.t && this.ships.has(b.id));
+    this.game.features.towing.towingTick(this);
     if ([...this.ships.values()].some((e) => e.player && e.hull === 815))
       this.game.features.industrial.industrialTick(this, DT);
     this.game.features.mining.endTick(this);

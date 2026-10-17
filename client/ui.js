@@ -1426,6 +1426,11 @@ export function renderLanded() {
           ['utility', 'UTILITY'],
         ]; // 2.4: outfitter categories
       const fits = (o) => {
+        if (
+          o.eff.towRig &&
+          (st.cargo < 60 || ['fighter', 'interceptor'].includes(G.A.ships[y.ship.hull].role))
+        )
+          return false;
         if (o.eff.ammo)
           return (
             !!(st.weapons && st.weapons[o.eff.ammo]) ||

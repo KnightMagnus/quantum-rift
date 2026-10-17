@@ -1,3 +1,4 @@
+import { drawTowing } from './towing_render.js';
 import { drawMining } from './mining_render.js';
 // Quantum Rift renderer: starfield, stellars, ship sprite sheets, shots, beams, effects, radar.
 import { stationWheel } from './station_wheel.js';
@@ -2078,6 +2079,7 @@ export function draw(G, ctx, W, H, dt, now) {
       ctx.fillRect(x - R * 0.6, y + R + 4, (R * 1.2 * k.hp) / 100, 3);
     }
   }
+  drawTowing(G, ctx, sx, sy, z, W, H);
   drawMining(G, ctx, sx, sy, z, W, H, now);
   for (const [px_, py_] of salvagePoints(G)) {
     const x = sx(px_),
