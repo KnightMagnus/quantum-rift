@@ -93,7 +93,8 @@
     "towing-browser.mjs",
     "mining-panel-browser.mjs",
     "logout-browser.mjs",
-    "mining-keys-browser.mjs"
+    "mining-keys-browser.mjs",
+    "landing-autopilot-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -346,9 +347,10 @@
         "landing-autopilot.js",
         "gateway-navigation.js",
         "gateway-browser.mjs",
-        "wormhole-loop.js"
+        "wormhole-loop.js",
+        "landing-autopilot-browser.mjs"
       ],
-      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce."
+      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input."
     },
     {
       "id": "ships-catalog-art",
@@ -558,11 +560,12 @@
       "combat-network.js",
       "fuzz.js",
       "sim.js",
-      "input-audio-browser.mjs"
+      "input-audio-browser.mjs",
+      "landing-autopilot-browser.mjs"
     ],
     "target": ["v03.js"],
     "tutskip": ["v03.js"],
-    "land": ["bot.js", "v11.js"],
+    "land": ["bot.js", "v11.js", "landing-autopilot-browser.mjs"],
     "depart": [
       "armada-formation-network.mjs",
       "bot.js",
@@ -653,7 +656,6 @@
     "faction-standing-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "hailing-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "hailing-persistence-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
-    "landing-autopilot-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "map-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "outfitter-wing-repairs-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "passengers-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",

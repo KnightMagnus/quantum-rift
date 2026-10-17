@@ -276,3 +276,18 @@ all off. All use the existing rebind UI. The exact legacy automatically inserted
 four-null mining bundle is upgraded once; existing custom/individual unbound
 keys and subsequent explicit unbinding are preserved. Conflicting defaults
 remain unassigned rather than displacing an existing control.
+
+## Landing cruise heading
+
+`landing-autopilot.js` runs production guidance and shared flight physics for every
+stock hull across four port radii, inward/outward and lateral drift, including
+long capped-speed approaches. Four light/heavy hulls additionally assert targetward
+cruise orientation at 90% and 100% maximum speed with tiny lateral drift. Existing
+settled-authority, stale snapshot and duplicate request guards remain exercised.
+
+`landing-autopilot-browser.mjs` is now registered in the browser CI lane: real L
+input, delayed WebSocket inputs, authoritative cruise heading, retrograde braking,
+one successful server landing, manual steering takeover and permission denial.
+Fixtures use disposable Solo saves and seeded ambient conditions, not player saves.
+Targets are static stellars (the production landing contract); moving-target
+rendezvous, arbitrary network jitter and cross-browser behavior are not claimed.
