@@ -46,13 +46,53 @@ const log = fs.createWriteStream(path.join(out, 'server.log'));
 server.stdout.pipe(log);
 server.stderr.pipe(log);
 let browser;
-const errors = [];
+const errors = [],
+  events = [];
+let diagnosticPage;
 try {
   await ready(server, origin);
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  diagnosticPage = page;
+  page.on('websocket', (socket) => {
+    socket.on('framesent', ({ payload }) => {
+      try {
+        const m = JSON.parse(String(payload));
+        if (m.t !== 'input') events.push({ at: Date.now(), dir: 'sent', m });
+      } catch {}
+    });
+    socket.on('framereceived', ({ payload }) => {
+      try {
+        const m = JSON.parse(String(payload));
+        if (m.t === 'you')
+          events.push({
+            at: Date.now(),
+            dir: 'received',
+            t: m.t,
+            cargo: m.d.cargo,
+            lots: m.d.cargoLots,
+          });
+        else if (m.t === 'toast' || m.t === 'rivals')
+          events.push({ at: Date.now(), dir: 'received', t: m.t, msg: m.msg });
+      } catch {}
+    });
+  });
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.addInitScript(() => {
+    window.pointerTrace = [];
+    for (const type of ['pointerdown', 'pointerup', 'click'])
+      document.addEventListener(
+        type,
+        (e) =>
+          window.pointerTrace.push({
+            at: performance.now(),
+            type,
+            target: e.target.outerHTML?.slice(0, 500),
+            x: e.clientX,
+            y: e.clientY,
+          }),
+        true,
+      );
     const NativeWebSocket = window.WebSocket;
     window.WebSocket = class extends NativeWebSocket {
       constructor(...args) {
@@ -135,6 +175,22 @@ try {
     'Actual market and in-flight grade buttons preserve unselected grades in authoritative server inventory.',
   );
 } catch (error) {
+  const state = await diagnosticPage
+    ?.evaluate(() => ({
+      cargo: G.you?.cargo,
+      lots: G.you?.cargoLots,
+      itab: G.itab,
+      pointers: window.pointerTrace,
+    }))
+    .catch(() => null);
+  fs.writeFileSync(
+    path.join(out, 'failure-state.json'),
+    JSON.stringify(
+      { node: process.version, browser: browser?.version(), errors, events, state },
+      null,
+      2,
+    ),
+  );
   await failureEvidence(browser, out, error);
   throw error;
 } finally {
