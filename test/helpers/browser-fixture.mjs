@@ -33,10 +33,10 @@ export async function cleanup(server, browser, log, dir) {
   try {
     await browser?.close();
   } finally {
-    if (server.exitCode === null) {
+    if (server.exitCode === null && server.signalCode === null) {
       server.kill('SIGTERM');
       await Promise.race([once(server, 'exit'), delay(3000)]);
-      if (server.exitCode === null) {
+      if (server.exitCode === null && server.signalCode === null) {
         server.kill('SIGKILL');
         await once(server, 'exit');
       }

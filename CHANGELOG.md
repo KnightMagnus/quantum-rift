@@ -2,6 +2,11 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.0.1 — Windows startup fix
+
+- Skip unsupported directory fsync on Windows so online and Solo startup can finish. Regular-file fsync and pending-checkpoint recovery remain intact; no saves need deleting.
+- Add persistence/startup regressions for the Windows failure condition, journal recovery and denied writes.
+
 ### 3.0.0 — Mining
 
 - **Survey and cutting:** persistent seam heat/work, staged clean releases, gas vents and finite common/rich/pure cargo lots. Partial pickups conserve the remaining material and resolve mining bonuses once. Existing cargo migrates to common lots.
