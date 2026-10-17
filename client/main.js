@@ -211,10 +211,17 @@ export const ACTIONS = [
   ['ordLoot', 'Fleet: collect loot', 'KeyU'],
   ['companion', 'Next companion tab', 'KeyC'],
   ['surveyPulse', 'Scan nearby rocks', 'KeyV'],
-  ['dredgeSweep', 'Dredge Sweep', null],
-  ['dredgeHarvest', 'Dredge Harvest Plasma', null],
-  ['dredgeSmelter', 'Dredge Mobile Smelter', null],
-  ['towToggle', 'Attach / Detach Motherlode', null],
+  ['dredgeSweep', 'Dredge Sweep', 'BracketLeft'],
+  ['dredgeHarvest', 'Dredge Harvest Plasma', 'BracketRight'],
+  ['dredgeSmelter', 'Dredge Mobile Smelter', 'Semicolon'],
+  ['towToggle', 'Attach / Detach Motherlode', 'Comma'],
+  ['miningPanel', 'Mining controls', 'Backquote'],
+  ['towDeliver', 'Deliver Motherlode (also automatic)', 'Period'],
+  ['towOffer', 'Offer tow to selected captain', 'Home'],
+  ['towAccept', 'Accept offered tow', 'End'],
+  ['miningGroup', 'Join / leave group mining', 'Minus'],
+  ['dredgeInput', 'Set selected processing input', 'Equal'],
+  ['dredgeOff', 'Dredge all off', 'Backslash'],
 ];
 const ALT = {
   thrust: 'ArrowUp',
@@ -245,18 +252,17 @@ function saveOpts() {
   } catch {}
 }
 function miningModalBlocked() {
-  return ['opts', 'gmap', 'storybox', 'ctrlbox', 'storebox', 'quitbox'].some((id) => {
-    const el = $(id);
-    return el && !el.classList.contains('hidden');
-  });
+  // Includes account/quit confirmation and future overlays without a stale ID list.
+  return !!document.querySelector('.overlay:not(.hidden)');
 }
+
 const miningUI = initMiningUI({
   industrialAudio: audio.industrial,
   towAudio: audio.towing,
   G,
   send,
   bound,
-  label: (c) => (c ? c.replace(/^Key/, '') : 'assign key'),
+  label: (c) => keyName(c),
   blocked: () => typing() || miningModalBlocked(),
   contextBlocked: miningModalBlocked,
 });
@@ -1011,6 +1017,13 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   switch (actionOf(e.code)) {
+    case 'miningPanel':
+    case 'towDeliver':
+    case 'towOffer':
+    case 'towAccept':
+    case 'miningGroup':
+    case 'dredgeInput':
+    case 'dredgeOff':
     case 'towToggle':
     case 'dredgeSweep':
     case 'dredgeHarvest':
@@ -1769,6 +1782,15 @@ const keyName = (c) =>
   !c
     ? 'assign key'
     : {
+        Backquote: '`',
+        BracketLeft: '[',
+        BracketRight: ']',
+        Semicolon: ';',
+        Comma: ',',
+        Period: '.',
+        Minus: '-',
+        Equal: '=',
+        Backslash: '\\',
         ArrowUp: '↑',
         ArrowDown: '↓',
         ArrowLeft: '←',

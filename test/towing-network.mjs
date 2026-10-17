@@ -85,15 +85,23 @@ try {
   request(other, 'attach');
   await until(() => other.snap.towing.attached === loadId, 'owner reclaim');
   const p = object(other).ports[0];
-  request(other, 'deliver', { port: p });
-  await delay(100);
-  assert.equal(other.you.cargo.ore || 0, 0, 'full hold denial');
-  assert.equal(object(other).status, 'attached');
+  other.send({ t: 'input', seq: 1, th: 1, tu: 0 });
+  await until(() => object(other).status === 'detached', 'full hold auto-release at port');
+  other.send({ t: 'input', seq: 2, th: 0, tu: 0 });
+  assert.equal(other.you.cargo.ore || 0, 0, 'no cargo lost or added on full hold');
   other.send({ t: 'jettison', cid: 'food', n: 1000 });
   await until(() => !other.you.cargo.food, 'real hold clearance');
-  await until(() => Math.hypot(object(other).vx, object(other).vy) <= 10, 'load settled');
-  request(other, 'deliver', { port: p });
-  await until(() => other.you.cargo.ore === 24, 'once-only delivery');
+  await until(
+    () => Math.hypot(object(other).vx, object(other).vy) <= 10,
+    'detached load stationary',
+  );
+  // Reconnect fixture spawns beside the preserved load; reclaim uses real ownership checks.
+  other.ws.close();
+  other = await peer(reclaimName);
+  other.send({ t: 'depart' });
+  await until(() => object(other)?.id === loadId, 'reload near reserved load');
+  request(other, 'attach');
+  await until(() => other.you.cargo.ore === 24, 'automatic once-only delivery after reclaim');
   request(other, 'deliver', { port: p });
   await delay(150);
   assert.equal(other.you.cargo.ore, 24);

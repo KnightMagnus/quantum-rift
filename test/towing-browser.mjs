@@ -49,7 +49,7 @@ try {
     return page;
   }
   const page = await pilot('Tow Alpha', { fire2: 'KeyF', towToggle: 'Backquote' });
-  assert.match(await page.locator('#towtoggle').textContent(), /Backquote/);
+  assert.match(await page.locator('#towtoggle').textContent(), /`/);
   await page.locator('#miningsurvey').click();
   await page.waitForFunction(() => G.towing.objects[0].revealed);
   // Select actual canvas motherlode, preserving combat target semantics.
@@ -113,7 +113,7 @@ try {
   );
   await page.locator('#towdeliver').click();
   await page.waitForFunction(() =>
-    document.getElementById('toasts').textContent.includes('free hold'),
+    document.getElementById('toasts').textContent.includes('collection zone'),
   );
   assert.equal(await page.evaluate(() => G.you.cargo.ore || 0), 0);
   const zoomWidths = [];
@@ -147,10 +147,11 @@ try {
   assert.match(await other.locator('#towtoggle').textContent(), /assign key/);
   await page.getByText('Transfer & towing help', { exact: true }).click();
   await page.locator('#towrecipient').fill('Tow Bravo');
-  await page.locator('#towoffer').click();
+  await page.locator('#towrecipient').blur();
+  await page.keyboard.press('Home');
   await other.waitForSelector('#towaccept:not([hidden])');
   assert.equal(await page.evaluate(() => G.towing.attached), xy.id);
-  await other.locator('#towaccept').click();
+  await other.keyboard.press('End');
   await other.waitForFunction(() => !!G.towing.attached);
   await other.waitForFunction(() =>
     document.getElementById('towstatus').textContent.includes('speed limit 30'),
@@ -170,11 +171,42 @@ try {
   await other.locator('[data-jet="food"][data-n="0"]').click();
   await other.keyboard.press('i');
   await other.waitForFunction(() => !G.you.cargo.food);
-  await other.waitForFunction(
-    () => Math.hypot(G.towing.objects[0].vx, G.towing.objects[0].vy) <= 10,
-  );
-  await other.locator('#towdeliver').click();
-  await other.waitForFunction(() => G.you.cargo.ore === 24);
+  const aimPort = async () => {
+    const target = await other.evaluate(async () => {
+      const { cam } = await import('/render.js'),
+        { STELLARS } = await import('/shared/galaxy.js');
+      const p = STELLARS[G.towing.objects[0].ports[0]],
+        e = G.view;
+      const dx = p.x - e.x,
+        dy = p.y - e.y,
+        d = Math.hypot(dx, dy) || 1;
+      return {
+        x: ((e.x - cam.cx) * cam.z + cam.W / 2) / devicePixelRatio + (dx / d) * 150,
+        y: ((e.y - cam.cy) * cam.z + cam.H / 2) / devicePixelRatio + (dy / d) * 150,
+      };
+    });
+    await other.mouse.move(target.x, target.y);
+  };
+  await aimPort();
+  await other.waitForTimeout(1000);
+  await other.keyboard.down('KeyW');
+  try {
+    await until(
+      async () => {
+        await aimPort();
+        return other.evaluate(() => G.you.cargo.ore === 24);
+      },
+      'moving automatic browser delivery',
+      20000,
+    );
+  } finally {
+    await other.keyboard.up('KeyW');
+  }
+
+  await other.screenshot({
+    path: path.join(f.out, 'automatic-motherlode-delivery.png'),
+    animations: 'disabled',
+  });
   assert.deepEqual(await other.evaluate(() => G.you.cargoLots.byCommodity.ore), {
     common: 18,
     rich: 5,
@@ -218,7 +250,7 @@ try {
   assert.deepEqual(missing, []);
   assert.deepEqual(errors, []);
   console.log(
-    'Real canvas survey/selection, custom and unbound toggle, F fighters, static reduced-motion tether/scales, explicit two-browser transfer, full hold rejection and exact delivery, actual production scaling, bounded mixer-aware tether audio and decoded/hash-verified transparent motherlode rasters.',
+    'Real canvas survey/selection, custom and unbound toggle, F fighters, static reduced-motion tether/scales, explicit two-browser transfer, out-of-range rejection and exact automatic delivery at speed, actual production scaling, bounded mixer-aware tether audio and decoded/hash-verified transparent motherlode rasters.',
   );
 } catch (error) {
   await failureEvidence(browser, f.out, error);

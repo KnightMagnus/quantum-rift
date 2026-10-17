@@ -8,6 +8,7 @@ export const TOW = Object.freeze({
   otherCap: 30,
   attachRange: 180,
   tether: 120,
+  deliveryApron: 180,
   breakRange: 320,
   grace: 300,
   recovery: 900,
