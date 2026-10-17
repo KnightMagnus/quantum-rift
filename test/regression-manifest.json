@@ -72,7 +72,8 @@
     "towing.js",
     "towing-persistence.js",
     "field-evolution.js",
-    "towing-network.mjs"
+    "towing-network.mjs",
+    "mining-panel.js"
   ],
   "browser": [
     "sidebar-browser.mjs",
@@ -87,7 +88,8 @@
     "mining-ui-browser.mjs",
     "refinery-ui-browser.mjs",
     "dredge-browser.mjs",
-    "towing-browser.mjs"
+    "towing-browser.mjs",
+    "mining-panel-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -443,15 +445,18 @@
         "server/db.js",
         "client/action-bindings.js",
         "client/mining_ui.js",
-        "client/mining_render.js"
+        "client/mining_render.js",
+        "client/mining-panel-state.js"
       ],
       "tests": [
         "mining.js",
         "mining-network.mjs",
         "mining-controls-browser.mjs",
-        "mining-ui-browser.mjs"
+        "mining-ui-browser.mjs",
+        "mining-panel.js",
+        "mining-panel-browser.mjs"
       ],
-      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion."
+      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion. Role/capacity-gated drill toggle, default collapse, full holds, lifecycle transitions, independent hails, keyboard dismissal and bounded responsive panel."
     },
     {
       "id": "mining-refinery",

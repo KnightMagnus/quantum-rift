@@ -1,3 +1,4 @@
+import { miningPanelState } from './mining-panel-state.js';
 import { initTowingUI } from './towing_ui.js';
 // One action entry point for keyboard and contextual cockpit button.
 export function initMiningUI({
@@ -13,6 +14,37 @@ export function initMiningUI({
   const root = document.getElementById('miningcontrols'),
     button = document.getElementById('miningsurvey'),
     meter = document.getElementById('miningmeter');
+  const indicator = document.getElementById('miningindicator');
+  const close = document.getElementById('miningclose');
+  const cargo = document.getElementById('miningcargo');
+  let open = false,
+    identity = null;
+  function setOpen(value) {
+    open = value;
+    root.classList.toggle('hidden', !open);
+    indicator.setAttribute('aria-expanded', String(open));
+  }
+  indicator.onclick = () => {
+    setOpen(!open);
+    if (open) close.focus();
+  };
+  close.onclick = () => {
+    setOpen(false);
+    indicator.focus();
+  };
+  // Native button activation must not become Enter-to-chat or Space-to-fire.
+  const buttonKeys = (e) => {
+    if (['Enter', ' '].includes(e.key) && ['BUTTON', 'SUMMARY'].includes(e.target.tagName))
+      e.stopPropagation();
+  };
+  indicator.addEventListener('keydown', buttonKeys);
+  root.addEventListener('keydown', buttonKeys);
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      close.click();
+    }
+  });
   const towUI = initTowingUI({ G, send, bound, label, blocked: contextBlocked, towAudio, root });
   function invokeMiningAction(action) {
     if (action === 'towToggle') return towUI.invoke();
@@ -33,8 +65,32 @@ export function initMiningUI({
   }
   function refresh() {
     towUI.refresh();
-    const fly = !!G.you && !G.landed && !!G.view;
-    root.classList.toggle('hidden', !fly);
+    const state = miningPanelState(G);
+    const fly = state.visible && document.getElementById('login').classList.contains('hidden');
+    const nextIdentity = G.you ? G.you.name + ':' + G.you.ship?.hull + ':' + G.myId : null;
+    if (!fly || nextIdentity !== identity) setOpen(false);
+    identity = nextIdentity;
+    indicator.classList.toggle('hidden', !fly);
+    root.classList.toggle('hidden', !fly || !open);
+    indicator.title = state.active
+      ? 'Mining operations active — open controls'
+      : 'Open mining controls';
+    indicator.classList.toggle('active', state.active);
+    indicator.setAttribute(
+      'aria-label',
+      G.miningPressure?.warn
+        ? 'Mining controls — high mining noise'
+        : state.active
+          ? 'Mining controls — operations active'
+          : 'Mining controls',
+    );
+    const danger = G.miningPressure?.warn;
+    indicator.classList.toggle('warning', !!danger);
+    cargo.textContent =
+      state.free > 0
+        ? state.free + ' / ' + state.capacity + ' t free'
+        : 'Hold full — unload cargo to collect more';
+    if (danger) cargo.textContent += ' · Mining noise is high — danger may follow';
     if (!fly) {
       industrialAudio(false, 0);
       return;
@@ -43,7 +99,7 @@ export function initMiningUI({
     const im = G.industrial || G.you?.industrial;
     if (im) {
       industrialAudio(!!im.inputs.sweep, im.heat);
-      heat.textContent = `SHIP HEAT ${im.heat.toFixed(0)}/100 · ${im.heat >= 150 ? 'CRITICAL HULL DAMAGE' : im.heat >= 120 ? 'SHIELD DRAIN' : im.heat >= 70 ? 'WARNING' : 'SAFE'} · ${im.reason} · sources SWEEP ${im.inputs.sweep.toFixed(1)} / SMELTER ${im.inputs.smelter.toFixed(1)} / CORONA ${im.inputs.corona.toFixed(1)} · ${im.safeSeconds.toFixed(0)}s to cutoff`;
+      heat.textContent = `SHIP HEAT ${im.heat.toFixed(0)}/100 · ${im.heat >= 150 ? 'CRITICAL HULL DAMAGE' : im.heat >= 120 ? 'SHIELD DRAIN' : im.heat >= 70 ? 'WARNING' : 'SAFE'} · ${im.reason} · ${im.safeSeconds.toFixed(0)}s to cutoff`;
       for (const [action, b] of industrialButtons) {
         const mode = { dredgeSweep: 'sweep', dredgeHarvest: 'harvest', dredgeSmelter: 'smelter' }[
           action
@@ -61,14 +117,14 @@ export function initMiningUI({
     }
     const m = G.mining,
       remaining = Math.max(0, (m?.cooldownUntil || 0) - (m?.now || 0));
-    button.textContent = `SURVEY · ${label(bound('surveyPulse'))}${remaining ? ` · ${Math.ceil(remaining)}s` : ''}`;
+    button.textContent = `Scan nearby rocks · ${label(bound('surveyPulse'))}${remaining ? ` · ${Math.ceil(remaining)}s` : ''}`;
     button.disabled = blocked() || !!G.paused || remaining > 0;
     const record = G.miningRocks?.rocks.find((r) => r.id === G.miningTarget);
     meter.textContent = record?.down
-      ? `${(record.lastCut || 'ordinary').toUpperCase()} ${record.gas ? 'VENT' : 'FRACTURE'} · graded material released`
+      ? `${record.lastCut === 'clean' ? 'Clean cut' : 'Rock opened'} — collect the released material`
       : record && !record.down
-        ? `${record.gas ? 'ROCK HEAT · VENT / PRESSURE' : 'ROCK HEAT / CUT'} · Stage ${record.stage + 1}/${record.stages} · ${Math.round(record.heat)}/100 · ${record.work.toFixed(1)}s · ${record.ready ? 'READY — release at 60–80' : record.acquired ? 'SEAM ACQUIRED' : 'hold contact 0.6s'}`
-        : 'Aim a mining tool · select a rock for heat / work · clean release 60–80';
+        ? `${record.gas ? 'Gas pressure' : 'Rock heat'} ${Math.round(record.heat)}/100 · Cut ${record.stage + 1}/${record.stages}. ${record.ready ? 'READY — release at 60–80 for a clean cut' : record.acquired ? 'Keep cutting the seam' : 'Aim at the seam and hold fire'}`
+        : 'Scan to reveal nearby deposits, then aim your mining tool at a rock.';
   }
   const industrial = document.createElement('div');
   industrial.id = 'industrialcontrols';
@@ -80,10 +136,19 @@ export function initMiningUI({
   const property = document.createElement('div');
   property.className = 'small';
   property.id = 'industrialproperty';
-  industrial.append(heat, property);
+  const industrialDetails = document.createElement('details');
+  const industrialSummary = document.createElement('summary');
+  industrialSummary.textContent = 'Processing details';
+  industrialDetails.append(industrialSummary, property);
+  industrial.append(heat);
   const industrialButtons = [];
   for (const action of ['dredgeSweep', 'dredgeHarvest', 'dredgeSmelter']) {
     const b = document.createElement('button');
+    b.title = {
+      dredgeSweep: 'Collect loose field material',
+      dredgeHarvest: 'Collect plasma in a stellar corona',
+      dredgeSmelter: 'Process carried material aboard the ship',
+    }[action];
     b.className = 'btn sm';
     b.id = action;
     b.onclick = () => invokeMiningAction(action);
@@ -92,6 +157,7 @@ export function initMiningUI({
   }
   const recipes = document.createElement('select');
   recipes.id = 'mobilerecipe';
+  recipes.setAttribute('aria-label', 'Material to process');
   for (const [id, name] of [
     ['alloy', 'Ore → Alloy'],
     ['cells', 'Gas → Cells'],
@@ -104,6 +170,7 @@ export function initMiningUI({
   }
   const grade = document.createElement('select');
   grade.id = 'mobilegrade';
+  grade.setAttribute('aria-label', 'Input material quality');
   for (const id of ['common', 'rich', 'pure']) {
     const o = document.createElement('option');
     o.value = id;
@@ -121,16 +188,24 @@ export function initMiningUI({
   off.textContent = 'ALL OFF';
   off.onclick = () => send({ t: 'industrial', op: 'off' });
   industrial.append(recipes, grade, choose, off);
+  industrial.append(industrialDetails);
   root.append(industrial);
   const consent = document.createElement('button');
   consent.className = 'btn sm';
   consent.textContent = 'GROUP MINING: OPT IN';
   consent.id = 'miningconsent';
-  root.append(consent);
+  const details = document.createElement('details');
+  const summary = document.createElement('summary');
+  summary.textContent = 'Group mining & help';
+  const help = document.createElement('p');
+  help.textContent =
+    'A scan briefly reveals seams and material quality. Hold your mining beam on a seam; when READY, release at 60–80 heat for better-quality material. Mining noise can attract danger. Group mining is optional consent for this flight, separate from Armada membership.';
+  details.append(summary, help, consent);
+  root.append(details);
   consent.onclick = () =>
     send({ t: 'miningPressure', op: G.miningPressure?.groupConsent ? 'leave' : 'join' });
   setInterval(() => {
-    consent.textContent = `${G.miningPressure?.groupConsent ? 'LEAVE' : 'OPT IN'} GROUP MINING · ${G.miningPressure?.warn ? 'WARNING ' : ''}NOISE ${Math.round(G.miningPressure?.noise || 0)}/100`;
+    consent.textContent = `${G.miningPressure?.groupConsent ? 'Leave' : 'Join'} group mining${G.miningPressure?.warn ? ' · High mining noise' : ''}`;
     consent.title = 'Separate consent for current flight; Armada membership alone is not consent.';
   }, 500);
   button.onclick = () => invokeMiningAction('surveyPulse');

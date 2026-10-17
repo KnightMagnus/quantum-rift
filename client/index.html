@@ -189,8 +189,31 @@
       </div>
     </div>
     <div id="toasts"></div>
+    <button
+      id="miningindicator"
+      class="hidden"
+      aria-label="Mining controls"
+      aria-controls="miningcontrols"
+      aria-expanded="false"
+      title="Open mining controls"
+    >
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M5 5h13v5h5v7H12v-5H5zM13 17h7v10h-7z" fill="currentColor" />
+        <path
+          d="M23 11h4l3 3-3 3h-4M25 11l2 6M28 12l1 3"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        />
+      </svg>
+    </button>
     <div class="well box hidden" id="miningcontrols" aria-label="Mining controls">
-      <button class="btn sm" id="miningsurvey">SURVEY</button>
+      <header>
+        <strong>Mining</strong
+        ><button class="btn sm" id="miningclose" aria-label="Close mining controls">Close</button>
+      </header>
+      <div id="miningcargo" role="status"></div>
+      <button class="btn sm" id="miningsurvey">Scan nearby rocks</button>
       <span id="miningmeter" role="status">Aim a mining tool</span>
     </div>
     <div

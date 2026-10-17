@@ -47,6 +47,7 @@ try {
   assert.equal(await page.evaluate(() => G.you.cargo.plasma || 0), 0);
   await page.screenshot({ path: path.join(f.out, 'stock-built-shipyard.png') });
   await page.locator('#depart').click();
+  await page.locator('#miningindicator').click();
   await page.waitForSelector('#industrialcontrols:not([hidden])');
   await page.waitForFunction(() => G.industrial?.version === 1);
   assert.match(await page.locator('#dredgeSweep').textContent(), /Backquote/);

@@ -32,6 +32,7 @@ try {
   await page.waitForFunction(
     () => G.view && G.miningRocks?.rocks.some((r) => r.x === 10000 && r.y === 10000),
   );
+  await page.locator('#miningindicator').click();
   await page.keyboard.press('v');
   await page.waitForFunction(() => G.mining.revealed.length > 0);
   const rock = await page.evaluate(() =>
@@ -122,7 +123,7 @@ try {
     G.miningTarget = id;
   }, gas.id);
   await page.waitForFunction(() =>
-    document.querySelector('#miningmeter').textContent.includes('VENT / PRESSURE'),
+    document.querySelector('#miningmeter').textContent.includes('Gas pressure'),
   );
   for (const scale of [0.8, 1, 1.4]) {
     await page.keyboard.press('o');

@@ -22,7 +22,7 @@ export function initTowingUI({ G, send, bound, label, blocked, towAudio = () => 
   const deliver = document.createElement('button');
   deliver.id = 'towdeliver';
   deliver.className = 'btn sm';
-  deliver.textContent = 'DELIVER ONCE';
+  deliver.textContent = 'Deliver load';
   const recipient = document.createElement('input');
   recipient.id = 'towrecipient';
   recipient.placeholder = 'Nearby captain name';
@@ -39,8 +39,12 @@ export function initTowingUI({ G, send, bound, label, blocked, towAudio = () => 
   const help = document.createElement('div');
   help.className = 'small';
   help.textContent =
-    'Survey first. Tow Rig / ≥60t hold required. Hard cap 60 Dredge / 30 others. No jump/Gateway; deliver or detach before landing. Detached owner grace 300 simulation seconds (offline/paused freezes). No extra credit or fragments.';
-  panel.append(status, select, toggle, port, deliver, recipient, offer, accept, help);
+    'Scan the deposit first. Towing needs a fitted Tow Rig and at least 60 t of hold capacity (built in on the Dredge). Towing limits speed to 60 on a Dredge or 30 on other ships. Deliver or detach before landing or jumping. A detached load stays reserved for its owner for 300 seconds of active simulation. Delivery gives the material, not extra credits.';
+  const details = document.createElement('details');
+  const summary = document.createElement('summary');
+  summary.textContent = 'Transfer & towing help';
+  details.append(summary, recipient, offer, help);
+  panel.append(status, select, toggle, port, deliver, accept, details);
   root.append(panel);
   const wire = () => G.towing || G.you?.towing;
   const object = () => {
@@ -69,7 +73,7 @@ export function initTowingUI({ G, send, bound, label, blocked, towAudio = () => 
     portSignature = '';
   function refresh() {
     const w = wire();
-    panel.hidden = !G.you || G.landed || !G.view;
+    panel.hidden = !G.you || G.landed || !G.view || !(w?.rig || w?.attached || w?.offers?.length);
     if (!w || panel.hidden) {
       towAudio(false, 0);
       return;
@@ -117,10 +121,9 @@ export function initTowingUI({ G, send, bound, label, blocked, towAudio = () => 
         }),
       );
     }
-    const speed = G.view ? Math.hypot(G.view.vx, G.view.vy) : 0;
     status.textContent = o
-      ? `${o.status.toUpperCase()} · MOTHERLODE ${o.id} · ${o.ore.toUpperCase()} · ${o.mass ?? 'SURVEY FOR'}t · ${o.field.label} · ${o.owner ? 'OWNER ' + o.owner : 'UNCLAIMED'} · ${o.status === 'detached' ? Math.max(0, Math.ceil(o.graceUntil - w.now)) + 's GRACE · ' : ''}${w.attached ? `HARD TOW CAP ${w.cap} · SPEED ${speed.toFixed(0)} · NO TRANSIT` : 'MANUAL FLIGHT'} · ${w.rig ? 'RIG READY' : 'FIT TOW RIG'}${o.revealed ? '' : ' · SURVEY TO REVEAL PORTS/YIELD'}`
-      : 'No motherlodes in this system. Fields recover in simulation time.';
+      ? `${o.ore} motherlode · ${o.mass ?? '?'} t. ${o.status === 'detached' ? `Reserved for ${o.owner || 'owner'}: ${Math.max(0, Math.ceil(o.graceUntil - w.now))}s remaining. ` : ''}${w.attached ? `Towing · speed limit ${w.cap}. Detach before landing or jumping.` : o.revealed ? 'Approach the deposit to attach.' : 'Scan to reveal its yield and delivery ports.'}`
+      : 'No large deposits nearby. Scan in another field.';
     toggle.textContent = `${w.attached ? 'DETACH' : 'ATTACH'} · ${label(bound('towToggle'))}`;
     toggle.disabled = !o || blocked() || G.paused;
     deliver.disabled = !w.attached || !ports.length || blocked() || G.paused;
