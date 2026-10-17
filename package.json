@@ -12,7 +12,10 @@
     "test:types": "node test/typecheck-contracts.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:regression:unit": "node test/regression-runner.mjs unit",
+    "test:regression:browser": "node test/regression-runner.mjs browser",
+    "test:regression": "node test/regression-runner.mjs all"
   },
   "engines": {
     "node": ">=18"
@@ -21,6 +24,7 @@
   "devDependencies": {
     "@types/node": "^26.6.5",
     "husky": "^9.1.7",
+    "playwright": "1.64.1",
     "prettier": "^3.9.10",
     "typescript": "^7.0.2"
   }

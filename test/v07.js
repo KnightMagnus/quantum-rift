@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 0.7 tests: colonies, station defense raids, ship mastery, the arena, the exchange, leaderboards and profiles.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -6,7 +7,7 @@ import { Game } from '../server/game.js';
 import { SYS, STELLARS, SYSTEMS, FACTIONS } from '../shared/galaxy.js';
 import { BUILDINGS, MASTERY, ARENA, DEFENSE } from '../shared/frontier.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
-const game = new Game(A, new DB('/tmp/rift-v07-' + Date.now()));
+const game = new Game(A, new DB(tempDataDir('rift-v07-')));
 const ok = (c, m) => {
   if (!c) {
     console.error('FAIL:', m);

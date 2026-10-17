@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 2.4 tests: the living galaxy (system states, trade impact, supply jobs) and questlines (contacts, side stories, salvage).
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -31,7 +32,7 @@ process.env.SEEDS_FILE = '/nonexistent';
   }
   ok(!bad.length, `every client script parses${bad.length ? ': BAD ' + bad.join(', ') : ''}`);
 }
-const g = new Game(A, new DB('/tmp/rift-v24-' + Date.now()));
+const g = new Game(A, new DB(tempDataDir('rift-v24-')));
 function fake(name) {
   const sock = new EventEmitter();
   sock.open = true;

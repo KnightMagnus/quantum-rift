@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 1.1 tests: rival captains, hailing, fleet commands, jettison, combat rating, news and market flashes.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -7,7 +8,7 @@ import { SYS, STELLARS, SYSTEMS, FACTIONS, START } from '../shared/galaxy.js';
 import { RIVALS, combatRank } from '../shared/rivals.js';
 import { makeLoadout } from '../shared/rules.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
-const game = new Game(A, new DB('/tmp/rift-v11-' + Date.now()));
+const game = new Game(A, new DB(tempDataDir('rift-v11-')));
 const wingUp = (game, d, hulls) => {
   d.docks[d.activeDock].wings = hulls.map((h) => {
     const ship = makeLoadout(A, h, 'Wing');

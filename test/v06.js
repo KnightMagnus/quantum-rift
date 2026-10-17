@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 0.6 tests: Umbral hostility fix, the Armada (2.6: replaced fleets; territory removed), invasions, anomalies, events, goals,
 // faction stores and the new job types.
 import fs from 'node:fs';
@@ -7,7 +8,7 @@ import { Game } from '../server/game.js';
 import { SYS, STELLARS, SYSTEMS, FACTIONS } from '../shared/galaxy.js';
 import { anomaliesAt, eventAt, eventCalendar, SCAN } from '../shared/fronts.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
-const game = new Game(A, new DB('/tmp/rift-v06-' + Date.now()));
+const game = new Game(A, new DB(tempDataDir('rift-v06-')));
 const ok = (c, m) => {
   if (!c) {
     console.error('FAIL:', m);

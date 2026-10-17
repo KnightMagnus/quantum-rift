@@ -3,3 +3,5 @@ solo-data/
 node_modules/
 *.log
 .DS_Store
+
+.artifacts/

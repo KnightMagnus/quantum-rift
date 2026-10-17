@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 2.0.1 tests: NPC traders actually settle over a planet and land (they used to circle forever), and escorts keep
 // formation on a moving leader with the new arrival steering.
 import fs from 'node:fs';
@@ -7,7 +8,7 @@ import { Game } from '../server/game.js';
 import { SYS } from '../shared/galaxy.js';
 import { makeLoadout } from '../shared/rules.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
-const game = new Game(A, new DB('/tmp/rift-v201-' + Date.now()));
+const game = new Game(A, new DB(tempDataDir('rift-v201-')));
 const wingUp = (game, d, hulls) => {
   d.docks[d.activeDock].wings = hulls.map((h) => {
     const ship = makeLoadout(A, h, 'Wing');
