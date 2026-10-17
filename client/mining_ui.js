@@ -107,7 +107,7 @@ export function initMiningUI({
         b.textContent = `${mode.toUpperCase()} ${im[mode] ? 'ON' : 'OFF'} · ${label(bound(action))}`;
         b.disabled = blocked() || G.paused;
       }
-      property.textContent = `Mobile: ${im.workMs / 1000}/10s per input tonne · ${Object.entries(
+      property.textContent = `Heat sources: SWEEP ${im.inputs.sweep.toFixed(1)} / SMELTER ${im.inputs.smelter.toFixed(1)} / CORONA ${im.inputs.corona.toFixed(1)}. Mobile: ${im.workMs / 1000}/10s per input tonne · ${Object.entries(
         im.outputs,
       )
         .map(([k, v]) => k + ' ' + v + '/300')
