@@ -16,6 +16,8 @@
     "server/fleetcmd.js",
     "server/contracts.js",
     "server/combat-assist.js",
-    "server/message-registry.js"
+    "server/message-registry.js",
+    "shared/cargo-lots.js",
+    "shared/cargo-contracts.js"
   ]
 }

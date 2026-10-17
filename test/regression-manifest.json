@@ -53,7 +53,8 @@
     "core-actions.js",
     "websocket-transport.js",
     "http-api.mjs",
-    "network-systems.mjs"
+    "network-systems.mjs",
+    "cargo-lots.js"
   ],
   "browser": [
     "sidebar-browser.mjs",
@@ -380,6 +381,13 @@
       "services": [],
       "tests": ["input-audio-browser.mjs"],
       "asserts": "Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification."
+    },
+    {
+      "id": "cargo-grade-ledger",
+      "services": [],
+      "owners": ["shared/cargo-lots.js", "shared/cargo-contracts.js"],
+      "tests": ["cargo-lots.js"],
+      "asserts": "Atomic versioned cargo/storage migration, common legacy production, strict raw grades, deterministic/exact withdrawals, failed-transfer inventory isolation, capacity supplied by holdUsed, partial-lot conservation and durable DB serialization."
     }
   ],
   "routes": {
