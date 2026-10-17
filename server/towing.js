@@ -455,9 +455,17 @@ export const TowingOperations = {
           distance > TOW.attachRange ||
           Math.hypot(from.ent.x - e.x, from.ent.y - e.y) > TOW.attachRange ||
           attached(this, s) ||
-          Math.hypot(e.vx, e.vy) > towSpeed(e.hull)
+          Math.hypot(e.vx, e.vy) > towSpeed(e.hull) ||
+          Math.hypot(e.vx - o.vx, e.vy - o.vy) > towSpeed(e.hull)
         )
           throw Error('Transfer expired or flight/range changed');
+        // Carry no velocity above the recipient's cap into snapshots/checkpoints.
+        const carried = Math.hypot(o.vx, o.vy),
+          cap = towSpeed(e.hull);
+        if (carried > cap) {
+          o.vx *= cap / carried;
+          o.vy *= cap / carried;
+        }
         from.ent.towCap = undefined;
         o.owner = account;
         o.ship = s.data.ship.uid || null;

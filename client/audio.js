@@ -22,6 +22,8 @@
  * @property {string[]} amb Active ambience bed names
  * @property {boolean} music Whether login music source is running
  * @property {number} buffers Number of decoded audio buffers cached
+ * @property {number} towVoices Active tether voices (zero or one)
+ * @property {number} towGain Effective tether gain through effects/master mixer
  */
 
 /**
@@ -447,6 +449,8 @@ export function debug() {
     amb: Object.keys(ambNow),
     music: !!musicSrc,
     buffers: buffers.size,
+    towVoices: towVoice ? 1 : 0,
+    towGain: towVoice ? towGain.gain.value * (bus.sfx?.gain.value ?? 1) * master.gain.value : 0,
   };
 }
 
@@ -479,5 +483,32 @@ export function industrial(on, heat) {
     industrialVoice.disconnect();
     industrialGain.disconnect();
     industrialVoice = industrialGain = null;
+  }
+}
+
+// One restrained tether-strain voice, downstream of the existing effects/master/mute mixer.
+let towVoice = null,
+  towGain = null;
+export function towing(on, tension = 0) {
+  if (!ctx) return;
+  const strain = Math.max(0, Math.min(1, Number(tension) || 0));
+  if (on && !towVoice) {
+    towVoice = ctx.createOscillator();
+    towGain = ctx.createGain();
+    towVoice.type = 'triangle';
+    towGain.gain.value = 0.006;
+    towVoice.connect(towGain);
+    towGain.connect(bus.sfx || master);
+    towVoice.start();
+  }
+  if (on && towVoice) {
+    towVoice.frequency.setTargetAtTime(45 + 35 * strain, ctx.currentTime, 0.25);
+    towGain.gain.setTargetAtTime(0.006 + 0.008 * strain, ctx.currentTime, 0.25);
+  }
+  if (!on && towVoice) {
+    towVoice.stop();
+    towVoice.disconnect();
+    towGain.disconnect();
+    towVoice = towGain = null;
   }
 }

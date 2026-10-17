@@ -502,7 +502,8 @@
         "server/towing-contracts.js",
         "shared/towing-rules.js",
         "client/towing_ui.js",
-        "client/towing_render.js"
+        "client/towing_render.js",
+        "client/audio.js"
       ],
       "services": ["towing"],
       "tests": [
@@ -512,7 +513,7 @@
         "towing-network.mjs",
         "towing-browser.mjs"
       ],
-      "asserts": "Finite authored source conservation, surveyed rig authority, hard 60/30 physical limits, consensual transfer, logical grace/recovery, transit and lifecycle denials, capacity-first exact-grade delivery and real journal fault recovery. Browser uses custom/unbound controls, F fighter bay, static reduced-motion artwork, scaled controls and actual two-captain transfer/delivery."
+      "asserts": "Finite authored source conservation, surveyed rig authority, hard 60/30 physical limits, consensual transfer, logical grace/recovery, transit and lifecycle denials, capacity-first exact-grade delivery and real journal fault recovery. Browser uses custom/unbound controls, F fighter bay, static reduced-motion artwork, scaled controls and actual two-captain transfer/delivery. Moving transfers check relative speed and immediate object cap; real production scaling, new raster hash/alpha decode and bounded mute/effects-aware tether audio are browser-verified."
     }
   ],
   "routes": {

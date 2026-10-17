@@ -15,9 +15,9 @@ export const TOW = Object.freeze({
   receiptLimit: 64,
 });
 export const MOTHERLODE_ART = Object.freeze({
-  ore: { base: 'rock0.webp', sides: 7, color: '#aa9574' },
-  gas: { base: 'rock4.webp', sides: 8, color: '#77bca8' },
-  shards: { base: 'rock8.webp', sides: 5, color: '#ba91d1' },
+  ore: { base: 'motherlode-ore.webp', sides: 7, color: '#aa9574' },
+  gas: { base: 'motherlode-gas.webp', sides: 8, color: '#77bca8' },
+  shards: { base: 'motherlode-shards.webp', sides: 5, color: '#ba91d1' },
 });
 /** @param {number|string} hull */
 export function towSpeed(hull) {

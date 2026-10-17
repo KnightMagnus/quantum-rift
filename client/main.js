@@ -251,6 +251,7 @@ function miningModalBlocked() {
 }
 const miningUI = initMiningUI({
   industrialAudio: audio.industrial,
+  towAudio: audio.towing,
   G,
   send,
   bound,

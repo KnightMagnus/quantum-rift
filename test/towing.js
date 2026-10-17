@@ -168,3 +168,27 @@ console.log(
   assert.equal(s.data.cargo.ore || 0, 0);
   assert.ok(o.graceUntil > g.db.world.mining.clock);
 }
+
+// Transfer has the same relative-motion boundary as attachment, immediately.
+{
+  const a = tug();
+  attach(a);
+  const b = tug(a.g, 'Moving Peer', 704);
+  b.o = a.o;
+  Object.assign(b.s.ent, { x: a.s.ent.x + 20, y: a.s.ent.y, vx: -30, vy: 0 });
+  Object.assign(a.s.ent, { vx: 60, vy: 0 });
+  Object.assign(a.o, { vx: 60, vy: 0 });
+  assert.equal(command(a, 'offer', { to: b.s.data.name }), true);
+  const before = JSON.stringify(a.g.db.world.towing);
+  assert.equal(command(b, 'accept'), false, 'opposing90 relative speed cannot transfer');
+  assert.equal(
+    JSON.stringify(a.g.db.world.towing),
+    before,
+    'denial preserves owner revision and offer',
+  );
+  b.s.ent.vx = 30;
+  assert.equal(command(b, 'accept'), true, 'safe30 relative moving handoff');
+  assert.equal(a.o.owner, a.g.db.key(b.s.data.name));
+  assert.ok(Math.hypot(a.o.vx, a.o.vy) <= 30);
+  assert.ok(Math.hypot(b.s.ent.vx, b.s.ent.vy) <= 30);
+}

@@ -69,6 +69,28 @@ try {
     document.getElementById('towstatus').textContent.includes('HARD TOW CAP 60'),
   );
   assert.match(await page.locator('#towstatus').textContent(), /HARD TOW CAP 60/);
+  const voice = await page.evaluate(async () => {
+    const a = await import('/audio.js');
+    for (let i = 0; i < 20; i++) a.towing(true, 0.5);
+    const muted = a.debug();
+    a.setMix({ mute: false, vol: 0.4, sfx: 0.5 });
+    await new Promise((r) => setTimeout(r, 300));
+    const live = a.debug();
+    a.setMix({ sfx: 0 });
+    await new Promise((r) => setTimeout(r, 400));
+    const silent = a.debug();
+    a.setMix({ mute: true });
+    return { muted, live, silent };
+  });
+  assert.equal(voice.muted.towVoices, 1);
+  assert.equal(voice.muted.towGain, 0, 'tow voice respects master mute');
+  assert.equal(voice.live.towVoices, 1);
+  assert.ok(voice.silent.towGain < 0.00001, 'effects mixer attenuates tether voice');
+  assert.ok(
+    voice.live.towGain > 0 && voice.live.towGain <= 0.003,
+    'restrained single voice respects master/effects buses',
+  );
+
   // F remains the fighter bay, not a towing shortcut.
   await page.keyboard.press('KeyF', { delay: 150 });
   await until(
@@ -93,12 +115,22 @@ try {
     document.getElementById('toasts').textContent.includes('free hold'),
   );
   assert.equal(await page.evaluate(() => G.you.cargo.ore || 0), 0);
+  const zoomWidths = [];
   for (const scale of [0.8, 1, 1.4]) {
     await page.evaluate((scale) => {
       G.opts.scale = scale;
       document.documentElement.style.setProperty('--ui', scale);
+      document.body.classList.toggle('scaled', scale !== 1);
     }, scale);
     await page.waitForTimeout(100);
+    const zoom = await page.evaluate(() => ({
+      value: Number(getComputedStyle(document.getElementById('hud')).zoom),
+      scaled: document.body.classList.contains('scaled'),
+      width: document.querySelector('#status .lbl').getBoundingClientRect().width,
+    }));
+    assert.equal(zoom.scaled, scale !== 1);
+    assert.ok(Math.abs(zoom.value - scale) < 0.001, 'actual production HUD zoom applied');
+    zoomWidths.push(zoom.width);
     const b = await page.locator('#towcontrols').boundingBox();
     assert.ok(
       b.x >= 0 && b.y >= 0 && b.x + b.width <= 1501 && b.y + b.height <= 1101,
@@ -109,6 +141,7 @@ try {
       animations: 'disabled',
     });
   }
+  assert.ok(zoomWidths[2] > zoomWidths[0] * 1.5, 'actual scaled overlay geometry changed');
   const other = await pilot('Tow Bravo', { fire2: 'KeyF', towToggle: null });
   assert.match(await other.locator('#towtoggle').textContent(), /assign key/);
   await page.locator('#towrecipient').fill('Tow Bravo');
@@ -145,10 +178,22 @@ try {
     rich: 5,
     pure: 1,
   });
+  await page.waitForFunction(async () => {
+    const a = await import('/audio.js');
+    return a.debug().towVoices === 0;
+  });
   const art = await page.evaluate(async () => {
     const { MOTHERLODE_ART } = await import('/shared/towing-rules.js');
+    const manifest = await fetch('/assets/objects/motherlodes.json').then((r) => r.json());
     return Promise.all(
       Object.values(MOTHERLODE_ART).map(async (a) => {
+        const row = manifest.find((x) => x.file === a.base);
+        if (!row) throw Error('missing motherlode inventory');
+        const bytes = await fetch('/assets/objects/' + a.base).then((r) => r.arrayBuffer());
+        const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), (b) =>
+          b.toString(16).padStart(2, '0'),
+        ).join('');
+        if (hash !== row.sha256) throw Error('motherlode hash mismatch');
         const im = new Image();
         im.src = '/assets/objects/' + a.base;
         await im.decode();
@@ -167,11 +212,11 @@ try {
       }),
     );
   });
-  assert.ok(art.every((a) => a.w > 0 && a.h > 0 && a.alpha && a.opaque));
+  assert.ok(art.every((a) => a.w === 384 && a.h === 384 && a.alpha && a.opaque));
   assert.deepEqual(missing, []);
   assert.deepEqual(errors, []);
   console.log(
-    'Real canvas survey/selection, custom and unbound toggle, F fighters, static reduced-motion tether/scales, explicit two-browser transfer, full hold rejection and exact delivery, decoded transparent production rock variants.',
+    'Real canvas survey/selection, custom and unbound toggle, F fighters, static reduced-motion tether/scales, explicit two-browser transfer, full hold rejection and exact delivery, actual production scaling, bounded mixer-aware tether audio and decoded/hash-verified transparent motherlode rasters.',
   );
 } catch (error) {
   await failureEvidence(browser, f.out, error);

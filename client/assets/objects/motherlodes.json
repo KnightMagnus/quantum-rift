@@ -1,0 +1,20 @@
+[
+  {
+    "file": "motherlode-ore.webp",
+    "width": 384,
+    "height": 384,
+    "sha256": "17ef90f80ed208d94a5d4da7f1b52e8e6fb87875dfcc5cce12a620818cedc8cc"
+  },
+  {
+    "file": "motherlode-gas.webp",
+    "width": 384,
+    "height": 384,
+    "sha256": "5222178c14acfc581d4c5d61a72b9740b3f8d145f4cc2afb87b8d822f50ba057"
+  },
+  {
+    "file": "motherlode-shards.webp",
+    "width": 384,
+    "height": 384,
+    "sha256": "d09d3bb21a11ae8312a5e9aa6d0f9e9bfa6b1340713bb4b87d99195f772f6696"
+  }
+]

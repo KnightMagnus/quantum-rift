@@ -1,5 +1,5 @@
 import { STELLARS } from '/shared/galaxy.js';
-export function initTowingUI({ G, send, bound, label, blocked, root }) {
+export function initTowingUI({ G, send, bound, label, blocked, towAudio = () => {}, root }) {
   const panel = document.createElement('div');
   panel.id = 'towcontrols';
   panel.style.maxWidth = 'min(700px,90vw)';
@@ -70,7 +70,15 @@ export function initTowingUI({ G, send, bound, label, blocked, root }) {
   function refresh() {
     const w = wire();
     panel.hidden = !G.you || G.landed || !G.view;
-    if (!w || panel.hidden) return;
+    if (!w || panel.hidden) {
+      towAudio(false, 0);
+      return;
+    }
+    const load = w.objects.find((o) => o.id === w.attached);
+    towAudio(
+      !!load && !G.paused,
+      load ? Math.hypot(load.x - G.view.x, load.y - G.view.y) / 320 : 0,
+    );
     const visible = w.objects.filter((o) => !['delivered', 'destroyed'].includes(o.status));
     const sig = visible.map((o) => o.id + ':' + o.status).join();
     if (signature !== sig) {

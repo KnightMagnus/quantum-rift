@@ -8,11 +8,12 @@ export function initMiningUI({
   blocked,
   contextBlocked = blocked,
   industrialAudio = () => {},
+  towAudio = () => {},
 }) {
   const root = document.getElementById('miningcontrols'),
     button = document.getElementById('miningsurvey'),
     meter = document.getElementById('miningmeter');
-  const towUI = initTowingUI({ G, send, bound, label, blocked: contextBlocked, root });
+  const towUI = initTowingUI({ G, send, bound, label, blocked: contextBlocked, towAudio, root });
   function invokeMiningAction(action) {
     if (action === 'towToggle') return towUI.invoke();
     if (['dredgeSweep', 'dredgeHarvest', 'dredgeSmelter'].includes(action)) {

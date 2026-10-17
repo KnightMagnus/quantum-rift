@@ -54,13 +54,12 @@ export function drawTowing(G, ctx, sx, sy, z, W, H) {
       else ctx.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
     }
     ctx.closePath();
-    ctx.fillStyle = art.color;
-    ctx.fill();
-    ctx.clip();
     const im = image(art.base);
     if (im.complete && im.naturalWidth) ctx.drawImage(im, x - R, y - R, R * 2, R * 2);
-    ctx.fillStyle = art.color + '55';
-    ctx.fillRect(x - R, y - R, R * 2, R * 2);
+    else {
+      ctx.fillStyle = art.color;
+      ctx.fill();
+    }
     ctx.restore();
     ctx.strokeStyle = G.opts.cb ? '#fff0a0' : art.color;
     ctx.lineWidth = selected ? 3 : 1.5;
