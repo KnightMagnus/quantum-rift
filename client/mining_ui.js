@@ -19,8 +19,10 @@ export function initMiningUI({
   const cargo = document.getElementById('miningcargo');
   let open = false,
     identity = null;
+  const currentIdentity = () => (G.you ? G.you.name + ':' + G.you.ship?.hull + ':' + G.myId : null);
   function setOpen(value) {
     open = value;
+    if (open) identity = currentIdentity();
     root.classList.toggle('hidden', !open);
     indicator.setAttribute('aria-expanded', String(open));
   }
@@ -87,7 +89,7 @@ export function initMiningUI({
     towUI.refresh();
     const state = miningPanelState(G);
     const fly = state.visible && document.getElementById('login').classList.contains('hidden');
-    const nextIdentity = G.you ? G.you.name + ':' + G.you.ship?.hull + ':' + G.myId : null;
+    const nextIdentity = currentIdentity();
     if (!fly || nextIdentity !== identity) setOpen(false);
     identity = nextIdentity;
     indicator.classList.toggle('hidden', !fly);
