@@ -1302,6 +1302,13 @@ export function renderLanded() {
     p = STELLARS[L.stellar],
     body = $('landbody'),
     st = y.shipStats;
+  // Live market/rivals updates must not erase a quantity while the captain types.
+  const amounts = new Map(
+    [...body.querySelectorAll('.trade-amount')].map((input) => [input.dataset.c, input.value]),
+  );
+  const focusedAmount = document.activeElement?.matches('.trade-amount')
+    ? document.activeElement.dataset.c
+    : null;
   $('dockchips').innerHTML = dockChips(G, !!(G.landed && G.landed.site && G.landed.site.own)); // 2.1
   $('landcr').textContent = credits(y.credits) + ' credits';
   $('landcargo').textContent = y.shipless
@@ -1358,7 +1365,7 @@ export function renderLanded() {
               )
               .join('');
             return `<tr><td>${esc(c.name)}${c.sellCap !== undefined ? ` <span class="dim small">buyer: ${c.sellCap}t left today</span>` : ''}${c.flash ? ` <span class="flashtag ${c.price > base ? 'up' : 'dn'}">${c.price > base ? 'SHORTAGE' : 'GLUT'}</span>` : ''}</td><td class="${c.price < base * 0.9 ? 'lo' : c.price > base * 1.1 ? 'hi' : ''}">${credits(c.price)}${c.moved ? `<span class="mv ${c.moved > 0 ? 'up' : 'dn'}" title="Moved by this system's state and by what captains have traded here">${c.moved > 0 ? '▲' : '▼'}${Math.abs(c.moved)}%</span>` : ''}</td><td>${y.cargo[c.id] || 0}${y.cargo[c.id] && y.paid && y.paid[c.id] ? ` <span class="small ${c.price >= y.paid[c.id] ? 'pgain' : 'ploss'}" title="What you paid per ton, on average">paid ${credits(y.paid[c.id])}</span>` : ''}</td>
-        <td style="text-align:right"><button class="btn sm" data-act="trade" data-c="${c.id}" data-q="1"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>BUY</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="10"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>+10</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="${Math.max(0, Math.min(holdFree(y), Math.floor(y.credits / c.price)))}" title="Fill your hold with what you can afford"${Math.min(holdFree(y), Math.floor(y.credits / c.price)) > 0 ? '' : ' disabled'}>MAX</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-1">SELL</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-999">ALL</button></td></tr>${gradeRows}`;
+        <td style="text-align:right"><button class="btn sm" data-act="trade" data-c="${c.id}" data-q="1"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>BUY</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="10"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>+10</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="${Math.max(0, Math.min(holdFree(y), Math.floor(y.credits / c.price)))}" title="Fill your hold with what you can afford"${Math.min(holdFree(y), Math.floor(y.credits / c.price)) > 0 ? '' : ' disabled'}>MAX</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-1">SELL</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-999">ALL</button><div class="trade-custom"><label>Amount <input class="trade-amount" data-c="${c.id}" type="number" required min="1" max="2147483647" step="1" inputmode="numeric" aria-label="${esc(c.name)} trade amount in tons" value="${esc(amounts.get(c.id) ?? '1')}"></label><button class="btn sm" data-act="trade" data-c="${c.id}" data-custom="buy">BUY AMOUNT</button><button class="btn sm" data-act="trade" data-c="${c.id}" data-custom="sell">SELL AMOUNT</button></div></td></tr>${gradeRows}`;
           })
           .join(
             '',
@@ -1567,6 +1574,10 @@ export function renderLanded() {
     }
   }
   body.innerHTML = h;
+  if (focusedAmount)
+    [...body.querySelectorAll('.trade-amount')]
+      .find((input) => input.dataset.c === focusedAmount)
+      ?.focus({ preventScroll: true });
 }
 // // 2.4: a system's state as a line of text, and as a card
 /**
@@ -1785,8 +1796,29 @@ function onAct(e) {
   const d = el.dataset;
   switch (d.act) {
     case 'trade': {
+      let qty = +d.q;
+      if (d.custom) {
+        const input = el.closest('td').querySelector('.trade-amount');
+        if (!input.reportValidity() || !Number.isSafeInteger(input.valueAsNumber)) {
+          input.focus();
+          return;
+        }
+        // The server remains authoritative for bulk prices/bonuses and finite buyers.
+        const market = G.landed.market.find((c) => c.id === d.c);
+        const limit =
+          d.custom === 'buy'
+            ? Math.max(0, holdFree(G.you))
+            : Math.min(G.you.cargo[d.c] || 0, market.sellCap ?? Infinity);
+        qty = Math.min(input.valueAsNumber, limit) * (d.custom === 'sell' ? -1 : 1);
+        if (!qty)
+          return toast(
+            d.custom === 'buy'
+              ? 'No room in your hold.'
+              : 'No sale inventory or buyer demand remaining.',
+          );
+      }
       const lots = d.grade ? { common: 0, rich: 0, pure: 0, [d.grade]: Math.abs(+d.q) } : undefined;
-      send({ t: 'trade', cid: d.c, qty: +d.q, lots });
+      send({ t: 'trade', cid: d.c, qty, lots });
       break;
     }
     case 'addfriend':

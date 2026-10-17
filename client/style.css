@@ -3147,3 +3147,22 @@ body.solo .mp {
   justify-content: flex-end;
   gap: 12px;
 }
+
+/* Custom market quantities use the same native dark fields as other menus. */
+.trade-custom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+}
+.trade-custom label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.trade-amount {
+  width: 76px;
+  color-scheme: dark;
+}

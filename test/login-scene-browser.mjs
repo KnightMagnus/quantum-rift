@@ -40,6 +40,11 @@ try {
   await context.addInitScript(() => {
     window.sceneTest = {
       draws: 0,
+      planetFrames: [],
+      hubFrames: [],
+      lightAlpha: [],
+      lightBrightness: [],
+      planetSizes: [],
       ships: {},
       motion: [],
       suppressReduceChange: false,
@@ -100,8 +105,74 @@ try {
 
     const draw = CanvasRenderingContext2D.prototype.drawImage;
     CanvasRenderingContext2D.prototype.drawImage = function (...args) {
+      let beaconPoint;
       if (this.canvas.classList.contains('login-scene')) {
         window.sceneTest.draws++;
+        const source = args[0];
+        if (
+          source?.tagName === 'CANVAS' &&
+          source !== document.querySelector('.login-scene') &&
+          source.width === source.height &&
+          args.length === 5
+        ) {
+          // Shared planet renderer produces a square canvas; sky fills the viewport.
+          const pixels = source
+            .getContext('2d')
+            .getImageData(0, 0, source.width, source.height).data;
+          let data = 2166136261;
+          for (let i = 0; i < pixels.length; i += 13)
+            data = Math.imul(data ^ pixels[i], 16777619) >>> 0;
+          if (
+            window.sceneTest.planetFrames.at(-1) !== data &&
+            window.sceneTest.planetFrames.length < 8
+          )
+            window.sceneTest.planetFrames.push(data);
+          window.sceneTest.planetHash = data;
+          window.sceneTest.planetSizes.push(args[3]);
+          if (window.sceneTest.planetSizes.length > 20) window.sceneTest.planetSizes.shift();
+        }
+        if (source?.src?.endsWith('/hub.png')) {
+          window.sceneTest.hubFrames.push([args[1], args[2], this.globalAlpha]);
+          if (window.sceneTest.hubFrames.length > 100) window.sceneTest.hubFrames.shift();
+        }
+        if (
+          source?.tagName === 'CANVAS' &&
+          source.width === 2160 &&
+          this.globalCompositeOperation === 'lighter'
+        ) {
+          if (window.sceneTest.lightPixels === undefined) {
+            const pixels = source
+              .getContext('2d')
+              .getImageData(0, 0, source.width, source.height).data;
+            let count = 0;
+            for (let i = 3; i < pixels.length; i += 4) if (pixels[i]) count++;
+            window.sceneTest.lightPixels = count;
+            const fs = source.width / 6;
+            for (let y = 1; y < fs - 1 && !window.sceneTest.beacon; y++)
+              for (let x = 1; x < fs - 1; x++) {
+                const i = (y * source.width + x) * 4;
+                if (
+                  pixels[i] > 230 &&
+                  pixels[i + 1] < 130 &&
+                  pixels[i + 3] === 255 &&
+                  pixels[i - 1] === 255 &&
+                  pixels[i + 7] === 255
+                ) {
+                  window.sceneTest.beacon = { x, y };
+                  break;
+                }
+              }
+          }
+          if (args[1] === 0 && args[2] === 0 && window.sceneTest.beacon) {
+            const p = window.sceneTest.beacon;
+            beaconPoint = this.getTransform().transformPoint({
+              x: args[5] + ((p.x + 0.5) / args[3]) * args[7],
+              y: args[6] + ((p.y + 0.5) / args[4]) * args[8],
+            });
+          }
+          window.sceneTest.lightAlpha.push(this.globalAlpha);
+          if (window.sceneTest.lightAlpha.length > 100) window.sceneTest.lightAlpha.shift();
+        }
         const src = args[0]?.src || '',
           match = src.match(/ships\/(\d+)\.webp/);
         if (match) {
@@ -114,7 +185,24 @@ try {
             x >= 0 && y >= 0 && x + args[7] <= innerWidth && y + args[8] <= innerHeight;
         }
       }
-      return draw.apply(this, args);
+      const result = draw.apply(this, args);
+      if (
+        beaconPoint &&
+        beaconPoint.x >= 0 &&
+        beaconPoint.x < this.canvas.width &&
+        beaconPoint.y >= 0 &&
+        beaconPoint.y < this.canvas.height
+      ) {
+        const p = this.getImageData(
+          Math.floor(beaconPoint.x),
+          Math.floor(beaconPoint.y),
+          1,
+          1,
+        ).data;
+        window.sceneTest.lightBrightness.push(p[0] + p[1] + p[2]);
+        if (window.sceneTest.lightBrightness.length > 100) window.sceneTest.lightBrightness.shift();
+      }
+      return result;
     };
   });
   const page = await context.newPage();
@@ -149,6 +237,53 @@ try {
     first,
     'Traffic changes actual scene pixels',
   );
+  const animated = await page.evaluate(() => ({
+    planetFrames: window.sceneTest.planetFrames.length,
+    hubFrames: window.sceneTest.hubFrames,
+    lightAlpha: window.sceneTest.lightAlpha,
+    lightPixels: window.sceneTest.lightPixels,
+    lightBrightness: window.sceneTest.lightBrightness,
+    planetSizes: window.sceneTest.planetSizes,
+  }));
+  assert.ok(
+    animated.planetFrames > 1,
+    'Shared planet surface/cloud rendering changes, not just traffic',
+  );
+  assert.ok(
+    new Set(animated.hubFrames.map((f) => f[2])).size > 2,
+    'Actual hub animation cross-fades frames',
+  );
+  assert.ok(
+    Math.max(...animated.lightAlpha) - Math.min(...animated.lightAlpha) > 0.1,
+    'Actual asset beacon pixels pulse',
+  );
+  assert.ok(animated.lightPixels > 100, 'Pulse mask contains actual nontransparent station lamps');
+  assert.ok(
+    Math.max(...animated.lightBrightness) - Math.min(...animated.lightBrightness) > 20,
+    'Actual displayed station lamp brightness changes',
+  );
+  // Compare disk diameter using the shared sprite geometry, independent of halo size.
+  const planetGeometry = await page.evaluate(async () => {
+    const { planetSprite } = await import('/planets.js');
+    const { STELLARS } = await import('/shared/galaxy.js');
+    const sprite = planetSprite(STELLARS.concordia, 0);
+    const rect = document.querySelector('.login-scene').getBoundingClientRect();
+    return { S: sprite.S, D: sprite.D, width: rect.width, height: rect.height };
+  });
+  const disk = (animated.planetSizes.at(-1) * planetGeometry.D) / planetGeometry.S;
+  assert.ok(
+    Math.abs(
+      disk / (2 * Math.min(planetGeometry.width * 0.32, planetGeometry.height * 0.57)) - 0.7,
+    ) < 0.001,
+    `Planet disk is exactly 30% smaller: ${JSON.stringify({ disk, planetGeometry, sizes: animated.planetSizes })}`,
+  );
+  results.push({
+    check:
+      'Animated shared planet, animated hub asset, pulsing asset beacons, 30% smaller planet disk',
+    status: 'pass',
+    animated,
+    disk,
+  });
   const traffic = await page.evaluate(() => window.sceneTest.ships);
   assert.equal(Object.keys(traffic).length, 6, 'Six distinct actual ship sheets are drawn');
   for (const [hull, ship] of Object.entries(traffic)) {
@@ -346,6 +481,34 @@ try {
   );
   results.push({
     check: 'Real server registration/login and scene stopped during gameplay',
+    status: 'pass',
+  });
+  // Shared planet caches/budgets must also animate after the gameplay renderer used them.
+  for (let i = 0; i < 10 && (await page.locator('#storybox').isVisible()); i++)
+    await page.locator('#storyb button').first().click();
+  await page.locator('#lname').evaluate((e) => e.blur());
+  await page.keyboard.press('Escape');
+  await page.locator('#quitconfirm').click();
+  await page.waitForFunction(
+    () => document.querySelector('.login-scene').dataset.running === 'true',
+  );
+  const returnedPlanet = await page.evaluate(() => window.sceneTest.planetHash);
+  await page.waitForFunction((hash) => window.sceneTest.planetHash !== hash, returnedPlanet);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.waitForFunction(
+    () => document.querySelector('.login-scene').dataset.running === 'false',
+  );
+  await page.waitForTimeout(1700);
+  const returnedStatic = await canvas.evaluate((c) => c.toDataURL());
+  await page.waitForTimeout(500);
+  assert.equal(
+    await canvas.evaluate((c) => c.toDataURL()),
+    returnedStatic,
+    'Reduced motion also stable after gameplay',
+  );
+  results.push({
+    check:
+      'Actual logout resumes animated shared planet; reduced motion still static after gameplay',
     status: 'pass',
   });
   assert.deepEqual(errors, [], 'No browser exceptions');

@@ -362,7 +362,8 @@ document.addEventListener(
       act === 'rtree'
     )
       return audio.ui('tab', 0.7);
-    if (act === 'trade') return audio.ui(+b.dataset.q > 0 ? 'buy' : 'sell', 0.7);
+    if (act === 'trade')
+      return audio.ui(b.dataset.custom === 'buy' || +b.dataset.q > 0 ? 'buy' : 'sell', 0.7);
     if (act === 'sellall') return audio.ui('sell', 0.8);
     if (
       act === 'buyship' ||
