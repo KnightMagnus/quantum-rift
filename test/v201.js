@@ -6,7 +6,8 @@ import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
 import { SYS } from '../shared/galaxy.js';
-import { makeLoadout } from '../shared/rules.js';
+import { makeLoadout, step, DT, wrap } from '../shared/rules.js';
+import assert from 'node:assert/strict';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v201-')));
 const wingUp = (game, d, hulls) => {
@@ -28,6 +29,52 @@ const sp = game.spaces.meridian;
 for (const e of [...sp.ships.values()]) sp.remove(e);
 const planets = SYS.meridian.stellars.filter((p) => p.svc.includes('L')),
   hulls = [704, 706, 712, 703, 713, 736].filter((h) => A.ships[h]);
+// Reproduce sideways cruise at the arrival speed ceiling, then run the actual
+// NPC AI and physics through its existing landing event for planet and station.
+for (const kind of ['planet', 'station']) {
+  const port = Object.values(SYS)
+    .flatMap((s) => s.stellars)
+    .find((p) => p.kind === kind && p.svc.includes('L'));
+  assert.ok(port, kind + ' destination exists');
+  for (const hull of [703, 704, 736])
+    for (const fraction of [0.94, 0.95, 1]) {
+      const e = sp.makeShip({
+        hull,
+        faction: 'spacer',
+        x: port.x,
+        y: port.y + 12000,
+        a: Math.PI / 2,
+        ai: 'trade',
+      });
+      e.vy = -e.st.maxSpeed * fraction;
+      e.vx = 1;
+      e.dest = port;
+      e.life = 1e9;
+      const beforeFuel = e.fuel;
+      for (let t = 0; t < Math.ceil((Math.PI / e.st.turn + 1) / DT); t++) {
+        sp.ai(e);
+        step(e, e.st, e.inp);
+      }
+      assert.ok(
+        Math.abs(wrap(e.a - Math.atan2(port.x - e.x, -(port.y - e.y)))) < 0.08,
+        kind + ' hull ' + hull + ' faces destination instead of perpendicular at cruise',
+      );
+      let event = false;
+      for (let t = 0; t < 300 / DT && sp.ships.has(e.id); t++) {
+        sp.ai(e);
+        if (!sp.ships.has(e.id)) {
+          event = sp.events.some((v) => v[0] === 'land' && v[1] === e.id);
+          break;
+        }
+        step(e, e.st, e.inp);
+      }
+      assert.ok(event, kind + ' hull ' + hull + ' settles and emits landing event');
+      assert.ok(Math.hypot(e.x - port.x, e.y - port.y) < Math.max(40, port.r * 0.5));
+      assert.ok(Math.hypot(e.vx, e.vy) < 45);
+      assert.equal(e.fuel, beforeFuel, 'NPC approach does not use afterburner fuel');
+    }
+}
+console.log('Planet/station NPC cruise alignment and actual landing events passed (18 cases).');
 let landed = 0,
   worst = 0;
 for (let i = 0; i < 24; i++) {

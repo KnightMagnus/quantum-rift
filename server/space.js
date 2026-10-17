@@ -936,9 +936,10 @@ export class Space {
    * @param {boolean} arrive Whether to brake and bring velocity to zero at target.
    * @param {number} [tvx=0] Target velocity X for formation matching.
    * @param {number} [tvy=0] Target velocity Y for formation matching.
+   * @param {boolean} [landing=false] Keep landing cruise pointed toward its destination.
    * @returns {number} Distance remaining to target coordinates.
    */
-  steer(e, tx, ty, arrive, tvx = 0, tvy = 0) {
+  steer(e, tx, ty, arrive, tvx = 0, tvy = 0, landing = false) {
     const st = e.st,
       dx = tx - e.x,
       dy = ty - e.y,
@@ -958,6 +959,23 @@ export class Space {
       const ex = tvx + ux * vAllow - e.vx,
         ey = tvy + uy * vAllow - e.vy,
         em = Math.hypot(ex, ey);
+      // Match player landing policy: tiny longitudinal speed corrections must not
+      // leave a cruising ship sideways. Keep actual lateral correction and the
+      // existing turn-time/braking envelope; formation steering is unchanged.
+      const lateral = (e.vx * dy - e.vy * dx) / (d || 1);
+      if (
+        landing &&
+        vAllow === st.maxSpeed * 0.95 &&
+        Math.abs(lateral) < 8 &&
+        e.vx * dx + e.vy * dy >= 0
+      ) {
+        e.inp = {
+          turn: Math.abs(diff) < st.turn * DT ? 0 : Math.sign(diff),
+          thrust: Math.abs(diff) < 0.15 && sp < vAllow - 8 ? 1 : 0,
+        };
+        if (Math.abs(diff) < st.turn * DT) e.a = want;
+        return d;
+      }
       if (em < 8) {
         e.inp = { turn: 0, thrust: 0 };
         return d;
@@ -1108,7 +1126,7 @@ export class Space {
             this.ports().length && Math.random() < 0.75
               ? pick(this.ports())
               : { x: rnd(-3000, 3000), y: rnd(-3000, 3000), out: true }; // 2.3: traders fly to worlds they can land on
-        const d = this.steer(e, e.dest.x, e.dest.y, !e.dest.out);
+        const d = this.steer(e, e.dest.x, e.dest.y, !e.dest.out, 0, 0, !e.dest.out);
         if (
           !e.dest.out &&
           d < Math.max(40, (e.dest.r || 60) * 0.5) &&

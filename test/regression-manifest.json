@@ -281,7 +281,7 @@
       "owners": ["server/space.js"],
       "services": [],
       "tests": ["v04.js", "v201.js", "v23.js", "v24.js", "sim.js"],
-      "asserts": "Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn."
+      "asserts": "Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn. NPC planet/station landing cruise remains target-facing at the speed ceiling, with real landing events, settled arrival, unchanged fuel and escort formation."
     },
     {
       "id": "mining-existing",

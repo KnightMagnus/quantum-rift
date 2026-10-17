@@ -359,3 +359,7 @@ The same renderer handles detached objects. Screenshots show all three states pl
 unscanned objects. Existing towing browser tests retain real survey/attach/delivery coverage.
 No new message actions or save fields. Server payload already exposes resource IDs;
 artwork now respects its `revealed` flag rather than disclosing composition before survey.
+
+## NPC landing orientation
+
+The registered v201.js case reproduces perpendicular cruise with three hulls and three speed-ceiling fractions at both planet and station destinations (18 deterministic cases). Production NPC AI and shared physics must align toward the destination, then emit a real landing event within the original radius/speed bounds without fuel consumption. Existing randomized trader arrival and moving-leader escort checks remain. This tests simulation headings and arrival, not every device or rendered bank animation.

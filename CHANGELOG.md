@@ -4,6 +4,9 @@ Every release, newest first. The main story is left out on purpose.
 
 ### 3.0.4 — Living resources and trading controls
 
+- Keep NPC planet/station approaches pointed toward their destination at cruise speed, while preserving braking and escort guidance.
+- Distinguish surveyed ore, gas and shard motherlodes with metallic seams, gas pockets and faceted crystals, including missing-image fallbacks.
+
 - Enter exact commodity buy/sell amounts in black-and-white counters; preserve presets and server-authoritative prices, inventory and capacity checks.
 - Animate the login station and its lights, restore planet rotation and cloud drift after logout, and reduce the planet's apparent size by 30%. Respect reduced motion and hidden screens.
 - Renew abandoned partially mined ore, gas and shard deposits after five quiet simulation minutes, preserving active cutting, finite rewards, original parcel ledgers and existing depletion/motherlode/plasma recovery rates.
