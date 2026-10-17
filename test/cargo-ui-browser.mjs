@@ -141,6 +141,9 @@ try {
   await page.waitForFunction(
     () => G.you.cargo.ore === 3 && G.you.cargoLots.byCommodity.ore.rich === 0,
   );
+  // Keep the stationary real flight running: this must not be a transient pre-scoop update.
+  await page.waitForTimeout(1000);
+  assert.equal(await page.evaluate(() => G.you.cargo.ore), 3);
   assert.deepEqual(await page.evaluate(() => G.you.cargoLots.byCommodity.ore), {
     common: 1,
     rich: 0,

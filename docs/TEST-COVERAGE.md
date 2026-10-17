@@ -188,7 +188,7 @@ is not sufficient. Keep tests offline, isolated, bounded and reproducible.
 and commodity grade rows in the market/info UI. [cargo-flows.js](../test/cargo-flows.js)
 exercises real production methods and dispatch: strict legacy/corrupt login and import,
 all nine raw-grade sales through depth/bonuses, common repurchases, exact denial,
-jettison/job-aware partial recollection, frozen mining rewards/progression, unchanged
+jettison/job-aware partial recollection, five-simulation-second owner/fleet-only pickup grace (close-spawn Space.tick, root-authority denial, foreign partial pickup, respawn and exact expiry), frozen mining rewards/progression, unchanged
 12 t + 1,500 cr station processing and supply, colony/plunder, graded exchange
 escrow/partial fill/refund/offline delivery, atomic captain swaps/full-hold storage,
 and death/Lodestar preservation. [cargo-ui-browser.mjs](../test/cargo-ui-browser.mjs)

@@ -400,7 +400,7 @@
         "client/main.js"
       ],
       "tests": ["cargo-lots.js", "cargo-flows.js", "cargo-ui-browser.mjs"],
-      "asserts": "Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
+      "asserts": "Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, owner/fleet simulation-time grace with foreign partial pickup and expiry, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
     }
   ],
   "routes": {

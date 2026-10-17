@@ -3,7 +3,7 @@
  * Incremental contracts: these describe only Fleet Commands' boundary, not a
  * complete save schema, a wire validator, or all the fields on a live entity.
  *
- * @typedef {{cargo: Record<string, number>, cargoLots: import('../shared/cargo-contracts.js').CargoLedger, sys: string, ship?: import('../shared/rules.js').ShipLoadout, stats?: {combat?: number}}} CargoPlayer
+ * @typedef {{name: string, cargo: Record<string, number>, cargoLots: import('../shared/cargo-contracts.js').CargoLedger, sys: string, ship?: import('../shared/rules.js').ShipLoadout, stats?: {combat?: number}}} CargoPlayer
  *
  * @typedef {object} CommandEntity
  * Live ship entity interacting with fleet commands and AI maneuvers.
@@ -24,7 +24,7 @@
  *
  * @typedef {{data: CargoPlayer, ent: CommandEntity | null}} CommandSession
  *
- * @typedef {{cargo: string, n: number, lots?: import('../shared/cargo-contracts.js').GradeLots}} CargoLoot
+ * @typedef {{cargo: string, n: number, lots?: import('../shared/cargo-contracts.js').GradeLots, jettisonPickup?: {owner: string, sys: string, until: number}}} CargoLoot
  *
  * @typedef {{id: number, x: number, y: number, vx: number, vy: number, it: CargoLoot, t: number, kind: number}} FloatingCargo
  *

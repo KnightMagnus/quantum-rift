@@ -19,6 +19,8 @@ const ORDERS = {
   holdfire: 'Escorts: hold your fire.',
   loot: 'Escorts: collect the loot.',
 };
+// Simulation seconds before the dumping captain/fleet may scoop its own cargo again.
+export const JETTISON_OWNER_GRACE_SECONDS = 5;
 export const FleetCmdOperations = {
   /** @this {import('./contracts.js').FleetCommandsCapabilities} @param {import('./contracts.js').CommandSession} s @param {string} o */
   fleetOrder(s, o) {
@@ -59,7 +61,12 @@ export const FleetCmdOperations = {
         y: e.y + Math.cos(e.a) * 40 + (Math.random() - 0.5) * 40,
         vx: e.vx * 0.4 + (Math.random() - 0.5) * 40,
         vy: e.vy * 0.4 + (Math.random() - 0.5) * 40,
-        it: { cargo: cid, n: part, lots },
+        it: {
+          cargo: cid,
+          n: part,
+          lots,
+          jettisonPickup: { owner: d.name, sys: d.sys, until: sp.t + JETTISON_OWNER_GRACE_SECONDS },
+        },
         t: sp.t,
         kind: 2,
       });
@@ -75,7 +82,7 @@ export const FleetCmdOperations = {
       }
     this.toast(
       s,
-      `Jettisoned ${n} t of ${c ? c.name.toLowerCase() : cid}.${lured ? ` ${lured} raider${lured > 1 ? 's' : ''} went for it.` : ''}`,
+      `Jettisoned ${n} t of ${c ? c.name.toLowerCase() : cid}. Own fleet pickup paused ${JETTISON_OWNER_GRACE_SECONDS}s.${lured ? ` ${lured} raider${lured > 1 ? 's' : ''} went for it.` : ''}`,
     );
     this.you(s);
   },
@@ -83,7 +90,16 @@ export const FleetCmdOperations = {
   /** @this {import('./contracts.js').FleetCommandsCapabilities} @param {import('./contracts.js').CommandSession} s @param {import('./contracts.js').CargoLoot} it */
   lootCargo(s, it) {
     const d = s.data,
-      st = this.stats(d);
+      grace = it.jettisonPickup;
+    // All player/wing/drone pickup paths resolve to this captain authority.
+    if (
+      grace &&
+      grace.owner === d.name &&
+      grace.sys === d.sys &&
+      this.spaces[d.sys]?.t < grace.until
+    )
+      return false;
+    const st = this.stats(d);
     if (!st) throw new TypeError('Cannot collect cargo without valid ship stats');
     const used = this.holdUsed(d),
       n = Math.min(it.n, st.cargo - used);

@@ -8,6 +8,7 @@ import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
 import { STELLARS, COMMODITIES, ORE_PROCESS } from '../shared/galaxy.js';
 import { makeLoadout } from '../shared/rules.js';
+import { JETTISON_OWNER_GRACE_SECONDS } from '../server/fleetcmd.js';
 import { TRADE_IMPACT } from '../shared/living.js';
 import { assertLots, addLots, commonLots, clearLots } from '../shared/cargo-lots.js';
 
@@ -178,6 +179,7 @@ assert.equal(
   parcels.reduce((n, x) => n + x.lots.pure, 0),
   8,
 );
+space.t += JETTISON_OWNER_GRACE_SECONDS;
 const cap = g.features.shipStats.stats(d).cargo;
 d.missions = [{ type: 'cargo', qty: cap - 3 }];
 assert.equal(g.onLoot(g.pref(a), parcels[0]), false);
@@ -193,6 +195,83 @@ assert.equal(d.cargo.ore, 10);
 console.log(
   'Jettison and partial recollection preserve premium grades and respect mission hold usage.',
 );
+
+// Close stationary jettison must not be instantly auto-scooped by its owner.
+{
+  const owner = pilot('Grace Owner'),
+    foreign = pilot('Grace Foreign');
+  owner.data.sys = foreign.data.sys = 'meridian';
+  owner.data.stellar = foreign.data.stellar = null;
+  owner.data.ship = makeLoadout(g.A, 704);
+  foreign.data.ship = makeLoadout(g.A, 704);
+  g.spawnPlayer(owner, 50000, 50000, 0, 0);
+  const sp = g.spaces.meridian;
+  sp.spawnT = 1e9;
+  Object.assign(owner.ent, { a: 0, vx: 0, vy: 0, graceT: 1e9, guns: [] });
+  seed(owner.data, 0, 2, 0);
+  const random = Math.random,
+    rolls = [0.5, 0, 0.5, 0.5];
+  try {
+    Math.random = () => rolls.shift() ?? 0.5;
+    g.onMessage(owner, { t: 'jettison', cid: 'ore', n: 2, lots: { common: 0, rich: 2, pure: 0 } });
+  } finally {
+    Math.random = random;
+  }
+  const parcel = sp.loot.at(-1),
+    original = JSON.stringify(parcel.it);
+  assert.ok(Math.hypot(parcel.x - owner.ent.x, parcel.y - owner.ent.y) < 30);
+  sp.tick();
+  assert.equal(
+    owner.data.cargo.ore || 0,
+    0,
+    'actual first Space.tick leaves dumped cargo outside owner hold',
+  );
+  assert.equal(sp.loot.includes(parcel), true, 'blocked pickup does not consume parcel');
+  assert.equal(
+    g.onLoot(g.pref(owner), parcel.it),
+    false,
+    'root-authority collector cannot bypass grace',
+  );
+  assert.equal(JSON.stringify(parcel.it), original, 'denial preserves exact mass and grades');
+  // Other captains can take part immediately; the remainder retains owner grace.
+  seed(foreign.data);
+  const capacity = g.features.shipStats.stats(foreign.data).cargo;
+  foreign.data.missions = [{ type: 'cargo', qty: capacity - 1 }];
+  assert.equal(g.onLoot(g.pref(foreign), parcel.it), false);
+  assert.deepEqual(lots(foreign.data), { common: 0, rich: 1, pure: 0 });
+  assert.equal(parcel.it.n, 1);
+  assert.equal(g.onLoot(g.pref(owner), parcel.it), false);
+  // Flight/session identity can change, but stable captain provenance still blocks it.
+  const oldEnt = owner.ent;
+  g.spawnPlayer(owner, 50000, 50000, 0, 0);
+  sp.ships.delete(oldEnt.id);
+  Object.assign(owner.ent, { a: 0, vx: 0, vy: 0, graceT: 1e9, guns: [] });
+  assert.equal(g.onLoot(g.pref(owner), parcel.it), false);
+  const until = parcel.it.jettisonPickup.until;
+  sp.t = until - 0.01;
+  assert.equal(
+    g.onLoot(g.pref(owner), parcel.it),
+    false,
+    'simulation-time grace includes its final fraction',
+  );
+  sp.tick();
+  assert.deepEqual(
+    lots(owner.data),
+    { common: 0, rich: 1, pure: 0 },
+    'owner can recover exact remainder after grace',
+  );
+  assert.equal(sp.loot.includes(parcel), false);
+  assert.equal(
+    (owner.data.cargo.ore || 0) + (foreign.data.cargo.ore || 0),
+    2,
+    'total mass conserved',
+  );
+  invariant(owner.data);
+  invariant(foreign.data);
+  foreign.data.missions = [];
+  sp.remove(owner.ent);
+  owner.ent = null;
+}
 
 // Once-resolved mining parcel: full/partial pickups cannot reroll bonuses or progression.
 seed(d);

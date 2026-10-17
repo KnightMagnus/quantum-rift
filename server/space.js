@@ -135,6 +135,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {string} [ore] Mined ore commodity ID.
  * @property {number} [n] Quantity of ore or units.
  * @property {string} [cargo] Jettisoned commodity ID.
+ * @property {{owner: string, sys: string, until: number}} [jettisonPickup] Owner-only pickup grace in origin-system simulation time.
  * @property {{id: string, name: string, xp?: number, credits?: number}} [salvage] Quest salvage payload.
  * @property {{credits?: number, tokens?: number, shards?: number, rep?: Record<string, number>}} [chest] Pirate treasure chest payload.
  *

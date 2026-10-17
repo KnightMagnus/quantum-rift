@@ -12,7 +12,7 @@ const common = `// @ts-check
 /** @type {import('${modulePath('features.js')}').FeatureServices} */
 const features = /** @type {import('${modulePath('features.js')}').FeatureServices} */ ({});
 /** @type {import('${modulePath('contracts.js')}').CommandSession} */
-const session = {data: {cargo: {}, cargoLots: {version: 1, byCommodity: {}}, sys: 'meridian'}, ent: null};
+const session = {data: {name: 'Fixture Captain', cargo: {}, cargoLots: {version: 1, byCommodity: {}}, sys: 'meridian'}, ent: null};
 `;
 try {
   fs.writeFileSync(path.join(dir, 'package.json'), '{"type":"module"}');
