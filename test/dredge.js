@@ -265,3 +265,36 @@ for (const restart of [false, true]) {
   }
   assert.equal(f.s.data.bp[815] || 0, 0);
 }
+
+// Actual industrial drones share their captain's jettison grace; no root bypass.
+{
+  const f = dredgePilot(undefined, 'DroneGrace'),
+    e = f.s.ent;
+  f.sp.loot = [];
+  for (const rock of f.sp.rocks) rock.x = -100000;
+  e.a = Math.PI / 2;
+  e.vx = 80;
+  seed(f.s.data, { ore: { common: 0, rich: 0, pure: 2 } });
+  f.g.features.fleetcmd.jettison(f.s, 'ore', 2);
+  const parcel = f.sp.loot.at(-1);
+  Object.assign(parcel, { x: e.x + 80, y: e.y, vx: 0, vy: 0 });
+  control(f, 'sweep');
+  industrialStep(f, 1);
+  const collectors = [...f.sp.ships.values()].filter((x) => x.industrialRoot === e.id);
+  assert.equal(collectors.length, 2);
+  assert.ok(collectors.some((x) => Math.hypot(x.x - parcel.x, x.y - parcel.y) < 35));
+  assert.equal(
+    parcel.taken,
+    undefined,
+    'actual in-reach industrial collector cannot re-scoop owner dump',
+  );
+  assert.equal(f.g.onLoot(e.player, parcel.it), false, 'root authority cannot bypass');
+  assert.equal(parcel.it.n, 2);
+  assert.deepEqual(parcel.it.lots, { common: 0, rich: 0, pure: 2 });
+  assert.equal(f.s.data.cargo.ore || 0, 0);
+  f.sp.t = parcel.it.jettisonPickup.until;
+  industrialStep(f, 0.1);
+  assert.equal(parcel.taken, true, 'same actual collector can recover after simulation grace');
+  assert.equal(f.s.data.cargo.ore, 2);
+  assert.deepEqual(f.s.data.cargoLots.byCommodity.ore, { common: 0, rich: 0, pure: 2 });
+}
