@@ -1815,6 +1815,9 @@ function onAct(e) {
     case 'sel':
       G.sel = +d.h;
       renderLanded();
+      // Only a deliberate ship choice returns to details; background refreshes
+      // and sorting keep the captain's browsing position. Render is synchronous.
+      if (G.ltab === 'yard') $('landbody').scrollTop = 0;
       break;
     case 'buyhangar':
       ask(

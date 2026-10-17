@@ -245,3 +245,25 @@ Registered unit programs `towing.js`, `towing-persistence.js`, `field-evolution.
 ## Mining panel usability
 
 `mining-panel.js` tests existing Survey-role / tow-rig eligibility, nonzero operational cargo capacity, full and mission-loaded holds, and active-control safety. `mining-panel-browser.mjs` exercises the production drill toggle at the former bottom-left panel anchor, default collapse, click/keyboard dismissal, full-hold and ship/landing transitions, independent hail inbox, and responsive final-control reachability. Transition snapshots are explicit client fixtures, not claimed server ship transactions. Existing mining, Dredge and towing browser suites exercise actual authoritative operations through the collapsed panel. Both new tests are registered in canonical CI lanes.
+
+## `native-dropdown-theme` — native dropdown appearance
+
+`dropdowns-browser.mjs` runs in the browser CI lane. It checks black backgrounds,
+white text and dark native popup hints on actual dynamic DOCKS controls, hangar
+crew/job selectors, station relocation, shipyard sort, refinery, map commodity
+and initialized mining/towing controls. Real dock assignment survives a server
+re-render; keyboard sorting and focus outlines remain functional. Synthetic
+optgroup/disabled cases cover future controls. Native OS popup rendering and
+forced-colors overrides are platform-owned, not cross-platform screenshot proof.
+
+The same browser program covers `shipyard-selection-scroll`: selecting a ship
+from the bottom of the actual catalog immediately resets `#landbody` to the top,
+exposes stats and purchase controls, and preserves the selected hull and money.
+An unrelated production renderer refresh preserves the browsing scroll offset.
+Ship cards currently have no keyboard-selection handler; native sort keyboard
+interaction remains covered. No purchasing is performed by selection.
+
+Login-scene coverage also rejects the removed bottom-left location caption and
+checks the title banner’s centered flex alignment, measured text fit and retained
+30px horizontal inset at desktop/mobile widths and 0.8×/1.4× UI scales. The Solo
+client-system test checks the same banner while exercising save/login workflows.
