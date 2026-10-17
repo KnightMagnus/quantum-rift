@@ -2040,13 +2040,13 @@ export function draw(G, ctx, W, H, dt, now) {
       ctx.setLineDash([]);
     }
     ctx.fillStyle = 'rgba(210,220,240,.8)';
-    ctx.font = '13px Tahoma';
+    ctx.font = '15px "Pixelify Sans", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(label, x, y + p.r * z + (p.hub ? -p.r * z * 0.25 : 18));
     const colOwner = G.world && G.world.colonies && G.world.colonies[p.id];
     if (colOwner) {
       ctx.fillStyle = '#ffd27a';
-      ctx.font = '12px Tahoma';
+      ctx.font = '14px "Pixelify Sans", sans-serif';
       ctx.fillText(`${colOwner}'s colony`, x, y + p.r * z + 34);
     }
   }
@@ -2092,7 +2092,7 @@ export function draw(G, ctx, W, H, dt, now) {
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = '#ffc85a';
-    ctx.font = '12px Tahoma';
+    ctx.font = '14px "Pixelify Sans", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('SALVAGE', x, y - 160 * z - 6);
   } // 2.4 quest salvage
@@ -2108,7 +2108,7 @@ export function draw(G, ctx, W, H, dt, now) {
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = '#5ad8ff';
-    ctx.font = '12px Tahoma';
+    ctx.font = '14px "Pixelify Sans", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('SURVEY POINT', x, y);
   }
@@ -2346,7 +2346,7 @@ export function draw(G, ctx, W, H, dt, now) {
     }
     if (f.num !== undefined) {
       ctx.globalAlpha = Math.min(1, k * 1.6);
-      ctx.font = `bold ${f.mine ? 15 : 13}px Tahoma`;
+      ctx.font = `bold ${f.mine ? 15 : 13}px "Pixelify Sans", sans-serif`;
       ctx.textAlign = 'center';
       ctx.lineWidth = 3;
       ctx.strokeStyle = '#000';
@@ -2402,7 +2402,7 @@ function edgeArrow(ctx, W, H, x, y, col, label, dist) {
   ctx.closePath();
   ctx.fill();
   ctx.restore();
-  ctx.font = '11px Tahoma';
+  ctx.font = '13px "Pixelify Sans", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillStyle = col;
   ctx.globalAlpha = 0.85;
@@ -2835,7 +2835,7 @@ export function drawShip(G, ctx, e, x, y, z, now) {
         : e.fl & 64
           ? '#f2c66a'
           : '#ddd'; // 1.1: rival captains carry gold name tags
-    ctx.font = '13px Tahoma';
+    ctx.font = '15px "Pixelify Sans", sans-serif';
     ctx.textAlign = 'center';
     const tw = ctx.measureText(e.name).width;
     let ty = y - w * 0.55 - 6;
@@ -3137,7 +3137,7 @@ export function galaxy(G, ctx, opts = {}) {
         ctx.stroke();
       }
       if (big) {
-        ctx.font = 'bold 11px Tahoma';
+        ctx.font = 'bold 13px "Pixelify Sans", sans-serif';
         ctx.textAlign = 'center';
         ctx.lineWidth = 3;
         ctx.strokeStyle = '#02030a';
@@ -3155,7 +3155,7 @@ export function galaxy(G, ctx, opts = {}) {
         ctx.fill();
       }
       if (big && zoom > 0.8) {
-        ctx.font = '10px Tahoma';
+        ctx.font = '12px "Pixelify Sans", sans-serif';
         ctx.textAlign = 'right';
         ctx.lineWidth = 3;
         ctx.strokeStyle = '#02030a';
@@ -3186,7 +3186,8 @@ export function galaxy(G, ctx, opts = {}) {
         ? zoom > 1.6 || (s.anchor && zoom > 0.95)
         : SYS[G.sys] && SYS[G.sys].links.includes(s.id));
     if (label) {
-      ctx.font = (big ? (here || s.anchor ? 'bold 12px' : '11px') : '9px') + ' Tahoma';
+      ctx.font =
+        (big ? (here || s.anchor ? 'bold 12px' : '11px') : '9px') + ' "Pixelify Sans", sans-serif';
       ctx.textAlign = 'center';
       ctx.lineWidth = 3;
       ctx.strokeStyle = '#02030a';
@@ -3204,7 +3205,7 @@ export function galaxy(G, ctx, opts = {}) {
     if (!S_ || !A_) continue;
     const [x, y] = P(S_);
     if (!on(x, y)) continue;
-    ctx.font = (big ? 'bold 13px' : '10px') + ' Tahoma';
+    ctx.font = (big ? 'bold 15px' : '12px') + ' "Pixelify Sans", sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = A_.color;
     ctx.fillText(A_.icon, x + (big ? 12 : 8), y + (big ? 4 : 3));
@@ -3221,7 +3222,7 @@ export function galaxy(G, ctx, opts = {}) {
     ctx.arc(x, y, big ? 10 : 7, 0, 6.283);
     ctx.stroke();
     if (big) {
-      ctx.font = '12px Tahoma';
+      ctx.font = '14px "Pixelify Sans", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(X.icon, x - 13, y + 4);
     }
@@ -3234,7 +3235,7 @@ export function galaxy(G, ctx, opts = {}) {
     ctx.arc(x, y, (big ? 14 : 9) + pulse * 5, 0, 6.283);
     ctx.stroke();
     if (big) {
-      ctx.font = 'bold 11px Tahoma';
+      ctx.font = 'bold 13px "Pixelify Sans", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ff5a40';
       ctx.fillText('INVASION', x, y + 30);
@@ -3259,7 +3260,7 @@ export function galaxy(G, ctx, opts = {}) {
     ctx.stroke();
     if (big) {
       const lab = t.kind === 'story' ? '★ ' + t.title : '◆ ' + t.title;
-      ctx.font = 'bold 11px Tahoma';
+      ctx.font = 'bold 13px "Pixelify Sans", sans-serif';
       ctx.textAlign = 'left';
       ctx.lineWidth = 3;
       ctx.strokeStyle = '#02030a';
@@ -3272,7 +3273,7 @@ export function galaxy(G, ctx, opts = {}) {
     const ch = SYS.coldharbor;
     if (ch) {
       const [x, y] = P(ch);
-      ctx.font = 'italic 12px Tahoma';
+      ctx.font = 'italic 14px "Pixelify Sans", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = 'rgba(216,200,144,.55)';
       ctx.fillText('beyond the Gateway', x - 20 * V.k, y + 50 * V.k + 14);
@@ -3315,7 +3316,7 @@ export function galaxy(G, ctx, opts = {}) {
       }[G.mapMode] || [];
     let lx = 12,
       ly = H - 14;
-    ctx.font = '11px Tahoma';
+    ctx.font = '13px "Pixelify Sans", sans-serif';
     ctx.textAlign = 'left';
     for (const [c, n] of L) {
       ctx.fillStyle = c;
@@ -3332,7 +3333,7 @@ export function galaxy(G, ctx, opts = {}) {
     // legend
     let lx = 12,
       ly = H - 14;
-    ctx.font = '11px Tahoma';
+    ctx.font = '13px "Pixelify Sans", sans-serif';
     ctx.textAlign = 'left';
     for (const [id, F] of Object.entries(FACTIONS)) {
       if (F.hidden) continue;

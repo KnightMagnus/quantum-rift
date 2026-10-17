@@ -7,6 +7,14 @@
     <link rel="icon" href="assets/stations/5.png" />
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="login_scene.css" />
+    <link
+      rel="preload"
+      href="assets/fonts/pixelify-sans.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="cockpit.css" />
   </head>
   <body>
     <canvas id="view"></canvas>
@@ -134,11 +142,26 @@
       <input id="chatin" placeholder="Press Enter to chat" maxlength="240" />
       <div class="cbtns">
         <button class="cb" id="cbmap" title="Galaxy map (M)">MAP</button
-        ><button class="cb" id="cbkeys" title="Change your key bindings">KEYS</button
         ><button class="cb" id="cbvol" title="Volume (N mutes)">🔉</button
         ><button class="cb" id="optbtn" title="Options (O)">&#9881;</button
         ><button class="cb q" id="cbhelp" title="Controls (?)">?</button>
       </div>
+    </div>
+    <aside id="traytrim" aria-label="Ship console trim">
+      <button
+        id="traytoggle"
+        aria-controls="hud"
+        aria-expanded="false"
+        title="Open ship console tray"
+      >
+        ‹<span>TRAY</span>
+      </button>
+    </aside>
+    <div id="flightstatus" aria-label="Ship status"></div>
+    <div id="cockpit" class="metal">
+      <div id="functiondock" aria-label="Ship function shortcuts"></div>
+      <div id="consolechat" class="well"></div>
+      <div id="consoleutilities" aria-label="Flight utilities"></div>
     </div>
     <div id="qvolbox" class="metal hidden">
       <div class="qvt">VOLUME <span id="qvoln" class="dim small"></span></div>

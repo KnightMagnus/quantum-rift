@@ -142,6 +142,7 @@ try {
     await page.click('#depart');
     await page.waitForFunction(() => G.view && !G.landed);
   }
+  await follower.click('#traytoggle');
   await follower.getByText('ALLIES', { exact: true }).click();
   await follower.locator('#capview [data-cs=armada]').click();
   await follower.locator('#afollow').check();

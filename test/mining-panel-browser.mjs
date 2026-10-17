@@ -24,10 +24,12 @@ try {
   await page.waitForFunction(() => !document.querySelector('#miningindicator').disabled);
   assert.equal(await page.locator('#miningcontrols').isVisible(), false);
   const icon = await page.locator('#miningindicator').boundingBox();
-  assert.equal(icon.x, 12);
+  const dock = await page.locator('#functiondock').boundingBox();
+  assert.ok(icon.x >= dock.x && icon.x + icon.width <= dock.x + dock.width);
+  assert.ok(icon.y >= dock.y && icon.y + icon.height <= dock.y + dock.height);
   const combatIcon = await page.locator('#combatindicator').boundingBox();
-  assert.ok(icon.y >= combatIcon.y + combatIcon.height);
-  assert.equal(icon.x, combatIcon.x);
+  assert.equal(icon.y, combatIcon.y, 'Mining shares the compact grid row with Combat');
+  assert.ok(icon.x >= combatIcon.x + combatIcon.width, 'Mining follows Combat without overlap');
   await page.screenshot({ path: path.join(f.out, 'after-collapsed.png') });
   await page.click('#miningindicator');
   assert.equal(await page.locator('#miningindicator').getAttribute('aria-expanded'), 'true');

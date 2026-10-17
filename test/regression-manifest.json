@@ -103,7 +103,8 @@
     "trade-amount-browser.mjs",
     "motherlode-art-browser.mjs",
     "ship-turning-assets-browser.mjs",
-    "ship-functions-browser.mjs"
+    "ship-functions-browser.mjs",
+    "cockpit-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -596,6 +597,18 @@
       "services": [],
       "tests": ["ship-functions-browser.mjs", "mining-panel-browser.mjs"],
       "asserts": "Accessible icon toggles, retained disabled mining, combat and survey message dispatch, fleet orders and secondary drone input, six-panel flow layout with long chat, keyboard/wheel reachability and desktop/narrow/scaled browser bounds."
+    },
+    {
+      "id": "cockpit-restyle",
+      "owners": [
+        "client/cockpit.css",
+        "client/ship-functions.js",
+        "client/render.js",
+        "client/chat_bubbles.js"
+      ],
+      "services": [],
+      "tests": ["cockpit-browser.mjs", "ship-functions-browser.mjs", "sidebar-browser.mjs"],
+      "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, eight-button compact cockpit, connected collapsed tray, keyboard tab/popup reachability and normal/narrow/scaled layout."
     }
   ],
   "routes": {

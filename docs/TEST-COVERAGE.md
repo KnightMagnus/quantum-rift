@@ -385,4 +385,21 @@ only; not exhaustive hull/loadout or real WAN latency testing.
 
 - `ship-function-stack`: ship-functions-browser.mjs and mining-panel-browser.mjs exercise toggles, disabled mining, action messages, multi-panel flow, long chat and 1440/1024/800/640px layouts at 0.8–1.4 UI scale. Capability fixtures are explicit; authoritative behavior remains covered by network suites.
 - Inventory: Combat, Mining (survey/cutting/group help), Towing, Dredge Processing, Fleet/Formation wing orders, Drones secondary-input shortcut. Hailing retains its indicator/modal; comms candidates supplied without duplicate comms. Armada Follow stays in Allies; server follow untouched.
-- Icons provisional A pending choice. Drone shortcut preserves secondary fire, including other secondary weapons.
+- User-selected icons: Combat A, Towing B, Fleet A, Drones A, Hailing B and Processing C. Drone shortcut preserves secondary fire, including other secondary weapons.
+
+### 3.1 cockpit restyle
+
+System: `cockpit-restyle`.
+
+`cockpit-browser.mjs` checks the bundled Pixelify Sans font is genuinely loaded,
+retains the original animated login scene/title and production landed illustration,
+and observes actual canvas ship-name and ship-chat drawing with that font. It
+exercises eight dock buttons, the single connected full-height tray trim, native
+keyboard tray/tab activation, popup close, and flight/chat separation at 1440,
+1024 and 640px (including 1.4 UI scale). `ship-functions-browser.mjs` retains
+multi-panel, long-history scrolling, all existing actions and keyboard/wheel
+reachability coverage. Existing sidebar/catalog/outfitter tests now explicitly
+open the collapsible tray before accessing its content; sidebar width persistence
+uses the dedicated tray-width preference. Chat-bubble renderer mocks include its
+new bezel/scanline drawing primitives. Tests use isolated saves and offline assets;
+these Chromium checks are not exhaustive device/OS coverage.

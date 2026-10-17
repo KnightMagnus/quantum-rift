@@ -6,6 +6,10 @@ export function initShipFunctions(G, send) {
       e.stopPropagation();
   });
   const entries = [];
+  const dock = document.getElementById('functiondock');
+  const consoleChat = document.getElementById('consolechat');
+  consoleChat.append(document.getElementById('chat'), document.getElementById('cbar'));
+  document.getElementById('consoleutilities').append(document.querySelector('.cbtns'));
   let identity;
   let droneUntil = 0;
   const flying = () => !!G.you && !!G.view && !G.landed && !G.you.shipless;
@@ -57,7 +61,14 @@ export function initShipFunctions(G, send) {
       button.setAttribute('aria-expanded', String(open));
     }
     panel.classList.add('function-panel');
-    row.append(button, panel);
+    button.title = name;
+    const label = document.createElement('span');
+    label.className = 'function-label';
+    label.textContent =
+      { 'Fleet / Formation': 'Fleet', Processing: 'Process', Towing: 'Tow' }[name] || name;
+    button.append(label);
+    dock.append(button);
+    row.append(panel);
     stack.append(row);
     entries.push({ button, panel, available, existing, setOpen });
   }
@@ -131,6 +142,24 @@ export function initShipFunctions(G, send) {
     panel: drones,
     available: () => flying() && hasDrones(),
   });
+  for (const [id, label] of [
+    ['hailindicator', 'Hail'],
+    ['cbmap', 'Map'],
+  ]) {
+    const button = document.getElementById(id);
+    button.classList.add('function-icon');
+    if (id === 'cbmap')
+      button.innerHTML =
+        '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 6l8-3 10 3 8-3v23l-8 3-10-3-8 3zM11 3v23M21 6v23" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+    const text = document.createElement('span');
+    text.className = 'function-label';
+    text.textContent = label;
+    button.append(text);
+    dock.append(button);
+  }
+  dock.addEventListener('keydown', (e) => {
+    if (['Enter', ' '].includes(e.key)) e.stopPropagation();
+  });
   stack.addEventListener('keydown', (e) => {
     if (
       ['Enter', ' '].includes(e.key) &&
@@ -146,10 +175,7 @@ export function initShipFunctions(G, send) {
       for (const e of entries) {
         if (e.existing) continue;
         const available = logged && e.available();
-        e.button.classList.toggle(
-          'hidden',
-          !logged || (e.button.id !== 'combatindicator' && !available),
-        );
+        e.button.classList.toggle('hidden', !logged);
         e.button.disabled = !available;
         e.button.setAttribute('aria-disabled', String(!available));
         e.button.title = available

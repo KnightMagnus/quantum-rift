@@ -14,7 +14,7 @@ export function drawTowing(G, ctx, sx, sy, z, W, H) {
   if (!w) return;
   ctx.save();
   const px = devicePixelRatio || 1;
-  ctx.font = `bold ${12 * px}px Tahoma`;
+  ctx.font = `bold ${14 * px}px "Pixelify Sans", sans-serif`;
   ctx.textAlign = 'center';
   for (const o of w.objects) {
     if (['delivered', 'destroyed'].includes(o.status)) continue;

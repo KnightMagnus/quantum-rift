@@ -67,7 +67,7 @@ try {
     if ((await b.getAttribute('aria-expanded')) !== 'true') await b.click();
   }
   await page.waitForFunction(() =>
-    [...document.querySelectorAll('#functionstack img, #hailindicator img')].every(
+    [...document.querySelectorAll('#functiondock img')].every(
       (img) => img.complete && img.naturalWidth > 0,
     ),
   );
@@ -75,7 +75,10 @@ try {
     await page.locator('#hailindicator img').getAttribute('src'),
     'assets/hud/comms.svg',
   );
-  assert.equal(await page.locator('#functionstack img').count(), 5);
+  assert.equal(
+    await page.locator('#functiondock .function-icon:not(#hailindicator) img').count(),
+    5,
+  );
   await page.locator('[data-order="hold"]').click();
   assert.ok(sent.some((m) => m.t === 'order' && m.o === 'hold'));
   await page.click('#dronetoggle');

@@ -113,10 +113,14 @@ try {
       size.hud,
     );
     const b = await page.locator('#hailindicator').boundingBox(),
-      v = await page.locator('#view').boundingBox();
+      v = await page.locator('#view').boundingBox(),
+      console = await page.locator('#cockpit').boundingBox();
     assert.ok(
-      b.x >= v.x && b.x + b.width <= v.x + v.width && b.y >= 0 && b.y + b.height < size.height,
-      'indicator inside resizable flight view',
+      b.x >= v.x &&
+        b.x + b.width <= v.x + v.width &&
+        b.y >= console.y &&
+        b.y + b.height <= console.y + console.height,
+      'indicator reachable in cockpit under the resizable flight view',
     );
   }
   await page.keyboard.press('KeyU');

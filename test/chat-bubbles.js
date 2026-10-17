@@ -41,6 +41,8 @@ const ctx = {
   rect() {},
   fill() {},
   stroke() {},
+  strokeRect() {},
+  fillRect() {},
   moveTo() {},
   lineTo() {},
   measureText: (s) => ({ width: Array.from(s).length * 7 }),

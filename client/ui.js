@@ -603,6 +603,22 @@ export function hud() {
   }
   $('cr').textContent = credits(y.credits) + ' cr';
   $('shipnm').textContent = y.shipless ? 'No active ship' : `${st.name} "${y.ship.name}"`;
+  const flightStatus = $('flightstatus');
+  const readout = [
+    $('shipnm').textContent,
+    `SHIELD ${$('v-sh').textContent} · ARMOR ${$('v-ar').textContent}`,
+    `FUEL ${Math.round(fu ?? 0)} · ${$('cr').textContent}`,
+  ];
+  if (flightStatus.dataset.readout !== readout.join('|')) {
+    flightStatus.dataset.readout = readout.join('|');
+    flightStatus.replaceChildren(
+      ...readout.map((text) => {
+        const line = document.createElement('div');
+        line.textContent = text;
+        return line;
+      }),
+    );
+  }
   $('sysname').textContent =
     (SYS[G.sys] ? SYS[G.sys].name.toUpperCase() : '') +
     (SYS[G.sys] ? ' · ' + FACTIONS[SYS[G.sys].faction].short : '') +
@@ -712,7 +728,8 @@ export function hud() {
  * @param {string} name Tab key ('radio' | 'codex' | 'missions' | 'station' | 'ops' | 'captains' | 'log')
  * @returns {void}
  */
-export function ctab(name) {
+export function ctab(name, reveal = true) {
+  if (reveal && $('hud').inert) $('traytoggle').click();
   G.ctab = name;
   document
     .querySelectorAll('#ctabs button')

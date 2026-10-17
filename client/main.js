@@ -566,7 +566,7 @@ function onMessage(m) {
       if (G.landed) renderLanded();
       refreshCompanion();
       refreshStores();
-      if (first) ctab('missions');
+      if (first) ctab('missions', false);
       renderTut();
       break;
     }
@@ -969,6 +969,8 @@ window.addEventListener('keydown', (e) => {
     $('storyok').click();
     return;
   } // 2.5.2: Enter or Space continues a story pop-up
+  // Focused cockpit/menu buttons retain native keyboard activation, not flight/chat shortcuts.
+  if (['Enter', ' '].includes(e.key) && e.target.closest?.('button, summary')) return;
   if (e.key === 'Enter' && G.you) {
     const c = $('chatin');
     if (document.activeElement === c) {
@@ -1102,6 +1104,7 @@ window.addEventListener('keydown', (e) => {
       send({ t: 'order', o: 'loot' });
       break;
     case 'companion': {
+      if (!document.body.classList.contains('tray-open')) $('traytoggle').click();
       const T = [
         'radio',
         'codex',
@@ -1418,7 +1421,7 @@ $('ctrlkeys').onclick = () => {
   closeControls();
   openOpts(true);
 };
-$('cbkeys').onclick = () => openOpts(true);
+// Key binding editor remains available through Options and Controls.
 $('cbmap').onclick = () => ($('gmap').classList.contains('hidden') ? openMap() : closeMap());
 /**
  * Cycles target lock through visible ships sorted by distance.
@@ -2029,7 +2032,7 @@ window.addEventListener('resize', resize);
  */
 function setHud(w) {
   w = Math.max(280, Math.min(Math.min(760, window.innerWidth * 0.6), w));
-  document.documentElement.style.setProperty('--hud', w + 'px');
+  document.documentElement.style.setProperty('--tray-width', w + 'px');
   resize();
   return w;
 }
@@ -2056,6 +2059,14 @@ $('hudgrip').addEventListener('mousedown', (e) => {
   window.addEventListener('mousemove', move);
   window.addEventListener('mouseup', up);
 });
+$('traytoggle').onclick = () => {
+  const open = document.body.classList.toggle('tray-open');
+  $('traytoggle').setAttribute('aria-expanded', String(open));
+  $('traytoggle').title = (open ? 'Close' : 'Open') + ' ship console tray';
+  $('hud').inert = !open;
+  resize();
+};
+$('hud').inert = true;
 resize();
 // ------------------------------------------------------------------ gamepad and touch controls
 const pad = { prev: [] },

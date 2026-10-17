@@ -61,7 +61,7 @@ export function drawShipChat(G, ctx, W, H, sx, sy, now) {
     return;
   }
   ctx.save();
-  ctx.font = '13px Tahoma, sans-serif';
+  ctx.font = '15px "Pixelify Sans", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   for (const [id, bubble] of G.chatBubbles) {
@@ -79,25 +79,30 @@ export function drawShipChat(G, ctx, W, H, sx, sy, now) {
     if (maxWidth < 30) continue;
     const lines = wrapShipChat(bubble.text, (s) => ctx.measureText(s).width, maxWidth);
     const width = Math.max(...lines.map((s) => ctx.measureText(s).width)) + 16,
-      height = lines.length * 17 + 12,
+      height = lines.length * 19 + 16,
       size = G.A.ships[entity.hull]?.size || 30,
       left = Math.max(4, Math.min(W - width - 4, x - width / 2)),
       top = Math.max(4, y - size * G.zoom * G.spriteScale * 0.55 - height - 27);
     ctx.globalAlpha = Math.min(1, (bubble.until - now) / 700);
-    ctx.fillStyle = 'rgba(8,18,30,.92)';
-    ctx.strokeStyle = '#8bb8d5';
+    ctx.fillStyle = 'rgba(9,22,25,.96)';
+    ctx.strokeStyle = '#627780';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.rect(left, top, width, height);
     ctx.fill();
     ctx.stroke();
+    ctx.strokeStyle = '#33454d';
+    ctx.strokeRect(left + 3, top + 3, width - 6, height - 6);
+    ctx.fillStyle = 'rgba(0,0,0,.12)';
+    for (let scan = top + 5; scan < top + height - 3; scan += 3)
+      ctx.fillRect(left + 4, scan, width - 8, 1);
     ctx.beginPath();
     ctx.moveTo(Math.max(left + 5, Math.min(left + width - 5, x)) - 4, top + height);
     ctx.lineTo(x, top + height + 6);
     ctx.lineTo(Math.max(left + 5, Math.min(left + width - 5, x)) + 4, top + height);
     ctx.fill();
     ctx.fillStyle = '#eef7ff';
-    lines.forEach((line, i) => ctx.fillText(line, left + width / 2, top + 6 + i * 17));
+    lines.forEach((line, i) => ctx.fillText(line, left + width / 2, top + 8 + i * 19));
   }
   ctx.restore();
 }

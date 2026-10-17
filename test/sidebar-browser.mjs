@@ -63,6 +63,7 @@ try {
   await page.locator('#depart').click();
   await page.waitForFunction(() => !G.landed && G.view);
   assert.equal(await page.evaluate(() => !!G.solo), false);
+  await page.click('#traytoggle');
   const results = [];
   const measure = () =>
     page.evaluate(() => {
@@ -105,23 +106,20 @@ try {
   ]) {
     await page.setViewportSize({ width: c.w, height: c.h });
     await page.evaluate((c) => {
-      document.documentElement.style.removeProperty('--hud');
-      if (c.hud) document.documentElement.style.setProperty('--hud', c.hud + 'px');
+      document.documentElement.style.removeProperty('--tray-width');
+      if (c.hud) document.documentElement.style.setProperty('--tray-width', c.hud + 'px');
       document.documentElement.style.setProperty('--ui', String(c.s));
       document.body.classList.toggle('scaled', c.s !== 1);
       document.querySelector('#ctabs').scrollLeft = 0;
       dispatchEvent(new Event('resize'));
     }, c);
     await page.waitForTimeout(150);
+    await page.locator('#ctabs').scrollIntoViewIfNeeded();
     const before = await measure();
     assert.equal(before.pageOverflow, false);
     assert.equal(before.tabs.length, 7);
     assert.ok(Math.abs(before.hudWidth + before.canvasWidth - c.w) < 2);
-    if (c.s === 1 && !c.hud)
-      assert.ok(
-        before.tabs.every((t) => t.visible),
-        JSON.stringify(before),
-      );
+    assert.ok(before.tabs[0].visible, 'Compact tray starts at the first tab');
     const box = await page.locator('#ctabs').boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + 10);
     await page.mouse.wheel(0, 1200);
@@ -146,13 +144,14 @@ try {
   await page.locator('#lbtn').click();
   await page.waitForFunction(() => G.you);
   assert.equal(
-    await page.evaluate(() => document.documentElement.style.getPropertyValue('--hud')),
+    await page.evaluate(() => document.documentElement.style.getPropertyValue('--tray-width')),
     '333px',
   );
   if (await page.locator('#land').isVisible()) {
     await page.locator('#depart').click();
     await page.waitForFunction(() => !G.landed && G.view);
   }
+  await page.click('#traytoggle');
   await page.locator('#ctabs button[data-tab=ops]').click();
   const panel = page.locator('#t-ops');
   await panel.hover();
@@ -181,7 +180,7 @@ try {
     };
   });
   for (const s of styles.menus) {
-    assert.equal(s.scrollbarColor, 'rgb(208, 42, 34) rgb(5, 6, 10)');
+    assert.equal(s.scrollbarColor, 'rgb(208, 42, 34) rgb(8, 20, 25)');
     assert.equal(s.scrollbarWidth, 'thin');
   }
   assert.equal(styles.checkbox, 'rgb(208, 42, 34)');
