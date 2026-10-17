@@ -2,6 +2,16 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.0.3 — Flight, mining and menu polish
+
+- Add an Escape logout confirmation and return to login without refreshing, preserving saves and clearing previous-account state.
+- Automatically detach and deliver motherlodes inside an accepted port's collection zone, regardless of towing speed or rotation. Full holds safely retain the reserved load for recovery.
+- Assign remappable mining shortcuts and display their effective keys in the controls.
+- Keep L-autoland facing its destination during cruise, turning for braking on final approach while preserving drift correction.
+- Give all dropdowns black backgrounds and white text; selecting a shipyard hull scrolls its stats and purchase button into view.
+- Remove the bottom-left login location caption and vertically center the Captain's Log-In banner title.
+- Clarify the ongoing beta status and simplify the README feature overview.
+
 ### 3.0.2 — Mining controls and KNIGHT testing profile
 
 - Collapse mining controls behind a bottom-left gold spiral-drill button. Hide controls on unsuitable ships, keep full-hold guidance and active-operation safety controls, and move detailed help out of the main panel.
