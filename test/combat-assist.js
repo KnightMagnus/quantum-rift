@@ -264,6 +264,7 @@ const selectedGame = {
     fronts: { mods: () => null },
     coop: { armadaOf: () => null },
     mining: { endTick() {} },
+    pressure: { pressureTick() {} },
   },
 };
 const selectedSpace = Object.assign(Object.create(Space.prototype), {

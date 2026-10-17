@@ -26,10 +26,23 @@ export function initMiningUI({ G, send, bound, label, blocked }) {
         ? `${record.gas ? 'VENT / PRESSURE' : 'CUT / HEAT'} · Stage ${record.stage + 1}/${record.stages} · ${Math.round(record.heat)}/100 · ${record.work.toFixed(1)}s · ${record.ready ? 'READY — release at 60–80' : record.acquired ? 'SEAM ACQUIRED' : 'hold contact 0.6s'}`
         : 'Aim a mining tool · select a rock for heat / work · clean release 60–80';
   }
+  const consent = document.createElement('button');
+  consent.className = 'btn sm';
+  consent.textContent = 'GROUP MINING: OPT IN';
+  consent.id = 'miningconsent';
+  root.append(consent);
+  consent.onclick = () =>
+    send({ t: 'miningPressure', op: G.miningPressure?.groupConsent ? 'leave' : 'join' });
+  setInterval(() => {
+    consent.textContent = `${G.miningPressure?.groupConsent ? 'LEAVE' : 'OPT IN'} GROUP MINING · ${G.miningPressure?.warn ? 'WARNING ' : ''}NOISE ${Math.round(G.miningPressure?.noise || 0)}/100`;
+    consent.title = 'Separate consent for current flight; Armada membership alone is not consent.';
+  }, 500);
   button.onclick = () => invokeMiningAction('surveyPulse');
   return { invokeMiningAction, refresh };
 }
 export function receiveMining(G, message) {
+  if (message.miningPressure) G.miningPressure = message.miningPressure;
+  if (message.miningHazards) G.miningHazards = message.miningHazards;
   const wire = message.miningRocks;
   if (!wire || wire.version !== 1 || !Array.isArray(wire.rocks) || !Number.isFinite(wire.now))
     return;

@@ -83,6 +83,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {number} [seq] Sequence number of last applied player input packet.
  * @property {number} [_f2] Previous state of secondary fire button.
  * @property {boolean} [noDisable] True if entity is destroyed immediately without disability threshold.
+ * @property {string} [miningEncounter] Mining-pressure encounter scope ID.
  * @property {number} [helpT] Timestamp of last distress call for reinforcements.
  * @property {boolean} [dread] True if dreadnought boss entity.
  * @property {number} [repHitT] Timestamp of last reputation penalty hit.
@@ -110,6 +111,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @typedef {object} Shot
  * @property {string|null} [captain] Captured root captain for ordinary rock damage.
  * @property {number} id Unique projectile ID.
+ * @property {string} [miningEncounter] Captured pressure-encounter scope.
  * @property {import("./mining-contracts.js").MiningSource|null} [mining] Captured mining provenance.
  * @property {number} w Weapon ID used to fire this shot.
  * @property {number} owner Entity ID of shooting ship.
@@ -511,6 +513,11 @@ export class Space {
   }
   // Idle wingmates must not turn a captain's protected passage into an unsolicited fight.
   canAcquire(e, o) {
+    if (
+      (e.miningEncounter || o.miningEncounter) &&
+      this.game.features.pressure.allow(this, e, o) === false
+    )
+      return false;
     if (this.spared(e, o)) return false;
     const lead = this.root(e);
     return !(
@@ -552,6 +559,11 @@ export class Space {
    * @returns {boolean} True if attacks can connect and damage target.
    */
   canHit(a, b) {
+    if (
+      (a.miningEncounter || b.miningEncounter) &&
+      this.game.features.pressure.allow(this, a, b) === false
+    )
+      return false;
     if (this.isHostile(a, b)) {
       // Only arrival grace blocks physical damage. Ambient newcomer truce blocks
       // acquisition, while existing shots/beams can still hit a crossing captain.
@@ -587,6 +599,9 @@ export class Space {
    */
   isHostile(a, b) {
     if (!a || !b || a === b || a.dead || b.dead) return false;
+    const scoped =
+      a.miningEncounter || b.miningEncounter ? this.game.features.pressure.allow(this, a, b) : null;
+    if (scoped !== null) return scoped;
     const ra = this.root(a),
       rb = this.root(b);
     if (ra === rb) return false;
@@ -1248,6 +1263,7 @@ export class Space {
    * @returns {void}
    */
   callHelp(s, attacker) {
+    if (s.miningEncounter || attacker.miningEncounter) return;
     if (s.player || this.sys.arena || (s.helpT || -99) > this.t - 5) return;
     s.helpT = this.t;
     for (const o of this.ships.values()) {
@@ -1417,6 +1433,7 @@ export class Space {
     const shotId = NEXT++;
     this.shots.push({
       id: shotId,
+      miningEncounter: e.miningEncounter,
       mining: W.mining
         ? Object.freeze({ ...provenance, contactId: `shot:${this.game.features.mining.shotId()}` })
         : null,
@@ -1649,6 +1666,12 @@ export class Space {
    * @returns {[number, number, number] | void} Tuple [damageDealt, hitShieldsFlag, shooterRootId].
    */
   damage(s, dA, dS, src, ion) {
+    if (
+      src &&
+      (src.miningEncounter || s.miningEncounter) &&
+      this.game.features.pressure.allow(this, src, s) === false
+    )
+      return;
     if (s.dead) return;
     const srcRoot = src ? this.root(src) : null;
     if (src && src.role && s.role) {
@@ -1892,6 +1915,11 @@ export class Space {
       const owner = this.ships.get(s.owner);
       for (const e of this.ships.values()) {
         if (e.id === s.owner || e.state !== 'fly') continue;
+        if (
+          s.miningEncounter &&
+          !this.game.features.pressure.shotAllowed(this, s.miningEncounter, e)
+        )
+          continue;
         if (owner ? !this.canHit(owner, e) : false) continue;
         const r = Math.max(9, e.st.size * 0.32);
         if (
@@ -1908,6 +1936,8 @@ export class Space {
               if (
                 o !== e &&
                 owner &&
+                (!s.miningEncounter ||
+                  this.game.features.pressure.shotAllowed(this, s.miningEncounter, o)) &&
                 this.canHit(owner, o) &&
                 Math.hypot(o.x - s.x, o.y - s.y) < s.p.blast
               )
@@ -1935,6 +1965,7 @@ export class Space {
     this.shots = this.shots.filter((s) => s.life > 0);
     this.beams = this.beams.filter((b) => b.until > this.t && this.ships.has(b.id));
     this.game.features.mining.endTick(this);
+    this.game.features.pressure.pressureTick(this);
     for (const l of this.loot) {
       l.x += l.vx * DT;
       l.y += l.vy * DT;

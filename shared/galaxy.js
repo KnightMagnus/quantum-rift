@@ -154,6 +154,10 @@ export const FACTIONS = {
  * @type {CommodityDef[]}
  */
 export const COMMODITIES = [
+  { id: 'alloy_ingots', name: 'Alloy Ingots', base: 360 },
+  { id: 'fuel_cells', name: 'Fuel Cells', base: 560 },
+  { id: 'cut_crystal', name: 'Cut Crystal', base: 920 },
+  { id: 'composite_plating', name: 'Composite Plating', base: 2400 },
   { id: 'food', name: 'Food', base: 120 },
   { id: 'industrial', name: 'Industrial Goods', base: 260 },
   { id: 'medical', name: 'Medical Supplies', base: 420 },
@@ -210,6 +214,7 @@ const P = (o) => o;
 /**
  * Star system record defining coordinates, hyperlane links, and celestial bodies.
  * @typedef {Object} StarSystem
+ * @property {boolean} [farside] Gateway far-side system, without ambient newcomer truce.
  * @property {string} id - Unique system identifier.
  * @property {string} name - Display name.
  * @property {string} faction - Dominant faction ID.
@@ -1622,3 +1627,11 @@ export const WINGMATES = [751, 752, 753, 754, 755, 756];
  * @type {number[]}
  */
 export const ARMADA_HULLS = [757, 758, 759]; // 2.6: the old station Armada escorts, now enemy-only
+
+// Deterministic refinery/processed-good markets; ordinary nonservice pads unchanged.
+for (const p of Object.values(STELLARS))
+  if (!p.site && p.svc.includes('T') && p.svc.includes('O'))
+    for (const id of ['alloy_ingots', 'fuel_cells', 'cut_crystal', 'composite_plating'])
+      p.prices[id] = 0;
+for (const id of ['alloy_ingots', 'fuel_cells', 'cut_crystal', 'composite_plating'])
+  SITE_PRICES[id] = 0;

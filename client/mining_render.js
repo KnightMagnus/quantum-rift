@@ -25,7 +25,7 @@ export function drawMining(G, ctx, sx, sy, z, W, H, now) {
     ctx.stroke();
     ctx.setLineDash([]);
     if (selected || shown) {
-      const text = `${r.gas ? 'VENT' : 'SEAM'} ${r.stage + 1}/${r.stages} · ${r.ready ? 'READY' : Math.round(r.heat) + '°'}${shown ? ' · SAFE' : ''}`;
+      const text = `${r.gas ? 'VENT' : 'SEAM'} ${r.stage + 1}/${r.stages} · ${r.ready ? 'READY' : Math.round(r.heat) + '°'}${shown ? ' · ' + (shown.hazard === 'volatile' ? 'VOLATILE' : 'SAFE') : ''}`;
       ctx.lineWidth = 4;
       ctx.strokeStyle = '#090d14';
       ctx.strokeText(text, x, y + R + 18);
@@ -59,6 +59,34 @@ export function drawMining(G, ctx, sx, sy, z, W, H, now) {
       Math.PI * 2,
     );
     ctx.stroke();
+  }
+  const dpr = devicePixelRatio || 1;
+  ctx.font = `bold ${14 * dpr}px Tahoma`;
+  for (const h of G.miningHazards || []) {
+    const x = sx(h.x),
+      y = sy(h.y);
+    ctx.setLineDash([8, 5]);
+    ctx.strokeStyle = G.opts.cb ? '#fff' : '#ffb84a';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y, h.radius * z, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(
+      `VOLATILE — ${Math.max(0, h.detonateAt - (G.mining?.now || 0)).toFixed(1)}s`,
+      x,
+      y - h.radius * z - 16 * dpr,
+    );
+  }
+  if (G.miningPressure?.warn) {
+    ctx.fillStyle = '#ffdf9e';
+    ctx.textAlign = 'left';
+    ctx.fillText(
+      `MINING PRESSURE ${Math.round(G.miningPressure.noise)}/100 — leave field to cool`,
+      18 * dpr,
+      90 * dpr,
+    );
   }
   ctx.restore();
 }

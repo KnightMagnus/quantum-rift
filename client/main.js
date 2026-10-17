@@ -1,3 +1,4 @@
+import { initRefineryUI } from './refinery_ui.js';
 import { binding, migrateBindings, RESERVED_KEYS } from './action-bindings.js';
 import { initMiningUI, receiveMining } from './mining_ui.js';
 import { landingGuidance, landingReady } from './landing_autopilot.js';
@@ -249,6 +250,7 @@ const miningUI = initMiningUI({
       return el && !el.classList.contains('hidden');
     }),
 });
+initRefineryUI(G, send);
 setInterval(() => miningUI.refresh(), 100);
 function applyOpts() {
   G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
@@ -485,6 +487,20 @@ function onMessage(m) {
       G.myName = m.name;
       toast(G.you ? 'Reconnected.' : `Welcome to Quantum Rift, Captain ${m.name}.`);
       break;
+    case 'refineryFuelQuote':
+      G.refineryFuelQuote = m.quote;
+      if (G.landed && G.ltab === 'refinery') renderLanded();
+      refreshCompanion();
+      break;
+    case 'refineryQuote':
+      G.refineryQuote = m.quote;
+      if (G.landed && G.ltab === 'refinery') renderLanded();
+      break;
+    case 'refinery':
+      if (G.you) G.you.refinery = m.data;
+      if (G.landed && G.ltab === 'refinery') renderLanded();
+      refreshCompanion();
+      break;
     case 'you': {
       const first = !G.you;
       G.you = m.d;
@@ -546,6 +562,8 @@ function onMessage(m) {
       G.miningTarget = 0;
       G.miningRocks = null;
       G.mining = null;
+      G.miningPressure = null;
+      G.miningHazards = [];
       receiveMining(G, m);
       if (G.route.length && G.route[0] === m.sys) G.route.shift();
       drawMini();

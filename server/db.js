@@ -20,6 +20,8 @@ import crypto from 'node:crypto';
  * @typedef {object} WorldData
  * @property {Record<string, string>} sites World sites and player claim data.
  * @property {import("./mining-contracts.js").SavedMiningWorld} [mining]
+ * @property {import("./refinery-contracts.js").SavedRefinery} [refinery]
+ * @property {import("./mining-pressure-contracts.js").SavedMiningPressure} [miningPressure]
  */
 
 /**
@@ -71,8 +73,11 @@ export class DB {
       this.world = JSON.parse(fs.readFileSync(this.wfile, 'utf8'));
     } catch {}
     /** @type {boolean} */
+    this.economicFrozen = false;
     this.dirty = false;
-    setInterval(() => this.flush(), 15000).unref();
+    setInterval(() => {
+      if (!this.economicFrozen) this.flush();
+    }, 15000).unref();
     setInterval(() => this.backup(), 30 * 60000).unref();
     setTimeout(() => this.backup(), 60000).unref();
   }

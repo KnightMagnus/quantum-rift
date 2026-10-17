@@ -866,7 +866,56 @@
         "collected",
         "shotId"
       ],
-      "uses": ["bonus", "db", "endTick", "mods", "paused", "specOnMine"]
+      "uses": [
+        "bonus",
+        "db",
+        "endTick",
+        "mods",
+        "paused",
+        "pressureExtract",
+        "pressureRegrow",
+        "pressureWork",
+        "specOnMine"
+      ]
+    },
+    {
+      "file": "refinery",
+      "module": "refinery",
+      "exportName": "RefineryOperations",
+      "methods": ["sellRoom", "sold", "resume", "init", "payload", "command"],
+      "uses": [
+        "access",
+        "db",
+        "fuelCapacity",
+        "now",
+        "paused",
+        "payload",
+        "pricing",
+        "refresh",
+        "room",
+        "rush",
+        "rushProgress",
+        "send",
+        "toast"
+      ]
+    },
+    {
+      "file": "pressure",
+      "module": "mining-pressure",
+      "exportName": "MiningPressureOperations",
+      "methods": [
+        "init",
+        "work",
+        "regrow",
+        "pressureTick",
+        "allow",
+        "shotAllowed",
+        "extracted",
+        "payload",
+        "hazards",
+        "consent"
+      ],
+      "uses": ["db", "newcomer", "rush", "sessions", "toast"]
     }
   ]
 }

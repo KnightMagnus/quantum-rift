@@ -99,7 +99,8 @@ function validate(w) {
             l.from >= 0 &&
             l.to >= l.from &&
             l.to - l.from <= 1.000001 &&
-            typeof l.seam === 'boolean',
+            typeof l.seam === 'boolean' &&
+            (l.captain === undefined || l.captain === null || typeof l.captain === 'string'),
         ) ||
         !r.seen ||
         typeof r.seen !== 'object' ||
@@ -275,7 +276,8 @@ function emit(c, sp, r, clean) {
   r.leases = [];
   r.releaseAt = 0;
   if (r.stage >= r.stages) {
-    r.down = w.clock + (100 + random() * 60) / (c.mods(sp.id).regrow || 1);
+    r.down =
+      w.clock + ((100 + random() * 60) / (c.mods(sp.id).regrow || 1)) * c.pressureRegrow(sp, r);
     r.hp = r.max;
     sp.events.push(['rock', r.id, 0], ['boom', r.x, r.y, r.r * 1.2]);
   } else {
@@ -306,6 +308,14 @@ function update(c, sp, r, now = world(c).clock) {
       const useful =
         crosses && r.ready ? Math.max(0, (MINING.overheat - r.heat) / MINING.heatRate) : seconds;
       r.work += useful * (1 + (seamSeconds > 0 ? 0.25 : 0));
+      const captains = [
+        ...new Set(
+          r.leases
+            .filter((l) => l.from < to && l.to > from && l.captain)
+            .map((l) => /** @type {string} */ (l.captain)),
+        ),
+      ];
+      c.pressureWork(sp, r, useful, captains);
       r.heat = crosses ? MINING.overheat : heated;
       r.releaseHeat = r.heat;
       r.releaseAt = to + MINING.grace;
@@ -413,6 +423,7 @@ export const MiningOperations = {
       from: hit.projectile ? now : Math.max(0, now - 1 / 30),
       to: hit.projectile ? now + Math.min(1, Math.max(1 / 30, hit.source.cadence)) : now,
       seam,
+      captain: hit.source.captain,
     });
     r.hp = Math.max(0, r.hp - hit.damage * 6 * (seam ? 1.25 : 1));
     if (!r.hp) r.ready = true;
@@ -563,7 +574,7 @@ export const MiningOperations = {
                 generation: r.generation,
                 seam: r.seam,
                 potential: 'common / rich / pure',
-                hazard: 'none',
+                hazard: r.ore === 'gas' || r.seed % 7 === 0 ? 'volatile' : 'none',
               }))
           : [],
     };
@@ -576,6 +587,7 @@ export const MiningOperations = {
       const r = [...f.rocks, ...f.history].find((r) => r.key === item.generationKey);
       if (!r) continue;
       r.accepted += n;
+      this.pressureExtract(s, n);
       for (const token of item.progressionTokens || [])
         if (!r.tokens[token]) {
           r.tokens[token] = true;

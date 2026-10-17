@@ -1,3 +1,4 @@
+import { refineryJobsHtml } from './refinery_ui.js';
 // 1.0.1: active mission tracking. Works out where each mission (and the main story) wants you to go, for the MISSIONS
 // companion tab and the gold target markers on the galaxy map.
 import { SYS, STELLARS } from '/shared/galaxy.js';
@@ -233,13 +234,16 @@ function journalHtml(G) {
  * @returns {string} HTML markup
  */
 export function missionsHtml(G) {
-  const T = missionTargets(G);
+  const T = missionTargets(G),
+    refinery = refineryJobsHtml(G);
   if (!T.length)
     return (
+      refinery +
       '<div class="dim small" style="padding:6px">No active missions. Mission boards (the JOBS tab when landed) post new work every ten minutes, and the contact at each spaceport bar has a story for you.</div>' +
       journalHtml(G)
     );
   return (
+    refinery +
     T.map((t) => {
       let jumps = '';
       if (t.sys && G.sys) {
@@ -256,6 +260,7 @@ export function missionsHtml(G) {
       ${t.kind === 'story' && T.some((x) => x.kind === 'career') ? `<details class="small dim"><summary>The story can wait until you know the ropes. Read more</summary>${esc(t.text)}</details>` : `<div class="dim small">${esc(t.text)}</div>`}
       <div class="mfoot">${t.reward ? `<span class="cr small">${Math.round(t.reward).toLocaleString()} cr</span>` : '<span></span>'}<span class="dim small">${jumps}</span>${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}${t.pendingQuest ? `<button class="btn sm mab" data-questdrop="${esc(t.pendingQuest)}" title="Abandon this story">✕</button>` : t.kind === 'job' || t.quest || (t.kind === 'arc' && t.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${esc(t.key)}" title="Drop this job">✕</button>` : ''}</div>
     </div>`;
-    }).join('') + journalHtml(G)
+    }).join('') +
+    journalHtml(G)
   );
 }

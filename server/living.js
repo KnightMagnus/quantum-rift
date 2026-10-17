@@ -32,7 +32,8 @@ const START_NEWS = {
     `War in ${S.name}: ${FACTIONS[st.enemy].name} ships are attacking the ${FACTIONS[S.faction].short}.`,
   pirates: (S) => `Raiders have the lanes in ${S.name}. Bounties there pay half again.`,
   festival: (S) => `A festival fills the spaceports of ${S.name}.`,
-  rush: (S) => `A mining rush in ${S.name}: refineries are paying top price for ore.`,
+  rush: (S) =>
+    `A mining rush in ${S.name}: refineries posted finite sourcing orders and fields are recovering faster.`,
   refugees: (S) => `Refugees are pouring into ${S.name}. Food, medicine and passage are scarce.`,
 };
 
@@ -320,7 +321,7 @@ export const LivingOperations = {
         famine: 'food',
         refugees: 'food',
         plague: 'medical',
-        rush: 'ore',
+        rush: null,
         war: 'equipment',
         boom: 'luxury',
         festival: 'luxury',

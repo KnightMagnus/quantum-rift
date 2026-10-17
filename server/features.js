@@ -1,6 +1,11 @@
 // @ts-check
 // Explicit feature composition. No method is installed on Game or another feature.
 import { MiningOperations } from './mining.js';
+import { RefineryOperations } from './refinery.js';
+import { MiningPressureOperations } from './mining-pressure.js';
+import { SYS, STELLARS, SITE_PRICES, COMMODITIES } from '../shared/galaxy.js';
+import { price } from '../shared/rules.js';
+import { purchaseUnit, saleValue } from './trade-pricing.js';
 import { bindOperations } from './feature-service.js';
 import { HangarOperations } from './hangar.js';
 import { FrontsOperations } from './fronts.js';
@@ -21,6 +26,8 @@ import { CoopOperations } from './coop.js';
 /**
  * @typedef {object} FeatureServices
  * @property {import("./feature-service.js").BoundOperations<typeof MiningOperations>} mining
+ * @property {import("./feature-service.js").BoundOperations<typeof RefineryOperations>} refinery
+ * @property {import("./feature-service.js").BoundOperations<typeof MiningPressureOperations>} pressure
  * @property {import('./feature-service.js').BoundOperations<typeof HangarOperations>} hangar
  * @property {import('./feature-service.js').BoundOperations<typeof FrontsOperations>} fronts
  * @property {import('./feature-service.js').BoundOperations<typeof FrontierOperations>} frontier
@@ -1191,10 +1198,99 @@ export function createFeatures(core) {
     get mods() {
       return features.fronts.mods;
     },
+    get pressureExtract() {
+      return features.pressure.extracted;
+    },
+    get pressureWork() {
+      return features.pressure.work;
+    },
+    get pressureRegrow() {
+      return features.pressure.regrow;
+    },
     get specOnMine() {
       return features.specialists.specOnMine;
     },
   };
   features.mining = bindOperations(MiningOperations, miningCapabilities);
+  /** @type {import('./refinery-contracts.js').RefineryCapabilities} */
+  const refineryCapabilities = {
+    get db() {
+      return core.db;
+    },
+    now: () => Date.now(),
+    paused: () => !!core.paused,
+    room: (d) => Math.max(0, (features.shipStats.stats(d)?.cargo || 0) - core.holdUsed(d)),
+    fuelCapacity: (d) => features.shipStats.stats(d)?.fuel || 0,
+    access(d, port) {
+      const p = /** @type {import('./game.js').StellarBody} */ (STELLARS[port]),
+        ent = features.sessions.sessionOf(d.name)?.ent;
+      if (!p) return { available: false, home: false, faction: '', near: false };
+      const home = !!(p.site && core.ownSite(d, p) && (d.station?.ops || 0) >= 1),
+        faction = p.outlaw ? 'outlaw' : SYS[p.system].faction,
+        eligible = home || (!p.site && p.svc.includes('T') && p.svc.includes('O')),
+        allowed =
+          p.outlaw || (d.rep?.[faction] || 0) > -30 || (d.landPass?.[port] || 0) > Date.now(),
+        near =
+          p.system === d.sys &&
+          (d.stellar === port || !!(ent && Math.hypot(ent.x - p.x, ent.y - p.y) <= p.r + 500));
+      return { available: !!(eligible && allowed), home, faction, near };
+    },
+    pricing(d, port, cid, now) {
+      const p = /** @type {import('./game.js').StellarBody} */ (STELLARS[port]);
+      if (!p) throw Error('Unknown port.');
+      const pr0 = price(p.site ? { ...p, prices: SITE_PRICES } : p, cid, now),
+        fallback = COMMODITIES.find((c) => c.id === cid)?.base;
+      if (pr0 === null && !fallback) throw Error('Unknown commodity.');
+      const flash = p.site ? 1 : features.rivals.flashMult(p.id, cid),
+        living = p.site ? 1 : features.living.livingMult(p, cid),
+        pr = Math.round((pr0 ?? fallback ?? 0) * flash * living),
+        bonus = features.bonuses.bonus(d).tradePct || 0,
+        sell = features.fronts.mods(p.system).sell;
+      return {
+        ask: purchaseUnit(pr, 1, bonus, !!p.site),
+        bid: saleValue(pr, { common: 1, rich: 0, pure: 0 }, bonus, !!p.site, sell),
+        fingerprint: JSON.stringify([pr, bonus, sell, flash, living, pr0 === null]),
+      };
+    },
+    rushProgress(s, event, delivered) {
+      const st = features.living.stateOf(s.data.sys);
+      if (!st || st.kind !== 'rush' || String(st.until) !== event) return;
+      const old = Number(st.miningOrderGot) || 0;
+      if (delivered <= old) return;
+      st.miningOrderGot = delivered;
+      features.living.stateProgress(s, s.data.sys, 'cid:ore', delivered - old);
+      try {
+        core.db.flush();
+      } catch (e) {
+        core.db.economicFrozen = true;
+        throw e;
+      }
+    },
+    rush(sys) {
+      const st = features.living.stateOf(sys);
+      return st?.kind === 'rush' ? { id: String(st.until), until: Number(st.until) } : null;
+    },
+    get payload() {
+      return features.refinery.payload;
+    },
+    refresh(s) {
+      core.you(s);
+      if (s.data.stellar) core.landed(s);
+    },
+    send: core.send.bind(core),
+    toast: core.toast.bind(core),
+  };
+  features.refinery = bindOperations(RefineryOperations, refineryCapabilities);
+  /** @type {import('./mining-pressure-contracts.js').PressureCapabilities} */
+  const pressureCapabilities = {
+    get db() {
+      return core.db;
+    },
+    sessions: () => core.sessions.values(),
+    newcomer: (d) => !!core.newcomer(d),
+    rush: (sys) => features.living.stateOf(sys)?.kind === 'rush',
+    toast: core.toast.bind(core),
+  };
+  features.pressure = bindOperations(MiningPressureOperations, pressureCapabilities);
   return Object.freeze(features);
 }

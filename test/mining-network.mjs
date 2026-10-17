@@ -49,7 +49,11 @@ try {
   for (const r of a.snap.mining.revealed) {
     const rock = a.snap.miningRocks.rocks.find((k) => k.id === r.id);
     assert.ok(Math.hypot(rock.x - 10180, rock.y - 10000) <= 1500);
-    assert.equal(r.hazard, 'none');
+    if (rock.ore === 'gas') assert.equal(r.hazard, 'volatile', 'survey marks real gas volatility');
+    assert.ok(
+      ['none', 'volatile'].includes(r.hazard),
+      'server exposes stable volatile/safe hazard classification',
+    );
   }
   const target = a.snap.miningRocks.rocks.find((r) => r.x === 10000 && r.y === 10000),
     id = target.id;

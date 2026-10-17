@@ -57,7 +57,12 @@
     "cargo-lots.js",
     "cargo-flows.js",
     "mining.js",
-    "mining-network.mjs"
+    "mining-network.mjs",
+    "refinery.js",
+    "refinery-economy.js",
+    "refinery-persistence.js",
+    "mining-pressure.js",
+    "refinery-network.mjs"
   ],
   "browser": [
     "sidebar-browser.mjs",
@@ -69,7 +74,8 @@
     "input-audio-browser.mjs",
     "cargo-ui-browser.mjs",
     "mining-controls-browser.mjs",
-    "mining-ui-browser.mjs"
+    "mining-ui-browser.mjs",
+    "refinery-ui-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -427,6 +433,36 @@
         "mining-ui-browser.mjs"
       ],
       "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion."
+    },
+    {
+      "id": "mining-refinery",
+      "owners": [
+        "server/refinery.js",
+        "server/trade-pricing.js",
+        "shared/refinery-rules.js",
+        "client/refinery_ui.js"
+      ],
+      "services": ["refinery"],
+      "tests": [
+        "refinery.js",
+        "refinery-economy.js",
+        "refinery-persistence.js",
+        "refinery-network.mjs",
+        "refinery-ui-browser.mjs"
+      ],
+      "asserts": "Binding exact-grade multi-input quotes, production trade pricing and bounded conversion cycles; rational output/partial claims, offline escrow/cancellation and journal interruption recovery, finite grade orders, Fuel Cell sink, real WS privacy and rendered explicit confirmation."
+    },
+    {
+      "id": "mining-pressure",
+      "owners": ["server/mining-pressure.js", "server/space.js", "client/mining_render.js"],
+      "services": ["pressure"],
+      "tests": [
+        "mining-pressure.js",
+        "mining.js",
+        "refinery-network.mjs",
+        "refinery-ui-browser.mjs"
+      ],
+      "asserts": "Real useful contact noise and persisted local recovery; delayed once-only volatile hazards, scoped two-hull pressure encounters, shared/captain cooldown and damage/acquisition/projectile allowlists preserving neutral, wing, Armada and newcomer protection."
     }
   ],
   "routes": {
@@ -509,7 +545,10 @@
     "lower": ["v12.js", "v203.js"],
     "bank": ["v12.js"],
     "pause": ["v10.js"],
-    "mining": ["mining-network.mjs", "mining-controls-browser.mjs"]
+    "mining": ["mining-network.mjs", "mining-controls-browser.mjs"],
+    "refinery": ["refinery-network.mjs", "refinery-ui-browser.mjs"],
+    "miningOrder": ["refinery-network.mjs", "refinery.js"],
+    "miningPressure": ["mining-pressure.js", "refinery-ui-browser.mjs"]
   },
   "tooling": [
     "capture-features.js",

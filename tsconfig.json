@@ -25,6 +25,13 @@
     "server/coop.js",
     "server/mining.js",
     "server/mining-contracts.js",
-    "shared/mining-rules.js"
+    "shared/mining-rules.js",
+    "server/refinery.js",
+    "server/refinery-contracts.js",
+    "shared/refinery-rules.js",
+    "server/trade-pricing.js",
+    "server/mining-pressure.js",
+    "server/mining-pressure-contracts.js",
+    "shared/mining-pressure-rules.js"
   ]
 }

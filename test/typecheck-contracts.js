@@ -57,6 +57,22 @@ try {
   );
   assert.notEqual(result.status, 0, 'mining facade requires explicit database capability');
   assert.match(result.stdout + result.stderr, /db.*missing|missing.*db/);
+  result = check(
+    `/** @type {import('${modulePath('refinery-contracts.js')}').RefineryRequest} */\nconst request={op:'quote',recipe:'alloy',grade:'pure',n:3};\n`,
+  );
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  result = check(
+    `/** @type {import('${modulePath('refinery-contracts.js')}').RefineryRequest} */\nconst request={op:'quote',n:'3',fee:0};\n`,
+  );
+  assert.notEqual(result.status, 0, 'string tonnes/forged fee rejected by refinery contract');
+  result = check(
+    `/** @type {import('${modulePath('refinery-contracts.js')}').RefineryCapabilities} */\nconst missingCheckpoint={paused(){return false;}};\n`,
+  );
+  assert.notEqual(
+    result.status,
+    0,
+    'refinery requires explicit checkpoint/pricing/capacity capabilities',
+  );
   console.log(
     'Typed valid calls/grade selections pass; invalid argument, grade quantity and missing capability are rejected.',
   );

@@ -1,3 +1,4 @@
+import { purchaseUnit, saleValue } from './trade-pricing.js';
 import {
   migrateCargoLots,
   assertLots,
@@ -113,6 +114,7 @@ import { eventideOffers } from '../shared/eventide.js';
  * @property {string} id Commodity ID.
  * @property {string} name Commodity display name.
  * @property {number | null} price Unit price in credits, or null if not traded.
+ * @property {number} [sellCap] Remaining finite Composite Plating buyer tonnes for this port/day.
  * @property {boolean} [flash] Whether a temporary flash market price is active.
  * @property {number} [moved] Percentage price shift due to system state or trade volume.
  *
@@ -399,6 +401,8 @@ export class Game {
     this.hails = new HailService(this);
     this.messageHandlers = this.createMessageHandlers();
     this.features.mining.init();
+    this.features.refinery.init();
+    this.features.pressure.init();
     this.features.fronts.frontsInit();
     this.features.coop.coopInit();
     this.features.frontier.frontierInit();
@@ -838,6 +842,7 @@ export class Game {
         loan: d.loan || null,
         credit: d.credit || 600,
         missions: d.missions,
+        refinery: this.features.refinery.payload(s),
         escorts: d.escorts,
         shuttles: d.shuttles,
         officers: d.officers,
@@ -1046,6 +1051,7 @@ export class Game {
       return;
     }
     const dt = Date.now() - (this.pausedAt || Date.now());
+    this.features.refinery.resume(dt);
     this.pausedAt = 0;
     if (dt <= 0) return;
     this.hails.resume(dt);
@@ -1099,6 +1105,9 @@ export class Game {
    */
   createMessageHandlers() {
     return createMessageRegistry([
+      ['miningPressure', (s, m) => this.features.pressure.consent(s, m)],
+      ['refinery', (s, m) => this.features.refinery.command(s, m)],
+      ['miningOrder', (s, m) => this.features.refinery.command(s, m, true)],
       [
         'mining',
         (s, m) => {
@@ -1307,6 +1316,12 @@ export class Game {
             // 2.0.3: an abandoned bounty's target leaves too
             const gone = d.missions.find((x) => x.id === m.id);
             if (!gone) return;
+            if (gone.type === 'miningOrder')
+              return this.features.refinery.command(
+                s,
+                { t: 'miningOrder', op: 'cancelOrder', id: gone.id, port: gone.dest },
+                true,
+              );
             d.missions = d.missions.filter((x) => x !== gone);
             if (gone.quest) this.features.quests.questFail(s, gone.quest.qid, 'abandoned'); // 2.4: abandoning a step ends the story
             if (gone.sys && this.live[gone.sys]) {
@@ -1791,6 +1806,8 @@ export class Game {
       if (m.t === 'hello') this.hello(s, m);
       return;
     }
+    if (this.db.economicFrozen && !['ping', 'input', 'chat'].includes(m.t))
+      return this.toast(s, 'Checkpoint recovery required; economic actions frozen.');
     if (m.t !== 'ping') s.actT = now; // 2.6: for Online / Away
     this.messageHandlers.dispatch(m.t, s, m);
   }
@@ -1991,6 +2008,8 @@ export class Game {
       rocks: sp.rocksPayload(),
       miningRocks: this.features.mining.rocksPayload(sp),
       mining: this.features.mining.payload(s, sp),
+      miningPressure: this.features.pressure.payload(s),
+      miningHazards: this.features.pressure.hazards(sp.id),
     });
     this.features.fronts.missionArrive(s, sp);
     this.features.story.storyArrive(s, sp);
@@ -2090,6 +2109,7 @@ export class Game {
       so = p.site ? this.siteOwner(p.id) : null;
     this.send(s, {
       t: 'landed',
+      refinery: this.features.refinery.payload(s),
       stellar: p.id,
       market: this.market(p),
       offers: this.offers(p, d),
@@ -2604,6 +2624,9 @@ export class Game {
         ? COMMODITIES.map((c) => ({
             id: c.id,
             name: c.name,
+            ...(c.id === 'composite_plating'
+              ? { sellCap: this.features.refinery.sellRoom(p.id, Number.MAX_SAFE_INTEGER) }
+              : {}),
             price: price({ ...p, prices: SITE_PRICES }, c.id),
           })).filter((x) => x.price !== null)
         : null;
@@ -2616,6 +2639,9 @@ export class Game {
       return {
         id: c.id,
         name: c.name,
+        ...(c.id === 'composite_plating'
+          ? { sellCap: this.features.refinery.sellRoom(p.id, Number.MAX_SAFE_INTEGER) }
+          : {}),
         price:
           pr === null ? null : Math.round(pr * this.features.rivals.flashMult(p.id, c.id) * lm),
         flash: this.features.rivals.flashMult(p.id, c.id) !== 1,
@@ -2640,7 +2666,9 @@ export class Game {
     } catch {
       return this.toast(s, 'Cargo validation failed.');
     }
-    const pr0 = price(p.site ? { ...p, prices: SITE_PRICES } : p, cid);
+    if (this.db.economicFrozen) return;
+    const captured = Date.now();
+    const pr0 = price(p.site ? { ...p, prices: SITE_PRICES } : p, cid, captured);
     if (pr0 === null || !qty || !this.market(p)) return;
     const pr = p.site
       ? pr0
@@ -2651,13 +2679,10 @@ export class Game {
       used = this.holdUsed(d);
     if (qty > 0) {
       const tb = (this.features.bonuses.bonus(d).tradePct || 0) / 100;
-      let bp = Math.max(1, Math.round(pr * (1 - tb))); // 1.2: haggling officers and crew
       qty = Math.min(qty, st.cargo - used);
-      const depth = (n) =>
-        p.site ? 1 : 1 + Math.min(TRADE_IMPACT.max, n * TRADE_IMPACT.perTon) / 2; // 2.5: a big lot pushes the price up as you buy it
-      while (qty > 0 && qty * Math.round(bp * depth(qty)) > d.credits)
-        qty = Math.min(qty - 1, Math.floor(d.credits / Math.round(bp * depth(qty))));
-      bp = Math.round(bp * depth(qty));
+      while (qty > 0 && qty * purchaseUnit(pr, qty, tb * 100, !!p.site) > d.credits)
+        qty = Math.min(qty - 1, Math.floor(d.credits / purchaseUnit(pr, qty, tb * 100, !!p.site)));
+      const bp = purchaseUnit(pr, qty, tb * 100, !!p.site);
       if (qty <= 0) return this.toast(s, 'No room or no money for that.');
       d.paid = d.paid || {};
       d.paid[cid] = Math.round(
@@ -2669,23 +2694,23 @@ export class Game {
     } else {
       const have = d.cargo[cid] || 0;
       qty = Math.min(-qty, have);
-      if (!qty) return;
+      if (cid === 'composite_plating') qty = this.features.refinery.sellRoom(p.id, qty, captured);
+      if (!qty) return this.toast(s, 'No sale inventory or finite buyer demand remaining.');
       let take;
       try {
         take = planTake(d.cargo, d.cargoLots, cid, qty, selection);
       } catch {
         return this.toast(s, 'Those cargo grades are unavailable.');
       }
-      const weighted = take.grades.common + take.grades.rich * 1.3 + take.grades.pure * 1.6;
-      const depth = p.site ? 1 : 1 - Math.min(TRADE_IMPACT.max, qty * TRADE_IMPACT.perTon) / 2; // 2.5: and down as you sell it
-      const sale = Math.round(
-        weighted *
-          pr *
-          depth *
-          this.features.fronts.mods(p.system).sell *
-          (1 + (this.features.bonuses.bonus(d).tradePct || 0) / 100),
+      const sale = saleValue(
+        pr,
+        take.grades,
+        this.features.bonuses.bonus(d).tradePct || 0,
+        !!p.site,
+        this.features.fronts.mods(p.system).sell,
       );
       applyTake(d.cargo, d.cargoLots, take);
+      if (cid === 'composite_plating') this.features.refinery.sold(p.id, qty, captured);
       this.features.fronts.goal(s, 'trade', sale);
       d.credits += sale - qty * pr;
       d.credits += qty * pr;
@@ -3083,6 +3108,7 @@ export class Game {
     const d = s.data;
     d.lastStellar = p.id;
     for (const m of [...d.missions]) {
+      if (m.type === 'miningOrder') continue;
       // a snapshot: follow-up jobs added on this landing wait for the next one
       if (m.type === 'supply' && m.dest === p.id && !this.features.living.supplyReady(d, m)) {
         this.toast(s, `${m.title}: you need ${m.qty} t of ${m.cid} in your hold.`);
@@ -3485,12 +3511,35 @@ export class Game {
    * @returns {void}
    */
   tick() {
+    if (this.db.economicFrozen) return;
     if (this.paused) {
       if (![...this.sessions.values()].some((x) => x.data)) this.setPaused(false);
       return;
     } // solo pause
     this.features.mining.advanceClock(1 / TICK);
     this.tickN++;
+    if (this.tickN % 60 === 0)
+      for (const session of this.sessions.values()) {
+        if (!session.data) continue;
+        const owner = this.db.key(session.data.name),
+          rw = this.db.world.refinery;
+        if (
+          !rw?.batches.some((b) => b.owner === owner && !b.credited && b.status !== 'cancelled') &&
+          !rw?.orders.some((o) => o.owner === owner && o.status === 'accepted')
+        )
+          continue;
+        const data = this.features.refinery.payload(session),
+          signature = JSON.stringify([
+            data.batches.map((b) => [b.id, b.status]),
+            data.ready,
+            data.orders,
+          ]);
+        if (signature !== session.refinerySignature) {
+          session.refinerySignature = signature;
+          this.send(session, { t: 'refinery', data });
+        }
+      }
+
     if (this.tickN % (TICK * 2) === 0) {
       for (const s of this.sessions.values())
         if (s.data) {
@@ -3559,6 +3608,8 @@ export class Game {
             ...snap,
             miningRocks: this.features.mining.rocksPayload(this.spaces[sys]),
             mining: this.features.mining.payload(s, this.spaces[sys]),
+            miningPressure: this.features.pressure.payload(s),
+            miningHazards: this.features.pressure.hazards(sys),
             combat: this.combatAssist.payload(s, this.spaces[sys]),
             formation: !!s.armadaFormationTarget,
             me: [

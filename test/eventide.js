@@ -23,6 +23,11 @@ assert.equal(
 const legacy = JSON.parse(JSON.stringify(SYSTEMS.filter((s) => !s.eventide)));
 for (const s of legacy) {
   delete s.scene;
+  // Mining3.0 intentionally adds only four processed-good price entries; compare
+  // every legacy property/price exactly against the existing generation golden.
+  for (const p of s.stellars)
+    for (const id of ['alloy_ingots', 'fuel_cells', 'cut_crystal', 'composite_plating'])
+      if (p.prices) delete p.prices[id];
   // v2.9.2 deliberately moves only the Far Gateway; preserve the generation golden.
   for (const p of s.stellars)
     if (p.id === 'coldharbor-gate') {

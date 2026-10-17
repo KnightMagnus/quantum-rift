@@ -4,6 +4,7 @@
  * @property {number} from
  * @property {number} to
  * @property {boolean} seam
+ * @property {string|null} [captain] Immutable useful-contact attribution.
  *
  * @typedef {object} MiningSource
  * @property {string|null} captain Captured normalized captain account at firing, not collision.
@@ -43,6 +44,9 @@
  * @typedef {Pick<import('./db.js').DB,'world'|'touch'|'get'|'key'>} MiningDatabase
  * @typedef {object} MiningCapabilities
  * @property {MiningDatabase} db
+ * @property {import("./features.js").FeatureServices["pressure"]["extracted"]} pressureExtract
+ * @property {import("./features.js").FeatureServices["pressure"]["work"]} pressureWork
+ * @property {import("./features.js").FeatureServices["pressure"]["regrow"]} pressureRegrow
  * @property {()=>boolean} paused
  * @property {(sp:MiningSpace)=>void} endTick
  * @property {import('./features.js').FeatureServices['bonuses']['bonus']} bonus

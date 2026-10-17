@@ -104,10 +104,10 @@ export const STATES = {
     name: 'Mining Rush',
     icon: '⛏',
     color: '#ffb84a',
-    prices: { ore: 1.7, gas: 1.5, shards: 1.8, equipment: 1.25 },
+    prices: { equipment: 1.1 },
     need: { cid: 'ore', qty: 160 },
     weight: 2,
-    desc: 'Refineries are hungry. Ore, gas and shards sell high until the demand is met.',
+    desc: 'Finite refinery sourcing orders and faster field recovery last until shared demand is met.',
     end: 'The mining rush in {sys} has run its course.',
   },
   refugees: {
