@@ -56,6 +56,11 @@ try {
   await until(() => other.snap.towing.offers.length === 1, 'private offer');
   assert.equal(owner.snap.towing.offers.length, 0);
   assert.equal(object(owner).owner, owner.you.name.toLowerCase(), 'offer not consent');
+  // The load, not only the two stationary tugs, must settle under the recipient cap.
+  await until(
+    () => Math.hypot(object(other).vx, object(other).vy) <= other.snap.towing.cap,
+    'safe transfer relative motion',
+  );
   request(other, 'accept');
   await until(() => other.snap.towing.attached === object(other).id, 'recipient acceptance');
   const reclaimName = other.you.name,
