@@ -245,3 +245,18 @@ Registered unit programs `towing.js`, `towing-persistence.js`, `field-evolution.
 ## Mining panel usability
 
 `mining-panel.js` tests existing Survey-role / tow-rig eligibility, nonzero operational cargo capacity, full and mission-loaded holds, and active-control safety. `mining-panel-browser.mjs` exercises the production drill toggle at the former bottom-left panel anchor, default collapse, click/keyboard dismissal, full-hold and ship/landing transitions, independent hail inbox, and responsive final-control reachability. Transition snapshots are explicit client fixtures, not claimed server ship transactions. Existing mining, Dredge and towing browser suites exercise actual authoritative operations through the collapsed panel. Both new tests are registered in canonical CI lanes.
+
+## Landing cruise heading
+
+`landing-autopilot.js` runs production guidance and shared flight physics for every
+stock hull across four port radii, inward/outward and lateral drift, including
+long capped-speed approaches. Four light/heavy hulls additionally assert targetward
+cruise orientation at 90% and 100% maximum speed with tiny lateral drift. Existing
+settled-authority, stale snapshot and duplicate request guards remain exercised.
+
+`landing-autopilot-browser.mjs` is now registered in the browser CI lane: real L
+input, delayed WebSocket inputs, authoritative cruise heading, retrograde braking,
+one successful server landing, manual steering takeover and permission denial.
+Fixtures use disposable Solo saves and seeded ambient conditions, not player saves.
+Targets are static stellars (the production landing contract); moving-target
+rendezvous, arbitrary network jitter and cross-browser behavior are not claimed.

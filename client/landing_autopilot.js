@@ -40,10 +40,22 @@ export function landingGuidance(state, ship, stats, port, input) {
     ),
     ex = (dx / (distance || 1)) * speedLimit - ship.vx,
     ey = (dy / (distance || 1)) * speedLimit - ship.vy;
-  if (Math.hypot(ex, ey) < Math.max(3, pulse * 0.6)) return;
-  const da = wrap(Math.atan2(ex, -ey) - ship.a);
+  const deadband = Math.max(3, pulse * 0.6),
+    lateral = (ship.vx * dy - ship.vy * dx) / (distance || 1),
+    // Cruise orientation is a policy, not the direction of a near-zero velocity
+    // error. At the speed ceiling that error can point sideways or backwards.
+    // Keep real lateral correction and the existing turn-time/stopping envelope.
+    cruise =
+      speedLimit === stats.maxSpeed * 0.9 &&
+      Math.abs(lateral) < deadband &&
+      ship.vx * dx + ship.vy * dy >= 0,
+    correcting = Math.hypot(ex, ey) >= deadband,
+    heading = cruise ? Math.atan2(dx, -dy) : Math.atan2(ex, -ey),
+    da = wrap(heading - ship.a);
+  if (!cruise && !correcting) return;
   input.turn = Math.abs(da) < stats.turn * DT ? 0 : Math.sign(da);
-  input.thrust = Math.abs(da) < 0.15 ? 1 : 0;
+  input.thrust =
+    Math.abs(da) < 0.15 && (cruise ? speed < speedLimit - deadband : correcting) ? 1 : 0;
 }
 
 /**
