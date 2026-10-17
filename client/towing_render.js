@@ -1,5 +1,5 @@
 import { STELLARS } from '/shared/galaxy.js';
-import { MOTHERLODE_ART } from '/shared/towing-rules.js';
+import { MOTHERLODE_ART, TOW } from '/shared/towing-rules.js';
 const images = new Map();
 function image(name) {
   if (!images.has(name)) {
@@ -77,8 +77,14 @@ export function drawTowing(G, ctx, sx, sy, z, W, H) {
       for (const id of o.ports) {
         const p = STELLARS[id];
         if (p) {
+          ctx.save();
+          ctx.globalAlpha = 0.35;
+          ctx.beginPath();
+          ctx.arc(sx(p.x), sy(p.y), (p.r + TOW.deliveryApron) * z, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
           ctx.strokeRect(sx(p.x) - 15, sy(p.y) - 15, 30, 30);
-          ctx.fillText('ACCEPTS MOTHERLODE', sx(p.x), sy(p.y) - 24 * px);
+          ctx.fillText('ACCEPTS MOTHERLODE · AUTO DELIVERY', sx(p.x), sy(p.y) - 24 * px);
         }
       }
     }
