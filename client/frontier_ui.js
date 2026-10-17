@@ -28,14 +28,14 @@ import { credits } from '/shared/rules.js';
  * @typedef {Object} ExchangeOrder
  * @property {string} id Order ID
  * @property {'buy'|'sell'} side Order side
- * @property {any} item Order item specification
+ * @property {Record<string, unknown>} item Order item specification
  * @property {number} qty Quantity
  * @property {number} price Unit price
  */
 
 /**
  * @typedef {Object} ExchangeBookEntry
- * @property {any} item Item spec
+ * @property {Record<string, unknown>} item Item spec
  * @property {number} [bid] Best bid price
  * @property {number} bids Number of bids
  * @property {number} [ask] Best ask price
@@ -62,7 +62,7 @@ import { credits } from '/shared/rules.js';
 
 /**
  * HTML-escapes a string safely for insertion into template strings.
- * @param {any} s Input value
+ * @param {string | number | boolean | null | undefined} s Input value
  * @returns {string} Escaped HTML string
  */
 const esc = (s) =>
@@ -73,7 +73,7 @@ const esc = (s) =>
 
 /**
  * Formats a list of required material tuples with availability coloring.
- * @param {any} y Player state object
+ * @param {import('../server/game.js').PlayerData | Record<string, unknown>} y Player state object
  * @param {Array<[string, number, number]>} list Array of [material, grade, quantity] tuples
  * @returns {string} HTML markup
  */
@@ -107,7 +107,7 @@ const buffText = (b) =>
 
 /**
  * Renders the COLONY landed tab for founding, managing, stockpiling, and constructing buildings.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @returns {string} HTML markup
  */
 export function colonyHtml(G) {
@@ -164,7 +164,7 @@ export function colonyHtml(G) {
 
 /**
  * Renders the Station Defense rating, turret upgrades, and Station Holdout wave defense interface.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @param {boolean} [interactive] Whether interactive actions are enabled
  * @returns {string} HTML markup
  */
@@ -188,7 +188,7 @@ export function defenseHtml(G, interactive) {
 
 /**
  * Renders the ship mastery overview tier stars, XP progress bar, and active hull bonuses.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @returns {string} HTML markup
  */
 export function masteryHtml(G) {
@@ -204,7 +204,7 @@ export function masteryHtml(G) {
 
 /**
  * Renders the Crucible arena queue, current matchmaking rating, and record.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @returns {string} HTML markup
  */
 export function arenaHtml(G) {
@@ -221,7 +221,7 @@ export function arenaHtml(G) {
 
 /**
  * Renders the player-to-player market exchange order book, active orders, and storage hold.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @returns {string} HTML markup
  */
 export function exchangeHtml(G) {
@@ -264,7 +264,7 @@ export function exchangeHtml(G) {
 
 /**
  * Renders the galactic community leaderboards and captain profile lookup.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @returns {string} HTML markup
  */
 export function boardsHtml(G) {

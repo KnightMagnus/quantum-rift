@@ -3,14 +3,50 @@ import { eventideOffers } from '../shared/eventide.js';
 /**
  * @typedef {import('./space.js').Entity} Entity
  *
+ * @typedef {object} PlayerInput
+ * @property {number} seq Sequence number.
+ * @property {number} thrust Forward thrust control.
+ * @property {number} turn Rotational turn steering.
+ * @property {number} ab Afterburner boost flag.
+ * @property {number} rev Reverse thrusters flag.
+ * @property {number} fire1 Primary weapon fire flag.
+ * @property {number} fire2 Secondary weapon fire flag.
+ *
+ * @typedef {object} PlayerData
+ * @property {string} name Captain name.
+ * @property {number} credits Balance in credits.
+ * @property {string} sys Current solar system ID.
+ * @property {string} [shipUid] Unique identifier for player ship.
+ * @property {import('../shared/rules.js').ShipLoadout} ship Current active ship loadout.
+ * @property {Record<string, number>} [cargo] Cargo inventory mapping commodity ID to tons.
+ * @property {Record<string, number>} [rep] Reputation standings per faction.
+ * @property {Record<string, number>} [tokens] Faction tokens balances.
+ * @property {Record<string, number[]>} [mats] Crafting materials inventory grades.
+ * @property {Record<string, unknown>} [station] Personal station state and research tree.
+ * @property {unknown[]} [dock] Personal station stored ships.
+ * @property {unknown[]} [shuttles] Station shuttle fleet.
+ * @property {unknown[]} [officers] Station officer roster.
+ * @property {Record<string, unknown>} [bridge] Bridge officer assignments.
+ * @property {Record<string, unknown>} [arcs] Story arc states.
+ * @property {Record<string, unknown>} [quests] Active and completed missions.
+ * @property {Record<string, unknown>} [syn] Syndicate operations progression.
+ * @property {Record<string, unknown>} [spec] Specialist career progression.
+ * @property {Record<string, unknown>} [fronts] Frontline goals and token progress.
+ * @property {Record<string, number>} [stats] Lifetime combat and trading stats.
+ * @property {string | number} [armada] Armada group identifier if joined.
+ * @property {boolean} [armadaFollow] Whether following armada leader.
+ * @property {number} [ops] Operations level.
+ * @property {number} [nextUid] Monotonic counter for IDs.
+ * @property {number} [saveTime] Timestamp of last save.
+ *
  * @typedef {object} Session
  * @property {number} id Unique session ID.
- * @property {import('node:events').EventEmitter & {send: (data: any) => void, close: () => void, open: boolean, backlog: number}} sock Client WebSocket connection.
+ * @property {import('node:events').EventEmitter & {send: (data: string | Buffer | Uint8Array | Record<string, unknown>) => void, close: () => void, open: boolean, backlog: number}} sock Client WebSocket connection.
  * @property {string} ip Remote client IP address.
- * @property {any} data Player account save data from DB.
+ * @property {PlayerData} data Player account save data from DB.
  * @property {Entity | null} ent Currently active ship entity in space, or null if docked.
- * @property {Array<{seq: number, thrust: number, turn: number, ab: number, rev: number, fire1: number, fire2: number}>} inputs Pending input commands queue.
- * @property {any} [lastInput] Most recent input processed.
+ * @property {PlayerInput[]} inputs Pending input commands queue.
+ * @property {PlayerInput | null} [lastInput] Most recent input processed.
  * @property {string | null} name Captain name.
  * @property {number} chatT Timestamp of last chat message sent.
  * @property {number} msgs Number of messages received in current rate-limiting window.
@@ -18,15 +54,15 @@ import { eventideOffers } from '../shared/eventide.js';
  * @property {number} [actT] Timestamp of last user activity.
  * @property {number} [loginT] Timestamp when user logged in.
  * @property {boolean} [isNew] Whether this account was newly created during login.
- * @property {any} [combat] Combat assist state for this session.
+ * @property {import('./combat-assist.js').CombatState} [combat] Combat assist state for this session.
  * @property {number} [fullT] Timestamp of last cargo-full notification.
  *
  * @typedef {object} PlayerReference
  * @property {number} id Session ID.
  * @property {string} name Captain name.
  * @property {Record<string, number>} rep Faction reputation map.
- * @property {Array<{seq: number, thrust: number, turn: number, ab: number, rev: number, fire1: number, fire2: number}>} inputs Input commands queue.
- * @property {any} lastInput Last processed input.
+ * @property {PlayerInput[]} inputs Input commands queue.
+ * @property {PlayerInput | null} [lastInput] Last processed input.
  * @property {Session} s Reference to the parent session.
  *
  * @typedef {object} SpaceSystem
@@ -90,7 +126,7 @@ import { eventideOffers } from '../shared/eventide.js';
  * @property {number} [taken] Timestamp when accepted.
  * @property {number} [deadline] Timestamp deadline if time-sensitive.
  * @property {number} [rush] Duration in minutes if rush delivery.
- * @property {any} [quest] Linked quest metadata.
+ * @property {Record<string, unknown>} [quest] Linked quest metadata.
  * @property {boolean} [elite] True for elite dangerous bounties.
  * @property {boolean} [spawned] True if bounty target is currently spawned in-system.
  *
@@ -275,17 +311,17 @@ const JUMPS = Object.fromEntries(SYSTEMS.map((s) => [s.id, jumpsFrom(s.id)]));
  * Quantum Rift master game engine.
  * Manages player accounts, client network sessions, world and system state,
  * trade markets, mission boards, station management, and game loops.
- * @property {any} A Game assets object containing ships, weapons, outfits, and commodities.
+ * @property {import('../shared/rules.js').GameAssets} A Game assets object containing ships, weapons, outfits, and commodities.
  * @property {import('./db.js').DB} db Persistent JSON database instance for player accounts and world state.
- * @property {Record<number, any>} O Outfit definitions lookup by ID.
- * @property {Record<string, any>} spaces Active simulated spaces by system ID, backed by live proxy.
+ * @property {Record<string | number, import('../shared/rules.js').OutfitAsset>} O Outfit definitions lookup by ID.
+ * @property {Record<string, import('./space.js').Space>} spaces Active simulated spaces by system ID, backed by live proxy.
  * @property {Map<number, Session>} sessions Connected client sessions by session ID.
  * @property {number} nextSid Next session identifier sequence number.
  * @property {number} tickN Server tick counter.
  * @property {Record<string, import('./space.js').Space>} live Cache of currently instantiated systems.
- * @property {any} features Modular feature service delegations.
- * @property {any} combatAssist Combat assist controller.
- * @property {any} messageHandlers Registered client message handlers.
+ * @property {import('./features.js').FeatureServices} features Modular feature service delegations.
+ * @property {import('./combat-assist.js').CombatAssist} combatAssist Combat assist controller.
+ * @property {import('./message-registry.js').MessageRegistry} messageHandlers Registered client message handlers.
  * @property {Map<string, {n: number, t: number}>} fails Failed sign-in attempt tracking map.
  * @property {boolean} paused Solo-mode pause flag.
  * @property {number} [pausedAt] Timestamp when solo mode was paused.
@@ -325,7 +361,7 @@ export class Game {
   solo;
   /**
    * Initializes the game server, assets, storage, features, and tick loop.
-   * @param {any} A Game assets object containing ships, weapons, outfits, and commodities.
+   * @param {import('../shared/rules.js').GameAssets} A Game assets object containing ships, weapons, outfits, and commodities.
    * @param {import('./db.js').DB} db Persistent JSON database instance for player accounts and world state.
    */
   constructor(A, db) {
@@ -384,7 +420,7 @@ export class Game {
   }
   /**
    * Imports an external save file object into the database.
-   * @param {any} sv Raw save object to import.
+   * @param {Record<string, unknown>} sv Raw save object to import.
    * @returns {string} Sanitized name of imported captain.
    */
   importSave(sv) {
@@ -501,8 +537,8 @@ export class Game {
   }
   /**
    * Synchronizes a showcase captain's station, officers, and progress to version spec.
-   * @param {any} p Player save record.
-   * @param {any} c Seed definition configuration.
+   * @param {PlayerData} p Player save record.
+   * @param {Record<string, unknown>} c Seed definition configuration.
    * @returns {void}
    */
   syncSeed(p, c) {
@@ -565,8 +601,8 @@ export class Game {
   // 2.1 playtest seeds: fill the docks with ships and crew them, once ({ docks: [{ lead, name, wings: [hulls] }], crew: [...officers], spare: [...officers] })
   /**
    * Sets up a test seed captain's docks with ships, wingmates, and officers.
-   * @param {any} p Player save record.
-   * @param {any} F Seed fleet configuration with docks, crew, and ships.
+   * @param {PlayerData} p Player save record.
+   * @param {Record<string, unknown>} F Seed fleet configuration with docks, crew, and ships.
    * @returns {void}
    */
   seedFleet(p, F) {
@@ -617,7 +653,7 @@ export class Game {
   // ------------------------------------------------------------------ sessions
   /**
    * Creates a fresh default captain save state with starter ship, credits, and tutorial.
-   * @returns {any} Fresh initial player save state.
+   * @returns {PlayerData} Fresh initial player save state.
    */
   fresh() {
     const rep = Object.fromEntries(Object.keys(FACTIONS).map((f) => [f, 0]));
@@ -642,7 +678,7 @@ export class Game {
   }
   /**
    * Handles incoming WebSocket client connection and binds message/close events.
-   * @param {any} sock WebSocket client connection.
+   * @param {ClientSocket} sock WebSocket client connection.
    * @param {string} [ip='?'] Remote client IP address.
    * @returns {void}
    */
@@ -715,16 +751,16 @@ export class Game {
   }
   /**
    * Sends a message payload to a client session if socket is open and backlog is acceptable.
-   * @param {any} s Destination session.
-   * @param {any} m Message object or string to send.
+   * @param {Session | import('./contracts.js').CommandSession} s Destination session.
+   * @param {string | Record<string, unknown>} m Message object or string to send.
    * @returns {void}
    */
   send(s, m) {
-    if (s.sock.open && s.sock.backlog < 4e6) s.sock.send(m);
+    if ('sock' in s && s.sock && s.sock.open && s.sock.backlog < 4e6) s.sock.send(m);
   }
   /**
    * Sends a transient toast banner message to the player's UI.
-   * @param {any} s Recipient session.
+   * @param {Session | import('./contracts.js').CommandSession} s Recipient session.
    * @param {string} msg Notification banner message text.
    * @returns {void}
    */
@@ -733,7 +769,7 @@ export class Game {
   }
   /**
    * Broadcasts a JSON message to all authenticated sessions matching an optional predicate.
-   * @param {any} m Message payload to broadcast.
+   * @param {string | Record<string, unknown>} m Message payload to broadcast.
    * @param {((s: Session) => boolean)} [filter] Optional predicate to filter sessions.
    * @returns {void}
    */
@@ -750,7 +786,7 @@ export class Game {
   }
   /**
    * Sends full updated player state ('you' packet) to client session.
-   * @param {any} s Player session.
+   * @param {Session | import('./contracts.js').CommandSession} s Player session.
    * @returns {void}
    */
   you(s) {
@@ -836,7 +872,7 @@ export class Game {
   /**
    * Finds the player account owning a claimable station site hull.
    * @param {string} id Stellar station site ID.
-   * @returns {any | null} Player record of owner, or null if unclaimed.
+   * @returns {PlayerData | null} Player record of owner, or null if unclaimed.
    */
   siteOwner(id) {
     const k = this.db.world.sites[id];
@@ -856,7 +892,7 @@ export class Game {
   }
   /**
    * Checks whether player owns the station hull at stellar body p.
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @param {StellarBody} p Stellar body.
    * @returns {boolean} True if player owns this station site.
    */
@@ -900,7 +936,7 @@ export class Game {
   // 2.0.3: cargo carried for jobs takes up real hold space
   /**
    * Calculates total cargo tonnage allocated to active delivery and smuggling jobs.
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @returns {number} Cargo space currently allocated to active cargo and smuggling missions.
    */
   jobCargo(d) {
@@ -910,7 +946,7 @@ export class Game {
   }
   /**
    * Calculates total hold space currently used by commodities and job cargo.
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @returns {number} Total cargo hold tonnage used by trade commodities and mission cargo.
    */
   holdUsed(d) {
@@ -918,7 +954,7 @@ export class Game {
   }
   /**
    * Calculates passenger berths occupied by active passenger missions.
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @returns {number} Passenger berths occupied by active passenger missions.
    */
   jobBunks(d) {
@@ -927,7 +963,7 @@ export class Game {
   // Check the actual destination loadout for swaps; purchases use the stock loadout.
   /**
    * Checks if candidate hull or ship loadout can accommodate current cargo, missions, and passengers.
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @param {number | {hull: number, outfits: Record<string, number>}} hullOrShip Candidate ship hull ID or loadout.
    * @param {boolean} [goods=true] Whether to include commodities in calculation.
    * @returns {string | null} Failure explanation reason, or null if ship fits.
@@ -1000,7 +1036,7 @@ export class Game {
   }
   /**
    * Checks whether a captain qualifies for newcomer protection (station below Station Tier 3).
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @returns {boolean} True if player qualifies for newcomer protection.
    */
   newcomer(d) {
@@ -1026,7 +1062,7 @@ export class Game {
   }
   /**
    * Appends an entry to the captain's log history (capped at 200 entries).
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @param {string} text Entry text to append.
    * @returns {void}
    */
@@ -1038,7 +1074,7 @@ export class Game {
   // Fixed routes; authentication, flood and activity gates remain in onMessage.
   /**
    * Builds the message router table binding route actions to feature services and handlers.
-   * @returns {any} Initialized message registry dispatcher.
+   * @returns {import('./message-registry.js').MessageRegistry} Initialized message registry dispatcher.
    */
   createMessageHandlers() {
     return createMessageRegistry([
@@ -1047,7 +1083,7 @@ export class Game {
         /**
          * Dispatches combat assist autopilot mode command.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.combatAssist.command(s, m);
@@ -1058,7 +1094,7 @@ export class Game {
         /**
          * Processes raw ship flight controls (thrust, turn, afterburner, weapons fire).
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           if (
@@ -1086,7 +1122,7 @@ export class Game {
         /**
          * Selects or clears current combat target entity.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           const d = s.data;
@@ -1104,7 +1140,7 @@ export class Game {
         /**
          * Skips career tutorial guide to completion.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           const d = s.data;
@@ -1120,7 +1156,7 @@ export class Game {
         /**
          * Requests landing at target stellar body.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.combatAssist.stop(s, 'Travel or boarding');
@@ -1133,7 +1169,7 @@ export class Game {
         /**
          * Requests launch from currently docked stellar body into space.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.depart(s);
@@ -1145,7 +1181,7 @@ export class Game {
         /**
          * Initiates hyperjump to connected system.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.combatAssist.stop(s, 'Travel or boarding');
@@ -1158,7 +1194,7 @@ export class Game {
         /**
          * Executes commodity buy or sell transaction at docked market.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.trade(s, m.cid, m.qty | 0);
@@ -1170,7 +1206,7 @@ export class Game {
         /**
          * Purchases a ship from shipyard for flagship or hangar storage.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           if (m.store) this.features.docks.buyToHangar(s, m.hull | 0);
@@ -1183,7 +1219,7 @@ export class Game {
         /**
          * Dispatches drydock operations (ship loadouts, wing assignments).
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.docks.docksOp(s, m);
@@ -1195,7 +1231,7 @@ export class Game {
         /**
          * Abandons an active story quest.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           const d = s.data;
@@ -1212,7 +1248,7 @@ export class Game {
         /**
          * Purchases or sells ship outfits and ammunition.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.outfit(s, m.id | 0, m.n | 0);
@@ -1224,7 +1260,7 @@ export class Game {
         /**
          * Accepts mission from stellar job board.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.accept(s, m.id);
@@ -1236,7 +1272,7 @@ export class Game {
         /**
          * Abandons an active mission.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           const d = s.data;
@@ -1269,7 +1305,7 @@ export class Game {
         /**
          * Performs Personal Station operations (claim, upgrade, refinery, research, relocate).
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.station(s, m);
@@ -1281,7 +1317,7 @@ export class Game {
         /**
          * Purchases or sells engineering materials at station or commodity hub.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.buyMat(s, m.mat, m.grade | 0, m.n | 0);
@@ -1293,7 +1329,7 @@ export class Game {
         /**
          * Renames current flagship.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           const d = s.data;
@@ -1310,7 +1346,7 @@ export class Game {
         /**
          * Adds a custom captain's log note entry.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           const d = s.data;
@@ -1326,7 +1362,7 @@ export class Game {
         /**
          * Sends chat message to system, global, or Armada channels.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.chat(s, m);
@@ -1338,7 +1374,7 @@ export class Game {
         /**
          * Performs bridge officer assignments, recruitment, and promotions.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.hangar.officerOp(s, m);
@@ -1350,7 +1386,7 @@ export class Game {
         /**
          * Dispatches or manages automated trade and mining shuttles.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.hangar.shuttleOp(s, m);
@@ -1362,7 +1398,7 @@ export class Game {
         /**
          * Manages hangar ship storage and swap operations.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.hangar.dockOp(s, m);
@@ -1374,7 +1410,7 @@ export class Game {
         /**
          * Boards disabled enemy ship or performs rescue operation.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.combatAssist.stop(s, 'Travel or boarding');
@@ -1387,7 +1423,7 @@ export class Game {
         /**
          * Performs ship specialization tier upgrades and modification.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.specialists.specOp(s, m);
@@ -1399,7 +1435,7 @@ export class Game {
         /**
          * Performs co-op Armada formation, invites, and group commands.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.coop.armadaOp(s, m);
@@ -1411,7 +1447,7 @@ export class Game {
         /**
          * Initiates survival holdout wave combat event.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.hostile.holdoutStart(s);
@@ -1423,7 +1459,7 @@ export class Game {
         /**
          * Accepts main storyline progression chapter.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.story.storyAccept(s, m);
@@ -1435,7 +1471,7 @@ export class Game {
         /**
          * Dispatches social operations: friend requests, direct messages, blocks.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.coop.socialOp(s, m);
@@ -1447,7 +1483,7 @@ export class Game {
         /**
          * Conducts secure station-to-station cargo and credit trade between captains.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.coop.tradeOp(s, m);
@@ -1459,7 +1495,7 @@ export class Game {
         /**
          * Initiates or accepts formal non-lethal captain duel challenge.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.coop.duelOp(s, m);
@@ -1471,7 +1507,7 @@ export class Game {
         /**
          * Claims milestone reward for faction war front goal.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.fronts.claimGoal(s, m);
@@ -1483,7 +1519,7 @@ export class Game {
         /**
          * Purchases items from faction front milestone store.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.fronts.storeBuy(s, m);
@@ -1495,7 +1531,7 @@ export class Game {
         /**
          * Dispatches frontier planet colonization and outpost development operations.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.frontier.colonyOp(s, m);
@@ -1507,7 +1543,7 @@ export class Game {
         /**
          * Enters matchmaking queue or manages combat arena operations.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.frontier.arenaOp(s, m);
@@ -1519,7 +1555,7 @@ export class Game {
         /**
          * Exchanges faction victory tokens and currencies.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.frontier.exchangeOp(s, m);
@@ -1531,7 +1567,7 @@ export class Game {
         /**
          * Requests community competitive leaderboard data.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.send(s, {
@@ -1547,7 +1583,7 @@ export class Game {
         /**
          * Requests public captain career and combat profile.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.send(s, { t: 'profile', p: this.features.frontier.profile(m.name) });
@@ -1559,7 +1595,7 @@ export class Game {
         /**
          * Responds to client latency measurement ping with pong.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.send(s, { t: 'pong', c: m.c });
@@ -1571,7 +1607,7 @@ export class Game {
         /**
          * Initiates radio comms hail to target stellar or ship.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.hail.hail(s, m);
@@ -1584,7 +1620,7 @@ export class Game {
         /**
          * Selects dialogue conversation choice during active radio hail.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.hail.hailOpt(s, m);
@@ -1596,7 +1632,7 @@ export class Game {
         /**
          * Issues fleet command order to escort wingmates.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           if (s.ent) {
@@ -1613,7 +1649,7 @@ export class Game {
         /**
          * Jettisons cargo into space to lighten ship or distract raiders.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.fleetcmd.jettison(s, m.cid, m.n | 0);
@@ -1625,7 +1661,7 @@ export class Game {
         /**
          * Requests status payload of active AI rival captains.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           const d = s.data;
@@ -1638,7 +1674,7 @@ export class Game {
         /**
          * Purchases illicit contraband from syndicate black market.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.syndicate.bmBuy(s, m.id);
@@ -1650,7 +1686,7 @@ export class Game {
         /**
          * Accepts faction campaign story arc.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.arcs.arcAccept(s, m.fac);
@@ -1662,7 +1698,7 @@ export class Game {
         /**
          * Claims syndicate crime tier promotion.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.syndicate.promote(s, m.id);
@@ -1674,7 +1710,7 @@ export class Game {
         /**
          * Dispatches lower deck syndicate crew operations.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.syndicate.lowerDeck(s, m);
@@ -1686,7 +1722,7 @@ export class Game {
         /**
          * Performs Syndicate bank loan borrowing and repayment.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           this.features.syndicate.bankOp(s, m);
@@ -1698,7 +1734,7 @@ export class Game {
         /**
          * Toggles solo play game pause state.
          * @param {Session} s Player session.
-         * @param {any} m Message payload.
+         * @param {Record<string, unknown>} m Message payload.
          */
         (s, m) => {
           if (this.solo && [...this.sessions.values()].filter((x) => x.data).length === 1) {
@@ -1714,7 +1750,7 @@ export class Game {
   /**
    * Ingests, rate-limits, authenticates, and dispatches an incoming client message.
    * @param {Session} s Source session.
-   * @param {any} m Incoming parsed client message.
+   * @param {Record<string, unknown>} m Incoming parsed client message.
    * @returns {void}
    */
   onMessage(s, m) {
@@ -2403,7 +2439,7 @@ export class Game {
   /**
    * Handles player scooping floating salvage canister, ore chunk, or credits.
    * @param {PlayerReference} pref Player scooping loot.
-   * @param {any} it Loot item payload.
+   * @param {import('./space.js').LootItem} it Loot item payload.
    * @returns {boolean | void} Returns false if cargo hold full when mining ore.
    */
   onLoot(pref, it) {
@@ -2598,7 +2634,7 @@ export class Game {
   /**
    * Lists upgrade materials for sale at a stellar body based on faction specialization.
    * @param {StellarBody} p Stellar body.
-   * @param {any} [d] Player data.
+   * @param {PlayerData} [d] Player data.
    * @returns {Array<{mat: string, grade: number, price: number}>} Upgrade materials available.
    */
   matsFor(p, d) {
@@ -2651,7 +2687,7 @@ export class Game {
   /**
    * Compiles list of ship hulls available for purchase at shipyard.
    * @param {StellarBody} p Stellar port.
-   * @param {any} [d] Player data.
+   * @param {PlayerData} [d] Player data.
    * @returns {number[] | null} Array of hull IDs for sale, or null.
    */
   yard(p, d) {
@@ -2679,7 +2715,7 @@ export class Game {
   }
   /**
    * Calculates credit trade-in value for captain's current ship and outfits (50% value).
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @returns {number} Credit trade-in value of current ship and installed outfits.
    */
   tradeIn(d) {
@@ -2721,7 +2757,7 @@ export class Game {
   /**
    * Compiles list of ship outfits available for purchase at outfitter.
    * @param {StellarBody} p Stellar port.
-   * @param {any} [d] Player data.
+   * @param {PlayerData} [d] Player data.
    * @returns {number[] | null} Array of outfit IDs for sale, or null.
    */
   outfitter(p, d) {
@@ -2809,7 +2845,7 @@ export class Game {
   /**
    * Generates procedural job board mission offers for a stellar port.
    * @param {StellarBody} p Stellar port.
-   * @param {any} d Player data.
+   * @param {PlayerData} d Player data.
    * @returns {Mission[]} Available job board missions.
    */
   offers(p, d) {
@@ -3024,7 +3060,7 @@ export class Game {
   // ------------------------------------------------------------------ Quantum Station (each captain's own)
   /**
    * Updates Personal Station timers: refinery generation, active research, and construction.
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @returns {void}
    */
   checkStation(d) {
@@ -3051,7 +3087,7 @@ export class Game {
   }
   /**
    * Verifies if player has required material quantities.
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @param {Array<[string, number, number]>} mats Required materials tuple [name, grade, count].
    * @returns {boolean} True if inventory satisfies all material requirements.
    */
@@ -3060,7 +3096,7 @@ export class Game {
   }
   /**
    * Deducts specified material quantities from player inventory.
-   * @param {any} d Player save data.
+   * @param {PlayerData} d Player save data.
    * @param {Array<[string, number, number]>} mats Materials to consume [name, grade, count].
    * @returns {void}
    */
@@ -3070,7 +3106,7 @@ export class Game {
   /**
    * Processes Personal Station operations: claiming derelicts, upgrades, refinery, and relocation.
    * @param {Session} s Player session.
-   * @param {any} m Station operation payload.
+   * @param {Record<string, unknown>} m Station operation payload.
    * @returns {void}
    */
   station(s, m) {

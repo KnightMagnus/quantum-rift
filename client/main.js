@@ -1301,7 +1301,7 @@ function toWorld(cx, cy) {
  * Identifies the nearest interactive ship or stellar body under the given world coordinates.
  * @param {number} wx World X coordinate
  * @param {number} wy World Y coordinate
- * @returns {{ ship?: ClientEntity, stellar?: any } | null} Picked target or null
+ * @returns {{ ship?: ClientEntity, stellar?: import('../server/game.js').StellarBody } | null} Picked target or null
  */
 function pickAt(wx, wy) {
   if (!G.view || G.landed) return null;
@@ -1331,7 +1331,7 @@ function pickAt(wx, wy) {
 }
 /**
  * Determines the appropriate mouse cursor style based on hover target.
- * @param {{ ship?: ClientEntity, stellar?: any } | null} h Picked object under cursor
+ * @param {{ ship?: ClientEntity, stellar?: import('../server/game.js').StellarBody } | null} h Picked object under cursor
  * @returns {string} CSS cursor identifier class suffix
  */
 function cursorFor(h) {

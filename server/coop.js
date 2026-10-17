@@ -60,7 +60,7 @@ export const CoopOperations = {
   // ------------------------------------------------------------------ start-up and save migration
   /**
    * Initializes co-op state on the world database, migrates legacy 0.6 fleets, and cleans obsolete tables.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @returns {void}
    */
   coopInit() {
@@ -94,8 +94,8 @@ export const CoopOperations = {
   },
   /**
    * Migrates a player save to version 2.6, refunding retired refits, Armada escorts, and directives.
-   * @this {any}
-   * @param {Record<string, any>} d - Player save data.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} d - Player save data.
    * @returns {void}
    */
   coopMigrate(d) {
@@ -196,9 +196,9 @@ export const CoopOperations = {
   // ------------------------------------------------------------------ helpers
   /**
    * Finds an active player session matching the specified captain name.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {string} name - Captain name to look up.
-   * @returns {Record<string, any>|null} Active session or null if not online.
+   * @returns {Record<string, unknown> | null} Active session or null if not online.
    */
   sessionOf(name) {
     const k = this.db.key(name);
@@ -207,9 +207,9 @@ export const CoopOperations = {
   },
   /**
    * Ensures social data structures (friends, requests, blocks, mailbox) exist on a player profile.
-   * @this {any}
-   * @param {Record<string, any>} d - Player profile data.
-   * @returns {Record<string, any>} The initialized player profile data.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} d - Player profile data.
+   * @returns {Record<string, unknown>} The initialized player profile data.
    */
   socialInit(d) {
     d.friends = d.friends || [];
@@ -221,7 +221,7 @@ export const CoopOperations = {
   },
   /**
    * Checks if a case-insensitive captain name is present in a list of names.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {string[]} list - List of captain names.
    * @param {string} name - Captain name to check.
    * @returns {boolean} True if the name is found in the list.
@@ -232,7 +232,7 @@ export const CoopOperations = {
   },
   /**
    * Removes all entries matching a captain name from a list of names.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {string[]} list - List of captain names.
    * @param {string} name - Captain name to remove.
    * @returns {string[]} New list with matching names removed.
@@ -243,8 +243,8 @@ export const CoopOperations = {
   },
   /**
    * Checks whether a captain is blocked by the target player profile.
-   * @this {any}
-   * @param {Record<string, any>} [d] - Player profile data.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} [d] - Player profile data.
    * @param {string} name - Captain name to check against blocks.
    * @returns {boolean} True if the captain is blocked.
    */
@@ -253,7 +253,7 @@ export const CoopOperations = {
   },
   /**
    * Determines the online, away, or offline status of a captain.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {string} name - Captain name to check.
    * @returns {'online'|'away'|'offline'} Captain presence status.
    */
@@ -264,7 +264,7 @@ export const CoopOperations = {
   },
   /**
    * Sends updated player state payload to an active captain session if online.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {string} name - Captain name to refresh.
    * @returns {void}
    */
@@ -274,7 +274,7 @@ export const CoopOperations = {
   },
   /**
    * Pushes the latest social and Armada payload to an active captain session.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {string} name - Captain name to push social data to.
    * @returns {void}
    */

@@ -36,7 +36,7 @@ const comName = (id) => (COMMODITIES.find((c) => c.id === id) || { name: id }).n
 export const FrontierOperations = {
   /**
    * Initialize world colonies, player market orders, and arena/wave structures.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @returns {void}
    */
   frontierInit() {
@@ -52,8 +52,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ bonuses: + ship mastery tier + colony buildings
   /**
    * Calculate aggregated bonuses from ship mastery, colony buildings, and survey ship perks.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {Record<string, number>} Aggregated stat bonuses.
    */
   bonus(d) {
@@ -67,8 +67,8 @@ export const FrontierOperations = {
   },
   /**
    * Send a system notification message to a player session.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} s - Player session.
    * @param {string} title - Notification title text.
    * @param {string} body - Notification body text.
    * @returns {void}
@@ -79,8 +79,8 @@ export const FrontierOperations = {
 
   /**
    * Build world telemetry payload augmented with active colony ownership names.
-   * @this {any}
-   * @returns {Record<string, any>} World telemetry payload.
+   * @this {Record<string, unknown>}
+   * @returns {Record<string, unknown>} World telemetry payload.
    */
   worldPayload() {
     const w = this.frontsWorldPayload(),
@@ -95,8 +95,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ mastery
   /**
    * Increment ship mastery points and award tier level-ups and elite trim.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} s - Player session.
    * @param {number} amount - Mastery points to add.
    * @returns {void}
    */
@@ -121,8 +121,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ colonies
   /**
    * Determine whether a stellar body is eligible for player colonization.
-   * @this {any}
-   * @param {{kind?: string, site?: any, svc?: string, system: string} | null} p - Stellar body.
+   * @this {Record<string, unknown>}
+   * @param {{kind?: string, site?: boolean | Record<string, unknown>, svc?: string, system: string} | null} p - Stellar body.
    * @returns {boolean} True if colonizable.
    */
   colonizable(p) {
@@ -136,9 +136,9 @@ export const FrontierOperations = {
   },
   /**
    * Retrieve all colonies owned by the player.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
-   * @returns {Array<[string, Record<string, any>]>} List of [stellarId, colony] pairs.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @returns {Array<[string, Record<string, unknown>]>} List of [stellarId, colony] pairs.
    */
   coloniesOf(d) {
     const k = this.db.key(d.name);
@@ -146,8 +146,8 @@ export const FrontierOperations = {
   },
   /**
    * Compute maximum allowed colonies for player based on personal station Station Tier.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {number} Maximum colonies.
    */
   colonyMax(d) {
@@ -155,8 +155,8 @@ export const FrontierOperations = {
   },
   /**
    * Aggregate active stat buffs produced by buildings across all player-owned colonies.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {Record<string, number>} Aggregated colony buff map.
    */
   colonyBuffs(d) {
@@ -173,8 +173,8 @@ export const FrontierOperations = {
   },
   /**
    * Accrue passive production (credits, commodities) in colony storage based on elapsed time.
-   * @this {any}
-   * @param {Record<string, any>} c - Colony data structure.
+   * @this {Record<string, unknown>}
+   * @param {Record<string, unknown>} c - Colony data structure.
    * @returns {void}
    */
   accrue(c) {
@@ -194,10 +194,10 @@ export const FrontierOperations = {
   },
   /**
    * Build network telemetry payload describing colony status at a stellar body.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {{id: string} | null} p - Stellar body.
-   * @param {Record<string, any>} d - Saved player data.
-   * @returns {Record<string, any> | null} Colony telemetry payload, or open descriptor, or null.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @returns {Record<string, unknown> | null} Colony telemetry payload, or open descriptor, or null.
    */
   colonyPayload(p, d) {
     if (!p) return null;
@@ -216,8 +216,8 @@ export const FrontierOperations = {
   },
   /**
    * Handle planetary colony operations (founding, building, demolishing, upgrading, collecting, abandoning).
-   * @this {any}
-   * @param {any} s - Player session.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} s - Player session.
    * @param {{op: string, kind?: string, i?: number}} m - Colony action payload.
    * @returns {void}
    */
@@ -337,8 +337,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ station defense
   /**
    * Calculate personal station defense rating from turret level and Station Tier rating.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {number} Defense rating score.
    */
   defenseRating(d) {
@@ -351,8 +351,8 @@ export const FrontierOperations = {
   },
   /**
    * Upgrade personal station defense turrets by one level.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
   defenseUpgrade(s) {
@@ -369,8 +369,8 @@ export const FrontierOperations = {
   },
   /**
    * Determine prospective NPC raid strength attacking player station in a time window.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @param {number} win - Time window index.
    * @returns {number} Raid strength score.
    */
@@ -382,8 +382,8 @@ export const FrontierOperations = {
   },
   /**
    * Check whether personal station is due for an incoming raid encounter.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
   raidCheck(s) {
@@ -404,8 +404,8 @@ export const FrontierOperations = {
   },
   /**
    * Spawn a live combat wave of hostile raiders targeting the player's personal station.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} s - Player session.
    * @param {number} strength - Calculated raid strength.
    * @returns {void}
    */
@@ -444,8 +444,8 @@ export const FrontierOperations = {
   },
   /**
    * Track destroyed raid wave entities and resolve victory if all raiders are eliminated.
-   * @this {any}
-   * @param {Record<string, any>} e - Killed ship entity.
+   * @this {Record<string, unknown>}
+   * @param {import('./space.js').Entity} e - Killed ship entity.
    * @returns {void}
    */
   onWaveKill(e) {
@@ -460,7 +460,7 @@ export const FrontierOperations = {
   },
   /**
    * Periodic check on active defense waves, cleaning up expired raids.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @returns {void}
    */
   waveTick() {
@@ -479,8 +479,8 @@ export const FrontierOperations = {
   },
   /**
    * Resolve outcomes of a station raid, awarding salvage on defense or deducting crates on breach.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} s - Player session.
    * @param {number} strength - Raid strength rating.
    * @param {boolean} foughtOff - True if player actively destroyed the wave.
    * @returns {void}
@@ -532,8 +532,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ the arena
   /**
    * Handle arena queue join and leave operations.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} s - Player session.
    * @param {{op: 'queue' | 'leave', mode: '1v1' | '2v2' | '4v4'}} m - Arena action payload.
    * @returns {void}
    */
@@ -563,10 +563,10 @@ export const FrontierOperations = {
   },
   /**
    * Build arena status payload including queue size and rating.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
-   * @param {any} s - Player session.
-   * @returns {Record<string, any>} Arena status descriptor.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {import('./game.js').Session} s - Player session.
+   * @returns {Record<string, unknown>} Arena status descriptor.
    */
   arenaPayload(d, s) {
     d.arena = d.arena || { rating: ARENA.start, w: 0, l: 0 };
@@ -579,9 +579,9 @@ export const FrontierOperations = {
   },
   /**
    * Attempt to construct an arena match from queued players for a given mode.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {'1v1' | '2v2' | '4v4'} mode - Arena combat mode.
-   * @returns {Record<string, any> | null} Created match descriptor or null if not enough players.
+   * @returns {Record<string, unknown> | null} Created match descriptor or null if not enough players.
    */
   tryMatch(mode) {
     const n = ARENA.modes[mode],
@@ -644,9 +644,9 @@ export const FrontierOperations = {
   // a captain leaves the arena: back to where they queued, ship repaired, no insurance fee
   /**
    * Return a captain from an arena match to their origin station.
-   * @this {any}
-   * @param {any} o - Player session.
-   * @param {Record<string, any>} match - Arena match descriptor.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} o - Player session.
+   * @param {Record<string, unknown>} match - Arena match descriptor.
    * @param {boolean} died - True if ship was knocked out in combat.
    * @returns {void}
    */
@@ -671,9 +671,9 @@ export const FrontierOperations = {
   },
   /**
    * Handle ship destruction inside the arena, free repair, and victory check.
-   * @this {any}
-   * @param {any} o - Knocked-out player session.
-   * @param {Record<string, any>} space - Space simulation instance.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} o - Knocked-out player session.
+   * @param {import('./space.js').Space} space - Space simulation instance.
    * @returns {boolean} True if entity was in an arena match.
    */
   onArenaDeath(o, space) {
@@ -689,8 +689,8 @@ export const FrontierOperations = {
   },
   /**
    * Check victory conditions for an active arena match and award Elo ratings and credits.
-   * @this {any}
-   * @param {Record<string, any>} match - Arena match descriptor.
+   * @this {Record<string, unknown>}
+   * @param {Record<string, unknown>} match - Arena match descriptor.
    * @returns {void}
    */
   arenaCheck(match) {
@@ -751,7 +751,7 @@ export const FrontierOperations = {
   },
   /**
    * Periodic tick check across all arena matches and matchmaker queues.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @returns {void}
    */
   arenaTick() {
@@ -762,8 +762,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ the exchange (player market): escrowed orders, matched by price
   /**
    * Handle player exchange operations (place, cancel, collect storage, credit transfer).
-   * @this {any}
-   * @param {any} s - Player session.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').Session} s - Player session.
    * @param {{op: string, side?: string, qty?: number, price?: number, kind?: string, mat?: string, grade?: number, cid?: string, id?: number, to?: string, n?: number}} m - Exchange action payload.
    * @returns {void}
    */
@@ -869,7 +869,7 @@ export const FrontierOperations = {
   },
   /**
    * Format display name of an exchange order item (material grade or commodity).
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {{kind: string, mat?: string, grade?: number, cid?: string}} it - Exchange item specification.
    * @returns {string} Formatted item name.
    */
@@ -878,7 +878,7 @@ export const FrontierOperations = {
   },
   /**
    * Compare two exchange items for type, material, grade, or commodity identity.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {{kind: string, mat?: string, grade?: number, cid?: string}} a - First item.
    * @param {{kind: string, mat?: string, grade?: number, cid?: string}} b - Second item.
    * @returns {boolean} True if items match.
@@ -891,7 +891,7 @@ export const FrontierOperations = {
   },
   /**
    * Deliver purchased goods to a buyer (materials directly, commodities to exchange storage).
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {string} name - Buyer captain name.
    * @param {{kind: string, mat?: string, grade?: number, cid?: string}} it - Purchased item.
    * @param {number} qty - Quantity purchased.
@@ -909,7 +909,7 @@ export const FrontierOperations = {
   },
   /**
    * Credit payment amount to a seller captain's account.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {string} name - Captain name.
    * @param {number} n - Credit amount.
    * @returns {void}
@@ -923,8 +923,8 @@ export const FrontierOperations = {
   },
   /**
    * Refund escrowed credits or inventory items for a cancelled exchange order.
-   * @this {any}
-   * @param {Record<string, any>} o - Order record.
+   * @this {Record<string, unknown>}
+   * @param {Record<string, unknown>} o - Order record.
    * @returns {void}
    */
   refundOrder(o) {
@@ -933,8 +933,8 @@ export const FrontierOperations = {
   },
   /**
    * Match an incoming exchange order against the open order book.
-   * @this {any}
-   * @param {Record<string, any>} order - Incoming order record.
+   * @this {Record<string, unknown>}
+   * @param {Record<string, unknown>} order - Incoming order record.
    * @returns {void}
    */
   matchOrder(order) {
@@ -981,9 +981,9 @@ export const FrontierOperations = {
   },
   /**
    * Build exchange order book summary and player-specific order state for client.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
-   * @returns {Record<string, any>} Exchange book payload.
+   * @this {Record<string, unknown>}
+   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @returns {Record<string, unknown>} Exchange book payload.
    */
   exchangePayload(d) {
     const book = {};
@@ -1008,7 +1008,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ leaderboards and profiles
   /**
    * Retrieve top 20 rankings for a given leaderboard category.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {string} cat - Leaderboard category ('earned', 'kills', 'mined', 'arena', 'station', 'colonies', 'mastery').
    * @returns {Array<{name: string, fleet: null, v: number}>} Top leaderboard entries.
    */
@@ -1034,9 +1034,9 @@ export const FrontierOperations = {
   },
   /**
    * Fetch public captain profile overview by captain name.
-   * @this {any}
+   * @this {Record<string, unknown>}
    * @param {string} name - Captain player name.
-   * @returns {Record<string, any> | null} Captain profile record or null if not found.
+   * @returns {Record<string, unknown> | null} Captain profile record or null if not found.
    */
   profile(name) {
     const p = this.db.get(String(name || ''));

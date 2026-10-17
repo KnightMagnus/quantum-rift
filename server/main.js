@@ -34,7 +34,7 @@ const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf
 
 /**
  * Static game asset catalog loaded from shared/assets.json.
- * @type {any}
+ * @type {import('../shared/rules.js').GameAssets}
  */
 const A = JSON.parse(fs.readFileSync(path.join(ROOT, 'shared', 'assets.json'), 'utf8'));
 

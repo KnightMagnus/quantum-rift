@@ -10,13 +10,13 @@ import crypto from 'node:crypto';
  * @property {string} salt Cryptographic salt in hexadecimal.
  * @property {string} hash Scrypt password hash in hexadecimal.
  * @property {number} created Account creation timestamp in milliseconds.
- * @property {Record<string, any>} [key: string] Additional save properties and player progress fields.
+ * @property {Record<string, unknown>} [key: string] Additional save properties and player progress fields.
  */
 
 /**
  * Persisted galaxy world state data.
  * @typedef {object} WorldData
- * @property {Record<string, any>} sites World sites and player claim data.
+ * @property {Record<string, unknown>} sites World sites and player claim data.
  */
 
 /**
@@ -98,7 +98,7 @@ export class DB {
    * Creates, persists, and returns a new player account with a hashed password and initial save data.
    * @param {string} name Captain name.
    * @param {string} pass Plaintext password.
-   * @param {Record<string, any>} fresh Initial player state and save properties.
+   * @param {import('./game.js').PlayerData | Record<string, unknown>} fresh Initial player state and save properties.
    * @returns {PlayerAccount} Newly created player account record.
    */
   create(name, pass, fresh) {

@@ -22,7 +22,7 @@
 
 /**
  * HTML-escapes a string safely for insertion into template strings.
- * @param {any} s Input value
+ * @param {string | number | boolean | null | undefined} s Input value
  * @returns {string} Escaped HTML string
  */
 const esc = (s) =>
@@ -122,7 +122,7 @@ async function nowPlaying(id, my) {
 
 /**
  * Asynchronously loads the Hls.js library if not already present on window.
- * @returns {Promise<any>}
+ * @returns {Promise<void>}
  */
 function loadHls() {
   if (window.Hls) return Promise.resolve(window.Hls);

@@ -44,7 +44,7 @@ import { credits } from '/shared/rules.js';
 
 /**
  * HTML-escapes a string safely for insertion into template strings.
- * @param {any} s Input value
+ * @param {string | number | boolean | null | undefined} s Input value
  * @returns {string} Escaped HTML string
  */
 const esc = (s) =>
@@ -74,7 +74,7 @@ const res = (k, n) =>
 
 /**
  * Renders the full Specialists screen at the Personal Station or docked view.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @param {boolean} [interactive] Whether interactive buttons are enabled
  * @returns {string} HTML markup
  */

@@ -147,7 +147,7 @@ export const roleTag = (H) => {
 };
 /**
  * Escapes unsafe characters for HTML element text or attributes.
- * @param {any} s Input string or value
+ * @param {string | number | boolean | null | undefined} s Input string or value
  * @returns {string} HTML-escaped string
  */
 const esc = (s) =>
@@ -158,8 +158,8 @@ const esc = (s) =>
 let G, send;
 /**
  * Binds DOM event listeners and initializes UI state managers with global game state.
- * @param {Record<string, any>} g Global client game state
- * @param {(msg: Record<string, any>) => void} sender Network send dispatch function
+ * @param {Record<string, unknown>} g Global client game state
+ * @param {(msg: Record<string, unknown>) => void} sender Network send dispatch function
  * @returns {void}
  */
 export function initUI(g, sender) {
@@ -459,7 +459,7 @@ const LAND_SCENES = {
 };
 /**
  * Selects the landscape illustration image key for a landed planetary or station body.
- * @param {Record<string, any>} p Landed stellar body definition
+ * @param {import('../server/game.js').StellarBody} p Landed stellar body definition
  * @returns {string} Image asset key name
  */
 function landScene(p) {

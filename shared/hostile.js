@@ -72,7 +72,7 @@ export function winOdds(mine, theirs) {
 
 /**
  * Computes a player's effective combat power based on hull, bonuses, and escort wingmates.
- * @param {any} A - Game assets collection containing ship hull definitions.
+ * @param {import('./rules.js').GameAssets} A - Game assets collection containing ship hull definitions.
  * @param {number|string} hull - Player's current ship hull ID.
  * @param {HostileBonus} [bonus={}] - Research and crew percentage bonuses.
  * @param {Array<number|string>} [escorts=[]] - Hull IDs of escort / wingmate ships.

@@ -55,7 +55,7 @@ import { credits } from '/shared/rules.js';
 
 /**
  * HTML-escapes a string safely for insertion into template strings.
- * @param {any} s Input value
+ * @param {string | number | boolean | null | undefined} s Input value
  * @returns {string} Escaped HTML string
  */
 const esc = (s) =>
@@ -67,7 +67,7 @@ const esc = (s) =>
 /**
  * Shorthand helper for document.getElementById.
  * @param {string} id Element ID
- * @returns {any} DOM element or null
+ * @returns {HTMLElement | null} DOM element or null
  */
 const $ = (id) => document.getElementById(id);
 
@@ -96,8 +96,8 @@ let G, send, toast, ask, plot;
 
 /**
  * Initializes the Co-op subsystem, event listeners, and helper callbacks.
- * @param {any} g Shared game state object
- * @param {(msg: any) => void} sender Network send message function
+ * @param {Record<string, unknown>} g Shared game state object
+ * @param {(msg: Record<string, unknown>) => void} sender Network send message function
  * @param {CoopHelpers} helpers UI helper callbacks
  * @returns {void}
  */
@@ -168,7 +168,7 @@ function badge() {
 
 /**
  * Handles inbound real-time social messages from the server (friend changes, DMs, trades, rally calls, follow jumps).
- * @param {any} m Message payload received via WebSocket
+ * @param {Record<string, unknown>} m Message payload received via WebSocket
  * @returns {void}
  */
 export function onCoopMsg(m) {
@@ -256,7 +256,7 @@ export function coopYou() {
 
 /**
  * Checks whether a space entity belongs to an allied Armada member or one of their wingmates.
- * @param {any} e Space entity object
+ * @param {Record<string, unknown>} e Space entity object
  * @returns {boolean} True if entity is an allied Armada captain or wingmate
  */
 export function isAlly(e) {

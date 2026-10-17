@@ -219,7 +219,7 @@ const P = (o) => o;
  * @property {StellarBody[]} stellars - Orbiting planets, stations, and derelict sites.
  * @property {number} danger - Threat level / security rating.
  * @property {string} [gate] - Wormhole destination system if a gateway is present.
- * @property {any[]} [fields] - Asteroid or resource field locations.
+ * @property {Array<{x: number, y: number, r: number, ore: string, rich: number, rocks: number}>} [fields] - Asteroid or resource field locations.
  * @property {string} [desc] - System lore notes.
  */
 
@@ -1188,7 +1188,7 @@ export const FACTION_OUTFITS = {
 };
 /**
  * Custom outfit definitions complementing standard outfits.
- * @type {Array<any>}
+ * @type {Array<import('./rules.js').OutfitAsset>}
  */
 // Generic weapon outfits. Stable weapon IDs keep existing ship loadouts and saves compatible.
 export const EXTRA_OUTFITS = [
@@ -1423,7 +1423,7 @@ for (const o of EXTRA_OUTFITS) o.icon = o.icon || `icons/${o.id}.png`; // 2.5: r
 
 /**
  * Custom weapon asset definitions added by Quantum Rift.
- * @type {Array<any>}
+ * @type {Array<import('./rules.js').WeaponAsset>}
  */
 export const EXTRA_WEAPONS = [
   {

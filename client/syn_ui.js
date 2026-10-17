@@ -63,7 +63,7 @@ import {
 
 /**
  * HTML-escapes a string safely for insertion into template strings.
- * @param {any} s Input value
+ * @param {string | number | boolean | null | undefined} s Input value
  * @returns {string} Escaped HTML string
  */
 const esc = (s) =>
@@ -81,7 +81,7 @@ const cr = (n) => Math.round(n).toLocaleString();
 
 /**
  * Renders the Syndicate standing badge showing current rank and points progress.
- * @param {any} y Player state object
+ * @param {import('../server/game.js').PlayerData | Record<string, unknown>} y Player state object
  * @returns {string} HTML markup
  */
 export function synBadge(y) {
@@ -91,7 +91,7 @@ export function synBadge(y) {
 
 /**
  * Renders the Black Market screen at a Syndicate-affiliated spaceport.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @returns {string} HTML markup
  */
 export function blackMarketHtml(G) {
@@ -112,7 +112,7 @@ export function blackMarketHtml(G) {
 
 /**
  * Renders the Bank of the Rift loan and repayment screen.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @returns {string} HTML markup
  */
 export function bankHtml(G) {
@@ -137,7 +137,7 @@ export function bankHtml(G) {
 
 /**
  * Renders the rank, traits badges, and promotion button for an officer card.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @param {Officer} o Officer instance
  * @param {boolean} [interactive] Whether promotion button is active
  * @returns {string} HTML markup
@@ -166,7 +166,7 @@ export function rankLine(G, o, interactive) {
 
 /**
  * Renders the Lower Deck berths section with passive crew assignment and hiring.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @returns {string} HTML markup
  */
 export function lowerDeckHtml(G) {
@@ -203,7 +203,7 @@ export function lowerDeckHtml(G) {
 
 /**
  * Renders faction arc cards available at the current landing location.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @returns {string} HTML markup
  */
 export function arcCardsHtml(G) {
@@ -219,7 +219,7 @@ export function arcCardsHtml(G) {
 
 /**
  * Computes bunk availability warning for passenger missions.
- * @param {any} G Game state object
+ * @param {Record<string, unknown>} G Game state object
  * @param {PassengerMissionOffer} o Mission offer data
  * @returns {string} Warning text if insufficient bunks, else empty string
  */
