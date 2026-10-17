@@ -5,7 +5,7 @@ import path from 'node:path';
 import { Game } from '../server/game.js';
 import { DB } from '../server/db.js';
 import { SYS } from '../shared/galaxy.js';
-import { landingGuidance } from '../client/landing_autopilot.js';
+import { gatewayGuidance } from '../client/gateway_autopilot.js';
 import { makeLoadout, shipStats, step } from '../shared/rules.js';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-gateway-'));
 try {
@@ -21,12 +21,29 @@ try {
   for (const origin of ['sol', 'coldharbor']) {
     const p = SYS[origin].stellars.find((p) => p.wormhole);
     const st = shipStats(game.A, makeLoadout(game.A, 704));
-    const ship = { x: p.x + 600, y: p.y + 300, vx: 80, vy: -60, a: 2, fuel: st.fuel },
-      state = {};
+    // Near the center, aligned ships keep thrusting regardless of drift speed/direction.
+    for (const vx of [-st.maxSpeed, 0, st.maxSpeed]) {
+      const input = {};
+      gatewayGuidance({ x: p.x + 1, y: p.y, a: -Math.PI / 2, vx, vy: 0 }, st, p, input);
+      assert.equal(input.thrust, 1, 'no speed-dependent arrival slowdown near center');
+      assert.equal(input.turn, 0, 'aim at center, not against drift');
+      assert.equal(input.rev, 0);
+    }
+    const ship = { x: p.x + 600, y: p.y + 300, vx: 80, vy: -60, a: 2, fuel: st.fuel };
     let i = 0;
     for (; i < 3000 && Math.hypot(ship.x - p.x, ship.y - p.y) >= p.r * 0.5; i++) {
       const input = {};
-      landingGuidance(state, ship, st, { ...p, r: 0 }, input);
+      gatewayGuidance(ship, st, p, input);
+      assert.equal(input.rev, 0, 'Gateway never requests retrograde braking');
+      if (
+        Math.abs(
+          Math.atan2(
+            Math.sin(Math.atan2(p.x - ship.x, -(p.y - ship.y)) - ship.a),
+            Math.cos(Math.atan2(p.x - ship.x, -(p.y - ship.y)) - ship.a),
+          ),
+        ) < 0.5
+      )
+        assert.equal(input.thrust, 1, 'aligned approach burns straight through, even at aperture');
       step(ship, st, input);
     }
     assert.ok(i < 3000, 'guidance reaches actual transit aperture');

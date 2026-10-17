@@ -1,3 +1,4 @@
+import { formationTargets, steerFormation, cancelFormation } from './armada-formation.js';
 import { eventideDrain } from '../shared/eventide.js';
 /**
  * @typedef {import('./game.js').Session} Session
@@ -1798,6 +1799,7 @@ export class Space {
       }
     }
     this.game.combatAssist?.resolve(this);
+    const formations = formationTargets(this);
     for (const e of this.ships.values()) {
       if (e.state === 'jumpout') {
         e.jumpT -= DT;
@@ -1816,8 +1818,21 @@ export class Space {
           e.player.lastInput = inp;
           e.inp = inp;
           e.seq = inp.seq;
+          if (inp.navigation) {
+            formations.delete(e.id);
+            e.player.s.armadaFormationTarget = null;
+          }
+          if (
+            formations.has(e.id) &&
+            !inp.navigation &&
+            (inp.thrust || inp.turn || inp.ab || inp.rev || inp.fire1 || inp.fire2)
+          ) {
+            cancelFormation(this.game, e.player.s, 'manual flight or weapons input');
+            formations.delete(e.id);
+          }
         }
       } else this.ai(e);
+      if (formations.has(e.id) && !e.autoCombat) steerFormation(e, formations.get(e.id));
       if (e.player && e.autoCombat) {
         e.inp = {};
         e.fireAt = null;

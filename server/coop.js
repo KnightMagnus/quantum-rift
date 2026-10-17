@@ -332,6 +332,8 @@ export const CoopOperations = {
   coopLogin(s) {
     const d = this.socialInit(s.data);
     s.actT = Date.now();
+    d.armadaFollow = false; // Flight consent never survives reconnects.
+    s.armadaFormationLeader = null;
     if (this.solo) return;
     if (d.armada && !this.db.world.armadas[d.armada]) d.armada = null;
     if (d.mail.length) {
@@ -543,6 +545,7 @@ export const CoopOperations = {
         .filter(([, t]) => t > Date.now())
         .map(([k]) => (this.db.get(k) || { name: k }).name),
       follow: !!d.armadaFollow,
+      followingFlight: !!this.sessionOf(d.name)?.armadaFormationTarget,
       invites,
       max: ARMADA.max,
     };
@@ -685,9 +688,13 @@ export const CoopOperations = {
       }
       case 'follow':
         d.armadaFollow = !!m.on;
+        s.armadaFormationLeader = m.on && A ? A.leader : null;
+        s.armadaFormationTarget = null;
+        s.inputs = [];
+        s.lastInput = {};
         say(
           m.on
-            ? "You will follow the leader's jumps when you are in the same system (autopilot)."
+            ? 'Following in V formation and following jumps. Manual flight or weapons input turns Follow off; Combat Assist takes priority.'
             : 'Follow the leader: off.',
         );
         break;
@@ -700,6 +707,7 @@ export const CoopOperations = {
   armadaLeave(p, A, why) {
     A.members = A.members.filter((n) => this.db.key(n) !== this.db.key(p.name));
     p.armada = null;
+    p.armadaFollow = false;
     this.log(p, `Left the Armada "${A.name}".`);
     this.armadaChat(A, `${p.name} ${why}.`);
     const o = this.sessionOf(p.name);
@@ -1492,7 +1500,10 @@ export const CoopOperations = {
       else if (now - A.emptyT > ARMADA.idleMin * 60000) {
         for (const n of A.members) {
           const p = this.db.get(n);
-          if (p && p.armada === A.id) p.armada = null;
+          if (p && p.armada === A.id) {
+            p.armada = null;
+            p.armadaFollow = false;
+          }
         }
         delete W.armadas[A.id];
         this.db.touch();
