@@ -1,18 +1,26 @@
+import { createHash } from 'node:crypto';
+import {
+  availablePort,
+  evidenceDir,
+  ready,
+  cleanup,
+  failureEvidence,
+} from './helpers/browser-fixture.mjs';
 // Real Solo login, landing UI, departure and complete production flight renderer.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
 import { augmentAssets } from '../shared/rules.js';
 import { SYS, STELLARS } from '../shared/galaxy.js';
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { chromium } = await import('playwright');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-exotic-solo-'));
-const evidence = process.env.RIFT_BROWSER_EVIDENCE || '/tmp/rift-station-landing';
+const evidence = process.env.RIFT_BROWSER_EVIDENCE || evidenceDir('stations');
 fs.mkdirSync(evidence, { recursive: true });
 const A = JSON.parse(fs.readFileSync(path.join(root, 'shared/assets.json')));
 augmentAssets(A);
@@ -49,50 +57,41 @@ for (const id of ports) {
 }
 db.touch();
 db.flush();
-const port = Number(process.env.RIFT_BROWSER_PORT || 18806),
+const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.js'], {
-  cwd: root,
-  env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: path.join(dir, 'data') },
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+const server = spawn(
+  process.execPath,
+  ['--import', path.join(root, 'test/helpers/seed-random.mjs'), 'server/main.js'],
+  {
+    cwd: root,
+    env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: path.join(dir, 'data') },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  },
+);
 const log = fs.createWriteStream(path.join(evidence, 'server.log'));
 server.stdout.pipe(log);
 server.stderr.pipe(log);
-const browser = await chromium.launch({
-  headless: true,
-  executablePath: process.env.CHROMIUM_EXECUTABLE,
-  args: ['--no-sandbox'],
-});
+let browser;
 try {
-  for (let i = 0; i < 100; i++) {
-    try {
-      if ((await fetch(origin + '/api/status')).ok) break;
-    } catch {}
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  // Record the actual former startup landing: hub was outside the station branch.
-  if (!process.env.RIFT_STATION_SKIP_BASELINE) {
-    const baseline = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-    await baseline.route('**/ui.js', (route) =>
-      route.fulfill({
-        contentType: 'text/javascript',
-        body: execFileSync('git', ['show', 'HEAD:client/ui.js'], { cwd: root }),
-      }),
-    );
-    await baseline.goto(origin);
-    await baseline.locator(`[data-slot="${captain('qstation')}"]`).click();
-    await baseline.waitForFunction(() => window.G?.you && G.landed);
-    const before = await baseline.locator('#landpic').evaluate((el) => el.style.backgroundImage);
-    assert.ok(before.includes('10955.jpg'), 'baseline hub reused legacy personal-station image');
-    await baseline.screenshot({ path: path.join(evidence, 'qstation-before.png') });
-    await baseline.close();
-  }
+  browser = await chromium.launch({
+    headless: true,
+    executablePath: process.env.CHROMIUM_EXECUTABLE,
+    args: ['--no-sandbox'],
+  });
+  await ready(server, origin);
   const results = [];
   for (const id of process.env.RIFT_STATION_QUICK ? ['qstation'] : ports) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }),
       errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
+    await page.route('**/regression-render.js', (route) =>
+      route.fulfill({
+        contentType: 'text/javascript',
+        body:
+          fs.readFileSync(path.join(root, 'client/render.js'), 'utf8') +
+          '\nexport {stationSprite, stationImgs, hubImg};\n',
+      }),
+    );
     await page.goto(origin);
     await page.locator(`[data-slot="${captain(id)}"]`).click();
     await page.waitForFunction(() => window.G?.you && G.landed);
@@ -123,6 +122,41 @@ try {
       landingImages.length && landingImages.every((x) => x.ok),
       id + ' landed pictures decode',
     );
+    if (id === 'luna') {
+      const identity = await page.evaluate(async () => {
+        const { STELLARS } = await import('/shared/galaxy.js');
+        const { stationWheel } = await import('/station_wheel.js');
+        const { stationLandingSource } = await import('/exotic_scenery.js');
+        const { stationSprite } = await import('/regression-render.js');
+        const p = STELLARS.luna;
+        const wheel = stationWheel(p).toDataURL('image/png');
+        return {
+          original: stationSprite(p).toDataURL('image/png') === wheel,
+          pixels: Array.from(
+            stationWheel(p)
+              .getContext('2d')
+              .getImageData(0, 0, stationWheel(p).width, stationWheel(p).height).data,
+          ),
+          landing: stationLandingSource(p, 'yard') === wheel,
+        };
+      });
+      // Frozen original seeded wheel pixels: independent of Git history and module equality.
+      assert.equal(
+        createHash('sha256').update(Buffer.from(identity.pixels)).digest('hex'),
+        'e76e4babe5212bc963b2d7bb1e1ffc7d6b1371c40774d00fb29138e29ece57ad',
+        'original purple Luna wheel/core pixel fingerprint',
+      );
+      delete identity.pixels;
+      assert.deepEqual(
+        identity,
+        { original: true, landing: true },
+        'Luna uses original exterior pixels in flight and landing',
+      );
+      fs.writeFileSync(
+        path.join(evidence, 'luna-original-identity.json'),
+        JSON.stringify(identity, null, 2),
+      );
+    }
     await page.screenshot({ path: path.join(evidence, id + '-landed.png') });
     const state = await page.evaluate(() => ({
       solo: G.solo,
@@ -154,19 +188,23 @@ try {
       });
       const retry = await page.evaluate(async () => {
         const { stationLanding } = await import('/exotic_scenery.js');
-        const { setArtworkVersion } = await import('/artwork.js');
+        const { setArtworkVersion, artworkUrl } = await import('/artwork.js');
+        const previousRevision = new URL(artworkUrl('hub.png'), location.href).searchParams.get(
+          'v',
+        );
         setArtworkVersion('station-retry');
         const p = { id: 'retry-audit', name: 'Retry fixture' };
         const first = await stationLanding(p, {}, 'cross');
         const second = await stationLanding(p, {}, 'cross');
-        setArtworkVersion('2.9.1');
+        setArtworkVersion(previousRevision);
         return { first, second: !!second };
       });
       assert.equal(retry.first, null);
       assert.equal(retry.second, true, 'transient station-art failures can recover');
       const audit = await page.evaluate(async () => {
         const { STELLARS, SYS } = await import('/shared/galaxy.js');
-        const { stationDesign } = await import('/render.js');
+        const { stationDesign, stationSprite, stationImgs, hubImg } =
+          await import('/regression-render.js');
         const { stationLanding, stationLandingSource } = await import('/exotic_scenery.js');
         const stations = Object.values(STELLARS).filter(
           (p) => p.svc?.includes('L') && (p.hub || p.site || p.kind === 'station'),
@@ -178,6 +216,20 @@ try {
             const site = p.site ? { ops: tier } : undefined;
             const design = stationDesign(p);
             const source = stationLandingSource(p, design, site);
+            let sprite = p.hub ? hubImg : p.site ? stationImgs[tier] : stationSprite(p);
+            const deadline = Date.now() + 3000;
+            while (!sprite && Date.now() < deadline) {
+              await new Promise((r) => setTimeout(r, 20));
+              sprite = stationSprite(p);
+            }
+            if (!sprite) throw Error('Missing production flight sprite: ' + p.id);
+            if (sprite instanceof HTMLImageElement) await sprite.decode();
+            const flightMatches =
+              sprite instanceof HTMLCanvasElement
+                ? sprite.toDataURL('image/png') === source
+                : new URL(sprite.src).pathname === new URL(source, location.href).pathname;
+            if (!flightMatches)
+              throw Error('Flight/landed identity mismatch: ' + p.id + ' tier ' + tier);
             const url = await stationLanding(p, SYS[p.system], design, site);
             if (!url) throw new Error('Failed artwork: ' + p.id);
             const im = new Image();
@@ -189,6 +241,7 @@ try {
               tier,
               design,
               source,
+              flightMatches,
               width: im.naturalWidth,
               height: im.naturalHeight,
             });
@@ -245,7 +298,9 @@ try {
   }
   fs.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(results, null, 2));
   console.log(JSON.stringify({ results, evidence }, null, 2));
+} catch (error) {
+  await failureEvidence(browser, evidence, error);
+  throw error;
 } finally {
-  await browser.close();
-  server.kill();
+  await cleanup(server, browser, log, dir);
 }

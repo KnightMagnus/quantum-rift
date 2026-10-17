@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 2.3 tests: ten new common Quantum hulls, more moons and asteroid fields, busier traffic.
 import fs from 'node:fs';
 import { DB } from '../server/db.js';
@@ -13,7 +14,7 @@ const ok = (c, m) => {
   console.log('ok -', m);
 };
 process.env.SEEDS_FILE = '/nonexistent';
-const g = new Game(A, new DB('/tmp/rift-v23-' + Date.now()));
+const g = new Game(A, new DB(tempDataDir('rift-v23-')));
 g.features.fronts.event = () => null;
 g.features.fronts.anomalies = () => ({}); // 2.6: traffic counts must not depend on the weekday's event (Bounty Week brings 50% more raiders)
 // new hulls

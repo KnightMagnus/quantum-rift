@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 2.1 tests: docks A-E with a lead ship and wingmates each, stored ships, officers crewing wingmates, buying to the hangar.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -15,7 +16,7 @@ const ok = (c, m) => {
   console.log('ok -', m);
 };
 process.env.SEEDS_FILE = '/nonexistent';
-const dir = '/tmp/rift-v21-' + Date.now();
+const dir = tempDataDir('rift-v21-');
 // an old (2.0.3) save with two hired escorts and a stored ship preset
 {
   const g0 = new Game(A, new DB(dir));

@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 0.3 tests: weapon colours, hit events with damage, escort slots, disabled wreck clean-up, login throttle, tutorial.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -6,7 +7,7 @@ import { Game } from '../server/game.js';
 import { weaponColor, weaponLook, weaponParams } from '../shared/rules.js';
 import { TUTORIAL } from '../shared/tutorial.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
-const game = new Game(A, new DB('/tmp/rift-v03-' + Date.now()));
+const game = new Game(A, new DB(tempDataDir('rift-v03-')));
 const ok = (c, m) => {
   if (!c) {
     console.error('FAIL:', m);

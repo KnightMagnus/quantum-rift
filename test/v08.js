@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 0.8 tests: the Sol Gateway (Sol, Earth, the wormhole, the Farside region), ship roles, specialty ships, parts and tiers.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -6,7 +7,7 @@ import { Game } from '../server/game.js';
 import { SYS, STELLARS, SYSTEMS, FACTIONS, FACTION_HULLS, COMMON_HULLS } from '../shared/galaxy.js';
 import { route } from '../shared/rules.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
-const game = new Game(A, new DB('/tmp/rift-v08-' + Date.now()));
+const game = new Game(A, new DB(tempDataDir('rift-v08-')));
 export const ok = (c, m) => {
   if (!c) {
     console.error('FAIL:', m);

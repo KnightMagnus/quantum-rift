@@ -49,6 +49,10 @@ try {
   b.send({ t: 'input', seq: 1, th: 1 });
   await until(() => !b.snap.combat.consent);
   assert.equal(b.snap.combat.delegated, false);
+  // Manual thrust now deliberately revokes Follow as well as combat consent.
+  await until(() => b.you.armada.follow === false);
+  b.send({ t: 'armada', op: 'follow', on: true });
+  await until(() => b.you.armada.follow === true);
   b.send({ t: 'combat', op: 'delegate', on: true });
   await until(() => b.snap.combat.delegated);
   b.send({ t: 'armada', op: 'follow', on: false });

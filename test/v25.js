@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 2.5 tests: the rendered art set is complete and wired up, plus the polish pass (career steps, market depth, dialogs).
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -175,11 +176,11 @@ ok(
       d2.tut === 19 &&
       d3.tut === 23 &&
       d4.tut === 3 &&
-      TUTORIAL[14].title === 'Market and refinery (Ops 2)',
+      TUTORIAL[14].title === 'Market and refinery (Station Tier 2)',
     'old saves keep their place in the longer career guide',
   );
 }
-const g = new Game(A, new DB('/tmp/rift-v25-' + Date.now()));
+const g = new Game(A, new DB(tempDataDir('rift-v25-')));
 const port = Object.values(STELLARS).find(
   (p) => p.svc.includes('T') && !p.site && !p.outlaw && SYS[p.system].faction === 'quantum',
 );

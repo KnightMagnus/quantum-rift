@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 2.6 tests: retirement of refits, Armada escorts, directives, fleets and territory (with save migration); Captain Friends
 // and DMs; the Armada; trading between Personal Stations; no open-galaxy PvP; duels and Armada Duels; rescue; co-op
 // Holdout; Armada contracts.
@@ -59,7 +60,7 @@ const C = fileURLToPath(new URL('../client/', import.meta.url));
 }
 
 // ------------------------------------------------------------------ an old save and an old world
-const dir = '/tmp/rift-v26-' + Date.now();
+const dir = tempDataDir('rift-v26-');
 {
   const g0 = new Game(A, new DB(dir)),
     W = g0.db.world;
@@ -679,7 +680,7 @@ ok(
 
 // ------------------------------------------------------------------ solo hides it all
 {
-  const gs = new Game(A, new DB('/tmp/rift-v26s-' + Date.now()));
+  const gs = new Game(A, new DB(tempDataDir('rift-v26s-')));
   gs.solo = true;
   const p = STELLARS.concordia;
   ok(

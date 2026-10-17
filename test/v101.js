@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 1.0.1 tests: respawn at your own station hull or the hub (never at someone else's base or wherever you last landed).
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -5,7 +6,7 @@ import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
 import { STELLARS, START, SITES } from '../shared/galaxy.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
-const game = new Game(A, new DB('/tmp/rift-v101-' + Date.now()));
+const game = new Game(A, new DB(tempDataDir('rift-v101-')));
 const ok = (c, m) => {
   if (!c) {
     console.error('FAIL:', m);

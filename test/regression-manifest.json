@@ -1,0 +1,482 @@
+{
+  "schema": 1,
+  "unit": [
+    "coverage-inventory.js",
+    "v03.js",
+    "v04.js",
+    "v05.js",
+    "v06.js",
+    "v07.js",
+    "v08.js",
+    "v09.js",
+    "v10.js",
+    "v101.js",
+    "v11.js",
+    "v12.js",
+    "v201.js",
+    "v202.js",
+    "v203.js",
+    "v21.js",
+    "v23.js",
+    "v24.js",
+    "v25.js",
+    "v252.js",
+    "v26.js",
+    "sim.js",
+    "balance.js",
+    "landing-autopilot.js",
+    "faction-standing.js",
+    "gateway-navigation.js",
+    "eventide.js",
+    "companion-fixes.js",
+    "hailing.js",
+    "chat-bubbles.js",
+    "original-weapons.js",
+    "combat-assist.js",
+    "comet.js",
+    "ship-economy.js",
+    "passengers.js",
+    "outfitter-icons.js",
+    "catalog-artwork.js",
+    "ship-banking.js",
+    "animation-frames.js",
+    "wormhole-loop.js",
+    "stars.js",
+    "background-scale.js",
+    "passenger-quests.js",
+    "local-retaliation.js",
+    "main-map-protection.js",
+    "outfitter-wing-repairs.js",
+    "fuzz.js",
+    "armada-formation.js",
+    "persistence-auth.js",
+    "core-actions.js",
+    "websocket-transport.js",
+    "http-api.mjs",
+    "network-systems.mjs"
+  ],
+  "browser": [
+    "sidebar-browser.mjs",
+    "armada-formation-network.mjs",
+    "gateway-browser.mjs",
+    "station-landing-browser.mjs",
+    "login-scene-browser.mjs",
+    "client-systems-browser.mjs",
+    "input-audio-browser.mjs"
+  ],
+  "children": {
+    "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
+  },
+  "characterization": ["features.js"],
+  "contracts": ["typecheck-contracts.js"],
+  "systems": [
+    {
+      "id": "accounts-persistence",
+      "owners": ["server/db.js", "server/game.js"],
+      "services": [],
+      "tests": ["persistence-auth.js", "v03.js", "v202.js", "v203.js", "http-api.mjs"],
+      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention."
+    },
+    {
+      "id": "protocol-http",
+      "owners": ["server/main.js"],
+      "services": [],
+      "tests": ["http-api.mjs"],
+      "asserts": "Real HTTP static/MIME/cache/404/traversal checks and online-vs-solo API permissions."
+    },
+    {
+      "id": "protocol-websocket",
+      "owners": ["server/ws.js"],
+      "services": [],
+      "tests": ["websocket-transport.js", "network-systems.mjs"],
+      "asserts": "Frame masking/fragmentation/control/limits, upgrade handshake and actual multiplayer client/server state transitions."
+    },
+    {
+      "id": "hangar",
+      "owners": ["server/hangar.js"],
+      "services": ["hangar"],
+      "tests": ["v05.js", "v12.js", "v21.js"],
+      "asserts": "Shuttle dispatch/resolution/repair, officer assignment/XP/ranks, research prerequisites/queue, refining, stored loadouts and boarding."
+    },
+    {
+      "id": "fronts",
+      "owners": ["server/fronts.js"],
+      "services": ["fronts"],
+      "tests": ["v06.js", "v09.js", "faction-standing.js"],
+      "asserts": "Invasion start/damage/win, anomalies/events/goals, faction store standing and convoy/rescue/survey/smuggling jobs."
+    },
+    {
+      "id": "frontier",
+      "owners": ["server/frontier.js"],
+      "services": ["frontier"],
+      "tests": ["v07.js"],
+      "asserts": "Colony ownership/accrual, station raid/defense waves, mastery, arena matchmaking/rating, exchange escrow/matching and profiles/leaderboards."
+    },
+    {
+      "id": "specialists",
+      "owners": ["server/specialists.js"],
+      "services": ["specialists"],
+      "tests": ["v08.js"],
+      "asserts": "Specialty roles, blueprint/part requirements, construction, tiers/upgrades and gameplay bonuses."
+    },
+    {
+      "id": "hostile",
+      "owners": ["server/hostile.js"],
+      "services": ["hostile"],
+      "tests": ["v09.js", "v26.js"],
+      "asserts": "Hostile levels/chest loot, Station Holdout wave/rewards and co-op helpers, weekly events/Eclipse."
+    },
+    {
+      "id": "story",
+      "owners": ["server/story.js"],
+      "services": ["story"],
+      "tests": ["v10.js"],
+      "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock."
+    },
+    {
+      "id": "rivals",
+      "owners": ["server/rivals.js"],
+      "services": ["rivals"],
+      "tests": ["v11.js", "core-actions.js"],
+      "asserts": "Named career population, relationships, hunters, damage/death/bounty, news/market flashes and status route."
+    },
+    {
+      "id": "hailing",
+      "owners": ["server/hail.js", "server/hail-service.js"],
+      "services": ["hail"],
+      "tests": ["v11.js", "hailing.js", "network-systems.mjs"],
+      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls."
+    },
+    {
+      "id": "fleet-orders",
+      "owners": ["server/fleetcmd.js"],
+      "services": ["fleetcmd"],
+      "tests": ["v11.js", "v21.js"],
+      "asserts": "Escort target/formation/hold/fire orders, jettison/loot limits and combat rating."
+    },
+    {
+      "id": "syndicate",
+      "owners": ["server/syndicate.js"],
+      "services": ["syndicate"],
+      "tests": ["v12.js", "v203.js", "ship-banking.js"],
+      "asserts": "Black market/Syndicate career, officer promotion/lower decks, bank deposits/loans/interest, timed delivery contracts."
+    },
+    {
+      "id": "faction-arcs",
+      "owners": ["server/arcs.js"],
+      "services": ["arcs"],
+      "tests": ["v12.js"],
+      "asserts": "Faction story acceptance/progression/rewards and Farside expedition stages."
+    },
+    {
+      "id": "docks",
+      "owners": ["server/docks.js"],
+      "services": ["docks"],
+      "tests": ["v21.js", "outfitter-wing-repairs.js", "ship-economy.js", "companion-fixes.js"],
+      "asserts": "Save migration/dock capacity, storing/flying/swapping, wing loadouts/officers/repairs, ship purchases and resale."
+    },
+    {
+      "id": "living-galaxy",
+      "owners": ["server/living.js"],
+      "services": ["living"],
+      "tests": ["v24.js", "v25.js", "v252.js"],
+      "asserts": "Living-state timers/resolution, trade impact/depth, supply jobs and war/newcomer behavior."
+    },
+    {
+      "id": "quests",
+      "owners": ["server/quests.js"],
+      "services": ["quests"],
+      "tests": ["v24.js", "passenger-quests.js", "core-actions.js"],
+      "asserts": "Generated contacts and handcrafted chains, per-step completion, failure/retry/salvage, passenger capacity and explicit abandonment isolation."
+    },
+    {
+      "id": "cooperative-social",
+      "owners": ["server/coop.js"],
+      "services": ["coop"],
+      "tests": ["v26.js", "network-systems.mjs"],
+      "asserts": "Friends/offline DM/blocking, Armada formation/leadership/chat/buffs/shared bounties, rescue, contracts and co-op Holdout."
+    },
+    {
+      "id": "consensual-pvp",
+      "owners": ["server/coop.js", "server/frontier.js"],
+      "services": [],
+      "tests": ["v26.js", "v07.js"],
+      "asserts": "Open-galaxy friendly-fire prevention, solo/Armada duel consent/nonlethal outcomes and arena team matching."
+    },
+    {
+      "id": "station-trading",
+      "owners": ["server/coop.js"],
+      "services": [],
+      "tests": ["v26.js"],
+      "asserts": "Two-party credits/cargo/crates/blueprint/part escrow, accept/cancel and location guards."
+    },
+    {
+      "id": "galaxy-navigation",
+      "owners": ["shared/galaxy.js", "shared/gen.js", "shared/rules.js"],
+      "services": [],
+      "tests": ["v04.js", "v08.js", "v23.js", "eventide.js"],
+      "asserts": "Seeded galaxy generation, reachable routes, Sol/Farside gates and authored Eventide landmarks."
+    },
+    {
+      "id": "sleep-traffic-ai",
+      "owners": ["server/space.js"],
+      "services": [],
+      "tests": ["v04.js", "v201.js", "v23.js", "v24.js", "sim.js"],
+      "asserts": "Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn."
+    },
+    {
+      "id": "mining-existing",
+      "owners": ["server/space.js", "server/game.js"],
+      "services": [],
+      "tests": ["v04.js", "v05.js", "v252.js"],
+      "asserts": "Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Proposed active-mining redesign is not implemented."
+    },
+    {
+      "id": "station-progression",
+      "owners": ["server/game.js", "server/hangar.js"],
+      "services": [],
+      "tests": ["sim.js", "v05.js", "v26.js"],
+      "asserts": "Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates."
+    },
+    {
+      "id": "market-materials",
+      "owners": ["server/game.js", "shared/rules.js"],
+      "services": [],
+      "tests": ["v25.js", "v203.js", "ship-economy.js", "core-actions.js", "network-systems.mjs"],
+      "asserts": "Trade buy/sell/depth/cargo/credit limits, material buy/sell and dock-only/insufficient-credit guards."
+    },
+    {
+      "id": "missions-passengers",
+      "owners": ["server/game.js", "server/fronts.js"],
+      "services": [],
+      "tests": ["v06.js", "v12.js", "passengers.js", "passenger-quests.js", "eventide.js"],
+      "asserts": "Cargo/bounty/patrol/convoy/rescue/survey/smuggling/rush/Syndicate/passenger jobs, acceptance/capacity/deadline/reward/failure behavior."
+    },
+    {
+      "id": "flight-combat-weapons",
+      "owners": ["server/space.js", "shared/rules.js"],
+      "services": [],
+      "tests": ["sim.js", "v03.js", "v21.js", "original-weapons.js", "v08.js"],
+      "asserts": "Movement/fire/hit events, weapon damage/types, missiles/point defense/drone controls, ship-role interactions, disabled cleanup and respawn."
+    },
+    {
+      "id": "combat-assist",
+      "owners": ["server/combat-assist.js"],
+      "services": [],
+      "tests": ["combat-assist.js", "network-systems.mjs"],
+      "asserts": "Consent-only autopilot/delegation, group odds, independent isolation, manual takeover and Hold Fire."
+    },
+    {
+      "id": "newcomer-standing",
+      "owners": ["server/game.js", "server/space.js"],
+      "services": [],
+      "tests": [
+        "main-map-protection.js",
+        "local-retaliation.js",
+        "faction-standing.js",
+        "v203.js",
+        "v252.js"
+      ],
+      "asserts": "Main-galaxy truce thresholds, Farside/combat/aggression exceptions, stray damage and standing/reputation impacts."
+    },
+    {
+      "id": "armada-follow",
+      "owners": ["server/armada-formation.js", "client/main.js"],
+      "services": [],
+      "tests": ["armada-formation.js", "armada-formation-network.mjs"],
+      "asserts": "Size/wing-aware V convergence while moving/turning/stopping, consent/takeover/leader changes and real automatic leader-jump arrival."
+    },
+    {
+      "id": "landing-gateway",
+      "owners": ["client/landing_autopilot.js", "client/gateway_autopilot.js", "server/game.js"],
+      "services": [],
+      "tests": [
+        "landing-autopilot.js",
+        "gateway-navigation.js",
+        "gateway-browser.mjs",
+        "wormhole-loop.js"
+      ],
+      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce."
+    },
+    {
+      "id": "ships-catalog-art",
+      "owners": ["shared/rules.js", "client/artwork.js", "client/render.js"],
+      "services": [],
+      "tests": [
+        "catalog-artwork.js",
+        "outfitter-icons.js",
+        "animation-frames.js",
+        "ship-banking.js",
+        "v25.js"
+      ],
+      "asserts": "Versioned catalog URL/cache semantics, shipped icon headers/dimensions and asset wiring, animation bounds and banked sprite selection."
+    },
+    {
+      "id": "world-scenery",
+      "owners": ["client/render.js", "client/exotic_scenery.js"],
+      "services": [],
+      "tests": ["eventide.js", "comet.js", "stars.js", "background-scale.js", "v25.js"],
+      "asserts": "Authored scenery configuration, comets/stars/background scaling, atmosphere/artwork invariants."
+    },
+    {
+      "id": "station-art-identity",
+      "owners": ["client/station_wheel.js", "client/exotic_scenery.js", "client/render.js"],
+      "services": [],
+      "tests": ["station-landing-browser.mjs"],
+      "asserts": "14 real landing/departure sessions, 110 stations/245 tier variants, actual flight-source identity, transient load recovery and frozen original Luna wheel pixels."
+    },
+    {
+      "id": "login-scene",
+      "owners": ["client/login_scene.js"],
+      "services": [],
+      "tests": ["login-scene-browser.mjs"],
+      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced motion and rendering lifecycle."
+    },
+    {
+      "id": "sidebar-scrollbars",
+      "owners": ["client/style.css", "client/ui.js"],
+      "services": [],
+      "tests": ["sidebar-browser.mjs"],
+      "asserts": "Eight viewport/scale/width cases, horizontal wheel and keyboard end-tab reachability, saved width and red menu scrollbar/accent styles."
+    },
+    {
+      "id": "client-options-map-save",
+      "owners": ["client/main.js", "client/ui.js"],
+      "services": [],
+      "tests": ["client-systems-browser.mjs"],
+      "asserts": "Real browser options/key remapping/scaling/palette, map routes and Solo pause/save workflows; see test assertions for exact exercised controls."
+    },
+    {
+      "id": "communications-log",
+      "owners": ["server/game.js", "client/ui.js"],
+      "services": [],
+      "tests": ["chat-bubbles.js", "v26.js", "core-actions.js"],
+      "asserts": "Chat channel scoping, plain-text transient ship bubbles, bounded captain notes and non-idle-resetting ping/pong."
+    },
+    {
+      "id": "radio-offline-proxy",
+      "owners": ["server/main.js"],
+      "services": [],
+      "tests": ["http-api.mjs"],
+      "asserts": "Real HTTP proxy requests against child-local mocked provider: search bounds, sanitized station IDs, stream/track response shapes and upstream outage/error fallbacks."
+    },
+    {
+      "id": "economy-balance",
+      "owners": ["shared/galaxy.js", "shared/rules.js"],
+      "services": [],
+      "tests": ["balance.js", "ship-economy.js"],
+      "asserts": "Price/strength ladder thresholds, progression-income bounds, Holdout reward floor and real loadout transaction arithmetic."
+    },
+    {
+      "id": "robustness-wiring",
+      "owners": ["server/features.js", "server/message-registry.js"],
+      "services": [],
+      "tests": ["fuzz.js"],
+      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage."
+    },
+    {
+      "id": "input-audio",
+      "owners": ["client/main.js", "client/audio.js"],
+      "services": [],
+      "tests": ["input-audio-browser.mjs"],
+      "asserts": "Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification."
+    }
+  ],
+  "routes": {
+    "combat": ["combat-assist.js", "combat-network.js"],
+    "input": [
+      "armada-formation-network.mjs",
+      "armada-formation.js",
+      "bot.js",
+      "combat-network.js",
+      "fuzz.js",
+      "sim.js",
+      "input-audio-browser.mjs"
+    ],
+    "target": ["v03.js"],
+    "tutskip": ["v03.js"],
+    "land": ["bot.js", "v11.js"],
+    "depart": [
+      "armada-formation-network.mjs",
+      "bot.js",
+      "combat-network.js",
+      "hailing-network.js",
+      "sim.js",
+      "v03.js",
+      "v04.js",
+      "v101.js",
+      "v203.js",
+      "v21.js",
+      "v24.js"
+    ],
+    "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
+    "trade": ["bot.js", "v203.js"],
+    "buyship": ["sim.js", "v21.js"],
+    "docks": ["outfitter-wing-repairs.js", "sim.js", "v21.js"],
+    "questdrop": ["core-actions.js"],
+    "outfit": ["bot.js", "v203.js"],
+    "accept": ["bot.js", "v12.js", "v203.js", "v24.js", "v26.js"],
+    "abandon": ["v203.js", "v24.js"],
+    "station": ["sim.js", "v04.js", "v05.js", "v07.js", "v203.js", "v21.js", "v26.js"],
+    "buymat": ["core-actions.js"],
+    "rename": ["v203.js"],
+    "note": ["core-actions.js"],
+    "chat": ["bot.js", "v06.js", "v26.js"],
+    "officer": ["v05.js", "v21.js"],
+    "shuttle": ["v05.js"],
+    "dock": ["v05.js", "v101.js", "v203.js", "v21.js"],
+    "board": ["v05.js", "v06.js", "v10.js", "v26.js"],
+    "spec": ["v08.js"],
+    "armada": ["armada-formation-network.mjs", "combat-network.js", "v06.js", "v26.js"],
+    "holdout": ["v09.js", "v26.js"],
+    "storyacc": ["v10.js"],
+    "social": ["hailing-network.js", "v26.js"],
+    "trade2": ["v26.js"],
+    "duel": ["v26.js"],
+    "goal": ["v06.js"],
+    "store": ["faction-standing.js", "v06.js"],
+    "colony": ["v07.js"],
+    "arena": ["v07.js"],
+    "exchange": ["v07.js"],
+    "boards": ["v07.js"],
+    "profile": ["v07.js"],
+    "ping": ["core-actions.js"],
+    "hail": ["hailing-network.js", "v11.js"],
+    "hailin": ["hailing-network.js"],
+    "hailopt": ["hailing-network.js", "v11.js"],
+    "order": ["combat-network.js", "v11.js", "v21.js"],
+    "jettison": ["v11.js"],
+    "rivals": ["core-actions.js"],
+    "bm": ["v12.js"],
+    "arcacc": ["v12.js"],
+    "promote": ["v12.js"],
+    "lower": ["v12.js", "v203.js"],
+    "bank": ["v12.js"],
+    "pause": ["v10.js"]
+  },
+  "tooling": [
+    "capture-features.js",
+    "regression-browser.mjs",
+    "regression-runner.mjs",
+    "seed-random.js"
+  ],
+  "supplemental": {
+    "background-scale-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "catalog-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "combat-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "comet-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "eventide-mission-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "exotic-scenery-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "exotic-solo-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "faction-standing-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "hailing-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "hailing-persistence-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "landing-autopilot-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "map-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "outfitter-wing-repairs-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "passengers-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "planet-assets-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "ship-banking-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "stars-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage."
+  }
+}
