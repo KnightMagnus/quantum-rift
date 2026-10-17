@@ -47,9 +47,29 @@ export function initMiningUI({
   });
   const towUI = initTowingUI({ G, send, bound, label, blocked: contextBlocked, towAudio, root });
   function invokeMiningAction(action) {
-    if (action === 'towToggle') return towUI.invoke();
+    if (blocked() || G.paused || G.landed || !G.you || !G.view || !miningPanelState(G).visible)
+      return false;
+    if (action === 'miningPanel') {
+      setOpen(!open);
+      return true;
+    }
+    if (['towToggle', 'towDeliver', 'towOffer', 'towAccept'].includes(action))
+      return towUI.invoke(action);
+    if (action === 'miningGroup') {
+      send({ t: 'miningPressure', op: G.miningPressure?.groupConsent ? 'leave' : 'join' });
+      return true;
+    }
+    if (action === 'dredgeInput' || action === 'dredgeOff') {
+      if (G.you.ship?.hull !== 815) return false;
+      send(
+        action === 'dredgeOff'
+          ? { t: 'industrial', op: 'off' }
+          : { t: 'industrial', op: 'recipe', recipe: recipes.value, grade: grade.value },
+      );
+      return true;
+    }
     if (['dredgeSweep', 'dredgeHarvest', 'dredgeSmelter'].includes(action)) {
-      if (blocked() || G.paused || G.landed || !G.view) return false;
+      if (G.you.ship?.hull !== 815) return false;
       send({
         t: 'industrial',
         op: { dredgeSweep: 'sweep', dredgeHarvest: 'harvest', dredgeSmelter: 'smelter' }[action],
@@ -84,6 +104,10 @@ export function initMiningUI({
           ? 'Mining controls — operations active'
           : 'Mining controls',
     );
+    indicator.title += ` · ${label(bound('miningPanel'))}`;
+    consent.textContent = `${G.miningPressure?.groupConsent ? 'Leave' : 'Join'} group mining · ${label(bound('miningGroup'))}`;
+    choose.textContent = `SET INPUT · ${label(bound('dredgeInput'))}`;
+    off.textContent = `ALL OFF · ${label(bound('dredgeOff'))}`;
     const danger = G.miningPressure?.warn;
     indicator.classList.toggle('warning', !!danger);
     cargo.textContent =
@@ -180,13 +204,12 @@ export function initMiningUI({
   const choose = document.createElement('button');
   choose.className = 'btn sm';
   choose.textContent = 'SET INPUT';
-  choose.onclick = () =>
-    send({ t: 'industrial', op: 'recipe', recipe: recipes.value, grade: grade.value });
+  choose.onclick = () => invokeMiningAction('dredgeInput');
   const off = document.createElement('button');
   off.className = 'btn sm';
   off.id = 'industrialoff';
   off.textContent = 'ALL OFF';
-  off.onclick = () => send({ t: 'industrial', op: 'off' });
+  off.onclick = () => invokeMiningAction('dredgeOff');
   industrial.append(recipes, grade, choose, off);
   industrial.append(industrialDetails);
   root.append(industrial);
@@ -202,12 +225,7 @@ export function initMiningUI({
     'A scan briefly reveals seams and material quality. Hold your mining beam on a seam; when READY, release at 60–80 heat for better-quality material. Mining noise can attract danger. Group mining is optional consent for this flight, separate from Armada membership.';
   details.append(summary, help, consent);
   root.append(details);
-  consent.onclick = () =>
-    send({ t: 'miningPressure', op: G.miningPressure?.groupConsent ? 'leave' : 'join' });
-  setInterval(() => {
-    consent.textContent = `${G.miningPressure?.groupConsent ? 'Leave' : 'Join'} group mining${G.miningPressure?.warn ? ' · High mining noise' : ''}`;
-    consent.title = 'Separate consent for current flight; Armada membership alone is not consent.';
-  }, 500);
+  consent.onclick = () => invokeMiningAction('miningGroup');
   button.onclick = () => invokeMiningAction('surveyPulse');
   return { invokeMiningAction, refresh };
 }

@@ -50,13 +50,13 @@ try {
   await page.locator('#miningindicator').click();
   await page.waitForSelector('#industrialcontrols:not([hidden])');
   await page.waitForFunction(() => G.industrial?.version === 1);
-  assert.match(await page.locator('#dredgeSweep').textContent(), /Backquote/);
-  assert.match(await page.locator('#dredgeHarvest').textContent(), /assign key/);
+  assert.match(await page.locator('#dredgeSweep').textContent(), /`/);
+  assert.match(await page.locator('#dredgeHarvest').textContent(), /]/);
   await page.keyboard.press('Backquote');
   await page.waitForFunction(() => G.industrial.sweep);
   await page.locator('#industrialoff').click();
   await page.waitForFunction(() => !G.industrial.sweep);
-  assert.equal(await page.locator('#industrialoff').textContent(), 'ALL OFF');
+  assert.match(await page.locator('#industrialoff').textContent(), /ALL OFF/);
   // Already-active harvesting must stop even when stationary keep-out completes
   // FULL STOP in the same production input tick (the final auto mode is null).
   assert.ok(await page.evaluate(() => Math.hypot(G.view.vx, G.view.vy) < 6));
@@ -218,7 +218,7 @@ try {
   assert.deepEqual(missing, []);
   assert.deepEqual(errors, []);
   console.log(
-    'Actual stock shipyard build, custom/unbound controls, finite plasma, source-labelled heat, scales/reduced motion and 108 unique production-rendered heading/bank/glow frames.',
+    'Actual stock shipyard build, custom/default controls, finite plasma, source-labelled heat, scales/reduced motion and 108 unique production-rendered heading/bank/glow frames.',
   );
 } catch (error) {
   await failureEvidence(browser, f.out, error);
