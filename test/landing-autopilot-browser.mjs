@@ -274,15 +274,18 @@ try {
       lastA = t.a;
     }
     const brakeStart = ticks.findIndex((t) => t.inp?.rev);
-    const brakeHeadings = brakeStart < 0 ? [] : ticks.slice(brakeStart).map((t) => t.a);
-    const brakeHeadingTravel = brakeHeadings
-      .slice(1)
-      .reduce(
-        (sum, a, i) =>
-          sum +
-          Math.abs(Math.atan2(Math.sin(a - brakeHeadings[i]), Math.cos(a - brakeHeadings[i]))),
-        0,
-      );
+    // Near/fast entries can safely stop outside the port and re-approach.
+    // Bound rotation within each committed retrograde pass, not the intervening
+    // approach turn (which is deliberately allowed by landingGuidance).
+    let brakeHeadingTravel = 0,
+      passTravel = 0;
+    for (let i = 1; i < ticks.length; i++) {
+      if (ticks[i].inp?.rev && ticks[i - 1].inp?.rev) {
+        const da = ticks[i].a - ticks[i - 1].a;
+        passTravel += Math.abs(Math.atan2(Math.sin(da), Math.cos(da)));
+        brakeHeadingTravel = Math.max(brakeHeadingTravel, passTravel);
+      } else passTravel = 0;
+    }
     const row = {
       name: c.name,
       hull: c.hull,
