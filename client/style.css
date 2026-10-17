@@ -1,5 +1,5 @@
 :root {
-  --hud: 360px;
+  --hud: 480px;
   --steel: url(assets/ui/steel.jpg);
   --steeld: url(assets/ui/steel_dark.jpg);
   --red: #b30000;
@@ -14,6 +14,25 @@
 }
 * {
   box-sizing: border-box;
+  scrollbar-color: #d02a22 var(--well);
+  scrollbar-width: thin;
+}
+/* Shared menu chrome, including nested panels, lists and modal content. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: var(--well);
+}
+::-webkit-scrollbar-thumb {
+  background: #d02a22;
+  border: 2px solid var(--well);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--red2);
 }
 html,
 body {
@@ -295,9 +314,14 @@ input:focus {
   display: flex;
   gap: 2px;
   flex: none;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
 }
 #ctabs button {
-  flex: 1;
+  flex: 1 0 auto;
+  white-space: nowrap;
   height: 27px;
   border: 1px solid #111;
   background: linear-gradient(rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.35)), var(--steel);
@@ -2674,7 +2698,7 @@ body:has(#land:not(.hidden)) #chatlog {
 }
 @media (max-width: 1150px), (max-height: 700px) {
   :root {
-    --hud: 300px;
+    --hud: 400px;
   }
   #hud {
     gap: 5px;
@@ -2815,7 +2839,7 @@ body:has(#land:not(.hidden)) #chatlog {
     font-size: 10.5px;
     letter-spacing: 0;
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 1 0 auto;
   }
 }
 .nocargo {
