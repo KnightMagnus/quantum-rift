@@ -49,6 +49,7 @@
     "outfitter-wing-repairs.js",
     "fuzz.js",
     "armada-formation.js",
+    "armada-follow-coasting.js",
     "persistence-auth.js",
     "knight-profile.mjs",
     "persistence-platform.mjs",
@@ -82,6 +83,7 @@
   "browser": [
     "sidebar-browser.mjs",
     "armada-formation-network.mjs",
+    "armada-follow-two-clients.mjs",
     "gateway-browser.mjs",
     "station-landing-browser.mjs",
     "login-scene-browser.mjs",
@@ -343,8 +345,13 @@
       "id": "armada-follow",
       "owners": ["server/armada-formation.js", "client/main.js"],
       "services": [],
-      "tests": ["armada-formation.js", "armada-formation-network.mjs"],
-      "asserts": "Size/wing-aware V convergence while moving/turning/stopping, consent/takeover/leader changes and real automatic leader-jump arrival."
+      "tests": [
+        "armada-formation.js",
+        "armada-formation-network.mjs",
+        "armada-follow-coasting.js",
+        "armada-follow-two-clients.mjs"
+      ],
+      "asserts": "Size/wing-aware V convergence while moving/turning/stopping, consent/takeover/leader changes and real automatic leader-jump arrival. Two independent Chromium account contexts retain sustained coasting without full rotations/stops; pulse-aware matching, attainable speed ceilings and slow-turn stop/restart/sharp-turn recovery."
     },
     {
       "id": "landing-gateway",
@@ -593,7 +600,8 @@
       "fuzz.js",
       "sim.js",
       "input-audio-browser.mjs",
-      "landing-autopilot-browser.mjs"
+      "landing-autopilot-browser.mjs",
+      "armada-follow-two-clients.mjs"
     ],
     "target": ["v03.js"],
     "tutskip": ["v03.js"],
@@ -609,7 +617,8 @@
       "v101.js",
       "v203.js",
       "v21.js",
-      "v24.js"
+      "v24.js",
+      "armada-follow-two-clients.mjs"
     ],
     "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
     "trade": [
@@ -650,7 +659,13 @@
     "dock": ["v05.js", "v101.js", "v203.js", "v21.js"],
     "board": ["cargo-flows.js", "v05.js", "v06.js", "v10.js", "v26.js"],
     "spec": ["v08.js"],
-    "armada": ["armada-formation-network.mjs", "combat-network.js", "v06.js", "v26.js"],
+    "armada": [
+      "armada-formation-network.mjs",
+      "combat-network.js",
+      "v06.js",
+      "v26.js",
+      "armada-follow-two-clients.mjs"
+    ],
     "holdout": ["v09.js", "v26.js"],
     "storyacc": ["v10.js"],
     "social": ["hailing-network.js", "v26.js"],

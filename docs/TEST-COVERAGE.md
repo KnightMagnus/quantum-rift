@@ -365,3 +365,18 @@ artwork now respects its `revealed` flag rather than disclosing composition befo
 The registered v201.js case reproduces perpendicular cruise with three hulls and three speed-ceiling fractions at both planet and station destinations (18 deterministic cases). Production NPC AI and shared physics must align toward the destination, then emit a real landing event within the original radius/speed bounds without fuel consumption. Existing randomized trader arrival and moving-leader escort checks remain. This tests simulation headings and arrival, not every device or rendered bank animation.
 
 - `ship-turning-assets-browser.mjs`: all 122 actual WebP atlases decode 108 nonempty base frames, every bank differs from its neutral heading, enabled glows match dimensions, and stock-rate runtime turns select both valid banks. Original large-hull repair also has an inspected 17-hull contact sheet.
+
+### Multiplayer Follow coasting
+
+`armada-follow-coasting.js` exercises unchanged production physics for seven stock hulls,
+including Constitution and slow-turn capital ships: sixty-second matching without
+circling/stopping, achievable world-velocity limits, and normal/slow ship
+reacquisition after a moving leader stops, restarts and turns sharply.
+`armada-follow-two-clients.mjs` uses two isolated Chromium contexts and distinct
+disposable multiplayer accounts, real Armada UI opt-in and real-key takeover.
+The disclosed fixture starts an attainable matched cruise with small lateral
+velocity error; it accelerates production ticks without changing flight physics.
+It asserts sustained authoritative movement/heading, sharp-turn slot recovery and
+manual override. Existing formation/network tests retain fleet envelope, consent,
+combat/landing suspension and leader-jump coverage. Browser evidence is Chromium
+only; not exhaustive hull/loadout or real WAN latency testing.

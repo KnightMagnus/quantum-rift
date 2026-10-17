@@ -91,24 +91,40 @@ export function steerFormation(e, target) {
     dy = target.y - e.y,
     distance = Math.hypot(dx, dy);
   const relativeSpeed = Math.hypot(e.vx - target.vx, e.vy - target.vy);
+  // A full physics tick is an indivisible thrust pulse. Do not chase corrections
+  // smaller than that pulse, or the ship continually flips between braking and
+  // accelerating instead of coasting with its leader.
+  const velocityTolerance = Math.max(2, e.st.accel * DT * 0.55);
+  const holding = e.formationHolding
+    ? distance < 60 && relativeSpeed < velocityTolerance
+    : distance < 24 && relativeSpeed < velocityTolerance;
+  e.formationHolding = holding;
   let turn,
     thrust = 0;
-  if (distance < 24 && relativeSpeed < 3) {
+  if (holding) {
     turn = angDiff(target.a, e.a);
   } else {
     // Proportional arrival with a braking/rotation-aware speed envelope. No position,
     // velocity or heading snapping, catch-up stat boosts, afterburner, or auto weapons.
     const speed = Math.min(
       e.st.maxSpeed * 0.85,
-      distance * 0.22,
+      distance * Math.min(0.22, e.st.turn * 0.2),
       Math.sqrt(2 * e.st.accel * distance) * 0.45,
     );
-    const vx = target.vx + (distance ? (dx / distance) * speed : 0);
-    const vy = target.vy + (distance ? (dy / distance) * speed : 0);
+    let vx = target.vx + (distance ? (dx / distance) * speed : 0);
+    let vy = target.vy + (distance ? (dy / distance) * speed : 0);
+    // Bound the *world* velocity, not only the relative arrival correction.
+    // Otherwise a same-speed leader can request an unreachable velocity forever.
+    const desiredSpeed = Math.hypot(vx, vy);
+    if (desiredSpeed > e.st.maxSpeed) {
+      vx *= e.st.maxSpeed / desiredSpeed;
+      vy *= e.st.maxSpeed / desiredSpeed;
+    }
     const ex = vx - e.vx,
       ey = vy - e.vy;
-    turn = angDiff(Math.atan2(ex, -ey), e.a);
-    thrust = Math.abs(turn) < 0.3 && Math.hypot(ex, ey) > 2 ? 1 : 0;
+    const correction = Math.hypot(ex, ey);
+    turn = angDiff(correction < velocityTolerance ? target.a : Math.atan2(ex, -ey), e.a);
+    thrust = Math.abs(turn) < 0.03 && correction > velocityTolerance ? 1 : 0;
   }
   e.inp = {
     turn: Math.abs(turn) < e.st.turn * DT ? turn / (e.st.turn * DT) : Math.sign(turn),
