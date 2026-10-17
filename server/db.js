@@ -176,6 +176,10 @@ export class DB {
     }
   }
   syncDirectory() {
+    // Windows cannot fsync a directory handle opened by Node's fs.openSync.
+    // Keep regular-file fsyncs and journal recovery; only POSIX directory syncing
+    // is unavailable here (so Windows has no extra directory-metadata barrier).
+    if (process.platform === 'win32') return;
     const fd = fs.openSync(this.dir, 'r');
     try {
       fs.fsyncSync(fd);

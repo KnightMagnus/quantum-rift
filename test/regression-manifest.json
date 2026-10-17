@@ -50,6 +50,7 @@
     "fuzz.js",
     "armada-formation.js",
     "persistence-auth.js",
+    "persistence-platform.mjs",
     "core-actions.js",
     "websocket-transport.js",
     "http-api.mjs",
@@ -98,8 +99,15 @@
       "id": "accounts-persistence",
       "owners": ["server/db.js", "server/game.js"],
       "services": [],
-      "tests": ["persistence-auth.js", "v03.js", "v202.js", "v203.js", "http-api.mjs"],
-      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention."
+      "tests": [
+        "persistence-auth.js",
+        "persistence-platform.mjs",
+        "v03.js",
+        "v202.js",
+        "v203.js",
+        "http-api.mjs"
+      ],
+      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes."
     },
     {
       "id": "protocol-http",
