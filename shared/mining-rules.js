@@ -14,6 +14,7 @@ export const MINING = Object.freeze({
   reveal: 6,
   radius: 1500,
   parcelTTL: 150,
+  idleRenewal: 300, // Abandoned damaged/staged deposits renew after five simulation minutes.
   seamWidth: 1.15,
 });
 /** @param {string} text @returns {number} */

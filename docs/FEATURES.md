@@ -228,3 +228,27 @@ Tow Rig9920 costs45,000 credits and4 outfit tonnes, maximum1, fitting nonfighter
 Survey reveals fixed tonnes and same-system accepted ports. ATTACH/DETACH is an unbound-by-default rebindable action, preserving F and custom keys; contextual controls also support explicit two-captain transfer acceptance. Offers bind revision, both flight identities and stable hull UIDs. Detach/disconnect grants300 simulation seconds of owner-only recovery, frozen offline/paused, with no reconnect refresh. Restart detaches a previously attached object in place. Static patterned tethers retain a distance/tension visual equivalent. One restrained tether oscillator routes through the existing effects/master/mute mixer and stops on detach, pause or hidden flight. Three new384px transparent lossless ore-family motherlode rasters use the existing lit-3D rock renderer/noise/material style, with distinct mineral inclusions and a SHA256 manifest; ordinary rock mappings remain unchanged.
 
 Delivery requires both tug/load near an accepted accessible port at speed≤10 and24t free after mission/industrial cargo. Exact raw lots are journal-checkpointed with the terminal object/receipt before success. Precommit errors restore memory; uncertain postcommit errors retain committed state and freeze economics until restart. Replays cannot pay twice, even after bounded receipt pruning because old IDs never become current again. Independent review, hosted CI and longer human balance play remain separate gates.
+
+## Renewable mining deposits
+
+Ore asteroids, gas pockets, shard deposits and industrial minor/sweep rocks renew as
+fresh full-health generations. Fully depleted deposits keep their existing seeded
+100–160 simulation-second recovery (modified by faction fronts and field pressure).
+A partially damaged or partially extracted deposit now renews after **300 seconds
+without mining contact**, so abandoned fields recover without interrupting active
+cutting or sweep work. Untouched full-health deposits do not churn. Five quiet
+minutes is provisional tuning: longer than normal depletion recovery and parcel
+lifetime, with no periodic reset in the middle of mining.
+
+Renewal retires the old identity and unextracted remainder; any original floating
+parcels keep their exact original finite accounting/progression. It creates no
+pickup or immediate reward. Restart preserves deadlines; older version-1 saves
+receive a conservative full quiet interval on first load. Timers use unpaused
+server simulation only, never stopped-server wall time; a sleeping system lazily
+renews at most one current generation when observed, not a backlog of rewards.
+Existing other-source recovery remains: delivered/destroyed motherlodes reissue
+at full 100 health after 900 simulation seconds × field recovery factor, and
+stellar plasma sources replenish 15 units/second (300 units per tonne, capped at
+300,000), enough to replace one mined tonne every 20 simulation seconds. Live or
+attached motherlodes are never replaced. These cadences retain existing economy
+balance rather than giving other mining sources an additional duplicate payout.

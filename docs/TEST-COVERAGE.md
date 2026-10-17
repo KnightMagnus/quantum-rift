@@ -313,3 +313,16 @@ Login-scene coverage also rejects the removed bottom-left location caption and
 checks the title banner’s centered flex alignment, measured text fit and retained
 30px horizontal inset at desktop/mobile widths and 0.8×/1.4× UI scales. The Solo
 client-system test checks the same banner while exercising save/login workflows.
+
+## Natural mining renewal
+
+`mining-renewal.js` (canonical unit lane, `mining-cutting`) exercises exact 300-second
+quiet renewal and existing depletion deadlines for ore, gas and shards through
+production mining operations. It checks full-health new identities, no stale-object
+damage/reward, active/recent cutting and sweep protection, lazy late-stage escrow
+conservation, bounded history, stable restart and version-1 migration, paused clock
+and no healthy-generation churn. `field-evolution.js` additionally checks renewed
+motherlode full health; `dredge-corona.js` verifies an exhausted plasma source
+replenishes enough for another actual harvest. Their existing timing/budget rules
+are unchanged. Fixtures are isolated deterministic simulation cases, not exhaustive
+seed coverage, rendered resource-reappearance certification or long-run balance.

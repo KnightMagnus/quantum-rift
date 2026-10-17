@@ -108,6 +108,13 @@ industrialStep(finite, 3);
 assert.equal(finite.s.data.cargo.plasma, plasma);
 finite.g.db.flush();
 assert.equal(finite.s.data.spec.plasma || 0, 0);
+// The same simulation clock naturally replenishes depleted non-rock mining sources.
+// Twenty seconds replaces one tonne's 300 units; there is no wall-time catchup.
+finite.g.db.world.mining.clock += INDUSTRIAL.units / INDUSTRIAL.renewPerSecond;
+finite.s.data.ship.industrial.heat = 0;
+industrialStep(finite, 3);
+assert.equal(finite.s.data.cargo.plasma, plasma + 1);
+assert.ok(src.units >= 0 && src.units < INDUSTRIAL.sourceUnits);
 
 // ALL OFF is not cooling while passive corona exceeds cooling capacity.
 {
