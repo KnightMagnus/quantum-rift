@@ -2,6 +2,8 @@
 
 ![Quantum Rift login page with the captain sign-in panel](docs/screenshots/login.jpg)
 
+**Quantum Rift is currently in beta and under ongoing development. All features are subject to change.**
+
 ## [Download Quantum Rift](https://github.com/KnightMagnus/quantum-rift/releases/latest/download/Quantum-Rift-latest.zip)
 
 **A space trading and combat game in your browser.**
