@@ -50,6 +50,7 @@
     "fuzz.js",
     "armada-formation.js",
     "persistence-auth.js",
+    "knight-profile.mjs",
     "persistence-platform.mjs",
     "core-actions.js",
     "websocket-transport.js",
@@ -101,13 +102,14 @@
       "services": [],
       "tests": [
         "persistence-auth.js",
+        "knight-profile.mjs",
         "persistence-platform.mjs",
         "v03.js",
         "v202.js",
         "v203.js",
         "http-api.mjs"
       ],
-      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes."
+      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Shipped KNIGHT test profile: online/Solo startup login, legacy credits, completed T5 research, usable full specialist storage, idempotency, existing-save and station-ownership preservation."
     },
     {
       "id": "protocol-http",
@@ -204,8 +206,14 @@
       "id": "docks",
       "owners": ["server/docks.js"],
       "services": ["docks"],
-      "tests": ["v21.js", "outfitter-wing-repairs.js", "ship-economy.js", "companion-fixes.js"],
-      "asserts": "Save migration/dock capacity, storing/flying/swapping, wing loadouts/officers/repairs, ship purchases and resale."
+      "tests": [
+        "v21.js",
+        "outfitter-wing-repairs.js",
+        "ship-economy.js",
+        "companion-fixes.js",
+        "knight-profile.mjs"
+      ],
+      "asserts": "Save migration/dock capacity, storing/flying/swapping, wing loadouts/officers/repairs, ship purchases and resale. Creation-only KNIGHT storage includes every current specialist and each can be selected through real dock assignment."
     },
     {
       "id": "living-galaxy",
@@ -554,7 +562,7 @@
     "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
     "trade": ["bot.js", "cargo-flows.js", "v203.js", "cargo-ui-browser.mjs"],
     "buyship": ["sim.js", "v21.js"],
-    "docks": ["outfitter-wing-repairs.js", "sim.js", "v21.js"],
+    "docks": ["outfitter-wing-repairs.js", "sim.js", "v21.js", "knight-profile.mjs"],
     "questdrop": ["core-actions.js"],
     "outfit": ["bot.js", "v203.js"],
     "accept": ["bot.js", "v12.js", "v203.js", "v24.js", "v26.js"],

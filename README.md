@@ -195,6 +195,29 @@ A delivered or destroyed source cannot pay again under its old ID. Fields expose
 
 ---
 
+## KNIGHT testing captain
+
+The included test profile is **KNIGHT** (password **1234** in the normal login).
+In Solo, select **KNIGHT → PLAY**; no password is needed.
+
+A fresh save folder starts this captain with **30,000,000 credits**, the Constitution
+**Excalibur**, a completed **T5 Personal Station with all research**, and all **11 specialty
+ships already built** in **STATION → DOCKS**. Select a stored ship as your active dock’s
+lead to fly it. Specialty ships start at their normal built tier (T1), not fully upgraded.
+The Star Dredge is included. The station starts at Quantum Gate, or another unclaimed
+station hull if that site belongs to someone else.
+
+Restarts preserve spending, ship changes and all other progress. An existing captain
+named Knight is **not** overwritten or given a new password. For a fresh testing profile,
+start with a separate `DATA_DIR` rather than deleting or replacing your saves. The normal
+and Solo launchers use separate `data` and `solo-data` folders.
+
+This is a shared test login, not a private account. Before hosting publicly, set
+`SEEDS_FILE` to a JSON file containing `[]` and use a save folder without this test
+profile. The override stops creation; it does not remove an existing captain.
+
+---
+
 ## Host it online
 
 Any host that runs a long-lived Node process with WebSockets will do:

@@ -98,8 +98,15 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 - **Useful environment variables:**
   - `PORT`, `DATA_DIR`, `SEEDS_FILE` and `SOLO`
   - `FRONT_HOURS` and `INVASION_NOW`, for testing fronts and invasions
-- **Seeds:** `server/seeds.json` creates ready-made captains. The shipped file only retires the old KNIGHT showcase
-  account. `test/seeds_knight.json` recreates KNIGHT (password 1234, fully upgraded) for the browser tests.
+- **Seeds:** `server/seeds.json` creates the KNIGHT testing captain (public test password `1234`): 30M credits,
+  Constitution Excalibur, completed T5 station and all specialty hulls in storage. `sync: "create"` applies
+  research/crew setup only at creation; existing captains are never reset. `storedShips: "specialists"`
+  adds stock-built T1 specialty ships only at creation. `station.fallback: true` picks an unclaimed site
+  if the preferred one is occupied, without displacing another owner; if none is free, creation is skipped.
+  `sync: true` still explicitly upgrades existing developer fixtures. `test/seeds_knight.json` retains
+  the older synced browser fixture. Override `SEEDS_FILE` with a JSON file containing `[]` to disable
+  seed creation; this does not delete an already-created profile. Never enable shared test credentials
+  on a public host: use an isolated testing save directory instead.
 - **Balance:** `test/balance.js` prints shipyard ladders, value for money, income per hour and hours to afford each
   milestone. It fails on outliers.
 
