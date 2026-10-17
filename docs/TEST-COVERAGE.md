@@ -313,3 +313,13 @@ Login-scene coverage also rejects the removed bottom-left location caption and
 checks the title banner’s centered flex alignment, measured text fit and retained
 30px horizontal inset at desktop/mobile widths and 0.8×/1.4× UI scales. The Solo
 client-system test checks the same banner while exercising save/login workflows.
+
+### Motherlode material artwork
+
+`motherlode-art.js` checks authoritative generated ore/gas/shards and visibility-safe mapping.
+`motherlode-art-browser.mjs` exercises production canvas material pixels (not labels),
+free/attached parity, neutral undiscovered/unknown objects and failed-image geometry.
+The same renderer handles detached objects. Screenshots show all three states plus
+unscanned objects. Existing towing browser tests retain real survey/attach/delivery coverage.
+No new message actions or save fields. Server payload already exposes resource IDs;
+artwork now respects its `revealed` flag rather than disclosing composition before survey.
