@@ -1,3 +1,5 @@
+import { binding, migrateBindings, RESERVED_KEYS } from './action-bindings.js';
+import { initMiningUI, receiveMining } from './mining_ui.js';
 import { landingGuidance, landingReady } from './landing_autopilot.js';
 import { initLoginScene } from './login_scene.js';
 import { gatewayGuidance } from './gateway_autopilot.js';
@@ -205,6 +207,7 @@ export const ACTIONS = [
   ['ordFire', 'Fleet: hold fire', 'KeyY'],
   ['ordLoot', 'Fleet: collect loot', 'KeyU'],
   ['companion', 'Next companion tab', 'KeyC'],
+  ['surveyPulse', 'Survey Pulse', 'KeyV'],
 ];
 const ALT = {
   thrust: 'ArrowUp',
@@ -213,7 +216,8 @@ const ALT = {
   rev: 'ArrowDown',
   ab: 'ShiftRight',
 }; // the arrow keys always work too
-const bound = (a) => G.opts.keys[a] || ACTIONS.find((x) => x[0] === a)[2];
+migrateBindings(G.opts, ACTIONS);
+const bound = (a) => binding(G.opts.keys, ACTIONS, a);
 const held = (a) => !!(keys[bound(a)] || (ALT[a] && keys[ALT[a]]));
 const actionOf = (code) => {
   for (const [a] of ACTIONS) if (bound(a) === code || ALT[a] === code) return a;
@@ -233,6 +237,19 @@ function saveOpts() {
     localStorage.setItem('rift.opts', JSON.stringify(G.opts));
   } catch {}
 }
+const miningUI = initMiningUI({
+  G,
+  send,
+  bound,
+  label: (c) => (c ? c.replace(/^Key/, '') : 'assign key'),
+  blocked: () =>
+    typing() ||
+    ['opts', 'gmap', 'storybox', 'ctrlbox', 'storebox'].some((id) => {
+      const el = $(id);
+      return el && !el.classList.contains('hidden');
+    }),
+});
+setInterval(() => miningUI.refresh(), 100);
 function applyOpts() {
   G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
   document.documentElement.style.setProperty('--ui', G.opts.scale);
@@ -526,6 +543,10 @@ function onMessage(m) {
       history = [];
       G.rocks = (m.rocks || []).map(([id, x, y, r, ore, hp]) => ({ id, x, y, r, ore, hp }));
       G.rockById = new Map(G.rocks.map((k) => [k.id, k]));
+      G.miningTarget = 0;
+      G.miningRocks = null;
+      G.mining = null;
+      receiveMining(G, m);
       if (G.route.length && G.route[0] === m.sys) G.route.shift();
       drawMini();
       if (G.autoRoute && G.route.length)
@@ -694,6 +715,7 @@ setInterval(() => {
 }, 10000); // keeps rush countdowns current
 // ------------------------------------------------------------------ snapshots and prediction
 function onSnap(m) {
+  receiveMining(G, m);
   G.combat = m.combat || {};
   G.formation = !!m.formation;
   $('combatcontrols').classList.remove('hidden');
@@ -852,7 +874,10 @@ function onEvent(ev) {
 }
 
 // ------------------------------------------------------------------ input
-const typing = () => document.activeElement && document.activeElement.tagName === 'INPUT';
+const typing = () =>
+  document.activeElement &&
+  (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) ||
+    document.activeElement.isContentEditable);
 window.addEventListener('keydown', (e) => {
   if (
     (e.key === 'Enter' || e.key === ' ') &&
@@ -917,6 +942,9 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   switch (actionOf(e.code)) {
+    case 'surveyPulse':
+      miningUI.invokeMiningAction('surveyPulse');
+      break;
     case 'target':
       cycleTarget(e.shiftKey ? -1 : 1);
       break;
@@ -1462,6 +1490,8 @@ canvas.addEventListener('mousedown', (e) => {
     );
     return;
   }
+  const rock = (G.rocks || []).find((k) => k.hp && Math.hypot(k.x - wx, k.y - wy) <= k.r + 8);
+  if (rock) G.miningTarget = rock.id;
   if (G.opts.mouseAim) mouse.down = true; // mouse-aim mode: hold the left button on open space to fire
 });
 window.addEventListener('mouseup', (e) => {
@@ -1617,22 +1647,24 @@ let rebinding = null;
  * @returns {string} Human-friendly key name
  */
 const keyName = (c) =>
-  ({
-    ArrowUp: '↑',
-    ArrowDown: '↓',
-    ArrowLeft: '←',
-    ArrowRight: '→',
-    ShiftLeft: 'Shift L',
-    ShiftRight: 'Shift R',
-    ControlLeft: 'Ctrl L',
-    ControlRight: 'Ctrl R',
-    AltLeft: 'Alt L',
-    AltRight: 'Alt R',
-  })[c] ||
-  c
-    .replace(/^Key/, '')
-    .replace(/^Digit/, '')
-    .replace(/^Numpad/, 'Num ');
+  !c
+    ? 'assign key'
+    : {
+        ArrowUp: '↑',
+        ArrowDown: '↓',
+        ArrowLeft: '←',
+        ArrowRight: '→',
+        ShiftLeft: 'Shift L',
+        ShiftRight: 'Shift R',
+        ControlLeft: 'Ctrl L',
+        ControlRight: 'Ctrl R',
+        AltLeft: 'Alt L',
+        AltRight: 'Alt R',
+      }[c] ||
+      c
+        .replace(/^Key/, '')
+        .replace(/^Digit/, '')
+        .replace(/^Numpad/, 'Num ');
 /**
  * Renders keybinding assignment rows in the options menu.
  * @returns {void}
@@ -1774,6 +1806,7 @@ window.addEventListener('rift-radio-vol', (e) => {
 });
 $('optreset').onclick = () => {
   G.opts.keys = {};
+  migrateBindings(G.opts, ACTIONS);
   saveOpts();
   renderKeys();
 };
@@ -1798,15 +1831,16 @@ window.addEventListener(
       // the next key pressed becomes the binding (Escape cancels); a key used by another action is swapped off it
       e.preventDefault();
       e.stopImmediatePropagation();
-      if (Object.values(ALT).includes(e.code)) {
-        toast(
-          'The arrow keys and right Shift always steer, so they cannot be bound to other actions.',
-        );
+      if (RESERVED_KEYS.has(e.code) && e.code !== 'Escape') {
+        toast('This key is reserved for steering or a fixed interface control.');
         rebinding = null;
         renderKeys();
         return;
       } // 2.0.3
-      if (e.code !== 'Escape') {
+      if (e.code === 'Backspace' || e.code === 'Delete') {
+        G.opts.keys[rebinding] = null;
+        saveOpts();
+      } else if (e.code !== 'Escape') {
         for (const [a] of ACTIONS)
           if (a !== rebinding && bound(a) === e.code) G.opts.keys[a] = bound(rebinding);
         G.opts.keys[rebinding] = e.code;

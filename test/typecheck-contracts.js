@@ -47,6 +47,16 @@ try {
   );
   assert.notEqual(result.status, 0, 'string grade quantity must be rejected');
   assert.match(result.stdout + result.stderr, /string.*number/);
+  result = check('features.mining.advanceClock(1/30);\n');
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  result = check("features.mining.advanceClock('1');\n");
+  assert.notEqual(result.status, 0, 'mining clock requires numeric seconds');
+  assert.match(result.stdout + result.stderr, /string.*number/);
+  result = check(
+    `/** @type {import('${modulePath('mining-contracts.js')}').MiningCapabilities} */\nconst miningWithoutDB={paused(){return false;},endTick(){},bonus(){return {};},mods(){return {mining:1,regrow:1};},specOnMine(){}};\n`,
+  );
+  assert.notEqual(result.status, 0, 'mining facade requires explicit database capability');
+  assert.match(result.stdout + result.stderr, /db.*missing|missing.*db/);
   console.log(
     'Typed valid calls/grade selections pass; invalid argument, grade quantity and missing capability are rejected.',
   );

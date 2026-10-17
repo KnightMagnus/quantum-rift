@@ -848,6 +848,25 @@
         "tick2s": ["coopTick"]
       },
       "owner": "server/coop.js"
+    },
+    {
+      "file": "mining",
+      "exportName": "MiningOperations",
+      "methods": [
+        "init",
+        "advanceClock",
+        "openSpace",
+        "contact",
+        "ordinary",
+        "endTick",
+        "suspendSpace",
+        "survey",
+        "rocksPayload",
+        "payload",
+        "collected",
+        "shotId"
+      ],
+      "uses": ["bonus", "db", "endTick", "mods", "paused", "specOnMine"]
     }
   ]
 }

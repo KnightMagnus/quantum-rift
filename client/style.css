@@ -3029,3 +3029,27 @@ body.solo .mp {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* Text + patterned seam display remain legible independently of color. */
+#miningcontrols {
+  position: absolute;
+  left: 12px;
+  bottom: 170px;
+  z-index: 5;
+  max-width: calc(100vw - var(--hud) - 24px);
+  font-size: 13px;
+  line-height: 1.6;
+  background: #111a26ed;
+}
+#miningmeter {
+  display: block;
+  max-width: 480px;
+  color: #fff1c9;
+}
+@media (max-width: 850px) {
+  #miningcontrols {
+    bottom: 180px;
+    max-width: 60vw;
+    font-size: 12px;
+  }
+}

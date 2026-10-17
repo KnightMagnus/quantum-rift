@@ -108,7 +108,9 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {number} evT Event tracking timestamp.
  *
  * @typedef {object} Shot
+ * @property {string|null} [captain] Captured root captain for ordinary rock damage.
  * @property {number} id Unique projectile ID.
+ * @property {import("./mining-contracts.js").MiningSource|null} [mining] Captured mining provenance.
  * @property {number} w Weapon ID used to fire this shot.
  * @property {number} owner Entity ID of shooting ship.
  * @property {number} x Current position X.
@@ -133,6 +135,12 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {string} [mat] Material commodity type.
  * @property {number} [grade] Material grade index (0-4).
  * @property {string} [ore] Mined ore commodity ID.
+ * @property {number} [rich] Authored field richness (not raw grade).
+ * @property {import('../shared/cargo-contracts.js').GradeLots} [remainingLots]
+ * @property {string} [generationKey]
+ * @property {string} [parcelKey]
+ * @property {number[]} [progressionTokens]
+ * @property {boolean} [progressionClaimed]
  * @property {number} [n] Quantity of ore or units.
  * @property {string} [cargo] Jettisoned commodity ID.
  * @property {{owner: string, sys: string, until: number}} [jettisonPickup] Owner-only pickup grace in origin-system simulation time.
@@ -261,27 +269,7 @@ export class Space {
         this.spawnTraffic(true); // 2.3: busier systems
     // asteroids and gas pockets in the system's mining fields: they break into ore that ships scoop up, and regrow
     this.rocks = [];
-    for (const f of this.sys.fields || [])
-      for (let i = 0; i < f.rocks; i++) {
-        const a = Math.random() * Math.PI * 2,
-          d = Math.sqrt(Math.random()) * f.r,
-          r = 16 + Math.random() * 30;
-        const max = Math.round(
-          r * (f.ore === 'gas' ? 6 : f.ore === 'shards' ? 12 : 9) * (1 + f.rich * 0.5),
-        );
-        this.rocks.push({
-          id: NEXT++,
-          x: Math.round(f.x + Math.cos(a) * d),
-          y: Math.round(f.y + Math.sin(a) * d),
-          r: Math.round(r),
-          ore: f.ore,
-          rich: f.rich,
-          hp: max,
-          max,
-          down: 0,
-          evT: 0,
-        });
-      }
+    this.game.features.mining.openSpace(this);
   }
   /**
    * Generates compact serialized state array of asteroid field rocks for client rendering.
@@ -304,29 +292,9 @@ export class Space {
    * @param {boolean} mining Whether damage originates from a mining laser.
    * @returns {void}
    */
-  hitRock(k, dmg, mining) {
-    if (k.down) return;
-    k.hp -= dmg * (mining ? 6 : 1);
-    if (k.hp <= 0) {
-      k.down = this.t + (100 + Math.random() * 60) / (this.m ? this.m.regrow : 1);
-      k.hp = k.max;
-      const n = Math.max(1, Math.round(k.r / 14)) + (k.rich - 1);
-      for (let i = 0; i < n; i++)
-        this.loot.push({
-          id: NEXT++,
-          x: k.x + rnd(-k.r, k.r) * 0.6,
-          y: k.y + rnd(-k.r, k.r) * 0.6,
-          vx: rnd(-25, 25),
-          vy: rnd(-25, 25),
-          t: this.t,
-          it: { ore: k.ore, rich: k.rich, n: k.rich + (Math.random() < 0.4 ? 1 : 0) },
-          kind: { ore: 2, gas: 3, shards: 4 }[k.ore],
-        });
-      this.events.push(['rock', k.id, 0], ['boom', k.x, k.y, k.r * 1.2]);
-    } else if (this.t - k.evT > 0.25) {
-      k.evT = this.t;
-      this.events.push(['rock', k.id, Math.round((100 * k.hp) / k.max)]);
-    }
+  hitRock(k, dmg, mining, captain = null) {
+    // Legacy direct damage retains ordinary output; clean credit requires actual collision provenance.
+    this.game.features.mining.ordinary(this, k, dmg * (mining ? 6 : 1), captain);
   }
   /**
    * Finds an active asteroid rock intersecting coordinates.
@@ -1358,6 +1326,15 @@ export class Space {
   fire(e, g, t, angle) {
     const p = g.p,
       W = this.A.weapons[g.w];
+    const captain = this.root(e).player?.s.name;
+    const provenance = {
+      captain: captain ? this.game.db.key(captain) : null,
+      source: e.id,
+      mount: e.guns.indexOf(g),
+      weapon: g.w,
+      cadence: p.reload / Math.max(1, g.n),
+      contactId: `beam:${this.game.db.world.mining?.clock}:${e.id}:${e.guns.indexOf(g)}:${this.t}`,
+    };
     if (g.ammo <= 0) return;
     if (p.bay) {
       const launch = W.launch;
@@ -1400,11 +1377,17 @@ export class Space {
           w: g.w,
           until: this.t + (p.continuous ? DT * 1.5 : 0.12),
         });
-        this.hitRock(
-          rk.k,
-          (p.dmgA + p.dmgS * 0.3) * (p.continuous ? K.beamDps * DT * Math.max(1, g.n) : 1),
-          this.A.weapons[g.w].mining,
-        );
+        const damage =
+          (p.dmgA + p.dmgS * 0.3) * (p.continuous ? K.beamDps * DT * Math.max(1, g.n) : 1);
+        if (W.mining)
+          this.game.features.mining.contact(this, rk.k, {
+            source: provenance,
+            damage,
+            x: rk.x,
+            y: rk.y,
+            projectile: false,
+          });
+        else this.hitRock(rk.k, damage, false, provenance.captain);
         if (!p.continuous || this.t - g.sndT > 0.6) this.sound(e, g);
         if (p.continuous) g.cd = 0;
         return;
@@ -1431,7 +1414,13 @@ export class Space {
     const sp = p.speed;
     const ox = e.x + Math.sin(e.a) * e.st.size * 0.35,
       oy = e.y - Math.cos(e.a) * e.st.size * 0.35;
+    const shotId = NEXT++;
     this.shots.push({
+      id: shotId,
+      mining: W.mining
+        ? Object.freeze({ ...provenance, contactId: `shot:${this.game.features.mining.shotId()}` })
+        : null,
+      captain: provenance.captain,
       x: ox,
       y: oy,
       vx: e.vx * (p.homing ? 0.3 : 1) + Math.sin(ang) * sp,
@@ -1488,7 +1477,7 @@ export class Space {
    * @param {Entity} e Firing ship entity.
    * @param {number} ang Beam trajectory heading in radians.
    * @param {number} len Maximum beam range.
-   * @returns {{k: Rock, d: number} | null} Hit rock and distance, or null.
+   * @returns {{k: Rock, d: number, x:number, y:number} | null} Hit rock and distance, or null.
    */
   rayRock(e, ang, len) {
     const dx = Math.sin(ang),
@@ -1499,8 +1488,12 @@ export class Space {
       const rx = k.x - e.x,
         ry = k.y - e.y,
         along = rx * dx + ry * dy;
-      if (along < 0 || along > len) continue;
-      if (Math.abs(rx * dy - ry * dx) < k.r && (!best || along < best.d)) best = { k, d: along };
+      if (along < -k.r || along > len + k.r) continue;
+      const perp = Math.abs(rx * dy - ry * dx);
+      if (perp < k.r) {
+        const d = Math.max(0, along - Math.sqrt(k.r * k.r - perp * perp));
+        if (d <= len && (!best || d < best.d)) best = { k, d, x: e.x + dx * d, y: e.y + dy * d };
+      }
     }
     return best;
   }
@@ -1620,7 +1613,10 @@ export class Space {
       if (p.bay && e.player) continue; // 2.1: bays launch and recall on a tap of F (toggleDrones)
       const wantFire = e.autoCombat ? !!t : e.player ? (g.sec ? inp.fire2 : inp.fire1) : !!t;
       if (!wantFire) continue;
-      const tgt = t && !t.dead ? t : null;
+      // Manual mining uses the existing aim/heading, independently of combat selection.
+      // Other weapons and delegated combat keep their targeting/leading behavior.
+      const tgt =
+        e.player && !automated && this.A.weapons[g.w]?.mining ? null : t && !t.dead ? t : null;
       if (p.bay || p.homing) {
         if (tgt || !p.homing) this.fire(e, g, tgt, e.a);
         continue;
@@ -1922,7 +1918,15 @@ export class Space {
       if (s.life > 0 && this.rocks.length) {
         const k = this.rockAt(s.x, s.y);
         if (k) {
-          this.hitRock(k, s.dmgA + s.dmgS * 0.3, this.A.weapons[s.w] && this.A.weapons[s.w].mining);
+          if (s.mining)
+            this.game.features.mining.contact(this, k, {
+              source: s.mining,
+              damage: s.dmgA + s.dmgS * 0.3,
+              x: s.x,
+              y: s.y,
+              projectile: true,
+            });
+          else this.hitRock(k, s.dmgA + s.dmgS * 0.3, false, s.captain);
           s.life = 0;
           this.events.push(['hit', Math.round(s.x), Math.round(s.y), s.w]);
         }
@@ -1930,18 +1934,14 @@ export class Space {
     }
     this.shots = this.shots.filter((s) => s.life > 0);
     this.beams = this.beams.filter((b) => b.until > this.t && this.ships.has(b.id));
-    for (const k of this.rocks)
-      if (k.down && this.t > k.down) {
-        k.down = 0;
-        this.events.push(['rock', k.id, 100]);
-      }
+    this.game.features.mining.endTick(this);
     for (const l of this.loot) {
       l.x += l.vx * DT;
       l.y += l.vy * DT;
       l.vx *= 0.99;
       l.vy *= 0.99;
     }
-    this.loot = this.loot.filter((l) => this.t - l.t < (l.it.ore ? 150 : 90));
+    this.loot = this.loot.filter((l) => l.it.generationKey || this.t - l.t < (l.it.ore ? 150 : 90));
     for (const e of this.ships.values())
       if (e.player && e.state === 'fly') {
         const reach = Math.max(30, e.st.size * 0.5) * (e.hull === 810 ? 4 : 1); // the Tidecaller's tractor tentacles

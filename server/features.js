@@ -1,5 +1,6 @@
 // @ts-check
 // Explicit feature composition. No method is installed on Game or another feature.
+import { MiningOperations } from './mining.js';
 import { bindOperations } from './feature-service.js';
 import { HangarOperations } from './hangar.js';
 import { FrontsOperations } from './fronts.js';
@@ -19,6 +20,7 @@ import { CoopOperations } from './coop.js';
 
 /**
  * @typedef {object} FeatureServices
+ * @property {import("./feature-service.js").BoundOperations<typeof MiningOperations>} mining
  * @property {import('./feature-service.js').BoundOperations<typeof HangarOperations>} hangar
  * @property {import('./feature-service.js').BoundOperations<typeof FrontsOperations>} fronts
  * @property {import('./feature-service.js').BoundOperations<typeof FrontierOperations>} frontier
@@ -1172,5 +1174,27 @@ export function createFeatures(core) {
   features.shipStats = { stats: features.fronts.stats };
   features.world = { worldPayload: features.frontier.worldPayload };
   features.sessions = { sessionOf: features.coop.sessionOf };
+  /** @type {import('./mining-contracts.js').MiningCapabilities} */
+  const miningCapabilities = {
+    get db() {
+      return core.db;
+    },
+    paused() {
+      return !!core.paused;
+    },
+    get endTick() {
+      return features.mining.endTick;
+    },
+    get bonus() {
+      return features.bonuses.bonus;
+    },
+    get mods() {
+      return features.fronts.mods;
+    },
+    get specOnMine() {
+      return features.specialists.specOnMine;
+    },
+  };
+  features.mining = bindOperations(MiningOperations, miningCapabilities);
   return Object.freeze(features);
 }

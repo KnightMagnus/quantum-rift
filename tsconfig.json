@@ -22,6 +22,9 @@
     "server/game.js",
     "server/frontier.js",
     "server/hangar.js",
-    "server/coop.js"
+    "server/coop.js",
+    "server/mining.js",
+    "server/mining-contracts.js",
+    "shared/mining-rules.js"
   ]
 }

@@ -178,3 +178,13 @@ conservation/progression contract, replacing—not stacking—the legacy yield p
 Scoped TypeScript includes all cargo writer modules and checks the Fleet Commands
 boundary plus shared ledger contracts. PR #21 domain interfaces remain intact;
 these scoped gradual checks are not a full-game type-safety claim.
+
+## Mining survey/cutting provider
+
+`features.mining` is composed by `bindOperations` with concrete `MiningCapabilities` in `server/mining-contracts.js`; it receives only DB/world access, pause query, named bonus/modifier/progression functions and its named tick operation. `MiningSpace` arguments expose only the rock/loot adapter, not unrestricted Game. Pure contact-union, grade and stage rules live in `shared/mining-rules.js`. Real collision provenance captures the normalized source captain at firing; clients can request only a validated survey pulse.
+
+World schema1 persists deterministic geometry/generations, ready/heat/work, resolved finite budget, exact parcel remainders and original economic progression tokens. All three tools retain sixfold HP effectiveness; stage HP partitions original durability across1/2/3 stages. Readiness latches until authoritative contact release; clean affects grade rather than mass. Tapper leases use its real cadence and merge time across mounts/captains. Survey is private, radius1500, cooldown10s/reveal6s; gas is presented as vents/pressure. All values are provisional.
+
+The saved logical clock advances once per unpaused Game tick independently of space scheduling; cold spaces catch up cooling/regrowth only. Process downtime freezes this clock. Field config changes fail closed with an explicit migration diagnostic rather than aliasing an old reward. A durable committed checkpoint journal covers player/world file pairs and is recovered before either is exposed after restart; backups skip pending checkpoints. This is coherent committed-checkpoint recovery, not a promise to retain actions performed after the latest checkpoint.
+
+Source-at-first-emission yield is frozen once for the full generation, including the unchanged Lodestar bonus service; prospective overheat discards25% of un-emitted mass once. Original parcel progression tokens are shared over visible clusters and claimed once on actual accepted material. Ordinary nonmining damage cannot earn clean-contact credit. Existing numeric cargo totals and grade-ledger integration remain authoritative. Controls migrate additively with explicit null-unbound semantics; V is assigned only if free, F and all metadata are preserved. Future sweep/tow actions remain inactive/unbound.

@@ -55,7 +55,9 @@
     "http-api.mjs",
     "network-systems.mjs",
     "cargo-lots.js",
-    "cargo-flows.js"
+    "cargo-flows.js",
+    "mining.js",
+    "mining-network.mjs"
   ],
   "browser": [
     "sidebar-browser.mjs",
@@ -65,7 +67,9 @@
     "login-scene-browser.mjs",
     "client-systems-browser.mjs",
     "input-audio-browser.mjs",
-    "cargo-ui-browser.mjs"
+    "cargo-ui-browser.mjs",
+    "mining-controls-browser.mjs",
+    "mining-ui-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -232,7 +236,7 @@
       "owners": ["server/space.js", "server/game.js"],
       "services": [],
       "tests": ["v04.js", "v05.js", "v252.js"],
-      "asserts": "Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Proposed active-mining redesign is not implemented."
+      "asserts": "Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Staged cutting/survey behavior is mapped separately under mining-cutting."
     },
     {
       "id": "station-progression",
@@ -401,6 +405,28 @@
       ],
       "tests": ["cargo-lots.js", "cargo-flows.js", "cargo-ui-browser.mjs"],
       "asserts": "Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, owner/fleet simulation-time grace with foreign partial pickup and expiry, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
+    },
+    {
+      "id": "mining-cutting",
+      "services": ["mining"],
+      "owners": [
+        "server/mining.js",
+        "server/mining-contracts.js",
+        "shared/mining-rules.js",
+        "server/space.js",
+        "server/game.js",
+        "server/db.js",
+        "client/action-bindings.js",
+        "client/mining_ui.js",
+        "client/mining_render.js"
+      ],
+      "tests": [
+        "mining.js",
+        "mining-network.mjs",
+        "mining-controls-browser.mjs",
+        "mining-ui-browser.mjs"
+      ],
+      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion."
     }
   ],
   "routes": {
@@ -482,7 +508,8 @@
     "promote": ["v12.js"],
     "lower": ["v12.js", "v203.js"],
     "bank": ["v12.js"],
-    "pause": ["v10.js"]
+    "pause": ["v10.js"],
+    "mining": ["mining-network.mjs", "mining-controls-browser.mjs"]
   },
   "tooling": [
     "capture-features.js",

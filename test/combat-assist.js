@@ -260,7 +260,11 @@ selectedLead.player = selectedSession;
 const selectedGame = {
   sessions: new Map([['Selected', selectedSession]]),
   spaces: {},
-  features: { fronts: { mods: () => null }, coop: { armadaOf: () => null } },
+  features: {
+    fronts: { mods: () => null },
+    coop: { armadaOf: () => null },
+    mining: { endTick() {} },
+  },
 };
 const selectedSpace = Object.assign(Object.create(Space.prototype), {
   game: selectedGame,

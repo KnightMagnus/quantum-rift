@@ -137,7 +137,8 @@ const sm = a.last('space');
 ok(sm.rocks && sm.rocks.length === spM.rocks.length, 'the arrival message lists the rocks');
 const rock = spM.rocks.find((k) => k.ore === 'ore');
 const lootN = spM.loot.length;
-spM.hitRock(rock, rock.max, true);
+// Stages share one finite budget; legacy direct hits remain ordinary, never fake clean contact.
+for (let stage = 0; stage < rock.stages; stage++) spM.hitRock(rock, rock.max, true);
 ok(rock.down > 0 && spM.loot.length > lootN, 'a mining hit breaks the rock into ore');
 const ore = spM.loot.filter((l) => l.it.ore);
 const e = a.s.ent;
@@ -147,9 +148,14 @@ e.vx = e.vy = 0;
 const before = d.cargo.ore || 0;
 spM.tick();
 ok((d.cargo.ore || 0) > before, `scooped ore into the hold (${d.cargo.ore} t)`);
-rock.down = spM.t - 1;
-spM.tick();
-ok(!rock.down, 'broken rocks regrow');
+const generation = rock.generation;
+rock.down = game.db.world.mining.clock - 1;
+game.features.mining.endTick(spM);
+ok(
+  spM.rocks.some((k) => k.generation === generation + 1 && k.x === rock.x && k.y === rock.y) ||
+    spM.rocks.some((k) => k.generation === generation + 1),
+  'broken rocks regrow as a fresh deterministic generation',
+);
 const k2 = spM.rocks.find((k) => !k.down);
 const hp = k2.hp;
 spM.hitRock(k2, 10, false);

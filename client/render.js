@@ -1,3 +1,4 @@
+import { drawMining } from './mining_render.js';
 // Quantum Rift renderer: starfield, stellars, ship sprite sheets, shots, beams, effects, radar.
 import { stationWheel } from './station_wheel.js';
 import { planetSprite } from './planets.js';
@@ -2056,7 +2057,8 @@ export function draw(G, ctx, W, H, dt, now) {
       R = k.r * z;
     if (x < -R * 2 || y < -R * 2 || x > W + R * 2 || y > H + R * 2) continue;
     const ri =
-        k.ore !== 'gas' && objImg(k.ore === 'shards' ? 'crys' + (k.id % 4) : 'rock' + (k.id % 10)),
+        k.ore !== 'gas' &&
+        objImg(k.ore === 'shards' ? 'crys' + (Math.abs(k.id) % 4) : 'rock' + (Math.abs(k.id) % 10)),
       rr = ri && ri.complete && ri.naturalWidth; // 2.5: rendered asteroids
     const im = rr ? ri : rockImage(k),
       s2 = rr ? k.r * 2.35 * z : im.width * z;
@@ -2076,6 +2078,7 @@ export function draw(G, ctx, W, H, dt, now) {
       ctx.fillRect(x - R * 0.6, y + R + 4, (R * 1.2 * k.hp) / 100, 3);
     }
   }
+  drawMining(G, ctx, sx, sy, z, W, H, now);
   for (const [px_, py_] of salvagePoints(G)) {
     const x = sx(px_),
       y = sy(py_);

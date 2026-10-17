@@ -7,6 +7,7 @@
  * @typedef {object} NetworkMessage
  * Incoming or outgoing network packet payload.
  * @property {string} [t] Message type identifier.
+ * @property {string} [op] Allowlisted operation, validated by its route.
  * @property {string} [id] Target entity or item identifier.
  * @property {string} [fac] Faction identifier.
  * @property {number} [n] Quantity or numeric count.

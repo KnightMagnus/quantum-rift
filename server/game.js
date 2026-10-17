@@ -23,9 +23,11 @@ import { eventideOffers } from '../shared/eventide.js';
  * @property {number} fire2 Secondary weapon fire flag.
  *
  * @typedef {object} PlayerData
+ * @property {import("./mining-contracts.js").SavedSurvey} [miningSurvey]
  * @property {string} name Captain name.
  * @property {number} credits Balance in credits.
  * @property {string} sys Current solar system ID.
+ * @property {string|null} [stellar] Docked stellar or null while flying.
  * @property {string} [shipUid] Unique identifier for player ship.
  * @property {import('../shared/rules.js').ShipLoadout} ship Current active ship loadout.
  * @property {Record<string, number>} [cargo] Cargo inventory mapping commodity ID to tons.
@@ -396,6 +398,7 @@ export class Game {
     this.combatAssist = new CombatAssist(this);
     this.hails = new HailService(this);
     this.messageHandlers = this.createMessageHandlers();
+    this.features.mining.init();
     this.features.fronts.frontsInit();
     this.features.coop.coopInit();
     this.features.frontier.frontierInit();
@@ -1096,6 +1099,12 @@ export class Game {
    */
   createMessageHandlers() {
     return createMessageRegistry([
+      [
+        'mining',
+        (s, m) => {
+          this.features.mining.survey(s, m);
+        },
+      ],
       [
         'combat',
         /**
@@ -1975,7 +1984,14 @@ export class Game {
         sp.spawnMissionTarget({ ...m, owner: s.id });
         this.toast(s, `Your bounty target, ${m.targetName}, is in this system.`);
       }
-    this.send(s, { t: 'space', sys: d.sys, id: e.id, rocks: sp.rocksPayload() });
+    this.send(s, {
+      t: 'space',
+      sys: d.sys,
+      id: e.id,
+      rocks: sp.rocksPayload(),
+      miningRocks: this.features.mining.rocksPayload(sp),
+      mining: this.features.mining.payload(s, sp),
+    });
     this.features.fronts.missionArrive(s, sp);
     this.features.story.storyArrive(s, sp);
     this.features.arcs.arcArrive(s, sp);
@@ -2514,7 +2530,8 @@ export class Game {
       d.stats.mined = (d.stats.mined || 0) + n;
       this.features.fronts.goal(s, 'mined', n);
       this.features.frontier.mastery(s, n * 0.3);
-      if (!it.progressionClaimed) {
+      if (it.generationKey) this.features.mining.collected(s, it, n);
+      else if (!it.progressionClaimed) {
         it.progressionClaimed = true;
         this.features.specialists.specOnMine(s, it);
       }
@@ -3418,6 +3435,7 @@ export class Game {
    * @returns {void}
    */
   sleep(sp) {
+    this.features.mining.suspendSpace(sp);
     delete this.live[sp.id];
   }
   // every two seconds: shuttles that have come home report in, finished research hands over to the queue
@@ -3471,6 +3489,7 @@ export class Game {
       if (![...this.sessions.values()].some((x) => x.data)) this.setPaused(false);
       return;
     } // solo pause
+    this.features.mining.advanceClock(1 / TICK);
     this.tickN++;
     if (this.tickN % (TICK * 2) === 0) {
       for (const s of this.sessions.values())
@@ -3538,6 +3557,8 @@ export class Game {
           JSON.stringify({
             t: 'snap',
             ...snap,
+            miningRocks: this.features.mining.rocksPayload(this.spaces[sys]),
+            mining: this.features.mining.payload(s, this.spaces[sys]),
             combat: this.combatAssist.payload(s, this.spaces[sys]),
             formation: !!s.armadaFormationTarget,
             me: [

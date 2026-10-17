@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 
 /**
  * Persisted player account record and save file state.
- * @typedef {object} PlayerAccount
+ * @typedef {object} AccountCredentials
  * @property {string} name Captain display name.
  * @property {string} salt Cryptographic salt in hexadecimal.
  * @property {string} hash Scrypt password hash in hexadecimal.
@@ -13,10 +13,13 @@ import crypto from 'node:crypto';
  * @property {import('./game.js').PlayerData} [data] Associated player save state data.
  */
 
+/** @typedef {import("./game.js").PlayerData & AccountCredentials} PlayerAccount */
+
 /**
  * Persisted galaxy world state data.
  * @typedef {object} WorldData
  * @property {Record<string, string>} sites World sites and player claim data.
+ * @property {import("./mining-contracts.js").SavedMiningWorld} [mining]
  */
 
 /**
@@ -34,6 +37,27 @@ export class DB {
     fs.mkdirSync(dir, { recursive: true });
     /** @type {string} */
     this.file = path.join(dir, 'players.json');
+    this.wfile = path.join(dir, 'world.json');
+    this.journal = path.join(dir, 'checkpoint.json');
+    // Complete a committed checkpoint before exposing either half to Game.
+    if (fs.existsSync(this.journal)) {
+      const saved = JSON.parse(fs.readFileSync(this.journal, 'utf8'));
+      if (
+        saved.version !== 1 ||
+        typeof saved.players !== 'string' ||
+        typeof saved.world !== 'string'
+      )
+        throw new Error('Invalid committed database checkpoint');
+      JSON.parse(saved.players);
+      JSON.parse(saved.world);
+      this.writeDurable(this.file + '.tmp', saved.players);
+      fs.renameSync(this.file + '.tmp', this.file);
+      this.writeDurable(this.wfile + '.tmp', saved.world);
+      fs.renameSync(this.wfile + '.tmp', this.wfile);
+      this.syncDirectory();
+      fs.unlinkSync(this.journal);
+      this.syncDirectory();
+    }
     /** @type {Record<string, PlayerAccount>} */
     this.players = Object.create(null); // 2.0.2: no prototype, so names like __proto__ can never reach object internals
     try {
@@ -60,7 +84,7 @@ export class DB {
    */
   backup() {
     try {
-      if (!fs.existsSync(this.file)) return;
+      if (!fs.existsSync(this.file) || fs.existsSync(this.journal)) return;
       const root = path.join(this.dir, 'backups'),
         stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19),
         dst = path.join(root, stamp);
@@ -134,13 +158,42 @@ export class DB {
    * Atomically flushes dirty in-memory player and world state to disk via temporary files.
    * @returns {void}
    */
+  /** @param {string} file @param {string} text */
+  writeDurable(file, text) {
+    const fd = fs.openSync(file, 'w');
+    try {
+      fs.writeFileSync(fd, text);
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+  }
+  syncDirectory() {
+    const fd = fs.openSync(this.dir, 'r');
+    try {
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+  }
   flush() {
     if (!this.dirty) return;
-    this.dirty = false;
-    const tmp = this.file + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(this.players));
-    fs.renameSync(tmp, this.file);
-    fs.writeFileSync(this.wfile + '.tmp', JSON.stringify(this.world));
+    // Journal commit point precedes both renames. Recovery rolls both halves forward.
+    // Never overwrite a committed journal after a failed flush: require restart/recovery.
+    if (fs.existsSync(this.journal))
+      throw new Error('Pending database checkpoint requires recovery');
+    const players = JSON.stringify(this.players),
+      world = JSON.stringify(this.world);
+    this.writeDurable(this.journal + '.tmp', JSON.stringify({ version: 1, players, world }));
+    fs.renameSync(this.journal + '.tmp', this.journal);
+    this.syncDirectory();
+    this.writeDurable(this.file + '.tmp', players);
+    fs.renameSync(this.file + '.tmp', this.file);
+    this.writeDurable(this.wfile + '.tmp', world);
     fs.renameSync(this.wfile + '.tmp', this.wfile);
+    this.syncDirectory();
+    fs.unlinkSync(this.journal);
+    this.syncDirectory();
+    this.dirty = false;
   }
 }
