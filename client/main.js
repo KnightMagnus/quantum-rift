@@ -60,6 +60,9 @@ import {
   ctab,
 } from './ui.js';
 
+const $ = (id) => document.getElementById(id);
+initLoginScene($('login'));
+
 /**
  * @typedef {object} ClientGameState
  * @property {import('../shared/rules.js').GameAssets | null} A Game assets dictionary.
