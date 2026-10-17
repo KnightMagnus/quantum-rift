@@ -189,7 +189,7 @@ Fit a **Tow Rig** at an outfitter: 45,000 credits, 4 outfit tonnes, maximum 1, o
 
 **DETACH** or disconnect leaves the motherlode in that system at its saved position. Its owner has **300 simulation seconds** to reclaim it; after that another surveyed, equipped captain can attach. Paused/offline simulation freezes this grace, and reconnecting does not refresh it or move the load to your new dock. A restart detaches an attached load in place.
 
-A delivered or destroyed source cannot pay again under its old ID. Fields expose **RICH OPPORTUNITY / STEADY / RECOVERING** states through the existing local recovery system; a settled source can eventually issue a new finite load, not a backlog of offline rewards. Motherlodes and tethers do not collide with ships or damage uninvolved captains. The three large ore-family silhouettes reuse the game's rock artwork, with static readable tethers under reduced motion.
+A delivered or destroyed source cannot pay again under its old ID. Fields expose **RICH OPPORTUNITY / STEADY / RECOVERING** states through the existing local recovery system; a settled source can eventually issue a new finite load, not a backlog of offline rewards. Motherlodes and tethers do not collide with ships or damage uninvolved captains. Three new large ore-family raster variants match the game's lit-3D rock style. Static readable tethers remain under reduced motion; one restrained strain voice follows tension and respects volume, effects and mute controls.
 
 ---
 
