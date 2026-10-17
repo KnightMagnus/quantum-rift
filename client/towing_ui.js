@@ -39,7 +39,7 @@ export function initTowingUI({ G, send, bound, label, blocked, towAudio = () => 
   const help = document.createElement('div');
   help.className = 'small';
   help.textContent =
-    'Scan the deposit first. Towing needs a fitted Tow Rig and at least 60 t of hold capacity (built in on the Dredge). Towing limits speed to 60 on a Dredge or 30 on other ships. Deliver or detach before landing or jumping. A detached load stays reserved for its owner for 300 seconds of active simulation. Delivery gives the material, not extra credits.';
+    'Scan the deposit first. Towing needs a fitted Tow Rig and at least 60 t of hold capacity (built in on the Dredge). Towing limits speed to 60 on a Dredge or 30 on other ships. Bring the load to an ACCEPTS MOTHERLODE marker for automatic delivery at any towing speed. Keep enough hold space; a full hold leaves the load safely detached and reserved at the port. Deliver or detach before landing or jumping. A detached load stays reserved for its owner for 300 seconds of active simulation. Delivery gives the material, not extra credits.';
   const details = document.createElement('details');
   const summary = document.createElement('summary');
   summary.textContent = 'Transfer & towing help';
@@ -57,18 +57,26 @@ export function initTowingUI({ G, send, bound, label, blocked, towAudio = () => 
     send({ t: 'towing', op, id: o.id, revision: o.revision, ...extra });
     return true;
   }
-  function invoke() {
+  function invoke(action = 'towToggle') {
     const w = wire();
+    if (action === 'towDeliver')
+      return w?.attached ? request('deliver', { port: port.value }) : false;
+    if (action === 'towOffer')
+      return w?.attached && recipient.value.trim()
+        ? request('offer', { to: recipient.value.trim() })
+        : false;
+    if (action === 'towAccept') {
+      const x = w?.offers[0];
+      if (!x || blocked() || G.paused || G.landed || !G.view) return false;
+      send({ t: 'towing', op: 'accept', id: x.id, revision: x.revision });
+      return true;
+    }
     return request(w?.attached ? 'detach' : 'attach');
   }
-  toggle.onclick = invoke;
-  deliver.onclick = () => request('deliver', { port: port.value });
-  offer.onclick = () => request('offer', { to: recipient.value.trim() });
-  accept.onclick = () => {
-    const x = wire()?.offers[0];
-    if (x && !blocked() && !G.paused && !G.landed)
-      send({ t: 'towing', op: 'accept', id: x.id, revision: x.revision });
-  };
+  toggle.onclick = () => invoke();
+  deliver.onclick = () => invoke('towDeliver');
+  offer.onclick = () => invoke('towOffer');
+  accept.onclick = () => invoke('towAccept');
   let signature = '',
     portSignature = '';
   function refresh() {
@@ -122,15 +130,17 @@ export function initTowingUI({ G, send, bound, label, blocked, towAudio = () => 
       );
     }
     status.textContent = o
-      ? `${o.ore} motherlode · ${o.mass ?? '?'} t. ${o.status === 'detached' ? `Reserved for ${o.owner || 'owner'}: ${Math.max(0, Math.ceil(o.graceUntil - w.now))}s remaining. ` : ''}${w.attached ? `Towing · speed limit ${w.cap}. Detach before landing or jumping.` : o.revealed ? 'Approach the deposit to attach.' : 'Scan to reveal its yield and delivery ports.'}`
+      ? `${o.ore} motherlode · ${o.mass ?? '?'} t. ${o.status === 'detached' ? `Reserved for ${o.owner || 'owner'}: ${Math.max(0, Math.ceil(o.graceUntil - w.now))}s remaining. ` : ''}${w.attached ? `Towing · speed limit ${w.cap}. Approach an ACCEPTS MOTHERLODE marker for automatic delivery.` : o.revealed ? 'Approach the deposit to attach.' : 'Scan to reveal its yield and delivery ports.'}`
       : 'No large deposits nearby. Scan in another field.';
+    deliver.textContent = `Deliver now · ${label(bound('towDeliver'))} (also automatic)`;
+    offer.textContent = `OFFER TRANSFER · ${label(bound('towOffer'))}`;
     toggle.textContent = `${w.attached ? 'DETACH' : 'ATTACH'} · ${label(bound('towToggle'))}`;
     toggle.disabled = !o || blocked() || G.paused;
     deliver.disabled = !w.attached || !ports.length || blocked() || G.paused;
     offer.disabled = !w.attached || blocked() || G.paused;
     accept.hidden = !w.offers.length;
     if (w.offers.length)
-      accept.textContent = `ACCEPT ${w.offers[0].from}'S TRANSFER (explicit consent)`;
+      accept.textContent = `ACCEPT ${w.offers[0].from}'S TRANSFER · ${label(bound('towAccept'))} (explicit consent)`;
   }
   return { invoke, refresh };
 }

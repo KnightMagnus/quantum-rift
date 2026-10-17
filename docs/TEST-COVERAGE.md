@@ -245,3 +245,71 @@ Registered unit programs `towing.js`, `towing-persistence.js`, `field-evolution.
 ## Mining panel usability
 
 `mining-panel.js` tests existing Survey-role / tow-rig eligibility, nonzero operational cargo capacity, full and mission-loaded holds, and active-control safety. `mining-panel-browser.mjs` exercises the production drill toggle at the former bottom-left panel anchor, default collapse, click/keyboard dismissal, full-hold and ship/landing transitions, independent hail inbox, and responsive final-control reachability. Transition snapshots are explicit client fixtures, not claimed server ship transactions. Existing mining, Dredge and towing browser suites exercise actual authoritative operations through the collapsed panel. Both new tests are registered in canonical CI lanes.
+
+## Account switching
+
+`logout-browser.mjs` runs real online and Solo servers with isolated saves. It covers
+Escape precedence for typing/options/map, default Cancel/keyboard confirmation,
+Solo temporary and preexisting pause, flight logout to login without reload,
+immediate durable dock/save, cleared credentials/chat/social/navigation state,
+refreshed Solo slot summaries, no automatic relogin and repeated account switches.
+It does not simulate every network outage or certify every peripheral device.
+
+### Automatic motherlode collection and mining shortcuts
+
+`towing-auto-delivery.js` covers authoritative load-centred port collection at
+all towing speeds and headings, a swept tangent crossing, tug-only proximity
+denial, rejected ports/standing, full-hold safe reserved detachment/reclaim,
+exact grade conservation and owner-only idempotent receipt replay.
+`mining-keys-browser.mjs` drives real browser keys for scanning, attach/detach,
+manual delivery, Dredge modes/input/all-off, group consent and panel toggle;
+it checks one-shot repeats, typing/modal/landed denial, remapping/unbinding and
+effective labels. `towing-browser.mjs` additionally uses Home/End for explicit
+cross-browser transfer and flies into the port for automatic delivery. The
+WebSocket suite exercises full-hold release and reconnect/reclaim delivery. Selection fields retain native keyboard navigation; focus
+must leave text/select fields before global game shortcuts apply.
+
+Mining defaults: V scan, backtick panel, comma attach/detach, period deliver,
+Home offer transfer, End accept transfer, minus group consent, left/right
+brackets Sweep/Harvest, semicolon Smelter, equals set selected input, backslash
+all off. All use the existing rebind UI. The exact legacy automatically inserted
+four-null mining bundle is upgraded once; existing custom/individual unbound
+keys and subsequent explicit unbinding are preserved. Conflicting defaults
+remain unassigned rather than displacing an existing control.
+
+## Landing cruise heading
+
+`landing-autopilot.js` runs production guidance and shared flight physics for every
+stock hull across four port radii, inward/outward and lateral drift, including
+long capped-speed approaches. Four light/heavy hulls additionally assert targetward
+cruise orientation at 90% and 100% maximum speed with tiny lateral drift. Existing
+settled-authority, stale snapshot and duplicate request guards remain exercised.
+
+`landing-autopilot-browser.mjs` is now registered in the browser CI lane: real L
+input, delayed WebSocket inputs, authoritative cruise heading, retrograde braking,
+one successful server landing, manual steering takeover and permission denial.
+Fixtures use disposable Solo saves and seeded ambient conditions, not player saves.
+Targets are static stellars (the production landing contract); moving-target
+rendezvous, arbitrary network jitter and cross-browser behavior are not claimed.
+
+## `native-dropdown-theme` — native dropdown appearance
+
+`dropdowns-browser.mjs` runs in the browser CI lane. It checks black backgrounds,
+white text and dark native popup hints on actual dynamic DOCKS controls, hangar
+crew/job selectors, station relocation, shipyard sort, refinery, map commodity
+and initialized mining/towing controls. Real dock assignment survives a server
+re-render; keyboard sorting and focus outlines remain functional. Synthetic
+optgroup/disabled cases cover future controls. Native OS popup rendering and
+forced-colors overrides are platform-owned, not cross-platform screenshot proof.
+
+The same browser program covers `shipyard-selection-scroll`: selecting a ship
+from the bottom of the actual catalog immediately resets `#landbody` to the top,
+exposes stats and purchase controls, and preserves the selected hull and money.
+An unrelated production renderer refresh preserves the browsing scroll offset.
+Ship cards currently have no keyboard-selection handler; native sort keyboard
+interaction remains covered. No purchasing is performed by selection.
+
+Login-scene coverage also rejects the removed bottom-left location caption and
+checks the title banner’s centered flex alignment, measured text fit and retained
+30px horizontal inset at desktop/mobile widths and 0.8×/1.4× UI scales. The Solo
+client-system test checks the same banner while exercising save/login workflows.

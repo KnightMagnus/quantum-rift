@@ -3426,3 +3426,12 @@ export function surveyPoints(G) {
   return out;
 }
 export { FAC };
+
+// World-bound visuals must not survive switching captains in the same document.
+export function resetRenderSession() {
+  fx.length = 0;
+  shieldHits.clear();
+  shake = 0;
+  tagRects = [];
+  Object.assign(cam, { cx: 0, cy: 0, z: 1, W: 1, H: 1 });
+}

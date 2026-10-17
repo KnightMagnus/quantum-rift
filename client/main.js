@@ -33,11 +33,12 @@ import {
   shieldHit,
   dmgNumber,
   addShake,
+  resetRenderSession,
   cam,
   FAC,
 } from './render.js';
 import * as audio from './audio.js';
-import { setRadioLevel } from './radio.js';
+import { setRadioLevel, stopRadio } from './radio.js';
 window.RiftAudio = audio; // for tests and the curious
 import { infoHtml } from './info_ui.js';
 import { boardHtml } from './hangar_ui.js';
@@ -210,10 +211,17 @@ export const ACTIONS = [
   ['ordLoot', 'Fleet: collect loot', 'KeyU'],
   ['companion', 'Next companion tab', 'KeyC'],
   ['surveyPulse', 'Scan nearby rocks', 'KeyV'],
-  ['dredgeSweep', 'Dredge Sweep', null],
-  ['dredgeHarvest', 'Dredge Harvest Plasma', null],
-  ['dredgeSmelter', 'Dredge Mobile Smelter', null],
-  ['towToggle', 'Attach / Detach Motherlode', null],
+  ['dredgeSweep', 'Dredge Sweep', 'BracketLeft'],
+  ['dredgeHarvest', 'Dredge Harvest Plasma', 'BracketRight'],
+  ['dredgeSmelter', 'Dredge Mobile Smelter', 'Semicolon'],
+  ['towToggle', 'Attach / Detach Motherlode', 'Comma'],
+  ['miningPanel', 'Mining controls', 'Backquote'],
+  ['towDeliver', 'Deliver Motherlode (also automatic)', 'Period'],
+  ['towOffer', 'Offer tow to selected captain', 'Home'],
+  ['towAccept', 'Accept offered tow', 'End'],
+  ['miningGroup', 'Join / leave group mining', 'Minus'],
+  ['dredgeInput', 'Set selected processing input', 'Equal'],
+  ['dredgeOff', 'Dredge all off', 'Backslash'],
 ];
 const ALT = {
   thrust: 'ArrowUp',
@@ -244,18 +252,17 @@ function saveOpts() {
   } catch {}
 }
 function miningModalBlocked() {
-  return ['opts', 'gmap', 'storybox', 'ctrlbox', 'storebox'].some((id) => {
-    const el = $(id);
-    return el && !el.classList.contains('hidden');
-  });
+  // Includes account/quit confirmation and future overlays without a stale ID list.
+  return !!document.querySelector('.overlay:not(.hidden)');
 }
+
 const miningUI = initMiningUI({
   industrialAudio: audio.industrial,
   towAudio: audio.towing,
   G,
   send,
   bound,
-  label: (c) => (c ? c.replace(/^Key/, '') : 'assign key'),
+  label: (c) => keyName(c),
   blocked: () => typing() || miningModalBlocked(),
   contextBlocked: miningModalBlocked,
 });
@@ -302,6 +309,9 @@ applyOpts();
 const canvas = $('view'),
   ctx = canvas.getContext('2d'),
   rctx = $('radar').getContext('2d');
+let reconnectTimer = null,
+  sessionEpoch = 0,
+  sessionDefaults = null;
 let ws = null,
   seq = 0,
   history = [],
@@ -433,6 +443,12 @@ function soloLogin(s) {
   };
 }
 async function login() {
+  if ($('lbtn').disabled) return;
+  clearTimeout(reconnectTimer);
+  sessionEpoch++;
+  const previous = ws;
+  ws = null;
+  previous?.close();
   audio.unlock();
   const name = $('lname').value.trim(),
     pass = G.solo ? '' : $('lpass').value;
@@ -444,6 +460,12 @@ async function login() {
     G.A = augmentAssets(await (await fetch('/shared/assets.json')).json());
     initUI(G, send);
     initCoop(G, send, { toast, ask, plot });
+    // Capture only the clean initialized state; account data arrives over the socket later.
+    sessionDefaults = Object.fromEntries(
+      Object.entries(G)
+        .filter(([k, v]) => !['A', 'opts', 'pal'].includes(k) && !(v instanceof Element))
+        .map(([k, v]) => [k, typeof v === 'function' ? v : structuredClone(v)]),
+    );
     $('lstat').textContent = was;
   } // 1.0.3: the status line comes back if login fails
   try {
@@ -455,26 +477,45 @@ async function login() {
 }
 // 2.4: a dropped connection reconnects on its own, signing back in as the same captain
 function openSocket(tries) {
+  if (!G._cred) return;
   const { name, pass } = G._cred;
-  ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
-  ws.onopen = () => send({ t: 'hello', name, pass });
-  ws.onmessage = (ev) => onMessage(JSON.parse(ev.data));
-  ws.onclose = () => {
+  const epoch = sessionEpoch;
+  const socket = new WebSocket(
+    (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws',
+  );
+  ws = socket;
+  const current = () => ws === socket && sessionEpoch === epoch;
+  socket.onopen = () => {
+    if (current()) send({ t: 'hello', name, pass });
+  };
+  socket.onmessage = (ev) => {
+    if (current()) onMessage(JSON.parse(ev.data));
+  };
+  socket.onclose = () => {
+    if (!current()) return;
+    ws = null;
     $('lbtn').disabled = false;
     if (!G.you) return;
     if (!G._kicked && tries < 30) {
       if (!tries) toast('Connection lost. Reconnecting...');
       $('lstat').textContent = 'Reconnecting to the server...';
-      setTimeout(() => openSocket(tries + 1), Math.min(8000, 1000 + tries * 700));
+      reconnectTimer = setTimeout(
+        () => {
+          if (sessionEpoch === epoch && G._cred) openSocket(tries + 1);
+        },
+        Math.min(8000, 1000 + tries * 700),
+      );
       return;
     }
-    $('login').classList.remove('hidden');
-    $('lerr').textContent = G._kicked
+    const reason = G._kicked
       ? 'Signed in somewhere else.'
       : 'Disconnected from the server. Sign in again when it is back.';
+    // Terminal disconnect also returns a clean login, not a former captain's UI state.
+    void logOut();
+    $('lerr').textContent = reason;
   };
-  ws.onerror = () => {
-    if (!G.you) {
+  socket.onerror = () => {
+    if (current() && !G.you) {
       $('lerr').textContent = 'Could not reach the Quantum Rift server.';
       $('lbtn').disabled = false;
     }
@@ -576,14 +617,15 @@ function onMessage(m) {
       receiveMining(G, m);
       if (G.route.length && G.route[0] === m.sys) G.route.shift();
       drawMini();
-      if (G.autoRoute && G.route.length)
+      if (G.autoRoute && G.route.length) {
+        const epoch = sessionEpoch;
         setTimeout(() => {
-          if (G.autoRoute && G.view && G.route.length && !G.auto) {
+          if (epoch === sessionEpoch && G.autoRoute && G.view && G.route.length && !G.auto) {
             G.autoKeep = true;
             setAuto({ mode: 'jump' }, `Autopilot: next jump to ${SYS[G.route[0]].name}.`);
           }
         }, 1500);
-      else G.autoRoute = false;
+      } else G.autoRoute = false;
       {
         const an = G.world && G.world.anomalies && G.world.anomalies[m.sys];
         if (an && ANOMALIES[an])
@@ -619,7 +661,7 @@ function onMessage(m) {
       break; // 2.6: friends, messages, trades, follow the leader
     case 'paused':
       G.paused = m.on;
-      $('pausebox').classList.toggle('hidden', !m.on);
+      $('pausebox').classList.toggle('hidden', !m.on || G.quitting);
       break;
     case 'chat':
       chatLine(m);
@@ -708,6 +750,7 @@ function onMessage(m) {
 
 const storyQ = [];
 function showStory(m) {
+  if (!G.you || !m) return;
   if (!$('storybox').classList.contains('hidden')) {
     storyQ.push(m);
     return;
@@ -722,7 +765,12 @@ function showStory(m) {
   audio.ui(/QUEST|SIDE STORY/.test(m.tag || '') ? 'quest' : m.done ? 'complete' : 'ping', 0.7); // 2.5: story beats have their own sting
   const close = () => {
     $('storybox').classList.add('hidden');
-    if (storyQ.length) setTimeout(() => showStory(storyQ.shift()), 150);
+    if (storyQ.length) {
+      const epoch = sessionEpoch;
+      setTimeout(() => {
+        if (epoch === sessionEpoch) showStory(storyQ.shift());
+      }, 150);
+    }
   };
   if (m.done) $('storyok').onclick = close;
   else {
@@ -969,6 +1017,13 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   switch (actionOf(e.code)) {
+    case 'miningPanel':
+    case 'towDeliver':
+    case 'towOffer':
+    case 'towAccept':
+    case 'miningGroup':
+    case 'dredgeInput':
+    case 'dredgeOff':
     case 'towToggle':
     case 'dredgeSweep':
     case 'dredgeHarvest':
@@ -1146,7 +1201,10 @@ $('infobody').addEventListener('click', (e) => {
       : undefined;
     send({ t: 'jettison', cid: b.dataset.jet, n: +b.dataset.n || 0, lots });
   } else send({ t: 'order', o: b.dataset.ord });
-  setTimeout(renderInfo, 250);
+  const epoch = sessionEpoch;
+  setTimeout(() => {
+    if (epoch === sessionEpoch && G.you) renderInfo();
+  }, 250);
 });
 window.addEventListener(
   'keydown',
@@ -1164,13 +1222,16 @@ window.addEventListener(
   true,
 );
 // ------------------------------------------------------------------ 1.0.3 autopilot: fly to a planet, turn, brake and land; or fly clear and jump
-G.startAutoJump = () =>
-  setTimeout(() => {
+G.startAutoJump = () => {
+  const epoch = sessionEpoch;
+  return setTimeout(() => {
+    if (epoch !== sessionEpoch) return;
     if (G.view && G.route.length && !G.auto) {
       G.autoKeep = true;
       setAuto({ mode: 'jump' }, `Autopilot: following to ${SYS[G.route[0]].name}.`);
     }
-  }, 300); // 2.6: follow the leader
+  }, 300);
+}; // 2.6: follow the leader
 function setAuto(a, msg) {
   if (a && (G.towing || G.you?.towing)?.attached) {
     toast('Towing: manual flight only; detach before automatic transit.');
@@ -1320,7 +1381,7 @@ const BASICS = [
   ['Mouse wheel', 'Zoom'],
   ['Enter', 'Chat'],
   ['O', 'Options'],
-  ['Esc', 'Close a window, clear the target'],
+  ['Esc', 'Close a window / open log out confirmation'],
 ];
 /**
  * Opens the flight and keyboard controls reference dialog modal.
@@ -1721,6 +1782,15 @@ const keyName = (c) =>
   !c
     ? 'assign key'
     : {
+        Backquote: '`',
+        BracketLeft: '[',
+        BracketRight: ']',
+        Semicolon: ';',
+        Comma: ',',
+        Period: '.',
+        Minus: '-',
+        Equal: '=',
+        Backslash: '\\',
         ArrowUp: '↑',
         ArrowDown: '↓',
         ArrowLeft: '←',
@@ -2098,7 +2168,7 @@ let acc = 0,
  * @returns {void}
  */
 function fixedTick() {
-  if (!G.view || G.landed || G.paused) return;
+  if (!G.view || G.landed || G.paused || G.quitting) return;
   // Preserve automatic-control intent even if guidance completes or refuses this tick.
   if ((G.towing || G.you?.towing)?.attached) G.auto = null;
   G.view.towCap = (G.towing || G.you?.towing)?.attached
@@ -2275,3 +2345,146 @@ $('combatstop').onclick = () => send({ t: 'combat', op: 'off' });
 $('combatdelegate').onchange = (e) => send({ t: 'combat', op: 'delegate', on: e.target.checked });
 $('combatcoordinate').onchange = (e) =>
   send({ t: 'combat', op: 'coordinate', on: e.target.checked });
+
+// Escape belongs to existing dialogs/text inputs first. Logging out is always explicit.
+let quitFocus = null,
+  quitPaused = false;
+function cancelQuit() {
+  if ($('quitconfirm').disabled) return;
+  $('quitbox').classList.add('hidden');
+  G.quitting = false;
+  if (quitPaused) send({ t: 'pause' });
+  quitPaused = false;
+  $('pausebox').classList.toggle('hidden', !G.paused);
+  quitFocus?.focus();
+}
+function openQuit() {
+  quitFocus = document.activeElement;
+  G.quitting = true;
+  keys = {};
+  mouse.down = false;
+  touch.keys = {};
+  touch.stick = null;
+  send({ t: 'input', seq: ++seq, th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 });
+  quitPaused = !!G.solo && !G.paused;
+  if (quitPaused) send({ t: 'pause' });
+  $('pausebox').classList.add('hidden');
+  $('quitnote').textContent = G.solo
+    ? 'Your progress is saved when you log out.'
+    : 'Your progress is saved when you log out. The online world keeps running.';
+  $('quitbox').classList.remove('hidden');
+  $('quitcancel').focus();
+}
+async function logOut() {
+  $('quitconfirm').disabled = $('quitcancel').disabled = true;
+  clearTimeout(reconnectTimer);
+  sessionEpoch++;
+  const epoch = sessionEpoch;
+  const socket = ws;
+  ws = null;
+  delete G._cred;
+  // The server's normal close path detaches, docks and saves the captain before closing.
+  if (socket && socket.readyState < WebSocket.CLOSING) {
+    await new Promise((resolve) => {
+      socket.addEventListener('close', resolve, { once: true });
+      socket.close(1000, 'Log out');
+    });
+  }
+  const keep = { A: G.A, opts: G.opts, pal: G.pal, mapLegend: G.mapLegend };
+  for (const key of Object.keys(G)) delete G[key];
+  for (const [key, value] of Object.entries(sessionDefaults))
+    G[key] = typeof value === 'function' ? value : structuredClone(value);
+  Object.assign(G, keep);
+  keys = {};
+  history = [];
+  seq = acc = lastSnapT = 0;
+  mouse.down = mouse.in = false;
+  pad.prev = [];
+  touch.keys = {};
+  touch.stick = null;
+  storyQ.length = 0;
+  quitPaused = false;
+  quitFocus = null;
+  resetRenderSession();
+  hailUI.reset();
+  miningUI.refresh();
+  closeMap();
+  document.querySelectorAll('.overlay').forEach((el) => el.classList.add('hidden'));
+  for (const id of ['pausebox', 'tut', 'combatcontrols']) $(id).classList.add('hidden');
+  for (const id of [
+    'chatlog',
+    'capview',
+    'landbody',
+    'infobody',
+    'toasts',
+    'storyx',
+    'storyb',
+    'hailtext',
+    'hailopts',
+  ])
+    $(id).replaceChildren();
+  // Clear persistent panel drafts too (for example, a former captain's tow recipient).
+  document.querySelectorAll('input, textarea').forEach((el) => {
+    if (el.id !== 'lname' && ['text', 'search', 'password', 'textarea'].includes(el.type))
+      el.value = '';
+  });
+  $('cchan')
+    .querySelectorAll('button')
+    .forEach((b) => b.classList.toggle('on', b.dataset.ch === ''));
+  $('chatin').placeholder = G.solo ? 'Write a note in your log (Enter)' : 'Press Enter to chat';
+  $('itabs')
+    .querySelectorAll('button')
+    .forEach((b) => b.classList.toggle('on', b.dataset.it === 'ship'));
+  $('qvolbox').classList.add('hidden');
+  $('lerr').textContent = '';
+  $('lbtn').disabled = $('quitconfirm').disabled = $('quitcancel').disabled = false;
+  $('login').classList.remove('hidden');
+  $('lname').focus();
+  $('lname').select();
+  audio.setAmbience(null);
+  audio.industrial(false, 0);
+  audio.towing(false);
+  stopRadio();
+  audio.startMusic();
+  // Refresh Solo slot summaries only after the disconnect/save, without rebuilding event listeners.
+  try {
+    const status = await (await fetch('/api/status')).json();
+    if (epoch === sessionEpoch && !G.you && G.solo) soloLogin(status);
+  } catch {}
+}
+$('quitcancel').onclick = cancelQuit;
+$('quitconfirm').onclick = logOut;
+window.addEventListener(
+  'keydown',
+  (e) => {
+    if (G.quitting) {
+      if (e.key === 'Escape' && !e.repeat && !$('quitconfirm').disabled) cancelQuit();
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        (document.activeElement === $('quitcancel') ? $('quitconfirm') : $('quitcancel')).focus();
+      }
+      e.stopImmediatePropagation();
+      if (!['Enter', ' ', 'Tab'].includes(e.key)) e.preventDefault();
+      return;
+    }
+    if (e.key !== 'Escape' || e.repeat || !G.you || typing()) return;
+    if (!$('qvolbox').classList.contains('hidden')) {
+      $('qvolbox').classList.add('hidden');
+      e.stopImmediatePropagation();
+      return;
+    }
+    // Existing modals, map, and expanded mining panel consume this Escape instead.
+    if ([...document.querySelectorAll('.overlay:not(.hidden)')].some((el) => el.id !== 'land'))
+      return;
+    if (!$('miningcontrols').classList.contains('hidden')) {
+      $('miningclose').click();
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    openQuit();
+  },
+  true,
+);
