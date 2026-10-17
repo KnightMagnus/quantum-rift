@@ -94,7 +94,8 @@
     "mining-panel-browser.mjs",
     "logout-browser.mjs",
     "mining-keys-browser.mjs",
-    "landing-autopilot-browser.mjs"
+    "landing-autopilot-browser.mjs",
+    "dropdowns-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -549,6 +550,20 @@
         "mining-keys-browser.mjs"
       ],
       "asserts": "Finite authored source conservation, surveyed rig authority, hard 60/30 physical limits, consensual transfer, logical grace/recovery, transit and lifecycle denials, capacity-first exact-grade delivery and real journal fault recovery. Browser uses custom/unbound controls, F fighter bay, static reduced-motion artwork, scaled controls and actual two-captain transfer/delivery. Moving transfers check relative speed and immediate object cap; real production scaling, new raster hash/alpha decode and bounded mute/effects-aware tether audio are browser-verified."
+    },
+    {
+      "id": "native-dropdown-theme",
+      "owners": ["client/style.css"],
+      "services": [],
+      "tests": ["dropdowns-browser.mjs"],
+      "asserts": "Black/white native selects/options across dynamic docks, hangar, shipyard, refinery, map and initialized mining/towing controls; real dock assignment/re-render, keyboard sort/focus and disabled/group styling. OS popup painting remains platform-owned."
+    },
+    {
+      "id": "shipyard-selection-scroll",
+      "owners": ["client/ui.js"],
+      "services": [],
+      "tests": ["dropdowns-browser.mjs"],
+      "asserts": "Explicit ship selection resets the actual landing scroll container after rendering; selected details and purchase controls visible, background renderer preserves scroll, no purchase or wallet change."
     }
   ],
   "routes": {
@@ -582,7 +597,13 @@
     "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
     "trade": ["bot.js", "cargo-flows.js", "v203.js", "cargo-ui-browser.mjs"],
     "buyship": ["sim.js", "v21.js"],
-    "docks": ["outfitter-wing-repairs.js", "sim.js", "v21.js", "knight-profile.mjs"],
+    "docks": [
+      "outfitter-wing-repairs.js",
+      "sim.js",
+      "v21.js",
+      "knight-profile.mjs",
+      "dropdowns-browser.mjs"
+    ],
     "questdrop": ["core-actions.js"],
     "outfit": ["bot.js", "v203.js"],
     "accept": ["bot.js", "v12.js", "v203.js", "v24.js", "v26.js"],
