@@ -1,3 +1,11 @@
+import {
+  root,
+  availablePort,
+  evidenceDir,
+  ready,
+  cleanup,
+  failureEvidence,
+} from './helpers/browser-fixture.mjs';
 // Actual Solo server, production client input loop and authoritative flight physics.
 // Fixture only seeds hull/position/drift, removes ambient combat and records telemetry.
 import assert from 'node:assert/strict';
@@ -5,18 +13,39 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
 import { augmentAssets, makeLoadout, shipStats } from '../shared/rules.js';
 import { STELLARS } from '../shared/galaxy.js';
-const root = path.resolve('.');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-landing-browser-'));
-const evidence = path.resolve(process.argv[2] || 'artifacts/landing-autopilot');
+const evidence = path.resolve(process.argv[2] || evidenceDir('landing-autopilot'));
 fs.mkdirSync(evidence, { recursive: true });
 const A = augmentAssets(JSON.parse(fs.readFileSync('shared/assets.json')));
 const db = new DB(path.join(dir, 'data'));
 const cases = [
+  {
+    name: 'Cruise Skiff',
+    hull: 703,
+    port: 'meridian-yards',
+    x: 0,
+    y: 2200,
+    vx: 1,
+    vy: -153.9,
+    a: Math.PI / 2,
+    cruise: true,
+  },
+  {
+    name: 'Cruise Liner',
+    hull: 714,
+    port: 'meridian-yards',
+    x: 0,
+    y: 1700,
+    vx: 1,
+    vy: -117,
+    a: Math.PI / 2,
+    cruise: true,
+  },
   {
     name: 'Skiff Station',
     hull: 703,
@@ -104,31 +133,36 @@ Game.prototype.tick=function(...args) {
 };
 `,
 );
-const port = Number(process.env.RIFT_LANDING_PORT || 18982),
+const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['--import', fixture, 'server/main.js'], {
-  cwd: root,
-  env: {
-    ...process.env,
-    SOLO: '1',
-    PORT: String(port),
-    DATA_DIR: path.join(dir, 'data'),
-    SEEDS_FILE: '/nonexistent',
+const server = spawn(
+  process.execPath,
+  [
+    '--import',
+    path.join(root, 'test/helpers/seed-random.mjs'),
+    '--import',
+    fixture,
+    'server/main.js',
+  ],
+  {
+    cwd: root,
+    env: {
+      ...process.env,
+      SOLO: '1',
+      PORT: String(port),
+      DATA_DIR: path.join(dir, 'data'),
+      SEEDS_FILE: '/nonexistent',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
   },
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+);
 const log = fs.createWriteStream(path.join(evidence, 'server.log'));
 server.stdout.pipe(log);
 server.stderr.pipe(log);
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { chromium } = await import('playwright');
 let browser;
 try {
-  for (let i = 0; i < 100; i++) {
-    try {
-      if ((await fetch(origin + '/api/status')).ok) break;
-    } catch {}
-    await new Promise((r) => setTimeout(r, 100));
-  }
+  await ready(server, origin);
   browser = await chromium.launch({
     headless: true,
     executablePath: process.env.CHROMIUM_EXECUTABLE,
@@ -139,146 +173,162 @@ try {
     ],
   });
   const results = [];
-  for (const baseline of process.env.RIFT_LANDING_FIXED_ONLY ? [false] : [true, false])
-    for (const c of cases.filter(
-      (c) => !process.env.RIFT_LANDING_CASE || c.name === process.env.RIFT_LANDING_CASE,
-    )) {
-      const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-      const errors = [],
-        sent = [],
-        received = [];
-      page.on('pageerror', (e) => errors.push(String(e)));
-      page.on('websocket', (socket) => {
-        socket.on('framesent', (f) => {
-          try {
-            sent.push(JSON.parse(f.payload));
-          } catch {}
-        });
-        socket.on('framereceived', (f) => {
-          try {
-            received.push(JSON.parse(f.payload));
-          } catch {}
-        });
+  for (const c of cases.filter(
+    (c) => !process.env.RIFT_LANDING_CASE || c.name === process.env.RIFT_LANDING_CASE,
+  )) {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    const errors = [],
+      sent = [],
+      received = [];
+    page.on('pageerror', (e) => errors.push(String(e)));
+    page.on('websocket', (socket) => {
+      socket.on('framesent', (f) => {
+        try {
+          sent.push(JSON.parse(f.payload));
+        } catch {}
       });
-      // 180ms upstream delay exercises a modest network path, not altered flight physics.
-      await page.addInitScript(() => {
-        const original = WebSocket.prototype.send;
-        WebSocket.prototype.send = function (data) {
-          setTimeout(() => {
-            if (this.readyState === 1) original.call(this, data);
-          }, 180);
+      socket.on('framereceived', (f) => {
+        try {
+          received.push(JSON.parse(f.payload));
+        } catch {}
+      });
+    });
+    // 180ms upstream delay exercises a modest network path, not altered flight physics.
+    await page.addInitScript(() => {
+      const original = WebSocket.prototype.send;
+      WebSocket.prototype.send = function (data) {
+        setTimeout(() => {
+          if (this.readyState === 1) original.call(this, data);
+        }, 180);
+      };
+    });
+    await page.goto(origin);
+    await page.locator(`[data-slot="${c.name}"]`).click();
+    await page.waitForFunction(() => G.you && G.landed);
+    for (let i = 0; i < 10 && (await page.locator('#storybox').isVisible()); i++)
+      await page.locator('#storyb button').first().click();
+    await page.click('#depart');
+    await page.waitForFunction(() => G.view && !G.landed);
+    await page.evaluate((id) => {
+      G.navStellar = id;
+      G.opts.mouseAim = false;
+    }, c.port);
+    const start = Date.now(),
+      traceStart = fs.existsSync(traceFile) ? fs.readFileSync(traceFile, 'utf8').length : 0;
+    await page.keyboard.press('l');
+    await page.waitForFunction((id) => G.auto?.id === id, c.port);
+    if (c.cruise) {
+      await page.waitForTimeout(3500);
+      const cruise = await page.evaluate(async () => {
+        const { STELLARS } = await import('/shared/galaxy.js');
+        const p = STELLARS[G.auto.id],
+          s = G.ents.get(G.myId);
+        const bearing = Math.atan2(p.x - s.x, -(p.y - s.y));
+        return {
+          heading: s.a,
+          bearing,
+          error: Math.abs(Math.atan2(Math.sin(s.a - bearing), Math.cos(s.a - bearing))),
+          speed: Math.hypot(s.vx, s.vy),
+          phase: G.auto.phase,
         };
       });
-      if (baseline)
-        await page.route('**/main.js', (route) =>
-          route.fulfill({
-            contentType: 'text/javascript',
-            body: execFileSync('git', ['show', 'HEAD:client/main.js'], { cwd: root }),
-          }),
-        );
-      await page.goto(origin);
-      await page.locator(`[data-slot="${c.name}"]`).click();
-      await page.waitForFunction(() => G.you && G.landed);
-      for (let i = 0; i < 10 && (await page.locator('#storybox').isVisible()); i++)
-        await page.locator('#storyb button').first().click();
-      await page.click('#depart');
-      await page.waitForFunction(() => G.view && !G.landed);
-      await page.evaluate((id) => {
-        G.navStellar = id;
-        G.opts.mouseAim = false;
-      }, c.port);
-      const start = Date.now(),
-        traceStart = fs.existsSync(traceFile) ? fs.readFileSync(traceFile, 'utf8').length : 0;
-      await page.keyboard.press('l');
-      if (!baseline) {
-        await page.waitForFunction(() => G.auto?.phase === 'brake', {}, { timeout: 30000 });
-        await page.screenshot({
-          path: path.join(evidence, 'braking-' + c.name.replaceAll(' ', '-') + '.png'),
-        });
+      fs.writeFileSync(
+        path.join(evidence, c.name + '-cruise.json'),
+        JSON.stringify(cruise, null, 2),
+      );
+      await page.screenshot({ path: path.join(evidence, c.name + '-cruise.png') });
+      assert.ok(cruise.error < 0.2, 'authoritative targetward cruise: ' + JSON.stringify(cruise));
+    }
+    {
+      await page.waitForFunction(() => G.auto?.phase === 'brake', {}, { timeout: 30000 });
+      await page.screenshot({
+        path: path.join(evidence, 'braking-' + c.name.replaceAll(' ', '-') + '.png'),
+      });
+    }
+    let landed = true;
+    try {
+      await page.waitForFunction(() => !!G.landed, {}, { timeout: 45000 });
+    } catch {
+      landed = false;
+    }
+    const trace = fs
+      .readFileSync(traceFile, 'utf8')
+      .slice(traceStart)
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((x) => JSON.parse(x));
+    const requests = trace.filter((x) => x.name === c.name && x.kind === 'request');
+    const ticks = trace.filter((x) => x.name === c.name && x.kind === 'tick');
+    const warnings = received.filter((m) => m.t === 'toast' && /Too far|Slow down/.test(m.msg));
+    let reversals = 0,
+      lastDirection = 0,
+      lastA;
+    for (const t of ticks.filter((t) => t.distance < STELLARS[c.port].r + 160)) {
+      if (lastA !== undefined) {
+        const da = Math.atan2(Math.sin(t.a - lastA), Math.cos(t.a - lastA)),
+          direction = Math.abs(da) > 0.008 ? Math.sign(da) : 0;
+        if (direction && lastDirection && direction !== lastDirection) reversals++;
+        if (direction) lastDirection = direction;
       }
-      let landed = true;
-      try {
-        await page.waitForFunction(() => !!G.landed, {}, { timeout: 45000 });
-      } catch {
-        landed = false;
-      }
-      const trace = fs
-        .readFileSync(traceFile, 'utf8')
-        .slice(traceStart)
-        .trim()
-        .split('\n')
-        .filter(Boolean)
-        .map((x) => JSON.parse(x));
-      const requests = trace.filter((x) => x.name === c.name && x.kind === 'request');
-      const ticks = trace.filter((x) => x.name === c.name && x.kind === 'tick');
-      const warnings = received.filter((m) => m.t === 'toast' && /Too far|Slow down/.test(m.msg));
-      let reversals = 0,
-        lastDirection = 0,
-        lastA;
-      for (const t of ticks.filter((t) => t.distance < STELLARS[c.port].r + 160)) {
-        if (lastA !== undefined) {
-          const da = Math.atan2(Math.sin(t.a - lastA), Math.cos(t.a - lastA)),
-            direction = Math.abs(da) > 0.008 ? Math.sign(da) : 0;
-          if (direction && lastDirection && direction !== lastDirection) reversals++;
-          if (direction) lastDirection = direction;
-        }
-        lastA = t.a;
-      }
-      const brakeStart = ticks.findIndex((t) => t.inp?.rev);
-      const brakeHeadings = brakeStart < 0 ? [] : ticks.slice(brakeStart).map((t) => t.a);
-      const brakeHeadingTravel = brakeHeadings
-        .slice(1)
-        .reduce(
-          (sum, a, i) =>
-            sum +
-            Math.abs(Math.atan2(Math.sin(a - brakeHeadings[i]), Math.cos(a - brakeHeadings[i]))),
-          0,
-        );
-      const row = {
+      lastA = t.a;
+    }
+    const brakeStart = ticks.findIndex((t) => t.inp?.rev);
+    // Near/fast entries can safely stop outside the port and re-approach.
+    // Bound rotation within each committed retrograde pass, not the intervening
+    // approach turn (which is deliberately allowed by landingGuidance).
+    let brakeHeadingTravel = 0,
+      passTravel = 0;
+    for (let i = 1; i < ticks.length; i++) {
+      if (ticks[i].inp?.rev && ticks[i - 1].inp?.rev) {
+        const da = ticks[i].a - ticks[i - 1].a;
+        passTravel += Math.abs(Math.atan2(Math.sin(da), Math.cos(da)));
+        brakeHeadingTravel = Math.max(brakeHeadingTravel, passTravel);
+      } else passTravel = 0;
+    }
+    const row = {
+      name: c.name,
+      hull: c.hull,
+      port: c.port,
+      initial: c,
+      stats: shipStats(A, makeLoadout(A, c.hull)),
+      landed,
+      seconds: (Date.now() - start) / 1000,
+      requests,
+      warnings,
+      nearTurnReversals: reversals,
+      brakeHeadingTravel,
+      pageErrors: errors,
+    };
+    results.push(row);
+    fs.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(results, null, 2));
+    console.log(
+      JSON.stringify({
         name: c.name,
-        baseline,
-        hull: c.hull,
-        port: c.port,
-        initial: c,
-        stats: shipStats(A, makeLoadout(A, c.hull)),
         landed,
-        seconds: (Date.now() - start) / 1000,
+        seconds: row.seconds,
         requests,
         warnings,
-        nearTurnReversals: reversals,
-        brakeHeadingTravel,
-        pageErrors: errors,
-      };
-      results.push(row);
-      fs.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(results, null, 2));
-      console.log(
-        JSON.stringify({
-          name: c.name,
-          baseline,
-          landed,
-          seconds: row.seconds,
-          requests,
-          warnings,
-          reversals,
-          errors,
-        }),
-      );
-      await page.screenshot({
-        path: path.join(
-          evidence,
-          `${baseline ? 'baseline' : 'fixed'}-${c.name.replaceAll(' ', '-')}.png`,
-        ),
-      });
-      if (!baseline) {
-        assert.ok(landed, `${c.name} lands`);
-        assert.equal(requests.length, 1, `${c.name} one request`);
-        assert.equal(warnings.length, 0, `${c.name} no premature server landing warnings`);
-        assert.ok(requests[0].distance <= STELLARS[c.port].r + 30);
-        assert.ok(requests[0].speed <= Math.max(2, (row.stats.accel / 30) * 0.55) + 2);
-        assert.deepEqual(errors, []);
-      }
-      await page.close();
+        reversals,
+        errors,
+      }),
+    );
+    await page.screenshot({
+      path: path.join(evidence, `fixed-${c.name.replaceAll(' ', '-')}.png`),
+    });
+    {
+      assert.ok(landed, `${c.name} lands`);
+      assert.equal(requests.length, 1, `${c.name} one request`);
+      assert.equal(requests[0].port, c.port, `${c.name} lands at intended nearest port`);
+      assert.ok(brakeStart >= 0, `${c.name} uses real retrograde control`);
+      assert.ok(brakeHeadingTravel < Math.PI + 0.3, `${c.name} no repeated braking rotations`);
+      assert.equal(warnings.length, 0, `${c.name} no premature server landing warnings`);
+      assert.ok(requests[0].distance <= STELLARS[c.port].r + 30);
+      assert.ok(requests[0].speed <= Math.max(2, (row.stats.accel / 30) * 0.55) + 2);
+      assert.deepEqual(errors, []);
     }
+    await page.close();
+  }
   // Override a live approach using actual steering input; no server command injection.
   const page = await browser.newPage();
   await page.goto(origin);
@@ -317,9 +367,10 @@ try {
     JSON.stringify({ landed: false, autopilotCancelled: true }),
   );
   await deniedPage.close();
+} catch (error) {
+  await failureEvidence(browser, evidence, error);
+  throw error;
 } finally {
-  if (browser) await browser.close();
-  server.kill('SIGTERM');
-  await new Promise((r) => server.once('exit', r));
-  log.end();
+  await cleanup(server, browser, log, dir);
 }
+process.exit(0);

@@ -6,6 +6,9 @@ import { addLots, assertLots } from '../shared/cargo-lots.js';
 /** @typedef {import('./towing-contracts.js').TowWorld} W */
 /** @typedef {import('./towing-contracts.js').Motherlode} ObjectRecord */
 /** @typedef {import('./towing-contracts.js').Session} Session */
+class DeliveryHoldFull extends Error {}
+/** @type {WeakMap<Session, string>} */
+const deliveryNotices = new WeakMap();
 /** @param {C} c @returns {W} */
 function state(c) {
   const w = c.db.world.towing;
@@ -236,6 +239,66 @@ function transaction(c, s, fn) {
     throw error;
   }
 }
+/** Load-centred collection radius: the port body plus its existing 180-unit approach apron.
+ * @param {{x:number,y:number}} p @param {{x:number,y:number}} a @param {{x:number,y:number}} b */
+function crossesPort(p, a, b) {
+  const dx = b.x - a.x,
+    dy = b.y - a.y;
+  const t = Math.max(
+    0,
+    Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1)),
+  );
+  return Math.hypot(a.x + dx * t - p.x, a.y + dy * t - p.y);
+}
+/** Shared by explicit delivery and the authoritative physics tick. Never accepts client coordinates.
+ * @param {C} c @param {Session} s @param {ObjectRecord} o @param {string} port
+ * @param {{x:number,y:number}} [previous] */
+function deliver(c, s, o, port, previous = o) {
+  const e = flight(c, s),
+    p = STELLARS[port];
+  if (!active(o) || o.owner !== key(c, s) || o.ship !== s.data.ship.uid)
+    throw Error('Only current tow owner may deliver');
+  if (
+    !p ||
+    !o.acceptPorts.includes(p.id) ||
+    p.system !== o.sys ||
+    crossesPort(p, previous, o) > p.r + TOW.deliveryApron
+  )
+    throw Error('Bring the motherlode into an accepted port collection zone');
+  const pass =
+    /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).landPass?.[p.id] || 0;
+  if (!p.outlaw && (s.data.rep?.[SYS[o.sys].faction] || 0) <= -30 && pass <= Date.now())
+    throw Error('Port refuses delivery permission');
+  if (c.room(s.data) < o.mass)
+    throw new DeliveryHoldFull(`Need ${o.mass}t free hold; store cargo or detach first`);
+  transaction(c, s, () => {
+    const ws = state(c),
+      ss = ws.slots.find((x) => x.object?.id === o.id);
+    if (!ss?.object) throw Error('Missing source');
+    addLots(
+      /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).cargo,
+      /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).cargoLots,
+      { cid: o.ore, qty: o.mass, grades: { ...o.lots } },
+      c.room(s.data),
+    );
+    ss.object.status = 'delivered';
+    ss.object.revision++;
+    ss.delivered += o.mass;
+    ss.nextAt = now(c) + TOW.recovery * c.field(o.sys, ss.field).factor;
+    ws.offers = ws.offers.filter((x) => x.id !== o.id);
+    ws.receipts.push({
+      id: o.id,
+      owner: key(c, s),
+      port: p.id,
+      ore: o.ore,
+      lots: { ...o.lots },
+      mass: o.mass,
+    });
+    ws.receipts = ws.receipts.slice(-TOW.receiptLimit);
+  });
+  e.towCap = undefined;
+  c.toast(s, `Motherlode delivered: ${o.mass}t ${o.ore}; no second credit/fragment reward.`);
+}
 /** @param {C} c @param {string} sys */
 function ensure(c, sys) {
   if (c.db.economicFrozen || c.paused()) return;
@@ -329,7 +392,8 @@ export const TowingOperations = {
     ensure(this, sp.id);
     const w = state(this);
     w.offers = w.offers.filter((x) => x.until > now(this));
-    for (const slot of w.slots.filter((x) => x.sys === sp.id)) {
+    for (const index of w.slots.flatMap((x, i) => (x.sys === sp.id ? [i] : []))) {
+      const slot = state(this).slots[index];
       const o = slot.object;
       if (!o || !active(o)) continue;
       const s = [...this.sessions()].find(
@@ -350,6 +414,7 @@ export const TowingOperations = {
         if (e) e.towCap = undefined;
         continue;
       }
+      const previous = { x: o.x, y: o.y };
       const tx = e.x - Math.sin(e.a) * TOW.tether,
         ty = e.y + Math.cos(e.a) * TOW.tether,
         dx = tx - o.x,
@@ -361,6 +426,39 @@ export const TowingOperations = {
       o.vy = dist ? (dy / dist) * speed : 0;
       o.x += o.vx * dt;
       o.y += o.vy * dt;
+      const ports = o.acceptPorts
+        .map((id) => STELLARS[id])
+        .filter(
+          (p) => p?.system === o.sys && crossesPort(p, previous, o) <= p.r + TOW.deliveryApron,
+        );
+      if (!ports.length) deliveryNotices.delete(s);
+      for (const port of ports) {
+        try {
+          deliver(this, s, o, port.id, previous);
+          deliveryNotices.delete(s);
+          this.refresh(s);
+          break;
+        } catch (error) {
+          // No room: leave the intact, owned load safely at the port so the pilot
+          // can land, unload and reattach. Never discard cargo or mint partial output.
+          if (error instanceof DeliveryHoldFull && !this.db.economicFrozen) {
+            release(this, o);
+            e.towCap = undefined;
+            this.toast(
+              s,
+              `Motherlode safely detached: need ${o.mass}t free hold. Unload, then reattach within ${TOW.grace}s to deliver.`,
+            );
+            this.refresh(s);
+            break;
+          }
+          if (port === ports.at(-1)) {
+            const reason = error instanceof Error ? error.message : 'Port cannot accept delivery';
+            const notice = `${o.id}:${port.id}:${reason}`;
+            if (deliveryNotices.get(s) !== notice) this.toast(s, reason);
+            deliveryNotices.set(s, notice);
+          }
+        }
+      }
       this.db.touch();
     }
   },
@@ -508,55 +606,7 @@ export const TowingOperations = {
             `${s.data.name} offers motherlode ${o.id}; accept explicitly in TOW controls.`,
           );
         } else if (q.op === 'deliver') {
-          const p = STELLARS[q.port || ''];
-          if (
-            !p ||
-            !o.acceptPorts.includes(p.id) ||
-            p.system !== o.sys ||
-            Math.hypot(e.x - p.x, e.y - p.y) > p.r + 180 ||
-            Math.hypot(o.x - p.x, o.y - p.y) > p.r + 180 ||
-            Math.hypot(e.vx, e.vy) > 10 ||
-            Math.hypot(o.vx, o.vy) > 10
-          )
-            throw Error('Approach an accepted port with tug and load, speed≤10');
-          const pass =
-            /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).landPass?.[
-              p.id
-            ] || 0;
-          if (!p.outlaw && (s.data.rep?.[SYS[o.sys].faction] || 0) <= -30 && pass <= Date.now())
-            throw Error('Port refuses delivery permission');
-          if (this.room(s.data) < o.mass)
-            throw Error(`Need ${o.mass}t free hold; store cargo or detach first`);
-          transaction(this, s, () => {
-            const ws = state(this),
-              ss = ws.slots.find((x) => x.object?.id === o.id);
-            if (!ss?.object) throw Error('Missing source');
-            addLots(
-              /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).cargo,
-              /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).cargoLots,
-              { cid: o.ore, qty: o.mass, grades: { ...o.lots } },
-              this.room(s.data),
-            );
-            ss.object.status = 'delivered';
-            ss.object.revision++;
-            ss.delivered += o.mass;
-            ss.nextAt = now(this) + TOW.recovery * this.field(o.sys, ss.field).factor;
-            ws.offers = ws.offers.filter((x) => x.id !== o.id);
-            ws.receipts.push({
-              id: o.id,
-              owner: account,
-              port: p.id,
-              ore: o.ore,
-              lots: { ...o.lots },
-              mass: o.mass,
-            });
-            ws.receipts = ws.receipts.slice(-TOW.receiptLimit);
-          });
-          e.towCap = undefined;
-          this.toast(
-            s,
-            `Motherlode delivered: ${o.mass}t ${o.ore}; no second credit/fragment reward.`,
-          );
+          deliver(this, s, o, q.port || '');
         }
       }
       validate(state(this));

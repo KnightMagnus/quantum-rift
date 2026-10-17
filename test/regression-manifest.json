@@ -74,7 +74,8 @@
     "towing-persistence.js",
     "field-evolution.js",
     "towing-network.mjs",
-    "mining-panel.js"
+    "mining-panel.js",
+    "towing-auto-delivery.js"
   ],
   "browser": [
     "sidebar-browser.mjs",
@@ -90,7 +91,11 @@
     "refinery-ui-browser.mjs",
     "dredge-browser.mjs",
     "towing-browser.mjs",
-    "mining-panel-browser.mjs"
+    "mining-panel-browser.mjs",
+    "logout-browser.mjs",
+    "mining-keys-browser.mjs",
+    "landing-autopilot-browser.mjs",
+    "dropdowns-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -100,7 +105,13 @@
   "systems": [
     {
       "id": "accounts-persistence",
-      "owners": ["server/db.js", "server/game.js"],
+      "owners": [
+        "server/db.js",
+        "server/game.js",
+        "client/main.js",
+        "client/hails_ui.js",
+        "client/render.js"
+      ],
       "services": [],
       "tests": [
         "persistence-auth.js",
@@ -109,9 +120,10 @@
         "v03.js",
         "v202.js",
         "v203.js",
-        "http-api.mjs"
+        "http-api.mjs",
+        "logout-browser.mjs"
       ],
-      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Shipped KNIGHT test profile: online/Solo startup login, legacy credits, completed T5 research, usable full specialist storage, idempotency, existing-save and station-ownership preservation."
+      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Shipped KNIGHT test profile: online/Solo startup login, legacy credits, completed T5 research, usable full specialist storage, idempotency, existing-save and station-ownership preservation. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect."
     },
     {
       "id": "protocol-http",
@@ -336,9 +348,10 @@
         "landing-autopilot.js",
         "gateway-navigation.js",
         "gateway-browser.mjs",
-        "wormhole-loop.js"
+        "wormhole-loop.js",
+        "landing-autopilot-browser.mjs"
       ],
-      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce."
+      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input."
     },
     {
       "id": "ships-catalog-art",
@@ -532,9 +545,25 @@
         "towing-persistence.js",
         "field-evolution.js",
         "towing-network.mjs",
-        "towing-browser.mjs"
+        "towing-browser.mjs",
+        "towing-auto-delivery.js",
+        "mining-keys-browser.mjs"
       ],
       "asserts": "Finite authored source conservation, surveyed rig authority, hard 60/30 physical limits, consensual transfer, logical grace/recovery, transit and lifecycle denials, capacity-first exact-grade delivery and real journal fault recovery. Browser uses custom/unbound controls, F fighter bay, static reduced-motion artwork, scaled controls and actual two-captain transfer/delivery. Moving transfers check relative speed and immediate object cap; real production scaling, new raster hash/alpha decode and bounded mute/effects-aware tether audio are browser-verified."
+    },
+    {
+      "id": "native-dropdown-theme",
+      "owners": ["client/style.css"],
+      "services": [],
+      "tests": ["dropdowns-browser.mjs"],
+      "asserts": "Black/white native selects/options across dynamic docks, hangar, shipyard, refinery, map and initialized mining/towing controls; real dock assignment/re-render, keyboard sort/focus and disabled/group styling. OS popup painting remains platform-owned."
+    },
+    {
+      "id": "shipyard-selection-scroll",
+      "owners": ["client/ui.js"],
+      "services": [],
+      "tests": ["dropdowns-browser.mjs"],
+      "asserts": "Explicit ship selection resets the actual landing scroll container after rendering; selected details and purchase controls visible, background renderer preserves scroll, no purchase or wallet change."
     }
   ],
   "routes": {
@@ -546,11 +575,12 @@
       "combat-network.js",
       "fuzz.js",
       "sim.js",
-      "input-audio-browser.mjs"
+      "input-audio-browser.mjs",
+      "landing-autopilot-browser.mjs"
     ],
     "target": ["v03.js"],
     "tutskip": ["v03.js"],
-    "land": ["bot.js", "v11.js"],
+    "land": ["bot.js", "v11.js", "landing-autopilot-browser.mjs"],
     "depart": [
       "armada-formation-network.mjs",
       "bot.js",
@@ -567,7 +597,13 @@
     "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
     "trade": ["bot.js", "cargo-flows.js", "v203.js", "cargo-ui-browser.mjs"],
     "buyship": ["sim.js", "v21.js"],
-    "docks": ["outfitter-wing-repairs.js", "sim.js", "v21.js", "knight-profile.mjs"],
+    "docks": [
+      "outfitter-wing-repairs.js",
+      "sim.js",
+      "v21.js",
+      "knight-profile.mjs",
+      "dropdowns-browser.mjs"
+    ],
     "questdrop": ["core-actions.js"],
     "outfit": ["bot.js", "v203.js"],
     "accept": ["bot.js", "v12.js", "v203.js", "v24.js", "v26.js"],
@@ -641,7 +677,6 @@
     "faction-standing-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "hailing-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "hailing-persistence-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
-    "landing-autopilot-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "map-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "outfitter-wing-repairs-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "passengers-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",

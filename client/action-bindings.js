@@ -38,9 +38,33 @@ export function migrateBindings(opts, actions) {
     scan(opts);
     keys.surveyPulse = !used.has('KeyV') && !RESERVED_KEYS.has('KeyV') ? 'KeyV' : null;
   }
-  if (!Object.hasOwn(keys, 'dredgeSweep')) keys.dredgeSweep = null;
-  if (!Object.hasOwn(keys, 'dredgeHarvest')) keys.dredgeHarvest = null;
-  if (!Object.hasOwn(keys, 'dredgeSmelter')) keys.dredgeSmelter = null;
-  if (!Object.hasOwn(keys, 'towToggle')) keys.towToggle = null;
+  // Older clients inserted all four nulls automatically. Upgrade that exact
+  // untouched legacy bundle once; preserve custom and individually unbound keys.
+  const legacy = ['dredgeSweep', 'dredgeHarvest', 'dredgeSmelter', 'towToggle'];
+  if (!opts.miningKeysVersion && legacy.every((a) => Object.hasOwn(keys, a) && keys[a] === null))
+    for (const a of legacy) delete keys[a];
+  const mining = [
+    'miningPanel',
+    ...legacy,
+    'towDeliver',
+    'towOffer',
+    'towAccept',
+    'miningGroup',
+    'dredgeInput',
+    'dredgeOff',
+  ];
+  const used = new Set(
+    actions.filter((a) => !mining.includes(a[0])).map((a) => binding(keys, actions, a[0])),
+  );
+  for (const [a, value] of Object.entries(keys))
+    if (!mining.includes(a) && typeof value === 'string') used.add(value);
+  for (const a of mining) if (Object.hasOwn(keys, a) && keys[a]) used.add(keys[a]);
+  for (const a of mining) {
+    if (Object.hasOwn(keys, a)) continue;
+    const candidate = actions.find((row) => row[0] === a)?.[2];
+    keys[a] = candidate && !used.has(candidate) && !RESERVED_KEYS.has(candidate) ? candidate : null;
+    if (keys[a]) used.add(keys[a]);
+  }
+  opts.miningKeysVersion = 1;
   return opts;
 }

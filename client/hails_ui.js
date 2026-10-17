@@ -162,5 +162,18 @@ export function initHails({ G, send, toast, cam }) {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  return { onMessage, show, inbox, close };
+  return {
+    onMessage,
+    show,
+    inbox,
+    close,
+    reset() {
+      entries = [];
+      active = marker = null;
+      allow = true;
+      close();
+      $('hailindicator').classList.add('hidden');
+      $('hailmarker').classList.add('hidden');
+    },
+  };
 }

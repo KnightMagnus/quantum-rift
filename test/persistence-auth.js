@@ -169,6 +169,29 @@ const liveSave = { ...game.fresh(), name: 'Auth Captain' };
 assert.throws(() => game.importSave(liveSave), /playing right now/);
 const reloaded = new DB(game.db.dir);
 assert.equal(reloaded.get('Imported Captain').credits, 54321);
+// Logout must release a Solo pause synchronously, not on a later world tick:
+// an immediate account switch must not inherit the former captain's pause.
+const soloGame = new Game(
+  JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url))),
+  new DB(tempDataDir('rift-solo-disconnect-')),
+);
+soloGame.solo = true;
+const soloSocket = new EventEmitter();
+Object.assign(soloSocket, { open: true, backlog: 0, send() {}, close() {} });
+soloGame.connect(soloSocket, 'solo-logout-fixture');
+const soloSession = [...soloGame.sessions.values()].at(-1);
+soloGame.onMessage(soloSession, { t: 'hello', name: 'Solo Logout', pass: '' });
+assert.ok(soloSession.data);
+soloSession.data.credits = 765432;
+soloGame.setPaused(true);
+soloGame.disconnect(soloSession);
+assert.equal(soloGame.paused, false, 'last Solo logout releases pause before another login');
+assert.equal(soloGame.sessions.has(soloSession.id), false);
+assert.equal(
+  JSON.parse(fs.readFileSync(soloGame.db.file))['solo logout'].credits,
+  765432,
+  'disconnect commits progress immediately without waiting for autosave',
+);
 console.log(
   'Persistence/auth: password salts/checks, atomic roundtrip, rolling backups, malformed recovery, registration/relogin/throttle and safe save import passed.',
 );
