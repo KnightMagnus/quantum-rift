@@ -39,6 +39,8 @@ export function migrateBindings(opts, actions) {
     keys.surveyPulse = !used.has('KeyV') && !RESERVED_KEYS.has('KeyV') ? 'KeyV' : null;
   }
   if (!Object.hasOwn(keys, 'dredgeSweep')) keys.dredgeSweep = null;
+  if (!Object.hasOwn(keys, 'dredgeHarvest')) keys.dredgeHarvest = null;
+  if (!Object.hasOwn(keys, 'dredgeSmelter')) keys.dredgeSmelter = null;
   if (!Object.hasOwn(keys, 'towToggle')) keys.towToggle = null;
   return opts;
 }

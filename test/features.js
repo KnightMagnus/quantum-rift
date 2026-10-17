@@ -65,7 +65,7 @@ const manifest = JSON.parse(
   fs.readFileSync(new URL('../docs/feature-inventory.json', import.meta.url)),
 );
 const composition = fs.readFileSync(new URL('../server/features.js', import.meta.url), 'utf8');
-assert.equal(new Set(manifest.features.map((f) => f.file)).size, 18);
+assert.equal(new Set(manifest.features.map((f) => f.file)).size, 19);
 for (const feature of manifest.features) {
   const module = await import(`../server/${feature.module || feature.file}.js`);
   const operations = module[feature.exportName];
@@ -82,7 +82,7 @@ for (const feature of manifest.features) {
     ...new Set(
       [
         ...source.matchAll(
-          ['mining', 'refinery', 'pressure'].includes(feature.file)
+          ['mining', 'refinery', 'pressure', 'industrial'].includes(feature.file)
             ? /\b(?:this|c)\.([A-Za-z_$][\w$]*)/g
             : /\bthis\.([A-Za-z_$][\w$]*)/g,
         ),
@@ -117,7 +117,7 @@ for (const feature of manifest.features) {
       method + ' must not be installed on Game',
     );
 }
-console.log('All 18 feature exports and explicit dependencies match the checked-in inventory.');
+console.log('All 19 feature exports and explicit dependencies match the checked-in inventory.');
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-feature-security-'));
 const interval = globalThis.setInterval;
@@ -149,7 +149,7 @@ try {
   assert.equal(dispatched.length, 2, 'flooded action must not dispatch');
   assert.ok(routes.types.includes('trade') && routes.types.includes('trade2'));
   assert.equal(new Set(routes.types).size, routes.types.length);
-  assert.equal(Object.keys(game.features).length, 22);
+  assert.equal(Object.keys(game.features).length, 23);
   const cargo = { food: 10 };
   const notices = [];
   game.toast = (_s, message) => notices.push(message);

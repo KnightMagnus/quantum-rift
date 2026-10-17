@@ -126,6 +126,7 @@ export const SPRITES = {
   811: { fs: 200, cols: 12, banks: true, glow: true, packed: true },
   812: { fs: 200, cols: 12, banks: true, glow: true, packed: true },
   813: { fs: 192, cols: 12, banks: true, glow: true, packed: true },
+  815: { fs: 200, cols: 12, banks: true, glow: true, packed: true },
   814: { fs: 200, cols: 12, banks: true, glow: true, packed: true },
   820: { fs: 68, cols: 12, banks: true, glow: true, packed: true },
   821: { fs: 96, cols: 12, banks: true, glow: true, packed: true },

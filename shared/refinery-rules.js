@@ -62,6 +62,22 @@ export const RECIPES = Object.freeze([
     base: 2400,
     pure: true,
   },
+  {
+    id: 'quantum',
+    name: 'Quantum Fuel',
+    inputs: ['plasma'],
+    output: 'quantum_fuel',
+    base: 1200,
+    pure: false,
+  },
+  {
+    id: 'exotic',
+    name: 'Exotic Matter',
+    inputs: ['plasma'],
+    output: 'exotic_matter',
+    base: 1800,
+    pure: false,
+  },
 ]);
 /** @param {string} faction @param {boolean} home @param {Recipe} recipe */
 export function recovery(faction, home, recipe) {

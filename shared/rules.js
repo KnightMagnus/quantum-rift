@@ -169,6 +169,7 @@ export function allOutfits(A) {
 /**
  * Player ship loadout data structure.
  * @typedef {Object} ShipLoadout
+ * @property {import("../server/industrial-contracts.js").IndustrialShip} [industrial] Saved hull-owned industrial work/heat.
  * @property {string} [uid] Stable saved hull identity assigned by docks.
  * @property {number|string} hull - Hull ID.
  * @property {Record<string|number, number>} outfits - Map of outfit ID to equipped quantity.

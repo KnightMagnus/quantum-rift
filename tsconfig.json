@@ -32,6 +32,9 @@
     "server/trade-pricing.js",
     "server/mining-pressure.js",
     "server/mining-pressure-contracts.js",
-    "shared/mining-pressure-rules.js"
+    "shared/mining-pressure-rules.js",
+    "server/industrial.js",
+    "server/industrial-contracts.js",
+    "shared/industrial-rules.js"
   ]
 }

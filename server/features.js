@@ -1,5 +1,6 @@
 // @ts-check
 // Explicit feature composition. No method is installed on Game or another feature.
+import { IndustrialOperations } from './industrial.js';
 import { MiningOperations } from './mining.js';
 import { RefineryOperations } from './refinery.js';
 import { MiningPressureOperations } from './mining-pressure.js';
@@ -25,6 +26,7 @@ import { CoopOperations } from './coop.js';
 
 /**
  * @typedef {object} FeatureServices
+ * @property {import("./feature-service.js").BoundOperations<typeof IndustrialOperations>} industrial
  * @property {import("./feature-service.js").BoundOperations<typeof MiningOperations>} mining
  * @property {import("./feature-service.js").BoundOperations<typeof RefineryOperations>} refinery
  * @property {import("./feature-service.js").BoundOperations<typeof MiningPressureOperations>} pressure
@@ -52,7 +54,7 @@ import { CoopOperations } from './coop.js';
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'holdUsed' | 'db' | 'hasMats' | 'landed' | 'live' | 'log' | 'ownSite' | 'spaces' | 'takeMats' | 'toast' | 'tut' | 'you'> & Pick<typeof ArcsOperations, 'arcProgress'> & Pick<typeof HangarOperations, 'barOffers' | 'bays' | 'dockSlots' | 'officerXp' | 'researchChain' | 'resolveShuttle' | 'shuttleBoard' | 'shuttleChance' | 'shuttleReward' | 'shuttleTraffic' | 'startQueued' | 'storedValue' | 'uid'> & Pick<typeof SpecialistOperations, 'bonus' | 'flying' | 'power' | 'specOnBoard'> & Pick<typeof DocksOperations, 'docksOp' | 'shipUid' | 'unassign' | 'unwingOfficer'> & Pick<typeof FrontsOperations, 'goal' | 'mods' | 'stats'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof CoopOperations, 'rescueBoard'> & Pick<typeof StoryOperations, 'storyProgress'> & Pick<typeof SyndicateOperations, 'synGain'>} HangarCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | '_an' | '_anW' | 'broadcast' | 'db' | 'invasion' | 'lastInvWin' | 'log' | 'sessions' | 'spaces' | 'toast' | 'you'> & Pick<typeof FrontsOperations, 'anomalies' | 'event' | 'goal' | 'goalsFor' | 'pushWorld' | 'startInvasion' | 'storeFor' | 'token'> & Pick<typeof CoopOperations, 'armadaBonus' | 'refreshPlayer'> & Pick<typeof SpecialistOperations, 'bonus'> & Pick<typeof HangarOperations, 'officerXp' | 'uid'> & Pick<typeof LivingOperations, 'statesPayload'> & Pick<typeof FrontierOperations, 'worldPayload'>} FrontsCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'holdUsed' | 'arenaQ' | 'broadcast' | 'db' | 'hasMats' | 'landed' | 'live' | 'log' | 'matches' | 'nextMatch' | 'send' | 'sessions' | 'spaces' | 'spawnPlayer' | 'takeMats' | 'toast' | 'waves' | 'you'> & Pick<typeof FrontierOperations, 'accrue' | 'arenaCheck' | 'arenaExit' | 'coloniesOf' | 'colonizable' | 'colonyBuffs' | 'colonyMax' | 'defenseRating' | 'deliver' | 'itemName' | 'matchOrder' | 'notify' | 'pay' | 'raidStrength' | 'refundOrder' | 'resolveRaid' | 'sameItem' | 'startWave' | 'tryMatch'> & Pick<typeof SpecialistOperations, 'flying' | 'specOnRaid'> & Pick<typeof FrontsOperations, 'pushWorld' | 'stats'> & Pick<typeof RivalsOperations, 'rivalBoard'> & Pick<typeof CoopOperations, 'sessionOf'> & {frontsBonus: typeof FrontsOperations.bonus, frontsWorldPayload: typeof FrontsOperations.worldPayload}} FrontierCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'broadcast' | 'db' | 'hasMats' | 'landed' | 'log' | 'ownSite' | 'takeMats' | 'toast' | 'tradeIn' | 'you'> & Pick<typeof FrontsOperations, 'anomalies'> & Pick<typeof SpecialistOperations, 'flying' | 'power' | 'specGain' | 'specInit' | 'specOf'> & Pick<typeof DocksOperations, 'wingHulls'> & {frontierBonus: typeof FrontierOperations.bonus}} SpecialistsCapabilities */
+/** @typedef {Pick<import('./game.js').Game, 'A' | 'fitsJobs' | 'holdUsed' | 'broadcast' | 'db' | 'hasMats' | 'landed' | 'log' | 'ownSite' | 'takeMats' | 'toast' | 'tradeIn' | 'you'> & Pick<typeof FrontsOperations, 'anomalies'> & Pick<typeof SpecialistOperations, 'flying' | 'power' | 'specGain' | 'specInit' | 'specOf'> & Pick<typeof DocksOperations, 'wingHulls'> & {frontierBonus: typeof FrontierOperations.bonus}} SpecialistsCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'depart' | 'live' | 'log' | 'ownSite' | 'spaces' | 'toast' | 'tut' | 'you'> & Pick<typeof SpecialistOperations, 'bonus' | 'specInit'> & Pick<typeof CoopOperations, 'holdoutAnnounce' | 'holdoutHelpers' | 'holdoutReward'> & Pick<typeof HostileOperations, 'holdoutEnd' | 'hostInit' | 'myPower'> & Pick<typeof FrontsOperations, 'mods'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof DocksOperations, 'wingHulls'>} HostileCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'broadcast' | 'db' | 'landed' | 'log' | 'send' | 'toast' | 'tradeIn' | 'you'> & Pick<typeof HangarOperations, 'dockSlots'> & Pick<typeof DocksOperations, 'leadChanged'> & Pick<typeof StoryOperations, 'storyComplete' | 'storyDone' | 'storyGift' | 'storyInit' | 'storyOffer'>} StoryCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'live' | 'log' | 'rivalEnts' | 'sessions' | 'spaces' | 'toast'> & Pick<typeof RivalsOperations, 'news' | 'relOf' | 'rivalRel' | 'rivalState' | 'spawnHunters'>} RivalsCapabilities */
@@ -445,6 +447,8 @@ export function createFeatures(core) {
   features.frontier = bindOperations(FrontierOperations, frontierCapabilities);
   /** @type {SpecialistsCapabilities} */
   const specialistsCapabilities = {
+    fitsJobs: core.fitsJobs.bind(core),
+    holdUsed: core.holdUsed.bind(core),
     get A() {
       return core.A;
     },
@@ -1207,6 +1211,18 @@ export function createFeatures(core) {
     get pressureRegrow() {
       return features.pressure.regrow;
     },
+    dredgeBlueprint(captain, chance) {
+      const s = features.sessions.sessionOf(captain);
+      if (s) features.specialists.specGain(s, 'star_dredge', 0, chance);
+      else {
+        const d = core.db.get(captain);
+        if (d && Math.random() < chance) {
+          d.bp ??= {};
+          d.bp[815] = (d.bp[815] || 0) + 1;
+          core.db.touch();
+        }
+      }
+    },
     get specOnMine() {
       return features.specialists.specOnMine;
     },
@@ -1292,5 +1308,23 @@ export function createFeatures(core) {
     toast: core.toast.bind(core),
   };
   features.pressure = bindOperations(MiningPressureOperations, pressureCapabilities);
+  /** @type {import('./industrial-contracts.js').IndustrialCapabilities} */
+  const industrialCapabilities = {
+    get db() {
+      return core.db;
+    },
+    paused: () => !!core.paused,
+    room: (d) => Math.max(0, (features.shipStats.stats(d)?.cargo || 0) - core.holdUsed(d)),
+    get power() {
+      return features.specialists.power;
+    },
+    get sweep() {
+      return features.mining.sweep;
+    },
+    loot: core.onLoot.bind(core),
+    refresh: core.you.bind(core),
+    toast: core.toast.bind(core),
+  };
+  features.industrial = bindOperations(IndustrialOperations, industrialCapabilities);
   return Object.freeze(features);
 }

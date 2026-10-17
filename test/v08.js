@@ -179,14 +179,14 @@ import('../shared/roles.js').then(async ({ ROLES_INFO, roleMult }) => {
   const { SPECIALISTS, SPEC, BP_NEED, PART_RATE, COMPONENTS } =
     await import('../shared/specialty.js');
   ok(
-    SPECIALISTS.length === 10 &&
+    SPECIALISTS.length === 11 &&
       SPECIALISTS.every(
         (sp) =>
           A.ships[sp.id] &&
           fs.existsSync(new URL(`../client/assets/ships/${sp.id}.webp`, import.meta.url)) &&
           fs.existsSync(new URL(`../client/assets/ships/${sp.id}_yard.png`, import.meta.url)),
       ),
-    'ten specialists, each with a rendered sprite sheet and shipyard picture',
+    'ten original specialists plus Star Dredge, each with rendered sheets and yard portrait',
   );
   ok(
     SPECIALISTS.every((sp) => sp.weapons.every(([w]) => A.weapons[w])),

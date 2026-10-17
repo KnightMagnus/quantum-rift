@@ -18,6 +18,7 @@ import crypto from 'node:crypto';
 /**
  * Persisted galaxy world state data.
  * @typedef {object} WorldData
+ * @property {import("./industrial-contracts.js").IndustrialWorld} [industrial]
  * @property {Record<string, string>} sites World sites and player claim data.
  * @property {import("./mining-contracts.js").SavedMiningWorld} [mining]
  * @property {import("./refinery-contracts.js").SavedRefinery} [refinery]

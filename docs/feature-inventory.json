@@ -290,9 +290,11 @@
         "anomalies",
         "broadcast",
         "db",
+        "fitsJobs",
         "flying",
         "frontierBonus",
         "hasMats",
+        "holdUsed",
         "landed",
         "log",
         "ownSite",
@@ -864,11 +866,13 @@
         "rocksPayload",
         "payload",
         "collected",
-        "shotId"
+        "shotId",
+        "sweep"
       ],
       "uses": [
         "bonus",
         "db",
+        "dredgeBlueprint",
         "endTick",
         "mods",
         "paused",
@@ -916,6 +920,13 @@
         "consent"
       ],
       "uses": ["db", "newcomer", "rush", "sessions", "toast"]
+    },
+    {
+      "file": "industrial",
+      "module": "industrial",
+      "exportName": "IndustrialOperations",
+      "methods": ["init", "stop", "command", "industrialTick", "payload"],
+      "uses": ["db", "loot", "paused", "power", "refresh", "room", "sweep", "toast"]
     }
   ]
 }

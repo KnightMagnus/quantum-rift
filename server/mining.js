@@ -7,6 +7,7 @@ import {
   rollGrades,
   contactTime,
 } from '../shared/mining-rules.js';
+import { INDUSTRIAL } from '../shared/industrial-rules.js';
 import { splitLots } from '../shared/cargo-lots.js';
 /** @typedef {import('./mining-contracts.js').SavedRockGeneration} Generation */
 /** @typedef {import('./mining-contracts.js').MiningCapabilities} Capabilities */
@@ -73,6 +74,12 @@ function validate(w) {
         r.releaseHeat,
       ])
         if (!Number.isFinite(n)) throw new Error('Invalid mining geometry/state');
+      if (
+        (r.dredgeToken !== undefined && typeof r.dredgeToken !== 'boolean') ||
+        (r.sweepCut !== undefined && typeof r.sweepCut !== 'boolean') ||
+        (r.dredgeWork !== undefined && (!Number.isFinite(r.dredgeWork) || r.dredgeWork < 0))
+      )
+        throw Error('Invalid industrial mining provenance');
       if (
         r.stage > r.stages ||
         r.stages < 1 ||
@@ -160,14 +167,14 @@ function validate(w) {
 function quantity(p) {
   return p.remainingLots.common + p.remainingLots.rich + p.remainingLots.pure;
 }
-/** @param {World} w @param {Space} sp @param {number} fi @param {number} i @param {{x:number,y:number,r:number,ore:string,rich:number}} f @param {number} generation @returns {Generation} */
+/** @param {World} w @param {Space} sp @param {number} fi @param {number} i @param {{x:number,y:number,r:number,ore:string,rich:number,minor?:boolean}} f @param {number} generation @returns {Generation} */
 function generate(w, sp, fi, i, f, generation) {
   const key = `${sp.id}:${fi}:${i}:${generation}`,
     seed = seedOf(key),
     random = randomOf(seed),
     a = random() * Math.PI * 2,
     d = Math.sqrt(random()) * f.r,
-    r = Math.round(16 + random() * 30),
+    r = Math.round(16 + random() * (f.minor ? 7 : 30)),
     max = Math.round(
       (r * (f.ore === 'gas' ? 6 : f.ore === 'shards' ? 12 : 9) * (1 + f.rich * 0.5)) /
         stageCount(r),
@@ -218,7 +225,14 @@ function generate(w, sp, fi, i, f, generation) {
 function emit(c, sp, r, clean) {
   const w = world(c),
     f = w.systems[sp.id];
-  r.lastCut = r.heat >= 100 ? 'overheat' : clean ? 'clean' : 'ordinary';
+  if (!r.dredgeToken && r.stages > 1 && (r.dredgeWork || 0) >= 1.5 && r.captain) {
+    const d = c.db.get(r.captain);
+    if (d) {
+      r.dredgeToken = true;
+      c.dredgeBlueprint(r.captain, INDUSTRIAL.blueprintChance);
+    }
+  }
+  r.lastCut = r.sweepCut ? 'sweep' : r.heat >= 100 ? 'overheat' : clean ? 'clean' : 'ordinary';
   if (r.budget < 0) {
     const account = r.captain ? c.db.get(r.captain) : null;
     const raw =
@@ -239,7 +253,7 @@ function emit(c, sp, r, clean) {
   const remainingStages = r.stages - r.stage,
     n = remainingStages === 1 ? r.pending : Math.floor(r.pending / remainingStages),
     random = randomOf(r.seed ^ ((r.stage + 1) * 17293)),
-    lots = rollGrades(n, clean, random),
+    lots = r.sweepCut ? sweepGrades(n, random) : rollGrades(n, clean, random),
     clusters = Math.min(n, 2 + Math.floor(random() * 3));
   const tokenIds = r.tokens.map((_, i) => i).filter((i) => i % r.stages === r.stage);
   for (let j = 0; j < clusters; j++) {
@@ -307,6 +321,7 @@ function update(c, sp, r, now = world(c).clock) {
       const crosses = heated >= MINING.overheat - 1e-9;
       const useful =
         crosses && r.ready ? Math.max(0, (MINING.overheat - r.heat) / MINING.heatRate) : seconds;
+      r.dredgeWork = (r.dredgeWork || 0) + useful;
       r.work += useful * (1 + (seamSeconds > 0 ? 0.25 : 0));
       const captains = [
         ...new Set(
@@ -349,6 +364,12 @@ function update(c, sp, r, now = world(c).clock) {
   r.leases = r.leases.filter((l) => l.to > now - 1);
   for (const [key, t] of Object.entries(r.seen)) if (t < now - 10) delete r.seen[key];
 }
+/** @param {number} n @param {()=>number} random */
+function sweepGrades(n, random) {
+  const lots = { common: 0, rich: 0, pure: 0 };
+  for (let i = 0; i < n; i++) lots[random() < 0.03 ? 'rich' : 'common']++;
+  return lots;
+}
 export const MiningOperations = {
   /** Stable across restart/sleep; a fresh projectile cannot alias a saved consumed shot.
    * @this {Capabilities} @returns {number} */
@@ -380,8 +401,23 @@ export const MiningOperations = {
     const w = world(this),
       config = JSON.stringify(sp.sys.fields || []);
     let f = w.systems[sp.id];
-    if (f && f.config !== config)
-      throw new Error(`Mining field config changed in ${sp.id}; explicit migration required`);
+    if (f && f.config !== config) {
+      const previous = JSON.parse(f.config),
+        next = sp.sys.fields || [];
+      // Only reviewed append-only industrial fields migrate. Old geometry, stable keys,
+      // unspent mass and outstanding original parcels are never regenerated or reminted.
+      if (
+        !Array.isArray(previous) ||
+        next.length < previous.length ||
+        JSON.stringify(next.slice(0, previous.length)) !== f.config ||
+        !next.slice(previous.length).every((x) => x.industrial === true && x.minor === true)
+      )
+        throw new Error(`Mining field config changed in ${sp.id}; explicit migration required`);
+      for (let fi = previous.length; fi < next.length; fi++)
+        for (let i = 0; i < next[fi].rocks; i++) f.rocks.push(generate(w, sp, fi, i, next[fi], 0));
+      f.config = config;
+      this.db.touch();
+    }
     if (!f) {
       f = { config, rocks: [], parcels: [], history: [] };
       for (const [fi, field] of (sp.sys.fields || []).entries())
@@ -428,6 +464,30 @@ export const MiningOperations = {
     r.hp = Math.max(0, r.hp - hit.damage * 6 * (seam ? 1.25 : 1));
     if (!r.hp) r.ready = true;
     this.db.touch();
+  },
+  /** Sweep never finishes a clean-ready or multistage rock; same finite root budget.
+   * @this {Capabilities} @param {Space} sp @param {import('./space.js').Rock} rock @param {number} damage @param {string} captain */
+  sweep(sp, rock, damage, captain) {
+    const r = world(this).systems[sp.id]?.rocks.find((x) => x === rock);
+    if (
+      !r ||
+      r.down ||
+      r.stages !== 1 ||
+      r.ready ||
+      r.work > 0 ||
+      !Number.isFinite(damage) ||
+      damage <= 0
+    )
+      return 0;
+    const spent = Math.min(r.hp, damage);
+    r.hp -= spent;
+    r.captain = captain;
+    if (r.hp <= 0) {
+      r.sweepCut = true;
+      emit(this, sp, r, false);
+    }
+    this.db.touch();
+    return spent;
   },
   /** @this {Capabilities} @param {Space} sp @param {import('./space.js').Rock} rock @param {number} damage @param {string|null} [captain] */
   ordinary(sp, rock, damage, captain = null) {

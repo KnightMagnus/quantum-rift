@@ -15,6 +15,7 @@ import { eventideOffers } from '../shared/eventide.js';
  * @typedef {import('./space.js').Entity} Entity
  *
  * @typedef {object} PlayerInput
+ * @property {boolean} [navigation] Automatic navigation input.
  * @property {number} seq Sequence number.
  * @property {number} thrust Forward thrust control.
  * @property {number} turn Rotational turn steering.
@@ -25,6 +26,7 @@ import { eventideOffers } from '../shared/eventide.js';
  *
  * @typedef {object} PlayerData
  * @property {import("./mining-contracts.js").SavedSurvey} [miningSurvey]
+ * @property {Record<string,number>} [bp] Specialist blueprint fragments.
  * @property {string} name Captain name.
  * @property {number} credits Balance in credits.
  * @property {string} sys Current solar system ID.
@@ -91,7 +93,7 @@ import { eventideOffers } from '../shared/eventide.js';
  * @property {boolean} [arena] True if this is a combat arena system.
  * @property {boolean} [anchor] True if anchor system for exploration.
  * @property {boolean} [gate] True if system contains a wormhole or gateway.
- * @property {Array<{x: number, y: number, r: number, ore: string, rich: number, rocks: number}>} [fields] Mining asteroid fields.
+ * @property {Array<{x: number, y: number, r: number, ore: string, rich: number, rocks: number,minor?:boolean,industrial?:boolean}>} [fields] Mining asteroid fields.
  *
  * @typedef {object} StellarBody
  * @property {string} id Stellar identifier.
@@ -403,6 +405,7 @@ export class Game {
     this.features.mining.init();
     this.features.refinery.init();
     this.features.pressure.init();
+    this.features.industrial.init();
     this.features.fronts.frontsInit();
     this.features.coop.coopInit();
     this.features.frontier.frontierInit();
@@ -735,6 +738,7 @@ export class Game {
    * @returns {void}
    */
   disconnect(s) {
+    if (s.data) this.features.industrial.stop(s);
     if (s.data && this.sessions.has(s.id)) this.features.coop.coopLogout(s); // 2.6: duels, trades, presence
     this.sessions.delete(s.id);
     for (const q of Object.values(this.arenaQ || {})) {
@@ -843,6 +847,7 @@ export class Game {
         credit: d.credit || 600,
         missions: d.missions,
         refinery: this.features.refinery.payload(s),
+        industrial: this.features.industrial.payload(s),
         escorts: d.escorts,
         shuttles: d.shuttles,
         officers: d.officers,
@@ -1017,6 +1022,7 @@ export class Game {
    * @returns {void}
    */
   dropEscorts(space, e, why) {
+    if (e.player?.s) this.features.industrial.stop(e.player.s);
     const ids = new Set([e.id]);
     for (let k = 0; k < 3; k++)
       for (const x of space.ships.values()) if (x.owner && ids.has(x.owner)) ids.add(x.id); // escorts, and their fighters
@@ -1105,6 +1111,7 @@ export class Game {
    */
   createMessageHandlers() {
     return createMessageRegistry([
+      ['industrial', (s, m) => this.features.industrial.command(s, m)],
       ['miningPressure', (s, m) => this.features.pressure.consent(s, m)],
       ['refinery', (s, m) => this.features.refinery.command(s, m)],
       ['miningOrder', (s, m) => this.features.refinery.command(s, m, true)],
@@ -2008,6 +2015,7 @@ export class Game {
       rocks: sp.rocksPayload(),
       miningRocks: this.features.mining.rocksPayload(sp),
       mining: this.features.mining.payload(s, sp),
+      industrial: this.features.industrial.payload(s),
       miningPressure: this.features.pressure.payload(s),
       miningHazards: this.features.pressure.hazards(sp.id),
     });
@@ -2444,6 +2452,11 @@ export class Game {
     s.ent = null;
     const fee = Math.min(d.credits, Math.round((this.A.ships[d.ship.hull].cost || 0) * 0.05));
     d.credits -= fee;
+    if (d.ship.industrial) {
+      d.ship.industrial.outputs = {};
+      d.ship.industrial.workMs = 0;
+      d.ship.industrial.harvestMs = 0;
+    }
     if (!this.features.specialists.flying(d, 'lodestar')) clearLots(d.cargo, d.cargoLots); // the Lodestar's hold is protected; wingmates fly home
     const back =
       d.station &&
@@ -3608,6 +3621,7 @@ export class Game {
             ...snap,
             miningRocks: this.features.mining.rocksPayload(this.spaces[sys]),
             mining: this.features.mining.payload(s, this.spaces[sys]),
+            industrial: this.features.industrial.payload(s),
             miningPressure: this.features.pressure.payload(s),
             miningHazards: this.features.pressure.hazards(sys),
             combat: this.combatAssist.payload(s, this.spaces[sys]),

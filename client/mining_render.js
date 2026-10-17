@@ -1,6 +1,25 @@
+import { CORONA_BANDS } from '/shared/industrial-rules.js';
 // Presentation only: all heat/work/stage/reveal data comes from server snapshots.
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 export function drawMining(G, ctx, sx, sy, z, W, H, now) {
+  ctx.save();
+  ctx.font = `bold ${14 * (devicePixelRatio || 1)}px Tahoma`;
+  ctx.strokeStyle = '#ffcf8a';
+  ctx.fillStyle = '#fff0cf';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([10, 7]);
+  for (const b of CORONA_BANDS.filter((b) => b.sys === G.you?.sys)) {
+    for (const radius of [b.inner, b.outer]) {
+      ctx.beginPath();
+      ctx.arc(sx(b.x), sy(b.y), radius * z, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    const x = sx(b.entry.x),
+      y = sy(b.entry.y);
+    ctx.fillText('☀ OPT-IN SHALLOW COLLECTOR — EXIT EAST →', x, y - 20);
+    ctx.strokeRect(x - 15, y - 15, 30, 30);
+  }
+  ctx.restore();
   const wire = G.miningRocks;
   if (!wire || wire.version !== 1) return;
   const reveal = new Map((G.mining?.revealed || []).map((r) => [r.id, r]));

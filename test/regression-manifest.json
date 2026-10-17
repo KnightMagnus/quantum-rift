@@ -62,7 +62,12 @@
     "refinery-economy.js",
     "refinery-persistence.js",
     "mining-pressure.js",
-    "refinery-network.mjs"
+    "refinery-network.mjs",
+    "dredge.js",
+    "dredge-smelter.js",
+    "dredge-corona.js",
+    "dredge-economy.js",
+    "dredge-network.mjs"
   ],
   "browser": [
     "sidebar-browser.mjs",
@@ -75,7 +80,8 @@
     "cargo-ui-browser.mjs",
     "mining-controls-browser.mjs",
     "mining-ui-browser.mjs",
-    "refinery-ui-browser.mjs"
+    "refinery-ui-browser.mjs",
+    "dredge-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -463,6 +469,25 @@
         "refinery-ui-browser.mjs"
       ],
       "asserts": "Real useful contact noise and persisted local recovery; delayed once-only volatile hazards, scoped two-hull pressure encounters, shared/captain cooldown and damage/acquisition/projectile allowlists preserving neutral, wing, Armada and newcomer protection."
+    },
+    {
+      "id": "industrial-dredge",
+      "services": ["industrial"],
+      "owners": [
+        "server/industrial.js",
+        "shared/industrial-rules.js",
+        "server/specialists.js",
+        "client/mining_ui.js"
+      ],
+      "tests": [
+        "dredge.js",
+        "dredge-smelter.js",
+        "dredge-corona.js",
+        "dredge-economy.js",
+        "dredge-network.mjs",
+        "dredge-browser.mjs"
+      ],
+      "asserts": "No-plasma real specialist build; finite root-only sweep mass and two utility collectors; exact mobile grade/remainder/checkpoint ownership; stock real flight plasma escape and thermal damage ordering; finite one-way economy, private checked WS modes and actual production sprite/control rendering."
     }
   ],
   "routes": {
@@ -548,7 +573,8 @@
     "mining": ["mining-network.mjs", "mining-controls-browser.mjs"],
     "refinery": ["refinery-network.mjs", "refinery-ui-browser.mjs"],
     "miningOrder": ["refinery-network.mjs", "refinery.js"],
-    "miningPressure": ["mining-pressure.js", "refinery-ui-browser.mjs"]
+    "miningPressure": ["mining-pressure.js", "refinery-ui-browser.mjs"],
+    "industrial": ["dredge-network.mjs", "dredge-browser.mjs"]
   },
   "tooling": [
     "capture-features.js",

@@ -209,6 +209,9 @@ export const ACTIONS = [
   ['ordLoot', 'Fleet: collect loot', 'KeyU'],
   ['companion', 'Next companion tab', 'KeyC'],
   ['surveyPulse', 'Survey Pulse', 'KeyV'],
+  ['dredgeSweep', 'Dredge Sweep', null],
+  ['dredgeHarvest', 'Dredge Harvest Plasma', null],
+  ['dredgeSmelter', 'Dredge Mobile Smelter', null],
 ];
 const ALT = {
   thrust: 'ArrowUp',
@@ -239,6 +242,7 @@ function saveOpts() {
   } catch {}
 }
 const miningUI = initMiningUI({
+  industrialAudio: audio.industrial,
   G,
   send,
   bound,
@@ -960,6 +964,11 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   switch (actionOf(e.code)) {
+    case 'dredgeSweep':
+    case 'dredgeHarvest':
+    case 'dredgeSmelter':
+      miningUI.invokeMiningAction(actionOf(e.code));
+      break;
     case 'surveyPulse':
       miningUI.invokeMiningAction('surveyPulse');
       break;

@@ -375,6 +375,7 @@ function quote(c, s, m) {
   const a = c.access(s.data, port);
   if (!a.available || s.data.stellar !== port || s.ent)
     throw Error('Dock at an eligible refinery.');
+  if (recipe.inputs[0] === 'plasma' && grade !== 'common') throw Error('Plasma is ungraded cargo.');
   if (recipe.pure && grade !== 'pure') throw Error('Composite requires pure ore, gas and shards.');
   const total = recipe.inputs.length * n;
   if (total > (mode === 'instant' ? R.instantCap : R.storedCap) || (recipe.pure && n % 3 !== 0))

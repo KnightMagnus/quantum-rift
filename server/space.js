@@ -83,6 +83,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {number} [seq] Sequence number of last applied player input packet.
  * @property {number} [_f2] Previous state of secondary fire button.
  * @property {boolean} [noDisable] True if entity is destroyed immediately without disability threshold.
+ * @property {number} [industrialRoot] Noncombat industrial collector root ID.
  * @property {string} [miningEncounter] Mining-pressure encounter scope ID.
  * @property {number} [helpT] Timestamp of last distress call for reinforcements.
  * @property {boolean} [dread] True if dreadnought boss entity.
@@ -513,6 +514,7 @@ export class Space {
   }
   // Idle wingmates must not turn a captain's protected passage into an unsolicited fight.
   canAcquire(e, o) {
+    if (e.industrialRoot || o.industrialRoot) return false;
     if (
       (e.miningEncounter || o.miningEncounter) &&
       this.game.features.pressure.allow(this, e, o) === false
@@ -559,6 +561,7 @@ export class Space {
    * @returns {boolean} True if attacks can connect and damage target.
    */
   canHit(a, b) {
+    if (a.industrialRoot || b.industrialRoot) return false;
     if (
       (a.miningEncounter || b.miningEncounter) &&
       this.game.features.pressure.allow(this, a, b) === false
@@ -1666,6 +1669,7 @@ export class Space {
    * @returns {[number, number, number] | void} Tuple [damageDealt, hitShieldsFlag, shooterRootId].
    */
   damage(s, dA, dS, src, ion) {
+    if (s.industrialRoot) return [0, 0, src?.id || 0]; // Utility collectors cannot tank combat or grant rewards.
     if (
       src &&
       (src.miningEncounter || s.miningEncounter) &&
@@ -1757,6 +1761,7 @@ export class Space {
       this.game.onPlayerDeath(s.player, this, by);
       return;
     }
+    if (s.industrialRoot) return; // No farmable salvage, bounty or replacement ammo.
     if (s.boss) this.game.features.fronts.onBossKilled(s, this);
     if (s.convoyOf) this.game.features.fronts.onConvoyLost(s);
     if (s.wingUid && this.game.features.docks.onWingLost) this.game.features.docks.onWingLost(s); // 2.1
@@ -1831,6 +1836,7 @@ export class Space {
         if (e.jumpT <= 0) this.game.finishJump(e, this);
         continue;
       }
+      if (e.industrialRoot) continue; // Industrial controller owns noncombat movement/collection.
       if (e.player) {
         const q = e.player.inputs;
         const inp = q.length ? q.shift() : e.player.lastInput;
@@ -1914,7 +1920,7 @@ export class Space {
       if (s.life <= 0) continue;
       const owner = this.ships.get(s.owner);
       for (const e of this.ships.values()) {
-        if (e.id === s.owner || e.state !== 'fly') continue;
+        if (e.industrialRoot || e.id === s.owner || e.state !== 'fly') continue;
         if (
           s.miningEncounter &&
           !this.game.features.pressure.shotAllowed(this, s.miningEncounter, e)
@@ -1964,6 +1970,8 @@ export class Space {
     }
     this.shots = this.shots.filter((s) => s.life > 0);
     this.beams = this.beams.filter((b) => b.until > this.t && this.ships.has(b.id));
+    if ([...this.ships.values()].some((e) => e.player && e.hull === 815))
+      this.game.features.industrial.industrialTick(this, DT);
     this.game.features.mining.endTick(this);
     this.game.features.pressure.pressureTick(this);
     for (const l of this.loot) {

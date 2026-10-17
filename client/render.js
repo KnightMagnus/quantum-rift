@@ -2668,7 +2668,7 @@ function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
  * @param {number} now Timestamp in milliseconds
  * @returns {void}
  */
-function drawShip(G, ctx, e, x, y, z, now) {
+export function drawShip(G, ctx, e, x, y, z, now) {
   const H = G.A.ships[e.hull];
   if (!H) return;
   const sz = H.size,

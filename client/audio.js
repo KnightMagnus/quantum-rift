@@ -449,3 +449,35 @@ export function debug() {
     buffers: buffers.size,
   };
 }
+
+// One restrained intake voice; existing mixer/master/mute applies. Alarm only on upward stage changes.
+let industrialVoice = null,
+  industrialGain = null,
+  industrialStage = 0;
+export function industrial(on, heat) {
+  const stage = heat >= 150 ? 3 : heat >= 120 ? 2 : heat >= 70 ? 1 : 0;
+  if (stage > industrialStage) ui('error', 0.32, 0.8 + stage * 0.2);
+  industrialStage = stage;
+  if (!ctx) return;
+  if (on && !industrialVoice) {
+    industrialVoice = ctx.createOscillator();
+    industrialGain = ctx.createGain();
+    industrialVoice.type = 'triangle';
+    industrialGain.gain.value = 0.018;
+    industrialVoice.connect(industrialGain);
+    industrialGain.connect(bus.sfx || master);
+    industrialVoice.start();
+  }
+  if (industrialVoice && on)
+    industrialVoice.frequency.setTargetAtTime(
+      55 + Math.min(150, heat) * 0.35,
+      ctx.currentTime,
+      0.2,
+    );
+  if (industrialVoice && !on) {
+    industrialVoice.stop();
+    industrialVoice.disconnect();
+    industrialGain.disconnect();
+    industrialVoice = industrialGain = null;
+  }
+}

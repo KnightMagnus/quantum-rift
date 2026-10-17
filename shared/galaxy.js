@@ -154,6 +154,9 @@ export const FACTIONS = {
  * @type {CommodityDef[]}
  */
 export const COMMODITIES = [
+  { id: 'plasma', name: 'Stellar Plasma', base: 500 },
+  { id: 'quantum_fuel', name: 'Quantum Fuel', base: 1200 },
+  { id: 'exotic_matter', name: 'Exotic Matter', base: 1800 },
   { id: 'alloy_ingots', name: 'Alloy Ingots', base: 360 },
   { id: 'fuel_cells', name: 'Fuel Cells', base: 560 },
   { id: 'cut_crystal', name: 'Cut Crystal', base: 920 },
@@ -224,7 +227,7 @@ const P = (o) => o;
  * @property {StellarBody[]} stellars - Orbiting planets, stations, and derelict sites.
  * @property {number} danger - Threat level / security rating.
  * @property {string} [gate] - Wormhole destination system if a gateway is present.
- * @property {Array<{x: number, y: number, r: number, ore: string, rich: number, rocks: number}>} [fields] - Asteroid or resource field locations.
+ * @property {Array<{x: number, y: number, r: number, ore: string, rich: number, rocks: number,minor?:boolean,industrial?:boolean}>} [fields] - Asteroid or resource field locations.
  * @property {string} [desc] - System lore notes.
  */
 
@@ -1631,7 +1634,40 @@ export const ARMADA_HULLS = [757, 758, 759]; // 2.6: the old station Armada esco
 // Deterministic refinery/processed-good markets; ordinary nonservice pads unchanged.
 for (const p of Object.values(STELLARS))
   if (!p.site && p.svc.includes('T') && p.svc.includes('O'))
-    for (const id of ['alloy_ingots', 'fuel_cells', 'cut_crystal', 'composite_plating'])
+    for (const id of [
+      'alloy_ingots',
+      'fuel_cells',
+      'cut_crystal',
+      'composite_plating',
+      'plasma',
+      'quantum_fuel',
+      'exotic_matter',
+    ])
       p.prices[id] = 0;
-for (const id of ['alloy_ingots', 'fuel_cells', 'cut_crystal', 'composite_plating'])
+for (const id of [
+  'alloy_ingots',
+  'fuel_cells',
+  'cut_crystal',
+  'composite_plating',
+  'plasma',
+  'quantum_fuel',
+  'exotic_matter',
+])
   SITE_PRICES[id] = 0;
+
+// Authored finite minor pockets support industrial bulk without changing existing fields.
+for (const [sys, ore] of [
+  ['meridian', 'ore'],
+  ['halcyon', 'gas'],
+])
+  SYS[sys].fields.push({
+    id: `${sys}-industrial-minor`,
+    x: 4200,
+    y: -4000,
+    r: 700,
+    ore,
+    rich: 2,
+    rocks: 20,
+    minor: true,
+    industrial: true,
+  });

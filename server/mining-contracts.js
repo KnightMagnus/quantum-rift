@@ -23,7 +23,7 @@
  *
  * @typedef {import('./space.js').Rock & {
  * key:string, generation:number, seed:number, stage:number, stages:number,
- * heat:number,work:number,updated:number,releaseAt:number,releaseHeat:number,
+ * dredgeToken?:boolean,dredgeWork?:number,sweepCut?:boolean,heat:number,work:number,updated:number,releaseAt:number,releaseHeat:number,
  * ready:boolean,penalty:boolean,penaltyApplied:boolean,baseBudget:number,budget:number,pending:number,
  * accepted:number,expired:number,discarded:number,emitted:number,
  * tokens:boolean[],leases:MiningLease[],seen:Record<string,number>,captain:string|null,
@@ -43,6 +43,7 @@
  * @typedef {Pick<import('./space.js').Space,'id'|'rocks'|'loot'|'events'|'t'|'sys'>} MiningSpace
  * @typedef {Pick<import('./db.js').DB,'world'|'touch'|'get'|'key'>} MiningDatabase
  * @typedef {object} MiningCapabilities
+ * @property {(captain:string,chance:number)=>void} dredgeBlueprint
  * @property {MiningDatabase} db
  * @property {import("./features.js").FeatureServices["pressure"]["extracted"]} pressureExtract
  * @property {import("./features.js").FeatureServices["pressure"]["work"]} pressureWork

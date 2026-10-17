@@ -73,6 +73,25 @@ try {
     0,
     'refinery requires explicit checkpoint/pricing/capacity capabilities',
   );
+  result =
+    check(`/** @type {import('${modulePath('industrial-contracts.js')}').IndustrialRequest} */
+const industrial={op:'recipe',recipe:'alloy',grade:'common'};
+`);
+  assert.equal(result.status, 0, 'typed industrial mode request');
+  result =
+    check(`/** @type {import('${modulePath('industrial-contracts.js')}').IndustrialRequest} */
+const forged={op:'harvest',heat:0,n:999};
+`);
+  assert.notEqual(result.status, 0, 'client heat and yield authority rejected');
+  result =
+    check(`/** @type {import('${modulePath('industrial-contracts.js')}').IndustrialCapabilities} */
+const missing={paused(){return false;}};
+`);
+  assert.notEqual(
+    result.status,
+    0,
+    'industrial requires checkpoint/capacity/root mining capabilities',
+  );
   console.log(
     'Typed valid calls/grade selections pass; invalid argument, grade quantity and missing capability are rejected.',
   );

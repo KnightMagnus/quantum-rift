@@ -12,7 +12,9 @@ import {
   COMP_COST,
   TIER_UP_MIN,
   specPower,
+  specialistResource,
 } from '../shared/specialty.js';
+import { planTake, applyTake } from '../shared/cargo-lots.js';
 import { makeLoadout, credits } from '../shared/rules.js';
 
 /** @type {Record<string, number>} Map of specialist keys to hull IDs. */
@@ -283,7 +285,7 @@ export const SpecialistOperations = {
             s,
             `Building the ${sp.name} takes ${credits(cost)} credits (after trade-in) and ${BUILD.mats.map(([a, g, n]) => `${n} ${a} ${GRADES[g]}`).join(', ')}.`,
           );
-        if (Object.values(d.cargo).reduce((a, b) => a + b, 0) > sp.cargo)
+        if (this.fitsJobs(d, makeLoadout(this.A, sp.id, sp.name)) || this.holdUsed(d) > sp.cargo)
           return this.toast(s, 'Sell some cargo first.');
         d.credits -= cost;
         this.takeMats(d, BUILD.mats);
@@ -304,14 +306,17 @@ export const SpecialistOperations = {
       case 'parts': {
         const sp = SPEC[m.id | 0];
         if (!sp) return;
-        const have = d.spec[sp.res] || 0,
+        const have = specialistResource(d, sp),
           n = Math.floor(have / PART_RATE);
         if (!n)
           return this.toast(
             s,
             `You need ${PART_RATE} ${SPEC_RES[sp.res].name} per ${sp.name} part.`,
           );
-        d.spec[sp.res] -= n * PART_RATE;
+        if (sp.key === 'star_dredge') {
+          const take = planTake(d.cargo, d.cargoLots, 'plasma', n * PART_RATE);
+          applyTake(d.cargo, d.cargoLots, take);
+        } else d.spec[sp.res] -= n * PART_RATE;
         d.parts[sp.id] = (d.parts[sp.id] || 0) + n;
         this.toast(
           s,
