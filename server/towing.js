@@ -6,6 +6,8 @@ import { addLots, assertLots } from '../shared/cargo-lots.js';
 /** @typedef {import('./towing-contracts.js').TowWorld} W */
 /** @typedef {import('./towing-contracts.js').Motherlode} ObjectRecord */
 /** @typedef {import('./towing-contracts.js').Session} Session */
+/** @type {WeakMap<Session, string>} */
+const deliveryNotices = new WeakMap();
 /** @param {C} c @returns {W} */
 function state(c) {
   const w = c.db.world.towing;
@@ -428,9 +430,11 @@ export const TowingOperations = {
         .filter(
           (p) => p?.system === o.sys && crossesPort(p, previous, o) <= p.r + TOW.deliveryApron,
         );
+      if (!ports.length) deliveryNotices.delete(s);
       for (const port of ports) {
         try {
           deliver(this, s, o, port.id, previous);
+          deliveryNotices.delete(s);
           this.refresh(s);
           break;
         } catch (error) {
@@ -445,6 +449,12 @@ export const TowingOperations = {
             );
             this.refresh(s);
             break;
+          }
+          if (port === ports.at(-1)) {
+            const reason = error instanceof Error ? error.message : 'Port cannot accept delivery';
+            const notice = `${o.id}:${port.id}:${reason}`;
+            if (deliveryNotices.get(s) !== notice) this.toast(s, reason);
+            deliveryNotices.set(s, notice);
           }
         }
       }
