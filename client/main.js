@@ -501,10 +501,12 @@ function openSocket(tries) {
       );
       return;
     }
-    $('login').classList.remove('hidden');
-    $('lerr').textContent = G._kicked
+    const reason = G._kicked
       ? 'Signed in somewhere else.'
       : 'Disconnected from the server. Sign in again when it is back.';
+    // Terminal disconnect also returns a clean login, not a former captain's UI state.
+    void logOut();
+    $('lerr').textContent = reason;
   };
   socket.onerror = () => {
     if (current() && !G.you) {

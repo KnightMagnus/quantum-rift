@@ -198,6 +198,25 @@ for (const solo of [false, true]) {
     await page.waitForFunction(() => !G.you);
     await page.waitForTimeout(1300);
     assert.equal(hellos.length, beforeDrop, 'queued reconnect invalidated');
+    await signIn('Logout Alpha');
+    await page.evaluate(() => {
+      G.myPrivateFixture = 'kick must clear this too';
+    });
+    const peer = new WebSocket(origin.replace('http:', 'ws:') + '/ws');
+    await new Promise((resolve, reject) => {
+      peer.onopen = resolve;
+      peer.onerror = reject;
+    });
+    peer.send(JSON.stringify({ t: 'hello', name: 'Logout Alpha', pass: solo ? '' : 'fixture' }));
+    await page.waitForFunction(
+      () => !G.you && document.querySelector('#lerr').textContent.includes('somewhere else'),
+    );
+    assert.equal(
+      await page.evaluate(() => G.myPrivateFixture ?? null),
+      null,
+      'forced logout cleans old captain state',
+    );
+    peer.close();
     assert.deepEqual(errors, []);
     console.log(
       label + ': Escape/Cancel/confirm, account isolation, persistence and repeated login passed',
