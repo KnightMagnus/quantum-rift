@@ -3166,3 +3166,112 @@ body.solo .mp {
   width: 76px;
   color-scheme: dark;
 }
+
+/* Shared flow layout: no special function may position itself over chat. */
+#shipfunctions {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  bottom: calc(var(--cbar) + 8px);
+  width: min(430px, calc(100vw - var(--hud) - 24px));
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+#functionstack {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  pointer-events: auto;
+}
+.function-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.function-entry:has(> .function-icon.hidden) {
+  display: none;
+}
+#shipfunctions .function-icon {
+  position: relative;
+  inset: auto;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #fba778;
+  background: #45251d;
+  color: #ffc18b;
+  cursor: pointer;
+}
+#shipfunctions #miningindicator {
+  border-color: #ffd36a;
+  background: #35280c;
+  color: #ffdc7b;
+}
+#shipfunctions .function-icon img,
+#shipfunctions .function-icon svg {
+  width: 30px;
+  height: 30px;
+}
+#shipfunctions .function-icon:disabled {
+  filter: grayscale(1);
+  opacity: 0.48;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+#shipfunctions .function-icon.active {
+  box-shadow: 0 0 0 2px #fba77888;
+}
+#shipfunctions :focus-visible {
+  outline: 2px solid white;
+  outline-offset: -2px;
+}
+#shipfunctions .function-panel {
+  position: static;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100% !important;
+  max-height: none;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  padding: 10px;
+  margin: 0;
+  font-size: 13px;
+  background: #111a2bf5;
+  border: 1px solid #5b6473;
+}
+#shipfunctions .function-panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+#shipfunctions .function-panel input,
+#shipfunctions .function-panel select {
+  max-width: 100%;
+}
+#shipfunctions #chat {
+  position: static;
+  width: 100%;
+  flex: 0 0 auto;
+  margin-top: 6px;
+  pointer-events: auto;
+}
+#shipfunctions #chatlog {
+  max-height: min(140px, 22vh);
+  overflow: auto;
+  justify-content: initial;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 650px) {
+  #shipfunctions {
+    width: min(280px, calc(100vw - 24px));
+    top: 8px;
+  }
+}

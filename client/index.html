@@ -124,7 +124,6 @@
       </section>
     </aside>
 
-    <div id="chat"><div id="chatlog"></div></div>
     <!-- 1.0.1: the command bar: chat with channels, controls help, key bindings, options, map -->
     <div id="cbar" class="metal">
       <div class="cchan" id="cchan">
@@ -155,7 +154,10 @@
       aria-label="Incoming hails"
       title="Incoming hails (U)"
     >
-      <span aria-hidden="true">◉</span><span id="hailcount">0</span>
+      <img src="assets/hud/comms.svg" width="24" height="24" alt="" aria-hidden="true" /><span
+        id="hailcount"
+        >0</span
+      >
     </button>
     <div id="hailmarker" class="hidden" aria-live="polite"></div>
     <div id="hailbox" class="overlay hidden">
@@ -189,66 +191,63 @@
       </div>
     </div>
     <div id="toasts"></div>
-    <button
-      id="miningindicator"
-      class="hidden"
-      aria-label="Mining controls"
-      aria-controls="miningcontrols"
-      aria-expanded="false"
-      title="Open mining controls"
-    >
-      <svg viewBox="0 0 32 32" aria-hidden="true">
-        <!-- Spiral-cone hand drill: broad flutes and a short grip stay legible at HUD size. -->
-        <g transform="rotate(35 16 16)">
-          <path d="M13 23h6v6h-6z" fill="#bd8239" stroke="currentColor" stroke-width="1.3" />
-          <path
-            d="M16 2 5 22q11 5 22 0Z"
-            fill="currentColor"
-            stroke="#fff1bd"
-            stroke-width="1"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M14 6q2 2 5 1M11.5 10q3 4 10 2M9 14q5 5 15 3M6.5 18q7 6 20 4"
-            fill="none"
-            stroke="#76501d"
-            stroke-width="2"
-            stroke-linecap="round"
-          />
-          <path d="M14.5 24v4" stroke="#ffe3a0" stroke-width="1.2" />
-        </g>
-      </svg>
-    </button>
-    <div class="well box hidden" id="miningcontrols" aria-label="Mining controls">
-      <header>
-        <strong>Mining</strong
-        ><button class="btn sm" id="miningclose" aria-label="Close mining controls">Close</button>
-      </header>
-      <div id="miningcargo" role="status"></div>
-      <button class="btn sm" id="miningsurvey">Scan nearby rocks</button>
-      <span id="miningmeter" role="status">Aim a mining tool</span>
-    </div>
-    <div
-      class="well box hidden"
-      id="combatcontrols"
-      style="
-        position: absolute;
-        bottom: 80px;
-        left: 12px;
-        max-width: calc(100vw - var(--hud) - 24px);
-        z-index: 5;
-      "
-    >
-      <button class="btn sm" id="combatassist">COMBAT ASSIST</button>
-      <button class="btn sm" id="combatstop">STOP</button
-      ><span class="small" id="combatstatus">OFF</span>
-      <div class="small">
-        <label><input type="checkbox" id="combatdelegate" />Allow Follow Leader combat</label>
-        <label
-          ><input type="checkbox" id="combatcoordinate" />Coordinate consenting followers</label
+    <section id="shipfunctions" aria-label="Ship functions and chat">
+      <div id="functionstack">
+        <button
+          id="miningindicator"
+          class="function-icon hidden"
+          aria-label="Mining controls"
+          aria-controls="miningcontrols"
+          aria-expanded="false"
+          title="Open mining controls"
         >
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <!-- Spiral-cone hand drill: broad flutes and a short grip stay legible at HUD size. -->
+            <g transform="rotate(35 16 16)">
+              <path d="M13 23h6v6h-6z" fill="#bd8239" stroke="currentColor" stroke-width="1.3" />
+              <path
+                d="M16 2 5 22q11 5 22 0Z"
+                fill="currentColor"
+                stroke="#fff1bd"
+                stroke-width="1"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M14 6q2 2 5 1M11.5 10q3 4 10 2M9 14q5 5 15 3M6.5 18q7 6 20 4"
+                fill="none"
+                stroke="#76501d"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <path d="M14.5 24v4" stroke="#ffe3a0" stroke-width="1.2" />
+            </g>
+          </svg>
+        </button>
+        <div class="well box hidden" id="miningcontrols" aria-label="Mining controls">
+          <header>
+            <strong>Mining</strong
+            ><button class="btn sm" id="miningclose" aria-label="Close mining controls">
+              Close
+            </button>
+          </header>
+          <div id="miningcargo" role="status"></div>
+          <button class="btn sm" id="miningsurvey">Scan nearby rocks</button>
+          <span id="miningmeter" role="status">Aim a mining tool</span>
+        </div>
+        <div class="well box hidden" id="combatcontrols" aria-label="Combat controls">
+          <button class="btn sm" id="combatassist">COMBAT ASSIST</button>
+          <button class="btn sm" id="combatstop">STOP</button
+          ><span class="small" id="combatstatus">OFF</span>
+          <div class="small">
+            <label><input type="checkbox" id="combatdelegate" />Allow Follow Leader combat</label>
+            <label
+              ><input type="checkbox" id="combatcoordinate" />Coordinate consenting followers</label
+            >
+          </div>
+        </div>
       </div>
-    </div>
+      <div id="chat"><div id="chatlog" tabindex="0" aria-label="Chat history"></div></div>
+    </section>
     <div id="autobadge" class="hidden"></div>
     <div id="touch" class="hidden">
       <div id="tstick"><i></i></div>

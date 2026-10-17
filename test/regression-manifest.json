@@ -102,7 +102,8 @@
     "dropdowns-browser.mjs",
     "trade-amount-browser.mjs",
     "motherlode-art-browser.mjs",
-    "ship-turning-assets-browser.mjs"
+    "ship-turning-assets-browser.mjs",
+    "ship-functions-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -588,10 +589,17 @@
       "services": [],
       "tests": ["trade-amount-browser.mjs"],
       "asserts": "Accessible native dark numeric quantities; invalid/empty/overflow denial before wire, real buy/sell settlement, common-first grades, hold/inventory and authoritative funds limits, preset compatibility, async draft/focus retention, narrow viewport interaction."
+    },
+    {
+      "id": "ship-function-stack",
+      "owners": ["client/ship-functions.js", "client/mining_ui.js", "client/style.css"],
+      "services": [],
+      "tests": ["ship-functions-browser.mjs", "mining-panel-browser.mjs"],
+      "asserts": "Accessible icon toggles, retained disabled mining, combat and survey message dispatch, fleet orders and secondary drone input, six-panel flow layout with long chat, keyboard/wheel reachability and desktop/narrow/scaled browser bounds."
     }
   ],
   "routes": {
-    "combat": ["combat-assist.js", "combat-network.js"],
+    "combat": ["combat-assist.js", "combat-network.js", "ship-functions-browser.mjs"],
     "input": [
       "armada-formation-network.mjs",
       "armada-formation.js",
@@ -682,7 +690,7 @@
     "hail": ["hailing-network.js", "v11.js"],
     "hailin": ["hailing-network.js"],
     "hailopt": ["hailing-network.js", "v11.js"],
-    "order": ["combat-network.js", "v11.js", "v21.js"],
+    "order": ["combat-network.js", "v11.js", "v21.js", "ship-functions-browser.mjs"],
     "jettison": ["cargo-flows.js", "v11.js", "cargo-ui-browser.mjs"],
     "rivals": ["core-actions.js"],
     "bm": ["v12.js"],

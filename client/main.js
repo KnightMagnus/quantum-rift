@@ -1,3 +1,4 @@
+import { initShipFunctions } from './ship-functions.js';
 import { coronaRouteBlocked } from '/shared/industrial-rules.js';
 import { initRefineryUI } from './refinery_ui.js';
 import { binding, migrateBindings, RESERVED_KEYS } from './action-bindings.js';
@@ -267,7 +268,11 @@ const miningUI = initMiningUI({
   contextBlocked: miningModalBlocked,
 });
 initRefineryUI(G, send);
-setInterval(() => miningUI.refresh(), 100);
+const shipFunctions = initShipFunctions(G, send);
+setInterval(() => {
+  miningUI.refresh();
+  shipFunctions.refresh();
+}, 100);
 function applyOpts() {
   G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
   document.documentElement.style.setProperty('--ui', G.opts.scale);
@@ -794,7 +799,7 @@ function onSnap(m) {
   receiveMining(G, m);
   G.combat = m.combat || {};
   G.formation = !!m.formation;
-  $('combatcontrols').classList.remove('hidden');
+  shipFunctions.refresh();
   $('combatstatus').textContent =
     ' · ' +
     (G.combat.status || 'OFF') +
@@ -2182,7 +2187,7 @@ function fixedTick() {
     rev: held('rev') ? 1 : 0,
     ab: held('ab') ? 1 : 0,
     fire1: held('fire1') ? 1 : 0,
-    fire2: held('fire2') ? 1 : 0,
+    fire2: held('fire2') || shipFunctions.secondary() ? 1 : 0,
   };
   if (
     G.opts.mouseAim &&
@@ -2477,6 +2482,13 @@ window.addEventListener(
     // Existing modals, map, and expanded mining panel consume this Escape instead.
     if ([...document.querySelectorAll('.overlay:not(.hidden)')].some((el) => el.id !== 'land'))
       return;
+    const focusedPanel = document.activeElement.closest('.function-panel:not(.hidden)');
+    if (focusedPanel) {
+      focusedPanel.querySelector('header button')?.click();
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
     if (!$('miningcontrols').classList.contains('hidden')) {
       $('miningclose').click();
       e.preventDefault();

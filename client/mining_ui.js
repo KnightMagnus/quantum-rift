@@ -92,7 +92,12 @@ export function initMiningUI({
     const nextIdentity = currentIdentity();
     if (!fly || nextIdentity !== identity) setOpen(false);
     identity = nextIdentity;
-    indicator.classList.toggle('hidden', !fly);
+    indicator.classList.toggle(
+      'hidden',
+      !G.you || !document.getElementById('login').classList.contains('hidden'),
+    );
+    indicator.disabled = !fly;
+    indicator.setAttribute('aria-disabled', String(!fly));
     root.classList.toggle('hidden', !fly || !open);
     indicator.title = state.active
       ? 'Mining operations active — open controls'
@@ -106,6 +111,7 @@ export function initMiningUI({
           ? 'Mining controls — operations active'
           : 'Mining controls',
     );
+    if (!fly) indicator.title = 'Mining unavailable — requires a mining ship or tow rig in flight';
     indicator.title += ` · ${label(bound('miningPanel'))}`;
     consent.textContent = `${G.miningPressure?.groupConsent ? 'Leave' : 'Join'} group mining · ${label(bound('miningGroup'))}`;
     choose.textContent = `SET INPUT · ${label(bound('dredgeInput'))}`;

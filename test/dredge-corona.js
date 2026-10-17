@@ -219,6 +219,7 @@ assert.ok(src.units >= 0 && src.units < INDUSTRIAL.sourceUnits);
       history: [],
       seq: 0,
       held: () => false,
+      shipFunctions: { secondary: () => false },
       typing: () => false,
       padInput() {},
       touchInput() {},

@@ -540,8 +540,11 @@ export function chatLine(m) {
     d.textContent = m.msg;
   } else
     d.innerHTML = `<b${m.ch === 'armada' ? ' class="armada"' : ''}${!G.solo && m.from !== G.myName ? ` data-dm="${esc(m.from)}" title="Message ${esc(m.from)}"` : ''}>${m.ch === 'armada' ? '[Armada] ' : ''}${esc(m.from)}${m.ch === 'sys' ? ' (system)' : ''}:</b> ${esc(m.msg)}`; // 2.6: click a name to message them
-  $('chatlog').appendChild(d);
-  while ($('chatlog').children.length > 40) $('chatlog').firstChild.remove();
+  const log = $('chatlog');
+  const atBottom = log.scrollHeight - log.clientHeight - log.scrollTop < 4;
+  log.appendChild(d);
+  while (log.children.length > 40) log.firstChild.remove();
+  if (atBottom) log.scrollTop = log.scrollHeight;
 }
 
 // ------------------------------------------------------------------ HUD (every frame)

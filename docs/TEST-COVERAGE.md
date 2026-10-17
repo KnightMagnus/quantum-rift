@@ -380,3 +380,9 @@ It asserts sustained authoritative movement/heading, sharp-turn slot recovery an
 manual override. Existing formation/network tests retain fleet envelope, consent,
 combat/landing suspension and leader-jump coverage. Browser evidence is Chromium
 only; not exhaustive hull/loadout or real WAN latency testing.
+
+### Ship-function cockpit stack
+
+- `ship-function-stack`: ship-functions-browser.mjs and mining-panel-browser.mjs exercise toggles, disabled mining, action messages, multi-panel flow, long chat and 1440/1024/800/640px layouts at 0.8–1.4 UI scale. Capability fixtures are explicit; authoritative behavior remains covered by network suites.
+- Inventory: Combat, Mining (survey/cutting/group help), Towing, Dredge Processing, Fleet/Formation wing orders, Drones secondary-input shortcut. Hailing retains its indicator/modal; comms candidates supplied without duplicate comms. Armada Follow stays in Allies; server follow untouched.
+- Icons provisional A pending choice. Drone shortcut preserves secondary fire, including other secondary weapons.
