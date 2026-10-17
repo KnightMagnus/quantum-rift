@@ -22,9 +22,10 @@ ok(
   'an old world with the KNIGHT showcase account and his Ops 5 station',
 );
 g1.db.flush();
-process.env.SEEDS_FILE = decodeURIComponent(
-  new URL('../server/seeds.json', import.meta.url).pathname,
-);
+// Retirement remains supported for explicit operator-supplied seed definitions.
+const retiredSeeds = dir + '/retired-seeds.json';
+fs.writeFileSync(retiredSeeds, JSON.stringify([{ name: 'KNIGHT', retire: true }]));
+process.env.SEEDS_FILE = retiredSeeds;
 const g2 = new Game(JSON.parse(JSON.stringify(A)), new DB(dir));
 ok(!g2.db.get('KNIGHT'), 'starting the new version retires KNIGHT');
 ok(

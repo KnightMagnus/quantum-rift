@@ -471,7 +471,8 @@ export class Game {
   wake(sp) {
     return sp;
   }
-  // Accounts listed in server/seeds.json are created on start-up if they don't exist yet (existing saves are never touched).
+  // Seed accounts are created on startup. sync:true explicitly upgrades existing saves;
+  // sync:'create' applies the same setup only once, without resetting a saved captain.
   /**
    * Populates showcase and developer seed accounts defined in seeds.json.
    * @returns {void}
@@ -493,7 +494,16 @@ export class Game {
       if (!c.name || !c.pass) continue;
       const have = this.db.get(c.name);
       if (have) {
-        if (c.sync) this.syncSeed(have, c);
+        if (c.sync === true) this.syncSeed(have, c);
+        continue;
+      }
+      const site = c.station?.fallback
+        ? [c.station.site, ...SITES.map((s) => s.id)].find(
+            (id) => STELLARS[id]?.site && !this.siteOwner(id),
+          )
+        : c.station?.site;
+      if (c.station?.fallback && !site) {
+        console.warn(`Cannot create seeded captain ${c.name}: no unclaimed station hull.`);
         continue;
       }
       const d = this.fresh();
@@ -512,9 +522,9 @@ export class Game {
         st.ops = c.station.ops || 0;
         st.refT = Date.now();
         if (c.station.research === 'all') st.done = RESEARCH.map((r) => r.id);
-        if (c.station.site && STELLARS[c.station.site] && !this.siteOwner(c.station.site)) {
-          st.site = c.station.site;
-          this.db.world.sites[c.station.site] = this.db.key(c.name);
+        if (site && STELLARS[site] && !this.siteOwner(site)) {
+          st.site = site;
+          this.db.world.sites[site] = this.db.key(c.name);
         }
       }
       if (c.mats) for (const m of MATERIALS) d.mats[m] = c.mats.slice();
@@ -522,9 +532,23 @@ export class Game {
         d.sys = c.system;
         d.stellar = c.stellar || d.stellar;
       }
+      if (c.station?.fallback && site) {
+        d.sys = STELLARS[site].system;
+        d.stellar = site;
+      }
       const p = this.db.create(c.name, c.pass, d);
       this.log(p, c.log || 'Arrived in the Rift.');
       if (c.sync) this.syncSeed(p, c);
+      if (c.storedShips === 'specialists') {
+        this.features.specialists.specInit(p);
+        this.features.docks.docksInit(p);
+        for (const sp of Object.values(SPEC)) {
+          const ship = makeLoadout(this.A, sp.id, sp.name);
+          ship.uid = this.features.docks.shipUid(p);
+          p.dock.push({ ship, bridge: {} });
+          p.specState[sp.id] = { tier: 1, comp: {} };
+        }
+      }
       console.log('Created seeded captain', c.name);
     }
     this.db.touch();

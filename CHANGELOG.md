@@ -2,6 +2,12 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### Unreleased — KNIGHT testing profile
+
+- Restore KNIGHT (`1234`) for testing: 30M credits, Constitution Excalibur, completed T5 station/research and all eleven specialty ships prebuilt in storage, including Star Dredge.
+- Create the preset once per save folder; preserve existing captains, credentials and progress. Use an available station hull without stealing another captain’s site.
+- Add registered real online/Solo login, ship-selection, restart and save-preservation regressions.
+
 ### 3.0.1 — Windows startup fix
 
 - Skip unsupported directory fsync on Windows so online and Solo startup can finish. Regular-file fsync and pending-checkpoint recovery remain intact; no saves need deleting.
