@@ -249,9 +249,9 @@ console.log(
 );
 // Replay two real Tapper impacts exactly one second apart. The first ready
 // stage's release deadline must settle before the later collision is admitted.
-async function separatedTapper(quiet) {
+async function separatedTapper(quiet, secondBeam = false) {
   const cg = game(),
-    cs = pilot(cg, `Separated${quiet}`),
+    cs = pilot(cg, `Separated${quiet}${secondBeam}`),
     space = cg.spaces.meridian;
   space.ships = new Map([[cs.ent.id, cs.ent]]);
   const r = space.rocks.find((rock) => stageCount(rock.r) === 2),
@@ -297,13 +297,15 @@ async function separatedTapper(quiet) {
     if (!quiet || frame % 15 === 0) endTick(sp_);
   };
   for (frame = 1; frame <= 75; frame++) {
-    if (frame === 31 - flight) {
+    if (!secondBeam && frame === 31 - flight) {
       space.fire(e, gun, null, e.a);
       second = space.shots.at(-1);
     }
     cg.features.mining.advanceClock(DT);
+    if (secondBeam && frame === 30)
+      space.fire(e, { ...gun, w: 9101, p: weaponParams(cg.A.weapons[9101]) }, null, e.a);
     space.tick();
-    if (frame === 30) {
+    if (frame === 30 && !secondBeam) {
       assert.ok(Object.hasOwn(r.seen, second.mining.contactId), 'second real impact at1s');
       assert.ok(Math.abs(r.seen[second.mining.contactId] - start - 1) < 1e-9);
     }
@@ -331,16 +333,21 @@ async function separatedTapper(quiet) {
     pending: r.pending,
   };
 }
-const quietSeparated = await separatedTapper(true),
-  fineSeparated = await separatedTapper(false);
-for (const k of ['heat', 'work']) {
-  assert.ok(Math.abs(quietSeparated[k] - fineSeparated[k]) < 1e-9, `${k} sampling parity`);
-  delete quietSeparated[k];
-  delete fineSeparated[k];
+for (const beam of [false, true]) {
+  const quietSeparated = await separatedTapper(true, beam),
+    fineSeparated = await separatedTapper(false, beam);
+  for (const k of ['heat', 'work']) {
+    assert.ok(
+      Math.abs(quietSeparated[k] - fineSeparated[k]) < 1e-9,
+      `${beam ? 'beam' : 'Tapper'} ${k} sampling parity`,
+    );
+    delete quietSeparated[k];
+    delete fineSeparated[k];
+  }
+  assert.deepEqual(quietSeparated, fineSeparated);
 }
-assert.deepEqual(quietSeparated, fineSeparated);
 console.log(
-  'Separated real Tapper impacts settle old clean release before new-stage work at populated/quiet cadence; identical lots and budgets.',
+  'Separated real Tapper-to-Tapper and Tapper-to-beam contacts settle old clean release and preserve first-frame next-stage work at populated/quiet cadence.',
 );
 // Early release retains HP/work, no parcel; target switching cannot reset rock state.
 const early = choose(44),

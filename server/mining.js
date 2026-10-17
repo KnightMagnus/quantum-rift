@@ -284,9 +284,8 @@ function emit(c, sp, r, clean) {
   }
   c.db.touch();
 }
-/** @param {Capabilities} c @param {Space} sp @param {Generation} r */
-function update(c, sp, r) {
-  const now = world(c).clock;
+/** @param {Capabilities} c @param {Space} sp @param {Generation} r @param {number} [now] */
+function update(c, sp, r, now = world(c).clock) {
   if (now < r.updated) throw new Error('Mining clock moved backwards');
   if (r.down) return;
   // Integrate each contact/cooling segment in time order. Quiet systems can observe
@@ -400,7 +399,9 @@ export const MiningOperations = {
         ...r.leases.map((l) => l.to),
       );
     if (r.ready && previousEnd && previousEnd + MINING.grace < from) {
-      update(this, sp, r); // Preserve prior captain/grade before attributing new hit.
+      // Settle only through incoming contact start. Advancing to observation
+      // now would consume a retrospective beam's first frame as cooling.
+      update(this, sp, r, Math.max(r.updated, from));
       if (r.down) return;
     }
     r.seen[key] = now;
