@@ -106,6 +106,10 @@ these shared changes small prerequisite changes for parallel feature work.
 
 ## Verification
 
+See [the full game system/action coverage inventory](TEST-COVERAGE.md) and the
+[repository regression contract](../AGENTS.md). New gameplay behavior requires
+meaningful tests registered in the canonical CI manifest in the same change.
+
 - `npm run typecheck`: checked scope above.
 - `npm run test:features`: deterministic original-vs-current characterization,
   dependency inventory, no prototype feature installation, capability isolation,

@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 0.4 tests: the 200-system galaxy, sleeping systems, region traffic, mining, ore processing, charting, routes.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -7,7 +8,7 @@ import { SYSTEMS, SYS, SITES, FACTIONS, ORE_PROCESS } from '../shared/galaxy.js'
 import { route } from '../shared/rules.js';
 import { expandGalaxy } from '../shared/gen.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
-const game = new Game(A, new DB('/tmp/rift-v04-' + Date.now()));
+const game = new Game(A, new DB(tempDataDir('rift-v04-')));
 const ok = (c, m) => {
   if (!c) {
     console.error('FAIL:', m);

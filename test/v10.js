@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 1.0 tests: the Que'vari storyline and the Deep gate (part 1). Career, solo mode and balance follow in later sections.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -6,7 +7,7 @@ import { Game } from '../server/game.js';
 import { SYS, STELLARS, SYSTEMS } from '../shared/galaxy.js';
 import { STORY } from '../shared/story.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
-const game = new Game(A, new DB('/tmp/rift-v10-' + Date.now()));
+const game = new Game(A, new DB(tempDataDir('rift-v10-')));
 export const ok = (c, m) => {
   if (!c) {
     console.error('FAIL:', m);
@@ -175,7 +176,7 @@ ok(
 ok(!game.features.story.storyOffer(d, STELLARS.inalumen), 'the story is complete');
 console.log('ok - (story section done)');
 // --- solo mode
-const sdir = '/tmp/rift-v10solo-' + Date.now(),
+const sdir = tempDataDir('rift-v10solo-'),
   sdb = new DB(sdir),
   solo = new Game(A, sdb);
 solo.solo = true;

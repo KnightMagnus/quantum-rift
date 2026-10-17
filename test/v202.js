@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 2.0.2 tests: retiring the KNIGHT showcase account frees its station hull; prototype-safe names and lookups.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -11,7 +12,7 @@ const ok = (c, m) => {
   }
   console.log('ok -', m);
 };
-const dir = '/tmp/rift-v202-' + Date.now();
+const dir = tempDataDir('rift-v202-');
 process.env.SEEDS_FILE = decodeURIComponent(
   new URL('./seeds_knight.json', import.meta.url).pathname,
 );

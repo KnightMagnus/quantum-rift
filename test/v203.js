@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 2.0.3 tests: newcomer protection in inner space, calmer raider spawns, and the backlog bug fixes.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
@@ -13,7 +14,7 @@ const ok = (c, m) => {
   console.log('ok -', m);
 };
 process.env.SEEDS_FILE = '/nonexistent';
-const g = new Game(A, new DB('/tmp/rift-v203-' + Date.now()));
+const g = new Game(A, new DB(tempDataDir('rift-v203-')));
 g.features.fronts.event = () => null;
 g.features.fronts.anomalies = () => ({}); // 2.6: traffic counts must not depend on the weekday's event (Bounty Week brings 50% more raiders)
 let ipn = 1;

@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 2.5.2 tests: the bug-fix and quality-of-life pass (story needs, supply warnings, mining hints, markets for mined goods,
 // war fleets and newcomers, map station marker, broken-ring art).
 import fs from 'node:fs';
@@ -48,7 +49,7 @@ ok(
   needsOf(fr.steps).hold === 12 && needsOf(fr.steps).pax === 1,
   'a story reports the most hold space and bunks its steps ask for',
 );
-const g = new Game(A, new DB('/tmp/rift-v252-' + Date.now()));
+const g = new Game(A, new DB(tempDataDir('rift-v252-')));
 function fake(name) {
   const sock = new EventEmitter();
   sock.open = true;

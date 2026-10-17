@@ -57,29 +57,41 @@ jobs:
       - name: Contract types test
         run: npm run test:types
 
-      - name: Communications, equipment and passenger regressions
-        run: |
-          node test/landing-autopilot.js
-          node test/faction-standing.js
-          node test/gateway-navigation.js
-          node test/eventide.js
-          node test/companion-fixes.js
-          node test/hailing.js
-          node test/chat-bubbles.js
-          node test/original-weapons.js
-          node test/combat-assist.js
-          node test/comet.js
-          node test/ship-economy.js
-          node test/passengers.js
-          node test/outfitter-icons.js
-          node test/catalog-artwork.js
-          node test/ship-banking.js
-          node test/animation-frames.js
-          node test/wormhole-loop.js
-          node test/stars.js
-          node test/background-scale.js
-          node test/passenger-quests.js
-          node test/local-retaliation.js
-          node test/main-map-protection.js
-          node test/outfitter-wing-repairs.js
-          node test/fuzz.js
+      - name: Complete server and gameplay regression inventory
+        run: npm run test:regression:unit
+
+      - name: Preserve server regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-regression-evidence
+          path: .artifacts/regression/
+          if-no-files-found: warn
+          retention-days: 7
+
+  browser-regressions:
+    name: Browser gameplay and client regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install pinned Playwright Chromium and Linux dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Durable browser regression suite
+        run: npm run test:regression:browser
+      - name: Preserve browser evidence and server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-regression-evidence
+          path: .artifacts/regression/
+          if-no-files-found: warn
+          retention-days: 7

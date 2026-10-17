@@ -1,3 +1,4 @@
+import { tempDataDir } from './helpers/temp-data.js';
 // 1.2 tests: the Syndicate and black market, officer ranks and traits, lower decks, the bank, passengers and rush jobs,
 // Syndicate contracts, faction story arcs, and Farside expeditions.
 import fs from 'node:fs';
@@ -17,7 +18,7 @@ import { ARCS } from '../shared/arcs.js';
 import { EXPEDITION_LORE } from '../shared/expeditions.js';
 import { captainBonus } from '../shared/rules.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
-const game = new Game(A, new DB('/tmp/rift-v12-' + Date.now()));
+const game = new Game(A, new DB(tempDataDir('rift-v12-')));
 const ok = (c, m) => {
   if (!c) {
     console.error('FAIL:', m);
