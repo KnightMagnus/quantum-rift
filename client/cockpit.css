@@ -172,8 +172,9 @@ body:not(.tray-open) #hud {
   pointer-events: none;
 }
 body.scaled #hud {
-  zoom: 1;
-  width: var(--hud);
+  zoom: var(--ui);
+  width: calc(var(--hud) / var(--ui));
+  height: calc((100vh - var(--cbar)) / var(--ui));
 }
 #radar {
   max-height: 170px;
@@ -240,6 +241,8 @@ body.tray-open #traytoggle {
   transform: none;
 }
 #cockpit {
+  /* Long histories scroll inside this track instead of stretching the console. */
+  grid-template-rows: minmax(0, 1fr);
   position: fixed;
   left: 0;
   right: 0;
@@ -258,6 +261,7 @@ body.tray-open #traytoggle {
     0 -5px 15px #0009;
 }
 #functiondock {
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(2, minmax(0, 1fr));
@@ -324,6 +328,7 @@ body.tray-open #traytoggle {
   display: block;
 }
 #consolechat {
+  min-height: 0;
   position: relative;
   min-width: 0;
   display: flex;
@@ -366,6 +371,7 @@ body.tray-open #traytoggle {
   pointer-events: auto;
 }
 #consolechat #chatlog {
+  display: block;
   max-height: none;
   height: 100%;
   overflow: auto;
@@ -378,6 +384,7 @@ body:has(#land:not(.hidden)) #chatlog {
   display: block;
 }
 #consolechat #cbar {
+  flex: 0 0 auto;
   position: static;
   width: 100%;
   min-width: 0;
@@ -545,28 +552,9 @@ body:has(#login:not(.hidden)) #flightstatus,
 body:has(#land:not(.hidden)) #flightstatus {
   display: none;
 }
-#consolechat #chatlog {
-  display: block;
-}
-/* Long histories must scroll inside the screen, never increase the cockpit track. */
-#cockpit {
-  grid-template-rows: minmax(0, 1fr);
-}
-#consolechat,
-#functiondock {
-  min-height: 0;
-}
-#consolechat #cbar {
-  flex: 0 0 auto;
-}
-body.scaled #hud {
-  zoom: var(--ui);
-  width: calc(var(--hud) / var(--ui));
-  height: calc((100vh - var(--cbar)) / var(--ui));
-}
 /* Native select menus and trade quantity fields retain their high-contrast contract. */
 select,
-.trade-amount {
+input.trade-amount[type='number'] {
   color-scheme: dark;
   background-color: #000;
   color: #fff;
