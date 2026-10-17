@@ -3114,3 +3114,16 @@ body.solo .mp {
     font-size: 12px;
   }
 }
+
+#quitbox {
+  width: 100%;
+  z-index: 200;
+}
+.quitbox {
+  width: min(360px, calc(100vw - 32px));
+}
+.quitactions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}

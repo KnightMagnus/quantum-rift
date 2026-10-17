@@ -245,3 +245,12 @@ Registered unit programs `towing.js`, `towing-persistence.js`, `field-evolution.
 ## Mining panel usability
 
 `mining-panel.js` tests existing Survey-role / tow-rig eligibility, nonzero operational cargo capacity, full and mission-loaded holds, and active-control safety. `mining-panel-browser.mjs` exercises the production drill toggle at the former bottom-left panel anchor, default collapse, click/keyboard dismissal, full-hold and ship/landing transitions, independent hail inbox, and responsive final-control reachability. Transition snapshots are explicit client fixtures, not claimed server ship transactions. Existing mining, Dredge and towing browser suites exercise actual authoritative operations through the collapsed panel. Both new tests are registered in canonical CI lanes.
+
+## Account switching
+
+`logout-browser.mjs` runs real online and Solo servers with isolated saves. It covers
+Escape precedence for typing/options/map, default Cancel/keyboard confirmation,
+Solo temporary and preexisting pause, flight logout to login without reload,
+immediate durable dock/save, cleared credentials/chat/social/navigation state,
+refreshed Solo slot summaries, no automatic relogin and repeated account switches.
+It does not simulate every network outage or certify every peripheral device.

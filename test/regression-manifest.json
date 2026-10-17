@@ -90,7 +90,8 @@
     "refinery-ui-browser.mjs",
     "dredge-browser.mjs",
     "towing-browser.mjs",
-    "mining-panel-browser.mjs"
+    "mining-panel-browser.mjs",
+    "logout-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -100,7 +101,13 @@
   "systems": [
     {
       "id": "accounts-persistence",
-      "owners": ["server/db.js", "server/game.js"],
+      "owners": [
+        "server/db.js",
+        "server/game.js",
+        "client/main.js",
+        "client/hails_ui.js",
+        "client/render.js"
+      ],
       "services": [],
       "tests": [
         "persistence-auth.js",
@@ -109,9 +116,10 @@
         "v03.js",
         "v202.js",
         "v203.js",
-        "http-api.mjs"
+        "http-api.mjs",
+        "logout-browser.mjs"
       ],
-      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Shipped KNIGHT test profile: online/Solo startup login, legacy credits, completed T5 research, usable full specialist storage, idempotency, existing-save and station-ownership preservation."
+      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Shipped KNIGHT test profile: online/Solo startup login, legacy credits, completed T5 research, usable full specialist storage, idempotency, existing-save and station-ownership preservation. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect."
     },
     {
       "id": "protocol-http",

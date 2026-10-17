@@ -799,6 +799,7 @@ export class Game {
     }
     if (s.data) {
       this.db.touch();
+      this.db.flush(); // Commit the final dock/flight state before a deliberate account switch.
       if (!this.solo) this.broadcast({ t: 'chat', from: '', msg: `${s.name} left the Rift.` });
     }
   }
