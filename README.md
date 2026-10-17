@@ -4,6 +4,8 @@
 
 **A space trading and combat game in your browser.**
 
+> This branch prepares the **3.0.0 local release candidate**. The download link above remains the latest publicly published release; it is not a claim that this candidate has been published.
+
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
 ## Features
@@ -14,7 +16,7 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 - Explore the six-system **Eventide Chain** beyond Vesper Gate: twin suns, a black-hole research ring, a pulsar graveyard, a rogue-world refuge, shattered-world mining and a remote builders' observatory.
 - Pre-rendered planets, stations and landing pictures with oceans that catch the sun, city lights on the night side, ringed giants, and a rendered scene for every world you land on.
 - Every system has its own scenery, generated from the system itself: its star, distant galaxies, nebulae, ion storms, ancient wrecks, abandoned stations, crystal formations, comets and drifting debris.
-- Moons, asteroid fields, gas clouds and crystal fields to mine.
+- Moons, asteroid fields, gas clouds and crystal fields to mine. Survey persistent seams, make clean cuts, haul exact common/rich/pure lots, refine trade goods and deliver finite motherlodes.
 - Busy space lanes: traders, convoys, patrols, raiders and thirty named rival captains with careers of their own.
 - Systems pass through famines, plagues, booms, border wars, pirate scourges, festivals and mining rushes that move prices and post their own jobs. Markets remember what you trade.
 
@@ -25,7 +27,7 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 - Optional **combat assist** handles steering and primary fire, with manual takeover and Hold Fire taking priority. Coordinate with wingmates and nearby Armada fleets.
 - NPC captains have personalities: some run when beaten, some call friends for help, and capital ships fire broadsides.
 - Autopilot landing and multi-jump routes, a hyperspace jump with its own effect and sound, and hold-right-click to look ahead.
-- Roughly 100 ships to fly, from a 15,000-credit Mite Drone to the Constitution, plus ten one-of-a-kind specialty ships. Every ship is rendered from a 3D model, and smaller ships bank into their turns.
+- Roughly 100 ships to fly, from a 15,000-credit Mite Drone to the Constitution, plus eleven one-of-a-kind specialty ships. Every ship is rendered from a 3D model, and smaller ships bank into their turns.
 
 **A career to build**
 
@@ -124,10 +126,70 @@ On the same network, friends can join at `http://<your-computer's-address>:8080`
 | N                 | mute                                                                                                                                    |
 | P                 | pause (solo)                                                                                                                            |
 | Enter             | chat (`/s` system, `/a` Armada, `/w name message` private, `/r` reply)                                                                  |
+| V (if free)       | survey nearby mining seams; otherwise assign Survey Pulse in Options                                                                    |
+| Unbound initially | Dredge sweep, plasma harvest, mobile smelter and Attach / Detach Motherlode; use their cockpit buttons or assign keys                   |
 | ? or F1           | the controls card                                                                                                                       |
 | Mouse             | click to target, click a planet to set your nav point, double-click to land; **hold right-click and move** to look ahead; wheel to zoom |
 
 Every key can be remapped in Options (the gear button, or **O**). A standard **gamepad** works out of the box, and touch screens get an on-screen stick and buttons.
+
+---
+
+## Mining: from field to refinery
+
+### Your first clean cut
+
+1. Fit a mining tool and fly to a rock, gas or crystal field. Use the **SURVEY** cockpit button to reveal nearby seams. Survey uses **V** only if that key was free; otherwise assign **Survey Pulse** in Options. The button shows your actual binding and cooldown.
+2. Aim your mining tool using the usual weapon controls. Watch **ROCK HEAT / CUT**—or the gas **VENT / PRESSURE** meter—and keep contact on the seam. Larger rocks take several stages.
+3. When the meter says **READY**, release the mining trigger in the **60–80** heat band for a clean cut. A clean cut improves grades, not the number of times one rock can pay. Early release keeps your work; overheating makes the remaining yield worse. Changing targets or reconnecting does not reset a rock.
+4. Collect the drifting material. A partly full hold takes only what fits and leaves the rest. Raw cargo now has **common, rich and pure** lots; these are separate from field richness and construction-crate quality. Trade and cargo controls let you select exact lots instead of accidentally spending your best material.
+
+Ordinary mining still works without a survey or perfect timing. Existing cargo loads remain usable as common-grade lots.
+
+### Refine or haul it home
+
+At a suitable landed port, open **REFINERY**. Choose a recipe, exact input grade, amount and instant/stored service, then **GET BINDING QUOTE**. Read the quoted inputs, output, fee and time before confirming payment.
+
+- Ore makes **Alloy Ingots**, gas makes **Fuel Cells**, and shards make **Cut Crystal**. Standard recipes compress three raw tonnes into at most one processed tonne before the port's recovery rate.
+- **Composite Plating** uses pure ore, gas and shards together. Plasma has its own Quantum Fuel and Exotic Matter recipes. These are trade goods, not the station's construction crates.
+- **Instant** service handles up to 30 input tonnes. **Stored** service handles up to 300, has a 30-second cancellation queue and then takes 5–30 minutes. Its base service charge is lower, though the quote's market-spread floor can limit the discount.
+- Stored jobs mature while you are away. Track jobs and exact-grade sourcing orders in **MISSIONS**. Collect only the whole tonnes your hold can carry; fractional output remains stored. Owner-only collection stays available near the original port even if landing/trading access changes.
+- Fuel Cells can be quoted and consumed for ship fuel. Confirmation uses real cargo and needs room for the full quoted fuel gain; fuel cannot be converted back into cells.
+
+The new home trade-good refinery offers 100% recovery with its own fees. Existing construction-crate processing remains **12 raw tonnes plus 1,500 credits per crate**; station production keeps its separate rules.
+
+### The Star Dredge
+
+The Dredge is a 400-tonne industrial Survey barge with a 2.4M-credit base build cost. Earn its blueprints through useful large-rock mining in any hull, then use the normal 40-blueprint, Station Tier 3 and construction-material build requirements. **You do not need plasma to build the stock ship.**
+
+Its cockpit has separate **SWEEP**, **HARVEST** and **SMELTER** buttons. These actions start unbound; assign them in Options if you want keys. **F keeps its existing secondary-weapon/fitted-fighter-bay function**; it is not a Dredge mode key.
+
+- **Sweep:** move forward to work minor rocks and collect common bulk material, assisted by two noncombat industrial collectors. It cannot swallow intact large rocks or replace precision clean cuts.
+- **Mobile smelter:** select the recipe and input grade, press **SET INPUT**, then enable smelting. It works at 6 input tonnes/minute with 70% of the standard recipe's output recovery. Fractions are retained; it does no offline work. Partial work must finish before changing an input still in your hold. If that old input was removed, changing recipes explicitly discards only its partial work, not completed fractional output.
+- **Heat:** ship heat is separate from rock heat. The cockpit labels sweep, smelter and corona contributions. **ALL OFF stops the machinery, not the sun's heat.** If the display says **CORONA HEATING — EXIT BAND**, leave the marked band.
+
+### First plasma: use the marked collector, not a background sun
+
+Meridian and Halcyon have signposted shallow collectors with an entry marker and **EXIT EAST →** instruction. Approach manually with sweep/smelter off and heat at zero, then enable **HARVEST**. At that stock entry, 15 productive seconds produce the first 5 tonnes of plasma, leaving the tested 10-second outward escape margin. This is an entry procedure, not a promise that any position deep in a band is safe.
+
+Leave east promptly. Passive corona heat continues even after harvesting is switched off: thermal cutoff comes first, then shield drain and finally critical hull damage. Automatic navigation refuses collector-crossing routes and cancels harvesting intent. Use manual flight for deliberate entry and exit. Plasma is real cargo and supplies the Dredge's normal specialist-part upgrades; spending it on parts consumes it.
+
+### Mine together deliberately
+
+The **OPT IN GROUP MINING** cockpit control is separate consent for the current flight. Armada membership alone does not opt you into mining hazards or pressure encounters; landing and a new departure require fresh consent. Watch noise warnings and striped volatile areas. Ordinary newcomer protection and the existing Lodestar's precision/protected-cargo identity remain in place.
+
+### Tow a finite motherlode
+
+Fit a **Tow Rig** at an outfitter: 45,000 credits, 4 outfit tonnes, maximum 1, on a nonfighter hull with at least 60t cargo. The stock Star Dredge already has towing capability. These loads are separate finite sources, not a second payout from an ordinary rock.
+
+1. **SURVEY** a motherlode to reveal its 24t raw load and accepted same-system delivery ports. Select it on the canvas or in the **MOTHERLODE** list. Slow down and approach within 180 units, then press **ATTACH**. **Attach / Detach Motherlode** starts unbound and can be assigned in Options; F remains unchanged.
+2. Fly manually. Actual tow speed is hard-capped at **60 for the Star Dredge, 30 for every other eligible hull**, including afterburner or upgraded drives. The patterned tether and cockpit show ownership/status. You cannot jump, use a Gateway or land while attached. Deliver or **DETACH** first; corona harvesting also stops while towing.
+3. Bring both tug and load to an accepted port, settle to speed 10 or less, and leave **24t free hold space**, including room taken by missions and industrial buffers. Select the port and press **DELIVER ONCE**. Its exact raw grade lots enter your cargo once; there is no extra credit, fragment or automatic mining-order payout. A full hold or refused port leaves the load attached so you can make space or detach.
+4. To hand over the load, enter a nearby eligible captain's name and press **OFFER TRANSFER**. The recipient must press **ACCEPT OFFER** themselves. Armada membership is not transfer consent; offers expire quickly and changes to the flight or object invalidate them.
+
+**DETACH** or disconnect leaves the motherlode in that system at its saved position. Its owner has **300 simulation seconds** to reclaim it; after that another surveyed, equipped captain can attach. Paused/offline simulation freezes this grace, and reconnecting does not refresh it or move the load to your new dock. A restart detaches an attached load in place.
+
+A delivered or destroyed source cannot pay again under its old ID. Fields expose **RICH OPPORTUNITY / STEADY / RECOVERING** states through the existing local recovery system; a settled source can eventually issue a new finite load, not a backlog of offline rewards. Motherlodes and tethers do not collide with ships or damage uninvolved captains. The three large ore-family silhouettes reuse the game's rock artwork, with static readable tethers under reduced motion.
 
 ---
 
@@ -155,7 +217,9 @@ One small CPU handles dozens of players; only systems with players in them run a
 - **Server:** plain Node.js ES modules with no dependencies. It has its own small WebSocket implementation and JSON save files written atomically. Each star system is simulated at 30 Hz, and systems nobody is in go to sleep.
 - **Client:** HTML canvas and vanilla JavaScript. Your own ship is predicted locally, so it responds instantly. Planets are rendered procedurally in the browser.
 - **Art and audio:** ship sprites come from a small Python 3D pipeline. Planets, stations, landing pictures, effects, asteroids, loot, outfit pictures and the login backdrop are rendered by the tools in `tools/` (`rift_planets.py`, `rift_stations.py`, `rift_landscapes.py` and others), and system scenery by `tools/rift_decor*.py`. All interface sounds, ambience and the login theme are synthesized from scratch (`tools/rift_audio*.py`).
-- **Tests:** in-process suites for every release, a message fuzzer, a balance report, and a Playwright UI crawler that clicks every screen.
+- **Tests:** manifest-driven server and real-browser regression programs, a message fuzzer, deterministic economy sessions, typed feature contracts and formatting checks. Development/CI uses Node 22 and dev-only npm packages; playing the game still needs no npm install.
+
+For development checks: `npm ci`, `npm run typecheck`, `npm run test:types`, `npm run test:features`, `npm run format:check` and `npm run test:regression`. Browser checks use the pinned Playwright Chromium (`npx playwright install --with-deps chromium`). See `docs/TEST-COVERAGE.md` for covered behavior and limits; these fixtures do not establish multi-hour human balance.
 
 **[DEVELOPMENT.md](DEVELOPMENT.md)** is the guide for anyone, or any AI assistant, picking up the code: the architecture, how to add a feature, how to test it, and the full list of test suites. **[CHANGELOG.md](CHANGELOG.md)** has every release from 0.3 to today.
 
