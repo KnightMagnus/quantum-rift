@@ -192,7 +192,9 @@ jettison/job-aware partial recollection, frozen mining rewards/progression, unch
 12 t + 1,500 cr station processing and supply, colony/plunder, graded exchange
 escrow/partial fill/refund/offline delivery, atomic captain swaps/full-hold storage,
 and death/Lodestar preservation. [cargo-ui-browser.mjs](../test/cargo-ui-browser.mjs)
-clicks actual grade-specific sale/jettison buttons and verifies server inventory.
+clicks actual grade-specific sale/jettison buttons and verifies server inventory,
+including a real rivals response between pointer-down/up on DUMP. It also checks
+that the Captains tab still refreshes from the same asynchronous response.
 
 The earlier pure-prerequisite boundary is superseded only for these cargo flows.
 No cutting, survey, refinery, Dredge, new controls or progression balance is claimed.

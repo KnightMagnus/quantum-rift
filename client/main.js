@@ -590,7 +590,8 @@ function onMessage(m) {
       break;
     case 'rivals':
       G.rivals = m.list;
-      if (!$('infobox').classList.contains('hidden')) renderInfo();
+      // Rivals only affect Captains; preserve in-progress gestures on other tabs.
+      if (!$('infobox').classList.contains('hidden') && G.itab === 'captains') renderInfo();
       break;
     case 'world': {
       // 2.5: a new trouble close by gets a beacon and a line of news

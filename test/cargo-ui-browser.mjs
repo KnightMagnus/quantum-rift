@@ -52,6 +52,15 @@ try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   page.on('pageerror', (e) => errors.push(String(e)));
+  await page.addInitScript(() => {
+    const NativeWebSocket = window.WebSocket;
+    window.WebSocket = class extends NativeWebSocket {
+      constructor(...args) {
+        super(...args);
+        window.fixtureSocket = this;
+      }
+    };
+  });
   await page.goto(origin);
   await page.locator('[data-slot="Grade Pilot"]').click();
   await page.waitForFunction(() => G.you && G.landed);
@@ -80,7 +89,15 @@ try {
   const dump = page.locator('[data-jet="ore"][data-grade="rich"]').first();
   await dump.waitFor();
   await page.screenshot({ animations: 'disabled', path: path.join(out, 'jettison-grades.png') });
-  await dump.click();
+  // Reproduce the asynchronous rivals refresh during a real pointer gesture.
+  await dump.hover();
+  await page.mouse.down();
+  await page.evaluate(() => {
+    G.rivals = null;
+    window.fixtureSocket.send(JSON.stringify({ t: 'rivals' }));
+  });
+  await page.waitForFunction(() => Array.isArray(G.rivals));
+  await page.mouse.up();
   await page.waitForFunction(
     () => G.you.cargo.ore === 3 && G.you.cargoLots.byCommodity.ore.rich === 0,
   );
@@ -89,11 +106,27 @@ try {
     rich: 0,
     pure: 2,
   });
+  // The relevant tab must still update when the same asynchronous reply arrives.
+  await page.evaluate(() => {
+    G.rivals = [];
+  });
+  await page.locator('[data-it="captains"]').click();
+  assert.equal(await page.locator('#infobody table tr').count(), 1);
+  await page.evaluate(() => window.fixtureSocket.send(JSON.stringify({ t: 'rivals' })));
+  await page.waitForFunction(() => document.querySelectorAll('#infobody table tr').length > 1);
+  assert.equal(await page.locator('#infobody table tr').count(), 31);
   assert.deepEqual(errors, []);
   fs.writeFileSync(
     path.join(out, 'results.json'),
     JSON.stringify(
-      { gradeSale: true, gradeJettison: true, serverInventory: true, errors },
+      {
+        gradeSale: true,
+        gradeJettison: true,
+        rivalsGesture: true,
+        captainsRefresh: true,
+        serverInventory: true,
+        errors,
+      },
       null,
       2,
     ),
