@@ -167,6 +167,181 @@ invariant(tap);
 console.log(
   'Real projectile Tapper cadence/travel creates bounded contact leases and a staged parcel.',
 );
+// Same real departed-source Tapper collision, sampled populated vs quiet. A
+// threshold reached during a lease must survive cooling before the next sample.
+async function tapperSampling(quiet, ready) {
+  const game_ = game(),
+    session = pilot(game_, `Heat${quiet}${ready}`),
+    space = game_.spaces.meridian;
+  space.ships = new Map([[session.ent.id, session.ent]]);
+  const rock = space.rocks.find((r) => stageCount(r.r) === 2);
+  rock.x = 100000;
+  rock.y = 100000;
+  rock.seam = 0;
+  rock.hp = ready ? 1 : rock.max;
+  const { weaponParams } = await import('../shared/rules.js');
+  const weapon = {
+    w: 181,
+    n: 1,
+    p: weaponParams(game_.A.weapons[181]),
+    cd: 0,
+    ammo: Infinity,
+    snd: 'laser',
+    sec: false,
+    sndT: 0,
+  };
+  const entity = session.ent;
+  entity.x = rock.x + rock.r + 100;
+  entity.y = rock.y;
+  entity.a = -Math.PI / 2;
+  entity.guns = [weapon];
+  space.fire(entity, weapon, null, entity.a);
+  const shot = space.shots.at(-1);
+  space.ships.delete(entity.id); // Captured real provenance survives departure.
+  for (let i = 0; i < 30 && !Object.hasOwn(rock.seen, shot.mining.contactId); i++) {
+    game_.features.mining.advanceClock(DT);
+    space.tick();
+  }
+  assert.ok(Object.hasOwn(rock.seen, shot.mining.contactId));
+  assert.equal(rock.captain, game_.db.key(session.name));
+  assert.equal(rock.ready, ready);
+  rock.heat = 87;
+  rock.work = 3;
+  for (let i = 1; i <= 30; i++) {
+    game_.features.mining.advanceClock(DT);
+    if (!quiet || i % 15 === 0) game_.features.mining.endTick(space);
+  }
+  assert.equal(rock.penalty, true, 'crossing remains latched after cooling');
+  assert.equal(rock.stage, ready ? 1 : 0);
+  if (ready) assert.equal(rock.lastCut, 'overheat');
+  else {
+    assert.equal(rock.budget, -1, 'not-ready crossing does not freeze rewards early');
+    assert.equal(rock.discarded, 0);
+    game_.features.mining.ordinary(space, rock, 1e9);
+  }
+  const discarded = rock.discarded;
+  assert.ok(discarded > 0, 'one prospective penalty applied');
+  while (rock.stage < rock.stages) game_.features.mining.ordinary(space, rock, 1e9);
+  assert.equal(rock.discarded, discarded, 'later stage cannot reapply penalty');
+  const parcels = game_.db.world.mining.systems.meridian.parcels.filter(
+    (p) => p.it.generationKey === rock.key,
+  );
+  const floating = parcels.reduce(
+    (n, p) => n + Object.values(p.it.remainingLots).reduce((a, b) => a + b, 0),
+    0,
+  );
+  assert.equal(rock.accepted + floating + rock.pending + rock.expired + discarded, rock.budget);
+  return {
+    discarded,
+    budget: rock.budget,
+    floating,
+    grades: parcels.map((p) => p.it.remainingLots),
+    penalty: rock.penalty,
+    penaltyApplied: rock.penaltyApplied,
+    stage: rock.stage,
+    lastCut: rock.lastCut,
+  };
+}
+for (const ready of [true, false])
+  assert.deepEqual(await tapperSampling(true, ready), await tapperSampling(false, ready));
+console.log(
+  'Real departed Tapper threshold crossings agree at30Hz and quiet0.5s, ready and not-ready; one penalty and conserved mass.',
+);
+// Replay two real Tapper impacts exactly one second apart. The first ready
+// stage's release deadline must settle before the later collision is admitted.
+async function separatedTapper(quiet) {
+  const cg = game(),
+    cs = pilot(cg, `Separated${quiet}`),
+    space = cg.spaces.meridian;
+  space.ships = new Map([[cs.ent.id, cs.ent]]);
+  const r = space.rocks.find((rock) => stageCount(rock.r) === 2),
+    e = cs.ent;
+  r.x = 100000;
+  r.y = 100000;
+  r.seam = 0;
+  r.hp = 1;
+  const { weaponParams } = await import('../shared/rules.js');
+  const gun = {
+    w: 181,
+    n: 1,
+    p: weaponParams(cg.A.weapons[181]),
+    cd: 0,
+    ammo: Infinity,
+    snd: 'laser',
+    sec: false,
+    sndT: 0,
+  };
+  e.x = r.x + r.r + 100;
+  e.y = r.y;
+  e.a = -Math.PI / 2;
+  e.vx = e.vy = 0;
+  e.inp = {};
+  e.guns = [];
+  space.fire(e, gun, null, e.a);
+  const first = space.shots.at(-1);
+  let flight = 0;
+  while (!Object.hasOwn(r.seen, first.mining.contactId) && flight < 30) {
+    cg.features.mining.advanceClock(DT);
+    space.tick();
+    flight++;
+  }
+  assert.ok(r.ready);
+  assert.ok(flight < 30);
+  r.heat = 65;
+  r.work = 2;
+  const start = cg.db.world.mining.clock,
+    endTick = cg.features.mining.endTick;
+  let frame = 0,
+    second;
+  cg.features.mining.endTick = (sp_) => {
+    if (!quiet || frame % 15 === 0) endTick(sp_);
+  };
+  for (frame = 1; frame <= 75; frame++) {
+    if (frame === 31 - flight) {
+      space.fire(e, gun, null, e.a);
+      second = space.shots.at(-1);
+    }
+    cg.features.mining.advanceClock(DT);
+    space.tick();
+    if (frame === 30) {
+      assert.ok(Object.hasOwn(r.seen, second.mining.contactId), 'second real impact at1s');
+      assert.ok(Math.abs(r.seen[second.mining.contactId] - start - 1) < 1e-9);
+    }
+  }
+  assert.equal(r.stage, 1);
+  assert.equal(r.lastCut, 'clean');
+  assert.equal(r.ready, false, 'later shot belongs to next stage, not old readiness');
+  assert.ok(r.hp < r.max && r.hp > 0);
+  const parcels = cg.db.world.mining.systems.meridian.parcels.filter(
+      (p) => p.it.generationKey === r.key,
+    ),
+    lots = parcels.map((p) => p.it.remainingLots),
+    floating = lots.reduce((n, p) => n + Object.values(p).reduce((a, b) => a + b, 0), 0);
+  assert.equal(r.accepted + floating + r.pending + r.expired + r.discarded, r.budget);
+  return {
+    stage: r.stage,
+    lastCut: r.lastCut,
+    ready: r.ready,
+    hp: r.hp,
+    work: r.work,
+    heat: r.heat,
+    lots,
+    budget: r.budget,
+    floating,
+    pending: r.pending,
+  };
+}
+const quietSeparated = await separatedTapper(true),
+  fineSeparated = await separatedTapper(false);
+for (const k of ['heat', 'work']) {
+  assert.ok(Math.abs(quietSeparated[k] - fineSeparated[k]) < 1e-9, `${k} sampling parity`);
+  delete quietSeparated[k];
+  delete fineSeparated[k];
+}
+assert.deepEqual(quietSeparated, fineSeparated);
+console.log(
+  'Separated real Tapper impacts settle old clean release before new-stage work at populated/quiet cadence; identical lots and budgets.',
+);
 // Early release retains HP/work, no parcel; target switching cannot reset rock state.
 const early = choose(44),
   heavy = await setup(9102, early);
@@ -291,6 +466,80 @@ for (const r of g.db.world.mining.systems.meridian.history) invariant(r);
 console.log(
   'Shared original progression tokens, captured departed-source projectile attribution/deduplication, generation rollover and expiry conservation passed.',
 );
+// Repeated production regrowth with accepted/TTL-settled ledgers is bounded.
+// Keep one original generation alive through many faster regrowth cycles, then
+// collect it exactly once through onLoot; unrelated old ledgers must not pin it.
+{
+  const cg = game(),
+    cs = pilot(cg, 'History'),
+    space = cg.spaces.meridian,
+    field = cg.db.world.mining.systems.meridian;
+  const first = space.rocks.find((r) => stageCount(r.r) === 1);
+  const slot = field.rocks.indexOf(first);
+  const mods = cg.features.fronts.mods;
+  cg.features.fronts.mods = (...args) => ({ ...mods(...args), regrow: 100 });
+  function advanceTo(time) {
+    while (cg.db.world.mining.clock < time)
+      cg.features.mining.advanceClock(Math.min(1, time - cg.db.world.mining.clock));
+    cg.features.mining.endTick(space);
+  }
+  function exhaust(r) {
+    while (!r.down) cg.features.mining.ordinary(space, r, 1e9);
+    const floating = field.parcels
+      .filter((p) => p.it.generationKey === r.key)
+      .reduce((n, p) => n + Object.values(p.it.remainingLots).reduce((a, b) => a + b, 0), 0);
+    assert.equal(r.accepted + floating + r.expired + r.discarded + r.pending, r.budget);
+  }
+  exhaust(first);
+  const originalBudget = first.budget;
+  const originalParcels = field.parcels.filter((p) => p.it.generationKey === first.key);
+  advanceTo(first.down + 0.001);
+  for (let cycle = 0; cycle < 32; cycle++) {
+    const r = field.rocks[slot];
+    exhaust(r);
+    const parcels = field.parcels.filter((p) => p.it.generationKey === r.key);
+    if (cycle < 24 || cycle % 2) {
+      clearLots(cs.data.cargo, cs.data.cargoLots);
+      for (const p of parcels) cg.onLoot(cg.pref(cs), p.it);
+    } else {
+      // Production TTL processing; leave the deliberately live old parcels intact.
+      advanceTo(Math.max(...parcels.map((p) => p.expires)) + 0.001);
+    }
+    if (cg.db.world.mining.clock < r.down) advanceTo(r.down + 0.001);
+    else cg.features.mining.endTick(space);
+    if (cycle >= 24 && cycle % 2 === 0)
+      assert.equal(r.expired, r.budget, 'real TTL settles the whole uncollected generation');
+    assert.equal(r.pending, 0);
+    assert.equal(r.accepted + r.expired + r.discarded, r.budget);
+    assert.ok(!field.history.some((x) => x.key === r.key));
+    assert.ok(
+      field.history.length <= (cycle < 24 ? 1 : 0),
+      'settled history cannot grow per regrowth',
+    );
+    if (cycle < 24) {
+      assert.ok(field.history.includes(first), 'live original parcels pin their ledger');
+      assert.equal(first.accepted + first.expired, 0);
+    }
+    if (cycle === 23) {
+      clearLots(cs.data.cargo, cs.data.cargoLots);
+      const mined = cs.data.stats.mined || 0;
+      for (const p of originalParcels) cg.onLoot(cg.pref(cs), p.it);
+      assert.equal(cs.data.stats.mined, mined + originalBudget);
+      for (const p of originalParcels) cg.onLoot(cg.pref(cs), p.it);
+      assert.equal(cs.data.stats.mined, mined + originalBudget, 'old generation accepted once');
+      assert.equal(first.accepted, originalBudget);
+      cg.features.mining.endTick(space);
+      assert.equal(field.history.length, 0);
+      cg.db.touch();
+      cg.db.flush();
+      const reloaded = game(new DB(cg.db.dir));
+      assert.equal(reloaded.db.world.mining.systems.meridian.history.length, 0);
+    }
+  }
+}
+console.log(
+  '32 real regrowth/collection/TTL cycles retain only live generations, collectible exactly once with conserved original budget.',
+);
 // Survey private bounded snapshots; unknown authority fields, landed/dead/paused/cooldown denied.
 assert.equal(g.features.mining.survey(s, { t: 'mining', op: 'survey', n: 99 }), false);
 assert.equal(g.features.mining.survey(s, { t: 'mining', op: 'survey' }), true);
@@ -323,7 +572,7 @@ assert.equal(g2.db.world.mining.version, 99);
 for (const mutate of [
   (r) => (r.releaseHeat = NaN),
   (r) => (r.ready = 'yes'),
-  (r) => (r.id = -1),
+  (r) => (r.id = 0),
   (r) => (r.leases = [{ from: 0, to: 99, seam: true }]),
   (r) => (r.seen = { bad: Infinity }),
 ]) {

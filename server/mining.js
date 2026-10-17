@@ -289,23 +289,40 @@ function update(c, sp, r) {
   const now = world(c).clock;
   if (now < r.updated) throw new Error('Mining clock moved backwards');
   if (r.down) return;
-  const { seconds, seamSeconds } = contactTime(r.leases, r.updated, now),
-    last = Math.min(now, Math.max(r.updated, ...r.leases.map((l) => l.to))),
-    after = seconds > 0 ? Math.max(0, now - last) : now - r.updated,
-    before = Math.max(0, now - r.updated - seconds - after);
-  r.heat = Math.max(0, r.heat - before * MINING.cooling);
-  r.heat = Math.min(100, r.heat + seconds * MINING.heatRate);
-  r.work += seconds + seamSeconds * 0.25;
-  if (seconds > 0) {
-    r.releaseHeat = r.heat;
-    r.releaseAt = last + MINING.grace;
+  // Integrate each contact/cooling segment in time order. Quiet systems can observe
+  // both a threshold crossing and trailing cooling in the same update.
+  const points = [r.updated, now];
+  for (const l of r.leases)
+    if (l.to > r.updated && l.from < now)
+      points.push(Math.max(r.updated, l.from), Math.min(now, l.to));
+  points.sort((a, b) => a - b);
+  for (let i = 1; i < points.length; i++) {
+    const from = points[i - 1],
+      to = points[i];
+    if (to <= from) continue;
+    const { seconds, seamSeconds } = contactTime(r.leases, from, to);
+    if (seconds > 0) {
+      const heated = r.heat + seconds * MINING.heatRate;
+      const crosses = heated >= MINING.overheat - 1e-9;
+      const useful =
+        crosses && r.ready ? Math.max(0, (MINING.overheat - r.heat) / MINING.heatRate) : seconds;
+      r.work += useful * (1 + (seamSeconds > 0 ? 0.25 : 0));
+      r.heat = crosses ? MINING.overheat : heated;
+      r.releaseHeat = r.heat;
+      r.releaseAt = to + MINING.grace;
+      if (crosses) {
+        r.penalty = true; // Latched even if not ready, including across trailing cooling.
+        if (r.ready) {
+          emit(c, sp, r, false);
+          // Emission ends this stage's leases at the crossing, not at observation.
+          r.heat = Math.max(0, r.heat - (now - from - useful) * MINING.cooling);
+          break;
+        }
+      }
+    } else r.heat = Math.max(0, r.heat - (to - from) * MINING.cooling);
   }
-  r.heat = Math.max(0, r.heat - after * MINING.cooling);
   r.updated = now;
-  if (r.heat >= 100) {
-    if (r.ready) emit(c, sp, r, false);
-    else r.penalty = true; // Prospective penalty only; source bonus still freezes at first emission.
-  } else if (
+  if (
     r.ready &&
     r.releaseAt &&
     now > r.releaseAt &&
@@ -374,6 +391,18 @@ export const MiningOperations = {
     const now = world(this).clock,
       key = hit.source.contactId;
     if (Object.hasOwn(r.seen, key)) return;
+    // A later arrival cannot extend an already expired ready-stage deadline.
+    // Beams cover the preceding frame; compare against contact start so a
+    // contiguous beam is not mistakenly cooled before its frame is admitted.
+    const from = hit.projectile ? now : Math.max(0, now - 1 / 30),
+      previousEnd = Math.max(
+        r.releaseAt ? r.releaseAt - MINING.grace : 0,
+        ...r.leases.map((l) => l.to),
+      );
+    if (r.ready && previousEnd && previousEnd + MINING.grace < from) {
+      update(this, sp, r); // Preserve prior captain/grade before attributing new hit.
+      if (r.down) return;
+    }
     r.seen[key] = now;
     r.captain = hit.source.captain;
     const angle = Math.atan2(hit.y - r.y, hit.x - r.x),
@@ -439,6 +468,20 @@ export const MiningOperations = {
         !('generationKey' in p.it) ||
         f.parcels.includes(/** @type {import('./mining-contracts.js').SavedMiningLoot} */ (p)),
     );
+    // No settled history is retained. Live parcels pin their original ledger until
+    // accepted/expired; unsettled or inconsistent records remain for validation.
+    const live = new Set(f.parcels.map((p) => p.it.generationKey));
+    const history = f.history.filter(
+      (r) =>
+        live.has(r.key) ||
+        r.budget < 0 ||
+        r.pending > 0 ||
+        r.accepted + r.expired + r.discarded !== r.budget,
+    );
+    if (history.length !== f.history.length) {
+      f.history = history;
+      this.db.touch();
+    }
   },
   /** @this {Capabilities} @param {Space} sp */
   suspendSpace(sp) {
