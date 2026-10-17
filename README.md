@@ -192,7 +192,7 @@ A fresh save folder starts this captain with **30,000,000 credits**, the Constit
 **Excalibur**, a completed **T5 Personal Station with all research**, and all **11 specialty
 ships already built** in **STATION → DOCKS**. Select a stored ship as your active dock’s
 lead to fly it. Specialty ships start at their normal built tier (T1), not fully upgraded.
-The Star Dredge is included. The station starts at Quantum Gate, or another unclaimed
+The Star Dredge is included. The station starts in Concordia, or another unclaimed
 station hull if that site belongs to someone else.
 
 Restarts preserve spending, ship changes and all other progress. An existing captain
