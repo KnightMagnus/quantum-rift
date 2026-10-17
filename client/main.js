@@ -1,5 +1,6 @@
 import { landingGuidance, landingReady } from './landing_autopilot.js';
 import { initLoginScene } from './login_scene.js';
+import { gatewayGuidance } from './gateway_autopilot.js';
 import { setArtworkVersion } from './artwork.js';
 import { initHails } from './hails_ui.js';
 import { receiveShipChat } from './chat_bubbles.js';
@@ -661,6 +662,7 @@ setInterval(() => {
 // ------------------------------------------------------------------ snapshots and prediction
 function onSnap(m) {
   G.combat = m.combat || {};
+  G.formation = !!m.formation;
   $('combatcontrols').classList.remove('hidden');
   $('combatstatus').textContent =
     ' · ' +
@@ -720,7 +722,13 @@ function onSnap(m) {
   Object.assign(v, { id, x, y, vx, vy, a, shield: sh, armor: ar, fuel: fu, fl: me0 ? me0.fl : 0 });
   history = history.filter((h) => h.seq > ack);
   const st = G.you && G.you.shipStats;
-  if (st && me0 && !(me0.fl & 8) && !(G.combat.on || G.combat.delegated))
+  if (
+    st &&
+    me0 &&
+    !(me0.fl & 8) &&
+    !(G.combat.on || G.combat.delegated) &&
+    !(G.formation && !G.auto)
+  )
     for (const h of history) step(v, st, h.inp);
   if (G.view) {
     v.ox += prevX - v.x;
@@ -1112,7 +1120,7 @@ function autopilot(inp) {
     const p = S.stellars.find((x) => x.id === A.id && x.wormhole);
     if (!p || A.sys !== G.sys) return setAuto(null);
     // Aim inside the transit aperture; never send a landing request.
-    landingGuidance(A, me, st, { ...p, r: 0 }, inp);
+    gatewayGuidance(me, st, p, inp);
     return;
   }
   if (A.mode === 'land') {
@@ -1960,7 +1968,7 @@ function fixedTick() {
   if (
     G.opts.mouseAim &&
     mouse.in &&
-    (mouse.down || !(G.combat && (G.combat.on || G.combat.delegated)))
+    (mouse.down || (!(G.combat && (G.combat.on || G.combat.delegated)) && !G.you?.armada?.follow))
   ) {
     // mouse-aim: the ship turns toward the cursor unless you steer with the keys
     if (!inp.turn) {
@@ -1976,6 +1984,19 @@ function fixedTick() {
     before = inp.thrust + '|' + inp.turn;
   padInput(inp);
   touchInput(inp);
+  // Human controls revoke Follow even while the leader is absent or Assist owns flight.
+  // Navigation-generated controls below do not revoke leader-jump consent.
+  if (
+    !typing() &&
+    G.you?.armada?.follow &&
+    (inp.thrust || inp.turn || inp.rev || inp.ab || inp.fire1 || inp.fire2 || held('face'))
+  ) {
+    send({ t: 'armada', op: 'follow', on: false });
+    G.you.armada.follow = false;
+    G.formation = false;
+    const checkbox = $('afollow');
+    if (checkbox) checkbox.checked = false;
+  }
   if (G.combat && (G.combat.on || G.combat.delegated)) {
     G.autoRoute = false;
     if (G.auto) setAuto(null);
@@ -2012,11 +2033,17 @@ function fixedTick() {
     rv: inp.rev,
     f1: inp.fire1,
     f2: inp.fire2,
+    nav: !!G.auto,
   });
   history.push({ seq, inp });
   if (history.length > 90) history.shift();
   const me0 = G.ents.get(G.myId);
-  if (G.you && !(me0 && me0.fl & 8) && !(G.combat && (G.combat.on || G.combat.delegated)))
+  if (
+    G.you &&
+    !(me0 && me0.fl & 8) &&
+    !(G.combat && (G.combat.on || G.combat.delegated)) &&
+    !(G.formation && !G.auto)
+  )
     step(G.view, G.you.shipStats, inp);
   G.view.fl = (inp.thrust ? 1 : 0) | (inp.ab ? 2 : 0);
 }

@@ -16,9 +16,7 @@ npm run test:regression
 `test:regression:unit` runs all registered legacy/recent gameplay, deterministic
 simulation/balance, persistence/authentication, protocol, HTTP and real network
 client regressions. `test:regression:browser` runs registered Chromium workflows
-for existing settings/audio/emulated input, map/Solo saves, sidebar/red
-scrollbars, the new login scene and station artwork identity. New Armada V and
-direct-center Gateway acceptance tests arrive with the next flight layer. CI runs
+for login, settings/audio/emulated input, sidebar, Armada, Gateway and station artwork. CI runs
 the groups independently, preserving the original characterization/type checks.
 
 The shared runner isolates subprocesses and temporary saves, seeds fixture RNG,

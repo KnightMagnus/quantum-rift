@@ -1076,6 +1076,7 @@ export class Game {
               rev: m.rv ? 1 : 0,
               fire1: m.f1 ? 1 : 0,
               fire2: m.f2 ? 1 : 0,
+              navigation: !!m.nav,
             });
           return;
         },
@@ -3442,6 +3443,7 @@ export class Game {
             t: 'snap',
             ...snap,
             combat: this.combatAssist.payload(s, this.spaces[sys]),
+            formation: !!s.armadaFormationTarget,
             me: [
               e.id,
               e.seq || 0,

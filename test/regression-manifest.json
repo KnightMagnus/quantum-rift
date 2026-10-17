@@ -48,6 +48,7 @@
     "main-map-protection.js",
     "outfitter-wing-repairs.js",
     "fuzz.js",
+    "armada-formation.js",
     "persistence-auth.js",
     "core-actions.js",
     "websocket-transport.js",
@@ -55,11 +56,13 @@
     "network-systems.mjs"
   ],
   "browser": [
-    "client-systems-browser.mjs",
-    "input-audio-browser.mjs",
     "sidebar-browser.mjs",
+    "armada-formation-network.mjs",
+    "gateway-browser.mjs",
     "station-landing-browser.mjs",
-    "login-scene-browser.mjs"
+    "login-scene-browser.mjs",
+    "client-systems-browser.mjs",
+    "input-audio-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -277,11 +280,23 @@
       "asserts": "Main-galaxy truce thresholds, Farside/combat/aggression exceptions, stray damage and standing/reputation impacts."
     },
     {
-      "id": "landing-gateway",
-      "owners": ["client/landing_autopilot.js", "server/game.js"],
+      "id": "armada-follow",
+      "owners": ["server/armada-formation.js", "client/main.js"],
       "services": [],
-      "tests": ["landing-autopilot.js", "gateway-navigation.js", "wormhole-loop.js"],
-      "asserts": "Existing smooth-landing calculation, current bidirectional Gateway transit, arrival positioning/loop prevention and server navigation checks. New direct-center autopilot changes are not in this foundation."
+      "tests": ["armada-formation.js", "armada-formation-network.mjs"],
+      "asserts": "Size/wing-aware V convergence while moving/turning/stopping, consent/takeover/leader changes and real automatic leader-jump arrival."
+    },
+    {
+      "id": "landing-gateway",
+      "owners": ["client/landing_autopilot.js", "client/gateway_autopilot.js", "server/game.js"],
+      "services": [],
+      "tests": [
+        "landing-autopilot.js",
+        "gateway-navigation.js",
+        "gateway-browser.mjs",
+        "wormhole-loop.js"
+      ],
+      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce."
     },
     {
       "id": "ships-catalog-art",
@@ -302,6 +317,27 @@
       "services": [],
       "tests": ["eventide.js", "comet.js", "stars.js", "background-scale.js", "v25.js"],
       "asserts": "Authored scenery configuration, comets/stars/background scaling, atmosphere/artwork invariants."
+    },
+    {
+      "id": "station-art-identity",
+      "owners": ["client/station_wheel.js", "client/exotic_scenery.js", "client/render.js"],
+      "services": [],
+      "tests": ["station-landing-browser.mjs"],
+      "asserts": "14 real landing/departure sessions, 110 stations/245 tier variants, actual flight-source identity, transient load recovery and frozen original Luna wheel pixels."
+    },
+    {
+      "id": "login-scene",
+      "owners": ["client/login_scene.js"],
+      "services": [],
+      "tests": ["login-scene-browser.mjs"],
+      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced motion and rendering lifecycle."
+    },
+    {
+      "id": "sidebar-scrollbars",
+      "owners": ["client/style.css", "client/ui.js"],
+      "services": [],
+      "tests": ["sidebar-browser.mjs"],
+      "asserts": "Eight viewport/scale/width cases, horizontal wheel and keyboard end-tab reachability, saved width and red menu scrollbar/accent styles."
     },
     {
       "id": "client-options-map-save",
@@ -344,36 +380,24 @@
       "services": [],
       "tests": ["input-audio-browser.mjs"],
       "asserts": "Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification."
-    },
-    {
-      "id": "station-art-identity",
-      "owners": ["client/station_wheel.js", "client/exotic_scenery.js", "client/render.js"],
-      "services": [],
-      "tests": ["station-landing-browser.mjs"],
-      "asserts": "14 real landing/departure sessions, 110 stations/245 tier variants, actual flight-source identity, transient load recovery and frozen original Luna wheel pixels."
-    },
-    {
-      "id": "login-scene",
-      "owners": ["client/login_scene.js"],
-      "services": [],
-      "tests": ["login-scene-browser.mjs"],
-      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced motion and rendering lifecycle."
-    },
-    {
-      "id": "sidebar-scrollbars",
-      "owners": ["client/style.css", "client/ui.js"],
-      "services": [],
-      "tests": ["sidebar-browser.mjs"],
-      "asserts": "Eight viewport/scale/width cases, horizontal wheel and keyboard end-tab reachability, saved width and red menu scrollbar/accent styles."
     }
   ],
   "routes": {
     "combat": ["combat-assist.js", "combat-network.js"],
-    "input": ["bot.js", "combat-network.js", "fuzz.js", "sim.js", "input-audio-browser.mjs"],
+    "input": [
+      "armada-formation-network.mjs",
+      "armada-formation.js",
+      "bot.js",
+      "combat-network.js",
+      "fuzz.js",
+      "sim.js",
+      "input-audio-browser.mjs"
+    ],
     "target": ["v03.js"],
     "tutskip": ["v03.js"],
     "land": ["bot.js", "v11.js"],
     "depart": [
+      "armada-formation-network.mjs",
       "bot.js",
       "combat-network.js",
       "hailing-network.js",
@@ -385,7 +409,7 @@
       "v21.js",
       "v24.js"
     ],
-    "jump": ["bot.js", "v10.js"],
+    "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
     "trade": ["bot.js", "v203.js"],
     "buyship": ["sim.js", "v21.js"],
     "docks": ["outfitter-wing-repairs.js", "sim.js", "v21.js"],
@@ -403,7 +427,7 @@
     "dock": ["v05.js", "v101.js", "v203.js", "v21.js"],
     "board": ["v05.js", "v06.js", "v10.js", "v26.js"],
     "spec": ["v08.js"],
-    "armada": ["combat-network.js", "v06.js", "v26.js"],
+    "armada": ["armada-formation-network.mjs", "combat-network.js", "v06.js", "v26.js"],
     "holdout": ["v09.js", "v26.js"],
     "storyacc": ["v10.js"],
     "social": ["hailing-network.js", "v26.js"],
@@ -437,23 +461,22 @@
     "seed-random.js"
   ],
   "supplemental": {
-    "background-scale-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "catalog-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "combat-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "comet-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "eventide-mission-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "exotic-scenery-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "exotic-solo-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "faction-standing-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "gateway-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "hailing-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "hailing-persistence-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "landing-autopilot-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "map-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "outfitter-wing-repairs-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "passengers-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "planet-assets-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "ship-banking-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage.",
-    "stars-browser.mjs": "Existing legacy/specialist probe; environment-specific or overlapping canonical coverage, not independently claimed as CI behavior coverage."
+    "background-scale-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "catalog-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "combat-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "comet-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "eventide-mission-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "exotic-scenery-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "exotic-solo-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "faction-standing-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "hailing-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "hailing-persistence-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "landing-autopilot-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "map-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "outfitter-wing-repairs-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "passengers-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "planet-assets-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "ship-banking-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
+    "stars-browser.mjs": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage."
   }
 }

@@ -193,6 +193,7 @@
     "friends": [],
     "freqIn": [],
     "freqOut": [],
+    "armadaFollow": false,
     "blocks": [],
     "mail": [],
     "spec": {},

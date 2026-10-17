@@ -1,3 +1,11 @@
+import {
+  root,
+  availablePort,
+  evidenceDir,
+  ready,
+  cleanup,
+  failureEvidence,
+} from './helpers/browser-fixture.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -6,12 +14,11 @@ import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
-const root = path.resolve('.'),
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-gate-browser-'));
-const evidence = path.resolve(process.argv[2] || '/tmp/rift-gateway-evidence');
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-gate-browser-'));
+const evidence = path.resolve(process.argv[2] || evidenceDir('gateway'));
 fs.mkdirSync(evidence, { recursive: true });
 const db = new DB(path.join(dir, 'data')),
-  g = new Game(JSON.parse(fs.readFileSync('shared/assets.json')), db);
+  g = new Game(JSON.parse(fs.readFileSync(path.join(root, 'shared/assets.json'))), db);
 for (const sys of ['sol', 'coldharbor']) {
   const d = db.create('Gate ' + sys, '', g.fresh());
   d.sys = sys;
@@ -32,30 +39,36 @@ fs.writeFileSync(
     ';' +
     'const orig=Game.prototype.spawnPlayer;Game.prototype.spawnPlayer=function(s,...args){orig.call(this,s,...args);if(!s._gatewayFixturePlaced){const p=SYS[s.data.sys].stellars.find(p=>p.wormhole);s._gatewayFixturePlaced=true;Object.assign(s.ent,{x:p.x+250,y:p.y,vx:0,vy:0,a:-Math.PI/2});}for(const e of [...this.spaces[s.data.sys].ships.values()])if(!e.player)this.spaces[s.data.sys].remove(e);};',
 );
-const port = 18984,
+const port = await availablePort(),
   origin = 'http://127.0.0.1:' + port;
-const server = spawn(process.execPath, ['--import', fixture, 'server/main.js'], {
-  env: {
-    ...process.env,
-    SOLO: '1',
-    PORT: String(port),
-    DATA_DIR: path.join(dir, 'data'),
-    SEEDS_FILE: '/nonexistent',
+const server = spawn(
+  process.execPath,
+  [
+    '--import',
+    path.join(root, 'test/helpers/seed-random.mjs'),
+    '--import',
+    fixture,
+    'server/main.js',
+  ],
+  {
+    cwd: root,
+    env: {
+      ...process.env,
+      SOLO: '1',
+      PORT: String(port),
+      DATA_DIR: path.join(dir, 'data'),
+      SEEDS_FILE: '/nonexistent',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
   },
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+);
 const log = fs.createWriteStream(path.join(evidence, 'server.log'));
 server.stdout.pipe(log);
 server.stderr.pipe(log);
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { chromium } = await import('playwright');
 let browser;
 try {
-  for (let i = 0; i < 100; i++) {
-    try {
-      if ((await fetch(origin + '/api/status')).ok) break;
-    } catch {}
-    await new Promise((r) => setTimeout(r, 100));
-  }
+  await ready(server, origin);
   browser = await chromium.launch({
     headless: true,
     executablePath: process.env.CHROMIUM_EXECUTABLE,
@@ -112,9 +125,10 @@ try {
   }
   fs.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(results, null, 2));
   console.log(results);
+} catch (error) {
+  await failureEvidence(browser, evidence, error);
+  throw error;
 } finally {
-  await browser?.close();
-  server.kill();
-  log.end();
+  await cleanup(server, browser, log, dir);
 }
 process.exit(0);
