@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 1.0.1 tests: respawn at your own station hull or the hub (never at someone else's base or wherever you last landed).
 import fs from 'node:fs';
@@ -66,7 +67,7 @@ die(owner, 'meridian');
 ok(od.stellar === site.id, 'with a station hull of your own you are rebuilt there');
 // 1.0.2: storing your only ship leaves you with no active ship (no free Gnat), and you cannot depart until you choose one
 od.station.ops = 4;
-od.cargo = {};
+seedCargo(od, {});
 od.stellar = site.id;
 od.sys = STELLARS[site.id].system;
 od.dock = [];

@@ -180,3 +180,21 @@ manifest and update this inventory. New feature providers, dispatched action nam
 registration guard until explicitly mapped or classified. Review test assertions: adding
 an inventory row, asserting a function exists or regenerating a snapshot alone
 is not sufficient. Keep tests offline, isolated, bounded and reproducible.
+
+## Production raw-grade integration
+
+`cargo-grade-ledger` additionally covers the cargo writers in `server/game.js`,
+`server/fleetcmd.js`, `server/frontier.js`, `server/hangar.js`, `server/coop.js`,
+and commodity grade rows in the market/info UI. [cargo-flows.js](../test/cargo-flows.js)
+exercises real production methods and dispatch: strict legacy/corrupt login and import,
+all nine raw-grade sales through depth/bonuses, common repurchases, exact denial,
+jettison/job-aware partial recollection, frozen mining rewards/progression, unchanged
+12 t + 1,500 cr station processing and supply, colony/plunder, graded exchange
+escrow/partial fill/refund/offline delivery, atomic captain swaps/full-hold storage,
+and death/Lodestar preservation. [cargo-ui-browser.mjs](../test/cargo-ui-browser.mjs)
+clicks actual grade-specific sale/jettison buttons and verifies server inventory.
+
+The earlier pure-prerequisite boundary is superseded only for these cargo flows.
+No cutting, survey, refinery, Dredge, new controls or progression balance is claimed.
+Legacy fixtures use `test/helpers/cargo-fixture.js` for deliberate common-only
+inventory replacement; production never silently repairs stale premium records.

@@ -127,7 +127,14 @@ export function infoHtml(G, tab) {
               .map(([c, n]) => {
                 const C = COMMODITIES.find((x) => x.id === c);
                 const B = bestSale(G, c);
-                return `<div class="kv"><span>${esc(C ? C.name : c)}${B ? `<div class="small dim">Best nearby: <b style="color:var(--cr)">${cr(B.price)}</b> at ${esc(B.p.name)}${B.jumps ? ` (${B.jumps} jump${B.jumps > 1 ? 's' : ''})` : ' (this system)'}${y.paid && y.paid[c] ? ` · you paid ${cr(y.paid[c])}` : ''} ${B.jumps ? `<button class="btn sm" data-plot="${B.p.system}">PLOT</button>` : ''}</div>` : '<div class="small dim">No market you have visited nearby buys this.</div>'}</span><span>${n} t ${inSpace ? `<button class="btn sm" data-jet="${c}" data-n="${Math.min(5, n)}">DUMP 5</button> <button class="btn sm" data-jet="${c}" data-n="0">DUMP ALL</button>` : ''}</span></div>`;
+                const grades = Object.entries(y.cargoLots?.byCommodity[c] || {})
+                  .filter(([, q]) => q > 0)
+                  .map(
+                    ([g, q]) =>
+                      `<div class="kv small"><span>↳ ${g}</span><span>${q} t ${inSpace ? `<button class="btn sm" data-jet="${c}" data-grade="${g}" data-n="${Math.min(5, q)}">DUMP ${Math.min(5, q)}</button> <button class="btn sm" data-jet="${c}" data-grade="${g}" data-n="${q}">DUMP ALL ${g.toUpperCase()}</button>` : ''}</span></div>`,
+                  )
+                  .join('');
+                return `<div class="kv"><span>${esc(C ? C.name : c)}${B ? `<div class="small dim">Best nearby: <b style="color:var(--cr)">${cr(B.price)}</b> at ${esc(B.p.name)}${B.jumps ? ` (${B.jumps} jump${B.jumps > 1 ? 's' : ''})` : ' (this system)'}${y.paid && y.paid[c] ? ` · you paid ${cr(y.paid[c])}` : ''} ${B.jumps ? `<button class="btn sm" data-plot="${B.p.system}">PLOT</button>` : ''}</div>` : '<div class="small dim">No market you have visited nearby buys this.</div>'}</span><span>${n} t ${inSpace ? `<button class="btn sm" data-jet="${c}" data-n="${Math.min(5, n)}">DUMP 5</button> <button class="btn sm" data-jet="${c}" data-n="0">DUMP ALL</button>` : ''}</span></div>${grades}`;
               })
               .join('')
           : '<p class="dim">The hold is empty.</p>'

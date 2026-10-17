@@ -1,3 +1,13 @@
+import {
+  migrateCargoLots,
+  assertLots,
+  planTake,
+  applyTake,
+  addLots,
+  clearLots,
+  commonLots,
+  splitLots,
+} from '../shared/cargo-lots.js';
 import { clampStanding } from '../shared/reputation.js';
 import { eventideOffers } from '../shared/eventide.js';
 /**
@@ -431,9 +441,12 @@ export class Game {
     for (const o of this.sessions.values())
       if (o.data && o.data.name.toLowerCase() === name.toLowerCase())
         throw new Error('That captain is playing right now.');
+    const imported = structuredClone(sv);
+    migrateCargoLots(imported); // validate before replacing any existing slot
     const p = this.db.create(name, 'solo', {});
-    for (const k of Object.keys(sv))
-      if (!['__proto__', 'constructor', 'prototype', 'salt', 'hash'].includes(k)) p[k] = sv[k];
+    for (const k of Object.keys(imported))
+      if (!['__proto__', 'constructor', 'prototype', 'salt', 'hash'].includes(k))
+        p[k] = imported[k];
     p.name = name;
     this.db.touch();
     this.db.flush();
@@ -664,6 +677,9 @@ export class Game {
       stellar: START.stellar,
       ship: makeLoadout(this.A, START.ship, 'Rift Runner'),
       cargo: {},
+      cargoLots: { version: 1, byCommodity: {} },
+      storage: {},
+      storageLots: { version: 1, byCommodity: {} },
       mats: Object.fromEntries(MATERIALS.map((m) => [m, [0, 0, 0, 0, 0]])),
       rep,
       missions: [],
@@ -803,6 +819,7 @@ export class Game {
         stellar: d.stellar,
         ship: d.ship,
         cargo: d.cargo,
+        cargoLots: structuredClone(d.cargoLots),
         paid: d.paid || {},
         mats: d.mats,
         rep: d.rep,
@@ -854,6 +871,7 @@ export class Game {
           .map(([id, c]) => ({ id, name: c.name, lv: c.lv, sys: STELLARS[id].system })),
         defense: this.features.frontier.defenseRating(d),
         storage: d.storage || {},
+        storageLots: structuredClone(d.storageLots),
         explored: d.explored,
         tut: d.tut ?? TUTORIAL.length,
         station: d.station,
@@ -936,7 +954,7 @@ export class Game {
   // 2.0.3: cargo carried for jobs takes up real hold space
   /**
    * Calculates total cargo tonnage allocated to active delivery and smuggling jobs.
-   * @param {PlayerData} d Player save data.
+   * @param {{missions?: Array<Pick<Mission, 'type' | 'qty'>>}} d Player mission cargo.
    * @returns {number} Cargo space currently allocated to active cargo and smuggling missions.
    */
   jobCargo(d) {
@@ -946,7 +964,7 @@ export class Game {
   }
   /**
    * Calculates total hold space currently used by commodities and job cargo.
-   * @param {PlayerData} d Player save data.
+   * @param {{cargo: Record<string, number>, missions?: Array<Pick<Mission, 'type' | 'qty'>>}} d Commodity and mission cargo.
    * @returns {number} Total cargo hold tonnage used by trade commodities and mission cargo.
    */
   holdUsed(d) {
@@ -1197,7 +1215,7 @@ export class Game {
          * @param {import("./message-registry.js").NetworkMessage} m Message payload.
          */
         (s, m) => {
-          this.trade(s, m.cid, m.qty | 0);
+          this.trade(s, m.cid, m.qty | 0, m.lots);
           return;
         },
       ],
@@ -1652,7 +1670,7 @@ export class Game {
          * @param {import("./message-registry.js").NetworkMessage} m Message payload.
          */
         (s, m) => {
-          this.features.fleetcmd.jettison(s, m.cid, m.n | 0);
+          this.features.fleetcmd.jettison(s, m.cid, m.n | 0, m.lots);
           return;
         },
       ],
@@ -1817,6 +1835,15 @@ export class Game {
         o.sock.close();
         this.disconnect(o);
       }
+    try {
+      if (migrateCargoLots(p).changed) this.db.touch();
+    } catch (error) {
+      console.error('Cargo save rejected:', name, error.message);
+      return this.send(s, {
+        t: 'error',
+        msg: 'Cargo save validation failed. Contact the server operator.',
+      });
+    }
     s.data = p;
     s.name = p.name;
     p.id = s.id;
@@ -2381,7 +2408,7 @@ export class Game {
     s.ent = null;
     const fee = Math.min(d.credits, Math.round((this.A.ships[d.ship.hull].cost || 0) * 0.05));
     d.credits -= fee;
-    if (!this.features.specialists.flying(d, 'lodestar')) d.cargo = {}; // the Lodestar's hold is protected; wingmates fly home
+    if (!this.features.specialists.flying(d, 'lodestar')) clearLots(d.cargo, d.cargoLots); // the Lodestar's hold is protected; wingmates fly home
     const back =
       d.station &&
       d.station.site &&
@@ -2450,9 +2477,15 @@ export class Game {
     if (it.salvage) return this.features.quests.questLoot(s, it); // 2.4: a quest's salvage
     if (it.ore) {
       // mined ore goes into the cargo hold, if there is room
-      const b = this.features.bonuses.bonus(d),
-        raw = it.n * (1 + (b.miningPct || 0) / 100) * this.features.fronts.mods(d.sys).mining,
-        want = Math.floor(raw) + (Math.random() < raw % 1 ? 1 : 0);
+      // Freeze the original economic parcel once, including when the first hold is full.
+      if (it.remainingLots === undefined) {
+        const b = this.features.bonuses.bonus(d),
+          raw = it.n * (1 + (b.miningPct || 0) / 100) * this.features.fronts.mods(d.sys).mining,
+          want = Math.floor(raw) + (Math.random() < raw % 1 ? 1 : 0);
+        it.remainingLots = commonLots(it.ore, want).grades;
+      }
+      const want = Object.values(it.remainingLots).reduce((a, b) => a + b, 0);
+      if (!want) return true;
       const st = this.features.shipStats.stats(d),
         used = this.holdUsed(d),
         n = Math.min(want, st.cargo - used);
@@ -2470,14 +2503,24 @@ export class Game {
         }
         return false;
       }
-      d.cargo[it.ore] = (d.cargo[it.ore] || 0) + n;
+      const selected = splitLots(it.remainingLots, n);
+      addLots(
+        d.cargo,
+        d.cargoLots,
+        { cid: it.ore, qty: n, grades: selected },
+        Math.max(0, st.cargo - used),
+      );
+      for (const g of ['common', 'rich', 'pure']) it.remainingLots[g] -= selected[g];
       d.stats.mined = (d.stats.mined || 0) + n;
       this.features.fronts.goal(s, 'mined', n);
       this.features.frontier.mastery(s, n * 0.3);
-      this.features.specialists.specOnMine(s, it);
+      if (!it.progressionClaimed) {
+        it.progressionClaimed = true;
+        this.features.specialists.specOnMine(s, it);
+      }
       this.toast(s, `+${n} t ${COMMODITIES.find((c) => c.id === it.ore).name}`);
       this.you(s);
-      return true;
+      return Object.values(it.remainingLots).every((q) => q === 0);
     }
     if (it.credits) {
       it.credits = Math.round(
@@ -2568,12 +2611,18 @@ export class Game {
    * @param {Session} s Player session.
    * @param {string} cid Commodity ID.
    * @param {number} qty Amount to buy (>0) or sell (<0).
+   * @param {import('../shared/cargo-contracts.js').GradeLots|'common-first'} [selection]
    * @returns {void}
    */
-  trade(s, cid, qty) {
+  trade(s, cid, qty, selection = 'common-first') {
     const d = s.data,
       p = STELLARS[d.stellar];
     if (!p || s.ent) return;
+    try {
+      assertLots(d.cargo, d.cargoLots);
+    } catch {
+      return this.toast(s, 'Cargo validation failed.');
+    }
     const pr0 = price(p.site ? { ...p, prices: SITE_PRICES } : p, cid);
     if (pr0 === null || !qty || !this.market(p)) return;
     const pr = p.site
@@ -2597,25 +2646,32 @@ export class Game {
       d.paid[cid] = Math.round(
         ((d.paid[cid] || bp) * (d.cargo[cid] || 0) + bp * qty) / ((d.cargo[cid] || 0) + qty),
       ); // 2.4: what you paid, on average
+      addLots(d.cargo, d.cargoLots, commonLots(cid, qty), Math.max(0, st.cargo - used));
       d.credits -= qty * bp;
-      d.cargo[cid] = (d.cargo[cid] || 0) + qty;
       if (!p.site) this.features.living.addImpact(p.id, cid, -qty); // 2.4: buying raises the local price
     } else {
       const have = d.cargo[cid] || 0;
       qty = Math.min(-qty, have);
       if (!qty) return;
+      let take;
+      try {
+        take = planTake(d.cargo, d.cargoLots, cid, qty, selection);
+      } catch {
+        return this.toast(s, 'Those cargo grades are unavailable.');
+      }
+      const weighted = take.grades.common + take.grades.rich * 1.3 + take.grades.pure * 1.6;
       const depth = p.site ? 1 : 1 - Math.min(TRADE_IMPACT.max, qty * TRADE_IMPACT.perTon) / 2; // 2.5: and down as you sell it
       const sale = Math.round(
-        qty *
+        weighted *
           pr *
           depth *
           this.features.fronts.mods(p.system).sell *
           (1 + (this.features.bonuses.bonus(d).tradePct || 0) / 100),
       );
+      applyTake(d.cargo, d.cargoLots, take);
       this.features.fronts.goal(s, 'trade', sale);
       d.credits += sale - qty * pr;
       d.credits += qty * pr;
-      d.cargo[cid] = have - qty;
       if (!d.cargo[cid]) {
         delete d.cargo[cid];
         if (d.paid) delete d.paid[cid];
@@ -3017,8 +3073,7 @@ export class Game {
       }
       if ((destType(m) && m.dest === p.id) || (!destType(m) && m.done)) {
         if (m.type === 'supply') {
-          d.cargo[m.cid] -= m.qty;
-          if (!d.cargo[m.cid]) delete d.cargo[m.cid];
+          applyTake(d.cargo, d.cargoLots, planTake(d.cargo, d.cargoLots, m.cid, m.qty));
           this.features.living.stateProgress(s, p.system, 'cid:' + m.cid, m.qty);
         } // 2.4: your goods are unloaded
         if (m.type === 'smuggle')
@@ -3194,8 +3249,13 @@ export class Game {
             `You need ${ORE_PROCESS.per} t of ${COMMODITIES.find((c) => c.id === ore).name} and ${credits(ORE_PROCESS.cost)} credits per crate.`,
           );
         const g = Math.min(4, ORE_PROCESS.grade[S.ops] + (researchBonus(S).processGrade || 0));
-        d.cargo[ore] = have - n * ORE_PROCESS.per;
-        if (!d.cargo[ore]) delete d.cargo[ore];
+        let take;
+        try {
+          take = planTake(d.cargo, d.cargoLots, ore, n * ORE_PROCESS.per, m.lots);
+        } catch {
+          return this.toast(s, 'Those cargo grades are unavailable.');
+        }
+        applyTake(d.cargo, d.cargoLots, take);
         d.credits -= n * ORE_PROCESS.cost;
         d.mats[mat][g] += n;
         this.toast(

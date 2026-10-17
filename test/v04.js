@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 0.4 tests: the 200-system galaxy, sleeping systems, region traffic, mining, ore processing, charting, routes.
 import fs from 'node:fs';
@@ -166,7 +167,7 @@ a.s.ent = null;
 spM.players--;
 d.sys = 'meridian';
 d.stellar = 'site-meridian';
-d.cargo = { ore: 30 };
+seedCargo(d, { ore: 30 });
 a.send({ t: 'station', op: 'process', id: 'ore', all: 1 });
 ok(
   d.mats.alloy[ORE_PROCESS.grade[3]] >= 2 && d.cargo.ore === 6,

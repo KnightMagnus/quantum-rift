@@ -3,7 +3,7 @@
  * Incremental contracts: these describe only Fleet Commands' boundary, not a
  * complete save schema, a wire validator, or all the fields on a live entity.
  *
- * @typedef {{cargo: Record<string, number>, sys: string, ship?: import('../shared/rules.js').ShipLoadout, stats?: {combat?: number}}} CargoPlayer
+ * @typedef {{cargo: Record<string, number>, cargoLots: import('../shared/cargo-contracts.js').CargoLedger, sys: string, ship?: import('../shared/rules.js').ShipLoadout, stats?: {combat?: number}}} CargoPlayer
  *
  * @typedef {object} CommandEntity
  * Live ship entity interacting with fleet commands and AI maneuvers.
@@ -24,7 +24,7 @@
  *
  * @typedef {{data: CargoPlayer, ent: CommandEntity | null}} CommandSession
  *
- * @typedef {{cargo: string, n: number}} CargoLoot
+ * @typedef {{cargo: string, n: number, lots?: import('../shared/cargo-contracts.js').GradeLots}} CargoLoot
  *
  * @typedef {{id: number, x: number, y: number, vx: number, vy: number, it: CargoLoot, t: number, kind: number}} FloatingCargo
  *
@@ -54,6 +54,7 @@
  * @property {(session: CommandSession, message: {t: 'order', o: string}) => void} send Transmits an order update message to the client.
  * @property {(session: CommandSession) => void} you Transmits updated player state telemetry to the client.
  * @property {(player: CargoPlayer) => import('../shared/rules.js').ComputedShipStats | ShipStats | null} stats Computes maximum cargo capacity statistics for the player.
+ * @property {(player: CargoPlayer) => number} holdUsed Total hold usage including mission cargo.
  * @property {Record<string, CommandSpace>} spaces Active solar system space instances indexed by system ID.
  */
 export {};

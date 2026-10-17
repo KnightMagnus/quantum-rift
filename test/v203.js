@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 2.0.3 tests: newcomer protection in inner space, calmer raider spawns, and the backlog bug fixes.
 import fs from 'node:fs';
@@ -192,7 +193,7 @@ ok(
   'job cargo takes up hold space when buying goods',
 );
 ok(P.out.filter((m) => m.t === 'you').pop().d.jobCargo === job.qty, 'and the HUD is told about it');
-d.cargo = {};
+seedCargo(d, {});
 d.missions = [];
 const noO = Object.values(STELLARS).find(
   (p) => p.svc.includes('L') && !p.svc.includes('O') && !p.site,
@@ -251,7 +252,7 @@ d.dock = [];
 d.docks = null;
 g.features.docks.docksInit(d);
 d.ship.name = 'Tender';
-d.cargo = {};
+seedCargo(d, {});
 P.send({ t: 'dock', op: 'store' });
 ok(d.shipless && d.dock.length === 1, 'store the ship named Tender');
 d.dock.push({

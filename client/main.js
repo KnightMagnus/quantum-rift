@@ -1078,8 +1078,12 @@ $('infobody').addEventListener('click', (e) => {
   }
   const b = e.target.closest('[data-jet],[data-ord]');
   if (!b) return;
-  if (b.dataset.jet) send({ t: 'jettison', cid: b.dataset.jet, n: +b.dataset.n || 0 });
-  else send({ t: 'order', o: b.dataset.ord });
+  if (b.dataset.jet) {
+    const lots = b.dataset.grade
+      ? { common: 0, rich: 0, pure: 0, [b.dataset.grade]: +b.dataset.n }
+      : undefined;
+    send({ t: 'jettison', cid: b.dataset.jet, n: +b.dataset.n || 0, lots });
+  } else send({ t: 'order', o: b.dataset.ord });
   setTimeout(renderInfo, 250);
 });
 window.addEventListener(

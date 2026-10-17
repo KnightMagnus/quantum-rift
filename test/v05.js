@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 0.5 tests: shuttles, officers (stats, synergy, xp), research queue, refining up, drydock presets, boarding.
 import fs from 'node:fs';
@@ -185,7 +186,7 @@ ok(d.mats.crystal[0] === 0 && d.mats.crystal[1] === 23, 'refined 9 crystal I int
 // stored ships (2.1: the drydock became docks; FLY THIS / STORE still work through the old messages)
 d.station.ops = 4;
 ok(game.features.hangar.dockSlots(d) === 11, 'Ops 4: eleven stored-ship berths');
-d.cargo = {};
+seedCargo(d, {});
 if (d.ship.hull === 703) d.ship.hull = 708;
 const hull0 = d.ship.hull;
 a.send({ t: 'dock', op: 'store' });

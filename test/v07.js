@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 0.7 tests: colonies, station defense raids, ship mastery, the arena, the exchange, leaderboards and profiles.
 import fs from 'node:fs';
@@ -216,11 +217,11 @@ ok(
 ok(game.db.world.orders[0].qty === 2, 'the rest of the sell order stays on the book');
 a.send({ t: 'exchange', op: 'cancel', id: game.db.world.orders[0].id });
 ok(!game.db.world.orders.length && da.mats.alloy[2] === alloy - 3, 'cancelling returns the escrow');
-da.cargo = { food: 20 };
+seedCargo(da, { food: 20 });
 a.send({ t: 'exchange', op: 'place', side: 'sell', kind: 'com', cid: 'food', qty: 20, price: 100 });
 b.send({ t: 'exchange', op: 'place', side: 'buy', kind: 'com', cid: 'food', qty: 20, price: 100 });
 ok(dbb.storage.food === 20, 'bought commodities wait in exchange storage');
-dbb.cargo = {};
+seedCargo(dbb, {});
 b.send({ t: 'exchange', op: 'collect' });
 ok(
   dbb.cargo.food > 0 && (dbb.storage.food || 0) + dbb.cargo.food === 20,

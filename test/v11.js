@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 1.1 tests: rival captains, hailing, fleet commands, jettison, combat rating, news and market flashes.
 import fs from 'node:fs';
@@ -220,7 +221,7 @@ ok(
   'attack my target: escorts engage it',
 );
 // jettison
-bd.cargo = { food: 10 };
+seedCargo(bd, { food: 10 });
 b.send({ t: 'jettison', cid: 'food', n: 10 });
 ok(!bd.cargo.food && sp3.loot.some((l) => l.it.cargo === 'food'), 'jettisoned cargo floats free');
 const lt = sp3.loot.filter((l) => l.it.cargo === 'food');

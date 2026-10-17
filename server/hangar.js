@@ -1,3 +1,4 @@
+import { assertLots, addLots, commonLots } from '../shared/cargo-lots.js';
 import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift 0.5 "Hangar Deck" server feature operations: shuttles, officers, the research queue,
 // refining crates up a grade, the drydock, and boarding disabled ships.
@@ -825,6 +826,7 @@ export const HangarOperations = {
     };
     switch (m.act) {
       case 'plunder': {
+        assertLots(d.cargo, d.cargoLots);
         const cr = Math.round(
           (t.strength || 10) *
             (20 + Math.random() * 40) *
@@ -835,12 +837,12 @@ export const HangarOperations = {
         d.stats.earned += cr;
         const got = [`${credits(cr)} credits`];
         const st = this.stats(d),
-          used = Object.values(d.cargo).reduce((a, x) => a + x, 0),
+          used = this.holdUsed(d),
           room = st.cargo - used;
         if (room > 0) {
           const c = COMMODITIES[Math.floor(Math.random() * COMMODITIES.length)],
             q = Math.min(room, 2 + Math.floor(Math.random() * 9));
-          d.cargo[c.id] = (d.cargo[c.id] || 0) + q;
+          addLots(d.cargo, d.cargoLots, commonLots(c.id, q), Math.max(0, room));
           got.push(`${q} t ${c.name}`);
         }
         if (Math.random() < 0.3) {

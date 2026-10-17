@@ -15,7 +15,8 @@ import { Game } from '../server/game.js';
 // to this fixture; v2.9 refreshes only the living-state allocation snapshot because
 // six new markets deliberately expand the random selection pool. All other snapshot values remain unchanged. capture-features
 // runs in its own process with fixed time/RNG. The 3.0 Armada migration also
-// defaults persisted armadaFollow consent to false; no other baseline fields change.
+// defaults persisted armadaFollow consent to false. Mining 3.0 adds empty versioned
+// cargoLots/storageLots plus storage; all other baseline fields remain unchanged.
 const actual = JSON.parse(
   execFileSync(
     process.execPath,

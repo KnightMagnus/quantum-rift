@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 0.8 tests: the Sol Gateway (Sol, Earth, the wormhole, the Farside region), ship roles, specialty ships, parts and tiers.
 import fs from 'node:fs';
@@ -229,7 +230,7 @@ import('../shared/roles.js').then(async ({ ROLES_INFO, roleMult }) => {
   d2.specState[805].upT = Date.now() - 1;
   game.idleCheck(c.s);
   ok(d2.specState[805].tier === 2 && !d2.specState[805].upT, 'the tier-up finished: Tier 2');
-  d2.cargo = { food: 5 };
+  seedCargo(d2, { food: 5 });
   game.depart(c.s);
   const spM = game.spaces.meridian;
   spM.kill(c.s.ent, null);

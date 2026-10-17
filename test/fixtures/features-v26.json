@@ -254,6 +254,15 @@
       "rating": 1000,
       "w": 0,
       "l": 0
+    },
+    "cargoLots": {
+      "version": 1,
+      "byCommodity": {}
+    },
+    "storage": {},
+    "storageLots": {
+      "version": 1,
+      "byCommodity": {}
     }
   },
   "samples": [

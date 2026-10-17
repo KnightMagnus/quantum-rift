@@ -139,3 +139,42 @@ For a reproducible scenario without altering assertions, run e.g.
 `node --import ./test/seed-random.js test/v203.js`. The default seed is 123456789;
 set `RIFT_TEST_SEED` to explore another scenario. This helper is test-only and
 is not used by the game. A seeded pass is not a claim about every random seed.
+
+## Raw cargo accounting boundary
+
+`shared/cargo-lots.js` owns strict, versioned integer-tonne lots. Totals remain
+authoritative. New saves initialize empty cargo/storage ledgers; authenticated
+login and solo import migrate missing legacy records to common only. Existing
+malformed premium records reject loading/import rather than resetting grades.
+Import validates before replacing a slot. Offline exchange delivery migrates and
+validates its recipient before adding goods.
+
+All cargo/storage writers in Game, Fleet Commands, Frontier, Hangar and Co-op use
+the ledger. Their capacity comes from the explicit `holdUsed` facade, including
+job cargo; unbounded station storage uses no hold capacity. Exchange orders hold
+exact remaining `lots`; old orders without lots are common. Captain trades
+preflight both inventories and destination storage before credits/items move.
+Exchange reservations commit only after all fill destinations validate, and pending
+escrow/book state commits before notifications; notification failures never refund
+an already-completed fill.
+
+Existing `trade` and `jettison` messages accept optional `lots: {common,rich,pure}`
+whose integer quantities must exactly match the requested tonnage and owned
+grades. `trade2` offers use `give.lots[commodity]` alongside `give.items`; exchange
+sell orders and station processing also accept `lots`. Omission uses deterministic
+common → rich → pure consumption. `you` includes copied `cargoLots`/`storageLots`.
+Market purchases and genuinely new colony/plunder production are common. Raw
+sale factors (1/1.3/1.6) weight the actual selected lots inside existing depth and
+bonus calculations once; market/info grade subrows expose explicit sale/jettison.
+Material-crate numeric quality and field richness remain separate.
+
+Mining's existing economic parcel freezes its effective yield on first pickup
+attempt (even a full hold), retains exact partial remainder, and claims one
+progression hook on first accepted material. This interim compatibility owner is
+not the later cutting service: no grade RNG, cutting, survey or Dredge action is
+added here. Later cutting must supply once-resolved parcel lots and preserve this
+conservation/progression contract, replacing—not stacking—the legacy yield path.
+
+Scoped TypeScript includes all cargo writer modules and checks the Fleet Commands
+boundary plus shared ledger contracts. PR #21 domain interfaces remain intact;
+these scoped gradual checks are not a full-game type-safety claim.

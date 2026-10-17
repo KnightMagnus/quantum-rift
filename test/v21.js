@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 2.1 tests: docks A-E with a lead ship and wingmates each, stored ships, officers crewing wingmates, buying to the hangar.
 import fs from 'node:fs';
@@ -156,10 +157,10 @@ ok(
 P.send({ t: 'docks', op: 'assign', k: 1, slot: 0, uid: d.ship.uid });
 ok(d.docks[1].wings[0].uid === wm.ship.uid, "the ship you fly can't be put in another slot");
 const old = d.ship;
-d.cargo = { food: 9999 };
+seedCargo(d, { food: 9999 });
 P.send({ t: 'docks', op: 'activate', k: 1 });
 ok(d.activeDock === 0, 'switching docks checks your cargo fits the new lead');
-d.cargo = {};
+seedCargo(d, {});
 P.send({ t: 'docks', op: 'activate', k: 1 });
 ok(
   d.activeDock === 1 &&

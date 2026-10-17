@@ -1,3 +1,4 @@
+import { migrateCargoLots, planTake, moveLots } from '../shared/cargo-lots.js';
 // Quantum Rift 2.6 "Co-op" server feature operations:
 //   Captain Friends (requests, online status, DMs with an offline mailbox, blocks)
 //   the Armada: a short co-op group of up to five captains and their wingmates (private chat, no friendly fire,
@@ -883,7 +884,12 @@ export const CoopOperations = {
       if (++lines > TRADE.maxLines) return `Up to ${TRADE.maxLines} different items per side.`;
       const [kind, a, b] = String(k).split(':');
       if (kind === 'cargo') {
-        if ((d.cargo[a] || 0) < q) return 'You do not have that much in your hold.';
+        try {
+          planTake(d.cargo, d.cargoLots, a, q, give.lots?.[a]);
+        } catch {
+          return 'You do not have those cargo grades in your hold.';
+        }
+        if (give.lots?.[a]) (g.lots = g.lots || {})[a] = { ...give.lots[a] };
       } else if (kind === 'mat') {
         if (!MATERIALS.includes(a) || !(d.mats[a] && d.mats[a][+b] >= q))
           return 'You do not have those crates.';
@@ -954,6 +960,31 @@ export const CoopOperations = {
           `Trade cancelled: ${p.name} no longer has everything offered.`,
         );
     }
+    try {
+      const a = structuredClone(pa),
+        b = structuredClone(pb);
+      migrateCargoLots(a);
+      migrateCargoLots(b);
+      for (const [from, to, g] of [
+        [a, b, T.give[T.a]],
+        [b, a, T.give[T.b]],
+      ])
+        for (const [k, q] of Object.entries(g.items || {}))
+          if (k.startsWith('cargo:'))
+            moveLots(
+              from.cargo,
+              from.cargoLots,
+              to.storage,
+              to.storageLots,
+              k.split(':')[1],
+              q,
+              g.lots?.[k.split(':')[1]],
+            );
+    } catch {
+      return this.tradeCancel(T.id, 'Trade cancelled: cargo validation failed.');
+    }
+    migrateCargoLots(pa);
+    migrateCargoLots(pb);
     const move = (from, to, g) => {
       const got = [];
       if (g.credits) {
@@ -965,10 +996,7 @@ export const CoopOperations = {
       for (const [k, q] of Object.entries(g.items || {})) {
         const [kind, a, b] = k.split(':');
         if (kind === 'cargo') {
-          from.cargo[a] -= q;
-          if (!from.cargo[a]) delete from.cargo[a];
-          to.storage = to.storage || {};
-          to.storage[a] = (to.storage[a] || 0) + q;
+          moveLots(from.cargo, from.cargoLots, to.storage, to.storageLots, a, q, g.lots?.[a]);
           const C = COMMODITIES.find((c) => c.id === a);
           got.push(`${q} t ${C ? C.name : a}`);
         }
@@ -1005,8 +1033,16 @@ export const CoopOperations = {
       for (const [k, v] of Object.entries(p.storage)) {
         const q = Math.min(v, Math.max(0, room));
         if (q > 0) {
-          p.cargo[k] = (p.cargo[k] || 0) + q;
-          p.storage[k] -= q;
+          moveLots(
+            p.storage,
+            p.storageLots,
+            p.cargo,
+            p.cargoLots,
+            k,
+            q,
+            'common-first',
+            Math.max(0, room),
+          );
           room -= q;
           if (!p.storage[k]) delete p.storage[k];
         }

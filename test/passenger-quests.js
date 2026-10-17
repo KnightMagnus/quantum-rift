@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 // Story jobs use the same finite passenger seating as ordinary board missions.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -34,7 +35,7 @@ const destination = Object.values(STELLARS).find(
 );
 d.sys = origin.system;
 d.stellar = origin.id;
-d.cargo = {};
+seedCargo(d, {});
 const step = (type) => ({
   type,
   where: 'A',

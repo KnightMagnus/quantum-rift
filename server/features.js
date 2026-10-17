@@ -40,9 +40,9 @@ import { CoopOperations } from './coop.js';
  * @property {Pick<typeof CoopOperations, 'sessionOf' >} sessions
  */
 
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'hasMats' | 'landed' | 'live' | 'log' | 'ownSite' | 'spaces' | 'takeMats' | 'toast' | 'tut' | 'you'> & Pick<typeof ArcsOperations, 'arcProgress'> & Pick<typeof HangarOperations, 'barOffers' | 'bays' | 'dockSlots' | 'officerXp' | 'researchChain' | 'resolveShuttle' | 'shuttleBoard' | 'shuttleChance' | 'shuttleReward' | 'shuttleTraffic' | 'startQueued' | 'storedValue' | 'uid'> & Pick<typeof SpecialistOperations, 'bonus' | 'flying' | 'power' | 'specOnBoard'> & Pick<typeof DocksOperations, 'docksOp' | 'shipUid' | 'unassign' | 'unwingOfficer'> & Pick<typeof FrontsOperations, 'goal' | 'mods' | 'stats'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof CoopOperations, 'rescueBoard'> & Pick<typeof StoryOperations, 'storyProgress'> & Pick<typeof SyndicateOperations, 'synGain'>} HangarCapabilities */
+/** @typedef {Pick<import('./game.js').Game, 'A' | 'holdUsed' | 'db' | 'hasMats' | 'landed' | 'live' | 'log' | 'ownSite' | 'spaces' | 'takeMats' | 'toast' | 'tut' | 'you'> & Pick<typeof ArcsOperations, 'arcProgress'> & Pick<typeof HangarOperations, 'barOffers' | 'bays' | 'dockSlots' | 'officerXp' | 'researchChain' | 'resolveShuttle' | 'shuttleBoard' | 'shuttleChance' | 'shuttleReward' | 'shuttleTraffic' | 'startQueued' | 'storedValue' | 'uid'> & Pick<typeof SpecialistOperations, 'bonus' | 'flying' | 'power' | 'specOnBoard'> & Pick<typeof DocksOperations, 'docksOp' | 'shipUid' | 'unassign' | 'unwingOfficer'> & Pick<typeof FrontsOperations, 'goal' | 'mods' | 'stats'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof CoopOperations, 'rescueBoard'> & Pick<typeof StoryOperations, 'storyProgress'> & Pick<typeof SyndicateOperations, 'synGain'>} HangarCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | '_an' | '_anW' | 'broadcast' | 'db' | 'invasion' | 'lastInvWin' | 'log' | 'sessions' | 'spaces' | 'toast' | 'you'> & Pick<typeof FrontsOperations, 'anomalies' | 'event' | 'goal' | 'goalsFor' | 'pushWorld' | 'startInvasion' | 'storeFor' | 'token'> & Pick<typeof CoopOperations, 'armadaBonus' | 'refreshPlayer'> & Pick<typeof SpecialistOperations, 'bonus'> & Pick<typeof HangarOperations, 'officerXp' | 'uid'> & Pick<typeof LivingOperations, 'statesPayload'> & Pick<typeof FrontierOperations, 'worldPayload'>} FrontsCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'arenaQ' | 'broadcast' | 'db' | 'hasMats' | 'landed' | 'live' | 'log' | 'matches' | 'nextMatch' | 'send' | 'sessions' | 'spaces' | 'spawnPlayer' | 'takeMats' | 'toast' | 'waves' | 'you'> & Pick<typeof FrontierOperations, 'accrue' | 'arenaCheck' | 'arenaExit' | 'coloniesOf' | 'colonizable' | 'colonyBuffs' | 'colonyMax' | 'defenseRating' | 'deliver' | 'itemName' | 'matchOrder' | 'notify' | 'pay' | 'raidStrength' | 'refundOrder' | 'resolveRaid' | 'sameItem' | 'startWave' | 'tryMatch'> & Pick<typeof SpecialistOperations, 'flying' | 'specOnRaid'> & Pick<typeof FrontsOperations, 'pushWorld' | 'stats'> & Pick<typeof RivalsOperations, 'rivalBoard'> & Pick<typeof CoopOperations, 'sessionOf'> & {frontsBonus: typeof FrontsOperations.bonus, frontsWorldPayload: typeof FrontsOperations.worldPayload}} FrontierCapabilities */
+/** @typedef {Pick<import('./game.js').Game, 'A' | 'holdUsed' | 'arenaQ' | 'broadcast' | 'db' | 'hasMats' | 'landed' | 'live' | 'log' | 'matches' | 'nextMatch' | 'send' | 'sessions' | 'spaces' | 'spawnPlayer' | 'takeMats' | 'toast' | 'waves' | 'you'> & Pick<typeof FrontierOperations, 'accrue' | 'arenaCheck' | 'arenaExit' | 'coloniesOf' | 'colonizable' | 'colonyBuffs' | 'colonyMax' | 'defenseRating' | 'deliver' | 'itemName' | 'matchOrder' | 'notify' | 'pay' | 'raidStrength' | 'refundOrder' | 'resolveRaid' | 'sameItem' | 'startWave' | 'tryMatch'> & Pick<typeof SpecialistOperations, 'flying' | 'specOnRaid'> & Pick<typeof FrontsOperations, 'pushWorld' | 'stats'> & Pick<typeof RivalsOperations, 'rivalBoard'> & Pick<typeof CoopOperations, 'sessionOf'> & {frontsBonus: typeof FrontsOperations.bonus, frontsWorldPayload: typeof FrontsOperations.worldPayload}} FrontierCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'broadcast' | 'db' | 'hasMats' | 'landed' | 'log' | 'ownSite' | 'takeMats' | 'toast' | 'tradeIn' | 'you'> & Pick<typeof FrontsOperations, 'anomalies'> & Pick<typeof SpecialistOperations, 'flying' | 'power' | 'specGain' | 'specInit' | 'specOf'> & Pick<typeof DocksOperations, 'wingHulls'> & {frontierBonus: typeof FrontierOperations.bonus}} SpecialistsCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'depart' | 'live' | 'log' | 'ownSite' | 'spaces' | 'toast' | 'tut' | 'you'> & Pick<typeof SpecialistOperations, 'bonus' | 'specInit'> & Pick<typeof CoopOperations, 'holdoutAnnounce' | 'holdoutHelpers' | 'holdoutReward'> & Pick<typeof HostileOperations, 'holdoutEnd' | 'hostInit' | 'myPower'> & Pick<typeof FrontsOperations, 'mods'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof DocksOperations, 'wingHulls'>} HostileCapabilities */
 /** @typedef {Pick<import('./game.js').Game, 'A' | 'broadcast' | 'db' | 'landed' | 'log' | 'send' | 'toast' | 'tradeIn' | 'you'> & Pick<typeof HangarOperations, 'dockSlots'> & Pick<typeof DocksOperations, 'leadChanged'> & Pick<typeof StoryOperations, 'storyComplete' | 'storyDone' | 'storyGift' | 'storyInit' | 'storyOffer'>} StoryCapabilities */
@@ -62,6 +62,7 @@ export function createFeatures(core) {
   const features = /** @type {FeatureServices} */ ({});
   /** @type {HangarCapabilities} */
   const hangarCapabilities = {
+    holdUsed: core.holdUsed.bind(core),
     get A() {
       return core.A;
     },
@@ -286,6 +287,7 @@ export function createFeatures(core) {
   features.fronts = bindOperations(FrontsOperations, frontsCapabilities);
   /** @type {FrontierCapabilities} */
   const frontierCapabilities = {
+    holdUsed: core.holdUsed.bind(core),
     get A() {
       return core.A;
     },
@@ -701,6 +703,7 @@ export function createFeatures(core) {
   features.hail = bindOperations(HailOperations, hailCapabilities);
   /** @type {FleetCommandsCapabilities} */
   const fleetcmdCapabilities = {
+    holdUsed: core.holdUsed.bind(core),
     send: core.send.bind(core),
     get spaces() {
       return core.spaces;

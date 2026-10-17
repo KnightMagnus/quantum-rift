@@ -54,7 +54,8 @@
     "websocket-transport.js",
     "http-api.mjs",
     "network-systems.mjs",
-    "cargo-lots.js"
+    "cargo-lots.js",
+    "cargo-flows.js"
   ],
   "browser": [
     "sidebar-browser.mjs",
@@ -63,7 +64,8 @@
     "station-landing-browser.mjs",
     "login-scene-browser.mjs",
     "client-systems-browser.mjs",
-    "input-audio-browser.mjs"
+    "input-audio-browser.mjs",
+    "cargo-ui-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -385,9 +387,20 @@
     {
       "id": "cargo-grade-ledger",
       "services": [],
-      "owners": ["shared/cargo-lots.js", "shared/cargo-contracts.js"],
-      "tests": ["cargo-lots.js"],
-      "asserts": "Atomic versioned cargo/storage migration, common legacy production, strict raw grades, deterministic/exact withdrawals, failed-transfer inventory isolation, capacity supplied by holdUsed, partial-lot conservation and durable DB serialization."
+      "owners": [
+        "shared/cargo-lots.js",
+        "shared/cargo-contracts.js",
+        "server/game.js",
+        "server/fleetcmd.js",
+        "server/frontier.js",
+        "server/hangar.js",
+        "server/coop.js",
+        "client/ui.js",
+        "client/info_ui.js",
+        "client/main.js"
+      ],
+      "tests": ["cargo-lots.js", "cargo-flows.js", "cargo-ui-browser.mjs"],
+      "asserts": "Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows and explicit premium sale/jettison."
     }
   ],
   "routes": {
@@ -418,14 +431,23 @@
       "v24.js"
     ],
     "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
-    "trade": ["bot.js", "v203.js"],
+    "trade": ["bot.js", "cargo-flows.js", "v203.js", "cargo-ui-browser.mjs"],
     "buyship": ["sim.js", "v21.js"],
     "docks": ["outfitter-wing-repairs.js", "sim.js", "v21.js"],
     "questdrop": ["core-actions.js"],
     "outfit": ["bot.js", "v203.js"],
     "accept": ["bot.js", "v12.js", "v203.js", "v24.js", "v26.js"],
     "abandon": ["v203.js", "v24.js"],
-    "station": ["sim.js", "v04.js", "v05.js", "v07.js", "v203.js", "v21.js", "v26.js"],
+    "station": [
+      "cargo-flows.js",
+      "sim.js",
+      "v04.js",
+      "v05.js",
+      "v07.js",
+      "v203.js",
+      "v21.js",
+      "v26.js"
+    ],
     "buymat": ["core-actions.js"],
     "rename": ["v203.js"],
     "note": ["core-actions.js"],
@@ -433,19 +455,19 @@
     "officer": ["v05.js", "v21.js"],
     "shuttle": ["v05.js"],
     "dock": ["v05.js", "v101.js", "v203.js", "v21.js"],
-    "board": ["v05.js", "v06.js", "v10.js", "v26.js"],
+    "board": ["cargo-flows.js", "v05.js", "v06.js", "v10.js", "v26.js"],
     "spec": ["v08.js"],
     "armada": ["armada-formation-network.mjs", "combat-network.js", "v06.js", "v26.js"],
     "holdout": ["v09.js", "v26.js"],
     "storyacc": ["v10.js"],
     "social": ["hailing-network.js", "v26.js"],
-    "trade2": ["v26.js"],
+    "trade2": ["cargo-flows.js", "v26.js"],
     "duel": ["v26.js"],
     "goal": ["v06.js"],
     "store": ["faction-standing.js", "v06.js"],
     "colony": ["v07.js"],
     "arena": ["v07.js"],
-    "exchange": ["v07.js"],
+    "exchange": ["cargo-flows.js", "v07.js"],
     "boards": ["v07.js"],
     "profile": ["v07.js"],
     "ping": ["core-actions.js"],
@@ -453,7 +475,7 @@
     "hailin": ["hailing-network.js"],
     "hailopt": ["hailing-network.js", "v11.js"],
     "order": ["combat-network.js", "v11.js", "v21.js"],
-    "jettison": ["v11.js"],
+    "jettison": ["cargo-flows.js", "v11.js", "cargo-ui-browser.mjs"],
     "rivals": ["core-actions.js"],
     "bm": ["v12.js"],
     "arcacc": ["v12.js"],

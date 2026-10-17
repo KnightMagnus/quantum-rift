@@ -1,3 +1,13 @@
+import {
+  migrateCargoLots,
+  assertLots,
+  planTake,
+  applyTake,
+  addLots,
+  moveLots,
+  commonLots,
+  splitLots,
+} from '../shared/cargo-lots.js';
 // Quantum Rift 0.7 "Frontier Life" server feature operations: planetary colonies, station defense raids, ship
 // mastery, the arena, the player exchange, leaderboards, captain profiles and browser notifications.
 import { SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES } from '../shared/galaxy.js';
@@ -281,9 +291,10 @@ export const FrontierOperations = {
       }
       case 'collect': {
         if (!own) return;
+        assertLots(d.cargo, d.cargoLots);
         this.accrue(c);
         const st = this.stats(d);
-        let room = st.cargo - Object.values(d.cargo).reduce((a, b) => a + b, 0);
+        let room = st.cargo - this.holdUsed(d);
         const got = [];
         if (c.store.credits >= 1) {
           const cr = Math.floor(c.store.credits);
@@ -296,7 +307,7 @@ export const FrontierOperations = {
           if (k === 'credits') continue;
           const n = Math.min(Math.floor(v), room);
           if (n <= 0) continue;
-          d.cargo[k] = (d.cargo[k] || 0) + n;
+          addLots(d.cargo, d.cargoLots, commonLots(k, n), Math.max(0, room));
           c.store[k] -= n;
           room -= n;
           got.push(`${n} t ${comName(k)}`);
@@ -745,13 +756,18 @@ export const FrontierOperations = {
       W = this.db.world;
     if (!p || s.ent || !(p.hub || (p.svc.includes('T') && !p.site)))
       return this.toast(s, 'The exchange is open at market worlds.');
-    d.storage = d.storage || {};
+    try {
+      assertLots(d.cargo, d.cargoLots);
+      assertLots(d.storage, d.storageLots);
+    } catch {
+      return this.toast(s, 'Cargo validation failed.');
+    }
     switch (m.op) {
       case 'place': {
         const side = m.side === 'buy' ? 'buy' : 'sell',
           qty = Math.max(1, Math.min(9999, m.qty | 0)),
           price = Math.max(1, Math.min(EXCHANGE.maxPrice, Math.round(+m.price || 0)));
-        let item;
+        let item, escrow, reserve;
         if (m.kind === 'mat' && MATERIALS.includes(m.mat) && m.grade >= 0 && m.grade <= 4)
           item = { kind: 'mat', mat: m.mat, grade: m.grade | 0 };
         else if (m.kind === 'com' && COMMODITIES.some((c) => c.id === m.cid))
@@ -764,22 +780,48 @@ export const FrontierOperations = {
           if (item.kind === 'mat') {
             if (d.mats[item.mat][item.grade] < qty)
               return this.toast(s, 'You do not have that many crates.');
-            d.mats[item.mat][item.grade] -= qty;
+            reserve = () => {
+              d.mats[item.mat][item.grade] -= qty;
+            };
           } else {
             if ((d.cargo[item.cid] || 0) < qty)
               return this.toast(s, 'You do not have that much in your hold.');
-            d.cargo[item.cid] -= qty;
-            if (!d.cargo[item.cid]) delete d.cargo[item.cid];
+            try {
+              escrow = planTake(d.cargo, d.cargoLots, item.cid, qty, m.lots);
+            } catch {
+              return this.toast(s, 'Those cargo grades are unavailable.');
+            }
+            reserve = () => applyTake(d.cargo, d.cargoLots, escrow);
           }
         } else {
           if (d.credits < qty * price)
             return this.toast(s, 'Not enough credits to back that order.');
-          d.credits -= qty * price;
+          reserve = () => {
+            d.credits -= qty * price;
+          };
         }
-        const order = { id: W.nextOrder++, owner: d.name, side, item, qty, price, t: Date.now() };
-        this.matchOrder(order);
+        const order = {
+          id: W.nextOrder++,
+          owner: d.name,
+          side,
+          item,
+          qty,
+          price,
+          lots: escrow ? { ...escrow.grades } : undefined,
+          t: Date.now(),
+        };
+        let committed = false;
+        try {
+          this.matchOrder(order, () => {
+            reserve();
+            committed = true;
+          });
+        } catch (error) {
+          // Only preflight failures are denials. Never refund after a completed swap.
+          if (committed) throw error;
+          return this.toast(s, 'Order rejected: cargo validation failed.');
+        }
         if (order.qty > 0) {
-          W.orders.push(order);
           this.toast(
             s,
             `Order placed: ${side} ${order.qty} ${this.itemName(item)} at ${credits(price)}.`,
@@ -797,14 +839,21 @@ export const FrontierOperations = {
       }
       case 'collect': {
         const st = this.stats(d);
-        let room = st.cargo - Object.values(d.cargo).reduce((a, b) => a + b, 0),
+        let room = st.cargo - this.holdUsed(d),
           got = 0;
         for (const [k, v] of Object.entries(d.storage)) {
           const n = Math.min(v, room);
           if (n <= 0) continue;
-          d.cargo[k] = (d.cargo[k] || 0) + n;
-          d.storage[k] -= n;
-          if (!d.storage[k]) delete d.storage[k];
+          moveLots(
+            d.storage,
+            d.storageLots,
+            d.cargo,
+            d.cargoLots,
+            k,
+            n,
+            'common-first',
+            Math.max(0, room),
+          );
           room -= n;
           got += n;
         }
@@ -864,16 +913,21 @@ export const FrontierOperations = {
    * @param {string} name - Buyer captain name.
    * @param {{kind: string, mat?: string, grade?: number, cid?: string}} it - Purchased item.
    * @param {number} qty - Quantity purchased.
+   * @param {import('../shared/cargo-contracts.js').GradeLots} [lots] Exact escrow grades.
    * @returns {void}
    */
-  deliver(name, it, qty) {
+  deliver(name, it, qty, lots) {
     // goods to a buyer: crates straight in, commodities to exchange storage
     const p = this.db.get(name);
     if (!p) return;
     if (it.kind === 'mat') p.mats[it.mat][it.grade] += qty;
     else {
-      p.storage = p.storage || {};
-      p.storage[it.cid] = (p.storage[it.cid] || 0) + qty;
+      migrateCargoLots(p);
+      addLots(p.storage, p.storageLots, {
+        cid: it.cid,
+        qty,
+        grades: lots === undefined ? commonLots(it.cid, qty).grades : lots,
+      });
     }
   },
   /**
@@ -895,15 +949,16 @@ export const FrontierOperations = {
    * @returns {void}
    */
   refundOrder(o) {
-    if (o.side === 'sell') this.deliver(o.owner, o.item, o.qty);
+    if (o.side === 'sell') this.deliver(o.owner, o.item, o.qty, o.lots);
     else this.pay(o.owner, o.qty * o.price);
   },
   /**
    * Match an incoming exchange order against the open order book.
-   * @param {{item: {id: string, name: string, cost: number}, n: number, p: number, by: string, t: number}} order - Incoming order record.
+   * @param {{id: number, owner: string, side: string, item: {kind: string, mat?: string, grade?: number, cid?: string}, qty: number, price: number, lots?: import('../shared/cargo-contracts.js').GradeLots, t: number}} order - Incoming escrow order record.
+   * @param {() => void} reserve - Commit the validated incoming reservation.
    * @returns {void}
    */
-  matchOrder(order) {
+  matchOrder(order, reserve) {
     const W = this.db.world;
     const book = W.orders
       .filter(
@@ -916,23 +971,76 @@ export const FrontierOperations = {
       .sort((a, b) =>
         order.side === 'buy' ? a.price - b.price || a.t - b.t : b.price - a.price || a.t - b.t,
       );
+    // Validate every destination and escrow remainder before the first fill/pay.
+    // Old book entries have no grade records and migrate as genuinely common escrow.
+    const trialPlayers = new Map(),
+      trialOrder = structuredClone(order);
+    for (const original of book) {
+      if (!trialOrder.qty) break;
+      const o = structuredClone(original),
+        buyer = trialOrder.side === 'buy' ? trialOrder : o,
+        seller = trialOrder.side === 'buy' ? o : trialOrder,
+        n = Math.min(trialOrder.qty, o.qty);
+      if (seller.item.kind === 'com') {
+        const available =
+          seller.lots === undefined ? commonLots(seller.item.cid, seller.qty).grades : seller.lots;
+        addLots(
+          {},
+          { version: 1, byCommodity: {} },
+          { cid: seller.item.cid, qty: seller.qty, grades: available },
+        );
+        const selected = splitLots(available, n);
+        let p = trialPlayers.get(buyer.owner);
+        if (!p) {
+          const saved = this.db.get(buyer.owner);
+          if (!saved || !this.db.get(seller.owner)) throw new Error('Missing order owner');
+          p = structuredClone(saved);
+          migrateCargoLots(p);
+          trialPlayers.set(buyer.owner, p);
+        }
+        addLots(p.storage, p.storageLots, { cid: seller.item.cid, qty: n, grades: selected });
+        seller.lots = { ...available };
+        for (const g of ['common', 'rich', 'pure']) seller.lots[g] -= selected[g];
+      }
+      trialOrder.qty -= n;
+    }
+    reserve();
+    const fills = [];
     for (const o of book) {
       if (!order.qty) break;
       const n = Math.min(order.qty, o.qty),
         price = o.price,
         buyer = order.side === 'buy' ? order : o,
         seller = order.side === 'buy' ? o : order;
-      this.deliver(buyer.owner, order.item, n);
+      const available =
+        seller.lots === undefined
+          ? seller.item.kind === 'com'
+            ? commonLots(seller.item.cid, seller.qty).grades
+            : null
+          : seller.lots;
+      const selected = available ? splitLots(available, n) : undefined;
+      this.deliver(buyer.owner, order.item, n, selected);
+      if (selected) {
+        seller.lots = available;
+        for (const g of ['common', 'rich', 'pure']) seller.lots[g] -= selected[g];
+      }
       this.pay(seller.owner, Math.round(n * price * (1 - EXCHANGE.fee)));
       if (buyer === order && order.price > price) this.pay(order.owner, n * (order.price - price)); // the buyer escrowed at their own price
       order.qty -= n;
       o.qty -= n;
-      for (const nm of [buyer.owner, seller.owner]) {
+      fills.push({ buyer: buyer.owner, seller: seller.owner, n, price });
+    }
+    W.orders = W.orders.filter((o) => o.qty > 0);
+    if (order.qty > 0) W.orders.push(order);
+    this.db.touch();
+    // Notification/socket failures cannot roll back mass, credits or pending escrow.
+    for (const { buyer, seller, n, price } of fills) {
+      for (const nm of [buyer, seller]) {
         const ss = this.sessionOf(nm);
         if (ss) {
           this.toast(
             ss,
-            `Exchange: ${nm === buyer.owner ? 'bought' : 'sold'} ${n} ${this.itemName(order.item)} at ${credits(price)}.`,
+            `Exchange: ${nm === buyer ? 'bought' : 'sold'} ${n} ${this.itemName(order.item)} at ${credits(price)}.`,
           );
           this.notify(
             ss,
@@ -943,7 +1051,6 @@ export const FrontierOperations = {
         }
       }
     }
-    W.orders = W.orders.filter((o) => o.qty > 0);
   },
   /**
    * Build exchange order book summary and player-specific order state for client.

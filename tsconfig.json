@@ -18,6 +18,10 @@
     "server/combat-assist.js",
     "server/message-registry.js",
     "shared/cargo-lots.js",
-    "shared/cargo-contracts.js"
+    "shared/cargo-contracts.js",
+    "server/game.js",
+    "server/frontier.js",
+    "server/hangar.js",
+    "server/coop.js"
   ]
 }

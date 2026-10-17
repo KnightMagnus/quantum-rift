@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 2.5.2 tests: the bug-fix and quality-of-life pass (story needs, supply warnings, mining hints, markets for mined goods,
 // war fleets and newcomers, map station marker, broken-ring art).
@@ -94,7 +95,7 @@ ok(
 const H = fake('Full Miner');
 H.d.ship = makeLoadout(A, 704, 'Dory');
 H.d.sys = 'qgate';
-H.d.cargo = { food: 70 };
+seedCargo(H.d, { food: 70 });
 g.onLoot({ s: H.s }, { ore: 'ore', n: 3 });
 ok(
   H.toasts().some((t) => /Cargo hold full\. Raw Ore sells at .+/.test(t)),

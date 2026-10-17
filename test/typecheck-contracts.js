@@ -12,7 +12,7 @@ const common = `// @ts-check
 /** @type {import('${modulePath('features.js')}').FeatureServices} */
 const features = /** @type {import('${modulePath('features.js')}').FeatureServices} */ ({});
 /** @type {import('${modulePath('contracts.js')}').CommandSession} */
-const session = {data: {cargo: {}, sys: 'meridian'}, ent: null};
+const session = {data: {cargo: {}, cargoLots: {version: 1, byCommodity: {}}, sys: 'meridian'}, ent: null};
 `;
 try {
   fs.writeFileSync(path.join(dir, 'package.json'), '{"type":"module"}');
@@ -36,11 +36,20 @@ try {
   assert.notEqual(result.status, 0, 'numeric fleet order must be rejected');
   assert.match(result.stdout + result.stderr, /number.*string/);
   result = check(
-    `/** @type {import('${modulePath('contracts.js')}').FleetCommandsCapabilities} */\nconst incomplete = {toast() {}, send() {}, you() {}, stats() { return {cargo: 5}; }};\n`,
+    `/** @type {import('${modulePath('contracts.js')}').FleetCommandsCapabilities} */\nconst incomplete = {toast() {}, send() {}, you() {}, holdUsed() { return 0; }, stats() { return {cargo: 5}; }};\n`,
   );
   assert.notEqual(result.status, 0, 'missing spaces capability must be rejected');
   assert.match(result.stdout + result.stderr, /spaces.*missing|missing.*spaces/);
-  console.log('Typed valid calls pass; invalid argument and missing capability are rejected.');
+  result = check("features.fleetcmd.jettison(session, 'ore', 1, {common: 0, rich: 0, pure: 1});\n");
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  result = check(
+    "features.fleetcmd.jettison(session, 'ore', 1, {common: 0, rich: 0, pure: '1'});\n",
+  );
+  assert.notEqual(result.status, 0, 'string grade quantity must be rejected');
+  assert.match(result.stdout + result.stderr, /string.*number/);
+  console.log(
+    'Typed valid calls/grade selections pass; invalid argument, grade quantity and missing capability are rejected.',
+  );
 } finally {
   fs.rmSync(dir, { recursive: true, force: true });
 }
