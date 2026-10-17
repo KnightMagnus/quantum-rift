@@ -55,6 +55,7 @@
         "flying",
         "goal",
         "hasMats",
+        "holdUsed",
         "landed",
         "live",
         "log",
@@ -221,6 +222,7 @@
         "frontsBonus",
         "frontsWorldPayload",
         "hasMats",
+        "holdUsed",
         "itemName",
         "landed",
         "live",
@@ -288,9 +290,11 @@
         "anomalies",
         "broadcast",
         "db",
+        "fitsJobs",
         "flying",
         "frontierBonus",
         "hasMats",
+        "holdUsed",
         "landed",
         "log",
         "ownSite",
@@ -474,7 +478,7 @@
     {
       "file": "fleetcmd",
       "methods": ["fleetOrder", "jettison", "lootCargo", "rankOf"],
-      "uses": ["send", "spaces", "stats", "toast", "you"],
+      "uses": ["holdUsed", "send", "spaces", "stats", "toast", "you"],
       "baselineExport": "FleetCmdMixin",
       "exportName": "FleetCmdOperations",
       "stateWrites": [],
@@ -846,6 +850,110 @@
         "tick2s": ["coopTick"]
       },
       "owner": "server/coop.js"
+    },
+    {
+      "file": "mining",
+      "exportName": "MiningOperations",
+      "methods": [
+        "init",
+        "advanceClock",
+        "openSpace",
+        "contact",
+        "ordinary",
+        "endTick",
+        "suspendSpace",
+        "survey",
+        "rocksPayload",
+        "payload",
+        "collected",
+        "shotId",
+        "sweep"
+      ],
+      "uses": [
+        "bonus",
+        "db",
+        "dredgeBlueprint",
+        "endTick",
+        "mods",
+        "paused",
+        "pressureExtract",
+        "pressureRegrow",
+        "pressureWork",
+        "specOnMine"
+      ]
+    },
+    {
+      "file": "refinery",
+      "module": "refinery",
+      "exportName": "RefineryOperations",
+      "methods": ["sellRoom", "sold", "resume", "init", "payload", "command"],
+      "uses": [
+        "access",
+        "db",
+        "fuelCapacity",
+        "now",
+        "paused",
+        "payload",
+        "pricing",
+        "refresh",
+        "room",
+        "rush",
+        "rushProgress",
+        "send",
+        "toast"
+      ]
+    },
+    {
+      "file": "pressure",
+      "module": "mining-pressure",
+      "exportName": "MiningPressureOperations",
+      "methods": [
+        "init",
+        "work",
+        "regrow",
+        "pressureTick",
+        "allow",
+        "shotAllowed",
+        "extracted",
+        "payload",
+        "hazards",
+        "consent",
+        "fieldState"
+      ],
+      "uses": ["db", "newcomer", "rush", "sessions", "toast"]
+    },
+    {
+      "file": "industrial",
+      "module": "industrial",
+      "exportName": "IndustrialOperations",
+      "methods": ["init", "stop", "command", "industrialTick", "payload"],
+      "uses": ["db", "loot", "paused", "power", "refresh", "room", "sweep", "toast"]
+    },
+    {
+      "file": "towing",
+      "module": "towing",
+      "exportName": "TowingOperations",
+      "methods": [
+        "init",
+        "ensure",
+        "attached",
+        "detach",
+        "towingTick",
+        "command",
+        "destroy",
+        "payload"
+      ],
+      "uses": [
+        "db",
+        "field",
+        "paused",
+        "refresh",
+        "room",
+        "sessions",
+        "stats",
+        "stopCombat",
+        "toast"
+      ]
     }
   ]
 }

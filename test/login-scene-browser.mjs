@@ -4,7 +4,14 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
-import { root, availablePort, evidenceDir, ready, cleanup } from './helpers/browser-fixture.mjs';
+import {
+  root,
+  availablePort,
+  evidenceDir,
+  ready,
+  cleanup,
+  failureEvidence,
+} from './helpers/browser-fixture.mjs';
 
 const out = evidenceDir('login-scene'),
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-login-scene-')),
@@ -31,7 +38,66 @@ try {
   });
   // Observe actual canvas drawing, without adding production-only test APIs.
   await context.addInitScript(() => {
-    window.sceneTest = { draws: 0, ships: {} };
+    window.sceneTest = {
+      draws: 0,
+      ships: {},
+      motion: [],
+      suppressReduceChange: false,
+      suppressedEvents: 0,
+      deliveredReduceEvents: 0,
+    };
+    window.loginMotionQueries = [];
+    // Bounded causal evidence and a controlled reduced-motion delivery-loss fixture.
+    const trace = (event, media = null) => {
+      const canvas = document.querySelector('.login-scene');
+      window.sceneTest.motion.push({
+        event,
+        now: performance.now(),
+        matches: media?.matches,
+        hidden: document.hidden,
+        width: innerWidth,
+        height: innerHeight,
+        renderer: canvas ? { ...canvas.dataset } : null,
+        draws: window.sceneTest.draws,
+      });
+      if (window.sceneTest.motion.length > 128) window.sceneTest.motion.shift();
+    };
+    const matchMedia = window.matchMedia.bind(window);
+    window.matchMedia = (query) => {
+      const media = matchMedia(query);
+      if (query.includes('prefers-reduced-motion')) {
+        trace('query-created', media);
+        window.loginMotionQueries.push(media);
+        const add = media.addEventListener;
+        add.call(media, 'change', () => {
+          trace('media-change-before', media);
+          setTimeout(() => trace('media-change-next-task', media), 0);
+        });
+        media.addEventListener = function (type, callback, options) {
+          if (type === 'change') trace('change-listener-added', media);
+          const observed =
+            type === 'change'
+              ? function (event) {
+                  // Deterministic delivery-loss fixture: real media state/animation remain untouched.
+                  if (event.matches && window.sceneTest.suppressReduceChange) {
+                    window.sceneTest.suppressedEvents++;
+                    trace('fixture-suppressed-reduce-change', media);
+                    return;
+                  }
+                  if (event.matches) window.sceneTest.deliveredReduceEvents++;
+                  return typeof callback === 'function'
+                    ? callback.call(this, event)
+                    : callback.handleEvent(event);
+                }
+              : callback;
+          return add.call(this, type, observed, options);
+        };
+      }
+      return media;
+    };
+    window.addEventListener('resize', () => trace('resize'));
+    document.addEventListener('visibilitychange', () => trace('visibility'));
+
     const draw = CanvasRenderingContext2D.prototype.drawImage;
     CanvasRenderingContext2D.prototype.drawImage = function (...args) {
       if (this.canvas.classList.contains('login-scene')) {
@@ -130,6 +196,9 @@ try {
     });
   }
   await page.setViewportSize({ width: 1440, height: 960 });
+  await page.evaluate(() => {
+    window.sceneTest.suppressReduceChange = true;
+  });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.waitForFunction(
     () => document.querySelector('.login-scene').dataset.running === 'false',
@@ -154,9 +223,29 @@ try {
       .evaluate((el) => getComputedStyle(el, '::after').animationName),
     'none',
   );
+  const fallback = await page.evaluate(() => ({
+    matches: window.loginMotionQueries[0].matches,
+    deliveries: window.sceneTest.deliveredReduceEvents,
+    suppressed: window.sceneTest.suppressedEvents,
+    width: document.querySelector('.login-scene').getBoundingClientRect().width,
+    x: window.sceneTest.ships[703].last,
+  }));
+  assert.equal(fallback.matches, true, 'Actual production media query changed');
+  assert.equal(fallback.deliveries, 0, 'No reduce callback was forwarded to production');
+  const expectedX =
+    0.12 * (fallback.width + 240) - 120 - 30 * Math.min(1.25, Math.max(0.6, fallback.width / 1440));
+  assert.ok(
+    Math.abs(fallback.x - expectedX) < 0.01,
+    'Lost-event fallback repaints the independent phase-zero traffic pose',
+  );
   results.push({
-    check: 'Reduced motion disables traffic and login CSS animation',
+    check:
+      'Reduced motion disables traffic and login CSS animation despite suppressed change delivery',
+    fallback,
     status: 'pass',
+  });
+  await page.evaluate(() => {
+    window.sceneTest.suppressReduceChange = false;
   });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.waitForFunction(
@@ -210,6 +299,45 @@ try {
   console.log(
     'Login scene: landmarks, six traffic variants/motion, DPR/resize, form interaction, reduced motion and lifecycle PASS',
   );
+} catch (error) {
+  const pages = [];
+  for (const context of browser?.contexts() || []) {
+    for (const page of context.pages()) {
+      pages.push(
+        await page
+          .evaluate(() => ({
+            url: location.href,
+            visibility: document.visibilityState,
+            reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+            originalQueries: window.loginMotionQueries?.map((q) => ({
+              media: q.media,
+              matches: q.matches,
+            })),
+            renderer: { ...document.querySelector('.login-scene')?.dataset },
+            scene: window.sceneTest,
+          }))
+          .catch((snapshotError) => ({ snapshotError: String(snapshotError) })),
+      );
+    }
+  }
+  fs.writeFileSync(
+    path.join(out, 'failure-state.json'),
+    JSON.stringify(
+      {
+        error: String(error?.stack || error),
+        node: process.version,
+        browser: browser?.version(),
+        errors,
+        failedAssets,
+        completed: results,
+        pages,
+      },
+      null,
+      2,
+    ),
+  );
+  await failureEvidence(browser, out, error);
+  throw error;
 } finally {
   await cleanup(server, browser, log, dir);
 }

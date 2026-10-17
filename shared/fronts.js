@@ -64,7 +64,7 @@ import { EXALTED_STANDING } from './reputation.js';
  * @property {number} tokens - Faction token cost to purchase.
  * @property {number} credits - Credit cost component.
  * @property {number} rep - Minimum faction reputation prerequisite.
- * @property {Object.<string, any>} give - Reward payload delivered to player upon purchase.
+ * @property {Record<string, number | string | boolean>} give - Reward payload delivered to player upon purchase.
  */
 
 // ------------------------------------------------------------------ invasions (server-wide bosses)

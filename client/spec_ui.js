@@ -13,6 +13,8 @@ import {
   COMP_COST,
   TIER_UP_MIN,
   specPower,
+  specialistResource,
+  DREDGE_COMPONENT_NAMES,
 } from '/shared/specialty.js';
 import { ROLES_INFO } from '/shared/roles.js';
 import { credits } from '/shared/rules.js';
@@ -44,7 +46,7 @@ import { credits } from '/shared/rules.js';
 
 /**
  * HTML-escapes a string safely for insertion into template strings.
- * @param {any} s Input value
+ * @param {string | number | boolean | null | undefined} s Input value
  * @returns {string} Escaped HTML string
  */
 const esc = (s) =>
@@ -70,11 +72,11 @@ const mins = (ms) => {
  * @returns {string} HTML markup
  */
 const res = (k, n) =>
-  `<span style="color:${SPEC_RES[k].color}">${SPEC_RES[k].icon} ${n} ${esc(SPEC_RES[k].name)}</span>`;
+  `<span style="color:${SPEC_RES[k].color}">${k === 'plasma' ? '<img alt="Plasma" width="20" height="20" src="/assets/icons/dredge-plasma.png">' : SPEC_RES[k].icon} ${n} ${esc(SPEC_RES[k].name)}</span>`;
 
 /**
  * Renders the full Specialists screen at the Personal Station or docked view.
- * @param {any} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether interactive buttons are enabled
  * @returns {string} HTML markup
  */
@@ -85,7 +87,7 @@ export function specialistsHtml(G, interactive) {
     parts = y.parts || {},
     ss = y.specState || {},
     cur = SPEC[y.ship.hull];
-  let h = `<div class="dim small">Ten one-of-a-kind ships, each built for a single job. Each job drops that ship's <b>blueprints</b>, whatever you fly. Flying the specialist itself earns its unique resource, which the station refines into <b>parts</b> (${PART_RATE} to 1). Parts upgrade her five components, and a full set unlocks a timed <b>tier-up</b> in the drydock, up to Tier ${TIER_MAX}.</div>`;
+  let h = `<div class="dim small">${SPECIALISTS.length} one-of-a-kind ships, each built for a single job. Each job drops that ship's <b>blueprints</b>, whatever you fly. Flying the specialist itself earns its unique resource, which the station refines into <b>parts</b> (${PART_RATE} to 1). Parts upgrade her five components, and a full set unlocks a timed <b>tier-up</b> in the drydock, up to Tier ${TIER_MAX}.</div>`;
   if (cur) {
     // the specialist you are flying
     const st = ss[cur.id] || { tier: 1, comp: {} },
@@ -94,7 +96,7 @@ export function specialistsHtml(G, interactive) {
       full = Object.keys(COMPONENTS).every((c) => (st.comp[c] || 0) >= st.tier);
     h += `<div class="ocard" style="border-color:#c9a24a88;margin-top:6px"><div class="oname"><img src="${artworkUrl(G.A.ships[cur.id].img)}" style="width:84px;height:64px;object-fit:contain;float:left;margin-right:8px"><b style="font-size:15px;color:#fff">${esc(cur.name)}</b> <span class="dim">${esc(cur.sub)}</span> <span style="color:${ROLES_INFO[cur.role].color}">${ROLES_INFO[cur.role].icon} ${ROLES_INFO[cur.role].name}</span>
       <div style="color:#ffd27a">${'★'.repeat(st.tier)}${'☆'.repeat(TIER_MAX - st.tier)} Tier ${st.tier} · specialty ${Math.round(pw * 100)}%</div><div class="small">${esc(cur.ability)}</div></div>
-      <div class="kv" style="clear:both"><span>${res(cur.res, spec[cur.res] || 0)}</span><span>${parts[cur.id] || 0} parts ${interactive && (spec[cur.res] || 0) >= PART_RATE ? `<button class="btn sm" data-act="spec" data-op="parts" data-id="${cur.id}">REFINE ${Math.floor((spec[cur.res] || 0) / PART_RATE)}</button>` : ''}</span></div>`;
+      <div class="kv" style="clear:both"><span>${res(cur.res, specialistResource(y, cur))}</span><span>${cur.key === 'star_dredge' ? '<img alt="Industrial part" width="20" height="20" src="/assets/icons/dredge-part.png">' : ''}${parts[cur.id] || 0} parts ${interactive && specialistResource(y, cur) >= PART_RATE ? `<button class="btn sm" data-act="spec" data-op="parts" data-id="${cur.id}">REFINE ${Math.floor(specialistResource(y, cur) / PART_RATE)}</button>` : ''}</span></div>`;
     if (st.upT && st.upT > Date.now())
       h += `<div class="kv"><span style="color:#7ad0ff">In the drydock for Tier ${st.tier + 1}</span><span>${mins(st.upT - Date.now())} left</span></div>`;
     else {
@@ -104,11 +106,15 @@ export function specialistsHtml(G, interactive) {
           .map(([c, C]) => {
             const lv = st.comp[c] || 0,
               can = lv < st.tier;
-            return `<tr><td>${C.name}</td><td>${lv} / ${st.tier}</td><td class="dim small">${Object.entries(
+            return `<tr><td>${cur.key === 'star_dredge' ? DREDGE_COMPONENT_NAMES[c] : C.name}</td><td>${lv} / ${st.tier}</td><td class="dim small">${Object.entries(
               C.bonus,
             )
               .map(([k, v]) =>
-                k === 'ability' ? `+${v}% specialty` : `+${v}% ${k.replace('Pct', '')}`,
+                k === 'ability'
+                  ? cur.key === 'star_dredge'
+                    ? '−1% active heat demand (cap20%; no output/rate gain)'
+                    : `+${v}% specialty`
+                  : `+${v}% ${k.replace('Pct', '')}`,
               )
               .join(
                 ', ',
@@ -140,7 +146,7 @@ export function specialistsHtml(G, interactive) {
         : '';
       return `<div class="ocard"><div class="oname"><img src="${artworkUrl(G.A.ships[sp.id].img)}" style="width:64px;height:48px;object-fit:contain;float:left;margin-right:6px"><b>${esc(sp.name)}</b> <span class="small" style="color:${R.color}">${R.icon} ${R.name}</span>${st ? ` <span style="color:#ffd27a" class="small">T${st.tier}</span>` : ''}<div class="dim small">${esc(sp.sub)}</div></div>
       <div class="small" style="clear:both">${esc(sp.ability)}</div><div class="dim small">Loop: ${esc(sp.loop)}</div>
-      <div class="kv"><span class="small">Blueprints ${Math.min(n, BP_NEED)}/${BP_NEED}</span><span class="small">${res(sp.res, spec[sp.res] || 0)} · ${parts[sp.id] || 0} parts</span></div><div class="xpbar"><i style="width:${Math.min(100, (100 * n) / BP_NEED)}%;background:#c9a24a"></i></div>${btn}</div>`;
+      <div class="kv"><span class="small">${sp.key === 'star_dredge' ? '<img alt="Blueprint" width="24" height="24" src="/assets/icons/dredge-blueprint.png">' : ''} Blueprints ${Math.min(n, BP_NEED)}/${BP_NEED}</span><span class="small">${res(sp.res, specialistResource(y, sp))} · ${parts[sp.id] || 0} parts</span></div><div class="xpbar"><i style="width:${Math.min(100, (100 * n) / BP_NEED)}%;background:#c9a24a"></i></div>${btn}</div>`;
     }).join('') +
     '</div>';
   if (interactive)

@@ -5,7 +5,7 @@
  * Career guide tutorial milestone definition.
  * @typedef {Object} TutorialStep
  * @property {string} [ev] - Event code triggering step completion (e.g. 'target', 'land2', 'sell', 'kill', 'site', 'job', 'chest').
- * @property {function(any, any=): boolean} [check] - State condition evaluator receiving player data and asset registry.
+ * @property {function(import('../server/game.js').PlayerData, import('./rules.js').GameAssets=): boolean} [check] - State condition evaluator receiving player data and asset registry.
  * @property {string} title - Display title of the milestone.
  * @property {string} text - Guidance instructions displayed to the player.
  * @property {number} reward - Credit reward awarded on completion.
@@ -14,7 +14,7 @@
 
 /**
  * Computes the total number of installed outfits on the player's active ship.
- * @param {any} d - Player save data containing active ship state.
+ * @param {import('../server/game.js').PlayerData} d - Player save data containing active ship state.
  * @returns {number} Total count of equipped outfits.
  */
 const outfits = (d) => Object.values(d.ship.outfits || {}).reduce((a, b) => a + b, 0);
@@ -178,7 +178,7 @@ export const TUT_VERSION = 2;
 
 /**
  * Migrates a player save file's tutorial index if saved under an older tutorial version.
- * @param {any} d - Player save data object containing tutorial progress.
+ * @param {import('../server/game.js').PlayerData} d - Player save data object containing tutorial progress.
  * @returns {void}
  */
 export function tutMigrate(d) {

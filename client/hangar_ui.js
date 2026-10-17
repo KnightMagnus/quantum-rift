@@ -41,7 +41,7 @@ import { officerStats, credits } from '/shared/rules.js';
  * @property {number} [runs] Number of completed runs
  * @property {number} [ends] Timestamp when current job finishes
  * @property {number} [chance] Success probability (0..1)
- * @property {any} [job] Active job details
+ * @property {{id: string, name: string, time: number}} [job] Active job details
  */
 
 /**
@@ -53,7 +53,7 @@ import { officerStats, credits } from '/shared/rules.js';
 
 /**
  * HTML-escapes a string safely for insertion into template strings.
- * @param {any} s Input value
+ * @param {string | number | boolean | null | undefined} s Input value
  * @returns {string} Escaped HTML string
  */
 const esc = (s) =>
@@ -86,7 +86,7 @@ function statText(o) {
 
 /**
  * Renders an officer card with rarity color, stats, level, and optional actions.
- * @param {any} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {OfficerEntry} o Officer object
  * @param {string} [extra] Additional HTML content or buttons
  * @returns {string} HTML markup
@@ -100,7 +100,7 @@ function officerCard(G, o, extra) {
 
 /**
  * Determines current assignment location or shuttle duty for an officer.
- * @param {any} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {OfficerEntry} o Officer object
  * @returns {string|null} Assignment description or null if off duty
  */
@@ -116,7 +116,7 @@ function where(G, o) {
 
 /**
  * Renders the CREW tab interface (bridge officers, species synergy, bar hires, roster, lower deck).
- * @param {any} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function crewHtml(G) {
@@ -197,7 +197,7 @@ export function crewHtml(G) {
 
 /**
  * Renders compact sidebar shuttle activity status list.
- * @param {any} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function shuttleSummary(G) {
@@ -223,7 +223,7 @@ export function shuttleSummary(G) {
 
 /**
  * Renders the Hangar interface including active shuttles, shuttle construction, and the remote Job Board.
- * @param {any} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {boolean} atHome Whether player is currently docked at their Personal Station
  * @returns {string} HTML markup
  */
@@ -309,7 +309,7 @@ export function hangarHtml(G, atHome) {
 
 /**
  * Renders the Research Lab tech trees, active research countdown, and research queue.
- * @param {any} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether research actions are enabled
  * @returns {string} HTML markup
  */
@@ -341,7 +341,7 @@ export function researchHtml(G, interactive) {
 
 /**
  * Renders the Material crates inventory grid and crate refinement actions.
- * @param {any} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether refining actions are interactive
  * @returns {string} HTML markup
  */
@@ -357,7 +357,7 @@ export function materialsHtml(G, interactive) {
 
 /**
  * Renders the modal dialog for boarding a disabled ship (plunder, capture, rescue/arrest).
- * @param {any} G Game state object
+ * @param {import("./main.js").ClientGameState} G Game state object
  * @param {BoardedTarget} t Target ship entity
  * @returns {string} HTML markup
  */

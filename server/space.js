@@ -9,7 +9,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @typedef {object} WeaponMount
  * @property {number} w Weapon item ID.
  * @property {number} n Number of mounted weapon instances.
- * @property {any} p Precomputed weapon parameters (range, reload, speed, homing, etc.).
+ * @property {import('../shared/rules.js').WeaponConfig} p Precomputed weapon parameters (range, reload, speed, homing, etc.).
  * @property {number} cd Current weapon cooldown time remaining in seconds.
  * @property {number} ammo Current ammunition count or Infinity if unlimited.
  * @property {string} snd Sound effect identifier.
@@ -44,7 +44,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {string} state Entity flight state ('fly', 'jumpout', 'landed').
  * @property {number} jumpT Countdown timer for hyperjump execution.
  * @property {string} [jumpTo] Destination system ID during jump.
- * @property {any} [mission] Mission data object if this is a spawned mission target.
+ * @property {import('./game.js').Mission} [mission] Mission data object if this is a spawned mission target.
  * @property {number} life Lifespan in seconds before departure.
  * @property {number} cargo Cargo capacity or cargo indicator.
  * @property {number} strength Base strength rating of the ship.
@@ -73,16 +73,19 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {boolean} [kingpin] True if Armada contract kingpin target.
  * @property {boolean} [warFleet] True if spawned as part of a system state war fleet.
  * @property {number} [coopRe] Armada shield recharge multiplier bonus.
- * @property {any} [catchup] Speed catchup boost when escort falls behind.
+ * @property {{dx: number, dy: number, mul: number} | boolean} [catchup] Speed catchup boost when escort falls behind.
  * @property {boolean} [tradeMate] True if accompanying a trader convoy.
  * @property {number} [escortSlot] Formation slot index for wingmates.
  * @property {string} [wingUid] Saved wingmate unique identifier.
  * @property {number} [wingOf] Player session ID of commanding player.
+ * @property {number} [towCap] Hard attached towing velocity limit.
  * @property {number} [distractT] Timestamp until distraction by jettisoned cargo expires.
  * @property {Entity | null} [fireAt] Current target entity to aim weapons at.
  * @property {number} [seq] Sequence number of last applied player input packet.
  * @property {number} [_f2] Previous state of secondary fire button.
  * @property {boolean} [noDisable] True if entity is destroyed immediately without disability threshold.
+ * @property {number} [industrialRoot] Noncombat industrial collector root ID.
+ * @property {string} [miningEncounter] Mining-pressure encounter scope ID.
  * @property {number} [helpT] Timestamp of last distress call for reinforcements.
  * @property {boolean} [dread] True if dreadnought boss entity.
  * @property {number} [repHitT] Timestamp of last reputation penalty hit.
@@ -108,7 +111,10 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {number} evT Event tracking timestamp.
  *
  * @typedef {object} Shot
+ * @property {string|null} [captain] Captured root captain for ordinary rock damage.
  * @property {number} id Unique projectile ID.
+ * @property {string} [miningEncounter] Captured pressure-encounter scope.
+ * @property {import("./mining-contracts.js").MiningSource|null} [mining] Captured mining provenance.
  * @property {number} w Weapon ID used to fire this shot.
  * @property {number} owner Entity ID of shooting ship.
  * @property {number} x Current position X.
@@ -118,7 +124,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {number} life Remaining projectile lifetime in seconds.
  * @property {number} dmgA Armor / hull damage dealt on impact.
  * @property {number} dmgS Shield damage dealt on impact.
- * @property {any} p Precomputed weapon properties.
+ * @property {import('../shared/rules.js').WeaponConfig} p Precomputed weapon properties.
  * @property {Entity | null} [target] Guided missile target entity, if homing.
  *
  * @typedef {object} Beam
@@ -133,10 +139,17 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {string} [mat] Material commodity type.
  * @property {number} [grade] Material grade index (0-4).
  * @property {string} [ore] Mined ore commodity ID.
+ * @property {number} [rich] Authored field richness (not raw grade).
+ * @property {import('../shared/cargo-contracts.js').GradeLots} [remainingLots]
+ * @property {string} [generationKey]
+ * @property {string} [parcelKey]
+ * @property {number[]} [progressionTokens]
+ * @property {boolean} [progressionClaimed]
  * @property {number} [n] Quantity of ore or units.
  * @property {string} [cargo] Jettisoned commodity ID.
- * @property {any} [salvage] Quest salvage payload.
- * @property {any} [chest] Pirate treasure chest payload.
+ * @property {{owner: string, sys: string, until: number}} [jettisonPickup] Owner-only pickup grace in origin-system simulation time.
+ * @property {{id: string, name: string, xp?: number, credits?: number}} [salvage] Quest salvage payload.
+ * @property {{credits?: number, tokens?: number, shards?: number, rep?: Record<string, number>}} [chest] Pirate treasure chest payload.
  *
  * @typedef {object} FloatingLoot
  * @property {number} id Unique loot canister ID.
@@ -154,7 +167,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {Array<number[]>} shots Serialized projectile positions and weapon types.
  * @property {Array<number[]>} beams Serialized active laser beam vectors.
  * @property {Array<number[]>} loot Serialized floating salvage canisters.
- * @property {Array<any[]>} ev Transient visual/audio simulation events.
+ * @property {Array<[string, ...(number | string)[]]>} ev Transient visual/audio simulation events.
  */
 
 // One star system's live simulation: ships (players, their escorts, NPC traffic), shots, beams, loot.
@@ -215,31 +228,31 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
  * Simulates ships, physics, weapons fire, projectile trajectories, laser beams,
  * floating debris/loot, asteroid fields, and NPC combat AI.
  *
- * @property {any} game Parent game server engine instance.
- * @property {any} A Global game asset definitions.
+ * @property {import('./game.js').Game} game Parent game server engine instance.
+ * @property {import('../shared/rules.js').GameAssets} A Global game asset definitions.
  * @property {SpaceSystem} sys System definition and stellar data from galaxy database.
  * @property {string} id Unique system identifier string.
  * @property {Map<number, Entity>} ships Active ships, escorts, drones, and traffic in this system.
  * @property {Shot[]} shots Active ballistic and guided weapon projectiles.
  * @property {Beam[]} beams Active continuous beam weapons currently firing.
  * @property {FloatingLoot[]} loot Floating cargo canisters, mined ore chunks, and salvage crates.
- * @property {Array<any[]>} events Transient visual and audio events accumulated for next client network update.
+ * @property {Array<[string, ...(number | string)[]]>} events Transient visual and audio events accumulated for next client network update.
  * @property {number} t Simulation timestamp in seconds.
  * @property {number} spawnT Countdown until next background traffic spawn check.
  * @property {number} players Number of human player-piloted ships currently flying in this system.
  * @property {Rock[]} rocks Mining field asteroids and gas pockets.
- * @property {any} m Cached system-wide modifiers from active fronts or living states.
+ * @property {Record<string, number>} m Cached system-wide modifiers from active fronts or living states.
  * @property {number} mT Counter for modifier recalculation cadence.
  * @property {number} quietT Quiet duration timer for system sleep deallocation.
  * @property {boolean} keep Prevent deallocation flag.
  * @property {number} errs Count of tick simulation errors.
  * @property {string[]} nearFacs Cached list of neighboring faction IDs for frontier traffic generation.
- * @property {any[]} _ports Cached landing-capable spaceports in this system.
+ * @property {import('./game.js').StellarBody[]} _ports Cached landing-capable spaceports in this system.
  */
 export class Space {
   /**
    * Initializes a live system space simulation.
-   * @param {any} game Server game instance.
+   * @param {import('./game.js').Game} game Server game instance.
    * @param {string} sysId Unique star system ID.
    */
   constructor(game, sysId) {
@@ -260,27 +273,7 @@ export class Space {
         this.spawnTraffic(true); // 2.3: busier systems
     // asteroids and gas pockets in the system's mining fields: they break into ore that ships scoop up, and regrow
     this.rocks = [];
-    for (const f of this.sys.fields || [])
-      for (let i = 0; i < f.rocks; i++) {
-        const a = Math.random() * Math.PI * 2,
-          d = Math.sqrt(Math.random()) * f.r,
-          r = 16 + Math.random() * 30;
-        const max = Math.round(
-          r * (f.ore === 'gas' ? 6 : f.ore === 'shards' ? 12 : 9) * (1 + f.rich * 0.5),
-        );
-        this.rocks.push({
-          id: NEXT++,
-          x: Math.round(f.x + Math.cos(a) * d),
-          y: Math.round(f.y + Math.sin(a) * d),
-          r: Math.round(r),
-          ore: f.ore,
-          rich: f.rich,
-          hp: max,
-          max,
-          down: 0,
-          evT: 0,
-        });
-      }
+    this.game.features.mining.openSpace(this);
   }
   /**
    * Generates compact serialized state array of asteroid field rocks for client rendering.
@@ -303,29 +296,9 @@ export class Space {
    * @param {boolean} mining Whether damage originates from a mining laser.
    * @returns {void}
    */
-  hitRock(k, dmg, mining) {
-    if (k.down) return;
-    k.hp -= dmg * (mining ? 6 : 1);
-    if (k.hp <= 0) {
-      k.down = this.t + (100 + Math.random() * 60) / (this.m ? this.m.regrow : 1);
-      k.hp = k.max;
-      const n = Math.max(1, Math.round(k.r / 14)) + (k.rich - 1);
-      for (let i = 0; i < n; i++)
-        this.loot.push({
-          id: NEXT++,
-          x: k.x + rnd(-k.r, k.r) * 0.6,
-          y: k.y + rnd(-k.r, k.r) * 0.6,
-          vx: rnd(-25, 25),
-          vy: rnd(-25, 25),
-          t: this.t,
-          it: { ore: k.ore, rich: k.rich, n: k.rich + (Math.random() < 0.4 ? 1 : 0) },
-          kind: { ore: 2, gas: 3, shards: 4 }[k.ore],
-        });
-      this.events.push(['rock', k.id, 0], ['boom', k.x, k.y, k.r * 1.2]);
-    } else if (this.t - k.evT > 0.25) {
-      k.evT = this.t;
-      this.events.push(['rock', k.id, Math.round((100 * k.hp) / k.max)]);
-    }
+  hitRock(k, dmg, mining, captain = null) {
+    // Legacy direct damage retains ordinary output; clean credit requires actual collision provenance.
+    this.game.features.mining.ordinary(this, k, dmg * (mining ? 6 : 1), captain);
   }
   /**
    * Finds an active asteroid rock intersecting coordinates.
@@ -350,7 +323,7 @@ export class Space {
   /**
    * Spawns and registers a new ship entity in this space simulation.
    * @param {object} o Ship initialization parameters.
-   * @param {any} [o.loadout] Ship loadout with hull, outfits, weapons, and ammo.
+   * @param {import('../shared/rules.js').ShipLoadout} [o.loadout] Ship loadout with hull, outfits, weapons, and ammo.
    * @param {number} [o.hull] Hull ID if no loadout specified.
    * @param {string} [o.faction] Faction affiliation ID.
    * @param {number} [o.x=0] Initial position X.
@@ -358,7 +331,7 @@ export class Space {
    * @param {number} [o.vx=0] Initial velocity X.
    * @param {number} [o.vy=0] Initial velocity Y.
    * @param {number} [o.a=0] Initial heading angle in radians.
-   * @param {any} [o.bonus] Stat multiplier bonuses.
+   * @param {import('../shared/rules.js').ShipStatsBonus} [o.bonus] Stat multiplier bonuses.
    * @param {number} [o.shield] Override initial shields.
    * @param {number} [o.armor] Override initial armor.
    * @param {number} [o.fuel] Override initial fuel.
@@ -367,7 +340,7 @@ export class Space {
    * @param {number | null} [o.owner] Commanding parent entity ID.
    * @param {string | null} [o.name] Display name.
    * @param {string} [o.state='fly'] Initial flight state.
-   * @param {any} [o.mission] Linked mission payload.
+   * @param {import('./game.js').Mission} [o.mission] Linked mission payload.
    * @param {number} [o.cargo] Carried cargo count.
    * @param {string} [o.pers] Combat personality override.
    * @param {Record<number, number>} [o.ammo] Weapon ammo counts.
@@ -465,6 +438,8 @@ export class Space {
    * @returns {void}
    */
   remove(e, why) {
+    if (e.player && e.player.s.ent === e && this.game.db.world.towing)
+      this.game.features.towing.detach(e.player.s);
     e.dead = true;
     this.ships.delete(e.id);
     if (why) this.events.push(['flash', Math.round(e.x), Math.round(e.y)]);
@@ -482,7 +457,7 @@ export class Space {
   }
   /**
    * Gets cached list of landing-capable ports in this system.
-   * @returns {any[]} Array of stellar bodies with landing services.
+   * @returns {import('./game.js').StellarBody[]} Array of stellar bodies with landing services.
    */
   ports() {
     return (
@@ -542,6 +517,12 @@ export class Space {
   }
   // Idle wingmates must not turn a captain's protected passage into an unsolicited fight.
   canAcquire(e, o) {
+    if (e.industrialRoot || o.industrialRoot) return false;
+    if (
+      (e.miningEncounter || o.miningEncounter) &&
+      this.game.features.pressure.allow(this, e, o) === false
+    )
+      return false;
     if (this.spared(e, o)) return false;
     const lead = this.root(e);
     return !(
@@ -583,6 +564,12 @@ export class Space {
    * @returns {boolean} True if attacks can connect and damage target.
    */
   canHit(a, b) {
+    if (a.industrialRoot || b.industrialRoot) return false;
+    if (
+      (a.miningEncounter || b.miningEncounter) &&
+      this.game.features.pressure.allow(this, a, b) === false
+    )
+      return false;
     if (this.isHostile(a, b)) {
       // Only arrival grace blocks physical damage. Ambient newcomer truce blocks
       // acquisition, while existing shots/beams can still hit a crossing captain.
@@ -618,6 +605,9 @@ export class Space {
    */
   isHostile(a, b) {
     if (!a || !b || a === b || a.dead || b.dead) return false;
+    const scoped =
+      a.miningEncounter || b.miningEncounter ? this.game.features.pressure.allow(this, a, b) : null;
+    if (scoped !== null) return scoped;
     const ra = this.root(a),
       rb = this.root(b);
     if (ra === rb) return false;
@@ -916,7 +906,7 @@ export class Space {
   }
   /**
    * Spawns a named bounty mission target and its defensive escort wing.
-   * @param {any} m Bounty mission specification.
+   * @param {import('./game.js').Mission} m Bounty mission specification.
    * @returns {Entity | null} Spawned mission target entity.
    */
   spawnMissionTarget(m) {
@@ -1279,6 +1269,7 @@ export class Space {
    * @returns {void}
    */
   callHelp(s, attacker) {
+    if (s.miningEncounter || attacker.miningEncounter) return;
     if (s.player || this.sys.arena || (s.helpT || -99) > this.t - 5) return;
     s.helpT = this.t;
     for (const o of this.ships.values()) {
@@ -1357,6 +1348,15 @@ export class Space {
   fire(e, g, t, angle) {
     const p = g.p,
       W = this.A.weapons[g.w];
+    const captain = this.root(e).player?.s.name;
+    const provenance = {
+      captain: captain ? this.game.db.key(captain) : null,
+      source: e.id,
+      mount: e.guns.indexOf(g),
+      weapon: g.w,
+      cadence: p.reload / Math.max(1, g.n),
+      contactId: `beam:${this.game.db.world.mining?.clock}:${e.id}:${e.guns.indexOf(g)}:${this.t}`,
+    };
     if (g.ammo <= 0) return;
     if (p.bay) {
       const launch = W.launch;
@@ -1399,11 +1399,17 @@ export class Space {
           w: g.w,
           until: this.t + (p.continuous ? DT * 1.5 : 0.12),
         });
-        this.hitRock(
-          rk.k,
-          (p.dmgA + p.dmgS * 0.3) * (p.continuous ? K.beamDps * DT * Math.max(1, g.n) : 1),
-          this.A.weapons[g.w].mining,
-        );
+        const damage =
+          (p.dmgA + p.dmgS * 0.3) * (p.continuous ? K.beamDps * DT * Math.max(1, g.n) : 1);
+        if (W.mining)
+          this.game.features.mining.contact(this, rk.k, {
+            source: provenance,
+            damage,
+            x: rk.x,
+            y: rk.y,
+            projectile: false,
+          });
+        else this.hitRock(rk.k, damage, false, provenance.captain);
         if (!p.continuous || this.t - g.sndT > 0.6) this.sound(e, g);
         if (p.continuous) g.cd = 0;
         return;
@@ -1430,7 +1436,14 @@ export class Space {
     const sp = p.speed;
     const ox = e.x + Math.sin(e.a) * e.st.size * 0.35,
       oy = e.y - Math.cos(e.a) * e.st.size * 0.35;
+    const shotId = NEXT++;
     this.shots.push({
+      id: shotId,
+      miningEncounter: e.miningEncounter,
+      mining: W.mining
+        ? Object.freeze({ ...provenance, contactId: `shot:${this.game.features.mining.shotId()}` })
+        : null,
+      captain: provenance.captain,
       x: ox,
       y: oy,
       vx: e.vx * (p.homing ? 0.3 : 1) + Math.sin(ang) * sp,
@@ -1487,7 +1500,7 @@ export class Space {
    * @param {Entity} e Firing ship entity.
    * @param {number} ang Beam trajectory heading in radians.
    * @param {number} len Maximum beam range.
-   * @returns {{k: Rock, d: number} | null} Hit rock and distance, or null.
+   * @returns {{k: Rock, d: number, x:number, y:number} | null} Hit rock and distance, or null.
    */
   rayRock(e, ang, len) {
     const dx = Math.sin(ang),
@@ -1498,8 +1511,12 @@ export class Space {
       const rx = k.x - e.x,
         ry = k.y - e.y,
         along = rx * dx + ry * dy;
-      if (along < 0 || along > len) continue;
-      if (Math.abs(rx * dy - ry * dx) < k.r && (!best || along < best.d)) best = { k, d: along };
+      if (along < -k.r || along > len + k.r) continue;
+      const perp = Math.abs(rx * dy - ry * dx);
+      if (perp < k.r) {
+        const d = Math.max(0, along - Math.sqrt(k.r * k.r - perp * perp));
+        if (d <= len && (!best || d < best.d)) best = { k, d, x: e.x + dx * d, y: e.y + dy * d };
+      }
     }
     return best;
   }
@@ -1619,7 +1636,10 @@ export class Space {
       if (p.bay && e.player) continue; // 2.1: bays launch and recall on a tap of F (toggleDrones)
       const wantFire = e.autoCombat ? !!t : e.player ? (g.sec ? inp.fire2 : inp.fire1) : !!t;
       if (!wantFire) continue;
-      const tgt = t && !t.dead ? t : null;
+      // Manual mining uses the existing aim/heading, independently of combat selection.
+      // Other weapons and delegated combat keep their targeting/leading behavior.
+      const tgt =
+        e.player && !automated && this.A.weapons[g.w]?.mining ? null : t && !t.dead ? t : null;
       if (p.bay || p.homing) {
         if (tgt || !p.homing) this.fire(e, g, tgt, e.a);
         continue;
@@ -1652,6 +1672,13 @@ export class Space {
    * @returns {[number, number, number] | void} Tuple [damageDealt, hitShieldsFlag, shooterRootId].
    */
   damage(s, dA, dS, src, ion) {
+    if (s.industrialRoot) return [0, 0, src?.id || 0]; // Utility collectors cannot tank combat or grant rewards.
+    if (
+      src &&
+      (src.miningEncounter || s.miningEncounter) &&
+      this.game.features.pressure.allow(this, src, s) === false
+    )
+      return;
     if (s.dead) return;
     const srcRoot = src ? this.root(src) : null;
     if (src && src.role && s.role) {
@@ -1737,6 +1764,7 @@ export class Space {
       this.game.onPlayerDeath(s.player, this, by);
       return;
     }
+    if (s.industrialRoot) return; // No farmable salvage, bounty or replacement ammo.
     if (s.boss) this.game.features.fronts.onBossKilled(s, this);
     if (s.convoyOf) this.game.features.fronts.onConvoyLost(s);
     if (s.wingUid && this.game.features.docks.onWingLost) this.game.features.docks.onWingLost(s); // 2.1
@@ -1801,6 +1829,12 @@ export class Space {
     this.game.combatAssist?.resolve(this);
     const formations = formationTargets(this);
     for (const e of this.ships.values()) {
+      if (e.towCap && e.player) {
+        formations.delete(e.id);
+        e.catchup = null;
+        if (e.autoCombat) this.game.combatAssist.stop(e.player.s, 'Towing requires manual flight');
+        if (e.state === 'jumpout') e.state = 'fly';
+      }
       if (e.state === 'jumpout') {
         e.jumpT -= DT;
         const sp = e.st.maxSpeed * 3;
@@ -1811,6 +1845,7 @@ export class Space {
         if (e.jumpT <= 0) this.game.finishJump(e, this);
         continue;
       }
+      if (e.industrialRoot) continue; // Industrial controller owns noncombat movement/collection.
       if (e.player) {
         const q = e.player.inputs;
         const inp = q.length ? q.shift() : e.player.lastInput;
@@ -1873,7 +1908,7 @@ export class Space {
       }
       if (e.player && e.state === 'fly' && this.sys.gate && !e.wormExit && !(e.wormT > this.t))
         for (const p of this.sys.stellars)
-          if (p.wormhole && Math.hypot(p.x - e.x, p.y - e.y) < p.r * 0.5) {
+          if (p.wormhole && !e.towCap && Math.hypot(p.x - e.x, p.y - e.y) < p.r * 0.5) {
             this.game.wormholeTransit(e, this, p);
             break;
           }
@@ -1894,7 +1929,12 @@ export class Space {
       if (s.life <= 0) continue;
       const owner = this.ships.get(s.owner);
       for (const e of this.ships.values()) {
-        if (e.id === s.owner || e.state !== 'fly') continue;
+        if (e.industrialRoot || e.id === s.owner || e.state !== 'fly') continue;
+        if (
+          s.miningEncounter &&
+          !this.game.features.pressure.shotAllowed(this, s.miningEncounter, e)
+        )
+          continue;
         if (owner ? !this.canHit(owner, e) : false) continue;
         const r = Math.max(9, e.st.size * 0.32);
         if (
@@ -1911,6 +1951,8 @@ export class Space {
               if (
                 o !== e &&
                 owner &&
+                (!s.miningEncounter ||
+                  this.game.features.pressure.shotAllowed(this, s.miningEncounter, o)) &&
                 this.canHit(owner, o) &&
                 Math.hypot(o.x - s.x, o.y - s.y) < s.p.blast
               )
@@ -1921,7 +1963,15 @@ export class Space {
       if (s.life > 0 && this.rocks.length) {
         const k = this.rockAt(s.x, s.y);
         if (k) {
-          this.hitRock(k, s.dmgA + s.dmgS * 0.3, this.A.weapons[s.w] && this.A.weapons[s.w].mining);
+          if (s.mining)
+            this.game.features.mining.contact(this, k, {
+              source: s.mining,
+              damage: s.dmgA + s.dmgS * 0.3,
+              x: s.x,
+              y: s.y,
+              projectile: true,
+            });
+          else this.hitRock(k, s.dmgA + s.dmgS * 0.3, false, s.captain);
           s.life = 0;
           this.events.push(['hit', Math.round(s.x), Math.round(s.y), s.w]);
         }
@@ -1929,18 +1979,18 @@ export class Space {
     }
     this.shots = this.shots.filter((s) => s.life > 0);
     this.beams = this.beams.filter((b) => b.until > this.t && this.ships.has(b.id));
-    for (const k of this.rocks)
-      if (k.down && this.t > k.down) {
-        k.down = 0;
-        this.events.push(['rock', k.id, 100]);
-      }
+    this.game.features.towing.towingTick(this);
+    if ([...this.ships.values()].some((e) => e.player && e.hull === 815))
+      this.game.features.industrial.industrialTick(this, DT);
+    this.game.features.mining.endTick(this);
+    this.game.features.pressure.pressureTick(this);
     for (const l of this.loot) {
       l.x += l.vx * DT;
       l.y += l.vy * DT;
       l.vx *= 0.99;
       l.vy *= 0.99;
     }
-    this.loot = this.loot.filter((l) => this.t - l.t < (l.it.ore ? 150 : 90));
+    this.loot = this.loot.filter((l) => l.it.generationKey || this.t - l.t < (l.it.ore ? 150 : 90));
     for (const e of this.ships.values())
       if (e.player && e.state === 'fly') {
         const reach = Math.max(30, e.st.size * 0.5) * (e.hull === 810 ? 4 : 1); // the Tidecaller's tractor tentacles

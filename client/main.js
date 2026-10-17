@@ -1,3 +1,7 @@
+import { coronaRouteBlocked } from '/shared/industrial-rules.js';
+import { initRefineryUI } from './refinery_ui.js';
+import { binding, migrateBindings, RESERVED_KEYS } from './action-bindings.js';
+import { initMiningUI, receiveMining } from './mining_ui.js';
 import { landingGuidance, landingReady } from './landing_autopilot.js';
 import { initLoginScene } from './login_scene.js';
 import { gatewayGuidance } from './gateway_autopilot.js';
@@ -62,6 +66,38 @@ import {
 
 const $ = (id) => document.getElementById(id);
 initLoginScene($('login'));
+
+/**
+ * @typedef {object} ClientGameState
+ * @property {import('../shared/rules.js').GameAssets | null} A Game assets dictionary.
+ * @property {import('../server/game.js').PlayerData | null} you Current player save data.
+ * @property {string | null} sys Current system ID.
+ * @property {string | null} landed Currently docked stellar body or null if flying.
+ * @property {string | null} view Current UI view mode.
+ * @property {Map<number, import('./render.js').RenderEntity>} ents Active entities in current space.
+ * @property {Array<{id: number, x: number, y: number, vx: number, vy: number, w: number, c: string, life: number}>} shots Active projectile shots.
+ * @property {Array<{id: number, from: {x: number, y: number}, to: {x: number, y: number}, c: string, life: number}>} beams Active beam weapon animations.
+ * @property {Array<{id: number, x: number, y: number, it: {cargo?: string, n?: number, mat?: string, credits?: number}}>} loot Floating loot canisters.
+ * @property {number} target Current target entity ID.
+ * @property {number} zoom Camera zoom scale.
+ * @property {number} spriteScale Sprite rendering scale.
+ * @property {string[]} route Active hyperspace route system IDs.
+ * @property {string | null} navStellar Navigation target stellar ID.
+ * @property {Record<string, number>} ammo Ammunition counts.
+ * @property {Record<string, string>} FAC Faction ID mapping.
+ * @property {string} ctab Active console tab.
+ * @property {string | null} ltab Active landed tab.
+ * @property {number} myId Player entity simulation ID.
+ * @property {number} myHull Player ship hull chassis ID.
+ * @property {number} hover Hovered entity ID.
+ * @property {Record<string, boolean | number | string | Record<string, string>>} opts Client preferences and configuration.
+ * @property {Record<string, string>} [pal] Color palette mapping.
+ * @property {Record<string, number>} [tokens] Current player token balances.
+ * @property {Array<{name: string, sys: string, ship: string}>} [captains] Active online captains list.
+ * @property {{team: string} | null} [arena] Crucible arena state.
+ * @property {((e: import('./render.js').RenderEntity) => boolean)} [isAlly] Checks if entity is an allied wingmate.
+ * @property {((e: import('./render.js').RenderEntity) => boolean)} [hostile] Checks if entity is hostile to player.
+ */
 const G = (window.G = {
   A: null,
   you: null,
@@ -173,6 +209,11 @@ export const ACTIONS = [
   ['ordFire', 'Fleet: hold fire', 'KeyY'],
   ['ordLoot', 'Fleet: collect loot', 'KeyU'],
   ['companion', 'Next companion tab', 'KeyC'],
+  ['surveyPulse', 'Survey Pulse', 'KeyV'],
+  ['dredgeSweep', 'Dredge Sweep', null],
+  ['dredgeHarvest', 'Dredge Harvest Plasma', null],
+  ['dredgeSmelter', 'Dredge Mobile Smelter', null],
+  ['towToggle', 'Attach / Detach Motherlode', null],
 ];
 const ALT = {
   thrust: 'ArrowUp',
@@ -181,7 +222,8 @@ const ALT = {
   rev: 'ArrowDown',
   ab: 'ShiftRight',
 }; // the arrow keys always work too
-const bound = (a) => G.opts.keys[a] || ACTIONS.find((x) => x[0] === a)[2];
+migrateBindings(G.opts, ACTIONS);
+const bound = (a) => binding(G.opts.keys, ACTIONS, a);
 const held = (a) => !!(keys[bound(a)] || (ALT[a] && keys[ALT[a]]));
 const actionOf = (code) => {
   for (const [a] of ACTIONS) if (bound(a) === code || ALT[a] === code) return a;
@@ -201,6 +243,24 @@ function saveOpts() {
     localStorage.setItem('rift.opts', JSON.stringify(G.opts));
   } catch {}
 }
+function miningModalBlocked() {
+  return ['opts', 'gmap', 'storybox', 'ctrlbox', 'storebox'].some((id) => {
+    const el = $(id);
+    return el && !el.classList.contains('hidden');
+  });
+}
+const miningUI = initMiningUI({
+  industrialAudio: audio.industrial,
+  towAudio: audio.towing,
+  G,
+  send,
+  bound,
+  label: (c) => (c ? c.replace(/^Key/, '') : 'assign key'),
+  blocked: () => typing() || miningModalBlocked(),
+  contextBlocked: miningModalBlocked,
+});
+initRefineryUI(G, send);
+setInterval(() => miningUI.refresh(), 100);
 function applyOpts() {
   G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
   document.documentElement.style.setProperty('--ui', G.opts.scale);
@@ -436,6 +496,20 @@ function onMessage(m) {
       G.myName = m.name;
       toast(G.you ? 'Reconnected.' : `Welcome to Quantum Rift, Captain ${m.name}.`);
       break;
+    case 'refineryFuelQuote':
+      G.refineryFuelQuote = m.quote;
+      if (G.landed && G.ltab === 'refinery') renderLanded();
+      refreshCompanion();
+      break;
+    case 'refineryQuote':
+      G.refineryQuote = m.quote;
+      if (G.landed && G.ltab === 'refinery') renderLanded();
+      break;
+    case 'refinery':
+      if (G.you) G.you.refinery = m.data;
+      if (G.landed && G.ltab === 'refinery') renderLanded();
+      refreshCompanion();
+      break;
     case 'you': {
       const first = !G.you;
       G.you = m.d;
@@ -494,6 +568,12 @@ function onMessage(m) {
       history = [];
       G.rocks = (m.rocks || []).map(([id, x, y, r, ore, hp]) => ({ id, x, y, r, ore, hp }));
       G.rockById = new Map(G.rocks.map((k) => [k.id, k]));
+      G.miningTarget = 0;
+      G.miningRocks = null;
+      G.mining = null;
+      G.miningPressure = null;
+      G.miningHazards = [];
+      receiveMining(G, m);
       if (G.route.length && G.route[0] === m.sys) G.route.shift();
       drawMini();
       if (G.autoRoute && G.route.length)
@@ -558,7 +638,8 @@ function onMessage(m) {
       break;
     case 'rivals':
       G.rivals = m.list;
-      if (!$('infobox').classList.contains('hidden')) renderInfo();
+      // Rivals only affect Captains; preserve in-progress gestures on other tabs.
+      if (!$('infobox').classList.contains('hidden') && G.itab === 'captains') renderInfo();
       break;
     case 'world': {
       // 2.5: a new trouble close by gets a beacon and a line of news
@@ -661,6 +742,7 @@ setInterval(() => {
 }, 10000); // keeps rush countdowns current
 // ------------------------------------------------------------------ snapshots and prediction
 function onSnap(m) {
+  receiveMining(G, m);
   G.combat = m.combat || {};
   G.formation = !!m.formation;
   $('combatcontrols').classList.remove('hidden');
@@ -819,7 +901,10 @@ function onEvent(ev) {
 }
 
 // ------------------------------------------------------------------ input
-const typing = () => document.activeElement && document.activeElement.tagName === 'INPUT';
+const typing = () =>
+  document.activeElement &&
+  (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) ||
+    document.activeElement.isContentEditable);
 window.addEventListener('keydown', (e) => {
   if (
     (e.key === 'Enter' || e.key === ' ') &&
@@ -884,6 +969,15 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   switch (actionOf(e.code)) {
+    case 'towToggle':
+    case 'dredgeSweep':
+    case 'dredgeHarvest':
+    case 'dredgeSmelter':
+      miningUI.invokeMiningAction(actionOf(e.code));
+      break;
+    case 'surveyPulse':
+      miningUI.invokeMiningAction('surveyPulse');
+      break;
     case 'target':
       cycleTarget(e.shiftKey ? -1 : 1);
       break;
@@ -1046,8 +1140,12 @@ $('infobody').addEventListener('click', (e) => {
   }
   const b = e.target.closest('[data-jet],[data-ord]');
   if (!b) return;
-  if (b.dataset.jet) send({ t: 'jettison', cid: b.dataset.jet, n: +b.dataset.n || 0 });
-  else send({ t: 'order', o: b.dataset.ord });
+  if (b.dataset.jet) {
+    const lots = b.dataset.grade
+      ? { common: 0, rich: 0, pure: 0, [b.dataset.grade]: +b.dataset.n }
+      : undefined;
+    send({ t: 'jettison', cid: b.dataset.jet, n: +b.dataset.n || 0, lots });
+  } else send({ t: 'order', o: b.dataset.ord });
   setTimeout(renderInfo, 250);
 });
 window.addEventListener(
@@ -1074,6 +1172,10 @@ G.startAutoJump = () =>
     }
   }, 300); // 2.6: follow the leader
 function setAuto(a, msg) {
+  if (a && (G.towing || G.you?.towing)?.attached) {
+    toast('Towing: manual flight only; detach before automatic transit.');
+    return;
+  }
   if (a) {
     send({ t: 'combat', op: 'off' });
     G.combat = {};
@@ -1103,6 +1205,33 @@ function autopilot(inp) {
     A = G.auto,
     S = SYS[G.sys];
   if (!me || !st || !S) return setAuto(null);
+  if (A.mode !== 'stop') {
+    const destination =
+      A.mode === 'land' || A.mode === 'gateway'
+        ? S.stellars.find((p) => p.id === A.id)
+        : (() => {
+            const to = SYS[G.route[0]];
+            if (!to) return null;
+            const a = Math.atan2(to.x - S.x, -(to.y - S.y));
+            return {
+              x: me.x + Math.sin(a) * (K.jumpClear + 1000),
+              y: me.y - Math.cos(a) * (K.jumpClear + 1000),
+            };
+          })();
+    const speed = Math.hypot(me.vx, me.vy);
+    const stoppingMargin =
+      1000 +
+      (speed * Math.PI) / Math.max(0.1, st.turn) +
+      (speed * speed) / (2 * Math.max(1, st.accel));
+    if (destination && coronaRouteBlocked(G.sys, me, destination, stoppingMargin)) {
+      G.autoRoute = false;
+      setAuto({ mode: 'stop' });
+      toast(
+        'Autopilot blocked: stellar collector keep-out. Braking; use manual flight to exit or harvest.',
+      );
+      return autopilot(inp);
+    }
+  }
   if (A.mode === 'stop') {
     // 1.1: full stop: turn against your drift and burn until still
     const sp = Math.hypot(me.vx, me.vy);
@@ -1301,7 +1430,7 @@ function toWorld(cx, cy) {
  * Identifies the nearest interactive ship or stellar body under the given world coordinates.
  * @param {number} wx World X coordinate
  * @param {number} wy World Y coordinate
- * @returns {{ ship?: ClientEntity, stellar?: any } | null} Picked target or null
+ * @returns {{ ship?: ClientEntity, stellar?: import('../server/game.js').StellarBody } | null} Picked target or null
  */
 function pickAt(wx, wy) {
   if (!G.view || G.landed) return null;
@@ -1331,7 +1460,7 @@ function pickAt(wx, wy) {
 }
 /**
  * Determines the appropriate mouse cursor style based on hover target.
- * @param {{ ship?: ClientEntity, stellar?: any } | null} h Picked object under cursor
+ * @param {{ ship?: ClientEntity, stellar?: import('../server/game.js').StellarBody } | null} h Picked object under cursor
  * @returns {string} CSS cursor identifier class suffix
  */
 function cursorFor(h) {
@@ -1423,6 +1552,15 @@ canvas.addEventListener('mousedown', (e) => {
     toast(
       `Nav: ${h.stellar.name}${h.stellar.svc.includes('L') ? ' (double-click to land; L chooses nearest)' : ''}`,
     );
+    return;
+  }
+  const rock = (G.rocks || []).find((k) => k.hp && Math.hypot(k.x - wx, k.y - wy) <= k.r + 8);
+  if (rock) G.miningTarget = rock.id;
+  const tow = (G.towing || G.you?.towing)?.objects.find(
+    (o) => !['delivered', 'destroyed'].includes(o.status) && Math.hypot(o.x - wx, o.y - wy) < 52,
+  );
+  if (tow) {
+    G.towTarget = tow.id;
     return;
   }
   if (G.opts.mouseAim) mouse.down = true; // mouse-aim mode: hold the left button on open space to fire
@@ -1580,22 +1718,24 @@ let rebinding = null;
  * @returns {string} Human-friendly key name
  */
 const keyName = (c) =>
-  ({
-    ArrowUp: '↑',
-    ArrowDown: '↓',
-    ArrowLeft: '←',
-    ArrowRight: '→',
-    ShiftLeft: 'Shift L',
-    ShiftRight: 'Shift R',
-    ControlLeft: 'Ctrl L',
-    ControlRight: 'Ctrl R',
-    AltLeft: 'Alt L',
-    AltRight: 'Alt R',
-  })[c] ||
-  c
-    .replace(/^Key/, '')
-    .replace(/^Digit/, '')
-    .replace(/^Numpad/, 'Num ');
+  !c
+    ? 'assign key'
+    : {
+        ArrowUp: '↑',
+        ArrowDown: '↓',
+        ArrowLeft: '←',
+        ArrowRight: '→',
+        ShiftLeft: 'Shift L',
+        ShiftRight: 'Shift R',
+        ControlLeft: 'Ctrl L',
+        ControlRight: 'Ctrl R',
+        AltLeft: 'Alt L',
+        AltRight: 'Alt R',
+      }[c] ||
+      c
+        .replace(/^Key/, '')
+        .replace(/^Digit/, '')
+        .replace(/^Numpad/, 'Num ');
 /**
  * Renders keybinding assignment rows in the options menu.
  * @returns {void}
@@ -1737,6 +1877,7 @@ window.addEventListener('rift-radio-vol', (e) => {
 });
 $('optreset').onclick = () => {
   G.opts.keys = {};
+  migrateBindings(G.opts, ACTIONS);
   saveOpts();
   renderKeys();
 };
@@ -1761,15 +1902,16 @@ window.addEventListener(
       // the next key pressed becomes the binding (Escape cancels); a key used by another action is swapped off it
       e.preventDefault();
       e.stopImmediatePropagation();
-      if (Object.values(ALT).includes(e.code)) {
-        toast(
-          'The arrow keys and right Shift always steer, so they cannot be bound to other actions.',
-        );
+      if (RESERVED_KEYS.has(e.code) && e.code !== 'Escape') {
+        toast('This key is reserved for steering or a fixed interface control.');
         rebinding = null;
         renderKeys();
         return;
       } // 2.0.3
-      if (e.code !== 'Escape') {
+      if (e.code === 'Backspace' || e.code === 'Delete') {
+        G.opts.keys[rebinding] = null;
+        saveOpts();
+      } else if (e.code !== 'Escape') {
         for (const [a] of ACTIONS)
           if (a !== rebinding && bound(a) === e.code) G.opts.keys[a] = bound(rebinding);
         G.opts.keys[rebinding] = e.code;
@@ -1957,6 +2099,12 @@ let acc = 0,
  */
 function fixedTick() {
   if (!G.view || G.landed || G.paused) return;
+  // Preserve automatic-control intent even if guidance completes or refuses this tick.
+  if ((G.towing || G.you?.towing)?.attached) G.auto = null;
+  G.view.towCap = (G.towing || G.you?.towing)?.attached
+    ? (G.towing || G.you?.towing).cap
+    : undefined;
+  const navigationRequested = !!G.auto;
   const inp = {
     thrust: held('thrust') ? 1 : 0,
     turn: (held('right') ? 1 : 0) - (held('left') ? 1 : 0),
@@ -2033,7 +2181,7 @@ function fixedTick() {
     rv: inp.rev,
     f1: inp.fire1,
     f2: inp.fire2,
-    nav: !!G.auto,
+    nav: navigationRequested || !!G.auto,
   });
   history.push({ seq, inp });
   if (history.length > 90) history.shift();

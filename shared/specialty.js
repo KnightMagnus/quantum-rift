@@ -65,6 +65,7 @@
  * @type {Object.<string, SpecialistResource>}
  */
 export const SPEC_RES = {
+  plasma: { name: 'Stellar Plasma', icon: '☀', color: '#ffb85c' },
   riftore: { name: 'Riftore', icon: '◆', color: '#ffb84a' },
   chitin: { name: 'Chitin Resonators', icon: '⬢', color: '#8ad84a' },
   umbra: { name: 'Umbral Shards', icon: '✦', color: '#b48aff' },
@@ -90,7 +91,7 @@ const S = (o) => ({
   glow: true,
   crew: 40,
   ...o,
-  cost: Math.round((o.cost * 0.7) / 10000) * 10000,
+  cost: o.finalCost ?? Math.round((o.cost * 0.7) / 10000) * 10000,
 }); // 1.0 balance: blueprints already gate these, so credits are 70%
 
 /**
@@ -98,6 +99,38 @@ const S = (o) => ({
  * @type {SpecialistShip[]}
  */
 export const SPECIALISTS = [
+  S({
+    id: 815,
+    key: 'star_dredge',
+    name: 'Star Dredge',
+    sub: 'Industrial Survey Barge',
+    role: 'survey',
+    res: 'plasma',
+    cost: 2400000,
+    finalCost: 2400000,
+    cargo: 400,
+    shield: 900,
+    shieldRe: 55,
+    armor: 1800,
+    accel: 180,
+    speed: 210,
+    turn: 22,
+    fuel: 700,
+    space: 110,
+    guns: 2,
+    turrets: 3,
+    mass: 760,
+    strength: 210,
+    size: 150,
+    weapons: [
+      [9102, 1, 0],
+      [130, 2, 0],
+    ],
+    ability:
+      'Forward common-material sweep and two industrial drones. 70% mobile smelter at 6 input tonnes/minute; opt-in shallow-corona plasma harvesting. Unprotected hold.',
+    loop: 'Earn blueprints by useful large-rock work in any hull. Build without plasma; gather plasma in marked shallow corona bands for parts.',
+    desc: 'A broad underbite scoop ahead of three massive charcoal containers, carried by worn brown plating and grey industrial framing.',
+  }),
   S({
     id: 805,
     key: 'lodestar',
@@ -488,4 +521,16 @@ export const TIER_UP_MIN = [0, 10, 20, 40, 80]; // minutes in drydock to go from
 export function specPower(st) {
   if (!st) return 1;
   return 1 + 0.1 * (st.comp && st.comp.special ? st.comp.special : 0) + 0.05 * ((st.tier || 1) - 1);
+}
+
+// Labels do not introduce new save slots or free stat multipliers.
+export const DREDGE_COMPONENT_NAMES = {
+  weapons: 'Intake',
+  shields: 'Heat Shields',
+  hull: 'Drones / Industrial Hull',
+  drive: 'Tow Rig',
+  special: 'Smelter / Harvest Control',
+};
+export function specialistResource(d, sp) {
+  return sp.key === 'star_dredge' ? d.cargo?.plasma || 0 : d.spec?.[sp.res] || 0;
 }

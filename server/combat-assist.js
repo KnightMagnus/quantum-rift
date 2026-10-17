@@ -43,6 +43,26 @@ import { winOdds } from '../shared/hostile.js';
  */
 
 /**
+ * Live computed ship performance stats.
+ * @typedef {object} CombatShipStats
+ * @property {number} armor Current maximum armor hitpoints.
+ * @property {number} [shields] Maximum shield capacity.
+ * @property {number} [speed] Maximum linear speed.
+ * @property {number} [cargo] Cargo capacity.
+ */
+
+/**
+ * Control inputs applied to ship physics simulation.
+ * @typedef {object} ShipInputControl
+ * @property {number} [thrust] Forward thruster input.
+ * @property {number} [turn] Steering torque input.
+ * @property {number} [fire1] Primary weapon fire command.
+ * @property {number} [fire2] Secondary weapon fire command.
+ * @property {number} [ab] Afterburner boost state.
+ * @property {number} [rev] Reverse thrusters state.
+ */
+
+/**
  * Entity representation participating in or evaluated by combat assist.
  * @typedef {object} CombatEntity
  * @property {number} id Unique entity simulation ID.
@@ -50,14 +70,14 @@ import { winOdds } from '../shared/hostile.js';
  * @property {boolean} [disabled] True if the ship is disabled and drifting.
  * @property {string} state Entity flight state ('fly', 'jumpout', 'landed').
  * @property {number} armor Current armor hitpoints.
- * @property {{armor: number, [key: string]: any}} st Live computed ship stats containing max armor.
- * @property {unknown} [player] Player reference if this is a player-controlled ship.
+ * @property {CombatShipStats} st Live computed ship stats containing max armor.
+ * @property {import('./game.js').Session | null} [player] Player reference if this is a player-controlled ship.
  * @property {boolean} [noDisable] Exemption flag preventing disablement threshold.
  * @property {number} [rescueT] Rescue protection countdown timestamp.
  * @property {number | null} [owner] Entity ID of the commanding or parent ship.
  * @property {CombatEntity | null} [target] Current active combat target entity.
  * @property {CombatEntity | null} [fireAt] Secondary weapon fire target entity.
- * @property {Record<string, any>} [inp] Ship input control state.
+ * @property {ShipInputControl} [inp] Ship input control state.
  * @property {number} [think] Time until next AI decision cycle.
  * @property {boolean} [autoCombat] Whether automated combat maneuvers and weapon firing are enabled.
  * @property {CombatEntity | null} [combatTarget] Shared combat target designated by assist or group leader.
@@ -76,27 +96,67 @@ import { winOdds } from '../shared/hostile.js';
  */
 
 /**
+ * Command input frame received from player client.
+ * @typedef {object} CombatInputFrame
+ * @property {number} [seq] Sequence number.
+ * @property {number} [thrust] Thrust control.
+ * @property {number} [turn] Turn control.
+ * @property {number} [ab] Afterburner.
+ * @property {number} [rev] Reverse thrusters.
+ * @property {number} [fire1] Primary fire.
+ * @property {number} [fire2] Secondary fire.
+ */
+
+/**
+ * Account save data fields accessed by combat assist.
+ * @typedef {object} CombatSessionData
+ * @property {string} sys Current solar system ID.
+ * @property {string} name Captain name.
+ * @property {string | number} [armada] Unique armada identifier.
+ * @property {boolean} [armadaFollow] Whether following armada leader.
+ */
+
+/**
  * Player session structure managing combat assist state and ship reference.
  * @typedef {object} CombatSession
  * @property {CombatState} [combat] Combat assist state for this session.
  * @property {CombatEntity} ent Currently active ship entity in space.
- * @property {{sys: string, name: string, armada?: string | number, armadaFollow?: boolean, [key: string]: any}} data Player account save data.
- * @property {any[]} inputs Pending input command queue.
- * @property {any} [lastInput] Most recent processed input.
+ * @property {CombatSessionData} data Player account save data.
+ * @property {CombatInputFrame[]} inputs Pending input command queue.
+ * @property {CombatInputFrame | null} [lastInput] Most recent processed input.
+ */
+
+/**
+ * System configuration parameters for combat space.
+ * @typedef {object} CombatSystemInfo
+ * @property {boolean} [arena] Whether system is a PvP combat arena.
+ * @property {string} [id] System ID.
+ * @property {string} [name] System name.
+ * @property {number} [danger] Danger level.
+ * @property {string} [faction] Controlling faction ID.
  */
 
 /**
  * System space simulation environment containing ships and combat context.
  * @typedef {object} CombatSpace
  * @property {string} id Space system identifier.
- * @property {{arena?: boolean, [key: string]: any}} sys System configuration parameters.
+ * @property {CombatSystemInfo} sys System configuration parameters.
  * @property {Map<number, CombatEntity>} ships Map of entity ID to live ship entities.
  * @property {number} t Current simulation timestamp.
- * @property {(entity: any) => any} root Resolves fleet root or parent commanding entity.
- * @property {(lead: any, target: any) => boolean} isHostile Checks hostile relationship between entities.
- * @property {(attacker: any, target: any) => boolean} canHit Checks whether attacks can connect and damage target.
- * @property {(source: any, target: any) => boolean} spared Checks whether source faction spares target.
- * @property {(source: any, target: any) => boolean} [newcomerTruce] Checks ambient targeting truce without arrival grace.
+ * @property {(entity: CombatEntity) => CombatEntity} root Resolves fleet root or parent commanding entity.
+ * @property {(lead: CombatEntity, target: CombatEntity) => boolean} isHostile Checks hostile relationship between entities.
+ * @property {(attacker: CombatEntity, target: CombatEntity) => boolean} canHit Checks whether attacks can connect and damage target.
+ * @property {(source: CombatEntity, target: CombatEntity) => boolean} spared Checks whether source faction spares target.
+ * @property {(source: CombatEntity, target: CombatEntity) => boolean} [newcomerTruce] Checks ambient targeting truce without arrival grace.
+ */
+
+/**
+ * Server game interface for combat coordination.
+ * @typedef {object} CombatGameHost
+ * @property {Record<string, CombatSpace>} spaces Active solar system space instances.
+ * @property {import('./features.js').FeatureServices} features Server feature services.
+ * @property {Map<number, CombatSession>} sessions Active client sessions.
+ * @property {(session: CombatSession, msg: import('./message-registry.js').NetworkMessage) => void} [send] Message transmitter.
  */
 
 /**
@@ -113,7 +173,7 @@ const stoppedOrders = new Set(['hold', 'holdfire', 'loot']);
 
 /**
  * Determines whether a ship entity is alive, flight-ready, and capable of combat.
- * @param {CombatEntity | any} e Candidate ship entity to check.
+ * @param {CombatEntity | null | undefined} e Candidate ship entity to check.
  * @returns {e is CombatEntity} True if the entity is available for combat operations.
  */
 export const available = (e) =>
@@ -131,7 +191,7 @@ export const available = (e) =>
 export class CombatAssist {
   /**
    * Initializes the CombatAssist service.
-   * @param {any} game The root Game server instance.
+   * @param {CombatGameHost} game The root Game server instance.
    */
   constructor(game) {
     this.game = game;
@@ -285,7 +345,7 @@ export class CombatAssist {
   /**
    * Validates whether a target entity is hostile, in range, and eligible for engagement.
    * @param {CombatSpace} sp Active space system instance.
-   * @param {CombatEntity | any} lead Lead attacking entity.
+   * @param {CombatEntity} lead Lead attacking entity.
    * @param {CombatEntity | null | undefined} t Candidate target entity.
    * @returns {t is CombatEntity} True if the target is valid for engagement.
    */

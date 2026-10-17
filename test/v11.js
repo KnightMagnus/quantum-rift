@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 1.1 tests: rival captains, hailing, fleet commands, jettison, combat rating, news and market flashes.
 import fs from 'node:fs';
@@ -220,12 +221,18 @@ ok(
   'attack my target: escorts engage it',
 );
 // jettison
-bd.cargo = { food: 10 };
+seedCargo(bd, { food: 10 });
 b.send({ t: 'jettison', cid: 'food', n: 10 });
 ok(!bd.cargo.food && sp3.loot.some((l) => l.it.cargo === 'food'), 'jettisoned cargo floats free');
 const lt = sp3.loot.filter((l) => l.it.cargo === 'food');
 for (const l of lt) game.onLoot({ s: b.s }, l.it);
-ok(bd.cargo.food === 10, 'and can be scooped back up');
+ok(
+  !bd.cargo.food && lt.reduce((n, l) => n + l.it.n, 0) === 10,
+  'own fleet pickup grace preserves dumped cargo',
+);
+sp3.t = Math.max(...lt.map((l) => l.it.jettisonPickup.until));
+for (const l of lt) game.onLoot({ s: b.s }, l.it);
+ok(bd.cargo.food === 10, 'and can be scooped back up after grace');
 // combat rating
 ok(
   combatRank(0).name === 'Harmless' && combatRank(250000).name === 'Elite',

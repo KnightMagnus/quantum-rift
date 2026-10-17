@@ -33,7 +33,7 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 /**
  * Check whether a system is appropriate for a rival's career archetype.
  * @param {{fac: string, kind: string}} r - Rival configuration.
- * @param {Record<string, any>} S - System definition object.
+ * @param {import('./game.js').SpaceSystem} S - System definition object.
  * @returns {boolean} True if system is valid for the rival.
  */
 function okSystem(r, S) {
@@ -48,7 +48,6 @@ function okSystem(r, S) {
 export const RivalsOperations = {
   /**
    * Initialize rival captains state and ambient spaceport news in world database.
-   * @this {any}
    * @returns {void}
    */
   rivalsInit() {
@@ -103,16 +102,14 @@ export const RivalsOperations = {
   },
   /**
    * Look up persistent state for a rival captain.
-   * @this {any}
    * @param {string} id - Rival identifier.
-   * @returns {Record<string, any> | undefined} Persistent rival record.
+   * @returns {Record<string, string | number | boolean> | undefined} Persistent rival record.
    */
   rivalState(id) {
     return this.db.world.rivals[id];
   },
   /**
    * Look up full name of a rival captain.
-   * @this {any}
    * @param {string} id - Rival identifier.
    * @returns {string} Rival name.
    */
@@ -121,8 +118,7 @@ export const RivalsOperations = {
   },
   /**
    * Look up relationship score between a player and a rival captain.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @param {string} id - Rival identifier.
    * @returns {number} Relationship score (-100 to 100).
    */
@@ -132,8 +128,7 @@ export const RivalsOperations = {
   },
   /**
    * Modify relationship score with a rival, logging changes and broadcasting news on threshold shifts.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {string} id - Rival identifier.
    * @param {number} delta - Delta to apply.
    * @param {string} [why] - Reason description.
@@ -162,7 +157,6 @@ export const RivalsOperations = {
   },
   /**
    * Add a headline to the persistent galaxy news feed.
-   * @this {any}
    * @param {string} text - Headline text.
    * @returns {void}
    */
@@ -173,7 +167,6 @@ export const RivalsOperations = {
   },
   /**
    * Retrieve recent headlines from the world news feed.
-   * @this {any}
    * @param {number} [n=6] - Number of items to retrieve.
    * @returns {string[]} Array of recent news strings.
    */
@@ -185,7 +178,6 @@ export const RivalsOperations = {
   },
   /**
    * Get active flash market price multiplier for a commodity at a stellar port.
-   * @this {any}
    * @param {string} stellar - Stellar port ID.
    * @param {string} cid - Commodity ID.
    * @returns {number} Price multiplier.
@@ -200,7 +192,6 @@ export const RivalsOperations = {
   // every 20 s: careers move on, ships get upgraded, news is made, grudges turn into hunters
   /**
    * Advance rival captains simulation tick: upgrade ships, trigger news, move between systems, spawn hunters.
-   * @this {any}
    * @returns {void}
    */
   rivalsTick() {
@@ -308,9 +299,8 @@ export const RivalsOperations = {
   },
   /**
    * Spawn bounty hunter escort ships targeting a player with a severe nemesis grudge.
-   * @this {any}
-   * @param {any} s - Player session.
-   * @param {Record<string, any>} R - Rival configuration object.
+   * @param {import('./game.js').Session} s - Player session.
+   * @param {Record<string, string | number>} R - Rival configuration object.
    * @returns {void}
    */
   spawnHunters(s, R) {
@@ -344,8 +334,7 @@ export const RivalsOperations = {
   // keep live systems in step with where the rivals are
   /**
    * Synchronize rival ships within an active space sector.
-   * @this {any}
-   * @param {any} sp - Space sector instance.
+   * @param {import('./space.js').Space} sp - Space sector instance.
    * @returns {void}
    */
   rivalSync(sp) {
@@ -396,9 +385,8 @@ export const RivalsOperations = {
   // think hook: rivals pick fights with their rivals and stand by their allies
   /**
    * AI decision loop for rival ships in space (attack nemeses, assist allies).
-   * @this {any}
-   * @param {any} e - Rival ship entity.
-   * @param {any} sp - Space sector instance.
+   * @param {import('./space.js').Entity} e - Rival ship entity.
+   * @param {import('./space.js').Space} sp - Space sector instance.
    * @returns {void}
    */
   rivalThink(e, sp) {
@@ -428,9 +416,8 @@ export const RivalsOperations = {
   // hostility hook (undefined = normal faction rules)
   /**
    * Determine hostility override between an NPC and a player based on rival status and relations.
-   * @this {any}
-   * @param {any} npc - NPC entity.
-   * @param {any} p - Player entity.
+   * @param {import('./space.js').Entity} npc - NPC entity.
+   * @param {import('./game.js').StellarBody} p - Player entity.
    * @returns {boolean | undefined} True/false if override applies, undefined to defer to faction rules.
    */
   rivalHostile(npc, p) {
@@ -445,10 +432,9 @@ export const RivalsOperations = {
   },
   /**
    * Handle weapon impact on a rival ship, reducing player relationship score.
-   * @this {any}
-   * @param {any} s - Player session that fired.
-   * @param {any} npc - Targeted entity that was hit.
-   * @param {any} space - Space sector instance.
+   * @param {import('./game.js').Session} s - Player session that fired.
+   * @param {import('./space.js').Entity} npc - Targeted entity that was hit.
+   * @param {import('./space.js').Space} space - Space sector instance.
    * @returns {void}
    */
   rivalOnHit(s, npc, space) {
@@ -464,10 +450,9 @@ export const RivalsOperations = {
   },
   /**
    * Handle ship destruction involving rivals, penalizing killer or rewarding helpful bystanders.
-   * @this {any}
-   * @param {any} s - Player session scoring the kill.
-   * @param {any} npc - Destroyed NPC entity.
-   * @param {any} space - Space sector instance.
+   * @param {import('./game.js').Session} s - Player session scoring the kill.
+   * @param {import('./space.js').Entity} npc - Destroyed NPC entity.
+   * @param {import('./space.js').Space} space - Space sector instance.
    * @returns {boolean} True if the destroyed NPC was a rival.
    */
   rivalOnKill(s, npc, space) {
@@ -495,8 +480,7 @@ export const RivalsOperations = {
   // a rival trader who lands stays docked a while, then takes off again from that world
   /**
    * Handle rival ship landing at a planetary spaceport.
-   * @this {any}
-   * @param {any} e - Landing ship entity.
+   * @param {import('./space.js').Entity} e - Landing ship entity.
    * @returns {void}
    */
   rivalDocked(e) {
@@ -508,7 +492,6 @@ export const RivalsOperations = {
   },
   /**
    * Generate leaderboard entries for rival captains in a given category.
-   * @this {any}
    * @param {string} cat - Metric category ('earned' or 'kills').
    * @returns {Array<{name: string, ai: boolean, v: number}>} Leaderboard ranking entries.
    */
@@ -523,9 +506,8 @@ export const RivalsOperations = {
   },
   /**
    * Compile the client payload listing all rival captains, locations, and relationship states.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
-   * @returns {Array<Record<string, any>>} Rivals summary list for client.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @returns {Array<Record<string, string | number>>} Rivals summary list for client.
    */
   rivalsPayload(d) {
     return RIVALS.map((R) => {

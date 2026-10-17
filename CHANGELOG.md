@@ -2,6 +2,16 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.0.0 — Mining
+
+- **Survey and cutting:** persistent seam heat/work, staged clean releases, gas vents and finite common/rich/pure cargo lots. Partial pickups conserve the remaining material and resolve mining bonuses once. Existing cargo migrates to common lots.
+- **Refinery and orders:** binding exact-grade quotes, instant/stored trade-good processing, retained fractional output, cancellation returns, finite sourcing orders and Fuel Cell consumption. Existing 12t/1,500cr construction-crate processing and station production remain separate.
+- **Pressure and consent:** local recovering fields, visible volatile telegraphs and bounded mining encounters. Group mining is explicit current-flight consent, not Armada membership or PvP permission; landing/relaunch clears it.
+- **Star Dredge:** the eleventh specialist ship, 400t and 2.4M-credit base build, with 108 matching heading/bank sprite frames. Stock construction needs no plasma. Forward minor-rock sweep, two noncombat collectors, 70% mobile smelting at 6 input t/min and manually entered shallow-corona plasma collectors share persistent hull heat. ALL OFF does not stop environmental corona heat.
+- **Motherlode logistics:** separate finite 24t authored sources, fittable Tow Rig, stock Dredge capability, hard 60/30 tow caps, explicit transfer acceptance, attached-transit denial, 300-simulation-second owner grace and capacity-first once-only exact-grade port delivery. Settled slots recover through the existing field ledger; old paid IDs cannot pay again. Three new transparent lit-3D ore-family rasters preserve ordinary rock mappings; one restrained tether-strain voice uses the effects/master/mute mixer.
+- **Persistence and controls:** versioned save checks, world/player journal recovery and economic freeze on uncertain committed errors; no offline mobile production or duplicated delivery. Survey uses V only when free; Dredge/tow actions begin unbound, with contextual buttons and custom keys preserved. F keeps secondary weapons/fitted fighters.
+- **Verification limits:** canonical deterministic server/browser regressions, fault injection and 20-minute scheduled economy fixtures are evidence for their tested cases, not all devices, seeds, interleavings or measured multi-hour human profitability. Release packaging and publication do not deploy a hosted production server.
+
 ### 2.9.2 — Clear approaches
 
 - **Landing:** autopilot commits to retrograde braking and settles before requesting landing. L chooses the nearest landable object; double-click retains the explicit destination.

@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 2.5 tests: the rendered art set is complete and wired up, plus the polish pass (career steps, market depth, dialogs).
 import fs from 'node:fs';
@@ -190,7 +191,7 @@ const sell = (n) => {
   g.sessions.set(s.id, s);
   s.data.stellar = port.id;
   s.data.sys = port.system;
-  s.data.cargo = { metal: n };
+  seedCargo(s.data, { metal: n });
   g.db.world.tradeImpact = {};
   const c0 = s.data.credits;
   g.trade(s, 'metal', -n);

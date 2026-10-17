@@ -69,8 +69,8 @@
  * @property {number} y - Galactic map Y coordinate.
  * @property {string[]} links - Hyperspace jump route connections.
  * @property {number} danger - System danger rating.
- * @property {any[]} stellars - Celestial bodies and stations.
- * @property {any[]} fields - Asteroid or dust fields.
+ * @property {import('../server/game.js').StellarBody[]} stellars - Celestial bodies and stations.
+ * @property {Array<{x: number, y: number, r: number, ore: string, rich: number, rocks: number}>} fields - Asteroid or dust fields.
  * @property {boolean} arena - Flag indicating this system is an instanced arena combat zone.
  */
 

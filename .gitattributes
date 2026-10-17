@@ -18,3 +18,6 @@ client/assets/planets/earth*.webp -filter -diff -merge -text
 
 # Original generated Gateway loop is shipped directly with the game.
 client/assets/wormhole.png -filter -diff -merge -text
+
+# Small reproducible lit-3D motherlodes ship directly without extra LFS fetches.
+client/assets/objects/motherlode-*.webp -filter -diff -merge -text

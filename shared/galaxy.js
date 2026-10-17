@@ -154,6 +154,13 @@ export const FACTIONS = {
  * @type {CommodityDef[]}
  */
 export const COMMODITIES = [
+  { id: 'plasma', name: 'Stellar Plasma', base: 500 },
+  { id: 'quantum_fuel', name: 'Quantum Fuel', base: 1200 },
+  { id: 'exotic_matter', name: 'Exotic Matter', base: 1800 },
+  { id: 'alloy_ingots', name: 'Alloy Ingots', base: 360 },
+  { id: 'fuel_cells', name: 'Fuel Cells', base: 560 },
+  { id: 'cut_crystal', name: 'Cut Crystal', base: 920 },
+  { id: 'composite_plating', name: 'Composite Plating', base: 2400 },
   { id: 'food', name: 'Food', base: 120 },
   { id: 'industrial', name: 'Industrial Goods', base: 260 },
   { id: 'medical', name: 'Medical Supplies', base: 420 },
@@ -192,6 +199,8 @@ const P = (o) => o;
 /**
  * Celestial body (planet, moon, station, asteroid field, or claimable site) orbiting within a star system.
  * @typedef {Object} StellarBody
+ * @property {string} [wormhole] Gateway destination system.
+ * @property {boolean} [outlaw] Outlaw port access.
  * @property {string} id - Unique stellar identifier.
  * @property {string} name - Display name of the body.
  * @property {string} kind - Category of body (e.g. 'planet', 'station', 'moon', 'field', 'site').
@@ -210,6 +219,8 @@ const P = (o) => o;
 /**
  * Star system record defining coordinates, hyperlane links, and celestial bodies.
  * @typedef {Object} StarSystem
+ * @property {boolean} [arena] Isolated arena space.
+ * @property {boolean} [farside] Gateway far-side system, without ambient newcomer truce.
  * @property {string} id - Unique system identifier.
  * @property {string} name - Display name.
  * @property {string} faction - Dominant faction ID.
@@ -219,7 +230,7 @@ const P = (o) => o;
  * @property {StellarBody[]} stellars - Orbiting planets, stations, and derelict sites.
  * @property {number} danger - Threat level / security rating.
  * @property {string} [gate] - Wormhole destination system if a gateway is present.
- * @property {any[]} [fields] - Asteroid or resource field locations.
+ * @property {Array<{x: number, y: number, r: number, ore: string, rich: number, rocks: number,minor?:boolean,industrial?:boolean}>} [fields] - Asteroid or resource field locations.
  * @property {string} [desc] - System lore notes.
  */
 
@@ -1188,10 +1199,21 @@ export const FACTION_OUTFITS = {
 };
 /**
  * Custom outfit definitions complementing standard outfits.
- * @type {Array<any>}
+ * @type {Array<import('./rules.js').OutfitAsset>}
  */
 // Generic weapon outfits. Stable weapon IDs keep existing ship loadouts and saves compatible.
 export const EXTRA_OUTFITS = [
+  {
+    id: 9920,
+    name: 'Tow Rig',
+    cost: 45000,
+    mass: 4,
+    max: 1,
+    tech: 1,
+    icon: 'icons/9020.png',
+    eff: { towRig: 1 },
+    desc: 'Finite motherlode tether. Requires a hull with at least 60t cargo. Hard tow speed 30 (stock Star Dredge 60). No jump/Gateway while attached.',
+  },
   {
     id: 9001,
     name: 'Mica Dart',
@@ -1423,7 +1445,7 @@ for (const o of EXTRA_OUTFITS) o.icon = o.icon || `icons/${o.id}.png`; // 2.5: r
 
 /**
  * Custom weapon asset definitions added by Quantum Rift.
- * @type {Array<any>}
+ * @type {Array<import('./rules.js').WeaponAsset>}
  */
 export const EXTRA_WEAPONS = [
   {
@@ -1622,3 +1644,44 @@ export const WINGMATES = [751, 752, 753, 754, 755, 756];
  * @type {number[]}
  */
 export const ARMADA_HULLS = [757, 758, 759]; // 2.6: the old station Armada escorts, now enemy-only
+
+// Deterministic refinery/processed-good markets; ordinary nonservice pads unchanged.
+for (const p of Object.values(STELLARS))
+  if (!p.site && p.svc.includes('T') && p.svc.includes('O'))
+    for (const id of [
+      'alloy_ingots',
+      'fuel_cells',
+      'cut_crystal',
+      'composite_plating',
+      'plasma',
+      'quantum_fuel',
+      'exotic_matter',
+    ])
+      p.prices[id] = 0;
+for (const id of [
+  'alloy_ingots',
+  'fuel_cells',
+  'cut_crystal',
+  'composite_plating',
+  'plasma',
+  'quantum_fuel',
+  'exotic_matter',
+])
+  SITE_PRICES[id] = 0;
+
+// Authored finite minor pockets support industrial bulk without changing existing fields.
+for (const [sys, ore] of [
+  ['meridian', 'ore'],
+  ['halcyon', 'gas'],
+])
+  SYS[sys].fields.push({
+    id: `${sys}-industrial-minor`,
+    x: 4200,
+    y: -4000,
+    r: 700,
+    ore,
+    rich: 2,
+    rocks: 20,
+    minor: true,
+    industrial: true,
+  });

@@ -1,3 +1,4 @@
+import { refineryHtml } from './refinery_ui.js';
 import { artworkUrl } from './artwork.js';
 import { stationLanding } from './exotic_scenery.js';
 import { passengerSeats, occupiedPassengerSeats } from '/shared/passengers.js';
@@ -147,7 +148,7 @@ export const roleTag = (H) => {
 };
 /**
  * Escapes unsafe characters for HTML element text or attributes.
- * @param {any} s Input string or value
+ * @param {string | number | boolean | null | undefined} s Input string or value
  * @returns {string} HTML-escaped string
  */
 const esc = (s) =>
@@ -158,8 +159,8 @@ const esc = (s) =>
 let G, send;
 /**
  * Binds DOM event listeners and initializes UI state managers with global game state.
- * @param {Record<string, any>} g Global client game state
- * @param {(msg: Record<string, any>) => void} sender Network send dispatch function
+ * @param {import("./main.js").ClientGameState} g Global client game state
+ * @param {(msg: import("../server/message-registry.js").NetworkMessage) => void} sender Network send dispatch function
  * @returns {void}
  */
 export function initUI(g, sender) {
@@ -459,7 +460,7 @@ const LAND_SCENES = {
 };
 /**
  * Selects the landscape illustration image key for a landed planetary or station body.
- * @param {Record<string, any>} p Landed stellar body definition
+ * @param {import('../server/game.js').StellarBody} p Landed stellar body definition
  * @returns {string} Image asset key name
  */
 function landScene(p) {
@@ -1169,6 +1170,7 @@ const TABS = [
   ['overview', 'OVERVIEW'],
   ['community', 'COMMUNITY'],
   ['trade', 'TRADE'],
+  ['refinery', 'REFINERY'],
   ['yard', 'SHIPYARD'],
   ['outfit', 'OUTFITTER'],
   ['jobs', 'JOBS'],
@@ -1219,6 +1221,7 @@ export function showLanded() {
   }
   const avail = TABS.filter(
     ([k]) =>
+      (k === 'refinery' && L.refinery?.available) ||
       (k === 'blackmarket' && L.blackmarket) ||
       (k === 'bank' && L.bank) ||
       k === 'overview' ||
@@ -1310,6 +1313,9 @@ export function renderLanded() {
     : '';
   let h = '';
   switch (G.ltab) {
+    case 'refinery':
+      h += refineryHtml(G);
+      break;
     case 'overview': {
       const fac = SYS[p.system].faction;
       h += stateCard(p.system); // 2.4
@@ -1344,8 +1350,15 @@ export function renderLanded() {
         h += `<table class="tbl"><tr><th>COMMODITY</th><th>PRICE</th><th>HOLD</th><th></th></tr>${L.market
           .map((c) => {
             const base = COMMODITIES.find((x) => x.id === c.id).base;
-            return `<tr><td>${esc(c.name)}${c.flash ? ` <span class="flashtag ${c.price > base ? 'up' : 'dn'}">${c.price > base ? 'SHORTAGE' : 'GLUT'}</span>` : ''}</td><td class="${c.price < base * 0.9 ? 'lo' : c.price > base * 1.1 ? 'hi' : ''}">${credits(c.price)}${c.moved ? `<span class="mv ${c.moved > 0 ? 'up' : 'dn'}" title="Moved by this system's state and by what captains have traded here">${c.moved > 0 ? '▲' : '▼'}${Math.abs(c.moved)}%</span>` : ''}</td><td>${y.cargo[c.id] || 0}${y.cargo[c.id] && y.paid && y.paid[c.id] ? ` <span class="small ${c.price >= y.paid[c.id] ? 'pgain' : 'ploss'}" title="What you paid per ton, on average">paid ${credits(y.paid[c.id])}</span>` : ''}</td>
-        <td style="text-align:right"><button class="btn sm" data-act="trade" data-c="${c.id}" data-q="1"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>BUY</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="10"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>+10</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="${Math.max(0, Math.min(holdFree(y), Math.floor(y.credits / c.price)))}" title="Fill your hold with what you can afford"${Math.min(holdFree(y), Math.floor(y.credits / c.price)) > 0 ? '' : ' disabled'}>MAX</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-1">SELL</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-999">ALL</button></td></tr>`;
+            const gradeRows = Object.entries(y.cargoLots?.byCommodity[c.id] || {})
+              .filter(([, n]) => n > 0)
+              .map(
+                ([grade, n]) =>
+                  `<tr class="small"><td>↳ ${grade}</td><td>${grade === 'pure' ? '1.6' : grade === 'rich' ? '1.3' : '1'}× raw sale value</td><td>${n} t</td><td style="text-align:right"><button class="btn sm" data-act="trade" data-c="${c.id}" data-grade="${grade}" data-q="-1">SELL 1</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-grade="${grade}" data-q="${-n}">SELL ${grade.toUpperCase()}</button></td></tr>`,
+              )
+              .join('');
+            return `<tr><td>${esc(c.name)}${c.sellCap !== undefined ? ` <span class="dim small">buyer: ${c.sellCap}t left today</span>` : ''}${c.flash ? ` <span class="flashtag ${c.price > base ? 'up' : 'dn'}">${c.price > base ? 'SHORTAGE' : 'GLUT'}</span>` : ''}</td><td class="${c.price < base * 0.9 ? 'lo' : c.price > base * 1.1 ? 'hi' : ''}">${credits(c.price)}${c.moved ? `<span class="mv ${c.moved > 0 ? 'up' : 'dn'}" title="Moved by this system's state and by what captains have traded here">${c.moved > 0 ? '▲' : '▼'}${Math.abs(c.moved)}%</span>` : ''}</td><td>${y.cargo[c.id] || 0}${y.cargo[c.id] && y.paid && y.paid[c.id] ? ` <span class="small ${c.price >= y.paid[c.id] ? 'pgain' : 'ploss'}" title="What you paid per ton, on average">paid ${credits(y.paid[c.id])}</span>` : ''}</td>
+        <td style="text-align:right"><button class="btn sm" data-act="trade" data-c="${c.id}" data-q="1"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>BUY</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="10"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>+10</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="${Math.max(0, Math.min(holdFree(y), Math.floor(y.credits / c.price)))}" title="Fill your hold with what you can afford"${Math.min(holdFree(y), Math.floor(y.credits / c.price)) > 0 ? '' : ' disabled'}>MAX</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-1">SELL</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-999">ALL</button></td></tr>${gradeRows}`;
           })
           .join(
             '',
@@ -1413,6 +1426,11 @@ export function renderLanded() {
           ['utility', 'UTILITY'],
         ]; // 2.4: outfitter categories
       const fits = (o) => {
+        if (
+          o.eff.towRig &&
+          (st.cargo < 60 || ['fighter', 'interceptor'].includes(G.A.ships[y.ship.hull].role))
+        )
+          return false;
         if (o.eff.ammo)
           return (
             !!(st.weapons && st.weapons[o.eff.ammo]) ||
@@ -1766,9 +1784,11 @@ function onAct(e) {
   if (el.tagName === 'SELECT') return;
   const d = el.dataset;
   switch (d.act) {
-    case 'trade':
-      send({ t: 'trade', cid: d.c, qty: +d.q });
+    case 'trade': {
+      const lots = d.grade ? { common: 0, rich: 0, pure: 0, [d.grade]: Math.abs(+d.q) } : undefined;
+      send({ t: 'trade', cid: d.c, qty: +d.q, lots });
       break;
+    }
     case 'addfriend':
       send({ t: 'social', op: 'add', name: d.n });
       break; // 2.6

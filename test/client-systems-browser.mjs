@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 // Real Solo UI contracts: save round-trip, settings persistence, map input, pause.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -26,7 +27,7 @@ const d = Game.prototype.fresh.call({ A });
 d.tut = 999;
 d.story = { done: ['start'], active: null };
 d.credits = 43210;
-d.cargo = { ore: 3 };
+seedCargo(d, { ore: 3 });
 db.create('Client Systems', 'fixture', d);
 db.flush();
 const port = await availablePort();

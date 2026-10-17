@@ -53,7 +53,25 @@
     "core-actions.js",
     "websocket-transport.js",
     "http-api.mjs",
-    "network-systems.mjs"
+    "network-systems.mjs",
+    "cargo-lots.js",
+    "cargo-flows.js",
+    "mining.js",
+    "mining-network.mjs",
+    "refinery.js",
+    "refinery-economy.js",
+    "refinery-persistence.js",
+    "mining-pressure.js",
+    "refinery-network.mjs",
+    "dredge.js",
+    "dredge-smelter.js",
+    "dredge-corona.js",
+    "dredge-economy.js",
+    "dredge-network.mjs",
+    "towing.js",
+    "towing-persistence.js",
+    "field-evolution.js",
+    "towing-network.mjs"
   ],
   "browser": [
     "sidebar-browser.mjs",
@@ -62,7 +80,13 @@
     "station-landing-browser.mjs",
     "login-scene-browser.mjs",
     "client-systems-browser.mjs",
-    "input-audio-browser.mjs"
+    "input-audio-browser.mjs",
+    "cargo-ui-browser.mjs",
+    "mining-controls-browser.mjs",
+    "mining-ui-browser.mjs",
+    "refinery-ui-browser.mjs",
+    "dredge-browser.mjs",
+    "towing-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -229,7 +253,7 @@
       "owners": ["server/space.js", "server/game.js"],
       "services": [],
       "tests": ["v04.js", "v05.js", "v252.js"],
-      "asserts": "Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Proposed active-mining redesign is not implemented."
+      "asserts": "Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Staged cutting/survey behavior is mapped separately under mining-cutting."
     },
     {
       "id": "station-progression",
@@ -330,7 +354,7 @@
       "owners": ["client/login_scene.js"],
       "services": [],
       "tests": ["login-scene-browser.mjs"],
-      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced motion and rendering lifecycle."
+      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced-motion static pose/no recurring draws despite suppressed native change delivery, normal resume and rendering lifecycle."
     },
     {
       "id": "sidebar-scrollbars",
@@ -380,6 +404,116 @@
       "services": [],
       "tests": ["input-audio-browser.mjs"],
       "asserts": "Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification."
+    },
+    {
+      "id": "cargo-grade-ledger",
+      "services": [],
+      "owners": [
+        "shared/cargo-lots.js",
+        "shared/cargo-contracts.js",
+        "server/game.js",
+        "server/fleetcmd.js",
+        "server/frontier.js",
+        "server/hangar.js",
+        "server/coop.js",
+        "client/ui.js",
+        "client/info_ui.js",
+        "client/main.js"
+      ],
+      "tests": ["cargo-lots.js", "cargo-flows.js", "cargo-ui-browser.mjs"],
+      "asserts": "Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, owner/fleet simulation-time grace with foreign partial pickup and expiry, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
+    },
+    {
+      "id": "mining-cutting",
+      "services": ["mining"],
+      "owners": [
+        "server/mining.js",
+        "server/mining-contracts.js",
+        "shared/mining-rules.js",
+        "server/space.js",
+        "server/game.js",
+        "server/db.js",
+        "client/action-bindings.js",
+        "client/mining_ui.js",
+        "client/mining_render.js"
+      ],
+      "tests": [
+        "mining.js",
+        "mining-network.mjs",
+        "mining-controls-browser.mjs",
+        "mining-ui-browser.mjs"
+      ],
+      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion."
+    },
+    {
+      "id": "mining-refinery",
+      "owners": [
+        "server/refinery.js",
+        "server/trade-pricing.js",
+        "shared/refinery-rules.js",
+        "client/refinery_ui.js"
+      ],
+      "services": ["refinery"],
+      "tests": [
+        "refinery.js",
+        "refinery-economy.js",
+        "refinery-persistence.js",
+        "refinery-network.mjs",
+        "refinery-ui-browser.mjs"
+      ],
+      "asserts": "Binding exact-grade multi-input quotes, production trade pricing and bounded conversion cycles; rational output/partial claims, offline escrow/cancellation and journal interruption recovery, finite grade orders, Fuel Cell sink, real WS privacy and rendered explicit confirmation."
+    },
+    {
+      "id": "mining-pressure",
+      "owners": ["server/mining-pressure.js", "server/space.js", "client/mining_render.js"],
+      "services": ["pressure"],
+      "tests": [
+        "mining-pressure.js",
+        "mining.js",
+        "refinery-network.mjs",
+        "refinery-ui-browser.mjs"
+      ],
+      "asserts": "Real useful contact noise and persisted local recovery; delayed once-only volatile hazards, scoped two-hull pressure encounters, shared/captain cooldown and damage/acquisition/projectile allowlists preserving neutral, wing, Armada and newcomer protection."
+    },
+    {
+      "id": "industrial-dredge",
+      "services": ["industrial"],
+      "owners": [
+        "server/industrial.js",
+        "shared/industrial-rules.js",
+        "server/specialists.js",
+        "client/mining_ui.js",
+        "client/main.js"
+      ],
+      "tests": [
+        "dredge.js",
+        "dredge-smelter.js",
+        "dredge-corona.js",
+        "dredge-economy.js",
+        "dredge-network.mjs",
+        "dredge-browser.mjs"
+      ],
+      "asserts": "No-plasma real specialist build; finite root-only sweep mass and two utility collectors; exact mobile grade/remainder/checkpoint ownership; stock real flight plasma escape and thermal damage ordering; finite one-way economy, private checked WS modes and actual production sprite/control rendering. Per-captain cooperative/restart blueprint qualification, missing-input work discard without transfer, passive corona exit warnings and automatic route keep-out."
+    },
+    {
+      "id": "towing-motherlodes",
+      "owners": [
+        "server/towing.js",
+        "server/towing-contracts.js",
+        "shared/towing-rules.js",
+        "client/towing_ui.js",
+        "client/towing_render.js",
+        "client/audio.js"
+      ],
+      "services": ["towing"],
+      "tests": [
+        "towing.js",
+        "towing-persistence.js",
+        "field-evolution.js",
+        "towing-network.mjs",
+        "towing-browser.mjs"
+      ],
+      "asserts": "Finite authored source conservation, surveyed rig authority, hard 60/30 physical limits, consensual transfer, logical grace/recovery, transit and lifecycle denials, capacity-first exact-grade delivery and real journal fault recovery. Browser uses custom/unbound controls, F fighter bay, static reduced-motion artwork, scaled controls and actual two-captain transfer/delivery. Moving transfers check relative speed and immediate object cap; real production scaling, new raster hash/alpha decode and bounded mute/effects-aware tether audio are browser-verified."
     }
   ],
   "routes": {
@@ -410,14 +544,23 @@
       "v24.js"
     ],
     "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
-    "trade": ["bot.js", "v203.js"],
+    "trade": ["bot.js", "cargo-flows.js", "v203.js", "cargo-ui-browser.mjs"],
     "buyship": ["sim.js", "v21.js"],
     "docks": ["outfitter-wing-repairs.js", "sim.js", "v21.js"],
     "questdrop": ["core-actions.js"],
     "outfit": ["bot.js", "v203.js"],
     "accept": ["bot.js", "v12.js", "v203.js", "v24.js", "v26.js"],
     "abandon": ["v203.js", "v24.js"],
-    "station": ["sim.js", "v04.js", "v05.js", "v07.js", "v203.js", "v21.js", "v26.js"],
+    "station": [
+      "cargo-flows.js",
+      "sim.js",
+      "v04.js",
+      "v05.js",
+      "v07.js",
+      "v203.js",
+      "v21.js",
+      "v26.js"
+    ],
     "buymat": ["core-actions.js"],
     "rename": ["v203.js"],
     "note": ["core-actions.js"],
@@ -425,19 +568,19 @@
     "officer": ["v05.js", "v21.js"],
     "shuttle": ["v05.js"],
     "dock": ["v05.js", "v101.js", "v203.js", "v21.js"],
-    "board": ["v05.js", "v06.js", "v10.js", "v26.js"],
+    "board": ["cargo-flows.js", "v05.js", "v06.js", "v10.js", "v26.js"],
     "spec": ["v08.js"],
     "armada": ["armada-formation-network.mjs", "combat-network.js", "v06.js", "v26.js"],
     "holdout": ["v09.js", "v26.js"],
     "storyacc": ["v10.js"],
     "social": ["hailing-network.js", "v26.js"],
-    "trade2": ["v26.js"],
+    "trade2": ["cargo-flows.js", "v26.js"],
     "duel": ["v26.js"],
     "goal": ["v06.js"],
     "store": ["faction-standing.js", "v06.js"],
     "colony": ["v07.js"],
     "arena": ["v07.js"],
-    "exchange": ["v07.js"],
+    "exchange": ["cargo-flows.js", "v07.js"],
     "boards": ["v07.js"],
     "profile": ["v07.js"],
     "ping": ["core-actions.js"],
@@ -445,14 +588,20 @@
     "hailin": ["hailing-network.js"],
     "hailopt": ["hailing-network.js", "v11.js"],
     "order": ["combat-network.js", "v11.js", "v21.js"],
-    "jettison": ["v11.js"],
+    "jettison": ["cargo-flows.js", "v11.js", "cargo-ui-browser.mjs"],
     "rivals": ["core-actions.js"],
     "bm": ["v12.js"],
     "arcacc": ["v12.js"],
     "promote": ["v12.js"],
     "lower": ["v12.js", "v203.js"],
     "bank": ["v12.js"],
-    "pause": ["v10.js"]
+    "pause": ["v10.js"],
+    "mining": ["mining-network.mjs", "mining-controls-browser.mjs"],
+    "refinery": ["refinery-network.mjs", "refinery-ui-browser.mjs"],
+    "miningOrder": ["refinery-network.mjs", "refinery.js"],
+    "miningPressure": ["mining-pressure.js", "refinery-ui-browser.mjs"],
+    "industrial": ["dredge-network.mjs", "dredge-browser.mjs"],
+    "towing": ["towing-network.mjs", "towing-browser.mjs"]
   },
   "tooling": [
     "capture-features.js",

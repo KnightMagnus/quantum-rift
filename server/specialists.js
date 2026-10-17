@@ -12,7 +12,9 @@ import {
   COMP_COST,
   TIER_UP_MIN,
   specPower,
+  specialistResource,
 } from '../shared/specialty.js';
+import { planTake, applyTake } from '../shared/cargo-lots.js';
 import { makeLoadout, credits } from '../shared/rules.js';
 
 /** @type {Record<string, number>} Map of specialist keys to hull IDs. */
@@ -21,8 +23,7 @@ const KEY = Object.fromEntries(Object.values(SPEC).map((s) => [s.key, s.id]));
 export const SpecialistOperations = {
   /**
    * Initialize specialist ship state and inventory on player data.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {void}
    */
   specInit(d) {
@@ -34,9 +35,8 @@ export const SpecialistOperations = {
   // the specialist the captain is flying, with its power (components + tier)
   /**
    * Get the specialist configuration and power rating of the player's active ship.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
-   * @returns {(Record<string, any> & {power: number}) | null} Active specialist object or null.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @returns {(Record<string, string | number> & {power: number}) | null} Active specialist object or null.
    */
   specOf(d) {
     const S_ = SPEC[d.ship.hull];
@@ -46,8 +46,7 @@ export const SpecialistOperations = {
   },
   /**
    * Check whether the player is currently piloting a specialist ship of the specified key.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @param {string} key - Specialist key.
    * @returns {boolean} True if flying the specified specialist.
    */
@@ -56,8 +55,7 @@ export const SpecialistOperations = {
   },
   /**
    * Get the current specialist power multiplier.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {number} Power multiplier.
    */
   power(d) {
@@ -66,8 +64,7 @@ export const SpecialistOperations = {
   },
   /**
    * Compute aggregated stat bonuses from base frontier stats plus active specialist components and traits.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {Record<string, number>} Combined ship stat bonuses.
    */
   bonus(d) {
@@ -88,8 +85,7 @@ export const SpecialistOperations = {
   // earn a specialty resource (only while flying that specialist) and/or blueprints (flying anything)
   /**
    * Award specialty resource and/or blueprint drops for activities.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {string} key - Specialist key.
    * @param {number} resN - Resource amount.
    * @param {number} bpChance - Blueprint chance.
@@ -120,10 +116,9 @@ export const SpecialistOperations = {
   // damage multiplier from the attacker's specialty against this target (called by Space.damage)
   /**
    * Compute specialist weapon damage multiplier against a target.
-   * @this {any}
-   * @param {any} srcRoot - Attacking root entity.
-   * @param {any} src - Direct projectile or damage source entity.
-   * @param {any} t - Target entity taking damage.
+   * @param {import('./space.js').Entity} srcRoot - Attacking root entity.
+   * @param {import('./space.js').Entity} src - Direct projectile or damage source entity.
+   * @param {import('./space.js').Entity} t - Target entity taking damage.
    * @returns {number} Damage multiplier factor.
    */
   specMult(srcRoot, src, t) {
@@ -145,10 +140,9 @@ export const SpecialistOperations = {
   // hooks from the rest of the game
   /**
    * Hook called when an NPC ship is destroyed to grant specialist rewards.
-   * @this {any}
-   * @param {any} s - Player session.
-   * @param {any} npc - Defeated NPC entity.
-   * @param {any} space - Space instance.
+   * @param {import('./game.js').Session} s - Player session.
+   * @param {import('./space.js').Entity} npc - Defeated NPC entity.
+   * @param {import('./space.js').Space} space - Space instance.
    * @param {boolean} [byEscort] - True if escort ship scored the final blow.
    * @returns {void}
    */
@@ -171,8 +165,7 @@ export const SpecialistOperations = {
   },
   /**
    * Hook called when player boards a disabled vessel to reward Corsair materials.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
   specOnBoard(s) {
@@ -180,8 +173,7 @@ export const SpecialistOperations = {
   },
   /**
    * Hook called when player scoops cargo loot to reward Tidecaller resources.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
   specOnLoot(s) {
@@ -189,8 +181,7 @@ export const SpecialistOperations = {
   },
   /**
    * Hook called when mining asteroid chunks to reward Lodestar resources.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {{rich?: number}} it - Mined item details.
    * @returns {void}
    */
@@ -200,8 +191,7 @@ export const SpecialistOperations = {
   },
   /**
    * Hook called when charting uncharted sectors to reward Pathfinder resources.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
   specOnChart(s) {
@@ -209,8 +199,7 @@ export const SpecialistOperations = {
   },
   /**
    * Hook called when defending or winning an outpost raid to reward Bulwark blueprints.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {boolean} won - True if raid was successful.
    * @returns {void}
    */
@@ -219,9 +208,8 @@ export const SpecialistOperations = {
   },
   /**
    * Hook called upon completing jobs to reward specialized blueprints and resources.
-   * @this {any}
-   * @param {any} s - Player session.
-   * @param {Record<string, any>} m - Mission object.
+   * @param {import('./game.js').Session} s - Player session.
+   * @param {import("./game.js").Mission} m - Mission object.
    * @returns {void}
    */
   specOnJob(s, m) {
@@ -238,8 +226,7 @@ export const SpecialistOperations = {
   // every two seconds in space: the Pathfinder harvests samples while flying through an anomaly
   /**
    * Periodic idle check in space for Pathfinder research sample harvesting in anomalies.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
   specIdle(s) {
@@ -256,8 +243,7 @@ export const SpecialistOperations = {
   // can this captain jump straight to `to`? (the Pathfinder skips one system along a route)
   /**
    * Evaluate whether Pathfinder ability can skip an intermediate hyperspace link.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @param {string} from - Departure system.
    * @param {string} to - Destination system.
    * @returns {string | null} Intermediate system skipped, or null if jump not possible.
@@ -271,9 +257,8 @@ export const SpecialistOperations = {
   // ------------------------------------------------------------------ the station: build, refine parts, upgrade, tier up
   /**
    * Handle personal station specialist shipyard actions (build, parts, comp, tierup).
-   * @this {any}
-   * @param {any} s - Player session.
-   * @param {Record<string, any>} m - Inbound operation message.
+   * @param {import('./game.js').Session} s - Player session.
+   * @param {import("./message-registry.js").NetworkMessage} m - Inbound operation message.
    * @returns {void}
    */
   specOp(s, m) {
@@ -300,7 +285,7 @@ export const SpecialistOperations = {
             s,
             `Building the ${sp.name} takes ${credits(cost)} credits (after trade-in) and ${BUILD.mats.map(([a, g, n]) => `${n} ${a} ${GRADES[g]}`).join(', ')}.`,
           );
-        if (Object.values(d.cargo).reduce((a, b) => a + b, 0) > sp.cargo)
+        if (this.fitsJobs(d, makeLoadout(this.A, sp.id, sp.name)) || this.holdUsed(d) > sp.cargo)
           return this.toast(s, 'Sell some cargo first.');
         d.credits -= cost;
         this.takeMats(d, BUILD.mats);
@@ -321,14 +306,17 @@ export const SpecialistOperations = {
       case 'parts': {
         const sp = SPEC[m.id | 0];
         if (!sp) return;
-        const have = d.spec[sp.res] || 0,
+        const have = specialistResource(d, sp),
           n = Math.floor(have / PART_RATE);
         if (!n)
           return this.toast(
             s,
             `You need ${PART_RATE} ${SPEC_RES[sp.res].name} per ${sp.name} part.`,
           );
-        d.spec[sp.res] -= n * PART_RATE;
+        if (sp.key === 'star_dredge') {
+          const take = planTake(d.cargo, d.cargoLots, 'plasma', n * PART_RATE);
+          applyTake(d.cargo, d.cargoLots, take);
+        } else d.spec[sp.res] -= n * PART_RATE;
         d.parts[sp.id] = (d.parts[sp.id] || 0) + n;
         this.toast(
           s,
@@ -385,8 +373,7 @@ export const SpecialistOperations = {
   // tier-ups finish on their own (checked with the station)
   /**
    * Check and finalize completed drydock tier-ups for specialist ships.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {boolean} True if any tier-up was completed.
    */
   specCheck(d) {
@@ -402,8 +389,7 @@ export const SpecialistOperations = {
   },
   /**
    * Check whether the player's active ship is currently undergoing a drydock tier-up.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {boolean} True if active ship is in drydock.
    */
   inDrydock(d) {

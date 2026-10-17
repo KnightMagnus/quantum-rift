@@ -1,3 +1,4 @@
+import { migrateCargoLots, planTake, moveLots } from '../shared/cargo-lots.js';
 // Quantum Rift 2.6 "Co-op" server feature operations:
 //   Captain Friends (requests, online status, DMs with an offline mailbox, blocks)
 //   the Armada: a short co-op group of up to five captains and their wingmates (private chat, no friendly fire,
@@ -60,7 +61,6 @@ export const CoopOperations = {
   // ------------------------------------------------------------------ start-up and save migration
   /**
    * Initializes co-op state on the world database, migrates legacy 0.6 fleets, and cleans obsolete tables.
-   * @this {any}
    * @returns {void}
    */
   coopInit() {
@@ -94,8 +94,7 @@ export const CoopOperations = {
   },
   /**
    * Migrates a player save to version 2.6, refunding retired refits, Armada escorts, and directives.
-   * @this {any}
-   * @param {Record<string, any>} d - Player save data.
+   * @param {import('./game.js').PlayerData} d - Player save data.
    * @returns {void}
    */
   coopMigrate(d) {
@@ -196,9 +195,8 @@ export const CoopOperations = {
   // ------------------------------------------------------------------ helpers
   /**
    * Finds an active player session matching the specified captain name.
-   * @this {any}
    * @param {string} name - Captain name to look up.
-   * @returns {Record<string, any>|null} Active session or null if not online.
+   * @returns {import("./game.js").Session | null} Active session or null if not online.
    */
   sessionOf(name) {
     const k = this.db.key(name);
@@ -207,9 +205,8 @@ export const CoopOperations = {
   },
   /**
    * Ensures social data structures (friends, requests, blocks, mailbox) exist on a player profile.
-   * @this {any}
-   * @param {Record<string, any>} d - Player profile data.
-   * @returns {Record<string, any>} The initialized player profile data.
+   * @param {import('./game.js').PlayerData} d - Player profile data.
+   * @returns {import("./game.js").PlayerData} The initialized player profile data.
    */
   socialInit(d) {
     d.friends = d.friends || [];
@@ -221,7 +218,6 @@ export const CoopOperations = {
   },
   /**
    * Checks if a case-insensitive captain name is present in a list of names.
-   * @this {any}
    * @param {string[]} list - List of captain names.
    * @param {string} name - Captain name to check.
    * @returns {boolean} True if the name is found in the list.
@@ -232,7 +228,6 @@ export const CoopOperations = {
   },
   /**
    * Removes all entries matching a captain name from a list of names.
-   * @this {any}
    * @param {string[]} list - List of captain names.
    * @param {string} name - Captain name to remove.
    * @returns {string[]} New list with matching names removed.
@@ -243,8 +238,7 @@ export const CoopOperations = {
   },
   /**
    * Checks whether a captain is blocked by the target player profile.
-   * @this {any}
-   * @param {Record<string, any>} [d] - Player profile data.
+   * @param {import('./game.js').PlayerData} [d] - Player profile data.
    * @param {string} name - Captain name to check against blocks.
    * @returns {boolean} True if the captain is blocked.
    */
@@ -253,7 +247,6 @@ export const CoopOperations = {
   },
   /**
    * Determines the online, away, or offline status of a captain.
-   * @this {any}
    * @param {string} name - Captain name to check.
    * @returns {'online'|'away'|'offline'} Captain presence status.
    */
@@ -264,7 +257,6 @@ export const CoopOperations = {
   },
   /**
    * Sends updated player state payload to an active captain session if online.
-   * @this {any}
    * @param {string} name - Captain name to refresh.
    * @returns {void}
    */
@@ -274,7 +266,6 @@ export const CoopOperations = {
   },
   /**
    * Pushes the latest social and Armada payload to an active captain session.
-   * @this {any}
    * @param {string} name - Captain name to push social data to.
    * @returns {void}
    */
@@ -893,7 +884,12 @@ export const CoopOperations = {
       if (++lines > TRADE.maxLines) return `Up to ${TRADE.maxLines} different items per side.`;
       const [kind, a, b] = String(k).split(':');
       if (kind === 'cargo') {
-        if ((d.cargo[a] || 0) < q) return 'You do not have that much in your hold.';
+        try {
+          planTake(d.cargo, d.cargoLots, a, q, give.lots?.[a]);
+        } catch {
+          return 'You do not have those cargo grades in your hold.';
+        }
+        if (give.lots?.[a]) (g.lots = g.lots || {})[a] = { ...give.lots[a] };
       } else if (kind === 'mat') {
         if (!MATERIALS.includes(a) || !(d.mats[a] && d.mats[a][+b] >= q))
           return 'You do not have those crates.';
@@ -964,6 +960,31 @@ export const CoopOperations = {
           `Trade cancelled: ${p.name} no longer has everything offered.`,
         );
     }
+    try {
+      const a = structuredClone(pa),
+        b = structuredClone(pb);
+      migrateCargoLots(a);
+      migrateCargoLots(b);
+      for (const [from, to, g] of [
+        [a, b, T.give[T.a]],
+        [b, a, T.give[T.b]],
+      ])
+        for (const [k, q] of Object.entries(g.items || {}))
+          if (k.startsWith('cargo:'))
+            moveLots(
+              from.cargo,
+              from.cargoLots,
+              to.storage,
+              to.storageLots,
+              k.split(':')[1],
+              q,
+              g.lots?.[k.split(':')[1]],
+            );
+    } catch {
+      return this.tradeCancel(T.id, 'Trade cancelled: cargo validation failed.');
+    }
+    migrateCargoLots(pa);
+    migrateCargoLots(pb);
     const move = (from, to, g) => {
       const got = [];
       if (g.credits) {
@@ -975,10 +996,7 @@ export const CoopOperations = {
       for (const [k, q] of Object.entries(g.items || {})) {
         const [kind, a, b] = k.split(':');
         if (kind === 'cargo') {
-          from.cargo[a] -= q;
-          if (!from.cargo[a]) delete from.cargo[a];
-          to.storage = to.storage || {};
-          to.storage[a] = (to.storage[a] || 0) + q;
+          moveLots(from.cargo, from.cargoLots, to.storage, to.storageLots, a, q, g.lots?.[a]);
           const C = COMMODITIES.find((c) => c.id === a);
           got.push(`${q} t ${C ? C.name : a}`);
         }
@@ -1015,8 +1033,16 @@ export const CoopOperations = {
       for (const [k, v] of Object.entries(p.storage)) {
         const q = Math.min(v, Math.max(0, room));
         if (q > 0) {
-          p.cargo[k] = (p.cargo[k] || 0) + q;
-          p.storage[k] -= q;
+          moveLots(
+            p.storage,
+            p.storageLots,
+            p.cargo,
+            p.cargoLots,
+            k,
+            q,
+            'common-first',
+            Math.max(0, room),
+          );
           room -= q;
           if (!p.storage[k]) delete p.storage[k];
         }

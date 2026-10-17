@@ -22,6 +22,8 @@
  * @property {string[]} amb Active ambience bed names
  * @property {boolean} music Whether login music source is running
  * @property {number} buffers Number of decoded audio buffers cached
+ * @property {number} towVoices Active tether voices (zero or one)
+ * @property {number} towGain Effective tether gain through effects/master mixer
  */
 
 /**
@@ -447,5 +449,66 @@ export function debug() {
     amb: Object.keys(ambNow),
     music: !!musicSrc,
     buffers: buffers.size,
+    towVoices: towVoice ? 1 : 0,
+    towGain: towVoice ? towGain.gain.value * (bus.sfx?.gain.value ?? 1) * master.gain.value : 0,
   };
+}
+
+// One restrained intake voice; existing mixer/master/mute applies. Alarm only on upward stage changes.
+let industrialVoice = null,
+  industrialGain = null,
+  industrialStage = 0;
+export function industrial(on, heat) {
+  const stage = heat >= 150 ? 3 : heat >= 120 ? 2 : heat >= 70 ? 1 : 0;
+  if (stage > industrialStage) ui('error', 0.32, 0.8 + stage * 0.2);
+  industrialStage = stage;
+  if (!ctx) return;
+  if (on && !industrialVoice) {
+    industrialVoice = ctx.createOscillator();
+    industrialGain = ctx.createGain();
+    industrialVoice.type = 'triangle';
+    industrialGain.gain.value = 0.018;
+    industrialVoice.connect(industrialGain);
+    industrialGain.connect(bus.sfx || master);
+    industrialVoice.start();
+  }
+  if (industrialVoice && on)
+    industrialVoice.frequency.setTargetAtTime(
+      55 + Math.min(150, heat) * 0.35,
+      ctx.currentTime,
+      0.2,
+    );
+  if (industrialVoice && !on) {
+    industrialVoice.stop();
+    industrialVoice.disconnect();
+    industrialGain.disconnect();
+    industrialVoice = industrialGain = null;
+  }
+}
+
+// One restrained tether-strain voice, downstream of the existing effects/master/mute mixer.
+let towVoice = null,
+  towGain = null;
+export function towing(on, tension = 0) {
+  if (!ctx) return;
+  const strain = Math.max(0, Math.min(1, Number(tension) || 0));
+  if (on && !towVoice) {
+    towVoice = ctx.createOscillator();
+    towGain = ctx.createGain();
+    towVoice.type = 'triangle';
+    towGain.gain.value = 0.006;
+    towVoice.connect(towGain);
+    towGain.connect(bus.sfx || master);
+    towVoice.start();
+  }
+  if (on && towVoice) {
+    towVoice.frequency.setTargetAtTime(45 + 35 * strain, ctx.currentTime, 0.25);
+    towGain.gain.setTargetAtTime(0.006 + 0.008 * strain, ctx.currentTime, 0.25);
+  }
+  if (!on && towVoice) {
+    towVoice.stop();
+    towVoice.disconnect();
+    towGain.disconnect();
+    towVoice = towGain = null;
+  }
 }

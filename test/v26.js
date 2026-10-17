@@ -1,3 +1,4 @@
+import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 2.6 tests: retirement of refits, Armada escorts, directives, fleets and territory (with save migration); Captain Friends
 // and DMs; the Armada; trading between Personal Stations; no open-galaxy PvP; duels and Armada Duels; rescue; co-op
@@ -492,7 +493,7 @@ ok(
   T1.d.credits = 100000;
   T2.d.credits = 0;
   T2.d.mats.alloy[2] = 3;
-  T1.d.cargo = { food: 10 };
+  seedCargo(T1.d, { food: 10 });
   T1.d.stellar = STELLARS['site-qgate'] ? 'site-qgate' : T1.d.stellar;
   const away = T2.d.stellar;
   T2.d.stellar = 'qstation';

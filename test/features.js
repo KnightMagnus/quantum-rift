@@ -1,3 +1,4 @@
+import babel from 'prettier/plugins/babel';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -15,7 +16,8 @@ import { Game } from '../server/game.js';
 // to this fixture; v2.9 refreshes only the living-state allocation snapshot because
 // six new markets deliberately expand the random selection pool. All other snapshot values remain unchanged. capture-features
 // runs in its own process with fixed time/RNG. The 3.0 Armada migration also
-// defaults persisted armadaFollow consent to false; no other baseline fields change.
+// defaults persisted armadaFollow consent to false. Mining 3.0 adds empty versioned
+// cargoLots/storageLots plus storage; all other baseline fields remain unchanged.
 const actual = JSON.parse(
   execFileSync(
     process.execPath,
@@ -63,24 +65,49 @@ const manifest = JSON.parse(
   fs.readFileSync(new URL('../docs/feature-inventory.json', import.meta.url)),
 );
 const composition = fs.readFileSync(new URL('../server/features.js', import.meta.url), 'utf8');
-assert.equal(new Set(manifest.features.map((f) => f.file)).size, 15);
+assert.equal(new Set(manifest.features.map((f) => f.file)).size, 20);
 for (const feature of manifest.features) {
-  const module = await import(`../server/${feature.file}.js`);
+  const module = await import(`../server/${feature.module || feature.file}.js`);
   const operations = module[feature.exportName];
   assert.deepEqual(
     Object.keys(operations).sort(),
     [...feature.methods].sort(),
     feature.file + ' operations inventory',
   );
-  const source = fs.readFileSync(new URL(`../server/${feature.file}.js`, import.meta.url), 'utf8');
+  const source = fs.readFileSync(
+    new URL(`../server/${feature.module || feature.file}.js`, import.meta.url),
+    'utf8',
+  );
   const referenced = [
-    ...new Set([...source.matchAll(/\bthis\.([A-Za-z_$][\w$]*)/g)].map((m) => m[1])),
+    ...new Set(
+      [
+        ...source.matchAll(
+          ['mining', 'refinery', 'pressure', 'industrial', 'towing'].includes(feature.file)
+            ? /\b(?:this|c)\.([A-Za-z_$][\w$]*)/g
+            : /\bthis\.([A-Za-z_$][\w$]*)/g,
+        ),
+      ].map((m) => m[1]),
+    ),
   ].sort();
   assert.deepEqual(referenced, feature.uses, feature.file + ' declared dependencies');
-  const facade = composition.split(`const ${feature.file}Capabilities = {`)[1].split('\n  };')[0];
-  const provided = [
-    ...new Set([...facade.matchAll(/(?:get )?(\w+)(?:\(\)|: core\.\w+\.bind)/g)].map((m) => m[1])),
-  ].filter((k) => !['bind'].includes(k));
+  const tree = babel.parsers.babel.parse(composition);
+  let facade;
+  function find(node) {
+    if (!node || typeof node !== 'object') return;
+    if (
+      node.type === 'VariableDeclarator' &&
+      node.id?.name === `${feature.file}Capabilities` &&
+      node.init?.type === 'ObjectExpression'
+    )
+      facade = node.init;
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) value.forEach(find);
+      else if (value && typeof value === 'object') find(value);
+    }
+  }
+  find(tree);
+  assert.ok(facade, `${feature.file}: explicit object facade required`);
+  const provided = facade.properties.map((p) => p.key?.name || p.key?.value);
   for (const key of referenced)
     assert.ok(provided.includes(key), `${feature.file}: missing explicit capability ${key}`);
   for (const method of feature.methods)
@@ -90,7 +117,7 @@ for (const feature of manifest.features) {
       method + ' must not be installed on Game',
     );
 }
-console.log('All 15 feature exports and explicit dependencies match the checked-in inventory.');
+console.log('All 20 feature exports and explicit dependencies match the checked-in inventory.');
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-feature-security-'));
 const interval = globalThis.setInterval;
@@ -122,7 +149,7 @@ try {
   assert.equal(dispatched.length, 2, 'flooded action must not dispatch');
   assert.ok(routes.types.includes('trade') && routes.types.includes('trade2'));
   assert.equal(new Set(routes.types).size, routes.types.length);
-  assert.equal(Object.keys(game.features).length, 19);
+  assert.equal(Object.keys(game.features).length, 24);
   const cargo = { food: 10 };
   const notices = [];
   game.toast = (_s, message) => notices.push(message);

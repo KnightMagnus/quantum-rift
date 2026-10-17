@@ -1,3 +1,13 @@
+import {
+  migrateCargoLots,
+  assertLots,
+  planTake,
+  applyTake,
+  addLots,
+  moveLots,
+  commonLots,
+  splitLots,
+} from '../shared/cargo-lots.js';
 // Quantum Rift 0.7 "Frontier Life" server feature operations: planetary colonies, station defense raids, ship
 // mastery, the arena, the player exchange, leaderboards, captain profiles and browser notifications.
 import { SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES } from '../shared/galaxy.js';
@@ -36,7 +46,6 @@ const comName = (id) => (COMMODITIES.find((c) => c.id === id) || { name: id }).n
 export const FrontierOperations = {
   /**
    * Initialize world colonies, player market orders, and arena/wave structures.
-   * @this {any}
    * @returns {void}
    */
   frontierInit() {
@@ -52,8 +61,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ bonuses: + ship mastery tier + colony buildings
   /**
    * Calculate aggregated bonuses from ship mastery, colony buildings, and survey ship perks.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {Record<string, number>} Aggregated stat bonuses.
    */
   bonus(d) {
@@ -67,8 +75,7 @@ export const FrontierOperations = {
   },
   /**
    * Send a system notification message to a player session.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {string} title - Notification title text.
    * @param {string} body - Notification body text.
    * @returns {void}
@@ -79,8 +86,7 @@ export const FrontierOperations = {
 
   /**
    * Build world telemetry payload augmented with active colony ownership names.
-   * @this {any}
-   * @returns {Record<string, any>} World telemetry payload.
+   * @returns {Record<string, string | number | boolean>} World telemetry payload.
    */
   worldPayload() {
     const w = this.frontsWorldPayload(),
@@ -95,8 +101,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ mastery
   /**
    * Increment ship mastery points and award tier level-ups and elite trim.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {number} amount - Mastery points to add.
    * @returns {void}
    */
@@ -121,8 +126,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ colonies
   /**
    * Determine whether a stellar body is eligible for player colonization.
-   * @this {any}
-   * @param {{kind?: string, site?: any, svc?: string, system: string} | null} p - Stellar body.
+   * @param {{kind?: string, site?: boolean | Record<string, string | number>, svc?: string, system: string} | null} p - Stellar body.
    * @returns {boolean} True if colonizable.
    */
   colonizable(p) {
@@ -136,9 +140,8 @@ export const FrontierOperations = {
   },
   /**
    * Retrieve all colonies owned by the player.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
-   * @returns {Array<[string, Record<string, any>]>} List of [stellarId, colony] pairs.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @returns {Array<[string, import("../client/frontier_ui.js").ColonyData]>} List of [stellarId, colony] pairs.
    */
   coloniesOf(d) {
     const k = this.db.key(d.name);
@@ -146,8 +149,7 @@ export const FrontierOperations = {
   },
   /**
    * Compute maximum allowed colonies for player based on personal station Station Tier.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {number} Maximum colonies.
    */
   colonyMax(d) {
@@ -155,8 +157,7 @@ export const FrontierOperations = {
   },
   /**
    * Aggregate active stat buffs produced by buildings across all player-owned colonies.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {Record<string, number>} Aggregated colony buff map.
    */
   colonyBuffs(d) {
@@ -173,8 +174,7 @@ export const FrontierOperations = {
   },
   /**
    * Accrue passive production (credits, commodities) in colony storage based on elapsed time.
-   * @this {any}
-   * @param {Record<string, any>} c - Colony data structure.
+   * @param {import("../client/frontier_ui.js").ColonyData} c - Colony data structure.
    * @returns {void}
    */
   accrue(c) {
@@ -194,10 +194,9 @@ export const FrontierOperations = {
   },
   /**
    * Build network telemetry payload describing colony status at a stellar body.
-   * @this {any}
    * @param {{id: string} | null} p - Stellar body.
-   * @param {Record<string, any>} d - Saved player data.
-   * @returns {Record<string, any> | null} Colony telemetry payload, or open descriptor, or null.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @returns {Record<string, string | number | boolean> | null} Colony telemetry payload, or open descriptor, or null.
    */
   colonyPayload(p, d) {
     if (!p) return null;
@@ -216,8 +215,7 @@ export const FrontierOperations = {
   },
   /**
    * Handle planetary colony operations (founding, building, demolishing, upgrading, collecting, abandoning).
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {{op: string, kind?: string, i?: number}} m - Colony action payload.
    * @returns {void}
    */
@@ -293,9 +291,10 @@ export const FrontierOperations = {
       }
       case 'collect': {
         if (!own) return;
+        assertLots(d.cargo, d.cargoLots);
         this.accrue(c);
         const st = this.stats(d);
-        let room = st.cargo - Object.values(d.cargo).reduce((a, b) => a + b, 0);
+        let room = st.cargo - this.holdUsed(d);
         const got = [];
         if (c.store.credits >= 1) {
           const cr = Math.floor(c.store.credits);
@@ -308,7 +307,7 @@ export const FrontierOperations = {
           if (k === 'credits') continue;
           const n = Math.min(Math.floor(v), room);
           if (n <= 0) continue;
-          d.cargo[k] = (d.cargo[k] || 0) + n;
+          addLots(d.cargo, d.cargoLots, commonLots(k, n), Math.max(0, room));
           c.store[k] -= n;
           room -= n;
           got.push(`${n} t ${comName(k)}`);
@@ -337,8 +336,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ station defense
   /**
    * Calculate personal station defense rating from turret level and Station Tier rating.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @returns {number} Defense rating score.
    */
   defenseRating(d) {
@@ -351,8 +349,7 @@ export const FrontierOperations = {
   },
   /**
    * Upgrade personal station defense turrets by one level.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
   defenseUpgrade(s) {
@@ -369,8 +366,7 @@ export const FrontierOperations = {
   },
   /**
    * Determine prospective NPC raid strength attacking player station in a time window.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
    * @param {number} win - Time window index.
    * @returns {number} Raid strength score.
    */
@@ -382,8 +378,7 @@ export const FrontierOperations = {
   },
   /**
    * Check whether personal station is due for an incoming raid encounter.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @returns {void}
    */
   raidCheck(s) {
@@ -404,8 +399,7 @@ export const FrontierOperations = {
   },
   /**
    * Spawn a live combat wave of hostile raiders targeting the player's personal station.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {number} strength - Calculated raid strength.
    * @returns {void}
    */
@@ -444,8 +438,7 @@ export const FrontierOperations = {
   },
   /**
    * Track destroyed raid wave entities and resolve victory if all raiders are eliminated.
-   * @this {any}
-   * @param {Record<string, any>} e - Killed ship entity.
+   * @param {import('./space.js').Entity} e - Killed ship entity.
    * @returns {void}
    */
   onWaveKill(e) {
@@ -460,7 +453,6 @@ export const FrontierOperations = {
   },
   /**
    * Periodic check on active defense waves, cleaning up expired raids.
-   * @this {any}
    * @returns {void}
    */
   waveTick() {
@@ -479,8 +471,7 @@ export const FrontierOperations = {
   },
   /**
    * Resolve outcomes of a station raid, awarding salvage on defense or deducting crates on breach.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {number} strength - Raid strength rating.
    * @param {boolean} foughtOff - True if player actively destroyed the wave.
    * @returns {void}
@@ -532,8 +523,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ the arena
   /**
    * Handle arena queue join and leave operations.
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {{op: 'queue' | 'leave', mode: '1v1' | '2v2' | '4v4'}} m - Arena action payload.
    * @returns {void}
    */
@@ -563,10 +553,9 @@ export const FrontierOperations = {
   },
   /**
    * Build arena status payload including queue size and rating.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
-   * @param {any} s - Player session.
-   * @returns {Record<string, any>} Arena status descriptor.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {import('./game.js').Session} s - Player session.
+   * @returns {Record<string, string | number | boolean>} Arena status descriptor.
    */
   arenaPayload(d, s) {
     d.arena = d.arena || { rating: ARENA.start, w: 0, l: 0 };
@@ -579,9 +568,8 @@ export const FrontierOperations = {
   },
   /**
    * Attempt to construct an arena match from queued players for a given mode.
-   * @this {any}
    * @param {'1v1' | '2v2' | '4v4'} mode - Arena combat mode.
-   * @returns {Record<string, any> | null} Created match descriptor or null if not enough players.
+   * @returns {{id: string, sys: string, t: number, a: string, b: string} | null} Created match descriptor or null if not enough players.
    */
   tryMatch(mode) {
     const n = ARENA.modes[mode],
@@ -644,9 +632,8 @@ export const FrontierOperations = {
   // a captain leaves the arena: back to where they queued, ship repaired, no insurance fee
   /**
    * Return a captain from an arena match to their origin station.
-   * @this {any}
-   * @param {any} o - Player session.
-   * @param {Record<string, any>} match - Arena match descriptor.
+   * @param {import('./game.js').Session} o - Player session.
+   * @param {{id: string, sys: string, t: number, a: string, b: string}} match - Arena match descriptor.
    * @param {boolean} died - True if ship was knocked out in combat.
    * @returns {void}
    */
@@ -671,9 +658,8 @@ export const FrontierOperations = {
   },
   /**
    * Handle ship destruction inside the arena, free repair, and victory check.
-   * @this {any}
-   * @param {any} o - Knocked-out player session.
-   * @param {Record<string, any>} space - Space simulation instance.
+   * @param {import('./game.js').Session} o - Knocked-out player session.
+   * @param {import('./space.js').Space} space - Space simulation instance.
    * @returns {boolean} True if entity was in an arena match.
    */
   onArenaDeath(o, space) {
@@ -689,8 +675,7 @@ export const FrontierOperations = {
   },
   /**
    * Check victory conditions for an active arena match and award Elo ratings and credits.
-   * @this {any}
-   * @param {Record<string, any>} match - Arena match descriptor.
+   * @param {{id: string, sys: string, t: number, a: string, b: string}} match - Arena match descriptor.
    * @returns {void}
    */
   arenaCheck(match) {
@@ -751,7 +736,6 @@ export const FrontierOperations = {
   },
   /**
    * Periodic tick check across all arena matches and matchmaker queues.
-   * @this {any}
    * @returns {void}
    */
   arenaTick() {
@@ -762,8 +746,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ the exchange (player market): escrowed orders, matched by price
   /**
    * Handle player exchange operations (place, cancel, collect storage, credit transfer).
-   * @this {any}
-   * @param {any} s - Player session.
+   * @param {import('./game.js').Session} s - Player session.
    * @param {{op: string, side?: string, qty?: number, price?: number, kind?: string, mat?: string, grade?: number, cid?: string, id?: number, to?: string, n?: number}} m - Exchange action payload.
    * @returns {void}
    */
@@ -773,13 +756,18 @@ export const FrontierOperations = {
       W = this.db.world;
     if (!p || s.ent || !(p.hub || (p.svc.includes('T') && !p.site)))
       return this.toast(s, 'The exchange is open at market worlds.');
-    d.storage = d.storage || {};
+    try {
+      assertLots(d.cargo, d.cargoLots);
+      assertLots(d.storage, d.storageLots);
+    } catch {
+      return this.toast(s, 'Cargo validation failed.');
+    }
     switch (m.op) {
       case 'place': {
         const side = m.side === 'buy' ? 'buy' : 'sell',
           qty = Math.max(1, Math.min(9999, m.qty | 0)),
           price = Math.max(1, Math.min(EXCHANGE.maxPrice, Math.round(+m.price || 0)));
-        let item;
+        let item, escrow, reserve;
         if (m.kind === 'mat' && MATERIALS.includes(m.mat) && m.grade >= 0 && m.grade <= 4)
           item = { kind: 'mat', mat: m.mat, grade: m.grade | 0 };
         else if (m.kind === 'com' && COMMODITIES.some((c) => c.id === m.cid))
@@ -792,22 +780,48 @@ export const FrontierOperations = {
           if (item.kind === 'mat') {
             if (d.mats[item.mat][item.grade] < qty)
               return this.toast(s, 'You do not have that many crates.');
-            d.mats[item.mat][item.grade] -= qty;
+            reserve = () => {
+              d.mats[item.mat][item.grade] -= qty;
+            };
           } else {
             if ((d.cargo[item.cid] || 0) < qty)
               return this.toast(s, 'You do not have that much in your hold.');
-            d.cargo[item.cid] -= qty;
-            if (!d.cargo[item.cid]) delete d.cargo[item.cid];
+            try {
+              escrow = planTake(d.cargo, d.cargoLots, item.cid, qty, m.lots);
+            } catch {
+              return this.toast(s, 'Those cargo grades are unavailable.');
+            }
+            reserve = () => applyTake(d.cargo, d.cargoLots, escrow);
           }
         } else {
           if (d.credits < qty * price)
             return this.toast(s, 'Not enough credits to back that order.');
-          d.credits -= qty * price;
+          reserve = () => {
+            d.credits -= qty * price;
+          };
         }
-        const order = { id: W.nextOrder++, owner: d.name, side, item, qty, price, t: Date.now() };
-        this.matchOrder(order);
+        const order = {
+          id: W.nextOrder++,
+          owner: d.name,
+          side,
+          item,
+          qty,
+          price,
+          lots: escrow ? { ...escrow.grades } : undefined,
+          t: Date.now(),
+        };
+        let committed = false;
+        try {
+          this.matchOrder(order, () => {
+            reserve();
+            committed = true;
+          });
+        } catch (error) {
+          // Only preflight failures are denials. Never refund after a completed swap.
+          if (committed) throw error;
+          return this.toast(s, 'Order rejected: cargo validation failed.');
+        }
         if (order.qty > 0) {
-          W.orders.push(order);
           this.toast(
             s,
             `Order placed: ${side} ${order.qty} ${this.itemName(item)} at ${credits(price)}.`,
@@ -825,14 +839,21 @@ export const FrontierOperations = {
       }
       case 'collect': {
         const st = this.stats(d);
-        let room = st.cargo - Object.values(d.cargo).reduce((a, b) => a + b, 0),
+        let room = st.cargo - this.holdUsed(d),
           got = 0;
         for (const [k, v] of Object.entries(d.storage)) {
           const n = Math.min(v, room);
           if (n <= 0) continue;
-          d.cargo[k] = (d.cargo[k] || 0) + n;
-          d.storage[k] -= n;
-          if (!d.storage[k]) delete d.storage[k];
+          moveLots(
+            d.storage,
+            d.storageLots,
+            d.cargo,
+            d.cargoLots,
+            k,
+            n,
+            'common-first',
+            Math.max(0, room),
+          );
           room -= n;
           got += n;
         }
@@ -869,7 +890,6 @@ export const FrontierOperations = {
   },
   /**
    * Format display name of an exchange order item (material grade or commodity).
-   * @this {any}
    * @param {{kind: string, mat?: string, grade?: number, cid?: string}} it - Exchange item specification.
    * @returns {string} Formatted item name.
    */
@@ -878,7 +898,6 @@ export const FrontierOperations = {
   },
   /**
    * Compare two exchange items for type, material, grade, or commodity identity.
-   * @this {any}
    * @param {{kind: string, mat?: string, grade?: number, cid?: string}} a - First item.
    * @param {{kind: string, mat?: string, grade?: number, cid?: string}} b - Second item.
    * @returns {boolean} True if items match.
@@ -891,25 +910,28 @@ export const FrontierOperations = {
   },
   /**
    * Deliver purchased goods to a buyer (materials directly, commodities to exchange storage).
-   * @this {any}
    * @param {string} name - Buyer captain name.
    * @param {{kind: string, mat?: string, grade?: number, cid?: string}} it - Purchased item.
    * @param {number} qty - Quantity purchased.
+   * @param {import('../shared/cargo-contracts.js').GradeLots} [lots] Exact escrow grades.
    * @returns {void}
    */
-  deliver(name, it, qty) {
+  deliver(name, it, qty, lots) {
     // goods to a buyer: crates straight in, commodities to exchange storage
     const p = this.db.get(name);
     if (!p) return;
     if (it.kind === 'mat') p.mats[it.mat][it.grade] += qty;
     else {
-      p.storage = p.storage || {};
-      p.storage[it.cid] = (p.storage[it.cid] || 0) + qty;
+      migrateCargoLots(p);
+      addLots(p.storage, p.storageLots, {
+        cid: it.cid,
+        qty,
+        grades: lots === undefined ? commonLots(it.cid, qty).grades : lots,
+      });
     }
   },
   /**
    * Credit payment amount to a seller captain's account.
-   * @this {any}
    * @param {string} name - Captain name.
    * @param {number} n - Credit amount.
    * @returns {void}
@@ -923,21 +945,20 @@ export const FrontierOperations = {
   },
   /**
    * Refund escrowed credits or inventory items for a cancelled exchange order.
-   * @this {any}
-   * @param {Record<string, any>} o - Order record.
+   * @param {{item: {id: string, name: string, cost: number}, n: number, p: number, by: string, t: number}} o - Order record.
    * @returns {void}
    */
   refundOrder(o) {
-    if (o.side === 'sell') this.deliver(o.owner, o.item, o.qty);
+    if (o.side === 'sell') this.deliver(o.owner, o.item, o.qty, o.lots);
     else this.pay(o.owner, o.qty * o.price);
   },
   /**
    * Match an incoming exchange order against the open order book.
-   * @this {any}
-   * @param {Record<string, any>} order - Incoming order record.
+   * @param {{id: number, owner: string, side: string, item: {kind: string, mat?: string, grade?: number, cid?: string}, qty: number, price: number, lots?: import('../shared/cargo-contracts.js').GradeLots, t: number}} order - Incoming escrow order record.
+   * @param {() => void} reserve - Commit the validated incoming reservation.
    * @returns {void}
    */
-  matchOrder(order) {
+  matchOrder(order, reserve) {
     const W = this.db.world;
     const book = W.orders
       .filter(
@@ -950,23 +971,76 @@ export const FrontierOperations = {
       .sort((a, b) =>
         order.side === 'buy' ? a.price - b.price || a.t - b.t : b.price - a.price || a.t - b.t,
       );
+    // Validate every destination and escrow remainder before the first fill/pay.
+    // Old book entries have no grade records and migrate as genuinely common escrow.
+    const trialPlayers = new Map(),
+      trialOrder = structuredClone(order);
+    for (const original of book) {
+      if (!trialOrder.qty) break;
+      const o = structuredClone(original),
+        buyer = trialOrder.side === 'buy' ? trialOrder : o,
+        seller = trialOrder.side === 'buy' ? o : trialOrder,
+        n = Math.min(trialOrder.qty, o.qty);
+      if (seller.item.kind === 'com') {
+        const available =
+          seller.lots === undefined ? commonLots(seller.item.cid, seller.qty).grades : seller.lots;
+        addLots(
+          {},
+          { version: 1, byCommodity: {} },
+          { cid: seller.item.cid, qty: seller.qty, grades: available },
+        );
+        const selected = splitLots(available, n);
+        let p = trialPlayers.get(buyer.owner);
+        if (!p) {
+          const saved = this.db.get(buyer.owner);
+          if (!saved || !this.db.get(seller.owner)) throw new Error('Missing order owner');
+          p = structuredClone(saved);
+          migrateCargoLots(p);
+          trialPlayers.set(buyer.owner, p);
+        }
+        addLots(p.storage, p.storageLots, { cid: seller.item.cid, qty: n, grades: selected });
+        seller.lots = { ...available };
+        for (const g of ['common', 'rich', 'pure']) seller.lots[g] -= selected[g];
+      }
+      trialOrder.qty -= n;
+    }
+    reserve();
+    const fills = [];
     for (const o of book) {
       if (!order.qty) break;
       const n = Math.min(order.qty, o.qty),
         price = o.price,
         buyer = order.side === 'buy' ? order : o,
         seller = order.side === 'buy' ? o : order;
-      this.deliver(buyer.owner, order.item, n);
+      const available =
+        seller.lots === undefined
+          ? seller.item.kind === 'com'
+            ? commonLots(seller.item.cid, seller.qty).grades
+            : null
+          : seller.lots;
+      const selected = available ? splitLots(available, n) : undefined;
+      this.deliver(buyer.owner, order.item, n, selected);
+      if (selected) {
+        seller.lots = available;
+        for (const g of ['common', 'rich', 'pure']) seller.lots[g] -= selected[g];
+      }
       this.pay(seller.owner, Math.round(n * price * (1 - EXCHANGE.fee)));
       if (buyer === order && order.price > price) this.pay(order.owner, n * (order.price - price)); // the buyer escrowed at their own price
       order.qty -= n;
       o.qty -= n;
-      for (const nm of [buyer.owner, seller.owner]) {
+      fills.push({ buyer: buyer.owner, seller: seller.owner, n, price });
+    }
+    W.orders = W.orders.filter((o) => o.qty > 0);
+    if (order.qty > 0) W.orders.push(order);
+    this.db.touch();
+    // Notification/socket failures cannot roll back mass, credits or pending escrow.
+    for (const { buyer, seller, n, price } of fills) {
+      for (const nm of [buyer, seller]) {
         const ss = this.sessionOf(nm);
         if (ss) {
           this.toast(
             ss,
-            `Exchange: ${nm === buyer.owner ? 'bought' : 'sold'} ${n} ${this.itemName(order.item)} at ${credits(price)}.`,
+            `Exchange: ${nm === buyer ? 'bought' : 'sold'} ${n} ${this.itemName(order.item)} at ${credits(price)}.`,
           );
           this.notify(
             ss,
@@ -977,13 +1051,11 @@ export const FrontierOperations = {
         }
       }
     }
-    W.orders = W.orders.filter((o) => o.qty > 0);
   },
   /**
    * Build exchange order book summary and player-specific order state for client.
-   * @this {any}
-   * @param {Record<string, any>} d - Saved player data.
-   * @returns {Record<string, any>} Exchange book payload.
+   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @returns {Record<string, Array<{by: string, p: number, n: number}>>} Exchange book payload.
    */
   exchangePayload(d) {
     const book = {};
@@ -1008,7 +1080,6 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ leaderboards and profiles
   /**
    * Retrieve top 20 rankings for a given leaderboard category.
-   * @this {any}
    * @param {string} cat - Leaderboard category ('earned', 'kills', 'mined', 'arena', 'station', 'colonies', 'mastery').
    * @returns {Array<{name: string, fleet: null, v: number}>} Top leaderboard entries.
    */
@@ -1034,9 +1105,8 @@ export const FrontierOperations = {
   },
   /**
    * Fetch public captain profile overview by captain name.
-   * @this {any}
    * @param {string} name - Captain player name.
-   * @returns {Record<string, any> | null} Captain profile record or null if not found.
+   * @returns {import("../client/frontier_ui.js").CaptainProfile | null} Captain profile record or null if not found.
    */
   profile(name) {
     const p = this.db.get(String(name || ''));
