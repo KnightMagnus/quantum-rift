@@ -2,6 +2,13 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.0.5 — Complete ship banking
+
+- Restore original 3D turning-bank frames and matched glows for all 17 large hulls, including Constitution; preserve existing level artwork and all 105 already complete hull sheets.
+- Allow slow-turning capital ships to trigger banking while retaining noise rejection and return-to-level behavior.
+- Retain the recovered original Python model/render pipeline in `tools/ships26/` for future ship development, with reproducible regeneration instructions.
+- Audit all 122 ship atlases and stock turn rates with decoded browser/frame regression coverage.
+
 ### 3.0.4 — Living resources and trading controls
 
 - Keep NPC planet/station approaches pointed toward their destination at cruise speed, while preserving braking and escort guidance.

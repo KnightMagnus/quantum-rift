@@ -5,3 +5,7 @@ node_modules/
 .DS_Store
 
 .artifacts/
+
+# Local Python generator bytecode.
+__pycache__/
+*.pyc

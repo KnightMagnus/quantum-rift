@@ -1,0 +1,78 @@
+{
+  "archiveSha256": "23a20527bae6d3cb24690a65d64eb11265491bb19e79dc6f498fb3c1bfee1d5c",
+  "archiveName": "quantum-rift-ship-generator.zip",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "6c0f925a957ec0c8a3eb6702455fff059e3c9577811f063ff8b1afb3b1838190"
+    },
+    {
+      "path": "ship_keys.json",
+      "sha256": "b8f1ddd918f1dcb5c819a85020a9f0228525a21d268d296c22f68c7ef16deab3"
+    },
+    {
+      "path": "ships.json",
+      "sha256": "ce4ea18751334892a38bd70b24a4acc89e404cdce2468a2717f13554153f32e2"
+    },
+    {
+      "path": "ships26.json",
+      "sha256": "5b6507f479d06284a7c64f9def8c9d0f337a83d85c3bce3f39e56f09596a12c7"
+    },
+    {
+      "path": "tools/artgen3.py",
+      "sha256": "10e68600d56c3d10aa18fe1cdde78ba66f69f79238494f3cf09856f950138733"
+    },
+    {
+      "path": "tools/artgen_mk2.py",
+      "sha256": "25778bd5e7603a789aaf62c3522955639ded616f924bfee0aa3ae7612b712cfa"
+    },
+    {
+      "path": "tools/hulls08.py",
+      "sha256": "e3ba8f7c8c5ac8cbaad6d3aa62fb3a8f8ed49c0c7bd91c9d5440ee39486930aa"
+    },
+    {
+      "path": "tools/hulls2.py",
+      "sha256": "5bcc4f927ae6c475701a07ef493c08d15d05da3af408ca758e95d3f785f2ce26"
+    },
+    {
+      "path": "tools/hulls22.py",
+      "sha256": "7ec93ff767f9d3e1f66b56efe03aed5f09ef605c5740229e8ef2f9c71997c066"
+    },
+    {
+      "path": "tools/hulls3.py",
+      "sha256": "0c60b160815dbe84fc4d7869c64c08f9107abf53cc914c48eb25b2f7e86b09b6"
+    },
+    {
+      "path": "tools/hulls5.py",
+      "sha256": "129b4436e38d7a8e66ed5d072d34b4892f9bf6a2424d4a97ca551b8df4a6834e"
+    },
+    {
+      "path": "tools/hulls52.py",
+      "sha256": "23554177c9a655e98de8b616a70831f5d4d3a5f843ab841365df5b04ccb602ef"
+    },
+    {
+      "path": "tools/pict.py",
+      "sha256": "3a060982b37cda8a8dfe52f35150b4272ac26a1c1ab22517ea28d9036f846f4c"
+    },
+    {
+      "path": "tools/render2.py",
+      "sha256": "d462dd5c01f546d422c6be631dd6c599b9b1ac92fe6cba9927de9c120f58abd0"
+    },
+    {
+      "path": "tools/rift_roster_chart.py",
+      "sha256": "6c2b990858624db7252c805664443bd3ce9352c3c218495b06e7e791ad974a83"
+    },
+    {
+      "path": "tools/rift_ships26.py",
+      "sha256": "aae0d883e75e89327fc3c997912cffff22ec87e5a4c9cac932802495884a93c3"
+    },
+    {
+      "path": "tools/ships26_pack.py",
+      "sha256": "12ce0e59c4068c1c8fe62f1e9e869defd8bc874e2a974c7945bc0fbaa200a006"
+    },
+    {
+      "path": "tools/sprites26_js.py",
+      "sha256": "22c8563948b1a45552fbbe761cba7b0251f8a7ce121e1ff59eaf9d5696372889"
+    }
+  ]
+}

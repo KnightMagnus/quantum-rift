@@ -1,6 +1,8 @@
 // Derive sprite roll from heading samples, not the number of display frames between snapshots.
-const ENTER_RATE = 0.55;
-const EXIT_RATE = 0.3;
+// The slowest stock capital hull turns at 0.471 rad/s. Keep activation well
+// below that rate, but above milliradian snapshot quantization noise (~0.015).
+const ENTER_RATE = 0.2;
+const EXIT_RATE = 0.1;
 const FILTER_MS = 120;
 const STALE_MS = 250;
 
