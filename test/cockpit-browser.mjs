@@ -8,7 +8,10 @@ const f = await miningFixture('cockpit');
 let browser;
 try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  const page = await browser.newPage({
+    viewport: { width: 1440, height: 1000 },
+    deviceScaleFactor: Number(process.env.COCKPIT_TEST_DPR || 1),
+  });
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.addInitScript(() => {
@@ -109,6 +112,11 @@ try {
         chat: r('consolechat'),
         dock: r('functiondock'),
         canvas: r('view'),
+        backing: {
+          width: document.getElementById('view').width,
+          height: document.getElementById('view').height,
+          dpr: devicePixelRatio,
+        },
       };
     });
     if (width === 1440)
@@ -116,6 +124,14 @@ try {
         Math.abs((rects.chat.left + rects.chat.right) / 2 - width / 2) < 1,
         'Desktop chat is horizontally centered',
       );
+    assert.ok(
+      Math.abs(rects.backing.width - rects.canvas.width * rects.backing.dpr) < 1,
+      'Flight backing width matches CSS pixels',
+    );
+    assert.ok(
+      Math.abs(rects.backing.height - rects.canvas.height * rects.backing.dpr) < 1,
+      'Flight backing height matches CSS pixels without stretching original sprites',
+    );
     assert.equal(rects.trim.right, width);
     assert.equal(rects.trim.height, height);
     assert.equal(rects.cockpit.bottom, height);
