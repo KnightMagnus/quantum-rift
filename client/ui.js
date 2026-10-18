@@ -1,3 +1,9 @@
+import {
+  missionDetails,
+  missionFactsHtml,
+  missionFiltersHtml,
+  filterMissions,
+} from './mission-details.js';
 import { initCockpitState } from './cockpit-state.js';
 import { tradeEstimateHtml, receiptHtml, initEconomyUI } from './economy-ui.js';
 import { refineryHtml } from './refinery_ui.js';
@@ -255,6 +261,24 @@ export function initUI(g, sender) {
       toast(`Course plotted to ${SYS[b.dataset.plot].name}. Press J in space to jump.`);
     }
   }); // 2.4 $('dockchips').addEventListener('click', onAct); $('stview').addEventListener('click', onAct); $('opsview').addEventListener('click', onAct); $('opsview').addEventListener('click', (e) => { const b = e.target.closest('[data-plot]'); if (b) { plot(b.dataset.plot); openMap(b.dataset.plot); } });   // 2.4
+  document.addEventListener('change', (e) => {
+    const key = e.target.dataset.missionFilter;
+    if (
+      ![
+        'jobType',
+        'jobFeasible',
+        'jobNearby',
+        'missionType',
+        'missionFeasible',
+        'missionNearby',
+      ].includes(key)
+    )
+      return;
+    G[key] = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    G.views.remember();
+    if (key.startsWith('job')) renderLanded();
+    else drawMini();
+  });
   $('landbody').addEventListener('change', (e) => {
     if (e.target.id === 'ysort') {
       G.ysort = e.target.value;
@@ -293,6 +317,16 @@ export function initUI(g, sender) {
     if (c) send({ t: 'shuttle', op: 'crew', sid: +c.dataset.crew, oid: c.value ? +c.value : null });
   });
   $('t-missions').addEventListener('click', (e) => {
+    const action = e.target.closest('[data-contract]');
+    if (action && !action.disabled && G.contractPlan) {
+      send({
+        t: 'armada',
+        op: action.dataset.contract,
+        id: G.contractPlan.id,
+        revision: G.contractPlan.revision,
+      });
+      return;
+    }
     const pin = e.target.closest('[data-pin]');
     if (pin) {
       G.pinnedObjective = G.pinnedObjective === pin.dataset.pin ? '' : pin.dataset.pin;
@@ -1604,15 +1638,16 @@ export function renderLanded() {
         h += `<div class="card story" style="cursor:default"><div class="storytag">MAIN STORY · IN PROGRESS</div><div class="t">${esc(SA.title)}</div><div>${esc(SA.brief)}</div>${SA.ready ? '<div style="color:var(--ok)">Done: return to collect.</div>' : SA.got ? `<div class="dim small">${SA.got} so far</div>` : ''}</div>`;
       h +=
         `<div class="sect" style="margin-top:0">JOBS ON OFFER</div>` +
-        (L.offers.length
-          ? L.offers
+        missionFiltersHtml(G) +
+        (filterMissions(G, L.offers).length
+          ? filterMissions(G, L.offers)
               .map((o) => {
                 if (o.type === 'quest') return questCard(o);
                 const j = jobInfo(o, y);
-                return `<div class="card" style="cursor:default"><div class="t">${esc(o.title)}</div><div>${esc(o.text)}</div><div class="p">Pays ${credits(o.reward)} credits <span class="dim small">· ${j.where}</span></div>${j.warn ? `<div class="jwarn">${j.warn}</div>` : ''}${j.note ? `<div class="jwarn" style="color:#ffb070">⚠ ${esc(j.note)}</div>` : ''}<div><button class="btn sm" data-act="accept" data-id="${o.id}"${j.warn ? ' disabled' : ''}>ACCEPT</button>${o.sys && o.sys !== G.sys ? ` <button class="btn sm" data-plot="${o.sys}">PLOT</button>` : ''}</div></div>`;
+                return `<div class="card" data-offer-type="${esc(o.type)}" style="cursor:default"><div class="t">${esc(o.title)}</div><div>${esc(o.text)}</div>${missionFactsHtml(G, o)}${j.warn ? `<div class="jwarn">${j.warn}</div>` : ''}${j.note ? `<div class="jwarn" style="color:#ffb070">⚠ ${esc(j.note)}</div>` : ''}<div><button class="btn sm" data-act="accept" data-id="${o.id}"${j.warn ? ' disabled' : ''}>${o.type === 'warband' ? 'PLAN TEAM CONTRACT' : 'ACCEPT'}</button>${o.sys && o.sys !== G.sys ? ` <button class="btn sm" data-plot="${o.sys}">PLOT</button>` : ''}</div></div>`;
               })
               .join('')
-          : '<p class="dim">No jobs on offer here right now. New ones are posted every ten minutes.</p>');
+          : '<p class="dim">No jobs match these filters right now. Choose All types or turn off a filter to see the rest. Boards refresh every ten minutes.</p>');
       h +=
         `<div class="sect">YOUR JOBS (${y.missions.length}/6)</div>` +
         (y.missions.length
@@ -1782,7 +1817,7 @@ function questCard(o) {
   const n = o.sys === G.sys ? 0 : (route(SYS, G.sys, o.sys) || []).length;
   return `<div class="card story quest" style="cursor:default"><div class="storytag">${o.side ? 'SIDE STORY' : 'CONTACT'} · ${esc(o.giver)}${o.standing ? ` · <span class="dim">${esc(o.standing)}</span>` : ''}</div><div class="t">${esc(o.title)}</div><div class="qintro">${esc(o.text)}</div>
     <div class="p">${o.steps} steps, starting in ${SYS[o.sys] ? esc(SYS[o.sys].name) : 'nearby'}${n ? ` (${n} jump${n > 1 ? 's' : ''})` : ''} · each step pays, and finishing earns <span class="cr">${esc(o.rewardText)}</span></div>
-    ${o.full ? '<div class="jwarn">You are already following three stories.</div>' : ''}${questNeeds(o)}<div><button class="btn sm" data-act="accept" data-id="${esc(o.id)}"${o.full ? ' disabled' : ''}>TAKE IT ON</button>${o.sys && o.sys !== G.sys ? ` <button class="btn sm" data-plot="${o.sys}">PLOT</button>` : ''}</div></div>`;
+    ${o.full ? '<div class="jwarn">You are already following three stories.</div>' : ''}${G.you.missions.length >= 6 ? '<div class="jwarn">All six job slots are full. Finish or abandon a job first.</div>' : ''}${questNeeds(o)}<div><button class="btn sm" data-act="accept" data-id="${esc(o.id)}"${o.full || G.you.missions.length >= 6 ? ' disabled' : ''}>TAKE IT ON</button>${o.sys && o.sys !== G.sys ? ` <button class="btn sm" data-plot="${o.sys}">PLOT</button>` : ''}</div></div>`;
 }
 /**
  * Sorts shipyard hull IDs by the current sort criterion (cost, cargo, speed, strength, shield).
@@ -1838,12 +1873,11 @@ function jobInfo(o, y) {
   const where = `${SYS[o.sys] ? SYS[o.sys].name : ''}${n ? ` · ${n} jump${n > 1 ? 's' : ''}` : ' · this system'}`;
   let warn = bunkInfo(G, o),
     note = '';
-  if (o.type === 'warband') {
-    const A_ = y.armada,
-      on = A_ && A_.members ? A_.members.filter((m) => m.online).length : 0;
-    if (on < 2) warn = 'Needs an Armada with at least 2 captains online (ALLIES tab).';
-    else note = `Taken for all ${on} captains online in your Armada; each gets an equal share.`;
-  } // 2.6
+  const details = missionDetails(G, o);
+  if (details.reasons.length) warn = details.reasons.join(' ');
+  if (o.type === 'warband')
+    note =
+      'Each captain chooses whether to join. Review exact shares in Missions before the team starts.';
   if (
     (o.type === 'bounty' || o.type === 'assassinate') &&
     o.hull &&
@@ -1957,6 +1991,7 @@ function onAct(e) {
       break;
     case 'accept':
       send({ t: 'accept', id: d.id });
+      if (G.landed?.offers.find((o) => o.id === d.id)?.type === 'warband') ctab('missions');
       break;
     case 'abandon': {
       const mm = (G.you.missions || []).find((x) => x.id === d.id);

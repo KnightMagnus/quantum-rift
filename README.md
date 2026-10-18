@@ -23,7 +23,7 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 
 - Trade on markets shaped by shortages, local events and what captains buy and sell.
 - See the expected cost or sale value before trading, keep a compact trip recap, and start refining from a plain-language cost-and-output summary.
-- Earn your way through deliveries, passenger runs, bounties, patrols, rescues and smuggling.
+- Earn your way through deliveries, passenger runs, bounties, patrols, rescues and smuggling. Compare travel, room needed, danger and your payout before choosing a job.
 - Mine asteroid, gas and crystal fields; survey deposits, refine your haul and tow large finds home with specialized equipment.
 - Follow faction and Syndicate careers, develop colonies, earn combat ratings and climb the leaderboards.
 
@@ -41,7 +41,7 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 
 ### Play with friends
 
-- Form an **Armada** to travel together, share bounties and take on co-op contracts and station defenses.
+- Form an **Armada** to travel together, share bounties and take on co-op contracts and station defenses. Review team-contract shares and choose Ready before joining.
 - Keep in touch through friends lists, private messages, local chat and player hails, with privacy and blocking controls.
 - Expand chat into a holographic history screen above the cockpit without leaving the flight view.
 - Trade credits, cargo and crafting supplies between captains.

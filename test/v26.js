@@ -612,11 +612,18 @@ ok(
   M1.send({ t: 'armada', op: 'invite', name: 'Mara Two' });
   M2.send({ t: 'armada', op: 'accept', id: M1.d.armada });
   M1.send({ t: 'accept', id: wb.id });
+  ok(
+    !M1.d.missions.some((m) => m.id === wb.id) && !M2.d.missions.some((m) => m.id === wb.id),
+    'planning never assigns a captain without consent',
+  );
+  const plan = M1.last('armadaContract').plan;
+  M2.send({ t: 'armada', op: 'contractReady', id: plan.id, revision: plan.revision });
+  M1.send({ t: 'armada', op: 'contractStart', id: plan.id, revision: plan.revision });
   const m1 = M1.d.missions.find((m) => m.id === wb.id),
     m2 = M2.d.missions.find((m) => m.id === wb.id);
   ok(
     m1 && m2 && m1.reward === Math.round(wb.reward / 2),
-    'taken for the whole Armada, the pay shared out',
+    'only consenting team members take the contract, with fixed shares',
   );
   toSpace(M1, wb.sys, 0, 0);
   toSpace(M2, wb.sys, 50, 0);

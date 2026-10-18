@@ -79,7 +79,8 @@
     "mining-panel.js",
     "towing-auto-delivery.js",
     "motherlode-art.js",
-    "economy-32.js"
+    "economy-32.js",
+    "mission-consent.js"
   ],
   "browser": [
     "chat-projection-browser.mjs",
@@ -111,7 +112,8 @@
     "cursors-browser.mjs",
     "landed-live-browser.mjs",
     "qol-browser.mjs",
-    "sidebar-sizing-browser.mjs"
+    "sidebar-sizing-browser.mjs",
+    "mission-ui-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -693,6 +695,21 @@
         "sidebar-sizing-browser.mjs"
       ],
       "asserts": "Per-captain remembered views and deliberate single objective pin survive reload without leaking between accounts; detail/back restores list focus/scroll, unavailable cargo links to Trade, native keyboard controls and narrow/scaled Tray stay usable without taking flight focus. Independent vertical map/menu pointer/touch/keyboard sizing, reload persistence, zoom-safe limits and automatic reset preserve backing geometry and reachability."
+    },
+    {
+      "id": "mission-choices",
+      "owners": [
+        "server/warband-consent.js",
+        "server/coop.js",
+        "server/game.js",
+        "shared/mission-payouts.js",
+        "client/mission-details.js",
+        "client/missions.js",
+        "client/ui.js"
+      ],
+      "services": [],
+      "tests": ["mission-consent.js", "mission-ui-browser.mjs", "v26.js", "qol-browser.mjs"],
+      "asserts": "Plain travel/capacity/risk/turn-in/personal-payout details and remembered optional type/feasible/nearby filters retain inaccessible offers with reasons. Real Ready/Start consent assigns only the frozen roster; exact pool conservation, stale/duplicate/full/refused/disconnected denial, offline completion and saved accepted rewards survive reconnect without automatic late enrollment."
     }
   ],
   "routes": {
@@ -744,7 +761,15 @@
     ],
     "questdrop": ["core-actions.js"],
     "outfit": ["bot.js", "v203.js"],
-    "accept": ["bot.js", "v12.js", "v203.js", "v24.js", "v26.js"],
+    "accept": [
+      "bot.js",
+      "v12.js",
+      "v203.js",
+      "v24.js",
+      "v26.js",
+      "mission-consent.js",
+      "mission-ui-browser.mjs"
+    ],
     "abandon": ["v203.js", "v24.js"],
     "station": [
       "cargo-flows.js",
@@ -770,7 +795,9 @@
       "combat-network.js",
       "v06.js",
       "v26.js",
-      "armada-follow-two-clients.mjs"
+      "armada-follow-two-clients.mjs",
+      "mission-consent.js",
+      "mission-ui-browser.mjs"
     ],
     "holdout": ["v09.js", "v26.js"],
     "storyacc": ["v10.js"],

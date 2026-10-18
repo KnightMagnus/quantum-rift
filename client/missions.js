@@ -1,3 +1,9 @@
+import {
+  missionFactsHtml,
+  filterMissions,
+  missionFiltersHtml,
+  contractPlanHtml,
+} from './mission-details.js';
 import { refineryJobsHtml } from './refinery_ui.js';
 // 1.0.1: active mission tracking. Works out where each mission (and the main story) wants you to go, for the MISSIONS
 // companion tab and the gold target markers on the galaxy map.
@@ -173,6 +179,12 @@ export function missionTargets(G) {
       status = `⏱ ${left} min left · ${status}`;
     }
     out.push({
+      type: m.type,
+      qty: m.qty,
+      pax: m.pax,
+      dest: m.dest,
+      done: m.done,
+      team: m.team,
       stellar: m.done ? null : m.dest || null,
       key: m.id,
       kind: m.exp || m.quest ? 'arc' : 'job',
@@ -235,7 +247,8 @@ function journalHtml(G) {
  */
 export function missionsHtml(G) {
   const T = missionTargets(G),
-    refinery = refineryJobsHtml(G);
+    shown = filterMissions(G, T, 'mission', true),
+    refinery = contractPlanHtml(G) + missionFiltersHtml(G, 'mission') + refineryJobsHtml(G);
   if (!T.length)
     return (
       refinery +
@@ -244,23 +257,28 @@ export function missionsHtml(G) {
     );
   return (
     refinery +
-    T.map((t) => {
-      let jumps = '';
-      if (t.sys && G.sys) {
-        if (t.sys === G.sys) jumps = '<span style="color:var(--ok)">in this system</span>';
-        else {
-          const r = route(SYS, G.sys, t.sys);
-          jumps = r && r.length ? `${r.length} jump${r.length > 1 ? 's' : ''}` : 'no known route';
+    (!shown.length
+      ? '<p class="dim small">No missions match these filters. Your other objectives are still tracked.</p>'
+      : '') +
+    shown
+      .map((t) => {
+        let jumps = '';
+        if (t.sys && G.sys) {
+          if (t.sys === G.sys) jumps = '<span style="color:var(--ok)">in this system</span>';
+          else {
+            const r = route(SYS, G.sys, t.sys);
+            jumps = r && r.length ? `${r.length} jump${r.length > 1 ? 's' : ''}` : 'no known route';
+          }
         }
-      }
-      return `<div class="mcard${t.kind === 'story' || t.kind === 'arc' ? ' story' : t.kind === 'career' ? ' career' : ''}${t.urgent ? ' urgent' : ''}">
+        return `<div data-mission-key="${esc(t.key)}" class="mcard${t.kind === 'story' || t.kind === 'arc' ? ' story' : t.kind === 'career' ? ' career' : ''}${t.urgent ? ' urgent' : ''}">
       ${t.kind === 'story' ? '<div class="storytag">MAIN STORY</div>' : t.kind === 'career' ? '<div class="careertag">CAREER</div>' : t.kind === 'arc' ? `<div class="storytag">${esc(t.tag || 'FACTION STORY')}</div>` : ''}
       <div class="t">${esc(t.title)}</div>
-      <div class="mstat">${esc(t.status)}</div>
+      <div class="mstat">${esc(t.status)}</div>${missionFactsHtml(G, t, true)}
       ${t.kind === 'story' && T.some((x) => x.kind === 'career') ? `<details class="small dim"><summary>The story can wait until you know the ropes. Read more</summary>${esc(t.text)}</details>` : `<div class="dim small">${esc(t.text)}</div>`}
-      <div class="mfoot"><button class="btn sm" data-pin="${esc(t.key)}" aria-pressed="${G.pinnedObjective === t.key}">${G.pinnedObjective === t.key ? 'UNPIN' : 'PIN'}</button>${t.reward ? `<span class="cr small">${Math.round(t.reward).toLocaleString()} cr</span>` : '<span></span>'}<span class="dim small">${jumps}</span>${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}${t.pendingQuest ? `<button class="btn sm mab" data-questdrop="${esc(t.pendingQuest)}" title="Abandon this story">✕</button>` : t.kind === 'job' || t.quest || (t.kind === 'arc' && t.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${esc(t.key)}" title="Drop this job">✕</button>` : ''}</div>
+      <div class="mfoot"><button class="btn sm" data-pin="${esc(t.key)}" aria-pressed="${G.pinnedObjective === t.key}">${G.pinnedObjective === t.key ? 'UNPIN' : 'PIN'}</button><span class="dim small">${jumps}</span>${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}${t.pendingQuest ? `<button class="btn sm mab" data-questdrop="${esc(t.pendingQuest)}" title="Abandon this story">✕</button>` : t.kind === 'job' || t.quest || (t.kind === 'arc' && t.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${esc(t.key)}" title="Drop this job">✕</button>` : ''}</div>
     </div>`;
-    }).join('') +
+      })
+      .join('') +
     journalHtml(G)
   );
 }

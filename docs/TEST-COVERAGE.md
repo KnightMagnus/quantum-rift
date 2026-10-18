@@ -1,5 +1,9 @@
 # Game regression coverage inventory
 
+## 3.2.1 mission choices
+
+`mission-choices` adds `mission-consent.js` (real authoritative 2/4-captain sessions) and `mission-ui-browser.mjs` (two real WebSocket/browser captains). Coverage includes board facts, visible denial reasons, retained filters, separate plotting/acceptance, explicit Ready/Start, exact integer-pool shares, revised-roster consent, refusal, capacity changes, reconnect/leave/late join, persisted offline completion and duplicate turn-in. Existing accepted rewards and legacy contracts are not migrated. `v26.js` now exercises the new consent gate before its existing actual kingpin/escort/completion checks. There is no measured career-rate or reward-balance claim.
+
 ## 3.2.1 cockpit QoL
 
 `cockpit-qol` covers per-captain view/search/scroll/subtab retention, a single explicitly pinned objective with other tracking retained, native detail/Back keyboard focus, unavailable cargo next-action links and narrow/scaled layouts. `qol-browser.mjs` uses an isolated real server and actual accepted mission; existing refinery, logout, input and sidebar checks guard integrated behavior. `sidebar-sizing-browser.mjs` additionally checks independent mouse/touch/keyboard minimap and lower-menu heights, canvas backing geometry, persistence, viewport/zoom limits and automatic reset. Default minimap square/fill coverage remains intact in `sidebar-browser.mjs`. Presentation preferences never store passwords, execute actions, auto-accept work or modify authoritative saves.

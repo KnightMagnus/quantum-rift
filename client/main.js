@@ -545,6 +545,7 @@ function onMessage(m) {
       if (/somewhere else/.test(m.msg)) G._kicked = true;
       break;
     case 'welcome':
+      G.contractPlan = null;
       refineryUI.connected();
       audio.stopMusic();
       audio.preloadUi();
@@ -676,6 +677,10 @@ function onMessage(m) {
         setAuto(null);
       toast(m.msg);
       break;
+    case 'armadaContract':
+      G.contractPlan = m.plan;
+      drawMini();
+      break;
     case 'social':
     case 'dm':
     case 'dms':
@@ -683,6 +688,7 @@ function onMessage(m) {
     case 'follow':
     case 'rally':
       onCoopMsg(m);
+      if (m.t === 'social' && G.landed && G.ltab === 'jobs') renderLanded();
       break; // 2.6: friends, messages, trades, follow the leader
     case 'paused':
       G.paused = m.on;

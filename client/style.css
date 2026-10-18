@@ -3380,3 +3380,27 @@ body.solo .mp {
     grid-row: 4;
   }
 }
+
+.mission-filters,
+.mission-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 7px 0;
+}
+.mission-filters label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mission-filters select {
+  max-width: 100%;
+}
+.mission-facts > span {
+  flex: 1 1 180px;
+  overflow-wrap: anywhere;
+}
+.contract-plan ul {
+  padding-left: 18px;
+  line-height: 1.5;
+}
