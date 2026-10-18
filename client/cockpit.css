@@ -600,3 +600,61 @@ input.trade-amount[type='number'] {
     max-height: 19vh;
   }
 }
+
+.title-energy-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.title-lightning {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.title-lightning path {
+  fill: none;
+  stroke: #e3baff;
+  stroke-width: 1.5;
+  stroke-linejoin: bevel;
+  stroke-dasharray: 18 90;
+  filter: drop-shadow(0 0 3px #a43aff);
+  animation: electric-trace 4.7s linear infinite;
+}
+@keyframes electric-trace {
+  0%,
+  70%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 108;
+  }
+  73%,
+  79% {
+    opacity: 0.85;
+  }
+  76%,
+  84% {
+    opacity: 0.15;
+  }
+  88% {
+    opacity: 0.7;
+    stroke-dashoffset: 0;
+  }
+  94% {
+    opacity: 0;
+    stroke-dashoffset: -30;
+  }
+}
+#login.hidden .title-lightning path {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-lightning path {
+    animation: none;
+    opacity: 0.25;
+    stroke-dasharray: none;
+  }
+}

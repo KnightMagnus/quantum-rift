@@ -67,13 +67,46 @@ try {
     await page.locator('.splash-title').evaluate((el) => getComputedStyle(el).animationName),
     'none',
   );
+  assert.equal(
+    await page
+      .locator('.title-lightning path')
+      .evaluate((el) => getComputedStyle(el).animationName),
+    'none',
+  );
   await page.emulateMedia({ reducedMotion: 'no-preference' });
+  assert.equal(
+    await page
+      .locator('.title-lightning path')
+      .evaluate((el) => getComputedStyle(el).animationName),
+    'electric-trace',
+  );
+  const lightning = await page.locator('.title-lightning path').evaluate((el) => {
+    const a = el.getAnimations()[0];
+    a.pause();
+    a.currentTime = 3500;
+    const first = getComputedStyle(el).strokeDashoffset;
+    a.currentTime = 4100;
+    const second = getComputedStyle(el).strokeDashoffset;
+    a.play();
+    return { first, second };
+  });
+  assert.notEqual(
+    lightning.first,
+    lightning.second,
+    'Electric accents trace independently of logo',
+  );
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({ path: path.join(f.out, 'login.png') });
   await page.fill('#lname', 'Mining Alpha');
   await page.fill('#lpass', 'fixture');
   await page.click('#lbtn');
   await page.waitForFunction(() => G.you && G.landed);
+  assert.equal(
+    await page
+      .locator('.title-lightning path')
+      .evaluate((el) => getComputedStyle(el).animationPlayState),
+    'paused',
+  );
   for (let i = 0; i < 8 && (await page.locator('#storybox').isVisible()); i++)
     await page.locator('#storyb button').first().click();
   const land = await page.locator('#landpic').evaluate((el) => ({

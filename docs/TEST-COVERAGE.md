@@ -413,3 +413,8 @@ three hulls/four headings, boost/idle, neutral texture concealment, revealed
 crystal distinction, gesture gating, music restart/cancel, ambience teardown and
 mute. Production-renderer fixtures are not an all-hull performance benchmark or
 a human listening test.
+
+Login title checks cover standalone placement, 1440/640-wide and 480-high screens,
+independently traced electric accents, reduced-motion static fallback and animation
+pause after login. New 64-second synthesized horn/string score uses the same tested
+music bus, gesture gate and stop/restart lifecycle; subjective timbre needs listening.
