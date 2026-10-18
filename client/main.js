@@ -1009,6 +1009,7 @@ window.addEventListener('keydown', (e) => {
       'PageUp',
       'PageDown',
     ].includes(e.key) &&
+    (['Tab', 'Enter', ' '].includes(e.key) || !actionOf(e.code)) &&
     e.target.closest?.('button, summary, a, [role="button"], [role="separator"]')
   )
     return;
