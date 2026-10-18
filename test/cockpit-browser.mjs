@@ -187,7 +187,7 @@ try {
   await page.locator('#hailopts').getByText('CLOSE', { exact: true }).click();
   // Actual pointer drag, persisted preference, scale-invariant maximum and temporary viewport shrink.
   await page.click('#traytoggle');
-  assert.equal(Math.round((await page.locator('#hud').boundingBox()).width), 480);
+  assert.equal(Math.round((await page.locator('#hud').boundingBox()).width), 520);
   assert.match(await page.locator('#commsheader').innerText(), /COMMS \/ MERIDIAN SECTOR/);
   assert.equal(await page.locator('#consoleutilities .utility-label').count(), 3);
   for (const scale of [0.8, 1, 1.4]) {
@@ -209,7 +209,10 @@ try {
   for (const width of [1600, 1440, 1024, 640]) {
     await page.setViewportSize({ width, height: 1000 });
     for (const scale of [0.8, 1, 1.4])
-      for (const tray of [width > 1150 ? 480 : 400, Math.min(760, width * 0.6)]) {
+      for (const tray of [
+        Math.min(520 * Math.max(1, scale), width * 0.6),
+        Math.min(760, width * 0.6),
+      ]) {
         await page.evaluate(
           ({ scale, tray }) => {
             document.documentElement.style.setProperty('--ui', scale);
@@ -246,7 +249,7 @@ try {
               JSON.stringify({ width, scale, tray, dock, chat, utility }),
           );
         await page.locator('#functiondock').scrollIntoViewIfNeeded();
-        if (scale === 1 && tray === 480)
+        if (scale === 1 && tray === Math.min(520, width * 0.6))
           await page.screenshot({ path: path.join(f.out, 'expanded-column-' + width + '.png') });
       }
   }
@@ -287,8 +290,8 @@ try {
   await page.setViewportSize({ width: 1024, height: 768 });
   assert.equal(
     Math.round((await page.locator('#hud').boundingBox()).width),
-    400,
-    'Compact default restores 400px capacity',
+    520,
+    'Compact default fits the complete menu row',
   );
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.click('#traytoggle');

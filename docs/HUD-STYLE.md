@@ -36,12 +36,23 @@ not establish unshown menu contents or authorize gameplay changes.
 
 ## Tray capacity
 
-- Fresh desktop default: **480 CSS screen pixels**.
-- Fresh compact default: **400px** at width ≤1150 or height ≤700.
+- System radar is square and fills its inset frame; backing pixels follow its
+  rendered dimensions after pointer resize, UI scaling and viewport changes.
+- COMMS is capped at 590px. Desktop expanded utilities retain a 156px track
+  (three 48px controls plus gaps); compact views use full-width stacked controls.
+- The continuous red screen rail and left fin are viewport chrome, not children
+  of the scrolling cockpit. Opening/resizing the Tray must not clip or recolor them.
+
+- Fresh default: **520 CSS screen pixels**, growing with UI scale to at most
+  760px (728px at 140%). The viewport cap still applies on compact screens.
+- All seven Tray menu tabs fit one row at desktop defaults. Narrow or manually
+  resized Trays wrap the tabs into visible rows; never require horizontal tab
+  scrolling or silently discard an existing narrow width preference.
 - Remember the player's resized width in the existing `rift.hud` setting.
 - Keep the existing drag bound: minimum 280px, maximum min(760px, 60vw).
   Temporary viewport shrink bounds the rendered width without overwriting the
-  saved preference; expanding the viewport restores the preferred capacity.
+  saved preference, including after reload; expanding the viewport restores the
+  preferred capacity.
 - UI scale changes text and inner layout, not the outer-screen drag maximum.
   The connected trim must not block the actual pointer resize grip.
 - Small/short high-scale views may need the outer HUD scroll as well as the inner
