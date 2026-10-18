@@ -417,7 +417,7 @@
       ],
       "services": [],
       "tests": ["sidebar-browser.mjs"],
-      "asserts": "Thirteen viewport/scale/width/unread cases: every menu tab fully visible without scrolling or overlap, single-row desktop defaults, narrow/scaled wrapping, wheel and keyboard reachability, old saved-width reload and viewport recovery, square full-width radar and backing geometry including real drag growth, capped COMMS/reserved utility widths, invariant viewport trim in closed/expanded/resized states, red menu scrollbar/accent styles."
+      "asserts": "Thirteen viewport/scale/width/unread cases: every menu tab fully visible without scrolling or overlap, single-row desktop defaults, narrow/scaled wrapping, wheel and keyboard reachability, old saved-width reload and viewport recovery, square full-width radar and backing geometry including real drag growth, capped COMMS/reserved utility widths, utility-anchored centered vent below controls across viewport/UI scales, invariant viewport trim in closed/expanded/resized states, red menu scrollbar/accent styles."
     },
     {
       "id": "client-options-map-save",

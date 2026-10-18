@@ -147,6 +147,22 @@ try {
     if (c.name === 'default')
       assert.ok(radar.width > 400, 'Desktop radar is larger than the old height cap');
     await page.locator('#ctabs').scrollIntoViewIfNeeded();
+    const ventLayout = await page.evaluate(() => {
+      const vent = document.querySelector('.console-vent');
+      const v = vent.getBoundingClientRect();
+      const b = document.querySelector('#consoleutilities .cbtns').getBoundingClientRect();
+      return {
+        parent: vent.parentElement.id,
+        visible: getComputedStyle(vent).display !== 'none',
+        centerDelta: v.x + v.width / 2 - b.x - b.width / 2,
+        below: v.y >= b.bottom,
+      };
+    });
+    assert.equal(ventLayout.parent, 'consoleutilities');
+    if (ventLayout.visible) {
+      assert.ok(Math.abs(ventLayout.centerDelta) < 1, 'Scaled vent centered: ' + c.name);
+      assert.ok(ventLayout.below);
+    }
     const before = await measure();
     assert.equal(before.pageOverflow, false);
     assert.equal(before.tabs.length, 7);
@@ -230,6 +246,8 @@ try {
         wing: box('.console-wing'),
         chat: box('#consolechat'),
         utility: box('#consoleutilities'),
+        buttons: box('#consoleutilities .cbtns'),
+        vent: box('.console-vent'),
         radar: box('#radar'),
         labels: [...document.querySelectorAll('#consoleutilities .cb')].map((el) => {
           const r = el.getBoundingClientRect();
@@ -239,6 +257,11 @@ try {
         railMaterial: getComputedStyle(document.querySelector('#viewscreen-trim')).backgroundImage,
       };
     });
+    assert.ok(
+      Math.abs(shell.vent.x + shell.vent.w / 2 - shell.buttons.x - shell.buttons.w / 2) < 1,
+      'Vent stays centered beneath utility buttons: ' + state,
+    );
+    assert.ok(shell.vent.y >= shell.buttons.y + shell.buttons.h, 'Vent stays below controls');
     assert.equal(shell.rail.position, 'fixed');
     assert.equal(shell.wing.position, 'fixed');
     assert.ok(shell.wing.y < shell.rail.y && shell.wing.y + shell.wing.h > shell.rail.y);

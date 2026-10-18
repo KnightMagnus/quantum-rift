@@ -848,6 +848,8 @@ input.trade-amount[type='number'] {
 #consoleutilities {
   align-self: start;
   padding-top: 14px;
+  display: flex;
+  flex-direction: column;
 }
 #consoleutilities .cbtns {
   display: grid;
@@ -873,10 +875,11 @@ input.trade-amount[type='number'] {
   pointer-events: none;
 }
 .console-vent {
-  position: absolute;
-  right: 50px;
-  top: 126px;
-  width: 290px;
+  order: 1;
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 26px;
+  width: 100%;
   height: 20px;
   border: 3px solid #25343d;
   border-radius: 5px;
@@ -1043,10 +1046,6 @@ input.trade-amount[type='number'] {
   #functiondock {
     gap: 8px;
   }
-  .console-vent {
-    right: 36px;
-    width: 180px;
-  }
 }
 @media (max-width: 1000px) {
   #cockpit {
@@ -1064,10 +1063,6 @@ input.trade-amount[type='number'] {
   .utility-label {
     font-size: 9px;
     letter-spacing: 0;
-  }
-  .console-vent {
-    right: 32px;
-    width: 108px;
   }
   #consolechat #cbar {
     flex-wrap: wrap;
@@ -1323,10 +1318,6 @@ body.tray-open #consoleutilities .cbtns {
 body.tray-open #consoleutilities .utility-label {
   font-size: 9px;
   letter-spacing: 0;
-}
-body.tray-open .console-vent {
-  right: 16px;
-  width: 156px;
 }
 body.tray-open #consolechat #cbar {
   flex-wrap: wrap;
