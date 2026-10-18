@@ -1,5 +1,6 @@
 // @ts-check
 import fs from 'node:fs';
+import { recordEconomy } from '../shared/economy-receipt.js';
 import {
   RECIPES,
   REFINERY_RULES as R,
@@ -74,6 +75,7 @@ function validate(w) {
       q.inputs.length !== recipe.inputs.length ||
       ![75, 80, 85, 95, 100].includes(q.recovery) ||
       q.inputTonnes < 1 ||
+      (q.preview !== undefined && typeof q.preview !== 'boolean') ||
       q.inputTonnes > (q.mode === 'instant' ? R.instantCap : R.storedCap) ||
       q.cancelFee > q.fee ||
       typeof q.fingerprint !== 'string'
@@ -283,7 +285,7 @@ function transaction(c, s, fn) {
   if (c.db.economicFrozen || c.paused())
     throw Error('Economy paused; recover checkpoint before continuing.');
   /** @type {[object,string[]][]} */ const targets = [
-    [s.data, ['cargo', 'cargoLots', 'credits', 'fuel', 'missions', 'stats']],
+    [s.data, ['cargo', 'cargoLots', 'credits', 'fuel', 'missions', 'stats', 'economyReceipt']],
     [c.db.world, ['refinery']],
   ];
   for (const [target, keys] of targets)
@@ -315,6 +317,7 @@ function transaction(c, s, fn) {
     fuel: d.fuel,
     missions: d.missions,
     stats: d.stats,
+    economyReceipt: d.economyReceipt,
   };
   Object.assign(d, {
     cargo: player.cargo,
@@ -323,6 +326,7 @@ function transaction(c, s, fn) {
     fuel: player.fuel,
     missions: player.missions,
     stats: player.stats,
+    economyReceipt: player.economyReceipt,
   });
   c.db.world.refinery = next;
   c.db.touch();
@@ -355,7 +359,7 @@ function economics(c, d, port, ids, now) {
   return ids.map((cid) => c.pricing(d, port, cid, now));
 }
 /** @param {C} c @param {Session} s @param {import('./refinery-contracts.js').RefineryRequest} m */
-function quote(c, s, m) {
+function quote(c, s, m, preview = false) {
   const port = m.port || s.data.stellar,
     recipe = RECIPES.find((r) => r.id === m.recipe),
     n = m.n,
@@ -406,10 +410,13 @@ function quote(c, s, m) {
   /** @type {Quote|undefined} */ let q;
   transaction(c, s, (w) => {
     w.quotes = w.quotes.filter((q) => q.expires > now);
+    // UI previews replace only earlier UI previews; legacy explicitly issued quotes remain intact.
+    if (preview) w.quotes = w.quotes.filter((q) => q.owner !== owner || !q.preview);
     const mine = w.quotes.filter((q) => q.owner === owner);
     if (mine.length >= R.maxQuotes) throw Error('Too many active quotes.');
     q = {
       id: `q${w.nextId++}`,
+      ...(preview ? { preview: true } : {}),
       owner,
       port,
       recipe: recipe.id,
@@ -440,7 +447,8 @@ function submit(c, s, id) {
     return;
   transaction(c, s, (w, d) => {
     const q = w.quotes.find((q) => q.id === id && q.owner === owner);
-    if (!q || q.expires < now) throw Error('Quote expired; request another.');
+    if (!q || q.expires < now)
+      throw Error('The refining price has expired. Check the updated cost and try again.');
     const a = c.access(d, q.port);
     if (!a.available || d.stellar !== q.port || s.ent) throw Error('Refinery access changed.');
     const recipe = RECIPES.find((r) => r.id === q.recipe);
@@ -450,7 +458,7 @@ function submit(c, s, id) {
       JSON.stringify(prices) !== q.fingerprint ||
       recovery(a.faction, a.home, recipe) !== q.recovery
     )
-      throw Error('Economics changed; request a new binding quote.');
+      throw Error('The refining price has changed. Check the updated cost and try again.');
     const dem = demand(w, q.port, now);
     if (
       dem.input + q.inputTonnes > R.dailyInput ||
@@ -481,6 +489,7 @@ function submit(c, s, id) {
         ),
       );
     d.credits -= q.fee;
+    recordEconomy(d, q.port, 'serviceFees', q.fee);
     dem.input += q.inputTonnes;
     if (recipe.pure) dem.composite += q.units;
     const startAt = now + (q.mode === 'stored' ? R.queueMs : 0),
@@ -572,6 +581,7 @@ function cancel(c, s, id) {
     b.status = 'cancelled';
     b.returns = structuredClone(b.quote.inputs);
     d.credits += b.quote.fee - b.quote.cancelFee;
+    recordEconomy(d, b.port, 'refunds', b.quote.fee - b.quote.cancelFee);
     receipt(w, owner, 'cancel', id, now, id);
   });
 }
@@ -825,10 +835,11 @@ export const RefineryOperations = {
   command(s, m, orders = false) {
     const allowed = orders
       ? ['accept', 'deliver', 'cancelOrder']
-      : ['quote', 'submit', 'claim', 'cancel', 'returns', 'fuelQuote', 'fuel', 'list'];
+      : ['quote', 'preview', 'submit', 'claim', 'cancel', 'returns', 'fuelQuote', 'fuel', 'list'];
     /** @type {Record<string,readonly string[]>} */
     const fields = {
       quote: ['t', 'op', 'port', 'recipe', 'grade', 'mode', 'n'],
+      preview: ['t', 'op', 'port', 'recipe', 'grade', 'mode', 'n'],
       submit: ['t', 'op', 'id'],
       claim: ['t', 'op', 'port', 'recipe'],
       cancel: ['t', 'op', 'id'],
@@ -856,15 +867,17 @@ export const RefineryOperations = {
         throw Error('Economy paused or checkpoint recovery required.');
       if (orders) order(this, s, m);
       else if (m.op === 'quote') return quote(this, s, m);
+      else if (m.op === 'preview') return quote(this, s, m, true);
       else if (m.op === 'submit') submit(this, s, m.id || '');
       else if (m.op === 'claim' || m.op === 'returns') collect(this, s, m);
       else if (m.op === 'cancel') cancel(this, s, m.id || '');
       else if (m.op === 'fuelQuote') return fuelQuote(this, s, m.n);
       else if (m.op === 'fuel') fuel(this, s, m);
       this.refresh(s);
-      this.send(s, { t: 'refinery', data: this.payload(s) });
+      this.send(s, { t: 'refinery', op: m.op, data: this.payload(s) });
     } catch (e) {
       this.toast(s, e instanceof Error ? e.message : 'Refinery unavailable.');
+      this.send(s, { t: 'refineryError', op: m.op });
     }
   },
 };

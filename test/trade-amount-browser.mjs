@@ -107,9 +107,15 @@ try {
   );
   // Actual server transactions, including common-first graded cargo accounting.
   await input.fill('7');
+  await page
+    .locator('[data-trade-estimate="ore"]')
+    .getByText('Buy 7 t:', { exact: false })
+    .waitFor();
   await buy.click();
   await page.waitForFunction((n) => G.you.cargo.ore === n, before.cargo + 7);
   assert.ok(await page.evaluate((n) => G.you.credits < n, before.credits));
+  await page.locator('.trip-receipt').waitFor();
+  assert.match(await page.locator('.trip-receipt summary').innerText(), /goods and refining only/);
   await input.fill('3');
   await sell.click();
   await page.waitForFunction((n) => G.you.cargo.ore === n, before.cargo + 4);
@@ -120,6 +126,7 @@ try {
   await page.evaluate(async () => (await import('/ui.js')).renderLanded());
   assert.equal(await input.inputValue(), '12');
   assert.equal(await input.evaluate((e) => e === document.activeElement), true);
+  await page.locator('[data-trade-estimate="ore"]').scrollIntoViewIfNeeded();
   await page.screenshot({ path: path.join(out, 'desktop-trade.png') });
   const free = await page.evaluate(
     () => G.you.shipStats.cargo - G.you.cargoUsed - (G.you.jobCargo || 0),

@@ -1,5 +1,11 @@
 import { purchaseUnit, saleValue } from './trade-pricing.js';
 import {
+  recordEconomy,
+  beginEconomyTrip,
+  arriveEconomyTrip,
+  economyReceipt,
+} from '../shared/economy-receipt.js';
+import {
   migrateCargoLots,
   assertLots,
   planTake,
@@ -25,6 +31,7 @@ import { eventideOffers } from '../shared/eventide.js';
  * @property {number} fire2 Secondary weapon fire flag.
  *
  * @typedef {object} PlayerData
+ * @property {import('../shared/economy-receipt.js').EconomyReceipt} [economyReceipt] Recent trip cash flow; never a source of credits.
  * @property {import("./mining-contracts.js").SavedSurvey} [miningSurvey]
  * @property {Record<string,number>} [bp] Specialist blueprint fragments.
  * @property {string} name Captain name.
@@ -861,6 +868,7 @@ export class Game {
         cargo: d.cargo,
         cargoLots: structuredClone(d.cargoLots),
         paid: d.paid || {},
+        economyReceipt: economyReceipt(d),
         mats: d.mats,
         rep: d.rep,
         shipless: !!d.shipless,
@@ -2087,6 +2095,7 @@ export class Game {
     }
     const p = STELLARS[d.stellar];
     const a = Math.random() * Math.PI * 2;
+    beginEconomyTrip(d, p.id, Date.now());
     d.stellar = null;
     this.spawnPlayer(s, p.x + Math.sin(a) * (p.r + 30), p.y - Math.cos(a) * (p.r + 30), a, 40);
     this.you(s);
@@ -2122,6 +2131,7 @@ export class Game {
     space.players--;
     s.ent = null;
     d.stellar = sid;
+    arriveEconomyTrip(d, sid, Date.now());
     // free refuel and repair
     const st = this.features.shipStats.stats(d);
     d.fuel = st.fuel;
@@ -2156,6 +2166,11 @@ export class Game {
       refinery: this.features.refinery.payload(s),
       stellar: p.id,
       market: this.market(p),
+      tradeTerms: {
+        site: !!p.site,
+        tradePct: this.features.bonuses.bonus(d).tradePct || 0,
+        sell: this.features.fronts.mods(p.system).sell,
+      },
       offers: this.offers(p, d),
       yard: this.yard(p, d),
       outfitter: this.outfitter(p, d),
@@ -2748,6 +2763,7 @@ export class Game {
       ); // 2.4: what you paid, on average
       addLots(d.cargo, d.cargoLots, commonLots(cid, qty), Math.max(0, st.cargo - used));
       d.credits -= qty * bp;
+      recordEconomy(d, p.id, 'purchases', qty * bp);
       if (!p.site) this.features.living.addImpact(p.id, cid, -qty); // 2.4: buying raises the local price
     } else {
       const have = d.cargo[cid] || 0;
@@ -2772,6 +2788,7 @@ export class Game {
       this.features.fronts.goal(s, 'trade', sale);
       d.credits += sale - qty * pr;
       d.credits += qty * pr;
+      recordEconomy(d, p.id, 'sales', sale);
       if (!d.cargo[cid]) {
         delete d.cargo[cid];
         if (d.paid) delete d.paid[cid];

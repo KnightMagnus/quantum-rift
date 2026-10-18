@@ -22,6 +22,7 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 ### Trade, mine and take jobs
 
 - Trade on markets shaped by shortages, local events and what captains buy and sell.
+- See the expected cost or sale value before trading, keep a compact trip recap, and start refining from a plain-language cost-and-output summary.
 - Earn your way through deliveries, passenger runs, bounties, patrols, rescues and smuggling.
 - Mine asteroid, gas and crystal fields; survey deposits, refine your haul and tow large finds home with specialized equipment.
 - Follow faction and Syndicate careers, develop colonies, earn combat ratings and climb the leaderboards.
