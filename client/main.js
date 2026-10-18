@@ -269,13 +269,16 @@ const miningUI = initMiningUI({
   blocked: () => typing() || miningModalBlocked(),
   contextBlocked: miningModalBlocked,
 });
-initRefineryUI(G, send);
+const refineryUI = initRefineryUI(G, send, () => {
+  if (G.landed && G.ltab === 'refinery') renderLanded();
+});
 const shipFunctions = initShipFunctions(G, send);
 const chatProjection = initChatProjection(G);
 setInterval(() => {
   miningUI.refresh();
   shipFunctions.refresh();
   chatProjection.refresh();
+  refineryUI.refresh();
 }, 100);
 function applyOpts() {
   G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
@@ -541,6 +544,7 @@ function onMessage(m) {
       if (/somewhere else/.test(m.msg)) G._kicked = true;
       break;
     case 'welcome':
+      refineryUI.connected();
       audio.stopMusic();
       audio.preloadUi();
       $('login').classList.add('hidden');
@@ -553,11 +557,15 @@ function onMessage(m) {
       refreshCompanion();
       break;
     case 'refineryQuote':
-      G.refineryQuote = m.quote;
+      if (refineryUI.receiveQuote(m.quote)) renderLanded();
+      break;
+    case 'refineryError':
+      refineryUI.failed(m.op);
       if (G.landed && G.ltab === 'refinery') renderLanded();
       break;
     case 'refinery':
       if (G.you) G.you.refinery = m.data;
+      refineryUI.settled(m.op);
       if (G.landed && G.ltab === 'refinery') renderLanded();
       refreshCompanion();
       break;

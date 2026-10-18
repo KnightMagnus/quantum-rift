@@ -1,3 +1,4 @@
+import { tradeEstimateHtml, receiptHtml, initEconomyUI } from './economy-ui.js';
 import { refineryHtml } from './refinery_ui.js';
 import { artworkUrl } from './artwork.js';
 import { stationLanding } from './exotic_scenery.js';
@@ -164,6 +165,7 @@ let G, send;
  * @returns {void}
  */
 export function initUI(g, sender) {
+  initEconomyUI(g);
   G = g;
   send = sender;
   try {
@@ -1329,6 +1331,11 @@ export function renderLanded() {
   const focusedAmount = document.activeElement?.matches('.trade-amount')
     ? document.activeElement.dataset.c
     : null;
+  const focusedRefinery = document.activeElement?.matches(
+    '.refinery-form input, .refinery-form select',
+  )
+    ? document.activeElement.id
+    : null;
   $('dockchips').innerHTML = dockChips(G, !!(G.landed && G.landed.site && G.landed.site.own)); // 2.1
   $('landcr').textContent = credits(y.credits) + ' credits';
   $('landcargo').textContent = y.shipless
@@ -1373,6 +1380,7 @@ export function renderLanded() {
       break;
     }
     case 'trade': {
+      h += receiptHtml(G);
       if (L.market)
         h += `<table class="tbl"><tr><th>COMMODITY</th><th>PRICE</th><th>HOLD</th><th></th></tr>${L.market
           .map((c) => {
@@ -1385,11 +1393,11 @@ export function renderLanded() {
               )
               .join('');
             return `<tr><td>${esc(c.name)}${c.sellCap !== undefined ? ` <span class="dim small">buyer: ${c.sellCap}t left today</span>` : ''}${c.flash ? ` <span class="flashtag ${c.price > base ? 'up' : 'dn'}">${c.price > base ? 'SHORTAGE' : 'GLUT'}</span>` : ''}</td><td class="${c.price < base * 0.9 ? 'lo' : c.price > base * 1.1 ? 'hi' : ''}">${credits(c.price)}${c.moved ? `<span class="mv ${c.moved > 0 ? 'up' : 'dn'}" title="Moved by this system's state and by what captains have traded here">${c.moved > 0 ? '▲' : '▼'}${Math.abs(c.moved)}%</span>` : ''}</td><td>${y.cargo[c.id] || 0}${y.cargo[c.id] && y.paid && y.paid[c.id] ? ` <span class="small ${c.price >= y.paid[c.id] ? 'pgain' : 'ploss'}" title="What you paid per ton, on average">paid ${credits(y.paid[c.id])}</span>` : ''}</td>
-        <td style="text-align:right"><button class="btn sm" data-act="trade" data-c="${c.id}" data-q="1"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>BUY</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="10"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>+10</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="${Math.max(0, Math.min(holdFree(y), Math.floor(y.credits / c.price)))}" title="Fill your hold with what you can afford"${Math.min(holdFree(y), Math.floor(y.credits / c.price)) > 0 ? '' : ' disabled'}>MAX</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-1">SELL</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-999">ALL</button><div class="trade-custom"><label>Amount <input class="trade-amount" data-c="${c.id}" type="number" required min="1" max="2147483647" step="1" inputmode="numeric" aria-label="${esc(c.name)} trade amount in tons" value="${esc(amounts.get(c.id) ?? '1')}"></label><button class="btn sm" data-act="trade" data-c="${c.id}" data-custom="buy">BUY AMOUNT</button><button class="btn sm" data-act="trade" data-c="${c.id}" data-custom="sell">SELL AMOUNT</button></div></td></tr>${gradeRows}`;
+        <td style="text-align:right"><button class="btn sm" data-act="trade" data-c="${c.id}" data-q="1"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>BUY</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="10"${holdFree(y) > 0 ? '' : ' disabled title="Hold full"'}>+10</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="${Math.max(0, Math.min(holdFree(y), Math.floor(y.credits / c.price)))}" title="Fill your hold with what you can afford"${Math.min(holdFree(y), Math.floor(y.credits / c.price)) > 0 ? '' : ' disabled'}>MAX</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-1">SELL</button> <button class="btn sm" data-act="trade" data-c="${c.id}" data-q="-999">ALL</button><div class="trade-custom"><label>Amount <input class="trade-amount" data-c="${c.id}" type="number" required min="1" max="2147483647" step="1" inputmode="numeric" aria-label="${esc(c.name)} trade amount in tons" value="${esc(amounts.get(c.id) ?? '1')}"></label><button class="btn sm" data-act="trade" data-c="${c.id}" data-custom="buy">BUY AMOUNT</button><button class="btn sm" data-act="trade" data-c="${c.id}" data-custom="sell">SELL AMOUNT</button></div><div class="trade-estimate small" data-trade-estimate="${esc(c.id)}">${tradeEstimateHtml(G, c, amounts.get(c.id) ?? '1')}</div></td></tr>${gradeRows}`;
           })
           .join(
             '',
-          )}</table><div class="tradefoot"><span class="dim small">Green prices are cheap here, red are high. Prices drift through the day. Hold: ${y.cargoUsed + (y.jobCargo || 0)} / ${st.cargo} t${y.jobCargo ? ` (${y.jobCargo} t is job cargo)` : ''}.</span>${L.market.some((c) => y.cargo[c.id]) ? `<button class="btn sm" data-act="sellall">SELL ALL CARGO</button>` : ''}</div>`;
+          )}</table><div class="tradefoot"><span class="dim small">Estimates include cargo grade, your perks and the size of the order. There is no separate trading fee. Prices can change before you click; a price here does not promise the same price elsewhere. Green is cheap here, red is high. Hold: ${y.cargoUsed + (y.jobCargo || 0)} / ${st.cargo} t${y.jobCargo ? ` (${y.jobCargo} t is job cargo)` : ''}.</span>${L.market.some((c) => y.cargo[c.id]) ? `<button class="btn sm" data-act="sellall">SELL ALL CARGO</button>` : ''}</div>`;
       if (L.mats.length)
         h += `<div class="sect">STATION MATERIALS</div><table class="tbl"><tr><th>CRATE</th><th>PRICE</th><th>HELD</th><th></th></tr>${L.mats.map((m) => `<tr><td>${m.mat} ${GRADES[m.grade]}</td><td>${credits(m.price)}</td><td>${y.mats[m.mat][m.grade]}</td><td style="text-align:right"><button class="btn sm" data-act="mat" data-m="${m.mat}" data-g="${m.grade}" data-q="1">BUY</button> <button class="btn sm" data-act="mat" data-m="${m.mat}" data-g="${m.grade}" data-q="-1">SELL</button></td></tr>`).join('')}</table>`;
       break;
@@ -1594,6 +1602,7 @@ export function renderLanded() {
     }
   }
   body.innerHTML = h;
+  if (focusedRefinery) document.getElementById(focusedRefinery)?.focus({ preventScroll: true });
   if (focusedAmount)
     [...body.querySelectorAll('.trade-amount')]
       .find((input) => input.dataset.c === focusedAmount)

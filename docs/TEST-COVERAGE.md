@@ -1,5 +1,24 @@
 # Game regression coverage inventory
 
+## 3.2.1 economy verification
+
+The `economy-32` system and additional trade/refinery action mappings register
+`economy-32.js`. Execution was held until the user reviewed the implementation
+summary and then authorized tests and merge (no standalone economy release). It covers real server purchase/sale versus preview totals,
+invalid/fractional/full/poor requests, higher-grade/delivery cargo warnings,
+trip-attributed cash flow and save reload, automatic cost-preview churn without
+invalidating legacy binding quotes, atomic missing-input/expired/duplicate denial,
+and baseline-report arithmetic/completeness/stress-profile exclusion. The existing
+refinery browser case is updated for automatic pricing and one Start action while
+retaining real debit, cancellation, partial collection and fuel-cell checks.
+
+No measured progression rate or tuned balance is claimed. The developer-only
+[measurement protocol](ECONOMY-BASELINES.md) specifies the 36 matched session cells,
+closure/cost requirements and reproducible evidence. Do not treat synthetic report
+fixtures as actual game observations. Full canonical, network, persistence and
+browser verification remains mandatory **after** the pre-test review, before any
+economy merge. Actual UI captures follow that review rather than being invented.
+
 This is the reviewed **system-level behavior inventory**, not a claim of 100%
 line/branch coverage. `test/regression-manifest.json` is the executable CI
 registration source. `test/coverage-inventory.js` rejects unregistered system

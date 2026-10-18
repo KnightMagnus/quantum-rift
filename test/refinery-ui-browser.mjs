@@ -45,8 +45,12 @@ try {
     await page.locator('#storyb button').first().click();
   await page.locator('[data-lt="refinery"]').click();
   await page.waitForSelector('#refrecipe');
+  assert.ok(
+    (await page.locator('#refquantity').boundingBox()).height <= 40,
+    'Tonnes input stays a compact single-line control',
+  );
   assert.equal(
-    await page.locator('#landbody').getByText('STORED PROPERTY', { exact: false }).count(),
+    await page.locator('#landbody').getByText('YOUR JOBS AND GOODS', { exact: false }).count(),
     1,
   );
   const initial = await page.evaluate(() => G.you.refinery.ready[0].units);
@@ -60,13 +64,50 @@ try {
   );
   await page.selectOption('#refmode', 'instant');
   await page.fill('#refquantity', '3');
-  await page.locator('[data-refinery="quote"]').click();
-  await page.waitForSelector('#refquote');
-  await page.locator('#refquote').getByText('85% recovery', { exact: false }).waitFor();
+  await page.waitForFunction(() => G.refineryQuote?.mode === 'instant');
+  await page.selectOption('#refgrade', 'pure');
+  await page.waitForFunction(() => G.refineryQuote?.inputs[0].lots.pure === 3);
+  await page
+    .locator('#refquote')
+    .getByText('give no extra output here', { exact: false })
+    .waitFor();
+  await page.selectOption('#refgrade', 'common');
+  await page.fill('#refquantity', '6');
+  await page.waitForFunction(() => G.refineryQuote?.inputs[0].lots.common === 6);
+  assert.equal(
+    await page.locator('#refquantity').inputValue(),
+    '6',
+    'Automatic price refresh retains the quantity draft',
+  );
+  assert.equal(
+    await page.locator('#refquantity').evaluate((el) => el === document.activeElement),
+    true,
+    'Automatic refresh does not steal quantity focus',
+  );
+  await page.fill('#refquantity', '3');
+  await page.waitForFunction(() => G.refineryQuote?.inputs[0].lots.common === 3);
+  assert.equal(
+    await page.locator('[data-refinery="quote"]').count(),
+    0,
+    'No manual quote-management action',
+  );
+  assert.doesNotMatch(
+    await page.locator('#refquote').innerText(),
+    /binding|arbitrage|entitlement|quote q\d/i,
+  );
+  await page
+    .locator('#refquote')
+    .getByText('85% of the usable material', { exact: false })
+    .waitFor();
   // Actual unrelated network reply between pointerdown/up must not replace confirm.
   const button = page.locator('#refquote [data-refinery="submit"]'),
     box = await button.boundingBox(),
     credits = await page.evaluate(() => G.you.credits);
+  const viewportBody = await page.locator('#landbody').boundingBox();
+  assert.ok(
+    box.y + box.height <= viewportBody.y + viewportBody.height,
+    'Main refining action is visible without an extra desktop scroll',
+  );
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
   await page.evaluate(() => {
@@ -78,8 +119,7 @@ try {
   await page.waitForFunction(() => G.you.refinery.batches.length === 3);
   assert.ok((await page.evaluate(() => G.you.credits)) < credits);
   await page.selectOption('#refmode', 'stored');
-  await page.locator('[data-refinery="quote"]').click();
-  await page.waitForFunction(() => G.refineryQuote.mode === 'stored');
+  await page.waitForFunction(() => G.refineryQuote?.mode === 'stored');
   await page.locator('#refquote [data-refinery="submit"]').click();
   await page.waitForFunction(() => G.you.refinery.batches.at(-1).status === 'queued');
   await page.locator('#landbody [data-refinery="cancel"]').last().click();

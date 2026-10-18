@@ -78,7 +78,8 @@
     "towing-network.mjs",
     "mining-panel.js",
     "towing-auto-delivery.js",
-    "motherlode-art.js"
+    "motherlode-art.js",
+    "economy-32.js"
   ],
   "browser": [
     "chat-projection-browser.mjs",
@@ -646,6 +647,28 @@
       "asserts": "Docked observer snapshots keep real traffic moving across services without a controllable player entity; real canvas ship sprite displacement, flight-input isolation and explicit Solo pause/resume.",
       "owners": ["server/game.js", "client/main.js", "client/render.js", "client/mining_render.js"],
       "services": []
+    },
+    {
+      "id": "economy-32",
+      "owners": [
+        "server/game.js",
+        "server/refinery.js",
+        "shared/trade-pricing.js",
+        "shared/economy-preview.js",
+        "shared/economy-receipt.js",
+        "client/economy-ui.js",
+        "client/refinery-controls.js",
+        "tools/economy-baseline.mjs"
+      ],
+      "services": ["refinery"],
+      "tests": [
+        "economy-32.js",
+        "refinery-ui-browser.mjs",
+        "trade-amount-browser.mjs",
+        "refinery-network.mjs",
+        "refinery-persistence.js"
+      ],
+      "asserts": "Automatic single-action refinery cost/output with retained authoritative settlement, stale/expired/duplicate denial, trip recap attribution and persistence, exact current-port order-size/grade estimates, reserved cargo warnings, malformed/full/poor requests and measurement report completeness without fabricated baseline data."
     }
   ],
   "routes": {
@@ -684,7 +707,8 @@
       "cargo-flows.js",
       "v203.js",
       "cargo-ui-browser.mjs",
-      "trade-amount-browser.mjs"
+      "trade-amount-browser.mjs",
+      "economy-32.js"
     ],
     "buyship": ["sim.js", "v21.js"],
     "docks": [
@@ -750,7 +774,7 @@
     "bank": ["v12.js"],
     "pause": ["v10.js"],
     "mining": ["mining-network.mjs", "mining-controls-browser.mjs"],
-    "refinery": ["refinery-network.mjs", "refinery-ui-browser.mjs"],
+    "refinery": ["refinery-network.mjs", "refinery-ui-browser.mjs", "economy-32.js"],
     "miningOrder": ["refinery-network.mjs", "refinery.js"],
     "miningPressure": ["mining-pressure.js", "refinery-ui-browser.mjs"],
     "industrial": ["dredge-network.mjs", "dredge-browser.mjs"],

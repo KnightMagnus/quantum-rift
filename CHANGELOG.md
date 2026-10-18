@@ -2,6 +2,14 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.2.1 — In development: clearer trade and refining
+
+- Show refining cost, output and waiting time automatically, with one Start Refining action instead of manual quote management. Keep authoritative price, ownership, cargo and duplicate-action safeguards.
+- Preview trade amounts using current local prices, cargo grades, perks and order size. Warn when using higher-grade cargo or supplies still needed for a delivery.
+- Add a compact recent-trip recap for goods and refining, clearly separated from full profit and other expenses/rewards.
+- Provide reproducible economy-measurement tools and protocols without claiming unmeasured balance improvements. Reward, price, fee, yield and recovery formulas are unchanged.
+- Economy is the first merge toward the cumulative economy, QoL and mission update; it has no standalone release. Radio and user-supplied music remain separate future work.
+
 ### 3.2.0 — Readable cockpit and expanded chat
 
 - Expand live chat history upward into a holographic screen, with one collapse toggle on the HUD. Keep the existing send controls, history scrolling and Escape/menu behavior.

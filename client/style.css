@@ -3263,6 +3263,50 @@ body.solo .mp {
   margin-top: 6px;
   pointer-events: auto;
 }
+.refinery-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 110px;
+}
+.refinery-form input[type='number'] {
+  width: 8em;
+  height: 32px;
+  min-height: 0;
+  flex: none;
+}
+.refinery-form {
+  align-items: flex-start;
+}
+#refquote p {
+  margin: 5px 0 10px;
+}
+#refquote > .btn {
+  margin-top: 4px;
+}
+.trade-estimate {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 350px;
+  margin: 6px 0;
+  text-align: left;
+  color: #c8dcd5;
+}
+.trip-receipt {
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  background: #0a1c22;
+  border: 1px solid #52736c;
+  border-radius: 4px;
+}
+.trip-receipt summary {
+  cursor: pointer;
+  color: #b7decd;
+}
+.trip-receipt[open] summary {
+  margin-bottom: 8px;
+}
 #shipfunctions #chatlog {
   max-height: min(140px, 22vh);
   overflow: auto;

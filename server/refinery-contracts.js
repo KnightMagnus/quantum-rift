@@ -3,7 +3,7 @@
  * @typedef {import('./game.js').PlayerData & {cargo:import('../shared/cargo-contracts.js').CargoTotals,cargoLots:import('../shared/cargo-contracts.js').CargoLedger,missions:import('./game.js').Mission[],fuel?:number,landPass?:Record<string,number>}} RefineryPlayer
  * @typedef {Omit<import('./game.js').Session,'data'> & {data:RefineryPlayer}} RefinerySession
  * @typedef {{cid:string,lots:import('../shared/cargo-contracts.js').GradeLots}} RefineryInput
- * @typedef {{id:string,owner:string,port:string,recipe:string,version:1,mode:string,inputs:RefineryInput[],inputTonnes:number,units:number,output:string,fee:number,cancelFee:number,expires:number,duration:number,recovery:number,fingerprint:string,ask:number,bid:number}} RefineryQuote
+ * @typedef {{id:string,owner:string,port:string,recipe:string,version:1,mode:string,inputs:RefineryInput[],inputTonnes:number,units:number,output:string,fee:number,cancelFee:number,expires:number,duration:number,recovery:number,fingerprint:string,ask:number,bid:number,preview?:boolean}} RefineryQuote
  * @typedef {{id:string,owner:string,port:string,quote:RefineryQuote,submittedAt:number,startAt:number,readyAt:number,status:'queued'|'processing'|'ready'|'collected'|'cancelled',credited:boolean,returns:RefineryInput[]}} RefineryBatch
  * @typedef {{owner:string,port:string,cid:string,units:number,producedUnits:number,claimedUnits:number}} RefineryReady
  * @typedef {{id:string,owner:string,kind:string,time:number,result:string}} RefineryReceipt
