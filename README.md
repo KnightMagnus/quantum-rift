@@ -90,8 +90,6 @@ Screenshots are captured from the implemented game using isolated test captains.
 
 ## Play it
 
-**[3.0.0 — Mining](https://github.com/KnightMagnus/quantum-rift/releases/tag/v3.0.0):** survey and cut graded seams, refine your haul, build a Star Dredge and tow finite motherlodes. Use the complete release download above; GitHub source archives may contain Git LFS pointers instead of artwork.
-
 You need **[Node.js](https://nodejs.org) 18 or newer**. Nothing else to install.
 
 **Windows:** double-click **`Start Solo Game.bat`** to play alone, or **`Start Quantum Rift.bat`** to host a game others can join. If Node isn't installed yet, the launcher opens the download page: install the LTS version, then run the launcher again. A console window opens (that's the server, leave it open) and the game opens in your browser.
@@ -256,24 +254,3 @@ One small CPU handles dozens of players; only systems with players in them run a
 For development checks: `npm ci`, `npm run typecheck`, `npm run test:types`, `npm run test:features`, `npm run format:check` and `npm run test:regression`. Browser checks use the pinned Playwright Chromium (`npx playwright install --with-deps chromium`). See `docs/TEST-COVERAGE.md` for covered behavior and limits; these fixtures do not establish multi-hour human balance.
 
 **[DEVELOPMENT.md](DEVELOPMENT.md)** is the guide for anyone, or any AI assistant, picking up the code: the architecture, how to add a feature, how to test it, and the full list of test suites. **[CHANGELOG.md](CHANGELOG.md)** has every release from 0.3 to today.
-
-### Cockpit cursors (3.1)
-
-High-contrast steel cursors use cyan friendly brackets with a check, amber neutral brackets, a red hostile diamond, and a downward docking arrow. Shape as well as color distinguishes target states. All use a consistent 32px footprint; disabled controls show the native blocked cursor. Text fields retain the native text caret.
-
-![Cursor artwork on dark and light backgrounds (asset preview, not gameplay)](client/assets/cursors/_preview.png)
-
-Left-click empty flight space to clear the selected ship target. Clicking a ship
-selects it; planet navigation and mining-object selection remain separate.
-Mouse-aim mode still supports holding the left button to fire.
-
-Docked service windows now retain the **live system and real ship traffic** behind
-readable panels. Docking does not pause the world; explicit Solo pause still does.
-The expanded Tray occupies a full-height independent right column, while COMMS
-and Volume/Settings/Help reflow together beside it (compact layouts scroll).
-
-Faction Stores now display a distinct, framed insignia at the top left for the
-selected faction, using that faction's existing menu color. See
-[insignia identities](docs/FACTION-INSIGNIAS.md).
-
-![Selected faction insignia in its matching store color](docs/screenshots/factions-fidelity.png)
