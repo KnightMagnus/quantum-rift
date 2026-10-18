@@ -1196,30 +1196,6 @@ input.trade-amount[type='number'] {
   box-shadow: inset 0 0 0 1px #a3adb511;
 }
 
-.console-wing {
-  position: fixed;
-  z-index: 8;
-  left: 0;
-  bottom: calc(var(--cbar) - 37px);
-  height: 200px;
-  width: 32px;
-  pointer-events: none;
-  clip-path: polygon(0 0, 45% 0, 100% 28%, 100% 100%, 0 100%);
-  background: linear-gradient(90deg, #0d1216, #68747b 18%, #27343c 36%, #3e4a52 70%, #121a20 95%);
-  border-left: 1px solid #66757d;
-  box-shadow: inset -3px 0 #111a20;
-}
-.console-wing::after {
-  content: '';
-  position: absolute;
-  left: 10px;
-  top: 40px;
-  bottom: 30px;
-  width: 3px;
-  background: #ad4938;
-  box-shadow: 0 0 4px #c9452f88;
-}
-body:has(#login:not(.hidden)) .console-wing,
 body:has(#login:not(.hidden)) #viewscreen-trim {
   display: none;
 }

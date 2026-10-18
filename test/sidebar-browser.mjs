@@ -222,8 +222,8 @@ try {
     results.push({ case: c.name, before, wheel, keyboard });
   }
   // Check the actual shell in both states and after a real pointer drag. Chrome
-  // stays outside the scrolling cockpit: the left fin and continuous red rail
-  // cannot vanish when the narrower console needs vertical scrolling.
+  // stays outside the scrolling cockpit: the continuous red rail cannot vanish
+  // when the narrower console needs vertical scrolling. The decorative fin is removed.
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.evaluate(() => {
     document.documentElement.style.setProperty('--ui', '1');
@@ -254,7 +254,7 @@ try {
       };
       return {
         rail: box('#viewscreen-trim'),
-        wing: box('.console-wing'),
+        wingCount: document.querySelectorAll('.console-wing').length,
         chat: box('#consolechat'),
         utility: box('#consoleutilities'),
         buttons: box('#consoleutilities .cbtns'),
@@ -264,7 +264,6 @@ try {
           const r = el.getBoundingClientRect();
           return { w: r.width, x: r.x, right: r.right, label: el.innerText };
         }),
-        red: getComputedStyle(document.querySelector('.console-wing'), '::after').backgroundColor,
         railMaterial: getComputedStyle(document.querySelector('#viewscreen-trim')).backgroundImage,
       };
     });
@@ -274,8 +273,7 @@ try {
     );
     assert.ok(shell.vent.y >= shell.buttons.y + shell.buttons.h, 'Vent stays below controls');
     assert.equal(shell.rail.position, 'fixed');
-    assert.equal(shell.wing.position, 'fixed');
-    assert.ok(shell.wing.y < shell.rail.y && shell.wing.y + shell.wing.h > shell.rail.y);
+    assert.equal(shell.wingCount, 0, 'Decorative fin no longer overlaps the main HUD tray');
     assert.ok(shell.chat.w <= 590, 'COMMS has a maximum width');
     assert.ok(
       shell.utility.x >= shell.chat.x + shell.chat.w,
@@ -294,7 +292,7 @@ try {
     }
     const frame = await page.screenshot({ path: out + '/shell-' + state + '.png' });
     shell.redPixels = await page.evaluate(
-      async ({ png, rail, wing }) => {
+      async ({ png, rail }) => {
         const im = new Image();
         im.src = 'data:image/png;base64,' + png;
         await im.decode();
@@ -305,15 +303,14 @@ try {
         ctx.drawImage(im, 0, 0);
         const pixel = (x, y) => [...ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data];
         return [
-          pixel(12, wing.y + 70),
           ...[0.1, 0.28, 0.31, 0.5, 0.7, 0.73, 0.9].map((f) => pixel(rail.w * f, rail.y + 2)),
         ];
       },
-      { png: frame.toString('base64'), rail: shell.rail, wing: shell.wing },
+      { png: frame.toString('base64'), rail: shell.rail },
     );
     assert.ok(
       shell.redPixels.every(([r, g, b]) => r > g * 1.2 && r > b * 1.2),
-      'Actual red fin/continuous rail pixels survive every Tray state',
+      'Actual continuous red rail pixels survive every Tray state',
     );
     if (state !== 'closed')
       await page.locator('#radarwrap').screenshot({ path: out + '/shell-' + state + '-radar.png' });
@@ -327,11 +324,6 @@ try {
     });
     shellResults.push({ state, shell });
   }
-  assert.equal(
-    new Set(shellResults.map((r) => r.shell.red)).size,
-    1,
-    'Left trim red does not change with Tray state',
-  );
   assert.equal(
     new Set(shellResults.map((r) => r.shell.railMaterial)).size,
     1,
