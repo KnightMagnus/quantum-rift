@@ -48,13 +48,19 @@ try {
     'assets/ui/title-31.png',
   );
   await page.locator('.splash-title').evaluate((im) => im.decode());
-  for (const width of [1440, 640]) {
-    await page.setViewportSize({ width, height: 1000 });
+  for (const [width, height] of [
+    [1440, 1000],
+    [640, 700],
+    [640, 480],
+  ]) {
+    await page.setViewportSize({ width, height });
     const logo = await page.locator('.splash-title').boundingBox();
     const panel = await page.locator('#login .loginbox').boundingBox();
     assert.ok(logo.x >= 0 && logo.x + logo.width <= width);
     assert.ok(logo.y + logo.height <= panel.y, 'Title is above, outside login HUD');
     assert.equal(await page.locator('#login .loginbox .splash-title').count(), 0);
+    const enter = await page.locator('#lbtn').boundingBox();
+    assert.ok(enter.y >= 0 && enter.y + enter.height <= height, 'Login action remains in viewport');
   }
   await page.emulateMedia({ reducedMotion: 'reduce' });
   assert.equal(
