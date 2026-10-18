@@ -405,3 +405,11 @@ open the collapsible tray before accessing its content; sidebar width persistenc
 uses the dedicated tray-width preference. Chat-bubble renderer mocks include its
 new bezel/scanline drawing primitives. Tests use isolated saves and offline assets;
 these Chromium checks are not exhaustive device/OS coverage.
+
+## 3.1 presentation polish
+
+Canonical browser case polish-browser.mjs checks engine-mask extrusion across
+three hulls/four headings, boost/idle, neutral texture concealment, revealed
+crystal distinction, gesture gating, music restart/cancel, ambience teardown and
+mute. Production-renderer fixtures are not an all-hull performance benchmark or
+a human listening test.

@@ -2739,7 +2739,35 @@ export function drawShip(G, ctx, e, x, y, z, now) {
     const g = sheet(H, true);
     if (g.complete && g.naturalWidth) {
       ctx.globalCompositeOperation = 'lighter';
+      // Extrude the authored engine mask aft, preserving every nozzle and bank.
+      // Bounded passes, no particle state or simulation changes.
+      const boost = !!(e.fl & 2),
+        heading = fr0 * (Math.PI / 18),
+        reduced = (G._exhaustReduced ??= matchMedia('(prefers-reduced-motion: reduce)').matches),
+        flicker = reduced ? 1 : 0.94 + 0.06 * Math.sin(now / 47 + e.id * 2.3),
+        length = w * (boost ? 0.32 : 0.14) * flicker;
+      ctx.save();
+      ctx.filter = 'blur(' + Math.max(0.7, w * 0.008) + 'px)';
+      for (let i = 12; i >= 1; i--) {
+        const t = i / 12,
+          aft = length * t;
+        ctx.globalAlpha = (boost ? 0.38 : 0.26) * (1 - t * 0.85);
+        ctx.drawImage(
+          g,
+          srcX,
+          srcY,
+          fs,
+          fs,
+          x - w / 2 - Math.sin(heading) * aft,
+          y - w / 2 + Math.cos(heading) * aft,
+          w,
+          w,
+        );
+      }
+      ctx.restore();
+      ctx.globalAlpha = boost ? 1 : 0.8 * flicker;
       ctx.drawImage(g, srcX, srcY, fs, fs, x - w / 2, y - w / 2, w, w);
+      ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
     }
   }

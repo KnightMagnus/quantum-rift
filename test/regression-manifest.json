@@ -104,7 +104,8 @@
     "motherlode-art-browser.mjs",
     "ship-turning-assets-browser.mjs",
     "ship-functions-browser.mjs",
-    "cockpit-browser.mjs"
+    "cockpit-browser.mjs",
+    "polish-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -609,6 +610,12 @@
       "services": [],
       "tests": ["cockpit-browser.mjs", "ship-functions-browser.mjs", "sidebar-browser.mjs"],
       "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, eight-button compact cockpit, real Map/Hail activation, connected collapsed tray with actual resize drag/persistence, first-login canvas pixel sizing, keyboard tab/popup reachability and normal/narrow/scaled layout."
+    },
+    {
+      "id": "presentation-polish",
+      "owners": ["client/render.js", "client/towing_render.js", "client/audio.js"],
+      "tests": ["polish-browser.mjs"],
+      "asserts": "Three hulls/four headings: aft engine masks, longer boost, idle. Neutral texture concealment, music restart/cancel, ambience teardown, mute."
     }
   ],
   "routes": {

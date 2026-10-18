@@ -391,7 +391,7 @@ document.addEventListener('mouseover', (e) => {
     e.target.closest && e.target.closest('.btn:not(:disabled), button:not(:disabled), .chip');
   if (b && b !== G._hoverBtn) {
     G._hoverBtn = b;
-    audio.ui('hover', 0.5);
+    audio.ui('hover', 0.18);
   } else if (!b) G._hoverBtn = null;
 });
 $('lpass').onkeydown = (e) => {
