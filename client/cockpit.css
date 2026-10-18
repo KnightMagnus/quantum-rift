@@ -6,7 +6,7 @@
   font-display: swap;
 }
 :root {
-  --tray-width: 480px;
+  --tray-width: clamp(520px, calc(520px * var(--ui, 1)), 760px);
   --hud: 24px;
   --cbar: 200px;
   --dim: #a1b0b6;
@@ -183,11 +183,21 @@ body.scaled #hud {
   height: calc((100vh - var(--cbar)) / var(--ui));
 }
 #radar {
-  max-height: 170px;
+  height: auto;
+  aspect-ratio: 1;
   object-fit: contain;
 }
+/* Fit all seven menu tabs without hidden icons or horizontal navigation. A saved
+   narrow width still wins; its tabs reflow instead of silently changing that preference. */
 #ctabs {
   flex-shrink: 0;
+  flex-wrap: wrap;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+#ctabs button {
+  padding-inline: 4px;
+  max-width: 100%;
 }
 #cpanel {
   min-height: 170px;
@@ -698,28 +708,16 @@ input.trade-amount[type='number'] {
     inset -1px -2px #10171d,
     0 5px 10px #0009;
 }
-#cockpit::after {
-  content: '';
-  position: absolute;
+/* Viewport chrome must not inherit the expanded cockpit scroll clipping. */
+#viewscreen-trim {
+  position: fixed;
   left: 0;
-  right: 24px;
-  top: -5px;
+  right: var(--hud);
+  bottom: calc(var(--cbar) - 27px);
   height: 32px;
-  z-index: -1;
+  z-index: 8;
   pointer-events: none;
   background: linear-gradient(#9a4a36, #411c17 13%, #111b22 17%, #68747b 35%, #27343c 55%, #3e4a52);
-  clip-path: polygon(
-    0 0,
-    28% 0,
-    31% 27px,
-    31% 3px,
-    70% 3px,
-    70% 27px,
-    73% 0,
-    100% 0,
-    100% 100%,
-    0 100%
-  );
 }
 .console-screw {
   position: absolute;
@@ -894,8 +892,8 @@ input.trade-amount[type='number'] {
   content: '';
   position: absolute;
   bottom: 0;
-  right: 0;
-  width: 40px;
+  left: 0;
+  width: 24px;
   height: var(--cbar);
   background: linear-gradient(90deg, #141c22, #58676f 50%, #1a252d);
   clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%, 0 14%);
@@ -1035,11 +1033,6 @@ input.trade-amount[type='number'] {
   margin-bottom: 5px;
   border-bottom: 1px solid #566a7288;
 }
-@media (max-width: 1150px), (max-height: 700px) {
-  :root {
-    --tray-width: 400px;
-  }
-}
 @media (max-width: 1250px) {
   #cockpit {
     grid-template-columns: 260px minmax(160px, 590px) 180px;
@@ -1150,10 +1143,6 @@ input.trade-amount[type='number'] {
   #cockpit::before {
     inset: 10px 20px 15px 2px;
   }
-  #cockpit::after {
-    height: 17px;
-    top: -3px;
-  }
   #commsheader {
     font-size: 9px;
   }
@@ -1213,9 +1202,10 @@ input.trade-amount[type='number'] {
 }
 
 .console-wing {
-  position: absolute;
+  position: fixed;
+  z-index: 8;
   left: 0;
-  bottom: 163px;
+  bottom: calc(var(--cbar) - 37px);
   height: 200px;
   width: 32px;
   pointer-events: none;
@@ -1234,10 +1224,9 @@ input.trade-amount[type='number'] {
   background: #ad4938;
   box-shadow: 0 0 4px #c9452f88;
 }
-@media (max-width: 1000px) {
-  .console-wing {
-    display: none;
-  }
+body:has(#login:not(.hidden)) .console-wing,
+body:has(#login:not(.hidden)) #viewscreen-trim {
+  display: none;
 }
 
 #hailmarker {
@@ -1321,14 +1310,15 @@ body.scaled.tray-open #hud {
 body.tray-open #cockpit {
   right: var(--hud);
   width: auto;
-  grid-template-columns: minmax(172px, 230px) minmax(100px, 1fr) 108px;
+  grid-template-columns: minmax(172px, 230px) minmax(100px, 590px) 156px;
+  justify-content: start;
   padding-left: 16px;
   padding-right: 16px;
   gap: 10px;
   overflow: auto;
 }
 body.tray-open #consoleutilities .cbtns {
-  gap: 4px;
+  gap: 6px;
 }
 body.tray-open #consoleutilities .utility-label {
   font-size: 9px;
@@ -1336,7 +1326,7 @@ body.tray-open #consoleutilities .utility-label {
 }
 body.tray-open .console-vent {
   right: 16px;
-  width: 108px;
+  width: 156px;
 }
 body.tray-open #consolechat #cbar {
   flex-wrap: wrap;

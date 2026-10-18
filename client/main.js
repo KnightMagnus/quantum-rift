@@ -2037,9 +2037,11 @@ function resize() {
   ctx.imageSmoothingEnabled = true;
   const rc = $('radar');
   rc.width = Math.round(rc.clientWidth * r);
-  rc.height = Math.round(rc.clientWidth * 0.62 * r);
+  rc.height = Math.round(rc.clientHeight * r);
 }
 window.addEventListener('resize', resize);
+// Sidebar reflow (including UI scale and persisted widths) also changes the radar.
+new ResizeObserver(resize).observe($('radar'));
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.
@@ -2047,7 +2049,9 @@ window.addEventListener('resize', resize);
  * @returns {number} Clamped width in CSS pixels
  */
 function setHud(w) {
-  w = Math.max(280, Math.min(Math.min(760, window.innerWidth * 0.6), w));
+  // CSS temporarily caps the displayed width to the viewport without destroying
+  // a restored preference. Pointer drags below apply that cap before saving.
+  w = Math.max(280, Math.min(760, w));
   document.documentElement.style.setProperty('--tray-width', w + 'px');
   resize();
   return w;
@@ -2061,7 +2065,7 @@ $('hudgrip').addEventListener('pointerdown', (e) => {
   const g = $('hudgrip');
   g.classList.add('drag');
   const move = (ev) => {
-    const w = setHud(window.innerWidth - ev.clientX);
+    const w = setHud(Math.min(window.innerWidth * 0.6, window.innerWidth - ev.clientX));
     try {
       localStorage.setItem('rift.hud', w);
     } catch {}

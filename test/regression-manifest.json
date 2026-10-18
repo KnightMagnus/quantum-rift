@@ -408,10 +408,16 @@
     },
     {
       "id": "sidebar-scrollbars",
-      "owners": ["client/style.css", "client/ui.js"],
+      "owners": [
+        "client/style.css",
+        "client/cockpit.css",
+        "client/index.html",
+        "client/main.js",
+        "client/ui.js"
+      ],
       "services": [],
       "tests": ["sidebar-browser.mjs"],
-      "asserts": "Eight viewport/scale/width cases, horizontal wheel and keyboard end-tab reachability, saved width and red menu scrollbar/accent styles."
+      "asserts": "Thirteen viewport/scale/width/unread cases: every menu tab fully visible without scrolling or overlap, single-row desktop defaults, narrow/scaled wrapping, wheel and keyboard reachability, old saved-width reload and viewport recovery, square full-width radar and backing geometry including real drag growth, capped COMMS/reserved utility widths, invariant viewport trim in closed/expanded/resized states, red menu scrollbar/accent styles."
     },
     {
       "id": "client-options-map-save",
@@ -612,7 +618,7 @@
       ],
       "services": [],
       "tests": ["cockpit-browser.mjs", "ship-functions-browser.mjs", "sidebar-browser.mjs"],
-      "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, eight-button compact cockpit, real Map/Hail activation, connected collapsed tray with actual pointer resize drag, restored 480/400 defaults, scale-invariant maximum, saved-width reload and viewport-shrink recovery, literal framed-hail edge containment, first-login canvas pixel sizing, keyboard tab/popup reachability and normal/narrow/scaled layout."
+      "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, eight-button compact cockpit, real Map/Hail activation, connected collapsed tray with actual pointer resize drag, scale-aware 520px menu-fitting default and wrapping compact tabs, scale-invariant maximum, saved-width reload and viewport-shrink recovery, literal framed-hail edge containment, first-login canvas pixel sizing, keyboard tab/popup reachability and normal/narrow/scaled layout."
     },
     {
       "id": "presentation-polish",
