@@ -187,7 +187,7 @@ export function preload(ids) {
 // ------------------------------------------------------------------ 2.0 interface sounds
 const lastUi = {};
 const UI_GAP = {
-  hover: 0.04,
+  hover: 0.18,
   click: 0.03,
   type: 0.02,
   toast: 0.25,
@@ -211,7 +211,7 @@ export function ui(name, gain = 1, rate = 1) {
   const buf = buffers.get(id);
   if (!buf) return;
   const now = ctx.currentTime;
-  if (lastUi[name] && now - lastUi[name] < (UI_GAP[name] || 0.05)) return;
+  if (lastUi[name] != null && now - lastUi[name] < (UI_GAP[name] || 0.05)) return;
   lastUi[name] = now;
   const src = ctx.createBufferSource();
   src.buffer = buf;
@@ -293,7 +293,11 @@ function loopBed(id, gainNode) {
       src.start(when);
       src.stop(when + dur + 0.05);
       st.srcs.push(src);
-      st.srcs = st.srcs.slice(-3);
+      src.onended = () => {
+        st.srcs = st.srcs.filter((s) => s !== src);
+        src.disconnect();
+        g.disconnect();
+      };
       st.timer = setTimeout(
         () => go(when + dur - xf),
         Math.max(0, (when + dur - xf - ctx.currentTime - 1) * 1000),
@@ -393,13 +397,15 @@ let musicSrc = null,
  * @returns {void}
  */
 export function startMusic() {
+  pendingMusicAllowed = true;
+  const request = ++musicRequest;
   if (!ctx) {
     pendingMusic = true;
     return;
   }
   if (musicSrc) return;
-  load('music_login').then((buf) => {
-    if (!buf || musicSrc || !pendingMusicAllowed) return;
+  load('music_login31').then((buf) => {
+    if (!buf || musicSrc || !pendingMusicAllowed || request !== musicRequest) return;
     musicGain = ctx.createGain();
     musicGain.gain.value = 0;
     musicGain.connect(bus.music);
@@ -411,7 +417,8 @@ export function startMusic() {
     musicSrc.start();
   });
 }
-let pendingMusicAllowed = true;
+let pendingMusicAllowed = true,
+  musicRequest = 0;
 
 /**
  * Fades out and stops login screen theme music.
@@ -420,6 +427,7 @@ let pendingMusicAllowed = true;
  */
 export function stopMusic(fade = 2.5) {
   pendingMusicAllowed = false;
+  musicRequest++;
   pendingMusic = false;
   if (!musicSrc || !ctx) return;
   const s = musicSrc,

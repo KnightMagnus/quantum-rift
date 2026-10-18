@@ -25,7 +25,7 @@ select {
   color: #fff;
   border: 1px solid #666;
   font:
-    13px Tahoma,
+    15px Tahoma,
     sans-serif;
   padding: 2px;
 }
@@ -92,7 +92,7 @@ body {
   color: var(--dim);
 }
 .small {
-  font-size: 12.5px;
+  font-size: 14.5px;
 }
 .cr {
   color: var(--cr);
@@ -160,7 +160,7 @@ body {
   border-radius: 15px;
   color: #fff;
   font:
-    bold 13.5px Tahoma,
+    bold 15.5px Tahoma,
     Geneva,
     sans-serif;
   cursor: pointer;
@@ -183,7 +183,7 @@ body {
 .btn.sm {
   height: 25px;
   padding: 0 11px;
-  font-size: 12.5px;
+  font-size: 14.5px;
 }
 .btn.big {
   height: 38px;
@@ -249,7 +249,7 @@ input:focus {
   position: absolute;
   left: 8px;
   top: 5px;
-  font-size: 13px;
+  font-size: 15px;
   color: #9cf;
   letter-spacing: 1px;
   text-shadow: 0 0 3px #000;
@@ -268,7 +268,7 @@ input:focus {
   justify-content: space-between;
 }
 .lbl {
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 1.5px;
   color: #a8a8a8;
   width: 62px;
@@ -332,7 +332,7 @@ input:focus {
   text-overflow: ellipsis;
 }
 #nav {
-  font-size: 14px;
+  font-size: 16px;
 }
 #nav div {
   margin: 2px 0;
@@ -356,7 +356,7 @@ input:focus {
   border: 1px solid #111;
   background: linear-gradient(rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.35)), var(--steel);
   color: #ddd;
-  font: bold 12px Tahoma;
+  font: bold 14px Tahoma;
   text-shadow: 0 1px 1px #000;
   letter-spacing: 0.5px;
   cursor: pointer;
@@ -424,7 +424,7 @@ input:focus {
   text-overflow: ellipsis;
 }
 .list .it .n .s {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--dim);
 }
 .chips {
@@ -434,7 +434,7 @@ input:focus {
   flex: none;
 }
 .chip {
-  font-size: 12px;
+  font-size: 14px;
   padding: 2px 7px;
   border: 1px solid #444;
   border-radius: 8px;
@@ -481,7 +481,7 @@ input:focus {
 #stview {
   overflow-y: auto;
   height: 100%;
-  font-size: 14px;
+  font-size: 16px;
 }
 .kv {
   display: flex;
@@ -492,7 +492,7 @@ input:focus {
   color: var(--dim);
 }
 .sect {
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 2px;
   color: #999;
   margin: 10px 0 4px;
@@ -511,7 +511,7 @@ input:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
   color: #555;
   background: #0a0a0a;
 }
@@ -536,10 +536,10 @@ input:focus {
 .logentry {
   padding: 6px 3px;
   border-bottom: 1px solid #141414;
-  font-size: 14px;
+  font-size: 16px;
 }
 .logentry .d {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--dim);
 }
 
@@ -558,7 +558,7 @@ input:focus {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  font-size: 14px;
+  font-size: 16px;
   text-shadow:
     0 1px 2px #000,
     0 0 4px #000;
@@ -603,7 +603,7 @@ input:focus {
   border: 1px solid #7a0000;
   padding: 7px 16px;
   border-radius: 3px;
-  font-size: 14px;
+  font-size: 16px;
   animation: fade 5s forwards;
   max-width: 560px;
   text-align: center;
@@ -676,7 +676,7 @@ input:focus {
 }
 .loginbox input {
   height: 34px;
-  font-size: 14px;
+  font-size: 16px;
 }
 .landbox {
   width: min(1180px, 96%);
@@ -737,7 +737,7 @@ table.tbl {
   border-collapse: collapse;
 }
 .tbl th {
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 1px;
   color: #999;
   text-align: left;
@@ -805,7 +805,7 @@ table.tbl {
   display: flex;
   gap: 6px;
   align-items: center;
-  font-size: 13px;
+  font-size: 15px;
   margin: 2px 0;
 }
 .stat span:first-child {
@@ -845,7 +845,7 @@ table.tbl {
   height: 6em;
   min-height: 0;
   overflow: auto;
-  font-size: 14px;
+  font-size: 16px;
 }
 @media (max-width: 900px) {
   :root {
@@ -877,7 +877,7 @@ table.tbl {
   border-radius: 9px;
   background: #222;
   color: #bbb;
-  font-size: 12px;
+  font-size: 14px;
   margin: 2px;
 }
 .pill.on {
@@ -892,21 +892,14 @@ body {
     url(assets/cursors/arrow.png) 2 2,
     default;
 }
-button,
-.btn,
-.card,
-.chip,
-.list .it,
-#ctabs button,
-#ltabs button,
-a,
-#minimap,
-#radar {
+:where(button, .btn, .card, .chip, .list .it, #ctabs button, #ltabs button, a, #minimap, #radar) {
   cursor:
     url(assets/cursors/pointer.png) 2 2,
     pointer !important;
 }
-input {
+input,
+textarea,
+[contenteditable='true'] {
   cursor: text;
 }
 #hudgrip {
@@ -931,7 +924,7 @@ input {
 }
 #view.cur-neutral {
   cursor:
-    url(assets/cursors/neutral.png) 24 24,
+    url(assets/cursors/neutral.png) 16 16,
     crosshair;
 }
 #view.cur-aim {
@@ -944,8 +937,15 @@ input {
     url(assets/cursors/land.png) 16 18,
     pointer;
 }
+button:disabled,
+.btn:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed !important;
+}
 body.busy,
-body.busy * {
+body.busy *,
+body.busy #hudgrip,
+body.busy #gcanvas {
   cursor:
     url(assets/cursors/busy.png) 16 16,
     progress !important;
@@ -1007,7 +1007,7 @@ body.busy * {
   flex-wrap: wrap;
   align-items: center;
   gap: 16px;
-  font-size: 14px;
+  font-size: 16px;
 }
 .howopts label {
   display: flex;
@@ -1043,7 +1043,7 @@ body.busy * {
   background: none;
   border: 1px solid #555;
   color: #aaa;
-  font: 11px Tahoma;
+  font: 13px Tahoma;
   border-radius: 3px;
   padding: 1px 6px;
 }
@@ -1072,7 +1072,7 @@ body.busy * {
   max-width: 100%;
   gap: 6px;
   align-items: center;
-  font: 13px Tahoma;
+  font: 15px Tahoma;
   letter-spacing: 0;
 }
 .gsw {
@@ -1177,7 +1177,7 @@ body.busy * {
   opacity: 0.5;
 }
 #ctabs button {
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.2px;
 }
 #cpanel a,
@@ -1249,7 +1249,7 @@ body.busy * {
   border: 1px solid #200;
   background: linear-gradient(#c33, #700);
   color: #fff;
-  font: bold 12px Tahoma;
+  font: bold 14px Tahoma;
   opacity: 0.85;
 }
 #tbtns button.on {
@@ -1269,7 +1269,7 @@ body.busy * {
 }
 .role {
   font-weight: bold;
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
@@ -1294,7 +1294,7 @@ body.busy * {
 .stnav .btn {
   height: 26px;
   padding: 0 10px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .stnav .btn.on {
   filter: brightness(1.35);
@@ -1423,7 +1423,7 @@ body.busy * {
   text-shadow: 0 1px 3px #000;
   margin-bottom: 8px;
   text-transform: uppercase;
-  font-size: 12.5px;
+  font-size: 14.5px;
 }
 .splash-tag b {
   color: #ffd27a;
@@ -1457,7 +1457,7 @@ body.busy * {
   font-size: 15px;
 }
 .storytag {
-  font: bold 11px Tahoma;
+  font: bold 13px Tahoma;
   letter-spacing: 3px;
   color: #c9a24a;
 }
@@ -1500,10 +1500,10 @@ body.busy * {
 }
 .slot a {
   color: #7ad0ff;
-  font-size: 12px;
+  font-size: 14px;
 }
 .solotag {
-  font: bold 11px Tahoma;
+  font: bold 13px Tahoma;
   letter-spacing: 3px;
   color: #c9a24a;
 }
@@ -1539,7 +1539,7 @@ body.busy * {
   font-weight: bold;
   letter-spacing: 2px;
   color: var(--cr);
-  font-size: 13px;
+  font-size: 15px;
 }
 .rng {
   display: flex;
@@ -1560,7 +1560,7 @@ body.busy * {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12.5px;
+  font-size: 14.5px;
 }
 .kb .btn {
   min-width: 86px;
@@ -1670,7 +1670,7 @@ body.scaled #ctabs button {
 }
 .mcard .mstat {
   color: #ffd27a;
-  font-size: 13px;
+  font-size: 15px;
 }
 .mfoot {
   display: flex;
@@ -1743,7 +1743,7 @@ body.scaled #ctabs button {
   border: 1px solid #111;
   background: linear-gradient(rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.35)), var(--steel);
   color: #bbb;
-  font: bold 11px Tahoma;
+  font: bold 13px Tahoma;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 1px #000;
   border-radius: 3px;
@@ -1764,7 +1764,7 @@ body.scaled #ctabs button {
   border: 1px solid #200;
   border-radius: 15px;
   color: #fff;
-  font: bold 12.5px Tahoma;
+  font: bold 14.5px Tahoma;
   letter-spacing: 0.5px;
   background: linear-gradient(#c11, #600);
   box-shadow:
@@ -1801,7 +1801,7 @@ body.scaled #ctabs button {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 4px 14px;
-  font-size: 13.5px;
+  font-size: 15.5px;
 }
 .ctrlgrid .k {
   font-weight: bold;
@@ -1825,7 +1825,7 @@ body.scaled #ctabs button {
   }
 }
 .mhead {
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 2px;
   color: #9aa;
   flex: none;
@@ -1867,7 +1867,7 @@ body.scaled #ctabs button {
   border-radius: 13px;
   background: rgba(10, 30, 50, 0.8);
   color: #9cf;
-  font: bold 12px Tahoma;
+  font: bold 14px Tahoma;
   letter-spacing: 2px;
   pointer-events: none;
   animation: abpulse 1.6s ease-in-out infinite;
@@ -1879,7 +1879,7 @@ body.scaled #ctabs button {
 }
 .jwarn {
   color: #ff9a7a;
-  font-size: 12.5px;
+  font-size: 14.5px;
 }
 .tradefoot {
   display: flex;
@@ -1892,7 +1892,7 @@ body.scaled #ctabs button {
   border-left-color: #5ab0ff;
 }
 .careertag {
-  font-size: 10.5px;
+  font-size: 12.5px;
   letter-spacing: 3px;
   color: #7ac0ff;
   font-weight: bold;
@@ -1914,7 +1914,7 @@ body.scaled #ctabs button {
     repeating-linear-gradient(0deg, #050608 0 2px, #090b0f 2px 4px);
 }
 .oa-top {
-  font: bold 11px Tahoma;
+  font: bold 13px Tahoma;
   letter-spacing: 3px;
   color: #ff6a5a;
   display: flex;
@@ -1948,14 +1948,14 @@ body.scaled #ctabs button {
   text-overflow: ellipsis;
 }
 .oa-sub {
-  font-size: 11.5px;
+  font-size: 13.5px;
   color: #8a93a3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .oa-track {
-  font-size: 13px;
+  font-size: 15px;
   color: #cfe3ff;
   white-space: nowrap;
   overflow: hidden;
@@ -1984,7 +1984,7 @@ body.scaled #ctabs button {
   left: 0;
   right: 0;
   bottom: 0;
-  font-size: 11px;
+  font-size: 13px;
   background: rgba(0, 0, 0, 0.75);
   color: #aaa;
   padding: 2px 6px;
@@ -2001,7 +2001,7 @@ body.scaled #ctabs button {
   width: min(520px, 94vw);
 }
 .hailtag {
-  font-size: 10.5px;
+  font-size: 12.5px;
   letter-spacing: 3px;
   color: #7ac0ff;
   font-weight: bold;
@@ -2072,7 +2072,7 @@ body.scaled #ctabs button {
   margin-bottom: 10px;
 }
 .newsit {
-  font-size: 13px;
+  font-size: 15px;
   padding: 2px 0;
   color: #cdd8e8;
 }
@@ -2081,7 +2081,7 @@ body.scaled #ctabs button {
   color: #5a8acb;
 }
 .aitag {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1px;
   color: #f2c66a;
   border: 1px solid #6a5a2a;
@@ -2089,7 +2089,7 @@ body.scaled #ctabs button {
   padding: 0 4px;
 }
 .flashtag {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1px;
   font-weight: bold;
   border-radius: 5px;
@@ -2131,14 +2131,14 @@ body.scaled #ctabs button {
   margin: 3px 0;
 }
 .rank {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: bold;
   letter-spacing: 1px;
   color: #ffd27a;
   margin-right: 4px;
 }
 .trait {
-  font-size: 10.5px;
+  font-size: 12.5px;
   border: 1px solid #4a5a8a;
   border-radius: 6px;
   padding: 0 5px;
@@ -2228,7 +2228,7 @@ body.scaled #ctabs button {
   left: 0;
   top: -4px;
   font-weight: bold;
-  font-size: 13px;
+  font-size: 15px;
   pointer-events: none;
   animation: crf 1.6s ease-out forwards;
 }
@@ -2282,7 +2282,7 @@ body.scaled #ctabs button {
   right: 5px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: bold;
   color: #fff;
   text-shadow:
@@ -2320,7 +2320,7 @@ body.scaled #ctabs button {
 #prot {
   margin-top: 5px;
   font:
-    bold 10px Tahoma,
+    bold 12px Tahoma,
     sans-serif;
   letter-spacing: 2px;
   color: #7ef0a0;
@@ -2386,7 +2386,7 @@ body:has(#land:not(.hidden)) #toasts {
   color: #fff;
 }
 .dact {
-  font: bold 10px Tahoma;
+  font: bold 12px Tahoma;
   letter-spacing: 2px;
   color: #ffd27a;
   border: 1px solid #7a5a1a;
@@ -2395,7 +2395,7 @@ body:has(#land:not(.hidden)) #toasts {
   background: rgba(80, 60, 0, 0.4);
 }
 .drole {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 2px;
   color: #8a93a3;
   margin-top: 6px;
@@ -2433,7 +2433,7 @@ body:has(#land:not(.hidden)) #toasts {
   width: 100%;
   max-width: 100%;
   margin-top: 2px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .dcrews {
   display: grid;
@@ -2442,7 +2442,7 @@ body:has(#land:not(.hidden)) #toasts {
   margin-top: 3px;
 }
 .dcrew span {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 2px;
   color: #8a93a3;
 }
@@ -2480,7 +2480,7 @@ body:has(#land:not(.hidden)) #toasts {
 }
 #dockrow {
   font:
-    11px Tahoma,
+    13px Tahoma,
     sans-serif;
   letter-spacing: 1px;
   color: #c8ccd6;
@@ -2513,7 +2513,7 @@ body:has(#land:not(.hidden)) #toasts {
   box-shadow: 0 6px 18px #000;
 }
 #qvolbox .qvt {
-  font: bold 11px Tahoma;
+  font: bold 13px Tahoma;
   letter-spacing: 2px;
   color: #ddd;
   display: flex;
@@ -2529,7 +2529,7 @@ body:has(#land:not(.hidden)) #toasts {
   justify-content: space-between;
 }
 #cbvol {
-  font-size: 14px;
+  font-size: 16px;
   padding: 0 8px;
 }
 /* 2.1: red volume sliders to match the interface */
@@ -2604,7 +2604,7 @@ body.solo #cchan {
   height: 100%;
 }
 .mv {
-  font-size: 11px;
+  font-size: 13px;
   margin-left: 4px;
 }
 .mv.up {
@@ -2622,7 +2622,7 @@ body.solo #cchan {
   margin: 4px 0 6px;
 }
 .qtag {
-  font: bold 10px Tahoma;
+  font: bold 12px Tahoma;
   letter-spacing: 1px;
   color: #1b1406;
   background: #c9a24a;
@@ -2635,7 +2635,7 @@ body.solo #cchan {
 }
 .journal summary {
   cursor: pointer;
-  font: bold 11px Tahoma;
+  font: bold 13px Tahoma;
   letter-spacing: 2px;
   color: #c9a24a;
   padding: 4px 0;
@@ -2658,7 +2658,7 @@ body.solo #cchan {
 .dlt {
   width: 34px;
   text-align: right;
-  font-size: 11px;
+  font-size: 13px;
   color: #889;
 }
 .dlt.up {
@@ -2786,7 +2786,7 @@ body:has(#land:not(.hidden)) #chatlog {
   align-items: center;
   padding-left: 30px;
   font:
-    bold 11px Tahoma,
+    bold 13px Tahoma,
     Geneva,
     sans-serif;
   letter-spacing: 3px;
@@ -2856,14 +2856,14 @@ body:has(#land:not(.hidden)) #chatlog {
   }
   #ctabs button {
     padding: 0 4px;
-    font-size: 10.5px;
+    font-size: 12.5px;
     letter-spacing: 0;
     min-width: 0;
     flex: 1 0 auto;
   }
 }
 .nocargo {
-  font: bold 10px Tahoma;
+  font: bold 12px Tahoma;
   letter-spacing: 1px;
   color: #ffb070;
   border: 1px solid #7a4a20;
@@ -2896,7 +2896,7 @@ body.solo .mp {
   border-radius: 7px;
   background: #e0b040;
   color: #000;
-  font-size: 9px;
+  font-size: 11px;
   line-height: 13px;
 }
 .capsub {
@@ -2919,7 +2919,7 @@ body.solo .mp {
 }
 .frbtn .btn {
   height: 20px;
-  font-size: 10px;
+  font-size: 12px;
   padding: 0 6px;
 }
 .dmlog {
@@ -2951,7 +2951,7 @@ body.solo .mp {
   background: rgba(0, 0, 0, 0.25);
   padding: 6px;
   border: 1px solid #222;
-  font-size: 12px;
+  font-size: 14px;
 }
 .bars2 {
   display: grid;
@@ -2973,7 +2973,7 @@ body.solo .mp {
 }
 .tgacts .btn {
   height: 19px;
-  font-size: 10px;
+  font-size: 12px;
   padding: 0 6px;
 }
 #chatlog b[data-dm] {
@@ -3010,7 +3010,7 @@ body.solo .mp {
   position: absolute;
   right: -5px;
   top: -6px;
-  font: bold 13px Tahoma;
+  font: bold 15px Tahoma;
   background: #ffdc7b;
   color: #161309;
   border-radius: 12px;
@@ -3025,7 +3025,7 @@ body.solo .mp {
   border: 1px solid #d9b956;
   background: #17130cdd;
   color: #ffdc7b;
-  font-size: 12px;
+  font-size: 14px;
   pointer-events: none;
 }
 #hailcompose {
@@ -3042,7 +3042,7 @@ body.solo .mp {
 }
 #hailopts label {
   display: block;
-  font-size: 12px;
+  font-size: 14px;
   margin: 8px 0;
 }
 #hailtext {
@@ -3096,7 +3096,7 @@ body.solo .mp {
   max-height: calc(100vh - 250px);
   overflow: auto;
   overflow-wrap: anywhere;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.6;
   background: #111a2bf5;
 }
@@ -3131,7 +3131,7 @@ body.solo .mp {
   #miningcontrols {
     bottom: 236px;
     max-height: calc(100vh - 260px);
-    font-size: 12px;
+    font-size: 14px;
   }
 }
 
@@ -3165,4 +3165,113 @@ body.solo .mp {
 .trade-amount {
   width: 76px;
   color-scheme: dark;
+}
+
+/* Shared flow layout: no special function may position itself over chat. */
+#shipfunctions {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  bottom: calc(var(--cbar) + 8px);
+  width: min(430px, calc(100vw - var(--hud) - 24px));
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+#functionstack {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  pointer-events: auto;
+}
+.function-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.function-entry:has(> .function-icon.hidden) {
+  display: none;
+}
+#shipfunctions .function-icon {
+  position: relative;
+  inset: auto;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #fba778;
+  background: #45251d;
+  color: #ffc18b;
+  cursor: pointer;
+}
+#shipfunctions #miningindicator {
+  border-color: #ffd36a;
+  background: #35280c;
+  color: #ffdc7b;
+}
+#shipfunctions .function-icon img,
+#shipfunctions .function-icon svg {
+  width: 30px;
+  height: 30px;
+}
+#shipfunctions .function-icon:disabled {
+  filter: grayscale(1);
+  opacity: 0.48;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+#shipfunctions .function-icon.active {
+  box-shadow: 0 0 0 2px #fba77888;
+}
+#shipfunctions :focus-visible {
+  outline: 2px solid white;
+  outline-offset: -2px;
+}
+#shipfunctions .function-panel {
+  position: static;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100% !important;
+  max-height: none;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  padding: 10px;
+  margin: 0;
+  font-size: 15px;
+  background: #111a2bf5;
+  border: 1px solid #5b6473;
+}
+#shipfunctions .function-panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+#shipfunctions .function-panel input,
+#shipfunctions .function-panel select {
+  max-width: 100%;
+}
+#shipfunctions #chat {
+  position: static;
+  width: 100%;
+  flex: 0 0 auto;
+  margin-top: 6px;
+  pointer-events: auto;
+}
+#shipfunctions #chatlog {
+  max-height: min(140px, 22vh);
+  overflow: auto;
+  justify-content: initial;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 650px) {
+  #shipfunctions {
+    width: min(280px, calc(100vw - 24px));
+    top: 8px;
+  }
 }

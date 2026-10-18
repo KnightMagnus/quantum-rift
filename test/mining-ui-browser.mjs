@@ -15,7 +15,37 @@ try {
     }),
     page = await context.newPage();
   page.on('pageerror', (e) => errors.push(String(e)));
+  const sent = [];
+  page.on('websocket', (ws) =>
+    ws.on('framesent', ({ payload }) => {
+      try {
+        sent.push(JSON.parse(String(payload)));
+      } catch {}
+    }),
+  );
   await page.addInitScript(() => {
+    // Deliver one authentic pre-clear snapshot after the user's clear command.
+    // This deterministically models a server snapshot already in flight.
+    const NativeSocket = WebSocket;
+    window.WebSocket = class extends NativeSocket {
+      constructor(...args) {
+        super(...args);
+        this.addEventListener('message', (event) => {
+          const m = JSON.parse(event.data);
+          if (m.t === 'snap') {
+            this.lastSnapshot = event.data;
+            window.lastTargetSnapshot = m.me[10];
+          }
+        });
+      }
+      send(raw) {
+        super.send(raw);
+        const m = JSON.parse(raw);
+        if (m.t === 'target' && m.id === 0 && this.lastSnapshot) {
+          this.onmessage?.({ data: this.lastSnapshot });
+        }
+      }
+    };
     localStorage.setItem(
       'rift.opts',
       JSON.stringify({ v21: true, keys: {}, cb: true, shake: false, mouseAim: true, scale: 1 }),
@@ -64,6 +94,49 @@ try {
       y: ((10200 - cam.cy) * cam.z + cam.H / 2) / devicePixelRatio,
     };
   });
+  await page.mouse.click(shipXY.x, shipXY.y);
+  await page.waitForFunction((id) => G.target === id, otherId);
+  // Real click on a verified empty canvas point clears an actual selected captain.
+  const empty = await page.evaluate(async () => {
+    const { cam } = await import('/render.js');
+    const { SYS } = await import('/shared/galaxy.js');
+    const canvas = document.querySelector('#view');
+    const r = canvas.getBoundingClientRect();
+    for (let y = 180; y < 650; y += 60)
+      for (let x = 180; x < 850; x += 60) {
+        if (document.elementFromPoint(x, y) !== canvas) continue;
+        const wx = ((x - r.left) * devicePixelRatio - cam.W / 2) / cam.z + cam.cx;
+        const wy = ((y - r.top) * devicePixelRatio - cam.H / 2) / cam.z + cam.cy;
+        if ([...G.ents.values()].some((e) => Math.hypot(e.rx - wx, e.ry - wy) < 150)) continue;
+        if (SYS[G.sys].stellars.some((p) => Math.hypot(p.x - wx, p.y - wy) < p.r * 1.15 + 100))
+          continue;
+        if ((G.rocks || []).some((k) => Math.hypot(k.x - wx, k.y - wy) < k.r + 100)) continue;
+        if ((G.towing?.objects || []).some((o) => Math.hypot(o.x - wx, o.y - wy) < 150)) continue;
+        return { x, y };
+      }
+    throw Error('No empty flight point');
+  });
+  for (const aim of [false, true]) {
+    await page.evaluate((v) => {
+      G.opts.mouseAim = v;
+    }, aim);
+    await page.mouse.click(shipXY.x, shipXY.y);
+    await page.waitForFunction((id) => G.target === id, otherId);
+    await page.waitForFunction((id) => window.lastTargetSnapshot === id, otherId);
+    const start = sent.length;
+    await page.mouse.click(empty.x, empty.y);
+    await page.waitForFunction(() => G.target === 0);
+    await until(
+      () => sent.slice(start).some((m) => m.t === 'target' && m.id === 0),
+      'server target-clear message',
+    );
+    await page.waitForFunction(() => !G.targetClearPending && window.lastTargetSnapshot === 0);
+    assert.equal(
+      await page.evaluate(() => G.target),
+      0,
+      'clear survives stale snapshot and server confirmation',
+    );
+  }
   await page.mouse.click(shipXY.x, shipXY.y);
   await page.waitForFunction((id) => G.target === id, otherId);
   await page.mouse.move(xy.x, xy.y);

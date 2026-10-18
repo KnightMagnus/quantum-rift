@@ -153,6 +153,7 @@ try {
     });
     let stationTier;
     if (name === 'Station Repairs') {
+      if (!(await page.locator('#hud').isVisible())) await page.click('#traytoggle');
       await page.locator('[data-tab="station"]').click();
       await page.locator('[data-act="stab"][data-k="ops"]').waitFor();
       const text = await page.locator('#stview').innerText();

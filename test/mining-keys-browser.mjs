@@ -83,6 +83,7 @@ try {
     animations: 'disabled',
   });
   // Text/select editing and modal keys must never invoke mining operations.
+  await page.locator('#towingindicator').click();
   await page.getByText('Transfer & towing help', { exact: true }).click();
   await page.fill('#towrecipient', 'Pilot');
   const count = () =>

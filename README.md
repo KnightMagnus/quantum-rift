@@ -1,6 +1,6 @@
 # Quantum Rift
 
-![Quantum Rift login page with the captain sign-in panel](docs/screenshots/login.jpg)
+![Quantum Rift login page with the captain sign-in panel](docs/screenshots/login-31.png)
 
 **Quantum Rift is currently in beta and under ongoing development. All features are subject to change.**
 
@@ -52,18 +52,30 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 - Tune into live radio stations alongside the game's synthesized soundscape.
 - Run locally in your browser with Node.js—no package installation or build step required.
 
-![A Caravel Trader flying past Concordia and its moon](docs/screenshots/flight.jpg)
+## 3.1 cockpit and artwork
 
-|                                                                              |                                                                        |
-| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| ![Six different systems](docs/screenshots/systems.jpg)                       | ![The DOCKS screen at a Personal Station](docs/screenshots/docks.jpg)  |
-| _Every system looks different_                                               | _Docks A to D, with crewed wingmates_                                  |
-| ![The galaxy map](docs/screenshots/galaxy-map.jpg)                           | ![A hyperspace jump, start to finish](docs/screenshots/hyperspace.jpg) |
-| _The galaxy map, with trade, standing and danger views_                      | _A hyperspace jump_                                                    |
-| ![Rendered landing pictures](docs/screenshots/landing-pictures.jpg)          | ![Rendered planets](docs/screenshots/planets.jpg)                      |
-| _A landing picture for every world_                                          | _Pre-rendered planets_                                                 |
-| ![Two captains in an Armada, with the ALLIES tab](docs/screenshots/coop.jpg) | ![A duel in the Crucible arena](docs/screenshots/crucible.jpg)         |
-| _An Armada: allies and their wingmates show in green_                        | _The Crucible arena_                                                   |
+Dark brushed-steel controls, larger Pixelify Sans lettering and an integrated
+right-hand Tray keep ship functions close without covering the flight view.
+Landing artwork and radar sit in recessed digital viewscreens. Layered engine
+exhaust follows the original nozzle artwork, with longer afterburner plumes.
+Unsurveyed motherlodes have neutral shaded, pitted surfaces without exposing their
+resources; surveying still reveals the original material artwork. Menu hover
+sounds are quieter and rate-limited; an original synthesized French-horn-like and bowed-string login theme and
+crossfaded ambience retain separate volume and mute controls.
+
+![Actual 3.1 flight cockpit](docs/screenshots/cockpit-31.png)
+
+_Compact ship controls with the Tray collapsed._
+
+![Integrated right-hand Tray](docs/screenshots/tray-31.png)
+
+_Embedded, resizable status and radar Tray._
+
+![Actual 3.1 landing viewscreen](docs/screenshots/landing-31.png)
+
+_Original landing artwork in the new steel console._
+
+Screenshots are captured from the implemented game using isolated test captains.
 
 ---
 
@@ -235,3 +247,13 @@ One small CPU handles dozens of players; only systems with players in them run a
 For development checks: `npm ci`, `npm run typecheck`, `npm run test:types`, `npm run test:features`, `npm run format:check` and `npm run test:regression`. Browser checks use the pinned Playwright Chromium (`npx playwright install --with-deps chromium`). See `docs/TEST-COVERAGE.md` for covered behavior and limits; these fixtures do not establish multi-hour human balance.
 
 **[DEVELOPMENT.md](DEVELOPMENT.md)** is the guide for anyone, or any AI assistant, picking up the code: the architecture, how to add a feature, how to test it, and the full list of test suites. **[CHANGELOG.md](CHANGELOG.md)** has every release from 0.3 to today.
+
+### Cockpit cursors (3.1)
+
+High-contrast steel cursors use cyan friendly brackets with a check, amber neutral brackets, a red hostile diamond, and a downward docking arrow. Shape as well as color distinguishes target states. All use a consistent 32px footprint; disabled controls show the native blocked cursor. Text fields retain the native text caret.
+
+![Cursor artwork on dark and light backgrounds (asset preview, not gameplay)](client/assets/cursors/_preview.png)
+
+Left-click empty flight space to clear the selected ship target. Clicking a ship
+selects it; planet navigation and mining-object selection remain separate.
+Mouse-aim mode still supports holding the left button to fire.

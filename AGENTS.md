@@ -19,3 +19,15 @@ proper process cleanup and failure evidence. External services must use offline
 fixtures for CI; do not require player saves, credentials or a running server.
 Keep slow/browser tests in the browser CI group and explain intentional coverage
 limits. A passing suite does not prove every branch, random seed or device.
+
+## Ship-function cockpit convention
+
+Existing and future special ship functions belong in the shared registry in
+client/ship-functions.js: a distinct accessible icon with a collapsible panel,
+in normal flow above chat. Never add fixed-position function panels or offsets
+per icon. Keep Mining visible but disabled when unavailable. Capability-specific
+Towing, Dredge Processing, Fleet/Formation and Drones appear when applicable.
+Retain authoritative action handlers and keyboard routes. New icons require three
+labeled alternatives and explicit user selection; provisional artwork is not approval.
+Add browser coverage for multiple expanded entries, long chat, keyboard/wheel
+reachability and narrow/scaled viewports in the canonical regression manifest.

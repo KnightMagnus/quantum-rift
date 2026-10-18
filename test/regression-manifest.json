@@ -102,7 +102,11 @@
     "dropdowns-browser.mjs",
     "trade-amount-browser.mjs",
     "motherlode-art-browser.mjs",
-    "ship-turning-assets-browser.mjs"
+    "ship-turning-assets-browser.mjs",
+    "ship-functions-browser.mjs",
+    "cockpit-browser.mjs",
+    "polish-browser.mjs",
+    "cursors-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -492,7 +496,7 @@
         "mining-panel-browser.mjs",
         "mining-renewal.js"
       ],
-      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion. Role/capacity-gated drill toggle, default collapse, full holds, lifecycle transitions, independent hails, keyboard dismissal and bounded responsive panel. Full-health idle renewal across ore/gas/shards, active-work and stale-identity denial, original parcel conservation, bounded history and version-1 restart migration."
+      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion. Role/capacity-gated drill toggle, default collapse, full holds, lifecycle transitions, independent hails, keyboard dismissal and bounded responsive panel. Full-health idle renewal across ore/gas/shards, active-work and stale-identity denial, original parcel conservation, bounded history and version-1 restart migration. Empty-space left-click clears the combat target and sends target id 0 with mouse aim on/off; rock selection preserves the selected captain."
     },
     {
       "id": "mining-refinery",
@@ -588,10 +592,43 @@
       "services": [],
       "tests": ["trade-amount-browser.mjs"],
       "asserts": "Accessible native dark numeric quantities; invalid/empty/overflow denial before wire, real buy/sell settlement, common-first grades, hold/inventory and authoritative funds limits, preset compatibility, async draft/focus retention, narrow viewport interaction."
+    },
+    {
+      "id": "ship-function-stack",
+      "owners": ["client/ship-functions.js", "client/mining_ui.js", "client/style.css"],
+      "services": [],
+      "tests": ["ship-functions-browser.mjs", "mining-panel-browser.mjs"],
+      "asserts": "Accessible icon toggles, retained disabled mining, combat and survey message dispatch, fleet orders and secondary drone input, six-panel flow layout with long chat, keyboard/wheel reachability and desktop/narrow/scaled browser bounds."
+    },
+    {
+      "id": "cockpit-restyle",
+      "owners": [
+        "client/cockpit.css",
+        "client/ship-functions.js",
+        "client/render.js",
+        "client/chat_bubbles.js"
+      ],
+      "services": [],
+      "tests": ["cockpit-browser.mjs", "ship-functions-browser.mjs", "sidebar-browser.mjs"],
+      "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, eight-button compact cockpit, real Map/Hail activation, connected collapsed tray with actual resize drag/persistence, first-login canvas pixel sizing, keyboard tab/popup reachability and normal/narrow/scaled layout."
+    },
+    {
+      "id": "presentation-polish",
+      "owners": ["client/render.js", "client/towing_render.js", "client/audio.js"],
+      "tests": ["polish-browser.mjs"],
+      "asserts": "Three hulls/four headings: aft engine masks, longer boost, idle. Neutral texture concealment, music restart/cancel, ambience teardown, mute.",
+      "services": []
+    },
+    {
+      "id": "cockpit-cursors",
+      "owners": ["client/style.css", "tools/cursors.py"],
+      "services": [],
+      "tests": ["cursors-browser.mjs"],
+      "asserts": "Decoded transparent cursor artwork, consistent dimensions and hotspots, CSS state mapping, disabled and ARIA denial, input, resize, map and busy precedence."
     }
   ],
   "routes": {
-    "combat": ["combat-assist.js", "combat-network.js"],
+    "combat": ["combat-assist.js", "combat-network.js", "ship-functions-browser.mjs"],
     "input": [
       "armada-formation-network.mjs",
       "armada-formation.js",
@@ -603,7 +640,7 @@
       "landing-autopilot-browser.mjs",
       "armada-follow-two-clients.mjs"
     ],
-    "target": ["v03.js"],
+    "target": ["v03.js", "mining-ui-browser.mjs"],
     "tutskip": ["v03.js"],
     "land": ["bot.js", "v11.js", "landing-autopilot-browser.mjs"],
     "depart": [
@@ -682,7 +719,7 @@
     "hail": ["hailing-network.js", "v11.js"],
     "hailin": ["hailing-network.js"],
     "hailopt": ["hailing-network.js", "v11.js"],
-    "order": ["combat-network.js", "v11.js", "v21.js"],
+    "order": ["combat-network.js", "v11.js", "v21.js", "ship-functions-browser.mjs"],
     "jettison": ["cargo-flows.js", "v11.js", "cargo-ui-browser.mjs"],
     "rivals": ["core-actions.js"],
     "bm": ["v12.js"],

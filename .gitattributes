@@ -21,3 +21,10 @@ client/assets/wormhole.png -filter -diff -merge -text
 
 # Small reproducible lit-3D motherlodes ship directly without extra LFS fetches.
 client/assets/objects/motherlode-*.webp -filter -diff -merge -text
+
+# Original 3.1 title and synthesized score ship in ordinary clones.
+client/assets/ui/title-31.png -filter -diff -merge -text
+client/assets/sfx/music_login31.mp3 -filter -diff -merge -text
+
+# Small reproducible cockpit cursors ship directly in ordinary clones.
+client/assets/cursors/*.png -filter -diff -merge -text

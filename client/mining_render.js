@@ -3,7 +3,7 @@ import { CORONA_BANDS } from '/shared/industrial-rules.js';
 const reduced = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 export function drawMining(G, ctx, sx, sy, z, W, H, now) {
   ctx.save();
-  ctx.font = `bold ${14 * (devicePixelRatio || 1)}px Tahoma`;
+  ctx.font = `bold ${14 * (devicePixelRatio || 1)}px "Pixelify Sans", sans-serif`;
   ctx.strokeStyle = '#ffcf8a';
   ctx.fillStyle = '#fff0cf';
   ctx.lineWidth = 3;
@@ -24,7 +24,7 @@ export function drawMining(G, ctx, sx, sy, z, W, H, now) {
   if (!wire || wire.version !== 1) return;
   const reveal = new Map((G.mining?.revealed || []).map((r) => [r.id, r]));
   ctx.save();
-  ctx.font = `bold ${Math.max(12, Math.min(17, 13 * (Number(G.opts.scale) || 1)))}px Tahoma`;
+  ctx.font = `bold ${Math.max(12, Math.min(17, 13 * (Number(G.opts.scale) || 1)))}px "Pixelify Sans", sans-serif`;
   ctx.textAlign = 'center';
   for (const r of wire.rocks) {
     if (r.down) continue;
@@ -51,7 +51,7 @@ export function drawMining(G, ctx, sx, sy, z, W, H, now) {
       ctx.fillStyle = '#fff1c9';
       ctx.fillText(text, x, y + R + 18);
       if (shown) {
-        ctx.font = '12px Tahoma';
+        ctx.font = '14px "Pixelify Sans", sans-serif';
         ctx.strokeText('common / rich / pure potential', x, y + R + 33);
         ctx.fillText('common / rich / pure potential', x, y + R + 33);
       }
@@ -80,7 +80,7 @@ export function drawMining(G, ctx, sx, sy, z, W, H, now) {
     ctx.stroke();
   }
   const dpr = devicePixelRatio || 1;
-  ctx.font = `bold ${14 * dpr}px Tahoma`;
+  ctx.font = `bold ${14 * dpr}px "Pixelify Sans", sans-serif`;
   for (const h of G.miningHazards || []) {
     const x = sx(h.x),
       y = sy(h.y);

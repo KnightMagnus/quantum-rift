@@ -1,3 +1,4 @@
+import { initShipFunctions } from './ship-functions.js';
 import { coronaRouteBlocked } from '/shared/industrial-rules.js';
 import { initRefineryUI } from './refinery_ui.js';
 import { binding, migrateBindings, RESERVED_KEYS } from './action-bindings.js';
@@ -110,6 +111,7 @@ const G = (window.G = {
   beams: [],
   loot: [],
   target: 0,
+  targetClearPending: false,
   zoom: 1,
   spriteScale: 1.25,
   route: [],
@@ -267,7 +269,11 @@ const miningUI = initMiningUI({
   contextBlocked: miningModalBlocked,
 });
 initRefineryUI(G, send);
-setInterval(() => miningUI.refresh(), 100);
+const shipFunctions = initShipFunctions(G, send);
+setInterval(() => {
+  miningUI.refresh();
+  shipFunctions.refresh();
+}, 100);
 function applyOpts() {
   G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
   document.documentElement.style.setProperty('--ui', G.opts.scale);
@@ -386,7 +392,7 @@ document.addEventListener('mouseover', (e) => {
     e.target.closest && e.target.closest('.btn:not(:disabled), button:not(:disabled), .chip');
   if (b && b !== G._hoverBtn) {
     G._hoverBtn = b;
-    audio.ui('hover', 0.5);
+    audio.ui('hover', 0.18);
   } else if (!b) G._hoverBtn = null;
 });
 $('lpass').onkeydown = (e) => {
@@ -561,7 +567,7 @@ function onMessage(m) {
       if (G.landed) renderLanded();
       refreshCompanion();
       refreshStores();
-      if (first) ctab('missions');
+      if (first) ctab('missions', false);
       renderTut();
       break;
     }
@@ -578,6 +584,7 @@ function onMessage(m) {
       G.beams = [];
       G.loot = [];
       G.target = 0;
+      G.targetClearPending = false;
       history = [];
       showLanded();
       refreshCompanion();
@@ -794,7 +801,7 @@ function onSnap(m) {
   receiveMining(G, m);
   G.combat = m.combat || {};
   G.formation = !!m.formation;
-  $('combatcontrols').classList.remove('hidden');
+  shipFunctions.refresh();
   $('combatstatus').textContent =
     ' · ' +
     (G.combat.status || 'OFF') +
@@ -842,7 +849,11 @@ function onSnap(m) {
   G.beams = m.beams.map(([bid, ba, len, w]) => ({ id: bid, a: ba, len, w }));
   G.loot = m.loot.map(([lid, lx, ly, kind]) => ({ id: lid, x: lx, y: ly, kind }));
   for (const [w, n] of ammo) G.ammo[w] = n;
-  if (!G.target || !G.ents.has(G.target))
+  // A snapshot already in flight may still contain the target we just cleared.
+  // Keep the explicit clear until the server confirms it, rather than restoring
+  // a stale target which subsequent zero-target snapshots would otherwise retain.
+  if (G.targetClearPending && !tgt) G.targetClearPending = false;
+  if (!G.targetClearPending && (!G.target || !G.ents.has(G.target)))
     G.target = tgt && G.ents.has(tgt) ? tgt : G.target && !G.ents.has(G.target) ? 0 : G.target;
   // reconcile own ship: take the server state, replay inputs it has not seen yet
   const me0 = G.ents.get(id);
@@ -964,6 +975,8 @@ window.addEventListener('keydown', (e) => {
     $('storyok').click();
     return;
   } // 2.5.2: Enter or Space continues a story pop-up
+  // Focused cockpit/menu buttons retain native keyboard activation, not flight/chat shortcuts.
+  if (['Enter', ' '].includes(e.key) && e.target.closest?.('button, summary')) return;
   if (e.key === 'Enter' && G.you) {
     const c = $('chatin');
     if (document.activeElement === c) {
@@ -990,8 +1003,7 @@ window.addEventListener('keydown', (e) => {
   if (e.repeat) return;
   if (e.code === 'Escape') {
     closeMap();
-    G.target = 0;
-    send({ t: 'target', id: 0 });
+    setTarget(0);
     return;
   }
   if (e.code === 'KeyO') {
@@ -1097,6 +1109,7 @@ window.addEventListener('keydown', (e) => {
       send({ t: 'order', o: 'loot' });
       break;
     case 'companion': {
+      if (!document.body.classList.contains('tray-open')) $('traytoggle').click();
       const T = [
         'radio',
         'codex',
@@ -1413,7 +1426,7 @@ $('ctrlkeys').onclick = () => {
   closeControls();
   openOpts(true);
 };
-$('cbkeys').onclick = () => openOpts(true);
+// Key binding editor remains available through Options and Controls.
 $('cbmap').onclick = () => ($('gmap').classList.contains('hidden') ? openMap() : closeMap());
 /**
  * Cycles target lock through visible ships sorted by distance.
@@ -1431,8 +1444,7 @@ function cycleTarget(dir) {
   if (!list.length) return;
   const i = list.findIndex((e) => e.id === G.target);
   const n = list[(i + dir + list.length) % list.length];
-  G.target = n.id;
-  send({ t: 'target', id: n.id });
+  setTarget(n.id);
 }
 /**
  * Finds and targets the nearest hostile ship in the current system.
@@ -1447,8 +1459,7 @@ function nearestHostile() {
       (a, b) => Math.hypot(a.rx - me.rx, a.ry - me.ry) - Math.hypot(b.rx - me.rx, b.ry - me.ry),
     );
   if (list.length) {
-    G.target = list[0].id;
-    send({ t: 'target', id: list[0].id });
+    setTarget(list[0].id);
   } else toast('No hostiles nearby.');
 }
 /**
@@ -1555,6 +1566,7 @@ function setCursor(c) {
  * @returns {void}
  */
 function setTarget(id) {
+  G.targetClearPending = id === 0;
   G.target = id;
   send({ t: 'target', id });
 }
@@ -1625,6 +1637,8 @@ canvas.addEventListener('mousedown', (e) => {
     G.towTarget = tow.id;
     return;
   }
+  // Only genuinely empty space clears combat selection; resource clicks retain it.
+  if (!rock) setTarget(0);
   if (G.opts.mouseAim) mouse.down = true; // mouse-aim mode: hold the left button on open space to fire
 });
 window.addEventListener('mouseup', (e) => {
@@ -2024,7 +2038,7 @@ window.addEventListener('resize', resize);
  */
 function setHud(w) {
   w = Math.max(280, Math.min(Math.min(760, window.innerWidth * 0.6), w));
-  document.documentElement.style.setProperty('--hud', w + 'px');
+  document.documentElement.style.setProperty('--tray-width', w + 'px');
   resize();
   return w;
 }
@@ -2051,6 +2065,14 @@ $('hudgrip').addEventListener('mousedown', (e) => {
   window.addEventListener('mousemove', move);
   window.addEventListener('mouseup', up);
 });
+$('traytoggle').onclick = () => {
+  const open = document.body.classList.toggle('tray-open');
+  $('traytoggle').setAttribute('aria-expanded', String(open));
+  $('traytoggle').title = (open ? 'Close' : 'Open') + ' ship console tray';
+  $('hud').inert = !open;
+  resize();
+};
+$('hud').inert = true;
 resize();
 // ------------------------------------------------------------------ gamepad and touch controls
 const pad = { prev: [] },
@@ -2182,7 +2204,7 @@ function fixedTick() {
     rev: held('rev') ? 1 : 0,
     ab: held('ab') ? 1 : 0,
     fire1: held('fire1') ? 1 : 0,
-    fire2: held('fire2') ? 1 : 0,
+    fire2: held('fire2') || shipFunctions.secondary() ? 1 : 0,
   };
   if (
     G.opts.mouseAim &&
@@ -2477,6 +2499,13 @@ window.addEventListener(
     // Existing modals, map, and expanded mining panel consume this Escape instead.
     if ([...document.querySelectorAll('.overlay:not(.hidden)')].some((el) => el.id !== 'land'))
       return;
+    const focusedPanel = document.activeElement.closest('.function-panel:not(.hidden)');
+    if (focusedPanel) {
+      focusedPanel.querySelector('header button')?.click();
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
     if (!$('miningcontrols').classList.contains('hidden')) {
       $('miningclose').click();
       e.preventDefault();

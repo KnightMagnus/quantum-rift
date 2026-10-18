@@ -380,3 +380,82 @@ It asserts sustained authoritative movement/heading, sharp-turn slot recovery an
 manual override. Existing formation/network tests retain fleet envelope, consent,
 combat/landing suspension and leader-jump coverage. Browser evidence is Chromium
 only; not exhaustive hull/loadout or real WAN latency testing.
+
+### Ship-function cockpit stack
+
+- `ship-function-stack`: ship-functions-browser.mjs and mining-panel-browser.mjs exercise toggles, disabled mining, action messages, multi-panel flow, long chat and 1440/1024/800/640px layouts at 0.8–1.4 UI scale. Capability fixtures are explicit; authoritative behavior remains covered by network suites.
+- Inventory: Combat, Mining (survey/cutting/group help), Towing, Dredge Processing, Fleet/Formation wing orders, Drones secondary-input shortcut. Hailing retains its indicator/modal; comms candidates supplied without duplicate comms. Armada Follow stays in Allies; server follow untouched.
+- User-selected icons: Combat A, Towing B, Fleet A, Drones A, Hailing B and Processing C. Drone shortcut preserves secondary fire, including other secondary weapons.
+
+### 3.1 cockpit restyle
+
+System: `cockpit-restyle`.
+
+`cockpit-browser.mjs` checks the bundled Pixelify Sans font is genuinely loaded,
+retains the original animated login scene/title and production landed illustration,
+and observes actual canvas ship-name and ship-chat drawing with that font. It
+exercises eight dock buttons, real Map/Hail activation, the single connected
+full-height tray trim, actual pointer resizing and persisted width, correct initial
+canvas backing pixels before resize, native
+keyboard tray/tab activation, popup close, and flight/chat separation at 1440,
+1024 and 640px (including 1.4 UI scale). `ship-functions-browser.mjs` retains
+multi-panel, long-history scrolling, all existing actions and keyboard/wheel
+reachability coverage. Existing sidebar/catalog/outfitter tests now explicitly
+open the collapsible tray before accessing its content; sidebar width persistence
+uses the dedicated tray-width preference. Chat-bubble renderer mocks include its
+new bezel/scanline drawing primitives. Tests use isolated saves and offline assets;
+these Chromium checks are not exhaustive device/OS coverage.
+
+## 3.1 `presentation-polish`
+
+Canonical browser case polish-browser.mjs checks engine-mask extrusion across
+three hulls/four headings, boost/idle, neutral texture concealment, revealed
+crystal distinction, gesture gating, music restart/cancel, ambience teardown and
+mute. Production-renderer fixtures are not an all-hull performance benchmark or
+a human listening test.
+
+Login title checks cover standalone placement, 1440/640-wide and 480-high screens,
+independently traced electric accents, reduced-motion static fallback and animation
+pause after login. New 64-second synthesized horn/string score uses the same tested
+music bus, gesture gate and stop/restart lifecycle; subjective timbre needs listening.
+
+### 3.1 exhaust raster budget
+
+The polish browser case retains aft-direction/normal/boost/idle checks and rejects
+per-draw blur on the layered engine masks. The source glow is already softened.
+A 60-frame, readback-forced Chromium raster comparison on the industrial hull
+measured 1251–1307ms with repeated blur versus 100–104ms without it. These are
+bounded local measurements, not a universal FPS claim or proof of a hosted
+landing failure's cause. Flight physics, autopilot and landing assertions remain
+unchanged. Browser CI now allows 30 minutes for the expanded full inventory;
+individual subprocess deadlines remain 180 seconds (network-systems: 240).
+
+### 3.1 cockpit-cursors
+
+System: `cockpit-cursors`. The canonical cursors-browser.mjs test decodes all ten
+transparent 32px assets and checks browser computed cursor states and hotspots,
+disabled/ARIA-disabled controls, text entry, resize, map and busy precedence.
+Class selection is a CSS fixture, not a flight hit-testing claim. Native OS cursor
+painting is not captured by headless screenshots. Artwork is reviewed on dark
+and light backgrounds. Rebuild with python3 tools/cursors.py (Pillow build only).
+
+### Empty-space target deselection
+
+The registered mining-ui-browser.mjs case selects a second real captain, clicks
+verified empty flight canvas at 2x DPI with mouse aim both off and on, and asserts
+local deselection plus the outgoing target-clear message. It then reselects the
+captain and retains the existing rock-selection, held mouse-aim cutting, clean
+release and pickup checks. Object clicks retain their existing selection paths.
+
+### Target snapshot race and hosted simulation timing
+
+The mining UI regression replays an authentic pre-clear server snapshot immediately
+after the real target-clear command, then waits for server confirmation. This
+reproduced target resurrection before the pending-clear guard; clearing now remains
+stable until confirmation. Reselecting and resource cutting retain their checks.
+
+The fleet two-client test still requires 180 simulated seconds of post-turn
+reacquisition and unchanged formation bounds. Its accelerated clock needs at least
+13.5 wall-clock seconds; the former 15-second wait expired on hosted CI before the
+simulation reached the observation point. This one wait allows 30 seconds, within
+the unchanged 180-second enclosing process deadline. No flight physics changed.

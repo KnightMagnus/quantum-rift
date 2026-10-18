@@ -45,6 +45,7 @@ try {
     await page.locator('#depart').click();
     await page.waitForFunction(() => G.view && G.towing?.objects.length);
     await page.locator('#miningindicator').click();
+    await page.locator('#towingindicator').click();
     await page.waitForFunction(() => document.getElementById('towtoggle').textContent.length > 0);
     return page;
   }

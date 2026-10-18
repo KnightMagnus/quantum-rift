@@ -1,0 +1,660 @@
+/* 3.1 cockpit skin. Scene artwork and landing picture selection are deliberately untouched. */
+@font-face {
+  font-family: 'Pixelify Sans';
+  src: url('assets/fonts/pixelify-sans.ttf') format('truetype');
+  font-weight: 400 700;
+  font-display: swap;
+}
+:root {
+  --tray-width: 380px;
+  --hud: 24px;
+  --cbar: 180px;
+  --dim: #a1b0b6;
+  --text: #d7e0df;
+  --well: #081419;
+  --red: #854333;
+  --red2: #c27b5c;
+  --violet: #c19c80;
+}
+body.tray-open {
+  --hud: min(var(--tray-width), 65vw);
+}
+body,
+body * {
+  font-family: 'Pixelify Sans', sans-serif !important;
+}
+body {
+  font-size: 16px;
+}
+button,
+input,
+select,
+textarea {
+  font-size: 15px;
+}
+.small,
+.dim.small,
+.lbl,
+.btn.sm,
+.cchan button,
+#ctabs button,
+.bv {
+  font-size: 14px;
+}
+.metal,
+#shipfunctions .function-panel {
+  color: var(--text);
+  border: 1px solid;
+  border-color: #73828a #121c23 #11181e #5a6a73;
+  background:
+    repeating-linear-gradient(177deg, transparent 0 61px, #02070830 62px, transparent 63px 116px),
+    repeating-linear-gradient(0deg, #ffffff05 0 1px, #00000013 1px 2px),
+    linear-gradient(110deg, #202c34, #46535a 22%, #28353e 44%, #3f4b51 72%, #202c33);
+  box-shadow:
+    inset 1px 1px #b4b9b935,
+    inset -2px -2px #10171d,
+    0 5px 20px #0008;
+}
+.well,
+.list,
+.landbody,
+.hailbody,
+#chat,
+input:not([type='checkbox']):not([type='range']),
+select,
+textarea {
+  color: #bed1ce;
+  background-color: #08171a;
+  border-color: #03090e #52656b #52656b #03090e;
+  box-shadow:
+    inset 0 2px 8px #000a,
+    0 1px #83939b33;
+}
+.btn,
+.cb,
+.cchan button,
+#ctabs button,
+#ltabs button,
+.itabs button {
+  border-radius: 3px;
+  border: 1px solid #090e13;
+  color: #dae3e2;
+  background: linear-gradient(#68747d, #2e3a43 10%, #263139 80%, #151f27 94%);
+  box-shadow:
+    inset 0 1px #9ba5ab88,
+    inset 0 0 0 2px #a2adb117,
+    0 2px #090f14;
+  text-shadow: 0 -1px #000;
+}
+.btn.on,
+.btn:active,
+#ctabs button.on,
+.cchan button.on,
+#ltabs button.on {
+  background: linear-gradient(#9a5b4b, #633025 12%, #421a15 90%, #24100d);
+  color: #ffe3ce;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #e4ba96;
+  outline-offset: -2px;
+}
+.overlay > .metal {
+  padding: 14px;
+  gap: 8px;
+  border-radius: 5px;
+}
+.overlay:not(#login) {
+  height: calc(100% - var(--cbar));
+  width: calc(100% - var(--hud));
+}
+.overlay:not(#login) > div {
+  max-height: calc((100vh - var(--cbar) - 20px) / var(--ui, 1));
+  max-width: calc((100vw - var(--hud) - 20px) / var(--ui, 1));
+  overflow: auto;
+}
+.gbox {
+  width: min(760px, 94%);
+}
+.optbox {
+  width: min(560px, 94%);
+}
+.ctrlin {
+  width: min(620px, 94%);
+}
+.hailin {
+  width: min(520px, 94%);
+}
+.landbox {
+  height: min(660px, 96%);
+  gap: 8px;
+  grid-template-columns: minmax(170px, 28%) 1fr;
+}
+.landpic {
+  height: 164px;
+  border: 6px solid #192730;
+  border-radius: 5px;
+  box-shadow:
+    inset 0 0 22px #000c,
+    0 0 0 1px #718088;
+}
+.landpic::after,
+#radarwrap::after,
+#consolechat::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 2px, #0002 2px 3px),
+    linear-gradient(145deg, #8caeaa12, transparent 45%);
+}
+.landbody {
+  padding: 8px;
+}
+.landhead h2 {
+  font-size: 28px;
+}
+#radarwrap {
+  border: 5px solid #192730;
+  border-radius: 4px;
+  background: radial-gradient(ellipse at top, #17322f, #061311 80%);
+  box-shadow:
+    inset 0 0 16px #000,
+    0 1px #b5c0c255;
+}
+#hud {
+  height: calc(100% - var(--cbar));
+  width: var(--hud);
+  padding: 8px 9px 8px 14px;
+  gap: 6px;
+  z-index: 8;
+  overflow: auto;
+}
+body:not(.tray-open) #hud {
+  visibility: hidden;
+  pointer-events: none;
+}
+body.scaled #hud {
+  zoom: var(--ui);
+  width: calc(var(--hud) / var(--ui));
+  height: calc((100vh - var(--cbar)) / var(--ui));
+}
+#radar {
+  max-height: 170px;
+  object-fit: contain;
+}
+#ctabs {
+  flex-shrink: 0;
+}
+#cpanel {
+  min-height: 170px;
+  overflow: auto;
+}
+#traytrim {
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 24px;
+  z-index: 10;
+  border-left: 1px solid #718087;
+  background:
+    repeating-linear-gradient(0deg, #ffffff05 0 1px, #00000015 1px 2px),
+    linear-gradient(90deg, #111b22, #68767c 12%, #28363e 28%, #35424a 72%, #141f26);
+  box-shadow:
+    -3px 0 9px #0008,
+    inset 3px 0 #0a1116;
+}
+#traytrim::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: var(--cbar);
+  left: 8px;
+  width: 2px;
+  background: #874732;
+  pointer-events: none;
+}
+#traytoggle {
+  pointer-events: auto;
+  position: absolute;
+  top: calc(50% - 50px);
+  left: -9px;
+  width: 32px;
+  min-height: 102px;
+  padding: 4px;
+  border: 1px solid #718086;
+  border-radius: 4px 0 0 4px;
+  color: #e0b18f;
+  background: linear-gradient(90deg, #46555e, #1b2a33);
+  box-shadow: -2px 2px 5px #000;
+  font-size: 22px;
+  z-index: 1;
+}
+#traytoggle span {
+  display: block;
+  writing-mode: vertical-rl;
+  margin: 5px auto;
+  font-size: 13px;
+  letter-spacing: 2px;
+}
+body.tray-open #traytrim {
+  right: calc(var(--hud) - 24px);
+}
+body.tray-open #traytoggle {
+  transform: none;
+}
+#cockpit {
+  /* Long histories scroll inside this track instead of stretching the console. */
+  grid-template-rows: minmax(0, 1fr);
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--cbar);
+  z-index: 7;
+  display: grid;
+  grid-template-columns: 280px minmax(160px, 560px) 280px;
+  justify-content: center;
+  gap: 18px;
+  padding: 16px 40px 14px;
+  border-top: 3px solid #95533b;
+  box-shadow:
+    inset 0 3px #101820,
+    inset 0 5px #73828a66,
+    0 -5px 15px #0009;
+}
+#functiondock {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  min-width: 0;
+}
+#functiondock .function-icon {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 5px 3px 18px;
+  border: 1px solid #0b1015;
+  border-radius: 5px;
+  color: #c1d2d7;
+  background: linear-gradient(#68747d, #2e3a43 10%, #263139 80%, #151f27 94%);
+  box-shadow:
+    inset 0 1px #9ba5ab88,
+    inset 0 0 0 2px #a2adb117,
+    0 3px #090f14;
+  cursor: pointer;
+}
+#functiondock .function-icon img,
+#functiondock .function-icon svg {
+  width: 27px;
+  height: 27px;
+}
+#functiondock .function-label {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  font-size: 12px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+#functiondock .function-icon:disabled {
+  opacity: 0.55;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
+#functiondock #hailindicator.hidden {
+  display: block !important;
+}
+#functiondock #hailindicator:has(#hailcount:not(:empty)) {
+  color: #e3af88;
+}
+#functiondock #hailcount {
+  position: absolute;
+  top: 0;
+  right: 1px;
+  font-size: 13px;
+  min-width: 15px;
+  padding: 1px;
+  border-radius: 4px;
+  background: #803325;
+}
+#functiondock #hailindicator.hidden #hailcount {
+  display: none;
+}
+#functiondock #cbmap {
+  display: block;
+}
+#consolechat {
+  min-height: 0;
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  border: 5px solid #18272f;
+  border-radius: 7px;
+  background: radial-gradient(ellipse at top, #17322f, #061311 80%);
+}
+#shipfunctions {
+  left: 18px;
+  top: 12px;
+  bottom: calc(var(--cbar) + 12px);
+  width: min(390px, calc(100vw - var(--hud) - 40px));
+}
+#functionstack {
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+.function-entry {
+  margin: 0;
+  gap: 0;
+}
+#shipfunctions .function-panel {
+  padding: 9px;
+  margin-bottom: 7px;
+  font-size: 15px;
+  border-radius: 4px;
+}
+#consolechat #chat {
+  position: static;
+  margin: 0;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  pointer-events: auto;
+}
+#consolechat #chatlog {
+  display: block;
+  max-height: none;
+  height: 100%;
+  overflow: auto;
+  justify-content: initial;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  padding: 0 3px;
+}
+body:has(#land:not(.hidden)) #chatlog {
+  display: block;
+}
+#consolechat #cbar {
+  flex: 0 0 auto;
+  position: static;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  padding: 5px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+#cbar::before {
+  display: none;
+}
+#cbar .cchan {
+  display: flex;
+  width: 100%;
+}
+#cbar .cchan button {
+  height: 22px;
+  padding: 0 7px;
+  font-size: 13px;
+}
+#cbar #chatin {
+  width: 100%;
+  min-width: 0;
+  height: 25px;
+  font-size: 14px;
+  padding: 0 6px;
+}
+#consoleutilities {
+  align-self: center;
+}
+#consoleutilities .cbtns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+#consoleutilities .cb {
+  width: 56px;
+  height: 48px;
+  font-size: 24px;
+  border-radius: 4px;
+}
+#qvolbox {
+  bottom: calc(var(--cbar) + 8px);
+  right: 40px;
+  left: auto;
+}
+#hailmarker {
+  font-size: 15px;
+  border: 4px solid #354750;
+  background: #0b1c20;
+  color: #e1b391;
+  box-shadow:
+    inset 0 1px #879b9f,
+    0 3px 10px #0009;
+  border-radius: 4px;
+  padding: 8px;
+}
+body:has(#login:not(.hidden)) #cockpit,
+body:has(#login:not(.hidden)) #traytrim {
+  display: none;
+}
+@media (max-width: 1100px) {
+  #cockpit {
+    grid-template-columns: 230px minmax(180px, 1fr) 140px;
+    gap: 12px;
+    padding-left: 14px;
+    padding-right: 34px;
+  }
+  #consoleutilities .cb {
+    width: 44px;
+    height: 40px;
+  }
+}
+@media (max-width: 760px) {
+  :root {
+    --cbar: 166px;
+  }
+  #cockpit {
+    grid-template-columns: 172px minmax(140px, 1fr) 38px;
+    gap: 7px;
+    padding: 10px 28px 10px 8px;
+  }
+  #functiondock {
+    gap: 5px;
+  }
+  #functiondock .function-label {
+    font-size: 10px;
+  }
+  #functiondock .function-icon img,
+  #functiondock .function-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+  #consoleutilities .cbtns {
+    gap: 5px;
+  }
+  #consoleutilities .cb {
+    width: 32px;
+    height: 34px;
+    font-size: 19px;
+  }
+  #consolechat {
+    padding: 4px;
+    border-width: 3px;
+  }
+  .landbox {
+    grid-template-columns: 130px minmax(0, 1fr);
+  }
+  .landpic {
+    height: 120px;
+  }
+}
+@media (max-width: 480px) {
+  #cockpit {
+    grid-template-columns: 136px minmax(100px, 1fr) 30px;
+    gap: 4px;
+    padding-left: 4px;
+  }
+  #functiondock .function-label {
+    font-size: 9px;
+  }
+  #functiondock .function-icon img,
+  #functiondock .function-icon svg {
+    width: 21px;
+    height: 21px;
+  }
+  #cbar .cchan button {
+    font-size: 10px;
+    padding: 0 4px;
+  }
+  .landbox {
+    grid-template-columns: 100px minmax(0, 1fr);
+  }
+}
+#consoleutilities #optbtn {
+  position: static;
+  inset: auto;
+  z-index: auto;
+}
+#functiondock #industrialindicator .function-label {
+  font-size: 11px;
+}
+#flightstatus {
+  position: fixed;
+  right: calc(var(--hud) + 22px);
+  top: 18px;
+  z-index: 4;
+  text-align: right;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #b4c7c7;
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none;
+}
+body:has(#login:not(.hidden)) #flightstatus,
+body:has(#land:not(.hidden)) #flightstatus {
+  display: none;
+}
+/* Native select menus and trade quantity fields retain their high-contrast contract. */
+select,
+input.trade-amount[type='number'] {
+  color-scheme: dark;
+  background-color: #000;
+  color: #fff;
+}
+
+/* Standalone title above the sign-in HUD; background scene remains untouched. */
+#login .splash-title {
+  width: min(640px, 86vw);
+  max-height: 27vh;
+  object-fit: contain;
+  flex-shrink: 0;
+  animation: title-energy 7s ease-in-out infinite;
+}
+@keyframes title-energy {
+  0%,
+  88%,
+  100% {
+    filter: drop-shadow(0 2px 10px #713ab855);
+  }
+  91%,
+  96% {
+    filter: drop-shadow(0 2px 14px #a35fe888);
+  }
+  93% {
+    filter: drop-shadow(0 2px 9px #713ab855);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #login .splash-title {
+    animation: none;
+  }
+}
+@media (max-height: 650px) {
+  #login .splash-col {
+    gap: 5px;
+    padding: 8px;
+  }
+  #login .splash-title {
+    max-height: 19vh;
+  }
+}
+
+.title-energy-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.title-lightning {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.title-lightning path {
+  fill: none;
+  stroke: #e3baff;
+  stroke-width: 1.5;
+  stroke-linejoin: bevel;
+  stroke-dasharray: 18 90;
+  filter: drop-shadow(0 0 3px #a43aff);
+  animation: electric-trace 4.7s linear infinite;
+}
+@keyframes electric-trace {
+  0%,
+  70%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 108;
+  }
+  73%,
+  79% {
+    opacity: 0.85;
+  }
+  76%,
+  84% {
+    opacity: 0.15;
+  }
+  88% {
+    opacity: 0.7;
+    stroke-dashoffset: 0;
+  }
+  94% {
+    opacity: 0;
+    stroke-dashoffset: -30;
+  }
+}
+#login.hidden .title-lightning path {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-lightning path {
+    animation: none;
+    opacity: 0.25;
+    stroke-dasharray: none;
+  }
+}

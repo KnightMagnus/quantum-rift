@@ -146,6 +146,7 @@ try {
   lead.send({ t: 'armada', op: 'invite', name: names[4] });
   await wait(200);
 
+  await page.click('#traytoggle');
   // Use the real page's existing socket for UI actions, not a second game session.
   await page
     .locator('[data-tab="captains"], [data-ctab="captains"]')

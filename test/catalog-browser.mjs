@@ -136,6 +136,7 @@ try {
   await page.waitForFunction(() => G.you && G.landed && G.solo);
   for (let i = 0; i < 10 && (await page.locator('#storybox').isVisible()); i++)
     await page.locator('#storyb button').first().click();
+  if (!(await page.locator('#hud').isVisible())) await page.click('#traytoggle');
   await page.click('[data-tab="codex"]');
   await page.waitForTimeout(1000);
   const assets = await page.evaluate(async () => {

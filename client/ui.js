@@ -540,8 +540,11 @@ export function chatLine(m) {
     d.textContent = m.msg;
   } else
     d.innerHTML = `<b${m.ch === 'armada' ? ' class="armada"' : ''}${!G.solo && m.from !== G.myName ? ` data-dm="${esc(m.from)}" title="Message ${esc(m.from)}"` : ''}>${m.ch === 'armada' ? '[Armada] ' : ''}${esc(m.from)}${m.ch === 'sys' ? ' (system)' : ''}:</b> ${esc(m.msg)}`; // 2.6: click a name to message them
-  $('chatlog').appendChild(d);
-  while ($('chatlog').children.length > 40) $('chatlog').firstChild.remove();
+  const log = $('chatlog');
+  const atBottom = log.scrollHeight - log.clientHeight - log.scrollTop < 4;
+  log.appendChild(d);
+  while (log.children.length > 40) log.firstChild.remove();
+  if (atBottom) log.scrollTop = log.scrollHeight;
 }
 
 // ------------------------------------------------------------------ HUD (every frame)
@@ -600,6 +603,22 @@ export function hud() {
   }
   $('cr').textContent = credits(y.credits) + ' cr';
   $('shipnm').textContent = y.shipless ? 'No active ship' : `${st.name} "${y.ship.name}"`;
+  const flightStatus = $('flightstatus');
+  const readout = [
+    $('shipnm').textContent,
+    `SHIELD ${$('v-sh').textContent} · ARMOR ${$('v-ar').textContent}`,
+    `FUEL ${Math.round(fu ?? 0)} · ${$('cr').textContent}`,
+  ];
+  if (flightStatus.dataset.readout !== readout.join('|')) {
+    flightStatus.dataset.readout = readout.join('|');
+    flightStatus.replaceChildren(
+      ...readout.map((text) => {
+        const line = document.createElement('div');
+        line.textContent = text;
+        return line;
+      }),
+    );
+  }
   $('sysname').textContent =
     (SYS[G.sys] ? SYS[G.sys].name.toUpperCase() : '') +
     (SYS[G.sys] ? ' · ' + FACTIONS[SYS[G.sys].faction].short : '') +
@@ -709,7 +728,8 @@ export function hud() {
  * @param {string} name Tab key ('radio' | 'codex' | 'missions' | 'station' | 'ops' | 'captains' | 'log')
  * @returns {void}
  */
-export function ctab(name) {
+export function ctab(name, reveal = true) {
+  if (reveal && $('hud').inert) $('traytoggle').click();
   G.ctab = name;
   document
     .querySelectorAll('#ctabs button')

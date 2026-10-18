@@ -18,13 +18,18 @@ try {
   await page.waitForFunction(() => G.you && G.landed);
   for (let i = 0; i < 8 && (await page.locator('#storybox').isVisible()); i++)
     await page.locator('#storyb button').first().click();
-  assert.equal(await page.locator('#miningindicator').isVisible(), false);
-  await page.click('#depart');
   await page.waitForSelector('#miningindicator', { state: 'visible' });
+  assert.equal(await page.locator('#miningindicator').isDisabled(), true);
+  await page.click('#depart');
+  await page.waitForFunction(() => !document.querySelector('#miningindicator').disabled);
   assert.equal(await page.locator('#miningcontrols').isVisible(), false);
   const icon = await page.locator('#miningindicator').boundingBox();
-  assert.equal(icon.x, 12);
-  assert.equal(1000 - icon.y - icon.height, 170);
+  const dock = await page.locator('#functiondock').boundingBox();
+  assert.ok(icon.x >= dock.x && icon.x + icon.width <= dock.x + dock.width);
+  assert.ok(icon.y >= dock.y && icon.y + icon.height <= dock.y + dock.height);
+  const combatIcon = await page.locator('#combatindicator').boundingBox();
+  assert.equal(icon.y, combatIcon.y, 'Mining shares the compact grid row with Combat');
+  assert.ok(icon.x >= combatIcon.x + combatIcon.width, 'Mining follows Combat without overlap');
   await page.screenshot({ path: path.join(f.out, 'after-collapsed.png') });
   await page.click('#miningindicator');
   assert.equal(await page.locator('#miningindicator').getAttribute('aria-expanded'), 'true');
@@ -60,7 +65,7 @@ try {
   await page.evaluate(() => {
     G.you.shipStats.cargo = 0;
   });
-  await page.waitForSelector('#miningindicator', { state: 'hidden' });
+  await page.waitForFunction(() => document.querySelector('#miningindicator').disabled);
   assert.equal(await page.locator('#miningcontrols').isVisible(), false);
   await page.evaluate(() => {
     G.you = structuredClone(savedYou);
@@ -68,12 +73,13 @@ try {
     G.you.ship.hull = h.id;
   });
   await page.waitForTimeout(150);
-  assert.equal(await page.locator('#miningindicator').isVisible(), false);
+  assert.equal(await page.locator('#miningindicator').isVisible(), true);
+  assert.equal(await page.locator('#miningindicator').isDisabled(), true);
   await page.screenshot({ path: path.join(f.out, 'after-ineligible.png') });
   await page.evaluate(() => {
     G.you = structuredClone(savedYou);
   });
-  await page.waitForSelector('#miningindicator', { state: 'visible' });
+  await page.waitForFunction(() => !document.querySelector('#miningindicator').disabled);
   assert.equal(
     await page.locator('#miningcontrols').isVisible(),
     false,
@@ -83,11 +89,11 @@ try {
   await page.evaluate(() => {
     G.landed = 'fixture';
   });
-  await page.waitForSelector('#miningindicator', { state: 'hidden' });
+  await page.waitForFunction(() => document.querySelector('#miningindicator').disabled);
   await page.evaluate(() => {
     G.landed = null;
   });
-  await page.waitForSelector('#miningindicator', { state: 'visible' });
+  await page.waitForFunction(() => !document.querySelector('#miningindicator').disabled);
   assert.equal(await page.locator('#miningcontrols').isVisible(), false);
   await page.click('#miningindicator');
   await page.evaluate(() => {

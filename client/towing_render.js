@@ -14,7 +14,7 @@ export function drawTowing(G, ctx, sx, sy, z, W, H) {
   if (!w) return;
   ctx.save();
   const px = devicePixelRatio || 1;
-  ctx.font = `bold ${12 * px}px Tahoma`;
+  ctx.font = `bold ${14 * px}px "Pixelify Sans", sans-serif`;
   ctx.textAlign = 'center';
   for (const o of w.objects) {
     if (['delivered', 'destroyed'].includes(o.status)) continue;
@@ -57,7 +57,13 @@ export function drawTowing(G, ctx, sx, sy, z, W, H) {
     const im = art.base ? image(art.base) : null;
     if (im?.complete && im.naturalWidth) ctx.drawImage(im, x - R, y - R, R * 2, R * 2);
     else {
-      ctx.fillStyle = art.kind === 'unknown' ? art.color : '#333943';
+      if (art.kind === 'unknown') {
+        const shade = ctx.createLinearGradient(x - R, y - R, x + R, y + R);
+        shade.addColorStop(0, '#b0b5bc');
+        shade.addColorStop(0.4, '#747d88');
+        shade.addColorStop(1, '#282f39');
+        ctx.fillStyle = shade;
+      } else ctx.fillStyle = '#333943';
       ctx.fill();
     }
     // Material geometry stays recognizable at flight zoom, even without rasters.
@@ -67,7 +73,33 @@ export function drawTowing(G, ctx, sx, sy, z, W, H) {
     ctx.fillStyle = art.color;
     ctx.lineWidth = 0.045;
     ctx.setLineDash([]);
-    if (art.kind === 'ore') {
+    if (art.kind === 'unknown') {
+      // Identical neutral geology: no resource-derived seeds or hues.
+      for (let i = 0; i < 18; i++) {
+        const a = i * 2.39996,
+          r = 0.17 + (i % 5) * 0.13,
+          dx = Math.cos(a) * r,
+          dy = Math.sin(a) * r,
+          pit = 0.035 + (i % 3) * 0.018;
+        ctx.fillStyle = '#424b57';
+        ctx.beginPath();
+        ctx.arc(dx, dy, pit, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#929ba6';
+        ctx.lineWidth = 0.014;
+        ctx.beginPath();
+        ctx.arc(dx, dy + 0.015, pit, 0.15, 2.6);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#56616e';
+      ctx.lineWidth = 0.022;
+      ctx.beginPath();
+      ctx.moveTo(-0.6, -0.4);
+      ctx.lineTo(-0.25, -0.18);
+      ctx.lineTo(-0.32, 0.14);
+      ctx.lineTo(0.12, 0.42);
+      ctx.stroke();
+    } else if (art.kind === 'ore') {
       for (const [dx, dy] of [
         [-0.4, -0.25],
         [0.12, 0.05],

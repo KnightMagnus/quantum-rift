@@ -142,6 +142,7 @@ try {
     await page.click('#depart');
     await page.waitForFunction(() => G.view && !G.landed);
   }
+  await follower.click('#traytoggle');
   await follower.getByText('ALLIES', { exact: true }).click();
   await follower.locator('#capview [data-cs=armada]').click();
   await follower.locator('#afollow').check();
@@ -194,7 +195,10 @@ try {
     return Math.hypot(ship.vx - beforeKeys.vx, ship.vy - beforeKeys.vy) > 10;
   }, 'real keyboard changes leader velocity');
   const turnStart = read().t;
-  await until(() => read().t > turnStart + 180, 'reacquisition after leader turn');
+  // 180 simulated seconds need 13.5s even at the ideal accelerated tick rate.
+  // Leave scheduling headroom on hosted runners; retain the same simulated
+  // duration and formation bounds, plus the enclosing 180s process deadline.
+  await until(() => read().t > turnStart + 180, 'reacquisition after leader turn', 30000);
   const afterTurn = read().trace.at(-1),
     follow = afterTurn.ships.find((s) => s.name === names[1]);
   assert.equal(follow.follow, true, 'turn preserves Follow');
