@@ -615,7 +615,8 @@
       "id": "presentation-polish",
       "owners": ["client/render.js", "client/towing_render.js", "client/audio.js"],
       "tests": ["polish-browser.mjs"],
-      "asserts": "Three hulls/four headings: aft engine masks, longer boost, idle. Neutral texture concealment, music restart/cancel, ambience teardown, mute."
+      "asserts": "Three hulls/four headings: aft engine masks, longer boost, idle. Neutral texture concealment, music restart/cancel, ambience teardown, mute.",
+      "services": []
     }
   ],
   "routes": {
