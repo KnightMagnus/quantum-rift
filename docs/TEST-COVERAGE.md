@@ -446,3 +446,16 @@ verified empty flight canvas at 2x DPI with mouse aim both off and on, and asser
 local deselection plus the outgoing target-clear message. It then reselects the
 captain and retains the existing rock-selection, held mouse-aim cutting, clean
 release and pickup checks. Object clicks retain their existing selection paths.
+
+### Target snapshot race and hosted simulation timing
+
+The mining UI regression replays an authentic pre-clear server snapshot immediately
+after the real target-clear command, then waits for server confirmation. This
+reproduced target resurrection before the pending-clear guard; clearing now remains
+stable until confirmation. Reselecting and resource cutting retain their checks.
+
+The fleet two-client test still requires 180 simulated seconds of post-turn
+reacquisition and unchanged formation bounds. Its accelerated clock needs at least
+13.5 wall-clock seconds; the former 15-second wait expired on hosted CI before the
+simulation reached the observation point. This one wait allows 30 seconds, within
+the unchanged 180-second enclosing process deadline. No flight physics changed.

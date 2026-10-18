@@ -111,6 +111,7 @@ const G = (window.G = {
   beams: [],
   loot: [],
   target: 0,
+  targetClearPending: false,
   zoom: 1,
   spriteScale: 1.25,
   route: [],
@@ -583,6 +584,7 @@ function onMessage(m) {
       G.beams = [];
       G.loot = [];
       G.target = 0;
+      G.targetClearPending = false;
       history = [];
       showLanded();
       refreshCompanion();
@@ -847,7 +849,11 @@ function onSnap(m) {
   G.beams = m.beams.map(([bid, ba, len, w]) => ({ id: bid, a: ba, len, w }));
   G.loot = m.loot.map(([lid, lx, ly, kind]) => ({ id: lid, x: lx, y: ly, kind }));
   for (const [w, n] of ammo) G.ammo[w] = n;
-  if (!G.target || !G.ents.has(G.target))
+  // A snapshot already in flight may still contain the target we just cleared.
+  // Keep the explicit clear until the server confirms it, rather than restoring
+  // a stale target which subsequent zero-target snapshots would otherwise retain.
+  if (G.targetClearPending && !tgt) G.targetClearPending = false;
+  if (!G.targetClearPending && (!G.target || !G.ents.has(G.target)))
     G.target = tgt && G.ents.has(tgt) ? tgt : G.target && !G.ents.has(G.target) ? 0 : G.target;
   // reconcile own ship: take the server state, replay inputs it has not seen yet
   const me0 = G.ents.get(id);
@@ -997,8 +1003,7 @@ window.addEventListener('keydown', (e) => {
   if (e.repeat) return;
   if (e.code === 'Escape') {
     closeMap();
-    G.target = 0;
-    send({ t: 'target', id: 0 });
+    setTarget(0);
     return;
   }
   if (e.code === 'KeyO') {
@@ -1439,8 +1444,7 @@ function cycleTarget(dir) {
   if (!list.length) return;
   const i = list.findIndex((e) => e.id === G.target);
   const n = list[(i + dir + list.length) % list.length];
-  G.target = n.id;
-  send({ t: 'target', id: n.id });
+  setTarget(n.id);
 }
 /**
  * Finds and targets the nearest hostile ship in the current system.
@@ -1455,8 +1459,7 @@ function nearestHostile() {
       (a, b) => Math.hypot(a.rx - me.rx, a.ry - me.ry) - Math.hypot(b.rx - me.rx, b.ry - me.ry),
     );
   if (list.length) {
-    G.target = list[0].id;
-    send({ t: 'target', id: list[0].id });
+    setTarget(list[0].id);
   } else toast('No hostiles nearby.');
 }
 /**
@@ -1563,6 +1566,7 @@ function setCursor(c) {
  * @returns {void}
  */
 function setTarget(id) {
+  G.targetClearPending = id === 0;
   G.target = id;
   send({ t: 'target', id });
 }

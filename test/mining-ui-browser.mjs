@@ -24,6 +24,28 @@ try {
     }),
   );
   await page.addInitScript(() => {
+    // Deliver one authentic pre-clear snapshot after the user's clear command.
+    // This deterministically models a server snapshot already in flight.
+    const NativeSocket = WebSocket;
+    window.WebSocket = class extends NativeSocket {
+      constructor(...args) {
+        super(...args);
+        this.addEventListener('message', (event) => {
+          const m = JSON.parse(event.data);
+          if (m.t === 'snap') {
+            this.lastSnapshot = event.data;
+            window.lastTargetSnapshot = m.me[10];
+          }
+        });
+      }
+      send(raw) {
+        super.send(raw);
+        const m = JSON.parse(raw);
+        if (m.t === 'target' && m.id === 0 && this.lastSnapshot) {
+          this.onmessage?.({ data: this.lastSnapshot });
+        }
+      }
+    };
     localStorage.setItem(
       'rift.opts',
       JSON.stringify({ v21: true, keys: {}, cb: true, shake: false, mouseAim: true, scale: 1 }),
@@ -100,12 +122,19 @@ try {
     }, aim);
     await page.mouse.click(shipXY.x, shipXY.y);
     await page.waitForFunction((id) => G.target === id, otherId);
+    await page.waitForFunction((id) => window.lastTargetSnapshot === id, otherId);
     const start = sent.length;
     await page.mouse.click(empty.x, empty.y);
     await page.waitForFunction(() => G.target === 0);
     await until(
       () => sent.slice(start).some((m) => m.t === 'target' && m.id === 0),
       'server target-clear message',
+    );
+    await page.waitForFunction(() => !G.targetClearPending && window.lastTargetSnapshot === 0);
+    assert.equal(
+      await page.evaluate(() => G.target),
+      0,
+      'clear survives stale snapshot and server confirmation',
     );
   }
   await page.mouse.click(shipXY.x, shipXY.y);
