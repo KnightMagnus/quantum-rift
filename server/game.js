@@ -3139,12 +3139,14 @@ export class Game {
       });
     }
     out.unshift(...this.features.quests.questOffers(p, d)); // 2.4: contacts and side stories lead the board
-    return out.filter(
-      (o) =>
-        !d.missions.some((m) => m.id === o.id) &&
-        !(destType(o) && o.dest === p.id) &&
-        !(o.type === 'assassinate' && rank < 3),
-    );
+    return out
+      .filter(
+        (o) =>
+          !d.missions.some((m) => m.id === o.id) &&
+          !(destType(o) && o.dest === p.id) &&
+          !(o.type === 'assassinate' && rank < 3),
+      )
+      .map((o) => ({ ...o, offerVersion: 1 }));
   }
   /**
    * Accepts a mission from the local stellar job board.

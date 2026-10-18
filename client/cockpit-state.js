@@ -10,6 +10,12 @@ const fields = [
   'codexCat',
   'codexQuery',
   'pinnedObjective',
+  'jobType',
+  'jobFeasible',
+  'jobNearby',
+  'missionType',
+  'missionFeasible',
+  'missionNearby',
 ];
 const tabs = ['radio', 'codex', 'missions', 'station', 'ops', 'captains', 'log'];
 export function initCockpitState(G) {
@@ -84,6 +90,7 @@ export function initCockpitState(G) {
       'data-id',
       'data-k',
       'data-abandon',
+      'data-mission-filter',
     ];
     const selectors = active
       ? attributes

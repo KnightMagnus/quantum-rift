@@ -1,3 +1,9 @@
+import {
+  proposeContract,
+  respondContract,
+  cleanContractPlans,
+  completeTeamContract,
+} from './warband-consent.js';
 import { migrateCargoLots, planTake, moveLots } from '../shared/cargo-lots.js';
 // Quantum Rift 2.6 "Co-op" server feature operations:
 //   Captain Friends (requests, online status, DMs with an offline mailbox, blocks)
@@ -348,6 +354,7 @@ export const CoopOperations = {
     this.presence(d);
   },
   coopLogout(s) {
+    cleanContractPlans(this, s);
     const d = s.data;
     if (!d || this.solo) return;
     d.lastSeen = Date.now();
@@ -525,6 +532,7 @@ export const CoopOperations = {
         sysId: o && p ? p.sys : null,
         hull: p && !p.shipless && p.ship ? this.A.ships[p.ship.hull].name : '',
         landed: !!(o && !o.ent),
+        jobSlots: p ? Math.max(0, 6 - p.missions.length) : 0,
       };
     };
     return {
@@ -545,6 +553,8 @@ export const CoopOperations = {
     for (const n of A.members) this.pushSocial(n);
   },
   armadaOp(s, m) {
+    if (['contractReady', 'contractDecline', 'contractStart', 'contractCancel'].includes(m.op))
+      return respondContract(this, s, m);
     if (this.solo) return this.toast(s, 'The Armada is for online games.');
     const d = s.data,
       W = this.db.world,
@@ -1425,39 +1435,12 @@ export const CoopOperations = {
         faction: 'hollow',
         targetName: nm,
         reward: Math.round(WARBAND.rewardBase + S.danger * WARBAND.rewardDanger + jumps * 4000),
-        text: `${nm} deserted with a squadron of the Concord's old refits and holds the ${S.name} system in a ${this.A.ships[lead].name}. Too much for one ship: this contract needs an Armada of ${WARBAND.minMembers} or more. Every member who takes it gets an equal share and standing.`,
+        text: `${nm} deserted with a squadron of the Concord's old refits and holds the ${S.name} system in a ${this.A.ships[lead].name}. Too much for one ship: this contract needs an Armada of ${WARBAND.minMembers} or more. Choose your team before starting. Only captains who agree join and share the contract pool.`,
       },
     ];
   },
   warbandAccept(s, o) {
-    const d = s.data,
-      A = this.armadaOf(d);
-    const on = A ? A.members.map((n) => this.sessionOf(n)).filter(Boolean) : [];
-    if (!A || on.length < WARBAND.minMembers)
-      return this.toast(
-        s,
-        `Armada contracts need an Armada with at least ${WARBAND.minMembers} captains online.`,
-      );
-    const takers = on.filter(
-        (x) => x.data.missions.length < 6 && !x.data.missions.some((m) => m.id === o.id),
-      ),
-      share = Math.round(o.reward / Math.max(1, takers.length));
-    for (const x of takers) {
-      x.data.missions.push({ ...o, reward: share, owner: x.id, armada: A.id, taken: Date.now() });
-      this.log(x.data, `Accepted (with the Armada): ${o.title}.`);
-      if (x !== s)
-        this.toast(
-          x,
-          `${d.name} took an Armada contract for everyone: ${o.title} in ${SYS[o.sys].name}. Your share: ${credits(share)} credits.`,
-        );
-      this.you(x);
-    }
-    this.toast(
-      s,
-      `Armada contract taken for ${takers.length} captain${takers.length > 1 ? 's' : ''}. Each share pays ${credits(share)} credits.`,
-    );
-    this.db.touch();
-    this.landed(s);
+    return proposeContract(this, s, o);
   },
   warbandArrive(s, sp) {
     for (const m of s.data.missions) {
@@ -1467,6 +1450,7 @@ export const CoopOperations = {
         pct = (members - 1) * WARBAND.pctPerMember;
       const t = sp.spawnMissionTarget({ ...m, owner: s.id });
       t.kingpin = m.id;
+      if (m.offerVersion === 1 && Array.isArray(m.team)) t.contractTeam = [...m.team];
       t.noDisable = true;
       if (pct) {
         t.st.shield *= 1 + pct / 100;
@@ -1500,6 +1484,7 @@ export const CoopOperations = {
     }
   },
   warbandDown(npc) {
+    if (completeTeamContract(this, npc)) return;
     for (const o of this.sessions.values())
       if (o.data)
         for (const m of o.data.missions)
@@ -1516,6 +1501,7 @@ export const CoopOperations = {
   // ------------------------------------------------------------------ every two seconds
   coopTick() {
     if (this.solo) return;
+    cleanContractPlans(this);
     const now = Date.now(),
       W = this.db.world;
     for (const A of Object.values(W.armadas)) {

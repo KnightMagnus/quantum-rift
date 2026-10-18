@@ -2,7 +2,7 @@
 
 Every release, newest first. The main story is left out on purpose.
 
-### 3.2.1 — In development: economy and cockpit QoL
+### 3.2.1 — In development: economy, QoL and mission choices
 
 - Show refining cost, output and waiting time automatically, with one Start Refining action instead of manual quote management. Keep authoritative price, ownership, cargo and duplicate-action safeguards.
 - Preview trade amounts using current local prices, cargo grades, perks and order size. Warn when using higher-grade cargo or supplies still needed for a delivery.
@@ -13,6 +13,8 @@ Every release, newest first. The main story is left out on purpose.
 - Remember per-captain console views, filters and browsing positions; return to the originating Codex item after details. Pin one next objective inside the existing Tray without hiding other mission tracking.
 - Prevent delayed autopilot braking input from reversing a nearly stopped ship and causing an extra turn; manual flight remains unchanged.
 - Explain unavailable cargo/towing actions and link back to existing screens, retaining essential confirmations and native keyboard interaction.
+- Compare mission travel, hold/seats, danger, turn-in and personal payout; remember optional type, available-now and nearby filters without hiding inaccessible work by default.
+- Plan Armada contracts with an explicit Ready roster and exact fixed shares. Declining is safe; changes require renewed consent, late joiners are not enrolled, and accepted teammates retain completion when offline. Existing accepted rewards and contracts are not rewritten.
 - Economy is the first merge toward the cumulative economy, QoL and mission update; it has no standalone release. Radio and user-supplied music remain separate future work.
 
 ### 3.2.0 — Readable cockpit and expanded chat
