@@ -2,6 +2,20 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.1.1 — Living cockpit
+
+- Restore the sculpted steel HUD, inset COMMS deck, larger Pixelify lettering and consistent framed menus.
+- Keep the real system and authoritative ship traffic visible behind landed menus; explicit Solo pause still freezes the scene. Docked captains remain safely docked.
+- Give the expanded Tray its own full-height column, with Volume, Settings and Help beside COMMS and reachable compact layouts.
+- Add 16 distinct faction insignias; all 11 selectable Faction Stores show their selected crest at top left in the exact existing menu color.
+- Clarify direct Armada invitations and follower-only opt-in without changing flight physics or consent. Strengthen mixed-hull, reconnect and jump-denial regressions.
+- Refresh actual-game README screenshots and preserve original login artwork, digital viewscreens and save compatibility.
+
+### 3.1.0 — HUD Overhaul
+
+- Introduce the Pixelify cockpit, shared ship-function panels, digital landing/radar viewscreens, layered exhaust, restrained login effects and original synthesized title score.
+- Sharpen cockpit cursors and preserve explicit target clearing across stale snapshots.
+
 ### 3.0.5 — Complete ship banking
 
 - Restore original 3D turning-bank frames and matched glows for all 17 large hulls, including Constitution; preserve existing level artwork and all 105 already complete hull sheets.

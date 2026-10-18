@@ -149,10 +149,17 @@ export function initHails({ G, send, toast, cam }) {
         const view = $('view').getBoundingClientRect();
         const px = ((x - cam.cx) * cam.z * view.width) / cam.W + view.width / 2,
           py = ((y - cam.cy) * cam.z * view.height) / cam.H + view.height / 2;
-        mark.style.left = `${Math.max(20, Math.min(view.width - 190, px))}px`;
-        mark.style.top = `${Math.max(70, Math.min(view.height - 90, py))}px`;
-        mark.textContent = `◇ ${marker.label} (${Math.round(x)}, ${Math.round(y)})`;
+        let body = mark.querySelector('.hail-marker-body');
+        if (!body) {
+          body = document.createElement('div');
+          body.className = 'hail-marker-body';
+          mark.replaceChildren(body);
+        }
+        body.textContent = `◇ ${marker.label} (${Math.round(x)}, ${Math.round(y)})`;
         mark.classList.remove('hidden');
+        const frame = mark.getBoundingClientRect();
+        mark.style.left = `${Math.max(8, Math.min(view.width - frame.width - 8, px - frame.width / 2))}px`;
+        mark.style.top = `${Math.max(8, Math.min(view.height - frame.height - 8, py - frame.height - 20))}px`;
       }
     }
     $('hailindicator').style.visibility =

@@ -10,7 +10,19 @@ export function initShipFunctions(G, send) {
   const consoleChat = document.getElementById('consolechat');
   consoleChat.append(document.getElementById('chat'), document.getElementById('cbar'));
   document.getElementById('consoleutilities').append(document.querySelector('.cbtns'));
-  let identity;
+  for (const [id, name] of [
+    ['optbtn', 'SETTINGS'],
+    ['cbhelp', 'HELP'],
+  ]) {
+    const button = document.getElementById(id);
+    if (!button.querySelector('.utility-label')) {
+      const label = document.createElement('span');
+      label.className = 'utility-label';
+      label.textContent = name;
+      button.append(label);
+    }
+  }
+  let identity, sector;
   let droneUntil = 0;
   const flying = () => !!G.you && !!G.view && !G.landed && !G.you.shipless;
   const hasDrones = () =>
@@ -34,7 +46,7 @@ export function initShipFunctions(G, send) {
       button.innerHTML = '<img src="assets/hud/' + icon + '.svg" alt="" aria-hidden="true">';
       const header = document.createElement('header');
       const title = document.createElement('strong');
-      title.textContent = name;
+      title.textContent = name === 'Combat' ? 'Combat assist' : name;
       const close = document.createElement('button');
       close.className = 'btn sm';
       close.textContent = 'Close';
@@ -61,6 +73,10 @@ export function initShipFunctions(G, send) {
       button.setAttribute('aria-expanded', String(open));
     }
     panel.classList.add('function-panel');
+    const body = document.createElement('div');
+    body.className = 'function-body';
+    for (const child of [...panel.childNodes]) if (child.nodeName !== 'HEADER') body.append(child);
+    panel.append(body);
     button.title = name;
     const label = document.createElement('span');
     label.className = 'function-label';
@@ -157,6 +173,17 @@ export function initShipFunctions(G, send) {
     button.append(text);
     dock.append(button);
   }
+  for (const id of [
+    'combatindicator',
+    'miningindicator',
+    'towingindicator',
+    'fleetindicator',
+    'dronesindicator',
+    'industrialindicator',
+    'hailindicator',
+    'cbmap',
+  ])
+    dock.append(document.getElementById(id));
   dock.addEventListener('keydown', (e) => {
     if (['Enter', ' '].includes(e.key)) e.stopPropagation();
   });
@@ -170,6 +197,11 @@ export function initShipFunctions(G, send) {
   return {
     secondary: () => performance.now() < droneUntil && flying() && !G.paused && hasDrones(),
     refresh() {
+      if (sector !== G.sys) {
+        sector = G.sys;
+        document.getElementById('commssector').textContent =
+          'COMMS / ' + (G.sys || 'SHIP NETWORK').toUpperCase() + (G.sys ? ' SECTOR' : '');
+      }
       const logged = !!G.you && document.getElementById('login').classList.contains('hidden');
       const next = G.you ? G.you.name + ':' + G.you.ship?.hull + ':' + G.myId : null;
       for (const e of entries) {

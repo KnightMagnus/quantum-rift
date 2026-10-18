@@ -108,16 +108,7 @@ try {
     ],
   });
   for (const name of names) {
-    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-    await context.addInitScript(() => {
-      const Native = window.WebSocket;
-      window.WebSocket = class extends Native {
-        constructor(...args) {
-          super(...args);
-          window.qaSocket = this;
-        }
-      };
-    });
+    const context = await browser.newContext({ viewport: { width: 1600, height: 1200 } });
     const page = await context.newPage();
     pages.push(page);
     page.on('pageerror', (e) => errors.push(String(e)));
@@ -128,23 +119,49 @@ try {
     await page.waitForFunction(() => G.you && G.landed);
   }
   const [leader, follower] = pages;
-  const send = (page, m) => page.evaluate((m) => window.qaSocket.send(JSON.stringify(m)), m);
-  await send(leader, { t: 'armada', op: 'form', name: 'Two Client Cruise' });
+  // Exercise the shortest actual player setup: direct INVITE auto-forms the
+  // Armada. No friend request, separate FORM step or raw-socket setup shortcuts.
+  for (const page of pages) {
+    for (let n = 0; n < 12 && (await page.locator('#storybox').isVisible()); n++)
+      await page.locator('#storyb button').first().click();
+    await page.click('#traytoggle');
+    await page.getByText('ALLIES', { exact: true }).click();
+    await page.locator('#capview [data-cs=armada]').click();
+  }
+  await leader.fill('#ainv', names[1]);
+  await leader.locator('[data-cact=ainv2]').click();
   await leader.waitForFunction(() => G.you.armada?.id);
   const id = await leader.evaluate(() => G.you.armada.id);
-  await send(leader, { t: 'armada', op: 'invite', name: names[1] });
-  await delay(150);
-  await send(follower, { t: 'armada', op: 'accept', id });
-  await follower.waitForFunction(() => G.you.armada?.id);
+  assert.equal(await leader.locator('#afollow').count(), 0, 'leader does not follow itself');
+  await leader.screenshot({ path: path.join(evidence, 'setup-01-leader.png') });
+  await follower.getByRole('button', { name: 'JOIN', exact: true }).waitFor();
+  await follower.screenshot({ path: path.join(evidence, 'setup-02-invitation.png') });
+  await follower.getByRole('button', { name: 'JOIN', exact: true }).click();
+  await follower.waitForFunction((id) => G.you.armada?.id === id, id);
+  assert.equal(
+    await follower.locator('#afollow').isChecked(),
+    false,
+    'joining is not flight consent',
+  );
+  await follower.screenshot({ path: path.join(evidence, 'setup-03-joined.png') });
   for (const page of pages) {
     for (let n = 0; n < 12 && (await page.locator('#storybox').isVisible()); n++)
       await page.locator('#storyb button').first().click();
     await page.click('#depart');
     await page.waitForFunction(() => G.view && !G.landed);
   }
-  await follower.click('#traytoggle');
   await follower.getByText('ALLIES', { exact: true }).click();
   await follower.locator('#capview [data-cs=armada]').click();
+  assert.equal(
+    await follower.evaluate(() => G.you.armada.follow),
+    false,
+    'departure does not opt in',
+  );
+  await follower.locator('#afollow').check();
+  await follower.waitForFunction(() => G.formation);
+  await follower.screenshot({ path: path.join(evidence, 'setup-04-follow-active.png') });
+  await follower.locator('#afollow').uncheck();
+  await follower.waitForFunction(() => !G.you.armada.follow && !G.formation);
   await follower.locator('#afollow').check();
   await follower.waitForFunction(() => G.formation);
   const start = read().t;
@@ -218,6 +235,28 @@ try {
         .ships.find((s) => s.name === names[1]).follow === false,
     'manual follower takeover',
   );
+  // Consent is transient: reconnecting while actively following must require
+  // another explicit opt-in, while preserving the Armada membership itself.
+  await follower.locator('#afollow').check();
+  await follower.waitForFunction(() => G.you.armada.follow && G.formation);
+  await follower.reload();
+  await follower.locator('#lname').waitFor();
+  if (await follower.locator('#lname').isVisible()) {
+    await follower.fill('#lname', names[1]);
+    await follower.fill('#lpass', 'fixture');
+    await follower.click('#lbtn');
+  }
+  await follower.waitForFunction((id) => G.you?.armada?.id === id, id);
+  assert.equal(
+    await follower.evaluate(() => G.you.armada.follow),
+    false,
+    'reconnect revokes flight consent',
+  );
+  await follower.click('#traytoggle');
+  await follower.getByText('ALLIES', { exact: true }).click();
+  await follower.locator('#capview [data-cs=armada]').click();
+  assert.equal(await follower.locator('#afollow').isChecked(), false);
+  await follower.screenshot({ path: path.join(evidence, 'setup-05-reconnect-opt-in.png') });
   await Promise.all(
     pages.map((p, i) => p.screenshot({ path: path.join(evidence, `client-${i}.png`) })),
   );
@@ -228,6 +267,13 @@ try {
       {
         accounts: names,
         browserContexts: 2,
+        setup: {
+          directInviteAutoForms: true,
+          joinedThroughUI: true,
+          joinPreservesNoConsent: true,
+          checkboxOffAndOn: true,
+          activeReconnectRevokesConsent: true,
+        },
         cruise: cruiseResult,
         afterTurn,
         manualTakeover: true,

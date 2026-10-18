@@ -106,7 +106,8 @@
     "ship-functions-browser.mjs",
     "cockpit-browser.mjs",
     "polish-browser.mjs",
-    "cursors-browser.mjs"
+    "cursors-browser.mjs",
+    "landed-live-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -347,7 +348,7 @@
     },
     {
       "id": "armada-follow",
-      "owners": ["server/armada-formation.js", "client/main.js"],
+      "owners": ["server/armada-formation.js", "client/main.js", "client/coop_ui.js"],
       "services": [],
       "tests": [
         "armada-formation.js",
@@ -355,7 +356,7 @@
         "armada-follow-coasting.js",
         "armada-follow-two-clients.mjs"
       ],
-      "asserts": "Size/wing-aware V convergence while moving/turning/stopping, consent/takeover/leader changes and real automatic leader-jump arrival. Two independent Chromium account contexts retain sustained coasting without full rotations/stops; pulse-aware matching, attainable speed ceilings and slow-turn stop/restart/sharp-turn recovery."
+      "asserts": "Size/wing-aware V convergence while moving/turning/stopping, consent/takeover/leader changes and real automatic leader-jump arrival. Two independent Chromium account contexts retain sustained coasting without full rotations/stops; pulse-aware matching, attainable speed ceilings and slow-turn stop/restart/sharp-turn recovery. Mixed stock hull acquisition/unreachable-leader separation; UI direct invite auto-forms, JOIN preserves no consent, explicit off/on, active reconnect revokes consent, fuel/disabled/invalid-route jump denial and root/session suspension."
     },
     {
       "id": "landing-gateway",
@@ -606,11 +607,12 @@
         "client/cockpit.css",
         "client/ship-functions.js",
         "client/render.js",
-        "client/chat_bubbles.js"
+        "client/chat_bubbles.js",
+        "client/hails_ui.js"
       ],
       "services": [],
       "tests": ["cockpit-browser.mjs", "ship-functions-browser.mjs", "sidebar-browser.mjs"],
-      "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, eight-button compact cockpit, real Map/Hail activation, connected collapsed tray with actual resize drag/persistence, first-login canvas pixel sizing, keyboard tab/popup reachability and normal/narrow/scaled layout."
+      "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, eight-button compact cockpit, real Map/Hail activation, connected collapsed tray with actual pointer resize drag, restored 480/400 defaults, scale-invariant maximum, saved-width reload and viewport-shrink recovery, literal framed-hail edge containment, first-login canvas pixel sizing, keyboard tab/popup reachability and normal/narrow/scaled layout."
     },
     {
       "id": "presentation-polish",
@@ -625,6 +627,13 @@
       "services": [],
       "tests": ["cursors-browser.mjs"],
       "asserts": "Decoded transparent cursor artwork, consistent dimensions and hotspots, CSS state mapping, disabled and ARIA denial, input, resize, map and busy precedence."
+    },
+    {
+      "id": "landed-live-scene",
+      "tests": ["landed-live-browser.mjs"],
+      "asserts": "Docked observer snapshots keep real traffic moving across services without a controllable player entity; real canvas ship sprite displacement, flight-input isolation and explicit Solo pause/resume.",
+      "owners": ["server/game.js", "client/main.js", "client/render.js", "client/mining_render.js"],
+      "services": []
     }
   ],
   "routes": {

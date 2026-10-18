@@ -68,3 +68,57 @@ for (const hull of [704, 736, 774]) {
 console.log(
   'Production physics recovery: same-hull normal/slow captains, leader stop/restart/sharp turn passed.',
 );
+
+// Cross-hull physics: a faster follower can acquire a slower leader; a slower
+// follower cannot magically catch a faster leader but must not exceed its stats.
+const stats = [704, 714, 736, 744, 774, 784, 804]
+  .map((hull) => ({
+    hull,
+    st: shipStats(A, makeLoadout(A, hull, 'Mixed-speed fixture')),
+  }))
+  .sort((a, b) => a.st.maxSpeed - b.st.maxSpeed);
+const slow = stats[0],
+  fast = stats.at(-1);
+const mixed = [];
+for (const [leaderStats, followerStats, canCatch] of [
+  [slow, fast, true],
+  [fast, slow, false],
+]) {
+  const velocity = canCatch
+    ? leaderStats.st.maxSpeed * 0.6
+    : (fast.st.maxSpeed + slow.st.maxSpeed) / 2;
+  const leader = { x: 0, y: 0, a: 0, vx: 0, vy: -velocity };
+  const follower = { x: 100, y: 200, a: 0, vx: 0, vy: 0, st: followerStats.st };
+  let maxSpeed = 0;
+  for (let tick = 0; tick < 30 * 300; tick++) {
+    step(leader, leaderStats.st, {});
+    steerFormation(follower, leader);
+    step(follower, followerStats.st, follower.inp);
+    maxSpeed = Math.max(maxSpeed, Math.hypot(follower.vx, follower.vy));
+    assert.ok(
+      Number.isFinite(follower.x + follower.y + follower.a),
+      'mixed-hull controller remains finite',
+    );
+    assert.ok(
+      maxSpeed <= followerStats.st.maxSpeed + 0.01,
+      'mixed-hull follower never gets catch-up boosts',
+    );
+  }
+  const error = Math.hypot(follower.x - leader.x, follower.y - leader.y);
+  if (canCatch) assert.ok(error < 100, 'faster stock hull acquires slower leader');
+  else
+    assert.ok(
+      error > (velocity - followerStats.st.maxSpeed) * 250,
+      'unattainable leader pulls away physically',
+    );
+  mixed.push({
+    leaderHull: leaderStats.hull,
+    followerHull: followerStats.hull,
+    leaderSpeed: velocity,
+    followerCeiling: followerStats.st.maxSpeed,
+    maxSpeed,
+    finalError: error,
+    canCatch,
+  });
+}
+console.log('Mixed stock hull speed mismatch:', mixed);

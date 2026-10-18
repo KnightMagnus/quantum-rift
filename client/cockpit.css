@@ -6,9 +6,9 @@
   font-display: swap;
 }
 :root {
-  --tray-width: 380px;
+  --tray-width: 480px;
   --hud: 24px;
-  --cbar: 180px;
+  --cbar: 200px;
   --dim: #a1b0b6;
   --text: #d7e0df;
   --well: #081419;
@@ -17,7 +17,7 @@
   --violet: #c19c80;
 }
 body.tray-open {
-  --hud: min(var(--tray-width), 65vw);
+  --hud: min(var(--tray-width), max(280px, 60vw));
 }
 body,
 body * {
@@ -533,7 +533,7 @@ body:has(#login:not(.hidden)) #traytrim {
   }
 }
 #consoleutilities #optbtn {
-  position: static;
+  position: relative;
   inset: auto;
   z-index: auto;
 }
@@ -656,5 +656,772 @@ input.trade-amount[type='number'] {
     animation: none;
     opacity: 0.25;
     stroke-dasharray: none;
+  }
+}
+
+/* Fidelity correction: sculpted shell, recessed instruments and a shared menu material. */
+#cockpit {
+  isolation: isolate;
+  grid-template-columns: 290px minmax(160px, 590px) 290px;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 34px 50px 24px;
+  border: 0;
+  background: linear-gradient(
+    180deg,
+    #748087,
+    #222a30 4%,
+    #4b565e 7%,
+    #313b43 14%,
+    #323b40 83%,
+    #171d22 96%,
+    #080c10
+  );
+  box-shadow:
+    inset 0 3px #0a0f12,
+    inset 0 9px #536068,
+    inset 0 -14px #192027,
+    0 -5px 14px #000b;
+}
+#cockpit::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 28px 24px 22px;
+  border: 1px solid #121a20;
+  border-radius: 5px;
+  background:
+    repeating-linear-gradient(0deg, #ffffff05 0 1px, #00000017 1px 2px),
+    linear-gradient(110deg, #252e35, #49535a 23%, #283238 45%, #434c52 72%, #222b32);
+  box-shadow:
+    inset 1px 1px #8c969d70,
+    inset -1px -2px #10171d,
+    0 5px 10px #0009;
+}
+#cockpit::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 24px;
+  top: -5px;
+  height: 32px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(#9a4a36, #411c17 13%, #111b22 17%, #68747b 35%, #27343c 55%, #3e4a52);
+  clip-path: polygon(
+    0 0,
+    28% 0,
+    31% 27px,
+    31% 3px,
+    70% 3px,
+    70% 27px,
+    73% 0,
+    100% 0,
+    100% 100%,
+    0 100%
+  );
+}
+.console-screw {
+  position: absolute;
+  top: 35px;
+  width: 12px;
+  height: 12px;
+  border: 1px solid #0c1318;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    #a5b0b2,
+    #35444c 44%,
+    #0c151b 46%,
+    #0c151b 53%,
+    #829098 56%,
+    #27353e
+  );
+  box-shadow: 0 1px 2px #000;
+  pointer-events: none;
+}
+.console-screw.left {
+  left: 30px;
+}
+.console-screw.right {
+  right: 30px;
+}
+.console-brand,
+.console-serial {
+  position: absolute;
+  bottom: 5px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #8b999e;
+  pointer-events: none;
+}
+.console-brand {
+  left: 50px;
+}
+.console-serial {
+  right: 50px;
+}
+#functiondock {
+  align-self: center;
+  grid-template-rows: repeat(2, 48px);
+  gap: 8px 12px;
+  padding: 10px;
+  border: 1px solid #0b141a;
+  border-radius: 4px;
+  background: linear-gradient(160deg, #38454e, #141d24);
+  box-shadow:
+    0 1px #a5afb455,
+    inset 0 2px 5px #000d;
+}
+#functiondock .function-icon {
+  height: 36px;
+  padding: 2px 3px;
+  margin-bottom: 12px;
+  align-self: start;
+  border-radius: 4px;
+}
+#functiondock .function-label {
+  bottom: -15px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px #000;
+  line-height: 13px;
+}
+#functiondock #industrialindicator .function-label {
+  font-size: 11px;
+}
+#consolechat {
+  align-self: center;
+  height: 144px;
+  border: 1px solid #697b82;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: radial-gradient(ellipse at top, #17322f, #061311 80%);
+  box-shadow:
+    inset 0 0 0 7px #17252c,
+    inset 0 0 0 8px #030b0d,
+    0 1px #899ba1,
+    0 4px 8px #0009;
+}
+#commsheader {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #b8c9c4;
+  padding: 2px 0 5px;
+  border-bottom: 1px solid #3c595344;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+#consolechat #chatlog {
+  font-size: 14px;
+  line-height: 1.35;
+  padding-top: 4px;
+}
+#consolechat #cbar {
+  flex-wrap: nowrap;
+  align-items: center;
+  border-top: 1px solid #3c595388;
+  margin-top: 3px;
+  gap: 6px;
+  padding-top: 4px;
+}
+#cbar .cchan {
+  width: auto;
+  flex-shrink: 0;
+  gap: 4px;
+}
+#cbar #chatin {
+  width: 0;
+  flex: 1;
+  height: 23px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0 4px;
+}
+#cbar .cchan button {
+  height: 23px;
+  padding: 0 5px;
+  font-size: 12px;
+}
+#consoleutilities {
+  align-self: start;
+  padding-top: 14px;
+}
+#consoleutilities .cbtns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+#consoleutilities .cb {
+  width: 100%;
+  height: 52px;
+  font-size: 20px;
+  position: relative;
+  padding: 3px 3px 17px;
+}
+.utility-label {
+  display: block;
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  right: 0;
+  font-size: 11px;
+  line-height: 12px;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+.console-vent {
+  position: absolute;
+  right: 50px;
+  top: 126px;
+  width: 290px;
+  height: 20px;
+  border: 3px solid #25343d;
+  border-radius: 5px;
+  background: repeating-linear-gradient(90deg, #101922 0 3px, #647682 4px, #31434f 6px);
+  box-shadow:
+    inset 0 2px 4px #000,
+    0 1px #83939988;
+}
+#traytrim {
+  background: linear-gradient(90deg, #111b22, #68767c 12%, #28363e 28%, #35424a 72%, #141f26);
+}
+#traytrim::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 40px;
+  height: var(--cbar);
+  background: linear-gradient(90deg, #141c22, #58676f 50%, #1a252d);
+  clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%, 0 14%);
+  pointer-events: none;
+}
+#hudgrip {
+  touch-action: none;
+}
+/* The same raised header / recessed screen hierarchy carries through actual menus. */
+.overlay > .metal:not(.loginbox),
+.overlay > .loginbox:not(#login .loginbox),
+#hud {
+  border-color: #76848b #10191f #10171d #52636d;
+  box-shadow:
+    inset 1px 1px #aab3b655,
+    inset -2px -2px #0a1116,
+    0 8px 28px #000b;
+}
+.overlay > .metal > h1,
+.overlay > .metal > h2,
+.landhead h2,
+#hud h3,
+.function-panel header,
+.osect {
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #d4dddc;
+  border-bottom: 2px solid #714332;
+  padding-bottom: 8px;
+  text-shadow: 0 1px #000;
+}
+#shipfunctions {
+  left: 64px;
+  width: min(390px, calc(100vw - var(--hud) - 82px));
+  bottom: calc(var(--cbar) + 64px);
+}
+#shipfunctions .function-panel {
+  padding: 10px;
+  background:
+    repeating-linear-gradient(0deg, #ffffff05 0 1px, #00000017 1px 2px),
+    linear-gradient(110deg, #303b42, #455159 35%, #29363e);
+  box-shadow:
+    inset 1px 1px #9aabb055,
+    inset -1px -2px #0a1116,
+    0 5px 14px #000b;
+}
+#shipfunctions .function-panel > header {
+  padding: 0 2px 7px;
+  margin: 0 0 8px;
+  min-height: 30px;
+  font-size: 15px;
+}
+#shipfunctions .function-body {
+  padding: 9px;
+  background-color: #0b171d;
+  border: 1px solid #030a0e;
+  border-radius: 3px;
+  box-shadow:
+    inset 0 2px 7px #000b,
+    0 1px #82939b44;
+  color: #c4d3d4;
+}
+#combatcontrols .function-body label {
+  display: block;
+  margin-top: 6px;
+}
+#shipfunctions .function-body p {
+  line-height: 1.4;
+}
+.landbody,
+.hailbody,
+#hailtext,
+#infobody,
+#storein .well,
+#boardin .well,
+#t-codex,
+#t-missions,
+#t-cargo,
+#t-ship,
+.gbox canvas {
+  background-color: #09161c;
+  border: 1px solid #050c10;
+  border-radius: 3px;
+  box-shadow:
+    inset 0 2px 9px #0009,
+    0 1px #82939b55;
+}
+#cpanel {
+  padding: 8px 4px;
+  background: linear-gradient(120deg, #111e25, #0b151b);
+  border: 1px solid #101a20;
+  box-shadow: inset 0 2px 6px #0009;
+}
+#cpanel h3 {
+  font-size: 17px;
+  padding: 8px 4px;
+  margin-top: 4px;
+}
+#cpanel .tab {
+  padding: 6px;
+}
+#ltabs,
+.itabs,
+#ctabs {
+  padding-bottom: 6px;
+  border-bottom: 1px solid #8b503a88;
+  gap: 5px;
+}
+#ltabs button,
+.itabs button {
+  letter-spacing: 0.5px;
+}
+.landhead {
+  padding: 4px 10px;
+  background: linear-gradient(120deg, #101c23, #17262c55);
+  border: 1px solid #10191e;
+  box-shadow: inset 0 2px 6px #0008;
+}
+.landhead h2 {
+  margin-top: 6px;
+}
+#landdesc {
+  line-height: 1.4;
+  color: #b1c2c6;
+}
+.landfoot {
+  border-top: 1px solid #82939944;
+  padding-top: 8px;
+}
+#hailmarker::before {
+  content: 'INCOMING HAIL';
+  display: block;
+  color: #d69a74;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  padding: 2px 0 6px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid #566a7288;
+}
+@media (max-width: 1150px), (max-height: 700px) {
+  :root {
+    --tray-width: 400px;
+  }
+}
+@media (max-width: 1250px) {
+  #cockpit {
+    grid-template-columns: 260px minmax(160px, 590px) 180px;
+    padding-left: 28px;
+    padding-right: 36px;
+    gap: 16px;
+  }
+  #functiondock {
+    gap: 8px;
+  }
+  .console-vent {
+    right: 36px;
+    width: 180px;
+  }
+}
+@media (max-width: 1000px) {
+  #cockpit {
+    grid-template-columns: 230px minmax(140px, 1fr) 108px;
+    padding-left: 16px;
+    padding-right: 32px;
+    gap: 10px;
+  }
+  #consoleutilities .cbtns {
+    gap: 4px;
+  }
+  #consoleutilities .cb {
+    font-size: 18px;
+  }
+  .utility-label {
+    font-size: 9px;
+    letter-spacing: 0;
+  }
+  .console-vent {
+    right: 32px;
+    width: 108px;
+  }
+  #consolechat #cbar {
+    flex-wrap: wrap;
+  }
+  #cbar #chatin {
+    flex-basis: 100%;
+    height: 23px;
+  }
+  #commsheader {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  #shipfunctions {
+    left: 16px;
+    bottom: calc(var(--cbar) + 16px);
+    width: min(390px, calc(100vw - var(--hud) - 36px));
+  }
+}
+@media (max-width: 760px) {
+  #cockpit {
+    grid-template-columns: 172px minmax(100px, 1fr) 38px;
+    padding: 15px 28px 18px 8px;
+    gap: 7px;
+  }
+  #functiondock {
+    padding: 7px 4px;
+    gap: 8px 5px;
+    grid-template-rows: repeat(2, 44px);
+  }
+  #functiondock .function-icon {
+    height: 32px;
+  }
+  #functiondock .function-label {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  #functiondock #industrialindicator .function-label {
+    font-size: 10px;
+  }
+  #consolechat {
+    height: 130px;
+    padding: 6px;
+    border-radius: 5px;
+  }
+  #consoleutilities {
+    padding-top: 3px;
+  }
+  #consoleutilities .cbtns {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  #consoleutilities .cb {
+    width: 34px;
+    height: 35px;
+    font-size: 17px;
+    padding: 0 0 9px;
+  }
+  .utility-label {
+    font-size: 7px;
+    bottom: 1px;
+  }
+  .console-vent,
+  .console-screw,
+  .console-serial {
+    display: none;
+  }
+  .console-brand {
+    left: 12px;
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  #cockpit::before {
+    inset: 10px 20px 15px 2px;
+  }
+  #cockpit::after {
+    height: 17px;
+    top: -3px;
+  }
+  #commsheader {
+    font-size: 9px;
+  }
+  #commsheader > span:last-child {
+    display: none;
+  }
+  #cbar .cchan button {
+    font-size: 10px;
+    padding: 0 3px;
+  }
+  #consolechat #chatlog {
+    font-size: 13px;
+  }
+}
+@media (max-width: 480px) {
+  #cockpit {
+    grid-template-columns: 132px minmax(90px, 1fr) 30px;
+    gap: 4px;
+    padding-left: 4px;
+  }
+  #functiondock {
+    gap: 8px 3px;
+    padding: 6px 3px;
+  }
+  #functiondock .function-label,
+  #functiondock #industrialindicator .function-label {
+    font-size: 8px;
+  }
+  #consoleutilities .cb {
+    width: 28px;
+  }
+  #commsheader {
+    font-size: 8px;
+  }
+}
+/* Reference-style recessed reading surfaces in the auxiliary menus. */
+#ctrllist,
+#optkeys {
+  padding: 10px;
+  background: #0b171d;
+  border: 1px solid #050c10;
+  border-radius: 3px;
+  box-shadow:
+    inset 0 2px 7px #000a,
+    0 1px #82939b44;
+}
+.overlay > .metal {
+  position: relative;
+}
+.overlay > .metal::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px #a3adb511;
+}
+
+.console-wing {
+  position: absolute;
+  left: 0;
+  bottom: 163px;
+  height: 200px;
+  width: 32px;
+  pointer-events: none;
+  clip-path: polygon(0 0, 45% 0, 100% 28%, 100% 100%, 0 100%);
+  background: linear-gradient(90deg, #0d1216, #68747b 18%, #27343c 36%, #3e4a52 70%, #121a20 95%);
+  border-left: 1px solid #66757d;
+  box-shadow: inset -3px 0 #111a20;
+}
+.console-wing::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 40px;
+  bottom: 30px;
+  width: 3px;
+  background: #ad4938;
+  box-shadow: 0 0 4px #c9452f88;
+}
+@media (max-width: 1000px) {
+  .console-wing {
+    display: none;
+  }
+}
+
+#hailmarker {
+  width: 300px;
+  max-width: calc(100vw - var(--hud) - 16px);
+  padding: 7px 8px;
+  background:
+    repeating-linear-gradient(0deg, #ffffff05 0 1px, #00000017 1px 2px),
+    linear-gradient(110deg, #303b42, #455159 35%, #29363e);
+  border: 1px solid #73848c;
+  box-shadow:
+    inset 1px 1px #9aabb055,
+    inset -1px -2px #0a1116,
+    0 5px 14px #000b;
+}
+#hailmarker::before {
+  border: 0;
+  padding: 0 3px 3px;
+  margin-bottom: 4px;
+}
+.hail-marker-body {
+  padding: 9px;
+  color: #c6d7db;
+  line-height: 1.3;
+  background: #0a171e;
+  border: 1px solid #030a0e;
+  box-shadow:
+    inset 0 2px 6px #000a,
+    0 1px #82939b44;
+  overflow-wrap: anywhere;
+}
+#hailmarker::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: calc(50% - 7px);
+  border: 7px solid transparent;
+  border-top: 11px solid #3b4b54;
+  pointer-events: none;
+}
+
+#functiondock .function-icon::after {
+  content: '';
+  position: absolute;
+  left: calc(50% - 4px);
+  bottom: 2px;
+  width: 8px;
+  height: 2px;
+  border: 1px solid #0e1012;
+  background: #98523b;
+  box-shadow: 0 1px #000;
+  pointer-events: none;
+}
+#functiondock .function-icon[aria-expanded='true'] {
+  background: linear-gradient(#9a5b4b, #633025 12%, #421a15 90%, #24100d);
+  color: #ffe3ce;
+}
+#functiondock .function-icon[aria-expanded='true']::after {
+  background: #edaa72;
+  box-shadow: 0 0 4px #c5753f;
+}
+/* A transient flight marker must not float over a modal's reading surface. */
+body:has(.overlay:not(.hidden)) #hailmarker {
+  visibility: hidden;
+}
+
+/* Live dock observation: opaque panels, a light scrim, no stacked blackout. */
+.overlay:not(#login) {
+  background: rgba(0, 0, 0, 0.24);
+}
+body:has(#land:not(.hidden)) .overlay:not(#login):not(#land) {
+  background: transparent;
+}
+/* The expanded Tray owns its entire column; cockpit instruments never sit beneath it. */
+body.tray-open #hud {
+  height: 100%;
+}
+body.scaled.tray-open #hud {
+  height: calc(100vh / var(--ui));
+}
+body.tray-open #cockpit {
+  right: var(--hud);
+  width: auto;
+  grid-template-columns: minmax(172px, 230px) minmax(100px, 1fr) 108px;
+  padding-left: 16px;
+  padding-right: 16px;
+  gap: 10px;
+  overflow: auto;
+}
+body.tray-open #consoleutilities .cbtns {
+  gap: 4px;
+}
+body.tray-open #consoleutilities .utility-label {
+  font-size: 9px;
+  letter-spacing: 0;
+}
+body.tray-open .console-vent {
+  right: 16px;
+  width: 108px;
+}
+body.tray-open #consolechat #cbar {
+  flex-wrap: wrap;
+}
+body.tray-open #cbar #chatin {
+  flex-basis: 100%;
+}
+@media (max-width: 1250px) {
+  body.tray-open #cockpit {
+    grid-template-columns: minmax(100px, 1fr) 48px;
+    grid-template-rows: max-content max-content;
+    align-content: start;
+    padding: 12px 8px;
+  }
+  body.tray-open #functiondock {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  body.tray-open #consoleutilities {
+    grid-column: 2;
+    grid-row: 1;
+    padding-top: 4px;
+  }
+  body.tray-open #consoleutilities .cbtns {
+    display: flex;
+    flex-direction: column;
+  }
+  body.tray-open #consoleutilities .cb {
+    width: 44px;
+    height: 40px;
+  }
+  body.tray-open #consolechat {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+  body.tray-open .console-vent,
+  body.tray-open .console-brand,
+  body.tray-open .console-serial,
+  body.tray-open .console-screw {
+    display: none;
+  }
+}
+
+/* Selected faction crest: the same inset viewscreen family as landed imagery. */
+.store-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+#storein .store-heading h2 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+#storein .store-heading h2 span {
+  display: block;
+  margin-top: 6px;
+}
+.faction-screen {
+  flex: 0 0 auto;
+  padding: 5px;
+  border: 5px solid #192730;
+  border-radius: 4px;
+  background: #071016;
+  box-shadow:
+    inset 0 0 12px #000,
+    0 1px #b5c0c255;
+}
+.faction-screen img {
+  display: block;
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+}
+@media (max-width: 760px) {
+  .store-heading {
+    gap: 8px;
+  }
+  .faction-screen img {
+    width: 64px;
+    height: 64px;
+  }
+  #storein .store-heading h2 {
+    font-size: 19px;
   }
 }

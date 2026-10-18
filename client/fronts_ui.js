@@ -212,7 +212,7 @@ export function storeMenuHtml(G, FACTIONS_) {
       return `<div class="sfac ${k === fac ? 'on' : ''}" data-act="sfac" data-f="${k}"><b style="color:${F.color}">${esc(F.short)}</b><span class="dim small">${rep} · ${tok} tokens</span></div>`;
     })
     .join('');
-  return `<h2>FACTION STORES <span class="dim small">Rift scrip: ${(y.tokens && y.tokens.any) || 0} · ${G.landed ? 'purchases are delivered to you here' : 'land anywhere to buy'}</span></h2><div class="sgrid"><div class="sfacs">${side}</div><div class="sbody well">${storeHtml(G, fac)}</div></div><button class="btn sm" data-act="sclose">CLOSE (Esc)</button>`;
+  return `<div class="store-heading"><div class="faction-screen"><img id="faction-insignia" src="assets/factions/${fac}.svg" alt="${esc(FACTIONS_[fac].name)} insignia" data-faction="${fac}" width="112" height="112"></div><h2>FACTION STORES <span class="dim small">Rift scrip: ${(y.tokens && y.tokens.any) || 0} · ${G.landed ? 'purchases are delivered to you here' : 'land anywhere to buy'}</span></h2></div><div class="sgrid"><div class="sfacs">${side}</div><div class="sbody well">${storeHtml(G, fac)}</div></div><button class="btn sm" data-act="sclose">CLOSE (Esc)</button>`;
 }
 
 /**

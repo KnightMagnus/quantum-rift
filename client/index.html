@@ -144,7 +144,9 @@
         <button class="cb" id="cbmap" title="Galaxy map (M)">MAP</button
         ><button class="cb" id="cbvol" title="Volume (N mutes)">🔉</button
         ><button class="cb" id="optbtn" title="Options (O)">&#9881;</button
-        ><button class="cb q" id="cbhelp" title="Controls (?)">?</button>
+        ><button class="cb q" id="cbhelp" title="Controls (?)">
+          ?<span class="utility-label">HELP</span>
+        </button>
       </div>
     </div>
     <aside id="traytrim" aria-label="Ship console trim">
@@ -160,8 +162,18 @@
     <div id="flightstatus" aria-label="Ship status"></div>
     <div id="cockpit" class="metal">
       <div id="functiondock" aria-label="Ship function shortcuts"></div>
-      <div id="consolechat" class="well"></div>
+      <div id="consolechat" class="well">
+        <header id="commsheader">
+          <span id="commssector">COMMS / SHIP NETWORK</span><span>● LIVE</span>
+        </header>
+      </div>
       <div id="consoleutilities" aria-label="Flight utilities"></div>
+      <div class="console-wing" aria-hidden="true"></div>
+      <div class="console-vent" aria-hidden="true"></div>
+      <span class="console-brand" aria-hidden="true">Q R / FLIGHT SYSTEMS ● MK. III</span>
+      <span class="console-serial" aria-hidden="true">MANUAL OVERRIDE • QRF—038</span>
+      <i class="console-screw left" aria-hidden="true"></i
+      ><i class="console-screw right" aria-hidden="true"></i>
     </div>
     <div id="qvolbox" class="metal hidden">
       <div class="qvt">VOLUME <span id="qvoln" class="dim small"></span></div>
