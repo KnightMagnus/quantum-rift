@@ -418,3 +418,14 @@ Login title checks cover standalone placement, 1440/640-wide and 480-high screen
 independently traced electric accents, reduced-motion static fallback and animation
 pause after login. New 64-second synthesized horn/string score uses the same tested
 music bus, gesture gate and stop/restart lifecycle; subjective timbre needs listening.
+
+### 3.1 exhaust raster budget
+
+The polish browser case retains aft-direction/normal/boost/idle checks and rejects
+per-draw blur on the layered engine masks. The source glow is already softened.
+A 60-frame, readback-forced Chromium raster comparison on the industrial hull
+measured 1251–1307ms with repeated blur versus 100–104ms without it. These are
+bounded local measurements, not a universal FPS claim or proof of a hosted
+landing failure's cause. Flight physics, autopilot and landing assertions remain
+unchanged. Browser CI now allows 30 minutes for the expanded full inventory;
+individual subprocess deadlines remain 180 seconds (network-systems: 240).

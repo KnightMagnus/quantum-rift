@@ -33,10 +33,12 @@ try {
       const H = G.A.ships[hull];
       await Promise.all([sheet(H).decode(), sheet(H, true).decode()]);
       for (const a of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) {
-        const calls = [];
+        const calls = [],
+          filters = [];
         const draw = ctx.drawImage.bind(ctx);
         ctx.drawImage = (...args) => {
           calls.push(args);
+          filters.push(ctx.filter);
           draw(...args);
         };
         const e = { id: 998, hull, a, fl: 1 };
@@ -53,6 +55,7 @@ try {
         const dx = normal[0][5] - normal.at(-1)[5],
           dy = normal[0][6] - normal.at(-1)[6];
         checks.push({
+          unfiltered: filters.every((filter) => filter === 'none'),
           normal: normal.length,
           boost: boost.length,
           idle: idle.length,
@@ -155,6 +158,7 @@ try {
     };
   });
   for (const c of proof.checks) {
+    assert.ok(c.unfiltered, 'authored glow layers must not trigger per-pass blur');
     assert.equal(c.normal, 13);
     assert.equal(c.boost, 13);
     assert.equal(c.idle, 0);

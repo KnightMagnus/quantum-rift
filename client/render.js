@@ -2747,7 +2747,9 @@ export function drawShip(G, ctx, e, x, y, z, now) {
         flicker = reduced ? 1 : 0.94 + 0.06 * Math.sin(now / 47 + e.id * 2.3),
         length = w * (boost ? 0.32 : 0.14) * flicker;
       ctx.save();
-      ctx.filter = 'blur(' + Math.max(0.7, w * 0.008) + 'px)';
+      // The authored glow is already soft. Per-pass canvas blur forces costly
+      // full-sprite rasterization (12 times per engine per frame) on software GPUs.
+      // Layer the existing mask directly so exhaust cannot stall flight input.
       for (let i = 12; i >= 1; i--) {
         const t = i / 12,
           aft = length * t;
