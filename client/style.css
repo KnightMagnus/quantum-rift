@@ -892,21 +892,14 @@ body {
     url(assets/cursors/arrow.png) 2 2,
     default;
 }
-button,
-.btn,
-.card,
-.chip,
-.list .it,
-#ctabs button,
-#ltabs button,
-a,
-#minimap,
-#radar {
+:where(button, .btn, .card, .chip, .list .it, #ctabs button, #ltabs button, a, #minimap, #radar) {
   cursor:
     url(assets/cursors/pointer.png) 2 2,
     pointer !important;
 }
-input {
+input,
+textarea,
+[contenteditable='true'] {
   cursor: text;
 }
 #hudgrip {
@@ -931,7 +924,7 @@ input {
 }
 #view.cur-neutral {
   cursor:
-    url(assets/cursors/neutral.png) 24 24,
+    url(assets/cursors/neutral.png) 16 16,
     crosshair;
 }
 #view.cur-aim {
@@ -944,8 +937,15 @@ input {
     url(assets/cursors/land.png) 16 18,
     pointer;
 }
+button:disabled,
+.btn:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed !important;
+}
 body.busy,
-body.busy * {
+body.busy *,
+body.busy #hudgrip,
+body.busy #gcanvas {
   cursor:
     url(assets/cursors/busy.png) 16 16,
     progress !important;

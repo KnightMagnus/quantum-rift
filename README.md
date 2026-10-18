@@ -247,3 +247,9 @@ One small CPU handles dozens of players; only systems with players in them run a
 For development checks: `npm ci`, `npm run typecheck`, `npm run test:types`, `npm run test:features`, `npm run format:check` and `npm run test:regression`. Browser checks use the pinned Playwright Chromium (`npx playwright install --with-deps chromium`). See `docs/TEST-COVERAGE.md` for covered behavior and limits; these fixtures do not establish multi-hour human balance.
 
 **[DEVELOPMENT.md](DEVELOPMENT.md)** is the guide for anyone, or any AI assistant, picking up the code: the architecture, how to add a feature, how to test it, and the full list of test suites. **[CHANGELOG.md](CHANGELOG.md)** has every release from 0.3 to today.
+
+### Cockpit cursors (3.1)
+
+High-contrast steel cursors use cyan friendly brackets with a check, amber neutral brackets, a red hostile diamond, and a downward docking arrow. Shape as well as color distinguishes target states. All use a consistent 32px footprint; disabled controls show the native blocked cursor. Text fields retain the native text caret.
+
+![Cursor artwork on dark and light backgrounds (asset preview, not gameplay)](client/assets/cursors/_preview.png)

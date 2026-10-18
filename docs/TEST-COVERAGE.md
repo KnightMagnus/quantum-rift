@@ -429,3 +429,12 @@ bounded local measurements, not a universal FPS claim or proof of a hosted
 landing failure's cause. Flight physics, autopilot and landing assertions remain
 unchanged. Browser CI now allows 30 minutes for the expanded full inventory;
 individual subprocess deadlines remain 180 seconds (network-systems: 240).
+
+### 3.1 cockpit-cursors
+
+System: `cockpit-cursors`. The canonical cursors-browser.mjs test decodes all ten
+transparent 32px assets and checks browser computed cursor states and hotspots,
+disabled/ARIA-disabled controls, text entry, resize, map and busy precedence.
+Class selection is a CSS fixture, not a flight hit-testing claim. Native OS cursor
+painting is not captured by headless screenshots. Artwork is reviewed on dark
+and light backgrounds. Rebuild with python3 tools/cursors.py (Pillow build only).

@@ -105,7 +105,8 @@
     "ship-turning-assets-browser.mjs",
     "ship-functions-browser.mjs",
     "cockpit-browser.mjs",
-    "polish-browser.mjs"
+    "polish-browser.mjs",
+    "cursors-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -617,6 +618,13 @@
       "tests": ["polish-browser.mjs"],
       "asserts": "Three hulls/four headings: aft engine masks, longer boost, idle. Neutral texture concealment, music restart/cancel, ambience teardown, mute.",
       "services": []
+    },
+    {
+      "id": "cockpit-cursors",
+      "owners": ["client/style.css", "tools/cursors.py"],
+      "services": [],
+      "tests": ["cursors-browser.mjs"],
+      "asserts": "Decoded transparent cursor artwork, consistent dimensions and hotspots, CSS state mapping, disabled and ARIA denial, input, resize, map and busy precedence."
     }
   ],
   "routes": {
