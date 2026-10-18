@@ -3348,7 +3348,7 @@ body.solo .mp {
   container-type: inline-size;
 }
 @container (max-width: 620px) {
-  .landbox {
+  #land .landbox {
     grid-template-columns: minmax(0, 1fr);
   }
   .landpic {

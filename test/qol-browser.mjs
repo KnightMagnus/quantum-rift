@@ -119,6 +119,7 @@ try {
     await page.setViewportSize({ width, height });
     await page.evaluate((scale) => {
       G.opts.scale = scale;
+      document.body.classList.toggle('scaled', scale !== 1);
       document.documentElement.style.setProperty('--ui', scale);
     }, scale);
     await page.click('#ctabs [data-tab="missions"]');
@@ -134,6 +135,14 @@ try {
       0,
       'A newly pinned objective starts at its heading',
     );
+    if (width === 760) {
+      const head = await page.locator('.landhead').boundingBox(),
+        frame = await page.locator('.landbox').boundingBox();
+      assert.ok(
+        head.width > frame.width * 0.75,
+        'Compact landing header uses the available width, not a clipped implicit column',
+      );
+    }
     await page.screenshot({ path: path.join(f.out, `qol-${width}-${scale}.png`) });
     await page.locator('#pinned-objective [data-pin]').click();
   }
