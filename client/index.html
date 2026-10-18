@@ -166,7 +166,17 @@
       <div id="functiondock" aria-label="Ship function shortcuts"></div>
       <div id="consolechat" class="well">
         <header id="commsheader">
-          <span id="commssector">COMMS / SHIP NETWORK</span><span>● LIVE</span>
+          <span id="commssector">COMMS / SHIP NETWORK</span><span class="comms-live">● LIVE</span>
+          <button
+            id="chatexpand"
+            type="button"
+            aria-label="Expand chat history"
+            aria-controls="chatprojection"
+            aria-expanded="false"
+            title="Project chat history above the console"
+          >
+            <span aria-hidden="true">⌃</span><span class="chat-toggle-label">EXPAND</span>
+          </button>
         </header>
       </div>
       <div id="consoleutilities" aria-label="Flight utilities">
@@ -177,6 +187,12 @@
       <i class="console-screw left" aria-hidden="true"></i
       ><i class="console-screw right" aria-hidden="true"></i>
     </div>
+    <section id="chatprojection" class="hidden" aria-label="Expanded chat history">
+      <header>
+        <span><span class="projection-light" aria-hidden="true">●</span> COMMS / HOLO-LINK</span>
+      </header>
+      <div class="projection-footer" aria-hidden="true">SHIP NETWORK / HISTORY PROJECTION</div>
+    </section>
     <div id="qvolbox" class="metal hidden">
       <div class="qvt">VOLUME <span id="qvoln" class="dim small"></span></div>
       <input type="range" id="qvol" min="0" max="100" step="1" />

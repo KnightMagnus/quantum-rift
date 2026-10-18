@@ -42,6 +42,7 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 
 - Form an **Armada** to travel together, share bounties and take on co-op contracts and station defenses.
 - Keep in touch through friends lists, private messages, local chat and player hails, with privacy and blocking controls.
+- Expand chat into a holographic history screen above the cockpit without leaving the flight view.
 - Trade credits, cargo and crafting supplies between captains.
 - Choose your PvP: consensual duels or rated team matches in the **Crucible** arena, rather than open-world player hunting.
 
@@ -71,6 +72,10 @@ Open **http://localhost:8080** if the browser does not open automatically. Keep 
 **Flight cockpit**
 
 ![Flight in Concordia with the sidebar closed](docs/screenshots/cockpit-31.png)
+
+**Expanded chat projection**
+
+![Chat history projected upward from the flight console](docs/screenshots/chat-projection.png)
 
 **System radar and sidebar**
 
