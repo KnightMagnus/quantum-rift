@@ -3319,3 +3319,64 @@ body.solo .mp {
     top: 8px;
   }
 }
+
+/* One next step in the existing Tray, never a floating flight overlay. */
+.pinned-objective {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 58%;
+  overflow: auto;
+  border: 1px solid #8c7549;
+  border-left: 3px solid #cfad68;
+  background: #101b1e;
+  padding: 7px;
+  overflow-wrap: anywhere;
+}
+.pinned-objective[hidden] {
+  display: none;
+}
+.mfoot {
+  flex-wrap: wrap;
+}
+.it[role='button']:focus-visible {
+  outline: 2px solid #e8bd76;
+  outline-offset: -2px;
+}
+
+/* React to the actual remaining viewscreen width, not just the browser window. */
+#land {
+  container-type: inline-size;
+}
+@container (max-width: 620px) {
+  #land .landbox {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .landpic {
+    display: none;
+  }
+  .landhead {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .landhead p {
+    display: none;
+  }
+  #ltabs {
+    grid-column: 1;
+    grid-row: 2;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+  }
+  #ltabs button {
+    flex: 0 0 auto;
+  }
+  .landbody {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .landfoot {
+    grid-column: 1;
+    grid-row: 4;
+  }
+}

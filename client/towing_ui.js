@@ -138,6 +138,23 @@ export function initTowingUI({ G, send, bound, label, blocked, towAudio = () => 
     toggle.disabled = !o || blocked() || G.paused;
     deliver.disabled = !w.attached || !ports.length || blocked() || G.paused;
     offer.disabled = !w.attached || blocked() || G.paused;
+    toggle.title = G.paused
+      ? 'Resume Solo to use towing.'
+      : !o
+        ? 'Scan a deposit to find a tow load.'
+        : blocked()
+          ? 'Close the open menu or text field first.'
+          : '';
+    deliver.title = !w.attached
+      ? 'Attach a load first.'
+      : !ports.length
+        ? 'Scan the load to find a delivery port.'
+        : G.paused
+          ? 'Resume Solo to deliver.'
+          : '';
+    offer.title = !w.attached
+      ? 'Attach a load before offering it.'
+      : 'The other captain must accept; nothing transfers automatically.';
     accept.hidden = !w.offers.length;
     if (w.offers.length)
       accept.textContent = `ACCEPT ${w.offers[0].from}'S TRANSFER · ${label(bound('towAccept'))} (explicit consent)`;

@@ -1,3 +1,4 @@
+import { initSidebarSize } from './sidebar-size.js';
 import { initShipFunctions } from './ship-functions.js';
 import { initChatProjection } from './chat-projection.js';
 import { coronaRouteBlocked } from '/shared/industrial-rules.js';
@@ -476,7 +477,7 @@ async function login() {
     // Capture only the clean initialized state; account data arrives over the socket later.
     sessionDefaults = Object.fromEntries(
       Object.entries(G)
-        .filter(([k, v]) => !['A', 'opts', 'pal'].includes(k) && !(v instanceof Element))
+        .filter(([k, v]) => !['A', 'opts', 'pal', 'views'].includes(k) && !(v instanceof Element))
         .map(([k, v]) => [k, typeof v === 'function' ? v : structuredClone(v)]),
     );
     $('lstat').textContent = was;
@@ -572,13 +573,14 @@ function onMessage(m) {
     case 'you': {
       const first = !G.you;
       G.you = m.d;
+      const restoredViews = G.views.load();
       G.sys = m.d.sys;
       coopYou(); // 2.6
       for (const [w, n] of Object.entries(m.d.ship.ammo || {})) if (!G.view) G.ammo[w] = n;
       if (G.landed) renderLanded();
       refreshCompanion();
       refreshStores();
-      if (first) ctab('missions', false);
+      if (first || restoredViews) ctab(G.ctab || 'missions', false);
       renderTut();
       break;
     }
@@ -992,8 +994,14 @@ window.addEventListener('keydown', (e) => {
     $('storyok').click();
     return;
   } // 2.5.2: Enter or Space continues a story pop-up
-  // Focused cockpit/menu buttons retain native keyboard activation, not flight/chat shortcuts.
-  if (['Enter', ' '].includes(e.key) && e.target.closest?.('button, summary')) return;
+  // Native activation/focus keys belong to the focused control. Steering and
+  // remapped actions still work after clicking a HUD button; separators consume
+  // only their own sizing keys locally.
+  if (
+    ['Tab', 'Enter', ' '].includes(e.key) &&
+    e.target.closest?.('button, summary, a, [role="button"], [role="separator"]')
+  )
+    return;
   if (e.key === 'Enter' && G.you) {
     const c = $('chatin');
     if (document.activeElement === c) {
@@ -1195,7 +1203,9 @@ window.addEventListener(
   true,
 );
 // ship and captain info (I)
+let infoReturnFocus;
 function openInfo() {
+  infoReturnFocus = document.activeElement;
   audio.ui('open', 0.6);
   $('infobox').classList.remove('hidden');
   send({ t: 'rivals' });
@@ -1204,9 +1214,13 @@ function openInfo() {
 function closeInfo() {
   audio.ui('close', 0.6);
   $('infobox').classList.add('hidden');
+  if (infoReturnFocus?.isConnected) infoReturnFocus.focus({ preventScroll: true });
 }
 function renderInfo() {
-  $('infobody').innerHTML = infoHtml(G, G.itab || 'ship');
+  G.views.replace($('infobody'), infoHtml(G, G.itab || 'ship'), 'info:' + (G.itab || 'ship'));
+  $('itabs')
+    .querySelectorAll('button')
+    .forEach((b) => b.classList.toggle('on', b.dataset.it === (G.itab || 'ship')));
 }
 $('itabs').addEventListener('click', (e) => {
   const b = e.target.closest('[data-it]');
@@ -1699,7 +1713,7 @@ $('radar').addEventListener('mousedown', (e) => {
     my = (e.clientY - rect.top) * r;
   const W = rc.width,
     H = rc.height,
-    k = (H / 2 / (G.radarR || 4200)) * 1.15;
+    k = (Math.min(W, H) / 2 / (G.radarR || 4200)) * 1.15;
   let best = null,
     bd = 10 * r;
   for (const en of G.ents.values()) {
@@ -2053,6 +2067,7 @@ function resize() {
 window.addEventListener('resize', resize);
 // Sidebar reflow (including UI scale and persisted widths) also changes the radar.
 new ResizeObserver(resize).observe($('radar'));
+initSidebarSize(resize);
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.
@@ -2442,7 +2457,8 @@ async function logOut() {
       socket.close(1000, 'Log out');
     });
   }
-  const keep = { A: G.A, opts: G.opts, pal: G.pal, mapLegend: G.mapLegend };
+  G.views.reset();
+  const keep = { A: G.A, opts: G.opts, pal: G.pal, mapLegend: G.mapLegend, views: G.views };
   for (const key of Object.keys(G)) delete G[key];
   for (const [key, value] of Object.entries(sessionDefaults))
     G[key] = typeof value === 'function' ? value : structuredClone(value);

@@ -258,9 +258,16 @@ export function missionsHtml(G) {
       <div class="t">${esc(t.title)}</div>
       <div class="mstat">${esc(t.status)}</div>
       ${t.kind === 'story' && T.some((x) => x.kind === 'career') ? `<details class="small dim"><summary>The story can wait until you know the ropes. Read more</summary>${esc(t.text)}</details>` : `<div class="dim small">${esc(t.text)}</div>`}
-      <div class="mfoot">${t.reward ? `<span class="cr small">${Math.round(t.reward).toLocaleString()} cr</span>` : '<span></span>'}<span class="dim small">${jumps}</span>${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}${t.pendingQuest ? `<button class="btn sm mab" data-questdrop="${esc(t.pendingQuest)}" title="Abandon this story">✕</button>` : t.kind === 'job' || t.quest || (t.kind === 'arc' && t.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${esc(t.key)}" title="Drop this job">✕</button>` : ''}</div>
+      <div class="mfoot"><button class="btn sm" data-pin="${esc(t.key)}" aria-pressed="${G.pinnedObjective === t.key}">${G.pinnedObjective === t.key ? 'UNPIN' : 'PIN'}</button>${t.reward ? `<span class="cr small">${Math.round(t.reward).toLocaleString()} cr</span>` : '<span></span>'}<span class="dim small">${jumps}</span>${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}${t.pendingQuest ? `<button class="btn sm mab" data-questdrop="${esc(t.pendingQuest)}" title="Abandon this story">✕</button>` : t.kind === 'job' || t.quest || (t.kind === 'arc' && t.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${esc(t.key)}" title="Drop this job">✕</button>` : ''}</div>
     </div>`;
     }).join('') +
     journalHtml(G)
   );
+}
+
+// One deliberate next step, inside the existing Tray; all other tracking stays visible.
+export function pinnedObjectiveHtml(G) {
+  const t = missionTargets(G).find((t) => t.key === G.pinnedObjective);
+  if (!t) return '';
+  return `<b class="small">PINNED · ${esc(t.title)}</b><div class="small">${esc(t.status)}</div><div class="mfoot">${t.sys && t.sys !== G.sys ? `<button class="btn sm" data-plot="${esc(t.sys)}">PLOT COURSE</button>` : ''}<button class="btn sm" data-pin="${esc(t.key)}" aria-label="Unpin objective">UNPIN</button></div>`;
 }

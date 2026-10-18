@@ -2892,21 +2892,22 @@ export function drawShip(G, ctx, e, x, y, z, now) {
 export function radar(G, ctx) {
   const W = ctx.canvas.width,
     H = ctx.canvas.height,
-    me = G.view;
+    me = G.view,
+    diameter = Math.min(W, H);
   ctx.fillStyle = '#020408';
   ctx.fillRect(0, 0, W, H);
   ctx.strokeStyle = '#0d2a1a';
   ctx.lineWidth = 1;
   for (let k = 1; k < 4; k++) {
     ctx.beginPath();
-    ctx.arc(W / 2, H / 2, (k * H) / 6, 0, 6.28);
+    ctx.arc(W / 2, H / 2, (k * diameter) / 6, 0, 6.28);
     ctx.stroke();
   }
   if (!me) return;
   const S = SYS[G.sys],
     neb = G.world && G.world.anomalies && G.world.anomalies[G.sys] === 'nebula',
     R = 4200 * (neb ? 0.5 : 1),
-    k = (H / 2 / R) * 1.15;
+    k = (diameter / 2 / R) * 1.15;
   G.radarR = R;
   const px = (x) => W / 2 + (x - me.rx) * k,
     py = (y) => H / 2 + (y - me.ry) * k;

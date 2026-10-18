@@ -109,7 +109,9 @@
     "cockpit-browser.mjs",
     "polish-browser.mjs",
     "cursors-browser.mjs",
-    "landed-live-browser.mjs"
+    "landed-live-browser.mjs",
+    "qol-browser.mjs",
+    "sidebar-sizing-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -669,6 +671,28 @@
         "refinery-persistence.js"
       ],
       "asserts": "Automatic single-action refinery cost/output with retained authoritative settlement, stale/expired/duplicate denial, trip recap attribution and persistence, exact current-port order-size/grade estimates, reserved cargo warnings, malformed/full/poor requests and measurement report completeness without fabricated baseline data."
+    },
+    {
+      "id": "cockpit-qol",
+      "owners": [
+        "client/cockpit-state.js",
+        "client/ui.js",
+        "client/missions.js",
+        "client/main.js",
+        "client/refinery-controls.js",
+        "client/towing_ui.js",
+        "client/sidebar-size.js"
+      ],
+      "services": [],
+      "tests": [
+        "qol-browser.mjs",
+        "refinery-ui-browser.mjs",
+        "logout-browser.mjs",
+        "sidebar-browser.mjs",
+        "input-audio-browser.mjs",
+        "sidebar-sizing-browser.mjs"
+      ],
+      "asserts": "Per-captain remembered views and deliberate single objective pin survive reload without leaking between accounts; detail/back restores list focus/scroll, unavailable cargo links to Trade, native keyboard controls and narrow/scaled Tray stay usable without taking flight focus. Independent vertical map/menu pointer/touch/keyboard sizing, reload persistence, zoom-safe limits and automatic reset preserve backing geometry and reachability."
     }
   ],
   "routes": {

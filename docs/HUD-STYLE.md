@@ -36,12 +36,14 @@ not establish unshown menu contents or authorize gameplay changes.
 
 ## Tray capacity
 
-- System radar is square and fills its inset frame; backing pixels follow its
-  rendered dimensions after pointer resize, UI scaling and viewport changes.
+- System radar defaults to square and fills its inset frame. Players can resize
+  its height independently of the lower tabbed menu; backing pixels and target
+  math follow both dimensions after resizing, UI scaling and viewport changes.
 - COMMS is capped at 590px. Desktop expanded utilities retain a 156px track
   (three 48px controls plus gaps); compact views use full-width stacked controls.
-- The continuous red screen rail and left fin are viewport chrome, not children
-  of the scrolling cockpit. Opening/resizing the Tray must not clip or recolor them.
+- The continuous red screen rail is viewport chrome, not a child of the scrolling
+  cockpit. Opening/resizing the Tray must not clip or recolor it. The decorative
+  left fin was removed because it overlapped the main tray; do not restore it.
 
 - Fresh default: **520 CSS screen pixels**, growing with UI scale to at most
   760px (728px at 140%). The viewport cap still applies on compact screens.

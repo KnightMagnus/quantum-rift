@@ -2,12 +2,17 @@
 
 Every release, newest first. The main story is left out on purpose.
 
-### 3.2.1 — In development: clearer trade and refining
+### 3.2.1 — In development: economy and cockpit QoL
 
 - Show refining cost, output and waiting time automatically, with one Start Refining action instead of manual quote management. Keep authoritative price, ownership, cargo and duplicate-action safeguards.
 - Preview trade amounts using current local prices, cargo grades, perks and order size. Warn when using higher-grade cargo or supplies still needed for a delivery.
 - Add a compact recent-trip recap for goods and refining, clearly separated from full profit and other expenses/rewards.
 - Provide reproducible economy-measurement tools and protocols without claiming unmeasured balance improvements. Reward, price, fee, yield and recovery formulas are unchanged.
+- Remove the decorative left viewscreen fin that overlapped the main HUD tray; keep the continuous horizontal trim and tray controls.
+- Add independent vertical drag/keyboard sizing for the sidebar minimap and tabbed menu, with remembered heights and automatic-layout reset.
+- Remember per-captain console views, filters and browsing positions; return to the originating Codex item after details. Pin one next objective inside the existing Tray without hiding other mission tracking.
+- Prevent delayed autopilot braking input from reversing a nearly stopped ship and causing an extra turn; manual flight remains unchanged.
+- Explain unavailable cargo/towing actions and link back to existing screens, retaining essential confirmations and native keyboard interaction.
 - Economy is the first merge toward the cumulative economy, QoL and mission update; it has no standalone release. Radio and user-supplied music remain separate future work.
 
 ### 3.2.0 — Readable cockpit and expanded chat
