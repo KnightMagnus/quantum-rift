@@ -421,7 +421,7 @@ function armadaHtml() {
     return (
       h +
       `<div class="sect">FORM AN ARMADA</div><div class="rrow"><input id="aname" placeholder="Armada name (optional)" maxlength="24"><button class="btn sm" data-cact="aform">FORM</button></div>
-      <div class="rrow"><input id="ainv" placeholder="...or just invite a captain by name" maxlength="20"><button class="btn sm" data-cact="ainv2">INVITE</button></div>
+      <div class="rrow"><input id="ainv" placeholder="Captain online (creates Armada)" maxlength="20"><button class="btn sm" data-cact="ainv2">INVITE</button></div>
       <div class="dim small">An Armada is a short co-op group of up to ${ARMADA.max} captains, each with their own wingmates. Members and their wingmates can't hurt each other and show in green. You get a private chat (/a), +5% shield recharge and bounties while another member shares your system, a share of each other's bounties and kill credit, Armada contracts, co-op Holdouts, and a rescue window if your ship goes down. It disbands when everyone has been offline for ${ARMADA.idleMin} minutes.</div>`
     );
   }
@@ -440,7 +440,9 @@ function armadaHtml() {
   if (A.members.length + (A.pending || []).length < A.max)
     h += `<div class="rrow"><input id="ainv" placeholder="Invite any captain online, by name" maxlength="20"><button class="btn sm" data-cact="ainv2">INVITE</button></div>`;
   h += `<div class="rrow"><button class="btn sm" data-cact="rally" title="Plot a course to you for every member">📣 CALL THE ARMADA TO ME</button></div>`;
-  h += `<label class="small"><input type="checkbox" id="afollow" data-cact="afollow" ${A.follow ? 'checked' : ''}> Follow the Leader (V formation + jumps)</label><div class="dim small">Manual flight or weapons input turns Follow off. Combat Assist takes priority. Re-enable after reconnecting or a leader change.</div>`;
+  h += lead
+    ? '<div class="dim small">You lead this Armada. Other captains enable Follow the Leader here; you fly normally. Invite, JOIN, then Follow — no friend request needed.</div>'
+    : `<label class="small"><input type="checkbox" id="afollow" data-cact="afollow" ${A.follow ? 'checked' : ''}> Follow the Leader (V formation + jumps)</label><div class="dim small">JOIN does not enable Follow: opt in here. Both ships must be in flight in the same system. Your ship needs its own jump fuel and route access. Manual flight or weapons input turns Follow off. Combat Assist takes priority. Re-enable after reconnecting or a leader change.</div>`;
   if (lead && G.view) {
     const t = G.target && G.ents.get(G.target),
       tn = t && t.fl & 16 ? String(t.name || '') : '';

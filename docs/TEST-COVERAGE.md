@@ -371,14 +371,24 @@ The registered v201.js case reproduces perpendicular cruise with three hulls and
 `armada-follow-coasting.js` exercises unchanged production physics for seven stock hulls,
 including Constitution and slow-turn capital ships: sixty-second matching without
 circling/stopping, achievable world-velocity limits, and normal/slow ship
-reacquisition after a moving leader stops, restarts and turns sharply.
+reacquisition after a moving leader stops, restarts and turns sharply. Mixed stock
+hulls additionally exercise faster-follower capture and physically unreachable
+faster-leader separation without catch-up boosts. Formation cases explicitly
+check root ownership, disabled/jumping suspension, missing leader sessions, and
+ordinary fuel/disabled/invalid-route jump denial without fuel consumption.
 `armada-follow-two-clients.mjs` uses two isolated Chromium contexts and distinct
-disposable multiplayer accounts, real Armada UI opt-in and real-key takeover.
+disposable multiplayer accounts, direct INVITE auto-formation and JOIN through the
+actual UI (no friendship/FORM prerequisite), no implicit flight consent on JOIN or
+departure, explicit Follow off/on and real-key takeover. Leader-only guidance
+replaces the inapplicable self-follow control; followers retain explicit opt-in.
 The disclosed fixture starts an attainable matched cruise with small lateral
 velocity error; it accelerates production ticks without changing flight physics.
 It asserts sustained authoritative movement/heading, sharp-turn slot recovery and
 manual override. Existing formation/network tests retain fleet envelope, consent,
-combat/landing suspension and leader-jump coverage. Browser evidence is Chromium
+combat/landing suspension and leader-jump coverage. The five-client network case
+also closes the actual leader WebSocket, asserts follower suspension, reconnects
+the same elected leader, departs again after logout safe-docking and checks
+formation resumes without changing the root. Browser evidence is Chromium
 only; not exhaustive hull/loadout or real WAN latency testing.
 
 ### Ship-function cockpit stack
@@ -459,3 +469,22 @@ reacquisition and unchanged formation bounds. Its accelerated clock needs at lea
 13.5 wall-clock seconds; the former 15-second wait expired on hosted CI before the
 simulation reached the observation point. This one wait allows 30 seconds, within
 the unchanged 180-second enclosing process deadline. No flight physics changed.
+
+### HUD fidelity correction
+
+`cockpit-browser.mjs` additionally exercises restored 480px desktop / 400px compact defaults, real pointer resizing to 760px at 0.8/1/1.4 UI scales, restored local-storage settings in a fresh browser context, viewport-shrink bounding without destroying the saved preference, COMMS/utility presentation, literal incoming-hail edge containment and modal suppression. The CSS upper bound remains 60vw and minimum 280px; no widened maximum is claimed.
+
+- `landed-live-scene` — Live landed observation: test/landed-live-browser.mjs (browser CI) uses isolated
+  seeded servers in online and Solo modes. Verifies authoritative and interpolated
+  real traffic displacement across Overview/Trade/Outfitter, nonblack canvas,
+  no controllable landed entity or leaked flight input, and explicit Solo pause /
+  resume snapshot semantics. Paired actual frames and motion JSON are retained.
+- Expanded cockpit column: test/cockpit-browser.mjs verifies full-height Tray,
+  utility reachability/non-overlap and adjacency at 1600/1440/1024/640 widths,
+  default/max Tray widths and UI scales 0.8/1/1.4, alongside persistence/real drag.
+
+The landed-live-scene browser contract also switches all 11 selectable faction
+stores, decodes each original insignia image, checks its canonical menu color,
+top-left header separation and narrow/high-scale reachability, while verifying
+unearned purchases remain disabled. All 16 roster entries have authored assets;
+non-store regions/hidden powers do not gain store access.

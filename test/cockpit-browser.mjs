@@ -15,6 +15,13 @@ try {
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.addInitScript(() => {
+    const NativeSocket = window.WebSocket;
+    window.WebSocket = class extends NativeSocket {
+      constructor(...args) {
+        super(...args);
+        window.cockpitSocket = this;
+      }
+    };
     window.cockpitText = [];
     const draw = CanvasRenderingContext2D.prototype.fillText;
     CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
@@ -178,6 +185,166 @@ try {
     'Dock Hail icon opens the real inbox even when empty',
   );
   await page.locator('#hailopts').getByText('CLOSE', { exact: true }).click();
+  // Actual pointer drag, persisted preference, scale-invariant maximum and temporary viewport shrink.
+  await page.click('#traytoggle');
+  assert.equal(Math.round((await page.locator('#hud').boundingBox()).width), 480);
+  assert.match(await page.locator('#commsheader').innerText(), /COMMS \/ MERIDIAN SECTOR/);
+  assert.equal(await page.locator('#consoleutilities .utility-label').count(), 3);
+  for (const scale of [0.8, 1, 1.4]) {
+    await page.evaluate((s) => {
+      document.documentElement.style.setProperty('--ui', s);
+      document.body.classList.toggle('scaled', s !== 1);
+    }, scale);
+    const grip = await page.locator('#hudgrip').boundingBox();
+    await page.mouse.move(grip.x + 2, grip.y + 40);
+    await page.mouse.down();
+    await page.mouse.move(200, grip.y + 40, { steps: 6 });
+    await page.mouse.up();
+    assert.ok(
+      Math.abs((await page.locator('#hud').boundingBox()).width - 760) < 1,
+      'Live drag reaches the original maximum at every UI scale',
+    );
+  }
+  // The expanded Tray owns the lower-right corner at every supported scale.
+  for (const width of [1600, 1440, 1024, 640]) {
+    await page.setViewportSize({ width, height: 1000 });
+    for (const scale of [0.8, 1, 1.4])
+      for (const tray of [width > 1150 ? 480 : 400, Math.min(760, width * 0.6)]) {
+        await page.evaluate(
+          ({ scale, tray }) => {
+            document.documentElement.style.setProperty('--ui', scale);
+            document.documentElement.style.setProperty('--tray-width', tray + 'px');
+            document.body.classList.toggle('scaled', scale !== 1);
+          },
+          { scale, tray },
+        );
+        const hud = await page.locator('#hud').boundingBox();
+        const cockpit = await page.locator('#cockpit').boundingBox();
+        assert.ok(Math.abs(hud.y + hud.height - 1000) < 1, 'Tray extends to the bottom');
+        assert.ok(cockpit.x + cockpit.width <= hud.x + 1, 'Cockpit excludes actual Tray width');
+        for (const id of ['cbvol', 'optbtn', 'cbhelp']) {
+          const target = page.locator('#' + id);
+          assert.equal(await target.count(), 1);
+          await target.scrollIntoViewIfNeeded();
+          const b = await target.boundingBox();
+          assert.ok(
+            b.x >= 0 && b.x + b.width <= hud.x + 1 && b.y >= cockpit.y && b.y + b.height <= 1001,
+            id + ' reachable outside Tray',
+          );
+        }
+        const chat = await page.locator('#consolechat').boundingBox(),
+          utility = await page.locator('#consoleutilities').boundingBox();
+        assert.ok(
+          utility.x >= chat.x + chat.width - 1 && utility.x - chat.x - chat.width <= 20,
+          'Utilities remain adjacent to chat',
+        );
+        const dock = await page.locator('#functiondock').boundingBox();
+        if (width <= 1250)
+          assert.ok(
+            dock.y >= Math.max(chat.y + chat.height, utility.y + utility.height) - 1,
+            'Stacked function housing cannot overlap COMMS or utilities: ' +
+              JSON.stringify({ width, scale, tray, dock, chat, utility }),
+          );
+        await page.locator('#functiondock').scrollIntoViewIfNeeded();
+        if (scale === 1 && tray === 480)
+          await page.screenshot({ path: path.join(f.out, 'expanded-column-' + width + '.png') });
+      }
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.evaluate(() => document.documentElement.style.setProperty('--tray-width', '760px'));
+  // Reload in a fresh context seeded only with the captured saved settings.
+  const storage = await page.context().storageState();
+  const restored = await browser.newContext({
+    storageState: storage,
+    viewport: { width: 1440, height: 1000 },
+  });
+  const restoredPage = await restored.newPage();
+  await restoredPage.goto(f.origin);
+  assert.equal(
+    await restoredPage.evaluate(() =>
+      document.documentElement.style.getPropertyValue('--tray-width'),
+    ),
+    '760px',
+  );
+  await restored.close();
+  await page.setViewportSize({ width: 800, height: 700 });
+  assert.ok(
+    Math.abs((await page.locator('#hud').boundingBox()).width - 480) < 1,
+    'Viewport shrink bounds existing preference to 60vw',
+  );
+  assert.equal(
+    await page.evaluate(() => Number(localStorage.getItem('rift.hud'))),
+    760,
+    'Temporary shrink preserves preferred width',
+  );
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  assert.ok(Math.abs((await page.locator('#hud').boundingBox()).width - 760) < 1);
+  await page.evaluate(() => {
+    document.documentElement.style.removeProperty('--tray-width');
+    document.documentElement.style.setProperty('--ui', 1);
+    document.body.classList.remove('scaled');
+  });
+  await page.setViewportSize({ width: 1024, height: 768 });
+  assert.equal(
+    Math.round((await page.locator('#hud').boundingBox()).width),
+    400,
+    'Compact default restores 400px capacity',
+  );
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.click('#traytoggle');
+  // The normal inbound marker renderer remains literal and fits the real flight viewport.
+  for (const width of [1440, 640]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.evaluate(() =>
+      cockpitSocket.dispatchEvent(
+        new MessageEvent('message', {
+          data: JSON.stringify({
+            t: 'hailmark',
+            x: G.view.rx + 1e6,
+            y: G.view.ry + 1e6,
+            label: '<b>Wing Two</b> ready',
+            until: Date.now() + 5000,
+          }),
+        }),
+      ),
+    );
+    await page.waitForSelector('#hailmarker:not(.hidden)');
+    // Marker layout runs in its animation frame; a previous visible marker is
+    // not evidence that the resized viewport has been processed yet.
+    await page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    );
+    const marker = await page.locator('#hailmarker').boundingBox();
+    const view = await page.locator('#view').boundingBox();
+    assert.ok(
+      marker.x >= 0 &&
+        marker.y >= 0 &&
+        marker.x + marker.width <= view.width &&
+        marker.y + marker.height <= view.height,
+      'Framed incoming hail stays within the visible flight area even at offscreen coordinates: ' +
+        JSON.stringify({ marker, view, width }),
+    );
+    assert.equal(await page.locator('#hailmarker b').count(), 0, 'Marker labels stay plain text');
+    if (width === 1440) {
+      await page.click('#cbmap');
+      assert.equal(
+        await page.locator('#hailmarker').isVisible(),
+        false,
+        'Flight marker cannot cover the galaxy-map modal',
+      );
+      await page.click('#cbmap');
+      assert.equal(
+        await page.locator('#hailmarker').isVisible(),
+        true,
+        'Unexpired marker returns when the modal closes',
+      );
+    }
+    assert.match(
+      await page.locator('#hailmarker .hail-marker-body').innerText(),
+      /<b>Wing Two<\/b>/,
+    );
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
   const layouts = [];
   for (const [width, height, scale] of [
     [1440, 1000, 1],

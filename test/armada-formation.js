@@ -8,6 +8,7 @@ import { Game } from '../server/game.js';
 import { DB } from '../server/db.js';
 import { makeLoadout } from '../shared/rules.js';
 import { ARMADA } from '../shared/coop.js';
+import { SYS } from '../shared/galaxy.js';
 import { formationTargets, fleetFootprint } from '../server/armada-formation.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-v-'));
@@ -149,6 +150,23 @@ game.features.coop.armadaOp(followers[0], { op: 'follow', on: true });
 followers[0].ent.autoCombat = true;
 assert.equal(formationTargets(sp).has(followers[0].ent.id), false, 'combat priority');
 followers[0].ent.autoCombat = false;
+// Every captain follows the human root, while owned NPC wings keep their owner.
+assert.equal(sp.root(wing), followers[1].ent, 'NPC wing is rooted in its own captain');
+for (const s of followers) {
+  assert.equal(
+    s.armadaFormationLeader,
+    leader.data.name,
+    'all captains follow the actual Armada leader',
+  );
+  const e = s.ent;
+  e.disabled = true;
+  assert.equal(formationTargets(sp).has(e.id), false, 'disabled follower suspends formation');
+  e.disabled = false;
+  e.state = 'jumpout';
+  assert.equal(formationTargets(sp).has(e.id), false, 'jumping follower suspends formation');
+  e.state = 'fly';
+  assert.equal(s.data.armadaFollow, true, 'temporary suspension retains explicit consent');
+}
 const le = leader.ent;
 leader.ent = null;
 assert.equal(formationTargets(sp).size, 0, 'landed/offline leader suspends flight without hijack');
@@ -165,6 +183,33 @@ assert.equal(
   4,
   'opted-in leader jump routing preserved',
 );
+// Follow routes a request, not jump permission. The ordinary server jump gates
+// remain authoritative for every human follower; no fuel or transit bypass.
+const jumpFollower = followers[0],
+  jumpShip = jumpFollower.ent;
+const messages = [];
+jumpFollower.sock.send = (m) => messages.push(m);
+const savedFuel = jumpShip.fuel;
+jumpShip.fuel = 0;
+game.jump(jumpFollower, SYS[jumpFollower.data.sys].links[0]);
+assert.equal(jumpShip.state, 'fly', 'no-fuel follower cannot jump');
+assert.ok(
+  messages.some((m) => m.t === 'toast' && /fuel/i.test(m.msg)),
+  'fuel denial is explained',
+);
+jumpShip.fuel = savedFuel;
+jumpShip.disabled = true;
+game.jump(jumpFollower, SYS[jumpFollower.data.sys].links[0]);
+assert.equal(jumpShip.state, 'fly', 'disabled follower cannot jump');
+jumpShip.disabled = false;
+game.jump(jumpFollower, 'nonexistent-system');
+assert.equal(jumpShip.state, 'fly', 'invalid route cannot jump');
+assert.equal(jumpShip.fuel, savedFuel, 'denials consume no fuel');
+const leaderSession = [...game.sessions.entries()].find(([, s]) => s === leader);
+game.sessions.delete(leaderSession[0]);
+assert.equal(formationTargets(sp).size, 0, 'actual missing leader session suspends every follower');
+game.sessions.set(...leaderSession);
+assert.equal(formationTargets(sp).size, 4, 'leader session return resumes unchanged consent');
 game.features.coop.armadaOp(leader, { op: 'lead', name: followers[1].data.name });
 sp.tick();
 assert.equal(followers[0].data.armadaFollow, false, 'leader transfer revokes old flight consent');

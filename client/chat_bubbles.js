@@ -75,16 +75,19 @@ export function drawShipChat(G, ctx, W, H, sx, sy, now) {
     const x = sx(ship.rx),
       y = sy(ship.ry);
     if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0 || x > W || y > H) continue;
-    const maxWidth = Math.min(224, W - 32);
+    const maxWidth = Math.min(260, W - 48);
     if (maxWidth < 30) continue;
     const lines = wrapShipChat(bubble.text, (s) => ctx.measureText(s).width, maxWidth);
-    const width = Math.max(...lines.map((s) => ctx.measureText(s).width)) + 16,
-      height = lines.length * 19 + 16,
+    const width = Math.min(
+        W - 16,
+        Math.max(220, Math.max(...lines.map((s) => ctx.measureText(s).width)) + 24),
+      ),
+      height = lines.length * 19 + 42,
       size = G.A.ships[entity.hull]?.size || 30,
       left = Math.max(4, Math.min(W - width - 4, x - width / 2)),
       top = Math.max(4, y - size * G.zoom * G.spriteScale * 0.55 - height - 27);
     ctx.globalAlpha = Math.min(1, (bubble.until - now) / 700);
-    ctx.fillStyle = 'rgba(9,22,25,.96)';
+    ctx.fillStyle = 'rgba(40,54,62,.97)';
     ctx.strokeStyle = '#627780';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -96,13 +99,22 @@ export function drawShipChat(G, ctx, W, H, sx, sy, now) {
     ctx.fillStyle = 'rgba(0,0,0,.12)';
     for (let scan = top + 5; scan < top + height - 3; scan += 3)
       ctx.fillRect(left + 4, scan, width - 8, 1);
+    ctx.fillStyle = '#3a4b54';
     ctx.beginPath();
     ctx.moveTo(Math.max(left + 5, Math.min(left + width - 5, x)) - 4, top + height);
     ctx.lineTo(x, top + height + 6);
     ctx.lineTo(Math.max(left + 5, Math.min(left + width - 5, x)) + 4, top + height);
     ctx.fill();
+    ctx.fillStyle = '#09161d';
+    ctx.fillRect(left + 8, top + 26, width - 16, height - 34);
+    ctx.strokeStyle = '#52656b';
+    ctx.strokeRect(left + 8, top + 26, width - 16, height - 34);
+    ctx.font = '11px "Pixelify Sans", sans-serif';
+    ctx.fillStyle = '#d69a74';
+    ctx.fillText('SYSTEM COMMS', left + width / 2, top + 8);
+    ctx.font = '15px "Pixelify Sans", sans-serif';
     ctx.fillStyle = '#eef7ff';
-    lines.forEach((line, i) => ctx.fillText(line, left + width / 2, top + 8 + i * 19));
+    lines.forEach((line, i) => ctx.fillText(line, left + width / 2, top + 31 + i * 19));
   }
   ctx.restore();
 }

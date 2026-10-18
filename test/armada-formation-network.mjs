@@ -246,6 +246,25 @@ try {
     true,
     'leader jump retains Follow consent and resumes formation',
   );
+  // The elected human root actually disconnects and rejoins through a fresh
+  // WebSocket session. Followers suspend, never select some other member as root.
+  lead.ws.close();
+  await page.waitForFunction(() => G.you.armada.follow && !G.formation);
+  assert.equal(await page.evaluate(() => G.you.armada.leader), names[0]);
+  const reconnected = await captain(names[0]);
+  assert.equal(reconnected.you.armada.id, id, 'reconnected leader keeps membership');
+  assert.equal(
+    reconnected.you.armada.follow,
+    false,
+    'leader reconnect never grants new flight consent',
+  );
+  assert.equal(
+    await page.evaluate(() => G.formation),
+    false,
+    'landed reconnected leader cannot steer followers',
+  );
+  reconnected.send({ t: 'depart' });
+  await page.waitForFunction(() => G.formation && G.you.armada.follow);
   assert.deepEqual(errors, []);
   fs.writeFileSync(
     path.join(evidence, 'network-result.json'),
@@ -260,6 +279,8 @@ try {
           destination: jumpDestination,
           automaticBrowserArrival: true,
           formationResumed: true,
+          leaderDisconnectSuspends: true,
+          sameLeaderReconnectAndDepartResumes: true,
         },
       },
       null,

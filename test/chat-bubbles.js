@@ -59,9 +59,10 @@ const draw = (now = 300) => {
     (y) => y,
     now,
   );
-  return calls.map((c) => c[0]);
+  return calls.filter((c) => c[0] !== 'SYSTEM COMMS').map((c) => c[0]);
 };
 assert.deepEqual(draw(), ['Replaced']);
+assert.equal(calls[0][0], 'SYSTEM COMMS', 'Speech frame has a separate transmission header');
 const priorX = calls[0][1];
 G.ents.get(2).rx += 50;
 draw();

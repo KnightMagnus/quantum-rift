@@ -1876,8 +1876,9 @@ export function draw(G, ctx, W, H, dt, now) {
   const me = G.view,
     z = G.zoom,
     S = SYS[G.sys];
-  let cx = (me ? me.rx : 0) + (G.lookX || 0),
-    cy = (me ? me.ry : 0) + (G.lookY || 0); // 2.1: hold right-click to look ahead
+  const dock = G.landed && STELLARS[G.landed.stellar];
+  let cx = dock ? dock.x : (me ? me.rx : 0) + (G.lookX || 0),
+    cy = dock ? dock.y : (me ? me.ry : 0) + (G.lookY || 0); // 2.1: hold right-click to look ahead
   Object.assign(cam, { cx, cy, z, W, H }); // un-shaken camera, used for mouse picking
   if (shake && G.opts && G.opts.shake !== false) {
     cx += ((Math.random() - 0.5) * shake * 2) / z;

@@ -3639,6 +3639,13 @@ export class Game {
         this.broadcast(v);
       }
     }
+    // Docked observers keep the real system awake without a player entity.
+    const observed = new Set();
+    for (const s of this.sessions.values())
+      if (s.data?.stellar && STELLARS[s.data.stellar]) {
+        observed.add(s.data.sys);
+        void this.spaces[s.data.sys];
+      }
     for (const sp of Object.values(this.live)) {
       const safeTick = () => {
         try {
@@ -3648,7 +3655,7 @@ export class Game {
           if (sp.errs < 5) console.error('space tick error', sp.id, e);
         }
       };
-      if (sp.players > 0) {
+      if (sp.players > 0 || observed.has(sp.id)) {
         sp.quietT = 0;
         safeTick();
       } else if (this.tickN % 15 === 0) {
@@ -3660,12 +3667,21 @@ export class Game {
     if (this.tickN % 2) return;
     const bySys = {};
     for (const s of this.sessions.values())
-      if (s.data && s.ent) (bySys[s.data.sys] = bySys[s.data.sys] || []).push(s);
+      if (s.data && (s.ent || observed.has(s.data.sys)))
+        (bySys[s.data.sys] = bySys[s.data.sys] || []).push(s);
     for (const [sys, list] of Object.entries(bySys)) {
       const snap = this.spaces[sys].snapshot();
       for (const s of list) {
         const e = s.ent;
-        if (!e) continue;
+        if (!e) {
+          this.send(s, {
+            t: 'scene',
+            sys,
+            ...snap,
+            miningRocks: this.features.mining.rocksPayload(this.spaces[sys]),
+          });
+          continue;
+        }
         this.send(
           s,
           JSON.stringify({

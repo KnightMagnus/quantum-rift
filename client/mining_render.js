@@ -66,7 +66,7 @@ export function drawMining(G, ctx, sx, sy, z, W, H, now) {
       }
     }
   }
-  if (G.mining?.revealUntil > G.mining.now && G.view) {
+  if (G.mining && G.mining.revealUntil > G.mining.now && G.view) {
     ctx.strokeStyle = '#7de8ea55';
     ctx.setLineDash([12, 12]);
     ctx.beginPath();

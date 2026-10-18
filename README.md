@@ -52,9 +52,11 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 - Tune into live radio stations alongside the game's synthesized soundscape.
 - Run locally in your browser with Node.js—no package installation or build step required.
 
-## 3.1 cockpit and artwork
+## 3.1.1 cockpit and artwork
 
-Dark brushed-steel controls, larger Pixelify Sans lettering and an integrated
+**3.1.1:** landed menus retain live system traffic, the expanded Tray owns its full-height column, and Faction Stores display color-matched insignias.
+
+Sculpted brushed-steel controls, larger Pixelify Sans lettering and an integrated
 right-hand Tray keep ship functions close without covering the flight view.
 Landing artwork and radar sit in recessed digital viewscreens. Layered engine
 exhaust follows the original nozzle artwork, with longer afterburner plumes.
@@ -65,17 +67,24 @@ crossfaded ambience retain separate volume and mute controls.
 
 ![Actual 3.1 flight cockpit](docs/screenshots/cockpit-31.png)
 
-_Compact ship controls with the Tray collapsed._
+_Stepped shell, inset control deck, COMMS screen and framed ship-function controls._
 
 ![Integrated right-hand Tray](docs/screenshots/tray-31.png)
 
-_Embedded, resizable status and radar Tray._
+_Full-height, resizable status and radar Tray in its own column; COMMS and utilities remain beside it. Desktop / compact defaults are 480px / 400px._
 
 ![Actual 3.1 landing viewscreen](docs/screenshots/landing-31.png)
 
-_Original landing artwork in the new steel console._
+_Original landing artwork in the steel console, with real system traffic continuing behind landed service windows._
+
+More implemented menu views: [galaxy map](docs/screenshots/map-fidelity.png),
+[outfitter](docs/screenshots/outfitter-fidelity.png),
+[Personal Station docks](docs/screenshots/station-fidelity.png),
+[mining and processing](docs/screenshots/functions-fidelity.png), and
+[settings](docs/screenshots/settings-fidelity.png).
 
 Screenshots are captured from the implemented game using isolated test captains.
+[HUD style and review conventions](docs/HUD-STYLE.md) keep future menus in the same material family.
 
 ---
 
@@ -257,3 +266,14 @@ High-contrast steel cursors use cyan friendly brackets with a check, amber neutr
 Left-click empty flight space to clear the selected ship target. Clicking a ship
 selects it; planet navigation and mining-object selection remain separate.
 Mouse-aim mode still supports holding the left button to fire.
+
+Docked service windows now retain the **live system and real ship traffic** behind
+readable panels. Docking does not pause the world; explicit Solo pause still does.
+The expanded Tray occupies a full-height independent right column, while COMMS
+and Volume/Settings/Help reflow together beside it (compact layouts scroll).
+
+Faction Stores now display a distinct, framed insignia at the top left for the
+selected faction, using that faction's existing menu color. See
+[insignia identities](docs/FACTION-INSIGNIAS.md).
+
+![Selected faction insignia in its matching store color](docs/screenshots/factions-fidelity.png)

@@ -578,6 +578,7 @@ function onMessage(m) {
       audio.setAmbience('station');
       setAuto(null);
       G.landed = m;
+      G.sys = STELLARS[m.stellar]?.system || G.sys;
       G.view = null;
       G.ents.clear();
       G.shots = [];
@@ -643,8 +644,11 @@ function onMessage(m) {
         ? SYS[m.sys].stellars.find((p) => p.svc.includes('L')).id
         : null;
       break;
+    case 'scene':
+      if (G.landed && m.sys === G.sys) onSnap(m);
+      break;
     case 'snap':
-      onSnap(m);
+      if (!G.landed) onSnap(m);
       break;
     case 'toast':
       // A refused/invalid landing must release the pending autopilot rather than
@@ -812,8 +816,8 @@ function onSnap(m) {
   $('combatcoordinate').checked = !!G.combat.coordinating;
   const now = performance.now();
   lastSnapT = now;
-  const [id, ack, x, y, vx, vy, a, sh, ar, fu, tgt, ammo] = m.me;
-  G.myId = id;
+  const [id, ack, x, y, vx, vy, a, sh, ar, fu, tgt, ammo] = m.me || [];
+  if (m.me) G.myId = id;
   const seen = new Set();
   for (const r of m.ships) {
     const [eid, hull, ex, ey, ea, evx, evy, fl, esh, ear, fac, name, owner, pw] = r;
@@ -848,6 +852,8 @@ function onSnap(m) {
   G.shots = m.shots.map(([sx, sy, svx, svy, w]) => ({ x: sx, y: sy, vx: svx, vy: svy, w, t: now }));
   G.beams = m.beams.map(([bid, ba, len, w]) => ({ id: bid, a: ba, len, w }));
   G.loot = m.loot.map(([lid, lx, ly, kind]) => ({ id: lid, x: lx, y: ly, kind }));
+  // Observer snapshots never create a controllable ship.
+  if (!m.me) return;
   for (const [w, n] of ammo) G.ammo[w] = n;
   // A snapshot already in flight may still contain the target we just cleared.
   // Keep the explicit clear until the server confirms it, rather than restoring
@@ -1901,6 +1907,10 @@ function volUi() {
         : G.opts.vol < 0.65
           ? '🔉'
           : '🔊';
+  const label = document.createElement('span');
+  label.className = 'utility-label';
+  label.textContent = G.opts.mute ? 'UNMUTE' : 'VOLUME';
+  b.append(label);
   $('qvol').value = Math.round(G.opts.vol * 100);
   paintRange($('qvol'));
   $('qvoln').textContent = G.opts.mute ? 'muted' : Math.round(G.opts.vol * 100) + '%';
@@ -2046,7 +2056,7 @@ try {
   const w = +localStorage.getItem('rift.hud');
   if (w) setHud(w);
 } catch {}
-$('hudgrip').addEventListener('mousedown', (e) => {
+$('hudgrip').addEventListener('pointerdown', (e) => {
   e.preventDefault();
   const g = $('hudgrip');
   g.classList.add('drag');
@@ -2058,12 +2068,14 @@ $('hudgrip').addEventListener('mousedown', (e) => {
   };
   const up = () => {
     g.classList.remove('drag');
-    window.removeEventListener('mousemove', move);
-    window.removeEventListener('mouseup', up);
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+    window.removeEventListener('pointercancel', up);
     refreshCompanion();
   };
-  window.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', up);
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+  window.addEventListener('pointercancel', up);
 });
 $('traytoggle').onclick = () => {
   const open = document.body.classList.toggle('tray-open');
@@ -2317,6 +2329,7 @@ function frame(t) {
   }
   const now = performance.now();
   for (const e of G.ents.values()) {
+    if (G.paused) continue;
     if (me && e.id === G.myId) {
       e.rx = me.rx;
       e.ry = me.ry;
@@ -2332,12 +2345,13 @@ function frame(t) {
     e.ry += (ty - e.ry) * s;
   }
   for (const s of G.shots) {
+    if (G.paused) continue;
     const k = (now - s.t) / 1000;
     s.rx = s.x + s.vx * k;
     s.ry = s.y + s.vy * k;
   }
   const shotsView = G.shots.map((s) => ({ ...s, x: s.rx ?? s.x, y: s.ry ?? s.y }));
-  if (!G.landed && G.sys)
+  if (G.sys)
     draw(
       { ...G, shots: shotsView, view: me, hostile: G.hostile },
       ctx,
