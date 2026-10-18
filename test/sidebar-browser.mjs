@@ -18,7 +18,18 @@ const port = await availablePort(),
 const { DB } = await import(repo + '/server/db.js');
 const { Game } = await import(repo + '/server/game.js');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-sidebar-'));
-const g = new Game(JSON.parse(fs.readFileSync(repo + '/shared/assets.json')), new DB(dir));
+// Seed once, then give the child server exclusive ownership of the temporary save.
+// A ticking setup Game otherwise starts a second checkpoint writer after 15 seconds.
+const nativeInterval = globalThis.setInterval,
+  nativeTimeout = globalThis.setTimeout;
+let g;
+try {
+  globalThis.setInterval = globalThis.setTimeout = () => ({ unref() {} });
+  g = new Game(JSON.parse(fs.readFileSync(repo + '/shared/assets.json')), new DB(dir));
+} finally {
+  globalThis.setInterval = nativeInterval;
+  globalThis.setTimeout = nativeTimeout;
+}
 const d = g.db.create('Sidebar QA', 'test-only', g.fresh());
 d.tut = 999;
 g.db.touch();
