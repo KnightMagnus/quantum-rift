@@ -108,6 +108,21 @@ try {
         .every((x) => x.font.includes('Pixelify Sans')),
     ),
   );
+  await page.click('#cbmap');
+  assert.equal(
+    await page.locator('#gmap').isVisible(),
+    true,
+    'Dock Map icon opens the real galaxy map',
+  );
+  await page.click('#cbmap');
+  assert.equal(await page.locator('#gmap').isVisible(), false);
+  await page.click('#hailindicator');
+  assert.equal(
+    await page.locator('#hailbox').isVisible(),
+    true,
+    'Dock Hail icon opens the real inbox even when empty',
+  );
+  await page.locator('#hailopts').getByText('CLOSE', { exact: true }).click();
   const layouts = [];
   for (const [width, height, scale] of [
     [1440, 1000, 1],
@@ -158,6 +173,21 @@ try {
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#traytoggle').getAttribute('aria-expanded'), 'true');
     assert.equal(await page.locator('#hud').evaluate((el) => el.inert), false);
+    if (width === 1440) {
+      const hudBefore = await page.locator('#hud').boundingBox();
+      const grip = await page.locator('#hudgrip').boundingBox();
+      await page.mouse.move(grip.x + 2, grip.y + 40);
+      await page.mouse.down();
+      await page.mouse.move(grip.x - 38, grip.y + 40, { steps: 4 });
+      await page.mouse.up();
+      const hudAfter = await page.locator('#hud').boundingBox();
+      assert.ok(
+        hudAfter.width >= hudBefore.width + 30,
+        'Embedded trim does not block actual sidebar resize drag',
+      );
+      const savedWidth = await page.evaluate(() => Number(localStorage.getItem('rift.hud')));
+      assert.ok(Math.abs(savedWidth - hudAfter.width) < 1, 'Drag persists the actual tray width');
+    }
     await page.locator('#ctabs button[data-tab="log"]').focus();
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#ctabs button[data-tab="log"]').getAttribute('class'), 'on');

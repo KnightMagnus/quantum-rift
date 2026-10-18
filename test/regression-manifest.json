@@ -608,7 +608,7 @@
       ],
       "services": [],
       "tests": ["cockpit-browser.mjs", "ship-functions-browser.mjs", "sidebar-browser.mjs"],
-      "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, eight-button compact cockpit, connected collapsed tray, keyboard tab/popup reachability and normal/narrow/scaled layout."
+      "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, eight-button compact cockpit, real Map/Hail activation, connected collapsed tray with actual resize drag/persistence, first-login canvas pixel sizing, keyboard tab/popup reachability and normal/narrow/scaled layout."
     }
   ],
   "routes": {

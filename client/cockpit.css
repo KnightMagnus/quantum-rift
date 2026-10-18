@@ -194,6 +194,7 @@ body.scaled #hud {
   overflow: auto;
 }
 #traytrim {
+  pointer-events: none;
   position: fixed;
   top: 0;
   right: 0;
@@ -219,6 +220,7 @@ body.scaled #hud {
   pointer-events: none;
 }
 #traytoggle {
+  pointer-events: auto;
   position: absolute;
   top: calc(50% - 50px);
   left: -9px;

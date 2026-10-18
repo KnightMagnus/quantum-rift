@@ -394,7 +394,9 @@ System: `cockpit-restyle`.
 `cockpit-browser.mjs` checks the bundled Pixelify Sans font is genuinely loaded,
 retains the original animated login scene/title and production landed illustration,
 and observes actual canvas ship-name and ship-chat drawing with that font. It
-exercises eight dock buttons, the single connected full-height tray trim, native
+exercises eight dock buttons, real Map/Hail activation, the single connected
+full-height tray trim, actual pointer resizing and persisted width, correct initial
+canvas backing pixels before resize, native
 keyboard tray/tab activation, popup close, and flight/chat separation at 1440,
 1024 and 640px (including 1.4 UI scale). `ship-functions-browser.mjs` retains
 multi-panel, long-history scrolling, all existing actions and keyboard/wheel
