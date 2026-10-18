@@ -2,6 +2,15 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.2.0 — Readable cockpit and expanded chat
+
+- Expand live chat history upward into a holographic screen, with one collapse toggle on the HUD. Keep the existing send controls, history scrolling and Escape/menu behavior.
+- Let the system minimap fill a square dynamically as the sidebar is resized.
+- Cap chat width so Volume, Settings and Help retain their spacing; keep the decorative vent centered under the utility buttons.
+- Preserve cockpit colors, left-edge detail and red trim across closed, expanded and resized sidebar states; remove trim artifacts above chat.
+- Simplify the README to game features, requirements, launch instructions and representative in-game screenshots.
+- Economy/refinery changes and user-supplied radio/login music remain separate 3.2.1 work. This release keeps iHeartRadio, the original login theme and existing economy mechanics.
+
 ### 3.1.1 — Living cockpit
 
 - Restore the sculpted steel HUD, inset COMMS deck, larger Pixelify lettering and consistent framed menus.
