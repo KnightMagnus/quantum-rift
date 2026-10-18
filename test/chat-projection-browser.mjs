@@ -90,8 +90,22 @@ try {
     el.scrollTop = 0;
   });
   await page.locator('#chatlog').focus();
+  await page.locator('#chatlog').evaluate((el) => {
+    window.chatScrollSettled = false;
+    el.addEventListener(
+      'scrollend',
+      () => {
+        window.chatScrollSettled = true;
+      },
+      { once: true },
+    );
+  });
   await page.keyboard.press('PageDown');
-  await page.waitForFunction(() => document.getElementById('chatlog').scrollTop > 0);
+  // Chromium's native PageDown scroll is animated. Wait for its actual end, not
+  // the first positive offset, before testing an unrelated incoming message.
+  await page.waitForFunction(
+    () => window.chatScrollSettled && document.getElementById('chatlog').scrollTop > 0,
+  );
   await page.locator('#chatlog').evaluate((el) => {
     el.scrollTop = 0;
   });
