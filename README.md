@@ -253,3 +253,7 @@ For development checks: `npm ci`, `npm run typecheck`, `npm run test:types`, `np
 High-contrast steel cursors use cyan friendly brackets with a check, amber neutral brackets, a red hostile diamond, and a downward docking arrow. Shape as well as color distinguishes target states. All use a consistent 32px footprint; disabled controls show the native blocked cursor. Text fields retain the native text caret.
 
 ![Cursor artwork on dark and light backgrounds (asset preview, not gameplay)](client/assets/cursors/_preview.png)
+
+Left-click empty flight space to clear the selected ship target. Clicking a ship
+selects it; planet navigation and mining-object selection remain separate.
+Mouse-aim mode still supports holding the left button to fire.

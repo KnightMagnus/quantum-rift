@@ -438,3 +438,11 @@ disabled/ARIA-disabled controls, text entry, resize, map and busy precedence.
 Class selection is a CSS fixture, not a flight hit-testing claim. Native OS cursor
 painting is not captured by headless screenshots. Artwork is reviewed on dark
 and light backgrounds. Rebuild with python3 tools/cursors.py (Pillow build only).
+
+### Empty-space target deselection
+
+The registered mining-ui-browser.mjs case selects a second real captain, clicks
+verified empty flight canvas at 2x DPI with mouse aim both off and on, and asserts
+local deselection plus the outgoing target-clear message. It then reselects the
+captain and retains the existing rock-selection, held mouse-aim cutting, clean
+release and pickup checks. Object clicks retain their existing selection paths.

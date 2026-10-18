@@ -496,7 +496,7 @@
         "mining-panel-browser.mjs",
         "mining-renewal.js"
       ],
-      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion. Role/capacity-gated drill toggle, default collapse, full holds, lifecycle transitions, independent hails, keyboard dismissal and bounded responsive panel. Full-health idle renewal across ore/gas/shards, active-work and stale-identity denial, original parcel conservation, bounded history and version-1 restart migration."
+      "asserts": "Actual beam/Tapper collision authority, staged ready/clean/overheat, finite mass and exact graded partial holds, logical cooling/pause, real departed-Tapper ready/not-ready overheat parity and separated real Tapper-to-Tapper/beam release ordering and first-frame beam work at populated/quiet scheduling, bounded settled history across repeated regrowth/collection/TTL with live old-parcel retention, stable sleep/restart generations and journal recovery after a fault between world/player renames. Real WS private range/cooldown/reveal and reconnect refresh. Browser additive/custom/unbound controls preserve F/drones; actual mouse aim and readable gas/heat at scaled/high-DPI reduced motion. Role/capacity-gated drill toggle, default collapse, full holds, lifecycle transitions, independent hails, keyboard dismissal and bounded responsive panel. Full-health idle renewal across ore/gas/shards, active-work and stale-identity denial, original parcel conservation, bounded history and version-1 restart migration. Empty-space left-click clears the combat target and sends target id 0 with mouse aim on/off; rock selection preserves the selected captain."
     },
     {
       "id": "mining-refinery",
@@ -640,7 +640,7 @@
       "landing-autopilot-browser.mjs",
       "armada-follow-two-clients.mjs"
     ],
-    "target": ["v03.js"],
+    "target": ["v03.js", "mining-ui-browser.mjs"],
     "tutskip": ["v03.js"],
     "land": ["bot.js", "v11.js", "landing-autopilot-browser.mjs"],
     "depart": [

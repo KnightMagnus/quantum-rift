@@ -15,6 +15,14 @@ try {
     }),
     page = await context.newPage();
   page.on('pageerror', (e) => errors.push(String(e)));
+  const sent = [];
+  page.on('websocket', (ws) =>
+    ws.on('framesent', ({ payload }) => {
+      try {
+        sent.push(JSON.parse(String(payload)));
+      } catch {}
+    }),
+  );
   await page.addInitScript(() => {
     localStorage.setItem(
       'rift.opts',
@@ -64,6 +72,42 @@ try {
       y: ((10200 - cam.cy) * cam.z + cam.H / 2) / devicePixelRatio,
     };
   });
+  await page.mouse.click(shipXY.x, shipXY.y);
+  await page.waitForFunction((id) => G.target === id, otherId);
+  // Real click on a verified empty canvas point clears an actual selected captain.
+  const empty = await page.evaluate(async () => {
+    const { cam } = await import('/render.js');
+    const { SYS } = await import('/shared/galaxy.js');
+    const canvas = document.querySelector('#view');
+    const r = canvas.getBoundingClientRect();
+    for (let y = 180; y < 650; y += 60)
+      for (let x = 180; x < 850; x += 60) {
+        if (document.elementFromPoint(x, y) !== canvas) continue;
+        const wx = ((x - r.left) * devicePixelRatio - cam.W / 2) / cam.z + cam.cx;
+        const wy = ((y - r.top) * devicePixelRatio - cam.H / 2) / cam.z + cam.cy;
+        if ([...G.ents.values()].some((e) => Math.hypot(e.rx - wx, e.ry - wy) < 150)) continue;
+        if (SYS[G.sys].stellars.some((p) => Math.hypot(p.x - wx, p.y - wy) < p.r * 1.15 + 100))
+          continue;
+        if ((G.rocks || []).some((k) => Math.hypot(k.x - wx, k.y - wy) < k.r + 100)) continue;
+        if ((G.towing?.objects || []).some((o) => Math.hypot(o.x - wx, o.y - wy) < 150)) continue;
+        return { x, y };
+      }
+    throw Error('No empty flight point');
+  });
+  for (const aim of [false, true]) {
+    await page.evaluate((v) => {
+      G.opts.mouseAim = v;
+    }, aim);
+    await page.mouse.click(shipXY.x, shipXY.y);
+    await page.waitForFunction((id) => G.target === id, otherId);
+    const start = sent.length;
+    await page.mouse.click(empty.x, empty.y);
+    await page.waitForFunction(() => G.target === 0);
+    await until(
+      () => sent.slice(start).some((m) => m.t === 'target' && m.id === 0),
+      'server target-clear message',
+    );
+  }
   await page.mouse.click(shipXY.x, shipXY.y);
   await page.waitForFunction((id) => G.target === id, otherId);
   await page.mouse.move(xy.x, xy.y);

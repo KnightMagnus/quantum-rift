@@ -1633,6 +1633,8 @@ canvas.addEventListener('mousedown', (e) => {
     G.towTarget = tow.id;
     return;
   }
+  // Only genuinely empty space clears combat selection; resource clicks retain it.
+  if (!rock) setTarget(0);
   if (G.opts.mouseAim) mouse.down = true; // mouse-aim mode: hold the left button on open space to fire
 });
 window.addEventListener('mouseup', (e) => {
