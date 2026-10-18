@@ -114,11 +114,17 @@ select:focus-visible {
   max-width: calc((100vw - var(--hud) - 20px) / var(--ui, 1));
   overflow: auto;
 }
-.gbox,
-.optbox,
-.ctrlin,
-.hailin {
+.gbox {
   width: min(760px, 94%);
+}
+.optbox {
+  width: min(560px, 94%);
+}
+.ctrlin {
+  width: min(620px, 94%);
+}
+.hailin {
+  width: min(520px, 94%);
 }
 .landbox {
   height: min(660px, 96%);
