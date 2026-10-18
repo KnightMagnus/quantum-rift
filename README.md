@@ -60,7 +60,7 @@ Landing artwork and radar sit in recessed digital viewscreens. Layered engine
 exhaust follows the original nozzle artwork, with longer afterburner plumes.
 Unsurveyed motherlodes have neutral shaded, pitted surfaces without exposing their
 resources; surveying still reveals the original material artwork. Menu hover
-sounds are quieter and rate-limited; the existing synthesized login theme and
+sounds are quieter and rate-limited; an original synthesized French-horn-like and bowed-string login theme and
 crossfaded ambience retain separate volume and mute controls.
 
 ![Actual 3.1 flight cockpit](docs/screenshots/cockpit-31.png)

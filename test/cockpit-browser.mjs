@@ -45,8 +45,24 @@ try {
   );
   assert.equal(
     await page.locator('#login .splash-title').getAttribute('src'),
-    'assets/ui/title.png',
+    'assets/ui/title-31.png',
   );
+  await page.locator('.splash-title').evaluate((im) => im.decode());
+  for (const width of [1440, 640]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const logo = await page.locator('.splash-title').boundingBox();
+    const panel = await page.locator('#login .loginbox').boundingBox();
+    assert.ok(logo.x >= 0 && logo.x + logo.width <= width);
+    assert.ok(logo.y + logo.height <= panel.y, 'Title is above, outside login HUD');
+    assert.equal(await page.locator('#login .loginbox .splash-title').count(), 0);
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  assert.equal(
+    await page.locator('.splash-title').evaluate((el) => getComputedStyle(el).animationName),
+    'none',
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({ path: path.join(f.out, 'login.png') });
   await page.fill('#lname', 'Mining Alpha');
   await page.fill('#lpass', 'fixture');

@@ -563,3 +563,40 @@ input.trade-amount[type='number'] {
   background-color: #000;
   color: #fff;
 }
+
+/* Standalone title above the sign-in HUD; background scene remains untouched. */
+#login .splash-title {
+  width: min(640px, 86vw);
+  max-height: 27vh;
+  object-fit: contain;
+  flex-shrink: 0;
+  animation: title-energy 7s ease-in-out infinite;
+}
+@keyframes title-energy {
+  0%,
+  88%,
+  100% {
+    filter: drop-shadow(0 2px 10px #713ab855);
+  }
+  91%,
+  96% {
+    filter: drop-shadow(0 2px 14px #a35fe888);
+  }
+  93% {
+    filter: drop-shadow(0 2px 9px #713ab855);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #login .splash-title {
+    animation: none;
+  }
+}
+@media (max-height: 650px) {
+  #login .splash-col {
+    gap: 5px;
+    padding: 8px;
+  }
+  #login .splash-title {
+    max-height: 19vh;
+  }
+}
