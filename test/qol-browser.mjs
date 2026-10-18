@@ -7,7 +7,11 @@ const f = await refineryFixture('cockpit-qol');
 let browser;
 try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-  const page = await browser.newPage({ viewport: { width: 1500, height: 1050 } });
+  const context = await browser.newContext({ viewport: { width: 1500, height: 1050 } });
+  const page = await context.newPage();
+  await page.addInitScript(() =>
+    localStorage.setItem('rift.opts', JSON.stringify({ v21: true, mouseAim: false, scale: 1 })),
+  );
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   const login = async (name) => {
@@ -146,8 +150,29 @@ try {
     await page.screenshot({ path: path.join(f.out, `qol-${width}-${scale}.png`) });
     await page.locator('#pinned-objective [data-pin]').click();
   }
+  await page.setViewportSize({ width: 1500, height: 1050 });
+  await page.evaluate(() => {
+    G.opts.scale = 1;
+    document.documentElement.style.setProperty('--ui', '1');
+    document.body.classList.remove('scaled');
+  });
+  await page.click('#depart');
+  await page.waitForFunction(() => G.view && !G.landed);
+  await page.locator('#chatexpand').focus();
+  const angle = await page.evaluate(() => G.view.a);
+  await page.keyboard.down('ArrowLeft');
+  try {
+    await page.waitForFunction((angle) => Math.abs(G.view.a - angle) > 0.05, angle);
+  } finally {
+    await page.keyboard.up('ArrowLeft');
+  }
+  assert.equal(
+    await page.evaluate(() => document.activeElement.id),
+    'chatexpand',
+    'Steering works without moving focus off a HUD button',
+  );
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const other = await browser.newPage();
+  const other = await page.context().newPage();
   await other.goto(f.origin);
   await other.fill('#lname', 'Refinery Bravo');
   await other.fill('#lpass', 'fixture');

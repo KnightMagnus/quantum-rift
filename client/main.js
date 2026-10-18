@@ -994,22 +994,11 @@ window.addEventListener('keydown', (e) => {
     $('storyok').click();
     return;
   } // 2.5.2: Enter or Space continues a story pop-up
-  // Focused cockpit/menu buttons retain native keyboard activation, not flight/chat shortcuts.
+  // Native activation/focus keys belong to the focused control. Steering and
+  // remapped actions still work after clicking a HUD button; separators consume
+  // only their own sizing keys locally.
   if (
-    [
-      'Tab',
-      'Enter',
-      ' ',
-      'ArrowUp',
-      'ArrowDown',
-      'ArrowLeft',
-      'ArrowRight',
-      'Home',
-      'End',
-      'PageUp',
-      'PageDown',
-    ].includes(e.key) &&
-    (['Tab', 'Enter', ' '].includes(e.key) || !actionOf(e.code)) &&
+    ['Tab', 'Enter', ' '].includes(e.key) &&
     e.target.closest?.('button, summary, a, [role="button"], [role="separator"]')
   )
     return;
