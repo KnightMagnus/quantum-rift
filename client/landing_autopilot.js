@@ -1,4 +1,4 @@
-// Landing-only guidance. Flight physics and server landing authority are unchanged.
+// Landing-only guidance. Manual flight and server landing limits are unchanged.
 import { DT, wrap } from '../shared/rules.js';
 
 /**

@@ -31,7 +31,7 @@ for (const hull of Object.keys(A.ships)) {
         landSpeed,
         braking = false;
       for (; tick < 9000; tick++) {
-        const input = {},
+        const input = { navigation: true },
           now = tick * DT * 1000;
         // Delayed 10 Hz authoritative snapshots; prediction remains ahead of them.
         if (tick % 3 === 0) authority = { ...ship, t: now };
@@ -66,6 +66,34 @@ for (const hull of Object.keys(A.ships)) {
       maxLandingSpeed = Math.max(maxLandingSpeed, landSpeed);
       count++;
     }
+}
+// Reproduce a delayed/held retrograde thrust after the last partial pulse.
+// This previously reversed a near-stopped ship, causing another braking turn.
+for (const hull of Object.keys(A.ships)) {
+  const st = shipStats(A, makeLoadout(A, hull)),
+    drift = st.accel * DT * 0.65;
+  for (const heading of [0, 0.7, -2.4]) {
+    const makeShip = () => ({
+      x: 0,
+      y: 0,
+      vx: -Math.sin(heading) * drift,
+      vy: Math.cos(heading) * drift,
+      a: heading,
+      fuel: st.fuel,
+    });
+    const ship = makeShip();
+    for (let tick = 0; tick < 12; tick++) {
+      step(ship, st, { navigation: true, rev: 1, thrust: 1 });
+      assert.equal(Math.hypot(ship.vx, ship.vy), 0, 'held navigation brake stays stopped');
+      assert.ok(Math.abs(wrap(ship.a - heading)) < 1e-8, 'no extra braking rotation at rest');
+    }
+    const manual = makeShip();
+    step(manual, st, { rev: 1, thrust: 1 });
+    assert.ok(
+      manual.vx * -Math.sin(heading) + manual.vy * Math.cos(heading) < 0,
+      'manual thrust can still reverse the original drift',
+    );
+  }
 }
 // Far-field heading must not follow tiny residual acceleration or speed overshoot.
 for (const hull of [703, 704, 714, 821]) {

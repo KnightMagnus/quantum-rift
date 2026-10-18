@@ -694,6 +694,7 @@ export function weaponSound(w) {
  * @property {number} [turn] - Turning control input (-1 left, 0 neutral, 1 right).
  * @property {number|boolean} [ab] - Afterburner boost active.
  * @property {number|boolean} [rev] - Reverse thrusters / face retrograde active.
+ * @property {number|boolean} [navigation] - Automatic navigation controls.
  */
 
 /**
@@ -706,7 +707,9 @@ export function weaponSound(w) {
  */
 // Flight: one fixed step. input: {thrust: 0/1, turn: -1/0/1, ab: 0/1, rev: 0/1}
 export function step(e, st, inp, dt = DT) {
-  if (inp.rev) {
+  const navigationBrake = inp.navigation && inp.rev,
+    drift = Math.hypot(e.vx, e.vy);
+  if (inp.rev && !(navigationBrake && drift < 1e-8)) {
     // turn to face against the direction of travel
     const want = wrap(Math.atan2(e.vx, -e.vy) + Math.PI);
     let d = angDiff(want, e.a);
@@ -720,6 +723,17 @@ export function step(e, st, inp, dt = DT) {
     acc *= 1.8;
     max *= 1.4;
     e.fuel -= 0.3;
+  }
+  // Delayed navigation input can remain held after the final braking pulse.
+  // Once aligned, stop at zero rather than reverse drift and chase it through
+  // another half-turn. Manual retrograde/thrust retains its existing physics.
+  if (
+    navigationBrake &&
+    acc * dt >= drift &&
+    (drift < 1e-8 || Math.abs(angDiff(wrap(Math.atan2(e.vx, -e.vy) + Math.PI), e.a)) < 1e-8)
+  ) {
+    e.vx = e.vy = 0;
+    acc = 0;
   }
   if (acc) {
     e.vx += Math.sin(e.a) * acc * dt;

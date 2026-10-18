@@ -11,6 +11,7 @@ Every release, newest first. The main story is left out on purpose.
 - Remove the decorative left viewscreen fin that overlapped the main HUD tray; keep the continuous horizontal trim and tray controls.
 - Add independent vertical drag/keyboard sizing for the sidebar minimap and tabbed menu, with remembered heights and automatic-layout reset.
 - Remember per-captain console views, filters and browsing positions; return to the originating Codex item after details. Pin one next objective inside the existing Tray without hiding other mission tracking.
+- Prevent delayed autopilot braking input from reversing a nearly stopped ship and causing an extra turn; manual flight remains unchanged.
 - Explain unavailable cargo/towing actions and link back to existing screens, retaining essential confirmations and native keyboard interaction.
 - Economy is the first merge toward the cumulative economy, QoL and mission update; it has no standalone release. Radio and user-supplied music remain separate future work.
 
