@@ -44,20 +44,24 @@ try {
   });
   page.on('pageerror', (e) => errors.push(String(e)));
   async function audit(surface, selector = 'select') {
-    const styles = await page.locator(selector).evaluateAll((nodes) =>
-      nodes.map((e) => {
-        const s = getComputedStyle(e);
-        return {
-          id: e.id || e.outerHTML.slice(0, 100),
-          background: s.backgroundColor,
-          color: s.color,
-          scheme: s.colorScheme,
-          options: [...e.querySelectorAll('option, optgroup')].map((o) => ({
-            background: getComputedStyle(o).backgroundColor,
-            color: getComputedStyle(o).color,
-          })),
-        };
-      }),
+    // Query and inspect in one browser task. Locator.evaluateAll first snapshots
+    // nodes; an arriving refinery preview can replace them before its callback.
+    const styles = await page.evaluate(
+      (selector) =>
+        [...document.querySelectorAll(selector)].map((e) => {
+          const s = getComputedStyle(e);
+          return {
+            id: e.id || e.outerHTML.slice(0, 100),
+            background: s.backgroundColor,
+            color: s.color,
+            scheme: s.colorScheme,
+            options: [...e.querySelectorAll('option, optgroup')].map((o) => ({
+              background: getComputedStyle(o).backgroundColor,
+              color: getComputedStyle(o).color,
+            })),
+          };
+        }),
+      selector,
     );
     assert.ok(styles.length, surface);
     inventory.push({ surface, styles });

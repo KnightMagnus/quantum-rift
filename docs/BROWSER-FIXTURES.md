@@ -29,3 +29,12 @@ Native Tab/Enter/Space handling must not consume remapped game actions or ordina
 steering after a HUD button click. Resize separators consume their own arrow and
 reset keys locally. Keep the real remapped towing transfer and steering regressions;
 do not replace them with source-text or inventory assertions.
+
+## Dynamic DOM audits
+
+For a synchronous style/content inventory of a frequently replaced panel, query
+and inspect its current nodes inside one `page.evaluate` task. A locator
+`evaluateAll` can snapshot nodes before a network-driven re-render and then
+inspect detached controls (whose computed styles are empty). Keep all original
+style assertions and the nonempty-inventory assertion; do not accept blank styles
+or retry until an actual mismatch disappears.
