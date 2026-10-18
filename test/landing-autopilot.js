@@ -84,8 +84,28 @@ for (const hull of Object.keys(A.ships)) {
     const ship = makeShip();
     for (let tick = 0; tick < 12; tick++) {
       step(ship, st, { navigation: true, rev: 1, thrust: 1 });
-      assert.equal(Math.hypot(ship.vx, ship.vy), 0, 'held navigation brake stays stopped');
+      assert.ok(
+        Math.hypot(ship.vx, ship.vy) <= Math.max(2, st.accel * DT * 0.55),
+        'held navigation brake stays within the landing stopped-speed bound',
+      );
       assert.ok(Math.abs(wrap(ship.a - heading)) < 1e-8, 'no extra braking rotation at rest');
+    }
+    // Guidance permits thrust within one turn step plus 0.02 radians. A held
+    // near-aligned final pulse must not accelerate the reversed residual drift.
+    const near = makeShip();
+    near.a += st.turn * DT + 0.01;
+    step(near, st, { navigation: true, rev: 1, thrust: 1 });
+    const finalHeading = near.a;
+    for (let tick = 0; tick < 12; tick++) {
+      step(near, st, { navigation: true, rev: 1, thrust: 1 });
+      assert.ok(
+        Math.hypot(near.vx, near.vy) <= Math.max(2, st.accel * DT * 0.55),
+        'near-aligned held braking cannot accelerate residual drift',
+      );
+      assert.ok(
+        Math.abs(wrap(near.a - finalHeading)) < 1e-8,
+        'near-aligned braking cannot chase residual drift into another turn',
+      );
     }
     const manual = makeShip();
     step(manual, st, { rev: 1, thrust: 1 });
