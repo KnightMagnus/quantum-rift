@@ -68,6 +68,23 @@ try {
   await page.screenshot({ path: path.join(f.out, 'landing.png') });
   await page.click('#depart');
   await page.waitForFunction(() => G.view && !G.landed);
+  const initialPixels = await page.locator('#view').evaluate((canvas) => ({
+    width: canvas.width,
+    height: canvas.height,
+    cssWidth: canvas.clientWidth,
+    cssHeight: canvas.clientHeight,
+    dpr: devicePixelRatio,
+  }));
+  assert.equal(
+    initialPixels.width,
+    initialPixels.cssWidth * initialPixels.dpr,
+    'First login has correct backing width before any resize event',
+  );
+  assert.equal(
+    initialPixels.height,
+    initialPixels.cssHeight * initialPixels.dpr,
+    'First login has correct backing height before any resize event',
+  );
   assert.equal(await page.locator('#functiondock > button').count(), 8);
   assert.equal(await page.locator('#cbkeys').count(), 0, 'No redundant Keys button');
   assert.equal(await page.locator('#traytoggle').getAttribute('aria-expanded'), 'false');
