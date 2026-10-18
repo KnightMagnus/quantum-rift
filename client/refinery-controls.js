@@ -80,8 +80,9 @@ export function refineryPanelHtml(G, jobs) {
       ${recipe.pure ? '<p class="dim small">Composite Plating needs equal amounts of pure ore, gas and shards, in groups of 3 tonnes each.</p>' : ''}
       ${premium ? '<p class="jwarn">Rich and pure cargo sell for more, but give no extra output here. Common cargo is usually the better choice.</p>' : ''}
       ${reserved ? '<p class="jwarn">This uses cargo you still need for a delivery. You may refine it, but you will need to replace it to finish that job.</p>' : ''}
-      ${!valid(c) ? '<p class="jwarn">Choose a whole amount within the limits above.</p>' : !enough ? '<p class="jwarn">Not enough of the selected cargo grade aboard.</p>' : ''}
+      ${!valid(c) ? '<p class="jwarn">Choose a whole amount within the limits above.</p>' : !enough ? '<p class="jwarn">Not enough of the selected cargo grade aboard. <button class="btn sm" data-act="ltab" data-t="trade">CHECK TRADE CARGO</button></p>' : ''}
       ${q ? `<b>YOU GET</b><p>${(q.units / R.units).toFixed(3)} t ${esc(title(q.output))} · ${q.mode === 'instant' ? 'ready to collect now' : `ready in about ${Math.ceil((q.duration + R.queueMs) / 60000)} min`}</p><p><b>Total cost: ${q.fee.toLocaleString()} credits</b>${G.you.credits < q.fee ? ' · not enough credits' : ''}</p><p class="dim small">${q.recovery}% of the usable material is recovered. Collect whole tonnes here; smaller amounts stay safely stored.${q.mode === 'stored' ? ` You can cancel during the first 30 seconds for ${q.cancelFee} credits.` : ''}</p>` : `<p class="dim">${G.refineryCostError ? 'Could not load the current cost. Try again when connected.' : 'Checking the current cost…'}</p>`}
+      ${G.paused ? '<p class="jwarn">Solo is paused. Resume before starting a job.</p>' : ''}
       <button class="btn" data-refinery="submit"${q ? ` data-id="${esc(q.id)}"` : ''}${ready ? '' : ' disabled'}>${G.refineryBusy ? 'STARTING…' : q ? `START REFINING · ${q.fee.toLocaleString()} CR` : 'START REFINING'}</button>
       ${G.refineryCostError ? '<button class="btn sm" data-refinery="retry">UPDATE COST</button>' : ''}
     </div>

@@ -1,5 +1,9 @@
 # Game regression coverage inventory
 
+## 3.2.1 cockpit QoL
+
+`cockpit-qol` covers per-captain view/search/scroll/subtab retention, a single explicitly pinned objective with other tracking retained, native detail/Back keyboard focus, unavailable cargo next-action links and narrow/scaled layouts. `qol-browser.mjs` uses an isolated real server and actual accepted mission; existing refinery, logout, input and sidebar checks guard integrated behavior. Presentation preferences never store passwords, execute actions, auto-accept work or modify authoritative saves.
+
 ## 3.2.1 economy verification
 
 The `economy-32` system and additional trade/refinery action mappings register

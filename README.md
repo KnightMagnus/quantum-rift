@@ -51,6 +51,7 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 
 - Solo mode includes pause, save slots and save-file import and export. A newcomer truce limits ambient hostility while you establish your station; missions and deliberate aggression can still lead to combat.
 - Remap controls, adjust interface scale, use a colour-blind palette, or play with a gamepad or touch controls.
+- Keep your browsing position and filters, and pin one next objective in the Tray without hiding your other missions.
 - Tune into live radio stations alongside the game's synthesized soundscape.
 - Run locally in your browser with Node.js—no package installation or build step required.
 

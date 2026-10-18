@@ -1,10 +1,11 @@
+import { initCockpitState } from './cockpit-state.js';
 import { tradeEstimateHtml, receiptHtml, initEconomyUI } from './economy-ui.js';
 import { refineryHtml } from './refinery_ui.js';
 import { artworkUrl } from './artwork.js';
 import { stationLanding } from './exotic_scenery.js';
 import { passengerSeats, occupiedPassengerSeats } from '/shared/passengers.js';
 // Quantum Rift interface: HUD, landing screens (trade, shipyard, outfitter, jobs, Quantum Station), companion tabs, galaxy map, chat.
-import { missionsHtml } from './missions.js';
+import { missionsHtml, missionTargets, pinnedObjectiveHtml } from './missions.js';
 import { playStation, stopRadio } from './radio.js';
 import { blackMarketHtml, bankHtml, arcCardsHtml, bunkInfo, synBadge } from './syn_ui.js';
 import {
@@ -166,6 +167,7 @@ let G, send;
  */
 export function initUI(g, sender) {
   initEconomyUI(g);
+  g.views = initCockpitState(g);
   G = g;
   send = sender;
   try {
@@ -290,7 +292,14 @@ export function initUI(g, sender) {
     const c = e.target.closest('select[data-crew]');
     if (c) send({ t: 'shuttle', op: 'crew', sid: +c.dataset.crew, oid: c.value ? +c.value : null });
   });
-  $('mlist').addEventListener('click', (e) => {
+  $('t-missions').addEventListener('click', (e) => {
+    const pin = e.target.closest('[data-pin]');
+    if (pin) {
+      G.pinnedObjective = G.pinnedObjective === pin.dataset.pin ? '' : pin.dataset.pin;
+      G.views.remember();
+      drawMini();
+      return;
+    }
     const b = e.target.closest('[data-plot]');
     if (b) {
       plot(b.dataset.plot);
@@ -419,7 +428,10 @@ export function initUI(g, sender) {
     renderRadio();
   };
   $('rstop').onclick = () => stopRadio($('rnow'));
-  $('cq').oninput = renderCodex;
+  $('cq').oninput = () => {
+    G.codexQuery = $('cq').value;
+    renderCodex();
+  };
   $('cq').onkeydown = (e) => e.stopPropagation();
   $('lgo').onclick = () => {
     const v = $('lq').value.trim();
@@ -488,6 +500,7 @@ function landScene(p) {
  * @returns {void}
  */
 export function ask(msg, yes, opts = {}) {
+  const returnTo = document.activeElement;
   const box = document.getElementById('askbox');
   document.getElementById('askx').textContent = msg;
   document.getElementById('askyes').textContent = opts.yes || 'CONFIRM';
@@ -497,6 +510,7 @@ export function ask(msg, yes, opts = {}) {
     window.removeEventListener('keydown', key, true);
     document.getElementById('askyes').onclick = document.getElementById('askno').onclick = null;
     if (ok) yes();
+    if (returnTo?.isConnected) returnTo.focus({ preventScroll: true });
   };
   const key = (e) => {
     if (e.key === 'Escape') {
@@ -732,6 +746,11 @@ export function hud() {
  */
 export function ctab(name, reveal = true) {
   if (reveal && $('hud').inert) $('traytoggle').click();
+  G.views.capture($('clist'));
+  G.views.capture($('mlist'));
+  G.views.capture($('stview'));
+  G.views.capture($('opsview'));
+  G.views.capture($('capview'));
   G.ctab = name;
   document
     .querySelectorAll('#ctabs button')
@@ -740,6 +759,7 @@ export function ctab(name, reveal = true) {
     .querySelectorAll('#cpanel .tab')
     .forEach((t) => t.classList.toggle('on', t.id === 't-' + name));
   refreshCompanion();
+  G.views.remember();
 }
 /**
  * Triggers a DOM re-render of whichever companion tab is currently active.
@@ -749,7 +769,7 @@ export function refreshCompanion() {
   if (G.ctab === 'codex') renderCodex();
   else if (G.ctab === 'station') renderStationTab();
   else if (G.ctab === 'ops') {
-    if (G.you) $('opsview').innerHTML = opsHtml(G);
+    if (G.you) G.views.replace($('opsview'), opsHtml(G), 'ops');
   } else if (G.ctab === 'log') renderLog();
   else if (G.ctab === 'missions') drawMini();
   else if (G.ctab === 'captains') renderCaptains();
@@ -760,10 +780,25 @@ export function refreshCompanion() {
  */
 export function drawMini() {
   if (G.ctab === 'missions' && G.you) {
+    const targets = missionTargets(G);
+    if (G.pinnedObjective && !targets.some((t) => t.key === G.pinnedObjective)) {
+      G.pinnedObjective = '';
+      toast('Pinned objective cleared. See Missions for current work.');
+      G.views.remember();
+    }
+    const pinned = pinnedObjectiveHtml(G);
+    const panel = $('pinned-objective');
+    if (panel.innerHTML !== pinned) {
+      const top = panel.dataset.key === G.pinnedObjective ? panel.scrollTop : 0;
+      panel.innerHTML = pinned;
+      panel.dataset.key = G.pinnedObjective || '';
+      panel.scrollTop = top;
+    }
+    $('pinned-objective').hidden = !pinned;
     const h = missionsHtml(G);
     if (h !== G._mhtml) {
       G._mhtml = h;
-      $('mlist').innerHTML = h;
+      G.views.replace($('mlist'), h, 'missions');
     }
   }
 } // 1.0.1: the MISSIONS tab replaced the minimap
@@ -882,6 +917,8 @@ function factionsSelling(h) {
  * @returns {void}
  */
 function renderCodex() {
+  codexCat = ['Ships', 'Outfits', 'Weapons'].includes(G.codexCat) ? G.codexCat : 'Ships';
+  if (document.activeElement !== $('cq')) $('cq').value = G.codexQuery || '';
   const q = $('cq').value.trim().toLowerCase(),
     O = allOutfits(G.A);
   const cats = ['Ships', 'Outfits', 'Weapons'];
@@ -893,7 +930,7 @@ function renderCodex() {
     .forEach(
       (ch) =>
         (ch.onclick = () => {
-          codexCat = ch.dataset.c;
+          codexCat = G.codexCat = ch.dataset.c;
           renderCodex();
         }),
     );
@@ -932,15 +969,27 @@ function renderCodex() {
         key: 'o' + o.id,
       }));
   if (q) items = items.filter((i) => (i.name + ' ' + i.sub).toLowerCase().includes(q));
-  $('clist').innerHTML = items
+  const html = items
     .map(
       (i) =>
         `<div class="it" data-k="${i.key}">${i.img ? `<img src="${i.img}" alt="">` : '<span style="width:40px"></span>'}<div class="n"><div>${esc(i.name)}</div><div class="s">${esc(i.sub)}</div></div><span class="cr small">${i.cost}</span></div>`,
     )
     .join('');
+  G.views.replace($('clist'), html, 'codex:' + codexCat + ':' + q);
   $('clist')
     .querySelectorAll('.it')
-    .forEach((el) => (el.onclick = () => codexDetail(el.dataset.k)));
+    .forEach((el) => {
+      el.tabIndex = 0;
+      el.setAttribute('role', 'button');
+      el.onclick = () => codexDetail(el.dataset.k);
+      el.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          codexDetail(el.dataset.k);
+        }
+      };
+    });
 }
 /**
  * Renders the detail view for an individual ship or outfit item within the codex tab.
@@ -948,6 +997,8 @@ function renderCodex() {
  * @returns {void}
  */
 function codexDetail(k) {
+  G.views.capture($('clist'));
+  delete $('clist').dataset.viewKey;
   const id = +k.slice(1);
   if (k[0] === 's') {
     const s = G.A.ships[id],
@@ -979,7 +1030,12 @@ function codexDetail(k) {
   $('cback').onclick = (e) => {
     e.preventDefault();
     renderCodex();
+    $('clist')
+      .querySelector('[data-k="' + CSS.escape(k) + '"]')
+      ?.focus({ preventScroll: true });
   };
+  $('clist').scrollTop = 0;
+  $('cback').focus({ preventScroll: true });
 }
 const STATMAX = {
   shield: 4500,
@@ -1167,7 +1223,8 @@ function stationHtml(interactive) {
  */
 function renderStationTab() {
   if (!G.you) return;
-  $('stview').innerHTML = stationHtml(true);
+  const html = stationHtml(true);
+  G.views.replace($('stview'), html, 'station:' + (G.stab || 'ops'));
 }
 /**
  * Renders the player event log history in the companion log tab.
@@ -1209,6 +1266,7 @@ const TABS = [
  * @returns {void}
  */
 export function showLanded() {
+  G.views.capture($('landbody'));
   const L = G.landed,
     p = STELLARS[L.stellar];
   $('land').classList.remove('hidden');
@@ -1311,6 +1369,8 @@ export function refreshStores() {
  * @returns {void}
  */
 export function hideLanded() {
+  G.views.capture($('landbody'));
+  G.views.remember();
   $('land').classList.add('hidden');
 }
 /**
@@ -1397,7 +1457,7 @@ export function renderLanded() {
           })
           .join(
             '',
-          )}</table><div class="tradefoot"><span class="dim small">Estimates include cargo grade, your perks and the size of the order. There is no separate trading fee. Prices can change before you click; a price here does not promise the same price elsewhere. Green is cheap here, red is high. Hold: ${y.cargoUsed + (y.jobCargo || 0)} / ${st.cargo} t${y.jobCargo ? ` (${y.jobCargo} t is job cargo)` : ''}.</span>${L.market.some((c) => y.cargo[c.id]) ? `<button class="btn sm" data-act="sellall">SELL ALL CARGO</button>` : ''}</div>`;
+          )}</table><div class="tradefoot"><span class="dim small">Estimates include cargo grade, your perks and the size of the order. There is no separate trading fee. Prices can change before you click; a price here does not promise the same price elsewhere. Green is cheap here, red is high. Hold: ${y.cargoUsed + (y.jobCargo || 0)} / ${st.cargo} t${y.jobCargo ? ` (${y.jobCargo} t is job cargo)` : ''}.</span>${holdFree(y) <= 0 ? '<span class="jwarn">Hold full. Sell cargo or finish a delivery to make room.</span>' : ''}${L.market.some((c) => y.cargo[c.id]) ? `<button class="btn sm" data-act="sellall">SELL ALL CARGO</button>` : ''}</div>`;
       if (L.mats.length)
         h += `<div class="sect">STATION MATERIALS</div><table class="tbl"><tr><th>CRATE</th><th>PRICE</th><th>HELD</th><th></th></tr>${L.mats.map((m) => `<tr><td>${m.mat} ${GRADES[m.grade]}</td><td>${credits(m.price)}</td><td>${y.mats[m.mat][m.grade]}</td><td style="text-align:right"><button class="btn sm" data-act="mat" data-m="${m.mat}" data-g="${m.grade}" data-q="1">BUY</button> <button class="btn sm" data-act="mat" data-m="${m.mat}" data-g="${m.grade}" data-q="-1">SELL</button></td></tr>`).join('')}</table>`;
       break;
@@ -1601,7 +1661,7 @@ export function renderLanded() {
       break;
     }
   }
-  body.innerHTML = h;
+  G.views.replace(body, h, 'land:' + L.stellar + ':' + G.ltab);
   if (focusedRefinery) document.getElementById(focusedRefinery)?.focus({ preventScroll: true });
   if (focusedAmount)
     [...body.querySelectorAll('.trade-amount')]

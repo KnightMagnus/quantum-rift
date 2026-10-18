@@ -304,7 +304,8 @@ export function renderCaptains() {
           : tradeHtml();
   const keep = $('dmin') ? $('dmin').value : null,
     focus = document.activeElement && document.activeElement.id;
-  v.innerHTML = h;
+  if (G.views) G.views.replace(v, h, 'captains:' + (G.ctabSub || 'online'));
+  else v.innerHTML = h;
   if (keep !== null && $('dmin')) $('dmin').value = keep;
   if (focus && $(focus)) $(focus).focus();
   const log = $('dmlog');
