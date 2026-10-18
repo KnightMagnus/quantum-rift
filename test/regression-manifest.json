@@ -81,6 +81,7 @@
     "motherlode-art.js"
   ],
   "browser": [
+    "chat-projection-browser.mjs",
     "sidebar-browser.mjs",
     "armada-formation-network.mjs",
     "armada-follow-two-clients.mjs",
@@ -428,10 +429,15 @@
     },
     {
       "id": "communications-log",
-      "owners": ["server/game.js", "client/ui.js"],
+      "owners": [
+        "server/game.js",
+        "client/ui.js",
+        "client/chat-projection.js",
+        "client/cockpit.css"
+      ],
       "services": [],
-      "tests": ["chat-bubbles.js", "v26.js", "core-actions.js"],
-      "asserts": "Chat channel scoping, plain-text transient ship bubbles, bounded captain notes and non-idle-resetting ping/pong."
+      "tests": ["chat-bubbles.js", "v26.js", "core-actions.js", "chat-projection-browser.mjs"],
+      "asserts": "Chat channel scoping, plain-text transient ship bubbles, bounded captain notes and non-idle-resetting ping/pong; live single-log hologram expansion, real sending, retained scroll and bounded history, escaped text, accessible collapse/Escape and modal priority, sidebar drag, narrow/scaled viewport bounds and reduced motion."
     },
     {
       "id": "radio-offline-proxy",
@@ -705,7 +711,7 @@
     "buymat": ["core-actions.js"],
     "rename": ["v203.js"],
     "note": ["core-actions.js"],
-    "chat": ["bot.js", "v06.js", "v26.js"],
+    "chat": ["bot.js", "v06.js", "v26.js", "chat-projection-browser.mjs"],
     "officer": ["v05.js", "v21.js"],
     "shuttle": ["v05.js"],
     "dock": ["v05.js", "v101.js", "v203.js", "v21.js"],

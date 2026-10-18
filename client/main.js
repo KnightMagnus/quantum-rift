@@ -1,4 +1,5 @@
 import { initShipFunctions } from './ship-functions.js';
+import { initChatProjection } from './chat-projection.js';
 import { coronaRouteBlocked } from '/shared/industrial-rules.js';
 import { initRefineryUI } from './refinery_ui.js';
 import { binding, migrateBindings, RESERVED_KEYS } from './action-bindings.js';
@@ -270,9 +271,11 @@ const miningUI = initMiningUI({
 });
 initRefineryUI(G, send);
 const shipFunctions = initShipFunctions(G, send);
+const chatProjection = initChatProjection(G);
 setInterval(() => {
   miningUI.refresh();
   shipFunctions.refresh();
+  chatProjection.refresh();
 }, 100);
 function applyOpts() {
   G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
@@ -2520,6 +2523,12 @@ window.addEventListener(
     const focusedPanel = document.activeElement.closest('.function-panel:not(.hidden)');
     if (focusedPanel) {
       focusedPanel.querySelector('header button')?.click();
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+    if (chatProjection.isOpen()) {
+      chatProjection.collapse();
       e.preventDefault();
       e.stopImmediatePropagation();
       return;

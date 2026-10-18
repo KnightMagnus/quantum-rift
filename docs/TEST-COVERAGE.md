@@ -397,6 +397,17 @@ only; not exhaustive hull/loadout or real WAN latency testing.
 - Inventory: Combat, Mining (survey/cutting/group help), Towing, Dredge Processing, Fleet/Formation wing orders, Drones secondary-input shortcut. Hailing retains its indicator/modal; comms candidates supplied without duplicate comms. Armada Follow stays in Allies; server follow untouched.
 - User-selected icons: Combat A, Towing B, Fleet A, Drones A, Hailing B and Processing C. Drone shortcut preserves secondary fire, including other secondary weapons.
 
+### Chat history projection
+
+System: `communications-log`. `chat-projection-browser.mjs` exercises one live log
+moving between console and holographic projection, native keyboard activation,
+real chat sending, the existing 40-entry retention limit, escaped inbound text,
+history scrolling without incoming-message jumps, focus restoration, Escape before
+logout, automatic retraction for menus, sidebar pointer resizing, six narrow/scaled
+viewport combinations and reduced-motion support. Screenshots use the actual game
+with isolated deterministic accounts and seeded chat conversations. The `chat` action
+mapping includes this test; authoritative channel scoping remains covered separately.
+
 ### 3.1 cockpit restyle
 
 System: `cockpit-restyle`.
