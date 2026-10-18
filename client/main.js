@@ -1,3 +1,4 @@
+import { initSidebarSize } from './sidebar-size.js';
 import { initShipFunctions } from './ship-functions.js';
 import { initChatProjection } from './chat-projection.js';
 import { coronaRouteBlocked } from '/shared/industrial-rules.js';
@@ -1008,7 +1009,7 @@ window.addEventListener('keydown', (e) => {
       'PageUp',
       'PageDown',
     ].includes(e.key) &&
-    e.target.closest?.('button, summary, a, [role="button"]')
+    e.target.closest?.('button, summary, a, [role="button"], [role="separator"]')
   )
     return;
   if (e.key === 'Enter' && G.you) {
@@ -1722,7 +1723,7 @@ $('radar').addEventListener('mousedown', (e) => {
     my = (e.clientY - rect.top) * r;
   const W = rc.width,
     H = rc.height,
-    k = (H / 2 / (G.radarR || 4200)) * 1.15;
+    k = (Math.min(W, H) / 2 / (G.radarR || 4200)) * 1.15;
   let best = null,
     bd = 10 * r;
   for (const en of G.ents.values()) {
@@ -2076,6 +2077,7 @@ function resize() {
 window.addEventListener('resize', resize);
 // Sidebar reflow (including UI scale and persisted widths) also changes the radar.
 new ResizeObserver(resize).observe($('radar'));
+initSidebarSize(resize);
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.

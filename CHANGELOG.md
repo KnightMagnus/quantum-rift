@@ -8,6 +8,7 @@ Every release, newest first. The main story is left out on purpose.
 - Preview trade amounts using current local prices, cargo grades, perks and order size. Warn when using higher-grade cargo or supplies still needed for a delivery.
 - Add a compact recent-trip recap for goods and refining, clearly separated from full profit and other expenses/rewards.
 - Provide reproducible economy-measurement tools and protocols without claiming unmeasured balance improvements. Reward, price, fee, yield and recovery formulas are unchanged.
+- Add independent vertical drag/keyboard sizing for the sidebar minimap and tabbed menu, with remembered heights and automatic-layout reset.
 - Remember per-captain console views, filters and browsing positions; return to the originating Codex item after details. Pin one next objective inside the existing Tray without hiding other mission tracking.
 - Explain unavailable cargo/towing actions and link back to existing screens, retaining essential confirmations and native keyboard interaction.
 - Economy is the first merge toward the cumulative economy, QoL and mission update; it has no standalone release. Radio and user-supplied music remain separate future work.

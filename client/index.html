@@ -26,6 +26,16 @@
         <canvas id="radar" width="320" height="200"></canvas>
         <div id="sysname">&nbsp;</div>
       </div>
+      <div
+        id="radarheightgrip"
+        class="heightgrip"
+        role="separator"
+        tabindex="0"
+        aria-label="Resize minimap height"
+        aria-orientation="horizontal"
+        aria-controls="radarwrap"
+        title="Drag vertically to resize the minimap. Arrow keys resize; Enter or double-click resets."
+      ></div>
       <div class="well box" id="status">
         <div class="row">
           <span class="lbl">SHIELD</span>
@@ -136,6 +146,16 @@
           <div class="list" id="llist"></div>
         </div>
       </section>
+      <div
+        id="menuheightgrip"
+        class="heightgrip"
+        role="separator"
+        tabindex="0"
+        aria-label="Resize tabbed menu height"
+        aria-orientation="horizontal"
+        aria-controls="cpanel"
+        title="Drag vertically to resize the menu. Arrow keys resize; Enter or double-click resets."
+      ></div>
     </aside>
 
     <!-- 1.0.1: the command bar: chat with channels, controls help, key bindings, options, map -->
