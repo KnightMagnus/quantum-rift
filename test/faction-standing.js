@@ -134,14 +134,19 @@ d.rep.quantum = 250;
 g.features.fronts.jobDone(s, { reward: 1000, chain: { fac: 'quantum', step: 2 } }, p);
 assert.equal(d.rep.quantum, 262, 'commission finale retains high standing');
 d.rep.quantum = 250;
-g.features.quests.questFinish(s, {
+const standingSide = {
   qid: 'standing-side',
   side: SIDE_STORIES[0].id,
   at: p.id,
   name: 'Standing side',
   giver: 'Test',
-});
+};
+// Model an active quest: completion now correctly rejects nonexistent/replayed records.
+g.features.quests.questInit(d).active[standingSide.qid] = standingSide;
+g.features.quests.questFinish(s, standingSide);
 assert.equal(d.rep.quantum, 258, 'quest reward does not truncate high standing');
+g.features.quests.questFinish(s, standingSide);
+assert.equal(d.rep.quantum, 258, 'replayed quest completion cannot award standing twice');
 d.rep.quantum = 250;
 g.features.hangar.resolveShuttle(s, {
   kind: 'courier',
