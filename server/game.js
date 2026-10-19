@@ -1,3 +1,4 @@
+import { discoverRadio, grantRadio, radioTourOffer, advanceRadioTour } from './radio-discovery.js';
 import { purchaseUnit, saleValue } from './trade-pricing.js';
 import {
   recordEconomy,
@@ -50,6 +51,7 @@ import { eventideOffers } from '../shared/eventide.js';
  * @property {Array<import('../shared/rules.js').OfficerRecord>} [officers] Station officer roster.
  * @property {Record<string, string>} [bridge] Bridge officer assignments.
  * @property {Record<string, number | string | boolean>} [arcs] Story arc states.
+ * @property {string[]} [radioStations] Discovered radio station IDs.
  * @property {Record<string, import('../shared/quests.js').QuestRecord | number | boolean>} [quests] Active and completed missions.
  * @property {Record<string, number | string | boolean>} [syn] Syndicate operations progression.
  * @property {Record<string, number | string | boolean>} [spec] Specialist career progression.
@@ -129,6 +131,7 @@ import { eventideOffers } from '../shared/eventide.js';
  *
  * @typedef {object} Mission
  * @property {string} id Unique mission ID.
+ * @property {{stops: string[], stop: number}} [radioTour] Saved five-stop passenger tour.
  * @property {string} type Mission type ('cargo', 'bounty', 'patrol', 'supply', 'smuggle', 'assassinate', 'quest', 'warband').
  * @property {string} title Mission display title.
  * @property {string} sys Target system ID.
@@ -869,6 +872,7 @@ export class Game {
         cargoLots: structuredClone(d.cargoLots),
         paid: d.paid || {},
         economyReceipt: economyReceipt(d),
+        radioStations: discoverRadio(this, s),
         mats: d.mats,
         rep: d.rep,
         shipless: !!d.shipless,
@@ -3138,6 +3142,8 @@ export class Game {
         text: `Only captains rated Dangerous or better are offered this one. ${nm} flies a ${H.name} out of ${S.name}. The Concord wants it gone.`,
       });
     }
+    const radioTour = radioTourOffer(p, d);
+    if (radioTour) out.unshift(radioTour);
     out.unshift(...this.features.quests.questOffers(p, d)); // 2.4: contacts and side stories lead the board
     return out
       .filter(
@@ -3190,7 +3196,8 @@ export class Game {
     const d = s.data;
     d.lastStellar = p.id;
     for (const m of [...d.missions]) {
-      if (m.type === 'miningOrder') continue;
+      if (m.type === 'miningOrder' || m.paid) continue;
+      if (m.radioTour && advanceRadioTour(this, s, m, p)) continue;
       // a snapshot: follow-up jobs added on this landing wait for the next one
       if (m.type === 'supply' && m.dest === p.id && !this.features.living.supplyReady(d, m)) {
         this.toast(s, `${m.title}: you need ${m.qty} t of ${m.cid} in your hold.`);
@@ -3220,6 +3227,16 @@ export class Game {
         d.credits += m.reward;
         d.stats.earned += m.reward;
         m.paid = true;
+        if (m.radioTour) {
+          grantRadio(this, s, 'super-idol');
+          this.send(s, {
+            t: 'story',
+            tag: 'SPACEPOP TOUR COMPLETE',
+            title: 'An album for the road',
+            done: true,
+            text: 'Lyra, Miri and Solenne hand you a digital copy of their album. "For our favourite captain. Keep us on the radio." Super-Idol Radio has been added to your console.',
+          });
+        }
         d.rep[SYS[p.system].faction] = clampStanding((d.rep[SYS[p.system].faction] || 0) + 2);
         if (Math.random() < 0.35) {
           const mt = MATERIALS[Math.floor(Math.random() * 3)],

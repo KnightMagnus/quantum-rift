@@ -52,7 +52,7 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 - Solo mode includes pause, save slots and save-file import and export. A newcomer truce limits ambient hostility while you establish your station; missions and deliberate aggression can still lead to combat.
 - Remap controls, adjust interface scale, use a colour-blind palette, or play with a gamepad or touch controls.
 - Resize the Tray, minimap and tabbed menu to suit your screen. Keep browsing positions and filters, and pin one next objective without hiding your other missions.
-- Tune into live radio stations alongside the game's synthesized soundscape.
+- Discover five radio stations through exploration and special jobs, with 32 owner-supplied songs and a full-album Spacepop tour reward. Stations shuffle their music except the Super-Idol album, which plays in order.
 - Run locally in your browser with Node.js—no package installation or build step required.
 
 ## Requirements
@@ -90,3 +90,7 @@ Open **http://localhost:8080** if the browser does not open automatically. Keep 
 **Galaxy map**
 
 ![In-game galaxy map menu](docs/screenshots/map-fidelity.png)
+
+**Discoverable radio stations**
+
+![Knight playing the owner-supplied Super-Idol album with all five stations available](docs/screenshots/radio-discovery-draft.png)

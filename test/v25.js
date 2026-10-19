@@ -150,9 +150,10 @@ const size = (d) =>
     );
 {
   const ships = size(AS + 'ships/');
+  const radio = fs.existsSync(AS + 'radio/') ? size(AS + 'radio/') : 0;
   ok(
-    size(AS) - ships < 29e6,
-    `client art besides the ship sheets stays small enough for one zip (${((size(AS) - ships) / 1e6).toFixed(1)} MB; 2.6 ship sheets ${(ships / 1e6).toFixed(1)} MB ship as part 2)`,
+    size(AS) - ships - radio < 29e6,
+    `client art besides separately packaged ships/radio stays small enough for one zip (${((size(AS) - ships - radio) / 1e6).toFixed(1)} MB; 2.6 ship sheets ${(ships / 1e6).toFixed(1)} MB ship as part 2)`,
   );
 }
 // polish

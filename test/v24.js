@@ -224,12 +224,12 @@ ok(
 
 // ---- side stories
 ok(
-  SIDE_STORIES.length === 6 &&
+  SIDE_STORIES.length === 7 &&
     SIDE_STORIES.every(
       (X) =>
         STELLARS[X.at] && STELLARS[X.at].svc.includes('B') && X.steps.every((s0) => SYS[s0.sys]),
     ),
-  'six side stories, each starting at a world with a bar',
+  'seven side stories, each starting at a world with a bar',
 );
 ok(
   !SIDE_STORIES.some((X) =>
