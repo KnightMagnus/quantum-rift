@@ -28,6 +28,8 @@ const actual = JSON.parse(
     },
   ),
 );
+// Radio draft adds only the saved starter station to the initialization baseline.
+// Preserve all other baseline fields; discovery/progression is tested separately.
 const expected = JSON.parse(
   fs.readFileSync(new URL('./fixtures/features-v26.json', import.meta.url)),
 );

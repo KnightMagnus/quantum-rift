@@ -1,4 +1,4 @@
-// Real HTTP boundary; radio upstream is deterministic/offline in a child-only preload.
+// Real HTTP boundary; retired radio routes cannot call an upstream provider.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,7 +21,9 @@ for (const solo of [false, true]) {
     trace = path.join(dir, 'upstream.json');
   fs.writeFileSync(
     fixture,
-    `import fs from 'node:fs';const calls=[];globalThis.fetch=async(input)=>{const url=String(input);calls.push(url);fs.writeFileSync(${JSON.stringify(trace)},JSON.stringify(calls));if(!url.startsWith('https://api.iheart.com/'))throw Error('Unexpected external request');if(url.includes('FAIL')||url.includes('/999'))throw Error('fixture outage');if(url.includes('/search/'))return new Response(JSON.stringify({hits:[{id:17,name:'Fixture Radio'}]}));if(url.includes('/liveStations/'))return new Response(JSON.stringify({hits:[{name:'Fixture Radio',description:'Offline fixture',callLetters:'TEST',streams:{secure_shoutcast_stream:'https://invalid.example/audio'}}]}));if(url.includes('/currentTrackMeta'))return new Response(JSON.stringify({artist:'Fixture Artist',title:'Fixture Track',album:'Fixture Album'}),{status:url.includes('/404/')?404:200});throw Error('Unhandled fixture upstream');};`,
+    "import fs from 'node:fs';globalThis.fetch=async()=>{fs.writeFileSync(" +
+      JSON.stringify(trace) +
+      ", 'unexpected');throw Error('No provider requests allowed');};",
   );
   const port = await availablePort(),
     origin = `http://127.0.0.1:${port}`;
@@ -64,35 +66,20 @@ for (const solo of [false, true]) {
       403,
       'encoded traversal cannot escape client root',
     );
-    const search = await request('/api/radio?q=' + encodeURIComponent('A'.repeat(100)));
-    assert.deepEqual(await search.json(), { hits: [{ id: 17, name: 'Fixture Radio' }] });
-    const calls = JSON.parse(fs.readFileSync(trace));
-    assert.equal(
-      new URL(calls.at(-1)).searchParams.get('keywords').length,
-      80,
-      'radio search is bounded',
-    );
-    assert.equal((await request('/api/radio/station?id=letters-only')).status, 400);
-    const station = await (await request('/api/radio/station?id=abc123456789012345')).json();
-    assert.equal(station.name, 'Fixture Radio');
-    assert.ok(station.streams.secure_shoutcast_stream);
-    assert.match(
-      JSON.parse(fs.readFileSync(trace)).at(-1),
-      /liveStations\/123456789012$/,
-      'station id digits-only and bounded',
-    );
-    assert.deepEqual(await (await request('/api/radio/meta?id=17')).json(), {
-      artist: 'Fixture Artist',
-      title: 'Fixture Track',
-      album: 'Fixture Album',
-    });
-    assert.deepEqual(await (await request('/api/radio/meta?id=404')).json(), {
-      artist: '',
-      title: '',
-      album: '',
-    });
-    assert.equal((await request('/api/radio?q=FAIL')).status, 502);
-    assert.equal((await request('/api/radio/station?id=999')).status, 502);
+    for (const route of ['/api/radio?q=calm', '/api/radio/station?id=17', '/api/radio/meta?id=17'])
+      assert.equal((await request(route)).status, 404, 'Retired provider route');
+    assert.equal(fs.existsSync(trace), false, 'No upstream provider fetches');
+    const mp3 = '/assets/sfx/music_login31.mp3';
+    const bytes = fs.readFileSync(path.join(root, 'client', mp3));
+    const range = await request(mp3, { headers: { Range: 'bytes=100-199' } });
+    assert.equal(range.status, 206);
+    assert.equal(range.headers.get('content-type'), 'audio/mpeg');
+    assert.equal(range.headers.get('content-range'), 'bytes 100-199/' + bytes.length);
+    assert.deepEqual(Buffer.from(await range.arrayBuffer()), bytes.subarray(100, 200));
+    const suffix = await request(mp3, { headers: { Range: 'bytes=-20' } });
+    assert.deepEqual(Buffer.from(await suffix.arrayBuffer()), bytes.subarray(-20));
+    for (const value of ['bytes=999999999-', 'bytes=20-10', 'bytes=-0', 'bytes=0-1,3-4'])
+      assert.equal((await request(mp3, { headers: { Range: value } })).status, 416);
     const exported = await request('/api/export?name=HTTP%20Captain');
     if (solo) {
       assert.equal(exported.status, 200);
@@ -123,6 +110,6 @@ for (const solo of [false, true]) {
   }
 }
 console.log(
-  'Real HTTP: static/MIME/cache/traversal, online-vs-solo status/save permissions and roundtrip, offline radio search/station/meta/outage passed.',
+  'Real HTTP: static/MIME/cache/traversal, online-vs-solo status/save permissions and roundtrip, retired radio endpoints without upstream access passed.',
 );
 process.exit(0);

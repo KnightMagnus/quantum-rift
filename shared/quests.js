@@ -50,6 +50,7 @@
 /**
  * @typedef {Object} SideStoryReward
  * @property {number} credits - Credit reward payout.
+ * @property {string} [radio] Discovered station rewarded on completion.
  * @property {[string, number]} [crate] - Material crate reward tuple [materialType, grade].
  * @property {number} [bp] - Blueprint fragments rewarded.
  */
@@ -569,5 +570,40 @@ export const SIDE_STORIES = [
     ],
     end: 'Dr. Feld plays the message for hours. "It\'s not a warning. I think it\'s a greeting." She looks up at you. "Whatever is out there, it has been waiting a long time for someone to answer."',
     reward: { credits: 85000, crate: ['isotope', 4], bp: 12 },
+  },
+  {
+    id: 'sideways-apology',
+    name: 'The Sideways Apology',
+    at: 'ninefold-prime',
+    giver: 'Professor Ivo Kett and his grandson Jem',
+    intro:
+      'A nervous young man waves you over to a ship with six kettles bolted to its hull and a cockpit pointing the wrong way. His grandfather, a scientist with a flask close at hand, is arguing with a hatch. "Granddad has been drinking again," Jem says quietly. "He needs help, and I cannot fix this thing alone." Professor Kett produces a short parts list: a phase coupler in Northmark and thermal filament in Quietude. "Bring those back here. I have something for your radio."',
+    steps: [
+      {
+        type: 'salvage',
+        sys: 'northmark',
+        title: 'Recover a phase coupler',
+        brief: 'Recover the marked parts cache in Northmark, then land to secure it.',
+        beat: 'The coupler is intact. Jem sends a relieved message: "One down. The thermal filament is in Quietude. Please do not let him test the engine without it."',
+      },
+      {
+        type: 'salvage',
+        sys: 'quietude',
+        title: 'Recover thermal filament',
+        brief: 'Recover the marked parts cache in Quietude, then land to pack the repair kit.',
+        beat: 'The filament is still sealed. Together with the coupler it makes a two-tonne repair kit. All that remains is to bring it to Ninefold Prime.',
+      },
+      {
+        type: 'cargo',
+        sys: 'ninefold',
+        dest: 'ninefold-prime',
+        qty: 2,
+        cid: 'equipment',
+        title: 'Repair the Sideways Apology',
+        brief: 'Bring the repair kit to Professor Kett and Jem on Ninefold Prime.',
+      },
+    ],
+    end: 'Jem fits the last connector while his grandfather puts the flask aside. The ship unfolds a wing in a direction you were not aware existed. "We can get home," Jem says, finally smiling. Professor Kett presses a small radio device into your hand. "Attach this to your radio console. It hears the stations between stations. Thank you, Captain." Your crew connects it for you. Interdimensional Radio is now available.',
+    reward: { credits: 0, radio: 'interdimensional' },
   },
 ];

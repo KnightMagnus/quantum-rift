@@ -2,6 +2,14 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### Radio — draft, not released
+
+- Replace the external radio provider with five discoverable stations, saved per captain and announced through existing discovery popups.
+- Start with Wave Function Collapse; discover QVRI Que'vari Radio in any Que'vari system and Signal Superposition Radio in Lost Signal.
+- Earn Interdimensional Radio by helping a scientist grandfather and his grandson repair their unusual ship in a Ninefold Prime Story Job.
+- Encounter a very rare three-passenger, five-system Spacepop tour. Receive credits and Super-Idol Radio after the last show, playing its album in order on repeat.
+- Keep the existing HUD, favorites, search, mixer and mute controls. Owner-supplied station audio is pending; the login theme is unchanged.
+
 ### 3.2.1 — Simpler economy, cockpit QoL and mission choices
 
 - Show refining cost, output and waiting time automatically, with one Start Refining action instead of manual quote management. Keep authoritative price, ownership, cargo and duplicate-action safeguards.

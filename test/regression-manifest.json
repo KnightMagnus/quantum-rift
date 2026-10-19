@@ -80,7 +80,9 @@
     "towing-auto-delivery.js",
     "motherlode-art.js",
     "economy-32.js",
-    "mission-consent.js"
+    "mission-consent.js",
+    "radio-playlists.js",
+    "radio-discovery.js"
   ],
   "browser": [
     "chat-projection-browser.mjs",
@@ -113,7 +115,8 @@
     "landed-live-browser.mjs",
     "qol-browser.mjs",
     "sidebar-sizing-browser.mjs",
-    "mission-ui-browser.mjs"
+    "mission-ui-browser.mjs",
+    "radio-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -445,11 +448,19 @@
       "asserts": "Chat channel scoping, plain-text transient ship bubbles, bounded captain notes and non-idle-resetting ping/pong; live single-log hologram expansion, real sending, retained scroll and bounded history, escaped text, accessible collapse/Escape and modal priority, sidebar drag, narrow/scaled viewport bounds and reduced motion."
     },
     {
-      "id": "radio-offline-proxy",
-      "owners": ["server/main.js"],
+      "id": "radio-discovery",
+      "owners": [
+        "server/main.js",
+        "server/radio-discovery.js",
+        "server/quests.js",
+        "shared/quests.js",
+        "shared/radio-stations.js",
+        "client/radio.js",
+        "client/ui.js"
+      ],
       "services": [],
-      "tests": ["http-api.mjs"],
-      "asserts": "Real HTTP proxy requests against child-local mocked provider: search bounds, sanitized station IDs, stream/track response shapes and upstream outage/error fallbacks."
+      "tests": ["http-api.mjs", "radio-playlists.js", "radio-discovery.js", "radio-browser.mjs"],
+      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings."
     },
     {
       "id": "economy-balance",
@@ -742,7 +753,13 @@
       "v24.js",
       "armada-follow-two-clients.mjs"
     ],
-    "jump": ["armada-formation-network.mjs", "bot.js", "v10.js"],
+    "jump": [
+      "armada-formation-network.mjs",
+      "bot.js",
+      "v10.js",
+      "radio-discovery.js",
+      "radio-browser.mjs"
+    ],
     "trade": [
       "bot.js",
       "cargo-flows.js",
@@ -768,9 +785,10 @@
       "v24.js",
       "v26.js",
       "mission-consent.js",
-      "mission-ui-browser.mjs"
+      "mission-ui-browser.mjs",
+      "radio-discovery.js"
     ],
-    "abandon": ["v203.js", "v24.js"],
+    "abandon": ["v203.js", "v24.js", "radio-discovery.js"],
     "station": [
       "cargo-flows.js",
       "sim.js",

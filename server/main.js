@@ -1,4 +1,4 @@
-// Quantum Rift server entry: static files, WebSocket game connection, radio search proxy.
+// Quantum Rift server entry: static files, WebSocket game connection, local game endpoints.
 // Run: node server/main.js   (PORT and DATA_DIR environment variables are optional)
 import http from 'node:http';
 import fs from 'node:fs';
@@ -63,6 +63,7 @@ const TYPES = {
   '.jpg': 'image/jpeg',
   '.webp': 'image/webp',
   '.wav': 'audio/wav',
+  '.mp3': 'audio/mpeg',
   '.css': 'text/css',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
@@ -76,14 +77,46 @@ const TYPES = {
  * @param {boolean} cache Whether to enable client-side 1-day public caching.
  * @returns {void}
  */
-function serve(res, file, cache) {
+function serve(res, file, cache, range) {
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) {
       res.writeHead(404);
       res.end('not found');
       return;
     }
+    if (path.extname(file) === '.mp3' && range) {
+      const m = /^bytes=(\d*)-(\d*)$/.exec(range);
+      let start = m?.[1] ? Number(m[1]) : 0;
+      let end = m?.[2] ? Number(m[2]) : st.size - 1;
+      if (m && !m[1] && m[2]) {
+        start = Math.max(0, st.size - Number(m[2]));
+        end = st.size - 1;
+      }
+      end = Math.min(end, st.size - 1);
+      if (
+        !m ||
+        (!m[1] && !m[2]) ||
+        !Number.isSafeInteger(start) ||
+        !Number.isSafeInteger(end) ||
+        start > end ||
+        start >= st.size
+      ) {
+        res.writeHead(416, { 'Content-Range': 'bytes */' + st.size });
+        res.end();
+        return;
+      }
+      res.writeHead(206, {
+        'Content-Type': 'audio/mpeg',
+        'Accept-Ranges': 'bytes',
+        'Content-Range': 'bytes ' + start + '-' + end + '/' + st.size,
+        'Content-Length': end - start + 1,
+        'Cache-Control': cache ? 'public, max-age=86400' : 'no-cache',
+      });
+      fs.createReadStream(file, { start, end }).pipe(res);
+      return;
+    }
     res.writeHead(200, {
+      ...(path.extname(file) === '.mp3' ? { 'Accept-Ranges': 'bytes' } : {}),
       'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream',
       'Content-Length': st.size,
       'Cache-Control': cache ? 'public, max-age=86400' : 'no-cache',
@@ -99,65 +132,6 @@ function serve(res, file, cache) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   let p = decodeURIComponent(url.pathname);
-  if (p === '/api/radio') {
-    // iHeartRadio station search for the in-HUD radio (the browser can't call it directly)
-    try {
-      const q = (url.searchParams.get('q') || '').slice(0, 80);
-      const r = await fetch(
-        'https://api.iheart.com/api/v3/search/all?keywords=' +
-          encodeURIComponent(q) +
-          '&maxRows=30&bundle=false&station=true&artist=false&track=false&playlist=false&podcast=false',
-        { headers: { 'User-Agent': 'QuantumRift/1.0', Accept: 'application/json' } },
-      );
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(await r.text());
-    } catch (e) {
-      res.writeHead(502);
-      res.end('{}');
-    }
-    return;
-  }
-  // 1.0.3: a station's direct audio streams (played in an <audio> element so the game controls volume) and its now-playing text
-  if (p === '/api/radio/station' || p === '/api/radio/meta') {
-    const id = (url.searchParams.get('id') || '').replace(/[^0-9]/g, '').slice(0, 12);
-    if (!id) {
-      res.writeHead(400);
-      res.end('{}');
-      return;
-    }
-    try {
-      const H = { headers: { 'User-Agent': 'QuantumRift/1.0', Accept: 'application/json' } };
-      if (p === '/api/radio/station') {
-        const j = await (
-            await fetch('https://api.iheart.com/api/v2/content/liveStations/' + id, H)
-          ).json(),
-          st = (j.hits && j.hits[0]) || {};
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({
-            name: st.name || '',
-            desc: st.description || '',
-            call: st.callLetters || '',
-            streams: st.streams || {},
-          }),
-        );
-      } else {
-        const r = await fetch(
-          'https://api.iheart.com/api/v3/live-meta/stream/' + id + '/currentTrackMeta',
-          H,
-        );
-        const j = r.status === 200 ? await r.json() : {};
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({ artist: j.artist || '', title: j.title || '', album: j.album || '' }),
-        );
-      }
-    } catch (e) {
-      res.writeHead(502);
-      res.end('{}');
-    }
-    return;
-  }
   if (p === '/api/status') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(
@@ -217,7 +191,12 @@ const server = http.createServer(async (req, res) => {
   }
   const catalog =
     (p.startsWith('/assets/ships/') && p.endsWith('_yard.png')) || p.startsWith('/assets/icons/');
-  serve(res, file, p.startsWith('/assets/') && (!catalog || url.searchParams.get('v') === VERSION));
+  serve(
+    res,
+    file,
+    p.startsWith('/assets/') && (!catalog || url.searchParams.get('v') === VERSION),
+    req.headers.range,
+  );
 });
 
 server.on('upgrade', (req, sock) => {

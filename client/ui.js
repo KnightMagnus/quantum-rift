@@ -12,7 +12,7 @@ import { stationLanding } from './exotic_scenery.js';
 import { passengerSeats, occupiedPassengerSeats } from '/shared/passengers.js';
 // Quantum Rift interface: HUD, landing screens (trade, shipyard, outfitter, jobs, Quantum Station), companion tabs, galaxy map, chat.
 import { missionsHtml, missionTargets, pinnedObjectiveHtml } from './missions.js';
-import { playStation, stopRadio } from './radio.js';
+import { playStation, stopRadio, RADIO_STATIONS, setUnlockedStations } from './radio.js';
 import { blackMarketHtml, bankHtml, arcCardsHtml, bunkInfo, synBadge } from './syn_ui.js';
 import {
   SYS,
@@ -459,6 +459,7 @@ export function initUI(g, sender) {
   };
   $('rres').onclick = () => {
     G.radioTab = 'res';
+    $('rq').value = '';
     renderRadio();
   };
   $('rstop').onclick = () => stopRadio($('rnow'));
@@ -800,7 +801,8 @@ export function ctab(name, reveal = true) {
  * @returns {void}
  */
 export function refreshCompanion() {
-  if (G.ctab === 'codex') renderCodex();
+  if (G.ctab === 'radio') renderRadio();
+  else if (G.ctab === 'codex') renderCodex();
   else if (G.ctab === 'station') renderStationTab();
   else if (G.ctab === 'ops') {
     if (G.you) G.views.replace($('opsview'), opsHtml(G), 'ops');
@@ -836,103 +838,79 @@ export function drawMini() {
     }
   }
 } // 1.0.1: the MISSIONS tab replaced the minimap
-// radio (iHeartRadio, as in the Quantum Companion)
-/**
- * Generates a URL-friendly slug identifier from a station name string.
- * @param {string} n Input station name
- * @returns {string} URL slug string
- */
-function slug(n) {
-  return (
-    String(n || '')
-      .toLowerCase()
-      .normalize('NFKD')
-      .replace(/[̀-ͯ]/g, '')
-      .replace(/&/g, ' and ')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'station'
-  );
-}
+// Discovered stations only; old provider favorites remain stored untouched.
 /**
  * Loads favorite radio stations from localStorage.
  * @returns {RadioStation[]} Stored favorite radio stations
  */
+function availableRadio() {
+  const ids = G.you?.radioStations || [RADIO_STATIONS[0].id];
+  return RADIO_STATIONS.filter((s) => ids.includes(s.id));
+}
+function favKey() {
+  return 'rift.radio-favs.' + (G.you?.name || '').toLowerCase();
+}
 function favs() {
   try {
-    return JSON.parse(localStorage.getItem('rift.favs') || '[]');
+    const ids = JSON.parse(localStorage.getItem(favKey()) || '[]');
+    return availableRadio().filter((s) => ids.includes(s.id));
   } catch {
     return [];
   }
 }
-/**
- * Persists favorite radio stations list to localStorage.
- * @param {RadioStation[]} f Array of radio stations
- * @returns {void}
- */
-function setFavs(f) {
+function setFavs(stations) {
   try {
-    localStorage.setItem('rift.favs', JSON.stringify(f));
+    localStorage.setItem(favKey(), JSON.stringify(stations.map((s) => s.id)));
   } catch {}
 }
-/**
- * Performs a search query against the radio API and renders the search results.
- * @returns {Promise<void>}
- */
-async function radioSearch() {
-  const q = $('rq').value.trim();
-  if (!q) return;
+function radioSearch() {
   G.radioTab = 'res';
-  G.radioRes = [];
-  renderRadio();
-  $('rlist').innerHTML = '<div class="dim small" style="padding:8px">Scanning...</div>';
-  try {
-    const d = await (await fetch('/api/radio?q=' + encodeURIComponent(q))).json();
-    G.radioRes = ((d.results && d.results.stations) || []).map((s) => ({
-      id: String(s.id),
-      name: s.name,
-      sub: [s.callLetters, s.description].filter(Boolean).join(' · '),
-      img: s.imageUrl || s.logo || '',
-    }));
-  } catch {
-    G.radioRes = [];
-  }
   renderRadio();
 }
-/**
- * Renders the radio tab stations list (favorites or search results).
- * @returns {void}
- */
 function renderRadio() {
-  $('rfav').classList.toggle('on', G.radioTab !== 'res');
-  $('rres').classList.toggle('on', G.radioTab === 'res');
-  const list = G.radioTab === 'res' ? G.radioRes || [] : favs(),
-    F = favs();
+  $('rfav').classList.toggle('on', G.radioTab === 'fav');
+  $('rres').classList.toggle('on', G.radioTab !== 'fav');
+  const q = $('rq').value.trim().toLowerCase();
+  const list =
+    G.radioTab === 'fav'
+      ? favs()
+      : availableRadio().filter((s) => (s.name + ' ' + s.sub).toLowerCase().includes(q));
+  const favorites = favs();
+  setUnlockedStations(G.you?.radioStations);
   $('rlist').innerHTML = list.length
     ? list
         .map(
           (s, i) =>
-            `<div class="it" data-i="${i}"><img src="${esc(s.img)}" alt="" onerror="this.style.visibility='hidden'"><div class="n"><div>${esc(s.name)}</div><div class="s">${esc(s.sub)}</div></div><span class="star" data-star="${i}" style="color:${F.some((f) => f.id === s.id) ? '#e6b84a' : '#555'};font-size:15px">★</span></div>`,
+            `<div class="it" data-i="${i}" role="button" tabindex="0" aria-label="Play ${esc(s.name)}"><div class="n"><div>${esc(s.name)}</div><div class="s">${esc(s.sub)}</div></div><span class="star" role="button" tabindex="0" aria-label="Favorite ${esc(s.name)}" data-star="${i}" style="color:${favorites.some((f) => f.id === s.id) ? '#e6b84a' : '#555'};font-size:15px">★</span></div>`,
         )
         .join('')
-    : `<div class="dim small" style="padding:8px">${G.radioTab === 'res' ? 'No stations found.' : 'No favorites yet. Search, then tap the star.'}</div>`;
-  $('rlist')
-    .querySelectorAll('.it')
-    .forEach(
-      (el) =>
-        (el.onclick = (e) => {
-          const s = list[+el.dataset.i];
-          if (e.target.dataset.star !== undefined) {
-            const f = favs(),
-              k = f.findIndex((x) => x.id === s.id);
-            if (k >= 0) f.splice(k, 1);
-            else f.push(s);
-            setFavs(f);
-            renderRadio();
-            return;
-          }
-          playStation(s, $('rnow'), slug(s.name)); // 1.0.3: plays in-game (mixer volume, auto-play), with an on-air text panel
-        }),
-    );
+    : '<div class="dim small" style="padding:8px">' +
+      (G.radioTab === 'fav'
+        ? 'No favorites yet. Choose STATIONS, then use a star to save one.'
+        : 'No stations match. Explore to discover more broadcasts.') +
+      '</div>';
+  for (const el of $('rlist').querySelectorAll('[role=button]'))
+    el.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        el.click();
+      }
+    };
+  for (const el of $('rlist').querySelectorAll('.it'))
+    el.onclick = (e) => {
+      const station = list[+el.dataset.i];
+      if (e.target.dataset.star !== undefined) {
+        const f = favs(),
+          i = f.findIndex((s) => s.id === station.id);
+        if (i >= 0) f.splice(i, 1);
+        else f.push(station);
+        setFavs(f);
+        renderRadio();
+        return;
+      }
+      playStation(station, $('rnow'));
+    };
 }
 // codex
 let codexCat = 'Ships';

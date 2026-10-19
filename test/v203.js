@@ -182,10 +182,14 @@ const land = (id) => {
 };
 land('qstation');
 d.ship = (await import('../shared/rules.js')).makeLoadout(A, 704, 'Hauler');
+// Mission offers depend on the ten-minute wall-clock window, not just test RNG.
+const realNow = Date.now;
+Date.now = () => 1792339200000;
 const job = g
   .offers(STELLARS.qstation, d)
   .find((o) => o.type === 'cargo' && o.qty < g.features.shipStats.stats(d).cargo);
 P.send({ t: 'accept', id: job.id });
+Date.now = realNow;
 const cid = g.market(STELLARS.qstation)[0].id;
 P.send({ t: 'trade', cid, qty: 99 });
 ok(

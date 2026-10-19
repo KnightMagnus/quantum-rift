@@ -41,7 +41,7 @@ import {
   FAC,
 } from './render.js';
 import * as audio from './audio.js';
-import { setRadioLevel, stopRadio } from './radio.js';
+import { setRadioLevel, stopRadio, setUnlockedStations } from './radio.js';
 window.RiftAudio = audio; // for tests and the curious
 import { infoHtml } from './info_ui.js';
 import { boardHtml } from './hangar_ui.js';
@@ -574,6 +574,7 @@ function onMessage(m) {
     case 'you': {
       const first = !G.you;
       G.you = m.d;
+      setUnlockedStations(G.you.radioStations);
       const restoredViews = G.views.load();
       G.sys = m.d.sys;
       coopYou(); // 2.6

@@ -263,7 +263,8 @@
     "storageLots": {
       "version": 1,
       "byCommodity": {}
-    }
+    },
+    "radioStations": ["wave-function-collapse"]
   },
   "samples": [
     {

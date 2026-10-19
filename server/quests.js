@@ -1,5 +1,7 @@
+import { grantRadio } from './radio-discovery.js';
+import { RADIO_STATIONS, SCIENTIST_STORY } from '../shared/radio-stations.js';
 import { clampStanding } from '../shared/reputation.js';
-// Quantum Rift 2.4: questlines. Contacts at spaceport bars offer multi-step jobs that tell a small story, and six
+// Quantum Rift 2.4: questlines. Contacts at spaceport bars offer multi-step jobs that tell a small story, and seven
 // handcrafted side stories wait at particular worlds. Each step is an ordinary job tagged with `m.quest`; finishing it
 // tells the next part of the story and posts the next step. Mixed into Game.
 import {
@@ -303,7 +305,9 @@ export const QuestOperations = {
    * @returns {string} Comma-separated reward description text.
    */
   questRewardText(R) {
-    const a = [`${credits(R.credits)} credits`];
+    const a = R.credits ? [`${credits(R.credits)} credits`] : [];
+    if (R.radio)
+      a.push(`radio station: ${RADIO_STATIONS.find((s) => s.id === R.radio)?.name || R.radio}`);
     if (R.crate) a.push(`a ${R.crate[0] || 'material'} ${GRADES[R.crate[1]]} crate`);
     if (R.officer) a.push('a new officer');
     if (R.bp) a.push(`${R.bp} specialist blueprints`);
@@ -387,7 +391,12 @@ export const QuestOperations = {
     let Q;
     if (o.side) {
       const X = SIDE_STORIES.find((x) => x.id === o.side);
-      if (!X) return;
+      if (!X || X.at !== p?.id || q.sides[X.id] || q.active['s:' + X.id]) return;
+      if (
+        X.id === SCIENTIST_STORY &&
+        this.stats(d).cargo - this.holdUsed(d) < needsOf(X.steps).hold
+      )
+        return this.toast(s, 'Free two tonnes of hold space for the repair kit first.');
       Q = {
         qid: 's:' + X.id,
         side: X.id,
@@ -466,7 +475,7 @@ export const QuestOperations = {
     switch (st.type) {
       case 'cargo':
         Object.assign(m, {
-          dest: port,
+          dest: st.dest || port,
           cid: st.cid || 'equipment',
           qty: st.qty || 4,
           reward: Math.round(1500 + jumps * 1200 + (st.qty || 4) * 90),
@@ -478,21 +487,21 @@ export const QuestOperations = {
         break;
       case 'smuggle':
         Object.assign(m, {
-          dest: port,
+          dest: st.dest || port,
           qty: st.qty || 3,
           reward: Math.round(8000 + (st.qty || 3) * 600),
         });
         break;
       case 'passenger':
         Object.assign(m, {
-          dest: port,
+          dest: st.dest || port,
           pax: st.pax || 1,
           reward: Math.round(2500 + (st.pax || 1) * 1200),
         });
         break;
       case 'supply':
         Object.assign(m, {
-          dest: port,
+          dest: st.dest || port,
           cid: st.cid,
           qty: st.qty,
           reward: Math.round(
@@ -657,6 +666,7 @@ export const QuestOperations = {
   questFinish(s, Q) {
     const d = s.data,
       q = this.questInit(d);
+    if (q.active[Q.qid] !== Q) return;
     delete q.active[Q.qid];
     let R, endText, X;
     if (Q.side) {
@@ -673,7 +683,9 @@ export const QuestOperations = {
       cs.cool = Date.now() + CONTACT_COOL_MIN * 60000;
       cs.last = [Q.chain, ...(cs.last || [])].slice(0, 3);
     }
-    const got = [`${credits(R.credits)} credits`];
+    const got = R.credits ? [`${credits(R.credits)} credits`] : [];
+    if (R.radio && grantRadio(this, s, R.radio))
+      got.push(`radio station: ${RADIO_STATIONS.find((s) => s.id === R.radio).name}`);
     d.credits += R.credits;
     d.stats.earned += R.credits;
     if (R.crate) {

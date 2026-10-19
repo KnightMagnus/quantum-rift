@@ -187,13 +187,13 @@ single-player focused for now.
 
 - Playwright with Chromium for browser tests.
 - Python with Pillow and numpy for the art pipeline and asset tools; numpy, scipy and ffmpeg for the synthesized audio.
-- hls.js (loaded from cdnjs only when a radio station needs HLS).
+- Radio uses local `<audio>` playlists; no external provider, directory or HLS dependency. See [radio content and unlocks](docs/RADIO.md).
 
 ## Test suites (full list)
 
 - `python3 test/v103_shot.py <outdir>`: 1.0.3 browser check (jobs, trade MAX and SELL ALL, outfitter, career card, L to depart,
   autopilot landing).
-- `python3 test/v103_radio.py <outdir>`: the in-game radio, with the station directory mocked.
+- `python3 test/v103_radio.py <outdir>`: the local radio playlist and isolated browser regressions (test-only silent WAV playback; owner recordings pending).
 - `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
 - `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
 - `node test/v252.js`: 2.5.2 checks (story needs, supply warnings, mining hints, markets for mined goods, war fleets and newcomers, the map station marker, the ring art).
