@@ -74,7 +74,7 @@ function panel(state, track, message = '') {
     '</div><div class="oa-sub">' +
     esc(cur?.sub) +
     '</div><div class="oa-track" id="rtrack">♪ <b>' +
-    esc(track.title) +
+    esc(cur?.id === 'super-idol' || state === 'empty' ? track.title : 'Broadcast') +
     '</b>' +
     (message ? '<br>' + esc(message) : '') +
     '</div><div class="oa-ctrl"><label>VOL <input aria-label="Radio volume" type="range" id="rvol" min="0" max="1" step="0.05" value="' +

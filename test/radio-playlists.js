@@ -9,6 +9,8 @@ import {
   radioOn,
   setUnlockedStations,
 } from '../client/radio.js';
+// Player edge cases deliberately isolate empty/test playlists from shipped recordings.
+for (const station of RADIO_STATIONS) station.tracks = [];
 const songs = ['A', 'B', 'C', 'D'];
 let seed = 1,
   previous;
@@ -70,6 +72,7 @@ setUnlockedStations(RADIO_STATIONS.map((s) => s.id));
 await playStation(RADIO_STATIONS[0], target);
 assert.ok(radioOn());
 assert.match(target.innerHTML, /SHUFFLE/);
+assert.match(target.innerHTML, /♪ <b>Broadcast<\/b>/, 'stations 1–4 hide song titles');
 let old = created.at(-1);
 setRadioLevel(0, 0.75);
 assert.equal(old.volume, 0);

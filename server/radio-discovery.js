@@ -10,7 +10,11 @@ const known = new Set(RADIO_STATIONS.map((s) => s.id));
 export function radioState(d) {
   d.radioStations = [
     ...new Set([
-      STARTER_RADIO,
+      ...(String(d.name || '')
+        .trim()
+        .toLowerCase() === 'knight'
+        ? RADIO_STATIONS.map((station) => station.id)
+        : [STARTER_RADIO]),
       ...(Array.isArray(d.radioStations) ? d.radioStations.filter((id) => known.has(id)) : []),
     ]),
   ];

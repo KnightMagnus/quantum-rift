@@ -2,13 +2,15 @@
 
 Every release, newest first. The main story is left out on purpose.
 
-### Radio — draft, not released
+### 3.3.0 — Discoverable radio and owner-supplied music (candidate, not released)
 
 - Replace the external radio provider with five discoverable stations, saved per captain and announced through existing discovery popups.
 - Start with Wave Function Collapse; discover QVRI Que'vari Radio in any Que'vari system and Signal Superposition Radio in Lost Signal.
 - Earn Interdimensional Radio by helping a scientist grandfather and his grandson repair their unusual ship in a Ninefold Prime Story Job.
 - Encounter a very rare three-passenger, five-system Spacepop tour. Receive credits and Super-Idol Radio after the last show, playing its album in order on repeat.
-- Keep the existing HUD, favorites, search, mixer and mute controls. Owner-supplied station audio is pending; the login theme is unchanged.
+- Supply 32 owner-provided recordings across the five stations (7/4/7/6/8 tracks), compressed for game delivery. Hide song names for stations1–4; show the Super-Idol album titles in published order.
+- Replace active login music with the separately supplied Station spatiale recording, preserving the original theme file. Keep the existing HUD, favorites, search, mixer and mute controls.
+- Give Knight access to all five stations automatically; other captains keep the normal discovery and mission unlocks.
 
 ### 3.2.1 — Simpler economy, cockpit QoL and mission choices
 

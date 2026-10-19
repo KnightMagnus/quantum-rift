@@ -82,7 +82,8 @@
     "economy-32.js",
     "mission-consent.js",
     "radio-playlists.js",
-    "radio-discovery.js"
+    "radio-discovery.js",
+    "radio-content.js"
   ],
   "browser": [
     "chat-projection-browser.mjs",
@@ -456,11 +457,18 @@
         "shared/quests.js",
         "shared/radio-stations.js",
         "client/radio.js",
-        "client/ui.js"
+        "client/ui.js",
+        "client/audio.js"
       ],
       "services": [],
-      "tests": ["http-api.mjs", "radio-playlists.js", "radio-discovery.js", "radio-browser.mjs"],
-      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings."
+      "tests": [
+        "http-api.mjs",
+        "radio-playlists.js",
+        "radio-discovery.js",
+        "radio-browser.mjs",
+        "radio-content.js"
+      ],
+      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Knight has all stations without mission progress; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1\u20134 and separate new login theme; original theme preserved."
     },
     {
       "id": "economy-balance",

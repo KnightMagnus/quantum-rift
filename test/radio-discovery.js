@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { refineryGame, refineryPilot, seed, lots } from './helpers/refinery-fixture.js';
 import { RADIO_STATIONS } from '../shared/radio-stations.js';
 import { SYS, STELLARS } from '../shared/galaxy.js';
-import { radioTourOffer, TOUR_ODDS, discoverRadio } from '../server/radio-discovery.js';
+import { radioTourOffer, TOUR_ODDS, discoverRadio, radioState } from '../server/radio-discovery.js';
 import { occupiedPassengerSeats } from '../shared/passengers.js';
 import { DB } from '../server/db.js';
 import { advanceRadioTour } from '../server/radio-discovery.js';
@@ -33,8 +33,15 @@ assert.deepEqual(
 );
 assert.deepEqual(d.radioStations, ['wave-function-collapse']);
 assert.equal(RADIO_STATIONS[4].playback, 'album');
-for (const station of RADIO_STATIONS)
-  assert.equal(station.tracks.length, 0, 'owner audio is still pending');
+assert.deepEqual(
+  RADIO_STATIONS.map((s) => s.tracks.length),
+  [7, 4, 7, 6, 8],
+);
+assert.deepEqual(
+  radioState({ name: 'kNiGhT', radioStations: [] }),
+  RADIO_STATIONS.map((s) => s.id),
+);
+assert.deepEqual(radioState({ name: 'Knightly', radioStations: [] }), ['wave-function-collapse']);
 const notifications = () =>
   pilot.sock.out.filter((m) => m.t === 'toast' && m.msg.includes('Discovered a new radio station'));
 for (const system of Object.values(SYS).filter((s) => s.faction === 'quevari')) {

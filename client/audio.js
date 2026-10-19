@@ -404,7 +404,7 @@ export function startMusic() {
     return;
   }
   if (musicSrc) return;
-  load('music_login31').then((buf) => {
+  load('music_login33').then((buf) => {
     if (!buf || musicSrc || !pendingMusicAllowed || request !== musicRequest) return;
     musicGain = ctx.createGain();
     musicGain.gain.value = 0;

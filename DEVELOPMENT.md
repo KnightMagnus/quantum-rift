@@ -193,7 +193,7 @@ single-player focused for now.
 
 - `python3 test/v103_shot.py <outdir>`: 1.0.3 browser check (jobs, trade MAX and SELL ALL, outfitter, career card, L to depart,
   autopilot landing).
-- `python3 test/v103_radio.py <outdir>`: the local radio playlist and isolated browser regressions (test-only silent WAV playback; owner recordings pending).
+- `python3 test/v103_radio.py <outdir>`: the local radio playlist and isolated browser regressions (all33 owner recordings decoded; short WAV fixtures separately exercise natural album advancement).
 - `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
 - `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
 - `node test/v252.js`: 2.5.2 checks (story needs, supply warnings, mining hints, markets for mined goods, war fleets and newcomers, the map station marker, the ring art).

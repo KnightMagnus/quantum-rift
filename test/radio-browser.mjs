@@ -30,12 +30,11 @@ try {
   for (const [name, sys, stellar] of [
     ['Radio Explorer', 'brightwater', 'brightwater-iv'],
     ['Radio Lost', 'longreach', 'longreach-prime'],
-    ['Radio Preview', 'ninefold', 'ninefold-prime'],
+    ['Knight', 'ninefold', 'ninefold-prime'],
   ]) {
     assert.equal(STELLARS[stellar]?.system, sys, 'valid seeded port');
     const d = game.db.create(name, 'test-only', game.fresh());
     Object.assign(d, { sys, stellar, tut: 999, story: { done: ['start'], active: null } });
-    if (name === 'Radio Preview') d.radioStations = RADIO_STATIONS.map((s) => s.id);
   }
   game.db.touch();
   game.db.flush();
@@ -130,8 +129,18 @@ try {
     'favorites cannot expose a locked station',
   );
   await page.locator('#rres').click();
+  // Exercise empty-content fallback in an isolated client fixture only.
+  await page.evaluate(async () => {
+    const { RADIO_STATIONS } = await import('/shared/radio-stations.js');
+    window.originalStarterTracks = RADIO_STATIONS[0].tracks;
+    RADIO_STATIONS[0].tracks = [];
+  });
   await page.getByRole('button', { name: 'Play Wave Function Collapse', exact: true }).click();
   await page.getByText('No recordings available yet', { exact: true }).waitFor();
+  await page.evaluate(async () => {
+    const { RADIO_STATIONS } = await import('/shared/radio-stations.js');
+    RADIO_STATIONS[0].tracks = window.originalStarterTracks;
+  });
   await page.locator('#depart').click();
   await page.waitForFunction(() => !G.landed && G.view);
   await page.evaluate(() => radioSocket.send(JSON.stringify({ t: 'jump', to: 'farmouth' })));
@@ -188,21 +197,64 @@ try {
     1,
   );
   await logout();
-  await login('Radio Preview');
+  await login('Knight');
   assert.deepEqual(
     await stations(),
     RADIO_STATIONS.map((s) => s.name),
   );
+  await page.getByRole('button', { name: 'Play Wave Function Collapse', exact: true }).click();
+  await page.locator('#rnow').getByText('ON AIR · SHUFFLE', { exact: true }).waitFor();
+  assert.equal(
+    await page.locator('#rtrack b').innerText(),
+    'Broadcast',
+    'real recording title hidden for station 1',
+  );
   await page.getByRole('button', { name: 'Play Super-Idol Radio', exact: true }).click();
-  await page.getByText('No recordings available yet', { exact: true }).waitFor();
+  await page.locator('#rnow').getByText('ON AIR · ALBUM LOOP', { exact: true }).waitFor();
+  assert.equal(
+    await page.locator('#rtrack b').innerText(),
+    RADIO_STATIONS[4].tracks[0].title,
+    'published first album track is visible',
+  );
   // Use the actual QoL keyboard handles for a readable five-station review capture.
   await page.locator('#radarheightgrip').focus();
   await page.keyboard.press('Home');
   await page.locator('#menuheightgrip').focus();
   for (let i = 0; i < 19; i++) await page.keyboard.press('ArrowDown');
   await page.locator('#rnow').scrollIntoViewIfNeeded();
-  await page.screenshot({ path: path.join(out, 'five-stations-pending-audio.png') });
-  // Real browser decode/play/ended, using tiny silent WAV fixtures supplied ONLY by this test.
+  await page.screenshot({ path: path.join(out, 'five-stations-playing.png') });
+  await page.locator('#rstop').click();
+  // Fetch and truly decode every owner recording, including the separate login theme.
+  const decoded = await page.evaluate(async () => {
+    const { RADIO_STATIONS } = await import('/shared/radio-stations.js');
+    const context = new AudioContext({ sampleRate: 22050 }),
+      results = [];
+    try {
+      for (const url of [
+        ...RADIO_STATIONS.flatMap((s) => s.tracks.map((t) => t.url)),
+        '/assets/sfx/music_login33.mp3',
+      ]) {
+        const response = await fetch(url);
+        if (!response.ok) throw Error('Missing recording ' + url);
+        const buffer = await context.decodeAudioData(await response.arrayBuffer());
+        const samples = buffer.getChannelData(0);
+        let peak = 0;
+        for (let i = 22050; i < samples.length; i += 997)
+          peak = Math.max(peak, Math.abs(samples[i]));
+        if (buffer.duration <= 0 || peak < 0.001) throw Error('Silent or invalid recording ' + url);
+        results.push({ url, duration: buffer.duration, channels: buffer.numberOfChannels, peak });
+      }
+    } finally {
+      await context.close();
+    }
+    return results;
+  });
+  assert.equal(decoded.length, 33);
+  fs.writeFileSync(
+    path.join(out, 'recording-decodes.json'),
+    JSON.stringify(decoded, null, 2) + '\n',
+  );
+  // Natural ended advancement uses tiny silent WAV fixtures to avoid waiting through a full album.
   const wav = Buffer.alloc(44 + 16000);
   wav.write('RIFF');
   wav.writeUInt32LE(wav.length - 8, 4);
@@ -263,9 +315,10 @@ try {
       {
         status: 'pass',
         discovery: 'real authenticated jumps, repeat reconnect, same-browser captain isolation',
-        screenshot: 'seeded all-unlocked captain, real HUD, audio pending',
+        screenshot:
+          'Knight receives all stations without seeded unlocks; real owner album playing in actual HUD',
         playback:
-          'test-only silent WAV browser decoding/ended, A B C A album loop; no production tracks supplied',
+          'all 33 owner recordings really decoded, actual station playback/title hiding; natural ended A B C A exercised with test-only short WAV responses',
         errors,
         external,
       },
@@ -274,7 +327,7 @@ try {
     ) + '\n',
   );
   console.log(
-    'PASS actual jumps/discoveries, reconnect, locked/favorites isolation, pending audio HUD, real browser album ended loop and OFF; fixture audio only',
+    'PASS actual jumps/discoveries, reconnect, locked/favorites isolation, Knight access, owner audio/title rules and 33 real decodes, fixture album ended loop and OFF',
   );
 } catch (error) {
   await failureEvidence(browser, out, error);
