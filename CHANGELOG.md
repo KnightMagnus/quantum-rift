@@ -2,19 +2,19 @@
 
 Every release, newest first. The main story is left out on purpose.
 
-### Unreleased — Courier and freight progression
+### 3.3.1 — Maintenance and freight progression
 
 - Guarantee two small, supplied-cargo deliveries on inner-system job boards, sized so an empty starting ship can take both.
 - Add five larger freight bands from 30 to 1,800 tonnes, with pay increasing by load and distance, to give existing haulers meaningful cargo work.
 - Make ordinary delivery the most common original board-slot choice; retain existing cargo reservations, job limits and accepted payouts.
 
-### 3.3.0 — Discoverable radio and owner-supplied music (candidate, not released)
+### 3.3.0 — Discoverable radio and owner-supplied music
 
 - Replace the external radio provider with five discoverable stations, saved per captain and announced through existing discovery popups.
 - Start with Wave Function Collapse; discover QVRI Que'vari Radio in any Que'vari system and Signal Superposition Radio in Lost Signal.
 - Earn Interdimensional Radio by helping a scientist grandfather and his grandson repair their unusual ship in a Ninefold Prime Story Job.
 - Encounter a very rare three-passenger, five-system Spacepop tour. Receive credits and Super-Idol Radio after the last show, playing its album in order on repeat.
-- Supply 32 owner-provided recordings across the five stations (7/4/7/6/8 tracks), compressed for game delivery. Hide song names for stations1–4; show the Super-Idol album titles in published order.
+- Supply 32 owner-provided recordings across the five stations (7/4/7/6/8 tracks), compressed for game delivery. Hide song names for stations 1–4; show the Super-Idol album titles in published order.
 - Replace active login music with the separately supplied Station spatiale recording, preserving the original theme file. Keep the existing HUD, favorites, search, mixer and mute controls.
 - Give Knight access to all five stations automatically; other captains keep the normal discovery and mission unlocks.
 
@@ -31,7 +31,7 @@ Every release, newest first. The main story is left out on purpose.
 - Explain unavailable cargo/towing actions and link back to existing screens, retaining essential confirmations and native keyboard interaction.
 - Compare mission travel, hold/seats, danger, turn-in and personal payout; remember optional type, available-now and nearby filters without hiding inaccessible work by default.
 - Plan Armada contracts with an explicit Ready roster and exact fixed shares. Declining is safe; changes require renewed consent, late joiners are not enrolled, and accepted teammates retain completion when offline. Existing accepted rewards and contracts are not rewritten.
-- Combine the economy, QoL and mission changes in one release. Keep iHeartRadio and the existing login theme unchanged; radio and user-supplied music are separate future work.
+- Keep iHeartRadio and the existing login theme unchanged in this version.
 
 ### 3.2.0 — Readable cockpit and expanded chat
 
@@ -40,7 +40,7 @@ Every release, newest first. The main story is left out on purpose.
 - Cap chat width so Volume, Settings and Help retain their spacing; keep the decorative vent centered under the utility buttons.
 - Preserve cockpit colors, left-edge detail and red trim across closed, expanded and resized sidebar states; remove trim artifacts above chat.
 - Simplify the README to game features, requirements, launch instructions and representative in-game screenshots.
-- Economy/refinery changes and user-supplied radio/login music remain separate 3.2.1 work. This release keeps iHeartRadio, the original login theme and existing economy mechanics.
+- Keep iHeartRadio, the original login theme and existing economy mechanics unchanged in this version.
 
 ### 3.1.1 — Living cockpit
 
@@ -137,7 +137,7 @@ Every release, newest first. The main story is left out on purpose.
 ### 2.8.3
 
 - **Catalog artwork:** ship portraits and outfit icons now use release-versioned URLs in Codex, shipyards, outfitters and related ship panels. This bypasses stale cached responses from before artwork repairs. Unversioned catalog artwork revalidates instead of remaining fresh for a day; WebP files have their proper image content type.
-- **Regression coverage:** actual browser checks cover catalog lists, ship details, shipyard selection and outfitters, including mixed good/bad cached artwork. The complete v2.8.2 package decoded correctly on a cold load; the user's exact existing browser cache was unavailable.
+- **Regression coverage:** actual browser checks cover catalog lists, ship details, shipyard selection and outfitters, including mixed good/bad cached artwork. The complete v2.8.2 package decoded correctly on a cold load; the cache regression does not diagnose every existing browser.
 
 ### 2.8.2
 
@@ -165,7 +165,7 @@ Every release, newest first. The main story is left out on purpose.
 
 ### 2.8 "Hail to the Code"
 
-Cumulative changes since 2.6, including previously merged engineering and combat-assist work. Publication and the final tested commit are tracked in [the release summary](docs/RELEASE-v2.8.md).
+Changes since 2.6. See [the release summary](docs/RELEASE-v2.8.md).
 
 - **Livelier hailing:** outgoing responses use ship identity, task, status and system context, with visit-local repetition avoidance and distinct named-captain voices.
 - **Incoming calls:** ordinary traffic and named captains can hail you. An amber communications badge stays at the flight-view perimeter; opening a conversation is always your choice. Queues, cooldowns and expiry keep calls bounded.
@@ -174,7 +174,7 @@ Cumulative changes since 2.6, including previously merged engineering and combat
 - **Ship speech bubbles:** system-only player chat appears briefly above the sender's active ship while remaining in the chat log. Private, Armada and global messages do not become bubbles.
 - **Combat assist:** optional automatic steering and primary fire, fleet focus and target succession, and consent-based Follow Leader coordination. Manual takeover and Hold Fire prevail; independent Armada members keep their own controls. Combat odds account for participating fleet/Armada ships.
 - **Weapon refresh:** fifteen inherited weapon records receive new names, descriptions and tuning while retaining stable IDs, mounts and ammunition references for existing saves. Updated outfitter/story terminology and README, title-screen and game-data branding. See [the weapon mapping and balance limits](docs/WEAPON-REFRESH.md).
-- **Engineering, already merged since 2.6:** explicit feature composition replaces prototype mixins, with JSDoc/type contracts and a feature inventory. Prettier, a Husky pre-commit hook, Git LFS asset rules and a GitHub formatting/type/feature-contract workflow support maintenance.
+- **Server architecture and tooling:** explicit feature composition replaces prototype mixins, with JSDoc/type contracts and a feature inventory. Prettier, a Husky pre-commit hook, Git LFS asset rules and a GitHub formatting/type/feature-contract workflow support maintenance.
 - **Documentation:** README feature coverage and actual communications/combat screenshots refreshed; cumulative release notes added. The radio remains unchanged.
 
 ### 2.6 "Together"
@@ -406,14 +406,13 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 
 - **KNIGHT retired.** The showcase account is gone, and on first start any existing KNIGHT save is removed and his Ops 5
   station hull at Quantum Gate becomes an unclaimed derelict again.
-- **Crash-proofing.** A fuzzer (`test/fuzz.js`) sent tens of thousands of random and malformed messages from many clients.
-  Fixes:
+- **Malformed-message handling** (`test/fuzz.js`):
   - captain names like `__proto__` are refused, and saves can no longer be corrupted through them
   - profile and leaderboard lookups with odd names no longer error
   - bogus faction-arc requests no longer write junk into saves
   - the game loop and each system now recover from errors instead of stopping the server
 - **UI crawler** (`test/crawl.py`). It visits every kind of world and clicks every tab, station section, overlay and map
-  view, checking for errors and for content spilling out of frames. It came back clean.
+  view, checking for errors and for content spilling out of frames.
 
 ### 2.0.1
 
@@ -642,7 +641,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
   browse every power's quartermaster. Purchases are delivered wherever you are landed.
 - **A new title screen,** in the game's metal style.
 - **Removed:**
-  - The How to Play guide. A new one will come when the game is finished.
+  - The How to Play guide.
   - Its options panel moves to the gear button (or the O key).
 - **Version and port warnings.** The login screen shows the version number, and the server explains clearly if
   another copy is already using the port.

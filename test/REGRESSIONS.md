@@ -34,8 +34,7 @@ node --import ./test/seed-random.js test/v24.js
 node test/sidebar-browser.mjs
 ```
 
-The frozen Luna wheel fingerprint protects the requested original purple-wheel
-identity. Change it only for an intentional artwork requirement change, not to
+The frozen Luna wheel fingerprint protects its purple-wheel artwork. Change it only for an intentional artwork requirement change, not to
 clear a failure. It compares raw canvas pixels, not PNG compression bytes, and
 CI pins Playwright/Chromium. Screenshots are supporting evidence, not substitutes
 for assertions or human artistic review.

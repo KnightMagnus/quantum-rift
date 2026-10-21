@@ -1,9 +1,8 @@
-# 3.2.1 economy measurement protocol
+# Economy measurement protocol
 
-No career-rate or tuning claims have been measured. The user reviewed the implementation
-summary and authorized tests and merge. This economy change has no standalone release;
-it is the first merge toward the cumulative 3.2.1 economy, QoL and mission update. Regression fixtures validate settlement
-and report arithmetic; they are not real 30-minute career observations.
+Career-rate and tuning claims require play-session measurements. Regression
+fixtures validate settlement and report arithmetic; they are not real 30-minute
+career observations.
 
 Use isolated temporary saves and the normal authoritative game actions. Preserve
 the seed, starting save, loadout, route, accepted offers, costs and timed input log
@@ -54,7 +53,7 @@ zero only after verifying that, rather than assuming unknown costs are zero.
 - `capitalCredits`, `holdRequired`, `lossesCredits`, `nextUpgradeCost`.
 - `closedLoop`, `unmeasuredCosts:[]`, `notes:[]`.
 
-After approval, run `node tools/economy-baseline.mjs observations.json report.json`.
+Run `node tools/economy-baseline.mjs observations.json report.json`.
 Incomplete evidence fails by default; `--allow-partial` produces an explicitly
 incomplete report. Never turn missing runs into synthetic data. Net cash, active and
 wall-clock rates, idle time, losses, capital/hold and estimated upgrade time are
@@ -64,5 +63,5 @@ Losses already present in the cash difference are never subtracted a second time
 The proposed 25% difference is a repeat/investigation trigger, not a balance target.
 The report only flags same-band/risk/seed comparisons with capital and hold within
 25%. Unequal prerequisites remain visible instead of being forced into equal pay.
-No reward, market-impact, fee, recovery, timing or grade multiplier is changed by
-this draft. Measured tuning remains conditional on the later execution/review phase.
+The reporting tool does not change reward, market-impact, fee, recovery, timing
+or grade multipliers. Tuning requires measured sessions.

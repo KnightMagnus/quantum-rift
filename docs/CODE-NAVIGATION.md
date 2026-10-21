@@ -4,7 +4,7 @@ Start here to find a feature, trace a player action, or decide where a change
 belongs. This maps existing code; it does not claim every subsystem is independent
 or fully typed. For running the game, use the public README.
 
-## First ten minutes
+## Entry points
 
 1. Read `package.json` for startup, test commands and the current version.
 2. Read [server/main.js](../server/main.js): it loads assets and the DB, creates
@@ -23,7 +23,7 @@ or fully typed. For running the game, use the public README.
 | `server/` | Authoritative multiplayer actions, sessions, simulation and saving.                                                   |
 | `shared/` | Catalogs, authored content and common calculations. Shared browser access does not grant authority to award anything. |
 | `test/`   | Behavior checks, deterministic fixtures and registered CI runners.                                                    |
-| `docs/`   | System contracts, guides, design limits and historical evidence.                                                      |
+| `docs/`   | System contracts, guides, design limits and fixture provenance.                                                       |
 | `tools/`  | Developer/reporting/asset tools, not the live game loop.                                                              |
 
 ## Trace a player action: accept a cargo job
@@ -149,18 +149,17 @@ TypeScript/JSDoc checks are selective: `checkJs` is not globally enabled. Large
 legacy bodies, including the moved action implementations, remain unchecked.
 A typed boundary does not runtime-validate incoming JSON or prove every branch.
 
-## First cleanup trial
+## Action-routing boundary
 
-The trial separates action routing from `server/game.js`, preserving entry gates
-and service implementations. It changes no action names, rewards, saves, UI or
-eligibility. [CODE-NAVIGATION-TRIAL.md](CODE-NAVIGATION-TRIAL.md) records provenance
-and review checks. Ordinary jobs and port commerce now have separate owners; station and session
-methods still remain in `Game`. The cleanup proceeds through separate PRs.
+Action routing lives in `server/game-message-handlers.js`; entry gates and service
+implementations retain their own owners. Ordinary jobs and port commerce have
+separate services; station and session methods still remain in `Game`.
+[MESSAGE-ROUTING.md](MESSAGE-ROUTING.md) describes the routing contract and fixtures.
 
 ## UI stylesheet ownership and order
 
 `client/style.css` is the ordered stylesheet entry point. Its ten imports keep
-the pre-cleanup rule order and the same asset-relative directory:
+their cascade order and the same asset-relative directory:
 
 | File                          | Contents                                                                           |
 | ----------------------------- | ---------------------------------------------------------------------------------- |
@@ -175,8 +174,6 @@ the pre-cleanup rule order and the same asset-relative directory:
 | `style-late-components.css`   | Later component chrome, newcomer badge, docks, volume, quest and dialog overrides. |
 | `style-responsive-scenes.css` | Later responsive/sidebar, login/co-op, communication and mining-layout rules.      |
 
-The last two files intentionally retain historical cross-component overrides;
-this is a safe first organization, not a claim that every duplicate selector is
-consolidated. Do not regroup selectors or reorder imports without checking their
+The last two files contain cross-component overrides and duplicate selectors. Do not regroup selectors or reorder imports without checking their
 cascade and responsive behavior. The separate `cockpit.css` and `login_scene.css`
 keep their existing document positions. No preprocessor or bundler is required.

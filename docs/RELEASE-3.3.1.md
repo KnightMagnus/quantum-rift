@@ -18,9 +18,6 @@ The core Game still owns substantial shared state and legacy feature bodies.
 This is incremental cleanup, not a complete rewrite or exhaustive type coverage.
 See [code navigation](CODE-NAVIGATION.md) and [regression coverage](TEST-COVERAGE.md).
 
-The separate HUD draft is not included. Its longer newcomer notice, redundant JOBS
-note removal and shipyard cargo-comparison correction follow this release.
-
 ## Updating
 
 Download the complete game ZIP and extract it. Node.js 18 or newer is required;
