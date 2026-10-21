@@ -1,0 +1,90 @@
+/* chat, toasts, help */
+#chat {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  width: min(460px, calc(100% - var(--hud) - 20px));
+  z-index: 4;
+  pointer-events: none;
+}
+#chatlog {
+  max-height: 180px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  font-size: 16px;
+  text-shadow:
+    0 1px 2px #000,
+    0 0 4px #000;
+}
+#chatlog div {
+  margin: 1px 0;
+}
+#chatlog b {
+  color: #9cf;
+}
+#chatlog .sys {
+  color: #c9a8ff;
+}
+#chatlog .note {
+  color: #aaa;
+  font-style: italic;
+}
+#chatin {
+  width: 100%;
+  margin-top: 4px;
+  pointer-events: auto;
+  opacity: 0.5;
+  background: rgba(0, 0, 0, 0.6);
+}
+#chatin:focus {
+  opacity: 1;
+}
+#toasts {
+  position: fixed;
+  top: 12px;
+  left: calc((100% - var(--hud)) / 2);
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  pointer-events: none;
+}
+#toasts div {
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #7a0000;
+  padding: 7px 16px;
+  border-radius: 3px;
+  font-size: 16px;
+  animation: fade 5s forwards;
+  max-width: 560px;
+  text-align: center;
+}
+@keyframes fade {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  6% {
+    opacity: 1;
+    transform: none;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+#help {
+  position: fixed;
+  right: calc(var(--hud) + 12px);
+  bottom: 8px;
+  z-index: 3;
+  text-shadow: 0 1px 2px #000;
+  text-align: right;
+  max-width: calc(100% - var(--hud) - 520px);
+}

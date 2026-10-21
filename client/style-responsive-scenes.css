@@ -1,0 +1,693 @@
+/* 2.5: chat lines no longer draw behind the landing frame; a narrower sidebar on small screens */
+body:has(#land:not(.hidden)) #chatlog {
+  visibility: hidden;
+}
+@media (max-width: 1150px), (max-height: 700px) {
+  :root {
+    --hud: 400px;
+  }
+  #hud {
+    gap: 5px;
+    padding: 7px 7px 7px 10px;
+  }
+}
+@media (max-height: 700px) {
+  .landbox {
+    padding: 10px;
+    gap: 7px;
+  }
+  .landpic {
+    min-height: 0;
+  }
+}
+/* 2.5 "Rendered Rift": the login backdrop and a few touches that tie the interface to the rendered art */
+#login {
+  background: #03040a url(assets/ui/login_bg.jpg) center/cover no-repeat;
+}
+#login::before {
+  content: '';
+  position: absolute;
+  inset: -3%;
+  background: inherit;
+  background-size: cover;
+  animation: kenburns 90s ease-in-out infinite alternate;
+  z-index: 0;
+}
+@keyframes kenburns {
+  from {
+    transform: scale(1) translate(0, 0);
+  }
+  to {
+    transform: scale(1.07) translate(-1.5%, -1%);
+  }
+}
+#login .splash-hub {
+  display: none;
+}
+#login .splash-stars {
+  opacity: 0.35;
+}
+#login .splash::after {
+  background: radial-gradient(ellipse at 50% 38%, rgba(0, 0, 0, 0.35), transparent 60%);
+}
+#login .splash-col {
+  z-index: 1;
+}
+#login .loginbox {
+  position: relative;
+  padding-top: 40px;
+  background-color: rgba(20, 20, 24, 0.92);
+  box-shadow:
+    0 0 0 1px #000,
+    0 12px 40px rgba(0, 0, 0, 0.85),
+    0 0 60px rgba(160, 20, 30, 0.18);
+}
+#login .loginbox::before {
+  content: 'CAPTAIN\2019S LOG-IN';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  padding-left: 30px;
+  font:
+    bold 13px Tahoma,
+    Geneva,
+    sans-serif;
+  letter-spacing: 3px;
+  color: #d8d8dc;
+  background: linear-gradient(#3a3b40, #1c1d21);
+  border-bottom: 1px solid #000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border-radius: 6px 6px 0 0;
+}
+#login .loginbox::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff3a2a;
+  box-shadow:
+    0 0 6px #ff3a2a,
+    0 0 12px rgba(255, 58, 42, 0.6);
+  animation: led 2.4s ease-in-out infinite;
+}
+@keyframes led {
+  50% {
+    opacity: 0.45;
+  }
+}
+.splash-tag {
+  background: rgba(0, 0, 0, 0.45);
+  padding: 4px 14px;
+  border-radius: 12px;
+}
+.landpic {
+  position: relative;
+  box-shadow:
+    inset 0 0 18px rgba(0, 0, 0, 0.85),
+    0 0 0 1px #000;
+}
+.landpic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 35%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px);
+}
+.sect::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  vertical-align: 1px;
+  border-radius: 1px;
+  background: #b30000;
+  box-shadow: 0 0 4px rgba(255, 60, 40, 0.7);
+}
+.sect {
+  border-bottom: 1px solid;
+  border-image: linear-gradient(90deg, #5a1a1a, #2a2a2e 40%, transparent) 1;
+}
+@media (max-width: 1150px), (max-height: 700px) {
+  #ctabs {
+    gap: 2px;
+  }
+  #ctabs button {
+    padding: 0 4px;
+    font-size: 12.5px;
+    letter-spacing: 0;
+    min-width: 0;
+    flex: 1 0 auto;
+  }
+}
+.nocargo {
+  font: bold 12px Tahoma;
+  letter-spacing: 1px;
+  color: #ffb070;
+  border: 1px solid #7a4a20;
+  border-radius: 3px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+.ysort {
+  margin: 6px 0 4px;
+}
+.ysort select {
+  margin-left: 6px;
+}
+.ofit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+  color: #ccc;
+}
+/* 2.6 co-op: the ALLIES tab */
+body.solo .mp {
+  display: none;
+}
+#ctabs button[data-n]:not([data-n=''])::after {
+  content: attr(data-n);
+  display: inline-block;
+  margin-left: 3px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: #e0b040;
+  color: #000;
+  font-size: 11px;
+  line-height: 13px;
+}
+.capsub {
+  margin: 2px 0 6px;
+  flex-wrap: wrap;
+}
+.capsub .btn {
+  flex: 1 1 auto;
+  padding: 0 6px;
+}
+.frow {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 3px 0;
+}
+.frbtn {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin: 2px 0 2px 16px;
+}
+.frbtn .btn {
+  height: 20px;
+  font-size: 12px;
+  padding: 0 6px;
+}
+.dmlog {
+  max-height: 300px;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid #222;
+  padding: 4px;
+  margin: 4px 0;
+}
+.dm {
+  margin: 3px 0;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #1a1d26;
+  max-width: 88%;
+}
+.dm.me {
+  margin-left: auto;
+  background: #14361f;
+}
+.dmrow {
+  cursor: pointer;
+}
+.tgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px;
+  border: 1px solid #222;
+  font-size: 14px;
+}
+.bars2 {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 0 16px;
+  max-width: 160px;
+}
+#capview input[type='number'] {
+  width: 110px;
+}
+#capview select {
+  max-width: 200px;
+}
+.tgacts {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+.tgacts .btn {
+  height: 19px;
+  font-size: 12px;
+  padding: 0 6px;
+}
+#chatlog b[data-dm] {
+  cursor: pointer;
+  pointer-events: auto;
+}
+#chatlog b[data-dm]:hover {
+  text-decoration: underline;
+}
+#chatlog b.armada {
+  color: #7af0a0;
+}
+
+/* Communications stay inside the flight viewport as the adjustable sidebar changes width. */
+#hailindicator {
+  position: fixed;
+  z-index: 65;
+  top: 22px;
+  right: calc(var(--hud) + 22px);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #ffd36a;
+  background: #35280c;
+  color: #ffdc7b;
+  cursor: pointer;
+  font-size: 24px;
+}
+#hailindicator:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 4px;
+}
+#hailcount {
+  position: absolute;
+  right: -5px;
+  top: -6px;
+  font: bold 15px Tahoma;
+  background: #ffdc7b;
+  color: #161309;
+  border-radius: 12px;
+  min-width: 20px;
+  padding: 3px;
+}
+#hailmarker {
+  position: fixed;
+  z-index: 40;
+  max-width: 185px;
+  padding: 5px;
+  border: 1px solid #d9b956;
+  background: #17130cdd;
+  color: #ffdc7b;
+  font-size: 14px;
+  pointer-events: none;
+}
+#hailcompose {
+  width: 100%;
+  padding: 10px;
+  background: #11141d;
+  color: var(--text);
+  border: 1px solid var(--warn);
+  user-select: text;
+}
+#hailopts {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+#hailopts label {
+  display: block;
+  font-size: 14px;
+  margin: 8px 0;
+}
+#hailtext {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Mining is opt-in, anchored where the old panel sat in the flight viewport. */
+#miningindicator {
+  position: absolute;
+  left: 12px;
+  bottom: 170px;
+  z-index: 6;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #ffd36a;
+  background: #35280c;
+  color: #ffdc7b;
+  cursor: pointer;
+}
+#miningindicator svg {
+  width: 30px;
+  height: 30px;
+}
+#miningindicator.active {
+  box-shadow: 0 0 0 3px #ffd36a66;
+}
+#miningindicator.warning::after {
+  content: '!';
+  position: absolute;
+  top: -5px;
+  right: -2px;
+  background: #ffd36a;
+  color: #17130c;
+  border-radius: 50%;
+  width: 18px;
+  font-weight: bold;
+}
+#miningindicator:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 3px;
+}
+#miningcontrols {
+  position: absolute;
+  left: 12px;
+  bottom: 226px;
+  z-index: 6;
+  width: 380px;
+  max-width: calc(100vw - var(--hud) - 24px);
+  max-height: calc(100vh - 250px);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.6;
+  background: #111a2bf5;
+}
+#miningcontrols header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#miningcontrols select,
+#miningcontrols input {
+  max-width: 100%;
+}
+#miningcontrols details {
+  margin-top: 8px;
+}
+#miningcontrols summary {
+  cursor: pointer;
+  color: #ffd36a;
+}
+#miningcontrols [hidden] {
+  display: none;
+}
+#miningmeter {
+  display: block;
+  color: #fff1c9;
+  margin: 8px 0;
+}
+@media (max-width: 850px) {
+  #miningindicator {
+    bottom: 180px;
+  }
+  #miningcontrols {
+    bottom: 236px;
+    max-height: calc(100vh - 260px);
+    font-size: 14px;
+  }
+}
+
+#quitbox {
+  width: 100%;
+  z-index: 200;
+}
+.quitbox {
+  width: min(360px, calc(100vw - 32px));
+}
+.quitactions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Custom market quantities use the same native dark fields as other menus. */
+.trade-custom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+}
+.trade-custom label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.trade-amount {
+  width: 76px;
+  color-scheme: dark;
+}
+
+/* Shared flow layout: no special function may position itself over chat. */
+#shipfunctions {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  bottom: calc(var(--cbar) + 8px);
+  width: min(430px, calc(100vw - var(--hud) - 24px));
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+#functionstack {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  pointer-events: auto;
+}
+.function-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.function-entry:has(> .function-icon.hidden) {
+  display: none;
+}
+#shipfunctions .function-icon {
+  position: relative;
+  inset: auto;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #fba778;
+  background: #45251d;
+  color: #ffc18b;
+  cursor: pointer;
+}
+#shipfunctions #miningindicator {
+  border-color: #ffd36a;
+  background: #35280c;
+  color: #ffdc7b;
+}
+#shipfunctions .function-icon img,
+#shipfunctions .function-icon svg {
+  width: 30px;
+  height: 30px;
+}
+#shipfunctions .function-icon:disabled {
+  filter: grayscale(1);
+  opacity: 0.48;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+#shipfunctions .function-icon.active {
+  box-shadow: 0 0 0 2px #fba77888;
+}
+#shipfunctions :focus-visible {
+  outline: 2px solid white;
+  outline-offset: -2px;
+}
+#shipfunctions .function-panel {
+  position: static;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100% !important;
+  max-height: none;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  padding: 10px;
+  margin: 0;
+  font-size: 15px;
+  background: #111a2bf5;
+  border: 1px solid #5b6473;
+}
+#shipfunctions .function-panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+#shipfunctions .function-panel input,
+#shipfunctions .function-panel select {
+  max-width: 100%;
+}
+#shipfunctions #chat {
+  position: static;
+  width: 100%;
+  flex: 0 0 auto;
+  margin-top: 6px;
+  pointer-events: auto;
+}
+.refinery-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 110px;
+}
+.refinery-form input[type='number'] {
+  width: 8em;
+  height: 32px;
+  min-height: 0;
+  flex: none;
+}
+.refinery-form {
+  align-items: flex-start;
+}
+#refquote p {
+  margin: 5px 0 10px;
+}
+#refquote > .btn {
+  margin-top: 4px;
+}
+.trade-estimate {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 350px;
+  margin: 6px 0;
+  text-align: left;
+  color: #c8dcd5;
+}
+.trip-receipt {
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  background: #0a1c22;
+  border: 1px solid #52736c;
+  border-radius: 4px;
+}
+.trip-receipt summary {
+  cursor: pointer;
+  color: #b7decd;
+}
+.trip-receipt[open] summary {
+  margin-bottom: 8px;
+}
+#shipfunctions #chatlog {
+  max-height: min(140px, 22vh);
+  overflow: auto;
+  justify-content: initial;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 650px) {
+  #shipfunctions {
+    width: min(280px, calc(100vw - 24px));
+    top: 8px;
+  }
+}
+
+/* One next step in the existing Tray, never a floating flight overlay. */
+.pinned-objective {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 58%;
+  overflow: auto;
+  border: 1px solid #8c7549;
+  border-left: 3px solid #cfad68;
+  background: #101b1e;
+  padding: 7px;
+  overflow-wrap: anywhere;
+}
+.pinned-objective[hidden] {
+  display: none;
+}
+.mfoot {
+  flex-wrap: wrap;
+}
+.it[role='button']:focus-visible {
+  outline: 2px solid #e8bd76;
+  outline-offset: -2px;
+}
+
+/* React to the actual remaining viewscreen width, not just the browser window. */
+#land {
+  container-type: inline-size;
+}
+@container (max-width: 620px) {
+  #land .landbox {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .landpic {
+    display: none;
+  }
+  .landhead {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .landhead p {
+    display: none;
+  }
+  #ltabs {
+    grid-column: 1;
+    grid-row: 2;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+  }
+  #ltabs button {
+    flex: 0 0 auto;
+  }
+  .landbody {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .landfoot {
+    grid-column: 1;
+    grid-row: 4;
+  }
+}
+
+.mission-filters,
+.mission-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 7px 0;
+}
+.mission-filters label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mission-filters select {
+  max-width: 100%;
+}
+.mission-facts > span {
+  flex: 1 1 180px;
+  overflow-wrap: anywhere;
+}
+.contract-plan ul {
+  padding-left: 18px;
+  line-height: 1.5;
+}

@@ -1,0 +1,210 @@
+/* custom cursor set (assets/cursors, rendered by tools/cursors.py) */
+html,
+body {
+  cursor:
+    url(assets/cursors/arrow.png) 2 2,
+    default;
+}
+:where(button, .btn, .card, .chip, .list .it, #ctabs button, #ltabs button, a, #minimap, #radar) {
+  cursor:
+    url(assets/cursors/pointer.png) 2 2,
+    pointer !important;
+}
+input,
+textarea,
+[contenteditable='true'] {
+  cursor: text;
+}
+#hudgrip {
+  cursor:
+    url(assets/cursors/resize.png) 16 16,
+    col-resize !important;
+}
+#gcanvas {
+  cursor:
+    url(assets/cursors/plot.png) 16 16,
+    crosshair !important;
+}
+#view.cur-hostile {
+  cursor:
+    url(assets/cursors/hostile.png) 16 16,
+    crosshair;
+}
+#view.cur-friendly {
+  cursor:
+    url(assets/cursors/friendly.png) 16 16,
+    crosshair;
+}
+#view.cur-neutral {
+  cursor:
+    url(assets/cursors/neutral.png) 16 16,
+    crosshair;
+}
+#view.cur-aim {
+  cursor:
+    url(assets/cursors/aim.png) 16 16,
+    crosshair;
+}
+#view.cur-land {
+  cursor:
+    url(assets/cursors/land.png) 16 18,
+    pointer;
+}
+button:disabled,
+.btn:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed !important;
+}
+body.busy,
+body.busy *,
+body.busy #hudgrip,
+body.busy #gcanvas {
+  cursor:
+    url(assets/cursors/busy.png) 16 16,
+    progress !important;
+}
+
+#optbtn {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  z-index: 5;
+  opacity: 0.85;
+}
+#optbtn:hover {
+  opacity: 1;
+}
+.howbox {
+  width: min(1240px, 94vw);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 6px;
+}
+.howimg {
+  padding: 0;
+  line-height: 0;
+  background: #000;
+}
+.howimg img {
+  width: 100%;
+  height: auto;
+  max-height: 68vh;
+  object-fit: contain;
+}
+.howbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+#howdots {
+  display: flex;
+  gap: 7px;
+}
+#howdots i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #333;
+  border: 1px solid #111;
+  cursor: pointer;
+}
+#howdots i.on {
+  background: #e33;
+  box-shadow: 0 0 6px #f44;
+}
+.howopts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  font-size: 16px;
+}
+.howopts label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.howopts .btn.big {
+  margin-left: auto;
+}
+#howto {
+  width: 100%;
+  z-index: 25;
+}
+#tut {
+  position: fixed;
+  left: 12px;
+  top: 52px;
+  z-index: 5;
+  width: 330px;
+  padding: 10px 12px;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+}
+#tut .tuthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#tut .x {
+  background: none;
+  border: 1px solid #555;
+  color: #aaa;
+  font: 13px Tahoma;
+  border-radius: 3px;
+  padding: 1px 6px;
+}
+#tut b {
+  font-size: 16px;
+  color: #ffd27a;
+}
+#tut.hidden {
+  display: none;
+}
+#tut .lbl,
+.howopts .lbl {
+  width: auto;
+}
+.gbox h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.gtools {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
+  gap: 6px;
+  align-items: center;
+  font: 15px Tahoma;
+  letter-spacing: 0;
+}
+.gsw {
+  position: relative;
+}
+#gsearch {
+  width: 190px;
+  height: 28px;
+}
+#gresults {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30px;
+  z-index: 3;
+  background: #0b0c10;
+  border: 1px solid #333;
+  max-height: 300px;
+}
+#gresults:empty {
+  display: none;
+}

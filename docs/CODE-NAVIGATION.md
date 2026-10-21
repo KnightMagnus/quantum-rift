@@ -156,3 +156,27 @@ and service implementations. It changes no action names, rewards, saves, UI or
 eligibility. [CODE-NAVIGATION-TRIAL.md](CODE-NAVIGATION-TRIAL.md) records provenance
 and review checks. Ordinary jobs and port commerce now have separate owners; station and session
 methods still remain in `Game`. The cleanup proceeds through separate PRs.
+
+## UI stylesheet ownership and order
+
+`client/style.css` is the ordered stylesheet entry point. Its ten imports keep
+the pre-cleanup rule order and the same asset-relative directory:
+
+| File                          | Contents                                                                           |
+| ----------------------------- | ---------------------------------------------------------------------------------- |
+| `style-foundation.css`        | Palette, native controls, shared menu chrome and base document styling.            |
+| `style-flight-hud.css`        | Sidebar, radar, tabs and flight HUD structure.                                     |
+| `style-communications.css`    | Original chat, toast and help styling.                                             |
+| `style-overlays.css`          | Landing/map/options/dialog overlay foundation.                                     |
+| `style-cursors-map.css`       | Custom cursors and galaxy-map tools.                                               |
+| `style-companions.css`        | Crew/hangar/boarding and operations components.                                    |
+| `style-controls-login.css`    | Touch controls, title/solo/story presentation and accessibility foundations.       |
+| `style-port-services.css`     | Mission board, command bar, radio, hail and Syndicate panels.                      |
+| `style-late-components.css`   | Later component chrome, newcomer badge, docks, volume, quest and dialog overrides. |
+| `style-responsive-scenes.css` | Later responsive/sidebar, login/co-op, communication and mining-layout rules.      |
+
+The last two files intentionally retain historical cross-component overrides;
+this is a safe first organization, not a claim that every duplicate selector is
+consolidated. Do not regroup selectors or reorder imports without checking their
+cascade and responsive behavior. The separate `cockpit.css` and `login_scene.css`
+keep their existing document positions. No preprocessor or bundler is required.
