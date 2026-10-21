@@ -8,6 +8,10 @@
 
 **A space trading and combat game in your browser.**
 
+3.3.1 is a maintenance release: clearer server ownership, organized stylesheets,
+and a [developer code-navigation guide](docs/CODE-NAVIGATION.md). Gameplay and
+save formats are unchanged by the cleanup. See the [release notes](docs/RELEASE-3.3.1.md).
+
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
 ## Features
@@ -68,6 +72,9 @@ Download and extract the release above, then:
 - **Any platform, from a terminal:** run `node server/main.js` in the extracted folder to host multiplayer.
 
 Open **http://localhost:8080** if the browser does not open automatically. Keep the server window open while playing. Solo games accept connections only from your computer; for multiplayer on the same network, friends open `http://<host-computer-address>:8080`.
+
+When updating, close the old game server window first. Preserve your `data/` and
+`solo-data/` save folders; do not replace them with empty folders from a new copy.
 
 ## Screenshots
 
