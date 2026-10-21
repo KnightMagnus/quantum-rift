@@ -11,6 +11,17 @@ existing real action, fuzz, persistence and browser cases remain intact. Route
 spies do not establish all delegated gameplay rules. See
 [CODE-NAVIGATION-TRIAL.md](CODE-NAVIGATION-TRIAL.md) for baseline provenance.
 
+## Ordered stylesheet organization
+
+The `sidebar-scrollbars` browser case additionally loads all ten component CSS
+imports through the actual server and verifies nonempty CSSOM sheets and no failed
+stylesheet requests, while retaining its 13 geometry/scale/trim/keyboard cases.
+The organization preserves the original 566-rule browser CSSOM order, declaration
+values and relative asset paths. A one-time original-versus-split comparison checked
+34,650 computed properties across login, landing, JOBS, flight and narrow flight,
+with animation/transition disabled equally for deterministic comparison. That
+evidence does not replace durable interaction, resize, scene and landing suites.
+
 ## Courier and freight progression
 
 `cargo-courier-progression` covers two untimed starter-fit deliveries across 2,304

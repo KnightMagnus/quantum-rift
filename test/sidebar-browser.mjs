@@ -63,8 +63,35 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
   const errors = [];
+  const stylesheetErrors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
+  page.on('response', (response) => {
+    if (response.request().resourceType() === 'stylesheet' && !response.ok())
+      stylesheetErrors.push(`${response.status()} ${response.url()}`);
+  });
+  page.on('requestfailed', (request) => {
+    if (request.resourceType() === 'stylesheet') stylesheetErrors.push(request.url());
+  });
   await page.goto(origin);
+  const styleCascade = await page.evaluate(() => {
+    const sheet = [...document.styleSheets].find((s) => /\/style\.css(?:\?|$)/.test(s.href));
+    const imports = [...sheet.cssRules].filter((rule) => rule.type === CSSRule.IMPORT_RULE);
+    return imports.map((rule) => ({
+      path: new URL(rule.href, rule.parentStyleSheet.href).pathname,
+      rules: rule.styleSheet.cssRules.length,
+    }));
+  });
+  assert.equal(
+    styleCascade.length,
+    10,
+    'all ordered component stylesheets load in the real browser',
+  );
+  assert.ok(
+    styleCascade.every((sheet) => sheet.rules > 0),
+    'no empty or missing component styles',
+  );
+  assert.deepEqual(stylesheetErrors, []);
+  fs.writeFileSync(out + '/style-cascade.json', JSON.stringify(styleCascade, null, 2));
   await page.locator('#lname').fill('Sidebar QA');
   await page.locator('#lpass').fill('test-only');
   await page.locator('#lbtn').click();
@@ -393,6 +420,7 @@ try {
   assert.equal(styles.checkbox, 'rgb(208, 42, 34)');
   assert.equal(styles.volume, 'rgb(208, 42, 34)');
   assert.deepEqual(errors, []);
+  assert.deepEqual(stylesheetErrors, []);
   fs.writeFileSync(
     out + '/results.json',
     JSON.stringify({ results, shellResults, styles, savedWidth: 333, errors }, null, 2),

@@ -1,0 +1,441 @@
+/* 0.7: touch controls */
+#touch {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  right: var(--hud);
+  height: 230px;
+  pointer-events: none;
+  z-index: 6;
+}
+#tstick {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  background: rgba(20, 24, 30, 0.35);
+  pointer-events: auto;
+  touch-action: none;
+}
+#tstick i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border-radius: 50%;
+  background: rgba(200, 60, 50, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+#tbtns {
+  position: absolute;
+  right: 16px;
+  bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 64px);
+  gap: 8px;
+  pointer-events: auto;
+  touch-action: none;
+}
+#tbtns button {
+  height: 56px;
+  border-radius: 12px;
+  border: 1px solid #200;
+  background: linear-gradient(#c33, #700);
+  color: #fff;
+  font: bold 14px Tahoma;
+  opacity: 0.85;
+}
+#tbtns button.on {
+  filter: brightness(1.4);
+}
+@media (max-width: 900px) {
+  :root {
+    --hud: 240px;
+  }
+}
+.rrow input[type='number'] {
+  flex: 0 0 120px;
+  min-width: 0;
+}
+.rrow select {
+  flex: 0 0 auto;
+}
+.role {
+  font-weight: bold;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.optbox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(520px, 92vw);
+}
+.optbox label {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  line-height: 1.35;
+}
+.stnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.stnav .btn {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+.stnav .btn.on {
+  filter: brightness(1.35);
+  box-shadow: 0 0 0 1px #fff4 inset;
+}
+#storein {
+  width: min(980px, 96vw);
+  max-height: 90vh;
+}
+.sgrid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 8px;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+.sfacs {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: auto;
+}
+.sfac {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid #333;
+  background: #0b0c10;
+  cursor: pointer;
+}
+.sfac.on {
+  border-color: #c33;
+  background: #1a0808;
+}
+.sbody {
+  overflow: auto;
+  padding: 8px;
+}
+#storebox {
+  z-index: 15;
+}
+#optbtn {
+  z-index: 12;
+}
+#opts {
+  z-index: 26;
+}
+
+/* 0.8: title splash */
+#login {
+  flex-direction: column;
+  overflow: hidden;
+  background: #03040a;
+}
+.splash {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.splash-stars {
+  position: absolute;
+  inset: -50%;
+  background:
+    radial-gradient(1px 1px at 10% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 30% 70%, #cde, transparent),
+    radial-gradient(1.5px 1.5px at 55% 35%, #fff, transparent),
+    radial-gradient(1px 1px at 75% 80%, #fff, transparent),
+    radial-gradient(1px 1px at 90% 15%, #dde, transparent),
+    radial-gradient(1px 1px at 45% 90%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 20% 50%, #bcf, transparent);
+  background-size: 340px 340px;
+  opacity: 0.8;
+  animation: drift 160s linear infinite;
+}
+.splash-hub {
+  position: absolute;
+  right: -12vw;
+  bottom: -22vh;
+  width: 78vh;
+  height: 78vh;
+  background: url(assets/hub_still.png) center/contain no-repeat;
+  opacity: 0.38;
+  filter: saturate(0.8);
+  animation: spin 240s linear infinite;
+}
+.splash::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(120, 20, 40, 0.25), transparent 55%),
+    radial-gradient(ellipse at 20% 90%, rgba(40, 60, 140, 0.18), transparent 60%);
+}
+@keyframes drift {
+  to {
+    transform: translate(340px, 170px);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.splash-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+}
+.splash-title {
+  width: min(560px, 80vw);
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.8));
+}
+.splash-tag {
+  font:
+    15px Tahoma,
+    Geneva,
+    sans-serif;
+  letter-spacing: 2px;
+  color: #c8ccd8;
+  text-shadow: 0 1px 3px #000;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  font-size: 14.5px;
+}
+.splash-tag b {
+  color: #ffd27a;
+  font-weight: bold;
+}
+#login .loginbox h1 {
+  display: none;
+}
+
+/* 1.0: story pop-ups and golden story cards */
+#storybox {
+  z-index: 22;
+}
+.storyin {
+  width: min(620px, 92vw);
+  border: 2px solid #c9a24a;
+  box-shadow: 0 0 30px rgba(201, 162, 74, 0.35);
+}
+.storyin h2 {
+  margin: 2px 0 8px;
+  font:
+    bold 22px Georgia,
+    serif;
+  color: #ffe2a0;
+  text-shadow: 0 2px 6px #000;
+}
+.storyin p {
+  white-space: pre-wrap;
+  line-height: 1.5;
+  color: #e8e2d0;
+  font-size: 15px;
+}
+.storytag {
+  font: bold 13px Tahoma;
+  letter-spacing: 3px;
+  color: #c9a24a;
+}
+.storybtns {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.card.story {
+  border: 1px solid #c9a24a;
+  background: linear-gradient(#1c160a, #0b0c10);
+  box-shadow: 0 0 12px rgba(201, 162, 74, 0.25) inset;
+}
+.card.story .t {
+  color: #ffe2a0;
+}
+
+/* 1.0: solo mode */
+#lslots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 40vh;
+  overflow: auto;
+}
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0b0c10;
+  border: 1px solid #333;
+  padding: 6px 8px;
+}
+.slot .n {
+  flex: 1;
+}
+.slot .n b {
+  color: #fff;
+}
+.slot a {
+  color: #7ad0ff;
+  font-size: 14px;
+}
+.solotag {
+  font: bold 13px Tahoma;
+  letter-spacing: 3px;
+  color: #c9a24a;
+}
+#pausebox {
+  position: fixed;
+  left: calc((100% - var(--hud)) / 2);
+  top: 40%;
+  transform: translate(-50%, -50%);
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid #c9a24a;
+  padding: 16px 40px;
+  color: #ffe2a0;
+  font: bold 28px Tahoma;
+  letter-spacing: 6px;
+}
+#pausebox.hidden {
+  display: none;
+}
+
+/* 1.0 accessibility */
+.optbox {
+  max-height: 90vh;
+  overflow: auto;
+  width: min(560px, 94vw);
+}
+.osect {
+  margin: 12px 0 4px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: var(--cr);
+  font-size: 15px;
+}
+.rng {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+.rng input {
+  flex: 0 0 55%;
+}
+#optkeys {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 14px;
+  margin-bottom: 10px;
+}
+.kb {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14.5px;
+}
+.kb .btn {
+  min-width: 86px;
+}
+.kb .btn.on {
+  background: var(--red);
+  color: #fff;
+}
+body.scaled #hud,
+body.scaled .overlay > div,
+body.scaled #tut,
+body.scaled #toasts {
+  zoom: var(--ui);
+}
+#lload {
+  margin-top: 8px;
+}
+#lload .bar {
+  height: 6px;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 3px;
+}
+#lload .bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--red), var(--red2));
+  transition: width 0.2s;
+}
+#lload.done {
+  display: none;
+}
+body.scaled #hud {
+  width: calc(var(--hud) / var(--ui));
+}
+body.scaled .optbox,
+body.scaled .overlay > .gbox {
+  max-height: calc(90vh / var(--ui));
+}
+.osect .dim {
+  letter-spacing: 0;
+  font-weight: normal;
+}
+body.scaled #ctabs button {
+  padding-left: 3px;
+  padding-right: 3px;
+  letter-spacing: 0;
+}
+/* 1.0.1: the landing/station frame keeps its content inside (the body row shrinks and scrolls) */
+.landbox {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  width: min(1240px, 97%);
+  height: min(880px, 96%);
+}
+.landbody {
+  min-height: 0;
+  min-width: 0;
+}
+.landpic {
+  height: clamp(120px, 27vh, 250px);
+}
+.landhead {
+  min-height: 0;
+  overflow: hidden;
+}
+.landhead p {
+  max-height: 6.2em;
+  overflow: auto;
+}
+#ltabs {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.landfoot {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}

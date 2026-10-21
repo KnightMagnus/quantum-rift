@@ -1,0 +1,210 @@
+:root {
+  --hud: 480px;
+  --steel: url(assets/ui/steel.jpg);
+  --steeld: url(assets/ui/steel_dark.jpg);
+  --red: #b30000;
+  --red2: #ff3a2a;
+  --text: #e6e6e6;
+  --dim: #8a8a8a;
+  --ok: #3fd36b;
+  --warn: #f0b43c;
+  --cr: #f2d38a;
+  --violet: #c9a8ff;
+  --well: #05060a;
+}
+* {
+  box-sizing: border-box;
+  scrollbar-color: #d02a22 var(--well);
+  scrollbar-width: thin;
+}
+/* Native dropdowns share the hangar's dark treatment on every dynamic screen.
+   Keep the native arrow, keyboard behavior and OS selection highlight. */
+select {
+  color-scheme: dark;
+  background-color: #000;
+  color: #fff;
+  border: 1px solid #666;
+  font:
+    15px Tahoma,
+    sans-serif;
+  padding: 2px;
+}
+select option,
+select optgroup {
+  background-color: #000;
+  color: #fff;
+}
+select:hover:not(:disabled) {
+  border-color: #aaa;
+}
+select:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+select:disabled,
+select option:disabled,
+select optgroup:disabled {
+  color: #aaa;
+  opacity: 1;
+}
+/* Shared menu chrome, including nested panels, lists and modal content. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: var(--well);
+}
+::-webkit-scrollbar-thumb {
+  background: #d02a22;
+  border: 2px solid var(--well);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--red2);
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  color: var(--text);
+  font:
+    15px Geneva,
+    'Lucida Grande',
+    Tahoma,
+    Verdana,
+    sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+#view {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: calc(100% - var(--hud));
+  height: 100%;
+  display: block;
+  background: #000;
+}
+.dim {
+  color: var(--dim);
+}
+.small {
+  font-size: 14.5px;
+}
+.cr {
+  color: var(--cr);
+  font-weight: bold;
+}
+.err {
+  color: #ff7a6a;
+  min-height: 18px;
+  margin-top: 6px;
+}
+.hidden {
+  display: none !important;
+}
+.metal {
+  background:
+    radial-gradient(
+      circle at 9px 9px,
+      #c8c8c8 0 1.5px,
+      #2a2a2a 2.5px,
+      rgba(0, 0, 0, 0.6) 3.5px,
+      transparent 4.5px
+    ),
+    radial-gradient(
+      circle at calc(100% - 9px) 9px,
+      #c8c8c8 0 1.5px,
+      #2a2a2a 2.5px,
+      rgba(0, 0, 0, 0.6) 3.5px,
+      transparent 4.5px
+    ),
+    radial-gradient(
+      circle at 9px calc(100% - 9px),
+      #c8c8c8 0 1.5px,
+      #2a2a2a 2.5px,
+      rgba(0, 0, 0, 0.6) 3.5px,
+      transparent 4.5px
+    ),
+    radial-gradient(
+      circle at calc(100% - 9px) calc(100% - 9px),
+      #c8c8c8 0 1.5px,
+      #2a2a2a 2.5px,
+      rgba(0, 0, 0, 0.6) 3.5px,
+      transparent 4.5px
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.25)),
+    var(--steel) repeat;
+  border: 1px solid;
+  border-color: #9a9da4 #2a2b2f #1c1d20 #8a8d94;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.18),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.6);
+}
+.well {
+  background: var(--well);
+  border: 2px solid;
+  border-color: #0c0c0d #8a8c90 #8a8c90 #0c0c0d;
+  box-shadow:
+    inset 2px 2px 4px #000,
+    0 0 0 1px #1a1a1a;
+  border-radius: 2px;
+}
+.btn {
+  height: 30px;
+  padding: 0 15px;
+  border: 1px solid #200;
+  border-radius: 15px;
+  color: #fff;
+  font:
+    bold 15.5px Tahoma,
+    Geneva,
+    sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  background: linear-gradient(#d43030 0%, #8a0000 52%, #5a0000 53%, #7a0000 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 1px 2px #000;
+  text-shadow: 0 1px 0 #300;
+  white-space: nowrap;
+}
+.btn:hover {
+  filter: brightness(1.15);
+}
+.btn:active,
+.btn.on {
+  background: linear-gradient(#5a0000, #8a0000);
+  color: #ddd;
+}
+.btn.sm {
+  height: 25px;
+  padding: 0 11px;
+  font-size: 14.5px;
+}
+.btn.big {
+  height: 38px;
+  font-size: 16px;
+  padding: 0 24px;
+  border-radius: 19px;
+}
+.btn:disabled {
+  filter: grayscale(1) brightness(0.6);
+  cursor: default;
+}
+input {
+  background: #000;
+  border: 2px solid;
+  border-color: #111 #666 #666 #111;
+  color: #fff;
+  font: inherit;
+  padding: 4px 7px;
+  outline: none;
+  min-width: 0;
+}
+input:focus {
+  border-color: #300 #c33 #c33 #300;
+}
