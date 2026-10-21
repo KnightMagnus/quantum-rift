@@ -1,5 +1,8 @@
 # Repository regression contract
 
+Start with [docs/CODE-NAVIGATION.md](docs/CODE-NAVIGATION.md) for the codebase map,
+action trace and state-ownership guide.
+
 For every new game feature or behavior change, add or update meaningful durable
 regression tests in the same change. Exercise the intended observable outcome and
 relevant denial/edge behavior; syntax checks, file-name checks, empty smoke tests

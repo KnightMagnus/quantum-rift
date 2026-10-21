@@ -1,0 +1,1055 @@
+{
+  "types": [
+    "towing",
+    "industrial",
+    "miningPressure",
+    "refinery",
+    "miningOrder",
+    "mining",
+    "combat",
+    "input",
+    "target",
+    "tutskip",
+    "land",
+    "depart",
+    "jump",
+    "trade",
+    "buyship",
+    "docks",
+    "questdrop",
+    "outfit",
+    "accept",
+    "abandon",
+    "station",
+    "buymat",
+    "rename",
+    "note",
+    "chat",
+    "officer",
+    "shuttle",
+    "dock",
+    "board",
+    "spec",
+    "armada",
+    "holdout",
+    "storyacc",
+    "social",
+    "trade2",
+    "duel",
+    "goal",
+    "store",
+    "colony",
+    "arena",
+    "exchange",
+    "boards",
+    "profile",
+    "ping",
+    "hail",
+    "hailin",
+    "hailopt",
+    "order",
+    "jettison",
+    "rivals",
+    "bm",
+    "arcacc",
+    "promote",
+    "lower",
+    "bank",
+    "pause"
+  ],
+  "traces": [
+    {
+      "label": "towing",
+      "calls": [
+        [
+          "towing.command",
+          [
+            "[session]",
+            {
+              "t": "towing"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "industrial",
+      "calls": [
+        [
+          "industrial.command",
+          [
+            "[session]",
+            {
+              "t": "industrial"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "miningPressure",
+      "calls": [
+        [
+          "pressure.consent",
+          [
+            "[session]",
+            {
+              "t": "miningPressure"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "refinery",
+      "calls": [
+        [
+          "refinery.command",
+          [
+            "[session]",
+            {
+              "t": "refinery"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "miningOrder",
+      "calls": [
+        [
+          "refinery.command",
+          [
+            "[session]",
+            {
+              "t": "miningOrder"
+            },
+            true
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "mining",
+      "calls": [
+        [
+          "mining.survey",
+          [
+            "[session]",
+            {
+              "t": "mining"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "combat",
+      "calls": [
+        [
+          "combat.command",
+          [
+            "[session]",
+            {
+              "t": "combat"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "input",
+      "calls": [],
+      "changes": {
+        "inputs": [
+          {
+            "seq": 7,
+            "thrust": 1,
+            "turn": 1,
+            "ab": 1,
+            "rev": 0,
+            "fire1": 1,
+            "fire2": 0,
+            "navigation": true
+          }
+        ]
+      }
+    },
+    {
+      "label": "target",
+      "calls": [
+        [
+          "combat.selected",
+          [
+            "[session]",
+            {
+              "id": "enemy"
+            },
+            "[space]"
+          ]
+        ],
+        ["tut", ["[session]", "target"]]
+      ],
+      "changes": {
+        "ent": {
+          "order": "hold",
+          "target": {
+            "id": "enemy"
+          }
+        }
+      }
+    },
+    {
+      "label": "tutskip",
+      "calls": [["you", ["[session]"]]],
+      "changes": {
+        "save": {
+          "name": "Route Fixture",
+          "sys": "sol",
+          "stellar": "earth",
+          "tut": 23,
+          "ship": {
+            "hull": 1,
+            "name": "Old ship"
+          },
+          "missions": [
+            {
+              "id": "job",
+              "type": "cargo",
+              "title": "Fixture freight",
+              "sys": "sol",
+              "quest": {
+                "qid": "repair"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "land",
+      "calls": [
+        ["combat.stop", ["[session]", "Travel or boarding"]],
+        ["land", ["[session]", "[undefined]"]]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "depart",
+      "calls": [["depart", ["[session]"]]],
+      "changes": {}
+    },
+    {
+      "label": "jump",
+      "calls": [
+        ["combat.stop", ["[session]", "Travel or boarding"]],
+        ["jump", ["[session]", "[undefined]"]]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "trade",
+      "calls": [["trade", ["[session]", "food", 3, "common-first"]]],
+      "changes": {}
+    },
+    {
+      "label": "buyship",
+      "calls": [["buyShip", ["[session]", 201]]],
+      "changes": {}
+    },
+    {
+      "label": "docks",
+      "calls": [
+        [
+          "docks.docksOp",
+          [
+            "[session]",
+            {
+              "t": "docks"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "questdrop",
+      "calls": [
+        ["quests.questFail", ["[session]", "repair", "abandoned"]],
+        ["you", ["[session]"]],
+        ["landed", ["[session]"]]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "outfit",
+      "calls": [["outfit", ["[session]", 5, 2]]],
+      "changes": {}
+    },
+    {
+      "label": "accept",
+      "calls": [["accept", ["[session]", "[undefined]"]]],
+      "changes": {}
+    },
+    {
+      "label": "abandon",
+      "calls": [
+        ["quests.questFail", ["[session]", "repair", "abandoned"]],
+        ["log", ["[save]", "Abandoned: Fixture freight."]],
+        ["db.touch", []],
+        ["you", ["[session]"]],
+        ["landed", ["[session]"]]
+      ],
+      "changes": {
+        "save": {
+          "name": "Route Fixture",
+          "sys": "sol",
+          "stellar": "earth",
+          "tut": 0,
+          "ship": {
+            "hull": 1,
+            "name": "Old ship"
+          },
+          "missions": []
+        },
+        "escort": {
+          "mission": null,
+          "ai": "leave",
+          "target": null,
+          "life": 0
+        }
+      }
+    },
+    {
+      "label": "station",
+      "calls": [
+        [
+          "station",
+          [
+            "[session]",
+            {
+              "t": "station"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "buymat",
+      "calls": [["buyMat", ["[session]", "alloy", 2, 3]]],
+      "changes": {}
+    },
+    {
+      "label": "rename",
+      "calls": [["you", ["[session]"]]],
+      "changes": {
+        "save": {
+          "name": "Route Fixture",
+          "sys": "sol",
+          "stellar": "earth",
+          "tut": 0,
+          "ship": {
+            "hull": 1,
+            "name": "New ship"
+          },
+          "missions": [
+            {
+              "id": "job",
+              "type": "cargo",
+              "title": "Fixture freight",
+              "sys": "sol",
+              "quest": {
+                "qid": "repair"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "note",
+      "calls": [
+        ["log", ["[save]", "captain note"]],
+        ["you", ["[session]"]]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "chat",
+      "calls": [
+        [
+          "chat",
+          [
+            "[session]",
+            {
+              "t": "chat"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "officer",
+      "calls": [
+        [
+          "hangar.officerOp",
+          [
+            "[session]",
+            {
+              "t": "officer"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "shuttle",
+      "calls": [
+        [
+          "hangar.shuttleOp",
+          [
+            "[session]",
+            {
+              "t": "shuttle"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "dock",
+      "calls": [
+        [
+          "hangar.dockOp",
+          [
+            "[session]",
+            {
+              "t": "dock"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "board",
+      "calls": [
+        ["combat.stop", ["[session]", "Travel or boarding"]],
+        [
+          "hangar.board",
+          [
+            "[session]",
+            {
+              "t": "board"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "spec",
+      "calls": [
+        [
+          "specialists.specOp",
+          [
+            "[session]",
+            {
+              "t": "spec"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "armada",
+      "calls": [
+        [
+          "coop.armadaOp",
+          [
+            "[session]",
+            {
+              "t": "armada"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "holdout",
+      "calls": [["hostile.holdoutStart", ["[session]"]]],
+      "changes": {}
+    },
+    {
+      "label": "storyacc",
+      "calls": [
+        [
+          "story.storyAccept",
+          [
+            "[session]",
+            {
+              "t": "storyacc"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "social",
+      "calls": [
+        [
+          "coop.socialOp",
+          [
+            "[session]",
+            {
+              "t": "social"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "trade2",
+      "calls": [
+        [
+          "coop.tradeOp",
+          [
+            "[session]",
+            {
+              "t": "trade2"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "duel",
+      "calls": [
+        [
+          "coop.duelOp",
+          [
+            "[session]",
+            {
+              "t": "duel"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "goal",
+      "calls": [
+        [
+          "fronts.claimGoal",
+          [
+            "[session]",
+            {
+              "t": "goal"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "store",
+      "calls": [
+        [
+          "fronts.storeBuy",
+          [
+            "[session]",
+            {
+              "t": "store"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "colony",
+      "calls": [
+        [
+          "frontier.colonyOp",
+          [
+            "[session]",
+            {
+              "t": "colony"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "arena",
+      "calls": [
+        [
+          "frontier.arenaOp",
+          [
+            "[session]",
+            {
+              "t": "arena"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "exchange",
+      "calls": [
+        [
+          "frontier.exchangeOp",
+          [
+            "[session]",
+            {
+              "t": "exchange"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "boards",
+      "calls": [
+        ["frontier.leaderboard", ["[undefined]"]],
+        [
+          "send",
+          [
+            "[session]",
+            {
+              "t": "boards",
+              "cat": "[undefined]",
+              "list": []
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "profile",
+      "calls": [
+        ["frontier.profile", ["[undefined]"]],
+        [
+          "send",
+          [
+            "[session]",
+            {
+              "t": "profile",
+              "p": "[undefined]"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "ping",
+      "calls": [
+        [
+          "send",
+          [
+            "[session]",
+            {
+              "t": "pong",
+              "c": "[undefined]"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "hail",
+      "calls": [
+        [
+          "hail.hail",
+          [
+            "[session]",
+            {
+              "t": "hail"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "hailin",
+      "calls": [
+        [
+          "hails.request",
+          [
+            "[session]",
+            {
+              "t": "hailin"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "hailopt",
+      "calls": [
+        [
+          "hail.hailOpt",
+          [
+            "[session]",
+            {
+              "t": "hailopt"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "order",
+      "calls": [
+        ["combat.attack", ["[session]", "[space]"]],
+        ["fleetcmd.fleetOrder", ["[session]", "attack"]]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "jettison",
+      "calls": [
+        [
+          "fleetcmd.jettison",
+          [
+            "[session]",
+            "ore",
+            4,
+            {
+              "pure": 4
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "rivals",
+      "calls": [
+        ["rivals.rivalsPayload", ["[save]"]],
+        [
+          "send",
+          [
+            "[session]",
+            {
+              "t": "rivals",
+              "list": []
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "bm",
+      "calls": [["syndicate.bmBuy", ["[session]", "[undefined]"]]],
+      "changes": {}
+    },
+    {
+      "label": "arcacc",
+      "calls": [["arcs.arcAccept", ["[session]", "[undefined]"]]],
+      "changes": {}
+    },
+    {
+      "label": "promote",
+      "calls": [["syndicate.promote", ["[session]", "[undefined]"]]],
+      "changes": {}
+    },
+    {
+      "label": "lower",
+      "calls": [
+        [
+          "syndicate.lowerDeck",
+          [
+            "[session]",
+            {
+              "t": "lower"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "bank",
+      "calls": [
+        [
+          "syndicate.bankOp",
+          [
+            "[session]",
+            {
+              "t": "bank"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "pause",
+      "calls": [
+        ["setPaused", [true]],
+        [
+          "send",
+          [
+            "[session]",
+            {
+              "t": "paused",
+              "on": false
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "input-negative",
+      "calls": [],
+      "changes": {
+        "inputs": [
+          {
+            "seq": 1,
+            "thrust": 0,
+            "turn": -1,
+            "ab": 0,
+            "rev": 0,
+            "fire1": 0,
+            "fire2": 0,
+            "navigation": false
+          }
+        ]
+      }
+    },
+    {
+      "label": "input-cap",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "input-manual",
+      "calls": [["combat.manual", ["[session]"]]],
+      "changes": {
+        "inputs": [
+          {
+            "seq": 0,
+            "thrust": 1,
+            "turn": 0,
+            "ab": 0,
+            "rev": 0,
+            "fire1": 0,
+            "fire2": 0,
+            "navigation": false
+          }
+        ]
+      }
+    },
+    {
+      "label": "target-clear",
+      "calls": [["combat.selected", ["[session]", null, "[space]"]]],
+      "changes": {}
+    },
+    {
+      "label": "target-no-ship",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "buyship-store",
+      "calls": [["docks.buyToHangar", ["[session]", 201]]],
+      "changes": {}
+    },
+    {
+      "label": "questdrop-invalid",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "abandon-missing",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "abandon-mining-order",
+      "calls": [
+        [
+          "refinery.command",
+          [
+            "[session]",
+            {
+              "t": "miningOrder",
+              "op": "cancelOrder",
+              "id": "job",
+              "port": "earth"
+            },
+            true
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "rename-empty",
+      "calls": [["you", ["[session]"]]],
+      "changes": {
+        "save": {
+          "name": "Route Fixture",
+          "sys": "sol",
+          "stellar": "earth",
+          "tut": 0,
+          "ship": {
+            "hull": 1,
+            "name": "Default hull"
+          },
+          "missions": [
+            {
+              "id": "job",
+              "type": "cargo",
+              "title": "Fixture freight",
+              "sys": "sol",
+              "quest": {
+                "qid": "repair"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "rename-shipless",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "note-empty",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "order-hold",
+      "calls": [
+        ["combat.stop", ["[session]", "Fleet order"]],
+        ["fleetcmd.fleetOrder", ["[session]", "hold"]]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "pause-online",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "pause-two-captains",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "pause-already-paused",
+      "calls": [
+        ["setPaused", [false]],
+        [
+          "send",
+          [
+            "[session]",
+            {
+              "t": "paused",
+              "on": true
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "live-method",
+      "calls": [["replacement.trade", ["[session]", "food", 4, "[undefined]"]]],
+      "changes": {}
+    },
+    {
+      "label": "live-service",
+      "calls": [
+        [
+          "replacement.hail",
+          [
+            "[session]",
+            {
+              "t": "hail"
+            }
+          ]
+        ]
+      ],
+      "changes": {}
+    },
+    {
+      "label": "live-space",
+      "calls": [
+        [
+          "combat.selected",
+          [
+            "[session]",
+            {
+              "id": "new"
+            },
+            {
+              "ships": {}
+            }
+          ]
+        ],
+        ["tut", ["[session]", "target"]]
+      ],
+      "changes": {
+        "ent": {
+          "order": "hold",
+          "target": {
+            "id": "new"
+          }
+        }
+      }
+    },
+    {
+      "label": "unknown",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "__proto__",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "constructor",
+      "calls": [],
+      "changes": {}
+    },
+    {
+      "label": "toString",
+      "calls": [],
+      "changes": {}
+    }
+  ]
+}
