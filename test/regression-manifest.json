@@ -319,14 +319,14 @@
     },
     {
       "id": "market-materials",
-      "owners": ["server/game.js", "shared/rules.js"],
+      "owners": ["server/game.js", "shared/rules.js", "server/port-services.js"],
       "services": [],
       "tests": ["v25.js", "v203.js", "ship-economy.js", "core-actions.js", "network-systems.mjs"],
       "asserts": "Trade buy/sell/depth/cargo/credit limits, material buy/sell and dock-only/insufficient-credit guards."
     },
     {
       "id": "missions-passengers",
-      "owners": ["server/game.js", "server/fronts.js"],
+      "owners": ["server/game.js", "server/fronts.js", "server/port-services.js"],
       "services": [],
       "tests": ["v06.js", "v12.js", "passengers.js", "passenger-quests.js", "eventide.js"],
       "asserts": "Cargo/bounty/patrol/convoy/rescue/survey/smuggling/rush/Syndicate/passenger jobs, acceptance/capacity/deadline/reward/failure behavior."
@@ -512,7 +512,8 @@
         "server/coop.js",
         "client/ui.js",
         "client/info_ui.js",
-        "client/main.js"
+        "client/main.js",
+        "server/port-services.js"
       ],
       "tests": ["cargo-lots.js", "cargo-flows.js", "cargo-ui-browser.mjs"],
       "asserts": "Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, owner/fleet simulation-time grace with foreign partial pickup and expiry, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
@@ -689,7 +690,8 @@
         "shared/economy-receipt.js",
         "client/economy-ui.js",
         "client/refinery-controls.js",
-        "tools/economy-baseline.mjs"
+        "tools/economy-baseline.mjs",
+        "server/port-services.js"
       ],
       "services": ["refinery"],
       "tests": [
@@ -699,7 +701,7 @@
         "refinery-network.mjs",
         "refinery-persistence.js"
       ],
-      "asserts": "Automatic single-action refinery cost/output with retained authoritative settlement, stale/expired/duplicate denial, trip recap attribution and persistence, exact current-port order-size/grade estimates, reserved cargo warnings, malformed/full/poor requests and measurement report completeness without fabricated baseline data."
+      "asserts": "Automatic single-action refinery cost/output with retained authoritative settlement, stale/expired/duplicate denial, trip recap attribution and persistence, exact current-port order-size/grade estimates, reserved cargo warnings, malformed/full/poor requests and measurement report completeness without fabricated baseline data. The ordinary port boundary reads a replaced market provider through a receiver-preserving live core call and denies removed markets without changing credits or grade lots."
     },
     {
       "id": "cockpit-qol",

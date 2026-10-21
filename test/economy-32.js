@@ -71,6 +71,25 @@ try {
     tradePct: g.features.bonuses.bonus(s.data).tradePct || 0,
     sell: g.features.fronts.mods(s.data.sys).sell,
   };
+  const originalMarket = g.market;
+  const beforeMarketOverride = structuredClone({
+    credits: s.data.credits,
+    cargo: s.data.cargo,
+    lots: s.data.cargoLots,
+  });
+  let marketReads = 0;
+  g.market = function () {
+    assert.equal(this, g, 'port forwarding retains the Game receiver');
+    marketReads++;
+    return null;
+  };
+  g.trade(s, 'ore', 1);
+  assert.equal(marketReads, 1, 'trade uses the current market provider, not a captured method');
+  assert.deepEqual(
+    { credits: s.data.credits, cargo: s.data.cargo, lots: s.data.cargoLots },
+    beforeMarketOverride,
+  );
+  g.market = originalMarket;
   const preview = tradePreview(options),
     beforeBuy = s.data.credits;
   g.trade(s, 'ore', preview.buy.tonnes);
