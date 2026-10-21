@@ -19,8 +19,9 @@ try {
   });
   const a = await context.newPage(),
     b = await context.newPage(),
+    courier = await context.newPage(),
     errors = [];
-  for (const page of [a, b]) page.on('pageerror', (e) => errors.push(String(e)));
+  for (const page of [a, b, courier]) page.on('pageerror', (e) => errors.push(String(e)));
   const login = async (page, name) => {
     await page.goto(f.origin);
     await page.fill('#lname', name);
@@ -72,6 +73,35 @@ try {
     [true, true, true, true, true],
     'Capacity/slots/seats, completed collection and feasible-nearby filtering have explicit boundary coverage',
   );
+
+  await login(courier, 'Courier review');
+  await courier.click('[data-lt="jobs"]');
+  const courierOffers = await courier.evaluate(() => ({
+    capacity: G.you.shipStats.cargo,
+    small: G.landed.offers.filter((o) => o.id.includes('-freight-courier-')),
+    large: G.landed.offers.find((o) => o.id.includes('-freight-bulk-4')),
+  }));
+  assert.equal(courierOffers.capacity, 15, 'Unmodified fresh starter, not rich fixture hull');
+  assert.equal(courierOffers.small.length, 2);
+  const largeButton = courier.locator(`[data-act="accept"][data-id="${courierOffers.large.id}"]`);
+  assert.ok(
+    await largeButton.isDisabled(),
+    'Large-hauler jobs show the existing hold-space denial',
+  );
+  const smallButton = (o) => courier.locator(`[data-act="accept"][data-id="${o.id}"]`);
+  await smallButton(courierOffers.small[0]).scrollIntoViewIfNeeded();
+  await courier.screenshot({ path: path.join(f.out, 'courier-small-and-bulk.png') });
+  for (const [i, o] of courierOffers.small.entries()) {
+    assert.equal(await smallButton(o).isDisabled(), false);
+    await smallButton(o).click();
+    await courier.waitForFunction((count) => G.you.missions.length === count, i + 1);
+  }
+  assert.equal(
+    await courier.evaluate(() => G.you.missions.reduce((n, o) => n + o.qty, 0)),
+    courierOffers.small.reduce((n, o) => n + o.qty, 0),
+    'Real HUD accepts both supplied shipments without buying commodities',
+  );
+  await courier.close();
 
   await a.click('[data-lt="jobs"]');
   const team = a.locator('[data-offer-type="warband"]');

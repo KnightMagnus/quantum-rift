@@ -195,6 +195,7 @@ import { HailService } from './hail-service.js';
 import { CombatAssist } from './combat-assist.js';
 import { createMessageRegistry } from './message-registry.js';
 import { createFeatures } from './features.js';
+import { freightOffers } from './freight-offers.js';
 import { TUTORIAL, tutMigrate, TUT_VERSION } from '../shared/tutorial.js';
 import fs from 'node:fs';
 // Quantum Rift game server: sessions, the galaxy's systems, landing services, missions, Quantum Station.
@@ -3049,7 +3050,7 @@ export class Game {
         [sys, jumps] = near[Math.floor(r() * near.length)],
         S = SYS[sys];
       const id = `${p.id}-${win}-${i}`;
-      if (roll < 0.5) {
+      if (roll < 0.65) {
         const lands = S.stellars.filter((x) => x.svc.includes('L') && !x.site),
           dest = lands[Math.floor(r() * lands.length)]; // 1.0.3: never to an empty derelict hull
         if (!dest) continue;
@@ -3064,7 +3065,7 @@ export class Game {
           cid: c.id,
           qty,
           reward: Math.round((800 + jumps * 1100 + qty * 60) * 1.35), // 2.4: cargo runs pay better
-          text: `Carry ${qty} tons of ${c.name.toLowerCase()} to ${dest.name} in the ${S.name} system (${jumps} jump${jumps > 1 ? 's' : ''}).`,
+          text: `The sender supplies the shipment. Carry ${qty} tons of ${c.name.toLowerCase()} to ${dest.name} in the ${S.name} system (${jumps} jump${jumps > 1 ? 's' : ''}). No commodity purchase needed.`,
         });
       } else if (roll < 0.8) {
         const fac = S.danger >= 3 || r() < 0.6 || S.farside ? 'hollow' : 'umbral',
@@ -3142,6 +3143,7 @@ export class Game {
         text: `Only captains rated Dangerous or better are offered this one. ${nm} flies a ${H.name} out of ${S.name}. The Concord wants it gone.`,
       });
     }
+    out.push(...freightOffers(p, win));
     const radioTour = radioTourOffer(p, d);
     if (radioTour) out.unshift(radioTour);
     out.unshift(...this.features.quests.questOffers(p, d)); // 2.4: contacts and side stories lead the board
