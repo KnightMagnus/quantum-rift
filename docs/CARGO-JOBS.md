@@ -26,7 +26,8 @@ an entirely risk-free flight or override a faction's refusal to admit a captain.
 
 ## Work for larger ships
 
-Lawful, danger 0–2 job boards also post five freight contracts, one in each band:
+Lawful, danger 0–2 job boards with a suitable one-to-four-jump trade route also
+post five freight contracts, one in each band:
 
 | Shipment    | Example stock hauler that fits the whole band |
 | ----------- | --------------------------------------------- |
@@ -41,6 +42,9 @@ when that board's weight fits; multiple shipments can share available hold space
 These routes use one to four jumps through lawful, danger 0–2 systems, excluding
 outlaw ports, territorial regions and Farside space. They use ordinary cargo
 acceptance, reservation and delivery rules, not new economic mechanics.
+Isolated boards without a suitable plotted route do not receive these additional
+bulk contracts; their existing job generators are unchanged. The current galaxy
+has 111 boards with suitable routes.
 
 Bulk pay increases with both weight and distance:
 `round(1.35 × (800 + 1100 × jumps + tonnes × (60 + 20 × jumps)))`.
