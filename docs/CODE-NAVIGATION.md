@@ -49,10 +49,11 @@ flowchart TD
 4. [server/game-message-handlers.js](../server/game-message-handlers.js) maps
    `accept` to the core method. It is the action switchboard, not a separate
    reward or permission authority.
-5. `Game.accept` checks the current offer, job limits and real hold/bunk space,
-   then records the accepted contract. `Game.offers` and
-   [server/freight-offers.js](../server/freight-offers.js) generate freight offers.
-   `Game.completeOnLanding` handles ordinary landing completion; special mission
+5. `Game.accept` forwards to [server/jobs.js](../server/jobs.js), the ordinary
+   job owner. It checks the current offer, job limits and real hold/bunk space,
+   then records the accepted contract. `Game.offers` forwards to the same job service;
+   [server/freight-offers.js](../server/freight-offers.js) supplies the stable freight tiers.
+   `Game.completeOnLanding` forwards ordinary landing completion to that owner; special mission
    progression also lives in named quest/co-op providers.
 6. `you` and `landed` send refreshed payloads. [server/db.js](../server/db.js)
    owns persistence; sending a refresh is not itself a save commit.
@@ -99,6 +100,10 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 - **Live sessions/active systems:** `Game` owns session and live-space maps.
   `Space` advances a system's simulation. Accessing `game.spaces[id]` can lazily
   wake a system: it is not an inert lookup table.
+- **Ordinary jobs:** `game.jobService` owns board generation, acceptance and
+  landing completion, using the existing account mission array. It has no second
+  save store. Story, Armada and mining-order services retain their specialized
+  progression; port refresh, logging and shared capacity stay core capabilities.
 - **Feature operations:** `game.features.<name>` exposes named services with
   explicit capability facades. Some state still lives on `Game` or in shared
   account/world objects. These are not fully isolated workers.
@@ -145,5 +150,5 @@ A typed boundary does not runtime-validate incoming JSON or prove every branch.
 The trial separates action routing from `server/game.js`, preserving entry gates
 and service implementations. It changes no action names, rewards, saves, UI or
 eligibility. [CODE-NAVIGATION-TRIAL.md](CODE-NAVIGATION-TRIAL.md) records provenance
-and review checks. Core trading, station, session and mission methods remain in
-`Game`; future extractions are separate decisions, not part of this trial.
+and review checks. Ordinary jobs now have a separate owner; core trading, station and session
+methods still remain in `Game`. The cleanup proceeds through separate PRs.

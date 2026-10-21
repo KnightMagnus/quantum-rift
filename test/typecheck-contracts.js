@@ -125,6 +125,17 @@ routing.trade = 42;
 `);
   assert.notEqual(result.status, 0, 'routing trade capability must be callable');
   assert.match(result.stdout + result.stderr, /number/);
+  result = check(`import { createJobService } from '${modulePath('jobs.js')}';
+/** @type {import('${modulePath('jobs.js')}').JobCapabilities} */
+const jobs = /** @type {import('${modulePath('jobs.js')}').JobCapabilities} */ ({});
+createJobService(jobs);
+`);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  result = check(`import { createJobService } from '${modulePath('jobs.js')}';
+createJobService({toast() {}});
+`);
+  assert.notEqual(result.status, 0, 'job service requires explicit core capabilities');
+  assert.match(result.stdout + result.stderr, /missing/);
   console.log(
     'Typed valid calls/grade selections pass; invalid argument, grade quantity and missing capability are rejected.',
   );

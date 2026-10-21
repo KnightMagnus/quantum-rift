@@ -254,3 +254,15 @@ stellar plasma sources replenish 15 units/second (300 units per tonne, capped at
 300,000), enough to replace one mined tonne every 20 simulation seconds. Live or
 attached motherlodes are never replaced. These cadences retain existing economy
 balance rather than giving other mining sources an additional duplicate payout.
+
+## Ordinary job ownership
+
+`server/jobs.js` owns ordinary board generation, acceptance and landing-completion
+operations, with `Game.offers/accept/completeOnLanding` retained as compatibility
+entry points. `Game.createJobService` provides eleven explicit live capabilities.
+The service uses the same account mission array and DB: no new save store, copied
+state, lifecycle hook, protocol action or feature-provider namespace is added.
+Auth/flood/freeze gates stay in `Game.onMessage`; Story Jobs, Armada contracts,
+mining orders and specialized progression retain their existing providers.
+Legacy operation bodies are unchecked; JSDoc boundary and positive/negative type
+fixtures do not claim a complete wire/save schema migration.
