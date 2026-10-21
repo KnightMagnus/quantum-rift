@@ -1,5 +1,7 @@
 # Feature composition and gradual JavaScript typing
 
+For a codebase map and a concrete action trace, see [CODE-NAVIGATION.md](CODE-NAVIGATION.md).
+
 ## What changed
 
 `Game` no longer receives feature methods through prototype merging. It owns

@@ -105,6 +105,26 @@ const missing={paused(){return false;}};`);
     0,
     'tow requires explicit checkpoint/session/capacity capabilities',
   );
+  result =
+    check(`import { createGameMessageHandlers } from '${modulePath('game-message-handlers.js')}';
+/** @type {import('${modulePath('game-message-handlers.js')}').MessageCapabilities} */
+const routing = /** @type {import('${modulePath('game-message-handlers.js')}').MessageCapabilities} */ ({});
+createGameMessageHandlers(routing);
+`);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  result =
+    check(`import { createGameMessageHandlers } from '${modulePath('game-message-handlers.js')}';
+createGameMessageHandlers({send() {}});
+`);
+  assert.notEqual(result.status, 0, 'routing requires all explicit capabilities');
+  assert.match(result.stdout + result.stderr, /missing/);
+  result =
+    check(`/** @type {import('${modulePath('game-message-handlers.js')}').MessageCapabilities} */
+const routing = /** @type {import('${modulePath('game-message-handlers.js')}').MessageCapabilities} */ ({});
+routing.trade = 42;
+`);
+  assert.notEqual(result.status, 0, 'routing trade capability must be callable');
+  assert.match(result.stdout + result.stderr, /number/);
   console.log(
     'Typed valid calls/grade selections pass; invalid argument, grade quantity and missing capability are rejected.',
   );

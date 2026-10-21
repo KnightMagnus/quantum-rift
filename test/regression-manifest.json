@@ -84,7 +84,8 @@
     "radio-playlists.js",
     "radio-discovery.js",
     "radio-content.js",
-    "cargo-couriers.js"
+    "cargo-couriers.js",
+    "message-routing.js"
   ],
   "browser": [
     "chat-projection-browser.mjs",
@@ -480,10 +481,15 @@
     },
     {
       "id": "robustness-wiring",
-      "owners": ["server/features.js", "server/message-registry.js"],
+      "owners": [
+        "server/features.js",
+        "server/message-registry.js",
+        "server/game.js",
+        "server/game-message-handlers.js"
+      ],
       "services": [],
-      "tests": ["fuzz.js"],
-      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage."
+      "tests": ["fuzz.js", "message-routing.js"],
+      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage. Fixed pre-extraction traces cover all 56 routes, argument coercion, call order, representative mutations and live dependencies; authenticated entry checks retain freeze/activity/flood order. This is routing parity, not complete delegated-rule coverage."
     },
     {
       "id": "input-audio",
@@ -740,7 +746,12 @@
     }
   ],
   "routes": {
-    "combat": ["combat-assist.js", "combat-network.js", "ship-functions-browser.mjs"],
+    "combat": [
+      "combat-assist.js",
+      "combat-network.js",
+      "ship-functions-browser.mjs",
+      "message-routing.js"
+    ],
     "input": [
       "armada-formation-network.mjs",
       "armada-formation.js",
@@ -750,11 +761,12 @@
       "sim.js",
       "input-audio-browser.mjs",
       "landing-autopilot-browser.mjs",
-      "armada-follow-two-clients.mjs"
+      "armada-follow-two-clients.mjs",
+      "message-routing.js"
     ],
-    "target": ["v03.js", "mining-ui-browser.mjs"],
-    "tutskip": ["v03.js"],
-    "land": ["bot.js", "v11.js", "landing-autopilot-browser.mjs"],
+    "target": ["v03.js", "mining-ui-browser.mjs", "message-routing.js"],
+    "tutskip": ["v03.js", "message-routing.js"],
+    "land": ["bot.js", "v11.js", "landing-autopilot-browser.mjs", "message-routing.js"],
     "depart": [
       "armada-formation-network.mjs",
       "bot.js",
@@ -767,14 +779,16 @@
       "v203.js",
       "v21.js",
       "v24.js",
-      "armada-follow-two-clients.mjs"
+      "armada-follow-two-clients.mjs",
+      "message-routing.js"
     ],
     "jump": [
       "armada-formation-network.mjs",
       "bot.js",
       "v10.js",
       "radio-discovery.js",
-      "radio-browser.mjs"
+      "radio-browser.mjs",
+      "message-routing.js"
     ],
     "trade": [
       "bot.js",
@@ -782,18 +796,20 @@
       "v203.js",
       "cargo-ui-browser.mjs",
       "trade-amount-browser.mjs",
-      "economy-32.js"
+      "economy-32.js",
+      "message-routing.js"
     ],
-    "buyship": ["sim.js", "v21.js"],
+    "buyship": ["sim.js", "v21.js", "message-routing.js"],
     "docks": [
       "outfitter-wing-repairs.js",
       "sim.js",
       "v21.js",
       "knight-profile.mjs",
-      "dropdowns-browser.mjs"
+      "dropdowns-browser.mjs",
+      "message-routing.js"
     ],
-    "questdrop": ["core-actions.js"],
-    "outfit": ["bot.js", "v203.js"],
+    "questdrop": ["core-actions.js", "message-routing.js"],
+    "outfit": ["bot.js", "v203.js", "message-routing.js"],
     "accept": [
       "bot.js",
       "v12.js",
@@ -803,9 +819,10 @@
       "mission-consent.js",
       "mission-ui-browser.mjs",
       "radio-discovery.js",
-      "cargo-couriers.js"
+      "cargo-couriers.js",
+      "message-routing.js"
     ],
-    "abandon": ["v203.js", "v24.js", "radio-discovery.js"],
+    "abandon": ["v203.js", "v24.js", "radio-discovery.js", "message-routing.js"],
     "station": [
       "cargo-flows.js",
       "sim.js",
@@ -814,17 +831,18 @@
       "v07.js",
       "v203.js",
       "v21.js",
-      "v26.js"
+      "v26.js",
+      "message-routing.js"
     ],
-    "buymat": ["core-actions.js"],
-    "rename": ["v203.js"],
-    "note": ["core-actions.js"],
-    "chat": ["bot.js", "v06.js", "v26.js", "chat-projection-browser.mjs"],
-    "officer": ["v05.js", "v21.js"],
-    "shuttle": ["v05.js"],
-    "dock": ["v05.js", "v101.js", "v203.js", "v21.js"],
-    "board": ["cargo-flows.js", "v05.js", "v06.js", "v10.js", "v26.js"],
-    "spec": ["v08.js"],
+    "buymat": ["core-actions.js", "message-routing.js"],
+    "rename": ["v203.js", "message-routing.js"],
+    "note": ["core-actions.js", "message-routing.js"],
+    "chat": ["bot.js", "v06.js", "v26.js", "chat-projection-browser.mjs", "message-routing.js"],
+    "officer": ["v05.js", "v21.js", "message-routing.js"],
+    "shuttle": ["v05.js", "message-routing.js"],
+    "dock": ["v05.js", "v101.js", "v203.js", "v21.js", "message-routing.js"],
+    "board": ["cargo-flows.js", "v05.js", "v06.js", "v10.js", "v26.js", "message-routing.js"],
+    "spec": ["v08.js", "message-routing.js"],
     "armada": [
       "armada-formation-network.mjs",
       "combat-network.js",
@@ -832,39 +850,51 @@
       "v26.js",
       "armada-follow-two-clients.mjs",
       "mission-consent.js",
-      "mission-ui-browser.mjs"
+      "mission-ui-browser.mjs",
+      "message-routing.js"
     ],
-    "holdout": ["v09.js", "v26.js"],
-    "storyacc": ["v10.js"],
-    "social": ["hailing-network.js", "v26.js"],
-    "trade2": ["cargo-flows.js", "v26.js"],
-    "duel": ["v26.js"],
-    "goal": ["v06.js"],
-    "store": ["faction-standing.js", "v06.js"],
-    "colony": ["v07.js"],
-    "arena": ["v07.js"],
-    "exchange": ["cargo-flows.js", "v07.js"],
-    "boards": ["v07.js"],
-    "profile": ["v07.js"],
-    "ping": ["core-actions.js"],
-    "hail": ["hailing-network.js", "v11.js"],
-    "hailin": ["hailing-network.js"],
-    "hailopt": ["hailing-network.js", "v11.js"],
-    "order": ["combat-network.js", "v11.js", "v21.js", "ship-functions-browser.mjs"],
-    "jettison": ["cargo-flows.js", "v11.js", "cargo-ui-browser.mjs"],
-    "rivals": ["core-actions.js"],
-    "bm": ["v12.js"],
-    "arcacc": ["v12.js"],
-    "promote": ["v12.js"],
-    "lower": ["v12.js", "v203.js"],
-    "bank": ["v12.js"],
-    "pause": ["v10.js"],
-    "mining": ["mining-network.mjs", "mining-controls-browser.mjs"],
-    "refinery": ["refinery-network.mjs", "refinery-ui-browser.mjs", "economy-32.js"],
-    "miningOrder": ["refinery-network.mjs", "refinery.js"],
-    "miningPressure": ["mining-pressure.js", "refinery-ui-browser.mjs"],
-    "industrial": ["dredge-network.mjs", "dredge-browser.mjs"],
-    "towing": ["towing-network.mjs", "towing-browser.mjs"]
+    "holdout": ["v09.js", "v26.js", "message-routing.js"],
+    "storyacc": ["v10.js", "message-routing.js"],
+    "social": ["hailing-network.js", "v26.js", "message-routing.js"],
+    "trade2": ["cargo-flows.js", "v26.js", "message-routing.js"],
+    "duel": ["v26.js", "message-routing.js"],
+    "goal": ["v06.js", "message-routing.js"],
+    "store": ["faction-standing.js", "v06.js", "message-routing.js"],
+    "colony": ["v07.js", "message-routing.js"],
+    "arena": ["v07.js", "message-routing.js"],
+    "exchange": ["cargo-flows.js", "v07.js", "message-routing.js"],
+    "boards": ["v07.js", "message-routing.js"],
+    "profile": ["v07.js", "message-routing.js"],
+    "ping": ["core-actions.js", "message-routing.js"],
+    "hail": ["hailing-network.js", "v11.js", "message-routing.js"],
+    "hailin": ["hailing-network.js", "message-routing.js"],
+    "hailopt": ["hailing-network.js", "v11.js", "message-routing.js"],
+    "order": [
+      "combat-network.js",
+      "v11.js",
+      "v21.js",
+      "ship-functions-browser.mjs",
+      "message-routing.js"
+    ],
+    "jettison": ["cargo-flows.js", "v11.js", "cargo-ui-browser.mjs", "message-routing.js"],
+    "rivals": ["core-actions.js", "message-routing.js"],
+    "bm": ["v12.js", "message-routing.js"],
+    "arcacc": ["v12.js", "message-routing.js"],
+    "promote": ["v12.js", "message-routing.js"],
+    "lower": ["v12.js", "v203.js", "message-routing.js"],
+    "bank": ["v12.js", "message-routing.js"],
+    "pause": ["v10.js", "message-routing.js"],
+    "mining": ["mining-network.mjs", "mining-controls-browser.mjs", "message-routing.js"],
+    "refinery": [
+      "refinery-network.mjs",
+      "refinery-ui-browser.mjs",
+      "economy-32.js",
+      "message-routing.js"
+    ],
+    "miningOrder": ["refinery-network.mjs", "refinery.js", "message-routing.js"],
+    "miningPressure": ["mining-pressure.js", "refinery-ui-browser.mjs", "message-routing.js"],
+    "industrial": ["dredge-network.mjs", "dredge-browser.mjs", "message-routing.js"],
+    "towing": ["towing-network.mjs", "towing-browser.mjs", "message-routing.js"]
   },
   "tooling": [
     "capture-features.js",
