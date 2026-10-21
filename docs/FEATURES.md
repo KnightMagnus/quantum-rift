@@ -266,3 +266,14 @@ Auth/flood/freeze gates stay in `Game.onMessage`; Story Jobs, Armada contracts,
 mining orders and specialized progression retain their existing providers.
 Legacy operation bodies are unchecked; JSDoc boundary and positive/negative type
 fixtures do not claim a complete wire/save schema migration.
+
+## Ordinary port-commerce ownership
+
+`server/port-services.js` owns ordinary market/material trading, shipyard/trade-in
+and outfitter operations. The existing Game methods forward to `game.portService`;
+`Game.createPortService` supplies nineteen explicit live capabilities, preserving
+current provider lookup and method receiver. Shared trade pricing, exact cargo
+lots, finite refined-goods demand, station access, job capacity and settlement
+remain the same existing authorities. No second inventory/save store, new route,
+feature namespace or lifecycle hook is introduced. The operation bodies remain
+legacy unchecked JavaScript; positive/negative boundary types are not wire validation.

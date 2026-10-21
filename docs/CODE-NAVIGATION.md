@@ -80,7 +80,7 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 | Incoming action names/routing                   | `server/game-message-handlers.js`                           | `Game.createMessageHandlers`, `Game.onMessage`, `server/message-registry.js`                                 |
 | Feature wiring/dependencies                     | `server/features.js`                                        | `server/feature-service.js`, `docs/FEATURES.md`, `docs/feature-inventory.json`                               |
 | Flight physics, collisions, system entities     | `server/space.js`                                           | `server/combat-assist.js`, `shared/rules.js`                                                                 |
-| Cargo, trading and grades                       | `Game.market/trade`, `shared/cargo-lots.js`                 | `server/trade-pricing.js`, `shared/trade-pricing.js`, `shared/economy-preview.js`                            |
+| Cargo, trading and grades                       | `server/port-services.js`, `shared/cargo-lots.js`           | `server/trade-pricing.js`, `shared/trade-pricing.js`, `shared/economy-preview.js`                            |
 | Public jobs and hauling                         | `Game.offers/accept/completeOnLanding`                      | `server/freight-offers.js`, `shared/passengers.js`, `docs/CARGO-JOBS.md`                                     |
 | Story Jobs and quest steps                      | `server/quests.js`, `shared/quests.js`                      | `server/story.js`, `shared/story.js`, `server/arcs.js`, `shared/arcs.js`                                     |
 | Team missions/consent                           | `server/coop.js`                                            | `server/warband-consent.js`, `shared/mission-payouts.js`, `docs/MISSION-REWARDS.md`                          |
@@ -104,6 +104,10 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
   landing completion, using the existing account mission array. It has no second
   save store. Story, Armada and mining-order services retain their specialized
   progression; port refresh, logging and shared capacity stay core capabilities.
+- **Port commerce:** `game.portService` owns ordinary markets, commodity/material
+  settlement, shipyard purchases/trade-in and outfitter operations. Existing Game
+  entry points remain, the same account inventories are used, and shared pricing/
+  grade helpers retain their arithmetic. Previewing a trade never settles one.
 - **Feature operations:** `game.features.<name>` exposes named services with
   explicit capability facades. Some state still lives on `Game` or in shared
   account/world objects. These are not fully isolated workers.
@@ -150,7 +154,7 @@ A typed boundary does not runtime-validate incoming JSON or prove every branch.
 The trial separates action routing from `server/game.js`, preserving entry gates
 and service implementations. It changes no action names, rewards, saves, UI or
 eligibility. [CODE-NAVIGATION-TRIAL.md](CODE-NAVIGATION-TRIAL.md) records provenance
-and review checks. Ordinary jobs now have a separate owner; core trading, station and session
+and review checks. Ordinary jobs and port commerce now have separate owners; station and session
 methods still remain in `Game`. The cleanup proceeds through separate PRs.
 
 ## UI stylesheet ownership and order
