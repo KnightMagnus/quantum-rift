@@ -2,6 +2,12 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### Unreleased — Courier and freight progression
+
+- Guarantee two small, supplied-cargo deliveries on inner-system job boards, sized so an empty starting ship can take both.
+- Add five larger freight bands from 30 to 1,800 tonnes, with pay increasing by load and distance, to give existing haulers meaningful cargo work.
+- Make ordinary delivery the most common original board-slot choice; retain existing cargo reservations, job limits and accepted payouts.
+
 ### 3.3.0 — Discoverable radio and owner-supplied music (candidate, not released)
 
 - Replace the external radio provider with five discoverable stations, saved per captain and announced through existing discovery popups.

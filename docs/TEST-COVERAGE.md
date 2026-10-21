@@ -1,5 +1,18 @@
 # Game regression coverage inventory
 
+## Courier and freight progression
+
+`cargo-courier-progression` covers two untimed starter-fit deliveries across 2,304
+inner-board/time-window cases, low-danger plotted routes, five stable public freight
+bands through 1,800 t, named stock-hauler capacities, existing commodity and mission
+hold reservations, six-job limits, duplicate/forged/oversized acceptance denial,
+wrong-port and once-only payment, real high-tonnage delivery and saved accepted
+weights/pay. `cargo-couriers.js` runs in the unit/server CI lane.
+`mission-ui-browser.mjs` additionally exercises a genuinely fresh starter captain's
+visible large-cargo denial and real button acceptance of both small shipments.
+Existing cargo, mission consent and browser checks remain intact. Availability
+coverage is not a measured credits-per-hour or all-career balance comparison.
+
 ## 3.2.1 mission choices
 
 `mission-choices` adds `mission-consent.js` (real authoritative 2/4-captain sessions) and `mission-ui-browser.mjs` (two real WebSocket/browser captains). Coverage includes board facts, visible denial reasons, retained filters, separate plotting/acceptance, explicit Ready/Start, exact integer-pool shares, revised-roster consent, refusal, capacity changes, reconnect/leave/late join, persisted offline completion and duplicate turn-in. Existing accepted rewards and legacy contracts are not migrated. `v26.js` now exercises the new consent gate before its existing actual kingpin/escort/completion checks. There is no measured career-rate or reward-balance claim.
@@ -425,6 +438,10 @@ only; not exhaustive hull/loadout or real WAN latency testing.
 - User-selected icons: Combat A, Towing B, Fleet A, Drones A, Hailing B and Processing C. Drone shortcut preserves secondary fire, including other secondary weapons.
 
 ### Chat history projection
+
+The keyboard-scroll check drains each programmatic reset's own native `scrollend`
+before arming the PageDown completion listener. A previously queued reset event
+must not falsely finish a later gesture; the exact no-jump assertion is unchanged.
 
 System: `communications-log`. `chat-projection-browser.mjs` exercises one live log
 moving between console and holographic projection, native keyboard activation,

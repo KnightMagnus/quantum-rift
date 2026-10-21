@@ -86,9 +86,19 @@ try {
     40,
     'Existing retention bound preserved',
   );
-  await page.locator('#chatlog').evaluate((el) => {
-    el.scrollTop = 0;
-  });
+  const resetHistoryScroll = () =>
+    page.locator('#chatlog').evaluate(async (el) => {
+      // Drain this reset's native scrollend before arming the PageDown listener.
+      // Otherwise its queued event can falsely mark the later gesture as finished.
+      const changed = el.scrollTop !== 0;
+      const ended = changed
+        ? new Promise((resolve) => el.addEventListener('scrollend', resolve, { once: true }))
+        : Promise.resolve();
+      el.scrollTo({ top: 0, behavior: 'instant' });
+      await ended;
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+  await resetHistoryScroll();
   await page.locator('#chatlog').focus();
   await page.locator('#chatlog').evaluate((el) => {
     window.chatScrollSettled = false;
@@ -106,9 +116,7 @@ try {
   await page.waitForFunction(
     () => window.chatScrollSettled && document.getElementById('chatlog').scrollTop > 0,
   );
-  await page.locator('#chatlog').evaluate((el) => {
-    el.scrollTop = 0;
-  });
+  await resetHistoryScroll();
   await page.evaluate(async () =>
     (await import('/ui.js')).chatLine({ msg: 'A new telemetry message.' }),
   );

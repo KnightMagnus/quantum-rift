@@ -83,7 +83,8 @@
     "mission-consent.js",
     "radio-playlists.js",
     "radio-discovery.js",
-    "radio-content.js"
+    "radio-content.js",
+    "cargo-couriers.js"
   ],
   "browser": [
     "chat-projection-browser.mjs",
@@ -729,6 +730,13 @@
       "services": [],
       "tests": ["mission-consent.js", "mission-ui-browser.mjs", "v26.js", "qol-browser.mjs"],
       "asserts": "Plain travel/capacity/risk/turn-in/personal-payout details and remembered optional type/feasible/nearby filters retain inaccessible offers with reasons. Real Ready/Start consent assigns only the frozen roster; exact pool conservation, stale/duplicate/full/refused/disconnected denial, offline completion and saved accepted rewards survive reconnect without automatic late enrollment."
+    },
+    {
+      "id": "cargo-courier-progression",
+      "owners": ["server/freight-offers.js", "server/game.js"],
+      "services": [],
+      "tests": ["cargo-couriers.js", "mission-ui-browser.mjs", "v203.js", "cargo-flows.js"],
+      "asserts": "Two lawful untimed 3\u20135t/6\u201310t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards."
     }
   ],
   "routes": {
@@ -794,7 +802,8 @@
       "v26.js",
       "mission-consent.js",
       "mission-ui-browser.mjs",
-      "radio-discovery.js"
+      "radio-discovery.js",
+      "cargo-couriers.js"
     ],
     "abandon": ["v203.js", "v24.js", "radio-discovery.js"],
     "station": [
