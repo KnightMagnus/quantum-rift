@@ -266,7 +266,7 @@ export function createGameMessageHandlers(capabilities) {
       (session, message) => {
         const playerData = session.data;
         {
-          // 2.0.3: an abandoned bounty's target leaves too
+          // an abandoned bounty's target leaves too
           const gone = playerData.missions.find((x) => x.id === message.id);
           if (!gone) return;
           if (gone.type === 'miningOrder')
@@ -277,7 +277,7 @@ export function createGameMessageHandlers(capabilities) {
             );
           playerData.missions = playerData.missions.filter((x) => x !== gone);
           if (gone.quest)
-            capabilities.features.quests.questFail(session, gone.quest.qid, 'abandoned'); // 2.4: abandoning a step ends the story
+            capabilities.features.quests.questFail(session, gone.quest.qid, 'abandoned'); // abandoning a step ends the story
           if (gone.sys && capabilities.live[gone.sys]) {
             const sp = capabilities.live[gone.sys];
             for (const x of [...sp.ships.values()])
@@ -436,7 +436,7 @@ export function createGameMessageHandlers(capabilities) {
        */
       (session, message) => {
         capabilities.features.coop.armadaOp(session, message);
-        return; // 2.6: the co-op group (was the solo-armada summon)
+        return; // the co-op group
       },
     ],
     [
@@ -472,7 +472,7 @@ export function createGameMessageHandlers(capabilities) {
        */
       (session, message) => {
         capabilities.features.coop.socialOp(session, message);
-        return; // 2.6: friends, DMs, blocks
+        return; // friends, DMs, blocks
       },
     ],
     [
@@ -484,7 +484,7 @@ export function createGameMessageHandlers(capabilities) {
        */
       (session, message) => {
         capabilities.features.coop.tradeOp(session, message);
-        return; // 2.6: trading between stations
+        return; // trading between stations
       },
     ],
     [
@@ -496,13 +496,13 @@ export function createGameMessageHandlers(capabilities) {
        */
       (session, message) => {
         capabilities.features.coop.duelOp(session, message);
-        return; // 2.6: agreed duels
+        return; // agreed duels
       },
     ],
     [
       'goal',
       /**
-       * Claims milestone reward for faction war front goal.
+       * Claims a daily or weekly goal reward.
        * @param {Session} session Player session.
        * @param {NetworkMessage} message Message payload.
        */
@@ -514,7 +514,7 @@ export function createGameMessageHandlers(capabilities) {
     [
       'store',
       /**
-       * Purchases items from faction front milestone store.
+       * Purchases a faction-store item.
        * @param {Session} session Player session.
        * @param {NetworkMessage} message Message payload.
        */
@@ -550,7 +550,7 @@ export function createGameMessageHandlers(capabilities) {
     [
       'exchange',
       /**
-       * Exchanges faction victory tokens and currencies.
+       * Manages player Exchange orders and storage.
        * @param {Session} session Player session.
        * @param {NetworkMessage} message Message payload.
        */

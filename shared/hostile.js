@@ -1,7 +1,7 @@
 /** @import { GameAssets } from './rules.js' */
 
-// Quantum Rift 0.9 "Hostile Space" data: hostile levels and the "can I win?" scan, loot chests, Station Holdout
-// waves, and the Umbral Eclipse. (2.6: directives and solo armadas were removed.)
+// Quantum Rift: data: hostile levels and the "can I win?" scan, loot chests, Station Holdout
+// waves, and the Umbral Eclipse.
 
 /**
  * Player stat bonuses affecting ship combat power calculations.

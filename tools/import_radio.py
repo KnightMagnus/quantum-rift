@@ -3,7 +3,7 @@
 
 python3 tools/import_radio.py --archive /path/Songs.zip --album-order /path/album-order.json
 The album-order JSON records the linked playlist's published position/title fields.
-Outputs approved game assets, shared/radio-stations.js and docs/RADIO-AUDIO.json.
+Writes game assets, shared/radio-stations.js and docs/RADIO-AUDIO.json.
 """
 import argparse
 import concurrent.futures

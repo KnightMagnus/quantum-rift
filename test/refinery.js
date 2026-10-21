@@ -181,7 +181,7 @@ try {
     reload.db.world.refinery.ready.find((x) => x.cid === 'alloy_ingots').units,
     w(g).ready.find((x) => x.cid === 'alloy_ingots').units,
   );
-  // Home profile is a new-recipe advantage; old12t+1500cr crate processing remains.
+  // Home profile is a new-recipe advantage; legacy 12 t + 1500 cr crate processing remains.
   {
     const h = refineryGame(),
       p = refineryPilot(h, 'Home Refiner'),

@@ -352,7 +352,7 @@ export class CombatAssist {
   }
 
   /**
-   * Validates whether a target entity is hostile, in range, and eligible for engagement.
+   * Checks whether a target entity is in range and eligible for engagement.
    * @param {CombatSpace} space Active space system instance.
    * @param {CombatEntity} lead Lead attacking entity.
    * @param {CombatEntity | null | undefined} entity Candidate target entity.

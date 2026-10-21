@@ -1,5 +1,5 @@
 import { clampStanding } from '../shared/reputation.js';
-// Quantum Rift 1.0: the Que'vari storyline as golden main-story missions (offered in landing pop-ups), and the Deep gate.
+// Quantum Rift: the Que'vari storyline as golden main-story missions (offered in landing pop-ups), and the Deep gate.
 import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES } from '../shared/galaxy.js';
 import { STORY, STORY_SHIP, DEEP_UNLOCK } from '../shared/story.js';
 import { makeLoadout, credits } from '../shared/rules.js';

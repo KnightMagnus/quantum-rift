@@ -1,4 +1,4 @@
-// Gameplay action routes previously exercised only indirectly (or not at all).
+// Gameplay action route regression tests.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';

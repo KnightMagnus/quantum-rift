@@ -8,7 +8,7 @@ import {
   commonLots,
   splitLots,
 } from '../shared/cargo-lots.js';
-// Quantum Rift 0.7 "Frontier Life" server feature operations: planetary colonies, station defense raids, ship
+// Quantum Rift: server feature operations: planetary colonies, station defense raids, ship
 // mastery, the arena, the player exchange, leaderboards, captain profiles and browser notifications.
 import { SYS, STELLARS, FACTIONS, COMMODITIES, MATERIALS, GRADES } from '../shared/galaxy.js';
 import {
@@ -153,7 +153,7 @@ export const FrontierOperations = {
     return Object.entries(this.db.world.colonies).filter(([, c]) => c.owner === k);
   },
   /**
-   * Compute maximum allowed colonies for player based on personal station Station Tier.
+   * Compute maximum allowed colonies for player based on personal Station Tier.
    * @param {PlayerData} playerData - Saved player data.
    * @returns {number} Maximum colonies.
    */
@@ -1117,7 +1117,7 @@ export const FrontierOperations = {
       .concat(this.rivalBoard ? this.rivalBoard(cat) : [])
       .filter((x) => x.v > 0)
       .sort((a, b) => b.v - a.v)
-      .slice(0, 20); // 1.1: rival captains compete too
+      .slice(0, 20); // rival captains compete too
   },
   /**
    * Fetch public captain profile overview by captain name.

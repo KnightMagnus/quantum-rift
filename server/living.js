@@ -1,6 +1,6 @@
 import { clampStanding } from '../shared/reputation.js';
-// Quantum Rift 2.4 "Living Galaxy": system states that come and go, a market that remembers what captains sold, and
-// supply jobs that pay you to bring what a troubled system needs. Mixed into Game.
+// Quantum Rift: system states that come and go, a market that remembers what captains sold, and
+// supply jobs that pay you to bring what a troubled system needs. Owned by game.features.living.
 import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.js';
 import { STATES, STATE_SHARE, STATE_MIN, TRADE_IMPACT } from '../shared/living.js';
 import { credits } from '../shared/rules.js';
@@ -248,7 +248,7 @@ export const LivingOperations = {
       (X.need.kills === 'pirate' && what === 'kill:pirate') ||
       (X.need.kills === 'enemy' && what === 'kill:' + st.enemy);
     if (!counts) return;
-    session.data.stats.stateHelp = (session.data.stats.stateHelp || 0) + 1; // 2.5: the career step
+    session.data.stats.stateHelp = (session.data.stats.stateHelp || 0) + 1; // the career step
     const before = st.got;
     st.got = Math.min(st.need, st.got + n);
     this.db.touch();

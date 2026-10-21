@@ -1,6 +1,6 @@
 /** @import { StellarBody } from '../server/game.js' */
 
-// Quantum Rift 0.7 "Frontier Life" data: planetary colonies, station defense, ship mastery, the arena, the player
+// Quantum Rift: data: planetary colonies, station defense, ship mastery, the arena, the player
 // exchange and leaderboards. Shared by server and client.
 
 /**

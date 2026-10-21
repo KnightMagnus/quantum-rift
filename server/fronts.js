@@ -1,7 +1,7 @@
 import { clampStanding } from '../shared/reputation.js';
-// Quantum Rift 0.6 "Fleets and Fronts" server feature operations: invasions,
+// Quantum Rift: server feature operations: invasions,
 // anomalies and server events, daily and weekly goals, faction stores, and the expanded job types.
-// (2.6: fleets became the Armada, see server/coop.js; territory and Dreadnoughts were removed.)
+// Armada operations are defined in server/coop.js.
 import {
   SYSTEMS,
   SYS,
@@ -191,7 +191,7 @@ export const FrontsOperations = {
       event: this.event(),
       calendar: eventCalendar(),
       states: this.statesPayload ? this.statesPayload() : {},
-    }; // 2.4: system states
+    }; // system states
   },
   /**
    * Broadcast updated world status telemetry to all connected sessions.
@@ -433,7 +433,7 @@ export const FrontsOperations = {
       const mt = MATERIALS[Math.floor(Math.random() * 3)];
       playerData.mats[mt][2]++;
       this.toast(session, `Weekly goal bonus: a ${mt} III crate.`);
-    } // 2.6: was a Hollow Directive
+    } // Grade III crate reward.
     if (list.every((x) => x.claimed)) {
       const mt = MATERIALS[Math.floor(Math.random() * 3)],
         gr = m.period === 'weekly' ? 3 : 1;
@@ -477,7 +477,7 @@ export const FrontsOperations = {
    * @returns {void}
    */
   storeBuy(session, m) {
-    // 0.8: the faction stores are their own menu, open from any landing (standing still gates the stock)
+    // the faction stores are their own menu, open from any landing (standing still gates the stock)
     const playerData = session.data,
       p = STELLARS[playerData.stellar],
       F_ = FACTIONS[m.fac],
@@ -711,7 +711,7 @@ export const FrontsOperations = {
             (1 - (this.bonus(playerData).lootPct || 0) / 300) *
             (1 - Math.min(80, this.bonus(playerData).scanPct || 0) / 100)
         ) {
-          // 1.2: ghosts and fixers slip past scans
+          // ghosts and fixers slip past scans
           const fine = Math.round(m.reward * SCAN.fine);
           playerData.credits = Math.max(0, playerData.credits - fine);
           playerData.rep[S.faction] = clampStanding((playerData.rep[S.faction] || 0) - 5);

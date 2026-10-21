@@ -5,7 +5,7 @@ import {
   completeTeamContract,
 } from './warband-consent.js';
 import { migrateCargoLots, planTake, moveLots } from '../shared/cargo-lots.js';
-// Quantum Rift 2.6 "Co-op" server feature operations:
+// Quantum Rift: server feature operations:
 //   Captain Friends (requests, online status, DMs with an offline mailbox, blocks)
 //   the Armada: a short co-op group of up to five captains and their wingmates (private chat, no friendly fire,
 //     small buffs, shared kill credit, follow-the-leader jumps). It replaces the 0.6 fleets.
@@ -77,7 +77,7 @@ export const CoopOperations = {
     this.duels = this.duels || {};
     this.trades = this.trades || {};
     this.nextCoopId = this.nextCoopId || 1;
-    // 2.6: the 0.6 fleets are gone. Each fleet bank is shared out between its members, and the founder gets the fee back.
+    // the 0.6 fleets are gone. Each fleet bank is shared out between its members, and the founder gets the fee back.
     if (W.fleets && Object.keys(W.fleets).length) {
       for (const F of Object.values(W.fleets)) {
         const members = (F.members || []).map((n) => this.db.get(n)).filter(Boolean),

@@ -146,15 +146,15 @@ export function augmentAssets(assets) {
   for (const w of EXTRA_WEAPONS) if (!assets.weapons[w.id]) assets.weapons[w.id] = w;
   for (const id of MINING_WEAPONS) if (assets.weapons[id]) assets.weapons[id].mining = true;
   for (const S of SPECIALISTS)
-    if (!assets.ships[S.id]) assets.ships[S.id] = { ...S, img: `ships/${S.id}_yard.png` }; // 0.8: specialty ships
-  for (const S of SHIPS23) if (!assets.ships[S.id]) assets.ships[S.id] = { ...S }; // 2.3: new common Quantum hulls
-  for (const H of Object.values(assets.ships)) H.role = roleOf(H, assets.weapons); // 0.8: class triangle roles
+    if (!assets.ships[S.id]) assets.ships[S.id] = { ...S, img: `ships/${S.id}_yard.png` }; // specialty ships
+  for (const S of SHIPS23) if (!assets.ships[S.id]) assets.ships[S.id] = { ...S }; // new common Quantum hulls
+  for (const H of Object.values(assets.ships)) H.role = roleOf(H, assets.weapons); // class triangle roles
   for (const M of [MK2_OF, MK3_OF])
     for (const [b, mk] of Object.entries(M))
       if (assets.ships[b] && assets.ships[mk]) assets.ships[mk].role = assets.ships[b].role; // refits keep their role
   for (const id of [...Object.values(MK2_OF), ...Object.values(MK3_OF), ...ARMADA_HULLS])
-    if (assets.ships[id]) assets.ships[id].npcOnly = true; // 2.6: enemy ships only
-  for (const [id, s] of Object.entries(SPRITES)) if (assets.ships[id]) assets.ships[id].spr = s; // 2.6: sharper sheets with banking
+    if (assets.ships[id]) assets.ships[id].npcOnly = true; // enemy ships only
+  for (const [id, s] of Object.entries(SPRITES)) if (assets.ships[id]) assets.ships[id].spr = s; // sharper sheets with banking
   return assets;
 }
 
@@ -525,7 +525,7 @@ export function researchBonus(station) {
 export function officerStats(officer) {
   const out = {},
     R = ROLES[officer.role],
-    mult = RARITY[officer.rarity].mult * (1 + 0.1 * (officer.lv - 1)) * RANK_MULT(officer.rank); // 1.2: rank adds 12% each
+    mult = RARITY[officer.rarity].mult * (1 + 0.1 * (officer.lv - 1)) * RANK_MULT(officer.rank); // rank adds 12% each
   for (const k of R.stats) out[k] = Math.round(STAT_BASE[k] * mult * 10) / 10;
   return out;
 }
@@ -548,7 +548,7 @@ export function officerBonus(officers, bridge) {
     const k = slot === 'captain' ? 1.25 : 1;
     for (const [s, v] of Object.entries(officerStats(officer))) b[s] = (b[s] || 0) + v * k;
     for (const t of officer.traits || [])
-      if (TRAITS[t]) for (const [s, v] of Object.entries(TRAITS[t].bonus)) b[s] = (b[s] || 0) + v; // 1.2: traits
+      if (TRAITS[t]) for (const [s, v] of Object.entries(TRAITS[t].bonus)) b[s] = (b[s] || 0) + v; // traits
     races[officer.race] = (races[officer.race] || 0) + 1;
   }
   for (const [r, n] of Object.entries(races))
@@ -569,7 +569,7 @@ export function captainBonus(playerData) {
   for (const [k, v] of Object.entries(o)) b[k] = (b[k] || 0) + v;
   for (const c of playerData.lower || [])
     if (LOWER_DECK[c])
-      for (const [k, v] of Object.entries(LOWER_DECK[c].bonus)) b[k] = (b[k] || 0) + v; // 1.2: lower-deck crew
+      for (const [k, v] of Object.entries(LOWER_DECK[c].bonus)) b[k] = (b[k] || 0) + v; // lower-deck crew
   return b;
 }
 

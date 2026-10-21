@@ -1,4 +1,4 @@
-// Quantum Rift 0.6 interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
+// Quantum Rift: interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
 import { SYS, FACTIONS, GRADES } from '/shared/galaxy.js';
 import {
   ANOMALIES,
@@ -131,7 +131,7 @@ export function opsHtml(G) {
       ])
       .filter((x) => x[2] <= 8)
       .sort((a, b) => a[2] - b[2])
-      .slice(0, 8); // 2.4: the Rift today
+      .slice(0, 8); // the Rift today
     if (near.length)
       h +=
         `<div class="sect">THE RIFT TODAY <span class="dim small">troubled systems near you</span></div>` +
@@ -154,7 +154,7 @@ export function opsHtml(G) {
       `<div class="sect">WEEKLY GOALS <span class="dim small">${credits(GOAL_REWARD.weekly.credits)} cr + ${GOAL_REWARD.weekly.tokens} scrip each</span></div>` +
       goalRows(y.goals.weekly, 'weekly');
   }
-  // 2.6: the Armada at a glance (full controls in the ALLIES tab); multiplayer only
+  // the Armada at a glance (full controls in the ALLIES tab); multiplayer only
   const A = y.armada;
   if (!G.solo) {
     h += `<div class="sect">ARMADA</div>`;

@@ -3,7 +3,7 @@
                   tumble at their own angles, with torn spars, loose plating, dead habitat modules and a debris scatter
   arc_0, arc_1    a fragment of an ancient megastructure: layered framework rails, lattice spars, docking bays, panels and
                   a few lights still burning
-Output: client/assets/decor/<name>.webp (replaces the flat 2.2 versions)
+Output: client/assets/decor/<name>.webp
 usage: python3 tools/rift_ruins.py client/assets/decor      (needs numpy and Pillow)"""
 import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

@@ -150,7 +150,7 @@ const JobOperations = {
         const landingPorts = destinationSystem.stellars.filter(
             (candidatePort) => candidatePort.svc.includes('L') && !candidatePort.site,
           ),
-          destinationPort = landingPorts[Math.floor(random() * landingPorts.length)]; // 1.0.3: never to an empty derelict hull
+          destinationPort = landingPorts[Math.floor(random() * landingPorts.length)]; // never to an empty derelict hull
         if (!destinationPort) continue;
         const commodity = COMMODITIES[Math.floor(random() * COMMODITIES.length)],
           cargoTonnes = 5 + Math.floor(random() * 26);
@@ -162,7 +162,7 @@ const JobOperations = {
           dest: destinationPort.id,
           cid: commodity.id,
           qty: cargoTonnes,
-          reward: Math.round((800 + jumps * 1100 + cargoTonnes * 60) * 1.35), // 2.4: cargo runs pay better
+          reward: Math.round((800 + jumps * 1100 + cargoTonnes * 60) * 1.35), // cargo runs pay better
           text: `The sender supplies the shipment. Carry ${cargoTonnes} tons of ${commodity.name.toLowerCase()} to ${destinationPort.name} in the ${destinationSystem.name} system (${jumps} jump${jumps > 1 ? 's' : ''}). No commodity purchase needed.`,
         });
       } else if (roll < 0.8) {
@@ -214,7 +214,7 @@ const JobOperations = {
     );
     offers.push(
       ...this.features.coop.coopOffers(stellarBody, playerData, random, nearbySystems, offerWindow),
-    ); // 2.6: Armada contracts (online games)
+    ); // Armada contracts (online games)
     {
       const mission = this.features.arcs.expeditionOffer(stellarBody, playerData);
       if (mission) offers.push(mission);
@@ -227,7 +227,7 @@ const JobOperations = {
         nearbySystems,
         offerWindow,
       ),
-    ); // 2.4: jobs posted by troubled systems nearby
+    ); // jobs posted by troubled systems nearby
     offers.push(
       ...this.features.syndicate.extraOffers(
         stellarBody,
@@ -280,7 +280,7 @@ const JobOperations = {
     offers.push(...freightOffers(stellarBody, offerWindow));
     const radioTour = radioTourOffer(stellarBody, playerData);
     if (radioTour) offers.unshift(radioTour);
-    offers.unshift(...this.features.quests.questOffers(stellarBody, playerData)); // 2.4: contacts and side stories lead the board
+    offers.unshift(...this.features.quests.questOffers(stellarBody, playerData)); // contacts and side stories lead the board
     return offers
       .filter(
         (offer) =>
@@ -305,7 +305,7 @@ const JobOperations = {
     const mission = this.offers(port, playerData).find((offer) => offer.id === missionId);
     if (!mission) return;
     if (mission.type === 'quest') return this.features.quests.questStart(session, mission); // 2.4
-    if (mission.type === 'warband') return this.features.coop.warbandAccept(session, mission); // 2.6: Armada contracts go to the whole Armada
+    if (mission.type === 'warband') return this.features.coop.warbandAccept(session, mission); // Armada contracts go to the whole Armada
     if (mission.type === 'cargo' || mission.type === 'smuggle') {
       const shipStats = this.features.shipStats.stats(playerData),
         usedHold = this.holdUsed(playerData);
@@ -365,7 +365,7 @@ const JobOperations = {
             'cid:' + mission.cid,
             mission.qty,
           );
-        } // 2.4: your goods are unloaded
+        } // your goods are unloaded
         if (mission.type === 'smuggle')
           this.features.syndicate.synGain(session, mission.syn ? 'contract' : 'smuggle');
         if (mission.syn === 'hit') this.features.syndicate.synGain(session, 'hit'); // 1.2
@@ -412,7 +412,7 @@ const JobOperations = {
           `Job complete: ${mission.title}. Paid ${credits(mission.reward)} credits.`,
         );
         this.log(playerData, `Completed: ${mission.title} (+${credits(mission.reward)}).`);
-        if (mission.quest) this.features.quests.questAdvance(session, mission); // 2.4: the story goes on
+        if (mission.quest) this.features.quests.questAdvance(session, mission); // the story goes on
       }
     }
     playerData.missions = playerData.missions.filter((mission) => !mission.paid);

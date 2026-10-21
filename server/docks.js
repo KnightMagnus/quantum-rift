@@ -1,4 +1,4 @@
-// 2.1 "Docks": lettered docks at your Personal Station, each with a lead ship and wingmate ships chosen from your stored
+// Docks: lettered docks at your Personal Station, each with a lead ship and wingmate ships chosen from your stored
 // ships. The lead of the active dock is the ship you fly (d.ship); everything else waits in the hangar (d.dock).
 // Wingmate slots carry their own officers (a captain and a crew member), who boost that ship.
 import { STELLARS, WINGMATES } from '../shared/galaxy.js';
@@ -81,7 +81,7 @@ export const DocksOperations = {
     while (playerData.docks.length < this.dockCount(playerData))
       playerData.docks.push({ lead: null, wings: [] });
     if (playerData.docks.length > this.dockCount(playerData)) {
-      // 2.1: five docks became four; ships in a dock that closed simply wait in the hangar
+      // five docks became four; ships in a dock that closed simply wait in the hangar
       if (playerData.activeDock >= this.dockCount(playerData)) {
         const k = this.dockCount(playerData) - 1;
         playerData.docks[k] = {
@@ -138,7 +138,7 @@ export const DocksOperations = {
     return 's' + this.uid(playerData);
   },
   /**
-   * Get the number of available docks based on station Station Tier.
+   * Get the number of available docks based on Station Tier.
    * @param {PlayerData} playerData - Saved player data.
    * @returns {number} Number of docks.
    */

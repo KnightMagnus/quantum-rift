@@ -1,4 +1,4 @@
-// Quantum Rift 0.8 "Specialists": ten one-of-a-kind ships, each built for a single job (after STFC's specialty ships).
+// Quantum Rift: ten one-of-a-kind ships, each built for a single job (after STFC's specialty ships).
 // The loop: the ship's activity drops its blueprints (flying anything) and its unique resource (flying the specialist).
 // The station refines the resource into that ship's parts; parts upgrade five components; a full set unlocks a timed tier-up.
 
@@ -34,7 +34,7 @@
  * @property {number} size - Visual sprite scale.
  * @property {Array<[number, number, number]>} weapons - Default weapon loadout tuples [weaponId, count, ammo].
  * @property {string} ability - Special innate ship capability description.
- * @property {string} loop - Gameplay gameplay loop description for collecting blueprints and resources.
+ * @property {string} loop - Gameplay loop description for collecting blueprints and resources.
  * @property {string} desc - Lore background and flavor text.
  * @property {string} cat - Category classification ('Specialist').
  * @property {string} faction - Faction identifier ('specialist').

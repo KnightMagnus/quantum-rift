@@ -1,4 +1,4 @@
-// 1.1 "Living Rift": rival captains. Thirty named AI captains with careers of their own: they trade, hunt, mine and
+// Living Rift: rival captains. Thirty named AI captains with careers of their own: they trade, hunt, mine and
 // raid across the Rift, buy better ships, show up in the systems you visit, and remember how you treated them.
 import { FACTION_HULLS } from './galaxy.js';
 
@@ -198,7 +198,7 @@ export const RIVALS = (() => {
       luck: 0.7 + r() * 0.6,
     });
   }
-  // two captains by special request
+  // Additional named captains
   const named = [
     ['pirate', 'Madcow Soul', 'Stampede'],
     ['hunter', 'Six Flash', 'Quickdraw'],
@@ -363,7 +363,7 @@ export function combatRank(score) {
   };
 }
 
-// personal lines for the two named-by-request captains
+// Captain-specific hail dialogue
 /**
  * Custom hailing dialogue for specially-named captains.
  * @type {Object.<string, Object.<string, string>>}

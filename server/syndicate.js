@@ -1,5 +1,5 @@
 import { clampStanding } from '../shared/reputation.js';
-// 1.2 "Syndicate and Officers": Syndicate standing and the black market, officer promotions and traits, lower-deck
+// Syndicate and Officers: Syndicate standing and the black market, officer promotions and traits, lower-deck
 // crew, the bank (loans with a credit rating), passenger and rush jobs, and Syndicate contracts.
 import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES, TRAFFIC } from '../shared/galaxy.js';
 import {
@@ -33,7 +33,7 @@ import { occupiedPassengerSeats } from '../shared/passengers.js';
  */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 /** @type {string[]} Mission types that complete upon reaching their destination. */
-const DEST_TYPES = ['cargo', 'smuggle', 'passenger', 'expret', 'supply']; // 2.4: supply jobs complete at their destination
+const DEST_TYPES = ['cargo', 'smuggle', 'passenger', 'expret', 'supply']; // supply jobs complete at their destination
 /**
  * Check whether a mission completes at its destination.
  * @param {{type: string}} m - Mission object to check.

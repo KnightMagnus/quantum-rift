@@ -70,7 +70,7 @@ export class DB {
       this.syncDirectory();
     }
     /** @type {Record<string, PlayerAccount>} */
-    this.players = Object.create(null); // 2.0.2: no prototype, so names like __proto__ can never reach object internals
+    this.players = Object.create(null); // no prototype, so names like __proto__ can never reach object internals
     try {
       Object.assign(this.players, JSON.parse(fs.readFileSync(this.file, 'utf8')));
     } catch {}

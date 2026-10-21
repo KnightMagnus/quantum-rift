@@ -7,7 +7,7 @@ import {
   commonLots,
   splitLots,
 } from '../shared/cargo-lots.js';
-// 1.1: fleet commands, jettisoning cargo, and the combat rating.
+// fleet commands, jettisoning cargo, and the combat rating.
 import { COMMODITIES } from '../shared/galaxy.js';
 import { combatRank } from '../shared/rivals.js';
 

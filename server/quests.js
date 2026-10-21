@@ -1,9 +1,9 @@
 import { grantRadio } from './radio-discovery.js';
 import { RADIO_STATIONS, SCIENTIST_STORY } from '../shared/radio-stations.js';
 import { clampStanding } from '../shared/reputation.js';
-// Quantum Rift 2.4: questlines. Contacts at spaceport bars offer multi-step jobs that tell a small story, and seven
+// Quantum Rift: questlines. Contacts at spaceport bars offer multi-step jobs that tell a small story, and seven
 // handcrafted side stories wait at particular worlds. Each step is an ordinary job tagged with `m.quest`; finishing it
-// tells the next part of the story and posts the next step. Mixed into Game.
+// tells the next part of the story and posts the next step. Owned by game.features.quests.
 import {
   SYSTEMS,
   SYS,
@@ -131,7 +131,7 @@ const jumpsFrom = (a) =>
  */
 const raceOf = (fac) => (RACE_ROLES[fac] ? fac : 'quantum');
 
-// 2.5.2: the most hold space and bunks any step of a story will ask for, so the job board can warn before you take it on
+// the most hold space and bunks any step of a story will ask for, so the job board can warn before you take it on
 /**
  * Compute the maximum cargo hold and passenger bunks required across all steps of a quest chain.
  * @param {Array<QuestStep>} steps - Quest chain steps.

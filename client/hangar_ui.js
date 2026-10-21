@@ -1,5 +1,5 @@
 import { artworkUrl } from './artwork.js';
-// Quantum Rift 0.5 interface pieces: crew (bar, roster, bridge), hangar (shuttles, job board, drydock), research trees, boarding.
+// Quantum Rift: interface pieces: crew (bar, roster, bridge), hangar (shuttles, job board, drydock), research trees, boarding.
 import { rankLine, lowerDeckHtml } from './syn_ui.js';
 import { SYS, FACTIONS, MATERIALS, GRADES, RESEARCH } from '/shared/galaxy.js';
 import {

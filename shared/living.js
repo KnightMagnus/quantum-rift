@@ -1,4 +1,4 @@
-// Quantum Rift 2.4 "Living Galaxy": systems pass through states (famine, war, a boom...) that come and go over time and
+// Quantum Rift: systems pass through states (famine, war, a boom...) that come and go over time and
 // that captains can end early. A state moves prices, changes the traffic, posts its own jobs and makes the news.
 // `need` is what ends a state early: tons of a good sold at the system's markets, or kills of a kind of ship there.
 

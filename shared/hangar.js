@@ -1,4 +1,4 @@
-// Quantum Rift 0.5 "Hangar Deck" data: shuttles, officers, research trees, refining and the drydock.
+// Quantum Rift: data: shuttles, officers, research trees, refining and the drydock.
 // Shared by the server (rules) and the client (display).
 
 /**
@@ -376,7 +376,7 @@ export const BRIDGE_SLOTS = ['captain', 'bridge1', 'bridge2'];
  * Maximum active officer roster capacity supported at the station.
  * @type {number}
  */
-export const ROSTER_MAX = 24; // 2.1: room for wingmate captains and crews
+export const ROSTER_MAX = 24; // room for wingmate captains and crews
 
 /**
  * Calculates cumulative experience points required to advance an officer to the next level.

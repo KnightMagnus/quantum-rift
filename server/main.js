@@ -238,6 +238,6 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
-// 2.0.2: log anything that slips through rather than letting the server die mid-game
+// log anything that slips through rather than letting the server die mid-game
 process.on('uncaughtException', (e) => console.error('uncaught', e));
 process.on('unhandledRejection', (e) => console.error('unhandled rejection', e));

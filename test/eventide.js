@@ -18,7 +18,7 @@ assert.equal(
   new Set(SYSTEMS.flatMap((s) => s.stellars.map((p) => p.id))).size,
   Object.keys(STELLARS).length,
 );
-// Golden source: untouched v2.8.3 generation, normalized ONLY for approved Terra text.
+// Golden source: untouched v2.8.3 generation, normalized ONLY for intentional Terra display text.
 // Scenes and the one new Vesper branch are additions; every legacy generated property stays exact.
 const legacy = JSON.parse(JSON.stringify(SYSTEMS.filter((s) => !s.eventide)));
 for (const s of legacy) {

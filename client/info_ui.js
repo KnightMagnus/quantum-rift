@@ -1,5 +1,5 @@
 import { artworkUrl } from './artwork.js';
-// 1.1: the ship and captain panel (I), the player information view: your ship, cargo (with jettison), combat
+// the ship and captain panel (I), the player information view: your ship, cargo (with jettison), combat
 // rating, fleet orders, and the rival captains of the Rift with how they feel about you.
 import {
   SYS,
@@ -183,10 +183,10 @@ export function infoHtml(G, tab) {
       .join('')}</table>`;
 }
 
-// 2.4: everything you own and everything you have done, on one page
+// everything you own and everything you have done, on one page
 
 /**
- * Renders the comprehensive career overview ledger (holdings, net worth, story progress, exploration record).
+ * Renders the career overview ledger (holdings, net worth, story progress, exploration record).
  * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
@@ -260,7 +260,7 @@ function careerHtml(G) {
   </div></div>`;
 }
 
-// 2.5.2: where a good in your hold sells best, among the markets you have visited within four jumps
+// where a good in your hold sells best, among the markets you have visited within four jumps
 
 /**
  * Finds the nearby explored trade port within four jumps offering the best sale price for a commodity.

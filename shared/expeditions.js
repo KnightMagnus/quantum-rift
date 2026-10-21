@@ -1,4 +1,4 @@
-// 1.2: what the Farside data cores say. Fragments only: they hint at the region's purpose without spending it.
+// what the Farside data cores say. Fragments only: they hint at the region's purpose without spending it.
 
 /**
  * @typedef {Object} ExpeditionLoreFragment

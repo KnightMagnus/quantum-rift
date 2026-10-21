@@ -1,4 +1,4 @@
-// Quantum Rift 0.9 "Hostile Space" server feature operations: loot chests (2.6: directives and solo armadas removed),
+// Quantum Rift: server feature operations: loot chests,
 // Station Holdout, and Umbral Eclipse cells. Hostile levels are computed in Space (e.pw) and shown by the client.
 import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES } from '../shared/galaxy.js';
 import { CHESTS, CHEST_CHANCE, HOLDOUT, ECLIPSE, levelOf, playerPower } from '../shared/hostile.js';
@@ -142,7 +142,7 @@ export const HostileOperations = {
       session,
       'HOLDOUT: ten waves are inbound. Your defense platforms are deploying. Hold the station!',
     );
-    if (this.holdoutAnnounce) this.holdoutAnnounce(session); // 2.6: the Armada is told and can fly in to help
+    if (this.holdoutAnnounce) this.holdoutAnnounce(session); // the Armada is told and can fly in to help
     this.db.touch();
     this.you(session);
   },
@@ -200,7 +200,7 @@ export const HostileOperations = {
       H.nextT = 0;
       H.waveT = Date.now();
       H.ids = [];
-      const helpers = this.holdoutHelpers ? this.holdoutHelpers(playerData, site) : []; // 2.6: co-op Holdout
+      const helpers = this.holdoutHelpers ? this.holdoutHelpers(playerData, site) : []; // co-op Holdout
       H.helpers = [...new Set([...(H.helpers || []), ...helpers.map((o) => o.data.name)])];
       const base = HOLDOUT.wave(H.wave),
         hulls = base.concat(
@@ -292,12 +292,12 @@ export const HostileOperations = {
       playerData.mats[MATERIALS[Math.floor(Math.random() * 3)]][4]++;
       playerData.bp[bw.id] += 5;
       got.push('a grade V crate', '5 more Bulwark blueprints');
-    } // 2.6: was an Umbral Directive
+    } // Grade V crate and five Bulwark blueprints.
     const msg = `${won ? 'HOLDOUT WON: all ten waves beaten!' : `Holdout over after ${n} wave${n > 1 ? 's' : ''}. ${why || ''}`} Rewards: ${got.join(', ')}.`;
     this.toast(session, msg);
     this.log(playerData, msg);
     this.notify(session, won ? 'Holdout won' : 'Holdout over', got.join(', '));
-    if (this.holdoutReward) this.holdoutReward(playerData, H, n, won, R); // 2.6: Armada helpers share the rewards
+    if (this.holdoutReward) this.holdoutReward(playerData, H, n, won, R); // Armada helpers share the rewards
     this.db.touch();
     this.you(session);
   },

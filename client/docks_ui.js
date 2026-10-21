@@ -1,5 +1,5 @@
 import { artworkUrl } from './artwork.js';
-// 2.1 Docks: the DOCKS screen at your Personal Station, the dock switcher by the DEPART button, and the sidebar line.
+// Docks: the DOCKS screen at your Personal Station, the dock switcher by the DEPART button, and the sidebar line.
 import { ROLES, RARITY } from '/shared/hangar.js';
 import { WING_REPAIR_COST, WING_REPAIR_MIN, NEXT_DOCK_OPS } from '/shared/docks.js';
 import { credits, repairBasis } from '/shared/rules.js';

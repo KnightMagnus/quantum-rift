@@ -1,4 +1,4 @@
-"""Quantum Rift 2.2 scenery, round two (procedural, plus the game's own station sprites for the abandoned stations).
+"""Quantum Rift scenery (procedural, plus the game's own station sprites for the abandoned stations).
   giant_0..3      far-off gas giants, some ringed, lit from one side
   derelict_0..3   abandoned station platforms: old hulls, dark, scorched, a few lights still burning
   crystal_0..2    floating crystal formations that glow from within
@@ -130,7 +130,7 @@ def pod(i, n=140):
     im.save(os.path.join(OUT, f'pod_{i}.webp'), 'WEBP', quality=90)
 for i in range(3): pod(i)
 print('scenery round two written to', OUT)
-# (2.2) the satellites and pods get light falling across them and a little grime; see the shading pass in DEVELOPMENT notes
+# Directional light and grime shade the satellites and pods.
 import glob as _g
 for _f in sorted(_g.glob(os.path.join(OUT, 'satellite_*.webp')) + _g.glob(os.path.join(OUT, 'pod_*.webp'))):
     _im = np.asarray(Image.open(_f).convert('RGBA')).astype(float) / 255; _n = _im.shape[0]

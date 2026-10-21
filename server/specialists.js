@@ -1,4 +1,4 @@
-// Quantum Rift 0.8 "Specialists" server feature operations: specialty-ship abilities, unique resources, blueprints,
+// Quantum Rift: server feature operations: specialty-ship abilities, unique resources, blueprints,
 // building, parts, components and timed tier-ups.
 import { SYS, STELLARS, FACTIONS, GRADES } from '../shared/galaxy.js';
 import {

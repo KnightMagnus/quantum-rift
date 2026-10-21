@@ -1,4 +1,4 @@
-"""Quantum Rift 2.5: rendered space stations for the 78 station worlds (they were flat drawn rings before).
+"""Quantum Rift: rendered space stations for the 78 station worlds.
 Twelve designs built from the hull pipeline's primitives (tools/rift_render3d.py) and rendered in the same lit, panelled
 3D style as the ships. Output: client/assets/stations/s_<design>.webp
 usage: python3 tools/rift_stations.py client/assets/stations [only]      (needs numpy and Pillow)"""

@@ -1,4 +1,4 @@
-// Quantum Rift 0.8: ship roles and the class triangle (after STFC). Interceptors beat Battleships, Battleships beat
+// Quantum Rift: ship roles and the class triangle (after STFC). Interceptors beat Battleships, Battleships beat
 // Explorers, Explorers beat Interceptors. Survey ships are the miners and haulers; Carriers launch fighters.
 
 /**

@@ -1,8 +1,8 @@
 """Deterministic large motherlodes in the existing rift_objects lit-3D style.
 
 Usage: python3 tools/rift_motherlodes.py client/assets/objects
-Requires the existing art toolchain (numpy, Pillow). Verified with numpy2.5.4
-and Pillow13.0.0 under Python3.14. Generates only three NEW
+Requires the existing art toolchain (numpy, Pillow). Tested with numpy 2.5.4
+and Pillow 13.0.0 under Python 3.14. Generates only three
 motherlode files; never regenerates or changes ordinary rock mappings.
 """
 import hashlib

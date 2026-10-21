@@ -120,7 +120,7 @@ const PortOperations = {
         flash: this.features.rivals.flashMult(stellarBody.id, commodity.id) !== 1,
         moved: Math.round((marketMultiplier - 1) * 100),
       };
-    }).filter((marketItem) => marketItem.price !== null); // 1.1: market flashes; 2.4: system states and what captains sold here
+    }).filter((marketItem) => marketItem.price !== null); // market flashes; 2.4: system states and what captains sold here
   },
   /**
    * Executes commodity purchase or sale transaction with market depth price impact.
@@ -184,7 +184,7 @@ const PortOperations = {
         ((playerData.paid[commodityId] || purchasePrice) * (playerData.cargo[commodityId] || 0) +
           purchasePrice * quantity) /
           ((playerData.cargo[commodityId] || 0) + quantity),
-      ); // 2.4: what you paid, on average
+      ); // what you paid, on average
       addLots(
         playerData.cargo,
         playerData.cargoLots,
@@ -193,7 +193,7 @@ const PortOperations = {
       );
       playerData.credits -= quantity * purchasePrice;
       recordEconomy(playerData, port.id, 'purchases', quantity * purchasePrice);
-      if (!port.site) this.features.living.addImpact(port.id, commodityId, -quantity); // 2.4: buying raises the local price
+      if (!port.site) this.features.living.addImpact(port.id, commodityId, -quantity); // buying raises the local price
     } else {
       const availableQuantity = playerData.cargo[commodityId] || 0;
       quantity = Math.min(-quantity, availableQuantity);
@@ -236,7 +236,7 @@ const PortOperations = {
       if (!port.site) {
         this.features.living.addImpact(port.id, commodityId, quantity);
         this.features.living.stateProgress(session, port.system, 'cid:' + commodityId, quantity);
-      } // 2.4: selling lowers it, and feeds a famine or a rush
+      } // selling lowers it, and feeds a famine or a rush
     }
     this.db.touch();
     this.you(session);
@@ -325,7 +325,7 @@ const PortOperations = {
           unlockedHullIds.forEach((hullId) => hullIds.add(hullId));
       for (const hullId of [703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713])
         hullIds.add(hullId);
-      if (playerData.station.ops >= 4) WINGMATES.forEach((hullId) => hullIds.add(hullId)); // 2.1: wingmate ships (2.6: the Armada escort hulls are retired)
+      if (playerData.station.ops >= 4) WINGMATES.forEach((hullId) => hullIds.add(hullId)); // wingmate ships (2.6: the Armada escort hulls are retired)
       return [...hullIds].sort(
         (leftHullId, rightHullId) => this.A.ships[leftHullId].cost - this.A.ships[rightHullId].cost,
       );
@@ -340,7 +340,7 @@ const PortOperations = {
     }
     if (factionId !== 'quevari' && factionId !== 'umbral')
       for (const hullId of [703, 704, 705, 706, 707, 708, 709, 710, 820, 821, 822])
-        if (this.A.ships[hullId].tech <= stellarBody.tech) list.add(hullId); // 2.3: the Wasp, Swift and Pelican are sold everywhere
+        if (this.A.ships[hullId].tech <= stellarBody.tech) list.add(hullId); // the Wasp, Swift and Pelican are sold everywhere
     return [...list].sort(
       (leftHullId, rightHullId) => this.A.ships[leftHullId].cost - this.A.ships[rightHullId].cost,
     );
@@ -368,7 +368,7 @@ const PortOperations = {
     if (!port || session.ent) return;
     const availableHullIds = this.yard(port, playerData) || [];
     if (!availableHullIds.includes(hullId)) return;
-    if (WING_ONLY.includes(hullId)) return this.features.docks.buyToHangar(session, hullId); // 2.1: escort hulls go straight to the hangar
+    if (WING_ONLY.includes(hullId)) return this.features.docks.buyToHangar(session, hullId); // escort hulls go straight to the hangar
     const hullDefinition = this.A.ships[hullId],
       netCost = hullDefinition.cost - this.tradeIn(playerData);
     if (playerData.credits < netCost)

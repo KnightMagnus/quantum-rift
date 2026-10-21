@@ -242,7 +242,7 @@ export function initUI(g, sender) {
     const b = e.target.closest('[data-tga]');
     if (!b) return;
     const n = $('tg-acts').dataset.n;
-    if (!n) return; // 2.6: invite, duel, message or befriend the captain you targeted
+    if (!n) return; // invite, duel, message or befriend the captain you targeted
     if (b.dataset.tga === 'invite') send({ t: 'armada', op: 'invite', name: n });
     else if (b.dataset.tga === 'friend') send({ t: 'social', op: 'add', name: n });
     else if (b.dataset.tga === 'duel')
@@ -265,7 +265,7 @@ export function initUI(g, sender) {
       plot(b.dataset.plot);
       toast(`Course plotted to ${SYS[b.dataset.plot].name}. Press J in space to jump.`);
     }
-  }); // 2.4 $('dockchips').addEventListener('click', onAct); $('stview').addEventListener('click', onAct); $('opsview').addEventListener('click', onAct); $('opsview').addEventListener('click', (e) => { const b = e.target.closest('[data-plot]'); if (b) { plot(b.dataset.plot); openMap(b.dataset.plot); } });   // 2.4
+  });
   document.addEventListener('change', (e) => {
     const key = e.target.dataset.missionFilter;
     if (
@@ -292,9 +292,9 @@ export function initUI(g, sender) {
       G.ofit = e.target.checked;
       renderLanded();
     }
-  }); // 2.5.2: shipyard sort, outfitter filter
+  }); // shipyard sort, outfitter filter
   $('landbody').addEventListener('change', (e) => {
-    // 2.1: dock pickers
+    // dock pickers
     const dp = e.target.closest('select.dpick');
     if (dp) {
       send({
@@ -486,7 +486,7 @@ export function initUI(g, sender) {
   };
   renderRadio();
 }
-// 2.0: toasts pick a sound from what they say
+// toasts pick a sound from what they say
 const TOAST_SND = [
   [/hired guns|raid|invasion|closing in|under attack|price on your head|ambush/i, 'alert'],
   [
@@ -499,7 +499,7 @@ const TOAST_SND = [
     'error',
   ],
 ];
-// 2.5: which rendered landing picture (tools/rift_landscapes.py) a world shows
+// which rendered landing picture (tools/rift_landscapes.py) a world shows
 const LAND_SCENES = {
   terran: ['terran_city1', 'terran_city2', 'terran_wild1', 'terran_wild2', 'jungle1', 'jungle2'],
   city: ['city1', 'city2', 'terran_city1'],
@@ -531,7 +531,7 @@ function landScene(stellarBody) {
   const L = LAND_SCENES[t] || LAND_SCENES.barren;
   return 'l_' + L[h % L.length];
 }
-// 2.5: a styled confirmation dialog in place of the browser's own confirm box
+// a styled confirmation dialog in place of the browser's own confirm box
 /**
  * Displays a styled confirmation modal dialog with confirm/cancel action handlers.
  * @param {string} msg Confirmation message prompt
@@ -595,7 +595,7 @@ export function chatLine(m) {
     d.className = 'sys';
     d.textContent = m.msg;
   } else
-    d.innerHTML = `<b${m.ch === 'armada' ? ' class="armada"' : ''}${!G.solo && m.from !== G.myName ? ` data-dm="${esc(m.from)}" title="Message ${esc(m.from)}"` : ''}>${m.ch === 'armada' ? '[Armada] ' : ''}${esc(m.from)}${m.ch === 'sys' ? ' (system)' : ''}:</b> ${esc(m.msg)}`; // 2.6: click a name to message them
+    d.innerHTML = `<b${m.ch === 'armada' ? ' class="armada"' : ''}${!G.solo && m.from !== G.myName ? ` data-dm="${esc(m.from)}" title="Message ${esc(m.from)}"` : ''}>${m.ch === 'armada' ? '[Armada] ' : ''}${esc(m.from)}${m.ch === 'sys' ? ' (system)' : ''}:</b> ${esc(m.msg)}`; // click a name to message them
   const log = $('chatlog');
   const atBottom = log.scrollHeight - log.clientHeight - log.scrollTop < 4;
   log.appendChild(d);
@@ -635,7 +635,7 @@ export function hud() {
   $('spd').textContent = me
     ? `SPD ${Math.round(Math.hypot(me.vx, me.vy) / 0.45)} / ${Math.round(st.maxSpeed / 0.45)}`
     : '';
-  $('spd').title = 'Speed: current / top'; // 2.0.3: labelled
+  $('spd').title = 'Speed: current / top';
   {
     const S = SYS[G.sys],
       on = !!(y.newcomer && S && !S.farside && !S.arena),
@@ -652,7 +652,7 @@ export function hud() {
       }
     } // 2.1
     if (el) {
-      el.classList.toggle('hidden', !y.newcomer || !!(S && S.arena)); // 2.6: meaningless in the Crucible
+      el.classList.toggle('hidden', !y.newcomer || !!(S && S.arena)); // meaningless in the Crucible
       el.classList.toggle('off', !on);
       el.textContent = on ? '🛡 NEWCOMER TRUCE · PRE T-3' : '🛡 NO NEWCOMER TRUCE: FARSIDE';
     }
@@ -724,7 +724,7 @@ export function hud() {
           t.name &&
           t.name !== G.myName,
         ally = cap && G.isAlly && G.isAlly(t),
-        k = cap ? t.name + '|' + ally : ''; // 2.6: act on a captain you can see
+        k = cap ? t.name + '|' + ally : ''; // act on a captain you can see
       const el = $('tg-acts');
       if (el._k !== k) {
         el._k = k;
@@ -746,7 +746,7 @@ export function hud() {
     $('tg-bars').style.visibility = 'hidden';
   }
   const fj = Math.floor(((G.view && G.view.fuel) ?? y.fuel ?? 0) / 100),
-    shortFuel = G.route && G.route.length > fj; // 1.0.3: warn when the route is longer than your fuel
+    shortFuel = G.route && G.route.length > fj; // warn when the route is longer than your fuel
   $('navto').classList.toggle('warnf', !!shortFuel);
   $('navto').textContent =
     G.route && G.route.length
@@ -760,7 +760,7 @@ export function hud() {
       y.docks.list[y.docks.active] &&
       y.docks.list[y.docks.active].wings.some(Boolean)
     ) ||
-    (G.order && G.order !== 'gather'); // 1.1: current fleet order
+    (G.order && G.order !== 'gather'); // current fleet order
   $('fleetrow').classList.toggle('hidden', !hasFleet);
   if (hasFleet)
     $('fleetord').textContent = {
@@ -842,7 +842,7 @@ export function drawMini() {
       G.views.replace($('mlist'), h, 'missions');
     }
   }
-} // 1.0.1: the MISSIONS tab replaced the minimap
+} // the MISSIONS tab replaced the minimap
 // Discovered stations only; old provider favorites remain stored untouched.
 /**
  * Loads favorite radio stations from localStorage.
@@ -1071,7 +1071,7 @@ const STATMAX = {
  * @returns {string} Rendered HTML string of stat comparison bars
  */
 function statLines(s, cmp) {
-  // 2.4: cmp = the hull you fly, to show the difference
+  // cmp = the hull you fly, to show the difference
   const fmt = (k, v) => (k === 'fuel' ? Math.floor(v / 100) + 'j' : v);
   const delta = (k) => {
     if (!cmp || cmp === s) return '';
@@ -1133,7 +1133,7 @@ const STATION_SECTIONS = [
   ['hangar', 'SHUTTLES', 2],
   ['defense', 'DEFENSE', 2],
   ['specialists', 'SPECIALISTS', 0],
-]; // 2.6: REFITS removed
+];
 /**
  * Generates the full HTML markup for the personal station overview and department tabs.
  * @param {boolean} [interactive] Whether interactive management controls are enabled
@@ -1186,7 +1186,7 @@ function stationHtml(interactive) {
         h += `<div class="kv"><span>Docks</span><span>${y.docks ? `${y.docks.count} docks · ${y.dock.length} stored ship${y.dock.length === 1 ? '' : 's'}` : y.dock.length + ' stored'}</span></div>`;
       h += materialsHtml(G, false);
       if (interactive && S.site && here && here.own) {
-        // 2.6: warp the station to another hull
+        // warp the station to another hull
         const free = SITES.filter((s_) => !(G.sites && G.sites[s_.id]) && s_.id !== S.site),
           cost = relocateCost(S.ops),
           wait = (S.relocT || 0) + RELOCATE.cooldownH * 3600000 - now;
@@ -1333,7 +1333,7 @@ export function showLanded() {
           (G.you && (G.you.missions.length || (G.you.story && G.you.story.active))))) ||
       (k === 'station' && site && (site.own || !site.owner)) ||
       k === 'crew' ||
-      (!G.solo && (k === 'arena' || (k === 'exchange' && L.exchange))) || // 2.4: multiplayer tabs hidden in solo
+      (!G.solo && (k === 'arena' || (k === 'exchange' && L.exchange))) || // multiplayer tabs hidden in solo
       (k === 'colony' && L.colony),
   );
   G.lastTab = G.lastTab || {};
@@ -1341,7 +1341,7 @@ export function showLanded() {
     G._landedAt = L.stellar;
     if (G.lastTab[L.stellar] && avail.some(([k]) => k === G.lastTab[L.stellar]))
       G.ltab = G.lastTab[L.stellar];
-  } // 2.0: each world remembers your last tab
+  } // each world remembers your last tab
   if (!avail.some(([k]) => k === G.ltab))
     G.ltab = site && (site.own || !site.owner) ? 'station' : L.community ? 'community' : 'overview';
   G.lastTab[L.stellar] = G.ltab;
@@ -1430,7 +1430,7 @@ export function renderLanded() {
     case 'overview': {
       const fac = SYS[p.system].faction;
       h += stateCard(p.system); // 2.4
-      h += barCard(L); // 2.4: the contact at the bar, and what this world trades in
+      h += barCard(L); // the contact at the bar, and what this world trades in
       if (L.news && L.news.length)
         h += `<div class="newsbox"><div class="sect" style="margin-top:0">SPACEPORT NEWS</div>${L.news
           .slice(0, 4)
@@ -1492,7 +1492,7 @@ export function renderLanded() {
         }${(() => {
           const D = y.docks,
             room = D && D.cap > D.stored.length,
-            wo = WING_ONLY.includes(s.id); // 2.1: buy to fly, or buy into your hangar
+            wo = WING_ONLY.includes(s.id); // buy to fly, or buy into your hangar
           const toH =
             y.station && y.station.site
               ? `<button class="btn" data-act="buyhangar" data-h="${s.id}"${room ? '' : ' disabled title="Your hangar is full"'}>BUY TO HANGAR${D ? ` (${D.stored.length}/${D.cap})` : ''}</button>`
@@ -1536,7 +1536,7 @@ export function renderLanded() {
           ['defense', 'DEFENSE'],
           ['engines', 'ENGINES'],
           ['utility', 'UTILITY'],
-        ]; // 2.4: outfitter categories
+        ]; // outfitter categories
       const fits = (o) => {
         if (
           o.eff.towRig &&
@@ -1570,11 +1570,11 @@ export function renderLanded() {
               ? (G.ammo[o.eff.ammo] ?? y.ship.ammo[o.eff.ammo] ?? 0)
               : y.ship.outfits[id] || 0;
           const W = o.eff.weapon && G.A.weapons[o.eff.weapon],
-            wp = W ? weaponParams(W) : null; // 1.0.3: guns show damage and range; ammo says if you have a launcher
+            wp = W ? weaponParams(W) : null; // guns show damage and range; ammo says if you have a launcher
           const hasLauncher =
             o.eff.ammo &&
             ((st.weapons && st.weapons[o.eff.ammo]) ||
-              Object.keys(y.ship.outfits).some((k) => O[k] && O[k].eff.weapon === o.eff.ammo)); // 2.0.3: fixed launchers count too
+              Object.keys(y.ship.outfits).some((k) => O[k] && O[k].eff.weapon === o.eff.ammo)); // fixed launchers count too
           const eff = W
             ? `${W.type}${o.turret ? ' turret' : ''} · ${Math.round((W.dmgA || 0) + (W.dmgS || 0))} dmg · ${Math.round(wp.range)} range`
             : o.eff.ammo
@@ -1730,7 +1730,7 @@ function stateCard(sys) {
     : '';
   return `<div class="statecard" style="border-color:${X.color}"><div><b style="color:${X.color}">${X.icon} ${X.name.toUpperCase()}</b> <span class="dim small">· about ${left} min left</span></div><div class="small">${esc(X.desc)}</div><div class="small dim">${prices}</div>${goal ? `<div class="small">${goal}${st.need ? ` <b>${st.got} / ${st.need}</b>` : ''}</div><div class="sbar"><i style="width:${Math.round((100 * st.got) / Math.max(1, st.need))}%;background:${X.color}"></i></div>` : ''}</div>`;
 }
-// 1.0.3: how far a job is and whether its cargo fits your hold
+// how far a job is and whether its cargo fits your hold
 /**
  * Calculates remaining available cargo capacity accounting for active cargo missions.
  * @param {ClientGameState} y Player state object
@@ -1742,7 +1742,7 @@ function holdFree(y) {
     .reduce((a, m) => a + (m.qty || 0), 0);
   return y.shipStats.cargo - y.cargoUsed - mc;
 }
-// 2.4: the bar contact's greeting and rumour, and the world's trade specialties
+// the bar contact's greeting and rumour, and the world's trade specialties
 /**
  * Renders the bar contact and trade export/import highlights on the landed overview screen.
  * @param {LandedState} L Current landed state
@@ -1769,7 +1769,7 @@ function barCard(L) {
   }
   return h;
 }
-// 2.5.2: warn when a story will ask for more hold space or bunks than the ship you fly
+// warn when a story will ask for more hold space or bunks than the ship you fly
 /**
  * Generates warning HTML if a quest or story mission requires more hold or bunk capacity than current ship has.
  * @param {LandedOffer} o Job or quest offer
@@ -1790,7 +1790,7 @@ function questNeeds(o) {
     ? `<div class="jwarn" style="color:#ffb070">⚠ ${esc(w.join('; '))}. You can take it on and switch ships for that step.</div>`
     : '';
 }
-// 2.4: a contact's story or a side story on the job board
+// a contact's story or a side story on the job board
 /**
  * Renders the HTML card for an available story or quest mission offer.
  * @param {LandedOffer} o Story/quest offer definition
@@ -1867,7 +1867,7 @@ function jobInfo(o, y) {
     G.A.ships[o.hull] &&
     !y.shipless
   ) {
-    // 2.0.3: how the target compares with your ship
+    // how the target compares with your ship
     const r =
       (G.A.ships[o.hull].strength || 10) / Math.max(1, G.A.ships[y.ship.hull].strength || 10);
     if (r > 1.6)
@@ -2180,7 +2180,7 @@ function onAct(e) {
       break;
     case 'wingrep':
       send({ t: 'docks', op: 'repair', uid: d.uid });
-      break; // 1.0.2: from the no-ship notice
+      break; // from the no-ship notice
     case 'ocat':
       G.ocat = d.k;
       renderLanded();
@@ -2284,7 +2284,7 @@ export function closeMap() {
     window.dispatchEvent(new CustomEvent('rift-toast-sound', { detail: 'close' }));
   $('gmap').classList.add('hidden');
 }
-// 1.2 map views
+// Map views
 $('gcid').innerHTML = COMMODITIES.filter((c) => !['ore', 'gas', 'shards'].includes(c.id))
   .map((c) => `<option value="${c.id}">${c.name}</option>`)
   .join('');
@@ -2329,7 +2329,7 @@ function drawGMap() {
       G.route && G.route.includes(s.id)
         ? ` · ${G.route.indexOf(s.id) + 1} jump${G.route.indexOf(s.id) ? 's' : ''} away`
         : '';
-    let extra = ''; // 1.2: what the current map view says about this system
+    let extra = ''; // what the current map view says about this system
     if (seen && G.mapMode === 'trade') {
       const cid = G.mapCid || 'food',
         C = COMMODITIES.find((c) => c.id === cid),

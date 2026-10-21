@@ -871,7 +871,7 @@ export function frontierSites(SYSTEMS, n = 10) {
   return out;
 }
 
-// ------------------------------------------------------------------ 0.8: Sol and the Gateway region
+// ------------------------------------------------------------------ Sol and the Gateway region
 
 /**
  * Specifications for the ten Farside systems accessible via the Sol Gateway wormhole.
@@ -1087,7 +1087,7 @@ export function addSolGateway(SYSTEMS) {
   return { sol, farside: added };
 }
 
-// ------------------------------------------------------------------ 2.3: more moons and more asteroid fields
+// ------------------------------------------------------------------ more moons and more asteroid fields
 // A separate pass after the galaxy is built, seeded per system, so no existing world, field or id changes.
 
 /**

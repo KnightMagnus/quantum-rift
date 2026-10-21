@@ -1,4 +1,4 @@
-// 1.2: faction story arcs. Three missions for each of seven powers, separate from the main story. Each arc is offered
+// faction story arcs. Three missions for each of seven powers, separate from the main story. Each arc is offered
 // at that power's capital once you have earned some standing there, and ends in a unique Epic officer and specialist
 // blueprints. Places are worked out from the map, so text uses {home}, {dest}, {s1} and {s2} placeholders.
 import { SYSTEMS, SYS } from './galaxy.js';

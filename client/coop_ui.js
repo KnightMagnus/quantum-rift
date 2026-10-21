@@ -1,4 +1,4 @@
-// Quantum Rift 2.6 "Co-op" interface: the CAPTAINS companion tab (friends and their status, messages, the Armada,
+// Quantum Rift: interface: the CAPTAINS companion tab (friends and their status, messages, the Armada,
 // trading between Personal Stations, duels), Armada ally detection for the HUD and radar, and follow-the-leader.
 import { SYS, COMMODITIES, MATERIALS, GRADES } from '/shared/galaxy.js';
 import { ARMADA, TRADE, DUEL } from '/shared/coop.js';

@@ -1,6 +1,6 @@
 import { assertLots, addLots, commonLots } from '../shared/cargo-lots.js';
 import { clampStanding } from '../shared/reputation.js';
-// Quantum Rift 0.5 "Hangar Deck" server feature operations: shuttles, officers, the research queue,
+// Quantum Rift: server feature operations: shuttles, officers, the research queue,
 // refining crates up a grade, the drydock, and boarding disabled ships.
 import {
   SYSTEMS,
@@ -141,7 +141,7 @@ export const HangarOperations = {
     return (playerData.nextUid = (playerData.nextUid || 1) + 1) - 1;
   },
   /**
-   * Calculate total shuttle bay capacity based on station Station Tier and research bonuses.
+   * Calculate total shuttle bay capacity based on Station Tier and research bonuses.
    * @param {PlayerData} playerData - Saved player data.
    * @returns {number} Total available shuttle bays.
    */
@@ -150,14 +150,14 @@ export const HangarOperations = {
     return playerData.station.site ? BAYS_BY_OPS[playerData.station.ops] + (b.bays || 0) : 0;
   },
   /**
-   * Calculate total stored-ship dock slots based on station Station Tier and research bonuses.
+   * Calculate total stored-ship dock slots based on Station Tier and research bonuses.
    * @param {PlayerData} playerData - Saved player data.
    * @returns {number} Total stored-ship berths.
    */
   dockSlots(playerData) {
     const b = researchBonus(playerData.station);
     return playerData.station.site ? HANGAR_BY_OPS[playerData.station.ops] + (b.dockSlots || 0) : 0;
-  }, // 2.1: stored-ship berths
+  }, // stored-ship berths
 
   // ------------------------------------------------------------------ officers
   // a bar on any inhabited world with a job board posts three officers of the local race each hour
@@ -243,7 +243,7 @@ export const HangarOperations = {
         for (const k of BRIDGE_SLOTS)
           if (playerData.bridge[k] === officer.id) delete playerData.bridge[k];
         for (const sh of playerData.shuttles) if (sh.crew === officer.id) sh.crew = null;
-        if (this.unwingOfficer) this.unwingOfficer(playerData, officer.id); // 2.1: one post at a time
+        if (this.unwingOfficer) this.unwingOfficer(playerData, officer.id); // one post at a time
         if (BRIDGE_SLOTS.includes(m.slot)) playerData.bridge[m.slot] = officer.id;
         break;
       }
@@ -819,7 +819,7 @@ export const HangarOperations = {
     if (!entity || entity.state !== 'fly') return;
     const sp = this.spaces[playerData.sys],
       t = sp.ships.get(m.id);
-    if (t && t.player && t.rescueT && this.rescueBoard) return this.rescueBoard(session, t); // 2.6: patch up a downed Armada captain
+    if (t && t.player && t.rescueT && this.rescueBoard) return this.rescueBoard(session, t); // patch up a downed Armada captain
     if (!t || !t.disabled || t.player || t.boarded)
       return this.toast(session, 'Only disabled ships can be boarded.');
     const dist = Math.hypot(t.x - entity.x, t.y - entity.y),

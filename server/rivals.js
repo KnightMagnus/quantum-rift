@@ -1,4 +1,4 @@
-// 1.1 "Living Rift": rival captains (careers, presence in live systems, relations, hunters and allies), spaceport news
+// Living Rift: rival captains (careers, presence in live systems, relations, hunters and allies), spaceport news
 // and market price spikes. Rival state lives in world.rivals; relations are kept per player.
 import { SYS, SYSTEMS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.js';
 import {

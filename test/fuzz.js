@@ -13,7 +13,7 @@ console.error = (...a) => {
   errors.push(a.map((x) => (x && x.stack ? x.stack : String(x))).join(' '));
 };
 const game = new Game(A, new DB('/tmp/rift-fuzz-' + Date.now()));
-// The registry is authoritative; source-code switch patterns stopped reflecting routes.
+// The runtime registry is the authoritative source of message routes.
 const TYPES = [...game.messageHandlers.types];
 assert.ok(TYPES.length, 'the authenticated message registry must not be empty');
 assert.equal(new Set(TYPES).size, TYPES.length, 'registered message types must be unique');

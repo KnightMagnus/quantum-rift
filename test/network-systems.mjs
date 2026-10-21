@@ -1,4 +1,4 @@
-// Promote existing real-client protocol assertions into isolated, bounded CI tests.
+// Isolated, bounded real-client protocol regression tests.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';

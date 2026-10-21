@@ -103,7 +103,7 @@ function surface(profile) {
 export function drawStar(ctx, system, sun, x, y, decorRadius, now) {
   const profile = starProfile(system, sun),
     t = now / 1000;
-  // The old radius described a glow, not a solid disc. Keep the new disc modest
+  // The source radius describes a glow, not a solid disc. Keep the disc modest
   // so planets, targeting markers and navigation remain readable in front of it.
   const radius = decorRadius * 0.34 * profile.radiusScale;
   if (!(radius > 0)) return;

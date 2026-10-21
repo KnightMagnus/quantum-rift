@@ -358,7 +358,7 @@ export class Game {
         if (this.tickErr < 20 || this.tickErr % 500 === 0)
           console.error('tick error', this.tickErr, e);
       }
-    }, 1000 / TICK); // 2.0.2: one bad ship never takes the server down
+    }, 1000 / TICK); // one bad ship never takes the server down
   }
 
   // solo mode: save slots and save files
@@ -402,7 +402,7 @@ export class Game {
     p.name = name;
     this.db.touch();
     this.db.flush();
-    return name; // 2.0.3: own keys only
+    return name; // own keys only
   }
   /**
    * System wake hook called when a space is accessed.
@@ -431,7 +431,7 @@ export class Game {
       if (c.retire && c.name) {
         this.retireAccount(c.name);
         continue;
-      } // 2.0.2: retired seed accounts are removed, and their holdings freed
+      } // retired seed accounts are removed, and their holdings freed
       if (!c.name || !c.pass) continue;
       const have = this.db.get(c.name);
       if (have) {
@@ -452,7 +452,7 @@ export class Game {
       playerData.explored = SYSTEMS.filter((x) => x.anchor).map((x) => x.id);
       if (c.credits !== undefined) playerData.credits = c.credits;
       if (c.rep) Object.assign(playerData.rep, c.rep);
-      if (c.extra) Object.assign(playerData, JSON.parse(JSON.stringify(c.extra))); // 1.2: test seeds can set standing, Syndicate points, commendations...
+      if (c.extra) Object.assign(playerData, JSON.parse(JSON.stringify(c.extra))); // test seeds can set standing, Syndicate points, commendations...
       if (c.ship) playerData.ship = makeLoadout(this.A, c.ship, c.shipName || 'Rift Runner');
       if (c.outfits)
         for (const [o, n] of Object.entries(c.outfits))
@@ -708,7 +708,7 @@ export class Game {
   disconnect(session) {
     if (session.data) this.features.towing.detach(session);
     if (session.data) this.features.industrial.stop(session);
-    if (session.data && this.sessions.has(session.id)) this.features.coop.coopLogout(session); // 2.6: duels, trades, presence
+    if (session.data && this.sessions.has(session.id)) this.features.coop.coopLogout(session); // duels, trades, presence
     this.sessions.delete(session.id);
     for (const q of Object.values(this.arenaQ || {})) {
       const i = q.indexOf(session.id);
@@ -953,8 +953,8 @@ export class Game {
     this.db.touch();
     this.you(session);
   }
-  // 2.0.3: newcomer protection lasts until your Personal Station reaches Station Tier 3 (see Space.spared)
-  // 2.0.3: cargo carried for jobs takes up real hold space
+  // newcomer protection lasts until your Personal Station reaches Station Tier 3 (see Space.spared)
+  // cargo carried for jobs takes up real hold space
   /**
    * Calculates total cargo tonnage allocated to active delivery and smuggling jobs.
    * @param {{missions?: Array<Pick<Mission, 'type' | 'qty'>>}} d Player mission cargo.
@@ -1005,7 +1005,7 @@ export class Game {
       return `The ${H.name} doesn't have seats for your ${pax} passenger${pax > 1 ? 's' : ''}.`;
     return null;
   }
-  // 2.0.3: when you leave a system, your escorts go with you; a rival flying alongside goes back to their own business
+  // when you leave a system, your escorts go with you; a rival flying alongside goes back to their own business
   /**
    * Cleans up or returns escort wingmates and fighter drones when a ship leaves space.
    * @param {SpaceSpace} space Active system space simulation.
@@ -1023,7 +1023,7 @@ export class Game {
       if (x.fighterOf === entity.id) {
         space.dock(x, entity);
         continue;
-      } // 2.1: drones still out go back into their bays
+      } // drones still out go back into their bays
       if (x.rival && x.owner === entity.id) {
         x.owner = null;
         x.ai = x.rivalAi || 'patrol';
@@ -1035,7 +1035,7 @@ export class Game {
       space.remove(x, why);
     }
   }
-  // 2.0.3: pausing a solo game stops the clock on rush deadlines and loan payments (station timers still run in real time)
+  // pausing a solo game stops the clock on rush deadlines and loan payments (station timers still run in real time)
   /**
    * Toggles pause state for solo play, freezing mission deadlines and loans.
    * @param {boolean} on Pause state.
@@ -1177,7 +1177,7 @@ export class Game {
     }
     if (this.db.economicFrozen && !['ping', 'input', 'chat'].includes(message.t))
       return this.toast(session, 'Checkpoint recovery required; economic actions frozen.');
-    if (message.t !== 'ping') session.actT = now; // 2.6: for Online / Away
+    if (message.t !== 'ping') session.actT = now; // for Online / Away
     this.messageHandlers.dispatch(message.t, session, message);
   }
   /**
@@ -1264,13 +1264,13 @@ export class Game {
     this.send(session, { t: 'welcome', id: session.id, name: p.name });
     this.send(session, { t: 'sites', sites: this.sitesPayload() });
     this.send(session, this.features.world.worldPayload());
-    this.features.coop.coopLogin(session); // 2.6: Armada membership, offline DMs, friends' status
+    this.features.coop.coopLogin(session); // Armada membership, offline DMs, friends' status
     this.idleCheck(session);
     this.you(session);
     this.landed(session);
     this.features.story.storyOnLand(session, STELLARS[p.stellar]);
     this.features.arcs.arcOnLand(session, STELLARS[p.stellar]); // a story step waiting where you logged off still pops up
-    if (!this.solo) this.broadcast({ t: 'chat', from: '', msg: `${p.name} entered the Rift.` }); // 2.4: no join messages in a solo game
+    if (!this.solo) this.broadcast({ t: 'chat', from: '', msg: `${p.name} entered the Rift.` }); // no join messages in a solo game
     if (session.isNew)
       this.toast(
         session,
@@ -1343,7 +1343,7 @@ export class Game {
         ? { shieldRePct: 40 * this.features.specialists.power(playerData) }
         : {};
     for (const { w, i, x: W } of this.features.docks.activeWings(playerData)) {
-      // 2.1: the active dock's wingmates, with their own outfits and officers
+      // the active dock's wingmates, with their own outfits and officers
       const wb = this.features.docks.wingBonus(playerData, w);
       for (const [k, v] of Object.entries(eb)) wb[k] = (wb[k] || 0) + v;
       const m = sp.makeShip({
@@ -1397,7 +1397,7 @@ export class Game {
         this.features.coop.armadaRefresh(A);
         this.features.coop.armadaPush(A);
       }
-    } // 2.6: members see where you are
+    } // members see where you are
   }
   /**
    * Launches player ship from docked stellar body into active space flight.
@@ -1611,7 +1611,7 @@ export class Game {
         x.a = entity.a;
         x.jumpTo = '-';
       }
-    this.features.coop.armadaLeaderJump(session, to); // 2.6: members who follow the leader get the destination
+    this.features.coop.armadaLeaderJump(session, to); // members who follow the leader get the destination
   }
   /**
    * Finalizes hyperjump: deducts fuel, explores destination, and spawns ship in new system.
@@ -1655,7 +1655,7 @@ export class Game {
     const a = ang + Math.PI;
     this.spawnPlayer(session, Math.sin(ang) * 2200, -Math.cos(ang) * 2200, a, entity.st.maxSpeed);
     playerData.shieldNow = playerData.armorNow = undefined;
-    session.ent.graceT = this.spaces[playerData.sys].t + 6; // 2.0.3: a few seconds to get your bearings after a jump
+    session.ent.graceT = this.spaces[playerData.sys].t + 6; // a few seconds to get your bearings after a jump
     this.protectNote(session, to);
     this.spaces[playerData.sys].events.push([
       'flash',
@@ -1668,7 +1668,7 @@ export class Game {
         this.toast(session, `Patrol: destroy ${m.need - m.got} more hostile ships here.`);
   }
 
-  // 0.8: flying into the Sol Gateway (or its far mouth) crosses instantly, with no fuel cost
+  // flying into the Sol Gateway (or its far mouth) crosses instantly, with no fuel cost
   /**
    * Handles instantaneous transit through Sol Gateway wormholes without fuel consumption.
    * @param {Entity} entity Ship entity entering wormhole.
@@ -1778,7 +1778,7 @@ export class Game {
       playerData = session.data;
     if (!playerData) return;
     playerData.stats.kills++;
-    playerData.stats.combat = (playerData.stats.combat || 0) + (npc.pw || npc.strength || 10); // 1.1: combat rating
+    playerData.stats.combat = (playerData.stats.combat || 0) + (npc.pw || npc.strength || 10); // combat rating
     this.features.hangar.officerXp(session, 8 + Math.round((npc.strength || 10) / 40));
     this.features.frontier.mastery(session, (npc.strength || 10) / 8);
     this.features.specialists.specOnKill(session, npc, space, byEscort);
@@ -1792,7 +1792,7 @@ export class Game {
       return;
     } // 1.1
     if (npc.storyKill) this.features.story.storyProgress(session, npc);
-    if (npc.kingpin) this.features.coop.warbandDown(npc); // 2.6: an Armada contract's kingpin
+    if (npc.kingpin) this.features.coop.warbandDown(npc); // an Armada contract's kingpin
     this.features.living.stateOnKill(session, npc, space); // 2.4
     if (npc.arcOf) this.features.arcs.arcProgress(session, npc); // 1.2 faction arcs
     if (npc.boss || npc.bossMinion) {
@@ -1804,7 +1804,7 @@ export class Game {
       const stB = (() => {
         const st = this.features.living.stateOf(space.id);
         return (st && STATES[st.kind].bounty) || 1;
-      })(); // 2.4: a pirate scourge pays more
+      })(); // a pirate scourge pays more
       const bounty = Math.round(
         ((npc.strength || 10) * 25 + 500) *
           (1 + (this.features.bonuses.bonus(playerData).lootPct || 0) / 100) *
@@ -1815,7 +1815,7 @@ export class Game {
             : 1),
       );
       this.features.coop.shareBounty(session, bounty, space, npc);
-      this.features.fronts.goal(session, 'kills'); // 2.6: Armada members present get kill credit and a share
+      this.features.fronts.goal(session, 'kills'); // Armada members present get kill credit and a share
       playerData.credits += bounty;
       playerData.stats.earned += bounty;
       playerData.rep.quantum = clampStanding(playerData.rep.quantum + 1);
@@ -1868,7 +1868,7 @@ export class Game {
     if (!playerData) return;
     this.features.towing.detach(session);
     if (space.sys.arena && this.features.frontier.onArenaDeath(session, space)) return;
-    if (session.ent) this.dropEscorts(space, session.ent, 'jump'); // 2.0.3: escorts no longer linger after you are destroyed
+    if (session.ent) this.dropEscorts(space, session.ent, 'jump'); // escorts no longer linger after you are destroyed
     space.players--;
     session.ent = null;
     const fee = Math.min(
@@ -1889,7 +1889,7 @@ export class Game {
       STELLARS[playerData.station.site] &&
       this.ownSite(playerData, STELLARS[playerData.station.site])
         ? playerData.station.site
-        : START.stellar; // 1.0.1: your own station hull if you have one, otherwise the hub
+        : START.stellar; // your own station hull if you have one, otherwise the hub
     playerData.stellar = back;
     playerData.sys = STELLARS[back].system;
     if (session.retaliationVisit?.sys !== playerData.sys) session.retaliationVisit = undefined;
@@ -1918,7 +1918,7 @@ export class Game {
    * @returns {{p: StellarBody, j: number} | null} Nearest purchasing stellar port and jump distance, or null.
    */
   nearestBuyer(sys, cid) {
-    // 2.5.2: the closest market that buys a good (by jumps)
+    // the closest market that buys a good (by jumps)
     const dist = { [sys]: 0 },
       q = [sys];
     while (q.length) {
@@ -1953,8 +1953,8 @@ export class Game {
     const session = pref.s,
       playerData = session.data;
     if (!playerData) return;
-    if (lootItem.cargo) return this.features.fleetcmd.lootCargo(session, lootItem); // 1.1: jettisoned cargo
-    if (lootItem.salvage) return this.features.quests.questLoot(session, lootItem); // 2.4: a quest's salvage
+    if (lootItem.cargo) return this.features.fleetcmd.lootCargo(session, lootItem); // jettisoned cargo
+    if (lootItem.salvage) return this.features.quests.questLoot(session, lootItem); // a quest's salvage
     if (lootItem.ore) {
       // mined ore goes into the cargo hold, if there is room
       // Freeze the original economic parcel once, including when the first hold is full.
@@ -1974,7 +1974,7 @@ export class Game {
         n = Math.min(want, st.cargo - used);
       if (n <= 0) {
         if (!session.fullT || Date.now() - session.fullT > 8000) {
-          session.fullT = Date.now(); // 2.5.2: say where it can go
+          session.fullT = Date.now(); // say where it can go
           const C = COMMODITIES.find((c) => c.id === lootItem.ore),
             B = this.nearestBuyer(playerData.sys, lootItem.ore);
           this.toast(
@@ -2464,7 +2464,7 @@ export class Game {
       case 'refit':
         return this.toast(session, 'Refits were retired in 2.6.');
       case 'relocate': {
-        // 2.6: warp the station to another unclaimed hull; you ride along
+        // warp the station to another unclaimed hull; you ride along
         const stellarBody = STELLARS[message.site],
           cost = relocateCost(S.ops),
           wait = (S.relocT || 0) + RELOCATE.cooldownH * 3600000 - Date.now();
@@ -2532,11 +2532,11 @@ export class Game {
     if (now - session.chatT < 700) return;
     session.chatT = now;
     const sys = m.ch === 'sys',
-      A = (m.ch === 'armada' || m.ch === 'fleet') && this.features.coop.armadaOf(session.data); // 2.6: the fleet channel is now the Armada's
+      A = (m.ch === 'armada' || m.ch === 'fleet') && this.features.coop.armadaOf(session.data); // the fleet channel is now the Armada's
     if ((m.ch === 'armada' || m.ch === 'fleet') && !A)
       return this.toast(session, 'You are not in an Armada.');
     const deaf = (o) =>
-      this.features.coop.blocked && this.features.coop.blocked(o.data, session.data.name); // 2.6: blocked captains are not heard
+      this.features.coop.blocked && this.features.coop.blocked(o.data, session.data.name); // blocked captains are not heard
     this.broadcast(
       {
         t: 'chat',
@@ -2668,7 +2668,7 @@ export class Game {
     if (this.tickN % (TICK * 20) === 0) {
       this.features.rivals.rivalsTick();
       this.features.living.livingTick();
-    } // 2.4: system states come and go   // 1.1: rival careers, news, market flashes, hired guns
+    } // system states come and go   // 1.1: rival careers, news, market flashes, hired guns
     if (this.tickN % (TICK * 2) === 1)
       for (const sp of Object.values(this.live))
         if (sp.players > 0) this.features.rivals.rivalSync(sp);

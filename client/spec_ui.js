@@ -1,5 +1,5 @@
 import { artworkUrl } from './artwork.js';
-// Quantum Rift 0.8 interface: the Specialists section of the station (blueprints, building, parts, components, tier-ups).
+// Quantum Rift: interface: the Specialists section of the station (blueprints, building, parts, components, tier-ups).
 import { GRADES } from '/shared/galaxy.js';
 import {
   SPECIALISTS,

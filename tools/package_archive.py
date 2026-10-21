@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package a clean, hydrated checkout; complete ZIP plus <=28MB matching parts.
+"""Package a clean, hydrated checkout; complete ZIP plus <=28 MB matching parts.
 Only Git-tracked files are included. Source masters, .git, saves and dependencies
 outside that inventory cannot accidentally enter a release archive.
 """

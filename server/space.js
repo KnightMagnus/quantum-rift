@@ -275,7 +275,7 @@ export class Space {
     this.players = 0;
     if (!this.sys.arena)
       for (let i = 0, n = 5 + this.sys.danger + Math.floor(this.ports().length / 2); i < n; i++)
-        this.spawnTraffic(true); // 2.3: busier systems
+        this.spawnTraffic(true); // busier systems
     // asteroids and gas pockets in the system's mining fields: they break into ore that ships scoop up, and regrow
     this.rocks = [];
     this.game.features.mining.openSpace(this);
@@ -404,7 +404,7 @@ export class Space {
             : r < 0.85
               ? 'steady'
               : 'reckless');
-    } // 2.4: how a captain fights
+    } // how a captain fights
     const statBonuses = o.bonus || {};
     e.pw = Math.round(
       (H.strength || 10) *
@@ -413,7 +413,7 @@ export class Space {
             (statBonuses.armorPct || 0) +
             (statBonuses.damagePct || 0)) /
             300),
-    ); // 0.9: effective strength (levels)
+    ); // effective strength (levels)
     const defAmmo = {};
     for (const [w, , a] of H.weapons) defAmmo[w] = (defAmmo[w] || 0) + a;
     for (const [w, n] of Object.entries(st.weapons)) {
@@ -475,7 +475,7 @@ export class Space {
         (stellarBody) => stellarBody.svc && stellarBody.svc.includes('L') && !stellarBody.site,
       ))
     );
-  } // 2.3: where traffic can land
+  } // where traffic can land
   /**
    * Gets the player session ID owning an entity or its root escort group.
    * @param {Entity} entity Candidate entity.
@@ -545,9 +545,9 @@ export class Space {
       this.newcomerTruce(o, e)
     );
   }
-  // 2.1: can a's fire hurt b? Hostiles always; a captain's own guns also hit any ship not on their side (like EV Nova),
+  // can a's fire hurt b? Hostiles always; a captain's own guns also hit any ship not on their side (like EV Nova),
   // which angers it and costs standing. Escorts and NPCs still only hit their enemies.
-  // 2.1: your wingmates under an attack order (K) go after whatever you have targeted, hostile or not
+  // your wingmates under an attack order (K) go after whatever you have targeted, hostile or not
   /**
    * Checks whether an escort entity is ordered by its player leader to attack target.
    * @param {Entity} entity Escort entity.
@@ -597,7 +597,7 @@ export class Space {
     if (this.ordered(attacker, rightEntity)) return true;
     if (!attacker || !rightEntity || !attacker.player || this.sys.arena) return false;
     const entity = this.root(rightEntity);
-    if (entity === attacker || entity.player) return false; // never your own wing; players only in lawless space (isHostile)
+    if (entity === attacker || entity.player) return false; // Never your own wing; player attacks follow consent and arena rules (isHostile).
     return !rightEntity.dead && rightEntity.state === 'fly';
   }
   /**
@@ -632,19 +632,19 @@ export class Space {
     const entity = this.root(leftEntity),
       rb = this.root(rightEntity);
     if (entity === rb) return false;
-    if (entity.rescueT > this.t || rb.rescueT > this.t) return false; // 2.6: a downed captain waiting for rescue is left alone
+    if (entity.rescueT > this.t || rb.rescueT > this.t) return false; // a downed captain waiting for rescue is left alone
     const pa = entity.player,
       pb = rb.player;
     if (this.sys.arena) return !!(entity.team && rb.team && entity.team !== rb.team); // arena: teams only
-    if (pa && pb && this.game.features.coop.sameArmada(pa, pb)) return false; // 2.6: Armada members and their wingmates never fight
+    if (pa && pb && this.game.features.coop.sameArmada(pa, pb)) return false; // Armada members and their wingmates never fight
     if (pa && pb)
-      return !!(this.game.features.coop.dueling && this.game.features.coop.dueling(pa, pb)); // 2.6: no open-galaxy PvP, whatever was fired; only agreed duels (and the Crucible, above)
+      return !!(this.game.features.coop.dueling && this.game.features.coop.dueling(pa, pb)); // no open-galaxy PvP, whatever was fired; only agreed duels (and the Crucible, above)
     if (entity.aggro.has(rb.id) || rb.aggro.has(entity.id)) return true;
     if (
       ((entity.boss || entity.bossMinion || entity.kingpin) && pb) ||
       ((rb.boss || rb.bossMinion || rb.kingpin) && pa)
     )
-      return true; // 2.6: Armada contract kingpins too   // invasion bosses attack everyone
+      return true; // Armada contract kingpins too   // invasion bosses attack everyone
     if (pa || pb) {
       const p = pa || pb,
         npc = pa ? rb : entity,
@@ -654,7 +654,7 @@ export class Space {
       const rh = this.game.features.rivals.rivalHostile
         ? this.game.features.rivals.rivalHostile(npc, p)
         : undefined;
-      if (rh !== undefined) return rh; // 1.1: rivals, hired guns, bribes
+      if (rh !== undefined) return rh; // rivals, hired guns, bribes
       if (F && F.pirate) return rep < 30;
       if (F && F.alwaysHostile) return true;
       if (npc.mission && npc.mission.owner === p.id) return true;
@@ -703,14 +703,14 @@ export class Space {
     const st = this.game.features.living.stateOf
         ? this.game.features.living.stateOf(this.id)
         : null,
-      SX = st ? STATES[st.kind] : null; // 2.4: the system's state shapes its traffic
+      SX = st ? STATES[st.kind] : null; // the system's state shapes its traffic
     if (st && st.kind === 'war' && st.enemy && TRAFFIC[st.enemy] && Math.random() < 0.35) {
       const lead = this.spawnGroup('patrol', st.enemy, TRAFFIC[st.enemy].war, initial);
       if (lead)
         for (const e of this.ships.values())
           if (e === lead || e.owner === lead.id) e.warFleet = true;
       return lead;
-    } // 2.5.2: tagged, so newcomers are spared
+    } // tagged, so newcomers are spared
     if (st && st.kind === 'pirates' && Math.random() < 0.3) roll = -1; // force a raid roll below
     if (FACTIONS[fac].pirate) kind = 'raid';
     else if ((S.danger >= 2 || roll < 0) && roll < 0.08 * S.danger * (this.m ? this.m.raid : 1)) {
@@ -729,7 +729,7 @@ export class Space {
     ) {
       kind = 'trade';
       f = 'spacer';
-    } // 2.3: pirate havens get visiting smugglers and free traders too
+    } // pirate havens get visiting smugglers and free traders too
     else if (
       kind === 'raid' &&
       !FACTIONS[S.faction].pirate &&
@@ -739,7 +739,7 @@ export class Space {
       kind = 'trade';
       f = T.traders.length ? fac : 'spacer';
       roll = 1;
-    } // 2.0.3: raiders don't pile up while traders come and go
+    } // raiders don't pile up while traders come and go
     let pool =
       kind === 'trade'
         ? TRAFFIC[f].traders.length
@@ -749,7 +749,7 @@ export class Space {
     if (kind === 'raid' && this.inner() && pool.length > 2)
       pool = [...pool]
         .sort((a, b) => ((this.A.ships[a] || {}).cost || 0) - ((this.A.ships[b] || {}).cost || 0))
-        .slice(0, pool.length - 1); // 2.0.3: no destroyers raiding inner space
+        .slice(0, pool.length - 1); // no destroyers raiding inner space
     const hull = pick(pool);
     if (!this.A.ships[hull]) return;
     const n =
@@ -757,7 +757,7 @@ export class Space {
         ? Math.random() < 0.22
           ? 2 + (Math.random() < 0.4 ? 1 : 0)
           : 1
-        : (Math.random() < 0.4 ? 2 : 1) + (kind === 'raid' && S.danger > 3 ? 1 : 0); // 2.3: some traders run in small convoys
+        : (Math.random() < 0.4 ? 2 : 1) + (kind === 'raid' && S.danger > 3 ? 1 : 0); // some traders run in small convoys
     let lead = null;
     for (let i = 0; i < n; i++) {
       const h =
@@ -806,7 +806,7 @@ export class Space {
       }
     }
   }
-  // 2.4: a group of warships of one power (a border war's attackers)
+  // a group of warships of one power (a border war's attackers)
   /**
    * Spawns a coordinated group of ships flying in formation.
    * @param {string} kind AI behavior ('patrol', 'raid', 'trade').
@@ -849,7 +849,7 @@ export class Space {
     }
     return lead;
   }
-  // 0.8: a Feral Swarm cluster: a Thrip Darter brood-leader and its drones, hostile to everyone
+  // a Feral Swarm cluster: a Thrip Darter brood-leader and its drones, hostile to everyone
   /**
    * Spawns a hostile Vashari alien drone swarm.
    * @param {boolean} [initial] True if spawning initial population.
@@ -885,7 +885,7 @@ export class Space {
     if (!initial) this.events.push(['flash', Math.round(x), Math.round(y)]);
     return lead;
   }
-  // 0.9: an Umbral Eclipse cell, violet-lit and far from home
+  // an Umbral Eclipse cell, violet-lit and far from home
   /**
    * Spawns an Eclipse cultist strike group.
    * @param {boolean} [initial] True if spawning initial population.
@@ -969,7 +969,7 @@ export class Space {
     const want = Math.atan2(dx, -dy),
       diff = angDiff(want, entity.a);
     if (arrive) {
-      // 2.0.1: plan a speed that falls to zero at the target (allowing time to turn around), and steer to close the velocity error
+      // plan a speed that falls to zero at the target (allowing time to turn around), and steer to close the velocity error
       const tflip = Math.PI / Math.max(0.3, st.turn),
         ux = d > 1 ? dx / d : 0,
         uy = d > 1 ? dy / d : 0;
@@ -1052,7 +1052,7 @@ export class Space {
     entity.think -= DT;
     const owner = entity.owner ? this.ships.get(entity.owner) : null;
     if (entity.ai === 'escort' && !owner)
-      entity.ai = entity.fighterOf ? 'leave' : entity.tradeMate ? 'trade' : 'patrol'; // 2.3: a convoy whose leader landed goes about its own trade
+      entity.ai = entity.fighterOf ? 'leave' : entity.tradeMate ? 'trade' : 'patrol'; // a convoy whose leader landed goes about its own trade
     if (entity.armor < entity.st.armor * 0.15 && !entity.player && !entity.noDisable) {
       // disabled: drifts; unclaimed wrecks are towed away after a while
       if (!entity.disabled) entity.disT = this.t;
@@ -1138,7 +1138,7 @@ export class Space {
           entity.target = null;
           entity.fled = true;
           this.events.push(['flee', entity.id]);
-        } // 2.4: a beaten captain runs for the jump point
+        } // a beaten captain runs for the jump point
         if (entity.ai === 'flee') entity.target = null;
       } // (not recalled)
     }
@@ -1168,7 +1168,7 @@ export class Space {
           entity.dest =
             this.ports().length && Math.random() < 0.75
               ? pick(this.ports())
-              : { x: rnd(-3000, 3000), y: rnd(-3000, 3000), out: true }; // 2.3: traders fly to worlds they can land on
+              : { x: rnd(-3000, 3000), y: rnd(-3000, 3000), out: true }; // traders fly to worlds they can land on
         const d = this.steer(
           entity,
           entity.dest.x,
@@ -1226,7 +1226,7 @@ export class Space {
           entity.catchup = owner.st;
           if (d < Math.max(50, owner.st.size * 0.35)) this.dock(entity, owner);
           break;
-        } // 2.1: drones flying home
+        } // drones flying home
         const ord = owner.order || 'gather';
         if (ord === 'hold' && entity.holdAt) {
           const d = this.steer(entity, entity.holdAt.x, entity.holdAt.y, true);
@@ -1344,7 +1344,7 @@ export class Space {
       return false;
     return entity.armor < entity.st.armor * thr && entity.shield < entity.st.shield * 0.15;
   }
-  // 2.4: a ship under attack calls nearby ships of its own side to help
+  // a ship under attack calls nearby ships of its own side to help
   /**
    * Broadcasts a distress call to nearby allied NPC ships when taking fire.
    * @param {Entity} entity Attacked ship entity.
@@ -1406,7 +1406,7 @@ export class Space {
       d < best * 1.1 &&
       d > Math.max(140, entity.st.size)
     ) {
-      // 2.4: capitals with turrets circle and fire broadsides instead of ramming
+      // capitals with turrets circle and fire broadsides instead of ramming
       const side = entity.id % 2 ? 1 : -1,
         ta =
           Math.atan2(dx, -dy) +
@@ -1625,7 +1625,7 @@ export class Space {
     }
     return best;
   }
-  // 2.1: a captain's fighter bays work as a toggle on F: tap to launch every drone, tap again to call them all home
+  // a captain's fighter bays work as a toggle on F: tap to launch every drone, tap again to call them all home
   /**
    * Toggles carrier fighter bays: launches all bay drones, or recalls active drones to dock.
    * @param {Entity} entity Carrier ship entity.
@@ -1738,7 +1738,7 @@ export class Space {
       }
       if (automated && g.sec) continue;
       if (automated && (!t || !this.game.combatAssist.valid(this, this.root(entity), t))) continue;
-      if (weapon.bay && entity.player) continue; // 2.1: bays launch and recall on a tap of F (toggleDrones)
+      if (weapon.bay && entity.player) continue; // bays launch and recall on a tap of F (toggleDrones)
       const wantFire = entity.autoCombat
         ? !!t
         : entity.player
@@ -1842,14 +1842,14 @@ export class Space {
       this.game.features.coop.duelHit &&
       this.game.features.coop.duelHit(srcRoot, entity, this)
     )
-      return [done, hadShield ? 1 : 0, srcRoot.id]; // 2.6: a duel stops at disabled
+      return [done, hadShield ? 1 : 0, srcRoot.id]; // a duel stops at disabled
     if (
       entity.armor <= 0 &&
       entity.player &&
       this.game.features.coop.rescueHold &&
       this.game.features.coop.rescueHold(entity, srcRoot, this)
     )
-      return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0]; // 2.6: an Armada can rescue a downed captain
+      return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0]; // an Armada can rescue a downed captain
     if (entity.armor <= 0) this.kill(entity, srcRoot);
     return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0];
   }
@@ -1948,7 +1948,7 @@ export class Space {
       const want = Math.min(
         28,
         (6 + this.ports().length * 2 + S.stellars.length * 0.5 + S.danger * 1.5) * tm,
-      ); // 2.3: more traffic everywhere; 2.4: booms and festivals bring more
+      ); // more traffic everywhere; 2.4: booms and festivals bring more
       const npcs = [...this.ships.values()].filter((e) => !e.player && !e.owner).length;
       if (this.spawnT <= 0) {
         this.spawnT = rnd(2, 5);
@@ -2024,7 +2024,7 @@ export class Space {
             (this.t - (e.hitT || -9) > 2 ? 1 : 0.4) *
             (this.m ? this.m.shieldRe : 1) *
             (e.coopRe || 1),
-      ); // 2.6: coopRe is the Armada buff
+      ); // coopRe is the Armada buff
       const radiation = eventideDrain(this.sys, e, Date.now() / 1000);
       if (radiation) e.shield = Math.max(0, e.shield - radiation * DT);
       if (e.st.armorRe) e.armor = Math.min(e.st.armor, e.armor + e.st.armorRe * DT);

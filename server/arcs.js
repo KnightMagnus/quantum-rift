@@ -1,5 +1,5 @@
 import { clampStanding } from '../shared/reputation.js';
-// 1.2: faction story arcs (three missions per power, offered at its capital) and Farside expeditions (procedural
+// faction story arcs (three missions per power, offered at its capital) and Farside expeditions (procedural
 // survey -> derelict -> data-core chains beyond the Sol Gateway that hint at the region's purpose).
 import { SYS, SYSTEMS, STELLARS, FACTIONS, GRADES } from '../shared/galaxy.js';
 import { ARCS } from '../shared/arcs.js';

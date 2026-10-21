@@ -1,4 +1,4 @@
-// 2.1 Docks: your Personal Station has lettered docks (A-E). Each dock holds a lead ship and up to two wingmate ships,
+// Docks: your Personal Station has lettered docks (A-D). Each dock holds a lead ship and up to two wingmate ships,
 // all chosen from your stored ships. You fly the lead of your active dock; its wingmates fly in formation with you.
 // Wingmates are crewed by officers (a captain and one crew member each), who boost that ship.
 import { WINGMATES } from './galaxy.js';

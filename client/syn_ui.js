@@ -1,4 +1,4 @@
-// 1.2 screens: black market, bank, officer ranks and traits, lower decks, and faction-arc cards.
+// Screens: black market, bank, officer ranks and traits, lower decks, and faction-arc cards.
 import { occupiedPassengerSeats } from '/shared/passengers.js';
 import { FACTIONS } from '/shared/galaxy.js';
 import {

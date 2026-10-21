@@ -20,7 +20,7 @@ body:has(#land:not(.hidden)) #chatlog {
     min-height: 0;
   }
 }
-/* 2.5 "Rendered Rift": the login backdrop and a few touches that tie the interface to the rendered art */
+/* Login backdrop and interface styling for the rendered art. */
 #login {
   background: #03040a url(assets/ui/login_bg.jpg) center/cover no-repeat;
 }
@@ -337,7 +337,7 @@ body.solo .mp {
   overflow-wrap: anywhere;
 }
 
-/* Mining is opt-in, anchored where the old panel sat in the flight viewport. */
+/* The opt-in mining panel is anchored in the flight viewport. */
 #miningindicator {
   position: absolute;
   left: 12px;

@@ -1,7 +1,7 @@
 /* Ordered UI stylesheet entry point. Keep this import order: later legacy
  * overrides intentionally retain their existing cascade precedence. All files
  * stay beside this entry point so asset URLs resolve exactly as before.
- * See docs/CODE-NAVIGATION.md for the component map and cleanup boundaries. */
+ * See docs/CODE-NAVIGATION.md for the component map and stylesheet ownership. */
 @import url('style-foundation.css');
 @import url('style-flight-hud.css');
 @import url('style-communications.css');

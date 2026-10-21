@@ -178,7 +178,7 @@ export const TUTORIAL = [
     mat: ['alloy', 3, 1],
   },
 ];
-// 2.5: three steps were added; saves from before move to the same goal in the longer list
+// three steps were added; saves from before move to the same goal in the longer list
 
 /**
  * Current version number of the tutorial progression sequence.

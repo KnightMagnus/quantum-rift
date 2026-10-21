@@ -94,7 +94,7 @@ function eligible(capabilities, space, owners, sessions, entity) {
     (!space.sys.farside && capabilities.newcomer(session.data))
   )
     return false;
-  // The owner is index0. Other captains must retain separate live opt-in.
+  // The owner is index 0. Other captains must retain separate live opt-in.
   const owner = online(capabilities, owners[0], space.id),
     ownerConsent =
       owner &&

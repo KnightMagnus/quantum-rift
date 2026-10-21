@@ -1,6 +1,6 @@
-// Quantum Rift 2.4: questlines. Two kinds:
+// Quantum Rift: questlines. Two kinds:
 //  - CHAINS: generated multi-step jobs offered by recurring contacts at spaceport bars. Each contact remembers you.
-//  - SIDE_STORIES: six handcrafted stories that start at a particular world.
+//  - SIDE_STORIES: seven handcrafted stories that start at a particular world.
 // A step is an ordinary job (cargo, survey, rescue, bounty, assassinate, passenger, smuggle, convoy, supply, patrol, salvage)
 // plus the story around it. `where` picks the step's system: 'W' (the contact's), 'A' or 'B' (two systems nearby, B further).
 // Text placeholders: {contact} {W} {Wsys} {A} {B} {X} (a port in A) {Y} (a port in B) {ship} {target} {n}.
@@ -338,7 +338,7 @@ export const CHAINS = [
   },
 ];
 
-// ---- six handcrafted side stories, each starting at a particular world
+// ---- seven handcrafted side stories, each starting at a particular world
 /**
  * Handcrafted narrative side quest storylines starting at specific worlds.
  * @type {SideStory[]}

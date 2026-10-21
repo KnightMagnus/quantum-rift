@@ -1,4 +1,4 @@
-// Quantum Rift 0.7 interface pieces: colonies, station defense, mastery, the arena, the exchange, leaderboards and profiles.
+// Quantum Rift: interface pieces: colonies, station defense, mastery, the arena, the exchange, leaderboards and profiles.
 import { SYS, STELLARS, COMMODITIES, MATERIALS, GRADES } from '/shared/galaxy.js';
 import {
   COLONY,
