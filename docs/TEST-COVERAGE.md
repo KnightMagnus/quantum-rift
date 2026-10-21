@@ -18,7 +18,9 @@ inner-board/time-window cases, low-danger plotted routes, five stable public fre
 bands through 1,800 t, named stock-hauler capacities, existing commodity and mission
 hold reservations, six-job limits, duplicate/forged/oversized acceptance denial,
 wrong-port and once-only payment, real high-tonnage delivery and saved accepted
-weights/pay. `cargo-couriers.js` runs in the unit/server CI lane.
+weights/pay. `cargo-couriers.js` runs in the unit/server CI lane. It also verifies that the
+ordinary-job service reads a replaced offer provider through the core forwarding
+seam, preserving the Game receiver and denying a removed offer.
 `mission-ui-browser.mjs` additionally exercises a genuinely fresh starter captain's
 visible large-cargo denial and real button acceptance of both small shipments.
 Existing cargo, mission consent and browser checks remain intact. Availability

@@ -460,7 +460,8 @@
         "shared/radio-stations.js",
         "client/radio.js",
         "client/ui.js",
-        "client/audio.js"
+        "client/audio.js",
+        "server/jobs.js"
       ],
       "services": [],
       "tests": [
@@ -731,7 +732,8 @@
         "shared/mission-payouts.js",
         "client/mission-details.js",
         "client/missions.js",
-        "client/ui.js"
+        "client/ui.js",
+        "server/jobs.js"
       ],
       "services": [],
       "tests": ["mission-consent.js", "mission-ui-browser.mjs", "v26.js", "qol-browser.mjs"],
@@ -739,10 +741,10 @@
     },
     {
       "id": "cargo-courier-progression",
-      "owners": ["server/freight-offers.js", "server/game.js"],
+      "owners": ["server/freight-offers.js", "server/game.js", "server/jobs.js"],
       "services": [],
       "tests": ["cargo-couriers.js", "mission-ui-browser.mjs", "v203.js", "cargo-flows.js"],
-      "asserts": "Two lawful untimed 3\u20135t/6\u201310t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards."
+      "asserts": "Two lawful untimed 3\u20135t/6\u201310t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."
     }
   ],
   "routes": {

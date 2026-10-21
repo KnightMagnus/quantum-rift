@@ -82,6 +82,17 @@ try {
     }
   }
   const big = board().find((o) => o.id.includes('-bulk-4'));
+  const originalOffers = g.offers;
+  let offerReads = 0;
+  g.offers = function () {
+    assert.equal(this, g, 'core forwarding keeps the Game receiver');
+    offerReads++;
+    return [];
+  };
+  g.accept(s, first.id);
+  assert.equal(offerReads, 1, 'acceptance reads the current offer provider, not a stale binding');
+  assert.equal(d.missions.length, 0, 'an offer removed by the current provider cannot be accepted');
+  g.offers = originalOffers;
   g.accept(s, big.id);
   assert.equal(d.missions.length, 0, 'Starter cannot overfill with a large contract');
   d.cargo.food = 15;
