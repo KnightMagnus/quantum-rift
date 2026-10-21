@@ -1051,7 +1051,8 @@ export const SITES = [
   site: true,
   desc: 'A gutted Concord station hull, adrift but sound. Claim it and it becomes your Personal Station: dock, refinery, lab and shipyard.',
 }));
-for (const st of SITES) SYSTEMS.find((s) => s.id === st.system).stellars.push(st);
+for (const stellarBody of SITES)
+  SYSTEMS.find((s) => s.id === stellarBody.system).stellars.push(stellarBody);
 addSolGateway(SYSTEMS); // 0.8: Sol (with Earth and the Gateway wormhole) and the ten Farside systems
 addMoonsAndFields(SYSTEMS); // 2.3: more moons and asteroid fields (a separate seeded pass: no existing ids change)
 // 2.5.2: more markets buy what captains mine. Worlds near asteroid fields, and mining and alien peoples, take ore, gas and
@@ -1067,24 +1068,32 @@ addMoonsAndFields(SYSTEMS); // 2.3: more moons and asteroid fields (a separate s
     'vashari',
   ]);
   for (const S of SYSTEMS)
-    for (const p of S.stellars) {
-      if (!p.prices || !(p.svc || '').includes('T') || p.site || p.hub) continue;
+    for (const stellarBody of S.stellars) {
+      if (
+        !stellarBody.prices ||
+        !(stellarBody.svc || '').includes('T') ||
+        stellarBody.site ||
+        stellarBody.hub
+      )
+        continue;
       let h = 2166136261;
-      for (const c of p.id + ':mine') h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+      for (const c of stellarBody.id + ':mine') h = Math.imul(h ^ c.charCodeAt(0), 16777619);
       h >>>= 0;
       const near = (S.fields || []).length > 0,
         kin = MINERS.has(S.faction),
         roll = (h % 1000) / 1000;
-      if (!('shards' in p.prices) && (near || kin) && roll < 0.42) p.prices.shards = 1;
-      if (!('ore' in p.prices) && near && roll > 0.7) p.prices.ore = 0;
-      if (!('gas' in p.prices) && near && roll > 0.55 && roll < 0.75) p.prices.gas = 0;
+      if (!('shards' in stellarBody.prices) && (near || kin) && roll < 0.42)
+        stellarBody.prices.shards = 1;
+      if (!('ore' in stellarBody.prices) && near && roll > 0.7) stellarBody.prices.ore = 0;
+      if (!('gas' in stellarBody.prices) && near && roll > 0.55 && roll < 0.75)
+        stellarBody.prices.gas = 0;
     }
 }
 addEventide(SYSTEMS); // Append authored v2.9 content without consuming legacy generation RNG.
 // Move only the authored mouth AFTER generation so collision rejection and RNG stay stable.
 {
   const gate = SYSTEMS.find((s) => s.id === 'coldharbor').stellars.find(
-    (p) => p.id === 'coldharbor-gate',
+    (stellarBody) => stellarBody.id === 'coldharbor-gate',
   );
   gate.x = 2200;
   gate.y = 2200;
@@ -1101,7 +1110,9 @@ export const SYS = Object.fromEntries(SYSTEMS.map((s) => [s.id, s]));
  * @type {Record<string, StellarBody>}
  */
 export const STELLARS = Object.fromEntries(
-  SYSTEMS.flatMap((s) => s.stellars.map((p) => [p.id, { ...p, system: s.id }])),
+  SYSTEMS.flatMap((s) =>
+    s.stellars.map((stellarBody) => [stellarBody.id, { ...stellarBody, system: s.id }]),
+  ),
 );
 
 /**
@@ -1441,7 +1452,7 @@ export const EXTRA_OUTFITS = [
     desc: 'Five dedicated passenger seats with restraint and life-support fittings. Uses three tons of outfit space; bridge officers and working crew do not occupy passenger seats.',
   },
 ];
-for (const o of EXTRA_OUTFITS) o.icon = o.icon || `icons/${o.id}.png`; // 2.5: rendered outfitter pictures (tools/rift_icons.py)
+for (const outfit of EXTRA_OUTFITS) outfit.icon = outfit.icon || `icons/${outfit.id}.png`; // 2.5: rendered outfitter pictures (tools/rift_icons.py)
 
 // weapons added by Quantum Rift (merged into the asset weapons by augmentAssets)
 
@@ -1648,8 +1659,8 @@ export const WINGMATES = [751, 752, 753, 754, 755, 756];
 export const ARMADA_HULLS = [757, 758, 759]; // 2.6: the old station Armada escorts, now enemy-only
 
 // Deterministic refinery/processed-good markets; ordinary nonservice pads unchanged.
-for (const p of Object.values(STELLARS))
-  if (!p.site && p.svc.includes('T') && p.svc.includes('O'))
+for (const stellarBody of Object.values(STELLARS))
+  if (!stellarBody.site && stellarBody.svc.includes('T') && stellarBody.svc.includes('O'))
     for (const id of [
       'alloy_ingots',
       'fuel_cells',
@@ -1659,7 +1670,7 @@ for (const p of Object.values(STELLARS))
       'quantum_fuel',
       'exotic_matter',
     ])
-      p.prices[id] = 0;
+      stellarBody.prices[id] = 0;
 for (const id of [
   'alloy_ingots',
   'fuel_cells',

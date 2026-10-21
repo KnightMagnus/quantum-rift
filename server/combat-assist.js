@@ -177,16 +177,16 @@ const stoppedOrders = new Set(['hold', 'holdfire', 'loot']);
 
 /**
  * Determines whether a ship entity is alive, flight-ready, and capable of combat.
- * @param {CombatEntity | null | undefined} e Candidate ship entity to check.
- * @returns {e is CombatEntity} True if the entity is available for combat operations.
+ * @param {CombatEntity | null | undefined} entity Candidate ship entity to check.
+ * @returns {entity is CombatEntity} True if the entity is available for combat operations.
  */
-export const available = (e) =>
-  !!e &&
-  !e.dead &&
-  !e.disabled &&
-  e.state === 'fly' &&
-  e.armor > 0 &&
-  !!(e.player || e.noDisable || (e.st && e.armor >= e.st.armor * 0.15));
+export const available = (entity) =>
+  !!entity &&
+  !entity.dead &&
+  !entity.disabled &&
+  entity.state === 'fly' &&
+  entity.armor > 0 &&
+  !!(entity.player || entity.noDisable || (entity.st && entity.armor >= entity.st.armor * 0.15));
 
 /**
  * Server-authoritative combat assistance coordinator managing targeting, fleet focus,
@@ -203,13 +203,13 @@ export class CombatAssist {
 
   /**
    * Retrieves or initializes the transient combat assist state for a session.
-   * @param {CombatSession} s Player session.
+   * @param {CombatSession} session Player session.
    * @returns {CombatState} Active combat assist state object.
    */
-  state(s) {
+  state(session) {
     return (
-      s.combat ||
-      (s.combat = {
+      session.combat ||
+      (session.combat = {
         on: false,
         consent: null,
         coordinating: false,
@@ -223,179 +223,184 @@ export class CombatAssist {
 
   /**
    * Suspends combat assist and clears combat targeting orders for a session and its escorts.
-   * @param {CombatSession} s Player session to stop.
+   * @param {CombatSession} session Player session to stop.
    * @param {string} [reason='Manual control'] Human-readable explanation for stopping.
    * @returns {void}
    */
-  stop(s, reason = 'Manual control') {
-    const c = this.state(s);
-    c.on = false;
-    c.delegated = false;
-    c.consent = null;
-    c.coordinating = false;
-    c.focus = false;
-    c.target = 0;
-    c.status = 'SUSPENDED';
-    c.reason = reason;
-    const sp = s.data && this.game.spaces[s.data.sys];
-    if (s.ent && sp)
-      for (const e of sp.ships.values())
-        if (e.owner && sp.root(e) === s.ent) {
-          e.target = null;
-          e.fireAt = null;
-          e.inp = {};
-          e.think = 0;
+  stop(session, reason = 'Manual control') {
+    const combatState = this.state(session);
+    combatState.on = false;
+    combatState.delegated = false;
+    combatState.consent = null;
+    combatState.coordinating = false;
+    combatState.focus = false;
+    combatState.target = 0;
+    combatState.status = 'SUSPENDED';
+    combatState.reason = reason;
+    const space = session.data && this.game.spaces[session.data.sys];
+    if (session.ent && space)
+      for (const entity of space.ships.values())
+        if (entity.owner && space.root(entity) === session.ent) {
+          entity.target = null;
+          entity.fireAt = null;
+          entity.inp = {};
+          entity.think = 0;
         }
-    if (s.ent) {
-      s.ent.autoCombat = false;
-      s.ent.fireAt = null;
-      s.ent.combatTarget = null;
-      s.ent.sharedCombat = false;
-      s.ent.inp = {};
+    if (session.ent) {
+      session.ent.autoCombat = false;
+      session.ent.fireAt = null;
+      session.ent.combatTarget = null;
+      session.ent.sharedCombat = false;
+      session.ent.inp = {};
     }
   }
 
   /**
    * Handles manual flight control input, suspending assist unless coordinating followers.
-   * @param {CombatSession} s Player session taking manual control.
+   * @param {CombatSession} session Player session taking manual control.
    * @returns {void}
    */
-  manual(s) {
-    const c = this.state(s);
+  manual(session) {
+    const combatState = this.state(session);
     // A leader may fly manually while still supplying the group's target.
-    if (c.coordinating && !c.consent) {
-      c.on = false;
-      if (s.ent) {
-        s.ent.autoCombat = false;
-        s.ent.inp = {};
+    if (combatState.coordinating && !combatState.consent) {
+      combatState.on = false;
+      if (session.ent) {
+        session.ent.autoCombat = false;
+        session.ent.inp = {};
       }
       return;
     }
-    this.stop(s);
+    this.stop(session);
   }
 
   /**
    * Processes a combat assist command operation from the client.
-   * @param {CombatSession} s Player session sending the command.
+   * @param {CombatSession} session Player session sending the command.
    * @param {CombatCommand} m Command message containing operation and parameters.
    * @returns {void}
    */
-  command(s, m) {
-    const c = this.state(s),
-      e = s.ent;
-    if (m.op === 'off') return this.stop(s, 'Combat assist off');
-    if (m.op === 'manual') return this.manual(s);
-    if (!available(e) || this.game.spaces[s.data.sys].sys.arena || e.rescueT) return;
+  command(session, m) {
+    const combatState = this.state(session),
+      entity = session.ent;
+    if (m.op === 'off') return this.stop(session, 'Combat assist off');
+    if (m.op === 'manual') return this.manual(session);
+    if (!available(entity) || this.game.spaces[session.data.sys].sys.arena || entity.rescueT)
+      return;
     if (!['assist', 'coordinate', 'delegate'].includes(m.op)) return;
     if (m.op === 'assist') {
-      c.on = m.on === true;
-      c.focus = c.on;
-      c.status = c.on ? 'READY' : 'OFF';
-      c.reason = '';
+      combatState.on = m.on === true;
+      combatState.focus = combatState.on;
+      combatState.status = combatState.on ? 'READY' : 'OFF';
+      combatState.reason = '';
       // Selection can precede arming: adopt it only on explicit enable, using the
       // same legal-NPC, protection and acquisition-range checks as active selection.
-      if (c.on) this.selected(s, e.target, this.game.spaces[s.data.sys]);
-      else this.stop(s, 'Combat assist off');
+      if (combatState.on) this.selected(session, entity.target, this.game.spaces[session.data.sys]);
+      else this.stop(session, 'Combat assist off');
     }
     if (m.op === 'coordinate') {
-      c.coordinating = m.on === true;
-      c.focus = c.coordinating || c.on;
+      combatState.coordinating = m.on === true;
+      combatState.focus = combatState.coordinating || combatState.on;
     }
     if (m.op === 'delegate') {
-      const a = this.game.features.coop.armadaOf(s.data);
-      c.consent =
-        m.on === true && a && s.data.armadaFollow && a.leader !== s.data.name
+      const a = this.game.features.coop.armadaOf(session.data);
+      combatState.consent =
+        m.on === true && a && session.data.armadaFollow && a.leader !== session.data.name
           ? { armada: a.id, leader: a.leader }
           : null;
-      c.focus = c.on;
+      combatState.focus = combatState.on;
     }
-    s.inputs.length = 0;
-    s.lastInput = null;
-    e.inp = {};
-    e.order = 'gather';
-    e.orderSeq = (e.orderSeq || 0) + 1;
+    session.inputs.length = 0;
+    session.lastInput = null;
+    entity.inp = {};
+    entity.order = 'gather';
+    entity.orderSeq = (entity.orderSeq || 0) + 1;
   }
 
   /**
    * Selects an explicit target entity if valid and assist or coordination is enabled.
-   * @param {CombatSession} s Player session selecting a target.
-   * @param {CombatEntity | null | undefined} t Candidate target entity.
-   * @param {CombatSpace} sp Active space system instance.
+   * @param {CombatSession} session Player session selecting a target.
+   * @param {CombatEntity | null | undefined} entity Candidate target entity.
+   * @param {CombatSpace} space Active space system instance.
    * @returns {void}
    */
-  selected(s, t, sp) {
-    const c = this.state(s);
-    if ((c.on || c.focus || c.coordinating || c.consent) && this.valid(sp, s.ent, t))
-      c.target = t.id;
+  selected(session, entity, space) {
+    const combatState = this.state(session);
+    if (
+      (combatState.on || combatState.focus || combatState.coordinating || combatState.consent) &&
+      this.valid(space, session.ent, entity)
+    )
+      combatState.target = entity.id;
   }
 
   /**
    * Directs local fleet focus fire on the player ship's current target.
-   * @param {CombatSession} s Player session initiating attack.
-   * @param {CombatSpace} sp Active space system instance.
+   * @param {CombatSession} session Player session initiating attack.
+   * @param {CombatSpace} space Active space system instance.
    * @returns {void}
    */
-  attack(s, sp) {
-    const target = s.ent.target;
-    if (!target || !this.valid(sp, s.ent, target)) return this.stop(s, 'Manual attack order');
-    const c = this.state(s);
+  attack(session, space) {
+    const target = session.ent.target;
+    if (!target || !this.valid(space, session.ent, target))
+      return this.stop(session, 'Manual attack order');
+    const combatState = this.state(session);
     // An explicit local order takes back authority before choosing this fleet's target.
-    if (c.consent || c.delegated) this.stop(s, 'Local attack order');
-    c.focus = true;
-    c.reason = '';
-    c.target = target.id;
+    if (combatState.consent || combatState.delegated) this.stop(session, 'Local attack order');
+    combatState.focus = true;
+    combatState.reason = '';
+    combatState.target = target.id;
   }
 
   /**
    * Validates whether a target entity is hostile, in range, and eligible for engagement.
-   * @param {CombatSpace} sp Active space system instance.
+   * @param {CombatSpace} space Active space system instance.
    * @param {CombatEntity} lead Lead attacking entity.
-   * @param {CombatEntity | null | undefined} t Candidate target entity.
-   * @returns {t is CombatEntity} True if the target is valid for engagement.
+   * @param {CombatEntity | null | undefined} entity Candidate target entity.
+   * @returns {entity is CombatEntity} True if the target is valid for engagement.
    */
-  valid(sp, lead, t) {
+  valid(space, lead, entity) {
     return (
       available(lead) &&
-      available(t) &&
-      sp.ships.get(t.id) === t &&
-      !sp.root(t).player &&
-      !sp.sys.arena &&
+      available(entity) &&
+      space.ships.get(entity.id) === entity &&
+      !space.root(entity).player &&
+      !space.sys.arena &&
       // Selecting a target and arming Assist is an explicit attack order, just like
       // manual primary fire or K/Attack: neutral NPCs are legal too. Never PvP/own wing.
-      sp.canHit(lead, t) &&
+      space.canHit(lead, entity) &&
       // Protection is directional: our arrival/newcomer truce limits NPC initiation,
       // not an explicitly selected player attack. Match the player-to-target canHit direction.
-      !sp.spared(lead, t) &&
-      Math.hypot(t.x - lead.x, t.y - lead.y) <= BOUNDARY
+      !space.spared(lead, entity) &&
+      Math.hypot(entity.x - lead.x, entity.y - lead.y) <= BOUNDARY
     );
   }
 
   /**
    * Resolves the active coordinating leader session for a delegated follower.
-   * @param {CombatSession} s Follower player session.
-   * @param {CombatSpace} sp Active space system instance.
+   * @param {CombatSession} session Follower player session.
+   * @param {CombatSpace} space Active space system instance.
    * @returns {CombatSession | null} Coordinating leader session, or null if delegation is inactive or revoked.
    */
-  delegation(s, sp) {
-    const c = this.state(s),
-      a = this.game.features.coop.armadaOf(s.data);
-    if (!c.consent) return null;
+  delegation(session, space) {
+    const combatState = this.state(session),
+      a = this.game.features.coop.armadaOf(session.data);
+    if (!combatState.consent) return null;
     const leader = a && this.game.features.coop.sessionOf(a.leader);
     if (
       !a ||
-      a.id !== c.consent.armada ||
-      a.leader !== c.consent.leader ||
-      !a.members.includes(s.data.name) ||
-      !s.data.armadaFollow ||
+      a.id !== combatState.consent.armada ||
+      a.leader !== combatState.consent.leader ||
+      !a.members.includes(session.data.name) ||
+      !session.data.armadaFollow ||
       !leader ||
-      leader === s ||
+      leader === session ||
       !available(leader.ent) ||
-      !available(s.ent) ||
-      leader.data.sys !== s.data.sys ||
-      stoppedOrders.has(s.ent.order) ||
-      sp.sys.arena
+      !available(session.ent) ||
+      leader.data.sys !== session.data.sys ||
+      stoppedOrders.has(session.ent.order) ||
+      space.sys.arena
     ) {
-      this.stop(s, 'Delegation revoked');
+      this.stop(session, 'Delegation revoked');
       return null;
     }
     // Coordination may be enabled after consent; this does not transfer consent to another leader.
@@ -404,139 +409,158 @@ export class CombatAssist {
 
   /**
    * Gathers all follower sessions in the same system delegated to the specified leader.
-   * @param {CombatSpace} sp Active space system instance.
+   * @param {CombatSpace} space Active space system instance.
    * @param {CombatSession} leadSession Leading coordinator session.
    * @returns {CombatSession[]} Group of sessions including leader and consenting followers.
    */
-  group(sp, leadSession) {
+  group(space, leadSession) {
     return [
       leadSession,
       ...[...this.game.sessions.values()].filter(
-        (s) =>
-          s !== leadSession &&
-          s.data &&
-          s.data.sys === sp.id &&
-          this.delegation(s, sp) === leadSession,
+        (session) =>
+          session !== leadSession &&
+          session.data &&
+          session.data.sys === space.id &&
+          this.delegation(session, space) === leadSession,
       ),
     ];
   }
 
   /**
    * Computes aggregate combat power rating for a group of participating sessions and escorts.
-   * @param {CombatSpace} sp Active space system instance.
+   * @param {CombatSpace} space Active space system instance.
    * @param {CombatSession[]} sessions Group of participating player sessions.
    * @returns {number} Combined combat power rating.
    */
-  power(sp, sessions) {
-    const roots = new Set(sessions.map((s) => s.ent).filter(available));
+  power(space, sessions) {
+    const roots = new Set(sessions.map((session) => session.ent).filter(available));
     let power = 0;
-    for (const e of sp.ships.values())
+    for (const entity of space.ships.values())
       if (
-        available(e) &&
-        roots.has(sp.root(e)) &&
-        !e.recall &&
-        (roots.has(e) || !stoppedOrders.has(sp.root(e).order))
+        available(entity) &&
+        roots.has(space.root(entity)) &&
+        !entity.recall &&
+        (roots.has(entity) || !stoppedOrders.has(space.root(entity).order))
       )
-        power += (e.pw || e.strength || 10) * (roots.has(e) ? 1 : 0.6);
+        power += (entity.pw || entity.strength || 10) * (roots.has(entity) ? 1 : 0.6);
     return power;
   }
 
   /**
    * Generates public combat status telemetry for transmission to a client session.
-   * @param {CombatSession} s Player session.
-   * @param {CombatSpace} sp Active space system instance.
+   * @param {CombatSession} session Player session.
+   * @param {CombatSpace} space Active space system instance.
    * @returns {CombatPayload} Serialized combat telemetry payload.
    */
-  payload(s, sp) {
-    const c = this.state(s),
-      leader = this.delegation(s, sp) || s;
+  payload(session, space) {
+    const combatState = this.state(session),
+      leader = this.delegation(session, space) || session;
     return {
-      on: c.on,
-      delegated: !!c.delegated,
-      consent: !!c.consent,
-      coordinating: c.coordinating,
-      status: c.status,
-      reason: c.reason,
-      target: c.target,
-      power: this.power(sp, this.group(sp, leader)),
+      on: combatState.on,
+      delegated: !!combatState.delegated,
+      consent: !!combatState.consent,
+      coordinating: combatState.coordinating,
+      status: combatState.status,
+      reason: combatState.reason,
+      target: combatState.target,
+      power: this.power(space, this.group(space, leader)),
     };
   }
 
   /**
    * Evaluates targets, delegation hierarchy, and engagement priorities across all ships in space.
-   * @param {CombatSpace} sp Active space system instance.
+   * @param {CombatSpace} space Active space system instance.
    * @returns {void}
    */
-  resolve(sp) {
+  resolve(space) {
     const sessions = [...this.game.sessions.values()].filter(
-      (s) => s.data && s.data.sys === sp.id && s.ent && sp.ships.get(s.ent.id) === s.ent,
+      (session) =>
+        session.data &&
+        session.data.sys === space.id &&
+        session.ent &&
+        space.ships.get(session.ent.id) === session.ent,
     );
-    for (const s of sessions) {
-      const c = this.state(s);
-      if (!available(s.ent) || sp.sys.arena || s.ent.rescueT || stoppedOrders.has(s.ent.order)) {
-        if (c.on || c.consent || c.focus || c.coordinating)
-          this.stop(s, 'Flight state or fleet order');
+    for (const session of sessions) {
+      const combatState = this.state(session);
+      if (
+        !available(session.ent) ||
+        space.sys.arena ||
+        session.ent.rescueT ||
+        stoppedOrders.has(session.ent.order)
+      ) {
+        if (combatState.on || combatState.consent || combatState.focus || combatState.coordinating)
+          this.stop(session, 'Flight state or fleet order');
       }
     }
-    const leaders = new Map(sessions.map((s) => [s, this.delegation(s, sp)]));
-    for (const s of sessions) {
-      const c = this.state(s);
-      if (c.delegated && !leaders.get(s)) this.stop(s, 'Leader stopped coordination');
-      c.delegated = !!leaders.get(s);
-      s.ent.sharedCombat = !!(c.focus || c.on || c.delegated || c.coordinating);
-      s.ent.autoCombat = false;
-      s.ent.combatTarget = null;
+    const leaders = new Map(sessions.map((session) => [session, this.delegation(session, space)]));
+    for (const session of sessions) {
+      const combatState = this.state(session);
+      if (combatState.delegated && !leaders.get(session))
+        this.stop(session, 'Leader stopped coordination');
+      combatState.delegated = !!leaders.get(session);
+      session.ent.sharedCombat = !!(
+        combatState.focus ||
+        combatState.on ||
+        combatState.delegated ||
+        combatState.coordinating
+      );
+      session.ent.autoCombat = false;
+      session.ent.combatTarget = null;
     }
     for (const s of sessions) {
       if (leaders.get(s)) continue;
-      const c = this.state(s),
-        group = sessions.filter((o) => o === s || leaders.get(o) === s),
-        roots = new Set(group.map((o) => o.ent));
+      const combatState = this.state(s),
+        group = sessions.filter((session) => session === s || leaders.get(session) === s),
+        roots = new Set(group.map((session) => session.ent));
       if (!s.ent.sharedCombat) continue;
-      let target = sp.ships.get(c.target);
-      if (!this.valid(sp, s.ent, target)) {
-        const power = this.power(sp, group);
-        const attackers = [...sp.ships.values()].filter(
-          (t) =>
-            this.valid(sp, s.ent, t) &&
+      let target = space.ships.get(combatState.target);
+      if (!this.valid(space, s.ent, target)) {
+        const power = this.power(space, group);
+        const attackers = [...space.ships.values()].filter(
+          (entity) =>
+            this.valid(space, s.ent, entity) &&
             // Passive Assist only defends against hostile attackers; it never hunts
             // neutral traffic merely because our primary guns could damage it.
-            sp.isHostile(s.ent, t) &&
+            space.isHostile(s.ent, entity) &&
             // Stray fire during protected travel must not silently turn passive
             // Assist into an opt-in faction battle. Explicit selection above still can.
-            !sp.newcomerTruce?.(t, s.ent) &&
-            ((t.target && roots.has(sp.root(t.target))) ||
-              [...sp.ships.values()].some(
-                (v) => roots.has(sp.root(v)) && v.lastHitBy === t.id && sp.t - v.hitT < 8,
+            !space.newcomerTruce?.(entity, s.ent) &&
+            ((entity.target && roots.has(space.root(entity.target))) ||
+              [...space.ships.values()].some(
+                (v) =>
+                  roots.has(space.root(v)) && v.lastHitBy === entity.id && space.t - v.hitT < 8,
               )),
         );
         attackers.sort(
-          (a, b) =>
-            winOdds(power, a.pw || 10) - winOdds(power, b.pw || 10) ||
-            Math.hypot(a.x - s.ent.x, a.y - s.ent.y) - Math.hypot(b.x - s.ent.x, b.y - s.ent.y) ||
-            a.id - b.id,
+          (leftEntity, rightEntity) =>
+            winOdds(power, leftEntity.pw || 10) - winOdds(power, rightEntity.pw || 10) ||
+            Math.hypot(leftEntity.x - s.ent.x, leftEntity.y - s.ent.y) -
+              Math.hypot(rightEntity.x - s.ent.x, rightEntity.y - s.ent.y) ||
+            leftEntity.id - rightEntity.id,
         );
         target = attackers[0] || null;
       }
-      for (const o of group) {
-        const oc = this.state(o);
+      for (const session of group) {
+        const oc = this.state(session);
         oc.target = target ? target.id : 0;
         oc.status = target ? 'ENGAGING' : 'READY';
         oc.reason = '';
-        o.ent.combatTarget = target;
-        o.ent.sharedCombat = true;
-        o.ent.autoCombat = !!(oc.on || leaders.get(o));
+        session.ent.combatTarget = target;
+        session.ent.sharedCombat = true;
+        session.ent.autoCombat = !!(oc.on || leaders.get(session));
       }
     }
     // Preassign before entity iteration, including recall/hold overrides, so no stale offensive target survives a handoff.
-    for (const e of sp.ships.values())
-      if (e.owner && sp.root(e).sharedCombat) {
-        const root = sp.root(e);
-        e.target =
-          !e.recall && !stoppedOrders.has(root.order) && this.valid(sp, root, root.combatTarget)
+    for (const entity of space.ships.values())
+      if (entity.owner && space.root(entity).sharedCombat) {
+        const root = space.root(entity);
+        entity.target =
+          !entity.recall &&
+          !stoppedOrders.has(root.order) &&
+          this.valid(space, root, root.combatTarget)
             ? root.combatTarget
             : null;
-        e.fireAt = null;
+        entity.fireAt = null;
       }
   }
 }

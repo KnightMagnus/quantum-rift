@@ -604,21 +604,22 @@ export function expandGalaxy(SYSTEMS, FACTIONS) {
   const CX = 495,
     CY = 370,
     SCALE = 1.7;
-  for (const s of SYSTEMS) {
-    s.x = Math.round(CX + (s.x - CX) * SCALE);
-    s.y = Math.round(CY + (s.y - CY) * SCALE);
-    s.anchor = true;
+  for (const system of SYSTEMS) {
+    system.x = Math.round(CX + (system.x - CX) * SCALE);
+    system.y = Math.round(CY + (system.y - CY) * SCALE);
+    system.anchor = true;
   }
   const anchors = SYSTEMS.slice(),
-    byId = Object.fromEntries(SYSTEMS.map((s) => [s.id, s]));
+    byId = Object.fromEntries(SYSTEMS.map((system) => [system.id, system]));
   const anchorEdges = [];
-  for (const s of anchors) for (const l of s.links) if (l > s.id) anchorEdges.push([s, byId[l]]);
+  for (const system of anchors)
+    for (const l of system.links) if (l > system.id) anchorEdges.push([system, byId[l]]);
   const RX = 1080,
     RY = 900,
     umbra = byId.umbra;
   const deepDir = Math.atan2(umbra.y - CY, umbra.x - CX);
   // Mitchell's best-candidate sampling: even spacing, no clumps
-  const pts = anchors.map((s) => ({ x: s.x, y: s.y }));
+  const pts = anchors.map((system) => ({ x: system.x, y: system.y }));
   const want = TOTAL - anchors.length,
     out = [];
   while (out.length < want) {
@@ -646,8 +647,13 @@ export function expandGalaxy(SYSTEMS, FACTIONS) {
     out.push(best);
   }
   // territories
-  const used = new Set(SYSTEMS.map((s) => s.name)),
-    usedIds = new Set(SYSTEMS.flatMap((s) => [s.id, ...s.stellars.map((p) => p.id)]));
+  const used = new Set(SYSTEMS.map((system) => system.name)),
+    usedIds = new Set(
+      SYSTEMS.flatMap((system) => [
+        system.id,
+        ...system.stellars.map((stellarBody) => stellarBody.id),
+      ]),
+    );
   const added = [];
   // territory: each power claims the free points nearest its anchors until it reaches its target size (exact quotas,
   // compact territories). Whatever is left between the powers and around the rim is Frontier; the Deep is carved first.
@@ -665,7 +671,7 @@ export function expandGalaxy(SYSTEMS, FACTIONS) {
     thalassi: 14,
   };
   const cnt = {};
-  for (const s of anchors) cnt[s.faction] = (cnt[s.faction] || 0) + 1;
+  for (const system of anchors) cnt[system.faction] = (cnt[system.faction] || 0) + 1;
   const cls = out.map((p) => {
     const rim = Math.hypot((p.x - CX) / RX, (p.y - CY) / RY);
     const ang = Math.atan2(p.y - CY, p.x - CX),
@@ -675,7 +681,7 @@ export function expandGalaxy(SYSTEMS, FACTIONS) {
   // round-robin: every power under quota claims the free point closest to its territory so far (anchors + claimed points),
   // so boxed-in core powers grow outward instead of being starved by their neighbours
   const terr = {};
-  for (const s of anchors) (terr[s.faction] = terr[s.faction] || []).push(s);
+  for (const system of anchors) (terr[system.faction] = terr[system.faction] || []).push(system);
   const ORDER = [
     'quantum',
     'spacer',
@@ -753,8 +759,8 @@ export function expandGalaxy(SYSTEMS, FACTIONS) {
   }
   // hyperspace routes: keep the anchor routes, then add the shortest non-crossing routes until everything is connected
   const edges = anchorEdges.map(([a, b]) => [a, b]);
-  const deg = new Map(SYSTEMS.map((s) => [s, s.links.length]));
-  const parent = new Map(SYSTEMS.map((s) => [s, s]));
+  const deg = new Map(SYSTEMS.map((system) => [system, system.links.length]));
+  const parent = new Map(SYSTEMS.map((system) => [system, system]));
   const find = (s) => {
     while (parent.get(s) !== s) {
       parent.set(s, parent.get(parent.get(s)));
@@ -765,12 +771,15 @@ export function expandGalaxy(SYSTEMS, FACTIONS) {
   for (const [a, b] of edges) parent.set(find(a), find(b));
   const cand = [];
   for (let i = 0; i < SYSTEMS.length; i++) {
-    const a = SYSTEMS[i];
-    const near = SYSTEMS.map((b) => [Math.hypot(a.x - b.x, a.y - b.y), b])
-      .filter(([d, b]) => b !== a && d < 230)
+    const leftSystem = SYSTEMS[i];
+    const near = SYSTEMS.map((rightSystem) => [
+      Math.hypot(leftSystem.x - rightSystem.x, leftSystem.y - rightSystem.y),
+      rightSystem,
+    ])
+      .filter(([d, b]) => b !== leftSystem && d < 230)
       .sort((x, y) => x[0] - y[0])
       .slice(0, 6);
-    for (const [d, b] of near) if (a.id < b.id) cand.push([d, a, b]);
+    for (const [d, b] of near) if (leftSystem.id < b.id) cand.push([d, leftSystem, b]);
   }
   cand.sort((x, y) => x[0] - y[0]);
   const link = (a, b) => {
@@ -798,35 +807,35 @@ export function expandGalaxy(SYSTEMS, FACTIONS) {
   // anything still cut off gets its shortest route, crossing or not
   for (let guard = 0; guard < 50; guard++) {
     const root = find(byId.qgate),
-      lone = SYSTEMS.filter((s) => find(s) !== root);
+      lone = SYSTEMS.filter((system) => find(system) !== root);
     if (!lone.length) break;
     let best = null;
-    for (const a of lone)
-      for (const b of SYSTEMS)
-        if (find(b) === root) {
-          const d = Math.hypot(a.x - b.x, a.y - b.y);
-          if (!best || d < best[0]) best = [d, a, b];
+    for (const leftSystem of lone)
+      for (const rightSystem of SYSTEMS)
+        if (find(rightSystem) === root) {
+          const d = Math.hypot(leftSystem.x - rightSystem.x, leftSystem.y - rightSystem.y);
+          if (!best || d < best[0]) best = [d, leftSystem, rightSystem];
         }
     link(best[1], best[2]);
   }
   // asteroid fields and gas clouds (mining nodes)
-  for (const s of SYSTEMS) {
-    const kinds = FIELD_ORE[s.faction] || ['ore', 'gas'];
-    let n = s.faction === 'quantum' ? (r() < 0.3 ? 1 : 0) : r() < 0.55 ? 1 : 0;
-    if (s.faction === 'korrund' || s.faction === 'frontier' || s.faction === 'deep')
+  for (const system of SYSTEMS) {
+    const kinds = FIELD_ORE[system.faction] || ['ore', 'gas'];
+    let n = system.faction === 'quantum' ? (r() < 0.3 ? 1 : 0) : r() < 0.55 ? 1 : 0;
+    if (system.faction === 'korrund' || system.faction === 'frontier' || system.faction === 'deep')
       n += r() < 0.6 ? 1 : 0;
-    if (!s.stellars.length) n = Math.max(1, n);
-    s.fields = [];
+    if (!system.stellars.length) n = Math.max(1, n);
+    system.fields = [];
     for (let k = 0; k < n; k++) {
       const a = r() * Math.PI * 2,
         d = 900 + r() * 900;
-      s.fields.push({
-        id: `${s.id}-f${k}`,
+      system.fields.push({
+        id: `${system.id}-f${k}`,
         x: Math.round(Math.cos(a) * d),
         y: Math.round(Math.sin(a) * d),
         r: 260 + Math.round(r() * 200),
         ore: kinds[Math.floor(r() * kinds.length)],
-        rich: Math.min(3, 1 + Math.floor((s.danger + r() * 3) / 3)),
+        rich: Math.min(3, 1 + Math.floor((system.danger + r() * 3) / 3)),
         rocks: 7 + Math.floor(r() * 7),
       });
     }
@@ -843,14 +852,16 @@ export function expandGalaxy(SYSTEMS, FACTIONS) {
 // additional claimable station hulls in Frontier space (chosen deterministically from the generated systems)
 export function frontierSites(SYSTEMS, n = 10) {
   const r = rng(GEN_SEED ^ 0xbeef);
-  const pool = SYSTEMS.filter((s) => s.gen && s.faction === 'frontier' && s.stellars.length <= 1);
+  const pool = SYSTEMS.filter(
+    (system) => system.gen && system.faction === 'frontier' && system.stellars.length <= 1,
+  );
   const out = [];
   while (out.length < n && pool.length) {
     const s = pool.splice(Math.floor(r() * pool.length), 1)[0];
     if (
       out.some((o) => {
-        const S = SYSTEMS.find((x) => x.id === o[1]);
-        return Math.hypot(S.x - s.x, S.y - s.y) < 260;
+        const system = SYSTEMS.find((x) => x.id === o[1]);
+        return Math.hypot(system.x - s.x, system.y - s.y) < 260;
       })
     )
       continue;
@@ -910,14 +921,20 @@ const FARSIDE_LINKS = [
  */
 export function addSolGateway(SYSTEMS) {
   const r = rng(GEN_SEED ^ 0x5011),
-    byId = Object.fromEntries(SYSTEMS.map((s) => [s.id, s]));
-  const used = new Set(SYSTEMS.map((s) => s.name)),
-    usedIds = new Set(SYSTEMS.flatMap((s) => [s.id, ...s.stellars.map((p) => p.id)]));
+    byId = Object.fromEntries(SYSTEMS.map((system) => [system.id, system]));
+  const used = new Set(SYSTEMS.map((system) => system.name)),
+    usedIds = new Set(
+      SYSTEMS.flatMap((system) => [
+        system.id,
+        ...system.stellars.map((stellarBody) => stellarBody.id),
+      ]),
+    );
   const edges = [];
-  for (const s of SYSTEMS) for (const l of s.links) if (l > s.id) edges.push([s, byId[l]]);
+  for (const system of SYSTEMS)
+    for (const l of system.links) if (l > system.id) edges.push([system, byId[l]]);
   // Sol: the clear spot nearest the centre of the galaxy
-  const xs = SYSTEMS.map((s) => s.x),
-    ys = SYSTEMS.map((s) => s.y),
+  const xs = SYSTEMS.map((system) => system.x),
+    ys = SYSTEMS.map((system) => system.y),
     CX = (Math.min(...xs) + Math.max(...xs)) / 2,
     CY = (Math.min(...ys) + Math.max(...ys)) / 2;
   let best = null;
@@ -925,7 +942,7 @@ export function addSolGateway(SYSTEMS) {
     for (let a = 0; a < 6.283 && !best; a += 0.21) {
       const p = { x: CX + Math.cos(a) * rad, y: CY + Math.sin(a) * rad };
       if (
-        SYSTEMS.every((s) => Math.hypot(s.x - p.x, s.y - p.y) > 48) &&
+        SYSTEMS.every((system) => Math.hypot(system.x - p.x, system.y - p.y) > 48) &&
         edges.every(([u, v]) => segDist(p, u, v) > 20)
       )
         best = p;
@@ -986,9 +1003,10 @@ export function addSolGateway(SYSTEMS) {
     fields: [],
   };
   // link Sol to its three nearest systems (non-crossing where possible)
-  const near = SYSTEMS.map((s) => [Math.hypot(s.x - sol.x, s.y - sol.y), s]).sort(
-    (a, b) => a[0] - b[0],
-  );
+  const near = SYSTEMS.map((system) => [
+    Math.hypot(system.x - sol.x, system.y - sol.y),
+    system,
+  ]).sort((a, b) => a[0] - b[0]);
   let n = 0;
   for (const [, s] of near) {
     if (n >= 3) break;
@@ -1118,15 +1136,20 @@ function hashId(str) {
  * @returns {void}
  */
 export function addMoonsAndFields(SYSTEMS) {
-  for (const s of SYSTEMS) {
-    if (s.arena) continue;
-    const r = rng(hashId('moons:' + s.id) ^ GEN_SEED),
+  for (const system of SYSTEMS) {
+    if (system.arena) continue;
+    const r = rng(hashId('moons:' + system.id) ^ GEN_SEED),
       free = (x, y, rad, pad) =>
-        s.stellars.every((o) => Math.hypot(o.x - x, o.y - y) > (o.r || 60) + rad + pad);
-    for (const p of [...s.stellars]) {
+        system.stellars.every(
+          (stellarBody) =>
+            Math.hypot(stellarBody.x - x, stellarBody.y - y) > (stellarBody.r || 60) + rad + pad,
+        );
+    for (const p of [...system.stellars]) {
       if (p.kind !== 'planet' || p.hub || p.site || p.wormhole) continue;
       const n = r() < 0.62 ? (r() < 0.3 ? 2 : 1) : 0,
-        have = s.stellars.filter((o) => o.id.startsWith(p.id + '-m')).length;
+        have = system.stellars.filter((stellarBody) =>
+          stellarBody.id.startsWith(p.id + '-m'),
+        ).length;
       for (let k = 0; k < n; k++) {
         const rad = 30 + Math.round(r() * 24);
         for (let tries = 0; tries < 12; tries++) {
@@ -1135,7 +1158,7 @@ export function addMoonsAndFields(SYSTEMS) {
             x = Math.round(p.x + Math.cos(a) * d),
             y = Math.round(p.y + Math.sin(a) * d);
           if (!free(x, y, rad, 130) || Math.hypot(x, y) > 3300) continue;
-          s.stellars.push({
+          system.stellars.push({
             id: `${p.id}-m${have + k + 1}`,
             name: /\s([IVX]+|\d+|Prime|Alpha|Beta|Gamma|Major|Minor)$/.test(p.name)
               ? `${p.name}-${'abc'[have + k] || have + k + 1}`
@@ -1156,9 +1179,9 @@ export function addMoonsAndFields(SYSTEMS) {
       }
     }
     // a few more rocks in the existing fields, and sometimes a whole new field
-    for (const f of s.fields || []) f.rocks = Math.round(f.rocks * 1.35);
-    const kinds = FIELD_ORE[s.faction] || ['ore', 'gas', 'shards'];
-    const extra = s.farside ? (r() < 0.5 ? 1 : 0) : r() < 0.5 ? 1 : 0;
+    for (const f of system.fields || []) f.rocks = Math.round(f.rocks * 1.35);
+    const kinds = FIELD_ORE[system.faction] || ['ore', 'gas', 'shards'];
+    const extra = system.farside ? (r() < 0.5 ? 1 : 0) : r() < 0.5 ? 1 : 0;
     for (let k = 0; k < extra; k++) {
       for (let tries = 0; tries < 12; tries++) {
         const a = r() * Math.PI * 2,
@@ -1167,16 +1190,16 @@ export function addMoonsAndFields(SYSTEMS) {
           y = Math.round(Math.sin(a) * d);
         if (
           !free(x, y, 320, 200) ||
-          (s.fields || []).some((f) => Math.hypot(f.x - x, f.y - y) < 900)
+          (system.fields || []).some((f) => Math.hypot(f.x - x, f.y - y) < 900)
         )
           continue;
-        (s.fields = s.fields || []).push({
-          id: `${s.id}-x${k}`,
+        (system.fields = system.fields || []).push({
+          id: `${system.id}-x${k}`,
           x,
           y,
           r: 280 + Math.round(r() * 200),
           ore: kinds[Math.floor(r() * kinds.length)],
-          rich: Math.min(3, 1 + Math.floor(((s.danger || 0) + r() * 3) / 3)),
+          rich: Math.min(3, 1 + Math.floor(((system.danger || 0) + r() * 3) / 3)),
           rocks: 10 + Math.floor(r() * 8),
         });
         break;

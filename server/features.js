@@ -1223,8 +1223,8 @@ export function createFeatures(core) {
       return features.pressure.regrow;
     },
     dredgeBlueprint(captain, chance) {
-      const s = features.sessions.sessionOf(captain);
-      if (s) features.specialists.specGain(s, 'star_dredge', 0, chance);
+      const session = features.sessions.sessionOf(captain);
+      if (session) features.specialists.specGain(session, 'star_dredge', 0, chance);
       else {
         const d = core.db.get(captain);
         if (d && Math.random() < chance) {
@@ -1246,36 +1246,52 @@ export function createFeatures(core) {
     },
     now: () => Date.now(),
     paused: () => !!core.paused,
-    room: (d) => Math.max(0, (features.shipStats.stats(d)?.cargo || 0) - core.holdUsed(d)),
-    fuelCapacity: (d) => features.shipStats.stats(d)?.fuel || 0,
-    access(d, port) {
-      const p = /** @type {StellarBody} */ (STELLARS[port]),
-        ent = features.sessions.sessionOf(d.name)?.ent;
-      if (!p) return { available: false, home: false, faction: '', near: false };
-      const home = !!(p.site && core.ownSite(d, p) && (d.station?.ops || 0) >= 1),
-        faction = p.outlaw ? 'outlaw' : SYS[p.system].faction,
-        eligible = home || (!p.site && p.svc.includes('T') && p.svc.includes('O')),
+    room: (playerData) =>
+      Math.max(0, (features.shipStats.stats(playerData)?.cargo || 0) - core.holdUsed(playerData)),
+    fuelCapacity: (playerData) => features.shipStats.stats(playerData)?.fuel || 0,
+    access(playerData, port) {
+      const stellarBody = /** @type {StellarBody} */ (STELLARS[port]),
+        ent = features.sessions.sessionOf(playerData.name)?.ent;
+      if (!stellarBody) return { available: false, home: false, faction: '', near: false };
+      const home = !!(
+          stellarBody.site &&
+          core.ownSite(playerData, stellarBody) &&
+          (playerData.station?.ops || 0) >= 1
+        ),
+        faction = stellarBody.outlaw ? 'outlaw' : SYS[stellarBody.system].faction,
+        eligible =
+          home ||
+          (!stellarBody.site && stellarBody.svc.includes('T') && stellarBody.svc.includes('O')),
         allowed =
-          p.outlaw || (d.rep?.[faction] || 0) > -30 || (d.landPass?.[port] || 0) > Date.now(),
+          stellarBody.outlaw ||
+          (playerData.rep?.[faction] || 0) > -30 ||
+          (playerData.landPass?.[port] || 0) > Date.now(),
         near =
-          p.system === d.sys &&
-          (d.stellar === port || !!(ent && Math.hypot(ent.x - p.x, ent.y - p.y) <= p.r + 500));
+          stellarBody.system === playerData.sys &&
+          (playerData.stellar === port ||
+            !!(
+              ent && Math.hypot(ent.x - stellarBody.x, ent.y - stellarBody.y) <= stellarBody.r + 500
+            ));
       return { available: !!(eligible && allowed), home, faction, near };
     },
-    pricing(d, port, cid, now) {
-      const p = /** @type {StellarBody} */ (STELLARS[port]);
-      if (!p) throw Error('Unknown port.');
-      const pr0 = price(p.site ? { ...p, prices: SITE_PRICES } : p, cid, now),
+    pricing(playerData, port, cid, now) {
+      const stellarBody = /** @type {StellarBody} */ (STELLARS[port]);
+      if (!stellarBody) throw Error('Unknown port.');
+      const pr0 = price(
+          stellarBody.site ? { ...stellarBody, prices: SITE_PRICES } : stellarBody,
+          cid,
+          now,
+        ),
         fallback = COMMODITIES.find((c) => c.id === cid)?.base;
       if (pr0 === null && !fallback) throw Error('Unknown commodity.');
-      const flash = p.site ? 1 : features.rivals.flashMult(p.id, cid),
-        living = p.site ? 1 : features.living.livingMult(p, cid),
+      const flash = stellarBody.site ? 1 : features.rivals.flashMult(stellarBody.id, cid),
+        living = stellarBody.site ? 1 : features.living.livingMult(stellarBody, cid),
         pr = Math.round((pr0 ?? fallback ?? 0) * flash * living),
-        bonus = features.bonuses.bonus(d).tradePct || 0,
-        sell = features.fronts.mods(p.system).sell;
+        bonus = features.bonuses.bonus(playerData).tradePct || 0,
+        sell = features.fronts.mods(stellarBody.system).sell;
       return {
-        ask: purchaseUnit(pr, 1, bonus, !!p.site),
-        bid: saleValue(pr, { common: 1, rich: 0, pure: 0 }, bonus, !!p.site, sell),
+        ask: purchaseUnit(pr, 1, bonus, !!stellarBody.site),
+        bid: saleValue(pr, { common: 1, rich: 0, pure: 0 }, bonus, !!stellarBody.site, sell),
         fingerprint: JSON.stringify([pr, bonus, sell, flash, living, pr0 === null]),
       };
     },
@@ -1314,7 +1330,7 @@ export function createFeatures(core) {
       return core.db;
     },
     sessions: () => core.sessions.values(),
-    newcomer: (d) => !!core.newcomer(d),
+    newcomer: (playerData) => !!core.newcomer(playerData),
     rush: (sys) => features.living.stateOf(sys)?.kind === 'rush',
     toast: core.toast.bind(core),
   };
@@ -1325,7 +1341,8 @@ export function createFeatures(core) {
       return core.db;
     },
     paused: () => !!core.paused,
-    room: (d) => Math.max(0, (features.shipStats.stats(d)?.cargo || 0) - core.holdUsed(d)),
+    room: (playerData) =>
+      Math.max(0, (features.shipStats.stats(playerData)?.cargo || 0) - core.holdUsed(playerData)),
     get power() {
       return features.specialists.power;
     },
@@ -1346,17 +1363,20 @@ export function createFeatures(core) {
     sessions: () => core.sessions.values(),
     refresh: core.you.bind(core),
     toast: core.toast.bind(core),
-    stopCombat: (s) => {
-      if (s.ent)
-        core.combatAssist?.stop(/** @type {CombatSession} */ (s), 'Towing: manual flight required');
+    stopCombat: (session) => {
+      if (session.ent)
+        core.combatAssist?.stop(
+          /** @type {CombatSession} */ (session),
+          'Towing: manual flight required',
+        );
     },
-    room: (d) =>
+    room: (playerData) =>
       Math.max(
         0,
-        (features.shipStats.stats(d)?.cargo || 0) -
-          core.holdUsed(/** @type {RefineryPlayer} */ (d)),
+        (features.shipStats.stats(playerData)?.cargo || 0) -
+          core.holdUsed(/** @type {RefineryPlayer} */ (playerData)),
       ),
-    stats: (d) => features.shipStats.stats(d),
+    stats: (playerData) => features.shipStats.stats(playerData),
     field: (sys, field) => features.pressure.fieldState(sys, field),
   };
   features.towing = bindOperations(TowingOperations, towingCapabilities);

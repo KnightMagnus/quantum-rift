@@ -102,13 +102,13 @@ export const CoopOperations = {
   },
   /**
    * Migrates a player save to version 2.6, refunding retired refits, Armada escorts, and directives.
-   * @param {PlayerData} d - Player save data.
+   * @param {PlayerData} playerData - Player save data.
    * @returns {void}
    */
-  coopMigrate(d) {
-    if (d.v26) return;
-    d.v26 = true;
-    delete d.fleet;
+  coopMigrate(playerData) {
+    if (playerData.v26) return;
+    playerData.v26 = true;
+    delete playerData.fleet;
     const O = allOutfits(this.A),
       notes = [];
     let refund = 0;
@@ -156,10 +156,10 @@ export const CoopOperations = {
       notes.push(`${ship.name || old} (${old}) is a ${this.A.ships[B.base].name} again`);
       return fresh;
     };
-    if (!d.shipless && d.ship) d.ship = revert(d.ship);
-    for (const x of d.dock || []) x.ship = revert(x.ship);
+    if (!playerData.shipless && playerData.ship) playerData.ship = revert(playerData.ship);
+    for (const x of playerData.dock || []) x.ship = revert(x.ship);
     // the station's Armada escorts are retired: refunded at full price with their outfits
-    const gone = (d.dock || []).filter((x) => ARMADA_HULLS.includes(x.ship.hull));
+    const gone = (playerData.dock || []).filter((x) => ARMADA_HULLS.includes(x.ship.hull));
     for (const x of gone) {
       refund += this.A.ships[x.ship.hull].cost || 0;
       for (const [id, n] of Object.entries(x.ship.outfits || {}))
@@ -167,33 +167,34 @@ export const CoopOperations = {
       notes.push(`the ${this.A.ships[x.ship.hull].name} stood down`);
     }
     if (gone.length) {
-      d.dock = d.dock.filter((x) => !gone.includes(x));
-      for (const k of d.docks || []) {
+      playerData.dock = playerData.dock.filter((x) => !gone.includes(x));
+      for (const k of playerData.docks || []) {
         k.wings = (k.wings || []).map((w) =>
           w && gone.some((x) => x.ship.uid === w.uid) ? null : w,
         );
         if (gone.some((x) => x.ship.uid === k.lead)) k.lead = null;
       }
     }
-    if (!d.shipless && d.ship && ARMADA_HULLS.includes(d.ship.hull)) {
-      refund += this.A.ships[d.ship.hull].cost;
-      d.ship = makeLoadout(this.A, 703, d.ship.name);
+    if (!playerData.shipless && playerData.ship && ARMADA_HULLS.includes(playerData.ship.hull)) {
+      refund += this.A.ships[playerData.ship.hull].cost;
+      playerData.ship = makeLoadout(this.A, 703, playerData.ship.name);
       notes.push('your Armada escort ship stood down (you fly a Gnat Skiff for now)');
     }
     // unused directives are bought back at their old store price
-    if (d.directives) {
-      for (const [t, n] of Object.entries(d.directives))
+    if (playerData.directives) {
+      for (const [t, n] of Object.entries(playerData.directives))
         if (n > 0) {
           refund += (DIRECTIVE_VALUE[t] || 0) * n;
           notes.push(`${n} unused directive${n > 1 ? 's' : ''} bought back`);
         }
-      delete d.directives;
+      delete playerData.directives;
     }
-    if (d.mats) for (const [m, g, n] of mats) if (d.mats[m]) d.mats[m][g] += n;
+    if (playerData.mats)
+      for (const [m, g, n] of mats) if (playerData.mats[m]) playerData.mats[m][g] += n;
     if (refund || notes.length) {
-      d.credits += refund;
-      d.log = d.log || [];
-      d.log.push({
+      playerData.credits += refund;
+      playerData.log = playerData.log || [];
+      playerData.log.push({
         t: Date.now(),
         text: `2.6: refits, the Armada escorts and directives were retired. ${notes.join('; ')}.${refund ? ` Refunded ${credits(refund)} credits${mats.length ? ' and the refit materials' : ''}.` : ''}`,
       });
@@ -213,16 +214,16 @@ export const CoopOperations = {
   },
   /**
    * Ensures social data structures (friends, requests, blocks, mailbox) exist on a player profile.
-   * @param {PlayerData} d - Player profile data.
+   * @param {PlayerData} playerData - Player profile data.
    * @returns {PlayerData} The initialized player profile data.
    */
-  socialInit(d) {
-    d.friends = d.friends || [];
-    d.freqIn = d.freqIn || [];
-    d.freqOut = d.freqOut || [];
-    d.blocks = d.blocks || [];
-    d.mail = d.mail || [];
-    return d;
+  socialInit(playerData) {
+    playerData.friends = playerData.friends || [];
+    playerData.freqIn = playerData.freqIn || [];
+    playerData.freqOut = playerData.freqOut || [];
+    playerData.blocks = playerData.blocks || [];
+    playerData.mail = playerData.mail || [];
+    return playerData;
   },
   /**
    * Checks if a case-insensitive captain name is present in a list of names.
@@ -246,12 +247,12 @@ export const CoopOperations = {
   },
   /**
    * Checks whether a captain is blocked by the target player profile.
-   * @param {PlayerData} [d] - Player profile data.
+   * @param {PlayerData} [playerData] - Player profile data.
    * @param {string} name - Captain name to check against blocks.
    * @returns {boolean} True if the captain is blocked.
    */
-  blocked(d, name) {
-    return !!(d && d.blocks && this.has(d.blocks, name));
+  blocked(playerData, name) {
+    return !!(playerData && playerData.blocks && this.has(playerData.blocks, name));
   },
   /**
    * Determines the online, away, or offline status of a captain.
@@ -259,9 +260,9 @@ export const CoopOperations = {
    * @returns {'online'|'away'|'offline'} Captain presence status.
    */
   statusOf(name) {
-    const o = this.sessionOf(name);
-    if (!o) return 'offline';
-    return Date.now() - (o.actT || 0) > SOCIAL.awayMin * 60000 ? 'away' : 'online';
+    const session = this.sessionOf(name);
+    if (!session) return 'offline';
+    return Date.now() - (session.actT || 0) > SOCIAL.awayMin * 60000 ? 'away' : 'online';
   },
   /**
    * Sends updated player state payload to an active captain session if online.
@@ -269,8 +270,8 @@ export const CoopOperations = {
    * @returns {void}
    */
   refreshPlayer(name) {
-    const o = this.sessionOf(name);
-    if (o) this.you(o);
+    const session = this.sessionOf(name);
+    if (session) this.you(session);
   },
   /**
    * Pushes the latest social and Armada payload to an active captain session.
@@ -278,12 +279,12 @@ export const CoopOperations = {
    * @returns {void}
    */
   pushSocial(name) {
-    const o = this.sessionOf(name);
-    if (o)
-      this.send(o, {
+    const session = this.sessionOf(name);
+    if (session)
+      this.send(session, {
         t: 'social',
-        social: this.socialPayload(o.data),
-        armada: this.armadaPayload(o.data),
+        social: this.socialPayload(session.data),
+        armada: this.armadaPayload(session.data),
       });
   },
   socialPayload(d) {
@@ -329,31 +330,31 @@ export const CoopOperations = {
         this.pushSocial(o.data.name);
   },
   coopLogin(s) {
-    const d = this.socialInit(s.data);
+    const playerData = this.socialInit(s.data);
     s.actT = Date.now();
-    d.armadaFollow = false; // Flight consent never survives reconnects.
+    playerData.armadaFollow = false; // Flight consent never survives reconnects.
     s.armadaFormationLeader = null;
     if (this.solo) return;
-    if (d.armada && !this.db.world.armadas[d.armada]) d.armada = null;
-    if (d.mail.length) {
-      this.send(s, { t: 'dms', list: d.mail });
+    if (playerData.armada && !this.db.world.armadas[playerData.armada]) playerData.armada = null;
+    if (playerData.mail.length) {
+      this.send(s, { t: 'dms', list: playerData.mail });
       this.toast(
         s,
-        `${d.mail.length} message${d.mail.length > 1 ? 's' : ''} arrived while you were away (ALLIES tab).`,
+        `${playerData.mail.length} message${playerData.mail.length > 1 ? 's' : ''} arrived while you were away (ALLIES tab).`,
       );
-      d.mail = [];
+      playerData.mail = [];
     }
-    if (d.freqIn.length)
+    if (playerData.freqIn.length)
       this.toast(
         s,
-        `Friend request${d.freqIn.length > 1 ? 's' : ''} from ${d.freqIn.join(', ')} (ALLIES tab).`,
+        `Friend request${playerData.freqIn.length > 1 ? 's' : ''} from ${playerData.freqIn.join(', ')} (ALLIES tab).`,
       );
-    const A = this.armadaOf(d);
+    const A = this.armadaOf(playerData);
     if (A) {
       A.emptyT = 0;
-      this.armadaChat(A, `${d.name} is online.`, d.name);
+      this.armadaChat(A, `${playerData.name} is online.`, playerData.name);
     }
-    this.presence(d);
+    this.presence(playerData);
   },
   coopLogout(s) {
     cleanContractPlans(this, s);
@@ -369,7 +370,7 @@ export const CoopOperations = {
 
   // ------------------------------------------------------------------ Captain Friends and DMs
   socialOp(s, m) {
-    const d = this.socialInit(s.data);
+    const playerData = this.socialInit(s.data);
     if (this.solo) return;
     const say = (msg) => this.toast(s, msg),
       name = cleanName(m.name),
@@ -377,19 +378,22 @@ export const CoopOperations = {
     switch (m.op) {
       case 'add': {
         if (!p) return say(`No captain called ${name}.`);
-        if (p === d) return say('That is you.');
+        if (p === playerData) return say('That is you.');
         this.socialInit(p);
-        if (this.has(d.friends, p.name)) return say(`${p.name} is already on your friends list.`);
-        if (d.friends.length >= SOCIAL.friendsMax)
+        if (this.has(playerData.friends, p.name))
+          return say(`${p.name} is already on your friends list.`);
+        if (playerData.friends.length >= SOCIAL.friendsMax)
           return say(`Your friends list is full (${SOCIAL.friendsMax}).`);
-        if (this.has(d.freqIn, p.name)) return this.socialOp(s, { op: 'accept', name: p.name });
-        if (this.blocked(d, p.name)) d.blocks = this.drop(d.blocks, p.name);
-        if (!this.has(d.freqOut, p.name)) d.freqOut.push(p.name);
-        if (!this.blocked(p, d.name) && !this.has(p.freqIn, d.name)) {
-          p.freqIn.push(d.name);
-          const o = this.sessionOf(p.name);
-          if (o) {
-            this.toast(o, `${d.name} wants to add you as a friend (ALLIES tab).`);
+        if (this.has(playerData.freqIn, p.name))
+          return this.socialOp(s, { op: 'accept', name: p.name });
+        if (this.blocked(playerData, p.name))
+          playerData.blocks = this.drop(playerData.blocks, p.name);
+        if (!this.has(playerData.freqOut, p.name)) playerData.freqOut.push(p.name);
+        if (!this.blocked(p, playerData.name) && !this.has(p.freqIn, playerData.name)) {
+          p.freqIn.push(playerData.name);
+          const session = this.sessionOf(p.name);
+          if (session) {
+            this.toast(session, `${playerData.name} wants to add you as a friend (ALLIES tab).`);
             this.pushSocial(p.name);
           }
         }
@@ -397,53 +401,53 @@ export const CoopOperations = {
         break;
       }
       case 'accept': {
-        if (!p || !this.has(d.freqIn, p.name)) return;
+        if (!p || !this.has(playerData.freqIn, p.name)) return;
         this.socialInit(p);
-        d.freqIn = this.drop(d.freqIn, p.name);
-        p.freqOut = this.drop(p.freqOut, d.name);
-        if (!this.has(d.friends, p.name)) d.friends.push(p.name);
-        if (!this.has(p.friends, d.name)) p.friends.push(d.name);
+        playerData.freqIn = this.drop(playerData.freqIn, p.name);
+        p.freqOut = this.drop(p.freqOut, playerData.name);
+        if (!this.has(playerData.friends, p.name)) playerData.friends.push(p.name);
+        if (!this.has(p.friends, playerData.name)) p.friends.push(playerData.name);
         say(`${p.name} is now your friend.`);
-        const o = this.sessionOf(p.name);
-        if (o) this.toast(o, `${d.name} accepted your friend request.`);
+        const session = this.sessionOf(p.name);
+        if (session) this.toast(session, `${playerData.name} accepted your friend request.`);
         this.pushSocial(p.name);
         break;
       }
       case 'decline':
         if (p) {
           this.socialInit(p);
-          d.freqIn = this.drop(d.freqIn, p.name);
-          p.freqOut = this.drop(p.freqOut, d.name);
+          playerData.freqIn = this.drop(playerData.freqIn, p.name);
+          p.freqOut = this.drop(p.freqOut, playerData.name);
           this.pushSocial(p.name);
         }
         break;
       case 'cancel':
         if (p) {
           this.socialInit(p);
-          d.freqOut = this.drop(d.freqOut, p.name);
-          p.freqIn = this.drop(p.freqIn, d.name);
+          playerData.freqOut = this.drop(playerData.freqOut, p.name);
+          p.freqIn = this.drop(p.freqIn, playerData.name);
           this.pushSocial(p.name);
         }
         break;
       case 'remove':
         if (p) {
           this.socialInit(p);
-          d.friends = this.drop(d.friends, p.name);
-          p.friends = this.drop(p.friends, d.name);
+          playerData.friends = this.drop(playerData.friends, p.name);
+          p.friends = this.drop(p.friends, playerData.name);
           say(`${p.name} was removed from your friends.`);
           this.pushSocial(p.name);
         }
         break;
       case 'block': {
-        if (!p || p === d) return;
+        if (!p || p === playerData) return;
         this.socialInit(p);
-        if (!this.blocked(d, p.name)) d.blocks.push(p.name);
-        d.friends = this.drop(d.friends, p.name);
-        p.friends = this.drop(p.friends, d.name);
-        d.freqIn = this.drop(d.freqIn, p.name);
-        d.freqOut = this.drop(d.freqOut, p.name);
-        p.freqIn = this.drop(p.freqIn, d.name);
-        p.freqOut = this.drop(p.freqOut, d.name);
+        if (!this.blocked(playerData, p.name)) playerData.blocks.push(p.name);
+        playerData.friends = this.drop(playerData.friends, p.name);
+        p.friends = this.drop(p.friends, playerData.name);
+        playerData.freqIn = this.drop(playerData.freqIn, p.name);
+        playerData.freqOut = this.drop(playerData.freqOut, p.name);
+        p.freqIn = this.drop(p.freqIn, playerData.name);
+        p.freqOut = this.drop(p.freqOut, playerData.name);
         say(
           `${p.name} is blocked: no messages, requests or invites from them, and you will not see their chat.`,
         );
@@ -452,14 +456,14 @@ export const CoopOperations = {
       }
       case 'unblock':
         if (p) {
-          d.blocks = this.drop(d.blocks, p.name);
+          playerData.blocks = this.drop(playerData.blocks, p.name);
           say(`${p.name} is unblocked.`);
         }
         break;
       case 'prefs':
-        d.dmAll = !!m.dmAll;
-        d.hideSys = !!m.hideSys;
-        this.presence(d);
+        playerData.dmAll = !!m.dmAll;
+        playerData.hideSys = !!m.hideSys;
+        this.presence(playerData);
         break;
       case 'dm':
         return this.dm(s, p, m.msg);
@@ -467,7 +471,7 @@ export const CoopOperations = {
         return;
     }
     this.db.touch();
-    this.send(s, { t: 'social', social: this.socialPayload(d) });
+    this.send(s, { t: 'social', social: this.socialPayload(playerData) });
   },
   dm(s, p, text) {
     const d = s.data,
@@ -490,15 +494,15 @@ export const CoopOperations = {
         `${p.name} only takes messages from friends. Send a friend request first.`,
       );
     const note = { from: d.name, to: p.name, msg, at: now },
-      o = this.sessionOf(p.name);
-    if (o) this.send(o, { t: 'dm', ...note });
+      session = this.sessionOf(p.name);
+    if (session) this.send(session, { t: 'dm', ...note });
     else {
       p.mail.push(note);
       const mine = p.mail.filter((x) => x.from === d.name);
       if (mine.length > SOCIAL.mailMax) p.mail.splice(p.mail.indexOf(mine[0]), 1);
       this.db.touch();
     }
-    this.send(s, { t: 'dm', ...note, sent: true, offline: !o });
+    this.send(s, { t: 'dm', ...note, sent: true, offline: !session });
   },
 
   // ------------------------------------------------------------------ the Armada
@@ -526,14 +530,14 @@ export const CoopOperations = {
     if (!A) return invites.length ? { none: true, invites } : null;
     const member = (n) => {
       const p = this.db.get(n),
-        o = this.sessionOf(n);
+        session = this.sessionOf(n);
       return {
         name: p ? p.name : n,
-        online: !!o,
-        sys: o && p && SYS[p.sys] ? SYS[p.sys].name : '',
-        sysId: o && p ? p.sys : null,
+        online: !!session,
+        sys: session && p && SYS[p.sys] ? SYS[p.sys].name : '',
+        sysId: session && p ? p.sys : null,
         hull: p && !p.shipless && p.ship ? this.A.ships[p.ship.hull].name : '',
-        landed: !!(o && !o.ent),
+        landed: !!(session && !session.ent),
         jobSlots: p ? Math.max(0, 6 - p.missions.length) : 0,
       };
     };
@@ -683,8 +687,9 @@ export const CoopOperations = {
         if (now - (s.rallyT || 0) < 20000) return say('Give them a moment before calling again.');
         s.rallyT = now;
         for (const n of A.members) {
-          const o = this.sessionOf(n);
-          if (o && o !== s) this.send(o, { t: 'rally', sys: d.sys, from: d.name });
+          const session = this.sessionOf(n);
+          if (session && session !== s)
+            this.send(session, { t: 'rally', sys: d.sys, from: d.name });
         }
         this.armadaChat(A, `${d.name} calls the Armada to ${SYS[d.sys].name}.`);
         return;
@@ -713,13 +718,13 @@ export const CoopOperations = {
     p.armadaFollow = false;
     this.log(p, `Left the Armada "${A.name}".`);
     this.armadaChat(A, `${p.name} ${why}.`);
-    const o = this.sessionOf(p.name);
-    if (o) {
+    const session = this.sessionOf(p.name);
+    if (session) {
       this.toast(
-        o,
+        session,
         `You ${why === 'left the Armada' ? 'left' : 'were removed from'} the Armada "${A.name}".`,
       );
-      this.you(o);
+      this.you(session);
     }
     if (!A.members.length) {
       delete this.db.world.armadas[A.id];
@@ -742,8 +747,9 @@ export const CoopOperations = {
   // members who share a system with another member get the buff; called when anyone arrives, leaves or joins
   armadaRefresh(A) {
     for (const n of A.members) {
-      const o = this.sessionOf(n);
-      if (o && o.ent) o.ent.coopRe = this.armadaNear(o.data) ? ARMADA.buff.shieldRe : 1;
+      const session = this.sessionOf(n);
+      if (session && session.ent)
+        session.ent.coopRe = this.armadaNear(session.data) ? ARMADA.buff.shieldRe : 1;
     }
   },
   armadaNear(d) {
@@ -805,8 +811,8 @@ export const CoopOperations = {
 
   // ------------------------------------------------------------------ trading between Personal Stations
   atOwnStation(d) {
-    const p = STELLARS[d.stellar];
-    return !!(p && p.site && this.ownSite(d, p));
+    const stellarBody = STELLARS[d.stellar];
+    return !!(stellarBody && stellarBody.site && this.ownSite(d, stellarBody));
   },
   tradeOp(s, m) {
     if (this.solo) return;
@@ -921,9 +927,9 @@ export const CoopOperations = {
       [T.a, T.b],
       [T.b, T.a],
     ]) {
-      const o = this.sessionOf(me);
-      if (o)
-        this.send(o, {
+      const session = this.sessionOf(me);
+      if (session)
+        this.send(session, {
           t: 'trade2',
           trade: {
             id,
@@ -942,20 +948,20 @@ export const CoopOperations = {
     if (!T) return;
     delete this.trades[id];
     for (const n of [T.a, T.b]) {
-      const o = this.sessionOf(n);
-      if (o) {
-        o.trade = null;
-        this.send(o, { t: 'trade2', trade: null });
-        if (why) this.toast(o, why);
+      const session = this.sessionOf(n);
+      if (session) {
+        session.trade = null;
+        this.send(session, { t: 'trade2', trade: null });
+        if (why) this.toast(session, why);
       }
     }
   },
   tradeDo(T) {
     const pa = this.db.get(T.a),
       pb = this.db.get(T.b),
-      sa = this.sessionOf(T.a),
+      session = this.sessionOf(T.a),
       sb = this.sessionOf(T.b);
-    if (!pa || !pb || !sa || !sb || !this.atOwnStation(pa) || !this.atOwnStation(pb))
+    if (!pa || !pb || !session || !sb || !this.atOwnStation(pa) || !this.atOwnStation(pb))
       return this.tradeCancel(
         T.id,
         'Trade cancelled: both captains must stay docked at their own stations.',
@@ -1036,7 +1042,7 @@ export const CoopOperations = {
       toA = move(pb, pa, T.give[T.b]);
     // goods land in station storage, then go into the hold if there is room
     for (const [p, o] of [
-      [pa, sa],
+      [pa, session],
       [pb, sb],
     ]) {
       if (!p.storage) continue;
@@ -1064,9 +1070,9 @@ export const CoopOperations = {
     this.log(pa, `Traded with ${pb.name}: gave ${line(toB)}; got ${line(toA)}.`);
     this.log(pb, `Traded with ${pa.name}: gave ${line(toA)}; got ${line(toB)}.`);
     delete this.trades[T.id];
-    sa.trade = sb.trade = null;
+    session.trade = sb.trade = null;
     for (const [o, got, w] of [
-      [sa, toA, pb.name],
+      [session, toA, pb.name],
       [sb, toB, pa.name],
     ]) {
       this.send(o, { t: 'trade2', trade: null });
@@ -1168,16 +1174,23 @@ export const CoopOperations = {
           this.you(s);
           return say('That challenge has lapsed.');
         }
-        const o = this.sessionOf(I.from);
+        const session = this.sessionOf(I.from);
         s.duelInv = null;
-        if (!o || !o.ent || !s.ent || o.data.sys !== d.sys || o.duel || s.duel) {
+        if (
+          !session ||
+          !session.ent ||
+          !s.ent ||
+          session.data.sys !== d.sys ||
+          session.duel ||
+          s.duel
+        ) {
           this.you(s);
           return say('The challenger is no longer here.');
         }
-        let A = [o.data.name],
+        let A = [session.data.name],
           B = [d.name];
         if (I.armada) {
-          const XA = this.armadaOf(o.data),
+          const XA = this.armadaOf(session.data),
             XB = this.armadaOf(d);
           if (!XA || !XB) return say('Both captains need their Armadas.');
           const here = (X) =>
@@ -1214,8 +1227,8 @@ export const CoopOperations = {
       }
       case 'decline':
         if (s.duelInv) {
-          const o = this.sessionOf(s.duelInv.from);
-          if (o) this.toast(o, `${d.name} declined the challenge.`);
+          const session = this.sessionOf(s.duelInv.from);
+          if (session) this.toast(session, `${d.name} declined the challenge.`);
           s.duelInv = null;
           this.you(s);
         }
@@ -1253,8 +1266,8 @@ export const CoopOperations = {
   },
   duelSay(D, msg) {
     for (const n of [...D.sides.A, ...D.sides.B]) {
-      const o = this.sessionOf(n);
-      if (o) this.toast(o, msg);
+      const session = this.sessionOf(n);
+      if (session) this.toast(session, msg);
     }
   },
   duelEnd(D, win) {
@@ -1265,17 +1278,17 @@ export const CoopOperations = {
       ? `${D.armada ? 'Armada Duel' : 'Duel'} won by ${names(win)} against ${names(win === 'A' ? 'B' : 'A')}.`
       : `The ${D.armada ? 'Armada Duel' : 'duel'} between ${names('A')} and ${names('B')} ended in a draw.`;
     for (const n of [...D.sides.A, ...D.sides.B]) {
-      const o = this.sessionOf(n);
+      const session = this.sessionOf(n);
       const p = this.db.get(n);
       if (p) {
         p.duels = p.duels || { w: 0, l: 0, d: 0 };
         const side = this.duelSide(D, n);
         p.duels[!win ? 'd' : side === win ? 'w' : 'l']++;
       }
-      if (o) {
-        if (o.duel === D.id) o.duel = null;
-        this.toast(o, msg);
-        this.you(o);
+      if (session) {
+        if (session.duel === D.id) session.duel = null;
+        this.toast(session, msg);
+        this.you(session);
       }
     }
     this.broadcast(
@@ -1290,15 +1303,15 @@ export const CoopOperations = {
         D.on = true;
         this.duelSay(D, 'Weapons free!');
         for (const n of [...D.sides.A, ...D.sides.B]) {
-          const o = this.sessionOf(n);
-          if (o) this.you(o);
+          const session = this.sessionOf(n);
+          if (session) this.you(session);
         }
       }
       for (const n of [...D.sides.A, ...D.sides.B]) {
         if (D.out.has(this.db.key(n))) continue;
-        const o = this.sessionOf(n);
-        if (!o || !o.ent || o.data.sys !== D.sys) {
-          if (o) this.duelOut(o, 'left the fight');
+        const session = this.sessionOf(n);
+        if (!session || !session.ent || session.data.sys !== D.sys) {
+          if (session) this.duelOut(session, 'left the fight');
           else {
             D.out.add(this.db.key(n));
           }
@@ -1403,19 +1416,19 @@ export const CoopOperations = {
   holdoutReward(host, H, n, won, R) {
     const site = STELLARS[host.station.site];
     for (const name of H.helpers || []) {
-      const o = this.sessionOf(name);
-      if (!o || !o.ent || o.data.sys !== site.system) continue;
-      const d = o.data,
+      const session = this.sessionOf(name);
+      if (!session || !session.ent || session.data.sys !== site.system) continue;
+      const playerData = session.data,
         cr = Math.round(R.credits * COOP_HOLDOUT.helperShare),
         mt = MATERIALS[Math.floor(Math.random() * 3)];
-      d.credits += cr;
-      d.stats.earned += cr;
-      d.mats[mt][R.grade]++;
-      d.bp = d.bp || {};
+      playerData.credits += cr;
+      playerData.stats.earned += cr;
+      playerData.mats[mt][R.grade]++;
+      playerData.bp = playerData.bp || {};
       const msg = `Holdout at ${host.name}'s station ${won ? 'WON' : `over after ${n} wave${n > 1 ? 's' : ''}`}. Your share: ${credits(cr)} cr and a ${mt} ${GRADES[R.grade]} crate.`;
-      this.toast(o, msg);
-      this.log(d, msg);
-      this.you(o);
+      this.toast(session, msg);
+      this.log(playerData, msg);
+      this.you(session);
     }
   },
 

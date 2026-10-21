@@ -109,9 +109,9 @@ function shipPick(G, D, k, slot, cur, interactive) {
  */
 function crewPick(G, k, w, role, oid, interactive) {
   const y = G.you,
-    o = y.officers.find((x) => x.id === oid);
+    officer = y.officers.find((x) => x.id === oid);
   if (!interactive)
-    return `<span class="dim small">${role === 'cap' ? 'Captain' : 'Crew'}: ${o ? esc(o.name) : 'none'}</span>`;
+    return `<span class="dim small">${role === 'cap' ? 'Captain' : 'Crew'}: ${officer ? esc(officer.name) : 'none'}</span>`;
   const opts = y.officers
     .map(
       (x) =>

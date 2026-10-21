@@ -59,7 +59,11 @@ export const LivingOperations = {
     return (
       this._mkt ||
       (this._mkt = SYSTEMS.filter(
-        (S) => !S.arena && S.stellars.some((p) => p.svc && p.svc.includes('T') && !p.site),
+        (S) =>
+          !S.arena &&
+          S.stellars.some(
+            (stellarBody) => stellarBody.svc && stellarBody.svc.includes('T') && !stellarBody.site,
+          ),
       ).map((S) => S.id))
     );
   },
@@ -75,17 +79,18 @@ export const LivingOperations = {
   // a war needs an enemy: a power hostile to the system's owner, preferably one next door
   /**
    * Select a hostile enemy faction for a system entering a war state.
-   * @param {SpaceSystem} S - System metadata.
+   * @param {SpaceSystem} system - System metadata.
    * @returns {string | null} Hostile enemy faction key or null.
    */
-  warEnemy(S) {
-    const F = FACTIONS[S.faction];
-    if (!F || F.region || F.pirate || S.faction === 'umbral') return null;
+  warEnemy(system) {
+    const F = FACTIONS[system.faction];
+    if (!F || F.region || F.pirate || system.faction === 'umbral') return null;
     const next = new Set(
-      S.links
+      system.links
         .map((l) => SYS[l].faction)
         .filter(
-          (f) => f !== S.faction && FACTIONS[f] && !FACTIONS[f].region && F.hostile.includes(f),
+          (f) =>
+            f !== system.faction && FACTIONS[f] && !FACTIONS[f].region && F.hostile.includes(f),
         ),
     );
     const pool = next.size
@@ -216,25 +221,25 @@ export const LivingOperations = {
   },
   /**
    * Calculate effective price multiplier from active system event and player trade impact.
-   * @param {StellarBody} p - Stellar body object.
+   * @param {StellarBody} stellarBody - Stellar body object.
    * @param {string} cid - Commodity ID.
    * @returns {number} Price multiplier.
    */
-  livingMult(p, cid) {
-    const st = this.stateOf(p.system),
+  livingMult(stellarBody, cid) {
+    const st = this.stateOf(stellarBody.system),
       sm = st ? STATES[st.kind].prices[cid] || 1 : 1;
-    return sm * (1 - this.impact(p.id, cid));
+    return sm * (1 - this.impact(stellarBody.id, cid));
   },
   // ---- captains ending states early
   /**
    * Contribute progress towards resolving an active troubled system event.
-   * @param {Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {string} sys - System ID.
    * @param {string} what - Progress category key (e.g. 'cid:food', 'kill:pirate').
    * @param {number} n - Amount of progress units.
    * @returns {void}
    */
-  stateProgress(s, sys, what, n) {
+  stateProgress(session, sys, what, n) {
     const st = this.stateOf(sys);
     if (!st || !st.need) return;
     const X = STATES[st.kind];
@@ -243,83 +248,84 @@ export const LivingOperations = {
       (X.need.kills === 'pirate' && what === 'kill:pirate') ||
       (X.need.kills === 'enemy' && what === 'kill:' + st.enemy);
     if (!counts) return;
-    s.data.stats.stateHelp = (s.data.stats.stateHelp || 0) + 1; // 2.5: the career step
+    session.data.stats.stateHelp = (session.data.stats.stateHelp || 0) + 1; // 2.5: the career step
     const before = st.got;
     st.got = Math.min(st.need, st.got + n);
     this.db.touch();
-    if (st.got >= st.need) return this.resolveState(s, sys);
+    if (st.got >= st.need) return this.resolveState(session, sys);
     if (Math.floor(before / (st.need / 4)) !== Math.floor(st.got / (st.need / 4)))
       this.toast(
-        s,
+        session,
         `${X.name} in ${SYS[sys].name}: ${st.got} / ${st.need} ${X.need.cid ? 't delivered' : 'destroyed'}.`,
       );
   },
   /**
    * Conclude an active system state early due to player contribution, distributing rewards.
-   * @param {Session} s - Player session that triggered resolution.
+   * @param {Session} session - Player session that triggered resolution.
    * @param {string} sys - System ID.
    * @returns {void}
    */
-  resolveState(s, sys) {
+  resolveState(session, sys) {
     const W = this.db.world,
       st = W.states[sys],
       X = STATES[st.kind],
       S = SYS[sys],
-      d = s.data;
+      playerData = session.data;
     delete W.states[sys];
     W.stateCool[sys] = Date.now() + 30 * 60000;
     this.worldKey = null;
     const reward = 15000 + st.need * 120;
-    d.credits += reward;
-    d.stats.earned += reward;
-    d.rep[S.faction] = clampStanding((d.rep[S.faction] || 0) + 6);
+    playerData.credits += reward;
+    playerData.stats.earned += reward;
+    playerData.rep[S.faction] = clampStanding((playerData.rep[S.faction] || 0) + 6);
     this.news(
-      `${X.end.replace('{sys}', S.name).replace('{fac}', FACTIONS[S.faction].name)} ${d.name} led the effort.`,
+      `${X.end.replace('{sys}', S.name).replace('{fac}', FACTIONS[S.faction].name)} ${playerData.name} led the effort.`,
     );
     this.toast(
-      s,
+      session,
       `You ended the ${X.name.toLowerCase()} in ${S.name}! The ${FACTIONS[S.faction].short} pay you ${credits(reward)} credits (+6 standing).`,
     );
-    this.log(d, `Ended the ${X.name.toLowerCase()} in ${S.name}.`);
+    this.log(playerData, `Ended the ${X.name.toLowerCase()} in ${S.name}.`);
     this.db.touch();
-    this.you(s);
+    this.you(session);
   },
   /**
    * Check killed NPC to progress pirate or war crisis states in the system.
-   * @param {Session} s - Player session scoring the kill.
+   * @param {Session} session - Player session scoring the kill.
    * @param {Entity} npc - Killed NPC entity.
    * @param {Space} space - Space instance where the kill occurred.
    * @returns {void}
    */
-  stateOnKill(s, npc, space) {
+  stateOnKill(session, npc, space) {
     const F = FACTIONS[npc.faction] || {};
-    if (F.pirate || npc.faction === 'hollow') this.stateProgress(s, space.id, 'kill:pirate', 1);
-    this.stateProgress(s, space.id, 'kill:' + npc.faction, 1);
+    if (F.pirate || npc.faction === 'hollow')
+      this.stateProgress(session, space.id, 'kill:pirate', 1);
+    this.stateProgress(session, space.id, 'kill:' + npc.faction, 1);
   },
   // ---- the jobs a troubled system posts (merged into nearby job boards)
   /**
    * Generate emergency relief, patrol, or evacuation jobs for nearby troubled systems.
-   * @param {StellarBody} p - Landed stellar body.
-   * @param {PlayerData} d - Saved player data.
+   * @param {StellarBody} stellarBody - Landed stellar body.
+   * @param {PlayerData} playerData - Saved player data.
    * @param {() => number} r - Seeded RNG function.
    * @param {Array<[string, number]>} near - Array of [systemId, jumps] tuples.
    * @param {number} win - Time window seed.
    * @returns {Array<Mission>} Generated mission objects.
    */
-  stateOffers(p, d, r, near, win) {
+  stateOffers(stellarBody, playerData, r, near, win) {
     const out = [],
-      here = [[p.system, 0], ...near];
+      here = [[stellarBody.system, 0], ...near];
     for (const [sys, jumps] of here) {
       const st = this.stateOf(sys);
       if (!st) continue;
       const S = SYS[sys],
         X = STATES[st.kind];
       const ports = S.stellars.filter(
-        (x) => x.id !== p.id && x.svc && x.svc.includes('T') && !x.site,
+        (x) => x.id !== stellarBody.id && x.svc && x.svc.includes('T') && !x.site,
       );
       if (!ports.length) continue;
       const dest = ports[Math.floor(r() * ports.length)],
-        id = `${p.id}-${win}-st-${sys}`;
+        id = `${stellarBody.id}-${win}-st-${sys}`;
       const supply = {
         famine: 'food',
         refugees: 'food',
@@ -390,11 +396,11 @@ export const LivingOperations = {
   // a supply job completes when you land at its destination with the goods in your hold
   /**
    * Check whether player currently carries sufficient cargo to complete a supply relief mission.
-   * @param {PlayerData} d - Saved player data.
-   * @param {Mission} m - Mission object.
+   * @param {PlayerData} playerData - Saved player data.
+   * @param {Mission} mission - Mission object.
    * @returns {boolean} True if required goods are in cargo.
    */
-  supplyReady(d, m) {
-    return m.type === 'supply' && (d.cargo[m.cid] || 0) >= m.qty;
+  supplyReady(playerData, mission) {
+    return mission.type === 'supply' && (playerData.cargo[mission.cid] || 0) >= mission.qty;
   },
 };

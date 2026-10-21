@@ -9,10 +9,11 @@ import { planTake, applyTake, addLots, commonLots } from '../shared/cargo-lots.j
 /** @typedef {import('./industrial-contracts.js').IndustrialCapabilities} C */
 /** @typedef {import('./industrial-contracts.js').IndustrialShip} State */
 /** @typedef {import('./refinery-contracts.js').RefineryPlayer} Player */
-/** @param {Player} d @returns {State} */
-function state(d) {
-  if (!d.ship.uid) d.ship.uid = `industrial-${d.name}-${(d.nextUid = (d.nextUid || 0) + 1)}`;
-  const m = (d.ship.industrial ??= {
+/** @param {Player} playerData @returns {State} */
+function state(playerData) {
+  if (!playerData.ship.uid)
+    playerData.ship.uid = `industrial-${playerData.name}-${(playerData.nextUid = (playerData.nextUid || 0) + 1)}`;
+  const m = (playerData.ship.industrial ??= {
     version: 1,
     heat: 0,
     cutoff: false,
@@ -56,52 +57,55 @@ function validate(m) {
     throw Error('Invalid industrial ship save');
 }
 /** Staged whole cargo + finite-source change, same checkpoint as existing player/world economy.
- * @param {C} c @param {Session} s @param {(d:Player,w:IndustrialWorld)=>void} fn */
-function transaction(c, s, fn) {
-  if (c.db.economicFrozen || c.paused())
+ * @param {C} capabilities @param {Session} session @param {(d:Player,w:IndustrialWorld)=>void} fn */
+function transaction(capabilities, session, fn) {
+  if (capabilities.db.economicFrozen || capabilities.paused())
     throw Error('Industrial economy requires recovery or unpause');
-  const d = /** @type {Player} */ (s.data),
-    old = { cargo: d.cargo, cargoLots: d.cargoLots, ship: d.ship },
-    world = c.db.world.industrial;
-  d.cargo = structuredClone(d.cargo);
-  d.cargoLots = structuredClone(d.cargoLots);
-  d.ship = structuredClone(d.ship);
-  c.db.world.industrial = structuredClone(world);
+  const playerData = /** @type {Player} */ (session.data),
+    old = { cargo: playerData.cargo, cargoLots: playerData.cargoLots, ship: playerData.ship },
+    world = capabilities.db.world.industrial;
+  playerData.cargo = structuredClone(playerData.cargo);
+  playerData.cargoLots = structuredClone(playerData.cargoLots);
+  playerData.ship = structuredClone(playerData.ship);
+  capabilities.db.world.industrial = structuredClone(world);
   try {
-    fn(/** @type {Player} */ (d), /** @type {IndustrialWorld} */ (c.db.world.industrial));
-    c.db.touch();
-    c.db.flush();
-    c.refresh(s);
+    fn(
+      /** @type {Player} */ (playerData),
+      /** @type {IndustrialWorld} */ (capabilities.db.world.industrial),
+    );
+    capabilities.db.touch();
+    capabilities.db.flush();
+    capabilities.refresh(session);
   } catch (error) {
-    if (!c.db.economicFrozen) {
-      Object.assign(d, old);
-      c.db.world.industrial = world;
+    if (!capabilities.db.economicFrozen) {
+      Object.assign(playerData, old);
+      capabilities.db.world.industrial = world;
     }
     throw error;
   }
 }
-/** @param {Space} sp @param {Entity} e */
-function drones(sp, e) {
-  return [...sp.ships.values()].filter((x) => x.industrialRoot === e.id);
+/** @param {Space} space @param {Entity} entity */
+function drones(space, entity) {
+  return [...space.ships.values()].filter((x) => x.industrialRoot === entity.id);
 }
-/** @param {Space} sp @param {Entity} e @param {boolean} on */
-function support(sp, e, on) {
-  const old = drones(sp, e);
+/** @param {Space} space @param {Entity} entity @param {boolean} on */
+function support(space, entity, on) {
+  const old = drones(space, entity);
   if (!on) {
-    for (const x of old) sp.remove(x);
+    for (const x of old) space.remove(x);
     return;
   }
   for (let i = old.length; i < 2; i++) {
-    const x = sp.makeShip({
+    const x = space.makeShip({
       hull: R.droneHull,
-      owner: e.id,
-      x: e.x + (i ? 55 : -55),
-      y: e.y + 30,
+      owner: entity.id,
+      x: entity.x + (i ? 55 : -55),
+      y: entity.y + 30,
       ai: 'industrial',
       name: `Industrial collector ${i + 1}`,
-      faction: e.faction,
+      faction: entity.faction,
     });
-    x.industrialRoot = e.id;
+    x.industrialRoot = entity.id;
     x.guns = [];
     x.strength = 0;
     old.push(x);
@@ -136,28 +140,28 @@ export const IndustrialOperations = {
     }
     this.db.touch();
   },
-  /** @this {C} @param {Session} s */
-  stop(s) {
-    const m = s.data?.ship?.industrial;
+  /** @this {C} @param {Session} session */
+  stop(session) {
+    const m = session.data?.ship?.industrial;
     if (m) m.sweep = m.harvest = m.smelter = false;
     this.db.touch();
   },
-  /** @this {C} @param {Session} s @param {IndustrialRequest} q */
-  command(s, q) {
+  /** @this {C} @param {Session} session @param {IndustrialRequest} q */
+  command(session, q) {
     try {
       if (
-        s.data?.ship?.hull !== R.hull ||
-        !s.ent ||
-        s.ent.dead ||
-        s.ent.state !== 'fly' ||
-        s.data.stellar ||
+        session.data?.ship?.hull !== R.hull ||
+        !session.ent ||
+        session.ent.dead ||
+        session.ent.state !== 'fly' ||
+        session.data.stellar ||
         this.paused() ||
         this.db.economicFrozen
       )
         throw Error('Industrial controls require an active Star Dredge flight');
       if (Object.keys(q).some((k) => !['t', 'op', 'recipe', 'grade'].includes(k)))
         throw Error('Unknown industrial authority field');
-      const m = state(/** @type {Player} */ (s.data));
+      const m = state(/** @type {Player} */ (session.data));
       if (q.op === 'off') {
         m.sweep = m.harvest = m.smelter = false;
       } else if (q.op === 'recipe') {
@@ -168,12 +172,15 @@ export const IndustrialOperations = {
           throw Error('Choose a mobile recipe and exact input grade');
         if (m.workMs > 0 && (q.recipe !== m.recipe || q.grade !== m.grade)) {
           const old = RECIPES.find((r) => r.id === m.recipe)?.inputs[0];
-          const player = /** @type {Player} */ (s.data);
+          const player = /** @type {Player} */ (session.data);
           if (old && (player.cargoLots?.byCommodity[old]?.[m.grade] || 0) > 0)
             throw Error('Finish earned work before switching input recipe/grade');
           // Unreserved input can be traded/jettisoned. Discard time, never transfer it.
           m.workMs = 0;
-          this.toast(s, 'Previous input is gone: discarded partial smelter work; outputs retained');
+          this.toast(
+            session,
+            'Previous input is gone: discarded partial smelter work; outputs retained',
+          );
         }
         m.recipe = /** @type {string} */ (q.recipe);
         m.grade = /** @type {'common'|'rich'|'pure'} */ (q.grade);
@@ -183,12 +190,12 @@ export const IndustrialOperations = {
         if (
           q.op === 'harvest' &&
           !m.harvest &&
-          (!coronaAt(s.data.sys, s.ent.x, s.ent.y) ||
+          (!coronaAt(session.data.sys, session.ent.x, session.ent.y) ||
             m.heat > 25 ||
             m.sweep ||
             m.smelter ||
-            s.lastInput?.navigation ||
-            s.ent.autoCombat)
+            session.lastInput?.navigation ||
+            session.ent.autoCombat)
         )
           throw Error(
             'Shallow bootstrap: enter marked band, heat ≤25, sweep/smelter/navigation OFF; leave outward within 10s after 15s harvest',
@@ -196,41 +203,41 @@ export const IndustrialOperations = {
         m[q.op] = !m[q.op];
       } else throw Error('Unknown industrial control');
       this.db.touch();
-      this.refresh(s);
+      this.refresh(session);
     } catch (error) {
-      this.toast(s, String(error instanceof Error ? error.message : error));
+      this.toast(session, String(error instanceof Error ? error.message : error));
     }
   },
-  /** @this {C} @param {Space} sp @param {number} dt */
-  industrialTick(sp, dt) {
+  /** @this {C} @param {Space} space @param {number} dt */
+  industrialTick(space, dt) {
     if (this.paused() || this.db.economicFrozen) return;
     if (!Number.isFinite(dt) || dt <= 0 || dt > 1) throw Error('Invalid industrial timestep');
     const clock = this.db.world.mining?.clock || 0;
-    for (const e of [...sp.ships.values()]) {
+    for (const e of [...space.ships.values()]) {
       if (!e.player || e.hull !== R.hull) continue;
       const s = e.player.s,
-        d = /** @type {Player} */ (s.data);
-      let m = state(d);
-      if (e.dead || e.disabled || e.state !== 'fly' || d.stellar) {
-        support(sp, e, false);
+        playerData = /** @type {Player} */ (s.data);
+      let m = state(playerData);
+      if (e.dead || e.disabled || e.state !== 'fly' || playerData.stellar) {
+        support(space, e, false);
         continue;
       }
-      const band = coronaAt(d.sys, e.x, e.y);
+      const band = coronaAt(playerData.sys, e.x, e.y);
       if (s.lastInput?.navigation || e.autoCombat || e.towCap) {
         m.harvest = false;
       }
       if (m.heat >= R.cutoff) m.cutoff = true;
       if (m.cutoff && m.heat <= R.restart) m.cutoff = false;
       const forward = e.vx * Math.sin(e.a) - e.vy * Math.cos(e.a),
-        room = this.room(d),
+        room = this.room(playerData),
         recipe = RECIPES.find((r) => r.id === m.recipe),
         input = recipe?.inputs[0] || 'ore',
-        have = d.cargoLots?.byCommodity[input]?.[m.grade] || 0,
+        have = playerData.cargoLots?.byCommodity[input]?.[m.grade] || 0,
         sweep = m.sweep && !m.cutoff && forward > R.minForward && room > 0,
         smelt = m.smelter && !m.cutoff && have > 0,
         harvest = m.harvest && !m.cutoff && !!band && room > 0;
       // Special power changes heat demand only, capped 20%; never output, rate or drone count.
-      const efficiency = Math.max(0.8, 1 - (this.power(d) - 1) * 0.1);
+      const efficiency = Math.max(0.8, 1 - (this.power(playerData) - 1) * 0.1);
       m.inputs = {
         sweep: sweep ? R.sweepHeat * efficiency : 0,
         smelter: smelt ? R.smelterHeat * efficiency : 0,
@@ -265,7 +272,7 @@ export const IndustrialOperations = {
       e.shield = Math.max(0, e.shield - R.shieldDrain * above(R.shield));
       e.armor = Math.max(0, e.armor - R.hullDrain * above(R.critical));
       if (e.armor <= 0) {
-        sp.kill(e);
+        space.kill(e);
         continue;
       }
       m.reason = m.cutoff
@@ -285,21 +292,21 @@ export const IndustrialOperations = {
                     : 'OFF / COOLING';
       if (band && R.coronaHeat > R.cooling && !sweep && !smelt && !harvest)
         m.reason += ' · CORONA HEATING — EXIT BAND';
-      support(sp, e, sweep);
+      support(space, e, sweep);
       if (sweep && work > 0) {
         // Root cap shared across ship and both drones, not one cap per collector.
         let damage = R.sweepDamage * work;
-        for (const rock of sp.rocks) {
+        for (const rock of space.rocks) {
           if (damage <= 0) break;
           if (!rock.down && inSweep(e, rock, dt)) {
-            const spent = this.sweep(sp, rock, damage, d.name);
+            const spent = this.sweep(space, rock, damage, playerData.name);
             damage -= spent;
           }
         }
       }
       // Drones are physical noncombat collectors; deterministic sequential selection avoids duplicate acceptance.
-      for (const [i, x] of drones(sp, e).entries()) {
-        const target = sp.loot.find((l) => !l.taken && inSweep(e, l, dt));
+      for (const [i, x] of drones(space, e).entries()) {
+        const target = space.loot.find((l) => !l.taken && inSweep(e, l, dt));
         const tx = target?.x ?? e.x + (i ? 65 : -65),
           ty = target?.y ?? e.y + 40,
           dist = Math.hypot(tx - x.x, ty - x.y),
@@ -313,7 +320,7 @@ export const IndustrialOperations = {
         if (target && dist < 35) {
           if (this.loot(e.player, target.it) !== false) {
             target.taken = true;
-            sp.events.push(['pickup', target.id]);
+            space.events.push(['pickup', target.id]);
           }
         }
       }
@@ -339,7 +346,7 @@ export const IndustrialOperations = {
           });
         }
       }
-      m = state(d);
+      m = state(playerData);
       if (smelt && work > 0 && recipe) {
         m.workMs = Math.min(R.workMs, m.workMs + work * 1000);
         if (m.workMs >= R.workMs - 1e-6)
@@ -362,14 +369,14 @@ export const IndustrialOperations = {
       this.db.touch();
     }
   },
-  /** @this {C} @param {Session} s */
-  payload(s) {
-    if (s.data?.ship?.hull !== R.hull) return null;
-    const m = state(/** @type {Player} */ (s.data)),
-      e = s.ent,
-      band = e ? coronaAt(s.data.sys, e.x, e.y) : null;
+  /** @this {C} @param {Session} session */
+  payload(session) {
+    if (session.data?.ship?.hull !== R.hull) return null;
+    const m = state(/** @type {Player} */ (session.data)),
+      entity = session.ent,
+      band = entity ? coronaAt(session.data.sys, entity.x, entity.y) : null;
     return {
-      ship: s.data.ship.uid,
+      ship: session.data.ship.uid,
       ...structuredClone(m),
       band: band?.id || null,
       safeSeconds: Math.max(
@@ -377,7 +384,7 @@ export const IndustrialOperations = {
         (R.cutoff - m.heat) /
           Math.max(0.1, m.inputs.corona + m.inputs.sweep + m.inputs.smelter - R.cooling),
       ),
-      bands: CORONA_BANDS.filter((b) => b.sys === s.data.sys),
+      bands: CORONA_BANDS.filter((b) => b.sys === session.data.sys),
       stock:
         'Sweep/smelter OFF, heat 0: 15s productive + 10s outward exit margin; entry faces east.',
     };

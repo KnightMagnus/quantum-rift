@@ -8,20 +8,20 @@ import { PRESSURE as P } from '../shared/mining-pressure-rules.js';
 /** @typedef {import('./mining-pressure-contracts.js').PressureCapabilities} C */
 /** @typedef {import('./mining-pressure-contracts.js').PressureSpace} Space */
 /** @typedef {import('./mining-pressure-contracts.js').SavedMiningPressure} W */
-/** @param {C} c @returns {W} */
-function state(c) {
-  const w = c.db.world.miningPressure;
+/** @param {C} capabilities @returns {W} */
+function state(capabilities) {
+  const w = capabilities.db.world.miningPressure;
   if (!w) throw Error('Mining pressure unavailable');
   return w;
 }
-/** @param {C} c */
-function now(c) {
-  return c.db.world.mining?.clock || 0;
+/** @param {C} capabilities */
+function now(capabilities) {
+  return capabilities.db.world.mining?.clock || 0;
 }
-/** @param {C} c @param {string} owner @param {string} sys */
-function captain(c, owner, sys) {
-  const w = state(c),
-    clock = now(c);
+/** @param {C} capabilities @param {string} owner @param {string} sys */
+function captain(capabilities, owner, sys) {
+  const w = state(capabilities),
+    clock = now(capabilities);
   let p = w.captains.find((p) => p.owner === owner && p.sys === sys);
   if (!p) {
     p = { owner, sys, noise: 0, updated: clock, lastEncounter: -P.cooldown, warned: false };
@@ -33,91 +33,101 @@ function captain(c, owner, sys) {
   if (p.noise < P.warn) p.warned = false;
   return p;
 }
-/** @param {C} c @param {string} owner @param {string} sys */
-function online(c, owner, sys) {
-  return [...c.sessions()].find(
-    (s) => s.data && c.db.key(s.data.name) === owner && s.data.sys === sys && s.ent && !s.ent.dead,
+/** @param {C} capabilities @param {string} owner @param {string} sys */
+function online(capabilities, owner, sys) {
+  return [...capabilities.sessions()].find(
+    (session) =>
+      session.data &&
+      capabilities.db.key(session.data.name) === owner &&
+      session.data.sys === sys &&
+      session.ent &&
+      !session.ent.dead,
   );
 }
-/** @param {C} c @param {string} owner @param {string} sys */
-function scope(c, owner, sys) {
-  const own = online(c, owner, sys);
+/** @param {C} capabilities @param {string} owner @param {string} sys */
+function scope(capabilities, owner, sys) {
+  const own = online(capabilities, owner, sys);
   if (!own) return [];
-  const consent = state(c).consent.find(
+  const consent = state(capabilities).consent.find(
     (x) =>
       x.owner === owner &&
       x.session === own.id &&
       x.entity === own.ent?.id &&
       x.sys === sys &&
-      x.until > now(c) &&
+      x.until > now(capabilities) &&
       x.group === String(own.data.armada),
   );
   return [
     own,
-    ...[...c.sessions()].filter(
-      (s) =>
-        s !== own &&
-        s.data &&
-        s.ent &&
-        s.data.sys === sys &&
+    ...[...capabilities.sessions()].filter(
+      (session) =>
+        session !== own &&
+        session.data &&
+        session.ent &&
+        session.data.sys === sys &&
         !!(
           consent &&
-          state(c).consent.some(
+          state(capabilities).consent.some(
             (x) =>
-              x.owner === c.db.key(s.data.name) &&
-              x.session === s.id &&
-              x.entity === s.ent?.id &&
+              x.owner === capabilities.db.key(session.data.name) &&
+              x.session === session.id &&
+              x.entity === session.ent?.id &&
               x.sys === sys &&
               x.group === consent.group &&
-              x.group === String(s.data.armada) &&
-              x.until > now(c),
+              x.group === String(session.data.armada) &&
+              x.until > now(capabilities),
           )
         ),
     ),
   ];
 }
-/** @param {C} c @param {Space} sp @param {string[]} owners @param {number[]} sessions @param {Entity} e */
-function eligible(c, sp, owners, sessions, e) {
-  if (!e.player || e.dead) return false;
-  const s = e.player.s,
-    key = c.db.key(s.data.name),
+/** @param {C} capabilities @param {Space} space @param {string[]} owners @param {number[]} sessions @param {Entity} entity */
+function eligible(capabilities, space, owners, sessions, entity) {
+  if (!entity.player || entity.dead) return false;
+  const session = entity.player.s,
+    key = capabilities.db.key(session.data.name),
     i = owners.indexOf(key);
-  if (i < 0 || sessions[i] !== s.id || s.ent !== e || (!sp.sys.farside && c.newcomer(s.data)))
+  if (
+    i < 0 ||
+    sessions[i] !== session.id ||
+    session.ent !== entity ||
+    (!space.sys.farside && capabilities.newcomer(session.data))
+  )
     return false;
   // The owner is index0. Other captains must retain separate live opt-in.
-  const owner = online(c, owners[0], sp.id),
+  const owner = online(capabilities, owners[0], space.id),
     ownerConsent =
       owner &&
-      state(c).consent.find(
+      state(capabilities).consent.find(
         (x) =>
           x.owner === owners[0] &&
           x.session === owner.id &&
           x.entity === owner.ent?.id &&
-          x.sys === sp.id &&
+          x.sys === space.id &&
           x.group === String(owner.data.armada) &&
-          x.until > now(c),
+          x.until > now(capabilities),
       );
   return (
     i === 0 ||
     !!(
       ownerConsent &&
-      state(c).consent.some(
+      state(capabilities).consent.some(
         (x) =>
           x.owner === key &&
-          x.session === s.id &&
-          x.entity === s.ent?.id &&
-          x.sys === sp.id &&
+          x.session === session.id &&
+          x.entity === session.ent?.id &&
+          x.sys === space.id &&
           x.group === ownerConsent.group &&
-          x.group === String(s.data.armada) &&
-          x.until > now(c),
+          x.group === String(session.data.armada) &&
+          x.until > now(capabilities),
       )
     )
   );
 }
-/** @param {C} c @param {Pick<Space,'id'>} sp @param {string} key */
-function field(c, sp, key) {
-  const w = state(c),
-    clock = now(c);
+/** @param {C} capabilities @param {Pick<Space,'id'>} sp @param {string} key */
+function field(capabilities, sp, key) {
+  const w = state(capabilities),
+    clock = now(capabilities);
   let f = w.fields.find((x) => x.key === key);
   if (!f) {
     f = { key, recovery: 0, updated: clock };
@@ -200,35 +210,35 @@ export const MiningPressureOperations = {
     w.consent = [];
     this.db.touch();
   },
-  /** @this {C} @param {MiningSpace} sp @param {SavedRockGeneration} rock @param {number} seconds @param {readonly string[]} [captains] */
-  work(sp, rock, seconds, captains = rock.captain ? [rock.captain] : []) {
+  /** @this {C} @param {MiningSpace} space @param {SavedRockGeneration} rock @param {number} seconds @param {readonly string[]} [captains] */
+  work(space, rock, seconds, captains = rock.captain ? [rock.captain] : []) {
     const owner = captains[0];
     if (!owner || seconds <= 0) return;
     const w = state(this);
     for (const account of captains) {
-      const p = captain(this, account, sp.id),
-        s = online(this, account, sp.id);
+      const p = captain(this, account, space.id),
+        session = online(this, account, space.id);
       p.noise = Math.min(100, p.noise + (seconds * P.noisePerSecond) / captains.length);
       if (p.noise >= P.warn && !p.warned) {
         p.warned = true;
-        if (s)
+        if (session)
           this.toast(
-            s,
+            session,
             'MINING PRESSURE 70/100 — leave the field to cool; extraction can attract a bounded encounter.',
           );
       }
     }
-    const f = field(this, sp, rock.key.split(':').slice(0, 2).join(':'));
+    const f = field(this, space, rock.key.split(':').slice(0, 2).join(':'));
     f.recovery = Math.min(P.fieldMax, f.recovery + seconds * P.fieldWorkRecovery);
     if ((rock.ore === 'gas' || rock.seed % 7 === 0) && !w.hazards.some((h) => h.id === rock.key)) {
-      const participants = scope(this, owner, sp.id);
+      const participants = scope(this, owner, space.id);
       w.hazards.push({
         id: rock.key,
-        sys: sp.id,
+        sys: space.id,
         owner,
-        participants: participants.map((s) => this.db.key(s.data.name)),
-        sessions: participants.map((s) => s.id),
-        entities: participants.map((s) => s.ent?.id || 0),
+        participants: participants.map((session) => this.db.key(session.data.name)),
+        sessions: participants.map((session) => session.id),
+        entities: participants.map((session) => session.ent?.id || 0),
         x: rock.x,
         y: rock.y,
         radius: P.radius,
@@ -239,10 +249,10 @@ export const MiningPressureOperations = {
     }
     this.db.touch();
   },
-  /** @this {C} @param {MiningSpace} sp @param {SavedRockGeneration} rock */
-  regrow(sp, rock) {
-    const f = field(this, sp, rock.key.split(':').slice(0, 2).join(':'));
-    return (1 + f.recovery / 100) * (this.rush(sp.id) ? 0.85 : 1);
+  /** @this {C} @param {MiningSpace} space @param {SavedRockGeneration} rock */
+  regrow(space, rock) {
+    const f = field(this, space, rock.key.split(':').slice(0, 2).join(':'));
+    return (1 + f.recovery / 100) * (this.rush(space.id) ? 0.85 : 1);
   },
   /** Public bounded field evolution reuses the existing recovery owner, not a second ledger.
    * @this {C} @param {string} sys @param {number} index */
@@ -254,39 +264,42 @@ export const MiningPressureOperations = {
       factor: (1 + f.recovery / 100) * (this.rush(sys) ? 0.85 : 1),
     };
   },
-  /** @this {C} @param {Space} sp */
-  pressureTick(sp) {
+  /** @this {C} @param {Space} space */
+  pressureTick(space) {
     const w = state(this),
       clock = now(this);
     for (const h of w.hazards)
-      if (h.sys === sp.id && !h.resolved && clock >= h.detonateAt) {
+      if (h.sys === space.id && !h.resolved && clock >= h.detonateAt) {
         h.resolved = true;
-        for (const e of sp.ships.values()) {
+        for (const e of space.ships.values()) {
           const participant =
               h.entities[h.participants.indexOf(this.db.key(e.player?.s.data.name || ''))] ===
-                e.id && eligible(this, sp, h.participants, h.sessions, e),
+                e.id && eligible(this, space, h.participants, h.sessions, e),
             enrolled =
               !!e.miningEncounter &&
               w.encounters.some(
                 (g) =>
-                  g.id === e.miningEncounter && g.active && g.sys === sp.id && g.owner === h.owner,
+                  g.id === e.miningEncounter &&
+                  g.active &&
+                  g.sys === space.id &&
+                  g.owner === h.owner,
               );
           if ((participant || enrolled) && Math.hypot(e.x - h.x, e.y - h.y) <= h.radius)
-            sp.damage(e, P.blast, P.blast, null);
+            space.damage(e, P.blast, P.blast, null);
         }
-        sp.events.push(['blast', Math.round(h.x), Math.round(h.y), h.radius]);
+        space.events.push(['blast', Math.round(h.x), Math.round(h.y), h.radius]);
         this.db.touch();
       }
     for (const group of w.encounters)
-      if (group.sys === sp.id && group.active) {
+      if (group.sys === space.id && group.active) {
         const alive = group.ids.filter((id) => {
-          const e = sp.ships.get(id);
+          const e = space.ships.get(id);
           return e && !e.dead;
         });
         if (!alive.length || clock - group.at >= P.encounterLife) {
           group.active = false;
           for (const id of alive) {
-            const e = sp.ships.get(id);
+            const e = space.ships.get(id);
             if (e) {
               e.ai = 'leave';
               e.target = null;
@@ -296,25 +309,31 @@ export const MiningPressureOperations = {
           this.db.touch();
         }
       }
-    if (w.encounters.some((e) => e.sys === sp.id && e.active)) return;
-    for (const s of this.sessions()) {
-      if (!s.data || !s.ent || s.data.sys !== sp.id || (!sp.sys.farside && this.newcomer(s.data)))
+    if (w.encounters.some((e) => e.sys === space.id && e.active)) return;
+    for (const session of this.sessions()) {
+      if (
+        !session.data ||
+        !session.ent ||
+        session.data.sys !== space.id ||
+        (!space.sys.farside && this.newcomer(session.data))
+      )
         continue;
-      const owner = this.db.key(s.data.name),
-        p = captain(this, owner, sp.id);
+      const owner = this.db.key(session.data.name),
+        p = captain(this, owner, space.id);
       if (p.noise < P.threshold || clock - p.lastEncounter < P.cooldown) continue;
-      const participants = scope(this, owner, sp.id).filter(
-        (x) => sp.sys.farside || !this.newcomer(x.data),
+      const participants = scope(this, owner, space.id).filter(
+        (x) => space.sys.farside || !this.newcomer(x.data),
       );
       if (
         participants.some(
-          (x) => clock - captain(this, this.db.key(x.data.name), sp.id).lastEncounter < P.cooldown,
+          (x) =>
+            clock - captain(this, this.db.key(x.data.name), space.id).lastEncounter < P.cooldown,
         )
       )
         continue;
       const group = {
         id: `enc${w.nextId++}`,
-        sys: sp.id,
+        sys: space.id,
         owner,
         participants: participants.map((x) => this.db.key(x.data.name)),
         sessions: participants.map((x) => x.id),
@@ -324,21 +343,25 @@ export const MiningPressureOperations = {
       };
       w.encounters.push(group);
       for (const x of participants)
-        captain(this, this.db.key(x.data.name), sp.id).lastEncounter = clock;
+        captain(this, this.db.key(x.data.name), space.id).lastEncounter = clock;
       // Reserve before spawning; bounded hulls and fixed offsets away from ports/neutral traffic.
       for (let i = 0; i < P.encounterShips; i++) {
-        let x = s.ent.x + 1400 + i * 100,
-          y = s.ent.y + 900;
+        let x = session.ent.x + 1400 + i * 100,
+          y = session.ent.y + 900;
         const crowded = () =>
-          [...sp.ships.values()].some(
+          [...space.ships.values()].some(
             (e) => !group.ids.includes(e.id) && Math.hypot(e.x - x, e.y - y) < 700,
-          ) || sp.sys.stellars.some((p) => Math.hypot(p.x - x, p.y - y) < p.r + 1000);
+          ) ||
+          space.sys.stellars.some(
+            (stellarBody) =>
+              Math.hypot(stellarBody.x - x, stellarBody.y - y) < stellarBody.r + 1000,
+          );
         for (let k = 0; k < 16 && crowded(); k++) {
           x += 700;
           y += 400;
         }
         if (crowded()) continue;
-        const e = sp.makeShip({
+        const entity = space.makeShip({
           hull: 704,
           faction: 'umbral',
           x,
@@ -347,11 +370,11 @@ export const MiningPressureOperations = {
           ai: 'raid',
           name: 'Mining-noise raider',
         });
-        e.miningEncounter = group.id;
-        group.ids.push(e.id);
+        entity.miningEncounter = group.id;
+        group.ids.push(entity.id);
       }
       this.toast(
-        s,
+        session,
         'MINING PRESSURE100/100 — two raiders tracked your field. Uninvolved captains are excluded.',
       );
       this.db.touch();
@@ -360,57 +383,60 @@ export const MiningPressureOperations = {
     // Keep generation hazard receipts only while that generation remains live/retired.
     const keys = new Set(
       [
-        ...(this.db.world.mining?.systems[sp.id]?.rocks || []),
-        ...(this.db.world.mining?.systems[sp.id]?.history || []),
-      ].map((r) => r.key),
+        ...(this.db.world.mining?.systems[space.id]?.rocks || []),
+        ...(this.db.world.mining?.systems[space.id]?.history || []),
+      ].map((generation) => generation.key),
     );
-    w.hazards = w.hazards.filter((h) => h.sys !== sp.id || !h.resolved || keys.has(h.id));
+    w.hazards = w.hazards.filter((h) => h.sys !== space.id || !h.resolved || keys.has(h.id));
     w.encounters = w.encounters.filter((e) => e.active || clock - e.at < P.cooldown);
   },
   /** A scoped encounter is hostile only to its current consenting captain hulls.
-   * @this {C} @param {Space} sp @param {Entity} a @param {Entity} b @returns {boolean|null} */
-  allow(sp, a, b) {
-    const id = a.miningEncounter || b.miningEncounter;
+   * @this {C} @param {Space} space @param {Entity} leftEntity @param {Entity} rightEntity @returns {boolean|null} */
+  allow(space, leftEntity, rightEntity) {
+    const id = leftEntity.miningEncounter || rightEntity.miningEncounter;
     if (!id) return null;
-    if (a.miningEncounter && b.miningEncounter) return false;
-    const g = state(this).encounters.find((g) => g.id === id && g.active && g.sys === sp.id);
+    if (leftEntity.miningEncounter && rightEntity.miningEncounter) return false;
+    const g = state(this).encounters.find((g) => g.id === id && g.active && g.sys === space.id);
     if (!g) return false;
-    const other = a.miningEncounter ? b : a,
-      root = sp.root(other);
+    const other = leftEntity.miningEncounter ? rightEntity : leftEntity,
+      root = space.root(other);
     if (!root?.player) return false;
-    if (a.miningEncounter && other !== root) return false; // Never punish friendly wingmates for captain noise.
-    return eligible(this, sp, g.participants, g.sessions, root);
+    if (leftEntity.miningEncounter && other !== root) return false; // Never punish friendly wingmates for captain noise.
+    return eligible(this, space, g.participants, g.sessions, root);
   },
-  /** @this {C} @param {Space} sp @param {string|undefined} id @param {Entity} target */
-  shotAllowed(sp, id, target) {
+  /** @this {C} @param {Space} space @param {string|undefined} id @param {Entity} target */
+  shotAllowed(space, id, target) {
     if (!id) return true;
-    const g = state(this).encounters.find((g) => g.id === id && g.active && g.sys === sp.id);
-    return !!g && eligible(this, sp, g.participants, g.sessions, target);
+    const g = state(this).encounters.find((g) => g.id === id && g.active && g.sys === space.id);
+    return !!g && eligible(this, space, g.participants, g.sessions, target);
   },
-  /** @this {C} @param {Session} s @param {number} tonnes */
-  extracted(s, tonnes) {
+  /** @this {C} @param {Session} session @param {number} tonnes */
+  extracted(session, tonnes) {
     if (tonnes <= 0) return;
-    const p = captain(this, this.db.key(s.data.name), s.data.sys);
+    const p = captain(this, this.db.key(session.data.name), session.data.sys);
     p.noise = Math.min(100, p.noise + tonnes * P.noisePerTonne);
     if (p.noise >= P.warn && !p.warned) {
       p.warned = true;
-      this.toast(s, 'MINING PRESSURE70/100 — extraction adds noise; leave the field to cool.');
+      this.toast(
+        session,
+        'MINING PRESSURE70/100 — extraction adds noise; leave the field to cool.',
+      );
     }
     this.db.touch();
   },
-  /** @this {C} @param {Session} s @returns {PressureWire} */
-  payload(s) {
-    const p = captain(this, this.db.key(s.data.name), s.data.sys);
+  /** @this {C} @param {Session} session @returns {PressureWire} */
+  payload(session) {
+    const p = captain(this, this.db.key(session.data.name), session.data.sys);
     return {
       noise: p.noise,
       warn: p.noise >= P.warn,
       groupConsent: state(this).consent.some(
         (x) =>
           x.owner === p.owner &&
-          x.session === s.id &&
-          x.entity === s.ent?.id &&
-          x.sys === s.data.sys &&
-          x.group === String(s.data.armada) &&
+          x.session === session.id &&
+          x.entity === session.ent?.id &&
+          x.sys === session.data.sys &&
+          x.group === String(session.data.armada) &&
           x.until > now(this),
       ),
       cooldown: Math.max(0, P.cooldown - (now(this) - p.lastEncounter)),
@@ -422,36 +448,36 @@ export const MiningPressureOperations = {
       .hazards.filter((h) => h.sys === sys && !h.resolved)
       .map((h) => ({ id: h.id, x: h.x, y: h.y, radius: h.radius, detonateAt: h.detonateAt }));
   },
-  /** @this {C} @param {Session} s @param {{op?:string}} m */
-  consent(s, m) {
+  /** @this {C} @param {Session} session @param {{op?:string}} m */
+  consent(session, m) {
     if (
-      !s.ent ||
+      !session.ent ||
       Object.keys(m).some((k) => !['t', 'op'].includes(k)) ||
       !['join', 'leave'].includes(m.op || '')
     )
       return;
-    if (m.op === 'join' && !s.data.armada) {
+    if (m.op === 'join' && !session.data.armada) {
       this.toast(
-        s,
+        session,
         'Join an Armada before opting in to group mining. Solo mining remains your own scope.',
       );
       return;
     }
     const w = state(this),
-      owner = this.db.key(s.data.name);
+      owner = this.db.key(session.data.name);
     w.consent = w.consent.filter((x) => x.owner !== owner);
-    if (m.op === 'join' && s.data.armada)
+    if (m.op === 'join' && session.data.armada)
       w.consent.push({
         owner,
-        session: s.id,
-        entity: s.ent.id,
-        sys: s.data.sys,
-        group: String(s.data.armada),
+        session: session.id,
+        entity: session.ent.id,
+        sys: session.data.sys,
+        group: String(session.data.armada),
         until: now(this) + P.consent,
       });
     this.db.touch();
     this.toast(
-      s,
+      session,
       m.op === 'join'
         ? 'Group mining hazards/pressure: opted in for this flight.'
         : 'Group mining: opted out.',

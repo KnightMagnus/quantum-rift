@@ -514,18 +514,18 @@ const LAND_SCENES = {
 };
 /**
  * Selects the landscape illustration image key for a landed planetary or station body.
- * @param {StellarBody} p Landed stellar body definition
+ * @param {StellarBody} stellarBody Landed stellar body definition
  * @returns {string} Image asset key name
  */
-function landScene(p) {
-  if (p.id === 'earth') return 'l_earth';
-  if (p.kind === 'station') return 'l_st_' + stationDesign(p);
+function landScene(stellarBody) {
+  if (stellarBody.id === 'earth') return 'l_earth';
+  if (stellarBody.kind === 'station') return 'l_st_' + stationDesign(stellarBody);
   let h = 2166136261;
-  for (const c of p.id) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  for (const c of stellarBody.id) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
   h >>>= 0;
-  if (p.outlaw) return ['l_moon2', 'l_lava2', 'l_desert2'][h % 3]; // outlaw dens look the part
-  let t = planetType(p);
-  const d = ((p.desc || '') + ' ' + p.name).toLowerCase();
+  if (stellarBody.outlaw) return ['l_moon2', 'l_lava2', 'l_desert2'][h % 3]; // outlaw dens look the part
+  let t = planetType(stellarBody);
+  const d = ((stellarBody.desc || '') + ' ' + stellarBody.name).toLowerCase();
   if (t === 'terran' && /(city|capital|sprawl|metropol|towers|arcolog)/.test(d)) t = 'city';
   if (t === 'terran' && /(jungle|forest|garden)/.test(d)) return ['l_jungle1', 'l_jungle2'][h % 2];
   const L = LAND_SCENES[t] || LAND_SCENES.barren;

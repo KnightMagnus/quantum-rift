@@ -192,8 +192,8 @@ export function infoHtml(G, tab) {
  */
 function careerHtml(G) {
   const y = G.you,
-    A = G.A,
-    shipVal = (sh) => (sh && A.ships[sh.hull] ? A.ships[sh.hull].cost || 0 : 0);
+    assets = G.A,
+    shipVal = (sh) => (sh && assets.ships[sh.hull] ? assets.ships[sh.hull].cost || 0 : 0);
   const stored = (y.dock || []).map((x) => x.ship).filter(Boolean),
     cargoVal = Object.entries(y.cargo || {}).reduce(
       (a, [c, n]) => a + (COMMODITIES.find((x) => x.id === c) || { base: 0 }).base * n,
@@ -203,7 +203,7 @@ function careerHtml(G) {
   const worth =
     y.credits +
     (y.shipless ? 0 : shipVal(y.ship)) +
-    stored.reduce((a, sh) => a + shipVal(sh), 0) +
+    stored.reduce((a, loadout) => a + shipVal(loadout), 0) +
     cargoVal -
     (y.loan ? y.loan.bal : 0);
   const kv = (k, v) => `<div class="kv"><span>${k}</span><span>${v}</span></div>`;
@@ -212,7 +212,10 @@ function careerHtml(G) {
     st = y.stats || {},
     Q = y.quests || { done: [], active: [] },
     SY = y.story || {};
-  const offs = (y.officers || []).reduce((a, o) => ((a[o.rarity] = (a[o.rarity] || 0) + 1), a), {});
+  const offs = (y.officers || []).reduce(
+    (a, officer) => ((a[officer.rarity] = (a[officer.rarity] || 0) + 1), a),
+    {},
+  );
   const bps = Object.entries(y.bp || {})
     .filter(([id, n]) => n > 0 && SPEC[id])
     .map(
@@ -224,14 +227,14 @@ function careerHtml(G) {
     ? y.docks.list
         .map(
           (k) =>
-            `<div class="kv small"><span>Dock ${k.letter}${k.letter === y.docks.list[y.docks.active].letter ? ' <span style="color:var(--ok)">(active)</span>' : ''}</span><span>${k.lead && A.ships[k.lead.hull] ? esc(A.ships[k.lead.hull].name) : '<span class="dim">no lead</span>'}${k.wings.filter(Boolean).length ? ` + ${k.wings.filter(Boolean).length} wing` : ''}</span></div>`,
+            `<div class="kv small"><span>Dock ${k.letter}${k.letter === y.docks.list[y.docks.active].letter ? ' <span style="color:var(--ok)">(active)</span>' : ''}</span><span>${k.lead && assets.ships[k.lead.hull] ? esc(assets.ships[k.lead.hull].name) : '<span class="dim">no lead</span>'}${k.wings.filter(Boolean).length ? ` + ${k.wings.filter(Boolean).length} wing` : ''}</span></div>`,
         )
         .join('')
     : '';
   return `<div class="igrid"><div>
     <div class="sect" style="margin-top:0">HOLDINGS</div>
     ${kv('<b>Net worth</b>', `<b class="cr">${cr(worth)} cr</b>`)}${kv('Credits', cr(y.credits))}${y.loan ? kv('Loan', `−${cr(y.loan.bal)}`) : ''}
-    ${kv('Ships', `${(y.shipless ? 0 : 1) + stored.length} <span class="dim small">(${cr((y.shipless ? 0 : shipVal(y.ship)) + stored.reduce((a, sh) => a + shipVal(sh), 0))} cr)</span>`)}${docks}
+    ${kv('Ships', `${(y.shipless ? 0 : 1) + stored.length} <span class="dim small">(${cr((y.shipless ? 0 : shipVal(y.ship)) + stored.reduce((a, loadout) => a + shipVal(loadout), 0))} cr)</span>`)}${docks}
     ${kv('Personal Station', site ? `Station Tier ${S.ops} · ${esc(SYS[site.system].name)}` : '<span class="dim">none yet</span>')}
     ${kv('Colonies', (y.colonies || []).length ? y.colonies.map((c) => `${esc(c.name)} (Lv ${c.lv})`).join(', ') : '<span class="dim">none</span>')}
     ${kv(

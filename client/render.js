@@ -140,12 +140,14 @@ const lerpC = (a, b, t) =>
  * @returns {number | null} Price ratio or null if no trade service available
  */
 export function tradeRatio(s, cid) {
-  const ps = s.stellars.filter((p) => p.svc && p.svc.includes('T') && !p.site);
+  const ps = s.stellars.filter(
+    (stellarBody) => stellarBody.svc && stellarBody.svc.includes('T') && !stellarBody.site,
+  );
   if (!ps.length) return null;
   const base = COMMODITIES.find((c) => c.id === cid).base;
   let best = null;
-  for (const p of ps) {
-    const v = price(p, cid);
+  for (const stellarBody of ps) {
+    const v = price(stellarBody, cid);
     if (v !== null && (best === null || v < best)) best = v;
   }
   return best === null ? null : best / base;
@@ -170,8 +172,8 @@ function viewColor(G, s, seen) {
         : lerpC([240, 220, 90], [255, 80, 60], (r - 1) / 0.25);
   }
   if (mode === 'services') {
-    const y = s.stellars.some((p) => p.svc && p.svc.includes('Y')),
-      o = s.stellars.some((p) => p.svc && p.svc.includes('O'));
+    const y = s.stellars.some((stellarBody) => stellarBody.svc && stellarBody.svc.includes('Y')),
+      o = s.stellars.some((stellarBody) => stellarBody.svc && stellarBody.svc.includes('O'));
     return y && o ? '#c38aff' : y ? '#5ab0ff' : o ? '#ffaa4a' : '#3a3e48';
   }
   if (mode === 'standing') {
@@ -449,8 +451,9 @@ function decorFor(S) {
     meteorT: r() * 10,
   };
   const clear = (x, y, m) =>
-    S.stellars.every((p) => Math.hypot(p.x - x, p.y - y) > (p.r || 80) + m) &&
-    Math.hypot(x, y) > 500;
+    S.stellars.every(
+      (stellarBody) => Math.hypot(stellarBody.x - x, stellarBody.y - y) > (stellarBody.r || 80) + m,
+    ) && Math.hypot(x, y) > 500;
   const spot = (rmin, rmax, m) => {
     for (let i = 0; i < 30; i++) {
       const a = r() * 6.283,
@@ -689,20 +692,20 @@ function decorFor(S) {
       period: 900,
     };
   }
-  for (const p of S.stellars) {
-    if (p.svc && p.svc.includes('L') && r() < 0.7)
+  for (const stellarBody of S.stellars) {
+    if (stellarBody.svc && stellarBody.svc.includes('L') && r() < 0.7)
       for (let i = 0; i < 2; i++)
         D.beacons.push({
-          x: p.x + Math.cos(r() * 6.283) * ((p.r || 80) + 140 + r() * 140),
-          y: p.y + Math.sin(r() * 6.283) * ((p.r || 80) + 140 + r() * 140),
+          x: stellarBody.x + Math.cos(r() * 6.283) * ((stellarBody.r || 80) + 140 + r() * 140),
+          y: stellarBody.y + Math.sin(r() * 6.283) * ((stellarBody.r || 80) + 140 + r() * 140),
           col: i ? '#ff4a3a' : '#5aff8a',
           ph: r() * 6.283,
         });
-    if ((p.kind === 'planet' || p.kind === 'moon') && r() < 0.55)
+    if ((stellarBody.kind === 'planet' || stellarBody.kind === 'moon') && r() < 0.55)
       D.sats.push({
-        cx: p.x,
-        cy: p.y,
-        R: (p.r || 100) + 90 + r() * 120,
+        cx: stellarBody.x,
+        cy: stellarBody.y,
+        R: (stellarBody.r || 100) + 90 + r() * 120,
         a: r() * 6.283,
         sp: (r() < 0.5 ? 1 : -1) * (0.02 + r() * 0.04),
         img: 'satellite_' + Math.floor(r() * 3),
@@ -1150,15 +1153,15 @@ const stImgs = {},
   stPick = new Map();
 /**
  * Determines the architectural 3D station sprite model name for a station.
- * @param {StellarBody} p Station stellar body definition
+ * @param {StellarBody} stellarBody Station stellar body definition
  * @returns {string} Station design archetype name
  */
-export function stationDesign(p) {
-  if (stPick.has(p.id)) return stPick.get(p.id);
-  const sysId = p.system || (STELLARS[p.id] && STELLARS[p.id].system),
+export function stationDesign(stellarBody) {
+  if (stPick.has(stellarBody.id)) return stPick.get(stellarBody.id);
+  const sysId = stellarBody.system || (STELLARS[stellarBody.id] && STELLARS[stellarBody.id].system),
     f = SYS[sysId] ? SYS[sysId].faction : '',
-    d = ((p.desc || '') + ' ' + p.id).toLowerCase(),
-    h = hashStr(p.id);
+    d = ((stellarBody.desc || '') + ' ' + stellarBody.id).toLowerCase(),
+    h = hashStr(stellarBody.id);
   const authored = {
     'twins-exchange': 'twin',
     'aureole-ring': 'ring',
@@ -1168,7 +1171,7 @@ export function stationDesign(p) {
     'palinode-observatory': 'crystal',
   };
   const by =
-    authored[p.id] ||
+    authored[stellarBody.id] ||
     {
       vashari: 'hive',
       ylith: 'crystal',
@@ -1179,22 +1182,26 @@ export function stationDesign(p) {
       lamp: h % 2 ? 'twin' : 'disc',
     }[f] ||
     (f === 'korrund' ? (h % 3 ? 'rock' : 'forge') : null) ||
-    (p.outlaw || (STELLARS[p.id] && STELLARS[p.id].outlaw) || f === 'hollow' ? 'junk' : null) ||
+    (stellarBody.outlaw ||
+    (STELLARS[stellarBody.id] && STELLARS[stellarBody.id].outlaw) ||
+    f === 'hollow'
+      ? 'junk'
+      : null) ||
     (f === 'farside' ? (h % 2 ? 'junk' : 'twin') : null) ||
     (/shipyard|slipway|yards/.test(d) && f === 'quantum' ? 'yard' : null) ||
     ['cross', 'ring', 'spindle', 'disc', 'twin'][h % 5];
-  stPick.set(p.id, by);
+  stPick.set(stellarBody.id, by);
   return by;
 }
 /**
  * Retrieves the loaded HTMLImageElement for a station's rendered sprite model.
- * @param {StellarBody} p Station stellar body
+ * @param {StellarBody} stellarBody Station stellar body
  * @returns {HTMLImageElement | HTMLCanvasElement | null} Loaded image or null if loading
  */
-function stationSprite(p) {
+function stationSprite(stellarBody) {
   // Luna keeps the original glowing wheel rather than inheriting the generic shipyard.
-  if (p.id === 'luna') return stationWheel(p);
-  const k = stationDesign(p);
+  if (stellarBody.id === 'luna') return stationWheel(stellarBody);
+  const k = stationDesign(stellarBody);
   let im = stImgs[k];
   if (!im) {
     im = stImgs[k] = new Image();
@@ -1204,21 +1211,21 @@ function stationSprite(p) {
 }
 /**
  * Generates or retrieves a pre-rendered off-screen canvas sprite for a planet or station.
- * @param {StellarBody} p Stellar body specification
+ * @param {StellarBody} stellarBody Stellar body specification
  * @returns {HTMLCanvasElement} Off-screen canvas containing the rendered body
  */
-function planetImage(p) {
-  if (planetCache.has(p.id)) return planetCache.get(p.id);
-  const R = p.r,
+function planetImage(stellarBody) {
+  if (planetCache.has(stellarBody.id)) return planetCache.get(stellarBody.id);
+  const R = stellarBody.r,
     S = Math.ceil(R * 2.6),
     c = document.createElement('canvas');
   c.width = c.height = S;
   const g = c.getContext('2d'),
     cx = S / 2,
     cy = S / 2,
-    [r0, g0, b0] = hexToRgb(p.color || '#888'),
-    rnd = seeded(hashStr(p.id));
-  if (p.kind === 'station') {
+    [r0, g0, b0] = hexToRgb(stellarBody.color || '#888'),
+    rnd = seeded(hashStr(stellarBody.id));
+  if (stellarBody.kind === 'station') {
     g.translate(cx, cy);
     const ring = (rad, w, col) => {
       g.beginPath();
@@ -1285,7 +1292,7 @@ function planetImage(p) {
       );
       g.fill();
     }
-    if (p.id === 'earth') {
+    if (stellarBody.id === 'earth') {
       // Earth gets green-brown continents and white cloud swirls
       for (let k = 0; k < 9; k++) {
         g.globalAlpha = 0.9;
@@ -1332,7 +1339,7 @@ function planetImage(p) {
     g.arc(cx, cy, R * 1.2, 0, Math.PI * 2);
     g.fill();
   }
-  planetCache.set(p.id, c);
+  planetCache.set(stellarBody.id, c);
   return c;
 }
 

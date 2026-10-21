@@ -65,8 +65,11 @@ export function freightOffers(port, window) {
       const path = route(SYS, port.system, id);
       return path.length > 0 && path.length <= limit && path.every((sid) => allowed.has(sid))
         ? SYS[id].stellars
-            .filter((p) => p.svc.includes('L') && !p.site && !p.outlaw)
-            .map((p) => ({ p, sys: id, jumps: path.length }))
+            .filter(
+              (stellarBody) =>
+                stellarBody.svc.includes('L') && !stellarBody.site && !stellarBody.outlaw,
+            )
+            .map((stellarBody) => ({ p: stellarBody, sys: id, jumps: path.length }))
         : [];
     });
   function add(slot, qty, choices, bulk) {

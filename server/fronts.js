@@ -160,21 +160,21 @@ export const FrontsOperations = {
   // everything that modifies a captain's ship: research + bridge crew + the Armada buff while a member shares the system (2.6)
   /**
    * Calculate cumulative ship bonuses from research, bridge crew, and co-op Armada proximity.
-   * @param {CargoPlayer | PlayerData} d - Saved player data.
+   * @param {CargoPlayer | PlayerData} playerData - Saved player data.
    * @returns {Record<string, number>} Cumulative stat bonuses.
    */
-  bonus(d) {
-    const b = captainBonus(d);
-    if (this.armadaBonus) this.armadaBonus(d, b);
+  bonus(playerData) {
+    const b = captainBonus(playerData);
+    if (this.armadaBonus) this.armadaBonus(playerData, b);
     return b;
   },
   /**
    * Calculate effective ship statistics with all bonuses applied.
-   * @param {CargoPlayer | PlayerData} d - Saved player data.
+   * @param {CargoPlayer | PlayerData} playerData - Saved player data.
    * @returns {ComputedShipStats | null} Effective ship stats.
    */
-  stats(d) {
-    return d.ship ? shipStats(this.A, d.ship, this.bonus(d)) : null;
+  stats(playerData) {
+    return playerData.ship ? shipStats(this.A, playerData.ship, this.bonus(playerData)) : null;
   },
   /**
    * Build world telemetry payload containing invasion, anomaly, event, and calendar information.
@@ -295,26 +295,26 @@ export const FrontsOperations = {
   },
   /**
    * Track damage dealt by player ships to an invasion boss entity.
-   * @param {Entity} e - Boss ship entity.
+   * @param {Entity} entity - Boss ship entity.
    * @param {Entity} by - Attacking entity.
    * @param {number} dmg - Damage dealt amount.
    * @returns {void}
    */
-  onBossDamage(e, by, dmg) {
+  onBossDamage(entity, by, dmg) {
     if (!by || !by.player) return;
     const n = by.player.name;
-    e.dmgBy[n] = (e.dmgBy[n] || 0) + dmg;
+    entity.dmgBy[n] = (entity.dmgBy[n] || 0) + dmg;
   },
   /**
    * Handle destruction of an invasion boss, distributing rewards to participating captains.
-   * @param {Entity} e - Destroyed boss entity.
+   * @param {Entity} entity - Destroyed boss entity.
    * @param {Space} space - Space simulation instance where the boss died.
    * @returns {void}
    */
-  onBossKilled(e, space) {
-    const B = BOSSES.find((b) => b.id === e.boss),
-      total = Object.values(e.dmgBy).reduce((a, b) => a + b, 0) || 1;
-    const ranked = Object.entries(e.dmgBy).sort((a, b) => b[1] - a[1]);
+  onBossKilled(entity, space) {
+    const B = BOSSES.find((b) => b.id === entity.boss),
+      total = Object.values(entity.dmgBy).reduce((a, b) => a + b, 0) || 1;
+    const ranked = Object.entries(entity.dmgBy).sort((a, b) => b[1] - a[1]);
     const names = [];
     ranked.forEach(([name, dmg], i) => {
       const share = dmg / total;
@@ -347,8 +347,8 @@ export const FrontsOperations = {
       from: '',
       msg: `The ${B.name} is destroyed in ${SYS[space.id].name}! ${names.length ? 'Top guns: ' + names.slice(0, 5).join(', ') : ''}`,
     });
-    for (const x of space.ships.values()) if (x.owner === e.id) x.ai = 'leave';
-    if (this.invasion && this.invasion.ent === e) {
+    for (const x of space.ships.values()) if (x.owner === entity.id) x.ai = 'leave';
+    if (this.invasion && this.invasion.ent === entity) {
       space.keep = false;
       this.invasion = null;
     }
@@ -359,16 +359,18 @@ export const FrontsOperations = {
   // ------------------------------------------------------------------ goals
   /**
    * Retrieve or roll daily and weekly goals for player.
-   * @param {PlayerData} d - Saved player data.
+   * @param {PlayerData} playerData - Saved player data.
    * @returns {{daily: Array<Record<string, string | number | boolean>>, weekly: Array<Record<string, string | number | boolean>>}} Player goals object containing daily and weekly lists.
    */
-  goalsFor(d) {
+  goalsFor(playerData) {
     const day = dayKey(),
       week = weekKey();
-    d.goals = d.goals || {};
+    playerData.goals = playerData.goals || {};
     const make = (period, key) => {
-      const r = rng(hash(d.name + period + key)),
-        types = Object.keys(GOAL_TYPES).filter((t) => t !== 'shuttles' || d.station.ops >= 2),
+      const r = rng(hash(playerData.name + period + key)),
+        types = Object.keys(GOAL_TYPES).filter(
+          (t) => t !== 'shuttles' || playerData.station.ops >= 2,
+        ),
         out = [];
       while (out.length < 3 && types.length) {
         const t = types.splice(Math.floor(r() * types.length), 1)[0],
@@ -379,81 +381,84 @@ export const FrontsOperations = {
       }
       return out;
     };
-    if (d.goals.day !== day) {
-      d.goals.day = day;
-      d.goals.daily = make('daily', day);
+    if (playerData.goals.day !== day) {
+      playerData.goals.day = day;
+      playerData.goals.daily = make('daily', day);
     }
-    if (d.goals.week !== week) {
-      d.goals.week = week;
-      d.goals.weekly = make('weekly', week);
+    if (playerData.goals.week !== week) {
+      playerData.goals.week = week;
+      playerData.goals.weekly = make('weekly', week);
     }
-    return d.goals;
+    return playerData.goals;
   },
   /**
    * Advance progress for a player goal category.
-   * @param {Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {string} type - Goal category key.
    * @param {number} [n=1] - Progress increment.
    * @returns {void}
    */
-  goal(s, type, n = 1) {
-    const d = s.data,
-      G = this.goalsFor(d);
+  goal(session, type, n = 1) {
+    const playerData = session.data,
+      G = this.goalsFor(playerData);
     for (const g of [...G.daily, ...G.weekly])
       if (g.type === type && g.got < g.n) {
         g.got = Math.min(g.n, g.got + n);
         if (g.got >= g.n)
-          this.toast(s, `Goal complete: ${GOAL_TYPES[type].text(g.n)}. Claim it in the Goals tab.`);
+          this.toast(
+            session,
+            `Goal complete: ${GOAL_TYPES[type].text(g.n)}. Claim it in the Goals tab.`,
+          );
       }
   },
   /**
    * Claim rewards for a completed daily or weekly goal.
-   * @param {Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {{period: 'daily' | 'weekly', i: number}} m - Claim goal payload.
    * @returns {void}
    */
-  claimGoal(s, m) {
-    const d = s.data,
-      G = this.goalsFor(d),
+  claimGoal(session, m) {
+    const playerData = session.data,
+      G = this.goalsFor(playerData),
       list = m.period === 'weekly' ? G.weekly : G.daily,
       g = list[m.i | 0];
     if (!g || g.claimed || g.got < g.n) return;
     const R = GOAL_REWARD[m.period === 'weekly' ? 'weekly' : 'daily'];
     g.claimed = true;
-    d.credits += R.credits;
-    d.tokens = d.tokens || {};
-    d.tokens.any = (d.tokens.any || 0) + R.tokens;
-    this.toast(s, `Goal reward: ${credits(R.credits)} credits and ${R.tokens} Rift scrip.`);
+    playerData.credits += R.credits;
+    playerData.tokens = playerData.tokens || {};
+    playerData.tokens.any = (playerData.tokens.any || 0) + R.tokens;
+    this.toast(session, `Goal reward: ${credits(R.credits)} credits and ${R.tokens} Rift scrip.`);
     if (m.period === 'weekly') {
       const mt = MATERIALS[Math.floor(Math.random() * 3)];
-      d.mats[mt][2]++;
-      this.toast(s, `Weekly goal bonus: a ${mt} III crate.`);
+      playerData.mats[mt][2]++;
+      this.toast(session, `Weekly goal bonus: a ${mt} III crate.`);
     } // 2.6: was a Hollow Directive
     if (list.every((x) => x.claimed)) {
       const mt = MATERIALS[Math.floor(Math.random() * 3)],
         gr = m.period === 'weekly' ? 3 : 1;
-      d.mats[mt][gr]++;
+      playerData.mats[mt][gr]++;
       this.toast(
-        s,
+        session,
         `All ${m.period === 'weekly' ? 'weekly' : 'daily'} goals done: bonus ${mt} ${GRADES[gr]} crate.`,
       );
     }
     this.db.touch();
-    this.you(s);
+    this.you(session);
   },
 
   // ------------------------------------------------------------------ faction stores
   /**
    * Award faction reputation tokens to player data.
-   * @param {PlayerData} d - Saved player data.
+   * @param {PlayerData} playerData - Saved player data.
    * @param {string} fac - Faction identifier.
    * @param {number} n - Number of tokens to grant.
    * @returns {void}
    */
-  token(d, fac, n) {
+  token(playerData, fac, n) {
     if (!fac || FACTIONS[fac].region || fac === 'umbral') return;
-    d.tokens = d.tokens || {};
-    d.tokens[fac] = (d.tokens[fac] || 0) + n;
+    playerData.tokens = playerData.tokens || {};
+    playerData.tokens[fac] = (playerData.tokens[fac] || 0) + n;
   },
   /**
    * Determine available faction store for a stellar body.
@@ -467,49 +472,49 @@ export const FrontsOperations = {
   },
   /**
    * Purchase an item or contract from a faction store.
-   * @param {Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {{fac: string, id: string}} m - Purchase operation payload.
    * @returns {void}
    */
-  storeBuy(s, m) {
+  storeBuy(session, m) {
     // 0.8: the faction stores are their own menu, open from any landing (standing still gates the stock)
-    const d = s.data,
-      p = STELLARS[d.stellar],
+    const playerData = session.data,
+      p = STELLARS[playerData.stellar],
       F_ = FACTIONS[m.fac],
       fac = F_ && !F_.region && !F_.hidden && m.fac !== 'umbral' ? m.fac : this.storeFor(p);
-    if (!fac || s.ent || !p)
-      return this.toast(s, 'Faction stores deliver to you while you are landed.');
+    if (!fac || session.ent || !p)
+      return this.toast(session, 'Faction stores deliver to you while you are landed.');
     const it = STORE_ITEMS.find((x) => x.id === m.id);
     if (!it) return;
-    if ((d.rep[fac] || 0) < it.rep)
-      return this.toast(s, `${FACTIONS[fac].short} standing ${it.rep} needed.`);
-    d.tokens = d.tokens || {};
-    const own = d.tokens[fac] || 0,
-      scrip = d.tokens.any || 0;
+    if ((playerData.rep[fac] || 0) < it.rep)
+      return this.toast(session, `${FACTIONS[fac].short} standing ${it.rep} needed.`);
+    playerData.tokens = playerData.tokens || {};
+    const own = playerData.tokens[fac] || 0,
+      scrip = playerData.tokens.any || 0;
     if (own + scrip < it.tokens)
       return this.toast(
-        s,
+        session,
         `You need ${it.tokens} ${FACTIONS[fac].short} tokens (Rift scrip makes up the difference).`,
       );
-    if (d.credits < it.credits) return this.toast(s, 'Not enough credits.');
-    if (it.give.officer && d.officers.length >= ROSTER_MAX)
-      return this.toast(s, 'Your roster is full.');
+    if (playerData.credits < it.credits) return this.toast(session, 'Not enough credits.');
+    if (it.give.officer && playerData.officers.length >= ROSTER_MAX)
+      return this.toast(session, 'Your roster is full.');
     const useOwn = Math.min(own, it.tokens);
-    d.tokens[fac] = own - useOwn;
-    d.tokens.any = scrip - (it.tokens - useOwn);
-    d.credits -= it.credits;
+    playerData.tokens[fac] = own - useOwn;
+    playerData.tokens.any = scrip - (it.tokens - useOwn);
+    playerData.credits -= it.credits;
     const G_ = it.give;
     if (G_.crate) {
       const mt = STORE_MAT[fac] || 'alloy';
-      d.mats[mt][G_.crate]++;
-      this.toast(s, `Bought a ${mt} ${GRADES[G_.crate]} crate.`);
+      playerData.mats[mt][G_.crate]++;
+      this.toast(session, `Bought a ${mt} ${GRADES[G_.crate]} crate.`);
     }
     if (G_.officer) {
       const r = Math.random,
         role = pick(r, RACE_ROLES[fac] || Object.keys(ROLES)),
         N = OFFICER_NAMES[fac] || OFFICER_NAMES.quantum;
       const o = {
-        id: this.uid(d),
+        id: this.uid(playerData),
         name: pick(r, N[0]) + ' ' + pick(r, N[1]),
         race: RACE_ROLES[fac] ? fac : 'quantum',
         role,
@@ -517,59 +522,59 @@ export const FrontsOperations = {
         lv: 1 + Math.floor(r() * 3),
         xp: 0,
       };
-      d.officers.push(o);
+      playerData.officers.push(o);
       this.toast(
-        s,
+        session,
         `${RARITY[o.rarity].name} ${ROLES[role].name.toLowerCase()} ${o.name} signs on.`,
       );
-      this.log(d, `Signed ${o.name} through a ${FACTIONS[fac].short} contract.`);
+      this.log(playerData, `Signed ${o.name} through a ${FACTIONS[fac].short} contract.`);
     }
     if (G_.xp) {
-      this.officerXp(s, G_.xp);
-      this.toast(s, 'Your bridge crew study the manuals.');
+      this.officerXp(session, G_.xp);
+      this.toast(session, 'Your bridge crew study the manuals.');
     }
     if (G_.rep) {
-      d.rep[fac] = clampStanding((d.rep[fac] || 0) + G_.rep);
-      this.toast(s, `${FACTIONS[fac].short} standing +${G_.rep}.`);
+      playerData.rep[fac] = clampStanding((playerData.rep[fac] || 0) + G_.rep);
+      this.toast(session, `${FACTIONS[fac].short} standing +${G_.rep}.`);
     }
     this.db.touch();
-    this.you(s);
+    this.you(session);
   },
 
   // ------------------------------------------------------------------ expanded jobs: convoy, smuggling, rescue, survey, assassination, chains
   // called when a captain arrives in a system (after spawnPlayer)
   /**
    * Spawn mission entities (convoys, wrecks, assassination targets) upon player arrival in system.
-   * @param {Session} s - Player session.
-   * @param {Space} sp - Current space system instance.
+   * @param {Session} session - Player session.
+   * @param {Space} space - Current space system instance.
    * @returns {void}
    */
-  missionArrive(s, sp) {
-    const d = s.data,
-      e = s.ent;
-    if (!e) return;
-    for (const m of d.missions) {
-      if (m.sys !== d.sys || m.done) continue;
+  missionArrive(session, space) {
+    const playerData = session.data,
+      entity = session.ent;
+    if (!entity) return;
+    for (const m of playerData.missions) {
+      if (m.sys !== playerData.sys || m.done) continue;
       if (m.type === 'convoy' && !m.spawned) {
         const dest = STELLARS[m.dest];
         if (!dest) continue;
         m.spawned = true;
-        const c = sp.makeShip({
+        const c = space.makeShip({
           hull: m.hull,
           faction: m.faction,
-          x: e.x + 140,
-          y: e.y + 60,
-          a: e.a,
+          x: entity.x + 140,
+          y: entity.y + 60,
+          a: entity.a,
           ai: 'trade',
           name: m.convoyName,
         });
         c.dest = { ...dest };
-        c.convoyOf = { id: m.id, owner: s.id };
+        c.convoyOf = { id: m.id, owner: session.id };
         c.life = 1e9;
         c.noDisable = true;
         for (let i = 0; i < m.raiders; i++) {
           const ang = Math.random() * 6.28;
-          const r = sp.makeShip({
+          const r = space.makeShip({
             hull: m.raiderHull,
             faction: 'hollow',
             x: dest.x + Math.cos(ang) * 900,
@@ -580,14 +585,14 @@ export const FrontsOperations = {
           r.life = 1e9;
         }
         this.toast(
-          s,
+          session,
           `Your convoy, the ${m.convoyName}, is with you. Get it safely to ${dest.name}.`,
         );
       }
       if (m.type === 'rescue' && !m.spawned) {
         m.spawned = true;
         const ang = Math.random() * 6.28;
-        const w = sp.makeShip({
+        const w = space.makeShip({
           hull: m.hull,
           faction: m.faction,
           x: m.eventide ? m.rescuePoint[0] : Math.cos(ang) * 1300,
@@ -596,19 +601,19 @@ export const FrontsOperations = {
         });
         w.disabled = true;
         w.armor = w.st.armor * 0.1;
-        w.rescueOf = { id: m.id, owner: s.id };
+        w.rescueOf = { id: m.id, owner: session.id };
         w.life = 1e9;
         w.wreckT = 1e9;
         this.toast(
-          s,
+          session,
           `Distress beacon: the ${m.wreckName} is drifting in this system. Board it and choose Rescue.`,
         );
       }
       if (m.type === 'assassinate' && !m.spawned) {
         m.spawned = true;
-        const t = sp.spawnMissionTarget({ ...m, owner: s.id });
+        const t = space.spawnMissionTarget({ ...m, owner: session.id });
         for (let i = 0; i < 2; i++) {
-          const g = sp.makeShip({
+          const g = space.makeShip({
             hull: m.guard,
             faction: m.faction,
             x: t.x + (i ? 90 : -90),
@@ -618,24 +623,24 @@ export const FrontsOperations = {
           });
           g.life = 1e9;
         }
-        this.toast(s, `${m.targetName} is here with bodyguards.`);
+        this.toast(session, `${m.targetName} is here with bodyguards.`);
       }
       if (m.type === 'survey')
         this.toast(
-          s,
+          session,
           `Survey: pass within 450 km of ${m.points.length - (m.seen || []).length} marked points (shown on your radar).`,
         );
     }
   },
   /**
    * Complete escort mission when convoy ship successfully lands at destination.
-   * @param {Entity} e - Landed convoy entity.
+   * @param {Entity} entity - Landed convoy entity.
    * @returns {void}
    */
-  onConvoyLanded(e) {
-    const s = this.sessions.get(e.convoyOf.owner);
+  onConvoyLanded(entity) {
+    const s = this.sessions.get(entity.convoyOf.owner);
     if (!s || !s.data) return;
-    const m = s.data.missions.find((x) => x.id === e.convoyOf.id);
+    const m = s.data.missions.find((x) => x.id === entity.convoyOf.id);
     if (!m) return;
     m.done = true;
     this.toast(s, `The ${m.convoyName} landed safely. Land anywhere to be paid.`);
@@ -643,13 +648,13 @@ export const FrontsOperations = {
   },
   /**
    * Fail escort mission when protected convoy ship is destroyed.
-   * @param {Entity} e - Destroyed convoy entity.
+   * @param {Entity} entity - Destroyed convoy entity.
    * @returns {void}
    */
-  onConvoyLost(e) {
-    const s = this.sessions.get(e.convoyOf.owner);
+  onConvoyLost(entity) {
+    const s = this.sessions.get(entity.convoyOf.owner);
     if (!s || !s.data) return;
-    const m = s.data.missions.find((x) => x.id === e.convoyOf.id);
+    const m = s.data.missions.find((x) => x.id === entity.convoyOf.id);
     if (!m) return;
     s.data.missions = s.data.missions.filter((x) => x !== m);
     this.toast(s, `The ${m.convoyName} was destroyed. Job failed.`);
@@ -659,29 +664,29 @@ export const FrontsOperations = {
   // every two seconds for captains in space: survey points, smuggler scans
   /**
    * Periodic check in space for survey waypoint proximity and police smuggler cargo scans.
-   * @param {Session} s - Player session.
+   * @param {Session} session - Player session.
    * @returns {void}
    */
-  missionIdle(s) {
-    const d = s.data,
-      e = s.ent;
-    if (!e) return;
-    const sp = this.spaces[d.sys],
-      S = SYS[d.sys];
-    for (const m of d.missions) {
-      if (m.type === 'survey' && m.sys === d.sys && !m.done) {
+  missionIdle(session) {
+    const playerData = session.data,
+      entity = session.ent;
+    if (!entity) return;
+    const sp = this.spaces[playerData.sys],
+      S = SYS[playerData.sys];
+    for (const m of playerData.missions) {
+      if (m.type === 'survey' && m.sys === playerData.sys && !m.done) {
         m.seen = m.seen || [];
         m.points.forEach((p, i) => {
-          if (!m.seen.includes(i) && Math.hypot(p[0] - e.x, p[1] - e.y) < 450) {
+          if (!m.seen.includes(i) && Math.hypot(p[0] - entity.x, p[1] - entity.y) < 450) {
             m.seen.push(i);
-            this.toast(s, `Survey point ${m.seen.length}/${m.points.length} logged.`);
+            this.toast(session, `Survey point ${m.seen.length}/${m.points.length} logged.`);
           }
         });
         if (m.seen.length >= m.points.length) {
           m.done = true;
-          this.toast(s, 'Survey complete. Land anywhere to be paid.');
+          this.toast(session, 'Survey complete. Land anywhere to be paid.');
         }
-        this.you(s);
+        this.you(session);
       }
       if (
         m.type === 'smuggle' &&
@@ -696,31 +701,31 @@ export const FrontsOperations = {
           (x) =>
             x.ai === 'patrol' &&
             x.faction === S.faction &&
-            Math.hypot(x.x - e.x, x.y - e.y) < SCAN.range,
+            Math.hypot(x.x - entity.x, x.y - entity.y) < SCAN.range,
         );
         if (!cop) continue;
         m.scanT = now;
         if (
           Math.random() <
           SCAN.chance *
-            (1 - (this.bonus(d).lootPct || 0) / 300) *
-            (1 - Math.min(80, this.bonus(d).scanPct || 0) / 100)
+            (1 - (this.bonus(playerData).lootPct || 0) / 300) *
+            (1 - Math.min(80, this.bonus(playerData).scanPct || 0) / 100)
         ) {
           // 1.2: ghosts and fixers slip past scans
           const fine = Math.round(m.reward * SCAN.fine);
-          d.credits = Math.max(0, d.credits - fine);
-          d.rep[S.faction] = clampStanding((d.rep[S.faction] || 0) - 5);
-          d.missions = d.missions.filter((x) => x !== m);
+          playerData.credits = Math.max(0, playerData.credits - fine);
+          playerData.rep[S.faction] = clampStanding((playerData.rep[S.faction] || 0) - 5);
+          playerData.missions = playerData.missions.filter((x) => x !== m);
           this.toast(
-            s,
+            session,
             `A ${FACTIONS[S.faction].short} patrol scanned your hold and found the contraband. Fined ${credits(fine)} credits; cargo seized.`,
           );
-          this.log(d, `Caught smuggling in ${S.name}.`);
-          this.you(s);
+          this.log(playerData, `Caught smuggling in ${S.name}.`);
+          this.you(session);
           return;
         }
         this.toast(
-          s,
+          session,
           `A ${FACTIONS[S.faction].short} patrol scanned you and found nothing. Keep moving.`,
         );
       }
@@ -730,13 +735,13 @@ export const FrontsOperations = {
   /**
    * Generate expanded job offerings (convoys, smuggling, rescues, surveys, bounties, faction chains).
    * @param {{id: string, system: string}} p - Current stellar body.
-   * @param {PlayerData} d - Saved player data.
+   * @param {PlayerData} playerData - Saved player data.
    * @param {() => number} r - Random generator function.
    * @param {Array<[string, number]>} near - Nearby system IDs and jump distances.
    * @param {number} win - Time window index.
    * @returns {Array<Mission>} List of generated mission offers.
    */
-  moreOffers(p, d, r, near, win) {
+  moreOffers(p, playerData, r, near, win) {
     const out = [],
       fac = SYS[p.system].faction,
       lawful = !FACTIONS[fac].region && !FACTIONS[fac].pirate && fac !== 'umbral';
@@ -847,13 +852,13 @@ export const FrontsOperations = {
     }
     // faction chains: three steps, each pays more; the next step shows up on any board in that power's space
     if (lawful) {
-      const step = (d.chains && d.chains[fac]) || 0;
+      const step = (playerData.chains && playerData.chains[fac]) || 0;
       if (
         step < CHAIN_STEPS &&
         near.length &&
-        !d.missions.some((m) => m.chain && m.chain.fac === fac)
+        !playerData.missions.some((m) => m.chain && m.chain.fac === fac)
       ) {
-        const r2 = rng(hash(d.name + fac + step)),
+        const r2 = rng(hash(playerData.name + fac + step)),
           [sys, jumps] = near[Math.floor(r2() * near.length)],
           S = SYS[sys],
           F = FACTIONS[fac];
@@ -885,30 +890,35 @@ export const FrontsOperations = {
   // job completion extras: tokens, chains, goals
   /**
    * Handle job completion rewards including tokens, faction commission chains, and goal advancement.
-   * @param {Session} s - Player session.
-   * @param {Mission} m - Completed mission record.
+   * @param {Session} session - Player session.
+   * @param {Mission} mission - Completed mission record.
    * @param {{system: string}} p - Landed stellar body.
    * @returns {void}
    */
-  jobDone(s, m, p) {
-    const d = s.data,
+  jobDone(session, mission, p) {
+    const playerData = session.data,
       fac = SYS[p.system].faction,
-      n = 1 + Math.min(2, Math.floor(m.reward / 12000));
-    this.token(d, fac, n);
-    this.goal(s, 'jobs');
-    if (m.chain) {
-      d.chains = d.chains || {};
-      d.chains[m.chain.fac] = m.chain.step + 1;
-      if (m.chain.step + 1 >= CHAIN_STEPS) {
-        const F = FACTIONS[m.chain.fac];
-        d.rep[m.chain.fac] = clampStanding((d.rep[m.chain.fac] || 0) + 12);
-        this.token(d, m.chain.fac, 10);
-        this.toast(s, `Commission complete: the ${F.name} honour you (+12 standing, 10 tokens).`);
-        this.log(d, `Completed the ${F.short} Commission.`);
+      n = 1 + Math.min(2, Math.floor(mission.reward / 12000));
+    this.token(playerData, fac, n);
+    this.goal(session, 'jobs');
+    if (mission.chain) {
+      playerData.chains = playerData.chains || {};
+      playerData.chains[mission.chain.fac] = mission.chain.step + 1;
+      if (mission.chain.step + 1 >= CHAIN_STEPS) {
+        const F = FACTIONS[mission.chain.fac];
+        playerData.rep[mission.chain.fac] = clampStanding(
+          (playerData.rep[mission.chain.fac] || 0) + 12,
+        );
+        this.token(playerData, mission.chain.fac, 10);
+        this.toast(
+          session,
+          `Commission complete: the ${F.name} honour you (+12 standing, 10 tokens).`,
+        );
+        this.log(playerData, `Completed the ${F.short} Commission.`);
       } else
         this.toast(
-          s,
-          `Commission step ${m.chain.step + 1} done. The next step waits on any ${FACTIONS[m.chain.fac].short} job board.`,
+          session,
+          `Commission step ${mission.chain.step + 1} done. The next step waits on any ${FACTIONS[mission.chain.fac].short} job board.`,
         );
     }
   },
