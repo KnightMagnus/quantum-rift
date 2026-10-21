@@ -439,6 +439,10 @@ only; not exhaustive hull/loadout or real WAN latency testing.
 
 ### Chat history projection
 
+The keyboard-scroll check drains each programmatic reset's own native `scrollend`
+before arming the PageDown completion listener. A previously queued reset event
+must not falsely finish a later gesture; the exact no-jump assertion is unchanged.
+
 System: `communications-log`. `chat-projection-browser.mjs` exercises one live log
 moving between console and holographic projection, native keyboard activation,
 real chat sending, the existing 40-entry retention limit, escaped inbound text,
