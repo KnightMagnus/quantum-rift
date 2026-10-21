@@ -16,6 +16,8 @@ import { destType } from './syndicate.js';
 import { freightOffers } from './freight-offers.js';
 import { grantRadio, radioTourOffer, advanceRadioTour } from './radio-discovery.js';
 
+/** @import { Game } from './game.js' */
+
 /** @typedef {import('./game.js').Session} Session */
 /** @typedef {import('./game.js').PlayerData} PlayerData */
 /** @typedef {import('./game.js').StellarBody} StellarBody */
@@ -25,7 +27,7 @@ import { grantRadio, radioTourOffer, advanceRadioTour } from './radio-discovery.
  * stories, team contracts, mining orders and progression retain their owners.
  * Live capabilities do not copy/save a second account state. Legacy operation
  * bodies remain unchecked; these types do not validate incoming wire data.
- * @typedef {Pick<import('./game.js').Game,
+ * @typedef {Pick<Game,
  *   'A' |
  *   'db' |
  *   'features' |
@@ -37,7 +39,7 @@ import { grantRadio, radioTourOffer, advanceRadioTour } from './radio-discovery.
  *   'toast' |
  *   'tut' |
  *   'you'>} JobCapabilities
- * @typedef {Pick<import('./game.js').Game, 'offers' | 'accept' | 'completeOnLanding'>} JobService
+ * @typedef {Pick<Game, 'offers' | 'accept' | 'completeOnLanding'>} JobService
  */
 
 /**

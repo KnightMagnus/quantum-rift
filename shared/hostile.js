@@ -1,3 +1,5 @@
+/** @import { GameAssets } from './rules.js' */
+
 // Quantum Rift 0.9 "Hostile Space" data: hostile levels and the "can I win?" scan, loot chests, Station Holdout
 // waves, and the Umbral Eclipse. (2.6: directives and solo armadas were removed.)
 
@@ -72,7 +74,7 @@ export function winOdds(mine, theirs) {
 
 /**
  * Computes a player's effective combat power based on hull, bonuses, and escort wingmates.
- * @param {import('./rules.js').GameAssets} A - Game assets collection containing ship hull definitions.
+ * @param {GameAssets} A - Game assets collection containing ship hull definitions.
  * @param {number|string} hull - Player's current ship hull ID.
  * @param {HostileBonus} [bonus={}] - Research and crew percentage bonuses.
  * @param {Array<number|string>} [escorts=[]] - Hull IDs of escort / wingmate ships.

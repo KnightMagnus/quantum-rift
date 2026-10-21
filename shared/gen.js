@@ -1,3 +1,6 @@
+/** @import { SpaceSystem, StellarBody } from '../server/game.js' */
+/** @import { FactionDef } from './galaxy.js' */
+
 // Quantum Rift galaxy generator: grows the 30 hand-made anchor systems into a ~200-system galaxy.
 // Fully deterministic (fixed seed), so the server and every browser build the same galaxy.
 // Each faction's territory grows out from its anchors; unclaimed Frontier space fills the borders and the rim,
@@ -485,12 +488,12 @@ const FIELD_ORE = {
 
 /**
  * Procedurally generates a celestial body (planet, station, or moon) within a star system.
- * @param {import('../server/game.js').SpaceSystem} sys - Parent star system object.
+ * @param {SpaceSystem} sys - Parent star system object.
  * @param {string} fac - System faction identifier.
  * @param {function(): number} r - Random number generator returning [0, 1).
  * @param {number} k - Orbit index of this stellar body.
  * @param {Set<string>} usedIds - Set of existing stellar IDs to avoid collisions.
- * @returns {import('../server/game.js').StellarBody} Complete stellar body definition.
+ * @returns {StellarBody} Complete stellar body definition.
  */
 function makeStellar(sys, fac, r, k, usedIds) {
   const roll = r(),
@@ -592,9 +595,9 @@ function segDist(p, a, b) {
 /**
  * Procedurally expands the hand-made anchor star systems into a full ~200-system galaxy.
  * Places systems deterministically, establishes hyperlane routes, assigns territories and worlds.
- * @param {import('../server/game.js').SpaceSystem[]} SYSTEMS - Base anchor systems array, modified and expanded in place.
- * @param {Record<string, import("./galaxy.js").FactionDef>} FACTIONS - Galaxy factions registry.
- * @returns {import('../server/game.js').SpaceSystem[]} Array of all newly generated star systems.
+ * @param {SpaceSystem[]} SYSTEMS - Base anchor systems array, modified and expanded in place.
+ * @param {Record<string, FactionDef>} FACTIONS - Galaxy factions registry.
+ * @returns {SpaceSystem[]} Array of all newly generated star systems.
  */
 export function expandGalaxy(SYSTEMS, FACTIONS) {
   const r = rng(GEN_SEED);
@@ -833,7 +836,7 @@ export function expandGalaxy(SYSTEMS, FACTIONS) {
 
 /**
  * Selects candidate derelict station hull locations in generated Frontier space.
- * @param {import('../server/game.js').SpaceSystem[]} SYSTEMS - Generated star systems array.
+ * @param {SpaceSystem[]} SYSTEMS - Generated star systems array.
  * @param {number} [n=10] - Number of sites to select.
  * @returns {Array<[string, string, number, number]>} Array of site tuples [siteId, systemId, x, y].
  */
@@ -902,7 +905,7 @@ const FARSIDE_LINKS = [
 
 /**
  * Integrates the Sol system (with Earth and Gateway wormhole) and the 10 Farside systems into the galaxy.
- * @param {import('../server/game.js').SpaceSystem[]} SYSTEMS - Systems collection augmented in place.
+ * @param {SpaceSystem[]} SYSTEMS - Systems collection augmented in place.
  * @returns {void}
  */
 export function addSolGateway(SYSTEMS) {
@@ -1111,7 +1114,7 @@ function hashId(str) {
 /**
  * Secondary procedural pass adding additional unpopulated moons and resource asteroid fields to systems.
  * Seeded per-system based on system ID hash and master seed to preserve determinism.
- * @param {import('../server/game.js').SpaceSystem[]} SYSTEMS - Star systems array, modified in place.
+ * @param {SpaceSystem[]} SYSTEMS - Star systems array, modified in place.
  * @returns {void}
  */
 export function addMoonsAndFields(SYSTEMS) {

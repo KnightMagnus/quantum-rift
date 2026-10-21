@@ -16,13 +16,16 @@ import { RANKS } from '/shared/rivals.js';
 import { synBadge } from './syn_ui.js';
 import { price } from '/shared/rules.js';
 
+/** @import { StellarBody } from '../server/game.js' */
+/** @import { ClientGameState } from './main.js' */
+
 /**
  * @typedef {'ship' | 'career' | 'fleet' | 'captains'} InfoTab
  */
 
 /**
  * @typedef {Object} BestSaleResult
- * @property {import('../server/game.js').StellarBody} p Stellar body object
+ * @property {StellarBody} p Stellar body object
  * @property {number} price Commodity price per ton
  * @property {number} jumps Jumps distance
  */
@@ -87,7 +90,7 @@ const MOODC = {
 
 /**
  * Renders the Info panel (I key) including ship stats, cargo jettison, career ledger, wingmate orders, and rival captains.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {InfoTab|string} [tab] Sub-tab to render ('ship', 'career', 'fleet', or 'captains')
  * @returns {string} HTML markup
  */
@@ -184,7 +187,7 @@ export function infoHtml(G, tab) {
 
 /**
  * Renders the comprehensive career overview ledger (holdings, net worth, story progress, exploration record).
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 function careerHtml(G) {
@@ -258,7 +261,7 @@ function careerHtml(G) {
 
 /**
  * Finds the nearby explored trade port within four jumps offering the best sale price for a commodity.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {string} cid Commodity identifier
  * @returns {BestSaleResult|null} Best sale location, price, and jumps distance or null
  */

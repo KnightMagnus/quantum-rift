@@ -5,6 +5,9 @@ import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.
 import { STATES, STATE_SHARE, STATE_MIN, TRADE_IMPACT } from '../shared/living.js';
 import { credits } from '../shared/rules.js';
 
+/** @import { Mission, PlayerData, Session, SpaceSystem, StellarBody } from './game.js' */
+/** @import { Entity, Space } from './space.js' */
+
 /**
  * Clamp a numeric value between minimum and maximum bounds.
  * @param {number} v - Value to clamp.
@@ -22,8 +25,8 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
  */
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
-/** @type {Record<string, (system: import("./game.js").SpaceSystem | Record<string, string | number>, state?: Record<string, string | number>) => string>} Headline generators for system events. */
-/** @type {Record<string, (system: import("./game.js").SpaceSystem | Record<string, string | number>, state?: Record<string, string | number>) => string>} */
+/** @type {Record<string, (system: SpaceSystem | Record<string, string | number>, state?: Record<string, string | number>) => string>} Headline generators for system events. */
+/** @type {Record<string, (system: SpaceSystem | Record<string, string | number>, state?: Record<string, string | number>) => string>} */
 const START_NEWS = {
   famine: (S) => `Famine grips ${S.name}: food prices have doubled and relief is needed.`,
   plague: (S) => `A fever spreads through ${S.name}. Medical supplies are urgently needed.`,
@@ -72,7 +75,7 @@ export const LivingOperations = {
   // a war needs an enemy: a power hostile to the system's owner, preferably one next door
   /**
    * Select a hostile enemy faction for a system entering a war state.
-   * @param {import('./game.js').SpaceSystem} S - System metadata.
+   * @param {SpaceSystem} S - System metadata.
    * @returns {string | null} Hostile enemy faction key or null.
    */
   warEnemy(S) {
@@ -213,7 +216,7 @@ export const LivingOperations = {
   },
   /**
    * Calculate effective price multiplier from active system event and player trade impact.
-   * @param {import('./game.js').StellarBody} p - Stellar body object.
+   * @param {StellarBody} p - Stellar body object.
    * @param {string} cid - Commodity ID.
    * @returns {number} Price multiplier.
    */
@@ -225,7 +228,7 @@ export const LivingOperations = {
   // ---- captains ending states early
   /**
    * Contribute progress towards resolving an active troubled system event.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} sys - System ID.
    * @param {string} what - Progress category key (e.g. 'cid:food', 'kill:pirate').
    * @param {number} n - Amount of progress units.
@@ -253,7 +256,7 @@ export const LivingOperations = {
   },
   /**
    * Conclude an active system state early due to player contribution, distributing rewards.
-   * @param {import('./game.js').Session} s - Player session that triggered resolution.
+   * @param {Session} s - Player session that triggered resolution.
    * @param {string} sys - System ID.
    * @returns {void}
    */
@@ -283,9 +286,9 @@ export const LivingOperations = {
   },
   /**
    * Check killed NPC to progress pirate or war crisis states in the system.
-   * @param {import('./game.js').Session} s - Player session scoring the kill.
-   * @param {import('./space.js').Entity} npc - Killed NPC entity.
-   * @param {import('./space.js').Space} space - Space instance where the kill occurred.
+   * @param {Session} s - Player session scoring the kill.
+   * @param {Entity} npc - Killed NPC entity.
+   * @param {Space} space - Space instance where the kill occurred.
    * @returns {void}
    */
   stateOnKill(s, npc, space) {
@@ -296,12 +299,12 @@ export const LivingOperations = {
   // ---- the jobs a troubled system posts (merged into nearby job boards)
   /**
    * Generate emergency relief, patrol, or evacuation jobs for nearby troubled systems.
-   * @param {import('./game.js').StellarBody} p - Landed stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {StellarBody} p - Landed stellar body.
+   * @param {PlayerData} d - Saved player data.
    * @param {() => number} r - Seeded RNG function.
    * @param {Array<[string, number]>} near - Array of [systemId, jumps] tuples.
    * @param {number} win - Time window seed.
-   * @returns {Array<import("./game.js").Mission>} Generated mission objects.
+   * @returns {Array<Mission>} Generated mission objects.
    */
   stateOffers(p, d, r, near, win) {
     const out = [],
@@ -387,8 +390,8 @@ export const LivingOperations = {
   // a supply job completes when you land at its destination with the goods in your hold
   /**
    * Check whether player currently carries sufficient cargo to complete a supply relief mission.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @param {import("./game.js").Mission} m - Mission object.
+   * @param {PlayerData} d - Saved player data.
+   * @param {Mission} m - Mission object.
    * @returns {boolean} True if required goods are in cargo.
    */
   supplyReady(d, m) {

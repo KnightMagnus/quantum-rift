@@ -68,17 +68,21 @@ import {
   ctab,
 } from './ui.js';
 
+/** @import { PlayerData, StellarBody } from '../server/game.js' */
+/** @import { GameAssets } from '../shared/rules.js' */
+/** @import { RenderEntity } from './render.js' */
+
 const $ = (id) => document.getElementById(id);
 initLoginScene($('login'));
 
 /**
  * @typedef {object} ClientGameState
- * @property {import('../shared/rules.js').GameAssets | null} A Game assets dictionary.
- * @property {import('../server/game.js').PlayerData | null} you Current player save data.
+ * @property {GameAssets | null} A Game assets dictionary.
+ * @property {PlayerData | null} you Current player save data.
  * @property {string | null} sys Current system ID.
  * @property {string | null} landed Currently docked stellar body or null if flying.
  * @property {string | null} view Current UI view mode.
- * @property {Map<number, import('./render.js').RenderEntity>} ents Active entities in current space.
+ * @property {Map<number, RenderEntity>} ents Active entities in current space.
  * @property {Array<{id: number, x: number, y: number, vx: number, vy: number, w: number, c: string, life: number}>} shots Active projectile shots.
  * @property {Array<{id: number, from: {x: number, y: number}, to: {x: number, y: number}, c: string, life: number}>} beams Active beam weapon animations.
  * @property {Array<{id: number, x: number, y: number, it: {cargo?: string, n?: number, mat?: string, credits?: number}}>} loot Floating loot canisters.
@@ -99,8 +103,8 @@ initLoginScene($('login'));
  * @property {Record<string, number>} [tokens] Current player token balances.
  * @property {Array<{name: string, sys: string, ship: string}>} [captains] Active online captains list.
  * @property {{team: string} | null} [arena] Crucible arena state.
- * @property {((e: import('./render.js').RenderEntity) => boolean)} [isAlly] Checks if entity is an allied wingmate.
- * @property {((e: import('./render.js').RenderEntity) => boolean)} [hostile] Checks if entity is hostile to player.
+ * @property {((e: RenderEntity) => boolean)} [isAlly] Checks if entity is an allied wingmate.
+ * @property {((e: RenderEntity) => boolean)} [hostile] Checks if entity is hostile to player.
  */
 const G = (window.G = {
   A: null,
@@ -1541,7 +1545,7 @@ function toWorld(cx, cy) {
  * Identifies the nearest interactive ship or stellar body under the given world coordinates.
  * @param {number} wx World X coordinate
  * @param {number} wy World Y coordinate
- * @returns {{ ship?: ClientEntity, stellar?: import('../server/game.js').StellarBody } | null} Picked target or null
+ * @returns {{ ship?: ClientEntity, stellar?: StellarBody } | null} Picked target or null
  */
 function pickAt(wx, wy) {
   if (!G.view || G.landed) return null;
@@ -1571,7 +1575,7 @@ function pickAt(wx, wy) {
 }
 /**
  * Determines the appropriate mouse cursor style based on hover target.
- * @param {{ ship?: ClientEntity, stellar?: import('../server/game.js').StellarBody } | null} h Picked object under cursor
+ * @param {{ ship?: ClientEntity, stellar?: StellarBody } | null} h Picked object under cursor
  * @returns {string} CSS cursor identifier class suffix
  */
 function cursorFor(h) {

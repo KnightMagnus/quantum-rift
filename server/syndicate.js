@@ -22,6 +22,8 @@ import {
 import { credits } from '../shared/rules.js';
 import { occupiedPassengerSeats } from '../shared/passengers.js';
 
+/** @import { Mission, PlayerData, Session, StellarBody } from './game.js' */
+
 /**
  * Clamp a numeric value between minimum and maximum bounds.
  * @param {number} v - Value to clamp.
@@ -42,8 +44,8 @@ export const destType = (m) => DEST_TYPES.includes(m.type);
 export const SyndicateOperations = {
   /**
    * Initialize or default Syndicate standing, commendations, lower deck crew, and credit rating.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {import("./game.js").PlayerData} Initialized player data.
+   * @param {PlayerData} d - Saved player data.
+   * @returns {PlayerData} Initialized player data.
    */
   synInit(d) {
     d.syn = d.syn || 0;
@@ -54,7 +56,7 @@ export const SyndicateOperations = {
   },
   /**
    * Award Syndicate standing and notify player of rank increases.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} kind - Standing gain category.
    * @param {number} [mult=1] - Standing gain multiplier.
    * @returns {void}
@@ -73,8 +75,8 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ black market: outlaw worlds, and any spaceport bar once you are a Lieutenant
   /**
    * Check whether black market services are accessible at a given stellar body.
-   * @param {import('./game.js').StellarBody} p - Stellar body or station.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {StellarBody} p - Stellar body or station.
+   * @param {PlayerData} d - Saved player data.
    * @returns {boolean} True if black market is accessible.
    */
   blackMarketAt(p, d) {
@@ -82,8 +84,8 @@ export const SyndicateOperations = {
   },
   /**
    * Retrieve black market stock and tier access details for a stellar body.
-   * @param {import('./game.js').StellarBody} p - Stellar body or station.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {StellarBody} p - Stellar body or station.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Record<string, string | number | boolean> | null} Black market inventory payload or null.
    */
   blackMarket(p, d) {
@@ -96,7 +98,7 @@ export const SyndicateOperations = {
   },
   /**
    * Purchase an item or service from the black market fence.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} id - Black market item identifier.
    * @returns {void}
    */
@@ -149,7 +151,7 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ officer promotions and the lower decks
   /**
    * Promote an officer to the next rank, consuming commendations and credits and granting a trait.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} id - Officer identifier.
    * @returns {void}
    */
@@ -185,7 +187,7 @@ export const SyndicateOperations = {
   },
   /**
    * Hire or dismiss lower-deck crew members.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{i: number, op: 'hire' | 'dismiss', kind: string}} m - Lower deck management message.
    * @returns {void}
    */
@@ -214,7 +216,7 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ the bank
   /**
    * Check whether banking services are available at a stellar body.
-   * @param {import('./game.js').StellarBody} p - Stellar body or station.
+   * @param {StellarBody} p - Stellar body or station.
    * @returns {boolean} True if banking services are available.
    */
   bankAt(p) {
@@ -222,7 +224,7 @@ export const SyndicateOperations = {
   },
   /**
    * Retrieve bank account, loan balance, and payment schedule details.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Record<string, number | string>} Bank account and loan information.
    */
   bankInfo(d) {
@@ -240,7 +242,7 @@ export const SyndicateOperations = {
   },
   /**
    * Process borrowing or loan repayment bank operations.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{op: 'borrow' | 'pay', amt: number | string}} m - Bank operation message.
    * @returns {void}
    */
@@ -281,7 +283,7 @@ export const SyndicateOperations = {
   },
   /**
    * Process periodic loan interest, scheduled payment deduction, and credit score changes.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @returns {void}
    */
   bankTick(s) {
@@ -319,13 +321,13 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ extra jobs: passengers, rush deliveries, Syndicate contracts
   /**
    * Generate extra mission offers including passenger transport, rush cargo deliveries, and Syndicate contracts.
-   * @param {import('./game.js').StellarBody} p - Current stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {StellarBody} p - Current stellar body.
+   * @param {PlayerData} d - Saved player data.
    * @param {() => number} r - Random number generator function.
    * @param {Array<[string, number]>} near - Nearby systems and jump distances.
    * @param {number} win - Offer rotation time window.
-   * @param {(sys: string) => import('./game.js').StellarBody | null} pickDest - Function to select destination stellar in target system.
-   * @returns {Array<import("./game.js").Mission>} Extra job and contract offers.
+   * @param {(sys: string) => StellarBody | null} pickDest - Function to select destination stellar in target system.
+   * @returns {Array<Mission>} Extra job and contract offers.
    */
   extraOffers(p, d, r, near, win, pickDest) {
     const out = [];
@@ -435,8 +437,8 @@ export const SyndicateOperations = {
   },
   /**
    * Verify whether the player meets requirements to accept a mission offer (e.g. passenger bunks).
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import("./game.js").Mission} o - Mission offer being accepted.
+   * @param {Session} s - Player session.
+   * @param {Mission} o - Mission offer being accepted.
    * @returns {boolean} True if offer requirements are met.
    */
   acceptCheck(s, o) {
@@ -456,7 +458,7 @@ export const SyndicateOperations = {
   },
   /**
    * Check active missions against their deadlines, notifying of impending expiration or penalizing failures.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @returns {void}
    */
   missionDeadlines(s) {

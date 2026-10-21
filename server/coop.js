@@ -26,6 +26,8 @@ import {
 import { SOCIAL, ARMADA, TRADE, DUEL, RESCUE, COOP_HOLDOUT, WARBAND } from '../shared/coop.js';
 import { credits, makeLoadout, shipStats, allOutfits } from '../shared/rules.js';
 
+/** @import { PlayerData, Session } from './game.js' */
+
 /**
  * Clamps a numeric value between a minimum and maximum bound.
  * @param {number} v - Numeric value to clamp.
@@ -100,7 +102,7 @@ export const CoopOperations = {
   },
   /**
    * Migrates a player save to version 2.6, refunding retired refits, Armada escorts, and directives.
-   * @param {import('./game.js').PlayerData} d - Player save data.
+   * @param {PlayerData} d - Player save data.
    * @returns {void}
    */
   coopMigrate(d) {
@@ -202,7 +204,7 @@ export const CoopOperations = {
   /**
    * Finds an active player session matching the specified captain name.
    * @param {string} name - Captain name to look up.
-   * @returns {import("./game.js").Session | null} Active session or null if not online.
+   * @returns {Session | null} Active session or null if not online.
    */
   sessionOf(name) {
     const k = this.db.key(name);
@@ -211,8 +213,8 @@ export const CoopOperations = {
   },
   /**
    * Ensures social data structures (friends, requests, blocks, mailbox) exist on a player profile.
-   * @param {import('./game.js').PlayerData} d - Player profile data.
-   * @returns {import("./game.js").PlayerData} The initialized player profile data.
+   * @param {PlayerData} d - Player profile data.
+   * @returns {PlayerData} The initialized player profile data.
    */
   socialInit(d) {
     d.friends = d.friends || [];
@@ -244,7 +246,7 @@ export const CoopOperations = {
   },
   /**
    * Checks whether a captain is blocked by the target player profile.
-   * @param {import('./game.js').PlayerData} [d] - Player profile data.
+   * @param {PlayerData} [d] - Player profile data.
    * @param {string} name - Captain name to check against blocks.
    * @returns {boolean} True if the captain is blocked.
    */

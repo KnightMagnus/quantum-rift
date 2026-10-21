@@ -20,6 +20,9 @@ import { SPRITES } from './sprites26.js';
 import { SPECIALISTS } from './specialty.js';
 import { RANK_MULT, TRAITS, LOWER_DECK } from './syndicate.js';
 
+/** @import { PlayerData } from '../server/game.js' */
+/** @import { IndustrialShip } from '../server/industrial-contracts.js' */
+
 /**
  * Simulation tick rate in cycles per second.
  * @type {number}
@@ -169,7 +172,7 @@ export function allOutfits(A) {
 /**
  * Player ship loadout data structure.
  * @typedef {Object} ShipLoadout
- * @property {import("../server/industrial-contracts.js").IndustrialShip} [industrial] Saved hull-owned industrial work/heat.
+ * @property {IndustrialShip} [industrial] Saved hull-owned industrial work/heat.
  * @property {string} [uid] Stable saved hull identity assigned by docks.
  * @property {number|string} hull - Hull ID.
  * @property {Record<string|number, number>} outfits - Map of outfit ID to equipped quantity.
@@ -552,7 +555,7 @@ export function officerBonus(officers, bridge) {
 
 /**
  * Aggregates all active player modifications: station research, bridge officers, and lower-deck crew.
- * @param {import("../server/game.js").PlayerData} d - Full player save state.
+ * @param {PlayerData} d - Full player save state.
  * @returns {Record<string, number>} Total unified stat bonuses.
  */
 // everything that modifies a captain's ship: research + bridge crew

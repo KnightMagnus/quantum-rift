@@ -30,6 +30,12 @@ import {
 import { ROLES, RARITY, RACE_ROLES, OFFICER_NAMES, ROSTER_MAX } from '../shared/hangar.js';
 import { captainBonus, shipStats, credits } from '../shared/rules.js';
 
+/** @import { WorldEvent } from '../shared/fronts.js' */
+/** @import { ComputedShipStats } from '../shared/rules.js' */
+/** @import { CargoPlayer } from './contracts.js' */
+/** @import { Mission, PlayerData, Session } from './game.js' */
+/** @import { Entity, Space } from './space.js' */
+
 /**
  * Clamp a numeric value between a lower and an upper bound.
  * @param {number} v - Value to clamp.
@@ -112,7 +118,7 @@ export const FrontsOperations = {
   },
   /**
    * Retrieve current active global server event.
-   * @returns {import("../shared/fronts.js").WorldEvent | null} Current event object or null.
+   * @returns {WorldEvent | null} Current event object or null.
    */
   event() {
     return eventAt();
@@ -154,7 +160,7 @@ export const FrontsOperations = {
   // everything that modifies a captain's ship: research + bridge crew + the Armada buff while a member shares the system (2.6)
   /**
    * Calculate cumulative ship bonuses from research, bridge crew, and co-op Armada proximity.
-   * @param {import('./contracts.js').CargoPlayer | import('./game.js').PlayerData} d - Saved player data.
+   * @param {CargoPlayer | PlayerData} d - Saved player data.
    * @returns {Record<string, number>} Cumulative stat bonuses.
    */
   bonus(d) {
@@ -164,8 +170,8 @@ export const FrontsOperations = {
   },
   /**
    * Calculate effective ship statistics with all bonuses applied.
-   * @param {import('./contracts.js').CargoPlayer | import('./game.js').PlayerData} d - Saved player data.
-   * @returns {import('../shared/rules.js').ComputedShipStats | null} Effective ship stats.
+   * @param {CargoPlayer | PlayerData} d - Saved player data.
+   * @returns {ComputedShipStats | null} Effective ship stats.
    */
   stats(d) {
     return d.ship ? shipStats(this.A, d.ship, this.bonus(d)) : null;
@@ -228,7 +234,7 @@ export const FrontsOperations = {
    * Spawn an invasion encounter with a world boss and minions in a target system.
    * @param {number} win - Time window index.
    * @param {string} [sysId] - Optional system ID to spawn in.
-   * @returns {import("./space.js").Entity} Spawned boss entity.
+   * @returns {Entity} Spawned boss entity.
    */
   startInvasion(win, sysId) {
     const r = rng(0xb055 + win * 31),
@@ -289,8 +295,8 @@ export const FrontsOperations = {
   },
   /**
    * Track damage dealt by player ships to an invasion boss entity.
-   * @param {import('./space.js').Entity} e - Boss ship entity.
-   * @param {import('./space.js').Entity} by - Attacking entity.
+   * @param {Entity} e - Boss ship entity.
+   * @param {Entity} by - Attacking entity.
    * @param {number} dmg - Damage dealt amount.
    * @returns {void}
    */
@@ -301,8 +307,8 @@ export const FrontsOperations = {
   },
   /**
    * Handle destruction of an invasion boss, distributing rewards to participating captains.
-   * @param {import('./space.js').Entity} e - Destroyed boss entity.
-   * @param {import('./space.js').Space} space - Space simulation instance where the boss died.
+   * @param {Entity} e - Destroyed boss entity.
+   * @param {Space} space - Space simulation instance where the boss died.
    * @returns {void}
    */
   onBossKilled(e, space) {
@@ -353,7 +359,7 @@ export const FrontsOperations = {
   // ------------------------------------------------------------------ goals
   /**
    * Retrieve or roll daily and weekly goals for player.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {{daily: Array<Record<string, string | number | boolean>>, weekly: Array<Record<string, string | number | boolean>>}} Player goals object containing daily and weekly lists.
    */
   goalsFor(d) {
@@ -385,7 +391,7 @@ export const FrontsOperations = {
   },
   /**
    * Advance progress for a player goal category.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} type - Goal category key.
    * @param {number} [n=1] - Progress increment.
    * @returns {void}
@@ -402,7 +408,7 @@ export const FrontsOperations = {
   },
   /**
    * Claim rewards for a completed daily or weekly goal.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{period: 'daily' | 'weekly', i: number}} m - Claim goal payload.
    * @returns {void}
    */
@@ -439,7 +445,7 @@ export const FrontsOperations = {
   // ------------------------------------------------------------------ faction stores
   /**
    * Award faction reputation tokens to player data.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {string} fac - Faction identifier.
    * @param {number} n - Number of tokens to grant.
    * @returns {void}
@@ -461,7 +467,7 @@ export const FrontsOperations = {
   },
   /**
    * Purchase an item or contract from a faction store.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{fac: string, id: string}} m - Purchase operation payload.
    * @returns {void}
    */
@@ -534,8 +540,8 @@ export const FrontsOperations = {
   // called when a captain arrives in a system (after spawnPlayer)
   /**
    * Spawn mission entities (convoys, wrecks, assassination targets) upon player arrival in system.
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import('./space.js').Space} sp - Current space system instance.
+   * @param {Session} s - Player session.
+   * @param {Space} sp - Current space system instance.
    * @returns {void}
    */
   missionArrive(s, sp) {
@@ -623,7 +629,7 @@ export const FrontsOperations = {
   },
   /**
    * Complete escort mission when convoy ship successfully lands at destination.
-   * @param {import('./space.js').Entity} e - Landed convoy entity.
+   * @param {Entity} e - Landed convoy entity.
    * @returns {void}
    */
   onConvoyLanded(e) {
@@ -637,7 +643,7 @@ export const FrontsOperations = {
   },
   /**
    * Fail escort mission when protected convoy ship is destroyed.
-   * @param {import('./space.js').Entity} e - Destroyed convoy entity.
+   * @param {Entity} e - Destroyed convoy entity.
    * @returns {void}
    */
   onConvoyLost(e) {
@@ -653,7 +659,7 @@ export const FrontsOperations = {
   // every two seconds for captains in space: survey points, smuggler scans
   /**
    * Periodic check in space for survey waypoint proximity and police smuggler cargo scans.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @returns {void}
    */
   missionIdle(s) {
@@ -724,11 +730,11 @@ export const FrontsOperations = {
   /**
    * Generate expanded job offerings (convoys, smuggling, rescues, surveys, bounties, faction chains).
    * @param {{id: string, system: string}} p - Current stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {() => number} r - Random generator function.
    * @param {Array<[string, number]>} near - Nearby system IDs and jump distances.
    * @param {number} win - Time window index.
-   * @returns {Array<import("./game.js").Mission>} List of generated mission offers.
+   * @returns {Array<Mission>} List of generated mission offers.
    */
   moreOffers(p, d, r, near, win) {
     const out = [],
@@ -879,8 +885,8 @@ export const FrontsOperations = {
   // job completion extras: tokens, chains, goals
   /**
    * Handle job completion rewards including tokens, faction commission chains, and goal advancement.
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import("./game.js").Mission} m - Completed mission record.
+   * @param {Session} s - Player session.
+   * @param {Mission} m - Completed mission record.
    * @param {{system: string}} p - Landed stellar body.
    * @returns {void}
    */

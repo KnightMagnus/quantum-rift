@@ -1,13 +1,17 @@
 // Landing-only guidance. Manual flight and server landing limits are unchanged.
 import { DT, wrap } from '../shared/rules.js';
 
+/** @import { StellarBody } from '../server/game.js' */
+/** @import { ComputedShipStats } from '../shared/rules.js' */
+/** @import { RenderEntity } from './render.js' */
+
 /**
  * Steer toward a landing volume, then commit to a retrograde braking pass.
  * Retain the phase instead of repeatedly alternating approach and brake headings.
  * @param {{mode?: string, t?: number, vx?: number, vy?: number, dest?: {x: number, y: number}}} state Autopilot state retained across ticks.
- * @param {import("./render.js").RenderEntity} ship Predicted player ship.
- * @param {import('../shared/rules.js').ComputedShipStats} stats Computed hull/outfit flight stats.
- * @param {import('../server/game.js').StellarBody} port Target landable body.
+ * @param {RenderEntity} ship Predicted player ship.
+ * @param {ComputedShipStats} stats Computed hull/outfit flight stats.
+ * @param {StellarBody} port Target landable body.
  * @param {Record<string, number>} input Controls modified in place.
  * @returns {void}
  */
@@ -62,10 +66,10 @@ export function landingGuidance(state, ship, stats, port, input) {
  * Require a settled prediction AND a recent authoritative snapshot well inside
  * the server's radius/speed limits before sending the one landing request.
  * @param {{mode?: string, t?: number, vx?: number, vy?: number, dest?: {x: number, y: number}}} state Retained autopilot state.
- * @param {import("./render.js").RenderEntity} ship Predicted ship.
- * @param {import("./render.js").RenderEntity} authority Last server ship snapshot.
- * @param {import('../shared/rules.js').ComputedShipStats} stats Computed flight stats.
- * @param {import('../server/game.js').StellarBody} port Landing target.
+ * @param {RenderEntity} ship Predicted ship.
+ * @param {RenderEntity} authority Last server ship snapshot.
+ * @param {ComputedShipStats} stats Computed flight stats.
+ * @param {StellarBody} port Landing target.
  * @param {number} now Monotonic browser time in milliseconds.
  * @returns {boolean} Whether to send the landing request this tick.
  */

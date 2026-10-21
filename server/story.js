@@ -4,10 +4,14 @@ import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES } from '../shared/galaxy.js'
 import { STORY, STORY_SHIP, DEEP_UNLOCK } from '../shared/story.js';
 import { makeLoadout, credits } from '../shared/rules.js';
 
+/** @import { StoryStep } from '../shared/story.js' */
+/** @import { PlayerData, Session } from './game.js' */
+/** @import { Entity, Space } from './space.js' */
+
 export const StoryOperations = {
   /**
    * Initialize or retrieve player story progress state.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Record<string, string | number | boolean>} Story progress state object.
    */
   storyInit(d) {
@@ -17,7 +21,7 @@ export const StoryOperations = {
   },
   /**
    * Check whether a specific storyline mission has been completed.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {string} id - Story mission identifier.
    * @returns {boolean} True if mission is completed.
    */
@@ -27,7 +31,7 @@ export const StoryOperations = {
   },
   /**
    * Construct story progress overview payload for client synchronization.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Record<string, string | number | boolean>} Story overview payload.
    */
   storyPayload(d) {
@@ -51,9 +55,9 @@ export const StoryOperations = {
   // the story step on offer at this landing (if any)
   /**
    * Evaluate the story mission step on offer at a stellar landing.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {{id: string} | null} p - Landed stellar body.
-   * @returns {import("../shared/story.js").StoryStep | null} Available story step or null.
+   * @returns {StoryStep | null} Available story step or null.
    */
   storyOffer(d, p) {
     const S = this.storyInit(d),
@@ -68,7 +72,7 @@ export const StoryOperations = {
   },
   /**
    * Check active story mission completion or send landing mission offer.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{id: string}} p - Landed stellar body.
    * @returns {void}
    */
@@ -94,7 +98,7 @@ export const StoryOperations = {
   },
   /**
    * Accept an offered story mission.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{id: string}} m - Accept message.
    * @returns {void}
    */
@@ -114,8 +118,8 @@ export const StoryOperations = {
   },
   /**
    * Conclude a story mission, distributing credits, standing, and rewards.
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import("../shared/story.js").StoryStep} st - Story step definition.
+   * @param {Session} s - Player session.
+   * @param {StoryStep} st - Story step definition.
    * @returns {void}
    */
   storyComplete(s, st) {
@@ -145,8 +149,8 @@ export const StoryOperations = {
   },
   /**
    * Award the unique Que'vari flagship reward as part of the storyline culmination.
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import("../shared/story.js").StoryStep} st - Story step definition.
+   * @param {Session} s - Player session.
+   * @param {StoryStep} st - Story step definition.
    * @returns {void}
    */
   storyGift(s, st) {
@@ -181,8 +185,8 @@ export const StoryOperations = {
   // arriving in a story system spawns what the step needs
   /**
    * Spawn story encounter ships, derelicts, boss vessels, or choir allies upon arriving in target system.
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import('./space.js').Space} sp - Current space system instance.
+   * @param {Session} s - Player session.
+   * @param {Space} sp - Current space system instance.
    * @returns {void}
    */
   storyArrive(s, sp) {
@@ -282,8 +286,8 @@ export const StoryOperations = {
   },
   /**
    * Advance active story mission progress after a relevant kill or rescue.
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import('./space.js').Entity} e - Defeated or rescued entity associated with the story mission.
+   * @param {Session} s - Player session.
+   * @param {Entity} e - Defeated or rescued entity associated with the story mission.
    * @returns {void}
    */
   storyProgress(s, e) {
@@ -303,7 +307,7 @@ export const StoryOperations = {
   },
   /**
    * Check whether a destination system is in deep space and locked behind story progression.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {string} to - Destination system ID.
    * @returns {boolean} True if jump to Deep system is locked.
    */

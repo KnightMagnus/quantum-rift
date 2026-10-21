@@ -16,6 +16,8 @@ import { ANOMALIES } from '/shared/fronts.js';
 import { STATES } from '/shared/living.js';
 import { SYS, STELLARS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
 import { weaponParams, BEAM_COLORS, weaponColor, weaponLook, price } from '/shared/rules.js';
+
+/** @import { ClientGameState } from './main.js' */
 // ------------------------------------------------------------------ type definitions
 /**
  * @typedef {Object} StellarBody
@@ -150,7 +152,7 @@ export function tradeRatio(s, cid) {
 }
 /**
  * Determines system display color on the map according to the selected map mode.
- * @param {import("./main.js").ClientGameState} G Global client game state
+ * @param {ClientGameState} G Global client game state
  * @param {GalaxySystem} s System object
  * @param {boolean} seen Whether the system has been visited or discovered
  * @returns {string} CSS color string
@@ -1863,7 +1865,7 @@ const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae
 let tagRects = []; // 2.6: name tags already drawn this frame, so close ships' tags stack instead of overlapping
 /**
  * Master rendering pipeline: backdrop, stellar bodies, mining fields, loot, shots, beams, ships, effects, and HUD overlays.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {CanvasRenderingContext2D} ctx Destination canvas rendering context
  * @param {number} W Viewport width in pixels
  * @param {number} H Viewport height in pixels
@@ -2460,7 +2462,7 @@ function streaks(ctx, W, H, a, len, alpha, drift) {
 }
 /**
  * Renders hyperspace jump departure spool animation, rings, and flash.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx 2D context
  * @param {number} W Viewport width
  * @param {number} H Viewport height
@@ -2526,7 +2528,7 @@ function hyperOut(G, ctx, W, H, now, x, y, a) {
 }
 /**
  * Renders hyperspace jump arrival deceleration bloom and shockwave rings.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx 2D context
  * @param {number} W Viewport width
  * @param {number} H Viewport height
@@ -2571,7 +2573,7 @@ function hyperIn(G, ctx, W, H, t, x, y, a) {
 }
 /**
  * Renders screen-space HUD indicators, off-screen arrows, and damage vignettes.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx 2D context
  * @param {number} W Viewport width
  * @param {number} H Viewport height
@@ -2662,7 +2664,7 @@ function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
 }
 /**
  * Renders an individual ship sprite, engine trails, shield/armor bars, and name tags.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx Destination canvas rendering context
  * @param {RenderEntity} e Ship entity to draw
  * @param {number} x Screen coordinate X
@@ -2885,7 +2887,7 @@ export function drawShip(G, ctx, e, x, y, z, now) {
 // ------------------------------------------------------------------ radar
 /**
  * Renders the circular cockpit radar display with blips for ships, planets, loot, and asteroids.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {CanvasRenderingContext2D} ctx Radar canvas rendering context
  * @returns {void}
  */
@@ -3015,7 +3017,7 @@ export function mapFit(W, H) {
 }
 /**
  * Renders the 2D galaxy starmap or minimap including hyperspace lanes, faction territories, and route plots.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {CanvasRenderingContext2D} ctx Starmap canvas rendering context
  * @param {{ big?: boolean }} [opts={}] Map render options (big: full interactive starmap)
  * @returns {void}
@@ -3410,7 +3412,7 @@ export function galaxy(G, ctx, opts = {}) {
 }
 /**
  * Tests for system click selection hit at given screen coordinates on galaxy map or minimap.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @param {number} mx Screen X coordinate
  * @param {number} my Screen Y coordinate
  * @param {boolean} [mini] Whether testing against companion minimap
@@ -3434,7 +3436,7 @@ export function mapHit(G, mx, my, mini) {
 }
 /**
  * Retrieves active salvage mission beacon world coordinates in current system.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @returns {Array<[number, number]>} Array of salvage point world coordinates [x, y]
  */
 export function salvagePoints(G) {
@@ -3445,7 +3447,7 @@ export function salvagePoints(G) {
 }
 /**
  * Retrieves unvisited planetary survey beacon coordinates for active missions in current system.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @returns {Array<[number, number]>} Array of survey point world coordinates [x, y]
  */
 export function surveyPoints(G) {

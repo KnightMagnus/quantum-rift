@@ -1,3 +1,8 @@
+/** @import { GradeLots } from '../shared/cargo-contracts.js' */
+/** @import { DB } from './db.js' */
+/** @import { FeatureServices } from './features.js' */
+/** @import { FloatingLoot, LootItem, Rock, Space } from './space.js' */
+
 // @ts-check
 /**
  * @typedef {object} MiningLease
@@ -21,7 +26,7 @@
  * @property {number} y
  * @property {boolean} projectile
  *
- * @typedef {import('./space.js').Rock & {
+ * @typedef {Rock & {
  * key:string, generation:number, seed:number, stage:number, stages:number,
  * dredgeToken?:boolean,dredgeWork?:number,dredgeContributors?:Record<string,number>,sweepCut?:boolean,heat:number,work:number,updated:number,lastActivity?:number,releaseAt:number,releaseHeat:number,
  * ready:boolean,penalty:boolean,penaltyApplied:boolean,baseBudget:number,budget:number,pending:number,
@@ -29,29 +34,29 @@
  * tokens:boolean[],leases:MiningLease[],seen:Record<string,number>,captain:string|null,
  * seam:number,lastCut:string|null
  * }} SavedRockGeneration
- * @typedef {import('./space.js').LootItem & {
- * ore:string,rich:number,remainingLots:import('../shared/cargo-contracts.js').GradeLots,
+ * @typedef {LootItem & {
+ * ore:string,rich:number,remainingLots:GradeLots,
  * generationKey:string,parcelKey:string,progressionTokens:number[]
  * }} MiningParcel
- * @typedef {import('./space.js').FloatingLoot & {it:MiningParcel,expires:number}} SavedMiningLoot
+ * @typedef {FloatingLoot & {it:MiningParcel,expires:number}} SavedMiningLoot
  * @typedef {{config:string,rocks:SavedRockGeneration[],parcels:SavedMiningLoot[],history:SavedRockGeneration[]}} SavedField
  * @typedef {{version:1,clock:number,nextId:number,systems:Record<string,SavedField>}} SavedMiningWorld
  * @typedef {{version:1,cooldownUntil:number,revealUntil:number,sys:string,x:number,y:number}} SavedSurvey
  * @typedef {{id:number,x:number,y:number,r:number,ore:string,generation:number,stage:number,stages:number,hp:number,heat:number,work:number,ready:boolean,lastCut:string|null,acquired:boolean,down:boolean,gas:boolean}} MiningRockWire
  * @typedef {{version:1,now:number,rocks:MiningRockWire[]}} MiningRocksWire
  * @typedef {{version:1,now:number,cooldownUntil:number,revealUntil:number,revealed:{id:number,generation:number,seam:number,potential:string,hazard:string}[]}} MiningPrivateWire
- * @typedef {Pick<import('./space.js').Space,'id'|'rocks'|'loot'|'events'|'t'|'sys'>} MiningSpace
- * @typedef {Pick<import('./db.js').DB,'world'|'touch'|'get'|'key'>} MiningDatabase
+ * @typedef {Pick<Space,'id'|'rocks'|'loot'|'events'|'t'|'sys'>} MiningSpace
+ * @typedef {Pick<DB,'world'|'touch'|'get'|'key'>} MiningDatabase
  * @typedef {object} MiningCapabilities
  * @property {(captain:string,chance:number)=>void} dredgeBlueprint
  * @property {MiningDatabase} db
- * @property {import("./features.js").FeatureServices["pressure"]["extracted"]} pressureExtract
- * @property {import("./features.js").FeatureServices["pressure"]["work"]} pressureWork
- * @property {import("./features.js").FeatureServices["pressure"]["regrow"]} pressureRegrow
+ * @property {FeatureServices["pressure"]["extracted"]} pressureExtract
+ * @property {FeatureServices["pressure"]["work"]} pressureWork
+ * @property {FeatureServices["pressure"]["regrow"]} pressureRegrow
  * @property {()=>boolean} paused
  * @property {(sp:MiningSpace)=>void} endTick
- * @property {import('./features.js').FeatureServices['bonuses']['bonus']} bonus
- * @property {import('./features.js').FeatureServices['fronts']['mods']} mods
- * @property {import('./features.js').FeatureServices['specialists']['specOnMine']} specOnMine
+ * @property {FeatureServices['bonuses']['bonus']} bonus
+ * @property {FeatureServices['fronts']['mods']} mods
+ * @property {FeatureServices['specialists']['specOnMine']} specOnMine
  */
 export {};

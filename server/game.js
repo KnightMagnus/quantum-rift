@@ -26,27 +26,27 @@ import { clampStanding } from '../shared/reputation.js';
  * @property {number} fire2 Secondary weapon fire flag.
  *
  * @typedef {object} PlayerData
- * @property {import('../shared/economy-receipt.js').EconomyReceipt} [economyReceipt] Recent trip cash flow; never a source of credits.
- * @property {import("./mining-contracts.js").SavedSurvey} [miningSurvey]
+ * @property {EconomyReceipt} [economyReceipt] Recent trip cash flow; never a source of credits.
+ * @property {SavedSurvey} [miningSurvey]
  * @property {Record<string,number>} [bp] Specialist blueprint fragments.
  * @property {string} name Captain name.
  * @property {number} credits Balance in credits.
  * @property {string} sys Current solar system ID.
  * @property {string|null} [stellar] Docked stellar or null while flying.
  * @property {string} [shipUid] Unique identifier for player ship.
- * @property {import('../shared/rules.js').ShipLoadout} ship Current active ship loadout.
+ * @property {ShipLoadout} ship Current active ship loadout.
  * @property {Record<string, number>} [cargo] Cargo inventory mapping commodity ID to tons.
  * @property {Record<string, number>} [rep] Reputation standings per faction.
  * @property {Record<string, number>} [tokens] Faction tokens balances.
  * @property {Record<string, number[]>} [mats] Crafting materials inventory grades.
- * @property {import('../shared/rules.js').StationState} [station] Personal station state and research tree.
- * @property {Array<{ship: import('../shared/rules.js').ShipLoadout, escorts?: Array<{ship: import('../shared/rules.js').ShipLoadout}>}>} [dock] Personal station stored ships.
+ * @property {StationState} [station] Personal station state and research tree.
+ * @property {Array<{ship: ShipLoadout, escorts?: Array<{ship: ShipLoadout}>}>} [dock] Personal station stored ships.
  * @property {Array<{id: string, name: string, hull: number, busyUntil?: number}>} [shuttles] Station shuttle fleet.
- * @property {Array<import('../shared/rules.js').OfficerRecord>} [officers] Station officer roster.
+ * @property {Array<OfficerRecord>} [officers] Station officer roster.
  * @property {Record<string, string>} [bridge] Bridge officer assignments.
  * @property {Record<string, number | string | boolean>} [arcs] Story arc states.
  * @property {string[]} [radioStations] Discovered radio station IDs.
- * @property {Record<string, import('../shared/quests.js').QuestRecord | number | boolean>} [quests] Active and completed missions.
+ * @property {Record<string, QuestRecord | number | boolean>} [quests] Active and completed missions.
  * @property {Record<string, number | string | boolean>} [syn] Syndicate operations progression.
  * @property {Record<string, number | string | boolean>} [spec] Specialist career progression.
  * @property {Record<string, number | string | boolean>} [fronts] Frontline goals and token progress.
@@ -59,7 +59,7 @@ import { clampStanding } from '../shared/reputation.js';
  *
  * @typedef {object} Session
  * @property {number} id Unique session ID.
- * @property {import('node:events').EventEmitter & {send: (data: string | Buffer | Uint8Array | import('./message-registry.js').NetworkMessage) => void, close: () => void, open: boolean, backlog: number}} sock Client WebSocket connection.
+ * @property {EventEmitter & {send: (data: string | Buffer | Uint8Array | NetworkMessage) => void, close: () => void, open: boolean, backlog: number}} sock Client WebSocket connection.
  * @property {string} ip Remote client IP address.
  * @property {PlayerData} data Player account save data from DB.
  * @property {Entity | null} ent Currently active ship entity in space, or null if docked.
@@ -72,7 +72,7 @@ import { clampStanding } from '../shared/reputation.js';
  * @property {number} [actT] Timestamp of last user activity.
  * @property {number} [loginT] Timestamp when user logged in.
  * @property {boolean} [isNew] Whether this account was newly created during login.
- * @property {import('./combat-assist.js').CombatState} [combat] Combat assist state for this session.
+ * @property {CombatState} [combat] Combat assist state for this session.
  * @property {number} [fullT] Timestamp of last cargo-full notification.
  *
  * @typedef {object} PlayerReference
@@ -146,7 +146,7 @@ import { clampStanding } from '../shared/reputation.js';
  * @property {number} [taken] Timestamp when accepted.
  * @property {number} [deadline] Timestamp deadline if time-sensitive.
  * @property {number} [rush] Duration in minutes if rush delivery.
- * @property {import('../shared/quests.js').QuestRecord} [quest] Linked quest metadata.
+ * @property {QuestRecord} [quest] Linked quest metadata.
  * @property {boolean} [elite] True for elite dangerous bounties.
  * @property {boolean} [spawned] True if bounty target is currently spawned in-system.
  *
@@ -239,23 +239,39 @@ import { SPEC } from '../shared/specialty.js';
 import { captainBonus } from '../shared/rules.js';
 import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.js';
 
+/** @import { GradeLots } from '../shared/cargo-contracts.js' */
+/** @import { EconomyReceipt } from '../shared/economy-receipt.js' */
+/** @import { QuestRecord } from '../shared/quests.js' */
+/** @import { GameAssets, OfficerRecord, OutfitAsset, ShipLoadout, StationState } from '../shared/rules.js' */
+/** @import { CombatAssist as CombatAssistCombatAssist, CombatState } from './combat-assist.js' */
+/** @import { CommandSession } from './contracts.js' */
+/** @import { DB } from './db.js' */
+/** @import { FeatureServices } from './features.js' */
+/** @import { MessageCapabilities } from './game-message-handlers.js' */
+/** @import { JobCapabilities, JobService } from './jobs.js' */
+/** @import { MessageRegistry, NetworkMessage } from './message-registry.js' */
+/** @import { SavedSurvey } from './mining-contracts.js' */
+/** @import { PortCapabilities, PortService } from './port-services.js' */
+/** @import { LootItem, Space as SpaceSpace } from './space.js' */
+/** @import { EventEmitter } from 'node:events' */
+
 /**
  * Quantum Rift master game engine.
  * Manages player accounts, client network sessions, world and system state,
  * trade markets, mission boards, station management, and game loops.
- * @property {import('../shared/rules.js').GameAssets} A Game assets object containing ships, weapons, outfits, and commodities.
- * @property {import('./db.js').DB} db Persistent JSON database instance for player accounts and world state.
- * @property {Record<string | number, import('../shared/rules.js').OutfitAsset>} O Outfit definitions lookup by ID.
- * @property {Record<string, import('./space.js').Space>} spaces Active simulated spaces by system ID, backed by live proxy.
+ * @property {GameAssets} A Game assets object containing ships, weapons, outfits, and commodities.
+ * @property {DB} db Persistent JSON database instance for player accounts and world state.
+ * @property {Record<string | number, OutfitAsset>} O Outfit definitions lookup by ID.
+ * @property {Record<string, SpaceSpace>} spaces Active simulated spaces by system ID, backed by live proxy.
  * @property {Map<number, Session>} sessions Connected client sessions by session ID.
  * @property {number} nextSid Next session identifier sequence number.
  * @property {number} tickN Server tick counter.
- * @property {Record<string, import('./space.js').Space>} live Cache of currently instantiated systems.
- * @property {import('./features.js').FeatureServices} features Modular feature service delegations.
- * @property {import('./jobs.js').JobService} jobService Ordinary job board, acceptance and completion owner.
- * @property {import('./port-services.js').PortService} portService Ordinary market, material, shipyard and outfitter owner.
- * @property {import('./combat-assist.js').CombatAssist} combatAssist Combat assist controller.
- * @property {import('./message-registry.js').MessageRegistry} messageHandlers Registered client message handlers.
+ * @property {Record<string, SpaceSpace>} live Cache of currently instantiated systems.
+ * @property {FeatureServices} features Modular feature service delegations.
+ * @property {JobService} jobService Ordinary job board, acceptance and completion owner.
+ * @property {PortService} portService Ordinary market, material, shipyard and outfitter owner.
+ * @property {CombatAssistCombatAssist} combatAssist Combat assist controller.
+ * @property {MessageRegistry} messageHandlers Registered client message handlers.
  * @property {Map<string, {n: number, t: number}>} fails Failed sign-in attempt tracking map.
  * @property {boolean} paused Solo-mode pause flag.
  * @property {number} [pausedAt] Timestamp when solo mode was paused.
@@ -267,7 +283,7 @@ export class Game {
   _an;
   /** Legacy feature state; see docs/FEATURES.md. @type {number | undefined} */
   _anW;
-  /** Legacy feature state; see docs/FEATURES.md. @type {{sys: string, boss: {name: string, hull: number}, until: number, ent: Entity, sp: import('./space.js').Space} | null | undefined} */
+  /** Legacy feature state; see docs/FEATURES.md. @type {{sys: string, boss: {name: string, hull: number}, until: number, ent: Entity, sp: SpaceSpace} | null | undefined} */
   invasion;
   /** Legacy feature state; see docs/FEATURES.md. @type {number | undefined} */
   lastInvWin;
@@ -295,8 +311,8 @@ export class Game {
   solo;
   /**
    * Initializes the game server, assets, storage, features, and tick loop.
-   * @param {import('../shared/rules.js').GameAssets} A Game assets object containing ships, weapons, outfits, and commodities.
-   * @param {import('./db.js').DB} db Persistent JSON database instance for player accounts and world state.
+   * @param {GameAssets} A Game assets object containing ships, weapons, outfits, and commodities.
+   * @param {DB} db Persistent JSON database instance for player accounts and world state.
    */
   constructor(A, db) {
     augmentAssets(A);
@@ -315,7 +331,7 @@ export class Game {
         t[k] ||
         (typeof k === 'string' && SYS[k] ? this.wake((t[k] = new Space(this, k))) : undefined),
     });
-    /** @type {import('./features.js').FeatureServices} */
+    /** @type {FeatureServices} */
     this.features = createFeatures(this);
     this.jobService = this.createJobService();
     this.portService = this.createPortService();
@@ -385,8 +401,8 @@ export class Game {
   }
   /**
    * System wake hook called when a space is accessed.
-   * @param {import('./space.js').Space} sp Newly awakened space instance.
-   * @returns {import('./space.js').Space} The space instance.
+   * @param {SpaceSpace} sp Newly awakened space instance.
+   * @returns {SpaceSpace} The space instance.
    */
   wake(sp) {
     return sp;
@@ -727,8 +743,8 @@ export class Game {
   }
   /**
    * Sends a message payload to a client session if socket is open and backlog is acceptable.
-   * @param {Session | import('./contracts.js').CommandSession} s Destination session.
-   * @param {string | import("./message-registry.js").NetworkMessage} m Message object or string to send.
+   * @param {Session | CommandSession} s Destination session.
+   * @param {string | NetworkMessage} m Message object or string to send.
    * @returns {void}
    */
   send(s, m) {
@@ -736,7 +752,7 @@ export class Game {
   }
   /**
    * Sends a transient toast banner message to the player's UI.
-   * @param {Session | import('./contracts.js').CommandSession} s Recipient session.
+   * @param {Session | CommandSession} s Recipient session.
    * @param {string} msg Notification banner message text.
    * @returns {void}
    */
@@ -745,7 +761,7 @@ export class Game {
   }
   /**
    * Broadcasts a JSON message to all authenticated sessions matching an optional predicate.
-   * @param {string | import("./message-registry.js").NetworkMessage} m Message payload to broadcast.
+   * @param {string | NetworkMessage} m Message payload to broadcast.
    * @param {((s: Session) => boolean)} [filter] Optional predicate to filter sessions.
    * @returns {void}
    */
@@ -762,7 +778,7 @@ export class Game {
   }
   /**
    * Sends full updated player state ('you' packet) to client session.
-   * @param {Session | import('./contracts.js').CommandSession} s Player session.
+   * @param {Session | CommandSession} s Player session.
    * @returns {void}
    */
   you(s) {
@@ -968,7 +984,7 @@ export class Game {
   // 2.0.3: when you leave a system, your escorts go with you; a rival flying alongside goes back to their own business
   /**
    * Cleans up or returns escort wingmates and fighter drones when a ship leaves space.
-   * @param {import('./space.js').Space} space Active system space simulation.
+   * @param {SpaceSpace} space Active system space simulation.
    * @param {Entity} e Leader entity leaving or destroyed.
    * @param {string} [why] Removal reason (e.g. 'jump').
    * @returns {void}
@@ -1059,12 +1075,12 @@ export class Game {
   // Fixed routes; authentication, flood and activity gates remain in onMessage.
   /**
    * Builds the message router table binding route actions to feature services and handlers.
-   * @returns {import('./message-registry.js').MessageRegistry} Initialized message registry dispatcher.
+   * @returns {MessageRegistry} Initialized message registry dispatcher.
    */
   createMessageHandlers() {
     const game = this;
     // Live getters and forwarding calls retain late setup and test seams.
-    /** @type {import('./game-message-handlers.js').MessageCapabilities} */
+    /** @type {MessageCapabilities} */
     const capabilities = {
       get A() {
         return game.A;
@@ -1119,7 +1135,7 @@ export class Game {
   /**
    * Ingests, rate-limits, authenticates, and dispatches an incoming client message.
    * @param {Session} s Source session.
-   * @param {import("./message-registry.js").NetworkMessage} m Incoming parsed client message.
+   * @param {NetworkMessage} m Incoming parsed client message.
    * @returns {void}
    */
   onMessage(s, m) {
@@ -1552,7 +1568,7 @@ export class Game {
   /**
    * Finalizes hyperjump: deducts fuel, explores destination, and spawns ship in new system.
    * @param {Entity} e Jumping ship entity.
-   * @param {import('./space.js').Space} space Origin space simulation.
+   * @param {SpaceSpace} space Origin space simulation.
    * @returns {void}
    */
   finishJump(e, space) {
@@ -1604,7 +1620,7 @@ export class Game {
   /**
    * Handles instantaneous transit through Sol Gateway wormholes without fuel consumption.
    * @param {Entity} e Ship entity entering wormhole.
-   * @param {import('./space.js').Space} space Origin space.
+   * @param {SpaceSpace} space Origin space.
    * @param {StellarBody} p Wormhole gateway stellar body.
    * @returns {void}
    */
@@ -1666,7 +1682,7 @@ export class Game {
    * Handles weapon impact against NPC ship, updating faction reputation and rival state.
    * @param {PlayerReference} pref Attacking player reference.
    * @param {Entity} npc Target entity hit.
-   * @param {import('./space.js').Space} space Space simulation.
+   * @param {SpaceSpace} space Space simulation.
    * @returns {void}
    */
   onHit(pref, npc, space) {
@@ -1693,7 +1709,7 @@ export class Game {
    * Resolves combat kill: awards bounties, increases combat rating, and fulfills mission objectives.
    * @param {PlayerReference} pref Killing player reference.
    * @param {Entity} npc Entity destroyed.
-   * @param {import('./space.js').Space} space Space simulation.
+   * @param {SpaceSpace} space Space simulation.
    * @param {boolean} [byEscort] Whether final blow was landed by an escort.
    * @returns {void}
    */
@@ -1778,7 +1794,7 @@ export class Game {
   /**
    * Handles player ship destruction: charges insurance fee, clears cargo, and respawns at station.
    * @param {PlayerReference} pref Player reference destroyed.
-   * @param {import('./space.js').Space} space Space simulation.
+   * @param {SpaceSpace} space Space simulation.
    * @param {Entity | null} [by] Killer entity, if any.
    * @returns {void}
    */
@@ -1856,7 +1872,7 @@ export class Game {
   /**
    * Handles player scooping floating salvage canister, ore chunk, or credits.
    * @param {PlayerReference} pref Player scooping loot.
-   * @param {import('./space.js').LootItem} it Loot item payload.
+   * @param {LootItem} it Loot item payload.
    * @returns {boolean | void} Returns false if cargo hold full when mining ore.
    */
   onLoot(pref, it) {
@@ -1966,10 +1982,10 @@ export class Game {
     return { docked, top, stations, online };
   }
   // ------------------------------------------------------------------ markets
-  /** @returns {import('./port-services.js').PortService} Ordinary port commerce. */
+  /** @returns {PortService} Ordinary port commerce. */
   createPortService() {
     const game = this;
-    /** @type {import('./port-services.js').PortCapabilities} */
+    /** @type {PortCapabilities} */
     const capabilities = {
       get A() {
         return game.A;
@@ -2015,7 +2031,7 @@ export class Game {
    * @param {Session} s Player session.
    * @param {string} cid Commodity ID.
    * @param {number} qty Amount to buy (>0) or sell (<0).
-   * @param {import('../shared/cargo-contracts.js').GradeLots|'common-first'} [selection]
+   * @param {GradeLots|'common-first'} [selection]
    * @returns {void}
    */
   trade(s, cid, qty, selection = 'common-first') {
@@ -2089,10 +2105,10 @@ export class Game {
     return this.portService.outfit(s, id, n);
   }
 
-  /** @returns {import('./jobs.js').JobService} Ordinary job operations. */
+  /** @returns {JobService} Ordinary job operations. */
   createJobService() {
     const game = this;
-    /** @type {import('./jobs.js').JobCapabilities} */
+    /** @type {JobCapabilities} */
     const capabilities = {
       get A() {
         return game.A;
@@ -2193,7 +2209,7 @@ export class Game {
   /**
    * Processes Personal Station operations: claiming derelicts, upgrades, refinery, and relocation.
    * @param {Session} s Player session.
-   * @param {import("./message-registry.js").NetworkMessage} m Station operation payload.
+   * @param {NetworkMessage} m Station operation payload.
    * @returns {void}
    */
   station(s, m) {
@@ -2446,7 +2462,7 @@ export class Game {
 
   /**
    * Suspends and deallocates an idle space simulation when no players are present.
-   * @param {import('./space.js').Space} sp Space instance to suspend.
+   * @param {SpaceSpace} sp Space instance to suspend.
    * @returns {void}
    */
   sleep(sp) {

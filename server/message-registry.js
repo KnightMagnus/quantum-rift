@@ -1,3 +1,5 @@
+/** @import { CommandSession } from './contracts.js' */
+
 // @ts-check
 /**
  * The registry only selects a fixed route. Authentication, flood limiting and
@@ -28,13 +30,13 @@
  * @property {boolean} [ok] Confirmation boolean status.
  * @property {Record<string, string | number | boolean | null>} [data] Message data fields.
  *
- * @typedef {(session: import('./contracts.js').CommandSession, message: NetworkMessage) => void} MessageHandler
+ * @typedef {(session: CommandSession, message: NetworkMessage) => void} MessageHandler
  * Handler callback invoked when a registered message type is received.
  *
  * @typedef {object} MessageRegistry
  * Immutable message router providing registered type listing and dispatch capabilities.
  * @property {readonly string[]} types Immutable list of registered message types.
- * @property {(type: string, session: import('./contracts.js').CommandSession, message: NetworkMessage) => void} dispatch Dispatches a message to its registered handler.
+ * @property {(type: string, session: CommandSession, message: NetworkMessage) => void} dispatch Dispatches a message to its registered handler.
  */
 
 /**
@@ -57,7 +59,7 @@ export function createMessageRegistry(entries) {
     /**
      * Dispatches an incoming message to its registered handler if recognized.
      * @param {string} type Message type identifier.
-     * @param {import('./contracts.js').CommandSession} session Active player network session.
+     * @param {CommandSession} session Active player network session.
      * @param {NetworkMessage} message Decoded payload object.
      * @returns {void}
      */

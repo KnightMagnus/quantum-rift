@@ -12,6 +12,9 @@ import {
 } from '../shared/rivals.js';
 import { credits } from '../shared/rules.js';
 
+/** @import { PlayerData, Session, SpaceSystem, StellarBody } from './game.js' */
+/** @import { Entity, Space } from './space.js' */
+
 /**
  * Clamp a numeric value between minimum and maximum bounds.
  * @param {number} v - Value to clamp.
@@ -33,7 +36,7 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 /**
  * Check whether a system is appropriate for a rival's career archetype.
  * @param {{fac: string, kind: string}} r - Rival configuration.
- * @param {import('./game.js').SpaceSystem} S - System definition object.
+ * @param {SpaceSystem} S - System definition object.
  * @returns {boolean} True if system is valid for the rival.
  */
 function okSystem(r, S) {
@@ -118,7 +121,7 @@ export const RivalsOperations = {
   },
   /**
    * Look up relationship score between a player and a rival captain.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {string} id - Rival identifier.
    * @returns {number} Relationship score (-100 to 100).
    */
@@ -128,7 +131,7 @@ export const RivalsOperations = {
   },
   /**
    * Modify relationship score with a rival, logging changes and broadcasting news on threshold shifts.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} id - Rival identifier.
    * @param {number} delta - Delta to apply.
    * @param {string} [why] - Reason description.
@@ -299,7 +302,7 @@ export const RivalsOperations = {
   },
   /**
    * Spawn bounty hunter escort ships targeting a player with a severe nemesis grudge.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {Record<string, string | number>} R - Rival configuration object.
    * @returns {void}
    */
@@ -334,7 +337,7 @@ export const RivalsOperations = {
   // keep live systems in step with where the rivals are
   /**
    * Synchronize rival ships within an active space sector.
-   * @param {import('./space.js').Space} sp - Space sector instance.
+   * @param {Space} sp - Space sector instance.
    * @returns {void}
    */
   rivalSync(sp) {
@@ -385,8 +388,8 @@ export const RivalsOperations = {
   // think hook: rivals pick fights with their rivals and stand by their allies
   /**
    * AI decision loop for rival ships in space (attack nemeses, assist allies).
-   * @param {import('./space.js').Entity} e - Rival ship entity.
-   * @param {import('./space.js').Space} sp - Space sector instance.
+   * @param {Entity} e - Rival ship entity.
+   * @param {Space} sp - Space sector instance.
    * @returns {void}
    */
   rivalThink(e, sp) {
@@ -416,8 +419,8 @@ export const RivalsOperations = {
   // hostility hook (undefined = normal faction rules)
   /**
    * Determine hostility override between an NPC and a player based on rival status and relations.
-   * @param {import('./space.js').Entity} npc - NPC entity.
-   * @param {import('./game.js').StellarBody} p - Player entity.
+   * @param {Entity} npc - NPC entity.
+   * @param {StellarBody} p - Player entity.
    * @returns {boolean | undefined} True/false if override applies, undefined to defer to faction rules.
    */
   rivalHostile(npc, p) {
@@ -432,9 +435,9 @@ export const RivalsOperations = {
   },
   /**
    * Handle weapon impact on a rival ship, reducing player relationship score.
-   * @param {import('./game.js').Session} s - Player session that fired.
-   * @param {import('./space.js').Entity} npc - Targeted entity that was hit.
-   * @param {import('./space.js').Space} space - Space sector instance.
+   * @param {Session} s - Player session that fired.
+   * @param {Entity} npc - Targeted entity that was hit.
+   * @param {Space} space - Space sector instance.
    * @returns {void}
    */
   rivalOnHit(s, npc, space) {
@@ -450,9 +453,9 @@ export const RivalsOperations = {
   },
   /**
    * Handle ship destruction involving rivals, penalizing killer or rewarding helpful bystanders.
-   * @param {import('./game.js').Session} s - Player session scoring the kill.
-   * @param {import('./space.js').Entity} npc - Destroyed NPC entity.
-   * @param {import('./space.js').Space} space - Space sector instance.
+   * @param {Session} s - Player session scoring the kill.
+   * @param {Entity} npc - Destroyed NPC entity.
+   * @param {Space} space - Space sector instance.
    * @returns {boolean} True if the destroyed NPC was a rival.
    */
   rivalOnKill(s, npc, space) {
@@ -480,7 +483,7 @@ export const RivalsOperations = {
   // a rival trader who lands stays docked a while, then takes off again from that world
   /**
    * Handle rival ship landing at a planetary spaceport.
-   * @param {import('./space.js').Entity} e - Landing ship entity.
+   * @param {Entity} e - Landing ship entity.
    * @returns {void}
    */
   rivalDocked(e) {
@@ -506,7 +509,7 @@ export const RivalsOperations = {
   },
   /**
    * Compile the client payload listing all rival captains, locations, and relationship states.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Array<Record<string, string | number>>} Rivals summary list for client.
    */
   rivalsPayload(d) {

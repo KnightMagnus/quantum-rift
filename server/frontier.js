@@ -27,6 +27,11 @@ import {
 } from '../shared/frontier.js';
 import { credits } from '../shared/rules.js';
 
+/** @import { CaptainProfile, ColonyData } from '../client/frontier_ui.js' */
+/** @import { GradeLots } from '../shared/cargo-contracts.js' */
+/** @import { PlayerData, Session } from './game.js' */
+/** @import { Entity, Space } from './space.js' */
+
 /**
  * Clamp a numeric value between a lower and an upper bound.
  * @param {number} v - Value to clamp.
@@ -61,7 +66,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ bonuses: + ship mastery tier + colony buildings
   /**
    * Calculate aggregated bonuses from ship mastery, colony buildings, and survey ship perks.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Record<string, number>} Aggregated stat bonuses.
    */
   bonus(d) {
@@ -75,7 +80,7 @@ export const FrontierOperations = {
   },
   /**
    * Send a system notification message to a player session.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} title - Notification title text.
    * @param {string} body - Notification body text.
    * @returns {void}
@@ -101,7 +106,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ mastery
   /**
    * Increment ship mastery points and award tier level-ups and elite trim.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {number} amount - Mastery points to add.
    * @returns {void}
    */
@@ -140,8 +145,8 @@ export const FrontierOperations = {
   },
   /**
    * Retrieve all colonies owned by the player.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Array<[string, import("../client/frontier_ui.js").ColonyData]>} List of [stellarId, colony] pairs.
+   * @param {PlayerData} d - Saved player data.
+   * @returns {Array<[string, ColonyData]>} List of [stellarId, colony] pairs.
    */
   coloniesOf(d) {
     const k = this.db.key(d.name);
@@ -149,7 +154,7 @@ export const FrontierOperations = {
   },
   /**
    * Compute maximum allowed colonies for player based on personal station Station Tier.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {number} Maximum colonies.
    */
   colonyMax(d) {
@@ -157,7 +162,7 @@ export const FrontierOperations = {
   },
   /**
    * Aggregate active stat buffs produced by buildings across all player-owned colonies.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Record<string, number>} Aggregated colony buff map.
    */
   colonyBuffs(d) {
@@ -174,7 +179,7 @@ export const FrontierOperations = {
   },
   /**
    * Accrue passive production (credits, commodities) in colony storage based on elapsed time.
-   * @param {import("../client/frontier_ui.js").ColonyData} c - Colony data structure.
+   * @param {ColonyData} c - Colony data structure.
    * @returns {void}
    */
   accrue(c) {
@@ -195,7 +200,7 @@ export const FrontierOperations = {
   /**
    * Build network telemetry payload describing colony status at a stellar body.
    * @param {{id: string} | null} p - Stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Record<string, string | number | boolean> | null} Colony telemetry payload, or open descriptor, or null.
    */
   colonyPayload(p, d) {
@@ -215,7 +220,7 @@ export const FrontierOperations = {
   },
   /**
    * Handle planetary colony operations (founding, building, demolishing, upgrading, collecting, abandoning).
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{op: string, kind?: string, i?: number}} m - Colony action payload.
    * @returns {void}
    */
@@ -336,7 +341,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ station defense
   /**
    * Calculate personal station defense rating from turret level and Station Tier rating.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {number} Defense rating score.
    */
   defenseRating(d) {
@@ -349,7 +354,7 @@ export const FrontierOperations = {
   },
   /**
    * Upgrade personal station defense turrets by one level.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @returns {void}
    */
   defenseUpgrade(s) {
@@ -366,7 +371,7 @@ export const FrontierOperations = {
   },
   /**
    * Determine prospective NPC raid strength attacking player station in a time window.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {number} win - Time window index.
    * @returns {number} Raid strength score.
    */
@@ -378,7 +383,7 @@ export const FrontierOperations = {
   },
   /**
    * Check whether personal station is due for an incoming raid encounter.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @returns {void}
    */
   raidCheck(s) {
@@ -399,7 +404,7 @@ export const FrontierOperations = {
   },
   /**
    * Spawn a live combat wave of hostile raiders targeting the player's personal station.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {number} strength - Calculated raid strength.
    * @returns {void}
    */
@@ -438,7 +443,7 @@ export const FrontierOperations = {
   },
   /**
    * Track destroyed raid wave entities and resolve victory if all raiders are eliminated.
-   * @param {import('./space.js').Entity} e - Killed ship entity.
+   * @param {Entity} e - Killed ship entity.
    * @returns {void}
    */
   onWaveKill(e) {
@@ -471,7 +476,7 @@ export const FrontierOperations = {
   },
   /**
    * Resolve outcomes of a station raid, awarding salvage on defense or deducting crates on breach.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {number} strength - Raid strength rating.
    * @param {boolean} foughtOff - True if player actively destroyed the wave.
    * @returns {void}
@@ -523,7 +528,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ the arena
   /**
    * Handle arena queue join and leave operations.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{op: 'queue' | 'leave', mode: '1v1' | '2v2' | '4v4'}} m - Arena action payload.
    * @returns {void}
    */
@@ -553,8 +558,8 @@ export const FrontierOperations = {
   },
   /**
    * Build arena status payload including queue size and rating.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {PlayerData} d - Saved player data.
+   * @param {Session} s - Player session.
    * @returns {Record<string, string | number | boolean>} Arena status descriptor.
    */
   arenaPayload(d, s) {
@@ -632,7 +637,7 @@ export const FrontierOperations = {
   // a captain leaves the arena: back to where they queued, ship repaired, no insurance fee
   /**
    * Return a captain from an arena match to their origin station.
-   * @param {import('./game.js').Session} o - Player session.
+   * @param {Session} o - Player session.
    * @param {{id: string, sys: string, t: number, a: string, b: string}} match - Arena match descriptor.
    * @param {boolean} died - True if ship was knocked out in combat.
    * @returns {void}
@@ -658,8 +663,8 @@ export const FrontierOperations = {
   },
   /**
    * Handle ship destruction inside the arena, free repair, and victory check.
-   * @param {import('./game.js').Session} o - Knocked-out player session.
-   * @param {import('./space.js').Space} space - Space simulation instance.
+   * @param {Session} o - Knocked-out player session.
+   * @param {Space} space - Space simulation instance.
    * @returns {boolean} True if entity was in an arena match.
    */
   onArenaDeath(o, space) {
@@ -746,7 +751,7 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ the exchange (player market): escrowed orders, matched by price
   /**
    * Handle player exchange operations (place, cancel, collect storage, credit transfer).
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{op: string, side?: string, qty?: number, price?: number, kind?: string, mat?: string, grade?: number, cid?: string, id?: number, to?: string, n?: number}} m - Exchange action payload.
    * @returns {void}
    */
@@ -913,7 +918,7 @@ export const FrontierOperations = {
    * @param {string} name - Buyer captain name.
    * @param {{kind: string, mat?: string, grade?: number, cid?: string}} it - Purchased item.
    * @param {number} qty - Quantity purchased.
-   * @param {import('../shared/cargo-contracts.js').GradeLots} [lots] Exact escrow grades.
+   * @param {GradeLots} [lots] Exact escrow grades.
    * @returns {void}
    */
   deliver(name, it, qty, lots) {
@@ -954,7 +959,7 @@ export const FrontierOperations = {
   },
   /**
    * Match an incoming exchange order against the open order book.
-   * @param {{id: number, owner: string, side: string, item: {kind: string, mat?: string, grade?: number, cid?: string}, qty: number, price: number, lots?: import('../shared/cargo-contracts.js').GradeLots, t: number}} order - Incoming escrow order record.
+   * @param {{id: number, owner: string, side: string, item: {kind: string, mat?: string, grade?: number, cid?: string}, qty: number, price: number, lots?: GradeLots, t: number}} order - Incoming escrow order record.
    * @param {() => void} reserve - Commit the validated incoming reservation.
    * @returns {void}
    */
@@ -1054,7 +1059,7 @@ export const FrontierOperations = {
   },
   /**
    * Build exchange order book summary and player-specific order state for client.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Record<string, Array<{by: string, p: number, n: number}>>} Exchange book payload.
    */
   exchangePayload(d) {
@@ -1106,7 +1111,7 @@ export const FrontierOperations = {
   /**
    * Fetch public captain profile overview by captain name.
    * @param {string} name - Captain player name.
-   * @returns {import("../client/frontier_ui.js").CaptainProfile | null} Captain profile record or null if not found.
+   * @returns {CaptainProfile | null} Captain profile record or null if not found.
    */
   profile(name) {
     const p = this.db.get(String(name || ''));

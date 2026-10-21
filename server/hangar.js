@@ -39,6 +39,9 @@ import {
   credits,
 } from '../shared/rules.js';
 
+/** @import { OfficerRecord } from '../shared/rules.js' */
+/** @import { PlayerData, Session } from './game.js' */
+
 /**
  * Clamp a numeric value between a lower and an upper bound.
  * @param {number} v - Value to clamp.
@@ -118,7 +121,7 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ save upgrades
   /**
    * Initialize hangar, officer, bridge, dock, and station queue data on player record.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {void}
    */
   hangarInit(d) {
@@ -131,7 +134,7 @@ export const HangarOperations = {
   },
   /**
    * Allocate a monotonically increasing unique identifier for player entities.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {number} Newly allocated unique ID.
    */
   uid(d) {
@@ -139,7 +142,7 @@ export const HangarOperations = {
   },
   /**
    * Calculate total shuttle bay capacity based on station Station Tier and research bonuses.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {number} Total available shuttle bays.
    */
   bays(d) {
@@ -148,7 +151,7 @@ export const HangarOperations = {
   },
   /**
    * Calculate total stored-ship dock slots based on station Station Tier and research bonuses.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {number} Total stored-ship berths.
    */
   dockSlots(d) {
@@ -161,8 +164,8 @@ export const HangarOperations = {
   /**
    * Generate three candidate officers for hire at an inhabited world with a bar service.
    * @param {{id: string, svc: string, system: string, tech?: number, site?: boolean | Record<string, string | number>}} p - Current stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Array<import("../shared/rules.js").OfficerRecord>} List of generated officer offers.
+   * @param {PlayerData} d - Saved player data.
+   * @returns {Array<OfficerRecord>} List of generated officer offers.
    */
   barOffers(p, d) {
     if (!p || !p.svc.includes('B') || p.site) return [];
@@ -195,7 +198,7 @@ export const HangarOperations = {
   },
   /**
    * Handle officer operations including hiring from bars, assigning to bridge/shuttles, and dismissing.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{op: string, id?: string, oid?: number, slot?: string}} m - Officer action payload.
    * @returns {void}
    */
@@ -262,9 +265,9 @@ export const HangarOperations = {
   // experience for the bridge crew (kills, jumps, jobs) or one officer (shuttle runs)
   /**
    * Award experience points to all active bridge officers or a single designated officer.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {number} amount - Base XP amount.
-   * @param {import("../shared/rules.js").OfficerRecord} [only] - Specific officer to award XP to (optional).
+   * @param {OfficerRecord} [only] - Specific officer to award XP to (optional).
    * @returns {void}
    */
   officerXp(s, amount, only) {
@@ -289,7 +292,7 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ shuttles
   /**
    * Generate available shuttle mission offerings from the player's personal station.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Array<{id: string, name: string, hull: number, reward: number, dest: string}>} List of active shuttle job offers.
    */
   shuttleBoard(d) {
@@ -364,10 +367,10 @@ export const HangarOperations = {
   },
   /**
    * Calculate probability of success for a shuttle mission.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {{kind: string}} sh - Shuttle state.
    * @param {{kind: string, danger: number}} job - Shuttle job details.
-   * @param {import("../shared/rules.js").OfficerRecord | null} crew - Assigned officer, if any.
+   * @param {OfficerRecord | null} crew - Assigned officer, if any.
    * @returns {number} Success chance probability in [0.15, 0.97].
    */
   shuttleChance(d, sh, job, crew) {
@@ -385,7 +388,7 @@ export const HangarOperations = {
   },
   /**
    * Handle shuttle construction, crew assignment, dispatch, return claiming, repair, and scrapping.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{op: string, kind?: string, sid?: number, oid?: number, job?: string}} m - Shuttle operation payload.
    * @returns {void}
    */
@@ -509,7 +512,7 @@ export const HangarOperations = {
   },
   /**
    * Resolve an accomplished or failed shuttle mission and grant rewards or report losses.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{id: string, name: string, hull: number, ret: number, reward: number, mat: string, qty: number, xp: number}} sh - Completed shuttle state.
    * @returns {void}
    */
@@ -581,7 +584,7 @@ export const HangarOperations = {
   // shuttles visibly launch from (and return to) the Personal Station when its system is live
   /**
    * Spawn ambient space entity representing shuttle departure or arrival at personal station.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {{kind: string}} sh - Shuttle state.
    * @param {'out' | 'in'} dir - Traffic direction ('out' or 'in').
    * @returns {void}
@@ -640,7 +643,7 @@ export const HangarOperations = {
   },
   /**
    * Queue a research project along with any unfulfilled prerequisites.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} id - Research project ID.
    * @returns {void}
    */
@@ -667,7 +670,7 @@ export const HangarOperations = {
   // start the next queued project if the lab is free and the captain can pay for it (called on every station check)
   /**
    * Start the next research project in queue if station lab is idle and funds/materials allow.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {void}
    */
   startQueued(d) {
@@ -701,7 +704,7 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ refining: three crates make one of the next grade
   /**
    * Refine multiple material crates of grade g into grade g+1.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} mat - Material identifier ('alloy', 'crystal', 'isotope').
    * @param {number} g - Current grade level (0 to 3).
    * @param {number} n - Number of refining operations to execute.
@@ -743,7 +746,7 @@ export const HangarOperations = {
   },
   /**
    * Handle drydock operations including storing and selling stored ships.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{op: string, i?: number, uid?: number}} m - Drydock operation payload.
    * @returns {void}
    */
@@ -786,7 +789,7 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ boarding
   /**
    * Handle boarding interactions with disabled ships or downed Armada captains (plunder, capture, rescue).
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{id: number, act: 'plunder' | 'capture' | 'rescue'}} m - Boarding action payload.
    * @returns {void}
    */

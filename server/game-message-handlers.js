@@ -1,13 +1,16 @@
 import { createMessageRegistry } from './message-registry.js';
 import { TUTORIAL } from '../shared/tutorial.js';
 
+/** @import { Game } from './game.js' */
+/** @import { MessageRegistry, NetworkMessage } from './message-registry.js' */
+
 /** @typedef {import('./game.js').Session} Session */
 /**
  * Explicit switchboard dependencies, supplied by Game.createMessageHandlers.
  * Getters read current services/state; forwarding functions preserve Game as the
  * method receiver. This routes actions, not a new owner of save or world state.
  * Legacy handler bodies remain unchecked; this type is not wire validation.
- * @typedef {Pick<import('./game.js').Game,
+ * @typedef {Pick<Game,
  *   'A' |
  *   'accept' |
  *   'buyMat' |
@@ -40,7 +43,7 @@ import { TUTORIAL } from '../shared/tutorial.js';
  * Build the fixed authenticated action switchboard. Game.onMessage retains the
  * authentication, flood, economic-freeze and activity gates ahead of dispatch.
  * @param {MessageCapabilities} c Only the explicitly provided core capabilities.
- * @returns {import('./message-registry.js').MessageRegistry}
+ * @returns {MessageRegistry}
  */
 export function createGameMessageHandlers(c) {
   return createMessageRegistry([
@@ -60,7 +63,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Dispatches combat assist autopilot mode command.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.combatAssist.command(s, m);
@@ -71,7 +74,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Processes raw ship flight controls (thrust, turn, afterburner, weapons fire).
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         if (
@@ -99,7 +102,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Selects or clears current combat target entity.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         const d = s.data;
@@ -117,7 +120,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Skips career tutorial guide to completion.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         const d = s.data;
@@ -133,7 +136,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Requests landing at target stellar body.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.combatAssist.stop(s, 'Travel or boarding');
@@ -146,7 +149,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Requests launch from currently docked stellar body into space.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.depart(s);
@@ -158,7 +161,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Initiates hyperjump to connected system.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.combatAssist.stop(s, 'Travel or boarding');
@@ -171,7 +174,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Executes commodity buy or sell transaction at docked market.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.trade(s, m.cid, m.qty | 0, m.lots);
@@ -183,7 +186,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Purchases a ship from shipyard for flagship or hangar storage.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         if (m.store) c.features.docks.buyToHangar(s, m.hull | 0);
@@ -196,7 +199,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Dispatches drydock operations (ship loadouts, wing assignments).
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.docks.docksOp(s, m);
@@ -208,7 +211,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Abandons an active story quest.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         const d = s.data;
@@ -225,7 +228,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Purchases or sells ship outfits and ammunition.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.outfit(s, m.id | 0, m.n | 0);
@@ -237,7 +240,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Accepts mission from stellar job board.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.accept(s, m.id);
@@ -249,7 +252,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Abandons an active mission.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         const d = s.data;
@@ -288,7 +291,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Performs Personal Station operations (claim, upgrade, refinery, research, relocate).
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.station(s, m);
@@ -300,7 +303,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Purchases or sells engineering materials at station or commodity hub.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.buyMat(s, m.mat, m.grade | 0, m.n | 0);
@@ -312,7 +315,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Renames current flagship.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         const d = s.data;
@@ -329,7 +332,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Adds a custom captain's log note entry.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         const d = s.data;
@@ -345,7 +348,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Sends chat message to system, global, or Armada channels.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.chat(s, m);
@@ -357,7 +360,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Performs bridge officer assignments, recruitment, and promotions.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.hangar.officerOp(s, m);
@@ -369,7 +372,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Dispatches or manages automated trade and mining shuttles.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.hangar.shuttleOp(s, m);
@@ -381,7 +384,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Manages hangar ship storage and swap operations.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.hangar.dockOp(s, m);
@@ -393,7 +396,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Boards disabled enemy ship or performs rescue operation.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.combatAssist.stop(s, 'Travel or boarding');
@@ -406,7 +409,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Performs ship specialization tier upgrades and modification.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.specialists.specOp(s, m);
@@ -418,7 +421,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Performs co-op Armada formation, invites, and group commands.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.coop.armadaOp(s, m);
@@ -430,7 +433,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Initiates survival holdout wave combat event.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.hostile.holdoutStart(s);
@@ -442,7 +445,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Accepts main storyline progression chapter.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.story.storyAccept(s, m);
@@ -454,7 +457,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Dispatches social operations: friend requests, direct messages, blocks.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.coop.socialOp(s, m);
@@ -466,7 +469,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Conducts secure station-to-station cargo and credit trade between captains.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.coop.tradeOp(s, m);
@@ -478,7 +481,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Initiates or accepts formal non-lethal captain duel challenge.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.coop.duelOp(s, m);
@@ -490,7 +493,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Claims milestone reward for faction war front goal.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.fronts.claimGoal(s, m);
@@ -502,7 +505,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Purchases items from faction front milestone store.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.fronts.storeBuy(s, m);
@@ -514,7 +517,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Dispatches frontier planet colonization and outpost development operations.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.frontier.colonyOp(s, m);
@@ -526,7 +529,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Enters matchmaking queue or manages combat arena operations.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.frontier.arenaOp(s, m);
@@ -538,7 +541,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Exchanges faction victory tokens and currencies.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.frontier.exchangeOp(s, m);
@@ -550,7 +553,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Requests community competitive leaderboard data.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.send(s, {
@@ -566,7 +569,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Requests public captain career and combat profile.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.send(s, { t: 'profile', p: c.features.frontier.profile(m.name) });
@@ -578,7 +581,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Responds to client latency measurement ping with pong.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.send(s, { t: 'pong', c: m.c });
@@ -590,7 +593,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Initiates radio comms hail to target stellar or ship.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.hail.hail(s, m);
@@ -603,7 +606,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Selects dialogue conversation choice during active radio hail.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.hail.hailOpt(s, m);
@@ -615,7 +618,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Issues fleet command order to escort wingmates.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         if (s.ent) {
@@ -632,7 +635,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Jettisons cargo into space to lighten ship or distract raiders.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.fleetcmd.jettison(s, m.cid, m.n | 0, m.lots);
@@ -644,7 +647,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Requests status payload of active AI rival captains.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         const d = s.data;
@@ -657,7 +660,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Purchases illicit contraband from syndicate black market.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.syndicate.bmBuy(s, m.id);
@@ -669,7 +672,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Accepts faction campaign story arc.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.arcs.arcAccept(s, m.fac);
@@ -681,7 +684,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Claims syndicate crime tier promotion.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.syndicate.promote(s, m.id);
@@ -693,7 +696,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Dispatches lower deck syndicate crew operations.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.syndicate.lowerDeck(s, m);
@@ -705,7 +708,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Performs Syndicate bank loan borrowing and repayment.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         c.features.syndicate.bankOp(s, m);
@@ -717,7 +720,7 @@ export function createGameMessageHandlers(c) {
       /**
        * Toggles solo play game pause state.
        * @param {Session} s Player session.
-       * @param {import("./message-registry.js").NetworkMessage} m Message payload.
+       * @param {NetworkMessage} m Message payload.
        */
       (s, m) => {
         if (c.solo && [...c.sessions.values()].filter((x) => x.data).length === 1) {

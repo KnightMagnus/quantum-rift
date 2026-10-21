@@ -1,6 +1,9 @@
 import { SYSTEMS, SYS, FACTIONS, START, COMMODITIES } from '../shared/galaxy.js';
 import { route } from '../shared/rules.js';
 
+/** @import { StellarBody } from '../shared/galaxy.js' */
+/** @import { Mission } from './game.js' */
+
 // Stable public board slots, independent of a captain's ship, money or combat rank.
 // Each band gives an existing class of hauler useful work without hiding smaller jobs.
 export const FREIGHT_BANDS = [
@@ -47,9 +50,9 @@ function random(seed) {
 }
 
 /** Additional ordinary cargo contracts, using existing acceptance/hold/payout rules.
- * @param {import('../shared/galaxy.js').StellarBody} port
+ * @param {StellarBody} port
  * @param {number} window Ten-minute board window.
- * @returns {import('./game.js').Mission[]}
+ * @returns {Mission[]}
  */
 export function freightOffers(port, window) {
   if (!port.svc.includes('B') || port.site || port.outlaw || !trade.has(port.system)) return [];

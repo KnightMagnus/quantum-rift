@@ -2,6 +2,10 @@
 // Server-authoritative, transient combat control. Never persists consent in saves.
 import { winOdds } from '../shared/hostile.js';
 
+/** @import { FeatureServices } from './features.js' */
+/** @import { Session } from './game.js' */
+/** @import { NetworkMessage } from './message-registry.js' */
+
 /**
  * Combat delegation consent granted to an armada leader.
  * @typedef {object} CombatConsent
@@ -71,7 +75,7 @@ import { winOdds } from '../shared/hostile.js';
  * @property {string} state Entity flight state ('fly', 'jumpout', 'landed').
  * @property {number} armor Current armor hitpoints.
  * @property {CombatShipStats} st Live computed ship stats containing max armor.
- * @property {import('./game.js').Session | null} [player] Player reference if this is a player-controlled ship.
+ * @property {Session | null} [player] Player reference if this is a player-controlled ship.
  * @property {boolean} [noDisable] Exemption flag preventing disablement threshold.
  * @property {number} [rescueT] Rescue protection countdown timestamp.
  * @property {number | null} [owner] Entity ID of the commanding or parent ship.
@@ -154,9 +158,9 @@ import { winOdds } from '../shared/hostile.js';
  * Server game interface for combat coordination.
  * @typedef {object} CombatGameHost
  * @property {Record<string, CombatSpace>} spaces Active solar system space instances.
- * @property {import('./features.js').FeatureServices} features Server feature services.
+ * @property {FeatureServices} features Server feature services.
  * @property {Map<number, CombatSession>} sessions Active client sessions.
- * @property {(session: CombatSession, msg: import('./message-registry.js').NetworkMessage) => void} [send] Message transmitter.
+ * @property {(session: CombatSession, msg: NetworkMessage) => void} [send] Message transmitter.
  */
 
 /**

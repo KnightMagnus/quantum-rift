@@ -24,6 +24,9 @@ import { assertLots, addLots, commonLots, planTake, applyTake } from '../shared/
 import { recordEconomy } from '../shared/economy-receipt.js';
 import { WING_ONLY } from '../shared/docks.js';
 
+/** @import { GradeLots } from '../shared/cargo-contracts.js' */
+/** @import { Game } from './game.js' */
+
 /** @typedef {import('./game.js').Session} Session */
 /** @typedef {import('./game.js').PlayerData} PlayerData */
 /** @typedef {import('./game.js').StellarBody} StellarBody */
@@ -33,7 +36,7 @@ import { WING_ONLY } from '../shared/docks.js';
  * outfitter operations. Uses the existing account and shared pricing/grade rules;
  * there is no copied inventory, new save path or economic authority in the UI.
  * Legacy bodies remain unchecked; the capability signature is not wire validation.
- * @typedef {Pick<import('./game.js').Game,
+ * @typedef {Pick<Game,
  *   'A' |
  *   'O' |
  *   'db' |
@@ -53,7 +56,7 @@ import { WING_ONLY } from '../shared/docks.js';
  *   'tut' |
  *   'yard' |
  *   'you'>} PortCapabilities
- * @typedef {Pick<import('./game.js').Game,
+ * @typedef {Pick<Game,
  *   'market' |
  *   'trade' |
  *   'matsFor' |
@@ -116,7 +119,7 @@ const PortOperations = {
    * @param {Session} s Player session.
    * @param {string} cid Commodity ID.
    * @param {number} qty Amount to buy (>0) or sell (<0).
-   * @param {import('../shared/cargo-contracts.js').GradeLots|'common-first'} [selection]
+   * @param {GradeLots|'common-first'} [selection]
    * @returns {void}
    * @this {PortCapabilities}
    */

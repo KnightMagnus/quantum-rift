@@ -1,5 +1,10 @@
 // @ts-check
 import { PRESSURE as P } from '../shared/mining-pressure-rules.js';
+
+/** @import { Session } from './game.js' */
+/** @import { MiningSpace, SavedRockGeneration } from './mining-contracts.js' */
+/** @import { PressureWire } from './mining-pressure-contracts.js' */
+/** @import { Entity } from './space.js' */
 /** @typedef {import('./mining-pressure-contracts.js').PressureCapabilities} C */
 /** @typedef {import('./mining-pressure-contracts.js').PressureSpace} Space */
 /** @typedef {import('./mining-pressure-contracts.js').SavedMiningPressure} W */
@@ -71,7 +76,7 @@ function scope(c, owner, sys) {
     ),
   ];
 }
-/** @param {C} c @param {Space} sp @param {string[]} owners @param {number[]} sessions @param {import('./space.js').Entity} e */
+/** @param {C} c @param {Space} sp @param {string[]} owners @param {number[]} sessions @param {Entity} e */
 function eligible(c, sp, owners, sessions, e) {
   if (!e.player || e.dead) return false;
   const s = e.player.s,
@@ -195,7 +200,7 @@ export const MiningPressureOperations = {
     w.consent = [];
     this.db.touch();
   },
-  /** @this {C} @param {import('./mining-contracts.js').MiningSpace} sp @param {import('./mining-contracts.js').SavedRockGeneration} rock @param {number} seconds @param {readonly string[]} [captains] */
+  /** @this {C} @param {MiningSpace} sp @param {SavedRockGeneration} rock @param {number} seconds @param {readonly string[]} [captains] */
   work(sp, rock, seconds, captains = rock.captain ? [rock.captain] : []) {
     const owner = captains[0];
     if (!owner || seconds <= 0) return;
@@ -234,7 +239,7 @@ export const MiningPressureOperations = {
     }
     this.db.touch();
   },
-  /** @this {C} @param {import('./mining-contracts.js').MiningSpace} sp @param {import('./mining-contracts.js').SavedRockGeneration} rock */
+  /** @this {C} @param {MiningSpace} sp @param {SavedRockGeneration} rock */
   regrow(sp, rock) {
     const f = field(this, sp, rock.key.split(':').slice(0, 2).join(':'));
     return (1 + f.recovery / 100) * (this.rush(sp.id) ? 0.85 : 1);
@@ -363,7 +368,7 @@ export const MiningPressureOperations = {
     w.encounters = w.encounters.filter((e) => e.active || clock - e.at < P.cooldown);
   },
   /** A scoped encounter is hostile only to its current consenting captain hulls.
-   * @this {C} @param {Space} sp @param {import('./space.js').Entity} a @param {import('./space.js').Entity} b @returns {boolean|null} */
+   * @this {C} @param {Space} sp @param {Entity} a @param {Entity} b @returns {boolean|null} */
   allow(sp, a, b) {
     const id = a.miningEncounter || b.miningEncounter;
     if (!id) return null;
@@ -376,13 +381,13 @@ export const MiningPressureOperations = {
     if (a.miningEncounter && other !== root) return false; // Never punish friendly wingmates for captain noise.
     return eligible(this, sp, g.participants, g.sessions, root);
   },
-  /** @this {C} @param {Space} sp @param {string|undefined} id @param {import('./space.js').Entity} target */
+  /** @this {C} @param {Space} sp @param {string|undefined} id @param {Entity} target */
   shotAllowed(sp, id, target) {
     if (!id) return true;
     const g = state(this).encounters.find((g) => g.id === id && g.active && g.sys === sp.id);
     return !!g && eligible(this, sp, g.participants, g.sessions, target);
   },
-  /** @this {C} @param {import('./game.js').Session} s @param {number} tonnes */
+  /** @this {C} @param {Session} s @param {number} tonnes */
   extracted(s, tonnes) {
     if (tonnes <= 0) return;
     const p = captain(this, this.db.key(s.data.name), s.data.sys);
@@ -393,7 +398,7 @@ export const MiningPressureOperations = {
     }
     this.db.touch();
   },
-  /** @this {C} @param {import('./game.js').Session} s @returns {import('./mining-pressure-contracts.js').PressureWire} */
+  /** @this {C} @param {Session} s @returns {PressureWire} */
   payload(s) {
     const p = captain(this, this.db.key(s.data.name), s.data.sys);
     return {
@@ -417,7 +422,7 @@ export const MiningPressureOperations = {
       .hazards.filter((h) => h.sys === sys && !h.resolved)
       .map((h) => ({ id: h.id, x: h.x, y: h.y, radius: h.radius, detonateAt: h.detonateAt }));
   },
-  /** @this {C} @param {import('./game.js').Session} s @param {{op?:string}} m */
+  /** @this {C} @param {Session} s @param {{op?:string}} m */
   consent(s, m) {
     if (
       !s.ent ||

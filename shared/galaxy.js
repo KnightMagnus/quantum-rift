@@ -1,5 +1,7 @@
 import { addEventide } from './eventide.js';
 import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from './gen.js';
+
+/** @import { OutfitAsset, WeaponAsset } from './rules.js' */
 // Quantum Rift: the galaxy. 30 hand-made anchor systems, grown to ~200 by shared/gen.js (deterministic).
 // Shared by the server (authoritative) and the browser client (map, landing screens).
 
@@ -1199,7 +1201,7 @@ export const FACTION_OUTFITS = {
 };
 /**
  * Custom outfit definitions complementing standard outfits.
- * @type {Array<import('./rules.js').OutfitAsset>}
+ * @type {Array<OutfitAsset>}
  */
 // Generic weapon outfits. Stable weapon IDs keep existing ship loadouts and saves compatible.
 export const EXTRA_OUTFITS = [
@@ -1445,7 +1447,7 @@ for (const o of EXTRA_OUTFITS) o.icon = o.icon || `icons/${o.id}.png`; // 2.5: r
 
 /**
  * Custom weapon asset definitions added by Quantum Rift.
- * @type {Array<import('./rules.js').WeaponAsset>}
+ * @type {Array<WeaponAsset>}
  */
 export const EXTRA_WEAPONS = [
   {

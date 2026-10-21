@@ -9,6 +9,11 @@ import {
 } from '../shared/mining-rules.js';
 import { INDUSTRIAL } from '../shared/industrial-rules.js';
 import { splitLots } from '../shared/cargo-lots.js';
+
+/** @import { Session } from './game.js' */
+/** @import { NetworkMessage } from './message-registry.js' */
+/** @import { MiningContact, MiningPrivateWire, MiningRocksWire, SavedMiningLoot } from './mining-contracts.js' */
+/** @import { LootItem, Rock } from './space.js' */
 /** @typedef {import('./mining-contracts.js').SavedRockGeneration} Generation */
 /** @typedef {import('./mining-contracts.js').MiningCapabilities} Capabilities */
 /** @typedef {import('./mining-contracts.js').SavedMiningWorld} World */
@@ -478,7 +483,7 @@ export const MiningOperations = {
     sp.loot.push(...f.parcels);
     this.endTick(sp);
   },
-  /** @this {Capabilities} @param {Space} sp @param {import('./space.js').Rock} rock @param {import('./mining-contracts.js').MiningContact} hit */
+  /** @this {Capabilities} @param {Space} sp @param {Rock} rock @param {MiningContact} hit */
   contact(sp, rock, hit) {
     const r = world(this).systems[sp.id]?.rocks.find((r) => r === rock);
     if (!r || r.down || !Number.isFinite(hit.damage) || hit.damage < 0) return;
@@ -516,7 +521,7 @@ export const MiningOperations = {
     this.db.touch();
   },
   /** Sweep never finishes a clean-ready or multistage rock; same finite root budget.
-   * @this {Capabilities} @param {Space} sp @param {import('./space.js').Rock} rock @param {number} damage @param {string} captain */
+   * @this {Capabilities} @param {Space} sp @param {Rock} rock @param {number} damage @param {string} captain */
   sweep(sp, rock, damage, captain) {
     const r = world(this).systems[sp.id]?.rocks.find((x) => x === rock);
     if (
@@ -540,7 +545,7 @@ export const MiningOperations = {
     this.db.touch();
     return spent;
   },
-  /** @this {Capabilities} @param {Space} sp @param {import('./space.js').Rock} rock @param {number} damage @param {string|null} [captain] */
+  /** @this {Capabilities} @param {Space} sp @param {Rock} rock @param {number} damage @param {string|null} [captain] */
   ordinary(sp, rock, damage, captain = null) {
     const r = world(this).systems[sp.id]?.rocks.find((r) => r === rock);
     if (!r || r.down || !Number.isFinite(damage) || damage <= 0) return;
@@ -602,9 +607,7 @@ export const MiningOperations = {
     }
     f.parcels = f.parcels.filter((p) => !p.taken && quantity(p.it) > 0);
     sp.loot = sp.loot.filter(
-      (p) =>
-        !('generationKey' in p.it) ||
-        f.parcels.includes(/** @type {import('./mining-contracts.js').SavedMiningLoot} */ (p)),
+      (p) => !('generationKey' in p.it) || f.parcels.includes(/** @type {SavedMiningLoot} */ (p)),
     );
     // No settled history is retained. Live parcels pin their original ledger until
     // accepted/expired; unsettled or inconsistent records remain for validation.
@@ -626,7 +629,7 @@ export const MiningOperations = {
     this.endTick(sp);
     this.db.touch();
   },
-  /** @this {Capabilities} @param {import('./game.js').Session} s @param {import('./message-registry.js').NetworkMessage & {op?:string}} request */
+  /** @this {Capabilities} @param {Session} s @param {NetworkMessage & {op?:string}} request */
   survey(s, request) {
     const e = s.ent,
       w = world(this);
@@ -656,7 +659,7 @@ export const MiningOperations = {
     this.db.touch();
     return true;
   },
-  /** @this {Capabilities} @param {Space} sp @returns {import('./mining-contracts.js').MiningRocksWire} */
+  /** @this {Capabilities} @param {Space} sp @returns {MiningRocksWire} */
   rocksPayload(sp) {
     this.endTick(sp);
     return {
@@ -682,7 +685,7 @@ export const MiningOperations = {
       })),
     };
   },
-  /** @this {Capabilities} @param {import('./game.js').Session} s @param {Space} sp @returns {import('./mining-contracts.js').MiningPrivateWire} */
+  /** @this {Capabilities} @param {Session} s @param {Space} sp @returns {MiningPrivateWire} */
   payload(s, sp) {
     const now = world(this).clock,
       v = s.data.miningSurvey;
@@ -705,7 +708,7 @@ export const MiningOperations = {
           : [],
     };
   },
-  /** @this {Capabilities} @param {import('./game.js').Session} s @param {import('./space.js').LootItem} item @param {number} n */
+  /** @this {Capabilities} @param {Session} s @param {LootItem} item @param {number} n */
   collected(s, item, n) {
     if (!item.generationKey) return;
     const w = world(this);

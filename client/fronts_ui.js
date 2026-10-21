@@ -11,6 +11,9 @@ import {
 import { credits, route } from '/shared/rules.js';
 import { STATES } from '/shared/living.js';
 
+/** @import { FactionDef } from '../shared/galaxy.js' */
+/** @import { ClientGameState } from './main.js' */
+
 /**
  * @typedef {Object} GoalEntry
  * @property {string} type Goal type key
@@ -96,7 +99,7 @@ function goalRows(list, period) {
 
 /**
  * Renders the OPS companion tab (server events, invasions, system anomalies, goals, Armada summary, and calendar).
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function opsHtml(G) {
@@ -182,7 +185,7 @@ export function opsHtml(G) {
 
 /**
  * Returns array of eligible faction keys that offer Quartermaster stores.
- * @param {Record<string, import("../shared/galaxy.js").FactionDef>} FACTIONS_ Faction definitions dictionary
+ * @param {Record<string, FactionDef>} FACTIONS_ Faction definitions dictionary
  * @returns {string[]} Faction keys
  */
 export const STORE_FACS = (FACTIONS_) =>
@@ -192,8 +195,8 @@ export const STORE_FACS = (FACTIONS_) =>
 
 /**
  * Renders the modal Faction Stores quartermaster dialog with faction selector tabs.
- * @param {import("./main.js").ClientGameState} G Game state object
- * @param {Record<string, import("../shared/galaxy.js").FactionDef>} FACTIONS_ Faction definitions
+ * @param {ClientGameState} G Game state object
+ * @param {Record<string, FactionDef>} FACTIONS_ Faction definitions
  * @returns {string} HTML markup
  */
 export function storeMenuHtml(G, FACTIONS_) {
@@ -217,7 +220,7 @@ export function storeMenuHtml(G, FACTIONS_) {
 
 /**
  * Renders the items and standing table for a specific faction store.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {string} [facArg] Faction key to display
  * @returns {string} HTML markup
  */

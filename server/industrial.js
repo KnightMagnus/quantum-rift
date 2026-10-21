@@ -2,6 +2,10 @@
 import { INDUSTRIAL as R, CORONA_BANDS, coronaAt, inSweep } from '../shared/industrial-rules.js';
 import { RECIPES } from '../shared/refinery-rules.js';
 import { planTake, applyTake, addLots, commonLots } from '../shared/cargo-lots.js';
+
+/** @import { Session } from './game.js' */
+/** @import { IndustrialRequest, IndustrialWorld } from './industrial-contracts.js' */
+/** @import { Entity, Space } from './space.js' */
 /** @typedef {import('./industrial-contracts.js').IndustrialCapabilities} C */
 /** @typedef {import('./industrial-contracts.js').IndustrialShip} State */
 /** @typedef {import('./refinery-contracts.js').RefineryPlayer} Player */
@@ -52,7 +56,7 @@ function validate(m) {
     throw Error('Invalid industrial ship save');
 }
 /** Staged whole cargo + finite-source change, same checkpoint as existing player/world economy.
- * @param {C} c @param {import('./game.js').Session} s @param {(d:Player,w:import('./industrial-contracts.js').IndustrialWorld)=>void} fn */
+ * @param {C} c @param {Session} s @param {(d:Player,w:IndustrialWorld)=>void} fn */
 function transaction(c, s, fn) {
   if (c.db.economicFrozen || c.paused())
     throw Error('Industrial economy requires recovery or unpause');
@@ -64,10 +68,7 @@ function transaction(c, s, fn) {
   d.ship = structuredClone(d.ship);
   c.db.world.industrial = structuredClone(world);
   try {
-    fn(
-      /** @type {Player} */ (d),
-      /** @type {import('./industrial-contracts.js').IndustrialWorld} */ (c.db.world.industrial),
-    );
+    fn(/** @type {Player} */ (d), /** @type {IndustrialWorld} */ (c.db.world.industrial));
     c.db.touch();
     c.db.flush();
     c.refresh(s);
@@ -79,11 +80,11 @@ function transaction(c, s, fn) {
     throw error;
   }
 }
-/** @param {import('./space.js').Space} sp @param {import('./space.js').Entity} e */
+/** @param {Space} sp @param {Entity} e */
 function drones(sp, e) {
   return [...sp.ships.values()].filter((x) => x.industrialRoot === e.id);
 }
-/** @param {import('./space.js').Space} sp @param {import('./space.js').Entity} e @param {boolean} on */
+/** @param {Space} sp @param {Entity} e @param {boolean} on */
 function support(sp, e, on) {
   const old = drones(sp, e);
   if (!on) {
@@ -135,13 +136,13 @@ export const IndustrialOperations = {
     }
     this.db.touch();
   },
-  /** @this {C} @param {import('./game.js').Session} s */
+  /** @this {C} @param {Session} s */
   stop(s) {
     const m = s.data?.ship?.industrial;
     if (m) m.sweep = m.harvest = m.smelter = false;
     this.db.touch();
   },
-  /** @this {C} @param {import('./game.js').Session} s @param {import('./industrial-contracts.js').IndustrialRequest} q */
+  /** @this {C} @param {Session} s @param {IndustrialRequest} q */
   command(s, q) {
     try {
       if (
@@ -200,7 +201,7 @@ export const IndustrialOperations = {
       this.toast(s, String(error instanceof Error ? error.message : error));
     }
   },
-  /** @this {C} @param {import('./space.js').Space} sp @param {number} dt */
+  /** @this {C} @param {Space} sp @param {number} dt */
   industrialTick(sp, dt) {
     if (this.paused() || this.db.economicFrozen) return;
     if (!Number.isFinite(dt) || dt <= 0 || dt > 1) throw Error('Invalid industrial timestep');
@@ -317,9 +318,7 @@ export const IndustrialOperations = {
         }
       }
       if (harvest && work > 0 && band) {
-        const w = /** @type {import('./industrial-contracts.js').IndustrialWorld} */ (
-          this.db.world.industrial
-        );
+        const w = /** @type {IndustrialWorld} */ (this.db.world.industrial);
         const source = (w.sources[band.id] ??= { units: R.sourceUnits, last: clock });
         source.units = Math.min(
           R.sourceUnits,
@@ -363,7 +362,7 @@ export const IndustrialOperations = {
       this.db.touch();
     }
   },
-  /** @this {C} @param {import('./game.js').Session} s */
+  /** @this {C} @param {Session} s */
   payload(s) {
     if (s.data?.ship?.hull !== R.hull) return null;
     const m = state(/** @type {Player} */ (s.data)),

@@ -2,6 +2,10 @@
 import { SYS, STELLARS } from '../shared/galaxy.js';
 import { TOW, towSpeed } from '../shared/towing-rules.js';
 import { addLots, assertLots } from '../shared/cargo-lots.js';
+
+/** @import { RefineryPlayer } from './refinery-contracts.js' */
+/** @import { Space } from './space.js' */
+/** @import { TowRequest } from './towing-contracts.js' */
 /** @typedef {import('./towing-contracts.js').TowCapabilities} C */
 /** @typedef {import('./towing-contracts.js').TowWorld} W */
 /** @typedef {import('./towing-contracts.js').Motherlode} ObjectRecord */
@@ -219,7 +223,7 @@ function release(c, o) {
 /** @param {C} c @param {Session} s @param {()=>void} fn */
 function transaction(c, s, fn) {
   if (c.db.economicFrozen || c.paused()) throw Error('Towing economy requires recovery/unpause');
-  const d = /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data),
+  const d = /** @type {RefineryPlayer} */ (s.data),
     old = { cargo: d.cargo, cargoLots: d.cargoLots },
     w = c.db.world.towing;
   d.cargo = structuredClone(d.cargo);
@@ -265,8 +269,7 @@ function deliver(c, s, o, port, previous = o) {
     crossesPort(p, previous, o) > p.r + TOW.deliveryApron
   )
     throw Error('Bring the motherlode into an accepted port collection zone');
-  const pass =
-    /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).landPass?.[p.id] || 0;
+  const pass = /** @type {RefineryPlayer} */ (s.data).landPass?.[p.id] || 0;
   if (!p.outlaw && (s.data.rep?.[SYS[o.sys].faction] || 0) <= -30 && pass <= Date.now())
     throw Error('Port refuses delivery permission');
   if (c.room(s.data) < o.mass)
@@ -276,8 +279,8 @@ function deliver(c, s, o, port, previous = o) {
       ss = ws.slots.find((x) => x.object?.id === o.id);
     if (!ss?.object) throw Error('Missing source');
     addLots(
-      /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).cargo,
-      /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).cargoLots,
+      /** @type {RefineryPlayer} */ (s.data).cargo,
+      /** @type {RefineryPlayer} */ (s.data).cargoLots,
       { cid: o.ore, qty: o.mass, grades: { ...o.lots } },
       c.room(s.data),
     );
@@ -386,7 +389,7 @@ export const TowingOperations = {
     this.db.touch();
     return true;
   },
-  /** @this {C} @param {import('./space.js').Space} sp */
+  /** @this {C} @param {Space} sp */
   towingTick(sp) {
     if (this.paused() || this.db.economicFrozen) return;
     ensure(this, sp.id);
@@ -462,7 +465,7 @@ export const TowingOperations = {
       this.db.touch();
     }
   },
-  /** @this {C} @param {Session} s @param {import('./towing-contracts.js').TowRequest} q */
+  /** @this {C} @param {Session} s @param {TowRequest} q */
   command(s, q) {
     try {
       if (

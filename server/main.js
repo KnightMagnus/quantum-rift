@@ -8,6 +8,9 @@ import { upgrade } from './ws.js';
 import { DB } from './db.js';
 import { Game } from './game.js';
 
+/** @import { GameAssets } from '../shared/rules.js' */
+/** @import { Server, ServerResponse } from 'node:http' */
+
 /**
  * Root directory path of the Quantum Rift repository.
  * @type {string}
@@ -34,7 +37,7 @@ const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf
 
 /**
  * Static game asset catalog loaded from shared/assets.json.
- * @type {import('../shared/rules.js').GameAssets}
+ * @type {GameAssets}
  */
 const A = JSON.parse(fs.readFileSync(path.join(ROOT, 'shared', 'assets.json'), 'utf8'));
 
@@ -72,7 +75,7 @@ const TYPES = {
 
 /**
  * Streams a local static file to an HTTP response with appropriate MIME headers and caching.
- * @param {import('node:http').ServerResponse} res Outgoing HTTP server response.
+ * @param {ServerResponse} res Outgoing HTTP server response.
  * @param {string} file Absolute filesystem path to the target static file.
  * @param {boolean} cache Whether to enable client-side 1-day public caching.
  * @returns {void}
@@ -127,7 +130,7 @@ function serve(res, file, cache, range) {
 
 /**
  * Main HTTP application server handling REST API endpoints, static assets, and WebSocket handshakes.
- * @type {import('node:http').Server}
+ * @type {Server}
  */
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');

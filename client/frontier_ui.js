@@ -13,6 +13,9 @@ import {
 } from '/shared/frontier.js';
 import { credits } from '/shared/rules.js';
 
+/** @import { PlayerData } from '../server/game.js' */
+/** @import { ClientGameState } from './main.js' */
+
 /**
  * @typedef {Object} ColonyData
  * @property {boolean} [open] Whether world is unsettled
@@ -73,7 +76,7 @@ const esc = (s) =>
 
 /**
  * Formats a list of required material tuples with availability coloring.
- * @param {import('../server/game.js').PlayerData} y Player state object
+ * @param {PlayerData} y Player state object
  * @param {Array<[string, number, number]>} list Array of [material, grade, quantity] tuples
  * @returns {string} HTML markup
  */
@@ -107,7 +110,7 @@ const buffText = (b) =>
 
 /**
  * Renders the COLONY landed tab for founding, managing, stockpiling, and constructing buildings.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function colonyHtml(G) {
@@ -164,7 +167,7 @@ export function colonyHtml(G) {
 
 /**
  * Renders the Station Defense rating, turret upgrades, and Station Holdout wave defense interface.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether interactive actions are enabled
  * @returns {string} HTML markup
  */
@@ -188,7 +191,7 @@ export function defenseHtml(G, interactive) {
 
 /**
  * Renders the ship mastery overview tier stars, XP progress bar, and active hull bonuses.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function masteryHtml(G) {
@@ -204,7 +207,7 @@ export function masteryHtml(G) {
 
 /**
  * Renders the Crucible arena queue, current matchmaking rating, and record.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function arenaHtml(G) {
@@ -221,7 +224,7 @@ export function arenaHtml(G) {
 
 /**
  * Renders the player-to-player market exchange order book, active orders, and storage hold.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function exchangeHtml(G) {
@@ -264,7 +267,7 @@ export function exchangeHtml(G) {
 
 /**
  * Renders the galactic community leaderboards and captain profile lookup.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function boardsHtml(G) {

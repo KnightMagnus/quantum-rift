@@ -16,6 +16,11 @@ import { BRIDGE_SLOTS } from '../shared/hangar.js';
 import { researchBonus, officerBonus, makeLoadout, repairBasis, credits } from '../shared/rules.js';
 import { SPEC } from '../shared/specialty.js';
 
+/** @import { ShipLoadout } from '../shared/rules.js' */
+/** @import { PlayerData, Session } from './game.js' */
+/** @import { NetworkMessage } from './message-registry.js' */
+/** @import { Entity } from './space.js' */
+
 /** @type {number | undefined} Hull ID for the Herald specialty ship. */
 const HERALD = (Object.values(SPEC).find((s) => s.key === 'herald') || {}).id;
 
@@ -23,8 +28,8 @@ export const DocksOperations = {
   // ------------------------------------------------------------------ save upgrade and bookkeeping
   /**
    * Migrate or repair docks structure in player data.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {import("./game.js").PlayerData} Initialized player data.
+   * @param {PlayerData} d - Saved player data.
+   * @returns {PlayerData} Initialized player data.
    */
   docksInit(d) {
     this.hangarInit(d);
@@ -118,7 +123,7 @@ export const DocksOperations = {
   },
   /**
    * Generate a unique ship UID.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {string} Unique ship identifier.
    */
   shipUid(d) {
@@ -126,7 +131,7 @@ export const DocksOperations = {
   },
   /**
    * Get the number of available docks based on station Station Tier.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {number} Number of docks.
    */
   dockCount(d) {
@@ -134,16 +139,16 @@ export const DocksOperations = {
   },
   /**
    * Look up a stored ship entry by its unique identifier.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {string | null | undefined} uid - Ship unique identifier.
-   * @returns {{ship: import("../shared/rules.js").ShipLoadout, escorts?: Array<{ship: import("../shared/rules.js").ShipLoadout}>} | null} Stored ship record or null if not found.
+   * @returns {{ship: ShipLoadout, escorts?: Array<{ship: ShipLoadout}>} | null} Stored ship record or null if not found.
    */
   stored(d, uid) {
     return uid ? d.dock.find((x) => x.ship.uid === uid) || null : null;
   },
   /**
    * Determine the maximum number of wingmates allowed for a dock.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {number} k - Dock index.
    * @returns {number} Maximum wingmate count.
    */
@@ -156,7 +161,7 @@ export const DocksOperations = {
   },
   /**
    * Find the dock index and slot where a ship UID is assigned.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {string} uid - Ship unique identifier.
    * @returns {{k: number, slot: string | number} | null} Slot coordinates or null.
    */
@@ -170,7 +175,7 @@ export const DocksOperations = {
   },
   /**
    * Remove a ship UID from all dock assignments (lead and wing slots).
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {string} uid - Ship unique identifier to unassign.
    * @returns {void}
    */
@@ -182,7 +187,7 @@ export const DocksOperations = {
   },
   /**
    * Remove an officer from all wingmate crew assignments.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {string} oid - Officer identifier.
    * @returns {void}
    */
@@ -192,7 +197,7 @@ export const DocksOperations = {
   },
   /**
    * Look up where an officer is assigned among wingmates.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {string} oid - Officer identifier.
    * @returns {{k: number, w: number, r: string} | null} Assignment location or null.
    */
@@ -205,8 +210,8 @@ export const DocksOperations = {
   // the wingmates of the active dock that are ready to fly
   /**
    * Retrieve active dock wingmates that are currently repaired and ready to fly.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Array<{w: import("../shared/rules.js").ShipLoadout, i: number, x: Record<string, string | number>}>} Array of active wingmate info objects.
+   * @param {PlayerData} d - Saved player data.
+   * @returns {Array<{w: ShipLoadout, i: number, x: Record<string, string | number>}>} Array of active wingmate info objects.
    */
   activeWings(d) {
     const D = d.docks && d.docks[d.activeDock];
@@ -220,7 +225,7 @@ export const DocksOperations = {
   },
   /**
    * Get an array of hull IDs for the active dock's ready wingmates.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {number[]} Array of hull IDs.
    */
   wingHulls(d) {
@@ -228,7 +233,7 @@ export const DocksOperations = {
   },
   /**
    * Calculate officer bonuses provided to a wingmate.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {{cap?: string | null, crew?: string | null}} w - Wingmate slot configuration.
    * @returns {Record<string, number>} Computed stat bonuses.
    */
@@ -238,7 +243,7 @@ export const DocksOperations = {
   // the new ship you fly took the active dock's lead slot (bought, rebuilt, rewarded)
   /**
    * Handle changes when the player's active ship changes lead slot.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {void}
    */
   leadChanged(d) {
@@ -249,7 +254,7 @@ export const DocksOperations = {
   // ------------------------------------------------------------------ payload
   /**
    * Build the network payload for docks and hangar status.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {{activeDock: number, docks: Array<Record<string, string | number>>, dock: Array<Record<string, string | number>>, stored: Array<Record<string, string | number>>}} Docks and stored ship overview payload.
    */
   docksPayload(d) {
@@ -298,8 +303,8 @@ export const DocksOperations = {
   // ------------------------------------------------------------------ operations (at your Personal Station)
   /**
    * Handle dock management operations (activate, assign, crew, repair).
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import("./message-registry.js").NetworkMessage} m - Inbound operation message.
+   * @param {Session} s - Player session.
+   * @param {NetworkMessage} m - Inbound operation message.
    * @returns {void}
    */
   docksOp(s, m) {
@@ -436,7 +441,7 @@ export const DocksOperations = {
   // stored bridge presets may name officers who now serve elsewhere
   /**
    * Clean and validate bridge assignments against available officers.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {Record<string, string>} b - Bridge slot officer map.
    * @returns {Record<string, string>} Sanitized bridge map.
    */
@@ -452,7 +457,7 @@ export const DocksOperations = {
   },
   /**
    * Instantly repair a damaged wingmate ship for a credit fee.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} uid - Unique ship identifier.
    * @returns {void}
    */
@@ -471,7 +476,7 @@ export const DocksOperations = {
   // a wingmate knocked out in a fight is towed home for repairs
   /**
    * Handle a wingmate ship being disabled or destroyed in combat, setting repair timer.
-   * @param {import('./space.js').Entity} e - Wingmate ship entity that was defeated.
+   * @param {Entity} e - Wingmate ship entity that was defeated.
    * @returns {void}
    */
   onWingLost(e) {
@@ -491,7 +496,7 @@ export const DocksOperations = {
   // buying a ship straight into your hangar (no trade-in)
   /**
    * Purchase a new ship directly into the hangar without trading in the active vessel.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {number} hull - Hull ID to purchase.
    * @returns {void}
    */

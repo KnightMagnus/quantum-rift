@@ -67,6 +67,11 @@ import {
 import { ROLES_INFO, BEATS } from '/shared/roles.js';
 import { levelOf, winOdds, HOLDOUT } from '/shared/hostile.js';
 
+/** @import { StellarBody } from '../server/game.js' */
+/** @import { NetworkMessage } from '../server/message-registry.js' */
+/** @import { ClientGameState } from './main.js' */
+/** @import { ShipHull } from './render.js' */
+
 // ------------------------------------------------------------------ type definitions
 /**
  * @typedef {Object} AskOptions
@@ -167,8 +172,8 @@ const esc = (s) =>
 let G, send;
 /**
  * Binds DOM event listeners and initializes UI state managers with global game state.
- * @param {import("./main.js").ClientGameState} g Global client game state
- * @param {(msg: import("../server/message-registry.js").NetworkMessage) => void} sender Network send dispatch function
+ * @param {ClientGameState} g Global client game state
+ * @param {(msg: NetworkMessage) => void} sender Network send dispatch function
  * @returns {void}
  */
 export function initUI(g, sender) {
@@ -509,7 +514,7 @@ const LAND_SCENES = {
 };
 /**
  * Selects the landscape illustration image key for a landed planetary or station body.
- * @param {import('../server/game.js').StellarBody} p Landed stellar body definition
+ * @param {StellarBody} p Landed stellar body definition
  * @returns {string} Image asset key name
  */
 function landScene(p) {
@@ -1061,8 +1066,8 @@ const STATMAX = {
 };
 /**
  * Generates HTML stat bar lines comparing ship statistics.
- * @param {import('./render.js').ShipHull} s Ship hull definition
- * @param {import('./render.js').ShipHull} [cmp] Comparison hull definition to show deltas
+ * @param {ShipHull} s Ship hull definition
+ * @param {ShipHull} [cmp] Comparison hull definition to show deltas
  * @returns {string} Rendered HTML string of stat comparison bars
  */
 function statLines(s, cmp) {
@@ -1728,7 +1733,7 @@ function stateCard(sys) {
 // 1.0.3: how far a job is and whether its cargo fits your hold
 /**
  * Calculates remaining available cargo capacity accounting for active cargo missions.
- * @param {import('./main.js').ClientGameState} y Player state object
+ * @param {ClientGameState} y Player state object
  * @returns {number} Free cargo capacity in tons
  */
 function holdFree(y) {
@@ -1843,7 +1848,7 @@ function outfitCat(o) {
 /**
  * Evaluates route distance, cargo/bunk space warnings, and threat notes for a job offer.
  * @param {LandedOffer} o Job offer definition
- * @param {import('./main.js').ClientGameState} y Player state object
+ * @param {ClientGameState} y Player state object
  * @returns {JobInfo} Evaluated location description, warning, and note strings
  */
 function jobInfo(o, y) {
@@ -1878,7 +1883,7 @@ function jobInfo(o, y) {
 }
 /**
  * Calculates the total trade-in refund value for the player's current ship and outfits (50% value).
- * @param {import('./main.js').ClientGameState} y Player state object
+ * @param {ClientGameState} y Player state object
  * @returns {number} Credit refund value
  */
 function tradeIn(y) {

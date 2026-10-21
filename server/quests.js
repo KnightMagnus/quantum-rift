@@ -20,6 +20,9 @@ import { SPECIALISTS } from '../shared/specialty.js';
 import { credits } from '../shared/rules.js';
 import { occupiedPassengerSeats } from '../shared/passengers.js';
 
+/** @import { QuestRecord, QuestStep } from '../shared/quests.js' */
+/** @import { Mission, PlayerData, Session } from './game.js' */
+
 /**
  * 32-bit FNV-1a string hash function.
  * @param {string | number} str - Input key to hash.
@@ -131,7 +134,7 @@ const raceOf = (fac) => (RACE_ROLES[fac] ? fac : 'quantum');
 // 2.5.2: the most hold space and bunks any step of a story will ask for, so the job board can warn before you take it on
 /**
  * Compute the maximum cargo hold and passenger bunks required across all steps of a quest chain.
- * @param {Array<import("../shared/quests.js").QuestStep>} steps - Quest chain steps.
+ * @param {Array<QuestStep>} steps - Quest chain steps.
  * @returns {{hold: number, pax: number}} Peak required hold and passenger capacity.
  */
 export const needsOf = (steps) => ({
@@ -153,8 +156,8 @@ export const needsOf = (steps) => ({
 export const QuestOperations = {
   /**
    * Initialize quest tracking structures on player data.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Record<string, import("../shared/quests.js").QuestRecord>} Initialized quests dictionary.
+   * @param {PlayerData} d - Saved player data.
+   * @returns {Record<string, QuestRecord>} Initialized quests dictionary.
    */
   questInit(d) {
     const q = (d.quests = d.quests || {});
@@ -190,7 +193,7 @@ export const QuestOperations = {
   },
   /**
    * Build network telemetry payload describing active quests, completed quests, and contact standings.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Record<string, string | number | boolean>} Quests telemetry payload.
    */
   questsPayload(d) {
@@ -216,8 +219,8 @@ export const QuestOperations = {
   /**
    * Generate available quest offerings at a stellar bar (side stories and procedural contact chains).
    * @param {{id: string, site?: boolean | Record<string, string | number>, svc: string, system: string} | null} p - Stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Array<import("./game.js").Mission>} List of quest offers.
+   * @param {PlayerData} d - Saved player data.
+   * @returns {Array<Mission>} List of quest offers.
    */
   questOffers(p, d) {
     const q = this.questInit(d),
@@ -271,7 +274,7 @@ export const QuestOperations = {
   /**
    * Determine next story chain and plan locations offered by a specific contact.
    * @param {{system: string, id: string}} p - Stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {Record<string, string | number>} C - Bar contact descriptor.
    * @returns {{X: Record<string, string | number | boolean>, plan: Record<string, string | number>} | null} Selected chain and route plan, or null.
    */
@@ -286,7 +289,7 @@ export const QuestOperations = {
   },
   /**
    * Calculate credit and item rewards for completing a quest chain at a given standing level.
-   * @param {{steps: Array<import("../shared/quests.js").QuestStep>}} X - Story chain template.
+   * @param {{steps: Array<QuestStep>}} X - Story chain template.
    * @param {number} lvl - Contact standing level (0-4).
    * @returns {{credits: number, crate: [string | null, number], officer: string | null, bp: number}} Reward descriptor.
    */
@@ -317,7 +320,7 @@ export const QuestOperations = {
   /**
    * Select candidate stellar worlds, ships, and targets for a procedural quest chain.
    * @param {{id: string, system: string}} p - Starting stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @param {Record<string, string | number | boolean>} X - Quest chain template.
    * @param {Record<string, string | number>} C - Contact descriptor.
    * @param {() => number} r - Random generator function.
@@ -374,7 +377,7 @@ export const QuestOperations = {
   // ---- accepting
   /**
    * Accept and start an active side story or procedural contact quest.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{side?: string, story?: string}} o - Quest offer descriptor.
    * @returns {void}
    */
@@ -441,10 +444,10 @@ export const QuestOperations = {
   // turn a step into a concrete job
   /**
    * Instantiate a concrete mission job object for a given quest step.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @param {import("../shared/quests.js").QuestRecord} Q - Active quest state.
+   * @param {PlayerData} d - Saved player data.
+   * @param {QuestRecord} Q - Active quest state.
    * @param {number} i - Step index.
-   * @returns {import("./game.js").Mission} Concrete mission specification.
+   * @returns {Mission} Concrete mission specification.
    */
   questStepJob(d, Q, i) {
     const st = Q.steps[i],
@@ -592,8 +595,8 @@ export const QuestOperations = {
   },
   /**
    * Push current step's job onto the player's active mission list.
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import("../shared/quests.js").QuestRecord} Q - Active quest state.
+   * @param {Session} s - Player session.
+   * @param {QuestRecord} Q - Active quest state.
    * @param {boolean} [first] - True if first step initiation.
    * @returns {void}
    */
@@ -632,8 +635,8 @@ export const QuestOperations = {
   // a step was paid (called from completeOnLanding)
   /**
    * Advance an active quest chain to its next step after completing the current step's job.
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import("./game.js").Mission} m - Completed mission record.
+   * @param {Session} s - Player session.
+   * @param {Mission} m - Completed mission record.
    * @returns {void}
    */
   questAdvance(s, m) {
@@ -659,8 +662,8 @@ export const QuestOperations = {
   },
   /**
    * Complete a quest chain, awarding credits, crates, blueprints, officers, and standing.
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import("../shared/quests.js").QuestRecord} Q - Completed quest structure.
+   * @param {Session} s - Player session.
+   * @param {QuestRecord} Q - Completed quest structure.
    * @returns {void}
    */
   questFinish(s, Q) {
@@ -741,7 +744,7 @@ export const QuestOperations = {
   },
   /**
    * Terminate and fail an active quest chain.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {string} qid - Quest ID string.
    * @param {string} why - Explanation of failure.
    * @returns {void}
@@ -767,7 +770,7 @@ export const QuestOperations = {
   // every two seconds: a step lost with your ship, a missed deadline or a destroyed convoy gets one more chance
   /**
    * Periodic check on active quest steps to allow second chance or mark failure.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @returns {void}
    */
   questSweep(s) {
@@ -805,7 +808,7 @@ export const QuestOperations = {
   /**
    * Retrieve dynamic conversation dialogue and trade/system rumors from a bar contact.
    * @param {{id: string, system: string}} p - Landed stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} d - Saved player data.
    * @returns {Record<string, string | number> | null} Bar dialogue descriptor, or null.
    */
   barTalk(p, d) {
@@ -900,7 +903,7 @@ export const QuestOperations = {
   // ---- salvage steps: a crate appears at the marked point when you come close
   /**
    * Spawn a floating salvage container when player ship nears marked quest coordinates.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @returns {void}
    */
   questSalvageIdle(s) {
@@ -928,7 +931,7 @@ export const QuestOperations = {
   },
   /**
    * Handle collecting a quest salvage floating loot entity.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} s - Player session.
    * @param {{salvage: string}} it - Collected loot cargo item.
    * @returns {boolean} True if matching salvage quest was completed.
    */

@@ -3,6 +3,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
+/** @import { PlayerData } from './game.js' */
+/** @import { IndustrialWorld } from './industrial-contracts.js' */
+/** @import { SavedMiningWorld } from './mining-contracts.js' */
+/** @import { SavedMiningPressure } from './mining-pressure-contracts.js' */
+/** @import { SavedRefinery } from './refinery-contracts.js' */
+/** @import { TowWorld } from './towing-contracts.js' */
+
 /**
  * Persisted player account record and save file state.
  * @typedef {object} AccountCredentials
@@ -10,20 +17,20 @@ import crypto from 'node:crypto';
  * @property {string} salt Cryptographic salt in hexadecimal.
  * @property {string} hash Scrypt password hash in hexadecimal.
  * @property {number} created Account creation timestamp in milliseconds.
- * @property {import('./game.js').PlayerData} [data] Associated player save state data.
+ * @property {PlayerData} [data] Associated player save state data.
  */
 
-/** @typedef {import("./game.js").PlayerData & AccountCredentials} PlayerAccount */
+/** @typedef {PlayerData & AccountCredentials} PlayerAccount */
 
 /**
  * Persisted galaxy world state data.
  * @typedef {object} WorldData
- * @property {import("./towing-contracts.js").TowWorld} [towing]
- * @property {import("./industrial-contracts.js").IndustrialWorld} [industrial]
+ * @property {TowWorld} [towing]
+ * @property {IndustrialWorld} [industrial]
  * @property {Record<string, string>} sites World sites and player claim data.
- * @property {import("./mining-contracts.js").SavedMiningWorld} [mining]
- * @property {import("./refinery-contracts.js").SavedRefinery} [refinery]
- * @property {import("./mining-pressure-contracts.js").SavedMiningPressure} [miningPressure]
+ * @property {SavedMiningWorld} [mining]
+ * @property {SavedRefinery} [refinery]
+ * @property {SavedMiningPressure} [miningPressure]
  */
 
 /**
@@ -129,7 +136,7 @@ export class DB {
    * Creates, persists, and returns a new player account with a hashed password and initial save data.
    * @param {string} name Captain name.
    * @param {string} pass Plaintext password.
-   * @param {import('./game.js').PlayerData} fresh Initial player state and save properties.
+   * @param {PlayerData} fresh Initial player state and save properties.
    * @returns {PlayerAccount} Newly created player account record.
    */
   create(name, pass, fresh) {

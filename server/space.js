@@ -9,7 +9,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @typedef {object} WeaponMount
  * @property {number} w Weapon item ID.
  * @property {number} n Number of mounted weapon instances.
- * @property {import('../shared/rules.js').WeaponConfig} p Precomputed weapon parameters (range, reload, speed, homing, etc.).
+ * @property {WeaponConfig} p Precomputed weapon parameters (range, reload, speed, homing, etc.).
  * @property {number} cd Current weapon cooldown time remaining in seconds.
  * @property {number} ammo Current ammunition count or Infinity if unlimited.
  * @property {string} snd Sound effect identifier.
@@ -44,7 +44,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {string} state Entity flight state ('fly', 'jumpout', 'landed').
  * @property {number} jumpT Countdown timer for hyperjump execution.
  * @property {string} [jumpTo] Destination system ID during jump.
- * @property {import('./game.js').Mission} [mission] Mission data object if this is a spawned mission target.
+ * @property {Mission} [mission] Mission data object if this is a spawned mission target.
  * @property {number} life Lifespan in seconds before departure.
  * @property {number} cargo Cargo capacity or cargo indicator.
  * @property {number} strength Base strength rating of the ship.
@@ -114,7 +114,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {string|null} [captain] Captured root captain for ordinary rock damage.
  * @property {number} id Unique projectile ID.
  * @property {string} [miningEncounter] Captured pressure-encounter scope.
- * @property {import("./mining-contracts.js").MiningSource|null} [mining] Captured mining provenance.
+ * @property {MiningSource|null} [mining] Captured mining provenance.
  * @property {number} w Weapon ID used to fire this shot.
  * @property {number} owner Entity ID of shooting ship.
  * @property {number} x Current position X.
@@ -124,7 +124,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {number} life Remaining projectile lifetime in seconds.
  * @property {number} dmgA Armor / hull damage dealt on impact.
  * @property {number} dmgS Shield damage dealt on impact.
- * @property {import('../shared/rules.js').WeaponConfig} p Precomputed weapon properties.
+ * @property {WeaponConfig} p Precomputed weapon properties.
  * @property {Entity | null} [target] Guided missile target entity, if homing.
  *
  * @typedef {object} Beam
@@ -140,7 +140,7 @@ import { eventideDrain } from '../shared/eventide.js';
  * @property {number} [grade] Material grade index (0-4).
  * @property {string} [ore] Mined ore commodity ID.
  * @property {number} [rich] Authored field richness (not raw grade).
- * @property {import('../shared/cargo-contracts.js').GradeLots} [remainingLots]
+ * @property {GradeLots} [remainingLots]
  * @property {string} [generationKey]
  * @property {string} [parcelKey]
  * @property {number[]} [progressionTokens]
@@ -187,6 +187,11 @@ import {
   DT,
 } from '../shared/rules.js';
 
+/** @import { GradeLots } from '../shared/cargo-contracts.js' */
+/** @import { GameAssets, ShipLoadout, ShipStatsBonus, WeaponConfig } from '../shared/rules.js' */
+/** @import { Game, Mission, StellarBody } from './game.js' */
+/** @import { MiningSource } from './mining-contracts.js' */
+
 let NEXT = 1;
 const SLOTS = [
   [-1, 1],
@@ -228,8 +233,8 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
  * Simulates ships, physics, weapons fire, projectile trajectories, laser beams,
  * floating debris/loot, asteroid fields, and NPC combat AI.
  *
- * @property {import('./game.js').Game} game Parent game server engine instance.
- * @property {import('../shared/rules.js').GameAssets} A Global game asset definitions.
+ * @property {Game} game Parent game server engine instance.
+ * @property {GameAssets} A Global game asset definitions.
  * @property {SpaceSystem} sys System definition and stellar data from galaxy database.
  * @property {string} id Unique system identifier string.
  * @property {Map<number, Entity>} ships Active ships, escorts, drones, and traffic in this system.
@@ -247,12 +252,12 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
  * @property {boolean} keep Prevent deallocation flag.
  * @property {number} errs Count of tick simulation errors.
  * @property {string[]} nearFacs Cached list of neighboring faction IDs for frontier traffic generation.
- * @property {import('./game.js').StellarBody[]} _ports Cached landing-capable spaceports in this system.
+ * @property {StellarBody[]} _ports Cached landing-capable spaceports in this system.
  */
 export class Space {
   /**
    * Initializes a live system space simulation.
-   * @param {import('./game.js').Game} game Server game instance.
+   * @param {Game} game Server game instance.
    * @param {string} sysId Unique star system ID.
    */
   constructor(game, sysId) {
@@ -323,7 +328,7 @@ export class Space {
   /**
    * Spawns and registers a new ship entity in this space simulation.
    * @param {object} o Ship initialization parameters.
-   * @param {import('../shared/rules.js').ShipLoadout} [o.loadout] Ship loadout with hull, outfits, weapons, and ammo.
+   * @param {ShipLoadout} [o.loadout] Ship loadout with hull, outfits, weapons, and ammo.
    * @param {number} [o.hull] Hull ID if no loadout specified.
    * @param {string} [o.faction] Faction affiliation ID.
    * @param {number} [o.x=0] Initial position X.
@@ -331,7 +336,7 @@ export class Space {
    * @param {number} [o.vx=0] Initial velocity X.
    * @param {number} [o.vy=0] Initial velocity Y.
    * @param {number} [o.a=0] Initial heading angle in radians.
-   * @param {import('../shared/rules.js').ShipStatsBonus} [o.bonus] Stat multiplier bonuses.
+   * @param {ShipStatsBonus} [o.bonus] Stat multiplier bonuses.
    * @param {number} [o.shield] Override initial shields.
    * @param {number} [o.armor] Override initial armor.
    * @param {number} [o.fuel] Override initial fuel.
@@ -340,7 +345,7 @@ export class Space {
    * @param {number | null} [o.owner] Commanding parent entity ID.
    * @param {string | null} [o.name] Display name.
    * @param {string} [o.state='fly'] Initial flight state.
-   * @param {import('./game.js').Mission} [o.mission] Linked mission payload.
+   * @param {Mission} [o.mission] Linked mission payload.
    * @param {number} [o.cargo] Carried cargo count.
    * @param {string} [o.pers] Combat personality override.
    * @param {Record<number, number>} [o.ammo] Weapon ammo counts.
@@ -457,7 +462,7 @@ export class Space {
   }
   /**
    * Gets cached list of landing-capable ports in this system.
-   * @returns {import('./game.js').StellarBody[]} Array of stellar bodies with landing services.
+   * @returns {StellarBody[]} Array of stellar bodies with landing services.
    */
   ports() {
     return (
@@ -906,7 +911,7 @@ export class Space {
   }
   /**
    * Spawns a named bounty mission target and its defensive escort wing.
-   * @param {import('./game.js').Mission} m Bounty mission specification.
+   * @param {Mission} m Bounty mission specification.
    * @returns {Entity | null} Spawned mission target entity.
    */
   spawnMissionTarget(m) {

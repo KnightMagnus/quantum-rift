@@ -11,6 +11,9 @@ import {
 import { COMMODITIES } from '../shared/galaxy.js';
 import { combatRank } from '../shared/rivals.js';
 
+/** @import { GradeLots } from '../shared/cargo-contracts.js' */
+/** @import { CargoLoot, CargoPlayer, CommandSession, FleetCommandsCapabilities } from './contracts.js' */
+
 /** @type {Record<string, string>} */
 const ORDERS = {
   gather: 'Escorts: form up on me.',
@@ -22,7 +25,7 @@ const ORDERS = {
 // Simulation seconds before the dumping captain/fleet may scoop its own cargo again.
 export const JETTISON_OWNER_GRACE_SECONDS = 5;
 export const FleetCmdOperations = {
-  /** @this {import('./contracts.js').FleetCommandsCapabilities} @param {import('./contracts.js').CommandSession} s @param {string} o */
+  /** @this {FleetCommandsCapabilities} @param {CommandSession} s @param {string} o */
   fleetOrder(s, o) {
     if (!ORDERS[o] || !s.ent) return;
     const e = s.ent;
@@ -32,7 +35,7 @@ export const FleetCmdOperations = {
     this.send(s, { t: 'order', o: e.order });
   },
   // throw cargo out of the hold: it floats free, and pirates chasing you may go for it instead
-  /** @this {import('./contracts.js').FleetCommandsCapabilities} @param {import('./contracts.js').CommandSession} s @param {string} cid @param {number} n @param {import('../shared/cargo-contracts.js').GradeLots|'common-first'} [selection] */
+  /** @this {FleetCommandsCapabilities} @param {CommandSession} s @param {string} cid @param {number} n @param {GradeLots|'common-first'} [selection] */
   jettison(s, cid, n, selection = 'common-first') {
     const d = s.data,
       e = s.ent;
@@ -87,7 +90,7 @@ export const FleetCmdOperations = {
     this.you(s);
   },
   // picking jettisoned (or anyone's) cargo back up
-  /** @this {import('./contracts.js').FleetCommandsCapabilities} @param {import('./contracts.js').CommandSession} s @param {import('./contracts.js').CargoLoot} it */
+  /** @this {FleetCommandsCapabilities} @param {CommandSession} s @param {CargoLoot} it */
   lootCargo(s, it) {
     const d = s.data,
       grace = it.jettisonPickup;
@@ -120,7 +123,7 @@ export const FleetCmdOperations = {
     this.you(s);
     return it.n <= 0 ? true : false;
   },
-  /** @param {import('./contracts.js').CargoPlayer} d */
+  /** @param {CargoPlayer} d */
   rankOf(d) {
     return combatRank((d.stats && d.stats.combat) || 0);
   },

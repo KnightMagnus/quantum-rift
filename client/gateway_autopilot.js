@@ -1,11 +1,15 @@
 // Gateways are transit apertures, not landing volumes. Aim at the center and fly through.
 import { DT, wrap } from '../shared/rules.js';
 
+/** @import { StellarBody } from '../server/game.js' */
+/** @import { ComputedShipStats } from '../shared/rules.js' */
+/** @import { RenderEntity } from './render.js' */
+
 /**
  * Direct center-seeking flight, with no arrival braking or retrograde phase.
- * @param {import("./render.js").RenderEntity} ship Current predicted ship.
- * @param {import('../shared/rules.js').ComputedShipStats} stats Normal flight stats.
- * @param {import('../server/game.js').StellarBody} gate Gateway center.
+ * @param {RenderEntity} ship Current predicted ship.
+ * @param {ComputedShipStats} stats Normal flight stats.
+ * @param {StellarBody} gate Gateway center.
  * @param {Record<string, number>} input Controls modified in place.
  * @returns {void}
  */

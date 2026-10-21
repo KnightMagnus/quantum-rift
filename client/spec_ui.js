@@ -19,6 +19,8 @@ import {
 import { ROLES_INFO } from '/shared/roles.js';
 import { credits } from '/shared/rules.js';
 
+/** @import { ClientGameState } from './main.js' */
+
 /**
  * @typedef {Object} SpecialistComponent
  * @property {string} name Display name of component
@@ -76,7 +78,7 @@ const res = (k, n) =>
 
 /**
  * Renders the full Specialists screen at the Personal Station or docked view.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether interactive buttons are enabled
  * @returns {string} HTML markup
  */
