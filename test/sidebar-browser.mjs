@@ -102,6 +102,14 @@ try {
   await page.waitForFunction(() => !G.landed && G.view);
   assert.equal(await page.evaluate(() => !!G.solo), false);
   await page.click('#traytoggle');
+  const captains = page.locator('#ctabs [data-tab=captains]');
+  await captains.waitFor({ state: 'visible' });
+  // Exercise the production Solo presentation class with the loaded cascade.
+  // Server-side Solo restrictions remain covered by v26.js.
+  await page.evaluate(() => document.body.classList.add('solo'));
+  assert.equal(await captains.isVisible(), false, 'Solo hides the CAPTAINS tab');
+  await page.evaluate(() => document.body.classList.remove('solo'));
+  assert.equal(await captains.isVisible(), true, 'Online restores the CAPTAINS tab');
   const results = [];
   const shellResults = [];
   const measure = () =>

@@ -699,9 +699,17 @@ ok(
   );
 }
 const read = (f) => fs.readFileSync(C + f, 'utf8');
+// Follow local imports so moving a rule cannot hide it from this contract.
+// Actual computed visibility is checked in Chromium by sidebar-browser.mjs.
+const readStyles = (url) =>
+  fs
+    .readFileSync(url, 'utf8')
+    .replace(/@import url\(['"]([^'"]+)['"]\);/g, (_, href) => readStyles(new URL(href, url)));
 ok(
   /data-tab="captains"/.test(read('index.html')) &&
-    /body\.solo\s+\.mp\s*\{\s*display:\s*none;?\s*\}/.test(read('style.css')),
+    /body\.solo\s+\.mp\s*\{\s*display:\s*none;?\s*\}/.test(
+      readStyles(new URL('../client/style.css', import.meta.url)),
+    ),
   'the CAPTAINS tab exists and hides in solo',
 );
 ok(

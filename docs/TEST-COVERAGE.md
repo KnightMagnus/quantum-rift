@@ -16,6 +16,9 @@ spies do not establish all delegated gameplay rules. See
 The `sidebar-scrollbars` browser case additionally loads all ten component CSS
 imports through the actual server and verifies nonempty CSSOM sheets and no failed
 stylesheet requests, while retaining its 13 geometry/scale/trim/keyboard cases.
+It also verifies CAPTAINS visibility with the production Solo class enabled and
+disabled. The legacy `v26.js` source contract follows the entry point's local CSS
+imports instead of assuming every rule resides in `style.css`.
 The organization preserves the original 566-rule browser CSSOM order, declaration
 values and relative asset paths. A one-time original-versus-split comparison checked
 34,650 computed properties across login, landing, JOBS, flight and narrow flight,
