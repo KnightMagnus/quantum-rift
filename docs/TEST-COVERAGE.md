@@ -558,3 +558,13 @@ stores, decodes each original insignia image, checks its canonical menu color,
 top-left header separation and narrow/high-scale reachability, while verifying
 unearned purchases remain disabled. All 16 roster entries have authored assets;
 non-store regions/hidden powers do not gain store access.
+
+## Ordinary port-service boundary
+
+`market-materials`, `cargo-grade-ledger`, `missions-passengers` and `economy-32`
+include the extracted ordinary port owner without replacing their existing
+transaction, denial, capacity and persistence assertions. `economy-32.js` also
+replaces the market provider after service construction and proves a denied trade
+changes neither credits nor exact cargo lots; the provider retains its Game
+receiver. Constructorless ship-economy fixtures explicitly initialize the new
+service; their stock/refit/recruitment assertions are unchanged.

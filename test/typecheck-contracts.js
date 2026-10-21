@@ -136,6 +136,19 @@ createJobService({toast() {}});
 `);
   assert.notEqual(result.status, 0, 'job service requires explicit core capabilities');
   assert.match(result.stdout + result.stderr, /missing/);
+  result = check(`import { createPortService } from '${modulePath('port-services.js')}';
+/** @type {import('${modulePath('port-services.js')}').PortCapabilities} */
+const port = /** @type {import('${modulePath('port-services.js')}').PortCapabilities} */ ({});
+/** @type {import('${modulePath('game.js')}').Session} */
+const captain = /** @type {import('${modulePath('game.js')}').Session} */ ({});
+createPortService(port).buyMat(captain, 'alloy', 2, 1);
+`);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  result = check(`import { createPortService } from '${modulePath('port-services.js')}';
+createPortService({toast() {}});
+`);
+  assert.notEqual(result.status, 0, 'port operations require explicit core capabilities');
+  assert.match(result.stdout + result.stderr, /missing/);
   console.log(
     'Typed valid calls/grade selections pass; invalid argument, grade quantity and missing capability are rejected.',
   );

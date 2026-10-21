@@ -26,6 +26,8 @@ Object.assign(g, {
   features: { docks: { leadChanged() {} }, shipStats: { stats: (d) => shipStats(A, d.ship) } },
 });
 for (const key of ['log', 'you', 'landed', 'toast']) g[key] = () => {};
+// This deliberately bare core fixture does not run Game's constructor.
+g.portService = g.createPortService();
 const session = (hull, credits = 10000000) => {
   const d = { ship: makeLoadout(A, hull), credits, cargo: {}, missions: [] };
   const port = Object.values(STELLARS).find(
@@ -134,6 +136,7 @@ const dockGame = {
   unassign() {},
   storedValue: HangarOperations.storedValue,
 };
+dockGame.portService = Game.prototype.createPortService.call(dockGame);
 for (const hull of WINGMATES) {
   const s = {
     data: {
