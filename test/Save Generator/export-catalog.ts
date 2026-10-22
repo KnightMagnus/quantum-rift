@@ -33,11 +33,7 @@ const catalog = {
   radio: RADIO_STATIONS.map((station) => station.id),
   start: START,
 };
-<<<<<<<< HEAD:test/Save Generator/export-catalog.mjs
-fs.writeFileSync('test/Save Generator/catalog.json', JSON.stringify(catalog));
-========
-fileSystem.writeFileSync('Testing/SaveGenerator/catalog.json', JSON.stringify(catalog));
->>>>>>>> 9365b36 (refactor: type tests and clarify bindings):test/Save Generator/export-catalog.ts
+fileSystem.writeFileSync('test/Save Generator/catalog.json', JSON.stringify(catalog));
 console.log(
   `${catalog.ships.length} ships, ${catalog.sites.length} station sites, ${catalog.locations.length} landing locations`,
 );

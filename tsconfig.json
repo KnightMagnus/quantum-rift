@@ -21,12 +21,5 @@
     },
     "verbatimModuleSyntax": true
   },
-  "include": [
-    "server/**/*.ts",
-    "client/**/*.ts",
-    "shared/**/*.ts",
-    "test/**/*.ts",
-    "tools/**/*.ts",
-    "Testing/**/*.ts"
-  ]
+  "include": ["server/**/*.ts", "client/**/*.ts", "shared/**/*.ts", "test/**/*.ts", "tools/**/*.ts"]
 }
