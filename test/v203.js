@@ -320,6 +320,8 @@ const sv = JSON.parse(JSON.stringify(g.db.get('Bug Hunter')));
 delete sv.salt;
 delete sv.hash;
 sv.name = 'Proto Test';
+// Isolate key filtering: a renamed save cannot take the original captain's station.
+sv.station = g.fresh().station;
 const evil = JSON.parse(JSON.stringify(sv).replace(/^\{/, '{"__proto__":{"polluted":1},'));
 g.importSave(evil);
 ok(
