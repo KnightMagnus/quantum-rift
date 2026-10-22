@@ -19,6 +19,7 @@ export class SpaceScene extends Scene {
   readonly display = new WorldActors(this);
   private layers: { actor: Actor; graphic: Canvas }[] = [];
   private now = 0;
+  private nextRaster = 0;
   private system: string | null | undefined;
   updates = 0;
   shakeOffset = { x: 0, y: 0 };
@@ -61,7 +62,7 @@ void main() { fragColor = vec4(texture(u_graphic, v_uv).rgb * u_opacity, 0.0); }
       const graphic = new Canvas({
         width: engine.screen.resolution.width,
         height: engine.screen.resolution.height,
-        cache: false,
+        cache: true,
         draw: (context) => {
           if (this.state.sys)
             draw(this.state, context, graphic.width, graphic.height, 0, this.now, layer);
@@ -97,7 +98,10 @@ void main() { fragColor = vec4(texture(u_graphic, v_uv).rgb * u_opacity, 0.0); }
     });
     updateEffects(this.state, Math.min(0.1, elapsed / 1000), this.now);
     this.display.update(this.state, this.now);
+    const rasterDue = this.now >= this.nextRaster;
+    if (rasterDue) this.nextRaster = this.now + 1000 / 30;
     for (const { actor, graphic } of this.layers) {
+      if (rasterDue) graphic.flagDirty();
       actor.graphics.visible = !!this.state.sys;
       if (
         graphic.width !== engine.screen.resolution.width ||

@@ -4,11 +4,37 @@ import type { Engine } from 'excalibur';
 const keyCodes = new Set<string>(Object.values(Keys));
 /** Saved browser key codes map directly to the engine's physical-key enum values. */
 export class FlightInput {
+  private pointerButtons = 0;
+  get pointerHeld(): boolean {
+    return !!(this.pointerButtons & 1);
+  }
   private pending = new Set<string>();
   private blocked = new Set<string>();
   private engine: Engine;
   constructor(engine: Engine) {
     this.engine = engine;
+    // Raw button state is only a safety latch, not a second command dispatcher.
+    window.addEventListener(
+      'pointerdown',
+      (event) => {
+        this.pointerButtons = event.buttons;
+      },
+      true,
+    );
+    window.addEventListener(
+      'pointerup',
+      (event) => {
+        this.pointerButtons = event.buttons;
+      },
+      true,
+    );
+    window.addEventListener(
+      'pointercancel',
+      () => {
+        this.pointerButtons = 0;
+      },
+      true,
+    );
     const clear = () => this.clear();
     window.addEventListener('blur', clear);
     document.addEventListener('visibilitychange', () => {
@@ -43,6 +69,7 @@ export class FlightInput {
     this.pending.clear();
   }
   clear(): void {
+    this.pointerButtons = 0;
     this.pending.clear();
     for (const key of this.engine.input.keyboard.getKeys()) this.blocked.add(key);
   }

@@ -55,6 +55,7 @@ try {
     [1, 'webgl'],
     [2, 'webgl'],
     [1, 'canvas'],
+    [2, 'auto'],
   ] as const) {
     const context = await browser.newContext({
       viewport: { width: 1280, height: 900 },
@@ -76,16 +77,19 @@ try {
     );
     page.on('request', (request) => requests.push(request.url()));
     // No unsafe-eval and no remote engine scripts. Blob images support locally rasterized native Sprites.
-    await page.route(origin + '/', async (route) => {
-      const response = await route.fetch();
-      await route.fulfill({
-        response,
-        headers: {
-          ...response.headers(),
-          'Content-Security-Policy': "script-src 'self'; object-src 'none'",
-        },
-      });
-    });
+    await page.route(
+      (url) => url.origin === origin && url.pathname === '/',
+      async (route) => {
+        const response = await route.fetch();
+        await route.fulfill({
+          response,
+          headers: {
+            ...response.headers(),
+            'Content-Security-Policy': "script-src 'self'; object-src 'none'",
+          },
+        });
+      },
+    );
     await page.addInitScript(() => {
       window.fixtureInputs = [];
       const send = Reflect.get(WebSocket.prototype, 'send') as typeof WebSocket.prototype.send;
@@ -95,7 +99,7 @@ try {
         return send.call(this, data);
       };
     });
-    await page.goto(origin + (renderer === 'canvas' ? '/?renderer=canvas' : '/'));
+    await page.goto(origin + (renderer === 'auto' ? '/' : '/?renderer=' + renderer));
     await page.waitForFunction(
       () => document.querySelector<HTMLCanvasElement>('#view')?.dataset.engine,
     );
@@ -133,6 +137,7 @@ try {
           return { x: (frame % columns) * size, y: Math.floor(frame / columns) * size };
         })(),
         renderer: runtime.engine.graphicsContext.constructor.name,
+        selectedBackend: runtime.engine.canvas.dataset.renderer,
       };
     });
     assert.equal(native.scene, true);
@@ -142,7 +147,10 @@ try {
     assert.match(native.graphic!, /GraphicsGroup/);
     assert.equal(native.source?.x, native.expectedFrame.x);
     assert.equal(native.source?.y, native.expectedFrame.y);
-    assert.match(native.renderer, renderer === 'canvas' ? /Canvas/ : /WebGL/);
+    assert.match(
+      native.renderer,
+      (renderer === 'auto' ? native.selectedBackend : renderer) === 'canvas' ? /Canvas/ : /WebGL/,
+    );
 
     // Independent camera expectation, DPR and zoom extremes, plus actual canvas backing size.
     for (const zoom of [0.35, 1, 2]) {

@@ -2260,7 +2260,11 @@ flightEngine.engine.input.pointers.on('down', (event) => {
   }
   // Only genuinely empty space clears combat selection; resource clicks retain it.
   if (!rock) setTarget(0);
-  if (clientGameState.opts.mouseAim) mouse.down = true; // mouse-aim mode: hold the left button on open space to fire
+  if (clientGameState.opts.mouseAim) mouse.down = flightEngine.input.pointerHeld; // mouse-aim mode: hold the left button on open space to fire
+});
+// A release cannot wait behind queued pointer processing or evidence-heavy frames.
+window.addEventListener('pointerup', () => {
+  mouse.down = false;
 });
 flightEngine.engine.input.pointers.on('up', (event) => {
   const mouseEvent = event.nativeEvent as MouseEvent;

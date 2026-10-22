@@ -2,6 +2,15 @@ import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import { advanceFlightClock } from '../client/flight-clock.ts';
 import { DT } from '../shared/rules.ts';
+import { softwareRenderer } from '../client/graphics-backend.ts';
+for (const name of [
+  'ANGLE (Google, Vulkan SwiftShader)',
+  'llvmpipe LLVM',
+  'Microsoft Basic Render Driver',
+])
+  assert.equal(softwareRenderer(name), true);
+for (const name of ['NVIDIA RTX', 'Intel Iris', 'AMD Radeon', 'Apple M3'])
+  assert.equal(softwareRenderer(name), false);
 
 // Independent elapsed-time displacement, with the original DT and extrapolation remainder.
 for (const framesPerSecond of [30, 60, 144]) {

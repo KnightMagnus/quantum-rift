@@ -1170,6 +1170,7 @@
         "client/engine.ts",
         "client/space-scene.ts",
         "client/engine-input.ts",
+        "client/graphics-backend.ts",
         "client/world-actors.ts"
       ],
       "tests": [

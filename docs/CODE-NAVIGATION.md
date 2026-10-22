@@ -217,11 +217,14 @@ The engine camera projects world entities and resolves pointer coordinates.
 Resolution deliberately uses CSS size times DPR with engine pixelRatio 1, retaining
 the existing physical-pixel zoom. Picking subtracts visual shake. Radar/map/login
 remain separate presentation canvases; login artwork shares the engine clock.
-`?renderer=canvas` selects Excalibur's supported Canvas fallback. That backend uses
-normal alpha compositing for native glow; WebGL uses an additive material.
+Software WebGL drivers select the supported Canvas backend before Engine construction.
+`?renderer=canvas` or `?renderer=webgl` explicitly selects either backend without
+replacing the live canvas. Canvas uses normal alpha compositing for native glow;
+WebGL uses an additive material.
 
 The browser build bundles the engine dependency graph into `dist/client/engine.js`.
 Existing stateful audio/HUD/render helpers remain local modules with one shared
 instance, including when browser tests import them. Releases need no CDN or
-node_modules at runtime. The procedural full-viewport Graphics still rerasterize;
-engine adoption is not a measured performance improvement.
+node_modules at runtime. Procedural full-viewport Graphics rasterize at up to 30Hz;
+native entities and simulation retain the Engine update cadence. These layers remain
+a rendering cost, not evidence of a general performance improvement.

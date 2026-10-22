@@ -617,7 +617,9 @@ It exercises the production Engine/SpaceScene, display-only physics and decoded
 native Sprite registries, physical-pixel camera picking at DPR 1/2 and zoom limits,
 responsive canvas size, keyboard thrust, typing/blur release, sequenced input,
 actor removal, local module loading and a script CSP without unsafe-eval. It runs
-Chromium WebGL and the explicit Canvas fallback. Existing input/audio, logout,
+Chromium explicit WebGL/Canvas and automatic backend selection. Landed traffic
+checks use supported Engine screenshots and native Graphics post-draw callbacks,
+retaining real-pixel and rendered-motion assertions. Existing input/audio, logout,
 sidebar, asset and gameplay assertions remain registered.
 
 These checks do not establish cross-browser parity, every weapon animation, a

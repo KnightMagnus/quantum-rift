@@ -2,6 +2,7 @@ import { Color, Engine, Flags, PointerScope, vec } from 'excalibur';
 import type { ClientGameState } from './main.ts';
 import { SpaceScene } from './space-scene.ts';
 import { FlightInput } from './engine-input.ts';
+import { canvasBackend } from './graphics-backend.ts';
 
 /** One Engine owns the flight clock, input, camera, backing size and scene lifecycle. */
 export class FlightEngine {
@@ -11,8 +12,9 @@ export class FlightEngine {
   private canvas: HTMLCanvasElement;
   constructor(canvas: HTMLCanvasElement, state: ClientGameState, advance: (time: number) => void) {
     this.canvas = canvas;
-    if (new URLSearchParams(location.search).get('renderer') === 'canvas')
-      Flags.useCanvasGraphicsContext();
+    const useCanvas = canvasBackend(new URLSearchParams(location.search).get('renderer'));
+    if (useCanvas) Flags.useCanvasGraphicsContext();
+    canvas.dataset.renderer = useCanvas ? 'canvas' : 'webgl';
     const width = Math.max(1, canvas.clientWidth),
       height = Math.max(1, canvas.clientHeight);
     this.engine = new Engine({
