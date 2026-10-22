@@ -18,7 +18,7 @@ const generated = spawnSync(
     '-c',
     `
 import sys, json
-sys.path.insert(0, 'Testing/SaveGenerator')
+sys.path.insert(0, 'test/Save Generator')
 from save_generator import create_save, CATALOG
 cases = []
 for ship in CATALOG['ships']:
@@ -56,7 +56,7 @@ const catalog: {
   tutorialEnd: number;
   radio: string[];
 } = JSON.parse(
-  fileSystem.readFileSync(path.join(root, 'Testing/SaveGenerator/catalog.json'), 'utf8'),
+  fileSystem.readFileSync(path.join(root, 'test/Save Generator/catalog.json'), 'utf8'),
 );
 assert.equal(
   catalog.version,
@@ -159,7 +159,7 @@ assert.throws(() => game.importSave({ ...stationSave, name: 'Other Captain' }), 
 const output = path.join(tempDataDir('rift-generator-cli-'), 'test.rift.json');
 const commandLine = spawnSync(
   'python3',
-  ['Testing/SaveGenerator/save_generator.py', '--output', output],
+  ['test/Save Generator/save_generator.py', '--output', output],
   {
     cwd: root,
   },
@@ -167,7 +167,7 @@ const commandLine = spawnSync(
 assert.equal(commandLine.status, 0, String(commandLine.stderr));
 const first = fileSystem.readFileSync(output, 'utf8');
 assert.equal(
-  spawnSync('python3', ['Testing/SaveGenerator/save_generator.py', '--output', output], {
+  spawnSync('python3', ['test/Save Generator/save_generator.py', '--output', output], {
     cwd: root,
   }).status,
   2,

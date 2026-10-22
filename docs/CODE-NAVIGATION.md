@@ -26,8 +26,8 @@ or fully typed. For running the game, use the public README.
 | `docs/`   | System contracts, guides, design limits and fixture provenance.                                                       |
 | `tools/`  | Developer/reporting/asset tools, not the live game loop.                                                              |
 
-The beta-only [Solo save generator](../Testing/SaveGenerator/README.md) lives in
-`Testing/SaveGenerator/`. Its catalog, import regressions and Windows EXE build must
+The beta-only [Solo save generator](../test/Save%20Generator/README.md) lives in
+`test/Save Generator/`. Its catalog, import regressions and Windows EXE build must
 stay compatible with each release while the tool is present.
 
 ## Trace a player action: accept a cargo job

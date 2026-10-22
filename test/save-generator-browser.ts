@@ -20,7 +20,7 @@ const saveFile = path.join(directory, 'custom.rift.json');
 const generated = spawnSync(
   'python3',
   [
-    'Testing/SaveGenerator/save_generator.py',
+    'test/Save Generator/save_generator.py',
     '--output',
     saveFile,
     '--name',
