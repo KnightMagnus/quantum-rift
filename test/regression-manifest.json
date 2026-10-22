@@ -51,7 +51,7 @@
     "armada-formation.js",
     "armada-follow-coasting.js",
     "persistence-auth.js",
-    "knight-profile.mjs",
+    "account-defaults.mjs",
     "persistence-platform.mjs",
     "core-actions.js",
     "websocket-transport.js",
@@ -85,7 +85,8 @@
     "radio-discovery.js",
     "radio-content.js",
     "cargo-couriers.js",
-    "message-routing.js"
+    "message-routing.js",
+    "save-generator.mjs"
   ],
   "browser": [
     "chat-projection-browser.mjs",
@@ -119,7 +120,8 @@
     "qol-browser.mjs",
     "sidebar-sizing-browser.mjs",
     "mission-ui-browser.mjs",
-    "radio-browser.mjs"
+    "radio-browser.mjs",
+    "save-generator-browser.mjs"
   ],
   "children": {
     "network-systems.mjs": ["combat-network.js", "hailing-network.js", "bot.js"]
@@ -139,15 +141,17 @@
       "services": [],
       "tests": [
         "persistence-auth.js",
-        "knight-profile.mjs",
+        "account-defaults.mjs",
         "persistence-platform.mjs",
         "v03.js",
         "v202.js",
         "v203.js",
         "http-api.mjs",
-        "logout-browser.mjs"
+        "logout-browser.mjs",
+        "save-generator.mjs",
+        "save-generator-browser.mjs"
       ],
-      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Shipped KNIGHT test profile: online/Solo startup login, legacy credits, completed T5 research, usable full specialist storage, idempotency, existing-save and station-ownership preservation. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect."
+      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Empty default seeds in online/Solo startup, preserved existing accounts/credentials and claims, explicit operator fixtures, no name-based radio unlocks; Python-generated saves across every hull/site/tier/port, real import/login and file-picker UI, invalid settings and overwrite denial, station-claim conflict/release/reload safety. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect."
     },
     {
       "id": "protocol-http",
@@ -249,10 +253,9 @@
         "outfitter-wing-repairs.js",
         "ship-economy.js",
         "companion-fixes.js",
-        "knight-profile.mjs",
         "dropdowns-browser.mjs"
       ],
-      "asserts": "Save migration/dock capacity, storing/flying/swapping, wing loadouts/officers/repairs, ship purchases and resale. Creation-only KNIGHT storage includes every current specialist and each can be selected through real dock assignment. Dock lead/wing selectors omit missing, empty and default names; custom names remain quoted and escaped, preserving selection and wing-only eligibility."
+      "asserts": "Save migration/dock capacity, storing/flying/swapping, wing loadouts/officers/repairs, ship purchases and resale. Dock lead/wing selectors omit missing, empty and default names; custom names remain quoted and escaped, preserving selection and wing-only eligibility."
     },
     {
       "id": "living-galaxy",
@@ -481,7 +484,7 @@
         "radio-browser.mjs",
         "radio-content.js"
       ],
-      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Knight has all stations without mission progress; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1\u20134 and separate new login theme; original theme preserved."
+      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Saved radio unlocks survive login without captain-name privileges; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1\u20134 and separate new login theme; original theme preserved."
     },
     {
       "id": "economy-balance",
@@ -818,7 +821,6 @@
       "outfitter-wing-repairs.js",
       "sim.js",
       "v21.js",
-      "knight-profile.mjs",
       "dropdowns-browser.mjs",
       "message-routing.js"
     ],

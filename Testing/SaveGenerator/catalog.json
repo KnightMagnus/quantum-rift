@@ -1,0 +1,2119 @@
+{
+  "version": "3.3.1",
+  "template": {
+    "credits": 30000,
+    "sys": "qgate",
+    "stellar": "qstation",
+    "ship": {
+      "hull": 703,
+      "outfits": { "9001": 1 },
+      "ammo": {},
+      "fixed": [],
+      "bonusSpace": 2,
+      "name": "Rift Runner",
+      "stockOutfits": { "9001": 1 }
+    },
+    "cargo": {},
+    "cargoLots": { "version": 1, "byCommodity": {} },
+    "storage": {},
+    "storageLots": { "version": 1, "byCommodity": {} },
+    "mats": { "alloy": [0, 0, 0, 0, 0], "crystal": [0, 0, 0, 0, 0], "isotope": [0, 0, 0, 0, 0] },
+    "rep": {
+      "quantum": 10,
+      "spacer": 0,
+      "lamp": 0,
+      "hollow": 0,
+      "quevari": 0,
+      "umbral": 0,
+      "vashari": 0,
+      "korrund": 0,
+      "ylith": 0,
+      "sarn": 0,
+      "thalassi": 0,
+      "frontier": 0,
+      "farside": 0,
+      "deep": 0,
+      "swarm": 0,
+      "eclipse": 0
+    },
+    "missions": [],
+    "escorts": [],
+    "log": [],
+    "station": { "claimed": false, "ops": 0, "refUnits": 0, "refT": 0, "active": null, "done": [] },
+    "stats": { "kills": 0, "jumps": 0, "earned": 0 },
+    "tut": 0,
+    "tutV": 2,
+    "explored": ["qgate"]
+  },
+  "ships": [
+    {
+      "id": 703,
+      "name": "Gnat Skiff",
+      "loadout": {
+        "hull": 703,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Gnat Skiff",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 704,
+      "name": "Dory Hauler",
+      "loadout": {
+        "hull": 704,
+        "outfits": { "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Dory Hauler",
+        "stockOutfits": { "9003": 1 }
+      }
+    },
+    {
+      "id": 705,
+      "name": "Kestrel Scout",
+      "loadout": {
+        "hull": 705,
+        "outfits": { "9001": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Kestrel Scout",
+        "stockOutfits": { "9001": 2 }
+      }
+    },
+    {
+      "id": 706,
+      "name": "Mule Tender",
+      "loadout": {
+        "hull": 706,
+        "outfits": { "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Mule Tender",
+        "stockOutfits": { "9003": 2 }
+      }
+    },
+    {
+      "id": 707,
+      "name": "Wayfarer",
+      "loadout": {
+        "hull": 707,
+        "outfits": { "598": 1, "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 7,
+        "name": "Wayfarer",
+        "stockOutfits": { "598": 1, "9001": 1 }
+      }
+    },
+    {
+      "id": 708,
+      "name": "Cutlass Interceptor",
+      "loadout": {
+        "hull": 708,
+        "outfits": { "600": 1, "9002": 2 },
+        "ammo": { "332": 8 },
+        "fixed": [],
+        "bonusSpace": 12,
+        "name": "Cutlass Interceptor",
+        "stockOutfits": { "600": 1, "9002": 2 }
+      }
+    },
+    {
+      "id": 709,
+      "name": "Lacewing Sail Yacht",
+      "loadout": {
+        "hull": 709,
+        "outfits": { "9006": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Lacewing Sail Yacht",
+        "stockOutfits": { "9006": 2 }
+      }
+    },
+    {
+      "id": 710,
+      "name": "Ore Crawler",
+      "loadout": {
+        "hull": 710,
+        "outfits": { "9003": 1, "9017": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 6,
+        "name": "Ore Crawler",
+        "stockOutfits": { "9003": 1, "9017": 1 }
+      }
+    },
+    {
+      "id": 711,
+      "name": "Bramble Gunboat",
+      "loadout": {
+        "hull": 711,
+        "outfits": { "598": 2, "9004": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 22,
+        "name": "Bramble Gunboat",
+        "stockOutfits": { "598": 2, "9004": 2 }
+      }
+    },
+    {
+      "id": 712,
+      "name": "Longhaul Barge",
+      "loadout": {
+        "hull": 712,
+        "outfits": { "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Longhaul Barge",
+        "stockOutfits": { "9003": 2 }
+      }
+    },
+    {
+      "id": 713,
+      "name": "Halberd Frigate",
+      "loadout": {
+        "hull": 713,
+        "outfits": { "600": 2, "9002": 2, "9004": 1 },
+        "ammo": { "332": 24 },
+        "fixed": [],
+        "bonusSpace": 24,
+        "name": "Halberd Frigate",
+        "stockOutfits": { "600": 2, "9002": 2, "9004": 1 }
+      }
+    },
+    {
+      "id": 714,
+      "name": "Pilgrim Liner",
+      "loadout": {
+        "hull": 714,
+        "outfits": { "598": 2, "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 14,
+        "name": "Pilgrim Liner",
+        "stockOutfits": { "598": 2, "9003": 1 }
+      }
+    },
+    {
+      "id": 715,
+      "name": "Hive Tender",
+      "loadout": {
+        "hull": 715,
+        "outfits": { "598": 2, "602": 1 },
+        "ammo": { "333": 4 },
+        "fixed": [],
+        "bonusSpace": 30,
+        "name": "Hive Tender",
+        "stockOutfits": { "598": 2, "602": 1 }
+      }
+    },
+    {
+      "id": 716,
+      "name": "Tempest Destroyer",
+      "loadout": {
+        "hull": 716,
+        "outfits": { "600": 2, "9005": 2 },
+        "ammo": { "332": 30 },
+        "fixed": [[143, 2, 0]],
+        "bonusSpace": 36,
+        "name": "Tempest Destroyer",
+        "stockOutfits": { "600": 2, "9005": 2 }
+      }
+    },
+    {
+      "id": 717,
+      "name": "Bastion Dreadnought",
+      "loadout": {
+        "hull": 717,
+        "outfits": { "599": 1, "600": 2, "9005": 4 },
+        "ammo": { "332": 40 },
+        "fixed": [],
+        "bonusSpace": 68,
+        "name": "Bastion Dreadnought",
+        "stockOutfits": { "599": 1, "600": 2, "9005": 4 }
+      }
+    },
+    {
+      "id": 718,
+      "name": "Mite Drone",
+      "loadout": {
+        "hull": 718,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Mite Drone",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 720,
+      "name": "Gnat Skiff Mk II",
+      "loadout": {
+        "hull": 720,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Gnat Skiff Mk II",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 721,
+      "name": "Kestrel Scout Mk II",
+      "loadout": {
+        "hull": 721,
+        "outfits": { "9001": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Kestrel Scout Mk II",
+        "stockOutfits": { "9001": 2 }
+      }
+    },
+    {
+      "id": 722,
+      "name": "Dory Hauler Mk II",
+      "loadout": {
+        "hull": 722,
+        "outfits": { "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Dory Hauler Mk II",
+        "stockOutfits": { "9003": 1 }
+      }
+    },
+    {
+      "id": 723,
+      "name": "Cutlass Interceptor Mk II",
+      "loadout": {
+        "hull": 723,
+        "outfits": { "600": 1, "9002": 2 },
+        "ammo": { "332": 8 },
+        "fixed": [],
+        "bonusSpace": 12,
+        "name": "Cutlass Interceptor Mk II",
+        "stockOutfits": { "600": 1, "9002": 2 }
+      }
+    },
+    {
+      "id": 724,
+      "name": "Mule Tender Mk II",
+      "loadout": {
+        "hull": 724,
+        "outfits": { "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Mule Tender Mk II",
+        "stockOutfits": { "9003": 2 }
+      }
+    },
+    {
+      "id": 725,
+      "name": "Wayfarer Mk II",
+      "loadout": {
+        "hull": 725,
+        "outfits": { "598": 1, "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 7,
+        "name": "Wayfarer Mk II",
+        "stockOutfits": { "598": 1, "9001": 1 }
+      }
+    },
+    {
+      "id": 726,
+      "name": "Lacewing Sail Yacht Mk II",
+      "loadout": {
+        "hull": 726,
+        "outfits": { "9006": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Lacewing Sail Yacht Mk II",
+        "stockOutfits": { "9006": 2 }
+      }
+    },
+    {
+      "id": 727,
+      "name": "Ore Crawler Mk II",
+      "loadout": {
+        "hull": 727,
+        "outfits": { "9003": 1, "9017": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 6,
+        "name": "Ore Crawler Mk II",
+        "stockOutfits": { "9003": 1, "9017": 1 }
+      }
+    },
+    {
+      "id": 728,
+      "name": "Bramble Gunboat Mk II",
+      "loadout": {
+        "hull": 728,
+        "outfits": { "598": 2, "9004": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 22,
+        "name": "Bramble Gunboat Mk II",
+        "stockOutfits": { "598": 2, "9004": 2 }
+      }
+    },
+    {
+      "id": 729,
+      "name": "Longhaul Barge Mk II",
+      "loadout": {
+        "hull": 729,
+        "outfits": { "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Longhaul Barge Mk II",
+        "stockOutfits": { "9003": 2 }
+      }
+    },
+    {
+      "id": 730,
+      "name": "Halberd Frigate Mk II",
+      "loadout": {
+        "hull": 730,
+        "outfits": { "600": 2, "9002": 2, "9004": 1 },
+        "ammo": { "332": 24 },
+        "fixed": [],
+        "bonusSpace": 24,
+        "name": "Halberd Frigate Mk II",
+        "stockOutfits": { "600": 2, "9002": 2, "9004": 1 }
+      }
+    },
+    {
+      "id": 731,
+      "name": "Pilgrim Liner Mk II",
+      "loadout": {
+        "hull": 731,
+        "outfits": { "598": 2, "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 14,
+        "name": "Pilgrim Liner Mk II",
+        "stockOutfits": { "598": 2, "9003": 1 }
+      }
+    },
+    {
+      "id": 732,
+      "name": "Hive Tender Mk II",
+      "loadout": {
+        "hull": 732,
+        "outfits": { "598": 2, "602": 1 },
+        "ammo": { "333": 4 },
+        "fixed": [],
+        "bonusSpace": 30,
+        "name": "Hive Tender Mk II",
+        "stockOutfits": { "598": 2, "602": 1 }
+      }
+    },
+    {
+      "id": 733,
+      "name": "Tempest Destroyer Mk II",
+      "loadout": {
+        "hull": 733,
+        "outfits": { "600": 2, "9005": 2 },
+        "ammo": { "332": 30 },
+        "fixed": [[143, 2, 0]],
+        "bonusSpace": 36,
+        "name": "Tempest Destroyer Mk II",
+        "stockOutfits": { "600": 2, "9005": 2 }
+      }
+    },
+    {
+      "id": 734,
+      "name": "Bastion Dreadnought Mk II",
+      "loadout": {
+        "hull": 734,
+        "outfits": { "599": 1, "600": 2, "9005": 4 },
+        "ammo": { "332": 40 },
+        "fixed": [],
+        "bonusSpace": 68,
+        "name": "Bastion Dreadnought Mk II",
+        "stockOutfits": { "599": 1, "600": 2, "9005": 4 }
+      }
+    },
+    {
+      "id": 735,
+      "name": "Halo Surveyor",
+      "loadout": {
+        "hull": 735,
+        "outfits": { "598": 1, "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 13,
+        "name": "Halo Surveyor",
+        "stockOutfits": { "598": 1, "9003": 2 }
+      }
+    },
+    {
+      "id": 736,
+      "name": "Constitution",
+      "loadout": {
+        "hull": 736,
+        "outfits": { "598": 6, "611": 4, "9005": 8 },
+        "ammo": { "335": 60 },
+        "fixed": [[143, 4, 0]],
+        "bonusSpace": 182,
+        "name": "Constitution",
+        "stockOutfits": { "598": 6, "611": 4, "9005": 8 }
+      }
+    },
+    {
+      "id": 737,
+      "name": "Lumen Mote",
+      "loadout": {
+        "hull": 737,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Lumen Mote",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 738,
+      "name": "Glimmer",
+      "loadout": {
+        "hull": 738,
+        "outfits": { "445": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Glimmer",
+        "stockOutfits": { "445": 1 }
+      }
+    },
+    {
+      "id": 739,
+      "name": "Sunwake Sloop",
+      "loadout": {
+        "hull": 739,
+        "outfits": { "448": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 5,
+        "name": "Sunwake Sloop",
+        "stockOutfits": { "448": 1 }
+      }
+    },
+    {
+      "id": 740,
+      "name": "Prism Corvette",
+      "loadout": {
+        "hull": 740,
+        "outfits": { "445": 2, "448": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 21,
+        "name": "Prism Corvette",
+        "stockOutfits": { "445": 2, "448": 1 }
+      }
+    },
+    {
+      "id": 741,
+      "name": "Aureate Frigate",
+      "loadout": {
+        "hull": 741,
+        "outfits": { "444": 2, "445": 2, "446": 1 },
+        "ammo": { "340": 12 },
+        "fixed": [],
+        "bonusSpace": 50,
+        "name": "Aureate Frigate",
+        "stockOutfits": { "444": 2, "445": 2, "446": 1 }
+      }
+    },
+    {
+      "id": 742,
+      "name": "Radiance Cruiser",
+      "loadout": {
+        "hull": 742,
+        "outfits": { "444": 4, "445": 2, "446": 2, "448": 2 },
+        "ammo": { "340": 24 },
+        "fixed": [],
+        "bonusSpace": 94,
+        "name": "Radiance Cruiser",
+        "stockOutfits": { "444": 4, "445": 2, "446": 2, "448": 2 }
+      }
+    },
+    {
+      "id": 743,
+      "name": "Choir Carrier",
+      "loadout": {
+        "hull": 743,
+        "outfits": { "444": 2, "448": 3, "449": 1 },
+        "ammo": { "342": 8 },
+        "fixed": [],
+        "bonusSpace": 64,
+        "name": "Choir Carrier",
+        "stockOutfits": { "444": 2, "448": 3, "449": 1 }
+      }
+    },
+    {
+      "id": 744,
+      "name": "Ina Que'var",
+      "loadout": {
+        "hull": 744,
+        "outfits": { "444": 10, "445": 6, "446": 4, "448": 8 },
+        "ammo": { "340": 80 },
+        "fixed": [],
+        "bonusSpace": 248,
+        "name": "Ina Que'var",
+        "stockOutfits": { "444": 10, "445": 6, "446": 4, "448": 8 }
+      }
+    },
+    {
+      "id": 745,
+      "name": "Cutlass Interceptor Mk III",
+      "loadout": {
+        "hull": 745,
+        "outfits": { "600": 1, "9002": 3 },
+        "ammo": { "332": 8 },
+        "fixed": [],
+        "bonusSpace": 15,
+        "name": "Cutlass Interceptor Mk III",
+        "stockOutfits": { "600": 1, "9002": 3 }
+      }
+    },
+    {
+      "id": 746,
+      "name": "Halberd Frigate Mk III",
+      "loadout": {
+        "hull": 746,
+        "outfits": { "600": 2, "9002": 3, "9004": 1 },
+        "ammo": { "332": 24 },
+        "fixed": [],
+        "bonusSpace": 27,
+        "name": "Halberd Frigate Mk III",
+        "stockOutfits": { "600": 2, "9002": 3, "9004": 1 }
+      }
+    },
+    {
+      "id": 747,
+      "name": "Bramble Gunboat Mk III",
+      "loadout": {
+        "hull": 747,
+        "outfits": { "598": 3, "9004": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 27,
+        "name": "Bramble Gunboat Mk III",
+        "stockOutfits": { "598": 3, "9004": 2 }
+      }
+    },
+    {
+      "id": 748,
+      "name": "Hive Tender Mk III",
+      "loadout": {
+        "hull": 748,
+        "outfits": { "598": 2, "602": 2 },
+        "ammo": { "333": 4 },
+        "fixed": [],
+        "bonusSpace": 50,
+        "name": "Hive Tender Mk III",
+        "stockOutfits": { "598": 2, "602": 2 }
+      }
+    },
+    {
+      "id": 749,
+      "name": "Tempest Destroyer Mk III",
+      "loadout": {
+        "hull": 749,
+        "outfits": { "600": 2, "9005": 2 },
+        "ammo": { "332": 30 },
+        "fixed": [[143, 3, 0]],
+        "bonusSpace": 36,
+        "name": "Tempest Destroyer Mk III",
+        "stockOutfits": { "600": 2, "9005": 2 }
+      }
+    },
+    {
+      "id": 750,
+      "name": "Bastion Dreadnought Mk III",
+      "loadout": {
+        "hull": 750,
+        "outfits": { "599": 1, "600": 2, "9005": 5 },
+        "ammo": { "332": 40 },
+        "fixed": [],
+        "bonusSpace": 80,
+        "name": "Bastion Dreadnought Mk III",
+        "stockOutfits": { "599": 1, "600": 2, "9005": 5 }
+      }
+    },
+    {
+      "id": 751,
+      "name": "Sable Okoro",
+      "loadout": {
+        "hull": 751,
+        "outfits": { "600": 2, "604": 1, "9006": 2 },
+        "ammo": { "332": 30 },
+        "fixed": [],
+        "bonusSpace": 30,
+        "name": "Sable Okoro",
+        "stockOutfits": { "600": 2, "604": 1, "9006": 2 }
+      }
+    },
+    {
+      "id": 752,
+      "name": "Brannock Teague",
+      "loadout": {
+        "hull": 752,
+        "outfits": { "600": 2, "9008": 2 },
+        "ammo": { "332": 30 },
+        "fixed": [[162, 2, 0]],
+        "bonusSpace": 36,
+        "name": "Brannock Teague",
+        "stockOutfits": { "600": 2, "9008": 2 }
+      }
+    },
+    {
+      "id": 753,
+      "name": "Ines Varro",
+      "loadout": {
+        "hull": 753,
+        "outfits": { "598": 2, "599": 1, "9005": 4 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 66,
+        "name": "Ines Varro",
+        "stockOutfits": { "598": 2, "599": 1, "9005": 4 }
+      }
+    },
+    {
+      "id": 754,
+      "name": "Old Mags Pell",
+      "loadout": {
+        "hull": 754,
+        "outfits": { "598": 6, "9005": 4, "9016": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 90,
+        "name": "Old Mags Pell",
+        "stockOutfits": { "598": 6, "9005": 4, "9016": 2 }
+      }
+    },
+    {
+      "id": 755,
+      "name": "Juniper Hale",
+      "loadout": {
+        "hull": 755,
+        "outfits": { "600": 2, "9002": 2, "9006": 2 },
+        "ammo": { "332": 40 },
+        "fixed": [],
+        "bonusSpace": 26,
+        "name": "Juniper Hale",
+        "stockOutfits": { "600": 2, "9002": 2, "9006": 2 }
+      }
+    },
+    {
+      "id": 756,
+      "name": "Tomas Eriksen-Kai",
+      "loadout": {
+        "hull": 756,
+        "outfits": { "598": 3, "599": 1, "602": 1 },
+        "ammo": { "333": 6 },
+        "fixed": [],
+        "bonusSpace": 43,
+        "name": "Tomas Eriksen-Kai",
+        "stockOutfits": { "598": 3, "599": 1, "602": 1 }
+      }
+    },
+    {
+      "id": 757,
+      "name": "Armada Frigate",
+      "loadout": {
+        "hull": 757,
+        "outfits": { "600": 2, "9002": 3, "9004": 1 },
+        "ammo": { "332": 24 },
+        "fixed": [],
+        "bonusSpace": 27,
+        "name": "Armada Frigate",
+        "stockOutfits": { "600": 2, "9002": 3, "9004": 1 }
+      }
+    },
+    {
+      "id": 758,
+      "name": "Armada Destroyer",
+      "loadout": {
+        "hull": 758,
+        "outfits": { "600": 2, "9005": 2 },
+        "ammo": { "332": 30 },
+        "fixed": [[143, 3, 0]],
+        "bonusSpace": 36,
+        "name": "Armada Destroyer",
+        "stockOutfits": { "600": 2, "9005": 2 }
+      }
+    },
+    {
+      "id": 759,
+      "name": "Armada Carrier",
+      "loadout": {
+        "hull": 759,
+        "outfits": { "598": 2, "602": 2 },
+        "ammo": { "333": 4 },
+        "fixed": [],
+        "bonusSpace": 50,
+        "name": "Armada Carrier",
+        "stockOutfits": { "598": 2, "602": 2 }
+      }
+    },
+    {
+      "id": 760,
+      "name": "Umbral Shade",
+      "loadout": {
+        "hull": 760,
+        "outfits": { "445": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Umbral Shade",
+        "stockOutfits": { "445": 1 }
+      }
+    },
+    {
+      "id": 761,
+      "name": "Umbral Hunter",
+      "loadout": {
+        "hull": 761,
+        "outfits": { "445": 2 },
+        "ammo": {},
+        "fixed": [[343, 1, 0]],
+        "bonusSpace": 16,
+        "name": "Umbral Hunter",
+        "stockOutfits": { "445": 2 }
+      }
+    },
+    {
+      "id": 762,
+      "name": "Umbral Reaver",
+      "loadout": {
+        "hull": 762,
+        "outfits": { "445": 2, "446": 1 },
+        "ammo": { "340": 10 },
+        "fixed": [[343, 3, 0]],
+        "bonusSpace": 26,
+        "name": "Umbral Reaver",
+        "stockOutfits": { "445": 2, "446": 1 }
+      }
+    },
+    {
+      "id": 763,
+      "name": "Umbral Dread",
+      "loadout": {
+        "hull": 763,
+        "outfits": { "445": 2, "446": 2, "448": 2 },
+        "ammo": { "340": 20 },
+        "fixed": [[343, 5, 0]],
+        "bonusSpace": 46,
+        "name": "Umbral Dread",
+        "stockOutfits": { "445": 2, "446": 2, "448": 2 }
+      }
+    },
+    {
+      "id": 764,
+      "name": "The Night Anchor",
+      "loadout": {
+        "hull": 764,
+        "outfits": { "445": 4, "446": 4, "448": 4 },
+        "ammo": { "340": 40 },
+        "fixed": [[343, 10, 0]],
+        "bonusSpace": 92,
+        "name": "The Night Anchor",
+        "stockOutfits": { "445": 4, "446": 4, "448": 4 }
+      }
+    },
+    {
+      "id": 765,
+      "name": "Thrip Darter",
+      "loadout": {
+        "hull": 765,
+        "outfits": { "9011": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 5,
+        "name": "Thrip Darter",
+        "stockOutfits": { "9011": 1 }
+      }
+    },
+    {
+      "id": 766,
+      "name": "Silkspinner Hauler",
+      "loadout": {
+        "hull": 766,
+        "outfits": { "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Silkspinner Hauler",
+        "stockOutfits": { "9003": 1 }
+      }
+    },
+    {
+      "id": 767,
+      "name": "Mantis Lancer",
+      "loadout": {
+        "hull": 767,
+        "outfits": { "9009": 1, "9011": 2 },
+        "ammo": { "134": 6 },
+        "fixed": [],
+        "bonusSpace": 15,
+        "name": "Mantis Lancer",
+        "stockOutfits": { "9009": 1, "9011": 2 }
+      }
+    },
+    {
+      "id": 768,
+      "name": "Carapace Destroyer",
+      "loadout": {
+        "hull": 768,
+        "outfits": { "9004": 3, "9011": 4 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 38,
+        "name": "Carapace Destroyer",
+        "stockOutfits": { "9004": 3, "9011": 4 }
+      }
+    },
+    {
+      "id": 769,
+      "name": "Brood Queen",
+      "loadout": {
+        "hull": 769,
+        "outfits": { "9004": 3, "9011": 2 },
+        "ammo": { "351": 8 },
+        "fixed": [[351, 1, 8]],
+        "bonusSpace": 28,
+        "name": "Brood Queen",
+        "stockOutfits": { "9004": 3, "9011": 2 }
+      }
+    },
+    {
+      "id": 770,
+      "name": "Slag Skiff",
+      "loadout": {
+        "hull": 770,
+        "outfits": { "9017": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Slag Skiff",
+        "stockOutfits": { "9017": 1 }
+      }
+    },
+    {
+      "id": 771,
+      "name": "Basalt Gunboat",
+      "loadout": {
+        "hull": 771,
+        "outfits": { "9007": 2, "9012": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 40,
+        "name": "Basalt Gunboat",
+        "stockOutfits": { "9007": 2, "9012": 2 }
+      }
+    },
+    {
+      "id": 772,
+      "name": "Magma Hauler",
+      "loadout": {
+        "hull": 772,
+        "outfits": { "9012": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 28,
+        "name": "Magma Hauler",
+        "stockOutfits": { "9012": 2 }
+      }
+    },
+    {
+      "id": 773,
+      "name": "Forge Cruiser",
+      "loadout": {
+        "hull": 773,
+        "outfits": { "9008": 2, "9012": 5 },
+        "ammo": {},
+        "fixed": [[197, 1, 0]],
+        "bonusSpace": 94,
+        "name": "Forge Cruiser",
+        "stockOutfits": { "9008": 2, "9012": 5 }
+      }
+    },
+    {
+      "id": 774,
+      "name": "Mountain Dreadnought",
+      "loadout": {
+        "hull": 774,
+        "outfits": { "9008": 4, "9012": 10 },
+        "ammo": {},
+        "fixed": [[197, 4, 0]],
+        "bonusSpace": 188,
+        "name": "Mountain Dreadnought",
+        "stockOutfits": { "9008": 4, "9012": 10 }
+      }
+    },
+    {
+      "id": 775,
+      "name": "Glint Scout",
+      "loadout": {
+        "hull": 775,
+        "outfits": { "9013": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Glint Scout",
+        "stockOutfits": { "9013": 1 }
+      }
+    },
+    {
+      "id": 776,
+      "name": "Facet Yacht",
+      "loadout": {
+        "hull": 776,
+        "outfits": { "9013": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Facet Yacht",
+        "stockOutfits": { "9013": 1 }
+      }
+    },
+    {
+      "id": 777,
+      "name": "Lattice Frigate",
+      "loadout": {
+        "hull": 777,
+        "outfits": { "9006": 2, "9013": 3 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 32,
+        "name": "Lattice Frigate",
+        "stockOutfits": { "9006": 2, "9013": 3 }
+      }
+    },
+    {
+      "id": 778,
+      "name": "Resonance Cruiser",
+      "loadout": {
+        "hull": 778,
+        "outfits": { "9006": 3, "9013": 6 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 60,
+        "name": "Resonance Cruiser",
+        "stockOutfits": { "9006": 3, "9013": 6 }
+      }
+    },
+    {
+      "id": 779,
+      "name": "Cathedral Carrier",
+      "loadout": {
+        "hull": 779,
+        "outfits": { "9013": 4 },
+        "ammo": { "352": 6 },
+        "fixed": [[352, 1, 6]],
+        "bonusSpace": 32,
+        "name": "Cathedral Carrier",
+        "stockOutfits": { "9013": 4 }
+      }
+    },
+    {
+      "id": 780,
+      "name": "Spoke Runner",
+      "loadout": {
+        "hull": 780,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Spoke Runner",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 781,
+      "name": "Wheelhouse Trader",
+      "loadout": {
+        "hull": 781,
+        "outfits": { "9001": 1, "9014": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Wheelhouse Trader",
+        "stockOutfits": { "9001": 1, "9014": 1 }
+      }
+    },
+    {
+      "id": 782,
+      "name": "Gyre Frigate",
+      "loadout": {
+        "hull": 782,
+        "outfits": { "9002": 2, "9014": 4 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 30,
+        "name": "Gyre Frigate",
+        "stockOutfits": { "9002": 2, "9014": 4 }
+      }
+    },
+    {
+      "id": 783,
+      "name": "Caravan Liner",
+      "loadout": {
+        "hull": 783,
+        "outfits": { "9014": 3 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 18,
+        "name": "Caravan Liner",
+        "stockOutfits": { "9014": 3 }
+      }
+    },
+    {
+      "id": 784,
+      "name": "Grand Caravan",
+      "loadout": {
+        "hull": 784,
+        "outfits": { "9009": 2, "9014": 8 },
+        "ammo": { "134": 20 },
+        "fixed": [],
+        "bonusSpace": 58,
+        "name": "Grand Caravan",
+        "stockOutfits": { "9009": 2, "9014": 8 }
+      }
+    },
+    {
+      "id": 785,
+      "name": "Möbius",
+      "loadout": {
+        "hull": 785,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [[348, 6, 0]],
+        "bonusSpace": 0,
+        "name": "Möbius",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 786,
+      "name": "Orrery",
+      "loadout": {
+        "hull": 786,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [
+          [349, 6, 0],
+          [348, 2, 0]
+        ],
+        "bonusSpace": 0,
+        "name": "Orrery",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 787,
+      "name": "Event Horizon",
+      "loadout": {
+        "hull": 787,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [
+          [350, 1, 0],
+          [349, 4, 0]
+        ],
+        "bonusSpace": 0,
+        "name": "Event Horizon",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 788,
+      "name": "Vespid Frigate",
+      "loadout": {
+        "hull": 788,
+        "outfits": { "9004": 2, "9011": 3 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 27,
+        "name": "Vespid Frigate",
+        "stockOutfits": { "9004": 2, "9011": 3 }
+      }
+    },
+    {
+      "id": 789,
+      "name": "Stagback Dreadnought",
+      "loadout": {
+        "hull": 789,
+        "outfits": { "9004": 6, "9009": 2, "9011": 8 },
+        "ammo": { "134": 30 },
+        "fixed": [],
+        "bonusSpace": 86,
+        "name": "Stagback Dreadnought",
+        "stockOutfits": { "9004": 6, "9009": 2, "9011": 8 }
+      }
+    },
+    {
+      "id": 790,
+      "name": "Ember Dart",
+      "loadout": {
+        "hull": 790,
+        "outfits": { "9012": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 14,
+        "name": "Ember Dart",
+        "stockOutfits": { "9012": 1 }
+      }
+    },
+    {
+      "id": 791,
+      "name": "Cinder Frigate",
+      "loadout": {
+        "hull": 791,
+        "outfits": { "9012": 3 },
+        "ammo": {},
+        "fixed": [[157, 2, 0]],
+        "bonusSpace": 42,
+        "name": "Cinder Frigate",
+        "stockOutfits": { "9012": 3 }
+      }
+    },
+    {
+      "id": 792,
+      "name": "Anvil Carrier",
+      "loadout": {
+        "hull": 792,
+        "outfits": { "9008": 2, "9012": 4 },
+        "ammo": { "353": 8 },
+        "fixed": [[353, 1, 8]],
+        "bonusSpace": 80,
+        "name": "Anvil Carrier",
+        "stockOutfits": { "9008": 2, "9012": 4 }
+      }
+    },
+    {
+      "id": 793,
+      "name": "Splinter Interceptor",
+      "loadout": {
+        "hull": 793,
+        "outfits": { "9006": 2, "9013": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 16,
+        "name": "Splinter Interceptor",
+        "stockOutfits": { "9006": 2, "9013": 1 }
+      }
+    },
+    {
+      "id": 794,
+      "name": "Geode Freighter",
+      "loadout": {
+        "hull": 794,
+        "outfits": { "9013": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Geode Freighter",
+        "stockOutfits": { "9013": 1 }
+      }
+    },
+    {
+      "id": 795,
+      "name": "Spire Dreadnought",
+      "loadout": {
+        "hull": 795,
+        "outfits": { "9006": 4, "9013": 10 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 96,
+        "name": "Spire Dreadnought",
+        "stockOutfits": { "9006": 4, "9013": 10 }
+      }
+    },
+    {
+      "id": 796,
+      "name": "Kite Raider",
+      "loadout": {
+        "hull": 796,
+        "outfits": { "9002": 1, "9014": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 9,
+        "name": "Kite Raider",
+        "stockOutfits": { "9002": 1, "9014": 1 }
+      }
+    },
+    {
+      "id": 797,
+      "name": "Ironwheel Destroyer",
+      "loadout": {
+        "hull": 797,
+        "outfits": { "9005": 2, "9014": 6 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 60,
+        "name": "Ironwheel Destroyer",
+        "stockOutfits": { "9005": 2, "9014": 6 }
+      }
+    },
+    {
+      "id": 798,
+      "name": "Polyp Dart",
+      "loadout": {
+        "hull": 798,
+        "outfits": { "9015": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 7,
+        "name": "Polyp Dart",
+        "stockOutfits": { "9015": 1 }
+      }
+    },
+    {
+      "id": 799,
+      "name": "Nautilus Skiff",
+      "loadout": {
+        "hull": 799,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Nautilus Skiff",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 800,
+      "name": "Siphon Hauler",
+      "loadout": {
+        "hull": 800,
+        "outfits": { "9015": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 7,
+        "name": "Siphon Hauler",
+        "stockOutfits": { "9015": 1 }
+      }
+    },
+    {
+      "id": 801,
+      "name": "Manta Striker",
+      "loadout": {
+        "hull": 801,
+        "outfits": { "9015": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 14,
+        "name": "Manta Striker",
+        "stockOutfits": { "9015": 2 }
+      }
+    },
+    {
+      "id": 802,
+      "name": "Ray Frigate",
+      "loadout": {
+        "hull": 802,
+        "outfits": { "9006": 2, "9015": 3 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 29,
+        "name": "Ray Frigate",
+        "stockOutfits": { "9006": 2, "9015": 3 }
+      }
+    },
+    {
+      "id": 803,
+      "name": "Medusa Cruiser",
+      "loadout": {
+        "hull": 803,
+        "outfits": { "9006": 2, "9015": 8 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 64,
+        "name": "Medusa Cruiser",
+        "stockOutfits": { "9006": 2, "9015": 8 }
+      }
+    },
+    {
+      "id": 804,
+      "name": "Abyssal Carrier",
+      "loadout": {
+        "hull": 804,
+        "outfits": { "9006": 2, "9015": 4 },
+        "ammo": { "354": 10 },
+        "fixed": [[354, 1, 10]],
+        "bonusSpace": 36,
+        "name": "Abyssal Carrier",
+        "stockOutfits": { "9006": 2, "9015": 4 }
+      }
+    },
+    {
+      "id": 805,
+      "name": "Lodestar",
+      "loadout": {
+        "hull": 805,
+        "outfits": { "9003": 2, "9019": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 26,
+        "name": "Lodestar",
+        "stockOutfits": { "9003": 2, "9019": 2 }
+      }
+    },
+    {
+      "id": 806,
+      "name": "Swarmbreaker",
+      "loadout": {
+        "hull": 806,
+        "outfits": { "9006": 2, "9013": 1, "9014": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 22,
+        "name": "Swarmbreaker",
+        "stockOutfits": { "9006": 2, "9013": 1, "9014": 1 }
+      }
+    },
+    {
+      "id": 807,
+      "name": "Nightglass",
+      "loadout": {
+        "hull": 807,
+        "outfits": { "445": 2 },
+        "ammo": {},
+        "fixed": [[343, 2, 0]],
+        "bonusSpace": 16,
+        "name": "Nightglass",
+        "stockOutfits": { "445": 2 }
+      }
+    },
+    {
+      "id": 808,
+      "name": "Corsair",
+      "loadout": {
+        "hull": 808,
+        "outfits": { "9004": 4, "9016": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 36,
+        "name": "Corsair",
+        "stockOutfits": { "9004": 4, "9016": 2 }
+      }
+    },
+    {
+      "id": 809,
+      "name": "Herald",
+      "loadout": {
+        "hull": 809,
+        "outfits": { "448": 2, "604": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 20,
+        "name": "Herald",
+        "stockOutfits": { "448": 2, "604": 1 }
+      }
+    },
+    {
+      "id": 810,
+      "name": "Tidecaller",
+      "loadout": {
+        "hull": 810,
+        "outfits": { "615": 2, "9006": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 16,
+        "name": "Tidecaller",
+        "stockOutfits": { "615": 2, "9006": 2 }
+      }
+    },
+    {
+      "id": 811,
+      "name": "Pathfinder",
+      "loadout": {
+        "hull": 811,
+        "outfits": { "448": 1, "9007": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 17,
+        "name": "Pathfinder",
+        "stockOutfits": { "448": 1, "9007": 2 }
+      }
+    },
+    {
+      "id": 812,
+      "name": "Bulwark",
+      "loadout": {
+        "hull": 812,
+        "outfits": { "9005": 4, "9014": 2 },
+        "ammo": {},
+        "fixed": [[197, 2, 0]],
+        "bonusSpace": 60,
+        "name": "Bulwark",
+        "stockOutfits": { "9005": 4, "9014": 2 }
+      }
+    },
+    {
+      "id": 813,
+      "name": "Wraith",
+      "loadout": {
+        "hull": 813,
+        "outfits": { "600": 1, "9002": 2 },
+        "ammo": { "332": 12 },
+        "fixed": [],
+        "bonusSpace": 12,
+        "name": "Wraith",
+        "stockOutfits": { "600": 1, "9002": 2 }
+      }
+    },
+    {
+      "id": 814,
+      "name": "Vanguard",
+      "loadout": {
+        "hull": 814,
+        "outfits": { "9004": 3, "9008": 1 },
+        "ammo": {},
+        "fixed": [[143, 2, 0]],
+        "bonusSpace": 30,
+        "name": "Vanguard",
+        "stockOutfits": { "9004": 3, "9008": 1 }
+      }
+    },
+    {
+      "id": 815,
+      "name": "Star Dredge",
+      "loadout": {
+        "hull": 815,
+        "outfits": { "9003": 2, "9019": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 17,
+        "name": "Star Dredge",
+        "stockOutfits": { "9003": 2, "9019": 1 }
+      }
+    },
+    {
+      "id": 820,
+      "name": "Wasp Skirmisher",
+      "loadout": {
+        "hull": 820,
+        "outfits": { "9001": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Wasp Skirmisher",
+        "stockOutfits": { "9001": 2 }
+      }
+    },
+    {
+      "id": 821,
+      "name": "Swift Courier",
+      "loadout": {
+        "hull": 821,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Swift Courier",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 822,
+      "name": "Pelican Salvage Tug",
+      "loadout": {
+        "hull": 822,
+        "outfits": { "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Pelican Salvage Tug",
+        "stockOutfits": { "9003": 1 }
+      }
+    },
+    {
+      "id": 823,
+      "name": "Sabre Corvette",
+      "loadout": {
+        "hull": 823,
+        "outfits": { "9002": 2, "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 10,
+        "name": "Sabre Corvette",
+        "stockOutfits": { "9002": 2, "9003": 1 }
+      }
+    },
+    {
+      "id": 824,
+      "name": "Caravel Trader",
+      "loadout": {
+        "hull": 824,
+        "outfits": { "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Caravel Trader",
+        "stockOutfits": { "9003": 2 }
+      }
+    },
+    {
+      "id": 825,
+      "name": "Talon Strike Fighter",
+      "loadout": {
+        "hull": 825,
+        "outfits": { "600": 2, "9002": 2 },
+        "ammo": { "332": 16 },
+        "fixed": [],
+        "bonusSpace": 18,
+        "name": "Talon Strike Fighter",
+        "stockOutfits": { "600": 2, "9002": 2 }
+      }
+    },
+    {
+      "id": 826,
+      "name": "Lighthouse Survey Cruiser",
+      "loadout": {
+        "hull": 826,
+        "outfits": { "9002": 1, "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 11,
+        "name": "Lighthouse Survey Cruiser",
+        "stockOutfits": { "9002": 1, "9003": 2 }
+      }
+    },
+    {
+      "id": 827,
+      "name": "Monarch Executive Yacht",
+      "loadout": {
+        "hull": 827,
+        "outfits": { "9003": 1, "9006": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 12,
+        "name": "Monarch Executive Yacht",
+        "stockOutfits": { "9003": 1, "9006": 2 }
+      }
+    },
+    {
+      "id": 828,
+      "name": "Aegis Escort Cruiser",
+      "loadout": {
+        "hull": 828,
+        "outfits": { "598": 4, "9004": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 32,
+        "name": "Aegis Escort Cruiser",
+        "stockOutfits": { "598": 4, "9004": 2 }
+      }
+    },
+    {
+      "id": 829,
+      "name": "Vigil Heavy Cruiser",
+      "loadout": {
+        "hull": 829,
+        "outfits": { "600": 2, "9005": 4 },
+        "ammo": { "332": 30 },
+        "fixed": [[143, 2, 0]],
+        "bonusSpace": 60,
+        "name": "Vigil Heavy Cruiser",
+        "stockOutfits": { "600": 2, "9005": 4 }
+      }
+    }
+  ],
+  "locations": [
+    { "id": "qstation", "system": "qgate", "label": "Concordia / Quantum Station" },
+    { "id": "concordia", "system": "qgate", "label": "Concordia / Concordia" },
+    { "id": "meridian-yards", "system": "meridian", "label": "Meridian / Meridian Yards" },
+    { "id": "halcyon-prime", "system": "halcyon", "label": "Halcyon / Halcyon Prime" },
+    { "id": "waystation-hub", "system": "waystation", "label": "Waystation / Waystation Hub" },
+    { "id": "longhaul-depot", "system": "longhaul", "label": "Longhaul / Longhaul Depot" },
+    { "id": "cartwheel", "system": "longhaul", "label": "Longhaul / Cartwheel" },
+    { "id": "brightwater-iv", "system": "brightwater", "label": "Brightwater / Brightwater IV" },
+    { "id": "lanternfall", "system": "hesper", "label": "Hesper / Lanternfall" },
+    { "id": "vigil-lamp", "system": "emberlight", "label": "Emberlight / Keeper's Vigil" },
+    { "id": "gloam-remnant", "system": "gloam", "label": "Gloam / Gloam Remnant" },
+    { "id": "cinder-hold", "system": "cinderverge", "label": "Cinder Verge / Cinder Hold" },
+    { "id": "thrum", "system": "thrumhive", "label": "Thrumhive / Thrum" },
+    { "id": "molt", "system": "chitinreach", "label": "Chitin Reach / Moltfield" },
+    { "id": "brood", "system": "broodhollow", "label": "Broodhollow / The Brood Spire" },
+    { "id": "slag", "system": "slagforge", "label": "Slagforge / Slag" },
+    { "id": "deepmine", "system": "basaltdeep", "label": "Basalt Deep / Deepmine Anvil" },
+    { "id": "hold", "system": "mountainhold", "label": "Mountainhold / The Hold" },
+    { "id": "facet", "system": "facetfall", "label": "Facetfall / Facet" },
+    { "id": "choirhall", "system": "resonance", "label": "Resonance / The Choirhall" },
+    { "id": "geode", "system": "geodesy", "label": "Geodesy / Hollow Geode" },
+    { "id": "spoke", "system": "spokeroad", "label": "Spokeroad / The Spoke" },
+    { "id": "serai", "system": "caravanserai", "label": "Caravanserai / Serai" },
+    { "id": "rest", "system": "wheelwright", "label": "Wheelwright's Rest / The Rest" },
+    { "id": "tide", "system": "tidepool", "label": "Tidepool / Tide" },
+    { "id": "reef", "system": "coralwake", "label": "Coralwake / The Reef" },
+    { "id": "deep", "system": "abyssal", "label": "Abyssal Trench / The Deep" },
+    { "id": "threshold", "system": "farmouth", "label": "Far Mouth / Threshold Spire" },
+    { "id": "inalumen", "system": "quevar", "label": "Que'var / Ina Lumen" },
+    { "id": "glasswind", "system": "shoalight", "label": "Shoalight / Glasswind Station" },
+    { "id": "wild-minor", "system": "wild-landing", "label": "Wild Landing / Wild Minor" },
+    { "id": "quiet-port", "system": "quiet-shelf", "label": "Quiet Shelf / Quiet Port" },
+    { "id": "quiet-beta", "system": "quiet-shelf", "label": "Quiet Shelf / Quiet Beta" },
+    { "id": "wild-yards", "system": "wild-hope", "label": "Wild Hope / Wild Yards" },
+    { "id": "lost-anchorage", "system": "lost-harbor", "label": "Lost Harbor / Lost Anchorage" },
+    { "id": "lost-station", "system": "lost-harbor", "label": "Lost Harbor / Lost Station" },
+    { "id": "new-expanse-0", "system": "new-expanse", "label": "New Expanse / New Expanse" },
+    {
+      "id": "vigilfall-hub",
+      "system": "vigilfall-lantern",
+      "label": "Vigilfall Lantern / Vigilfall Hub"
+    },
+    { "id": "anchorreach-hub", "system": "anchorreach", "label": "Anchorreach / Anchorreach Hub" },
+    { "id": "vrrhive-moon", "system": "vrrhive", "label": "Vrrhive / Vrrhive Moon" },
+    { "id": "cold-port", "system": "cold-mile", "label": "Cold Mile / Cold Port" },
+    {
+      "id": "surfwake-outpost",
+      "system": "surfwake-current",
+      "label": "Surfwake Current / Surfwake Outpost"
+    },
+    { "id": "free-minor", "system": "free-landing", "label": "Free Landing / Free Minor" },
+    { "id": "emberwake-0", "system": "emberwake", "label": "Emberwake / Emberwake" },
+    { "id": "gutteryard-moon", "system": "gutteryard", "label": "Gutteryard / Gutteryard Moon" },
+    {
+      "id": "caravantrack-outpost",
+      "system": "caravantrack",
+      "label": "Caravantrack / Caravantrack Outpost"
+    },
+    { "id": "wagonrest-world", "system": "wagonrest", "label": "Wagonrest / Wagonrest World" },
+    {
+      "id": "fathompool-station",
+      "system": "fathompool",
+      "label": "Fathompool / Fathompool Station"
+    },
+    { "id": "seimira-hub", "system": "seimira", "label": "Seimira / Seimira Hub" },
+    { "id": "serita-exchange", "system": "serita", "label": "Serita / Serita Exchange" },
+    { "id": "lyrene-yards", "system": "lyrene", "label": "Lyrene / Lyrene Yards" },
+    { "id": "far-prime", "system": "far-reach", "label": "Far Reach / Far Prime" },
+    { "id": "free-port", "system": "free-reach", "label": "Free Reach / Free Port" },
+    { "id": "free-moonlet", "system": "free-light", "label": "Free Light / Free Moonlet" },
+    { "id": "stray-prime", "system": "stray-margin", "label": "Stray Margin / Stray Prime" },
+    { "id": "stray-minor", "system": "stray-margin", "label": "Stray Margin / Stray Minor" },
+    { "id": "stray-prime-0", "system": "stray-reach", "label": "Stray Reach / Stray Prime" },
+    {
+      "id": "sparith-facet-0",
+      "system": "sparith-facet",
+      "label": "Sparith Facet / Sparith Facet"
+    },
+    { "id": "knifemaw-prime", "system": "knifemaw", "label": "Knifemaw / Knifemaw Prime" },
+    { "id": "outer-minor", "system": "outer-signal", "label": "Outer Signal / Outer Minor" },
+    { "id": "broken-prime", "system": "broken-reach", "label": "Broken Reach / Broken Prime" },
+    { "id": "the-moonlet", "system": "the-unlight", "label": "The Unlight / The Moonlet" },
+    { "id": "gallowsden-minor", "system": "gallowsden", "label": "Gallowsden / Gallowsden Minor" },
+    { "id": "wild-port", "system": "wild-signal", "label": "Wild Signal / Wild Port" },
+    { "id": "longreach-prime", "system": "longreach", "label": "Longreach / Longreach Prime" },
+    { "id": "longreach-port", "system": "longreach", "label": "Longreach / Longreach Port" },
+    { "id": "iriace-station", "system": "iriace", "label": "Iriace / Iriace Station" },
+    { "id": "iriace-yards", "system": "iriace", "label": "Iriace / Iriace Yards" },
+    { "id": "scrapverge-yards", "system": "scrapverge", "label": "Scrapverge / Scrapverge Yards" },
+    { "id": "emberburn-prime", "system": "emberburn", "label": "Emberburn / Emberburn Prime" },
+    { "id": "far-yards", "system": "far-mile", "label": "Far Mile / Far Yards" },
+    { "id": "anchorwater-0", "system": "anchorwater", "label": "Anchorwater / Anchorwater" },
+    { "id": "outer-chance-0", "system": "outer-chance", "label": "Outer Chance / Outer Chance" },
+    { "id": "vrrath-moon", "system": "vrrath", "label": "Vrrath / Vrrath Moon" },
+    {
+      "id": "coralreef-outpost",
+      "system": "coralreef-current",
+      "label": "Coralreef Current / Coralreef Outpost"
+    },
+    { "id": "novium-world", "system": "novium-verge", "label": "Novium Verge / Novium World" },
+    { "id": "last-haven-0", "system": "last-haven", "label": "Last Haven / Last Haven" },
+    {
+      "id": "gutteryard-minor",
+      "system": "gutteryard-den",
+      "label": "Gutteryard Den / Gutteryard Minor"
+    },
+    {
+      "id": "gutteryard-major",
+      "system": "gutteryard-den",
+      "label": "Gutteryard Den / Gutteryard Major"
+    },
+    { "id": "kraggard-station", "system": "kraggard", "label": "Kraggard / Kraggard Station" },
+    { "id": "flickerglow-0", "system": "flickerglow", "label": "Flickerglow / Flickerglow" },
+    {
+      "id": "flickerglow-world",
+      "system": "flickerglow",
+      "label": "Flickerglow / Flickerglow World"
+    },
+    { "id": "shoaldrift-moon", "system": "shoaldrift", "label": "Shoaldrift / Shoaldrift Moon" },
+    { "id": "new-port", "system": "new-landing", "label": "New Landing / New Port" },
+    { "id": "stray-world", "system": "stray-harbor", "label": "Stray Harbor / Stray World" },
+    { "id": "dunpeak-major", "system": "dunpeak", "label": "Dunpeak / Dunpeak Major" },
+    { "id": "novion-minor", "system": "novion", "label": "Novion / Novion Minor" },
+    {
+      "id": "opalace-station",
+      "system": "opalace-facet",
+      "label": "Opalace Facet / Opalace Station"
+    },
+    {
+      "id": "facethymn-chord-0",
+      "system": "facethymn-chord",
+      "label": "Facethymn Chord / Facethymn Chord"
+    },
+    { "id": "lone-moon", "system": "lone-expanse", "label": "Lone Expanse / Lone Moon" },
+    { "id": "last-anchorage", "system": "last-shelf", "label": "Last Shelf / Last Anchorage" },
+    { "id": "praeenna-yards", "system": "praeenna", "label": "Praeenna / Praeenna Yards" },
+    { "id": "astita-yards", "system": "astita", "label": "Astita / Astita Yards" },
+    { "id": "ironpost-exchange", "system": "ironpost", "label": "Ironpost / Ironpost Exchange" },
+    { "id": "ironpost-station", "system": "ironpost", "label": "Ironpost / Ironpost Station" },
+    { "id": "maghelm-yards", "system": "maghelm-hold", "label": "Maghelm Hold / Maghelm Yards" },
+    {
+      "id": "wickburn-minor",
+      "system": "wickburn-watch",
+      "label": "Wickburn Watch / Wickburn Minor"
+    },
+    { "id": "hookhole-prime", "system": "hookhole", "label": "Hookhole / Hookhole Prime" },
+    {
+      "id": "second-outpost",
+      "system": "second-signal",
+      "label": "Second Signal / Second Outpost"
+    },
+    { "id": "opalvane-rock", "system": "opalvane", "label": "Opalvane / Opalvane Rock" },
+    { "id": "hookyard-minor", "system": "hookyard", "label": "Hookyard / Hookyard Minor" },
+    { "id": "spokeserai-hub", "system": "spokeserai", "label": "Spokeserai / Spokeserai Hub" },
+    { "id": "spokeserai-port", "system": "spokeserai", "label": "Spokeserai / Spokeserai Port" },
+    { "id": "abyssdrift-rock", "system": "abyssdrift", "label": "Abyssdrift / Abyssdrift Rock" },
+    { "id": "quiet-outpost", "system": "quiet-mile", "label": "Quiet Mile / Quiet Outpost" },
+    { "id": "quiet-exchange", "system": "quiet-mile", "label": "Quiet Mile / Quiet Exchange" },
+    { "id": "wild-hub", "system": "wild-reach", "label": "Wild Reach / Wild Hub" },
+    { "id": "free-anchorage", "system": "free-hope", "label": "Free Hope / Free Anchorage" },
+    { "id": "free-exchange", "system": "free-hope", "label": "Free Hope / Free Exchange" },
+    {
+      "id": "dunstone-moonlet",
+      "system": "dunstone-hold",
+      "label": "Dunstone Hold / Dunstone Moonlet"
+    },
+    { "id": "corora-exchange", "system": "corora", "label": "Corora / Corora Exchange" },
+    {
+      "id": "saddlerest-moonlet",
+      "system": "saddlerest-market",
+      "label": "Saddlerest Market / Saddlerest Moonlet"
+    },
+    {
+      "id": "kelpbloom-exchange",
+      "system": "kelpbloom",
+      "label": "Kelpbloom / Kelpbloom Exchange"
+    },
+    {
+      "id": "chimeith-station",
+      "system": "chimeith-facet",
+      "label": "Chimeith Facet / Chimeith Station"
+    },
+    { "id": "axleway-moon", "system": "axleway", "label": "Axleway / Axleway Moon" },
+    {
+      "id": "fathomtrench-world",
+      "system": "fathomtrench",
+      "label": "Fathomtrench / Fathomtrench World"
+    },
+    {
+      "id": "facetvane-outpost",
+      "system": "facetvane-facet",
+      "label": "Facetvane Facet / Facetvane Outpost"
+    },
+    { "id": "lost-station-0", "system": "lost-haven", "label": "Lost Haven / Lost Station" },
+    { "id": "zzclutch-rock", "system": "zzclutch", "label": "Zzclutch / Zzclutch Rock" },
+    { "id": "zzclutch-port", "system": "zzclutch", "label": "Zzclutch / Zzclutch Port" },
+    { "id": "maggard-major", "system": "maggard", "label": "Maggard / Maggard Major" },
+    { "id": "valeon-world", "system": "valeon", "label": "Valeon / Valeon World" },
+    { "id": "wagonford-0", "system": "wagonford", "label": "Wagonford / Wagonford" },
+    { "id": "bilgeyard-station", "system": "bilgeyard", "label": "Bilgeyard / Bilgeyard Station" },
+    {
+      "id": "brasstrack-minor",
+      "system": "brasstrack-wells",
+      "label": "Brasstrack Wells / Brasstrack Minor"
+    },
+    {
+      "id": "brasstrack-station",
+      "system": "brasstrack-wells",
+      "label": "Brasstrack Wells / Brasstrack Station"
+    },
+    { "id": "hivemire-minor", "system": "hivemire", "label": "Hivemire / Hivemire Minor" },
+    { "id": "copperwell-port", "system": "copperwell", "label": "Copperwell / Copperwell Port" },
+    {
+      "id": "free-anchorage-0",
+      "system": "free-expanse",
+      "label": "Free Expanse / Free Anchorage"
+    },
+    { "id": "burnt-chance-0", "system": "burnt-chance", "label": "Burnt Chance / Burnt Chance" },
+    { "id": "mandihive-rock", "system": "mandihive", "label": "Mandihive / Mandihive Rock" },
+    { "id": "axleford-hub", "system": "axleford", "label": "Axleford / Axleford Hub" },
+    {
+      "id": "tinpost-outpost",
+      "system": "tinpost-market",
+      "label": "Tinpost Market / Tinpost Outpost"
+    },
+    { "id": "shoalpool-major", "system": "shoalpool", "label": "Shoalpool / Shoalpool Major" },
+    { "id": "shoalpool-prime", "system": "shoalpool", "label": "Shoalpool / Shoalpool Prime" },
+    {
+      "id": "anvilhelm-station",
+      "system": "anvilhelm-hold",
+      "label": "Anvilhelm Hold / Anvilhelm Station"
+    },
+    {
+      "id": "anvilhelm-exchange",
+      "system": "anvilhelm-hold",
+      "label": "Anvilhelm Hold / Anvilhelm Exchange"
+    },
+    { "id": "sparfall-hub", "system": "sparfall", "label": "Sparfall / Sparfall Hub" },
+    {
+      "id": "ironwell-moon",
+      "system": "ironwell-market",
+      "label": "Ironwell Market / Ironwell Moon"
+    },
+    {
+      "id": "sconcefall-port",
+      "system": "sconcefall-vigil",
+      "label": "Sconcefall Vigil / Sconcefall Port"
+    },
+    {
+      "id": "sconcefall-moonlet",
+      "system": "sconcefall-vigil",
+      "label": "Sconcefall Vigil / Sconcefall Moonlet"
+    },
+    {
+      "id": "basaltforge-major",
+      "system": "basaltforge-deep",
+      "label": "Basaltforge Deep / Basaltforge Major"
+    },
+    { "id": "ironpeak-hub", "system": "ironpeak-forge", "label": "Ironpeak Forge / Ironpeak Hub" },
+    {
+      "id": "ironpeak-anchorage",
+      "system": "ironpeak-forge",
+      "label": "Ironpeak Forge / Ironpeak Anchorage"
+    },
+    { "id": "shoalbloom-hub", "system": "shoalbloom", "label": "Shoalbloom / Shoalbloom Hub" },
+    { "id": "shoalbloom-world", "system": "shoalbloom", "label": "Shoalbloom / Shoalbloom World" },
+    { "id": "tapermere-0", "system": "tapermere", "label": "Tapermere / Tapermere" },
+    {
+      "id": "saddletrack-world",
+      "system": "saddletrack",
+      "label": "Saddletrack / Saddletrack World"
+    },
+    {
+      "id": "saddletrack-anchorage",
+      "system": "saddletrack",
+      "label": "Saddletrack / Saddletrack Anchorage"
+    },
+    { "id": "outer-moon", "system": "outer-hope", "label": "Outer Hope / Outer Moon" },
+    { "id": "rustverge-0", "system": "rustverge", "label": "Rustverge / Rustverge" },
+    { "id": "rustverge-port", "system": "rustverge", "label": "Rustverge / Rustverge Port" },
+    { "id": "mandikesh-world", "system": "mandikesh", "label": "Mandikesh / Mandikesh World" },
+    { "id": "mandikesh-hub", "system": "mandikesh", "label": "Mandikesh / Mandikesh Hub" },
+    { "id": "ebbreef-prime", "system": "ebbreef", "label": "Ebbreef / Ebbreef Prime" },
+    { "id": "iridell-minor", "system": "iridell", "label": "Iridell / Iridell Minor" },
+    { "id": "iridell-prime", "system": "iridell", "label": "Iridell / Iridell Prime" },
+    { "id": "valora-anchorage", "system": "valora", "label": "Valora / Valora Anchorage" },
+    { "id": "outer-moon-0", "system": "outer-landing", "label": "Outer Landing / Outer Moon" },
+    { "id": "elasai-moonlet", "system": "elasai", "label": "Elasai / Elasai Moonlet" },
+    { "id": "basaltgard-minor", "system": "basaltgard", "label": "Basaltgard / Basaltgard Minor" },
+    {
+      "id": "duneroad-port",
+      "system": "duneroad-market",
+      "label": "Duneroad Market / Duneroad Port"
+    },
+    { "id": "shoaldeep-yards", "system": "shoaldeep", "label": "Shoaldeep / Shoaldeep Yards" },
+    { "id": "valora-minor", "system": "valora-prime", "label": "Valora Prime / Valora Minor" },
+    {
+      "id": "flickerfall-port",
+      "system": "flickerfall",
+      "label": "Flickerfall / Flickerfall Port"
+    },
+    { "id": "sparvane-hub", "system": "sparvane", "label": "Sparvane / Sparvane Hub" },
+    {
+      "id": "broken-exchange",
+      "system": "broken-landing",
+      "label": "Broken Landing / Broken Exchange"
+    },
+    {
+      "id": "hearthlight-world",
+      "system": "hearthlight",
+      "label": "Hearthlight / Hearthlight World"
+    },
+    { "id": "tapershade-minor", "system": "tapershade", "label": "Tapershade / Tapershade Minor" },
+    { "id": "vrrath-minor", "system": "vrrath-clutch", "label": "Vrrath Clutch / Vrrath Minor" },
+    { "id": "vrrath-beta", "system": "vrrath-clutch", "label": "Vrrath Clutch / Vrrath Beta" },
+    { "id": "gravehole-outpost", "system": "gravehole", "label": "Gravehole / Gravehole Outpost" },
+    { "id": "earth", "system": "sol", "label": "Sol / Terra" },
+    { "id": "luna", "system": "sol", "label": "Sol / Luna Station" },
+    { "id": "coldharbor", "system": "coldharbor", "label": "Coldharbor / Coldharbor" },
+    { "id": "coldharbor-yards", "system": "coldharbor", "label": "Coldharbor / Coldharbor Yards" },
+    { "id": "greyline-moon", "system": "greyline", "label": "Greyline / Greyline Moon" },
+    { "id": "greyline-moon-1", "system": "greyline", "label": "Greyline / Greyline Moon" },
+    { "id": "sable-outpost", "system": "sable-reach", "label": "Sable Reach / Sable Outpost" },
+    { "id": "quietude-anchorage", "system": "quietude", "label": "Quietude / Quietude Anchorage" },
+    { "id": "ember-minor", "system": "ember-drift", "label": "Ember Drift / Ember Minor" },
+    { "id": "lowtide-station", "system": "lowtide", "label": "Lowtide / Lowtide Station" },
+    { "id": "northmark-station", "system": "northmark", "label": "Northmark / Northmark Station" },
+    { "id": "ninefold-prime", "system": "ninefold", "label": "Ninefold / Ninefold Prime" },
+    {
+      "id": "twins-exchange",
+      "system": "lantern-twins",
+      "label": "Lantern Twins / Twins Exchange"
+    },
+    { "id": "aureole-ring", "system": "aureole", "label": "Aureole / Aureole Research Ring" },
+    { "id": "reliquary-watch", "system": "reliquary", "label": "Reliquary / Graveyard Watch" },
+    { "id": "nightjar-refuge", "system": "nightjar", "label": "Nightjar / Nightjar Refuge" },
+    { "id": "nightjar-beacon", "system": "nightjar", "label": "Nightjar / Refuge Beacon" },
+    {
+      "id": "glasswake-foundry",
+      "system": "glasswake",
+      "label": "Glasswake / Shardwright Foundry"
+    },
+    {
+      "id": "palinode-observatory",
+      "system": "palinode",
+      "label": "Palinode / Palinode Observatory"
+    }
+  ],
+  "sites": [
+    { "id": "site-qgate", "system": "qgate", "label": "Concordia / Derelict Station Hull" },
+    { "id": "site-meridian", "system": "meridian", "label": "Meridian / Derelict Station Hull" },
+    { "id": "site-halcyon", "system": "halcyon", "label": "Halcyon / Derelict Station Hull" },
+    {
+      "id": "site-waystation",
+      "system": "waystation",
+      "label": "Waystation / Derelict Station Hull"
+    },
+    { "id": "site-longhaul", "system": "longhaul", "label": "Longhaul / Derelict Station Hull" },
+    {
+      "id": "site-brightwater",
+      "system": "brightwater",
+      "label": "Brightwater / Derelict Station Hull"
+    },
+    {
+      "id": "site-emberlight",
+      "system": "emberlight",
+      "label": "Emberlight / Derelict Station Hull"
+    },
+    { "id": "site-gloam", "system": "gloam", "label": "Gloam / Derelict Station Hull" },
+    { "id": "site-thrumhive", "system": "thrumhive", "label": "Thrumhive / Derelict Station Hull" },
+    { "id": "site-slagforge", "system": "slagforge", "label": "Slagforge / Derelict Station Hull" },
+    { "id": "site-facetfall", "system": "facetfall", "label": "Facetfall / Derelict Station Hull" },
+    { "id": "site-spokeroad", "system": "spokeroad", "label": "Spokeroad / Derelict Station Hull" },
+    { "id": "site-tidepool", "system": "tidepool", "label": "Tidepool / Derelict Station Hull" },
+    { "id": "site-farmouth", "system": "farmouth", "label": "Far Mouth / Derelict Station Hull" },
+    {
+      "id": "site-chitinreach",
+      "system": "chitinreach",
+      "label": "Chitin Reach / Derelict Station Hull"
+    },
+    {
+      "id": "site-basaltdeep",
+      "system": "basaltdeep",
+      "label": "Basalt Deep / Derelict Station Hull"
+    },
+    { "id": "site-geodesy", "system": "geodesy", "label": "Geodesy / Derelict Station Hull" },
+    {
+      "id": "site-burnt-light",
+      "system": "burnt-light",
+      "label": "Burnt Light / Derelict Station Hull"
+    },
+    {
+      "id": "site-outer-signal",
+      "system": "outer-signal",
+      "label": "Outer Signal / Derelict Station Hull"
+    },
+    {
+      "id": "site-free-claim",
+      "system": "free-claim",
+      "label": "Free Claim / Derelict Station Hull"
+    },
+    {
+      "id": "site-outer-claim",
+      "system": "outer-claim",
+      "label": "Outer Claim / Derelict Station Hull"
+    },
+    {
+      "id": "site-wild-claim",
+      "system": "wild-claim",
+      "label": "Wild Claim / Derelict Station Hull"
+    },
+    {
+      "id": "site-second-harbor",
+      "system": "second-harbor",
+      "label": "Second Harbor / Derelict Station Hull"
+    },
+    {
+      "id": "site-broken-mile",
+      "system": "broken-mile",
+      "label": "Broken Mile / Derelict Station Hull"
+    },
+    {
+      "id": "site-wild-landing",
+      "system": "wild-landing",
+      "label": "Wild Landing / Derelict Station Hull"
+    },
+    {
+      "id": "site-outer-chance",
+      "system": "outer-chance",
+      "label": "Outer Chance / Derelict Station Hull"
+    },
+    {
+      "id": "site-second-light",
+      "system": "second-light",
+      "label": "Second Light / Derelict Station Hull"
+    }
+  ],
+  "research": [
+    { "id": "shield1", "ops": 2 },
+    { "id": "shield2", "ops": 3 },
+    { "id": "shield3", "ops": 5 },
+    { "id": "hull1", "ops": 2 },
+    { "id": "hull2", "ops": 3 },
+    { "id": "hull3", "ops": 5 },
+    { "id": "gunnery", "ops": 4 },
+    { "id": "gunnery2", "ops": 5 },
+    { "id": "thrusters", "ops": 3 },
+    { "id": "silo", "ops": 2 },
+    { "id": "silo2", "ops": 4 },
+    { "id": "refine1", "ops": 2 },
+    { "id": "refine2", "ops": 4 },
+    { "id": "process", "ops": 3 },
+    { "id": "drydock", "ops": 4 },
+    { "id": "drive", "ops": 2 },
+    { "id": "scoop", "ops": 3 },
+    { "id": "warpcal", "ops": 4 },
+    { "id": "holds", "ops": 3 },
+    { "id": "mining1", "ops": 2 },
+    { "id": "mining2", "ops": 4 },
+    { "id": "salvage", "ops": 3 },
+    { "id": "bay1", "ops": 2 },
+    { "id": "bay2", "ops": 5 },
+    { "id": "sh_speed", "ops": 2 },
+    { "id": "sh_armor", "ops": 3 },
+    { "id": "sh_yield", "ops": 3 },
+    { "id": "sh_crew", "ops": 4 }
+  ],
+  "tutorialEnd": 23,
+  "radio": [
+    "wave-function-collapse",
+    "qvri",
+    "interdimensional",
+    "signal-superposition",
+    "super-idol"
+  ],
+  "start": { "system": "qgate", "stellar": "qstation", "credits": 30000, "ship": 703 }
+}

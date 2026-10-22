@@ -395,11 +395,28 @@ export class Game {
         throw new Error('That captain is playing right now.');
     const imported = structuredClone(playerData);
     migrateCargoLots(imported); // validate before replacing any existing slot
+    const ownerKey = this.db.key(name);
+    const site = imported.station.claimed ? imported.station.site : null;
+    if (site) {
+      if (!STELLARS[site]?.site) throw new Error('Unknown station location in the save.');
+      const owner = this.db.world.sites[site];
+      const otherClaim = Object.values(this.db.players).find(
+        (captain) => this.db.key(captain.name) !== ownerKey && captain.station?.site === site,
+      );
+      if ((owner && owner !== ownerKey) || otherClaim)
+        throw new Error(
+          'That station location belongs to another captain. Choose another location.',
+        );
+    }
     const p = this.db.create(name, 'solo', {});
     for (const k of Object.keys(imported))
       if (!['__proto__', 'constructor', 'prototype', 'salt', 'hash'].includes(k))
         p[k] = imported[k];
     p.name = name;
+    // Save files contain captain data, not world ownership. Reconcile both on import.
+    for (const [ownedSite, owner] of Object.entries(this.db.world.sites))
+      if (owner === ownerKey) delete this.db.world.sites[ownedSite];
+    if (site) this.db.world.sites[site] = ownerKey;
     this.db.touch();
     this.db.flush();
     return name; // own keys only

@@ -30,11 +30,12 @@ try {
   for (const [name, sys, stellar] of [
     ['Radio Explorer', 'brightwater', 'brightwater-iv'],
     ['Radio Lost', 'longreach', 'longreach-prime'],
-    ['Knight', 'ninefold', 'ninefold-prime'],
+    ['Radio Playback', 'ninefold', 'ninefold-prime'],
   ]) {
     assert.equal(STELLARS[stellar]?.system, sys, 'valid seeded port');
     const d = game.db.create(name, 'test-only', game.fresh());
     Object.assign(d, { sys, stellar, tut: 999, story: { done: ['start'], active: null } });
+    if (name === 'Radio Playback') d.radioStations = RADIO_STATIONS.map((station) => station.id);
   }
   game.db.touch();
   game.db.flush();
@@ -197,7 +198,7 @@ try {
     1,
   );
   await logout();
-  await login('Knight');
+  await login('Radio Playback');
   assert.deepEqual(
     await stations(),
     RADIO_STATIONS.map((s) => s.name),
@@ -316,7 +317,7 @@ try {
         status: 'pass',
         discovery: 'real authenticated jumps, repeat reconnect, same-browser captain isolation',
         screenshot:
-          'Knight receives all stations without seeded unlocks; real owner album playing in actual HUD',
+          'Fixture captain has saved radio unlocks; real owner album playing in actual HUD',
         playback:
           'all 33 owner recordings really decoded, actual station playback/title hiding; natural ended A B C A exercised with test-only short WAV responses',
         errors,
@@ -327,7 +328,7 @@ try {
     ) + '\n',
   );
   console.log(
-    'PASS actual jumps/discoveries, reconnect, locked/favorites isolation, Knight access, owner audio/title rules and 33 real decodes, fixture album ended loop and OFF',
+    'PASS actual jumps/discoveries, reconnect, locked/favorites isolation, saved station unlocks, owner audio/title rules and 33 real decodes, fixture album ended loop and OFF',
   );
 } catch (error) {
   await failureEvidence(browser, out, error);

@@ -16,7 +16,6 @@ Every release, newest first. The main story is left out on purpose.
 - Encounter a very rare three-passenger, five-system Spacepop tour. Receive credits and Super-Idol Radio after the last show, playing its album in order on repeat.
 - Supply 32 owner-provided recordings across the five stations (7/4/7/6/8 tracks), compressed for game delivery. Hide song names for stations 1–4; show the Super-Idol album titles in published order.
 - Replace active login music with the separately supplied Station spatiale recording, preserving the original theme file. Keep the existing HUD, favorites, search, mixer and mute controls.
-- Give Knight access to all five stations automatically; other captains keep the normal discovery and mission unlocks.
 
 ### 3.2.1 — Simpler economy, cockpit QoL and mission choices
 
@@ -85,11 +84,9 @@ Every release, newest first. The main story is left out on purpose.
 - Remove the bottom-left login location caption and vertically center the Captain's Log-In banner title.
 - Clarify the ongoing beta status and simplify the README feature overview.
 
-### 3.0.2 — Mining controls and KNIGHT testing profile
+### 3.0.2 — Mining controls
 
 - Collapse mining controls behind a bottom-left gold spiral-drill button. Hide controls on unsuitable ships, keep full-hold guidance and active-operation safety controls, and move detailed help out of the main panel.
-- Restore KNIGHT (`1234`) for testing: 30M credits, Constitution Excalibur, completed T5 station/research and all eleven specialty ships prebuilt in storage, including Star Dredge.
-- Create the preset once per save folder; preserve existing captains, credentials and progress. Use an available station hull without stealing another captain’s site.
 - Add registered real online/Solo login, ship-selection, restart and save-preservation regressions.
 
 ### 3.0.1 — Windows startup fix
@@ -404,8 +401,6 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 
 ### 2.0.2
 
-- **KNIGHT retired.** The showcase account is gone, and on first start any existing KNIGHT save is removed and his Ops 5
-  station hull at Quantum Gate becomes an unclaimed derelict again.
 - **Malformed-message handling** (`test/fuzz.js`):
   - captain names like `__proto__` are refused, and saves can no longer be corrupted through them
   - profile and leaderboard lookups with odd names no longer error

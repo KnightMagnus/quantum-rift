@@ -37,11 +37,15 @@ assert.deepEqual(
   RADIO_STATIONS.map((s) => s.tracks.length),
   [7, 4, 7, 6, 8],
 );
-assert.deepEqual(
-  radioState({ name: 'kNiGhT', radioStations: [] }),
-  RADIO_STATIONS.map((s) => s.id),
-);
+assert.deepEqual(radioState({ name: 'kNiGhT', radioStations: [] }), ['wave-function-collapse']);
 assert.deepEqual(radioState({ name: 'Knightly', radioStations: [] }), ['wave-function-collapse']);
+assert.deepEqual(
+  radioState({
+    name: 'Saved Listener',
+    radioStations: RADIO_STATIONS.map((station) => station.id),
+  }),
+  RADIO_STATIONS.map((station) => station.id),
+);
 const notifications = () =>
   pilot.sock.out.filter((m) => m.t === 'toast' && m.msg.includes('Discovered a new radio station'));
 for (const system of Object.values(SYS).filter((s) => s.faction === 'quevari')) {

@@ -91,15 +91,15 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 - **Useful environment variables:**
   - `PORT`, `DATA_DIR`, `SEEDS_FILE` and `SOLO`
   - `FRONT_HOURS` and `INVASION_NOW`, for testing fronts and invasions
-- **Seeds:** `server/seeds.json` creates the KNIGHT testing captain (public test password `1234`): 30M credits,
-  Constitution Excalibur, completed T5 station and all specialty hulls in storage. `sync: "create"` applies
-  research/crew setup only at creation; existing captains are never reset. `storedShips: "specialists"`
-  adds stock-built T1 specialty ships only at creation. `station.fallback: true` picks an unclaimed site
-  if the preferred one is occupied, without displacing another owner; if none is free, creation is skipped.
-  `sync: true` still explicitly upgrades existing developer fixtures. `test/seeds_knight.json` retains
-  the older synced browser fixture. Override `SEEDS_FILE` with a JSON file containing `[]` to disable
-  seed creation; this does not delete an already-created profile. Never enable shared test credentials
-  on a public host: use an isolated testing save directory instead.
+- **Test saves:** use the [Solo save generator](Testing/SaveGenerator/README.md) to
+  choose starting credits, ship, station location and tier. Save import/export is
+  available only in Solo mode; online servers do not expose these endpoints.
+- **Seeds:** `server/seeds.json` is empty by default. Set `SEEDS_FILE` to an explicit
+  fixture JSON file for isolated server tests. Seed definitions can set credits,
+  ships, research and station ownership. `sync: "create"` applies setup only at
+  creation; `sync: true` upgrades an existing fixture. `station.fallback: true`
+  selects an unclaimed site rather than displacing an owner. Never put shared test
+  credentials on a public server. Removing a seed definition preserves existing saves.
 - **Balance:** `test/balance.js` prints shipyard ladders, value for money, income per hour and hours to afford each
   milestone. It fails on outliers.
 
@@ -160,7 +160,7 @@ using `bankOf` in `client/render.js`. Hulls without `spr` use the older PNG shee
 - `python3 test/v103_shot.py <outdir>`: 1.0.3 browser check (jobs, trade MAX and SELL ALL, outfitter, career card, L to depart,
   autopilot landing).
 - `python3 test/v103_radio.py <outdir>`: the local radio playlist and isolated browser regressions (all33 owner recordings decoded; short WAV fixtures separately exercise natural album advancement).
-- `node test/v202.js`: 2.0.2 checks (KNIGHT retirement, prototype-safe names and lookups).
+- `node test/v202.js`: 2.0.2 checks (explicit fixture retirement, prototype-safe names and lookups).
 - `node test/v203.js`: 2.0.3 checks (newcomer protection, calmer raider spawns, the backlog fixes).
 - `node test/v252.js`: 2.5.2 checks (story needs, supply warnings, mining hints, markets for mined goods, war fleets and newcomers, the map station marker, the ring art).
 - `node test/v26.js`: 2.6 checks with many connected captains (the save migration for refits, escorts, directives and fleets; friends, DMs and the offline mailbox; the Armada, no friendly fire, buffs, shares, follow and rally; rescue; duels and Armada Duels; trading between stations; co-op Holdout; Armada contracts; Relocate Station; every client import resolving).

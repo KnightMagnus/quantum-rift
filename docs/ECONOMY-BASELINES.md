@@ -6,7 +6,7 @@ career observations.
 
 Use isolated temporary saves and the normal authoritative game actions. Preserve
 the seed, starting save, loadout, route, accepted offers, costs and timed input log
-for every session. Never use production/player saves or the rich KNIGHT test profile
+for every session. Never use production/player saves or a high-credit testing profile
 as an ordinary progression baseline. No rewarded tutorial replay or external gifts.
 
 ## Matched sessions
@@ -57,7 +57,7 @@ Run `node tools/economy-baseline.mjs observations.json report.json`.
 Incomplete evidence fails by default; `--allow-partial` produces an explicitly
 incomplete report. Never turn missing runs into synthetic data. Net cash, active and
 wall-clock rates, idle time, losses, capital/hold and estimated upgrade time are
-reported separately. KNIGHT-style stress runs are excluded from comparable cells.
+reported separately. High-credit stress runs are excluded from comparable cells.
 Losses already present in the cash difference are never subtracted a second time.
 
 The proposed 25% difference is a repeat/investigation trigger, not a balance target.
