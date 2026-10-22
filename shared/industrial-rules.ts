@@ -63,8 +63,9 @@ export function coronaAt(starSystem: string, positionX: number, positionY: numbe
     ) || null
   );
 }
-/** A swept forward cone samples the actual travelled segment, not just its endpoint.
- * @param {{x:number,y:number,a:number,vx:number,vy:number}} event @param {{x:number,y:number,r?:number}} target @param {number} deltaTime */
+/**
+ * A swept forward cone samples the actual travelled segment, not just its endpoint.
+ */
 export function inSweep(
   event: { x: number; y: number; a: number; vx: number; vy: number },
   target: { x: number; y: number; r?: number },
@@ -88,10 +89,10 @@ export function inSweep(
   return false;
 }
 
-/** Conservative autopilot keep-out: route segments must clear the whole collector.
+/**
+ * Conservative autopilot keep-out: route segments must clear the whole collector.
  * A margin includes stock stopping drift; manual harvesting flight remains available.
- * @param {string} starSystem @param {{x:number,y:number}} start
- * @param {{x:number,y:number}} endPosition @param {number} [margin] */
+ */
 export function coronaRouteBlocked(
   starSystem: string,
   start: { x: number; y: number },

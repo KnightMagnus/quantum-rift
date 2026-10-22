@@ -41,65 +41,65 @@ import { ARMADA, TRADE, DUEL } from '../shared/coop.ts';
 import { credits } from '../shared/rules.ts';
 
 /**
- * @typedef {Object} CoopHelpers
- * @property {(msg: string) => void} toast Show toast notification function
- * @property {(msg: string, onYes: () => void) => void} ask Prompt confirmation modal function
- * @property {(sysId: string) => void} plot Plot course function
+ * CoopHelpers fields:
+ * toast: Show toast notification function
+ * ask: Prompt confirmation modal function
+ * plot: Plot course function
  */
 
 /**
- * @typedef {Object} DirectMessage
- * @property {string} from Sender captain name
- * @property {string} msg Message text
- * @property {number} t Timestamp
- * @property {boolean} [off] Delivered while offline flag
+ * DirectMessage fields:
+ * from: Sender captain name
+ * msg: Message text
+ * t: Timestamp
+ * [off]: Delivered while offline flag
  */
 
 /**
- * @typedef {Object} FriendEntry
- * @property {string} name Friend captain name
- * @property {'online'|'away'|'offline'} status Online status
- * @property {number} [last] Last seen timestamp
- * @property {string} [sys] System display name
- * @property {string} [sysId] System ID
+ * FriendEntry fields:
+ * name: Friend captain name
+ * status: Online status
+ * [last]: Last seen timestamp
+ * [sys]: System display name
+ * [sysId]: System ID
  */
 
 /**
- * @typedef {Object} SocialState
- * @property {FriendEntry[]} friends List of friends
- * @property {string[]} inReq Inbound friend request captain names
- * @property {string[]} outReq Outbound friend request captain names
- * @property {string[]} blocks Blocked captain names
- * @property {boolean} [dmAll] Allow messages from non-friends
- * @property {boolean} [hideSys] Hide current location from friends
+ * SocialState fields:
+ * friends: List of friends
+ * inReq: Inbound friend request captain names
+ * outReq: Outbound friend request captain names
+ * blocks: Blocked captain names
+ * [dmAll]: Allow messages from non-friends
+ * [hideSys]: Hide current location from friends
  */
 
 /**
- * @typedef {Object} TradeOffer
- * @property {number} [credits] Credits offered
- * @property {Record<string, number>} [items] Items offered
+ * TradeOffer fields:
+ * [credits]: Credits offered
+ * [items]: Items offered
  */
 
 /**
- * @typedef {Object} TradeState
- * @property {string} with Other captain name
- * @property {TradeOffer} mine Current player offer
- * @property {TradeOffer} theirs Other captain offer
- * @property {{ me: boolean, them: boolean }} lock Offer lock states
- * @property {{ me: boolean, them: boolean }} ok Offer confirm states
+ * TradeState fields:
+ * with: Other captain name
+ * mine: Current player offer
+ * theirs: Other captain offer
+ * lock: Offer lock states
+ * ok: Offer confirm states
  */
 
 /**
  * Shorthand helper for document.getElementById.
- * @param {string} id Element ID
- * @returns {HTMLElement | null} DOM element or null
+ * @param id Element ID
+ * @returns DOM element or null
  */
 const elementById2 = elementById;
 
 /**
  * Formats past timestamp to relative time ago string.
- * @param {number} time Past timestamp in ms
- * @returns {string} Formatted relative time string
+ * @param time Past timestamp in ms
+ * @returns Formatted relative time string
  */
 const elapsedTime = (time: number): string => {
   if (!time) return '';
@@ -125,10 +125,9 @@ let plot: CoopHelpers['plot'];
 
 /**
  * Initializes the Co-op subsystem, event listeners, and helper callbacks.
- * @param {ClientGameState} clientGameState2 Shared game state object
- * @param {(msg: NetworkMessage) => void} sender Network send message function
- * @param {CoopHelpers} helpers UI helper callbacks
- * @returns {void}
+ * @param clientGameState2 Shared game state object
+ * @param sender Network send message function
+ * @param helpers UI helper callbacks
  */
 export function initCoop(
   clientGameState2: ClientGameState,
@@ -169,7 +168,6 @@ export function initCoop(
 
 /**
  * Loads direct messages for the current captain from localStorage.
- * @returns {void}
  */
 function loadDms(): void {
   if (!clientGameState.myName || clientGameState._dmFor === clientGameState.myName) return;
@@ -185,7 +183,6 @@ function loadDms(): void {
 
 /**
  * Saves direct messages for the current captain to localStorage.
- * @returns {void}
  */
 function saveDms(): void {
   try {
@@ -198,7 +195,6 @@ function saveDms(): void {
 
 /**
  * Updates the unread notification badge count on the CAPTAINS tab button.
- * @returns {void}
  */
 function badge(): void {
   const count =
@@ -221,8 +217,7 @@ function badge(): void {
 
 /**
  * Handles inbound real-time social messages from the server (friend changes, DMs, trades, rally calls, follow jumps).
- * @param {NetworkMessage} message Message payload received via WebSocket
- * @returns {void}
+ * @param message Message payload received via WebSocket
  */
 export function onCoopMsg(message: SocialMessage): void {
   loadDms();
@@ -318,7 +313,6 @@ export function onCoopMsg(message: SocialMessage): void {
 
 /**
  * Synchronizes local social state and badges when the 'you' payload is received.
- * @returns {void}
  */
 export function coopYou(): void {
   loadDms();
@@ -332,8 +326,8 @@ export function coopYou(): void {
 
 /**
  * Checks whether a space entity belongs to an allied Armada member or one of their wingmates.
- * @param {RenderEntity} event Space entity object
- * @returns {boolean} True if entity is an allied Armada captain or wingmate
+ * @param event Space entity object
+ * @returns True if entity is an allied Armada captain or wingmate
  */
 export function isAlly(event: RenderShip | null | undefined | 0): boolean {
   const firstValue = clientGameState.you && clientGameState.you!.armada;
@@ -353,7 +347,6 @@ export function isAlly(event: RenderShip | null | undefined | 0): boolean {
 
 /**
  * Renders the CAPTAINS companion tab (friends, messages, Armada roster, player trading).
- * @returns {void}
  */
 export function renderCaptains(): void {
   if (!clientGameState.you) return;
@@ -402,7 +395,7 @@ export function renderCaptains(): void {
 
 /**
  * Renders the active duel banner or incoming challenge acceptance box.
- * @returns {string} HTML markup
+ * @returns HTML markup
  */
 function duelBox(): string {
   const duel2 = clientGameState.you!.duel;
@@ -414,7 +407,7 @@ function duelBox(): string {
 
 /**
  * Renders the FRIENDS sub-tab (targeted captain actions, friend requests, friends list, privacy).
- * @returns {string} HTML markup
+ * @returns HTML markup
  */
 function friendsHtml(): string {
   const socialState = clientGameState.social;

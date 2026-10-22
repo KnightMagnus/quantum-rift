@@ -10,13 +10,11 @@ import { signedXorshift32 as randomGenerator, fnv1a as hashId } from './determin
 
 /**
  * Master random seed ensuring deterministic galaxy generation across server and clients.
- * @type {number}
  */
 export const GEN_SEED: number = 0x51f7;
 
 /**
  * Target count of systems in the main procedural galaxy generation pass.
- * @type {number}
  */
 const TOTAL: number = 200;
 
@@ -24,7 +22,6 @@ const TOTAL: number = 200;
 
 /**
  * Procedural name prefixes, suffixes, and title fragments by faction cultural theme.
- * @type {Record<string, Array<string[]>>}
  */
 const NAMES: Record<string, Array<string[]>> = {
   quantum: [
@@ -207,16 +204,15 @@ const NAMES: Record<string, Array<string[]>> = {
 };
 /**
  * Roman numeral suffixes for collision resolution in procedural naming.
- * @type {string[]}
  */
 const ROMAN: string[] = ['', ' II', ' III', ' IV', ' V', ' VI'];
 
 /**
  * Generates a unique star system name consistent with the faction's linguistic theme.
- * @param {string} faction - Faction identifier.
- * @param {() => number} radius - Random number generator returning [0, 1).
- * @param {Set<string>} used - Set of names already in use to ensure uniqueness.
- * @returns {string} Unique procedural name.
+ * @param faction - Faction identifier.
+ * @param radius - Random number generator returning [0, 1).
+ * @param used - Set of names already in use to ensure uniqueness.
+ * @returns Unique procedural name.
  */
 function makeName(faction: string, radius: () => number, used: Set<string>): string {
   const names = NAMES[faction];
@@ -252,8 +248,8 @@ function makeName(faction: string, radius: () => number, used: Set<string>): str
 
 /**
  * Converts a display name into a kebab-case identifier slug.
- * @param {string} state - Input text.
- * @returns {string} Clean URL/ID slug string.
+ * @param state - Input text.
+ * @returns Clean URL/ID slug string.
  */
 const slug = (state: string) =>
   state
@@ -265,7 +261,6 @@ const slug = (state: string) =>
 
 /**
  * Color palettes for procedural planets and stations by faction.
- * @type {Record<string, string[]>}
  */
 const PALETTE: Record<string, string[]> = {
   quantum: ['#4a7fc8', '#7ab878', '#889', '#6a8ab8', '#9ab'],
@@ -286,7 +281,6 @@ const PALETTE: Record<string, string[]> = {
 
 /**
  * Naming suffixes for procedural celestial bodies by type.
- * @type {Record<string, string[]>}
  */
 const KINDS: Record<string, string[]> = {
   planet: ['World', 'Prime', '', 'Major', 'Minor'],
@@ -445,7 +439,6 @@ const FAVOUR: Record<string, string[][]> = {
 };
 /**
  * Baseline danger tier per faction territory for system generation.
- * @type {Record<string, number>}
  */
 const BASE_DANGER: Record<string, number> = {
   quantum: 0,
@@ -465,7 +458,6 @@ const BASE_DANGER: Record<string, number> = {
 
 /**
  * Asteroid and harvestable field resource drop weights per faction region.
- * @type {Record<string, string[]>}
  */
 const FIELD_ORE: Record<string, string[]> = {
   korrund: ['ore', 'ore', 'gas'],
@@ -478,12 +470,12 @@ const FIELD_ORE: Record<string, string[]> = {
 
 /**
  * Procedurally generates a celestial body (planet, station, or moon) within a star system.
- * @param {SpaceSystem} starSystem - Parent star system object.
- * @param {string} faction - System faction identifier.
- * @param {() => number} radius2 - Random number generator returning [0, 1).
- * @param {number} entryKey - Orbit index of this stellar body.
- * @param {Set<string>} usedIds - Set of existing stellar IDs to avoid collisions.
- * @returns {StellarBody} Complete stellar body definition.
+ * @param starSystem - Parent star system object.
+ * @param faction - System faction identifier.
+ * @param radius2 - Random number generator returning [0, 1).
+ * @param entryKey - Orbit index of this stellar body.
+ * @param usedIds - Set of existing stellar IDs to avoid collisions.
+ * @returns Complete stellar body definition.
  */
 function makeStellar(
   starSystem: SpaceSystem,
@@ -566,11 +558,11 @@ function makeStellar(
 
 /**
  * Determines whether two 2D line segments properly intersect (excluding shared endpoints).
- * @param {{ x: number, y: number }} firstValue - First endpoint of segment 1.
- * @param {{ x: number, y: number }} secondValue - Second endpoint of segment 1.
- * @param {{ x: number, y: number }} component - First endpoint of segment 2.
- * @param {{ x: number, y: number }} distance - Second endpoint of segment 2.
- * @returns {boolean} True if segments properly cross.
+ * @param firstValue - First endpoint of segment 1.
+ * @param secondValue - Second endpoint of segment 1.
+ * @param component - First endpoint of segment 2.
+ * @param distance - Second endpoint of segment 2.
+ * @returns True if segments properly cross.
  */
 function segCross(
   firstValue: { x: number; y: number },
@@ -598,10 +590,10 @@ function segCross(
 
 /**
  * Calculates the shortest Euclidean distance from a point to a 2D line segment.
- * @param {{ x: number, y: number }} position - Target point coordinates.
- * @param {{ x: number, y: number }} firstValue - Segment start coordinates.
- * @param {{ x: number, y: number }} secondValue - Segment end coordinates.
- * @returns {number} Shortest distance.
+ * @param position - Target point coordinates.
+ * @param firstValue - Segment start coordinates.
+ * @param secondValue - Segment end coordinates.
+ * @returns Shortest distance.
  */
 function segDist(
   position: { x: number; y: number },
@@ -629,9 +621,9 @@ function segDist(
 /**
  * Procedurally expands the hand-made anchor star systems into a full ~200-system galaxy.
  * Places systems deterministically, establishes hyperlane routes, assigns territories and worlds.
- * @param {SpaceSystem[]} SYSTEMS - Base anchor systems array, modified and expanded in place.
- * @param {Record<string, FactionDef>} _FACTIONS - Galaxy factions registry.
- * @returns {SpaceSystem[]} Array of all newly generated star systems.
+ * @param SYSTEMS - Base anchor systems array, modified and expanded in place.
+ * @param _FACTIONS - Galaxy factions registry.
+ * @returns Array of all newly generated star systems.
  */
 export function expandGalaxy(
   SYSTEMS: SpaceSystem[],
@@ -908,9 +900,9 @@ export function expandGalaxy(
 
 /**
  * Selects candidate derelict station hull locations in generated Frontier space.
- * @param {SpaceSystem[]} SYSTEMS - Generated star systems array.
- * @param {number} [count=10] - Number of sites to select.
- * @returns {Array<[string, string, number, number]>} Array of site tuples [siteId, systemId, x, y].
+ * @param SYSTEMS - Generated star systems array.
+ * @param count - Number of sites to select.
+ * @returns Array of site tuples [siteId, systemId, x, y].
  */
 // additional claimable station hulls in Frontier space (chosen deterministically from the generated systems)
 export function frontierSites(
@@ -947,7 +939,6 @@ export function frontierSites(
 /**
  * Specifications for the ten Farside systems accessible via the Sol Gateway wormhole.
  * Array of tuples [systemId, systemName, xOffset, yOffset, dangerLevel].
- * @type {Array<[string, string, number, number, number]>}
  */
 // Added after generation so none of the 200 generated systems (or their ids) change. Sol sits near the centre of the map;
 // its wormhole leads to ten Farside systems off the north-west edge, reachable only through the Gateway.
@@ -967,7 +958,6 @@ export const FARSIDE: Array<[string, string, number, number, number]> = [
 
 /**
  * Hyperlane connection pairs between Farside systems.
- * @type {Array<[string, string]>}
  */
 const FARSIDE_LINKS: Array<[string, string]> = [
   ['coldharbor', 'mirrorfall'],
@@ -987,8 +977,7 @@ const FARSIDE_LINKS: Array<[string, string]> = [
 
 /**
  * Integrates the Sol system (with Earth and Gateway wormhole) and the 10 Farside systems into the galaxy.
- * @param {SpaceSystem[]} SYSTEMS - Systems collection augmented in place.
- * @returns {void}
+ * @param SYSTEMS - Systems collection augmented in place.
  */
 export function addSolGateway(SYSTEMS: SpaceSystem[]): {
   sol: SpaceSystem;
@@ -1179,7 +1168,6 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
 
 /**
  * Surface color palette for procedural uninhabited moons.
- * @type {string[]}
  */
 const MOON_COLORS: string[] = [
   '#9a948c',
@@ -1193,7 +1181,6 @@ const MOON_COLORS: string[] = [
 
 /**
  * Atmospheric and terrain flavor descriptions for uninhabited moons.
- * @type {string[]}
  */
 const MOON_DESC: string[] = [
   'An airless moon, cratered and quiet.',
@@ -1206,15 +1193,13 @@ const MOON_DESC: string[] = [
 
 /**
  * Roman numerals for procedural moon naming.
- * @type {string[]}
  */
 const MOON_NUM: string[] = ['I', 'II', 'III'];
 
 /**
  * Secondary procedural pass adding additional unpopulated moons and resource asteroid fields to systems.
  * Seeded per-system based on system ID hash and master seed to preserve determinism.
- * @param {SpaceSystem[]} SYSTEMS - Star systems array, modified in place.
- * @returns {void}
+ * @param SYSTEMS - Star systems array, modified in place.
  */
 export function addMoonsAndFields(SYSTEMS: SpaceSystem[]): void {
   for (const system of SYSTEMS) {

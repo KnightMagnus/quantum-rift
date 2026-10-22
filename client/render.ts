@@ -139,116 +139,116 @@ import { weaponColor, weaponLook, price } from '../shared/rules.ts';
 
 // ------------------------------------------------------------------ type definitions
 /**
- * @typedef {Object} StellarBody
- * @property {string} id Unique identifier for the stellar body
- * @property {string} name Display name of the planet, station, or wormhole
- * @property {number} x World X coordinate
- * @property {number} y World Y coordinate
- * @property {number} r Radius in game units
- * @property {string[]} svc Service flags (e.g. 'L' land, 'T' trade, 'Y' shipyard, 'O' outfit)
- * @property {string} [desc] Lore description
- * @property {string} [faction] Controlling faction identifier
- * @property {number} [station] Station visual design index
- * @property {boolean} [hub] Whether this is a central hub station
- * @property {boolean} [wormhole] Whether this stellar body is a wormhole gate
- * @property {boolean} [site] Whether this is a special POI site
+ * StellarBody fields:
+ * id: Unique identifier for the stellar body
+ * name: Display name of the planet, station, or wormhole
+ * x: World X coordinate
+ * y: World Y coordinate
+ * r: Radius in game units
+ * svc: Service flags (e.g. 'L' land, 'T' trade, 'Y' shipyard, 'O' outfit)
+ * [desc]: Lore description
+ * [faction]: Controlling faction identifier
+ * [station]: Station visual design index
+ * [hub]: Whether this is a central hub station
+ * [wormhole]: Whether this stellar body is a wormhole gate
+ * [site]: Whether this is a special POI site
  */
 
 /**
- * @typedef {Object} GalaxySystem
- * @property {string} id System identifier
- * @property {string} name System display name
- * @property {number} x Galactic coordinate X
- * @property {number} y Galactic coordinate Y
- * @property {string} faction Controlling faction ID
- * @property {number} danger Danger rating index
- * @property {string[]} links Connected system IDs
- * @property {StellarBody[]} stellars Stellar bodies located in this system
- * @property {string} [gate] Wormhole destination system ID if present
+ * GalaxySystem fields:
+ * id: System identifier
+ * name: System display name
+ * x: Galactic coordinate X
+ * y: Galactic coordinate Y
+ * faction: Controlling faction ID
+ * danger: Danger rating index
+ * links: Connected system IDs
+ * stellars: Stellar bodies located in this system
+ * [gate]: Wormhole destination system ID if present
  */
 
 /**
- * @typedef {Object} CameraState
- * @property {number} cx Camera center X world position
- * @property {number} cy Camera center Y world position
- * @property {number} z Zoom scale factor
- * @property {number} W Viewport width in pixels
- * @property {number} H Viewport height in pixels
+ * CameraState fields:
+ * cx: Camera center X world position
+ * cy: Camera center Y world position
+ * z: Zoom scale factor
+ * W: Viewport width in pixels
+ * H: Viewport height in pixels
  */
 
 /**
- * @typedef {Object} VisualEffect
- * @property {string} type Effect kind ('boom' | 'spark' | 'flash' | 'blast' | 'dmg')
- * @property {number} x World X coordinate
- * @property {number} y World Y coordinate
- * @property {number} t Spawn timestamp (performance.now())
- * @property {number} d Duration in milliseconds
- * @property {number} [size] Radius or scale of explosion/blast
- * @property {string} [col] Color hex or CSS string for sparks
- * @property {number} [r] Blast radius
- * @property {number} [n] Damage number amount
- * @property {boolean} [mine] Whether damage was dealt by or to the local player
+ * VisualEffect fields:
+ * type: Effect kind ('boom' | 'spark' | 'flash' | 'blast' | 'dmg')
+ * x: World X coordinate
+ * y: World Y coordinate
+ * t: Spawn timestamp (performance.now())
+ * d: Duration in milliseconds
+ * [size]: Radius or scale of explosion/blast
+ * [col]: Color hex or CSS string for sparks
+ * [r]: Blast radius
+ * [n]: Damage number amount
+ * [mine]: Whether damage was dealt by or to the local player
  */
 
 /**
- * @typedef {Object} ShieldHit
- * @property {number} t Hit timestamp (performance.now())
- * @property {number} x World X coordinate of impact
- * @property {number} y World Y coordinate of impact
+ * ShieldHit fields:
+ * t: Hit timestamp (performance.now())
+ * x: World X coordinate of impact
+ * y: World Y coordinate of impact
  */
 
 /**
- * @typedef {Object} MapFit
- * @property {number} k Scale multiplier
- * @property {number} ox Pixel horizontal offset
- * @property {number} oy Pixel vertical offset
+ * MapFit fields:
+ * k: Scale multiplier
+ * ox: Pixel horizontal offset
+ * oy: Pixel vertical offset
  */
 
 /**
- * @typedef {Object} MapTransform
- * @property {(gx: number) => number} tx Transform galactic X to canvas X
- * @property {(gy: number) => number} ty Transform galactic Y to canvas Y
- * @property {number} k Zoom / scale factor
+ * MapTransform fields:
+ * tx: Transform galactic X to canvas X
+ * ty: Transform galactic Y to canvas Y
+ * k: Zoom / scale factor
  */
 
 /**
- * @typedef {Object} ShipHull
- * @property {string} id Hull identifier
- * @property {string} name Ship model display name
- * @property {number} size Hull collision / rendering radius
- * @property {boolean} [spr] True if rendered using multi-frame sprite sheet
- * @property {number} [frames] Total rotation frames (typically 36)
- * @property {number} [banks] Banking animation frames count
+ * ShipHull fields:
+ * id: Hull identifier
+ * name: Ship model display name
+ * size: Hull collision / rendering radius
+ * [spr]: True if rendered using multi-frame sprite sheet
+ * [frames]: Total rotation frames (typically 36)
+ * [banks]: Banking animation frames count
  */
 
 /**
- * @typedef {Object} RenderEntity
- * @property {number} id Unique entity ID
- * @property {string} hull Hull design identifier
- * @property {number} rx Smoothed / interpolated world X coordinate
- * @property {number} ry Smoothed / interpolated world Y coordinate
- * @property {number} x Raw world X coordinate
- * @property {number} y Raw world Y coordinate
- * @property {number} a Heading angle in radians
- * @property {number} vx Velocity X component
- * @property {number} vy Velocity Y component
- * @property {number} fl Entity status flags (thrust, ab, disabled, friendly, etc.)
- * @property {number} sh Current shield amount
- * @property {number} ar Current armor amount
- * @property {string} fac Faction identifier
- * @property {string} [name] Captain or ship name
- * @property {number} [owner] Player owner ID if companion or drone
- * @property {number} [pw] Power level or aura
- * @property {number} [t] Timestamp of last update
+ * RenderEntity fields:
+ * id: Unique entity ID
+ * hull: Hull design identifier
+ * rx: Smoothed / interpolated world X coordinate
+ * ry: Smoothed / interpolated world Y coordinate
+ * x: Raw world X coordinate
+ * y: Raw world Y coordinate
+ * a: Heading angle in radians
+ * vx: Velocity X component
+ * vy: Velocity Y component
+ * fl: Entity status flags (thrust, ab, disabled, friendly, etc.)
+ * sh: Current shield amount
+ * ar: Current armor amount
+ * fac: Faction identifier
+ * [name]: Captain or ship name
+ * [owner]: Player owner ID if companion or drone
+ * [pw]: Power level or aura
+ * [t]: Timestamp of last update
  */
 
 // Map views (system map modes): colour each system by trade price, services, your standing, or danger
 /**
  * Interpolates between two RGB color tuples.
- * @param {[number, number, number]} firstValue Start RGB tuple
- * @param {[number, number, number]} secondValue End RGB tuple
- * @param {number} time Interpolation factor (0 to 1)
- * @returns {string} Formatted rgb(r, g, b) string
+ * @param firstValue Start RGB tuple
+ * @param secondValue End RGB tuple
+ * @param time Interpolation factor (0 to 1)
+ * @returns Formatted rgb(r, g, b) string
  */
 const interpolateColor = (
   firstValue: [number, number, number],
@@ -258,9 +258,9 @@ const interpolateColor = (
   `rgb(${firstValue.map((value, index) => Math.round(value + (secondValue[index] - value) * Math.max(0, Math.min(1, time)))).join(',')})`;
 /**
  * Computes the best price-to-base ratio for a given commodity across a system's trade ports.
- * @param {GalaxySystem} starSystem System object
- * @param {string} captainId Commodity identifier
- * @returns {number | null} Price ratio or null if no trade service available
+ * @param starSystem System object
+ * @param captainId Commodity identifier
+ * @returns Price ratio or null if no trade service available
  */
 export function tradeRatio(starSystem: GalaxySystem, captainId: string): number | null {
   const rawStellarBodys = starSystem.stellars.filter(
@@ -277,10 +277,10 @@ export function tradeRatio(starSystem: GalaxySystem, captainId: string): number 
 }
 /**
  * Determines system display color on the map according to the selected map mode.
- * @param {ClientGameState} clientGameState Global client game state
- * @param {GalaxySystem} starSystem System object
- * @param {boolean} seen Whether the system has been visited or discovered
- * @returns {string} CSS color string
+ * @param clientGameState Global client game state
+ * @param starSystem System object
+ * @param seen Whether the system has been visited or discovered
+ * @returns CSS color string
  */
 function viewColor(
   clientGameState: ClientGameState,
@@ -332,9 +332,9 @@ wormImg.src = 'assets/wormhole.png';
 const sheets = new Map<string, HTMLImageElement>();
 /**
  * Loads or retrieves a cached sprite sheet image for a given ship hull.
- * @param {ShipHull} shipHullAsset Ship hull specification object
- * @param {boolean} [glow] Whether to load the thruster glow variant
- * @returns {HTMLImageElement} Cached or newly requested HTML Image
+ * @param shipHullAsset Ship hull specification object
+ * @param glow Whether to load the thruster glow variant
+ * @returns Cached or newly requested HTML Image
  */
 export function sheet(shipHullAsset: ShipHull, glow?: boolean): HTMLImageElement {
   // the sharper full-colour sheets (12 wide, with banking frames) where a hull has them
@@ -358,8 +358,8 @@ const HUB_FRAMES = 18,
 
 /**
  * Creates a deterministic pseudorandom number generator function from a seed.
- * @param {number} seed Integer seed value
- * @returns {() => number} Generator returning floats in [0, 1)
+ * @param seed Integer seed value
+ * @returns Generator returning floats in [0, 1)
  */
 function seeded(seed: number): () => number {
   let state = seed >>> 0 || 7;
@@ -370,8 +370,8 @@ function seeded(seed: number): () => number {
 }
 /**
  * Hashes a string using 32-bit FNV-1a.
- * @param {string} text Input string
- * @returns {number} Unsigned 32-bit hash value
+ * @param text Input string
+ * @returns Unsigned 32-bit hash value
  */
 function hashStr(text: string): number {
   let height = 2166136261;
@@ -386,8 +386,8 @@ function hashStr(text: string): number {
 const starCache = new Map<string, StarBackdrop>();
 /**
  * Generates and caches parallax star layers and faint nebulae for a solar system.
- * @param {string} systemId System identifier
- * @returns {{ layers: Array<{ L: Array<[number, number, number, number]>, depth: number, size: number }>, neb: Array<[number, number, number, number]> }} Star backdrop model
+ * @param systemId System identifier
+ * @returns Star backdrop model
  */
 function stars(systemId: string): {
   layers: Array<{ L: Array<[number, number, number, number]>; depth: number; size: number }>;
@@ -431,8 +431,8 @@ function stars(systemId: string): {
 const decorImgs: Record<string, HTMLImageElement> = {};
 /**
  * Loads and caches background decor assets by filename.
- * @param {string} count Asset filename key
- * @returns {HTMLImageElement} HTML Image instance
+ * @param count Asset filename key
+ * @returns HTML Image instance
  */
 function decorImg(count: string): HTMLImageElement {
   if (!decorImgs[count]) {
@@ -444,8 +444,8 @@ function decorImg(count: string): HTMLImageElement {
 }
 /**
  * Checks whether an image has completely loaded and has positive natural dimensions.
- * @param {HTMLImageElement} htmlImageElement Image element to test
- * @returns {boolean} True if ready to draw
+ * @param htmlImageElement Image element to test
+ * @returns True if ready to draw
  */
 const ready = (htmlImageElement: HTMLImageElement) =>
   htmlImageElement.complete && htmlImageElement.naturalWidth;
@@ -473,8 +473,8 @@ const SUNS = [
 const objImgs: Record<string, HTMLImageElement> = {}; // rendered asteroids and loot (tools/rift_objects.py)
 /**
  * Loads and caches rendered 3D object images (asteroids, minerals, crates).
- * @param {string} count Object name identifier
- * @returns {HTMLImageElement} Cached or newly created image
+ * @param count Object name identifier
+ * @returns Cached or newly created image
  */
 function objImg(count: string): HTMLImageElement {
   let htmlImageElement = objImgs[count];
@@ -487,8 +487,8 @@ function objImg(count: string): HTMLImageElement {
 let rockSprites: HTMLCanvasElement[] | null = null;
 /**
  * Generates or retrieves procedural canvas textures for background asteroids.
- * @param {number} entryKey Asteroid variant index
- * @returns {HTMLCanvasElement} Off-screen canvas sprite
+ * @param entryKey Asteroid variant index
+ * @returns Off-screen canvas sprite
  */
 function rockSprite(entryKey: number): HTMLCanvasElement {
   // a few dark, lumpy background asteroids, drawn once
@@ -525,8 +525,8 @@ function rockSprite(entryKey: number): HTMLCanvasElement {
 }
 /**
  * Procedurally generates and caches all ambient scenery and backdrop objects for a solar system.
- * @param {GalaxySystem} starSystem Solar system specification
- * @returns {Record<string, {x: number, y: number, r: number, color?: string}>} System scenery definitions object
+ * @param starSystem Solar system specification
+ * @returns System scenery definitions object
  */
 function decorFor(starSystem: GalaxySystem): DecorModel {
   if (decorCache.has(starSystem.id)) return decorCache.get(starSystem.id)!;
@@ -932,13 +932,13 @@ function decorFor(starSystem: GalaxySystem): DecorModel {
 }
 /**
  * Projects a distant background object's coordinates into screen space using parallax depth.
- * @param {{ x: number, y: number, depth: number }} options Object with position and depth factor
- * @param {number} width2 Viewport width
- * @param {number} height2 Viewport height
- * @param {number} centerX Camera center X
- * @param {number} centerY Camera center Y
- * @param {number} zoomFactor Zoom scale factor for far objects
- * @returns {[number, number]} Screen coordinates [x, y]
+ * @param options Object with position and depth factor
+ * @param width2 Viewport width
+ * @param height2 Viewport height
+ * @param centerX Camera center X
+ * @param centerY Camera center Y
+ * @param zoomFactor Zoom scale factor for far objects
+ * @returns Screen coordinates [x, y]
  */
 function farXY(
   options: { x: number; y: number; depth: number },
@@ -955,15 +955,14 @@ function farXY(
 }
 /**
  * Renders deepest background elements: primary star, distant galaxies, pulsars, and nebulae.
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
- * @param {GalaxySystem} starSystem Solar system specification
- * @param {number} width2 Viewport width
- * @param {number} height2 Viewport height
- * @param {number} positionZ Camera zoom level
- * @param {number} centerX Camera center X
- * @param {number} centerY Camera center Y
- * @param {number} currentTime Timestamp in milliseconds
- * @returns {void}
+ * @param canvasRenderingContext2D 2D rendering context
+ * @param starSystem Solar system specification
+ * @param width2 Viewport width
+ * @param height2 Viewport height
+ * @param positionZ Camera zoom level
+ * @param centerX Camera center X
+ * @param centerY Camera center Y
+ * @param currentTime Timestamp in milliseconds
  */
 function drawDecorFar(
   canvasRenderingContext2D: CanvasRenderingContext2D,
@@ -1249,15 +1248,14 @@ function drawDecorFar(
 }
 /**
  * Renders mid-distance background clutter: asteroid drift belts and ion storm fields with lightning.
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
- * @param {GalaxySystem} starSystem Solar system specification
- * @param {number} width2 Viewport width
- * @param {number} height2 Viewport height
- * @param {number} positionZ Camera zoom factor
- * @param {number} centerX Camera center X
- * @param {number} centerY Camera center Y
- * @param {number} currentTime Timestamp in milliseconds
- * @returns {void}
+ * @param canvasRenderingContext2D 2D rendering context
+ * @param starSystem Solar system specification
+ * @param width2 Viewport width
+ * @param height2 Viewport height
+ * @param positionZ Camera zoom factor
+ * @param centerX Camera center X
+ * @param centerY Camera center Y
+ * @param currentTime Timestamp in milliseconds
  */
 function drawDecorMid(
   canvasRenderingContext2D: CanvasRenderingContext2D,
@@ -1356,15 +1354,14 @@ function drawDecorMid(
 }
 /**
  * Renders in-system foreground clutter: comets, derelicts, ancient ruins, satellites, and nav beacons.
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
- * @param {GalaxySystem} starSystem Solar system specification
- * @param {number} width2 Viewport width
- * @param {number} height2 Viewport height
- * @param {number} positionZ Camera zoom factor
- * @param {(wx: number) => number} screenX Screen X projector function
- * @param {(wy: number) => number} screenY Screen Y projector function
- * @param {number} currentTime Timestamp in milliseconds
- * @returns {void}
+ * @param canvasRenderingContext2D 2D rendering context
+ * @param starSystem Solar system specification
+ * @param width2 Viewport width
+ * @param height2 Viewport height
+ * @param positionZ Camera zoom factor
+ * @param screenX Screen X projector function
+ * @param screenY Screen Y projector function
+ * @param currentTime Timestamp in milliseconds
  */
 function drawDecorNear(
   canvasRenderingContext2D: CanvasRenderingContext2D,
@@ -1563,8 +1560,8 @@ function drawDecorNear(
 const planetCache = new Map<string, HTMLCanvasElement>();
 /**
  * Converts a hexadecimal color string to an RGB number triplet.
- * @param {string} height2 Hex color code (e.g. '#ff8800')
- * @returns {[number, number, number]} RGB color values [r, g, b]
+ * @param height2 Hex color code (e.g. '#ff8800')
+ * @returns RGB color values [r, g, b]
  */
 function hexToRgb(hexColor: string): [number, number, number] {
   const parseInt2 = parseInt(hexColor.slice(1), 16);
@@ -1575,8 +1572,8 @@ const stImgs: Record<string, HTMLImageElement> = {},
   stPick = new Map<string, string>();
 /**
  * Determines the architectural 3D station sprite model name for a station.
- * @param {StellarBody} stellarBody Station stellar body definition
- * @returns {string} Station design archetype name
+ * @param stellarBody Station stellar body definition
+ * @returns Station design archetype name
  */
 export function stationDesign(stellarBody: StellarBody): string {
   if (stPick.has(stellarBody.id)) return stPick.get(stellarBody.id)!;
@@ -1620,8 +1617,8 @@ export function stationDesign(stellarBody: StellarBody): string {
 }
 /**
  * Retrieves the loaded HTMLImageElement for a station's rendered sprite model.
- * @param {StellarBody} stellarBody Station stellar body
- * @returns {HTMLImageElement | HTMLCanvasElement | null} Loaded image or null if loading
+ * @param stellarBody Station stellar body
+ * @returns Loaded image or null if loading
  */
 function stationSprite(stellarBody: StellarBody): HTMLImageElement | HTMLCanvasElement | null {
   // Luna keeps the original glowing wheel rather than inheriting the generic shipyard.
@@ -1636,8 +1633,8 @@ function stationSprite(stellarBody: StellarBody): HTMLImageElement | HTMLCanvasE
 }
 /**
  * Generates or retrieves a pre-rendered off-screen canvas sprite for a planet or station.
- * @param {StellarBody} stellarBody Stellar body specification
- * @returns {HTMLCanvasElement} Off-screen canvas containing the rendered body
+ * @param stellarBody Stellar body specification
+ * @returns Off-screen canvas containing the rendered body
  */
 function planetImage(stellarBody: StellarBody): HTMLCanvasElement {
   if (planetCache.has(stellarBody.id)) return planetCache.get(stellarBody.id)!;
@@ -1820,15 +1817,14 @@ function planetImage(stellarBody: StellarBody): HTMLCanvasElement {
 // ------------------------------------------------------------------ effects
 /**
  * Active transient visual effect particle objects.
- * @type {VisualEffect[]}
  */
 const visualEffects: VisualEffect[] = [];
 export { visualEffects as fx };
 const fxImgs: Record<string, HTMLImageElement> = {}; // rendered effects (tools/rift_fx.py)
 /**
  * Loads or returns cached visual effect sprites.
- * @param {string} count Effect sprite name
- * @returns {HTMLImageElement} Effect sprite image
+ * @param count Effect sprite name
+ * @returns Effect sprite image
  */
 function fxImg(count: string): HTMLImageElement {
   let htmlImageElement = fxImgs[count];
@@ -1841,10 +1837,9 @@ function fxImg(count: string): HTMLImageElement {
 for (const count of ['boom_a', 'boom_b', 'boom_big', 'shards', 'flare']) fxImg(count);
 /**
  * Spawns an explosion visual effect with fireballs, shockwaves, smoke, and debris.
- * @param {number} positionX World coordinate X
- * @param {number} positionY World coordinate Y
- * @param {number} [size=40] Explosion radius / size
- * @returns {void}
+ * @param positionX World coordinate X
+ * @param positionY World coordinate Y
+ * @param size Explosion radius / size
  */
 export function boom(positionX: number, positionY: number, size?: number): void {
   size = Math.max(20, size || 40);
@@ -1936,10 +1931,9 @@ export function boom(positionX: number, positionY: number, size?: number): void 
 }
 /**
  * Spawns directional weapon impact sparks and a momentary flash flare.
- * @param {number} positionX World coordinate X
- * @param {number} positionY World coordinate Y
- * @param {string} [column='#fff'] Spark color code
- * @returns {void}
+ * @param positionX World coordinate X
+ * @param positionY World coordinate Y
+ * @param column Spark color code
  */
 export function spark(positionX: number, positionY: number, column?: string): void {
   visualEffects.push({
@@ -1968,9 +1962,8 @@ export function spark(positionX: number, positionY: number, column?: string): vo
 }
 /**
  * Spawns a hyperspace jump departure or arrival visual flash effect.
- * @param {number} positionX World coordinate X
- * @param {number} positionY World coordinate Y
- * @returns {void}
+ * @param positionX World coordinate X
+ * @param positionY World coordinate Y
  */
 export function flash(positionX: number, positionY: number): void {
   // a ship entering or leaving hyperspace: a hot core, a lens streak and two shock rings
@@ -1996,10 +1989,9 @@ export function flash(positionX: number, positionY: number): void {
 }
 /**
  * Spawns an expanding circular blast wave effect.
- * @param {number} positionX World coordinate X
- * @param {number} positionY World coordinate Y
- * @param {number} radius Maximum blast radius
- * @returns {void}
+ * @param positionX World coordinate X
+ * @param positionY World coordinate Y
+ * @param radius Maximum blast radius
  */
 export function blast(positionX: number, positionY: number, radius: number): void {
   visualEffects.push({
@@ -2015,26 +2007,23 @@ export function blast(positionX: number, positionY: number, radius: number): voi
 // shield shimmer on the ship that was hit, and floating damage numbers
 /**
  * Active shield hit shimmer animations mapped by entity ID.
- * @type {Map<number, ShieldHit>}
  */
 export const shieldHits: Map<number, ShieldHit> = new Map();
 /**
  * Triggers a shield impact ripple shimmer effect on the target ship.
- * @param {number} identifier Ship entity ID
- * @param {number} positionX Impact world X
- * @param {number} positionY Impact world Y
- * @returns {void}
+ * @param identifier Ship entity ID
+ * @param positionX Impact world X
+ * @param positionY Impact world Y
  */
 export function shieldHit(identifier: number, positionX: number, positionY: number): void {
   shieldHits.set(identifier, { t: 0.35, hx: positionX, hy: positionY });
 }
 /**
  * Creates or aggregates floating combat damage numbers on screen.
- * @param {number} positionX World coordinate X
- * @param {number} positionY World coordinate Y
- * @param {number} count2 Damage points
- * @param {boolean} mine Whether this damage was dealt by the local player
- * @returns {void}
+ * @param positionX World coordinate X
+ * @param positionY World coordinate Y
+ * @param count2 Damage points
+ * @param mine Whether this damage was dealt by the local player
  */
 export function dmgNumber(
   positionX: number,
@@ -2073,19 +2062,16 @@ export function dmgNumber(
 }
 /**
  * Current camera screen shake intensity factor.
- * @type {number}
  */
 export let shake: number = 0;
 /**
  * Global active camera state.
- * @type {CameraState}
  */
 const cameraState: CameraState = { cx: 0, cy: 0, z: 1, W: 1, H: 1 };
 export { cameraState as cam };
 /**
  * Adds an impulse to the camera screen shake intensity.
- * @param {number} entryKey Shake magnitude to add/clamp
- * @returns {void}
+ * @param entryKey Shake magnitude to add/clamp
  */
 export function addShake(entryKey: number): void {
   shake = Math.max(shake, entryKey);
@@ -2095,8 +2081,8 @@ export function addShake(entryKey: number): void {
 const glowColor = new Map<string, HTMLCanvasElement>(); // a soft additive glow behind every bolt, and a fading trail
 /**
  * Generates or retrieves a radial glow sprite for projectile weapons.
- * @param {string} column Color hex string
- * @returns {HTMLCanvasElement} Radial glow canvas sprite
+ * @param column Color hex string
+ * @returns Radial glow canvas sprite
  */
 function glowSprite(column: string): HTMLCanvasElement {
   let htmlCanvasElement = glowColor.get(column);
@@ -2116,13 +2102,12 @@ function glowSprite(column: string): HTMLCanvasElement {
 }
 /**
  * Draws an individual projectile or missile shot on the canvas.
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
- * @param {{x: number, y: number, vx: number, vy: number, c: string, w: number, life: number}} state Shot object definition
- * @param {number} positionX Screen coordinate X
- * @param {number} positionY Screen coordinate Y
- * @param {number} positionZ Zoom scale factor
- * @param {number} currentTime Timestamp in milliseconds
- * @returns {void}
+ * @param canvasRenderingContext2D 2D rendering context
+ * @param state Shot object definition
+ * @param positionX Screen coordinate X
+ * @param positionY Screen coordinate Y
+ * @param positionZ Zoom scale factor
+ * @param currentTime Timestamp in milliseconds
  */
 function drawShot(
   canvasRenderingContext2D: CanvasRenderingContext2D,
@@ -2381,8 +2366,8 @@ function drawShot(
 const rockCache = new Map<number, HTMLCanvasElement>();
 /**
  * Generates and caches an off-screen canvas sprite for a minable asteroid or gas deposit.
- * @param {{x: number, y: number, r: number, mat: string, qty: number}} renderRock Mining rock or gas pocket definition
- * @returns {HTMLCanvasElement} Off-screen canvas sprite
+ * @param renderRock Mining rock or gas pocket definition
+ * @returns Off-screen canvas sprite
  */
 function rockImage(renderRock: RenderRock): HTMLCanvasElement {
   const entryKey = renderRock.id;
@@ -2513,13 +2498,12 @@ const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae
 let tagRects: [number, number, number][] = []; // name tags already drawn this frame, so close ships' tags stack instead of overlapping
 /**
  * Master rendering pipeline: backdrop, stellar bodies, mining fields, loot, shots, beams, ships, effects, and HUD overlays.
- * @param {ClientGameState} clientGameState Game state object
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D Destination canvas rendering context
- * @param {number} width2 Viewport width in pixels
- * @param {number} height2 Viewport height in pixels
- * @param {number} deltaTime Delta time in seconds since previous frame
- * @param {number} currentTime Timestamp in milliseconds
- * @returns {void}
+ * @param clientGameState Game state object
+ * @param canvasRenderingContext2D Destination canvas rendering context
+ * @param width2 Viewport width in pixels
+ * @param height2 Viewport height in pixels
+ * @param deltaTime Delta time in seconds since previous frame
+ * @param currentTime Timestamp in milliseconds
  */
 export function draw(
   clientGameState: ClientGameState,
@@ -3295,15 +3279,14 @@ export function draw(
 // ------------------------------------------------------------------ 2.0 screen-space feedback: edge arrows, damage, jumps
 /**
  * Renders an off-screen pointing arrow and label at the viewport perimeter.
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
- * @param {number} width2 Viewport width
- * @param {number} height2 Viewport height
- * @param {number} positionX World-to-screen projected X coordinate
- * @param {number} positionY World-to-screen projected Y coordinate
- * @param {string} column CSS color string
- * @param {string} label Display text
- * @param {number} distance Distance in kilometers
- * @returns {void}
+ * @param canvasRenderingContext2D 2D rendering context
+ * @param width2 Viewport width
+ * @param height2 Viewport height
+ * @param positionX World-to-screen projected X coordinate
+ * @param positionY World-to-screen projected Y coordinate
+ * @param column CSS color string
+ * @param label Display text
+ * @param distance Distance in kilometers
  */
 function edgeArrow(
   canvasRenderingContext2D: CanvasRenderingContext2D,
@@ -3375,14 +3358,13 @@ const STARS = Array.from({ length: 170 }, (unused, index) => {
 const STAR_COL: Record<string, string> = { n: '220,235,255', b: '150,195,255', w: '255,215,170' };
 /**
  * Renders directional starfield velocity streaks during hyperspace transitions.
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
- * @param {number} width2 Viewport width
- * @param {number} height2 Viewport height
- * @param {number} firstValue Ship heading angle
- * @param {number} length2 Streak length
- * @param {number} alpha Opacity factor
- * @param {number} drift Drift distance
- * @returns {void}
+ * @param canvasRenderingContext2D 2D rendering context
+ * @param width2 Viewport width
+ * @param height2 Viewport height
+ * @param firstValue Ship heading angle
+ * @param length2 Streak length
+ * @param alpha Opacity factor
+ * @param drift Drift distance
  */
 function streaks(
   canvasRenderingContext2D: CanvasRenderingContext2D,
@@ -3417,15 +3399,14 @@ function streaks(
 }
 /**
  * Renders hyperspace jump departure spool animation, rings, and flash.
- * @param {ClientGameState} clientGameState Game state
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D context
- * @param {number} width2 Viewport width
- * @param {number} height2 Viewport height
- * @param {number} currentTime Timestamp in milliseconds
- * @param {number} positionX Ship screen X
- * @param {number} positionY Ship screen Y
- * @param {number} firstValue Ship heading angle
- * @returns {void}
+ * @param clientGameState Game state
+ * @param canvasRenderingContext2D 2D context
+ * @param width2 Viewport width
+ * @param height2 Viewport height
+ * @param currentTime Timestamp in milliseconds
+ * @param positionX Ship screen X
+ * @param positionY Ship screen Y
+ * @param firstValue Ship heading angle
  */
 function hyperOut(
   clientGameState: ClientGameState,
@@ -3517,15 +3498,14 @@ function hyperOut(
 }
 /**
  * Renders hyperspace jump arrival deceleration bloom and shockwave rings.
- * @param {ClientGameState} clientGameState Game state
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D context
- * @param {number} width2 Viewport width
- * @param {number} height2 Viewport height
- * @param {number} time Milliseconds elapsed since arrival
- * @param {number} positionX Ship screen X
- * @param {number} positionY Ship screen Y
- * @param {number} firstValue Ship heading angle
- * @returns {void}
+ * @param clientGameState Game state
+ * @param canvasRenderingContext2D 2D context
+ * @param width2 Viewport width
+ * @param height2 Viewport height
+ * @param time Milliseconds elapsed since arrival
+ * @param positionX Ship screen X
+ * @param positionY Ship screen Y
+ * @param firstValue Ship heading angle
  */
 function hyperIn(
   clientGameState: ClientGameState,
@@ -3586,15 +3566,14 @@ function hyperIn(
 }
 /**
  * Renders screen-space HUD indicators, off-screen arrows, and damage vignettes.
- * @param {ClientGameState} clientGameState Game state
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D context
- * @param {number} width2 Viewport width
- * @param {number} height2 Viewport height
- * @param {number} currentTime Timestamp in milliseconds
- * @param {(wx: number) => number} screenX Screen X projector function
- * @param {(wy: number) => number} screenY Screen Y projector function
- * @param {ClientView | null} clientView Current player view state
- * @returns {void}
+ * @param clientGameState Game state
+ * @param canvasRenderingContext2D 2D context
+ * @param width2 Viewport width
+ * @param height2 Viewport height
+ * @param currentTime Timestamp in milliseconds
+ * @param screenX Screen X projector function
+ * @param screenY Screen Y projector function
+ * @param clientView Current player view state
  */
 function hudOverlay(
   clientGameState: ClientGameState,
@@ -3742,14 +3721,13 @@ function hudOverlay(
 }
 /**
  * Renders an individual ship sprite, engine trails, shield/armor bars, and name tags.
- * @param {ClientGameState} clientGameState Game state
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D Destination canvas rendering context
- * @param {RenderEntity} renderShip Ship entity to draw
- * @param {number} positionX Screen coordinate X
- * @param {number} positionY Screen coordinate Y
- * @param {number} positionZ Zoom scale factor
- * @param {number} currentTime Timestamp in milliseconds
- * @returns {void}
+ * @param clientGameState Game state
+ * @param canvasRenderingContext2D Destination canvas rendering context
+ * @param renderShip Ship entity to draw
+ * @param positionX Screen coordinate X
+ * @param positionY Screen coordinate Y
+ * @param positionZ Zoom scale factor
+ * @param currentTime Timestamp in milliseconds
  */
 export function drawShip(
   clientGameState: ClientGameState,
@@ -4044,9 +4022,8 @@ export function drawShip(
 // ------------------------------------------------------------------ radar
 /**
  * Renders the circular cockpit radar display with blips for ships, planets, loot, and asteroids.
- * @param {ClientGameState} clientGameState Game state object
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D Radar canvas rendering context
- * @returns {void}
+ * @param clientGameState Game state object
+ * @param canvasRenderingContext2D Radar canvas rendering context
  */
 export function radar(
   clientGameState: ClientGameState,
@@ -4182,9 +4159,9 @@ const BOUNDS = (() => {
 })();
 /**
  * Calculates optimal galaxy map viewport centering and zoom factor to fit all systems.
- * @param {number} width2 Canvas pixel width
- * @param {number} height2 Canvas pixel height
- * @returns {MapFit & { cx: number, cy: number, fit: number }} Map bounds fit object
+ * @param width2 Canvas pixel width
+ * @param height2 Canvas pixel height
+ * @returns Map bounds fit object
  */
 export function mapFit(
   width: number,
@@ -4201,10 +4178,9 @@ export function mapFit(
 }
 /**
  * Renders the 2D galaxy starmap or minimap including hyperspace lanes, faction territories, and route plots.
- * @param {ClientGameState} clientGameState Game state object
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D Starmap canvas rendering context
- * @param {{ big?: boolean }} [options={}] Map render options (big: full interactive starmap)
- * @returns {void}
+ * @param clientGameState Game state object
+ * @param canvasRenderingContext2D Starmap canvas rendering context
+ * @param options Map render options (big: full interactive starmap)
  */
 export function galaxy(
   clientGameState: ClientGameState,
@@ -4695,11 +4671,11 @@ export function galaxy(
 }
 /**
  * Tests for system click selection hit at given screen coordinates on galaxy map or minimap.
- * @param {ClientGameState} clientGameState Game state
- * @param {number} mouseX Screen X coordinate
- * @param {number} mouseY Screen Y coordinate
- * @param {boolean} [mini] Whether testing against companion minimap
- * @returns {string | null} Hit solar system ID or null
+ * @param clientGameState Game state
+ * @param mouseX Screen X coordinate
+ * @param mouseY Screen Y coordinate
+ * @param mini Whether testing against companion minimap
+ * @returns Hit solar system ID or null
  */
 export function mapHit(
   clientGameState: ClientGameState,
@@ -4724,8 +4700,8 @@ export function mapHit(
 }
 /**
  * Retrieves active salvage mission beacon world coordinates in current system.
- * @param {ClientGameState} clientGameState Game state
- * @returns {Array<[number, number]>} Array of salvage point world coordinates [x, y]
+ * @param clientGameState Game state
+ * @returns Array of salvage point world coordinates [x, y]
  */
 export function salvagePoints(clientGameState: ClientGameState): Array<[number, number]> {
   const result: [number, number][] = [];
@@ -4741,8 +4717,8 @@ export function salvagePoints(clientGameState: ClientGameState): Array<[number, 
 }
 /**
  * Retrieves unvisited planetary survey beacon coordinates for active missions in current system.
- * @param {ClientGameState} clientGameState Game state
- * @returns {Array<[number, number]>} Array of survey point world coordinates [x, y]
+ * @param clientGameState Game state
+ * @returns Array of survey point world coordinates [x, y]
  */
 export function surveyPoints(clientGameState: ClientGameState): Array<[number, number]> {
   const result: [number, number][] = [];

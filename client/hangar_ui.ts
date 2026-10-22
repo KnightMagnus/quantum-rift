@@ -37,40 +37,40 @@ import {
 import { officerStats, credits } from '../shared/rules.ts';
 
 /**
- * @typedef {Object} OfficerEntry
- * @property {number|string} id Unique officer ID
- * @property {string} name Officer name
- * @property {string} race Faction / race identifier
- * @property {string} role Role key (e.g. 'pilot', 'engineer')
- * @property {number} rarity Rarity index (0..4)
- * @property {number} lv Officer level
- * @property {number} [xp] Current experience points
- * @property {number} [cost] Credit hiring cost
+ * OfficerEntry fields:
+ * id: Unique officer ID
+ * name: Officer name
+ * race: Faction / race identifier
+ * role: Role key (e.g. 'pilot', 'engineer')
+ * rarity: Rarity index (0..4)
+ * lv: Officer level
+ * [xp]: Current experience points
+ * [cost]: Credit hiring cost
  */
 
 /**
- * @typedef {Object} ShuttleInstance
- * @property {number|string} id Shuttle instance ID
- * @property {string} kind Shuttle model key
- * @property {'idle'|'out'|'damaged'} state Current shuttle status
- * @property {number|string|null} [crew] Assigned officer ID
- * @property {number} [runs] Number of completed runs
- * @property {number} [ends] Timestamp when current job finishes
- * @property {number} [chance] Success probability (0..1)
- * @property {{id: string, name: string, time: number}} [job] Active job details
+ * ShuttleInstance fields:
+ * id: Shuttle instance ID
+ * kind: Shuttle model key
+ * state: Current shuttle status
+ * [crew]: Assigned officer ID
+ * [runs]: Number of completed runs
+ * [ends]: Timestamp when current job finishes
+ * [chance]: Success probability (0..1)
+ * [job]: Active job details
  */
 
 /**
- * @typedef {Object} BoardedTarget
- * @property {string} hull Hull identifier
- * @property {string|number} fac Faction index or identifier
- * @property {string} [name] Custom target name
+ * BoardedTarget fields:
+ * hull: Hull identifier
+ * fac: Faction index or identifier
+ * [name]: Custom target name
  */
 
 /**
  * Formats duration in milliseconds to whole minutes or hours + minutes.
- * @param {number} milliseconds Duration in milliseconds
- * @returns {string} Formatted duration string
+ * @param milliseconds Duration in milliseconds
+ * @returns Formatted duration string
  */
 const minutes2 = (milliseconds: number): string => {
   const message = Math.max(0, Math.ceil(milliseconds / 60000));
@@ -84,8 +84,8 @@ const SLOT_NAME: Record<string, string> = {
 
 /**
  * Formats an officer's passive stat bonuses into readable text.
- * @param {OfficerEntry} officerRecord Officer object
- * @returns {string} Formatted stat bonus text
+ * @param officerRecord Officer object
+ * @returns Formatted stat bonus text
  */
 function statText(officerRecord: OfficerEntry): string {
   return Object.entries(officerStats(officerRecord))
@@ -95,10 +95,10 @@ function statText(officerRecord: OfficerEntry): string {
 
 /**
  * Renders an officer card with rarity color, stats, level, and optional actions.
- * @param {ClientGameState} clientGameState Game state object
- * @param {OfficerEntry} officerRecord Officer object
- * @param {string} [extra] Additional HTML content or buttons
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param officerRecord Officer object
+ * @param extra Additional HTML content or buttons
+ * @returns HTML markup
  */
 function officerCard(
   clientGameState: ClientGameState,
@@ -113,9 +113,9 @@ function officerCard(
 
 /**
  * Determines current assignment location or shuttle duty for an officer.
- * @param {ClientGameState} clientGameState Game state object
- * @param {OfficerEntry} officerRecord Officer object
- * @returns {string|null} Assignment description or null if off duty
+ * @param clientGameState Game state object
+ * @param officerRecord Officer object
+ * @returns Assignment description or null if off duty
  */
 function where(clientGameState: ClientGameState, officerRecord: OfficerEntry): string | null {
   const playerPayload = clientGameState.you!;
@@ -133,8 +133,8 @@ function where(clientGameState: ClientGameState, officerRecord: OfficerEntry): s
 
 /**
  * Renders the CREW tab interface (bridge officers, species synergy, bar hires, roster, lower deck).
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function crewHtml(clientGameState: ClientGameState): string {
   const playerPayload = clientGameState.you!,
@@ -223,8 +223,8 @@ export function crewHtml(clientGameState: ClientGameState): string {
 
 /**
  * Renders compact sidebar shuttle activity status list.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function shuttleSummary(clientGameState: ClientGameState): string {
   const playerPayload = clientGameState.you!,
@@ -249,9 +249,9 @@ export function shuttleSummary(clientGameState: ClientGameState): string {
 
 /**
  * Renders the Hangar interface including active shuttles, shuttle construction, and the remote Job Board.
- * @param {ClientGameState} clientGameState Game state object
- * @param {boolean} atHome Whether player is currently docked at their Personal Station
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param atHome Whether player is currently docked at their Personal Station
+ * @returns HTML markup
  */
 export function hangarHtml(clientGameState: ClientGameState, atHome: boolean): string {
   const playerPayload = clientGameState.you!,
@@ -357,9 +357,9 @@ export function hangarHtml(clientGameState: ClientGameState, atHome: boolean): s
 
 /**
  * Renders the Research Lab tech trees, active research countdown, and research queue.
- * @param {ClientGameState} clientGameState Game state object
- * @param {boolean} [interactive] Whether research actions are enabled
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param interactive Whether research actions are enabled
+ * @returns HTML markup
  */
 export function researchHtml(clientGameState: ClientGameState, interactive?: boolean): string {
   const playerPayload = clientGameState.you!,
@@ -395,9 +395,9 @@ export function researchHtml(clientGameState: ClientGameState, interactive?: boo
 
 /**
  * Renders the Material crates inventory grid and crate refinement actions.
- * @param {ClientGameState} clientGameState Game state object
- * @param {boolean} [interactive] Whether refining actions are interactive
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param interactive Whether refining actions are interactive
+ * @returns HTML markup
  */
 export function materialsHtml(clientGameState: ClientGameState, interactive?: boolean): string {
   const playerPayload = clientGameState.you!;
@@ -411,9 +411,9 @@ export function materialsHtml(clientGameState: ClientGameState, interactive?: bo
 
 /**
  * Renders the modal dialog for boarding a disabled ship (plunder, capture, rescue/arrest).
- * @param {ClientGameState} clientGameState Game state object
- * @param {BoardedTarget} boardedTarget Target ship entity
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param boardedTarget Target ship entity
+ * @returns HTML markup
  */
 export function boardHtml(clientGameState: ClientGameState, boardedTarget: BoardedTarget): string {
   const shipHullAsset = clientGameState.A!.ships[boardedTarget.hull],

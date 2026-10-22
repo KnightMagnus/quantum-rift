@@ -19,38 +19,37 @@ export type TradeImpactConfig = { perTon: number; max: number; halfLifeMin: numb
 // `need` is what ends a state early: tons of a good sold at the system's markets, or kills of a kind of ship there.
 
 /**
- * @typedef {Object} SystemStateNeed
- * @property {string} [cid] - Commodity ID needed to resolve the state early (e.g. 'food', 'medical', 'ore').
- * @property {string} [kills] - Faction or ship category required to destroy (e.g. 'enemy', 'pirate').
- * @property {number} qty - Target quantity of commodity sales or ship kills needed to end the state.
+ * SystemStateNeed fields:
+ * [cid]: - Commodity ID needed to resolve the state early (e.g. 'food', 'medical', 'ore').
+ * [kills]: - Faction or ship category required to destroy (e.g. 'enemy', 'pirate').
+ * qty: - Target quantity of commodity sales or ship kills needed to end the state.
  */
 
 /**
- * @typedef {Object} SystemState
- * @property {string} name - Display name of the system state.
- * @property {string} icon - Emoji or symbol icon representing the state.
- * @property {string} color - Hex color string for UI and galactic map highlights.
- * @property {Object.<string, number>} prices - Map of commodity ID to market price multiplier.
- * @property {SystemStateNeed} [need] - Objective that ends the state early when met.
- * @property {number} [traders] - Multiplier applied to NPC trading vessel traffic.
- * @property {number} [passengers] - Multiplier applied to station passenger board volume.
- * @property {number} [raidCap] - Maximum concurrent raid encounters permitted.
- * @property {number} [bounty] - Multiplier on bounty payouts awarded for kills.
- * @property {number} weight - Relative selection weight for periodic random state rolls.
- * @property {string} desc - In-game description detailing market and security effects.
- * @property {string} end - Announcement text broadcast when the state concludes.
+ * SystemState fields:
+ * name: - Display name of the system state.
+ * icon: - Emoji or symbol icon representing the state.
+ * color: - Hex color string for UI and galactic map highlights.
+ * prices: - Map of commodity ID to market price multiplier.
+ * [need]: - Objective that ends the state early when met.
+ * [traders]: - Multiplier applied to NPC trading vessel traffic.
+ * [passengers]: - Multiplier applied to station passenger board volume.
+ * [raidCap]: - Maximum concurrent raid encounters permitted.
+ * [bounty]: - Multiplier on bounty payouts awarded for kills.
+ * weight: - Relative selection weight for periodic random state rolls.
+ * desc: - In-game description detailing market and security effects.
+ * end: - Announcement text broadcast when the state concludes.
  */
 
 /**
- * @typedef {Object} TradeImpactConfig
- * @property {number} perTon - Price variance induced per metric ton traded.
- * @property {number} max - Maximum allowable price fluctuation cap.
- * @property {number} halfLifeMin - Minutes required for local price impacts to decay by half.
+ * TradeImpactConfig fields:
+ * perTon: - Price variance induced per metric ton traded.
+ * max: - Maximum allowable price fluctuation cap.
+ * halfLifeMin: - Minutes required for local price impacts to decay by half.
  */
 
 /**
  * Dynamic star system event state definitions.
- * @type {Object.<string, SystemState>}
  */
 export const STATES: Record<string, SystemState> = {
   famine: {
@@ -141,19 +140,16 @@ export const STATES: Record<string, SystemState> = {
 
 /**
  * Target fraction of market systems that should simultaneously undergo a state event.
- * @type {number}
  */
 export const STATE_SHARE: number = 0.16; // about this share of systems with markets is in some state at a time
 
 /**
  * Minimum and maximum duration range in real-time minutes for an active system state [min, max].
- * @type {number[]}
  */
 export const STATE_MIN: number[] = [25, 60]; // a state lasts this many minutes (real time) unless it is ended early
 
 // player trading moves prices: each ton sold lowers the local price, each ton bought raises it, and the effect fades
 /**
  * Dynamic market elasticity coefficients for player trade impact.
- * @type {TradeImpactConfig}
  */
 export const TRADE_IMPACT: TradeImpactConfig = { perTon: 0.0022, max: 0.4, halfLifeMin: 12 };

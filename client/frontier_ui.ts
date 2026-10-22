@@ -57,57 +57,57 @@ import {
 import { credits } from '../shared/rules.ts';
 
 /**
- * @typedef {Object} ColonyData
- * @property {boolean} [open] Whether world is unsettled
- * @property {boolean} [own] Whether settled by player
- * @property {string} name Colony name
- * @property {string} [owner] Owner captain name
- * @property {number} lv Colony level
- * @property {string[]} buildings Installed building types
- * @property {Record<string, number>} store Stockpile resource amounts
+ * ColonyData fields:
+ * [open]: Whether world is unsettled
+ * [own]: Whether settled by player
+ * name: Colony name
+ * [owner]: Owner captain name
+ * lv: Colony level
+ * buildings: Installed building types
+ * store: Stockpile resource amounts
  */
 
 /**
- * @typedef {Object} ExchangeOrder
- * @property {string} id Order ID
- * @property {'buy'|'sell'} side Order side
- * @property {{id: string, name: string, cost: number}} item Order item specification
- * @property {number} qty Quantity
- * @property {number} price Unit price
+ * ExchangeOrder fields:
+ * id: Order ID
+ * side: Order side
+ * item: Order item specification
+ * qty: Quantity
+ * price: Unit price
  */
 
 /**
- * @typedef {Object} ExchangeBookEntry
- * @property {{id: string, name: string, cost: number}} item Item spec
- * @property {number} [bid] Best bid price
- * @property {number} bids Number of bids
- * @property {number} [ask] Best ask price
- * @property {number} asks Number of asks
+ * ExchangeBookEntry fields:
+ * item: Item spec
+ * [bid]: Best bid price
+ * bids: Number of bids
+ * [ask]: Best ask price
+ * asks: Number of asks
  */
 
 /**
- * @typedef {Object} CaptainProfile
- * @property {string} name Captain name
- * @property {boolean} online Online status
- * @property {string} ship Current ship hull name
- * @property {string} shipName Custom ship name
- * @property {string} [site] Personal station site name
- * @property {number} [ops] Station Tier
- * @property {string[]} colonies List of settled colony names
- * @property {number} kills Total kills
- * @property {number} jumps Total jumps
- * @property {number} mined Total ore mined in tons
- * @property {number} earned Total credits earned
- * @property {{ rating: number, w: number, l: number }} [arena] Arena stats
- * @property {{ ship: string, tier: number }} [mastery] Best ship mastery
- * @property {number} officers Total officers
+ * CaptainProfile fields:
+ * name: Captain name
+ * online: Online status
+ * ship: Current ship hull name
+ * shipName: Custom ship name
+ * [site]: Personal station site name
+ * [ops]: Station Tier
+ * colonies: List of settled colony names
+ * kills: Total kills
+ * jumps: Total jumps
+ * mined: Total ore mined in tons
+ * earned: Total credits earned
+ * [arena]: Arena stats
+ * [mastery]: Best ship mastery
+ * officers: Total officers
  */
 
 /**
  * Formats a list of required material tuples with availability coloring.
- * @param {PlayerData} positionY Player state object
- * @param {Array<[string, number, number]>} list Array of [material, grade, quantity] tuples
- * @returns {string} HTML markup
+ * @param positionY Player state object
+ * @param list Array of [material, grade, quantity] tuples
+ * @returns HTML markup
  */
 const mats = (playerPayload: PlayerData, list: Array<[string, number, number]>): string =>
   list
@@ -119,8 +119,8 @@ const mats = (playerPayload: PlayerData, list: Array<[string, number, number]>):
 
 /**
  * Returns commodity display name by ID or 'credits'.
- * @param {string} identifier Commodity ID or 'credits'
- * @returns {string} Display name
+ * @param identifier Commodity ID or 'credits'
+ * @returns Display name
  */
 const commodityName = (identifier: string): string =>
   identifier === 'credits'
@@ -130,8 +130,8 @@ const commodityName = (identifier: string): string =>
 
 /**
  * Formats buff percentage bonus properties into readable summary text.
- * @param {Record<string, number>} secondValue Buff definition object
- * @returns {string} Formatted bonus text
+ * @param secondValue Buff definition object
+ * @returns Formatted bonus text
  */
 const buffText = (secondValue: Record<string, number>): string =>
   Object.entries(secondValue)
@@ -145,8 +145,8 @@ const buffText = (secondValue: Record<string, number>): string =>
 
 /**
  * Renders the COLONY landed tab for founding, managing, stockpiling, and constructing buildings.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function colonyHtml(clientGameState: ClientGameState): string {
   const playerPayload = clientGameState.you!,
@@ -205,9 +205,9 @@ export function colonyHtml(clientGameState: ClientGameState): string {
 
 /**
  * Renders the Station Defense rating, turret upgrades, and Station Holdout wave defense interface.
- * @param {ClientGameState} clientGameState Game state object
- * @param {boolean} [interactive] Whether interactive actions are enabled
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param interactive Whether interactive actions are enabled
+ * @returns HTML markup
  */
 export function defenseHtml(clientGameState: ClientGameState, interactive?: boolean): string {
   const playerPayload = clientGameState.you!,
@@ -233,8 +233,8 @@ export function defenseHtml(clientGameState: ClientGameState, interactive?: bool
 
 /**
  * Renders the ship mastery overview tier stars, XP progress bar, and active hull bonuses.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function masteryHtml(clientGameState: ClientGameState): string {
   const playerPayload = clientGameState.you!,
@@ -249,8 +249,8 @@ export function masteryHtml(clientGameState: ClientGameState): string {
 
 /**
  * Renders the Crucible arena queue, current matchmaking rating, and record.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function arenaHtml(clientGameState: ClientGameState): string {
   const firstValue = clientGameState.you!.arena || { rating: ARENA.start, w: 0, l: 0, sizes: {} };
@@ -266,8 +266,8 @@ export function arenaHtml(clientGameState: ClientGameState): string {
 
 /**
  * Renders the player-to-player market exchange order book, active orders, and storage hold.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function exchangeHtml(clientGameState: ClientGameState): string {
   const _positionY = clientGameState.you!,
@@ -321,8 +321,8 @@ export function exchangeHtml(clientGameState: ClientGameState): string {
 
 /**
  * Renders the galactic community leaderboards and captain profile lookup.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function boardsHtml(clientGameState: ClientGameState): string {
   const category = clientGameState.boardCat || 'earned',

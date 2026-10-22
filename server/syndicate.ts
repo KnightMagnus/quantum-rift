@@ -78,27 +78,29 @@ import { occupiedPassengerSeats } from '../shared/passengers.ts';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
- * @param {number} value - Value to clamp.
- * @param {number} firstValue - Minimum value.
- * @param {number} secondValue - Maximum value.
- * @returns {number} Clamped value.
+ * @param value - Value to clamp.
+ * @param firstValue - Minimum value.
+ * @param secondValue - Maximum value.
+ * @returns Clamped value.
  */
 const clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));
-/** @type {string[]} Mission types that complete upon reaching their destination. */
+/**
+ * Mission types that complete upon reaching their destination.
+ */
 const DEST_TYPES: string[] = ['cargo', 'smuggle', 'passenger', 'expret', 'supply']; // supply jobs complete at their destination
 /**
  * Check whether a mission completes at its destination.
- * @param {{type: string}} message - Mission object to check.
- * @returns {boolean} True if the mission completes at destination.
+ * @param message - Mission object to check.
+ * @returns True if the mission completes at destination.
  */
 export const destType = (message: { type: string }): boolean => DEST_TYPES.includes(message.type);
 
 export const SyndicateOperations = {
   /**
    * Initialize or default Syndicate standing, commendations, lower deck crew, and credit rating.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {PlayerData} Initialized player data.
+   * @param playerData - Saved player data.
+   * @returns Initialized player data.
    */
   synInit(this: SyndicateCapabilities, playerData: PlayerData) {
     playerData.syn = playerData.syn || 0;
@@ -109,10 +111,9 @@ export const SyndicateOperations = {
   },
   /**
    * Award Syndicate standing and notify player of rank increases.
-   * @param {Session} session - Player session.
-   * @param {string} kind - Standing gain category.
-   * @param {number} [multiplier=1] - Standing gain multiplier.
-   * @returns {void}
+   * @param session - Player session.
+   * @param kind - Standing gain category.
+   * @param multiplier - Standing gain multiplier.
    */
   synGain(this: SyndicateCapabilities, session: Session, kind: string, multiplier: number = 1) {
     const playerData = this.synInit(session.data),
@@ -132,9 +133,9 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ black market: outlaw worlds, and any spaceport bar once you are a Lieutenant
   /**
    * Check whether black market services are accessible at a given stellar body.
-   * @param {StellarBody} stellarBody - Stellar body or station.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {boolean} True if black market is accessible.
+   * @param stellarBody - Stellar body or station.
+   * @param playerData - Saved player data.
+   * @returns True if black market is accessible.
    */
   blackMarketAt(this: SyndicateCapabilities, stellarBody: StellarBody, playerData: PlayerData) {
     return (
@@ -145,9 +146,9 @@ export const SyndicateOperations = {
   },
   /**
    * Retrieve black market stock and tier access details for a stellar body.
-   * @param {StellarBody} stellarBody - Stellar body or station.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Record<string, string | number | boolean> | null} Black market inventory payload or null.
+   * @param stellarBody - Stellar body or station.
+   * @param playerData - Saved player data.
+   * @returns Black market inventory payload or null.
    */
   blackMarket(this: SyndicateCapabilities, stellarBody: StellarBody, playerData: PlayerData) {
     if (!this.blackMarketAt(stellarBody, playerData)) return null;
@@ -162,9 +163,8 @@ export const SyndicateOperations = {
   },
   /**
    * Purchase an item or service from the black market fence.
-   * @param {Session} session - Player session.
-   * @param {string} identifier - Black market item identifier.
-   * @returns {void}
+   * @param session - Player session.
+   * @param identifier - Black market item identifier.
    */
   bmBuy(this: SyndicateCapabilities, session: Session, identifier: string) {
     const playerData = this.synInit(session.data),
@@ -231,9 +231,8 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ officer promotions and the lower decks
   /**
    * Promote an officer to the next rank, consuming commendations and credits and granting a trait.
-   * @param {Session} session - Player session.
-   * @param {string} identifier - Officer identifier.
-   * @returns {void}
+   * @param session - Player session.
+   * @param identifier - Officer identifier.
    */
   promote(this: SyndicateCapabilities, session: Session, identifier: string) {
     const playerData = this.synInit(session.data),
@@ -276,9 +275,8 @@ export const SyndicateOperations = {
   },
   /**
    * Hire or dismiss lower-deck crew members.
-   * @param {Session} session - Player session.
-   * @param {{i: number, op: 'hire' | 'dismiss', kind: string}} message - Lower deck management message.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Lower deck management message.
    */
   lowerDeck(
     this: SyndicateCapabilities,
@@ -318,8 +316,8 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ the bank
   /**
    * Check whether banking services are available at a stellar body.
-   * @param {StellarBody} stellarBody - Stellar body or station.
-   * @returns {boolean} True if banking services are available.
+   * @param stellarBody - Stellar body or station.
+   * @returns True if banking services are available.
    */
   bankAt(this: SyndicateCapabilities, stellarBody: StellarBody) {
     return (
@@ -331,8 +329,8 @@ export const SyndicateOperations = {
   },
   /**
    * Retrieve bank account, loan balance, and payment schedule details.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Record<string, number | string>} Bank account and loan information.
+   * @param playerData - Saved player data.
+   * @returns Bank account and loan information.
    */
   bankInfo(this: SyndicateCapabilities, playerData: PlayerData) {
     this.synInit(playerData);
@@ -349,9 +347,8 @@ export const SyndicateOperations = {
   },
   /**
    * Process borrowing or loan repayment bank operations.
-   * @param {Session} session - Player session.
-   * @param {{op: 'borrow' | 'pay', amt: number | string}} message - Bank operation message.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Bank operation message.
    */
   bankOp(
     this: SyndicateCapabilities,
@@ -401,8 +398,7 @@ export const SyndicateOperations = {
   },
   /**
    * Process periodic loan interest, scheduled payment deduction, and credit score changes.
-   * @param {Session} session - Player session.
-   * @returns {void}
+   * @param session - Player session.
    */
   bankTick(this: SyndicateCapabilities, session: Session) {
     const playerData = session.data,
@@ -440,13 +436,13 @@ export const SyndicateOperations = {
   // ------------------------------------------------------------------ extra jobs: passengers, rush deliveries, Syndicate contracts
   /**
    * Generate extra mission offers including passenger transport, rush cargo deliveries, and Syndicate contracts.
-   * @param {StellarBody} stellarBody - Current stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {() => number} radius - Random number generator function.
-   * @param {Array<[string, number]>} near - Nearby systems and jump distances.
-   * @param {number} window - Offer rotation time window.
-   * @param {(sys?: string) => RawStellarBody | null} pickDest - Function to select destination stellar in target system.
-   * @returns {Array<Mission>} Extra job and contract offers.
+   * @param stellarBody - Current stellar body.
+   * @param playerData - Saved player data.
+   * @param radius - Random number generator function.
+   * @param near - Nearby systems and jump distances.
+   * @param window - Offer rotation time window.
+   * @param pickDest - Function to select destination stellar in target system.
+   * @returns Extra job and contract offers.
    */
   extraOffers(
     this: SyndicateCapabilities,
@@ -567,9 +563,9 @@ export const SyndicateOperations = {
   },
   /**
    * Verify whether the player meets requirements to accept a mission offer (e.g. passenger bunks).
-   * @param {Session} session - Player session.
-   * @param {Mission} mission - Mission offer being accepted.
-   * @returns {boolean} True if offer requirements are met.
+   * @param session - Player session.
+   * @param mission - Mission offer being accepted.
+   * @returns True if offer requirements are met.
    */
   acceptCheck(this: SyndicateCapabilities, session: Session, mission: Mission) {
     const playerData = session.data;
@@ -588,8 +584,7 @@ export const SyndicateOperations = {
   },
   /**
    * Check active missions against their deadlines, notifying of impending expiration or penalizing failures.
-   * @param {Session} session - Player session.
-   * @returns {void}
+   * @param session - Player session.
    */
   missionDeadlines(this: SyndicateCapabilities, session: Session) {
     const playerData = session.data,

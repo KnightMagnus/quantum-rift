@@ -49,8 +49,9 @@ function state(account: Account): EconomyReceipt {
     account.economyReceipt = { version: 1, pending: null, trip: null };
   return account.economyReceipt;
 }
-/** Record only successful, authoritative settlements. No event can itself issue money.
- * @param {Account} account @param {string} port @param {'purchases'|'serviceFees'|'sales'|'refunds'} kind @param {number} amount */
+/**
+ * Record only successful, authoritative settlements. No event can itself issue money.
+ */
 export function recordEconomy(
   account: Account,
   port: string,
@@ -73,8 +74,9 @@ export function recordEconomy(
   if (Number.isSafeInteger(economyReceipt.pending[kind] + amount))
     economyReceipt.pending[kind] += amount;
 }
-/** Supplies bought at the departure stop belong to the following trip, not the previous sale.
- * @param {Account} account @param {string} port @param {number} currentTime */
+/**
+ * Supplies bought at the departure stop belong to the following trip, not the previous sale.
+ */
 export function beginEconomyTrip(account: Account, port: string, currentTime: number) {
   const economyReceipt = state(account),
     dockCosts = economyReceipt.pending?.port === port ? economyReceipt.pending : null;
@@ -98,8 +100,9 @@ export function arriveEconomyTrip(account: Account, port: string, currentTime: n
     trip.arrivedAt = currentTime;
   }
 }
-/** Read-only: old saves do not gain state merely because their HUD is rendered.
- * @param {Account} account */
+/**
+ * Read-only: old saves do not gain state merely because their HUD is rendered.
+ */
 export function economyReceipt(account: Account) {
   const economyReceipt2 = account.economyReceipt;
   if (!valid(economyReceipt2)) return null;

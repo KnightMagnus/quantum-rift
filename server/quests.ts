@@ -98,31 +98,38 @@ import { occupiedPassengerSeats } from '../shared/passengers.ts';
 
 /**
  * 32-bit FNV-1a string hash function.
- * @param {string | number} text - Input key to hash.
- * @returns {number} 32-bit unsigned integer hash.
+ * @param text - Input key to hash.
+ * @returns 32-bit unsigned integer hash.
  */
 const hash = (text: string | number): number => fnv1a(String(text));
 
 /**
  * Pick a random item from an array.
- * @template T
- * @param {() => number} radius - Random generator function returning [0, 1).
- * @param {T[]} firstValue - Array of items.
- * @returns {T} Selected element.
+ * @param radius - Random generator function returning [0, 1).
+ * @param firstValue - Array of items.
+ * @returns Selected element.
  */
 const pick = <ValueType>(radius: () => number, firstValue: ValueType[]): ValueType =>
   firstValue[Math.floor(radius() * firstValue.length)];
 
-/** @type {number} Maximum number of active quests permitted simultaneously. */
+/**
+ * Maximum number of active quests permitted simultaneously.
+ */
 export const QUEST_MAX: number = 3; // quests in progress at once
 
-/** @type {number} Cooldown in minutes before a bar contact offers a new story chain. */
+/**
+ * Cooldown in minutes before a bar contact offers a new story chain.
+ */
 export const CONTACT_COOL_MIN: number = 15; // a contact needs this long before offering the next story
 
-/** @type {string[]} Standing tier labels by relationship level. */
+/**
+ * Standing tier labels by relationship level.
+ */
 export const STANDING: string[] = ['Stranger', 'Acquaintance', 'Trusted', 'Friend', 'Old Friend'];
 
-/** @type {string[]} Pool of civilian and quest ship names. */
+/**
+ * Pool of civilian and quest ship names.
+ */
 const SHIP_NAMES: string[] = [
   'Marigold',
   'Fair Exchange',
@@ -138,7 +145,9 @@ const SHIP_NAMES: string[] = [
   'Old Reliable',
 ];
 
-/** @type {string[]} Pool of outlaw and antagonist villain names. */
+/**
+ * Pool of outlaw and antagonist villain names.
+ */
 const VILLAINS: string[] = [
   '"Grin" Haskell',
   'Vessa the Hook',
@@ -152,15 +161,17 @@ const VILLAINS: string[] = [
 
 /**
  * Retrieve landable spaceports in a star system.
- * @param {string} starSystem - System ID.
- * @returns {Array<{id: string, name: string, system: string}>} List of stellar port objects.
+ * @param starSystem - System ID.
+ * @returns List of stellar port objects.
  */
 const portsOf = (starSystem: string): Array<(typeof systemsById)[string]['stellars'][number]> =>
   systemsById[starSystem].stellars.filter(
     (rawStellarBody) => rawStellarBody.svc!.includes('L') && !rawStellarBody.site,
   );
 
-/** @type {Record<string, Record<string, number>>} Jump distance cache by system ID. */
+/**
+ * Jump distance cache by system ID.
+ */
 const JCACHE: Record<string, Record<string, number>> = {};
 
 const galaxyGraph = new GalaxyGraph(systemsById);
@@ -170,16 +181,16 @@ const jumpsFrom = (from: string): Record<string, number> =>
 
 /**
  * Map faction identifier to playable/officer race key.
- * @param {string} faction - Faction identifier.
- * @returns {string} Corresponding race key.
+ * @param faction - Faction identifier.
+ * @returns Corresponding race key.
  */
 const raceOf = (faction: string): string => (RACE_ROLES[faction] ? faction : 'quantum');
 
 // the most hold space and bunks any step of a story will ask for, so the job board can warn before you take it on
 /**
  * Compute the maximum cargo hold and passenger bunks required across all steps of a quest chain.
- * @param {Array<QuestStep>} steps - Quest chain steps.
- * @returns {{hold: number, pax: number}} Peak required hold and passenger capacity.
+ * @param steps - Quest chain steps.
+ * @returns Peak required hold and passenger capacity.
  */
 export const needsOf = (steps: Array<QuestStep>): { hold: number; pax: number } => ({
   hold: Math.max(
@@ -203,8 +214,8 @@ export const needsOf = (steps: Array<QuestStep>): { hold: number; pax: number } 
 export const QuestOperations = {
   /**
    * Initialize quest tracking structures on player data.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Record<string, QuestRecord>} Initialized quests dictionary.
+   * @param playerData - Saved player data.
+   * @returns Initialized quests dictionary.
    */
   questInit(this: QuestsCapabilities, playerData: PlayerData) {
     const savedQuests = (playerData.quests = playerData.quests || {});
@@ -217,8 +228,8 @@ export const QuestOperations = {
   // every bar has a contact; who they are depends only on the world
   /**
    * Determine the unique bar contact stationed at a stellar body.
-   * @param {{id: string, site?: boolean | Record<string, string>, svc: string, system: string, outlaw?: boolean} | null} position - Stellar body.
-   * @returns {Record<string, string> | null} Contact descriptor or null if no bar available.
+   * @param position - Stellar body.
+   * @returns Contact descriptor or null if no bar available.
    */
   contactAt(
     this: QuestsCapabilities,
@@ -255,8 +266,8 @@ export const QuestOperations = {
   },
   /**
    * Build network telemetry payload describing active quests, completed quests, and contact standings.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {QuestChain} Quests telemetry payload.
+   * @param playerData - Saved player data.
+   * @returns Quests telemetry payload.
    */
   questsPayload(this: QuestsCapabilities, playerData: PlayerData) {
     const savedQuests = this.questInit(playerData);
@@ -283,9 +294,9 @@ export const QuestOperations = {
   // ---- what a bar offers you: a side story that starts here, or this contact's next story
   /**
    * Generate available quest offerings at a stellar bar (side stories and procedural contact chains).
-   * @param {{id: string, site?: boolean | Record<string, string>, svc: string, system: string} | null} position - Stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Array<Mission>} List of quest offers.
+   * @param position - Stellar body.
+   * @param playerData - Saved player data.
+   * @returns List of quest offers.
    */
   questOffers(
     this: QuestsCapabilities,
@@ -355,10 +366,10 @@ export const QuestOperations = {
   // which story this contact has for you next, and where it happens (the same every time you ask, until you finish one)
   /**
    * Determine next story chain and plan locations offered by a specific contact.
-   * @param {{system: string, id: string}} position - Stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {Record<string, string>} component - Bar contact descriptor.
-   * @returns {{X: QuestChain, plan: Record<string, string>} | null} Selected chain and route plan, or null.
+   * @param position - Stellar body.
+   * @param playerData - Saved player data.
+   * @param component - Bar contact descriptor.
+   * @returns Selected chain and route plan, or null.
    */
   contactStory(
     this: QuestsCapabilities,
@@ -380,9 +391,9 @@ export const QuestOperations = {
   },
   /**
    * Calculate credit and item rewards for completing a quest chain at a given standing level.
-   * @param {{steps: Array<QuestStep>}} positionX - Story chain template.
-   * @param {number} level - Contact standing level (0-4).
-   * @returns {QuestReward} Reward descriptor.
+   * @param positionX - Story chain template.
+   * @param level - Contact standing level (0-4).
+   * @returns Reward descriptor.
    */
   chainReward(
     this: QuestsCapabilities,
@@ -399,8 +410,8 @@ export const QuestOperations = {
   },
   /**
    * Format a textual summary of quest rewards for UI presentation.
-   * @param {QuestReward} questReward - Reward descriptor.
-   * @returns {string} Comma-separated reward description text.
+   * @param questReward - Reward descriptor.
+   * @returns Comma-separated reward description text.
    */
   questRewardText(this: QuestsCapabilities, questReward: QuestReward) {
     const firstValue = questReward.credits ? [`${credits(questReward.credits)} credits`] : [];
@@ -419,12 +430,12 @@ export const QuestOperations = {
   // the places a generated story happens: A is close (1-2 jumps), B a little further and different from A
   /**
    * Select candidate stellar worlds, ships, and targets for a procedural quest chain.
-   * @param {{id: string, system: string}} position - Starting stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {QuestChain} questChain - Quest chain template.
-   * @param {Record<string, string>} component - Contact descriptor.
-   * @param {() => number} radius - Random generator function.
-   * @returns {Record<string, string> | null} Spatial and narrative plan variables, or null.
+   * @param position - Starting stellar body.
+   * @param playerData - Saved player data.
+   * @param questChain - Quest chain template.
+   * @param component - Contact descriptor.
+   * @param radius - Random generator function.
+   * @returns Spatial and narrative plan variables, or null.
    */
   questPlan(
     this: QuestsCapabilities,
@@ -469,9 +480,9 @@ export const QuestOperations = {
   },
   /**
    * Substitute template placeholders with concrete planetary and narrative variables.
-   * @param {string} time - Template text with {placeholders}.
-   * @param {Record<string, string>} position - Quest plan parameters.
-   * @returns {string} Interpolated narrative text.
+   * @param time - Template text with {placeholders}.
+   * @param position - Quest plan parameters.
+   * @returns Interpolated narrative text.
    */
   fill(this: QuestsCapabilities, time: string, position: Record<string, string>) {
     const name2 = (identifier: string) =>
@@ -491,9 +502,8 @@ export const QuestOperations = {
   // ---- accepting
   /**
    * Accept and start an active side story or procedural contact quest.
-   * @param {Session} session - Player session.
-   * @param {{side?: string, story?: string}} options - Quest offer descriptor.
-   * @returns {void}
+   * @param session - Player session.
+   * @param options - Quest offer descriptor.
    */
   questStart(
     this: QuestsCapabilities,
@@ -568,10 +578,10 @@ export const QuestOperations = {
   // turn a step into a concrete job
   /**
    * Instantiate a concrete mission job object for a given quest step.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {QuestRecord} quest - Active quest state.
-   * @param {number} index - Step index.
-   * @returns {Mission} Concrete mission specification.
+   * @param playerData - Saved player data.
+   * @param quest - Active quest state.
+   * @param index - Step index.
+   * @returns Concrete mission specification.
    */
   questStepJob(
     this: QuestsCapabilities,
@@ -753,10 +763,9 @@ export const QuestOperations = {
   },
   /**
    * Push current step's job onto the player's active mission list.
-   * @param {Session} session - Player session.
-   * @param {QuestRecord} quest - Active quest state.
-   * @param {boolean} [first] - True if first step initiation.
-   * @returns {void}
+   * @param session - Player session.
+   * @param quest - Active quest state.
+   * @param first - True if first step initiation.
    */
   questPush(this: QuestsCapabilities, session: Session, quest: QuestRecord, first?: boolean) {
     const playerData = session.data,
@@ -808,9 +817,8 @@ export const QuestOperations = {
   // a step was paid (called from completeOnLanding)
   /**
    * Advance an active quest chain to its next step after completing the current step's job.
-   * @param {Session} session - Player session.
-   * @param {Mission} mission - Completed mission record.
-   * @returns {void}
+   * @param session - Player session.
+   * @param mission - Completed mission record.
    */
   questAdvance(this: QuestsCapabilities, session: Session, mission: Mission) {
     const playerData = session.data,
@@ -835,9 +843,8 @@ export const QuestOperations = {
   },
   /**
    * Complete a quest chain, awarding credits, crates, blueprints, officers, and standing.
-   * @param {Session} session - Player session.
-   * @param {QuestRecord} quest - Completed quest structure.
-   * @returns {void}
+   * @param session - Player session.
+   * @param quest - Completed quest structure.
    */
   questFinish(this: QuestsCapabilities, session: Session, quest: QuestRecord) {
     const playerData = session.data,
@@ -932,10 +939,9 @@ export const QuestOperations = {
   },
   /**
    * Terminate and fail an active quest chain.
-   * @param {Session} session - Player session.
-   * @param {string} questId - Quest ID string.
-   * @param {string} reason - Explanation of failure.
-   * @returns {void}
+   * @param session - Player session.
+   * @param questId - Quest ID string.
+   * @param reason - Explanation of failure.
    */
   questFail(this: QuestsCapabilities, session: Session, questId: string, reason: string) {
     const playerData = session.data,
@@ -961,8 +967,7 @@ export const QuestOperations = {
   // every two seconds: a step lost with your ship, a missed deadline or a destroyed convoy gets one more chance
   /**
    * Periodic check on active quest steps to allow second chance or mark failure.
-   * @param {Session} session - Player session.
-   * @returns {void}
+   * @param session - Player session.
    */
   questSweep(this: QuestsCapabilities, session: Session) {
     const playerData = session.data,
@@ -1007,9 +1012,9 @@ export const QuestOperations = {
   // ---- the contact's talk at the bar: a greeting that knows you, and a rumour worth acting on
   /**
    * Retrieve dynamic conversation dialogue and trade/system rumors from a bar contact.
-   * @param {{id: string, system: string}} stellarBody2 - Landed stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Record<string, string> | null} Bar dialogue descriptor, or null.
+   * @param stellarBody2 - Landed stellar body.
+   * @param playerData - Saved player data.
+   * @returns Bar dialogue descriptor, or null.
    */
   barTalk(this: QuestsCapabilities, stellarBody2: StellarBody, playerData: PlayerData) {
     const contactAt2 = this.contactAt(stellarBody2);
@@ -1115,8 +1120,7 @@ export const QuestOperations = {
   // ---- salvage steps: a crate appears at the marked point when you come close
   /**
    * Spawn a floating salvage container when player ship nears marked quest coordinates.
-   * @param {Session} session - Player session.
-   * @returns {void}
+   * @param session - Player session.
    */
   questSalvageIdle(this: QuestsCapabilities, session: Session) {
     const playerData = session.data,
@@ -1154,9 +1158,9 @@ export const QuestOperations = {
   },
   /**
    * Handle collecting a quest salvage floating loot entity.
-   * @param {Session} session - Player session.
-   * @param {{salvage: string}} item - Collected loot cargo item.
-   * @returns {boolean} True if matching salvage quest was completed.
+   * @param session - Player session.
+   * @param item - Collected loot cargo item.
+   * @returns True if matching salvage quest was completed.
    */
   questLoot(this: QuestsCapabilities, session: Session, item: { salvage?: string }) {
     const playerData = session.data,

@@ -26,66 +26,65 @@ import { FACTIONS } from '../shared/galaxy.ts';
 import { RANKS_OFF, PROMOTE, TRAITS, LOWER_DECK, LOWER_SLOTS, bunks } from '../shared/syndicate.ts';
 
 /**
- * @typedef {Object} SyndicateStanding
- * @property {string} name Tier name
- * @property {number} pts Current reputation points
- * @property {number} i Tier index
- * @property {number} [next] Points required for next tier
+ * SyndicateStanding fields:
+ * name: Tier name
+ * pts: Current reputation points
+ * i: Tier index
+ * [next]: Points required for next tier
  */
 
 /**
- * @typedef {Object} BlackMarketItem
- * @property {string} id Unique item key
- * @property {string} name Display item name
- * @property {string} desc Description
- * @property {number} price Price in credits
- * @property {string} [locked] Requirement text if locked
+ * BlackMarketItem fields:
+ * id: Unique item key
+ * name: Display item name
+ * desc: Description
+ * price: Price in credits
+ * [locked]: Requirement text if locked
  */
 
 /**
- * @typedef {Object} BankState
- * @property {number} [credit] Current player credit score
- * @property {number} rate Interest rate per cycle
- * @property {number} period Billing interval in minutes
- * @property {number} max Maximum loan capacity
- * @property {number} pay Estimated periodic payment
+ * BankState fields:
+ * [credit]: Current player credit score
+ * rate: Interest rate per cycle
+ * period: Billing interval in minutes
+ * max: Maximum loan capacity
+ * pay: Estimated periodic payment
  */
 
 /**
- * @typedef {Object} Officer
- * @property {number|string} id Officer unique ID
- * @property {string} name Officer name
- * @property {number} [rank] Promotion rank index
- * @property {number} lv Current level
- * @property {string[]} [traits] Acquired trait keys
+ * Officer fields:
+ * id: Officer unique ID
+ * name: Officer name
+ * [rank]: Promotion rank index
+ * lv: Current level
+ * [traits]: Acquired trait keys
  */
 
 /**
- * @typedef {Object} ArcCard
- * @property {string} fac Faction identifier
- * @property {string} arc Arc name
- * @property {string} title Arc headline
- * @property {string} brief Narrative summary
- * @property {string} [locked] Lock condition text
+ * ArcCard fields:
+ * fac: Faction identifier
+ * arc: Arc name
+ * title: Arc headline
+ * brief: Narrative summary
+ * [locked]: Lock condition text
  */
 
 /**
- * @typedef {Object} PassengerMissionOffer
- * @property {string} [type] Mission type
- * @property {number} [pax] Number of passengers to carry
+ * PassengerMissionOffer fields:
+ * [type]: Mission type
+ * [pax]: Number of passengers to carry
  */
 
 /**
  * Formats a number to rounded, localized string.
- * @param {number} count Input number
- * @returns {string}
+ * @param count Input number
  */
 const credits2 = (count: number): string => Math.round(count).toLocaleString();
 
 /**
  * Renders the Syndicate standing badge showing current rank and points progress.
- * @param {PlayerData} positionY Player state object
- * @returns {string} HTML markup
+ * @param positionY Player state object
+ * @returns HTML markup
  */
 export function synBadge(playerPayload: PlayerData): string {
   const syndicateTierInfo = playerPayload.syn || { name: 'Unknown', pts: 0, i: 0 };
@@ -94,8 +93,8 @@ export function synBadge(playerPayload: PlayerData): string {
 
 /**
  * Renders the Black Market screen at a Syndicate-affiliated spaceport.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function blackMarketHtml(clientGameState: ClientGameState): string {
   const blackmarket2 = clientGameState.landed!.blackmarket,
@@ -115,8 +114,8 @@ export function blackMarketHtml(clientGameState: ClientGameState): string {
 
 /**
  * Renders the Bank of the Rift loan and repayment screen.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function bankHtml(clientGameState: ClientGameState): string {
   const bank2 = clientGameState.landed!.bank,
@@ -142,10 +141,10 @@ export function bankHtml(clientGameState: ClientGameState): string {
 
 /**
  * Renders the rank, traits badges, and promotion button for an officer card.
- * @param {ClientGameState} clientGameState Game state object
- * @param {Officer} officer Officer instance
- * @param {boolean} [interactive] Whether promotion button is active
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param officer Officer instance
+ * @param interactive Whether promotion button is active
+ * @returns HTML markup
  */
 export function rankLine(
   clientGameState: ClientGameState,
@@ -178,8 +177,8 @@ export function rankLine(
 
 /**
  * Renders the Lower Deck berths section with passive crew assignment and hiring.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function lowerDeckHtml(clientGameState: ClientGameState): string {
   const playerPayload = clientGameState.you!,
@@ -215,8 +214,8 @@ export function lowerDeckHtml(clientGameState: ClientGameState): string {
 
 /**
  * Renders faction arc cards available at the current landing location.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function arcCardsHtml(clientGameState: ClientGameState): string {
   const length2 = clientGameState.landed!;
@@ -231,9 +230,9 @@ export function arcCardsHtml(clientGameState: ClientGameState): string {
 
 /**
  * Computes bunk availability warning for passenger missions.
- * @param {ClientGameState} clientGameState Game state object
- * @param {PassengerMissionOffer} passengerMissionOffer Mission offer data
- * @returns {string} Warning text if insufficient bunks, else empty string
+ * @param clientGameState Game state object
+ * @param passengerMissionOffer Mission offer data
+ * @returns Warning text if insufficient bunks, else empty string
  */
 export function bunkInfo(
   clientGameState: ClientGameState,

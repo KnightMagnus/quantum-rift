@@ -89,7 +89,9 @@ import { BRIDGE_SLOTS } from '../shared/hangar.ts';
 import { officerBonus, makeLoadout, repairBasis, credits } from '../shared/rules.ts';
 import { SPEC } from '../shared/specialty.ts';
 
-/** @type {number | undefined} Hull ID for the Herald specialty ship. */
+/**
+ * Hull ID for the Herald specialty ship.
+ */
 const HERALD: number | undefined = (
   Object.values(SPEC).find((specialistShip) => specialistShip.key === 'herald') || {}
 ).id;
@@ -98,8 +100,8 @@ export const DocksOperations = {
   // ------------------------------------------------------------------ save upgrade and bookkeeping
   /**
    * Migrate or repair docks structure in player data.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {PlayerData} Initialized player data.
+   * @param playerData - Saved player data.
+   * @returns Initialized player data.
    */
   docksInit(this: DocksCapabilities, playerData: PlayerData) {
     this.hangarInit(playerData);
@@ -206,16 +208,16 @@ export const DocksOperations = {
   },
   /**
    * Generate a unique ship UID.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {string} Unique ship identifier.
+   * @param playerData - Saved player data.
+   * @returns Unique ship identifier.
    */
   shipUid(this: DocksCapabilities, playerData: PlayerData) {
     return 's' + this.uid(playerData);
   },
   /**
    * Get the number of available docks based on Station Tier.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {number} Number of docks.
+   * @param playerData - Saved player data.
+   * @returns Number of docks.
    */
   dockCount(this: DocksCapabilities, playerData: PlayerData) {
     return playerData.station && playerData.station.site
@@ -224,9 +226,9 @@ export const DocksOperations = {
   },
   /**
    * Look up a stored ship entry by its unique identifier.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {string | null | undefined} userId - Ship unique identifier.
-   * @returns {StoredShip | null} Stored ship record or null if not found.
+   * @param playerData - Saved player data.
+   * @param userId - Ship unique identifier.
+   * @returns Stored ship record or null if not found.
    */
   stored(this: DocksCapabilities, playerData: PlayerData, userId: string | null | undefined) {
     return userId
@@ -235,9 +237,9 @@ export const DocksOperations = {
   },
   /**
    * Determine the maximum number of wingmates allowed for a dock.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {number} entryKey - Dock index.
-   * @returns {number} Maximum wingmate count.
+   * @param playerData - Saved player data.
+   * @param entryKey - Dock index.
+   * @returns Maximum wingmate count.
    */
   wingMax(this: DocksCapabilities, playerData: PlayerData, entryKey: number) {
     const savedDock = playerData.docks[entryKey];
@@ -252,9 +254,9 @@ export const DocksOperations = {
   },
   /**
    * Find the dock index and slot where a ship UID is assigned.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {string} userId - Ship unique identifier.
-   * @returns {{k: number, slot: 'lead' | number} | null} Slot coordinates or null.
+   * @param playerData - Saved player data.
+   * @param userId - Ship unique identifier.
+   * @returns Slot coordinates or null.
    */
   slotOf(
     this: DocksCapabilities,
@@ -272,9 +274,8 @@ export const DocksOperations = {
   },
   /**
    * Remove a ship UID from all dock assignments (lead and wing slots).
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {string} userId - Ship unique identifier to unassign.
-   * @returns {void}
+   * @param playerData - Saved player data.
+   * @param userId - Ship unique identifier to unassign.
    */
   unassign(this: DocksCapabilities, playerData: PlayerData, userId: string) {
     for (const savedDock of playerData.docks) {
@@ -286,9 +287,8 @@ export const DocksOperations = {
   },
   /**
    * Remove an officer from all wingmate crew assignments.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {string} officerId - Officer identifier.
-   * @returns {void}
+   * @param playerData - Saved player data.
+   * @param officerId - Officer identifier.
    */
   unwingOfficer(this: DocksCapabilities, playerData: PlayerData, officerId: string | number) {
     for (const savedDock of playerData.docks)
@@ -299,9 +299,9 @@ export const DocksOperations = {
   },
   /**
    * Look up where an officer is assigned among wingmates.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {string} officerId - Officer identifier.
-   * @returns {{k: number, w: number, r: string} | null} Assignment location or null.
+   * @param playerData - Saved player data.
+   * @param officerId - Officer identifier.
+   * @returns Assignment location or null.
    */
   wingOfficerAt(this: DocksCapabilities, playerData: PlayerData, officerId: string | number) {
     for (const [index, savedDock] of playerData.docks.entries())
@@ -315,8 +315,8 @@ export const DocksOperations = {
   // the wingmates of the active dock that are ready to fly
   /**
    * Retrieve active dock wingmates that are currently repaired and ready to fly.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Array<{w: SavedDockWing, i: number, x: StoredShip}>} Array of active wingmate info objects.
+   * @param playerData - Saved player data.
+   * @returns Array of active wingmate info objects.
    */
   activeWings(this: DocksCapabilities, playerData: PlayerData) {
     const savedDock = playerData.docks && playerData.docks[playerData.activeDock];
@@ -337,17 +337,17 @@ export const DocksOperations = {
   },
   /**
    * Get an array of hull IDs for the active dock's ready wingmates.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {number[]} Array of hull IDs.
+   * @param playerData - Saved player data.
+   * @returns Array of hull IDs.
    */
   wingHulls(this: DocksCapabilities, playerData: PlayerData) {
     return this.activeWings(playerData).map((options) => options.x.ship.hull);
   },
   /**
    * Calculate officer bonuses provided to a wingmate.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {Pick<SavedDockWing, 'cap' | 'crew'>} width - Wingmate slot configuration.
-   * @returns {Record<string, number>} Computed stat bonuses.
+   * @param playerData - Saved player data.
+   * @param width - Wingmate slot configuration.
+   * @returns Computed stat bonuses.
    */
   wingBonus(
     this: DocksCapabilities,
@@ -359,8 +359,7 @@ export const DocksOperations = {
   // the new ship you fly took the active dock's lead slot (bought, rebuilt, rewarded)
   /**
    * Handle changes when the player's active ship changes lead slot.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {void}
+   * @param playerData - Saved player data.
    */
   leadChanged(this: DocksCapabilities, playerData: PlayerData) {
     if (!playerData.ship.uid!) playerData.ship.uid! = this.shipUid(playerData);
@@ -370,8 +369,8 @@ export const DocksOperations = {
   // ------------------------------------------------------------------ payload
   /**
    * Build the network payload for docks and hangar status.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {DocksPayload} Docks and stored ship overview payload.
+   * @param playerData - Saved player data.
+   * @returns Docks and stored ship overview payload.
    */
   docksPayload(this: DocksCapabilities, playerData: PlayerData): DocksPayload {
     const currentTime = Date.now(),
@@ -434,9 +433,8 @@ export const DocksOperations = {
   // ------------------------------------------------------------------ operations (at your Personal Station)
   /**
    * Handle dock management operations (activate, assign, crew, repair).
-   * @param {Session} session - Player session.
-   * @param {NetworkMessage} message - Inbound operation message.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Inbound operation message.
    */
   docksOp(this: DocksCapabilities, session: Session, message: NetworkMessage) {
     const playerData = this.docksInit(session.data),
@@ -615,9 +613,9 @@ export const DocksOperations = {
   // stored bridge presets may name officers who now serve elsewhere
   /**
    * Clean and validate bridge assignments against available officers.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {PlayerData['bridge'] | undefined} secondValue - Bridge slot officer map.
-   * @returns {PlayerData['bridge']} Sanitized bridge map.
+   * @param playerData - Saved player data.
+   * @param secondValue - Bridge slot officer map.
+   * @returns Sanitized bridge map.
    */
   cleanBridge(
     this: DocksCapabilities,
@@ -642,9 +640,8 @@ export const DocksOperations = {
   },
   /**
    * Instantly repair a damaged wingmate ship for a credit fee.
-   * @param {Session} session - Player session.
-   * @param {string} userId - Unique ship identifier.
-   * @returns {void}
+   * @param session - Player session.
+   * @param userId - Unique ship identifier.
    */
   wingRepair(this: DocksCapabilities, session: Session, userId: string) {
     const playerData = session.data,
@@ -662,8 +659,7 @@ export const DocksOperations = {
   // a wingmate knocked out in a fight is towed home for repairs
   /**
    * Handle a wingmate ship being disabled or destroyed in combat, setting repair timer.
-   * @param {Entity} entity - Wingmate ship entity that was defeated.
-   * @returns {void}
+   * @param entity - Wingmate ship entity that was defeated.
    */
   onWingLost(this: DocksCapabilities, entity: Entity) {
     const session = [...this.sessions.values()].find((session) => session.id === entity.wingOf);
@@ -682,9 +678,8 @@ export const DocksOperations = {
   // buying a ship straight into your hangar (no trade-in)
   /**
    * Purchase a new ship directly into the hangar without trading in the active vessel.
-   * @param {Session} session - Player session.
-   * @param {number} hull - Hull ID to purchase.
-   * @returns {void}
+   * @param session - Player session.
+   * @param hull - Hull ID to purchase.
    */
   buyToHangar(this: DocksCapabilities, session: Session, hull: number) {
     const playerData = this.docksInit(session.data),

@@ -127,25 +127,26 @@ import {
 
 /**
  * Clamp a numeric value between a lower and an upper bound.
- * @param {number} value - Value to clamp.
- * @param {number} firstValue - Lower bound.
- * @param {number} secondValue - Upper bound.
- * @returns {number} Clamped value.
+ * @param value - Value to clamp.
+ * @param firstValue - Lower bound.
+ * @param secondValue - Upper bound.
+ * @returns Clamped value.
  */
 const clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Pick a random element from an array using a random generator function.
- * @template T
- * @param {() => number} radius - Random generator function returning [0, 1).
- * @param {T[]} firstValue - Array of items to choose from.
- * @returns {T} Selected element.
+ * @param radius - Random generator function returning [0, 1).
+ * @param firstValue - Array of items to choose from.
+ * @returns Selected element.
  */
 const pick = <ValueType>(radius: () => number, firstValue: ValueType[]): ValueType =>
   firstValue[Math.floor(radius() * firstValue.length)];
 
-/** @type {Record<string, Record<string, number>>} Cache of shortest jump distance maps by starting system ID. */
+/**
+ * Cache of shortest jump distance maps by starting system ID.
+ */
 const DIST: Record<string, Record<string, number>> = {};
 
 const galaxyGraph = new GalaxyGraph(systemsById);
@@ -154,15 +155,16 @@ function jumps(from: string): Record<string, number> {
   return DIST[from] || (DIST[from] = galaxyGraph.distances(from));
 }
 
-/** @type {string[]} List of playable and NPC race identifiers. */
+/**
+ * List of playable and NPC race identifiers.
+ */
 const RACES: string[] = Object.keys(RACE_ROLES);
 
 export const HangarOperations = {
   // ------------------------------------------------------------------ save upgrades
   /**
    * Initialize hangar, officer, bridge, dock, and station queue data on player record.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {void}
+   * @param playerData - Saved player data.
    */
   hangarInit(this: HangarCapabilities, playerData: PlayerData) {
     playerData.shuttles = playerData.shuttles || [];
@@ -174,16 +176,16 @@ export const HangarOperations = {
   },
   /**
    * Allocate a monotonically increasing unique identifier for player entities.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {number} Newly allocated unique ID.
+   * @param playerData - Saved player data.
+   * @returns Newly allocated unique ID.
    */
   uid(this: HangarCapabilities, playerData: PlayerData) {
     return (playerData.nextUid = (playerData.nextUid || 1) + 1) - 1;
   },
   /**
    * Calculate total shuttle bay capacity based on Station Tier and research bonuses.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {number} Total available shuttle bays.
+   * @param playerData - Saved player data.
+   * @returns Total available shuttle bays.
    */
   bays(this: HangarCapabilities, playerData: PlayerData) {
     const researchBonus2 = researchBonus(playerData.station);
@@ -193,8 +195,8 @@ export const HangarOperations = {
   },
   /**
    * Calculate total stored-ship dock slots based on Station Tier and research bonuses.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {number} Total stored-ship berths.
+   * @param playerData - Saved player data.
+   * @returns Total stored-ship berths.
    */
   dockSlots(this: HangarCapabilities, playerData: PlayerData) {
     const researchBonus2 = researchBonus(playerData.station);
@@ -207,9 +209,9 @@ export const HangarOperations = {
   // a bar on any inhabited world with a job board posts three officers of the local race each hour
   /**
    * Generate three candidate officers for hire at an inhabited world with a bar service.
-   * @param {{id: string, svc: string, system: string, tech?: number, site?: boolean | Record<string, string | number>}} position - Current stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Array<OfficerRecord>} List of generated officer offers.
+   * @param position - Current stellar body.
+   * @param playerData - Saved player data.
+   * @returns List of generated officer offers.
    */
   barOffers(
     this: HangarCapabilities,
@@ -254,9 +256,8 @@ export const HangarOperations = {
   },
   /**
    * Handle officer operations including hiring from bars, assigning to bridge/shuttles, and dismissing.
-   * @param {Session} session - Player session.
-   * @param {{op: string, id?: string, oid?: number, slot?: string}} message - Officer action payload.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Officer action payload.
    */
   officerOp(
     this: HangarCapabilities,
@@ -350,10 +351,9 @@ export const HangarOperations = {
   // experience for the bridge crew (kills, jumps, jobs) or one officer (shuttle runs)
   /**
    * Award experience points to all active bridge officers or a single designated officer.
-   * @param {Session} session - Player session.
-   * @param {number} amount - Base XP amount.
-   * @param {OfficerRecord} [only] - Specific officer to award XP to (optional).
-   * @returns {void}
+   * @param session - Player session.
+   * @param amount - Base XP amount.
+   * @param only - Specific officer to award XP to (optional).
    */
   officerXp(this: HangarCapabilities, session: Session, amount: number, only?: OfficerRecord) {
     const playerData = session.data,
@@ -379,8 +379,8 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ shuttles
   /**
    * Generate available shuttle mission offerings from the player's personal station.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {ShuttleJob[]} List of active shuttle job offers.
+   * @param playerData - Saved player data.
+   * @returns List of active shuttle job offers.
    */
   shuttleBoard(this: HangarCapabilities, playerData: PlayerData) {
     if (!playerData.station.site) return [];
@@ -428,9 +428,9 @@ export const HangarOperations = {
   },
   /**
    * Determine credit and item rewards for a generated shuttle job.
-   * @param {{kind: string, jumps: number, danger: number, sys: string}} missionJob - Shuttle job specification.
-   * @param {() => number} radius - Random generator function.
-   * @returns {{credits: number, chart?: boolean, mats?: Array<[string, number, number]>, rep?: [string, number]}} Reward descriptor.
+   * @param missionJob - Shuttle job specification.
+   * @param radius - Random generator function.
+   * @returns Reward descriptor.
    */
   shuttleReward(
     this: HangarCapabilities,
@@ -472,11 +472,11 @@ export const HangarOperations = {
   },
   /**
    * Calculate probability of success for a shuttle mission.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {{kind: string}} ship - Shuttle state.
-   * @param {{kind: string, danger: number}} missionJob - Shuttle job details.
-   * @param {OfficerRecord | null} crew - Assigned officer, if any.
-   * @returns {number} Success chance probability in [0.15, 0.97].
+   * @param playerData - Saved player data.
+   * @param ship - Shuttle state.
+   * @param missionJob - Shuttle job details.
+   * @param crew - Assigned officer, if any.
+   * @returns Success chance probability in [0.15, 0.97].
    */
   shuttleChance(
     this: HangarCapabilities,
@@ -502,9 +502,8 @@ export const HangarOperations = {
   },
   /**
    * Handle shuttle construction, crew assignment, dispatch, return claiming, repair, and scrapping.
-   * @param {Session} session - Player session.
-   * @param {{op: string, kind?: string, sid?: number, oid?: number, job?: string}} message - Shuttle operation payload.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Shuttle operation payload.
    */
   shuttleOp(
     this: HangarCapabilities,
@@ -676,9 +675,8 @@ export const HangarOperations = {
   },
   /**
    * Resolve an accomplished or failed shuttle mission and grant rewards or report losses.
-   * @param {Session} session - Player session.
-   * @param {{id: string, name: string, hull: number, ret: number, reward: number, mat: string, qty: number, xp: number}} savedShuttle - Completed shuttle state.
-   * @returns {void}
+   * @param session - Player session.
+   * @param savedShuttle - Completed shuttle state.
    */
   resolveShuttle(this: HangarCapabilities, session: Session, savedShuttle: SavedShuttle) {
     const playerData = session.data,
@@ -763,10 +761,9 @@ export const HangarOperations = {
   // shuttles visibly launch from (and return to) the Personal Station when its system is live
   /**
    * Spawn ambient space entity representing shuttle departure or arrival at personal station.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {{kind: string}} ship - Shuttle state.
-   * @param {'out' | 'in'} direction - Traffic direction ('out' or 'in').
-   * @returns {void}
+   * @param playerData - Saved player data.
+   * @param ship - Shuttle state.
+   * @param direction - Traffic direction ('out' or 'in').
    */
   shuttleTraffic(
     this: HangarCapabilities,
@@ -812,9 +809,9 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ research queue (prerequisites are queued first)
   /**
    * Resolve prerequisite chain for a research project.
-   * @param {{done: string[]}} state - Player station state.
-   * @param {string} identifier - Research project ID.
-   * @returns {string[]} Ordered list of research IDs needed.
+   * @param state - Player station state.
+   * @param identifier - Research project ID.
+   * @returns Ordered list of research IDs needed.
    */
   researchChain(this: HangarCapabilities, state: { done: string[] }, identifier: string) {
     const chain = [];
@@ -831,9 +828,8 @@ export const HangarOperations = {
   },
   /**
    * Queue a research project along with any unfulfilled prerequisites.
-   * @param {Session} session - Player session.
-   * @param {string} identifier - Research project ID.
-   * @returns {void}
+   * @param session - Player session.
+   * @param identifier - Research project ID.
    */
   queueResearch(this: HangarCapabilities, session: Session, identifier: string) {
     const playerData = session.data,
@@ -865,8 +861,7 @@ export const HangarOperations = {
   // start the next queued project if the lab is free and the captain can pay for it (called on every station check)
   /**
    * Start the next research project in queue if station lab is idle and funds/materials allow.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {void}
+   * @param playerData - Saved player data.
    */
   startQueued(this: HangarCapabilities, playerData: PlayerData) {
     const stationState = playerData.station;
@@ -908,11 +903,10 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ refining: three crates make one of the next grade
   /**
    * Refine multiple material crates of grade g into grade g+1.
-   * @param {Session} session - Player session.
-   * @param {string} material - Material identifier ('alloy', 'crystal', 'isotope').
-   * @param {number} game - Current grade level (0 to 3).
-   * @param {number} count - Number of refining operations to execute.
-   * @returns {void}
+   * @param session - Player session.
+   * @param material - Material identifier ('alloy', 'crystal', 'isotope').
+   * @param game - Current grade level (0 to 3).
+   * @param count - Number of refining operations to execute.
    */
   refineUp(
     this: HangarCapabilities,
@@ -951,17 +945,16 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ drydock: stored ships keep their escorts and bridge crew (fleet presets)
   /**
    * Calculate scrap/resale value of a stored ship (half hull cost + half outfit costs).
-   * @param {StoredShip} storedShip - Stored ship structure.
-   * @returns {number} Credit value.
+   * @param storedShip - Stored ship structure.
+   * @returns Credit value.
    */
   storedValue(this: HangarCapabilities, storedShip: StoredShip) {
     return loadoutValue(this.A, storedShip.ship);
   },
   /**
    * Handle drydock operations including storing and selling stored ships.
-   * @param {Session} session - Player session.
-   * @param {{op: string, i?: number, uid?: number}} message - Drydock operation payload.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Drydock operation payload.
    */
   dockOp(
     this: HangarCapabilities,
@@ -1015,9 +1008,8 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ boarding
   /**
    * Handle boarding interactions with disabled ships or downed Armada captains (plunder, capture, rescue).
-   * @param {Session} session - Player session.
-   * @param {{id: number, act: 'plunder' | 'capture' | 'rescue'}} message - Boarding action payload.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Boarding action payload.
    */
   board(
     this: HangarCapabilities,

@@ -36,19 +36,18 @@ import { COOP_HOLDOUT } from '../shared/coop.ts';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
- * @param {number} value - Value to clamp.
- * @param {number} firstValue - Minimum value.
- * @param {number} secondValue - Maximum value.
- * @returns {number} Clamped value.
+ * @param value - Value to clamp.
+ * @param firstValue - Minimum value.
+ * @param secondValue - Maximum value.
+ * @returns Clamped value.
  */
 const clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Select a random element from an array.
- * @template T
- * @param {T[]} firstValue - Array of items.
- * @returns {T} Selected item.
+ * @param firstValue - Array of items.
+ * @returns Selected item.
  */
 const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
   firstValue[Math.floor(Math.random() * firstValue.length)];
@@ -56,16 +55,15 @@ const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
 export const HostileOperations = {
   /**
    * Initialize holdout tracking state on player data.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {void}
+   * @param playerData - Saved player data.
    */
   hostInit(this: HostileCapabilities, playerData: PlayerData) {
     playerData.holdout = playerData.holdout || { best: 0, lastT: 0 };
   },
   /**
    * Calculate effective combat power of the player's active ship and wingmates.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {number} Player power rating.
+   * @param playerData - Saved player data.
+   * @returns Player power rating.
    */
   myPower(this: HostileCapabilities, playerData: PlayerData) {
     return playerPower(
@@ -79,10 +77,9 @@ export const HostileOperations = {
   // ------------------------------------------------------------------ chests (called from Space.kill)
   /**
    * Roll for and spawn a faction loot chest when an NPC ship is destroyed.
-   * @param {Space} space - Space instance where the kill occurred.
-   * @param {Session} session - Destroyed ship entity.
-   * @param {Entity} entity - Attacking entity that destroyed the ship.
-   * @returns {void}
+   * @param space - Space instance where the kill occurred.
+   * @param session - Destroyed ship entity.
+   * @param entity - Attacking entity that destroyed the ship.
    */
   maybeChest(
     this: HostileCapabilities,
@@ -107,9 +104,9 @@ export const HostileOperations = {
   },
   /**
    * Open a loot chest, awarding credits, crafting materials, blueprints, and specialty items.
-   * @param {Session} session - Player session opening the chest.
-   * @param {{chest: string, lvl?: number}} item - Loot item details.
-   * @returns {boolean} True if opened successfully.
+   * @param session - Player session opening the chest.
+   * @param item - Loot item details.
+   * @returns True if opened successfully.
    */
   openChest(this: HostileCapabilities, session: Session, item: { chest?: string; lvl?: number }) {
     const playerData = session.data,
@@ -146,8 +143,7 @@ export const HostileOperations = {
   // ------------------------------------------------------------------ Station Holdout (solo wave defense at your own station)
   /**
    * Start a Station Holdout wave defense activity from the player's personal station.
-   * @param {Session} session - Player session.
-   * @returns {void}
+   * @param session - Player session.
    */
   holdoutStart(this: HostileCapabilities, session: Session) {
     const playerData = session.data,
@@ -180,8 +176,7 @@ export const HostileOperations = {
   },
   /**
    * Update the active holdout state, managing waves, platform defense, and completion checks.
-   * @param {Session} session - Player session.
-   * @returns {void}
+   * @param session - Player session.
    */
   holdoutTick(this: HostileCapabilities, session: Session) {
     const playerData = session.data;
@@ -294,10 +289,9 @@ export const HostileOperations = {
   },
   /**
    * Conclude a holdout event, despawn platforms/enemies, and distribute rewards.
-   * @param {Session} session - Player session.
-   * @param {boolean} hasWon - Whether all ten waves were completed.
-   * @param {string} [reason] - Reason for termination if incomplete.
-   * @returns {void}
+   * @param session - Player session.
+   * @param hasWon - Whether all ten waves were completed.
+   * @param reason - Reason for termination if incomplete.
    */
   holdoutEnd(this: HostileCapabilities, session: Session, hasWon: boolean, reason?: string) {
     const playerData = session.data,
@@ -352,17 +346,16 @@ export const HostileOperations = {
   },
   /**
    * Callback invoked when a ship is destroyed during a holdout.
-   * @param {Entity} _entity - Defeated ship entity.
-   * @returns {void}
+   * @param _entity - Defeated ship entity.
    */
   onHoldoutKill(this: HostileCapabilities, _entity: Entity): void {}, // waves are tracked by id each tick
 
   // ------------------------------------------------------------------ the Umbral Eclipse (spawned by Space.spawnTraffic)
   /**
    * Compute the spawn probability for an Umbral Eclipse cell in a system.
-   * @param {SpaceSystem} system - System metadata.
-   * @param {Record<string, number>} [message] - Active sector modifiers.
-   * @returns {number} Spawn probability.
+   * @param system - System metadata.
+   * @param message - Active sector modifiers.
+   * @returns Spawn probability.
    */
   eclipseChance(
     this: HostileCapabilities,

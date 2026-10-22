@@ -88,69 +88,68 @@ export type QuestRecord = {
 // `beat` is told when that step is done, before the next one begins.
 
 /**
- * @typedef {Object} QuestChainStep
- * @property {'survey'|'rescue'|'bounty'|'cargo'|'passenger'|'convoy'|'patrol'|'smuggle'|'assassinate'|'salvage'|string} type - Mission step archetype.
- * @property {'W'|'A'|'B'|string} where - Relative system locator ('W' = contact world, 'A' = near system, 'B' = distant system).
- * @property {string} title - Step title template.
- * @property {string} brief - Concise objective instructions template.
- * @property {string} [beat] - Narrative bridge text delivered upon completing this step.
- * @property {number} [qty] - Target commodity quantity.
- * @property {string} [cid] - Commodity ID for cargo/delivery objectives.
- * @property {number} [rush] - Rush mission delivery time limit in minutes.
- * @property {number} [pax] - Passenger count to transport.
- * @property {number} [need] - Target count of ships to destroy or board.
- * @property {string} [target] - Target enemy ship name.
+ * QuestChainStep fields:
+ * type: - Mission step archetype.
+ * where: - Relative system locator ('W' = contact world, 'A' = near system, 'B' = distant system).
+ * title: - Step title template.
+ * brief: - Concise objective instructions template.
+ * [beat]: - Narrative bridge text delivered upon completing this step.
+ * [qty]: - Target commodity quantity.
+ * [cid]: - Commodity ID for cargo/delivery objectives.
+ * [rush]: - Rush mission delivery time limit in minutes.
+ * [pax]: - Passenger count to transport.
+ * [need]: - Target count of ships to destroy or board.
+ * [target]: - Target enemy ship name.
  */
 
 /**
- * @typedef {Object} QuestChain
- * @property {string} id - Unique quest chain identifier.
- * @property {string} name - Title of the quest storyline.
- * @property {'lawful'|'shady'|'wild'|'any'|string} kind - Contact archetype alignment required to offer this chain.
- * @property {string} intro - Initial bar patron dialogue offering the quest chain.
- * @property {QuestChainStep[]} steps - Progressive sequence of mission steps.
- * @property {string} end - Epilogue dialogue upon chain completion.
+ * QuestChain fields:
+ * id: - Unique quest chain identifier.
+ * name: - Title of the quest storyline.
+ * kind: - Contact archetype alignment required to offer this chain.
+ * intro: - Initial bar patron dialogue offering the quest chain.
+ * steps: - Progressive sequence of mission steps.
+ * end: - Epilogue dialogue upon chain completion.
  */
 
 /**
- * @typedef {Object} SideStoryStep
- * @property {string} type - Mission step archetype.
- * @property {string} [sys] - Target star system ID.
- * @property {string} [dest] - Destination port or stellar body ID.
- * @property {string} title - Mission step title.
- * @property {string} brief - Step objective brief.
- * @property {string} [beat] - Narrative beat text advancing the story.
- * @property {string} [target] - Target NPC name.
- * @property {number} [qty] - Cargo tonnage.
- * @property {string} [cid] - Cargo commodity identifier.
- * @property {number} [rush] - Delivery time limit in minutes.
- * @property {number} [hull] - Target ship hull ID.
- * @property {string} [faction] - Target faction ID.
+ * SideStoryStep fields:
+ * type: - Mission step archetype.
+ * [sys]: - Target star system ID.
+ * [dest]: - Destination port or stellar body ID.
+ * title: - Mission step title.
+ * brief: - Step objective brief.
+ * [beat]: - Narrative beat text advancing the story.
+ * [target]: - Target NPC name.
+ * [qty]: - Cargo tonnage.
+ * [cid]: - Cargo commodity identifier.
+ * [rush]: - Delivery time limit in minutes.
+ * [hull]: - Target ship hull ID.
+ * [faction]: - Target faction ID.
  */
 
 /**
- * @typedef {Object} SideStoryReward
- * @property {number} credits - Credit reward payout.
- * @property {string} [radio] Discovered station rewarded on completion.
- * @property {[string, number]} [crate] - Material crate reward tuple [materialType, grade].
- * @property {number} [bp] - Blueprint fragments rewarded.
+ * SideStoryReward fields:
+ * credits: - Credit reward payout.
+ * [radio]: Discovered station rewarded on completion.
+ * [crate]: - Material crate reward tuple [materialType, grade].
+ * [bp]: - Blueprint fragments rewarded.
  */
 
 /**
- * @typedef {Object} SideStory
- * @property {string} id - Unique side story identifier.
- * @property {string} name - Story title.
- * @property {string} at - Starting port ID where quest giver is located.
- * @property {string} giver - Full name and title of the story NPC quest giver.
- * @property {string} intro - Initial quest offering dialog.
- * @property {SideStoryStep[]} steps - Progressive sequence of story mission steps.
- * @property {string} end - Concluding narrative text upon story completion.
- * @property {SideStoryReward} reward - Completion reward bundle.
+ * SideStory fields:
+ * id: - Unique side story identifier.
+ * name: - Story title.
+ * at: - Starting port ID where quest giver is located.
+ * giver: - Full name and title of the story NPC quest giver.
+ * intro: - Initial quest offering dialog.
+ * steps: - Progressive sequence of story mission steps.
+ * end: - Concluding narrative text upon story completion.
+ * reward: - Completion reward bundle.
  */
 
 /**
  * Honorific title pools for bar contact archetypes.
- * @type {Object.<string, string[]>}
  */
 export const CONTACT_TITLES: Record<string, string[]> = {
   lawful: [
@@ -167,7 +166,6 @@ export const CONTACT_TITLES: Record<string, string[]> = {
 
 /**
  * Procedurally-instantiated multi-step contact quest chains.
- * @type {QuestChain[]}
  */
 export const CHAINS: QuestChain[] = [
   {
@@ -422,7 +420,6 @@ export const CHAINS: QuestChain[] = [
 // ---- seven handcrafted side stories, each starting at a particular world
 /**
  * Handcrafted narrative side quest storylines starting at specific worlds.
- * @type {SideStory[]}
  */
 export const SIDE_STORIES: SideStory[] = [
   {

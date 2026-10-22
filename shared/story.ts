@@ -26,33 +26,32 @@ export type StoryMission = {
 // Each step: where it is offered, what you must do, and what it pays. Text is shown in landing pop-ups.
 
 /**
- * @typedef {Object} StoryMission
- * @property {string} id - Unique storyline step identifier (e.g. 'qv1').
- * @property {string} title - Mission title displayed in dialogs and mission log.
- * @property {string} at - Station or location ID where the mission is offered.
- * @property {'carry'|'board'|'kill'|'boss'|'gift'|string} type - Mission objective archetype.
- * @property {string} [dest] - Destination station ID for courier/transport missions.
- * @property {string} [sys] - Target system ID where the objective takes place.
- * @property {number} [count] - Target count of ships to defeat or board.
- * @property {number} [hull] - Target or reward hull ID.
- * @property {string} [faction] - Faction identifier of targets or allies.
- * @property {number[]} [allies] - Array of friendly escort hull IDs spawned during boss encounter.
- * @property {string} [back] - Station ID to return to upon objective completion.
- * @property {number} pay - Credit reward awarded on completion.
- * @property {number} rep - Reputation points awarded on completion.
- * @property {number} [minRep] - Minimum faction reputation prerequisite to accept the mission.
- * @property {[string, number]} [crate] - Special item or commodity reward tuple [itemType, quantity].
- * @property {string} text - Narrative dialog text presented when offered.
- * @property {string} brief - Concise objective summary for UI displays.
- * @property {string} acc - Acceptance button prompt text.
- * @property {string} ref - Rejection or postponement button prompt text.
- * @property {string} [progress] - Status message displayed during mission progress.
- * @property {string} done - Narrative epilogue displayed when claiming mission rewards.
+ * StoryMission fields:
+ * id: - Unique storyline step identifier (e.g. 'qv1').
+ * title: - Mission title displayed in dialogs and mission log.
+ * at: - Station or location ID where the mission is offered.
+ * type: - Mission objective archetype.
+ * [dest]: - Destination station ID for courier/transport missions.
+ * [sys]: - Target system ID where the objective takes place.
+ * [count]: - Target count of ships to defeat or board.
+ * [hull]: - Target or reward hull ID.
+ * [faction]: - Faction identifier of targets or allies.
+ * [allies]: - Array of friendly escort hull IDs spawned during boss encounter.
+ * [back]: - Station ID to return to upon objective completion.
+ * pay: - Credit reward awarded on completion.
+ * rep: - Reputation points awarded on completion.
+ * [minRep]: - Minimum faction reputation prerequisite to accept the mission.
+ * [crate]: - Special item or commodity reward tuple [itemType, quantity].
+ * text: - Narrative dialog text presented when offered.
+ * brief: - Concise objective summary for UI displays.
+ * acc: - Acceptance button prompt text.
+ * ref: - Rejection or postponement button prompt text.
+ * [progress]: - Status message displayed during mission progress.
+ * done: - Narrative epilogue displayed when claiming mission rewards.
  */
 
 /**
  * Main Que'vari golden story mission chain progression.
- * @type {StoryMission[]}
  */
 export const STORY: StoryMission[] = [
   {
@@ -152,12 +151,10 @@ export const STORY: StoryMission[] = [
 
 /**
  * Hull ID of the legendary Ina Que'var reward ship awarded at the conclusion of the story.
- * @type {number}
  */
 export const STORY_SHIP: number = 744;
 
 /**
  * Storyline step identifier that unlocks navigation access to the Deep systems.
- * @type {string}
  */
 export const DEEP_UNLOCK: string = 'qv3'; // the Que'vari charts of the dark open the Deep

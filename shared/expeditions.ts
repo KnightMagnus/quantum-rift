@@ -2,14 +2,13 @@ export type ExpeditionLoreFragment = { title: string; text: string };
 // what the Farside data cores say. Fragments only: they hint at the region's purpose without spending it.
 
 /**
- * @typedef {Object} ExpeditionLoreFragment
- * @property {string} title - Title or header of the data core fragment.
- * @property {string} text - Narrative text contents recovered from the data core.
+ * ExpeditionLoreFragment fields:
+ * title: - Title or header of the data core fragment.
+ * text: - Narrative text contents recovered from the data core.
  */
 
 /**
  * Lore fragments unlocked from recovered Farside data cores.
- * @type {ExpeditionLoreFragment[]}
  */
 export const EXPEDITION_LORE: ExpeditionLoreFragment[] = [
   {

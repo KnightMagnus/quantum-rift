@@ -67,177 +67,175 @@ import { winOdds } from '../shared/hostile.ts';
 
 /**
  * Combat delegation consent granted to an armada leader.
- * @typedef {object} CombatConsent
- * @property {string | number} armada Unique armada identifier.
- * @property {string} leader Captain name of the armada leader.
+ * CombatConsent fields:
+ * armada: Unique armada identifier.
+ * leader: Captain name of the armada leader.
  */
 
 /**
  * Transient combat assist state tracked per player session.
- * @typedef {object} CombatState
- * @property {boolean} on Whether automated combat assistance is currently active.
- * @property {CombatConsent | null} consent Active delegation consent granted to an armada leader, if any.
- * @property {boolean} coordinating Whether this session is coordinating combat targeting for follower ships.
- * @property {boolean} focus Whether manual focus fire targeting is active.
- * @property {number} target Target entity ID currently focused or acquired.
- * @property {string} status Operational status indicator ('OFF' | 'READY' | 'ENGAGING' | 'SUSPENDED').
- * @property {string} reason Human-readable explanation for state transitions or suspension.
- * @property {boolean} [delegated] Whether combat control is currently delegated to a coordinating leader.
+ * CombatState fields:
+ * on: Whether automated combat assistance is currently active.
+ * consent: Active delegation consent granted to an armada leader, if any.
+ * coordinating: Whether this session is coordinating combat targeting for follower ships.
+ * focus: Whether manual focus fire targeting is active.
+ * target: Target entity ID currently focused or acquired.
+ * status: Operational status indicator ('OFF' | 'READY' | 'ENGAGING' | 'SUSPENDED').
+ * reason: Human-readable explanation for state transitions or suspension.
+ * [delegated]: Whether combat control is currently delegated to a coordinating leader.
  */
 
 /**
  * Public combat assist telemetry and status payload sent to the client.
- * @typedef {object} CombatPayload
- * @property {boolean} on Whether combat assist is enabled.
- * @property {boolean} delegated Whether combat control is currently delegated to a leader.
- * @property {boolean} consent Whether delegation consent has been granted.
- * @property {boolean} coordinating Whether coordinating combat targeting for followers.
- * @property {string} status Current combat status ('OFF' | 'READY' | 'ENGAGING' | 'SUSPENDED').
- * @property {string} reason Explanation or reason for the current combat status.
- * @property {number} target Target entity ID.
- * @property {number} power Effective fleet and group combat power rating.
+ * CombatPayload fields:
+ * on: Whether combat assist is enabled.
+ * delegated: Whether combat control is currently delegated to a leader.
+ * consent: Whether delegation consent has been granted.
+ * coordinating: Whether coordinating combat targeting for followers.
+ * status: Current combat status ('OFF' | 'READY' | 'ENGAGING' | 'SUSPENDED').
+ * reason: Explanation or reason for the current combat status.
+ * target: Target entity ID.
+ * power: Effective fleet and group combat power rating.
  */
 
 /**
  * Client command payload for toggling or updating combat assist mode.
- * @typedef {object} CombatCommand
- * @property {'off' | 'manual' | 'assist' | 'coordinate' | 'delegate'} op Combat operation command.
- * @property {boolean} [on] Enable/disable flag for state toggling.
+ * CombatCommand fields:
+ * op: Combat operation command.
+ * [on]: Enable/disable flag for state toggling.
  */
 
 /**
  * Live computed ship performance stats.
- * @typedef {object} CombatShipStats
- * @property {number} armor Current maximum armor hitpoints.
- * @property {number} [shields] Maximum shield capacity.
- * @property {number} [speed] Maximum linear speed.
- * @property {number} [cargo] Cargo capacity.
+ * CombatShipStats fields:
+ * armor: Current maximum armor hitpoints.
+ * [shields]: Maximum shield capacity.
+ * [speed]: Maximum linear speed.
+ * [cargo]: Cargo capacity.
  */
 
 /**
  * Control inputs applied to ship physics simulation.
- * @typedef {object} ShipInputControl
- * @property {number} [thrust] Forward thruster input.
- * @property {number} [turn] Steering torque input.
- * @property {number} [fire1] Primary weapon fire command.
- * @property {number} [fire2] Secondary weapon fire command.
- * @property {number} [ab] Afterburner boost state.
- * @property {number} [rev] Reverse thrusters state.
+ * ShipInputControl fields:
+ * [thrust]: Forward thruster input.
+ * [turn]: Steering torque input.
+ * [fire1]: Primary weapon fire command.
+ * [fire2]: Secondary weapon fire command.
+ * [ab]: Afterburner boost state.
+ * [rev]: Reverse thrusters state.
  */
 
 /**
  * Entity representation participating in or evaluated by combat assist.
- * @typedef {object} CombatEntity
- * @property {number} id Unique entity simulation ID.
- * @property {boolean} [dead] True if the ship is destroyed.
- * @property {boolean} [disabled] True if the ship is disabled and drifting.
- * @property {string} state Entity flight state ('fly', 'jumpout', 'landed').
- * @property {number} armor Current armor hitpoints.
- * @property {CombatShipStats} st Live computed ship stats containing max armor.
- * @property {Session | null} [player] Player reference if this is a player-controlled ship.
- * @property {boolean} [noDisable] Exemption flag preventing disablement threshold.
- * @property {number} [rescueT] Rescue protection countdown timestamp.
- * @property {number | null} [owner] Entity ID of the commanding or parent ship.
- * @property {CombatEntity | null} [target] Current active combat target entity.
- * @property {CombatEntity | null} [fireAt] Secondary weapon fire target entity.
- * @property {ShipInputControl} [inp] Ship input control state.
- * @property {number} [think] Time until next AI decision cycle.
- * @property {boolean} [autoCombat] Whether automated combat maneuvers and weapon firing are enabled.
- * @property {CombatEntity | null} [combatTarget] Shared combat target designated by assist or group leader.
- * @property {boolean} [sharedCombat] Whether participating in shared fleet or group combat.
- * @property {string} [order] Active fleet order ('hold', 'holdfire', 'loot', 'gather', etc.).
- * @property {number} [orderSeq] Monotonic sequence counter of fleet orders.
- * @property {number} x Coordinate X in 2D space.
- * @property {number} y Coordinate Y in 2D space.
- * @property {number} [pw] Effective combat power rating.
- * @property {number} [strength] Base combat strength rating.
- * @property {boolean} [recall] True if fighter drone is recalled to dock.
- * @property {number} [lastHitBy] Entity ID of attacker that dealt last damage.
- * @property {number} hitT Simulation timestamp when ship was last damaged.
- * @property {boolean} [enemy] Test or hostile flag.
- * @property {Set<number>} [aggro] Set of hostile entity IDs that have engaged this ship.
+ * CombatEntity fields:
+ * id: Unique entity simulation ID.
+ * [dead]: True if the ship is destroyed.
+ * [disabled]: True if the ship is disabled and drifting.
+ * state: Entity flight state ('fly', 'jumpout', 'landed').
+ * armor: Current armor hitpoints.
+ * st: Live computed ship stats containing max armor.
+ * [player]: Player reference if this is a player-controlled ship.
+ * [noDisable]: Exemption flag preventing disablement threshold.
+ * [rescueT]: Rescue protection countdown timestamp.
+ * [owner]: Entity ID of the commanding or parent ship.
+ * [target]: Current active combat target entity.
+ * [fireAt]: Secondary weapon fire target entity.
+ * [inp]: Ship input control state.
+ * [think]: Time until next AI decision cycle.
+ * [autoCombat]: Whether automated combat maneuvers and weapon firing are enabled.
+ * [combatTarget]: Shared combat target designated by assist or group leader.
+ * [sharedCombat]: Whether participating in shared fleet or group combat.
+ * [order]: Active fleet order ('hold', 'holdfire', 'loot', 'gather', etc.).
+ * [orderSeq]: Monotonic sequence counter of fleet orders.
+ * x: Coordinate X in 2D space.
+ * y: Coordinate Y in 2D space.
+ * [pw]: Effective combat power rating.
+ * [strength]: Base combat strength rating.
+ * [recall]: True if fighter drone is recalled to dock.
+ * [lastHitBy]: Entity ID of attacker that dealt last damage.
+ * hitT: Simulation timestamp when ship was last damaged.
+ * [enemy]: Test or hostile flag.
+ * [aggro]: Set of hostile entity IDs that have engaged this ship.
  */
 
 /**
  * Command input frame received from player client.
- * @typedef {object} CombatInputFrame
- * @property {number} [seq] Sequence number.
- * @property {number} [thrust] Thrust control.
- * @property {number} [turn] Turn control.
- * @property {number} [ab] Afterburner.
- * @property {number} [rev] Reverse thrusters.
- * @property {number} [fire1] Primary fire.
- * @property {number} [fire2] Secondary fire.
+ * CombatInputFrame fields:
+ * [seq]: Sequence number.
+ * [thrust]: Thrust control.
+ * [turn]: Turn control.
+ * [ab]: Afterburner.
+ * [rev]: Reverse thrusters.
+ * [fire1]: Primary fire.
+ * [fire2]: Secondary fire.
  */
 
 /**
  * Account save data fields accessed by combat assist.
- * @typedef {object} CombatSessionData
- * @property {string} sys Current solar system ID.
- * @property {string} name Captain name.
- * @property {string | number} [armada] Unique armada identifier.
- * @property {boolean} [armadaFollow] Whether following armada leader.
+ * CombatSessionData fields:
+ * sys: Current solar system ID.
+ * name: Captain name.
+ * [armada]: Unique armada identifier.
+ * [armadaFollow]: Whether following armada leader.
  */
 
 /**
  * Player session structure managing combat assist state and ship reference.
- * @typedef {object} CombatSession
- * @property {CombatState} [combat] Combat assist state for this session.
- * @property {CombatEntity} ent Currently active ship entity in space.
- * @property {CombatSessionData} data Player account save data.
- * @property {CombatInputFrame[]} inputs Pending input command queue.
- * @property {CombatInputFrame | null} [lastInput] Most recent processed input.
+ * CombatSession fields:
+ * [combat]: Combat assist state for this session.
+ * ent: Currently active ship entity in space.
+ * data: Player account save data.
+ * inputs: Pending input command queue.
+ * [lastInput]: Most recent processed input.
  */
 
 /**
  * System configuration parameters for combat space.
- * @typedef {object} CombatSystemInfo
- * @property {boolean} [arena] Whether system is a PvP combat arena.
- * @property {string} [id] System ID.
- * @property {string} [name] System name.
- * @property {number} [danger] Danger level.
- * @property {string} [faction] Controlling faction ID.
+ * CombatSystemInfo fields:
+ * [arena]: Whether system is a PvP combat arena.
+ * [id]: System ID.
+ * [name]: System name.
+ * [danger]: Danger level.
+ * [faction]: Controlling faction ID.
  */
 
 /**
  * System space simulation environment containing ships and combat context.
- * @typedef {object} CombatSpace
- * @property {string} id Space system identifier.
- * @property {CombatSystemInfo} sys System configuration parameters.
- * @property {Map<number, CombatEntity>} ships Map of entity ID to live ship entities.
- * @property {number} t Current simulation timestamp.
- * @property {(entity: CombatEntity) => CombatEntity} root Resolves fleet root or parent commanding entity.
- * @property {(lead: CombatEntity, target: CombatEntity) => boolean} isHostile Checks hostile relationship between entities.
- * @property {(attacker: CombatEntity, target: CombatEntity) => boolean} canHit Checks whether attacks can connect and damage target.
- * @property {(source: CombatEntity, target: CombatEntity) => boolean} spared Checks whether source faction spares target.
- * @property {(source: CombatEntity, target: CombatEntity) => boolean} [newcomerTruce] Checks ambient targeting truce without arrival grace.
+ * CombatSpace fields:
+ * id: Space system identifier.
+ * sys: System configuration parameters.
+ * ships: Map of entity ID to live ship entities.
+ * t: Current simulation timestamp.
+ * root: Resolves fleet root or parent commanding entity.
+ * isHostile: Checks hostile relationship between entities.
+ * canHit: Checks whether attacks can connect and damage target.
+ * spared: Checks whether source faction spares target.
+ * [newcomerTruce]: Checks ambient targeting truce without arrival grace.
  */
 
 /**
  * Server game interface for combat coordination.
- * @typedef {object} CombatGameHost
- * @property {Record<string, CombatSpace>} spaces Active solar system space instances.
- * @property {FeatureServices} features Server feature services.
- * @property {Map<number, CombatSession>} sessions Active client sessions.
- * @property {(session: CombatSession, msg: NetworkMessage) => void} [send] Message transmitter.
+ * CombatGameHost fields:
+ * spaces: Active solar system space instances.
+ * features: Server feature services.
+ * sessions: Active client sessions.
+ * [send]: Message transmitter.
  */
 
 /**
  * Maximum distance in space units for target engagement validity.
- * @type {number}
  */
 const BOUNDARY: number = 2200;
 
 /**
  * Fleet orders that halt or suppress offensive combat actions.
- * @type {Set<string | undefined>}
  */
 const stoppedOrders: Set<string | undefined> = new Set(['hold', 'holdfire', 'loot']);
 
 /**
  * Determines whether a ship entity is alive, flight-ready, and capable of combat.
- * @param {CombatEntity | null | undefined} entity Candidate ship entity to check.
- * @returns {entity is CombatEntity} True if the entity is available for combat operations.
+ * @param entity Candidate ship entity to check.
+ * @returns True if the entity is available for combat operations.
  */
 export const available = (entity: CombatEntity | null | undefined): entity is CombatEntity =>
   !!entity &&
@@ -256,7 +254,7 @@ export class CombatAssist {
 
   /**
    * Initializes the CombatAssist service.
-   * @param {CombatGameHost} game The root Game server instance.
+   * @param game The root Game server instance.
    */
   constructor(game: CombatGameHost) {
     this.game = game;
@@ -264,8 +262,8 @@ export class CombatAssist {
 
   /**
    * Retrieves or initializes the transient combat assist state for a session.
-   * @param {CombatSession} session Player session.
-   * @returns {CombatState} Active combat assist state object.
+   * @param session Player session.
+   * @returns Active combat assist state object.
    */
   state(session: CombatSession): CombatState {
     return (
@@ -284,9 +282,8 @@ export class CombatAssist {
 
   /**
    * Suspends combat assist and clears combat targeting orders for a session and its escorts.
-   * @param {CombatSession} session Player session to stop.
-   * @param {string} [reason='Manual control'] Human-readable explanation for stopping.
-   * @returns {void}
+   * @param session Player session to stop.
+   * @param reason Human-readable explanation for stopping.
    */
   stop(session: CombatSession, reason: string = 'Manual control'): void {
     const combatState = this.state(session);
@@ -318,8 +315,7 @@ export class CombatAssist {
 
   /**
    * Handles manual flight control input, suspending assist unless coordinating followers.
-   * @param {CombatSession} session Player session taking manual control.
-   * @returns {void}
+   * @param session Player session taking manual control.
    */
   manual(session: CombatSession): void {
     const combatState = this.state(session);
@@ -337,9 +333,8 @@ export class CombatAssist {
 
   /**
    * Processes a combat assist command operation from the client.
-   * @param {CombatSession} session Player session sending the command.
-   * @param {CombatCommand} combatCommand Command message containing operation and parameters.
-   * @returns {void}
+   * @param session Player session sending the command.
+   * @param combatCommand Command message containing operation and parameters.
    */
   command(session: CombatSession, combatCommand: CombatCommand): void {
     const combatState = this.state(session),
@@ -383,10 +378,9 @@ export class CombatAssist {
 
   /**
    * Selects an explicit target entity if valid and assist or coordination is enabled.
-   * @param {CombatSession} session Player session selecting a target.
-   * @param {CombatEntity | null | undefined} entity Candidate target entity.
-   * @param {CombatSpace} space Active space system instance.
-   * @returns {void}
+   * @param session Player session selecting a target.
+   * @param entity Candidate target entity.
+   * @param space Active space system instance.
    */
   selected(
     session: CombatSession,
@@ -403,9 +397,8 @@ export class CombatAssist {
 
   /**
    * Directs local fleet focus fire on the player ship's current target.
-   * @param {CombatSession} session Player session initiating attack.
-   * @param {CombatSpace} space Active space system instance.
-   * @returns {void}
+   * @param session Player session initiating attack.
+   * @param space Active space system instance.
    */
   attack(session: CombatSession, space: CombatSpace): void {
     const target = session.ent!.target;
@@ -421,10 +414,10 @@ export class CombatAssist {
 
   /**
    * Checks whether a target entity is in range and eligible for engagement.
-   * @param {CombatSpace} space Active space system instance.
-   * @param {CombatEntity} lead Lead attacking entity.
-   * @param {CombatEntity | null | undefined} entity Candidate target entity.
-   * @returns {entity is CombatEntity} True if the target is valid for engagement.
+   * @param space Active space system instance.
+   * @param lead Lead attacking entity.
+   * @param entity Candidate target entity.
+   * @returns True if the target is valid for engagement.
    */
   valid(
     space: CombatSpace,
@@ -449,9 +442,9 @@ export class CombatAssist {
 
   /**
    * Resolves the active coordinating leader session for a delegated follower.
-   * @param {CombatSession} session Follower player session.
-   * @param {CombatSpace} space Active space system instance.
-   * @returns {CombatSession | null} Coordinating leader session, or null if delegation is inactive or revoked.
+   * @param session Follower player session.
+   * @param space Active space system instance.
+   * @returns Coordinating leader session, or null if delegation is inactive or revoked.
    */
   delegation(session: CombatSession, space: CombatSpace): CombatSession | null {
     const combatState = this.state(session),
@@ -481,9 +474,9 @@ export class CombatAssist {
 
   /**
    * Gathers all follower sessions in the same system delegated to the specified leader.
-   * @param {CombatSpace} space Active space system instance.
-   * @param {CombatSession} leadSession Leading coordinator session.
-   * @returns {CombatSession[]} Group of sessions including leader and consenting followers.
+   * @param space Active space system instance.
+   * @param leadSession Leading coordinator session.
+   * @returns Group of sessions including leader and consenting followers.
    */
   group(space: CombatSpace, leadSession: CombatSession): CombatSession[] {
     return [
@@ -500,9 +493,9 @@ export class CombatAssist {
 
   /**
    * Computes aggregate combat power rating for a group of participating sessions and escorts.
-   * @param {CombatSpace} space Active space system instance.
-   * @param {CombatSession[]} sessions Group of participating player sessions.
-   * @returns {number} Combined combat power rating.
+   * @param space Active space system instance.
+   * @param sessions Group of participating player sessions.
+   * @returns Combined combat power rating.
    */
   power(space: CombatSpace, sessions: CombatSession[]): number {
     const roots = new Set(sessions.map((session) => session.ent).filter(available));
@@ -520,9 +513,9 @@ export class CombatAssist {
 
   /**
    * Generates public combat status telemetry for transmission to a client session.
-   * @param {CombatSession} session Player session.
-   * @param {CombatSpace} space Active space system instance.
-   * @returns {CombatPayload} Serialized combat telemetry payload.
+   * @param session Player session.
+   * @param space Active space system instance.
+   * @returns Serialized combat telemetry payload.
    */
   payload(session: CombatSession, space: CombatSpace): CombatPayload {
     const combatState = this.state(session),
@@ -541,8 +534,7 @@ export class CombatAssist {
 
   /**
    * Evaluates targets, delegation hierarchy, and engagement priorities across all ships in space.
-   * @param {CombatSpace} space Active space system instance.
-   * @returns {void}
+   * @param space Active space system instance.
    */
   resolve(space: CombatSpace): void {
     const sessions = [...this.game.sessions.values()].filter(

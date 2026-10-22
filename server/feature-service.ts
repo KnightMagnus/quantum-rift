@@ -4,10 +4,6 @@ export type BoundOperations<ValueType extends object> = {
 /**
  * Bind a feature's operations to its explicit capability facade. This does not
  * install methods on Game, resolve names, or expose the coordinator to features.
- * @template {object} T
- * @param {T} operations
- * @param {ThisParameterType<T[keyof T]>} capabilities
- * @returns {BoundOperations<T>}
  */
 export function bindOperations<ValueType extends object>(
   operations: ValueType,

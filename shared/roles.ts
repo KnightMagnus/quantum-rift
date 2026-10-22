@@ -16,41 +16,40 @@ export type WeaponRef = { type?: string };
 
 /**
  * Valid ship combat and utility roles.
- * @typedef {'interceptor' | 'explorer' | 'battleship' | 'survey' | 'carrier'} RoleId
+
  */
 
 /**
  * Display metadata and combat description for a ship role.
- * @typedef {Object} RoleInfo
- * @property {string} name - Display name of the role.
- * @property {string} short - Short 3-letter abbreviation.
- * @property {string} color - Hex color code representing this role.
- * @property {string} icon - Unicode icon symbol for UI badges.
- * @property {string} desc - Description of tactical strengths and weaknesses.
+ * RoleInfo fields:
+ * name: - Display name of the role.
+ * short: - Short 3-letter abbreviation.
+ * color: - Hex color code representing this role.
+ * icon: - Unicode icon symbol for UI badges.
+ * desc: - Description of tactical strengths and weaknesses.
  */
 
 /**
  * Minimal ship hull interface required for role resolution.
- * @typedef {Object} ShipHullRef
- * @property {number} [id] - Hull identifier.
- * @property {RoleId|string} [role] - Explicit role if already assigned.
- * @property {Array<[number|string, number, number?]>} [weapons] - Ship weapon slots tuple [id, count, ammo].
- * @property {number} [shield] - Base shield strength.
- * @property {number} [armor] - Base armor hit points.
- * @property {number} [cargo] - Cargo capacity in tons.
- * @property {number} [strength] - Combat rating / strength score.
- * @property {number} [speed] - Maximum flight speed in EV units.
+ * ShipHullRef fields:
+ * [id]: - Hull identifier.
+ * [role]: - Explicit role if already assigned.
+ * [weapons]: - Ship weapon slots tuple [id, count, ammo].
+ * [shield]: - Base shield strength.
+ * [armor]: - Base armor hit points.
+ * [cargo]: - Cargo capacity in tons.
+ * [strength]: - Combat rating / strength score.
+ * [speed]: - Maximum flight speed in EV units.
  */
 
 /**
  * Weapon definition metadata for carrier detection.
- * @typedef {Object} WeaponRef
- * @property {string} [type] - Weapon mount type (e.g. 'bay', 'beam', 'turret').
+ * WeaponRef fields:
+ * [type]: - Weapon mount type (e.g. 'bay', 'beam', 'turret').
  */
 
 /**
  * Information and UI presentation definitions for all ship roles.
- * @type {Record<RoleId, RoleInfo>}
  */
 export const ROLES_INFO: Record<RoleId, RoleInfo> = {
   interceptor: {
@@ -92,7 +91,6 @@ export const ROLES_INFO: Record<RoleId, RoleInfo> = {
 
 /**
  * The combat advantage triangle mapping attacker role to the role it beats.
- * @type {Record<string, RoleId>}
  */
 export const BEATS: Record<string, RoleId> = {
   interceptor: 'battleship',
@@ -102,7 +100,6 @@ export const BEATS: Record<string, RoleId> = {
 
 /**
  * Multipliers for role advantage and disadvantage.
- * @type {{ dmg: number, taken: number, survey: number, surveyMining: number }}
  */
 export const COUNTER: { dmg: number; taken: number; survey: number; surveyMining: number } = {
   dmg: 1.15,
@@ -113,15 +110,14 @@ export const COUNTER: { dmg: number; taken: number; survey: number; surveyMining
 
 /**
  * Hardcoded role overrides for specific legacy hull IDs.
- * @type {Record<number, RoleId>}
  */
 const OVERRIDE: Record<number, RoleId> = { 735: 'explorer', 716: 'battleship' }; // the Halo Surveyor is a scout, the Tempest a destroyer
 
 /**
  * Determines the role of a ship hull from its attributes or hardcoded overrides.
- * @param {ShipHullRef|null|undefined} shipHullRef - Ship hull definition or ship instance.
- * @param {Record<string|number, WeaponRef>|null|undefined} [width] - Weapon definitions map keyed by weapon ID.
- * @returns {RoleId|string} The resolved ship role.
+ * @param shipHullRef - Ship hull definition or ship instance.
+ * @param width - Weapon definitions map keyed by weapon ID.
+ * @returns The resolved ship role.
  */
 export function roleOf(
   shipHullRef: ShipHullRef | null | undefined,
@@ -145,9 +141,9 @@ export function roleOf(
 
 /**
  * Calculates the damage multiplier for an attacker of role `a` hitting a target of role `t`.
- * @param {RoleId|string|null|undefined} firstValue - Attacker role.
- * @param {RoleId|string|null|undefined} time - Target role.
- * @returns {number} Damage multiplier.
+ * @param firstValue - Attacker role.
+ * @param time - Target role.
+ * @returns Damage multiplier.
  */
 // damage multiplier for an attacker of role a hitting a target of role t
 export function roleMult(

@@ -14,42 +14,41 @@ const sprites = new WeakMap<CometConfig, HTMLCanvasElement>();
 
 /**
  * Depth parallax factor for background comet rendering.
- * @type {number}
  */
 export const COMET_DEPTH = 0.12;
 
 /**
  * Comet orbital parameters.
- * @typedef {object} CometConfig
- * @property {number} x0 Initial orbital X reference.
- * @property {number} y0 Initial orbital Y reference.
- * @property {number} len Visual tail length scale.
- * @property {string} hue RGB color string for coma glow.
+ * CometConfig fields:
+ * x0: Initial orbital X reference.
+ * y0: Initial orbital Y reference.
+ * len: Visual tail length scale.
+ * hue: RGB color string for coma glow.
  */
 
 /**
  * Evaluated orbital pose in world space.
- * @typedef {object} CometPose
- * @property {number} x World coordinate X.
- * @property {number} y World coordinate Y.
- * @property {number} angle Tangent trajectory angle in radians.
+ * CometPose fields:
+ * x: World coordinate X.
+ * y: World coordinate Y.
+ * angle: Tangent trajectory angle in radians.
  */
 
 /**
  * Evaluated comet pose transformed into screen viewport coordinates.
- * @typedef {object} CometScreenPose
- * @property {number} x Screen coordinate X.
- * @property {number} y Screen coordinate Y.
- * @property {number} angle Tangent trajectory angle in radians.
- * @property {number} scale Parallax zoom scale factor.
+ * CometScreenPose fields:
+ * x: Screen coordinate X.
+ * y: Screen coordinate Y.
+ * angle: Tangent trajectory angle in radians.
+ * scale: Parallax zoom scale factor.
  */
 
 /**
  * A continuous ellipse rather than a modulo flight/reset. About 1–2 px/sec at
  * normal zoom: visible over seconds, never a foreground projectile.
- * @param {CometConfig} cometConfig Comet configuration parameters.
- * @param {number} currentTime Current simulation or animation timestamp in milliseconds.
- * @returns {CometPose} Orbital pose in system space.
+ * @param cometConfig Comet configuration parameters.
+ * @param currentTime Current simulation or animation timestamp in milliseconds.
+ * @returns Orbital pose in system space.
  */
 export function cometPose(cometConfig: CometConfig, currentTime: number) {
   const phase = Math.atan2(cometConfig.y0, cometConfig.x0),
@@ -63,14 +62,14 @@ export function cometPose(cometConfig: CometConfig, currentTime: number) {
 
 /**
  * Computes the screen-space position and parallax scaling for a comet.
- * @param {CometConfig} cometConfig Comet configuration parameters.
- * @param {number} width Viewport width in pixels.
- * @param {number} height Viewport height in pixels.
- * @param {number} positionZ Camera zoom level.
- * @param {number} centerX Camera center X in world space.
- * @param {number} centerY Camera center Y in world space.
- * @param {number} currentTime Timestamp in milliseconds.
- * @returns {CometScreenPose} Viewport-mapped screen pose.
+ * @param cometConfig Comet configuration parameters.
+ * @param width Viewport width in pixels.
+ * @param height Viewport height in pixels.
+ * @param positionZ Camera zoom level.
+ * @param centerX Camera center X in world space.
+ * @param centerY Camera center Y in world space.
+ * @param currentTime Timestamp in milliseconds.
+ * @returns Viewport-mapped screen pose.
  */
 export function cometScreen(
   cometConfig: CometConfig,
@@ -93,8 +92,8 @@ export function cometScreen(
 
 /**
  * Generates or retrieves cached offscreen canvas sprite artwork for a comet.
- * @param {CometConfig} cometConfig Comet configuration parameters.
- * @returns {HTMLCanvasElement} Rendered canvas sprite texture.
+ * @param cometConfig Comet configuration parameters.
+ * @returns Rendered canvas sprite texture.
  */
 function artwork(cometConfig: CometConfig) {
   if (sprites.has(cometConfig)) return sprites.get(cometConfig)!;
@@ -183,9 +182,9 @@ function artwork(cometConfig: CometConfig) {
 
 /**
  * Calculates anti-solar tail angle pointing away from the system star.
- * @param {{x: number, y: number}} point Comet screen coordinates.
- * @param {{x: number, y: number}} point2 Primary stellar body screen coordinates.
- * @returns {number} Tail angle in radians.
+ * @param point Comet screen coordinates.
+ * @param point2 Primary stellar body screen coordinates.
+ * @returns Tail angle in radians.
  */
 export function cometTailAngle(point: Point, point2: Point) {
   return Math.atan2(point.y - point2.y, point.x - point2.x);
@@ -193,16 +192,15 @@ export function cometTailAngle(point: Point, point2: Point) {
 
 /**
  * Renders a comet and its dust/ion tail onto the main viewport canvas.
- * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D canvas rendering context.
- * @param {CometConfig} cometConfig Comet configuration parameters.
- * @param {number} width Viewport width in pixels.
- * @param {number} height Viewport height in pixels.
- * @param {number} positionZ Camera zoom scale.
- * @param {number} centerX Camera center X in world space.
- * @param {number} centerY Camera center Y in world space.
- * @param {number} currentTime Timestamp in milliseconds.
- * @param {{x: number, y: number}} point Primary stellar body screen coordinates.
- * @returns {void}
+ * @param canvasRenderingContext2D 2D canvas rendering context.
+ * @param cometConfig Comet configuration parameters.
+ * @param width Viewport width in pixels.
+ * @param height Viewport height in pixels.
+ * @param positionZ Camera zoom scale.
+ * @param centerX Camera center X in world space.
+ * @param centerY Camera center Y in world space.
+ * @param currentTime Timestamp in milliseconds.
+ * @param point Primary stellar body screen coordinates.
  */
 export function drawComet(
   canvasRenderingContext2D: CanvasRenderingContext2D,

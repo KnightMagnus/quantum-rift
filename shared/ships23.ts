@@ -41,41 +41,41 @@ export type Ship23Hull = Ship23Input & {
 
 /**
  * Hull specifications input for 2.3 Quantum ship definitions.
- * @typedef {Object} Ship23Input
- * @property {number} id - Unique ship hull identifier.
- * @property {string} name - Ship model name.
- * @property {string} sub - Subtitle / classification.
- * @property {number} cost - Base purchase cost in credits.
- * @property {number} tech - Tech tier required to purchase (1-6).
- * @property {number} cargo - Cargo capacity in tons.
- * @property {number} shield - Maximum shield capacity.
- * @property {number} shieldRe - Shield recharge rate.
- * @property {number} armor - Maximum armor hit points.
- * @property {number} accel - Acceleration capability in EV units.
- * @property {number} speed - Top flight speed in EV units.
- * @property {number} turn - Maneuverability / turning speed in EV units.
- * @property {number} fuel - Maximum hyperdrive jump fuel.
- * @property {number} space - Internal outfit expansion space.
- * @property {number} guns - Fixed gun hardpoint count.
- * @property {number} turrets - Turret mount count.
- * @property {number} mass - Unladen hull mass.
- * @property {number} crew - Crew complement required.
- * @property {number} strength - Overall combat power score.
- * @property {number} size - Target collision and sprite visual scale.
- * @property {Array<[number, number, number]>} weapons - Default weapon loadout tuples [weaponId, count, ammo].
- * @property {string} desc - Lore description displayed in shipyards.
- * @property {boolean} [fastJump] - Whether this hull spools hyperdrive jumps in half time.
+ * Ship23Input fields:
+ * id: - Unique ship hull identifier.
+ * name: - Ship model name.
+ * sub: - Subtitle / classification.
+ * cost: - Base purchase cost in credits.
+ * tech: - Tech tier required to purchase (1-6).
+ * cargo: - Cargo capacity in tons.
+ * shield: - Maximum shield capacity.
+ * shieldRe: - Shield recharge rate.
+ * armor: - Maximum armor hit points.
+ * accel: - Acceleration capability in EV units.
+ * speed: - Top flight speed in EV units.
+ * turn: - Maneuverability / turning speed in EV units.
+ * fuel: - Maximum hyperdrive jump fuel.
+ * space: - Internal outfit expansion space.
+ * guns: - Fixed gun hardpoint count.
+ * turrets: - Turret mount count.
+ * mass: - Unladen hull mass.
+ * crew: - Crew complement required.
+ * strength: - Overall combat power score.
+ * size: - Target collision and sprite visual scale.
+ * weapons: - Default weapon loadout tuples [weaponId, count, ammo].
+ * desc: - Lore description displayed in shipyards.
+ * [fastJump]: - Whether this hull spools hyperdrive jumps in half time.
  */
 
 /**
  * Complete Quantum ship hull record with default yard properties.
- * @typedef {Ship23Input & { cat: string, faction: string, kind: string, armorRe: number, fuelRe: number, buy: number, ai: number, fastJump: boolean, glow: boolean, pilot: string, img: string }} Ship23Hull
+
  */
 
 /**
  * Factory helper generating common Quantum hull records with standardized defaults.
- * @param {Ship23Input} ship23Input - Raw hull attributes.
- * @returns {Ship23Hull} Fully-specified hull object.
+ * @param ship23Input - Raw hull attributes.
+ * @returns Fully-specified hull object.
  */
 const quantity = (ship23Input: Ship23Input) => ({
   cat: 'Quantum',
@@ -94,7 +94,6 @@ const quantity = (ship23Input: Ship23Input) => ({
 
 /**
  * Roster of ten common Quantum hulls introduced in 2.3.
- * @type {Ship23Hull[]}
  */
 export const SHIPS23: Ship23Hull[] = [
   quantity({

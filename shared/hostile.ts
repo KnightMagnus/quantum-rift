@@ -18,56 +18,56 @@ export type EclipseConfig = { hulls: number[]; chance: number; thursday: number 
 
 /**
  * Player stat bonuses affecting ship combat power calculations.
- * @typedef {Object} HostileBonus
- * @property {number} [damagePct] - Percentage bonus to weapon damage.
- * @property {number} [shieldPct] - Percentage bonus to shield capacity.
- * @property {number} [armorPct] - Percentage bonus to armor hit points.
+ * HostileBonus fields:
+ * [damagePct]: - Percentage bonus to weapon damage.
+ * [shieldPct]: - Percentage bonus to shield capacity.
+ * [armorPct]: - Percentage bonus to armor hit points.
  */
 
 /**
  * Loot chest drop configuration for hostile faction types.
- * @typedef {Object} LootChestDef
- * @property {string} name - Display name of the cache container.
- * @property {string} color - Hex color code for HUD and drop renders.
- * @property {string} bp - Blueprint family rewarded by the chest.
- * @property {string} res - Special resource yielded.
- * @property {string[]} mats - Material categories dropped.
+ * LootChestDef fields:
+ * name: - Display name of the cache container.
+ * color: - Hex color code for HUD and drop renders.
+ * bp: - Blueprint family rewarded by the chest.
+ * res: - Special resource yielded.
+ * mats: - Material categories dropped.
  */
 
 /**
  * Reward breakdown for clearing a Station Holdout wave.
- * @typedef {Object} HoldoutReward
- * @property {number} credits - Credit payout for completing the wave.
- * @property {number} grade - Material grade rewarded (0 through 4).
- * @property {number} insignia - Faction insignia count rewarded.
+ * HoldoutReward fields:
+ * credits: - Credit payout for completing the wave.
+ * grade: - Material grade rewarded (0 through 4).
+ * insignia: - Faction insignia count rewarded.
  */
 
 /**
  * Station Holdout wave definitions, timings, and platform scaling.
- * @typedef {Object} HoldoutConfig
- * @property {number} waves - Total number of escalating waves.
- * @property {number} cooldownH - Cooldown duration in hours between holdouts.
- * @property {number} waveGap - Delay in seconds between consecutive waves.
- * @property {number} timeoutMin - Timeout limit in minutes per wave attempt.
- * @property {(arg0: number) => number[]} wave - Generates array of attacking hull IDs for wave n (1 to 10).
- * @property {(arg0: number) => HoldoutReward} reward - Computes rewards for completing wave n.
- * @property {(arg0: number) => number} platforms - Calculates active defense platform count from station defense level.
+ * HoldoutConfig fields:
+ * waves: - Total number of escalating waves.
+ * cooldownH: - Cooldown duration in hours between holdouts.
+ * waveGap: - Delay in seconds between consecutive waves.
+ * timeoutMin: - Timeout limit in minutes per wave attempt.
+ * wave: - Generates array of attacking hull IDs for wave n (1 to 10).
+ * reward: - Computes rewards for completing wave n.
+ * platforms: - Calculates active defense platform count from station defense level.
  */
 
 /**
  * Umbral Eclipse event parameters and hull pools.
- * @typedef {Object} EclipseConfig
- * @property {number[]} hulls - Hull IDs participating in Eclipse incursions.
- * @property {number} chance - Standard baseline spawn probability.
- * @property {number} thursday - Elevated spawn probability during Thursday events.
+ * EclipseConfig fields:
+ * hulls: - Hull IDs participating in Eclipse incursions.
+ * chance: - Standard baseline spawn probability.
+ * thursday: - Elevated spawn probability during Thursday events.
  */
 
 // ------------------------------------------------------------------ levels: from a ship's effective strength
 
 /**
  * Calculates a ship's combat level from its effective power rating.
- * @param {number} power - Effective ship combat power.
- * @returns {number} Combat level (minimum 1).
+ * @param power - Effective ship combat power.
+ * @returns Combat level (minimum 1).
  */
 export function levelOf(power: number): number {
   return Math.max(1, Math.round(4 * Math.log2(1 + Math.max(0, power) / 12)));
@@ -75,9 +75,9 @@ export function levelOf(power: number): number {
 
 /**
  * Calculates the odds of winning a straight 1v1 fight between two combat powers.
- * @param {number} mine - Attacker or player combat power.
- * @param {number} theirs - Opponent or hostile combat power.
- * @returns {number} Win probability value between 0.0 and 1.0.
+ * @param mine - Attacker or player combat power.
+ * @param theirs - Opponent or hostile combat power.
+ * @returns Win probability value between 0.0 and 1.0.
  */
 // odds of winning a straight fight between two effective strengths (a logistic on the level gap)
 export function winOdds(mine: number, theirs: number): number {
@@ -87,11 +87,11 @@ export function winOdds(mine: number, theirs: number): number {
 
 /**
  * Computes a player's effective combat power based on hull, bonuses, and escort wingmates.
- * @param {GameAssets} assets - Game assets collection containing ship hull definitions.
- * @param {number|string} hull - Player's current ship hull ID.
- * @param {HostileBonus} [bonus={}] - Research and crew percentage bonuses.
- * @param {Array<number|string>} [escorts=[]] - Hull IDs of escort / wingmate ships.
- * @returns {number} Total effective combat power rating.
+ * @param assets - Game assets collection containing ship hull definitions.
+ * @param hull - Player's current ship hull ID.
+ * @param bonus - Research and crew percentage bonuses.
+ * @param escorts - Hull IDs of escort / wingmate ships.
+ * @returns Total effective combat power rating.
  */
 // a player's effective strength: hull strength scaled by their bonuses, plus a share of their escorts
 export function playerPower(
@@ -117,7 +117,6 @@ export function playerPower(
 
 /**
  * Loot chest drop tables and metadata by hostile faction.
- * @type {Record<string, LootChestDef>}
  */
 export const CHESTS: Record<string, LootChestDef> = {
   hollow: {
@@ -152,7 +151,6 @@ export const CHESTS: Record<string, LootChestDef> = {
 
 /**
  * Probability of an ordinary hostile kill dropping a loot chest (0.3 = 30%).
- * @type {number}
  */
 export const CHEST_CHANCE: number = 0.3; // per hostile kill (bosses and kingpins always drop one)
 
@@ -160,7 +158,6 @@ export const CHEST_CHANCE: number = 0.3; // per hostile kill (bosses and kingpin
 
 /**
  * Station Holdout wave rules, enemy generators, and rewards.
- * @type {HoldoutConfig}
  */
 export const HOLDOUT: HoldoutConfig = {
   waves: 10,
@@ -204,6 +201,5 @@ export const HOLDOUT: HoldoutConfig = {
 
 /**
  * Configuration for the roaming Umbral Eclipse event.
- * @type {EclipseConfig}
  */
 export const ECLIPSE: EclipseConfig = { hulls: [761, 762, 763], chance: 0.1, thursday: 0.25 };

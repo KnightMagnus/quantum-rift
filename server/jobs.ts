@@ -52,24 +52,11 @@ import { grantRadio, radioTourOffer, advanceRadioTour } from './radio-discovery.
  * stories, team contracts, mining orders and progression retain their owners.
  * Live capabilities do not copy/save a second account state. Legacy operation
  * bodies remain unchecked; these types do not validate incoming wire data.
- * @typedef {Pick<Game,
- *   'A' |
- *   'db' |
- *   'features' |
- *   'holdUsed' |
- *   'landed' |
- *   'log' |
- *   'offers' |
- *   'send' |
- *   'toast' |
- *   'tut' |
- *   'you'>} JobCapabilities
- * @typedef {Pick<Game, 'offers' | 'accept' | 'completeOnLanding'>} JobService
+
  */
 
 /**
- * @param {JobCapabilities} capabilities Live core functions/state, not Game.
- * @returns {JobService}
+ * @param capabilities Live core functions/state, not Game.
  */
 export function createJobService(capabilities: JobCapabilities): JobService {
   return bindOperations(JobOperations, capabilities);
@@ -103,10 +90,9 @@ const JUMP_DISTANCES = Object.fromEntries(
 const JobOperations: JobOperations = {
   /**
    * Generates procedural job board mission offers for a stellar port.
-   * @param {StellarBody} stellarBody Stellar port.
-   * @param {PlayerData} playerData Player data.
-   * @returns {Mission[]} Available job board missions.
-   * @this {JobCapabilities}
+   * @param stellarBody Stellar port.
+   * @param playerData Player data.
+   * @returns Available job board missions.
    */
   offers(this: JobCapabilities, stellarBody: StellarBody, playerData: PlayerData) {
     if (!stellarBody.svc.includes('B')) return [];
@@ -273,10 +259,9 @@ const JobOperations: JobOperations = {
   },
   /**
    * Accepts a mission from the local stellar job board.
-   * @param {Session} session Player session.
-   * @param {string} missionId Mission ID to accept.
-   * @this {JobCapabilities}
-   * @returns {void}
+   * @param session Player session.
+   * @param missionId Mission ID to accept.
+   * *
    */
   accept(this: JobCapabilities, session: Session, missionId: string) {
     const playerData = session.data,
@@ -307,10 +292,9 @@ const JobOperations: JobOperations = {
   },
   /**
    * Evaluates active missions upon landing, paying rewards and logging completions.
-   * @param {Session} session Player session landing.
-   * @param {StellarBody} stellarBody Landed stellar port.
-   * @this {JobCapabilities}
-   * @returns {void}
+   * @param session Player session landing.
+   * @param stellarBody Landed stellar port.
+   * *
    */
   completeOnLanding(this: JobCapabilities, session: Session, stellarBody: StellarBody) {
     const playerData = session.data;

@@ -29,37 +29,37 @@ declare global {
 // master > effects | interface | ambience | music. The radio is an <audio> element with its own level (radio.js).
 
 /**
- * @typedef {Object} AudioMixOptions
- * @property {number} [vol] Master volume level (0..1)
- * @property {boolean} [mute] Whether all audio is muted
- * @property {number} [sfx] Sound effects bus level (0..1)
- * @property {number} [ui] UI audio bus level (0..1)
- * @property {number} [amb] Ambience audio bus level (0..1)
- * @property {number} [music] Music audio bus level (0..1)
+ * AudioMixOptions fields:
+ * [vol]: Master volume level (0..1)
+ * [mute]: Whether all audio is muted
+ * [sfx]: Sound effects bus level (0..1)
+ * [ui]: UI audio bus level (0..1)
+ * [amb]: Ambience audio bus level (0..1)
+ * [music]: Music audio bus level (0..1)
  */
 
 /**
- * @typedef {Object} AudioDebugInfo
- * @property {string | null | undefined} ctx Audio context state or null
- * @property {string[]} amb Active ambience bed names
- * @property {boolean} music Whether login music source is running
- * @property {number} buffers Number of decoded audio buffers cached
- * @property {number} towVoices Active tether voices (zero or one)
- * @property {number} towGain Effective tether gain through effects/master mixer
+ * AudioDebugInfo fields:
+ * ctx: Audio context state or null
+ * amb: Active ambience bed names
+ * music: Whether login music source is running
+ * buffers: Number of decoded audio buffers cached
+ * towVoices: Active tether voices (zero or one)
+ * towGain: Effective tether gain through effects/master mixer
  */
 
 /**
- * @typedef {Object} AmbienceLoopState
- * @property {boolean} stop Whether the loop has been requested to stop
- * @property {AudioBufferSourceNode[]} srcs List of active audio buffer source nodes
- * @property {ReturnType<typeof setTimeout>} [timer] Scheduled timer handle for next loop crossfade
+ * AmbienceLoopState fields:
+ * stop: Whether the loop has been requested to stop
+ * srcs: List of active audio buffer source nodes
+ * [timer]: Scheduled timer handle for next loop crossfade
  */
 
 /**
- * @typedef {Object} AmbienceBedState
- * @property {GainNode} g Gain node controlling bed volume
- * @property {BiquadFilterNode|null} f Optional biquad filter node (used for engine lowpass)
- * @property {AmbienceLoopState} loop Loop scheduler state
+ * AmbienceBedState fields:
+ * g: Gain node controlling bed volume
+ * f: Optional biquad filter node (used for engine lowpass)
+ * loop: Loop scheduler state
  */
 
 let audioContext: AudioContext | null = null,
@@ -73,14 +73,12 @@ let level2 = { sfx: 1, ui: 0.8, amb: 0.5, music: 0.6 },
 
 /**
  * Computes effective master volume taking mute state into account.
- * @returns {number}
  */
 const level = () => (muted ? 0 : volume);
 
 /**
  * Unlocks or initializes the WebAudio AudioContext and mixer busses on user interaction.
  * Resumes suspended context if already initialized.
- * @returns {void}
  */
 export function unlock() {
   if (audioContext) {
@@ -109,8 +107,7 @@ export function unlock() {
 
 /**
  * Sets the master volume level.
- * @param {number} value2 Volume level (0..1)
- * @returns {void}
+ * @param value2 Volume level (0..1)
  */
 export function setVolume(value2: number) {
   volume = value2;
@@ -119,8 +116,7 @@ export function setVolume(value2: number) {
 
 /**
  * Updates mixer settings including master volume, mute state, and individual bus levels.
- * @param {AudioMixOptions} audioMixOptions Mixer options to apply
- * @returns {void}
+ * @param audioMixOptions Mixer options to apply
  */
 export function setMix(audioMixOptions: AudioMixOptions) {
   if (audioMixOptions.vol != null) volume = audioMixOptions.vol;
@@ -139,8 +135,7 @@ export function setMix(audioMixOptions: AudioMixOptions) {
 }
 /**
  * Loads and decodes an audio file by ID into memory.
- * @param {string|number} identifier Sound identifier or EV sound resource ID
- * @returns {Promise<AudioBuffer|null>|undefined}
+ * @param identifier Sound identifier or EV sound resource ID
  */
 function load(identifier: string | number) {
   if (buffers.has(identifier) || loading.has(identifier) || !audioContext)
@@ -166,11 +161,10 @@ let recent = 0,
 
 /**
  * Plays a positional combat sound effect with distance attenuation and stereo panning.
- * @param {string|number} identifier Sound identifier or resource number
- * @param {number} [deltaX=0] Horizontal offset relative to listener
- * @param {number} [deltaY=0] Vertical offset relative to listener
- * @param {number} [gain=1] Playback gain multiplier
- * @returns {void}
+ * @param identifier Sound identifier or resource number
+ * @param deltaX Horizontal offset relative to listener
+ * @param deltaY Vertical offset relative to listener
+ * @param gain Playback gain multiplier
  */
 export function play(identifier: string | number, deltaX = 0, deltaY = 0, gain = 1) {
   if (!audioContext || !identifier) return;
@@ -204,8 +198,7 @@ export function play(identifier: string | number, deltaX = 0, deltaY = 0, gain =
 
 /**
  * Preloads a list of sound IDs into memory.
- * @param {Array<string|number>} identifiers Array of sound identifiers to preload
- * @returns {void}
+ * @param identifiers Array of sound identifiers to preload
  */
 export function preload(identifiers: Array<string | number>) {
   if (!audioContext) return;
@@ -227,10 +220,9 @@ const UI_GAP: Record<string, number> = {
 
 /**
  * Plays an interface sound effect with slight pitch variation and rate limiting.
- * @param {string} name Interface sound name without 'ui_' prefix (e.g. 'click', 'tab')
- * @param {number} [gain=1] Volume gain multiplier
- * @param {number} [rate=1] Base playback speed multiplier
- * @returns {void}
+ * @param name Interface sound name without 'ui_' prefix (e.g. 'click', 'tab')
+ * @param gain Volume gain multiplier
+ * @param rate Base playback speed multiplier
  */
 export function ui(name: string, gain = 1, rate = 1) {
   if (!audioContext) return;
@@ -253,7 +245,6 @@ export function ui(name: string, gain = 1, rate = 1) {
 
 /**
  * Preloads common UI and interface sound effects.
- * @returns {void}
  */
 export function preloadUi() {
   if (!audioContext) return;
@@ -296,9 +287,8 @@ let wantAmb: AmbienceLocation = null;
 const ambNow: Record<string, AmbienceBedState> = {};
 /**
  * Schedules overlapping copies of an ambient loop with crossfades.
- * @param {string} identifier Sound ID for the ambience track
- * @param {GainNode} gainNode Target gain node
- * @returns {AmbienceLoopState}
+ * @param identifier Sound ID for the ambience track
+ * @param gainNode Target gain node
  */
 function loopBed(identifier: string, gainNode: GainNode) {
   // schedules overlapping copies of the loop with 2 s cross-fades, forever, until stopped
@@ -340,11 +330,10 @@ function loopBed(identifier: string, gainNode: GainNode) {
 
 /**
  * Manages an ambient audio bed (creation, volume target scheduling, and cross-fade out).
- * @param {string} name Ambience bed name ('space', 'station', 'engine')
- * @param {boolean} enabled Whether the bed should be active
- * @param {number} [target=1] Target gain level when on
- * @param {number} [fade=1.5] Fade duration in seconds
- * @returns {void}
+ * @param name Ambience bed name ('space', 'station', 'engine')
+ * @param enabled Whether the bed should be active
+ * @param target Target gain level when on
+ * @param fade Fade duration in seconds
  */
 function createAudioBed(name: string, enabled: boolean, target = 1, fade = 1.5) {
   if (!audioContext) return;
@@ -395,9 +384,8 @@ function createAudioBed(name: string, enabled: boolean, target = 1, fade = 1.5) 
 
 /**
  * Sets current ambience environment ('space', 'station', or null).
- * @param {AmbienceLocation} where Current environment
- * @param {boolean} [force] Force update even if environment hasn't changed
- * @returns {void}
+ * @param where Current environment
+ * @param force Force update even if environment hasn't changed
  */
 export function setAmbience(where: AmbienceLocation, force = false) {
   if (where === wantAmb && !force) return;
@@ -410,8 +398,7 @@ export function setAmbience(where: AmbienceLocation, force = false) {
 
 /**
  * Updates engine sound pitch/filter and volume based on ship throttle.
- * @param {number} level Throttle level (0 idle .. 1 thrust, 1.6 afterburner)
- * @returns {void}
+ * @param level Throttle level (0 idle .. 1 thrust, 1.6 afterburner)
  */
 let engineTime = 0;
 export function engine(level: number) {
@@ -433,7 +420,6 @@ let musicSrc: AudioBufferSourceNode | null = null,
 
 /**
  * Starts login screen theme music with fade-in.
- * @returns {void}
  */
 export function startMusic() {
   pendingMusicAllowed = true;
@@ -461,8 +447,7 @@ let pendingMusicAllowed = true,
 
 /**
  * Fades out and stops login screen theme music.
- * @param {number} [fade=2.5] Fade-out duration in seconds
- * @returns {void}
+ * @param fade Fade-out duration in seconds
  */
 export function stopMusic(fade = 2.5) {
   pendingMusicAllowed = false;
@@ -488,7 +473,6 @@ export function stopMusic(fade = 2.5) {
 
 /**
  * Returns audio subsystem debug diagnostics.
- * @returns {AudioDebugInfo}
  */
 export function debug() {
   return {

@@ -5,10 +5,37 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseSync } from 'oxc-parser';
-import { checkApplicationTypeScript } from '../tools/typescript-scope.ts';
+import {
+  checkApplicationTypeScript,
+  checkNativeTypeDocumentation,
+} from '../tools/typescript-scope.ts';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-tooling-'));
+checkNativeTypeDocumentation(
+  '/** Explain behavior. @param value Document the argument. @returns A result. */\n' +
+    'export function example(value: string): string { return value; }\n' +
+    'const quoted = "/** @typedef {object} Example */"; const css = "@import url(theme.css)";',
+  'native-documentation.ts',
+);
+for (const declaration of [
+  '@typedef {object} Example',
+  '@import { Example } from "./example.ts"',
+  '@type {number}',
+  '@param {string} value Description to preserve.',
+  '@returns {number} Description to preserve.',
+  '@this {Example}',
+  '@template Value',
+  '@property {string} name Description to preserve.',
+])
+  assert.throws(
+    () =>
+      checkNativeTypeDocumentation(
+        `/** Useful explanation.\n * ${declaration}\n */\nexport const value = 1;`,
+        'legacy-documentation.ts',
+      ),
+    /Legacy JSDoc type declaration/,
+  );
 function lint(source: string | NodeJS.ArrayBufferView<ArrayBufferLike>, typed = false) {
   const filename = path.join(directory, typed ? 'fixture.ts' : 'fixture.js');
   fileSystem.writeFileSync(filename, source);

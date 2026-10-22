@@ -2,8 +2,23 @@ import fileSystem from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { parseSync } from 'oxc-parser';
 
 const compiler = fileURLToPath(new URL('../node_modules/tsrs/bin/tsrs', import.meta.url));
+
+export function checkNativeTypeDocumentation(source: string, filename: string) {
+  const parsed = parseSync(filename, source);
+  for (const comment of parsed.comments) {
+    if (
+      comment.type === 'Block' &&
+      comment.value.startsWith('*') &&
+      /@(?:import|typedef|type|this|template|property|callback|enum|extends|implements|satisfies|overload)\b|@(?:param|returns?)[\s*]*\{/.test(
+        comment.value,
+      )
+    )
+      throw new Error(`Legacy JSDoc type declaration in ${filename}; use native TypeScript.`);
+  }
+}
 
 export function checkApplicationTypeScript(rootDirectory: string) {
   const configPath = path.join(rootDirectory, 'tsconfig.json');
@@ -73,6 +88,7 @@ export function checkApplicationTypeScript(rootDirectory: string) {
       if (!/\.tsx?$/.test(filename) || filename.endsWith('.d.ts')) continue;
       if (!checked.has(path.resolve(source)))
         throw new Error(`Application source omitted from typecheck: ${directory}/${filename}`);
+      checkNativeTypeDocumentation(fileSystem.readFileSync(source, 'utf8'), source);
       if (
         /^\s*(?:\/\/|\/\*+|\*)\s*@ts-(?:nocheck|ignore)\b/m.test(
           fileSystem.readFileSync(source, 'utf8'),

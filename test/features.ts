@@ -66,7 +66,9 @@ interface SourceNode {
   type?: string;
   name?: string;
   computed?: boolean;
-  typeAnnotation?: { typeAnnotation?: { typeName?: { name?: string } } };
+  typeAnnotation?: SourceNode;
+  typeName?: SourceNode;
+  qualifier?: SourceNode;
   object?: SourceNode;
   property?: SourceNode;
   id?: SourceNode;
@@ -74,6 +76,120 @@ interface SourceNode {
   key?: { name?: string; value?: string };
   properties?: SourceNode[];
 }
+function referencedCapabilities(source: string, filename: string): string[] {
+  const parsed = parseSync(filename, source, { showSemanticErrors: true });
+  assert.deepEqual(parsed.errors, [] as typeof parsed.errors, `${filename}: valid source required`);
+  const nodes: SourceNode[] = [];
+  function visit(input: unknown) {
+    if (!input || typeof input !== 'object') return;
+    const node = input as SourceNode;
+    nodes.push(node);
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) value.forEach(visit);
+      else if (value && typeof value === 'object') visit(value);
+    }
+  }
+  visit(parsed.program);
+  const capabilityTypes = new Set<string>();
+  for (const statement of parsed.program.body) {
+    if (statement.type !== 'ImportDeclaration') continue;
+    for (const specifier of statement.specifiers)
+      if (
+        specifier.type === 'ImportSpecifier' &&
+        (specifier.imported.type === 'Identifier'
+          ? specifier.imported.name
+          : specifier.imported.value
+        ).endsWith('Capabilities')
+      )
+        capabilityTypes.add(specifier.local.name);
+  }
+  function isCapabilityType(annotation: SourceNode | undefined): boolean {
+    if (annotation?.type === 'TSImportType')
+      return annotation.qualifier?.name?.endsWith('Capabilities') || false;
+    return (
+      annotation?.type === 'TSTypeReference' && capabilityTypes.has(annotation.typeName?.name || '')
+    );
+  }
+  // Alias order is not significant: an exported import-type alias or a chain of
+  // aliases must identify the same capability parameters as a named type import.
+  let addedAlias = true;
+  while (addedAlias) {
+    addedAlias = false;
+    for (const node of nodes)
+      if (
+        node.type === 'TSTypeAliasDeclaration' &&
+        node.id?.name &&
+        !capabilityTypes.has(node.id.name) &&
+        isCapabilityType(node.typeAnnotation)
+      ) {
+        capabilityTypes.add(node.id.name);
+        addedAlias = true;
+      }
+  }
+  const capabilityParameters = new Set<string>();
+  for (const node of nodes)
+    if (
+      node.type === 'Identifier' &&
+      node.name &&
+      isCapabilityType(node.typeAnnotation?.typeAnnotation)
+    )
+      capabilityParameters.add(node.name);
+  const dependencyNames = new Set<string>();
+  for (const node of nodes)
+    if (
+      (node.type === 'MemberExpression' || node.type === 'OptionalMemberExpression') &&
+      !node.computed &&
+      node.property?.type === 'Identifier' &&
+      (node.object?.type === 'ThisExpression' ||
+        (node.object?.type === 'Identifier' && capabilityParameters.has(node.object.name || '')))
+    )
+      dependencyNames.add(node.property.name!);
+  return [...dependencyNames].sort((first, second) =>
+    first < second ? -1 : first > second ? 1 : 0,
+  );
+}
+
+function assertCapabilityInventory(source: string, expected: string[], filename: string) {
+  const referenced = referencedCapabilities(source, filename);
+  assert.deepEqual(referenced, expected, `${filename} declared dependencies`);
+  return referenced;
+}
+
+for (const declaration of [
+  `import type { MiningCapabilities as Boundary } from './contracts.ts';`,
+  `export type Boundary = import('./contracts.ts').MiningCapabilities;`,
+  `type Boundary = Intermediate; type Intermediate = import('./contracts.ts').MiningCapabilities;`,
+]) {
+  const fixture = `${declaration}
+    function helper(capabilities: Boundary) { capabilities.bonus(); capabilities.mods(); }
+    const unrelated = { ignored() {} }; unrelated.ignored();
+    export const operations = { tick(this: Boundary) { this.endTick(); } };
+  `;
+  const dependencies = ['bonus', 'endTick', 'mods'];
+  assertCapabilityInventory(fixture, dependencies, 'native-capability-fixture.ts');
+  assert.throws(
+    () => assertCapabilityInventory(fixture, ['endTick', 'mods'], 'native-capability-fixture.ts'),
+    /declared dependencies/,
+    'native helper dependencies cannot be omitted from the inventory',
+  );
+  assert.throws(
+    () =>
+      assertCapabilityInventory(
+        fixture.replace('capabilities.bonus();', ''),
+        dependencies,
+        'native-capability-fixture.ts',
+      ),
+    /declared dependencies/,
+    'an unused declared dependency must also fail the inventory',
+  );
+}
+assertCapabilityInventory(
+  `function helper(capabilities: import('./contracts.ts').MiningCapabilities) { capabilities.bonus(); }`,
+  ['bonus'],
+  'direct-native-capability-fixture.ts',
+);
+console.log('Native capability imports, exported/chained aliases and strict dependency fixtures.');
+
 const manifest: {
   features: {
     file: string;
@@ -102,68 +218,7 @@ for (const feature of manifest.features) {
     new URL(`../server/${feature.module || feature.file}.ts`, import.meta.url),
     'utf8',
   );
-  const capabilityTypes = new Set(
-    [...source.matchAll(/@typedef\s+\{import\([^)]*\)\.\w*Capabilities\}\s+(\w+)/g)].map(
-      ([, name]) => name,
-    ),
-  );
-  const capabilityParameters = new Set();
-  for (const [, type, name] of source.matchAll(/@param\s+\{(\w+)\}\s+(\w+)/g))
-    if (capabilityTypes.has(type)) capabilityParameters.add(name);
-  const parsed = parseSync(`${feature.file}.ts`, source, { showSemanticErrors: true });
-  assert.deepEqual(
-    parsed.errors,
-    [] as typeof parsed.errors,
-    `${feature.file}: valid source required`,
-  );
-  // Native type imports/parameters replace the earlier JSDoc boundary aliases.
-  for (const statement of parsed.program.body) {
-    if (statement.type !== 'ImportDeclaration') continue;
-    for (const specifier of statement.specifiers)
-      if (
-        specifier.type === 'ImportSpecifier' &&
-        (
-          (specifier.imported.type === 'Identifier'
-            ? specifier.imported.name
-            : specifier.imported.value) || ''
-        ).endsWith('Capabilities')
-      )
-        capabilityTypes.add(specifier.local.name);
-  }
-  function collectCapabilityParameters(input: unknown) {
-    if (!input || typeof input !== 'object') return;
-    const node = input as SourceNode;
-    const annotation = node.typeAnnotation?.typeAnnotation;
-    if (node.type === 'Identifier' && capabilityTypes.has(annotation?.typeName?.name || ''))
-      capabilityParameters.add(node.name);
-    for (const value of Object.values(node)) {
-      if (Array.isArray(value)) value.forEach(collectCapabilityParameters);
-      else if (value && typeof value === 'object') collectCapabilityParameters(value);
-    }
-  }
-  collectCapabilityParameters(parsed.program);
-  const dependencyNames = new Set<string>();
-  function collectDependencies(input: unknown) {
-    if (!input || typeof input !== 'object') return;
-    const node = input as SourceNode;
-    if (
-      (node.type === 'MemberExpression' || node.type === 'OptionalMemberExpression') &&
-      !node.computed &&
-      node.property?.type === 'Identifier' &&
-      (node.object?.type === 'ThisExpression' ||
-        (node.object?.type === 'Identifier' && capabilityParameters.has(node.object.name || '')))
-    )
-      dependencyNames.add(node.property.name!);
-    for (const value of Object.values(node)) {
-      if (Array.isArray(value)) value.forEach(collectDependencies);
-      else if (value && typeof value === 'object') collectDependencies(value);
-    }
-  }
-  collectDependencies(parsed.program);
-  const referenced = [...dependencyNames].sort((first, second) =>
-    first < second ? -1 : first > second ? 1 : 0,
-  );
-  assert.deepEqual(referenced, feature.uses, feature.file + ' declared dependencies');
+  const referenced = assertCapabilityInventory(source, feature.uses, `${feature.file}.ts`);
   const parsedComposition = parseSync('features.ts', composition, { showSemanticErrors: true });
   assert.deepEqual(
     parsedComposition.errors,

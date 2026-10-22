@@ -101,36 +101,7 @@ import { WING_ONLY } from '../shared/docks.ts';
  * outfitter operations. Uses the existing account and shared pricing/grade rules;
  * there is no copied inventory, new save path or economic authority in the UI.
  * Legacy bodies remain unchecked; the capability signature is not wire validation.
- * @typedef {Pick<Game,
- *   'A' |
- *   'O' |
- *   'db' |
- *   'features' |
- *   'fitsJobs' |
- *   'holdUsed' |
- *   'jobBunks' |
- *   'landed' |
- *   'log' |
- *   'market' |
- *   'matsFor' |
- *   'outfitter' |
- *   'ownSite' |
- *   'siteOwner' |
- *   'toast' |
- *   'tradeIn' |
- *   'tut' |
- *   'yard' |
- *   'you'>} PortCapabilities
- * @typedef {Pick<Game,
- *   'market' |
- *   'trade' |
- *   'matsFor' |
- *   'buyMat' |
- *   'yard' |
- *   'tradeIn' |
- *   'buyShip' |
- *   'outfitter' |
- *   'outfit'>} PortService
+
  */
 
 export function createPortService(capabilities: PortCapabilities): PortService {
@@ -142,9 +113,8 @@ const MAT_PRICE = [6000, 18000, 45000, 110000, 260000];
 const PortOperations: PortOperations = {
   /**
    * Generates commodity market prices for a stellar port, applying flash and state modifiers.
-   * @param {StellarBody} stellarBody Stellar port.
-   * @returns {MarketItem[] | null} Array of traded commodities and pricing, or null.
-   * @this {PortCapabilities}
+   * @param stellarBody Stellar port.
+   * @returns Array of traded commodities and pricing, or null.
    */
   market(this: PortCapabilities, stellarBody: StellarBody) {
     if (stellarBody.site) {
@@ -188,12 +158,9 @@ const PortOperations: PortOperations = {
   },
   /**
    * Executes commodity purchase or sale transaction with market depth price impact.
-   * @param {Session} session Player session.
-   * @param {string} commodityId Commodity ID.
-   * @param {number} quantity Amount to buy (>0) or sell (<0).
-   * @param {GradeLots|'common-first'} [selection]
-   * @returns {void}
-   * @this {PortCapabilities}
+   * @param session Player session.
+   * @param commodityId Commodity ID.
+   * @param quantity Amount to buy (>0) or sell (<0).
    */
   trade(
     this: PortCapabilities,
@@ -314,10 +281,9 @@ const PortOperations: PortOperations = {
   },
   /**
    * Lists upgrade materials for sale at a stellar body based on faction specialization.
-   * @param {StellarBody} stellarBody Stellar body.
-   * @param {PlayerData} [playerData] Player data.
-   * @returns {Array<{mat: string, grade: number, price: number}>} Upgrade materials available.
-   * @this {PortCapabilities}
+   * @param stellarBody Stellar body.
+   * @param playerData Player data.
+   * @returns Upgrade materials available.
    */
   matsFor(this: PortCapabilities, stellarBody: StellarBody, playerData?: PlayerData) {
     const factionId = systemsById[stellarBody.system].faction,
@@ -350,12 +316,10 @@ const PortOperations: PortOperations = {
   },
   /**
    * Executes purchase or sale of crafting and upgrade materials.
-   * @param {Session} session Player session.
-   * @param {string} materialId Material name ('alloy', 'crystal', 'isotope').
-   * @param {number} grade Material grade index (0-4).
-   * @param {number} quantity Quantity to buy (>0) or sell (<0).
-   * @returns {void}
-   * @this {PortCapabilities}
+   * @param session Player session.
+   * @param materialId Material name ('alloy', 'crystal', 'isotope').
+   * @param grade Material grade index (0-4).
+   * @param quantity Quantity to buy (>0) or sell (<0).
    */
   buyMat(
     this: PortCapabilities,
@@ -388,10 +352,9 @@ const PortOperations: PortOperations = {
   // ------------------------------------------------------------------ shipyard and outfitter
   /**
    * Compiles list of ship hulls available for purchase at shipyard.
-   * @param {StellarBody} stellarBody Stellar port.
-   * @param {PlayerData} [playerData] Player data.
-   * @returns {number[] | null} Array of hull IDs for sale, or null.
-   * @this {PortCapabilities}
+   * @param stellarBody Stellar port.
+   * @param playerData Player data.
+   * @returns Array of hull IDs for sale, or null.
    */
   yard(this: PortCapabilities, stellarBody: StellarBody, playerData?: PlayerData) {
     if (stellarBody.site) {
@@ -428,9 +391,8 @@ const PortOperations: PortOperations = {
   },
   /**
    * Calculates credit trade-in value for captain's current ship and outfits (50% value).
-   * @param {PlayerData} playerData Player save data.
-   * @returns {number} Credit trade-in value of current ship and installed outfits.
-   * @this {PortCapabilities}
+   * @param playerData Player save data.
+   * @returns Credit trade-in value of current ship and installed outfits.
    */
   tradeIn(this: PortCapabilities, playerData: PlayerData) {
     if (playerData.shipless) return 0;
@@ -438,10 +400,8 @@ const PortOperations: PortOperations = {
   },
   /**
    * Purchases a new flagship hull, applying trade-in credit for previous ship.
-   * @param {Session} session Player session.
-   * @param {number} hullId Hull ID to purchase.
-   * @returns {void}
-   * @this {PortCapabilities}
+   * @param session Player session.
+   * @param hullId Hull ID to purchase.
    */
   buyShip(this: PortCapabilities, session: Session, hullId: number) {
     const playerData = session.data,
@@ -476,10 +436,9 @@ const PortOperations: PortOperations = {
   },
   /**
    * Compiles list of ship outfits available for purchase at outfitter.
-   * @param {StellarBody} stellarBody Stellar port.
-   * @param {PlayerData} [playerData] Player data.
-   * @returns {number[] | null} Array of outfit IDs for sale, or null.
-   * @this {PortCapabilities}
+   * @param stellarBody Stellar port.
+   * @param playerData Player data.
+   * @returns Array of outfit IDs for sale, or null.
    */
   outfitter(this: PortCapabilities, stellarBody: StellarBody, playerData?: PlayerData) {
     if (
@@ -515,11 +474,9 @@ const PortOperations: PortOperations = {
   },
   /**
    * Purchases or sells a ship outfit or ammunition batch.
-   * @param {Session} session Player session.
-   * @param {number} outfitId Outfit ID.
-   * @param {number} quantity Quantity to buy (>0) or sell (<0).
-   * @returns {void}
-   * @this {PortCapabilities}
+   * @param session Player session.
+   * @param outfitId Outfit ID.
+   * @param quantity Quantity to buy (>0) or sell (<0).
    */
   outfit(this: PortCapabilities, session: Session, outfitId: number, quantity: number) {
     const playerData = session.data,

@@ -40,23 +40,18 @@ import crypto from 'node:crypto';
 
 /**
  * Persisted player account record and save file state.
- * @typedef {object} AccountCredentials
- * @property {string} name Captain display name.
- * @property {string} salt Cryptographic salt in hexadecimal.
- * @property {string} hash Scrypt password hash in hexadecimal.
- * @property {number} created Account creation timestamp in milliseconds.
- * @property {PlayerData} [data] Associated player save state data.
+ * AccountCredentials fields:
+ * name: Captain display name.
+ * salt: Cryptographic salt in hexadecimal.
+ * hash: Scrypt password hash in hexadecimal.
+ * created: Account creation timestamp in milliseconds.
+ * [data]: Associated player save state data.
  */
 
 /**
  * Persisted galaxy world state data.
- * @typedef {object} WorldData
- * @property {TowWorld} [towing]
- * @property {IndustrialWorld} [industrial]
- * @property {Record<string, string>} sites World sites and player claim data.
- * @property {SavedMiningWorld} [mining]
- * @property {SavedRefinery} [refinery]
- * @property {SavedMiningPressure} [miningPressure]
+ * WorldData fields:
+ * sites: World sites and player claim data.
  */
 
 /**
@@ -76,7 +71,7 @@ export class DB {
 
   /**
    * Initializes the database in the target directory and loads existing data from disk.
-   * @param {string} direction Storage directory path for player and world database files.
+   * @param direction Storage directory path for player and world database files.
    */
   constructor(direction: string) {
     this.dir = direction;
@@ -129,7 +124,6 @@ export class DB {
   /**
    * Generates rolling timestamped backups of player and world database files, retaining the 12 most recent.
    * Backups are saved under data/backups/<timestamp>/players.json + world.json.
-   * @returns {void}
    */
   backup(): void {
     try {
@@ -151,8 +145,8 @@ export class DB {
 
   /**
    * Normalizes a captain name into a trimmed, lowercase account lookup key.
-   * @param {string} name Captain name.
-   * @returns {string} Lowercase normalized lookup key.
+   * @param name Captain name.
+   * @returns Lowercase normalized lookup key.
    */
   key(name: string): string {
     return String(name).trim().toLowerCase();
@@ -160,8 +154,8 @@ export class DB {
 
   /**
    * Retrieves an existing player account by captain name.
-   * @param {string} name Captain name.
-   * @returns {PlayerAccount | null} Player account record or null if not found.
+   * @param name Captain name.
+   * @returns Player account record or null if not found.
    */
   get(name: string): PlayerAccount | null {
     const entryKey = this.key(name);
@@ -172,10 +166,10 @@ export class DB {
 
   /**
    * Creates, persists, and returns a new player account with a hashed password and initial save data.
-   * @param {string} name Captain name.
-   * @param {string} pass Plaintext password.
-   * @param {PlayerData} fresh Initial player state and save properties.
-   * @returns {PlayerAccount} Newly created player account record.
+   * @param name Captain name.
+   * @param pass Plaintext password.
+   * @param fresh Initial player state and save properties.
+   * @returns Newly created player account record.
    */
   create(name: string, pass: string, fresh: Partial<Omit<PlayerData, 'name'>>): PlayerAccount {
     const salt = crypto.randomBytes(16).toString('hex');
@@ -195,9 +189,9 @@ export class DB {
 
   /**
    * Verifies a plaintext password against a player's stored scrypt hash using timing-safe comparison.
-   * @param {PlayerAccount} playerAccount Stored player account record.
-   * @param {string} pass Plaintext password to verify.
-   * @returns {boolean} True if the password matches the stored hash, false otherwise.
+   * @param playerAccount Stored player account record.
+   * @param pass Plaintext password to verify.
+   * @returns True if the password matches the stored hash, false otherwise.
    */
   check(playerAccount: PlayerAccount, pass: string): boolean {
     const nonSharedBuffer = crypto.scryptSync(pass, playerAccount.salt, 32);
@@ -206,7 +200,6 @@ export class DB {
 
   /**
    * Marks the database as dirty to ensure changes are flushed on the next sync interval.
-   * @returns {void}
    */
   touch(): void {
     this.dirty = true;
@@ -214,7 +207,6 @@ export class DB {
 
   /**
    * Atomically flushes dirty in-memory player and world state to disk via temporary files.
-   * @returns {void}
    */
 
   writeDurable(file: string, text: string) {

@@ -58,8 +58,8 @@ import { credits } from '../shared/rules.ts';
 export const ArcsOperations = {
   /**
    * Initialize or retrieve the player's arc state dictionary.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Record<string, SavedArc>} Player arcs state dictionary.
+   * @param playerData - Saved player data.
+   * @returns Player arcs state dictionary.
    */
   arcsInit(this: ArcsCapabilities, playerData: PlayerData) {
     playerData.arcs = playerData.arcs || {};
@@ -67,9 +67,9 @@ export const ArcsOperations = {
   },
   /**
    * Get or initialize the progress state for a specific faction arc.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {string} factionId - Faction key.
-   * @returns {SavedArc} Arc progress state.
+   * @param playerData - Saved player data.
+   * @param factionId - Faction key.
+   * @returns Arc progress state.
    */
   arcState(this: ArcsCapabilities, playerData: PlayerData, factionId: string) {
     const arcsInit2 = this.arcsInit(playerData);
@@ -80,10 +80,10 @@ export const ArcsOperations = {
   // the arc step on offer at this world, if any
   /**
    * Evaluate the next arc mission step on offer at a stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {{id: string}} position - Current stellar body.
-   * @param {string} factionId - Faction key.
-   * @returns {ArcOffer | null} Arc step offer details, or null if unavailable.
+   * @param playerData - Saved player data.
+   * @param position - Current stellar body.
+   * @param factionId - Faction key.
+   * @returns Arc step offer details, or null if unavailable.
    */
   arcOffer(
     this: ArcsCapabilities,
@@ -105,9 +105,9 @@ export const ArcsOperations = {
   },
   /**
    * List all available arc mission offers at a stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {{id: string}} position - Current stellar body.
-   * @returns {Array<Mission>} List of arc mission offers.
+   * @param playerData - Saved player data.
+   * @param position - Current stellar body.
+   * @returns List of arc mission offers.
    */
   arcOffersAt(this: ArcsCapabilities, playerData: PlayerData, stellarBody: { id: string }) {
     return Object.keys(ARCS)
@@ -116,8 +116,8 @@ export const ArcsOperations = {
   },
   /**
    * Build the network payload representing arc progress for the client.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {ArcPayload[]} Arc states summary for client.
+   * @param playerData - Saved player data.
+   * @returns Arc states summary for client.
    */
   arcsPayload(this: ArcsCapabilities, playerData: PlayerData) {
     this.arcsInit(playerData);
@@ -152,9 +152,8 @@ export const ArcsOperations = {
   },
   /**
    * Handle player landing event to check arc step completion or trigger offers.
-   * @param {Session} session - Player session.
-   * @param {{id: string}} position - Landed stellar body.
-   * @returns {void}
+   * @param session - Player session.
+   * @param position - Landed stellar body.
    */
   arcOnLand(this: ArcsCapabilities, session: Session, stellarBody: { id: string }) {
     const playerData = session.data;
@@ -184,9 +183,8 @@ export const ArcsOperations = {
   },
   /**
    * Accept an active faction arc mission offer.
-   * @param {Session} session - Player session.
-   * @param {string} factionId - Faction key.
-   * @returns {void}
+   * @param session - Player session.
+   * @param factionId - Faction key.
    */
   arcAccept(this: ArcsCapabilities, session: Session, factionId: string) {
     if (typeof factionId !== 'string' || !Object.prototype.hasOwnProperty.call(ARCS, factionId))
@@ -205,9 +203,8 @@ export const ArcsOperations = {
   },
   /**
    * Complete the active step of a faction arc, awarding credits, reputation, and rewards.
-   * @param {Session} session - Player session.
-   * @param {string} factionId - Faction key.
-   * @returns {void}
+   * @param session - Player session.
+   * @param factionId - Faction key.
    */
   arcComplete(this: ArcsCapabilities, session: Session, factionId: string) {
     const playerData = session.data,
@@ -272,9 +269,8 @@ export const ArcsOperations = {
   // arriving in an arc system spawns what the step needs
   /**
    * Spawn encounter ships or derelicts upon arriving in a system required by an active arc.
-   * @param {Session} session - Player session.
-   * @param {Space} space - Current space system instance.
-   * @returns {void}
+   * @param session - Player session.
+   * @param space - Current space system instance.
    */
   arcArrive(this: ArcsCapabilities, session: Session, space: Space) {
     const playerData = session.data,
@@ -334,9 +330,8 @@ export const ArcsOperations = {
   },
   /**
    * Record combat or rescue progress for an encounter associated with an active arc.
-   * @param {Session} session - Player session.
-   * @param {Entity} entity - Destroyed or rescued entity.
-   * @returns {void}
+   * @param session - Player session.
+   * @param entity - Destroyed or rescued entity.
    */
   arcProgress(this: ArcsCapabilities, session: Session, entity: Entity) {
     if (!entity.arcOf || entity.arcOf.sid !== session.id) return;
@@ -365,9 +360,9 @@ export const ArcsOperations = {
   // Offered on Farside job boards: survey a system, board the derelict the survey finds, bring its data core back.
   /**
    * Generate a procedural Farside survey expedition mission if eligible.
-   * @param {StellarBody} stellarBody - Current stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Mission | null} Expedition mission object or null if ineligible.
+   * @param stellarBody - Current stellar body.
+   * @param playerData - Saved player data.
+   * @returns Expedition mission object or null if ineligible.
    */
   expeditionOffer(this: ArcsCapabilities, stellarBody: StellarBody, playerData: PlayerData) {
     if (!systemsById[stellarBody.system].farside || !stellarBody.svc.includes('B')) return null;
@@ -404,9 +399,8 @@ export const ArcsOperations = {
   // a finished expedition stage becomes the next one
   /**
    * Advance a completed expedition stage to the next stage or final reward.
-   * @param {Session} session - Player session.
-   * @param {Mission} mission - Completed expedition mission.
-   * @returns {void}
+   * @param session - Player session.
+   * @param mission - Completed expedition mission.
    */
   expeditionNext(this: ArcsCapabilities, session: Session, mission: Pick<Mission, 'exp'>) {
     const playerData = session.data,

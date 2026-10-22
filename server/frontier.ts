@@ -140,18 +140,18 @@ import { credits } from '../shared/rules.ts';
 
 /**
  * Clamp a numeric value between a lower and an upper bound.
- * @param {number} value - Value to clamp.
- * @param {number} firstValue - Lower bound.
- * @param {number} secondValue - Upper bound.
- * @returns {number} Clamped value.
+ * @param value - Value to clamp.
+ * @param firstValue - Lower bound.
+ * @param secondValue - Upper bound.
+ * @returns Clamped value.
  */
 const clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Look up commodity human-readable display name by commodity ID.
- * @param {string} identifier - Commodity identifier.
- * @returns {string} Commodity name.
+ * @param identifier - Commodity identifier.
+ * @returns Commodity name.
  */
 const comName = (identifier: string): string =>
   (COMMODITIES.find((commodityDef) => commodityDef.id === identifier) || { name: identifier }).name;
@@ -159,7 +159,6 @@ const comName = (identifier: string): string =>
 export const FrontierOperations = {
   /**
    * Initialize world colonies, player market orders, and arena/wave structures.
-   * @returns {void}
    */
   frontierInit(this: FrontierCapabilities) {
     const worldData = this.db.world;
@@ -174,8 +173,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ bonuses: + ship mastery tier + colony buildings
   /**
    * Calculate aggregated bonuses from ship mastery, colony buildings, and survey ship perks.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Record<string, number>} Aggregated stat bonuses.
+   * @param playerData - Saved player data.
+   * @returns Aggregated stat bonuses.
    */
   bonus(this: FrontierCapabilities, playerData: PlayerData) {
     const frontsBonus2 = this.frontsBonus(playerData);
@@ -190,10 +189,9 @@ export const FrontierOperations = {
   },
   /**
    * Send a system notification message to a player session.
-   * @param {Session} session - Player session.
-   * @param {string} title - Notification title text.
-   * @param {string} body - Notification body text.
-   * @returns {void}
+   * @param session - Player session.
+   * @param title - Notification title text.
+   * @param body - Notification body text.
    */
   notify(this: FrontierCapabilities, session: Session, title: string, body: string) {
     if (session) this.send(session, { t: 'notify', title, body });
@@ -201,7 +199,7 @@ export const FrontierOperations = {
 
   /**
    * Build world telemetry payload augmented with active colony ownership names.
-   * @returns {Record<string, string | number | boolean>} World telemetry payload.
+   * @returns World telemetry payload.
    */
   worldPayload(this: FrontierCapabilities) {
     const width = this.frontsWorldPayload() as ReturnType<
@@ -218,9 +216,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ mastery
   /**
    * Increment ship mastery points and award tier level-ups and elite trim.
-   * @param {Session} session - Player session.
-   * @param {number} amount - Mastery points to add.
-   * @returns {void}
+   * @param session - Player session.
+   * @param amount - Mastery points to add.
    */
   mastery(this: FrontierCapabilities, session: Session, amount: number) {
     const playerData = session.data;
@@ -243,8 +240,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ colonies
   /**
    * Determine whether a stellar body is eligible for player colonization.
-   * @param {StellarBody | null} stellarBody - Stellar body.
-   * @returns {boolean} True if colonizable.
+   * @param stellarBody - Stellar body.
+   * @returns True if colonizable.
    */
   colonizable(this: FrontierCapabilities, stellarBody: StellarBody | null) {
     return !!(
@@ -257,8 +254,8 @@ export const FrontierOperations = {
   },
   /**
    * Retrieve all colonies owned by the player.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Array<[string, ColonyData]>} List of [stellarId, colony] pairs.
+   * @param playerData - Saved player data.
+   * @returns List of [stellarId, colony] pairs.
    */
   coloniesOf(this: FrontierCapabilities, playerData: PlayerData) {
     const entryKey = this.db.key(playerData.name);
@@ -268,16 +265,16 @@ export const FrontierOperations = {
   },
   /**
    * Compute maximum allowed colonies for player based on personal Station Tier.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {number} Maximum colonies.
+   * @param playerData - Saved player data.
+   * @returns Maximum colonies.
    */
   colonyMax(this: FrontierCapabilities, playerData: PlayerData) {
     return playerData.station.ops >= 5 ? COLONY.maxAtOps5 : COLONY.max;
   },
   /**
    * Aggregate active stat buffs produced by buildings across all player-owned colonies.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Record<string, number>} Aggregated colony buff map.
+   * @param playerData - Saved player data.
+   * @returns Aggregated colony buff map.
    */
   colonyBuffs(this: FrontierCapabilities, playerData: PlayerData) {
     const result: Record<string, number> = {};
@@ -293,8 +290,7 @@ export const FrontierOperations = {
   },
   /**
    * Accrue passive production (credits, commodities) in colony storage based on elapsed time.
-   * @param {ColonyData} colonyState - Colony data structure.
-   * @returns {void}
+   * @param colonyState - Colony data structure.
    */
   accrue(this: FrontierCapabilities, colonyState: ColonyData) {
     const currentTime = Date.now(),
@@ -316,9 +312,9 @@ export const FrontierOperations = {
   },
   /**
    * Build network telemetry payload describing colony status at a stellar body.
-   * @param {{id: string} | null} stellarBody - Stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Record<string, string | number | boolean> | null} Colony telemetry payload, or open descriptor, or null.
+   * @param stellarBody - Stellar body.
+   * @param playerData - Saved player data.
+   * @returns Colony telemetry payload, or open descriptor, or null.
    */
   colonyPayload(
     this: FrontierCapabilities,
@@ -343,9 +339,8 @@ export const FrontierOperations = {
   },
   /**
    * Handle planetary colony operations (founding, building, demolishing, upgrading, collecting, abandoning).
-   * @param {Session} session - Player session.
-   * @param {{op: string, kind?: string, i?: number}} message - Colony action payload.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Colony action payload.
    */
   colonyOp(
     this: FrontierCapabilities,
@@ -483,8 +478,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ station defense
   /**
    * Calculate personal station defense rating from turret level and Station Tier rating.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {number} Defense rating score.
+   * @param playerData - Saved player data.
+   * @returns Defense rating score.
    */
   defenseRating(this: FrontierCapabilities, playerData: PlayerData) {
     const stationState = playerData.station;
@@ -496,8 +491,7 @@ export const FrontierOperations = {
   },
   /**
    * Upgrade personal station defense turrets by one level.
-   * @param {Session} session - Player session.
-   * @returns {void}
+   * @param session - Player session.
    */
   defenseUpgrade(this: FrontierCapabilities, session: Session) {
     const playerData = session.data,
@@ -516,9 +510,9 @@ export const FrontierOperations = {
   },
   /**
    * Determine prospective NPC raid strength attacking player station in a time window.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {number} window - Time window index.
-   * @returns {number} Raid strength score.
+   * @param playerData - Saved player data.
+   * @param window - Time window index.
+   * @returns Raid strength score.
    */
   raidStrength(this: FrontierCapabilities, playerData: PlayerData, window: number) {
     const starSystem = systemsById[STELLARS[playerData.station.site!].system];
@@ -529,8 +523,7 @@ export const FrontierOperations = {
   },
   /**
    * Check whether personal station is due for an incoming raid encounter.
-   * @param {Session} session - Player session.
-   * @returns {void}
+   * @param session - Player session.
    */
   raidCheck(this: FrontierCapabilities, session: Session) {
     const playerData = session.data,
@@ -551,9 +544,8 @@ export const FrontierOperations = {
   },
   /**
    * Spawn a live combat wave of hostile raiders targeting the player's personal station.
-   * @param {Session} session - Player session.
-   * @param {number} strength - Calculated raid strength.
-   * @returns {void}
+   * @param session - Player session.
+   * @param strength - Calculated raid strength.
    */
   startWave(this: FrontierCapabilities, session: Session, strength: number) {
     const playerData = session.data,
@@ -597,8 +589,7 @@ export const FrontierOperations = {
   },
   /**
    * Track destroyed raid wave entities and resolve victory if all raiders are eliminated.
-   * @param {Entity} entity - Killed ship entity.
-   * @returns {void}
+   * @param entity - Killed ship entity.
    */
   onWaveKill(this: FrontierCapabilities, entity: Entity) {
     const raidWave = this.waves[entity.wave!];
@@ -612,7 +603,6 @@ export const FrontierOperations = {
   },
   /**
    * Periodic check on active defense waves, cleaning up expired raids.
-   * @returns {void}
    */
   waveTick(this: FrontierCapabilities) {
     for (const [name, raidWave] of Object.entries(this.waves))
@@ -635,10 +625,9 @@ export const FrontierOperations = {
   },
   /**
    * Resolve outcomes of a station raid, awarding salvage on defense or deducting crates on breach.
-   * @param {Session} session - Player session.
-   * @param {number} strength - Raid strength rating.
-   * @param {boolean} foughtOff - True if player actively destroyed the wave.
-   * @returns {void}
+   * @param session - Player session.
+   * @param strength - Raid strength rating.
+   * @param foughtOff - True if player actively destroyed the wave.
    */
   resolveRaid(this: FrontierCapabilities, session: Session, strength: number, foughtOff: boolean) {
     const playerData = session.data,
@@ -689,9 +678,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ the arena
   /**
    * Handle arena queue join and leave operations.
-   * @param {Session} session - Player session.
-   * @param {{op: 'queue' | 'leave', mode: '1v1' | '2v2' | '4v4'}} message - Arena action payload.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Arena action payload.
    */
   arenaOp(
     this: FrontierCapabilities,
@@ -724,9 +712,9 @@ export const FrontierOperations = {
   },
   /**
    * Build arena status payload including queue size and rating.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {Session} session - Player session.
-   * @returns {Record<string, string | number | boolean>} Arena status descriptor.
+   * @param playerData - Saved player data.
+   * @param session - Player session.
+   * @returns Arena status descriptor.
    */
   arenaPayload(this: FrontierCapabilities, playerData: PlayerData, session: Session) {
     playerData.arena = playerData.arena || { rating: ARENA.start, w: 0, l: 0 };
@@ -743,8 +731,8 @@ export const FrontierOperations = {
   },
   /**
    * Attempt to construct an arena match from queued players for a given mode.
-   * @param {'1v1' | '2v2' | '4v4'} mode - Arena combat mode.
-   * @returns {ArenaMatch | null} Created match descriptor or null if not enough players.
+   * @param mode - Arena combat mode.
+   * @returns Created match descriptor or null if not enough players.
    */
   tryMatch(this: FrontierCapabilities, mode: '1v1' | '2v2' | '4v4') {
     const mode2 = ARENA.modes[mode],
@@ -823,10 +811,9 @@ export const FrontierOperations = {
   // a captain leaves the arena: back to where they queued, ship repaired, no insurance fee
   /**
    * Return a captain from an arena match to their origin station.
-   * @param {Session} session - Player session.
-   * @param {ArenaMatch} match - Arena match descriptor.
-   * @param {boolean} died - True if ship was knocked out in combat.
-   * @returns {void}
+   * @param session - Player session.
+   * @param match - Arena match descriptor.
+   * @param died - True if ship was knocked out in combat.
    */
   arenaExit(this: FrontierCapabilities, session: Session, match: ArenaMatch, died: boolean) {
     const playerData = session.data,
@@ -854,9 +841,9 @@ export const FrontierOperations = {
   },
   /**
    * Handle ship destruction inside the arena, free repair, and victory check.
-   * @param {Session} session - Knocked-out player session.
-   * @param {Space} space - Space simulation instance.
-   * @returns {boolean} True if entity was in an arena match.
+   * @param session - Knocked-out player session.
+   * @param space - Space simulation instance.
+   * @returns True if entity was in an arena match.
    */
   onArenaDeath(this: FrontierCapabilities, session: Session, space: Space) {
     const match = this.matches[space.id];
@@ -871,8 +858,7 @@ export const FrontierOperations = {
   },
   /**
    * Check victory conditions for an active arena match and award Elo ratings and credits.
-   * @param {ArenaMatch} match - Arena match descriptor.
-   * @returns {void}
+   * @param match - Arena match descriptor.
    */
   arenaCheck(this: FrontierCapabilities, match: ArenaMatch) {
     const alive = (time: 'A' | 'B') => match.teams[time].filter((count) => match.alive.has(count));
@@ -942,7 +928,6 @@ export const FrontierOperations = {
   },
   /**
    * Periodic tick check across all arena matches and matchmaker queues.
-   * @returns {void}
    */
   arenaTick(this: FrontierCapabilities) {
     for (const arenaMatch of Object.values(this.matches)) this.arenaCheck(arenaMatch);
@@ -952,9 +937,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ the exchange (player market): escrowed orders, matched by price
   /**
    * Handle player exchange operations (place, cancel, collect storage, credit transfer).
-   * @param {Session} session - Player session.
-   * @param {{op: string, side?: string, qty?: number, price?: number, lots?: GradeLots, kind?: string, mat?: string, grade?: number, cid?: string, id?: number, to?: string, n?: number}} message - Exchange action payload.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Exchange action payload.
    */
   exchangeOp(
     this: FrontierCapabilities,
@@ -1148,8 +1132,8 @@ export const FrontierOperations = {
   },
   /**
    * Format display name of an exchange order item (material grade or commodity).
-   * @param {ExchangeItem} exchangeItem - Exchange item specification.
-   * @returns {string} Formatted item name.
+   * @param exchangeItem - Exchange item specification.
+   * @returns Formatted item name.
    */
   itemName(this: FrontierCapabilities, exchangeItem: ExchangeItem) {
     return exchangeItem.kind === 'mat'
@@ -1158,9 +1142,9 @@ export const FrontierOperations = {
   },
   /**
    * Compare two exchange items for type, material, grade, or commodity identity.
-   * @param {ExchangeItem} exchangeItem - First item.
-   * @param {ExchangeItem} exchangeItem2 - Second item.
-   * @returns {boolean} True if items match.
+   * @param exchangeItem - First item.
+   * @param exchangeItem2 - Second item.
+   * @returns True if items match.
    */
   sameItem(this: FrontierCapabilities, exchangeItem: ExchangeItem, exchangeItem2: ExchangeItem) {
     return (
@@ -1173,11 +1157,10 @@ export const FrontierOperations = {
   },
   /**
    * Deliver purchased goods to a buyer (materials directly, commodities to exchange storage).
-   * @param {string} name - Buyer captain name.
-   * @param {ExchangeItem} exchangeItem - Purchased item.
-   * @param {number} quantity - Quantity purchased.
-   * @param {GradeLots} [lots] Exact escrow grades.
-   * @returns {void}
+   * @param name - Buyer captain name.
+   * @param exchangeItem - Purchased item.
+   * @param quantity - Quantity purchased.
+   * @param lots Exact escrow grades.
    */
   deliver(
     this: FrontierCapabilities,
@@ -1202,9 +1185,8 @@ export const FrontierOperations = {
   },
   /**
    * Credit payment amount to a seller captain's account.
-   * @param {string} name - Captain name.
-   * @param {number} count - Credit amount.
-   * @returns {void}
+   * @param name - Captain name.
+   * @param count - Credit amount.
    */
   pay(this: FrontierCapabilities, name: string, count: number) {
     const playerAccount = this.db.get(name);
@@ -1215,8 +1197,7 @@ export const FrontierOperations = {
   },
   /**
    * Refund escrowed credits or inventory items for a cancelled exchange order.
-   * @param {ExchangeOrder} exchangeOrder - Order record.
-   * @returns {void}
+   * @param exchangeOrder - Order record.
    */
   refundOrder(this: FrontierCapabilities, exchangeOrder: ExchangeOrder) {
     if (exchangeOrder.side === 'sell')
@@ -1225,9 +1206,8 @@ export const FrontierOperations = {
   },
   /**
    * Match an incoming exchange order against the open order book.
-   * @param {ExchangeOrder} order - Incoming escrow order record.
-   * @param {() => void} reserve - Commit the validated incoming reservation.
-   * @returns {void}
+   * @param order - Incoming escrow order record.
+   * @param reserve - Commit the validated incoming reservation.
    */
   matchOrder(this: FrontierCapabilities, order: ExchangeOrder, reserve: () => void) {
     const worldData = this.db.world;
@@ -1336,8 +1316,8 @@ export const FrontierOperations = {
   },
   /**
    * Build exchange order book summary and player-specific order state for client.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Record<string, Array<{by: string, p: number, n: number}>>} Exchange book payload.
+   * @param playerData - Saved player data.
+   * @returns Exchange book payload.
    */
   exchangePayload(this: FrontierCapabilities, playerData: PlayerData) {
     const book: Record<
@@ -1376,8 +1356,8 @@ export const FrontierOperations = {
   // ------------------------------------------------------------------ leaderboards and profiles
   /**
    * Retrieve top 20 rankings for a given leaderboard category.
-   * @param {string} category - Leaderboard category ('earned', 'kills', 'mined', 'arena', 'station', 'colonies', 'mastery').
-   * @returns {Array<{name: string, fleet: null, v: number}>} Top leaderboard entries.
+   * @param category - Leaderboard category ('earned', 'kills', 'mined', 'arena', 'station', 'colonies', 'mastery').
+   * @returns Top leaderboard entries.
    */
   leaderboard(this: FrontierCapabilities, category: string) {
     const playerAccounts = Object.values(this.db.players),
@@ -1412,8 +1392,8 @@ export const FrontierOperations = {
   },
   /**
    * Fetch public captain profile overview by captain name.
-   * @param {string} name - Captain player name.
-   * @returns {CaptainProfile | null} Captain profile record or null if not found.
+   * @param name - Captain player name.
+   * @returns Captain profile record or null if not found.
    */
   profile(this: FrontierCapabilities, name: string) {
     const playerAccount = this.db.get(String(name || ''));

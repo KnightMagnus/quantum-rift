@@ -4,11 +4,10 @@ import { DT as tickDuration, wrap } from '../shared/rules.ts';
 
 /**
  * Direct center-seeking flight, with no arrival braking or retrograde phase.
- * @param {RenderEntity} ship Current predicted ship.
- * @param {ComputedShipStats} stats Normal flight stats.
- * @param {StellarBody} gate Gateway center.
- * @param {Record<string, number>} input Controls modified in place.
- * @returns {void}
+ * @param ship Current predicted ship.
+ * @param stats Normal flight stats.
+ * @param gate Gateway center.
+ * @param input Controls modified in place.
  */
 export function gatewayGuidance(
   ship: AutopilotShip,

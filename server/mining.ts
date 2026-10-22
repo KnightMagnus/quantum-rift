@@ -23,8 +23,9 @@ function world(capabilities: Capabilities): World {
   if (!miningWorld) throw new Error('Mining not initialized');
   return miningWorld;
 }
-/** Validate persisted JSON before exposing any rocks or changing world. No repair/minting.
- * @param {World} miningWorld */
+/**
+ * Validate persisted JSON before exposing any rocks or changing world. No repair/minting.
+ */
 function validate(miningWorld: World) {
   if (
     miningWorld.version !== 1 ||
@@ -490,8 +491,9 @@ function sweepGrades(count: number, random: () => number) {
   return lots;
 }
 export const MiningOperations = {
-  /** Stable across restart/sleep; a fresh projectile cannot alias a saved consumed shot.
-   * @this {Capabilities} @returns {number} */
+  /**
+   * Stable across restart/sleep; a fresh projectile cannot alias a saved consumed shot.
+   */
   shotId(this: Capabilities) {
     const identifier = world(this).nextId--;
     this.db.touch();
@@ -607,8 +609,9 @@ export const MiningOperations = {
     if (!generation.hp) generation.ready = true;
     this.db.touch();
   },
-  /** Sweep never finishes a clean-ready or multistage rock; same finite root budget.
-   * @this {Capabilities} @param {Space} space @param {Rock} rock @param {number} damage @param {string} captain */
+  /**
+   * Sweep never finishes a clean-ready or multistage rock; same finite root budget.
+   */
   sweep(this: Capabilities, space: Space, rock: Rock, damage: number, captain: string) {
     const generation = world(this).systems[space.id]?.rocks.find(
       (savedRockGeneration) => savedRockGeneration === rock,

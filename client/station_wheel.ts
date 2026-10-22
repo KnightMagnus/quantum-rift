@@ -10,8 +10,8 @@ function seeded(seed: number) {
 }
 /**
  * Hashes a string using 32-bit FNV-1a.
- * @param {string} text Input string
- * @returns {number} Unsigned 32-bit hash value
+ * @param text Input string
+ * @returns Unsigned 32-bit hash value
  */
 function hashStr(text: string) {
   let height = 2166136261;
