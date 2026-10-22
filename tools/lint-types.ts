@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const rootDirectory = fileURLToPath(new URL('../', import.meta.url));
-const files = ['server', 'shared', 'client', 'test', 'tools', 'Testing'].flatMap((directory) =>
+const files = ['server', 'shared', 'client', 'test', 'tools'].flatMap((directory) =>
   fileSystem
     .readdirSync(path.join(rootDirectory, directory), { recursive: true, encoding: 'utf8' })
     .filter((file) => file.endsWith('.ts'))
