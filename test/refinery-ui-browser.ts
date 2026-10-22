@@ -196,12 +196,13 @@ try {
   await page.mouse.move(position.x, position.y);
   await page.mouse.down();
   await page.waitForFunction(() => G.miningHazards?.length > 0);
+  // Release and assert before capture latency can advance the volatile timer.
+  await page.mouse.up();
+  assert.ok((await page.evaluate(() => G.miningPressure!.noise)) >= 70);
   await page.screenshot({
     path: path.join(feature.out, 'volatile-countdown-pressure-hidpi.png'),
     fullPage: true,
   });
-  await page.mouse.up();
-  assert.ok((await page.evaluate(() => G.miningPressure!.noise)) >= 70);
   assert.deepEqual(errors, []);
   console.log(
     'ALL REFINERY REAL BROWSER QUOTE / POINTER / PARTIAL / CANCEL / FUEL / SCALED HAZARD TESTS PASSED',

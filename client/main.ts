@@ -292,6 +292,8 @@ import { initRefineryUI } from './refinery_ui.ts';
 import { binding, migrateBindings, RESERVED_KEYS } from './action-bindings.ts';
 import { initMiningUI, receiveMining } from './mining_ui.ts';
 import { landingGuidance, landingReady } from './landing_autopilot.ts';
+import { FlightEngine } from './engine.ts';
+import { advanceFlightClock } from './flight-clock.ts';
 import { initLoginScene } from './login_scene.ts';
 import { gatewayGuidance } from './gateway_autopilot.ts';
 import { setArtworkVersion } from './artwork.ts';
@@ -311,7 +313,6 @@ import {
 } from '../shared/rules.ts';
 import { STATES } from '../shared/living.ts';
 import {
-  draw,
   radar,
   boom,
   spark,
@@ -506,9 +507,11 @@ const alternateBindings: Record<string, string> = {
 migrateBindings(clientGameState.opts, ACTIONS);
 const bound = (firstValue: string) => binding(clientGameState.opts.keys, ACTIONS, firstValue);
 const held = (firstValue: string) =>
+  !typing() &&
+  elementById2('opts').classList.contains('hidden') &&
   !!(
-    keys[bound(firstValue)!] ||
-    (alternateBindings[firstValue] && keys[alternateBindings[firstValue]])
+    flightEngine.input.held(bound(firstValue)) ||
+    flightEngine.input.held(alternateBindings[firstValue])
   );
 const actionOf = (code: string) => {
   for (const [firstValue] of ACTIONS)
@@ -597,15 +600,14 @@ applyOpts();
   setTimeout(() => elementById2('lload').classList.add('done'), 20000);
 })();
 const canvas = elementById2('view'),
-  canvasRenderingContext2D = canvas.getContext('2d')!,
   canvasRenderingContext2D2 = elementById2('radar').getContext('2d')!;
+const flightEngine = new FlightEngine(canvas, clientGameState, frame);
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null,
   sessionEpoch = 0,
   sessionDefaults: Record<string, unknown> | null = null;
 let webSocket: WebSocket | null = null,
   sequence = 0,
   history: Array<{ seq: number; inp: ClientInput }> = [],
-  keys: Record<string, boolean | number> = {},
   _lastSnapT = 0;
 function send(networkMessage: NetworkMessage) {
   if (webSocket && webSocket.readyState === 1) webSocket.send(JSON.stringify(networkMessage));
@@ -798,6 +800,12 @@ function openSocket(tries: number) {
   };
   socket.onclose = () => {
     if (!current()) return;
+    flightEngine.input.clear();
+    mouse.down = false;
+    touch.keys = {};
+    touch.stick = null;
+    clientGameState._look = null;
+    clientGameState._lookT = null;
     webSocket = null;
     elementById2('lbtn').disabled = false;
     if (!clientGameState.you) return;
@@ -1493,7 +1501,6 @@ window.addEventListener('keydown', (keyboardEvent) => {
   }
   if (!clientGameState.you) return;
   audio.unlock();
-  keys[keyboardEvent.code] = true;
   if (
     ['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(
       keyboardEvent.code,
@@ -1629,11 +1636,11 @@ window.addEventListener('keydown', (keyboardEvent) => {
     }
   }
 });
-window.addEventListener('keyup', (keyboardEvent) => {
-  keys[keyboardEvent.code] = false;
-});
 window.addEventListener('blur', () => {
-  keys = {};
+  flightEngine.input.clear();
+  mouse.down = false;
+  clientGameState._look = null;
+  clientGameState._lookT = null;
 });
 function jumpNext() {
   if (!clientGameState.route.length) return toast('Plot a course on the map first (M).');
@@ -2071,13 +2078,9 @@ const mouse = { x: 0, y: 0, wx: 0, wy: 0, in: false, down: false };
  * @returns World coordinates [wx, wy]
  */
 function toWorld(centerX: number, centerY: number): [number, number] {
-  const radius = window.devicePixelRatio || 1,
-    domRect = canvas.getBoundingClientRect();
-  return [
-    ((centerX - domRect.left) * radius - camera.W / 2) / camera.z + camera.cx,
-    ((centerY - domRect.top) * radius - camera.H / 2) / camera.z + camera.cy,
-  ];
+  return flightEngine.worldPoint(centerX, centerY);
 }
+
 /**
  * Identifies the nearest interactive ship or stellar body under the given world coordinates.
  * @param worldX World X coordinate
@@ -2158,7 +2161,8 @@ function setTarget(identifier: number): void {
   clientGameState.target = identifier;
   send({ t: 'target', id: identifier });
 }
-canvas.addEventListener('mousemove', (mouseEvent) => {
+flightEngine.engine.input.pointers.on('move', (event) => {
+  const mouseEvent = event.nativeEvent as MouseEvent;
   if (
     clientGameState.opts.mouseAim &&
     (mouseEvent.movementX || mouseEvent.movementY) &&
@@ -2190,13 +2194,29 @@ canvas.addEventListener('mousemove', (mouseEvent) => {
   clientGameState.hoverStellar = pickAt2 && pickAt2.stellar ? pickAt2.stellar.id : null;
   setCursor(cursorFor(pickAt2));
 });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) return;
+  mouse.down = false;
+  clientGameState._look = null;
+  clientGameState._lookT = null;
+  touch.keys = {};
+  touch.stick = null;
+});
+canvas.addEventListener('pointercancel', () => {
+  mouse.down = false;
+  clientGameState._look = null;
+  clientGameState._lookT = null;
+});
 canvas.addEventListener('mouseleave', () => {
+  clientGameState._look = null;
+  clientGameState._lookT = null;
   mouse.in = false;
   mouse.down = false;
   clientGameState.hover = 0;
   clientGameState.hoverStellar = null;
 });
-canvas.addEventListener('mousedown', (mouseEvent) => {
+flightEngine.engine.input.pointers.on('down', (event) => {
+  const mouseEvent = event.nativeEvent as MouseEvent;
   if (!clientGameState.you || clientGameState.landed) return;
   audio.unlock();
   if (document.activeElement && document.activeElement.tagName === 'INPUT')
@@ -2240,9 +2260,14 @@ canvas.addEventListener('mousedown', (mouseEvent) => {
   }
   // Only genuinely empty space clears combat selection; resource clicks retain it.
   if (!rock) setTarget(0);
-  if (clientGameState.opts.mouseAim) mouse.down = true; // mouse-aim mode: hold the left button on open space to fire
+  if (clientGameState.opts.mouseAim) mouse.down = flightEngine.input.pointerHeld; // mouse-aim mode: hold the left button on open space to fire
 });
-window.addEventListener('mouseup', (mouseEvent) => {
+// A release cannot wait behind queued pointer processing or evidence-heavy frames.
+window.addEventListener('pointerup', () => {
+  mouse.down = false;
+});
+flightEngine.engine.input.pointers.on('up', (event) => {
+  const mouseEvent = event.nativeEvent as MouseEvent;
   mouse.down = false;
   if (mouseEvent.button === 2 && clientGameState._look) {
     if (!clientGameState._look.moved && performance.now() - clientGameState._look.t < 300)
@@ -2471,6 +2496,7 @@ function renderKeys(): void {
  * @param keysFirst Whether to scroll directly down to the keybinding section
  */
 function openOpts(keysFirst?: boolean | PointerEvent): void {
+  flightEngine.input.clear();
   audio.ui('open', 0.6);
   elementById2('opts').classList.remove('hidden');
   for (const cHECKS of CHECKS)
@@ -2664,15 +2690,16 @@ window.addEventListener(
   true,
 );
 
+// Read-only diagnostic access is useful for support and browser regression assertions.
+Object.defineProperty(window, 'RiftEngine', { value: flightEngine });
+
 // ------------------------------------------------------------------ loops
 /**
  * Synchronizes canvas and radar internal pixel resolutions with device pixel ratio.
  */
 function resize(): void {
   const radius = window.devicePixelRatio || 1;
-  canvas.width = canvas.clientWidth * radius;
-  canvas.height = canvas.clientHeight * radius;
-  canvasRenderingContext2D.imageSmoothingEnabled = true;
+  flightEngine.resize();
   const htmlCanvasElement = elementById2('radar');
   htmlCanvasElement.width = Math.round(htmlCanvasElement.clientWidth * radius);
   htmlCanvasElement.height = Math.round(htmlCanvasElement.clientHeight * radius);
@@ -2956,8 +2983,9 @@ function fixedTick(): void {
     );
     input.turn = Math.abs(wrap2) < computedShipStats!.turn * tickDuration ? 0 : Math.sign(wrap2);
   }
-  if (typing() && !clientGameState.auto) {
-    input.thrust = input.turn = input.rev = input.ab = input.fire1 = input.fire2 = 0;
+  if (typing()) {
+    input.fire1 = input.fire2 = 0;
+    if (!clientGameState.auto) input.thrust = input.turn = input.rev = input.ab = 0;
   } // the autopilot keeps flying while you chat
   audio.engine(input.thrust ? (input.ab ? 1.6 : 1) : input.rev ? 0.3 : 0); // the engine hum follows your throttle
   sequence++;
@@ -2985,8 +3013,8 @@ function fixedTick(): void {
   clientGameState.view.fl = (input.thrust ? 1 : 0) | (input.ab ? 2 : 0);
 }
 /**
- * Main animation and rendering frame loop driven by requestAnimationFrame.
- * @param time High-resolution timestamp from requestAnimationFrame
+ * Presentation and prediction update driven exclusively by the Excalibur scene.
+ * @param time High-resolution engine update timestamp
  */
 function frame(time: number): void {
   const deltaTime = Math.min(0.1, (time - last) / 1000);
@@ -3002,11 +3030,10 @@ function frame(time: number): void {
     clientGameState.lookY =
       (clientGameState.lookY || 0) + (targetLook[1] - (clientGameState.lookY || 0)) * entryKey;
   } // 2.1 look-ahead
-  account += deltaTime;
-  while (account >= tickDuration) {
+  account = advanceFlightClock(account, deltaTime, tickDuration, () => {
     fixedTick();
-    account -= tickDuration;
-  }
+    flightEngine.input.consumeTick();
+  });
   const clientView = clientGameState.view;
   if (clientView) {
     // smooth out prediction corrections
@@ -3038,29 +3065,13 @@ function frame(time: number): void {
     shot.rx = shot.x + shot.vx * entryKey;
     shot.ry = shot.y + shot.vy * entryKey;
   }
-  const shotsView = clientGameState.shots.map((state) => ({
-    ...state,
-    x: state.rx ?? state.x,
-    y: state.ry ?? state.y,
-  }));
-  if (clientGameState.sys)
-    draw(
-      { ...clientGameState, shots: shotsView, view: clientView, hostile: clientGameState.hostile },
-      canvasRenderingContext2D,
-      canvas.width,
-      canvas.height,
-      deltaTime,
-      currentTime,
-    );
-  else {
-    canvasRenderingContext2D.fillStyle = '#000';
-    canvasRenderingContext2D.fillRect(0, 0, canvas.width, canvas.height);
-  }
   radar(clientGameState, canvasRenderingContext2D2);
   renderHud();
-  requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+void flightEngine.start().catch((error) => {
+  console.error('Flight engine failed to start', error);
+  toast('Graphics could not start. Reload to retry.');
+});
 setInterval(() => {
   if ((clientGameState.ctab === 'station' || clientGameState.ctab === 'ops') && clientGameState.you)
     refreshCompanion();
@@ -3092,7 +3103,7 @@ function cancelQuit() {
 function openQuit() {
   quitFocus = document.activeElement as HTMLElement | null;
   clientGameState.quitting = true;
-  keys = {};
+  flightEngine.input.clear();
   mouse.down = false;
   touch.keys = {};
   touch.stick = null;
@@ -3134,7 +3145,7 @@ async function logOut() {
   for (const [entryKey, value] of Object.entries(sessionDefaults!))
     sessionState[entryKey] = typeof value === 'function' ? value : structuredClone(value);
   Object.assign(clientGameState, keep);
-  keys = {};
+  flightEngine.input.clear();
   history = [];
   sequence = account = _lastSnapT = 0;
   mouse.down = mouse.in = false;

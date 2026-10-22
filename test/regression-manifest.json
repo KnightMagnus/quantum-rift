@@ -2,6 +2,7 @@
   "schema": 1,
   "unit": [
     "coverage-inventory.ts",
+    "excalibur-contracts.ts",
     "v03.ts",
     "v04.ts",
     "v05.ts",
@@ -128,7 +129,8 @@
     "sidebar-sizing-browser.ts",
     "mission-ui-browser.ts",
     "radio-browser.ts",
-    "save-generator-browser.ts"
+    "save-generator-browser.ts",
+    "excalibur-runtime-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -1160,6 +1162,25 @@
         "packaged-runtime.ts"
       ],
       "asserts": "Preserves ordered graph traversal, freight and nearest-buyer parity; signed cargo capacity, mission reservations and HTML escaping compatibility across original consumers. Exact original random streams, hashes, galaxy, rivals, arcs and radio tours remain unchanged. Source and compiled online/Solo startup serve executable browser modules; release archives rebuild and include compiled output, exclude private/stale files and launch without dependencies."
+    },
+    {
+      "id": "excalibur-runtime",
+      "services": [],
+      "owners": [
+        "client/engine.ts",
+        "client/space-scene.ts",
+        "client/engine-input.ts",
+        "client/graphics-backend.ts",
+        "client/world-actors.ts"
+      ],
+      "tests": [
+        "excalibur-runtime-browser.ts",
+        "excalibur-contracts.ts",
+        "input-audio-browser.ts",
+        "logout-browser.ts",
+        "sidebar-sizing-browser.ts"
+      ],
+      "asserts": "Production Engine, uncropped zoom-2 projectile pixel references across headings/speeds/iteration orders/backends, native decoded Sprite entities, display-only physics, original sequenced input stream, typing/blur, physical-pixel camera at DPR1/2 and zoom limits, responsive resizing, actor cleanup, local modules and no unsafe-eval."
     }
   ],
   "routes": {

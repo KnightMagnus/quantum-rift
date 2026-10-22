@@ -297,7 +297,7 @@ import { planetSprite } from './planets.ts';
 import { drawStar } from './stars.ts';
 import { drawExoticSky, drawPulseBoundary } from './exotic_scenery.ts';
 import { missionTargets } from './missions.ts';
-import { drawShipChat } from './chat_bubbles.ts';
+import { drawShipChat, updateShipChat } from './chat_bubbles.ts';
 import { loopFrames } from './animation_frames.ts';
 import { WORMHOLE } from './wormhole_animation.ts';
 import { shipBank } from './ship_banking.ts';
@@ -544,7 +544,7 @@ const objImgs: Record<string, HTMLImageElement> = {}; // rendered asteroids and 
  * @param count Object name identifier
  * @returns Cached or newly created image
  */
-function objImg(count: string): HTMLImageElement {
+export function objImg(count: string): HTMLImageElement {
   let htmlImageElement = objImgs[count];
   if (!htmlImageElement) {
     htmlImageElement = objImgs[count] = new Image();
@@ -2177,7 +2177,7 @@ function glowSprite(column: string): HTMLCanvasElement {
  * @param positionZ Zoom scale factor
  * @param currentTime Timestamp in milliseconds
  */
-function drawShot(
+export function drawShot(
   canvasRenderingContext2D: CanvasRenderingContext2D,
   state: RenderShot & { col: string; look: string },
   positionX: number,
@@ -2258,17 +2258,6 @@ function drawShot(
       canvasRenderingContext2D.beginPath();
       canvasRenderingContext2D.arc(positionX, positionY, radius * 0.45, 0, 6.283);
       canvasRenderingContext2D.fill();
-      if (look === 'magma' && Math.random() < 0.5)
-        visualEffects.push({
-          x: state.x,
-          y: state.y,
-          vx: (Math.random() - 0.5) * 20,
-          vy: (Math.random() - 0.5) * 20,
-          life: 0.35,
-          max: 0.35,
-          c: '#ff8a30',
-          s: 1.6,
-        });
       break;
     }
     case 'missile':
@@ -2292,17 +2281,6 @@ function drawShot(
         6.283,
       );
       canvasRenderingContext2D.fill();
-      if (Math.random() < 0.8)
-        visualEffects.push({
-          x: state.x - unitX * 8,
-          y: state.y - unitY * 8,
-          vx: (Math.random() - 0.5) * 10,
-          vy: (Math.random() - 0.5) * 10,
-          smoke: true,
-          life: 0.6,
-          max: 0.6,
-          r: 3,
-        });
       break;
     }
     case 'torp':
@@ -2341,17 +2319,6 @@ function drawShot(
         );
         canvasRenderingContext2D.stroke();
       }
-      if (Math.random() < 0.6)
-        visualEffects.push({
-          x: state.x,
-          y: state.y,
-          vx: 0,
-          vy: 0,
-          life: 0.4,
-          max: 0.4,
-          c: column,
-          s: 2.2,
-        });
       break;
     }
     case 'mine': {
@@ -2437,7 +2404,7 @@ const rockCache = new Map<number, HTMLCanvasElement>();
  * @param renderRock Mining rock or gas pocket definition
  * @returns Off-screen canvas sprite
  */
-function rockImage(renderRock: RenderRock): HTMLCanvasElement {
+export function rockImage(renderRock: RenderRock): HTMLCanvasElement {
   const entryKey = renderRock.id;
   if (rockCache.has(entryKey)) return rockCache.get(entryKey)!;
   const radius = renderRock.r,
@@ -2564,6 +2531,14 @@ const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae
 
 // ------------------------------------------------------------------ main draw
 let tagRects: [number, number, number][] = []; // name tags already drawn this frame, so close ships' tags stack instead of overlapping
+
+let worldProjection: ((x: number, y: number) => { x: number; y: number }) | undefined;
+/** Engine projection for flight; standalone canvas previews retain their own local camera. */
+export function setWorldProjection(
+  project: (x: number, y: number) => { x: number; y: number },
+): void {
+  worldProjection = project;
+}
 /**
  * Master rendering pipeline: backdrop, stellar bodies, mining fields, loot, shots, beams, ships, effects, and HUD overlays.
  * @param clientGameState Game state object
@@ -2580,6 +2555,7 @@ export function draw(
   height2: number,
   deltaTime: number,
   currentTime: number,
+  layer: 'all' | 'background' | 'middle' | 'foreground' = 'all',
 ): void {
   tagRects = [];
   const clientView = clientGameState.view,
@@ -2589,458 +2565,517 @@ export function draw(
   let centerX = dock ? dock.x : (clientView ? clientView.rx : 0) + (clientGameState.lookX || 0),
     centerY = dock ? dock.y : (clientView ? clientView.ry : 0) + (clientGameState.lookY || 0); // hold right-click to look ahead
   Object.assign(cameraState, { cx: centerX, cy: centerY, z: zoom2, W: width2, H: height2 }); // un-shaken camera, used for mouse picking
-  if (shake && clientGameState.opts && clientGameState.opts.shake !== false) {
+  if (layer === 'all' && shake && clientGameState.opts && clientGameState.opts.shake !== false) {
     centerX += ((Math.random() - 0.5) * shake * 2) / zoom2;
     centerY += ((Math.random() - 0.5) * shake * 2) / zoom2;
   }
-  const screenX = (positionX: number) => (positionX - centerX) * zoom2 + width2 / 2,
-    screenY = (positionY: number) => (positionY - centerY) * zoom2 + height2 / 2;
-  canvasRenderingContext2D.fillStyle = '#000';
-  canvasRenderingContext2D.fillRect(0, 0, width2, height2);
-  if (!starSystem) return;
-  const stars2 = stars(starSystem.id),
-    hexToRgb2 = hexToRgb(FACTIONS[starSystem.faction].color);
-  for (const [nextX, nextY, nextRadius, entryKey] of stars2.neb) {
-    // faint nebulae in the faction's colour
-    const positionX = screenX(nextX * 0.4 + centerX * 0.6),
-      positionY = screenY(nextY * 0.4 + centerY * 0.6),
-      radius = nextRadius * zoom2 * 0.6;
-    const canvasGradient = canvasRenderingContext2D.createRadialGradient(
-      positionX,
-      positionY,
-      0,
-      positionX,
-      positionY,
-      radius,
-    );
-    canvasGradient.addColorStop(
-      0,
-      `rgba(${hexToRgb2[0]},${hexToRgb2[1]},${hexToRgb2[2]},${0.05 + entryKey * 0.05})`,
-    );
-    canvasGradient.addColorStop(1, 'rgba(0,0,0,0)');
-    canvasRenderingContext2D.fillStyle = canvasGradient;
-    canvasRenderingContext2D.fillRect(
-      positionX - radius,
-      positionY - radius,
-      radius * 2,
-      radius * 2,
-    );
-  }
-  drawDecorFar(
-    canvasRenderingContext2D,
-    starSystem,
-    width2,
-    height2,
-    zoom2,
-    centerX,
-    centerY,
-    currentTime,
-  ); // galaxies and gas clouds far behind the stars
-  for (const { L: length, depth, size } of stars2.layers) {
-    for (const [startX, startY, secondValue, textWidth] of length) {
-      let positionX = (startX - centerX * depth) % 2048,
-        positionY = (startY - centerY * depth) % 2048;
-      if (positionX < 0) positionX += 2048;
-      if (positionY < 0) positionY += 2048;
-      for (let positionX22 = positionX; positionX22 < width2 + 2048; positionX22 += 2048)
-        for (let positionY22 = positionY; positionY22 < height2 + 2048; positionY22 += 2048) {
-          if (positionX22 > width2 || positionY22 > height2) continue;
-          const value = Math.round(
-            255 * secondValue * (0.85 + 0.15 * Math.sin(currentTime / 700 + textWidth * 20)),
-          );
-          canvasRenderingContext2D.fillStyle = `rgb(${value},${value},${Math.min(255, value + 20)})`;
-          canvasRenderingContext2D.fillRect(positionX22, positionY22, size, size);
-        }
+  const screenX = (positionX: number) =>
+      layer !== 'all' && worldProjection
+        ? worldProjection(positionX, centerY).x
+        : (positionX - centerX) * zoom2 + width2 / 2,
+    screenY = (positionY: number) =>
+      layer !== 'all' && worldProjection
+        ? worldProjection(centerX, positionY).y
+        : (positionY - centerY) * zoom2 + height2 / 2;
+  if (layer === 'all' || layer === 'background') {
+    canvasRenderingContext2D.fillStyle = '#000';
+    canvasRenderingContext2D.fillRect(0, 0, width2, height2);
+    if (!starSystem) return;
+    const stars2 = stars(starSystem.id),
+      hexToRgb2 = hexToRgb(FACTIONS[starSystem.faction].color);
+    for (const [nextX, nextY, nextRadius, entryKey] of stars2.neb) {
+      // faint nebulae in the faction's colour
+      const positionX = screenX(nextX * 0.4 + centerX * 0.6),
+        positionY = screenY(nextY * 0.4 + centerY * 0.6),
+        radius = nextRadius * zoom2 * 0.6;
+      const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+        positionX,
+        positionY,
+        0,
+        positionX,
+        positionY,
+        radius,
+      );
+      canvasGradient.addColorStop(
+        0,
+        `rgba(${hexToRgb2[0]},${hexToRgb2[1]},${hexToRgb2[2]},${0.05 + entryKey * 0.05})`,
+      );
+      canvasGradient.addColorStop(1, 'rgba(0,0,0,0)');
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.fillRect(
+        positionX - radius,
+        positionY - radius,
+        radius * 2,
+        radius * 2,
+      );
     }
-  }
-  drawDecorMid(
-    canvasRenderingContext2D,
-    starSystem,
-    width2,
-    height2,
-    zoom2,
-    centerX,
-    centerY,
-    currentTime,
-  );
-  drawDecorNear(
-    canvasRenderingContext2D,
-    starSystem,
-    width2,
-    height2,
-    zoom2,
-    screenX,
-    screenY,
-    currentTime,
-  ); // 2.2 scenery in the system itself
-  drawPulseBoundary(canvasRenderingContext2D, starSystem, screenX, screenY, zoom2);
-  // stellars
-  let position;
-  for (const rawStellarBody of starSystem.stellars) {
-    const positionX = screenX(rawStellarBody.x),
-      positionY = screenY(rawStellarBody.y);
-    if (
-      positionX < -rawStellarBody.r * 3 * zoom2 ||
-      positionY < -rawStellarBody.r * 3 * zoom2 ||
-      positionX > width2 + rawStellarBody.r * 3 * zoom2 ||
-      positionY > height2 + rawStellarBody.r * 3 * zoom2
-    )
-      continue;
-    let label = rawStellarBody.name;
-    if (rawStellarBody.wormhole) {
-      // Original periodic Gateway frames; interpolate only to smooth display cadence.
-      if (wormImg.complete && wormImg.naturalWidth) {
-        const frames = loopFrames(currentTime, WORMHOLE.frames, WORMHOLE.frameMs),
-          fileSystem = wormImg.naturalWidth / WORMHOLE.columns,
-          state = rawStellarBody.r * 2.6 * zoom2;
-        canvasRenderingContext2D.save();
-        canvasRenderingContext2D.translate(positionX, positionY);
-        canvasRenderingContext2D.rotate(currentTime / 9000);
-        canvasRenderingContext2D.globalCompositeOperation = 'lighter';
-        // Additive weights preserve brightness, including the wrap from frame 31 to 0.
-        for (const [factionId, weight] of [
-          [frames.first, 1 - frames.mix],
-          [frames.second, frames.mix],
-        ]) {
-          canvasRenderingContext2D.globalAlpha = weight;
+    drawDecorFar(
+      canvasRenderingContext2D,
+      starSystem,
+      width2,
+      height2,
+      zoom2,
+      centerX,
+      centerY,
+      currentTime,
+    ); // galaxies and gas clouds far behind the stars
+    for (const { L: length, depth, size } of stars2.layers) {
+      for (const [startX, startY, secondValue, textWidth] of length) {
+        let positionX = (startX - centerX * depth) % 2048,
+          positionY = (startY - centerY * depth) % 2048;
+        if (positionX < 0) positionX += 2048;
+        if (positionY < 0) positionY += 2048;
+        for (let positionX22 = positionX; positionX22 < width2 + 2048; positionX22 += 2048)
+          for (let positionY22 = positionY; positionY22 < height2 + 2048; positionY22 += 2048) {
+            if (positionX22 > width2 || positionY22 > height2) continue;
+            const value = Math.round(
+              255 * secondValue * (0.85 + 0.15 * Math.sin(currentTime / 700 + textWidth * 20)),
+            );
+            canvasRenderingContext2D.fillStyle = `rgb(${value},${value},${Math.min(255, value + 20)})`;
+            canvasRenderingContext2D.fillRect(positionX22, positionY22, size, size);
+          }
+      }
+    }
+    drawDecorMid(
+      canvasRenderingContext2D,
+      starSystem,
+      width2,
+      height2,
+      zoom2,
+      centerX,
+      centerY,
+      currentTime,
+    );
+    drawDecorNear(
+      canvasRenderingContext2D,
+      starSystem,
+      width2,
+      height2,
+      zoom2,
+      screenX,
+      screenY,
+      currentTime,
+    ); // 2.2 scenery in the system itself
+    drawPulseBoundary(canvasRenderingContext2D, starSystem, screenX, screenY, zoom2);
+    // stellars
+    let position;
+    for (const rawStellarBody of starSystem.stellars) {
+      const positionX = screenX(rawStellarBody.x),
+        positionY = screenY(rawStellarBody.y);
+      if (
+        positionX < -rawStellarBody.r * 3 * zoom2 ||
+        positionY < -rawStellarBody.r * 3 * zoom2 ||
+        positionX > width2 + rawStellarBody.r * 3 * zoom2 ||
+        positionY > height2 + rawStellarBody.r * 3 * zoom2
+      )
+        continue;
+      let label = rawStellarBody.name;
+      if (rawStellarBody.wormhole) {
+        // Original periodic Gateway frames; interpolate only to smooth display cadence.
+        if (wormImg.complete && wormImg.naturalWidth) {
+          const frames = loopFrames(currentTime, WORMHOLE.frames, WORMHOLE.frameMs),
+            fileSystem = wormImg.naturalWidth / WORMHOLE.columns,
+            state = rawStellarBody.r * 2.6 * zoom2;
+          canvasRenderingContext2D.save();
+          canvasRenderingContext2D.translate(positionX, positionY);
+          canvasRenderingContext2D.rotate(currentTime / 9000);
+          canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+          // Additive weights preserve brightness, including the wrap from frame 31 to 0.
+          for (const [factionId, weight] of [
+            [frames.first, 1 - frames.mix],
+            [frames.second, frames.mix],
+          ]) {
+            canvasRenderingContext2D.globalAlpha = weight;
+            canvasRenderingContext2D.drawImage(
+              wormImg,
+              (factionId % WORMHOLE.columns) * fileSystem,
+              Math.floor(factionId / WORMHOLE.columns) * fileSystem,
+              fileSystem,
+              fileSystem,
+              -state / 2,
+              -state / 2,
+              state,
+              state,
+            );
+          }
+          canvasRenderingContext2D.restore();
+        }
+      } else if (rawStellarBody.hub) {
+        // the Quantum Station hub turns slowly; neighbouring frames are cross-faded so the rotation is smooth
+        if (hubImg.complete && hubImg.naturalWidth) {
+          const fileSystem = hubImg.naturalWidth / 6,
+            state = rawStellarBody.r * 2.13 * zoom2,
+            time = (currentTime / 1000 / HUB_PERIOD) * HUB_FRAMES,
+            factionId = Math.floor(time) % HUB_FRAMES,
+            factionId1 = (factionId + 1) % HUB_FRAMES,
+            entryKey = time - Math.floor(time);
           canvasRenderingContext2D.drawImage(
-            wormImg,
-            (factionId % WORMHOLE.columns) * fileSystem,
-            Math.floor(factionId / WORMHOLE.columns) * fileSystem,
+            hubImg,
+            (factionId % 6) * fileSystem,
+            Math.floor(factionId / 6) * fileSystem,
             fileSystem,
             fileSystem,
-            -state / 2,
-            -state / 2,
+            positionX - state / 2,
+            positionY - state / 2,
             state,
             state,
           );
+          canvasRenderingContext2D.globalAlpha = entryKey;
+          canvasRenderingContext2D.drawImage(
+            hubImg,
+            (factionId1 % 6) * fileSystem,
+            Math.floor(factionId1 / 6) * fileSystem,
+            fileSystem,
+            fileSystem,
+            positionX - state / 2,
+            positionY - state / 2,
+            state,
+            state,
+          );
+          canvasRenderingContext2D.globalAlpha = 1;
         }
-        canvasRenderingContext2D.restore();
-      }
-    } else if (rawStellarBody.hub) {
-      // the Quantum Station hub turns slowly; neighbouring frames are cross-faded so the rotation is smooth
-      if (hubImg.complete && hubImg.naturalWidth) {
-        const fileSystem = hubImg.naturalWidth / 6,
-          state = rawStellarBody.r * 2.13 * zoom2,
-          time = (currentTime / 1000 / HUB_PERIOD) * HUB_FRAMES,
-          factionId = Math.floor(time) % HUB_FRAMES,
-          factionId1 = (factionId + 1) % HUB_FRAMES,
-          entryKey = time - Math.floor(time);
+      } else if (rawStellarBody.site) {
+        const state = clientGameState.sites && clientGameState.sites[rawStellarBody.id],
+          operations = state ? state.ops : 0,
+          htmlImageElement = stationImgs[operations];
+        if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
+          const state4 = rawStellarBody.r * (2.2 + operations * 0.25) * zoom2;
+          canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+          canvasRenderingContext2D.drawImage(
+            htmlImageElement,
+            positionX - state4 / 2,
+            positionY - state4 / 2,
+            state4,
+            state4,
+          );
+          canvasRenderingContext2D.globalCompositeOperation = 'source-over';
+        }
+        label = state
+          ? `${state.owner}'s Personal Station · Station Tier ${operations}`
+          : 'Derelict Station Hull (unclaimed)';
+      } else if (
+        (rawStellarBody.kind === 'planet' || rawStellarBody.kind === 'moon') &&
+        (position = planetSprite(rawStellarBody, currentTime))
+      ) {
+        const width = position.S * position.scale * zoom2;
         canvasRenderingContext2D.drawImage(
-          hubImg,
-          (factionId % 6) * fileSystem,
-          Math.floor(factionId / 6) * fileSystem,
-          fileSystem,
-          fileSystem,
-          positionX - state / 2,
-          positionY - state / 2,
-          state,
-          state,
+          position.canvas,
+          positionX - width / 2,
+          positionY - width / 2,
+          width,
+          width,
         );
-        canvasRenderingContext2D.globalAlpha = entryKey;
+      } // procedural planets (old art until built)
+      else if (rawStellarBody.kind === 'station' && (position = stationSprite(rawStellarBody))) {
+        const secondState = rawStellarBody.r * 2.5 * zoom2;
         canvasRenderingContext2D.drawImage(
-          hubImg,
-          (factionId1 % 6) * fileSystem,
-          Math.floor(factionId1 / 6) * fileSystem,
-          fileSystem,
-          fileSystem,
-          positionX - state / 2,
-          positionY - state / 2,
-          state,
-          state,
+          position,
+          positionX - secondState / 2,
+          positionY - secondState / 2,
+          secondState,
+          secondState,
         );
-        canvasRenderingContext2D.globalAlpha = 1;
-      }
-    } else if (rawStellarBody.site) {
-      const state = clientGameState.sites && clientGameState.sites[rawStellarBody.id],
-        operations = state ? state.ops : 0,
-        htmlImageElement = stationImgs[operations];
-      if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
-        const state4 = rawStellarBody.r * (2.2 + operations * 0.25) * zoom2;
-        canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+      } // rendered stations
+      else {
+        const htmlCanvasElement = planetImage(rawStellarBody);
         canvasRenderingContext2D.drawImage(
-          htmlImageElement,
-          positionX - state4 / 2,
-          positionY - state4 / 2,
-          state4,
-          state4,
+          htmlCanvasElement,
+          positionX - (htmlCanvasElement.width * zoom2) / 2,
+          positionY - (htmlCanvasElement.height * zoom2) / 2,
+          htmlCanvasElement.width * zoom2,
+          htmlCanvasElement.height * zoom2,
         );
-        canvasRenderingContext2D.globalCompositeOperation = 'source-over';
       }
-      label = state
-        ? `${state.owner}'s Personal Station · Station Tier ${operations}`
-        : 'Derelict Station Hull (unclaimed)';
-    } else if (
-      (rawStellarBody.kind === 'planet' || rawStellarBody.kind === 'moon') &&
-      (position = planetSprite(rawStellarBody, currentTime))
-    ) {
-      const width = position.S * position.scale * zoom2;
-      canvasRenderingContext2D.drawImage(
-        position.canvas,
-        positionX - width / 2,
-        positionY - width / 2,
-        width,
-        width,
-      );
-    } // procedural planets (old art until built)
-    else if (rawStellarBody.kind === 'station' && (position = stationSprite(rawStellarBody))) {
-      const secondState = rawStellarBody.r * 2.5 * zoom2;
-      canvasRenderingContext2D.drawImage(
-        position,
-        positionX - secondState / 2,
-        positionY - secondState / 2,
-        secondState,
-        secondState,
-      );
-    } // rendered stations
-    else {
-      const htmlCanvasElement = planetImage(rawStellarBody);
-      canvasRenderingContext2D.drawImage(
-        htmlCanvasElement,
-        positionX - (htmlCanvasElement.width * zoom2) / 2,
-        positionY - (htmlCanvasElement.height * zoom2) / 2,
-        htmlCanvasElement.width * zoom2,
-        htmlCanvasElement.height * zoom2,
-      );
-    }
-    if (
-      clientGameState.hoverStellar === rawStellarBody.id &&
-      clientGameState.navStellar !== rawStellarBody.id
-    ) {
-      canvasRenderingContext2D.strokeStyle = 'rgba(255,255,255,.25)';
-      canvasRenderingContext2D.setLineDash([3, 6]);
-      canvasRenderingContext2D.beginPath();
-      canvasRenderingContext2D.arc(
-        positionX,
-        positionY,
-        rawStellarBody.r * zoom2 * 1.15 + 8,
-        0,
-        Math.PI * 2,
-      );
-      canvasRenderingContext2D.stroke();
-      canvasRenderingContext2D.setLineDash([]);
-    }
-    if (clientGameState.navStellar === rawStellarBody.id) {
-      canvasRenderingContext2D.strokeStyle = 'rgba(120,200,255,.6)';
-      canvasRenderingContext2D.setLineDash([6, 6]);
-      canvasRenderingContext2D.beginPath();
-      canvasRenderingContext2D.arc(
-        positionX,
-        positionY,
-        rawStellarBody.r * zoom2 * 1.15 + 8,
-        0,
-        Math.PI * 2,
-      );
-      canvasRenderingContext2D.stroke();
-      canvasRenderingContext2D.setLineDash([]);
-    }
-    canvasRenderingContext2D.fillStyle = 'rgba(210,220,240,.8)';
-    canvasRenderingContext2D.font = '15px "Pixelify Sans", sans-serif';
-    canvasRenderingContext2D.textAlign = 'center';
-    canvasRenderingContext2D.fillText(
-      label,
-      positionX,
-      positionY +
-        rawStellarBody.r * zoom2 +
-        (rawStellarBody.hub ? -rawStellarBody.r * zoom2 * 0.25 : 18),
-    );
-    const colOwner =
-      clientGameState.world &&
-      clientGameState.world.colonies &&
-      clientGameState.world.colonies[rawStellarBody.id];
-    if (colOwner) {
-      canvasRenderingContext2D.fillStyle = '#ffd27a';
-      canvasRenderingContext2D.font = '14px "Pixelify Sans", sans-serif';
+      if (
+        clientGameState.hoverStellar === rawStellarBody.id &&
+        clientGameState.navStellar !== rawStellarBody.id
+      ) {
+        canvasRenderingContext2D.strokeStyle = 'rgba(255,255,255,.25)';
+        canvasRenderingContext2D.setLineDash([3, 6]);
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.arc(
+          positionX,
+          positionY,
+          rawStellarBody.r * zoom2 * 1.15 + 8,
+          0,
+          Math.PI * 2,
+        );
+        canvasRenderingContext2D.stroke();
+        canvasRenderingContext2D.setLineDash([]);
+      }
+      if (clientGameState.navStellar === rawStellarBody.id) {
+        canvasRenderingContext2D.strokeStyle = 'rgba(120,200,255,.6)';
+        canvasRenderingContext2D.setLineDash([6, 6]);
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.arc(
+          positionX,
+          positionY,
+          rawStellarBody.r * zoom2 * 1.15 + 8,
+          0,
+          Math.PI * 2,
+        );
+        canvasRenderingContext2D.stroke();
+        canvasRenderingContext2D.setLineDash([]);
+      }
+      canvasRenderingContext2D.fillStyle = 'rgba(210,220,240,.8)';
+      canvasRenderingContext2D.font = '15px "Pixelify Sans", sans-serif';
+      canvasRenderingContext2D.textAlign = 'center';
       canvasRenderingContext2D.fillText(
-        `${colOwner}'s colony`,
+        label,
         positionX,
-        positionY + rawStellarBody.r * zoom2 + 34,
+        positionY +
+          rawStellarBody.r * zoom2 +
+          (rawStellarBody.hub ? -rawStellarBody.r * zoom2 * 0.25 : 18),
       );
+      const colOwner =
+        clientGameState.world &&
+        clientGameState.world.colonies &&
+        clientGameState.world.colonies[rawStellarBody.id];
+      if (colOwner) {
+        canvasRenderingContext2D.fillStyle = '#ffd27a';
+        canvasRenderingContext2D.font = '14px "Pixelify Sans", sans-serif';
+        canvasRenderingContext2D.fillText(
+          `${colOwner}'s colony`,
+          positionX,
+          positionY + rawStellarBody.r * zoom2 + 34,
+        );
+      }
     }
   }
-  // asteroids, gas pockets and crystal clusters
-  for (const entryKey of clientGameState.rocks || []) {
-    if (!entryKey.hp) continue;
-    const positionX = screenX(entryKey.x),
-      positionY = screenY(entryKey.y),
-      radius = entryKey.r * zoom2;
-    if (
-      positionX < -radius * 2 ||
-      positionY < -radius * 2 ||
-      positionX > width2 + radius * 2 ||
-      positionY > height2 + radius * 2
-    )
-      continue;
-    const rowIndex =
-        entryKey.ore !== 'gas' &&
-        objImg(
-          entryKey.ore === 'shards'
-            ? 'crys' + (Math.abs(entryKey.id) % 4)
-            : 'rock' + (Math.abs(entryKey.id) % 10),
-        ),
-      radiusRatio = rowIndex && rowIndex.complete && rowIndex.naturalWidth; // rendered asteroids
-    const image = radiusRatio ? rowIndex : rockImage(entryKey),
-      secondState = radiusRatio ? entryKey.r * 2.35 * zoom2 : image.width * zoom2;
-    canvasRenderingContext2D.save();
-    canvasRenderingContext2D.translate(positionX, positionY);
-    canvasRenderingContext2D.rotate(
-      (currentTime / 1000) * (entryKey.ore === 'gas' ? 0.05 : 0.12) * (entryKey.id % 2 ? 1 : -1) +
-        entryKey.id,
-    );
-    canvasRenderingContext2D.globalAlpha = 0.45 + (0.55 * entryKey.hp) / 100;
-    if (entryKey.ore === 'gas') canvasRenderingContext2D.globalCompositeOperation = 'lighter';
-    canvasRenderingContext2D.drawImage(
-      image,
-      -secondState / 2,
-      -secondState / 2,
-      secondState,
-      secondState,
-    );
-    canvasRenderingContext2D.restore();
-    canvasRenderingContext2D.globalAlpha = 1;
-    canvasRenderingContext2D.globalCompositeOperation = 'source-over';
-    if (entryKey.hp < 100 && entryKey.hp > 0) {
-      canvasRenderingContext2D.fillStyle = 'rgba(0,0,0,.6)';
-      canvasRenderingContext2D.fillRect(
-        positionX - radius * 0.6,
-        positionY + radius + 4,
-        radius * 1.2,
-        3,
-      );
-      canvasRenderingContext2D.fillStyle = '#e8c070';
-      canvasRenderingContext2D.fillRect(
-        positionX - radius * 0.6,
-        positionY + radius + 4,
-        (radius * 1.2 * entryKey.hp) / 100,
-        3,
-      );
-    }
-  }
-  drawTowing(clientGameState, canvasRenderingContext2D, screenX, screenY, zoom2, width2, height2);
-  drawMining(
-    clientGameState,
-    canvasRenderingContext2D,
-    screenX,
-    screenY,
-    zoom2,
-    width2,
-    height2,
-    currentTime,
-  );
-  for (const [pixelX, pixelY] of salvagePoints(clientGameState)) {
-    const positionX = screenX(pixelX),
-      positionY = screenY(pixelY);
-    canvasRenderingContext2D.strokeStyle = 'rgba(255,200,90,.6)';
-    canvasRenderingContext2D.lineWidth = 1.5;
-    canvasRenderingContext2D.setLineDash([4, 6]);
-    canvasRenderingContext2D.beginPath();
-    canvasRenderingContext2D.arc(positionX, positionY, 160 * zoom2, 0, 6.283);
-    canvasRenderingContext2D.stroke();
-    canvasRenderingContext2D.setLineDash([]);
-    canvasRenderingContext2D.fillStyle = '#ffc85a';
-    canvasRenderingContext2D.font = '14px "Pixelify Sans", sans-serif';
-    canvasRenderingContext2D.textAlign = 'center';
-    canvasRenderingContext2D.fillText('SALVAGE', positionX, positionY - 160 * zoom2 - 6);
-  } // 2.4 quest salvage
-  // survey points for an active survey job here
-  for (const [pixelX, pixelY] of surveyPoints(clientGameState)) {
-    const positionX = screenX(pixelX),
-      positionY = screenY(pixelY);
-    canvasRenderingContext2D.strokeStyle = 'rgba(90,216,255,.55)';
-    canvasRenderingContext2D.lineWidth = 1.5;
-    canvasRenderingContext2D.setLineDash([8, 8]);
-    canvasRenderingContext2D.beginPath();
-    canvasRenderingContext2D.arc(positionX, positionY, 450 * zoom2, 0, 6.283);
-    canvasRenderingContext2D.stroke();
-    canvasRenderingContext2D.setLineDash([]);
-    canvasRenderingContext2D.fillStyle = '#5ad8ff';
-    canvasRenderingContext2D.font = '14px "Pixelify Sans", sans-serif';
-    canvasRenderingContext2D.textAlign = 'center';
-    canvasRenderingContext2D.fillText('SURVEY POINT', positionX, positionY);
-  }
-  // loot: credits (gold), salvage crates (blue), ore (brown), gas (green), crystal shards (violet)
-  for (const loot2 of clientGameState.loot) {
-    const positionX = screenX(loot2.x),
-      positionY = screenY(loot2.y),
-      htmlImageElement = objImg('loot' + Math.min(5, loot2.kind || 0)); // rendered loot
-    if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
-      const quantity =
-        (loot2.kind === 5 ? 30 + Math.sin(currentTime / 200) * 2 : 18) * Math.max(0.6, zoom2);
+  if (layer === 'background') return;
+  if (layer === 'all') {
+    // asteroids, gas pockets and crystal clusters
+    for (const entryKey of clientGameState.rocks || []) {
+      if (!entryKey.hp) continue;
+      const positionX = screenX(entryKey.x),
+        positionY = screenY(entryKey.y),
+        radius = entryKey.r * zoom2;
+      if (
+        positionX < -radius * 2 ||
+        positionY < -radius * 2 ||
+        positionX > width2 + radius * 2 ||
+        positionY > height2 + radius * 2
+      )
+        continue;
+      const rowIndex =
+          entryKey.ore !== 'gas' &&
+          objImg(
+            entryKey.ore === 'shards'
+              ? 'crys' + (Math.abs(entryKey.id) % 4)
+              : 'rock' + (Math.abs(entryKey.id) % 10),
+          ),
+        radiusRatio = rowIndex && rowIndex.complete && rowIndex.naturalWidth; // rendered asteroids
+      const image = radiusRatio ? rowIndex : rockImage(entryKey),
+        secondState = radiusRatio ? entryKey.r * 2.35 * zoom2 : image.width * zoom2;
       canvasRenderingContext2D.save();
       canvasRenderingContext2D.translate(positionX, positionY);
-      canvasRenderingContext2D.rotate(currentTime / 900 + loot2.id);
-      canvasRenderingContext2D.shadowColor = LOOT_COL[loot2.kind] || '#fff';
-      canvasRenderingContext2D.shadowBlur = loot2.kind === 5 ? 18 : 9;
+      canvasRenderingContext2D.rotate(
+        (currentTime / 1000) * (entryKey.ore === 'gas' ? 0.05 : 0.12) * (entryKey.id % 2 ? 1 : -1) +
+          entryKey.id,
+      );
+      canvasRenderingContext2D.globalAlpha = 0.45 + (0.55 * entryKey.hp) / 100;
+      if (entryKey.ore === 'gas') canvasRenderingContext2D.globalCompositeOperation = 'lighter';
       canvasRenderingContext2D.drawImage(
-        htmlImageElement,
-        -quantity / 2,
-        -quantity / 2,
-        quantity,
-        quantity,
+        image,
+        -secondState / 2,
+        -secondState / 2,
+        secondState,
+        secondState,
       );
       canvasRenderingContext2D.restore();
-      continue;
+      canvasRenderingContext2D.globalAlpha = 1;
+      canvasRenderingContext2D.globalCompositeOperation = 'source-over';
+      if (entryKey.hp < 100 && entryKey.hp > 0) {
+        canvasRenderingContext2D.fillStyle = 'rgba(0,0,0,.6)';
+        canvasRenderingContext2D.fillRect(
+          positionX - radius * 0.6,
+          positionY + radius + 4,
+          radius * 1.2,
+          3,
+        );
+        canvasRenderingContext2D.fillStyle = '#e8c070';
+        canvasRenderingContext2D.fillRect(
+          positionX - radius * 0.6,
+          positionY + radius + 4,
+          (radius * 1.2 * entryKey.hp) / 100,
+          3,
+        );
+      }
     }
-    canvasRenderingContext2D.save();
-    canvasRenderingContext2D.translate(positionX, positionY);
-    canvasRenderingContext2D.rotate(currentTime / 600 + loot2.id);
-    canvasRenderingContext2D.fillStyle = LOOT_COL[loot2.kind] || '#fff';
-    canvasRenderingContext2D.shadowColor = canvasRenderingContext2D.fillStyle;
-    canvasRenderingContext2D.shadowBlur = loot2.kind === 5 ? 16 : 8;
-    const quantity2 = loot2.kind === 5 ? 6 + Math.sin(currentTime / 200) : loot2.kind >= 2 ? 3 : 4;
-    canvasRenderingContext2D.fillRect(
-      -quantity2 * zoom2,
-      -quantity2 * zoom2,
-      quantity2 * 2 * zoom2,
-      quantity2 * 2 * zoom2,
-    );
-    canvasRenderingContext2D.restore();
   }
-  // shots
-  canvasRenderingContext2D.lineCap = 'round';
-  for (const shot of clientGameState.shots) {
-    const weaponAsset = clientGameState.A!.weapons[shot.w];
-    if (!shot.col) {
-      shot.W = weaponAsset;
-      shot.col = weaponColor(weaponAsset);
-      shot.look = weaponLook(weaponAsset);
+  if (layer === 'all' || layer === 'middle') {
+    if (layer === 'middle') {
+      for (const rock of clientGameState.rocks || []) {
+        if (!(rock.hp > 0 && rock.hp < 100)) continue;
+        const x = screenX(rock.x),
+          y = screenY(rock.y),
+          radius = rock.r * zoom2;
+        canvasRenderingContext2D.fillStyle = 'rgba(0,0,0,.6)';
+        canvasRenderingContext2D.fillRect(x - radius * 0.6, y + radius + 4, radius * 1.2, 3);
+        canvasRenderingContext2D.fillStyle = '#e8c070';
+        canvasRenderingContext2D.fillRect(
+          x - radius * 0.6,
+          y + radius + 4,
+          (radius * 1.2 * rock.hp) / 100,
+          3,
+        );
+      }
     }
-    const positionX = screenX(shot.x),
-      positionY = screenY(shot.y);
-    if (positionX < -40 || positionY < -40 || positionX > width2 + 40 || positionY > height2 + 40)
-      continue;
-    drawShot(
-      canvasRenderingContext2D,
-      shot as RenderShot & { col: string; look: string },
-      positionX,
-      positionY,
-      zoom2,
-      currentTime,
-    );
-  }
-  canvasRenderingContext2D.shadowBlur = 0;
-  // ships
-  for (const renderEntity of clientGameState.ents.values())
-    drawShip(
+
+    drawTowing(clientGameState, canvasRenderingContext2D, screenX, screenY, zoom2, width2, height2);
+    drawMining(
       clientGameState,
       canvasRenderingContext2D,
-      renderEntity,
-      screenX(renderEntity.rx),
-      screenY(renderEntity.ry),
+      screenX,
+      screenY,
       zoom2,
+      width2,
+      height2,
       currentTime,
     );
-  if (clientView && clientGameState.ents.get(clientView.id)) {
-  } else if (clientView && clientGameState.myHull)
-    drawShip(
-      clientGameState,
-      canvasRenderingContext2D,
-      { ...clientView, hull: clientGameState.myHull, fl: clientView.fl, id: clientView.id },
-      screenX(clientView.rx),
-      screenY(clientView.ry),
-      zoom2,
-      currentTime,
-    );
+    for (const [pixelX, pixelY] of salvagePoints(clientGameState)) {
+      const positionX = screenX(pixelX),
+        positionY = screenY(pixelY);
+      canvasRenderingContext2D.strokeStyle = 'rgba(255,200,90,.6)';
+      canvasRenderingContext2D.lineWidth = 1.5;
+      canvasRenderingContext2D.setLineDash([4, 6]);
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, 160 * zoom2, 0, 6.283);
+      canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.setLineDash([]);
+      canvasRenderingContext2D.fillStyle = '#ffc85a';
+      canvasRenderingContext2D.font = '14px "Pixelify Sans", sans-serif';
+      canvasRenderingContext2D.textAlign = 'center';
+      canvasRenderingContext2D.fillText('SALVAGE', positionX, positionY - 160 * zoom2 - 6);
+    } // 2.4 quest salvage
+    // survey points for an active survey job here
+    for (const [pixelX, pixelY] of surveyPoints(clientGameState)) {
+      const positionX = screenX(pixelX),
+        positionY = screenY(pixelY);
+      canvasRenderingContext2D.strokeStyle = 'rgba(90,216,255,.55)';
+      canvasRenderingContext2D.lineWidth = 1.5;
+      canvasRenderingContext2D.setLineDash([8, 8]);
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, 450 * zoom2, 0, 6.283);
+      canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.setLineDash([]);
+      canvasRenderingContext2D.fillStyle = '#5ad8ff';
+      canvasRenderingContext2D.font = '14px "Pixelify Sans", sans-serif';
+      canvasRenderingContext2D.textAlign = 'center';
+      canvasRenderingContext2D.fillText('SURVEY POINT', positionX, positionY);
+    }
+  }
+  if (layer === 'middle') return;
+  if (layer === 'all') {
+    // loot: credits (gold), salvage crates (blue), ore (brown), gas (green), crystal shards (violet)
+    for (const loot2 of clientGameState.loot) {
+      const positionX = screenX(loot2.x),
+        positionY = screenY(loot2.y),
+        htmlImageElement = objImg('loot' + Math.min(5, loot2.kind || 0)); // rendered loot
+      if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
+        const quantity =
+          (loot2.kind === 5 ? 30 + Math.sin(currentTime / 200) * 2 : 18) * Math.max(0.6, zoom2);
+        canvasRenderingContext2D.save();
+        canvasRenderingContext2D.translate(positionX, positionY);
+        canvasRenderingContext2D.rotate(currentTime / 900 + loot2.id);
+        canvasRenderingContext2D.shadowColor = LOOT_COL[loot2.kind] || '#fff';
+        canvasRenderingContext2D.shadowBlur = loot2.kind === 5 ? 18 : 9;
+        canvasRenderingContext2D.drawImage(
+          htmlImageElement,
+          -quantity / 2,
+          -quantity / 2,
+          quantity,
+          quantity,
+        );
+        canvasRenderingContext2D.restore();
+        continue;
+      }
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(positionX, positionY);
+      canvasRenderingContext2D.rotate(currentTime / 600 + loot2.id);
+      canvasRenderingContext2D.fillStyle = LOOT_COL[loot2.kind] || '#fff';
+      canvasRenderingContext2D.shadowColor = canvasRenderingContext2D.fillStyle;
+      canvasRenderingContext2D.shadowBlur = loot2.kind === 5 ? 16 : 8;
+      const quantity2 =
+        loot2.kind === 5 ? 6 + Math.sin(currentTime / 200) : loot2.kind >= 2 ? 3 : 4;
+      canvasRenderingContext2D.fillRect(
+        -quantity2 * zoom2,
+        -quantity2 * zoom2,
+        quantity2 * 2 * zoom2,
+        quantity2 * 2 * zoom2,
+      );
+      canvasRenderingContext2D.restore();
+    }
+    // shots
+    canvasRenderingContext2D.lineCap = 'round';
+    for (const shot of clientGameState.shots) {
+      const weaponAsset = clientGameState.A!.weapons[shot.w];
+      if (!shot.col) {
+        shot.W = weaponAsset;
+        shot.col = weaponColor(weaponAsset);
+        shot.look = weaponLook(weaponAsset);
+      }
+      const positionX = screenX(shot.x),
+        positionY = screenY(shot.y);
+      if (positionX < -40 || positionY < -40 || positionX > width2 + 40 || positionY > height2 + 40)
+        continue;
+      drawShot(
+        canvasRenderingContext2D,
+        shot as RenderShot & { col: string; look: string },
+        positionX,
+        positionY,
+        zoom2,
+        currentTime,
+      );
+    }
+    canvasRenderingContext2D.shadowBlur = 0;
+    // ships
+    for (const renderEntity of clientGameState.ents.values())
+      drawShip(
+        clientGameState,
+        canvasRenderingContext2D,
+        renderEntity,
+        screenX(renderEntity.rx),
+        screenY(renderEntity.ry),
+        zoom2,
+        currentTime,
+      );
+    if (clientView && clientGameState.ents.get(clientView.id)) {
+    } else if (clientView && clientGameState.myHull)
+      drawShip(
+        clientGameState,
+        canvasRenderingContext2D,
+        { ...clientView, hull: clientGameState.myHull, fl: clientView.fl, id: clientView.id },
+        screenX(clientView.rx),
+        screenY(clientView.ry),
+        zoom2,
+        currentTime,
+      );
+  }
+  if (layer === 'foreground') {
+    for (const ship of clientGameState.ents.values())
+      drawShip(
+        clientGameState,
+        canvasRenderingContext2D,
+        ship,
+        screenX(ship.rx),
+        screenY(ship.ry),
+        zoom2,
+        currentTime,
+        true,
+      );
+    if (clientView && !clientGameState.ents.has(clientView.id) && clientGameState.myHull)
+      drawShip(
+        clientGameState,
+        canvasRenderingContext2D,
+        { ...clientView, hull: clientGameState.myHull },
+        screenX(clientView.rx),
+        screenY(clientView.ry),
+        zoom2,
+        currentTime,
+        true,
+      );
+  }
   // beams
   for (const beam of clientGameState.beams) {
     const event =
@@ -3070,11 +3105,6 @@ export function draw(
   }
   // shield shimmer: an arc of the shield bubble facing the hit
   for (const [identifier, shieldHit] of shieldHits) {
-    shieldHit.t -= deltaTime;
-    if (shieldHit.t <= 0) {
-      shieldHits.delete(identifier);
-      continue;
-    }
     const event =
       identifier === (clientView && clientView.id)
         ? clientView
@@ -3106,18 +3136,9 @@ export function draw(
   // effects
   for (let index = visualEffects.length - 1; index >= 0; index--) {
     const factionId = visualEffects[index];
-    factionId.life -= deltaTime;
-    if (factionId.life <= 0) {
-      visualEffects.splice(index, 1);
-      continue;
-    }
     const entryKey = factionId.life / factionId.max,
       positionX = screenX(factionId.x),
       positionY = screenY(factionId.y);
-    if (factionId.vx !== undefined) {
-      factionId.x += factionId.vx * deltaTime;
-      factionId.y += factionId.vy * deltaTime;
-    }
     if (factionId.hyper) {
       // 2.1 hyperspace flash
       const event = 1 - entryKey,
@@ -3221,9 +3242,8 @@ export function draw(
       continue;
     }
     if (factionId.debris && fxImg('shards').complete && fxImg('shards').naturalWidth) {
-      factionId.rot += factionId.vr * deltaTime;
       const htmlImageElement = fxImg('shards'),
-        systemIndex = factionId.si ?? (factionId.si = Math.floor(Math.random() * 8)),
+        systemIndex = factionId.si ?? 0,
         size = Math.max(6, factionId.s * 5) * zoom2;
       canvasRenderingContext2D.save();
       canvasRenderingContext2D.translate(positionX, positionY);
@@ -3283,8 +3303,6 @@ export function draw(
       continue;
     }
     if (factionId.smoke) {
-      factionId.vx *= 0.97;
-      factionId.vy *= 0.97;
       const radius = factionId.r * (1.6 - entryKey) * zoom2;
       canvasRenderingContext2D.fillStyle = `rgba(90,85,80,${0.35 * entryKey})`;
       canvasRenderingContext2D.beginPath();
@@ -3293,7 +3311,6 @@ export function draw(
       continue;
     }
     if (factionId.debris) {
-      factionId.rot += factionId.vr * deltaTime;
       canvasRenderingContext2D.save();
       canvasRenderingContext2D.translate(positionX, positionY);
       canvasRenderingContext2D.rotate(factionId.rot);
@@ -3331,8 +3348,6 @@ export function draw(
     );
     canvasRenderingContext2D.globalAlpha = 1;
   }
-  shake *= Math.pow(0.02, deltaTime);
-  if (shake < 0.2) shake = 0;
   hudOverlay(
     clientGameState,
     canvasRenderingContext2D,
@@ -3739,6 +3754,7 @@ function hudOverlay(
     screenX,
     screenY,
     currentTime,
+    false,
   );
   // 2.1 hyperspace: spool rings, star streaks along your heading, a white bloom; arrival plays it in reverse with a shockwave
   if (clientGameState._jumping || clientView.fl & 8)
@@ -3787,6 +3803,168 @@ function hudOverlay(
     canvasRenderingContext2D.fillRect(0, 0, width, height);
   }
 }
+
+/** Emit projectile trails during update, independently of rasterization/culling. */
+function updateShotEffects(state: RenderShot, column: string, look: string): void {
+  const space = Math.hypot(state.vx, state.vy) || 1,
+    unitX = state.vx / space,
+    unitY = state.vy / space;
+  if (look === 'magma') {
+    if (Math.random() < 0.5)
+      visualEffects.push({
+        x: state.x,
+        y: state.y,
+        vx: (Math.random() - 0.5) * 20,
+        vy: (Math.random() - 0.5) * 20,
+        life: 0.35,
+        max: 0.35,
+        c: '#ff8a30',
+        s: 1.6,
+      });
+  } else if (look === 'missile' || look === 'rocket') {
+    if (Math.random() < 0.8)
+      visualEffects.push({
+        x: state.x - unitX * 8,
+        y: state.y - unitY * 8,
+        vx: (Math.random() - 0.5) * 10,
+        vy: (Math.random() - 0.5) * 10,
+        smoke: true,
+        life: 0.6,
+        max: 0.6,
+        r: 3,
+      });
+  } else if (look === 'torp' || look === 'sing') {
+    if (Math.random() < 0.6)
+      visualEffects.push({
+        x: state.x,
+        y: state.y,
+        vx: 0,
+        vy: 0,
+        life: 0.4,
+        max: 0.4,
+        c: column,
+        s: 2.2,
+      });
+  }
+}
+/** Sample visual shake once; interaction camera remains unshaken. */
+export function cameraShake(state: ClientGameState): { x: number; y: number } {
+  return state.opts.shake === false
+    ? { x: 0, y: 0 }
+    : {
+        x: ((Math.random() - 0.5) * shake * 2) / state.zoom,
+        y: ((Math.random() - 0.5) * shake * 2) / state.zoom,
+      };
+}
+/** Advance transient effects once per update, never while rasterizing. */
+export function updateEffects(
+  clientGameState: ClientGameState,
+  deltaTime: number,
+  currentTime: number,
+): void {
+  updateShipChat(clientGameState, currentTime);
+  for (const [identifier, hit] of shieldHits) {
+    hit.t -= deltaTime;
+    if (hit.t <= 0) shieldHits.delete(identifier);
+  }
+  for (let index = visualEffects.length - 1; index >= 0; index--) {
+    const effect = visualEffects[index];
+    effect.life -= deltaTime;
+    if (effect.life <= 0) {
+      visualEffects.splice(index, 1);
+      continue;
+    }
+    if (effect.vx !== undefined) {
+      effect.x += effect.vx * deltaTime;
+      effect.y += effect.vy * deltaTime;
+    }
+    if (effect.debris) {
+      effect.rot += effect.vr * deltaTime;
+      effect.si ??= Math.floor(Math.random() * 8);
+    }
+    if (effect.smoke) {
+      const damping = Math.pow(0.97, deltaTime * 60);
+      effect.vx *= damping;
+      effect.vy *= damping;
+    }
+  }
+  shake *= Math.pow(0.02, deltaTime);
+  if (shake < 0.2) shake = 0;
+  for (const shot of clientGameState.shots) {
+    const weapon = clientGameState.A?.weapons[shot.w];
+    if (weapon)
+      updateShotEffects(
+        { ...shot, x: shot.rx ?? shot.x, y: shot.ry ?? shot.y },
+        weaponColor(weapon),
+        weaponLook(weapon),
+      );
+  }
+  for (const renderShip of clientGameState.ents.values()) {
+    const size2 = clientGameState.A?.ships[renderShip.hull]?.size || 60;
+    if (!clientGameState.A?.ships[renderShip.hull]) continue;
+    shipBank(
+      renderShip,
+      currentTime,
+      renderShip.id === clientGameState.myId &&
+        !(renderShip.fl & 8) &&
+        !(clientGameState.combat?.on || clientGameState.combat?.delegated),
+    );
+    if (
+      visualEffects.length < 1200 &&
+      renderShip.ar != null &&
+      renderShip.ar < 50 &&
+      !(renderShip.fl & 8) &&
+      renderShip.rx != null &&
+      Math.random() < ((50 - renderShip.ar) / 50) * 0.4
+    ) {
+      // damaged ships trail smoke, and badly damaged ones burn
+      const offsetX = (Math.random() - 0.5) * size2 * 0.4,
+        offsetY = (Math.random() - 0.5) * size2 * 0.4;
+      visualEffects.push({
+        x: renderShip.rx + offsetX,
+        y: renderShip.ry + offsetY,
+        vx: (renderShip.vx || 0) * 0.3 + (Math.random() - 0.5) * 12,
+        vy: (renderShip.vy || 0) * 0.3 + (Math.random() - 0.5) * 12,
+        smoke: true,
+        life: 1.1,
+        max: 1.1,
+        r: 2.5 + size2 * 0.03,
+      });
+      if (renderShip.ar < 25 && Math.random() < 0.45)
+        visualEffects.push({
+          x: renderShip.rx + offsetX,
+          y: renderShip.ry + offsetY,
+          vx: (Math.random() - 0.5) * 50,
+          vy: (Math.random() - 0.5) * 50,
+          life: 0.3,
+          max: 0.3,
+          c: Math.random() < 0.5 ? '#ffb040' : '#ff6a20',
+          s: 1.4,
+        });
+    }
+  }
+}
+/** Authored heading/bank selection shared by native sprites and canvas previews. */
+export function shipFrame(
+  clientGameState: ClientGameState,
+  renderShip: RenderShip,
+  _currentTime: number,
+) {
+  const shipHullAsset = clientGameState.A!.ships[renderShip.hull];
+  const size2 = shipHullAsset.size;
+  const fraction0 = ((Math.round(renderShip.a / (Math.PI / 18)) % 36) + 36) % 36,
+    spriteSheetConfig = shipHullAsset.spr,
+    fileSystem = spriteSheetConfig ? spriteSheetConfig.fs : size2,
+    columns = spriteSheetConfig ? spriteSheetConfig.cols : 6;
+  const fraction =
+      fraction0 +
+      (spriteSheetConfig && spriteSheetConfig.banks && !(renderShip.fl & 4)
+        ? ((renderShip as RenderShip & { _bank?: { bank: number } })._bank?.bank || 0) * 36
+        : 0),
+    sourceX = (fraction % columns) * fileSystem,
+    sourceY = Math.floor(fraction / columns) * fileSystem;
+  return { fraction0, fraction, sourceX, sourceY, fileSystem, spriteSheetConfig };
+}
 /**
  * Renders an individual ship sprite, engine trails, shield/armor bars, and name tags.
  * @param clientGameState Game state
@@ -3805,6 +3983,7 @@ export function drawShip(
   positionY: number,
   positionZ: number,
   currentTime: number,
+  overlaysOnly = false,
 ): void {
   const shipHullAsset = clientGameState.A!.ships[renderShip.hull];
   if (!shipHullAsset) return;
@@ -3818,127 +3997,71 @@ export function drawShip(
     positionY > canvasRenderingContext2D.canvas.height + width2
   )
     return;
-  const fraction0 = ((Math.round(renderShip.a / (Math.PI / 18)) % 36) + 36) % 36,
-    spriteSheetConfig = shipHullAsset.spr,
-    fileSystem = spriteSheetConfig ? spriteSheetConfig.fs : size2,
-    columns = spriteSheetConfig ? spriteSheetConfig.cols : 6;
-  const fraction =
-      fraction0 +
-      (spriteSheetConfig && spriteSheetConfig.banks && !(renderShip.fl & 4)
-        ? shipBank(
-            renderShip,
-            currentTime,
-            renderShip.id === clientGameState.myId &&
-              !(renderShip.fl & 8) &&
-              !(clientGameState.combat?.on || clientGameState.combat?.delegated),
-          ) * 36
-        : 0),
-    sourceX = (fraction % columns) * fileSystem,
-    sourceY = Math.floor(fraction / columns) * fileSystem;
-  const htmlImageElement = sheet(shipHullAsset);
-  if (renderShip.fl & 8 && htmlImageElement.complete && htmlImageElement.naturalWidth) {
-    // a ship in hyperspace leaves a stretched, blue-shifted ghost trail
-    const unitX = Math.sin(renderShip.a),
-      unitY = -Math.cos(renderShip.a);
-    canvasRenderingContext2D.globalCompositeOperation = 'lighter';
-    for (let index = 6; index >= 1; index--) {
-      canvasRenderingContext2D.globalAlpha = 0.22 * (1 - index / 7);
-      const options = index * width2 * 0.32;
-      canvasRenderingContext2D.drawImage(
-        htmlImageElement,
-        sourceX,
-        sourceY,
-        fileSystem,
-        fileSystem,
-        positionX - unitX * options - width2 / 2,
-        positionY - unitY * options - width2 / 2,
-        width2,
-        width2,
-      );
-    }
-    canvasRenderingContext2D.globalCompositeOperation = 'source-over';
-    canvasRenderingContext2D.globalAlpha = 1;
-    const canvasGradient = canvasRenderingContext2D.createRadialGradient(
-      positionX + unitX * width2 * 0.35,
-      positionY + unitY * width2 * 0.35,
-      0,
-      positionX + unitX * width2 * 0.35,
-      positionY + unitY * width2 * 0.35,
-      width2 * 0.6,
+  if (!overlaysOnly)
+    shipBank(
+      renderShip,
+      currentTime,
+      renderShip.id === clientGameState.myId &&
+        !(renderShip.fl & 8) &&
+        !(clientGameState.combat?.on || clientGameState.combat?.delegated),
     );
-    canvasGradient.addColorStop(0, 'rgba(220,240,255,.85)');
-    canvasGradient.addColorStop(1, 'rgba(120,170,255,0)');
-    canvasRenderingContext2D.globalCompositeOperation = 'lighter';
-    canvasRenderingContext2D.fillStyle = canvasGradient;
-    canvasRenderingContext2D.beginPath();
-    canvasRenderingContext2D.arc(
-      positionX + unitX * width2 * 0.35,
-      positionY + unitY * width2 * 0.35,
-      width2 * 0.6,
-      0,
-      6.283,
-    );
-    canvasRenderingContext2D.fill();
-    canvasRenderingContext2D.globalCompositeOperation = 'source-over';
-  }
-  if (renderShip.fl & 32) {
-    canvasRenderingContext2D.shadowColor = 'rgba(255,205,90,.95)';
-    canvasRenderingContext2D.shadowBlur = Math.max(6, 16 * positionZ);
-  } // mastery Tier 5 gold trim
-  if (htmlImageElement.complete && htmlImageElement.naturalWidth)
-    canvasRenderingContext2D.drawImage(
-      htmlImageElement,
-      sourceX,
-      sourceY,
-      fileSystem,
-      fileSystem,
-      positionX - width2 / 2,
-      positionY - width2 / 2,
-      width2,
-      width2,
-    );
-  else {
-    canvasRenderingContext2D.fillStyle = '#888';
-    canvasRenderingContext2D.beginPath();
-    canvasRenderingContext2D.arc(positionX, positionY, width2 / 4, 0, 6.28);
-    canvasRenderingContext2D.fill();
-  }
-  canvasRenderingContext2D.shadowBlur = 0;
-  if (renderShip.fl & 1 && shipHullAsset.glow && (!spriteSheetConfig || spriteSheetConfig.glow)) {
-    const htmlImageElement = sheet(shipHullAsset, true);
-    if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
+  const { fraction0, sourceX, sourceY, fileSystem, spriteSheetConfig } = shipFrame(
+    clientGameState,
+    renderShip,
+    currentTime,
+  );
+  if (!overlaysOnly) {
+    const htmlImageElement = sheet(shipHullAsset);
+    if (renderShip.fl & 8 && htmlImageElement.complete && htmlImageElement.naturalWidth) {
+      // a ship in hyperspace leaves a stretched, blue-shifted ghost trail
+      const unitX = Math.sin(renderShip.a),
+        unitY = -Math.cos(renderShip.a);
       canvasRenderingContext2D.globalCompositeOperation = 'lighter';
-      // Extrude the authored engine mask aft, preserving every nozzle and bank.
-      // Bounded passes, no particle state or simulation changes.
-      const boost = !!(renderShip.fl & 2),
-        heading = fraction0 * (Math.PI / 18),
-        reduced = (clientGameState._exhaustReduced ??= matchMedia(
-          '(prefers-reduced-motion: reduce)',
-        ).matches),
-        flicker = reduced ? 1 : 0.94 + 0.06 * Math.sin(currentTime / 47 + renderShip.id * 2.3),
-        length = width2 * (boost ? 0.32 : 0.14) * flicker;
-      canvasRenderingContext2D.save();
-      // The authored glow is already soft. Per-pass canvas blur forces costly
-      // full-sprite rasterization (12 times per engine per frame) on software GPUs.
-      // Layer the existing mask directly so exhaust cannot stall flight input.
-      for (let index = 12; index >= 1; index--) {
-        const time = index / 12,
-          after = length * time;
-        canvasRenderingContext2D.globalAlpha = (boost ? 0.38 : 0.26) * (1 - time * 0.85);
+      for (let index = 6; index >= 1; index--) {
+        canvasRenderingContext2D.globalAlpha = 0.22 * (1 - index / 7);
+        const options = index * width2 * 0.32;
         canvasRenderingContext2D.drawImage(
           htmlImageElement,
           sourceX,
           sourceY,
           fileSystem,
           fileSystem,
-          positionX - width2 / 2 - Math.sin(heading) * after,
-          positionY - width2 / 2 + Math.cos(heading) * after,
+          positionX - unitX * options - width2 / 2,
+          positionY - unitY * options - width2 / 2,
           width2,
           width2,
         );
       }
-      canvasRenderingContext2D.restore();
-      canvasRenderingContext2D.globalAlpha = boost ? 1 : 0.8 * flicker;
+      canvasRenderingContext2D.globalCompositeOperation = 'source-over';
+      canvasRenderingContext2D.globalAlpha = 1;
+      const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+        positionX + unitX * width2 * 0.35,
+        positionY + unitY * width2 * 0.35,
+        0,
+        positionX + unitX * width2 * 0.35,
+        positionY + unitY * width2 * 0.35,
+        width2 * 0.6,
+      );
+      canvasGradient.addColorStop(0, 'rgba(220,240,255,.85)');
+      canvasGradient.addColorStop(1, 'rgba(120,170,255,0)');
+      canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(
+        positionX + unitX * width2 * 0.35,
+        positionY + unitY * width2 * 0.35,
+        width2 * 0.6,
+        0,
+        6.283,
+      );
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.globalCompositeOperation = 'source-over';
+    }
+    if (renderShip.fl & 32) {
+      canvasRenderingContext2D.shadowColor = 'rgba(255,205,90,.95)';
+      canvasRenderingContext2D.shadowBlur = Math.max(6, 16 * positionZ);
+    } // mastery Tier 5 gold trim
+    if (htmlImageElement.complete && htmlImageElement.naturalWidth)
       canvasRenderingContext2D.drawImage(
         htmlImageElement,
         sourceX,
@@ -3950,43 +4073,64 @@ export function drawShip(
         width2,
         width2,
       );
-      canvasRenderingContext2D.globalAlpha = 1;
-      canvasRenderingContext2D.globalCompositeOperation = 'source-over';
+    else {
+      canvasRenderingContext2D.fillStyle = '#888';
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, width2 / 4, 0, 6.28);
+      canvasRenderingContext2D.fill();
     }
-  }
-  canvasRenderingContext2D.globalAlpha = 1;
-  if (
-    visualEffects.length < 1200 &&
-    renderShip.ar != null &&
-    renderShip.ar < 50 &&
-    !(renderShip.fl & 8) &&
-    renderShip.rx != null &&
-    Math.random() < ((50 - renderShip.ar) / 50) * 0.4
-  ) {
-    // damaged ships trail smoke, and badly damaged ones burn
-    const offsetX = (Math.random() - 0.5) * size2 * 0.4,
-      offsetY = (Math.random() - 0.5) * size2 * 0.4;
-    visualEffects.push({
-      x: renderShip.rx + offsetX,
-      y: renderShip.ry + offsetY,
-      vx: (renderShip.vx || 0) * 0.3 + (Math.random() - 0.5) * 12,
-      vy: (renderShip.vy || 0) * 0.3 + (Math.random() - 0.5) * 12,
-      smoke: true,
-      life: 1.1,
-      max: 1.1,
-      r: 2.5 + size2 * 0.03,
-    });
-    if (renderShip.ar < 25 && Math.random() < 0.45)
-      visualEffects.push({
-        x: renderShip.rx + offsetX,
-        y: renderShip.ry + offsetY,
-        vx: (Math.random() - 0.5) * 50,
-        vy: (Math.random() - 0.5) * 50,
-        life: 0.3,
-        max: 0.3,
-        c: Math.random() < 0.5 ? '#ffb040' : '#ff6a20',
-        s: 1.4,
-      });
+    canvasRenderingContext2D.shadowBlur = 0;
+    if (renderShip.fl & 1 && shipHullAsset.glow && (!spriteSheetConfig || spriteSheetConfig.glow)) {
+      const htmlImageElement = sheet(shipHullAsset, true);
+      if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
+        canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+        // Extrude the authored engine mask aft, preserving every nozzle and bank.
+        // Bounded passes, no particle state or simulation changes.
+        const boost = !!(renderShip.fl & 2),
+          heading = fraction0 * (Math.PI / 18),
+          reduced = (clientGameState._exhaustReduced ??= matchMedia(
+            '(prefers-reduced-motion: reduce)',
+          ).matches),
+          flicker = reduced ? 1 : 0.94 + 0.06 * Math.sin(currentTime / 47 + renderShip.id * 2.3),
+          length = width2 * (boost ? 0.32 : 0.14) * flicker;
+        canvasRenderingContext2D.save();
+        // The authored glow is already soft. Per-pass canvas blur forces costly
+        // full-sprite rasterization (12 times per engine per frame) on software GPUs.
+        // Layer the existing mask directly so exhaust cannot stall flight input.
+        for (let index = 12; index >= 1; index--) {
+          const time = index / 12,
+            after = length * time;
+          canvasRenderingContext2D.globalAlpha = (boost ? 0.38 : 0.26) * (1 - time * 0.85);
+          canvasRenderingContext2D.drawImage(
+            htmlImageElement,
+            sourceX,
+            sourceY,
+            fileSystem,
+            fileSystem,
+            positionX - width2 / 2 - Math.sin(heading) * after,
+            positionY - width2 / 2 + Math.cos(heading) * after,
+            width2,
+            width2,
+          );
+        }
+        canvasRenderingContext2D.restore();
+        canvasRenderingContext2D.globalAlpha = boost ? 1 : 0.8 * flicker;
+        canvasRenderingContext2D.drawImage(
+          htmlImageElement,
+          sourceX,
+          sourceY,
+          fileSystem,
+          fileSystem,
+          positionX - width2 / 2,
+          positionY - width2 / 2,
+          width2,
+          width2,
+        );
+        canvasRenderingContext2D.globalAlpha = 1;
+        canvasRenderingContext2D.globalCompositeOperation = 'source-over';
+      }
+    }
+    canvasRenderingContext2D.globalAlpha = 1;
   }
   if (renderShip.fl & 4) {
     canvasRenderingContext2D.fillStyle = 'rgba(255,120,60,.8)';

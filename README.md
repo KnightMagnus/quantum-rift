@@ -14,6 +14,10 @@ save formats are unchanged by the cleanup. See the [release notes](docs/RELEASE-
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
+The flight viewport uses [ExcaliburJS](https://excaliburjs.com/) for its scene,
+camera, input and native sprite entities. The existing server simulation, saves
+and HTML cockpit remain in place; engine scripts are included locally.
+
 ## Features
 
 ### Explore the galaxy
@@ -82,7 +86,7 @@ For custom Solo test captains, use the [save generator](test/Save%20Generator/RE
 
 **Flight cockpit**
 
-![Flight in Concordia with the sidebar closed](docs/screenshots/cockpit-31.png)
+![Flight in Concordia with the sidebar closed](docs/screenshots/flight-excalibur.png)
 
 **Expanded chat projection**
 

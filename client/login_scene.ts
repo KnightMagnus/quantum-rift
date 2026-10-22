@@ -28,6 +28,12 @@ export function loginTraffic(seconds: number, width: number, height: number) {
   });
 }
 
+let engineTick: ((time: number) => void) | undefined;
+/** Decorative login artwork shares the engine clock without owning a second RAF. */
+export function updateLoginScene(time: number): void {
+  engineTick?.(time);
+}
+
 /** Install one scene; hide/show and tab visibility own its animation lifecycle. */
 export function initLoginScene(login: HTMLElement) {
   const candidate = login.querySelector<HTMLCanvasElement>('.login-scene');
@@ -51,7 +57,6 @@ export function initLoginScene(login: HTMLElement) {
   let width = 0,
     height = 0,
     ratio = 1,
-    frame = 0,
     elapsed = 0,
     last = 0,
     drawn = 0,
@@ -277,7 +282,6 @@ export function initLoginScene(login: HTMLElement) {
   }
 
   function tick(currentTime: number) {
-    frame = 0;
     if (!visible() || motion.matches) {
       // Reconcile even if a browser drops/coalesces the media/visibility change event.
       sync();
@@ -289,23 +293,24 @@ export function initLoginScene(login: HTMLElement) {
       paint();
       drawn = currentTime;
     }
-    frame = requestAnimationFrame(tick);
   }
   function sync() {
-    cancelAnimationFrame(frame);
-    frame = 0;
     last = 0;
     for (const timer of settle) clearTimeout(timer);
     settle = [];
     const active = visible();
     staticPlanetTime = performance.now();
     canvas.dataset.running = String(active && !motion.matches);
-    if (!active) return;
+    if (!active) {
+      engineTick = undefined;
+      return;
+    }
     paint();
-    if (!motion.matches) frame = requestAnimationFrame(tick);
+    engineTick = motion.matches ? undefined : tick;
     // Give the shared planet renderer time to decode its textures in static mode.
     // These bounded repaints never change positions, and are cancelled on hide.
-    else settle = [150, 500, 1500].map((milliseconds) => setTimeout(paint, milliseconds));
+    if (motion.matches)
+      settle = [150, 500, 1500].map((milliseconds) => setTimeout(paint, milliseconds));
   }
   const sizeObserver = new ResizeObserver(resize);
   sizeObserver.observe(canvas);

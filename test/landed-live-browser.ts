@@ -3,6 +3,7 @@ import fileSystem from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
+import type { GraphicsGroup, GraphicsGrouping, Sprite } from 'excalibur';
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets } from '../shared/rules.ts';
@@ -64,29 +65,32 @@ for (const solo of [false, true]) {
     });
     await page.addInitScript(() => {
       window.trafficDraws = [];
-      const original = Reflect.get(
-        CanvasRenderingContext2D.prototype,
-        'drawImage',
-      ) as typeof CanvasRenderingContext2D.prototype.drawImage;
-      CanvasRenderingContext2D.prototype.drawImage = function (
-        image: CanvasImageSource,
-        ...args: number[]
-      ) {
-        if (this.canvas.id === 'view' && /ships/.test((image as HTMLImageElement)?.src || '')) {
-          const message = this.getTransform();
-          window.trafficDraws.push({
-            src: (image as HTMLImageElement).src,
-            x: message.e + args[4],
-            y: message.f + args[5],
-            t: performance.now(),
-          });
-          if (window.trafficDraws.length > 2000) window.trafficDraws.shift();
-        }
-        return Reflect.apply(original, this, [image, ...args]);
-      };
     });
     await page.goto(origin);
     await page.waitForFunction(() => document.querySelector<HTMLElement>('#lver')!.textContent);
+    await page.waitForFunction(() => !!window.RiftEngine);
+    await page.evaluate(() => {
+      const runtime = window.RiftEngine,
+        observed = new WeakSet();
+      runtime.engine.on('postupdate', () => {
+        for (const [key, actor] of runtime.scene.display.actors) {
+          if (!key.startsWith('ship:') || observed.has(actor)) continue;
+          observed.add(actor);
+          actor.graphics.onPostDraw = () => {
+            const group = actor.graphics.current as GraphicsGroup;
+            const sprite = (group.members[0] as GraphicsGrouping).graphic as Sprite;
+            const position = runtime.engine.screen.worldToScreenCoordinates(actor.pos);
+            window.trafficDraws.push({
+              src: sprite.image.path,
+              x: position.x,
+              y: position.y,
+              t: performance.now(),
+            });
+            if (window.trafficDraws.length > 2000) window.trafficDraws.shift();
+          };
+        }
+      });
+    });
     await page.fill('#lname', 'Dock Observer');
     if (!solo) await page.fill('#lpass', 'fixture');
     await page.click('#lbtn');
@@ -94,28 +98,29 @@ for (const solo of [false, true]) {
     for (let index = 0; index < 8 && (await page.locator('#storybox').isVisible()); index++)
       await page.locator('#storyb button').first().click();
     const sample = () =>
-      page.evaluate(() => ({
-        view: G.view,
-        stellar: G.landed?.stellar,
-        ships: [...G.ents.values()].map((entity) => ({
-          id: entity.id,
-          x: entity.x,
-          y: entity.y,
-          rx: entity.rx,
-          ry: entity.ry,
-        })),
-        draws: window.trafficDraws.filter((drawRecord) => drawRecord.t > performance.now() - 200),
-        pixels: Array.from(
-          (document.querySelector('#view')! as HTMLCanvasElement)
-            .getContext('2d')!
-            .getImageData(
-              0,
-              0,
-              (document.querySelector<HTMLElement>('#view')! as HTMLCanvasElement).width,
-              (document.querySelector<HTMLElement>('#view')! as HTMLCanvasElement).height,
-            ).data,
-        ).filter((value, index) => index % 4 !== 3 && value > 20).length,
-      }));
+      page.evaluate(async () => {
+        const image = await window.RiftEngine.engine.screenshot(true);
+        const capture = document.createElement('canvas');
+        capture.width = image.width;
+        capture.height = image.height;
+        const context = capture.getContext('2d')!;
+        context.drawImage(image, 0, 0);
+        return {
+          view: G.view,
+          stellar: G.landed?.stellar,
+          ships: [...G.ents.values()].map((entity) => ({
+            id: entity.id,
+            x: entity.x,
+            y: entity.y,
+            rx: entity.rx,
+            ry: entity.ry,
+          })),
+          draws: window.trafficDraws.filter((drawRecord) => drawRecord.t > performance.now() - 200),
+          pixels: Array.from(context.getImageData(0, 0, capture.width, capture.height).data).filter(
+            (value, index) => index % 4 !== 3 && value > 20,
+          ).length,
+        };
+      });
     const camera = await page.evaluate(async () => {
       const { cam: camera2 } = await import('/render.js');
       const { STELLARS } = await import('/shared/galaxy.js');

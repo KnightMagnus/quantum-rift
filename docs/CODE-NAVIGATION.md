@@ -197,3 +197,34 @@ their cascade order and the same asset-relative directory:
 The last two files contain cross-component overrides and duplicate selectors. Do not regroup selectors or reorder imports without checking their
 cascade and responsive behavior. The separate `cockpit.css` and `login_scene.css`
 keep their existing document positions. No preprocessor or bundler is required.
+
+## Flight engine
+
+Excalibur 0.32.0 owns the browser flight clock in `client/engine.ts` and the
+persistent `SpaceScene` in `client/space-scene.ts`. `client/main.ts` still owns
+networking, the original DT accumulator/prediction and DOM command routing.
+`client/engine-input.ts` reads physical keys through Excalibur and queues short
+presses until a simulation tick. Typing and modal controls keep their DOM behavior.
+
+`client/world-actors.ts` reconciles display-only Actors and native Sprite graphics
+for ships, rocks, loot and projectiles. Actors never receive authoritative
+velocities, collisions or ownership of gameplay. Authored hull heading/bank frames
+and thruster masks remain in use. Procedural scenery, beams, links and overlays
+use ordered screen-space Canvas Graphics below, between and above native entities.
+Effect lifetimes and motion advance in `updateEffects`, not in those draw callbacks.
+
+The engine camera projects world entities and resolves pointer coordinates.
+Resolution deliberately uses CSS size times DPR with engine pixelRatio 1, retaining
+the existing physical-pixel zoom. Picking subtracts visual shake. Radar/map/login
+remain separate presentation canvases; login artwork shares the engine clock.
+Software WebGL drivers select the supported Canvas backend before Engine construction.
+`?renderer=canvas` or `?renderer=webgl` explicitly selects either backend without
+replacing the live canvas. Canvas uses normal alpha compositing for native glow;
+WebGL uses an additive material.
+
+The browser build bundles the engine dependency graph into `dist/client/engine.js`.
+Existing stateful audio/HUD/render helpers remain local modules with one shared
+instance, including when browser tests import them. Releases need no CDN or
+node_modules at runtime. Procedural full-viewport Graphics rasterize at up to 30Hz;
+native entities and simulation retain the Engine update cadence. These layers remain
+a rendering cost, not evidence of a general performance improvement.
