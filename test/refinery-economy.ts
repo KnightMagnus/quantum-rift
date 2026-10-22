@@ -35,8 +35,9 @@ for (const bonus of [0, 25, 75])
             for (const residue of [0, 1, 149, 299]) {
               const prices = recipe.inputs.map(
                   (commodityId) =>
-                    requiredFixtureValue(COMMODITIES.find((captain) => captain.id === commodityId))
-                      .base,
+                    requiredFixtureValue(
+                      COMMODITIES.find((commodity) => commodity.id === commodityId),
+                    ).base,
                 ),
                 sellOffer = prices.reduce(
                   (session, player) =>

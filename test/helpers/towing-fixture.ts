@@ -79,8 +79,8 @@ export function atPort(pilotFixture: ReturnType<typeof tug>) {
   return stellarBody;
 }
 export function advance(pilotFixture: ReturnType<typeof tug>, seconds: number) {
-  for (let messageType = 0; messageType < seconds - 1e-8; messageType += 1 / 30) {
-    pilotFixture.g.features.mining.advanceClock(Math.min(1 / 30, seconds - messageType));
+  for (let advancedSeconds = 0; advancedSeconds < seconds - 1e-8; advancedSeconds += 1 / 30) {
+    pilotFixture.g.features.mining.advanceClock(Math.min(1 / 30, seconds - advancedSeconds));
     pilotFixture.sp.tick();
   }
 }

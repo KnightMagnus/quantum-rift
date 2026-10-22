@@ -24,10 +24,10 @@ try {
     const { drawShip, sheet } = await import('/render.js');
     const { drawTowing } = await import('/towing_render.js');
     const audio = await import('/audio.js');
-    const captain = document.createElement('canvas');
-    captain.width = 600;
-    captain.height = 600;
-    const context = captain.getContext('2d');
+    const canvasElement = document.createElement('canvas');
+    canvasElement.width = 600;
+    canvasElement.height = 600;
+    const context = canvasElement.getContext('2d');
     const hulls = [704, 815, 703];
     const checks = [];
     for (const hull of hulls) {
@@ -97,7 +97,7 @@ try {
         600,
         600,
       );
-      return captain.toDataURL();
+      return canvasElement.toDataURL();
     }
     const concealed = ['ore', 'gas', 'shards'].map((oreRecord2) => rock(oreRecord2, false));
     const colors = new Set();
@@ -111,8 +111,8 @@ try {
     rock('shards', true);
     await new Promise((resolve) => setTimeout(resolve, 300));
     const crystal = rock('shards', true);
-    captain.width = 900;
-    captain.height = 350;
+    canvasElement.width = 900;
+    canvasElement.height = 350;
     context!.fillStyle = '#070b13';
     context!.fillRect(0, 0, 900, 350);
     for (const [index, flightState] of [0, 1, 3].entries()) {
@@ -129,7 +129,7 @@ try {
       context!.font = '18px "Pixelify Sans"';
       context!.fillText(['IDLE', 'THRUST', 'BOOST'][index], 100 + index * 220, 300);
     }
-    window.polishArt = captain.toDataURL();
+    window.polishArt = canvasElement.toDataURL();
     audio.stopMusic(0);
     audio.startMusic();
     audio.stopMusic(0);
@@ -159,14 +159,14 @@ try {
       amb: audio.debug().amb,
     };
   });
-  for (const captain of proof.checks) {
-    assert.ok(captain.unfiltered, 'authored glow layers must not trigger per-pass blur');
-    assert.equal(captain.normal, 13);
-    assert.equal(captain.boost, 13);
-    assert.equal(captain.idle, 0);
-    assert.ok(captain.aft > 0);
-    assert.ok(Math.abs(captain.side) < 0.001);
-    assert.ok(captain.longer);
+  for (const renderProbe of proof.checks) {
+    assert.ok(renderProbe.unfiltered, 'authored glow layers must not trigger per-pass blur');
+    assert.equal(renderProbe.normal, 13);
+    assert.equal(renderProbe.boost, 13);
+    assert.equal(renderProbe.idle, 0);
+    assert.ok(renderProbe.aft > 0);
+    assert.ok(Math.abs(renderProbe.side) < 0.001);
+    assert.ok(renderProbe.longer);
   }
   assert.ok(proof.concealedEqual);
   assert.ok(proof.colors > 20);

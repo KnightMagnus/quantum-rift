@@ -120,16 +120,11 @@ try {
       const { augmentAssets, allOutfits } = await import('/shared/rules.js');
       const assets3 = augmentAssets(await (await fetch('/shared/assets.json')).json());
       const ships = Object.values(assets3.ships)
-          .filter(
-            (horizontalPosition) =>
-              ![703, 704, 708, 714, 821, 823, 827].includes(horizontalPosition.id),
-          )
-          .map((horizontalPosition2) => horizontalPosition2.img),
+          .filter((hullAsset) => ![703, 704, 708, 714, 821, 823, 827].includes(hullAsset.id))
+          .map((hullAsset2) => hullAsset2.img),
         outfits = Object.values(allOutfits(assets3))
-          .filter(
-            (horizontalPosition3) => ![564, 569, 602, 603, 9020].includes(horizontalPosition3.id),
-          )
-          .map((horizontalPosition4) => horizontalPosition4.icon);
+          .filter((outfitAsset) => ![564, 569, 602, 603, 9020].includes(outfitAsset.id))
+          .map((outfitAsset2) => outfitAsset2.icon);
       return await Promise.all(
         [...ships, ...outfits].map(async (path) => {
           await (await fetch('/assets/' + path)).arrayBuffer();
@@ -160,19 +155,19 @@ try {
   const assets = await page.evaluate(async () => {
     const { allOutfits } = await import('/shared/rules.js');
     const list = [
-      ...Object.values(G.A!.ships).map((horizontalPosition5) => ({
+      ...Object.values(G.A!.ships).map((hullAsset3) => ({
         kind: 'ship',
-        id: horizontalPosition5.id,
-        path: horizontalPosition5.img,
+        id: hullAsset3.id,
+        path: hullAsset3.img,
       })),
-      ...Object.values(allOutfits(G.A!)).map((horizontalPosition6) => ({
+      ...Object.values(allOutfits(G.A!)).map((outfitAsset3) => ({
         kind: 'outfit',
-        id: horizontalPosition6.id,
-        path: horizontalPosition6.icon,
+        id: outfitAsset3.id,
+        path: outfitAsset3.icon,
       })),
     ];
     return await Promise.all(
-      list.map(async (horizontalPosition7) => {
+      list.map(async (assetProbe) => {
         const image2 = new Image();
         image2.src =
           '/' +
@@ -180,17 +175,17 @@ try {
             await import('/artwork.js').catch(() => ({
               artworkUrl: (feature: string) => 'assets/' + feature,
             }))
-          ).artworkUrl(horizontalPosition7.path!);
+          ).artworkUrl(assetProbe.path!);
         try {
           await image2.decode();
           return {
-            ...horizontalPosition7,
+            ...assetProbe,
             ok: true,
             width: image2.naturalWidth,
             height: image2.naturalHeight,
           };
         } catch (error2) {
-          return { ...horizontalPosition7, ok: false, error: String(error2) };
+          return { ...assetProbe, ok: false, error: String(error2) };
         }
       }),
     );
@@ -203,21 +198,20 @@ try {
     await page.waitForTimeout(600);
     await page
       .locator(name.startsWith('codex') ? '#clist' : '#landbody')
-      .evaluate((horizontalPosition8: { scrollTop: number }) => {
-        horizontalPosition8.scrollTop = 0;
+      .evaluate((scrollState: { scrollTop: number }) => {
+        scrollState.scrollTop = 0;
       });
     surfaces[name] = await page
       .locator(name.startsWith('codex') ? '#clist img' : '#landbody img')
       .evaluateAll((elements) =>
-        elements.map((horizontalPosition9) => ({
-          src: horizontalPosition9.getAttribute('src'),
+        elements.map((element) => ({
+          src: element.getAttribute('src'),
           ok:
-            (horizontalPosition9 as HTMLImageElement).complete &&
-            (horizontalPosition9 as HTMLImageElement).naturalWidth > 0,
-          width: (horizontalPosition9 as HTMLImageElement).naturalWidth,
+            (element as HTMLImageElement).complete &&
+            (element as HTMLImageElement).naturalWidth > 0,
+          width: (element as HTMLImageElement).naturalWidth,
           visible: !!(
-            (horizontalPosition9 as HTMLElement).offsetWidth &&
-            (horizontalPosition9 as HTMLElement).offsetHeight
+            (element as HTMLElement).offsetWidth && (element as HTMLElement).offsetHeight
           ),
         })),
       );
@@ -231,20 +225,16 @@ try {
   await inspect('shipyard');
   const yardIds = await page
     .locator('#landbody .card[data-h]')
-    .evaluateAll((elements2) =>
-      elements2.map((horizontalPosition10) => horizontalPosition10.dataset.h),
-    );
+    .evaluateAll((elements2) => elements2.map((element2) => element2.dataset.h));
   const yardDetails = [];
   for (const identifier of yardIds) {
     await page.locator(`#landbody .card[data-h="${identifier}"]`).click();
-    const assertCondition = await page
-      .locator('#landbody .detail img')
-      .evaluate((horizontalPosition11) =>
-        (horizontalPosition11 as HTMLImageElement).decode().then(
-          () => true,
-          () => false,
-        ),
-      );
+    const assertCondition = await page.locator('#landbody .detail img').evaluate((element3) =>
+      (element3 as HTMLImageElement).decode().then(
+        () => true,
+        () => false,
+      ),
+    );
     yardDetails.push({ id: identifier, ok: assertCondition });
     if (process.env.EXPECT_FIXED)
       assert.ok(assertCondition, `Shipyard detail ${identifier} decodes`);
@@ -269,39 +259,30 @@ try {
     for (const [surface, images] of Object.entries(surfaces)) {
       assert.ok(images.length, surface + ' has images');
       assert.ok(
-        images.every((horizontalPosition12) => horizontalPosition12.ok),
+        images.every((imageProbe) => imageProbe.ok),
         surface + ' all images decoded',
       );
     }
 
   if (process.env.POISON_CACHE && !process.env.EXPECT_FIXED) {
-    assert.equal(
-      surfaces['codex-ships'].filter((horizontalPosition13) => horizontalPosition13.ok).length,
-      7,
-    );
-    assert.equal(
-      surfaces.outfitter.filter((horizontalPosition14) => horizontalPosition14.ok).length,
-      5,
-    );
+    assert.equal(surfaces['codex-ships'].filter((imageProbe2) => imageProbe2.ok).length, 7);
+    assert.equal(surfaces.outfitter.filter((imageProbe3) => imageProbe3.ok).length, 5);
     const failedCodex = new Set(
       surfaces['codex-ships']
-        .filter((horizontalPosition15) => !horizontalPosition15.ok)
-        .map((horizontalPosition16) => horizontalPosition16.src),
+        .filter((imageProbe4) => !imageProbe4.ok)
+        .map((imageProbe5) => imageProbe5.src),
     );
     assert.ok(
       surfaces.shipyard
-        .filter((horizontalPosition17) => !horizontalPosition17.ok)
-        .every((horizontalPosition18) => failedCodex.has(horizontalPosition18.src)),
+        .filter((imageProbe6) => !imageProbe6.ok)
+        .every((imageProbe7) => failedCodex.has(imageProbe7.src)),
     );
     assert.equal(surfaces['codex-missing-detail'][0].ok, false);
-    assert.equal(
-      surfaces.shipyard.filter((horizontalPosition19) => horizontalPosition19.ok).length,
-      8,
-    );
+    assert.equal(surfaces.shipyard.filter((imageProbe8) => imageProbe8.ok).length, 8);
   }
   if (process.env.EXPECT_FIXED) {
     assert.ok(
-      assets.every((horizontalPosition20) => horizontalPosition20.ok),
+      assets.every((assetProbe2) => assetProbe2.ok),
       'All 194 catalog assets decode',
     );
     const sprite = await fetch(origin + '/assets/ships/704.webp');
@@ -317,7 +298,7 @@ try {
     JSON.stringify(
       {
         decoded: assets.length,
-        failed: assets.filter((horizontalPosition21) => !horizontalPosition21.ok),
+        failed: assets.filter((assetProbe3) => !assetProbe3.ok),
       },
       null,
       2,

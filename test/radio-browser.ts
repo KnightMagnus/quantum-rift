@@ -173,8 +173,8 @@ try {
   assert.equal(
     await page.evaluate(
       () =>
-        radioToasts.filter((messageType) =>
-          messageType.includes('Discovered a new radio station: QVRI'),
+        radioToasts.filter((toastText) =>
+          toastText.includes('Discovered a new radio station: QVRI'),
         ).length,
     ),
     1,

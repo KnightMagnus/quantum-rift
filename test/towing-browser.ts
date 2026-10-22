@@ -102,18 +102,16 @@ try {
     () =>
       feature
         .read()
-        ?.pilots.find(
-          (horizontalPosition: { name: string }) => horizontalPosition.name === 'Tow Alpha',
-        )?.fighters.length > 0,
+        ?.pilots.find((pilotIdentity: { name: string }) => pilotIdentity.name === 'Tow Alpha')
+        ?.fighters.length > 0,
     'actual F fighter launch',
   );
   await until(
     () =>
       feature
         .read()
-        ?.pilots.find(
-          (horizontalPosition2: { name: string }) => horizontalPosition2.name === 'Tow Alpha',
-        )?.input2 === 0,
+        ?.pilots.find((pilotIdentity2: { name: string }) => pilotIdentity2.name === 'Tow Alpha')
+        ?.input2 === 0,
     'F released',
   );
   await page.keyboard.press('KeyF', { delay: 150 });
@@ -121,9 +119,8 @@ try {
     () =>
       feature
         .read()
-        ?.pilots.find(
-          (horizontalPosition3: { name: string }) => horizontalPosition3.name === 'Tow Alpha',
-        )?.fighters.length === 0,
+        ?.pilots.find((pilotIdentity3: { name: string }) => pilotIdentity3.name === 'Tow Alpha')
+        ?.fighters.length === 0,
     'F fighter recall',
   );
   // Slow load is allowed to settle; screen capture never holds movement/fire input.
@@ -201,14 +198,14 @@ try {
         entity = G.view;
       const horizontalDelta = player.x - entity!.x,
         verticalDelta = player.y - entity!.y,
-        playerData = Math.hypot(horizontalDelta, verticalDelta) || 1;
+        directionLength = Math.hypot(horizontalDelta, verticalDelta) || 1;
       return {
         x:
           ((entity!.x - camera2.cx) * camera2.z + camera2.W / 2) / devicePixelRatio +
-          (horizontalDelta / playerData) * 150,
+          (horizontalDelta / directionLength) * 150,
         y:
           ((entity!.y - camera2.cy) * camera2.z + camera2.H / 2) / devicePixelRatio +
-          (verticalDelta / playerData) * 150,
+          (verticalDelta / directionLength) * 150,
       };
     });
     await other.mouse.move(target.x, target.y);
@@ -250,7 +247,7 @@ try {
     return Promise.all(
       Object.values(MOTHERLODE_ART).map(async (artworkAsset) => {
         const record = manifest.find(
-          (horizontalPosition4: { file: string }) => horizontalPosition4.file === artworkAsset.base,
+          (imageFixture: { file: string }) => imageFixture.file === artworkAsset.base,
         );
         if (!record) throw Error('missing motherlode inventory');
         const bytes = await fetch('/assets/objects/' + artworkAsset.base).then((result) =>
@@ -264,17 +261,22 @@ try {
         const image = new Image();
         image.src = '/assets/objects/' + artworkAsset.base;
         await image.decode();
-        const captain = document.createElement('canvas');
-        captain.width = image.naturalWidth;
-        captain.height = image.naturalHeight;
-        const context = captain.getContext('2d');
+        const canvasElement = document.createElement('canvas');
+        canvasElement.width = image.naturalWidth;
+        canvasElement.height = image.naturalHeight;
+        const context = canvasElement.getContext('2d');
         context!.drawImage(image, 0, 0);
-        const playerData = context!.getImageData(0, 0, captain.width, captain.height).data;
+        const pixelChannels = context!.getImageData(
+          0,
+          0,
+          canvasElement.width,
+          canvasElement.height,
+        ).data;
         return {
-          w: captain.width,
-          h: captain.height,
-          alpha: playerData.some((value, index) => index % 4 === 3 && value === 0),
-          opaque: playerData.some((value, index) => index % 4 === 3 && value > 0),
+          w: canvasElement.width,
+          h: canvasElement.height,
+          alpha: pixelChannels.some((value, index) => index % 4 === 3 && value === 0),
+          opaque: pixelChannels.some((value, index) => index % 4 === 3 && value > 0),
         };
       }),
     );

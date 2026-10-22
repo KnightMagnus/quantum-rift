@@ -24,11 +24,11 @@ const game = refineryGame(),
   session = refineryPilot(game, 'Noise Owner'),
   session2 = refineryPilot(game, 'Neutral'),
   session3 = refineryPilot(game, 'Armada'),
-  playerData = refineryPilot(game, 'Optin');
+  pilotSession = refineryPilot(game, 'Optin');
 const entity = spawnFlyingPilot(game, session),
   neutral = spawnFlyingPilot(game, session2),
   armada = spawnFlyingPilot(game, session3),
-  peer = spawnFlyingPilot(game, playerData),
+  peer = spawnFlyingPilot(game, pilotSession),
   message = miningSpace(game.spaces.meridian);
 message.ships = new Map(
   [entity, neutral, armada, peer].map((shipEntity) => [shipEntity.id, shipEntity]),
@@ -37,10 +37,10 @@ message.ships = new Map(
 game.sessions = new Map([...game.sessions.entries()].reverse());
 requiredFixtureValue(session).data.armada =
   requiredFixtureValue(session3).data.armada =
-  requiredFixtureValue(playerData).data.armada =
+  requiredFixtureValue(pilotSession).data.armada =
     'fixture-miners';
 game.features.pressure.consent(session, { op: 'join' });
-game.features.pressure.consent(playerData, { op: 'join' });
+game.features.pressure.consent(pilotSession, { op: 'join' });
 const wing = message.makeShip({
   hull: 704,
   faction: 'quantum',
@@ -133,7 +133,7 @@ assert.deepEqual(
   neutralHP,
   'damage authority itself blocks collateral',
 );
-game.features.pressure.consent(playerData, { op: 'leave' });
+game.features.pressure.consent(pilotSession, { op: 'leave' });
 const hitPoints = [peer.shield, peer.armor];
 message.damage(peer, 999, 999, raider);
 assert.deepEqual(

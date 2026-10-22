@@ -14,8 +14,8 @@ const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
 const game = new Game(assets, new Database(tempDataDir('rift-v09-')));
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -107,12 +107,12 @@ requiredFixtureValue(entity).y = requiredFixtureValue(chest).y;
 message.tick();
 assertCondition(
   playerData.credits > credits &&
-    firstEntry.toasts().some((messageType3: string) => /Hollow Cache/.test(messageType3)),
+    firstEntry.toasts().some((toastText: string) => /Hollow Cache/.test(toastText)),
   'opening a cache pays credits, a crate and maybe blueprints',
 );
 // 2.6: directives no longer drop and solo armadas are gone
 assertCondition(
-  !firstEntry.toasts().some((messageType4: string) => /Directive/.test(messageType4)) &&
+  !firstEntry.toasts().some((toastText2: string) => /Directive/.test(toastText2)) &&
     playerData.directives === undefined,
   'caches never hold directives',
 );

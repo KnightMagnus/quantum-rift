@@ -88,17 +88,17 @@ function runScenario(seconds: number, input = {}) {
 }
 function errors() {
   return followers.map((session) => {
-    const messageType = requiredFixtureValue(session).armadaFormationTarget;
+    const formationTarget = requiredFixtureValue(session).armadaFormationTarget;
     return Math.hypot(
-      requiredFixtureValue(session).ent.x - requiredFixtureValue(messageType).x,
-      requiredFixtureValue(session).ent.y - requiredFixtureValue(messageType).y,
+      requiredFixtureValue(session).ent.x - requiredFixtureValue(formationTarget).x,
+      requiredFixtureValue(session).ent.y - requiredFixtureValue(formationTarget).y,
     );
   });
 }
 runScenario(160);
 console.log('stationary initial', errors());
 assert.ok(
-  errors().every((playerData) => playerData < 100),
+  errors().every((formationError) => formationError < 100),
   'captains assemble into V using actual physics',
 );
 const before = followers.map((session) => ({
@@ -153,7 +153,7 @@ console.log(
   ),
 );
 assert.ok(
-  errors().every((playerData) => playerData < 120),
+  errors().every((formationError2) => formationError2 < 120),
   'settles after leader turns/moves/stops',
 );
 for (let index = 0; index < followers.length; index++)

@@ -150,19 +150,20 @@ try {
   const destination = await page.evaluate(async () => {
     const { SYS: systemsById } = await import('/shared/galaxy.js');
     const { mapHit } = await import('/render.js');
-    const messageType = G.mapXform;
+    const mapTransform = G.mapXform;
     const canvas = document.querySelector<HTMLCanvasElement>('#gcanvas');
     const result = canvas!.getBoundingClientRect();
     for (const identifier of systemsById[G.sys!].links) {
       const session = systemsById[identifier];
       const horizontalPosition =
-        messageType!.W / 2 + (session.x - messageType!.cx) * messageType!.k;
-      const verticalPosition = messageType!.H / 2 + (session.y - messageType!.cy) * messageType!.k;
+        mapTransform!.W / 2 + (session.x - mapTransform!.cx) * mapTransform!.k;
+      const verticalPosition =
+        mapTransform!.H / 2 + (session.y - mapTransform!.cy) * mapTransform!.k;
       if (
         horizontalPosition > 10 &&
-        horizontalPosition < messageType!.W - 10 &&
+        horizontalPosition < mapTransform!.W - 10 &&
         verticalPosition > 10 &&
-        verticalPosition < messageType!.H - 10 &&
+        verticalPosition < mapTransform!.H - 10 &&
         mapHit(G, horizontalPosition, verticalPosition) === identifier
       )
         return {

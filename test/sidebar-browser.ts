@@ -162,7 +162,7 @@ try {
           }),
       };
     });
-  for (const captain of [
+  for (const viewportScenario of [
     { name: 'default', w: 1440, h: 1000, s: 1 },
     { name: 'desktop-1280', w: 1280, h: 800, s: 1 },
     { name: 'unread-99', w: 1440, h: 1000, s: 1, badge: '99' },
@@ -177,7 +177,7 @@ try {
     { name: 'compact-640-scaled', w: 640, h: 700, s: 1.4 },
     { name: 'mobile-390-scaled', w: 390, h: 844, s: 1.4 },
   ]) {
-    await page.setViewportSize({ width: captain.w, height: captain.h });
+    await page.setViewportSize({ width: viewportScenario.w, height: viewportScenario.h });
     await page.evaluate((savedCockpitState) => {
       document.documentElement.style.removeProperty('--tray-width');
       if (savedCockpitState.hud)
@@ -188,7 +188,7 @@ try {
       (document.querySelector('#ctabs [data-tab=captains]')! as HTMLElement).dataset.n =
         savedCockpitState.badge || '';
       dispatchEvent(new Event('resize'));
-    }, captain);
+    }, viewportScenario);
     await page.waitForTimeout(150);
     await page.locator('#radar').scrollIntoViewIfNeeded();
     const radar = await page.locator('#radar').evaluate((element) => {
@@ -203,14 +203,14 @@ try {
     });
     assert.ok(
       Math.abs(radar.width - radar.height) < 1,
-      'System radar remains square: ' + captain.name,
+      'System radar remains square: ' + viewportScenario.name,
     );
     assert.equal(radar.pixels[0], radar.pixels[1], 'Radar backing is square without distortion');
     assert.ok(
-      Math.abs(radar.width - radar.parentWidth + 10 * captain.s) < 2,
+      Math.abs(radar.width - radar.parentWidth + 10 * viewportScenario.s) < 2,
       'Radar fills sidebar frame width',
     );
-    if (captain.name === 'default')
+    if (viewportScenario.name === 'default')
       assert.ok(radar.width > 400, 'Desktop radar is larger than the old height cap');
     await page.locator('#ctabs').scrollIntoViewIfNeeded();
     const ventLayout = await page.evaluate(() => {
@@ -229,16 +229,20 @@ try {
     });
     assert.equal(ventLayout.parent, 'consoleutilities');
     if (ventLayout.visible) {
-      assert.ok(Math.abs(ventLayout.centerDelta) < 1, 'Scaled vent centered: ' + captain.name);
+      assert.ok(
+        Math.abs(ventLayout.centerDelta) < 1,
+        'Scaled vent centered: ' + viewportScenario.name,
+      );
       assert.ok(ventLayout.below);
     }
     const before = await measure();
     assert.equal(before.pageOverflow, false);
     assert.equal(before.tabs.length, 7);
-    assert.ok(Math.abs(before.hudWidth + before.canvasWidth - captain.w) < 2);
+    assert.ok(Math.abs(before.hudWidth + before.canvasWidth - viewportScenario.w) < 2);
     assert.ok(
-      before.tabs.every((messageType) => messageType.visible),
-      'Every tab is visible without scrolling: ' + JSON.stringify({ case: captain.name, before }),
+      before.tabs.every((tabBounds2) => tabBounds2.visible),
+      'Every tab is visible without scrolling: ' +
+        JSON.stringify({ case: viewportScenario.name, before }),
     );
     assert.ok(before.scrollWidth <= before.clientWidth + 1, 'No horizontal tab scrolling');
     for (let index = 0; index < before.tabs.length; index++)
@@ -261,7 +265,7 @@ try {
         'scaled-down',
         'unread-99',
         'unread-99-scaled',
-      ].includes(captain.name)
+      ].includes(viewportScenario.name)
     )
       assert.equal(
         new Set(before.tabs.map((tabBounds) => tabBounds.top)).size,
@@ -282,9 +286,12 @@ try {
       'log',
     );
     const keyboard = await measure();
-    assert.ok(keyboard.tabs.at(-1)!.visible, JSON.stringify({ case: captain.name, keyboard }));
-    await page.screenshot({ path: output + '/' + captain.name + '.png' });
-    results.push({ case: captain.name, before, wheel, keyboard });
+    assert.ok(
+      keyboard.tabs.at(-1)!.visible,
+      JSON.stringify({ case: viewportScenario.name, keyboard }),
+    );
+    await page.screenshot({ path: output + '/' + viewportScenario.name + '.png' });
+    results.push({ case: viewportScenario.name, before, wheel, keyboard });
   }
   // Check the actual shell in both states and after a real pointer drag. Chrome
   // stays outside the scrolling cockpit: the continuous red rail cannot vanish

@@ -179,7 +179,7 @@ try {
   });
   const plateSell = page.locator('[data-custom="sell"][data-c="composite_plating"]');
   const capacity = await page.evaluate(
-    () => G.landed!.market!.find((captain) => captain.id === 'composite_plating')!.sellCap,
+    () => G.landed!.market!.find((marketItem) => marketItem.id === 'composite_plating')!.sellCap,
   );
   assert.ok(capacity! > 0 && capacity! < 40);
   await plating.fill('40');
@@ -189,7 +189,9 @@ try {
     40 - capacity!,
   );
   await page.waitForFunction(
-    () => G.landed!.market!.find((captain) => captain.id === 'composite_plating')!.sellCap === 0,
+    () =>
+      G.landed!.market!.find((marketItem2) => marketItem2.id === 'composite_plating')!.sellCap ===
+      0,
   );
   assert.equal(events.filter((tradeEvent) => tradeEvent.dir === 'sent').at(-1)!.m.qty, -capacity!);
   const finiteSent = events.filter((tradeEvent) => tradeEvent.dir === 'sent').length;

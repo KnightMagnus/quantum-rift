@@ -16,11 +16,11 @@ export async function towingFixture(name: string) {
     data = path.join(directory, 'data'),
     game = refineryGame(new Database(data));
   const player = Object.values(STELLARS).find(
-    (horizontalPosition) =>
-      horizontalPosition.system === 'meridian' &&
-      horizontalPosition.svc.includes('L') &&
-      !horizontalPosition.site &&
-      !horizontalPosition.outlaw,
+    (stellarBody) =>
+      stellarBody.system === 'meridian' &&
+      stellarBody.svc.includes('L') &&
+      !stellarBody.site &&
+      !stellarBody.outlaw,
   );
   for (const [name, hull] of [
     ['Tow Alpha', 815],

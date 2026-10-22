@@ -20,8 +20,8 @@ import { ARMADA, DUEL, RESCUE, WARBAND } from '../shared/coop.ts';
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -198,9 +198,9 @@ assertCondition(
     site: 'site-qgate',
   };
   worldData2.sites['site-qgate'] = game.db.key(stationPlayerData.name);
-  const verticalPosition = game.yard(STELLARS['site-qgate'], stationPlayerData);
+  const availableHulls = game.yard(STELLARS['site-qgate'], stationPlayerData);
   assertCondition(
-    verticalPosition && !verticalPosition.some((hull3) => gameAssets.ships[hull3].npcOnly),
+    availableHulls && !availableHulls.some((hull3) => gameAssets.ships[hull3].npcOnly),
     'the station shipyard sells no refits or Armada escorts',
   );
   captainFixture.send({ t: 'station', op: 'refit' });
@@ -216,7 +216,7 @@ firstEntry.send({ t: 'social', op: 'add', name: 'Bram Cole' });
 assertCondition(
   secondEntry.d.freqIn.includes('Ada Vance') &&
     firstEntry.d.freqOut.includes('Bram Cole') &&
-    secondEntry.toasts().some((messageType3: string) => /wants to add you/.test(messageType3)),
+    secondEntry.toasts().some((toastText: string) => /wants to add you/.test(toastText)),
   'a friend request reaches the other captain',
 );
 secondEntry.send({ t: 'social', op: 'accept', name: 'Ada Vance' });
@@ -246,7 +246,7 @@ assertCondition(
   !secondEntry.all('dm').some((message) => message.msg === 'hi stranger') &&
     captain
       .toasts()
-      .some((messageType4: string) => /only takes messages from friends/.test(messageType4)),
+      .some((toastText2: string) => /only takes messages from friends/.test(toastText2)),
   'strangers cannot message you by default',
 );
 secondEntry.sock.emit('close');
@@ -434,7 +434,7 @@ const credits = captain.d.credits,
 message.kill(shipEntity3, shipEntity);
 assertCondition(
   captain.d.credits > credits &&
-    captain.toasts().some((messageType5: string) => /Armada share/.test(messageType5)),
+    captain.toasts().some((toastText3: string) => /Armada share/.test(toastText3)),
   'members in the system get a share of the bounty',
 );
 // follow the leader
@@ -488,9 +488,7 @@ assertCondition(
     'a downed Armada captain is disabled, not destroyed, and left alone',
   );
   assertCondition(
-    firstEntry
-      .toasts()
-      .some((messageType6: string) => /is disabled in this system/.test(messageType6)),
+    firstEntry.toasts().some((toastText4: string) => /is disabled in this system/.test(toastText4)),
     'the Armada is told',
   );
   requiredFixtureValue<FixtureEntity>(requiredFixtureValue(firstEntry.s).ent).x =
@@ -689,7 +687,7 @@ assertCondition(
   captainFixture11.send({ t: 'trade2', op: 'offer', give: { items: { 'mat:alloy:2': 2 } } });
   captainFixture10.send({ t: 'trade2', op: 'confirm' });
   assertCondition(
-    captainFixture10.toasts().some((messageType7: string) => /lock their offer/.test(messageType7)),
+    captainFixture10.toasts().some((toastText5: string) => /lock their offer/.test(toastText5)),
     'offers are locked before anyone confirms',
   );
   captainFixture10.send({ t: 'trade2', op: 'lock', on: true });
@@ -725,7 +723,7 @@ assertCondition(
       captainFixture11.d.mats.alloy[2] === 1 &&
       captainFixture10
         .toasts()
-        .some((messageType8: string) => /no longer has everything/.test(messageType8)),
+        .some((toastText6: string) => /no longer has everything/.test(toastText6)),
     'if anything went missing the trade is cancelled whole: nothing is duplicated',
   );
 }
@@ -774,7 +772,7 @@ assertCondition(
   game.features.hostile.holdoutEnd(captainFixture13.s, false, 'test');
   assertCondition(
     captainFixture14.d.credits > credits4 &&
-      captainFixture14.toasts().some((messageType9: string) => /Your share/.test(messageType9)),
+      captainFixture14.toasts().some((toastText7: string) => /Your share/.test(toastText7)),
     'helpers share the Holdout rewards',
   );
 }
@@ -926,7 +924,7 @@ assertCondition(
   captainFixture18.send({ t: 'station', op: 'relocate', site: 'site-halcyon' });
   assertCondition(
     playerData2.station.site === requiredFixtureValue(stellarBody).id &&
-      captainFixture18.toasts().some((messageType10: string) => /recharging/.test(messageType10)),
+      captainFixture18.toasts().some((toastText8: string) => /recharging/.test(toastText8)),
     'the warp core needs a day to recharge',
   );
   assertCondition(!game.siteOwner('site-halcyon'), 'the old hull is free for anyone to claim');

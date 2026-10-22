@@ -98,7 +98,7 @@ try {
       );
     });
     assert.ok(
-      landingImages.length && landingImages.every((horizontalPosition) => horizontalPosition.ok),
+      landingImages.length && landingImages.every((imageProbe) => imageProbe.ok),
       identifier + ' landed pictures decode',
     );
     await page.screenshot({ path: path.join(evidence, identifier + '-landed.png') });

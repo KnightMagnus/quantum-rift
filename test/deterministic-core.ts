@@ -98,7 +98,7 @@ assert.equal(
   'Arc discovery order and generated objectives are unchanged',
 );
 for (const [standing, expected] of Object.entries(baseline.tours)) {
-  const captain = {
+  const reputationFixture = {
     rep: Object.fromEntries(
       [...new Set(Object.values(systemsById).map((session) => session.faction))].map((faction) => [
         faction,
@@ -108,7 +108,7 @@ for (const [standing, expected] of Object.entries(baseline.tours)) {
   };
   const tours = Object.keys(systemsById).map((origin) => [
     origin,
-    tourRoute(origin, mockPlayerData(captain)),
+    tourRoute(origin, mockPlayerData(reputationFixture)),
   ]);
   assert.equal(sha256(tours), expected, `Sorted, safe radio tours at standing ${standing}`);
 }

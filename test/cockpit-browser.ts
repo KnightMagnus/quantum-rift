@@ -159,13 +159,13 @@ try {
   assert.equal(await page.locator('#cbkeys').count(), 0, 'No redundant Keys button');
   assert.equal(await page.locator('#traytoggle').getAttribute('aria-expanded'), 'false');
   await page.waitForFunction(() =>
-    window.cockpitText.some((horizontalPosition) => horizontalPosition.text === 'Mining Alpha'),
+    window.cockpitText.some((textCall) => textCall.text === 'Mining Alpha'),
   );
   assert.ok(
     await page.evaluate(() =>
       window.cockpitText
-        .filter((horizontalPosition2) => horizontalPosition2.text === 'Mining Alpha')
-        .every((horizontalPosition3) => horizontalPosition3.font.includes('Pixelify Sans')),
+        .filter((textCall2) => textCall2.text === 'Mining Alpha')
+        .every((textCall3) => textCall3.font.includes('Pixelify Sans')),
     ),
   );
   await page.evaluate(async () => {
@@ -173,15 +173,13 @@ try {
     receiveShipChat(G, { ch: 'sys', sys: G.sys, ship: G.myId, msg: 'Ready to follow.' });
   });
   await page.waitForFunction(() =>
-    window.cockpitText.some(
-      (horizontalPosition4) => horizontalPosition4.text === 'Ready to follow.',
-    ),
+    window.cockpitText.some((textCall4) => textCall4.text === 'Ready to follow.'),
   );
   assert.ok(
     await page.evaluate(() =>
       window.cockpitText
-        .filter((horizontalPosition5) => horizontalPosition5.text === 'Ready to follow.')
-        .every((horizontalPosition6) => horizontalPosition6.font.includes('Pixelify Sans')),
+        .filter((textCall5) => textCall5.text === 'Ready to follow.')
+        .every((textCall6) => textCall6.font.includes('Pixelify Sans')),
     ),
   );
   await page.click('#cbmap');

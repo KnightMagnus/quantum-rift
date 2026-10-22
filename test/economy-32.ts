@@ -63,7 +63,7 @@ try {
     game.market(
       (await import('../shared/galaxy.ts')).STELLARS[requiredFixtureValue(session.data.stellar)],
     ),
-  ).find((captain) => captain.id === 'ore')!;
+  ).find((marketItem) => marketItem.id === 'ore')!;
   const options = {
     market,
     amount: 10,
@@ -114,7 +114,7 @@ try {
       game.market(
         (await import('../shared/galaxy.ts')).STELLARS[requiredFixtureValue(session.data.stellar)],
       ),
-    ).find((captain) => captain.id === 'ore')!,
+    ).find((marketItem2) => marketItem2.id === 'ore')!,
     cargo: requiredFixtureValue(session).data.cargo,
     cargoLots: requiredFixtureValue(session).data.cargoLots,
   });

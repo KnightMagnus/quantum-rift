@@ -170,7 +170,7 @@ for (const commodityId of ['ore', 'gas', 'shards']) {
     );
     const port = STELLARS[playerData.stellar],
       playerReference = requiredFixtureValue(
-        requiredFixtureValue(game.market(port)).find((captain) => captain.id === commodityId),
+        requiredFixtureValue(game.market(port)).find((marketItem) => marketItem.id === commodityId),
       ).price;
     const multiplier = grade === 'pure' ? 1.6 : grade === 'rich' ? 1.3 : 1;
     const expected = Math.round(
@@ -679,7 +679,7 @@ const message = game.spaces[playerData.sys],
 target.disabled = true;
 target.vx = requiredFixtureValue(requiredFixtureValue(session).ent).vx;
 target.vy = requiredFixtureValue(requiredFixtureValue(session).ent).vy;
-const oreIndex = COMMODITIES.findIndex((captain) => captain.id === 'ore');
+const oreIndex = COMMODITIES.findIndex((commodity) => commodity.id === 'ore');
 let randomCalls = 0;
 Math.random = () => (++randomCalls === 2 ? (oreIndex + 0.1) / COMMODITIES.length : 0.4);
 try {

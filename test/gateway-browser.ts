@@ -99,12 +99,12 @@ try {
       const { SYS: systemsById } = await import('/shared/galaxy.js');
       const { cam: camera } = await import('/render.js');
       const player = systemsById[G.sys!].stellars.find((gatewayBody) => gatewayBody.wormhole);
-      const captain = document.querySelector<HTMLCanvasElement>('canvas'),
-        result = captain!.getBoundingClientRect(),
-        playerData = devicePixelRatio || 1;
+      const canvasElement = document.querySelector<HTMLCanvasElement>('canvas'),
+        result = canvasElement!.getBoundingClientRect(),
+        pixelRatio = devicePixelRatio || 1;
       return {
-        x: result.left + ((player!.x - camera.cx) * camera.z + camera.W / 2) / playerData,
-        y: result.top + ((player!.y - camera.cy) * camera.z + camera.H / 2) / playerData,
+        x: result.left + ((player!.x - camera.cx) * camera.z + camera.W / 2) / pixelRatio,
+        y: result.top + ((player!.y - camera.cy) * camera.z + camera.H / 2) / pixelRatio,
       };
     });
     await page.mouse.dblclick(point.x, point.y);

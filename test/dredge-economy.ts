@@ -245,7 +245,7 @@ for (const mature of [false, true])
       0,
     );
     const rawData = requiredFixtureValue(
-      COMMODITIES.find((captain) => captain.id === commodityId),
+      COMMODITIES.find((commodity) => commodity.id === commodityId),
     ).base;
     netCredits += Math.floor(hold * rawData * 0.9);
     const common = playerData.cargoLots.byCommodity[commodityId]?.common || 0;

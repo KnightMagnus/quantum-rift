@@ -14,8 +14,8 @@ const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
 const game = new Game(assets, new Database(tempDataDir('rift-v07-')));
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -322,7 +322,7 @@ firstEntry.send({ t: 'exchange', op: 'transfer', to: 'Duelist', n: 5000 });
 assertCondition(
   firstEntry
     .all('toast')
-    .some((messageType3: { msg: string }) => /Sent 5,000/.test(messageType3.msg)),
+    .some((toastMessage: { msg: string }) => /Sent 5,000/.test(toastMessage.msg)),
   'sent credits to another captain',
 );
 // boards and profiles

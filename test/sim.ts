@@ -17,8 +17,8 @@ const directory = tempDataDir('rift-sim-');
 const game = new Game(assets, new Database(directory));
 const sleep = (milliseconds: number | undefined) =>
   new Promise((result) => setTimeout(result, milliseconds));
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }

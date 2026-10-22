@@ -113,10 +113,10 @@ try {
   assert.equal(result.sys, system);
   assert.equal(result.landed, false);
   assert.ok(
-    result.draws.every((horizontalPosition: { center: number[] }) =>
+    result.draws.every((starSample: { center: number[] }) =>
       system === 'sol'
-        ? horizontalPosition.center[0] > horizontalPosition.center[2]
-        : horizontalPosition.center[2] > horizontalPosition.center[0],
+        ? starSample.center[0] > starSample.center[2]
+        : starSample.center[2] > starSample.center[0],
     ),
     'actual stellar palette matches selected system',
   );

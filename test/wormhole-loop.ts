@@ -19,26 +19,26 @@ assert.equal(bytes[24], 8, '8-bit channel depth');
 assert.equal(bytes[25], 6, 'RGBA pixels');
 assert.equal(bytes[28], 0, 'noninterlaced PNG');
 const compressed = [];
-for (let player = 8; player < bytes.length;) {
-  const quantity = bytes.readUInt32BE(player),
-    type = bytes.toString('ascii', player + 4, player + 8);
-  if (type === 'IDAT') compressed.push(bytes.subarray(player + 8, player + 8 + quantity));
-  player += 12 + quantity;
+for (let chunkOffset = 8; chunkOffset < bytes.length;) {
+  const quantity = bytes.readUInt32BE(chunkOffset),
+    type = bytes.toString('ascii', chunkOffset + 4, chunkOffset + 8);
+  if (type === 'IDAT') compressed.push(bytes.subarray(chunkOffset + 8, chunkOffset + 8 + quantity));
+  chunkOffset += 12 + quantity;
 }
 const rawData = inflateSync(Buffer.concat(compressed)),
   stride = width * 4;
 assert.equal(rawData.length, (stride + 1) * height);
 const rgba = Buffer.alloc(stride * height);
-function paeth(firstValue: number, secondValue: number, captain: number) {
-  const player = firstValue + secondValue - captain,
-    firstPosition = Math.abs(player - firstValue),
-    secondPosition = Math.abs(player - secondValue),
-    thirdPosition = Math.abs(player - captain);
+function paeth(firstValue: number, secondValue: number, channel: number) {
+  const predictorEstimate = firstValue + secondValue - channel,
+    firstPosition = Math.abs(predictorEstimate - firstValue),
+    secondPosition = Math.abs(predictorEstimate - secondValue),
+    thirdPosition = Math.abs(predictorEstimate - channel);
   return firstPosition <= secondPosition && firstPosition <= thirdPosition
     ? firstValue
     : secondPosition <= thirdPosition
       ? secondValue
-      : captain;
+      : channel;
 }
 for (let verticalPosition = 0; verticalPosition < height; verticalPosition++) {
   const filter = rawData[verticalPosition * (stride + 1)];
@@ -47,7 +47,7 @@ for (let verticalPosition = 0; verticalPosition < height; verticalPosition++) {
     const index = verticalPosition * stride + horizontalPosition,
       firstValue = horizontalPosition >= 4 ? rgba[index - 4] : 0,
       secondValue = verticalPosition ? rgba[index - stride] : 0,
-      captain = verticalPosition && horizontalPosition >= 4 ? rgba[index - stride - 4] : 0;
+      upperLeftChannel = verticalPosition && horizontalPosition >= 4 ? rgba[index - stride - 4] : 0;
     const predictor =
       filter === 0
         ? 0
@@ -57,16 +57,16 @@ for (let verticalPosition = 0; verticalPosition < height; verticalPosition++) {
             ? secondValue
             : filter === 3
               ? Math.floor((firstValue + secondValue) / 2)
-              : paeth(firstValue, secondValue, captain);
+              : paeth(firstValue, secondValue, upperLeftChannel);
     rgba[index] =
       (rawData[verticalPosition * (stride + 1) + 1 + horizontalPosition] + predictor) & 255;
   }
 }
 const tiles: Buffer[] = [];
-for (let feature = 0; feature < WORMHOLE.frames; feature++) {
+for (let frameIndex = 0; frameIndex < WORMHOLE.frames; frameIndex++) {
   const tile = Buffer.alloc(WORMHOLE.frameSize ** 2 * 4),
-    originX = (feature % WORMHOLE.columns) * WORMHOLE.frameSize,
-    originY = Math.floor(feature / WORMHOLE.columns) * WORMHOLE.frameSize;
+    originX = (frameIndex % WORMHOLE.columns) * WORMHOLE.frameSize,
+    originY = Math.floor(frameIndex / WORMHOLE.columns) * WORMHOLE.frameSize;
   for (let verticalPosition2 = 0; verticalPosition2 < WORMHOLE.frameSize; verticalPosition2++)
     rgba.copy(
       tile,
@@ -81,15 +81,15 @@ assert.equal(
   WORMHOLE.frames,
   'all frames differ; no duplicated endpoint/pause',
 );
-const deltas = tiles.map((firstEntry, feature) => {
-  const secondEntry = tiles[(feature + 1) % tiles.length];
+const deltas = tiles.map((firstEntry, frameIndex2) => {
+  const secondEntry = tiles[(frameIndex2 + 1) % tiles.length];
   let difference = 0;
   for (let index = 0; index < firstEntry.length; index += 4)
-    for (let captain = 0; captain < 3; captain++)
+    for (let channelIndex = 0; channelIndex < 3; channelIndex++)
       difference +=
         Math.abs(
-          firstEntry[index + captain] * firstEntry[index + 3] -
-            secondEntry[index + captain] * secondEntry[index + 3],
+          firstEntry[index + channelIndex] * firstEntry[index + 3] -
+            secondEntry[index + channelIndex] * secondEntry[index + 3],
         ) / 65025;
   return difference / (WORMHOLE.frameSize ** 2 * 3);
 });
@@ -97,7 +97,7 @@ const ordinary = deltas.slice(0, -1).sort((firstValue, secondValue) => firstValu
   median = ordinary[Math.floor(ordinary.length / 2)],
   ratio = requiredFixtureValue(deltas.at(-1)) / median;
 assert.ok(
-  deltas.every((playerData) => playerData > 0.001),
+  deltas.every((differenceRatio) => differenceRatio > 0.001),
   'every frame advances internal motion',
 );
 assert.ok(ratio > 0.8 && ratio < 1.2, `last-to-first pixel delta is not an outlier (${ratio})`);

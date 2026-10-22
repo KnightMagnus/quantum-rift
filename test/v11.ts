@@ -25,8 +25,8 @@ const wingUp = (game: Game, playerData: PlayerData, hulls: (string | number)[]) 
     return mockSavedDockWing({ uid: ship.uid });
   });
 }; // 2.1: wingmates are stored ships in your dock
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -375,9 +375,11 @@ assertCondition(
 );
 // news and market flashes
 worldData.flash = [{ stellar: land.id, cid: 'food', mult: 1.45, until: Date.now() + 60000 }];
-const base = requiredFixtureValue(game.market(land)).find((captain) => captain.id === 'food');
+const base = requiredFixtureValue(game.market(land)).find((marketItem) => marketItem.id === 'food');
 worldData.flash = [];
-const plain = requiredFixtureValue(game.market(land)).find((captain) => captain.id === 'food');
+const plain = requiredFixtureValue(game.market(land)).find(
+  (marketItem2) => marketItem2.id === 'food',
+);
 assertCondition(
   requiredFixtureValue(requiredFixtureValue(base).price) >
     requiredFixtureValue(requiredFixtureValue(plain).price) && requiredFixtureValue(base).flash,

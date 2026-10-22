@@ -73,11 +73,11 @@ try {
         const canvas = document.createElement('canvas');
         canvas.width = session.fs;
         canvas.height = session.fs;
-        const captain = canvas.getContext('2d', { willReadFrequently: true });
+        const drawingContext = canvas.getContext('2d', { willReadFrequently: true });
         const frames: ImageDataArray[] = [];
         for (let index = 0; index < 108; index++) {
-          captain!.clearRect(0, 0, session.fs, session.fs);
-          captain!.drawImage(
+          drawingContext!.clearRect(0, 0, session.fs, session.fs);
+          drawingContext!.drawImage(
             image,
             (index % session.cols) * session.fs,
             Math.floor(index / session.cols) * session.fs,
@@ -88,7 +88,7 @@ try {
             session.fs,
             session.fs,
           );
-          const pixels = captain!.getImageData(0, 0, session.fs, session.fs).data;
+          const pixels = drawingContext!.getImageData(0, 0, session.fs, session.fs).data;
           if (
             !suffix &&
             !pixels.some((value, secondaryIndex) => secondaryIndex % 4 === 3 && value > 0)
