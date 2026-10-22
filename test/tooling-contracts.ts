@@ -50,6 +50,25 @@ try {
   }) => fileSystem.writeFileSync(path.join(scope, 'tsconfig.json'), JSON.stringify(value));
   writeScopeConfig(sourceConfig);
   assert.equal(checkApplicationTypeScript(scope), 3);
+  fileSystem.writeFileSync(path.join(scope, 'strict-base.json'), JSON.stringify(sourceConfig));
+  fileSystem.writeFileSync(
+    path.join(scope, 'tsconfig.json'),
+    JSON.stringify({ extends: './strict-base.json' }),
+  );
+  assert.equal(
+    checkApplicationTypeScript(scope),
+    3,
+    'inherited strict configuration stays checked',
+  );
+  fileSystem.writeFileSync(
+    path.join(scope, 'tsconfig.json'),
+    JSON.stringify({
+      extends: './strict-base.json',
+      compilerOptions: { strictNullChecks: false },
+    }),
+  );
+  assert.throws(() => checkApplicationTypeScript(scope), /must not disable strict option/);
+  writeScopeConfig(sourceConfig);
   const legacy = path.join(scope, 'server', 'unchecked.js');
   fileSystem.writeFileSync(legacy, 'export const legacy = 1;');
   assert.throws(() => checkApplicationTypeScript(scope), /Unchecked application JavaScript/);
@@ -111,7 +130,7 @@ try {
     return spawnSync(
       process.execPath,
       [
-        path.join(root, 'node_modules/typescript/bin/tsc'),
+        path.join(root, 'node_modules/tsrs/bin/tsrs'),
         '--project',
         path.join(importProject, 'tsconfig.json'),
         '--pretty',

@@ -28,7 +28,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
   `game.features`. Each gets only its listed capability facade; no feature methods are installed on `Game.prototype`.
   - `server/coop.ts` owns friends/DMs, Armada, station trading, duels, rescue, co-op Holdout, contracts and v2.6 migration.
   - Effective bonus/stats/world/session services have explicit owners and ordered calculations, not method overrides.
-  - All application modules are native TypeScript and included in strict `tsc --noEmit` checks. Startup and browser delivery use compiled JavaScript in `dist/`.
+  - All application modules are native TypeScript and included in strict Rust `tsrs --noEmit` checks. Startup and browser delivery use compiled JavaScript in `dist/`.
   - See [feature architecture, ownership, typing coverage and checks](docs/FEATURES.md) and the machine-readable
     [feature inventory](docs/feature-inventory.json) before changing integration points.
 - **Shared code.** `shared/` is imported by both server and client:

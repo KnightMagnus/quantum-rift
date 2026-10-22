@@ -70,11 +70,11 @@ The source-coverage guard rejects application JavaScript, omitted modules and
 blanket type-check suppressions before compilation. `tsconfig.tests.json` checks regression harnesses; `tsconfig.tools.json` checks
 developer tooling and the save-catalog exporter. Browser/server preload fixtures live in `test/fixtures/` and are checked by the test project; the regression inventory follows their helper dependencies. All source programs use TypeScript,
 while browser and server release artifacts remain emitted JavaScript.
-`npm run typecheck:tsrs` checks all configurations with the pinned Rust-based
-[tsrs checker](https://github.com/oxc-project/tsrs). CI runs it alongside `tsc`,
-including the valid/invalid contract fixtures through `npm run test:types:tsrs`.
-The pinned tsrs package provides Linux and macOS binaries, but no Windows binary;
-Windows contributors can keep using `npm run typecheck`. Builds still use `tsc`.
+`npm run typecheck` uses the pinned Rust-based [tsrs checker](https://github.com/oxc-project/tsrs)
+for every configuration. `npm run test:types` checks valid and invalid contract
+fixtures with the same compiler. Builds also use tsrs for checked JavaScript
+emission. See [Development tools](DEVELOPMENT-TOOLS.md) for the native Windows
+compiler setup; there is no alternate checker or emitter.
 `tsconfig.core.json` retains the same strict application scope. Contract fixtures
 check both accepted calls and rejected argument/capability shapes. Type checking
 does not validate incoming JSON at runtime or prove every gameplay branch.
