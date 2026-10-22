@@ -1,0 +1,118 @@
+{
+  "rift": "3.3.1",
+  "save": {
+    "credits": 30000000,
+    "sys": "meridian",
+    "stellar": "site-meridian",
+    "ship": {
+      "hull": 736,
+      "outfits": {
+        "598": 6,
+        "611": 4,
+        "9005": 8
+      },
+      "ammo": {
+        "335": 60
+      },
+      "fixed": [[143, 4, 0]],
+      "bonusSpace": 182,
+      "name": "Constitution",
+      "stockOutfits": {
+        "598": 6,
+        "611": 4,
+        "9005": 8
+      }
+    },
+    "cargo": {},
+    "cargoLots": {
+      "version": 1,
+      "byCommodity": {}
+    },
+    "storage": {},
+    "storageLots": {
+      "version": 1,
+      "byCommodity": {}
+    },
+    "mats": {
+      "alloy": [0, 0, 0, 0, 0],
+      "crystal": [0, 0, 0, 0, 0],
+      "isotope": [0, 0, 0, 0, 0]
+    },
+    "rep": {
+      "quantum": 10,
+      "spacer": 0,
+      "lamp": 0,
+      "hollow": 0,
+      "quevari": 0,
+      "umbral": 0,
+      "vashari": 0,
+      "korrund": 0,
+      "ylith": 0,
+      "sarn": 0,
+      "thalassi": 0,
+      "frontier": 0,
+      "farside": 0,
+      "deep": 0,
+      "swarm": 0,
+      "eclipse": 0
+    },
+    "missions": [],
+    "escorts": [],
+    "log": [],
+    "station": {
+      "claimed": true,
+      "ops": 5,
+      "refUnits": 0,
+      "refT": 1792629811307,
+      "active": null,
+      "done": [
+        "shield1",
+        "shield2",
+        "shield3",
+        "hull1",
+        "hull2",
+        "hull3",
+        "gunnery",
+        "gunnery2",
+        "thrusters",
+        "silo",
+        "silo2",
+        "refine1",
+        "refine2",
+        "process",
+        "drydock",
+        "drive",
+        "scoop",
+        "warpcal",
+        "holds",
+        "mining1",
+        "mining2",
+        "salvage",
+        "bay1",
+        "bay2",
+        "sh_speed",
+        "sh_armor",
+        "sh_yield",
+        "sh_crew"
+      ],
+      "queue": [],
+      "site": "site-meridian"
+    },
+    "stats": {
+      "kills": 0,
+      "jumps": 0,
+      "earned": 0
+    },
+    "tut": 23,
+    "tutV": 2,
+    "explored": ["qgate", "meridian"],
+    "name": "Example Captain",
+    "radioStations": [
+      "wave-function-collapse",
+      "qvri",
+      "interdimensional",
+      "signal-superposition",
+      "super-idol"
+    ]
+  }
+}

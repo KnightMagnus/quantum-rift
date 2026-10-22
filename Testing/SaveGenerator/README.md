@@ -3,6 +3,7 @@
 Create custom **Solo-mode** saves for Quantum Rift 3.3.1. Choose a player name,
 starting credits, ship, personal station location and station tier. The game does
 not need to be running. The generator never edits your installed game or saves.
+`Example Captain.rift.json` is an optional ready-made T5 test save.
 
 ## Run on Windows
 
