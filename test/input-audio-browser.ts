@@ -48,7 +48,43 @@ server.stderr.pipe(serverLog);
 let browser;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
+  });
+  const autoplayPage = await browser.newPage();
+  const autoplayErrors = [];
+  autoplayPage.on('pageerror', (error) => autoplayErrors.push(String(error)));
+  await autoplayPage.goto(origin);
+  // Playwright evaluations can grant user activation. Read via CDP with gestures disabled.
+  const autoplaySession = await autoplayPage.context().newCDPSession(autoplayPage);
+  const autoplayState = await autoplaySession.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const audio = await import('/audio.js');
+      const end = performance.now() + 15000;
+      while (performance.now() < end) {
+        if (audio.debug().ctx === 'running' && audio.debug().music)
+          return { ...audio.debug(), activated: navigator.userActivation.hasBeenActive };
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      throw Error('Login music did not autoplay');
+    })()`,
+    awaitPromise: true,
+    returnByValue: true,
+    userGesture: false,
+  });
+  assert.equal(autoplayState.exceptionDetails, undefined);
+  assert.equal(
+    autoplayState.result.value.activated,
+    false,
+    'Login music starts with a running audio context before any user gesture',
+  );
+  assert.deepEqual(autoplayErrors, []);
+  await browser.close();
+  browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--autoplay-policy=document-user-activation-required'],
+  });
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
     hasTouch: true,
@@ -72,8 +108,36 @@ try {
     };
   });
   await page.goto(origin);
+  const blockedSession = await context.newCDPSession(page);
+  const blockedState = await blockedSession.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const audio = await import('/audio.js');
+      const end = performance.now() + 15000;
+      while (!audio.debug().music && performance.now() < end)
+        await new Promise(resolve => setTimeout(resolve, 50));
+      return { ...audio.debug(), activated: navigator.userActivation.hasBeenActive };
+    })()`,
+    awaitPromise: true,
+    returnByValue: true,
+    userGesture: false,
+  });
+  assert.equal(blockedState.exceptionDetails, undefined);
+  assert.equal(blockedState.result.value.music, true, 'Blocked theme is queued');
+  assert.equal(blockedState.result.value.activated, false);
+  assert.equal(
+    blockedState.result.value.ctx,
+    'suspended',
+    'Blocked autoplay queues the theme without bypassing browser policy',
+  );
+  await page.locator('#lname').click();
+  await page.waitForFunction(async () => (await import('/audio.js')).debug().ctx === 'running');
   await page.locator('[data-slot="Input Audio"]').click();
   await page.waitForFunction(() => G.you && G.landed);
+  assert.equal(
+    await page.evaluate(async () => (await import('/audio.js')).debug().music),
+    false,
+    'Entering the game stops the login theme',
+  );
   await page.locator('#depart').click();
   await page.waitForFunction(() => G.view && !G.landed);
 
@@ -163,6 +227,9 @@ try {
     path.join(output, 'results.json'),
     JSON.stringify(
       {
+        loginAutoplay: true,
+        blockedAutoplayGestureFallback: true,
+        loginMusicStopsInGame: true,
         mixerAndMute: true,
         settingsPersisted: true,
         gamepadAxesDeadzoneFire: true,

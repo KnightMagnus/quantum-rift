@@ -64,6 +64,7 @@ one authoritative server on the host’s computer; Solo retains its separate loc
 - Solo mode includes pause, save slots and save-file import and export. A newcomer truce limits ambient hostility while you establish your station; missions and deliberate aggression can still lead to combat.
 - Remap controls, adjust interface scale, use a colour-blind palette, or play with a gamepad or touch controls.
 - Resize the Tray, minimap and tabbed menu to suit your screen. Keep browsing positions and filters, and pin one next objective without hiding your other missions.
+- Login music starts on page load when your browser allows autoplay; otherwise it starts on your first interaction. Saved mute and music levels still apply.
 - Discover five radio stations through exploration and special jobs, with 32 owner-supplied songs and a full-album Spacepop tour reward. Stations shuffle their music except the Super-Idol album, which plays in order.
 - Run locally in your browser with the project’s pinned Node.js runtime. Built releases need no package installation or compilation.
 
