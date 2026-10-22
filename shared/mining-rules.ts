@@ -1,7 +1,4 @@
 import type { GradeLots } from './cargo-contracts.ts';
-/** @import { GradeLots } from './cargo-contracts.ts' */
-
-// @ts-check
 export { fnv1a as seedOf, linearRandom32 as randomOf } from './deterministic-random.ts';
 // Provisional tuning, not measured balance. Time is eligible server simulation seconds.
 export const MINING = Object.freeze({
@@ -22,11 +19,10 @@ export const MINING = Object.freeze({
   seamWidth: 1.15,
 });
 
-/** @param {number} radius */
 export function stageCount(radius: number) {
   return radius < 26 ? 1 : radius < 38 ? 2 : 3;
 }
-/** @param {number} quantity @param {boolean} clean @param {()=>number} random @returns {GradeLots} */
+
 export function rollGrades(quantity: number, clean: boolean, random: () => number): GradeLots {
   const lots = { common: 0, rich: 0, pure: 0 };
   for (let index = 0; index < quantity; index++) {

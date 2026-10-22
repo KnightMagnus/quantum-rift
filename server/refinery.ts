@@ -10,8 +10,6 @@ type SavedRefinery2 = import('./refinery-contracts.ts').SavedRefinery;
 export type { SavedRefinery2 as W };
 export type Session = import('./refinery-contracts.ts').RefinerySession;
 export type Quote = import('./refinery-contracts.ts').RefineryQuote;
-
-// @ts-check
 import fileSystem from 'node:fs';
 import { recordEconomy } from '../shared/economy-receipt.ts';
 import {
@@ -24,26 +22,20 @@ import {
 } from '../shared/refinery-rules.ts';
 import { assertLots, planTake, applyTake, addLots, commonLots } from '../shared/cargo-lots.ts';
 
-/** @import { FuelQuote, MiningOrder, RefineryPlayer, RefineryRequest } from './refinery-contracts.ts' */
-/** @typedef {import('./refinery-contracts.ts').RefineryCapabilities} C */
-/** @typedef {import('./refinery-contracts.ts').SavedRefinery} W */
-/** @typedef {import('./refinery-contracts.ts').RefinerySession} Session */
-/** @typedef {import('./refinery-contracts.ts').RefineryQuote} Quote */
-/** @param {C} capabilities @returns {W} */
 function state(capabilities: RefineryCapabilities2): SavedRefinery2 {
   const savedRefinery = capabilities.db.world.refinery;
   if (!savedRefinery) throw Error('Refinery unavailable');
   return savedRefinery;
 }
-/** @param {number} count */
+
 function integer(count: number) {
   if (!Number.isSafeInteger(count) || count < 0) throw Error('Invalid refinery integer');
 }
-/** @param {unknown} value */
+
 function identity(value: unknown) {
   if (typeof value !== 'string' || !value.trim()) throw Error('Invalid refinery identity');
 }
-/** @param {W} savedRefinery */
+
 function validate(savedRefinery: SavedRefinery2) {
   if (
     savedRefinery.version !== 1 ||
@@ -180,7 +172,7 @@ function validate(savedRefinery: SavedRefinery2) {
         Object.keys(refineryInput.lots).sort().join(',') !== 'common,pure,rich'
       )
         throw Error('Invalid return escrow');
-      for (const grade of /** @type {const} */ (['common', 'rich', 'pure'] as const)) {
+      for (const grade of ['common', 'rich', 'pure'] as const) {
         integer(refineryInput.lots[grade]);
         if (refineryInput.lots[grade] > source.lots[grade])
           throw Error('Invalid return entitlement');
@@ -266,7 +258,7 @@ function validate(savedRefinery: SavedRefinery2) {
       throw Error('Invalid mining order');
   }
 }
-/** @param {W} savedRefinery @param {string} owner @param {string} port @param {string} captainId */
+
 function balance(savedRefinery: SavedRefinery2, owner: string, port: string, captainId: string) {
   let refineryReady = savedRefinery.ready.find(
     (refineryReady) =>
@@ -280,7 +272,7 @@ function balance(savedRefinery: SavedRefinery2, owner: string, port: string, cap
   }
   return refineryReady;
 }
-/** @param {C} capabilities */
+
 function advance(capabilities: RefineryCapabilities2) {
   if (capabilities.db.economicFrozen) return;
   const savedRefinery = state(capabilities),
@@ -315,9 +307,7 @@ function advance(capabilities: RefineryCapabilities2) {
         refineryDemand.reserved -= miningOrder.qty;
         refineryDemand.paid -= miningOrder.reward;
       }
-      const account = /** @type {RefineryPlayer|null} */ (
-        capabilities.db.get(miningOrder.owner) as RefineryPlayer | null
-      );
+      const account = capabilities.db.get(miningOrder.owner) as RefineryPlayer | null;
       if (account)
         account.missions = account.missions.filter((mission) => mission.id !== miningOrder.id);
       changed = true;
@@ -380,7 +370,7 @@ function prune(savedRefinery: SavedRefinery2, currentTime: number) {
       : Number(refineryDemand.key.split(':').at(-1)) >= Math.floor(currentTime / 86400000) - 2,
   );
 }
-/** @param {W} savedRefinery @param {string} port @param {number} currentTime */
+
 function demand(savedRefinery: SavedRefinery2, port: string, currentTime: number) {
   const entryKey = `${port}:${Math.floor(currentTime / 86400000)}`;
   let refineryDemand = savedRefinery.demand.find(
@@ -409,7 +399,7 @@ function transaction(
 ) {
   if (capabilities.db.economicFrozen || capabilities.paused())
     throw Error('Economy paused; recover checkpoint before continuing.');
-  /** @type {[object,string[]][]} */ const targets: [object, string[]][] = [
+  const targets: [object, string[]][] = [
     [
       session.data,
       ['cargo', 'cargoLots', 'credits', 'fuel', 'missions', 'stats', 'economyReceipt'],
@@ -472,7 +462,7 @@ function transaction(
   }
   if (session.ent && typeof playerData.fuel === 'number') session.ent.fuel = playerData.fuel;
 }
-/** @param {W} savedRefinery @param {string} owner @param {string} kind @param {string} identifier @param {number} currentTime @param {string} result */
+
 function receipt(
   savedRefinery: SavedRefinery2,
   owner: string,
@@ -501,7 +491,7 @@ function receipt(
     );
   }
 }
-/** @param {C} capabilities @param {RefineryPlayer} playerData @param {string} port @param {string[]} identifiers @param {number} currentTime */
+
 function economics(
   capabilities: RefineryCapabilities2,
   playerData: RefineryPlayer,
@@ -513,7 +503,7 @@ function economics(
     capabilities.pricing(playerData, port, captainId, currentTime),
   );
 }
-/** @param {C} capabilities @param {Session} session @param {RefineryRequest} refineryRequest */
+
 function quote(
   capabilities: RefineryCapabilities2,
   session: Session,
@@ -586,7 +576,7 @@ function quote(
       total *
       (mode === 'stored' ? refineryRules.storedFeeFactor : 1),
     refineryFee2 = refineryFee(bidPrice, showConfirmation, service);
-  /** @type {Quote|undefined} */ let refineryQuote: Quote | undefined;
+  let refineryQuote: Quote | undefined;
   transaction(capabilities, session, (savedRefinery) => {
     savedRefinery.quotes = savedRefinery.quotes.filter(
       (refineryQuote) => refineryQuote.expires > currentTime,
@@ -623,7 +613,7 @@ function quote(
   });
   capabilities.send(session, { t: 'refineryQuote', quote: refineryQuote });
 }
-/** @param {C} capabilities @param {Session} session @param {string} identifier */
+
 function submit(capabilities: RefineryCapabilities2, session: Session, identifier: string) {
   const owner = capabilities.db.key(session.data.name),
     currentTime = capabilities.now();
@@ -708,7 +698,7 @@ function submit(capabilities: RefineryCapabilities2, session: Session, identifie
         submittedAt: currentTime,
         startAt,
         readyAt: startAt + refineryQuote.duration,
-        status: /** @type {'queued'} */ ('queued' as const),
+        status: 'queued' as const,
         credited: false,
         returns: [],
       };
@@ -735,7 +725,7 @@ function submit(capabilities: RefineryCapabilities2, session: Session, identifie
   });
   advance(capabilities);
 }
-/** @param {C} capabilities @param {Session} session @param {RefineryRequest} refineryRequest */
+
 function collect(
   capabilities: RefineryCapabilities2,
   session: Session,
@@ -788,7 +778,7 @@ function collect(
         if (!count) continue;
         const lots = { common: 0, rich: 0, pure: 0 };
         let left = count;
-        for (const entryKey of /** @type {const} */ (['common', 'rich', 'pure'] as const)) {
+        for (const entryKey of ['common', 'rich', 'pure'] as const) {
           lots[entryKey] = Math.min(input.lots[entryKey], left);
           input.lots[entryKey] -= lots[entryKey];
           left -= lots[entryKey];
@@ -804,7 +794,7 @@ function collect(
     }
   });
 }
-/** @param {C} capabilities @param {Session} session @param {string} identifier */
+
 function cancel(capabilities: RefineryCapabilities2, session: Session, identifier: string) {
   const owner = capabilities.db.key(session.data.name),
     currentTime = capabilities.now();
@@ -840,7 +830,7 @@ function cancel(capabilities: RefineryCapabilities2, session: Session, identifie
     receipt(savedRefinery, owner, 'cancel', identifier, currentTime, identifier);
   });
 }
-/** @param {C} capabilities @param {Session} session @param {number|undefined} count */
+
 function fuelQuote(
   capabilities: RefineryCapabilities2,
   session: Session,
@@ -848,7 +838,7 @@ function fuelQuote(
 ) {
   if (typeof count !== 'number' || !Number.isSafeInteger(count) || count < 1 || count > 30)
     throw Error('Invalid cells.');
-  /** @type {FuelQuote|undefined} */ let fuelQuote: FuelQuote | undefined;
+  let fuelQuote: FuelQuote | undefined;
   transaction(capabilities, session, (savedRefinery, playerData) => {
     const before = session.ent?.fuel ?? playerData.fuel ?? capabilities.fuelCapacity(playerData),
       capacity = capabilities.fuelCapacity(playerData),
@@ -878,7 +868,7 @@ function fuelQuote(
   });
   capabilities.send(session, { t: 'refineryFuelQuote', quote: fuelQuote });
 }
-/** @param {C} capabilities @param {Session} session @param {RefineryRequest} refineryRequest */
+
 function fuel(
   capabilities: RefineryCapabilities2,
   session: Session,
@@ -963,7 +953,7 @@ function offers(
         qty: quantity,
         reward,
         deadline: currentTime + refineryRules.orderExpiryMs,
-        status: /** @type {'accepted'} */ ('accepted' as const),
+        status: 'accepted' as const,
         demand: entryKey,
         event: rush?.id || null,
       };
@@ -977,7 +967,7 @@ function offers(
             refineryDemand.paid + options.reward <= refineryRules.payoutDaily)),
     );
 }
-/** @param {C} capabilities @param {Session} session @param {RefineryRequest} refineryRequest */
+
 function order(
   capabilities: RefineryCapabilities2,
   session: Session,
@@ -1088,7 +1078,7 @@ function order(
     }
   });
 }
-/** @param {C} capabilities @param {Session} session */
+
 function syncRush(capabilities: RefineryCapabilities2, session: Session) {
   for (const miningOrder of state(capabilities).orders)
     if (
@@ -1104,7 +1094,6 @@ function syncRush(capabilities: RefineryCapabilities2, session: Session) {
     }
 }
 export const RefineryOperations = {
-  /** @this {C} @param {string} port @param {number} requested @param {number} [location] */
   sellRoom(
     this: RefineryCapabilities2,
     port: string,
@@ -1118,7 +1107,7 @@ export const RefineryOperations = {
       Math.min(requested, refineryRules.compositeDaily - (refineryDemand?.sold || 0)),
     );
   },
-  /** @this {C} @param {string} port @param {number} tonnes @param {number} [location] */
+
   sold(this: RefineryCapabilities2, port: string, tonnes: number, location: number = this.now()) {
     integer(tonnes);
     const refineryDemand = demand(state(this), port, location);
@@ -1128,13 +1117,12 @@ export const RefineryOperations = {
     this.db.touch();
   },
 
-  /** @this {C} @param {number} milliseconds */
   resume(this: RefineryCapabilities2, milliseconds: number) {
     for (const miningOrder of state(this).orders)
       if (miningOrder.status === 'accepted') miningOrder.deadline += Math.max(0, milliseconds);
     this.db.touch();
   },
-  /** @this {C} */
+
   init(this: RefineryCapabilities2) {
     if (this.db.world.refinery) validate(this.db.world.refinery);
     else {
@@ -1152,7 +1140,7 @@ export const RefineryOperations = {
       this.db.touch();
     }
   },
-  /** @this {C} @param {Session} session @returns {RefineryWire} */
+
   payload(this: RefineryCapabilities2, session: Session) {
     advance(this);
     syncRush(this, session);
@@ -1177,7 +1165,7 @@ export const RefineryOperations = {
       offers: port ? offers(this, session.data, port) : [],
     };
   },
-  /** @this {C} @param {Session} session @param {RefineryRequest} refineryRequest @param {boolean} [orders] */
+
   command(
     this: RefineryCapabilities2,
     session: Session,
@@ -1187,7 +1175,7 @@ export const RefineryOperations = {
     const allowed = orders
       ? ['accept', 'deliver', 'cancelOrder']
       : ['quote', 'preview', 'submit', 'claim', 'cancel', 'returns', 'fuelQuote', 'fuel', 'list'];
-    /** @type {Record<string,readonly string[]>} */
+
     const fields: Record<string, readonly string[]> = {
       quote: ['t', 'op', 'port', 'recipe', 'grade', 'mode', 'n'],
       preview: ['t', 'op', 'port', 'recipe', 'grade', 'mode', 'n'],
@@ -1210,7 +1198,7 @@ export const RefineryOperations = {
         (entryKey) =>
           typeof entryKey !== 'string' || !fields[refineryRequest.op || '']?.includes(entryKey),
       ) ||
-      /** @type {const} */ ((['id', 'port', 'recipe', 'grade', 'mode'] as const)).some(
+      (['id', 'port', 'recipe', 'grade', 'mode'] as const).some(
         (entryKey) =>
           refineryRequest[entryKey] !== undefined &&
           (typeof refineryRequest[entryKey] !== 'string' || refineryRequest[entryKey].length > 200),

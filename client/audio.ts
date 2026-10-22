@@ -39,10 +39,6 @@ declare global {
  */
 
 /**
- * @typedef {'space' | 'station' | null} AmbienceLocation
- */
-
-/**
  * @typedef {Object} AudioDebugInfo
  * @property {string | null | undefined} ctx Audio context state or null
  * @property {string[]} amb Active ambience bed names

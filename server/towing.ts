@@ -7,41 +7,32 @@ type TowWorld2 = import('./towing-contracts.ts').TowWorld;
 export type { TowWorld2 as W };
 export type ObjectRecord = import('./towing-contracts.ts').Motherlode;
 export type Session = import('./towing-contracts.ts').Session;
-
-// @ts-check
 import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
 import { TOW as towingRules, towSpeed } from '../shared/towing-rules.ts';
 import { addLots, assertLots } from '../shared/cargo-lots.ts';
 
-/** @import { RefineryPlayer } from './refinery-contracts.ts' */
-/** @import { Space } from './space.ts' */
-/** @import { TowRequest } from './towing-contracts.ts' */
-/** @typedef {import('./towing-contracts.ts').TowCapabilities} C */
-/** @typedef {import('./towing-contracts.ts').TowWorld} W */
-/** @typedef {import('./towing-contracts.ts').Motherlode} ObjectRecord */
-/** @typedef {import('./towing-contracts.ts').Session} Session */
 class DeliveryHoldFull extends Error {}
-/** @type {WeakMap<Session, string>} */
+
 const deliveryNotices: WeakMap<Session, string> = new WeakMap();
-/** @param {C} capabilities @returns {W} */
+
 function state(capabilities: TowCapabilities2): TowWorld2 {
   const towWorld = capabilities.db.world.towing;
   if (!towWorld) throw Error('Towing unavailable');
   return towWorld;
 }
-/** @param {C} capabilities */
+
 function currentTime(capabilities: TowCapabilities2) {
   return capabilities.db.world.mining?.clock || 0;
 }
-/** @param {C} capabilities @param {Session} session */
+
 function entryKey2(capabilities: TowCapabilities2, session: Session) {
   return capabilities.db.key(session.data.name);
 }
-/** @param {ObjectRecord} motherlode */
+
 function active(motherlode: ObjectRecord) {
   return motherlode.status === 'attached';
 }
-/** @param {C} capabilities @param {Session} session */
+
 function attached(capabilities: TowCapabilities2, session: Session) {
   return state(capabilities)
     .slots.map((towSlot) => towSlot.object)
@@ -50,7 +41,7 @@ function attached(capabilities: TowCapabilities2, session: Session) {
         motherlode && active(motherlode) && motherlode.owner === entryKey2(capabilities, session),
     );
 }
-/** @param {C} capabilities @param {Session} session */
+
 function flight(capabilities: TowCapabilities2, session: Session) {
   const entity = session.ent,
     computedShipStats = capabilities.stats(session.data);
@@ -74,7 +65,7 @@ function flight(capabilities: TowCapabilities2, session: Session) {
     throw Error('Fit a Tow Rig on a cargo hull of at least 60t (stock Dredge included)');
   return entity;
 }
-/** @param {W} towWorld */
+
 function validate(towWorld: TowWorld2) {
   if (
     towWorld.version !== 1 ||
@@ -250,7 +241,7 @@ function validate(towWorld: TowWorld2) {
     offerIds.add(offer.id);
   }
 }
-/** @param {C} capabilities @param {ObjectRecord} motherlode */
+
 function release(capabilities: TowCapabilities2, motherlode: ObjectRecord) {
   if (!active(motherlode)) return;
   motherlode.status = 'detached';
@@ -261,11 +252,11 @@ function release(capabilities: TowCapabilities2, motherlode: ObjectRecord) {
     (towOffer) => towOffer.id !== motherlode.id,
   );
 }
-/** @param {C} capabilities @param {Session} session @param {()=>void} callback */
+
 function transaction(capabilities: TowCapabilities2, session: Session, callback: () => void) {
   if (capabilities.db.economicFrozen || capabilities.paused())
     throw Error('Towing economy requires recovery/unpause');
-  const playerData = /** @type {RefineryPlayer} */ (session.data as RefineryPlayer),
+  const playerData = session.data as RefineryPlayer,
     previousValue = { cargo: playerData.cargo, cargoLots: playerData.cargoLots },
     towWorld = capabilities.db.world.towing;
   playerData.cargo = structuredClone(playerData.cargo);
@@ -332,9 +323,7 @@ function deliver(
     crossesPort(stellarBody, previous, motherlode) > stellarBody.r + towingRules.deliveryApron
   )
     throw Error('Bring the motherlode into an accepted port collection zone');
-  const pass =
-    /** @type {RefineryPlayer} */ ((session.data as RefineryPlayer)).landPass?.[stellarBody.id] ||
-    0;
+  const pass = (session.data as RefineryPlayer).landPass?.[stellarBody.id] || 0;
   if (
     !stellarBody.outlaw &&
     (session.data.rep?.[systemsById[motherlode.sys].faction] || 0) <= -30 &&
@@ -348,8 +337,8 @@ function deliver(
       towSlot = towWorld.slots.find((towSlot) => towSlot.object?.id === motherlode.id);
     if (!towSlot?.object) throw Error('Missing source');
     addLots(
-      /** @type {RefineryPlayer} */ ((session.data as RefineryPlayer)).cargo,
-      /** @type {RefineryPlayer} */ ((session.data as RefineryPlayer)).cargoLots,
+      (session.data as RefineryPlayer).cargo,
+      (session.data as RefineryPlayer).cargoLots,
       { cid: motherlode.ore, qty: motherlode.mass, grades: { ...motherlode.lots } },
       capabilities.room(session.data),
     );
@@ -376,7 +365,7 @@ function deliver(
     `Motherlode delivered: ${motherlode.mass}t ${motherlode.ore}; no second credit/fragment reward.`,
   );
 }
-/** @param {C} capabilities @param {string} starSystem */
+
 function ensure(capabilities: TowCapabilities2, starSystem: string) {
   if (capabilities.db.economicFrozen || capabilities.paused()) return;
   const towWorld = state(capabilities),
@@ -445,7 +434,6 @@ function ensure(capabilities: TowCapabilities2, starSystem: string) {
   }
 }
 export const TowingOperations = {
-  /** @this {C} */
   init(this: TowCapabilities2) {
     if (!this.db.world.towing)
       this.db.world.towing = { version: 1, nextId: 1, slots: [], receipts: [], offers: [] };
@@ -456,15 +444,15 @@ export const TowingOperations = {
     towWorld.offers = [];
     this.db.touch();
   },
-  /** @this {C} @param {string} starSystem */
+
   ensure(this: TowCapabilities2, starSystem: string) {
     ensure(this, starSystem);
   },
-  /** @this {C} @param {Session} session */
+
   attached(this: TowCapabilities2, session: Session) {
     return attached(this, session) || null;
   },
-  /** @this {C} @param {Session} session */
+
   detach(this: TowCapabilities2, session: Session) {
     const motherlode = attached(this, session);
     if (!motherlode) return false;
@@ -473,7 +461,7 @@ export const TowingOperations = {
     this.db.touch();
     return true;
   },
-  /** @this {C} @param {Space} space */
+
   towingTick(this: TowCapabilities2, space: Space) {
     if (this.paused() || this.db.economicFrozen) return;
     ensure(this, space.id);
@@ -557,7 +545,7 @@ export const TowingOperations = {
       this.db.touch();
     }
   },
-  /** @this {C} @param {Session} session @param {TowRequest} towRequest */
+
   command(this: TowCapabilities2, session: Session, towRequest: TowRequest) {
     try {
       if (
@@ -766,7 +754,7 @@ export const TowingOperations = {
     this.db.touch();
     return true;
   },
-  /** @this {C} @param {Session} session */
+
   payload(this: TowCapabilities2, session: Session) {
     if (!session.data) return null;
     ensure(this, session.data.sys);

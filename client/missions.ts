@@ -36,12 +36,6 @@ import { STORY } from '../shared/story.ts';
 import { route } from '../shared/rules.ts';
 import { TUTORIAL } from '../shared/tutorial.ts';
 
-/** @import { ClientGameState } from './main.ts' */
-
-/**
- * @typedef {'story' | 'career' | 'arc' | 'job'} MissionKind
- */
-
 /**
  * @typedef {Object} MissionTarget
  * @property {string} key Mission unique key or ID

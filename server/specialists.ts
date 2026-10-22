@@ -64,10 +64,6 @@ import {
 import { planTake, applyTake } from '../shared/cargo-lots.ts';
 import { makeLoadout, credits } from '../shared/rules.ts';
 
-/** @import { Mission, PlayerData, Session } from './game.ts' */
-/** @import { NetworkMessage } from './message-registry.ts' */
-/** @import { Entity, Space } from './space.ts' */
-
 /** @type {Record<string, number>} Map of specialist keys to hull IDs. */
 const fromEntries2: Record<string, number> = Object.fromEntries(
   Object.values(SPEC).map((specialistShip) => [specialistShip.key, specialistShip.id]),

@@ -125,9 +125,6 @@ import {
   credits,
 } from '../shared/rules.ts';
 
-/** @import { OfficerRecord } from '../shared/rules.ts' */
-/** @import { PlayerData, Session } from './game.ts' */
-
 /**
  * Clamp a numeric value between a lower and an upper bound.
  * @param {number} value - Value to clamp.
@@ -153,7 +150,6 @@ const DIST: Record<string, Record<string, number>> = {};
 
 const galaxyGraph = new GalaxyGraph(systemsById);
 
-/** @param {string} from @returns {Record<string, number>} */
 function jumps(from: string): Record<string, number> {
   return DIST[from] || (DIST[from] = galaxyGraph.distances(from));
 }

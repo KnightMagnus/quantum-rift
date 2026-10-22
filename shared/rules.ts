@@ -245,9 +245,6 @@ import { SPRITES } from './sprites26.ts';
 import { SPECIALISTS } from './specialty.ts';
 import { RANK_MULT, TRAITS, LOWER_DECK } from './syndicate.ts';
 
-/** @import { PlayerData } from '../server/game.ts' */
-/** @import { IndustrialShip } from '../server/industrial-contracts.ts' */
-
 /**
  * Simulation tick rate in cycles per second.
  * @type {number}

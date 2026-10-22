@@ -5,9 +5,6 @@ import type { Socket as NodeNetSocket } from 'node:net';
 import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 
-/** @import { IncomingMessage } from 'node:http' */
-/** @import { Socket as NodeNetSocket } from 'node:net' */
-
 /**
  * RFC 6455 magic GUID constant appended to client Sec-WebSocket-Key to generate Sec-WebSocket-Accept.
  * @type {string}
@@ -30,13 +27,13 @@ export class Socket extends EventEmitter {
    */
   constructor(socket: NodeNetSocket) {
     super();
-    /** @type {NodeNetSocket} */
+
     this.sock = socket;
-    /** @type {Buffer} */
+
     this.buf = Buffer.alloc(0);
-    /** @type {boolean} */
+
     this.open = true;
-    /** @type {Buffer[] | null} */
+
     this.frag = null;
     socket.setNoDelay(true);
     socket.on('data', (distance) => {

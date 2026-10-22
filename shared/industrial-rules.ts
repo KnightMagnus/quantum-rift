@@ -1,4 +1,3 @@
-// @ts-check
 // Provisional industrial tuning. No rate depends on client messages or frame count.
 export const INDUSTRIAL = Object.freeze({
   hull: 815,
@@ -53,7 +52,7 @@ export const CORONA_BANDS = Object.freeze([
     exit: 10,
   },
 ]);
-/** @param {string} starSystem @param {number} positionX @param {number} positionY */
+
 export function coronaAt(starSystem: string, positionX: number, positionY: number) {
   return (
     CORONA_BANDS.find(

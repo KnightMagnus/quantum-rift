@@ -34,8 +34,6 @@ import {
 import { ROLES_INFO } from '../shared/roles.ts';
 import { credits } from '../shared/rules.ts';
 
-/** @import { ClientGameState } from './main.ts' */
-
 /**
  * @typedef {Object} SpecialistComponent
  * @property {string} name Display name of component

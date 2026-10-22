@@ -5,8 +5,6 @@ type IndustrialCapabilities2 = import('./industrial-contracts.ts').IndustrialCap
 export type { IndustrialCapabilities2 as C };
 export type State = import('./industrial-contracts.ts').IndustrialShip;
 export type Player = import('./refinery-contracts.ts').RefineryPlayer;
-
-// @ts-check
 import {
   INDUSTRIAL as industrialRules,
   CORONA_BANDS,
@@ -16,13 +14,6 @@ import {
 import { RECIPES } from '../shared/refinery-rules.ts';
 import { planTake, applyTake, addLots, commonLots } from '../shared/cargo-lots.ts';
 
-/** @import { Session } from './game.ts' */
-/** @import { IndustrialRequest, IndustrialWorld } from './industrial-contracts.ts' */
-/** @import { Entity, Space } from './space.ts' */
-/** @typedef {import('./industrial-contracts.ts').IndustrialCapabilities} C */
-/** @typedef {import('./industrial-contracts.ts').IndustrialShip} State */
-/** @typedef {import('./refinery-contracts.ts').RefineryPlayer} Player */
-/** @param {Player} playerData @returns {State} */
 function state(playerData: Player): State {
   if (!playerData.ship.uid)
     playerData.ship.uid = `industrial-${playerData.name}-${(playerData.nextUid = (playerData.nextUid || 0) + 1)}`;
@@ -44,7 +35,7 @@ function state(playerData: Player): State {
   validate(industrialShip);
   return industrialShip;
 }
-/** @param {State} industrialShip */
+
 function validate(industrialShip: State) {
   if (
     industrialShip.version !== 1 ||
@@ -87,7 +78,7 @@ function transaction(
 ) {
   if (capabilities.db.economicFrozen || capabilities.paused())
     throw Error('Industrial economy requires recovery or unpause');
-  const playerData = /** @type {Player} */ (session.data as Player),
+  const playerData = session.data as Player,
     previousValue = {
       cargo: playerData.cargo,
       cargoLots: playerData.cargoLots,
@@ -99,10 +90,7 @@ function transaction(
   playerData.ship = structuredClone(playerData.ship);
   capabilities.db.world.industrial = structuredClone(world);
   try {
-    callback(
-      /** @type {Player} */ (playerData as Player),
-      /** @type {IndustrialWorld} */ (capabilities.db.world.industrial as IndustrialWorld),
-    );
+    callback(playerData as Player, capabilities.db.world.industrial as IndustrialWorld);
     capabilities.db.touch();
     capabilities.db.flush();
     capabilities.refresh(session);
@@ -114,11 +102,11 @@ function transaction(
     throw error;
   }
 }
-/** @param {Space} space @param {Entity} entity */
+
 function drones(space: Space, entity: Entity) {
   return [...space.ships.values()].filter((entity2) => entity2.industrialRoot === entity.id);
 }
-/** @param {Space} space @param {Entity} entity @param {boolean} enabled */
+
 function support(space: Space, entity: Entity, enabled: boolean) {
   const entitys = drones(space, entity);
   if (!enabled) {
@@ -142,7 +130,6 @@ function support(space: Space, entity: Entity, enabled: boolean) {
   }
 }
 export const IndustrialOperations = {
-  /** @this {C} */
   init(this: IndustrialCapabilities2) {
     const industrialWorld = this.db.world.industrial;
     if (industrialWorld) {
@@ -173,14 +160,14 @@ export const IndustrialOperations = {
     }
     this.db.touch();
   },
-  /** @this {C} @param {Session} session */
+
   stop(this: IndustrialCapabilities2, session: Session) {
     const industrialShip = session.data?.ship?.industrial;
     if (industrialShip)
       industrialShip.sweep = industrialShip.harvest = industrialShip.smelter = false;
     this.db.touch();
   },
-  /** @this {C} @param {Session} session @param {IndustrialRequest} industrialRequest */
+
   command(this: IndustrialCapabilities2, session: Session, industrialRequest: IndustrialRequest) {
     try {
       if (
@@ -199,7 +186,7 @@ export const IndustrialOperations = {
         )
       )
         throw Error('Unknown industrial authority field');
-      const industrialShip = state(/** @type {Player} */ (session.data as Player));
+      const industrialShip = state(session.data as Player);
       if (industrialRequest.op === 'off') {
         industrialShip.sweep = industrialShip.harvest = industrialShip.smelter = false;
       } else if (industrialRequest.op === 'recipe') {
@@ -214,7 +201,7 @@ export const IndustrialOperations = {
             industrialRequest.grade !== industrialShip.grade)
         ) {
           const input = RECIPES.find((recipe2) => recipe2.id === industrialShip.recipe)?.inputs[0];
-          const player = /** @type {Player} */ (session.data as Player);
+          const player = session.data as Player;
           if (input && (player.cargoLots?.byCommodity[input]?.[industrialShip.grade] || 0) > 0)
             throw Error('Finish earned work before switching input recipe/grade');
           // Unreserved input can be traded/jettisoned. Discard time, never transfer it.
@@ -224,10 +211,8 @@ export const IndustrialOperations = {
             'Previous input is gone: discarded partial smelter work; outputs retained',
           );
         }
-        industrialShip.recipe = /** @type {string} */ (industrialRequest.recipe as string);
-        industrialShip.grade = /** @type {'common'|'rich'|'pure'} */ (
-          industrialRequest.grade as 'common' | 'rich' | 'pure'
-        );
+        industrialShip.recipe = industrialRequest.recipe as string;
+        industrialShip.grade = industrialRequest.grade as 'common' | 'rich' | 'pure';
       } else if (
         industrialRequest.op === 'sweep' ||
         industrialRequest.op === 'smelter' ||
@@ -256,7 +241,7 @@ export const IndustrialOperations = {
       this.toast(session, String(error instanceof Error ? error.message : error));
     }
   },
-  /** @this {C} @param {Space} space @param {number} deltaTime */
+
   industrialTick(this: IndustrialCapabilities2, space: Space, deltaTime: number) {
     if (this.paused() || this.db.economicFrozen) return;
     if (!Number.isFinite(deltaTime) || deltaTime <= 0 || deltaTime > 1)
@@ -266,7 +251,7 @@ export const IndustrialOperations = {
     for (const entity of [...space.ships.values()]) {
       if (!entity.player || entity.hull !== industrialRules.hull) continue;
       const session = entity.player.s,
-        playerData = /** @type {Player} */ (session.data as Player);
+        playerData = session.data as Player;
       let industrialShip = state(playerData);
       if (entity.dead || entity.disabled || entity.state !== 'fly' || playerData.stellar) {
         support(space, entity, false);
@@ -320,7 +305,7 @@ export const IndustrialOperations = {
       }
       const first = start < industrialRules.cutoff ? work : deltaTime,
         midpoint = start + rate * first;
-      /** @type {(h0:number,h1:number,t:number,threshold:number)=>number} */
+
       const exposure: (
         initialHeight: number,
         finalHeight: number,
@@ -337,7 +322,7 @@ export const IndustrialOperations = {
               ? time
               : (time * Math.max(0, Math.max(initialHeight, finalHeight) - threshold)) /
                 Math.abs(finalHeight - initialHeight);
-      /** @param {number} threshold */
+
       const above = (threshold: number) =>
         exposure(start, midpoint, first, threshold) +
         exposure(midpoint, industrialShip.heat, deltaTime - first, threshold);
@@ -411,9 +396,7 @@ export const IndustrialOperations = {
         }
       }
       if (harvest && work > 0 && band) {
-        const industrialWorld = /** @type {IndustrialWorld} */ (
-          this.db.world.industrial as IndustrialWorld
-        );
+        const industrialWorld = this.db.world.industrial as IndustrialWorld;
         const source = (industrialWorld.sources[band.id] ??= {
           units: industrialRules.sourceUnits,
           last: clock,
@@ -472,10 +455,10 @@ export const IndustrialOperations = {
       this.db.touch();
     }
   },
-  /** @this {C} @param {Session} session */
+
   payload(this: IndustrialCapabilities2, session: Session) {
     if (session.data?.ship?.hull !== industrialRules.hull) return null;
-    const industrialShip = state(/** @type {Player} */ (session.data as Player)),
+    const industrialShip = state(session.data as Player),
       entity = session.ent,
       band = entity ? coronaAt(session.data.sys, entity.x, entity.y) : null;
     return {

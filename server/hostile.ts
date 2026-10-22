@@ -34,9 +34,6 @@ import { SPEC_BY_KEY } from '../shared/specialty.ts';
 import { credits } from '../shared/rules.ts';
 import { COOP_HOLDOUT } from '../shared/coop.ts';
 
-/** @import { PlayerData, Session, SpaceSystem } from './game.ts' */
-/** @import { Entity, Space } from './space.ts' */
-
 /**
  * Clamp a numeric value between minimum and maximum bounds.
  * @param {number} value - Value to clamp.

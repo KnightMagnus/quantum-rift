@@ -3,9 +3,6 @@ export type CargoTotals = import('./cargo-contracts.ts').CargoTotals;
 export type CargoLedger = import('./cargo-contracts.ts').CargoLedger;
 export type GradeLots = import('./cargo-contracts.ts').GradeLots;
 export type LotTransfer = import('./cargo-contracts.ts').LotTransfer;
-/** @import { CargoOwner } from './cargo-contracts.ts' */
-
-// @ts-check
 /** Pure integer-tonne accounting. Totals stay authoritative; corrupt ledgers fail closed.
  * No time, RNG, capacity calculation, crate quality or field richness belongs here.
  * @typedef {import('./cargo-contracts.ts').CargoTotals} CargoTotals
@@ -16,7 +13,7 @@ export type LotTransfer = import('./cargo-contracts.ts').LotTransfer;
 export const RAW_COMMODITIES = Object.freeze(['ore', 'gas', 'shards']);
 export const RAW_GRADES = Object.freeze(['common', 'rich', 'pure'] as const);
 const forbidden = new Set([...Object.getOwnPropertyNames(Object.prototype), 'prototype']);
-/** @param {unknown} value @returns {asserts value is Record<string, unknown>} */
+
 function record(value: unknown): asserts value is Record<string, unknown> {
   if (
     !value ||
@@ -61,28 +58,28 @@ function writable(target: object, entryKey: string) {
   )
     throw new Error('Cargo ledger: destination is not writable');
 }
-/** @param {CargoTotals} totals @param {CargoLedger} ledger @param {string} captainId */
+
 function writableLots(totals: CargoTotals, ledger: CargoLedger, captainId: string) {
   writable(totals, captainId);
   if (RAW_COMMODITIES.includes(captainId)) writable(ledger.byCommodity, captainId);
 }
-/** @param {number} value */
+
 function count(value: unknown): asserts value is number {
   if (!Number.isSafeInteger(value) || (value as number) < 0)
     throw new Error('Cargo ledger: invalid quantity');
 }
-/** @param {string} captainId */
+
 function commodity(captainId: string) {
   if (typeof captainId !== 'string' || !captainId || forbidden.has(captainId))
     throw new Error('Cargo ledger: unsafe commodity');
 }
-/** @returns {GradeLots} */
+
 const empty = () => ({ common: 0, rich: 0, pure: 0 });
-/** @param {GradeLots} lots */
+
 function sumValues(lots: GradeLots) {
   return lots.common + lots.rich + lots.pure;
 }
-/** @param {unknown} value @returns {asserts value is GradeLots} */
+
 function grades(value: unknown): asserts value is GradeLots {
   record(value);
   if (Reflect.ownKeys(value).length !== 3 || RAW_GRADES.some((game) => !Object.hasOwn(value, game)))
@@ -90,7 +87,7 @@ function grades(value: unknown): asserts value is GradeLots {
   for (const rAW_GRADES of RAW_GRADES) count(value[rAW_GRADES]);
   count(sumValues(value as GradeLots));
 }
-/** @param {CargoTotals} totals @param {CargoLedger} ledger */
+
 export function assertLots(totals: CargoTotals, ledger: CargoLedger) {
   record(totals);
   record(ledger);
@@ -119,12 +116,10 @@ export function assertLots(totals: CargoTotals, ledger: CargoLedger) {
  */
 export function migrateCargoLots(player: CargoOwner): { changed: boolean } {
   owner(player);
-  const pairs = /** @type {const} */ (
-    [
-      ['cargo', 'cargoLots'],
-      ['storage', 'storageLots'],
-    ] as const
-  );
+  const pairs = [
+    ['cargo', 'cargoLots'],
+    ['storage', 'storageLots'],
+  ] as const;
   const pending = [];
   for (const [totalKey, lotKey] of pairs) {
     const totals = player[totalKey] === undefined ? {} : player[totalKey];
@@ -153,7 +148,7 @@ export function migrateCargoLots(player: CargoOwner): { changed: boolean } {
   }
   return { changed: pending.length > 0 };
 }
-/** @param {CargoTotals} totals @param {CargoLedger} ledger @param {string} captainId @returns {GradeLots} */
+
 function owned(totals: CargoTotals, ledger: CargoLedger, captainId: string): GradeLots {
   return RAW_COMMODITIES.includes(captainId)
     ? { ...(ledger.byCommodity[captainId] || empty()) }
@@ -173,7 +168,7 @@ export function splitLots(available: GradeLots, quantity: number): GradeLots {
   }
   return selected;
 }
-/** @type {WeakMap<LotTransfer, {totals:CargoTotals, ledger:CargoLedger, before:GradeLots}>} */
+
 const plans: WeakMap<LotTransfer, { totals: CargoTotals; ledger: CargoLedger; before: GradeLots }> =
   new WeakMap();
 /** Plans are immutable, process-local and single use. Explicit selection is never substituted.
@@ -200,7 +195,7 @@ export function planTake(
   plans.set(plan, { totals, ledger, before });
   return plan;
 }
-/** @param {CargoTotals} totals @param {CargoLedger} ledger @param {string} captainId @param {GradeLots} lots */
+
 function write(totals: CargoTotals, ledger: CargoLedger, captainId: string, lots: GradeLots) {
   writableLots(totals, ledger, captainId);
   totals[captainId] = sumValues(lots);
@@ -232,7 +227,7 @@ export function applyTake(
   plans.delete(plan);
   return plan;
 }
-/** @param {LotTransfer} transfer */
+
 function validateTransfer(transfer: LotTransfer) {
   record(transfer);
   commodity(transfer.cid);
@@ -304,7 +299,7 @@ export function moveLots(
   write(target, targetLedger, captainId, owned(trialTotals, trialLedger, captainId));
   return plan;
 }
-/** @param {CargoTotals} totals @param {CargoLedger} ledger */
+
 export function clearLots(totals: CargoTotals, ledger: CargoLedger) {
   assertLots(totals, ledger);
   for (const captainId of Object.keys(totals)) {

@@ -96,9 +96,6 @@ import { SPECIALISTS } from '../shared/specialty.ts';
 import { credits } from '../shared/rules.ts';
 import { occupiedPassengerSeats } from '../shared/passengers.ts';
 
-/** @import { QuestRecord, QuestStep } from '../shared/quests.ts' */
-/** @import { Mission, PlayerData, Session } from './game.ts' */
-
 /**
  * 32-bit FNV-1a string hash function.
  * @param {string | number} text - Input key to hash.
@@ -168,7 +165,6 @@ const JCACHE: Record<string, Record<string, number>> = {};
 
 const galaxyGraph = new GalaxyGraph(systemsById);
 
-/** @param {string} from @returns {Record<string, number>} */
 const jumpsFrom = (from: string): Record<string, number> =>
   JCACHE[from] || (JCACHE[from] = galaxyGraph.distances(from));
 

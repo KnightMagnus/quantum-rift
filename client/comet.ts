@@ -1,5 +1,5 @@
 // Seeded, cached artwork: no per-frame randomness, filters or particle allocation.
-/** @type {WeakMap<CometConfig, HTMLCanvasElement>} */
+
 export interface CometConfig {
   x0: number;
   y0: number;
@@ -108,14 +108,7 @@ function artwork(cometConfig: CometConfig) {
   let seed =
     Math.round(cometConfig.x0 * 31 + cometConfig.y0 * 17 + cometConfig.len * 101) >>> 0 || 1;
   const random = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296;
-  /**
-   * @param {number} positionX
-   * @param {number} positionY
-   * @param {number} relativeX
-   * @param {number} relativeY
-   * @param {string} colorChannels
-   * @param {number} alpha
-   */
+
   const puff = (
     positionX: number,
     positionY: number,

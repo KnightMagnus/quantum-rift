@@ -2,10 +2,6 @@ import type { AutopilotShip, FlightStats, LandingPort } from './landing_autopilo
 // Gateways are transit apertures, not landing volumes. Aim at the center and fly through.
 import { DT as tickDuration, wrap } from '../shared/rules.ts';
 
-/** @import { StellarBody } from '../server/game.js' */
-/** @import { ComputedShipStats } from '../shared/rules.ts' */
-/** @import { RenderEntity } from './render.js' */
-
 /**
  * Direct center-seeking flight, with no arrival braking or retrograde phase.
  * @param {RenderEntity} ship Current predicted ship.

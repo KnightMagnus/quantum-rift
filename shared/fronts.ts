@@ -88,10 +88,6 @@ import { EXALTED_STANDING } from './reputation.ts';
  */
 
 /**
- * @typedef {Partial<ServerEvent> & { start: number, end: number }} ScheduledEvent
- */
-
-/**
  * @typedef {Object} FactionStoreTier
  * @property {number} rep - Minimum reputation required to reach this standing tier.
  * @property {string} name - Title designation of the reputation tier.

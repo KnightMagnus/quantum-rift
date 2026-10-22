@@ -404,11 +404,6 @@ import {
   DT as tickDuration,
 } from '../shared/rules.ts';
 
-/** @import { GradeLots } from '../shared/cargo-contracts.ts' */
-/** @import { GameAssets, ShipLoadout, ShipStatsBonus, WeaponConfig } from '../shared/rules.ts' */
-/** @import { Game, Mission } from './game.ts' */
-/** @import { MiningSource } from './mining-contracts.ts' */
-
 let NEXT = 1;
 const SLOTS = [
   [-1, 1],

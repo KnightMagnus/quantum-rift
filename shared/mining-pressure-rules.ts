@@ -1,4 +1,3 @@
-// @ts-check
 // Provisional, unbalanced tuning. All time below is mining logical simulation time.
 export const PRESSURE = Object.freeze({
   fieldWorkRecovery: 0.5,

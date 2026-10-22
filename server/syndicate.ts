@@ -76,8 +76,6 @@ import {
 import { credits } from '../shared/rules.ts';
 import { occupiedPassengerSeats } from '../shared/passengers.ts';
 
-/** @import { Mission, PlayerData, Session, StellarBody } from './game.ts' */
-
 /**
  * Clamp a numeric value between minimum and maximum bounds.
  * @param {number} value - Value to clamp.

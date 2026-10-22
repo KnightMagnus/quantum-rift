@@ -35,8 +35,6 @@ import {
 import { SOCIAL, ARMADA, TRADE, DUEL, RESCUE, COOP_HOLDOUT, WARBAND } from '../shared/coop.ts';
 import { credits, makeLoadout, shipStats, allOutfits } from '../shared/rules.ts';
 
-/** @import { PlayerData, Session } from './game.ts' */
-
 /**
  * Clamps a numeric value between a minimum and maximum bound.
  * @param {number} value - Numeric value to clamp.

@@ -25,9 +25,6 @@ import { occupiedPassengerSeats } from '../shared/passengers.ts';
 import { FACTIONS } from '../shared/galaxy.ts';
 import { RANKS_OFF, PROMOTE, TRAITS, LOWER_DECK, LOWER_SLOTS, bunks } from '../shared/syndicate.ts';
 
-/** @import { PlayerData } from '../server/game.ts' */
-/** @import { ClientGameState } from './main.ts' */
-
 /**
  * @typedef {Object} SyndicateStanding
  * @property {string} name Tier name

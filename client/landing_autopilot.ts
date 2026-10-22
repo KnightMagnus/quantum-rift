@@ -29,10 +29,6 @@ export interface FlightStats {
 // Landing-only guidance. Manual flight and server landing limits are unchanged.
 import { DT as tickDuration, wrap } from '../shared/rules.ts';
 
-/** @import { StellarBody } from '../server/game.js' */
-/** @import { ComputedShipStats } from '../shared/rules.ts' */
-/** @import { RenderEntity } from './render.js' */
-
 /**
  * Steer toward a landing volume, then commit to a retrograde braking pass.
  * Retain the phase instead of repeatedly alternating approach and brake headings.

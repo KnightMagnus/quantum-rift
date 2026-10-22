@@ -12,7 +12,6 @@ export type HoldoutConfig = {
   platforms: (arg0: number) => number;
 };
 export type EclipseConfig = { hulls: number[]; chance: number; thursday: number };
-/** @import { GameAssets } from './rules.ts' */
 
 // Quantum Rift: data: hostile levels and the "can I win?" scan, loot chests, Station Holdout
 // waves, and the Umbral Eclipse.

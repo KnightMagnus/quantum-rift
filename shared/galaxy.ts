@@ -90,7 +90,6 @@ import { fnv1a } from './deterministic-random.ts';
 import { addEventide } from './eventide.ts';
 import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from './gen.ts';
 
-/** @import { OutfitAsset, WeaponAsset } from './rules.ts' */
 // Quantum Rift: the galaxy. 30 hand-made anchor systems, grown to ~200 by shared/gen.js (deterministic).
 // Shared by the server (authoritative) and the browser client (map, landing screens).
 

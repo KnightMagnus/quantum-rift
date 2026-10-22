@@ -62,14 +62,8 @@ export type CombatGameHost = Pick<
   import('./game.ts').Game,
   'spaces' | 'features' | 'sessions' | 'send'
 >;
-
-// @ts-check
 // Server-authoritative, transient combat control. Never persists consent in saves.
 import { winOdds } from '../shared/hostile.ts';
-
-/** @import { FeatureServices } from './features.ts' */
-/** @import { Session } from './game.ts' */
-/** @import { NetworkMessage } from './message-registry.ts' */
 
 /**
  * Combat delegation consent granted to an armada leader.

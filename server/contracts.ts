@@ -40,12 +40,6 @@ export type FleetCommandsCapabilities = {
   holdUsed: (player: CargoPlayer) => number;
   spaces: Record<string, CommandSpace>;
 };
-
-/** @import { GradeLots } from '../shared/cargo-contracts.ts' */
-/** @import { ComputedShipStats } from '../shared/rules.ts' */
-/** @import { Session } from './game.ts' */
-
-// @ts-check
 /**
  * Incremental contracts: these describe only Fleet Commands' boundary, not a
  * complete save schema, a wire validator, or all the fields on a live entity.

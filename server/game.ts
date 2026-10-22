@@ -528,22 +528,6 @@ import { SHUTTLES } from '../shared/hangar.ts';
 import { SPEC } from '../shared/specialty.ts';
 import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.ts';
 
-/** @import { GradeLots } from '../shared/cargo-contracts.ts' */
-/** @import { EconomyReceipt } from '../shared/economy-receipt.ts' */
-/** @import { QuestRecord } from '../shared/quests.ts' */
-/** @import { GameAssets, OfficerRecord, OutfitAsset, ShipLoadout, StationState } from '../shared/rules.ts' */
-/** @import { CombatAssist as CombatAssistCombatAssist, CombatState } from './combat-assist.ts' */
-/** @import { CommandSession } from './contracts.ts' */
-/** @import { DB } from './db.ts' */
-/** @import { FeatureServices } from './features.ts' */
-/** @import { MessageCapabilities } from './game-message-handlers.ts' */
-/** @import { JobCapabilities, JobService } from './jobs.ts' */
-/** @import { MessageRegistry, NetworkMessage } from './message-registry.ts' */
-/** @import { SavedSurvey } from './mining-contracts.ts' */
-/** @import { PortCapabilities, PortService } from './port-services.ts' */
-/** @import { LootItem, Space as SpaceSpace } from './space.ts' */
-/** @import { EventEmitter } from 'node:events' */
-
 const galaxyGraph = new GalaxyGraph(systemsById);
 
 /**
@@ -648,7 +632,7 @@ export class Game {
           ? this.wake((time[entryKey] = new Space(this, entryKey)))
           : undefined),
     });
-    /** @type {FeatureServices} */
+
     this.features = createFeatures(this);
     this.jobService = this.createJobService();
     this.portService = this.createPortService();
@@ -1498,7 +1482,7 @@ export class Game {
     // oxlint-disable-next-line typescript/no-this-alias -- Capability getters retain the coordinator receiver.
     const game = this;
     // Live getters and forwarding calls retain late setup and test seams.
-    /** @type {MessageCapabilities} */
+
     const capabilities: MessageCapabilities = {
       get A() {
         return game.A;
@@ -2523,7 +2507,7 @@ export class Game {
   createPortService(): PortService {
     // oxlint-disable-next-line typescript/no-this-alias -- Capability getters retain the coordinator receiver.
     const game = this;
-    /** @type {PortCapabilities} */
+
     const capabilities: PortCapabilities = {
       get A() {
         return game.A;
@@ -2655,7 +2639,7 @@ export class Game {
   createJobService(): JobService {
     // oxlint-disable-next-line typescript/no-this-alias -- Capability getters retain the coordinator receiver.
     const game = this;
-    /** @type {JobCapabilities} */
+
     const capabilities: JobCapabilities = {
       get A() {
         return game.A;

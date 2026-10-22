@@ -58,7 +58,6 @@ export type ArenaSystem = {
 };
 export type ExchangeConfig = { fee: number; maxOrders: number; maxPrice: number };
 export type LeaderboardCategory = { name: string };
-/** @import { StellarBody } from '../server/game.ts' */
 
 // Quantum Rift: data: planetary colonies, station defense, ship mastery, the arena, the player
 // exchange and leaderboards. Shared by server and client.

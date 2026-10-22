@@ -9,7 +9,6 @@ export type CargoOwner = {
   cargoLots?: CargoLedger;
   storageLots?: CargoLedger;
 };
-// @ts-check
 /** Raw grades deliberately do not describe field richness or material-crate quality.
  * @typedef {'common'|'rich'|'pure'} RawGrade
  * @typedef {{common:number, rich:number, pure:number}} GradeLots
