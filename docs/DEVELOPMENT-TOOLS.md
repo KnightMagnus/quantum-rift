@@ -1,17 +1,17 @@
 # Development tools
 
 Use the pinned Node runtime described in [TYPESCRIPT-RUNTIME.md](TYPESCRIPT-RUNTIME.md).
-Install with `npm ci`; no global tool installation is required.
+Install with `npm ci`. Linux and Apple Silicon macOS need no global tools;
+Windows requires the native compiler setup below before installation.
 
-| Command                                          | Scope                                                                                                                        |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `npm run lint`                                   | Oxlint correctness rules across JavaScript and TypeScript, then type-aware lint for application, test and tool `.ts` sources |
-| `npm run lint:fix`                               | Oxlint safe fixes; review the diff before committing                                                                         |
-| `npm run format`                                 | Oxfmt formatting across supported source, configuration and documentation files                                              |
-| `npm run format:check`                           | Read-only formatting gate                                                                                                    |
-| `npm run typecheck`                              | Portable TypeScript checks, including the strict core configuration                                                          |
-| `npm run typecheck:tsrs`                         | Fast Rust type checks on supported native platforms (also `npm run typecheck:fast`)                                          |
-| `npm run test:types` / `npm run test:types:tsrs` | Valid and deliberately invalid contract fixtures                                                                             |
+| Command                | Scope                                                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `npm run lint`         | Oxlint correctness rules across JavaScript and TypeScript, then type-aware lint for application, test and tool `.ts` sources |
+| `npm run lint:fix`     | Oxlint safe fixes; review the diff before committing                                                                         |
+| `npm run format`       | Oxfmt formatting across supported source, configuration and documentation files                                              |
+| `npm run format:check` | Read-only formatting gate                                                                                                    |
+| `npm run typecheck`    | Rust tsrs checks for application, core, tools and tests                                                                      |
+| `npm run test:types`   | Valid and deliberately invalid contract fixtures                                                                             |
 
 ## Lint and formatting policy
 
@@ -34,21 +34,35 @@ Oxfmt 0.74.0 replaces the direct Prettier dependency. `.oxfmtrc.json` keeps sing
 quotes, 100-column lines and the existing save/output exclusions. Import and
 package-field sorting are disabled to preserve module evaluation and review
 order. The pre-commit hook runs lint and formatting checks; CI also runs types,
-contracts and regression suites. Windows CI exercises the portable gates.
+contracts and regression suites. Windows CI exercises the same native-tool gates.
 
-## Why not one Rust compiler?
+## One compiler for checking and emission
 
-The pinned tsrs 0.18.0-ts7.1.0-dev.20260929 package publishes Linux x64/ARM64
-and Apple Silicon macOS binaries, but no Windows binary. It therefore cannot
-replace the portable checker or build for this project's Windows contributors.
-Its upstream goal is full TypeScript conformance; that is not a guarantee of
-complete compatibility today. Keep `tsc` for the shared typecheck/build path,
-and tsrs as an additional Linux CI gate with positive/negative contract tests.
+The pinned Rust compiler, tsrs 0.18.0-ts7.1.0-dev.20260929, performs all type
+checks, contract checks and JavaScript emission. There are no tsc command paths
+or duplicate compiler gates. The build preserves relative import rewriting and
+checks types before emitting browser and server modules.
 
-The existing build emits browser modules, rewrites relative `.ts` imports and
-checks types before emission. Oxc's transformer can strip TypeScript and lower
-syntax, but does not replace those type checks. Replacing this small working
-emitter would add custom output/import-rewrite logic without a current benefit.
+The pinned npm release includes Linux x64/ARM64 and Apple Silicon macOS binaries,
+but no Windows binary. Native Windows CI builds the same release from upstream
+commit `5f92808bc92bb97b06212153ab73d28d551c0b9b`, using its Rust 1.99.1 toolchain
+and locked dependencies. It sets `TSRS_BINARY` to the resulting native executable
+before `npm ci`, then runs the same checks and Windows persistence regressions.
+A compiler build failure fails the job; no fallback checker or skipped gate is used.
+
+Windows contributors need Rust 1.99.1 and the MSVC C++ build tools. Check out the
+pinned upstream commit, then run:
+
+```powershell
+$env:TSRS_TS_VERSION = '7.1.0-dev.20260930.4'
+cargo +1.99.1 build --profile ci --locked -p tsrs_cli --bin tsrs
+$env:TSRS_BINARY = (Resolve-Path target/ci/tsrs.exe).Path
+```
+
+Keep `TSRS_BINARY` set when installing dependencies and running project commands.
+The compiler’s conformance goal is not a guarantee of compatibility; positive and
+negative contract fixtures and compiled-runtime regressions remain required.
+
 Oxc Parser 0.155.0 replaces the feature-inventory test’s indirect use of
 Prettier’s Babel parser. The test walks its ESTree AST, checks parse diagnostics
 and still verifies all 20 providers against the unchanged dependency inventory.

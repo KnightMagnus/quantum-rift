@@ -11,7 +11,7 @@ fileSystem.rmSync(output, { recursive: true, force: true });
 for (const config of ['tsconfig.core.json', 'tsconfig.build.json']) {
   const result = spawnSync(
     process.execPath,
-    [path.join(rootDirectory, 'node_modules/typescript/bin/tsc'), '-p', config],
+    [path.join(rootDirectory, 'node_modules/tsrs/bin/tsrs'), '-p', config],
     { cwd: rootDirectory, stdio: 'inherit' },
   );
   if (result.error) throw result.error;

@@ -1,11 +1,11 @@
-// Prove checked contracts reject bad calls, not merely that tsc exits cleanly.
+// Prove checked contracts reject bad calls, not merely that the checker exits cleanly.
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
-const checker = process.argv.includes('--tsrs') ? 'tsrs/bin/tsrs' : 'typescript/bin/tsc';
+const checker = 'tsrs/bin/tsrs';
 const fixtureRoot = path.join(root, '.artifacts', 'type-contracts');
 filesystem.mkdirSync(fixtureRoot, { recursive: true });
 const directory = filesystem.mkdtempSync(path.join(fixtureRoot, 'fixture-'));

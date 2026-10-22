@@ -3,19 +3,41 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-const compiler = fileURLToPath(new URL('../node_modules/typescript/bin/tsc', import.meta.url));
+const compiler = fileURLToPath(new URL('../node_modules/tsrs/bin/tsrs', import.meta.url));
 
 export function checkApplicationTypeScript(rootDirectory: string) {
   const configPath = path.join(rootDirectory, 'tsconfig.json');
-  const result = spawnSync(process.execPath, [compiler, '--showConfig', '-p', configPath], {
+  const result = spawnSync(process.execPath, [compiler, '--listFilesOnly', '-p', configPath], {
     encoding: 'utf8',
     timeout: 30000,
   });
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(result.stdout + result.stderr);
-  const config = JSON.parse(result.stdout) as {
-    compilerOptions: Record<string, boolean | undefined>;
-    files: string[];
+  // tsrs resolves the actual checked file set. Read strictness from the same
+  // local JSON configuration chain because its CLI does not expose --showConfig.
+  function readCompilerOptions(
+    filename: string,
+    ancestors = new Set<string>(),
+  ): Record<string, boolean | undefined> {
+    if (ancestors.has(filename)) throw new Error(`Circular TypeScript config: ${filename}`);
+    const config = JSON.parse(fileSystem.readFileSync(filename, 'utf8')) as {
+      extends?: string | string[];
+      compilerOptions?: Record<string, boolean | undefined>;
+    };
+    const options: Record<string, boolean | undefined> = {};
+    const parents = config.extends ? [config.extends].flat() : [];
+    for (const parent of parents) {
+      if (!path.isAbsolute(parent) && !parent.startsWith('.'))
+        throw new Error(`Source coverage requires a local TypeScript config: ${parent}`);
+      let parentPath = path.resolve(path.dirname(filename), parent);
+      if (!parentPath.endsWith('.json')) parentPath += '.json';
+      Object.assign(options, readCompilerOptions(parentPath, new Set([...ancestors, filename])));
+    }
+    return Object.assign(options, config.compilerOptions);
+  }
+  const config = {
+    compilerOptions: readCompilerOptions(configPath),
+    files: result.stdout.trim().split(/\r?\n/),
   };
   if (
     !config.compilerOptions.strict ||
