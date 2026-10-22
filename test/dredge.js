@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { dredgePilot, control, industrialStep, seed, lots } from './helpers/dredge-fixture.js';
 import { SPECIALISTS, BUILD, SPEC, BP_NEED, specPower } from '../shared/specialty.js';
 import { STELLARS } from '../shared/galaxy.js';
@@ -19,7 +18,7 @@ assert.deepEqual(
 );
 assert.equal(SPEC[805].cost, 980000);
 assert.equal(SPECIALISTS.filter((x) => x.id !== 815).length, 10);
-const normalBonus = g.features.bonuses.bonus(d).miningPct;
+const _normalBonus = g.features.bonuses.bonus(d).miningPct;
 const other = dredgePilot(undefined, 'Precision', 805);
 other.s.data.specState[805] = { tier: 5, comp: { special: 5 } };
 assert.ok(

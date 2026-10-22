@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
-import { Space } from '../server/space.js';
 import { DT, makeLoadout } from '../shared/rules.js';
 import { contactTime, rollGrades, randomOf, stageCount } from '../shared/mining-rules.js';
 import { assertLots, clearLots } from '../shared/cargo-lots.js';
@@ -44,9 +43,9 @@ const g = game(),
   sp = g.spaces.meridian;
 sp.ships = new Map([[s.ent.id, s.ent]]);
 sp.players = 1;
-let tokenCalls = 0;
+let _tokenCalls = 0;
 g.features.specialists.specGain = () => {
-  tokenCalls++;
+  _tokenCalls++;
 };
 function step(n = 1) {
   for (let i = 0; i < n; i++) {

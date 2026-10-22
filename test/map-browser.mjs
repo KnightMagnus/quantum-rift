@@ -92,7 +92,7 @@ try {
         G.you.explored = Object.keys(SYS);
         G.mapMode = mode;
         G.hoverSys = null;
-        return [...Object.values(SYS)]
+        return Object.values(SYS)
           .filter((s) => !s.arena)
           .sort(
             (a, b) =>

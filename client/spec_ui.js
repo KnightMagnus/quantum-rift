@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from './html.ts';
 import { artworkUrl } from './artwork.js';
 // Quantum Rift: interface: the Specialists section of the station (blueprints, building, parts, components, tier-ups).
 import { GRADES } from '/shared/galaxy.js';
@@ -47,17 +48,6 @@ import { credits } from '/shared/rules.js';
  */
 
 /**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
-
-/**
  * Formats duration in milliseconds to a human-readable minutes and hours string.
  * @param {number} ms Duration in milliseconds
  * @returns {string} Formatted duration (e.g. '15m' or '2h 10m')
@@ -85,7 +75,7 @@ const res = (k, n) =>
 export function specialistsHtml(G, interactive) {
   const y = G.you,
     bp = y.bp || {},
-    spec = y.spec || {},
+    _spec = y.spec || {},
     parts = y.parts || {},
     ss = y.specState || {},
     cur = SPEC[y.ship.hull];

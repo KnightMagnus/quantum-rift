@@ -1,3 +1,4 @@
+import { linearRandom32 } from './deterministic-random.ts';
 // Living Rift: rival captains. Thirty named AI captains with careers of their own: they trade, hunt, mine and
 // raid across the Rift, buy better ships, show up in the systems you visit, and remember how you treated them.
 import { FACTION_HULLS } from './galaxy.js';
@@ -164,13 +165,9 @@ const KIND_LIST = [
   'pirate',
 ];
 
-function seeded(seed) {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
-}
+// Rival generation historically replaces a zero seed before starting its LCG.
+const seeded = (seed) => linearRandom32(seed >>> 0 || 1);
+
 export const RIVALS = (() => {
   const r = seeded(0x51f00d),
     out = [],

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
-import { SYS, STELLARS, SYSTEMS } from '../shared/galaxy.js';
+import { SYSTEMS } from '../shared/galaxy.js';
 import { levelOf, winOdds, HOLDOUT } from '../shared/hostile.js';
 import { eventAt, eventCalendar, EVENTS } from '../shared/fronts.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));

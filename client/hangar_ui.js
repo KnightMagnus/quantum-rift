@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from './html.ts';
 import { artworkUrl } from './artwork.js';
 // Quantum Rift: interface pieces: crew (bar, roster, bridge), hangar (shuttles, job board, drydock), research trees, boarding.
 import { rankLine, lowerDeckHtml } from './syn_ui.js';
@@ -52,17 +53,6 @@ import { officerStats, credits } from '/shared/rules.js';
  * @property {string|number} fac Faction index or identifier
  * @property {string} [name] Custom target name
  */
-
-/**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
 
 /**
  * Formats duration in milliseconds to whole minutes or hours + minutes.
@@ -238,7 +228,7 @@ export function hangarHtml(G, atHome) {
   let h = `<div class="sect" style="margin-top:0">HANGAR BAYS (${y.shuttles.length}/${y.bays})</div>`;
   if (!y.bays) h += '<p class="dim">The hangar opens at Station Tier 2.</p>';
   const idle = y.shuttles.filter((s) => s.state === 'idle'),
-    crewFree = y.officers.filter(
+    _crewFree = y.officers.filter(
       (officer) =>
         !where(G, officer) || y.shuttles.some((s) => s.crew === officer.id && s.state !== 'out'),
     );

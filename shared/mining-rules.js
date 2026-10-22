@@ -1,6 +1,7 @@
 /** @import { GradeLots } from './cargo-contracts.js' */
 
 // @ts-check
+export { fnv1a as seedOf, linearRandom32 as randomOf } from './deterministic-random.ts';
 // Provisional tuning, not measured balance. Time is eligible server simulation seconds.
 export const MINING = Object.freeze({
   version: 1,
@@ -19,20 +20,7 @@ export const MINING = Object.freeze({
   idleRenewal: 300, // Abandoned damaged/staged deposits renew after five simulation minutes.
   seamWidth: 1.15,
 });
-/** @param {string} text @returns {number} */
-export function seedOf(text) {
-  let h = 2166136261;
-  for (const c of text) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-  return h >>> 0;
-}
-/** @param {number} seed @returns {()=>number} */
-export function randomOf(seed) {
-  let s = seed >>> 0;
-  return () => {
-    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
-}
+
 /** @param {number} radius */
 export function stageCount(radius) {
   return radius < 26 ? 1 : radius < 38 ? 2 : 3;

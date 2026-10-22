@@ -5,15 +5,8 @@ import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
-import { SYS, STELLARS, SYSTEMS, FACTIONS } from '../shared/galaxy.js';
-import {
-  synTier,
-  BLACK_MARKET,
-  TRAITS,
-  LOWER_DECK,
-  bunks,
-  loanPayment,
-} from '../shared/syndicate.js';
+import { SYS, STELLARS } from '../shared/galaxy.js';
+import { synTier, BLACK_MARKET, TRAITS, bunks } from '../shared/syndicate.js';
 import { ARCS } from '../shared/arcs.js';
 import { EXPEDITION_LORE } from '../shared/expeditions.js';
 import { captainBonus } from '../shared/rules.js';
@@ -198,7 +191,7 @@ const cap = bunks(A.ships[704]);
 ok(cap >= 1, `a hauler sleeps ${cap} passengers`);
 const offers = game.offers(STELLARS.qstation, d);
 const pax = offers.find((o) => o.type === 'passenger'),
-  rush = offers.find((o) => o.rush);
+  _rush = offers.find((o) => o.rush);
 if (pax) {
   d.missions = [];
   const big = { ...pax, pax: cap + 5 };

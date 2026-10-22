@@ -48,6 +48,7 @@ for (const s of followers) {
   game.features.coop.armadaOp(s, { op: 'accept', id });
   game.features.coop.armadaOp(s, { op: 'follow', on: true });
 }
+// oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
 for (const e of [...sp.ships.values()]) if (!e.player) sp.remove(e);
 const wing = sp.makeShip({ hull: 704, faction: 'quantum', x: 0, y: 0 });
 wing.owner = followers[1].ent.id;

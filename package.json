@@ -5,27 +5,42 @@
   "type": "module",
   "main": "server/main.js",
   "scripts": {
-    "start": "node server/main.js",
+    "start": "node tools/start.mjs",
     "test": "node test/bot.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.core.json --noEmit",
+    "typecheck:tsrs": "tsrs --noEmit && tsrs -p tsconfig.core.json --noEmit",
     "test:features": "node test/features.js",
     "test:types": "node test/typecheck-contracts.js",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "prepare": "husky",
+    "test:types:tsrs": "node test/typecheck-contracts.js --tsrs",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "prepare": "husky && npm run build",
     "test:regression:unit": "node test/regression-runner.mjs unit",
     "test:regression:browser": "node test/regression-runner.mjs browser",
-    "test:regression": "node test/regression-runner.mjs all"
+    "test:regression": "node test/regression-runner.mjs all",
+    "build": "node tools/build.mjs",
+    "prestart": "npm run build",
+    "pretest:regression": "npm run build",
+    "pretest:regression:unit": "npm run build",
+    "pretest:regression:browser": "npm run build",
+    "lint": "oxlint --deny-warnings && npm run lint:types",
+    "lint:fix": "oxlint --fix",
+    "lint:types": "node tools/lint-types.mjs",
+    "test:tooling": "node test/tooling-contracts.mjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=27.0.0-0 <28"
   },
   "license": "UNLICENSED",
   "devDependencies": {
     "@types/node": "^26.6.5",
     "husky": "^9.1.7",
+    "oxc-parser": "0.155.0",
+    "oxfmt": "0.74.0",
+    "oxlint": "1.89.0",
+    "oxlint-tsgolint": "7.0.2004",
     "playwright": "1.64.1",
-    "prettier": "^3.9.10",
+    "tsrs": "0.18.0-ts7.1.0-dev.20260929",
     "typescript": "^7.0.2"
   }
 }

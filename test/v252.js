@@ -8,7 +8,7 @@ import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
 import { needsOf } from '../server/quests.js';
-import { STELLARS, SYS } from '../shared/galaxy.js';
+import { STELLARS } from '../shared/galaxy.js';
 import { CHAINS } from '../shared/quests.js';
 import { price, makeLoadout } from '../shared/rules.js';
 import { TUTORIAL } from '../shared/tutorial.js';

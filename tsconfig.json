@@ -8,7 +8,9 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "types": ["node"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true
   },
   "include": [
     "server/features.js",
@@ -38,6 +40,9 @@
     "shared/industrial-rules.js",
     "server/towing.js",
     "server/towing-contracts.js",
-    "shared/towing-rules.js"
+    "shared/towing-rules.js",
+    "server/**/*.ts",
+    "client/**/*.ts",
+    "shared/**/*.ts"
   ]
 }

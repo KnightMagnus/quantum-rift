@@ -3,4 +3,4 @@
 cd "$(dirname "$0")"
 command -v node >/dev/null || { echo "Install Node.js from https://nodejs.org first."; exit 1; }
 (sleep 2; open http://localhost:8080 2>/dev/null || xdg-open http://localhost:8080) &
-node server/main.js
+node tools/start.mjs

@@ -2,6 +2,8 @@
 
 This guide covers the game architecture, feature development, testing and asset tools.
 For installation and play, see [README.md](README.md).
+For the pinned Node 27 prerelease, TypeScript source imports, browser compilation
+and release packaging, see [TypeScript and runtime](docs/TYPESCRIPT-RUNTIME.md).
 
 ## What it is
 

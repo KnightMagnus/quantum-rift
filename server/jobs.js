@@ -1,3 +1,5 @@
+import { signedXorshift32 as rng, fnv1a as hash } from '../shared/deterministic-random.ts';
+import { GalaxyGraph } from '../shared/galaxy-graph.ts';
 import { bindOperations } from './feature-service.js';
 import {
   SYSTEMS,
@@ -68,55 +70,11 @@ const BOUNTY_NAMES = [
   'Quill',
   'Drey',
 ];
-/**
- * Deterministic pseudo-random number generator (xorshift32) from seed.
- * @param {number} seed Initial numeric seed.
- * @returns {() => number} Generator returning float in [0, 1).
- */
-function rng(seed) {
-  let randomState = seed >>> 0 || 1;
-  return () => {
-    randomState ^= randomState << 13;
-    randomState >>>= 0;
-    randomState ^= randomState >> 17;
-    randomState ^= randomState << 5;
-    randomState >>>= 0;
-    return randomState / 4294967296;
-  };
-}
-/**
- * Computes 32-bit FNV-1a hash of a string.
- * @param {string} text Input string.
- * @returns {number} Unsigned 32-bit hash.
- */
-function hash(text) {
-  let hashValue = 2166136261;
-  for (const character of text) {
-    hashValue ^= character.charCodeAt(0);
-    hashValue = Math.imul(hashValue, 16777619);
-  }
-  return hashValue >>> 0;
-}
-/**
- * Computes shortest jump distances from a given system to all reachable systems via BFS.
- * @param {string} startSystemId Starting system ID.
- * @returns {Record<string, number>} Map of system IDs to jump counts.
- */
-function jumpsFrom(startSystemId) {
-  const distances = { [startSystemId]: 0 },
-    queue = [startSystemId];
-  while (queue.length) {
-    const systemId = queue.shift();
-    for (const linkedSystemId of SYS[systemId].links)
-      if (distances[linkedSystemId] === undefined) {
-        distances[linkedSystemId] = distances[systemId] + 1;
-        queue.push(linkedSystemId);
-      }
-  }
-  return distances;
-}
+
+const galaxyGraph = new GalaxyGraph(SYS);
+
 const JUMP_DISTANCES = Object.fromEntries(
-  SYSTEMS.map((system) => [system.id, jumpsFrom(system.id)]),
+  SYSTEMS.map((system) => [system.id, galaxyGraph.distances(system.id)]),
 );
 
 const JobOperations = {
@@ -334,6 +292,7 @@ const JobOperations = {
   completeOnLanding(session, stellarBody) {
     const playerData = session.data;
     playerData.lastStellar = stellarBody.id;
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const mission of [...playerData.missions]) {
       if (mission.type === 'miningOrder' || mission.paid) continue;
       if (mission.radioTour && advanceRadioTour(this, session, mission, stellarBody)) continue;

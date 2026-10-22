@@ -85,7 +85,7 @@ export const SOCIAL = {
  */
 export const ARMADA = {
   max: 5, // captains per Armada (each brings their own wingmates)
-  nameRe: /^[A-Za-z0-9 '\-]{3,24}$/,
+  nameRe: /^[A-Za-z0-9 '-]{3,24}$/,
   inviteMin: 5, // an invite lapses after this long
   idleMin: 30, // an Armada with nobody online for this long disbands
   buff: { shieldRe: 1.05, bounty: 1.05 }, // while another member shares your system: +5% shield recharge, +5% bounty

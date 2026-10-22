@@ -465,7 +465,7 @@ const PortOperations = {
       if (outfit.eff.ammo) {
         // ammunition: needs the launcher
         const weaponId = outfit.eff.ammo,
-          hullDefinition = this.A.ships[playerData.ship.hull];
+          _hullDefinition = this.A.ships[playerData.ship.hull];
         const launchers = shipStats.weapons[weaponId] || 0;
         if (!launchers) return this.toast(session, 'You have nothing that fires that.');
         const loadedAmmo = playerData.ship.ammo[weaponId] ?? 0;

@@ -1,4 +1,4 @@
-import babel from 'prettier/plugins/babel';
+import { parseSync } from 'oxc-parser';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -101,10 +101,14 @@ for (const feature of manifest.features) {
       else if (value && typeof value === 'object') collectDependencies(value);
     }
   }
-  collectDependencies(babel.parsers.babel.parse(source));
+  const parsed = parseSync(`${feature.file}.js`, source, { showSemanticErrors: true });
+  assert.deepEqual(parsed.errors, [], `${feature.file}: valid source required`);
+  collectDependencies(parsed.program);
   const referenced = [...dependencyNames].sort();
   assert.deepEqual(referenced, feature.uses, feature.file + ' declared dependencies');
-  const tree = babel.parsers.babel.parse(composition);
+  const parsedComposition = parseSync('features.js', composition, { showSemanticErrors: true });
+  assert.deepEqual(parsedComposition.errors, [], 'valid feature composition required');
+  const tree = parsedComposition.program;
   let facade;
   function find(node) {
     if (!node || typeof node !== 'object') return;

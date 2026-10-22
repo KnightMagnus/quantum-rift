@@ -26,6 +26,7 @@ const ok = (c, m) => {
   console.log('ok -', m);
 };
 const sp = game.spaces.meridian;
+// oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
 for (const e of [...sp.ships.values()]) sp.remove(e);
 const planets = SYS.meridian.stellars.filter((p) => p.svc.includes('L')),
   hulls = [704, 706, 712, 703, 713, 736].filter((h) => A.ships[h]);

@@ -14,17 +14,7 @@ import { receiveShipChat } from './chat_bubbles.js';
 // Quantum Rift client: connection, input, client-side prediction, render loop.
 import { SYS, STELLARS, FACTIONS, FACTION_HULLS } from '/shared/galaxy.js';
 import { TUTORIAL } from '/shared/tutorial.js';
-import {
-  step,
-  DT,
-  TICK,
-  hostileFactions,
-  weaponColor,
-  augmentAssets,
-  K,
-  wrap,
-  route,
-} from '/shared/rules.js';
+import { step, DT, weaponColor, augmentAssets, K, wrap, route } from '/shared/rules.js';
 import { STATES } from '/shared/living.js';
 import {
   draw,
@@ -47,7 +37,7 @@ import { infoHtml } from './info_ui.js';
 import { boardHtml } from './hangar_ui.js';
 import { ANOMALIES } from '/shared/fronts.js';
 import { arenaSystem } from '/shared/frontier.js';
-import { initCoop, onCoopMsg, coopYou, renderCaptains, openDm } from './coop_ui.js';
+import { initCoop, onCoopMsg, coopYou } from './coop_ui.js';
 import { SPRITES } from '/shared/sprites26.js';
 import { refreshStores } from './ui.js';
 import {
@@ -333,7 +323,7 @@ let ws = null,
   seq = 0,
   history = [],
   keys = {},
-  lastSnapT = 0;
+  _lastSnapT = 0;
 function send(m) {
   if (ws && ws.readyState === 1) ws.send(JSON.stringify(m));
 }
@@ -839,7 +829,7 @@ function onSnap(m) {
   $('combatdelegate').checked = !!G.combat.consent;
   $('combatcoordinate').checked = !!G.combat.coordinating;
   const now = performance.now();
-  lastSnapT = now;
+  _lastSnapT = now;
   const [id, ack, x, y, vx, vy, a, sh, ar, fu, tgt, ammo] = m.me || [];
   if (m.me) G.myId = id;
   const seen = new Set();
@@ -872,6 +862,7 @@ function onSnap(m) {
       e.ry = ey;
     }
   }
+  // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
   for (const k of [...G.ents.keys()]) if (!seen.has(k)) G.ents.delete(k);
   G.shots = m.shots.map(([sx, sy, svx, svy, w]) => ({ x: sx, y: sy, vx: svx, vy: svy, w, t: now }));
   G.beams = m.beams.map(([bid, ba, len, w]) => ({ id: bid, a: ba, len, w }));
@@ -2246,10 +2237,9 @@ let acc = 0,
 function fixedTick() {
   if (!G.view || G.landed || G.paused || G.quitting) return;
   // Preserve automatic-control intent even if guidance completes or refuses this tick.
-  if ((G.towing || G.you?.towing)?.attached) G.auto = null;
-  G.view.towCap = (G.towing || G.you?.towing)?.attached
-    ? (G.towing || G.you?.towing).cap
-    : undefined;
+  const towing = G.towing || G.you?.towing;
+  if (towing?.attached) G.auto = null;
+  G.view.towCap = towing?.attached ? towing.cap : undefined;
   const navigationRequested = !!G.auto;
   const inp = {
     thrust: held('thrust') ? 1 : 0,
@@ -2476,7 +2466,7 @@ async function logOut() {
   Object.assign(G, keep);
   keys = {};
   history = [];
-  seq = acc = lastSnapT = 0;
+  seq = acc = _lastSnapT = 0;
   mouse.down = mouse.in = false;
   pad.prev = [];
   touch.keys = {};

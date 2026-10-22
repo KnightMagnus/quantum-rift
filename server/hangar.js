@@ -1,9 +1,10 @@
+import { signedXorshift32 as rng, fnv1a as hash } from '../shared/deterministic-random.ts';
+import { GalaxyGraph } from '../shared/galaxy-graph.ts';
 import { assertLots, addLots, commonLots } from '../shared/cargo-lots.js';
 import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift: server feature operations: shuttles, officers, the research queue,
 // refining crates up a grade, the drydock, and boarding disabled ships.
 import {
-  SYSTEMS,
   SYS,
   STELLARS,
   FACTIONS,
@@ -52,37 +53,6 @@ import {
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /**
- * Create a seeded pseudo-random number generator function.
- * @param {number} seed - Initial random seed.
- * @returns {() => number} Generator returning floats in [0, 1).
- */
-function rng(seed) {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s ^= s << 13;
-    s >>>= 0;
-    s ^= s >> 17;
-    s ^= s << 5;
-    s >>>= 0;
-    return s / 4294967296;
-  };
-}
-
-/**
- * 32-bit FNV-1a string hash function.
- * @param {string} str - Input string to hash.
- * @returns {number} 32-bit unsigned integer hash.
- */
-function hash(str) {
-  let h = 2166136261;
-  for (const c of str) {
-    h ^= c.charCodeAt(0);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-/**
  * Pick a random element from an array using a random generator function.
  * @template T
  * @param {() => number} r - Random generator function returning [0, 1).
@@ -94,24 +64,11 @@ const pick = (r, a) => a[Math.floor(r() * a.length)];
 /** @type {Record<string, Record<string, number>>} Cache of shortest jump distance maps by starting system ID. */
 const DIST = {};
 
-/**
- * Compute or retrieve cached shortest jump distances from a given system to all connected systems.
- * @param {string} from - Origin system ID.
- * @returns {Record<string, number>} Map of system IDs to jump count distance.
- */
+const galaxyGraph = new GalaxyGraph(SYS);
+
+/** @param {string} from @returns {Record<string, number>} */
 function jumps(from) {
-  if (DIST[from]) return DIST[from];
-  const d = { [from]: 0 },
-    q = [from];
-  while (q.length) {
-    const s = q.shift();
-    for (const l of SYS[s].links)
-      if (d[l] === undefined) {
-        d[l] = d[s] + 1;
-        q.push(l);
-      }
-  }
-  return (DIST[from] = d);
+  return DIST[from] || (DIST[from] = galaxyGraph.distances(from));
 }
 
 /** @type {string[]} List of playable and NPC race identifiers. */
@@ -309,14 +266,14 @@ export const HangarOperations = {
     const r = rng(hash('sh' + playerData.name + win)),
       J = jumps(home),
       out = [];
-    const cand = Object.entries(J).filter(([sid, n]) => n >= 1 && n <= 7);
+    const cand = Object.entries(J).filter(([_sid, n]) => n >= 1 && n <= 7);
     const kinds = Object.keys(SHUTTLE_JOBS);
     for (let i = 0; i < 6 && cand.length; i++) {
       const kind = kinds[i % kinds.length === i ? i : Math.floor(r() * kinds.length)],
         J_ = SHUTTLE_JOBS[kind];
       const [sys, n] = pick(r, cand),
         S = SYS[sys],
-        F = FACTIONS[S.faction];
+        _F = FACTIONS[S.faction];
       const id = `sj-${win}-${i}`;
       if (playerData.shuttles.some((sh) => sh.job && sh.job.id === id)) continue;
       const minutes = clamp(Math.round(10 + n * 28 + S.danger * 6 + r() * 20), 15, 480);

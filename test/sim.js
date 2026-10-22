@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
-import { OPS } from '../shared/galaxy.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const dir = tempDataDir('rift-sim-');
 const game = new Game(A, new DB(dir));

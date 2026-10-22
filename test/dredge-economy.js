@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { dredgePilot, control, industrialStep, seed, lots, DT } from './helpers/dredge-fixture.js';
+import { dredgePilot, control, industrialStep, seed, DT } from './helpers/dredge-fixture.js';
 import { weaponParams } from '../shared/rules.js';
-import { RECIPES, outputUnits, recovery, refineryFee } from '../shared/refinery-rules.js';
+import { RECIPES } from '../shared/refinery-rules.js';
 import { SYS, STELLARS, COMMODITIES } from '../shared/galaxy.js';
-import { refineryGame, quote, command } from './helpers/refinery-fixture.js';
+import { quote, command } from './helpers/refinery-fixture.js';
 import { evidenceDir } from './helpers/browser-fixture.mjs';
 // Actual price/debit/output/fee loop including new plasma recipes, all forward only.
 for (const recipe of RECIPES.filter((r) => r.inputs[0] === 'plasma'))
@@ -159,9 +159,10 @@ for (const mature of [false, true])
           work += DT;
         }
       }
+      // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
       for (const parcel of [...g.db.world.mining.systems[d.sys].parcels])
         if (parcel.it.generationKey === r.key && !parcel.taken) {
-          const before = g.holdUsed(d);
+          const _before = g.holdUsed(d);
           g.onLoot(e.player, parcel.it);
         }
       harvested += g.holdUsed(d) - beforeHold;

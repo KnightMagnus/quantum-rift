@@ -1,3 +1,5 @@
+import { GalaxyGraph } from '../shared/galaxy-graph.ts';
+import { commodityCargoTonnes, reservedCargoTonnes } from '../shared/ship-capacity.ts';
 import { createPortService } from './port-services.js';
 import { discoverRadio } from './radio-discovery.js';
 import { createJobService } from './jobs.js';
@@ -201,7 +203,6 @@ import {
   MATERIALS,
   GRADES,
   START,
-  EXTRA_OUTFITS,
   OPS,
   RESEARCH,
   REFINERY,
@@ -218,14 +219,12 @@ import {
   allOutfits,
   makeLoadout,
   K,
-  DT,
   TICK,
-  angleTo,
   credits,
 } from '../shared/rules.js';
 import { Space } from './space.js';
 import { synTier } from '../shared/syndicate.js';
-import { STATES, TRADE_IMPACT } from '../shared/living.js';
+import { STATES } from '../shared/living.js';
 import { ARCS } from '../shared/arcs.js';
 /**
  * Resolves the display name for a faction story arc.
@@ -236,7 +235,6 @@ const ARCS_NAME = (f) => (ARCS[f] ? ARCS[f].name : '');
 import { masteryTier } from '../shared/frontier.js';
 import { SHUTTLES } from '../shared/hangar.js';
 import { SPEC } from '../shared/specialty.js';
-import { captainBonus } from '../shared/rules.js';
 import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.js';
 
 /** @import { GradeLots } from '../shared/cargo-contracts.js' */
@@ -254,6 +252,8 @@ import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.js'
 /** @import { PortCapabilities, PortService } from './port-services.js' */
 /** @import { LootItem, Space as SpaceSpace } from './space.js' */
 /** @import { EventEmitter } from 'node:events' */
+
+const galaxyGraph = new GalaxyGraph(SYS);
 
 /**
  * Quantum Rift master game engine.
@@ -576,7 +576,7 @@ export class Game {
             runs: 0,
           });
     if (c.officers && !playerData.officers.some((officer) => officer.seed))
-      for (const [i, o] of c.officers.entries()) {
+      for (const [_i, o] of c.officers.entries()) {
         const off = {
           id: this.features.hangar.uid(playerData),
           seed: true,
@@ -899,7 +899,7 @@ export class Game {
         log: d.log.slice(-60),
         shipStats: st,
         fuel: session.ent ? session.ent.fuel : (d.fuel ?? st.fuel),
-        cargoUsed: Object.values(d.cargo).reduce((a, b) => a + b, 0),
+        cargoUsed: commodityCargoTonnes(d.cargo),
         jobCargo: this.jobCargo(d),
         duel: this.features.coop.duelPayload(session),
         duels: d.duels || null,
@@ -978,9 +978,7 @@ export class Game {
    * @returns {number} Cargo space currently allocated to active cargo and smuggling missions.
    */
   jobCargo(d) {
-    return (d.missions || [])
-      .filter((m) => m.type === 'cargo' || m.type === 'smuggle')
-      .reduce((a, m) => a + (m.qty || 0), 0);
+    return reservedCargoTonnes(d.missions);
   }
   /**
    * Calculates total hold space currently used by commodities and job cargo.
@@ -988,7 +986,7 @@ export class Game {
    * @returns {number} Total cargo hold tonnage used by trade commodities and mission cargo.
    */
   holdUsed(d) {
-    return Object.values(d.cargo).reduce((a, b) => a + b, 0) + this.jobCargo(d);
+    return commodityCargoTonnes(d.cargo) + this.jobCargo(d);
   }
   /**
    * Calculates passenger berths occupied by active passenger missions.
@@ -1011,9 +1009,7 @@ export class Game {
     const H = this.A.ships[hull];
     if (!H) return 'Unknown hull.';
     const ship = typeof hullOrShip === 'object' ? hullOrShip : makeLoadout(this.A, hull, '');
-    const need =
-        (goods ? Object.values(playerData.cargo).reduce((a, b) => a + b, 0) : 0) +
-        this.jobCargo(playerData),
+    const need = (goods ? commodityCargoTonnes(playerData.cargo) : 0) + this.jobCargo(playerData),
       cap = shipStats(this.A, ship).cargo;
     if (need > cap)
       return `The ${H.name} can't hold your ${need} t of cargo${this.jobCargo(playerData) ? ' (including job cargo)' : ''}.`;
@@ -1035,6 +1031,7 @@ export class Game {
     const ids = new Set([entity.id]);
     for (let k = 0; k < 3; k++)
       for (const x of space.ships.values()) if (x.owner && ids.has(x.owner)) ids.add(x.id); // escorts, and their fighters
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const x of [...space.ships.values()]) {
       if (x === entity || !ids.has(x.id)) continue;
       if (x.fighterOf === entity.id) {
@@ -1272,7 +1269,6 @@ export class Game {
     this.features.arcs.arcsInit(p);
     if (!p.explored) p.explored = SYSTEMS.filter((x) => x.anchor).map((x) => x.id); // captains from before 0.4 know the old 30 systems
     session.rep = p.rep;
-    session.id = session.id;
     if (!STELLARS[p.stellar]) {
       p.sys = START.system;
       p.stellar = START.stellar;
@@ -1365,7 +1361,7 @@ export class Game {
       for (const [k, v] of Object.entries(eb)) wb[k] = (wb[k] || 0) + v;
       const m = sp.makeShip({
         loadout: W.ship,
-        ammo: { ...(W.ship.ammo || {}) },
+        ammo: { ...W.ship.ammo },
         faction: 'quantum',
         bonus: wb,
         x: x - Math.sin(a) * 120 + (i - 1) * 70,
@@ -1935,28 +1931,18 @@ export class Game {
    * @returns {{p: StellarBody, j: number} | null} Nearest purchasing stellar port and jump distance, or null.
    */
   nearestBuyer(sys, cid) {
-    // the closest market that buys a good (by jumps)
-    const dist = { [sys]: 0 },
-      q = [sys];
-    while (q.length) {
-      const x = q.shift();
-      const j = dist[x];
-      for (const sp of SYS[x].stellars) {
-        const stellarBody = STELLARS[sp.id];
+    // Keep authored tie order and the existing five-link search boundary.
+    for (const [systemId, jumps] of galaxyGraph.walk(sys, { maxDepth: 5 })) {
+      for (const port of SYS[systemId].stellars) {
+        const stellarBody = STELLARS[port.id];
         if (
           stellarBody &&
           !stellarBody.site &&
           (stellarBody.svc || '').includes('T') &&
           price(stellarBody, cid) !== null
         )
-          return { p: stellarBody, j };
+          return { p: stellarBody, j: jumps };
       }
-      if (j < 5)
-        for (const l of SYS[x].links)
-          if (dist[l] === undefined) {
-            dist[l] = j + 1;
-            q.push(l);
-          }
     }
     return null;
   }

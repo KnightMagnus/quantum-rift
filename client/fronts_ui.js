@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from './html.ts';
 // Quantum Rift: interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
 import { SYS, FACTIONS, GRADES } from '/shared/galaxy.js';
 import {
@@ -58,17 +59,6 @@ import { STATES } from '/shared/living.js';
  */
 
 /**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
-
-/**
  * Formats time remaining until a timestamp into days, hours, or minutes.
  * @param {number} t Future timestamp in ms
  * @returns {string} Formatted duration (e.g. '2d 5h', '3h 12m', or '45m')
@@ -106,7 +96,7 @@ export function opsHtml(G) {
   const y = G.you,
     W = G.world || {},
     ev = W.event,
-    here = SYS[G.sys];
+    _here = SYS[G.sys];
   let h =
     '<button class="btn sm" data-act="stores" style="margin-bottom:6px">FACTION STORES</button>';
   const SY = y.story;

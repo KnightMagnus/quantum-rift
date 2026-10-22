@@ -129,9 +129,9 @@ export function createGameMessageHandlers(capabilities) {
       /**
        * Skips career tutorial guide to completion.
        * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param {NetworkMessage} _message Message payload.
        */
-      (session, message) => {
+      (session, _message) => {
         const playerData = session.data;
         if (playerData.tut != null && playerData.tut < TUTORIAL.length) {
           playerData.tut = TUTORIAL.length;
@@ -158,9 +158,9 @@ export function createGameMessageHandlers(capabilities) {
       /**
        * Requests launch from currently docked stellar body into space.
        * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param {NetworkMessage} _message Message payload.
        */
-      (session, message) => {
+      (session, _message) => {
         capabilities.depart(session);
         return;
       },
@@ -280,6 +280,7 @@ export function createGameMessageHandlers(capabilities) {
             capabilities.features.quests.questFail(session, gone.quest.qid, 'abandoned'); // abandoning a step ends the story
           if (gone.sys && capabilities.live[gone.sys]) {
             const sp = capabilities.live[gone.sys];
+            // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
             for (const x of [...sp.ships.values()])
               if (x.mission && x.mission.id === gone.id) {
                 x.mission = null;
@@ -444,9 +445,9 @@ export function createGameMessageHandlers(capabilities) {
       /**
        * Initiates survival holdout wave combat event.
        * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param {NetworkMessage} _message Message payload.
        */
-      (session, message) => {
+      (session, _message) => {
         capabilities.features.hostile.holdoutStart(session);
         return;
       },
@@ -661,9 +662,9 @@ export function createGameMessageHandlers(capabilities) {
       /**
        * Requests status payload of active AI rival captains.
        * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param {NetworkMessage} _message Message payload.
        */
-      (session, message) => {
+      (session, _message) => {
         const playerData = session.data;
         capabilities.send(session, {
           t: 'rivals',
@@ -737,9 +738,9 @@ export function createGameMessageHandlers(capabilities) {
       /**
        * Toggles solo play game pause state.
        * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param {NetworkMessage} _message Message payload.
        */
-      (session, message) => {
+      (session, _message) => {
         if (
           capabilities.solo &&
           [...capabilities.sessions.values()].filter((x) => x.data).length === 1

@@ -1,5 +1,29 @@
 # Game regression coverage inventory
 
+## Development tooling
+
+`tooling-contracts.mjs` runs in the unit CI lane. It checks that Oxlint accepts
+valid source and rejects unused bindings and floating promises, and that Oxc
+Parser preserves optional/member access needed by the feature-dependency audit.
+The existing feature test checks all 20 providers against the unchanged inventory.
+Both TypeScript and tsrs run valid/invalid contract fixtures; tsrs remains a
+Linux CI check because its pinned native package has no Windows binary.
+
+## Reusable foundations
+
+`reusable-core` checks ordered galaxy traversal against an independent baseline,
+including every galaxy origin, freight offers and nearest buyers. It also checks
+hold allocation and mission reservations, signed versus clamped free capacity,
+and the existing HTML-escaping policies. Independent original-source fixtures also
+check random streams, hashes, the generated galaxy, rivals, arcs and 651 radio-tour
+starts. Compiled startup checks cover online/Solo entry points, the default seed
+catalog and executable browser modules. Release packaging checks rebuild compiled
+output, reject untracked source output, exclude private/stale files and launch an
+extracted archive without compiler dependencies. The archive fixture uses real
+modules and catalogs but omits the unrelated artwork/audio library.
+These are calculation and compatibility
+tests, not proof that every UI or simulation branch is covered.
+
 ## Message-routing contracts
 
 `robustness-wiring` includes `message-routing.js`: independent reference traces

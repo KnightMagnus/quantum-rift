@@ -98,6 +98,18 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 
 ## Who owns which information?
 
+- **Reusable foundations:** `shared/galaxy-graph.ts` owns ordered link traversal;
+  callers choose filters, depth limits and cache lifetimes. Weighted gate-aware
+  routing remains a separate policy. `shared/ship-capacity.ts` calculates commodity
+  and mission hold allocation without owning inventory or granting permission to
+  load cargo. `client/html.ts` preserves the existing escaping policies for HTML
+  text and double-quoted attributes; it is not a URL or script sanitizer.
+- **TypeScript execution:** foundational modules use native TypeScript source.
+  Node strips erasable types when executing source; browser modules are compiled
+  into `dist`. Type stripping is not type checking. See
+  [TYPESCRIPT-RUNTIME.md](TYPESCRIPT-RUNTIME.md) for the checked scope and startup
+  commands.
+
 - **Persistent accounts/world:** `DB` stores these. Ordinary changes mark it
   dirty; journal/checkpoint systems have stronger commit and recovery rules.
   Preserve these boundaries rather than adding another save path.
@@ -123,6 +135,8 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 - **Shared calculations/content:** these supply definitions, not permissions.
   Avoid duplicating authoritative arithmetic in a panel.
 
+See [DEVELOPMENT-TOOLS.md](DEVELOPMENT-TOOLS.md) for lint, formatting and compiler policy.
+
 ## Tests and a safe change workflow
 
 1. Find the system/action in
@@ -135,6 +149,7 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 3. Run existing gates:
 
    ```sh
+   npm run lint
    npm run typecheck
    npm run test:features
    npm run test:types

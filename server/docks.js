@@ -5,7 +5,6 @@ import { STELLARS, WINGMATES } from '../shared/galaxy.js';
 import {
   DOCK_LETTERS,
   DOCKS_BY_OPS,
-  HANGAR_BY_OPS,
   WINGS_PER_DOCK,
   WING_ONLY,
   WING_REPAIR_MIN,
@@ -13,7 +12,7 @@ import {
   WING_CREW,
 } from '../shared/docks.js';
 import { BRIDGE_SLOTS } from '../shared/hangar.js';
-import { researchBonus, officerBonus, makeLoadout, repairBasis, credits } from '../shared/rules.js';
+import { officerBonus, makeLoadout, repairBasis, credits } from '../shared/rules.js';
 import { SPEC } from '../shared/specialty.js';
 
 /** @import { ShipLoadout } from '../shared/rules.js' */

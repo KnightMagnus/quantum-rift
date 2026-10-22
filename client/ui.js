@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from './html.ts';
 import {
   missionDetails,
   missionFactsHtml,
@@ -8,6 +9,7 @@ import { initCockpitState } from './cockpit-state.js';
 import { tradeEstimateHtml, receiptHtml, initEconomyUI } from './economy-ui.js';
 import { refineryHtml } from './refinery_ui.js';
 import { artworkUrl } from './artwork.js';
+import { ShipCapacity, reservedCargoTonnes } from '../shared/ship-capacity.ts';
 import { stationLanding } from './exotic_scenery.js';
 import { passengerSeats, occupiedPassengerSeats } from '/shared/passengers.js';
 // Quantum Rift interface: HUD, landing screens (trade, shipyard, outfitter, jobs, Quantum Station), companion tabs, galaxy map, chat.
@@ -25,15 +27,12 @@ import {
   RESEARCH,
   REFINERY,
   ORE_PROCESS,
-  WINGMATES,
   FACTION_HULLS,
-  STATION_SHIPS,
   SITES,
   RELOCATE,
   relocateCost,
 } from '/shared/galaxy.js';
 import {
-  shipStats,
   researchBonus,
   allOutfits,
   loadoutValue,
@@ -47,7 +46,7 @@ import {
 } from '/shared/rules.js';
 import { galaxy, mapHit, mapFit, stationDesign } from './render.js';
 import { planetType } from './planets.js';
-import { crewHtml, hangarHtml, shuttleSummary, researchHtml, materialsHtml } from './hangar_ui.js';
+import { crewHtml, hangarHtml, researchHtml, materialsHtml } from './hangar_ui.js';
 import { specialistsHtml } from './spec_ui.js';
 import { docksHtml, dockChips, dockLine, outfitterRepairsHtml } from './docks_ui.js';
 import { WING_ONLY } from '/shared/docks.js';
@@ -65,7 +64,7 @@ import {
 } from './frontier_ui.js';
 
 import { ROLES_INFO, BEATS } from '/shared/roles.js';
-import { levelOf, winOdds, HOLDOUT } from '/shared/hostile.js';
+import { levelOf, winOdds } from '/shared/hostile.js';
 
 /** @import { StellarBody } from '../server/game.js' */
 /** @import { NetworkMessage } from '../server/message-registry.js' */
@@ -159,16 +158,7 @@ export const roleTag = (H) => {
     ? `<span class="role" style="color:${R.color}" title="${R.desc}">${R.icon} ${R.name}</span>`
     : '';
 };
-/**
- * Escapes unsafe characters for HTML element text or attributes.
- * @param {string | number | boolean | null | undefined} s Input string or value
- * @returns {string} HTML-escaped string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
+
 let G, send;
 /**
  * Binds DOM event listeners and initializes UI state managers with global game state.
@@ -926,7 +916,7 @@ let codexCat = 'Ships';
  */
 function factionsSelling(h) {
   return Object.entries(FACTION_HULLS)
-    .filter(([f, hs]) => hs.includes(h))
+    .filter(([_f, hs]) => hs.includes(h))
     .map(([f]) => FACTIONS[f].short);
 }
 /**
@@ -1428,7 +1418,7 @@ export function renderLanded() {
       h += refineryHtml(G);
       break;
     case 'overview': {
-      const fac = SYS[p.system].faction;
+      const _fac = SYS[p.system].faction;
       h += stateCard(p.system); // 2.4
       h += barCard(L); // the contact at the bar, and what this world trades in
       if (L.news && L.news.length)
@@ -1737,10 +1727,8 @@ function stateCard(sys) {
  * @returns {number} Free cargo capacity in tons
  */
 function holdFree(y) {
-  const mc = (y.missions || [])
-    .filter((m) => m.type === 'cargo' || m.type === 'smuggle')
-    .reduce((a, m) => a + (m.qty || 0), 0);
-  return y.shipStats.cargo - y.cargoUsed - mc;
+  return new ShipCapacity(y.shipStats.cargo, y.cargoUsed, reservedCargoTonnes(y.missions))
+    .remaining;
 }
 // the bar contact's greeting and rumour, and the world's trade specialties
 /**

@@ -14,7 +14,7 @@ import {
   DT,
 } from './helpers/dredge-fixture.js';
 import { CORONA_BANDS, coronaAt, INDUSTRIAL } from '../shared/industrial-rules.js';
-import { SYS, STELLARS } from '../shared/galaxy.js';
+import { SYS } from '../shared/galaxy.js';
 for (const b of CORONA_BANDS) {
   assert.ok(SYS[b.sys], 'authored system exists');
   for (const p of SYS[b.sys].stellars)

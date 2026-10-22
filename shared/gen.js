@@ -1,3 +1,4 @@
+import { signedXorshift32 as rng, fnv1a as hashId } from './deterministic-random.ts';
 /** @import { SpaceSystem, StellarBody } from '../server/game.js' */
 /** @import { FactionDef } from './galaxy.js' */
 
@@ -17,23 +18,6 @@ export const GEN_SEED = 0x51f7;
  * @type {number}
  */
 const TOTAL = 200;
-
-/**
- * Xorshift32 pseudo-random number generator factory.
- * @param {number} seed - Initial 32-bit integer seed value.
- * @returns {function(): number} PRNG closure returning deterministic floats in [0, 1).
- */
-function rng(seed) {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s ^= s << 13;
-    s >>>= 0;
-    s ^= s >> 17;
-    s ^= s << 5;
-    s >>>= 0;
-    return s / 4294967296;
-  };
-}
 
 // ------------------------------------------------------------------ names
 
@@ -596,10 +580,10 @@ function segDist(p, a, b) {
  * Procedurally expands the hand-made anchor star systems into a full ~200-system galaxy.
  * Places systems deterministically, establishes hyperlane routes, assigns territories and worlds.
  * @param {SpaceSystem[]} SYSTEMS - Base anchor systems array, modified and expanded in place.
- * @param {Record<string, FactionDef>} FACTIONS - Galaxy factions registry.
+ * @param {Record<string, FactionDef>} _FACTIONS - Galaxy factions registry.
  * @returns {SpaceSystem[]} Array of all newly generated star systems.
  */
-export function expandGalaxy(SYSTEMS, FACTIONS) {
+export function expandGalaxy(SYSTEMS, _FACTIONS) {
   const r = rng(GEN_SEED);
   const CX = 495,
     CY = 370,
@@ -1116,20 +1100,6 @@ const MOON_DESC = [
 const MOON_NUM = ['I', 'II', 'III'];
 
 /**
- * Computes a 32-bit FNV-1a hash integer from an input string.
- * @param {string} str - String to hash.
- * @returns {number} Unsigned 32-bit hash integer.
- */
-function hashId(str) {
-  let h = 2166136261;
-  for (const c of str) {
-    h ^= c.charCodeAt(0);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-/**
  * Secondary procedural pass adding additional unpopulated moons and resource asteroid fields to systems.
  * Seeded per-system based on system ID hash and master seed to preserve determinism.
  * @param {SpaceSystem[]} SYSTEMS - Star systems array, modified in place.
@@ -1144,6 +1114,7 @@ export function addMoonsAndFields(SYSTEMS) {
           (stellarBody) =>
             Math.hypot(stellarBody.x - x, stellarBody.y - y) > (stellarBody.r || 60) + rad + pad,
         );
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const p of [...system.stellars]) {
       if (p.kind !== 'planet' || p.hub || p.site || p.wormhole) continue;
       const n = r() < 0.62 ? (r() < 0.3 ? 2 : 1) : 0,

@@ -634,7 +634,7 @@ export const MiningOperations = {
           generation.pending = 0;
           f.history.push(generation);
         }
-        const [sys, fi, ri] = generation.key.split(':');
+        const [_sys, fi, ri] = generation.key.split(':');
         f.rocks[i] = generate(
           miningWorld,
           space,

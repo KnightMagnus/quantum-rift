@@ -1,3 +1,4 @@
+import { fnv1a } from './deterministic-random.ts';
 import { addEventide } from './eventide.js';
 import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from './gen.js';
 
@@ -1076,9 +1077,7 @@ addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded
         stellarBody.hub
       )
         continue;
-      let h = 2166136261;
-      for (const c of stellarBody.id + ':mine') h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-      h >>>= 0;
+      const h = fnv1a(stellarBody.id + ':mine');
       const near = (S.fields || []).length > 0,
         kin = MINERS.has(S.faction),
         roll = (h % 1000) / 1000;

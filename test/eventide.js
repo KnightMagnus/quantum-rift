@@ -181,6 +181,7 @@ try {
   d.stellar = null;
   game.spawnPlayer(s, h.x, h.y, 0, 0);
   const pulseSpace = game.spaces.reliquary;
+  // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
   for (const e of [...pulseSpace.ships.values()]) if (e !== s.ent) pulseSpace.remove(e);
   pulseSpace.spawnT = 9999;
   const e = s.ent;

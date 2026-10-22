@@ -62,7 +62,7 @@ try {
   for (let i = 0; i < 100 && !snap; i++) await new Promise((r) => setTimeout(r, 30));
   assert.ok(snap);
   const id = await page.evaluate(() => G.myId),
-    peerId = snap.me[0];
+    _peerId = snap.me[0];
   await page.keyboard.press('ArrowUp');
   const before = await page.evaluate(() => G.view.ry);
   send({ t: 'hailin', op: 'send', id, text: '<b>Transmission</b> 😀' });

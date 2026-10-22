@@ -1,5 +1,6 @@
+import { escapeHtml as esc } from './html.ts';
 // Quantum Rift: interface pieces: colonies, station defense, mastery, the arena, the exchange, leaderboards and profiles.
-import { SYS, STELLARS, COMMODITIES, MATERIALS, GRADES } from '/shared/galaxy.js';
+import { STELLARS, COMMODITIES, MATERIALS, GRADES } from '/shared/galaxy.js';
 import {
   COLONY,
   COLONY_LEVELS,
@@ -62,17 +63,6 @@ import { credits } from '/shared/rules.js';
  * @property {{ ship: string, tier: number }} [mastery] Best ship mastery
  * @property {number} officers Total officers
  */
-
-/**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
 
 /**
  * Formats a list of required material tuples with availability coloring.
@@ -228,7 +218,7 @@ export function arenaHtml(G) {
  * @returns {string} HTML markup
  */
 export function exchangeHtml(G) {
-  const y = G.you,
+  const _y = G.you,
     X = G.landed.exchange;
   const opts =
     MATERIALS.flatMap((m) =>

@@ -1,3 +1,4 @@
+import { escapeDoubleQuotedHtml as esc } from './html.ts';
 import {
   missionFactsHtml,
   filterMissions,
@@ -32,17 +33,6 @@ import { TUTORIAL } from '/shared/tutorial.js';
  * @property {boolean} [urgent] Whether mission has a deadline
  * @property {boolean} [quest] Whether mission is part of a quest line
  */
-
-/**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"]/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
-  );
 
 /**
  * Resolves the parent system ID for a given stellar body.

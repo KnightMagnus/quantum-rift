@@ -75,6 +75,7 @@ export function initShipFunctions(G, send) {
     panel.classList.add('function-panel');
     const body = document.createElement('div');
     body.className = 'function-body';
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const child of [...panel.childNodes]) if (child.nodeName !== 'HEADER') body.append(child);
     panel.append(body);
     button.title = name;

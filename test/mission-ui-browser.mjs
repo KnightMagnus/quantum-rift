@@ -73,6 +73,38 @@ try {
     [true, true, true, true, true],
     'Capacity/slots/seats, completed collection and feasible-nearby filtering have explicit boundary coverage',
   );
+  const escapedMission = await a.evaluate(async () => {
+    const { missionsHtml } = await import('/missions.js');
+    const title = `Pilot's <img data-injected="true"> & "cargo" 🚀`;
+    const key = `quote" data-injected="true`;
+    const root = document.createElement('div');
+    root.innerHTML = missionsHtml({
+      ...G,
+      missionType: 'all',
+      missionFeasible: false,
+      missionNearby: false,
+      you: {
+        ...G.you,
+        missions: [{ id: key, title, text: title, type: 'patrol', sys: G.sys, need: 1 }],
+      },
+    });
+    const card = [...root.querySelectorAll('[data-mission-key]')].find(
+      (element) => element.dataset.missionKey === key,
+    );
+    return {
+      title: card?.querySelector('.t').textContent,
+      expected: title,
+      injected: !!root.querySelector('[data-injected]'),
+      titleElements: card?.querySelector('.t').childElementCount,
+    };
+  });
+  assert.equal(escapedMission.title, escapedMission.expected);
+  assert.equal(escapedMission.titleElements, 0);
+  assert.equal(
+    escapedMission.injected,
+    false,
+    'Shared escaping preserves text and attribute boundaries',
+  );
 
   await login(courier, 'Courier review');
   await courier.click('[data-lt="jobs"]');

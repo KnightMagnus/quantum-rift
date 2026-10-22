@@ -337,9 +337,7 @@ try {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(im, 0, 0);
         const pixel = (x, y) => [...ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data];
-        return [
-          ...[0.1, 0.28, 0.31, 0.5, 0.7, 0.73, 0.9].map((f) => pixel(rail.w * f, rail.y + 2)),
-        ];
+        return [0.1, 0.28, 0.31, 0.5, 0.7, 0.73, 0.9].map((f) => pixel(rail.w * f, rail.y + 2));
       },
       { png: frame.toString('base64'), rail: shell.rail },
     );

@@ -14,7 +14,7 @@ import {
   commonLots,
   splitLots,
 } from '../shared/cargo-lots.js';
-const clone = (v) => structuredClone(v);
+const _clone = (v) => structuredClone(v);
 const snap = (v) => JSON.stringify(v);
 function inventory(cargo = {}, storage = {}) {
   const p = { cargo, storage };

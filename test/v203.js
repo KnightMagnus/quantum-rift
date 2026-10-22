@@ -61,7 +61,7 @@ function arrive(P, sysId) {
 }
 function survive(P, sysId, secs = 20) {
   const sp = g.spaces[sysId];
-  const e = (s) => s;
+  const _e = (s) => s;
   for (let t = 0; t < 30 * secs && P.s.ent; t++) sp.tick();
   return P.s.ent;
 }

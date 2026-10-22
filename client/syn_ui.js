@@ -1,15 +1,8 @@
+import { escapeDoubleQuotedHtml as esc } from './html.ts';
 // Screens: black market, bank, officer ranks and traits, lower decks, and faction-arc cards.
 import { occupiedPassengerSeats } from '/shared/passengers.js';
 import { FACTIONS } from '/shared/galaxy.js';
-import {
-  RANKS_OFF,
-  PROMOTE,
-  TRAITS,
-  LOWER_DECK,
-  LOWER_SLOTS,
-  SYN_TIERS,
-  bunks,
-} from '/shared/syndicate.js';
+import { RANKS_OFF, PROMOTE, TRAITS, LOWER_DECK, LOWER_SLOTS, bunks } from '/shared/syndicate.js';
 
 /** @import { PlayerData } from '../server/game.js' */
 /** @import { ClientGameState } from './main.js' */
@@ -63,17 +56,6 @@ import {
  * @property {string} [type] Mission type
  * @property {number} [pax] Number of passengers to carry
  */
-
-/**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"]/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
-  );
 
 /**
  * Formats a number to rounded, localized string.

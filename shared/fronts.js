@@ -1,3 +1,4 @@
+import { signedXorshift32 as rng } from './deterministic-random.ts';
 import { EXALTED_STANDING } from './reputation.js';
 // Quantum Rift: data: invasions, anomalies, goals,
 // server events and faction stores. Shared by server and client.
@@ -389,22 +390,6 @@ export const CHAIN_STEPS = 3; // faction job chains: three steps, each pays more
 export const SCAN = { range: 320, chance: 0.35, fine: 0.25, cooldown: 25 }; // patrol scans of smugglers in lawful space
 
 // ------------------------------------------------------------------ helpers (deterministic, shared)
-/**
- * Creates a deterministic 32-bit pseudo-random number generator function from a seed.
- * @param {number} seed - Initial random integer seed.
- * @returns {function(): number} PRNG returning floating-point numbers in [0, 1).
- */
-function rng(seed) {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s ^= s << 13;
-    s >>>= 0;
-    s ^= s >> 17;
-    s ^= s << 5;
-    s >>>= 0;
-    return s / 4294967296;
-  };
-}
 
 // anomalies for the current 6-hour window, deterministic from the time: { systemId: anomalyId }
 /**
