@@ -1,3 +1,6 @@
+/** @import { PlayerData } from '../server/game.js' */
+/** @import { GameAssets } from './rules.js' */
+
 // The career guide (1.0): twenty goals from first flight to your first capital ship. The first five are the original
 // first-flight tutorial (event goals); the rest are checked against your progress. The client shows the current one.
 
@@ -5,7 +8,7 @@
  * Career guide tutorial milestone definition.
  * @typedef {Object} TutorialStep
  * @property {string} [ev] - Event code triggering step completion (e.g. 'target', 'land2', 'sell', 'kill', 'site', 'job', 'chest').
- * @property {function(import('../server/game.js').PlayerData, import('./rules.js').GameAssets=): boolean} [check] - State condition evaluator receiving player data and asset registry.
+ * @property {function(PlayerData, GameAssets=): boolean} [check] - State condition evaluator receiving player data and asset registry.
  * @property {string} title - Display title of the milestone.
  * @property {string} text - Guidance instructions displayed to the player.
  * @property {number} reward - Credit reward awarded on completion.
@@ -14,10 +17,11 @@
 
 /**
  * Computes the total number of installed outfits on the player's active ship.
- * @param {import('../server/game.js').PlayerData} d - Player save data containing active ship state.
+ * @param {PlayerData} playerData - Player save data containing active ship state.
  * @returns {number} Total count of equipped outfits.
  */
-const outfits = (d) => Object.values(d.ship.outfits || {}).reduce((a, b) => a + b, 0);
+const outfits = (playerData) =>
+  Object.values(playerData.ship.outfits || {}).reduce((a, b) => a + b, 0);
 
 /**
  * Ordered sequence of career guide tutorial steps.
@@ -56,19 +60,19 @@ export const TUTORIAL = [
     mat: ['alloy', 0, 1],
   },
   {
-    check: (d) => d.station.claimed && !!d.station.site,
+    check: (playerData) => playerData.station.claimed && !!playerData.station.site,
     title: 'Claim it',
     text: 'In the STATION tab of a derelict hull, claim it. It becomes your Personal Station.',
     reward: 5000,
   },
   {
-    check: (d) => outfits(d) >= 3,
+    check: (playerData) => outfits(playerData) >= 3,
     title: 'Kit out your ship',
     text: 'Buy two more outfits at an outfitter: weapons, shields, armor or cargo pods.',
     reward: 6000,
   },
   {
-    check: (d) => d.station.ops >= 1,
+    check: (playerData) => playerData.station.ops >= 1,
     title: 'Restore docking (Station Tier 1)',
     text: 'At your station, build Station Tier 1. It needs credits and an Alloy I crate.',
     reward: 10000,
@@ -80,50 +84,54 @@ export const TUTORIAL = [
     reward: 8000,
   },
   {
-    check: (d) =>
-      !!(d.quests && (Object.keys(d.quests.active || {}).length || (d.quests.done || []).length)),
+    check: (playerData) =>
+      !!(
+        playerData.quests &&
+        (Object.keys(playerData.quests.active || {}).length ||
+          (playerData.quests.done || []).length)
+      ),
     title: 'Meet a contact',
     text: 'Every spaceport bar has a contact (see AT THE BAR on the landing overview). Take on their story from the JOBS tab.',
     reward: 8000,
   },
   {
-    check: (d) => (d.stats.stateHelp || 0) >= 1,
+    check: (playerData) => (playerData.stats.stateHelp || 0) >= 1,
     title: 'Help a troubled system',
     text: 'The OPS tab lists famines, wars and other troubles near you. Sell what a troubled system needs there, take one of its jobs, or fight its raiders.',
     reward: 10000,
   },
   {
-    check: (d) => (d.stats.mined || 0) >= 10,
+    check: (playerData) => (playerData.stats.mined || 0) >= 10,
     title: 'Mine 10 tons',
     text: 'Buy a Mining Laser and break rocks in an asteroid field. Fly over the ore to scoop it into your hold (ships with no hold need a Cargo Compression outfit first).',
     reward: 8000,
   },
   {
-    check: (d, A) => (A.ships[d.ship.hull].strength || 0) >= 80,
+    check: (playerData, assets) => (assets.ships[playerData.ship.hull].strength || 0) >= 80,
     title: 'A real warship',
     text: 'Buy a fighting ship: a Cutlass Interceptor or better.',
     reward: 15000,
   },
   {
-    check: (d) => (d.officers || []).length >= 1,
+    check: (playerData) => (playerData.officers || []).length >= 1,
     title: 'Hire an officer',
     text: 'Visit the CREW tab on an inhabited world and hire an officer for your bridge.',
     reward: 10000,
   },
   {
-    check: (d) => d.station.ops >= 2,
+    check: (playerData) => playerData.station.ops >= 2,
     title: 'Market and refinery (Station Tier 2)',
     text: 'Build Station Tier 2 at your station: it opens the research lab and the hangar.',
     reward: 20000,
   },
   {
-    check: (d) => (d.shuttles || []).some((s) => s.runs > 0 || s.state === 'out'),
+    check: (playerData) => (playerData.shuttles || []).some((s) => s.runs > 0 || s.state === 'out'),
     title: 'Launch a shuttle',
     text: 'Build a shuttle in your station HANGAR and send it on a job from the hangar board.',
     reward: 15000,
   },
   {
-    check: (d) => d.station.done.length > 0 || !!d.station.active,
+    check: (playerData) => playerData.station.done.length > 0 || !!playerData.station.active,
     title: 'Start research',
     text: 'Open the RESEARCH LAB at your station and start a project.',
     reward: 15000,
@@ -135,40 +143,42 @@ export const TUTORIAL = [
     reward: 15000,
   },
   {
-    check: (d) => !!(d.quests && (d.quests.done || []).length),
+    check: (playerData) => !!(playerData.quests && (playerData.quests.done || []).length),
     title: 'Finish a story',
     text: "See a contact's story through to its end. Your progress is on the CAREER page of the ship and captain panel (I).",
     reward: 20000,
   },
   {
-    check: (d) => !!(d.story && d.story.done && d.story.done.includes('qv1')),
+    check: (playerData) =>
+      !!(playerData.story && playerData.story.done && playerData.story.done.includes('qv1')),
     title: 'The Threshold Spire',
     text: 'Someone is waiting at the Threshold Spire in Far Mouth. Land there.',
     reward: 20000,
   },
   {
-    check: (d) => d.station.ops >= 3,
+    check: (playerData) => playerData.station.ops >= 3,
     title: 'Shipyard and lab (Station Tier 3)',
     text: 'Build Station Tier 3: the drydock, the station shipyard and specialist building.',
     reward: 40000,
     mat: ['crystal', 1, 1],
   },
   {
-    check: (d) => d.holdout && d.holdout.best >= 3,
+    check: (playerData) => playerData.holdout && playerData.holdout.best >= 3,
     title: 'Hold the line',
     text: 'Clear three waves of a Station Holdout (station DEFENSE). Your Armada can defend it with you.',
     reward: 50000,
   },
   {
-    check: (d, A) =>
-      (A.ships[d.ship.hull].cost || 0) >= 1000000 || A.ships[d.ship.hull].kind === 'specialist',
+    check: (playerData, assets) =>
+      (assets.ships[playerData.ship.hull].cost || 0) >= 1000000 ||
+      assets.ships[playerData.ship.hull].kind === 'specialist',
     title: 'Captain of a capital',
     text: 'Fly a ship worth a million credits or more, or build a specialist.',
     reward: 100000,
     mat: ['alloy', 3, 1],
   },
 ];
-// 2.5: three steps were added; saves from before move to the same goal in the longer list
+// three steps were added; saves from before move to the same goal in the longer list
 
 /**
  * Current version number of the tutorial progression sequence.
@@ -178,11 +188,17 @@ export const TUT_VERSION = 2;
 
 /**
  * Migrates a player save file's tutorial index if saved under an older tutorial version.
- * @param {import('../server/game.js').PlayerData} d - Player save data object containing tutorial progress.
+ * @param {PlayerData} playerData - Player save data object containing tutorial progress.
  * @returns {void}
  */
-export function tutMigrate(d) {
-  if ((d.tutV || 1) >= TUT_VERSION) return;
-  if (d.tut != null) d.tut = d.tut <= 8 ? d.tut : d.tut <= 15 ? d.tut + 2 : d.tut + 3;
-  d.tutV = TUT_VERSION;
+export function tutMigrate(playerData) {
+  if ((playerData.tutV || 1) >= TUT_VERSION) return;
+  if (playerData.tut != null)
+    playerData.tut =
+      playerData.tut <= 8
+        ? playerData.tut
+        : playerData.tut <= 15
+          ? playerData.tut + 2
+          : playerData.tut + 3;
+  playerData.tutV = TUT_VERSION;
 }

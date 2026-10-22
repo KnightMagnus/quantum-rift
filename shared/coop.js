@@ -1,4 +1,4 @@
-// Quantum Rift 2.6 "Co-op" data, shared by server and client: Captain Friends and DMs, the Armada (a short co-op group
+// Quantum Rift: data, shared by server and client: Captain Friends and DMs, the Armada (a short co-op group
 // of up to five captains and their wingmates), trading between Personal Stations, duels and Armada Duels, rescue,
 // co-op Holdout and Armada contracts. All of it is for online games; a solo game hides it.
 

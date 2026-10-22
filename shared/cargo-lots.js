@@ -1,3 +1,5 @@
+/** @import { CargoOwner } from './cargo-contracts.js' */
+
 // @ts-check
 /** Pure integer-tonne accounting. Totals stay authoritative; corrupt ledgers fail closed.
  * No time, RNG, capacity calculation, crate quality or field richness belongs here.
@@ -26,7 +28,7 @@ function record(value) {
   }
 }
 /** Owner validation is limited to inventory fields: real players have unrelated data/methods.
- * @param {import('./cargo-contracts.js').CargoOwner} player
+ * @param {CargoOwner} player
  */
 function owner(player) {
   if (
@@ -105,7 +107,7 @@ export function assertLots(totals, ledger) {
 }
 /** Both cargo and storage validate before either migration is committed.
  * Missing legacy records become common. Existing valid records are never rewritten.
- * @param {import('./cargo-contracts.js').CargoOwner} player
+ * @param {CargoOwner} player
  * @returns {{changed:boolean}}
  */
 export function migrateCargoLots(player) {

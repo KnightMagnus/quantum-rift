@@ -16,6 +16,8 @@ import { ANOMALIES } from '/shared/fronts.js';
 import { STATES } from '/shared/living.js';
 import { SYS, STELLARS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
 import { weaponParams, BEAM_COLORS, weaponColor, weaponLook, price } from '/shared/rules.js';
+
+/** @import { ClientGameState } from './main.js' */
 // ------------------------------------------------------------------ type definitions
 /**
  * @typedef {Object} StellarBody
@@ -121,7 +123,7 @@ import { weaponParams, BEAM_COLORS, weaponColor, weaponLook, price } from '/shar
  * @property {number} [t] Timestamp of last update
  */
 
-// 1.2 map views (system map modes): colour each system by trade price, services, your standing, or danger
+// Map views (system map modes): colour each system by trade price, services, your standing, or danger
 /**
  * Interpolates between two RGB color tuples.
  * @param {[number, number, number]} a Start RGB tuple
@@ -138,19 +140,21 @@ const lerpC = (a, b, t) =>
  * @returns {number | null} Price ratio or null if no trade service available
  */
 export function tradeRatio(s, cid) {
-  const ps = s.stellars.filter((p) => p.svc && p.svc.includes('T') && !p.site);
+  const ps = s.stellars.filter(
+    (stellarBody) => stellarBody.svc && stellarBody.svc.includes('T') && !stellarBody.site,
+  );
   if (!ps.length) return null;
   const base = COMMODITIES.find((c) => c.id === cid).base;
   let best = null;
-  for (const p of ps) {
-    const v = price(p, cid);
+  for (const stellarBody of ps) {
+    const v = price(stellarBody, cid);
     if (v !== null && (best === null || v < best)) best = v;
   }
   return best === null ? null : best / base;
 }
 /**
  * Determines system display color on the map according to the selected map mode.
- * @param {import("./main.js").ClientGameState} G Global client game state
+ * @param {ClientGameState} G Global client game state
  * @param {GalaxySystem} s System object
  * @param {boolean} seen Whether the system has been visited or discovered
  * @returns {string} CSS color string
@@ -168,8 +172,8 @@ function viewColor(G, s, seen) {
         : lerpC([240, 220, 90], [255, 80, 60], (r - 1) / 0.25);
   }
   if (mode === 'services') {
-    const y = s.stellars.some((p) => p.svc && p.svc.includes('Y')),
-      o = s.stellars.some((p) => p.svc && p.svc.includes('O'));
+    const y = s.stellars.some((stellarBody) => stellarBody.svc && stellarBody.svc.includes('Y')),
+      o = s.stellars.some((stellarBody) => stellarBody.svc && stellarBody.svc.includes('O'));
     return y && o ? '#c38aff' : y ? '#5ab0ff' : o ? '#ffaa4a' : '#3a3e48';
   }
   if (mode === 'standing') {
@@ -195,7 +199,7 @@ const sheets = new Map();
  * @returns {HTMLImageElement} Cached or newly requested HTML Image
  */
 export function sheet(H, glow) {
-  // 2.6: the sharper full-colour sheets (12 wide, with banking frames) where a hull has them
+  // the sharper full-colour sheets (12 wide, with banking frames) where a hull has them
   const k = H.id + (glow ? 'g' : '');
   if (!sheets.has(k)) {
     const im = new Image();
@@ -268,7 +272,7 @@ function stars(sysId) {
   return v;
 }
 // ------------------------------------------------------------------ 2.2 scenery: every system gets its own sky and its own clutter, seeded from its id.
-// 2.2 scenery: every system gets its own sky and its own clutter, seeded from its id.
+// Scenery: every system gets its own sky and its own clutter, seeded from its id.
 // Far (barely moves): the system's star, galaxies, a black hole or pulsar, gas giants, megastructure arcs. Middle: gas clouds,
 // asteroid drifts, ion storms. Near (in the system itself): abandoned stations, ancient wrecks, ring ruins, crystal formations,
 // debris fields, comets, relay satellites, cargo pods and nav beacons.
@@ -313,7 +317,7 @@ const SUNS = [
   ['210,230,255', '140,180,255'],
   ['255,255,255', '200,220,255'],
 ];
-const objImgs = {}; // 2.5: rendered asteroids and loot (tools/rift_objects.py)
+const objImgs = {}; // rendered asteroids and loot (tools/rift_objects.py)
 /**
  * Loads and caches rendered 3D object images (asteroids, minerals, crates).
  * @param {string} n Object name identifier
@@ -329,7 +333,7 @@ function objImg(n) {
 }
 let rockSprites = null;
 /**
- * Generates or retrieves procedural procedural canvas textures for background asteroids.
+ * Generates or retrieves procedural canvas textures for background asteroids.
  * @param {number} k Asteroid variant index
  * @returns {HTMLCanvasElement} Off-screen canvas sprite
  */
@@ -368,7 +372,7 @@ function rockSprite(k) {
 function decorFor(S) {
   if (decorCache.has(S.id)) return decorCache.get(S.id);
   if (S.arena) {
-    // 2.6: the Crucible has its own look: a ring of pylons in Azure and Crimson, dark crimson nebulae, no borrowed worlds
+    // the Crucible has its own look: a ring of pylons in Azure and Crimson, dark crimson nebulae, no borrowed worlds
     const r = seeded(hashStr('crucible')),
       D = {
         sun: { x: 380, y: -260, size: 110, core: '255,216,208', halo: '255,90,80', depth: 0.03 },
@@ -447,8 +451,9 @@ function decorFor(S) {
     meteorT: r() * 10,
   };
   const clear = (x, y, m) =>
-    S.stellars.every((p) => Math.hypot(p.x - x, p.y - y) > (p.r || 80) + m) &&
-    Math.hypot(x, y) > 500;
+    S.stellars.every(
+      (stellarBody) => Math.hypot(stellarBody.x - x, stellarBody.y - y) > (stellarBody.r || 80) + m,
+    ) && Math.hypot(x, y) > 500;
   const spot = (rmin, rmax, m) => {
     for (let i = 0; i < 30; i++) {
       const a = r() * 6.283,
@@ -496,7 +501,7 @@ function decorFor(S) {
       len: 260 + r() * 260,
       depth: 0.05,
     };
-  D.bgp = []; // 2.4: background worlds painted by the planet renderer, unique to every system
+  D.bgp = []; // background worlds painted by the planet renderer, unique to every system
   const BGT = [
     ['gas giant ringed rings', 0, 360, 0.35, 0.65],
     ['gas giant storm bands', 0, 360, 0.3, 0.55],
@@ -559,7 +564,7 @@ function decorFor(S) {
       size: 900 + r() * 700,
       rot: r() * 6.283,
       depth: 0.14,
-    }; // 2.5.2: smaller, now that it is detailed
+    }; // smaller, now that it is detailed
   const fac = S.farside ? 'farside' : S.faction,
     pool = NEB_BY_FAC[fac] || [0, 1, 2, 3, 4, 5, 6, 7],
     nn = 1 + Math.floor(r() * 3) + (S.danger >= 3 ? 1 : 0);
@@ -687,20 +692,20 @@ function decorFor(S) {
       period: 900,
     };
   }
-  for (const p of S.stellars) {
-    if (p.svc && p.svc.includes('L') && r() < 0.7)
+  for (const stellarBody of S.stellars) {
+    if (stellarBody.svc && stellarBody.svc.includes('L') && r() < 0.7)
       for (let i = 0; i < 2; i++)
         D.beacons.push({
-          x: p.x + Math.cos(r() * 6.283) * ((p.r || 80) + 140 + r() * 140),
-          y: p.y + Math.sin(r() * 6.283) * ((p.r || 80) + 140 + r() * 140),
+          x: stellarBody.x + Math.cos(r() * 6.283) * ((stellarBody.r || 80) + 140 + r() * 140),
+          y: stellarBody.y + Math.sin(r() * 6.283) * ((stellarBody.r || 80) + 140 + r() * 140),
           col: i ? '#ff4a3a' : '#5aff8a',
           ph: r() * 6.283,
         });
-    if ((p.kind === 'planet' || p.kind === 'moon') && r() < 0.55)
+    if ((stellarBody.kind === 'planet' || stellarBody.kind === 'moon') && r() < 0.55)
       D.sats.push({
-        cx: p.x,
-        cy: p.y,
-        R: (p.r || 100) + 90 + r() * 120,
+        cx: stellarBody.x,
+        cy: stellarBody.y,
+        R: (stellarBody.r || 100) + 90 + r() * 120,
         a: r() * 6.283,
         sp: (r() < 0.5 ? 1 : -1) * (0.02 + r() * 0.04),
         img: 'satellite_' + Math.floor(r() * 3),
@@ -830,7 +835,7 @@ function drawDecorFar(ctx, S, W, H, z, cx, cy, now) {
     drawComet(ctx, D.comet, W, H, z, cx, cy, now, { x, y });
   }
   for (const bp of [...D.bgp].sort((a, b) => a.depth - b.depth)) {
-    // 2.4: unique background worlds, the farthest first
+    // unique background worlds, the farthest first
     const [x, y] = farXY(bp, W, H, cx, cy, zf),
       s = bp.size * zf * backgroundScale('world', bp.p.desc);
     if (x < -s * 2 || y < -s * 2 || x > W + s * 2 || y > H + s * 2) continue;
@@ -1112,7 +1117,7 @@ function drawDecorNear(ctx, S, W, H, z, sx, sy, now) {
       ctx.stroke();
     }
     ctx.restore();
-  } // 2.6: the Crucible's bounds
+  } // the Crucible's bounds
   for (const b of D.beacons) {
     const x = sx(b.x),
       y = sy(b.y);
@@ -1143,20 +1148,20 @@ function hexToRgb(h) {
   const n = parseInt(h.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
-// 2.5: rendered station designs (tools/rift_stations.py), chosen by who built the station and what it is
+// rendered station designs (tools/rift_stations.py), chosen by who built the station and what it is
 const stImgs = {},
   stPick = new Map();
 /**
  * Determines the architectural 3D station sprite model name for a station.
- * @param {StellarBody} p Station stellar body definition
+ * @param {StellarBody} stellarBody Station stellar body definition
  * @returns {string} Station design archetype name
  */
-export function stationDesign(p) {
-  if (stPick.has(p.id)) return stPick.get(p.id);
-  const sysId = p.system || (STELLARS[p.id] && STELLARS[p.id].system),
+export function stationDesign(stellarBody) {
+  if (stPick.has(stellarBody.id)) return stPick.get(stellarBody.id);
+  const sysId = stellarBody.system || (STELLARS[stellarBody.id] && STELLARS[stellarBody.id].system),
     f = SYS[sysId] ? SYS[sysId].faction : '',
-    d = ((p.desc || '') + ' ' + p.id).toLowerCase(),
-    h = hashStr(p.id);
+    d = ((stellarBody.desc || '') + ' ' + stellarBody.id).toLowerCase(),
+    h = hashStr(stellarBody.id);
   const authored = {
     'twins-exchange': 'twin',
     'aureole-ring': 'ring',
@@ -1166,7 +1171,7 @@ export function stationDesign(p) {
     'palinode-observatory': 'crystal',
   };
   const by =
-    authored[p.id] ||
+    authored[stellarBody.id] ||
     {
       vashari: 'hive',
       ylith: 'crystal',
@@ -1177,22 +1182,26 @@ export function stationDesign(p) {
       lamp: h % 2 ? 'twin' : 'disc',
     }[f] ||
     (f === 'korrund' ? (h % 3 ? 'rock' : 'forge') : null) ||
-    (p.outlaw || (STELLARS[p.id] && STELLARS[p.id].outlaw) || f === 'hollow' ? 'junk' : null) ||
+    (stellarBody.outlaw ||
+    (STELLARS[stellarBody.id] && STELLARS[stellarBody.id].outlaw) ||
+    f === 'hollow'
+      ? 'junk'
+      : null) ||
     (f === 'farside' ? (h % 2 ? 'junk' : 'twin') : null) ||
     (/shipyard|slipway|yards/.test(d) && f === 'quantum' ? 'yard' : null) ||
     ['cross', 'ring', 'spindle', 'disc', 'twin'][h % 5];
-  stPick.set(p.id, by);
+  stPick.set(stellarBody.id, by);
   return by;
 }
 /**
  * Retrieves the loaded HTMLImageElement for a station's rendered sprite model.
- * @param {StellarBody} p Station stellar body
+ * @param {StellarBody} stellarBody Station stellar body
  * @returns {HTMLImageElement | HTMLCanvasElement | null} Loaded image or null if loading
  */
-function stationSprite(p) {
+function stationSprite(stellarBody) {
   // Luna keeps the original glowing wheel rather than inheriting the generic shipyard.
-  if (p.id === 'luna') return stationWheel(p);
-  const k = stationDesign(p);
+  if (stellarBody.id === 'luna') return stationWheel(stellarBody);
+  const k = stationDesign(stellarBody);
   let im = stImgs[k];
   if (!im) {
     im = stImgs[k] = new Image();
@@ -1202,21 +1211,21 @@ function stationSprite(p) {
 }
 /**
  * Generates or retrieves a pre-rendered off-screen canvas sprite for a planet or station.
- * @param {StellarBody} p Stellar body specification
+ * @param {StellarBody} stellarBody Stellar body specification
  * @returns {HTMLCanvasElement} Off-screen canvas containing the rendered body
  */
-function planetImage(p) {
-  if (planetCache.has(p.id)) return planetCache.get(p.id);
-  const R = p.r,
+function planetImage(stellarBody) {
+  if (planetCache.has(stellarBody.id)) return planetCache.get(stellarBody.id);
+  const R = stellarBody.r,
     S = Math.ceil(R * 2.6),
     c = document.createElement('canvas');
   c.width = c.height = S;
   const g = c.getContext('2d'),
     cx = S / 2,
     cy = S / 2,
-    [r0, g0, b0] = hexToRgb(p.color || '#888'),
-    rnd = seeded(hashStr(p.id));
-  if (p.kind === 'station') {
+    [r0, g0, b0] = hexToRgb(stellarBody.color || '#888'),
+    rnd = seeded(hashStr(stellarBody.id));
+  if (stellarBody.kind === 'station') {
     g.translate(cx, cy);
     const ring = (rad, w, col) => {
       g.beginPath();
@@ -1283,7 +1292,7 @@ function planetImage(p) {
       );
       g.fill();
     }
-    if (p.id === 'earth') {
+    if (stellarBody.id === 'earth') {
       // Earth gets green-brown continents and white cloud swirls
       for (let k = 0; k < 9; k++) {
         g.globalAlpha = 0.9;
@@ -1330,7 +1339,7 @@ function planetImage(p) {
     g.arc(cx, cy, R * 1.2, 0, Math.PI * 2);
     g.fill();
   }
-  planetCache.set(p.id, c);
+  planetCache.set(stellarBody.id, c);
   return c;
 }
 
@@ -1340,7 +1349,7 @@ function planetImage(p) {
  * @type {VisualEffect[]}
  */
 export const fx = [];
-const fxImgs = {}; // 2.5: rendered effects (tools/rift_fx.py)
+const fxImgs = {}; // rendered effects (tools/rift_fx.py)
 /**
  * Loads or returns cached visual effect sprites.
  * @param {string} n Effect sprite name
@@ -1378,7 +1387,7 @@ export function boom(x, y, size) {
       r: size * (big ? 1.35 : 1.1),
       rot: Math.random() * 6.283,
     });
-  } // 2.5: a rendered fireball
+  } // a rendered fireball
   for (let i = 0; i < n; i++) {
     const a = Math.random() * 6.283,
       v = 30 + Math.random() * (60 + size);
@@ -1457,7 +1466,7 @@ export function spark(x, y, col) {
  * @returns {void}
  */
 export function flash(x, y) {
-  // 2.1: a ship entering or leaving hyperspace: a hot core, a lens streak and two shock rings
+  // a ship entering or leaving hyperspace: a hot core, a lens streak and two shock rings
   fx.push({ x, y, hyper: true, life: 0.75, max: 0.75, r: 70 });
   fx.push({ x, y, ring: true, life: 0.55, max: 0.55, r: 150, c: '#bfe2ff' });
   fx.push({ x, y, ring: true, life: 0.9, max: 0.9, r: 260, c: '#7aa8ff' });
@@ -1505,7 +1514,7 @@ export function dmgNumber(x, y, n, mine) {
       f.life = f.max;
       return;
     }
-  } // 2.5: hits close together add up into one number
+  } // hits close together add up into one number
   fx.push({
     x: x + (Math.random() - 0.5) * 16,
     y,
@@ -1537,7 +1546,7 @@ export function addShake(k) {
 }
 
 // projectile drawing by look
-const glowC = new Map(); // 2.5: a soft additive glow behind every bolt, and a fading trail
+const glowC = new Map(); // a soft additive glow behind every bolt, and a fading trail
 /**
  * Generates or retrieves a radial glow sprite for projectile weapons.
  * @param {string} col Color hex string
@@ -1860,10 +1869,10 @@ function rockImage(k) {
 const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae0']; // 5: hostile loot chest
 
 // ------------------------------------------------------------------ main draw
-let tagRects = []; // 2.6: name tags already drawn this frame, so close ships' tags stack instead of overlapping
+let tagRects = []; // name tags already drawn this frame, so close ships' tags stack instead of overlapping
 /**
  * Master rendering pipeline: backdrop, stellar bodies, mining fields, loot, shots, beams, ships, effects, and HUD overlays.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {CanvasRenderingContext2D} ctx Destination canvas rendering context
  * @param {number} W Viewport width in pixels
  * @param {number} H Viewport height in pixels
@@ -1878,7 +1887,7 @@ export function draw(G, ctx, W, H, dt, now) {
     S = SYS[G.sys];
   const dock = G.landed && STELLARS[G.landed.stellar];
   let cx = dock ? dock.x : (me ? me.rx : 0) + (G.lookX || 0),
-    cy = dock ? dock.y : (me ? me.ry : 0) + (G.lookY || 0); // 2.1: hold right-click to look ahead
+    cy = dock ? dock.y : (me ? me.ry : 0) + (G.lookY || 0); // hold right-click to look ahead
   Object.assign(cam, { cx, cy, z, W, H }); // un-shaken camera, used for mouse picking
   if (shake && G.opts && G.opts.shake !== false) {
     cx += ((Math.random() - 0.5) * shake * 2) / z;
@@ -1902,7 +1911,7 @@ export function draw(G, ctx, W, H, dt, now) {
     ctx.fillStyle = g;
     ctx.fillRect(x - r, y - r, r * 2, r * 2);
   }
-  drawDecorFar(ctx, S, W, H, z, cx, cy, now); // 2.1: galaxies and gas clouds far behind the stars
+  drawDecorFar(ctx, S, W, H, z, cx, cy, now); // galaxies and gas clouds far behind the stars
   for (const { L, depth, size } of st.layers) {
     for (const [x0, y0, b, tw] of L) {
       let x = (x0 - cx * depth) % 2048,
@@ -2009,11 +2018,11 @@ export function draw(G, ctx, W, H, dt, now) {
     } else if ((p.kind === 'planet' || p.kind === 'moon') && (P_ = planetSprite(p, now))) {
       const w = P_.S * P_.scale * z;
       ctx.drawImage(P_.canvas, x - w / 2, y - w / 2, w, w);
-    } // 1.0.1: procedural planets (old art until built)
+    } // procedural planets (old art until built)
     else if (p.kind === 'station' && (P_ = stationSprite(p))) {
       const s2 = p.r * 2.5 * z;
       ctx.drawImage(P_, x - s2 / 2, y - s2 / 2, s2, s2);
-    } // 2.5: rendered stations
+    } // rendered stations
     else {
       const im = planetImage(p);
       ctx.drawImage(
@@ -2061,7 +2070,7 @@ export function draw(G, ctx, W, H, dt, now) {
     const ri =
         k.ore !== 'gas' &&
         objImg(k.ore === 'shards' ? 'crys' + (Math.abs(k.id) % 4) : 'rock' + (Math.abs(k.id) % 10)),
-      rr = ri && ri.complete && ri.naturalWidth; // 2.5: rendered asteroids
+      rr = ri && ri.complete && ri.naturalWidth; // rendered asteroids
     const im = rr ? ri : rockImage(k),
       s2 = rr ? k.r * 2.35 * z : im.width * z;
     ctx.save();
@@ -2117,7 +2126,7 @@ export function draw(G, ctx, W, H, dt, now) {
   for (const l of G.loot) {
     const x = sx(l.x),
       y = sy(l.y),
-      li = objImg('loot' + Math.min(5, l.kind || 0)); // 2.5: rendered loot
+      li = objImg('loot' + Math.min(5, l.kind || 0)); // rendered loot
     if (li.complete && li.naturalWidth) {
       const q = (l.kind === 5 ? 30 + Math.sin(now / 200) * 2 : 18) * Math.max(0.6, z);
       ctx.save();
@@ -2460,7 +2469,7 @@ function streaks(ctx, W, H, a, len, alpha, drift) {
 }
 /**
  * Renders hyperspace jump departure spool animation, rings, and flash.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx 2D context
  * @param {number} W Viewport width
  * @param {number} H Viewport height
@@ -2526,7 +2535,7 @@ function hyperOut(G, ctx, W, H, now, x, y, a) {
 }
 /**
  * Renders hyperspace jump arrival deceleration bloom and shockwave rings.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx 2D context
  * @param {number} W Viewport width
  * @param {number} H Viewport height
@@ -2571,7 +2580,7 @@ function hyperIn(G, ctx, W, H, t, x, y, a) {
 }
 /**
  * Renders screen-space HUD indicators, off-screen arrows, and damage vignettes.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx 2D context
  * @param {number} W Viewport width
  * @param {number} H Viewport height
@@ -2662,7 +2671,7 @@ function hudOverlay(G, ctx, W, H, now, sx, sy, me) {
 }
 /**
  * Renders an individual ship sprite, engine trails, shield/armor bars, and name tags.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @param {CanvasRenderingContext2D} ctx Destination canvas rendering context
  * @param {RenderEntity} e Ship entity to draw
  * @param {number} x Screen coordinate X
@@ -2695,7 +2704,7 @@ export function drawShip(G, ctx, e, x, y, z, now) {
     srcY = Math.floor(fr / cols) * fs;
   const im = sheet(H);
   if (e.fl & 8 && im.complete && im.naturalWidth) {
-    // 2.1: a ship in hyperspace leaves a stretched, blue-shifted ghost trail
+    // a ship in hyperspace leaves a stretched, blue-shifted ghost trail
     const ux = Math.sin(e.a),
       uy = -Math.cos(e.a);
     ctx.globalCompositeOperation = 'lighter';
@@ -2783,7 +2792,7 @@ export function drawShip(G, ctx, e, x, y, z, now) {
     e.rx != null &&
     Math.random() < ((50 - e.ar) / 50) * 0.4
   ) {
-    // 2.4: damaged ships trail smoke, and badly damaged ones burn
+    // damaged ships trail smoke, and badly damaged ones burn
     const ox = (Math.random() - 0.5) * sz * 0.4,
       oy = (Math.random() - 0.5) * sz * 0.4;
     fx.push({
@@ -2826,7 +2835,7 @@ export function drawShip(G, ctx, e, x, y, z, now) {
   const tgt = G.target === e.id;
   const ally = G.isAlly && G.isAlly(e);
   if (ally && !tgt) {
-    // 2.6: Armada members and their wingmates carry a green marker
+    // Armada members and their wingmates carry a green marker
     const r = w * 0.55 + 5;
     ctx.strokeStyle = G.pal.ally;
     ctx.globalAlpha = 0.75;
@@ -2865,7 +2874,7 @@ export function drawShip(G, ctx, e, x, y, z, now) {
           : '#9cf'
         : e.fl & 64
           ? '#f2c66a'
-          : '#ddd'; // 1.1: rival captains carry gold name tags
+          : '#ddd'; // rival captains carry gold name tags
     ctx.font = '15px "Pixelify Sans", sans-serif';
     ctx.textAlign = 'center';
     const tw = ctx.measureText(e.name).width;
@@ -2885,7 +2894,7 @@ export function drawShip(G, ctx, e, x, y, z, now) {
 // ------------------------------------------------------------------ radar
 /**
  * Renders the circular cockpit radar display with blips for ships, planets, loot, and asteroids.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {CanvasRenderingContext2D} ctx Radar canvas rendering context
  * @returns {void}
  */
@@ -3015,7 +3024,7 @@ export function mapFit(W, H) {
 }
 /**
  * Renders the 2D galaxy starmap or minimap including hyperspace lanes, faction territories, and route plots.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {CanvasRenderingContext2D} ctx Starmap canvas rendering context
  * @param {{ big?: boolean }} [opts={}] Map render options (big: full interactive starmap)
  * @returns {void}
@@ -3037,7 +3046,7 @@ export function galaxy(G, ctx, opts = {}) {
       G.mapView.prevFit = f.fit;
     }
     V = G.mapView;
-  } // 1.0.1: keep the zoom when the canvas is resized
+  } // keep the zoom when the canvas is resized
   else {
     const here = SYS[G.sys] || SYS_LIST[0];
     V = { cx: here.x, cy: here.y, k: Math.min(W, H) / 560 };
@@ -3118,7 +3127,7 @@ export function galaxy(G, ctx, opts = {}) {
         : null;
   const allySys = {};
   for (const m of (G.you && G.you.armada && G.you.armada.members) || [])
-    if (m.sysId && m.name !== G.myName) (allySys[m.sysId] = allySys[m.sysId] || []).push(m.name); // 2.6: where your Armada is
+    if (m.sysId && m.name !== G.myName) (allySys[m.sysId] = allySys[m.sysId] || []).push(m.name); // where your Armada is
   for (const s of SYS_LIST) {
     const [x, y] = P(s);
     if (!on(x, y)) continue;
@@ -3153,7 +3162,7 @@ export function galaxy(G, ctx, opts = {}) {
       ctx.fill();
     }
     if (myStSys === s.id) {
-      // 2.5.2: your Personal Station: a gold station mark with its Station Tier
+      // your Personal Station: a gold station mark with its Station Tier
       const q = r + 9,
         pulse2 = 0.6 + 0.4 * Math.sin(performance.now() / 500);
       ctx.strokeStyle = `rgba(255,210,110,${0.75 + 0.25 * pulse2})`;
@@ -3247,7 +3256,7 @@ export function galaxy(G, ctx, opts = {}) {
       X = STATES[st.k];
     if (!S_ || !X) continue;
     const [x, y] = P(S_);
-    if (!on(x, y)) continue; // 2.4: system states
+    if (!on(x, y)) continue; // system states
     ctx.strokeStyle = X.color + 'aa';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -3273,7 +3282,7 @@ export function galaxy(G, ctx, opts = {}) {
       ctx.fillText('INVASION', x, y + 30);
     }
   }
-  // 1.0.1: active mission targets (gold diamond and ring; the main story is brighter)
+  // active mission targets (gold diamond and ring; the main story is brighter)
   for (const t of missionTargets(G)) {
     const S_ = t.sys && SYS[t.sys];
     if (!S_) continue;
@@ -3311,7 +3320,7 @@ export function galaxy(G, ctx, opts = {}) {
       ctx.fillText('beyond the Gateway', x - 20 * V.k, y + 50 * V.k + 14);
     }
   }
-  if (big && G.mapLegend === false) return; // 2.4: the legend can be hidden
+  if (big && G.mapLegend === false) return; // the legend can be hidden
   if (big) {
     ctx.fillStyle = 'rgba(2,3,10,.82)';
     ctx.fillRect(0, H - (G.mapMode && G.mapMode !== 'factions' ? 26 : 42), W, 42);
@@ -3400,7 +3409,7 @@ export function galaxy(G, ctx, opts = {}) {
     }
     ctx.fillStyle = '#ff5a40';
     ctx.fillText('◯ invasion', lx, ly);
-    lx += 70; // 2.4: no fleet claims in solo
+    lx += 70; // no fleet claims in solo
     for (const A_ of Object.values(ANOMALIES)) {
       ctx.fillStyle = A_.color;
       ctx.fillText(`${A_.icon} ${A_.name}`, lx, ly);
@@ -3410,7 +3419,7 @@ export function galaxy(G, ctx, opts = {}) {
 }
 /**
  * Tests for system click selection hit at given screen coordinates on galaxy map or minimap.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @param {number} mx Screen X coordinate
  * @param {number} my Screen Y coordinate
  * @param {boolean} [mini] Whether testing against companion minimap
@@ -3434,7 +3443,7 @@ export function mapHit(G, mx, my, mini) {
 }
 /**
  * Retrieves active salvage mission beacon world coordinates in current system.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @returns {Array<[number, number]>} Array of salvage point world coordinates [x, y]
  */
 export function salvagePoints(G) {
@@ -3445,7 +3454,7 @@ export function salvagePoints(G) {
 }
 /**
  * Retrieves unvisited planetary survey beacon coordinates for active missions in current system.
- * @param {import("./main.js").ClientGameState} G Game state
+ * @param {ClientGameState} G Game state
  * @returns {Array<[number, number]>} Array of survey point world coordinates [x, y]
  */
 export function surveyPoints(G) {

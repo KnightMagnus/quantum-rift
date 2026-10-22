@@ -1,4 +1,4 @@
-"""Star Dredge: deterministic Concept-A mesh using the game's shared 3D renderer.
+"""Star Dredge: deterministic mesh using the game's shared 3D renderer.
 
 Usage: python3 tools/rift_dredge.py --out /path/to/staging [--preview]
 Requires numpy and Pillow. No registry edits; outputs remain in the supplied directory.

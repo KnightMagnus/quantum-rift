@@ -22,7 +22,6 @@ async def main():
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(200)
         await pg.click('#cchan button[data-ch="sys"]'); await pg.keyboard.type('hello system'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(500)
         print('chat log:', (await pg.inner_text('#chatlog'))[-80:].replace('\n', ' | '))
-        # fly to Ina Lumen's system is far; instead jump view to a planet-rich system by teleporting the camera is not possible, so land and look at Que'var later
         print('\n'.join(errs[:10]) or 'no page errors'); await b.close()
 asyncio.run(main())
 async def planets():

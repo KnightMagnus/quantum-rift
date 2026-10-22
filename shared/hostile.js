@@ -1,5 +1,7 @@
-// Quantum Rift 0.9 "Hostile Space" data: hostile levels and the "can I win?" scan, loot chests, Station Holdout
-// waves, and the Umbral Eclipse. (2.6: directives and solo armadas were removed.)
+/** @import { GameAssets } from './rules.js' */
+
+// Quantum Rift: data: hostile levels and the "can I win?" scan, loot chests, Station Holdout
+// waves, and the Umbral Eclipse.
 
 /**
  * Player stat bonuses affecting ship combat power calculations.
@@ -72,20 +74,20 @@ export function winOdds(mine, theirs) {
 
 /**
  * Computes a player's effective combat power based on hull, bonuses, and escort wingmates.
- * @param {import('./rules.js').GameAssets} A - Game assets collection containing ship hull definitions.
+ * @param {GameAssets} assets - Game assets collection containing ship hull definitions.
  * @param {number|string} hull - Player's current ship hull ID.
  * @param {HostileBonus} [bonus={}] - Research and crew percentage bonuses.
  * @param {Array<number|string>} [escorts=[]] - Hull IDs of escort / wingmate ships.
  * @returns {number} Total effective combat power rating.
  */
 // a player's effective strength: hull strength scaled by their bonuses, plus a share of their escorts
-export function playerPower(A, hull, bonus = {}, escorts = []) {
-  const H = A.ships[hull];
+export function playerPower(assets, hull, bonus = {}, escorts = []) {
+  const H = assets.ships[hull];
   if (!H) return 10;
   const b = 1 + ((bonus.damagePct || 0) + (bonus.shieldPct || 0) + (bonus.armorPct || 0)) / 300;
   return (
     (H.strength || 10) * b +
-    escorts.reduce((t, h) => t + ((A.ships[h] || {}).strength || 0) * 0.6, 0)
+    escorts.reduce((t, h) => t + ((assets.ships[h] || {}).strength || 0) * 0.6, 0)
   );
 }
 

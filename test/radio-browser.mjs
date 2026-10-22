@@ -216,7 +216,7 @@ try {
     RADIO_STATIONS[4].tracks[0].title,
     'published first album track is visible',
   );
-  // Use the actual QoL keyboard handles for a readable five-station review capture.
+  // Use the actual QoL keyboard handles for a readable five-station screenshot.
   await page.locator('#radarheightgrip').focus();
   await page.keyboard.press('Home');
   await page.locator('#menuheightgrip').focus();

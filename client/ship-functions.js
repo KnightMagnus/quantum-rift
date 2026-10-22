@@ -214,7 +214,7 @@ export function initShipFunctions(G, send) {
           ? e.button.getAttribute('aria-label')
           : e.button.getAttribute('aria-label') + ' — unavailable';
         if (!available || identity !== next) e.setOpen(false);
-        e.panel.hidden = false; // Visibility belongs to the registry, not former nested hosts.
+        e.panel.hidden = false; // The registry owns panel visibility.
       }
       document.getElementById('combatindicator').classList.toggle('active', !!G.combat?.on);
       if (identity !== next || !flying()) droneUntil = 0;

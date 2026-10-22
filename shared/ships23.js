@@ -1,4 +1,4 @@
-// Quantum Rift 2.3: ten new common Quantum hulls, filling the gaps in the Concord yards (art: scratchpad tools/hulls22.py).
+// Quantum Rift: ten common Quantum hulls for the Concord yards (art: tools/ships26/hulls22.py).
 // Same units and fields as the mod's own ships.
 
 /**

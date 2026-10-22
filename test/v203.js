@@ -1,6 +1,6 @@
 import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
-// 2.0.3 tests: newcomer protection in inner space, calmer raider spawns, and the backlog bug fixes.
+// 2.0.3 tests: newcomer protection in inner space, calmer raider spawns, and gameplay edge cases.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
@@ -166,7 +166,7 @@ ok(
   'and the heaviest raider hull stays out of inner space',
 );
 
-// ---- backlog fixes
+// ---- gameplay edge cases
 const P = fake('Bug Hunter'),
   d = P.d;
 const land = (id) => {

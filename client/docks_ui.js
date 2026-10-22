@@ -1,8 +1,10 @@
 import { artworkUrl } from './artwork.js';
-// 2.1 Docks: the DOCKS screen at your Personal Station, the dock switcher by the DEPART button, and the sidebar line.
+// Docks: the DOCKS screen at your Personal Station, the dock switcher by the DEPART button, and the sidebar line.
 import { ROLES, RARITY } from '/shared/hangar.js';
 import { WING_REPAIR_COST, WING_REPAIR_MIN, NEXT_DOCK_OPS } from '/shared/docks.js';
 import { credits, repairBasis } from '/shared/rules.js';
+
+/** @import { ClientGameState } from './main.js' */
 
 /**
  * @typedef {Object} DockShip
@@ -53,7 +55,7 @@ const mins = (t) => Math.max(1, Math.ceil((t - Date.now()) / 60000));
 
 /**
  * Renders a visual slot card for a lead or wingmate ship.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {DockShip|null} s Ship data
  * @param {string} empty Placeholder text when slot is empty
  * @returns {string} HTML markup
@@ -67,7 +69,7 @@ function shipBox(G, s, empty) {
 
 /**
  * Renders a drop-down selector of stored ships for an individual dock slot.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {DocksState} D Docks state
  * @param {number} k Dock index
  * @param {string|number} slot Slot identifier ('lead' or wingmate index)
@@ -97,7 +99,7 @@ function shipPick(G, D, k, slot, cur, interactive) {
 
 /**
  * Renders an officer assignment selector for a wingmate captain or crew role.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {number} k Dock index
  * @param {number} w Wing slot index
  * @param {'cap'|'crew'} role Officer assignment role
@@ -107,9 +109,9 @@ function shipPick(G, D, k, slot, cur, interactive) {
  */
 function crewPick(G, k, w, role, oid, interactive) {
   const y = G.you,
-    o = y.officers.find((x) => x.id === oid);
+    officer = y.officers.find((x) => x.id === oid);
   if (!interactive)
-    return `<span class="dim small">${role === 'cap' ? 'Captain' : 'Crew'}: ${o ? esc(o.name) : 'none'}</span>`;
+    return `<span class="dim small">${role === 'cap' ? 'Captain' : 'Crew'}: ${officer ? esc(officer.name) : 'none'}</span>`;
   const opts = y.officers
     .map(
       (x) =>
@@ -121,7 +123,7 @@ function crewPick(G, k, w, role, oid, interactive) {
 
 /**
  * Renders the full Personal Station Docks interface including bays, wingmates, and stored ships.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether interactive buttons and select elements are enabled
  * @returns {string} HTML markup
  */
@@ -173,7 +175,7 @@ export function docksHtml(G, interactive) {
 
 /**
  * Renders the dock switcher chips beside the DEPART button on landing screens.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {boolean} atHome Whether landed at personal station
  * @returns {string} HTML markup
  */
@@ -185,7 +187,7 @@ export function dockChips(G, atHome) {
 
 /**
  * Renders the compact sidebar status line for active dock and wingmate health.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup or empty string
  */
 export function dockLine(G) {
@@ -212,7 +214,7 @@ export function dockLine(G) {
 
 /**
  * Quoted rush repairs at landed outfitter ports. Uses the same stored ships and fee as DOCKS.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function outfitterRepairsHtml(G) {

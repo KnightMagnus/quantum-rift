@@ -1,4 +1,4 @@
-// 1.0.1: procedural planets. Each world gets a seamless surface texture built from 3D noise sampled on the sphere,
+// procedural planets. Each world gets a seamless surface texture built from 3D noise sampled on the sphere,
 // chosen by type (from its description and colour), then is drawn as a lit sphere that slowly turns, with drifting
 // clouds, night-side city lights or lava glow, an atmosphere rim and, for some giants, rings.
 // planetSprite(p, now) -> { canvas, scale }: scale is world units per canvas pixel.
@@ -608,7 +608,7 @@ function renderDisk(P, ru, rc) {
 }
 let budget = 0,
   budgetT = 0;
-// 2.5: pre-rendered planets (tools/rift_planets.py) in a pre-rendered space-art style. Each world picks the rendered planet of its type
+// pre-rendered planets (tools/rift_planets.py) in a pre-rendered space-art style. Each world picks the rendered planet of its type
 // whose colour is closest to its own; the procedural sphere above stays as the fallback while images load.
 let MAN = null;
 const imgs = new Map(),
@@ -682,7 +682,7 @@ function chooseRendered(p) {
   pick.set(p.id, o);
   return o;
 }
-// 2.5.1: the rendered planets turn. tools/rift_planets.py bakes each world into surface maps (albedo; height, water,
+// the rendered planets turn. tools/rift_planets.py bakes each world into surface maps (albedo; height, water,
 // emissive and cloud), and they are lit here every time the surface turns a texel: bump relief, the soft terminator,
 // ocean glint, cloud shadows, night lights and the atmosphere rim, as in the static renders. The halo and the rings are
 // fixed layers rendered with the planet (_back and _front).
@@ -1109,7 +1109,7 @@ function procSprite(p, now) {
         cache.delete(k);
         break;
       }
-    } // 2.4: forget old background worlds
+    } // forget old background worlds
   const ru = Math.floor((P.T.spinLon / 6.283) * TW + (now / 1000) * P.T.spin) % TW,
     rc = Math.floor((now / 1000) * P.T.cspin) % TW;
   if (P.fresh) {

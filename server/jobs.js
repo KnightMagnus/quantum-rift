@@ -16,6 +16,8 @@ import { destType } from './syndicate.js';
 import { freightOffers } from './freight-offers.js';
 import { grantRadio, radioTourOffer, advanceRadioTour } from './radio-discovery.js';
 
+/** @import { Game } from './game.js' */
+
 /** @typedef {import('./game.js').Session} Session */
 /** @typedef {import('./game.js').PlayerData} PlayerData */
 /** @typedef {import('./game.js').StellarBody} StellarBody */
@@ -25,7 +27,7 @@ import { grantRadio, radioTourOffer, advanceRadioTour } from './radio-discovery.
  * stories, team contracts, mining orders and progression retain their owners.
  * Live capabilities do not copy/save a second account state. Legacy operation
  * bodies remain unchecked; these types do not validate incoming wire data.
- * @typedef {Pick<import('./game.js').Game,
+ * @typedef {Pick<Game,
  *   'A' |
  *   'db' |
  *   'features' |
@@ -37,7 +39,7 @@ import { grantRadio, radioTourOffer, advanceRadioTour } from './radio-discovery.
  *   'toast' |
  *   'tut' |
  *   'you'>} JobCapabilities
- * @typedef {Pick<import('./game.js').Game, 'offers' | 'accept' | 'completeOnLanding'>} JobService
+ * @typedef {Pick<Game, 'offers' | 'accept' | 'completeOnLanding'>} JobService
  */
 
 /**
@@ -48,7 +50,7 @@ export function createJobService(capabilities) {
   return bindOperations(JobOperations, capabilities);
 }
 
-const NAMES = [
+const BOUNTY_NAMES = [
   'Vask',
   'Oru',
   'Sable',
@@ -72,260 +74,322 @@ const NAMES = [
  * @returns {() => number} Generator returning float in [0, 1).
  */
 function rng(seed) {
-  let s = seed >>> 0 || 1;
+  let randomState = seed >>> 0 || 1;
   return () => {
-    s ^= s << 13;
-    s >>>= 0;
-    s ^= s >> 17;
-    s ^= s << 5;
-    s >>>= 0;
-    return s / 4294967296;
+    randomState ^= randomState << 13;
+    randomState >>>= 0;
+    randomState ^= randomState >> 17;
+    randomState ^= randomState << 5;
+    randomState >>>= 0;
+    return randomState / 4294967296;
   };
 }
 /**
  * Computes 32-bit FNV-1a hash of a string.
- * @param {string} str Input string.
+ * @param {string} text Input string.
  * @returns {number} Unsigned 32-bit hash.
  */
-function hash(str) {
-  let h = 2166136261;
-  for (const c of str) {
-    h ^= c.charCodeAt(0);
-    h = Math.imul(h, 16777619);
+function hash(text) {
+  let hashValue = 2166136261;
+  for (const character of text) {
+    hashValue ^= character.charCodeAt(0);
+    hashValue = Math.imul(hashValue, 16777619);
   }
-  return h >>> 0;
+  return hashValue >>> 0;
 }
 /**
  * Computes shortest jump distances from a given system to all reachable systems via BFS.
- * @param {string} a Starting system ID.
+ * @param {string} startSystemId Starting system ID.
  * @returns {Record<string, number>} Map of system IDs to jump counts.
  */
-function jumpsFrom(a) {
-  const d = { [a]: 0 },
-    q = [a];
-  while (q.length) {
-    const s = q.shift();
-    for (const l of SYS[s].links)
-      if (d[l] === undefined) {
-        d[l] = d[s] + 1;
-        q.push(l);
+function jumpsFrom(startSystemId) {
+  const distances = { [startSystemId]: 0 },
+    queue = [startSystemId];
+  while (queue.length) {
+    const systemId = queue.shift();
+    for (const linkedSystemId of SYS[systemId].links)
+      if (distances[linkedSystemId] === undefined) {
+        distances[linkedSystemId] = distances[systemId] + 1;
+        queue.push(linkedSystemId);
       }
   }
-  return d;
+  return distances;
 }
-const JUMPS = Object.fromEntries(SYSTEMS.map((s) => [s.id, jumpsFrom(s.id)]));
+const JUMP_DISTANCES = Object.fromEntries(
+  SYSTEMS.map((system) => [system.id, jumpsFrom(system.id)]),
+);
 
 const JobOperations = {
   /**
    * Generates procedural job board mission offers for a stellar port.
-   * @param {StellarBody} p Stellar port.
-   * @param {PlayerData} d Player data.
+   * @param {StellarBody} stellarBody Stellar port.
+   * @param {PlayerData} playerData Player data.
    * @returns {Mission[]} Available job board missions.
    * @this {JobCapabilities}
    */
-  offers(p, d) {
-    if (!p.svc.includes('B')) return [];
-    const win = Math.floor(Date.now() / 600000),
-      r = rng(hash(p.id + win)),
-      out = [],
-      here = p.system;
-    const near = Object.entries(JUMPS[here]).filter(
-      ([s, n]) =>
-        n >= 1 &&
-        n <= 4 &&
-        SYS[s].stellars.some((x) => x.svc.includes('L')) &&
-        SYS[s].faction !== 'umbral',
+  offers(stellarBody, playerData) {
+    if (!stellarBody.svc.includes('B')) return [];
+    const offerWindow = Math.floor(Date.now() / 600000),
+      random = rng(hash(stellarBody.id + offerWindow)),
+      offers = [],
+      originSystemId = stellarBody.system;
+    const nearbySystems = Object.entries(JUMP_DISTANCES[originSystemId]).filter(
+      ([systemId, jumpCount]) =>
+        jumpCount >= 1 &&
+        jumpCount <= 4 &&
+        SYS[systemId].stellars.some((candidatePort) => candidatePort.svc.includes('L')) &&
+        SYS[systemId].faction !== 'umbral',
     );
     const usedNames = new Set();
-    for (let i = 0; i < 5 && near.length; i++) {
-      const roll = r(),
-        [sys, jumps] = near[Math.floor(r() * near.length)],
-        S = SYS[sys];
-      const id = `${p.id}-${win}-${i}`;
+    for (let i = 0; i < 5 && nearbySystems.length; i++) {
+      const roll = random(),
+        [destinationSystemId, jumps] = nearbySystems[Math.floor(random() * nearbySystems.length)],
+        destinationSystem = SYS[destinationSystemId];
+      const offerId = `${stellarBody.id}-${offerWindow}-${i}`;
       if (roll < 0.65) {
-        const lands = S.stellars.filter((x) => x.svc.includes('L') && !x.site),
-          dest = lands[Math.floor(r() * lands.length)]; // 1.0.3: never to an empty derelict hull
-        if (!dest) continue;
-        const c = COMMODITIES[Math.floor(r() * COMMODITIES.length)],
-          qty = 5 + Math.floor(r() * 26);
-        out.push({
-          id,
+        const landingPorts = destinationSystem.stellars.filter(
+            (candidatePort) => candidatePort.svc.includes('L') && !candidatePort.site,
+          ),
+          destinationPort = landingPorts[Math.floor(random() * landingPorts.length)]; // never to an empty derelict hull
+        if (!destinationPort) continue;
+        const commodity = COMMODITIES[Math.floor(random() * COMMODITIES.length)],
+          cargoTonnes = 5 + Math.floor(random() * 26);
+        offers.push({
+          id: offerId,
           type: 'cargo',
-          title: `Deliver ${qty} tons of ${c.name}`,
-          sys,
-          dest: dest.id,
-          cid: c.id,
-          qty,
-          reward: Math.round((800 + jumps * 1100 + qty * 60) * 1.35), // 2.4: cargo runs pay better
-          text: `The sender supplies the shipment. Carry ${qty} tons of ${c.name.toLowerCase()} to ${dest.name} in the ${S.name} system (${jumps} jump${jumps > 1 ? 's' : ''}). No commodity purchase needed.`,
+          title: `Deliver ${cargoTonnes} tons of ${commodity.name}`,
+          sys: destinationSystemId,
+          dest: destinationPort.id,
+          cid: commodity.id,
+          qty: cargoTonnes,
+          reward: Math.round((800 + jumps * 1100 + cargoTonnes * 60) * 1.35), // cargo runs pay better
+          text: `The sender supplies the shipment. Carry ${cargoTonnes} tons of ${commodity.name.toLowerCase()} to ${destinationPort.name} in the ${destinationSystem.name} system (${jumps} jump${jumps > 1 ? 's' : ''}). No commodity purchase needed.`,
         });
       } else if (roll < 0.8) {
-        const fac = S.danger >= 3 || r() < 0.6 || S.farside ? 'hollow' : 'umbral',
-          hull = TRAFFIC[fac].war[Math.floor(r() * TRAFFIC[fac].war.length)],
-          H = this.A.ships[hull];
-        let ni = Math.floor(r() * NAMES.length);
-        while (usedNames.has(ni)) ni = (ni + 1) % NAMES.length;
-        usedNames.add(ni);
-        const nm = (fac === 'hollow' ? 'Hollow captain ' : 'Umbral hunter ') + NAMES[ni];
-        out.push({
-          id,
+        const factionId =
+            destinationSystem.danger >= 3 || random() < 0.6 || destinationSystem.farside
+              ? 'hollow'
+              : 'umbral',
+          hull = TRAFFIC[factionId].war[Math.floor(random() * TRAFFIC[factionId].war.length)],
+          hullDefinition = this.A.ships[hull];
+        let nameIndex = Math.floor(random() * BOUNTY_NAMES.length);
+        while (usedNames.has(nameIndex)) nameIndex = (nameIndex + 1) % BOUNTY_NAMES.length;
+        usedNames.add(nameIndex);
+        const targetName =
+          (factionId === 'hollow' ? 'Hollow captain ' : 'Umbral hunter ') + BOUNTY_NAMES[nameIndex];
+        offers.push({
+          id: offerId,
           type: 'bounty',
-          title: `Bounty: ${nm}`,
-          sys,
+          title: `Bounty: ${targetName}`,
+          sys: destinationSystemId,
           hull,
-          faction: fac,
-          targetName: nm,
-          reward: Math.round(4000 + (H.strength || 20) * 60),
-          text: `${nm} has been raiding the lanes in a ${H.name}. Find and destroy them in the ${S.name} system.`,
+          faction: factionId,
+          targetName: targetName,
+          reward: Math.round(4000 + (hullDefinition.strength || 20) * 60),
+          text: `${targetName} has been raiding the lanes in a ${hullDefinition.name}. Find and destroy them in the ${destinationSystem.name} system.`,
         });
       } else {
-        const need = 2 + Math.floor(r() * 3);
-        out.push({
-          id,
+        const requiredKills = 2 + Math.floor(random() * 3);
+        offers.push({
+          id: offerId,
           type: 'patrol',
-          title: `Patrol ${S.name}`,
-          sys,
-          need,
+          title: `Patrol ${destinationSystem.name}`,
+          sys: destinationSystemId,
+          need: requiredKills,
           got: 0,
-          reward: Math.round(3000 + need * 1800 + S.danger * 1500),
-          text: `Destroy ${need} pirate or hostile ships in the ${S.name} system, then land anywhere to be paid.`,
+          reward: Math.round(3000 + requiredKills * 1800 + destinationSystem.danger * 1500),
+          text: `Destroy ${requiredKills} pirate or hostile ships in the ${destinationSystem.name} system, then land anywhere to be paid.`,
         });
       }
     }
-    out.push(...eventideOffers(p, d, win));
-    out.push(...this.features.fronts.moreOffers(p, d, r, near, win));
-    out.push(...this.features.coop.coopOffers(p, d, r, near, win)); // 2.6: Armada contracts (online games)
+    offers.push(...eventideOffers(stellarBody, playerData, offerWindow));
+    offers.push(
+      ...this.features.fronts.moreOffers(
+        stellarBody,
+        playerData,
+        random,
+        nearbySystems,
+        offerWindow,
+      ),
+    );
+    offers.push(
+      ...this.features.coop.coopOffers(stellarBody, playerData, random, nearbySystems, offerWindow),
+    ); // Armada contracts (online games)
     {
-      const X = this.features.arcs.expeditionOffer(p, d);
-      if (X) out.push(X);
+      const mission = this.features.arcs.expeditionOffer(stellarBody, playerData);
+      if (mission) offers.push(mission);
     } // 1.2 Farside expeditions
-    out.unshift(...this.features.living.stateOffers(p, d, r, near, win)); // 2.4: jobs posted by troubled systems nearby
-    out.push(
-      ...this.features.syndicate.extraOffers(p, d, r, near, win, (sys) => {
-        const ls = SYS[sys].stellars.filter((x) => x.svc.includes('L') && !x.site);
-        return ls.length ? ls[Math.floor(r() * ls.length)] : null;
-      }),
+    offers.unshift(
+      ...this.features.living.stateOffers(
+        stellarBody,
+        playerData,
+        random,
+        nearbySystems,
+        offerWindow,
+      ),
+    ); // jobs posted by troubled systems nearby
+    offers.push(
+      ...this.features.syndicate.extraOffers(
+        stellarBody,
+        playerData,
+        random,
+        nearbySystems,
+        offerWindow,
+        (sys) => {
+          const landingPorts = SYS[sys].stellars.filter(
+            (candidatePort) => candidatePort.svc.includes('L') && !candidatePort.site,
+          );
+          return landingPorts.length
+            ? landingPorts[Math.floor(random() * landingPorts.length)]
+            : null;
+        },
+      ),
     ); // 1.2
     // 1.1 combat rating: Wanted contracts need Competent; bounties pay more as your rank rises; Dangerous captains get elite contracts
-    const rank = this.features.fleetcmd.rankOf(d).i;
-    for (const o of out)
-      if (o.type === 'bounty' || o.type === 'assassinate')
-        o.reward = Math.round(o.reward * (1 + 0.06 * rank));
-    if (rank >= 5 && near.length) {
-      const [sys] = near[Math.floor(r() * near.length)],
-        S = SYS[sys],
-        pool = [...TRAFFIC.umbral.war, ...TRAFFIC.hollow.war]
-          .filter((h) => this.A.ships[h])
-          .sort((a, b) => (this.A.ships[b].strength || 0) - (this.A.ships[a].strength || 0));
-      const hull = pool[Math.floor(r() * Math.min(2, pool.length))],
-        H = this.A.ships[hull],
-        nm =
+    const rank = this.features.fleetcmd.rankOf(playerData).i;
+    for (const offer of offers)
+      if (offer.type === 'bounty' || offer.type === 'assassinate')
+        offer.reward = Math.round(offer.reward * (1 + 0.06 * rank));
+    if (rank >= 5 && nearbySystems.length) {
+      const [sys] = nearbySystems[Math.floor(random() * nearbySystems.length)],
+        destinationSystem = SYS[sys],
+        eliteHullIds = [...TRAFFIC.umbral.war, ...TRAFFIC.hollow.war]
+          .filter((hullId) => this.A.ships[hullId])
+          .sort(
+            (leftHullId, rightHullId) =>
+              (this.A.ships[rightHullId].strength || 0) - (this.A.ships[leftHullId].strength || 0),
+          );
+      const hull = eliteHullIds[Math.floor(random() * Math.min(2, eliteHullIds.length))],
+        hullDefinition = this.A.ships[hull],
+        targetName =
           'the ' +
-          ['Ashen Admiral', 'Red Widow', 'Quiet Knife', 'Last Lantern'][Math.floor(r() * 4)];
-      out.push({
-        id: `${p.id}-${win}-elite`,
+          ['Ashen Admiral', 'Red Widow', 'Quiet Knife', 'Last Lantern'][Math.floor(random() * 4)];
+      offers.push({
+        id: `${stellarBody.id}-${offerWindow}-elite`,
         type: 'bounty',
         elite: true,
-        title: `ELITE CONTRACT: ${nm}`,
+        title: `ELITE CONTRACT: ${targetName}`,
         sys,
         hull,
         faction: TRAFFIC.umbral.war.includes(hull) ? 'umbral' : 'hollow',
-        targetName: nm,
-        reward: Math.round(45000 + (H.strength || 200) * 160),
-        text: `Only captains rated Dangerous or better are offered this one. ${nm} flies a ${H.name} out of ${S.name}. The Concord wants it gone.`,
+        targetName: targetName,
+        reward: Math.round(45000 + (hullDefinition.strength || 200) * 160),
+        text: `Only captains rated Dangerous or better are offered this one. ${targetName} flies a ${hullDefinition.name} out of ${destinationSystem.name}. The Concord wants it gone.`,
       });
     }
-    out.push(...freightOffers(p, win));
-    const radioTour = radioTourOffer(p, d);
-    if (radioTour) out.unshift(radioTour);
-    out.unshift(...this.features.quests.questOffers(p, d)); // 2.4: contacts and side stories lead the board
-    return out
+    offers.push(...freightOffers(stellarBody, offerWindow));
+    const radioTour = radioTourOffer(stellarBody, playerData);
+    if (radioTour) offers.unshift(radioTour);
+    offers.unshift(...this.features.quests.questOffers(stellarBody, playerData)); // contacts and side stories lead the board
+    return offers
       .filter(
-        (o) =>
-          !d.missions.some((m) => m.id === o.id) &&
-          !(destType(o) && o.dest === p.id) &&
-          !(o.type === 'assassinate' && rank < 3),
+        (offer) =>
+          !playerData.missions.some((acceptedMission) => acceptedMission.id === offer.id) &&
+          !(destType(offer) && offer.dest === stellarBody.id) &&
+          !(offer.type === 'assassinate' && rank < 3),
       )
-      .map((o) => ({ ...o, offerVersion: 1 }));
+      .map((offer) => ({ ...offer, offerVersion: 1 }));
   },
   /**
    * Accepts a mission from the local stellar job board.
-   * @param {Session} s Player session.
-   * @param {string} id Mission ID to accept.
+   * @param {Session} session Player session.
+   * @param {string} missionId Mission ID to accept.
    * @this {JobCapabilities}
    * @returns {void}
    */
-  accept(s, id) {
-    const d = s.data,
-      p = STELLARS[d.stellar];
-    if (!p) return;
-    if (d.missions.length >= 6) return this.toast(s, 'You already have six jobs.');
-    const o = this.offers(p, d).find((x) => x.id === id);
-    if (!o) return;
-    if (o.type === 'quest') return this.features.quests.questStart(s, o); // 2.4
-    if (o.type === 'warband') return this.features.coop.warbandAccept(s, o); // 2.6: Armada contracts go to the whole Armada
-    if (o.type === 'cargo' || o.type === 'smuggle') {
-      const st = this.features.shipStats.stats(d),
-        used = this.holdUsed(d);
-      if (used + o.qty > st.cargo) return this.toast(s, 'Not enough cargo space for that job.');
+  accept(session, missionId) {
+    const playerData = session.data,
+      port = STELLARS[playerData.stellar];
+    if (!port) return;
+    if (playerData.missions.length >= 6) return this.toast(session, 'You already have six jobs.');
+    const mission = this.offers(port, playerData).find((offer) => offer.id === missionId);
+    if (!mission) return;
+    if (mission.type === 'quest') return this.features.quests.questStart(session, mission); // 2.4
+    if (mission.type === 'warband') return this.features.coop.warbandAccept(session, mission); // Armada contracts go to the whole Armada
+    if (mission.type === 'cargo' || mission.type === 'smuggle') {
+      const shipStats = this.features.shipStats.stats(playerData),
+        usedHold = this.holdUsed(playerData);
+      if (usedHold + mission.qty > shipStats.cargo)
+        return this.toast(session, 'Not enough cargo space for that job.');
     }
-    if (!this.features.syndicate.acceptCheck(s, o)) return;
-    d.missions.push({
-      ...o,
-      owner: s.id,
+    if (!this.features.syndicate.acceptCheck(session, mission)) return;
+    playerData.missions.push({
+      ...mission,
+      owner: session.id,
       taken: Date.now(),
-      ...(o.rush ? { deadline: Date.now() + o.rush * 60000 } : {}),
+      ...(mission.rush ? { deadline: Date.now() + mission.rush * 60000 } : {}),
     });
-    this.log(d, `Accepted: ${o.title}.`);
+    this.log(playerData, `Accepted: ${mission.title}.`);
     this.db.touch();
-    this.you(s);
-    this.landed(s);
+    this.you(session);
+    this.landed(session);
   },
   /**
    * Evaluates active missions upon landing, paying rewards and logging completions.
-   * @param {Session} s Player session landing.
-   * @param {StellarBody} p Landed stellar port.
+   * @param {Session} session Player session landing.
+   * @param {StellarBody} stellarBody Landed stellar port.
    * @this {JobCapabilities}
    * @returns {void}
    */
-  completeOnLanding(s, p) {
-    const d = s.data;
-    d.lastStellar = p.id;
-    for (const m of [...d.missions]) {
-      if (m.type === 'miningOrder' || m.paid) continue;
-      if (m.radioTour && advanceRadioTour(this, s, m, p)) continue;
+  completeOnLanding(session, stellarBody) {
+    const playerData = session.data;
+    playerData.lastStellar = stellarBody.id;
+    for (const mission of [...playerData.missions]) {
+      if (mission.type === 'miningOrder' || mission.paid) continue;
+      if (mission.radioTour && advanceRadioTour(this, session, mission, stellarBody)) continue;
       // a snapshot: follow-up jobs added on this landing wait for the next one
-      if (m.type === 'supply' && m.dest === p.id && !this.features.living.supplyReady(d, m)) {
-        this.toast(s, `${m.title}: you need ${m.qty} t of ${m.cid} in your hold.`);
+      if (
+        mission.type === 'supply' &&
+        mission.dest === stellarBody.id &&
+        !this.features.living.supplyReady(playerData, mission)
+      ) {
+        this.toast(
+          session,
+          `${mission.title}: you need ${mission.qty} t of ${mission.cid} in your hold.`,
+        );
         continue;
       }
-      if ((destType(m) && m.dest === p.id) || (!destType(m) && m.done)) {
-        if (m.type === 'supply') {
-          applyTake(d.cargo, d.cargoLots, planTake(d.cargo, d.cargoLots, m.cid, m.qty));
-          this.features.living.stateProgress(s, p.system, 'cid:' + m.cid, m.qty);
-        } // 2.4: your goods are unloaded
-        if (m.type === 'smuggle')
-          this.features.syndicate.synGain(s, m.syn ? 'contract' : 'smuggle');
-        if (m.syn === 'hit') this.features.syndicate.synGain(s, 'hit'); // 1.2
-        this.features.fronts.jobDone(s, m, p);
-        if (m.exp) this.features.arcs.expeditionNext(s, m);
-        this.features.frontier.mastery(s, 15);
-        this.features.specialists.specOnJob(s, m);
-        this.tut(s, 'job');
+      if (
+        (destType(mission) && mission.dest === stellarBody.id) ||
+        (!destType(mission) && mission.done)
+      ) {
+        if (mission.type === 'supply') {
+          applyTake(
+            playerData.cargo,
+            playerData.cargoLots,
+            planTake(playerData.cargo, playerData.cargoLots, mission.cid, mission.qty),
+          );
+          this.features.living.stateProgress(
+            session,
+            stellarBody.system,
+            'cid:' + mission.cid,
+            mission.qty,
+          );
+        } // your goods are unloaded
+        if (mission.type === 'smuggle')
+          this.features.syndicate.synGain(session, mission.syn ? 'contract' : 'smuggle');
+        if (mission.syn === 'hit') this.features.syndicate.synGain(session, 'hit'); // 1.2
+        this.features.fronts.jobDone(session, mission, stellarBody);
+        if (mission.exp) this.features.arcs.expeditionNext(session, mission);
+        this.features.frontier.mastery(session, 15);
+        this.features.specialists.specOnJob(session, mission);
+        this.tut(session, 'job');
         if (
-          (m.type === 'bounty' || m.type === 'assassinate') &&
-          this.features.specialists.flying(d, 'vanguard')
+          (mission.type === 'bounty' || mission.type === 'assassinate') &&
+          this.features.specialists.flying(playerData, 'vanguard')
         ) {
-          const extra = Math.round(m.reward * 0.5 * this.features.specialists.power(d));
-          d.credits += extra;
-          this.toast(s, `Vanguard bonus: +${credits(extra)} credits.`);
+          const vanguardBonus = Math.round(
+            mission.reward * 0.5 * this.features.specialists.power(playerData),
+          );
+          playerData.credits += vanguardBonus;
+          this.toast(session, `Vanguard bonus: +${credits(vanguardBonus)} credits.`);
         }
-        d.credits += m.reward;
-        d.stats.earned += m.reward;
-        m.paid = true;
-        if (m.radioTour) {
-          grantRadio(this, s, 'super-idol');
-          this.send(s, {
+        playerData.credits += mission.reward;
+        playerData.stats.earned += mission.reward;
+        mission.paid = true;
+        if (mission.radioTour) {
+          grantRadio(this, session, 'super-idol');
+          this.send(session, {
             t: 'story',
             tag: 'SPACEPOP TOUR COMPLETE',
             title: 'An album for the road',
@@ -333,20 +397,26 @@ const JobOperations = {
             text: 'Lyra, Miri and Solenne hand you a digital copy of their album. "For our favourite captain. Keep us on the radio." Super-Idol Radio has been added to your console.',
           });
         }
-        d.rep[SYS[p.system].faction] = clampStanding((d.rep[SYS[p.system].faction] || 0) + 2);
+        playerData.rep[SYS[stellarBody.system].faction] = clampStanding(
+          (playerData.rep[SYS[stellarBody.system].faction] || 0) + 2,
+        );
         if (Math.random() < 0.35) {
-          const mt = MATERIALS[Math.floor(Math.random() * 3)],
-            g = Math.min(4, Math.floor(m.reward / 9000));
-          d.mats[mt][g]++;
-          this.toast(s, `Bonus: a ${mt} crate (grade ${GRADES[g]}).`);
+          const materialId = MATERIALS[Math.floor(Math.random() * 3)],
+            gradeIndex = Math.min(4, Math.floor(mission.reward / 9000));
+          playerData.mats[materialId][gradeIndex]++;
+          this.toast(session, `Bonus: a ${materialId} crate (grade ${GRADES[gradeIndex]}).`);
         }
-        this.features.hangar.officerXp(s, 20);
-        this.toast(s, `Job complete: ${m.title}. Paid ${credits(m.reward)} credits.`);
-        this.log(d, `Completed: ${m.title} (+${credits(m.reward)}).`);
-        if (m.quest) this.features.quests.questAdvance(s, m); // 2.4: the story goes on
+        this.features.hangar.officerXp(session, 20);
+        this.toast(
+          session,
+          `Job complete: ${mission.title}. Paid ${credits(mission.reward)} credits.`,
+        );
+        this.log(playerData, `Completed: ${mission.title} (+${credits(mission.reward)}).`);
+        if (mission.quest) this.features.quests.questAdvance(session, mission); // the story goes on
       }
     }
-    d.missions = d.missions.filter((m) => !m.paid);
-    for (const m of d.missions) if (m.type === 'bounty' && !m.done) m.spawned = false; // the target returns if you left
+    playerData.missions = playerData.missions.filter((mission) => !mission.paid);
+    for (const mission of playerData.missions)
+      if (mission.type === 'bounty' && !mission.done) mission.spawned = false; // the target returns if you left
   },
 };

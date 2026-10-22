@@ -2,6 +2,10 @@
 import { SYS, STELLARS } from '../shared/galaxy.js';
 import { TOW, towSpeed } from '../shared/towing-rules.js';
 import { addLots, assertLots } from '../shared/cargo-lots.js';
+
+/** @import { RefineryPlayer } from './refinery-contracts.js' */
+/** @import { Space } from './space.js' */
+/** @import { TowRequest } from './towing-contracts.js' */
 /** @typedef {import('./towing-contracts.js').TowCapabilities} C */
 /** @typedef {import('./towing-contracts.js').TowWorld} W */
 /** @typedef {import('./towing-contracts.js').Motherlode} ObjectRecord */
@@ -9,47 +13,53 @@ import { addLots, assertLots } from '../shared/cargo-lots.js';
 class DeliveryHoldFull extends Error {}
 /** @type {WeakMap<Session, string>} */
 const deliveryNotices = new WeakMap();
-/** @param {C} c @returns {W} */
-function state(c) {
-  const w = c.db.world.towing;
+/** @param {C} capabilities @returns {W} */
+function state(capabilities) {
+  const w = capabilities.db.world.towing;
   if (!w) throw Error('Towing unavailable');
   return w;
 }
-/** @param {C} c */
-function now(c) {
-  return c.db.world.mining?.clock || 0;
+/** @param {C} capabilities */
+function now(capabilities) {
+  return capabilities.db.world.mining?.clock || 0;
 }
-/** @param {C} c @param {Session} s */
-function key(c, s) {
-  return c.db.key(s.data.name);
+/** @param {C} capabilities @param {Session} session */
+function key(capabilities, session) {
+  return capabilities.db.key(session.data.name);
 }
 /** @param {ObjectRecord} o */
 function active(o) {
   return o.status === 'attached';
 }
-/** @param {C} c @param {Session} s */
-function attached(c, s) {
-  return state(c)
+/** @param {C} capabilities @param {Session} session */
+function attached(capabilities, session) {
+  return state(capabilities)
     .slots.map((x) => x.object)
-    .find((o) => o && active(o) && o.owner === key(c, s));
+    .find((o) => o && active(o) && o.owner === key(capabilities, session));
 }
-/** @param {C} c @param {Session} s */
-function flight(c, s) {
-  const e = s.ent,
-    st = c.stats(s.data);
+/** @param {C} capabilities @param {Session} session */
+function flight(capabilities, session) {
+  const entity = session.ent,
+    st = capabilities.stats(session.data);
   if (
-    c.paused() ||
-    c.db.economicFrozen ||
-    !e ||
-    e.dead ||
-    e.disabled ||
-    e.state !== 'fly' ||
-    s.data.stellar
+    capabilities.paused() ||
+    capabilities.db.economicFrozen ||
+    !entity ||
+    entity.dead ||
+    entity.disabled ||
+    entity.state !== 'fly' ||
+    session.data.stellar
   )
     throw Error('Towing requires a living active flight and recovered economy');
-  if (!s.data.ship.uid || !st?.towRig || st.cargo < TOW.minCargo || e.fighterOf || e.wormExit)
+  if (
+    !session.data.ship.uid ||
+    !st?.towRig ||
+    st.cargo < TOW.minCargo ||
+    entity.fighterOf ||
+    entity.wormExit
+  )
     throw Error('Fit a Tow Rig on a cargo hull of at least 60t (stock Dredge included)');
-  return e;
+  return entity;
 }
 /** @param {W} w */
 function validate(w) {
@@ -207,34 +217,35 @@ function validate(w) {
     offerIds.add(offer.id);
   }
 }
-/** @param {C} c @param {ObjectRecord} o */
-function release(c, o) {
+/** @param {C} capabilities @param {ObjectRecord} o */
+function release(capabilities, o) {
   if (!active(o)) return;
   o.status = 'detached';
-  o.graceUntil = now(c) + TOW.grace;
+  o.graceUntil = now(capabilities) + TOW.grace;
   o.revision++;
   o.vx = o.vy = 0;
-  state(c).offers = state(c).offers.filter((x) => x.id !== o.id);
+  state(capabilities).offers = state(capabilities).offers.filter((x) => x.id !== o.id);
 }
-/** @param {C} c @param {Session} s @param {()=>void} fn */
-function transaction(c, s, fn) {
-  if (c.db.economicFrozen || c.paused()) throw Error('Towing economy requires recovery/unpause');
-  const d = /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data),
-    old = { cargo: d.cargo, cargoLots: d.cargoLots },
-    w = c.db.world.towing;
-  d.cargo = structuredClone(d.cargo);
-  d.cargoLots = structuredClone(d.cargoLots);
-  c.db.world.towing = structuredClone(w);
+/** @param {C} capabilities @param {Session} session @param {()=>void} fn */
+function transaction(capabilities, session, fn) {
+  if (capabilities.db.economicFrozen || capabilities.paused())
+    throw Error('Towing economy requires recovery/unpause');
+  const playerData = /** @type {RefineryPlayer} */ (session.data),
+    old = { cargo: playerData.cargo, cargoLots: playerData.cargoLots },
+    w = capabilities.db.world.towing;
+  playerData.cargo = structuredClone(playerData.cargo);
+  playerData.cargoLots = structuredClone(playerData.cargoLots);
+  capabilities.db.world.towing = structuredClone(w);
   try {
     fn();
-    assertLots(d.cargo, d.cargoLots);
-    validate(state(c));
-    c.db.touch();
-    c.db.flush();
+    assertLots(playerData.cargo, playerData.cargoLots);
+    validate(state(capabilities));
+    capabilities.db.touch();
+    capabilities.db.flush();
   } catch (error) {
-    if (!c.db.economicFrozen) {
-      Object.assign(d, old);
-      c.db.world.towing = w;
+    if (!capabilities.db.economicFrozen) {
+      Object.assign(playerData, old);
+      capabilities.db.world.towing = w;
     }
     throw error;
   }
@@ -251,63 +262,75 @@ function crossesPort(p, a, b) {
   return Math.hypot(a.x + dx * t - p.x, a.y + dy * t - p.y);
 }
 /** Shared by explicit delivery and the authoritative physics tick. Never accepts client coordinates.
- * @param {C} c @param {Session} s @param {ObjectRecord} o @param {string} port
+ * @param {C} capabilities @param {Session} session @param {ObjectRecord} o @param {string} port
  * @param {{x:number,y:number}} [previous] */
-function deliver(c, s, o, port, previous = o) {
-  const e = flight(c, s),
-    p = STELLARS[port];
-  if (!active(o) || o.owner !== key(c, s) || o.ship !== s.data.ship.uid)
+function deliver(capabilities, session, o, port, previous = o) {
+  const entity = flight(capabilities, session),
+    stellarBody = STELLARS[port];
+  if (!active(o) || o.owner !== key(capabilities, session) || o.ship !== session.data.ship.uid)
     throw Error('Only current tow owner may deliver');
   if (
-    !p ||
-    !o.acceptPorts.includes(p.id) ||
-    p.system !== o.sys ||
-    crossesPort(p, previous, o) > p.r + TOW.deliveryApron
+    !stellarBody ||
+    !o.acceptPorts.includes(stellarBody.id) ||
+    stellarBody.system !== o.sys ||
+    crossesPort(stellarBody, previous, o) > stellarBody.r + TOW.deliveryApron
   )
     throw Error('Bring the motherlode into an accepted port collection zone');
-  const pass =
-    /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).landPass?.[p.id] || 0;
-  if (!p.outlaw && (s.data.rep?.[SYS[o.sys].faction] || 0) <= -30 && pass <= Date.now())
+  const pass = /** @type {RefineryPlayer} */ (session.data).landPass?.[stellarBody.id] || 0;
+  if (
+    !stellarBody.outlaw &&
+    (session.data.rep?.[SYS[o.sys].faction] || 0) <= -30 &&
+    pass <= Date.now()
+  )
     throw Error('Port refuses delivery permission');
-  if (c.room(s.data) < o.mass)
+  if (capabilities.room(session.data) < o.mass)
     throw new DeliveryHoldFull(`Need ${o.mass}t free hold; store cargo or detach first`);
-  transaction(c, s, () => {
-    const ws = state(c),
+  transaction(capabilities, session, () => {
+    const ws = state(capabilities),
       ss = ws.slots.find((x) => x.object?.id === o.id);
     if (!ss?.object) throw Error('Missing source');
     addLots(
-      /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).cargo,
-      /** @type {import("./refinery-contracts.js").RefineryPlayer} */ (s.data).cargoLots,
+      /** @type {RefineryPlayer} */ (session.data).cargo,
+      /** @type {RefineryPlayer} */ (session.data).cargoLots,
       { cid: o.ore, qty: o.mass, grades: { ...o.lots } },
-      c.room(s.data),
+      capabilities.room(session.data),
     );
     ss.object.status = 'delivered';
     ss.object.revision++;
     ss.delivered += o.mass;
-    ss.nextAt = now(c) + TOW.recovery * c.field(o.sys, ss.field).factor;
+    ss.nextAt = now(capabilities) + TOW.recovery * capabilities.field(o.sys, ss.field).factor;
     ws.offers = ws.offers.filter((x) => x.id !== o.id);
     ws.receipts.push({
       id: o.id,
-      owner: key(c, s),
-      port: p.id,
+      owner: key(capabilities, session),
+      port: stellarBody.id,
       ore: o.ore,
       lots: { ...o.lots },
       mass: o.mass,
     });
     ws.receipts = ws.receipts.slice(-TOW.receiptLimit);
   });
-  e.towCap = undefined;
-  c.toast(s, `Motherlode delivered: ${o.mass}t ${o.ore}; no second credit/fragment reward.`);
+  entity.towCap = undefined;
+  capabilities.toast(
+    session,
+    `Motherlode delivered: ${o.mass}t ${o.ore}; no second credit/fragment reward.`,
+  );
 }
-/** @param {C} c @param {string} sys */
-function ensure(c, sys) {
-  if (c.db.economicFrozen || c.paused()) return;
-  const w = state(c),
+/** @param {C} capabilities @param {string} sys */
+function ensure(capabilities, sys) {
+  if (capabilities.db.economicFrozen || capabilities.paused()) return;
+  const w = state(capabilities),
     S = SYS[sys];
   if (!S || S.arena || !S.fields?.length) return;
   const ports = S.stellars
-    .filter((p) => p.svc?.includes('L') && !p.site && !p.wormhole && !p.outlaw)
-    .map((p) => p.id);
+    .filter(
+      (stellarBody) =>
+        stellarBody.svc?.includes('L') &&
+        !stellarBody.site &&
+        !stellarBody.wormhole &&
+        !stellarBody.outlaw,
+    )
+    .map((stellarBody) => stellarBody.id);
   if (!ports.length) return;
   // One separately authored finite source per field, capped at three. Never a normal-rock copy.
   for (const [i, f] of S.fields.slice(0, 3).entries()) {
@@ -328,7 +351,7 @@ function ensure(c, sys) {
       w.slots.push(slot);
     }
     if (slot.object && !['delivered', 'destroyed'].includes(slot.object.status)) continue;
-    if (now(c) < slot.nextAt) continue;
+    if (now(capabilities) < slot.nextAt) continue;
     // IDs and accumulated conservation counters must never wrap into stale authority.
     if (w.nextId >= Number.MAX_SAFE_INTEGER || slot.issued > Number.MAX_SAFE_INTEGER - TOW.mass)
       continue;
@@ -355,7 +378,7 @@ function ensure(c, sys) {
       revision: 1,
       acceptPorts: ports,
     };
-    c.db.touch();
+    capabilities.db.touch();
   }
 }
 export const TowingOperations = {
@@ -373,54 +396,57 @@ export const TowingOperations = {
   ensure(sys) {
     ensure(this, sys);
   },
-  /** @this {C} @param {Session} s */
-  attached(s) {
-    return attached(this, s) || null;
+  /** @this {C} @param {Session} session */
+  attached(session) {
+    return attached(this, session) || null;
   },
-  /** @this {C} @param {Session} s */
-  detach(s) {
-    const o = attached(this, s);
+  /** @this {C} @param {Session} session */
+  detach(session) {
+    const o = attached(this, session);
     if (!o) return false;
     release(this, o);
-    if (s.ent) s.ent.towCap = undefined;
+    if (session.ent) session.ent.towCap = undefined;
     this.db.touch();
     return true;
   },
-  /** @this {C} @param {import('./space.js').Space} sp */
-  towingTick(sp) {
+  /** @this {C} @param {Space} space */
+  towingTick(space) {
     if (this.paused() || this.db.economicFrozen) return;
-    ensure(this, sp.id);
+    ensure(this, space.id);
     const w = state(this);
     w.offers = w.offers.filter((x) => x.until > now(this));
-    for (const index of w.slots.flatMap((x, i) => (x.sys === sp.id ? [i] : []))) {
+    for (const index of w.slots.flatMap((x, i) => (x.sys === space.id ? [i] : []))) {
       const slot = state(this).slots[index];
       const o = slot.object;
       if (!o || !active(o)) continue;
-      const s = [...this.sessions()].find(
+      const session = [...this.sessions()].find(
         (s) =>
-          s.data && key(this, s) === o.owner && s.data.sys === sp.id && s.data.ship.uid === o.ship,
+          s.data &&
+          key(this, s) === o.owner &&
+          s.data.sys === space.id &&
+          s.data.ship.uid === o.ship,
       );
-      const e = s?.ent;
+      const entity = session?.ent;
       if (
-        !s ||
-        !e ||
-        e.dead ||
-        e.disabled ||
-        e.state !== 'fly' ||
-        e.towCap !== towSpeed(e.hull) ||
-        Math.hypot(e.x - o.x, e.y - o.y) > TOW.breakRange
+        !session ||
+        !entity ||
+        entity.dead ||
+        entity.disabled ||
+        entity.state !== 'fly' ||
+        entity.towCap !== towSpeed(entity.hull) ||
+        Math.hypot(entity.x - o.x, entity.y - o.y) > TOW.breakRange
       ) {
         release(this, o);
-        if (e) e.towCap = undefined;
+        if (entity) entity.towCap = undefined;
         continue;
       }
       const previous = { x: o.x, y: o.y };
-      const tx = e.x - Math.sin(e.a) * TOW.tether,
-        ty = e.y + Math.cos(e.a) * TOW.tether,
+      const tx = entity.x - Math.sin(entity.a) * TOW.tether,
+        ty = entity.y + Math.cos(entity.a) * TOW.tether,
         dx = tx - o.x,
         dy = ty - o.y,
         dist = Math.hypot(dx, dy),
-        speed = Math.min(towSpeed(e.hull), dist * 2),
+        speed = Math.min(towSpeed(entity.hull), dist * 2),
         dt = 1 / 30;
       o.vx = dist ? (dx / dist) * speed : 0;
       o.vy = dist ? (dy / dist) * speed : 0;
@@ -429,44 +455,46 @@ export const TowingOperations = {
       const ports = o.acceptPorts
         .map((id) => STELLARS[id])
         .filter(
-          (p) => p?.system === o.sys && crossesPort(p, previous, o) <= p.r + TOW.deliveryApron,
+          (stellarBody) =>
+            stellarBody?.system === o.sys &&
+            crossesPort(stellarBody, previous, o) <= stellarBody.r + TOW.deliveryApron,
         );
-      if (!ports.length) deliveryNotices.delete(s);
+      if (!ports.length) deliveryNotices.delete(session);
       for (const port of ports) {
         try {
-          deliver(this, s, o, port.id, previous);
-          deliveryNotices.delete(s);
-          this.refresh(s);
+          deliver(this, session, o, port.id, previous);
+          deliveryNotices.delete(session);
+          this.refresh(session);
           break;
         } catch (error) {
           // No room: leave the intact, owned load safely at the port so the pilot
           // can land, unload and reattach. Never discard cargo or mint partial output.
           if (error instanceof DeliveryHoldFull && !this.db.economicFrozen) {
             release(this, o);
-            e.towCap = undefined;
+            entity.towCap = undefined;
             this.toast(
-              s,
+              session,
               `Motherlode safely detached: need ${o.mass}t free hold. Unload, then reattach within ${TOW.grace}s to deliver.`,
             );
-            this.refresh(s);
+            this.refresh(session);
             break;
           }
           if (port === ports.at(-1)) {
             const reason = error instanceof Error ? error.message : 'Port cannot accept delivery';
             const notice = `${o.id}:${port.id}:${reason}`;
-            if (deliveryNotices.get(s) !== notice) this.toast(s, reason);
-            deliveryNotices.set(s, notice);
+            if (deliveryNotices.get(session) !== notice) this.toast(session, reason);
+            deliveryNotices.set(session, notice);
           }
         }
       }
       this.db.touch();
     }
   },
-  /** @this {C} @param {Session} s @param {import('./towing-contracts.js').TowRequest} q */
-  command(s, q) {
+  /** @this {C} @param {Session} session @param {TowRequest} q */
+  command(session, q) {
     try {
       if (
-        !s.data ||
+        !session.data ||
         !['attach', 'detach', 'offer', 'accept', 'deliver'].includes(q.op || '') ||
         Object.keys(q).some((k) => !['t', 'op', 'id', 'revision', 'to', 'port'].includes(k)) ||
         (q.to !== undefined && (typeof q.to !== 'string' || !q.to.trim() || q.to.length > 64)) ||
@@ -480,10 +508,10 @@ export const TowingOperations = {
       if (this.db.economicFrozen || this.paused()) throw Error('Towing requires recovery/unpause');
       const w = state(this),
         receipt = w.receipts.find((x) => x.id === q.id),
-        account = key(this, s);
+        account = key(this, session);
       if (q.op === 'deliver' && receipt) {
         if (receipt.owner !== account || receipt.port !== q.port) throw Error('Already delivered');
-        this.toast(s, 'Motherlode already delivered once; no additional output.');
+        this.toast(session, 'Motherlode already delivered once; no additional output.');
         return true;
       }
       const slot = w.slots.find((x) => x.object?.id === q.id),
@@ -493,20 +521,20 @@ export const TowingOperations = {
         !o ||
         ['delivered', 'destroyed'].includes(o.status) ||
         o.revision !== q.revision ||
-        o.sys !== s.data.sys
+        o.sys !== session.data.sys
       )
         throw Error('Motherlode changed; refresh selection');
-      const e = flight(this, s),
-        distance = Math.hypot(e.x - o.x, e.y - o.y);
+      const entity = flight(this, session),
+        distance = Math.hypot(entity.x - o.x, entity.y - o.y);
       if (q.op === 'attach') {
         if (
           active(o) ||
-          attached(this, s) ||
+          attached(this, session) ||
           distance > TOW.attachRange ||
           (o.status === 'detached' && o.owner !== account && now(this) < o.graceUntil)
         )
           throw Error('Motherlode unavailable, too far or reserved');
-        const scan = s.data.miningSurvey;
+        const scan = session.data.miningSurvey;
         if (
           o.owner !== account &&
           (!scan ||
@@ -516,19 +544,19 @@ export const TowingOperations = {
         )
           throw Error('Survey this motherlode first');
         if (
-          Math.hypot(e.vx, e.vy) > towSpeed(e.hull) ||
-          Math.hypot(e.vx - o.vx, e.vy - o.vy) > towSpeed(e.hull)
+          Math.hypot(entity.vx, entity.vy) > towSpeed(entity.hull) ||
+          Math.hypot(entity.vx - o.vx, entity.vy - o.vy) > towSpeed(entity.hull)
         )
           throw Error('Slow below tow cap before attachment');
         o.status = 'attached';
         o.owner = account;
-        o.ship = s.data.ship.uid || null;
+        o.ship = session.data.ship.uid || null;
         o.graceUntil = 0;
         o.revision++;
-        e.towCap = towSpeed(e.hull);
-        this.stopCombat(s);
-        s.data.armadaFollow = false;
-        if (s.data.ship.industrial) s.data.ship.industrial.harvest = false;
+        entity.towCap = towSpeed(entity.hull);
+        this.stopCombat(session);
+        session.data.armadaFollow = false;
+        if (session.data.ship.industrial) session.data.ship.industrial.harvest = false;
       } else if (q.op === 'accept') {
         const offer = w.offers.find(
             (x) =>
@@ -541,9 +569,9 @@ export const TowingOperations = {
           !active(o) ||
           o.owner !== offer.from ||
           from.ent.id !== offer.fromEntity ||
-          e.id !== offer.toEntity ||
+          entity.id !== offer.toEntity ||
           from.data.ship.uid !== offer.fromShip ||
-          s.data.ship.uid !== offer.toShip ||
+          session.data.ship.uid !== offer.toShip ||
           from.data.sys !== o.sys ||
           from.ent.dead ||
           from.ent.disabled ||
@@ -551,43 +579,46 @@ export const TowingOperations = {
           o.ship !== from.data.ship.uid ||
           Math.hypot(from.ent.x - o.x, from.ent.y - o.y) > TOW.breakRange ||
           distance > TOW.attachRange ||
-          Math.hypot(from.ent.x - e.x, from.ent.y - e.y) > TOW.attachRange ||
-          attached(this, s) ||
-          Math.hypot(e.vx, e.vy) > towSpeed(e.hull) ||
-          Math.hypot(e.vx - o.vx, e.vy - o.vy) > towSpeed(e.hull)
+          Math.hypot(from.ent.x - entity.x, from.ent.y - entity.y) > TOW.attachRange ||
+          attached(this, session) ||
+          Math.hypot(entity.vx, entity.vy) > towSpeed(entity.hull) ||
+          Math.hypot(entity.vx - o.vx, entity.vy - o.vy) > towSpeed(entity.hull)
         )
           throw Error('Transfer expired or flight/range changed');
         // Carry no velocity above the recipient's cap into snapshots/checkpoints.
         const carried = Math.hypot(o.vx, o.vy),
-          cap = towSpeed(e.hull);
+          cap = towSpeed(entity.hull);
         if (carried > cap) {
           o.vx *= cap / carried;
           o.vy *= cap / carried;
         }
         from.ent.towCap = undefined;
         o.owner = account;
-        o.ship = s.data.ship.uid || null;
+        o.ship = session.data.ship.uid || null;
         o.revision++;
-        e.towCap = towSpeed(e.hull);
+        entity.towCap = towSpeed(entity.hull);
         w.offers = w.offers.filter((x) => x.id !== o.id);
-        this.stopCombat(s);
-        s.data.armadaFollow = false;
-        if (s.data.ship.industrial) s.data.ship.industrial.harvest = false;
+        this.stopCombat(session);
+        session.data.armadaFollow = false;
+        if (session.data.ship.industrial) session.data.ship.industrial.harvest = false;
         this.refresh(from);
       } else {
-        if (!active(o) || o.owner !== account || o.ship !== s.data.ship.uid)
+        if (!active(o) || o.owner !== account || o.ship !== session.data.ship.uid)
           throw Error('Only current tow owner may do that');
         if (q.op === 'detach') {
           release(this, o);
-          e.towCap = undefined;
+          entity.towCap = undefined;
         } else if (q.op === 'offer') {
           const to = [...this.sessions()].find(
             (x) => x.data && this.db.key(x.data.name) === this.db.key(q.to || ''),
           );
-          if (!to || to === s || to.data.sys !== o.sys)
+          if (!to || to === session || to.data.sys !== o.sys)
             throw Error('Choose another nearby captain');
           const target = flight(this, to);
-          if (attached(this, to) || Math.hypot(target.x - e.x, target.y - e.y) > TOW.attachRange)
+          if (
+            attached(this, to) ||
+            Math.hypot(target.x - entity.x, target.y - entity.y) > TOW.attachRange
+          )
             throw Error('Recipient unavailable or too far');
           w.offers = w.offers.filter((x) => x.id !== o.id);
           w.offers.push({
@@ -595,32 +626,32 @@ export const TowingOperations = {
             revision: o.revision,
             from: account,
             to: key(this, to),
-            fromShip: s.data.ship.uid || '',
+            fromShip: session.data.ship.uid || '',
             toShip: to.data.ship.uid || '',
-            fromEntity: e.id,
+            fromEntity: entity.id,
             toEntity: target.id,
             until: now(this) + TOW.offerSeconds,
           });
           this.toast(
             to,
-            `${s.data.name} offers motherlode ${o.id}; accept explicitly in TOW controls.`,
+            `${session.data.name} offers motherlode ${o.id}; accept explicitly in TOW controls.`,
           );
         } else if (q.op === 'deliver') {
-          deliver(this, s, o, q.port || '');
+          deliver(this, session, o, q.port || '');
         }
       }
       validate(state(this));
       this.db.touch();
-      this.refresh(s);
+      this.refresh(session);
       return true;
     } catch (error) {
-      this.toast(s, error instanceof Error ? error.message : 'Towing rejected');
+      this.toast(session, error instanceof Error ? error.message : 'Towing rejected');
       return false;
     }
   },
   /** Authorized object-only destruction. No generic neutral weapon/hazard collision path calls it.
-   * @this {C} @param {Session} s @param {number} id @param {number} revision */
-  destroy(s, id, revision) {
+   * @this {C} @param {Session} session @param {number} id @param {number} revision */
+  destroy(session, id, revision) {
     if (this.db.economicFrozen || this.paused()) return false;
     const slot = state(this).slots.find((x) => x.object?.id === id),
       o = slot?.object;
@@ -628,8 +659,8 @@ export const TowingOperations = {
       !slot ||
       !o ||
       o.status !== 'attached' ||
-      o.owner !== key(this, s) ||
-      o.ship !== s.data.ship.uid ||
+      o.owner !== key(this, session) ||
+      o.ship !== session.data.ship.uid ||
       o.revision !== revision
     )
       return false;
@@ -639,25 +670,25 @@ export const TowingOperations = {
     slot.discarded += o.mass;
     slot.nextAt = now(this) + TOW.recovery * this.field(o.sys, slot.field).factor;
     state(this).offers = state(this).offers.filter((x) => x.id !== o.id);
-    if (s.ent) s.ent.towCap = undefined;
+    if (session.ent) session.ent.towCap = undefined;
     this.db.touch();
     return true;
   },
-  /** @this {C} @param {Session} s */
-  payload(s) {
-    if (!s.data) return null;
-    ensure(this, s.data.sys);
-    const scan = s.data.miningSurvey,
-      account = key(this, s),
+  /** @this {C} @param {Session} session */
+  payload(session) {
+    if (!session.data) return null;
+    ensure(this, session.data.sys);
+    const scan = session.data.miningSurvey,
+      account = key(this, session),
       w = state(this);
     return {
       version: 1,
       now: now(this),
-      cap: towSpeed(s.data.ship.hull),
-      rig: !!this.stats(s.data)?.towRig,
-      attached: attached(this, s)?.id || null,
+      cap: towSpeed(session.data.ship.hull),
+      rig: !!this.stats(session.data)?.towRig,
+      attached: attached(this, session)?.id || null,
       objects: w.slots
-        .filter((x) => x.sys === s.data.sys)
+        .filter((x) => x.sys === session.data.sys)
         .map((slot) => {
           const o = slot.object;
           if (!o) return null;
@@ -687,14 +718,14 @@ export const TowingOperations = {
             hp: o.hp,
             tug: active(o)
               ? (() => {
-                  const t = [...this.sessions()].find(
+                  const entity = [...this.sessions()].find(
                     (x) =>
                       x.data &&
                       key(this, x) === o.owner &&
                       x.data.ship.uid === o.ship &&
                       x.data.sys === o.sys,
                   )?.ent;
-                  return t ? { x: t.x, y: t.y } : null;
+                  return entity ? { x: entity.x, y: entity.y } : null;
                 })()
               : null,
           };

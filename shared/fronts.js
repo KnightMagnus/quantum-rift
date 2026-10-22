@@ -1,8 +1,8 @@
 import { EXALTED_STANDING } from './reputation.js';
-// Quantum Rift 0.6 "Fleets and Fronts" data: invasions, anomalies, goals,
+// Quantum Rift: data: invasions, anomalies, goals,
 // server events and faction stores. Shared by server and client.
 
-// (2.6: fleets became the Armada, shared/coop.js; territory, Dreadnoughts and the front window were removed)
+// Armada rules are defined in shared/coop.js.
 
 /**
  * @typedef {Object} InvasionBoss
@@ -193,7 +193,7 @@ export const GOAL_REWARD = {
 };
 
 // ------------------------------------------------------------------ server events (a weekly calendar, rotating every 2 days)
-// 0.9: a weekly rhythm (after STFC's event days), by UTC weekday, plus a monthly Gold Vein weekend
+// a weekly rhythm (after STFC's event days), by UTC weekday, plus a monthly Gold Vein weekend
 /**
  * Weekly calendar of repeating server-wide events and active modifiers.
  * @type {ServerEvent[]}
@@ -240,7 +240,7 @@ export const EVENTS = [
     name: 'Salvage Night',
     desc: 'Hostiles drop loot chests twice as often, and Armadas earn 50% more bounty together.',
     mods: { chest: 2, armadaBounty: 1.5 },
-  }, // 2.6: replaces Armada Night
+  }, // replaces Armada Night
   {
     id: 'sweep',
     day: 6,

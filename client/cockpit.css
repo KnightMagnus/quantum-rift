@@ -669,7 +669,7 @@ input.trade-amount[type='number'] {
   }
 }
 
-/* Fidelity correction: sculpted shell, recessed instruments and a shared menu material. */
+/* Sculpted shell, recessed instruments and a shared menu material. */
 #cockpit {
   isolation: isolate;
   grid-template-columns: 290px minmax(160px, 590px) 290px;
@@ -1173,7 +1173,7 @@ input.trade-amount[type='number'] {
     font-size: 8px;
   }
 }
-/* Reference-style recessed reading surfaces in the auxiliary menus. */
+/* Recessed reading surfaces in the auxiliary menus. */
 #ctrllist,
 #optkeys {
   padding: 10px;

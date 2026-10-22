@@ -1,5 +1,5 @@
 import { passengerSeats } from './passengers.js';
-// 1.2 "Syndicate and Officers": the Syndicate crime path and black market, officer ranks and traits, lower-deck crew,
+// Syndicate and Officers: the Syndicate crime path and black market, officer ranks and traits, lower-deck crew,
 // the bank (credit-based mortgages), and passenger and rush jobs.
 
 /**
@@ -164,7 +164,7 @@ export const BLACK_MARKET = [
     price: 650000,
     desc: 'A random grade V material crate. Kingpins only.',
     give: { crate: 4 },
-  }, // 2.6: replaces the Eclipse Directive
+  }, // Grade V material crate.
 ];
 
 // ------------------------------------------------------------------ officer ranks and traits

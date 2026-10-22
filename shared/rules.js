@@ -20,6 +20,9 @@ import { SPRITES } from './sprites26.js';
 import { SPECIALISTS } from './specialty.js';
 import { RANK_MULT, TRAITS, LOWER_DECK } from './syndicate.js';
 
+/** @import { PlayerData } from '../server/game.js' */
+/** @import { IndustrialShip } from '../server/industrial-contracts.js' */
+
 /**
  * Simulation tick rate in cycles per second.
  * @type {number}
@@ -135,41 +138,41 @@ export const K = {
 /**
  * Injects Quantum Rift custom ships, weapons, roles, and sprites into the raw asset dictionary.
  * Safe to call idempotently multiple times.
- * @param {GameAssets} A - Raw game assets object to augment in place.
+ * @param {GameAssets} assets - Raw game assets object to augment in place.
  * @returns {GameAssets} The augmented assets object.
  */
 // Add Quantum Rift's own weapons to the exported asset data (safe to call more than once)
-export function augmentAssets(A) {
-  for (const w of EXTRA_WEAPONS) if (!A.weapons[w.id]) A.weapons[w.id] = w;
-  for (const id of MINING_WEAPONS) if (A.weapons[id]) A.weapons[id].mining = true;
+export function augmentAssets(assets) {
+  for (const w of EXTRA_WEAPONS) if (!assets.weapons[w.id]) assets.weapons[w.id] = w;
+  for (const id of MINING_WEAPONS) if (assets.weapons[id]) assets.weapons[id].mining = true;
   for (const S of SPECIALISTS)
-    if (!A.ships[S.id]) A.ships[S.id] = { ...S, img: `ships/${S.id}_yard.png` }; // 0.8: specialty ships
-  for (const S of SHIPS23) if (!A.ships[S.id]) A.ships[S.id] = { ...S }; // 2.3: new common Quantum hulls
-  for (const H of Object.values(A.ships)) H.role = roleOf(H, A.weapons); // 0.8: class triangle roles
+    if (!assets.ships[S.id]) assets.ships[S.id] = { ...S, img: `ships/${S.id}_yard.png` }; // specialty ships
+  for (const S of SHIPS23) if (!assets.ships[S.id]) assets.ships[S.id] = { ...S }; // new common Quantum hulls
+  for (const H of Object.values(assets.ships)) H.role = roleOf(H, assets.weapons); // class triangle roles
   for (const M of [MK2_OF, MK3_OF])
     for (const [b, mk] of Object.entries(M))
-      if (A.ships[b] && A.ships[mk]) A.ships[mk].role = A.ships[b].role; // refits keep their role
+      if (assets.ships[b] && assets.ships[mk]) assets.ships[mk].role = assets.ships[b].role; // refits keep their role
   for (const id of [...Object.values(MK2_OF), ...Object.values(MK3_OF), ...ARMADA_HULLS])
-    if (A.ships[id]) A.ships[id].npcOnly = true; // 2.6: enemy ships only
-  for (const [id, s] of Object.entries(SPRITES)) if (A.ships[id]) A.ships[id].spr = s; // 2.6: sharper sheets with banking
-  return A;
+    if (assets.ships[id]) assets.ships[id].npcOnly = true; // enemy ships only
+  for (const [id, s] of Object.entries(SPRITES)) if (assets.ships[id]) assets.ships[id].spr = s; // sharper sheets with banking
+  return assets;
 }
 
 /**
  * Returns a dictionary of all outfits, merging base outfits with Rift custom extensions.
- * @param {GameAssets} A - Game assets object.
+ * @param {GameAssets} assets - Game assets object.
  * @returns {Record<string|number, OutfitAsset>} Merged map of all outfits.
  */
-export function allOutfits(A) {
-  const o = { ...A.outfits };
-  for (const e of EXTRA_OUTFITS) o[e.id] = e;
+export function allOutfits(assets) {
+  const o = { ...assets.outfits };
+  for (const outfit of EXTRA_OUTFITS) o[outfit.id] = outfit;
   return o;
 }
 
 /**
  * Player ship loadout data structure.
  * @typedef {Object} ShipLoadout
- * @property {import("../server/industrial-contracts.js").IndustrialShip} [industrial] Saved hull-owned industrial work/heat.
+ * @property {IndustrialShip} [industrial] Saved hull-owned industrial work/heat.
  * @property {string} [uid] Stable saved hull identity assigned by docks.
  * @property {number|string} hull - Hull ID.
  * @property {Record<string|number, number>} outfits - Map of outfit ID to equipped quantity.
@@ -181,19 +184,20 @@ export function allOutfits(A) {
 
 /**
  * Generates an initial loadout for a newly purchased ship hull, converting standard built-in weapons into modular outfits.
- * @param {GameAssets} A - Game assets collection.
+ * @param {GameAssets} assets - Game assets collection.
  * @param {number|string} hull - Hull identifier.
  * @param {string} [name='Rift Runner'] - Display name for the ship.
  * @returns {ShipLoadout} Initialized loadout object.
  */
 // A player's new ship: the hull's built-in weapons become ordinary outfits (so they can be sold or swapped) where an
 // outfit exists for them; anything else (fighter bays, special guns) stays fixed. Their mass is refunded as space.
-export function makeLoadout(A, hull, name) {
-  const O = allOutfits(A),
-    H = A.ships[hull],
+export function makeLoadout(assets, hull, name) {
+  const O = allOutfits(assets),
+    H = assets.ships[hull],
     byWeapon = {};
-  for (const o of Object.values(O))
-    if (o.eff && o.eff.weapon && !(o.eff.weapon in byWeapon)) byWeapon[o.eff.weapon] = o;
+  for (const outfit of Object.values(O))
+    if (outfit.eff && outfit.eff.weapon && !(outfit.eff.weapon in byWeapon))
+      byWeapon[outfit.eff.weapon] = outfit;
   const L = { hull, outfits: {}, ammo: {}, fixed: [], bonusSpace: 0, name: name || 'Rift Runner' };
   for (const [w, n, a] of H.weapons) {
     const o = byWeapon[w];
@@ -210,35 +214,38 @@ export function makeLoadout(A, hull, name) {
 // A factory weapon bank is refittable even where its authored count exceeds a generic shop limit.
 /**
  * Resolves maximum purchasable/mountable limit for an outfit on a ship.
- * @param {GameAssets} A - Game assets.
+ * @param {GameAssets} assets - Game assets.
  * @param {ShipLoadout} ship - Ship loadout.
  * @param {string|number} id - Outfit ID.
  * @returns {number} Maximum allowed outfit count.
  */
-export function stockOutfitLimit(A, ship, id) {
-  const o = allOutfits(A)[id];
-  return Math.max(o?.max || 1, o?.eff?.weapon ? makeLoadout(A, ship.hull).outfits[id] || 0 : 0);
+export function stockOutfitLimit(assets, ship, id) {
+  const outfit = allOutfits(assets)[id];
+  return Math.max(
+    outfit?.max || 1,
+    outfit?.eff?.weapon ? makeLoadout(assets, ship.hull).outfits[id] || 0 : 0,
+  );
 }
 
 // Factory equipment is included in the hull price, not a second retail purchase.
 // Reserve at most half that price for removable stock gear; the rest is chassis.
 /**
  * Calculates stock outfits, chassis value, and equipment price scale for a hull.
- * @param {GameAssets} A - Game assets.
+ * @param {GameAssets} assets - Game assets.
  * @param {number|string} hull - Hull ID.
  * @returns {{ stock: Record<string, number>, chassis: number, scale: number }}
  */
-export function loadoutBasis(A, hull) {
-  const stock = makeLoadout(A, hull),
-    O = allOutfits(A);
+export function loadoutBasis(assets, hull) {
+  const stock = makeLoadout(assets, hull),
+    O = allOutfits(assets);
   const retail = Object.entries(stock.outfits).reduce(
     (v, [id, n]) => v + (O[id]?.cost || 0) * n,
     0,
   );
-  const gear = Math.min(retail, Math.max(0, A.ships[hull]?.cost || 0) * 0.5);
+  const gear = Math.min(retail, Math.max(0, assets.ships[hull]?.cost || 0) * 0.5);
   return {
     stock: stock.outfits,
-    chassis: Math.max(0, (A.ships[hull]?.cost || 0) - gear),
+    chassis: Math.max(0, (assets.ships[hull]?.cost || 0) - gear),
     scale: retail ? gear / retail : 0,
   };
 }
@@ -246,15 +253,15 @@ export function loadoutBasis(A, hull) {
 // Named hull prices are recruitment fees; rush repairs use actual factory kit replacement value.
 /**
  * Calculates repair cost basis for hull and factory kit.
- * @param {GameAssets} A - Game assets.
+ * @param {GameAssets} assets - Game assets.
  * @param {number|string} hull - Hull ID.
  * @returns {number} Repair base cost.
  */
-export function repairBasis(A, hull) {
-  const cost = A.ships[hull]?.cost || 0;
+export function repairBasis(assets, hull) {
+  const cost = assets.ships[hull]?.cost || 0;
   if (!WINGMATES.includes(hull)) return cost;
-  const O = allOutfits(A),
-    stock = makeLoadout(A, hull);
+  const O = allOutfits(assets),
+    stock = makeLoadout(assets, hull);
   return Math.max(
     cost,
     Object.entries(stock.outfits).reduce((v, [id, n]) => v + (O[id]?.cost || 0) * n, 0),
@@ -265,12 +272,12 @@ export function repairBasis(A, hull) {
 // Initialize before buying/removing equipment so subsequent paid replacements remain retail-valued.
 /**
  * Ensures a ship loadout records its original factory equipment.
- * @param {GameAssets} A - Game assets.
+ * @param {GameAssets} assets - Game assets.
  * @param {ShipLoadout} ship - Ship loadout.
  * @returns {Record<string, number>} Normalized stock outfits record.
  */
-export function ensureStockOutfits(A, ship) {
-  const { stock } = loadoutBasis(A, ship.hull);
+export function ensureStockOutfits(assets, ship) {
+  const { stock } = loadoutBasis(assets, ship.hull);
   if (!ship.stockOutfits || typeof ship.stockOutfits !== 'object') ship.stockOutfits = { ...stock };
   for (const id of Object.keys(ship.stockOutfits)) {
     const n = Math.max(
@@ -285,13 +292,13 @@ export function ensureStockOutfits(A, ship) {
 
 /**
  * Calculates trade-in resale value of a ship and its installed outfits.
- * @param {GameAssets} A - Game assets.
+ * @param {GameAssets} assets - Game assets.
  * @param {ShipLoadout} ship - Ship loadout.
  * @returns {number} Net credit trade-in value.
  */
-export function loadoutValue(A, ship) {
-  const { stock, chassis, scale } = loadoutBasis(A, ship.hull),
-    O = allOutfits(A);
+export function loadoutValue(assets, ship) {
+  const { stock, chassis, scale } = loadoutBasis(assets, ship.hull),
+    O = allOutfits(assets);
   let value = chassis;
   for (const [id, n] of Object.entries(ship.outfits || {})) {
     const original = Math.max(
@@ -306,21 +313,21 @@ export function loadoutValue(A, ship) {
 // Call before decrementing outfits. Stock is sold first; paid additions retain normal resale.
 /**
  * Calculates refund value when selling an installed outfit from a ship.
- * @param {GameAssets} A - Game assets.
+ * @param {GameAssets} assets - Game assets.
  * @param {ShipLoadout} ship - Ship loadout.
  * @param {string|number} id - Outfit ID.
  * @param {number} count - Quantity being sold.
  * @returns {number} Credit refund value.
  */
-export function outfitSaleValue(A, ship, id, count) {
-  const originals = ensureStockOutfits(A, ship),
-    { scale } = loadoutBasis(A, ship.hull);
+export function outfitSaleValue(assets, ship, id, count) {
+  const originals = ensureStockOutfits(assets, ship),
+    { scale } = loadoutBasis(assets, ship.hull);
   const n = Math.max(0, Math.min(count, ship.outfits?.[id] || 0));
   const original = Math.min(n, originals[id] || 0),
-    o = allOutfits(A)[id];
+    outfit = allOutfits(assets)[id];
   originals[id] = (originals[id] || 0) - original;
   if (!originals[id]) delete originals[id];
-  return Math.round((o?.cost || 0) * (n - original + original * scale) * 0.5);
+  return Math.round((outfit?.cost || 0) * (n - original + original * scale) * 0.5);
 }
 
 /**
@@ -374,16 +381,16 @@ export function outfitSaleValue(A, ship, id, count) {
 
 /**
  * Computes live operational flight, combat, and cargo stats from hull, fitted outfits, and captain bonuses.
- * @param {GameAssets} A - Game assets collection.
+ * @param {GameAssets} assets - Game assets collection.
  * @param {ShipLoadout} ship - Player ship state or loadout.
  * @param {ShipStatsBonus} [bonus={}] - Research and crew stat bonuses.
  * @returns {ComputedShipStats|null} Live computed ship statistics, or null if hull not found.
  */
 // The ship a player is flying: hull + bought outfits (+ research bonuses) -> live stats.
-export function shipStats(A, ship, bonus = {}) {
-  const H = A.ships[ship.hull];
+export function shipStats(assets, ship, bonus = {}) {
+  const H = assets.ships[ship.hull];
   if (!H) return null;
-  const O = allOutfits(A);
+  const O = allOutfits(assets);
   let shield = H.shield,
     armor = H.armor,
     accel = H.accel,
@@ -405,13 +412,13 @@ export function shipStats(A, ship, bonus = {}) {
   const builtIn = ship.fixed !== undefined ? ship.fixed : H.weapons;
   for (const [w, n] of builtIn) weapons[w] = (weapons[w] || 0) + n;
   for (const [id, n] of Object.entries(ship.outfits || {})) {
-    const o = O[id];
-    if (!o || !n) continue;
-    used += (o.mass || 0) * n;
-    const e = o.eff || {};
+    const outfit = O[id];
+    if (!outfit || !n) continue;
+    used += (outfit.mass || 0) * n;
+    const e = outfit.eff || {};
     if (e.weapon) {
       weapons[e.weapon] = (weapons[e.weapon] || 0) + n;
-      if (o.turret) turrets += n;
+      if (outfit.turret) turrets += n;
       else guns += n;
     }
     shield += (e.shield || 0) * n;
@@ -511,14 +518,14 @@ export function researchBonus(station) {
 
 /**
  * Calculates a single officer's individual stat contributions based on role, level, rarity, and rank.
- * @param {OfficerRecord} o - Officer state record.
+ * @param {OfficerRecord} officer - Officer state record.
  * @returns {Record<string, number>} Map of stat names to bonus values.
  */
 // one officer's stat values: base x rarity, +10% per level above 1
-export function officerStats(o) {
+export function officerStats(officer) {
   const out = {},
-    R = ROLES[o.role],
-    mult = RARITY[o.rarity].mult * (1 + 0.1 * (o.lv - 1)) * RANK_MULT(o.rank); // 1.2: rank adds 12% each
+    R = ROLES[officer.role],
+    mult = RARITY[officer.rarity].mult * (1 + 0.1 * (officer.lv - 1)) * RANK_MULT(officer.rank); // rank adds 12% each
   for (const k of R.stats) out[k] = Math.round(STAT_BASE[k] * mult * 10) / 10;
   return out;
 }
@@ -536,13 +543,13 @@ export function officerBonus(officers, bridge) {
     races = {};
   if (!officers || !bridge) return b;
   for (const slot of BRIDGE_SLOTS) {
-    const o = officers.find((x) => x.id === bridge[slot]);
-    if (!o) continue;
+    const officer = officers.find((x) => x.id === bridge[slot]);
+    if (!officer) continue;
     const k = slot === 'captain' ? 1.25 : 1;
-    for (const [s, v] of Object.entries(officerStats(o))) b[s] = (b[s] || 0) + v * k;
-    for (const t of o.traits || [])
-      if (TRAITS[t]) for (const [s, v] of Object.entries(TRAITS[t].bonus)) b[s] = (b[s] || 0) + v; // 1.2: traits
-    races[o.race] = (races[o.race] || 0) + 1;
+    for (const [s, v] of Object.entries(officerStats(officer))) b[s] = (b[s] || 0) + v * k;
+    for (const t of officer.traits || [])
+      if (TRAITS[t]) for (const [s, v] of Object.entries(TRAITS[t].bonus)) b[s] = (b[s] || 0) + v; // traits
+    races[officer.race] = (races[officer.race] || 0) + 1;
   }
   for (const [r, n] of Object.entries(races))
     if (n >= 2 && SYNERGY[r])
@@ -552,17 +559,17 @@ export function officerBonus(officers, bridge) {
 
 /**
  * Aggregates all active player modifications: station research, bridge officers, and lower-deck crew.
- * @param {import("../server/game.js").PlayerData} d - Full player save state.
+ * @param {PlayerData} playerData - Full player save state.
  * @returns {Record<string, number>} Total unified stat bonuses.
  */
 // everything that modifies a captain's ship: research + bridge crew
-export function captainBonus(d) {
-  const b = researchBonus(d.station),
-    o = officerBonus(d.officers, d.bridge);
+export function captainBonus(playerData) {
+  const b = researchBonus(playerData.station),
+    o = officerBonus(playerData.officers, playerData.bridge);
   for (const [k, v] of Object.entries(o)) b[k] = (b[k] || 0) + v;
-  for (const c of d.lower || [])
+  for (const c of playerData.lower || [])
     if (LOWER_DECK[c])
-      for (const [k, v] of Object.entries(LOWER_DECK[c].bonus)) b[k] = (b[k] || 0) + v; // 1.2: lower-deck crew
+      for (const [k, v] of Object.entries(LOWER_DECK[c].bonus)) b[k] = (b[k] || 0) + v; // lower-deck crew
   return b;
 }
 
@@ -667,11 +674,11 @@ export const BEAM_COLORS = {
 // Stable sound references for weapon effects, with a nearest-match fallback.
 export function weaponSound(w) {
   if (w.sound >= 36) return 200 + w.sound;
-  const p = weaponParams(w);
-  if (p.homing) return 238;
-  if (p.beam) return 240;
-  if (p.pd) return 236;
-  if (p.bay) return 239;
+  const weapon = weaponParams(w);
+  if (weapon.homing) return 238;
+  if (weapon.beam) return 240;
+  if (weapon.pd) return 236;
+  if (weapon.bay) return 239;
   return w.dmgA + w.dmgS > 40 ? 241 : 236;
 }
 

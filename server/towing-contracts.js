@@ -1,3 +1,7 @@
+/** @import { ComputedShipStats } from '../shared/rules.js' */
+/** @import { DB } from './db.js' */
+/** @import { PlayerData } from './game.js' */
+
 // @ts-check
 /**
  * @typedef {import('../shared/cargo-contracts.js').GradeLots} Lots
@@ -10,14 +14,14 @@
  * @typedef {{t?:string,op?:'attach'|'detach'|'offer'|'accept'|'deliver',id?:number,revision?:number,to?:string,port?:string}} TowRequest
  * @typedef {import('./game.js').Session} Session
  * @typedef {object} TowCapabilities
- * @property {Pick<import('./db.js').DB,'world'|'players'|'touch'|'flush'|'economicFrozen'|'key'>} db
+ * @property {Pick<DB,'world'|'players'|'touch'|'flush'|'economicFrozen'|'key'>} db
  * @property {()=>boolean} paused
  * @property {()=>IterableIterator<Session>} sessions
  * @property {(s:Session)=>void} refresh
  * @property {(s:Session,text:string)=>void} toast
  * @property {(s:Session)=>void} stopCombat
- * @property {(d:import('./game.js').PlayerData)=>number} room
- * @property {(d:import('./game.js').PlayerData)=>import('../shared/rules.js').ComputedShipStats|null} stats
+ * @property {(d:PlayerData)=>number} room
+ * @property {(d:PlayerData)=>ComputedShipStats|null} stats
  * @property {(sys:string,field:number)=>{recovery:number,label:string,factor:number}} field
  */
 export {};

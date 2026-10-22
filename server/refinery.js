@@ -10,13 +10,15 @@ import {
   refineryFee,
 } from '../shared/refinery-rules.js';
 import { assertLots, planTake, applyTake, addLots, commonLots } from '../shared/cargo-lots.js';
+
+/** @import { FuelQuote, MiningOrder, RefineryPlayer, RefineryRequest, RefineryWire } from './refinery-contracts.js' */
 /** @typedef {import('./refinery-contracts.js').RefineryCapabilities} C */
 /** @typedef {import('./refinery-contracts.js').SavedRefinery} W */
 /** @typedef {import('./refinery-contracts.js').RefinerySession} Session */
 /** @typedef {import('./refinery-contracts.js').RefineryQuote} Quote */
-/** @param {C} c @returns {W} */
-function state(c) {
-  const w = c.db.world.refinery;
+/** @param {C} capabilities @returns {W} */
+function state(capabilities) {
+  const w = capabilities.db.world.refinery;
   if (!w) throw Error('Refinery unavailable');
   return w;
 }
@@ -194,11 +196,11 @@ function balance(w, owner, port, cid) {
   }
   return b;
 }
-/** @param {C} c */
-function advance(c) {
-  if (c.db.economicFrozen) return;
-  const w = state(c),
-    now = c.now();
+/** @param {C} capabilities */
+function advance(capabilities) {
+  if (capabilities.db.economicFrozen) return;
+  const w = state(capabilities),
+    now = capabilities.now();
   let changed = false;
   for (const b of w.batches) {
     if (b.status === 'cancelled' || b.credited) continue;
@@ -222,18 +224,16 @@ function advance(c) {
         d.reserved -= o.qty;
         d.paid -= o.reward;
       }
-      const account = /** @type {import('./refinery-contracts.js').RefineryPlayer|null} */ (
-        c.db.get(o.owner)
-      );
-      if (account) account.missions = account.missions.filter((m) => m.id !== o.id);
+      const account = /** @type {RefineryPlayer|null} */ (capabilities.db.get(o.owner));
+      if (account) account.missions = account.missions.filter((mission) => mission.id !== o.id);
       changed = true;
     }
   if (changed) {
-    c.db.touch();
+    capabilities.db.touch();
     try {
-      c.db.flush();
+      capabilities.db.flush();
     } catch (e) {
-      c.db.economicFrozen = true;
+      capabilities.db.economicFrozen = true;
       throw e;
     }
   }
@@ -280,13 +280,16 @@ function demand(w, port, now) {
   return d;
 }
 /** Transaction uses copies and the existing world+player checkpoint. No async gap.
- * @param {C} c @param {Session} s @param {(w:W,d:import('./refinery-contracts.js').RefineryPlayer)=>void} fn */
-function transaction(c, s, fn) {
-  if (c.db.economicFrozen || c.paused())
+ * @param {C} capabilities @param {Session} session @param {(w:W,d:RefineryPlayer)=>void} fn */
+function transaction(capabilities, session, fn) {
+  if (capabilities.db.economicFrozen || capabilities.paused())
     throw Error('Economy paused; recover checkpoint before continuing.');
   /** @type {[object,string[]][]} */ const targets = [
-    [s.data, ['cargo', 'cargoLots', 'credits', 'fuel', 'missions', 'stats', 'economyReceipt']],
-    [c.db.world, ['refinery']],
+    [
+      session.data,
+      ['cargo', 'cargoLots', 'credits', 'fuel', 'missions', 'stats', 'economyReceipt'],
+    ],
+    [capabilities.db.world, ['refinery']],
   ];
   for (const [target, keys] of targets)
     for (const key of keys) {
@@ -298,28 +301,28 @@ function transaction(c, s, fn) {
       )
         throw Error('Refinery settlement target is not writable.');
     }
-  advance(c);
-  const old = state(c),
-    d = s.data,
+  advance(capabilities);
+  const old = state(capabilities),
+    playerData = session.data,
     next = structuredClone(old),
-    player = structuredClone(d);
+    player = structuredClone(playerData);
   // Flight fuel is authoritative; unrelated escrow actions must not restore the stale dock save.
-  if (s.ent) player.fuel = s.ent.fuel;
+  if (session.ent) player.fuel = session.ent.fuel;
   assertLots(player.cargo, player.cargoLots);
   fn(next, player);
-  prune(next, c.now());
+  prune(next, capabilities.now());
   assertLots(player.cargo, player.cargoLots);
   validate(next);
   const prior = {
-    cargo: d.cargo,
-    cargoLots: d.cargoLots,
-    credits: d.credits,
-    fuel: d.fuel,
-    missions: d.missions,
-    stats: d.stats,
-    economyReceipt: d.economyReceipt,
+    cargo: playerData.cargo,
+    cargoLots: playerData.cargoLots,
+    credits: playerData.credits,
+    fuel: playerData.fuel,
+    missions: playerData.missions,
+    stats: playerData.stats,
+    economyReceipt: playerData.economyReceipt,
   };
-  Object.assign(d, {
+  Object.assign(playerData, {
     cargo: player.cargo,
     cargoLots: player.cargoLots,
     credits: player.credits,
@@ -328,20 +331,21 @@ function transaction(c, s, fn) {
     stats: player.stats,
     economyReceipt: player.economyReceipt,
   });
-  c.db.world.refinery = next;
-  c.db.touch();
+  capabilities.db.world.refinery = next;
+  capabilities.db.touch();
   try {
-    c.db.flush();
+    capabilities.db.flush();
   } catch (e) {
-    if (c.db.economicFrozen || fs.existsSync(c.db.journal)) c.db.economicFrozen = true;
+    if (capabilities.db.economicFrozen || fs.existsSync(capabilities.db.journal))
+      capabilities.db.economicFrozen = true;
     else {
-      Object.assign(d, prior);
-      c.db.world.refinery = old;
-      c.db.touch();
+      Object.assign(playerData, prior);
+      capabilities.db.world.refinery = old;
+      capabilities.db.touch();
     }
     throw e;
   }
-  if (s.ent && typeof d.fuel === 'number') s.ent.fuel = d.fuel;
+  if (session.ent && typeof playerData.fuel === 'number') session.ent.fuel = playerData.fuel;
 }
 /** @param {W} w @param {string} owner @param {string} kind @param {string} id @param {number} now @param {string} result */
 function receipt(w, owner, kind, id, now, result) {
@@ -354,13 +358,13 @@ function receipt(w, owner, kind, id, now, result) {
     w.operations = w.operations.filter((o) => !remove.has(o));
   }
 }
-/** @param {C} c @param {import('./refinery-contracts.js').RefineryPlayer} d @param {string} port @param {string[]} ids @param {number} now */
-function economics(c, d, port, ids, now) {
-  return ids.map((cid) => c.pricing(d, port, cid, now));
+/** @param {C} capabilities @param {RefineryPlayer} playerData @param {string} port @param {string[]} ids @param {number} now */
+function economics(capabilities, playerData, port, ids, now) {
+  return ids.map((cid) => capabilities.pricing(playerData, port, cid, now));
 }
-/** @param {C} c @param {Session} s @param {import('./refinery-contracts.js').RefineryRequest} m */
-function quote(c, s, m, preview = false) {
-  const port = m.port || s.data.stellar,
+/** @param {C} capabilities @param {Session} session @param {RefineryRequest} m */
+function quote(capabilities, session, m, preview = false) {
+  const port = m.port || session.data.stellar,
     recipe = RECIPES.find((r) => r.id === m.recipe),
     n = m.n,
     grade = m.grade || 'common',
@@ -376,8 +380,8 @@ function quote(c, s, m, preview = false) {
     !['instant', 'stored'].includes(mode)
   )
     throw Error('Invalid recipe/quantity.');
-  const a = c.access(s.data, port);
-  if (!a.available || s.data.stellar !== port || s.ent)
+  const a = capabilities.access(session.data, port);
+  if (!a.available || session.data.stellar !== port || session.ent)
     throw Error('Dock at an eligible refinery.');
   if (recipe.inputs[0] === 'plasma' && grade !== 'common') throw Error('Plasma is ungraded cargo.');
   if (recipe.pure && grade !== 'pure') throw Error('Composite requires pure ore, gas and shards.');
@@ -392,15 +396,16 @@ function quote(c, s, m, preview = false) {
       pure: grade === 'pure' ? n : 0,
     },
   }));
-  const now = c.now(),
-    owner = c.db.key(s.data.name),
+  const now = capabilities.now(),
+    owner = capabilities.db.key(session.data.name),
     percent = recovery(a.faction, a.home, recipe),
     units = outputUnits(total, percent, recipe.pure),
-    prices = economics(c, s.data, port, [...recipe.inputs, recipe.output], now),
+    prices = economics(capabilities, session.data, port, [...recipe.inputs, recipe.output], now),
     ask = prices.slice(0, -1).reduce((v, p) => v + p.ask * n, 0),
     existing =
-      state(c).ready.find((b) => b.owner === owner && b.port === port && b.cid === recipe.output)
-        ?.units || 0,
+      state(capabilities).ready.find(
+        (b) => b.owner === owner && b.port === port && b.cid === recipe.output,
+      )?.units || 0,
     bid = prices[prices.length - 1].bid * Math.ceil((units + (existing % 300)) / 300),
     service =
       (a.home ? R.homeFeePerTon : a.faction === 'outlaw' ? R.outlawFeePerTon : R.publicFeePerTon) *
@@ -408,7 +413,7 @@ function quote(c, s, m, preview = false) {
       (mode === 'stored' ? R.storedFeeFactor : 1),
     fee = refineryFee(bid, ask, service);
   /** @type {Quote|undefined} */ let q;
-  transaction(c, s, (w) => {
+  transaction(capabilities, session, (w) => {
     w.quotes = w.quotes.filter((q) => q.expires > now);
     // UI previews replace only earlier UI previews; legacy explicitly issued quotes remain intact.
     if (preview) w.quotes = w.quotes.filter((q) => q.owner !== owner || !q.preview);
@@ -437,23 +442,34 @@ function quote(c, s, m, preview = false) {
     };
     w.quotes.push(q);
   });
-  c.send(s, { t: 'refineryQuote', quote: q });
+  capabilities.send(session, { t: 'refineryQuote', quote: q });
 }
-/** @param {C} c @param {Session} s @param {string} id */
-function submit(c, s, id) {
-  const owner = c.db.key(s.data.name),
-    now = c.now();
-  if (state(c).operations.some((o) => o.owner === owner && o.kind === 'submit' && o.id === id))
+/** @param {C} capabilities @param {Session} session @param {string} id */
+function submit(capabilities, session, id) {
+  const owner = capabilities.db.key(session.data.name),
+    now = capabilities.now();
+  if (
+    state(capabilities).operations.some(
+      (o) => o.owner === owner && o.kind === 'submit' && o.id === id,
+    )
+  )
     return;
-  transaction(c, s, (w, d) => {
+  transaction(capabilities, session, (w, playerData) => {
     const q = w.quotes.find((q) => q.id === id && q.owner === owner);
     if (!q || q.expires < now)
       throw Error('The refining price has expired. Check the updated cost and try again.');
-    const a = c.access(d, q.port);
-    if (!a.available || d.stellar !== q.port || s.ent) throw Error('Refinery access changed.');
+    const a = capabilities.access(playerData, q.port);
+    if (!a.available || playerData.stellar !== q.port || session.ent)
+      throw Error('Refinery access changed.');
     const recipe = RECIPES.find((r) => r.id === q.recipe);
     if (!recipe) throw Error('Unknown recipe version.');
-    const prices = economics(c, d, q.port, [...recipe.inputs, recipe.output], now);
+    const prices = economics(
+      capabilities,
+      playerData,
+      q.port,
+      [...recipe.inputs, recipe.output],
+      now,
+    );
     if (
       JSON.stringify(prices) !== q.fingerprint ||
       recovery(a.faction, a.home, recipe) !== q.recovery
@@ -474,22 +490,22 @@ function submit(c, s, id) {
       ).length >= R.activeBatches
     )
       throw Error('Active batch limit.');
-    if (d.credits < q.fee) throw Error('Insufficient credits.');
+    if (playerData.credits < q.fee) throw Error('Insufficient credits.');
     // Every mutation is on copies. A third-input failure cannot debit either of the first two.
     for (const i of q.inputs)
       applyTake(
-        d.cargo,
-        d.cargoLots,
+        playerData.cargo,
+        playerData.cargoLots,
         planTake(
-          d.cargo,
-          d.cargoLots,
+          playerData.cargo,
+          playerData.cargoLots,
           i.cid,
           Object.values(i.lots).reduce((a, b) => a + b, 0),
           i.lots,
         ),
       );
-    d.credits -= q.fee;
-    recordEconomy(d, q.port, 'serviceFees', q.fee);
+    playerData.credits -= q.fee;
+    recordEconomy(playerData, q.port, 'serviceFees', q.fee);
     dem.input += q.inputTonnes;
     if (recipe.pure) dem.composite += q.units;
     const startAt = now + (q.mode === 'stored' ? R.queueMs : 0),
@@ -520,22 +536,27 @@ function submit(c, s, id) {
       w.batches = w.batches.filter((b) => !trim.has(b));
     }
   });
-  advance(c);
+  advance(capabilities);
 }
-/** @param {C} c @param {Session} s @param {import('./refinery-contracts.js').RefineryRequest} m */
-function collect(c, s, m) {
-  const port = m.port || s.data.stellar,
-    owner = c.db.key(s.data.name),
+/** @param {C} capabilities @param {Session} session @param {RefineryRequest} m */
+function collect(capabilities, session, m) {
+  const port = m.port || session.data.stellar,
+    owner = capabilities.db.key(session.data.name),
     recipe = RECIPES.find((r) => r.id === m.recipe);
-  if (!port || !c.access(s.data, port).near)
+  if (!port || !capabilities.access(session.data, port).near)
     throw Error('Approach the collection marker within500 units.');
-  transaction(c, s, (w, d) => {
+  transaction(capabilities, session, (w, playerData) => {
     if (m.op === 'claim') {
       if (!recipe) throw Error('Unknown output.');
       const b = balance(w, owner, port, recipe.output),
-        n = Math.min(Math.floor(b.units / 300), c.room(d));
+        n = Math.min(Math.floor(b.units / 300), capabilities.room(playerData));
       if (!n) throw Error('Hold full or no whole output ready; fraction remains stored.');
-      addLots(d.cargo, d.cargoLots, commonLots(recipe.output, n), c.room(d));
+      addLots(
+        playerData.cargo,
+        playerData.cargoLots,
+        commonLots(recipe.output, n),
+        capabilities.room(playerData),
+      );
       b.units -= n * 300;
       b.claimedUnits += n * 300;
       if (!b.units)
@@ -550,7 +571,7 @@ function collect(c, s, m) {
     } else {
       const b = w.batches.find((b) => b.id === m.id && b.owner === owner && b.port === port);
       if (!b || b.status !== 'cancelled') throw Error('No owned cancellation escrow.');
-      let room = c.room(d);
+      let room = capabilities.room(playerData);
       for (const input of b.returns) {
         const total = Object.values(input.lots).reduce((a, b) => a + b, 0),
           n = Math.min(total, room);
@@ -562,43 +583,57 @@ function collect(c, s, m) {
           input.lots[k] -= lots[k];
           left -= lots[k];
         }
-        addLots(d.cargo, d.cargoLots, { cid: input.cid, qty: n, grades: lots }, room);
+        addLots(
+          playerData.cargo,
+          playerData.cargoLots,
+          { cid: input.cid, qty: n, grades: lots },
+          room,
+        );
         room -= n;
       }
     }
   });
 }
-/** @param {C} c @param {Session} s @param {string} id */
-function cancel(c, s, id) {
-  const owner = c.db.key(s.data.name),
-    now = c.now();
-  if (state(c).operations.some((o) => o.owner === owner && o.kind === 'cancel' && o.id === id))
+/** @param {C} capabilities @param {Session} session @param {string} id */
+function cancel(capabilities, session, id) {
+  const owner = capabilities.db.key(session.data.name),
+    now = capabilities.now();
+  if (
+    state(capabilities).operations.some(
+      (o) => o.owner === owner && o.kind === 'cancel' && o.id === id,
+    )
+  )
     return;
-  transaction(c, s, (w, d) => {
+  transaction(capabilities, session, (w, playerData) => {
     const b = w.batches.find((b) => b.id === id && b.owner === owner);
-    if (!b || b.status !== 'queued' || now >= b.startAt || !c.access(d, b.port).near)
+    if (
+      !b ||
+      b.status !== 'queued' ||
+      now >= b.startAt ||
+      !capabilities.access(playerData, b.port).near
+    )
       throw Error('Cancellation window closed or collection port out of range.');
     b.status = 'cancelled';
     b.returns = structuredClone(b.quote.inputs);
-    d.credits += b.quote.fee - b.quote.cancelFee;
-    recordEconomy(d, b.port, 'refunds', b.quote.fee - b.quote.cancelFee);
+    playerData.credits += b.quote.fee - b.quote.cancelFee;
+    recordEconomy(playerData, b.port, 'refunds', b.quote.fee - b.quote.cancelFee);
     receipt(w, owner, 'cancel', id, now, id);
   });
 }
-/** @param {C} c @param {Session} s @param {number|undefined} n */
-function fuelQuote(c, s, n) {
+/** @param {C} capabilities @param {Session} session @param {number|undefined} n */
+function fuelQuote(capabilities, session, n) {
   if (typeof n !== 'number' || !Number.isSafeInteger(n) || n < 1 || n > 30)
     throw Error('Invalid cells.');
-  /** @type {import('./refinery-contracts.js').FuelQuote|undefined} */ let q;
-  transaction(c, s, (w, d) => {
-    const before = s.ent?.fuel ?? d.fuel ?? c.fuelCapacity(d),
-      capacity = c.fuelCapacity(d),
+  /** @type {FuelQuote|undefined} */ let q;
+  transaction(capabilities, session, (w, playerData) => {
+    const before = session.ent?.fuel ?? playerData.fuel ?? capabilities.fuelCapacity(playerData),
+      capacity = capabilities.fuelCapacity(playerData),
       gain = n * R.fuelPerCell;
-    if ((d.cargo.fuel_cells || 0) < n) throw Error('Not enough Fuel Cells.');
+    if ((playerData.cargo.fuel_cells || 0) < n) throw Error('Not enough Fuel Cells.');
     if (before + gain > capacity)
       throw Error(`Each cell adds ${R.fuelPerCell} fuel; full cell would exceed capacity.`);
-    const owner = c.db.key(d.name),
-      now = c.now();
+    const owner = capabilities.db.key(playerData.name),
+      now = capabilities.now();
     q = {
       id: `f${w.nextId++}`,
       owner,
@@ -606,24 +641,28 @@ function fuelQuote(c, s, n) {
       gain,
       before,
       capacity,
-      ship: `${d.ship.hull}:${d.ship.uid || ''}`,
+      ship: `${playerData.ship.hull}:${playerData.ship.uid || ''}`,
       issuedAt: now,
       expires: now + R.quoteMs,
     };
     w.fuelQuotes = w.fuelQuotes.filter((x) => x.owner !== owner);
     w.fuelQuotes.push(q);
   });
-  c.send(s, { t: 'refineryFuelQuote', quote: q });
+  capabilities.send(session, { t: 'refineryFuelQuote', quote: q });
 }
-/** @param {C} c @param {Session} s @param {import('./refinery-contracts.js').RefineryRequest} m */
-function fuel(c, s, m) {
-  const owner = c.db.key(s.data.name);
-  if (state(c).operations.some((o) => o.owner === owner && o.kind === 'fuel' && o.id === m.id))
+/** @param {C} capabilities @param {Session} session @param {RefineryRequest} m */
+function fuel(capabilities, session, m) {
+  const owner = capabilities.db.key(session.data.name);
+  if (
+    state(capabilities).operations.some(
+      (o) => o.owner === owner && o.kind === 'fuel' && o.id === m.id,
+    )
+  )
     return;
-  transaction(c, s, (w, d) => {
+  transaction(capabilities, session, (w, playerData) => {
     const q = w.fuelQuotes.find((q) => q.id === m.id && q.owner === owner),
-      now = c.now(),
-      current = s.ent?.fuel ?? d.fuel ?? c.fuelCapacity(d);
+      now = capabilities.now(),
+      current = session.ent?.fuel ?? playerData.fuel ?? capabilities.fuelCapacity(playerData);
     if (
       !q ||
       now < q.issuedAt ||
@@ -631,12 +670,16 @@ function fuel(c, s, m) {
       !Number.isFinite(current) ||
       current < 0 ||
       current + q.gain > q.capacity ||
-      q.capacity !== c.fuelCapacity(d) ||
-      q.ship !== `${d.ship.hull}:${d.ship.uid || ''}`
+      q.capacity !== capabilities.fuelCapacity(playerData) ||
+      q.ship !== `${playerData.ship.hull}:${playerData.ship.uid || ''}`
     )
       throw Error('Fuel quote stale; request a new binding quote.');
-    applyTake(d.cargo, d.cargoLots, planTake(d.cargo, d.cargoLots, 'fuel_cells', q.n));
-    d.fuel = current + q.gain;
+    applyTake(
+      playerData.cargo,
+      playerData.cargoLots,
+      planTake(playerData.cargo, playerData.cargoLots, 'fuel_cells', q.n),
+    );
+    playerData.fuel = current + q.gain;
     receipt(w, owner, 'fuel', q.id, now, String(q.gain));
     w.fuelQuotes = w.fuelQuotes.filter((x) => x !== q);
   });
@@ -647,19 +690,21 @@ function offerKey(id) {
   return id.slice(0, id.lastIndexOf(':'));
 }
 /** Finite sourcing orders share a persisted daily/event budget, never per-login inventory.
- * @param {C} c @param {import('./refinery-contracts.js').RefineryPlayer} d @param {string} port @returns {import('./refinery-contracts.js').MiningOrder[]} */
-function offers(c, d, port) {
-  if (!c.access(d, port).available) return [];
-  const now = c.now(),
-    rush = c.rush(d.sys),
+ * @param {C} capabilities @param {RefineryPlayer} playerData @param {string} port @returns {MiningOrder[]} */
+function offers(capabilities, playerData, port) {
+  if (!capabilities.access(playerData, port).available) return [];
+  const now = capabilities.now(),
+    rush = capabilities.rush(playerData.sys),
     window = Math.floor(now / R.orderWindowMs),
-    key = rush ? `rush:${d.sys}:${rush.id}` : `order:${port}:${Math.floor(now / 86400000)}`,
-    dem = state(c).demand.find((x) => x.key === key);
+    key = rush
+      ? `rush:${playerData.sys}:${rush.id}`
+      : `order:${port}:${Math.floor(now / 86400000)}`,
+    dem = state(capabilities).demand.find((x) => x.key === key);
   return ['common', 'rich', 'pure', 'compressed']
     .map((grade, i) => {
       const cid = grade === 'compressed' ? 'alloy_ingots' : ['ore', 'gas', 'shards'][i],
         qty = [8, 6, 3, 2][i],
-        p = c.pricing(d, port, cid, now),
+        p = capabilities.pricing(playerData, port, cid, now),
         reward = Math.ceil(p.ask * qty * R.orderPremium + R.orderBase),
         id = `order:${port}:${window}:${i}:${rush?.id || 'normal'}:${reward}`;
       return {
@@ -684,18 +729,24 @@ function offers(c, d, port) {
             dem.paid + o.reward <= R.payoutDaily)),
     );
 }
-/** @param {C} c @param {Session} s @param {import('./refinery-contracts.js').RefineryRequest} m */
-function order(c, s, m) {
-  const owner = c.db.key(s.data.name),
-    now = c.now(),
-    port = m.port || s.data.stellar;
+/** @param {C} capabilities @param {Session} session @param {RefineryRequest} m */
+function order(capabilities, session, m) {
+  const owner = capabilities.db.key(session.data.name),
+    now = capabilities.now(),
+    port = m.port || session.data.stellar;
   if (!port) throw Error('Dock to accept or deliver a sourcing order.');
-  const offered = m.op === 'accept' ? offers(c, s.data, port).find((o) => o.id === m.id) : null;
-  transaction(c, s, (w, d) => {
-    if (m.op !== 'cancelOrder' && (s.ent || d.stellar !== port || !c.access(d, port).available))
+  const offered =
+    m.op === 'accept' ? offers(capabilities, session.data, port).find((o) => o.id === m.id) : null;
+  transaction(capabilities, session, (w, playerData) => {
+    if (
+      m.op !== 'cancelOrder' &&
+      (session.ent ||
+        playerData.stellar !== port ||
+        !capabilities.access(playerData, port).available)
+    )
       throw Error('Order requires eligible docking.');
     if (m.op === 'accept') {
-      if (!offered || d.missions.length >= 6) throw Error('Offer stale or six-job limit.');
+      if (!offered || playerData.missions.length >= 6) throw Error('Offer stale or six-job limit.');
       let dem = w.demand.find((d) => d.key === offered.demand);
       if (!dem) {
         dem = {
@@ -720,11 +771,11 @@ function order(c, s, m) {
       dem.usedOffers.push(offerKey(offered.id));
       const o = { ...offered, owner };
       w.orders.push(o);
-      d.missions.push({
+      playerData.missions.push({
         id: o.id,
         type: 'miningOrder',
         title: `Source ${o.qty}t ${o.grade} ${o.cid}`,
-        sys: d.sys,
+        sys: playerData.sys,
         dest: port,
         cid: o.cid,
         qty: o.qty,
@@ -745,10 +796,14 @@ function order(c, s, m) {
           rich: o.grade === 'rich' ? o.qty : 0,
           pure: o.grade === 'pure' ? o.qty : 0,
         };
-        applyTake(d.cargo, d.cargoLots, planTake(d.cargo, d.cargoLots, o.cid, o.qty, lots));
-        d.credits += o.reward;
-        d.stats ||= {};
-        d.stats.earned = (d.stats.earned || 0) + o.reward;
+        applyTake(
+          playerData.cargo,
+          playerData.cargoLots,
+          planTake(playerData.cargo, playerData.cargoLots, o.cid, o.qty, lots),
+        );
+        playerData.credits += o.reward;
+        playerData.stats ||= {};
+        playerData.stats.earned = (playerData.stats.earned || 0) + o.reward;
         o.status = 'delivered';
         dem.input += o.qty;
       } else {
@@ -756,17 +811,17 @@ function order(c, s, m) {
         dem.paid -= o.reward;
       }
       dem.reserved -= o.qty;
-      d.missions = d.missions.filter((x) => x.id !== o.id);
+      playerData.missions = playerData.missions.filter((x) => x.id !== o.id);
       receipt(w, owner, m.op || '', o.id, now, o.status);
     }
   });
 }
-/** @param {C} c @param {Session} s */
-function syncRush(c, s) {
-  for (const o of state(c).orders)
-    if (o.owner === c.db.key(s.data.name) && o.status === 'delivered' && o.event) {
-      const d = state(c).demand.find((d) => d.key === o.demand);
-      if (d) c.rushProgress(s, o.event, d.input);
+/** @param {C} capabilities @param {Session} session */
+function syncRush(capabilities, session) {
+  for (const o of state(capabilities).orders)
+    if (o.owner === capabilities.db.key(session.data.name) && o.status === 'delivered' && o.event) {
+      const d = state(capabilities).demand.find((d) => d.key === o.demand);
+      if (d) capabilities.rushProgress(session, o.event, d.input);
     }
 }
 export const RefineryOperations = {
@@ -810,14 +865,14 @@ export const RefineryOperations = {
       this.db.touch();
     }
   },
-  /** @this {C} @param {Session} s @returns {import('./refinery-contracts.js').RefineryWire} */
-  payload(s) {
+  /** @this {C} @param {Session} session @returns {RefineryWire} */
+  payload(session) {
     advance(this);
-    syncRush(this, s);
+    syncRush(this, session);
     const w = state(this),
-      owner = this.db.key(s.data.name),
-      port = s.data.stellar || null,
-      a = port ? this.access(s.data, port) : { available: false, home: false, faction: '' };
+      owner = this.db.key(session.data.name),
+      port = session.data.stellar || null,
+      a = port ? this.access(session.data, port) : { available: false, home: false, faction: '' };
     return {
       port,
       available: a.available,
@@ -828,11 +883,11 @@ export const RefineryOperations = {
       batches: w.batches.filter((b) => b.owner === owner),
       ready: w.ready.filter((b) => b.owner === owner),
       orders: w.orders.filter((o) => o.owner === owner && o.status === 'accepted'),
-      offers: port ? offers(this, s.data, port) : [],
+      offers: port ? offers(this, session.data, port) : [],
     };
   },
-  /** @this {C} @param {Session} s @param {import('./refinery-contracts.js').RefineryRequest} m @param {boolean} [orders] */
-  command(s, m, orders = false) {
+  /** @this {C} @param {Session} session @param {RefineryRequest} m @param {boolean} [orders] */
+  command(session, m, orders = false) {
     const allowed = orders
       ? ['accept', 'deliver', 'cancelOrder']
       : ['quote', 'preview', 'submit', 'claim', 'cancel', 'returns', 'fuelQuote', 'fuel', 'list'];
@@ -865,19 +920,19 @@ export const RefineryOperations = {
     try {
       if (this.paused() || this.db.economicFrozen)
         throw Error('Economy paused or checkpoint recovery required.');
-      if (orders) order(this, s, m);
-      else if (m.op === 'quote') return quote(this, s, m);
-      else if (m.op === 'preview') return quote(this, s, m, true);
-      else if (m.op === 'submit') submit(this, s, m.id || '');
-      else if (m.op === 'claim' || m.op === 'returns') collect(this, s, m);
-      else if (m.op === 'cancel') cancel(this, s, m.id || '');
-      else if (m.op === 'fuelQuote') return fuelQuote(this, s, m.n);
-      else if (m.op === 'fuel') fuel(this, s, m);
-      this.refresh(s);
-      this.send(s, { t: 'refinery', op: m.op, data: this.payload(s) });
+      if (orders) order(this, session, m);
+      else if (m.op === 'quote') return quote(this, session, m);
+      else if (m.op === 'preview') return quote(this, session, m, true);
+      else if (m.op === 'submit') submit(this, session, m.id || '');
+      else if (m.op === 'claim' || m.op === 'returns') collect(this, session, m);
+      else if (m.op === 'cancel') cancel(this, session, m.id || '');
+      else if (m.op === 'fuelQuote') return fuelQuote(this, session, m.n);
+      else if (m.op === 'fuel') fuel(this, session, m);
+      this.refresh(session);
+      this.send(session, { t: 'refinery', op: m.op, data: this.payload(session) });
     } catch (e) {
-      this.toast(s, e instanceof Error ? e.message : 'Refinery unavailable.');
-      this.send(s, { t: 'refineryError', op: m.op });
+      this.toast(session, e instanceof Error ? e.message : 'Refinery unavailable.');
+      this.send(session, { t: 'refineryError', op: m.op });
     }
   },
 };

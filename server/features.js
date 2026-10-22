@@ -25,51 +25,60 @@ import { LivingOperations } from './living.js';
 import { QuestOperations } from './quests.js';
 import { CoopOperations } from './coop.js';
 
+/** @import { CombatSession } from './combat-assist.js' */
+/** @import { BoundOperations } from './feature-service.js' */
+/** @import { Game, StellarBody } from './game.js' */
+/** @import { IndustrialCapabilities } from './industrial-contracts.js' */
+/** @import { MiningCapabilities } from './mining-contracts.js' */
+/** @import { PressureCapabilities } from './mining-pressure-contracts.js' */
+/** @import { RefineryCapabilities, RefineryPlayer } from './refinery-contracts.js' */
+/** @import { TowCapabilities } from './towing-contracts.js' */
+
 /**
  * @typedef {object} FeatureServices
- * @property {import("./feature-service.js").BoundOperations<typeof TowingOperations>} towing
- * @property {import("./feature-service.js").BoundOperations<typeof IndustrialOperations>} industrial
- * @property {import("./feature-service.js").BoundOperations<typeof MiningOperations>} mining
- * @property {import("./feature-service.js").BoundOperations<typeof RefineryOperations>} refinery
- * @property {import("./feature-service.js").BoundOperations<typeof MiningPressureOperations>} pressure
- * @property {import('./feature-service.js').BoundOperations<typeof HangarOperations>} hangar
- * @property {import('./feature-service.js').BoundOperations<typeof FrontsOperations>} fronts
- * @property {import('./feature-service.js').BoundOperations<typeof FrontierOperations>} frontier
- * @property {import('./feature-service.js').BoundOperations<typeof SpecialistOperations>} specialists
- * @property {import('./feature-service.js').BoundOperations<typeof HostileOperations>} hostile
- * @property {import('./feature-service.js').BoundOperations<typeof StoryOperations>} story
- * @property {import('./feature-service.js').BoundOperations<typeof RivalsOperations>} rivals
- * @property {import('./feature-service.js').BoundOperations<typeof HailOperations>} hail
- * @property {import('./feature-service.js').BoundOperations<typeof FleetCmdOperations>} fleetcmd
- * @property {import('./feature-service.js').BoundOperations<typeof SyndicateOperations>} syndicate
- * @property {import('./feature-service.js').BoundOperations<typeof ArcsOperations>} arcs
- * @property {import('./feature-service.js').BoundOperations<typeof DocksOperations>} docks
- * @property {import('./feature-service.js').BoundOperations<typeof LivingOperations>} living
- * @property {import('./feature-service.js').BoundOperations<typeof QuestOperations>} quests
- * @property {import('./feature-service.js').BoundOperations<typeof CoopOperations>} coop
+ * @property {BoundOperations<typeof TowingOperations>} towing
+ * @property {BoundOperations<typeof IndustrialOperations>} industrial
+ * @property {BoundOperations<typeof MiningOperations>} mining
+ * @property {BoundOperations<typeof RefineryOperations>} refinery
+ * @property {BoundOperations<typeof MiningPressureOperations>} pressure
+ * @property {BoundOperations<typeof HangarOperations>} hangar
+ * @property {BoundOperations<typeof FrontsOperations>} fronts
+ * @property {BoundOperations<typeof FrontierOperations>} frontier
+ * @property {BoundOperations<typeof SpecialistOperations>} specialists
+ * @property {BoundOperations<typeof HostileOperations>} hostile
+ * @property {BoundOperations<typeof StoryOperations>} story
+ * @property {BoundOperations<typeof RivalsOperations>} rivals
+ * @property {BoundOperations<typeof HailOperations>} hail
+ * @property {BoundOperations<typeof FleetCmdOperations>} fleetcmd
+ * @property {BoundOperations<typeof SyndicateOperations>} syndicate
+ * @property {BoundOperations<typeof ArcsOperations>} arcs
+ * @property {BoundOperations<typeof DocksOperations>} docks
+ * @property {BoundOperations<typeof LivingOperations>} living
+ * @property {BoundOperations<typeof QuestOperations>} quests
+ * @property {BoundOperations<typeof CoopOperations>} coop
  * @property {Pick<typeof SpecialistOperations, 'bonus' >} bonuses
  * @property {Pick<typeof FrontsOperations, 'stats' >} shipStats
  * @property {Pick<typeof FrontierOperations, 'worldPayload' >} world
  * @property {Pick<typeof CoopOperations, 'sessionOf' >} sessions
  */
 
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'holdUsed' | 'db' | 'hasMats' | 'landed' | 'live' | 'log' | 'ownSite' | 'spaces' | 'takeMats' | 'toast' | 'tut' | 'you'> & Pick<typeof ArcsOperations, 'arcProgress'> & Pick<typeof HangarOperations, 'barOffers' | 'bays' | 'dockSlots' | 'officerXp' | 'researchChain' | 'resolveShuttle' | 'shuttleBoard' | 'shuttleChance' | 'shuttleReward' | 'shuttleTraffic' | 'startQueued' | 'storedValue' | 'uid'> & Pick<typeof SpecialistOperations, 'bonus' | 'flying' | 'power' | 'specOnBoard'> & Pick<typeof DocksOperations, 'docksOp' | 'shipUid' | 'unassign' | 'unwingOfficer'> & Pick<typeof FrontsOperations, 'goal' | 'mods' | 'stats'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof CoopOperations, 'rescueBoard'> & Pick<typeof StoryOperations, 'storyProgress'> & Pick<typeof SyndicateOperations, 'synGain'>} HangarCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | '_an' | '_anW' | 'broadcast' | 'db' | 'invasion' | 'lastInvWin' | 'log' | 'sessions' | 'spaces' | 'toast' | 'you'> & Pick<typeof FrontsOperations, 'anomalies' | 'event' | 'goal' | 'goalsFor' | 'pushWorld' | 'startInvasion' | 'storeFor' | 'token'> & Pick<typeof CoopOperations, 'armadaBonus' | 'refreshPlayer'> & Pick<typeof SpecialistOperations, 'bonus'> & Pick<typeof HangarOperations, 'officerXp' | 'uid'> & Pick<typeof LivingOperations, 'statesPayload'> & Pick<typeof FrontierOperations, 'worldPayload'>} FrontsCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'holdUsed' | 'arenaQ' | 'broadcast' | 'db' | 'hasMats' | 'landed' | 'live' | 'log' | 'matches' | 'nextMatch' | 'send' | 'sessions' | 'spaces' | 'spawnPlayer' | 'takeMats' | 'toast' | 'waves' | 'you'> & Pick<typeof FrontierOperations, 'accrue' | 'arenaCheck' | 'arenaExit' | 'coloniesOf' | 'colonizable' | 'colonyBuffs' | 'colonyMax' | 'defenseRating' | 'deliver' | 'itemName' | 'matchOrder' | 'notify' | 'pay' | 'raidStrength' | 'refundOrder' | 'resolveRaid' | 'sameItem' | 'startWave' | 'tryMatch'> & Pick<typeof SpecialistOperations, 'flying' | 'specOnRaid'> & Pick<typeof FrontsOperations, 'pushWorld' | 'stats'> & Pick<typeof RivalsOperations, 'rivalBoard'> & Pick<typeof CoopOperations, 'sessionOf'> & {frontsBonus: typeof FrontsOperations.bonus, frontsWorldPayload: typeof FrontsOperations.worldPayload}} FrontierCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'fitsJobs' | 'holdUsed' | 'broadcast' | 'db' | 'hasMats' | 'landed' | 'log' | 'ownSite' | 'takeMats' | 'toast' | 'tradeIn' | 'you'> & Pick<typeof FrontsOperations, 'anomalies'> & Pick<typeof SpecialistOperations, 'flying' | 'power' | 'specGain' | 'specInit' | 'specOf'> & Pick<typeof DocksOperations, 'wingHulls'> & {frontierBonus: typeof FrontierOperations.bonus}} SpecialistsCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'depart' | 'live' | 'log' | 'ownSite' | 'spaces' | 'toast' | 'tut' | 'you'> & Pick<typeof SpecialistOperations, 'bonus' | 'specInit'> & Pick<typeof CoopOperations, 'holdoutAnnounce' | 'holdoutHelpers' | 'holdoutReward'> & Pick<typeof HostileOperations, 'holdoutEnd' | 'hostInit' | 'myPower'> & Pick<typeof FrontsOperations, 'mods'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof DocksOperations, 'wingHulls'>} HostileCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'broadcast' | 'db' | 'landed' | 'log' | 'send' | 'toast' | 'tradeIn' | 'you'> & Pick<typeof HangarOperations, 'dockSlots'> & Pick<typeof DocksOperations, 'leadChanged'> & Pick<typeof StoryOperations, 'storyComplete' | 'storyDone' | 'storyGift' | 'storyInit' | 'storyOffer'>} StoryCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'live' | 'log' | 'rivalEnts' | 'sessions' | 'spaces' | 'toast'> & Pick<typeof RivalsOperations, 'news' | 'relOf' | 'rivalRel' | 'rivalState' | 'spawnHunters'>} RivalsCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'hails' | 'log' | 'send' | 'spaces' | 'toast' | 'you'> & Pick<typeof HailOperations, 'bribeCost' | 'hailPlanet' | 'hailPlanetOpt' | 'hailTarget'> & Pick<typeof HostileOperations, 'myPower'> & Pick<typeof RivalsOperations, 'relOf' | 'rivalRel'>} HailCapabilities */
+/** @typedef {Pick<Game, 'A' | 'holdUsed' | 'db' | 'hasMats' | 'landed' | 'live' | 'log' | 'ownSite' | 'spaces' | 'takeMats' | 'toast' | 'tut' | 'you'> & Pick<typeof ArcsOperations, 'arcProgress'> & Pick<typeof HangarOperations, 'barOffers' | 'bays' | 'dockSlots' | 'officerXp' | 'researchChain' | 'resolveShuttle' | 'shuttleBoard' | 'shuttleChance' | 'shuttleReward' | 'shuttleTraffic' | 'startQueued' | 'storedValue' | 'uid'> & Pick<typeof SpecialistOperations, 'bonus' | 'flying' | 'power' | 'specOnBoard'> & Pick<typeof DocksOperations, 'docksOp' | 'shipUid' | 'unassign' | 'unwingOfficer'> & Pick<typeof FrontsOperations, 'goal' | 'mods' | 'stats'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof CoopOperations, 'rescueBoard'> & Pick<typeof StoryOperations, 'storyProgress'> & Pick<typeof SyndicateOperations, 'synGain'>} HangarCapabilities */
+/** @typedef {Pick<Game, 'A' | '_an' | '_anW' | 'broadcast' | 'db' | 'invasion' | 'lastInvWin' | 'log' | 'sessions' | 'spaces' | 'toast' | 'you'> & Pick<typeof FrontsOperations, 'anomalies' | 'event' | 'goal' | 'goalsFor' | 'pushWorld' | 'startInvasion' | 'storeFor' | 'token'> & Pick<typeof CoopOperations, 'armadaBonus' | 'refreshPlayer'> & Pick<typeof SpecialistOperations, 'bonus'> & Pick<typeof HangarOperations, 'officerXp' | 'uid'> & Pick<typeof LivingOperations, 'statesPayload'> & Pick<typeof FrontierOperations, 'worldPayload'>} FrontsCapabilities */
+/** @typedef {Pick<Game, 'A' | 'holdUsed' | 'arenaQ' | 'broadcast' | 'db' | 'hasMats' | 'landed' | 'live' | 'log' | 'matches' | 'nextMatch' | 'send' | 'sessions' | 'spaces' | 'spawnPlayer' | 'takeMats' | 'toast' | 'waves' | 'you'> & Pick<typeof FrontierOperations, 'accrue' | 'arenaCheck' | 'arenaExit' | 'coloniesOf' | 'colonizable' | 'colonyBuffs' | 'colonyMax' | 'defenseRating' | 'deliver' | 'itemName' | 'matchOrder' | 'notify' | 'pay' | 'raidStrength' | 'refundOrder' | 'resolveRaid' | 'sameItem' | 'startWave' | 'tryMatch'> & Pick<typeof SpecialistOperations, 'flying' | 'specOnRaid'> & Pick<typeof FrontsOperations, 'pushWorld' | 'stats'> & Pick<typeof RivalsOperations, 'rivalBoard'> & Pick<typeof CoopOperations, 'sessionOf'> & {frontsBonus: typeof FrontsOperations.bonus, frontsWorldPayload: typeof FrontsOperations.worldPayload}} FrontierCapabilities */
+/** @typedef {Pick<Game, 'A' | 'fitsJobs' | 'holdUsed' | 'broadcast' | 'db' | 'hasMats' | 'landed' | 'log' | 'ownSite' | 'takeMats' | 'toast' | 'tradeIn' | 'you'> & Pick<typeof FrontsOperations, 'anomalies'> & Pick<typeof SpecialistOperations, 'flying' | 'power' | 'specGain' | 'specInit' | 'specOf'> & Pick<typeof DocksOperations, 'wingHulls'> & {frontierBonus: typeof FrontierOperations.bonus}} SpecialistsCapabilities */
+/** @typedef {Pick<Game, 'A' | 'db' | 'depart' | 'live' | 'log' | 'ownSite' | 'spaces' | 'toast' | 'tut' | 'you'> & Pick<typeof SpecialistOperations, 'bonus' | 'specInit'> & Pick<typeof CoopOperations, 'holdoutAnnounce' | 'holdoutHelpers' | 'holdoutReward'> & Pick<typeof HostileOperations, 'holdoutEnd' | 'hostInit' | 'myPower'> & Pick<typeof FrontsOperations, 'mods'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof DocksOperations, 'wingHulls'>} HostileCapabilities */
+/** @typedef {Pick<Game, 'A' | 'broadcast' | 'db' | 'landed' | 'log' | 'send' | 'toast' | 'tradeIn' | 'you'> & Pick<typeof HangarOperations, 'dockSlots'> & Pick<typeof DocksOperations, 'leadChanged'> & Pick<typeof StoryOperations, 'storyComplete' | 'storyDone' | 'storyGift' | 'storyInit' | 'storyOffer'>} StoryCapabilities */
+/** @typedef {Pick<Game, 'A' | 'db' | 'live' | 'log' | 'rivalEnts' | 'sessions' | 'spaces' | 'toast'> & Pick<typeof RivalsOperations, 'news' | 'relOf' | 'rivalRel' | 'rivalState' | 'spawnHunters'>} RivalsCapabilities */
+/** @typedef {Pick<Game, 'A' | 'db' | 'hails' | 'log' | 'send' | 'spaces' | 'toast' | 'you'> & Pick<typeof HailOperations, 'bribeCost' | 'hailPlanet' | 'hailPlanetOpt' | 'hailTarget'> & Pick<typeof HostileOperations, 'myPower'> & Pick<typeof RivalsOperations, 'relOf' | 'rivalRel'>} HailCapabilities */
 /** @typedef {import('./contracts.js').FleetCommandsCapabilities} FleetCommandsCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'landed' | 'log' | 'toast' | 'you'> & Pick<typeof SyndicateOperations, 'bankAt' | 'bankInfo' | 'blackMarketAt' | 'synInit'> & Pick<typeof FrontierOperations, 'notify'>} SyndicateCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'landed' | 'log' | 'send' | 'toast' | 'you'> & Pick<typeof ArcsOperations, 'arcComplete' | 'arcOffer' | 'arcOffersAt' | 'arcState' | 'arcsInit' | 'expeditionNext'>} ArcsCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'fitsJobs' | 'jobCargo' | 'landed' | 'log' | 'ownSite' | 'outfitter' | 'sessions' | 'toast' | 'yard' | 'you'> & Pick<typeof DocksOperations, 'activeWings' | 'cleanBridge' | 'dockCount' | 'docksInit' | 'shipUid' | 'slotOf' | 'stored' | 'unassign' | 'unwingOfficer' | 'wingMax' | 'wingOfficerAt' | 'wingRepair'> & Pick<typeof HangarOperations, 'dockSlots' | 'hangarInit' | 'uid'>} DocksCapabilities */
-/** @typedef {Pick<import('./game.js').Game, '_livingStarted' | '_mkt' | 'db' | 'log' | 'toast' | 'worldKey' | 'you'> & Pick<typeof LivingOperations, 'impact' | 'livingInit' | 'marketSystems' | 'resolveState' | 'stateOf' | 'stateProgress' | 'warEnemy'> & Pick<typeof RivalsOperations, 'news'>} LivingCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'db' | 'holdUsed' | 'landed' | 'log' | 'market' | 'send' | 'spaces' | 'toast' | 'you'> & Pick<typeof QuestOperations, 'chainReward' | 'contactAt' | 'contactStory' | 'fill' | 'questFail' | 'questFinish' | 'questInit' | 'questPlan' | 'questPush' | 'questRewardText' | 'questStepJob'> & Pick<typeof LivingOperations, 'stateOf'> & Pick<typeof FrontsOperations, 'stats'> & Pick<typeof HangarOperations, 'uid'>} QuestsCapabilities */
-/** @typedef {Pick<import('./game.js').Game, 'A' | 'broadcast' | 'db' | 'duels' | 'holdUsed' | 'landed' | 'live' | 'log' | 'nextCoopId' | 'ownSite' | 'send' | 'sessions' | 'solo' | 'spaces' | 'toast' | 'trades' | 'you'> & Pick<typeof CoopOperations, 'armadaChat' | 'armadaLeave' | 'armadaNear' | 'armadaOf' | 'armadaPayload' | 'armadaPush' | 'armadaRefresh' | 'atOwnStation' | 'blocked' | 'dm' | 'drop' | 'duelEnd' | 'duelOf' | 'duelOut' | 'duelSay' | 'duelSide' | 'duelTick' | 'dueling' | 'has' | 'presence' | 'pushSocial' | 'rescueTick' | 'sessionOf' | 'socialInit' | 'socialOp' | 'socialPayload' | 'statusOf' | 'tradeCancel' | 'tradeClean' | 'tradeDo' | 'tradePush'> & Pick<typeof FrontsOperations, 'goal' | 'mods' | 'stats'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof HangarOperations, 'officerXp'>} CoopCapabilities */
+/** @typedef {Pick<Game, 'A' | 'db' | 'landed' | 'log' | 'toast' | 'you'> & Pick<typeof SyndicateOperations, 'bankAt' | 'bankInfo' | 'blackMarketAt' | 'synInit'> & Pick<typeof FrontierOperations, 'notify'>} SyndicateCapabilities */
+/** @typedef {Pick<Game, 'A' | 'db' | 'landed' | 'log' | 'send' | 'toast' | 'you'> & Pick<typeof ArcsOperations, 'arcComplete' | 'arcOffer' | 'arcOffersAt' | 'arcState' | 'arcsInit' | 'expeditionNext'>} ArcsCapabilities */
+/** @typedef {Pick<Game, 'A' | 'db' | 'fitsJobs' | 'jobCargo' | 'landed' | 'log' | 'ownSite' | 'outfitter' | 'sessions' | 'toast' | 'yard' | 'you'> & Pick<typeof DocksOperations, 'activeWings' | 'cleanBridge' | 'dockCount' | 'docksInit' | 'shipUid' | 'slotOf' | 'stored' | 'unassign' | 'unwingOfficer' | 'wingMax' | 'wingOfficerAt' | 'wingRepair'> & Pick<typeof HangarOperations, 'dockSlots' | 'hangarInit' | 'uid'>} DocksCapabilities */
+/** @typedef {Pick<Game, '_livingStarted' | '_mkt' | 'db' | 'log' | 'toast' | 'worldKey' | 'you'> & Pick<typeof LivingOperations, 'impact' | 'livingInit' | 'marketSystems' | 'resolveState' | 'stateOf' | 'stateProgress' | 'warEnemy'> & Pick<typeof RivalsOperations, 'news'>} LivingCapabilities */
+/** @typedef {Pick<Game, 'A' | 'db' | 'holdUsed' | 'landed' | 'log' | 'market' | 'send' | 'spaces' | 'toast' | 'you'> & Pick<typeof QuestOperations, 'chainReward' | 'contactAt' | 'contactStory' | 'fill' | 'questFail' | 'questFinish' | 'questInit' | 'questPlan' | 'questPush' | 'questRewardText' | 'questStepJob'> & Pick<typeof LivingOperations, 'stateOf'> & Pick<typeof FrontsOperations, 'stats'> & Pick<typeof HangarOperations, 'uid'>} QuestsCapabilities */
+/** @typedef {Pick<Game, 'A' | 'broadcast' | 'db' | 'duels' | 'holdUsed' | 'landed' | 'live' | 'log' | 'nextCoopId' | 'ownSite' | 'send' | 'sessions' | 'solo' | 'spaces' | 'toast' | 'trades' | 'you'> & Pick<typeof CoopOperations, 'armadaChat' | 'armadaLeave' | 'armadaNear' | 'armadaOf' | 'armadaPayload' | 'armadaPush' | 'armadaRefresh' | 'atOwnStation' | 'blocked' | 'dm' | 'drop' | 'duelEnd' | 'duelOf' | 'duelOut' | 'duelSay' | 'duelSide' | 'duelTick' | 'dueling' | 'has' | 'presence' | 'pushSocial' | 'rescueTick' | 'sessionOf' | 'socialInit' | 'socialOp' | 'socialPayload' | 'statusOf' | 'tradeCancel' | 'tradeClean' | 'tradeDo' | 'tradePush'> & Pick<typeof FrontsOperations, 'goal' | 'mods' | 'stats'> & Pick<typeof FrontierOperations, 'notify'> & Pick<typeof HangarOperations, 'officerXp'>} CoopCapabilities */
 
-/** @param {import('./game.js').Game} core @returns {FeatureServices} */
+/** @param {Game} core @returns {FeatureServices} */
 export function createFeatures(core) {
   /** @type {FeatureServices} */
   const features = /** @type {FeatureServices} */ ({});
@@ -1187,7 +1196,7 @@ export function createFeatures(core) {
   features.shipStats = { stats: features.fronts.stats };
   features.world = { worldPayload: features.frontier.worldPayload };
   features.sessions = { sessionOf: features.coop.sessionOf };
-  /** @type {import('./mining-contracts.js').MiningCapabilities} */
+  /** @type {MiningCapabilities} */
   const miningCapabilities = {
     get db() {
       return core.db;
@@ -1214,8 +1223,8 @@ export function createFeatures(core) {
       return features.pressure.regrow;
     },
     dredgeBlueprint(captain, chance) {
-      const s = features.sessions.sessionOf(captain);
-      if (s) features.specialists.specGain(s, 'star_dredge', 0, chance);
+      const session = features.sessions.sessionOf(captain);
+      if (session) features.specialists.specGain(session, 'star_dredge', 0, chance);
       else {
         const d = core.db.get(captain);
         if (d && Math.random() < chance) {
@@ -1230,43 +1239,59 @@ export function createFeatures(core) {
     },
   };
   features.mining = bindOperations(MiningOperations, miningCapabilities);
-  /** @type {import('./refinery-contracts.js').RefineryCapabilities} */
+  /** @type {RefineryCapabilities} */
   const refineryCapabilities = {
     get db() {
       return core.db;
     },
     now: () => Date.now(),
     paused: () => !!core.paused,
-    room: (d) => Math.max(0, (features.shipStats.stats(d)?.cargo || 0) - core.holdUsed(d)),
-    fuelCapacity: (d) => features.shipStats.stats(d)?.fuel || 0,
-    access(d, port) {
-      const p = /** @type {import('./game.js').StellarBody} */ (STELLARS[port]),
-        ent = features.sessions.sessionOf(d.name)?.ent;
-      if (!p) return { available: false, home: false, faction: '', near: false };
-      const home = !!(p.site && core.ownSite(d, p) && (d.station?.ops || 0) >= 1),
-        faction = p.outlaw ? 'outlaw' : SYS[p.system].faction,
-        eligible = home || (!p.site && p.svc.includes('T') && p.svc.includes('O')),
+    room: (playerData) =>
+      Math.max(0, (features.shipStats.stats(playerData)?.cargo || 0) - core.holdUsed(playerData)),
+    fuelCapacity: (playerData) => features.shipStats.stats(playerData)?.fuel || 0,
+    access(playerData, port) {
+      const stellarBody = /** @type {StellarBody} */ (STELLARS[port]),
+        ent = features.sessions.sessionOf(playerData.name)?.ent;
+      if (!stellarBody) return { available: false, home: false, faction: '', near: false };
+      const home = !!(
+          stellarBody.site &&
+          core.ownSite(playerData, stellarBody) &&
+          (playerData.station?.ops || 0) >= 1
+        ),
+        faction = stellarBody.outlaw ? 'outlaw' : SYS[stellarBody.system].faction,
+        eligible =
+          home ||
+          (!stellarBody.site && stellarBody.svc.includes('T') && stellarBody.svc.includes('O')),
         allowed =
-          p.outlaw || (d.rep?.[faction] || 0) > -30 || (d.landPass?.[port] || 0) > Date.now(),
+          stellarBody.outlaw ||
+          (playerData.rep?.[faction] || 0) > -30 ||
+          (playerData.landPass?.[port] || 0) > Date.now(),
         near =
-          p.system === d.sys &&
-          (d.stellar === port || !!(ent && Math.hypot(ent.x - p.x, ent.y - p.y) <= p.r + 500));
+          stellarBody.system === playerData.sys &&
+          (playerData.stellar === port ||
+            !!(
+              ent && Math.hypot(ent.x - stellarBody.x, ent.y - stellarBody.y) <= stellarBody.r + 500
+            ));
       return { available: !!(eligible && allowed), home, faction, near };
     },
-    pricing(d, port, cid, now) {
-      const p = /** @type {import('./game.js').StellarBody} */ (STELLARS[port]);
-      if (!p) throw Error('Unknown port.');
-      const pr0 = price(p.site ? { ...p, prices: SITE_PRICES } : p, cid, now),
+    pricing(playerData, port, cid, now) {
+      const stellarBody = /** @type {StellarBody} */ (STELLARS[port]);
+      if (!stellarBody) throw Error('Unknown port.');
+      const pr0 = price(
+          stellarBody.site ? { ...stellarBody, prices: SITE_PRICES } : stellarBody,
+          cid,
+          now,
+        ),
         fallback = COMMODITIES.find((c) => c.id === cid)?.base;
       if (pr0 === null && !fallback) throw Error('Unknown commodity.');
-      const flash = p.site ? 1 : features.rivals.flashMult(p.id, cid),
-        living = p.site ? 1 : features.living.livingMult(p, cid),
+      const flash = stellarBody.site ? 1 : features.rivals.flashMult(stellarBody.id, cid),
+        living = stellarBody.site ? 1 : features.living.livingMult(stellarBody, cid),
         pr = Math.round((pr0 ?? fallback ?? 0) * flash * living),
-        bonus = features.bonuses.bonus(d).tradePct || 0,
-        sell = features.fronts.mods(p.system).sell;
+        bonus = features.bonuses.bonus(playerData).tradePct || 0,
+        sell = features.fronts.mods(stellarBody.system).sell;
       return {
-        ask: purchaseUnit(pr, 1, bonus, !!p.site),
-        bid: saleValue(pr, { common: 1, rich: 0, pure: 0 }, bonus, !!p.site, sell),
+        ask: purchaseUnit(pr, 1, bonus, !!stellarBody.site),
+        bid: saleValue(pr, { common: 1, rich: 0, pure: 0 }, bonus, !!stellarBody.site, sell),
         fingerprint: JSON.stringify([pr, bonus, sell, flash, living, pr0 === null]),
       };
     },
@@ -1299,24 +1324,25 @@ export function createFeatures(core) {
     toast: core.toast.bind(core),
   };
   features.refinery = bindOperations(RefineryOperations, refineryCapabilities);
-  /** @type {import('./mining-pressure-contracts.js').PressureCapabilities} */
+  /** @type {PressureCapabilities} */
   const pressureCapabilities = {
     get db() {
       return core.db;
     },
     sessions: () => core.sessions.values(),
-    newcomer: (d) => !!core.newcomer(d),
+    newcomer: (playerData) => !!core.newcomer(playerData),
     rush: (sys) => features.living.stateOf(sys)?.kind === 'rush',
     toast: core.toast.bind(core),
   };
   features.pressure = bindOperations(MiningPressureOperations, pressureCapabilities);
-  /** @type {import('./industrial-contracts.js').IndustrialCapabilities} */
+  /** @type {IndustrialCapabilities} */
   const industrialCapabilities = {
     get db() {
       return core.db;
     },
     paused: () => !!core.paused,
-    room: (d) => Math.max(0, (features.shipStats.stats(d)?.cargo || 0) - core.holdUsed(d)),
+    room: (playerData) =>
+      Math.max(0, (features.shipStats.stats(playerData)?.cargo || 0) - core.holdUsed(playerData)),
     get power() {
       return features.specialists.power;
     },
@@ -1328,7 +1354,7 @@ export function createFeatures(core) {
     toast: core.toast.bind(core),
   };
   features.industrial = bindOperations(IndustrialOperations, industrialCapabilities);
-  /** @type {import('./towing-contracts.js').TowCapabilities} */
+  /** @type {TowCapabilities} */
   const towingCapabilities = {
     get db() {
       return core.db;
@@ -1337,20 +1363,20 @@ export function createFeatures(core) {
     sessions: () => core.sessions.values(),
     refresh: core.you.bind(core),
     toast: core.toast.bind(core),
-    stopCombat: (s) => {
-      if (s.ent)
+    stopCombat: (session) => {
+      if (session.ent)
         core.combatAssist?.stop(
-          /** @type {import('./combat-assist.js').CombatSession} */ (s),
+          /** @type {CombatSession} */ (session),
           'Towing: manual flight required',
         );
     },
-    room: (d) =>
+    room: (playerData) =>
       Math.max(
         0,
-        (features.shipStats.stats(d)?.cargo || 0) -
-          core.holdUsed(/** @type {import('./refinery-contracts.js').RefineryPlayer} */ (d)),
+        (features.shipStats.stats(playerData)?.cargo || 0) -
+          core.holdUsed(/** @type {RefineryPlayer} */ (playerData)),
       ),
-    stats: (d) => features.shipStats.stats(d),
+    stats: (playerData) => features.shipStats.stats(playerData),
     field: (sys, field) => features.pressure.fieldState(sys, field),
   };
   features.towing = bindOperations(TowingOperations, towingCapabilities);

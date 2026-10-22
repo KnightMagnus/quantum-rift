@@ -1,6 +1,6 @@
 import { assertLots, addLots, commonLots } from '../shared/cargo-lots.js';
 import { clampStanding } from '../shared/reputation.js';
-// Quantum Rift 0.5 "Hangar Deck" server feature operations: shuttles, officers, the research queue,
+// Quantum Rift: server feature operations: shuttles, officers, the research queue,
 // refining crates up a grade, the drydock, and boarding disabled ships.
 import {
   SYSTEMS,
@@ -38,6 +38,9 @@ import {
   loadoutValue,
   credits,
 } from '../shared/rules.js';
+
+/** @import { OfficerRecord } from '../shared/rules.js' */
+/** @import { PlayerData, Session } from './game.js' */
 
 /**
  * Clamp a numeric value between a lower and an upper bound.
@@ -118,53 +121,53 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ save upgrades
   /**
    * Initialize hangar, officer, bridge, dock, and station queue data on player record.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} playerData - Saved player data.
    * @returns {void}
    */
-  hangarInit(d) {
-    d.shuttles = d.shuttles || [];
-    d.officers = d.officers || [];
-    d.bridge = d.bridge || {};
-    d.dock = d.dock || [];
-    d.station.queue = d.station.queue || [];
-    d.nextUid = d.nextUid || 1;
+  hangarInit(playerData) {
+    playerData.shuttles = playerData.shuttles || [];
+    playerData.officers = playerData.officers || [];
+    playerData.bridge = playerData.bridge || {};
+    playerData.dock = playerData.dock || [];
+    playerData.station.queue = playerData.station.queue || [];
+    playerData.nextUid = playerData.nextUid || 1;
   },
   /**
    * Allocate a monotonically increasing unique identifier for player entities.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} playerData - Saved player data.
    * @returns {number} Newly allocated unique ID.
    */
-  uid(d) {
-    return (d.nextUid = (d.nextUid || 1) + 1) - 1;
+  uid(playerData) {
+    return (playerData.nextUid = (playerData.nextUid || 1) + 1) - 1;
   },
   /**
-   * Calculate total shuttle bay capacity based on station Station Tier and research bonuses.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * Calculate total shuttle bay capacity based on Station Tier and research bonuses.
+   * @param {PlayerData} playerData - Saved player data.
    * @returns {number} Total available shuttle bays.
    */
-  bays(d) {
-    const b = researchBonus(d.station);
-    return d.station.site ? BAYS_BY_OPS[d.station.ops] + (b.bays || 0) : 0;
+  bays(playerData) {
+    const b = researchBonus(playerData.station);
+    return playerData.station.site ? BAYS_BY_OPS[playerData.station.ops] + (b.bays || 0) : 0;
   },
   /**
-   * Calculate total stored-ship dock slots based on station Station Tier and research bonuses.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * Calculate total stored-ship dock slots based on Station Tier and research bonuses.
+   * @param {PlayerData} playerData - Saved player data.
    * @returns {number} Total stored-ship berths.
    */
-  dockSlots(d) {
-    const b = researchBonus(d.station);
-    return d.station.site ? HANGAR_BY_OPS[d.station.ops] + (b.dockSlots || 0) : 0;
-  }, // 2.1: stored-ship berths
+  dockSlots(playerData) {
+    const b = researchBonus(playerData.station);
+    return playerData.station.site ? HANGAR_BY_OPS[playerData.station.ops] + (b.dockSlots || 0) : 0;
+  }, // stored-ship berths
 
   // ------------------------------------------------------------------ officers
   // a bar on any inhabited world with a job board posts three officers of the local race each hour
   /**
    * Generate three candidate officers for hire at an inhabited world with a bar service.
    * @param {{id: string, svc: string, system: string, tech?: number, site?: boolean | Record<string, string | number>}} p - Current stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {Array<import("../shared/rules.js").OfficerRecord>} List of generated officer offers.
+   * @param {PlayerData} playerData - Saved player data.
+   * @returns {Array<OfficerRecord>} List of generated officer offers.
    */
-  barOffers(p, d) {
+  barOffers(p, playerData) {
     if (!p || !p.svc.includes('B') || p.site) return [];
     const fac = SYS[p.system].faction,
       hour = Math.floor(Date.now() / 3600000),
@@ -179,7 +182,7 @@ export const HangarOperations = {
       const N = OFFICER_NAMES[race],
         name = pick(r, N[0]) + ' ' + pick(r, N[1]);
       const id = `${p.id}-${hour}-${i}`;
-      if (d && d.officers.some((o) => o.src === id)) continue;
+      if (playerData && playerData.officers.some((officer) => officer.src === id)) continue;
       out.push({
         id,
         name,
@@ -195,93 +198,100 @@ export const HangarOperations = {
   },
   /**
    * Handle officer operations including hiring from bars, assigning to bridge/shuttles, and dismissing.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {{op: string, id?: string, oid?: number, slot?: string}} m - Officer action payload.
    * @returns {void}
    */
-  officerOp(s, m) {
-    const d = s.data,
-      p = STELLARS[d.stellar];
+  officerOp(session, m) {
+    const playerData = session.data,
+      p = STELLARS[playerData.stellar];
     switch (m.op) {
       case 'hire': {
-        if (!p || s.ent) return;
-        const o = this.barOffers(p, d).find((x) => x.id === m.id);
-        if (!o) return;
-        if (d.officers.length >= ROSTER_MAX)
-          return this.toast(s, `Your roster is full (${ROSTER_MAX} officers).`);
-        if (d.credits < o.cost) return this.toast(s, 'Not enough credits.');
-        d.credits -= o.cost;
-        d.officers.push({
-          id: this.uid(d),
-          src: o.id,
-          name: o.name,
-          race: o.race,
-          role: o.role,
-          rarity: o.rarity,
-          lv: o.lv,
+        if (!p || session.ent) return;
+        const officer = this.barOffers(p, playerData).find((x) => x.id === m.id);
+        if (!officer) return;
+        if (playerData.officers.length >= ROSTER_MAX)
+          return this.toast(session, `Your roster is full (${ROSTER_MAX} officers).`);
+        if (playerData.credits < officer.cost) return this.toast(session, 'Not enough credits.');
+        playerData.credits -= officer.cost;
+        playerData.officers.push({
+          id: this.uid(playerData),
+          src: officer.id,
+          name: officer.name,
+          race: officer.race,
+          role: officer.role,
+          rarity: officer.rarity,
+          lv: officer.lv,
           xp: 0,
         });
         this.log(
-          d,
-          `Signed ${RARITY[o.rarity].name.toLowerCase()} ${ROLES[o.role].name.toLowerCase()} ${o.name} (${FACTIONS[o.race].short}).`,
+          playerData,
+          `Signed ${RARITY[officer.rarity].name.toLowerCase()} ${ROLES[officer.role].name.toLowerCase()} ${officer.name} (${FACTIONS[officer.race].short}).`,
         );
-        this.toast(s, `${o.name} joins your crew. Assign them to the bridge or a shuttle.`);
+        this.toast(
+          session,
+          `${officer.name} joins your crew. Assign them to the bridge or a shuttle.`,
+        );
         break;
       }
       case 'assign': {
         // slot: captain | bridge1 | bridge2 | '' (unassign)
-        const o = d.officers.find((x) => x.id === m.oid);
-        if (!o) return;
-        if (d.shuttles.some((sh) => sh.crew === o.id && sh.state === 'out'))
-          return this.toast(s, `${o.name} is out on a shuttle job.`);
-        for (const k of BRIDGE_SLOTS) if (d.bridge[k] === o.id) delete d.bridge[k];
-        for (const sh of d.shuttles) if (sh.crew === o.id) sh.crew = null;
-        if (this.unwingOfficer) this.unwingOfficer(d, o.id); // 2.1: one post at a time
-        if (BRIDGE_SLOTS.includes(m.slot)) d.bridge[m.slot] = o.id;
+        const officer = playerData.officers.find((x) => x.id === m.oid);
+        if (!officer) return;
+        if (playerData.shuttles.some((sh) => sh.crew === officer.id && sh.state === 'out'))
+          return this.toast(session, `${officer.name} is out on a shuttle job.`);
+        for (const k of BRIDGE_SLOTS)
+          if (playerData.bridge[k] === officer.id) delete playerData.bridge[k];
+        for (const sh of playerData.shuttles) if (sh.crew === officer.id) sh.crew = null;
+        if (this.unwingOfficer) this.unwingOfficer(playerData, officer.id); // one post at a time
+        if (BRIDGE_SLOTS.includes(m.slot)) playerData.bridge[m.slot] = officer.id;
         break;
       }
       case 'dismiss': {
-        const o = d.officers.find((x) => x.id === m.oid);
-        if (!o) return;
-        if (d.shuttles.some((sh) => sh.crew === o.id && sh.state === 'out'))
-          return this.toast(s, `${o.name} is out on a shuttle job.`);
-        for (const k of BRIDGE_SLOTS) if (d.bridge[k] === o.id) delete d.bridge[k];
-        for (const sh of d.shuttles) if (sh.crew === o.id) sh.crew = null;
-        if (this.unwingOfficer) this.unwingOfficer(d, o.id);
-        d.officers = d.officers.filter((x) => x !== o);
-        this.log(d, `${o.name} left your crew.`);
+        const officer = playerData.officers.find((x) => x.id === m.oid);
+        if (!officer) return;
+        if (playerData.shuttles.some((sh) => sh.crew === officer.id && sh.state === 'out'))
+          return this.toast(session, `${officer.name} is out on a shuttle job.`);
+        for (const k of BRIDGE_SLOTS)
+          if (playerData.bridge[k] === officer.id) delete playerData.bridge[k];
+        for (const sh of playerData.shuttles) if (sh.crew === officer.id) sh.crew = null;
+        if (this.unwingOfficer) this.unwingOfficer(playerData, officer.id);
+        playerData.officers = playerData.officers.filter((x) => x !== officer);
+        this.log(playerData, `${officer.name} left your crew.`);
         break;
       }
       default:
         return;
     }
     this.db.touch();
-    this.you(s);
-    this.landed(s);
+    this.you(session);
+    this.landed(session);
   },
   // experience for the bridge crew (kills, jumps, jobs) or one officer (shuttle runs)
   /**
    * Award experience points to all active bridge officers or a single designated officer.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {number} amount - Base XP amount.
-   * @param {import("../shared/rules.js").OfficerRecord} [only] - Specific officer to award XP to (optional).
+   * @param {OfficerRecord} [only] - Specific officer to award XP to (optional).
    * @returns {void}
    */
-  officerXp(s, amount, only) {
-    const d = s.data,
-      b = this.bonus ? this.bonus(d) : researchBonus(d.station),
+  officerXp(session, amount, only) {
+    const playerData = session.data,
+      b = this.bonus ? this.bonus(playerData) : researchBonus(playerData.station),
       k = (1 + (b.officerXp || 0) / 100) * (this.mods ? this.mods().xp : 1);
     const list = only
       ? [only]
-      : BRIDGE_SLOTS.map((sl) => d.officers.find((o) => o.id === d.bridge[sl])).filter(Boolean);
-    for (const o of list) {
-      if (o.lv >= MAX_LEVEL) continue;
-      o.xp += Math.round(amount * k);
-      while (o.lv < MAX_LEVEL && o.xp >= XP_LEVEL(o.lv)) {
-        o.xp -= XP_LEVEL(o.lv);
-        o.lv++;
-        this.toast(s, `${o.name} reached level ${o.lv}.`);
-        this.log(d, `${o.name} reached level ${o.lv}.`);
+      : BRIDGE_SLOTS.map((sl) =>
+          playerData.officers.find((officer) => officer.id === playerData.bridge[sl]),
+        ).filter(Boolean);
+    for (const officer of list) {
+      if (officer.lv >= MAX_LEVEL) continue;
+      officer.xp += Math.round(amount * k);
+      while (officer.lv < MAX_LEVEL && officer.xp >= XP_LEVEL(officer.lv)) {
+        officer.xp -= XP_LEVEL(officer.lv);
+        officer.lv++;
+        this.toast(session, `${officer.name} reached level ${officer.lv}.`);
+        this.log(playerData, `${officer.name} reached level ${officer.lv}.`);
       }
     }
   },
@@ -289,14 +299,14 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ shuttles
   /**
    * Generate available shuttle mission offerings from the player's personal station.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} playerData - Saved player data.
    * @returns {Array<{id: string, name: string, hull: number, reward: number, dest: string}>} List of active shuttle job offers.
    */
-  shuttleBoard(d) {
-    if (!d.station.site) return [];
-    const home = STELLARS[d.station.site].system,
+  shuttleBoard(playerData) {
+    if (!playerData.station.site) return [];
+    const home = STELLARS[playerData.station.site].system,
       win = Math.floor(Date.now() / (JOB_WINDOW_H * 3600000));
-    const r = rng(hash('sh' + d.name + win)),
+    const r = rng(hash('sh' + playerData.name + win)),
       J = jumps(home),
       out = [];
     const cand = Object.entries(J).filter(([sid, n]) => n >= 1 && n <= 7);
@@ -308,7 +318,7 @@ export const HangarOperations = {
         S = SYS[sys],
         F = FACTIONS[S.faction];
       const id = `sj-${win}-${i}`;
-      if (d.shuttles.some((sh) => sh.job && sh.job.id === id)) continue;
+      if (playerData.shuttles.some((sh) => sh.job && sh.job.id === id)) continue;
       const minutes = clamp(Math.round(10 + n * 28 + S.danger * 6 + r() * 20), 15, 480);
       const job = {
         id,
@@ -364,14 +374,14 @@ export const HangarOperations = {
   },
   /**
    * Calculate probability of success for a shuttle mission.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} playerData - Saved player data.
    * @param {{kind: string}} sh - Shuttle state.
    * @param {{kind: string, danger: number}} job - Shuttle job details.
-   * @param {import("../shared/rules.js").OfficerRecord | null} crew - Assigned officer, if any.
+   * @param {OfficerRecord | null} crew - Assigned officer, if any.
    * @returns {number} Success chance probability in [0.15, 0.97].
    */
-  shuttleChance(d, sh, job, crew) {
-    const b = researchBonus(d.station),
+  shuttleChance(playerData, sh, job, crew) {
+    const b = researchBonus(playerData.station),
       J = SHUTTLE_JOBS[job.kind];
     let c =
       J.base - job.danger * 0.07 + (J.fit === sh.kind ? 0.15 : -0.05) + (b.shuttlePct || 0) / 100;
@@ -385,58 +395,65 @@ export const HangarOperations = {
   },
   /**
    * Handle shuttle construction, crew assignment, dispatch, return claiming, repair, and scrapping.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {{op: string, kind?: string, sid?: number, oid?: number, job?: string}} m - Shuttle operation payload.
    * @returns {void}
    */
-  shuttleOp(s, m) {
-    const d = s.data,
-      p = STELLARS[d.stellar],
-      S = d.station;
-    const atHome = p && this.ownSite(d, p) && !s.ent;
+  shuttleOp(session, m) {
+    const playerData = session.data,
+      p = STELLARS[playerData.stellar],
+      S = playerData.station;
+    const atHome = p && this.ownSite(playerData, p) && !session.ent;
     switch (m.op) {
       case 'build': {
-        if (!atHome) return this.toast(s, 'Shuttles are built at your Personal Station.');
+        if (!atHome) return this.toast(session, 'Shuttles are built at your Personal Station.');
         const T = SHUTTLES[m.kind];
         if (!T) return;
-        if (S.ops < T.ops) return this.toast(s, `The ${T.name} needs Station Tier ${T.ops}.`);
-        if (d.shuttles.length >= this.bays(d))
+        if (S.ops < T.ops) return this.toast(session, `The ${T.name} needs Station Tier ${T.ops}.`);
+        if (playerData.shuttles.length >= this.bays(playerData))
           return this.toast(
-            s,
+            session,
             'Every hangar bay is full. Build Station Tiers or research bay extensions.',
           );
-        if (d.credits < T.cost || !this.hasMats(d, T.mats))
-          return this.toast(s, 'You need the credits and materials listed.');
-        d.credits -= T.cost;
-        this.takeMats(d, T.mats);
-        d.shuttles.push({ id: this.uid(d), kind: m.kind, state: 'idle', crew: null, runs: 0 });
-        this.log(d, `Built a ${T.name}.`);
-        this.toast(s, `The ${T.name} is ready in its bay.`);
+        if (playerData.credits < T.cost || !this.hasMats(playerData, T.mats))
+          return this.toast(session, 'You need the credits and materials listed.');
+        playerData.credits -= T.cost;
+        this.takeMats(playerData, T.mats);
+        playerData.shuttles.push({
+          id: this.uid(playerData),
+          kind: m.kind,
+          state: 'idle',
+          crew: null,
+          runs: 0,
+        });
+        this.log(playerData, `Built a ${T.name}.`);
+        this.toast(session, `The ${T.name} is ready in its bay.`);
         break;
       }
       case 'crew': {
-        const sh = d.shuttles.find((x) => x.id === m.sid);
+        const sh = playerData.shuttles.find((x) => x.id === m.sid);
         if (!sh || sh.state === 'out') return;
-        const o = m.oid ? d.officers.find((x) => x.id === m.oid) : null;
-        if (o) {
-          if (d.shuttles.some((x) => x.crew === o.id && x.state === 'out'))
-            return this.toast(s, `${o.name} is already out.`);
-          for (const k of BRIDGE_SLOTS) if (d.bridge[k] === o.id) delete d.bridge[k];
-          for (const x of d.shuttles) if (x.crew === o.id) x.crew = null;
+        const officer = m.oid ? playerData.officers.find((x) => x.id === m.oid) : null;
+        if (officer) {
+          if (playerData.shuttles.some((x) => x.crew === officer.id && x.state === 'out'))
+            return this.toast(session, `${officer.name} is already out.`);
+          for (const k of BRIDGE_SLOTS)
+            if (playerData.bridge[k] === officer.id) delete playerData.bridge[k];
+          for (const x of playerData.shuttles) if (x.crew === officer.id) x.crew = null;
         }
-        sh.crew = o ? o.id : null;
+        sh.crew = officer ? officer.id : null;
         break;
       }
       case 'send': {
         // dispatching works from anywhere: the hangar crew launch on your order
-        const sh = d.shuttles.find((x) => x.id === m.sid);
-        if (!sh || sh.state !== 'idle') return this.toast(s, 'That shuttle is not ready.');
-        const job = this.shuttleBoard(d).find((j) => j.id === m.job);
-        if (!job) return this.toast(s, 'That job is no longer posted.');
-        const b = researchBonus(d.station),
+        const sh = playerData.shuttles.find((x) => x.id === m.sid);
+        if (!sh || sh.state !== 'idle') return this.toast(session, 'That shuttle is not ready.');
+        const job = this.shuttleBoard(playerData).find((j) => j.id === m.job);
+        if (!job) return this.toast(session, 'That job is no longer posted.');
+        const b = researchBonus(playerData.station),
           T = SHUTTLES[sh.kind],
-          crew = sh.crew ? d.officers.find((o) => o.id === sh.crew) : null;
-        const chance = this.shuttleChance(d, sh, job, crew),
+          crew = sh.crew ? playerData.officers.find((officer) => officer.id === sh.crew) : null;
+        const chance = this.shuttleChance(playerData, sh, job, crew),
           roll = Math.random();
         const minutes = Math.max(
           5,
@@ -462,63 +479,63 @@ export const HangarOperations = {
         sh.ends = Date.now() + minutes * 60000;
         sh.outcome = outcome;
         sh.chance = chance;
-        this.log(d, `${T.name} launched: ${job.title} (${minutes} min).`);
-        this.toast(s, `${T.name} launched. Back in ${minutes} minutes.`);
-        this.shuttleTraffic(d, sh, 'out');
+        this.log(playerData, `${T.name} launched: ${job.title} (${minutes} min).`);
+        this.toast(session, `${T.name} launched. Back in ${minutes} minutes.`);
+        this.shuttleTraffic(playerData, sh, 'out');
         break;
       }
       case 'claim': {
         // collect every shuttle that has come back
         const now = Date.now();
         let n = 0;
-        for (const sh of d.shuttles.filter((x) => x.state === 'out' && now >= x.ends)) {
-          this.resolveShuttle(s, sh);
+        for (const sh of playerData.shuttles.filter((x) => x.state === 'out' && now >= x.ends)) {
+          this.resolveShuttle(session, sh);
           n++;
         }
-        if (!n) return this.toast(s, 'No shuttles have returned yet.');
-        d.shuttles = d.shuttles.filter((x) => x.state !== 'gone');
+        if (!n) return this.toast(session, 'No shuttles have returned yet.');
+        playerData.shuttles = playerData.shuttles.filter((x) => x.state !== 'gone');
         break;
       }
       case 'repair': {
-        if (!atHome) return this.toast(s, 'Repairs happen at your Personal Station.');
-        const sh = d.shuttles.find((x) => x.id === m.sid);
+        if (!atHome) return this.toast(session, 'Repairs happen at your Personal Station.');
+        const sh = playerData.shuttles.find((x) => x.id === m.sid);
         if (!sh || sh.state !== 'damaged') return;
         const cost = Math.round(SHUTTLES[sh.kind].cost * SHUTTLE_REPAIR);
-        if (d.credits < cost) return this.toast(s, 'Not enough credits.');
-        d.credits -= cost;
+        if (playerData.credits < cost) return this.toast(session, 'Not enough credits.');
+        playerData.credits -= cost;
         sh.state = 'idle';
-        this.toast(s, `${SHUTTLES[sh.kind].name} repaired for ${credits(cost)} credits.`);
+        this.toast(session, `${SHUTTLES[sh.kind].name} repaired for ${credits(cost)} credits.`);
         break;
       }
       case 'scrap': {
         if (!atHome) return;
-        const sh = d.shuttles.find((x) => x.id === m.sid);
+        const sh = playerData.shuttles.find((x) => x.id === m.sid);
         if (!sh || sh.state === 'out') return;
         const back = Math.round(SHUTTLES[sh.kind].cost * 0.3);
-        d.credits += back;
-        d.shuttles = d.shuttles.filter((x) => x !== sh);
-        this.toast(s, `Scrapped for ${credits(back)} credits.`);
+        playerData.credits += back;
+        playerData.shuttles = playerData.shuttles.filter((x) => x !== sh);
+        this.toast(session, `Scrapped for ${credits(back)} credits.`);
         break;
       }
       default:
         return;
     }
     this.db.touch();
-    this.you(s);
-    this.landed(s);
+    this.you(session);
+    this.landed(session);
   },
   /**
    * Resolve an accomplished or failed shuttle mission and grant rewards or report losses.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {{id: string, name: string, hull: number, ret: number, reward: number, mat: string, qty: number, xp: number}} sh - Completed shuttle state.
    * @returns {void}
    */
-  resolveShuttle(s, sh) {
-    const d = s.data,
+  resolveShuttle(session, sh) {
+    const playerData = session.data,
       T = SHUTTLES[sh.kind],
       job = sh.job,
-      b = researchBonus(d.station),
-      crew = sh.crew ? d.officers.find((o) => o.id === sh.crew) : null;
+      b = researchBonus(playerData.station),
+      crew = sh.crew ? playerData.officers.find((officer) => officer.id === sh.crew) : null;
     const k = (1 + (b.shuttleYield || 0) / 100) * (this.mods ? this.mods().shuttleYield : 1);
     sh.runs++;
     if (sh.outcome === 'success') {
@@ -526,69 +543,69 @@ export const HangarOperations = {
         got = [];
       if (rw.credits) {
         const c = Math.round(rw.credits * k);
-        d.credits += c;
-        d.stats.earned += c;
+        playerData.credits += c;
+        playerData.stats.earned += c;
         got.push(`${credits(c)} cr`);
       }
       if (rw.mats)
         for (const [mt, g, n] of rw.mats) {
           const q = n + (Math.random() < k - 1 ? 1 : 0);
-          d.mats[mt][g] += q;
+          playerData.mats[mt][g] += q;
           got.push(`${q} ${mt} ${GRADES[g]}`);
         }
       if (rw.rep) {
-        d.rep[rw.rep[0]] = clampStanding((d.rep[rw.rep[0]] || 0) + rw.rep[1]);
+        playerData.rep[rw.rep[0]] = clampStanding((playerData.rep[rw.rep[0]] || 0) + rw.rep[1]);
         got.push(`+${rw.rep[1]} ${FACTIONS[rw.rep[0]].short} standing`);
       }
-      if (rw.chart && !d.explored.includes(job.sys)) {
-        d.explored.push(job.sys);
+      if (rw.chart && !playerData.explored.includes(job.sys)) {
+        playerData.explored.push(job.sys);
         got.push(`charted ${SYS[job.sys].name}`);
       }
       if (Math.random() < 0.08 + job.danger * 0.02) {
         const mt = MATERIALS[Math.floor(Math.random() * 3)],
           g = clamp(Math.floor(job.danger / 2) + 1, 1, 4);
-        d.mats[mt][g]++;
+        playerData.mats[mt][g]++;
         got.push(`rare find: ${mt} ${GRADES[g]}`);
       }
-      this.toast(s, `${T.name} back from "${job.title}": ${got.join(', ')}.`);
-      if (this.notify) this.notify(s, 'Shuttle home', `${T.name}: ${got.join(', ')}`);
-      this.log(d, `${T.name} succeeded: ${job.title}. ${got.join(', ')}.`);
-      if (crew) this.officerXp(s, 30 + job.jumps * 12, crew);
-      if (this.goal) this.goal(s, 'shuttles');
+      this.toast(session, `${T.name} back from "${job.title}": ${got.join(', ')}.`);
+      if (this.notify) this.notify(session, 'Shuttle home', `${T.name}: ${got.join(', ')}`);
+      this.log(playerData, `${T.name} succeeded: ${job.title}. ${got.join(', ')}.`);
+      if (crew) this.officerXp(session, 30 + job.jumps * 12, crew);
+      if (this.goal) this.goal(session, 'shuttles');
       sh.state = 'idle';
     } else if (sh.outcome === 'lost') {
       this.toast(
-        s,
+        session,
         `${T.name} was lost on "${job.title}".${crew ? ` ${crew.name} made it home in an escape pod.` : ''}`,
       );
-      this.log(d, `${T.name} lost in ${SYS[job.sys].name}.`);
+      this.log(playerData, `${T.name} lost in ${SYS[job.sys].name}.`);
       sh.state = 'gone';
     } else {
       const dmg = sh.outcome === 'damaged';
       this.toast(
-        s,
+        session,
         `${T.name} came back empty-handed from "${job.title}"${dmg ? ' and needs repairs' : ''}.`,
       );
-      this.log(d, `${T.name} failed: ${job.title}${dmg ? ' (damaged)' : ''}.`);
-      if (crew) this.officerXp(s, 10, crew);
+      this.log(playerData, `${T.name} failed: ${job.title}${dmg ? ' (damaged)' : ''}.`);
+      if (crew) this.officerXp(session, 10, crew);
       sh.state = dmg ? 'damaged' : 'idle';
     }
     sh.job = null;
     sh.outcome = null;
     sh.ends = null;
-    if (sh.state !== 'gone') this.shuttleTraffic(d, sh, 'in');
+    if (sh.state !== 'gone') this.shuttleTraffic(playerData, sh, 'in');
   },
   // shuttles visibly launch from (and return to) the Personal Station when its system is live
   /**
    * Spawn ambient space entity representing shuttle departure or arrival at personal station.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} playerData - Saved player data.
    * @param {{kind: string}} sh - Shuttle state.
    * @param {'out' | 'in'} dir - Traffic direction ('out' or 'in').
    * @returns {void}
    */
-  shuttleTraffic(d, sh, dir) {
-    if (!d.station.site) return;
-    const site = STELLARS[d.station.site],
+  shuttleTraffic(playerData, sh, dir) {
+    if (!playerData.station.site) return;
+    const site = STELLARS[playerData.station.site],
       sp = this.live[site.system];
     if (!sp) return;
     const T = SHUTTLES[sh.kind],
@@ -603,7 +620,7 @@ export const HangarOperations = {
         vx: Math.sin(ang) * 60,
         vy: -Math.cos(ang) * 60,
         ai: 'leave',
-        name: `${d.name}'s ${T.name}`,
+        name: `${playerData.name}'s ${T.name}`,
       });
       e.civil = true;
     } else {
@@ -614,7 +631,7 @@ export const HangarOperations = {
         y: site.y - Math.cos(ang) * 2400,
         a: ang + Math.PI,
         ai: 'trade',
-        name: `${d.name}'s ${T.name}`,
+        name: `${playerData.name}'s ${T.name}`,
       });
       e.dest = { ...site, r: site.r };
       e.civil = true;
@@ -640,38 +657,38 @@ export const HangarOperations = {
   },
   /**
    * Queue a research project along with any unfulfilled prerequisites.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {string} id - Research project ID.
    * @returns {void}
    */
-  queueResearch(s, id) {
-    const d = s.data,
-      S = d.station;
+  queueResearch(session, id) {
+    const playerData = session.data,
+      S = playerData.station;
     const chain = this.researchChain(S, id).filter(
       (x) => x !== (S.active && S.active.id) && !S.queue.includes(x),
     );
-    if (!chain.length) return this.toast(s, 'Already researched or queued.');
+    if (!chain.length) return this.toast(session, 'Already researched or queued.');
     if (chain.some((x) => RESEARCH.find((r) => r.id === x).ops > S.ops))
-      return this.toast(s, 'That needs a higher Station Tier.');
+      return this.toast(session, 'That needs a higher Station Tier.');
     if (S.queue.length + chain.length > RESEARCH_QUEUE_MAX)
-      return this.toast(s, `The lab queue holds ${RESEARCH_QUEUE_MAX} projects.`);
+      return this.toast(session, `The lab queue holds ${RESEARCH_QUEUE_MAX} projects.`);
     S.queue.push(...chain);
     this.toast(
-      s,
+      session,
       chain.length > 1
         ? `Queued ${chain.length} projects (prerequisites first).`
         : 'Research queued.',
     );
-    this.startQueued(d);
+    this.startQueued(playerData);
   },
   // start the next queued project if the lab is free and the captain can pay for it (called on every station check)
   /**
    * Start the next research project in queue if station lab is idle and funds/materials allow.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} playerData - Saved player data.
    * @returns {void}
    */
-  startQueued(d) {
-    const S = d.station;
+  startQueued(playerData) {
+    const S = playerData.station;
     if (S.active || !S.queue.length) return;
     const r = RESEARCH.find((x) => x.id === S.queue[0]);
     if (!r) {
@@ -680,17 +697,17 @@ export const HangarOperations = {
     }
     if (S.done.includes(r.id)) {
       S.queue.shift();
-      return this.startQueued(d);
+      return this.startQueued(playerData);
     }
     if (S.ops < r.ops || (r.needs && !S.done.includes(r.needs))) return;
-    if (d.credits < r.cost || !this.hasMats(d, r.mats)) {
+    if (playerData.credits < r.cost || !this.hasMats(playerData, r.mats)) {
       S.waiting = true;
       return;
     }
     S.waiting = false;
     S.queue.shift();
-    d.credits -= r.cost;
-    this.takeMats(d, r.mats);
+    playerData.credits -= r.cost;
+    this.takeMats(playerData, r.mats);
     S.active = {
       id: r.id,
       ends: Date.now() + r.minutes * 60000,
@@ -701,33 +718,33 @@ export const HangarOperations = {
   // ------------------------------------------------------------------ refining: three crates make one of the next grade
   /**
    * Refine multiple material crates of grade g into grade g+1.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {string} mat - Material identifier ('alloy', 'crystal', 'isotope').
    * @param {number} g - Current grade level (0 to 3).
    * @param {number} n - Number of refining operations to execute.
    * @returns {void}
    */
-  refineUp(s, mat, g, n) {
-    const d = s.data;
+  refineUp(session, mat, g, n) {
+    const playerData = session.data;
     if (!MATERIALS.includes(mat) || !(g >= 0 && g < 4)) return;
     n = Math.max(
       1,
       Math.min(
         n | 0 || 1,
-        Math.floor(d.mats[mat][g] / REFINE_UP.need),
-        Math.floor(d.credits / REFINE_UP.cost[g]),
+        Math.floor(playerData.mats[mat][g] / REFINE_UP.need),
+        Math.floor(playerData.credits / REFINE_UP.cost[g]),
       ),
     );
-    if (d.mats[mat][g] < REFINE_UP.need || d.credits < REFINE_UP.cost[g])
+    if (playerData.mats[mat][g] < REFINE_UP.need || playerData.credits < REFINE_UP.cost[g])
       return this.toast(
-        s,
+        session,
         `You need ${REFINE_UP.need} ${mat} ${GRADES[g]} crates and ${credits(REFINE_UP.cost[g])} credits per refine.`,
       );
-    d.mats[mat][g] -= n * REFINE_UP.need;
-    d.mats[mat][g + 1] += n;
-    d.credits -= n * REFINE_UP.cost[g];
+    playerData.mats[mat][g] -= n * REFINE_UP.need;
+    playerData.mats[mat][g + 1] += n;
+    playerData.credits -= n * REFINE_UP.cost[g];
     this.toast(
-      s,
+      session,
       `Refined ${n * REFINE_UP.need} ${mat} ${GRADES[g]} into ${n} ${mat} ${GRADES[g + 1]}.`,
     );
   },
@@ -743,201 +760,210 @@ export const HangarOperations = {
   },
   /**
    * Handle drydock operations including storing and selling stored ships.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {{op: string, i?: number, uid?: number}} m - Drydock operation payload.
    * @returns {void}
    */
-  dockOp(s, m) {
-    const d = s.data,
-      p = STELLARS[d.stellar];
-    if (!p || s.ent || !this.ownSite(d, p))
-      return this.toast(s, 'The drydock is at your Personal Station.');
+  dockOp(session, m) {
+    const playerData = session.data,
+      p = STELLARS[playerData.stellar];
+    if (!p || session.ent || !this.ownSite(playerData, p))
+      return this.toast(session, 'The drydock is at your Personal Station.');
     switch (m.op) {
       case 'store': {
         // 2.1: kept for older clients: FLY THIS = make it the active dock's lead; no index = store the ship you fly
-        const st = m.i === undefined || m.i === null || m.i < 0 ? null : d.dock[m.i | 0];
+        const st = m.i === undefined || m.i === null || m.i < 0 ? null : playerData.dock[m.i | 0];
         if (m.i >= 0 && !st) return;
-        if (!st && d.shipless) return this.toast(s, 'You have no active ship to store.');
-        return this.docksOp(s, {
+        if (!st && playerData.shipless)
+          return this.toast(session, 'You have no active ship to store.');
+        return this.docksOp(session, {
           op: 'assign',
-          k: d.activeDock,
+          k: playerData.activeDock,
           slot: 'lead',
           uid: st ? st.ship.uid : null,
         });
       }
       case 'sell': {
-        const st = m.uid ? d.dock.find((x) => x.ship.uid === m.uid) : d.dock[m.i | 0];
+        const st = m.uid
+          ? playerData.dock.find((x) => x.ship.uid === m.uid)
+          : playerData.dock[m.i | 0];
         if (!st) return;
         const v = this.storedValue(st);
-        d.credits += v;
-        d.dock = d.dock.filter((x) => x !== st);
-        this.unassign(d, st.ship.uid);
-        this.toast(s, `Sold the ${this.A.ships[st.ship.hull].name} for ${credits(v)} credits.`);
+        playerData.credits += v;
+        playerData.dock = playerData.dock.filter((x) => x !== st);
+        this.unassign(playerData, st.ship.uid);
+        this.toast(
+          session,
+          `Sold the ${this.A.ships[st.ship.hull].name} for ${credits(v)} credits.`,
+        );
         break;
       }
       default:
         return;
     }
     this.db.touch();
-    this.you(s);
-    this.landed(s);
+    this.you(session);
+    this.landed(session);
   },
 
   // ------------------------------------------------------------------ boarding
   /**
    * Handle boarding interactions with disabled ships or downed Armada captains (plunder, capture, rescue).
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {{id: number, act: 'plunder' | 'capture' | 'rescue'}} m - Boarding action payload.
    * @returns {void}
    */
-  board(s, m) {
-    const d = s.data,
-      e = s.ent;
-    if (!e || e.state !== 'fly') return;
-    const sp = this.spaces[d.sys],
+  board(session, m) {
+    const playerData = session.data,
+      entity = session.ent;
+    if (!entity || entity.state !== 'fly') return;
+    const sp = this.spaces[playerData.sys],
       t = sp.ships.get(m.id);
-    if (t && t.player && t.rescueT && this.rescueBoard) return this.rescueBoard(s, t); // 2.6: patch up a downed Armada captain
+    if (t && t.player && t.rescueT && this.rescueBoard) return this.rescueBoard(session, t); // patch up a downed Armada captain
     if (!t || !t.disabled || t.player || t.boarded)
-      return this.toast(s, 'Only disabled ships can be boarded.');
-    const dist = Math.hypot(t.x - e.x, t.y - e.y),
-      rel = Math.hypot(t.vx - e.vx, t.vy - e.vy);
-    if (dist > Math.max(120, (t.st.size + e.st.size) * 0.5))
-      return this.toast(s, 'Move alongside to board.');
-    if (rel > 90) return this.toast(s, 'Match speed to board.');
+      return this.toast(session, 'Only disabled ships can be boarded.');
+    const dist = Math.hypot(t.x - entity.x, t.y - entity.y),
+      rel = Math.hypot(t.vx - entity.vx, t.vy - entity.vy);
+    if (dist > Math.max(120, (t.st.size + entity.st.size) * 0.5))
+      return this.toast(session, 'Move alongside to board.');
+    if (rel > 90) return this.toast(session, 'Match speed to board.');
     const H = this.A.ships[t.hull],
       F = FACTIONS[t.faction],
       lawful = F && !F.pirate && t.faction !== 'umbral',
-      b = captainBonus(d);
+      b = captainBonus(playerData);
     const repHit = (n) => {
-      if (lawful && !t.mission && (d.rep[t.faction] || 0) > -100) {
-        d.rep[t.faction] = clampStanding((d.rep[t.faction] || 0) - n);
+      if (lawful && !t.mission && (playerData.rep[t.faction] || 0) > -100) {
+        playerData.rep[t.faction] = clampStanding((playerData.rep[t.faction] || 0) - n);
         return ` ${F.short} standing -${n}.`;
       }
       return '';
     };
     const done = () => {
-      if (this.specOnBoard) this.specOnBoard(s);
+      if (this.specOnBoard) this.specOnBoard(session);
       t.boarded = true;
       sp.remove(t, 'jump');
-      this.tut(s, 'board');
-      if (this.goal) this.goal(s, 'boarded');
+      this.tut(session, 'board');
+      if (this.goal) this.goal(session, 'boarded');
       this.db.touch();
-      this.you(s);
+      this.you(session);
     };
     switch (m.act) {
       case 'plunder': {
-        assertLots(d.cargo, d.cargoLots);
+        assertLots(playerData.cargo, playerData.cargoLots);
         const cr = Math.round(
           (t.strength || 10) *
             (20 + Math.random() * 40) *
             (1 + (b.lootPct || 0) / 100) *
-            (this.flying && this.flying(d, 'corsair') ? 2 * this.power(d) : 1),
+            (this.flying && this.flying(playerData, 'corsair') ? 2 * this.power(playerData) : 1),
         );
-        d.credits += cr;
-        d.stats.earned += cr;
+        playerData.credits += cr;
+        playerData.stats.earned += cr;
         const got = [`${credits(cr)} credits`];
-        const st = this.stats(d),
-          used = this.holdUsed(d),
+        const st = this.stats(playerData),
+          used = this.holdUsed(playerData),
           room = st.cargo - used;
         if (room > 0) {
           const c = COMMODITIES[Math.floor(Math.random() * COMMODITIES.length)],
             q = Math.min(room, 2 + Math.floor(Math.random() * 9));
-          addLots(d.cargo, d.cargoLots, commonLots(c.id, q), Math.max(0, room));
+          addLots(playerData.cargo, playerData.cargoLots, commonLots(c.id, q), Math.max(0, room));
           got.push(`${q} t ${c.name}`);
         }
         if (Math.random() < 0.3) {
           const mt = MATERIALS[Math.floor(Math.random() * 3)],
             g = clamp(Math.floor((t.strength || 10) / 400), 0, 3);
-          d.mats[mt][g]++;
+          playerData.mats[mt][g]++;
           got.push(`${mt} ${GRADES[g]}`);
         }
-        this.toast(s, `Plundered the ${H.name}: ${got.join(', ')}.${repHit(8)}`);
-        this.log(d, `Boarded and plundered a ${H.name} in ${SYS[d.sys].name}.`);
-        this.officerXp(s, 15);
-        if (this.synGain) this.synGain(s, 'plunder');
+        this.toast(session, `Plundered the ${H.name}: ${got.join(', ')}.${repHit(8)}`);
+        this.log(playerData, `Boarded and plundered a ${H.name} in ${SYS[playerData.sys].name}.`);
+        this.officerXp(session, 15);
+        if (this.synGain) this.synGain(session, 'plunder');
         return done();
       }
       case 'capture': {
-        const crewN = BRIDGE_SLOTS.filter((k) => d.bridge[k]).length;
+        const crewN = BRIDGE_SLOTS.filter((k) => playerData.bridge[k]).length;
         if (!crewN)
-          return this.toast(s, 'You need at least one officer on the bridge to lead a prize crew.');
-        const own = this.A.ships[d.ship.hull].strength || 10;
+          return this.toast(
+            session,
+            'You need at least one officer on the bridge to lead a prize crew.',
+          );
+        const own = this.A.ships[playerData.ship.hull].strength || 10;
         const chance = clamp(
           0.3 +
             crewN * 0.15 -
             (t.strength || 10) / Math.max(40, own * 3) +
-            (this.flying && this.flying(d, 'corsair') ? 0.25 * this.power(d) : 0),
+            (this.flying && this.flying(playerData, 'corsair') ? 0.25 * this.power(playerData) : 0),
           0.08,
           0.95,
         );
         if (Math.random() > chance) {
           sp.events.push(['boom', Math.round(t.x), Math.round(t.y), t.st.size]);
-          e.armor = Math.max(1, e.armor - e.st.armor * 0.1);
+          entity.armor = Math.max(1, entity.armor - entity.st.armor * 0.1);
           this.toast(
-            s,
+            session,
             `The ${H.name}'s crew scuttled her before your prize crew could take the bridge.${repHit(10)}`,
           );
-          this.log(d, `A capture attempt on a ${H.name} failed: scuttled.`);
+          this.log(playerData, `A capture attempt on a ${H.name} failed: scuttled.`);
           return done();
         }
         const loadout = makeLoadout(this.A, t.hull, `Prize ${H.name.split(' ')[0]}`);
-        if (d.dock.length < this.dockSlots(d)) {
-          loadout.uid = this.shipUid(d);
-          d.dock.push({ ship: loadout, bridge: {} });
+        if (playerData.dock.length < this.dockSlots(playerData)) {
+          loadout.uid = this.shipUid(playerData);
+          playerData.dock.push({ ship: loadout, bridge: {} });
           this.toast(
-            s,
+            session,
             `Captured the ${H.name}! A prize crew takes her to your drydock.${repHit(15)}`,
           );
         } else {
           const v = Math.round((H.cost || 0) * CAPTURE_SELL);
-          d.credits += v;
+          playerData.credits += v;
           this.toast(
-            s,
+            session,
             `Captured the ${H.name}. With no free berth she was sold at the nearest yard for ${credits(v)} credits.${repHit(15)}`,
           );
         }
-        this.log(d, `Captured a ${H.name} in ${SYS[d.sys].name}.`);
-        this.officerXp(s, 40);
-        if (this.synGain) this.synGain(s, 'capture');
+        this.log(playerData, `Captured a ${H.name} in ${SYS[playerData.sys].name}.`);
+        this.officerXp(session, 40);
+        if (this.synGain) this.synGain(session, 'capture');
         return done();
       }
       case 'rescue': {
-        if (t.storyBoard && this.storyProgress) this.storyProgress(s, t);
-        if (t.arcOf && this.arcProgress) this.arcProgress(s, t);
+        if (t.storyBoard && this.storyProgress) this.storyProgress(session, t);
+        if (t.arcOf && this.arcProgress) this.arcProgress(session, t);
         if (t.rescueOf) {
-          const mm = d.missions.find((x) => x.id === t.rescueOf.id);
+          const mm = playerData.missions.find((x) => x.id === t.rescueOf.id);
           if (mm) {
             mm.done = true;
-            this.toast(s, `The ${t.name}'s crew are safe aboard. Land anywhere to be paid.`);
+            this.toast(session, `The ${t.name}'s crew are safe aboard. Land anywhere to be paid.`);
           }
         }
         if (lawful) {
-          d.rep[t.faction] = clampStanding((d.rep[t.faction] || 0) + 6);
+          playerData.rep[t.faction] = clampStanding((playerData.rep[t.faction] || 0) + 6);
           const cr = 500 + Math.round((t.strength || 10) * 5);
-          d.credits += cr;
+          playerData.credits += cr;
           this.toast(
-            s,
+            session,
             `Rescued the ${H.name}'s crew. ${F.short} standing +6, and a ${credits(cr)} credit reward.`,
           );
         } else {
           const cr = Math.round(
             ((t.strength || 10) * 25 + 500) * 0.8 * (1 + (b.lootPct || 0) / 100),
           );
-          d.credits += cr;
-          d.stats.earned += cr;
-          d.rep.quantum = clampStanding(d.rep.quantum + 2);
+          playerData.credits += cr;
+          playerData.stats.earned += cr;
+          playerData.rep.quantum = clampStanding(playerData.rep.quantum + 2);
           this.toast(
-            s,
+            session,
             `Arrested the ${H.name}'s crew for the Concord. Reward: ${credits(cr)} credits.`,
           );
-          for (const mm of d.missions)
+          for (const mm of playerData.missions)
             if (mm.type === 'bounty' && t.mission && t.mission.id === mm.id) {
               mm.done = true;
-              this.toast(s, 'Bounty complete: land anywhere to collect.');
+              this.toast(session, 'Bounty complete: land anywhere to collect.');
             }
         }
-        this.log(d, `Rescued the crew of a ${H.name}.`);
-        this.officerXp(s, 20);
+        this.log(playerData, `Rescued the crew of a ${H.name}.`);
+        this.officerXp(session, 20);
         return done();
       }
     }

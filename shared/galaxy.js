@@ -1,5 +1,7 @@
 import { addEventide } from './eventide.js';
 import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from './gen.js';
+
+/** @import { OutfitAsset, WeaponAsset } from './rules.js' */
 // Quantum Rift: the galaxy. 30 hand-made anchor systems, grown to ~200 by shared/gen.js (deterministic).
 // Shared by the server (authoritative) and the browser client (map, landing screens).
 
@@ -97,7 +99,7 @@ export const FACTIONS = {
     farside: true,
   },
   deep: { name: 'The Deep', short: 'Deep', color: '#4a5a9a', hostile: [], region: true },
-  // 0.8: the Feral Swarm: wild Vashari drone clusters, hostile to everyone (not a power: no territory, no store, no standing)
+  // the Feral Swarm: wild Vashari drone clusters, hostile to everyone (not a power: no territory, no store, no standing)
   swarm: {
     name: 'Feral Swarm',
     short: 'Swarm',
@@ -118,7 +120,7 @@ export const FACTIONS = {
     hidden: true,
     region: true,
   },
-  // 0.9: the Umbral Eclipse: violet-lit Umbral cells that roam far from home (hostile to all; no territory, store or standing)
+  // the Umbral Eclipse: violet-lit Umbral cells that roam far from home (hostile to all; no territory, store or standing)
   eclipse: {
     name: 'Umbral Eclipse',
     short: 'Eclipse',
@@ -1049,10 +1051,11 @@ export const SITES = [
   site: true,
   desc: 'A gutted Concord station hull, adrift but sound. Claim it and it becomes your Personal Station: dock, refinery, lab and shipyard.',
 }));
-for (const st of SITES) SYSTEMS.find((s) => s.id === st.system).stellars.push(st);
-addSolGateway(SYSTEMS); // 0.8: Sol (with Earth and the Gateway wormhole) and the ten Farside systems
-addMoonsAndFields(SYSTEMS); // 2.3: more moons and asteroid fields (a separate seeded pass: no existing ids change)
-// 2.5.2: more markets buy what captains mine. Worlds near asteroid fields, and mining and alien peoples, take ore, gas and
+for (const stellarBody of SITES)
+  SYSTEMS.find((s) => s.id === stellarBody.system).stellars.push(stellarBody);
+addSolGateway(SYSTEMS); // Sol (with Earth and the Gateway wormhole) and the ten Farside systems
+addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded pass: no existing ids change)
+// more markets buy what captains mine. Worlds near asteroid fields, and mining and alien peoples, take ore, gas and
 // crystal shards (a deterministic pass over the generated markets; existing prices are untouched).
 {
   const MINERS = new Set([
@@ -1065,24 +1068,32 @@ addMoonsAndFields(SYSTEMS); // 2.3: more moons and asteroid fields (a separate s
     'vashari',
   ]);
   for (const S of SYSTEMS)
-    for (const p of S.stellars) {
-      if (!p.prices || !(p.svc || '').includes('T') || p.site || p.hub) continue;
+    for (const stellarBody of S.stellars) {
+      if (
+        !stellarBody.prices ||
+        !(stellarBody.svc || '').includes('T') ||
+        stellarBody.site ||
+        stellarBody.hub
+      )
+        continue;
       let h = 2166136261;
-      for (const c of p.id + ':mine') h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+      for (const c of stellarBody.id + ':mine') h = Math.imul(h ^ c.charCodeAt(0), 16777619);
       h >>>= 0;
       const near = (S.fields || []).length > 0,
         kin = MINERS.has(S.faction),
         roll = (h % 1000) / 1000;
-      if (!('shards' in p.prices) && (near || kin) && roll < 0.42) p.prices.shards = 1;
-      if (!('ore' in p.prices) && near && roll > 0.7) p.prices.ore = 0;
-      if (!('gas' in p.prices) && near && roll > 0.55 && roll < 0.75) p.prices.gas = 0;
+      if (!('shards' in stellarBody.prices) && (near || kin) && roll < 0.42)
+        stellarBody.prices.shards = 1;
+      if (!('ore' in stellarBody.prices) && near && roll > 0.7) stellarBody.prices.ore = 0;
+      if (!('gas' in stellarBody.prices) && near && roll > 0.55 && roll < 0.75)
+        stellarBody.prices.gas = 0;
     }
 }
 addEventide(SYSTEMS); // Append authored v2.9 content without consuming legacy generation RNG.
 // Move only the authored mouth AFTER generation so collision rejection and RNG stay stable.
 {
   const gate = SYSTEMS.find((s) => s.id === 'coldharbor').stellars.find(
-    (p) => p.id === 'coldharbor-gate',
+    (stellarBody) => stellarBody.id === 'coldharbor-gate',
   );
   gate.x = 2200;
   gate.y = 2200;
@@ -1099,7 +1110,9 @@ export const SYS = Object.fromEntries(SYSTEMS.map((s) => [s.id, s]));
  * @type {Record<string, StellarBody>}
  */
 export const STELLARS = Object.fromEntries(
-  SYSTEMS.flatMap((s) => s.stellars.map((p) => [p.id, { ...p, system: s.id }])),
+  SYSTEMS.flatMap((s) =>
+    s.stellars.map((stellarBody) => [stellarBody.id, { ...stellarBody, system: s.id }]),
+  ),
 );
 
 /**
@@ -1133,7 +1146,7 @@ export const START = { system: 'qgate', stellar: 'qstation', credits: 30000, shi
 export const COMMON_HULLS = [
   703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716, 717, 820, 821, 822, 823,
   824, 825, 826, 827, 828, 829,
-]; // 2.3: ten new hulls (shared/ships23.js)
+]; // ten new hulls (shared/ships23.js)
 
 /**
  * Hull catalog available to each faction in shipyards and defense fleets.
@@ -1199,7 +1212,7 @@ export const FACTION_OUTFITS = {
 };
 /**
  * Custom outfit definitions complementing standard outfits.
- * @type {Array<import('./rules.js').OutfitAsset>}
+ * @type {Array<OutfitAsset>}
  */
 // Generic weapon outfits. Stable weapon IDs keep existing ship loadouts and saves compatible.
 export const EXTRA_OUTFITS = [
@@ -1439,13 +1452,13 @@ export const EXTRA_OUTFITS = [
     desc: 'Five dedicated passenger seats with restraint and life-support fittings. Uses three tons of outfit space; bridge officers and working crew do not occupy passenger seats.',
   },
 ];
-for (const o of EXTRA_OUTFITS) o.icon = o.icon || `icons/${o.id}.png`; // 2.5: rendered outfitter pictures (tools/rift_icons.py)
+for (const outfit of EXTRA_OUTFITS) outfit.icon = outfit.icon || `icons/${outfit.id}.png`; // rendered outfitter pictures (tools/rift_icons.py)
 
 // weapons added by Quantum Rift (merged into the asset weapons by augmentAssets)
 
 /**
  * Custom weapon asset definitions added by Quantum Rift.
- * @type {Array<import('./rules.js').WeaponAsset>}
+ * @type {Array<WeaponAsset>}
  */
 export const EXTRA_WEAPONS = [
   {
@@ -1578,7 +1591,7 @@ export const OPS = [
  * Parameters and requirements for relocating a Personal Station to another derelict hull site.
  * @type {{ base: number, perOps: number, mats: Array<[string, number, number]>, cooldownH: number }}
  */
-// 2.6: warp your Personal Station to another unclaimed hull, keeping everything (Ops, research, refinery, docks, stored ships)
+// warp your Personal Station to another unclaimed hull, keeping everything (Ops, research, refinery, docks, stored ships)
 export const RELOCATE = { base: 100000, perOps: 60000, mats: [['alloy', 1, 1]], cooldownH: 24 };
 
 /**
@@ -1588,7 +1601,7 @@ export const RELOCATE = { base: 100000, perOps: 60000, mats: [['alloy', 1, 1]], 
  */
 export const relocateCost = (ops) => RELOCATE.base + RELOCATE.perOps * (ops || 0);
 
-export { RESEARCH2 as RESEARCH } from './hangar.js'; // 0.5: four research trees (see shared/hangar.js)
+export { RESEARCH2 as RESEARCH } from './hangar.js'; // four research trees (see shared/hangar.js)
 
 /**
  * Refinery processing speed in minutes per unit by Ops level, and silo batch size.
@@ -1607,7 +1620,7 @@ export const STATION_SHIPS = { 3: [735], 5: [736, 785, 786, 787] };
  * Mapping of base hulls to their Mk II refit hull IDs.
  * @type {Record<number, number>}
  */
-// 2.6: the Mk II and Mk III refits are no longer available to captains. The hulls stay as enemy ships (kingpins' rogue
+// the Mk II and Mk III refits are no longer available to captains. The hulls stay as enemy ships (kingpins' rogue
 // refits in Armada contracts), and these tables map them back to their base hulls for old saves.
 export const MK2_OF = {
   703: 720,
@@ -1643,11 +1656,11 @@ export const WINGMATES = [751, 752, 753, 754, 755, 756];
  * Armada escort hull IDs (now enemy-only in 2.6).
  * @type {number[]}
  */
-export const ARMADA_HULLS = [757, 758, 759]; // 2.6: the old station Armada escorts, now enemy-only
+export const ARMADA_HULLS = [757, 758, 759]; // the old station Armada escorts, now enemy-only
 
 // Deterministic refinery/processed-good markets; ordinary nonservice pads unchanged.
-for (const p of Object.values(STELLARS))
-  if (!p.site && p.svc.includes('T') && p.svc.includes('O'))
+for (const stellarBody of Object.values(STELLARS))
+  if (!stellarBody.site && stellarBody.svc.includes('T') && stellarBody.svc.includes('O'))
     for (const id of [
       'alloy_ingots',
       'fuel_cells',
@@ -1657,7 +1670,7 @@ for (const p of Object.values(STELLARS))
       'quantum_fuel',
       'exotic_matter',
     ])
-      p.prices[id] = 0;
+      stellarBody.prices[id] = 0;
 for (const id of [
   'alloy_ingots',
   'fuel_cells',

@@ -1,5 +1,5 @@
 import { artworkUrl } from './artwork.js';
-// Quantum Rift 0.5 interface pieces: crew (bar, roster, bridge), hangar (shuttles, job board, drydock), research trees, boarding.
+// Quantum Rift: interface pieces: crew (bar, roster, bridge), hangar (shuttles, job board, drydock), research trees, boarding.
 import { rankLine, lowerDeckHtml } from './syn_ui.js';
 import { SYS, FACTIONS, MATERIALS, GRADES, RESEARCH } from '/shared/galaxy.js';
 import {
@@ -19,6 +19,8 @@ import {
   SYNERGY,
 } from '/shared/hangar.js';
 import { officerStats, credits } from '/shared/rules.js';
+
+/** @import { ClientGameState } from './main.js' */
 
 /**
  * @typedef {Object} OfficerEntry
@@ -86,7 +88,7 @@ function statText(o) {
 
 /**
  * Renders an officer card with rarity color, stats, level, and optional actions.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {OfficerEntry} o Officer object
  * @param {string} [extra] Additional HTML content or buttons
  * @returns {string} HTML markup
@@ -100,7 +102,7 @@ function officerCard(G, o, extra) {
 
 /**
  * Determines current assignment location or shuttle duty for an officer.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {OfficerEntry} o Officer object
  * @returns {string|null} Assignment description or null if off duty
  */
@@ -116,7 +118,7 @@ function where(G, o) {
 
 /**
  * Renders the CREW tab interface (bridge officers, species synergy, bar hires, roster, lower deck).
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function crewHtml(G) {
@@ -124,14 +126,14 @@ export function crewHtml(G) {
     L = G.landed;
   let h = '<div class="sect" style="margin-top:0">YOUR BRIDGE</div><div class="bridge">';
   for (const k of BRIDGE_SLOTS) {
-    const o = y.officers.find((x) => x.id === y.bridge[k]);
-    h += `<div class="slot"><div class="dim small">${k === 'captain' ? 'CAPTAIN (x1.25)' : 'BRIDGE OFFICER'}</div>${o ? officerCard(G, o, `<button class="btn sm" data-act="off" data-op="assign" data-oid="${o.id}" data-slot="">STAND DOWN</button>`) : '<div class="dim">Empty</div>'}</div>`;
+    const officer = y.officers.find((x) => x.id === y.bridge[k]);
+    h += `<div class="slot"><div class="dim small">${k === 'captain' ? 'CAPTAIN (x1.25)' : 'BRIDGE OFFICER'}</div>${officer ? officerCard(G, officer, `<button class="btn sm" data-act="off" data-op="assign" data-oid="${officer.id}" data-slot="">STAND DOWN</button>`) : '<div class="dim">Empty</div>'}</div>`;
   }
   h += '</div>';
   const races = {};
   for (const k of BRIDGE_SLOTS) {
-    const o = y.officers.find((x) => x.id === y.bridge[k]);
-    if (o) races[o.race] = (races[o.race] || 0) + 1;
+    const officer = y.officers.find((x) => x.id === y.bridge[k]);
+    if (officer) races[officer.race] = (races[officer.race] || 0) + 1;
   }
   const syn = Object.entries(races).filter(([r, n]) => n >= 2 && SYNERGY[r]);
   h += `<div class="dim small">Two or more officers of one race on the bridge unlock a synergy bonus.${
@@ -169,22 +171,22 @@ export function crewHtml(G) {
   h +=
     '<div class="ogrid">' +
     y.officers
-      .map((o) => {
-        const w = where(G, o),
+      .map((officer) => {
+        const w = where(G, officer),
           out = w && w.endsWith('(out)');
         const btns = out
           ? ''
-          : BRIDGE_SLOTS.filter((k) => y.bridge[k] !== o.id)
+          : BRIDGE_SLOTS.filter((k) => y.bridge[k] !== officer.id)
               .map(
                 (k) =>
-                  `<button class="btn sm" data-act="off" data-op="assign" data-oid="${o.id}" data-slot="${k}">${k === 'captain' ? 'CAPTAIN' : k === 'bridge1' ? 'BRIDGE 1' : 'BRIDGE 2'}</button>`,
+                  `<button class="btn sm" data-act="off" data-op="assign" data-oid="${officer.id}" data-slot="${k}">${k === 'captain' ? 'CAPTAIN' : k === 'bridge1' ? 'BRIDGE 1' : 'BRIDGE 2'}</button>`,
               )
               .join(' ') +
-            ` <button class="btn sm" data-act="off" data-op="dismiss" data-oid="${o.id}">DISMISS</button>`;
+            ` <button class="btn sm" data-act="off" data-op="dismiss" data-oid="${officer.id}">DISMISS</button>`;
         return officerCard(
           G,
-          o,
-          `${rankLine(G, o, true)}<div class="dim small">${w ? 'Serving: ' + esc(w) : 'Off duty'}</div><div>${btns}</div>`,
+          officer,
+          `${rankLine(G, officer, true)}<div class="dim small">${w ? 'Serving: ' + esc(w) : 'Off duty'}</div><div>${btns}</div>`,
         );
       })
       .join('') +
@@ -197,7 +199,7 @@ export function crewHtml(G) {
 
 /**
  * Renders compact sidebar shuttle activity status list.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function shuttleSummary(G) {
@@ -223,7 +225,7 @@ export function shuttleSummary(G) {
 
 /**
  * Renders the Hangar interface including active shuttles, shuttle construction, and the remote Job Board.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {boolean} atHome Whether player is currently docked at their Personal Station
  * @returns {string} HTML markup
  */
@@ -237,14 +239,15 @@ export function hangarHtml(G, atHome) {
   if (!y.bays) h += '<p class="dim">The hangar opens at Station Tier 2.</p>';
   const idle = y.shuttles.filter((s) => s.state === 'idle'),
     crewFree = y.officers.filter(
-      (o) => !where(G, o) || y.shuttles.some((s) => s.crew === o.id && s.state !== 'out'),
+      (officer) =>
+        !where(G, officer) || y.shuttles.some((s) => s.crew === officer.id && s.state !== 'out'),
     );
   h +=
     '<div class="ogrid">' +
     y.shuttles
       .map((sh) => {
         const T = SHUTTLES[sh.kind],
-          crew = sh.crew ? y.officers.find((o) => o.id === sh.crew) : null;
+          crew = sh.crew ? y.officers.find((officer) => officer.id === sh.crew) : null;
         let body;
         if (sh.state === 'out') {
           const tot = Math.max(1, sh.ends - (sh.ends - sh.job.minutes * 60000)),
@@ -255,11 +258,12 @@ export function hangarHtml(G, atHome) {
         else
           body = `<div class="small" style="color:var(--ok)">Ready</div><div class="rrow"><select data-crew="${sh.id}"><option value="">No crew</option>${y.officers
             .filter(
-              (o) => !y.shuttles.some((s) => s.crew === o.id && s !== sh && s.state === 'out'),
+              (officer) =>
+                !y.shuttles.some((s) => s.crew === officer.id && s !== sh && s.state === 'out'),
             )
             .map(
-              (o) =>
-                `<option value="${o.id}" ${o.id === sh.crew ? 'selected' : ''}>${esc(o.name)} (${ROLES[o.role].name} ${o.lv})</option>`,
+              (officer) =>
+                `<option value="${officer.id}" ${officer.id === sh.crew ? 'selected' : ''}>${esc(officer.name)} (${ROLES[officer.role].name} ${officer.lv})</option>`,
             )
             .join('')}</select></div>`;
         return `<div class="ocard"><div class="oname"><img src="${artworkUrl(G.A.ships[T.hull].img)}" style="width:44px;height:30px;object-fit:contain;vertical-align:middle"> <b>${esc(T.name)}</b> <span class="dim small">${sh.runs} runs</span></div>${crew && sh.state !== 'idle' ? `<div class="dim small">Crew: ${esc(crew.name)}</div>` : ''}${body}${atHome && sh.state !== 'out' ? ` <button class="btn sm" data-act="sh" data-op="scrap" data-sid="${sh.id}">SCRAP</button>` : ''}</div>`;
@@ -309,7 +313,7 @@ export function hangarHtml(G, atHome) {
 
 /**
  * Renders the Research Lab tech trees, active research countdown, and research queue.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether research actions are enabled
  * @returns {string} HTML markup
  */
@@ -341,7 +345,7 @@ export function researchHtml(G, interactive) {
 
 /**
  * Renders the Material crates inventory grid and crate refinement actions.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether refining actions are interactive
  * @returns {string} HTML markup
  */
@@ -357,7 +361,7 @@ export function materialsHtml(G, interactive) {
 
 /**
  * Renders the modal dialog for boarding a disabled ship (plunder, capture, rescue/arrest).
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {BoardedTarget} t Target ship entity
  * @returns {string} HTML markup
  */

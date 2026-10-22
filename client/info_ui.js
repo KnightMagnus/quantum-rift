@@ -1,5 +1,5 @@
 import { artworkUrl } from './artwork.js';
-// 1.1: the ship and captain panel (I), the player information view: your ship, cargo (with jettison), combat
+// the ship and captain panel (I), the player information view: your ship, cargo (with jettison), combat
 // rating, fleet orders, and the rival captains of the Rift with how they feel about you.
 import {
   SYS,
@@ -16,13 +16,16 @@ import { RANKS } from '/shared/rivals.js';
 import { synBadge } from './syn_ui.js';
 import { price } from '/shared/rules.js';
 
+/** @import { StellarBody } from '../server/game.js' */
+/** @import { ClientGameState } from './main.js' */
+
 /**
  * @typedef {'ship' | 'career' | 'fleet' | 'captains'} InfoTab
  */
 
 /**
  * @typedef {Object} BestSaleResult
- * @property {import('../server/game.js').StellarBody} p Stellar body object
+ * @property {StellarBody} p Stellar body object
  * @property {number} price Commodity price per ton
  * @property {number} jumps Jumps distance
  */
@@ -87,7 +90,7 @@ const MOODC = {
 
 /**
  * Renders the Info panel (I key) including ship stats, cargo jettison, career ledger, wingmate orders, and rival captains.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {InfoTab|string} [tab] Sub-tab to render ('ship', 'career', 'fleet', or 'captains')
  * @returns {string} HTML markup
  */
@@ -180,17 +183,17 @@ export function infoHtml(G, tab) {
       .join('')}</table>`;
 }
 
-// 2.4: everything you own and everything you have done, on one page
+// everything you own and everything you have done, on one page
 
 /**
- * Renders the comprehensive career overview ledger (holdings, net worth, story progress, exploration record).
- * @param {import("./main.js").ClientGameState} G Game state object
+ * Renders the career overview ledger (holdings, net worth, story progress, exploration record).
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 function careerHtml(G) {
   const y = G.you,
-    A = G.A,
-    shipVal = (sh) => (sh && A.ships[sh.hull] ? A.ships[sh.hull].cost || 0 : 0);
+    assets = G.A,
+    shipVal = (sh) => (sh && assets.ships[sh.hull] ? assets.ships[sh.hull].cost || 0 : 0);
   const stored = (y.dock || []).map((x) => x.ship).filter(Boolean),
     cargoVal = Object.entries(y.cargo || {}).reduce(
       (a, [c, n]) => a + (COMMODITIES.find((x) => x.id === c) || { base: 0 }).base * n,
@@ -200,7 +203,7 @@ function careerHtml(G) {
   const worth =
     y.credits +
     (y.shipless ? 0 : shipVal(y.ship)) +
-    stored.reduce((a, sh) => a + shipVal(sh), 0) +
+    stored.reduce((a, loadout) => a + shipVal(loadout), 0) +
     cargoVal -
     (y.loan ? y.loan.bal : 0);
   const kv = (k, v) => `<div class="kv"><span>${k}</span><span>${v}</span></div>`;
@@ -209,7 +212,10 @@ function careerHtml(G) {
     st = y.stats || {},
     Q = y.quests || { done: [], active: [] },
     SY = y.story || {};
-  const offs = (y.officers || []).reduce((a, o) => ((a[o.rarity] = (a[o.rarity] || 0) + 1), a), {});
+  const offs = (y.officers || []).reduce(
+    (a, officer) => ((a[officer.rarity] = (a[officer.rarity] || 0) + 1), a),
+    {},
+  );
   const bps = Object.entries(y.bp || {})
     .filter(([id, n]) => n > 0 && SPEC[id])
     .map(
@@ -221,14 +227,14 @@ function careerHtml(G) {
     ? y.docks.list
         .map(
           (k) =>
-            `<div class="kv small"><span>Dock ${k.letter}${k.letter === y.docks.list[y.docks.active].letter ? ' <span style="color:var(--ok)">(active)</span>' : ''}</span><span>${k.lead && A.ships[k.lead.hull] ? esc(A.ships[k.lead.hull].name) : '<span class="dim">no lead</span>'}${k.wings.filter(Boolean).length ? ` + ${k.wings.filter(Boolean).length} wing` : ''}</span></div>`,
+            `<div class="kv small"><span>Dock ${k.letter}${k.letter === y.docks.list[y.docks.active].letter ? ' <span style="color:var(--ok)">(active)</span>' : ''}</span><span>${k.lead && assets.ships[k.lead.hull] ? esc(assets.ships[k.lead.hull].name) : '<span class="dim">no lead</span>'}${k.wings.filter(Boolean).length ? ` + ${k.wings.filter(Boolean).length} wing` : ''}</span></div>`,
         )
         .join('')
     : '';
   return `<div class="igrid"><div>
     <div class="sect" style="margin-top:0">HOLDINGS</div>
     ${kv('<b>Net worth</b>', `<b class="cr">${cr(worth)} cr</b>`)}${kv('Credits', cr(y.credits))}${y.loan ? kv('Loan', `−${cr(y.loan.bal)}`) : ''}
-    ${kv('Ships', `${(y.shipless ? 0 : 1) + stored.length} <span class="dim small">(${cr((y.shipless ? 0 : shipVal(y.ship)) + stored.reduce((a, sh) => a + shipVal(sh), 0))} cr)</span>`)}${docks}
+    ${kv('Ships', `${(y.shipless ? 0 : 1) + stored.length} <span class="dim small">(${cr((y.shipless ? 0 : shipVal(y.ship)) + stored.reduce((a, loadout) => a + shipVal(loadout), 0))} cr)</span>`)}${docks}
     ${kv('Personal Station', site ? `Station Tier ${S.ops} · ${esc(SYS[site.system].name)}` : '<span class="dim">none yet</span>')}
     ${kv('Colonies', (y.colonies || []).length ? y.colonies.map((c) => `${esc(c.name)} (Lv ${c.lv})`).join(', ') : '<span class="dim">none</span>')}
     ${kv(
@@ -254,11 +260,11 @@ function careerHtml(G) {
   </div></div>`;
 }
 
-// 2.5.2: where a good in your hold sells best, among the markets you have visited within four jumps
+// where a good in your hold sells best, among the markets you have visited within four jumps
 
 /**
  * Finds the nearby explored trade port within four jumps offering the best sale price for a commodity.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {string} cid Commodity identifier
  * @returns {BestSaleResult|null} Best sale location, price, and jumps distance or null
  */

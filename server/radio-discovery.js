@@ -61,7 +61,11 @@ export function tourRoute(origin, d) {
       if (!system) continue;
       if (distance > 0 && !seen.has(id) && tourSystemSafe(system, d))
         port = system.stellars.find(
-          (p) => !p.site && !p.outlaw && p.svc.includes('L') && p.svc.includes('B'),
+          (stellarBody) =>
+            !stellarBody.site &&
+            !stellarBody.outlaw &&
+            stellarBody.svc.includes('L') &&
+            stellarBody.svc.includes('B'),
         );
       if (distance < 3)
         for (const next of [...system.links].sort())

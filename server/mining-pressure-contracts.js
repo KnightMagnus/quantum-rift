@@ -1,3 +1,7 @@
+/** @import { DB } from './db.js' */
+/** @import { PlayerData, Session } from './game.js' */
+/** @import { Space } from './space.js' */
+
 // @ts-check
 /**
  * @typedef {{owner:string,sys:string,noise:number,updated:number,lastEncounter:number,warned:boolean}} CaptainPressure
@@ -7,12 +11,12 @@
  * @typedef {{key:string,recovery:number,updated:number}} MiningFieldRecovery
  * @typedef {{version:1,nextId:number,captains:CaptainPressure[],hazards:MiningHazard[],encounters:MiningEncounter[],consent:MiningConsent[],fields:MiningFieldRecovery[]}} SavedMiningPressure
  * @typedef {{noise:number,warn:boolean,groupConsent:boolean,cooldown:number}} PressureWire
- * @typedef {Pick<import('./space.js').Space,'id'|'sys'|'ships'|'rocks'|'makeShip'|'root'|'damage'|'events'>} PressureSpace
+ * @typedef {Pick<Space,'id'|'sys'|'ships'|'rocks'|'makeShip'|'root'|'damage'|'events'>} PressureSpace
  * @typedef {object} PressureCapabilities
- * @property {Pick<import('./db.js').DB,'world'|'get'|'key'|'touch'>} db
- * @property {()=>Iterable<import('./game.js').Session>} sessions
- * @property {(d:import('./game.js').PlayerData)=>boolean} newcomer
+ * @property {Pick<DB,'world'|'get'|'key'|'touch'>} db
+ * @property {()=>Iterable<Session>} sessions
+ * @property {(d:PlayerData)=>boolean} newcomer
  * @property {(sys:string)=>boolean} rush
- * @property {(s:import('./game.js').Session,text:string)=>void} toast
+ * @property {(s:Session,text:string)=>void} toast
  */
 export {};

@@ -1,4 +1,4 @@
-// Routing characterization captured against untouched main 680a6f8 before extraction.
+// Independent routing characterization from source commit 680a6f8.
 // These spies check routing/argument coercion/order, not the delegated game rules.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

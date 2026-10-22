@@ -8,6 +8,9 @@ import { upgrade } from './ws.js';
 import { DB } from './db.js';
 import { Game } from './game.js';
 
+/** @import { GameAssets } from '../shared/rules.js' */
+/** @import { Server, ServerResponse } from 'node:http' */
+
 /**
  * Root directory path of the Quantum Rift repository.
  * @type {string}
@@ -34,21 +37,21 @@ const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf
 
 /**
  * Static game asset catalog loaded from shared/assets.json.
- * @type {import('../shared/rules.js').GameAssets}
+ * @type {GameAssets}
  */
-const A = JSON.parse(fs.readFileSync(path.join(ROOT, 'shared', 'assets.json'), 'utf8'));
+const assets = JSON.parse(fs.readFileSync(path.join(ROOT, 'shared', 'assets.json'), 'utf8'));
 
 /**
  * Database persistence manager for player accounts and world state.
  * @type {DB}
  */
-const db = new DB(process.env.DATA_DIR || path.join(ROOT, 'data'));
+const database = new DB(process.env.DATA_DIR || path.join(ROOT, 'data'));
 
 /**
  * Primary game engine instance managing active systems, entities, and client sessions.
  * @type {Game}
  */
-const game = new Game(A, db);
+const game = new Game(assets, database);
 game.solo = SOLO;
 
 /**
@@ -72,7 +75,7 @@ const TYPES = {
 
 /**
  * Streams a local static file to an HTTP response with appropriate MIME headers and caching.
- * @param {import('node:http').ServerResponse} res Outgoing HTTP server response.
+ * @param {ServerResponse} res Outgoing HTTP server response.
  * @param {string} file Absolute filesystem path to the target static file.
  * @param {boolean} cache Whether to enable client-side 1-day public caching.
  * @returns {void}
@@ -127,7 +130,7 @@ function serve(res, file, cache, range) {
 
 /**
  * Main HTTP application server handling REST API endpoints, static assets, and WebSocket handshakes.
- * @type {import('node:http').Server}
+ * @type {Server}
  */
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
@@ -146,7 +149,7 @@ const server = http.createServer(async (req, res) => {
   }
   if (SOLO && p === '/api/export') {
     // download a save
-    const pl = db.get(url.searchParams.get('name') || '');
+    const pl = database.get(url.searchParams.get('name') || '');
     if (!pl) {
       res.writeHead(404);
       res.end();
@@ -226,15 +229,15 @@ server.listen(PORT, SOLO ? '127.0.0.1' : undefined, () =>
 );
 
 process.on('SIGINT', () => {
-  db.flush();
+  database.flush();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  db.flush();
+  database.flush();
   process.exit(0);
 });
 
-// 2.0.2: log anything that slips through rather than letting the server die mid-game
+// log anything that slips through rather than letting the server die mid-game
 process.on('uncaughtException', (e) => console.error('uncaught', e));
 process.on('unhandledRejection', (e) => console.error('unhandled rejection', e));

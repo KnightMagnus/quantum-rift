@@ -17,7 +17,7 @@ KEYS.update({805: 'sp_lodestar', 806: 'sp_swarmbreaker', 807: 'sp_nightglass', 8
 KEYS.update({820: 'wasp', 821: 'swift', 822: 'pelican', 823: 'sabre', 824: 'caravel', 825: 'talon', 826: 'lighthouse', 827: 'monarch', 828: 'aegis', 829: 'vigil'})
 ROLLS = (0, -28, 28)   # level, then the two roll sets in the order the EV Quantum sheets used
 COLS = 12
-NPC = set()   # 2.6: every hull renders sharp (an earlier draft kept enemy-only hulls at their original size)
+NPC = set()   # Render every hull at high resolution.
 def out_size(size, hid=0): return size if hid in NPC else max(size, min(size * 2, 200))
 def layers(o):
     rgb, a = o[0]

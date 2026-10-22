@@ -2,6 +2,9 @@
 import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
 
+/** @import { IncomingMessage } from 'node:http' */
+/** @import { Socket as NodeNetSocket } from 'node:net' */
+
 /**
  * RFC 6455 magic GUID constant appended to client Sec-WebSocket-Key to generate Sec-WebSocket-Accept.
  * @type {string}
@@ -15,11 +18,11 @@ const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 export class Socket extends EventEmitter {
   /**
    * Initializes a WebSocket connection around a raw TCP network socket.
-   * @param {import('node:net').Socket} sock Raw TCP network stream socket.
+   * @param {NodeNetSocket} sock Raw TCP network stream socket.
    */
   constructor(sock) {
     super();
-    /** @type {import('node:net').Socket} */
+    /** @type {NodeNetSocket} */
     this.sock = sock;
     /** @type {Buffer} */
     this.buf = Buffer.alloc(0);
@@ -172,8 +175,8 @@ export class Socket extends EventEmitter {
 
 /**
  * Validates and upgrades an incoming HTTP 1.1 upgrade request to the RFC 6455 WebSocket protocol.
- * @param {import('node:http').IncomingMessage} req Inbound HTTP upgrade request.
- * @param {import('node:net').Socket} sock Underlying client network socket stream.
+ * @param {IncomingMessage} req Inbound HTTP upgrade request.
+ * @param {NodeNetSocket} sock Underlying client network socket stream.
  * @param {(ws: Socket) => void} onSocket Callback invoked with the initialized WebSocket wrapper.
  * @returns {void}
  */

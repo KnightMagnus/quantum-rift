@@ -1,8 +1,12 @@
-// Quantum Rift 2.6 "Co-op" interface: the CAPTAINS companion tab (friends and their status, messages, the Armada,
+// Quantum Rift: interface: the CAPTAINS companion tab (friends and their status, messages, the Armada,
 // trading between Personal Stations, duels), Armada ally detection for the HUD and radar, and follow-the-leader.
 import { SYS, COMMODITIES, MATERIALS, GRADES } from '/shared/galaxy.js';
 import { ARMADA, TRADE, DUEL } from '/shared/coop.js';
 import { credits } from '/shared/rules.js';
+
+/** @import { NetworkMessage } from '../server/message-registry.js' */
+/** @import { ClientGameState } from './main.js' */
+/** @import { RenderEntity } from './render.js' */
 
 /**
  * @typedef {Object} CoopHelpers
@@ -96,8 +100,8 @@ let G, send, toast, ask, plot;
 
 /**
  * Initializes the Co-op subsystem, event listeners, and helper callbacks.
- * @param {import("./main.js").ClientGameState} g Shared game state object
- * @param {(msg: import("../server/message-registry.js").NetworkMessage) => void} sender Network send message function
+ * @param {ClientGameState} g Shared game state object
+ * @param {(msg: NetworkMessage) => void} sender Network send message function
  * @param {CoopHelpers} helpers UI helper callbacks
  * @returns {void}
  */
@@ -168,17 +172,17 @@ function badge() {
 
 /**
  * Handles inbound real-time social messages from the server (friend changes, DMs, trades, rally calls, follow jumps).
- * @param {import("../server/message-registry.js").NetworkMessage} m Message payload received via WebSocket
+ * @param {NetworkMessage} message Message payload received via WebSocket
  * @returns {void}
  */
-export function onCoopMsg(m) {
+export function onCoopMsg(message) {
   loadDms();
-  switch (m.t) {
+  switch (message.t) {
     case 'social': {
       // 2.6 QoL: a friend coming online gets a short note
       const before = new Map(((G.social && G.social.friends) || []).map((f) => [f.name, f.status]));
-      if (m.social !== undefined) G.social = m.social;
-      if (m.armada !== undefined && G.you) G.you.armada = m.armada;
+      if (message.social !== undefined) G.social = message.social;
+      if (message.armada !== undefined && G.you) G.you.armada = message.armada;
       if (G.social && before.size)
         for (const f of G.social.friends)
           if (before.get(f.name) === 'offline' && f.status !== 'offline')
@@ -186,24 +190,24 @@ export function onCoopMsg(m) {
       break;
     }
     case 'dm': {
-      const other = m.sent ? m.to : m.from;
+      const other = message.sent ? message.to : message.from;
       (G.dms[other] = G.dms[other] || []).push({
-        from: m.from,
-        msg: m.msg,
-        t: m.at || Date.now(),
-        off: m.offline,
+        from: message.from,
+        msg: message.msg,
+        t: message.at || Date.now(),
+        off: message.offline,
       });
       if (G.dms[other].length > 200) G.dms[other].splice(0, G.dms[other].length - 200);
-      if (!m.sent) G.lastDmFrom = m.from;
-      if (!m.sent && !(G.ctab === 'captains' && G.ctabSub === 'dm' && G.dmWith === other)) {
+      if (!message.sent) G.lastDmFrom = message.from;
+      if (!message.sent && !(G.ctab === 'captains' && G.ctabSub === 'dm' && G.dmWith === other)) {
         G.unread[other] = (G.unread[other] || 0) + 1;
-        toast(`✉ ${m.from}: ${m.msg.slice(0, 80)}`);
+        toast(`✉ ${message.from}: ${message.msg.slice(0, 80)}`);
       }
       saveDms();
       break;
     }
     case 'dms':
-      for (const x of m.list || []) {
+      for (const x of message.list || []) {
         (G.dms[x.from] = G.dms[x.from] || []).push({
           from: x.from,
           msg: x.msg,
@@ -214,25 +218,25 @@ export function onCoopMsg(m) {
       saveDms();
       break;
     case 'trade2':
-      G.trade = m.trade;
-      if (m.trade && G.ctab !== 'captains')
-        toast(`Trade open with ${m.trade.with}: see the ALLIES tab.`);
-      if (m.trade) G.ctabSub = 'trade';
+      G.trade = message.trade;
+      if (message.trade && G.ctab !== 'captains')
+        toast(`Trade open with ${message.trade.with}: see the ALLIES tab.`);
+      if (message.trade) G.ctabSub = 'trade';
       break;
     case 'rally':
-      if (SYS[m.sys]) {
-        G.rally = { sys: m.sys, t: Date.now() };
-        if (m.sys !== G.sys) plot(m.sys);
+      if (SYS[message.sys]) {
+        G.rally = { sys: message.sys, t: Date.now() };
+        if (message.sys !== G.sys) plot(message.sys);
         toast(
-          `📣 ${m.from} calls the Armada to ${SYS[m.sys].name}.${m.sys !== G.sys ? ' Course plotted.' : ' You are there.'}`,
+          `📣 ${message.from} calls the Armada to ${SYS[message.sys].name}.${message.sys !== G.sys ? ' Course plotted.' : ' You are there.'}`,
         );
       }
       break;
     case 'follow':
-      if (G.you && G.you.armada && G.you.armada.follow && G.view && SYS[m.to]) {
-        plot(m.to);
+      if (G.you && G.you.armada && G.you.armada.follow && G.view && SYS[message.to]) {
+        plot(message.to);
         G.autoRoute = true;
-        toast(`Following ${m.leader} to ${SYS[m.to].name}.`);
+        toast(`Following ${message.leader} to ${SYS[message.to].name}.`);
         if (G.startAutoJump) G.startAutoJump();
       }
       break;
@@ -256,7 +260,7 @@ export function coopYou() {
 
 /**
  * Checks whether a space entity belongs to an allied Armada member or one of their wingmates.
- * @param {import("./render.js").RenderEntity} e Space entity object
+ * @param {RenderEntity} e Space entity object
  * @returns {boolean} True if entity is an allied Armada captain or wingmate
  */
 export function isAlly(e) {

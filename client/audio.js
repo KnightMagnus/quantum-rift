@@ -1,5 +1,5 @@
-// Audio (WebAudio). Positional combat effects come from the combat sound pack; 2.0 adds generated interface sounds,
-// ambient loops (open space, station interior, your engine) and a login-screen theme. Separate buses feed the mixer:
+// Audio (WebAudio). Positional combat effects come from the combat sound pack. Generated interface sounds,
+// ambient loops (open space, station interior, your engine) and a login-screen theme use separate mixer buses:
 // master > effects | interface | ambience | music. The radio is an <audio> element with its own level (radio.js).
 
 /**

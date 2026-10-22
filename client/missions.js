@@ -5,12 +5,14 @@ import {
   contractPlanHtml,
 } from './mission-details.js';
 import { refineryJobsHtml } from './refinery_ui.js';
-// 1.0.1: active mission tracking. Works out where each mission (and the main story) wants you to go, for the MISSIONS
+// active mission tracking. Works out where each mission (and the main story) wants you to go, for the MISSIONS
 // companion tab and the gold target markers on the galaxy map.
 import { SYS, STELLARS } from '/shared/galaxy.js';
 import { STORY } from '/shared/story.js';
 import { route } from '/shared/rules.js';
 import { TUTORIAL } from '/shared/tutorial.js';
+
+/** @import { ClientGameState } from './main.js' */
 
 /**
  * @typedef {'story' | 'career' | 'arc' | 'job'} MissionKind
@@ -59,7 +61,7 @@ const placeName = (stellar) =>
 
 /**
  * Computes active mission target entries including career steps, main story, faction arcs, and job board contracts.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {MissionTarget[]} Array of mission target objectives
  */
 export function missionTargets(G) {
@@ -68,7 +70,7 @@ export function missionTargets(G) {
   const out = [],
     S = y.story;
   const ti = y.tut ?? TUTORIAL.length,
-    T = TUTORIAL[ti]; // 1.0.3: the current career step leads the list
+    T = TUTORIAL[ti]; // the current career step leads the list
   if (T)
     out.push({
       key: 'career',
@@ -173,7 +175,7 @@ export function missionTargets(G) {
       (m.type === 'cargo' || m.type === 'smuggle' || m.type === 'supply') &&
       m.qty > (y.shipStats.cargo || 0)
     )
-      status = `⚠ Needs ${m.qty} t of hold: switch ships for this step. ${status}`; // 2.5.2: the step waits for a ship that can do it
+      status = `⚠ Needs ${m.qty} t of hold: switch ships for this step. ${status}`; // the step waits for a ship that can do it
     if (m.deadline) {
       const left = Math.max(0, Math.ceil((m.deadline - Date.now()) / 60000));
       status = `⏱ ${left} min left · ${status}`;
@@ -220,11 +222,11 @@ export function missionTargets(G) {
   return out;
 }
 
-// 2.4: the story journal under the active missions
+// the story journal under the active missions
 
 /**
  * Renders the completed quests and stories journal section.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 function journalHtml(G) {
@@ -242,7 +244,7 @@ function journalHtml(G) {
 
 /**
  * Renders the MISSIONS companion tab showing active missions, plot course buttons, and journal.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function missionsHtml(G) {

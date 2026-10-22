@@ -1,4 +1,4 @@
-// Quantum Rift 0.6 interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
+// Quantum Rift: interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
 import { SYS, FACTIONS, GRADES } from '/shared/galaxy.js';
 import {
   ANOMALIES,
@@ -10,6 +10,9 @@ import {
 } from '/shared/fronts.js';
 import { credits, route } from '/shared/rules.js';
 import { STATES } from '/shared/living.js';
+
+/** @import { FactionDef } from '../shared/galaxy.js' */
+/** @import { ClientGameState } from './main.js' */
 
 /**
  * @typedef {Object} GoalEntry
@@ -96,7 +99,7 @@ function goalRows(list, period) {
 
 /**
  * Renders the OPS companion tab (server events, invasions, system anomalies, goals, Armada summary, and calendar).
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @returns {string} HTML markup
  */
 export function opsHtml(G) {
@@ -128,7 +131,7 @@ export function opsHtml(G) {
       ])
       .filter((x) => x[2] <= 8)
       .sort((a, b) => a[2] - b[2])
-      .slice(0, 8); // 2.4: the Rift today
+      .slice(0, 8); // the Rift today
     if (near.length)
       h +=
         `<div class="sect">THE RIFT TODAY <span class="dim small">troubled systems near you</span></div>` +
@@ -151,7 +154,7 @@ export function opsHtml(G) {
       `<div class="sect">WEEKLY GOALS <span class="dim small">${credits(GOAL_REWARD.weekly.credits)} cr + ${GOAL_REWARD.weekly.tokens} scrip each</span></div>` +
       goalRows(y.goals.weekly, 'weekly');
   }
-  // 2.6: the Armada at a glance (full controls in the ALLIES tab); multiplayer only
+  // the Armada at a glance (full controls in the ALLIES tab); multiplayer only
   const A = y.armada;
   if (!G.solo) {
     h += `<div class="sect">ARMADA</div>`;
@@ -182,7 +185,7 @@ export function opsHtml(G) {
 
 /**
  * Returns array of eligible faction keys that offer Quartermaster stores.
- * @param {Record<string, import("../shared/galaxy.js").FactionDef>} FACTIONS_ Faction definitions dictionary
+ * @param {Record<string, FactionDef>} FACTIONS_ Faction definitions dictionary
  * @returns {string[]} Faction keys
  */
 export const STORE_FACS = (FACTIONS_) =>
@@ -192,8 +195,8 @@ export const STORE_FACS = (FACTIONS_) =>
 
 /**
  * Renders the modal Faction Stores quartermaster dialog with faction selector tabs.
- * @param {import("./main.js").ClientGameState} G Game state object
- * @param {Record<string, import("../shared/galaxy.js").FactionDef>} FACTIONS_ Faction definitions
+ * @param {ClientGameState} G Game state object
+ * @param {Record<string, FactionDef>} FACTIONS_ Faction definitions
  * @returns {string} HTML markup
  */
 export function storeMenuHtml(G, FACTIONS_) {
@@ -217,7 +220,7 @@ export function storeMenuHtml(G, FACTIONS_) {
 
 /**
  * Renders the items and standing table for a specific faction store.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {string} [facArg] Faction key to display
  * @returns {string} HTML markup
  */

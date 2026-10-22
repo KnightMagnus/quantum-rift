@@ -1,5 +1,5 @@
 import { clampStanding } from '../shared/reputation.js';
-// 1.2 "Syndicate and Officers": Syndicate standing and the black market, officer promotions and traits, lower-deck
+// Syndicate and Officers: Syndicate standing and the black market, officer promotions and traits, lower-deck
 // crew, the bank (loans with a credit rating), passenger and rush jobs, and Syndicate contracts.
 import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES, TRAFFIC } from '../shared/galaxy.js';
 import {
@@ -22,6 +22,8 @@ import {
 import { credits } from '../shared/rules.js';
 import { occupiedPassengerSeats } from '../shared/passengers.js';
 
+/** @import { Mission, PlayerData, Session, StellarBody } from './game.js' */
+
 /**
  * Clamp a numeric value between minimum and maximum bounds.
  * @param {number} v - Value to clamp.
@@ -31,7 +33,7 @@ import { occupiedPassengerSeats } from '../shared/passengers.js';
  */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 /** @type {string[]} Mission types that complete upon reaching their destination. */
-const DEST_TYPES = ['cargo', 'smuggle', 'passenger', 'expret', 'supply']; // 2.4: supply jobs complete at their destination
+const DEST_TYPES = ['cargo', 'smuggle', 'passenger', 'expret', 'supply']; // supply jobs complete at their destination
 /**
  * Check whether a mission completes at its destination.
  * @param {{type: string}} m - Mission object to check.
@@ -42,292 +44,320 @@ export const destType = (m) => DEST_TYPES.includes(m.type);
 export const SyndicateOperations = {
   /**
    * Initialize or default Syndicate standing, commendations, lower deck crew, and credit rating.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
-   * @returns {import("./game.js").PlayerData} Initialized player data.
+   * @param {PlayerData} playerData - Saved player data.
+   * @returns {PlayerData} Initialized player data.
    */
-  synInit(d) {
-    d.syn = d.syn || 0;
-    d.shards = d.shards || 0;
-    d.lower = d.lower || [];
-    d.credit = d.credit || BANK.credit0;
-    return d;
+  synInit(playerData) {
+    playerData.syn = playerData.syn || 0;
+    playerData.shards = playerData.shards || 0;
+    playerData.lower = playerData.lower || [];
+    playerData.credit = playerData.credit || BANK.credit0;
+    return playerData;
   },
   /**
    * Award Syndicate standing and notify player of rank increases.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {string} kind - Standing gain category.
    * @param {number} [mult=1] - Standing gain multiplier.
    * @returns {void}
    */
-  synGain(s, kind, mult = 1) {
-    const d = this.synInit(s.data),
-      before = synTier(d.syn).i;
-    d.syn += Math.round((SYN_GAIN[kind] || 0) * mult);
-    const t = synTier(d.syn);
+  synGain(session, kind, mult = 1) {
+    const playerData = this.synInit(session.data),
+      before = synTier(playerData.syn).i;
+    playerData.syn += Math.round((SYN_GAIN[kind] || 0) * mult);
+    const t = synTier(playerData.syn);
     if (t.i > before) {
-      this.toast(s, `The Syndicate takes notice: you are now ${t.i === 1 ? 'an' : 'a'} ${t.name}.`);
-      this.log(d, `Syndicate standing: ${t.name}.`);
+      this.toast(
+        session,
+        `The Syndicate takes notice: you are now ${t.i === 1 ? 'an' : 'a'} ${t.name}.`,
+      );
+      this.log(playerData, `Syndicate standing: ${t.name}.`);
     }
-    if (t.i >= 2 && Math.random() < 0.5) d.rep.quantum = clampStanding((d.rep.quantum || 0) - 1); // the Concord notices too
+    if (t.i >= 2 && Math.random() < 0.5)
+      playerData.rep.quantum = clampStanding((playerData.rep.quantum || 0) - 1); // the Concord notices too
   },
   // ------------------------------------------------------------------ black market: outlaw worlds, and any spaceport bar once you are a Lieutenant
   /**
    * Check whether black market services are accessible at a given stellar body.
-   * @param {import('./game.js').StellarBody} p - Stellar body or station.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {StellarBody} stellarBody - Stellar body or station.
+   * @param {PlayerData} playerData - Saved player data.
    * @returns {boolean} True if black market is accessible.
    */
-  blackMarketAt(p, d) {
-    return !!p && !p.site && (p.outlaw || (p.svc.includes('B') && synTier(d.syn).i >= 3));
+  blackMarketAt(stellarBody, playerData) {
+    return (
+      !!stellarBody &&
+      !stellarBody.site &&
+      (stellarBody.outlaw || (stellarBody.svc.includes('B') && synTier(playerData.syn).i >= 3))
+    );
   },
   /**
    * Retrieve black market stock and tier access details for a stellar body.
-   * @param {import('./game.js').StellarBody} p - Stellar body or station.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {StellarBody} stellarBody - Stellar body or station.
+   * @param {PlayerData} playerData - Saved player data.
    * @returns {Record<string, string | number | boolean> | null} Black market inventory payload or null.
    */
-  blackMarket(p, d) {
-    if (!this.blackMarketAt(p, d)) return null;
-    const t = synTier(d.syn).i;
+  blackMarket(stellarBody, playerData) {
+    if (!this.blackMarketAt(stellarBody, playerData)) return null;
+    const t = synTier(playerData.syn).i;
     return {
-      tier: synTier(d.syn),
+      tier: synTier(playerData.syn),
       items: BLACK_MARKET.map((x) => ({ ...x, locked: x.tier > t ? SYN_TIERS[x.tier][1] : null })),
     };
   },
   /**
    * Purchase an item or service from the black market fence.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {string} id - Black market item identifier.
    * @returns {void}
    */
-  bmBuy(s, id) {
-    const d = this.synInit(s.data),
-      p = STELLARS[d.stellar],
+  bmBuy(session, id) {
+    const playerData = this.synInit(session.data),
+      p = STELLARS[playerData.stellar],
       it = BLACK_MARKET.find((x) => x.id === id);
-    if (!it || !this.blackMarketAt(p, d)) return;
-    if (synTier(d.syn).i < it.tier)
-      return this.toast(s, `The fence won't sell that to anyone below ${SYN_TIERS[it.tier][1]}.`);
-    if (d.credits < it.price) return this.toast(s, `That costs ${credits(it.price)} credits.`);
+    if (!it || !this.blackMarketAt(p, playerData)) return;
+    if (synTier(playerData.syn).i < it.tier)
+      return this.toast(
+        session,
+        `The fence won't sell that to anyone below ${SYN_TIERS[it.tier][1]}.`,
+      );
+    if (playerData.credits < it.price)
+      return this.toast(session, `That costs ${credits(it.price)} credits.`);
     const g = it.give;
     if (g.papers) {
       // your worst grudge is quietly forgiven
-      const worst = Object.entries(d.rep)
+      const worst = Object.entries(playerData.rep)
         .filter(
           ([f]) =>
             FACTIONS[f] && !FACTIONS[f].pirate && !FACTIONS[f].alwaysHostile && !FACTIONS[f].region,
         )
         .sort((a, b) => a[1] - b[1])[0];
       if (!worst || worst[1] >= -10)
-        return this.toast(s, 'Nobody is looking for you badly enough to need papers.');
-      d.rep[worst[0]] = -10;
+        return this.toast(session, 'Nobody is looking for you badly enough to need papers.');
+      playerData.rep[worst[0]] = -10;
       this.toast(
-        s,
+        session,
         `New papers. The ${FACTIONS[worst[0]].name} records now show only minor infractions.`,
       );
     }
-    if (g.shards) d.shards += g.shards;
+    if (g.shards) playerData.shards += g.shards;
     if (g.bp) {
-      d.bp = d.bp || {};
-      d.bp[g.bp[0]] = (d.bp[g.bp[0]] || 0) + g.bp[1];
+      playerData.bp = playerData.bp || {};
+      playerData.bp[g.bp[0]] = (playerData.bp[g.bp[0]] || 0) + g.bp[1];
     }
     if (g.parts) {
-      d.parts = d.parts || {};
-      d.parts[g.parts[0]] = (d.parts[g.parts[0]] || 0) + g.parts[1];
+      playerData.parts = playerData.parts || {};
+      playerData.parts[g.parts[0]] = (playerData.parts[g.parts[0]] || 0) + g.parts[1];
     }
     if (g.crate != null) {
       const m = MATERIALS[Math.floor(Math.random() * MATERIALS.length)];
-      d.mats[m][g.crate]++;
-      this.toast(s, `Inside: a ${m} ${GRADES[g.crate]} crate.`);
+      playerData.mats[m][g.crate]++;
+      this.toast(session, `Inside: a ${m} ${GRADES[g.crate]} crate.`);
     }
-    d.credits -= it.price;
-    if (!g.papers && g.crate == null) this.toast(s, `Bought: ${it.name}.`);
-    this.log(d, `Black market: ${it.name} for ${credits(it.price)} credits.`);
+    playerData.credits -= it.price;
+    if (!g.papers && g.crate == null) this.toast(session, `Bought: ${it.name}.`);
+    this.log(playerData, `Black market: ${it.name} for ${credits(it.price)} credits.`);
     this.db.touch();
-    this.you(s);
-    this.landed(s);
+    this.you(session);
+    this.landed(session);
   },
   // ------------------------------------------------------------------ officer promotions and the lower decks
   /**
    * Promote an officer to the next rank, consuming commendations and credits and granting a trait.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {string} id - Officer identifier.
    * @returns {void}
    */
-  promote(s, id) {
-    const d = this.synInit(s.data),
-      o = (d.officers || []).find((x) => x.id === id);
-    if (!o) return;
-    const r = (o.rank || 0) + 1,
+  promote(session, id) {
+    const playerData = this.synInit(session.data),
+      officer = (playerData.officers || []).find((x) => x.id === id);
+    if (!officer) return;
+    const r = (officer.rank || 0) + 1,
       P = PROMOTE[r];
-    if (!P) return this.toast(s, `${o.name} already holds the highest rank.`);
-    if (o.lv < P.lv)
-      return this.toast(s, `${o.name} needs level ${P.lv} to become ${RANKS_OFF[r]}.`);
-    if (d.shards < P.shards || d.credits < P.credits)
+    if (!P) return this.toast(session, `${officer.name} already holds the highest rank.`);
+    if (officer.lv < P.lv)
+      return this.toast(session, `${officer.name} needs level ${P.lv} to become ${RANKS_OFF[r]}.`);
+    if (playerData.shards < P.shards || playerData.credits < P.credits)
       return this.toast(
-        s,
+        session,
         `Promotion to ${RANKS_OFF[r]} takes ${P.shards} commendations and ${credits(P.credits)} credits.`,
       );
-    d.shards -= P.shards;
-    d.credits -= P.credits;
-    o.rank = r;
-    o.traits = o.traits || [];
-    const pool = Object.keys(TRAITS).filter((t) => !o.traits.includes(t)),
+    playerData.shards -= P.shards;
+    playerData.credits -= P.credits;
+    officer.rank = r;
+    officer.traits = officer.traits || [];
+    const pool = Object.keys(TRAITS).filter((t) => !officer.traits.includes(t)),
       t = pool[Math.floor(Math.random() * pool.length)];
-    if (t) o.traits.push(t);
+    if (t) officer.traits.push(t);
     this.toast(
-      s,
-      `${o.name} is promoted to ${RANKS_OFF[r]}${t ? ` and learns ${TRAITS[t].name}` : ''}.`,
+      session,
+      `${officer.name} is promoted to ${RANKS_OFF[r]}${t ? ` and learns ${TRAITS[t].name}` : ''}.`,
     );
-    this.log(d, `${o.name} promoted to ${RANKS_OFF[r]}.`);
+    this.log(playerData, `${officer.name} promoted to ${RANKS_OFF[r]}.`);
     this.db.touch();
-    this.you(s);
-    if (d.stellar) this.landed(s);
+    this.you(session);
+    if (playerData.stellar) this.landed(session);
   },
   /**
    * Hire or dismiss lower-deck crew members.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {{i: number, op: 'hire' | 'dismiss', kind: string}} m - Lower deck management message.
    * @returns {void}
    */
-  lowerDeck(s, m) {
-    const d = this.synInit(s.data),
+  lowerDeck(session, m) {
+    const playerData = this.synInit(session.data),
       i = m.i | 0;
     if (i < 0 || i >= LOWER_SLOTS) return;
     if (m.op === 'hire') {
       const C = LOWER_DECK[m.kind];
-      if (!C || !d.stellar) return;
-      if (d.lower.includes(m.kind)) return this.toast(s, `You already have a ${C.name} aboard.`);
-      if (d.lower[i]) return this.toast(s, 'That berth is taken. Dismiss its crew member first.'); // 2.0.3
-      if (d.credits < C.cost)
-        return this.toast(s, `Hiring a ${C.name} costs ${credits(C.cost)} credits.`);
-      d.credits -= C.cost;
-      d.lower[i] = m.kind;
-      this.toast(s, `${C.name} hired for the lower deck (${C.desc}).`);
+      if (!C || !playerData.stellar) return;
+      if (playerData.lower.includes(m.kind))
+        return this.toast(session, `You already have a ${C.name} aboard.`);
+      if (playerData.lower[i])
+        return this.toast(session, 'That berth is taken. Dismiss its crew member first.'); // 2.0.3
+      if (playerData.credits < C.cost)
+        return this.toast(session, `Hiring a ${C.name} costs ${credits(C.cost)} credits.`);
+      playerData.credits -= C.cost;
+      playerData.lower[i] = m.kind;
+      this.toast(session, `${C.name} hired for the lower deck (${C.desc}).`);
     } else if (m.op === 'dismiss') {
-      if (d.lower[i]) this.toast(s, `${LOWER_DECK[d.lower[i]].name} dismissed.`);
-      d.lower[i] = null;
+      if (playerData.lower[i])
+        this.toast(session, `${LOWER_DECK[playerData.lower[i]].name} dismissed.`);
+      playerData.lower[i] = null;
     }
     this.db.touch();
-    this.you(s);
-    if (d.stellar) this.landed(s);
+    this.you(session);
+    if (playerData.stellar) this.landed(session);
   },
   // ------------------------------------------------------------------ the bank
   /**
    * Check whether banking services are available at a stellar body.
-   * @param {import('./game.js').StellarBody} p - Stellar body or station.
+   * @param {StellarBody} stellarBody - Stellar body or station.
    * @returns {boolean} True if banking services are available.
    */
-  bankAt(p) {
-    return !!p && !p.site && (p.hub || p.svc.includes('T')) && !p.outlaw;
+  bankAt(stellarBody) {
+    return (
+      !!stellarBody &&
+      !stellarBody.site &&
+      (stellarBody.hub || stellarBody.svc.includes('T')) &&
+      !stellarBody.outlaw
+    );
   },
   /**
    * Retrieve bank account, loan balance, and payment schedule details.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {PlayerData} playerData - Saved player data.
    * @returns {Record<string, number | string>} Bank account and loan information.
    */
-  bankInfo(d) {
-    this.synInit(d);
-    const L = d.loan;
+  bankInfo(playerData) {
+    this.synInit(playerData);
+    const L = playerData.loan;
     return {
-      credit: d.credit,
-      rate: loanRate(d.credit),
-      max: maxLoan(d.credit, d.stats.earned),
+      credit: playerData.credit,
+      rate: loanRate(playerData.credit),
+      max: maxLoan(playerData.credit, playerData.stats.earned),
       bal: L ? L.bal : 0,
       next: L ? L.next : 0,
-      pay: L ? loanPayment(L.bal, d.credit) : 0,
+      pay: L ? loanPayment(L.bal, playerData.credit) : 0,
       period: BANK.periodMin,
     };
   },
   /**
    * Process borrowing or loan repayment bank operations.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @param {{op: 'borrow' | 'pay', amt: number | string}} m - Bank operation message.
    * @returns {void}
    */
-  bankOp(s, m) {
-    const d = this.synInit(s.data),
-      p = STELLARS[d.stellar];
-    if (!this.bankAt(p)) return this.toast(s, 'Banking is done at a trade port.');
-    const B = this.bankInfo(d);
+  bankOp(session, m) {
+    const playerData = this.synInit(session.data),
+      p = STELLARS[playerData.stellar];
+    if (!this.bankAt(p)) return this.toast(session, 'Banking is done at a trade port.');
+    const B = this.bankInfo(playerData);
     if (m.op === 'borrow') {
       const amt = Math.floor(Math.max(0, +m.amt || 0) / 1000) * 1000;
       if (!amt) return;
       if (B.bal + amt > B.max)
-        return this.toast(s, `The bank will lend you at most ${credits(B.max)} credits in total.`);
-      d.loan = d.loan || { bal: 0, next: Date.now() + BANK.periodMin * 60000 };
-      d.loan.bal += amt;
-      d.credits += amt;
+        return this.toast(
+          session,
+          `The bank will lend you at most ${credits(B.max)} credits in total.`,
+        );
+      playerData.loan = playerData.loan || { bal: 0, next: Date.now() + BANK.periodMin * 60000 };
+      playerData.loan.bal += amt;
+      playerData.credits += amt;
       this.toast(
-        s,
-        `Loan approved: ${credits(amt)} credits. Payments of about ${credits(loanPayment(d.loan.bal, d.credit))} every ${BANK.periodMin} minutes of play.`,
+        session,
+        `Loan approved: ${credits(amt)} credits. Payments of about ${credits(loanPayment(playerData.loan.bal, playerData.credit))} every ${BANK.periodMin} minutes of play.`,
       );
-      this.log(d, `Borrowed ${credits(amt)} credits.`);
+      this.log(playerData, `Borrowed ${credits(amt)} credits.`);
     } else if (m.op === 'pay') {
-      if (!d.loan) return;
-      const amt = Math.min(d.loan.bal, Math.max(0, Math.floor(+m.amt || 0)), d.credits);
+      if (!playerData.loan) return;
+      const amt = Math.min(
+        playerData.loan.bal,
+        Math.max(0, Math.floor(+m.amt || 0)),
+        playerData.credits,
+      );
       if (!amt) return;
-      d.credits -= amt;
-      d.loan.bal -= amt;
-      this.toast(s, `Paid ${credits(amt)} toward your loan.`);
-      if (d.loan.bal <= 0) {
-        d.loan = null;
-        d.credit = clamp(d.credit + 15, BANK.creditMin, BANK.creditMax);
-        this.toast(s, 'Loan paid off. Your credit rating improves.');
+      playerData.credits -= amt;
+      playerData.loan.bal -= amt;
+      this.toast(session, `Paid ${credits(amt)} toward your loan.`);
+      if (playerData.loan.bal <= 0) {
+        playerData.loan = null;
+        playerData.credit = clamp(playerData.credit + 15, BANK.creditMin, BANK.creditMax);
+        this.toast(session, 'Loan paid off. Your credit rating improves.');
       }
     }
     this.db.touch();
-    this.you(s);
-    this.landed(s);
+    this.you(session);
+    this.landed(session);
   },
   /**
    * Process periodic loan interest, scheduled payment deduction, and credit score changes.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @returns {void}
    */
-  bankTick(s) {
-    const d = s.data,
-      L = d.loan;
+  bankTick(session) {
+    const playerData = session.data,
+      L = playerData.loan;
     if (!L || Date.now() < L.next) return;
     L.next = Date.now() + BANK.periodMin * 60000;
-    const interest = Math.ceil(L.bal * loanRate(d.credit)),
-      pay = loanPayment(L.bal, d.credit);
-    if (d.credits >= pay) {
-      d.credits -= pay;
+    const interest = Math.ceil(L.bal * loanRate(playerData.credit)),
+      pay = loanPayment(L.bal, playerData.credit);
+    if (playerData.credits >= pay) {
+      playerData.credits -= pay;
       L.bal = L.bal + interest - pay;
-      d.credit = clamp(d.credit + 3, BANK.creditMin, BANK.creditMax);
+      playerData.credit = clamp(playerData.credit + 3, BANK.creditMin, BANK.creditMax);
       this.toast(
-        s,
+        session,
         `Loan payment: ${credits(pay)} credits. ${L.bal > 0 ? `${credits(L.bal)} left.` : ''}`,
       );
     } else {
       L.bal += interest;
-      d.credit = clamp(d.credit - 8, BANK.creditMin, BANK.creditMax);
+      playerData.credit = clamp(playerData.credit - 8, BANK.creditMin, BANK.creditMax);
       this.toast(
-        s,
+        session,
         `Missed a loan payment of ${credits(pay)}. Interest added and your credit rating drops.`,
       );
-      this.notify && this.notify(s, 'Missed loan payment', `${credits(pay)} credits were due.`);
+      this.notify &&
+        this.notify(session, 'Missed loan payment', `${credits(pay)} credits were due.`);
     }
     if (L.bal <= 0) {
-      d.loan = null;
-      d.credit = clamp(d.credit + 15, BANK.creditMin, BANK.creditMax);
-      this.toast(s, 'Loan paid off. Your credit rating improves.');
+      playerData.loan = null;
+      playerData.credit = clamp(playerData.credit + 15, BANK.creditMin, BANK.creditMax);
+      this.toast(session, 'Loan paid off. Your credit rating improves.');
     }
     this.db.touch();
-    this.you(s);
+    this.you(session);
   },
   // ------------------------------------------------------------------ extra jobs: passengers, rush deliveries, Syndicate contracts
   /**
    * Generate extra mission offers including passenger transport, rush cargo deliveries, and Syndicate contracts.
-   * @param {import('./game.js').StellarBody} p - Current stellar body.
-   * @param {import('./game.js').PlayerData} d - Saved player data.
+   * @param {StellarBody} stellarBody - Current stellar body.
+   * @param {PlayerData} playerData - Saved player data.
    * @param {() => number} r - Random number generator function.
    * @param {Array<[string, number]>} near - Nearby systems and jump distances.
    * @param {number} win - Offer rotation time window.
-   * @param {(sys: string) => import('./game.js').StellarBody | null} pickDest - Function to select destination stellar in target system.
-   * @returns {Array<import("./game.js").Mission>} Extra job and contract offers.
+   * @param {(sys: string) => StellarBody | null} pickDest - Function to select destination stellar in target system.
+   * @returns {Array<Mission>} Extra job and contract offers.
    */
-  extraOffers(p, d, r, near, win, pickDest) {
+  extraOffers(stellarBody, playerData, r, near, win, pickDest) {
     const out = [];
     if (!near.length) return out;
     const one = (k) => near[Math.floor(r() * near.length)];
@@ -362,7 +392,7 @@ export const SyndicateOperations = {
       if (!dest) continue;
       const pax = group.min + Math.floor(r() * group.span);
       out.push({
-        id: `${p.id}-${win}-${group.key}`,
+        id: `${stellarBody.id}-${win}-${group.key}`,
         type: 'passenger',
         title: `${group.label}: ${pax} passengers to ${dest.name}`,
         sys,
@@ -380,7 +410,7 @@ export const SyndicateOperations = {
         const qty = 3 + Math.floor(r() * 10),
           minutes = 5 + jumps * 4;
         out.push({
-          id: `${p.id}-${win}-rush`,
+          id: `${stellarBody.id}-${win}-rush`,
           type: 'cargo',
           rush: minutes,
           cid: 'medical',
@@ -393,7 +423,10 @@ export const SyndicateOperations = {
         });
       }
     }
-    const shady = p.outlaw || FACTIONS[SYS[p.system].faction].pirate || SYS[p.system].danger >= 3;
+    const shady =
+      stellarBody.outlaw ||
+      FACTIONS[SYS[stellarBody.system].faction].pirate ||
+      SYS[stellarBody.system].danger >= 3;
     if (shady) {
       // Syndicate contracts
       const [sys, jumps] = one(),
@@ -401,7 +434,7 @@ export const SyndicateOperations = {
       if (dest && r() < 0.6) {
         const qty = 4 + Math.floor(r() * 8);
         out.push({
-          id: `${p.id}-${win}-syn1`,
+          id: `${stellarBody.id}-${win}-syn1`,
           type: 'smuggle',
           syn: 'contract',
           title: `SYNDICATE: move ${qty} t of "spare parts" to ${dest.name}`,
@@ -418,7 +451,7 @@ export const SyndicateOperations = {
           hull = (TRAFFIC[fac].traders || TRAFFIC.spacer.traders)[0] || 704,
           nm = `courier ${['Ostrava', 'Bellwether', 'Gilt Margin', 'Patience', 'Clerk Nine'][Math.floor(r() * 5)]}`;
         out.push({
-          id: `${p.id}-${win}-syn2`,
+          id: `${stellarBody.id}-${win}-syn2`,
           type: 'bounty',
           syn: 'hit',
           title: `SYNDICATE HIT: the ${nm}`,
@@ -435,19 +468,19 @@ export const SyndicateOperations = {
   },
   /**
    * Verify whether the player meets requirements to accept a mission offer (e.g. passenger bunks).
-   * @param {import('./game.js').Session} s - Player session.
-   * @param {import("./game.js").Mission} o - Mission offer being accepted.
+   * @param {Session} session - Player session.
+   * @param {Mission} mission - Mission offer being accepted.
    * @returns {boolean} True if offer requirements are met.
    */
-  acceptCheck(s, o) {
-    const d = s.data;
-    if (o.type === 'passenger') {
-      const cap = bunks(this.A.ships[d.ship.hull], d.ship),
-        used = occupiedPassengerSeats(d.missions);
-      if (used + o.pax > cap) {
+  acceptCheck(session, mission) {
+    const playerData = session.data;
+    if (mission.type === 'passenger') {
+      const cap = bunks(this.A.ships[playerData.ship.hull], playerData.ship),
+        used = occupiedPassengerSeats(playerData.missions);
+      if (used + mission.pax > cap) {
         this.toast(
-          s,
-          `Not enough passenger seats: ${used} of ${cap} are occupied; this mission needs ${o.pax} more.`,
+          session,
+          `Not enough passenger seats: ${used} of ${cap} are occupied; this mission needs ${mission.pax} more.`,
         );
         return false;
       }
@@ -456,33 +489,34 @@ export const SyndicateOperations = {
   },
   /**
    * Check active missions against their deadlines, notifying of impending expiration or penalizing failures.
-   * @param {import('./game.js').Session} s - Player session.
+   * @param {Session} session - Player session.
    * @returns {void}
    */
-  missionDeadlines(s) {
-    const d = s.data,
+  missionDeadlines(session) {
+    const playerData = session.data,
       now = Date.now();
     let gone = false;
-    for (const m of d.missions)
+    for (const m of playerData.missions)
       if (m.deadline && !m.done && !m.warned && m.deadline - now < 120000 && now <= m.deadline) {
         m.warned = true;
-        this.toast(s, `⏱ Two minutes left: ${m.title}.`);
+        this.toast(session, `⏱ Two minutes left: ${m.title}.`);
       } // 2.4
-    for (const m of d.missions)
+    for (const m of playerData.missions)
       if (m.deadline && !m.done && now > m.deadline) {
         m.failed = true;
         gone = true;
         const fac = SYS[m.sys] && SYS[m.sys].faction;
-        if (m.qty && m.cid && d.cargo[m.cid]) {
+        if (m.qty && m.cid && playerData.cargo[m.cid]) {
         } // the cargo stays yours
-        if (fac && d.rep[fac] != null) d.rep[fac] = clampStanding(d.rep[fac] - 3);
-        this.toast(s, `Job failed: ${m.title}. You missed the deadline.`);
-        this.log(d, `Failed (deadline): ${m.title}.`);
+        if (fac && playerData.rep[fac] != null)
+          playerData.rep[fac] = clampStanding(playerData.rep[fac] - 3);
+        this.toast(session, `Job failed: ${m.title}. You missed the deadline.`);
+        this.log(playerData, `Failed (deadline): ${m.title}.`);
       }
     if (gone) {
-      d.missions = d.missions.filter((m) => !m.failed);
+      playerData.missions = playerData.missions.filter((m) => !m.failed);
       this.db.touch();
-      this.you(s);
+      this.you(session);
     }
   },
 };

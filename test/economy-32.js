@@ -1,4 +1,4 @@
-// Covers 3.2 settlement and reporting after the user-approved pre-test implementation review.
+// Covers settlement arithmetic and cash-flow reporting.
 import assert from 'node:assert/strict';
 import { tradePreview } from '../shared/economy-preview.js';
 import {

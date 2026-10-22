@@ -1,3 +1,5 @@
+/** @import { GradeLots } from './cargo-contracts.js' */
+
 // @ts-check
 // Provisional tuning, not measured balance. Time is eligible server simulation seconds.
 export const MINING = Object.freeze({
@@ -35,7 +37,7 @@ export function randomOf(seed) {
 export function stageCount(radius) {
   return radius < 26 ? 1 : radius < 38 ? 2 : 3;
 }
-/** @param {number} quantity @param {boolean} clean @param {()=>number} random @returns {import('./cargo-contracts.js').GradeLots} */
+/** @param {number} quantity @param {boolean} clean @param {()=>number} random @returns {GradeLots} */
 export function rollGrades(quantity, clean, random) {
   const lots = { common: 0, rich: 0, pure: 0 };
   for (let i = 0; i < quantity; i++) {

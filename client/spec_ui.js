@@ -1,5 +1,5 @@
 import { artworkUrl } from './artwork.js';
-// Quantum Rift 0.8 interface: the Specialists section of the station (blueprints, building, parts, components, tier-ups).
+// Quantum Rift: interface: the Specialists section of the station (blueprints, building, parts, components, tier-ups).
 import { GRADES } from '/shared/galaxy.js';
 import {
   SPECIALISTS,
@@ -18,6 +18,8 @@ import {
 } from '/shared/specialty.js';
 import { ROLES_INFO } from '/shared/roles.js';
 import { credits } from '/shared/rules.js';
+
+/** @import { ClientGameState } from './main.js' */
 
 /**
  * @typedef {Object} SpecialistComponent
@@ -76,7 +78,7 @@ const res = (k, n) =>
 
 /**
  * Renders the full Specialists screen at the Personal Station or docked view.
- * @param {import("./main.js").ClientGameState} G Game state object
+ * @param {ClientGameState} G Game state object
  * @param {boolean} [interactive] Whether interactive buttons are enabled
  * @returns {string} HTML markup
  */

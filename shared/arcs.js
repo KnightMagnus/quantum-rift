@@ -1,4 +1,4 @@
-// 1.2: faction story arcs. Three missions for each of seven powers, separate from the main story. Each arc is offered
+// faction story arcs. Three missions for each of seven powers, separate from the main story. Each arc is offered
 // at that power's capital once you have earned some standing there, and ends in a unique Epic officer and specialist
 // blueprints. Places are worked out from the map, so text uses {home}, {dest}, {s1} and {s2} placeholders.
 import { SYSTEMS, SYS } from './galaxy.js';
@@ -351,8 +351,14 @@ function placesFor(fac) {
   const worlds = mine
     .flatMap((S) =>
       S.stellars
-        .filter((p) => p.svc && p.svc.includes('B') && p.svc.includes('L') && !p.site)
-        .map((p) => ({ p, S })),
+        .filter(
+          (stellarBody) =>
+            stellarBody.svc &&
+            stellarBody.svc.includes('B') &&
+            stellarBody.svc.includes('L') &&
+            !stellarBody.site,
+        )
+        .map((stellarBody) => ({ p: stellarBody, S })),
     )
     .sort((a, b) => (b.p.tech || 0) - (a.p.tech || 0) || a.p.id.localeCompare(b.p.id));
   if (!worlds.length) return null;
@@ -372,7 +378,9 @@ function placesFor(fac) {
       if (
         !s1 &&
         S.faction === fac &&
-        S.stellars.some((p) => p.svc && p.svc.includes('L') && !p.site)
+        S.stellars.some(
+          (stellarBody) => stellarBody.svc && stellarBody.svc.includes('L') && !stellarBody.site,
+        )
       )
         s1 = S;
       if (!s2 && S.id !== home.S.id && S.danger >= 2 && S.faction !== 'quevari') s2 = S;
@@ -381,8 +389,13 @@ function placesFor(fac) {
   s1 = s1 || home.S;
   s2 = s2 || s1;
   const dest =
-    s1.stellars.find((p) => p.svc && p.svc.includes('L') && !p.site && p.id !== home.p.id) ||
-    home.p;
+    s1.stellars.find(
+      (stellarBody) =>
+        stellarBody.svc &&
+        stellarBody.svc.includes('L') &&
+        !stellarBody.site &&
+        stellarBody.id !== home.p.id,
+    ) || home.p;
   return {
     at: home.p.id,
     home: home.p.name,

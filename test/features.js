@@ -10,14 +10,11 @@ import { createMessageRegistry } from '../server/message-registry.js';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
 
-// Characterization from the untouched baseline: catches ordering, stacking,
-// schema, payload, and session-normalization changes without running both against
-// one mutable state. The passenger/economy update adds passengerSeats and stockOutfits
-// to this fixture; v2.9 refreshes only the living-state allocation snapshot because
-// six new markets deliberately expand the random selection pool. All other snapshot values remain unchanged. capture-features
-// runs in its own process with fixed time/RNG. The 3.0 Armada migration also
-// defaults persisted armadaFollow consent to false. Mining 3.0 adds empty versioned
-// cargoLots/storageLots plus storage; all other baseline fields remain unchanged.
+// Characterization checks ordering, stacking, schema, payloads and session normalization.
+// capture-features runs in a separate process with fixed time and RNG. The baseline
+// permits passengerSeats, stockOutfits, armadaFollow=false, empty versioned
+// cargoLots/storageLots and storage. Living-state allocation accounts for the six
+// additional markets in the seeded selection pool. All other fields must match.
 const actual = JSON.parse(
   execFileSync(
     process.execPath,
@@ -28,7 +25,7 @@ const actual = JSON.parse(
     },
   ),
 );
-// Radio draft adds only the saved starter station to the initialization baseline.
+// The saved starter station is the only radio-specific initialization baseline difference.
 // Preserve all other baseline fields; discovery/progression is tested separately.
 const expected = JSON.parse(
   fs.readFileSync(new URL('./fixtures/features-v26.json', import.meta.url)),
@@ -80,17 +77,32 @@ for (const feature of manifest.features) {
     new URL(`../server/${feature.module || feature.file}.js`, import.meta.url),
     'utf8',
   );
-  const referenced = [
-    ...new Set(
-      [
-        ...source.matchAll(
-          ['mining', 'refinery', 'pressure', 'industrial', 'towing'].includes(feature.file)
-            ? /\b(?:this|c)\.([A-Za-z_$][\w$]*)/g
-            : /\bthis\.([A-Za-z_$][\w$]*)/g,
-        ),
-      ].map((m) => m[1]),
+  const capabilityTypes = new Set(
+    [...source.matchAll(/@typedef\s+\{import\([^)]*\)\.\w*Capabilities\}\s+(\w+)/g)].map(
+      ([, name]) => name,
     ),
-  ].sort();
+  );
+  const capabilityParameters = new Set();
+  for (const [, type, name] of source.matchAll(/@param\s+\{(\w+)\}\s+(\w+)/g))
+    if (capabilityTypes.has(type)) capabilityParameters.add(name);
+  const dependencyNames = new Set();
+  function collectDependencies(node) {
+    if (!node || typeof node !== 'object') return;
+    if (
+      (node.type === 'MemberExpression' || node.type === 'OptionalMemberExpression') &&
+      !node.computed &&
+      node.property?.type === 'Identifier' &&
+      (node.object?.type === 'ThisExpression' ||
+        (node.object?.type === 'Identifier' && capabilityParameters.has(node.object.name)))
+    )
+      dependencyNames.add(node.property.name);
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) value.forEach(collectDependencies);
+      else if (value && typeof value === 'object') collectDependencies(value);
+    }
+  }
+  collectDependencies(babel.parsers.babel.parse(source));
+  const referenced = [...dependencyNames].sort();
   assert.deepEqual(referenced, feature.uses, feature.file + ' declared dependencies');
   const tree = babel.parsers.babel.parse(composition);
   let facade;
