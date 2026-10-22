@@ -36,11 +36,8 @@ jobs:
           git lfs fsck
           node -e 'const fs = require("fs"); const s = fs.statSync("client/assets/hub.png"); if (s.size < 10000) throw new Error("LFS pointer not resolved: " + s.size);'
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+      - name: Install pinned project-local Node 27 nightly
+        run: node tools/runtime/install-node.mjs
 
       - name: Install dependencies
         run: npm ci
@@ -85,10 +82,8 @@ jobs:
         with:
           lfs: true
           persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+      - name: Install pinned project-local Node 27 nightly
+        run: node tools/runtime/install-node.mjs
       - run: npm ci
       - name: Install pinned Playwright Chromium and Linux dependencies
         run: npx playwright install --with-deps chromium
@@ -115,9 +110,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
+      - name: Install pinned project-local Node 27 nightly
+        run: node tools/runtime/install-node.mjs
+      - name: Install and compile browser modules
+        run: npm ci
       - name: Windows online and Solo startup regression
         run: node test/persistence-platform.mjs
       - name: Preserve Windows startup evidence

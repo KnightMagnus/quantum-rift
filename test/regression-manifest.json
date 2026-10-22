@@ -86,7 +86,13 @@
     "radio-content.js",
     "cargo-couriers.js",
     "message-routing.js",
-    "save-generator.mjs"
+    "save-generator.mjs",
+    "galaxy-graph.mjs",
+    "ship-capacity.mjs",
+    "html-presentation.mjs",
+    "compiled-runtime.mjs",
+    "deterministic-core.mjs",
+    "packaged-runtime.mjs"
   ],
   "browser": [
     "chat-projection-browser.mjs",
@@ -484,7 +490,7 @@
         "radio-browser.mjs",
         "radio-content.js"
       ],
-      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Saved radio unlocks survive login without captain-name privileges; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1\u20134 and separate new login theme; original theme preserved."
+      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Saved radio unlocks survive login without captain-name privileges; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1–4 and separate new login theme; original theme preserved."
     },
     {
       "id": "economy-balance",
@@ -759,7 +765,28 @@
       "owners": ["server/freight-offers.js", "server/game.js", "server/jobs.js"],
       "services": [],
       "tests": ["cargo-couriers.js", "mission-ui-browser.mjs", "v203.js", "cargo-flows.js"],
-      "asserts": "Two lawful untimed 3\u20135t/6\u201310t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."
+      "asserts": "Two lawful untimed 3–5t/6–10t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."
+    },
+    {
+      "id": "reusable-core",
+      "services": [],
+      "owners": [
+        "shared/galaxy-graph.ts",
+        "shared/ship-capacity.ts",
+        "client/html.ts",
+        "shared/deterministic-random.ts",
+        "tools/build.mjs",
+        "tools/package_archive.py"
+      ],
+      "tests": [
+        "galaxy-graph.mjs",
+        "ship-capacity.mjs",
+        "html-presentation.mjs",
+        "compiled-runtime.mjs",
+        "deterministic-core.mjs",
+        "packaged-runtime.mjs"
+      ],
+      "asserts": "Preserves ordered graph traversal, freight and nearest-buyer parity; signed cargo capacity, mission reservations and HTML escaping compatibility across original consumers. Exact original random streams, hashes, galaxy, rivals, arcs and radio tours remain unchanged. Source and compiled online/Solo startup serve executable browser modules; release archives rebuild and include compiled output, exclude private/stale files and launch without dependencies."
     }
   ],
   "routes": {

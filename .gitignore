@@ -1,6 +1,7 @@
 data/
 solo-data/
 node_modules/
+/node_modules
 *.log
 .DS_Store
 
@@ -9,3 +10,6 @@ node_modules/
 # Local Python generator bytecode.
 __pycache__/
 *.pyc
+
+# Generated browser/server JavaScript; source stays in server/client/shared.
+/dist/

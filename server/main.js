@@ -15,7 +15,11 @@ import { Game } from './game.js';
  * Root directory path of the Quantum Rift repository.
  * @type {string}
  */
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const moduleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = fs.existsSync(path.join(moduleRoot, 'package.json'))
+  ? moduleRoot
+  : path.dirname(moduleRoot);
+const compiledRoot = path.join(ROOT, 'dist');
 
 /**
  * HTTP and WebSocket listener port number.
@@ -185,12 +189,22 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   if (p === '/') p = '/index.html';
+  if (path.extname(p) === '.ts') {
+    res.writeHead(404);
+    res.end('not found');
+    return;
+  }
   const base = p.startsWith('/shared/') ? ROOT : path.join(ROOT, 'client');
-  const file = path.normalize(path.join(base, p));
+  let file = path.normalize(path.join(base, p));
   if (!file.startsWith(base)) {
     res.writeHead(403);
     res.end();
     return;
+  }
+  // Browser imports need emitted JavaScript, never raw TypeScript. Images, HTML,
+  // CSS and JSON remain in their original directories and are not duplicated.
+  if (path.extname(file) === '.js') {
+    file = path.join(compiledRoot, path.relative(ROOT, file));
   }
   const catalog =
     (p.startsWith('/assets/ships/') && p.endsWith('_yard.png')) || p.startsWith('/assets/icons/');

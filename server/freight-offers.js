@@ -1,3 +1,5 @@
+import { xorshift32, fnv1a } from '../shared/deterministic-random.ts';
+import { GalaxyGraph } from '../shared/galaxy-graph.ts';
 import { SYSTEMS, SYS, FACTIONS, START, COMMODITIES } from '../shared/galaxy.js';
 import { route } from '../shared/rules.js';
 
@@ -23,14 +25,10 @@ const lawful = (s, danger) =>
   !FACTIONS[s.faction].pirate &&
   s.stellars.some((p) => p.svc.includes('L') && !p.site && !p.outlaw);
 
+const galaxyGraph = new GalaxyGraph(SYS);
+
 function distances(origin, allowed, limit) {
-  const found = new Map([[origin, 0]]);
-  for (const [id, n] of found) {
-    if (n >= limit) continue;
-    for (const next of SYS[id].links)
-      if (allowed.has(next) && !found.has(next)) found.set(next, n + 1);
-  }
-  return found;
+  return new Map(galaxyGraph.walk(origin, { allowed, maxDepth: limit }));
 }
 
 const quiet = new Set(SYSTEMS.filter((s) => lawful(s, 1)).map((s) => s.id));
@@ -39,14 +37,7 @@ export const INNER_FREIGHT_SYSTEMS = new Set(distances(START.system, quiet, 2).k
 const trade = new Set(SYSTEMS.filter((s) => lawful(s, 2)).map((s) => s.id));
 
 function random(seed) {
-  let n = 2166136261;
-  for (const c of seed) n = Math.imul(n ^ c.charCodeAt(0), 16777619);
-  return () => {
-    n ^= n << 13;
-    n ^= n >>> 17;
-    n ^= n << 5;
-    return (n >>> 0) / 4294967296;
-  };
+  return xorshift32(fnv1a(seed));
 }
 
 /** Additional ordinary cargo contracts, using existing acceptance/hold/payout rules.

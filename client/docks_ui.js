@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from './html.ts';
 import { artworkUrl } from './artwork.js';
 // Docks: the DOCKS screen at your Personal Station, the dock switcher by the DEPART button, and the sidebar line.
 import { ROLES, RARITY } from '/shared/hangar.js';
@@ -34,17 +35,6 @@ import { credits, repairBasis } from '/shared/rules.js';
  * @property {DockBay[]} list List of dock bays
  * @property {DockShip[]} stored List of ships stored in hangar
  */
-
-/**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
 
 /**
  * Returns remaining time in minutes until the specified timestamp.

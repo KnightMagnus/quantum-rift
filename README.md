@@ -57,11 +57,11 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 - Remap controls, adjust interface scale, use a colour-blind palette, or play with a gamepad or touch controls.
 - Resize the Tray, minimap and tabbed menu to suit your screen. Keep browsing positions and filters, and pin one next objective without hiding your other missions.
 - Discover five radio stations through exploration and special jobs, with 32 owner-supplied songs and a full-album Spacepop tour reward. Stations shuffle their music except the Super-Idol album, which plays in order.
-- Run locally in your browser with Node.js—no package installation or build step required.
+- Run locally in your browser with the project’s pinned Node.js runtime. Built releases need no package installation or compilation.
 
 ## Requirements
 
-The computer running the game needs **[Node.js](https://nodejs.org) 18 or newer** and a modern browser. No package installation or build step is needed. Friends joining your server only need a browser.
+The computer running the game needs the **pinned Node 27 prerelease** and a modern browser. Run `node tools/runtime/install-node.mjs` once with an existing Node installation to install the runtime locally without changing system Node. Built release archives need no npm dependencies or compiler; source checkouts require `npm ci` and `npm run build`. See [runtime and build instructions](docs/TYPESCRIPT-RUNTIME.md) for supported platforms. Friends joining your server only need a browser.
 
 ## Launch
 
@@ -69,7 +69,7 @@ Download and extract the release above, then:
 
 - **Windows:** double-click **`Start Solo Game.bat`** for a private game, or **`Start Quantum Rift.bat`** to host multiplayer.
 - **macOS / Linux:** open a terminal in the extracted folder and run `sh start-solo.command` for a private game, or `sh start.command` to host multiplayer.
-- **Any platform, from a terminal:** run `node server/main.js` in the extracted folder to host multiplayer.
+- **Any platform, from a terminal:** run `node tools/start.mjs` in the extracted folder to host multiplayer.
 
 Open **http://localhost:8080** if the browser does not open automatically. Keep the server window open while playing. Solo games accept connections only from your computer; for multiplayer on the same network, friends open `http://<host-computer-address>:8080`.
 

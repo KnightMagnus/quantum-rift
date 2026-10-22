@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from './html.ts';
 import { artworkUrl } from './artwork.js';
 // Quantum Rift: interface: the Specialists section of the station (blueprints, building, parts, components, tier-ups).
 import { GRADES } from '/shared/galaxy.js';
@@ -45,17 +46,6 @@ import { credits } from '/shared/rules.js';
  * @property {Record<string, number>} comp Current component upgrade levels
  * @property {number} [upT] Timestamp when tier-up in drydock completes
  */
-
-/**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
 
 /**
  * Formats duration in milliseconds to a human-readable minutes and hours string.

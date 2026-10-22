@@ -1,4 +1,5 @@
 // UI visibility only: mining/towing authority remains on the server.
+import { ShipCapacity } from '../shared/ship-capacity.ts';
 export function miningPanelState(G) {
   const y = G.you,
     st = y?.shipStats;
@@ -16,7 +17,7 @@ export function miningPanelState(G) {
   return {
     visible: !!y && !y.shipless && !G.landed && !!G.view && (eligible || active),
     capacity,
-    free: Math.max(0, capacity - (y?.cargoUsed || 0) - (y?.jobCargo || 0)),
+    free: new ShipCapacity(capacity, y?.cargoUsed || 0, y?.jobCargo || 0).available,
     active,
   };
 }

@@ -1,16 +1,12 @@
+import { escapeHtml as esc } from './html.ts';
 import { tradePreview } from '/shared/economy-preview.js';
 import { STELLARS } from '/shared/galaxy.js';
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
+import { ShipCapacity, reservedCargoTonnes } from '../shared/ship-capacity.ts';
+
 const cr = (n) => Math.round(n).toLocaleString() + ' cr';
 export function tradeEstimateHtml(G, market, rawAmount) {
   const y = G.you,
-    jobs = (y.missions || [])
-      .filter((m) => ['cargo', 'smuggle'].includes(m.type))
-      .reduce((n, m) => n + (m.qty || 0), 0);
+    hold = new ShipCapacity(y.shipStats.cargo, y.cargoUsed, reservedCargoTonnes(y.missions));
   let p;
   try {
     p = tradePreview({
@@ -19,7 +15,7 @@ export function tradeEstimateHtml(G, market, rawAmount) {
       cargo: y.cargo,
       cargoLots: y.cargoLots,
       credits: y.credits,
-      freeHold: y.shipStats.cargo - y.cargoUsed - jobs,
+      freeHold: hold.remaining,
       ...G.landed.tradeTerms,
       orders: y.refinery?.orders || [],
     });

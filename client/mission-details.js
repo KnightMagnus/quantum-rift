@@ -1,12 +1,10 @@
+import { escapeHtml as esc } from './html.ts';
 import { SYS, STELLARS } from '/shared/galaxy.js';
 import { route } from '/shared/rules.js';
 import { passengerSeats, occupiedPassengerSeats } from '/shared/passengers.js';
 import { contractShares } from '/shared/mission-payouts.js';
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
+import { ShipCapacity, reservedCargoTonnes } from '../shared/ship-capacity.ts';
+
 const kinds = [
   ['all', 'All types'],
   ['cargo', 'Cargo'],
@@ -37,10 +35,11 @@ export function missionDetails(G, o, active = false) {
   const path = system && G.sys ? route(SYS, G.sys, system) : null;
   const jumps = o.done || system === G.sys ? 0 : path?.length || null;
   const cargo = ['cargo', 'smuggle', 'supply'].includes(o.type) ? o.qty || 0 : 0;
-  const used = (y.missions || [])
-    .filter((m) => ['cargo', 'smuggle'].includes(m.type))
-    .reduce((n, m) => n + (m.qty || 0), 0);
-  const free = Math.max(0, (y.shipStats?.cargo || 0) - (y.cargoUsed || 0) - used);
+  const free = new ShipCapacity(
+    y.shipStats?.cargo || 0,
+    y.cargoUsed || 0,
+    reservedCargoTonnes(y.missions),
+  ).available;
   const capacity = passengerSeats(G.A.ships[y.ship?.hull], y.ship);
   const seats = Math.max(0, capacity - occupiedPassengerSeats(y.missions));
   const team = (y.armada?.members || []).filter((m) => m.online && m.jobSlots > 0);

@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from './html.ts';
 // Quantum Rift: interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
 import { SYS, FACTIONS, GRADES } from '/shared/galaxy.js';
 import {
@@ -56,17 +57,6 @@ import { STATES } from '/shared/living.js';
  * @property {number} start Start timestamp
  * @property {number} end End timestamp
  */
-
-/**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
 
 /**
  * Formats time remaining until a timestamp into days, hours, or minutes.

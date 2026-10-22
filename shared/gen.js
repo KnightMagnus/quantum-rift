@@ -1,3 +1,4 @@
+import { signedXorshift32 as rng, fnv1a as hashId } from './deterministic-random.ts';
 /** @import { SpaceSystem, StellarBody } from '../server/game.js' */
 /** @import { FactionDef } from './galaxy.js' */
 
@@ -17,23 +18,6 @@ export const GEN_SEED = 0x51f7;
  * @type {number}
  */
 const TOTAL = 200;
-
-/**
- * Xorshift32 pseudo-random number generator factory.
- * @param {number} seed - Initial 32-bit integer seed value.
- * @returns {function(): number} PRNG closure returning deterministic floats in [0, 1).
- */
-function rng(seed) {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s ^= s << 13;
-    s >>>= 0;
-    s ^= s >> 17;
-    s ^= s << 5;
-    s >>>= 0;
-    return s / 4294967296;
-  };
-}
 
 // ------------------------------------------------------------------ names
 
@@ -1114,20 +1098,6 @@ const MOON_DESC = [
  * @type {string[]}
  */
 const MOON_NUM = ['I', 'II', 'III'];
-
-/**
- * Computes a 32-bit FNV-1a hash integer from an input string.
- * @param {string} str - String to hash.
- * @returns {number} Unsigned 32-bit hash integer.
- */
-function hashId(str) {
-  let h = 2166136261;
-  for (const c of str) {
-    h ^= c.charCodeAt(0);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
 
 /**
  * Secondary procedural pass adding additional unpopulated moons and resource asteroid fields to systems.

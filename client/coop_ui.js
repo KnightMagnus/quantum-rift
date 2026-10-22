@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from './html.ts';
 // Quantum Rift: interface: the CAPTAINS companion tab (friends and their status, messages, the Armada,
 // trading between Personal Stations, duels), Armada ally detection for the HUD and radar, and follow-the-leader.
 import { SYS, COMMODITIES, MATERIALS, GRADES } from '/shared/galaxy.js';
@@ -56,17 +57,6 @@ import { credits } from '/shared/rules.js';
  * @property {{ me: boolean, them: boolean }} lock Offer lock states
  * @property {{ me: boolean, them: boolean }} ok Offer confirm states
  */
-
-/**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
 
 /**
  * Shorthand helper for document.getElementById.

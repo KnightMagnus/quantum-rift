@@ -1,7 +1,9 @@
+import { GalaxyGraph } from './galaxy-graph.ts';
 // faction story arcs. Three missions for each of seven powers, separate from the main story. Each arc is offered
 // at that power's capital once you have earned some standing there, and ends in a unique Epic officer and specialist
 // blueprints. Places are worked out from the map, so text uses {home}, {dest}, {s1} and {s2} placeholders.
 import { SYSTEMS, SYS } from './galaxy.js';
+const galaxyGraph = new GalaxyGraph(SYS);
 
 /**
  * @typedef {Object} ArcStepRaw
@@ -362,29 +364,23 @@ function placesFor(fac) {
     )
     .sort((a, b) => (b.p.tech || 0) - (a.p.tech || 0) || a.p.id.localeCompare(b.p.id));
   if (!worlds.length) return null;
-  const home = worlds[0],
-    seen = new Set([home.S.id]),
-    q = [home.S.id];
+  const home = worlds[0];
   let s1 = null,
     s2 = null;
-  while (q.length && (!s1 || !s2)) {
-    const id = q.shift();
-    for (const l of SYS[id].links) {
-      if (seen.has(l)) continue;
-      seen.add(l);
-      q.push(l);
-      const S = SYS[l];
-      if (S.arena || S.faction === 'deep' || S.farside) continue;
-      if (
-        !s1 &&
-        S.faction === fac &&
-        S.stellars.some(
-          (stellarBody) => stellarBody.svc && stellarBody.svc.includes('L') && !stellarBody.site,
-        )
+  for (const [systemId, distance] of galaxyGraph.walk(home.S.id)) {
+    if (!distance) continue;
+    const S = SYS[systemId];
+    if (S.arena || S.faction === 'deep' || S.farside) continue;
+    if (
+      !s1 &&
+      S.faction === fac &&
+      S.stellars.some(
+        (stellarBody) => stellarBody.svc && stellarBody.svc.includes('L') && !stellarBody.site,
       )
-        s1 = S;
-      if (!s2 && S.id !== home.S.id && S.danger >= 2 && S.faction !== 'quevari') s2 = S;
-    }
+    )
+      s1 = S;
+    if (!s2 && S.id !== home.S.id && S.danger >= 2 && S.faction !== 'quevari') s2 = S;
+    if (s1 && s2) break;
   }
   s1 = s1 || home.S;
   s2 = s2 || s1;

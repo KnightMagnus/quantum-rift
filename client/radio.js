@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from './html.ts';
 // Original, bundled station playlists: no external player or network provider.
 import { RADIO_STATIONS } from '../shared/radio-stations.js';
 export { RADIO_STATIONS };
@@ -39,11 +40,7 @@ let el = null,
   token = 0,
   box = null,
   cur = null;
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
+
 export function setRadioLevel(v, show = v) {
   level = Math.max(0, Math.min(1, v));
   shown = show;

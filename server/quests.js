@@ -1,3 +1,5 @@
+import { mulberry32 as rng, fnv1a } from '../shared/deterministic-random.ts';
+import { GalaxyGraph } from '../shared/galaxy-graph.ts';
 import { grantRadio } from './radio-discovery.js';
 import { RADIO_STATIONS, SCIENTIST_STORY } from '../shared/radio-stations.js';
 import { clampStanding } from '../shared/reputation.js';
@@ -5,7 +7,6 @@ import { clampStanding } from '../shared/reputation.js';
 // handcrafted side stories wait at particular worlds. Each step is an ordinary job tagged with `m.quest`; finishing it
 // tells the next part of the story and posts the next step. Owned by game.features.quests.
 import {
-  SYSTEMS,
   SYS,
   STELLARS,
   FACTIONS,
@@ -28,24 +29,7 @@ import { occupiedPassengerSeats } from '../shared/passengers.js';
  * @param {string | number} str - Input key to hash.
  * @returns {number} 32-bit unsigned integer hash.
  */
-const hash = (str) => {
-  let h = 2166136261;
-  for (const c of String(str)) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-  return h >>> 0;
-};
-
-/**
- * SplitMix32 pseudo-random number generator factory.
- * @param {number} seed - Initial seed value.
- * @returns {() => number} Random generator returning floats in [0, 1).
- */
-const rng = (seed) => () => {
-  seed = (seed + 0x6d2b79f5) >>> 0;
-  let t = seed;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-};
+const hash = (str) => fnv1a(String(str));
 
 /**
  * Pick a random item from an array.
@@ -103,26 +87,10 @@ const portsOf = (sys) => SYS[sys].stellars.filter((x) => x.svc.includes('L') && 
 /** @type {Record<string, Record<string, number>>} Jump distance cache by system ID. */
 const JCACHE = {};
 
-/**
- * Calculate or look up cached jump distances from an origin system to all connected systems.
- * @param {string} a - Origin system ID.
- * @returns {Record<string, number>} Map of system IDs to jump count distance.
- */
-const jumpsFrom = (a) =>
-  JCACHE[a] ||
-  (JCACHE[a] = (() => {
-    const d = { [a]: 0 },
-      q = [a];
-    while (q.length) {
-      const x = q.shift();
-      for (const l of SYS[x].links)
-        if (d[l] === undefined) {
-          d[l] = d[x] + 1;
-          q.push(l);
-        }
-    }
-    return d;
-  })());
+const galaxyGraph = new GalaxyGraph(SYS);
+
+/** @param {string} from @returns {Record<string, number>} */
+const jumpsFrom = (from) => JCACHE[from] || (JCACHE[from] = galaxyGraph.distances(from));
 
 /**
  * Map faction identifier to playable/officer race key.

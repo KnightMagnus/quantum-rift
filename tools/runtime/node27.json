@@ -1,0 +1,26 @@
+{
+  "version": "v27.0.0-nightly20261020531d28fc36",
+  "baseUrl": "https://nodejs.org/download/nightly/v27.0.0-nightly20261020531d28fc36/",
+  "artifacts": {
+    "linux-x64": {
+      "file": "node-v27.0.0-nightly20261020531d28fc36-linux-x64.tar.xz",
+      "sha256": "02e0cb0151f8029620de22cfaeb5615538ca02939cab347376d692f9d4e0131a"
+    },
+    "linux-arm64": {
+      "file": "node-v27.0.0-nightly20261020531d28fc36-linux-arm64.tar.xz",
+      "sha256": "1d6c9cc6d1bb3f44003a9ccef17c4bc62799520737bf1bb822a2dbc8878cf420"
+    },
+    "darwin-arm64": {
+      "file": "node-v27.0.0-nightly20261020531d28fc36-darwin-arm64.tar.gz",
+      "sha256": "61926d616db9d590d0c8d691afc765f9e04cffcae4c5aaa0b75c094feedd7b58"
+    },
+    "win32-x64": {
+      "file": "node-v27.0.0-nightly20261020531d28fc36-win-x64.zip",
+      "sha256": "3ae164813f2a11eaebc19b76e1eacb87adb3a1bfec5a79a59206fbb622bd92ba"
+    },
+    "win32-arm64": {
+      "file": "node-v27.0.0-nightly20261020531d28fc36-win-arm64.zip",
+      "sha256": "50a8b064ae5d9bccdaf126cbfbbbbe93fd1b360ec576296250b2662371674bb7"
+    }
+  }
+}

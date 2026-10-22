@@ -1,3 +1,4 @@
+import { signedXorshift32 as rng, fnv1a as hash } from '../shared/deterministic-random.ts';
 import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift: server feature operations: invasions,
 // anomalies and server events, daily and weekly goals, faction stores, and the expanded job types.
@@ -44,37 +45,6 @@ import { captainBonus, shipStats, credits } from '../shared/rules.js';
  * @returns {number} Clamped value.
  */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-
-/**
- * Create a seeded pseudo-random number generator function.
- * @param {number} seed - Initial random seed.
- * @returns {() => number} Generator returning floats in [0, 1).
- */
-function rng(seed) {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s ^= s << 13;
-    s >>>= 0;
-    s ^= s >> 17;
-    s ^= s << 5;
-    s >>>= 0;
-    return s / 4294967296;
-  };
-}
-
-/**
- * 32-bit FNV-1a string hash function.
- * @param {string} str - Input string to hash.
- * @returns {number} 32-bit unsigned integer hash.
- */
-function hash(str) {
-  let h = 2166136261;
-  for (const c of str) {
-    h ^= c.charCodeAt(0);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
 
 /**
  * Pick a random element from an array using a random generator function.

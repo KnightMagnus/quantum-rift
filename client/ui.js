@@ -1,3 +1,4 @@
+import { escapeHtml as esc } from './html.ts';
 import {
   missionDetails,
   missionFactsHtml,
@@ -8,6 +9,7 @@ import { initCockpitState } from './cockpit-state.js';
 import { tradeEstimateHtml, receiptHtml, initEconomyUI } from './economy-ui.js';
 import { refineryHtml } from './refinery_ui.js';
 import { artworkUrl } from './artwork.js';
+import { ShipCapacity, reservedCargoTonnes } from '../shared/ship-capacity.ts';
 import { stationLanding } from './exotic_scenery.js';
 import { passengerSeats, occupiedPassengerSeats } from '/shared/passengers.js';
 // Quantum Rift interface: HUD, landing screens (trade, shipyard, outfitter, jobs, Quantum Station), companion tabs, galaxy map, chat.
@@ -159,16 +161,7 @@ export const roleTag = (H) => {
     ? `<span class="role" style="color:${R.color}" title="${R.desc}">${R.icon} ${R.name}</span>`
     : '';
 };
-/**
- * Escapes unsafe characters for HTML element text or attributes.
- * @param {string | number | boolean | null | undefined} s Input string or value
- * @returns {string} HTML-escaped string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
+
 let G, send;
 /**
  * Binds DOM event listeners and initializes UI state managers with global game state.
@@ -1737,10 +1730,8 @@ function stateCard(sys) {
  * @returns {number} Free cargo capacity in tons
  */
 function holdFree(y) {
-  const mc = (y.missions || [])
-    .filter((m) => m.type === 'cargo' || m.type === 'smuggle')
-    .reduce((a, m) => a + (m.qty || 0), 0);
-  return y.shipStats.cargo - y.cargoUsed - mc;
+  return new ShipCapacity(y.shipStats.cargo, y.cargoUsed, reservedCargoTonnes(y.missions))
+    .remaining;
 }
 // the bar contact's greeting and rumour, and the world's trade specialties
 /**

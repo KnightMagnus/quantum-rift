@@ -1,3 +1,4 @@
+import { escapeDoubleQuotedHtml as esc } from './html.ts';
 import { artworkUrl } from './artwork.js';
 // the ship and captain panel (I), the player information view: your ship, cargo (with jettison), combat
 // rating, fleet orders, and the rival captains of the Rift with how they feel about you.
@@ -55,17 +56,6 @@ import { price } from '/shared/rules.js';
  * @property {number} turrets Equipped turret count
  * @property {number} maxTurrets Maximum turret mounts
  */
-
-/**
- * HTML-escapes a string safely for insertion into template strings.
- * @param {string | number | boolean | null | undefined} s Input value
- * @returns {string} Escaped HTML string
- */
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"]/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
-  );
 
 /**
  * Formats a number to rounded, localized string.

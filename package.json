@@ -5,20 +5,25 @@
   "type": "module",
   "main": "server/main.js",
   "scripts": {
-    "start": "node server/main.js",
+    "start": "node tools/start.mjs",
     "test": "node test/bot.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.core.json --noEmit",
     "test:features": "node test/features.js",
     "test:types": "node test/typecheck-contracts.js",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky",
+    "prepare": "husky && npm run build",
     "test:regression:unit": "node test/regression-runner.mjs unit",
     "test:regression:browser": "node test/regression-runner.mjs browser",
-    "test:regression": "node test/regression-runner.mjs all"
+    "test:regression": "node test/regression-runner.mjs all",
+    "build": "node tools/build.mjs",
+    "prestart": "npm run build",
+    "pretest:regression": "npm run build",
+    "pretest:regression:unit": "npm run build",
+    "pretest:regression:browser": "npm run build"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=27.0.0-0 <28"
   },
   "license": "UNLICENSED",
   "devDependencies": {

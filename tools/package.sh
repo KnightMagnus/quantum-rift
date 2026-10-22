@@ -1,6 +1,7 @@
 #!/bin/sh
 # Clean/hydrated checkout -> complete ZIP and matching parts below 28 MB.
-# All parts extract into the same versioned folder. Requires Python 3 and Git LFS.
+# Builds dist first; requires Node, installed dev dependencies, Python 3 and Git LFS.
+# All parts extract into the same versioned folder.
 set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 DEST=$(cd "${1:-..}" && pwd)/out

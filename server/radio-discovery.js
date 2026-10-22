@@ -1,5 +1,8 @@
+import { fnv1a as hash } from '../shared/deterministic-random.ts';
+import { GalaxyGraph } from '../shared/galaxy-graph.ts';
 import { RADIO_STATIONS, STARTER_RADIO } from '../shared/radio-stations.js';
 import { SYS, STELLARS } from '../shared/galaxy.js';
+const galaxyGraph = new GalaxyGraph(SYS);
 const tourSystemSafe = (system, d) =>
   system &&
   !system.farside &&
@@ -37,23 +40,20 @@ export function discoverRadio(game, session) {
   return [...session.data.radioStations];
 }
 // Stable per captain/port/jump: reopening the board or reconnecting cannot reroll it.
-const hash = (text) => {
-  let n = 2166136261;
-  for (const c of text) n = Math.imul(n ^ c.charCodeAt(0), 16777619);
-  return n >>> 0;
-};
 export const TOUR_ODDS = 1000; // One in 1,000 eligible arrival boards.
 export function tourRoute(origin, d) {
+  if (!SYS[origin]) return null;
   let current = origin;
   const seen = new Set([origin]),
     stops = [];
   for (let i = 0; i < 5; i++) {
-    const pending = [[current, 0]],
-      visited = new Set([current]);
     let port;
-    while (pending.length && !port) {
-      const [id, distance] = pending.shift(),
-        system = SYS[id];
+    for (const [id, distance] of galaxyGraph.walk(current, {
+      maxDepth: 3,
+      neighborOrder: 'sorted',
+      canEnter: (next) => tourSystemSafe(SYS[next], d),
+    })) {
+      const system = SYS[id];
       if (!system) continue;
       if (distance > 0 && !seen.has(id) && tourSystemSafe(system, d))
         port = system.stellars.find(
@@ -63,12 +63,7 @@ export function tourRoute(origin, d) {
             stellarBody.svc.includes('L') &&
             stellarBody.svc.includes('B'),
         );
-      if (distance < 3)
-        for (const next of [...system.links].sort())
-          if (!visited.has(next) && tourSystemSafe(SYS[next], d)) {
-            visited.add(next);
-            pending.push([next, distance + 1]);
-          }
+      if (port) break;
     }
     if (!port) return null;
     stops.push(port.id);

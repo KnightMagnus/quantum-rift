@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "noEmitOnError": true,
+    "rootDir": ".",
+    "outDir": "dist",
+    "erasableSyntaxOnly": true
+  },
+  "include": [
+    "server/**/*.js",
+    "server/**/*.ts",
+    "shared/**/*.js",
+    "shared/**/*.ts",
+    "client/**/*.js",
+    "client/**/*.ts"
+  ],
+  "exclude": ["dist", "node_modules"]
+}

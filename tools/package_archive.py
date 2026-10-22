@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Package a clean, hydrated checkout; complete ZIP plus <=28 MB matching parts.
-Only Git-tracked files are included. Source masters, .git, saves and dependencies
-outside that inventory cannot accidentally enter a release archive.
+Includes Git-tracked files and freshly compiled dist modules. Source masters,
+saves and dependencies outside those inventories cannot enter a release archive.
 """
 import argparse
 import hashlib
@@ -21,6 +21,9 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     subprocess.run(['git','-C',str(ROOT),'diff','--quiet','HEAD','--'],check=True)
+    # dist is intentionally untracked. Rebuild it rather than packaging stale
+    # output or leaving players with a source-only archive that cannot launch.
+    subprocess.run(['node',str(ROOT/'tools/build.mjs')],cwd=ROOT,check=True)
     version = json.loads((ROOT/'package.json').read_text())['version']
     name = 'Quantum Rift v' + version
     out = args.output.resolve()
@@ -45,6 +48,24 @@ def main():
         if filename in lfs and lfs[filename]!=digest: raise ValueError('LFS hash mismatch: '+filename)
         if len(data)>27_000_000:raise ValueError('Individual file exceeds multipart limit: '+filename)
         records.append(dict(path=filename,size=len(data),sha256=digest,mode=int(mode[-3:],8)))
+    compiled = ROOT/'dist'
+    compiled_inventory = {'dist/server/seeds.json'}
+    for row in records:
+        source = Path(row['path'])
+        if source.parts[0] in ['server','shared','client'] and source.suffix in ['.js','.ts'] and not source.name.endswith('.d.ts'):
+            compiled_inventory.add('dist/'+source.with_suffix('.js').as_posix())
+    if compiled.is_symlink(): raise ValueError('Compiled output must not be a symlink')
+    if not (compiled/'server/main.js').is_file(): raise ValueError('Missing compiled server entry')
+    for p in sorted(compiled.rglob('*')):
+        if p.is_symlink(): raise ValueError('Compiled output must not contain symlinks: '+str(p))
+        if p.is_dir(): continue
+        filename=p.relative_to(ROOT).as_posix()
+        if not p.is_file() or filename not in compiled_inventory:
+            raise ValueError('Unexpected compiled package file: '+filename)
+        data=p.read_bytes()
+        if len(data)>27_000_000: raise ValueError('Individual file exceeds multipart limit: '+filename)
+        records.append(dict(path=filename,size=len(data),sha256=hashlib.sha256(data).hexdigest(),mode=0o644))
+    if len({row['path'] for row in records}) != len(records): raise ValueError('Duplicate package path')
     records.sort(key=lambda r:r['path'])
     def write_zip(target,rows):
         with zipfile.ZipFile(target,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as archive:
@@ -74,6 +95,6 @@ def main():
             outputs.append(target)
     manifest=dict(version=version,head=git('rev-parse','HEAD').decode().strip(),root=name,lfsAssets=len(lfs),files=records,archives=[dict(name=p.name,bytes=p.stat().st_size,sha256=hashlib.sha256(p.read_bytes()).hexdigest()) for p in outputs])
     (out/'package-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
-    print(f'Verified {len(records)} tracked files, {len(lfs)} hydrated LFS assets, complete ZIP and {len(outputs)-1} parts.',flush=True)
+    print(f'Verified {len(records)} source and compiled files, {len(lfs)} hydrated LFS assets, complete ZIP and {len(outputs)-1} parts.',flush=True)
 
 if __name__=='__main__':main()

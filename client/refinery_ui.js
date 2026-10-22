@@ -1,11 +1,8 @@
+import { escapeHtml as esc } from './html.ts';
 import { refineryPanelHtml, initRefineryControls } from './refinery-controls.js';
 import { RECIPES, REFINERY_RULES as R } from '/shared/refinery-rules.js';
 import { STELLARS, COMMODITIES } from '/shared/galaxy.js';
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"']/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-  );
+
 const title = (cid) => COMMODITIES.find((c) => c.id === cid)?.name || cid;
 export function refineryJobsHtml(G) {
   const data = G.you?.refinery;
