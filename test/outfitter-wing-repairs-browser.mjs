@@ -5,11 +5,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { STELLARS } from '../shared/galaxy.js';
-import { repairBasis } from '../shared/rules.js';
-import { WING_REPAIR_COST } from '../shared/docks.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { STELLARS } from '../shared/galaxy.ts';
+import { repairBasis } from '../shared/rules.ts';
+import { WING_REPAIR_COST } from '../shared/docks.ts';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright'),
   evidence = path.resolve(process.argv[2] || 'artifacts/outfitter-wing-repairs'),
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-wing-browser-')),
@@ -48,7 +48,7 @@ g.db.touch();
 g.db.flush();
 const port = Number(process.env.REPAIR_TEST_PORT || 18974),
   origin = `http://127.0.0.1:${port}`,
-  server = spawn(process.execPath, ['server/main.js'], {
+  server = spawn(process.execPath, ['server/main.ts'], {
     cwd: path.resolve('.'),
     env: {
       ...process.env,

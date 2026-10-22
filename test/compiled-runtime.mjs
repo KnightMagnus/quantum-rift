@@ -11,7 +11,7 @@ assert.deepEqual(
   'compiled default seed catalog must be shipped unchanged',
 );
 
-for (const entry of ['server/main.js', 'dist/server/main.js', 'tools/start.mjs']) {
+for (const entry of ['server/main.ts', 'dist/server/main.js', 'tools/start.mjs']) {
   for (const solo of [false, true]) {
     const port = await availablePort();
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-compiled-'));

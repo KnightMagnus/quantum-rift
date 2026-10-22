@@ -4,11 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { SYSTEMS, SYS, STELLARS } from '../shared/galaxy.js';
-import { EVENTIDE, EVENTIDE_LINKS, eventideDrain, eventidePulse } from '../shared/eventide.js';
-import { Game } from '../server/game.js';
-import { DT } from '../shared/rules.js';
-import { DB } from '../server/db.js';
+import { SYSTEMS, SYS, STELLARS } from '../shared/galaxy.ts';
+import { EVENTIDE, EVENTIDE_LINKS, eventideDrain, eventidePulse } from '../shared/eventide.ts';
+import { Game } from '../server/game.ts';
+import { DT } from '../shared/rules.ts';
+import { DB } from '../server/db.ts';
 
 const ids = new Set(EVENTIDE.map((s) => s.id));
 assert.equal(SYSTEMS.length, 217);

@@ -1,4 +1,4 @@
-"""Writes shared/sprites26.js from ships26.json (the frame sizes and banking flags of the 2.6 ship sheets)."""
+"""Writes shared/sprites26.ts from ships26.json (the frame sizes and banking flags of the 2.6 ship sheets)."""
 import json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); root = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '..', 'quantum-rift')
 meta = json.load(open(os.path.join(HERE, 'ships26.json')))

@@ -5,10 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 import { EventEmitter } from 'node:events';
-import { Game } from '../server/game.js';
-import { DB } from '../server/db.js';
-import { upgrade } from '../server/ws.js';
-import { HAIL_LIMITS } from '../server/hail-service.js';
+import { Game } from '../server/game.ts';
+import { DB } from '../server/db.ts';
+import { upgrade } from '../server/ws.ts';
+import { HAIL_LIMITS } from '../server/hail-service.ts';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(new URL('..', import.meta.url).pathname),
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-hails-browser-')),

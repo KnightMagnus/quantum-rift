@@ -14,9 +14,9 @@ import {
   failureEvidence,
   delay,
 } from './helpers/browser-fixture.mjs';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { augmentAssets, makeLoadout } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { augmentAssets, makeLoadout } from '../shared/rules.ts';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-follow-two-'));
 const evidence = process.env.RIFT_TWO_FOLLOW_DIR || evidenceDir('armada-two-clients');
 fs.mkdirSync(evidence, { recursive: true });
@@ -41,7 +41,7 @@ fs.writeFileSync(
   fixture,
   `
 import fs from 'node:fs';
-import {Game} from ${JSON.stringify(url('server/game.js'))};
+import {Game} from ${JSON.stringify(url('server/game.ts'))};
 let game, ticks=0, trace=[];
 const original=Game.prototype.spawnPlayer;
 Game.prototype.spawnPlayer=function(s,...args){original.call(this,s,...args); game=this;
@@ -67,7 +67,7 @@ const server = spawn(
     path.join(root, 'test/helpers/seed-random.mjs'),
     '--import',
     fixture,
-    'server/main.js',
+    'server/main.ts',
   ],
   {
     cwd: root,

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseSync } from 'oxc-parser';
+import { checkApplicationTypeScript } from '../tools/typescript-scope.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-tooling-'));
@@ -27,6 +28,37 @@ function lint(source, typed = false) {
   return result;
 }
 try {
+  const scope = path.join(directory, 'application');
+  for (const name of ['server', 'shared', 'client']) {
+    fs.mkdirSync(path.join(scope, name), { recursive: true });
+    fs.writeFileSync(path.join(scope, name, 'fixture.ts'), 'export const answer: number = 42;');
+  }
+  const sourceConfig = {
+    compilerOptions: { strict: true, noEmit: true },
+    include: ['server/**/*.ts', 'shared/**/*.ts', 'client/**/*.ts'],
+  };
+  const writeScopeConfig = (value) =>
+    fs.writeFileSync(path.join(scope, 'tsconfig.json'), JSON.stringify(value));
+  writeScopeConfig(sourceConfig);
+  assert.equal(checkApplicationTypeScript(scope), 3);
+  const legacy = path.join(scope, 'server', 'unchecked.js');
+  fs.writeFileSync(legacy, 'export const legacy = 1;');
+  assert.throws(() => checkApplicationTypeScript(scope), /Unchecked application JavaScript/);
+  fs.unlinkSync(legacy);
+  writeScopeConfig({ ...sourceConfig, exclude: ['client'] });
+  assert.throws(() => checkApplicationTypeScript(scope), /omitted from typecheck/);
+  writeScopeConfig({ ...sourceConfig, compilerOptions: { noEmit: true, strict: false } });
+  assert.throws(() => checkApplicationTypeScript(scope), /requires strict TypeScript/);
+  writeScopeConfig({
+    ...sourceConfig,
+    compilerOptions: { strict: true, noImplicitAny: false, noEmit: true },
+  });
+  assert.throws(() => checkApplicationTypeScript(scope), /must not disable strict option/);
+  writeScopeConfig(sourceConfig);
+  fs.writeFileSync(path.join(scope, 'server', 'fixture.ts'), '// @ts-nocheck\nexport const x = 1;');
+  assert.throws(() => checkApplicationTypeScript(scope), /Type-check suppression/);
+  fs.writeFileSync(path.join(scope, 'server', 'fixture.ts'), 'export const answer: number = 42;');
+  assert.equal(checkApplicationTypeScript(scope), 3);
   fs.writeFileSync(
     path.join(directory, 'tsconfig.json'),
     JSON.stringify({

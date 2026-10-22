@@ -1,7 +1,7 @@
 // Actual damage, hostility, protection and help dispatch; no saved immunity flag.
 import assert from 'node:assert/strict';
-import { Space } from '../server/space.js';
-import { Game } from '../server/game.js';
+import { Space } from '../server/space.ts';
+import { Game } from '../server/game.ts';
 
 let next = 1;
 const ship = (faction, extra = {}) => ({

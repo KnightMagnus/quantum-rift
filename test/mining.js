@@ -2,11 +2,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { DT, makeLoadout } from '../shared/rules.js';
-import { contactTime, rollGrades, randomOf, stageCount } from '../shared/mining-rules.js';
-import { assertLots, clearLots } from '../shared/cargo-lots.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { DT, makeLoadout } from '../shared/rules.ts';
+import { contactTime, rollGrades, randomOf, stageCount } from '../shared/mining-rules.ts';
+import { assertLots, clearLots } from '../shared/cargo-lots.ts';
 import { tempDataDir } from './helpers/temp-data.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 function game(db = new DB(tempDataDir('rift-mining-'))) {
@@ -66,7 +66,7 @@ function setup(w, r) {
   r.y = 100000;
   e.guns = []; // Use actual weapon parameters and production Space.fire rather than trusted contact messages.
   const p = g.A.weapons[w];
-  return import('../shared/rules.js').then(({ weaponParams }) => {
+  return import('../shared/rules.ts').then(({ weaponParams }) => {
     const gun = {
       w,
       n: 1,
@@ -178,7 +178,7 @@ async function tapperSampling(quiet, ready) {
   rock.y = 100000;
   rock.seam = 0;
   rock.hp = ready ? 1 : rock.max;
-  const { weaponParams } = await import('../shared/rules.js');
+  const { weaponParams } = await import('../shared/rules.ts');
   const weapon = {
     w: 181,
     n: 1,
@@ -259,7 +259,7 @@ async function separatedTapper(quiet, secondBeam = false) {
   r.y = 100000;
   r.seam = 0;
   r.hp = 1;
-  const { weaponParams } = await import('../shared/rules.js');
+  const { weaponParams } = await import('../shared/rules.ts');
   const gun = {
     w: 181,
     n: 1,

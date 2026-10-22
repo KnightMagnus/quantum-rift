@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { STELLARS } from '../shared/galaxy.js';
+import { STELLARS } from '../shared/galaxy.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const evidence = process.env.RIFT_BROWSER_EVIDENCE;

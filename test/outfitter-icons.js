@@ -1,7 +1,7 @@
 // Verify actual shipped image headers for every currently offered outfit, not LFS placeholders.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { allOutfits, augmentAssets } from '../shared/rules.js';
+import { allOutfits, augmentAssets } from '../shared/rules.ts';
 const A = augmentAssets(
   JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url))),
 );

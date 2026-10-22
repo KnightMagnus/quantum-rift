@@ -2,11 +2,11 @@ import { tempDataDir } from './helpers/temp-data.js';
 // 0.9 tests: hostile levels, loot chests (2.6: no directives or solo armadas), Station Holdout, weekly events, the Umbral Eclipse.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYSTEMS } from '../shared/galaxy.js';
-import { levelOf, winOdds, HOLDOUT } from '../shared/hostile.js';
-import { eventAt, eventCalendar, EVENTS } from '../shared/fronts.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYSTEMS } from '../shared/galaxy.ts';
+import { levelOf, winOdds, HOLDOUT } from '../shared/hostile.ts';
+import { eventAt, eventCalendar, EVENTS } from '../shared/fronts.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v09-')));
 const ok = (c, m) => {

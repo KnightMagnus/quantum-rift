@@ -3,13 +3,13 @@ import { tempDataDir } from './helpers/temp-data.js';
 // Syndicate contracts, faction story arcs, and Farside expeditions.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS, STELLARS } from '../shared/galaxy.js';
-import { synTier, BLACK_MARKET, TRAITS, bunks } from '../shared/syndicate.js';
-import { ARCS } from '../shared/arcs.js';
-import { EXPEDITION_LORE } from '../shared/expeditions.js';
-import { captainBonus } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS, STELLARS } from '../shared/galaxy.ts';
+import { synTier, BLACK_MARKET, TRAITS, bunks } from '../shared/syndicate.ts';
+import { ARCS } from '../shared/arcs.ts';
+import { EXPEDITION_LORE } from '../shared/expeditions.ts';
+import { captainBonus } from '../shared/rules.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v12-')));
 const ok = (c, m) => {
@@ -228,7 +228,7 @@ ok(
   'outlaw boards post Syndicate smuggling contracts and hits',
 );
 // trade haggling
-const tp = (await import('../shared/syndicate.js')).TRAITS.haggler;
+const tp = (await import('../shared/syndicate.ts')).TRAITS.haggler;
 ok(tp.bonus.tradePct === 2, 'the Haggler trait improves trade prices');
 // faction story arcs
 ok(

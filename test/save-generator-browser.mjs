@@ -36,7 +36,7 @@ const generated = spawnSync(
 assert.equal(generated.status, 0, String(generated.stderr));
 const port = await availablePort();
 const origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.js'], {
+const server = spawn(process.execPath, ['server/main.ts'], {
   cwd: root,
   env: {
     ...process.env,

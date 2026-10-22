@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { dredgePilot, control, industrialStep, seed, DT } from './helpers/dredge-fixture.js';
-import { weaponParams } from '../shared/rules.js';
-import { RECIPES } from '../shared/refinery-rules.js';
-import { SYS, STELLARS, COMMODITIES } from '../shared/galaxy.js';
+import { weaponParams } from '../shared/rules.ts';
+import { RECIPES } from '../shared/refinery-rules.ts';
+import { SYS, STELLARS, COMMODITIES } from '../shared/galaxy.ts';
 import { quote, command } from './helpers/refinery-fixture.js';
 import { evidenceDir } from './helpers/browser-fixture.mjs';
 // Actual price/debit/output/fee loop including new plasma recipes, all forward only.

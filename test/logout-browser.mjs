@@ -3,9 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { augmentAssets } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { augmentAssets } from '../shared/rules.ts';
 import { tempDataDir } from './helpers/temp-data.js';
 import {
   root,
@@ -33,7 +33,7 @@ for (const solo of [false, true]) {
   db.flush();
   const port = await availablePort();
   const origin = `http://127.0.0.1:${port}`;
-  const server = spawn(process.execPath, ['--import', './test/seed-random.js', 'server/main.js'], {
+  const server = spawn(process.execPath, ['--import', './test/seed-random.js', 'server/main.ts'], {
     cwd: root,
     env: {
       ...process.env,

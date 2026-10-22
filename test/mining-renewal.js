@@ -1,8 +1,8 @@
 // Natural renewal is a new finite generation, never a reset of an extracted ledger.
 import assert from 'node:assert/strict';
 import { refineryGame } from './helpers/refinery-fixture.js';
-import { DB } from '../server/db.js';
-import { MINING } from '../shared/mining-rules.js';
+import { DB } from '../server/db.ts';
+import { MINING } from '../shared/mining-rules.ts';
 const fields = ['ore', 'gas', 'shards'].map((ore, i) => ({
   x: i * 1000,
   y: 0,

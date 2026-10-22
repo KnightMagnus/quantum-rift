@@ -9,10 +9,10 @@ import {
   linearRandom32,
   fnv1a,
 } from '../shared/deterministic-random.ts';
-import { SYS } from '../shared/galaxy.js';
-import { ARCS } from '../shared/arcs.js';
-import { seedOf, randomOf } from '../shared/mining-rules.js';
-import { tourRoute } from '../server/radio-discovery.js';
+import { SYS } from '../shared/galaxy.ts';
+import { ARCS } from '../shared/arcs.ts';
+import { seedOf, randomOf } from '../shared/mining-rules.ts';
+import { tourRoute } from '../server/radio-discovery.ts';
 
 // Captured from the original private functions at PR64 0eaf491, independently
 // before migrations. Signed shifts, zero defaults and string iteration matter.
@@ -20,20 +20,20 @@ const baseline = JSON.parse(
   fs.readFileSync(new URL('./fixtures/deterministic-core-v331.json', import.meta.url)),
 );
 const factories = {
-  'shared/gen.js': signedXorshift32,
-  'shared/fronts.js': signedXorshift32,
-  'server/fronts.js': signedXorshift32,
-  'server/hangar.js': signedXorshift32,
-  'server/jobs.js': signedXorshift32,
-  'server/quests.js': mulberry32,
-  'shared/mining-rules.js': randomOf,
-  'shared/rivals.js': (seed) => linearRandom32(seed >>> 0 || 1),
-  'server/freight-offers.js': (seed) => xorshift32(fnv1a(seed)),
+  'shared/gen.ts': signedXorshift32,
+  'shared/fronts.ts': signedXorshift32,
+  'server/fronts.ts': signedXorshift32,
+  'server/hangar.ts': signedXorshift32,
+  'server/jobs.ts': signedXorshift32,
+  'server/quests.ts': mulberry32,
+  'shared/mining-rules.ts': randomOf,
+  'shared/rivals.ts': (seed) => linearRandom32(seed >>> 0 || 1),
+  'server/freight-offers.ts': (seed) => xorshift32(fnv1a(seed)),
 };
 for (const [file, cases] of Object.entries(baseline.streams)) {
   for (const [seed, expected] of cases) {
     assert.deepEqual(
-      Array.from({ length: expected.length }, factories[file](seed)),
+      Array.from({ length: expected.length }, factories[file.replace(/\.js$/, '.ts')](seed)),
       expected,
       `${file} seed ${seed}`,
     );

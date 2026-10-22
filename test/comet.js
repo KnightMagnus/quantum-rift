@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { cometPose, cometScreen, cometTailAngle, COMET_DEPTH } from '../client/comet.js';
+import { cometPose, cometScreen, cometTailAngle, COMET_DEPTH } from '../client/comet.ts';
 const c = { x0: 5200, y0: 0, len: 700, hue: '170,220,255' };
 for (const t of [0, 899999, 900000, 4523893, 1e9]) {
   assert.deepEqual(cometPose(c, t), cometPose({ ...c }, t));
@@ -31,13 +31,13 @@ for (const z of [0.4, 1, 2])
       );
     }
   }
-const source = fs.readFileSync(new URL('../client/render.js', import.meta.url), 'utf8');
+const source = fs.readFileSync(new URL('../client/render.ts', import.meta.url), 'utf8');
 const far = source.slice(
   source.indexOf('function drawDecorFar'),
   source.indexOf('function drawDecorMid'),
 );
 assert.ok(far.indexOf('drawComet(') < far.indexOf('for (const bp'));
-assert.ok(far.includes('farXY(D.sun, W, H, cx, cy, zf)'));
+assert.ok(/farXY\(D\.sun!?, W, H, cx, cy, zf\)/.test(far));
 assert.ok(
   !source
     .slice(

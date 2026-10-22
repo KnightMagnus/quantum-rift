@@ -19,7 +19,9 @@ try {
         contentType: 'text/html',
         body: '<body style="margin:0;background:#030712;color:white"><canvas width="1200" height="760"></canvas></body>',
       });
-    const file = path.join(root, p.startsWith('/assets/') ? '/client' + p : p);
+    const file = /^\/(client|shared)\/.+\.js$/.test(p)
+      ? path.join(root, 'dist', p)
+      : path.join(root, p.startsWith('/assets/') ? '/client' + p : p);
     try {
       let body = await fs.readFile(file);
       if (p === '/client/render.js') body = body.toString() + '\nexport {decorFor,drawDecorFar};';

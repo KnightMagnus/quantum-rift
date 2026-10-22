@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
+import { DB } from '../server/db.ts';
 import { tempDataDir } from './helpers/temp-data.js';
 import { root, availablePort, ready, cleanup, evidenceDir } from './helpers/browser-fixture.mjs';
 
@@ -120,7 +120,7 @@ fs.fsyncSync = (fd) => {
   const out = evidenceDir(solo ? 'windows-solo' : 'windows-online');
   const server = spawn(
     process.execPath,
-    ['--import', pathToFileURL(preload).href, 'server/main.js'],
+    ['--import', pathToFileURL(preload).href, 'server/main.ts'],
     {
       cwd: root,
       env: {

@@ -3,10 +3,10 @@ import { tempDataDir } from './helpers/temp-data.js';
 // 0.8 tests: the Sol Gateway (Sol, Earth, the wormhole, the Farside region), ship roles, specialty ships, parts and tiers.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS, STELLARS, SYSTEMS, FACTION_HULLS, COMMON_HULLS } from '../shared/galaxy.js';
-import { route } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS, STELLARS, SYSTEMS, FACTION_HULLS, COMMON_HULLS } from '../shared/galaxy.ts';
+import { route } from '../shared/rules.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v08-')));
 export const ok = (c, m) => {
@@ -137,7 +137,7 @@ ok(
   'Earth has a full set of services',
 );
 // --- the class triangle
-import('../shared/roles.js').then(async ({ ROLES_INFO, roleMult }) => {
+import('../shared/roles.ts').then(async ({ ROLES_INFO, roleMult }) => {
   const roles = {};
   for (const H of Object.values(A.ships)) roles[H.role] = (roles[H.role] || 0) + 1;
   ok(
@@ -182,7 +182,7 @@ import('../shared/roles.js').then(async ({ ROLES_INFO, roleMult }) => {
     BP_NEED,
     PART_RATE: _PART_RATE,
     COMPONENTS,
-  } = await import('../shared/specialty.js');
+  } = await import('../shared/specialty.ts');
   ok(
     SPECIALISTS.length === 11 &&
       SPECIALISTS.every(

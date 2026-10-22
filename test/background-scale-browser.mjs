@@ -18,7 +18,7 @@ const server = http.createServer((req, res) => {
       '<body style="margin:0;background:#030713"><canvas width="1800" height="1300"></canvas></body>',
     );
   if (pathname === '/client/render-before.js' || pathname === '/client/render-after.js') {
-    let source = fs.readFileSync(path.join(root, 'client/render.js'), 'utf8');
+    let source = fs.readFileSync(path.join(root, 'dist/client/render.js'), 'utf8');
     if (pathname.includes('before'))
       source = source.replace(
         "import { backgroundScale } from './background_scale.js';",
@@ -28,6 +28,8 @@ const server = http.createServer((req, res) => {
     return res.end(source + '\nexport {decorFor,drawDecorFar,drawDecorNear};');
   }
   let file = path.join(root, decodeURIComponent(pathname));
+  if (/^\/(client|shared)\/.+\.js$/.test(pathname))
+    file = path.join(root, 'dist', decodeURIComponent(pathname));
   if (!file.startsWith(root + path.sep)) return res.writeHead(403).end();
   if (
     pathname.startsWith('/client/assets/') &&

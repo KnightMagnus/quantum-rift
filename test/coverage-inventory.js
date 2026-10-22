@@ -1,8 +1,8 @@
 // A registration/composition guard, NOT evidence that all behavior branches are tested.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
 import { tempDataDir } from './helpers/temp-data.js';
 const read = (name) => JSON.parse(fs.readFileSync(new URL(name, import.meta.url)));
 const manifest = read('./regression-manifest.json'),

@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { refineryGame, refineryPilot, seed, lots } from './helpers/refinery-fixture.js';
-import { RADIO_STATIONS } from '../shared/radio-stations.js';
-import { SYS, STELLARS } from '../shared/galaxy.js';
-import { radioTourOffer, TOUR_ODDS, discoverRadio, radioState } from '../server/radio-discovery.js';
-import { occupiedPassengerSeats } from '../shared/passengers.js';
-import { DB } from '../server/db.js';
-import { advanceRadioTour } from '../server/radio-discovery.js';
-import { makeLoadout } from '../shared/rules.js';
+import { RADIO_STATIONS } from '../shared/radio-stations.ts';
+import { SYS, STELLARS } from '../shared/galaxy.ts';
+import { radioTourOffer, TOUR_ODDS, discoverRadio, radioState } from '../server/radio-discovery.ts';
+import { occupiedPassengerSeats } from '../shared/passengers.ts';
+import { DB } from '../server/db.ts';
+import { advanceRadioTour } from '../server/radio-discovery.ts';
+import { makeLoadout } from '../shared/rules.ts';
 function fixtureGame(dir) {
   const interval = globalThis.setInterval,
     timeout = globalThis.setTimeout;

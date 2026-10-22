@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { dredgePilot, control, industrialStep, seed, lots } from './helpers/dredge-fixture.js';
-import { SPECIALISTS, BUILD, SPEC, BP_NEED, specPower } from '../shared/specialty.js';
-import { STELLARS } from '../shared/galaxy.js';
+import { SPECIALISTS, BUILD, SPEC, BP_NEED, specPower } from '../shared/specialty.ts';
+import { STELLARS } from '../shared/galaxy.ts';
 const f = dredgePilot(),
   { g, s, sp } = f,
   d = s.data;
@@ -121,7 +121,7 @@ console.log(
   s.ent.x = r.x + r.r + 100;
   s.ent.y = r.y;
   s.ent.a = -Math.PI / 2;
-  const { weaponParams } = await import('../shared/rules.js');
+  const { weaponParams } = await import('../shared/rules.ts');
   const gun = {
     w: 9102,
     n: 1,
@@ -195,7 +195,7 @@ console.log(
 for (const restart of [false, true]) {
   let f = dredgePilot(undefined, 'UsefulWorker', 704);
   const { refineryPilot, refineryGame } = await import('./helpers/refinery-fixture.js');
-  const { DB } = await import('../server/db.js');
+  const { DB } = await import('../server/db.ts');
   const finisher = refineryPilot(f.g, 'OnlyFinisher');
   const r = f.sp.rocks.find((r) => r.stages > 1);
   r.hp = r.max = 1800;

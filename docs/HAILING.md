@@ -30,7 +30,7 @@ The rendezvous/escort marker tracks the accepted sender; the intel marker is a f
 
 ## Implementation boundaries and verification
 
-`server/hail-service.js` owns ephemeral queue, cooldown, source identity, resource/reward validation and encounter lifecycle. `server/hail-dialogue.js` owns contextual authored responses. Existing `HailOperations` keep outgoing services and delegate player targets to the service through an explicit feature capability. The `hailin` message route is behind the normal authentication/flood/activity gates. `client/hails_ui.js` uses DOM text nodes for all messages and option labels.
+`server/hail-service.ts` owns ephemeral queue, cooldown, source identity, resource/reward validation and encounter lifecycle. `server/hail-dialogue.ts` owns contextual authored responses. Existing `HailOperations` keep outgoing services and delegate player targets to the service through an explicit feature capability. The `hailin` message route is behind the normal authentication/flood/activity gates. `client/hails_ui.ts` uses DOM text nodes for all messages and option labels.
 
 Checks:
 

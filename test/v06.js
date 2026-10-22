@@ -3,10 +3,10 @@ import { tempDataDir } from './helpers/temp-data.js';
 // faction stores and the new job types.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS, STELLARS, SYSTEMS, FACTIONS } from '../shared/galaxy.js';
-import { anomaliesAt, eventAt, eventCalendar, SCAN } from '../shared/fronts.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS, STELLARS, SYSTEMS, FACTIONS } from '../shared/galaxy.ts';
+import { anomaliesAt, eventAt, eventCalendar, SCAN } from '../shared/fronts.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v06-')));
 const ok = (c, m) => {

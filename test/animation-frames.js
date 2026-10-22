@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { loopFrames } from '../client/animation_frames.js';
+import { loopFrames } from '../client/animation_frames.ts';
 assert.deepEqual(loopFrames(0, 32, 55), { first: 0, second: 1, mix: 0 });
 assert.deepEqual(loopFrames(32 * 55, 32, 55), loopFrames(0, 32, 55));
 const before = loopFrames(32 * 55 - 0.001, 32, 55);

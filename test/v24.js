@@ -1,12 +1,13 @@
 import { tempDataDir } from './helpers/temp-data.js';
 // 2.4 tests: the living galaxy (system states, trade impact, supply jobs) and questlines (contacts, side stories, salvage).
 import fs from 'node:fs';
+import { stripTypeScriptTypes } from 'node:module';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS, STELLARS } from '../shared/galaxy.js';
-import { CHAINS, SIDE_STORIES } from '../shared/quests.js';
-import { STATES } from '../shared/living.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS, STELLARS } from '../shared/galaxy.ts';
+import { CHAINS, SIDE_STORIES } from '../shared/quests.ts';
+import { STATES } from '../shared/living.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => {
   if (!c) {
@@ -20,10 +21,10 @@ process.env.SEEDS_FILE = '/nonexistent';
   const { execFileSync } = await import('node:child_process');
   const cdir = decodeURIComponent(new URL('../client/', import.meta.url).pathname);
   const bad = [];
-  for (const f of fs.readdirSync(cdir).filter((f) => f.endsWith('.js'))) {
+  for (const f of fs.readdirSync(cdir).filter((f) => f.endsWith('.ts'))) {
     try {
       execFileSync(process.execPath, ['--input-type=module', '--check'], {
-        input: fs.readFileSync(cdir + f),
+        input: stripTypeScriptTypes(fs.readFileSync(cdir + f, 'utf8')),
         stdio: ['pipe', 'ignore', 'ignore'],
       });
     } catch {

@@ -1,8 +1,8 @@
 // Real contacts and actual shield/armor checks across hazard and encounter scopes.
 import assert from 'node:assert/strict';
 import { refineryGame, refineryPilot } from './helpers/refinery-fixture.js';
-import { weaponParams, DT } from '../shared/rules.js';
-import { DB } from '../server/db.js';
+import { weaponParams, DT } from '../shared/rules.ts';
+import { DB } from '../server/db.ts';
 function fly(g, s, sys = 'meridian', adult = true) {
   s.data.sys = sys;
   s.data.stellar = null;

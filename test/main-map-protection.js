@@ -1,8 +1,8 @@
 // Production targeting and damage regression coverage for the main-map newcomer truce.
 import assert from 'node:assert/strict';
-import { Space } from '../server/space.js';
-import { Game } from '../server/game.js';
-import { SYS } from '../shared/galaxy.js';
+import { Space } from '../server/space.ts';
+import { Game } from '../server/game.ts';
+import { SYS } from '../shared/galaxy.ts';
 
 let next = 1;
 const ship = (faction, extra = {}) => ({

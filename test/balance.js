@@ -1,11 +1,11 @@
 // 1.0 balance harness: price ladders, strength-for-money, and how long things take to afford at typical income.
 // Prints a report and fails on clear outliers. Run: node test/balance.js
 import fs from 'node:fs';
-import { FACTION_HULLS, OPS, COMMODITIES } from '../shared/galaxy.js';
-import { augmentAssets } from '../shared/rules.js';
-import { RESEARCH2 } from '../shared/hangar.js';
-import { SPECIALISTS } from '../shared/specialty.js';
-import { HOLDOUT } from '../shared/hostile.js';
+import { FACTION_HULLS, OPS, COMMODITIES } from '../shared/galaxy.ts';
+import { augmentAssets } from '../shared/rules.ts';
+import { RESEARCH2 } from '../shared/hangar.ts';
+import { SPECIALISTS } from '../shared/specialty.ts';
+import { HOLDOUT } from '../shared/hostile.ts';
 const A = augmentAssets(
   JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url))),
 );

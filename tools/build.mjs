@@ -2,8 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { checkApplicationTypeScript } from './typescript-scope.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+checkApplicationTypeScript(root);
 const output = path.join(root, 'dist');
 fs.rmSync(output, { recursive: true, force: true });
 for (const config of ['tsconfig.core.json', 'tsconfig.build.json']) {

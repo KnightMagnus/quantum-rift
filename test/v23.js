@@ -1,10 +1,10 @@
 import { tempDataDir } from './helpers/temp-data.js';
 // 2.3 tests: ten new common Quantum hulls, more moons and asteroid fields, busier traffic.
 import fs from 'node:fs';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYSTEMS, STELLARS, COMMON_HULLS, TRAFFIC, FACTION_HULLS } from '../shared/galaxy.js';
-import { SHIPS23 } from '../shared/ships23.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYSTEMS, STELLARS, COMMON_HULLS, TRAFFIC, FACTION_HULLS } from '../shared/galaxy.ts';
+import { SHIPS23 } from '../shared/ships23.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => {
   if (!c) {

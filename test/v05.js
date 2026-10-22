@@ -3,10 +3,10 @@ import { tempDataDir } from './helpers/temp-data.js';
 // 0.5 tests: shuttles, officers (stats, synergy, xp), research queue, refining up, drydock presets, boarding.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS, STELLARS, RESEARCH } from '../shared/galaxy.js';
-import { RARITY } from '../shared/hangar.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS, STELLARS, RESEARCH } from '../shared/galaxy.ts';
+import { RARITY } from '../shared/hangar.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v05-')));
 const ok = (c, m) => {

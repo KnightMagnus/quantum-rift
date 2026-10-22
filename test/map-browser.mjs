@@ -5,9 +5,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { augmentAssets } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { augmentAssets } from '../shared/rules.ts';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-map-browser-'));
 const evidence = process.env.RIFT_BROWSER_EVIDENCE || path.join(dir, 'evidence');
@@ -20,7 +20,7 @@ fresh.tut = 999;
 db.create('Map Layout', 'map-browser', fresh);
 const port = Number(process.env.RIFT_BROWSER_PORT || 18894);
 const origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.js'], {
+const server = spawn(process.execPath, ['server/main.ts'], {
   cwd: root,
   env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: path.join(dir, 'data') },
   stdio: ['ignore', 'pipe', 'pipe'],

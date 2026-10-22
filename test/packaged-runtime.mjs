@@ -63,6 +63,7 @@ try {
     'client/index.html',
     'client/style.css',
     'tools/build.mjs',
+    'tools/typescript-scope.mjs',
     'tools/start.mjs',
     'tools/runtime/node27.json',
     'tools/package_archive.py',
@@ -90,9 +91,8 @@ try {
   );
   fs.writeFileSync(path.join(checkout, 'server/untracked-private.js'), 'export const secret = 1;');
   command(python, ['tools/package_archive.py', '--output', output], checkout, 1);
-  assert.equal(
-    fs.readdirSync(output).length,
-    0,
+  assert.ok(
+    !fs.existsSync(output) || fs.readdirSync(output).length === 0,
     'Untracked source output must not enter an archive',
   );
   fs.rmSync(path.join(checkout, 'server/untracked-private.js'));

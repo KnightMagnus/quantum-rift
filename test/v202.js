@@ -2,8 +2,8 @@ import { tempDataDir } from './helpers/temp-data.js';
 // 2.0.2 tests: retiring the KNIGHT showcase account frees its station hull; prototype-safe names and lookups.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => {
   if (!c) {

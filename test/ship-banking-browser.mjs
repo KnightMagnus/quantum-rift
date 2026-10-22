@@ -5,9 +5,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { augmentAssets, makeLoadout } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { augmentAssets, makeLoadout } from '../shared/rules.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-banking-browser-'));
@@ -30,8 +30,8 @@ fs.writeFileSync(
   fixture,
   `
 import fs from 'node:fs';
-import { Game } from ${JSON.stringify(moduleUrl('server/game.js'))};
-import { STELLARS } from ${JSON.stringify(moduleUrl('shared/galaxy.js'))};
+import { Game } from ${JSON.stringify(moduleUrl('server/game.ts'))};
+import { STELLARS } from ${JSON.stringify(moduleUrl('shared/galaxy.ts'))};
 let active, trader, space, previousWrite = 0;
 const spawnPlayer = Game.prototype.spawnPlayer;
 Game.prototype.spawnPlayer = function(s, ...args) {
@@ -60,7 +60,7 @@ Game.prototype.tick=function(...args) {
 
 const port = Number(process.env.RIFT_BROWSER_PORT || 18776);
 const origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['--import', fixture, 'server/main.js'], {
+const server = spawn(process.execPath, ['--import', fixture, 'server/main.ts'], {
   cwd: root,
   env: { ...process.env, PORT: String(port), DATA_DIR: path.join(dir, 'data') },
   stdio: ['ignore', 'pipe', 'pipe'],

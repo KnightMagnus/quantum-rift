@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { miningPanelState } from '../client/mining-panel-state.js';
+import { miningPanelState } from '../client/mining-panel-state.ts';
 const G = {
   A: { ships: { 704: { role: 'survey' }, 1: { role: 'interceptor' } } },
   you: { ship: { hull: 704 }, shipStats: { cargo: 70 }, cargoUsed: 60, jobCargo: 10 },

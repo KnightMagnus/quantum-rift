@@ -1,12 +1,12 @@
 // Covers settlement arithmetic and cash-flow reporting.
 import assert from 'node:assert/strict';
-import { tradePreview } from '../shared/economy-preview.js';
+import { tradePreview } from '../shared/economy-preview.ts';
 import {
   recordEconomy,
   beginEconomyTrip,
   arriveEconomyTrip,
   economyReceipt,
-} from '../shared/economy-receipt.js';
+} from '../shared/economy-receipt.ts';
 import { analyseSessions, CAREERS, BANDS, RISKS } from '../tools/economy-baseline.mjs';
 import {
   refineryGame,
@@ -17,7 +17,7 @@ import {
   lots,
   w,
 } from './helpers/refinery-fixture.js';
-import { DB } from '../server/db.js';
+import { DB } from '../server/db.ts';
 
 const account = {};
 assert.equal(economyReceipt(account), null, 'Old saves are read without adding invented history');
@@ -59,7 +59,7 @@ try {
     s = refineryPilot(g);
   seed(s.data, { ore: lots(10, 5, 2) });
   const market = g
-    .market((await import('../shared/galaxy.js')).STELLARS[s.data.stellar])
+    .market((await import('../shared/galaxy.ts')).STELLARS[s.data.stellar])
     .find((c) => c.id === 'ore');
   const options = {
     market,
@@ -101,7 +101,7 @@ try {
   const sellPreview = tradePreview({
     ...options,
     market: g
-      .market((await import('../shared/galaxy.js')).STELLARS[s.data.stellar])
+      .market((await import('../shared/galaxy.ts')).STELLARS[s.data.stellar])
       .find((c) => c.id === 'ore'),
     cargo: s.data.cargo,
     cargoLots: s.data.cargoLots,

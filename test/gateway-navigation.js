@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { Game } from '../server/game.js';
-import { DB } from '../server/db.js';
-import { SYS } from '../shared/galaxy.js';
-import { gatewayGuidance } from '../client/gateway_autopilot.js';
-import { makeLoadout, shipStats, step } from '../shared/rules.js';
+import { Game } from '../server/game.ts';
+import { DB } from '../server/db.ts';
+import { SYS } from '../shared/galaxy.ts';
+import { gatewayGuidance } from '../client/gateway_autopilot.ts';
+import { makeLoadout, shipStats, step } from '../shared/rules.ts';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-gateway-'));
 try {
   const game = new Game(JSON.parse(fs.readFileSync('shared/assets.json')), new DB(dir));

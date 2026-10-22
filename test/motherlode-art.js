@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { SYS } from '../shared/galaxy.js';
-import { motherlodeArt, MOTHERLODE_ART, UNKNOWN_MOTHERLODE_ART } from '../shared/towing-rules.js';
+import { SYS } from '../shared/galaxy.ts';
+import { motherlodeArt, MOTHERLODE_ART, UNKNOWN_MOTHERLODE_ART } from '../shared/towing-rules.ts';
 import { refineryGame, refineryPilot } from './helpers/refinery-fixture.js';
 // Exercise authoritative generated payload, not a duplicated commodity inventory.
 const g = refineryGame(),

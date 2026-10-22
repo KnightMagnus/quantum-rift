@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
+import { stripTypeScriptTypes } from 'node:module';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { K, wrap, step } from '../shared/rules.js';
-import { landingGuidance, landingReady } from '../client/landing_autopilot.js';
-import { gatewayGuidance } from '../client/gateway_autopilot.js';
+import { K, wrap, step } from '../shared/rules.ts';
+import { landingGuidance, landingReady } from '../client/landing_autopilot.ts';
+import { gatewayGuidance } from '../client/gateway_autopilot.ts';
 import {
   dredgePilot,
   control,
@@ -13,8 +14,8 @@ import {
   lots,
   DT,
 } from './helpers/dredge-fixture.js';
-import { CORONA_BANDS, coronaAt, INDUSTRIAL } from '../shared/industrial-rules.js';
-import { SYS } from '../shared/galaxy.js';
+import { CORONA_BANDS, coronaAt, INDUSTRIAL } from '../shared/industrial-rules.ts';
+import { SYS } from '../shared/galaxy.ts';
 for (const b of CORONA_BANDS) {
   assert.ok(SYS[b.sys], 'authored system exists');
   for (const p of SYS[b.sys].stellars)
@@ -144,9 +145,9 @@ assert.ok(src.units >= 0 && src.units < INDUSTRIAL.sourceUnits);
 }
 // Arbitrary automatic route segments, not just authored stellar-to-stellar routes.
 {
-  const { coronaRouteBlocked } = await import('../shared/industrial-rules.js');
-  const { step } = await import('../shared/rules.js');
-  const { landingGuidance } = await import('../client/landing_autopilot.js');
+  const { coronaRouteBlocked } = await import('../shared/industrial-rules.ts');
+  const { step } = await import('../shared/rules.ts');
+  const { landingGuidance } = await import('../client/landing_autopilot.ts');
   const b = CORONA_BANDS[0],
     f = dredgePilot(undefined, 'Keepout'),
     e = f.s.ent;
@@ -172,13 +173,15 @@ assert.ok(src.units >= 0 && src.units < INDUSTRIAL.sourceUnits);
 // Run the actual production input tick, including recursive keep-out/full-stop completion.
 // UI/audio adapters are inert; authoritative industrial work uses the real fixture.
 {
-  const source = fs.readFileSync(new URL('../client/main.js', import.meta.url), 'utf8');
+  const source = stripTypeScriptTypes(
+    fs.readFileSync(new URL('../client/main.ts', import.meta.url), 'utf8'),
+  );
   const productionFunction = (name) => {
     const start = source.indexOf(`function ${name}(`);
     assert.ok(start >= 0);
     return source.slice(start, source.indexOf('\n}', start) + 2);
   };
-  const { coronaRouteBlocked } = await import('../shared/industrial-rules.js');
+  const { coronaRouteBlocked } = await import('../shared/industrial-rules.ts');
   for (const scenario of ['stationary', 'low-speed', 'moving', 'manual', 'normal-route']) {
     const f = dredgePilot(undefined, 'Intent' + scenario),
       e = f.s.ent;

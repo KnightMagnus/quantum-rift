@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { starProfile, drawStar } from '../client/stars.js';
+import { starProfile, drawStar } from '../client/stars.ts';
 
 const sun = { core: '210,230,255', halo: '140,180,255' };
 const first = starProfile({ id: 'vega' }, sun);

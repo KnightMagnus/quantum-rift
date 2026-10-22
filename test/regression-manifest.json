@@ -139,11 +139,11 @@
     {
       "id": "accounts-persistence",
       "owners": [
-        "server/db.js",
-        "server/game.js",
-        "client/main.js",
-        "client/hails_ui.js",
-        "client/render.js"
+        "server/db.ts",
+        "server/game.ts",
+        "client/main.ts",
+        "client/hails_ui.ts",
+        "client/render.ts"
       ],
       "services": [],
       "tests": [
@@ -162,98 +162,98 @@
     },
     {
       "id": "protocol-http",
-      "owners": ["server/main.js"],
+      "owners": ["server/main.ts"],
       "services": [],
       "tests": ["http-api.mjs"],
       "asserts": "Real HTTP static/MIME/cache/404/traversal checks and online-vs-solo API permissions."
     },
     {
       "id": "protocol-websocket",
-      "owners": ["server/ws.js"],
+      "owners": ["server/ws.ts"],
       "services": [],
       "tests": ["websocket-transport.js", "network-systems.mjs"],
       "asserts": "Frame masking/fragmentation/control/limits, upgrade handshake and actual multiplayer client/server state transitions."
     },
     {
       "id": "hangar",
-      "owners": ["server/hangar.js"],
+      "owners": ["server/hangar.ts"],
       "services": ["hangar"],
       "tests": ["v05.js", "v12.js", "v21.js"],
       "asserts": "Shuttle dispatch/resolution/repair, officer assignment/XP/ranks, research prerequisites/queue, refining, stored loadouts and boarding."
     },
     {
       "id": "fronts",
-      "owners": ["server/fronts.js"],
+      "owners": ["server/fronts.ts"],
       "services": ["fronts"],
       "tests": ["v06.js", "v09.js", "faction-standing.js"],
       "asserts": "Invasion start/damage/win, anomalies/events/goals, faction store standing and convoy/rescue/survey/smuggling jobs."
     },
     {
       "id": "frontier",
-      "owners": ["server/frontier.js"],
+      "owners": ["server/frontier.ts"],
       "services": ["frontier"],
       "tests": ["v07.js"],
       "asserts": "Colony ownership/accrual, station raid/defense waves, mastery, arena matchmaking/rating, exchange escrow/matching and profiles/leaderboards."
     },
     {
       "id": "specialists",
-      "owners": ["server/specialists.js"],
+      "owners": ["server/specialists.ts"],
       "services": ["specialists"],
       "tests": ["v08.js"],
       "asserts": "Specialty roles, blueprint/part requirements, construction, tiers/upgrades and gameplay bonuses."
     },
     {
       "id": "hostile",
-      "owners": ["server/hostile.js"],
+      "owners": ["server/hostile.ts"],
       "services": ["hostile"],
       "tests": ["v09.js", "v26.js"],
       "asserts": "Hostile levels/chest loot, Station Holdout wave/rewards and co-op helpers, weekly events/Eclipse."
     },
     {
       "id": "story",
-      "owners": ["server/story.js"],
+      "owners": ["server/story.ts"],
       "services": ["story"],
       "tests": ["v10.js"],
       "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock."
     },
     {
       "id": "rivals",
-      "owners": ["server/rivals.js"],
+      "owners": ["server/rivals.ts"],
       "services": ["rivals"],
       "tests": ["v11.js", "core-actions.js"],
       "asserts": "Named career population, relationships, hunters, damage/death/bounty, news/market flashes and status route."
     },
     {
       "id": "hailing",
-      "owners": ["server/hail.js", "server/hail-service.js"],
+      "owners": ["server/hail.ts", "server/hail-service.ts"],
       "services": ["hail"],
       "tests": ["v11.js", "hailing.js", "network-systems.mjs"],
       "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls."
     },
     {
       "id": "fleet-orders",
-      "owners": ["server/fleetcmd.js"],
+      "owners": ["server/fleetcmd.ts"],
       "services": ["fleetcmd"],
       "tests": ["v11.js", "v21.js"],
       "asserts": "Escort target/formation/hold/fire orders, jettison/loot limits and combat rating."
     },
     {
       "id": "syndicate",
-      "owners": ["server/syndicate.js"],
+      "owners": ["server/syndicate.ts"],
       "services": ["syndicate"],
       "tests": ["v12.js", "v203.js", "ship-banking.js"],
       "asserts": "Black market/Syndicate career, officer promotion/lower decks, bank deposits/loans/interest, timed delivery contracts."
     },
     {
       "id": "faction-arcs",
-      "owners": ["server/arcs.js"],
+      "owners": ["server/arcs.ts"],
       "services": ["arcs"],
       "tests": ["v12.js"],
       "asserts": "Faction story acceptance/progression/rewards and Farside expedition stages."
     },
     {
       "id": "docks",
-      "owners": ["server/docks.js"],
+      "owners": ["server/docks.ts"],
       "services": ["docks"],
       "tests": [
         "v21.js",
@@ -266,98 +266,98 @@
     },
     {
       "id": "living-galaxy",
-      "owners": ["server/living.js"],
+      "owners": ["server/living.ts"],
       "services": ["living"],
       "tests": ["v24.js", "v25.js", "v252.js"],
       "asserts": "Living-state timers/resolution, trade impact/depth, supply jobs and war/newcomer behavior."
     },
     {
       "id": "quests",
-      "owners": ["server/quests.js"],
+      "owners": ["server/quests.ts"],
       "services": ["quests"],
       "tests": ["v24.js", "passenger-quests.js", "core-actions.js"],
       "asserts": "Generated contacts and handcrafted chains, per-step completion, failure/retry/salvage, passenger capacity and explicit abandonment isolation."
     },
     {
       "id": "cooperative-social",
-      "owners": ["server/coop.js"],
+      "owners": ["server/coop.ts"],
       "services": ["coop"],
       "tests": ["v26.js", "network-systems.mjs"],
       "asserts": "Friends/offline DM/blocking, Armada formation/leadership/chat/buffs/shared bounties, rescue, contracts and co-op Holdout."
     },
     {
       "id": "consensual-pvp",
-      "owners": ["server/coop.js", "server/frontier.js"],
+      "owners": ["server/coop.ts", "server/frontier.ts"],
       "services": [],
       "tests": ["v26.js", "v07.js"],
       "asserts": "Open-galaxy friendly-fire prevention, solo/Armada duel consent/nonlethal outcomes and arena team matching."
     },
     {
       "id": "station-trading",
-      "owners": ["server/coop.js"],
+      "owners": ["server/coop.ts"],
       "services": [],
       "tests": ["v26.js"],
       "asserts": "Two-party credits/cargo/crates/blueprint/part escrow, accept/cancel and location guards."
     },
     {
       "id": "galaxy-navigation",
-      "owners": ["shared/galaxy.js", "shared/gen.js", "shared/rules.js"],
+      "owners": ["shared/galaxy.ts", "shared/gen.ts", "shared/rules.ts"],
       "services": [],
       "tests": ["v04.js", "v08.js", "v23.js", "eventide.js"],
       "asserts": "Seeded galaxy generation, reachable routes, Sol/Farside gates and authored Eventide landmarks."
     },
     {
       "id": "sleep-traffic-ai",
-      "owners": ["server/space.js"],
+      "owners": ["server/space.ts"],
       "services": [],
       "tests": ["v04.js", "v201.js", "v23.js", "v24.js", "sim.js"],
       "asserts": "Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn. NPC planet/station landing cruise remains target-facing at the speed ceiling, with real landing events, settled arrival, unchanged fuel and escort formation."
     },
     {
       "id": "mining-existing",
-      "owners": ["server/space.js", "server/game.js"],
+      "owners": ["server/space.ts", "server/game.ts"],
       "services": [],
       "tests": ["v04.js", "v05.js", "v252.js"],
       "asserts": "Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Staged cutting/survey behavior is mapped separately under mining-cutting."
     },
     {
       "id": "station-progression",
-      "owners": ["server/game.js", "server/hangar.js"],
+      "owners": ["server/game.ts", "server/hangar.ts"],
       "services": [],
       "tests": ["sim.js", "v05.js", "v26.js"],
       "asserts": "Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates."
     },
     {
       "id": "market-materials",
-      "owners": ["server/game.js", "shared/rules.js", "server/port-services.js"],
+      "owners": ["server/game.ts", "shared/rules.ts", "server/port-services.ts"],
       "services": [],
       "tests": ["v25.js", "v203.js", "ship-economy.js", "core-actions.js", "network-systems.mjs"],
       "asserts": "Trade buy/sell/depth/cargo/credit limits, material buy/sell and dock-only/insufficient-credit guards."
     },
     {
       "id": "missions-passengers",
-      "owners": ["server/game.js", "server/fronts.js", "server/port-services.js"],
+      "owners": ["server/game.ts", "server/fronts.ts", "server/port-services.ts"],
       "services": [],
       "tests": ["v06.js", "v12.js", "passengers.js", "passenger-quests.js", "eventide.js"],
       "asserts": "Cargo/bounty/patrol/convoy/rescue/survey/smuggling/rush/Syndicate/passenger jobs, acceptance/capacity/deadline/reward/failure behavior."
     },
     {
       "id": "flight-combat-weapons",
-      "owners": ["server/space.js", "shared/rules.js"],
+      "owners": ["server/space.ts", "shared/rules.ts"],
       "services": [],
       "tests": ["sim.js", "v03.js", "v21.js", "original-weapons.js", "v08.js"],
       "asserts": "Movement/fire/hit events, weapon damage/types, missiles/point defense/drone controls, ship-role interactions, disabled cleanup and respawn."
     },
     {
       "id": "combat-assist",
-      "owners": ["server/combat-assist.js"],
+      "owners": ["server/combat-assist.ts"],
       "services": [],
       "tests": ["combat-assist.js", "network-systems.mjs"],
       "asserts": "Consent-only autopilot/delegation, group odds, independent isolation, manual takeover and Hold Fire."
     },
     {
       "id": "newcomer-standing",
-      "owners": ["server/game.js", "server/space.js"],
+      "owners": ["server/game.ts", "server/space.ts"],
       "services": [],
       "tests": [
         "main-map-protection.js",
@@ -370,7 +370,7 @@
     },
     {
       "id": "armada-follow",
-      "owners": ["server/armada-formation.js", "client/main.js", "client/coop_ui.js"],
+      "owners": ["server/armada-formation.ts", "client/main.ts", "client/coop_ui.ts"],
       "services": [],
       "tests": [
         "armada-formation.js",
@@ -382,7 +382,7 @@
     },
     {
       "id": "landing-gateway",
-      "owners": ["client/landing_autopilot.js", "client/gateway_autopilot.js", "server/game.js"],
+      "owners": ["client/landing_autopilot.ts", "client/gateway_autopilot.ts", "server/game.ts"],
       "services": [],
       "tests": [
         "landing-autopilot.js",
@@ -395,7 +395,7 @@
     },
     {
       "id": "ships-catalog-art",
-      "owners": ["shared/rules.js", "client/artwork.js", "client/render.js"],
+      "owners": ["shared/rules.ts", "client/artwork.ts", "client/render.ts"],
       "services": [],
       "tests": [
         "catalog-artwork.js",
@@ -409,21 +409,21 @@
     },
     {
       "id": "world-scenery",
-      "owners": ["client/render.js", "client/exotic_scenery.js"],
+      "owners": ["client/render.ts", "client/exotic_scenery.ts"],
       "services": [],
       "tests": ["eventide.js", "comet.js", "stars.js", "background-scale.js", "v25.js"],
       "asserts": "Authored scenery configuration, comets/stars/background scaling, atmosphere/artwork invariants."
     },
     {
       "id": "station-art-identity",
-      "owners": ["client/station_wheel.js", "client/exotic_scenery.js", "client/render.js"],
+      "owners": ["client/station_wheel.ts", "client/exotic_scenery.ts", "client/render.ts"],
       "services": [],
       "tests": ["station-landing-browser.mjs"],
       "asserts": "14 real landing/departure sessions, 110 stations/245 tier variants, actual flight-source identity, transient load recovery and frozen original Luna wheel pixels."
     },
     {
       "id": "login-scene",
-      "owners": ["client/login_scene.js"],
+      "owners": ["client/login_scene.ts"],
       "services": [],
       "tests": ["login-scene-browser.mjs"],
       "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced-motion static pose/no recurring draws despite suppressed native change delivery, normal resume and rendering lifecycle. Actual hub sprite cross-fade and navigation-light pulses, shared rotating/cloud planet pixels, 30% smaller apparent planet diameter. Displayed lamp pixel brightness changes; real logout resumes shared planet motion and reduced-motion freezes again after gameplay."
@@ -434,8 +434,8 @@
         "client/style.css",
         "client/cockpit.css",
         "client/index.html",
-        "client/main.js",
-        "client/ui.js",
+        "client/main.ts",
+        "client/ui.ts",
         "client/style-foundation.css",
         "client/style-flight-hud.css",
         "client/style-communications.css",
@@ -453,7 +453,7 @@
     },
     {
       "id": "client-options-map-save",
-      "owners": ["client/main.js", "client/ui.js"],
+      "owners": ["client/main.ts", "client/ui.ts"],
       "services": [],
       "tests": ["client-systems-browser.mjs"],
       "asserts": "Real browser options/key remapping/scaling/palette, map routes and Solo pause/save workflows; see test assertions for exact exercised controls."
@@ -461,9 +461,9 @@
     {
       "id": "communications-log",
       "owners": [
-        "server/game.js",
-        "client/ui.js",
-        "client/chat-projection.js",
+        "server/game.ts",
+        "client/ui.ts",
+        "client/chat-projection.ts",
         "client/cockpit.css"
       ],
       "services": [],
@@ -473,15 +473,15 @@
     {
       "id": "radio-discovery",
       "owners": [
-        "server/main.js",
-        "server/radio-discovery.js",
-        "server/quests.js",
-        "shared/quests.js",
-        "shared/radio-stations.js",
-        "client/radio.js",
-        "client/ui.js",
-        "client/audio.js",
-        "server/jobs.js"
+        "server/main.ts",
+        "server/radio-discovery.ts",
+        "server/quests.ts",
+        "shared/quests.ts",
+        "shared/radio-stations.ts",
+        "client/radio.ts",
+        "client/ui.ts",
+        "client/audio.ts",
+        "server/jobs.ts"
       ],
       "services": [],
       "tests": [
@@ -495,7 +495,7 @@
     },
     {
       "id": "economy-balance",
-      "owners": ["shared/galaxy.js", "shared/rules.js"],
+      "owners": ["shared/galaxy.ts", "shared/rules.ts"],
       "services": [],
       "tests": ["balance.js", "ship-economy.js"],
       "asserts": "Price/strength ladder thresholds, progression-income bounds, Holdout reward floor and real loadout transaction arithmetic."
@@ -503,10 +503,10 @@
     {
       "id": "robustness-wiring",
       "owners": [
-        "server/features.js",
-        "server/message-registry.js",
-        "server/game.js",
-        "server/game-message-handlers.js"
+        "server/features.ts",
+        "server/message-registry.ts",
+        "server/game.ts",
+        "server/game-message-handlers.ts"
       ],
       "services": [],
       "tests": ["fuzz.js", "message-routing.js"],
@@ -514,7 +514,7 @@
     },
     {
       "id": "input-audio",
-      "owners": ["client/main.js", "client/audio.js"],
+      "owners": ["client/main.ts", "client/audio.ts"],
       "services": [],
       "tests": ["input-audio-browser.mjs"],
       "asserts": "Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification."
@@ -523,17 +523,17 @@
       "id": "cargo-grade-ledger",
       "services": [],
       "owners": [
-        "shared/cargo-lots.js",
-        "shared/cargo-contracts.js",
-        "server/game.js",
-        "server/fleetcmd.js",
-        "server/frontier.js",
-        "server/hangar.js",
-        "server/coop.js",
-        "client/ui.js",
-        "client/info_ui.js",
-        "client/main.js",
-        "server/port-services.js"
+        "shared/cargo-lots.ts",
+        "shared/cargo-contracts.ts",
+        "server/game.ts",
+        "server/fleetcmd.ts",
+        "server/frontier.ts",
+        "server/hangar.ts",
+        "server/coop.ts",
+        "client/ui.ts",
+        "client/info_ui.ts",
+        "client/main.ts",
+        "server/port-services.ts"
       ],
       "tests": ["cargo-lots.js", "cargo-flows.js", "cargo-ui-browser.mjs"],
       "asserts": "Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, owner/fleet simulation-time grace with foreign partial pickup and expiry, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
@@ -542,16 +542,16 @@
       "id": "mining-cutting",
       "services": ["mining"],
       "owners": [
-        "server/mining.js",
-        "server/mining-contracts.js",
-        "shared/mining-rules.js",
-        "server/space.js",
-        "server/game.js",
-        "server/db.js",
-        "client/action-bindings.js",
-        "client/mining_ui.js",
-        "client/mining_render.js",
-        "client/mining-panel-state.js"
+        "server/mining.ts",
+        "server/mining-contracts.ts",
+        "shared/mining-rules.ts",
+        "server/space.ts",
+        "server/game.ts",
+        "server/db.ts",
+        "client/action-bindings.ts",
+        "client/mining_ui.ts",
+        "client/mining_render.ts",
+        "client/mining-panel-state.ts"
       ],
       "tests": [
         "mining.js",
@@ -567,10 +567,10 @@
     {
       "id": "mining-refinery",
       "owners": [
-        "server/refinery.js",
-        "server/trade-pricing.js",
-        "shared/refinery-rules.js",
-        "client/refinery_ui.js"
+        "server/refinery.ts",
+        "server/trade-pricing.ts",
+        "shared/refinery-rules.ts",
+        "client/refinery_ui.ts"
       ],
       "services": ["refinery"],
       "tests": [
@@ -584,7 +584,7 @@
     },
     {
       "id": "mining-pressure",
-      "owners": ["server/mining-pressure.js", "server/space.js", "client/mining_render.js"],
+      "owners": ["server/mining-pressure.ts", "server/space.ts", "client/mining_render.ts"],
       "services": ["pressure"],
       "tests": [
         "mining-pressure.js",
@@ -598,11 +598,11 @@
       "id": "industrial-dredge",
       "services": ["industrial"],
       "owners": [
-        "server/industrial.js",
-        "shared/industrial-rules.js",
-        "server/specialists.js",
-        "client/mining_ui.js",
-        "client/main.js"
+        "server/industrial.ts",
+        "shared/industrial-rules.ts",
+        "server/specialists.ts",
+        "client/mining_ui.ts",
+        "client/main.ts"
       ],
       "tests": [
         "dredge.js",
@@ -617,12 +617,12 @@
     {
       "id": "towing-motherlodes",
       "owners": [
-        "server/towing.js",
-        "server/towing-contracts.js",
-        "shared/towing-rules.js",
-        "client/towing_ui.js",
-        "client/towing_render.js",
-        "client/audio.js"
+        "server/towing.ts",
+        "server/towing-contracts.ts",
+        "shared/towing-rules.ts",
+        "client/towing_ui.ts",
+        "client/towing_render.ts",
+        "client/audio.ts"
       ],
       "services": ["towing"],
       "tests": [
@@ -647,21 +647,21 @@
     },
     {
       "id": "shipyard-selection-scroll",
-      "owners": ["client/ui.js"],
+      "owners": ["client/ui.ts"],
       "services": [],
       "tests": ["dropdowns-browser.mjs"],
       "asserts": "Explicit ship selection resets the actual landing scroll container after rendering; selected details and purchase controls visible, background renderer preserves scroll, no purchase or wallet change."
     },
     {
       "id": "trade-custom-amount",
-      "owners": ["client/ui.js", "client/style.css"],
+      "owners": ["client/ui.ts", "client/style.css"],
       "services": [],
       "tests": ["trade-amount-browser.mjs"],
       "asserts": "Accessible native dark numeric quantities; invalid/empty/overflow denial before wire, real buy/sell settlement, common-first grades, hold/inventory and authoritative funds limits, preset compatibility, async draft/focus retention, narrow viewport interaction."
     },
     {
       "id": "ship-function-stack",
-      "owners": ["client/ship-functions.js", "client/mining_ui.js", "client/style.css"],
+      "owners": ["client/ship-functions.ts", "client/mining_ui.ts", "client/style.css"],
       "services": [],
       "tests": ["ship-functions-browser.mjs", "mining-panel-browser.mjs"],
       "asserts": "Accessible icon toggles, retained disabled mining, combat and survey message dispatch, fleet orders and secondary drone input, six-panel flow layout with long chat, keyboard/wheel reachability and desktop/narrow/scaled browser bounds."
@@ -670,10 +670,10 @@
       "id": "cockpit-restyle",
       "owners": [
         "client/cockpit.css",
-        "client/ship-functions.js",
-        "client/render.js",
-        "client/chat_bubbles.js",
-        "client/hails_ui.js"
+        "client/ship-functions.ts",
+        "client/render.ts",
+        "client/chat_bubbles.ts",
+        "client/hails_ui.ts"
       ],
       "services": [],
       "tests": ["cockpit-browser.mjs", "ship-functions-browser.mjs", "sidebar-browser.mjs"],
@@ -681,7 +681,7 @@
     },
     {
       "id": "presentation-polish",
-      "owners": ["client/render.js", "client/towing_render.js", "client/audio.js"],
+      "owners": ["client/render.ts", "client/towing_render.ts", "client/audio.ts"],
       "tests": ["polish-browser.mjs"],
       "asserts": "Three hulls/four headings: aft engine masks, longer boost, idle. Neutral texture concealment, music restart/cancel, ambience teardown, mute.",
       "services": []
@@ -697,21 +697,21 @@
       "id": "landed-live-scene",
       "tests": ["landed-live-browser.mjs"],
       "asserts": "Docked observer snapshots keep real traffic moving across services without a controllable player entity; real canvas ship sprite displacement, flight-input isolation and explicit Solo pause/resume.",
-      "owners": ["server/game.js", "client/main.js", "client/render.js", "client/mining_render.js"],
+      "owners": ["server/game.ts", "client/main.ts", "client/render.ts", "client/mining_render.ts"],
       "services": []
     },
     {
       "id": "economy-32",
       "owners": [
-        "server/game.js",
-        "server/refinery.js",
-        "shared/trade-pricing.js",
-        "shared/economy-preview.js",
-        "shared/economy-receipt.js",
-        "client/economy-ui.js",
-        "client/refinery-controls.js",
+        "server/game.ts",
+        "server/refinery.ts",
+        "shared/trade-pricing.ts",
+        "shared/economy-preview.ts",
+        "shared/economy-receipt.ts",
+        "client/economy-ui.ts",
+        "client/refinery-controls.ts",
         "tools/economy-baseline.mjs",
-        "server/port-services.js"
+        "server/port-services.ts"
       ],
       "services": ["refinery"],
       "tests": [
@@ -726,13 +726,13 @@
     {
       "id": "cockpit-qol",
       "owners": [
-        "client/cockpit-state.js",
-        "client/ui.js",
-        "client/missions.js",
-        "client/main.js",
-        "client/refinery-controls.js",
-        "client/towing_ui.js",
-        "client/sidebar-size.js"
+        "client/cockpit-state.ts",
+        "client/ui.ts",
+        "client/missions.ts",
+        "client/main.ts",
+        "client/refinery-controls.ts",
+        "client/towing_ui.ts",
+        "client/sidebar-size.ts"
       ],
       "services": [],
       "tests": [
@@ -748,14 +748,14 @@
     {
       "id": "mission-choices",
       "owners": [
-        "server/warband-consent.js",
-        "server/coop.js",
-        "server/game.js",
-        "shared/mission-payouts.js",
-        "client/mission-details.js",
-        "client/missions.js",
-        "client/ui.js",
-        "server/jobs.js"
+        "server/warband-consent.ts",
+        "server/coop.ts",
+        "server/game.ts",
+        "shared/mission-payouts.ts",
+        "client/mission-details.ts",
+        "client/missions.ts",
+        "client/ui.ts",
+        "server/jobs.ts"
       ],
       "services": [],
       "tests": ["mission-consent.js", "mission-ui-browser.mjs", "v26.js", "qol-browser.mjs"],
@@ -763,7 +763,7 @@
     },
     {
       "id": "cargo-courier-progression",
-      "owners": ["server/freight-offers.js", "server/game.js", "server/jobs.js"],
+      "owners": ["server/freight-offers.ts", "server/game.ts", "server/jobs.ts"],
       "services": [],
       "tests": ["cargo-couriers.js", "mission-ui-browser.mjs", "v203.js", "cargo-flows.js"],
       "asserts": "Two lawful untimed 3–5t/6–10t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."

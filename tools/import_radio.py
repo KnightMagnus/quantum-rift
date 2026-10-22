@@ -3,7 +3,7 @@
 
 python3 tools/import_radio.py --archive /path/Songs.zip --album-order /path/album-order.json
 The album-order JSON records the linked playlist's published position/title fields.
-Writes game assets, shared/radio-stations.js and docs/RADIO-AUDIO.json.
+Writes game assets, shared/radio-stations.ts and docs/RADIO-AUDIO.json.
 """
 import argparse
 import concurrent.futures
@@ -86,7 +86,7 @@ def main():
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
             converted = list(pool.map(convert, jobs))
     registry = '// Owner-supplied audio. Stations 1–4 intentionally contain no song titles.\nexport const RADIO_STATIONS = ' + json.dumps(stations, ensure_ascii=False, indent=2) + ";\nexport const STARTER_RADIO = RADIO_STATIONS[0].id;\nexport const SCIENTIST_STORY = 'sideways-apology';\n"
-    (root / 'shared/radio-stations.js').write_text(registry)
+    (root / 'shared/radio-stations.ts').write_text(registry)
     manifest = dict(sourceUrl='https://filebin.net/7ska2yl46u4c2pgl', archiveSha256=digest(args.archive), rights='Supplied by the game owner, who confirms commercial rights to all recordings and lyrics.', artist='Isekai Bum', albumOrderUrl='https://music.youtube.com/playlist?list=OLAK5uy_lkakAvDQ-FvwPtZQ6gkHf62lgkzycp-iI', conversion=dict(codec='MP3', bitrate=128000, sampleRate=44100, channels=2, edits='No trimming, stretching, gain changes or generated audio; metadata/artwork removed.'), sourceBytes=sum(t['sourceBytes'] for t in converted), bytes=sum(t['bytes'] for t in converted), tracks=converted)
     (root / 'docs/RADIO-AUDIO.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
     print(json.dumps(dict(files=len(converted), sourceBytes=manifest['sourceBytes'], gameBytes=manifest['bytes'])), flush=True)

@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { Game } from '../server/game.js';
+import { Game } from '../server/game.ts';
 
 export function characterizeRouting(GameClass) {
   const traces = [];

@@ -5,10 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { augmentAssets } from '../shared/rules.js';
-import { SYS, STELLARS } from '../shared/galaxy.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { augmentAssets } from '../shared/rules.ts';
+import { SYS, STELLARS } from '../shared/galaxy.ts';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-exotic-solo-'));
@@ -39,7 +39,7 @@ for (const id of ports) {
 }
 const port = Number(process.env.RIFT_BROWSER_PORT || 18798),
   origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.js'], {
+const server = spawn(process.execPath, ['server/main.ts'], {
   cwd: root,
   env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: path.join(dir, 'data') },
   stdio: ['ignore', 'pipe', 'pipe'],

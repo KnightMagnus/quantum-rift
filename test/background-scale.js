@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { backgroundScale } from '../client/background_scale.js';
+import { backgroundScale } from '../client/background_scale.ts';
 assert.equal(backgroundScale('wreck'), 0.5);
 for (const desc of ['gas giant ringed rings', 'gas giant storm bands', 'ice giant gas giant'])
   assert.equal(backgroundScale('world', desc), 0.6);

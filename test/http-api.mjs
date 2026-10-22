@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
 import { root, availablePort, ready, cleanup, evidenceDir } from './helpers/browser-fixture.mjs';
 import { tempDataDir } from './helpers/temp-data.js';
 const version = JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).version;
@@ -27,7 +27,7 @@ for (const solo of [false, true]) {
   );
   const port = await availablePort(),
     origin = `http://127.0.0.1:${port}`;
-  const server = spawn(process.execPath, ['--import', fixture, 'server/main.js'], {
+  const server = spawn(process.execPath, ['--import', fixture, 'server/main.ts'], {
     cwd: root,
     env: {
       ...process.env,

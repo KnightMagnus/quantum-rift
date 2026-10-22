@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { CombatAssist } from '../server/combat-assist.js';
-import { Space } from '../server/space.js';
-import { Game } from '../server/game.js';
-import { winOdds } from '../shared/hostile.js';
+import { CombatAssist } from '../server/combat-assist.ts';
+import { Space } from '../server/space.ts';
+import { Game } from '../server/game.ts';
+import { winOdds } from '../shared/hostile.ts';
 let n = 1;
 const ship = (pw = 100) => ({
   id: n++,

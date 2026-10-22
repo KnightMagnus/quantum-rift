@@ -5,10 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { bindOperations } from '../server/feature-service.js';
-import { createMessageRegistry } from '../server/message-registry.js';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
+import { bindOperations } from '../server/feature-service.ts';
+import { createMessageRegistry } from '../server/message-registry.ts';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
 
 // Characterization checks ordering, stacking, schema, payloads and session normalization.
 // capture-features runs in a separate process with fixed time and RNG. The baseline
@@ -63,10 +63,10 @@ console.log('Capability isolation, invalid operation and duplicate/unknown messa
 const manifest = JSON.parse(
   fs.readFileSync(new URL('../docs/feature-inventory.json', import.meta.url)),
 );
-const composition = fs.readFileSync(new URL('../server/features.js', import.meta.url), 'utf8');
+const composition = fs.readFileSync(new URL('../server/features.ts', import.meta.url), 'utf8');
 assert.equal(new Set(manifest.features.map((f) => f.file)).size, 20);
 for (const feature of manifest.features) {
-  const module = await import(`../server/${feature.module || feature.file}.js`);
+  const module = await import(`../server/${feature.module || feature.file}.ts`);
   const operations = module[feature.exportName];
   assert.deepEqual(
     Object.keys(operations).sort(),
@@ -74,7 +74,7 @@ for (const feature of manifest.features) {
     feature.file + ' operations inventory',
   );
   const source = fs.readFileSync(
-    new URL(`../server/${feature.module || feature.file}.js`, import.meta.url),
+    new URL(`../server/${feature.module || feature.file}.ts`, import.meta.url),
     'utf8',
   );
   const capabilityTypes = new Set(
@@ -85,6 +85,26 @@ for (const feature of manifest.features) {
   const capabilityParameters = new Set();
   for (const [, type, name] of source.matchAll(/@param\s+\{(\w+)\}\s+(\w+)/g))
     if (capabilityTypes.has(type)) capabilityParameters.add(name);
+  const parsed = parseSync(`${feature.file}.ts`, source, { showSemanticErrors: true });
+  assert.deepEqual(parsed.errors, [], `${feature.file}: valid source required`);
+  // Native type imports/parameters replace the earlier JSDoc boundary aliases.
+  for (const statement of parsed.program.body) {
+    if (statement.type !== 'ImportDeclaration') continue;
+    for (const specifier of statement.specifiers)
+      if ((specifier.imported?.name || '').endsWith('Capabilities'))
+        capabilityTypes.add(specifier.local.name);
+  }
+  function collectCapabilityParameters(node) {
+    if (!node || typeof node !== 'object') return;
+    const annotation = node.typeAnnotation?.typeAnnotation;
+    if (node.type === 'Identifier' && capabilityTypes.has(annotation?.typeName?.name))
+      capabilityParameters.add(node.name);
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) value.forEach(collectCapabilityParameters);
+      else if (value && typeof value === 'object') collectCapabilityParameters(value);
+    }
+  }
+  collectCapabilityParameters(parsed.program);
   const dependencyNames = new Set();
   function collectDependencies(node) {
     if (!node || typeof node !== 'object') return;
@@ -101,12 +121,10 @@ for (const feature of manifest.features) {
       else if (value && typeof value === 'object') collectDependencies(value);
     }
   }
-  const parsed = parseSync(`${feature.file}.js`, source, { showSemanticErrors: true });
-  assert.deepEqual(parsed.errors, [], `${feature.file}: valid source required`);
   collectDependencies(parsed.program);
   const referenced = [...dependencyNames].sort();
   assert.deepEqual(referenced, feature.uses, feature.file + ' declared dependencies');
-  const parsedComposition = parseSync('features.js', composition, { showSemanticErrors: true });
+  const parsedComposition = parseSync('features.ts', composition, { showSemanticErrors: true });
   assert.deepEqual(parsedComposition.errors, [], 'valid feature composition required');
   const tree = parsedComposition.program;
   let facade;
@@ -173,7 +191,7 @@ try {
   game.toast = (_s, message) => notices.push(message);
   // Services capture explicit core function capabilities at construction. Use a
   // standalone typed pilot facade to check the unauthorized action's mutation.
-  const { FleetCmdOperations } = await import('../server/fleetcmd.js');
+  const { FleetCmdOperations } = await import('../server/fleetcmd.ts');
   const fleet = bindOperations(FleetCmdOperations, {
     toast: (_s, m) => notices.push(m),
     send() {},

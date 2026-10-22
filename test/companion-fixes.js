@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS, STELLARS } from '../shared/galaxy.js';
-import { SIDE_STORIES } from '../shared/quests.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS, STELLARS } from '../shared/galaxy.ts';
+import { SIDE_STORIES } from '../shared/quests.ts';
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-companion-'));
 try {

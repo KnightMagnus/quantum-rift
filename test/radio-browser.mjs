@@ -5,10 +5,10 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { RADIO_STATIONS } from '../shared/radio-stations.js';
-import { STELLARS } from '../shared/galaxy.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { RADIO_STATIONS } from '../shared/radio-stations.ts';
+import { STELLARS } from '../shared/galaxy.ts';
 import {
   root,
   availablePort,
@@ -47,14 +47,14 @@ try {
 const preload = path.join(dir, 'preload.mjs');
 fs.writeFileSync(
   preload,
-  `import {Game} from ${JSON.stringify(pathToFileURL(path.join(root, 'server/game.js')).href)};
+  `import {Game} from ${JSON.stringify(pathToFileURL(path.join(root, 'server/game.ts')).href)};
 const spawn=Game.prototype.spawnPlayer;Game.prototype.spawnPlayer=function(s,...args){spawn.call(this,s,...args);if(!s.data.name.startsWith('Radio '))return;const sp=this.spaces[s.data.sys];for(const e of [...sp.ships.values()])if(!e.player&&!e.owner)sp.remove(e);sp.spawnT=1e9;Object.assign(s.ent,{x:20000,y:20000,vx:0,vy:0,fuel:1000});};`,
 );
 const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
 const server = spawn(
   process.execPath,
-  ['--import', './test/seed-random.js', '--import', preload, 'server/main.js'],
+  ['--import', './test/seed-random.js', '--import', preload, 'server/main.ts'],
   {
     cwd: root,
     env: {

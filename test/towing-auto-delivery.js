@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { tug, attach, atPort, command } from './helpers/towing-fixture.js';
-import { STELLARS, SYS } from '../shared/galaxy.js';
-import { TOW } from '../shared/towing-rules.js';
+import { STELLARS, SYS } from '../shared/galaxy.ts';
+import { TOW } from '../shared/towing-rules.ts';
 const live = (f) => f.g.db.world.towing.slots.find((s) => s.object?.id === f.o.id).object;
 // The load, not the ship centre or its rotation/velocity, determines delivery.
 for (const a of [0, Math.PI / 2, Math.PI, 4.2]) {

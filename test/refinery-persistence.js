@@ -1,7 +1,7 @@
 // Real checkpoint interruption, not a mocked persistence callback.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { DB } from '../server/db.js';
+import { DB } from '../server/db.ts';
 import {
   refineryGame,
   refineryPilot,

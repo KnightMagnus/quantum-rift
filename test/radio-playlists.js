@@ -8,7 +8,7 @@ import {
   setRadioLevel,
   radioOn,
   setUnlockedStations,
-} from '../client/radio.js';
+} from '../client/radio.ts';
 // Player edge cases deliberately isolate empty/test playlists from shipped recordings.
 for (const station of RADIO_STATIONS) station.tracks = [];
 const songs = ['A', 'B', 'C', 'D'];

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { tug, attach, command, survey } from './helpers/towing-fixture.js';
-import { TOW } from '../shared/towing-rules.js';
+import { TOW } from '../shared/towing-rules.ts';
 const f = tug(),
   { g, s } = f;
 const w = g.db.world.towing,

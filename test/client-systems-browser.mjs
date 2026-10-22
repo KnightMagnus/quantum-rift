@@ -6,9 +6,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { augmentAssets } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { augmentAssets } from '../shared/rules.ts';
 import {
   root,
   availablePort,
@@ -34,7 +34,7 @@ const port = await availablePort();
 const origin = `http://127.0.0.1:${port}`;
 const server = spawn(
   process.execPath,
-  ['--import', path.join(root, 'test/helpers/seed-random.mjs'), 'server/main.js'],
+  ['--import', path.join(root, 'test/helpers/seed-random.mjs'), 'server/main.ts'],
   {
     cwd: root,
     env: {

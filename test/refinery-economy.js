@@ -8,9 +8,9 @@ import {
   lots,
   w,
 } from './helpers/refinery-fixture.js';
-import { RECIPES, recovery, outputUnits, refineryFee } from '../shared/refinery-rules.js';
-import { purchaseUnit, saleValue } from '../server/trade-pricing.js';
-import { STELLARS, COMMODITIES } from '../shared/galaxy.js';
+import { RECIPES, recovery, outputUnits, refineryFee } from '../shared/refinery-rules.ts';
+import { purchaseUnit, saleValue } from '../server/trade-pricing.ts';
+import { STELLARS, COMMODITIES } from '../shared/galaxy.ts';
 assert.equal(
   refineryFee(324, 3 * 99, 0),
   28,

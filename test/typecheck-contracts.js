@@ -8,16 +8,20 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const checker = process.argv.includes('--tsrs') ? 'tsrs/bin/tsrs' : 'typescript/bin/tsc';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-types-'));
-const modulePath = (file) => path.join(root, 'server', file).replaceAll('\\', '/');
+const modulePath = (file) =>
+  './' +
+  path.relative(dir, path.join(root, 'server', file.replace(/\.js$/, '.ts'))).replaceAll('\\', '/');
 const common = `// @ts-check
 /** @type {import('${modulePath('features.js')}').FeatureServices} */
 const features = /** @type {import('${modulePath('features.js')}').FeatureServices} */ ({});
 /** @type {import('${modulePath('contracts.js')}').CommandSession} */
-const session = {data: {name: 'Fixture Captain', cargo: {}, cargoLots: {version: 1, byCommodity: {}}, sys: 'meridian'}, ent: null};
+const session = /** @type {import('${modulePath('contracts.js')}').CommandSession} */ ({});
 `;
 try {
   fs.writeFileSync(path.join(dir, 'package.json'), '{"type":"module"}');
   const config = JSON.parse(fs.readFileSync(new URL('../tsconfig.json', import.meta.url)));
+  config.compilerOptions.allowJs = true;
+  config.compilerOptions.checkJs = true;
   config.compilerOptions.typeRoots = [path.join(root, 'node_modules/@types')];
   config.include = [path.join(dir, 'fixture.js')];
   fs.writeFileSync(path.join(dir, 'tsconfig.json'), JSON.stringify(config));
@@ -29,6 +33,21 @@ try {
       { encoding: 'utf8' },
     );
   };
+  const bindingPath = modulePath('feature-service.js');
+  const bindingFixture = `import {bindOperations} from '${bindingPath}';
+/** @this {{required:number}} @returns {number} */
+function run(){return this.required;}
+const operations = {run};
+`;
+  let bindingResult = check(bindingFixture + 'bindOperations(operations, {required: 1});');
+  assert.equal(bindingResult.status, 0, bindingResult.stdout + bindingResult.stderr);
+  bindingResult = check(bindingFixture + 'bindOperations(operations, {});');
+  assert.notEqual(bindingResult.status, 0, 'binding requires the operation capability facade');
+  assert.match(bindingResult.stdout + bindingResult.stderr, /required.*missing|missing.*required/);
+  const incompleteSession =
+    check(`/** @type {import('${modulePath('contracts.js')}').CommandSession} */
+const invalidSession = {data: {name: 'Fixture Captain', cargo: {}, sys: 'meridian'}, ent: null};`);
+  assert.notEqual(incompleteSession.status, 0, 'incomplete authenticated session must be rejected');
   let result = check(
     "features.fleetcmd.fleetOrder(session, 'hold');\nfeatures.fleetcmd.jettison(session, 'food', 3);\n",
   );

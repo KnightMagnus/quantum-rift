@@ -6,7 +6,12 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { EventEmitter } from 'node:events';
 const root = process.env.REFERENCE_ROOT || fileURLToPath(new URL('../', import.meta.url));
-const load = (file) => import(pathToFileURL(path.join(root, file)).href);
+const load = (file) => {
+  // The optional reference checkout predates TypeScript; keep it usable.
+  const source = path.join(root, file);
+  const legacy = source.replace(/\.ts$/, '.js');
+  return import(pathToFileURL(fs.existsSync(source) ? source : legacy).href);
+};
 process.env.SEEDS_FILE = '/nonexistent';
 delete process.env.INVASION_NOW;
 Date.now = () => 1781503200000;
@@ -16,8 +21,8 @@ Math.random = () => {
   return random / 4294967296;
 };
 globalThis.setInterval = () => ({ unref() {} });
-const { DB } = await load('server/db.js');
-const { makeLoadout } = await load('shared/rules.js');
+const { DB } = await load('server/db.ts');
+const { makeLoadout } = await load('shared/rules.ts');
 const A = JSON.parse(fs.readFileSync(path.join(root, 'shared/assets.json')));
 const trace = [];
 const phases = {
@@ -34,7 +39,7 @@ const phases = {
   arcs: ['arcsInit'],
 };
 for (const [file, methods] of Object.entries(phases)) {
-  const module = await load(`server/${file}.js`);
+  const module = await load(`server/${file}.ts`);
   const operations = Object.values(module).find(
     (value) => value && typeof value === 'object' && typeof value[methods[0]] === 'function',
   );
@@ -46,7 +51,7 @@ for (const [file, methods] of Object.entries(phases)) {
     };
   }
 }
-const { Game } = await load('server/game.js');
+const { Game } = await load('server/game.ts');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-feature-fixture-'));
 try {
   const g = new Game(A, new DB(dir));

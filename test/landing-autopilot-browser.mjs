@@ -14,10 +14,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { augmentAssets, makeLoadout, shipStats } from '../shared/rules.js';
-import { STELLARS } from '../shared/galaxy.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { augmentAssets, makeLoadout, shipStats } from '../shared/rules.ts';
+import { STELLARS } from '../shared/galaxy.ts';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-landing-browser-'));
 const evidence = path.resolve(process.argv[2] || evidenceDir('landing-autopilot'));
 fs.mkdirSync(evidence, { recursive: true });
@@ -100,8 +100,8 @@ fs.writeFileSync(
   fixture,
   `
 import fs from 'node:fs';
-import { Game } from ${JSON.stringify(url('server/game.js'))};
-import { STELLARS } from ${JSON.stringify(url('shared/galaxy.js'))};
+import { Game } from ${JSON.stringify(url('server/game.ts'))};
+import { STELLARS } from ${JSON.stringify(url('shared/galaxy.ts'))};
 const cases = ${JSON.stringify(cases)}, active = new Map();
 const write = row => fs.appendFileSync(${JSON.stringify(traceFile)}, JSON.stringify({...row,time:Date.now()})+'\\n');
 const spawnPlayer = Game.prototype.spawnPlayer;
@@ -142,7 +142,7 @@ const server = spawn(
     path.join(root, 'test/helpers/seed-random.mjs'),
     '--import',
     fixture,
-    'server/main.js',
+    'server/main.ts',
   ],
   {
     cwd: root,

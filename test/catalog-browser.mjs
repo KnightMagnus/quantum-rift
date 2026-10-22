@@ -14,9 +14,9 @@ const root = process.argv[2],
   evidence = process.argv[3];
 fs.mkdirSync(evidence, { recursive: true });
 const load = (p) => import(pathToFileURL(path.join(root, p)).href);
-const { DB } = await load('server/db.js'),
-  { Game } = await load('server/game.js');
-const { augmentAssets } = await load('shared/rules.js');
+const { DB } = await load('server/db.ts'),
+  { Game } = await load('server/game.ts');
+const { augmentAssets } = await load('shared/rules.ts');
 const A = JSON.parse(fs.readFileSync(path.join(root, 'shared/assets.json')));
 augmentAssets(A);
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-282-download-smoke-'));
@@ -68,7 +68,7 @@ proxy.on('upgrade', (req, socket, head) => {
   r.end();
 });
 await new Promise((r) => proxy.listen(port + 1, '127.0.0.1', r));
-const server = spawn(process.execPath, ['server/main.js'], {
+const server = spawn(process.execPath, ['server/main.ts'], {
   cwd: root,
   env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: dir },
   stdio: ['ignore', 'pipe', 'pipe'],

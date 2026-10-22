@@ -17,7 +17,7 @@ const out = evidenceDir('login-scene'),
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-login-scene-')),
   port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.js'], {
+const server = spawn(process.execPath, ['server/main.ts'], {
   cwd: root,
   env: { ...process.env, SOLO: '', PORT: String(port), DATA_DIR: dir, SEEDS_FILE: '/nonexistent' },
   stdio: ['ignore', 'pipe', 'pipe'],

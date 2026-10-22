@@ -45,8 +45,8 @@ npm start
 commands rebuild before running. After changing source, rebuild before launching
 individual tests directly.
 
-`server/`, `shared/` and `client/` contain source modules. Use explicit `.ts`
-extensions when importing a TypeScript source module, including from JavaScript.
+`server/`, `shared/` and `client/` contain TypeScript source modules. Use explicit `.ts`
+extensions when importing application source, including from JavaScript test tools.
 Node 27 strips erasable types when tests import source directly. Keep TypeScript
 syntax erasable: no runtime enums, namespaces or constructor parameter properties.
 
@@ -65,17 +65,19 @@ source checkouts do. Do not publish a source-only archive as ready to play.
 
 ## Checked scope
 
-`npm run typecheck` retains the existing selective JavaScript/JSDoc checks and
-adds `tsconfig.core.json` with strict checking for actual `.ts` source.
+`npm run typecheck` checks all application TypeScript with strict compiler options.
+The source-coverage guard rejects application JavaScript, omitted modules and
+blanket type-check suppressions before compilation. Test harnesses and developer
+tools can remain JavaScript; their language does not exempt application imports
+from the strict project checks.
 `npm run typecheck:tsrs` checks both configurations with the pinned Rust-based
 [tsrs checker](https://github.com/oxc-project/tsrs). CI runs it alongside `tsc`,
 including the valid/invalid contract fixtures through `npm run test:types:tsrs`.
 The pinned tsrs package provides Linux and macOS binaries, but no Windows binary;
 Windows contributors can keep using `npm run typecheck`. Builds still use `tsc`.
-`GalaxyGraph`, `ShipCapacity`, deterministic random/hash utilities and client HTML
-escaping are TypeScript. Existing
-JavaScript bodies are not thereby converted or globally checked. Emitting every
-module is not a claim that every implementation is type-safe.
+`tsconfig.core.json` retains the same strict application scope. Contract fixtures
+check both accepted calls and rejected argument/capability shapes. Type checking
+does not validate incoming JSON at runtime or prove every gameplay branch.
 
 `test/compiled-runtime.mjs` exercises online and Solo startup through both source
 and compiled server entries, executable emitted browser/shared modules, original

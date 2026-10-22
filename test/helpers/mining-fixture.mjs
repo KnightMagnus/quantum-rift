@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { DB } from '../../server/db.js';
-import { Game } from '../../server/game.js';
-import { augmentAssets, makeLoadout, shipStats } from '../../shared/rules.js';
-import { STELLARS } from '../../shared/galaxy.js';
+import { DB } from '../../server/db.ts';
+import { Game } from '../../server/game.ts';
+import { augmentAssets, makeLoadout, shipStats } from '../../shared/rules.ts';
+import { STELLARS } from '../../shared/galaxy.ts';
 import { tempDataDir } from './temp-data.js';
 import { root, availablePort, evidenceDir, ready, cleanup, delay } from './browser-fixture.mjs';
 export async function until(fn, label, ms = 15000) {
@@ -50,8 +50,8 @@ export async function miningFixture(name) {
     fixture = path.join(dir, 'placement.mjs');
   fs.writeFileSync(
     fixture,
-    `import fs from 'node:fs';import {Game} from ${JSON.stringify(pathToFileURL(path.join(root, 'server/game.js')).href)};
- import {SYS} from ${JSON.stringify(pathToFileURL(path.join(root, 'shared/galaxy.js')).href)};SYS.meridian.fields.push({x:10400,y:10200,r:60,ore:'gas',rich:2,rocks:1});
+    `import fs from 'node:fs';import {Game} from ${JSON.stringify(pathToFileURL(path.join(root, 'server/game.ts')).href)};
+ import {SYS} from ${JSON.stringify(pathToFileURL(path.join(root, 'shared/galaxy.ts')).href)};SYS.meridian.fields.push({x:10400,y:10200,r:60,ore:'gas',rich:2,rocks:1});
  let game;const spawn=Game.prototype.spawnPlayer;Game.prototype.spawnPlayer=function(s,...args){spawn.call(this,s,...args);game=this;const sp=this.spaces[s.data.sys];if(!['Mining Alpha','Mining Bravo'].includes(s.data.name))return;for(const e of [...sp.ships.values()])if(!e.player&&!e.owner)sp.remove(e);sp.spawnT=1e9;
  const r=sp.rocks.find(r=>r.ore==='ore'&&r.stages===1)||sp.rocks[0];r.x=10000;r.y=10000;r.seam=0;const gas=sp.rocks.find(r=>r.ore==='gas');if(gas){gas.x=10400;gas.y=10200;}s.ent.x=10180;s.ent.y=10000+(s.data.name==='Mining Bravo'?200:0);s.ent.a=-Math.PI/2;s.ent.vx=s.ent.vy=0;
  };
@@ -61,7 +61,7 @@ export async function miningFixture(name) {
     origin = `http://127.0.0.1:${port}`,
     server = spawn(
       process.execPath,
-      ['--import', './test/seed-random.js', '--import', fixture, 'server/main.js'],
+      ['--import', './test/seed-random.js', '--import', fixture, 'server/main.ts'],
       {
         cwd: root,
         env: {

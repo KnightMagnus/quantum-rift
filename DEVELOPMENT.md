@@ -18,52 +18,52 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 ## How it fits together
 
 - **Authoritative server.**
-  - `server/game.js` holds the `Game` class: sessions, accounts, landing, markets, jobs, explicit message routes and the main
+  - `server/game.ts` holds the `Game` class: sessions, accounts, landing, markets, jobs, explicit message routes and the main
     loop.
-  - Each star system is a `Space` (`server/space.js`) simulated at 30 Hz. It holds ships, AI, shots, beams, loot and
+  - Each star system is a `Space` (`server/space.ts`) simulated at 30 Hz. It holds ships, AI, shots, beams, loot and
     asteroids.
   - Systems are created lazily, on first access through a Proxy, and put to sleep after two quiet minutes. 211 systems cost
     no more than the occupied ones.
-- **Explicit feature services.** `server/features.js` assembles 15 namespaced services under
+- **Explicit feature services.** `server/features.ts` assembles 15 namespaced services under
   `game.features`. Each gets only its listed capability facade; no feature methods are installed on `Game.prototype`.
-  - `server/coop.js` owns friends/DMs, Armada, station trading, duels, rescue, co-op Holdout, contracts and v2.6 migration.
+  - `server/coop.ts` owns friends/DMs, Armada, station trading, duels, rescue, co-op Holdout, contracts and v2.6 migration.
   - Effective bonus/stats/world/session services have explicit owners and ordered calculations, not method overrides.
-  - Composition and Fleet Commands are JSDoc-checked with development-only `tsc --noEmit`; other legacy bodies migrate gradually.
+  - All application modules are native TypeScript and included in strict `tsc --noEmit` checks. Startup and browser delivery use compiled JavaScript in `dist/`.
   - See [feature architecture, ownership, typing coverage and checks](docs/FEATURES.md) and the machine-readable
     [feature inventory](docs/feature-inventory.json) before changing integration points.
 - **Shared code.** `shared/` is imported by both server and client:
   - data tables, the galaxy generator, prices
-  - flight physics in `shared/rules.js`, so the client can predict its own ship
+  - flight physics in `shared/rules.ts`, so the client can predict its own ship
 - **Protocol.** JSON over one WebSocket.
   - The client sends inputs 30 times a second.
   - The server sends a snapshot of the player's system 15 times a second.
   - A ship row is `[id, hull, x, y, a*1000, vx, vy, flags, shield%, armor%, factionIdx, name, owner, power]`. The flag
     bits are 1 thrust, 2 afterburner, 4 disabled, 8 jumping, 16 player, 32 elite and 64 rival captain.
   - Players also get `you` (their whole save, trimmed) and `landed` (the services where they are docked).
-- **Saves.** `server/db.js` writes `data/players.json` and `data/world.json` atomically, with a rolling backup every 30
+- **Saves.** `server/db.ts` writes `data/players.json` and `data/world.json` atomically, with a rolling backup every 30
   minutes.
 - **Client.**
-  - `client/main.js`: network, input, prediction, autopilot, key bindings.
-  - `client/render.js`: canvas drawing, radar, galaxy map.
-  - `client/ui.js`: HUD, landing screens, companion tabs.
+  - `client/main.ts`: network, input, prediction, autopilot, key bindings.
+  - `client/render.ts`: canvas drawing, radar, galaxy map.
+  - `client/ui.ts`: HUD, landing screens, companion tabs.
   - Feature screens live in their own modules: `hangar_ui`, `fronts_ui`, `frontier_ui`, `spec_ui`, `info_ui`, `syn_ui`,
     `missions`, `radio` and `planets`.
-- **Living galaxy (2.4).** `shared/living.js` defines the system states (famine, war, boom...). `server/living.js`
+- **Living galaxy (2.4).** `shared/living.ts` defines the system states (famine, war, boom...). `server/living.ts`
   starts and ends them every 20 s (`livingTick`), moves prices (`livingMult`: the state times the fading trade impact of
   what captains bought and sold at that world), and posts supply, patrol and passenger jobs (`stateOffers`). States go to
   the client in the `world` message as `states`.
-- **Questlines (2.4).** `shared/quests.js` holds the contact story templates (`CHAINS`) and six handcrafted
-  `SIDE_STORIES`. `server/quests.js` gives every bar a seeded contact (`contactAt`), offers a `type:'quest'` job, and
+- **Questlines (2.4).** `shared/quests.ts` holds the contact story templates (`CHAINS`) and six handcrafted
+  `SIDE_STORIES`. `server/quests.ts` gives every bar a seeded contact (`contactAt`), offers a `type:'quest'` job, and
   turns each step into an ordinary job tagged `m.quest = {qid, step, of, name}`. `completeOnLanding` calls
   `questAdvance`, which sends the story beat and posts the next step. A lost step is re-posted once by `questSweep`;
   abandoning a step ends the story. Faction commissions still use `m.chain`, so quests must never set it.
 
 ## How to add a feature
 
-1. **Data:** a `shared/<feature>.js` file with the tables: costs, tiers, names, text.
-2. **Server:** a `server/<feature>.js` operations module with typed capabilities, operations and payload helpers.
+1. **Data:** a `shared/<feature>.ts` file with the tables: costs, tiers, names, text.
+2. **Server:** a `server/<feature>.ts` operations module with typed capabilities, operations and payload helpers.
    Follow [the composition workflow](docs/FEATURES.md):
-   - add a named service and explicit checked facade in `server/features.js`, never prototype writes
+   - add a named service and explicit checked facade in `server/features.ts`, never prototype writes
    - initialize/migrate on login or world startup in the existing explicit phase
    - add fixed routes in `Game.createMessageHandlers()` (duplicate types are rejected)
    - wire periodic work in `tick()` at its declared cadence and position
@@ -80,7 +80,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 
 ## Testing
 
-- `npm run typecheck`: development-only JSDoc checking, no emitted files. See the explicit gradual coverage boundary in `docs/FEATURES.md`.
+- `npm run typecheck`: strict checking of every application module, with no emitted files. See `docs/FEATURES.md`.
 - `npm run test:features`: original-baseline characterization, capability/inventory and dispatch/security regression checks.
 - `npm run test:types`: prove valid calls compile and invalid arguments/missing capabilities fail.
 
@@ -113,9 +113,9 @@ See [the ship pipeline](tools/ships26/README.md) for `rift_ships26.py` usage.
 Ship sprites are generated from Python 3D hull designs. WebP sheets use full colour,
 frames up to 200 px and three roll sets (level, right and left). Files are
 `client/assets/ships/<id>.webp` and `<id>_glow.webp`, with 12 frames per row.
-`shared/sprites26.js` supplies frame dimensions, columns and banking; `augmentAssets`
+`shared/sprites26.ts` supplies frame dimensions, columns and banking; `augmentAssets`
 attaches those values as `ship.spr`. The client chooses a roll set from turn rate
-using `bankOf` in `client/render.js`. Hulls without `spr` use the older PNG sheets.
+using `bankOf` in `client/render.ts`. Hulls without `spr` use the older PNG sheets.
 
 ## Conventions
 
@@ -123,22 +123,22 @@ using `bankOf` in `client/render.js`. Hulls without `spr` use the older PNG shee
 - Every feature gets a test, and the whole suite runs before a release.
 - **Art:**
   - Sprite PNGs are quantized to 256 colours to keep the zip small.
-  - Planets are procedural (`client/planets.js`): a 3D-noise texture wrapped onto a lit, rotating sphere.
+  - Planets are procedural (`client/planets.ts`): a 3D-noise texture wrapped onto a lit, rotating sphere.
   - **2.5 rendered art** (numpy and Pillow; each tool's docstring has its usage):
-    - `tools/rift_planets.py`: 56 ray-cast planets into `client/assets/planets/` plus `planets.json` (type, hue, sphere radius as a fraction of the image). `client/planets.js` picks one per world (`chooseRendered`). Since 2.5.1 each planet also has surface maps (`_tex` albedo, `_aux` four stacked grey maps: height, water, emissive, cloud) and fixed `_back` (halo, far ring) and `_front` (near ring, ring shadow) layers; `renderRendered` lights the turning sphere whenever it moves a texel, showing the still render (`<id>.webp`) until the maps load.
-    - `tools/rift_stations.py`: twelve station designs (`s_<design>.webp`); `client/render.js` `stationDesign(p)` picks one by faction and description.
-    - `tools/rift_landscapes.py`: landing pictures (`client/assets/land/l_*.jpg`): a voxel-space height-field terrain with reflective water and haze, depth-tested 3D structures, and skies that reuse the planet renders. `client/ui.js` `landScene(p)` maps worlds to scenes.
+    - `tools/rift_planets.py`: 56 ray-cast planets into `client/assets/planets/` plus `planets.json` (type, hue, sphere radius as a fraction of the image). `client/planets.ts` picks one per world (`chooseRendered`). Since 2.5.1 each planet also has surface maps (`_tex` albedo, `_aux` four stacked grey maps: height, water, emissive, cloud) and fixed `_back` (halo, far ring) and `_front` (near ring, ring shadow) layers; `renderRendered` lights the turning sphere whenever it moves a texel, showing the still render (`<id>.webp`) until the maps load.
+    - `tools/rift_stations.py`: twelve station designs (`s_<design>.webp`); `client/render.ts` `stationDesign(p)` picks one by faction and description.
+    - `tools/rift_landscapes.py`: landing pictures (`client/assets/land/l_*.jpg`): a voxel-space height-field terrain with reflective water and haze, depth-tested 3D structures, and skies that reuse the planet renders. `client/ui.ts` `landScene(p)` maps worlds to scenes.
     - `tools/rift_ruins.py` (the drifting ring ruins and megastructure arcs, `ruin_*` and `arc_*` in `client/assets/decor/`)
     - `tools/rift_fx.py` (fireball sheets, shards, flare), `tools/rift_objects.py` (asteroids, loot), `tools/rift_icons.py` (outfitter pictures for `EXTRA_OUTFITS`), `tools/rift_login.py` (the login backdrop).
     - `tools/rift_render3d.py` is the hull pipeline's software renderer (lofts, tori, blocks, materials with panels, windows and glow); `tools/rift_noise.py` has the shared 3D Perlin noise.
-  - System scenery is rendered by `tools/rift_decor.py` (galaxies, nebulae, wrecks, ring ruins) and `tools/rift_decor2.py` (gas giants, derelicts, crystals, black hole, arcs, satellites, pods) into `client/assets/decor/*.webp`. `client/render.js` places it per system (`decorFor`, seeded from the system id) in far, middle and near layers.
+  - System scenery is rendered by `tools/rift_decor.py` (galaxies, nebulae, wrecks, ring ruins) and `tools/rift_decor2.py` (gas giants, derelicts, crystals, black hole, arcs, satellites, pods) into `client/assets/decor/*.webp`. `client/render.ts` places it per system (`decorFor`, seeded from the system id) in far, middle and near layers.
 - **Audio** is synthesized by `tools/rift_audio.py` (numpy, scipy, ffmpeg) into `client/assets/sfx/`:
   - `ui_*.wav` interface sounds
   - `amb_*.mp3` ambient loops
   - `music_login.mp3`, the login theme
   - `tools/rift_audio25.py` makes the story sting (`ui_quest`) and the trouble beacon (`ui_state`)
   - `tools/rift_audio_jump.py` makes the hyperspace sounds (`ui_jump`, `ui_jumpfast`, `ui_arrive`, `jumpfar`)
-- `client/audio.js` routes sound through buses (effects, interface, ambience, music) under a master gain.
+- `client/audio.ts` routes sound through buses (effects, interface, ambience, music) under a master gain.
   - MP3 loops are played as overlapping copies with cross-fades, because MP3 padding makes simple loops click.
   - The radio is a separate `<audio>` element.
   - Music plays only on the login screen.

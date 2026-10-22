@@ -3,10 +3,10 @@ import { tempDataDir } from './helpers/temp-data.js';
 // formation on a moving leader with the new arrival steering.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS } from '../shared/galaxy.js';
-import { makeLoadout, step, DT, wrap } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS } from '../shared/galaxy.ts';
+import { makeLoadout, step, DT, wrap } from '../shared/rules.ts';
 import assert from 'node:assert/strict';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v201-')));

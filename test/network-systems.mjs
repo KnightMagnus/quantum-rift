@@ -10,7 +10,7 @@ for (const test of ['combat-network.js', 'hailing-network.js', 'bot.js']) {
     out = evidenceDir(test.replace('.js', '')),
     port = await availablePort(),
     origin = `http://127.0.0.1:${port}`;
-  const server = spawn(process.execPath, ['--import', './test/seed-random.js', 'server/main.js'], {
+  const server = spawn(process.execPath, ['--import', './test/seed-random.js', 'server/main.ts'], {
     cwd: root,
     env: {
       ...process.env,

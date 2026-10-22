@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-import { RADIO_STATIONS } from '../shared/radio-stations.js';
+import { RADIO_STATIONS } from '../shared/radio-stations.ts';
 const manifest = JSON.parse(fs.readFileSync(new URL('../docs/RADIO-AUDIO.json', import.meta.url)));
 assert.equal(
   manifest.archiveSha256,
@@ -61,7 +61,7 @@ for (const track of manifest.tracks) {
 assert.equal(manifest.bytes, bytes);
 assert.equal(manifest.sourceBytes, sourceBytes);
 assert.ok(bytes < sourceBytes * 0.4, 'at least 60% smaller than the supplied masters');
-const audio = fs.readFileSync(new URL('../client/audio.js', import.meta.url), 'utf8');
+const audio = fs.readFileSync(new URL('../client/audio.ts', import.meta.url), 'utf8');
 assert.match(audio, /load\('music_login33'\)/);
 const original = fs.readFileSync(
   new URL('../client/assets/sfx/music_login31.mp3', import.meta.url),

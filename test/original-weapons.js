@@ -1,8 +1,8 @@
 // Asset migration contract: persistent IDs, firing roles and mounting still agree after the refresh.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { augmentAssets, weaponParams } from '../shared/rules.js';
-import { EXTRA_OUTFITS, MINING_WEAPONS } from '../shared/galaxy.js';
+import { augmentAssets, weaponParams } from '../shared/rules.ts';
+import { EXTRA_OUTFITS, MINING_WEAPONS } from '../shared/galaxy.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const classes = new Map([
   [128, 'gun'],
@@ -75,10 +75,10 @@ for (const file of [
   'README.md',
   'package.json',
   'shared/assets.json',
-  'shared/galaxy.js',
-  'shared/rules.js',
-  'shared/story.js',
-  'shared/specialty.js',
+  'shared/galaxy.ts',
+  'shared/rules.ts',
+  'shared/story.ts',
+  'shared/specialty.ts',
 ]) {
   assert.ok(
     !brand.test(fs.readFileSync(new URL('../' + file, import.meta.url), 'utf8')),
