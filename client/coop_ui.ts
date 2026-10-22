@@ -4,32 +4,80 @@ import type { NetworkMessage } from '../server/message-registry.ts';
 import type { ClientGameState } from './main.ts';
 import type { RenderShip } from './render.ts';
 export type CoopHelpers = {
+  /** Show toast notification function */
   toast: (message: string) => void;
+
+  /** Prompt confirmation modal function */
   ask: (message: string, onYes: () => void) => void;
+
+  /** Plot course function */
   plot: (systemId: string) => void;
 };
-export type DirectMessage = { from: string; msg: string; t: number; off?: boolean };
+export type DirectMessage = {
+  /** Sender captain name */
+  from: string;
+  /** Message text */
+  msg: string;
+  /** Timestamp */
+  t: number;
+  /** Delivered while offline flag */
+  off?: boolean;
+};
 export type FriendEntry = {
+  /** Friend captain name */
   name: string;
+
+  /** Online status */
   status: 'online' | 'away' | 'offline';
+
+  /** Last seen timestamp */
   last?: number;
+
+  /** System display name */
   sys?: string;
+
+  /** System ID */
   sysId?: string | null;
 };
 export type SocialState = {
+  /** List of friends */
   friends: FriendEntry[];
+
+  /** Inbound friend request captain names */
   inReq: string[];
+
+  /** Outbound friend request captain names */
   outReq: string[];
+
+  /** Blocked captain names */
   blocks: string[];
+
+  /** Allow messages from non-friends */
   dmAll?: boolean;
+
+  /** Hide current location from friends */
   hideSys?: boolean;
 };
-export type TradeOffer = { credits?: number; items?: Record<string, number> };
+export type TradeOffer = {
+  /** Credits offered */
+  credits?: number;
+  /** Items offered */
+  items?: Record<string, number>;
+};
 export type TradeState = {
+  /** Other captain name */
   with: string;
+
+  /** Current player offer */
   mine: TradeOffer;
+
+  /** Other captain offer */
   theirs: TradeOffer;
+
+  /** Offer lock states */
   lock: { me: boolean; them: boolean };
+
+  /** Offer confirm states */
   ok: { me: boolean; them: boolean };
 };
 
@@ -39,55 +87,6 @@ import { escapeHtml as escapeHtml2 } from './html.ts';
 import { SYS as systemsById, COMMODITIES, MATERIALS, GRADES } from '../shared/galaxy.ts';
 import { ARMADA, TRADE, DUEL } from '../shared/coop.ts';
 import { credits } from '../shared/rules.ts';
-
-/**
- * CoopHelpers fields:
- * toast: Show toast notification function
- * ask: Prompt confirmation modal function
- * plot: Plot course function
- */
-
-/**
- * DirectMessage fields:
- * from: Sender captain name
- * msg: Message text
- * t: Timestamp
- * [off]: Delivered while offline flag
- */
-
-/**
- * FriendEntry fields:
- * name: Friend captain name
- * status: Online status
- * [last]: Last seen timestamp
- * [sys]: System display name
- * [sysId]: System ID
- */
-
-/**
- * SocialState fields:
- * friends: List of friends
- * inReq: Inbound friend request captain names
- * outReq: Outbound friend request captain names
- * blocks: Blocked captain names
- * [dmAll]: Allow messages from non-friends
- * [hideSys]: Hide current location from friends
- */
-
-/**
- * TradeOffer fields:
- * [credits]: Credits offered
- * [items]: Items offered
- */
-
-/**
- * TradeState fields:
- * with: Other captain name
- * mine: Current player offer
- * theirs: Other captain offer
- * lock: Offer lock states
- * ok: Offer confirm states
- */
 
 /**
  * Shorthand helper for document.getElementById.

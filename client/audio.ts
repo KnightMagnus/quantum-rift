@@ -1,20 +1,41 @@
 export interface AudioMixOptions {
+  /** Master volume level (0..1) */
   vol?: number;
+
+  /** Whether all audio is muted */
   mute?: boolean;
+
+  /** Sound effects bus level (0..1) */
   sfx?: number;
+
+  /** UI audio bus level (0..1) */
   ui?: number;
+
+  /** Ambience audio bus level (0..1) */
   amb?: number;
+
+  /** Music audio bus level (0..1) */
   music?: number;
 }
 export type AmbienceLocation = 'space' | 'station' | null;
 export interface AmbienceLoopState {
+  /** Whether the loop has been requested to stop */
   stop: boolean;
+
+  /** List of active audio buffer source nodes */
   srcs: AudioBufferSourceNode[];
+
+  /** Scheduled timer handle for next loop crossfade */
   timer?: ReturnType<typeof setTimeout>;
 }
 export interface AmbienceBedState {
+  /** Gain node controlling bed volume */
   g: GainNode;
+
+  /** Optional biquad filter node (used for engine lowpass) */
   f: BiquadFilterNode | null;
+
+  /** Loop scheduler state */
   loop: AmbienceLoopState;
 }
 type MixerBus = 'sfx' | 'ui' | 'amb' | 'music';
@@ -27,40 +48,6 @@ declare global {
 // Audio (WebAudio). Positional combat effects come from the combat sound pack. Generated interface sounds,
 // ambient loops (open space, station interior, your engine) and a login-screen theme use separate mixer buses:
 // master > effects | interface | ambience | music. The radio is an <audio> element with its own level (radio.js).
-
-/**
- * AudioMixOptions fields:
- * [vol]: Master volume level (0..1)
- * [mute]: Whether all audio is muted
- * [sfx]: Sound effects bus level (0..1)
- * [ui]: UI audio bus level (0..1)
- * [amb]: Ambience audio bus level (0..1)
- * [music]: Music audio bus level (0..1)
- */
-
-/**
- * AudioDebugInfo fields:
- * ctx: Audio context state or null
- * amb: Active ambience bed names
- * music: Whether login music source is running
- * buffers: Number of decoded audio buffers cached
- * towVoices: Active tether voices (zero or one)
- * towGain: Effective tether gain through effects/master mixer
- */
-
-/**
- * AmbienceLoopState fields:
- * stop: Whether the loop has been requested to stop
- * srcs: List of active audio buffer source nodes
- * [timer]: Scheduled timer handle for next loop crossfade
- */
-
-/**
- * AmbienceBedState fields:
- * g: Gain node controlling bed volume
- * f: Optional biquad filter node (used for engine lowpass)
- * loop: Loop scheduler state
- */
 
 let audioContext: AudioContext | null = null,
   master: GainNode | null = null;
@@ -476,11 +463,22 @@ export function stopMusic(fade = 2.5) {
  */
 export function debug() {
   return {
+    /** Audio context state or null */
     ctx: audioContext && audioContext.state,
+
+    /** Active ambience bed names */
     amb: Object.keys(ambNow),
+
+    /** Whether login music source is running */
     music: !!musicSrc,
+
+    /** Number of decoded audio buffers cached */
     buffers: buffers.size,
+
+    /** Active tether voices (zero or one) */
     towVoices: towVoice ? 1 : 0,
+
+    /** Effective tether gain through effects/master mixer */
     towGain: towVoice
       ? towGain!.gain.value * (audioBus.sfx?.gain.value ?? 1) * master!.gain.value
       : 0,

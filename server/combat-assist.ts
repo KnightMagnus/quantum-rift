@@ -1,226 +1,182 @@
 import type { Session } from './game.ts';
-export type CombatConsent = { armada: string | number; leader: string };
+
+/** Combat delegation consent granted to an armada leader. */
+export type CombatConsent = {
+  /** Unique armada identifier. */
+  armada: string | number;
+  /** Captain name of the armada leader. */
+  leader: string;
+};
+
+/** Transient combat assist state tracked per player session. */
 export type CombatState = {
+  /** Whether automated combat assistance is currently active. */
   on: boolean;
+
+  /** Active delegation consent granted to an armada leader, if any. */
   consent: CombatConsent | null;
+
+  /** Whether this session is coordinating combat targeting for follower ships. */
   coordinating: boolean;
+
+  /** Whether manual focus fire targeting is active. */
   focus: boolean;
+
+  /** Target entity ID currently focused or acquired. */
   target: number;
+
+  /** Operational status indicator ('OFF' | 'READY' | 'ENGAGING' | 'SUSPENDED'). */
   status: string;
+
+  /** Human-readable explanation for state transitions or suspension. */
   reason: string;
+
+  /** Whether combat control is currently delegated to a coordinating leader. */
   delegated?: boolean;
 };
+
+/** Public combat assist telemetry and status payload sent to the client. */
 export type CombatPayload = {
+  /** Whether combat assist is enabled. */
   on: boolean;
+
+  /** Whether combat control is currently delegated to a leader. */
   delegated: boolean;
+
+  /** Whether delegation consent has been granted. */
   consent: boolean;
+
+  /** Whether coordinating combat targeting for followers. */
   coordinating: boolean;
+
+  /** Current combat status ('OFF' | 'READY' | 'ENGAGING' | 'SUSPENDED'). */
   status: string;
+
+  /** Explanation or reason for the current combat status. */
   reason: string;
+
+  /** Target entity ID. */
   target: number;
+
+  /** Effective fleet and group combat power rating. */
   power: number;
 };
+
+/** Client command payload for toggling or updating combat assist mode. */
 export type CombatCommand = {
+  /** Combat operation command. */
   op: 'off' | 'manual' | 'assist' | 'coordinate' | 'delegate';
+
+  /** Enable/disable flag for state toggling. */
   on?: boolean;
 };
-export type CombatShipStats = { armor: number; shields?: number; speed?: number; cargo?: number };
+
+/** Live computed ship performance stats. */
+export type CombatShipStats = {
+  /** Current maximum armor hitpoints. */
+  armor: number;
+  /** Maximum shield capacity. */
+  shields?: number;
+  /** Maximum linear speed. */
+  speed?: number;
+  /** Cargo capacity. */
+  cargo?: number;
+};
+
+/** Control inputs applied to ship physics simulation. */
 export type ShipInputControl = {
+  /** Forward thruster input. */
   thrust?: number;
+
+  /** Steering torque input. */
   turn?: number;
+
+  /** Primary weapon fire command. */
   fire1?: number;
+
+  /** Secondary weapon fire command. */
   fire2?: number;
+
+  /** Afterburner boost state. */
   ab?: number;
+
+  /** Reverse thrusters state. */
   rev?: number;
 };
+
+/** Entity representation participating in or evaluated by combat assist. */
 export type CombatEntity = import('./space.ts').Entity;
+
+/** Command input frame received from player client. */
 export type CombatInputFrame = {
+  /** Sequence number. */
   seq?: number;
+
+  /** Thrust control. */
   thrust?: number;
+
+  /** Turn control. */
   turn?: number;
+
+  /** Afterburner. */
   ab?: number;
+
+  /** Reverse thrusters. */
   rev?: number;
+
+  /** Primary fire. */
   fire1?: number;
+
+  /** Secondary fire. */
   fire2?: number;
 };
+
+/** Account save data fields accessed by combat assist. */
 export type CombatSessionData = {
+  /** Current solar system ID. */
   sys: string;
+
+  /** Captain name. */
   name: string;
+
+  /** Unique armada identifier. */
   armada?: string | number | null;
+
+  /** Whether following armada leader. */
   armadaFollow?: boolean;
 };
+
+/** Player session structure managing combat assist state and ship reference. */
 export type CombatSession = Session;
+
+/** System configuration parameters for combat space. */
 export type CombatSystemInfo = {
+  /** Whether system is a PvP combat arena. */
   arena?: boolean;
+
+  /** System ID. */
   id?: string;
+
+  /** System name. */
   name?: string;
+
+  /** Danger level. */
   danger?: number;
+
+  /** Controlling faction ID. */
   faction?: string;
 };
+
+/** System space simulation environment containing ships and combat context. */
 export type CombatSpace = import('./space.ts').Space;
+
+/** Server game interface for combat coordination. */
 export type CombatGameHost = Pick<
   import('./game.ts').Game,
   'spaces' | 'features' | 'sessions' | 'send'
 >;
 // Server-authoritative, transient combat control. Never persists consent in saves.
 import { winOdds } from '../shared/hostile.ts';
-
-/**
- * Combat delegation consent granted to an armada leader.
- * CombatConsent fields:
- * armada: Unique armada identifier.
- * leader: Captain name of the armada leader.
- */
-
-/**
- * Transient combat assist state tracked per player session.
- * CombatState fields:
- * on: Whether automated combat assistance is currently active.
- * consent: Active delegation consent granted to an armada leader, if any.
- * coordinating: Whether this session is coordinating combat targeting for follower ships.
- * focus: Whether manual focus fire targeting is active.
- * target: Target entity ID currently focused or acquired.
- * status: Operational status indicator ('OFF' | 'READY' | 'ENGAGING' | 'SUSPENDED').
- * reason: Human-readable explanation for state transitions or suspension.
- * [delegated]: Whether combat control is currently delegated to a coordinating leader.
- */
-
-/**
- * Public combat assist telemetry and status payload sent to the client.
- * CombatPayload fields:
- * on: Whether combat assist is enabled.
- * delegated: Whether combat control is currently delegated to a leader.
- * consent: Whether delegation consent has been granted.
- * coordinating: Whether coordinating combat targeting for followers.
- * status: Current combat status ('OFF' | 'READY' | 'ENGAGING' | 'SUSPENDED').
- * reason: Explanation or reason for the current combat status.
- * target: Target entity ID.
- * power: Effective fleet and group combat power rating.
- */
-
-/**
- * Client command payload for toggling or updating combat assist mode.
- * CombatCommand fields:
- * op: Combat operation command.
- * [on]: Enable/disable flag for state toggling.
- */
-
-/**
- * Live computed ship performance stats.
- * CombatShipStats fields:
- * armor: Current maximum armor hitpoints.
- * [shields]: Maximum shield capacity.
- * [speed]: Maximum linear speed.
- * [cargo]: Cargo capacity.
- */
-
-/**
- * Control inputs applied to ship physics simulation.
- * ShipInputControl fields:
- * [thrust]: Forward thruster input.
- * [turn]: Steering torque input.
- * [fire1]: Primary weapon fire command.
- * [fire2]: Secondary weapon fire command.
- * [ab]: Afterburner boost state.
- * [rev]: Reverse thrusters state.
- */
-
-/**
- * Entity representation participating in or evaluated by combat assist.
- * CombatEntity fields:
- * id: Unique entity simulation ID.
- * [dead]: True if the ship is destroyed.
- * [disabled]: True if the ship is disabled and drifting.
- * state: Entity flight state ('fly', 'jumpout', 'landed').
- * armor: Current armor hitpoints.
- * st: Live computed ship stats containing max armor.
- * [player]: Player reference if this is a player-controlled ship.
- * [noDisable]: Exemption flag preventing disablement threshold.
- * [rescueT]: Rescue protection countdown timestamp.
- * [owner]: Entity ID of the commanding or parent ship.
- * [target]: Current active combat target entity.
- * [fireAt]: Secondary weapon fire target entity.
- * [inp]: Ship input control state.
- * [think]: Time until next AI decision cycle.
- * [autoCombat]: Whether automated combat maneuvers and weapon firing are enabled.
- * [combatTarget]: Shared combat target designated by assist or group leader.
- * [sharedCombat]: Whether participating in shared fleet or group combat.
- * [order]: Active fleet order ('hold', 'holdfire', 'loot', 'gather', etc.).
- * [orderSeq]: Monotonic sequence counter of fleet orders.
- * x: Coordinate X in 2D space.
- * y: Coordinate Y in 2D space.
- * [pw]: Effective combat power rating.
- * [strength]: Base combat strength rating.
- * [recall]: True if fighter drone is recalled to dock.
- * [lastHitBy]: Entity ID of attacker that dealt last damage.
- * hitT: Simulation timestamp when ship was last damaged.
- * [enemy]: Test or hostile flag.
- * [aggro]: Set of hostile entity IDs that have engaged this ship.
- */
-
-/**
- * Command input frame received from player client.
- * CombatInputFrame fields:
- * [seq]: Sequence number.
- * [thrust]: Thrust control.
- * [turn]: Turn control.
- * [ab]: Afterburner.
- * [rev]: Reverse thrusters.
- * [fire1]: Primary fire.
- * [fire2]: Secondary fire.
- */
-
-/**
- * Account save data fields accessed by combat assist.
- * CombatSessionData fields:
- * sys: Current solar system ID.
- * name: Captain name.
- * [armada]: Unique armada identifier.
- * [armadaFollow]: Whether following armada leader.
- */
-
-/**
- * Player session structure managing combat assist state and ship reference.
- * CombatSession fields:
- * [combat]: Combat assist state for this session.
- * ent: Currently active ship entity in space.
- * data: Player account save data.
- * inputs: Pending input command queue.
- * [lastInput]: Most recent processed input.
- */
-
-/**
- * System configuration parameters for combat space.
- * CombatSystemInfo fields:
- * [arena]: Whether system is a PvP combat arena.
- * [id]: System ID.
- * [name]: System name.
- * [danger]: Danger level.
- * [faction]: Controlling faction ID.
- */
-
-/**
- * System space simulation environment containing ships and combat context.
- * CombatSpace fields:
- * id: Space system identifier.
- * sys: System configuration parameters.
- * ships: Map of entity ID to live ship entities.
- * t: Current simulation timestamp.
- * root: Resolves fleet root or parent commanding entity.
- * isHostile: Checks hostile relationship between entities.
- * canHit: Checks whether attacks can connect and damage target.
- * spared: Checks whether source faction spares target.
- * [newcomerTruce]: Checks ambient targeting truce without arrival grace.
- */
-
-/**
- * Server game interface for combat coordination.
- * CombatGameHost fields:
- * spaces: Active solar system space instances.
- * features: Server feature services.
- * sessions: Active client sessions.
- * [send]: Message transmitter.
- */
 
 /**
  * Maximum distance in space units for target engagement validity.

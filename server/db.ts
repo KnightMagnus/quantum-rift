@@ -6,11 +6,22 @@ import type { SavedMiningWorld } from './mining-contracts.ts';
 import type { SavedMiningPressure } from './mining-pressure-contracts.ts';
 import type { SavedRefinery } from './refinery-contracts.ts';
 import type { TowWorld } from './towing-contracts.ts';
+
+/** Persisted player account record and save file state. */
 export type AccountCredentials = {
+  /** Captain display name. */
   name: string;
+
+  /** Cryptographic salt in hexadecimal. */
   salt: string;
+
+  /** Scrypt password hash in hexadecimal. */
   hash: string;
+
+  /** Account creation timestamp in milliseconds. */
   created: number;
+
+  /** Associated player save state data. */
   data?: PlayerData;
 };
 export type PlayerAccount = PlayerData & AccountCredentials;
@@ -23,10 +34,14 @@ export interface ArmadaState {
   t: number;
   emptyT: number;
 }
+
+/** Persisted galaxy world state data. */
 export type WorldData = FeatureWorldState & {
   armadas: Record<string, ArmadaState>;
   towing?: TowWorld;
   industrial?: IndustrialWorld;
+
+  /** World sites and player claim data. */
   sites: Record<string, string>;
   mining?: SavedMiningWorld;
   refinery?: SavedRefinery;
@@ -37,22 +52,6 @@ export type WorldData = FeatureWorldState & {
 import fileSystem from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-
-/**
- * Persisted player account record and save file state.
- * AccountCredentials fields:
- * name: Captain display name.
- * salt: Cryptographic salt in hexadecimal.
- * hash: Scrypt password hash in hexadecimal.
- * created: Account creation timestamp in milliseconds.
- * [data]: Associated player save state data.
- */
-
-/**
- * Persisted galaxy world state data.
- * WorldData fields:
- * sites: World sites and player claim data.
- */
 
 /**
  * Player account and world state persistence engine managing JSON files, atomic writes,

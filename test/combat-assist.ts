@@ -13,7 +13,10 @@ import {
 import type { Entity } from '../server/space.ts';
 import type { CombatState } from '../server/combat-assist.ts';
 import type { Session } from '../server/game.ts';
-type CombatFixtureEntity = Entity & { enemy?: boolean };
+type CombatFixtureEntity = Entity & {
+  /** Test or hostile flag. */
+  enemy?: boolean;
+};
 import assert from 'node:assert/strict';
 import { CombatAssist } from '../server/combat-assist.ts';
 import { Space } from '../server/space.ts';

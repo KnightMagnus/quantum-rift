@@ -1,84 +1,92 @@
 export type ShuttleCraft = {
+  /** Shuttle craft designation name. */
   name: string;
+
+  /** Ship hull ID used by the shuttle. */
   hull: number;
+
+  /** Construction cost in credits. */
   cost: number;
+
+  /** Crafting materials as [materialKey, gradeIndex, quantity]. */
   mats: Array<[string, number, number]>;
+
+  /** Minimum station Ops level required to build. */
   ops: number;
+
+  /** Mission speed multiplier. */
   speed: number;
+
+  /** Hull protection / hazard survival rating. */
   armor: number;
+
+  /** Shuttle operational profile description. */
   desc: string;
 };
-export type ShuttleJobType = { name: string; fit: string; verbs: string[]; base: number };
-export type OfficerRole = { name: string; stats: string[]; desc?: string };
-export type OfficerRarity = { name: string; mult: number; color: string; cost: number };
-export type ResearchNode = {
-  id: string;
-  tree: string;
+export type ShuttleJobType = {
+  /** Mission category name. */
   name: string;
+  /** Recommended shuttle craft archetype. */
+  fit: string;
+  /** Mission objective description prefixes. */
+  verbs: string[];
+  /** Baseline mission success probability. */
+  base: number;
+};
+export type OfficerRole = {
+  /** Officer role display name. */
+  name: string;
+  /** Array of ship stat keys boosted by this role. */
+  stats: string[];
+  /** Role description summary. */
+  desc?: string;
+};
+export type OfficerRarity = {
+  /** Rarity tier title. */
+  name: string;
+  /** Stat multiplier coefficient. */
+  mult: number;
+  /** Hex color code for UI rendering. */
+  color: string;
+  /** Hiring fee in credits. */
   cost: number;
+};
+export type ResearchNode = {
+  /** Unique research node identifier. */
+  id: string;
+
+  /** Research category tree. */
+  tree: string;
+
+  /** Research project title. */
+  name: string;
+
+  /** Research cost in credits. */
+  cost: number;
+
+  /** Required crafting materials. */
   mats: Array<[string, number, number]>;
+
+  /** Research completion time in minutes. */
   minutes: number;
+
+  /** Minimum Ops level required. */
   ops: number;
+
+  /** Prerequisite research node ID that must be completed first. */
   needs?: string;
+
+  /** Stat or facility bonuses granted upon completion. */
   bonus: Record<string, number>;
 };
-export type RefineUpConfig = { need: number; cost: number[] };
+export type RefineUpConfig = {
+  /** Quantity of lower-grade crates consumed. */
+  need: number;
+  /** Credit cost per grade index [g0, g1, g2, g3]. */
+  cost: number[];
+};
 // Quantum Rift: data: shuttles, officers, research trees, refining and the drydock.
 // Shared by the server (rules) and the client (display).
-
-/**
- * ShuttleCraft fields:
- * name: - Shuttle craft designation name.
- * hull: - Ship hull ID used by the shuttle.
- * cost: - Construction cost in credits.
- * mats: - Crafting materials as [materialKey, gradeIndex, quantity].
- * ops: - Minimum station Ops level required to build.
- * speed: - Mission speed multiplier.
- * armor: - Hull protection / hazard survival rating.
- * desc: - Shuttle operational profile description.
- */
-
-/**
- * ShuttleJobType fields:
- * name: - Mission category name.
- * fit: - Recommended shuttle craft archetype.
- * verbs: - Mission objective description prefixes.
- * base: - Baseline mission success probability.
- */
-
-/**
- * OfficerRole fields:
- * name: - Officer role display name.
- * stats: - Array of ship stat keys boosted by this role.
- * [desc]: - Role description summary.
- */
-
-/**
- * OfficerRarity fields:
- * name: - Rarity tier title.
- * mult: - Stat multiplier coefficient.
- * color: - Hex color code for UI rendering.
- * cost: - Hiring fee in credits.
- */
-
-/**
- * ResearchNode fields:
- * id: - Unique research node identifier.
- * tree: - Research category tree.
- * name: - Research project title.
- * cost: - Research cost in credits.
- * mats: - Required crafting materials.
- * minutes: - Research completion time in minutes.
- * ops: - Minimum Ops level required.
- * [needs]: - Prerequisite research node ID that must be completed first.
- * bonus: - Stat or facility bonuses granted upon completion.
- */
-
-/**
- * RefineUpConfig fields:
- * need: - Quantity of lower-grade crates consumed.
- * cost: - Credit cost per grade index [g0, g1, g2, g3].
- */
 
 // ------------------------------------------------------------------ shuttles
 // Shuttles launch from your Personal Station on timed jobs that run in real time, even while you are offline.

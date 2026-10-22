@@ -1,79 +1,83 @@
 import type { PlayerPayload as PlayerData } from './main.ts';
 import type { ClientGameState } from './main.ts';
-export type SyndicateStanding = { name: string; pts: number; i: number; next?: number };
-export type BlackMarketItem = {
-  id: string;
+export type SyndicateStanding = {
+  /** Tier name */
   name: string;
+  /** Current reputation points */
+  pts: number;
+  /** Tier index */
+  i: number;
+  /** Points required for next tier */
+  next?: number;
+};
+export type BlackMarketItem = {
+  /** Unique item key */
+  id: string;
+
+  /** Display item name */
+  name: string;
+
+  /** Description */
   desc: string;
+
+  /** Price in credits */
   price: number;
+
+  /** Requirement text if locked */
   locked?: string;
 };
-export type BankState = { credit?: number; rate: number; period: number; max: number; pay: number };
+export type BankState = {
+  /** Current player credit score */
+  credit?: number;
+  /** Interest rate per cycle */
+  rate: number;
+  /** Billing interval in minutes */
+  period: number;
+  /** Maximum loan capacity */
+  max: number;
+  /** Estimated periodic payment */
+  pay: number;
+};
 export type Officer = {
+  /** Officer unique ID */
   id: number | string;
+
+  /** Officer name */
   name: string;
+
+  /** Promotion rank index */
   rank?: number;
+
+  /** Current level */
   lv: number;
+
+  /** Acquired trait keys */
   traits?: string[];
 };
-export type ArcCard = { fac: string; arc: string; title: string; brief: string; locked?: string };
-export type PassengerMissionOffer = { type?: string; pax?: number };
+export type ArcCard = {
+  /** Faction identifier */
+  fac: string;
+  /** Arc name */
+  arc: string;
+  /** Arc headline */
+  title: string;
+  /** Narrative summary */
+  brief: string;
+  /** Lock condition text */
+  locked?: string;
+};
+export type PassengerMissionOffer = {
+  /** Mission type */
+  type?: string;
+  /** Number of passengers to carry */
+  pax?: number;
+};
 
 import { escapeDoubleQuotedHtml as escapeHtml } from './html.ts';
 // Screens: black market, bank, officer ranks and traits, lower decks, and faction-arc cards.
 import { occupiedPassengerSeats } from '../shared/passengers.ts';
 import { FACTIONS } from '../shared/galaxy.ts';
 import { RANKS_OFF, PROMOTE, TRAITS, LOWER_DECK, LOWER_SLOTS, bunks } from '../shared/syndicate.ts';
-
-/**
- * SyndicateStanding fields:
- * name: Tier name
- * pts: Current reputation points
- * i: Tier index
- * [next]: Points required for next tier
- */
-
-/**
- * BlackMarketItem fields:
- * id: Unique item key
- * name: Display item name
- * desc: Description
- * price: Price in credits
- * [locked]: Requirement text if locked
- */
-
-/**
- * BankState fields:
- * [credit]: Current player credit score
- * rate: Interest rate per cycle
- * period: Billing interval in minutes
- * max: Maximum loan capacity
- * pay: Estimated periodic payment
- */
-
-/**
- * Officer fields:
- * id: Officer unique ID
- * name: Officer name
- * [rank]: Promotion rank index
- * lv: Current level
- * [traits]: Acquired trait keys
- */
-
-/**
- * ArcCard fields:
- * fac: Faction identifier
- * arc: Arc name
- * title: Arc headline
- * brief: Narrative summary
- * [locked]: Lock condition text
- */
-
-/**
- * PassengerMissionOffer fields:
- * [type]: Mission type
- * [pax]: Number of passengers to carry
- */
 
 /**
  * Formats a number to rounded, localized string.

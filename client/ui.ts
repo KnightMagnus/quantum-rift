@@ -7,28 +7,76 @@ import type { StellarBody } from '../server/game.ts';
 import type { NetworkMessage } from '../server/message-registry.ts';
 import type { ClientGameState } from './main.ts';
 import type { ShipHull } from './render.ts';
-export type AskOptions = { yes?: string };
-export type RadioStation = { id: string; name: string; sub: string; img?: string };
-export type CodexItem = {
+export type AskOptions = {
+  /** Confirm button label */
+  yes?: string;
+};
+export type RadioStation = {
+  /** Unique station identifier */
   id: string;
+  /** Station name */
   name: string;
+  /** Station subtitle or call letters */
+  sub: string;
+  /** Station logo image URL */
+  img?: string;
+};
+export type CodexItem = {
+  /** Unique codex entry key */
+  id: string;
+
+  /** Title of the codex item */
+  name: string;
+
+  /** Subtitle or categorization */
   sub?: string;
+
+  /** Category identifier ('factions' | 'ships' | 'outfits' | 'galaxy') */
   cat?: string;
+
+  /** Detailed entry narrative */
   desc?: string;
+
+  /** Associated asset image filename */
   img?: string;
 };
 export type LandedMarketItem = {
+  /** Commodity identifier */
   id: string;
+
+  /** Commodity name */
   name: string;
+
+  /** Current port price */
   price: number;
+
+  /** Base galactic price */
   base: number;
+
+  /** Quantity currently held in player cargo */
   hold?: number;
 };
-export type LandedMatItem = { id: string; name: string; count: number; tier?: number };
+export type LandedMatItem = {
+  /** Material identifier */
+  id: string;
+  /** Material display name */
+  name: string;
+  /** Owned amount */
+  count: number;
+  /** Material rarity tier */
+  tier?: number;
+};
 export type LandedOffer = Mission;
 export type LandedState = LandedPayload;
 export type SystemState = import('../server/world-contracts.ts').LivingPayloadState;
-export type JobInfo = { where: string; warn: string; note: string };
+export type JobInfo = {
+  /** Destination system and jump-count description. */
+  where: string;
+  /** Requirements or capacity warning; empty when none. */
+  warn: string;
+  /** Additional mission advice or threat information; empty when none. */
+  note: string;
+};
 
 import { escapeHtml as escapeHtml2 } from './html.ts';
 import {
@@ -99,79 +147,6 @@ import { ROLES_INFO, BEATS } from '../shared/roles.ts';
 import { levelOf, winOdds } from '../shared/hostile.ts';
 
 // ------------------------------------------------------------------ type definitions
-/**
- * AskOptions fields:
- * [yes]: Confirm button label
- */
-
-/**
- * RadioStation fields:
- * id: Unique station identifier
- * name: Station name
- * sub: Station subtitle or call letters
- * [img]: Station logo image URL
- */
-
-/**
- * CodexItem fields:
- * id: Unique codex entry key
- * name: Title of the codex item
- * [sub]: Subtitle or categorization
- * [cat]: Category identifier ('factions' | 'ships' | 'outfits' | 'galaxy')
- * [desc]: Detailed entry narrative
- * [img]: Associated asset image filename
- */
-
-/**
- * LandedMarketItem fields:
- * id: Commodity identifier
- * name: Commodity name
- * price: Current port price
- * base: Base galactic price
- * [hold]: Quantity currently held in player cargo
- */
-
-/**
- * LandedMatItem fields:
- * id: Material identifier
- * name: Material display name
- * count: Owned amount
- * [tier]: Material rarity tier
- */
-
-/**
- * LandedOffer fields:
- * id: Mission or trade offer identifier
- * title: Mission headline
- * [desc]: Mission brief
- * reward: Credit payout
- * [to]: Destination system or planet
- */
-
-/**
- * LandedState fields:
- * sys: Current system identifier
- * stellar: Landed stellar body identifier
- * tabs: Available interaction tab keys
- * tab: Currently active tab
- */
-
-/**
- * SystemState fields:
- * k: State kind key (e.g. 'boom', 'war', 'plague')
- * name: Human-friendly state name
- * desc: Description of systemic event effects
- * icon: Emoji or glyph
- * color: Badge CSS color
- */
-
-/**
- * JobInfo fields:
- * dist: Distance in galactic coordinates
- * jumps: Number of hyperspace hops required
- * [rush]: Whether the job has a short delivery deadline
- * [rewardPerJump]: Efficiency payout per jump
- */
 
 const elementById2 = elementById;
 /**
@@ -1973,7 +1948,7 @@ function stateCard(starSystem: number | string | null): string {
 // how far a job is and whether its cargo fits your hold
 /**
  * Calculates remaining available cargo capacity accounting for active cargo missions.
- * @param positionY Player state object
+ * @param playerPayload Player state object
  * @returns Free cargo capacity in tons
  */
 function holdFree(playerPayload: PlayerPayload): number {
@@ -2108,14 +2083,17 @@ function outfitCat(outfitAsset: OutfitAsset): string {
 /**
  * Evaluates route distance, cargo/bunk space warnings, and threat notes for a job offer.
  * @param mission Job offer definition
- * @param positionY Player state object
+ * @param playerPayload Player state object
  * @returns Evaluated location description, warning, and note strings
  */
+
+/** Route distance is expressed in hyperspace hops. */
 function jobInfo(mission: LandedOffer, playerPayload: PlayerPayload): JobInfo {
-  const count =
-    mission.sys === clientGameState.sys
-      ? 0
-      : (route(systemsById, clientGameState.sys!, mission.sys) || []).length;
+  const /** Number of hyperspace hops required */
+    count =
+      mission.sys === clientGameState.sys
+        ? 0
+        : (route(systemsById, clientGameState.sys!, mission.sys) || []).length;
   const where = `${systemsById[mission.sys] ? systemsById[mission.sys].name : ''}${count ? ` · ${count} jump${count > 1 ? 's' : ''}` : ' · this system'}`;
   let warn = bunkInfo(clientGameState, mission),
     note = '';
@@ -2161,7 +2139,7 @@ function jobInfo(mission: LandedOffer, playerPayload: PlayerPayload): JobInfo {
 }
 /**
  * Calculates the total trade-in refund value for the player's current ship and outfits (50% value).
- * @param positionY Player state object
+ * @param playerPayload Player state object
  * @returns Credit refund value
  */
 function tradeIn(playerPayload: PlayerPayload): number {

@@ -1,11 +1,55 @@
 import type { FactionDef } from '../shared/galaxy.ts';
 import type { ClientGameState } from './main.ts';
-export type GoalEntry = { type: string; n: number; got: number; claimed?: boolean };
-export type WorldEvent = { name: string; desc: string; until?: number };
-export type WorldInvasion = { name: string; sys: string; until: number };
-export type ArmadaMember = { name: string; online: boolean; sys?: string };
-export type ArmadaState = { name: string; leader: string; members: ArmadaMember[] };
-export type CalendarEvent = { name: string; start: number; end: number };
+export type GoalEntry = {
+  /** Goal type key */
+  type: string;
+  /** Required count or target amount */
+  n: number;
+  /** Current progress count or amount */
+  got: number;
+  /** Whether reward has been claimed */
+  claimed?: boolean;
+};
+export type WorldEvent = {
+  /** Event name */
+  name: string;
+  /** Event description */
+  desc: string;
+  /** End timestamp */
+  until?: number;
+};
+export type WorldInvasion = {
+  /** Boss / fleet name */
+  name: string;
+  /** System identifier */
+  sys: string;
+  /** Expiration timestamp */
+  until: number;
+};
+export type ArmadaMember = {
+  /** Member captain name */
+  name: string;
+  /** Online status */
+  online: boolean;
+  /** Current system name */
+  sys?: string;
+};
+export type ArmadaState = {
+  /** Armada group name */
+  name: string;
+  /** Group leader captain name */
+  leader: string;
+  /** Member roster */
+  members: ArmadaMember[];
+};
+export type CalendarEvent = {
+  /** Event title */
+  name: string;
+  /** Start timestamp */
+  start: number;
+  /** End timestamp */
+  end: number;
+};
 
 import { escapeHtml as escapeHtml2 } from './html.ts';
 // Quantum Rift: interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
@@ -20,49 +64,6 @@ import {
 } from '../shared/fronts.ts';
 import { credits, route } from '../shared/rules.ts';
 import { STATES } from '../shared/living.ts';
-
-/**
- * GoalEntry fields:
- * type: Goal type key
- * n: Required count or target amount
- * got: Current progress count or amount
- * [claimed]: Whether reward has been claimed
- */
-
-/**
- * WorldEvent fields:
- * name: Event name
- * desc: Event description
- * [until]: End timestamp
- */
-
-/**
- * WorldInvasion fields:
- * name: Boss / fleet name
- * sys: System identifier
- * until: Expiration timestamp
- */
-
-/**
- * ArmadaMember fields:
- * name: Member captain name
- * online: Online status
- * [sys]: Current system name
- */
-
-/**
- * ArmadaState fields:
- * name: Armada group name
- * leader: Group leader captain name
- * members: Member roster
- */
-
-/**
- * CalendarEvent fields:
- * name: Event title
- * start: Start timestamp
- * end: End timestamp
- */
 
 /**
  * Formats time remaining until a timestamp into days, hours, or minutes.

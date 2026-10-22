@@ -1,54 +1,70 @@
 export type StoryStep = StoryMission;
 export type StoryMission = {
+  /** Unique storyline step identifier (e.g. 'qv1'). */
   id: string;
+
+  /** Mission title displayed in dialogs and mission log. */
   title: string;
+
+  /** Station or location ID where the mission is offered. */
   at: string;
+
+  /** Mission objective archetype. */
   type: string;
+
+  /** Destination station ID for courier/transport missions. */
   dest?: string;
+
+  /** Target system ID where the objective takes place. */
   sys?: string;
+
+  /** Target count of ships to defeat or board. */
   count?: number;
+
+  /** Target or reward hull ID. */
   hull?: number;
+
+  /** Faction identifier of targets or allies. */
   faction?: string;
+
+  /** Array of friendly escort hull IDs spawned during boss encounter. */
   allies?: number[];
+
+  /** Station ID to return to upon objective completion. */
   back?: string;
+
+  /** Credit reward awarded on completion. */
   pay: number;
+
+  /** Reputation points awarded on completion. */
   rep: number;
+
+  /** Minimum faction reputation prerequisite to accept the mission. */
   minRep?: number;
+
+  /** Special item or commodity reward tuple [itemType, quantity]. */
   crate?: [string, number];
+
+  /** Narrative dialog text presented when offered. */
   text: string;
+
+  /** Concise objective summary for UI displays. */
   brief: string;
+
+  /** Acceptance button prompt text. */
   acc: string;
+
+  /** Rejection or postponement button prompt text. */
   ref: string;
+
+  /** Status message displayed during mission progress. */
   progress?: string;
+
+  /** Narrative epilogue displayed when claiming mission rewards. */
   done: string;
 };
 // Quantum Rift: the Que'vari storyline, as golden main-story missions.
 // Each step: where it is offered, what you must do, and what it pays. Text is shown in landing pop-ups.
-
-/**
- * StoryMission fields:
- * id: - Unique storyline step identifier (e.g. 'qv1').
- * title: - Mission title displayed in dialogs and mission log.
- * at: - Station or location ID where the mission is offered.
- * type: - Mission objective archetype.
- * [dest]: - Destination station ID for courier/transport missions.
- * [sys]: - Target system ID where the objective takes place.
- * [count]: - Target count of ships to defeat or board.
- * [hull]: - Target or reward hull ID.
- * [faction]: - Faction identifier of targets or allies.
- * [allies]: - Array of friendly escort hull IDs spawned during boss encounter.
- * [back]: - Station ID to return to upon objective completion.
- * pay: - Credit reward awarded on completion.
- * rep: - Reputation points awarded on completion.
- * [minRep]: - Minimum faction reputation prerequisite to accept the mission.
- * [crate]: - Special item or commodity reward tuple [itemType, quantity].
- * text: - Narrative dialog text presented when offered.
- * brief: - Concise objective summary for UI displays.
- * acc: - Acceptance button prompt text.
- * ref: - Rejection or postponement button prompt text.
- * [progress]: - Status message displayed during mission progress.
- * done: - Narrative epilogue displayed when claiming mission rewards.
- */
 
 /**
  * Main Que'vari golden story mission chain progression.

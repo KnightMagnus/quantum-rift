@@ -1,42 +1,100 @@
 import type { PlayerPayload as PlayerData } from './main.ts';
 import type { ClientGameState } from './main.ts';
 export type ColonyData = {
+  /** Whether world is unsettled */
   open?: boolean;
+
+  /** Whether settled by player */
   own?: boolean;
+
+  /** Colony name */
   name: string;
+
+  /** Owner captain name */
   owner?: string;
+
+  /** Colony level */
   lv: number;
+
+  /** Installed building types */
   buildings: string[];
+
+  /** Stockpile resource amounts */
   store: Record<string, number>;
 };
 export type ExchangeOrder = {
+  /** Order ID */
   id: string;
+
+  /** Order side */
   side: 'buy' | 'sell';
+
+  /** Order item specification */
   item: { id: string; name: string; cost: number };
+
+  /** Quantity */
   qty: number;
+
+  /** Unit price */
   price: number;
 };
 export type ExchangeBookEntry = {
+  /** Item spec */
   item: { id: string; name: string; cost: number };
+
+  /** Best bid price */
   bid?: number;
+
+  /** Number of bids */
   bids: number;
+
+  /** Best ask price */
   ask?: number;
+
+  /** Number of asks */
   asks: number;
 };
 export type CaptainProfile = {
+  /** Captain name */
   name: string;
+
+  /** Online status */
   online: boolean;
+
+  /** Current ship hull name */
   ship: string;
+
+  /** Custom ship name */
   shipName: string;
+
+  /** Personal station site name */
   site?: string;
+
+  /** Station Tier */
   ops?: number;
+
+  /** List of settled colony names */
   colonies: string[];
+
+  /** Total kills */
   kills: number;
+
+  /** Total jumps */
   jumps: number;
+
+  /** Total ore mined in tons */
   mined: number;
+
+  /** Total credits earned */
   earned: number;
+
+  /** Arena stats */
   arena?: { rating: number; w: number; l: number };
+
+  /** Best ship mastery */
   mastery?: { ship: string; tier: number };
+
+  /** Total officers */
   officers: number;
 };
 
@@ -55,53 +113,6 @@ import {
   BOARDS,
 } from '../shared/frontier.ts';
 import { credits } from '../shared/rules.ts';
-
-/**
- * ColonyData fields:
- * [open]: Whether world is unsettled
- * [own]: Whether settled by player
- * name: Colony name
- * [owner]: Owner captain name
- * lv: Colony level
- * buildings: Installed building types
- * store: Stockpile resource amounts
- */
-
-/**
- * ExchangeOrder fields:
- * id: Order ID
- * side: Order side
- * item: Order item specification
- * qty: Quantity
- * price: Unit price
- */
-
-/**
- * ExchangeBookEntry fields:
- * item: Item spec
- * [bid]: Best bid price
- * bids: Number of bids
- * [ask]: Best ask price
- * asks: Number of asks
- */
-
-/**
- * CaptainProfile fields:
- * name: Captain name
- * online: Online status
- * ship: Current ship hull name
- * shipName: Custom ship name
- * [site]: Personal station site name
- * [ops]: Station Tier
- * colonies: List of settled colony names
- * kills: Total kills
- * jumps: Total jumps
- * mined: Total ore mined in tons
- * earned: Total credits earned
- * [arena]: Arena stats
- * [mastery]: Best ship mastery
- * officers: Total officers
- */
 
 /**
  * Formats a list of required material tuples with availability coloring.

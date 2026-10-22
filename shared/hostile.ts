@@ -1,66 +1,75 @@
 import type { GameAssets } from './rules.ts';
-export type HostileBonus = { damagePct?: number; shieldPct?: number; armorPct?: number };
-export type LootChestDef = { name: string; color: string; bp: string; res: string; mats: string[] };
-export type HoldoutReward = { credits: number; grade: number; insignia: number };
+
+/** Player stat bonuses affecting ship combat power calculations. */
+export type HostileBonus = {
+  /** Percentage bonus to weapon damage. */
+  damagePct?: number;
+  /** Percentage bonus to shield capacity. */
+  shieldPct?: number;
+  /** Percentage bonus to armor hit points. */
+  armorPct?: number;
+};
+
+/** Loot chest drop configuration for hostile faction types. */
+export type LootChestDef = {
+  /** Display name of the cache container. */
+  name: string;
+  /** Hex color code for HUD and drop renders. */
+  color: string;
+  /** Blueprint family rewarded by the chest. */
+  bp: string;
+  /** Special resource yielded. */
+  res: string;
+  /** Material categories dropped. */
+  mats: string[];
+};
+
+/** Reward breakdown for clearing a Station Holdout wave. */
+export type HoldoutReward = {
+  /** Credit payout for completing the wave. */
+  credits: number;
+  /** Material grade rewarded (0 through 4). */
+  grade: number;
+  /** Faction insignia count rewarded. */
+  insignia: number;
+};
+
+/** Station Holdout wave definitions, timings, and platform scaling. */
 export type HoldoutConfig = {
+  /** Total number of escalating waves. */
   waves: number;
+
+  /** Cooldown duration in hours between holdouts. */
   cooldownH: number;
+
+  /** Delay in seconds between consecutive waves. */
   waveGap: number;
+
+  /** Timeout limit in minutes per wave attempt. */
   timeoutMin: number;
+
+  /** Generates array of attacking hull IDs for wave n (1 to 10). */
   wave: (arg0: number) => number[];
+
+  /** Computes rewards for completing wave n. */
   reward: (arg0: number) => HoldoutReward;
+
+  /** Calculates active defense platform count from station defense level. */
   platforms: (arg0: number) => number;
 };
-export type EclipseConfig = { hulls: number[]; chance: number; thursday: number };
+
+/** Umbral Eclipse event parameters and hull pools. */
+export type EclipseConfig = {
+  /** Hull IDs participating in Eclipse incursions. */
+  hulls: number[];
+  /** Standard baseline spawn probability. */
+  chance: number;
+  /** Elevated spawn probability during Thursday events. */
+  thursday: number;
+};
 
 // Quantum Rift: data: hostile levels and the "can I win?" scan, loot chests, Station Holdout
 // waves, and the Umbral Eclipse.
-
-/**
- * Player stat bonuses affecting ship combat power calculations.
- * HostileBonus fields:
- * [damagePct]: - Percentage bonus to weapon damage.
- * [shieldPct]: - Percentage bonus to shield capacity.
- * [armorPct]: - Percentage bonus to armor hit points.
- */
-
-/**
- * Loot chest drop configuration for hostile faction types.
- * LootChestDef fields:
- * name: - Display name of the cache container.
- * color: - Hex color code for HUD and drop renders.
- * bp: - Blueprint family rewarded by the chest.
- * res: - Special resource yielded.
- * mats: - Material categories dropped.
- */
-
-/**
- * Reward breakdown for clearing a Station Holdout wave.
- * HoldoutReward fields:
- * credits: - Credit payout for completing the wave.
- * grade: - Material grade rewarded (0 through 4).
- * insignia: - Faction insignia count rewarded.
- */
-
-/**
- * Station Holdout wave definitions, timings, and platform scaling.
- * HoldoutConfig fields:
- * waves: - Total number of escalating waves.
- * cooldownH: - Cooldown duration in hours between holdouts.
- * waveGap: - Delay in seconds between consecutive waves.
- * timeoutMin: - Timeout limit in minutes per wave attempt.
- * wave: - Generates array of attacking hull IDs for wave n (1 to 10).
- * reward: - Computes rewards for completing wave n.
- * platforms: - Calculates active defense platform count from station defense level.
- */
-
-/**
- * Umbral Eclipse event parameters and hull pools.
- * EclipseConfig fields:
- * hulls: - Hull IDs participating in Eclipse incursions.
- * chance: - Standard baseline spawn probability.
- * thursday: - Elevated spawn probability during Thursday events.
- */
 
 // ------------------------------------------------------------------ levels: from a ship's effective strength
 

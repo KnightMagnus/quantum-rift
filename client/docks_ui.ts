@@ -1,21 +1,54 @@
 import type { ClientGameState } from './main.ts';
 export type DockShip = {
+  /** Unique identifier of the ship instance */
   uid?: string;
+
+  /** Custom ship name */
   name?: string;
+
+  /** Hull type identifier */
   hull: string | number;
+
+  /** Timestamp when repair completes */
   repairT?: number;
+
+  /** Whether the ship is currently deployed/flying */
   flying?: boolean;
+
+  /** Whether restricted to wingmate slot only */
   wingOnly?: boolean;
+
+  /** Dock assignment label (e.g. 'A', 'B') */
   at?: string | null;
+
+  /** Assigned captain officer ID */
   cap?: number | string | null;
+
+  /** Assigned crew officer ID */
   crew?: number | string | null;
 };
-export type DockBay = { letter: string; lead: DockShip | null; wings: Array<DockShip | null> };
+export type DockBay = {
+  /** Dock letter identifier (A, B, C, D) */
+  letter: string;
+  /** Lead ship assigned to this dock */
+  lead: DockShip | null;
+  /** Wingmate ships assigned to this dock */
+  wings: Array<DockShip | null>;
+};
 export type DocksState = {
+  /** Total number of unlocked docks */
   count: number;
+
+  /** Index of currently active dock */
   active: number;
+
+  /** Maximum hangar storage berth capacity */
   cap: number;
+
+  /** List of dock bays */
   list: DockBay[];
+
+  /** List of ships stored in hangar */
   stored: DockShip[];
 };
 
@@ -25,35 +58,6 @@ import { artworkUrl } from './artwork.ts';
 import { ROLES, RARITY } from '../shared/hangar.ts';
 import { WING_REPAIR_COST, WING_REPAIR_MIN, NEXT_DOCK_OPS } from '../shared/docks.ts';
 import { credits, repairBasis } from '../shared/rules.ts';
-
-/**
- * DockShip fields:
- * [uid]: Unique identifier of the ship instance
- * [name]: Custom ship name
- * hull: Hull type identifier
- * [repairT]: Timestamp when repair completes
- * [flying]: Whether the ship is currently deployed/flying
- * [wingOnly]: Whether restricted to wingmate slot only
- * [at]: Dock assignment label (e.g. 'A', 'B')
- * [cap]: Assigned captain officer ID
- * [crew]: Assigned crew officer ID
- */
-
-/**
- * DockBay fields:
- * letter: Dock letter identifier (A, B, C, D)
- * lead: Lead ship assigned to this dock
- * wings: Wingmate ships assigned to this dock
- */
-
-/**
- * DocksState fields:
- * count: Total number of unlocked docks
- * active: Index of currently active dock
- * cap: Maximum hangar storage berth capacity
- * list: List of dock bays
- * stored: List of ships stored in hangar
- */
 
 /**
  * Returns remaining time in minutes until the specified timestamp.

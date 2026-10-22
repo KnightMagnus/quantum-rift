@@ -18,6 +18,36 @@ checkNativeTypeDocumentation(
     'const quoted = "/** @typedef {object} Example */"; const css = "@import url(theme.css)";',
   'native-documentation.ts',
 );
+checkNativeTypeDocumentation(
+  '/** Goal progress. */\n' +
+    'export type GoalEntry = {\n' +
+    '  /** Goal type key. */ type: string;\n' +
+    '  /** Whether reward has been claimed. */ claimed?: boolean;\n' +
+    '};\n' +
+    '// GoalEntry fields: this is a normal comment, not detached JSDoc.\n' +
+    'const example = "/** GoalEntry fields:\\n * type: Goal type key\\n */";\n' +
+    '/** Inventory fields: real players also have unrelated methods. */\n' +
+    'const fields: Record<string, number> = {};',
+  'attached-documentation.ts',
+);
+assert.throws(
+  () =>
+    checkNativeTypeDocumentation(
+      '/**\n * GoalEntry fields:\n * type: Goal type key\n */\n' +
+        'export type GoalEntry = { type: string };',
+      'detached-documentation.ts',
+    ),
+  /Detached type field documentation/,
+);
+assert.throws(
+  () =>
+    checkNativeTypeDocumentation(
+      '/** GoalEntry fields: [claimed]: Whether reward has been claimed */\n' +
+        'export type GoalEntry = { claimed?: boolean };',
+      'inline-detached-documentation.ts',
+    ),
+  /Detached type field documentation/,
+);
 for (const declaration of [
   '@typedef {object} Example',
   '@import { Example } from "./example.ts"',

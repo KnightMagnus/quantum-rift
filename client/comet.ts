@@ -1,9 +1,17 @@
 // Seeded, cached artwork: no per-frame randomness, filters or particle allocation.
 
+/** Comet orbital parameters. */
 export interface CometConfig {
+  /** Initial orbital X reference. */
   x0: number;
+
+  /** Initial orbital Y reference. */
   y0: number;
+
+  /** Visual tail length scale. */
   len: number;
+
+  /** RGB color string for coma glow. */
   hue: string;
 }
 interface Point {
@@ -18,44 +26,25 @@ const sprites = new WeakMap<CometConfig, HTMLCanvasElement>();
 export const COMET_DEPTH = 0.12;
 
 /**
- * Comet orbital parameters.
- * CometConfig fields:
- * x0: Initial orbital X reference.
- * y0: Initial orbital Y reference.
- * len: Visual tail length scale.
- * hue: RGB color string for coma glow.
- */
-
-/**
- * Evaluated orbital pose in world space.
- * CometPose fields:
- * x: World coordinate X.
- * y: World coordinate Y.
- * angle: Tangent trajectory angle in radians.
- */
-
-/**
- * Evaluated comet pose transformed into screen viewport coordinates.
- * CometScreenPose fields:
- * x: Screen coordinate X.
- * y: Screen coordinate Y.
- * angle: Tangent trajectory angle in radians.
- * scale: Parallax zoom scale factor.
- */
-
-/**
  * A continuous ellipse rather than a modulo flight/reset. About 1–2 px/sec at
  * normal zoom: visible over seconds, never a foreground projectile.
  * @param cometConfig Comet configuration parameters.
  * @param currentTime Current simulation or animation timestamp in milliseconds.
  * @returns Orbital pose in system space.
  */
+
+/** Evaluated orbital pose in world space. */
 export function cometPose(cometConfig: CometConfig, currentTime: number) {
   const phase = Math.atan2(cometConfig.y0, cometConfig.x0),
     firstValue = phase + currentTime / 1000 / 720;
   return {
+    /** World coordinate X. */
     x: Math.cos(firstValue) * 920,
+
+    /** World coordinate Y. */
     y: Math.sin(firstValue) * 560,
+
+    /** Tangent trajectory angle in radians. */
     angle: Math.atan2(Math.sin(firstValue) * 560, Math.cos(firstValue) * 920),
   };
 }
@@ -71,6 +60,8 @@ export function cometPose(cometConfig: CometConfig, currentTime: number) {
  * @param currentTime Timestamp in milliseconds.
  * @returns Viewport-mapped screen pose.
  */
+
+/** Evaluated comet pose transformed into screen viewport coordinates. */
 export function cometScreen(
   cometConfig: CometConfig,
   width: number,
@@ -84,8 +75,14 @@ export function cometScreen(
     scale = Math.pow(positionZ, 0.25);
   return {
     ...cometPose2,
+
+    /** Screen coordinate X. */
     x: width / 2 + (cometPose2.x - centerX * COMET_DEPTH) * scale,
+
+    /** Screen coordinate Y. */
     y: height / 2 + (cometPose2.y - centerY * COMET_DEPTH) * scale,
+
+    /** Parallax zoom scale factor. */
     scale,
   };
 }

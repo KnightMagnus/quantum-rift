@@ -2,16 +2,38 @@ import type { OfficerRecord } from '../shared/rules.ts';
 import type { ClientGameState } from './main.ts';
 export type OfficerEntry = OfficerRecord;
 export type ShuttleInstance = {
+  /** Shuttle instance ID */
   id: number | string;
+
+  /** Shuttle model key */
   kind: string;
+
+  /** Current shuttle status */
   state: 'idle' | 'out' | 'damaged';
+
+  /** Assigned officer ID */
   crew?: number | string | null;
+
+  /** Number of completed runs */
   runs?: number;
+
+  /** Timestamp when current job finishes */
   ends?: number;
+
+  /** Success probability (0..1) */
   chance?: number;
+
+  /** Active job details */
   job?: { id: string; name: string; time: number };
 };
-export type BoardedTarget = { hull: string | number; fac: string | number; name?: string };
+export type BoardedTarget = {
+  /** Hull identifier */
+  hull: string | number;
+  /** Faction index or identifier */
+  fac: string | number;
+  /** Custom target name */
+  name?: string;
+};
 
 import { escapeHtml as escapeHtml2 } from './html.ts';
 import { artworkUrl } from './artwork.ts';
@@ -35,37 +57,6 @@ import {
   SYNERGY,
 } from '../shared/hangar.ts';
 import { officerStats, credits } from '../shared/rules.ts';
-
-/**
- * OfficerEntry fields:
- * id: Unique officer ID
- * name: Officer name
- * race: Faction / race identifier
- * role: Role key (e.g. 'pilot', 'engineer')
- * rarity: Rarity index (0..4)
- * lv: Officer level
- * [xp]: Current experience points
- * [cost]: Credit hiring cost
- */
-
-/**
- * ShuttleInstance fields:
- * id: Shuttle instance ID
- * kind: Shuttle model key
- * state: Current shuttle status
- * [crew]: Assigned officer ID
- * [runs]: Number of completed runs
- * [ends]: Timestamp when current job finishes
- * [chance]: Success probability (0..1)
- * [job]: Active job details
- */
-
-/**
- * BoardedTarget fields:
- * hull: Hull identifier
- * fac: Faction index or identifier
- * [name]: Custom target name
- */
 
 /**
  * Formats duration in milliseconds to whole minutes or hours + minutes.

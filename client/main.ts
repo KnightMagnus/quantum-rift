@@ -80,12 +80,28 @@ export interface ClientOptions {
   musicWas?: number;
 }
 export type ClientGameState = RefineryClientState & {
+  /** Game assets dictionary. */
   A: GameAssets | null;
+
+  /** Current player save data. */
   you: PlayerPayload | null;
+
+  /**
+   * Current system ID.
+   * Current system identifier
+   */
   sys: string | null;
+
+  /** Currently docked stellar body or null if flying. */
   landed: LandedPayload | null;
+
+  /** Current UI view mode. */
   view: ClientView | null;
+
+  /** Active entities in current space. */
   ents: Map<number, RenderEntity>;
+
+  /** Active projectile shots. */
   shots: Array<{
     x: number;
     y: number;
@@ -101,24 +117,63 @@ export type ClientGameState = RefineryClientState & {
     col?: string;
     look?: string;
   }>;
+
+  /** Active beam weapon animations. */
   beams: Array<{ id: number; a: number; len: number; w: number }>;
+
+  /** Floating loot canisters. */
   loot: Array<{ id: number; x: number; y: number; kind: number }>;
+
+  /** Current target entity ID. */
   target: number;
   targetClearPending: boolean;
+
+  /** Camera zoom scale. */
   zoom: number;
+
+  /** Sprite rendering scale. */
   spriteScale: number;
+
+  /** Active hyperspace route system IDs. */
   route: string[];
+
+  /** Navigation target stellar ID. */
   navStellar: string | null;
+
+  /** Ammunition counts. */
   ammo: Record<string, number>;
+
+  /** Faction ID mapping. */
   FAC: string[];
+
+  /** Active console tab. */
   ctab: string;
+
+  /**
+   * Active landed tab.
+   * Currently active tab
+   */
   ltab: string | null;
+
+  /** Player entity simulation ID. */
   myId: number;
+
+  /** Player ship hull chassis ID. */
   myHull: number;
+
+  /** Hovered entity ID. */
   hover: number;
+
+  /** Client preferences and configuration. */
   opts: ClientOptions;
+
+  /** Color palette mapping. */
   pal: Record<string, string>;
+
+  /** Checks if entity is an allied wingmate. */
   isAlly?: (entity: RenderShip | null | undefined | 0) => boolean;
+
+  /** Checks if entity is hostile to player. */
   hostile: (entity: RenderShip | null | undefined | 0) => boolean;
   myName?: string;
   solo?: boolean;
@@ -134,6 +189,8 @@ export type ClientGameState = RefineryClientState & {
   trade?: TradeState | null;
   tdraft?: TradeOffer | null;
   rally?: { sys: string; t: number };
+
+  /** Crucible arena state. */
   arena?: { team: string; [field: string]: unknown } | null;
   auto?: (AutopilotState & { id?: string; sys?: string | null }) | null;
   autoKeep?: boolean;
@@ -220,6 +277,8 @@ export type ClientGameState = RefineryClientState & {
   _look?: { t: number; x: number; y: number; moved: boolean } | null;
   _lookT?: [number, number] | null;
   _lowSh?: boolean;
+
+  /** Available interaction tab keys */
   _ltabs?: string[];
   _mhtml?: string | null;
   _toastKind?: string;
@@ -296,37 +355,6 @@ import {
 const elementById2 = elementById;
 initLoginScene(elementById2('login'));
 
-/**
- * ClientGameState fields:
- * A: Game assets dictionary.
- * you: Current player save data.
- * sys: Current system ID.
- * landed: Currently docked stellar body or null if flying.
- * view: Current UI view mode.
- * ents: Active entities in current space.
- * shots: Active projectile shots.
- * beams: Active beam weapon animations.
- * loot: Floating loot canisters.
- * target: Current target entity ID.
- * zoom: Camera zoom scale.
- * spriteScale: Sprite rendering scale.
- * route: Active hyperspace route system IDs.
- * navStellar: Navigation target stellar ID.
- * ammo: Ammunition counts.
- * FAC: Faction ID mapping.
- * ctab: Active console tab.
- * ltab: Active landed tab.
- * myId: Player entity simulation ID.
- * myHull: Player ship hull chassis ID.
- * hover: Hovered entity ID.
- * opts: Client preferences and configuration.
- * [pal]: Color palette mapping.
- * [tokens]: Current player token balances.
- * [captains]: Active online captains list.
- * [arena]: Crucible arena state.
- * [isAlly]: Checks if entity is an allied wingmate.
- * [hostile]: Checks if entity is hostile to player.
- */
 const clientGameState: ClientGameState = (window.G = {
   A: null,
   you: null,

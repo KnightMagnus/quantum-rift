@@ -1,55 +1,138 @@
 export type ArcStepRaw = {
+  /** Mission step archetype. */
   type: string;
+
+  /** Mission step title. */
   title: string;
+
+  /** Raw narrative text template. */
   text: string;
+
+  /** Concise objective description template. */
   brief: string;
+
+  /** Narrative epilogue upon completion. */
   done: string;
+
+  /** Status message displayed during mission progress. */
   progress?: string;
+
+  /** Target count for kill or board objectives. */
   count?: number;
+
+  /** Target hull ID. */
   hull?: number;
+
+  /** Faction allegiance of target ships. */
   faction?: string;
+
+  /** Display name of the boss flagship. */
   bossName?: string;
 };
 export type ArcTemplate = {
+  /** Title of the faction story arc. */
   name: string;
+
+  /** Blueprint hull ID unlocked upon arc completion. */
   spec: number;
+
+  /** Epic officer reward tuple [officerName, officerRole]. */
   officer: [string, string];
+
+  /** Raw mission steps in the storyline arc. */
   steps: ArcStepRaw[];
 };
 export type ArcPlaces = {
+  /** Stellar body ID of the faction capital station where missions originate. */
   at: string;
+
+  /** Name of the home station. */
   home: string;
+
+  /** System ID of the faction capital. */
   homeSys: string;
+
+  /** System ID of a friendly neighbouring system. */
   s1: string;
+
+  /** System ID of a nearby dangerous system. */
   s2: string;
+
+  /** Destination stellar body ID. */
   dest: string;
+
+  /** Name of the destination stellar body. */
   destName: string;
 };
 export type ArcStep = {
+  /** Step index (0, 1, or 2). */
   i: number;
+
+  /** Step title. */
   title: string;
+
+  /** Resolved story dialog text with placeholders filled. */
   text: string;
+
+  /** Resolved mission brief text. */
   brief: string;
+
+  /** Resolved completion text. */
   done: string;
+
+  /** Step progress status text. */
   progress?: string;
+
+  /** Origin station ID. */
   at: string;
+
+  /** Turn-in station ID. */
   back: string;
+
+  /** Destination station ID (for carry missions). */
   dest: string | null;
+
+  /** System ID where the mission objective is located. */
   sys: string;
+
+  /** Minimum faction reputation required to accept this step. */
   minRep: number;
+
+  /** Credit reward awarded upon completion. */
   pay: number;
+
+  /** Mission objective archetype. */
   type: string;
+
+  /** Target count of ships to defeat or board. */
   count?: number;
+
+  /** Target ship hull ID. */
   hull?: number;
+
+  /** Target faction ID. */
   faction?: string;
+
+  /** Boss ship display name. */
   bossName?: string;
 };
 export type FactionArc = {
+  /** Faction identifier key. */
   fac: string;
+
+  /** Title of the faction story arc. */
   name: string;
+
+  /** Specialist blueprint hull ID awarded. */
   spec: number;
+
+  /** Unique Epic officer reward [name, role]. */
   officer: [string, string];
+
+  /** Geographic locations where arc missions take place. */
   places: ArcPlaces;
+
+  /** Instantiated 3-step storyline mission definitions. */
   steps: ArcStep[];
 };
 import { GalaxyGraph } from './galaxy-graph.ts';
@@ -58,70 +141,6 @@ import { GalaxyGraph } from './galaxy-graph.ts';
 // blueprints. Places are worked out from the map, so text uses {home}, {dest}, {s1} and {s2} placeholders.
 import { SYSTEMS, SYS as systemsById } from './galaxy.ts';
 const galaxyGraph = new GalaxyGraph(systemsById);
-
-/**
- * ArcStepRaw fields:
- * type: - Mission step archetype.
- * title: - Mission step title.
- * text: - Raw narrative text template.
- * brief: - Concise objective description template.
- * done: - Narrative epilogue upon completion.
- * [progress]: - Status message displayed during mission progress.
- * [count]: - Target count for kill or board objectives.
- * [hull]: - Target hull ID.
- * [faction]: - Faction allegiance of target ships.
- * [bossName]: - Display name of the boss flagship.
- */
-
-/**
- * ArcTemplate fields:
- * name: - Title of the faction story arc.
- * spec: - Blueprint hull ID unlocked upon arc completion.
- * officer: - Epic officer reward tuple [officerName, officerRole].
- * steps: - Raw mission steps in the storyline arc.
- */
-
-/**
- * ArcPlaces fields:
- * at: - Stellar body ID of the faction capital station where missions originate.
- * home: - Name of the home station.
- * homeSys: - System ID of the faction capital.
- * s1: - System ID of a friendly neighbouring system.
- * s2: - System ID of a nearby dangerous system.
- * dest: - Destination stellar body ID.
- * destName: - Name of the destination stellar body.
- */
-
-/**
- * ArcStep fields:
- * i: - Step index (0, 1, or 2).
- * title: - Step title.
- * text: - Resolved story dialog text with placeholders filled.
- * brief: - Resolved mission brief text.
- * done: - Resolved completion text.
- * [progress]: - Step progress status text.
- * at: - Origin station ID.
- * back: - Turn-in station ID.
- * dest: - Destination station ID (for carry missions).
- * sys: - System ID where the mission objective is located.
- * minRep: - Minimum faction reputation required to accept this step.
- * pay: - Credit reward awarded upon completion.
- * type: - Mission objective archetype.
- * [count]: - Target count of ships to defeat or board.
- * [hull]: - Target ship hull ID.
- * [faction]: - Target faction ID.
- * [bossName]: - Boss ship display name.
- */
-
-/**
- * FactionArc fields:
- * fac: - Faction identifier key.
- * name: - Title of the faction story arc.
- * spec: - Specialist blueprint hull ID awarded.
- * officer: - Unique Epic officer reward [name, role].
- * places: - Geographic locations where arc missions take place.
- * steps: - Instantiated 3-step storyline mission definitions.
- */
 
 const ARC_TEXT: Record<string, ArcTemplate> = {
   quantum: {

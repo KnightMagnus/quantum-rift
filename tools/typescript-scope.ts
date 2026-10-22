@@ -12,6 +12,16 @@ export function checkNativeTypeDocumentation(source: string, filename: string) {
     if (
       comment.type === 'Block' &&
       comment.value.startsWith('*') &&
+      /(?:^|\n)\s*\*?\s*[A-Z][A-Za-z0-9_]* fields:\s*(?:\r?\n|$|(?:\[[A-Za-z_$][\w$]*\]|[A-Za-z_$][\w$]*)\s*:)/.test(
+        comment.value,
+      )
+    )
+      throw new Error(
+        `Detached type field documentation in ${filename}; document native declarations and members.`,
+      );
+    if (
+      comment.type === 'Block' &&
+      comment.value.startsWith('*') &&
       /@(?:import|typedef|type|this|template|property|callback|enum|extends|implements|satisfies|overload)\b|@(?:param|returns?)[\s*]*\{/.test(
         comment.value,
       )

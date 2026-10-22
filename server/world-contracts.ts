@@ -1,4 +1,5 @@
 export interface LivingPayloadState {
+  /** State kind key (e.g. 'boom', 'war', 'plague') */
   k: string;
   got: number;
   need: number;

@@ -1,16 +1,43 @@
 import type { ClientGameState } from './main.ts';
-export type SpecialistComponent = { name: string; bonus: Record<string, number> };
-export type SpecialistDef = {
-  id: string;
+export type SpecialistComponent = {
+  /** Display name of component */
   name: string;
+  /** Stat bonuses */
+  bonus: Record<string, number>;
+};
+export type SpecialistDef = {
+  /** Unique hull identifier */
+  id: string;
+
+  /** Ship name */
+  name: string;
+
+  /** Ship subtitle / designation */
   sub: string;
+
+  /** Ship role identifier */
   role: string;
+
+  /** Unique specialist resource key */
   res: string;
+
+  /** Description of special ability */
   ability: string;
+
+  /** Primary gameplay loop description */
   loop: string;
+
+  /** Credit cost to build */
   cost: number;
 };
-export type SpecialistProgress = { tier: number; comp: Record<string, number>; upT?: number };
+export type SpecialistProgress = {
+  /** Current specialist tier (1..5) */
+  tier: number;
+  /** Current component upgrade levels */
+  comp: Record<string, number>;
+  /** Timestamp when tier-up in drydock completes */
+  upT?: number;
+};
 
 import { escapeHtml as escapeHtml2 } from './html.ts';
 import { artworkUrl } from './artwork.ts';
@@ -33,31 +60,6 @@ import {
 } from '../shared/specialty.ts';
 import { ROLES_INFO } from '../shared/roles.ts';
 import { credits } from '../shared/rules.ts';
-
-/**
- * SpecialistComponent fields:
- * name: Display name of component
- * bonus: Stat bonuses
- */
-
-/**
- * SpecialistDef fields:
- * id: Unique hull identifier
- * name: Ship name
- * sub: Ship subtitle / designation
- * role: Ship role identifier
- * res: Unique specialist resource key
- * ability: Description of special ability
- * loop: Primary gameplay loop description
- * cost: Credit cost to build
- */
-
-/**
- * SpecialistProgress fields:
- * tier: Current specialist tier (1..5)
- * comp: Current component upgrade levels
- * [upT]: Timestamp when tier-up in drydock completes
- */
 
 /**
  * Formats duration in milliseconds to a human-readable minutes and hours string.

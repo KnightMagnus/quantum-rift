@@ -8,6 +8,7 @@ export interface RefineryDraft {
   mode: string;
 }
 export interface RefineryClientState {
+  /** Current player save data. */
   you?: {
     name: string;
     refinery?: RefineryWire;
@@ -15,7 +16,14 @@ export interface RefineryClientState {
     cargo: Record<string, number>;
     credits: number;
   } | null;
+
+  /** Currently docked stellar body or null if flying. */
   landed?: { stellar: string; refinery?: RefineryWire } | null;
+
+  /**
+   * Active landed tab.
+   * Currently active tab
+   */
   ltab?: string | null;
   refineryDraft?: RefineryDraft | null;
   refineryQuote?: RefineryQuote | null;
