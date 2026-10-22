@@ -1,5 +1,5 @@
 import type { GradeLots } from '../shared/cargo-contracts.ts';
-import type { DB as Database } from './db.ts';
+import type { GameStorage as Database } from './game-storage.ts';
 import type { FeatureServices } from './features.ts';
 import type { FloatingLoot, LootItem, Rock, Space } from './space.ts';
 export type MiningLease = {

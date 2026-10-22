@@ -8,6 +8,8 @@ import type {
 import type { AutopilotState } from './landing_autopilot.ts';
 import type { NetworkMessage } from '../server/message-registry.ts';
 import { elementById } from './dom.ts';
+import { createGameConnection } from './connection.ts';
+import type { ClientConnection, NakamaConfig } from './connection.ts';
 import type { GameAssets } from '../shared/rules.ts';
 import type { RenderEntity, RenderShip } from './render.ts';
 import type { Game } from '../server/game.ts';
@@ -605,7 +607,9 @@ const flightEngine = new FlightEngine(canvas, clientGameState, frame);
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null,
   sessionEpoch = 0,
   sessionDefaults: Record<string, unknown> | null = null;
-let webSocket: WebSocket | null = null,
+let nakamaConfig: NakamaConfig | undefined;
+let localReferenceTransport = false;
+let webSocket: ClientConnection | null = null,
   sequence = 0,
   history: Array<{ seq: number; inp: ClientInput }> = [],
   _lastSnapT = 0;
@@ -695,12 +699,16 @@ elementById2('lpass').onkeydown = (keyboardEvent) => {
 try {
   elementById2('lname').value = localStorage.getItem('rift.name') || '';
 } catch {}
-fetch('/api/status')
+const statusRequest = fetch('/api/status')
   .then((response) => response.json())
   .then((state) => {
+    nakamaConfig = state.nakama;
+    localReferenceTransport = state.localAuthority === true;
     setArtworkVersion(state.version);
     elementById2('lstat').textContent =
-      `${state.players} captain${state.players === 1 ? '' : 's'} in the Rift right now.`;
+      state.players === null
+        ? 'Online play uses Nakama.'
+        : `${state.players} captain${state.players === 1 ? '' : 's'} in the Rift right now.`;
     elementById2('lver').textContent = 'Quantum Rift v' + state.version;
     if (state.solo) soloLogin(state);
   })
@@ -747,10 +755,14 @@ async function login() {
   if (elementById2('lbtn').disabled) return;
   clearTimeout(reconnectTimer!);
   sessionEpoch++;
+  const loginEpoch = sessionEpoch;
   const previous = webSocket;
   webSocket = null;
-  previous?.close();
+  void previous?.logout().catch(() => {});
   audio.unlock();
+  elementById2('lbtn').disabled = true;
+  await statusRequest;
+  if (loginEpoch !== sessionEpoch) return;
   const name = elementById2('lname').value.trim(),
     pass = clientGameState.solo ? '' : elementById2('lpass').value;
   elementById2('lerr').textContent = '';
@@ -778,6 +790,7 @@ async function login() {
   try {
     localStorage.setItem('rift.name', name);
   } catch {}
+  if (loginEpoch !== sessionEpoch) return;
   clientGameState._cred = { name, pass };
   clientGameState._kicked = false;
   openSocket(0);
@@ -787,13 +800,22 @@ function openSocket(tries: number) {
   if (!clientGameState._cred) return;
   const { name, pass } = clientGameState._cred;
   const epoch = sessionEpoch;
-  const socket = new WebSocket(
-    (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws',
+  const socket = createGameConnection(
+    {
+      solo: !!clientGameState.solo || localReferenceTransport,
+      localUrl: (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws',
+      nakama: nakamaConfig,
+    },
+    { name, pass },
   );
   webSocket = socket;
   const current = () => webSocket === socket && sessionEpoch === epoch;
   socket.onopen = () => {
-    if (current()) send({ t: 'hello', name, pass });
+    if (!current()) {
+      socket.close();
+      return;
+    }
+    if (clientGameState.solo || localReferenceTransport) send({ t: 'hello', name, pass });
   };
   socket.onmessage = (event) => {
     if (current()) onMessage(JSON.parse(event.data));
@@ -806,7 +828,6 @@ function openSocket(tries: number) {
     touch.stick = null;
     clientGameState._look = null;
     clientGameState._lookT = null;
-    webSocket = null;
     elementById2('lbtn').disabled = false;
     if (!clientGameState.you) return;
     if (!clientGameState._kicked && tries < 30) {
@@ -824,12 +845,11 @@ function openSocket(tries: number) {
       ? 'Signed in somewhere else.'
       : 'Disconnected from the server. Sign in again when it is back.';
     // Terminal disconnect also returns a clean login, not a former captain's UI state.
-    void logOut();
-    elementById2('lerr').textContent = reason;
+    void logOut(reason);
   };
-  socket.onerror = () => {
+  socket.onerror = (message) => {
     if (current() && !clientGameState.you) {
-      elementById2('lerr').textContent = 'Could not reach the Quantum Rift server.';
+      elementById2('lerr').textContent = message || 'Could not reach the Quantum Rift server.';
       elementById2('lbtn').disabled = false;
     }
   };
@@ -841,9 +861,19 @@ function onMessage(serverMessage: ServerMessage) {
       elementById2('lerr').textContent = serverMessage.msg;
       elementById2('lbtn').disabled = false;
       toast(serverMessage.msg);
-      if (/somewhere else/.test(serverMessage.msg)) clientGameState._kicked = true;
+      if (/somewhere else/.test(serverMessage.msg)) {
+        clientGameState._kicked = true;
+        webSocket?.close();
+      }
       break;
     case 'welcome':
+      if (!clientGameState.solo && !localReferenceTransport) {
+        // Welcome establishes this native presence before its first controls, even if join/onopen is pending.
+        sequence = 0;
+        history = [];
+        clientGameState.view = null;
+        _lastSnapT = 0;
+      }
       clientGameState.contractPlan = null;
       refineryUI.connected();
       audio.stopMusic();
@@ -3117,7 +3147,7 @@ function openQuit() {
   elementById2('quitbox').classList.remove('hidden');
   elementById2('quitcancel').focus();
 }
-async function logOut() {
+async function logOut(reason = '') {
   elementById2('quitconfirm').disabled = elementById2('quitcancel').disabled = true;
   clearTimeout(reconnectTimer!);
   sessionEpoch++;
@@ -3126,12 +3156,12 @@ async function logOut() {
   webSocket = null;
   delete clientGameState._cred;
   // The server's normal close path detaches, docks and saves the captain before closing.
-  if (socket && socket.readyState < WebSocket.CLOSING) {
-    await new Promise((resolve) => {
-      socket.addEventListener('close', resolve, { once: true });
-      socket.close(1000, 'Log out');
-    });
+  try {
+    await socket?.logout();
+  } catch {
+    // A disconnected service cannot acknowledge revocation; still clear local account state.
   }
+  if (epoch !== sessionEpoch) return;
   clientGameState.views.reset();
   const keep = {
     A: clientGameState.A,
@@ -3198,7 +3228,7 @@ async function logOut() {
       htmlElement.classList.toggle('on', htmlElement.dataset.it === 'ship'),
     );
   elementById2('qvolbox').classList.add('hidden');
-  elementById2('lerr').textContent = '';
+  elementById2('lerr').textContent = reason;
   elementById2('lbtn').disabled =
     elementById2('quitconfirm').disabled =
     elementById2('quitcancel').disabled =
@@ -3218,7 +3248,7 @@ async function logOut() {
   } catch {}
 }
 elementById2('quitcancel').onclick = cancelQuit;
-elementById2('quitconfirm').onclick = logOut;
+elementById2('quitconfirm').onclick = () => logOut();
 window.addEventListener(
   'keydown',
   (keyboardEvent) => {

@@ -12,11 +12,17 @@
 and a [developer code-navigation guide](docs/CODE-NAVIGATION.md). Gameplay and
 save formats are unchanged by the cleanup. See the [release notes](docs/RELEASE-3.3.1.md).
 
+The download above is the published release archive and predates this checkout’s
+native online backend. In this checkout, multiplayer requires an operator-managed
+Nakama 3.41.0 service and PostgreSQL; Solo still runs locally with its existing
+saves and pause behavior. See [online hosting and ownership](docs/NAKAMA.md).
+No new release or production migration is implied.
+
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
 The flight viewport uses [ExcaliburJS](https://excaliburjs.com/) for its scene,
-camera, input and native sprite entities. The existing server simulation, saves
-and HTML cockpit remain in place; engine scripts are included locally.
+camera, input and native sprite entities. The shared game simulation and HTML cockpit remain in place; engine scripts are
+included locally. Online authority runs inside Nakama; Solo retains its local database.
 
 ## Features
 
@@ -67,7 +73,7 @@ and HTML cockpit remain in place; engine scripts are included locally.
 
 The computer running the game needs the **pinned Node 27 prerelease** and a modern browser. Run `node tools/runtime/install-node.ts` once with an existing Node installation to install the runtime locally without changing system Node. Built release archives need no npm dependencies or compiler; source checkouts require `npm ci` and `npm run build`. See [runtime and build instructions](docs/TYPESCRIPT-RUNTIME.md) for supported platforms. Friends joining your server only need a browser.
 
-## Launch
+## Launch the published archive
 
 Download and extract the release above, then:
 
@@ -79,6 +85,20 @@ Open **http://localhost:8080** if the browser does not open automatically. Keep 
 
 When updating, close the old game server window first. Preserve your `data/` and
 `solo-data/` save folders; do not replace them with empty folders from a new copy.
+
+## Run this source checkout
+
+After installing the pinned Node runtime, run `npm ci` and `npm run build`.
+`node tools/start.ts` starts the online static web host, not Nakama or PostgreSQL.
+Configure and run those services separately as described in
+[NAKAMA.md](docs/NAKAMA.md). The web host defaults to `127.0.0.1:8080`; exposing
+it to your network requires an explicit `HOST` setting and deliberate network
+configuration. No ports are opened automatically.
+
+For local Solo play, set `SOLO=1` before running `node tools/start.ts`, or use the
+existing Solo launcher. Solo does not require Nakama or PostgreSQL. Preserve both
+`data/` and `solo-data/` when changing checkouts; old online files are not imported
+automatically.
 
 For custom Solo test captains, use the [save generator](test/Save%20Generator/README.md). Save imports are not available online.
 

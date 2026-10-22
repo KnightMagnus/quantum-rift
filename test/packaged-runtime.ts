@@ -1,3 +1,4 @@
+import { NakamaService, until } from './helpers/nakama-service.ts';
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import operatingSystem from 'node:os';
@@ -71,6 +72,7 @@ try {
     'client/index.html',
     'client/style.css',
     'tools/build.ts',
+    'tools/build-nakama.ts',
     'tools/typescript-scope.ts',
     'tools/start.ts',
     'tools/runtime/node27.json',
@@ -121,6 +123,12 @@ try {
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/server/main.js'));
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/client/html.js'));
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/server/seeds.json'));
+  for (const required of [
+    'dist/nakama/quantum-rift.js',
+    'dist/client/connection.js',
+    'dist/shared/assets.json',
+  ])
+    assert(manifest.files.some(({ path: filename }) => filename === required));
   assert.equal(
     manifest.files.some(({ path: filename }) => /stale-secret|private|node_modules/.test(filename)),
     false,
@@ -156,6 +164,78 @@ try {
   } finally {
     await cleanup(server, null, serverLog, data);
   }
+  // The extracted artifact, not the source checkout bundle, owns this native game.
+  const native = new NakamaService(path.join(installed, 'dist/nakama/quantum-rift.js'));
+  try {
+    await native.initialize();
+    const onlinePort = await availablePort();
+    const onlineLog = fileSystem.createWriteStream(path.join(evidence, 'online-server.log'));
+    const online = spawn(process.execPath, ['tools/start.ts'], {
+      cwd: installed,
+      env: {
+        ...environment,
+        SOLO: '',
+        PORT: String(onlinePort),
+        NAKAMA_HOST: '127.0.0.1',
+        NAKAMA_PORT: String(native.apiPort),
+        NAKAMA_SERVER_KEY: native.client.serverkey,
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    online.stdout.pipe(onlineLog, { end: false });
+    online.stderr.pipe(onlineLog, { end: false });
+    const onlineData = path.join(scratch, 'online-empty');
+    fileSystem.mkdirSync(onlineData);
+    try {
+      const origin = 'http://127.0.0.1:' + onlinePort;
+      await ready(online, origin);
+      const status = await (await fetch(origin + '/api/status')).json();
+      assert.equal(status.solo, false);
+      assert.equal(Number(status.nakama.port), native.apiPort);
+      assert.equal(status.localAuthority, undefined);
+      assert.equal((await fetch(origin + '/connection.js')).status, 200);
+      const session = await native.client.authenticateCustom('qr:archivepilot', true, undefined, {
+        pass: 'synthetic-archive-pass',
+      });
+      const rpc = await native.client.rpc(session, 'qr_world', {});
+      const payload: unknown =
+        typeof rpc.payload === 'string' ? JSON.parse(rpc.payload) : rpc.payload;
+      assert(
+        payload &&
+          typeof payload === 'object' &&
+          'matchId' in payload &&
+          typeof payload.matchId === 'string',
+      );
+      const actor = await native.connect(session);
+      await actor.socket.joinMatch(payload.matchId);
+      await until(() => actor.latest('you'), 'extracted native captain');
+      assert.equal(actor.latest('you')!.d.name, 'archivepilot');
+      await actor.socket.sendMatchState(payload.matchId, 1, JSON.stringify({ t: 'depart' }));
+      await until(() => actor.latest('snap')?.me, 'extracted native departure');
+      const before = actor.latest('snap')!.me;
+      await actor.socket.sendMatchState(
+        payload.matchId,
+        1,
+        JSON.stringify({ t: 'input', seq: 1, th: 1, tu: 1, ab: 0, rv: 0, f1: 0, f2: 0 }),
+      );
+      await until(() => {
+        const me = actor.latest('snap')?.me;
+        return me && me[1] >= 1 && Math.hypot(me[2] - before[2], me[3] - before[3]) > 1;
+      }, 'extracted native authoritative movement');
+      assert(actor.latest('snap')!.me.slice(0, 7).every(Number.isFinite));
+      await actor.socket.sendMatchState(
+        payload.matchId,
+        1,
+        JSON.stringify({ t: 'input', seq: 2, th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 }),
+      );
+      await until(() => actor.latest('snap')?.me?.[1] === 2, 'extracted native input release');
+      assert.equal(fileSystem.existsSync(path.join(installed, 'node_modules')), false);
+    } finally {
+      await cleanup(online, null, onlineLog, onlineData);
+    }
+  } finally {
+    await native.cleanup();
+  }
 } catch (error) {
   fileSystem.writeFileSync(
     path.join(evidence, 'failure.txt'),
@@ -166,5 +246,5 @@ try {
   fileSystem.rmSync(scratch, { recursive: true, force: true });
 }
 console.log(
-  'Release packaging rebuilds dist, excludes private/stale output, and launches an extracted archive without dependencies.',
+  'Release packaging excludes private/stale output; extracted Solo and actual native online flight run without bundled npm dependencies.',
 );

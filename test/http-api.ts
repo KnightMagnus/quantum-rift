@@ -51,7 +51,7 @@ for (const solo of [false, true]) {
     const status = await (await request('/api/status')).json();
     assert.equal(status.version, version);
     assert.equal(status.solo, solo);
-    assert.equal(status.players, 0);
+    assert.equal(status.players, solo ? 0 : null);
     assert.equal(Array.isArray(status.slots), solo);
     const index = await request('/');
     assert.equal(index.status, 200);

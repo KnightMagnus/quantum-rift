@@ -28,17 +28,21 @@ Object.assign(captain, {
 fileSystem.writeFileSync(fixtureSeeds, JSON.stringify([captain]));
 const port = await availablePort();
 const origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['--import', './test/seed-random.ts', 'server/main.ts'], {
-  cwd: root,
-  env: {
-    ...process.env,
-    SOLO: '',
-    PORT: String(port),
-    DATA_DIR: path.join(directory, 'data'),
-    SEEDS_FILE: fixtureSeeds,
+const server = spawn(
+  process.execPath,
+  ['--import', './test/seed-random.ts', 'server/local-main.ts'],
+  {
+    cwd: root,
+    env: {
+      ...process.env,
+      SOLO: '',
+      PORT: String(port),
+      DATA_DIR: path.join(directory, 'data'),
+      SEEDS_FILE: fixtureSeeds,
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
   },
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+);
 const serverLog = fileSystem.createWriteStream(path.join(output, 'server.log'));
 server.stdout.pipe(serverLog);
 server.stderr.pipe(serverLog);

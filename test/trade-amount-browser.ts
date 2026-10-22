@@ -47,17 +47,21 @@ for (const [name, credits] of [
 database.flush();
 const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['--import', './test/seed-random.ts', 'server/main.ts'], {
-  cwd: root,
-  env: {
-    ...process.env,
-    SOLO: '1',
-    PORT: String(port),
-    DATA_DIR: path.join(directory, 'data'),
-    SEEDS_FILE: '/nonexistent',
+const server = spawn(
+  process.execPath,
+  ['--import', './test/seed-random.ts', 'server/local-main.ts'],
+  {
+    cwd: root,
+    env: {
+      ...process.env,
+      SOLO: '1',
+      PORT: String(port),
+      DATA_DIR: path.join(directory, 'data'),
+      SEEDS_FILE: '/nonexistent',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
   },
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+);
 const serverLog = fileSystem.createWriteStream(path.join(output, 'server.log'));
 server.stdout.pipe(serverLog);
 server.stderr.pipe(serverLog);

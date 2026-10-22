@@ -81,7 +81,7 @@ proxy.on('upgrade', (request3, socket, head) => {
   result.end();
 });
 await new Promise<void>((resolve) => proxy.listen(port + 1, '127.0.0.1', () => resolve()));
-const server = spawn(process.execPath, ['server/main.ts'], {
+const server = spawn(process.execPath, ['server/local-main.ts'], {
   cwd: root,
   env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: directory },
   stdio: ['ignore', 'pipe', 'pipe'],

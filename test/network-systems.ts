@@ -10,17 +10,21 @@ for (const test of ['combat-network.ts', 'hailing-network.ts', 'bot.ts']) {
     output = evidenceDir(test.replace('.js', '')),
     port = await availablePort(),
     origin = `http://127.0.0.1:${port}`;
-  const server = spawn(process.execPath, ['--import', './test/seed-random.ts', 'server/main.ts'], {
-    cwd: root,
-    env: {
-      ...process.env,
-      PORT: String(port),
-      SOLO: '',
-      DATA_DIR: directory,
-      SEEDS_FILE: '/nonexistent',
+  const server = spawn(
+    process.execPath,
+    ['--import', './test/seed-random.ts', 'server/local-main.ts'],
+    {
+      cwd: root,
+      env: {
+        ...process.env,
+        PORT: String(port),
+        SOLO: '',
+        DATA_DIR: directory,
+        SEEDS_FILE: '/nonexistent',
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
     },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  );
   const serverLog = fileSystem.createWriteStream(path.join(output, 'server.log'));
   server.stdout.pipe(serverLog);
   server.stderr.pipe(serverLog);

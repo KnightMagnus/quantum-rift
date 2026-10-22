@@ -33,7 +33,7 @@ game.db.flush();
 fileSystem.mkdirSync(evidence, { recursive: true });
 const port = Number(process.env.STANDING_TEST_PORT || 18991);
 const origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.ts'], {
+const server = spawn(process.execPath, ['server/local-main.ts'], {
   env: {
     ...process.env,
     SOLO: '1',

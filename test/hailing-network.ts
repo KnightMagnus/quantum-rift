@@ -1,7 +1,7 @@
 import type { NetworkClient } from './helpers/network-client-types.ts';
 import type { ServerMessage } from '../client/protocol.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
-// Disposable real-WebSocket test; start server/main.ts with a temporary DATA_DIR first.
+// Disposable real-WebSocket test; start server/local-main.ts with a temporary DATA_DIR first.
 import assert from 'node:assert/strict';
 const address = process.argv[2] || 'ws://localhost:18766/ws';
 const sleep = (milliseconds: number | undefined) =>

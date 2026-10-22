@@ -48,7 +48,7 @@ game.db.touch();
 game.db.flush();
 const server = spawn(
   process.execPath,
-  ['--import', path.join(repo, 'test/helpers/seed-random.ts'), 'server/main.ts'],
+  ['--import', path.join(repo, 'test/helpers/seed-random.ts'), 'server/local-main.ts'],
   {
     cwd: repo,
     env: {

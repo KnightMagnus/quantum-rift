@@ -1,4 +1,4 @@
-import type { DB as Database } from './db.ts';
+import type { GameStorage as Database } from './game-storage.ts';
 import type { FeatureServices } from './features.ts';
 import type { PlayerReference } from './game.ts';
 import type { RefineryPlayer } from './refinery-contracts.ts';

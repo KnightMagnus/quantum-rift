@@ -134,12 +134,12 @@ export const FrontsOperations = {
   frontsInit(this: FrontsCapabilities) {
     this.invasion = null;
     this.lastInvWin = Math.floor(Date.now() / (INVASION.everyMin * 60000));
-    if (process.env.INVASION_NOW)
-      setTimeout(
+    if (this.platform.invasionNow)
+      this.platform.defer(
         () =>
           this.startInvasion(
             this.lastInvWin,
-            systemsById[process.env.INVASION_NOW!] ? process.env.INVASION_NOW : undefined,
+            systemsById[this.platform.invasionNow!] ? this.platform.invasionNow : undefined,
           ),
         500,
       ); // testing: start one at boot

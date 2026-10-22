@@ -49,7 +49,7 @@ def main():
         if len(data)>27_000_000:raise ValueError('Individual file exceeds multipart limit: '+filename)
         records.append(dict(path=filename,size=len(data),sha256=digest,mode=int(mode[-3:],8)))
     compiled = ROOT/'dist'
-    compiled_inventory = {'dist/server/seeds.json'}
+    compiled_inventory = {'dist/server/seeds.json', 'dist/shared/assets.json', 'dist/nakama/quantum-rift.js'}
     for row in records:
         source = Path(row['path'])
         if source.parts[0] in ['server','shared','client'] and source.suffix in ['.js','.ts'] and not source.name.endswith('.d.ts'):

@@ -29,6 +29,21 @@ for (const entry of ['server/main.ts', 'dist/server/main.js', 'tools/start.ts'])
       await ready(server, origin);
       const status = await (await fetch(origin + '/api/status')).json();
       assert.equal(status.solo, solo, `${entry}: Solo mode is preserved`);
+      if (!solo) {
+        assert.equal(
+          status.localAuthority,
+          undefined,
+          'production online never advertises a raw local transport',
+        );
+        assert.equal(typeof status.nakama?.serverKey, 'string');
+        assert.equal(typeof status.nakama?.host, 'string');
+        assert.equal(status.players, null, 'unknown native population is never reported as zero');
+        assert.deepEqual(
+          fileSystem.readdirSync(directory),
+          [],
+          'online web host never creates a Node game database',
+        );
+      }
       assert.equal(
         status.version,
         JSON.parse(fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8')).version,

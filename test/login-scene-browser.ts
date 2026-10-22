@@ -17,7 +17,7 @@ const output = evidenceDir('login-scene'),
   directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-login-scene-')),
   port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.ts'], {
+const server = spawn(process.execPath, ['server/local-main.ts'], {
   cwd: root,
   env: {
     ...process.env,
