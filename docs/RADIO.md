@@ -12,7 +12,7 @@ The radio includes 32 owner-supplied station recordings and a separate login the
 | `signal-superposition`   | Signal Superposition Radio | Enter Lost Signal                                                   | Shuffle             |
 | `super-idol`             | Super-Idol Radio           | Finish the very rare **Spacepop: the five-stop tour** passenger job | Album order, repeat |
 
-The server saves unlocked IDs per captain. Discoveries use the existing warning/toast and log, once per station. No purchase or manual device-installation step is required. Login in a qualifying current system also recognizes its signal; old explored-system history is not mined for retroactive rewards. Favorites cannot reveal or unlock an unearned station, and are stored separately for each captain. Knight (case-insensitive account name) automatically has all five stations without needing discovery or mission progress; this does not grant other captains access.
+The server saves unlocked IDs per captain. Discoveries use the existing warning/toast and log, once per station. No purchase or manual device-installation step is required. Login in a qualifying current system also recognizes its signal; old explored-system history is not mined for retroactive rewards. Favorites cannot reveal or unlock an unearned station, and are stored separately for each captain. All captains use the same discovery rules; saved unlocks are preserved.
 
 Quietude is a repair-material stop in the scientist story, not a radio discovery location.
 
@@ -49,4 +49,4 @@ The album-order JSON is an array of the published `position`/`title` records; it
 
 The Super-Idol array order defines its album order. Tuning starts at the first track, natural `ended` advances, and the final track wraps to the first. Other stations shuffle through every track before refilling, without an immediate boundary repeat. Existing mixer, radio slider and mute controls still apply. MP3s use the repository's existing Git LFS rule; hydrate and verify all assets in a candidate package before release.
 
-Tests hash-check all 33 shipped recordings and actually decode them in a browser, also exercising actual station playback and title hiding. Separate tiny silent WAV fixtures prove natural album-ended ordering without waiting through the full album. The screenshot shows Knight's real automatic all-station access and actual owner-supplied album playback; other captains must earn unlocks. These are bounded behavioral checks, not subjective listening approval.
+Tests hash-check all 33 shipped recordings and actually decode them in a browser, also exercising actual station playback and title hiding. Separate tiny silent WAV fixtures prove natural album-ended ordering without waiting through the full album. The screenshot shows a test captain with saved station unlocks playing the owner-supplied album; new captains must earn unlocks. These are bounded behavioral checks, not subjective listening approval.

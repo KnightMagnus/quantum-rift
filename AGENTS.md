@@ -73,3 +73,17 @@ plain technical language. Use the available humanization workflow to audit first
 then rewrite only where needed. Preserve facts, caveats, examples, links, commands,
 JSDoc types and tags, tool directives, and license or attribution notices. Do not
 change executable code or quoted third-party material merely to alter its voice.
+
+## Beta save generator maintenance
+
+Keep `Testing/SaveGenerator/` functional for every future release while this beta
+testing tool remains in the repository. When the version, fresh-save schema, ships,
+station sites, landing ports, research or tutorial/radio defaults change, refresh
+its catalog with `node Testing/SaveGenerator/export-catalog.mjs` and format the
+result. Update its instructions and Windows scripts when their requirements change.
+
+Preserve the generator's custom credits, ship, station location/tier and player-name
+controls. Run the registered save-generator import/login and browser regressions;
+keep the native Windows EXE build/export check in CI. Import/export must remain
+Solo-only and unavailable to online players. Do not remove the tool or its checks
+until the human explicitly requests its removal after beta.
