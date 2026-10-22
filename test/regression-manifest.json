@@ -1180,7 +1180,7 @@
         "logout-browser.ts",
         "sidebar-sizing-browser.ts"
       ],
-      "asserts": "Production Engine, native decoded Sprite entities, display-only physics, original sequenced input stream, typing/blur, physical-pixel camera at DPR1/2 and zoom limits, responsive resizing, actor cleanup, local modules and no unsafe-eval."
+      "asserts": "Production Engine, uncropped zoom-2 projectile pixel references across headings/speeds/iteration orders/backends, native decoded Sprite entities, display-only physics, original sequenced input stream, typing/blur, physical-pixel camera at DPR1/2 and zoom limits, responsive resizing, actor cleanup, local modules and no unsafe-eval."
     }
   ],
   "routes": {

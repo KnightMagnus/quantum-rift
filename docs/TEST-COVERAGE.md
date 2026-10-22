@@ -622,6 +622,10 @@ checks use supported Engine screenshots and native Graphics post-draw callbacks,
 retaining real-pixel and rendered-motion assertions. Existing input/audio, logout,
 sidebar, asset and gameplay assertions remain registered.
 
+Projectile pixels are compared with an uncropped production procedural reference at
+zoom 2, three headings and two same-weapon speeds in both iteration orders. Missing
+and extra visible tail pixels are bounded independently of registry/Sprite counts.
+
 These checks do not establish cross-browser parity, every weapon animation, a
 frame-time improvement, or all lifecycle/network latency combinations. The Canvas
 fallback cannot apply the WebGL additive glow material.

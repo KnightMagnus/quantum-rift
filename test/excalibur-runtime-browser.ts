@@ -257,6 +257,143 @@ try {
       G.opts.keys.thrust = 'KeyW';
     });
 
+    // Uncropped production procedural reference, not another cached native sprite.
+    const projectilePixels = await page.evaluate(async () => {
+      const runtime = window.RiftEngine,
+        scene = runtime.scene,
+        engine = runtime.engine;
+      const { drawShot } = await import('/render.js');
+      const { weaponColor, weaponLook } = await import('/shared/rules.js');
+      engine.stop();
+      const advance = scene.onPreUpdate.bind(scene);
+      scene.onPreUpdate = () => {};
+      scene.display.clear();
+      const previous = scene.actors.map((actor) => ({ actor, visible: actor.graphics.visible }));
+      for (const { actor } of previous) actor.graphics.visible = false;
+      const camera = { pos: scene.camera.pos.clone(), zoom: scene.camera.zoom };
+      scene.camera.pos.setTo(0, 0);
+      scene.camera.zoom = 2;
+      const weapon = Object.values(G.A!.weapons).find(
+        (weapon) => weaponLook(weapon) === 'bolt' && /^#[0-9a-f]{6}$/i.test(weaponColor(weapon)),
+      )!;
+      if (!weapon) throw Error('Expected authored colored bolt fixture');
+      const results = [];
+      try {
+        for (const heading of [0, Math.PI / 2, Math.PI / 4]) {
+          for (const speeds of [
+            [1000, 1600],
+            [1600, 1000],
+          ]) {
+            scene.display.clear();
+            const shots = speeds.map((speed, index) => ({
+              x: index ? 100 : -100,
+              y: 0,
+              rx: index ? 100 : -100,
+              ry: 0,
+              vx: Math.cos(heading) * speed,
+              vy: Math.sin(heading) * speed,
+              w: weapon.id,
+              t: 0,
+            }));
+            const state = {
+              ...G,
+              ents: new Map(),
+              view: null,
+              rocks: [],
+              loot: [],
+              shots,
+              zoom: 2,
+            };
+            scene.display.update(state, 0);
+            await new Promise((resolve) => setTimeout(resolve, 40));
+            scene.display.update(state, 0);
+            await engine.start();
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            const image = await engine.screenshot(true);
+            engine.stop();
+            const capture = document.createElement('canvas');
+            capture.width = image.width;
+            capture.height = image.height;
+            const actual = capture.getContext('2d')!;
+            actual.drawImage(image, 0, 0);
+            for (const [index, shot] of shots.entries()) {
+              const position = scene.camera.pos.clone();
+              position.setTo(shot.x, shot.y);
+              const point = engine.screen.worldToScreenCoordinates(position);
+              const reference = document.createElement('canvas');
+              reference.width = reference.height = 256;
+              const expected = reference.getContext('2d')!;
+              expected.fillStyle = '#000';
+              expected.fillRect(0, 0, 256, 256);
+              drawShot(
+                expected,
+                { ...shot, W: weapon, col: weaponColor(weapon), look: weaponLook(weapon) },
+                128,
+                128,
+                2,
+                0,
+              );
+              const wanted = expected.getImageData(0, 0, 256, 256).data;
+              const got = actual.getImageData(
+                Math.round(point.x) - 128,
+                Math.round(point.y) - 128,
+                256,
+                256,
+              ).data;
+              let energy = 0,
+                error = 0,
+                missing = 0,
+                excess = 0;
+              for (let pixel = 0; pixel < wanted.length; pixel += 4) {
+                const brightness = wanted[pixel] + wanted[pixel + 1] + wanted[pixel + 2];
+                const present = got[pixel] + got[pixel + 1] + got[pixel + 2];
+                energy += brightness;
+                error +=
+                  Math.abs(wanted[pixel] - got[pixel]) +
+                  Math.abs(wanted[pixel + 1] - got[pixel + 1]) +
+                  Math.abs(wanted[pixel + 2] - got[pixel + 2]);
+                if (brightness >= 12 && present < 3) missing++;
+                if (present >= 12 && brightness < 3) excess++;
+              }
+              results.push({
+                heading,
+                speed: speeds[index],
+                order: speeds.join(','),
+                energy,
+                error: error / energy,
+                missing,
+                excess,
+              });
+            }
+          }
+        }
+      } finally {
+        scene.display.clear();
+        for (const { actor, visible } of previous) actor.graphics.visible = visible;
+        scene.onPreUpdate = advance;
+        scene.camera.pos = camera.pos;
+        scene.camera.zoom = camera.zoom;
+        await engine.start();
+      }
+      return results;
+    });
+    fileSystem.writeFileSync(
+      path.join(output, 'projectile-pixels-' + renderer + '-dpr' + ratio + '.json'),
+      JSON.stringify(projectilePixels, null, 2),
+    );
+    for (const pixel of projectilePixels) {
+      assert.ok(pixel.energy > 1000, 'uncropped reference contains visible authored projectile');
+      assert.ok(pixel.error < 0.18, JSON.stringify(pixel));
+      assert.ok(
+        pixel.excess <= 12,
+        'native projectile must not inherit another speed tail: ' + JSON.stringify(pixel),
+      );
+      assert.ok(
+        pixel.missing <= 12,
+        'native projectile must retain visible reference tail: ' + JSON.stringify(pixel),
+      );
+    }
+
     // Fixture-only entities verify actual registries, Sprite decode and removal, without changing the server.
     const registry = await page.evaluate(async () => {
       const runtime = window.RiftEngine;

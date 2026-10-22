@@ -239,13 +239,23 @@ export class WorldActors {
         if (!weapon) return;
         // Cache local procedural weapon frames; the projectile itself is a native Sprite.
         const phase = Math.floor(now / 45) % 16;
-        const key = shot.w + ':' + phase + ':' + state.zoom.toFixed(3);
+        const speed = Math.hypot(shot.vx, shot.vy);
+        // drawShot varies only its colored trail with speed; retain that exact identity.
+        const trail = Math.min(40, (speed || 1) * 0.03);
+        const identity = ':' + state.zoom + ':' + trail;
+        const key = shot.w + ':' + phase + identity;
+        // Cover the longest trail, torpedo/singularity pulse, flak and fixed-pixel blur.
+        // A centered square remains conservative under every Actor rotation.
+        const effectZoom = Math.max(0.7, state.zoom);
+        const radius = Math.ceil(
+          Math.max(40 * state.zoom, 23 * effectZoom, 8 * 1.25 * 2.2 * effectZoom) + 32,
+        );
+        const extent = radius * 2;
         let resource = this.shotGraphics.get(key);
         if (!resource) {
           const canvas = document.createElement('canvas');
-          canvas.width = canvas.height = 120;
+          canvas.width = canvas.height = extent;
           const context = canvas.getContext('2d')!;
-          const speed = Math.hypot(shot.vx, shot.vy);
           drawShot(
             context,
             {
@@ -256,8 +266,8 @@ export class WorldActors {
               col: weaponColor(weapon),
               look: weaponLook(weapon),
             },
-            60,
-            60,
+            radius,
+            radius,
             state.zoom,
             phase * 45,
           );
@@ -268,7 +278,7 @@ export class WorldActors {
         }
         if (!resource.isLoaded()) {
           const prefix = shot.w + ':';
-          const suffix = ':' + state.zoom.toFixed(3);
+          const suffix = identity;
           const loaded = [...this.shotGraphics].find(
             ([cachedKey, image]) =>
               cachedKey.startsWith(prefix) && cachedKey.endsWith(suffix) && image.isLoaded(),
@@ -278,7 +288,7 @@ export class WorldActors {
         }
         const graphic = new Sprite({
           image: resource,
-          destSize: { width: 120 / state.zoom, height: 120 / state.zoom },
+          destSize: { width: resource.width / state.zoom, height: resource.height / state.zoom },
         });
         const actor = this.bind(
           'shot:' + this.shotGeneration + ':' + index,
