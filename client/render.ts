@@ -54,11 +54,25 @@ type DecorModel = {
 };
 import type { ClientGameState, ClientView } from './main.ts';
 export type StellarBody = import('../shared/galaxy.ts').RawStellarBody & {
+  /** Station visual design index */
   station?: number;
+
+  /** Controlling faction identifier */
   faction?: string;
 };
 export type GalaxySystem = import('../shared/galaxy.ts').StarSystem;
-export type CameraState = { cx: number; cy: number; z: number; W: number; H: number };
+export type CameraState = {
+  /** Camera center X world position */
+  cx: number;
+  /** Camera center Y world position */
+  cy: number;
+  /** Zoom scale factor */
+  z: number;
+  /** Viewport width in pixels */
+  W: number;
+  /** Viewport height in pixels */
+  H: number;
+};
 type EffectFlags = {
   hyper?: never;
   ring?: never;
@@ -72,45 +86,202 @@ type EffectFlags = {
 type EffectVariant<KeyType extends keyof EffectFlags, ValueType> = Omit<EffectFlags, KeyType> &
   ValueType;
 type EffectVelocity = { vx: number; vy: number } | { vx?: never; vy?: never };
+
+/**
+ * Visual effect variants use flags and animation identifiers to select their appearance.
+ */
 export type VisualEffect = {
+  /** World X coordinate */
   x: number;
+
+  /** World Y coordinate */
   y: number;
+
+  /** Remaining lifetime in seconds. */
   life: number;
+
+  /** Reference lifetime in seconds used to normalize effect progress. */
   max: number;
+
+  /** Whether damage was dealt by or to the local player */
   mine?: boolean;
 } & EffectVelocity &
   (
-    | EffectVariant<'hyper', { hyper: true; r: number }>
-    | EffectVariant<'ring', { ring: true; r: number; c: string; fill?: boolean }>
-    | EffectVariant<'anim', { anim: 'boom_big' | 'boom_a' | 'boom_b'; r: number; rot: number }>
-    | EffectVariant<'flare', { flare: true; r: number; c?: string }>
-    | EffectVariant<'debris', { debris: true; rot: number; vr: number; s: number; si?: number }>
-    | EffectVariant<'ball', { ball: true; r: number }>
-    | EffectVariant<'smoke', { smoke: true; r: number; vx: number; vy: number }>
-    | EffectVariant<'num', { num: number }>
-    | (EffectFlags & { c: string; s: number })
+    | EffectVariant<
+        'hyper',
+        {
+          hyper: true;
+          /**
+           * Blast radius
+           * Radius or scale of explosion/blast
+           */
+          r: number;
+        }
+      >
+    | EffectVariant<
+        'ring',
+        {
+          ring: true;
+          /**
+           * Blast radius
+           * Radius or scale of explosion/blast
+           */
+          r: number;
+          /** Color hex or CSS string for sparks */
+          c: string;
+          fill?: boolean;
+        }
+      >
+    | EffectVariant<
+        'anim',
+        {
+          anim: 'boom_big' | 'boom_a' | 'boom_b';
+          /**
+           * Blast radius
+           * Radius or scale of explosion/blast
+           */
+          r: number;
+          rot: number;
+        }
+      >
+    | EffectVariant<
+        'flare',
+        {
+          flare: true;
+          /**
+           * Blast radius
+           * Radius or scale of explosion/blast
+           */
+          r: number;
+          /** Color hex or CSS string for sparks */
+          c?: string;
+        }
+      >
+    | EffectVariant<
+        'debris',
+        {
+          debris: true;
+          rot: number;
+          vr: number;
+          /** Radius or scale of explosion/blast */
+          s: number;
+          si?: number;
+        }
+      >
+    | EffectVariant<
+        'ball',
+        {
+          ball: true;
+          /**
+           * Blast radius
+           * Radius or scale of explosion/blast
+           */
+          r: number;
+        }
+      >
+    | EffectVariant<
+        'smoke',
+        {
+          smoke: true;
+          /**
+           * Blast radius
+           * Radius or scale of explosion/blast
+           */
+          r: number;
+          vx: number;
+          vy: number;
+        }
+      >
+    | EffectVariant<
+        'num',
+        {
+          /** Damage number amount */
+          num: number;
+        }
+      >
+    | (EffectFlags & {
+        /** Color hex or CSS string for sparks */
+        c: string;
+        /** Radius or scale of explosion/blast */
+        s: number;
+      })
   );
-export type ShieldHit = { t: number; hx: number; hy: number };
-export type MapFit = { cx: number; cy: number; k: number; fit: number };
-export type MapTransform = { cx: number; cy: number; k: number; W: number; H: number };
+export type ShieldHit = {
+  /** Remaining hit-flash lifetime in seconds. */
+  t: number;
+  /** World X coordinate of impact */
+  hx: number;
+  /** World Y coordinate of impact */
+  hy: number;
+};
+export type MapFit = {
+  /** World-space horizontal center used to derive the pixel horizontal offset. */
+  cx: number;
+  /** World-space vertical center used to derive the pixel vertical offset. */
+  cy: number;
+  /** Scale multiplier */
+  k: number;
+  fit: number;
+};
+export type MapTransform = {
+  cx: number;
+  cy: number;
+  /** Zoom / scale factor */
+  k: number;
+  W: number;
+  H: number;
+};
 export type ShipHull = import('../shared/rules.ts').ShipHullAsset;
 export type RenderEntity = {
+  /** Unique entity ID */
   id: number;
+
+  /** Hull design identifier */
   hull: number;
+
+  /** Smoothed / interpolated world X coordinate */
   rx: number;
+
+  /** Smoothed / interpolated world Y coordinate */
   ry: number;
+
+  /** Raw world X coordinate */
   x: number;
+
+  /** Raw world Y coordinate */
   y: number;
+
+  /** Heading angle in radians */
   a: number;
+
+  /** Velocity X component */
   vx: number;
+
+  /** Velocity Y component */
   vy: number;
+
+  /** Entity status flags (thrust, ab, disabled, friendly, etc.) */
   fl: number;
+
+  /** Current shield amount */
   sh: number;
+
+  /** Current armor amount */
   ar: number;
+
+  /** Faction identifier */
   fac: string;
+
+  /** Captain or ship name */
   name?: string;
+
+  /** Player owner ID if companion or drone */
   owner?: number;
+
+  /** Power level or aura */
   pw?: number;
+
+  /** Timestamp of last update */
   t?: number;
 };
 export type RenderShip = Pick<
@@ -138,109 +309,6 @@ import { SYS as systemsById, STELLARS, FACTIONS, COMMODITIES } from '../shared/g
 import { weaponColor, weaponLook, price } from '../shared/rules.ts';
 
 // ------------------------------------------------------------------ type definitions
-/**
- * StellarBody fields:
- * id: Unique identifier for the stellar body
- * name: Display name of the planet, station, or wormhole
- * x: World X coordinate
- * y: World Y coordinate
- * r: Radius in game units
- * svc: Service flags (e.g. 'L' land, 'T' trade, 'Y' shipyard, 'O' outfit)
- * [desc]: Lore description
- * [faction]: Controlling faction identifier
- * [station]: Station visual design index
- * [hub]: Whether this is a central hub station
- * [wormhole]: Whether this stellar body is a wormhole gate
- * [site]: Whether this is a special POI site
- */
-
-/**
- * GalaxySystem fields:
- * id: System identifier
- * name: System display name
- * x: Galactic coordinate X
- * y: Galactic coordinate Y
- * faction: Controlling faction ID
- * danger: Danger rating index
- * links: Connected system IDs
- * stellars: Stellar bodies located in this system
- * [gate]: Wormhole destination system ID if present
- */
-
-/**
- * CameraState fields:
- * cx: Camera center X world position
- * cy: Camera center Y world position
- * z: Zoom scale factor
- * W: Viewport width in pixels
- * H: Viewport height in pixels
- */
-
-/**
- * VisualEffect fields:
- * type: Effect kind ('boom' | 'spark' | 'flash' | 'blast' | 'dmg')
- * x: World X coordinate
- * y: World Y coordinate
- * t: Spawn timestamp (performance.now())
- * d: Duration in milliseconds
- * [size]: Radius or scale of explosion/blast
- * [col]: Color hex or CSS string for sparks
- * [r]: Blast radius
- * [n]: Damage number amount
- * [mine]: Whether damage was dealt by or to the local player
- */
-
-/**
- * ShieldHit fields:
- * t: Hit timestamp (performance.now())
- * x: World X coordinate of impact
- * y: World Y coordinate of impact
- */
-
-/**
- * MapFit fields:
- * k: Scale multiplier
- * ox: Pixel horizontal offset
- * oy: Pixel vertical offset
- */
-
-/**
- * MapTransform fields:
- * tx: Transform galactic X to canvas X
- * ty: Transform galactic Y to canvas Y
- * k: Zoom / scale factor
- */
-
-/**
- * ShipHull fields:
- * id: Hull identifier
- * name: Ship model display name
- * size: Hull collision / rendering radius
- * [spr]: True if rendered using multi-frame sprite sheet
- * [frames]: Total rotation frames (typically 36)
- * [banks]: Banking animation frames count
- */
-
-/**
- * RenderEntity fields:
- * id: Unique entity ID
- * hull: Hull design identifier
- * rx: Smoothed / interpolated world X coordinate
- * ry: Smoothed / interpolated world Y coordinate
- * x: Raw world X coordinate
- * y: Raw world Y coordinate
- * a: Heading angle in radians
- * vx: Velocity X component
- * vy: Velocity Y component
- * fl: Entity status flags (thrust, ab, disabled, friendly, etc.)
- * sh: Current shield amount
- * ar: Current armor amount
- * fac: Faction identifier
- * [name]: Captain or ship name
- * [owner]: Player owner ID if companion or drone
- * [pw]: Power level or aura
- * [t]: Timestamp of last update
- */
 
 // Map views (system map modes): colour each system by trade price, services, your standing, or danger
 /**
@@ -4220,10 +4288,14 @@ export function galaxy(
     const here = systemsById[clientGameState.sys!] || SYS_LIST[0];
     mapFit2 = { cx: here.x, cy: here.y, k: Math.min(width2, height2) / 560 } as MapFit;
   }
-  const position = (point: Point) => [
-    width2 / 2 + (point.x - mapFit2.cx) * mapFit2.k,
-    height2 / 2 + (point.y - mapFit2.cy) * mapFit2.k,
-  ];
+  const /**
+     * Transform galactic X to canvas X
+     * Transform galactic Y to canvas Y
+     */
+    position = (point: Point) => [
+      width2 / 2 + (point.x - mapFit2.cx) * mapFit2.k,
+      height2 / 2 + (point.y - mapFit2.cy) * mapFit2.k,
+    ];
   clientGameState[large ? 'mapXform' : 'miniXform'] = {
     cx: mapFit2.cx,
     cy: mapFit2.cy,

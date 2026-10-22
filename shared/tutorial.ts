@@ -1,27 +1,29 @@
 import type { PlayerData } from '../server/game.ts';
 import type { GameAssets } from './rules.ts';
+
+/** Career guide tutorial milestone definition. */
 export type TutorialStep = {
+  /** Event code triggering step completion (e.g. 'target', 'land2', 'sell', 'kill', 'site', 'job', 'chest'). */
   ev?: string;
+
+  /** State condition evaluator receiving player data and asset registry. */
   check?: (arg0: PlayerData, arg1?: GameAssets) => boolean | undefined;
+
+  /** Display title of the milestone. */
   title: string;
+
+  /** Guidance instructions displayed to the player. */
   text: string;
+
+  /** Credit reward awarded on completion. */
   reward: number;
+
+  /** Optional material reward tuple [matName, gradeIndex, quantity]. */
   mat?: [string, number, number];
 };
 
 // The career guide (1.0): twenty goals from first flight to your first capital ship. The first five are the original
 // first-flight tutorial (event goals); the rest are checked against your progress. The client shows the current one.
-
-/**
- * Career guide tutorial milestone definition.
- * TutorialStep fields:
- * [ev]: - Event code triggering step completion (e.g. 'target', 'land2', 'sell', 'kill', 'site', 'job', 'chest').
- * [check]: - State condition evaluator receiving player data and asset registry.
- * title: - Display title of the milestone.
- * text: - Guidance instructions displayed to the player.
- * reward: - Credit reward awarded on completion.
- * [mat]: - Optional material reward tuple [matName, gradeIndex, quantity].
- */
 
 /**
  * Computes the total number of installed outfits on the player's active ship.

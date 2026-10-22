@@ -15,57 +15,259 @@ export type SceneDefinition = {
   [entryKey: string]: unknown;
 };
 import type { OutfitAsset, WeaponAsset } from './rules.ts';
+
+/** Faction organization attributes and diplomatic relationships. */
 export type FactionDef = {
+  /** Full display name of the faction. */
   name: string;
+
+  /** Short colloquial moniker. */
   short: string;
+
+  /** Hex color code representing this faction. */
   color: string;
+
+  /** IDs of factions considered hostile. */
   hostile: string[];
+
+  /** Whether this faction engages in piracy. */
   pirate?: boolean;
+
+  /** Hostile by default to all standard factions. */
   alwaysHostile?: boolean;
+
+  /** Marker indicating this is an unaligned territorial region. */
   region?: boolean;
+
+  /** Marker indicating Farside sector alignment. */
   farside?: boolean;
+
+  /** Whether this faction is excluded from standing reputation views. */
   hidden?: boolean;
 };
-export type CommodityDef = { id: string; name: string; base: number; mined?: boolean };
+
+/** Tradable market commodity specification. */
+export type CommodityDef = {
+  /** Unique commodity identifier. */
+  id: string;
+  /** Display name. */
+  name: string;
+  /** Standard baseline price in credits. */
+  base: number;
+  /** Whether this commodity is mined directly from asteroid fields or gas clouds. */
+  mined?: boolean;
+};
 export type RawStellarBody = {
+  /**
+   * Whether this is a central hub station
+   * True if this is the central hub station (Quantum Station).
+   */
   hub?: number | boolean;
   land?: string | number;
+
+  /** Destination stellar ID for wormhole transit. */
   exit?: string;
   gen?: boolean;
+
+  /**
+   * Whether this stellar body is a wormhole gate
+   * Destination system ID for wormhole transit.
+   * Gateway destination system.
+   */
   wormhole?: string;
+
+  /**
+   * True if outlaw haven with no reputation restrictions.
+   * Outlaw port access.
+   */
   outlaw?: boolean;
+
+  /**
+   * Unique identifier for the stellar body
+   * Stellar identifier.
+   * Unique stellar identifier.
+   */
   id: string;
+
+  /**
+   * Display name of the planet, station, or wormhole
+   * Stellar display name.
+   * Display name of the body.
+   */
   name: string;
+
+  /**
+   * Category of body (e.g. 'planet', 'station', 'moon', 'field', 'site').
+   * Type of stellar ('planet', 'station', 'site', 'wormhole').
+   */
   kind: string;
+
+  /** Display render hex color. */
   color?: string;
+
+  /**
+   * Radius in game units
+   * Radius of body.
+   * Collision and render radius.
+   */
   r: number;
+
+  /**
+   * World X coordinate
+   * Position X in system.
+   * Relative system orbit coordinate X.
+   */
   x: number;
+
+  /**
+   * World Y coordinate
+   * Position Y in system.
+   * Relative system orbit coordinate Y.
+   */
   y: number;
+
+  /**
+   * Service flags (e.g. 'L' land, 'T' trade, 'Y' shipyard, 'O' outfit)
+   * Service flags string ('L' for land, 'T' for trade, 'Y' for shipyard, 'O' for outfitter, 'B' for bar/bounty, etc.).
+   * Port services available: L (land), T (trade), O (outfitter), Y (shipyard), B (bar), R (repair/refuel).
+   */
   svc?: string;
+
+  /**
+   * Tech level available for purchase.
+   * Outfitter tech level.
+   */
   tech?: number;
+
+  /**
+   * Lore description
+   * Lore description text.
+   */
   desc?: string;
+
+  /**
+   * Custom commodity price overrides.
+   * Market trading price offsets (-1 low, 0 standard, 1 high).
+   */
   prices?: Record<string, number>;
+
+  /**
+   * Whether this is a special POI site
+   * True if this is a derelict/claimable Personal Station site.
+   * True if this stellar body is a claimable derelict station hull.
+   */
   site?: boolean;
+
+  /**
+   * System ID where this stellar is located.
+   * ID of parent star system.
+   */
   system?: string;
 };
-export type StellarBody = RawStellarBody & { system: string; svc: string };
+
+/** Celestial body (planet, moon, station, asteroid field, or claimable site) orbiting within a star system. */
+export type StellarBody = RawStellarBody & {
+  /**
+   * System ID where this stellar is located.
+   * ID of parent star system.
+   */
+  system: string;
+  /**
+   * Service flags string ('L' for land, 'T' for trade, 'Y' for shipyard, 'O' for outfitter, 'B' for bar/bounty, etc.).
+   * Port services available: L (land), T (trade), O (outfitter), Y (shipyard), B (bar), R (repair/refuel).
+   */
+  svc: string;
+};
+
+/** Star system record defining coordinates, hyperlane links, and celestial bodies. */
 export type StarSystem = {
   gen?: boolean;
   sol?: boolean;
+
+  /** True if anchor system for exploration. */
   anchor?: boolean;
   eventide?: boolean;
   scene?: SceneDefinition;
+
+  /**
+   * True if this is a combat arena system.
+   * Isolated arena space.
+   */
   arena?: boolean;
+
+  /**
+   * True if located on the far side of the Sol Gateway.
+   * Gateway far-side system, without ambient newcomer truce.
+   */
   farside?: boolean;
+
+  /**
+   * System identifier
+   * Unique system ID (e.g. 'sol', 'meridian').
+   * Unique system identifier.
+   */
   id: string;
+
+  /**
+   * System display name
+   * Display name of the system.
+   * Display name.
+   */
   name: string;
+
+  /**
+   * Controlling faction ID
+   * System controlling faction ID.
+   * Dominant faction ID.
+   */
   faction: string;
+
+  /**
+   * Galactic coordinate X
+   * Coordinate on galaxy map.
+   * Map coordinate X.
+   */
   x: number;
+
+  /**
+   * Galactic coordinate Y
+   * Coordinate on galaxy map.
+   * Map coordinate Y.
+   */
   y: number;
+
+  /**
+   * Connected system IDs
+   * Connected hyperlanes system IDs.
+   * Hyperlane destination system IDs.
+   */
   links: string[];
+
+  /**
+   * Stellar bodies located in this system
+   * Planets, stations, sites, and wormholes in this system.
+   * Orbiting planets, stations, and derelict sites.
+   */
   stellars: RawStellarBody[];
+
+  /**
+   * Danger rating index
+   * Danger level (0-5).
+   * Threat level / security rating.
+   */
   danger: number;
+
+  /**
+   * Wormhole destination system ID if present
+   * True if system contains a wormhole or gateway.
+   * Wormhole destination system if a gateway is present.
+   */
   gate?: string;
+
+  /**
+   * Mining asteroid fields.
+   * Asteroid or resource field locations.
+   */
   fields?: Array<{
     id?: string;
     x: number;
@@ -77,13 +279,26 @@ export type StarSystem = {
     minor?: boolean;
     industrial?: boolean;
   }>;
+
+  /** System lore notes. */
   desc?: string;
 };
+
+/** Station Ops upgrade milestone level definition. */
 export type OpsLevelDef = {
+  /** Ops tier index (1 through 5). */
   lv: number;
+
+  /** Milestone level name. */
   title: string;
+
+  /** Construction credit cost. */
   cost: number;
+
+  /** Material crates required [matType, gradeIndex, quantity]. */
   mats: Array<[string, number, number]>;
+
+  /** Feature unlock summary. */
   unlock: string;
 };
 import { fnv1a } from './deterministic-random.ts';
@@ -92,20 +307,6 @@ import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from '.
 
 // Quantum Rift: the galaxy. 30 hand-made anchor systems, grown to ~200 by shared/gen.js (deterministic).
 // Shared by the server (authoritative) and the browser client (map, landing screens).
-
-/**
- * Faction organization attributes and diplomatic relationships.
- * FactionDef fields:
- * name: - Full display name of the faction.
- * short: - Short colloquial moniker.
- * color: - Hex color code representing this faction.
- * hostile: - IDs of factions considered hostile.
- * [pirate]: - Whether this faction engages in piracy.
- * [alwaysHostile]: - Hostile by default to all standard factions.
- * [region]: - Marker indicating this is an unaligned territorial region.
- * [farside]: - Marker indicating Farside sector alignment.
- * [hidden]: - Whether this faction is excluded from standing reputation views.
- */
 
 /**
  * Master catalog of all galactic factions and territorial powers.
@@ -230,15 +431,6 @@ export const FACTIONS: Record<string, FactionDef> = {
 };
 
 /**
- * Tradable market commodity specification.
- * CommodityDef fields:
- * id: - Unique commodity identifier.
- * name: - Display name.
- * base: - Standard baseline price in credits.
- * [mined]: - Whether this commodity is mined directly from asteroid fields or gas clouds.
- */
-
-/**
  * List of commodities traded across markets and harvested from asteroids.
  */
 export const COMMODITIES: CommodityDef[] = [
@@ -281,44 +473,6 @@ export const GRADES: string[] = ['I', 'II', 'III', 'IV', 'V'];
  */
 // price levels per stellar: -1 low (they produce it), 0 normal, 1 high (they want it). Unlisted = not traded.
 const position = (options: Record<string, number>) => options;
-
-/**
- * Celestial body (planet, moon, station, asteroid field, or claimable site) orbiting within a star system.
- * StellarBody fields:
- * [wormhole]: Gateway destination system.
- * [outlaw]: Outlaw port access.
- * id: - Unique stellar identifier.
- * name: - Display name of the body.
- * kind: - Category of body (e.g. 'planet', 'station', 'moon', 'field', 'site').
- * [color]: - Display render hex color.
- * r: - Collision and render radius.
- * x: - Relative system orbit coordinate X.
- * y: - Relative system orbit coordinate Y.
- * [svc]: - Port services available: L (land), T (trade), O (outfitter), Y (shipyard), B (bar), R (repair/refuel).
- * [tech]: - Outfitter tech level.
- * [desc]: - Lore description text.
- * [prices]: - Market trading price offsets (-1 low, 0 standard, 1 high).
- * [site]: - True if this stellar body is a claimable derelict station hull.
- * [system]: - ID of parent star system.
- */
-
-/**
- * Star system record defining coordinates, hyperlane links, and celestial bodies.
- * StarSystem fields:
- * [arena]: Isolated arena space.
- * [farside]: Gateway far-side system, without ambient newcomer truce.
- * id: - Unique system identifier.
- * name: - Display name.
- * faction: - Dominant faction ID.
- * x: - Map coordinate X.
- * y: - Map coordinate Y.
- * links: - Hyperlane destination system IDs.
- * stellars: - Orbiting planets, stations, and derelict sites.
- * danger: - Threat level / security rating.
- * [gate]: - Wormhole destination system if a gateway is present.
- * [fields]: - Asteroid or resource field locations.
- * [desc]: - System lore notes.
- */
 
 /**
  * Roster of core anchor systems in the galaxy, expanded programmatically to ~200 systems by expandGalaxy.
@@ -1604,16 +1758,6 @@ export const ORE_PROCESS: {
   to: { ore: 'alloy', gas: 'isotope', shards: 'crystal' },
   grade: [0, 0, 0, 1, 1, 2],
 };
-
-/**
- * Station Ops upgrade milestone level definition.
- * OpsLevelDef fields:
- * lv: - Ops tier index (1 through 5).
- * title: - Milestone level name.
- * cost: - Construction credit cost.
- * mats: - Material crates required [matType, gradeIndex, quantity].
- * unlock: - Feature unlock summary.
- */
 
 /**
  * Specifications, costs, and materials required for Personal Station Ops upgrade levels 1-5.

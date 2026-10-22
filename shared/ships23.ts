@@ -1,26 +1,72 @@
+/** Hull specifications input for 2.3 Quantum ship definitions. */
 export type Ship23Input = {
+  /** Unique ship hull identifier. */
   id: number;
+
+  /** Ship model name. */
   name: string;
+
+  /** Subtitle / classification. */
   sub: string;
+
+  /** Base purchase cost in credits. */
   cost: number;
+
+  /** Tech tier required to purchase (1-6). */
   tech: number;
+
+  /** Cargo capacity in tons. */
   cargo: number;
+
+  /** Maximum shield capacity. */
   shield: number;
+
+  /** Shield recharge rate. */
   shieldRe: number;
+
+  /** Maximum armor hit points. */
   armor: number;
+
+  /** Acceleration capability in EV units. */
   accel: number;
+
+  /** Top flight speed in EV units. */
   speed: number;
+
+  /** Maneuverability / turning speed in EV units. */
   turn: number;
+
+  /** Maximum hyperdrive jump fuel. */
   fuel: number;
+
+  /** Internal outfit expansion space. */
   space: number;
+
+  /** Fixed gun hardpoint count. */
   guns: number;
+
+  /** Turret mount count. */
   turrets: number;
+
+  /** Unladen hull mass. */
   mass: number;
+
+  /** Crew complement required. */
   crew: number;
+
+  /** Overall combat power score. */
   strength: number;
+
+  /** Target collision and sprite visual scale. */
   size: number;
+
+  /** Default weapon loadout tuples [weaponId, count, ammo]. */
   weapons: Array<[number, number, number]>;
+
+  /** Lore description displayed in shipyards. */
   desc: string;
+
+  /** Whether this hull spools hyperdrive jumps in half time. */
   fastJump?: boolean;
 };
 export type Ship23Hull = Ship23Input & {
@@ -38,34 +84,6 @@ export type Ship23Hull = Ship23Input & {
 };
 // Quantum Rift: ten common Quantum hulls for the Concord yards (art: tools/ships26/hulls22.py).
 // Same units and fields as the mod's own ships.
-
-/**
- * Hull specifications input for 2.3 Quantum ship definitions.
- * Ship23Input fields:
- * id: - Unique ship hull identifier.
- * name: - Ship model name.
- * sub: - Subtitle / classification.
- * cost: - Base purchase cost in credits.
- * tech: - Tech tier required to purchase (1-6).
- * cargo: - Cargo capacity in tons.
- * shield: - Maximum shield capacity.
- * shieldRe: - Shield recharge rate.
- * armor: - Maximum armor hit points.
- * accel: - Acceleration capability in EV units.
- * speed: - Top flight speed in EV units.
- * turn: - Maneuverability / turning speed in EV units.
- * fuel: - Maximum hyperdrive jump fuel.
- * space: - Internal outfit expansion space.
- * guns: - Fixed gun hardpoint count.
- * turrets: - Turret mount count.
- * mass: - Unladen hull mass.
- * crew: - Crew complement required.
- * strength: - Overall combat power score.
- * size: - Target collision and sprite visual scale.
- * weapons: - Default weapon loadout tuples [weaponId, count, ammo].
- * desc: - Lore description displayed in shipyards.
- * [fastJump]: - Whether this hull spools hyperdrive jumps in half time.
- */
 
 /**
  * Complete Quantum ship hull record with default yard properties.

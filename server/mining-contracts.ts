@@ -2,13 +2,22 @@ import type { GradeLots } from '../shared/cargo-contracts.ts';
 import type { DB as Database } from './db.ts';
 import type { FeatureServices } from './features.ts';
 import type { FloatingLoot, LootItem, Rock, Space } from './space.ts';
-export type MiningLease = { from: number; to: number; seam: boolean; captain?: string | null };
+export type MiningLease = {
+  from: number;
+  to: number;
+  seam: boolean;
+  /** Immutable useful-contact attribution. */
+  captain?: string | null;
+};
 export type MiningSource = {
+  /** Captured normalized captain account at firing, not collision. */
   captain: string | null;
   source: number;
   mount: number;
   weapon: number;
   cadence: number;
+
+  /** Real shot ID or beam emitter/mount/frame identity. */
   contactId: string;
 };
 export type MiningContact = {
@@ -120,11 +129,3 @@ export type MiningCapabilities = {
   mods: FeatureServices['fronts']['mods'];
   specOnMine: FeatureServices['specialists']['specOnMine'];
 };
-/**
- * MiningLease fields:
- * [captain]: Immutable useful-contact attribution.
- * MiningSource fields:
- * captain: Captured normalized captain account at firing, not collision.
- * contactId: Real shot ID or beam emitter/mount/frame identity.
-
- */

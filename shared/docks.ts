@@ -1,28 +1,26 @@
 export type DockWingAssignment = {
+  /** Unique ID of the stored ship assigned as a wingmate. */
   uid: string | number;
+
+  /** Officer ID assigned as captain, or null if unassigned. */
   cap: string | null;
+
+  /** Officer ID assigned as crew member, or null if unassigned. */
   crew: string | null;
+
+  /** Unix timestamp until which the wingmate remains disabled under repair. */
   downUntil?: number;
 };
-export type DockSlot = { lead: string | number | null; wings: DockWingAssignment[] };
+export type DockSlot = {
+  /** Unique ID of the lead ship for this dock, or null if empty. */
+  lead: string | number | null;
+  /** Array of assigned wingmates in formation. */
+  wings: DockWingAssignment[];
+};
 // Docks: your Personal Station has lettered docks (A-D). Each dock holds a lead ship and up to two wingmate ships,
 // all chosen from your stored ships. You fly the lead of your active dock; its wingmates fly in formation with you.
 // Wingmates are crewed by officers (a captain and one crew member each), who boost that ship.
 import { WINGMATES } from './galaxy.ts';
-
-/**
- * DockWingAssignment fields:
- * uid: - Unique ID of the stored ship assigned as a wingmate.
- * cap: - Officer ID assigned as captain, or null if unassigned.
- * crew: - Officer ID assigned as crew member, or null if unassigned.
- * [downUntil]: - Unix timestamp until which the wingmate remains disabled under repair.
- */
-
-/**
- * DockSlot fields:
- * lead: - Unique ID of the lead ship for this dock, or null if empty.
- * wings: - Array of assigned wingmates in formation.
- */
 
 /**
  * Letter designations assigned to Personal Station docks (A through D).

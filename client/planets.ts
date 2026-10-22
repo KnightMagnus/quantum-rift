@@ -1,17 +1,35 @@
 export interface PlanetDef {
+  /** World celestial identifier. */
   id: string;
+
+  /** Display name of the world. */
   name?: string;
+
+  /** Descriptive text lore for planet classification. */
   desc?: string;
+
+  /** Body type (e.g., 'planet', 'moon', 'station'). */
   kind?: string;
+
+  /** Hex color code. */
   color?: string;
+
+  /** Celestial radius in world units. */
   r: number;
   svc?: string;
   tech?: number;
 }
 export interface PlanetSprite {
+  /** Canvas or image buffer for rendering. */
   canvas: HTMLCanvasElement | HTMLImageElement;
+
+  /** Canvas diameter dimension in pixels. */
   S: number;
+
+  /** Projected planetary disk diameter in pixels. */
   D: number;
+
+  /** Scaling factor converting canvas pixels to world units. */
   scale: number;
 }
 type ColorChannels = readonly number[];
@@ -73,24 +91,6 @@ type RenderedPlanet = ReturnType<typeof setupRendered>;
 // chosen by type (from its description and colour), then is drawn as a lit sphere that slowly turns, with drifting
 // clouds, night-side city lights or lava glow, an atmosphere rim and, for some giants, rings.
 // planetSprite(p, now) -> { canvas, scale }: scale is world units per canvas pixel.
-
-/**
- * PlanetDef fields:
- * id: - World celestial identifier.
- * [name]: - Display name of the world.
- * [desc]: - Descriptive text lore for planet classification.
- * [kind]: - Body type (e.g., 'planet', 'moon', 'station').
- * [color]: - Hex color code.
- * r: - Celestial radius in world units.
- */
-
-/**
- * PlanetSprite fields:
- * canvas: - Canvas or image buffer for rendering.
- * S: - Canvas diameter dimension in pixels.
- * D: - Projected planetary disk diameter in pixels.
- * scale: - Scaling factor converting canvas pixels to world units.
- */
 
 const textWidth = 512,
   textureHeight = 256;

@@ -1,42 +1,114 @@
 import type { RoleId } from './roles.ts';
 import type { PlayerData } from '../server/game.ts';
 import type { IndustrialShip } from '../server/industrial-contracts.ts';
+
+/** Raw asset physics units to Quantum Rift physics scaling factors. */
 export type PhysicsConstants = {
+  /** Velocity multiplier. */
   speed: number;
+
+  /** Acceleration multiplier. */
   accel: number;
+
+  /** Turn rate multiplier. */
   turn: number;
+
+  /** Projectile velocity multiplier. */
   shot: number;
+
+  /** Shield recharge rate multiplier. */
   shieldRe: number;
+
+  /** Armor repair rate multiplier. */
   armorRe: number;
+
+  /** Continuous beam damage scale. */
   beamDps: number;
+
+  /** Fuel cost per hyperdrive jump. */
   jumpFuel: number;
+
+  /** Minimum clearance distance from stellar bodies required to jump. */
   jumpClear: number;
 };
+
+/** Ship hull specification definition from asset database. */
 export type ShipHullAsset = {
+  /**
+   * Hull identifier
+   * Hull item identifier.
+   */
   id: number;
+
+  /**
+   * Ship model display name
+   * Ship model name.
+   */
   name: string;
+
+  /** Chassis purchase price in credits. */
   cost: number;
+
+  /** Base dry hull mass. */
   mass: number;
+
+  /** Base shield hit points. */
   shield: number;
+
+  /** Base armor hit points. */
   armor: number;
+
+  /** Base linear acceleration. */
   accel: number;
+
+  /** Base maximum velocity. */
   speed: number;
+
+  /** Base angular turn rate. */
   turn: number;
+
+  /** Total outfit space capacity. */
   space: number;
+
+  /** Cargo hold capacity in tons. */
   cargo: number;
+
+  /** Maximum hyperspace fuel units. */
   fuel: number;
+
+  /** Shield recharge rate per second. */
   shieldRe: number;
+
+  /** Armor repair rate per second. */
   armorRe: number;
+
+  /** Fuel regeneration rate per second. */
   fuelRe: number;
+
+  /** Stock factory weapon loadout. */
   weapons: Array<[number, number, number?]>;
+
+  /** Maximum fixed weapon mounts. */
   guns: number;
+
+  /** Maximum turret weapon mounts. */
   turrets: number;
+
+  /** Hull collision / rendering radius */
   size: number;
+
+  /** Combat class role ('interceptor', 'fighter', 'corvette', 'frigate', 'destroyer', 'cruiser'). */
   role?: RoleId;
+
+  /** Ship sprite image asset path. */
   img?: string;
   sub?: string;
   loop?: string;
+
+  /** Spools jump drive faster. */
   fastJump?: boolean;
+
+  /** Whether restricted to non-player ships. */
   npcOnly?: boolean;
   strength: number;
   cat?: string;
@@ -45,34 +117,67 @@ export type ShipHullAsset = {
   tech?: number;
   crew?: number;
   desc?: string;
+
+  /** True if rendered using multi-frame sprite sheet */
   spr?: import('./sprites26.ts').SpriteSheetConfig;
   buy?: number;
   ai?: number;
   glow?: boolean;
   pilot?: string;
 };
+
+/** Outfit catalog item specification. */
 export type OutfitAsset = {
+  /** Outfit item identifier. */
   id: number;
+
+  /** Outfit display name. */
   name: string;
+
+  /**
+   * Purchase price in credits.
+   * Weapon purchase price is carried by the corresponding weapon outfit's cost.
+   */
   cost: number;
+
+  /** Outfit mass in space units. */
   mass: number;
+
+  /** Maximum allowed installations. */
   max?: number;
   tech?: number;
+
+  /** Attribute modifier effects. */
   eff?: Record<string, number>;
+
+  /** Item description. */
   desc?: string;
+
+  /** Whether mounted as a turret. */
   turret?: boolean;
   gun?: boolean;
   icon?: string;
   faction?: string;
+
+  /** Space requirement. */
   space?: number;
 };
+
+/** Weapon catalog definition. */
 export type WeaponAsset = {
+  /** Weapon identifier. */
   id: number;
+
+  /** Weapon display name. */
   name: string;
   type: string;
   dmgA: number;
   dmgS: number;
+
+  /** Firing delay in seconds. */
   reload: number;
+
+  /** Projectile velocity. */
   speed: number;
   duration: number;
   inacc: number;
@@ -82,89 +187,276 @@ export type WeaponAsset = {
   color?: string | null;
   ion?: number;
   burst?: number;
+
+  /** Maximum ammunition capacity. */
   ammo?: number;
   desc?: string;
   launch?: number;
+
+  /** Visual projectile style. */
   look?: string;
+
+  /** Mining beam capability. */
   mining?: boolean;
+
+  /** Effective range in space units. */
   range?: number;
+
+  /** True if secondary missile/bay. */
   sec?: boolean;
+
+  /** Tracking turn rate. */
   homing?: number;
+
+  /** Impact damage. */
   damage?: number;
+
+  /** Shield damage modifier. */
   shieldDamage?: number;
+
+  /** Beam weapon duration. */
   beam?: number;
+
+  /** Audio firing effect name. */
   snd?: string;
 };
+
+/** Master collection of game assets (ships, outfits, weapons, etc.). */
 export type GameAssets = {
+  /** Ship hull definitions map. */
   ships: Record<string | number, ShipHullAsset>;
+
+  /** Outfit catalog map. */
   outfits: Record<string | number, OutfitAsset>;
+
+  /** Weapon catalog map. */
   weapons: Record<string | number, WeaponAsset>;
 };
+
+/** Player ship loadout data structure. */
 export type ShipLoadout = {
+  /** Saved hull-owned industrial work/heat. */
   industrial?: IndustrialShip;
   stockOutfits?: Record<string, number>;
+
+  /** Stable saved hull identity assigned by docks. */
   uid?: string;
+
+  /** Hull ID. */
   hull: number | string;
+
+  /** Map of outfit ID to equipped quantity. */
   outfits: Record<string | number, number>;
+
+  /** Map of weapon ID to current ammunition count. */
   ammo: Record<string | number, number>;
+
+  /** Built-in non-swappable weapon slots. */
   fixed: Array<[number | string, number, number?]>;
+
+  /** Extra outfit space refunded from built-in weapon conversion. */
   bonusSpace: number;
+
+  /** Ship name. */
   name: string;
 };
 export type ShipStatsLoadout = Pick<ShipLoadout, 'hull'> &
   Partial<Pick<ShipLoadout, 'outfits' | 'fixed' | 'bonusSpace'>>;
+
+/** Percentage and flat stat bonuses affecting ship performance. */
 export type ShipStatsBonus = {
+  /** Shield capacity bonus percent. */
   shieldPct?: number;
+
+  /** Armor hit point bonus percent. */
   armorPct?: number;
+
+  /** Top speed bonus percent. */
   speedPct?: number;
+
+  /** Turning rate bonus percent. */
   turnPct?: number;
+
+  /** Acceleration bonus percent. */
   accelPct?: number;
+
+  /** Cargo capacity bonus percent. */
   cargoPct?: number;
+
+  /** Shield recharge rate bonus percent. */
   shieldRePct?: number;
+
+  /** Fuel regeneration rate addition. */
   fuelRe?: number;
+
+  /** Flat additional jump fuel capacity. */
   fuel?: number;
+
+  /** Whether fast jump drive spools are enabled. */
   jumpFast?: number | boolean;
+
+  /** Weapon damage bonus percent. */
   damagePct?: number;
 };
+
+/** Live calculated flight, combat, and capacity attributes for an equipped ship. */
 export type ComputedShipStats = {
   passengerSeats: number;
+
+  /** Installed industrial towing capability. */
   towRig: boolean;
+
+  /** Hull identifier. */
   hull: number | string;
+
+  /** Ship model name. */
   name: string;
+
+  /**
+   * Collision bounding radius.
+   * Visual sprite size.
+   */
   size: number;
+
+  /**
+   * Total ship mass.
+   * Total mass.
+   */
   mass: number;
+
+  /**
+   * Maximum forward speed.
+   * Max flight speed in Rift units.
+   */
   maxSpeed: number;
+
+  /**
+   * Acceleration rating.
+   * Acceleration rate in Rift units.
+   */
   accel: number;
+
+  /** Turn rate in radians per second. */
   turn: number;
+
+  /**
+   * Maximum shield capacity.
+   * Max shield capacity.
+   */
   shield: number;
+
+  /**
+   * Maximum armor / hull points.
+   * Max armor hit points.
+   */
   armor: number;
+
+  /**
+   * Shield recharge rate per second.
+   * Shield recharge per second in Rift units.
+   */
   shieldRe: number;
+
+  /**
+   * Armor repair rate per second.
+   * Armor repair per second in Rift units.
+   */
   armorRe: number;
+
+  /**
+   * Fuel capacity for hyperjumps.
+   * Maximum jump fuel.
+   */
   fuel: number;
+
+  /**
+   * Fuel ramscoop regeneration rate.
+   * Fuel regen rate per second.
+   */
   fuelRe: number;
+
+  /**
+   * Cargo capacity in metric tons.
+   * Cargo capacity in tons.
+   */
   cargo: number;
+
+  /** Total outfit space available. */
   space: number;
+
+  /** Outfit space occupied by installed equipment. */
   used: number;
+
+  /**
+   * Unallocated outfit mass / space.
+   * Remaining outfit space available.
+   */
   free: number;
+
+  /**
+   * Forward gun mount count.
+   * Number of active fixed guns.
+   */
   guns: number;
+
+  /**
+   * Turret mount count.
+   * Number of active turrets.
+   */
   turrets: number;
+
+  /**
+   * Maximum gun mounts.
+   * Maximum gun mounts on the hull.
+   */
   maxGuns: number;
+
+  /**
+   * Maximum turret mounts.
+   * Maximum turret mounts on the hull.
+   */
   maxTurrets: number;
+
+  /** Afterburner boost tier / capability. */
   afterburner: number;
+
+  /** Cloaking device enabled flag (0 or 1). */
   cloak: number;
+
+  /** Consecutive hyperdrive jump range. */
   multiJump: number;
+
+  /**
+   * Fast jump drive charge capability.
+   * Fast jump drive spool flag (0 or 1).
+   */
   jumpFast: number;
+
+  /**
+   * Installed weapon mount counts by weapon ID.
+   * Map of weapon ID to mounted count.
+   */
   weapons: Record<string | number, number>;
+
+  /** Final outgoing damage multiplier. */
   damageMul: number;
 };
+
+/** Personal station state object. */
 export type StationState = {
   claimed: boolean;
   site?: string;
+
+  /** Station operations tier. */
   ops: number;
   refUnits: number;
   refT: number;
   active: { id: string; ends: number; from?: number } | null;
+
+  /** List of completed research technology IDs. */
   done: string[];
+
+  /** In-progress research jobs. */
   queue?: string[];
   defense?: number;
   raidWin?: number;
@@ -172,55 +464,156 @@ export type StationState = {
   relocT?: number;
   waiting?: boolean;
 };
+
+/** Officer data record structure. */
 export type OfficerRecord = {
+  /**
+   * Unique officer ID
+   * Unique officer ID.
+   */
   id: string | number;
+
+  /** Officer name */
   name: string;
   seed?: boolean;
   src?: string;
+
+  /** Credit hiring cost */
   cost?: number;
+
+  /** Current experience points */
   xp?: number;
+
+  /**
+   * Role key (e.g. 'pilot', 'engineer')
+   * Officer division / role (e.g. 'tactical', 'helm').
+   */
   role: string;
+
+  /**
+   * Rarity index (0..4)
+   * Rarity tier (e.g. 'common', 'rare', 'epic').
+   */
   rarity: number;
+
+  /**
+   * Officer level
+   * Level of the officer (starts at 1).
+   */
   lv: number;
+
+  /** Rank index (1.2 rank multiplier). */
   rank?: number;
+
+  /**
+   * Faction / race identifier
+   * Alien or human race identifier.
+   */
   race?: string;
+
+  /** Special innate traits. */
   traits?: string[];
 };
+
+/** Resolved operational weapon parameters in Rift simulation units. */
 export type WeaponConfig = {
+  /** Whether weapon is an instant beam weapon. */
   beam: boolean;
+
+  /** Projectile travel speed. */
   speed: number;
+
+  /** Projectile lifetime in seconds. */
   life: number;
+
+  /** Effective maximum firing range. */
   range: number;
+
+  /** Cooldown reload delay between shots in seconds. */
   reload: number;
+
+  /** Whether weapon is mounted on a turret. */
   turret: boolean;
+
+  /** Turret firing arc limit in radians (0 for 360 degree). */
   arc: number;
+
+  /** Whether projectile homes on targeted ship. */
   homing: boolean;
+
+  /** Whether weapon acts as point-defense against munitions. */
   pd: boolean;
+
+  /** Whether weapon is a fighter launch bay. */
   bay: boolean;
+
+  /** Whether weapon fires unguided rockets. */
   rocket: boolean;
+
+  /** Inaccuracy spread angle in radians. */
   inacc: number;
+
+  /** Armor damage dealt per hit or second. */
   dmgA: number;
+
+  /** Shield damage dealt per hit or second. */
   dmgS: number;
+
+  /** Whether beam fires continuously without cycling. */
   continuous: boolean;
+
+  /** Hex color code for rendering projectile or beam. */
   color: string;
+
+  /** Projectile visual graphic style. */
   look: string;
+
+  /** Area-of-effect blast radius. */
   blast: number;
+
+  /** Ion damage disabling ship systems. */
   ion: number;
 };
+
+/** Physics entity moving in 2D space. */
 export type FlightEntity = {
+  /** Current X position coordinate. */
   x: number;
+
+  /** Current Y position coordinate. */
   y: number;
+
+  /** Current velocity vector X component. */
   vx: number;
+
+  /** Current velocity vector Y component. */
   vy: number;
+
+  /** Heading angle in radians (0 = up, clockwise). */
   a: number;
+
+  /** Current remaining fuel. */
   fuel: number;
+
+  /** Hard attached velocity cap. */
   towCap?: number;
 };
+
+/** Flight control inputs for a single simulation step. */
 export type FlightInput = {
+  /** Forward main thruster active. */
   thrust?: number | boolean;
+
+  /** Turning control input (-1 left, 0 neutral, 1 right). */
   turn?: number;
+
+  /** Afterburner boost active. */
   ab?: number | boolean;
+
+  /** Reverse thrusters / face retrograde active. */
   rev?: number | boolean;
+
+  /** Automatic navigation controls. */
   navigation?: number | boolean;
 };
 import { EXALTED_STANDING } from './reputation.ts';
@@ -257,20 +650,6 @@ const tickDuration: number = 1 / TICK;
 export { tickDuration as DT };
 
 /**
- * Raw asset physics units to Quantum Rift physics scaling factors.
- * PhysicsConstants fields:
- * speed: - Velocity multiplier.
- * accel: - Acceleration multiplier.
- * turn: - Turn rate multiplier.
- * shot: - Projectile velocity multiplier.
- * shieldRe: - Shield recharge rate multiplier.
- * armorRe: - Armor repair rate multiplier.
- * beamDps: - Continuous beam damage scale.
- * jumpFuel: - Fuel cost per hyperdrive jump.
- * jumpClear: - Minimum clearance distance from stellar bodies required to jump.
- */
-
-/**
  * Scaling constants for translating raw engine units to Rift units.
  */
 // Asset-space units -> simulation units
@@ -286,75 +665,6 @@ const physicsConstants: PhysicsConstants = {
   jumpClear: 1100,
 };
 export { physicsConstants as K };
-
-/**
- * Ship hull specification definition from asset database.
- * ShipHullAsset fields:
- * [id]: Hull item identifier.
- * name: Ship model name.
- * price: Chassis purchase price in credits.
- * mass: Base dry hull mass.
- * shield: Base shield hit points.
- * armor: Base armor hit points.
- * accel: Base linear acceleration.
- * speed: Base maximum velocity.
- * turn: Base angular turn rate.
- * space: Total outfit space capacity.
- * cargo: Cargo hold capacity in tons.
- * fuel: Maximum hyperspace fuel units.
- * shieldRe: Shield recharge rate per second.
- * armorRe: Armor repair rate per second.
- * fuelRe: Fuel regeneration rate per second.
- * weapons: Stock factory weapon loadout.
- * [guns]: Maximum fixed weapon mounts.
- * [turrets]: Maximum turret weapon mounts.
- * [role]: Combat class role ('interceptor', 'fighter', 'corvette', 'frigate', 'destroyer', 'cruiser').
- * [img]: Ship sprite image asset path.
- * [fastJump]: Spools jump drive faster.
- * [npcOnly]: Whether restricted to non-player ships.
- */
-
-/**
- * Outfit catalog item specification.
- * OutfitAsset fields:
- * id: Outfit item identifier.
- * name: Outfit display name.
- * price: Purchase price in credits.
- * [mass]: Outfit mass in space units.
- * [space]: Space requirement.
- * [max]: Maximum allowed installations.
- * [turret]: Whether mounted as a turret.
- * [eff]: Attribute modifier effects.
- * [desc]: Item description.
- */
-
-/**
- * Weapon catalog definition.
- * WeaponAsset fields:
- * id: Weapon identifier.
- * name: Weapon display name.
- * [price]: Weapon purchase price.
- * [range]: Effective range in space units.
- * [reload]: Firing delay in seconds.
- * [speed]: Projectile velocity.
- * [damage]: Impact damage.
- * [shieldDamage]: Shield damage modifier.
- * [beam]: Beam weapon duration.
- * [ammo]: Maximum ammunition capacity.
- * [homing]: Tracking turn rate.
- * [kind]: Visual projectile style.
- * [snd]: Audio firing effect name.
- * [sec]: True if secondary missile/bay.
- * [mining]: Mining beam capability.
- */
-
-/**
- * Master collection of game assets (ships, outfits, weapons, etc.).
- * GameAssets fields:
- * ships: - Ship hull definitions map.
- * outfits: - Outfit catalog map.
- * weapons: - Weapon catalog map.
- */
 
 /**
  * Injects Quantum Rift custom ships, weapons, roles, and sprites into the raw asset dictionary.
@@ -399,19 +709,6 @@ export function allOutfits(assets: GameAssets): Record<string | number, OutfitAs
   for (const outfit of EXTRA_OUTFITS) options[outfit.id] = outfit;
   return options;
 }
-
-/**
- * Player ship loadout data structure.
- * ShipLoadout fields:
- * [industrial]: Saved hull-owned industrial work/heat.
- * [uid]: Stable saved hull identity assigned by docks.
- * hull: - Hull ID.
- * outfits: - Map of outfit ID to equipped quantity.
- * ammo: - Map of weapon ID to current ammunition count.
- * fixed: - Built-in non-swappable weapon slots.
- * bonusSpace: - Extra outfit space refunded from built-in weapon conversion.
- * name: - Ship name.
- */
 
 /**
  * Generates an initial loadout for a newly purchased ship hull, converting standard built-in weapons into modular outfits.
@@ -591,55 +888,6 @@ export function outfitSaleValue(
 }
 
 /**
- * Percentage and flat stat bonuses affecting ship performance.
- * ShipStatsBonus fields:
- * [shieldPct]: - Shield capacity bonus percent.
- * [armorPct]: - Armor hit point bonus percent.
- * [speedPct]: - Top speed bonus percent.
- * [turnPct]: - Turning rate bonus percent.
- * [accelPct]: - Acceleration bonus percent.
- * [cargoPct]: - Cargo capacity bonus percent.
- * [shieldRePct]: - Shield recharge rate bonus percent.
- * [fuelRe]: - Fuel regeneration rate addition.
- * [fuel]: - Flat additional jump fuel capacity.
- * [jumpFast]: - Whether fast jump drive spools are enabled.
- * [damagePct]: - Weapon damage bonus percent.
- */
-
-/**
- * Live calculated flight, combat, and capacity attributes for an equipped ship.
- * ComputedShipStats fields:
- * towRig: - Installed industrial towing capability.
- * hull: - Hull identifier.
- * name: - Ship model name.
- * size: - Visual sprite size.
- * mass: - Total mass.
- * maxSpeed: - Max flight speed in Rift units.
- * accel: - Acceleration rate in Rift units.
- * turn: - Turn rate in radians per second.
- * shield: - Max shield capacity.
- * armor: - Max armor hit points.
- * shieldRe: - Shield recharge per second in Rift units.
- * armorRe: - Armor repair per second in Rift units.
- * fuel: - Maximum jump fuel.
- * fuelRe: - Fuel regen rate per second.
- * cargo: - Cargo capacity in tons.
- * space: - Total outfit space available.
- * used: - Outfit space occupied by installed equipment.
- * free: - Remaining outfit space available.
- * guns: - Number of active fixed guns.
- * turrets: - Number of active turrets.
- * maxGuns: - Maximum gun mounts on the hull.
- * maxTurrets: - Maximum turret mounts on the hull.
- * afterburner: - Afterburner boost tier / capability.
- * cloak: - Cloaking device enabled flag (0 or 1).
- * multiJump: - Consecutive hyperdrive jump range.
- * jumpFast: - Fast jump drive spool flag (0 or 1).
- * weapons: - Map of weapon ID to mounted count.
- * damageMul: - Final outgoing damage multiplier.
- */
-
-/**
  * Computes live operational flight, combat, and cargo stats from hull, fitted outfits, and captain bonuses.
  * @param assets - Game assets collection.
  * @param ship - Player ship state or loadout.
@@ -750,14 +998,6 @@ export function shipStats(
 }
 
 /**
- * Personal station state object.
- * StationState fields:
- * [ops]: - Station operations tier.
- * [done]: - List of completed research technology IDs.
- * [queue]: - In-progress research jobs.
- */
-
-/**
  * Aggregates all completed station research project stat bonuses.
  * @param station - Personal station state object containing `done` research ID list.
  * @returns Aggregated stat bonuses.
@@ -770,18 +1010,6 @@ export function researchBonus(station: StationState | null | undefined): Record<
         secondValue[entryKey] = (secondValue[entryKey] || 0) + value;
   return secondValue;
 }
-
-/**
- * Officer data record structure.
- * OfficerRecord fields:
- * id: - Unique officer ID.
- * role: - Officer division / role (e.g. 'tactical', 'helm').
- * rarity: - Rarity tier (e.g. 'common', 'rare', 'epic').
- * lv: - Level of the officer (starts at 1).
- * rank: - Rank index (1.2 rank multiplier).
- * [race]: - Alien or human race identifier.
- * [traits]: - Special innate traits.
- */
 
 /**
  * Calculates a single officer's individual stat contributions based on role, level, rarity, and rank.
@@ -850,30 +1078,6 @@ export function captainBonus(playerData: PlayerData): Record<string, number> {
         researchBonus2[entryKey] = (researchBonus2[entryKey] || 0) + value; // lower-deck crew
   return researchBonus2;
 }
-
-/**
- * Resolved operational weapon parameters in Rift simulation units.
- * WeaponConfig fields:
- * beam: - Whether weapon is an instant beam weapon.
- * speed: - Projectile travel speed.
- * life: - Projectile lifetime in seconds.
- * range: - Effective maximum firing range.
- * reload: - Cooldown reload delay between shots in seconds.
- * turret: - Whether weapon is mounted on a turret.
- * arc: - Turret firing arc limit in radians (0 for 360 degree).
- * homing: - Whether projectile homes on targeted ship.
- * pd: - Whether weapon acts as point-defense against munitions.
- * bay: - Whether weapon is a fighter launch bay.
- * rocket: - Whether weapon fires unguided rockets.
- * inacc: - Inaccuracy spread angle in radians.
- * dmgA: - Armor damage dealt per hit or second.
- * dmgS: - Shield damage dealt per hit or second.
- * continuous: - Whether beam fires continuously without cycling.
- * color: - Hex color code for rendering projectile or beam.
- * look: - Projectile visual graphic style.
- * blast: - Area-of-effect blast radius.
- * ion: - Ion damage disabling ship systems.
- */
 
 /**
  * Converts raw weapon asset definitions into live physics and combat parameters.
@@ -969,28 +1173,6 @@ export function weaponSound(weaponAsset: WeaponAsset): number {
   if (weapon.bay) return 239;
   return weaponAsset.dmgA + weaponAsset.dmgS > 40 ? 241 : 236;
 }
-
-/**
- * Physics entity moving in 2D space.
- * FlightEntity fields:
- * x: - Current X position coordinate.
- * y: - Current Y position coordinate.
- * vx: - Current velocity vector X component.
- * vy: - Current velocity vector Y component.
- * a: - Heading angle in radians (0 = up, clockwise).
- * fuel: - Current remaining fuel.
- * [towCap]: Hard attached velocity cap.
- */
-
-/**
- * Flight control inputs for a single simulation step.
- * FlightInput fields:
- * [thrust]: - Forward main thruster active.
- * [turn]: - Turning control input (-1 left, 0 neutral, 1 right).
- * [ab]: - Afterburner boost active.
- * [rev]: - Reverse thrusters / face retrograde active.
- * [navigation]: - Automatic navigation controls.
- */
 
 /**
  * Advances flight physics for an entity by one simulation time step.

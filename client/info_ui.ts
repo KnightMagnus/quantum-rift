@@ -1,27 +1,68 @@
 import type { StellarBody } from '../server/game.ts';
 import type { ClientGameState } from './main.ts';
 export type InfoTab = 'ship' | 'career' | 'fleet' | 'captains';
-export type BestSaleResult = { p: StellarBody; price: number; jumps: number };
+export type BestSaleResult = {
+  /** Stellar body object */
+  p: StellarBody;
+  /** Commodity price per ton */
+  price: number;
+  /** Jumps distance */
+  jumps: number;
+};
 export type RivalCaptain = {
+  /** Captain name */
   name: string;
+
+  /** Career type */
   kind: string;
+
+  /** Faction identifier */
   fac: string;
+
+  /** Ship hull name */
   ship: string;
+
+  /** Current system ID */
   sys?: string | null;
+
+  /** Standing category */
   mood: 'nemesis' | 'rival' | 'neutral' | 'friendly' | 'ally';
+
+  /** Standing relationship score */
   rel: number;
 };
 export type ShipStats = {
+  /** Shield strength */
   shield: number;
+
+  /** Armor strength */
   armor: number;
+
+  /** Maximum forward speed */
   maxSpeed: number;
+
+  /** Turn rate */
   turn: number;
+
+  /** Cargo capacity in tons */
   cargo: number;
+
+  /** Total outfit space */
   space: number;
+
+  /** Available free outfit space */
   free: number;
+
+  /** Equipped gun count */
   guns: number;
+
+  /** Maximum gun mounts */
   maxGuns: number;
+
+  /** Equipped turret count */
   turrets: number;
+
+  /** Maximum turret mounts */
   maxTurrets: number;
 };
 
@@ -42,39 +83,6 @@ import { RARITY } from '../shared/hangar.ts';
 import { RANKS } from '../shared/rivals.ts';
 import { synBadge } from './syn_ui.ts';
 import { price } from '../shared/rules.ts';
-
-/**
- * BestSaleResult fields:
- * p: Stellar body object
- * price: Commodity price per ton
- * jumps: Jumps distance
- */
-
-/**
- * RivalCaptain fields:
- * name: Captain name
- * kind: Career type
- * fac: Faction identifier
- * ship: Ship hull name
- * [sys]: Current system ID
- * mood: Standing category
- * rel: Standing relationship score
- */
-
-/**
- * ShipStats fields:
- * shield: Shield strength
- * armor: Armor strength
- * maxSpeed: Maximum forward speed
- * turn: Turn rate
- * cargo: Cargo capacity in tons
- * space: Total outfit space
- * free: Available free outfit space
- * guns: Equipped gun count
- * maxGuns: Maximum gun mounts
- * turrets: Equipped turret count
- * maxTurrets: Maximum turret mounts
- */
 
 /**
  * Formats a number to rounded, localized string.

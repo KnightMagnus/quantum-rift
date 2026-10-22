@@ -1,51 +1,57 @@
 export type RoleId = 'interceptor' | 'explorer' | 'battleship' | 'survey' | 'carrier';
-export type RoleInfo = { name: string; short: string; color: string; icon: string; desc: string };
+
+/** Display metadata and combat description for a ship role. */
+export type RoleInfo = {
+  /** Display name of the role. */
+  name: string;
+  /** Short 3-letter abbreviation. */
+  short: string;
+  /** Hex color code representing this role. */
+  color: string;
+  /** Unicode icon symbol for UI badges. */
+  icon: string;
+  /** Description of tactical strengths and weaknesses. */
+  desc: string;
+};
+
+/** Minimal ship hull interface required for role resolution. */
 export type ShipHullRef = {
+  /** Hull identifier. */
   id?: number;
+
+  /** Explicit role if already assigned. */
   role?: string;
+
+  /** Ship weapon slots tuple [id, count, ammo]. */
   weapons?: Array<[number | string, number, number?]>;
+
+  /** Base shield strength. */
   shield?: number;
+
+  /** Base armor hit points. */
   armor?: number;
+
+  /** Cargo capacity in tons. */
   cargo?: number;
+
+  /** Combat rating / strength score. */
   strength?: number;
+
+  /** Maximum flight speed in EV units. */
   speed?: number;
 };
-export type WeaponRef = { type?: string };
+
+/** Weapon definition metadata for carrier detection. */
+export type WeaponRef = {
+  /** Weapon mount type (e.g. 'bay', 'beam', 'turret'). */
+  type?: string;
+};
 // Quantum Rift: ship roles and the class triangle (after STFC). Interceptors beat Battleships, Battleships beat
 // Explorers, Explorers beat Interceptors. Survey ships are the miners and haulers; Carriers launch fighters.
 
 /**
  * Valid ship combat and utility roles.
 
- */
-
-/**
- * Display metadata and combat description for a ship role.
- * RoleInfo fields:
- * name: - Display name of the role.
- * short: - Short 3-letter abbreviation.
- * color: - Hex color code representing this role.
- * icon: - Unicode icon symbol for UI badges.
- * desc: - Description of tactical strengths and weaknesses.
- */
-
-/**
- * Minimal ship hull interface required for role resolution.
- * ShipHullRef fields:
- * [id]: - Hull identifier.
- * [role]: - Explicit role if already assigned.
- * [weapons]: - Ship weapon slots tuple [id, count, ammo].
- * [shield]: - Base shield strength.
- * [armor]: - Base armor hit points.
- * [cargo]: - Cargo capacity in tons.
- * [strength]: - Combat rating / strength score.
- * [speed]: - Maximum flight speed in EV units.
- */
-
-/**
- * Weapon definition metadata for carrier detection.
- * WeaponRef fields:
- * [type]: - Weapon mount type (e.g. 'bay', 'beam', 'turret').
  */
 
 /**

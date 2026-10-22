@@ -1,40 +1,99 @@
 export type InvasionBoss = {
+  /** Unique boss encounter identifier. */
   id: string;
+
+  /** Display title of the world boss flagship. */
   name: string;
+
+  /** Hull ID of the boss ship. */
   hull: number;
+
+  /** Faction allegiance of the boss. */
   faction: string;
+
+  /** Boss durability/shield scaling multiplier. */
   mult: number;
+
+  /** Total bounty credit pool distributed among attackers. */
   pool: number;
+
+  /** Array of escort minion hull IDs spawned alongside the boss. */
   minions: number[];
 };
-export type InvasionConfig = { everyMin: number; lastMin: number; minShare: number };
+export type InvasionConfig = {
+  /** Interval in minutes between boss invasion spawns. */
+  everyMin: number;
+  /** Active duration in minutes before unvanquished bosses retreat. */
+  lastMin: number;
+  /** Minimum share of boss damage required to qualify for bounty rewards. */
+  minShare: number;
+};
 export type SpaceAnomaly = {
+  /** Display name of the spatial anomaly. */
   name: string;
+
+  /** Symbol icon representing the anomaly. */
   icon: string;
+
+  /** Hex color code for UI and star map overlays. */
   color: string;
+
+  /** Description explaining gameplay and tactical consequences. */
   desc: string;
+
+  /** Numerical modifiers applied within affected systems. */
   mods: Record<string, number>;
 };
 export type GoalTypeDef = {
+  /** Callback returning formatted goal objective description. */
   text: (arg0: number) => string;
+
+  /** Minimum and maximum threshold range for daily assignments. */
   daily: [number, number];
+
+  /** Minimum and maximum threshold range for weekly assignments. */
   weekly: [number, number];
 };
 export type ServerEvent = {
+  /** Unique event identifier. */
   id: string;
+
+  /** Day of week (0=Sunday ... 6=Saturday) when this event takes place. */
   day?: number;
+
+  /** Event title. */
   name: string;
+
+  /** In-game description of event bonuses and global modifiers. */
   desc: string;
+
+  /** Active gameplay modifiers during the event window. */
   mods: Record<string, number>;
 };
 export type ScheduledEvent = Partial<ServerEvent> & { start: number; end: number };
-export type FactionStoreTier = { rep: number; name: string };
-export type FactionStoreItem = {
-  id: string;
-  name: string;
-  tokens: number;
-  credits: number;
+export type FactionStoreTier = {
+  /** Minimum reputation required to reach this standing tier. */
   rep: number;
+  /** Title designation of the reputation tier. */
+  name: string;
+};
+export type FactionStoreItem = {
+  /** Unique item identifier. */
+  id: string;
+
+  /** Display name of the store listing. */
+  name: string;
+
+  /** Faction token cost to purchase. */
+  tokens: number;
+
+  /** Credit cost component. */
+  credits: number;
+
+  /** Minimum faction reputation prerequisite. */
+  rep: number;
+
+  /** Reward payload delivered to player upon purchase. */
   give: Record<string, number | string | boolean>;
 };
 import { signedXorshift32 as randomGenerator } from './deterministic-random.ts';
@@ -43,65 +102,6 @@ import { EXALTED_STANDING } from './reputation.ts';
 // server events and faction stores. Shared by server and client.
 
 // Armada rules are defined in shared/coop.js.
-
-/**
- * InvasionBoss fields:
- * id: - Unique boss encounter identifier.
- * name: - Display title of the world boss flagship.
- * hull: - Hull ID of the boss ship.
- * faction: - Faction allegiance of the boss.
- * mult: - Boss durability/shield scaling multiplier.
- * pool: - Total bounty credit pool distributed among attackers.
- * minions: - Array of escort minion hull IDs spawned alongside the boss.
- */
-
-/**
- * InvasionConfig fields:
- * everyMin: - Interval in minutes between boss invasion spawns.
- * lastMin: - Active duration in minutes before unvanquished bosses retreat.
- * minShare: - Minimum share of boss damage required to qualify for bounty rewards.
- */
-
-/**
- * SpaceAnomaly fields:
- * name: - Display name of the spatial anomaly.
- * icon: - Symbol icon representing the anomaly.
- * color: - Hex color code for UI and star map overlays.
- * desc: - Description explaining gameplay and tactical consequences.
- * mods: - Numerical modifiers applied within affected systems.
- */
-
-/**
- * GoalTypeDef fields:
- * text: - Callback returning formatted goal objective description.
- * daily: - Minimum and maximum threshold range for daily assignments.
- * weekly: - Minimum and maximum threshold range for weekly assignments.
- */
-
-/**
- * ServerEvent fields:
- * id: - Unique event identifier.
- * [day]: - Day of week (0=Sunday ... 6=Saturday) when this event takes place.
- * name: - Event title.
- * desc: - In-game description of event bonuses and global modifiers.
- * mods: - Active gameplay modifiers during the event window.
- */
-
-/**
- * FactionStoreTier fields:
- * rep: - Minimum reputation required to reach this standing tier.
- * name: - Title designation of the reputation tier.
- */
-
-/**
- * FactionStoreItem fields:
- * id: - Unique item identifier.
- * name: - Display name of the store listing.
- * tokens: - Faction token cost to purchase.
- * credits: - Credit cost component.
- * rep: - Minimum faction reputation prerequisite.
- * give: - Reward payload delivered to player upon purchase.
- */
 
 // ------------------------------------------------------------------ invasions (server-wide bosses)
 /**

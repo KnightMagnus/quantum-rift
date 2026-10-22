@@ -41,6 +41,10 @@ Use descriptive names for variables, parameters, functions and types. Avoid opaq
 abbreviations and single-letter names except for conventional, short-lived indices
 or mathematical coordinates whose meaning is immediately clear.
 
+Document native TypeScript types at their declarations. Put field descriptions on
+the corresponding interface/type members, not in detached `TypeName fields:` lists
+or duplicate JSDoc type declarations. Preserve explanatory text when moving it.
+
 Keep JSDoc type references readable: declare named imported type aliases near the
 top of the module and reuse them instead of scattering inline `import(...).Type`
 expressions at points of use. Preserve useful type precision; do not replace types

@@ -1,79 +1,79 @@
 import type { ShipHullAsset, ShipLoadout } from './rules.ts';
-export type SyndicateTierInfo = { i: number; name: string; pts: number; next: number | null };
-export type BlackMarketItem = {
-  id: string;
-  tier: number;
+export type SyndicateTierInfo = {
+  /** Tier index (0-5). */
+  i: number;
+  /** Tier title name. */
   name: string;
+  /** Current standing points. */
+  pts: number;
+  /** Points required for the next tier, or null if maximum tier reached. */
+  next: number | null;
+};
+export type BlackMarketItem = {
+  /** Unique item identifier. */
+  id: string;
+
+  /** Minimum Syndicate tier required to purchase. */
+  tier: number;
+
+  /** Display name of the item or bundle. */
+  name: string;
+
+  /** Purchase cost in credits. */
   price: number;
+
+  /** In-game description of item utility. */
   desc: string;
+
+  /** Reward payload granted upon purchase (e.g. papers, shards, bp, parts, crate). */
   give: Record<string, number | string | boolean | [number, number]>;
 };
-export type OfficerPromotionCost = { shards: number; credits: number; lv: number };
-export type OfficerTrait = { name: string; bonus: Record<string, number> };
-export type LowerDeckRole = {
+export type OfficerPromotionCost = {
+  /** Commendation shards required. */
+  shards: number;
+  /** Credit cost for promotion. */
+  credits: number;
+  /** Minimum officer level required. */
+  lv: number;
+};
+export type OfficerTrait = {
+  /** Trait display name. */
   name: string;
-  cost: number;
+  /** Percentage or flat stat modifications granted by the trait. */
   bonus: Record<string, number>;
+};
+export type LowerDeckRole = {
+  /** Crew member title. */
+  name: string;
+
+  /** Hiring fee in credits. */
+  cost: number;
+
+  /** Passive stat modifications granted by this crew member. */
+  bonus: Record<string, number>;
+
+  /** Summary description of granted bonuses. */
   desc: string;
 };
 export type BankConfig = {
+  /** Loan compounding and payment period in minutes. */
   periodMin: number;
+
+  /** Starting credit score baseline. */
   credit0: number;
+
+  /** Minimum credit score floor. */
   creditMin: number;
+
+  /** Maximum credit score ceiling. */
   creditMax: number;
+
+  /** Minimum periodic payment amount in credits. */
   minPay: number;
 };
 import { passengerSeats } from './passengers.ts';
 // Syndicate and Officers: the Syndicate crime path and black market, officer ranks and traits, lower-deck crew,
 // the bank (credit-based mortgages), and passenger and rush jobs.
-
-/**
- * SyndicateTierInfo fields:
- * i: - Tier index (0-5).
- * name: - Tier title name.
- * pts: - Current standing points.
- * next: - Points required for the next tier, or null if maximum tier reached.
- */
-
-/**
- * BlackMarketItem fields:
- * id: - Unique item identifier.
- * tier: - Minimum Syndicate tier required to purchase.
- * name: - Display name of the item or bundle.
- * price: - Purchase cost in credits.
- * desc: - In-game description of item utility.
- * give: - Reward payload granted upon purchase (e.g. papers, shards, bp, parts, crate).
- */
-
-/**
- * OfficerPromotionCost fields:
- * shards: - Commendation shards required.
- * credits: - Credit cost for promotion.
- * lv: - Minimum officer level required.
- */
-
-/**
- * OfficerTrait fields:
- * name: - Trait display name.
- * bonus: - Percentage or flat stat modifications granted by the trait.
- */
-
-/**
- * LowerDeckRole fields:
- * name: - Crew member title.
- * cost: - Hiring fee in credits.
- * bonus: - Passive stat modifications granted by this crew member.
- * desc: - Summary description of granted bonuses.
- */
-
-/**
- * BankConfig fields:
- * periodMin: - Loan compounding and payment period in minutes.
- * credit0: - Starting credit score baseline.
- * creditMin: - Minimum credit score floor.
- * creditMax: - Maximum credit score ceiling.
- * minPay: - Minimum periodic payment amount in credits.
- */
 
 // ------------------------------------------------------------------ the Syndicate
 // Standing earned through smuggling, plunder, capture and Syndicate contracts. Each tier opens more of the black market.

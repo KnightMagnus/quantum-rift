@@ -1,24 +1,70 @@
 import type { Session } from './game.ts';
+
+/**
+ * The registry only selects a fixed route. Authentication, flood limiting and
+ * activity accounting remain ahead of it; individual routes retain validation.
+ * Legacy routes accept decoded objects; this is NOT runtime payload validation.
+ * Incoming or outgoing network packet payload.
+ */
 export type NetworkMessage = {
+  /** Message type identifier. */
   t?: string;
+
+  /** Allowlisted operation, validated by its route. */
   op?: string;
+
+  /** Target entity or item identifier. */
   id?: string | number;
+
+  /** Faction identifier. */
   fac?: string;
+
+  /** Quantity or numeric count. */
   n?: number;
+
+  /** Player or character name. */
   name?: string;
+
+  /** Secret password string. */
   pass?: string;
+
+  /** Chat or broadcast text content. */
   text?: string;
+
+  /** Message body string. */
   msg?: string;
+
+  /** Message sender name. */
   from?: string;
+
+  /** Message recipient name. */
   to?: string;
+
+  /** Fleet order string or mode. */
   o?: string;
+
+  /** Navigation destination identifier. */
   dest?: string;
+
+  /** Targeted entity identifier. */
   target?: number;
+
+  /** Assigned ship or equipment slot identifier. */
   slot?: string | number;
+
+  /** Ship chassis or hull identifier. */
   hull?: number;
+
+  /** Entity unique instance identifier. */
   uid?: string | null;
+
+  /** Credit valuation or amount. */
   val?: number;
+
+  /** Reward share payout. */
   share?: number;
+
+  /** Confirmation boolean status. */
   ok?: boolean;
   th?: number;
   tu?: number;
@@ -71,47 +117,22 @@ export type NetworkMessage = {
   oid?: string | number | null;
   sid?: string | number;
   amt?: number;
+
+  /** Message data fields. */
   data?: Record<string, string | number | boolean | null>;
 };
+
+/** Handler callback invoked when a registered message type is received. */
 export type MessageHandler = (session: Session, message: NetworkMessage) => void;
+
+/** Immutable message router providing registered type listing and dispatch capabilities. */
 export type MessageRegistry = {
+  /** Immutable list of registered message types. */
   types: readonly string[];
+
+  /** Dispatches a message to its registered handler. */
   dispatch: (type: string, session: Session, message: NetworkMessage) => void;
 };
-/**
- * The registry only selects a fixed route. Authentication, flood limiting and
- * activity accounting remain ahead of it; individual routes retain validation.
- * Legacy routes accept decoded objects; this is NOT runtime payload validation.
- * NetworkMessage fields:
- * Incoming or outgoing network packet payload.
- * [t]: Message type identifier.
- * [op]: Allowlisted operation, validated by its route.
- * [id]: Target entity or item identifier.
- * [fac]: Faction identifier.
- * [n]: Quantity or numeric count.
- * [name]: Player or character name.
- * [pass]: Secret password string.
- * [text]: Chat or broadcast text content.
- * [msg]: Message body string.
- * [from]: Message sender name.
- * [to]: Message recipient name.
- * [o]: Fleet order string or mode.
- * [dest]: Navigation destination identifier.
- * [target]: Targeted entity identifier.
- * [slot]: Assigned ship or equipment slot identifier.
- * [hull]: Ship chassis or hull identifier.
- * [uid]: Entity unique instance identifier.
- * [val]: Credit valuation or amount.
- * [share]: Reward share payout.
- * [ok]: Confirmation boolean status.
- * [data]: Message data fields.
- * MessageHandler fields:
- * Handler callback invoked when a registered message type is received.
- * MessageRegistry fields:
- * Immutable message router providing registered type listing and dispatch capabilities.
- * types: Immutable list of registered message types.
- * dispatch: Dispatches a message to its registered handler.
- */
 
 /**
  * Creates an immutable message registry for dispatching typed network messages to their respective handlers.

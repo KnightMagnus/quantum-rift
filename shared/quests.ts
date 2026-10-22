@@ -1,56 +1,136 @@
 export type QuestChainStep = {
   hostile?: string;
+
+  /** Mission step archetype. */
   type: string;
+
+  /** Relative system locator ('W' = contact world, 'A' = near system, 'B' = distant system). */
   where: string;
+
+  /** Step title template. */
   title: string;
+
+  /** Concise objective instructions template. */
   brief: string;
+
+  /** Narrative bridge text delivered upon completing this step. */
   beat?: string;
+
+  /** Target commodity quantity. */
   qty?: number;
+
+  /** Commodity ID for cargo/delivery objectives. */
   cid?: string;
+
+  /** Rush mission delivery time limit in minutes. */
   rush?: number;
+
+  /** Passenger count to transport. */
   pax?: number;
+
+  /** Target count of ships to destroy or board. */
   need?: number;
+
+  /** Target enemy ship name. */
   target?: string;
 };
 export type QuestChain = {
+  /** Unique quest chain identifier. */
   id: string;
+
+  /** Title of the quest storyline. */
   name: string;
+
+  /** Contact archetype alignment required to offer this chain. */
   kind: string;
+
+  /** Initial bar patron dialogue offering the quest chain. */
   intro: string;
+
+  /** Progressive sequence of mission steps. */
   steps: QuestChainStep[];
+
+  /** Epilogue dialogue upon chain completion. */
   end: string;
 };
 export type SideStoryStep = {
   need?: number;
   pax?: number;
+
+  /** Mission step archetype. */
   type: string;
+
+  /** Target star system ID. */
   sys?: string;
+
+  /** Destination port or stellar body ID. */
   dest?: string;
+
+  /** Mission step title. */
   title: string;
+
+  /** Step objective brief. */
   brief: string;
+
+  /** Narrative beat text advancing the story. */
   beat?: string;
+
+  /** Target NPC name. */
   target?: string;
+
+  /** Cargo tonnage. */
   qty?: number;
+
+  /** Cargo commodity identifier. */
   cid?: string;
+
+  /** Delivery time limit in minutes. */
   rush?: number;
+
+  /** Target ship hull ID. */
   hull?: number;
+
+  /** Target faction ID. */
   faction?: string;
 };
 export type SideStoryReward = {
   officer?: string;
+
+  /** Credit reward payout. */
   credits: number;
+
+  /** Discovered station rewarded on completion. */
   radio?: string;
+
+  /** Material crate reward tuple [materialType, grade]. */
   crate?: [string, number];
+
+  /** Blueprint fragments rewarded. */
   bp?: number;
 };
 export type SideStory = {
+  /** Unique side story identifier. */
   id: string;
+
+  /** Story title. */
   name: string;
+
+  /** Starting port ID where quest giver is located. */
   at: string;
+
+  /** Full name and title of the story NPC quest giver. */
   giver: string;
+
+  /** Initial quest offering dialog. */
   intro: string;
+
+  /** Progressive sequence of story mission steps. */
   steps: SideStoryStep[];
+
+  /** Concluding narrative text upon story completion. */
   end: string;
+
+  /** Completion reward bundle. */
   reward: SideStoryReward;
 };
 export type QuestStep = Omit<QuestChainStep, 'where'> & SideStoryStep & { where?: string };
@@ -86,67 +166,6 @@ export type QuestRecord = {
 // plus the story around it. `where` picks the step's system: 'W' (the contact's), 'A' or 'B' (two systems nearby, B further).
 // Text placeholders: {contact} {W} {Wsys} {A} {B} {X} (a port in A) {Y} (a port in B) {ship} {target} {n}.
 // `beat` is told when that step is done, before the next one begins.
-
-/**
- * QuestChainStep fields:
- * type: - Mission step archetype.
- * where: - Relative system locator ('W' = contact world, 'A' = near system, 'B' = distant system).
- * title: - Step title template.
- * brief: - Concise objective instructions template.
- * [beat]: - Narrative bridge text delivered upon completing this step.
- * [qty]: - Target commodity quantity.
- * [cid]: - Commodity ID for cargo/delivery objectives.
- * [rush]: - Rush mission delivery time limit in minutes.
- * [pax]: - Passenger count to transport.
- * [need]: - Target count of ships to destroy or board.
- * [target]: - Target enemy ship name.
- */
-
-/**
- * QuestChain fields:
- * id: - Unique quest chain identifier.
- * name: - Title of the quest storyline.
- * kind: - Contact archetype alignment required to offer this chain.
- * intro: - Initial bar patron dialogue offering the quest chain.
- * steps: - Progressive sequence of mission steps.
- * end: - Epilogue dialogue upon chain completion.
- */
-
-/**
- * SideStoryStep fields:
- * type: - Mission step archetype.
- * [sys]: - Target star system ID.
- * [dest]: - Destination port or stellar body ID.
- * title: - Mission step title.
- * brief: - Step objective brief.
- * [beat]: - Narrative beat text advancing the story.
- * [target]: - Target NPC name.
- * [qty]: - Cargo tonnage.
- * [cid]: - Cargo commodity identifier.
- * [rush]: - Delivery time limit in minutes.
- * [hull]: - Target ship hull ID.
- * [faction]: - Target faction ID.
- */
-
-/**
- * SideStoryReward fields:
- * credits: - Credit reward payout.
- * [radio]: Discovered station rewarded on completion.
- * [crate]: - Material crate reward tuple [materialType, grade].
- * [bp]: - Blueprint fragments rewarded.
- */
-
-/**
- * SideStory fields:
- * id: - Unique side story identifier.
- * name: - Story title.
- * at: - Starting port ID where quest giver is located.
- * giver: - Full name and title of the story NPC quest giver.
- * intro: - Initial quest offering dialog.
- * steps: - Progressive sequence of story mission steps.
- * end: - Concluding narrative text upon story completion.
- * reward: - Completion reward bundle.
- */
 
 /**
  * Honorific title pools for bar contact archetypes.

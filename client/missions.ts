@@ -1,16 +1,37 @@
 import type { ClientGameState } from './main.ts';
 export type MissionKind = 'story' | 'career' | 'arc' | 'job';
 export type MissionTarget = {
+  /** Mission unique key or ID */
   key: string;
+
+  /** Category of mission */
   kind: MissionKind;
+
+  /** Headline or mission name */
   title: string;
+
+  /** Mission description or briefing */
   text: string;
+
+  /** Progress or destination instructions */
   status: string;
+
+  /** System ID to fly to (or null if anywhere) */
   sys: string | null | undefined;
+
+  /** Destination stellar body ID */
   stellar?: string | null;
+
+  /** Mission card tag or category badge */
   tag?: string | null;
+
+  /** Credit reward */
   reward?: number;
+
+  /** Whether mission has a deadline */
   urgent?: boolean;
+
+  /** Whether mission is part of a quest line */
   quest?: boolean;
   type?: string;
   dest?: string;
@@ -35,21 +56,6 @@ import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
 import { STORY } from '../shared/story.ts';
 import { route } from '../shared/rules.ts';
 import { TUTORIAL } from '../shared/tutorial.ts';
-
-/**
- * MissionTarget fields:
- * key: Mission unique key or ID
- * kind: Category of mission
- * title: Headline or mission name
- * text: Mission description or briefing
- * status: Progress or destination instructions
- * sys: System ID to fly to (or null if anywhere)
- * [stellar]: Destination stellar body ID
- * [tag]: Mission card tag or category badge
- * [reward]: Credit reward
- * [urgent]: Whether mission has a deadline
- * [quest]: Whether mission is part of a quest line
- */
 
 /**
  * Resolves the parent system ID for a given stellar body.

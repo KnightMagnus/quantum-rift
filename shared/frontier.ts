@@ -1,151 +1,150 @@
 import type { StellarBody } from '../server/game.ts';
 export type ColonyConfig = {
+  /** Base maximum number of colonies allowed per captain. */
   max: number;
+
+  /** Colony cap when Station Tier reaches level 5. */
   maxAtOps5: number;
+
+  /** Founding cost in credits. */
   cost: number;
+
+  /** Required crafting materials as [materialKey, gradeIndex, quantity]. */
   mats: Array<[string, number, number]>;
+
+  /** Storage buffer capacity in hours before colony warehouses fill up. */
   storeHours: number;
 };
 export type ColonyLevelInfo = {
+  /** Number of building plots available at this level. */
   slots: number;
+
+  /** Production rate multiplier. */
   mult: number;
+
+  /** Credit cost to upgrade to this level. */
   cost?: number;
+
+  /** Required materials to upgrade. */
   mats?: Array<[string, number, number]>;
 };
 export type ColonyBuilding = {
+  /** Building display name. */
   name: string;
+
+  /** Construction cost in credits. */
   cost: number;
+
+  /** Commodity tons or credits produced per hour. */
   produce?: Record<string, number>;
+
+  /** Permanent player ship stat bonuses while owned. */
   buff?: Record<string, number>;
+
+  /** In-game description of building output or benefits. */
   desc: string;
 };
 export type DefenseLevelInfo = {
+  /** Station defense rating score. */
   rating: number;
+
+  /** Credit upgrade cost. */
   cost?: number;
+
+  /** Upgrade crafting materials. */
   mats?: Array<[string, number, number]>;
 };
 export type DefenseConfig = {
+  /** Interval in hours between automated station raid attempts. */
   everyH: number;
+
+  /** Minimum Station Tier required before station raids begin. */
   minOps: number;
+
+  /** Defense upgrades and defensive ratings. */
   levels: DefenseLevelInfo[];
+
+  /** Defense rating contributed per Station Tier. */
   opsRating: number;
+
+  /** Defense rating bonus provided by Station Tier 5 Defense Grid research. */
   gridBonus: number;
+
+  /** Live raid wave encounter duration in minutes. */
   waveMin: number;
 };
 export type MasteryConfig = {
+  /** XP thresholds required to reach mastery tiers 1 through 5. */
   tiers: number[];
+
+  /** Cumulative stat buffs per mastery tier. */
   bonus: Array<Record<string, number>>;
+
+  /** XP granted per gameplay action. */
   xp: Record<string, number>;
 };
 export type ArenaConfig = {
+  /** Team sizes supported per arena game mode. */
   modes: Record<string, number>;
+
+  /** Match time limit in minutes. */
   matchMin: number;
+
+  /** Standard ELO rating K-factor. */
   k: number;
+
+  /** Default baseline starting rating. */
   start: number;
+
+  /** Combat arena combat boundary dimension in units. */
   size: number;
 };
 export type ArenaSystem = {
+  /** Unique system ID for the arena match instance. */
   id: string;
+
+  /** Display name of the arena system. */
   name: string;
+
+  /** Faction controlling the instance. */
   faction: string;
+
+  /** Galactic map X coordinate. */
   x: number;
+
+  /** Galactic map Y coordinate. */
   y: number;
+
+  /** Hyperspace jump route connections. */
   links: string[];
+
+  /** System danger rating. */
   danger: number;
+
+  /** Celestial bodies and stations. */
   stellars: StellarBody[];
+
+  /** Asteroid or dust fields. */
   fields: Array<{ x: number; y: number; r: number; ore: string; rich: number; rocks: number }>;
+
+  /** Flag indicating this system is an instanced arena combat zone. */
   arena: boolean;
 };
-export type ExchangeConfig = { fee: number; maxOrders: number; maxPrice: number };
-export type LeaderboardCategory = { name: string };
+export type ExchangeConfig = {
+  /** Player transaction fee fraction (e.g. 0.02 = 2%). */
+  fee: number;
+  /** Maximum active trade orders permitted per captain. */
+  maxOrders: number;
+  /** Absolute maximum listing price in credits. */
+  maxPrice: number;
+};
+export type LeaderboardCategory = {
+  /** Human-readable leaderboard title. */
+  name: string;
+};
 
 // Quantum Rift: data: planetary colonies, station defense, ship mastery, the arena, the player
 // exchange and leaderboards. Shared by server and client.
-
-/**
- * ColonyConfig fields:
- * max: - Base maximum number of colonies allowed per captain.
- * maxAtOps5: - Colony cap when Station Tier reaches level 5.
- * cost: - Founding cost in credits.
- * mats: - Required crafting materials as [materialKey, gradeIndex, quantity].
- * storeHours: - Storage buffer capacity in hours before colony warehouses fill up.
- */
-
-/**
- * ColonyLevelInfo fields:
- * slots: - Number of building plots available at this level.
- * mult: - Production rate multiplier.
- * [cost]: - Credit cost to upgrade to this level.
- * [mats]: - Required materials to upgrade.
- */
-
-/**
- * ColonyBuilding fields:
- * name: - Building display name.
- * cost: - Construction cost in credits.
- * [produce]: - Commodity tons or credits produced per hour.
- * [buff]: - Permanent player ship stat bonuses while owned.
- * desc: - In-game description of building output or benefits.
- */
-
-/**
- * DefenseLevelInfo fields:
- * rating: - Station defense rating score.
- * [cost]: - Credit upgrade cost.
- * [mats]: - Upgrade crafting materials.
- */
-
-/**
- * DefenseConfig fields:
- * everyH: - Interval in hours between automated station raid attempts.
- * minOps: - Minimum Station Tier required before station raids begin.
- * levels: - Defense upgrades and defensive ratings.
- * opsRating: - Defense rating contributed per Station Tier.
- * gridBonus: - Defense rating bonus provided by Station Tier 5 Defense Grid research.
- * waveMin: - Live raid wave encounter duration in minutes.
- */
-
-/**
- * MasteryConfig fields:
- * tiers: - XP thresholds required to reach mastery tiers 1 through 5.
- * bonus: - Cumulative stat buffs per mastery tier.
- * xp: - XP granted per gameplay action.
- */
-
-/**
- * ArenaConfig fields:
- * modes: - Team sizes supported per arena game mode.
- * matchMin: - Match time limit in minutes.
- * k: - Standard ELO rating K-factor.
- * start: - Default baseline starting rating.
- * size: - Combat arena combat boundary dimension in units.
- */
-
-/**
- * ArenaSystem fields:
- * id: - Unique system ID for the arena match instance.
- * name: - Display name of the arena system.
- * faction: - Faction controlling the instance.
- * x: - Galactic map X coordinate.
- * y: - Galactic map Y coordinate.
- * links: - Hyperspace jump route connections.
- * danger: - System danger rating.
- * stellars: - Celestial bodies and stations.
- * fields: - Asteroid or dust fields.
- * arena: - Flag indicating this system is an instanced arena combat zone.
- */
-
-/**
- * ExchangeConfig fields:
- * fee: - Player transaction fee fraction (e.g. 0.02 = 2%).
- * maxOrders: - Maximum active trade orders permitted per captain.
- * maxPrice: - Absolute maximum listing price in credits.
- */
-
-/**
- * LeaderboardCategory fields:
- * name: - Human-readable leaderboard title.
- */
 
 // ------------------------------------------------------------------ planetary colonies (unsettled planets in Frontier and the Deep)
 /**

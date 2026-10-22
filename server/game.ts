@@ -97,46 +97,122 @@ import type { LootItem, Space as SpaceSpace } from './space.ts';
 import type { EventEmitter } from 'node:events';
 export type Entity = import('./space.ts').Entity;
 export type PlayerInput = {
+  /** Automatic navigation input. */
   navigation?: boolean;
+
+  /** Sequence number. */
   seq: number;
+
+  /** Forward thrust control. */
   thrust: number;
+
+  /** Rotational turn steering. */
   turn: number;
+
+  /** Afterburner boost flag. */
   ab: number;
+
+  /** Reverse thrusters flag. */
   rev: number;
+
+  /** Primary weapon fire flag. */
   fire1: number;
+
+  /** Secondary weapon fire flag. */
   fire2: number;
 };
 export type PlayerData = FeaturePlayerState & {
   id?: number;
+
+  /** Recent trip cash flow; never a source of credits. */
   economyReceipt?: EconomyReceipt;
   miningSurvey?: SavedSurvey;
+
+  /** Specialist blueprint fragments. */
   bp: Record<string, number>;
+
+  /** Captain name. */
   name: string;
+
+  /** Balance in credits. */
   credits: number;
+
+  /** Current solar system ID. */
   sys: string;
+
+  /** Docked stellar or null while flying. */
   stellar: string | null;
+
+  /** Unique identifier for player ship. */
   shipUid?: string;
+
+  /** Current active ship loadout. */
   ship: ShipLoadout;
+
+  /** Cargo inventory mapping commodity ID to tons. */
   cargo: Record<string, number>;
+
+  /** Reputation standings per faction. */
   rep: Record<string, number>;
+
+  /**
+   * Faction tokens balances.
+   * Current player token balances.
+   */
   tokens?: Record<string, number>;
+
+  /** Crafting materials inventory grades. */
   mats: Record<string, number[]>;
+
+  /** Personal station state and research tree. */
   station: StationState;
+
+  /** Personal station stored ships. */
   dock: StoredShip[];
+
+  /** Station shuttle fleet. */
   shuttles: SavedShuttle[];
+
+  /** Station officer roster. */
   officers: Array<OfficerRecord>;
+
+  /** Bridge officer assignments. */
   bridge: Record<string, number | string | null>;
+
+  /** Story arc states. */
   arcs: Record<string, SavedArc>;
+
+  /** Discovered radio station IDs. */
   radioStations?: string[];
+
+  /** Active and completed missions. */
   quests: SavedQuests;
+
+  /** Syndicate operations progression. */
   syn: number;
+
+  /** Specialist career progression. */
   spec: Record<string, number>;
+
+  /** Frontline goals and token progress. */
   fronts: Record<string, number | string | boolean>;
+
+  /** Lifetime combat and trading stats. */
   stats: Record<string, number>;
+
+  /** Armada group identifier if joined. */
   armada?: string | number | null;
+
+  /** Whether following armada leader. */
   armadaFollow?: boolean;
+
+  /** Operations level. */
   ops?: number;
+
+  /** Monotonic counter for IDs. */
   nextUid?: number;
+
+  /** Timestamp of last save. */
   saveTime?: number;
 };
 export interface FormationTarget {
@@ -162,34 +238,89 @@ export type Session = {
   armadaFormationLeader?: string | null;
   armadaFormationTarget?: FormationTarget | null;
   hailLedger?: { space: SpaceSpace; used: Set<string>; seq: number } | null;
+
+  /** Unique session ID. */
   id: number;
+
+  /** Client WebSocket connection. */
   sock: EventEmitter & {
     send: (data: string | Buffer | Uint8Array | object) => void;
     close: () => void;
     open: boolean;
     backlog: number;
   };
+
+  /** Remote client IP address. */
   ip: string;
+
+  /**
+   * Player account save data.
+   * Player account save data from DB.
+   */
   data: PlayerData;
+
+  /**
+   * Currently active ship entity in space.
+   * Currently active ship entity in space, or null if docked.
+   */
   ent: Entity | null;
+
+  /**
+   * Pending input command queue.
+   * Pending input commands queue.
+   */
   inputs: PlayerInput[];
+
+  /**
+   * Most recent processed input.
+   * Most recent input processed.
+   */
   lastInput?: Partial<PlayerInput> | null;
+
+  /** Captain name. */
   name: string | null;
+
+  /** Timestamp of last chat message sent. */
   chatT: number;
+
+  /** Number of messages received in current rate-limiting window. */
   msgs: number;
+
+  /** Timestamp start of current rate-limiting window. */
   msgT: number;
+
+  /** Timestamp of last user activity. */
   actT?: number;
+
+  /** Timestamp when user logged in. */
   loginT?: number;
+
+  /** Whether this account was newly created during login. */
   isNew?: boolean;
+
+  /** Combat assist state for this session. */
   combat?: CombatState;
+
+  /** Timestamp of last cargo-full notification. */
   fullT?: number;
 };
 export type PlayerReference = {
+  /** Session ID. */
   id: number;
+
+  /** Captain name. */
   name: string;
+
+  /** Faction reputation map. */
   rep: Record<string, number>;
+
+  /** Input commands queue. */
   inputs: PlayerInput[];
+
+  /** Last processed input. */
   lastInput?: Partial<PlayerInput> | null;
+
+  /** Reference to the parent session. */
   s: Session;
 };
 export type SpaceSystem = import('../shared/galaxy.ts').StarSystem;
@@ -211,11 +342,22 @@ export type LegacyStellarBody = {
   exit?: string;
 };
 export type MarketItem = {
+  /** Commodity ID. */
   id: string;
+
+  /** Commodity display name. */
   name: string;
+
+  /** Unit price in credits, or null if not traded. */
   price: number | null;
+
+  /** Remaining finite Composite Plating buyer tonnes for this port/day. */
   sellCap?: number;
+
+  /** Whether a temporary flash market price is active. */
   flash?: boolean;
+
+  /** Percentage price shift due to system state or trade volume. */
   moved?: number;
 };
 export type Mission = {
@@ -248,43 +390,127 @@ export type Mission = {
   side?: string;
   story?: string;
   syn?: number | string;
+
+  /**
+   * Mission or trade offer identifier
+   * Unique mission ID.
+   */
   id: string;
+
+  /** Saved five-stop passenger tour. */
   radioTour?: { stops: string[]; stop: number };
+
+  /** Mission type ('cargo', 'bounty', 'patrol', 'supply', 'smuggle', 'assassinate', 'quest', 'warband'). */
   type: string;
+
+  /**
+   * Mission headline
+   * Mission display title.
+   */
   title: string;
+
+  /** Target system ID. */
   sys: string;
+
+  /**
+   * Destination stellar ID for delivery/landing.
+   * Destination system or planet
+   */
   dest?: string;
+
+  /** Commodity ID to transport. */
   cid?: string;
+
+  /** Quantity of cargo/passengers. */
   qty?: number;
+
+  /** Number of passengers. */
   pax?: number;
+
+  /** Target kill count needed for patrol. */
   need?: number;
+
+  /** Current kill count achieved for patrol. */
   got?: number;
+
+  /** Target ship hull ID. */
   hull?: number;
+
+  /** Target faction ID. */
   faction?: string;
+
+  /** Target NPC name for bounty. */
   targetName?: string;
+
+  /** Payout upon completion in credits. */
   reward: number;
+
+  /**
+   * Narrative brief/description.
+   * Mission brief
+   */
   text: string;
+
+  /** Whether mission objectives are fulfilled. */
   done?: boolean;
+
+  /** Whether payout has been disbursed. */
   paid?: boolean;
+
+  /** Session ID of mission contractor. */
   owner?: number | null;
+
+  /** Timestamp when accepted. */
   taken?: number;
+
+  /**
+   * Timestamp deadline if time-sensitive.
+   * Optional deadline timestamp; its presence indicates whether the job has a short delivery deadline.
+   */
   deadline?: number;
+
+  /** Duration in minutes if rush delivery. */
   rush?: number;
+
+  /** Linked quest metadata. */
   quest?: { qid: string; step: number; of: number; name: string };
+
+  /** True for elite dangerous bounties. */
   elite?: boolean;
+
+  /** True if bounty target is currently spawned in-system. */
   spawned?: boolean;
 };
 export type SaveSlotSummary = {
+  /** Captain name. */
   name: string;
+
+  /** Current ship name. */
   ship: string;
+
+  /** Balance in credits. */
   credits: number;
+
+  /** Personal Station Tier. */
   ops: number;
+
+  /** Current system name. */
   sys: string;
 };
 export type CommunityPayload = {
+  /** Names of captains currently docked at Quantum Station. */
   docked: string[];
+
+  /** Leaderboard of top earners. */
   top: Array<{ name: string; earned: number; kills: number; ship: string; ai?: boolean }>;
+
+  /** List of claimable station hulls and their owners. */
   stations: Array<{ system: string; owner: string | null; ops: number }>;
+
+  /**
+   * Captains currently online and their systems.
+   * Active online captains list.
+   */
   online: Array<{ name: string; sys: string }>;
 };
 export type ShipStats = import('../shared/rules.ts').ComputedShipStats;
@@ -305,166 +531,6 @@ import {
   splitLots,
 } from '../shared/cargo-lots.ts';
 import { clampStanding } from '../shared/reputation.ts';
-/**
-
- * PlayerInput fields:
- * [navigation]: Automatic navigation input.
- * seq: Sequence number.
- * thrust: Forward thrust control.
- * turn: Rotational turn steering.
- * ab: Afterburner boost flag.
- * rev: Reverse thrusters flag.
- * fire1: Primary weapon fire flag.
- * fire2: Secondary weapon fire flag.
- * PlayerData fields:
- * [economyReceipt]: Recent trip cash flow; never a source of credits.
- * [bp]: Specialist blueprint fragments.
- * name: Captain name.
- * credits: Balance in credits.
- * sys: Current solar system ID.
- * [stellar]: Docked stellar or null while flying.
- * [shipUid]: Unique identifier for player ship.
- * ship: Current active ship loadout.
- * [cargo]: Cargo inventory mapping commodity ID to tons.
- * [rep]: Reputation standings per faction.
- * [tokens]: Faction tokens balances.
- * [mats]: Crafting materials inventory grades.
- * [station]: Personal station state and research tree.
- * [dock]: Personal station stored ships.
- * [shuttles]: Station shuttle fleet.
- * [officers]: Station officer roster.
- * [bridge]: Bridge officer assignments.
- * [arcs]: Story arc states.
- * [radioStations]: Discovered radio station IDs.
- * [quests]: Active and completed missions.
- * [syn]: Syndicate operations progression.
- * [spec]: Specialist career progression.
- * [fronts]: Frontline goals and token progress.
- * [stats]: Lifetime combat and trading stats.
- * [armada]: Armada group identifier if joined.
- * [armadaFollow]: Whether following armada leader.
- * [ops]: Operations level.
- * [nextUid]: Monotonic counter for IDs.
- * [saveTime]: Timestamp of last save.
- * Session fields:
- * id: Unique session ID.
- * sock: Client WebSocket connection.
- * ip: Remote client IP address.
- * data: Player account save data from DB.
- * ent: Currently active ship entity in space, or null if docked.
- * inputs: Pending input commands queue.
- * [lastInput]: Most recent input processed.
- * name: Captain name.
- * chatT: Timestamp of last chat message sent.
- * msgs: Number of messages received in current rate-limiting window.
- * msgT: Timestamp start of current rate-limiting window.
- * [actT]: Timestamp of last user activity.
- * [loginT]: Timestamp when user logged in.
- * [isNew]: Whether this account was newly created during login.
- * [combat]: Combat assist state for this session.
- * [fullT]: Timestamp of last cargo-full notification.
- * PlayerReference fields:
- * id: Session ID.
- * name: Captain name.
- * rep: Faction reputation map.
- * inputs: Input commands queue.
- * [lastInput]: Last processed input.
- * s: Reference to the parent session.
- * SpaceSystem fields:
- * id: Unique system ID (e.g. 'sol', 'meridian').
- * name: Display name of the system.
- * x: Coordinate on galaxy map.
- * y: Coordinate on galaxy map.
- * danger: Danger level (0-5).
- * links: Connected hyperlanes system IDs.
- * faction: System controlling faction ID.
- * stellars: Planets, stations, sites, and wormholes in this system.
- * [farside]: True if located on the far side of the Sol Gateway.
- * [arena]: True if this is a combat arena system.
- * [anchor]: True if anchor system for exploration.
- * [gate]: True if system contains a wormhole or gateway.
- * [fields]: Mining asteroid fields.
- * StellarBody fields:
- * id: Stellar identifier.
- * name: Stellar display name.
- * [type]: Type of stellar ('planet', 'station', 'site', 'wormhole').
- * x: Position X in system.
- * y: Position Y in system.
- * r: Radius of body.
- * svc: Service flags string ('L' for land, 'T' for trade, 'Y' for shipyard, 'O' for outfitter, 'B' for bar/bounty, etc.).
- * system: System ID where this stellar is located.
- * [tech]: Tech level available for purchase.
- * [site]: True if this is a derelict/claimable Personal Station site.
- * [hub]: True if this is the central hub station (Quantum Station).
- * [outlaw]: True if outlaw haven with no reputation restrictions.
- * [prices]: Custom commodity price overrides.
- * [wormhole]: Destination system ID for wormhole transit.
- * [exit]: Destination stellar ID for wormhole transit.
- * MarketItem fields:
- * id: Commodity ID.
- * name: Commodity display name.
- * price: Unit price in credits, or null if not traded.
- * [sellCap]: Remaining finite Composite Plating buyer tonnes for this port/day.
- * [flash]: Whether a temporary flash market price is active.
- * [moved]: Percentage price shift due to system state or trade volume.
- * Mission fields:
- * id: Unique mission ID.
- * [radioTour]: Saved five-stop passenger tour.
- * type: Mission type ('cargo', 'bounty', 'patrol', 'supply', 'smuggle', 'assassinate', 'quest', 'warband').
- * title: Mission display title.
- * sys: Target system ID.
- * [dest]: Destination stellar ID for delivery/landing.
- * [cid]: Commodity ID to transport.
- * [qty]: Quantity of cargo/passengers.
- * [pax]: Number of passengers.
- * [need]: Target kill count needed for patrol.
- * [got]: Current kill count achieved for patrol.
- * [hull]: Target ship hull ID.
- * [faction]: Target faction ID.
- * [targetName]: Target NPC name for bounty.
- * reward: Payout upon completion in credits.
- * text: Narrative brief/description.
- * [done]: Whether mission objectives are fulfilled.
- * [paid]: Whether payout has been disbursed.
- * [owner]: Session ID of mission contractor.
- * [taken]: Timestamp when accepted.
- * [deadline]: Timestamp deadline if time-sensitive.
- * [rush]: Duration in minutes if rush delivery.
- * [quest]: Linked quest metadata.
- * [elite]: True for elite dangerous bounties.
- * [spawned]: True if bounty target is currently spawned in-system.
- * SaveSlotSummary fields:
- * name: Captain name.
- * ship: Current ship name.
- * credits: Balance in credits.
- * ops: Personal Station Tier.
- * sys: Current system name.
- * CommunityPayload fields:
- * docked: Names of captains currently docked at Quantum Station.
- * top: Leaderboard of top earners.
- * stations: List of claimable station hulls and their owners.
- * online: Captains currently online and their systems.
- * ShipStats fields:
- * shield: Maximum shield capacity.
- * shieldRe: Shield recharge rate per second.
- * armor: Maximum armor / hull points.
- * [armorRe]: Armor repair rate per second.
- * maxSpeed: Maximum forward speed.
- * accel: Acceleration rating.
- * turn: Turn rate in radians per second.
- * cargo: Cargo capacity in metric tons.
- * free: Unallocated outfit mass / space.
- * fuel: Fuel capacity for hyperjumps.
- * [fuelRe]: Fuel ramscoop regeneration rate.
- * size: Collision bounding radius.
- * mass: Total ship mass.
- * weapons: Installed weapon mount counts by weapon ID.
- * guns: Forward gun mount count.
- * maxGuns: Maximum gun mounts.
- * turrets: Turret mount count.
- * maxTurrets: Maximum turret mounts.
- * [jumpFast]: Fast jump drive charge capability.
- */
 
 import { HailService } from './hail-service.ts';
 import { CombatAssist } from './combat-assist.ts';
@@ -522,45 +588,70 @@ const galaxyGraph = new GalaxyGraph(systemsById);
  * Quantum Rift master game engine.
  * Manages player accounts, client network sessions, world and system state,
  * trade markets, mission boards, station management, and game loops.
- * A: Game assets object containing ships, weapons, outfits, and commodities.
- * db: Persistent JSON database instance for player accounts and world state.
- * O: Outfit definitions lookup by ID.
- * spaces: Active simulated spaces by system ID, backed by live proxy.
- * sessions: Connected client sessions by session ID.
- * nextSid: Next session identifier sequence number.
- * tickN: Server tick counter.
- * live: Cache of currently instantiated systems.
- * features: Modular feature service delegations.
- * jobService: Ordinary job board, acceptance and completion owner.
- * portService: Ordinary market, material, shipyard and outfitter owner.
- * combatAssist: Combat assist controller.
- * messageHandlers: Registered client message handlers.
- * fails: Failed sign-in attempt tracking map.
- * paused: Solo-mode pause flag.
- * [pausedAt]: Timestamp when solo mode was paused.
- * [tickErr]: Error count during server ticks.
- * [worldKey]: Cache key for deduplicating world status broadcasts.
  */
 export class Game {
+  /** Game assets object containing ships, weapons, outfits, and commodities. */
   declare A: GameAssets;
+
+  /** Persistent JSON database instance for player accounts and world state. */
   declare db: Database;
+
+  /** Outfit definitions lookup by ID. */
   declare O: Record<string | number, OutfitAsset>;
+
+  /**
+   * Active solar system space instances.
+   * Active simulated spaces by system ID, backed by live proxy.
+   */
   declare spaces: Record<string, SpaceSpace>;
+
+  /**
+   * Active client sessions.
+   * Connected client sessions by session ID.
+   */
   declare sessions: Map<number, Session>;
+
+  /** Cache of currently instantiated systems. */
   declare live: Record<string, SpaceSpace>;
+
+  /** Ordinary job board, acceptance and completion owner. */
   declare jobService: JobService;
+
+  /** Ordinary market, material, shipyard and outfitter owner. */
   declare portService: PortService;
+
+  /** Combat assist controller. */
   declare combatAssist: CombatAssistCombatAssist;
+
+  /** Registered client message handlers. */
   declare messageHandlers: MessageRegistry;
+
+  /** Failed sign-in attempt tracking map. */
   declare fails: Map<string, { n: number; t: number }>;
+
+  /** Solo-mode pause flag. */
   declare paused: boolean;
+
+  /** Error count during server ticks. */
   declare tickErr?: number;
+
+  /** Cache key for deduplicating world status broadcasts. */
   declare worldKey?: string | null;
 
+  /** Next session identifier sequence number. */
   declare nextSid: number;
+
+  /** Server tick counter. */
   declare tickN: number;
   declare hails: HailService;
+
+  /**
+   * Server feature services.
+   * Modular feature service delegations.
+   */
   declare features: FeatureServices;
+
+  /** Timestamp when solo mode was paused. */
   declare pausedAt: number;
 
   /**
@@ -1133,6 +1224,8 @@ export class Game {
    * @param session Destination session.
    * @param message Message object or string to send.
    */
+
+  /** Message transmitter. */
   send(session: Pick<Session, 'sock'>, message: string | object): void {
     if ('sock' in session && session.sock && session.sock.open && session.sock.backlog < 4e6)
       session.sock.send(message);
@@ -1902,6 +1995,8 @@ export class Game {
     return {
       t: 'landed',
       refinery: this.features.refinery.payload(session),
+
+      /** Landed stellar body identifier */
       stellar: stellarBody.id,
       market: this.market(stellarBody),
       tradeTerms: {

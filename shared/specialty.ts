@@ -1,105 +1,133 @@
 import type { RoleId } from './roles.ts';
-export type SpecialistResource = { name: string; icon: string; color: string };
-export type SpecialistShip = {
-  id: number;
-  key: string;
+export type SpecialistResource = {
+  /** Resource item name. */
   name: string;
+  /** Symbol icon representing the resource. */
+  icon: string;
+  /** Hex color code for UI and inventory display. */
+  color: string;
+};
+export type SpecialistShip = {
+  /** Unique ship hull ID (805-814). */
+  id: number;
+
+  /** String identifier key (e.g. 'lodestar', 'swarmbreaker'). */
+  key: string;
+
+  /** Ship hull name. */
+  name: string;
+
+  /** Subtitle / classification. */
   sub: string;
+
+  /** Tactical role profile. */
   role: RoleId;
+
+  /** Associated unique resource key. */
   res: string;
+
+  /** Base credit purchase/build cost. */
   cost: number;
+
+  /** Cargo hold capacity. */
   cargo: number;
+
+  /** Maximum shield strength. */
   shield: number;
+
+  /** Shield recharge rate. */
   shieldRe: number;
+
+  /** Maximum armor plating. */
   armor: number;
+
+  /** Engine acceleration rating. */
   accel: number;
+
+  /** Top sublight speed. */
   speed: number;
+
+  /** Maneuverability / turn rate. */
   turn: number;
+
+  /** Hyperdrive fuel tank capacity. */
   fuel: number;
+
+  /** Free outfit expansion space. */
   space: number;
+
+  /** Fixed gun mount hardpoints. */
   guns: number;
+
+  /** Turret hardpoints. */
   turrets: number;
+
+  /** Ship hull displacement mass. */
   mass: number;
+
+  /** Combat strength rating. */
   strength: number;
+
+  /** Visual sprite scale. */
   size: number;
+
+  /** Default weapon loadout tuples [weaponId, count, ammo]. */
   weapons: Array<[number, number, number]>;
+
+  /** Special innate ship capability description. */
   ability: string;
+
+  /** Gameplay loop description for collecting blueprints and resources. */
   loop: string;
+
+  /** Lore background and flavor text. */
   desc: string;
+
+  /** Category classification ('Specialist'). */
   cat: string;
+
+  /** Faction identifier ('specialist'). */
   faction: string;
+
+  /** Classification key ('specialist'). */
   kind: string;
+
+  /** Purchase availability flag (0). */
   buy: number;
+
+  /** Default AI profile level. */
   ai: number;
+
+  /** Tech level rating. */
   tech: number;
+
+  /** Passive fuel generation rate. */
   fuelRe: number;
+
+  /** Passive armor repair rate. */
   armorRe: number;
+
+  /** Visual engine flare flag. */
   glow: boolean;
+
+  /** Crew complement requirement. */
   crew: number;
 };
-export type SpecialistComponent = { name: string; bonus: Record<string, number> };
-export type SpecialistUpgradeState = { tier?: number; comp?: Record<string, number> };
+export type SpecialistComponent = {
+  /** Component name. */
+  name: string;
+  /** Stat bonuses granted per component upgrade level. */
+  bonus: Record<string, number>;
+};
+export type SpecialistUpgradeState = {
+  /** Current specialist tier level (1 to 5). */
+  tier?: number;
+  /** Mapping of component keys ('weapons', 'shields', etc.) to current upgrade levels. */
+  comp?: Record<string, number>;
+};
 // Quantum Rift: ten one-of-a-kind ships, each built for a single job (after STFC's specialty ships).
 // The loop: the ship's activity drops its blueprints (flying anything) and its unique resource (flying the specialist).
 // The station refines the resource into that ship's parts; parts upgrade five components; a full set unlocks a timed tier-up.
-
-/**
- * SpecialistResource fields:
- * name: - Resource item name.
- * icon: - Symbol icon representing the resource.
- * color: - Hex color code for UI and inventory display.
- */
-
-/**
- * SpecialistShip fields:
- * id: - Unique ship hull ID (805-814).
- * key: - String identifier key (e.g. 'lodestar', 'swarmbreaker').
- * name: - Ship hull name.
- * sub: - Subtitle / classification.
- * role: - Tactical role profile.
- * res: - Associated unique resource key.
- * cost: - Base credit purchase/build cost.
- * cargo: - Cargo hold capacity.
- * shield: - Maximum shield strength.
- * shieldRe: - Shield recharge rate.
- * armor: - Maximum armor plating.
- * accel: - Engine acceleration rating.
- * speed: - Top sublight speed.
- * turn: - Maneuverability / turn rate.
- * fuel: - Hyperdrive fuel tank capacity.
- * space: - Free outfit expansion space.
- * guns: - Fixed gun mount hardpoints.
- * turrets: - Turret hardpoints.
- * mass: - Ship hull displacement mass.
- * strength: - Combat strength rating.
- * size: - Visual sprite scale.
- * weapons: - Default weapon loadout tuples [weaponId, count, ammo].
- * ability: - Special innate ship capability description.
- * loop: - Gameplay loop description for collecting blueprints and resources.
- * desc: - Lore background and flavor text.
- * cat: - Category classification ('Specialist').
- * faction: - Faction identifier ('specialist').
- * kind: - Classification key ('specialist').
- * buy: - Purchase availability flag (0).
- * ai: - Default AI profile level.
- * tech: - Tech level rating.
- * fuelRe: - Passive fuel generation rate.
- * armorRe: - Passive armor repair rate.
- * glow: - Visual engine flare flag.
- * crew: - Crew complement requirement.
- */
-
-/**
- * SpecialistComponent fields:
- * name: - Component name.
- * bonus: - Stat bonuses granted per component upgrade level.
- */
-
-/**
- * SpecialistUpgradeState fields:
- * [tier]: - Current specialist tier level (1 to 5).
- * [comp]: - Mapping of component keys ('weapons', 'shields', etc.) to current upgrade levels.
- */
 
 /**
  * Unique refined resources dropped by each specialist ship archetype.

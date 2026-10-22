@@ -1,106 +1,107 @@
 export type SocialConfig = {
+  /** Maximum friends allowed per captain. */
   friendsMax: number;
+
+  /** Maximum DMs retained for an offline captain per sender. */
   mailMax: number;
+
+  /** Maximum character length of a direct message. */
   dmLen: number;
+
+  /** Cooldown milliseconds between consecutive DMs from the same captain. */
   dmGapMs: number;
+
+  /** Inactivity minutes before a captain is marked as Away. */
   awayMin: number;
 };
-export type ArmadaBuff = { shieldRe: number; bounty: number };
+export type ArmadaBuff = {
+  /** Multiplier for shield recharge rate when sharing a system with members. */
+  shieldRe: number;
+  /** Multiplier for bounty rewards earned in the same system. */
+  bounty: number;
+};
 export type ArmadaConfig = {
+  /** Maximum number of captains allowed in an Armada. */
   max: number;
+
+  /** Validation regular expression for Armada group names. */
   nameRe: RegExp;
+
+  /** Expiration duration in minutes for pending invites. */
   inviteMin: number;
+
+  /** Inactivity minutes before an unattended Armada disbands. */
   idleMin: number;
+
+  /** Passive buffs applied to members sharing a system. */
   buff: ArmadaBuff;
+
+  /** Share of bounties paid out to nearby armada members. */
   share: number;
 };
-export type TradeConfig = { fee: number; idleMin: number; maxLines: number };
-export type DuelConfig = { floor: number; minutes: number; inviteSec: number };
-export type RescueConfig = { windowSec: number; repair: number };
+export type TradeConfig = {
+  /** Credit transfer fee percentage (e.g. 0.02 = 2%). */
+  fee: number;
+  /** Expiration duration in minutes for an idle station trade session. */
+  idleMin: number;
+  /** Maximum distinct item line items allowed per side. */
+  maxLines: number;
+};
+export type DuelConfig = {
+  /** Armor percentage threshold marking a disabled ship/duel defeat. */
+  floor: number;
+  /** Match time limit in minutes before a duel results in a draw. */
+  minutes: number;
+  /** Expiration duration in seconds for duel invitations. */
+  inviteSec: number;
+};
+export type RescueConfig = {
+  /** Seconds allowed for an Armada member to board and rescue a downed ship. */
+  windowSec: number;
+  /** Fraction of armor restored upon successful boarding rescue. */
+  repair: number;
+};
 export type CoopHoldoutConfig = {
+  /** Additional hostiles spawned per helper captain. */
   extraPerHelper: number;
+
+  /** Percentage increase in hostile durability/stats per helper. */
   pctPerHelper: number;
+
+  /** Fraction of wave rewards shared with Armada helpers. */
   helperShare: number;
 };
 export type WarbandConfig = {
+  /** Name pool for warband kingpin flagships. */
   names: string[];
+
+  /** Hull IDs of kingpin flagship hulls (Mk III refits). */
   leads: number[];
+
+  /** Hull IDs of escort guard ships (Mk II refits). */
   guards: number[];
+
+  /** Base number of escort guard ships. */
   guardsBase: number;
+
+  /** Additional escort guards spawned per Armada member. */
   guardsPerMember: number;
+
+  /** Scaling percentage per participating member. */
   pctPerMember: number;
+
+  /** Base credit reward for defeating the warband. */
   rewardBase: number;
+
+  /** Additional credit reward scaled by sector danger level. */
   rewardDanger: number;
+
+  /** Minimum Armada members required to accept the contract. */
   minMembers: number;
 };
 // Quantum Rift: data, shared by server and client: Captain Friends and DMs, the Armada (a short co-op group
 // of up to five captains and their wingmates), trading between Personal Stations, duels and Armada Duels, rescue,
 // co-op Holdout and Armada contracts. All of it is for online games; a solo game hides it.
-
-/**
- * SocialConfig fields:
- * friendsMax: - Maximum friends allowed per captain.
- * mailMax: - Maximum DMs retained for an offline captain per sender.
- * dmLen: - Maximum character length of a direct message.
- * dmGapMs: - Cooldown milliseconds between consecutive DMs from the same captain.
- * awayMin: - Inactivity minutes before a captain is marked as Away.
- */
-
-/**
- * ArmadaBuff fields:
- * shieldRe: - Multiplier for shield recharge rate when sharing a system with members.
- * bounty: - Multiplier for bounty rewards earned in the same system.
- */
-
-/**
- * ArmadaConfig fields:
- * max: - Maximum number of captains allowed in an Armada.
- * nameRe: - Validation regular expression for Armada group names.
- * inviteMin: - Expiration duration in minutes for pending invites.
- * idleMin: - Inactivity minutes before an unattended Armada disbands.
- * buff: - Passive buffs applied to members sharing a system.
- * share: - Share of bounties paid out to nearby armada members.
- */
-
-/**
- * TradeConfig fields:
- * fee: - Credit transfer fee percentage (e.g. 0.02 = 2%).
- * idleMin: - Expiration duration in minutes for an idle station trade session.
- * maxLines: - Maximum distinct item line items allowed per side.
- */
-
-/**
- * DuelConfig fields:
- * floor: - Armor percentage threshold marking a disabled ship/duel defeat.
- * minutes: - Match time limit in minutes before a duel results in a draw.
- * inviteSec: - Expiration duration in seconds for duel invitations.
- */
-
-/**
- * RescueConfig fields:
- * windowSec: - Seconds allowed for an Armada member to board and rescue a downed ship.
- * repair: - Fraction of armor restored upon successful boarding rescue.
- */
-
-/**
- * CoopHoldoutConfig fields:
- * extraPerHelper: - Additional hostiles spawned per helper captain.
- * pctPerHelper: - Percentage increase in hostile durability/stats per helper.
- * helperShare: - Fraction of wave rewards shared with Armada helpers.
- */
-
-/**
- * WarbandConfig fields:
- * names: - Name pool for warband kingpin flagships.
- * leads: - Hull IDs of kingpin flagship hulls (Mk III refits).
- * guards: - Hull IDs of escort guard ships (Mk II refits).
- * guardsBase: - Base number of escort guard ships.
- * guardsPerMember: - Additional escort guards spawned per Armada member.
- * pctPerMember: - Scaling percentage per participating member.
- * rewardBase: - Base credit reward for defeating the warband.
- * rewardDanger: - Additional credit reward scaled by sector danger level.
- * minMembers: - Minimum Armada members required to accept the contract.
- */
 
 /**
  * Social messaging and friend list configuration limits.
