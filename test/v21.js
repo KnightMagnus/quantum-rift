@@ -3,11 +3,11 @@ import { tempDataDir } from './helpers/temp-data.js';
 // 2.1 tests: docks A-E with a lead ship and wingmates each, stored ships, officers crewing wingmates, buying to the hangar.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { STELLARS, WINGMATES } from '../shared/galaxy.js';
-import { makeLoadout } from '../shared/rules.js';
-import { SPEC } from '../shared/specialty.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { STELLARS, WINGMATES } from '../shared/galaxy.ts';
+import { makeLoadout } from '../shared/rules.ts';
+import { SPEC } from '../shared/specialty.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => {
   if (!c) {
@@ -359,7 +359,7 @@ ok(
   g.land(
     C.s,
     cd.stellar ||
-      Object.values((await import('../shared/galaxy.js')).STELLARS).find(
+      Object.values((await import('../shared/galaxy.ts')).STELLARS).find(
         (p) => p.system === cd.sys && p.svc.includes('L'),
       ).id,
   );

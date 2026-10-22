@@ -1,5 +1,5 @@
 import { refineryGame, refineryPilot, seed, lots } from './refinery-fixture.js';
-import { makeLoadout, DT } from '../../shared/rules.js';
+import { makeLoadout, DT } from '../../shared/rules.ts';
 export { seed, lots, DT };
 let pilotCounter = 0;
 export function dredgePilot(g = refineryGame(), name = 'Dredger', hull = 815, sys = 'meridian') {

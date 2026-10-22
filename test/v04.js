@@ -3,11 +3,11 @@ import { tempDataDir } from './helpers/temp-data.js';
 // 0.4 tests: the 200-system galaxy, sleeping systems, region traffic, mining, ore processing, charting, routes.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYSTEMS, SYS, SITES, FACTIONS, ORE_PROCESS } from '../shared/galaxy.js';
-import { route } from '../shared/rules.js';
-import { expandGalaxy } from '../shared/gen.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYSTEMS, SYS, SITES, FACTIONS, ORE_PROCESS } from '../shared/galaxy.ts';
+import { route } from '../shared/rules.ts';
+import { expandGalaxy } from '../shared/gen.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v04-')));
 const ok = (c, m) => {
@@ -80,7 +80,7 @@ ok(
   'the hand-made anchors keep their worlds and routes',
 );
 // determinism: regenerating from the same anchors gives the same galaxy
-const _raw = fs.readFileSync(new URL('../shared/galaxy.js', import.meta.url), 'utf8');
+const _raw = fs.readFileSync(new URL('../shared/galaxy.ts', import.meta.url), 'utf8');
 ok(SITES.length >= 25, `${SITES.length} claimable hulls (17 + Frontier)`);
 const copy = JSON.parse(JSON.stringify(SYSTEMS.filter((s) => s.anchor))).map((s) => ({
   ...s,

@@ -7,13 +7,6 @@
     "outDir": "dist",
     "erasableSyntaxOnly": true
   },
-  "include": [
-    "server/**/*.js",
-    "server/**/*.ts",
-    "shared/**/*.js",
-    "shared/**/*.ts",
-    "client/**/*.js",
-    "client/**/*.ts"
-  ],
+  "include": ["server/**/*.ts", "shared/**/*.ts", "client/**/*.ts"],
   "exclude": ["dist", "node_modules"]
 }

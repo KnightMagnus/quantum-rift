@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { Game } from '../../server/game.js';
-import { DB } from '../../server/db.js';
-import { makeLoadout } from '../../shared/rules.js';
-import { clearLots, addLots, assertLots } from '../../shared/cargo-lots.js';
+import { Game } from '../../server/game.ts';
+import { DB } from '../../server/db.ts';
+import { makeLoadout } from '../../shared/rules.ts';
+import { clearLots, addLots, assertLots } from '../../shared/cargo-lots.ts';
 import { tempDataDir } from './temp-data.js';
 export function refineryGame(db = new DB(tempDataDir('rift-refinery-'))) {
   const interval = globalThis.setInterval;

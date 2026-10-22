@@ -26,7 +26,7 @@ limits. A passing suite does not prove every branch, random seed or device.
 ## Ship-function cockpit convention
 
 Existing and future special ship functions belong in the shared registry in
-client/ship-functions.js: a distinct accessible icon with a collapsible panel,
+client/ship-functions.ts: a distinct accessible icon with a collapsible panel,
 in normal flow above chat. Never add fixed-position function panels or offsets
 per icon. Keep Mining visible but disabled when unavailable. Capability-specific
 Towing, Dredge Processing, Fleet/Formation and Drones appear when applicable.

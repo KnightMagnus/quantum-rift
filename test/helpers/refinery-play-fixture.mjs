@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { DB } from '../../server/db.js';
-import { STELLARS } from '../../shared/galaxy.js';
+import { DB } from '../../server/db.ts';
+import { STELLARS } from '../../shared/galaxy.ts';
 import { refineryGame, refineryPilot, seed, quote, command, lots, w } from './refinery-fixture.js';
 import { tempDataDir } from './temp-data.js';
 import { root, availablePort, evidenceDir, ready, cleanup } from './browser-fixture.mjs';
@@ -55,7 +55,7 @@ export async function refineryFixture(name) {
     preload = path.join(dir, 'refinery-preload.mjs');
   fs.writeFileSync(
     preload,
-    `import fs from 'node:fs';import {Game} from ${JSON.stringify(pathToFileURL(path.join(root, 'server/game.js')).href)};
+    `import fs from 'node:fs';import {Game} from ${JSON.stringify(pathToFileURL(path.join(root, 'server/game.ts')).href)};
  let game;const connect=Game.prototype.connect;Game.prototype.connect=function(...args){game=this;return connect.apply(this,args);};
  const spawn=Game.prototype.spawnPlayer;Game.prototype.spawnPlayer=function(s,...args){spawn.call(this,s,...args);if(!s.data.name.startsWith('Refinery'))return;const sp=this.spaces[s.data.sys];for(const e of [...sp.ships.values()])if(!e.player&&!e.owner)sp.remove(e);sp.spawnT=1e9;const r=sp.rocks.find(r=>r.ore==='gas')||sp.rocks[0];r.ore='gas';r.x=10000;r.y=10000;r.hp=r.max=100000;s.ent.x=10160;s.ent.y=10000;s.ent.a=-Math.PI/2;s.ent.fuel=0;};
  setInterval(()=>{if(!game)return;fs.writeFileSync(${JSON.stringify(telemetry)},JSON.stringify({refinery:game.db.world.refinery,pressure:game.db.world.miningPressure,pilots:[...game.sessions.values()].filter(s=>s.data).map(s=>({name:s.data.name,cargo:s.data.cargo,cargoLots:s.data.cargoLots,fuel:s.ent?.fuel??s.data.fuel,drones:[...(game.live[s.data.sys]?.ships?.values()||[])].filter(e=>e.fighterOf===s.ent?.id).map(e=>({id:e.id,recall:e.recall}))}))}));},40).unref();`,
@@ -64,7 +64,7 @@ export async function refineryFixture(name) {
     origin = `http://127.0.0.1:${portNumber}`,
     server = spawn(
       process.execPath,
-      ['--import', './test/seed-random.js', '--import', preload, 'server/main.js'],
+      ['--import', './test/seed-random.js', '--import', preload, 'server/main.ts'],
       {
         cwd: root,
         env: {

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { freightOffers, INNER_FREIGHT_SYSTEMS } from '../server/freight-offers.js';
-import { STELLARS, SYS, START, FACTIONS } from '../shared/galaxy.js';
-import { makeLoadout, shipStats, route } from '../shared/rules.js';
+import { freightOffers, INNER_FREIGHT_SYSTEMS } from '../server/freight-offers.ts';
+import { STELLARS, SYS, START, FACTIONS } from '../shared/galaxy.ts';
+import { makeLoadout, shipStats, route } from '../shared/rules.ts';
 import { refineryGame, refineryPilot } from './helpers/refinery-fixture.js';
-import { DB } from '../server/db.js';
+import { DB } from '../server/db.ts';
 
 const now = Date.now;
 let time = 1800000000000;

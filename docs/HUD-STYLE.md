@@ -15,7 +15,7 @@ flight screenshot shows the implemented design.
   do not shrink the desktop design's text to fit a narrow screenshot.
 - Function controls use compact key faces, separate visible labels and a small
   indicator. An expanded panel gets the warm oxide active treatment. Keep all
-  ship functions in the registry and scrollable stack in `client/ship-functions.js`.
+  ship functions in the registry and scrollable stack in `client/ship-functions.ts`.
 - COMMS has its own sector/status header, scrolling history, channel controls and
   entry row. Keep long histories inside the screen instead of stretching the deck.
 - A popup has a raised steel header and a distinct recessed `.function-body`.

@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { GalaxyGraph } from '../shared/galaxy-graph.ts';
-import { SYS, STELLARS, COMMODITIES } from '../shared/galaxy.js';
-import { freightOffers } from '../server/freight-offers.js';
-import { Game } from '../server/game.js';
+import { SYS, STELLARS, COMMODITIES } from '../shared/galaxy.ts';
+import { freightOffers } from '../server/freight-offers.ts';
+import { Game } from '../server/game.ts';
 
 const topology = {
   home: { links: ['west', 'east', 'west'], gate: 'remote' },

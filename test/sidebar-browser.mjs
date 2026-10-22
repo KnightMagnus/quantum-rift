@@ -15,8 +15,8 @@ import {
 const out = evidenceDir('sidebar');
 const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
-const { DB } = await import(repo + '/server/db.js');
-const { Game } = await import(repo + '/server/game.js');
+const { DB } = await import(repo + '/server/db.ts');
+const { Game } = await import(repo + '/server/game.ts');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-sidebar-'));
 // Seed once, then give the child server exclusive ownership of the temporary save.
 // A ticking setup Game otherwise starts a second checkpoint writer after 15 seconds.
@@ -36,7 +36,7 @@ g.db.touch();
 g.db.flush();
 const server = spawn(
   process.execPath,
-  ['--import', path.join(repo, 'test/helpers/seed-random.mjs'), 'server/main.js'],
+  ['--import', path.join(repo, 'test/helpers/seed-random.mjs'), 'server/main.ts'],
   {
     cwd: repo,
     env: {

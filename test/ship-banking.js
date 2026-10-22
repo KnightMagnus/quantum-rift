@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { augmentAssets, makeLoadout, shipStats } from '../shared/rules.js';
-import { shipBank } from '../client/ship_banking.js';
+import { augmentAssets, makeLoadout, shipStats } from '../shared/rules.ts';
+import { shipBank } from '../client/ship_banking.ts';
 // Same 15 Hz network samples rendered at different display rates must hold a steady bank.
 function simulate(fps, rate = 0.62, origin = 0, jitter = false) {
   const e = { a: origin, t: 0 },

@@ -1,4 +1,4 @@
-// Disposable real-WebSocket test; start server/main.js with a temporary DATA_DIR first.
+// Disposable real-WebSocket test; start server/main.ts with a temporary DATA_DIR first.
 import assert from 'node:assert/strict';
 const url = process.argv[2] || 'ws://localhost:18766/ws';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

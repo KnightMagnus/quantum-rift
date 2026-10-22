@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { DB } from '../server/db.js';
+import { DB } from '../server/db.ts';
 import { tug, attach, command, atPort, refineryGame } from './helpers/towing-fixture.js';
 import { refineryPilot } from './helpers/refinery-fixture.js';
 for (const point of ['before-journal', 'after-journal', 'between-snapshots', 'final-sync']) {

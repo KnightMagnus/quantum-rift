@@ -4,14 +4,15 @@ import { tempDataDir } from './helpers/temp-data.js';
 // and DMs; the Armada; trading between Personal Stations; no open-galaxy PvP; duels and Armada Duels; rescue; co-op
 // Holdout; Armada contracts.
 import fs from 'node:fs';
+import { stripTypeScriptTypes } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { STELLARS, SYS, SYSTEMS, MK2_OF, MK3_OF } from '../shared/galaxy.js';
-import { makeLoadout, augmentAssets } from '../shared/rules.js';
-import { ARMADA, DUEL, RESCUE, WARBAND } from '../shared/coop.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { STELLARS, SYS, SYSTEMS, MK2_OF, MK3_OF } from '../shared/galaxy.ts';
+import { makeLoadout, augmentAssets } from '../shared/rules.ts';
+import { ARMADA, DUEL, RESCUE, WARBAND } from '../shared/coop.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => {
   if (!c) {
@@ -24,10 +25,10 @@ process.env.SEEDS_FILE = '/nonexistent';
 const C = fileURLToPath(new URL('../client/', import.meta.url));
 {
   const bad = [];
-  for (const f of fs.readdirSync(C).filter((f) => f.endsWith('.js'))) {
+  for (const f of fs.readdirSync(C).filter((f) => f.endsWith('.ts'))) {
     try {
       execFileSync(process.execPath, ['--input-type=module', '--check'], {
-        input: fs.readFileSync(C + f),
+        input: stripTypeScriptTypes(fs.readFileSync(C + f, 'utf8')),
         stdio: ['pipe', 'ignore', 'ignore'],
       });
     } catch {
@@ -38,7 +39,7 @@ const C = fileURLToPath(new URL('../client/', import.meta.url));
 }
 {
   const miss = []; // every name a client script imports from a shared or client module is actually exported there
-  for (const f of fs.readdirSync(C).filter((f) => f.endsWith('.js')))
+  for (const f of fs.readdirSync(C).filter((f) => f.endsWith('.ts')))
     for (const m of fs.readFileSync(C + f, 'utf8').matchAll(/import \{([^}]+)\} from '([^']+)'/g)) {
       const path = m[2].startsWith('/shared/')
         ? new URL('..' + m[2], import.meta.url).href
@@ -698,7 +699,7 @@ ok(
     'a solo game has no Armada, friends or contracts',
   );
 }
-const read = (f) => fs.readFileSync(C + f, 'utf8');
+const read = (f) => fs.readFileSync(C + f.replace(/\.js$/, '.ts'), 'utf8');
 // Follow local imports so moving a rule cannot hide it from this contract.
 // Actual computed visibility is checked in Chromium by sidebar-browser.mjs.
 const readStyles = (url) =>

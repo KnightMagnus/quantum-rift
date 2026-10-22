@@ -1,7 +1,7 @@
 // Transport boundary regressions: real parser with a controlled duplex TCP surface.
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import { Socket, upgrade } from '../server/ws.js';
+import { Socket, upgrade } from '../server/ws.ts';
 
 class Wire extends EventEmitter {
   writes = [];

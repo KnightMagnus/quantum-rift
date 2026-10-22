@@ -2,11 +2,12 @@ import { seedCargo } from './helpers/cargo-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 // 2.5 tests: the rendered art set is complete and wired up, plus the polish pass (career steps, market depth, dialogs).
 import fs from 'node:fs';
+import { stripTypeScriptTypes } from 'node:module';
 import { execFileSync } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { STELLARS, SYS, EXTRA_OUTFITS } from '../shared/galaxy.js';
-import { TUTORIAL, tutMigrate } from '../shared/tutorial.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { STELLARS, SYS, EXTRA_OUTFITS } from '../shared/galaxy.ts';
+import { TUTORIAL, tutMigrate } from '../shared/tutorial.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => {
   if (!c) {
@@ -18,13 +19,13 @@ const ok = (c, m) => {
 process.env.SEEDS_FILE = '/nonexistent';
 const C = decodeURIComponent(new URL('../client/', import.meta.url).pathname),
   AS = C + 'assets/';
-const read = (f) => fs.readFileSync(C + f, 'utf8');
+const read = (f) => fs.readFileSync(C + f.replace(/\.js$/, '.ts'), 'utf8');
 {
   const bad = [];
-  for (const f of fs.readdirSync(C).filter((f) => f.endsWith('.js'))) {
+  for (const f of fs.readdirSync(C).filter((f) => f.endsWith('.ts'))) {
     try {
       execFileSync(process.execPath, ['--input-type=module', '--check'], {
-        input: fs.readFileSync(C + f),
+        input: stripTypeScriptTypes(fs.readFileSync(C + f, 'utf8')),
         stdio: ['pipe', 'ignore', 'ignore'],
       });
     } catch {
@@ -91,7 +92,7 @@ ok(
   'twelve station designs, each with a space sprite and a landing picture',
 );
 // landing pictures
-const LS = read('ui.js').match(/const LAND_SCENES = (\{[\s\S]*?\});/)[1],
+const LS = stripTypeScriptTypes(read('ui.js')).match(/const LAND_SCENES\s*= (\{[\s\S]*?\});/)[1],
   scenes = [...LS.matchAll(/'([a-z_0-9]+)'/g)]
     .map((m) => m[1])
     .filter(

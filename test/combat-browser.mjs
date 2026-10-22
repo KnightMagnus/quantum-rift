@@ -6,9 +6,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { augmentAssets, makeLoadout } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { augmentAssets, makeLoadout } from '../shared/rules.ts';
 
 const protection = process.env.RIFT_BROWSER_PROTECTION === '1';
 const neutral = process.env.RIFT_BROWSER_TARGET === 'neutral';
@@ -37,10 +37,10 @@ fs.writeFileSync(
   fixture,
   `
 import fs from 'node:fs';
-import { Game } from ${JSON.stringify(moduleUrl('server/game.js'))};
-import { Space } from ${JSON.stringify(moduleUrl('server/space.js'))};
-import { SYS } from ${JSON.stringify(moduleUrl('shared/galaxy.js'))};
-import { RIVALS } from ${JSON.stringify(moduleUrl('shared/rivals.js'))};
+import { Game } from ${JSON.stringify(moduleUrl('server/game.ts'))};
+import { Space } from ${JSON.stringify(moduleUrl('server/space.ts'))};
+import { SYS } from ${JSON.stringify(moduleUrl('shared/galaxy.ts'))};
+import { RIVALS } from ${JSON.stringify(moduleUrl('shared/rivals.ts'))};
 let active, foe, space, shots = 0, previousWrite = 0;
 const spawnPlayer = Game.prototype.spawnPlayer;
 Game.prototype.spawnPlayer = function(s, ...args) {
@@ -106,7 +106,7 @@ Game.prototype.tick = function(...args) {
 );
 const port = Number(process.env.RIFT_BROWSER_PORT || 18775);
 const origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['--import', fixture, 'server/main.js'], {
+const server = spawn(process.execPath, ['--import', fixture, 'server/main.ts'], {
   cwd: root,
   env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: path.join(dir, 'data') },
   stdio: ['ignore', 'pipe', 'pipe'],

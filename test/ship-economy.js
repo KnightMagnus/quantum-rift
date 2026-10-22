@@ -9,11 +9,11 @@ import {
   loadoutValue,
   ensureStockOutfits,
   repairBasis,
-} from '../shared/rules.js';
-import { Game } from '../server/game.js';
-import { DocksOperations } from '../server/docks.js';
-import { HangarOperations } from '../server/hangar.js';
-import { STELLARS, WINGMATES } from '../shared/galaxy.js';
+} from '../shared/rules.ts';
+import { Game } from '../server/game.ts';
+import { DocksOperations } from '../server/docks.ts';
+import { HangarOperations } from '../server/hangar.ts';
+import { STELLARS, WINGMATES } from '../shared/galaxy.ts';
 const A = augmentAssets(
   JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url))),
 );

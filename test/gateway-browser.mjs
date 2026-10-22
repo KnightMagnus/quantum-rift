@@ -12,8 +12,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-gate-browser-'));
 const evidence = path.resolve(process.argv[2] || evidenceDir('gateway'));
 fs.mkdirSync(evidence, { recursive: true });
@@ -32,10 +32,10 @@ const fixture = path.join(dir, 'fixture.mjs');
 fs.writeFileSync(
   fixture,
   'import {Game} from ' +
-    JSON.stringify(pathToFileURL(path.join(root, 'server/game.js')).href) +
+    JSON.stringify(pathToFileURL(path.join(root, 'server/game.ts')).href) +
     ';' +
     'import {SYS} from ' +
-    JSON.stringify(pathToFileURL(path.join(root, 'shared/galaxy.js')).href) +
+    JSON.stringify(pathToFileURL(path.join(root, 'shared/galaxy.ts')).href) +
     ';' +
     'const orig=Game.prototype.spawnPlayer;Game.prototype.spawnPlayer=function(s,...args){orig.call(this,s,...args);if(!s._gatewayFixturePlaced){const p=SYS[s.data.sys].stellars.find(p=>p.wormhole);s._gatewayFixturePlaced=true;Object.assign(s.ent,{x:p.x+250,y:p.y,vx:0,vy:0,a:-Math.PI/2});}for(const e of [...this.spaces[s.data.sys].ships.values()])if(!e.player)this.spaces[s.data.sys].remove(e);};',
 );
@@ -48,7 +48,7 @@ const server = spawn(
     path.join(root, 'test/helpers/seed-random.mjs'),
     '--import',
     fixture,
-    'server/main.js',
+    'server/main.ts',
   ],
   {
     cwd: root,

@@ -4,7 +4,7 @@ import {
   drawShipChat,
   wrapShipChat,
   CHAT_BUBBLE_MS,
-} from '../client/chat_bubbles.js';
+} from '../client/chat_bubbles.ts';
 
 const player = (id, x = 180) => ({ id, hull: 1, fl: 16, ar: 100, rx: x, ry: 200 });
 const G = {

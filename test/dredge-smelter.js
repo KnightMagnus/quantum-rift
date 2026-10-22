@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { dredgePilot, control, industrialStep, seed, lots } from './helpers/dredge-fixture.js';
-import { DB } from '../server/db.js';
+import { DB } from '../server/db.ts';
 import { refineryGame } from './helpers/refinery-fixture.js';
 for (const dt of [1 / 30, 0.5, 1]) {
   const f = dredgePilot(undefined, 'Smelt' + dt),

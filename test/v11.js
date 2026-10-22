@@ -3,11 +3,11 @@ import { tempDataDir } from './helpers/temp-data.js';
 // 1.1 tests: rival captains, hailing, fleet commands, jettison, combat rating, news and market flashes.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS, STELLARS, START } from '../shared/galaxy.js';
-import { RIVALS, combatRank } from '../shared/rivals.js';
-import { makeLoadout } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS, STELLARS, START } from '../shared/galaxy.ts';
+import { RIVALS, combatRank } from '../shared/rivals.ts';
+import { makeLoadout } from '../shared/rules.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v11-')));
 const wingUp = (game, d, hulls) => {

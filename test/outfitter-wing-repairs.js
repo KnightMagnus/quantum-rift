@@ -3,11 +3,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { STELLARS } from '../shared/galaxy.js';
-import { repairBasis } from '../shared/rules.js';
-import { WING_REPAIR_COST } from '../shared/docks.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { STELLARS } from '../shared/galaxy.ts';
+import { repairBasis } from '../shared/rules.ts';
+import { WING_REPAIR_COST } from '../shared/docks.ts';
 process.env.SEEDS_FILE = '/nonexistent';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url))),
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-outfitter-repairs-')),

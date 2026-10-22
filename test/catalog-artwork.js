@@ -1,6 +1,6 @@
 // Catalog URLs must bypass pre-repair HTTP caches without disabling release caching.
 import assert from 'node:assert/strict';
-import { artworkUrl, setArtworkVersion } from '../client/artwork.js';
+import { artworkUrl, setArtworkVersion } from '../client/artwork.ts';
 assert.equal(artworkUrl('ships/704_yard.png'), 'assets/ships/704_yard.png?v=catalog-1');
 setArtworkVersion('2.8.3');
 assert.equal(artworkUrl('icons/9020.png'), 'assets/icons/9020.png?v=2.8.3');

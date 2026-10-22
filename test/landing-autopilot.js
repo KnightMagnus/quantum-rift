@@ -2,8 +2,8 @@
 // physics for every stock hull, with varied drift, headings and landing radii.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { landingGuidance, landingReady } from '../client/landing_autopilot.js';
-import { augmentAssets, shipStats, makeLoadout, step, DT, wrap } from '../shared/rules.js';
+import { landingGuidance, landingReady } from '../client/landing_autopilot.ts';
+import { augmentAssets, shipStats, makeLoadout, step, DT, wrap } from '../shared/rules.ts';
 const A = augmentAssets(
   JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url))),
 );

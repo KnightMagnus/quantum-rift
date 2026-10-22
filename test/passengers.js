@@ -4,11 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { STELLARS } from '../shared/galaxy.js';
-import { makeLoadout, shipStats } from '../shared/rules.js';
-import { passengerSeats, occupiedPassengerSeats, PASSENGER_PACK_ID } from '../shared/passengers.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { STELLARS } from '../shared/galaxy.ts';
+import { makeLoadout, shipStats } from '../shared/rules.ts';
+import { passengerSeats, occupiedPassengerSeats, PASSENGER_PACK_ID } from '../shared/passengers.ts';
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-passengers-'));
 try {

@@ -1,10 +1,10 @@
 // Refresh the standalone editor's catalog from this checkout's authoritative game data.
 import fs from 'node:fs';
-import { Game } from '../../server/game.js';
-import { augmentAssets, makeLoadout } from '../../shared/rules.js';
-import { SYSTEMS, SYS, SITES, RESEARCH, START } from '../../shared/galaxy.js';
-import { TUTORIAL } from '../../shared/tutorial.js';
-import { RADIO_STATIONS } from '../../shared/radio-stations.js';
+import { Game } from '../../server/game.ts';
+import { augmentAssets, makeLoadout } from '../../shared/rules.ts';
+import { SYSTEMS, SYS, SITES, RESEARCH, START } from '../../shared/galaxy.ts';
+import { TUTORIAL } from '../../shared/tutorial.ts';
+import { RADIO_STATIONS } from '../../shared/radio-stations.ts';
 const assets = JSON.parse(fs.readFileSync('shared/assets.json'));
 augmentAssets(assets);
 const template = Game.prototype.fresh.call({ A: assets });

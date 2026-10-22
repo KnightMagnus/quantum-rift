@@ -2,8 +2,8 @@
 // velocity errors. Include stock slow-turn and high-acceleration hulls.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { augmentAssets, shipStats, makeLoadout, step, angDiff } from '../shared/rules.js';
-import { steerFormation } from '../server/armada-formation.js';
+import { augmentAssets, shipStats, makeLoadout, step, angDiff } from '../shared/rules.ts';
+import { steerFormation } from '../server/armada-formation.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 augmentAssets(A);
 const proof = [];

@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
-import { WORMHOLE } from '../client/wormhole_animation.js';
-import { loopFrames } from '../client/animation_frames.js';
+import { WORMHOLE } from '../client/wormhole_animation.ts';
+import { loopFrames } from '../client/animation_frames.ts';
 const wormholeFrame = (now) => loopFrames(now, WORMHOLE.frames, WORMHOLE.frameMs).first;
 
 const bytes = fs.readFileSync(new URL('../client/assets/wormhole.png', import.meta.url));

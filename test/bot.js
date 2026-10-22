@@ -1,5 +1,5 @@
 // Headless test: two captains log in, trade, depart, fly, fight, jump and land. Run with the server up: node test/bot.js [url]
-import { TRADE_IMPACT } from '../shared/living.js';
+import { TRADE_IMPACT } from '../shared/living.ts';
 const URL_ = process.argv[2] || 'ws://localhost:8080/ws';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function bot(name) {

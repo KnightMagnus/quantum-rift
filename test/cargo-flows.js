@@ -4,13 +4,13 @@ import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { tempDataDir } from './helpers/temp-data.js';
 import { seedCargo } from './helpers/cargo-fixture.js';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { STELLARS, COMMODITIES, ORE_PROCESS } from '../shared/galaxy.js';
-import { makeLoadout } from '../shared/rules.js';
-import { JETTISON_OWNER_GRACE_SECONDS } from '../server/fleetcmd.js';
-import { TRADE_IMPACT } from '../shared/living.js';
-import { assertLots, addLots, clearLots } from '../shared/cargo-lots.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { STELLARS, COMMODITIES, ORE_PROCESS } from '../shared/galaxy.ts';
+import { makeLoadout } from '../shared/rules.ts';
+import { JETTISON_OWNER_GRACE_SECONDS } from '../server/fleetcmd.ts';
+import { TRADE_IMPACT } from '../shared/living.ts';
+import { assertLots, addLots, clearLots } from '../shared/cargo-lots.ts';
 
 const oldInterval = globalThis.setInterval,
   oldRandom = Math.random;

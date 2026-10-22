@@ -5,9 +5,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { STELLARS } from '../shared/galaxy.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { STELLARS } from '../shared/galaxy.ts';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const evidence = path.resolve(process.argv[2] || 'artifacts/faction-standing');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-standing-browser-'));
@@ -27,7 +27,7 @@ g.db.flush();
 fs.mkdirSync(evidence, { recursive: true });
 const port = Number(process.env.STANDING_TEST_PORT || 18991);
 const origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.js'], {
+const server = spawn(process.execPath, ['server/main.ts'], {
   env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: dir, SEEDS_FILE: '/nonexistent' },
   stdio: ['ignore', 'pipe', 'pipe'],
 });

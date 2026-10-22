@@ -4,7 +4,7 @@ import {
   commodityCargoTonnes,
   reservedCargoTonnes,
 } from '../shared/ship-capacity.ts';
-import { miningPanelState } from '../client/mining-panel-state.js';
+import { miningPanelState } from '../client/mining-panel-state.ts';
 
 const missions = [
   { type: 'cargo', qty: 5 },

@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
+import { DB } from '../server/db.ts';
 import { refineryGame, refineryPilot } from './helpers/refinery-fixture.js';
 import { tempDataDir } from './helpers/temp-data.js';
 import { root, availablePort, ready, cleanup, evidenceDir } from './helpers/browser-fixture.mjs';
-import { radioState } from '../server/radio-discovery.js';
+import { radioState } from '../server/radio-discovery.ts';
 // Exercise the shipped defaults, not the runner's empty SEEDS_FILE override.
 delete process.env.SEEDS_FILE;
 const dir = tempDataDir('rift-default-accounts-');
@@ -44,7 +44,7 @@ for (const solo of [false, true]) {
   const origin = `http://127.0.0.1:${port}`;
   const env = { ...process.env, SOLO: solo ? '1' : '', PORT: String(port), DATA_DIR: data };
   delete env.SEEDS_FILE;
-  const server = spawn(process.execPath, ['server/main.js'], {
+  const server = spawn(process.execPath, ['server/main.ts'], {
     cwd: root,
     env,
     stdio: ['ignore', 'pipe', 'pipe'],

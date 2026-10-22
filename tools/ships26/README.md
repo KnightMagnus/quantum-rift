@@ -28,7 +28,7 @@ and register it in `hulls2.DESIGNS`. Map its new numeric ID to the design key in
 `KEYS.update` in `rift_ships26.py`. Render only that ID into staging. The renderer
 updates this directory's `ships26.json`. Review all headings and three roll sets,
 including base/glow alignment, before copying approved outputs to game assets.
-Update the corresponding entry in `shared/sprites26.js` from that metadata,
+Update the corresponding entry in `shared/sprites26.ts` from that metadata,
 retaining current JSDoc and unrelated/newer records. Do not blindly run the old
 `sprites26_js.py`: it rewrites the registry using only the recovered old roster.
 

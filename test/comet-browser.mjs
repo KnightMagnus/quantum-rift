@@ -17,6 +17,8 @@ const server = http.createServer((req, res) => {
       '<body style="margin:0;background:#030713"><canvas width="1800" height="1300"></canvas></body>',
     );
   let file = path.join(root, decodeURIComponent(pathname));
+  if (/^\/(client|shared)\/.+\.js$/.test(pathname))
+    file = path.join(root, 'dist', decodeURIComponent(pathname));
   if (!file.startsWith(root + path.sep)) return res.writeHead(403).end();
   if (!fs.existsSync(file)) return res.writeHead(404).end();
   res.setHeader(

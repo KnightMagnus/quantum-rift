@@ -1,8 +1,8 @@
-import { Space } from '../server/space.js';
+import { Space } from '../server/space.ts';
 import assert from 'node:assert/strict';
-import { HailService, HAIL_LIMITS, hailText } from '../server/hail-service.js';
-import { contextualHail } from '../server/hail-dialogue.js';
-import { SYS } from '../shared/galaxy.js';
+import { HailService, HAIL_LIMITS, hailText } from '../server/hail-service.ts';
+import { contextualHail } from '../server/hail-dialogue.ts';
+import { SYS } from '../shared/galaxy.ts';
 const sys = Object.keys(SYS)[0];
 let now = 10000000;
 const sent = [],

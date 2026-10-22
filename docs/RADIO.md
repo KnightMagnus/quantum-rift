@@ -32,7 +32,7 @@ The board shows all five stops, the three-seat requirement and the final reward.
 
 ## Supplied audio and later updates
 
-The authoritative content registry is [`shared/radio-stations.js`](../shared/radio-stations.js). Station track counts are **7,4,7,6,8**, respectively. The eight-track Super-Idol sequence was checked against the [supplied published album](https://music.youtube.com/playlist?list=OLAK5uy_lkakAvDQ-FvwPtZQ6gkHf62lgkzycp-iI) and the FLAC masters' track numbers. The published album titles are shown only for station 5. Stations 1–4 have no titles in the shipped registry or MP3 metadata; the HUD simply says **Broadcast**.
+The authoritative content registry is [`shared/radio-stations.ts`](../shared/radio-stations.ts). Station track counts are **7,4,7,6,8**, respectively. The eight-track Super-Idol sequence was checked against the [supplied published album](https://music.youtube.com/playlist?list=OLAK5uy_lkakAvDQ-FvwPtZQ6gkHf62lgkzycp-iI) and the FLAC masters' track numbers. The published album titles are shown only for station 5. Stations 1–4 have no titles in the shipped registry or MP3 metadata; the HUD simply says **Broadcast**.
 
 [`RADIO-AUDIO.json`](RADIO-AUDIO.json) records the source archive hash, source-to-game mapping, output hashes, lengths and conversion settings. All 33 supplied files (32 station songs plus one theme) were converted to 128 kbps stereo 44.1 kHz MP3 with no trimming, stretching, gain changes or generated audio. Source files total 305,931,023 bytes; delivery copies total 100,729,569 bytes, about 67% smaller. The original supplied song lengths are retained.
 

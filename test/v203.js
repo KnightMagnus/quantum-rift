@@ -3,9 +3,9 @@ import { tempDataDir } from './helpers/temp-data.js';
 // 2.0.3 tests: newcomer protection in inner space, calmer raider spawns, and gameplay edge cases.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS, STELLARS, SYSTEMS, TRAFFIC } from '../shared/galaxy.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS, STELLARS, SYSTEMS, TRAFFIC } from '../shared/galaxy.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => {
   if (!c) {
@@ -181,7 +181,7 @@ const land = (id) => {
   d.sys = STELLARS[id].system;
 };
 land('qstation');
-d.ship = (await import('../shared/rules.js')).makeLoadout(A, 704, 'Hauler');
+d.ship = (await import('../shared/rules.ts')).makeLoadout(A, 704, 'Hauler');
 // Mission offers depend on the ten-minute wall-clock window, not just test RNG.
 const realNow = Date.now;
 Date.now = () => 1792339200000;
@@ -212,7 +212,7 @@ ok(d.ship.name === A.ships[d.ship.hull].name, 'a blank ship name falls back to t
 land('qstation');
 g.features.docks.docksInit(d);
 for (const h of [703, 704]) {
-  const ship = (await import('../shared/rules.js')).makeLoadout(A, h, 'W' + h);
+  const ship = (await import('../shared/rules.ts')).makeLoadout(A, h, 'W' + h);
   ship.uid = g.features.docks.shipUid(d);
   d.dock.push({ ship, bridge: {} });
   d.docks[d.activeDock].wings.push({ uid: ship.uid });
@@ -311,7 +311,7 @@ d.lower = ['medic'];
 P.send({
   t: 'lower',
   op: 'hire',
-  kind: Object.keys((await import('../shared/syndicate.js')).LOWER_DECK).find((k) => k !== 'medic'),
+  kind: Object.keys((await import('../shared/syndicate.ts')).LOWER_DECK).find((k) => k !== 'medic'),
   i: 0,
 });
 ok(d.lower[0] === 'medic', 'hiring into a filled lower-deck berth is refused');

@@ -5,11 +5,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { makeLoadout } from '../shared/rules.js';
-import { STELLARS } from '../shared/galaxy.js';
-import { CHAINS } from '../shared/quests.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { makeLoadout } from '../shared/rules.ts';
+import { STELLARS } from '../shared/galaxy.ts';
+import { CHAINS } from '../shared/quests.ts';
 
 process.env.SEEDS_FILE = '/nonexistent';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));

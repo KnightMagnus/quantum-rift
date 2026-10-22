@@ -2,10 +2,10 @@ import { tempDataDir } from './helpers/temp-data.js';
 // 1.0 tests: the Que'vari storyline and the Deep gate (part 1). Career, solo mode and balance follow in later sections.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS, STELLARS, SYSTEMS } from '../shared/galaxy.js';
-import { STORY } from '../shared/story.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS, STELLARS, SYSTEMS } from '../shared/galaxy.ts';
+import { STORY } from '../shared/story.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v10-')));
 export const ok = (c, m) => {
@@ -223,7 +223,7 @@ const mp = fake('Online Only');
 mp.send({ t: 'pause' });
 ok(!game.paused, 'pause only works in solo mode');
 // --- career guide
-const { TUTORIAL } = await import('../shared/tutorial.js');
+const { TUTORIAL } = await import('../shared/tutorial.ts');
 ok(TUTORIAL.length === 23, 'the career guide has twenty-three goals (2.5)');
 const cg = fake('Rookie'),
   cd = cg.s.data;

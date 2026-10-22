@@ -26,10 +26,10 @@ enabled everywhere else.
 
 Type-aware lint uses oxlint-tsgolint 7.0.2004, which uses Go's TypeScript engine,
 not the Rust tsrs checker. `tools/lint-types.mjs` discovers all application `.ts`
-files without shell-specific glob expansion. This scope follows the strict typed
-foundations; legacy JavaScript still receives ordinary correctness lint. A full
-legacy type-aware audit reports issues involving inferred JSDoc types, callbacks
-and promises and is not claimed clean. It is not silently suppressed.
+files without shell-specific glob expansion. The type-aware scope covers all
+application modules. JavaScript test harnesses and developer tools receive
+ordinary correctness lint. The build and typecheck commands reject unchecked
+JavaScript inside application source directories.
 
 Oxfmt 0.74.0 replaces the direct Prettier dependency. `.oxfmtrc.json` keeps single
 quotes, 100-column lines and the existing save/output exclusions. Import and

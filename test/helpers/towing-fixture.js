@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { refineryGame, refineryPilot, seed, lots } from './refinery-fixture.js';
-import { makeLoadout } from '../../shared/rules.js';
-import { TOW } from '../../shared/towing-rules.js';
-import { STELLARS } from '../../shared/galaxy.js';
+import { makeLoadout } from '../../shared/rules.ts';
+import { TOW } from '../../shared/towing-rules.ts';
+import { STELLARS } from '../../shared/galaxy.ts';
 export { refineryGame, seed, lots };
 let counter = 0;
 export function tug(g = refineryGame(), name = 'TowPilot', hull = 815) {

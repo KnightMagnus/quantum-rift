@@ -13,10 +13,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { augmentAssets } from '../shared/rules.js';
-import { SYS, STELLARS } from '../shared/galaxy.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { augmentAssets } from '../shared/rules.ts';
+import { SYS, STELLARS } from '../shared/galaxy.ts';
 const { chromium } = await import('playwright');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-exotic-solo-'));
@@ -61,7 +61,7 @@ const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
 const server = spawn(
   process.execPath,
-  ['--import', path.join(root, 'test/helpers/seed-random.mjs'), 'server/main.js'],
+  ['--import', path.join(root, 'test/helpers/seed-random.mjs'), 'server/main.ts'],
   {
     cwd: root,
     env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: path.join(dir, 'data') },
@@ -88,7 +88,7 @@ try {
       route.fulfill({
         contentType: 'text/javascript',
         body:
-          fs.readFileSync(path.join(root, 'client/render.js'), 'utf8') +
+          fs.readFileSync(path.join(root, 'dist/client/render.js'), 'utf8') +
           '\nexport {stationSprite, stationImgs, hubImg};\n',
       }),
     );

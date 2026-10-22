@@ -10,10 +10,10 @@ import {
   lots,
   w,
 } from './helpers/refinery-fixture.js';
-import { STELLARS } from '../shared/galaxy.js';
-import { RECIPES, recovery, outputUnits } from '../shared/refinery-rules.js';
-import { DB } from '../server/db.js';
-import { clearLots } from '../shared/cargo-lots.js';
+import { STELLARS } from '../shared/galaxy.ts';
+import { RECIPES, recovery, outputUnits } from '../shared/refinery-rules.ts';
+import { DB } from '../server/db.ts';
+import { clearLots } from '../shared/cargo-lots.ts';
 const realNow = Date.now;
 let time = 1800000000000;
 Date.now = () => time;

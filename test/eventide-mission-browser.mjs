@@ -7,9 +7,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { augmentAssets } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { augmentAssets } from '../shared/rules.ts';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-eventide-ui-'));
@@ -27,11 +27,11 @@ db.create('Eventide Supply', 'solo', d);
 const fixture = path.join(dir, 'fixture.mjs');
 fs.writeFileSync(
   fixture,
-  `import {Game} from ${JSON.stringify(pathToFileURL(path.join(root, 'server/game.js')).href)};\nconst spawn=Game.prototype.spawnPlayer,finish=Game.prototype.finishJump;Game.prototype.spawnPlayer=function(s,...args){spawn.call(this,s,...args);if(s.data.name==='Eventide Supply'&&s.data.sys==='lantern-twins'){s.ent.x=0;s.ent.y=-2400;s.ent.vx=s.ent.vy=0;}};Game.prototype.finishJump=function(e,sp){const s=e.player?.s;finish.call(this,e,sp);if(s?.data.name==='Eventide Supply'&&s.data.sys==='aureole'){s.ent.x=-540;s.ent.y=410;s.ent.vx=s.ent.vy=0;}};`,
+  `import {Game} from ${JSON.stringify(pathToFileURL(path.join(root, 'server/game.ts')).href)};\nconst spawn=Game.prototype.spawnPlayer,finish=Game.prototype.finishJump;Game.prototype.spawnPlayer=function(s,...args){spawn.call(this,s,...args);if(s.data.name==='Eventide Supply'&&s.data.sys==='lantern-twins'){s.ent.x=0;s.ent.y=-2400;s.ent.vx=s.ent.vy=0;}};Game.prototype.finishJump=function(e,sp){const s=e.player?.s;finish.call(this,e,sp);if(s?.data.name==='Eventide Supply'&&s.data.sys==='aureole'){s.ent.x=-540;s.ent.y=410;s.ent.vx=s.ent.vy=0;}};`,
 );
 const port = Number(process.env.RIFT_BROWSER_PORT || 18844),
   origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['--import', fixture, 'server/main.js'], {
+const server = spawn(process.execPath, ['--import', fixture, 'server/main.ts'], {
   cwd: root,
   env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: path.join(dir, 'data') },
   stdio: ['ignore', 'pipe', 'pipe'],

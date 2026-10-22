@@ -13,10 +13,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { SYS } from '../shared/galaxy.js';
-import { augmentAssets, makeLoadout } from '../shared/rules.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { SYS } from '../shared/galaxy.ts';
+import { augmentAssets, makeLoadout } from '../shared/rules.ts';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-v-net-'));
 const evidence = process.env.RIFT_FORMATION_DIR || evidenceDir('armada');
 fs.mkdirSync(evidence, { recursive: true });
@@ -38,7 +38,7 @@ fs.writeFileSync(
   fixture,
   `
 import fs from 'node:fs';
-import {Game} from ${JSON.stringify(url('server/game.js'))};
+import {Game} from ${JSON.stringify(url('server/game.ts'))};
 const original=Game.prototype.spawnPlayer;let game;
 Game.prototype.spawnPlayer=function(s,...args){original.call(this,s,...args);game=this;
  const i=${JSON.stringify(names)}.indexOf(s.data.name);if(i<0)return;
@@ -62,7 +62,7 @@ const server = spawn(
     path.join(root, 'test/helpers/seed-random.mjs'),
     '--import',
     fixture,
-    'server/main.js',
+    'server/main.ts',
   ],
   {
     cwd: root,

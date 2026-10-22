@@ -3,15 +3,16 @@ import { tempDataDir } from './helpers/temp-data.js';
 // 2.5.2 tests: the bug-fix and quality-of-life pass (story needs, supply warnings, mining hints, markets for mined goods,
 // war fleets and newcomers, map station marker, broken-ring art).
 import fs from 'node:fs';
+import { stripTypeScriptTypes } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { needsOf } from '../server/quests.js';
-import { STELLARS } from '../shared/galaxy.js';
-import { CHAINS } from '../shared/quests.js';
-import { price, makeLoadout } from '../shared/rules.js';
-import { TUTORIAL } from '../shared/tutorial.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import { needsOf } from '../server/quests.ts';
+import { STELLARS } from '../shared/galaxy.ts';
+import { CHAINS } from '../shared/quests.ts';
+import { price, makeLoadout } from '../shared/rules.ts';
+import { TUTORIAL } from '../shared/tutorial.ts';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const ok = (c, m) => {
   if (!c) {
@@ -22,13 +23,13 @@ const ok = (c, m) => {
 };
 process.env.SEEDS_FILE = '/nonexistent';
 const C = decodeURIComponent(new URL('../client/', import.meta.url).pathname),
-  read = (f) => fs.readFileSync(C + f, 'utf8');
+  read = (f) => fs.readFileSync(C + f.replace(/\.js$/, '.ts'), 'utf8');
 {
   const bad = [];
-  for (const f of fs.readdirSync(C).filter((f) => f.endsWith('.js'))) {
+  for (const f of fs.readdirSync(C).filter((f) => f.endsWith('.ts'))) {
     try {
       execFileSync(process.execPath, ['--input-type=module', '--check'], {
-        input: fs.readFileSync(C + f),
+        input: stripTypeScriptTypes(fs.readFileSync(C + f, 'utf8')),
         stdio: ['pipe', 'ignore', 'ignore'],
       });
     } catch {

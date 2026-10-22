@@ -94,7 +94,7 @@
         "login": ["hangarInit"],
         "tick2s": ["resolveShuttle"]
       },
-      "owner": "server/hangar.js"
+      "owner": "server/hangar.ts"
     },
     {
       "file": "fronts",
@@ -161,7 +161,7 @@
         "tick2s": ["invasionTick"],
         "login": []
       },
-      "owner": "server/fronts.js"
+      "owner": "server/fronts.ts"
     },
     {
       "file": "frontier",
@@ -260,7 +260,7 @@
         "tick2s": ["raidCheck", "waveTick", "arenaTick"],
         "tick30s": ["worldPayload"]
       },
-      "owner": "server/frontier.js"
+      "owner": "server/frontier.ts"
     },
     {
       "file": "specialists",
@@ -314,7 +314,7 @@
       "hooks": {
         "tick2s": ["specIdle", "specCheck"]
       },
-      "owner": "server/specialists.js"
+      "owner": "server/specialists.ts"
     },
     {
       "file": "hostile",
@@ -359,7 +359,7 @@
         "login": ["hostInit"],
         "tick2s": ["holdoutTick"]
       },
-      "owner": "server/hostile.js"
+      "owner": "server/hostile.ts"
     },
     {
       "file": "story",
@@ -400,7 +400,7 @@
       "hooks": {
         "login": ["storyInit", "storyOnLand"]
       },
-      "owner": "server/story.js"
+      "owner": "server/story.ts"
     },
     {
       "file": "rivals",
@@ -447,7 +447,7 @@
         "tick20s": ["rivalsTick"],
         "tick2sOffset": ["rivalSync"]
       },
-      "owner": "server/rivals.js"
+      "owner": "server/rivals.ts"
     },
     {
       "file": "hail",
@@ -473,7 +473,7 @@
       "exportName": "HailOperations",
       "stateWrites": [],
       "hooks": {},
-      "owner": "server/hail.js"
+      "owner": "server/hail.ts"
     },
     {
       "file": "fleetcmd",
@@ -483,7 +483,7 @@
       "exportName": "FleetCmdOperations",
       "stateWrites": [],
       "hooks": {},
-      "owner": "server/fleetcmd.js"
+      "owner": "server/fleetcmd.ts"
     },
     {
       "file": "syndicate",
@@ -523,7 +523,7 @@
         "login": ["synInit"],
         "tick2s": ["missionDeadlines", "bankTick"]
       },
-      "owner": "server/syndicate.js"
+      "owner": "server/syndicate.ts"
     },
     {
       "file": "arcs",
@@ -562,7 +562,7 @@
       "hooks": {
         "login": ["arcsInit", "arcOnLand"]
       },
-      "owner": "server/arcs.js"
+      "owner": "server/arcs.ts"
     },
     {
       "file": "docks",
@@ -622,7 +622,7 @@
       "hooks": {
         "login": ["docksInit"]
       },
-      "owner": "server/docks.js"
+      "owner": "server/docks.ts"
     },
     {
       "file": "living",
@@ -666,7 +666,7 @@
         "worldInit": ["livingInit", "livingTick"],
         "tick20s": ["livingTick"]
       },
-      "owner": "server/living.js"
+      "owner": "server/living.ts"
     },
     {
       "file": "quests",
@@ -723,7 +723,7 @@
       "hooks": {
         "tick2s": ["questSweep", "questSalvageIdle"]
       },
-      "owner": "server/quests.js"
+      "owner": "server/quests.ts"
     },
     {
       "file": "coop",
@@ -849,7 +849,7 @@
         "logout": ["coopLogout"],
         "tick2s": ["coopTick"]
       },
-      "owner": "server/coop.js"
+      "owner": "server/coop.ts"
     },
     {
       "file": "mining",

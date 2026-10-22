@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { DB } from '../server/db.js';
+import { DB } from '../server/db.ts';
 import {
   migrateCargoLots,
   assertLots,
@@ -13,7 +13,7 @@ import {
   clearLots,
   commonLots,
   splitLots,
-} from '../shared/cargo-lots.js';
+} from '../shared/cargo-lots.ts';
 const _clone = (v) => structuredClone(v);
 const snap = (v) => JSON.stringify(v);
 function inventory(cargo = {}, storage = {}) {

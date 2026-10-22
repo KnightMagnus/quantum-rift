@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": false,
+    "allowJs": false,
+    "strict": true,
     "noEmit": true,
     "strictNullChecks": true,
     "target": "ES2022",
@@ -12,37 +12,5 @@
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true
   },
-  "include": [
-    "server/features.js",
-    "server/feature-service.js",
-    "server/fleetcmd.js",
-    "server/contracts.js",
-    "server/combat-assist.js",
-    "server/message-registry.js",
-    "shared/cargo-lots.js",
-    "shared/cargo-contracts.js",
-    "server/game.js",
-    "server/frontier.js",
-    "server/hangar.js",
-    "server/coop.js",
-    "server/mining.js",
-    "server/mining-contracts.js",
-    "shared/mining-rules.js",
-    "server/refinery.js",
-    "server/refinery-contracts.js",
-    "shared/refinery-rules.js",
-    "server/trade-pricing.js",
-    "server/mining-pressure.js",
-    "server/mining-pressure-contracts.js",
-    "shared/mining-pressure-rules.js",
-    "server/industrial.js",
-    "server/industrial-contracts.js",
-    "shared/industrial-rules.js",
-    "server/towing.js",
-    "server/towing-contracts.js",
-    "shared/towing-rules.js",
-    "server/**/*.ts",
-    "client/**/*.ts",
-    "shared/**/*.ts"
-  ]
+  "include": ["server/**/*.ts", "client/**/*.ts", "shared/**/*.ts"]
 }

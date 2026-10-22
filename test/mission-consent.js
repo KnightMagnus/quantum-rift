@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { refineryGame, refineryPilot } from './helpers/refinery-fixture.js';
-import { STELLARS } from '../shared/galaxy.js';
-import { contractShares } from '../shared/mission-payouts.js';
-import { DB } from '../server/db.js';
+import { STELLARS } from '../shared/galaxy.ts';
+import { contractShares } from '../shared/mission-payouts.ts';
+import { DB } from '../server/db.ts';
 function setup(count) {
   const g = refineryGame(),
     pilots = Array.from({ length: count }, (_, i) => refineryPilot(g, `Team ${i + 1}`));
