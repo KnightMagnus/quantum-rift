@@ -63,94 +63,93 @@ export type LeaderboardCategory = { name: string };
 // exchange and leaderboards. Shared by server and client.
 
 /**
- * @typedef {Object} ColonyConfig
- * @property {number} max - Base maximum number of colonies allowed per captain.
- * @property {number} maxAtOps5 - Colony cap when Station Tier reaches level 5.
- * @property {number} cost - Founding cost in credits.
- * @property {Array<[string, number, number]>} mats - Required crafting materials as [materialKey, gradeIndex, quantity].
- * @property {number} storeHours - Storage buffer capacity in hours before colony warehouses fill up.
+ * ColonyConfig fields:
+ * max: - Base maximum number of colonies allowed per captain.
+ * maxAtOps5: - Colony cap when Station Tier reaches level 5.
+ * cost: - Founding cost in credits.
+ * mats: - Required crafting materials as [materialKey, gradeIndex, quantity].
+ * storeHours: - Storage buffer capacity in hours before colony warehouses fill up.
  */
 
 /**
- * @typedef {Object} ColonyLevelInfo
- * @property {number} slots - Number of building plots available at this level.
- * @property {number} mult - Production rate multiplier.
- * @property {number} [cost] - Credit cost to upgrade to this level.
- * @property {Array<[string, number, number]>} [mats] - Required materials to upgrade.
+ * ColonyLevelInfo fields:
+ * slots: - Number of building plots available at this level.
+ * mult: - Production rate multiplier.
+ * [cost]: - Credit cost to upgrade to this level.
+ * [mats]: - Required materials to upgrade.
  */
 
 /**
- * @typedef {Object} ColonyBuilding
- * @property {string} name - Building display name.
- * @property {number} cost - Construction cost in credits.
- * @property {Object.<string, number>} [produce] - Commodity tons or credits produced per hour.
- * @property {Object.<string, number>} [buff] - Permanent player ship stat bonuses while owned.
- * @property {string} desc - In-game description of building output or benefits.
+ * ColonyBuilding fields:
+ * name: - Building display name.
+ * cost: - Construction cost in credits.
+ * [produce]: - Commodity tons or credits produced per hour.
+ * [buff]: - Permanent player ship stat bonuses while owned.
+ * desc: - In-game description of building output or benefits.
  */
 
 /**
- * @typedef {Object} DefenseLevelInfo
- * @property {number} rating - Station defense rating score.
- * @property {number} [cost] - Credit upgrade cost.
- * @property {Array<[string, number, number]>} [mats] - Upgrade crafting materials.
+ * DefenseLevelInfo fields:
+ * rating: - Station defense rating score.
+ * [cost]: - Credit upgrade cost.
+ * [mats]: - Upgrade crafting materials.
  */
 
 /**
- * @typedef {Object} DefenseConfig
- * @property {number} everyH - Interval in hours between automated station raid attempts.
- * @property {number} minOps - Minimum Station Tier required before station raids begin.
- * @property {DefenseLevelInfo[]} levels - Defense upgrades and defensive ratings.
- * @property {number} opsRating - Defense rating contributed per Station Tier.
- * @property {number} gridBonus - Defense rating bonus provided by Station Tier 5 Defense Grid research.
- * @property {number} waveMin - Live raid wave encounter duration in minutes.
+ * DefenseConfig fields:
+ * everyH: - Interval in hours between automated station raid attempts.
+ * minOps: - Minimum Station Tier required before station raids begin.
+ * levels: - Defense upgrades and defensive ratings.
+ * opsRating: - Defense rating contributed per Station Tier.
+ * gridBonus: - Defense rating bonus provided by Station Tier 5 Defense Grid research.
+ * waveMin: - Live raid wave encounter duration in minutes.
  */
 
 /**
- * @typedef {Object} MasteryConfig
- * @property {number[]} tiers - XP thresholds required to reach mastery tiers 1 through 5.
- * @property {Array<Object.<string, number>>} bonus - Cumulative stat buffs per mastery tier.
- * @property {Object.<string, number>} xp - XP granted per gameplay action.
+ * MasteryConfig fields:
+ * tiers: - XP thresholds required to reach mastery tiers 1 through 5.
+ * bonus: - Cumulative stat buffs per mastery tier.
+ * xp: - XP granted per gameplay action.
  */
 
 /**
- * @typedef {Object} ArenaConfig
- * @property {Object.<string, number>} modes - Team sizes supported per arena game mode.
- * @property {number} matchMin - Match time limit in minutes.
- * @property {number} k - Standard ELO rating K-factor.
- * @property {number} start - Default baseline starting rating.
- * @property {number} size - Combat arena combat boundary dimension in units.
+ * ArenaConfig fields:
+ * modes: - Team sizes supported per arena game mode.
+ * matchMin: - Match time limit in minutes.
+ * k: - Standard ELO rating K-factor.
+ * start: - Default baseline starting rating.
+ * size: - Combat arena combat boundary dimension in units.
  */
 
 /**
- * @typedef {Object} ArenaSystem
- * @property {string} id - Unique system ID for the arena match instance.
- * @property {string} name - Display name of the arena system.
- * @property {string} faction - Faction controlling the instance.
- * @property {number} x - Galactic map X coordinate.
- * @property {number} y - Galactic map Y coordinate.
- * @property {string[]} links - Hyperspace jump route connections.
- * @property {number} danger - System danger rating.
- * @property {StellarBody[]} stellars - Celestial bodies and stations.
- * @property {Array<{x: number, y: number, r: number, ore: string, rich: number, rocks: number}>} fields - Asteroid or dust fields.
- * @property {boolean} arena - Flag indicating this system is an instanced arena combat zone.
+ * ArenaSystem fields:
+ * id: - Unique system ID for the arena match instance.
+ * name: - Display name of the arena system.
+ * faction: - Faction controlling the instance.
+ * x: - Galactic map X coordinate.
+ * y: - Galactic map Y coordinate.
+ * links: - Hyperspace jump route connections.
+ * danger: - System danger rating.
+ * stellars: - Celestial bodies and stations.
+ * fields: - Asteroid or dust fields.
+ * arena: - Flag indicating this system is an instanced arena combat zone.
  */
 
 /**
- * @typedef {Object} ExchangeConfig
- * @property {number} fee - Player transaction fee fraction (e.g. 0.02 = 2%).
- * @property {number} maxOrders - Maximum active trade orders permitted per captain.
- * @property {number} maxPrice - Absolute maximum listing price in credits.
+ * ExchangeConfig fields:
+ * fee: - Player transaction fee fraction (e.g. 0.02 = 2%).
+ * maxOrders: - Maximum active trade orders permitted per captain.
+ * maxPrice: - Absolute maximum listing price in credits.
  */
 
 /**
- * @typedef {Object} LeaderboardCategory
- * @property {string} name - Human-readable leaderboard title.
+ * LeaderboardCategory fields:
+ * name: - Human-readable leaderboard title.
  */
 
 // ------------------------------------------------------------------ planetary colonies (unsettled planets in Frontier and the Deep)
 /**
  * Planetary colony foundation limits, costs, and warehouse limits.
- * @type {ColonyConfig}
  */
 export const COLONY: ColonyConfig = {
   max: 2,
@@ -165,7 +164,6 @@ export const COLONY: ColonyConfig = {
 
 /**
  * Colony progression tiers detailing building slots, multipliers, and upgrade requirements.
- * @type {Array<ColonyLevelInfo|null>}
  */
 export const COLONY_LEVELS: Array<ColonyLevelInfo | null> = [
   // level -> building slots, production multiplier, upgrade cost
@@ -214,7 +212,6 @@ export const COLONY_LEVELS: Array<ColonyLevelInfo | null> = [
 // produce: commodity tons per hour (or credits per hour); buff: permanent ship bonus while you own the building (capped per stat)
 /**
  * Constructible colony infrastructure buildings, outputs, and passive player bonuses.
- * @type {Object.<string, ColonyBuilding>}
  */
 export const BUILDINGS: Record<string, ColonyBuilding> = {
   farm: {
@@ -281,7 +278,6 @@ export const BUILDINGS: Record<string, ColonyBuilding> = {
 
 /**
  * Maximum cumulative stat bonuses attainable from colony structures.
- * @type {Object.<string, number>}
  */
 export const BUFF_CAP: Record<string, number> = {
   shieldPct: 9,
@@ -294,7 +290,6 @@ export const BUFF_CAP: Record<string, number> = {
 // ------------------------------------------------------------------ station defense: raids on Personal Stations
 /**
  * Station security and defense parameters against periodic raider attacks.
- * @type {DefenseConfig}
  */
 export const DEFENSE: DefenseConfig = {
   everyH: 8,
@@ -338,7 +333,6 @@ export const DEFENSE: DefenseConfig = {
 // ------------------------------------------------------------------ ship mastery (per hull)
 /**
  * Ship mastery configuration, tier XP thresholds, bonuses, and XP sources.
- * @type {MasteryConfig}
  */
 export const MASTERY: MasteryConfig = {
   tiers: [0, 300, 1000, 2500, 6000], // xp to reach tiers 1-5
@@ -355,8 +349,8 @@ export const MASTERY: MasteryConfig = {
 
 /**
  * Calculates current ship mastery tier (1-5) achieved based on earned XP.
- * @param {number} experience - Accumulated hull mastery experience points.
- * @returns {number} Mastery tier level (1 to 5).
+ * @param experience - Accumulated hull mastery experience points.
+ * @returns Mastery tier level (1 to 5).
  */
 export function masteryTier(experience: number): number {
   let time = 1;
@@ -368,7 +362,6 @@ export function masteryTier(experience: number): number {
 // ------------------------------------------------------------------ the arena: instanced, rated PvP away from the open galaxy
 /**
  * Arena instanced combat rules and rating parameters.
- * @type {ArenaConfig}
  */
 export const ARENA: ArenaConfig = {
   modes: { '1v1': 1, '2v2': 2, '4v4': 4 },
@@ -380,8 +373,8 @@ export const ARENA: ArenaConfig = {
 
 /**
  * Instantiates a temporary star system structure to host an arena match.
- * @param {string} identifier - Unique match or session identifier.
- * @returns {ArenaSystem} Stand-in star system data for the arena combat instance.
+ * @param identifier - Unique match or session identifier.
+ * @returns Stand-in star system data for the arena combat instance.
  */
 export function arenaSystem(identifier: string): ArenaSystem {
   // a stand-in system for an arena instance (registered on demand on both server and client)
@@ -401,11 +394,11 @@ export function arenaSystem(identifier: string): ArenaSystem {
 
 /**
  * Calculates standard Elo rating point change following a match outcome.
- * @param {number} reputationAmount - Rating of player A.
- * @param {number} rightBoundary - Rating of player B.
- * @param {boolean} firstWon - True if player A won; false if player B won.
- * @param {number} [entryKey=32] - Rating change sensitivity factor.
- * @returns {number} Net rating points gained or lost by player A.
+ * @param reputationAmount - Rating of player A.
+ * @param rightBoundary - Rating of player B.
+ * @param firstWon - True if player A won; false if player B won.
+ * @param entryKey - Rating change sensitivity factor.
+ * @returns Net rating points gained or lost by player A.
  */
 export function elo(
   playerRating: number,
@@ -420,14 +413,12 @@ export function elo(
 // ------------------------------------------------------------------ the exchange (player market)
 /**
  * Player-to-player trade exchange rules and transaction constraints.
- * @type {ExchangeConfig}
  */
 export const EXCHANGE: ExchangeConfig = { fee: 0.02, maxOrders: 12, maxPrice: 1e9 };
 
 // ------------------------------------------------------------------ leaderboards
 /**
  * Ranked leaderboard categories and display labels.
- * @type {Object.<string, LeaderboardCategory>}
  */
 export const BOARDS: Record<string, LeaderboardCategory> = {
   earned: { name: 'Credits earned' },

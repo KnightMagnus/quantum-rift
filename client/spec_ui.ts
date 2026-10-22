@@ -35,34 +35,34 @@ import { ROLES_INFO } from '../shared/roles.ts';
 import { credits } from '../shared/rules.ts';
 
 /**
- * @typedef {Object} SpecialistComponent
- * @property {string} name Display name of component
- * @property {Record<string, number>} bonus Stat bonuses
+ * SpecialistComponent fields:
+ * name: Display name of component
+ * bonus: Stat bonuses
  */
 
 /**
- * @typedef {Object} SpecialistDef
- * @property {string} id Unique hull identifier
- * @property {string} name Ship name
- * @property {string} sub Ship subtitle / designation
- * @property {string} role Ship role identifier
- * @property {string} res Unique specialist resource key
- * @property {string} ability Description of special ability
- * @property {string} loop Primary gameplay loop description
- * @property {number} cost Credit cost to build
+ * SpecialistDef fields:
+ * id: Unique hull identifier
+ * name: Ship name
+ * sub: Ship subtitle / designation
+ * role: Ship role identifier
+ * res: Unique specialist resource key
+ * ability: Description of special ability
+ * loop: Primary gameplay loop description
+ * cost: Credit cost to build
  */
 
 /**
- * @typedef {Object} SpecialistProgress
- * @property {number} tier Current specialist tier (1..5)
- * @property {Record<string, number>} comp Current component upgrade levels
- * @property {number} [upT] Timestamp when tier-up in drydock completes
+ * SpecialistProgress fields:
+ * tier: Current specialist tier (1..5)
+ * comp: Current component upgrade levels
+ * [upT]: Timestamp when tier-up in drydock completes
  */
 
 /**
  * Formats duration in milliseconds to a human-readable minutes and hours string.
- * @param {number} milliseconds Duration in milliseconds
- * @returns {string} Formatted duration (e.g. '15m' or '2h 10m')
+ * @param milliseconds Duration in milliseconds
+ * @returns Formatted duration (e.g. '15m' or '2h 10m')
  */
 const minutes = (milliseconds: number): string => {
   const message = Math.max(0, Math.ceil(milliseconds / 60000));
@@ -71,18 +71,18 @@ const minutes = (milliseconds: number): string => {
 
 /**
  * Formats a specialist resource icon, amount, and name with faction color.
- * @param {string} entryKey Resource identifier
- * @param {number} count Resource quantity
- * @returns {string} HTML markup
+ * @param entryKey Resource identifier
+ * @param count Resource quantity
+ * @returns HTML markup
  */
 const response = (entryKey: string, count: number): string =>
   `<span style="color:${SPEC_RES[entryKey].color}">${entryKey === 'plasma' ? '<img alt="Plasma" width="20" height="20" src="/assets/icons/dredge-plasma.png">' : SPEC_RES[entryKey].icon} ${count} ${escapeHtml2(SPEC_RES[entryKey].name)}</span>`;
 
 /**
  * Renders the full Specialists screen at the Personal Station or docked view.
- * @param {ClientGameState} clientGameState Game state object
- * @param {boolean} [interactive] Whether interactive buttons are enabled
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param interactive Whether interactive buttons are enabled
+ * @returns HTML markup
  */
 export function specialistsHtml(clientGameState: ClientGameState, interactive?: boolean): string {
   const playerPayload = clientGameState.you!,

@@ -69,8 +69,9 @@ function validate(industrialShip: State) {
   )
     throw Error('Invalid industrial ship save');
 }
-/** Staged whole cargo + finite-source change, same checkpoint as existing player/world economy.
- * @param {C} capabilities @param {Session} session @param {(d:Player,w:IndustrialWorld)=>void} callback */
+/**
+ * Staged whole cargo + finite-source change, same checkpoint as existing player/world economy.
+ */
 function transaction(
   capabilities: IndustrialCapabilities2,
   session: Session,

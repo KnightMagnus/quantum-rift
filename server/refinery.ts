@@ -322,8 +322,9 @@ function advance(capabilities: RefineryCapabilities2) {
     }
   }
 }
-/** Bound settled history without discarding live escrow/reservations. IDs never recycle.
- * @param {W} savedRefinery @param {number} currentTime */
+/**
+ * Bound settled history without discarding live escrow/reservations. IDs never recycle.
+ */
 function prune(savedRefinery: SavedRefinery2, currentTime: number) {
   savedRefinery.fuelQuotes = savedRefinery.fuelQuotes.filter(
     (fuelQuote) => fuelQuote.expires > currentTime,
@@ -390,8 +391,9 @@ function demand(savedRefinery: SavedRefinery2, port: string, currentTime: number
   }
   return refineryDemand;
 }
-/** Transaction uses copies and the existing world+player checkpoint. No async gap.
- * @param {C} capabilities @param {Session} session @param {(w:W,d:RefineryPlayer)=>void} callback */
+/**
+ * Transaction uses copies and the existing world+player checkpoint. No async gap.
+ */
 function transaction(
   capabilities: RefineryCapabilities2,
   session: Session,
@@ -913,13 +915,15 @@ function fuel(
     );
   });
 }
-/** Bind economics into the opaque offer token; a paid authored slot never reopens on price drift.
- * @param {string} identifier */
+/**
+ * Bind economics into the opaque offer token; a paid authored slot never reopens on price drift.
+ */
 function offerKey(identifier: string) {
   return identifier.slice(0, identifier.lastIndexOf(':'));
 }
-/** Finite sourcing orders share a persisted daily/event budget, never per-login inventory.
- * @param {C} capabilities @param {RefineryPlayer} playerData @param {string} port @returns {MiningOrder[]} */
+/**
+ * Finite sourcing orders share a persisted daily/event budget, never per-login inventory.
+ */
 function offers(
   capabilities: RefineryCapabilities2,
   playerData: RefineryPlayer,

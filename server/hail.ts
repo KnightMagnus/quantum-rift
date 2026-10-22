@@ -24,19 +24,18 @@ import { credits } from '../shared/rules.ts';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
- * @param {number} value - Value to clamp.
- * @param {number} firstValue - Minimum value.
- * @param {number} secondValue - Maximum value.
- * @returns {number} Clamped value.
+ * @param value - Value to clamp.
+ * @param firstValue - Minimum value.
+ * @param secondValue - Maximum value.
+ * @returns Clamped value.
  */
 const _clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Select a random element from an array.
- * @template T
- * @param {T[]} firstValue - Array of items.
- * @returns {T} Selected item.
+ * @param firstValue - Array of items.
+ * @returns Selected item.
  */
 const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
   firstValue[Math.floor(Math.random() * firstValue.length)];
@@ -44,8 +43,8 @@ const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
 export const HailOperations = {
   /**
    * Calculate credit cost to bribe hostile forces based on player ship and cargo.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {number} Credit cost to bribe.
+   * @param playerData - Saved player data.
+   * @returns Credit cost to bribe.
    */
   bribeCost(this: HailCapabilities, playerData: PlayerData) {
     const shipHullAsset = this.A.ships[playerData.ship.hull],
@@ -65,9 +64,9 @@ export const HailOperations = {
   },
   /**
    * Find and validate the targeted ship for a hail within comms range.
-   * @param {Session} session - Player session.
-   * @param {NetworkMessage} message - Target hail message.
-   * @returns {{sp: Space, e: Entity, root: Entity} | null} Target context or null if unreachable.
+   * @param session - Player session.
+   * @param message - Target hail message.
+   * @returns Target context or null if unreachable.
    */
   hailTarget(this: HailCapabilities, session: Session, message: NetworkMessage) {
     const playerData = session.data,
@@ -85,9 +84,8 @@ export const HailOperations = {
   },
   /**
    * Open communications with a targeted ship or selected planet.
-   * @param {Session} session - Player session.
-   * @param {NetworkMessage} message - Inbound hail message.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Inbound hail message.
    */
   hail(this: HailCapabilities, session: Session, message: NetworkMessage) {
     const playerData = session.data;
@@ -197,9 +195,8 @@ export const HailOperations = {
   },
   /**
    * Process a player's selected dialogue response or negotiation option in a hail.
-   * @param {Session} session - Player session.
-   * @param {NetworkMessage} message - Inbound dialogue choice message.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Inbound dialogue choice message.
    */
   hailOpt(this: HailCapabilities, session: Session, message: NetworkMessage) {
     const playerData = session.data;
@@ -328,9 +325,8 @@ export const HailOperations = {
   // planets: docking control. When your standing is too low to land, docking control can be persuaded.
   /**
    * Hail a planet's docking control for landing clearance.
-   * @param {Session} session - Player session.
-   * @param {string} identifier - Stellar body identifier.
-   * @returns {void}
+   * @param session - Player session.
+   * @param identifier - Stellar body identifier.
    */
   hailPlanet(this: HailCapabilities, session: Session, identifier: string) {
     const playerData = session.data,
@@ -372,9 +368,8 @@ export const HailOperations = {
   },
   /**
    * Handle dialogue response for planetary docking control (such as paying bribes for clearance).
-   * @param {Session} session - Player session.
-   * @param {NetworkMessage} message - Inbound option message.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Inbound option message.
    */
   hailPlanetOpt(this: HailCapabilities, session: Session, message: NetworkMessage) {
     const playerData = session.data,

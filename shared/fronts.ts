@@ -45,68 +45,67 @@ import { EXALTED_STANDING } from './reputation.ts';
 // Armada rules are defined in shared/coop.js.
 
 /**
- * @typedef {Object} InvasionBoss
- * @property {string} id - Unique boss encounter identifier.
- * @property {string} name - Display title of the world boss flagship.
- * @property {number} hull - Hull ID of the boss ship.
- * @property {string} faction - Faction allegiance of the boss.
- * @property {number} mult - Boss durability/shield scaling multiplier.
- * @property {number} pool - Total bounty credit pool distributed among attackers.
- * @property {number[]} minions - Array of escort minion hull IDs spawned alongside the boss.
+ * InvasionBoss fields:
+ * id: - Unique boss encounter identifier.
+ * name: - Display title of the world boss flagship.
+ * hull: - Hull ID of the boss ship.
+ * faction: - Faction allegiance of the boss.
+ * mult: - Boss durability/shield scaling multiplier.
+ * pool: - Total bounty credit pool distributed among attackers.
+ * minions: - Array of escort minion hull IDs spawned alongside the boss.
  */
 
 /**
- * @typedef {Object} InvasionConfig
- * @property {number} everyMin - Interval in minutes between boss invasion spawns.
- * @property {number} lastMin - Active duration in minutes before unvanquished bosses retreat.
- * @property {number} minShare - Minimum share of boss damage required to qualify for bounty rewards.
+ * InvasionConfig fields:
+ * everyMin: - Interval in minutes between boss invasion spawns.
+ * lastMin: - Active duration in minutes before unvanquished bosses retreat.
+ * minShare: - Minimum share of boss damage required to qualify for bounty rewards.
  */
 
 /**
- * @typedef {Object} SpaceAnomaly
- * @property {string} name - Display name of the spatial anomaly.
- * @property {string} icon - Symbol icon representing the anomaly.
- * @property {string} color - Hex color code for UI and star map overlays.
- * @property {string} desc - Description explaining gameplay and tactical consequences.
- * @property {Object.<string, number>} mods - Numerical modifiers applied within affected systems.
+ * SpaceAnomaly fields:
+ * name: - Display name of the spatial anomaly.
+ * icon: - Symbol icon representing the anomaly.
+ * color: - Hex color code for UI and star map overlays.
+ * desc: - Description explaining gameplay and tactical consequences.
+ * mods: - Numerical modifiers applied within affected systems.
  */
 
 /**
- * @typedef {Object} GoalTypeDef
- * @property {(arg0: number) => string} text - Callback returning formatted goal objective description.
- * @property {[number, number]} daily - Minimum and maximum threshold range for daily assignments.
- * @property {[number, number]} weekly - Minimum and maximum threshold range for weekly assignments.
+ * GoalTypeDef fields:
+ * text: - Callback returning formatted goal objective description.
+ * daily: - Minimum and maximum threshold range for daily assignments.
+ * weekly: - Minimum and maximum threshold range for weekly assignments.
  */
 
 /**
- * @typedef {Object} ServerEvent
- * @property {string} id - Unique event identifier.
- * @property {number} [day] - Day of week (0=Sunday ... 6=Saturday) when this event takes place.
- * @property {string} name - Event title.
- * @property {string} desc - In-game description of event bonuses and global modifiers.
- * @property {Object.<string, number>} mods - Active gameplay modifiers during the event window.
+ * ServerEvent fields:
+ * id: - Unique event identifier.
+ * [day]: - Day of week (0=Sunday ... 6=Saturday) when this event takes place.
+ * name: - Event title.
+ * desc: - In-game description of event bonuses and global modifiers.
+ * mods: - Active gameplay modifiers during the event window.
  */
 
 /**
- * @typedef {Object} FactionStoreTier
- * @property {number} rep - Minimum reputation required to reach this standing tier.
- * @property {string} name - Title designation of the reputation tier.
+ * FactionStoreTier fields:
+ * rep: - Minimum reputation required to reach this standing tier.
+ * name: - Title designation of the reputation tier.
  */
 
 /**
- * @typedef {Object} FactionStoreItem
- * @property {string} id - Unique item identifier.
- * @property {string} name - Display name of the store listing.
- * @property {number} tokens - Faction token cost to purchase.
- * @property {number} credits - Credit cost component.
- * @property {number} rep - Minimum faction reputation prerequisite.
- * @property {Record<string, number | string | boolean>} give - Reward payload delivered to player upon purchase.
+ * FactionStoreItem fields:
+ * id: - Unique item identifier.
+ * name: - Display name of the store listing.
+ * tokens: - Faction token cost to purchase.
+ * credits: - Credit cost component.
+ * rep: - Minimum faction reputation prerequisite.
+ * give: - Reward payload delivered to player upon purchase.
  */
 
 // ------------------------------------------------------------------ invasions (server-wide bosses)
 /**
  * Server-wide world boss fleet flagship definitions.
- * @type {InvasionBoss[]}
  */
 export const BOSSES: InvasionBoss[] = [
   {
@@ -131,14 +130,12 @@ export const BOSSES: InvasionBoss[] = [
 
 /**
  * World boss invasion schedule and participation reward thresholds.
- * @type {InvasionConfig}
  */
 export const INVASION: InvasionConfig = { everyMin: 120, lastMin: 45, minShare: 0.02 };
 
 // ------------------------------------------------------------------ anomalies (rotate every 6 hours over 9 systems)
 /**
  * System space anomalies altering flight, sensor, and combat parameters.
- * @type {Object.<string, SpaceAnomaly>}
  */
 export const ANOMALIES: Record<string, SpaceAnomaly> = {
   ion: {
@@ -187,14 +184,12 @@ export const ANOMALIES: Record<string, SpaceAnomaly> = {
 
 /**
  * Anomaly rotation cycle length in hours and simultaneous system count.
- * @type {{ hours: number, count: number }}
  */
 export const ANOMALY: { hours: number; count: number } = { hours: 6, count: 9 };
 
 // ------------------------------------------------------------------ goals (daily resets 00:00 UTC, weekly on Monday)
 /**
  * Daily and weekly goal archetype definitions and target quantity ranges.
- * @type {Object.<string, GoalTypeDef>}
  */
 export const GOAL_TYPES: Record<string, GoalTypeDef> = {
   kills: {
@@ -225,7 +220,6 @@ export const GOAL_TYPES: Record<string, GoalTypeDef> = {
 
 /**
  * Reward credit and faction token packages granted for completing daily and weekly goals.
- * @type {Object.<string, { credits: number, tokens: number }>}
  */
 export const GOAL_REWARD: Record<string, { credits: number; tokens: number }> = {
   daily: { credits: 15000, tokens: 2 },
@@ -236,7 +230,6 @@ export const GOAL_REWARD: Record<string, { credits: number; tokens: number }> = 
 // a weekly rhythm (after STFC's event days), by UTC weekday, plus a monthly Gold Vein weekend
 /**
  * Weekly calendar of repeating server-wide events and active modifiers.
- * @type {ServerEvent[]}
  */
 export const EVENTS: ServerEvent[] = [
   {
@@ -292,7 +285,6 @@ export const EVENTS: ServerEvent[] = [
 
 /**
  * Monthly special Gold Vein event active during the first weekend of each month.
- * @type {ServerEvent}
  */
 export const GOLD_VEIN: ServerEvent = {
   id: 'gold',
@@ -303,14 +295,12 @@ export const GOLD_VEIN: ServerEvent = {
 
 /**
  * Number of days each server event persists.
- * @type {number}
  */
 export const EVENT_DAYS: number = 1;
 
 // ------------------------------------------------------------------ faction stores (tokens earned from jobs and goals for a faction)
 /**
  * Faction store access tiers governed by standing reputation points.
- * @type {FactionStoreTier[]}
  */
 export const STORE_TIERS: FactionStoreTier[] = [
   { rep: 10, name: 'Known' },
@@ -321,7 +311,6 @@ export const STORE_TIERS: FactionStoreTier[] = [
 
 /**
  * Goods, contracts, and items available for purchase in faction stores.
- * @type {FactionStoreItem[]}
  */
 export const STORE_ITEMS: FactionStoreItem[] = [
   {
@@ -385,7 +374,6 @@ export const STORE_ITEMS: FactionStoreItem[] = [
 // which crate material each power favours in its store
 /**
  * Mapping of faction ID to the preferred raw material type stocked in their stores.
- * @type {Object.<string, string>}
  */
 export const STORE_MAT: Record<string, string> = {
   quantum: 'alloy',
@@ -403,7 +391,6 @@ export const STORE_MAT: Record<string, string> = {
 // ------------------------------------------------------------------ expanded jobs
 /**
  * Supported freelance job archetype classifications.
- * @type {string[]}
  */
 export const JOB_KINDS: string[] = [
   'cargo',
@@ -418,13 +405,11 @@ export const JOB_KINDS: string[] = [
 
 /**
  * Maximum steps in multi-stage progressive faction job chains.
- * @type {number}
  */
 export const CHAIN_STEPS: number = 3; // faction job chains: three steps, each pays more
 
 /**
  * Security patrol scanner configuration parameters for contraband interception.
- * @type {{ range: number, chance: number, fine: number, cooldown: number }}
  */
 export const SCAN: { range: number; chance: number; fine: number; cooldown: number } = {
   range: 320,
@@ -438,9 +423,9 @@ export const SCAN: { range: number; chance: number; fine: number; cooldown: numb
 // anomalies for the current 6-hour window, deterministic from the time: { systemId: anomalyId }
 /**
  * Calculates deterministic system anomaly placements for the active 6-hour time window.
- * @param {Array<{ id: string, faction?: string, farside?: boolean }>} systems - Star systems array.
- * @param {number} [currentTime=Date.now()] - Current epoch timestamp in milliseconds.
- * @returns {Object.<string, string>} Mapping of system ID to anomaly ID.
+ * @param systems - Star systems array.
+ * @param currentTime - Current epoch timestamp in milliseconds.
+ * @returns Mapping of system ID to anomaly ID.
  */
 export function anomaliesAt(
   systems: Array<{ id: string; faction?: string; farside?: boolean }>,
@@ -462,8 +447,8 @@ export function anomaliesAt(
 
 /**
  * Resolves the active server event corresponding to a given timestamp.
- * @param {number} [currentTime=Date.now()] - Epoch timestamp in milliseconds.
- * @returns {ServerEvent|undefined} Active server event or monthly Gold Vein event.
+ * @param currentTime - Epoch timestamp in milliseconds.
+ * @returns Active server event or monthly Gold Vein event.
  */
 export function eventAt(currentTime: number = Date.now()): ServerEvent | undefined {
   const date = new Date(currentTime),
@@ -476,9 +461,9 @@ export function eventAt(currentTime: number = Date.now()): ServerEvent | undefin
 
 /**
  * Computes scheduled server events spanning n consecutive days from a starting timestamp.
- * @param {number} [currentTime=Date.now()] - Epoch timestamp in milliseconds.
- * @param {number} [count=7] - Number of days to include in the schedule.
- * @returns {ScheduledEvent[]} Array of scheduled event windows with start and end timestamps.
+ * @param currentTime - Epoch timestamp in milliseconds.
+ * @param count - Number of days to include in the schedule.
+ * @returns Array of scheduled event windows with start and end timestamps.
  */
 export function eventCalendar(
   currentTime: number = Date.now(),
@@ -495,8 +480,8 @@ export function eventCalendar(
 
 /**
  * Computes the epoch day index for UTC day boundaries.
- * @param {number} [currentTime=Date.now()] - Epoch timestamp in milliseconds.
- * @returns {number} Day index number.
+ * @param currentTime - Epoch timestamp in milliseconds.
+ * @returns Day index number.
  */
 export function dayKey(currentTime: number = Date.now()): number {
   return Math.floor(currentTime / 86400000);
@@ -504,8 +489,8 @@ export function dayKey(currentTime: number = Date.now()): number {
 
 /**
  * Computes the epoch week index (starting Monday 00:00 UTC).
- * @param {number} [currentTime=Date.now()] - Epoch timestamp in milliseconds.
- * @returns {number} Week index number.
+ * @param currentTime - Epoch timestamp in milliseconds.
+ * @returns Week index number.
  */
 export function weekKey(currentTime: number = Date.now()): number {
   return Math.floor((currentTime / 86400000 + 3) / 7);

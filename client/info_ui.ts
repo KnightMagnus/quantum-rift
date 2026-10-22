@@ -44,42 +44,42 @@ import { synBadge } from './syn_ui.ts';
 import { price } from '../shared/rules.ts';
 
 /**
- * @typedef {Object} BestSaleResult
- * @property {StellarBody} p Stellar body object
- * @property {number} price Commodity price per ton
- * @property {number} jumps Jumps distance
+ * BestSaleResult fields:
+ * p: Stellar body object
+ * price: Commodity price per ton
+ * jumps: Jumps distance
  */
 
 /**
- * @typedef {Object} RivalCaptain
- * @property {string} name Captain name
- * @property {string} kind Career type
- * @property {string} fac Faction identifier
- * @property {string} ship Ship hull name
- * @property {string|null} [sys] Current system ID
- * @property {'nemesis'|'rival'|'neutral'|'friendly'|'ally'} mood Standing category
- * @property {number} rel Standing relationship score
+ * RivalCaptain fields:
+ * name: Captain name
+ * kind: Career type
+ * fac: Faction identifier
+ * ship: Ship hull name
+ * [sys]: Current system ID
+ * mood: Standing category
+ * rel: Standing relationship score
  */
 
 /**
- * @typedef {Object} ShipStats
- * @property {number} shield Shield strength
- * @property {number} armor Armor strength
- * @property {number} maxSpeed Maximum forward speed
- * @property {number} turn Turn rate
- * @property {number} cargo Cargo capacity in tons
- * @property {number} space Total outfit space
- * @property {number} free Available free outfit space
- * @property {number} guns Equipped gun count
- * @property {number} maxGuns Maximum gun mounts
- * @property {number} turrets Equipped turret count
- * @property {number} maxTurrets Maximum turret mounts
+ * ShipStats fields:
+ * shield: Shield strength
+ * armor: Armor strength
+ * maxSpeed: Maximum forward speed
+ * turn: Turn rate
+ * cargo: Cargo capacity in tons
+ * space: Total outfit space
+ * free: Available free outfit space
+ * guns: Equipped gun count
+ * maxGuns: Maximum gun mounts
+ * turrets: Equipped turret count
+ * maxTurrets: Maximum turret mounts
  */
 
 /**
  * Formats a number to rounded, localized string.
- * @param {number} count Input number
- * @returns {string} Formatted number string
+ * @param count Input number
+ * @returns Formatted number string
  */
 const credits2 = (count: number): string => Math.round(count).toLocaleString();
 const order2 = [
@@ -99,9 +99,9 @@ const MOODC = {
 
 /**
  * Renders the Info panel (I key) including ship stats, cargo jettison, career ledger, wingmate orders, and rival captains.
- * @param {ClientGameState} clientGameState Game state object
- * @param {InfoTab|string} [activeTab] Sub-tab to render ('ship', 'career', 'fleet', or 'captains')
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param activeTab Sub-tab to render ('ship', 'career', 'fleet', or 'captains')
+ * @returns HTML markup
  */
 export function infoHtml(clientGameState: ClientGameState, activeTab?: string): string {
   const playerPayload = clientGameState.you!;
@@ -204,8 +204,8 @@ export function infoHtml(clientGameState: ClientGameState, activeTab?: string): 
 
 /**
  * Renders the career overview ledger (holdings, net worth, story progress, exploration record).
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 function careerHtml(clientGameState: ClientGameState): string {
   const playerPayload = clientGameState.you!,
@@ -297,9 +297,9 @@ function careerHtml(clientGameState: ClientGameState): string {
 
 /**
  * Finds the nearby explored trade port within four jumps offering the best sale price for a commodity.
- * @param {ClientGameState} clientGameState Game state object
- * @param {string} captainId Commodity identifier
- * @returns {BestSaleResult|null} Best sale location, price, and jumps distance or null
+ * @param clientGameState Game state object
+ * @param captainId Commodity identifier
+ * @returns Best sale location, price, and jumps distance or null
  */
 export function bestSale(
   clientGameState: ClientGameState,

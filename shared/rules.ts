@@ -247,34 +247,31 @@ import { RANK_MULT, TRAITS, LOWER_DECK } from './syndicate.ts';
 
 /**
  * Simulation tick rate in cycles per second.
- * @type {number}
  */
 export const TICK: number = 30; // simulation steps per second
 
 /**
  * Duration of a single simulation time step in seconds.
- * @type {number}
  */
 const tickDuration: number = 1 / TICK;
 export { tickDuration as DT };
 
 /**
  * Raw asset physics units to Quantum Rift physics scaling factors.
- * @typedef {Object} PhysicsConstants
- * @property {number} speed - Velocity multiplier.
- * @property {number} accel - Acceleration multiplier.
- * @property {number} turn - Turn rate multiplier.
- * @property {number} shot - Projectile velocity multiplier.
- * @property {number} shieldRe - Shield recharge rate multiplier.
- * @property {number} armorRe - Armor repair rate multiplier.
- * @property {number} beamDps - Continuous beam damage scale.
- * @property {number} jumpFuel - Fuel cost per hyperdrive jump.
- * @property {number} jumpClear - Minimum clearance distance from stellar bodies required to jump.
+ * PhysicsConstants fields:
+ * speed: - Velocity multiplier.
+ * accel: - Acceleration multiplier.
+ * turn: - Turn rate multiplier.
+ * shot: - Projectile velocity multiplier.
+ * shieldRe: - Shield recharge rate multiplier.
+ * armorRe: - Armor repair rate multiplier.
+ * beamDps: - Continuous beam damage scale.
+ * jumpFuel: - Fuel cost per hyperdrive jump.
+ * jumpClear: - Minimum clearance distance from stellar bodies required to jump.
  */
 
 /**
  * Scaling constants for translating raw engine units to Rift units.
- * @type {PhysicsConstants}
  */
 // Asset-space units -> simulation units
 const physicsConstants: PhysicsConstants = {
@@ -292,78 +289,78 @@ export { physicsConstants as K };
 
 /**
  * Ship hull specification definition from asset database.
- * @typedef {Object} ShipHullAsset
- * @property {number|string} [id] Hull item identifier.
- * @property {string} name Ship model name.
- * @property {number} price Chassis purchase price in credits.
- * @property {number} mass Base dry hull mass.
- * @property {number} shield Base shield hit points.
- * @property {number} armor Base armor hit points.
- * @property {number} accel Base linear acceleration.
- * @property {number} speed Base maximum velocity.
- * @property {number} turn Base angular turn rate.
- * @property {number} space Total outfit space capacity.
- * @property {number} cargo Cargo hold capacity in tons.
- * @property {number} fuel Maximum hyperspace fuel units.
- * @property {number} shieldRe Shield recharge rate per second.
- * @property {number} armorRe Armor repair rate per second.
- * @property {number} fuelRe Fuel regeneration rate per second.
- * @property {Array<[number|string, number]>} weapons Stock factory weapon loadout.
- * @property {number} [guns] Maximum fixed weapon mounts.
- * @property {number} [turrets] Maximum turret weapon mounts.
- * @property {string} [role] Combat class role ('interceptor', 'fighter', 'corvette', 'frigate', 'destroyer', 'cruiser').
- * @property {string} [img] Ship sprite image asset path.
- * @property {boolean} [fastJump] Spools jump drive faster.
- * @property {boolean} [npcOnly] Whether restricted to non-player ships.
+ * ShipHullAsset fields:
+ * [id]: Hull item identifier.
+ * name: Ship model name.
+ * price: Chassis purchase price in credits.
+ * mass: Base dry hull mass.
+ * shield: Base shield hit points.
+ * armor: Base armor hit points.
+ * accel: Base linear acceleration.
+ * speed: Base maximum velocity.
+ * turn: Base angular turn rate.
+ * space: Total outfit space capacity.
+ * cargo: Cargo hold capacity in tons.
+ * fuel: Maximum hyperspace fuel units.
+ * shieldRe: Shield recharge rate per second.
+ * armorRe: Armor repair rate per second.
+ * fuelRe: Fuel regeneration rate per second.
+ * weapons: Stock factory weapon loadout.
+ * [guns]: Maximum fixed weapon mounts.
+ * [turrets]: Maximum turret weapon mounts.
+ * [role]: Combat class role ('interceptor', 'fighter', 'corvette', 'frigate', 'destroyer', 'cruiser').
+ * [img]: Ship sprite image asset path.
+ * [fastJump]: Spools jump drive faster.
+ * [npcOnly]: Whether restricted to non-player ships.
  */
 
 /**
  * Outfit catalog item specification.
- * @typedef {Object} OutfitAsset
- * @property {number|string} id Outfit item identifier.
- * @property {string} name Outfit display name.
- * @property {number} price Purchase price in credits.
- * @property {number} [mass] Outfit mass in space units.
- * @property {number} [space] Space requirement.
- * @property {number} [max] Maximum allowed installations.
- * @property {boolean} [turret] Whether mounted as a turret.
- * @property {Record<string, number>} [eff] Attribute modifier effects.
- * @property {string} [desc] Item description.
+ * OutfitAsset fields:
+ * id: Outfit item identifier.
+ * name: Outfit display name.
+ * price: Purchase price in credits.
+ * [mass]: Outfit mass in space units.
+ * [space]: Space requirement.
+ * [max]: Maximum allowed installations.
+ * [turret]: Whether mounted as a turret.
+ * [eff]: Attribute modifier effects.
+ * [desc]: Item description.
  */
 
 /**
  * Weapon catalog definition.
- * @typedef {Object} WeaponAsset
- * @property {number|string} id Weapon identifier.
- * @property {string} name Weapon display name.
- * @property {number} [price] Weapon purchase price.
- * @property {number} [range] Effective range in space units.
- * @property {number} [reload] Firing delay in seconds.
- * @property {number} [speed] Projectile velocity.
- * @property {number} [damage] Impact damage.
- * @property {number} [shieldDamage] Shield damage modifier.
- * @property {number} [beam] Beam weapon duration.
- * @property {number} [ammo] Maximum ammunition capacity.
- * @property {number} [homing] Tracking turn rate.
- * @property {string} [kind] Visual projectile style.
- * @property {string} [snd] Audio firing effect name.
- * @property {boolean} [sec] True if secondary missile/bay.
- * @property {boolean} [mining] Mining beam capability.
+ * WeaponAsset fields:
+ * id: Weapon identifier.
+ * name: Weapon display name.
+ * [price]: Weapon purchase price.
+ * [range]: Effective range in space units.
+ * [reload]: Firing delay in seconds.
+ * [speed]: Projectile velocity.
+ * [damage]: Impact damage.
+ * [shieldDamage]: Shield damage modifier.
+ * [beam]: Beam weapon duration.
+ * [ammo]: Maximum ammunition capacity.
+ * [homing]: Tracking turn rate.
+ * [kind]: Visual projectile style.
+ * [snd]: Audio firing effect name.
+ * [sec]: True if secondary missile/bay.
+ * [mining]: Mining beam capability.
  */
 
 /**
  * Master collection of game assets (ships, outfits, weapons, etc.).
- * @typedef {Object} GameAssets
- * @property {Record<string|number, ShipHullAsset>} ships - Ship hull definitions map.
- * @property {Record<string|number, OutfitAsset>} outfits - Outfit catalog map.
- * @property {Record<string|number, WeaponAsset>} weapons - Weapon catalog map.
+ * GameAssets fields:
+ * ships: - Ship hull definitions map.
+ * outfits: - Outfit catalog map.
+ * weapons: - Weapon catalog map.
  */
 
 /**
  * Injects Quantum Rift custom ships, weapons, roles, and sprites into the raw asset dictionary.
  * Safe to call idempotently multiple times.
- * @param {GameAssets} assets - Raw game assets object to augment in place.
- * @returns {GameAssets} The augmented assets object.
+ * @param assets - Raw game assets object to augment in place.
+ * @returns The augmented assets object.
  */
 // Add Quantum Rift's own weapons to the exported asset data (safe to call more than once)
 export function augmentAssets(assets: GameAssets): GameAssets {
@@ -394,8 +391,8 @@ export function augmentAssets(assets: GameAssets): GameAssets {
 
 /**
  * Returns a dictionary of all outfits, merging base outfits with Rift custom extensions.
- * @param {GameAssets} assets - Game assets object.
- * @returns {Record<string|number, OutfitAsset>} Merged map of all outfits.
+ * @param assets - Game assets object.
+ * @returns Merged map of all outfits.
  */
 export function allOutfits(assets: GameAssets): Record<string | number, OutfitAsset> {
   const options = { ...assets.outfits };
@@ -405,23 +402,23 @@ export function allOutfits(assets: GameAssets): Record<string | number, OutfitAs
 
 /**
  * Player ship loadout data structure.
- * @typedef {Object} ShipLoadout
- * @property {IndustrialShip} [industrial] Saved hull-owned industrial work/heat.
- * @property {string} [uid] Stable saved hull identity assigned by docks.
- * @property {number|string} hull - Hull ID.
- * @property {Record<string|number, number>} outfits - Map of outfit ID to equipped quantity.
- * @property {Record<string|number, number>} ammo - Map of weapon ID to current ammunition count.
- * @property {Array<[number|string, number, number?]>} fixed - Built-in non-swappable weapon slots.
- * @property {number} bonusSpace - Extra outfit space refunded from built-in weapon conversion.
- * @property {string} name - Ship name.
+ * ShipLoadout fields:
+ * [industrial]: Saved hull-owned industrial work/heat.
+ * [uid]: Stable saved hull identity assigned by docks.
+ * hull: - Hull ID.
+ * outfits: - Map of outfit ID to equipped quantity.
+ * ammo: - Map of weapon ID to current ammunition count.
+ * fixed: - Built-in non-swappable weapon slots.
+ * bonusSpace: - Extra outfit space refunded from built-in weapon conversion.
+ * name: - Ship name.
  */
 
 /**
  * Generates an initial loadout for a newly purchased ship hull, converting standard built-in weapons into modular outfits.
- * @param {GameAssets} assets - Game assets collection.
- * @param {number|string} hull - Hull identifier.
- * @param {string} [name='Rift Runner'] - Display name for the ship.
- * @returns {ShipLoadout} Initialized loadout object.
+ * @param assets - Game assets collection.
+ * @param hull - Hull identifier.
+ * @param name - Display name for the ship.
+ * @returns Initialized loadout object.
  */
 // A player's new ship: the hull's built-in weapons become ordinary outfits (so they can be sold or swapped) where an
 // outfit exists for them; anything else (fighter bays, special guns) stays fixed. Their mass is refunded as space.
@@ -455,10 +452,10 @@ export function makeLoadout(assets: GameAssets, hull: number | string, name?: st
 // A factory weapon bank is refittable even where its authored count exceeds a generic shop limit.
 /**
  * Resolves maximum purchasable/mountable limit for an outfit on a ship.
- * @param {GameAssets} assets - Game assets.
- * @param {ShipLoadout} ship - Ship loadout.
- * @param {string|number} identifier - Outfit ID.
- * @returns {number} Maximum allowed outfit count.
+ * @param assets - Game assets.
+ * @param ship - Ship loadout.
+ * @param identifier - Outfit ID.
+ * @returns Maximum allowed outfit count.
  */
 export function stockOutfitLimit(
   assets: GameAssets,
@@ -476,9 +473,8 @@ export function stockOutfitLimit(
 // Reserve at most half that price for removable stock gear; the rest is chassis.
 /**
  * Calculates stock outfits, chassis value, and equipment price scale for a hull.
- * @param {GameAssets} assets - Game assets.
- * @param {number|string} hull - Hull ID.
- * @returns {{ stock: Record<string, number>, chassis: number, scale: number }}
+ * @param assets - Game assets.
+ * @param hull - Hull ID.
  */
 export function loadoutBasis(
   assets: GameAssets,
@@ -501,9 +497,9 @@ export function loadoutBasis(
 // Named hull prices are recruitment fees; rush repairs use actual factory kit replacement value.
 /**
  * Calculates repair cost basis for hull and factory kit.
- * @param {GameAssets} assets - Game assets.
- * @param {number|string} hull - Hull ID.
- * @returns {number} Repair base cost.
+ * @param assets - Game assets.
+ * @param hull - Hull ID.
+ * @returns Repair base cost.
  */
 export function repairBasis(assets: GameAssets, hull: number | string): number {
   const cost = assets.ships[hull]?.cost || 0;
@@ -523,9 +519,9 @@ export function repairBasis(assets: GameAssets, hull: number | string): number {
 // Initialize before buying/removing equipment so subsequent paid replacements remain retail-valued.
 /**
  * Ensures a ship loadout records its original factory equipment.
- * @param {GameAssets} assets - Game assets.
- * @param {ShipLoadout} ship - Ship loadout.
- * @returns {Record<string, number>} Normalized stock outfits record.
+ * @param assets - Game assets.
+ * @param ship - Ship loadout.
+ * @returns Normalized stock outfits record.
  */
 export function ensureStockOutfits(assets: GameAssets, ship: ShipLoadout): Record<string, number> {
   const { stock } = loadoutBasis(assets, ship.hull);
@@ -547,9 +543,9 @@ export function ensureStockOutfits(assets: GameAssets, ship: ShipLoadout): Recor
 
 /**
  * Calculates trade-in resale value of a ship and its installed outfits.
- * @param {GameAssets} assets - Game assets.
- * @param {ShipLoadout} ship - Ship loadout.
- * @returns {number} Net credit trade-in value.
+ * @param assets - Game assets.
+ * @param ship - Ship loadout.
+ * @returns Net credit trade-in value.
  */
 export function loadoutValue(assets: GameAssets, ship: ShipLoadout): number {
   const { stock, chassis, scale } = loadoutBasis(assets, ship.hull),
@@ -572,11 +568,11 @@ export function loadoutValue(assets: GameAssets, ship: ShipLoadout): number {
 // Call before decrementing outfits. Stock is sold first; paid additions retain normal resale.
 /**
  * Calculates refund value when selling an installed outfit from a ship.
- * @param {GameAssets} assets - Game assets.
- * @param {ShipLoadout} ship - Ship loadout.
- * @param {string|number} identifier - Outfit ID.
- * @param {number} count - Quantity being sold.
- * @returns {number} Credit refund value.
+ * @param assets - Game assets.
+ * @param ship - Ship loadout.
+ * @param identifier - Outfit ID.
+ * @param count - Quantity being sold.
+ * @returns Credit refund value.
  */
 export function outfitSaleValue(
   assets: GameAssets,
@@ -596,59 +592,59 @@ export function outfitSaleValue(
 
 /**
  * Percentage and flat stat bonuses affecting ship performance.
- * @typedef {Object} ShipStatsBonus
- * @property {number} [shieldPct] - Shield capacity bonus percent.
- * @property {number} [armorPct] - Armor hit point bonus percent.
- * @property {number} [speedPct] - Top speed bonus percent.
- * @property {number} [turnPct] - Turning rate bonus percent.
- * @property {number} [accelPct] - Acceleration bonus percent.
- * @property {number} [cargoPct] - Cargo capacity bonus percent.
- * @property {number} [shieldRePct] - Shield recharge rate bonus percent.
- * @property {number} [fuelRe] - Fuel regeneration rate addition.
- * @property {number} [fuel] - Flat additional jump fuel capacity.
- * @property {number|boolean} [jumpFast] - Whether fast jump drive spools are enabled.
- * @property {number} [damagePct] - Weapon damage bonus percent.
+ * ShipStatsBonus fields:
+ * [shieldPct]: - Shield capacity bonus percent.
+ * [armorPct]: - Armor hit point bonus percent.
+ * [speedPct]: - Top speed bonus percent.
+ * [turnPct]: - Turning rate bonus percent.
+ * [accelPct]: - Acceleration bonus percent.
+ * [cargoPct]: - Cargo capacity bonus percent.
+ * [shieldRePct]: - Shield recharge rate bonus percent.
+ * [fuelRe]: - Fuel regeneration rate addition.
+ * [fuel]: - Flat additional jump fuel capacity.
+ * [jumpFast]: - Whether fast jump drive spools are enabled.
+ * [damagePct]: - Weapon damage bonus percent.
  */
 
 /**
  * Live calculated flight, combat, and capacity attributes for an equipped ship.
- * @typedef {Object} ComputedShipStats
- * @property {boolean} towRig - Installed industrial towing capability.
- * @property {number} hull - Hull identifier.
- * @property {string} name - Ship model name.
- * @property {number} size - Visual sprite size.
- * @property {number} mass - Total mass.
- * @property {number} maxSpeed - Max flight speed in Rift units.
- * @property {number} accel - Acceleration rate in Rift units.
- * @property {number} turn - Turn rate in radians per second.
- * @property {number} shield - Max shield capacity.
- * @property {number} armor - Max armor hit points.
- * @property {number} shieldRe - Shield recharge per second in Rift units.
- * @property {number} armorRe - Armor repair per second in Rift units.
- * @property {number} fuel - Maximum jump fuel.
- * @property {number} fuelRe - Fuel regen rate per second.
- * @property {number} cargo - Cargo capacity in tons.
- * @property {number} space - Total outfit space available.
- * @property {number} used - Outfit space occupied by installed equipment.
- * @property {number} free - Remaining outfit space available.
- * @property {number} guns - Number of active fixed guns.
- * @property {number} turrets - Number of active turrets.
- * @property {number} maxGuns - Maximum gun mounts on the hull.
- * @property {number} maxTurrets - Maximum turret mounts on the hull.
- * @property {number} afterburner - Afterburner boost tier / capability.
- * @property {number} cloak - Cloaking device enabled flag (0 or 1).
- * @property {number} multiJump - Consecutive hyperdrive jump range.
- * @property {number} jumpFast - Fast jump drive spool flag (0 or 1).
- * @property {Record<string|number, number>} weapons - Map of weapon ID to mounted count.
- * @property {number} damageMul - Final outgoing damage multiplier.
+ * ComputedShipStats fields:
+ * towRig: - Installed industrial towing capability.
+ * hull: - Hull identifier.
+ * name: - Ship model name.
+ * size: - Visual sprite size.
+ * mass: - Total mass.
+ * maxSpeed: - Max flight speed in Rift units.
+ * accel: - Acceleration rate in Rift units.
+ * turn: - Turn rate in radians per second.
+ * shield: - Max shield capacity.
+ * armor: - Max armor hit points.
+ * shieldRe: - Shield recharge per second in Rift units.
+ * armorRe: - Armor repair per second in Rift units.
+ * fuel: - Maximum jump fuel.
+ * fuelRe: - Fuel regen rate per second.
+ * cargo: - Cargo capacity in tons.
+ * space: - Total outfit space available.
+ * used: - Outfit space occupied by installed equipment.
+ * free: - Remaining outfit space available.
+ * guns: - Number of active fixed guns.
+ * turrets: - Number of active turrets.
+ * maxGuns: - Maximum gun mounts on the hull.
+ * maxTurrets: - Maximum turret mounts on the hull.
+ * afterburner: - Afterburner boost tier / capability.
+ * cloak: - Cloaking device enabled flag (0 or 1).
+ * multiJump: - Consecutive hyperdrive jump range.
+ * jumpFast: - Fast jump drive spool flag (0 or 1).
+ * weapons: - Map of weapon ID to mounted count.
+ * damageMul: - Final outgoing damage multiplier.
  */
 
 /**
  * Computes live operational flight, combat, and cargo stats from hull, fitted outfits, and captain bonuses.
- * @param {GameAssets} assets - Game assets collection.
- * @param {ShipLoadout} ship - Player ship state or loadout.
- * @param {ShipStatsBonus} [bonus={}] - Research and crew stat bonuses.
- * @returns {ComputedShipStats|null} Live computed ship statistics, or null if hull not found.
+ * @param assets - Game assets collection.
+ * @param ship - Player ship state or loadout.
+ * @param bonus - Research and crew stat bonuses.
+ * @returns Live computed ship statistics, or null if hull not found.
  */
 // The ship a player is flying: hull + bought outfits (+ research bonuses) -> live stats.
 export function shipStats(
@@ -755,16 +751,16 @@ export function shipStats(
 
 /**
  * Personal station state object.
- * @typedef {Object} StationState
- * @property {number} [ops] - Station operations tier.
- * @property {string[]} [done] - List of completed research technology IDs.
- * @property {Array<{id: string, t: number, total: number}>} [queue] - In-progress research jobs.
+ * StationState fields:
+ * [ops]: - Station operations tier.
+ * [done]: - List of completed research technology IDs.
+ * [queue]: - In-progress research jobs.
  */
 
 /**
  * Aggregates all completed station research project stat bonuses.
- * @param {StationState | null | undefined} station - Personal station state object containing `done` research ID list.
- * @returns {Record<string, number>} Aggregated stat bonuses.
+ * @param station - Personal station state object containing `done` research ID list.
+ * @returns Aggregated stat bonuses.
  */
 export function researchBonus(station: StationState | null | undefined): Record<string, number> {
   const secondValue: Record<string, number> = {};
@@ -777,20 +773,20 @@ export function researchBonus(station: StationState | null | undefined): Record<
 
 /**
  * Officer data record structure.
- * @typedef {Object} OfficerRecord
- * @property {string} id - Unique officer ID.
- * @property {string} role - Officer division / role (e.g. 'tactical', 'helm').
- * @property {string} rarity - Rarity tier (e.g. 'common', 'rare', 'epic').
- * @property {number} lv - Level of the officer (starts at 1).
- * @property {number} rank - Rank index (1.2 rank multiplier).
- * @property {string} [race] - Alien or human race identifier.
- * @property {string[]} [traits] - Special innate traits.
+ * OfficerRecord fields:
+ * id: - Unique officer ID.
+ * role: - Officer division / role (e.g. 'tactical', 'helm').
+ * rarity: - Rarity tier (e.g. 'common', 'rare', 'epic').
+ * lv: - Level of the officer (starts at 1).
+ * rank: - Rank index (1.2 rank multiplier).
+ * [race]: - Alien or human race identifier.
+ * [traits]: - Special innate traits.
  */
 
 /**
  * Calculates a single officer's individual stat contributions based on role, level, rarity, and rank.
- * @param {OfficerRecord} officer - Officer state record.
- * @returns {Record<string, number>} Map of stat names to bonus values.
+ * @param officer - Officer state record.
+ * @returns Map of stat names to bonus values.
  */
 // one officer's stat values: base x rarity, +10% per level above 1
 export function officerStats(officer: OfficerRecord): Record<string, number> {
@@ -806,9 +802,9 @@ export function officerStats(officer: OfficerRecord): Record<string, number> {
 /**
  * Computes combined stat bonuses from all officers assigned to bridge stations,
  * including captain multiplier (1.25x), officer traits, and racial synergy bonuses.
- * @param {OfficerRecord[]|null|undefined} officers - Hired officers roster.
- * @param {Record<string, string>|null|undefined} bridge - Bridge slot map of slot name to officer ID.
- * @returns {Record<string, number>} Cumulative bridge stat bonuses.
+ * @param officers - Hired officers roster.
+ * @param bridge - Bridge slot map of slot name to officer ID.
+ * @returns Cumulative bridge stat bonuses.
  */
 // bridge officers (captain slot counts 1.25x) plus race synergy when two or more of a race share the bridge
 export function officerBonus(
@@ -839,8 +835,8 @@ export function officerBonus(
 
 /**
  * Aggregates all active player modifications: station research, bridge officers, and lower-deck crew.
- * @param {PlayerData} playerData - Full player save state.
- * @returns {Record<string, number>} Total unified stat bonuses.
+ * @param playerData - Full player save state.
+ * @returns Total unified stat bonuses.
  */
 // everything that modifies a captain's ship: research + bridge crew
 export function captainBonus(playerData: PlayerData): Record<string, number> {
@@ -857,32 +853,32 @@ export function captainBonus(playerData: PlayerData): Record<string, number> {
 
 /**
  * Resolved operational weapon parameters in Rift simulation units.
- * @typedef {Object} WeaponConfig
- * @property {boolean} beam - Whether weapon is an instant beam weapon.
- * @property {number} speed - Projectile travel speed.
- * @property {number} life - Projectile lifetime in seconds.
- * @property {number} range - Effective maximum firing range.
- * @property {number} reload - Cooldown reload delay between shots in seconds.
- * @property {boolean} turret - Whether weapon is mounted on a turret.
- * @property {number} arc - Turret firing arc limit in radians (0 for 360 degree).
- * @property {boolean} homing - Whether projectile homes on targeted ship.
- * @property {boolean} pd - Whether weapon acts as point-defense against munitions.
- * @property {boolean} bay - Whether weapon is a fighter launch bay.
- * @property {boolean} rocket - Whether weapon fires unguided rockets.
- * @property {number} inacc - Inaccuracy spread angle in radians.
- * @property {number} dmgA - Armor damage dealt per hit or second.
- * @property {number} dmgS - Shield damage dealt per hit or second.
- * @property {boolean} continuous - Whether beam fires continuously without cycling.
- * @property {string} color - Hex color code for rendering projectile or beam.
- * @property {string} look - Projectile visual graphic style.
- * @property {number} blast - Area-of-effect blast radius.
- * @property {number} ion - Ion damage disabling ship systems.
+ * WeaponConfig fields:
+ * beam: - Whether weapon is an instant beam weapon.
+ * speed: - Projectile travel speed.
+ * life: - Projectile lifetime in seconds.
+ * range: - Effective maximum firing range.
+ * reload: - Cooldown reload delay between shots in seconds.
+ * turret: - Whether weapon is mounted on a turret.
+ * arc: - Turret firing arc limit in radians (0 for 360 degree).
+ * homing: - Whether projectile homes on targeted ship.
+ * pd: - Whether weapon acts as point-defense against munitions.
+ * bay: - Whether weapon is a fighter launch bay.
+ * rocket: - Whether weapon fires unguided rockets.
+ * inacc: - Inaccuracy spread angle in radians.
+ * dmgA: - Armor damage dealt per hit or second.
+ * dmgS: - Shield damage dealt per hit or second.
+ * continuous: - Whether beam fires continuously without cycling.
+ * color: - Hex color code for rendering projectile or beam.
+ * look: - Projectile visual graphic style.
+ * blast: - Area-of-effect blast radius.
+ * ion: - Ion damage disabling ship systems.
  */
 
 /**
  * Converts raw weapon asset definitions into live physics and combat parameters.
- * @param {WeaponAsset} weaponAsset - Raw weapon definition from asset registry.
- * @returns {WeaponConfig} Configured weapon parameters.
+ * @param weaponAsset - Raw weapon definition from asset registry.
+ * @returns Configured weapon parameters.
  */
 // Weapon parameters in Rift units
 export function weaponParams(weaponAsset: WeaponAsset): WeaponConfig {
@@ -926,7 +922,6 @@ export function weaponParams(weaponAsset: WeaponAsset): WeaponConfig {
 
 /**
  * Default beam colors indexed by weapon ID.
- * @type {Record<number, string>}
  */
 export const BEAM_COLORS: Record<number, string> = {
   146: '#ff4a4a',
@@ -961,8 +956,8 @@ export const BEAM_COLORS: Record<number, string> = {
 };
 /**
  * Determines audio sound effect ID for a weapon discharge.
- * @param {WeaponAsset} weaponAsset - Weapon asset definition.
- * @returns {number} Sound effect resource ID.
+ * @param weaponAsset - Weapon asset definition.
+ * @returns Sound effect resource ID.
  */
 // Stable sound references for weapon effects, with a nearest-match fallback.
 export function weaponSound(weaponAsset: WeaponAsset): number {
@@ -977,33 +972,32 @@ export function weaponSound(weaponAsset: WeaponAsset): number {
 
 /**
  * Physics entity moving in 2D space.
- * @typedef {Object} FlightEntity
- * @property {number} x - Current X position coordinate.
- * @property {number} y - Current Y position coordinate.
- * @property {number} vx - Current velocity vector X component.
- * @property {number} vy - Current velocity vector Y component.
- * @property {number} a - Heading angle in radians (0 = up, clockwise).
- * @property {number} fuel - Current remaining fuel.
- * @property {number} [towCap] Hard attached velocity cap.
+ * FlightEntity fields:
+ * x: - Current X position coordinate.
+ * y: - Current Y position coordinate.
+ * vx: - Current velocity vector X component.
+ * vy: - Current velocity vector Y component.
+ * a: - Heading angle in radians (0 = up, clockwise).
+ * fuel: - Current remaining fuel.
+ * [towCap]: Hard attached velocity cap.
  */
 
 /**
  * Flight control inputs for a single simulation step.
- * @typedef {Object} FlightInput
- * @property {number|boolean} [thrust] - Forward main thruster active.
- * @property {number} [turn] - Turning control input (-1 left, 0 neutral, 1 right).
- * @property {number|boolean} [ab] - Afterburner boost active.
- * @property {number|boolean} [rev] - Reverse thrusters / face retrograde active.
- * @property {number|boolean} [navigation] - Automatic navigation controls.
+ * FlightInput fields:
+ * [thrust]: - Forward main thruster active.
+ * [turn]: - Turning control input (-1 left, 0 neutral, 1 right).
+ * [ab]: - Afterburner boost active.
+ * [rev]: - Reverse thrusters / face retrograde active.
+ * [navigation]: - Automatic navigation controls.
  */
 
 /**
  * Advances flight physics for an entity by one simulation time step.
- * @param {FlightEntity} flightEntity - Ship entity state modified in place.
- * @param {ComputedShipStats} computedShipStats - Ship performance attributes.
- * @param {FlightInput} flightInput - Flight control inputs.
- * @param {number} [deltaTime=DT] - Step duration in seconds.
- * @returns {void}
+ * @param flightEntity - Ship entity state modified in place.
+ * @param computedShipStats - Ship performance attributes.
+ * @param flightInput - Flight control inputs.
+ * @param deltaTime - Step duration in seconds.
  */
 // Flight: one fixed step. input: {thrust: 0/1, turn: -1/0/1, ab: 0/1, rev: 0/1}
 export function step(
@@ -1072,8 +1066,8 @@ export function step(
 
 /**
  * Wraps an angle in radians into the interval (-PI, PI].
- * @param {number} firstValue - Angle in radians.
- * @returns {number} Normalized angle in radians.
+ * @param firstValue - Angle in radians.
+ * @returns Normalized angle in radians.
  */
 export function wrap(firstValue: number): number {
   while (firstValue > Math.PI) firstValue -= 2 * Math.PI;
@@ -1083,9 +1077,9 @@ export function wrap(firstValue: number): number {
 
 /**
  * Computes the signed shortest angular difference between two angles in radians.
- * @param {number} firstValue - First angle.
- * @param {number} secondValue - Second angle.
- * @returns {number} Angular difference between (-PI, PI].
+ * @param firstValue - First angle.
+ * @param secondValue - Second angle.
+ * @returns Angular difference between (-PI, PI].
  */
 export function angDiff(firstValue: number, secondValue: number): number {
   return wrap(firstValue - secondValue);
@@ -1093,10 +1087,10 @@ export function angDiff(firstValue: number, secondValue: number): number {
 
 /**
  * Computes heading angle in radians from an origin entity to a destination coordinate (0 = up, clockwise).
- * @param {{ x: number, y: number }} event - Origin entity coordinates.
- * @param {number} positionX - Target X coordinate.
- * @param {number} positionY - Target Y coordinate.
- * @returns {number} Angle in radians.
+ * @param event - Origin entity coordinates.
+ * @param positionX - Target X coordinate.
+ * @param positionY - Target Y coordinate.
+ * @returns Angle in radians.
  */
 export function angleTo(
   event: { x: number; y: number },
@@ -1108,10 +1102,10 @@ export function angleTo(
 
 /**
  * Calculates current market trading price for a commodity at a stellar station or planet, including time drift.
- * @param {{id: string, prices?: Record<string, number>}} stellar - Stellar object with market prices map.
- * @param {string} captainId - Commodity identifier.
- * @param {number} [time=Date.now()] - Timestamp for deterministic market price drift.
- * @returns {number|null} Current trade price in credits, or null if commodity not traded.
+ * @param stellar - Stellar object with market prices map.
+ * @param captainId - Commodity identifier.
+ * @param time - Timestamp for deterministic market price drift.
+ * @returns Current trade price in credits, or null if commodity not traded.
  */
 // Prices at a stellar for a commodity (level -1 / 0 / 1), with a slow drift by time so markets move
 export function price(
@@ -1128,9 +1122,9 @@ export function price(
 
 /**
  * Determines whether two faction identifiers are mutually hostile.
- * @param {string|null|undefined} firstValue - First faction ID.
- * @param {string|null|undefined} secondValue - Second faction ID.
- * @returns {boolean} True if either faction considers the other an enemy.
+ * @param firstValue - First faction ID.
+ * @param secondValue - Second faction ID.
+ * @returns True if either faction considers the other an enemy.
  */
 export function hostileFactions(
   firstValue: string | null | undefined,
@@ -1145,8 +1139,8 @@ export function hostileFactions(
 
 /**
  * Returns descriptive standing tier label corresponding to a numerical reputation score.
- * @param {number} value2 - Reputation value.
- * @returns {'Exalted' | 'Honored' | 'Friendly' | 'Neutral' | 'Wanted' | 'Hunted'} Reputation label.
+ * @param value2 - Reputation value.
+ * @returns Reputation label.
  */
 export function repLabel(
   value: number,
@@ -1166,8 +1160,8 @@ export function repLabel(
 
 /**
  * Formats a credit amount into a human-readable display string (e.g. "1.25M" or "25,000").
- * @param {number} count2 - Credit balance.
- * @returns {string} Formatted credits string.
+ * @param count2 - Credit balance.
+ * @returns Formatted credits string.
  */
 export function credits(count: number): string {
   count = Math.round(count || 0);
@@ -1178,8 +1172,8 @@ export function credits(count: number): string {
 
 /**
  * Checks whether a given color hex string represents unset / black color.
- * @param {string|null|undefined} component - Color hex string.
- * @returns {boolean} True if color is null, empty, or black.
+ * @param component - Color hex string.
+ * @returns True if color is null, empty, or black.
  */
 // Legacy projectile records can use black as an unset colour; supply a visible fallback.
 const isBlack = (component: string | null | undefined) =>
@@ -1187,8 +1181,8 @@ const isBlack = (component: string | null | undefined) =>
 
 /**
  * Determines the display render color for a weapon projectile or beam.
- * @param {WeaponAsset} weaponAsset - Weapon asset definition.
- * @returns {string} Hex color string.
+ * @param weaponAsset - Weapon asset definition.
+ * @returns Hex color string.
  */
 export function weaponColor(weaponAsset: WeaponAsset): string {
   if (!weaponAsset) return '#ffd27a';
@@ -1202,7 +1196,6 @@ export function weaponColor(weaponAsset: WeaponAsset): string {
 
 /**
  * Mapping of weapon IDs to their projectile visual sprite or rendering style.
- * @type {Record<number, string>}
  */
 // How a projectile is drawn: bolt, rail, pulse, missile, rocket, torp, sing, mine, flak, pd, shard, spit, magma
 export const WEAPON_LOOKS: Record<number, string> = {
@@ -1231,8 +1224,8 @@ export const WEAPON_LOOKS: Record<number, string> = {
 
 /**
  * Resolves the visual projectile rendering style for a given weapon.
- * @param {WeaponAsset} weaponAsset - Weapon asset definition.
- * @returns {string} Projectile visual style name.
+ * @param weaponAsset - Weapon asset definition.
+ * @returns Projectile visual style name.
  */
 export function weaponLook(weaponAsset: WeaponAsset): string {
   if (!weaponAsset) return 'bolt';
@@ -1247,10 +1240,10 @@ export function weaponLook(weaponAsset: WeaponAsset): string {
 
 /**
  * A* pathfinding algorithm computing the shortest and safest hyperspace jump route between two star systems.
- * @param {Record<string, {x: number, y: number, danger: number, links: string[], gate?:string}>} starSystem - Star systems dictionary keyed by system ID.
- * @param {string} from - Origin system ID.
- * @param {string} destination - Destination system ID.
- * @returns {string[]} Ordered array of system IDs to jump through (excluding origin).
+ * @param starSystem - Star systems dictionary keyed by system ID.
+ * @param from - Origin system ID.
+ * @param destination - Destination system ID.
+ * @returns Ordered array of system IDs to jump through (excluding origin).
  */
 // A* route between systems: fewest jumps, preferring safer systems when two routes are the same length
 export function route(

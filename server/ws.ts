@@ -7,7 +7,6 @@ import { EventEmitter } from 'node:events';
 
 /**
  * RFC 6455 magic GUID constant appended to client Sec-WebSocket-Key to generate Sec-WebSocket-Accept.
- * @type {string}
  */
 const GUID: string = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
@@ -23,7 +22,7 @@ export class Socket extends EventEmitter {
 
   /**
    * Initializes a WebSocket connection around a raw TCP network socket.
-   * @param {NodeNetSocket} socket Raw TCP network stream socket.
+   * @param socket Raw TCP network stream socket.
    */
   constructor(socket: NodeNetSocket) {
     super();
@@ -46,7 +45,6 @@ export class Socket extends EventEmitter {
 
   /**
    * Transitions socket state to closed and emits the 'close' event once.
-   * @returns {void}
    */
   closed(): void {
     if (this.open) {
@@ -58,7 +56,6 @@ export class Socket extends EventEmitter {
   /**
    * Parses inbound RFC 6455 WebSocket frames from the internal stream buffer and emits unmasked message events.
    * Enforces 1 MB frame size limit and responds to ping control frames automatically.
-   * @returns {void}
    */
   parse(): void {
     while (this.buf.length >= 2) {
@@ -119,9 +116,8 @@ export class Socket extends EventEmitter {
 
   /**
    * Constructs and writes an RFC 6455 binary frame to the client TCP stream.
-   * @param {number} operation Opcode (0x1 text, 0x2 binary, 0x8 close, 0x9 ping, 0xa pong).
-   * @param {Buffer} data Payload buffer to transmit.
-   * @returns {void}
+   * @param operation Opcode (0x1 text, 0x2 binary, 0x8 close, 0x9 ping, 0xa pong).
+   * @param data Payload buffer to transmit.
    */
   frame(operation: number, data: Buffer): void {
     if (!this.open) return;
@@ -149,8 +145,7 @@ export class Socket extends EventEmitter {
 
   /**
    * Serializes and transmits a text message or JSON object over the WebSocket connection.
-   * @param {string | object} object UTF-8 string or JSON-serializable object payload.
-   * @returns {void}
+   * @param object UTF-8 string or JSON-serializable object payload.
    */
   send(object: string | object): void {
     this.frame(
@@ -161,7 +156,6 @@ export class Socket extends EventEmitter {
 
   /**
    * Sends an RFC 6455 close control frame (0x8) and gracefully terminates the underlying TCP socket.
-   * @returns {void}
    */
   close(): void {
     if (!this.open) return;
@@ -174,7 +168,6 @@ export class Socket extends EventEmitter {
 
   /**
    * Number of buffered bytes waiting in the underlying TCP write queue.
-   * @returns {number}
    */
   get backlog(): number {
     return this.sock.writableLength || 0;
@@ -183,10 +176,9 @@ export class Socket extends EventEmitter {
 
 /**
  * Validates and upgrades an incoming HTTP 1.1 upgrade request to the RFC 6455 WebSocket protocol.
- * @param {IncomingMessage} incomingMessage Inbound HTTP upgrade request.
- * @param {NodeNetSocket} socket Underlying client network socket stream.
- * @param {(ws: Socket) => void} onSocket Callback invoked with the initialized WebSocket wrapper.
- * @returns {void}
+ * @param incomingMessage Inbound HTTP upgrade request.
+ * @param socket Underlying client network socket stream.
+ * @param onSocket Callback invoked with the initialized WebSocket wrapper.
  */
 export function upgrade(
   incomingMessage: IncomingMessage,

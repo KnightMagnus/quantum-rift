@@ -243,11 +243,11 @@ const ROLE_FIT: Record<string, (ship: ShipHullAsset) => boolean> = {
 
 /**
  * Determines the best ship hull a rival captain can afford and fly according to their career and wealth.
- * @param {Object} gameAssets - Game assets database containing ship hull definitions.
- * @param {string} faction - Faction allegiance.
- * @param {number} wealth - Total net worth / credits available to the rival.
- * @param {string} [kind] - Rival career kind (e.g. 'hunter', 'trader', 'miner').
- * @returns {number} Hull ID of the chosen ship.
+ * @param gameAssets - Game assets database containing ship hull definitions.
+ * @param faction - Faction allegiance.
+ * @param wealth - Total net worth / credits available to the rival.
+ * @param kind - Rival career kind (e.g. 'hunter', 'trader', 'miner').
+ * @returns Hull ID of the chosen ship.
  */
 export function rivalHull(
   gameAssets: GameAssets,
@@ -273,8 +273,8 @@ export function rivalHull(
 
 /**
  * Evaluates rival captain disposition mood based on player relationship standing.
- * @param {number} relative - Relationship standing score between player and rival (-100 to +100).
- * @returns {RivalMood} Disposition mood classification.
+ * @param relative - Relationship standing score between player and rival (-100 to +100).
+ * @returns Disposition mood classification.
  */
 export const MOOD = (relative: number) =>
   relative <= -60
@@ -289,7 +289,6 @@ export const MOOD = (relative: number) =>
 
 /**
  * Display names corresponding to rival relationship mood states.
- * @type {Object.<string, string>}
  */
 export const MOOD_LABEL: Record<string, string> = {
   nemesis: 'Nemesis',
@@ -302,7 +301,6 @@ export const MOOD_LABEL: Record<string, string> = {
 // what they say when hailed, by career and mood
 /**
  * Dynamic hailing dialogue responses categorized by career path and mood disposition.
- * @type {Object.<string, Object.<string, string>>}
  */
 export const HAIL_LINES: Record<string, Record<string, string>> = {
   trader: {
@@ -344,7 +342,6 @@ export const HAIL_LINES: Record<string, Record<string, string>> = {
 
 /**
  * Formatting templates for galaxy newsfeed broadcasts about rival captain activities.
- * @type {Record<string, (...args: (string | number)[]) => string>}
  */
 export const NEWS_TEMPLATES: Record<string, (...argumentsList: (string | number)[]) => string> = {
   upgrade: (count, ship, place) =>
@@ -368,7 +365,6 @@ export const NEWS_TEMPLATES: Record<string, (...argumentsList: (string | number)
 // better-paid bounty contracts
 /**
  * Combat rating progression thresholds as [requiredScore, rankTitle] pairs.
- * @type {Array<[number, string]>}
  */
 export const RANKS: Array<[number, string]> = [
   [0, 'Harmless'],
@@ -383,8 +379,8 @@ export const RANKS: Array<[number, string]> = [
 
 /**
  * Computes current player combat rating rank and progress to next rank.
- * @param {number} score - Accumulated combat rating points.
- * @returns {CombatRankInfo} Rank information and target score.
+ * @param score - Accumulated combat rating points.
+ * @returns Rank information and target score.
  */
 export function combatRank(score: number): CombatRankInfo {
   let index = 0;
@@ -401,7 +397,6 @@ export function combatRank(score: number): CombatRankInfo {
 // Captain-specific hail dialogue
 /**
  * Custom hailing dialogue for specially-named captains.
- * @type {Object.<string, Object.<string, string>>}
  */
 export const HAIL_SPECIAL: Record<string, Record<string, string>> = {
   'Madcow Soul': {

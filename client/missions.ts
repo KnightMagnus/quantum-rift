@@ -37,40 +37,40 @@ import { route } from '../shared/rules.ts';
 import { TUTORIAL } from '../shared/tutorial.ts';
 
 /**
- * @typedef {Object} MissionTarget
- * @property {string} key Mission unique key or ID
- * @property {MissionKind} kind Category of mission
- * @property {string} title Headline or mission name
- * @property {string} text Mission description or briefing
- * @property {string} status Progress or destination instructions
- * @property {string|null} sys System ID to fly to (or null if anywhere)
- * @property {string|null} [stellar] Destination stellar body ID
- * @property {string|null} [tag] Mission card tag or category badge
- * @property {number} [reward] Credit reward
- * @property {boolean} [urgent] Whether mission has a deadline
- * @property {boolean} [quest] Whether mission is part of a quest line
+ * MissionTarget fields:
+ * key: Mission unique key or ID
+ * kind: Category of mission
+ * title: Headline or mission name
+ * text: Mission description or briefing
+ * status: Progress or destination instructions
+ * sys: System ID to fly to (or null if anywhere)
+ * [stellar]: Destination stellar body ID
+ * [tag]: Mission card tag or category badge
+ * [reward]: Credit reward
+ * [urgent]: Whether mission has a deadline
+ * [quest]: Whether mission is part of a quest line
  */
 
 /**
  * Resolves the parent system ID for a given stellar body.
- * @param {string} stellar Stellar body ID
- * @returns {string|null} System ID or null
+ * @param stellar Stellar body ID
+ * @returns System ID or null
  */
 const systemOf = (stellar: string | null | undefined): string | null =>
   STELLARS[stellar!] ? STELLARS[stellar!].system : null;
 
 /**
  * Returns formatted location string "StellarName (SystemName)".
- * @param {string} stellar Stellar body ID
- * @returns {string} Location display string
+ * @param stellar Stellar body ID
+ * @returns Location display string
  */
 const placeName = (stellar: string | null | undefined): string =>
   STELLARS[stellar!] ? `${STELLARS[stellar!].name} (${systemsById[systemOf(stellar)!].name})` : '';
 
 /**
  * Computes active mission target entries including career steps, main story, faction arcs, and job board contracts.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {MissionTarget[]} Array of mission target objectives
+ * @param clientGameState Game state object
+ * @returns Array of mission target objectives
  */
 export function missionTargets(clientGameState: ClientGameState): MissionTarget[] {
   const playerPayload = clientGameState.you!;
@@ -241,8 +241,8 @@ export function missionTargets(clientGameState: ClientGameState): MissionTarget[
 
 /**
  * Renders the completed quests and stories journal section.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 function journalHtml(clientGameState: ClientGameState): string {
   const quests2 = clientGameState.you!.quests;
@@ -259,8 +259,8 @@ function journalHtml(clientGameState: ClientGameState): string {
 
 /**
  * Renders the MISSIONS companion tab showing active missions, plot course buttons, and journal.
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function missionsHtml(clientGameState: ClientGameState): string {
   const missionTargets2 = missionTargets(clientGameState),

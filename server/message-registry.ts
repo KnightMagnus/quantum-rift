@@ -82,44 +82,41 @@ export type MessageRegistry = {
  * The registry only selects a fixed route. Authentication, flood limiting and
  * activity accounting remain ahead of it; individual routes retain validation.
  * Legacy routes accept decoded objects; this is NOT runtime payload validation.
- *
- * @typedef {object} NetworkMessage
+ * NetworkMessage fields:
  * Incoming or outgoing network packet payload.
- * @property {string} [t] Message type identifier.
- * @property {string} [op] Allowlisted operation, validated by its route.
- * @property {string} [id] Target entity or item identifier.
- * @property {string} [fac] Faction identifier.
- * @property {number} [n] Quantity or numeric count.
- * @property {string} [name] Player or character name.
- * @property {string} [pass] Secret password string.
- * @property {string} [text] Chat or broadcast text content.
- * @property {string} [msg] Message body string.
- * @property {string} [from] Message sender name.
- * @property {string} [to] Message recipient name.
- * @property {string} [o] Fleet order string or mode.
- * @property {string} [dest] Navigation destination identifier.
- * @property {string} [target] Targeted entity identifier.
- * @property {string} [slot] Assigned ship or equipment slot identifier.
- * @property {number} [hull] Ship chassis or hull identifier.
- * @property {string} [uid] Entity unique instance identifier.
- * @property {number} [val] Credit valuation or amount.
- * @property {number} [share] Reward share payout.
- * @property {boolean} [ok] Confirmation boolean status.
- * @property {Record<string, string | number | boolean | null>} [data] Message data fields.
- *
- * @typedef {(session: Session, message: NetworkMessage) => void} MessageHandler
+ * [t]: Message type identifier.
+ * [op]: Allowlisted operation, validated by its route.
+ * [id]: Target entity or item identifier.
+ * [fac]: Faction identifier.
+ * [n]: Quantity or numeric count.
+ * [name]: Player or character name.
+ * [pass]: Secret password string.
+ * [text]: Chat or broadcast text content.
+ * [msg]: Message body string.
+ * [from]: Message sender name.
+ * [to]: Message recipient name.
+ * [o]: Fleet order string or mode.
+ * [dest]: Navigation destination identifier.
+ * [target]: Targeted entity identifier.
+ * [slot]: Assigned ship or equipment slot identifier.
+ * [hull]: Ship chassis or hull identifier.
+ * [uid]: Entity unique instance identifier.
+ * [val]: Credit valuation or amount.
+ * [share]: Reward share payout.
+ * [ok]: Confirmation boolean status.
+ * [data]: Message data fields.
+ * MessageHandler fields:
  * Handler callback invoked when a registered message type is received.
- *
- * @typedef {object} MessageRegistry
+ * MessageRegistry fields:
  * Immutable message router providing registered type listing and dispatch capabilities.
- * @property {readonly string[]} types Immutable list of registered message types.
- * @property {(type: string, session: Session, message: NetworkMessage) => void} dispatch Dispatches a message to its registered handler.
+ * types: Immutable list of registered message types.
+ * dispatch: Dispatches a message to its registered handler.
  */
 
 /**
  * Creates an immutable message registry for dispatching typed network messages to their respective handlers.
- * @param {ReadonlyArray<readonly [string, MessageHandler]>} entries Array of message type to handler mappings.
- * @returns {MessageRegistry} Frozen message registry instance with dispatch capability.
+ * @param entries Array of message type to handler mappings.
+ * @returns Frozen message registry instance with dispatch capability.
  * @throws {TypeError} If a route type is invalid or a handler is not a function.
  * @throws {Error} If duplicate message route types are provided.
  */
@@ -137,10 +134,9 @@ export function createMessageRegistry(
     types: Object.freeze([...handlers.keys()]),
     /**
      * Dispatches an incoming message to its registered handler if recognized.
-     * @param {string} type Message type identifier.
-     * @param {CommandSession} session Active player network session.
-     * @param {NetworkMessage} message Decoded payload object.
-     * @returns {void}
+     * @param type Message type identifier.
+     * @param session Active player network session.
+     * @param message Decoded payload object.
      */
     dispatch(type: string, session: Session, message: NetworkMessage): void {
       if (typeof type === 'string') handlers.get(type)?.(session, message);

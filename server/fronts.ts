@@ -110,20 +110,19 @@ import { captainBonus, shipStats, credits } from '../shared/rules.ts';
 
 /**
  * Clamp a numeric value between a lower and an upper bound.
- * @param {number} value - Value to clamp.
- * @param {number} firstValue - Lower bound.
- * @param {number} secondValue - Upper bound.
- * @returns {number} Clamped value.
+ * @param value - Value to clamp.
+ * @param firstValue - Lower bound.
+ * @param secondValue - Upper bound.
+ * @returns Clamped value.
  */
 const _clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Pick a random element from an array using a random generator function.
- * @template T
- * @param {() => number} radius - Random generator function returning [0, 1).
- * @param {T[]} firstValue - Array of items to choose from.
- * @returns {T} Selected element.
+ * @param radius - Random generator function returning [0, 1).
+ * @param firstValue - Array of items to choose from.
+ * @returns Selected element.
  */
 const pick = <ValueType>(radius: () => number, firstValue: ValueType[]): ValueType =>
   firstValue[Math.floor(radius() * firstValue.length)];
@@ -131,7 +130,6 @@ const pick = <ValueType>(radius: () => number, firstValue: ValueType[]): ValueTy
 export const FrontsOperations = {
   /**
    * Initialize invasion scheduling and state.
-   * @returns {void}
    */
   frontsInit(this: FrontsCapabilities) {
     this.invasion = null;
@@ -149,7 +147,7 @@ export const FrontsOperations = {
   // ------------------------------------------------------------------ modifiers from anomalies (per system) and the server event (global)
   /**
    * Get current active system anomalies, refreshing every 6-hour window.
-   * @returns {Record<string, string>} Map of system IDs to anomaly keys.
+   * @returns Map of system IDs to anomaly keys.
    */
   anomalies(this: FrontsCapabilities) {
     const width = Math.floor(Date.now() / (6 * 3600000));
@@ -161,15 +159,15 @@ export const FrontsOperations = {
   },
   /**
    * Retrieve current active global server event.
-   * @returns {WorldEvent | undefined} Current event object or null.
+   * @returns Current event object or null.
    */
   event(this: FrontsCapabilities) {
     return eventAt();
   },
   /**
    * Compute aggregated modifiers for a system combining local anomaly and server event.
-   * @param {string} [systemId] - Optional system identifier.
-   * @returns {Record<string, number>} Aggregated modifier multipliers and additive adjustments.
+   * @param systemId - Optional system identifier.
+   * @returns Aggregated modifier multipliers and additive adjustments.
    */
   mods(this: FrontsCapabilities, systemId?: string) {
     const message: Record<string, number> = {
@@ -208,8 +206,8 @@ export const FrontsOperations = {
   // everything that modifies a captain's ship: research + bridge crew + the Armada buff while a member shares the system (2.6)
   /**
    * Calculate cumulative ship bonuses from research, bridge crew, and co-op Armada proximity.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {Record<string, number>} Cumulative stat bonuses.
+   * @param playerData - Saved player data.
+   * @returns Cumulative stat bonuses.
    */
   bonus(this: FrontsCapabilities, playerData: PlayerData) {
     const captainBonus2 = captainBonus(playerData);
@@ -218,15 +216,15 @@ export const FrontsOperations = {
   },
   /**
    * Calculate effective ship statistics with all bonuses applied.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {ComputedShipStats | null} Effective ship stats.
+   * @param playerData - Saved player data.
+   * @returns Effective ship stats.
    */
   stats(this: FrontsCapabilities, playerData: PlayerData) {
     return playerData.ship ? shipStats(this.A, playerData.ship, this.bonus(playerData)) : null;
   },
   /**
    * Build world telemetry payload containing invasion, anomaly, event, and calendar information.
-   * @returns {WorldPayload} World telemetry payload.
+   * @returns World telemetry payload.
    */
   worldPayload(this: FrontsCapabilities) {
     const inventory = this.invasion
@@ -243,7 +241,6 @@ export const FrontsOperations = {
   },
   /**
    * Broadcast updated world status telemetry to all connected sessions.
-   * @returns {void}
    */
   pushWorld(this: FrontsCapabilities) {
     this.broadcast(this.worldPayload());
@@ -252,7 +249,6 @@ export const FrontsOperations = {
   // ------------------------------------------------------------------ invasions
   /**
    * Periodic tick check to spawn new invasions or withdraw timed-out bosses.
-   * @returns {void}
    */
   invasionTick(this: FrontsCapabilities) {
     const currentTime = Date.now(),
@@ -281,9 +277,9 @@ export const FrontsOperations = {
   },
   /**
    * Spawn an invasion encounter with a world boss and minions in a target system.
-   * @param {number} window - Time window index.
-   * @param {string} [systemId] - Optional system ID to spawn in.
-   * @returns {Entity} Spawned boss entity.
+   * @param window - Time window index.
+   * @param systemId - Optional system ID to spawn in.
+   * @returns Spawned boss entity.
    */
   startInvasion(this: FrontsCapabilities, window: number, systemId?: string) {
     const radius = randomGenerator(0xb055 + window * 31),
@@ -348,10 +344,9 @@ export const FrontsOperations = {
   },
   /**
    * Track damage dealt by player ships to an invasion boss entity.
-   * @param {Entity} entity - Boss ship entity.
-   * @param {Entity} entity2 - Attacking entity.
-   * @param {number} damage - Damage dealt amount.
-   * @returns {void}
+   * @param entity - Boss ship entity.
+   * @param entity2 - Attacking entity.
+   * @param damage - Damage dealt amount.
    */
   onBossDamage(this: FrontsCapabilities, entity: Entity, entity2: Entity | null, damage: number) {
     if (!entity2 || !entity2.player) return;
@@ -360,9 +355,8 @@ export const FrontsOperations = {
   },
   /**
    * Handle destruction of an invasion boss, distributing rewards to participating captains.
-   * @param {Entity} entity - Destroyed boss entity.
-   * @param {Space} space - Space simulation instance where the boss died.
-   * @returns {void}
+   * @param entity - Destroyed boss entity.
+   * @param space - Space simulation instance where the boss died.
    */
   onBossKilled(this: FrontsCapabilities, entity: Entity, space: Space) {
     const invasionBoss = BOSSES.find((invasionBoss) => invasionBoss.id === entity.boss)!,
@@ -419,8 +413,8 @@ export const FrontsOperations = {
   // ------------------------------------------------------------------ goals
   /**
    * Retrieve or roll daily and weekly goals for player.
-   * @param {PlayerData} playerData - Saved player data.
-   * @returns {{daily: SavedGoal[]; weekly: SavedGoal[]}} Player goals object containing daily and weekly lists.
+   * @param playerData - Saved player data.
+   * @returns Player goals object containing daily and weekly lists.
    */
   goalsFor(this: FrontsCapabilities, playerData: PlayerData) {
     const dayKey2 = dayKey(),
@@ -458,10 +452,9 @@ export const FrontsOperations = {
   },
   /**
    * Advance progress for a player goal category.
-   * @param {Session} session - Player session.
-   * @param {string} type - Goal category key.
-   * @param {number} [count=1] - Progress increment.
-   * @returns {void}
+   * @param session - Player session.
+   * @param type - Goal category key.
+   * @param count - Progress increment.
    */
   goal(this: FrontsCapabilities, session: Session, type: string, count: number = 1) {
     const playerData = session.data,
@@ -478,9 +471,8 @@ export const FrontsOperations = {
   },
   /**
    * Claim rewards for a completed daily or weekly goal.
-   * @param {Session} session - Player session.
-   * @param {{period: 'daily' | 'weekly', i: number}} message - Claim goal payload.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Claim goal payload.
    */
   claimGoal(
     this: FrontsCapabilities,
@@ -522,10 +514,9 @@ export const FrontsOperations = {
   // ------------------------------------------------------------------ faction stores
   /**
    * Award faction reputation tokens to player data.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {string} faction - Faction identifier.
-   * @param {number} count - Number of tokens to grant.
-   * @returns {void}
+   * @param playerData - Saved player data.
+   * @param faction - Faction identifier.
+   * @param count - Number of tokens to grant.
    */
   token(this: FrontsCapabilities, playerData: PlayerData, faction: string, count: number) {
     if (!faction || FACTIONS[faction].region || faction === 'umbral') return;
@@ -534,8 +525,8 @@ export const FrontsOperations = {
   },
   /**
    * Determine available faction store for a stellar body.
-   * @param {{system: string, svc: string, site?: boolean | Record<string, string | number>} | null} position - Stellar body descriptor.
-   * @returns {string | null} Faction identifier or null if no store available.
+   * @param position - Stellar body descriptor.
+   * @returns Faction identifier or null if no store available.
    */
   storeFor(
     this: FrontsCapabilities,
@@ -551,9 +542,8 @@ export const FrontsOperations = {
   },
   /**
    * Purchase an item or contract from a faction store.
-   * @param {Session} session - Player session.
-   * @param {{fac: string, id: string}} message - Purchase operation payload.
-   * @returns {void}
+   * @param session - Player session.
+   * @param message - Purchase operation payload.
    */
   storeBuy(this: FrontsCapabilities, session: Session, message: { fac: string; id: string }) {
     // the faction stores are their own menu, open from any landing (standing still gates the stock)
@@ -638,9 +628,8 @@ export const FrontsOperations = {
   // called when a captain arrives in a system (after spawnPlayer)
   /**
    * Spawn mission entities (convoys, wrecks, assassination targets) upon player arrival in system.
-   * @param {Session} session - Player session.
-   * @param {Space} space - Current space system instance.
-   * @returns {void}
+   * @param session - Player session.
+   * @param space - Current space system instance.
    */
   missionArrive(this: FrontsCapabilities, session: Session, space: Space) {
     const playerData = session.data,
@@ -727,8 +716,7 @@ export const FrontsOperations = {
   },
   /**
    * Complete escort mission when convoy ship successfully lands at destination.
-   * @param {Entity} entity - Landed convoy entity.
-   * @returns {void}
+   * @param entity - Landed convoy entity.
    */
   onConvoyLanded(this: FrontsCapabilities, entity: Entity) {
     const session = this.sessions.get(entity.convoyOf!.owner);
@@ -741,8 +729,7 @@ export const FrontsOperations = {
   },
   /**
    * Fail escort mission when protected convoy ship is destroyed.
-   * @param {Entity} entity - Destroyed convoy entity.
-   * @returns {void}
+   * @param entity - Destroyed convoy entity.
    */
   onConvoyLost(this: FrontsCapabilities, entity: Entity) {
     const session = this.sessions.get(entity.convoyOf!.owner);
@@ -757,8 +744,7 @@ export const FrontsOperations = {
   // every two seconds for captains in space: survey points, smuggler scans
   /**
    * Periodic check in space for survey waypoint proximity and police smuggler cargo scans.
-   * @param {Session} session - Player session.
-   * @returns {void}
+   * @param session - Player session.
    */
   missionIdle(this: FrontsCapabilities, session: Session) {
     const playerData = session.data,
@@ -835,12 +821,12 @@ export const FrontsOperations = {
   // extra job offers for 0.6 (merged into the job board)
   /**
    * Generate expanded job offerings (convoys, smuggling, rescues, surveys, bounties, faction chains).
-   * @param {{id: string, system: string}} position - Current stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {() => number} radius - Random generator function.
-   * @param {Array<[string, number]>} near - Nearby system IDs and jump distances.
-   * @param {number} window - Time window index.
-   * @returns {Array<Mission>} List of generated mission offers.
+   * @param position - Current stellar body.
+   * @param playerData - Saved player data.
+   * @param radius - Random generator function.
+   * @param near - Nearby system IDs and jump distances.
+   * @param window - Time window index.
+   * @returns List of generated mission offers.
    */
   moreOffers(
     this: FrontsCapabilities,
@@ -1010,10 +996,9 @@ export const FrontsOperations = {
   // job completion extras: tokens, chains, goals
   /**
    * Handle job completion rewards including tokens, faction commission chains, and goal advancement.
-   * @param {Session} session - Player session.
-   * @param {Mission} mission - Completed mission record.
-   * @param {{system: string}} position - Landed stellar body.
-   * @returns {void}
+   * @param session - Player session.
+   * @param mission - Completed mission record.
+   * @param position - Landed stellar body.
    */
   jobDone(
     this: FrontsCapabilities,

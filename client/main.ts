@@ -297,35 +297,35 @@ const elementById2 = elementById;
 initLoginScene(elementById2('login'));
 
 /**
- * @typedef {object} ClientGameState
- * @property {GameAssets | null} A Game assets dictionary.
- * @property {PlayerData | null} you Current player save data.
- * @property {string | null} sys Current system ID.
- * @property {string | null} landed Currently docked stellar body or null if flying.
- * @property {string | null} view Current UI view mode.
- * @property {Map<number, RenderEntity>} ents Active entities in current space.
- * @property {Array<{id: number, x: number, y: number, vx: number, vy: number, w: number, c: string, life: number}>} shots Active projectile shots.
- * @property {Array<{id: number, from: {x: number, y: number}, to: {x: number, y: number}, c: string, life: number}>} beams Active beam weapon animations.
- * @property {Array<{id: number, x: number, y: number, it: {cargo?: string, n?: number, mat?: string, credits?: number}}>} loot Floating loot canisters.
- * @property {number} target Current target entity ID.
- * @property {number} zoom Camera zoom scale.
- * @property {number} spriteScale Sprite rendering scale.
- * @property {string[]} route Active hyperspace route system IDs.
- * @property {string | null} navStellar Navigation target stellar ID.
- * @property {Record<string, number>} ammo Ammunition counts.
- * @property {Record<string, string>} FAC Faction ID mapping.
- * @property {string} ctab Active console tab.
- * @property {string | null} ltab Active landed tab.
- * @property {number} myId Player entity simulation ID.
- * @property {number} myHull Player ship hull chassis ID.
- * @property {number} hover Hovered entity ID.
- * @property {Record<string, boolean | number | string | Record<string, string>>} opts Client preferences and configuration.
- * @property {Record<string, string>} [pal] Color palette mapping.
- * @property {Record<string, number>} [tokens] Current player token balances.
- * @property {Array<{name: string, sys: string, ship: string}>} [captains] Active online captains list.
- * @property {{team: string} | null} [arena] Crucible arena state.
- * @property {((e: RenderEntity) => boolean)} [isAlly] Checks if entity is an allied wingmate.
- * @property {((e: RenderEntity) => boolean)} [hostile] Checks if entity is hostile to player.
+ * ClientGameState fields:
+ * A: Game assets dictionary.
+ * you: Current player save data.
+ * sys: Current system ID.
+ * landed: Currently docked stellar body or null if flying.
+ * view: Current UI view mode.
+ * ents: Active entities in current space.
+ * shots: Active projectile shots.
+ * beams: Active beam weapon animations.
+ * loot: Floating loot canisters.
+ * target: Current target entity ID.
+ * zoom: Camera zoom scale.
+ * spriteScale: Sprite rendering scale.
+ * route: Active hyperspace route system IDs.
+ * navStellar: Navigation target stellar ID.
+ * ammo: Ammunition counts.
+ * FAC: Faction ID mapping.
+ * ctab: Active console tab.
+ * ltab: Active landed tab.
+ * myId: Player entity simulation ID.
+ * myHull: Player ship hull chassis ID.
+ * hover: Hovered entity ID.
+ * opts: Client preferences and configuration.
+ * [pal]: Color palette mapping.
+ * [tokens]: Current player token balances.
+ * [captains]: Active online captains list.
+ * [arena]: Crucible arena state.
+ * [isAlly]: Checks if entity is an allied wingmate.
+ * [hostile]: Checks if entity is hostile to player.
  */
 const clientGameState: ClientGameState = (window.G = {
   A: null,
@@ -1934,7 +1934,6 @@ const BASICS = [
 ];
 /**
  * Opens the flight and keyboard controls reference dialog modal.
- * @returns {void}
  */
 function openControls(): void {
   audio.ui('open', 0.6);
@@ -1954,7 +1953,6 @@ function openControls(): void {
 }
 /**
  * Closes the flight controls reference dialog modal.
- * @returns {void}
  */
 const closeControls = (): void => elementById2('ctrlbox').classList.add('hidden');
 elementById2('cbhelp').onclick = openControls;
@@ -1968,8 +1966,7 @@ elementById2('cbmap').onclick = () =>
   elementById2('gmap').classList.contains('hidden') ? openMap() : closeMap();
 /**
  * Cycles target lock through visible ships sorted by distance.
- * @param {number} direction Direction offset in target list (-1 for previous, 1 for next)
- * @returns {void}
+ * @param direction Direction offset in target list (-1 for previous, 1 for next)
  */
 function cycleTarget(direction: number): void {
   const clientView = clientGameState.view;
@@ -1988,7 +1985,6 @@ function cycleTarget(direction: number): void {
 }
 /**
  * Finds and targets the nearest hostile ship in the current system.
- * @returns {void}
  */
 function nearestHostile(): void {
   const clientView = clientGameState.view;
@@ -2006,8 +2002,7 @@ function nearestHostile(): void {
 }
 /**
  * Requests docking/landing on a specified or nearest landable stellar object.
- * @param {{ id: string, name: string, x: number, y: number, r: number, svc?: string }} [pick] Optional targeted stellar body
- * @returns {void}
+ * @param pick Optional targeted stellar body
  */
 function landRequest(pick?: {
   id: string;
@@ -2043,9 +2038,9 @@ function landRequest(pick?: {
 const mouse = { x: 0, y: 0, wx: 0, wy: 0, in: false, down: false };
 /**
  * Converts screen/canvas client coordinates to game world space coordinates.
- * @param {number} centerX Client X coordinate
- * @param {number} centerY Client Y coordinate
- * @returns {[number, number]} World coordinates [wx, wy]
+ * @param centerX Client X coordinate
+ * @param centerY Client Y coordinate
+ * @returns World coordinates [wx, wy]
  */
 function toWorld(centerX: number, centerY: number): [number, number] {
   const radius = window.devicePixelRatio || 1,
@@ -2057,9 +2052,9 @@ function toWorld(centerX: number, centerY: number): [number, number] {
 }
 /**
  * Identifies the nearest interactive ship or stellar body under the given world coordinates.
- * @param {number} worldX World X coordinate
- * @param {number} worldY World Y coordinate
- * @returns {{ ship?: RenderEntity, stellar?: import('../shared/galaxy.ts').RawStellarBody } | null} Picked target or null
+ * @param worldX World X coordinate
+ * @param worldY World Y coordinate
+ * @returns Picked target or null
  */
 function pickAt(
   worldX: number,
@@ -2098,8 +2093,8 @@ function pickAt(
 }
 /**
  * Determines the appropriate mouse cursor style based on hover target.
- * @param {{ ship?: RenderEntity, stellar?: import('../shared/galaxy.ts').RawStellarBody } | null} height2 Picked object under cursor
- * @returns {string} CSS cursor identifier class suffix
+ * @param height2 Picked object under cursor
+ * @returns CSS cursor identifier class suffix
  */
 function cursorFor(
   height: { ship?: RenderEntity; stellar?: import('../shared/galaxy.ts').RawStellarBody } | null,
@@ -2118,8 +2113,7 @@ function cursorFor(
 }
 /**
  * Applies a cursor CSS class to the canvas element.
- * @param {string} component Cursor type name
- * @returns {void}
+ * @param component Cursor type name
  */
 function setCursor(component: string): void {
   if (canvas.dataset.cur! !== component) {
@@ -2129,8 +2123,7 @@ function setCursor(component: string): void {
 }
 /**
  * Sets the active target ID and notifies the server.
- * @param {number} identifier Target entity ID or 0 to clear
- * @returns {void}
+ * @param identifier Target entity ID or 0 to clear
  */
 function setTarget(identifier: number): void {
   clientGameState.targetClearPending = identifier === 0;
@@ -2291,7 +2284,6 @@ elementById2('radar').addEventListener('contextmenu', (pointerEvent) =>
 // ------------------------------------------------------------------ boarding (B next to a disabled ship)
 /**
  * Opens the ship boarding interface modal if alongside a disabled ship.
- * @returns {void}
  */
 function openBoard(): void {
   const renderEntity = clientGameState.target
@@ -2317,7 +2309,6 @@ function openBoard(): void {
 }
 /**
  * Closes the ship boarding action modal.
- * @returns {void}
  */
 function closeBoard(): void {
   elementById2('boardbox').classList.add('hidden');
@@ -2325,8 +2316,7 @@ function closeBoard(): void {
 }
 /**
  * Sends a boarding action command (plunder, capture, rescue) to the server.
- * @param {string} action Boarding action type ('plunder' | 'capture' | 'rescue')
- * @returns {void}
+ * @param action Boarding action type ('plunder' | 'capture' | 'rescue')
  */
 function doBoard(action: string): void {
   if (action && clientGameState.boarding)
@@ -2363,7 +2353,6 @@ window.addEventListener(
 // ------------------------------------------------------------------ tutorial panel
 /**
  * Updates the career tutorial guide widget with current stage info.
- * @returns {void}
  */
 function renderTut(): void {
   const index = clientGameState.you ? clientGameState.you!.tut : TUTORIAL.length,
@@ -2400,8 +2389,8 @@ const CHECKS = ['dmg', 'shake', 'mouseAim', 'notify', 'cb', 'mute'];
 let rebinding: string | null = null;
 /**
  * Formats a KeyboardEvent.code string into a readable label.
- * @param {string} component KeyboardEvent code
- * @returns {string} Human-friendly key name
+ * @param component KeyboardEvent code
+ * @returns Human-friendly key name
  */
 const keyName = (component: string | null): string =>
   !component
@@ -2433,7 +2422,6 @@ const keyName = (component: string | null): string =>
         .replace(/^Numpad/, 'Num ');
 /**
  * Renders keybinding assignment rows in the options menu.
- * @returns {void}
  */
 function renderKeys(): void {
   elementById2('optkeys').innerHTML = ACTIONS.map(
@@ -2452,8 +2440,7 @@ function renderKeys(): void {
 }
 /**
  * Opens the settings modal dialog and populates current configuration values.
- * @param {boolean} [keysFirst] Whether to scroll directly down to the keybinding section
- * @returns {void}
+ * @param keysFirst Whether to scroll directly down to the keybinding section
  */
 function openOpts(keysFirst?: boolean | PointerEvent): void {
   audio.ui('open', 0.6);
@@ -2475,7 +2462,6 @@ function openOpts(keysFirst?: boolean | PointerEvent): void {
 }
 /**
  * Closes the settings modal dialog.
- * @returns {void}
  */
 function closeOpts(): void {
   audio.ui('close', 0.6);
@@ -2487,8 +2473,7 @@ elementById2('optbtn').onclick = openOpts;
 // the quick volume control in the command bar: one master slider and a mute button
 /**
  * Updates an HTML range input's background fill gradient according to its value.
- * @param {HTMLInputElement} htmlInputElement Input slider element
- * @returns {void}
+ * @param htmlInputElement Input slider element
  */
 function paintRange(htmlInputElement: HTMLInputElement): void {
   if (!htmlInputElement) return;
@@ -2507,7 +2492,6 @@ document.addEventListener('input', (event) => {
 });
 /**
  * Syncs the volume quick-slider and mute button with current volume settings.
- * @returns {void}
  */
 function volUi(): void {
   const htmlButtonElement = elementById2('cbvol');
@@ -2655,7 +2639,6 @@ window.addEventListener(
 // ------------------------------------------------------------------ loops
 /**
  * Synchronizes canvas and radar internal pixel resolutions with device pixel ratio.
- * @returns {void}
  */
 function resize(): void {
   const radius = window.devicePixelRatio || 1;
@@ -2673,8 +2656,8 @@ initSidebarSize(resize);
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.
- * @param {number} width2 Requested width in CSS pixels
- * @returns {number} Clamped width in CSS pixels
+ * @param width2 Requested width in CSS pixels
+ * @returns Clamped width in CSS pixels
  */
 function setHud(width: number): number {
   // CSS temporarily caps the displayed width to the viewport without destroying
@@ -2728,8 +2711,7 @@ const padding: { prev: boolean[] } = { prev: [] },
   };
 /**
  * Reads standard Gamepad API state and maps buttons/axes to ship inputs and commands.
- * @param {ClientInput} clientInput Mutable input state object
- * @returns {void}
+ * @param clientInput Mutable input state object
  */
 function padInput(clientInput: ClientInput): void {
   const gamepad = navigator.getGamepads ? [...navigator.getGamepads()].find(Boolean) : null;
@@ -2755,8 +2737,7 @@ function padInput(clientInput: ClientInput): void {
 }
 /**
  * Polls on-screen virtual joystick and touch action buttons for input state.
- * @param {ClientInput} clientInput Mutable input state object
- * @returns {void}
+ * @param clientInput Mutable input state object
  */
 function touchInput(clientInput: ClientInput): void {
   for (const entryKey of ['fire1', 'fire2', 'ab'] as const)
@@ -2843,7 +2824,6 @@ let account = 0,
   last = performance.now();
 /**
  * Fixed physics and input update tick executed at fixed timestep (DT).
- * @returns {void}
  */
 function fixedTick(): void {
   if (
@@ -2978,8 +2958,7 @@ function fixedTick(): void {
 }
 /**
  * Main animation and rendering frame loop driven by requestAnimationFrame.
- * @param {number} time High-resolution timestamp from requestAnimationFrame
- * @returns {void}
+ * @param time High-resolution timestamp from requestAnimationFrame
  */
 function frame(time: number): void {
   const deltaTime = Math.min(0.1, (time - last) / 1000);

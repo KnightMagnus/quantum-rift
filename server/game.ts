@@ -306,176 +306,164 @@ import {
 } from '../shared/cargo-lots.ts';
 import { clampStanding } from '../shared/reputation.ts';
 /**
- * @typedef {import('./space.ts').Entity} Entity
- *
- * @typedef {object} PlayerInput
- * @property {boolean} [navigation] Automatic navigation input.
- * @property {number} seq Sequence number.
- * @property {number} thrust Forward thrust control.
- * @property {number} turn Rotational turn steering.
- * @property {number} ab Afterburner boost flag.
- * @property {number} rev Reverse thrusters flag.
- * @property {number} fire1 Primary weapon fire flag.
- * @property {number} fire2 Secondary weapon fire flag.
- *
- * @typedef {object} PlayerData
- * @property {EconomyReceipt} [economyReceipt] Recent trip cash flow; never a source of credits.
- * @property {SavedSurvey} [miningSurvey]
- * @property {Record<string,number>} [bp] Specialist blueprint fragments.
- * @property {string} name Captain name.
- * @property {number} credits Balance in credits.
- * @property {string} sys Current solar system ID.
- * @property {string|null} [stellar] Docked stellar or null while flying.
- * @property {string} [shipUid] Unique identifier for player ship.
- * @property {ShipLoadout} ship Current active ship loadout.
- * @property {Record<string, number>} [cargo] Cargo inventory mapping commodity ID to tons.
- * @property {Record<string, number>} [rep] Reputation standings per faction.
- * @property {Record<string, number>} [tokens] Faction tokens balances.
- * @property {Record<string, number[]>} [mats] Crafting materials inventory grades.
- * @property {StationState} [station] Personal station state and research tree.
- * @property {Array<{ship: ShipLoadout, escorts?: Array<{ship: ShipLoadout}>}>} [dock] Personal station stored ships.
- * @property {SavedShuttle[]} [shuttles] Station shuttle fleet.
- * @property {Array<OfficerRecord>} [officers] Station officer roster.
- * @property {Record<string, string>} [bridge] Bridge officer assignments.
- * @property {Record<string, number | string | boolean>} [arcs] Story arc states.
- * @property {string[]} [radioStations] Discovered radio station IDs.
- * @property {Record<string, QuestRecord | number | boolean>} [quests] Active and completed missions.
- * @property {Record<string, number | string | boolean>} [syn] Syndicate operations progression.
- * @property {Record<string, number | string | boolean>} [spec] Specialist career progression.
- * @property {Record<string, number | string | boolean>} [fronts] Frontline goals and token progress.
- * @property {Record<string, number>} [stats] Lifetime combat and trading stats.
- * @property {string | number} [armada] Armada group identifier if joined.
- * @property {boolean} [armadaFollow] Whether following armada leader.
- * @property {number} [ops] Operations level.
- * @property {number} [nextUid] Monotonic counter for IDs.
- * @property {number} [saveTime] Timestamp of last save.
- *
- * @typedef {object} Session
- * @property {number} id Unique session ID.
- * @property {EventEmitter & {send: (data: string | Buffer | Uint8Array | object) => void, close: () => void, open: boolean, backlog: number}} sock Client WebSocket connection.
- * @property {string} ip Remote client IP address.
- * @property {PlayerData} data Player account save data from DB.
- * @property {Entity | null} ent Currently active ship entity in space, or null if docked.
- * @property {PlayerInput[]} inputs Pending input commands queue.
- * @property {PlayerInput | null} [lastInput] Most recent input processed.
- * @property {string | null} name Captain name.
- * @property {number} chatT Timestamp of last chat message sent.
- * @property {number} msgs Number of messages received in current rate-limiting window.
- * @property {number} msgT Timestamp start of current rate-limiting window.
- * @property {number} [actT] Timestamp of last user activity.
- * @property {number} [loginT] Timestamp when user logged in.
- * @property {boolean} [isNew] Whether this account was newly created during login.
- * @property {CombatState} [combat] Combat assist state for this session.
- * @property {number} [fullT] Timestamp of last cargo-full notification.
- *
- * @typedef {object} PlayerReference
- * @property {number} id Session ID.
- * @property {string} name Captain name.
- * @property {Record<string, number>} rep Faction reputation map.
- * @property {PlayerInput[]} inputs Input commands queue.
- * @property {PlayerInput | null} [lastInput] Last processed input.
- * @property {Session} s Reference to the parent session.
- *
- * @typedef {object} SpaceSystem
- * @property {string} id Unique system ID (e.g. 'sol', 'meridian').
- * @property {string} name Display name of the system.
- * @property {number} x Coordinate on galaxy map.
- * @property {number} y Coordinate on galaxy map.
- * @property {number} danger Danger level (0-5).
- * @property {string[]} links Connected hyperlanes system IDs.
- * @property {string} faction System controlling faction ID.
- * @property {StellarBody[]} stellars Planets, stations, sites, and wormholes in this system.
- * @property {boolean} [farside] True if located on the far side of the Sol Gateway.
- * @property {boolean} [arena] True if this is a combat arena system.
- * @property {boolean} [anchor] True if anchor system for exploration.
- * @property {boolean} [gate] True if system contains a wormhole or gateway.
- * @property {Array<{x: number, y: number, r: number, ore: string, rich: number, rocks: number,minor?:boolean,industrial?:boolean}>} [fields] Mining asteroid fields.
- *
- * @typedef {object} StellarBody
- * @property {string} id Stellar identifier.
- * @property {string} name Stellar display name.
- * @property {string} [type] Type of stellar ('planet', 'station', 'site', 'wormhole').
- * @property {number} x Position X in system.
- * @property {number} y Position Y in system.
- * @property {number} r Radius of body.
- * @property {string} svc Service flags string ('L' for land, 'T' for trade, 'Y' for shipyard, 'O' for outfitter, 'B' for bar/bounty, etc.).
- * @property {string} system System ID where this stellar is located.
- * @property {number} [tech] Tech level available for purchase.
- * @property {boolean} [site] True if this is a derelict/claimable Personal Station site.
- * @property {boolean} [hub] True if this is the central hub station (Quantum Station).
- * @property {boolean} [outlaw] True if outlaw haven with no reputation restrictions.
- * @property {Record<string, number>} [prices] Custom commodity price overrides.
- * @property {string} [wormhole] Destination system ID for wormhole transit.
- * @property {string} [exit] Destination stellar ID for wormhole transit.
- *
- * @typedef {object} MarketItem
- * @property {string} id Commodity ID.
- * @property {string} name Commodity display name.
- * @property {number | null} price Unit price in credits, or null if not traded.
- * @property {number} [sellCap] Remaining finite Composite Plating buyer tonnes for this port/day.
- * @property {boolean} [flash] Whether a temporary flash market price is active.
- * @property {number} [moved] Percentage price shift due to system state or trade volume.
- *
- * @typedef {object} Mission
- * @property {string} id Unique mission ID.
- * @property {{stops: string[], stop: number}} [radioTour] Saved five-stop passenger tour.
- * @property {string} type Mission type ('cargo', 'bounty', 'patrol', 'supply', 'smuggle', 'assassinate', 'quest', 'warband').
- * @property {string} title Mission display title.
- * @property {string} sys Target system ID.
- * @property {string} [dest] Destination stellar ID for delivery/landing.
- * @property {string} [cid] Commodity ID to transport.
- * @property {number} [qty] Quantity of cargo/passengers.
- * @property {number} [pax] Number of passengers.
- * @property {number} [need] Target kill count needed for patrol.
- * @property {number} [got] Current kill count achieved for patrol.
- * @property {number} [hull] Target ship hull ID.
- * @property {string} [faction] Target faction ID.
- * @property {string} [targetName] Target NPC name for bounty.
- * @property {number} reward Payout upon completion in credits.
- * @property {string} text Narrative brief/description.
- * @property {boolean} [done] Whether mission objectives are fulfilled.
- * @property {boolean} [paid] Whether payout has been disbursed.
- * @property {number} [owner] Session ID of mission contractor.
- * @property {number} [taken] Timestamp when accepted.
- * @property {number} [deadline] Timestamp deadline if time-sensitive.
- * @property {number} [rush] Duration in minutes if rush delivery.
- * @property {QuestRecord} [quest] Linked quest metadata.
- * @property {boolean} [elite] True for elite dangerous bounties.
- * @property {boolean} [spawned] True if bounty target is currently spawned in-system.
- *
- * @typedef {object} SaveSlotSummary
- * @property {string} name Captain name.
- * @property {string} ship Current ship name.
- * @property {number} credits Balance in credits.
- * @property {number} ops Personal Station Tier.
- * @property {string} sys Current system name.
- *
- * @typedef {object} CommunityPayload
- * @property {string[]} docked Names of captains currently docked at Quantum Station.
- * @property {Array<{name: string, earned: number, kills: number, ship: string, ai?: boolean}>} top Leaderboard of top earners.
- * @property {Array<{system: string, owner: string | null, ops: number}>} stations List of claimable station hulls and their owners.
- * @property {Array<{name: string, sys: string}>} online Captains currently online and their systems.
- *
- * @typedef {object} ShipStats
- * @property {number} shield Maximum shield capacity.
- * @property {number} shieldRe Shield recharge rate per second.
- * @property {number} armor Maximum armor / hull points.
- * @property {number} [armorRe] Armor repair rate per second.
- * @property {number} maxSpeed Maximum forward speed.
- * @property {number} accel Acceleration rating.
- * @property {number} turn Turn rate in radians per second.
- * @property {number} cargo Cargo capacity in metric tons.
- * @property {number} free Unallocated outfit mass / space.
- * @property {number} fuel Fuel capacity for hyperjumps.
- * @property {number} [fuelRe] Fuel ramscoop regeneration rate.
- * @property {number} size Collision bounding radius.
- * @property {number} mass Total ship mass.
- * @property {Record<number, number>} weapons Installed weapon mount counts by weapon ID.
- * @property {number} guns Forward gun mount count.
- * @property {number} maxGuns Maximum gun mounts.
- * @property {number} turrets Turret mount count.
- * @property {number} maxTurrets Maximum turret mounts.
- * @property {boolean} [jumpFast] Fast jump drive charge capability.
+
+ * PlayerInput fields:
+ * [navigation]: Automatic navigation input.
+ * seq: Sequence number.
+ * thrust: Forward thrust control.
+ * turn: Rotational turn steering.
+ * ab: Afterburner boost flag.
+ * rev: Reverse thrusters flag.
+ * fire1: Primary weapon fire flag.
+ * fire2: Secondary weapon fire flag.
+ * PlayerData fields:
+ * [economyReceipt]: Recent trip cash flow; never a source of credits.
+ * [bp]: Specialist blueprint fragments.
+ * name: Captain name.
+ * credits: Balance in credits.
+ * sys: Current solar system ID.
+ * [stellar]: Docked stellar or null while flying.
+ * [shipUid]: Unique identifier for player ship.
+ * ship: Current active ship loadout.
+ * [cargo]: Cargo inventory mapping commodity ID to tons.
+ * [rep]: Reputation standings per faction.
+ * [tokens]: Faction tokens balances.
+ * [mats]: Crafting materials inventory grades.
+ * [station]: Personal station state and research tree.
+ * [dock]: Personal station stored ships.
+ * [shuttles]: Station shuttle fleet.
+ * [officers]: Station officer roster.
+ * [bridge]: Bridge officer assignments.
+ * [arcs]: Story arc states.
+ * [radioStations]: Discovered radio station IDs.
+ * [quests]: Active and completed missions.
+ * [syn]: Syndicate operations progression.
+ * [spec]: Specialist career progression.
+ * [fronts]: Frontline goals and token progress.
+ * [stats]: Lifetime combat and trading stats.
+ * [armada]: Armada group identifier if joined.
+ * [armadaFollow]: Whether following armada leader.
+ * [ops]: Operations level.
+ * [nextUid]: Monotonic counter for IDs.
+ * [saveTime]: Timestamp of last save.
+ * Session fields:
+ * id: Unique session ID.
+ * sock: Client WebSocket connection.
+ * ip: Remote client IP address.
+ * data: Player account save data from DB.
+ * ent: Currently active ship entity in space, or null if docked.
+ * inputs: Pending input commands queue.
+ * [lastInput]: Most recent input processed.
+ * name: Captain name.
+ * chatT: Timestamp of last chat message sent.
+ * msgs: Number of messages received in current rate-limiting window.
+ * msgT: Timestamp start of current rate-limiting window.
+ * [actT]: Timestamp of last user activity.
+ * [loginT]: Timestamp when user logged in.
+ * [isNew]: Whether this account was newly created during login.
+ * [combat]: Combat assist state for this session.
+ * [fullT]: Timestamp of last cargo-full notification.
+ * PlayerReference fields:
+ * id: Session ID.
+ * name: Captain name.
+ * rep: Faction reputation map.
+ * inputs: Input commands queue.
+ * [lastInput]: Last processed input.
+ * s: Reference to the parent session.
+ * SpaceSystem fields:
+ * id: Unique system ID (e.g. 'sol', 'meridian').
+ * name: Display name of the system.
+ * x: Coordinate on galaxy map.
+ * y: Coordinate on galaxy map.
+ * danger: Danger level (0-5).
+ * links: Connected hyperlanes system IDs.
+ * faction: System controlling faction ID.
+ * stellars: Planets, stations, sites, and wormholes in this system.
+ * [farside]: True if located on the far side of the Sol Gateway.
+ * [arena]: True if this is a combat arena system.
+ * [anchor]: True if anchor system for exploration.
+ * [gate]: True if system contains a wormhole or gateway.
+ * [fields]: Mining asteroid fields.
+ * StellarBody fields:
+ * id: Stellar identifier.
+ * name: Stellar display name.
+ * [type]: Type of stellar ('planet', 'station', 'site', 'wormhole').
+ * x: Position X in system.
+ * y: Position Y in system.
+ * r: Radius of body.
+ * svc: Service flags string ('L' for land, 'T' for trade, 'Y' for shipyard, 'O' for outfitter, 'B' for bar/bounty, etc.).
+ * system: System ID where this stellar is located.
+ * [tech]: Tech level available for purchase.
+ * [site]: True if this is a derelict/claimable Personal Station site.
+ * [hub]: True if this is the central hub station (Quantum Station).
+ * [outlaw]: True if outlaw haven with no reputation restrictions.
+ * [prices]: Custom commodity price overrides.
+ * [wormhole]: Destination system ID for wormhole transit.
+ * [exit]: Destination stellar ID for wormhole transit.
+ * MarketItem fields:
+ * id: Commodity ID.
+ * name: Commodity display name.
+ * price: Unit price in credits, or null if not traded.
+ * [sellCap]: Remaining finite Composite Plating buyer tonnes for this port/day.
+ * [flash]: Whether a temporary flash market price is active.
+ * [moved]: Percentage price shift due to system state or trade volume.
+ * Mission fields:
+ * id: Unique mission ID.
+ * [radioTour]: Saved five-stop passenger tour.
+ * type: Mission type ('cargo', 'bounty', 'patrol', 'supply', 'smuggle', 'assassinate', 'quest', 'warband').
+ * title: Mission display title.
+ * sys: Target system ID.
+ * [dest]: Destination stellar ID for delivery/landing.
+ * [cid]: Commodity ID to transport.
+ * [qty]: Quantity of cargo/passengers.
+ * [pax]: Number of passengers.
+ * [need]: Target kill count needed for patrol.
+ * [got]: Current kill count achieved for patrol.
+ * [hull]: Target ship hull ID.
+ * [faction]: Target faction ID.
+ * [targetName]: Target NPC name for bounty.
+ * reward: Payout upon completion in credits.
+ * text: Narrative brief/description.
+ * [done]: Whether mission objectives are fulfilled.
+ * [paid]: Whether payout has been disbursed.
+ * [owner]: Session ID of mission contractor.
+ * [taken]: Timestamp when accepted.
+ * [deadline]: Timestamp deadline if time-sensitive.
+ * [rush]: Duration in minutes if rush delivery.
+ * [quest]: Linked quest metadata.
+ * [elite]: True for elite dangerous bounties.
+ * [spawned]: True if bounty target is currently spawned in-system.
+ * SaveSlotSummary fields:
+ * name: Captain name.
+ * ship: Current ship name.
+ * credits: Balance in credits.
+ * ops: Personal Station Tier.
+ * sys: Current system name.
+ * CommunityPayload fields:
+ * docked: Names of captains currently docked at Quantum Station.
+ * top: Leaderboard of top earners.
+ * stations: List of claimable station hulls and their owners.
+ * online: Captains currently online and their systems.
+ * ShipStats fields:
+ * shield: Maximum shield capacity.
+ * shieldRe: Shield recharge rate per second.
+ * armor: Maximum armor / hull points.
+ * [armorRe]: Armor repair rate per second.
+ * maxSpeed: Maximum forward speed.
+ * accel: Acceleration rating.
+ * turn: Turn rate in radians per second.
+ * cargo: Cargo capacity in metric tons.
+ * free: Unallocated outfit mass / space.
+ * fuel: Fuel capacity for hyperjumps.
+ * [fuelRe]: Fuel ramscoop regeneration rate.
+ * size: Collision bounding radius.
+ * mass: Total ship mass.
+ * weapons: Installed weapon mount counts by weapon ID.
+ * guns: Forward gun mount count.
+ * maxGuns: Maximum gun mounts.
+ * turrets: Turret mount count.
+ * maxTurrets: Maximum turret mounts.
+ * [jumpFast]: Fast jump drive charge capability.
  */
 
 import { HailService } from './hail-service.ts';
@@ -519,8 +507,8 @@ import { STATES } from '../shared/living.ts';
 import { ARCS } from '../shared/arcs.ts';
 /**
  * Resolves the display name for a faction story arc.
- * @param {string} factionId Faction identifier.
- * @returns {string} Story arc title.
+ * @param factionId Faction identifier.
+ * @returns Story arc title.
  */
 const ARCS_NAME = (factionId: string): string => (ARCS[factionId] ? ARCS[factionId].name : '');
 import { masteryTier } from '../shared/frontier.ts';
@@ -534,24 +522,24 @@ const galaxyGraph = new GalaxyGraph(systemsById);
  * Quantum Rift master game engine.
  * Manages player accounts, client network sessions, world and system state,
  * trade markets, mission boards, station management, and game loops.
- * @property {GameAssets} A Game assets object containing ships, weapons, outfits, and commodities.
- * @property {DB} db Persistent JSON database instance for player accounts and world state.
- * @property {Record<string | number, OutfitAsset>} O Outfit definitions lookup by ID.
- * @property {Record<string, SpaceSpace>} spaces Active simulated spaces by system ID, backed by live proxy.
- * @property {Map<number, Session>} sessions Connected client sessions by session ID.
- * @property {number} nextSid Next session identifier sequence number.
- * @property {number} tickN Server tick counter.
- * @property {Record<string, SpaceSpace>} live Cache of currently instantiated systems.
- * @property {FeatureServices} features Modular feature service delegations.
- * @property {JobService} jobService Ordinary job board, acceptance and completion owner.
- * @property {PortService} portService Ordinary market, material, shipyard and outfitter owner.
- * @property {CombatAssistCombatAssist} combatAssist Combat assist controller.
- * @property {MessageRegistry} messageHandlers Registered client message handlers.
- * @property {Map<string, {n: number, t: number}>} fails Failed sign-in attempt tracking map.
- * @property {boolean} paused Solo-mode pause flag.
- * @property {number} [pausedAt] Timestamp when solo mode was paused.
- * @property {number} [tickErr] Error count during server ticks.
- * @property {string} [worldKey] Cache key for deduplicating world status broadcasts.
+ * A: Game assets object containing ships, weapons, outfits, and commodities.
+ * db: Persistent JSON database instance for player accounts and world state.
+ * O: Outfit definitions lookup by ID.
+ * spaces: Active simulated spaces by system ID, backed by live proxy.
+ * sessions: Connected client sessions by session ID.
+ * nextSid: Next session identifier sequence number.
+ * tickN: Server tick counter.
+ * live: Cache of currently instantiated systems.
+ * features: Modular feature service delegations.
+ * jobService: Ordinary job board, acceptance and completion owner.
+ * portService: Ordinary market, material, shipyard and outfitter owner.
+ * combatAssist: Combat assist controller.
+ * messageHandlers: Registered client message handlers.
+ * fails: Failed sign-in attempt tracking map.
+ * paused: Solo-mode pause flag.
+ * [pausedAt]: Timestamp when solo mode was paused.
+ * [tickErr]: Error count during server ticks.
+ * [worldKey]: Cache key for deduplicating world status broadcasts.
  */
 export class Game {
   declare A: GameAssets;
@@ -575,43 +563,73 @@ export class Game {
   declare features: FeatureServices;
   declare pausedAt: number;
 
-  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, string> | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   _an: Record<string, string> | undefined;
-  /** Legacy feature state; see docs/FEATURES.md. @type {number | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   _anW: number | undefined;
-  /** Legacy feature state; see docs/FEATURES.md. @type {{sys: string, boss: InvasionBoss, until: number, ent: Entity, sp: SpaceSpace} | null | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   invasion:
     | { sys: string; boss: InvasionBoss; until: number; ent: Entity; sp: SpaceSpace }
     | null
     | undefined;
-  /** Legacy feature state; see docs/FEATURES.md. @type {number | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   lastInvWin!: number;
-  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, number[]> | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   arenaQ!: Record<string, number[]>;
-  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, {id: string, sys: string, t: number, a: string, b: string}> | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   matches!: Record<string, ArenaMatch>;
-  /** Legacy feature state; see docs/FEATURES.md. @type {number | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   nextMatch!: number;
-  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, {wave: number, until: number, count: number}> | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   waves!: Record<string, RaidWave>;
-  /** Legacy feature state; see docs/FEATURES.md. @type {Map<string, {sys: string, id: number}> | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   rivalEnts!: Map<string, { sys: string; id: number }>;
-  /** Legacy feature state; see docs/FEATURES.md. @type {boolean | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   _livingStarted: boolean | undefined;
-  /** Legacy feature state; see docs/FEATURES.md. @type {string[] | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   _mkt: string[] | undefined;
-  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, {a: string, b: string, start: number, sys: string}> | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   duels!: Record<string, DuelState>;
-  /** Legacy feature state; see docs/FEATURES.md. @type {Record<string, {from: string, to: string, offer: Record<string, number>, want: Record<string, number>}> | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   trades!: Record<string, TradeState>;
-  /** Legacy feature state; see docs/FEATURES.md. @type {number | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   nextCoopId!: number;
-  /** Legacy feature state; see docs/FEATURES.md. @type {boolean | undefined} */
+  /**
+   * Legacy feature state; see docs/FEATURES.md.
+   */
   solo: boolean | undefined;
   /**
    * Initializes the game server, assets, storage, features, and tick loop.
-   * @param {GameAssets} assets Game assets object containing ships, weapons, outfits, and commodities.
-   * @param {DB} database Persistent JSON database instance for player accounts and world state.
+   * @param assets Game assets object containing ships, weapons, outfits, and commodities.
+   * @param database Persistent JSON database instance for player accounts and world state.
    */
   constructor(assets: GameAssets, database: Database) {
     augmentAssets(assets);
@@ -665,7 +683,7 @@ export class Game {
   // solo mode: save slots and save files
   /**
    * Summarizes all stored player saves for solo slot selection.
-   * @returns {SaveSlotSummary[]} Array of save summaries.
+   * @returns Array of save summaries.
    */
   slots(): SaveSlotSummary[] {
     return Object.values(this.db.players).map((playerAccount) => ({
@@ -680,8 +698,8 @@ export class Game {
   }
   /**
    * Imports an external save file object into the database.
-   * @param {PlayerData} playerData Raw save object to import.
-   * @returns {string} Sanitized name of imported captain.
+   * @param playerData Raw save object to import.
+   * @returns Sanitized name of imported captain.
    */
   importSave(playerData: PlayerData): string {
     if (
@@ -727,8 +745,8 @@ export class Game {
   }
   /**
    * System wake hook called when a space is accessed.
-   * @param {SpaceSpace} space Newly awakened space instance.
-   * @returns {SpaceSpace} The space instance.
+   * @param space Newly awakened space instance.
+   * @returns The space instance.
    */
   wake(space: SpaceSpace): SpaceSpace {
     return space;
@@ -737,7 +755,6 @@ export class Game {
   // sync:'create' applies the same setup only once, without resetting a saved captain.
   /**
    * Populates showcase and developer seed accounts defined in seeds.json.
-   * @returns {void}
    */
   seed(): void {
     let list: SeedDefinition[] = [];
@@ -835,8 +852,7 @@ export class Game {
   // Station Tier 5, a full hangar and, if listed, an elite bridge crew). Credits, ships and cargo are left alone.
   /**
    * Retires an account, disconnecting active sessions and freeing claimed stations and colonies.
-   * @param {string} name Captain name of the account to retire.
-   * @returns {void}
+   * @param name Captain name of the account to retire.
    */
   retireAccount(name: string): void {
     const entryKey = this.db.key(name),
@@ -867,9 +883,8 @@ export class Game {
   }
   /**
    * Synchronizes a showcase captain's station, officers, and progress to version spec.
-   * @param {PlayerData} playerData Player save record.
-   * @param {{station?: {ops?: number, research?: string}, ships?: Array<{hull: number}>}} seedDefinition Seed definition configuration.
-   * @returns {void}
+   * @param playerData Player save record.
+   * @param seedDefinition Seed definition configuration.
    */
   syncSeed(playerData: PlayerData, seedDefinition: SeedDefinition): void {
     this.features.hangar.hangarInit(playerData);
@@ -939,9 +954,8 @@ export class Game {
   // 2.1 playtest seeds: fill the docks with ships and crew them, once ({ docks: [{ lead, name, wings: [hulls] }], crew: [...officers], spare: [...officers] })
   /**
    * Sets up a test seed captain's docks with ships, wingmates, and officers.
-   * @param {PlayerData} playerData Player save record.
-   * @param {{docks?: Array<{lead?: number, name?: string, wings?: number[]}>, crew?: Array<{role: string, rarity: string, lv?: number}>, spare?: Array<{role: string, rarity: string, lv?: number}>}} seedFleetConfig Seed fleet configuration with docks, crew, and ships.
-   * @returns {void}
+   * @param playerData Player save record.
+   * @param seedFleetConfig Seed fleet configuration with docks, crew, and ships.
    */
   seedFleet(playerData: PlayerData, seedFleetConfig: SeedFleetConfig): void {
     this.features.docks.docksInit(playerData);
@@ -995,7 +1009,7 @@ export class Game {
   // ------------------------------------------------------------------ sessions
   /**
    * Creates a fresh default captain save state with starter ship, credits, and tutorial.
-   * @returns {PlayerData} Fresh initial player save state.
+   * @returns Fresh initial player save state.
    */
   fresh(): FreshPlayerData {
     const fromEntries2 = Object.fromEntries(
@@ -1025,9 +1039,8 @@ export class Game {
   }
   /**
    * Handles incoming WebSocket client connection and binds message/close events.
-   * @param {ClientSocket} socket WebSocket client connection.
-   * @param {string} [ipAddress='?'] Remote client IP address.
-   * @returns {void}
+   * @param socket WebSocket client connection.
+   * @param ipAddress Remote client IP address.
    */
   connect(socket: ClientSocket, ipAddress: string = '?'): void {
     const session = {
@@ -1055,8 +1068,7 @@ export class Game {
   }
   /**
    * Disconnects and unregisters a client session, saving flight state and docking in-system.
-   * @param {Session} session Session disconnecting.
-   * @returns {void}
+   * @param session Session disconnecting.
    */
   disconnect(session: Session): void {
     if (session.data) this.features.towing.detach(session);
@@ -1118,9 +1130,8 @@ export class Game {
   }
   /**
    * Sends a message payload to a client session if socket is open and backlog is acceptable.
-   * @param {Session} session Destination session.
-   * @param {string | NetworkMessage} message Message object or string to send.
-   * @returns {void}
+   * @param session Destination session.
+   * @param message Message object or string to send.
    */
   send(session: Pick<Session, 'sock'>, message: string | object): void {
     if ('sock' in session && session.sock && session.sock.open && session.sock.backlog < 4e6)
@@ -1128,18 +1139,16 @@ export class Game {
   }
   /**
    * Sends a transient toast banner message to the player's UI.
-   * @param {Session} session Recipient session.
-   * @param {string} message Notification banner message text.
-   * @returns {void}
+   * @param session Recipient session.
+   * @param message Notification banner message text.
    */
   toast(session: Session, message: string): void {
     this.send(session, { t: 'toast', msg: message });
   }
   /**
    * Broadcasts a JSON message to all authenticated sessions matching an optional predicate.
-   * @param {string | NetworkMessage} message Message payload to broadcast.
-   * @param {((s: Session) => boolean)} [filter] Optional predicate to filter sessions.
-   * @returns {void}
+   * @param message Message payload to broadcast.
+   * @param filter Optional predicate to filter sessions.
    */
   broadcast(message: string | object, filter?: (session: Session) => boolean): void {
     const stringify2 = JSON.stringify(message);
@@ -1148,15 +1157,13 @@ export class Game {
   }
   /**
    * Legacy reputation getter.
-   * @returns {null}
    */
   get rep(): null {
     return null;
   }
   /**
    * Sends full updated player state ('you' packet) to client session.
-   * @param {Session} session Player session.
-   * @returns {void}
+   * @param session Player session.
    */
   you(session: Session): void {
     const playerData = session.data as PlayerData;
@@ -1258,8 +1265,8 @@ export class Game {
   // ---- claimable station hulls
   /**
    * Finds the player account owning a claimable station site hull.
-   * @param {string} identifier Stellar station site ID.
-   * @returns {PlayerData | null} Player record of owner, or null if unclaimed.
+   * @param identifier Stellar station site ID.
+   * @returns Player record of owner, or null if unclaimed.
    */
   siteOwner(identifier: string): PlayerData | null {
     const site = this.db.world.sites[identifier];
@@ -1267,7 +1274,7 @@ export class Game {
   }
   /**
    * Compiles map of all claimed station sites and their current owners/Station Tiers.
-   * @returns {Record<string, {owner: string, ops: number}>} Map of claimed sites and owner information.
+   * @returns Map of claimed sites and owner information.
    */
   sitesPayload(): Record<string, { owner: string; ops: number }> {
     const result: Record<string, { owner: string; ops: number }> = {};
@@ -1280,25 +1287,23 @@ export class Game {
   }
   /**
    * Checks whether player owns the station hull at stellar body p.
-   * @param {PlayerData} playerData Player save data.
-   * @param {StellarBody} stellarBody Stellar body.
-   * @returns {boolean} True if player owns this station site.
+   * @param playerData Player save data.
+   * @param stellarBody Stellar body.
+   * @returns True if player owns this station site.
    */
   ownSite(playerData: PlayerData, stellarBody: Pick<StellarBody, 'id' | 'site'>): boolean {
     return !!(stellarBody && stellarBody.site && playerData.station.site === stellarBody.id);
   }
   /**
    * Broadcasts claimed station sites update to all players.
-   * @returns {void}
    */
   pushSites(): void {
     this.broadcast({ t: 'sites', sites: this.sitesPayload() });
   }
   /**
    * Advances the career guide / tutorial when the current milestone event occurs.
-   * @param {Session} session Player session.
-   * @param {string} event Tutorial trigger event identifier.
-   * @returns {void}
+   * @param session Player session.
+   * @param event Tutorial trigger event identifier.
    */
   tut(session: Session, event: string): void {
     // advance the first-flight tutorial if this event is the current goal
@@ -1326,16 +1331,16 @@ export class Game {
   // cargo carried for jobs takes up real hold space
   /**
    * Calculates total cargo tonnage allocated to active delivery and smuggling jobs.
-   * @param {{missions?: Array<Pick<Mission, 'type' | 'qty'>>}} distance Player mission cargo.
-   * @returns {number} Cargo space currently allocated to active cargo and smuggling missions.
+   * @param distance Player mission cargo.
+   * @returns Cargo space currently allocated to active cargo and smuggling missions.
    */
   jobCargo(distance: { missions?: Array<Pick<Mission, 'type' | 'qty'>> }): number {
     return reservedCargoTonnes(distance.missions);
   }
   /**
    * Calculates total hold space currently used by commodities and job cargo.
-   * @param {{cargo: Record<string, number>, missions?: Array<Pick<Mission, 'type' | 'qty'>>}} distance Commodity and mission cargo.
-   * @returns {number} Total cargo hold tonnage used by trade commodities and mission cargo.
+   * @param distance Commodity and mission cargo.
+   * @returns Total cargo hold tonnage used by trade commodities and mission cargo.
    */
   holdUsed(distance: {
     cargo: Record<string, number>;
@@ -1345,8 +1350,8 @@ export class Game {
   }
   /**
    * Calculates passenger berths occupied by active passenger missions.
-   * @param {PlayerData} playerData Player save data.
-   * @returns {number} Passenger berths occupied by active passenger missions.
+   * @param playerData Player save data.
+   * @returns Passenger berths occupied by active passenger missions.
    */
   jobBunks(playerData: PlayerData): number {
     return occupiedPassengerSeats(playerData.missions);
@@ -1354,10 +1359,10 @@ export class Game {
   // Check the actual destination loadout for swaps; purchases use the stock loadout.
   /**
    * Checks if candidate hull or ship loadout can accommodate current cargo, missions, and passengers.
-   * @param {PlayerData} playerData Player save data.
-   * @param {number | {hull: number, outfits: Record<string, number>}} hullOrShip Candidate ship hull ID or loadout.
-   * @param {boolean} [goods=true] Whether to include commodities in calculation.
-   * @returns {string | null} Failure explanation reason, or null if ship fits.
+   * @param playerData Player save data.
+   * @param hullOrShip Candidate ship hull ID or loadout.
+   * @param goods Whether to include commodities in calculation.
+   * @returns Failure explanation reason, or null if ship fits.
    */
   fitsJobs(
     playerData: PlayerData,
@@ -1380,10 +1385,9 @@ export class Game {
   // when you leave a system, your escorts go with you; a rival flying alongside goes back to their own business
   /**
    * Cleans up or returns escort wingmates and fighter drones when a ship leaves space.
-   * @param {SpaceSpace} space Active system space simulation.
-   * @param {Entity} entity Leader entity leaving or destroyed.
-   * @param {string} [reason] Removal reason (e.g. 'jump').
-   * @returns {void}
+   * @param space Active system space simulation.
+   * @param entity Leader entity leaving or destroyed.
+   * @param reason Removal reason (e.g. 'jump').
    */
   dropEscorts(space: SpaceSpace, entity: Entity, reason?: string): void {
     if (entity.player?.s) this.features.industrial.stop(entity.player.s);
@@ -1412,8 +1416,7 @@ export class Game {
   // pausing a solo game stops the clock on rush deadlines and loan payments (station timers still run in real time)
   /**
    * Toggles pause state for solo play, freezing mission deadlines and loans.
-   * @param {boolean} enabled Pause state.
-   * @returns {void}
+   * @param enabled Pause state.
    */
   setPaused(enabled: boolean): void {
     if (enabled === !!this.paused) return;
@@ -1436,8 +1439,8 @@ export class Game {
   }
   /**
    * Checks whether a captain qualifies for newcomer protection (station below Station Tier 3).
-   * @param {PlayerData} playerData Player save data.
-   * @returns {boolean} True if player qualifies for newcomer protection.
+   * @param playerData Player save data.
+   * @returns True if player qualifies for newcomer protection.
    */
   newcomer(playerData: PlayerData): boolean {
     return (
@@ -1446,9 +1449,8 @@ export class Game {
   }
   /**
    * Warns protected captains when jumping into lawless or dangerous systems.
-   * @param {Session} session Player session.
-   * @param {SpaceSystem} system Destination space system.
-   * @returns {void}
+   * @param session Player session.
+   * @param system Destination space system.
    */
   protectNote(session: Session, system: SpaceSystem): void {
     // Warn once on crossing the Gateway: the main-map truce does not reach Farside.
@@ -1464,9 +1466,8 @@ export class Game {
   }
   /**
    * Appends an entry to the captain's log history (capped at 200 entries).
-   * @param {PlayerData} playerData Player save data.
-   * @param {string} text Entry text to append.
-   * @returns {void}
+   * @param playerData Player save data.
+   * @param text Entry text to append.
    */
   log(playerData: PlayerData, text: string): void {
     playerData.log.push({ t: Date.now(), text });
@@ -1476,7 +1477,7 @@ export class Game {
   // Fixed routes; authentication, flood and activity gates remain in onMessage.
   /**
    * Builds the message router table binding route actions to feature services and handlers.
-   * @returns {MessageRegistry} Initialized message registry dispatcher.
+   * @returns Initialized message registry dispatcher.
    */
   createMessageHandlers(): MessageRegistry {
     // oxlint-disable-next-line typescript/no-this-alias -- Capability getters retain the coordinator receiver.
@@ -1536,9 +1537,8 @@ export class Game {
 
   /**
    * Ingests, rate-limits, authenticates, and dispatches an incoming client message.
-   * @param {Session} session Source session.
-   * @param {NetworkMessage} message Incoming parsed client message.
-   * @returns {void}
+   * @param session Source session.
+   * @param message Incoming parsed client message.
    */
   onMessage(session: Session, message: NetworkMessage): void {
     const currentTime = Date.now();
@@ -1558,9 +1558,8 @@ export class Game {
   }
   /**
    * Handles player login authentication and new account registration.
-   * @param {Session} session Unauthenticated session.
-   * @param {{name: string, pass: string}} message2 Authentication handshake payload.
-   * @returns {void}
+   * @param session Unauthenticated session.
+   * @param message2 Authentication handshake payload.
    */
   hello(session: Session, message2: { name?: string; pass?: string }): void {
     const name = String(message2.name || '').trim(),
@@ -1660,8 +1659,8 @@ export class Game {
   // player-facing reference used by Space (id, name, rep, inputs)
   /**
    * Constructs player reference descriptor used by Space simulation to bridge entity and session.
-   * @param {Session} session Player session.
-   * @returns {PlayerReference} Player reference descriptor for Space.
+   * @param session Player session.
+   * @returns Player reference descriptor for Space.
    */
   pref(session: Session): PlayerReference {
     return {
@@ -1684,12 +1683,11 @@ export class Game {
   // ------------------------------------------------------------------ space: depart, land, jump
   /**
    * Spawns player ship and active wingmates into space system simulation.
-   * @param {Session} session Player session.
-   * @param {number} positionX Coordinate X.
-   * @param {number} positionY Coordinate Y.
-   * @param {number} firstValue Heading angle in radians.
-   * @param {number} value Initial velocity magnitude.
-   * @returns {void}
+   * @param session Player session.
+   * @param positionX Coordinate X.
+   * @param positionY Coordinate Y.
+   * @param firstValue Heading angle in radians.
+   * @param value Initial velocity magnitude.
    */
   spawnPlayer(
     session: Session,
@@ -1792,8 +1790,7 @@ export class Game {
   }
   /**
    * Launches player ship from docked stellar body into active space flight.
-   * @param {Session} session Player session launching from stellar.
-   * @returns {void}
+   * @param session Player session launching from stellar.
    */
   depart(session: Session): void {
     const playerData = session.data;
@@ -1825,9 +1822,8 @@ export class Game {
   }
   /**
    * Lands player ship at a stellar body, repairing, refueling, and completing missions.
-   * @param {Session} session Player session landing.
-   * @param {string} sessionId Target stellar ID.
-   * @returns {void}
+   * @param session Player session landing.
+   * @param sessionId Target stellar ID.
    */
   land(session: Session, sessionId: string): void {
     const playerData = session.data,
@@ -1885,8 +1881,7 @@ export class Game {
   }
   /**
    * Transmits docked port services payload (market, shipyard, jobs, outfitter) to client.
-   * @param {Session} session Player session currently docked.
-   * @returns {void}
+   * @param session Player session currently docked.
    */
   landed(session: Session): void {
     const playerData = session.data,
@@ -1965,9 +1960,8 @@ export class Game {
   }
   /**
    * Initiates hyperjump to connected system, charging jump drive.
-   * @param {Session} session Player session initiating hyperjump.
-   * @param {string} destination Destination system ID.
-   * @returns {void}
+   * @param session Player session initiating hyperjump.
+   * @param destination Destination system ID.
    */
   jump(session: Session, destination: string): void {
     if (this.features.towing.attached(session))
@@ -2031,9 +2025,8 @@ export class Game {
   }
   /**
    * Finalizes hyperjump: deducts fuel, explores destination, and spawns ship in new system.
-   * @param {Entity} entity Jumping ship entity.
-   * @param {SpaceSpace} space Origin space simulation.
-   * @returns {void}
+   * @param entity Jumping ship entity.
+   * @param space Origin space simulation.
    */
   finishJump(entity: Entity, space: SpaceSpace): void {
     if (entity.player && this.features.towing.attached(entity.player.s)) {
@@ -2098,10 +2091,9 @@ export class Game {
   // flying into the Sol Gateway (or its far mouth) crosses instantly, with no fuel cost
   /**
    * Handles instantaneous transit through Sol Gateway wormholes without fuel consumption.
-   * @param {Entity} entity Ship entity entering wormhole.
-   * @param {SpaceSpace} space Origin space.
-   * @param {StellarBody} stellarBody Wormhole gateway stellar body.
-   * @returns {void}
+   * @param entity Ship entity entering wormhole.
+   * @param space Origin space.
+   * @param stellarBody Wormhole gateway stellar body.
    */
   wormholeTransit(
     entity: Entity,
@@ -2168,10 +2160,9 @@ export class Game {
   // ------------------------------------------------------------------ combat outcomes
   /**
    * Handles weapon impact against NPC ship, updating faction reputation and rival state.
-   * @param {PlayerReference} playerReference Attacking player reference.
-   * @param {Entity} entity Target entity hit.
-   * @param {SpaceSpace} space Space simulation.
-   * @returns {void}
+   * @param playerReference Attacking player reference.
+   * @param entity Target entity hit.
+   * @param space Space simulation.
    */
   onHit(playerReference: PlayerReference, entity: Entity, space: SpaceSpace): void {
     const session = playerReference.s,
@@ -2199,11 +2190,10 @@ export class Game {
   }
   /**
    * Resolves combat kill: awards bounties, increases combat rating, and fulfills mission objectives.
-   * @param {PlayerReference} playerReference Killing player reference.
-   * @param {Entity} entity Entity destroyed.
-   * @param {SpaceSpace} space Space simulation.
-   * @param {boolean} [byEscort] Whether final blow was landed by an escort.
-   * @returns {void}
+   * @param playerReference Killing player reference.
+   * @param entity Entity destroyed.
+   * @param space Space simulation.
+   * @param byEscort Whether final blow was landed by an escort.
    */
   onKill(
     playerReference: PlayerReference,
@@ -2298,10 +2288,9 @@ export class Game {
   }
   /**
    * Handles player ship destruction: charges insurance fee, clears cargo, and respawns at station.
-   * @param {PlayerReference} playerReference Player reference destroyed.
-   * @param {SpaceSpace} space Space simulation.
-   * @param {Entity | null} [entity] Killer entity, if any.
-   * @returns {void}
+   * @param playerReference Player reference destroyed.
+   * @param space Space simulation.
+   * @param entity Killer entity, if any.
    */
   onPlayerDeath(playerReference: PlayerReference, space: SpaceSpace, entity?: Entity | null): void {
     const session = playerReference.s,
@@ -2354,9 +2343,9 @@ export class Game {
   }
   /**
    * Finds the nearest market port that purchases a specific commodity.
-   * @param {string} starSystem Starting system ID.
-   * @param {string} captainId Commodity ID.
-   * @returns {{p: StellarBody, j: number} | null} Nearest purchasing stellar port and jump distance, or null.
+   * @param starSystem Starting system ID.
+   * @param captainId Commodity ID.
+   * @returns Nearest purchasing stellar port and jump distance, or null.
    */
   nearestBuyer(starSystem: string, captainId: string): { p: StellarBody; j: number } | null {
     // Keep authored tie order and the existing five-link search boundary.
@@ -2376,9 +2365,9 @@ export class Game {
   }
   /**
    * Handles player scooping floating salvage canister, ore chunk, or credits.
-   * @param {PlayerReference} playerReference Player scooping loot.
-   * @param {LootItem} lootItem Loot item payload.
-   * @returns {boolean | void} Returns false if cargo hold full when mining ore.
+   * @param playerReference Player scooping loot.
+   * @param lootItem Loot item payload.
+   * @returns Returns false if cargo hold full when mining ore.
    */
   onLoot(playerReference: PlayerReference, lootItem: LootItem): boolean | void {
     const session = playerReference.s,
@@ -2462,7 +2451,7 @@ export class Game {
 
   /**
    * Compiles social hub statistics: docked captains, top earners, and station claim statuses.
-   * @returns {CommunityPayload} Active social / leaderboard statistics payload.
+   * @returns Active social / leaderboard statistics payload.
    */
   community(): CommunityPayload {
     const docked = [...this.sessions.values()]
@@ -2503,7 +2492,9 @@ export class Game {
     return { docked, top: slice2, stations, online };
   }
   // ------------------------------------------------------------------ markets
-  /** @returns {PortService} Ordinary port commerce. */
+  /**
+   * @returns Ordinary port commerce.
+   */
   createPortService(): PortService {
     // oxlint-disable-next-line typescript/no-this-alias -- Capability getters retain the coordinator receiver.
     const game = this;
@@ -2542,19 +2533,17 @@ export class Game {
 
   /**
    * Generates commodity market prices for a stellar port, applying flash and state modifiers.
-   * @param {StellarBody} stellarBody Stellar port.
-   * @returns {MarketItem[] | null} Array of traded commodities and pricing, or null.
+   * @param stellarBody Stellar port.
+   * @returns Array of traded commodities and pricing, or null.
    */
   market(stellarBody: StellarBody): MarketItem[] | null {
     return this.portService.market(stellarBody);
   }
   /**
    * Executes commodity purchase or sale transaction with market depth price impact.
-   * @param {Session} session Player session.
-   * @param {string} captainId Commodity ID.
-   * @param {number} quantity Amount to buy (>0) or sell (<0).
-   * @param {GradeLots|'common-first'} [selection]
-   * @returns {void}
+   * @param session Player session.
+   * @param captainId Commodity ID.
+   * @param quantity Amount to buy (>0) or sell (<0).
    */
   trade(
     session: Session,
@@ -2566,9 +2555,9 @@ export class Game {
   }
   /**
    * Lists upgrade materials for sale at a stellar body based on faction specialization.
-   * @param {StellarBody} stellarBody Stellar body.
-   * @param {PlayerData} [playerData] Player data.
-   * @returns {Array<{mat: string, grade: number, price: number}>} Upgrade materials available.
+   * @param stellarBody Stellar body.
+   * @param playerData Player data.
+   * @returns Upgrade materials available.
    */
   matsFor(
     stellarBody: StellarBody,
@@ -2578,11 +2567,10 @@ export class Game {
   }
   /**
    * Executes purchase or sale of crafting and upgrade materials.
-   * @param {Session} session Player session.
-   * @param {string} material Material name ('alloy', 'crystal', 'isotope').
-   * @param {number} grade Material grade index (0-4).
-   * @param {number} count Quantity to buy (>0) or sell (<0).
-   * @returns {void}
+   * @param session Player session.
+   * @param material Material name ('alloy', 'crystal', 'isotope').
+   * @param grade Material grade index (0-4).
+   * @param count Quantity to buy (>0) or sell (<0).
    */
   buyMat(session: Session, material: string, grade: number, count: number): void {
     return this.portService.buyMat(session, material, grade, count);
@@ -2591,51 +2579,51 @@ export class Game {
   // ------------------------------------------------------------------ shipyard and outfitter
   /**
    * Compiles list of ship hulls available for purchase at shipyard.
-   * @param {StellarBody} stellarBody Stellar port.
-   * @param {PlayerData} [playerData] Player data.
-   * @returns {number[] | null} Array of hull IDs for sale, or null.
+   * @param stellarBody Stellar port.
+   * @param playerData Player data.
+   * @returns Array of hull IDs for sale, or null.
    */
   yard(stellarBody: StellarBody, playerData?: PlayerData): number[] | null {
     return this.portService.yard(stellarBody, playerData);
   }
   /**
    * Calculates credit trade-in value for captain's current ship and outfits (50% value).
-   * @param {PlayerData} playerData Player save data.
-   * @returns {number} Credit trade-in value of current ship and installed outfits.
+   * @param playerData Player save data.
+   * @returns Credit trade-in value of current ship and installed outfits.
    */
   tradeIn(playerData: PlayerData): number {
     return this.portService.tradeIn(playerData);
   }
   /**
    * Purchases a new flagship hull, applying trade-in credit for previous ship.
-   * @param {Session} session Player session.
-   * @param {number} hull Hull ID to purchase.
-   * @returns {void}
+   * @param session Player session.
+   * @param hull Hull ID to purchase.
    */
   buyShip(session: Session, hull: number): void {
     return this.portService.buyShip(session, hull);
   }
   /**
    * Compiles list of ship outfits available for purchase at outfitter.
-   * @param {StellarBody} stellarBody Stellar port.
-   * @param {PlayerData} [playerData] Player data.
-   * @returns {number[] | null} Array of outfit IDs for sale, or null.
+   * @param stellarBody Stellar port.
+   * @param playerData Player data.
+   * @returns Array of outfit IDs for sale, or null.
    */
   outfitter(stellarBody: StellarBody, playerData?: PlayerData): number[] | null {
     return this.portService.outfitter(stellarBody, playerData);
   }
   /**
    * Purchases or sells a ship outfit or ammunition batch.
-   * @param {Session} session Player session.
-   * @param {number} identifier Outfit ID.
-   * @param {number} count Quantity to buy (>0) or sell (<0).
-   * @returns {void}
+   * @param session Player session.
+   * @param identifier Outfit ID.
+   * @param count Quantity to buy (>0) or sell (<0).
    */
   outfit(session: Session, identifier: number, count: number): void {
     return this.portService.outfit(session, identifier, count);
   }
 
-  /** @returns {JobService} Ordinary job operations. */
+  /**
+   * @returns Ordinary job operations.
+   */
   createJobService(): JobService {
     // oxlint-disable-next-line typescript/no-this-alias -- Capability getters retain the coordinator receiver.
     const game = this;
@@ -2665,27 +2653,25 @@ export class Game {
   // ------------------------------------------------------------------ missions
   /**
    * Generates procedural job board mission offers for a stellar port.
-   * @param {StellarBody} stellarBody Stellar port.
-   * @param {PlayerData} playerData Player data.
-   * @returns {Mission[]} Available job board missions.
+   * @param stellarBody Stellar port.
+   * @param playerData Player data.
+   * @returns Available job board missions.
    */
   offers(stellarBody: StellarBody, playerData: PlayerData): Mission[] {
     return this.jobService.offers(stellarBody, playerData);
   }
   /**
    * Accepts a mission from the local stellar job board.
-   * @param {Session} session Player session.
-   * @param {string} identifier Mission ID to accept.
-   * @returns {void}
+   * @param session Player session.
+   * @param identifier Mission ID to accept.
    */
   accept(session: Session, identifier: string): void {
     return this.jobService.accept(session, identifier);
   }
   /**
    * Evaluates active missions upon landing, paying rewards and logging completions.
-   * @param {Session} session Player session landing.
-   * @param {StellarBody} stellarBody Landed stellar port.
-   * @returns {void}
+   * @param session Player session landing.
+   * @param stellarBody Landed stellar port.
    */
   completeOnLanding(session: Session, stellarBody: StellarBody): void {
     return this.jobService.completeOnLanding(session, stellarBody);
@@ -2694,8 +2680,7 @@ export class Game {
   // ------------------------------------------------------------------ Quantum Station (each captain's own)
   /**
    * Updates Personal Station timers: refinery generation, active research, and construction.
-   * @param {PlayerData} playerData Player save data.
-   * @returns {void}
+   * @param playerData Player save data.
    */
   checkStation(playerData: PlayerData): void {
     const stationState = playerData.station;
@@ -2726,27 +2711,25 @@ export class Game {
   }
   /**
    * Verifies if player has required material quantities.
-   * @param {PlayerData} playerData Player save data.
-   * @param {Array<[string, number, number]>} mats Required materials tuple [name, grade, count].
-   * @returns {boolean} True if inventory satisfies all material requirements.
+   * @param playerData Player save data.
+   * @param mats Required materials tuple [name, grade, count].
+   * @returns True if inventory satisfies all material requirements.
    */
   hasMats(playerData: PlayerData, mats: Array<[string, number, number]>): boolean {
     return mats.every(([message, game, count]) => playerData.mats[message][game] >= count);
   }
   /**
    * Deducts specified material quantities from player inventory.
-   * @param {PlayerData} playerData Player save data.
-   * @param {Array<[string, number, number]>} mats Materials to consume [name, grade, count].
-   * @returns {void}
+   * @param playerData Player save data.
+   * @param mats Materials to consume [name, grade, count].
    */
   takeMats(playerData: PlayerData, mats: Array<[string, number, number]>): void {
     for (const [message, game, count] of mats) playerData.mats[message][game] -= count;
   }
   /**
    * Processes Personal Station operations: claiming derelicts, upgrades, refinery, and relocation.
-   * @param {Session} session Player session.
-   * @param {NetworkMessage} message Station operation payload.
-   * @returns {void}
+   * @param session Player session.
+   * @param message Station operation payload.
    */
   station(session: Session, message: NetworkMessage): void {
     const playerData = session.data,
@@ -2994,9 +2977,8 @@ export class Game {
   // ------------------------------------------------------------------ chat
   /**
    * Broadcasts chat message across system, global, or Armada channels.
-   * @param {Session} session Sending session.
-   * @param {{msg: string, ch?: string}} message Chat message payload.
-   * @returns {void}
+   * @param session Sending session.
+   * @param message Chat message payload.
    */
   chat(session: Session, message: { msg: string; ch?: string }): void {
     const trim2 = String(message.msg || '')
@@ -3033,8 +3015,7 @@ export class Game {
 
   /**
    * Suspends and deallocates an idle space simulation when no players are present.
-   * @param {SpaceSpace} space Space instance to suspend.
-   * @returns {void}
+   * @param space Space instance to suspend.
    */
   sleep(space: SpaceSpace): void {
     for (const session of this.sessions.values())
@@ -3045,8 +3026,7 @@ export class Game {
   // every two seconds: shuttles that have come home report in, finished research hands over to the queue
   /**
    * Periodic maintenance check per session: shuttle missions, research queue, and station ticks.
-   * @param {Session} session Active session.
-   * @returns {void}
+   * @param session Active session.
    */
   idleCheck(session: Session): void {
     const playerData = session.data;
@@ -3095,7 +3075,6 @@ export class Game {
   // ------------------------------------------------------------------ loop
   /**
    * Main server engine simulation tick loop: ticks spaces, features, and sends state snapshots.
-   * @returns {void}
    */
   tick(): void {
     if (this.db.economicFrozen) return;

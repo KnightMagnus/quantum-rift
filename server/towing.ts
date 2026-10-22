@@ -276,8 +276,9 @@ function transaction(capabilities: TowCapabilities2, session: Session, callback:
     throw error;
   }
 }
-/** Load-centred collection radius: the port body plus its existing 180-unit approach apron.
- * @param {{x:number,y:number}} position @param {{x:number,y:number}} firstValue @param {{x:number,y:number}} secondValue */
+/**
+ * Load-centred collection radius: the port body plus its existing 180-unit approach apron.
+ */
 function crossesPort(
   position: { x: number; y: number },
   firstValue: { x: number; y: number },
@@ -298,9 +299,9 @@ function crossesPort(
     firstValue.y + deltaY * time - position.y,
   );
 }
-/** Shared by explicit delivery and the authoritative physics tick. Never accepts client coordinates.
- * @param {C} capabilities @param {Session} session @param {ObjectRecord} motherlode @param {string} port
- * @param {{x:number,y:number}} [previous] */
+/**
+ * Shared by explicit delivery and the authoritative physics tick. Never accepts client coordinates.
+ */
 function deliver(
   capabilities: TowCapabilities2,
   session: Session,
@@ -728,8 +729,9 @@ export const TowingOperations = {
       return false;
     }
   },
-  /** Authorized object-only destruction. No generic neutral weapon/hazard collision path calls it.
-   * @this {C} @param {Session} session @param {number} identifier @param {number} revision */
+  /**
+   * Authorized object-only destruction. No generic neutral weapon/hazard collision path calls it.
+   */
   destroy(this: TowCapabilities2, session: Session, identifier: number, revision: number) {
     if (this.db.economicFrozen || this.paused()) return false;
     const slot = state(this).slots.find((towSlot) => towSlot.object?.id === identifier),

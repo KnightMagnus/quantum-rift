@@ -14,19 +14,19 @@ export type TutorialStep = {
 
 /**
  * Career guide tutorial milestone definition.
- * @typedef {Object} TutorialStep
- * @property {string} [ev] - Event code triggering step completion (e.g. 'target', 'land2', 'sell', 'kill', 'site', 'job', 'chest').
- * @property {(arg0: PlayerData, arg1?: GameAssets) => boolean} [check] - State condition evaluator receiving player data and asset registry.
- * @property {string} title - Display title of the milestone.
- * @property {string} text - Guidance instructions displayed to the player.
- * @property {number} reward - Credit reward awarded on completion.
- * @property {[string, number, number]} [mat] - Optional material reward tuple [matName, gradeIndex, quantity].
+ * TutorialStep fields:
+ * [ev]: - Event code triggering step completion (e.g. 'target', 'land2', 'sell', 'kill', 'site', 'job', 'chest').
+ * [check]: - State condition evaluator receiving player data and asset registry.
+ * title: - Display title of the milestone.
+ * text: - Guidance instructions displayed to the player.
+ * reward: - Credit reward awarded on completion.
+ * [mat]: - Optional material reward tuple [matName, gradeIndex, quantity].
  */
 
 /**
  * Computes the total number of installed outfits on the player's active ship.
- * @param {PlayerData} playerData - Player save data containing active ship state.
- * @returns {number} Total count of equipped outfits.
+ * @param playerData - Player save data containing active ship state.
+ * @returns Total count of equipped outfits.
  */
 const outfits = (playerData: PlayerData) =>
   Object.values(playerData.ship.outfits || {}).reduce(
@@ -36,7 +36,6 @@ const outfits = (playerData: PlayerData) =>
 
 /**
  * Ordered sequence of career guide tutorial steps.
- * @type {TutorialStep[]}
  */
 export const TUTORIAL: TutorialStep[] = [
   {
@@ -196,14 +195,12 @@ export const TUTORIAL: TutorialStep[] = [
 
 /**
  * Current version number of the tutorial progression sequence.
- * @type {number}
  */
 export const TUT_VERSION: number = 2;
 
 /**
  * Migrates a player save file's tutorial index if saved under an older tutorial version.
- * @param {PlayerData} playerData - Player save data object containing tutorial progress.
- * @returns {void}
+ * @param playerData - Player save data object containing tutorial progress.
  */
 export function tutMigrate(playerData: PlayerData): void {
   if ((playerData.tutV || 1) >= TUT_VERSION) return;

@@ -41,24 +41,25 @@ import { credits } from '../shared/rules.ts';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
- * @param {number} value - Value to clamp.
- * @param {number} firstValue - Minimum value.
- * @param {number} secondValue - Maximum value.
- * @returns {number} Clamped value.
+ * @param value - Value to clamp.
+ * @param firstValue - Minimum value.
+ * @param secondValue - Maximum value.
+ * @returns Clamped value.
  */
 const clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Pick a random item from an array.
- * @template T
- * @param {T[]} firstValue - Array of items.
- * @returns {T} Chosen item.
+ * @param firstValue - Array of items.
+ * @returns Chosen item.
  */
 const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
   firstValue[Math.floor(Math.random() * firstValue.length)];
 
-/** @type {Record<string, (system: SpaceSystem | Record<string, string | number>, state?: LivingState) => string>} Headline generators for system events. */
+/**
+ * Headline generators for system events.
+ */
 
 const START_NEWS: Record<
   string,
@@ -80,7 +81,6 @@ const START_NEWS: Record<
 export const LivingOperations = {
   /**
    * Initialize living world state containers in the database.
-   * @returns {void}
    */
   livingInit(this: LivingCapabilities) {
     const worldData = this.db.world;
@@ -90,7 +90,7 @@ export const LivingOperations = {
   },
   /**
    * Get all non-arena systems with active trade ports.
-   * @returns {string[]} List of system IDs.
+   * @returns List of system IDs.
    */
   marketSystems(this: LivingCapabilities) {
     return (
@@ -106,8 +106,8 @@ export const LivingOperations = {
   },
   /**
    * Look up the currently active event state for a system.
-   * @param {string} systemId - System ID.
-   * @returns {Record<string, string | number | boolean> | null} System state object or null if none active.
+   * @param systemId - System ID.
+   * @returns System state object or null if none active.
    */
   stateOf(this: LivingCapabilities, systemId: string) {
     const livingState = this.db.world.states && this.db.world.states[systemId];
@@ -116,8 +116,8 @@ export const LivingOperations = {
   // a war needs an enemy: a power hostile to the system's owner, preferably one next door
   /**
    * Select a hostile enemy faction for a system entering a war state.
-   * @param {SpaceSystem} system - System metadata.
-   * @returns {string | null} Hostile enemy faction key or null.
+   * @param system - System metadata.
+   * @returns Hostile enemy faction key or null.
    */
   warEnemy(this: LivingCapabilities, system: SpaceSystem) {
     const factionDef = FACTIONS[system.faction];
@@ -144,7 +144,6 @@ export const LivingOperations = {
   },
   /**
    * Advance the living galaxy simulation tick, updating system states and generating news.
-   * @returns {void}
    */
   livingTick(this: LivingCapabilities) {
     this.livingInit();
@@ -213,7 +212,7 @@ export const LivingOperations = {
   },
   /**
    * Compile a summary payload of all active system states for client sync.
-   * @returns {Record<string, Record<string, string | number>>} Active system states map.
+   * @returns Active system states map.
    */
   statesPayload(this: LivingCapabilities) {
     const result: Record<string, LivingPayloadState> = {};
@@ -231,9 +230,9 @@ export const LivingOperations = {
   // ---- prices: the system's state and what captains have been selling or buying at this world
   /**
    * Calculate decayed trade impact factor on prices for a commodity at a stellar port.
-   * @param {string} sessionId - Stellar port ID.
-   * @param {string} captainId - Commodity ID.
-   * @returns {number} Fractional impact on price.
+   * @param sessionId - Stellar port ID.
+   * @param captainId - Commodity ID.
+   * @returns Fractional impact on price.
    */
   impact(this: LivingCapabilities, sessionId: string, captainId: string) {
     const time = (this.db.world.tradeImpact || {})[sessionId];
@@ -249,10 +248,9 @@ export const LivingOperations = {
   },
   /**
    * Record trade volume and apply price impact for a commodity at a stellar port.
-   * @param {string} sessionId - Stellar port ID.
-   * @param {string} captainId - Commodity ID.
-   * @param {number} tons - Traded volume (positive for sales, negative for purchases).
-   * @returns {void}
+   * @param sessionId - Stellar port ID.
+   * @param captainId - Commodity ID.
+   * @param tons - Traded volume (positive for sales, negative for purchases).
    */
   addImpact(this: LivingCapabilities, sessionId: string, captainId: string, tons: number) {
     // tons > 0: sold here (the price falls); < 0: bought here (the price rises)
@@ -270,9 +268,9 @@ export const LivingOperations = {
   },
   /**
    * Calculate effective price multiplier from active system event and player trade impact.
-   * @param {StellarBody} stellarBody - Stellar body object.
-   * @param {string} captainId - Commodity ID.
-   * @returns {number} Price multiplier.
+   * @param stellarBody - Stellar body object.
+   * @param captainId - Commodity ID.
+   * @returns Price multiplier.
    */
   livingMult(this: LivingCapabilities, stellarBody: StellarBody, captainId: string) {
     const livingState = this.stateOf(stellarBody.system),
@@ -282,11 +280,10 @@ export const LivingOperations = {
   // ---- captains ending states early
   /**
    * Contribute progress towards resolving an active troubled system event.
-   * @param {Session} session - Player session.
-   * @param {string} starSystem - System ID.
-   * @param {string} what - Progress category key (e.g. 'cid:food', 'kill:pirate').
-   * @param {number} count - Amount of progress units.
-   * @returns {void}
+   * @param session - Player session.
+   * @param starSystem - System ID.
+   * @param what - Progress category key (e.g. 'cid:food', 'kill:pirate').
+   * @param count - Amount of progress units.
    */
   stateProgress(
     this: LivingCapabilities,
@@ -319,9 +316,8 @@ export const LivingOperations = {
   },
   /**
    * Conclude an active system state early due to player contribution, distributing rewards.
-   * @param {Session} session - Player session that triggered resolution.
-   * @param {string} starSystem - System ID.
-   * @returns {void}
+   * @param session - Player session that triggered resolution.
+   * @param starSystem - System ID.
    */
   resolveState(this: LivingCapabilities, session: Session, starSystem: string) {
     const worldData = this.db.world,
@@ -351,10 +347,9 @@ export const LivingOperations = {
   },
   /**
    * Check killed NPC to progress pirate or war crisis states in the system.
-   * @param {Session} session - Player session scoring the kill.
-   * @param {Entity} entity - Killed NPC entity.
-   * @param {Space} space - Space instance where the kill occurred.
-   * @returns {void}
+   * @param session - Player session scoring the kill.
+   * @param entity - Killed NPC entity.
+   * @param space - Space instance where the kill occurred.
    */
   stateOnKill(this: LivingCapabilities, session: Session, entity: Entity, space: Space) {
     const factionDef = FACTIONS[entity.faction] || {};
@@ -365,12 +360,12 @@ export const LivingOperations = {
   // ---- the jobs a troubled system posts (merged into nearby job boards)
   /**
    * Generate emergency relief, patrol, or evacuation jobs for nearby troubled systems.
-   * @param {StellarBody} stellarBody - Landed stellar body.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {() => number} radius - Seeded RNG function.
-   * @param {Array<[string, number]>} near - Array of [systemId, jumps] tuples.
-   * @param {number} window - Time window seed.
-   * @returns {Array<Mission>} Generated mission objects.
+   * @param stellarBody - Landed stellar body.
+   * @param playerData - Saved player data.
+   * @param radius - Seeded RNG function.
+   * @param near - Array of [systemId, jumps] tuples.
+   * @param window - Time window seed.
+   * @returns Generated mission objects.
    */
   stateOffers(
     this: LivingCapabilities,
@@ -476,9 +471,9 @@ export const LivingOperations = {
   // a supply job completes when you land at its destination with the goods in your hold
   /**
    * Check whether player currently carries sufficient cargo to complete a supply relief mission.
-   * @param {PlayerData} playerData - Saved player data.
-   * @param {Mission} mission - Mission object.
-   * @returns {boolean} True if required goods are in cargo.
+   * @param playerData - Saved player data.
+   * @param mission - Mission object.
+   * @returns True if required goods are in cargo.
    */
   supplyReady(this: LivingCapabilities, playerData: PlayerData, mission: Mission) {
     return mission.type === 'supply' && (playerData.cargo[mission.cid!] || 0) >= mission.qty!;

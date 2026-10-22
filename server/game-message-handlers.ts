@@ -39,40 +39,13 @@ import { TUTORIAL } from '../shared/tutorial.ts';
  * Getters read current services/state; forwarding functions preserve Game as the
  * method receiver. This routes actions, not a new owner of save or world state.
  * Handlers are statically checked; this type is not runtime wire validation.
- * @typedef {Pick<Game,
- *   'A' |
- *   'accept' |
- *   'buyMat' |
- *   'buyShip' |
- *   'chat' |
- *   'combatAssist' |
- *   'db' |
- *   'depart' |
- *   'features' |
- *   'hails' |
- *   'jump' |
- *   'land' |
- *   'landed' |
- *   'live' |
- *   'log' |
- *   'outfit' |
- *   'paused' |
- *   'send' |
- *   'sessions' |
- *   'setPaused' |
- *   'solo' |
- *   'spaces' |
- *   'station' |
- *   'trade' |
- *   'tut' |
- *   'you'>} MessageCapabilities
+
  */
 
 /**
  * Build the fixed authenticated action switchboard. Game.onMessage retains the
  * authentication, flood, economic-freeze and activity gates ahead of dispatch.
- * @param {MessageCapabilities} capabilities Only the explicitly provided core capabilities.
- * @returns {MessageRegistry}
+ * @param capabilities Only the explicitly provided core capabilities.
  */
 export function createGameMessageHandlers(capabilities: MessageCapabilities): MessageRegistry {
   return createMessageRegistry([
@@ -130,8 +103,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'combat',
       /**
        * Dispatches combat assist autopilot mode command.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.combatAssist.command(
@@ -144,8 +117,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'input',
       /**
        * Processes raw ship flight controls (thrust, turn, afterburner, weapons fire).
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         if (
@@ -172,8 +145,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'target',
       /**
        * Selects or clears current combat target entity.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         const playerData = session.data;
@@ -190,8 +163,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'tutskip',
       /**
        * Skips career tutorial guide to completion.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} _message Message payload.
+       * @param session Player session.
+       * @param _message Message payload.
        */
       (session: Session, _message: NetworkMessage) => {
         const playerData = session.data;
@@ -206,8 +179,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'land',
       /**
        * Requests landing at target stellar body.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.combatAssist.stop(session, 'Travel or boarding');
@@ -219,8 +192,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'depart',
       /**
        * Requests launch from currently docked stellar body into space.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} _message Message payload.
+       * @param session Player session.
+       * @param _message Message payload.
        */
       (session: Session, _message: NetworkMessage) => {
         capabilities.depart(session);
@@ -231,8 +204,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'jump',
       /**
        * Initiates hyperjump to connected system.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.combatAssist.stop(session, 'Travel or boarding');
@@ -244,8 +217,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'trade',
       /**
        * Executes commodity buy or sell transaction at docked market.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.trade(session, message.cid!, message.qty! | 0, message.lots);
@@ -256,8 +229,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'buyship',
       /**
        * Purchases a ship from shipyard for flagship or hangar storage.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         if (message.store) capabilities.features.docks.buyToHangar(session, message.hull! | 0);
@@ -269,8 +242,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'docks',
       /**
        * Dispatches drydock operations (ship loadouts, wing assignments).
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.docks.docksOp(
@@ -284,8 +257,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'questdrop',
       /**
        * Abandons an active story quest.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         const playerData = session.data;
@@ -301,8 +274,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'outfit',
       /**
        * Purchases or sells ship outfits and ammunition.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.outfit(session, (message.id as number) | 0, message.n! | 0);
@@ -313,8 +286,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'accept',
       /**
        * Accepts mission from stellar job board.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.accept(session, message.id as string);
@@ -325,8 +298,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'abandon',
       /**
        * Abandons an active mission.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         const playerData = session.data;
@@ -366,8 +339,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'station',
       /**
        * Performs Personal Station operations (claim, upgrade, refinery, research, relocate).
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.station(session, message as Parameters<typeof capabilities.station>[1]);
@@ -378,8 +351,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'buymat',
       /**
        * Purchases or sells engineering materials at station or commodity hub.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.buyMat(session, message.mat!, (message.grade as number) | 0, message.n! | 0);
@@ -390,8 +363,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'rename',
       /**
        * Renames current flagship.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         const playerData = session.data;
@@ -408,8 +381,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'note',
       /**
        * Adds a custom captain's log note entry.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         const playerData = session.data;
@@ -424,8 +397,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'chat',
       /**
        * Sends chat message to system, global, or Armada channels.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.chat(session, message as Parameters<typeof capabilities.chat>[1]);
@@ -436,8 +409,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'officer',
       /**
        * Performs bridge officer assignments, recruitment, and promotions.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.hangar.officerOp(
@@ -451,8 +424,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'shuttle',
       /**
        * Dispatches or manages automated trade and mining shuttles.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.hangar.shuttleOp(
@@ -466,8 +439,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'dock',
       /**
        * Manages hangar ship storage and swap operations.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.hangar.dockOp(
@@ -481,8 +454,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'board',
       /**
        * Boards disabled enemy ship or performs rescue operation.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.combatAssist.stop(session, 'Travel or boarding');
@@ -497,8 +470,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'spec',
       /**
        * Performs ship specialization tier upgrades and modification.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.specialists.specOp(
@@ -512,8 +485,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'armada',
       /**
        * Performs co-op Armada formation, invites, and group commands.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.coop.armadaOp(
@@ -527,8 +500,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'holdout',
       /**
        * Initiates survival holdout wave combat event.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} _message Message payload.
+       * @param session Player session.
+       * @param _message Message payload.
        */
       (session: Session, _message: NetworkMessage) => {
         capabilities.features.hostile.holdoutStart(session);
@@ -539,8 +512,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'storyacc',
       /**
        * Accepts main storyline progression chapter.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.story.storyAccept(
@@ -554,8 +527,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'social',
       /**
        * Dispatches social operations: friend requests, direct messages, blocks.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.coop.socialOp(
@@ -569,8 +542,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'trade2',
       /**
        * Conducts secure station-to-station cargo and credit trade between captains.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.coop.tradeOp(
@@ -584,8 +557,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'duel',
       /**
        * Initiates or accepts formal non-lethal captain duel challenge.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.coop.duelOp(
@@ -599,8 +572,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'goal',
       /**
        * Claims a daily or weekly goal reward.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.fronts.claimGoal(
@@ -614,8 +587,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'store',
       /**
        * Purchases a faction-store item.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.fronts.storeBuy(
@@ -629,8 +602,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'colony',
       /**
        * Dispatches frontier planet colonization and outpost development operations.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.frontier.colonyOp(
@@ -644,8 +617,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'arena',
       /**
        * Enters matchmaking queue or manages combat arena operations.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.frontier.arenaOp(
@@ -659,8 +632,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'exchange',
       /**
        * Manages player Exchange orders and storage.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.frontier.exchangeOp(
@@ -674,8 +647,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'boards',
       /**
        * Requests community competitive leaderboard data.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.send(session, {
@@ -690,8 +663,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'profile',
       /**
        * Requests public captain career and combat profile.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.send(session, {
@@ -705,8 +678,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'ping',
       /**
        * Responds to client latency measurement ping with pong.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.send(session, { t: 'pong', c: message.c });
@@ -717,8 +690,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'hail',
       /**
        * Initiates radio comms hail to target stellar or ship.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.hail.hail(
@@ -740,8 +713,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'hailopt',
       /**
        * Selects dialogue conversation choice during active radio hail.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.hail.hailOpt(
@@ -755,8 +728,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'order',
       /**
        * Issues fleet command order to escort wingmates.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         if (session.ent) {
@@ -772,8 +745,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'jettison',
       /**
        * Jettisons cargo into space to lighten ship or distract raiders.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.fleetcmd.jettison(
@@ -789,8 +762,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'rivals',
       /**
        * Requests status payload of active AI rival captains.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} _message Message payload.
+       * @param session Player session.
+       * @param _message Message payload.
        */
       (session: Session, _message: NetworkMessage) => {
         const playerData = session.data;
@@ -805,8 +778,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'bm',
       /**
        * Purchases illicit contraband from syndicate black market.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.syndicate.bmBuy(session, message.id as string);
@@ -817,8 +790,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'arcacc',
       /**
        * Accepts faction campaign story arc.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.arcs.arcAccept(session, message.fac!);
@@ -829,8 +802,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'promote',
       /**
        * Claims syndicate crime tier promotion.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.syndicate.promote(session, message.id as string);
@@ -841,8 +814,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'lower',
       /**
        * Dispatches lower deck syndicate crew operations.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.syndicate.lowerDeck(
@@ -856,8 +829,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'bank',
       /**
        * Performs Syndicate bank loan borrowing and repayment.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} message Message payload.
+       * @param session Player session.
+       * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
         capabilities.features.syndicate.bankOp(
@@ -871,8 +844,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       'pause',
       /**
        * Toggles solo play game pause state.
-       * @param {Session} session Player session.
-       * @param {NetworkMessage} _message Message payload.
+       * @param session Player session.
+       * @param _message Message payload.
        */
       (session: Session, _message: NetworkMessage) => {
         if (
@@ -890,10 +863,10 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
 
 /**
  * Clamps a numeric value between minimum and maximum bounds.
- * @param {number} value Input value.
- * @param {number} firstValue Minimum bound.
- * @param {number} secondValue Maximum bound.
- * @returns {number} Clamped value.
+ * @param value Input value.
+ * @param firstValue Minimum bound.
+ * @param secondValue Maximum bound.
+ * @returns Clamped value.
  */
 const clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));

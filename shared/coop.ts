@@ -38,73 +38,72 @@ export type WarbandConfig = {
 // co-op Holdout and Armada contracts. All of it is for online games; a solo game hides it.
 
 /**
- * @typedef {Object} SocialConfig
- * @property {number} friendsMax - Maximum friends allowed per captain.
- * @property {number} mailMax - Maximum DMs retained for an offline captain per sender.
- * @property {number} dmLen - Maximum character length of a direct message.
- * @property {number} dmGapMs - Cooldown milliseconds between consecutive DMs from the same captain.
- * @property {number} awayMin - Inactivity minutes before a captain is marked as Away.
+ * SocialConfig fields:
+ * friendsMax: - Maximum friends allowed per captain.
+ * mailMax: - Maximum DMs retained for an offline captain per sender.
+ * dmLen: - Maximum character length of a direct message.
+ * dmGapMs: - Cooldown milliseconds between consecutive DMs from the same captain.
+ * awayMin: - Inactivity minutes before a captain is marked as Away.
  */
 
 /**
- * @typedef {Object} ArmadaBuff
- * @property {number} shieldRe - Multiplier for shield recharge rate when sharing a system with members.
- * @property {number} bounty - Multiplier for bounty rewards earned in the same system.
+ * ArmadaBuff fields:
+ * shieldRe: - Multiplier for shield recharge rate when sharing a system with members.
+ * bounty: - Multiplier for bounty rewards earned in the same system.
  */
 
 /**
- * @typedef {Object} ArmadaConfig
- * @property {number} max - Maximum number of captains allowed in an Armada.
- * @property {RegExp} nameRe - Validation regular expression for Armada group names.
- * @property {number} inviteMin - Expiration duration in minutes for pending invites.
- * @property {number} idleMin - Inactivity minutes before an unattended Armada disbands.
- * @property {ArmadaBuff} buff - Passive buffs applied to members sharing a system.
- * @property {number} share - Share of bounties paid out to nearby armada members.
+ * ArmadaConfig fields:
+ * max: - Maximum number of captains allowed in an Armada.
+ * nameRe: - Validation regular expression for Armada group names.
+ * inviteMin: - Expiration duration in minutes for pending invites.
+ * idleMin: - Inactivity minutes before an unattended Armada disbands.
+ * buff: - Passive buffs applied to members sharing a system.
+ * share: - Share of bounties paid out to nearby armada members.
  */
 
 /**
- * @typedef {Object} TradeConfig
- * @property {number} fee - Credit transfer fee percentage (e.g. 0.02 = 2%).
- * @property {number} idleMin - Expiration duration in minutes for an idle station trade session.
- * @property {number} maxLines - Maximum distinct item line items allowed per side.
+ * TradeConfig fields:
+ * fee: - Credit transfer fee percentage (e.g. 0.02 = 2%).
+ * idleMin: - Expiration duration in minutes for an idle station trade session.
+ * maxLines: - Maximum distinct item line items allowed per side.
  */
 
 /**
- * @typedef {Object} DuelConfig
- * @property {number} floor - Armor percentage threshold marking a disabled ship/duel defeat.
- * @property {number} minutes - Match time limit in minutes before a duel results in a draw.
- * @property {number} inviteSec - Expiration duration in seconds for duel invitations.
+ * DuelConfig fields:
+ * floor: - Armor percentage threshold marking a disabled ship/duel defeat.
+ * minutes: - Match time limit in minutes before a duel results in a draw.
+ * inviteSec: - Expiration duration in seconds for duel invitations.
  */
 
 /**
- * @typedef {Object} RescueConfig
- * @property {number} windowSec - Seconds allowed for an Armada member to board and rescue a downed ship.
- * @property {number} repair - Fraction of armor restored upon successful boarding rescue.
+ * RescueConfig fields:
+ * windowSec: - Seconds allowed for an Armada member to board and rescue a downed ship.
+ * repair: - Fraction of armor restored upon successful boarding rescue.
  */
 
 /**
- * @typedef {Object} CoopHoldoutConfig
- * @property {number} extraPerHelper - Additional hostiles spawned per helper captain.
- * @property {number} pctPerHelper - Percentage increase in hostile durability/stats per helper.
- * @property {number} helperShare - Fraction of wave rewards shared with Armada helpers.
+ * CoopHoldoutConfig fields:
+ * extraPerHelper: - Additional hostiles spawned per helper captain.
+ * pctPerHelper: - Percentage increase in hostile durability/stats per helper.
+ * helperShare: - Fraction of wave rewards shared with Armada helpers.
  */
 
 /**
- * @typedef {Object} WarbandConfig
- * @property {string[]} names - Name pool for warband kingpin flagships.
- * @property {number[]} leads - Hull IDs of kingpin flagship hulls (Mk III refits).
- * @property {number[]} guards - Hull IDs of escort guard ships (Mk II refits).
- * @property {number} guardsBase - Base number of escort guard ships.
- * @property {number} guardsPerMember - Additional escort guards spawned per Armada member.
- * @property {number} pctPerMember - Scaling percentage per participating member.
- * @property {number} rewardBase - Base credit reward for defeating the warband.
- * @property {number} rewardDanger - Additional credit reward scaled by sector danger level.
- * @property {number} minMembers - Minimum Armada members required to accept the contract.
+ * WarbandConfig fields:
+ * names: - Name pool for warband kingpin flagships.
+ * leads: - Hull IDs of kingpin flagship hulls (Mk III refits).
+ * guards: - Hull IDs of escort guard ships (Mk II refits).
+ * guardsBase: - Base number of escort guard ships.
+ * guardsPerMember: - Additional escort guards spawned per Armada member.
+ * pctPerMember: - Scaling percentage per participating member.
+ * rewardBase: - Base credit reward for defeating the warband.
+ * rewardDanger: - Additional credit reward scaled by sector danger level.
+ * minMembers: - Minimum Armada members required to accept the contract.
  */
 
 /**
  * Social messaging and friend list configuration limits.
- * @type {SocialConfig}
  */
 export const SOCIAL: SocialConfig = {
   friendsMax: 100, // friends per captain
@@ -116,7 +115,6 @@ export const SOCIAL: SocialConfig = {
 
 /**
  * Armada co-op group rules, capacity, and proximity bonus settings.
- * @type {ArmadaConfig}
  */
 export const ARMADA: ArmadaConfig = {
   max: 5, // captains per Armada (each brings their own wingmates)
@@ -129,7 +127,6 @@ export const ARMADA: ArmadaConfig = {
 
 /**
  * Station-to-station direct trading parameters and constraints.
- * @type {TradeConfig}
  */
 export const TRADE: TradeConfig = {
   fee: 0.02, // on credits sent, like the Exchange
@@ -139,7 +136,6 @@ export const TRADE: TradeConfig = {
 
 /**
  * Ship dueling thresholds, time limits, and invitation rules.
- * @type {DuelConfig}
  */
 export const DUEL: DuelConfig = {
   floor: 0.12, // a duel ends at disabled: armor never drops below this share in a duel
@@ -149,7 +145,6 @@ export const DUEL: DuelConfig = {
 
 /**
  * Downed captain rescue window and restoration constants.
- * @type {RescueConfig}
  */
 export const RESCUE: RescueConfig = {
   windowSec: 60, // a downed Armada captain can be boarded by a member this long before the insurers take over
@@ -159,7 +154,6 @@ export const RESCUE: RescueConfig = {
 // co-op Holdout: each helper from your Armada adds hostiles to every wave and makes them tougher, and shares the rewards
 /**
  * Scaling and reward multipliers for co-op Holdout defense missions.
- * @type {CoopHoldoutConfig}
  */
 export const COOP_HOLDOUT: CoopHoldoutConfig = {
   extraPerHelper: 1,
@@ -170,7 +164,6 @@ export const COOP_HOLDOUT: CoopHoldoutConfig = {
 // Armada contracts: group kingpins who fly the Concord's old Mk II and Mk III refits (no longer sold to captains)
 /**
  * Warband kingpin contract definitions, hull selections, and reward scales.
- * @type {WarbandConfig}
  */
 export const WARBAND: WarbandConfig = {
   names: [

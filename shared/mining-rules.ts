@@ -33,8 +33,9 @@ export function rollGrades(quantity: number, clean: boolean, random: () => numbe
   }
   return lots;
 }
-/** Union contact seconds: multiple mounts/captains never duplicate elapsed time.
- * @param {{from:number,to:number,seam:boolean}[]} spans @param {number} from @param {number} destination @returns {{seconds:number,seamSeconds:number}} */
+/**
+ * Union contact seconds: multiple mounts/captains never duplicate elapsed time.
+ */
 export function contactTime(
   spans: { from: number; to: number; seam: boolean }[],
   from: number,

@@ -22,52 +22,52 @@ import { credits, route } from '../shared/rules.ts';
 import { STATES } from '../shared/living.ts';
 
 /**
- * @typedef {Object} GoalEntry
- * @property {string} type Goal type key
- * @property {number} n Required count or target amount
- * @property {number} got Current progress count or amount
- * @property {boolean} [claimed] Whether reward has been claimed
+ * GoalEntry fields:
+ * type: Goal type key
+ * n: Required count or target amount
+ * got: Current progress count or amount
+ * [claimed]: Whether reward has been claimed
  */
 
 /**
- * @typedef {Object} WorldEvent
- * @property {string} name Event name
- * @property {string} desc Event description
- * @property {number} [until] End timestamp
+ * WorldEvent fields:
+ * name: Event name
+ * desc: Event description
+ * [until]: End timestamp
  */
 
 /**
- * @typedef {Object} WorldInvasion
- * @property {string} name Boss / fleet name
- * @property {string} sys System identifier
- * @property {number} until Expiration timestamp
+ * WorldInvasion fields:
+ * name: Boss / fleet name
+ * sys: System identifier
+ * until: Expiration timestamp
  */
 
 /**
- * @typedef {Object} ArmadaMember
- * @property {string} name Member captain name
- * @property {boolean} online Online status
- * @property {string} [sys] Current system name
+ * ArmadaMember fields:
+ * name: Member captain name
+ * online: Online status
+ * [sys]: Current system name
  */
 
 /**
- * @typedef {Object} ArmadaState
- * @property {string} name Armada group name
- * @property {string} leader Group leader captain name
- * @property {ArmadaMember[]} members Member roster
+ * ArmadaState fields:
+ * name: Armada group name
+ * leader: Group leader captain name
+ * members: Member roster
  */
 
 /**
- * @typedef {Object} CalendarEvent
- * @property {string} name Event title
- * @property {number} start Start timestamp
- * @property {number} end End timestamp
+ * CalendarEvent fields:
+ * name: Event title
+ * start: Start timestamp
+ * end: End timestamp
  */
 
 /**
  * Formats time remaining until a timestamp into days, hours, or minutes.
- * @param {number} time Future timestamp in ms
- * @returns {string} Formatted duration (e.g. '2d 5h', '3h 12m', or '45m')
+ * @param time Future timestamp in ms
+ * @returns Formatted duration (e.g. '2d 5h', '3h 12m', or '45m')
  */
 const left = (time: number): string => {
   const message = Math.max(0, Math.round((time - Date.now()) / 60000));
@@ -80,9 +80,9 @@ const left = (time: number): string => {
 
 /**
  * Renders daily or weekly goal progression cards and claim buttons.
- * @param {GoalEntry[]} list List of goal items
- * @param {'daily'|'weekly'} period Period identifier
- * @returns {string} HTML markup
+ * @param list List of goal items
+ * @param period Period identifier
+ * @returns HTML markup
  */
 function goalRows(list: GoalEntry[], period: 'daily' | 'weekly'): string {
   return list
@@ -95,8 +95,8 @@ function goalRows(list: GoalEntry[], period: 'daily' | 'weekly'): string {
 
 /**
  * Renders the OPS companion tab (server events, invasions, system anomalies, goals, Armada summary, and calendar).
- * @param {ClientGameState} clientGameState Game state object
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @returns HTML markup
  */
 export function opsHtml(clientGameState: ClientGameState): string {
   const playerPayload = clientGameState.you!,
@@ -188,8 +188,8 @@ export function opsHtml(clientGameState: ClientGameState): string {
 
 /**
  * Returns array of eligible faction keys that offer Quartermaster stores.
- * @param {Record<string, FactionDef>} FACTIONS_ Faction definitions dictionary
- * @returns {string[]} Faction keys
+ * @param FACTIONS_ Faction definitions dictionary
+ * @returns Faction keys
  */
 export const STORE_FACS = (FACTIONS_: Record<string, FactionDef>): string[] =>
   Object.entries(FACTIONS_)
@@ -200,9 +200,9 @@ export const STORE_FACS = (FACTIONS_: Record<string, FactionDef>): string[] =>
 
 /**
  * Renders the modal Faction Stores quartermaster dialog with faction selector tabs.
- * @param {ClientGameState} clientGameState Game state object
- * @param {Record<string, FactionDef>} FACTIONS_ Faction definitions
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param FACTIONS_ Faction definitions
+ * @returns HTML markup
  */
 export function storeMenuHtml(
   clientGameState: ClientGameState,
@@ -228,9 +228,9 @@ export function storeMenuHtml(
 
 /**
  * Renders the items and standing table for a specific faction store.
- * @param {ClientGameState} clientGameState Game state object
- * @param {string} [facArg] Faction key to display
- * @returns {string} HTML markup
+ * @param clientGameState Game state object
+ * @param facArg Faction key to display
+ * @returns HTML markup
  */
 export function storeHtml(clientGameState: ClientGameState, facArg?: string): string {
   const playerPayload = clientGameState.you!,

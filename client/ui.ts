@@ -100,84 +100,84 @@ import { levelOf, winOdds } from '../shared/hostile.ts';
 
 // ------------------------------------------------------------------ type definitions
 /**
- * @typedef {Object} AskOptions
- * @property {string} [yes] Confirm button label
+ * AskOptions fields:
+ * [yes]: Confirm button label
  */
 
 /**
- * @typedef {Object} RadioStation
- * @property {string} id Unique station identifier
- * @property {string} name Station name
- * @property {string} sub Station subtitle or call letters
- * @property {string} [img] Station logo image URL
+ * RadioStation fields:
+ * id: Unique station identifier
+ * name: Station name
+ * sub: Station subtitle or call letters
+ * [img]: Station logo image URL
  */
 
 /**
- * @typedef {Object} CodexItem
- * @property {string} id Unique codex entry key
- * @property {string} name Title of the codex item
- * @property {string} [sub] Subtitle or categorization
- * @property {string} [cat] Category identifier ('factions' | 'ships' | 'outfits' | 'galaxy')
- * @property {string} [desc] Detailed entry narrative
- * @property {string} [img] Associated asset image filename
+ * CodexItem fields:
+ * id: Unique codex entry key
+ * name: Title of the codex item
+ * [sub]: Subtitle or categorization
+ * [cat]: Category identifier ('factions' | 'ships' | 'outfits' | 'galaxy')
+ * [desc]: Detailed entry narrative
+ * [img]: Associated asset image filename
  */
 
 /**
- * @typedef {Object} LandedMarketItem
- * @property {string} id Commodity identifier
- * @property {string} name Commodity name
- * @property {number} price Current port price
- * @property {number} base Base galactic price
- * @property {number} [hold] Quantity currently held in player cargo
+ * LandedMarketItem fields:
+ * id: Commodity identifier
+ * name: Commodity name
+ * price: Current port price
+ * base: Base galactic price
+ * [hold]: Quantity currently held in player cargo
  */
 
 /**
- * @typedef {Object} LandedMatItem
- * @property {string} id Material identifier
- * @property {string} name Material display name
- * @property {number} count Owned amount
- * @property {number} [tier] Material rarity tier
+ * LandedMatItem fields:
+ * id: Material identifier
+ * name: Material display name
+ * count: Owned amount
+ * [tier]: Material rarity tier
  */
 
 /**
- * @typedef {Object} LandedOffer
- * @property {string} id Mission or trade offer identifier
- * @property {string} title Mission headline
- * @property {string} [desc] Mission brief
- * @property {number} reward Credit payout
- * @property {string} [to] Destination system or planet
+ * LandedOffer fields:
+ * id: Mission or trade offer identifier
+ * title: Mission headline
+ * [desc]: Mission brief
+ * reward: Credit payout
+ * [to]: Destination system or planet
  */
 
 /**
- * @typedef {Object} LandedState
- * @property {string} sys Current system identifier
- * @property {string} stellar Landed stellar body identifier
- * @property {string[]} tabs Available interaction tab keys
- * @property {string} tab Currently active tab
+ * LandedState fields:
+ * sys: Current system identifier
+ * stellar: Landed stellar body identifier
+ * tabs: Available interaction tab keys
+ * tab: Currently active tab
  */
 
 /**
- * @typedef {Object} SystemState
- * @property {string} k State kind key (e.g. 'boom', 'war', 'plague')
- * @property {string} name Human-friendly state name
- * @property {string} desc Description of systemic event effects
- * @property {string} icon Emoji or glyph
- * @property {string} color Badge CSS color
+ * SystemState fields:
+ * k: State kind key (e.g. 'boom', 'war', 'plague')
+ * name: Human-friendly state name
+ * desc: Description of systemic event effects
+ * icon: Emoji or glyph
+ * color: Badge CSS color
  */
 
 /**
- * @typedef {Object} JobInfo
- * @property {number} dist Distance in galactic coordinates
- * @property {number} jumps Number of hyperspace hops required
- * @property {boolean} [rush] Whether the job has a short delivery deadline
- * @property {number} [rewardPerJump] Efficiency payout per jump
+ * JobInfo fields:
+ * dist: Distance in galactic coordinates
+ * jumps: Number of hyperspace hops required
+ * [rush]: Whether the job has a short delivery deadline
+ * [rewardPerJump]: Efficiency payout per jump
  */
 
 const elementById2 = elementById;
 /**
  * Generates an HTML badge element displaying a ship's combat tactical role.
- * @param {{ role?: string }} height2 Ship hull or outfit object with role attribute
- * @returns {string} HTML span tag or empty string
+ * @param height2 Ship hull or outfit object with role attribute
+ * @returns HTML span tag or empty string
  */
 export const roleTag = (height: { role?: RoleId }): string => {
   const roleInfo = ROLES_INFO[(height && height.role)!];
@@ -190,9 +190,8 @@ let clientGameState: ClientGameState;
 let send: (message: NetworkMessage) => void;
 /**
  * Binds DOM event listeners and initializes UI state managers with global game state.
- * @param {ClientGameState} clientGameState2 Global client game state
- * @param {(msg: NetworkMessage) => void} sender Network send dispatch function
- * @returns {void}
+ * @param clientGameState2 Global client game state
+ * @param sender Network send dispatch function
  */
 export function initUI(
   clientGameState2: ClientGameState,
@@ -593,8 +592,8 @@ const LAND_SCENES: Record<string, string[]> = {
 };
 /**
  * Selects the landscape illustration image key for a landed planetary or station body.
- * @param {StellarBody} stellarBody Landed stellar body definition
- * @returns {string} Image asset key name
+ * @param stellarBody Landed stellar body definition
+ * @returns Image asset key name
  */
 function landScene(stellarBody: StellarBody): string {
   if (stellarBody.id === 'earth') return 'l_earth';
@@ -619,10 +618,9 @@ function landScene(stellarBody: StellarBody): string {
 // a styled confirmation dialog in place of the browser's own confirm box
 /**
  * Displays a styled confirmation modal dialog with confirm/cancel action handlers.
- * @param {string} message2 Confirmation message prompt
- * @param {() => void} confirmed Callback function executed when confirmed
- * @param {AskOptions} [askOptions={}] Optional configuration including button labels
- * @returns {void}
+ * @param message2 Confirmation message prompt
+ * @param confirmed Callback function executed when confirmed
+ * @param askOptions Optional configuration including button labels
  */
 export function ask(message: string, confirmed: () => void, askOptions: AskOptions = {}): void {
   const returnTo = document.activeElement as HTMLElement | null;
@@ -654,8 +652,7 @@ export function ask(message: string, confirmed: () => void, askOptions: AskOptio
 }
 /**
  * Renders a transient notification toast banner on screen with an audio sting.
- * @param {string} message2 Notification message text
- * @returns {void}
+ * @param message2 Notification message text
  */
 export function toast(message: string): void {
   const entryKey = TOAST_SND.find(([regExp]) => regExp.test(message)),
@@ -671,8 +668,7 @@ export function toast(message: string): void {
 }
 /**
  * Appends a message entry or system notification to the in-game chat log.
- * @param {{ msg: string, from?: string, ch?: string }} message2 Chat message payload
- * @returns {void}
+ * @param message2 Chat message payload
  */
 export function chatLine(message: { msg: string; from?: string; ch?: string }): void {
   const htmlDivElement = document.createElement('div');
@@ -692,7 +688,6 @@ export function chatLine(message: { msg: string; from?: string; ch?: string }): 
 // ------------------------------------------------------------------ HUD (every frame)
 /**
  * Updates primary HUD elements: shield/armor/fuel meters, speed, target card, and nav waypoint.
- * @returns {void}
  */
 export function hud(): void {
   if (!clientGameState) return;
@@ -910,8 +905,7 @@ export function hud(): void {
 // ------------------------------------------------------------------ companion tabs
 /**
  * Switches the active sidebar companion tab panel by name.
- * @param {string} name Tab key ('radio' | 'codex' | 'missions' | 'station' | 'ops' | 'captains' | 'log')
- * @returns {void}
+ * @param name Tab key ('radio' | 'codex' | 'missions' | 'station' | 'ops' | 'captains' | 'log')
  */
 export function ctab(name: string, reveal = true): void {
   if (reveal && elementById2('hud').inert) elementById2('traytoggle').click();
@@ -932,7 +926,6 @@ export function ctab(name: string, reveal = true): void {
 }
 /**
  * Triggers a DOM re-render of whichever companion tab is currently active.
- * @returns {void}
  */
 export function refreshCompanion(): void {
   if (clientGameState.ctab === 'radio') renderRadio();
@@ -947,7 +940,6 @@ export function refreshCompanion(): void {
 }
 /**
  * Re-renders the mission contracts list inside the missions companion tab.
- * @returns {void}
  */
 export function drawMini(): void {
   if (clientGameState.ctab === 'missions' && clientGameState.you!) {
@@ -979,7 +971,7 @@ export function drawMini(): void {
 // Discovered stations only; old provider favorites remain stored untouched.
 /**
  * Loads favorite radio stations from localStorage.
- * @returns {RadioStation[]} Stored favorite radio stations
+ * @returns Stored favorite radio stations
  */
 function availableRadio(): RadioStation[] {
   const identifiers = clientGameState.you?.radioStations || [RADIO_STATIONS[0].id];
@@ -1056,8 +1048,8 @@ function renderRadio() {
 let codexCat = 'Ships';
 /**
  * Lists the short names of factions whose shipyards offer a specific ship hull.
- * @param {number} height2 Ship hull ID
- * @returns {string[]} Faction short names array
+ * @param height2 Ship hull ID
+ * @returns Faction short names array
  */
 function factionsSelling(height: number): string[] {
   return Object.entries(FACTION_HULLS)
@@ -1066,7 +1058,6 @@ function factionsSelling(height: number): string[] {
 }
 /**
  * Renders the filtered list of ships, outfits, or weapons in the codex companion tab.
- * @returns {void}
  */
 function renderCodex(): void {
   codexCat = ['Ships', 'Outfits', 'Weapons'].includes(clientGameState.codexCat!)
@@ -1166,8 +1157,7 @@ function renderCodex(): void {
 }
 /**
  * Renders the detail view for an individual ship or outfit item within the codex tab.
- * @param {string} entryKey Item key prefix + ID (e.g. 's701' for ship, 'o50' for outfit)
- * @returns {void}
+ * @param entryKey Item key prefix + ID (e.g. 's701' for ship, 'o50' for outfit)
  */
 function codexDetail(entryKey: string): void {
   clientGameState.views.capture(elementById2('clist'));
@@ -1222,9 +1212,9 @@ const STATMAX = {
 };
 /**
  * Generates HTML stat bar lines comparing ship statistics.
- * @param {ShipHull} shipHullAsset Ship hull definition
- * @param {ShipHull} [shipHullAsset2] Comparison hull definition to show deltas
- * @returns {string} Rendered HTML string of stat comparison bars
+ * @param shipHullAsset Ship hull definition
+ * @param shipHullAsset2 Comparison hull definition to show deltas
+ * @returns Rendered HTML string of stat comparison bars
  */
 function statLines(shipHullAsset: ShipHull, shipHullAsset2?: ShipHull | null): string {
   // cmp = the hull you fly, to show the difference
@@ -1256,8 +1246,8 @@ function statLines(shipHullAsset: ShipHull, shipHullAsset2?: ShipHull | null): s
 }
 /**
  * Renders weapon summary lines for an outfit item.
- * @param {Object} outfitAsset Outfit item definition
- * @returns {string} Rendered HTML string of weapon attributes or empty string
+ * @param outfitAsset Outfit item definition
+ * @returns Rendered HTML string of weapon attributes or empty string
  */
 function weaponLines(outfitAsset: OutfitAsset): string {
   const weaponAsset = outfitAsset.eff!.weapon
@@ -1270,7 +1260,7 @@ function weaponLines(outfitAsset: OutfitAsset): string {
 // station dashboard
 /**
  * Generates an HTML list of systems with unclaimed derelict station hulls.
- * @returns {string} HTML string displaying unclaimed hulls
+ * @returns HTML string displaying unclaimed hulls
  */
 function unclaimedList(): string {
   const free = SITES.filter(
@@ -1298,8 +1288,8 @@ const STATION_SECTIONS: Array<[string, string, number]> = [
 ];
 /**
  * Generates the full HTML markup for the personal station overview and department tabs.
- * @param {boolean} [interactive] Whether interactive management controls are enabled
- * @returns {string} HTML string of station UI
+ * @param interactive Whether interactive management controls are enabled
+ * @returns HTML string of station UI
  */
 function stationHtml(interactive?: boolean): string {
   const playerPayload = clientGameState.you!,
@@ -1411,7 +1401,6 @@ function stationHtml(interactive?: boolean): string {
 }
 /**
  * Renders the personal station management companion tab.
- * @returns {void}
  */
 function renderStationTab(): void {
   if (!clientGameState.you!) return;
@@ -1424,7 +1413,6 @@ function renderStationTab(): void {
 }
 /**
  * Renders the player event log history in the companion log tab.
- * @returns {void}
  */
 function renderLog(): void {
   const playerPayload = clientGameState.you!;
@@ -1459,7 +1447,6 @@ const TABS = [
 ];
 /**
  * Opens and populates the landed view for the current stellar body or personal station.
- * @returns {void}
  */
 export function showLanded(): void {
   clientGameState.views.capture(elementById2('landbody'));
@@ -1560,7 +1547,6 @@ export function showLanded(): void {
 }
 /**
  * Opens the faction storehouse / item storage dialog.
- * @returns {void}
  */
 export function openStores(): void {
   if (!clientGameState.you!) return;
@@ -1569,7 +1555,6 @@ export function openStores(): void {
 }
 /**
  * Refreshes the faction storehouse UI if it is currently open.
- * @returns {void}
  */
 export function refreshStores(): void {
   if (!elementById2('storebox').classList.contains('hidden'))
@@ -1577,7 +1562,6 @@ export function refreshStores(): void {
 }
 /**
  * Hides the landed screen dialog.
- * @returns {void}
  */
 export function hideLanded(): void {
   clientGameState.views.capture(elementById2('landbody'));
@@ -1586,7 +1570,6 @@ export function hideLanded(): void {
 }
 /**
  * Renders the contents of the currently active landing tab (overview, shipyard, trade, jobs, etc.).
- * @returns {void}
  */
 export function renderLanded(): void {
   if (!clientGameState.landed || !clientGameState.you!) return;
@@ -1941,8 +1924,8 @@ export function renderLanded(): void {
 // // 2.4: a system's state as a line of text, and as a card
 /**
  * Retrieves the currently active economic or military state of a star system.
- * @param {number|string} starSystem System ID
- * @returns {SystemState|null} Active system state or null
+ * @param starSystem System ID
+ * @returns Active system state or null
  */
 export function stateOfSys(starSystem: number | string | null): SystemState | null {
   const livingPayloadState =
@@ -1955,8 +1938,8 @@ export function stateOfSys(starSystem: number | string | null): SystemState | nu
 }
 /**
  * Formats a short colored text summary line of a system's active state.
- * @param {number|string} starSystem System ID
- * @returns {string} Rendered HTML string of system state
+ * @param starSystem System ID
+ * @returns Rendered HTML string of system state
  */
 function stateLine(starSystem: number | string | null): string {
   const livingPayloadState = stateOfSys(starSystem);
@@ -1966,8 +1949,8 @@ function stateLine(starSystem: number | string | null): string {
 }
 /**
  * Renders an informational card showing system state details, price shifts, and goals.
- * @param {number|string} starSystem System ID
- * @returns {string} Rendered HTML string of state card
+ * @param starSystem System ID
+ * @returns Rendered HTML string of state card
  */
 function stateCard(starSystem: number | string | null): string {
   const livingPayloadState = stateOfSys(starSystem);
@@ -1990,8 +1973,8 @@ function stateCard(starSystem: number | string | null): string {
 // how far a job is and whether its cargo fits your hold
 /**
  * Calculates remaining available cargo capacity accounting for active cargo missions.
- * @param {ClientGameState} positionY Player state object
- * @returns {number} Free cargo capacity in tons
+ * @param positionY Player state object
+ * @returns Free cargo capacity in tons
  */
 function holdFree(playerPayload: PlayerPayload): number {
   return new ShipCapacity(
@@ -2003,8 +1986,8 @@ function holdFree(playerPayload: PlayerPayload): number {
 // the bar contact's greeting and rumour, and the world's trade specialties
 /**
  * Renders the bar contact and trade export/import highlights on the landed overview screen.
- * @param {LandedState} length2 Current landed state
- * @returns {string} Rendered HTML string of bar card
+ * @param length2 Current landed state
+ * @returns Rendered HTML string of bar card
  */
 function barCard(length2: LandedState): string {
   let height = '';
@@ -2035,8 +2018,8 @@ function barCard(length2: LandedState): string {
 // warn when a story will ask for more hold space or bunks than the ship you fly
 /**
  * Generates warning HTML if a quest or story mission requires more hold or bunk capacity than current ship has.
- * @param {LandedOffer} mission Job or quest offer
- * @returns {string} Rendered HTML warning string or empty string
+ * @param mission Job or quest offer
+ * @returns Rendered HTML warning string or empty string
  */
 function questNeeds(mission: LandedOffer): string {
   const playerPayload = clientGameState.you!,
@@ -2056,8 +2039,8 @@ function questNeeds(mission: LandedOffer): string {
 // a contact's story or a side story on the job board
 /**
  * Renders the HTML card for an available story or quest mission offer.
- * @param {LandedOffer} mission Story/quest offer definition
- * @returns {string} Rendered HTML string of quest card
+ * @param mission Story/quest offer definition
+ * @returns Rendered HTML string of quest card
  */
 function questCard(mission: LandedOffer): string {
   const count =
@@ -2070,8 +2053,8 @@ function questCard(mission: LandedOffer): string {
 }
 /**
  * Sorts shipyard hull IDs by the current sort criterion (cost, cargo, speed, strength, shield).
- * @param {number[]} list Array of ship hull IDs
- * @returns {number[]} Sorted copy of hull IDs array
+ * @param list Array of ship hull IDs
+ * @returns Sorted copy of hull IDs array
  */
 function yardSorted(list: number[] | null): number[] {
   const entryKey = (clientGameState.ysort || 'cost') as
@@ -2091,8 +2074,8 @@ function yardSorted(list: number[] | null): number[] {
 } // 2.5.2
 /**
  * Determines the category of an outfit for outfitter filtering.
- * @param {Object} outfitAsset Outfit item definition
- * @returns {string} Category name ('weapons', 'ammo', 'defense', 'engines', or 'utility')
+ * @param outfitAsset Outfit item definition
+ * @returns Category name ('weapons', 'ammo', 'defense', 'engines', or 'utility')
  */
 function outfitCat(outfitAsset: OutfitAsset): string {
   if (!outfitAsset) return 'utility';
@@ -2124,9 +2107,9 @@ function outfitCat(outfitAsset: OutfitAsset): string {
 }
 /**
  * Evaluates route distance, cargo/bunk space warnings, and threat notes for a job offer.
- * @param {LandedOffer} mission Job offer definition
- * @param {ClientGameState} positionY Player state object
- * @returns {JobInfo} Evaluated location description, warning, and note strings
+ * @param mission Job offer definition
+ * @param positionY Player state object
+ * @returns Evaluated location description, warning, and note strings
  */
 function jobInfo(mission: LandedOffer, playerPayload: PlayerPayload): JobInfo {
   const count =
@@ -2178,16 +2161,15 @@ function jobInfo(mission: LandedOffer, playerPayload: PlayerPayload): JobInfo {
 }
 /**
  * Calculates the total trade-in refund value for the player's current ship and outfits (50% value).
- * @param {ClientGameState} positionY Player state object
- * @returns {number} Credit refund value
+ * @param positionY Player state object
+ * @returns Credit refund value
  */
 function tradeIn(playerPayload: PlayerPayload): number {
   return playerPayload.shipless ? 0 : loadoutValue(clientGameState.A!, playerPayload.ship);
 }
 /**
  * Global click event dispatcher for interactive buttons and links across all landing screens and companion tabs.
- * @param {MouseEvent} mouseEvent Click event
- * @returns {void}
+ * @param mouseEvent Click event
  */
 function onAct(mouseEvent: MouseEvent): void {
   const htmlElement = (mouseEvent.target as HTMLInputElement).closest<HTMLElement>('[data-act]');
@@ -2573,8 +2555,7 @@ function onAct(mouseEvent: MouseEvent): void {
 // ------------------------------------------------------------------ galaxy map overlay and routes
 /**
  * Opens the full-screen galaxy map overlay, optionally centering on a given system.
- * @param {number|string} [focus] Star system ID to center view on
- * @returns {void}
+ * @param focus Star system ID to center view on
  */
 export function openMap(focus?: number | string): void {
   window.dispatchEvent(new CustomEvent('rift-toast-sound', { detail: 'open' }));
@@ -2610,9 +2591,8 @@ export function openMap(focus?: number | string): void {
 }
 /**
  * Centers the galaxy map viewport on the specified star system coordinate.
- * @param {number|string} identifier Star system ID
- * @param {number} [zoom] Relative zoom factor
- * @returns {void}
+ * @param identifier Star system ID
+ * @param zoom Relative zoom factor
  */
 function centerOn(identifier: number | string, zoom?: number): void {
   const starSystem = systemsById[identifier];
@@ -2628,7 +2608,6 @@ function centerOn(identifier: number | string, zoom?: number): void {
 }
 /**
  * Searches systems and stellar bodies by name query and updates the search results list.
- * @returns {void}
  */
 function searchMap(): void {
   const toLowerCase2 = elementById2('gsearch').value.trim().toLowerCase();
@@ -2655,7 +2634,6 @@ function searchMap(): void {
 }
 /**
  * Closes the galaxy map overlay.
- * @returns {void}
  */
 export function closeMap(): void {
   if (!elementById2('gmap').classList.contains('hidden'))
@@ -2683,7 +2661,6 @@ elementById2('gmodes').addEventListener('click', (pointerEvent) => {
 });
 /**
  * Synchronizes the visual active state of the galaxy map filter mode buttons.
- * @returns {void}
  */
 function syncModes(): void {
   elementById2('gmodes')
@@ -2698,7 +2675,6 @@ function syncModes(): void {
 }
 /**
  * Redraws the galaxy map canvas and updates the system info tooltip/panel.
- * @returns {void}
  */
 function drawGMap(): void {
   const htmlCanvasElement = elementById2('gcanvas');
@@ -2786,8 +2762,7 @@ function drawGMap(): void {
 }
 /**
  * Plots a navigational jump hyperspace route to a target destination system.
- * @param {number|string} destination Target star system ID
- * @returns {void}
+ * @param destination Target star system ID
  */
 export function plot(destination: number | string | undefined | null): void {
   if (destination === clientGameState.sys) {
@@ -2805,8 +2780,7 @@ export function plot(destination: number | string | undefined | null): void {
 }
 /**
  * Displays the ship destruction and insurance reconstruction notice modal.
- * @param {{ at: string, fee: number }} message2 Rebuild event payload containing location and insurance fee
- * @returns {void}
+ * @param message2 Rebuild event payload containing location and insurance fee
  */
 export function showDead(message: { at: string; fee: number }): void {
   elementById2('deadmsg').textContent =

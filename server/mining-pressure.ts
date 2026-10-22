@@ -299,8 +299,9 @@ export const MiningPressureOperations = {
     const miningFieldRecovery = field(this, space, rock.key.split(':').slice(0, 2).join(':'));
     return (1 + miningFieldRecovery.recovery / 100) * (this.rush(space.id) ? 0.85 : 1);
   },
-  /** Public bounded field evolution reuses the existing recovery owner, not a second ledger.
-   * @this {C} @param {string} starSystem @param {number} index */
+  /**
+   * Public bounded field evolution reuses the existing recovery owner, not a second ledger.
+   */
   fieldState(this: PressureCapabilities, starSystem: string, index: number) {
     const miningFieldRecovery = field(this, { id: starSystem }, `${starSystem}:${index}`);
     return {
@@ -473,8 +474,9 @@ export const MiningPressureOperations = {
         miningEncounter.active || clock - miningEncounter.at < pressureRules.cooldown,
     );
   },
-  /** A scoped encounter is hostile only to its current consenting captain hulls.
-   * @this {C} @param {Space} space @param {Entity} leftEntity @param {Entity} rightEntity @returns {boolean|null} */
+  /**
+   * A scoped encounter is hostile only to its current consenting captain hulls.
+   */
   allow(this: PressureCapabilities, space: Space, leftEntity: Entity, rightEntity: Entity) {
     const identifier = leftEntity.miningEncounter || rightEntity.miningEncounter;
     if (!identifier) return null;

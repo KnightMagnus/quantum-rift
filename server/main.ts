@@ -13,7 +13,6 @@ import { Game } from './game.ts';
 
 /**
  * Root directory path of the Quantum Rift repository.
- * @type {string}
  */
 const moduleRoot: string = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ROOT = fileSystem.existsSync(path.join(moduleRoot, 'package.json'))
@@ -23,19 +22,16 @@ const compiledRoot = path.join(ROOT, 'dist');
 
 /**
  * HTTP and WebSocket listener port number.
- * @type {number}
  */
 const PORT: number = Number(process.env.PORT) || 8080;
 
 /**
  * Solo play mode flag: private offline game on local computer with no passwords and save slots.
- * @type {boolean}
  */
 const SOLO: boolean = !!process.env.SOLO; // solo mode: a private game on this computer only, no passwords, save slots
 
 /**
  * Server version string parsed from package.json.
- * @type {string}
  */
 const VERSION: string = JSON.parse(
   fileSystem.readFileSync(path.join(ROOT, 'package.json'), 'utf8'),
@@ -43,7 +39,6 @@ const VERSION: string = JSON.parse(
 
 /**
  * Static game asset catalog loaded from shared/assets.json.
- * @type {GameAssets}
  */
 const assets: GameAssets = JSON.parse(
   fileSystem.readFileSync(path.join(ROOT, 'shared', 'assets.json'), 'utf8'),
@@ -51,20 +46,17 @@ const assets: GameAssets = JSON.parse(
 
 /**
  * Database persistence manager for player accounts and world state.
- * @type {DB}
  */
 const database: Database = new Database(process.env.DATA_DIR || path.join(ROOT, 'data'));
 
 /**
  * Primary game engine instance managing active systems, entities, and client sessions.
- * @type {Game}
  */
 const game: Game = new Game(assets, database);
 game.solo = SOLO;
 
 /**
  * MIME content-type lookup table indexed by file extension.
- * @type {Record<string, string>}
  */
 const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -83,10 +75,9 @@ const TYPES: Record<string, string> = {
 
 /**
  * Streams a local static file to an HTTP response with appropriate MIME headers and caching.
- * @param {ServerResponse} response Outgoing HTTP server response.
- * @param {string} file Absolute filesystem path to the target static file.
- * @param {boolean} cache Whether to enable client-side 1-day public caching.
- * @returns {void}
+ * @param response Outgoing HTTP server response.
+ * @param file Absolute filesystem path to the target static file.
+ * @param cache Whether to enable client-side 1-day public caching.
  */
 function serve(response: ServerResponse, file: string, cache: boolean, range?: string): void {
   fileSystem.stat(file, (errnoException, stats) => {
@@ -138,7 +129,6 @@ function serve(response: ServerResponse, file: string, cache: boolean, range?: s
 
 /**
  * Main HTTP application server handling REST API endpoints, static assets, and WebSocket handshakes.
- * @type {Server}
  */
 const server: Server = http.createServer(async (incomingMessage, response) => {
   const targetUrl = new URL(incomingMessage.url!, 'http://x');

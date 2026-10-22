@@ -37,17 +37,16 @@ import { credits, makeLoadout, shipStats, allOutfits } from '../shared/rules.ts'
 
 /**
  * Clamps a numeric value between a minimum and maximum bound.
- * @param {number} value - Numeric value to clamp.
- * @param {number} firstValue - Minimum bound.
- * @param {number} secondValue - Maximum bound.
- * @returns {number} Clamped value.
+ * @param value - Numeric value to clamp.
+ * @param firstValue - Minimum bound.
+ * @param secondValue - Maximum bound.
+ * @returns Clamped value.
  */
 const _clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Mapping from refit hull ID to base hull info and refit generation.
- * @type {Record<number, { base: number, mk: number, via?: number }>}
  */
 const BASE_OF: Record<string | number, { base: number; mk: number; via?: number }> = {};
 for (const [secondValue, message] of Object.entries(MK2_OF))
@@ -61,14 +60,13 @@ for (const [message, message3] of Object.entries(MK3_OF))
 
 /**
  * Credit refund valuation for retired unused directive tiers.
- * @type {Record<number, number>}
  */
 const DIRECTIVE_VALUE: Record<string | number, number> = { 1: 90000, 2: 240000, 3: 600000 };
 
 /**
  * Sanitizes and truncates a captain name to 20 characters.
- * @param {string} [count] - Raw name string.
- * @returns {string} Trimmed and sanitized name.
+ * @param count - Raw name string.
+ * @returns Trimmed and sanitized name.
  */
 const cleanName = (count?: string): string =>
   String(count || '')
@@ -82,7 +80,6 @@ export const CoopOperations = {
   // ------------------------------------------------------------------ start-up and save migration
   /**
    * Initializes co-op state on the world database, migrates legacy 0.6 fleets, and cleans obsolete tables.
-   * @returns {void}
    */
   coopInit(this: CoopCapabilities) {
     const worldData = this.db.world;
@@ -120,8 +117,7 @@ export const CoopOperations = {
   },
   /**
    * Migrates a player save to version 2.6, refunding retired refits, Armada escorts, and directives.
-   * @param {PlayerData} playerData - Player save data.
-   * @returns {void}
+   * @param playerData - Player save data.
    */
   coopMigrate(this: CoopCapabilities, playerData: PlayerData) {
     if (playerData.v26) return;
@@ -240,8 +236,8 @@ export const CoopOperations = {
   // ------------------------------------------------------------------ helpers
   /**
    * Finds an active player session matching the specified captain name.
-   * @param {string} name - Captain name to look up.
-   * @returns {Session | null} Active session or null if not online.
+   * @param name - Captain name to look up.
+   * @returns Active session or null if not online.
    */
   sessionOf(this: CoopCapabilities, name: string) {
     const entryKey = this.db.key(name);
@@ -251,8 +247,8 @@ export const CoopOperations = {
   },
   /**
    * Ensures social data structures (friends, requests, blocks, mailbox) exist on a player profile.
-   * @param {PlayerData} playerData - Player profile data.
-   * @returns {PlayerData} The initialized player profile data.
+   * @param playerData - Player profile data.
+   * @returns The initialized player profile data.
    */
   socialInit(this: CoopCapabilities, playerData: PlayerData) {
     playerData.friends = playerData.friends || [];
@@ -264,9 +260,9 @@ export const CoopOperations = {
   },
   /**
    * Checks if a case-insensitive captain name is present in a list of names.
-   * @param {string[]} list - List of captain names.
-   * @param {string} name - Captain name to check.
-   * @returns {boolean} True if the name is found in the list.
+   * @param list - List of captain names.
+   * @param name - Captain name to check.
+   * @returns True if the name is found in the list.
    */
   has(this: CoopCapabilities, list: string[], name: string) {
     const entryKey = this.db.key(name);
@@ -274,9 +270,9 @@ export const CoopOperations = {
   },
   /**
    * Removes all entries matching a captain name from a list of names.
-   * @param {string[]} list - List of captain names.
-   * @param {string} name - Captain name to remove.
-   * @returns {string[]} New list with matching names removed.
+   * @param list - List of captain names.
+   * @param name - Captain name to remove.
+   * @returns New list with matching names removed.
    */
   drop(this: CoopCapabilities, list: string[], name: string) {
     const entryKey = this.db.key(name);
@@ -284,17 +280,17 @@ export const CoopOperations = {
   },
   /**
    * Checks whether a captain is blocked by the target player profile.
-   * @param {PlayerData} [playerData] - Player profile data.
-   * @param {string} name - Captain name to check against blocks.
-   * @returns {boolean} True if the captain is blocked.
+   * @param playerData - Player profile data.
+   * @param name - Captain name to check against blocks.
+   * @returns True if the captain is blocked.
    */
   blocked(this: CoopCapabilities, playerData: PlayerData | null | undefined, name: string) {
     return !!(playerData && playerData.blocks && this.has(playerData.blocks, name));
   },
   /**
    * Determines the online, away, or offline status of a captain.
-   * @param {string} name - Captain name to check.
-   * @returns {'online'|'away'|'offline'} Captain presence status.
+   * @param name - Captain name to check.
+   * @returns Captain presence status.
    */
   statusOf(this: CoopCapabilities, name: string) {
     const session = this.sessionOf(name);
@@ -303,8 +299,7 @@ export const CoopOperations = {
   },
   /**
    * Sends updated player state payload to an active captain session if online.
-   * @param {string} name - Captain name to refresh.
-   * @returns {void}
+   * @param name - Captain name to refresh.
    */
   refreshPlayer(this: CoopCapabilities, name: string) {
     const session = this.sessionOf(name);
@@ -312,8 +307,7 @@ export const CoopOperations = {
   },
   /**
    * Pushes the latest social and Armada payload to an active captain session.
-   * @param {string} name - Captain name to push social data to.
-   * @returns {void}
+   * @param name - Captain name to push social data to.
    */
   pushSocial(this: CoopCapabilities, name: string) {
     const session = this.sessionOf(name);

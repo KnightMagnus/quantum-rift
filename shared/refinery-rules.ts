@@ -101,8 +101,9 @@ export function outputUnits(input: number, percent: number, composite: boolean) 
 export function storedDuration(input: number) {
   return Math.round(300000 + (1500000 * input) / 300);
 }
-/** Locked-quote floor; liability must include pooled fractions, acquisition a conservative lower bound.
- * @param {number} bidPrice @param {number} showConfirmation @param {number} service */
+/**
+ * Locked-quote floor; liability must include pooled fractions, acquisition a conservative lower bound.
+ */
 export function refineryFee(bidPrice: number, showConfirmation: number, service: number) {
   return Math.max(1, Math.ceil(service), Math.ceil(bidPrice - showConfirmation + 1));
 }

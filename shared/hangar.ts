@@ -27,64 +27,63 @@ export type RefineUpConfig = { need: number; cost: number[] };
 // Shared by the server (rules) and the client (display).
 
 /**
- * @typedef {Object} ShuttleCraft
- * @property {string} name - Shuttle craft designation name.
- * @property {number} hull - Ship hull ID used by the shuttle.
- * @property {number} cost - Construction cost in credits.
- * @property {Array<[string, number, number]>} mats - Crafting materials as [materialKey, gradeIndex, quantity].
- * @property {number} ops - Minimum station Ops level required to build.
- * @property {number} speed - Mission speed multiplier.
- * @property {number} armor - Hull protection / hazard survival rating.
- * @property {string} desc - Shuttle operational profile description.
+ * ShuttleCraft fields:
+ * name: - Shuttle craft designation name.
+ * hull: - Ship hull ID used by the shuttle.
+ * cost: - Construction cost in credits.
+ * mats: - Crafting materials as [materialKey, gradeIndex, quantity].
+ * ops: - Minimum station Ops level required to build.
+ * speed: - Mission speed multiplier.
+ * armor: - Hull protection / hazard survival rating.
+ * desc: - Shuttle operational profile description.
  */
 
 /**
- * @typedef {Object} ShuttleJobType
- * @property {string} name - Mission category name.
- * @property {string} fit - Recommended shuttle craft archetype.
- * @property {string[]} verbs - Mission objective description prefixes.
- * @property {number} base - Baseline mission success probability.
+ * ShuttleJobType fields:
+ * name: - Mission category name.
+ * fit: - Recommended shuttle craft archetype.
+ * verbs: - Mission objective description prefixes.
+ * base: - Baseline mission success probability.
  */
 
 /**
- * @typedef {Object} OfficerRole
- * @property {string} name - Officer role display name.
- * @property {string[]} stats - Array of ship stat keys boosted by this role.
- * @property {string} [desc] - Role description summary.
+ * OfficerRole fields:
+ * name: - Officer role display name.
+ * stats: - Array of ship stat keys boosted by this role.
+ * [desc]: - Role description summary.
  */
 
 /**
- * @typedef {Object} OfficerRarity
- * @property {string} name - Rarity tier title.
- * @property {number} mult - Stat multiplier coefficient.
- * @property {string} color - Hex color code for UI rendering.
- * @property {number} cost - Hiring fee in credits.
+ * OfficerRarity fields:
+ * name: - Rarity tier title.
+ * mult: - Stat multiplier coefficient.
+ * color: - Hex color code for UI rendering.
+ * cost: - Hiring fee in credits.
  */
 
 /**
- * @typedef {Object} ResearchNode
- * @property {string} id - Unique research node identifier.
- * @property {'Combat'|'Station'|'Galaxy'|'Shuttles'|string} tree - Research category tree.
- * @property {string} name - Research project title.
- * @property {number} cost - Research cost in credits.
- * @property {Array<[string, number, number]>} mats - Required crafting materials.
- * @property {number} minutes - Research completion time in minutes.
- * @property {number} ops - Minimum Ops level required.
- * @property {string} [needs] - Prerequisite research node ID that must be completed first.
- * @property {Object.<string, number>} bonus - Stat or facility bonuses granted upon completion.
+ * ResearchNode fields:
+ * id: - Unique research node identifier.
+ * tree: - Research category tree.
+ * name: - Research project title.
+ * cost: - Research cost in credits.
+ * mats: - Required crafting materials.
+ * minutes: - Research completion time in minutes.
+ * ops: - Minimum Ops level required.
+ * [needs]: - Prerequisite research node ID that must be completed first.
+ * bonus: - Stat or facility bonuses granted upon completion.
  */
 
 /**
- * @typedef {Object} RefineUpConfig
- * @property {number} need - Quantity of lower-grade crates consumed.
- * @property {number[]} cost - Credit cost per grade index [g0, g1, g2, g3].
+ * RefineUpConfig fields:
+ * need: - Quantity of lower-grade crates consumed.
+ * cost: - Credit cost per grade index [g0, g1, g2, g3].
  */
 
 // ------------------------------------------------------------------ shuttles
 // Shuttles launch from your Personal Station on timed jobs that run in real time, even while you are offline.
 /**
  * Constructible automated shuttle craft configurations.
- * @type {Object.<string, ShuttleCraft>}
  */
 export const SHUTTLES: Record<string, ShuttleCraft> = {
   courier: {
@@ -144,21 +143,18 @@ export const SHUTTLES: Record<string, ShuttleCraft> = {
 
 /**
  * Array of all supported shuttle craft type keys.
- * @type {string[]}
  */
 export const SHUTTLE_KINDS: string[] = Object.keys(SHUTTLES);
 
 /**
  * Base hangar launch bays unlocked per station Ops level index (0 through 5).
  * Research projects unlock additional bays.
- * @type {number[]}
  */
 export const BAYS_BY_OPS: number[] = [0, 0, 1, 2, 3, 4]; // hangar bays per Ops level (research adds more)
 
 // Job types posted on the hangar board. `fit` is the shuttle kind that does the job best.
 /**
  * Automated shuttle mission types available on the station mission board.
- * @type {Object.<string, ShuttleJobType>}
  */
 export const SHUTTLE_JOBS: Record<string, ShuttleJobType> = {
   delivery: {
@@ -219,20 +215,17 @@ export const SHUTTLE_JOBS: Record<string, ShuttleJobType> = {
 };
 /**
  * Share of a shuttle's purchase price required for hull repairs.
- * @type {number}
  */
 export const SHUTTLE_REPAIR: number = 0.25; // repair costs this share of the shuttle's price
 
 /**
  * Period in hours at which the hangar shuttle job board refreshes.
- * @type {number}
  */
 export const JOB_WINDOW_H: number = 3; // the hangar board refreshes every 3 hours
 
 // ------------------------------------------------------------------ officers
 /**
  * Bridge officer role classifications and the ship stats they enhance.
- * @type {Object.<string, OfficerRole>}
  */
 export const ROLES: Record<string, OfficerRole> = {
   captain: {
@@ -250,7 +243,6 @@ export const ROLES: Record<string, OfficerRole> = {
 // value of each stat at level 1 for a common officer; rarity multiplies, each level adds 10%
 /**
  * Baseline stat bonus magnitude at level 1 for Common rarity officers.
- * @type {Object.<string, number>}
  */
 export const STAT_BASE: Record<string, number> = {
   damagePct: 4,
@@ -269,7 +261,6 @@ export const STAT_BASE: Record<string, number> = {
 
 /**
  * Human-readable display labels for officer ship stat enhancements.
- * @type {Object.<string, string>}
  */
 export const STAT_NAME: Record<string, string> = {
   damagePct: 'weapon damage',
@@ -288,7 +279,6 @@ export const STAT_NAME: Record<string, string> = {
 
 /**
  * Officer rarity tiers, stat multipliers, display colors, and hiring costs.
- * @type {OfficerRarity[]}
  */
 export const RARITY: OfficerRarity[] = [
   { name: 'Common', mult: 1, color: '#b8bcc6', cost: 8000 },
@@ -300,7 +290,6 @@ export const RARITY: OfficerRarity[] = [
 // each race favours certain roles and gives a race synergy when two or more of them share a bridge
 /**
  * Preferred bridge roles favoured by each race or faction.
- * @type {Object.<string, string[]>}
  */
 export const RACE_ROLES: Record<string, string[]> = {
   quantum: ['captain', 'engineer', 'navigator'],
@@ -317,7 +306,6 @@ export const RACE_ROLES: Record<string, string[]> = {
 
 /**
  * Bridge synergy stat buffs triggered when two or more officers of the same race share bridge seats.
- * @type {Object.<string, Object.<string, number>>}
  */
 export const SYNERGY: Record<string, Record<string, number>> = {
   // two or more of the same race on the bridge
@@ -335,7 +323,6 @@ export const SYNERGY: Record<string, Record<string, number>> = {
 
 /**
  * Cultural name generation pools for bridge officers by race/faction [firstNames, lastNames].
- * @type {Object.<string, [string[], string[]]>}
  */
 export const OFFICER_NAMES: Record<string, [string[], string[]]> = {
   quantum: [
@@ -393,26 +380,23 @@ export const OFFICER_NAMES: Record<string, [string[], string[]]> = {
 
 /**
  * Standard officer station positions available on player ship bridges.
- * @type {string[]}
  */
 export const BRIDGE_SLOTS: string[] = ['captain', 'bridge1', 'bridge2'];
 
 /**
  * Maximum active officer roster capacity supported at the station.
- * @type {number}
  */
 export const ROSTER_MAX: number = 24; // room for wingmate captains and crews
 
 /**
  * Calculates cumulative experience points required to advance an officer to the next level.
- * @param {number} level - Target officer level.
- * @returns {number} Required experience points.
+ * @param level - Target officer level.
+ * @returns Required experience points.
  */
 export const XP_LEVEL = (level: number) => 100 * level * level; // xp needed to reach the next level
 
 /**
  * Maximum obtainable officer level cap.
- * @type {number}
  */
 export const MAX_LEVEL: number = 10;
 
@@ -420,12 +404,10 @@ export const MAX_LEVEL: number = 10;
 // `needs` chains the nodes. Queueing a node queues its unfinished prerequisites first (STFC-style bulk research).
 /**
  * Research discipline tree category names.
- * @type {string[]}
  */
 export const RESEARCH_TREES: string[] = ['Combat', 'Station', 'Galaxy', 'Shuttles'];
 /**
  * All research tree progression nodes and project definitions.
- * @type {ResearchNode[]}
  */
 export const RESEARCH2: ResearchNode[] = [
   // Combat
@@ -742,14 +724,12 @@ export const RESEARCH2: ResearchNode[] = [
 ];
 /**
  * Maximum concurrent research project queue capacity.
- * @type {number}
  */
 export const RESEARCH_QUEUE_MAX: number = 6;
 
 // ------------------------------------------------------------------ refining (combine crates up a grade)
 /**
  * Material crate tier upgrading rules and credit costs per grade index.
- * @type {RefineUpConfig}
  */
 export const REFINE_UP: RefineUpConfig = { need: 3, cost: [4000, 12000, 30000, 70000] }; // 3 crates of grade g + cost[g] -> 1 crate of grade g+1
 
@@ -757,12 +737,10 @@ export const REFINE_UP: RefineUpConfig = { need: 3, cost: [4000, 12000, 30000, 7
 /**
  * Hangar drydock ship berths unlocked per station Ops level index (0 through 5).
  * Research projects provide additional berths.
- * @type {number[]}
  */
 export const DOCK_BY_OPS: number[] = [0, 0, 0, 2, 3, 4]; // stored ships per Ops level (research adds more)
 
 /**
  * Payout fraction received when selling a captured ship hull with no available drydock berth.
- * @type {number}
  */
 export const CAPTURE_SELL: number = 0.25; // a captured hull with no free berth is sold for this share

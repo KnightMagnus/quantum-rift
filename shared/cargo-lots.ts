@@ -3,12 +3,10 @@ export type CargoTotals = import('./cargo-contracts.ts').CargoTotals;
 export type CargoLedger = import('./cargo-contracts.ts').CargoLedger;
 export type GradeLots = import('./cargo-contracts.ts').GradeLots;
 export type LotTransfer = import('./cargo-contracts.ts').LotTransfer;
-/** Pure integer-tonne accounting. Totals stay authoritative; corrupt ledgers fail closed.
+/**
+ * Pure integer-tonne accounting. Totals stay authoritative; corrupt ledgers fail closed.
  * No time, RNG, capacity calculation, crate quality or field richness belongs here.
- * @typedef {import('./cargo-contracts.ts').CargoTotals} CargoTotals
- * @typedef {import('./cargo-contracts.ts').CargoLedger} CargoLedger
- * @typedef {import('./cargo-contracts.ts').GradeLots} GradeLots
- * @typedef {import('./cargo-contracts.ts').LotTransfer} LotTransfer
+
  */
 export const RAW_COMMODITIES = Object.freeze(['ore', 'gas', 'shards']);
 export const RAW_GRADES = Object.freeze(['common', 'rich', 'pure'] as const);
@@ -30,8 +28,8 @@ function record(value: unknown): asserts value is Record<string, unknown> {
       throw new Error('Cargo ledger: expected serializable data properties');
   }
 }
-/** Owner validation is limited to inventory fields: real players have unrelated data/methods.
- * @param {CargoOwner} player
+/**
+ * Owner validation is limited to inventory fields: real players have unrelated data/methods.
  */
 function owner(player: CargoOwner) {
   if (
@@ -46,8 +44,8 @@ function owner(player: CargoOwner) {
       throw new Error('Cargo ledger: expected serializable data properties');
   }
 }
-/** Check the real assignment target before any transaction writes.
- * @param {object} target @param {string} entryKey
+/**
+ * Check the real assignment target before any transaction writes.
  */
 function writable(target: object, entryKey: string) {
   const descriptor = Object.getOwnPropertyDescriptor(target, entryKey);
@@ -109,10 +107,9 @@ export function assertLots(totals: CargoTotals, ledger: CargoLedger) {
       throw new Error('Cargo ledger: aggregate mismatch for ' + rAW_COMMODITIES);
   }
 }
-/** Both cargo and storage validate before either migration is committed.
+/**
+ * Both cargo and storage validate before either migration is committed.
  * Missing legacy records become common. Existing valid records are never rewritten.
- * @param {CargoOwner} player
- * @returns {{changed:boolean}}
  */
 export function migrateCargoLots(player: CargoOwner): { changed: boolean } {
   owner(player);
@@ -154,8 +151,8 @@ function owned(totals: CargoTotals, ledger: CargoLedger, captainId: string): Gra
     ? { ...(ledger.byCommodity[captainId] || empty()) }
     : { common: totals[captainId] || 0, rich: 0, pure: 0 };
 }
-/** Select up to qty in deterministic common -> rich -> pure order; no rolls.
- * @param {GradeLots} available @param {number} quantity @returns {GradeLots}
+/**
+ * Select up to qty in deterministic common -> rich -> pure order; no rolls.
  */
 export function splitLots(available: GradeLots, quantity: number): GradeLots {
   grades(available);
@@ -171,9 +168,8 @@ export function splitLots(available: GradeLots, quantity: number): GradeLots {
 
 const plans: WeakMap<LotTransfer, { totals: CargoTotals; ledger: CargoLedger; before: GradeLots }> =
   new WeakMap();
-/** Plans are immutable, process-local and single use. Explicit selection is never substituted.
- * @param {CargoTotals} totals @param {CargoLedger} ledger @param {string} captainId @param {number} quantity
- * @param {GradeLots|'common-first'} [selection='common-first'] @returns {LotTransfer}
+/**
+ * Plans are immutable, process-local and single use. Explicit selection is never substituted.
  */
 export function planTake(
   totals: CargoTotals,
@@ -201,8 +197,8 @@ function write(totals: CargoTotals, ledger: CargoLedger, captainId: string, lots
   totals[captainId] = sumValues(lots);
   if (RAW_COMMODITIES.includes(captainId)) ledger.byCommodity[captainId] = lots;
 }
-/** Revalidates against current inventory and rejects forged/reused/stale plans without mutation.
- * @param {CargoTotals} totals @param {CargoLedger} ledger @param {LotTransfer} plan @returns {LotTransfer}
+/**
+ * Revalidates against current inventory and rejects forged/reused/stale plans without mutation.
  */
 export function applyTake(
   totals: CargoTotals,
@@ -239,10 +235,10 @@ function validateTransfer(transfer: LotTransfer) {
   )
     throw new Error('Cargo ledger: invalid transfer');
 }
-/** All-or-nothing credit. room is remaining capacity from authoritative holdUsed,
+/**
+ * All-or-nothing credit. room is remaining capacity from authoritative holdUsed,
  * including jobCargo; Infinity explicitly means unbounded storage. Partial callers
  * must split once-resolved lots first, retaining their exact remainder externally.
- * @param {CargoTotals} totals @param {CargoLedger} ledger @param {LotTransfer} transfer @param {number} [room=Infinity]
  */
 export function addLots(
   totals: CargoTotals,
@@ -263,11 +259,8 @@ export function addLots(
   count(sumValues(next));
   write(totals, ledger, transfer.cid, next);
 }
-/** Preflight quantities on copies and real destinations before debiting source; no await/callback in commit.
- * @param {CargoTotals} source @param {CargoLedger} sourceLedger
- * @param {CargoTotals} target @param {CargoLedger} targetLedger
- * @param {string} captainId @param {number} quantity @param {GradeLots|'common-first'} [selection]
- * @param {number} [room=Infinity] @returns {LotTransfer}
+/**
+ * Preflight quantities on copies and real destinations before debiting source; no await/callback in commit.
  */
 export function moveLots(
   source: CargoTotals,
@@ -310,8 +303,8 @@ export function clearLots(totals: CargoTotals, ledger: CargoLedger) {
   for (const captainId of Object.keys(totals)) delete totals[captainId];
   ledger.byCommodity = {};
 }
-/** Legacy new production (not a reconstruction of a premium withdrawal).
- * @param {string} captainId @param {number} quantity @returns {LotTransfer}
+/**
+ * Legacy new production (not a reconstruction of a premium withdrawal).
  */
 export function commonLots(captainId: string, quantity: number): LotTransfer {
   commodity(captainId);

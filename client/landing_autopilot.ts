@@ -32,12 +32,11 @@ import { DT as tickDuration, wrap } from '../shared/rules.ts';
 /**
  * Steer toward a landing volume, then commit to a retrograde braking pass.
  * Retain the phase instead of repeatedly alternating approach and brake headings.
- * @param {{mode?: string, t?: number, vx?: number, vy?: number, dest?: {x: number, y: number}}} state Autopilot state retained across ticks.
- * @param {RenderEntity} ship Predicted player ship.
- * @param {ComputedShipStats} stats Computed hull/outfit flight stats.
- * @param {StellarBody} port Target landable body.
- * @param {Record<string, number>} input Controls modified in place.
- * @returns {void}
+ * @param state Autopilot state retained across ticks.
+ * @param ship Predicted player ship.
+ * @param stats Computed hull/outfit flight stats.
+ * @param port Target landable body.
+ * @param input Controls modified in place.
  */
 export function landingGuidance(
   state: AutopilotState,
@@ -95,13 +94,13 @@ export function landingGuidance(
 /**
  * Require a settled prediction AND a recent authoritative snapshot well inside
  * the server's radius/speed limits before sending the one landing request.
- * @param {{mode?: string, t?: number, vx?: number, vy?: number, dest?: {x: number, y: number}}} state Retained autopilot state.
- * @param {RenderEntity} ship Predicted ship.
- * @param {RenderEntity} authority Last server ship snapshot.
- * @param {ComputedShipStats} stats Computed flight stats.
- * @param {StellarBody} port Landing target.
- * @param {number} currentTime Monotonic browser time in milliseconds.
- * @returns {boolean} Whether to send the landing request this tick.
+ * @param state Retained autopilot state.
+ * @param ship Predicted ship.
+ * @param authority Last server ship snapshot.
+ * @param stats Computed flight stats.
+ * @param port Landing target.
+ * @param currentTime Monotonic browser time in milliseconds.
+ * @returns Whether to send the landing request this tick.
  */
 export function landingReady(
   state: AutopilotState,

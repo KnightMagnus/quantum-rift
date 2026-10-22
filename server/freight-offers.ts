@@ -47,10 +47,9 @@ function random(seed: string) {
   return xorshift32(fnv1a(seed));
 }
 
-/** Additional ordinary cargo contracts, using existing acceptance/hold/payout rules.
- * @param {StellarBody} port
- * @param {number} window Ten-minute board window.
- * @returns {Mission[]}
+/**
+ * Additional ordinary cargo contracts, using existing acceptance/hold/payout rules.
+ * @param window Ten-minute board window.
  */
 export function freightOffers(port: StellarBody, window: number): Mission[] {
   if (!port.svc.includes('B') || port.site || port.outlaw || !trade.has(port.system)) return [];

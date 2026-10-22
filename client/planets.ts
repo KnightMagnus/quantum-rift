@@ -75,21 +75,21 @@ type RenderedPlanet = ReturnType<typeof setupRendered>;
 // planetSprite(p, now) -> { canvas, scale }: scale is world units per canvas pixel.
 
 /**
- * @typedef {object} PlanetDef
- * @property {string} id - World celestial identifier.
- * @property {string} [name] - Display name of the world.
- * @property {string} [desc] - Descriptive text lore for planet classification.
- * @property {string} [kind] - Body type (e.g., 'planet', 'moon', 'station').
- * @property {string} [color] - Hex color code.
- * @property {number} r - Celestial radius in world units.
+ * PlanetDef fields:
+ * id: - World celestial identifier.
+ * [name]: - Display name of the world.
+ * [desc]: - Descriptive text lore for planet classification.
+ * [kind]: - Body type (e.g., 'planet', 'moon', 'station').
+ * [color]: - Hex color code.
+ * r: - Celestial radius in world units.
  */
 
 /**
- * @typedef {object} PlanetSprite
- * @property {HTMLCanvasElement | HTMLImageElement} canvas - Canvas or image buffer for rendering.
- * @property {number} S - Canvas diameter dimension in pixels.
- * @property {number} D - Projected planetary disk diameter in pixels.
- * @property {number} scale - Scaling factor converting canvas pixels to world units.
+ * PlanetSprite fields:
+ * canvas: - Canvas or image buffer for rendering.
+ * S: - Canvas diameter dimension in pixels.
+ * D: - Projected planetary disk diameter in pixels.
+ * scale: - Scaling factor converting canvas pixels to world units.
  */
 
 const textWidth = 512,
@@ -249,8 +249,8 @@ function hueSaturationLightness(colorChannels: ColorChannels) {
 // ---------------------------------------------------------------- what kind of world is it?
 /**
  * Classifies a stellar body into a procedural or visual planet category.
- * @param {PlanetDef} planetDef - Stellar object descriptor.
- * @returns {string} Planet biome category (e.g. 'earth', 'lava', 'gas', 'ocean', 'terran', 'desert', 'ice', 'crystal', 'toxic', 'barren').
+ * @param planetDef - Stellar object descriptor.
+ * @returns Planet biome category (e.g. 'earth', 'lava', 'gas', 'ocean', 'terran', 'desert', 'ice', 'crystal', 'toxic', 'barren').
  */
 export function planetType(planetDef: PlanetDef): Biome {
   if (planetDef.id === 'earth') return 'earth';
@@ -1419,9 +1419,9 @@ function renderRendered(position: RenderedPlanet, horizontalOffset: number, clou
 }
 /**
  * Generates or retrieves the lit, rotating canvas sprite for a planet or moon.
- * @param {PlanetDef} planetDef - Stellar object descriptor.
- * @param {number} currentTime - High-resolution timestamp in milliseconds.
- * @returns {PlanetSprite | null} Active planet sprite buffer with rendering metrics, or null if loading.
+ * @param planetDef - Stellar object descriptor.
+ * @param currentTime - High-resolution timestamp in milliseconds.
+ * @returns Active planet sprite buffer with rendering metrics, or null if loading.
  */
 export function planetSprite(planetDef: PlanetDef, currentTime: number): PlanetSprite | null {
   const renderedDefinition = chooseRendered(planetDef);
