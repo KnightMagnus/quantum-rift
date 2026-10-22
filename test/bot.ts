@@ -62,8 +62,8 @@ const fail = (message: string) => {
   console.error('FAIL:', message);
   process.exit(1);
 };
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) fail(message);
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) fail(message);
   console.log('ok -', message);
 };
 (async () => {
@@ -199,13 +199,13 @@ const assertCondition = (captain: unknown, message: string) => {
     const playerEntity = requiredFixtureValue(firstEntry.snap).me,
       deltaX = player.x - playerEntity[2],
       deltaY = player.y - playerEntity[3],
-      playerData = Math.hypot(deltaX, deltaY),
+      targetDistance = Math.hypot(deltaX, deltaY),
       space = Math.hypot(playerEntity[4], playerEntity[5]);
     const want = Math.atan2(deltaX, -deltaY),
       diff = ((want - playerEntity[6] + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
     const retro = Math.atan2(playerEntity[4], -playerEntity[5]) + Math.PI,
       rdiff = Math.abs(((retro - playerEntity[6] + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
-    if (playerData < 90) {
+    if (targetDistance < 90) {
       if (space < 60) {
         firstEntry.send({ t: 'land', stellar: 'meridian-yards' });
         await sleep(300);
@@ -217,7 +217,8 @@ const assertCondition = (captain: unknown, message: string) => {
         (space * space) /
           (2 * requiredFixtureValue(requiredFixtureValue(firstEntry.you).shipStats).accel) +
         80;
-      if (playerData < stop || space > 160) firstEntry.input({ rv: 1, th: rdiff < 0.3 ? 1 : 0 });
+      if (targetDistance < stop || space > 160)
+        firstEntry.input({ rv: 1, th: rdiff < 0.3 ? 1 : 0 });
       else
         firstEntry.input({
           tu: Math.abs(diff) < 0.05 ? 0 : Math.sign(diff),

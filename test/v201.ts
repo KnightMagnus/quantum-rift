@@ -24,8 +24,8 @@ const wingUp = (game: Game, playerData: PlayerData, hulls: (string | number)[]) 
     return mockSavedDockWing({ uid: ship.uid });
   });
 }; // 2.1: wingmates are stored ships in your dock
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -64,9 +64,9 @@ for (const kind of ['planet', 'station']) {
       shipEntity.life = 1e9;
       const beforeFuel = shipEntity.fuel;
       for (
-        let messageType = 0;
-        messageType < Math.ceil((Math.PI / shipEntity.st.turn + 1) / simulationStepSeconds);
-        messageType++
+        let tickIndex = 0;
+        tickIndex < Math.ceil((Math.PI / shipEntity.st.turn + 1) / simulationStepSeconds);
+        tickIndex++
       ) {
         space.ai(shipEntity);
         step(shipEntity, shipEntity.st, shipEntity.inp);
@@ -78,9 +78,9 @@ for (const kind of ['planet', 'station']) {
       );
       let event = false;
       for (
-        let messageType2 = 0;
-        messageType2 < 300 / simulationStepSeconds && space.ships.has(shipEntity.id);
-        messageType2++
+        let tickIndex2 = 0;
+        tickIndex2 < 300 / simulationStepSeconds && space.ships.has(shipEntity.id);
+        tickIndex2++
       ) {
         space.ai(shipEntity);
         if (!space.ships.has(shipEntity.id)) {
@@ -116,14 +116,14 @@ for (let index = 0; index < 24; index++) {
   });
   shipEntity.dest = stellarBody;
   shipEntity.life = 1e9;
-  let messageType3 = 0;
-  while (space.ships.has(shipEntity.id) && messageType3 < 90 * 30) {
+  let tickIndex3 = 0;
+  while (space.ships.has(shipEntity.id) && tickIndex3 < 90 * 30) {
     space.tick();
-    messageType3++;
+    tickIndex3++;
   }
   if (!space.ships.has(shipEntity.id)) {
     landed++;
-    worst = Math.max(worst, messageType3 / 30);
+    worst = Math.max(worst, tickIndex3 / 30);
   } else space.remove(shipEntity);
 }
 assertCondition(

@@ -12,8 +12,8 @@ import { SHIPS23 } from '../shared/ships23.ts';
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }

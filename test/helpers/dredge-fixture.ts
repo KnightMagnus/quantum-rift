@@ -38,15 +38,23 @@ export function industrialStep(
   seconds: number,
   elapsedSeconds = 1 / 30,
 ) {
-  for (let messageType = 0; messageType < seconds - 1e-8; messageType += elapsedSeconds) {
-    const step = Math.min(elapsedSeconds, seconds - messageType);
+  for (
+    let advancedSeconds = 0;
+    advancedSeconds < seconds - 1e-8;
+    advancedSeconds += elapsedSeconds
+  ) {
+    const step = Math.min(elapsedSeconds, seconds - advancedSeconds);
     pilotFixture.g.features.mining.advanceClock(step);
     pilotFixture.g.features.industrial.industrialTick(pilotFixture.sp, step);
     pilotFixture.g.features.mining.endTick(pilotFixture.sp);
   }
 }
 export function fullStep(pilotFixture: ReturnType<typeof dredgePilot>, seconds: number) {
-  for (let messageType2 = 0; messageType2 < seconds - 1e-8; messageType2 += simulationStepSeconds) {
+  for (
+    let advancedSeconds = 0;
+    advancedSeconds < seconds - 1e-8;
+    advancedSeconds += simulationStepSeconds
+  ) {
     pilotFixture.g.features.mining.advanceClock(simulationStepSeconds);
     pilotFixture.sp.tick();
   }

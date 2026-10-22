@@ -91,7 +91,7 @@ assert.deepEqual(
   [200, 70, 250000],
 );
 assert.deepEqual(
-  STORE_TIERS.map((messageType) => messageType.rep),
+  STORE_TIERS.map((storeTier) => storeTier.rep),
   [10, 30, 60, 200],
 );
 for (const initial of [90, 199, 200, 250]) {

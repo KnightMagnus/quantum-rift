@@ -27,9 +27,9 @@ try {
       const image = new Image();
       image.src = '/assets/cursors/' + name + '.png';
       await image.decode();
-      const captain = document.createElement('canvas');
-      captain.width = captain.height = 32;
-      const context = captain.getContext('2d');
+      const canvasElement = document.createElement('canvas');
+      canvasElement.width = canvasElement.height = 32;
+      const context = canvasElement.getContext('2d');
       context!.drawImage(image, 0, 0);
       const pixels = context!.getImageData(0, 0, 32, 32).data;
       images.push({

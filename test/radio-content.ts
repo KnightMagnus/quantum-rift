@@ -19,9 +19,7 @@ assert.deepEqual(
   ['shuffle', 'shuffle', 'shuffle', 'shuffle', 'album'],
 );
 assert.deepEqual(
-  RADIO_STATIONS[4].tracks.map((messageType) =>
-    'title' in messageType ? messageType.title : undefined,
-  ),
+  RADIO_STATIONS[4].tracks.map((track2) => ('title' in track2 ? track2.title : undefined)),
   [
     'You Fakku Youself',
     'Basso-Stoppu Rouza',
@@ -47,7 +45,7 @@ const expected = [
 assert.equal(expected.length, 33);
 assert.equal(new Set(expected).size, 33);
 assert.deepEqual(
-  manifest.tracks.map((messageType4: { path: string }) => messageType4.path),
+  manifest.tracks.map((track3: { path: string }) => track3.path),
   expected,
 );
 let bytes = 0,

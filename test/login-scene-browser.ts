@@ -270,16 +270,16 @@ try {
   await page.waitForFunction(
     () => document.querySelector<HTMLElement>('.login-scene')?.dataset.planetReady === 'true',
   );
-  const identity = await canvas.evaluate((captain) => Object.assign({}, captain.dataset));
+  const identity = await canvas.evaluate((element2) => Object.assign({}, element2.dataset));
   assert.equal(identity.system, 'qgate');
   assert.equal(identity.station, 'qstation');
   assert.equal(identity.planet, 'concordia');
   assert.equal(identity.running, 'true');
   await page.screenshot({ path: path.join(output, 'desktop-start.png') });
-  const first = await canvas.evaluate((captain) => (captain as HTMLCanvasElement).toDataURL());
+  const first = await canvas.evaluate((element3) => (element3 as HTMLCanvasElement).toDataURL());
   await page.waitForTimeout(1400);
   assert.notEqual(
-    await canvas.evaluate((captain) => (captain as HTMLCanvasElement).toDataURL()),
+    await canvas.evaluate((element4) => (element4 as HTMLCanvasElement).toDataURL()),
     first,
     'Traffic changes actual scene pixels',
   );
@@ -350,19 +350,19 @@ try {
   ]) {
     await page.setViewportSize({ width, height });
     await page.waitForFunction(() => {
-      const captain = document.querySelector<HTMLElement>('.login-scene');
+      const element5 = document.querySelector<HTMLElement>('.login-scene');
       return (
-        (captain! as HTMLCanvasElement).width ===
-        Math.round(captain!.getBoundingClientRect().width * Math.min(devicePixelRatio, 2))
+        (element5! as HTMLCanvasElement).width ===
+        Math.round(element5!.getBoundingClientRect().width * Math.min(devicePixelRatio, 2))
       );
     });
     const layout = await page.evaluate(() => {
-      const captain = document.querySelector<HTMLElement>('.login-scene'),
-        result = captain!.getBoundingClientRect(),
+      const element6 = document.querySelector<HTMLElement>('.login-scene'),
+        result = element6!.getBoundingClientRect(),
         secondCaptain = document.querySelector<HTMLElement>('#lbtn')!.getBoundingClientRect();
       return {
-        width: (captain! as HTMLCanvasElement).width,
-        height: (captain! as HTMLCanvasElement).height,
+        width: (element6! as HTMLCanvasElement).width,
+        height: (element6! as HTMLCanvasElement).height,
         cssWidth: result.width,
         cssHeight: result.height,
         overflow: document.documentElement.scrollWidth > innerWidth,
@@ -456,11 +456,13 @@ try {
     () => document.querySelector<HTMLElement>('.login-scene')!.dataset.running === 'false',
   );
   await page.waitForTimeout(1700); // bounded initial texture settling has completed
-  const stationary = await canvas.evaluate((captain) => (captain as HTMLCanvasElement).toDataURL()),
+  const stationary = await canvas.evaluate((element7) =>
+      (element7 as HTMLCanvasElement).toDataURL(),
+    ),
     count = await page.evaluate(() => window.sceneTest.draws);
   await page.waitForTimeout(500);
   assert.equal(
-    await canvas.evaluate((captain) => (captain as HTMLCanvasElement).toDataURL()),
+    await canvas.evaluate((element8) => (element8 as HTMLCanvasElement).toDataURL()),
     stationary,
     'Reduced motion has a static scene',
   );
@@ -561,12 +563,12 @@ try {
     () => document.querySelector<HTMLElement>('.login-scene')!.dataset.running === 'false',
   );
   await page.waitForTimeout(1700);
-  const returnedStatic = await canvas.evaluate((captain) =>
-    (captain as HTMLCanvasElement).toDataURL(),
+  const returnedStatic = await canvas.evaluate((element9) =>
+    (element9 as HTMLCanvasElement).toDataURL(),
   );
   await page.waitForTimeout(500);
   assert.equal(
-    await canvas.evaluate((captain) => (captain as HTMLCanvasElement).toDataURL()),
+    await canvas.evaluate((element10) => (element10 as HTMLCanvasElement).toDataURL()),
     returnedStatic,
     'Reduced motion also stable after gameplay',
   );

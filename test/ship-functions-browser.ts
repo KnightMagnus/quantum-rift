@@ -106,13 +106,13 @@ try {
   await page.evaluate(() => {
     document
       .querySelectorAll('#functionstack details')
-      .forEach((playerData) => ((playerData as HTMLDetailsElement).open = true));
+      .forEach((element2) => ((element2 as HTMLDetailsElement).open = true));
     const serverLog = document.querySelector('#chatlog');
     for (let index = 0; index < 80; index++) {
-      const playerData = document.createElement('div');
-      playerData.textContent =
+      const element3 = document.createElement('div');
+      element3.textContent =
         'Captain ' + index + ': long flight message ' + 'navigation '.repeat(15);
-      serverLog!.append(playerData);
+      serverLog!.append(element3);
     }
   });
   const results = [];

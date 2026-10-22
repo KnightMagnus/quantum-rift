@@ -293,8 +293,8 @@ try {
   assert.equal(approached.combat.target, initial.foe.id);
   assert.equal(approached.player.inp.thrust, 1, 'Assist applies actual thrust');
   const fired = await until(
-    (messageType: { shots: number; foe: { shield: number } }) =>
-      messageType.shots > 0 && messageType.foe.shield < 1000,
+    (combatProbe: { shots: number; foe: { shield: number } }) =>
+      combatProbe.shots > 0 && combatProbe.foe.shield < 1000,
     'primary fire damages selected hostile',
     20000,
   );

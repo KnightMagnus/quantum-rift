@@ -15,8 +15,8 @@ import { SPEC } from '../shared/specialty.ts';
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -145,7 +145,7 @@ const storedShip = playerData.dock.find(
 );
 assertCondition(
   requiredFixtureValue(requiredFixtureValue(storedShip).repairT) > Date.now() &&
-    captainFixture.toasts().some((messageType: string) => messageType.includes('towed home')),
+    captainFixture.toasts().some((toastText: string) => toastText.includes('towed home')),
   'a wingmate knocked out is towed home for repairs',
 );
 assertCondition(

@@ -23,11 +23,11 @@ try {
       document.body.innerHTML =
         '<h2 style="color:white">Motherlodes: ore / gas / shards / unknown</h2>';
       document.body.style.background = '#0b1019';
-      const captain = document.createElement('canvas');
-      captain.width = 1080;
-      captain.height = 780;
-      document.body.append(captain);
-      const context = captain.getContext('2d');
+      const canvasElement = document.createElement('canvas');
+      canvasElement.width = 1080;
+      canvasElement.height = 780;
+      document.body.append(canvasElement);
+      const context = canvasElement.getContext('2d');
       const types = ['ore', 'gas', 'shards', 'future-resource'];
       const render = (
         oreRecord: string,
@@ -55,8 +55,8 @@ try {
           (value) => value,
           (value) => value,
           zoom,
-          captain.width,
-          captain.height,
+          canvasElement.width,
+          canvasElement.height,
         );
       };
       // Trigger the production image cache, then allow its actual decode/failure to finish.
@@ -74,7 +74,7 @@ try {
           ),
         );
       await new Promise((resolve2) => setTimeout(resolve2, 100));
-      context!.clearRect(0, 0, captain.width, captain.height);
+      context!.clearRect(0, 0, canvasElement.width, canvasElement.height);
       const pixels = (oreRecord3: string, status: string, revealed: boolean, ownShip = false) => {
         const disabledState = document.createElement('canvas');
         disabledState.width = 240;
@@ -112,7 +112,7 @@ try {
         // Only material pixels: exclude status labels, selection frame and exterior tether.
         return Array.from(cameraX!.getImageData(125, 100, 20, 30).data).join(',');
       };
-      const known = types.map((messageType) => pixels(messageType, 'available', true));
+      const known = types.map((artType) => pixels(artType, 'available', true));
       const hidden = types.map((unrevealedBody) => pixels(unrevealedBody, 'available', false));
       const attached = types.map((visibleAttachedBody) =>
         pixels(visibleAttachedBody, 'attached', true),

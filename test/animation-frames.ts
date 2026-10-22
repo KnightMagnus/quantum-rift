@@ -6,8 +6,8 @@ const before = loopFrames(32 * 55 - 0.001, 32, 55);
 assert.equal(before.first, 31);
 assert.equal(before.second, 0);
 assert.ok(before.mix > 0.9999);
-for (let messageType = 0; messageType < 10000; messageType += 7) {
-  const feature = loopFrames(messageType, 32, 55);
+for (let elapsedMilliseconds = 0; elapsedMilliseconds < 10000; elapsedMilliseconds += 7) {
+  const feature = loopFrames(elapsedMilliseconds, 32, 55);
   assert.ok(
     feature.first >= 0 &&
       feature.first < 32 &&

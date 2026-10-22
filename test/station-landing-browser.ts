@@ -135,7 +135,7 @@ try {
       );
     });
     assert.ok(
-      landingImages.length && landingImages.every((horizontalPosition) => horizontalPosition.ok),
+      landingImages.length && landingImages.every((imageProbe) => imageProbe.ok),
       identifier + ' landed pictures decode',
     );
     if (identifier === 'luna') {
@@ -319,14 +319,14 @@ try {
       assert.equal(audit.rows.length, 245);
       assert.ok(
         audit.rows
-          .filter((horizontalPosition3) => horizontalPosition3.kind === 'hub')
-          .every((horizontalPosition4) => horizontalPosition4.source.includes('hub.png')),
+          .filter((assetProbe) => assetProbe.kind === 'hub')
+          .every((assetProbe2) => assetProbe2.source.includes('hub.png')),
       );
       assert.ok(
         audit.rows
-          .filter((horizontalPosition5) => horizontalPosition5.kind === 'site')
-          .every((horizontalPosition6) =>
-            horizontalPosition6.source.includes('/stations/' + horizontalPosition6.tier + '.png'),
+          .filter((assetProbe3) => assetProbe3.kind === 'site')
+          .every((assetProbe4) =>
+            assetProbe4.source.includes('/stations/' + assetProbe4.tier + '.png'),
           ),
       );
     }

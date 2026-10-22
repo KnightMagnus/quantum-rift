@@ -75,7 +75,7 @@ const cargoJob = 800 + 2 * 1100 + 18 * 60,
   cargoPerHour = cargoJob * 6; // ~6 two-jump cargo runs an hour
 const bounty = 300 * 25 + 500,
   bountyPerHour = bounty * 10; // ~10 frigate-class kills an hour
-const orePrice = requiredFixtureValue(COMMODITIES.find((captain) => captain.id === 'ore')).base,
+const orePrice = requiredFixtureValue(COMMODITIES.find((commodity) => commodity.id === 'ore')).base,
   minePerHour = 2.5 * 60 * 0.8 * orePrice; // ~2.5 t a minute
 const shuttlePerHour = ((2500 + 3 * 2600 * 1.5) * 4) / 2; // four bays, ~2 h runs
 const rates = {
@@ -90,17 +90,11 @@ const missionPerHour = (4000 + 300 * 60) * 3; // ~3 bounty contracts an hour on 
 const typical = (cargoPerHour + bountyPerHour + missionPerHour + shuttlePerHour) / 2; // a mixed session, half of each
 console.log(`  contracts ~${formatValue(missionPerHour)} cr/h`);
 const milestones: [string, number][] = [
-  [
-    'Ops 1-5 (credits)',
-    operationNames.reduce((messageType, options) => messageType + options.cost, 0),
-  ],
-  [
-    'All research (credits)',
-    RESEARCH2.reduce((messageType2, result) => messageType2 + result.cost, 0),
-  ],
+  ['Ops 1-5 (credits)', operationNames.reduce((totalCost, options) => totalCost + options.cost, 0)],
+  ['All research (credits)', RESEARCH2.reduce((totalCost2, result) => totalCost2 + result.cost, 0)],
   [
     'A specialist (after trade-in)',
-    SPECIALISTS.reduce((messageType3, shipHull) => messageType3 + shipHull.cost, 0) /
+    SPECIALISTS.reduce((totalCost3, shipHull) => totalCost3 + shipHull.cost, 0) /
       SPECIALISTS.length -
       assets.ships[713].cost * 0.5,
   ],
@@ -109,9 +103,9 @@ const milestones: [string, number][] = [
   ['Constitution', assets.ships[736].cost],
 ];
 console.log(`== hours to afford at ~${formatValue(typical)} cr/h`);
-for (const [quantity, captain] of milestones)
+for (const [quantity, upgradeCost] of milestones)
   console.log(
-    `  ${quantity.padEnd(30)} ${formatValue(captain).padStart(12)} cr  ~${(captain / typical).toFixed(1)} h`,
+    `  ${quantity.padEnd(30)} ${formatValue(upgradeCost).padStart(12)} cr  ~${(upgradeCost / typical).toFixed(1)} h`,
   );
 if (milestones[0][1] / typical > 40) warn('Ops 1-5 takes over 40 hours of typical income');
 if (milestones[2][1] / typical > 30)

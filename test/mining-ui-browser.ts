@@ -72,10 +72,10 @@ try {
   );
   const position = await page.evaluate(async (result) => {
     const { cam: camera } = await import('/render.js');
-    const captain = document.querySelector('canvas')!.getBoundingClientRect();
+    const canvasBounds = document.querySelector('canvas')!.getBoundingClientRect();
     return {
-      x: captain.left + ((result!.x - camera.cx) * camera.z + camera.W / 2) / devicePixelRatio,
-      y: captain.top + ((result!.y - camera.cy) * camera.z + camera.H / 2) / devicePixelRatio,
+      x: canvasBounds.left + ((result!.x - camera.cx) * camera.z + camera.W / 2) / devicePixelRatio,
+      y: canvasBounds.top + ((result!.y - camera.cy) * camera.z + camera.H / 2) / devicePixelRatio,
     };
   }, rock);
   other = new WebSocket(feature.origin.replace('http', 'ws') + '/ws');

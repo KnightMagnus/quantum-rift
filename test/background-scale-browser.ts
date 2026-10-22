@@ -76,14 +76,14 @@ try {
     const { SYSTEMS } = await import('/shared/galaxy.js');
     const { planetSprite } = await import('/client/planets.js');
     const system = SYSTEMS.find((session) => {
-      const playerData = after.decorFor(session);
+      const decorModel = after.decorFor(session);
       return (
-        playerData.wreck.length &&
-        playerData.bgp?.some(
+        decorModel.wreck.length &&
+        decorModel.bgp?.some(
           (backgroundPlanet) =>
             /gas giant/i.test(backgroundPlanet.p.desc!) &&
-            Math.abs(backgroundPlanet.x - playerData.wreck[0].x * backgroundPlanet.depth) < 700 &&
-            Math.abs(backgroundPlanet.y - playerData.wreck[0].y * backgroundPlanet.depth) < 450!,
+            Math.abs(backgroundPlanet.x - decorModel.wreck[0].x * backgroundPlanet.depth) < 700 &&
+            Math.abs(backgroundPlanet.y - decorModel.wreck[0].y * backgroundPlanet.depth) < 450!,
         )
       );
     });
@@ -147,9 +147,7 @@ try {
   });
   const rows = [];
   for (const currentDrawRecord of result.current) {
-    const match = result.old.find(
-      (horizontalPosition2) => horizontalPosition2.kind === currentDrawRecord.kind,
-    );
+    const match = result.old.find((assetProbe) => assetProbe.kind === currentDrawRecord.kind);
     if (!match) continue;
     {
       const expected = currentDrawRecord.kind.includes('wreck_')
@@ -163,15 +161,15 @@ try {
     }
   }
   assert.ok(
-    rows.some((horizontalPosition3) => /gas giant/.test(horizontalPosition3.kind)),
+    rows.some((assetProbe2) => /gas giant/.test(assetProbe2.kind)),
     'rendered gas giant measured',
   );
   assert.ok(
-    rows.some((horizontalPosition4) => /wreck_/.test(horizontalPosition4.kind)),
+    rows.some((assetProbe3) => /wreck_/.test(assetProbe3.kind)),
     'rendered wreck measured',
   );
   assert.ok(
-    rows.some((horizontalPosition5) => horizontalPosition5.kind === 'star'),
+    rows.some((assetProbe4) => assetProbe4.kind === 'star'),
     'unchanged stellar disc measured',
   );
   assert.deepEqual(errors, []);

@@ -14,8 +14,8 @@ const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
 const game = new Game(assets, new Database(tempDataDir('rift-v10-')));
-export const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+export const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -98,7 +98,7 @@ assertCondition(
   requiredFixtureValue(shipEntity).state === 'fly' &&
     firstEntry
       .all('toast')
-      .some((messageType3: { msg: string }) => /Deep is uncharted/.test(messageType3.msg)),
+      .some((toastMessage: { msg: string }) => /Deep is uncharted/.test(toastMessage.msg)),
   'the Deep is locked until the story opens it',
 );
 assertCondition(

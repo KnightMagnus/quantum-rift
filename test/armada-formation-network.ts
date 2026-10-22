@@ -168,8 +168,8 @@ try {
     await page
       .locator('button')
       .allTextContents()
-      .then((horizontalPosition) =>
-        horizontalPosition.filter((messageType) => /ALLIES|ARMADA|JOIN/.test(messageType)),
+      .then((overlayLabels) =>
+        overlayLabels.filter((toastText) => /ALLIES|ARMADA|JOIN/.test(toastText)),
       ),
   );
   await page.getByText('ALLIES', { exact: true }).click();

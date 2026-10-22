@@ -208,7 +208,7 @@ try {
     const contact = document.createElement('canvas');
     contact.width = 2400;
     contact.height = 1800;
-    const captain = contact.getContext('2d');
+    const drawingContext = contact.getContext('2d');
     for (let bank = 0; bank < 3; bank++)
       for (let heading = 0; heading < 36; heading++) {
         const angle = (heading * Math.PI) / 18,
@@ -224,7 +224,7 @@ try {
         const index = heading + bank * 36;
         drawShip(
           G,
-          captain!,
+          drawingContext!,
           entity as import('../client/render.ts').RenderShip,
           (index % 12) * 200 + 100,
           Math.floor(index / 12) * 200 + 100,

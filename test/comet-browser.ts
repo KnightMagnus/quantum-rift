@@ -52,11 +52,11 @@ try {
       context = canvas!.getContext('2d');
     canvas!.width = 1400;
     canvas!.height = 900;
-    const captain = { x0: 5200, y0: 0, len: 790, hue: '170,220,255' };
+    const cometDescriptor = { x0: 5200, y0: 0, len: 790, hue: '170,220,255' };
     const cameraX = 10500,
       cameraY = 0,
       starPosition = { x: 120, y: 450 };
-    function draw(messageType = 0, occlude = false, clone = false) {
+    function draw(elapsedMilliseconds = 0, occlude = false, clone = false) {
       context!.fillStyle = '#030713';
       context!.fillRect(0, 0, 1400, 900);
       for (let index = 0; index < 180; index++) {
@@ -69,13 +69,13 @@ try {
       context!.fill();
       drawComet(
         context!,
-        clone ? { ...captain } : captain,
+        clone ? { ...cometDescriptor } : cometDescriptor,
         1400,
         900,
         1,
         cameraX,
         cameraY,
-        messageType,
+        elapsedMilliseconds,
         starPosition,
       );
       if (occlude) {
@@ -89,8 +89,16 @@ try {
     const first = draw(),
       repeated = draw(0, false, true);
     window.cometFrame = draw;
-    const player = cometScreen(captain, 1400, 900, 1, cameraX, cameraY, 0),
-      positionAfterThirtySeconds = cometScreen(captain, 1400, 900, 1, cameraX, cameraY, 30000);
+    const player = cometScreen(cometDescriptor, 1400, 900, 1, cameraX, cameraY, 0),
+      positionAfterThirtySeconds = cometScreen(
+        cometDescriptor,
+        1400,
+        900,
+        1,
+        cameraX,
+        cameraY,
+        30000,
+      );
     draw(0, true);
     const occlusion = Array.from(context!.getImageData(540, 470, 1, 1).data);
     return {

@@ -118,8 +118,11 @@ try {
         }, identifier);
         await page.waitForTimeout(500); // opening animation must finish before bounding measurements
         const before = await measure();
-        const captain = await page.locator('#gcanvas').boundingBox();
-        await page.mouse.move(captain!.x + captain!.width / 2, captain!.y + captain!.height / 2);
+        const canvasBounds = await page.locator('#gcanvas').boundingBox();
+        await page.mouse.move(
+          canvasBounds!.x + canvasBounds!.width / 2,
+          canvasBounds!.y + canvasBounds!.height / 2,
+        );
         await page.waitForFunction(
           (expectedSystemId: string | null | undefined) => G.hoverSys === expectedSystemId,
           identifier,
@@ -214,8 +217,11 @@ try {
     const { openMap } = await import('/ui.js');
     openMap('sol');
   });
-  const captain = await page.locator('#gcanvas').boundingBox();
-  await page.mouse.click(captain!.x + captain!.width / 2, captain!.y + captain!.height / 2);
+  const canvasBounds2 = await page.locator('#gcanvas').boundingBox();
+  await page.mouse.click(
+    canvasBounds2!.x + canvasBounds2!.width / 2,
+    canvasBounds2!.y + canvasBounds2!.height / 2,
+  );
   assert.ok(await page.evaluate(() => G.route.at(-1) === 'sol' || G.sys === 'sol'));
   await page.fill('#gsearch', 'Sol');
   await page.locator('#gresults [data-sys="sol"]').first().click();
@@ -226,7 +232,7 @@ try {
     JSON.stringify({ results, errors, navigation: true }, null, 2),
   );
   const unstable = results.filter((result) =>
-    Object.values(result.deltas).some((playerData) => playerData > 0.05),
+    Object.values(result.deltas).some((sampleIndex) => sampleIndex > 0.05),
   );
   console.log(
     JSON.stringify(

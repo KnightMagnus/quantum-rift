@@ -14,8 +14,8 @@ import { SYS as systemsById, STELLARS, SYSTEMS, TRAFFIC } from '../shared/galaxy
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -72,9 +72,9 @@ function survive(captainFixture: ReturnType<typeof fake>, systemId: string, secs
   const message = game.spaces[systemId];
   const _event2 = <Value>(session: Value) => session;
   for (
-    let messageType = 0;
-    messageType < 30 * secs && requiredFixtureValue(captainFixture.s).ent;
-    messageType++
+    let tickIndex = 0;
+    tickIndex < 30 * secs && requiredFixtureValue(captainFixture.s).ent;
+    tickIndex++
   )
     message.tick();
   return requiredFixtureValue<FixtureEntity>(requiredFixtureValue(captainFixture.s).ent);
@@ -83,9 +83,7 @@ function survive(captainFixture: ReturnType<typeof fake>, systemId: string, secs
 // ---- newcomer protection
 const captainFixture = fake('Fresh One');
 assertCondition(
-  captainFixture
-    .toasts()
-    .some((messageType2: string) => messageType2.includes('Newcomer protection')),
+  captainFixture.toasts().some((toastText: string) => toastText.includes('Newcomer protection')),
   'new captains are told about newcomer protection',
 );
 assertCondition(
@@ -160,7 +158,7 @@ assertCondition(
   'main-map lawless space now has newcomer targeting truce',
 );
 assertCondition(
-  !captainFixture.toasts().some((messageType3: string) => messageType3.includes('does not reach')),
+  !captainFixture.toasts().some((toastText2: string) => toastText2.includes('does not reach')),
   'main-map lawless entry no longer gives an inaccurate protection warning',
 );
 const shipEntity6 = game.spaces[lawless].makeShip({

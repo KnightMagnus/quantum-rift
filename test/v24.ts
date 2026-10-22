@@ -16,8 +16,8 @@ import { STATES } from '../shared/living.ts';
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -114,7 +114,8 @@ const port =
 const captainFixture = fake('Famine Runner');
 location(captainFixture, port.id);
 captainFixture.d.credits = 1e6;
-const food = () => requiredFixtureValue(game.market(port)).find((captain) => captain.id === 'food');
+const food = () =>
+  requiredFixtureValue(game.market(port)).find((marketItem) => marketItem.id === 'food');
 const before = food();
 assertCondition(
   before && requiredFixtureValue(before.price) > 0 && requiredFixtureValue(before.moved) >= 100,

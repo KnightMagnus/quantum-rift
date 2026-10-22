@@ -39,7 +39,7 @@ try {
   await page.keyboard.press('BracketLeft');
   assert.equal(
     await page.evaluate(
-      () => wire.filter((horizontalPosition) => horizontalPosition.t === 'industrial').length,
+      () => wire.filter((recordedInput) => recordedInput.t === 'industrial').length,
     ),
     0,
     'landed keys blocked',
@@ -63,8 +63,7 @@ try {
     await page.waitForFunction(
       (operation2) =>
         wire.some(
-          (horizontalPosition2) =>
-            horizontalPosition2.t === 'industrial' && horizontalPosition2.op === operation2,
+          (recordedInput2) => recordedInput2.t === 'industrial' && recordedInput2.op === operation2,
         ),
       operation,
     );
@@ -72,8 +71,7 @@ try {
   await page.keyboard.press('Minus');
   await page.waitForFunction(() =>
     wire.some(
-      (horizontalPosition3) =>
-        horizontalPosition3.t === 'miningPressure' && horizontalPosition3.op === 'join',
+      (recordedInput3) => recordedInput3.t === 'miningPressure' && recordedInput3.op === 'join',
     ),
   );
   await page.keyboard.press('KeyV');
@@ -87,9 +85,9 @@ try {
     await page.evaluate(
       () =>
         wire.filter(
-          (horizontalPosition4) =>
-            horizontalPosition4.t === 'towing' &&
-            ['attach', 'detach'].includes(String(horizontalPosition4.op)),
+          (recordedInput4) =>
+            recordedInput4.t === 'towing' &&
+            ['attach', 'detach'].includes(String(recordedInput4.op)),
         ).length,
     ),
     1,
@@ -97,10 +95,7 @@ try {
   );
   await page.keyboard.press('Period');
   await page.waitForFunction(() =>
-    wire.some(
-      (horizontalPosition5) =>
-        horizontalPosition5.t === 'towing' && horizontalPosition5.op === 'deliver',
-    ),
+    wire.some((recordedInput5) => recordedInput5.t === 'towing' && recordedInput5.op === 'deliver'),
   );
   await page.screenshot({
     path: path.join(feature.out, 'mining-default-shortcuts.png'),
@@ -113,8 +108,8 @@ try {
   const count = () =>
     page.evaluate(
       () =>
-        wire.filter((horizontalPosition6) =>
-          ['towing', 'industrial', 'mining', 'miningPressure'].includes(horizontalPosition6.t),
+        wire.filter((recordedInput6) =>
+          ['towing', 'industrial', 'mining', 'miningPressure'].includes(recordedInput6.t),
         ).length,
     );
   let before = await count();

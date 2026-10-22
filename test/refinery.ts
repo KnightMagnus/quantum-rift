@@ -412,7 +412,7 @@ try {
     assert.equal(
       requiredFixtureValue(
         refineryWorld(hull2).demand.find(
-          (playerData) => playerData.key === requiredFixtureValue(active).demand,
+          (refineryDemand) => refineryDemand.key === requiredFixtureValue(active).demand,
         ),
       ).reserved,
       0,
@@ -430,7 +430,7 @@ try {
       requiredFixtureValue(
         requiredFixtureValue(
           hull3.market(STELLARS[requiredFixtureValue(session3.data.stellar)]),
-        ).find((captain) => captain.id === 'composite_plating'),
+        ).find((marketItem) => marketItem.id === 'composite_plating'),
       ).sellCap,
       0,
     );

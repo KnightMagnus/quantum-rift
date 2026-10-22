@@ -187,10 +187,10 @@ try {
   // Existing mouse-aim primary trigger invokes actual collision, not an authority endpoint.
   const position = await page.evaluate(async (rock) => {
     const { cam: camera } = await import('/render.js');
-    const captain = document.querySelector('canvas')!.getBoundingClientRect();
+    const canvasBounds = document.querySelector('canvas')!.getBoundingClientRect();
     return {
-      x: captain.left + ((rock!.x - camera.cx) * camera.z + camera.W / 2) / devicePixelRatio,
-      y: captain.top + ((rock!.y - camera.cy) * camera.z + camera.H / 2) / devicePixelRatio,
+      x: canvasBounds.left + ((rock!.x - camera.cx) * camera.z + camera.W / 2) / devicePixelRatio,
+      y: canvasBounds.top + ((rock!.y - camera.cy) * camera.z + camera.H / 2) / devicePixelRatio,
     };
   }, rock);
   await page.mouse.move(position.x, position.y);

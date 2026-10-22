@@ -118,7 +118,7 @@ try {
     entity.inp = {};
     // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const other of [...space.ships.values()]) if (!other.player) space.remove(other);
-    for (let messageType = 0; messageType < 180; messageType++) space.tick();
+    for (let tickIndex = 0; tickIndex < 180; tickIndex++) space.tick();
     assert.equal(session.ent, entity, 'no bounce even stopped in center after cooldown');
     entity.x = requiredFixtureValue(exit).x + requiredFixtureValue(exit).r;
     space.tick();

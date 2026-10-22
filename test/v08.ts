@@ -21,8 +21,8 @@ const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
 const game = new Game(assets, new Database(tempDataDir('rift-v08-')));
-export const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+export const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -202,11 +202,11 @@ await import('../shared/roles.ts').then(async ({ ROLES_INFO, roleMult }) => {
           x: 0,
           y: 0,
         }),
-        verticalPosition = message.makeShip({ hull: target, faction: 'hollow', x: 50, y: 0 });
-      verticalPosition.shield = 0;
-      const armor2 = verticalPosition.armor;
-      message.damage(verticalPosition, 100, 100, shipEntity);
-      return armor2 - verticalPosition.armor;
+        targetEntity = message.makeShip({ hull: target, faction: 'hollow', x: 50, y: 0 });
+      targetEntity.shield = 0;
+      const armor2 = targetEntity.armor;
+      message.damage(targetEntity, 100, 100, shipEntity);
+      return armor2 - targetEntity.armor;
     };
   const battleshipDamage = damageHit(708, 717),
     explorerDamage = damageHit(708, 708),

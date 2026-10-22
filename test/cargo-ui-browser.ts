@@ -132,7 +132,7 @@ try {
   await page.waitForFunction(
     () => G.you!.cargo.ore === 5 && G.you!.cargoLots.byCommodity.ore.pure === 2,
   );
-  assert.ok(await page.evaluate((captain) => G.you!.credits > captain, credits));
+  assert.ok(await page.evaluate((previousCredits) => G.you!.credits > previousCredits, credits));
   assert.deepEqual(await page.evaluate(() => G.you!.cargoLots.byCommodity.ore), {
     common: 1,
     rich: 2,

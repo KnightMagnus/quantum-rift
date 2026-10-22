@@ -75,19 +75,19 @@ const cases = [
   // Borderline near/slow direct clicks raced server authority on the former path.
   { name: 'Edge Drift', hull: 704, port: 'meridian-yards', x: 117, y: 0, vx: 65, vy: 10, a: 1.57 },
 ];
-for (const captain of cases) {
+for (const landingScenario of cases) {
   const playerData = Game.prototype.fresh.call({ A: assets }) as ReturnType<
     import('../server/game.ts').Game['fresh']
   > & { story?: { done: string[]; active: null; step: number } };
-  playerData.ship = makeLoadout(assets, captain.hull, captain.name);
+  playerData.ship = makeLoadout(assets, landingScenario.hull, landingScenario.name);
   playerData.tut = 999;
   playerData.story = { done: ['start'], active: null, step: 0 };
-  playerData.sys = STELLARS[captain.port].system;
-  playerData.stellar = captain.port;
+  playerData.sys = STELLARS[landingScenario.port].system;
+  playerData.stellar = landingScenario.port;
   playerData.station.claimed = true;
   playerData.station.site = 'site-qgate';
   playerData.station.ops = 1;
-  database.create(captain.name, '', playerData);
+  database.create(landingScenario.name, '', playerData);
 }
 const denied = Game.prototype.fresh.call({ A: assets }) as ReturnType<
   import('../server/game.ts').Game['fresh']
@@ -149,7 +149,7 @@ try {
     ],
   });
   const results = [];
-  for (const captain of cases.filter(
+  for (const landingScenario2 of cases.filter(
     (selectedLandingCase) =>
       !process.env.RIFT_LANDING_CASE || selectedLandingCase.name === process.env.RIFT_LANDING_CASE,
   )) {
@@ -180,7 +180,7 @@ try {
       };
     });
     await page.goto(origin);
-    await page.locator(`[data-slot="${captain.name}"]`).click();
+    await page.locator(`[data-slot="${landingScenario2.name}"]`).click();
     await page.waitForFunction(() => G.you && G.landed);
     for (let index = 0; index < 10 && (await page.locator('#storybox').isVisible()); index++)
       await page.locator('#storyb button').first().click();
@@ -189,14 +189,14 @@ try {
     await page.evaluate((identifier) => {
       G.navStellar = identifier;
       G.opts.mouseAim = false;
-    }, captain.port);
+    }, landingScenario2.port);
     const start = Date.now(),
       traceStart = fileSystem.existsSync(traceFile)
         ? fileSystem.readFileSync(traceFile, 'utf8').length
         : 0;
     await page.keyboard.press('l');
-    await page.waitForFunction((identifier) => G.auto?.id === identifier, captain.port);
-    if (captain.cruise) {
+    await page.waitForFunction((identifier) => G.auto?.id === identifier, landingScenario2.port);
+    if (landingScenario2.cruise) {
       await page.waitForTimeout(3500);
       const cruise = await page.evaluate(async () => {
         const { STELLARS } = await import('/shared/galaxy.js');
@@ -214,16 +214,16 @@ try {
         };
       });
       fileSystem.writeFileSync(
-        path.join(evidence, captain.name + '-cruise.json'),
+        path.join(evidence, landingScenario2.name + '-cruise.json'),
         JSON.stringify(cruise, null, 2),
       );
-      await page.screenshot({ path: path.join(evidence, captain.name + '-cruise.png') });
+      await page.screenshot({ path: path.join(evidence, landingScenario2.name + '-cruise.png') });
       assert.ok(cruise.error < 0.2, 'authoritative targetward cruise: ' + JSON.stringify(cruise));
     }
     {
       await page.waitForFunction(() => G.auto?.phase === 'brake', {}, { timeout: 30000 });
       await page.screenshot({
-        path: path.join(evidence, 'braking-' + captain.name.replaceAll(' ', '-') + '.png'),
+        path: path.join(evidence, 'braking-' + landingScenario2.name.replaceAll(' ', '-') + '.png'),
       });
     }
     let landed = true;
@@ -238,14 +238,14 @@ try {
       .trim()
       .split('\n')
       .filter(Boolean)
-      .map((horizontalPosition) => JSON.parse(horizontalPosition));
+      .map((scenarioName) => JSON.parse(scenarioName));
     const requests = trace.filter(
-      (horizontalPosition2) =>
-        horizontalPosition2.name === captain.name && horizontalPosition2.kind === 'request',
+      (scenarioResult) =>
+        scenarioResult.name === landingScenario2.name && scenarioResult.kind === 'request',
     );
     const ticks = trace.filter(
-      (horizontalPosition3) =>
-        horizontalPosition3.name === captain.name && horizontalPosition3.kind === 'tick',
+      (scenarioResult2) =>
+        scenarioResult2.name === landingScenario2.name && scenarioResult2.kind === 'tick',
     );
     const warnings = received.filter(
       (message) => message.t === 'toast' && /Too far|Slow down/.test(String(message.msg)),
@@ -253,19 +253,19 @@ try {
     let reversals = 0,
       lastDirection = 0,
       lastA;
-    for (const messageType of ticks.filter(
-      (flightTelemetry) => flightTelemetry.distance < STELLARS[captain.port].r + 160,
+    for (const flightSample of ticks.filter(
+      (flightTelemetry) => flightTelemetry.distance < STELLARS[landingScenario2.port].r + 160,
     )) {
       if (lastA !== undefined) {
         const deltaAngle = Math.atan2(
-            Math.sin(messageType.a - lastA),
-            Math.cos(messageType.a - lastA),
+            Math.sin(flightSample.a - lastA),
+            Math.cos(flightSample.a - lastA),
           ),
           direction = Math.abs(deltaAngle) > 0.008 ? Math.sign(deltaAngle) : 0;
         if (direction && lastDirection && direction !== lastDirection) reversals++;
         if (direction) lastDirection = direction;
       }
-      lastA = messageType.a;
+      lastA = flightSample.a;
     }
     const brakeStart = ticks.findIndex((flightTelemetry) => flightTelemetry.inp?.rev);
     // Near/fast entries can safely stop outside the port and re-approach.
@@ -281,11 +281,11 @@ try {
       } else passTravel = 0;
     }
     const record = {
-      name: captain.name,
-      hull: captain.hull,
-      port: captain.port,
-      initial: captain,
-      stats: shipStats(assets, makeLoadout(assets, captain.hull)),
+      name: landingScenario2.name,
+      hull: landingScenario2.hull,
+      port: landingScenario2.port,
+      initial: landingScenario2,
+      stats: shipStats(assets, makeLoadout(assets, landingScenario2.hull)),
       landed,
       seconds: (Date.now() - start) / 1000,
       requests,
@@ -298,7 +298,7 @@ try {
     fileSystem.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(results, null, 2));
     console.log(
       JSON.stringify({
-        name: captain.name,
+        name: landingScenario2.name,
         landed,
         seconds: record.seconds,
         requests,
@@ -308,23 +308,27 @@ try {
       }),
     );
     await page.screenshot({
-      path: path.join(evidence, `fixed-${captain.name.replaceAll(' ', '-')}.png`),
+      path: path.join(evidence, `fixed-${landingScenario2.name.replaceAll(' ', '-')}.png`),
     });
     {
-      assert.ok(landed, `${captain.name} lands`);
-      assert.equal(requests.length, 1, `${captain.name} one request`);
+      assert.ok(landed, `${landingScenario2.name} lands`);
+      assert.equal(requests.length, 1, `${landingScenario2.name} one request`);
       assert.equal(
         requests[0].port,
-        captain.port,
-        `${captain.name} lands at intended nearest port`,
+        landingScenario2.port,
+        `${landingScenario2.name} lands at intended nearest port`,
       );
-      assert.ok(brakeStart >= 0, `${captain.name} uses real retrograde control`);
+      assert.ok(brakeStart >= 0, `${landingScenario2.name} uses real retrograde control`);
       assert.ok(
         brakeHeadingTravel < Math.PI + 0.3,
-        `${captain.name} no repeated braking rotations`,
+        `${landingScenario2.name} no repeated braking rotations`,
       );
-      assert.equal(warnings.length, 0, `${captain.name} no premature server landing warnings`);
-      assert.ok(requests[0].distance <= STELLARS[captain.port].r + 30);
+      assert.equal(
+        warnings.length,
+        0,
+        `${landingScenario2.name} no premature server landing warnings`,
+      );
+      assert.ok(requests[0].distance <= STELLARS[landingScenario2.port].r + 30);
       assert.ok(requests[0].speed <= Math.max(2, (record.stats!.accel / 30) * 0.55) + 2);
       assert.deepEqual(errors, []);
     }

@@ -19,8 +19,8 @@ import { TUTORIAL } from '../shared/tutorial.ts';
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -107,7 +107,8 @@ assertCondition(
 );
 assertCondition(
   /Cargo Compression outfit first/.test(
-    requiredFixtureValue(TUTORIAL.find((messageType) => messageType.title === 'Mine 10 tons')).text,
+    requiredFixtureValue(TUTORIAL.find((tutorialStep) => tutorialStep.title === 'Mine 10 tons'))
+      .text,
   ),
   'the mining career step explains ships with no hold',
 );
@@ -117,7 +118,7 @@ fake3.d.ship = makeLoadout(assets, 790, 'Dart');
 fake3.d.sys = 'qgate';
 game.onLoot(mockPlayerReference({ s: fake3.s }), { ore: 'ore', n: 3 });
 assertCondition(
-  fake3.toasts().some((messageType2: string) => /no cargo hold/.test(messageType2)),
+  fake3.toasts().some((toastText: string) => /no cargo hold/.test(toastText)),
   'mining in a ship with no hold explains why and what to fit',
 );
 const fake4 = fake('Full Miner');
@@ -128,7 +129,7 @@ game.onLoot(mockPlayerReference({ s: fake4.s }), { ore: 'ore', n: 3 });
 assertCondition(
   fake4
     .toasts()
-    .some((messageType3: string) => /Cargo hold full\. Raw Ore sells at .+/.test(messageType3)),
+    .some((toastText2: string) => /Cargo hold full\. Raw Ore sells at .+/.test(toastText2)),
   `a full hold names the nearest buyer (${fake4.toasts().pop()})`,
 );
 assertCondition(

@@ -21,16 +21,18 @@ const write = (record: Record<string, unknown>) =>
 const spawnPlayer = Reflect.get(Game.prototype, 'spawnPlayer') as typeof Game.prototype.spawnPlayer;
 Game.prototype.spawnPlayer = function (session, ...args) {
   spawnPlayer.call(this, session, ...args);
-  const captain = cases.find((landingScenario) => landingScenario.name === session.data.name);
-  if (!captain) return;
-  const player = STELLARS[captain.port],
+  const landingScenario2 = cases.find(
+    (landingScenario) => landingScenario.name === session.data.name,
+  );
+  if (!landingScenario2) return;
+  const player = STELLARS[landingScenario2.port],
     entity = session.ent;
   Object.assign(entity!, {
-    x: player.x + captain.x,
-    y: player.y + captain.y,
-    vx: captain.vx,
-    vy: captain.vy,
-    a: captain.a,
+    x: player.x + landingScenario2.x,
+    y: player.y + landingScenario2.y,
+    vx: landingScenario2.vx,
+    vy: landingScenario2.vy,
+    a: landingScenario2.a,
   });
   const space = this.spaces[session.data.sys];
   // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before removing live entities.
@@ -64,16 +66,16 @@ Game.prototype.land = function (session, identifier) {
 const tick = Reflect.get(Game.prototype, 'tick') as typeof Game.prototype.tick;
 Game.prototype.tick = function (...args) {
   const result = tick.apply(this, args);
-  for (const [name, captain] of active) {
-    const entity = captain.s.ent;
+  for (const [name, activePilot] of active) {
+    const entity = activePilot.s.ent;
     if (!entity) continue;
     const currentTime = Date.now();
-    if (currentTime - captain.last < 30) continue;
-    captain.last = currentTime;
+    if (currentTime - activePilot.last < 30) continue;
+    activePilot.last = currentTime;
     write({
       kind: 'tick',
       name,
-      distance: Math.hypot(entity.x - captain.p.x, entity.y - captain.p.y),
+      distance: Math.hypot(entity.x - activePilot.p.x, entity.y - activePilot.p.y),
       speed: Math.hypot(entity.vx, entity.vy),
       x: entity.x,
       y: entity.y,

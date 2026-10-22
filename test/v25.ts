@@ -14,8 +14,8 @@ import { TUTORIAL, tutMigrate } from '../shared/tutorial.ts';
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
-const assertCondition = (captain: unknown, message: string) => {
-  if (!captain) {
+const assertCondition = (condition: unknown, message: string) => {
+  if (!condition) {
     console.error('FAIL:', message);
     process.exit(1);
   }
@@ -56,7 +56,7 @@ assertCondition(
   `${Object.keys(parse2).length} pre-rendered planets, every one on disk`,
 );
 const types = new Set(Object.values(parse2).map((message) => message.type));
-for (const messageType of [
+for (const planetType of [
   'earth',
   'terran',
   'ocean',
@@ -70,7 +70,7 @@ for (const messageType of [
   'city',
   'jungle',
 ])
-  assertCondition(types.has(messageType), `planet type ${messageType} has renders`);
+  assertCondition(types.has(planetType), `planet type ${planetType} has renders`);
 assertCondition(
   Object.entries(parse2).every(
     ([identifier, message]) =>
@@ -199,8 +199,8 @@ assertCondition(
 );
 assertCondition(
   TUTORIAL.length === 23 &&
-    TUTORIAL.some((messageType2) => messageType2.title === 'Meet a contact') &&
-    TUTORIAL.some((messageType3) => messageType3.title === 'Finish a story'),
+    TUTORIAL.some((tutorialStep) => tutorialStep.title === 'Meet a contact') &&
+    TUTORIAL.some((tutorialStep2) => tutorialStep2.title === 'Finish a story'),
   'the career guide teaches contacts, troubled systems and stories',
 );
 {

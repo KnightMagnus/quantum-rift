@@ -65,8 +65,8 @@ const until = async (
 ) => {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
-    const messageType = read();
-    if (messageType && check(messageType)) return messageType;
+    const bankingProbe = read();
+    if (bankingProbe && check(bankingProbe)) return bankingProbe;
     await new Promise((resolve) => setTimeout(resolve, 75));
   }
   throw new Error(`${label}: ${JSON.stringify(read())}`);

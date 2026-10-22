@@ -72,7 +72,9 @@ const draw = (currentTime = 300) => {
     (verticalPosition) => verticalPosition,
     currentTime,
   );
-  return calls.filter((captain) => captain[0] !== 'SYSTEM COMMS').map((captain) => captain[0]);
+  return calls
+    .filter((textCall) => textCall[0] !== 'SYSTEM COMMS')
+    .map((textCall2) => textCall2[0]);
 };
 assert.deepEqual(draw(), ['Replaced']);
 assert.equal(calls[0][0], 'SYSTEM COMMS', 'Speech frame has a separate transmission header');
