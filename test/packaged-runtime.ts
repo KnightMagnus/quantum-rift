@@ -1,16 +1,29 @@
 import { NakamaService, until } from './helpers/nakama-service.ts';
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
-import operatingSystem from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
+import { request } from 'node:http';
+import { randomBytes, createHash } from 'node:crypto';
+import { Socket } from '../server/ws.ts';
+import type { ServerMessage, SnapshotMessage } from '../client/protocol.ts';
+import type { PlayerPayload, LandedPayload } from '../client/main.ts';
 import { root, availablePort, ready, cleanup, evidenceDir } from './helpers/browser-fixture.ts';
 
-const scratch = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-package-'));
+process.umask(0o077);
+const privateRoot = path.resolve(root, '..');
+for (const name of ['temp', 'npm-cache', 'evidence']) {
+  const directory = path.join(privateRoot, name);
+  fileSystem.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  assert.equal(fileSystem.statSync(directory).mode & 0o077, 0, 'Private fixture directory');
+}
+process.env.TMPDIR = process.env.TMP = process.env.TEMP = path.join(privateRoot, 'temp');
+process.env.npm_config_cache = path.join(privateRoot, 'npm-cache');
+const scratch = fileSystem.mkdtempSync(path.join(privateRoot, 'temp', 'rift-package-'));
 const checkout = path.join(scratch, 'source');
 const output = path.join(scratch, 'archives');
 const extracted = path.join(scratch, 'extracted');
-const evidence = evidenceDir('packaged-runtime');
+const evidence = evidenceDir('packaged-runtime-' + path.basename(scratch));
 const python = process.platform === 'win32' ? 'python' : 'python3';
 const environment = {
   ...process.env,
@@ -48,6 +61,76 @@ function copy(relative: string) {
   fileSystem.mkdirSync(path.dirname(destination), { recursive: true });
   fileSystem.copyFileSync(path.join(root, relative), destination);
 }
+/** Real RFC 6455 client with a browser Origin and masked client frames. */
+async function captain(origin: string, name: string, pass = 'synthetic-archive-friends') {
+  const key = randomBytes(16).toString('base64');
+  const socket = await new Promise<Socket>((resolve, reject) => {
+    const upgrade = request(origin + '/ws', {
+      headers: {
+        Origin: origin,
+        Connection: 'Upgrade',
+        Upgrade: 'websocket',
+        'Sec-WebSocket-Version': '13',
+        'Sec-WebSocket-Key': key,
+      },
+    });
+    upgrade.setTimeout(5000, () => upgrade.destroy(new Error('Archive handshake timeout')));
+    upgrade.once('error', reject);
+    upgrade.once('response', (response) => {
+      response.resume();
+      reject(new Error('Archive socket rejected: ' + response.statusCode));
+    });
+    upgrade.once('upgrade', (response, stream, head) => {
+      const expected = createHash('sha1')
+        .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
+        .digest('base64');
+      if (response.headers['sec-websocket-accept'] !== expected) {
+        stream.destroy();
+        reject(new Error('Invalid WebSocket handshake'));
+        return;
+      }
+      resolve(new Socket(stream));
+      if (head.length) stream.unshift(head);
+    });
+    upgrade.end();
+  });
+  const messages: ServerMessage[] = [];
+  const actor = {
+    name,
+    socket,
+    messages,
+    you: undefined as PlayerPayload | undefined,
+    landed: undefined as LandedPayload | undefined,
+    snap: undefined as SnapshotMessage | undefined,
+    send(packet: object) {
+      const payload = Buffer.from(JSON.stringify(packet));
+      assert(payload.length < 126, 'Small fixture packet');
+      const mask = randomBytes(4);
+      const frame = Buffer.concat([Buffer.from([0x81, 0x80 | payload.length]), mask, payload]);
+      for (let index = 0; index < payload.length; index++) frame[6 + index] ^= mask[index & 3];
+      socket.sock.write(frame);
+    },
+  };
+  socket.on('message', (data: string) => {
+    const packet = JSON.parse(String(data)) as ServerMessage;
+    messages.push(packet);
+    if (packet.t === 'you') actor.you = packet.d;
+    if (packet.t === 'landed') actor.landed = packet;
+    if (packet.t === 'snap') actor.snap = packet;
+  });
+  actor.send({ t: 'hello', name, pass });
+  try {
+    await until(
+      () => actor.you || messages.some((packet) => packet.t === 'error'),
+      'archive login',
+    );
+    return actor;
+  } catch (error) {
+    socket.sock.destroy();
+    throw error;
+  }
+}
+
 try {
   fileSystem.mkdirSync(checkout);
   // Keep this fixture small: real game modules/catalogs and HTTP entry assets,
@@ -79,6 +162,13 @@ try {
     'tools/package_archive.py',
   ])
     copy(relative);
+  for (const launcher of [
+    'tools/start-friends.ts',
+    'Start Friend Game.bat',
+    'start-friends.command',
+  ]) {
+    if (fileSystem.existsSync(path.join(root, launcher))) copy(launcher);
+  }
   command('git', ['init', '--quiet']);
   command('git', ['add', '.']);
   command('git', [
@@ -117,9 +207,51 @@ try {
   fileSystem.writeFileSync(path.join(checkout, 'dist/stale-secret.js'), 'must not ship');
   fileSystem.mkdirSync(path.join(checkout, '.artifacts'), { recursive: true });
   fileSystem.writeFileSync(path.join(checkout, '.artifacts/private.txt'), 'must not ship');
+  // Reject accidentally tracked private saves, and exclude untracked runtime saves.
+  fileSystem.mkdirSync(path.join(checkout, 'friend-data'), { recursive: true });
+  fileSystem.writeFileSync(path.join(checkout, 'friend-data/players.json'), '{"synthetic":true}');
+  command('git', ['add', '-f', 'friend-data/players.json']);
+  command('git', [
+    '-c',
+    'commit.gpgsign=false',
+    '-c',
+    'core.hooksPath=/dev/null',
+    'commit',
+    '--quiet',
+    '-m',
+    'test: tracked private save rejection',
+  ]);
+  command(python, ['tools/package_archive.py', '--output', output], checkout, 1);
+  assert.match(
+    fileSystem.readFileSync(path.join(evidence, 'commands.log'), 'utf8'),
+    /Private\/runtime file tracked: friend-data\/players.json/,
+  );
+  command('git', ['rm', '--cached', 'friend-data/players.json']);
+  command('git', [
+    '-c',
+    'commit.gpgsign=false',
+    '-c',
+    'core.hooksPath=/dev/null',
+    'commit',
+    '--quiet',
+    '-m',
+    'test: exclude private save',
+  ]);
   command(python, ['tools/package_archive.py', '--output', output]);
   const manifest: { files: { path: string }[]; archives: { name: string }[]; root: string } =
     JSON.parse(fileSystem.readFileSync(path.join(output, 'package-manifest.json'), 'utf8'));
+  for (const launcher of [
+    'tools/start-friends.ts',
+    'Start Friend Game.bat',
+    'start-friends.command',
+  ]) {
+    if (fileSystem.existsSync(path.join(checkout, launcher))) {
+      assert(
+        manifest.files.some(({ path: filename }) => filename === launcher),
+        'Shipped friend launcher',
+      );
+    }
+  }
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/server/main.js'));
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/client/html.js'));
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/server/seeds.json'));
@@ -130,7 +262,9 @@ try {
   ])
     assert(manifest.files.some(({ path: filename }) => filename === required));
   assert.equal(
-    manifest.files.some(({ path: filename }) => /stale-secret|private|node_modules/.test(filename)),
+    manifest.files.some(({ path: filename }) =>
+      /stale-secret|private|node_modules|friend-data/.test(filename),
+    ),
     false,
   );
   command(python, [
@@ -164,6 +298,177 @@ try {
   } finally {
     await cleanup(server, null, serverLog, data);
   }
+  const friendData = path.join(scratch, 'friend-save');
+  const names = ['Archive Host', 'Archive Friend'];
+  let expected: { name: string; credits: number; cargo: PlayerPayload['cargo']; sys: string }[] =
+    [];
+  let worldBefore: unknown;
+  for (let launch = 0; launch < 2; launch++) {
+    const friendPort = await availablePort();
+    const origin = 'http://127.0.0.1:' + friendPort;
+    const log = fileSystem.createWriteStream(path.join(evidence, 'friends-' + launch + '.log'));
+    const host = spawn(process.execPath, ['tools/start.ts'], {
+      cwd: installed,
+      env: {
+        ...environment,
+        HOST_FRIENDS: '1',
+        HOST_BIND: '127.0.0.1',
+        SOLO: '',
+        SEEDS_FILE: '',
+        INVASION_NOW: '',
+        DATA_DIR: '',
+        FRIEND_DATA_DIR: friendData,
+        PORT: String(friendPort),
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    host.stdout.pipe(log, { end: false });
+    host.stderr.pipe(log, { end: false });
+    const actors: Awaited<ReturnType<typeof captain>>[] = [];
+    try {
+      await ready(host, origin);
+      const status = await (await fetch(origin + '/api/status')).json();
+      assert.equal(status.solo, false);
+      assert.equal(status.mode, 'friends');
+      assert.equal(status.localTransport, true);
+      for (const name of names) {
+        const actor = await captain(origin, name);
+        actors.push(actor);
+        assert.equal(actor.you?.name, name, 'Password-authenticated captain');
+      }
+      const wrong = await captain(origin, names[0], 'wrong-synthetic-password');
+      actors.push(wrong);
+      assert.equal(wrong.you, undefined);
+      assert.match(JSON.stringify(wrong.messages), /wrong password/i);
+      wrong.socket.sock.destroy();
+      const clients = actors.slice(0, 2);
+      if (launch === 0) {
+        for (const actor of clients) {
+          await until(() => actor.landed?.market?.length, 'archive starting market');
+          const commodity = actor.landed!.market![0];
+          const before = actor.you!.credits;
+          actor.send({ t: 'trade', cid: commodity.id, qty: 1 });
+          await until(() => actor.you!.credits < before, 'archive ordinary credit expenditure');
+          assert.equal(actor.you!.cargo[commodity.id], 1);
+        }
+        expected = clients.map((actor) => ({
+          name: actor.name,
+          credits: actor.you!.credits,
+          cargo: structuredClone(actor.you!.cargo),
+          sys: actor.you!.sys,
+        }));
+      } else {
+        for (const [index, actor] of clients.entries()) {
+          assert.deepEqual(
+            {
+              name: actor.you!.name,
+              credits: actor.you!.credits,
+              cargo: actor.you!.cargo,
+              sys: actor.you!.sys,
+            },
+            expected[index],
+          );
+        }
+        assert.deepEqual(
+          JSON.parse(fileSystem.readFileSync(path.join(friendData, 'world.json'), 'utf8')),
+          worldBefore,
+          'Same persisted universe reloaded',
+        );
+      }
+      for (const actor of clients) actor.send({ t: 'depart' });
+      await until(
+        () =>
+          clients.every(
+            (actor) =>
+              actor.snap?.me &&
+              names.every((name) => actor.snap!.ships.some((ship) => ship[11] === name)),
+          ),
+        'archive shared universe',
+      );
+      assert.equal(new Set(clients.map((actor) => actor.you!.sys)).size, 1);
+      assert.equal(new Set(clients.map((actor) => actor.snap!.me![0])).size, 2);
+      const before = clients.map((actor) => [actor.snap!.me![2], actor.snap!.me![3]]);
+      for (const actor of clients) actor.send({ t: 'input', seq: 1, th: 1, tu: 0 });
+      await until(
+        () =>
+          clients.every(
+            (actor, index) =>
+              actor.snap!.me![1] >= 1 &&
+              Math.hypot(
+                actor.snap!.me![2] - before[index][0],
+                actor.snap!.me![3] - before[index][1],
+              ) > 15,
+          ),
+        'archive both authoritative movement acknowledgements',
+      );
+      for (const actor of clients) actor.send({ t: 'input', seq: 2, th: 0, tu: 0 });
+      await until(
+        () => clients.every((actor) => actor.snap!.me![1] === 2),
+        'archive input releases',
+      );
+      for (const actor of clients) {
+        const welcome = actor.messages.find((packet) => packet.t === 'welcome');
+        assert(welcome?.t === 'welcome');
+        assert.equal(welcome.name, actor.name);
+        const ownShip = actor.snap!.ships.find((ship) => ship[11] === actor.name);
+        assert(ownShip, 'Own public ship');
+        assert.equal(actor.snap!.me![0], ownShip[0], 'Only own private movement payload');
+        assert(
+          actor.messages
+            .filter((packet) => packet.t === 'you')
+            .every((packet) => packet.t === 'you' && packet.d.name === actor.name),
+        );
+        // Cargo may legitimately contain the commodity named salt; compare real secrets.
+        const account = JSON.parse(
+          fileSystem.readFileSync(path.join(friendData, 'players.json'), 'utf8'),
+        )[actor.name.toLowerCase()];
+        for (const secret of [account.salt, account.hash]) {
+          assert.equal(typeof secret, 'string');
+          assert(secret.length >= 32);
+          assert(!JSON.stringify(actor.messages).includes(secret), 'Account secret never returned');
+        }
+        assert(!Object.hasOwn(actor.you!, 'salt') && !Object.hasOwn(actor.you!, 'hash'));
+        assert(!JSON.stringify(actor.messages).includes('synthetic-archive-friends'));
+        assert(actor.snap!.me!.slice(0, 7).every(Number.isFinite));
+      }
+      assert.equal(fileSystem.existsSync(path.join(installed, 'node_modules')), false);
+    } finally {
+      for (const actor of actors) actor.socket.sock.destroy();
+      // Preserve the save directory across this owned process restart.
+      await cleanup(host, null, log, path.join(scratch, 'friend-cleanup-unused'));
+    }
+    const players = JSON.parse(
+      fileSystem.readFileSync(path.join(friendData, 'players.json'), 'utf8'),
+    );
+    for (const saved of expected) {
+      assert.equal(players[saved.name.toLowerCase()].credits, saved.credits);
+      assert.deepEqual(players[saved.name.toLowerCase()].cargo, saved.cargo);
+    }
+    worldBefore = JSON.parse(fileSystem.readFileSync(path.join(friendData, 'world.json'), 'utf8'));
+  }
+  fileSystem.writeFileSync(
+    path.join(evidence, 'friends-result.json'),
+    JSON.stringify(
+      {
+        passed: true,
+        captains: expected,
+        extractedArchive: true,
+        restarts: 1,
+        checks: [
+          'password authentication and denial',
+          'shared universe',
+          'private payloads',
+          'departure',
+          'authoritative movement and input release',
+          'credits/cargo persistence',
+          'persisted universe reload',
+          'no node_modules',
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   // The extracted artifact, not the source checkout bundle, owns this native game.
   const native = new NakamaService(path.join(installed, 'dist/nakama/quantum-rift.js'));
   try {
@@ -246,5 +551,6 @@ try {
   fileSystem.rmSync(scratch, { recursive: true, force: true });
 }
 console.log(
-  'Release packaging excludes private/stale output; extracted Solo and actual native online flight run without bundled npm dependencies.',
+  'Release packaging excludes private/stale output; extracted Solo, friends restart and actual native online flight run without bundled npm dependencies. Evidence: ' +
+    evidence,
 );

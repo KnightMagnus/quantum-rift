@@ -1,10 +1,15 @@
 # Native online hosting
 
-This source checkout uses Nakama 3.41.0 for online authentication, sessions,
+Dedicated online mode uses Nakama 3.41.0 for authentication, sessions,
 sockets, match presence and authoritative simulation, with PostgreSQL for durable
 storage. Local verification uses PostgreSQL 18.6. The published 3.3.1 archive
 predates this backend; this guide describes the checkout, not a new release or a
 completed production deployment.
+
+For a player-hosted universe without Nakama or PostgreSQL, see
+[friend hosting](HOSTING.md). Ordinary startup still selects the dedicated native
+backend; friend hosting is an explicit alternative, not a Node relay to Nakama.
+The two backends do not automatically share accounts, worlds or progress.
 
 ## Service and launch boundary
 
@@ -36,7 +41,7 @@ socket:
 The pool sizes are the local test configuration, not a production capacity
 recommendation. The longer HTTP write timeout is needed for legacy first-login
 verification; it does not change the match tick or gameplay heartbeat.
-The launcher runs compiled `server/main.ts`: without `SOLO`, it selects
+The launcher runs compiled `server/main.ts`: without `SOLO` or `HOST_FRIENDS=1`, it selects
 `server/nakama-host.ts`, which serves static HTTP and public connection
 configuration only. It does not launch Nakama, relay gameplay or own a game timer.
 

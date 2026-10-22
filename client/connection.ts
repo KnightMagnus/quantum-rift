@@ -13,9 +13,13 @@ export interface NakamaConfig {
   serverKey: string;
 }
 export interface ConnectionConfig {
-  /** Solo alone uses the local save server. */
+  /** Solo uses the private local save server. */
   solo: boolean;
-  /** Existing same-origin Solo /ws endpoint. */
+  /** Explicit status discriminator; never infer local transport from absent Nakama. */
+  mode?: 'friends';
+  /** Server-advertised local transport, accepted only with friend mode. */
+  localTransport?: boolean;
+  /** Same-origin Solo/friend /ws endpoint. */
   localUrl: string;
   /** Required online; absence must never enable a raw-socket fallback. */
   nakama?: NakamaConfig;
@@ -222,7 +226,7 @@ export function createGameConnection(
   const started = Promise.resolve()
     .then(async () => {
       if (state === 3) return;
-      if (config.solo) {
+      if (config.solo || (config.mode === 'friends' && config.localTransport === true)) {
         local = services.createLocalSocket(config.localUrl);
         local.onopen = () => {
           state = 1;

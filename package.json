@@ -24,7 +24,9 @@
     "lint": "oxlint --deny-warnings && npm run lint:types",
     "lint:fix": "oxlint --fix",
     "lint:types": "node tools/lint-types.ts",
-    "test:tooling": "node test/tooling-contracts.ts"
+    "test:tooling": "node test/tooling-contracts.ts",
+    "start:friends": "node tools/start.ts --friends",
+    "prestart:friends": "npm run build"
   },
   "engines": {
     "node": ">=27.0.0-0 <28"

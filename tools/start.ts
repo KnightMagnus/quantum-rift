@@ -3,6 +3,7 @@ import fileSystem from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { friendHostConfig } from '../server/friend-host-config.ts';
 
 const rootDirectory = fileURLToPath(new URL('../', import.meta.url));
 const manifest = JSON.parse(
@@ -28,11 +29,69 @@ if (!fileSystem.existsSync(path.join(rootDirectory, 'dist/server/main.js'))) {
   console.error('Compile the game first: npm ci && npm run build');
   process.exit(1);
 }
+// --friends is an explicit owner action; ordinary startup stays dedicated Nakama.
+const launchFriends = process.argv.includes('--friends');
+const environment = { ...process.env };
+if (launchFriends) {
+  environment.HOST_FRIENDS = '1';
+  environment.HOST_BIND ??= '0.0.0.0';
+}
+const friendConfig =
+  environment.HOST_FRIENDS === '1' ? friendHostConfig(environment, rootDirectory) : undefined;
 const child = spawn(binary, [path.join(rootDirectory, 'dist/server/main.js')], {
   cwd: rootDirectory,
-  stdio: 'inherit',
-  env: process.env,
+  stdio: launchFriends ? ['inherit', 'pipe', 'inherit'] : 'inherit',
+  env: environment,
 });
+// Wait for this child's listening log before probing; an occupied port must not open an older world.
+let childListening = false;
+child.stdout?.on('data', (chunk: Buffer) => {
+  process.stdout.write(chunk);
+  if (chunk.toString().includes('(friend game) running at')) childListening = true;
+});
+let cancelled = false;
+child.once('exit', () => {
+  cancelled = true;
+});
+if (launchFriends && friendConfig) {
+  const browserHost =
+    friendConfig.bind === '0.0.0.0'
+      ? '127.0.0.1'
+      : friendConfig.bind === '::'
+        ? '[::1]'
+        : friendConfig.bind.includes(':')
+          ? `[${friendConfig.bind}]`
+          : friendConfig.bind;
+  const browserUrl = `http://${browserHost}:${friendConfig.port}`;
+  void (async () => {
+    for (let attempt = 0; attempt < 60 && !cancelled; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (!childListening) continue;
+      try {
+        const response = await fetch(`${browserUrl}/api/status`, {
+          signal: AbortSignal.timeout(1000),
+        });
+        const status = (await response.json()) as { mode?: string };
+        if (cancelled) return;
+        if (status.mode !== 'friends') continue;
+        const command =
+          process.platform === 'win32'
+            ? 'cmd'
+            : process.platform === 'darwin'
+              ? 'open'
+              : 'xdg-open';
+        const args = process.platform === 'win32' ? ['/c', 'start', '', browserUrl] : [browserUrl];
+        const browser = spawn(command, args, { stdio: 'ignore' });
+        browser.on('error', () => console.log(`Open the game in your browser: ${browserUrl}`));
+        browser.unref();
+        return;
+      } catch {
+        /* The authority may still be starting. */
+      }
+    }
+    if (!cancelled) console.log(`Open the game in your browser: ${browserUrl}`);
+  })();
+}
 child.on('error', (error) => {
   console.error(error.message);
   process.exitCode = 1;

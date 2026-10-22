@@ -102,7 +102,10 @@
     "authority-callbacks.ts",
     "nakama-network.ts",
     "nakama-diagnostics.ts",
-    "nakama-world-lease.ts"
+    "nakama-world-lease.ts",
+    "friend-host-config.ts",
+    "friend-host-network.ts",
+    "friend-save-owner.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -139,7 +142,8 @@
     "radio-browser.ts",
     "save-generator-browser.ts",
     "excalibur-runtime-browser.ts",
-    "nakama-browser.ts"
+    "nakama-browser.ts",
+    "friend-host-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -522,7 +526,10 @@
     "fixtures/towing-preload.ts": ["helpers/required.ts"],
     "nakama-network.ts": ["helpers/nakama-service.ts"],
     "nakama-browser.ts": ["helpers/nakama-service.ts"],
-    "nakama-diagnostics.ts": ["helpers/nakama-service.ts"]
+    "nakama-diagnostics.ts": ["helpers/nakama-service.ts"],
+    "friend-host-network.ts": ["helpers/friend-host.ts"],
+    "friend-host-browser.ts": ["helpers/friend-host.ts"],
+    "helpers/friend-host.ts": ["helpers/browser-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1222,6 +1229,26 @@
         "nakama-world-lease.ts"
       ],
       "asserts": "Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/flood/replay denials; legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency. Reference/Solo tests are separate and no full native-feature coverage is implied."
+    },
+    {
+      "id": "friend-hosting",
+      "owners": [
+        "server/main.ts",
+        "server/local-main.ts",
+        "server/friend-host-config.ts",
+        "client/connection.ts",
+        "tools/start.ts",
+        "server/friend-save-owner.ts"
+      ],
+      "services": [],
+      "tests": [
+        "friend-host-config.ts",
+        "friend-host-network.ts",
+        "friend-host-browser.ts",
+        "packaged-runtime.ts",
+        "friend-save-owner.ts"
+      ],
+      "asserts": "Explicit password-protected listen-server hosting with one Game and durable independent friend saves; three captain ownership, movement and interaction; denial of Solo-only import/pause and foreign Origins; browser physical controls, reconnect, restart and extracted artifact execution without native service dependencies."
     }
   ],
   "routes": {

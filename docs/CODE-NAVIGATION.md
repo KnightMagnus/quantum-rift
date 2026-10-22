@@ -7,14 +7,16 @@ or fully typed. For running the game, use the public README.
 ## Entry points
 
 1. Read `package.json` for startup, test commands and the current version.
-2. Read [server/main.ts](../server/main.ts): online startup selects the static
-   [Nakama web host](../server/nakama-host.ts); Solo selects
-   [the local platform](../server/local-main.ts). The online web host has no Game,
+2. Read [server/main.ts](../server/main.ts): default dedicated startup selects the static
+   [Nakama web host](../server/nakama-host.ts); Solo and explicit `HOST_FRIENDS=1`
+   select [the local platform](../server/local-main.ts). The dedicated web host has no Game,
    database or gameplay WebSocket.
 3. Follow [the native match](../server/nakama-world.ts) into
    [Game](../server/game.ts)'s constructor: live systems, sessions, named feature
    services and fixed message routes. Nakama advances online simulation; the local
-   platform retains the Solo timer. See [native hosting](NAKAMA.md).
+   platform owns the Solo or friend-game timer. Friend mode has one Game and local
+   journal store, not a second Nakama clock. See [hosting choices](HOSTING.md)
+   and [native hosting](NAKAMA.md).
 4. Read [FEATURES.md](FEATURES.md) before changing composition. Its explicit
    service boundaries and remaining shared state are migration seams.
 5. Follow one action below rather than reading every large file front to back.
@@ -38,7 +40,7 @@ stay compatible with each release while the tool is present.
 
 ```mermaid
 flowchart TD
-  A[Browser job board] --> B[accept packet over native match or Solo socket]
+  A[Browser job board] --> B[accept packet over native match or local socket]
   B --> C[Game.onMessage entry gates]
   C --> D[Fixed action switchboard]
   D --> E[Game.accept authoritative checks]
@@ -53,7 +55,8 @@ flowchart TD
 2. [client/connection.ts](../client/connection.ts) sends online actions through the
    native SDK. [server/nakama-world.ts](../server/nakama-world.ts) resolves the
    authenticated captain, bounds match ingress and passes actions to `Game.onMessage`.
-   Solo uses the explicit local platform's WebSocket and `Game.connect` listener.
+   Solo and friend games use the local platform’s WebSocket and `Game.connect`
+   listener. Friend games retain password login; Solo does not.
 3. [server/game.ts](../server/game.ts)'s `onMessage` applies flood, login,
    checkpoint-recovery freeze and activity gates **before** routing.
 4. [server/game-message-handlers.ts](../server/game-message-handlers.ts) maps
@@ -67,13 +70,13 @@ flowchart TD
    progression also lives in named quest/co-op providers.
 6. `you` and `landed` send refreshed payloads.
    [Nakama storage](../server/nakama-storage.ts) owns the atomic online checkpoint;
-   [the local DB](../server/db.ts) retains Solo persistence. Sending a refresh is
+   [the local DB](../server/db.ts) retains separate Solo/friend persistence. Sending a refresh is
    not itself a save commit.
 
 For other actions, find the outgoing packet's `t`, look it up in the fixed
 switchboard, then follow the named method/service. Native joins establish the
 server-owned identity before the internal Game hello; client hello packets cannot
-choose a captain. Solo/reference hello uses the existing unauthenticated entry
+choose a captain. Solo/friend/reference hello uses the existing pre-login entry
 gate, not the authenticated route registry.
 
 Useful searches from the repository root:
@@ -91,7 +94,7 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 | ----------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Startup and static HTTP                         | `server/main.ts`, `server/nakama-host.ts`                   | `tools/start.ts`, `docs/NAKAMA.md`                                                                           |
 | Native sessions, match ingress and clock        | `server/nakama-world.ts`, `server/nakama-auth.ts`           | `server/nakama-identity-gates.ts`, `server/nakama-storage.ts`                                                |
-| Solo/local endpoints and reference fixtures     | `server/local-main.ts`                                      | `server/ws.ts`, `server/db.ts`                                                                               |
+| Solo/friend endpoints and reference fixtures    | `server/local-main.ts`                                      | `server/ws.ts`, `server/db.ts`, `server/friend-host-config.ts`                                               |
 | Login, sessions, travel, ordinary port services | `server/game.ts`                                            | `server/space.ts`, `shared/galaxy.ts`                                                                        |
 | Incoming action names/routing                   | `server/game-message-handlers.ts`                           | `Game.createMessageHandlers`, `Game.onMessage`, `server/message-registry.ts`                                 |
 | Feature wiring/dependencies                     | `server/features.ts`                                        | `server/feature-service.ts`, `docs/FEATURES.md`, `docs/feature-inventory.json`                               |
@@ -126,6 +129,12 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
   `NakamaDatabase` online and `DB` locally. Ordinary changes mark storage dirty;
   native CAS checkpoints and local journals have explicit commit/recovery rules.
   Preserve these boundaries rather than adding another save path.
+- **Friend-host startup and exposure:** `server/friend-host-config.ts` validates
+  explicit mode, binding, port, public origin and the separate `friend-data/`
+  directory. `tools/start.ts --friends` is the LAN opt-in used by the friend
+  launchers. `/api/status` advertises `mode: "friends"` and `localTransport: true`;
+  `client/connection.ts` selects the local socket only with that mode pair or
+  Solo. The server owns login, world state and the clock; browsers are clients.
 - **Live sessions/active systems:** `Game` owns session and live-space maps.
   `Space` advances a system's simulation. Accessing `game.spaces[id]` can lazily
   wake a system: it is not an inert lookup table.

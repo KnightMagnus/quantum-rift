@@ -609,6 +609,7 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null,
   sessionDefaults: Record<string, unknown> | null = null;
 let nakamaConfig: NakamaConfig | undefined;
 let localReferenceTransport = false;
+let friendHostTransport = false;
 let webSocket: ClientConnection | null = null,
   sequence = 0,
   history: Array<{ seq: number; inp: ClientInput }> = [],
@@ -704,9 +705,11 @@ const statusRequest = fetch('/api/status')
   .then((state) => {
     nakamaConfig = state.nakama;
     localReferenceTransport = state.localAuthority === true;
+    friendHostTransport = state.mode === 'friends' && state.localTransport === true;
     setArtworkVersion(state.version);
-    elementById2('lstat').textContent =
-      state.players === null
+    elementById2('lstat').textContent = friendHostTransport
+      ? 'Friend-hosted universe. Sign in with your own captain and password.'
+      : state.players === null
         ? 'Online play uses Nakama.'
         : `${state.players} captain${state.players === 1 ? '' : 's'} in the Rift right now.`;
     elementById2('lver').textContent = 'Quantum Rift v' + state.version;
@@ -802,7 +805,8 @@ function openSocket(tries: number) {
   const epoch = sessionEpoch;
   const socket = createGameConnection(
     {
-      solo: !!clientGameState.solo || localReferenceTransport,
+      solo: !!clientGameState.solo || (localReferenceTransport && !friendHostTransport),
+      ...(friendHostTransport ? { mode: 'friends' as const, localTransport: true } : {}),
       localUrl: (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws',
       nakama: nakamaConfig,
     },
@@ -815,7 +819,8 @@ function openSocket(tries: number) {
       socket.close();
       return;
     }
-    if (clientGameState.solo || localReferenceTransport) send({ t: 'hello', name, pass });
+    if (clientGameState.solo || localReferenceTransport || friendHostTransport)
+      send({ t: 'hello', name, pass });
   };
   socket.onmessage = (event) => {
     if (current()) onMessage(JSON.parse(event.data));
@@ -867,7 +872,7 @@ function onMessage(serverMessage: ServerMessage) {
       }
       break;
     case 'welcome':
-      if (!clientGameState.solo && !localReferenceTransport) {
+      if (!clientGameState.solo && !localReferenceTransport && !friendHostTransport) {
         // Welcome establishes this native presence before its first controls, even if join/onopen is pending.
         sequence = 0;
         history = [];

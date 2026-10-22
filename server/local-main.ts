@@ -1,8 +1,8 @@
 import type { GameAssets } from '../shared/rules.ts';
 import type { Server, ServerResponse } from 'node:http';
 
-// Local Solo platform, plus the explicit reference authority used by legacy regression fixtures.
-// The normal launcher selects this file only for SOLO=1; production online uses nakama-host.ts.
+// Local Node authority for Solo, explicit friend games and legacy reference fixtures.
+// Dedicated native online hosting remains in nakama-host.ts.
 import http from 'node:http';
 import fileSystem from 'node:fs';
 import path from 'node:path';
@@ -10,6 +10,14 @@ import { fileURLToPath } from 'node:url';
 import { upgrade } from './ws.ts';
 import { DB as Database } from './db.ts';
 import { Game } from './game.ts';
+import {
+  friendHostConfig,
+  friendGamePlatform,
+  friendOriginAllowed,
+  friendHostAllowed,
+} from './friend-host-config.ts';
+import { acquireFriendSaveOwner } from './friend-save-owner.ts';
+import { networkInterfaces } from 'node:os';
 
 /**
  * Root directory path of the Quantum Rift repository.
@@ -23,7 +31,10 @@ const compiledRoot = path.join(ROOT, 'dist');
 /**
  * HTTP and WebSocket listener port number.
  */
-const PORT: number = Number(process.env.PORT) || 8080;
+const FRIENDS = process.env.HOST_FRIENDS === '1';
+if (FRIENDS) process.umask(0o077);
+const friendConfig = FRIENDS ? friendHostConfig(process.env, ROOT) : undefined;
+const PORT: number = friendConfig?.port ?? (Number(process.env.PORT) || 8080);
 
 /**
  * Solo play mode flag: private offline game on local computer with no passwords and save slots.
@@ -47,12 +58,17 @@ const assets: GameAssets = JSON.parse(
 /**
  * Database persistence manager for player accounts and world state.
  */
-const database: Database = new Database(process.env.DATA_DIR || path.join(ROOT, 'data'));
+const releaseFriendSave = friendConfig
+  ? acquireFriendSaveOwner(friendConfig.dataDirectory, ROOT)
+  : undefined;
+const database: Database = new Database(
+  friendConfig?.dataDirectory || process.env.DATA_DIR || path.join(ROOT, 'data'),
+);
 
 /**
  * Primary game engine instance managing active systems, entities, and client sessions.
  */
-const game: Game = new Game(assets, database);
+const game: Game = new Game(assets, database, FRIENDS ? friendGamePlatform() : undefined);
 game.solo = SOLO;
 
 /**
@@ -131,6 +147,11 @@ function serve(response: ServerResponse, file: string, cache: boolean, range?: s
  * Main HTTP application server handling REST API endpoints, static assets, and WebSocket handshakes.
  */
 const server: Server = http.createServer(async (incomingMessage, response) => {
+  if (friendConfig && !friendHostAllowed(incomingMessage.headers.host, friendConfig)) {
+    response.writeHead(403);
+    response.end('Forbidden host');
+    return;
+  }
   const targetUrl = new URL(incomingMessage.url!, 'http://x');
   let decodeURIComponent2 = decodeURIComponent(targetUrl.pathname);
   if (decodeURIComponent2 === '/api/status') {
@@ -142,6 +163,7 @@ const server: Server = http.createServer(async (incomingMessage, response) => {
         solo: SOLO,
         slots: SOLO ? game.slots() : undefined,
         localAuthority: !SOLO,
+        ...(FRIENDS ? { mode: 'friends', localTransport: true } : {}),
       }),
     );
     return;
@@ -217,14 +239,22 @@ const server: Server = http.createServer(async (incomingMessage, response) => {
 });
 
 server.on('upgrade', (incomingMessage, duplex) => {
-  if (incomingMessage.url!.startsWith('/ws'))
+  if (
+    FRIENDS &&
+    !friendOriginAllowed(
+      incomingMessage.headers.origin,
+      incomingMessage.headers.host,
+      false,
+      friendConfig?.publicOrigin,
+      friendConfig,
+    )
+  ) {
+    duplex.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+    return;
+  }
+  if (incomingMessage.url?.split('?')[0] === '/ws')
     upgrade(incomingMessage, duplex as import('node:net').Socket, (socket) =>
-      game.connect(
-        socket,
-        ((incomingMessage.headers['x-forwarded-for'] || '') as string).split(',')[0].trim() ||
-          (duplex as import('node:net').Socket).remoteAddress ||
-          '?',
-      ),
+      game.connect(socket, (duplex as import('node:net').Socket).remoteAddress || '?'),
     );
   else duplex.destroy();
 });
@@ -238,21 +268,48 @@ server.on('error', (error2) => {
   process.exit(1);
 });
 
-server.listen(PORT, process.env.HOST || '127.0.0.1', () =>
+server.listen(PORT, friendConfig?.bind || process.env.HOST || '127.0.0.1', () => {
   console.log(
-    `Quantum Rift ${VERSION}${SOLO ? ' (solo game)' : ''} running at http://localhost:${PORT}`,
-  ),
-);
-
-process.on('SIGINT', () => {
-  database.flush();
-  process.exit(0);
+    `Quantum Rift ${VERSION}${FRIENDS ? ' (friend game)' : SOLO ? ' (solo game)' : ''} running at http://localhost:${PORT}`,
+  );
+  if (friendConfig) {
+    console.log(
+      `Friend world saved in ${friendConfig.dataDirectory}. Keep this window open while playing.`,
+    );
+    console.log(
+      `Listening on ${friendConfig.bind}:${PORT}. Every captain needs their own name and password.`,
+    );
+    if (friendConfig.bind === '127.0.0.1' || friendConfig.bind === '::1')
+      console.log('Local computer only. To invite LAN friends, explicitly set HOST_BIND=0.0.0.0.');
+    else {
+      for (const addresses of Object.values(networkInterfaces()))
+        for (const address of addresses || [])
+          if (!address.internal && address.family === 'IPv4')
+            console.log(`LAN friends: http://${address.address}:${PORT}`);
+      console.log(
+        'Internet friends need your own VPN or manual router/NAT and firewall setup. No ports or tunnels are opened automatically.',
+      );
+      console.log(
+        'Use a trusted LAN/VPN, or configure HTTPS yourself before sending passwords over the Internet.',
+      );
+    }
+  }
 });
 
-process.on('SIGTERM', () => {
-  database.flush();
-  process.exit(0);
-});
+/** Stop accepting work, synchronously persist, then release only a clean owner's lock. */
+function shutdown(): void {
+  server.close();
+  try {
+    database.flush();
+    releaseFriendSave?.();
+    process.exit(0);
+  } catch (error) {
+    console.error('Save shutdown failed; ownership lock retained for operator recovery.', error);
+    process.exit(1);
+  }
+}
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 // log anything that slips through rather than letting the server die mid-game
 process.on('uncaughtException', (error2) => console.error('uncaught', error2));

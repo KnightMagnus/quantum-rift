@@ -1,6 +1,6 @@
 # Quantum Rift
 
-![Quantum Rift login page with the captain sign-in panel](docs/screenshots/login-31.png)
+![Friend-hosted universe login with separate captain name and password fields](docs/screenshots/friend-host-login.png)
 
 **Quantum Rift is currently in beta and under ongoing development. All features are subject to change.**
 
@@ -13,16 +13,18 @@ and a [developer code-navigation guide](docs/CODE-NAVIGATION.md). Gameplay and
 save formats are unchanged by the cleanup. See the [release notes](docs/RELEASE-3.3.1.md).
 
 The download above is the published release archive and predates this checkout’s
-native online backend. In this checkout, multiplayer requires an operator-managed
-Nakama 3.41.0 service and PostgreSQL; Solo still runs locally with its existing
-saves and pause behavior. See [online hosting and ownership](docs/NAKAMA.md).
+native online backend and friend-host mode. This checkout offers local Solo,
+a friend-hosted universe saved on one player’s computer, and dedicated online
+play with Nakama 3.41.0 and PostgreSQL. See [hosting choices](docs/HOSTING.md)
+and [dedicated online hosting](docs/NAKAMA.md).
 No new release or production migration is implied.
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
 The flight viewport uses [ExcaliburJS](https://excaliburjs.com/) for its scene,
 camera, input and native sprite entities. The shared game simulation and HTML cockpit remain in place; engine scripts are
-included locally. Online authority runs inside Nakama; Solo retains its local database.
+included locally. Dedicated online authority runs inside Nakama. Friend games run
+one authoritative server on the host’s computer; Solo retains its separate local database.
 
 ## Features
 
@@ -89,18 +91,31 @@ When updating, close the old game server window first. Preserve your `data/` and
 ## Run this source checkout
 
 After installing the pinned Node runtime, run `npm ci` and `npm run build`.
-`node tools/start.ts` starts the online static web host, not Nakama or PostgreSQL.
-Configure and run those services separately as described in
-[NAKAMA.md](docs/NAKAMA.md). The web host defaults to `127.0.0.1:8080`; exposing
-it to your network requires an explicit `HOST` setting and deliberate network
-configuration. No ports are opened automatically.
+Choose how to play:
 
-For local Solo play, set `SOLO=1` before running `node tools/start.ts`, or use the
-existing Solo launcher. Solo does not require Nakama or PostgreSQL. Preserve both
-`data/` and `solo-data/` when changing checkouts; old online files are not imported
-automatically.
+| Mode             | Start                                                               | Where progress lives                             |
+| ---------------- | ------------------------------------------------------------------- | ------------------------------------------------ |
+| Solo             | `Start Solo Game.bat` or `sh start-solo.command`                    | Local Solo saves, with pause and import/export   |
+| Host friends     | `Start Friend Game.bat` or `sh start-friends.command`               | One shared universe in the host’s `friend-data/` |
+| Dedicated online | `node tools/start.ts`, with separately configured Nakama/PostgreSQL | Native server storage                            |
 
-For custom Solo test captains, use the [save generator](test/Save%20Generator/README.md). Save imports are not available online.
+The friend launcher opens the host’s browser and explicitly enables LAN listening.
+Keep its server window open. The host plays in the same browser game as everyone
+else; friends open the host’s LAN or VPN URL, not `localhost`. Each player uses a
+different captain name and their own password. The login status identifies a
+friend-hosted universe. Friend games have no Solo pause or save import/export and
+start without demo accounts. See [the friend-host guide](docs/HOSTING.md) for
+addresses, binding, backups and Internet access limits.
+
+Ordinary startup still selects the dedicated native backend: it starts only the
+static web host, not Nakama or PostgreSQL. Configure those services separately
+using [NAKAMA.md](docs/NAKAMA.md). Neither startup route opens router ports or
+changes firewall rules automatically.
+
+Preserve `friend-data/`, `data/` and `solo-data/` when changing checkouts. These
+stores do not automatically import or synchronize with each other. For custom
+Solo test captains, use the [save generator](test/Save%20Generator/README.md).
+Save imports remain Solo-only.
 
 ## Screenshots
 
