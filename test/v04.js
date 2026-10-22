@@ -80,7 +80,7 @@ ok(
   'the hand-made anchors keep their worlds and routes',
 );
 // determinism: regenerating from the same anchors gives the same galaxy
-const raw = fs.readFileSync(new URL('../shared/galaxy.js', import.meta.url), 'utf8');
+const _raw = fs.readFileSync(new URL('../shared/galaxy.js', import.meta.url), 'utf8');
 ok(SITES.length >= 25, `${SITES.length} claimable hulls (17 + Frontier)`);
 const copy = JSON.parse(JSON.stringify(SYSTEMS.filter((s) => s.anchor))).map((s) => ({
   ...s,

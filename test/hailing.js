@@ -7,7 +7,7 @@ const sys = Object.keys(SYS)[0];
 let now = 10000000;
 const sent = [],
   toasts = [];
-const sp = { id: sys, ships: new Map(), root: (e) => e, isHostile: (a, b) => !!a.hostile };
+const sp = { id: sys, ships: new Map(), root: (e) => e, isHostile: (a, _b) => !!a.hostile };
 const player = (id, name) => {
   const s = {
     id,

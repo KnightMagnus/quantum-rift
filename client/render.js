@@ -15,7 +15,7 @@ import { drawComet } from './comet.js';
 import { ANOMALIES } from '/shared/fronts.js';
 import { STATES } from '/shared/living.js';
 import { SYS, STELLARS, FACTIONS, COMMODITIES } from '/shared/galaxy.js';
-import { weaponParams, BEAM_COLORS, weaponColor, weaponLook, price } from '/shared/rules.js';
+import { weaponColor, weaponLook, price } from '/shared/rules.js';
 
 /** @import { ClientGameState } from './main.js' */
 // ------------------------------------------------------------------ type definitions
@@ -2267,7 +2267,11 @@ export function draw(G, ctx, W, H, dt, now) {
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(x, y, f.r * (1 - k) * z + 4, 0, Math.PI * 2);
-      f.fill ? ((ctx.fillStyle = f.c), (ctx.globalAlpha = k * 0.5), ctx.fill()) : ctx.stroke();
+      if (f.fill) {
+        ctx.fillStyle = f.c;
+        ctx.globalAlpha = k * 0.5;
+        ctx.fill();
+      } else ctx.stroke();
       ctx.globalAlpha = 1;
       continue;
     }
@@ -3376,7 +3380,7 @@ export function galaxy(G, ctx, opts = {}) {
       ly = H - 14;
     ctx.font = '13px "Pixelify Sans", sans-serif';
     ctx.textAlign = 'left';
-    for (const [id, F] of Object.entries(FACTIONS)) {
+    for (const [_id, F] of Object.entries(FACTIONS)) {
       if (F.hidden) continue;
       ctx.fillStyle = F.color;
       ctx.fillRect(lx, ly - 8, 8, 8);

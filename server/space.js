@@ -1784,10 +1784,10 @@ export class Space {
    * @param {number} dA Base armor / hull damage.
    * @param {number} dS Base shield damage.
    * @param {Entity | null} [src] Attacker entity source.
-   * @param {boolean} [ion] Whether weapon inflicts ion damage.
+   * @param {boolean} [_ion] Whether weapon inflicts ion damage.
    * @returns {[number, number, number] | void} Tuple [damageDealt, hitShieldsFlag, shooterRootId].
    */
-  damage(entity, dA, dS, src, ion) {
+  damage(entity, dA, dS, src, _ion) {
     if (entity.industrialRoot) return [0, 0, src?.id || 0]; // Utility collectors cannot tank combat or grant rewards.
     if (
       src &&

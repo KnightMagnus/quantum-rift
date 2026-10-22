@@ -5,8 +5,8 @@ import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
-import { SYS, STELLARS, SYSTEMS, FACTIONS } from '../shared/galaxy.js';
-import { BUILDINGS, MASTERY, ARENA, DEFENSE } from '../shared/frontier.js';
+import { SYS, STELLARS, FACTIONS } from '../shared/galaxy.js';
+import { MASTERY } from '../shared/frontier.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v07-')));
 const ok = (c, m) => {
@@ -120,6 +120,7 @@ const w = game.waves[da.name],
   spW = game.spaces.meridian;
 ok(w && w.ids.size >= 2, `a live raid wave of ${w.ids.size} ships attacks while you are there`);
 const credW = da.credits;
+// oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
 for (const id of [...w.ids]) spW.kill(spW.ships.get(id), a.s.ent);
 ok(!game.waves[da.name] && da.credits > credW, 'destroying the whole wave wins the raid');
 // mastery

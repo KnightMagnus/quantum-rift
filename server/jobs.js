@@ -292,6 +292,7 @@ const JobOperations = {
   completeOnLanding(session, stellarBody) {
     const playerData = session.data;
     playerData.lastStellar = stellarBody.id;
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const mission of [...playerData.missions]) {
       if (mission.type === 'miningOrder' || mission.paid) continue;
       if (mission.radioTour && advanceRadioTour(this, session, mission, stellarBody)) continue;

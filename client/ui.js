@@ -27,15 +27,12 @@ import {
   RESEARCH,
   REFINERY,
   ORE_PROCESS,
-  WINGMATES,
   FACTION_HULLS,
-  STATION_SHIPS,
   SITES,
   RELOCATE,
   relocateCost,
 } from '/shared/galaxy.js';
 import {
-  shipStats,
   researchBonus,
   allOutfits,
   loadoutValue,
@@ -49,7 +46,7 @@ import {
 } from '/shared/rules.js';
 import { galaxy, mapHit, mapFit, stationDesign } from './render.js';
 import { planetType } from './planets.js';
-import { crewHtml, hangarHtml, shuttleSummary, researchHtml, materialsHtml } from './hangar_ui.js';
+import { crewHtml, hangarHtml, researchHtml, materialsHtml } from './hangar_ui.js';
 import { specialistsHtml } from './spec_ui.js';
 import { docksHtml, dockChips, dockLine, outfitterRepairsHtml } from './docks_ui.js';
 import { WING_ONLY } from '/shared/docks.js';
@@ -67,7 +64,7 @@ import {
 } from './frontier_ui.js';
 
 import { ROLES_INFO, BEATS } from '/shared/roles.js';
-import { levelOf, winOdds, HOLDOUT } from '/shared/hostile.js';
+import { levelOf, winOdds } from '/shared/hostile.js';
 
 /** @import { StellarBody } from '../server/game.js' */
 /** @import { NetworkMessage } from '../server/message-registry.js' */
@@ -919,7 +916,7 @@ let codexCat = 'Ships';
  */
 function factionsSelling(h) {
   return Object.entries(FACTION_HULLS)
-    .filter(([f, hs]) => hs.includes(h))
+    .filter(([_f, hs]) => hs.includes(h))
     .map(([f]) => FACTIONS[f].short);
 }
 /**
@@ -1421,7 +1418,7 @@ export function renderLanded() {
       h += refineryHtml(G);
       break;
     case 'overview': {
-      const fac = SYS[p.system].faction;
+      const _fac = SYS[p.system].faction;
       h += stateCard(p.system); // 2.4
       h += barCard(L); // the contact at the bar, and what this world trades in
       if (L.news && L.news.length)

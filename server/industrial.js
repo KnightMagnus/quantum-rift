@@ -213,6 +213,7 @@ export const IndustrialOperations = {
     if (this.paused() || this.db.economicFrozen) return;
     if (!Number.isFinite(dt) || dt <= 0 || dt > 1) throw Error('Invalid industrial timestep');
     const clock = this.db.world.mining?.clock || 0;
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const e of [...space.ships.values()]) {
       if (!e.player || e.hull !== R.hull) continue;
       const s = e.player.s,

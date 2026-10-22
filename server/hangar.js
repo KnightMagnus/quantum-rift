@@ -266,14 +266,14 @@ export const HangarOperations = {
     const r = rng(hash('sh' + playerData.name + win)),
       J = jumps(home),
       out = [];
-    const cand = Object.entries(J).filter(([sid, n]) => n >= 1 && n <= 7);
+    const cand = Object.entries(J).filter(([_sid, n]) => n >= 1 && n <= 7);
     const kinds = Object.keys(SHUTTLE_JOBS);
     for (let i = 0; i < 6 && cand.length; i++) {
       const kind = kinds[i % kinds.length === i ? i : Math.floor(r() * kinds.length)],
         J_ = SHUTTLE_JOBS[kind];
       const [sys, n] = pick(r, cand),
         S = SYS[sys],
-        F = FACTIONS[S.faction];
+        _F = FACTIONS[S.faction];
       const id = `sj-${win}-${i}`;
       if (playerData.shuttles.some((sh) => sh.job && sh.job.id === id)) continue;
       const minutes = clamp(Math.round(10 + n * 28 + S.danger * 6 + r() * 20), 15, 480);

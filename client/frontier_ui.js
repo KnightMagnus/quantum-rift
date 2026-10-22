@@ -1,6 +1,6 @@
 import { escapeHtml as esc } from './html.ts';
 // Quantum Rift: interface pieces: colonies, station defense, mastery, the arena, the exchange, leaderboards and profiles.
-import { SYS, STELLARS, COMMODITIES, MATERIALS, GRADES } from '/shared/galaxy.js';
+import { STELLARS, COMMODITIES, MATERIALS, GRADES } from '/shared/galaxy.js';
 import {
   COLONY,
   COLONY_LEVELS,
@@ -218,7 +218,7 @@ export function arenaHtml(G) {
  * @returns {string} HTML markup
  */
 export function exchangeHtml(G) {
-  const y = G.you,
+  const _y = G.you,
     X = G.landed.exchange;
   const opts =
     MATERIALS.flatMap((m) =>

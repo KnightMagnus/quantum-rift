@@ -103,7 +103,7 @@ assert.equal(
   'Rounding never creates or loses pool credits',
 );
 {
-  const { g, pilots, begin, reply, last, offer } = setup(4),
+  const { g: _g, pilots, begin, reply, last, offer } = setup(4),
     old = begin();
   reply(pilots[1], 'contractDecline', old);
   const revised = last(pilots[0]);

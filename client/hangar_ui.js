@@ -228,7 +228,7 @@ export function hangarHtml(G, atHome) {
   let h = `<div class="sect" style="margin-top:0">HANGAR BAYS (${y.shuttles.length}/${y.bays})</div>`;
   if (!y.bays) h += '<p class="dim">The hangar opens at Station Tier 2.</p>';
   const idle = y.shuttles.filter((s) => s.state === 'idle'),
-    crewFree = y.officers.filter(
+    _crewFree = y.officers.filter(
       (officer) =>
         !where(G, officer) || y.shuttles.some((s) => s.crew === officer.id && s.state !== 'out'),
     );

@@ -92,7 +92,8 @@
     "html-presentation.mjs",
     "compiled-runtime.mjs",
     "deterministic-core.mjs",
-    "packaged-runtime.mjs"
+    "packaged-runtime.mjs",
+    "tooling-contracts.mjs"
   ],
   "browser": [
     "chat-projection-browser.mjs",

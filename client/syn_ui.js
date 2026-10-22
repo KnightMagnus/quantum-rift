@@ -2,15 +2,7 @@ import { escapeDoubleQuotedHtml as esc } from './html.ts';
 // Screens: black market, bank, officer ranks and traits, lower decks, and faction-arc cards.
 import { occupiedPassengerSeats } from '/shared/passengers.js';
 import { FACTIONS } from '/shared/galaxy.js';
-import {
-  RANKS_OFF,
-  PROMOTE,
-  TRAITS,
-  LOWER_DECK,
-  LOWER_SLOTS,
-  SYN_TIERS,
-  bunks,
-} from '/shared/syndicate.js';
+import { RANKS_OFF, PROMOTE, TRAITS, LOWER_DECK, LOWER_SLOTS, bunks } from '/shared/syndicate.js';
 
 /** @import { PlayerData } from '../server/game.js' */
 /** @import { ClientGameState } from './main.js' */

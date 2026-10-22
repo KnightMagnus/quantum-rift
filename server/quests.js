@@ -303,7 +303,7 @@ export const QuestOperations = {
       calm = all.filter(([s]) => (SYS[s].danger || 0) <= cap); // stories stay about as dangerous as where they start
     const near = calm.filter(([, n]) => n <= 2).length ? calm : all;
     const A_ = near.filter(([, n]) => n <= 2),
-      B_ = near.filter(([s, n]) => n >= 2);
+      B_ = near.filter(([_s, n]) => n >= 2);
     if (!A_.length) return null;
     const A = pick(r, A_)[0],
       Bp = B_.filter(([s]) => s !== A),

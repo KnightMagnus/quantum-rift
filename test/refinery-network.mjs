@@ -31,7 +31,7 @@ try {
   assert.ok(a.you.refinery.batches.length);
   assert.equal(b.you.refinery.batches.length, 0, 'owner-onlyjobs');
   assert.equal(a.you.refinery.ready[0].units, 765, 'offline maturity once');
-  const before = JSON.stringify(f.read()?.refinery);
+  const _before = JSON.stringify(f.read()?.refinery);
   a.send({ t: 'refinery', op: 'quote', recipe: 'alloy', n: 3, fee: 0 });
   a.send({ t: 'refinery', op: 'mint', n: 99 });
   await delay(80);

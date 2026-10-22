@@ -23,7 +23,6 @@ import {
   arenaSystem,
   elo,
   EXCHANGE,
-  BOARDS,
 } from '../shared/frontier.js';
 import { credits } from '../shared/rules.js';
 
@@ -628,6 +627,7 @@ export const FrontierOperations = {
           side < 0 ? Math.PI / 2 : -Math.PI / 2,
           0,
         );
+        // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
         for (const x of [...sp.ships.values()]) if (x.owner === o.ent.id) sp.remove(x); // no escorts in the Crucible
         o.ent.team = team;
         o.ent.arena = id;
@@ -653,6 +653,7 @@ export const FrontierOperations = {
     const playerData = session.data,
       sp = match.sp;
     if (session.ent) {
+      // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
       for (const x of [...sp.ships.values()]) if (x.owner === session.ent.id) sp.remove(x);
       if (!died) sp.remove(session.ent, 'jump');
       sp.players--;
@@ -740,6 +741,7 @@ export const FrontierOperations = {
           );
         this.log(p, `Arena ${match.mode}: ${won ? 'won' : 'lost'} (rating ${p.arena.rating}).`);
       }
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const n of [...match.alive]) {
       const o = this.sessionOf(n);
       if (o) this.arenaExit(o, match, false);

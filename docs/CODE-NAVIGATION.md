@@ -135,6 +135,8 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 - **Shared calculations/content:** these supply definitions, not permissions.
   Avoid duplicating authoritative arithmetic in a panel.
 
+See [DEVELOPMENT-TOOLS.md](DEVELOPMENT-TOOLS.md) for lint, formatting and compiler policy.
+
 ## Tests and a safe change workflow
 
 1. Find the system/action in
@@ -147,6 +149,7 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 3. Run existing gates:
 
    ```sh
+   npm run lint
    npm run typecheck
    npm run test:features
    npm run test:types

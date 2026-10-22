@@ -580,10 +580,10 @@ function segDist(p, a, b) {
  * Procedurally expands the hand-made anchor star systems into a full ~200-system galaxy.
  * Places systems deterministically, establishes hyperlane routes, assigns territories and worlds.
  * @param {SpaceSystem[]} SYSTEMS - Base anchor systems array, modified and expanded in place.
- * @param {Record<string, FactionDef>} FACTIONS - Galaxy factions registry.
+ * @param {Record<string, FactionDef>} _FACTIONS - Galaxy factions registry.
  * @returns {SpaceSystem[]} Array of all newly generated star systems.
  */
-export function expandGalaxy(SYSTEMS, FACTIONS) {
+export function expandGalaxy(SYSTEMS, _FACTIONS) {
   const r = rng(GEN_SEED);
   const CX = 495,
     CY = 370,
@@ -1114,6 +1114,7 @@ export function addMoonsAndFields(SYSTEMS) {
           (stellarBody) =>
             Math.hypot(stellarBody.x - x, stellarBody.y - y) > (stellarBody.r || 60) + rad + pad,
         );
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const p of [...system.stellars]) {
       if (p.kind !== 'planet' || p.hub || p.site || p.wormhole) continue;
       const n = r() < 0.62 ? (r() < 0.3 ? 2 : 1) : 0,

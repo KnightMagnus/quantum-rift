@@ -360,7 +360,7 @@ export const SyndicateOperations = {
   extraOffers(stellarBody, playerData, r, near, win, pickDest) {
     const out = [];
     if (!near.length) return out;
-    const one = (k) => near[Math.floor(r() * near.length)];
+    const one = (_k) => near[Math.floor(r() * near.length)];
     // Each board has both small parties and group charters, regardless of the current hull.
     // A captain can combine destinations and fill a liner with several accepted missions.
     const passengerGroups = [

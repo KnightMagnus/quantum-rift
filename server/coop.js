@@ -35,7 +35,7 @@ import { credits, makeLoadout, shipStats, allOutfits } from '../shared/rules.js'
  * @param {number} b - Maximum bound.
  * @returns {number} Clamped value.
  */
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const _clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /**
  * Mapping from refit hull ID to base hull info and refit generation.
@@ -135,7 +135,7 @@ export const CoopOperations = {
       const old = this.A.ships[ship.hull].name,
         fresh = makeLoadout(this.A, B.base, ship.name);
       fresh.uid = ship.uid;
-      fresh.ammo = { ...(fresh.ammo || {}) };
+      fresh.ammo = { ...fresh.ammo };
       for (const [id, n] of Object.entries(ship.outfits || {})) {
         let left = n - (fresh.outfits[id] || 0);
         while (left > 0) {
@@ -476,6 +476,7 @@ export const CoopOperations = {
   dm(s, p, text) {
     const d = s.data,
       msg = String(text || '')
+        // oxlint-disable-next-line no-control-regex -- Reject or sanitize control characters in player text.
         .replace(/[\u0000-\u001f]/g, ' ')
         .trim()
         .slice(0, SOCIAL.dmLen);
@@ -764,7 +765,7 @@ export const CoopOperations = {
     if (this.armadaNear(d)) b.armadaBounty = (b.armadaBounty || 1) * ARMADA.buff.bounty;
   },
   // bounty: the killer gets +5% with a member nearby; members in the system get kill credit and a share (paid on top)
-  shareBounty(s, amount, space, npc) {
+  shareBounty(s, amount, space, _npc) {
     const d = s.data;
     if (!d.armada) return;
     const near = [...this.sessions.values()].filter(
@@ -1041,7 +1042,7 @@ export const CoopOperations = {
     const toB = move(pa, pb, T.give[T.a]),
       toA = move(pb, pa, T.give[T.b]);
     // goods land in station storage, then go into the hold if there is room
-    for (const [p, o] of [
+    for (const [p, _o] of [
       [pa, session],
       [pb, sb],
     ]) {
@@ -1384,6 +1385,7 @@ export const CoopOperations = {
   },
   rescueTick() {
     for (const sp of Object.values(this.live))
+      // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
       for (const e of [...sp.ships.values()])
         if (e.player && e.rescueT && sp.t > e.rescueT) {
           e.rescueT = 0;

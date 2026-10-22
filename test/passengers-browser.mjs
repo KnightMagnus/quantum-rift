@@ -133,7 +133,7 @@ try {
     } else {
       await page.locator('[data-lt="jobs"]').click();
       const offer = await page.evaluate(() =>
-        G.landed.offers.find((o) => o.type === 'passenger' && /-charter$/.test(o.id)),
+        G.landed.offers.find((o) => o.type === 'passenger' && o.id.endsWith('-charter')),
       );
       assert.ok(offer.pax >= 20);
       await page.locator(`button[data-act="accept"][data-id="${offer.id}"]`).click();

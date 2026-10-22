@@ -75,7 +75,7 @@ const res = (k, n) =>
 export function specialistsHtml(G, interactive) {
   const y = G.you,
     bp = y.bp || {},
-    spec = y.spec || {},
+    _spec = y.spec || {},
     parts = y.parts || {},
     ss = y.specState || {},
     cur = SPEC[y.ship.hull];

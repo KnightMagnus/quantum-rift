@@ -16,7 +16,7 @@ import { credits } from '../shared/rules.js';
  * @param {number} b - Maximum value.
  * @returns {number} Clamped value.
  */
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const _clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /**
  * Select a random element from an array.

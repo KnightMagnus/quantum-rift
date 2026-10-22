@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { DB } from '../../server/db.js';
 import { Game } from '../../server/game.js';
-import { augmentAssets, makeLoadout } from '../../shared/rules.js';
+import { augmentAssets } from '../../shared/rules.js';
 import { STELLARS } from '../../shared/galaxy.js';
 import { BUILD } from '../../shared/specialty.js';
 import { tempDataDir } from './temp-data.js';

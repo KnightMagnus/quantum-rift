@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
-import { SYS, STELLARS, SYSTEMS, FACTIONS, FACTION_HULLS, COMMON_HULLS } from '../shared/galaxy.js';
+import { SYS, STELLARS, SYSTEMS, FACTION_HULLS, COMMON_HULLS } from '../shared/galaxy.js';
 import { route } from '../shared/rules.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v08-')));
@@ -176,8 +176,13 @@ import('../shared/roles.js').then(async ({ ROLES_INFO, roleMult }) => {
   dd.ship.hull = 704;
   ok(game.features.bonuses.bonus(dd).miningPct >= 50, 'survey ships mine 50% better');
   // --- specialists
-  const { SPECIALISTS, SPEC, BP_NEED, PART_RATE, COMPONENTS } =
-    await import('../shared/specialty.js');
+  const {
+    SPECIALISTS,
+    SPEC: _SPEC,
+    BP_NEED,
+    PART_RATE: _PART_RATE,
+    COMPONENTS,
+  } = await import('../shared/specialty.js');
   ok(
     SPECIALISTS.length === 11 &&
       SPECIALISTS.every(

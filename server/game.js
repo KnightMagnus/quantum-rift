@@ -203,7 +203,6 @@ import {
   MATERIALS,
   GRADES,
   START,
-  EXTRA_OUTFITS,
   OPS,
   RESEARCH,
   REFINERY,
@@ -220,14 +219,12 @@ import {
   allOutfits,
   makeLoadout,
   K,
-  DT,
   TICK,
-  angleTo,
   credits,
 } from '../shared/rules.js';
 import { Space } from './space.js';
 import { synTier } from '../shared/syndicate.js';
-import { STATES, TRADE_IMPACT } from '../shared/living.js';
+import { STATES } from '../shared/living.js';
 import { ARCS } from '../shared/arcs.js';
 /**
  * Resolves the display name for a faction story arc.
@@ -238,7 +235,6 @@ const ARCS_NAME = (f) => (ARCS[f] ? ARCS[f].name : '');
 import { masteryTier } from '../shared/frontier.js';
 import { SHUTTLES } from '../shared/hangar.js';
 import { SPEC } from '../shared/specialty.js';
-import { captainBonus } from '../shared/rules.js';
 import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.js';
 
 /** @import { GradeLots } from '../shared/cargo-contracts.js' */
@@ -580,7 +576,7 @@ export class Game {
             runs: 0,
           });
     if (c.officers && !playerData.officers.some((officer) => officer.seed))
-      for (const [i, o] of c.officers.entries()) {
+      for (const [_i, o] of c.officers.entries()) {
         const off = {
           id: this.features.hangar.uid(playerData),
           seed: true,
@@ -1035,6 +1031,7 @@ export class Game {
     const ids = new Set([entity.id]);
     for (let k = 0; k < 3; k++)
       for (const x of space.ships.values()) if (x.owner && ids.has(x.owner)) ids.add(x.id); // escorts, and their fighters
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const x of [...space.ships.values()]) {
       if (x === entity || !ids.has(x.id)) continue;
       if (x.fighterOf === entity.id) {
@@ -1272,7 +1269,6 @@ export class Game {
     this.features.arcs.arcsInit(p);
     if (!p.explored) p.explored = SYSTEMS.filter((x) => x.anchor).map((x) => x.id); // captains from before 0.4 know the old 30 systems
     session.rep = p.rep;
-    session.id = session.id;
     if (!STELLARS[p.stellar]) {
       p.sys = START.system;
       p.stellar = START.stellar;
@@ -1365,7 +1361,7 @@ export class Game {
       for (const [k, v] of Object.entries(eb)) wb[k] = (wb[k] || 0) + v;
       const m = sp.makeShip({
         loadout: W.ship,
-        ammo: { ...(W.ship.ammo || {}) },
+        ammo: { ...W.ship.ammo },
         faction: 'quantum',
         bonus: wb,
         x: x - Math.sin(a) * 120 + (i - 1) * 70,

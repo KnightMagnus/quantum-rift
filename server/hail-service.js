@@ -1,6 +1,5 @@
 import { clampStanding } from '../shared/reputation.js';
 import { SYS, FACTIONS } from '../shared/galaxy.js';
-import { RIVAL } from '../shared/rivals.js';
 import { contextualHail } from './hail-dialogue.js';
 
 export const HAIL_LIMITS = Object.freeze({
@@ -15,6 +14,7 @@ export const HAIL_LIMITS = Object.freeze({
 export function hailText(value) {
   if (typeof value !== 'string') return null;
   const text = value.trim();
+  // oxlint-disable-next-line no-control-regex -- Reject or sanitize control characters in player text.
   return text && [...text].length <= 100 && !/[\u0000-\u0008\u000b-\u001f\u007f]/u.test(text)
     ? text
     : null;
@@ -496,6 +496,7 @@ export class HailService {
       const st = this.state(s),
         sp = st.space;
       const before = st.queue.length;
+      // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
       for (const q of [...st.queue])
         if (q.expires <= now || !this.source(s, q)) this.archive(st, q);
       if (before !== st.queue.length) this.push(s, st);

@@ -10,7 +10,7 @@ import { STELLARS, COMMODITIES, ORE_PROCESS } from '../shared/galaxy.js';
 import { makeLoadout } from '../shared/rules.js';
 import { JETTISON_OWNER_GRACE_SECONDS } from '../server/fleetcmd.js';
 import { TRADE_IMPACT } from '../shared/living.js';
-import { assertLots, addLots, commonLots, clearLots } from '../shared/cargo-lots.js';
+import { assertLots, addLots, clearLots } from '../shared/cargo-lots.js';
 
 const oldInterval = globalThis.setInterval,
   oldRandom = Math.random;

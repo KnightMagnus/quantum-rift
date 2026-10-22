@@ -2,15 +2,7 @@ import { escapeDoubleQuotedHtml as esc } from './html.ts';
 import { artworkUrl } from './artwork.js';
 // the ship and captain panel (I), the player information view: your ship, cargo (with jettison), combat
 // rating, fleet orders, and the rival captains of the Rift with how they feel about you.
-import {
-  SYS,
-  SYSTEMS,
-  STELLARS,
-  FACTIONS,
-  COMMODITIES,
-  MATERIALS,
-  GRADES,
-} from '/shared/galaxy.js';
+import { SYS, SYSTEMS, STELLARS, FACTIONS, COMMODITIES, MATERIALS } from '/shared/galaxy.js';
 import { SPEC, BP_NEED } from '/shared/specialty.js';
 import { RARITY } from '/shared/hangar.js';
 import { RANKS } from '/shared/rivals.js';

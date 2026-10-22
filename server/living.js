@@ -1,7 +1,7 @@
 import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift: system states that come and go, a market that remembers what captains sold, and
 // supply jobs that pay you to bring what a troubled system needs. Owned by game.features.living.
-import { SYSTEMS, SYS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.js';
+import { SYSTEMS, SYS, FACTIONS, COMMODITIES } from '../shared/galaxy.js';
 import { STATES, STATE_SHARE, STATE_MIN, TRADE_IMPACT } from '../shared/living.js';
 import { credits } from '../shared/rules.js';
 

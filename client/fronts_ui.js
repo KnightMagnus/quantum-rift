@@ -96,7 +96,7 @@ export function opsHtml(G) {
   const y = G.you,
     W = G.world || {},
     ev = W.event,
-    here = SYS[G.sys];
+    _here = SYS[G.sys];
   let h =
     '<button class="btn sm" data-act="stores" style="margin-bottom:6px">FACTION STORES</button>';
   const SY = y.story;

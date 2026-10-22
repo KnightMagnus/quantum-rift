@@ -1,5 +1,5 @@
 // Incoming calls only update a badge. A player action opens a conversation; flight never pauses.
-export function initHails({ G, send, toast, cam }) {
+export function initHails({ G, send, toast: _toast, cam }) {
   const $ = (id) => document.getElementById(id);
   let entries = [],
     active = null,

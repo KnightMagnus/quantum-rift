@@ -1,6 +1,6 @@
 import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift: the Que'vari storyline as golden main-story missions (offered in landing pop-ups), and the Deep gate.
-import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES } from '../shared/galaxy.js';
+import { SYS, STELLARS, GRADES } from '../shared/galaxy.js';
 import { STORY, STORY_SHIP, DEEP_UNLOCK } from '../shared/story.js';
 import { makeLoadout, credits } from '../shared/rules.js';
 
@@ -157,7 +157,7 @@ export const StoryOperations = {
     const playerData = session.data,
       S = this.storyInit(playerData),
       old = playerData.ship,
-      H = this.A.ships[old.hull];
+      _H = this.A.ships[old.hull];
     if (playerData.shipless) {
     } else if (playerData.dock.length < this.dockSlots(playerData))
       playerData.dock.push({ ship: old, bridge: playerData.bridge });

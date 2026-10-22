@@ -187,7 +187,7 @@ ok(
   a.d.friends.includes('Bram Cole') && b.d.friends.includes('Ada Vance') && !b.d.freqIn.length,
   'accepted: friends both ways',
 );
-const sp = a.last('social') || {};
+const _sp = a.last('social') || {};
 ok(a.last('social').social.friends[0].status === 'online', 'friends show as online');
 a.send({ t: 'social', op: 'dm', name: 'Bram Cole', msg: 'Meet at Halcyon?' });
 ok(
@@ -334,7 +334,7 @@ ok(
   'members sharing a system get +5% shield recharge',
 );
 const crC = c.d.credits,
-  crA = a.d.credits,
+  _crA = a.d.credits,
   pir = sL.makeShip({ hull: 711, faction: 'hollow', x: 30, y: 30 });
 sL.kill(pir, ea);
 ok(

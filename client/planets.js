@@ -922,7 +922,7 @@ function setupRendered(p, T) {
   RCACHE.set(p.id, P);
   return P;
 }
-function cloudAt(cld, aw, ah, fu, fv) {
+function _cloudAt(cld, aw, ah, fu, fv) {
   fv = Math.max(0, Math.min(ah - 1.001, fv));
   const v0 = fv | 0,
     v1 = Math.min(ah - 1, v0 + 1),

@@ -1,8 +1,8 @@
 // Quantum Rift: server feature operations: loot chests,
 // Station Holdout, and Umbral Eclipse cells. Hostile levels are computed in Space (e.pw) and shown by the client.
-import { SYS, STELLARS, FACTIONS, MATERIALS, GRADES } from '../shared/galaxy.js';
+import { STELLARS, MATERIALS, GRADES } from '../shared/galaxy.js';
 import { CHESTS, CHEST_CHANCE, HOLDOUT, ECLIPSE, levelOf, playerPower } from '../shared/hostile.js';
-import { SPECIALISTS, SPEC_BY_KEY, BP_NEED } from '../shared/specialty.js';
+import { SPEC_BY_KEY } from '../shared/specialty.js';
 import { credits } from '../shared/rules.js';
 import { COOP_HOLDOUT } from '../shared/coop.js';
 
@@ -84,7 +84,7 @@ export const HostileOperations = {
       C = CHESTS[it.chest],
       lvl = it.lvl || 1,
       got = [],
-      m = this.mods(playerData.sys);
+      _m = this.mods(playerData.sys);
     this.hostInit(playerData);
     this.specInit(playerData);
     this.tut(session, 'chest');
@@ -303,10 +303,10 @@ export const HostileOperations = {
   },
   /**
    * Callback invoked when a ship is destroyed during a holdout.
-   * @param {Entity} entity - Defeated ship entity.
+   * @param {Entity} _entity - Defeated ship entity.
    * @returns {void}
    */
-  onHoldoutKill(entity) {}, // waves are tracked by id each tick
+  onHoldoutKill(_entity) {}, // waves are tracked by id each tick
 
   // ------------------------------------------------------------------ the Umbral Eclipse (spawned by Space.spawnTraffic)
   /**

@@ -250,8 +250,8 @@ const lawSys = SYSTEMS.find(
     s.danger <= 2 &&
     s.faction !== 'umbral',
 );
-const em = toSpace(a, lawSys.id, 0, 0),
-  cop = game.spaces[lawSys.id].makeShip({
+const _em = toSpace(a, lawSys.id, 0, 0),
+  _cop = game.spaces[lawSys.id].makeShip({
     hull: 711,
     faction: lawSys.faction,
     x: 60,

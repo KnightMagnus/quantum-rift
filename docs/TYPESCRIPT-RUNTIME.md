@@ -67,6 +67,11 @@ source checkouts do. Do not publish a source-only archive as ready to play.
 
 `npm run typecheck` retains the existing selective JavaScript/JSDoc checks and
 adds `tsconfig.core.json` with strict checking for actual `.ts` source.
+`npm run typecheck:tsrs` checks both configurations with the pinned Rust-based
+[tsrs checker](https://github.com/oxc-project/tsrs). CI runs it alongside `tsc`,
+including the valid/invalid contract fixtures through `npm run test:types:tsrs`.
+The pinned tsrs package provides Linux and macOS binaries, but no Windows binary;
+Windows contributors can keep using `npm run typecheck`. Builds still use `tsc`.
 `GalaxyGraph`, `ShipCapacity`, deterministic random/hash utilities and client HTML
 escaping are TypeScript. Existing
 JavaScript bodies are not thereby converted or globally checked. Emitting every

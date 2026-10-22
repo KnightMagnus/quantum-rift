@@ -10,6 +10,7 @@ export function dredgePilot(g = refineryGame(), name = 'Dredger', hull = 815, sy
   g.spawnPlayer(s, 10000, 10000, 0, 0);
   const sp = g.spaces[sys];
   sp.spawnT = 1e9;
+  // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
   for (const e of [...sp.ships.values()]) if (!e.player) sp.remove(e);
   s.ent.guns = [];
   s.ent.graceT = 1e9;

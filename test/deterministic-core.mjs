@@ -11,7 +11,6 @@ import {
 } from '../shared/deterministic-random.ts';
 import { SYS } from '../shared/galaxy.js';
 import { ARCS } from '../shared/arcs.js';
-import { RIVALS } from '../shared/rivals.js';
 import { seedOf, randomOf } from '../shared/mining-rules.js';
 import { tourRoute } from '../server/radio-discovery.js';
 

@@ -1,17 +1,8 @@
 import assert from 'node:assert/strict';
-import {
-  tug,
-  survey,
-  attach,
-  command,
-  atPort,
-  advance,
-  seed,
-  lots,
-} from './helpers/towing-fixture.js';
+import { tug, survey, attach, command, atPort, advance } from './helpers/towing-fixture.js';
 import { TOW } from '../shared/towing-rules.js';
-import { step, makeLoadout, shipStats } from '../shared/rules.js';
-import { STELLARS, SYS } from '../shared/galaxy.js';
+import { step } from '../shared/rules.js';
+import { SYS } from '../shared/galaxy.js';
 const f = tug(),
   { g, s, sp } = f;
 let o = f.o;

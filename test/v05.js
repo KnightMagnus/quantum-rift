@@ -5,8 +5,8 @@ import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { DB } from '../server/db.js';
 import { Game } from '../server/game.js';
-import { SYS, STELLARS, SYSTEMS, RESEARCH } from '../shared/galaxy.js';
-import { SHUTTLES, RARITY } from '../shared/hangar.js';
+import { SYS, STELLARS, RESEARCH } from '../shared/galaxy.js';
+import { RARITY } from '../shared/hangar.js';
 const A = JSON.parse(fs.readFileSync(new URL('../shared/assets.json', import.meta.url)));
 const game = new Game(A, new DB(tempDataDir('rift-v05-')));
 const ok = (c, m) => {
@@ -257,7 +257,7 @@ t.disabled = true;
 a.send({ t: 'board', id: t.id, act: 'plunder' });
 ok(sp.ships.has(t.id), 'boarding needs you alongside');
 // mining yield bonus
-const b = game.features.bonuses.bonus(d);
+const _b = game.features.bonuses.bonus(d);
 d.station.done.push('mining1', 'mining2');
 ok(game.features.bonuses.bonus(d).miningPct >= 60, 'mining research raises ore yield');
 console.log('ALL 0.5 TESTS PASSED');

@@ -166,7 +166,7 @@ sp4.damage(anchor, 10, 10, e4);
 ok(d.story.active.ready, 'the Night Anchor is destroyed');
 land(a, 'inalumen');
 ok(d.story.done.includes('qv4'), 'The Night Anchor complete');
-const old = d.ship.hull;
+const _old = d.ship.hull;
 land(a, 'inalumen');
 a.send({ t: 'storyacc', id: 'qv5' });
 ok(

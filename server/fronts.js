@@ -3,15 +3,7 @@ import { clampStanding } from '../shared/reputation.js';
 // Quantum Rift: server feature operations: invasions,
 // anomalies and server events, daily and weekly goals, faction stores, and the expanded job types.
 // Armada operations are defined in server/coop.js.
-import {
-  SYSTEMS,
-  SYS,
-  STELLARS,
-  FACTIONS,
-  COMMODITIES,
-  MATERIALS,
-  GRADES,
-} from '../shared/galaxy.js';
+import { SYSTEMS, SYS, STELLARS, FACTIONS, MATERIALS, GRADES } from '../shared/galaxy.js';
 import {
   BOSSES,
   INVASION,
@@ -44,7 +36,7 @@ import { captainBonus, shipStats, credits } from '../shared/rules.js';
  * @param {number} b - Upper bound.
  * @returns {number} Clamped value.
  */
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const _clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /**
  * Pick a random element from an array using a random generator function.
@@ -183,6 +175,7 @@ export const FrontsOperations = {
     if (inv && (now > inv.until || !inv.sp.ships.has(inv.ent.id))) {
       if (now > inv.until && inv.sp.ships.has(inv.ent.id)) {
         inv.sp.remove(inv.ent, 'jump');
+        // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
         for (const x of [...inv.sp.ships.values()])
           if (x.owner === inv.ent.id) inv.sp.remove(x, 'jump');
         this.broadcast({

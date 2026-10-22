@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
+const checker = process.argv.includes('--tsrs') ? 'tsrs/bin/tsrs' : 'typescript/bin/tsc';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-types-'));
 const modulePath = (file) => path.join(root, 'server', file).replaceAll('\\', '/');
 const common = `// @ts-check
@@ -24,7 +25,7 @@ try {
     fs.writeFileSync(path.join(dir, 'fixture.js'), common + body);
     return spawnSync(
       process.execPath,
-      [path.join(root, 'node_modules/typescript/bin/tsc'), '-p', path.join(dir, 'tsconfig.json')],
+      [path.join(root, 'node_modules', checker), '-p', path.join(dir, 'tsconfig.json')],
       { encoding: 'utf8' },
     );
   };

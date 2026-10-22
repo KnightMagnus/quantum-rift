@@ -53,7 +53,7 @@ const graph = new Map(
   RECIPES.flatMap((r) =>
     r.inputs.map((cid) => [
       cid,
-      [...RECIPES.filter((q) => q.inputs.includes(cid)).map((q) => q.output)],
+      RECIPES.filter((q) => q.inputs.includes(cid)).map((q) => q.output),
     ]),
   ),
 );

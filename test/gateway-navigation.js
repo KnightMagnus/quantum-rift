@@ -55,6 +55,7 @@ try {
     assert.equal(e.wormExit, exit.id);
     e.vx = e.vy = 0;
     e.inp = {};
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const other of [...space.ships.values()]) if (!other.player) space.remove(other);
     for (let t = 0; t < 180; t++) space.tick();
     assert.equal(s.ent, e, 'no bounce even stopped in center after cooldown');

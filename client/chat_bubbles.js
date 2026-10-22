@@ -20,6 +20,7 @@ export function receiveShipChat(G, message, now = performance.now()) {
     !G.view
   )
     return false;
+  // oxlint-disable-next-line no-control-regex -- Reject or sanitize control characters in player text.
   const text = segments(message.msg.replace(/[\u0000-\u001f\u007f-\u009f]/g, ' '))
     .slice(0, 240)
     .join('')
