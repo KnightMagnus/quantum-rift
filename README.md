@@ -76,7 +76,7 @@ Open **http://localhost:8080** if the browser does not open automatically. Keep 
 When updating, close the old game server window first. Preserve your `data/` and
 `solo-data/` save folders; do not replace them with empty folders from a new copy.
 
-For custom Solo test captains, use the [save generator](Testing/SaveGenerator/README.md). Save imports are not available online.
+For custom Solo test captains, use the [save generator](test/Save%20Generator/README.md). Save imports are not available online.
 
 ## Screenshots
 

@@ -93,7 +93,7 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 - **Useful environment variables:**
   - `PORT`, `DATA_DIR`, `SEEDS_FILE` and `SOLO`
   - `FRONT_HOURS` and `INVASION_NOW`, for testing fronts and invasions
-- **Test saves:** use the [Solo save generator](Testing/SaveGenerator/README.md) to
+- **Test saves:** use the [Solo save generator](test/Save%20Generator/README.md) to
   choose starting credits, ship, station location and tier. Save import/export is
   available only in Solo mode; online servers do not expose these endpoints.
 - **Seeds:** `server/seeds.json` is empty by default. Set `SEEDS_FILE` to an explicit

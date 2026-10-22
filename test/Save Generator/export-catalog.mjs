@@ -32,7 +32,7 @@ const catalog = {
   radio: RADIO_STATIONS.map((station) => station.id),
   start: START,
 };
-fs.writeFileSync('Testing/SaveGenerator/catalog.json', JSON.stringify(catalog));
+fs.writeFileSync('test/Save Generator/catalog.json', JSON.stringify(catalog));
 console.log(
   `${catalog.ships.length} ships, ${catalog.sites.length} station sites, ${catalog.locations.length} landing locations`,
 );

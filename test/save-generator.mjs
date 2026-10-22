@@ -17,7 +17,7 @@ const generated = spawnSync(
     '-c',
     `
 import sys, json
-sys.path.insert(0, 'Testing/SaveGenerator')
+sys.path.insert(0, 'test/Save Generator')
 from save_generator import create_save, CATALOG
 cases = []
 for ship in CATALOG['ships']:
@@ -45,7 +45,7 @@ assert.equal(generated.status, 0, generated.stderr);
 const cases = JSON.parse(generated.stdout);
 const game = refineryGame();
 game.solo = true;
-const catalog = JSON.parse(fs.readFileSync(path.join(root, 'Testing/SaveGenerator/catalog.json')));
+const catalog = JSON.parse(fs.readFileSync(path.join(root, 'test/Save Generator/catalog.json')));
 assert.equal(
   catalog.version,
   JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).version,
@@ -128,13 +128,13 @@ game.importSave(stationSave);
 delete game.db.world.sites[stationSave.station.site];
 assert.throws(() => game.importSave({ ...stationSave, name: 'Other Captain' }), /another captain/);
 const output = path.join(tempDataDir('rift-generator-cli-'), 'test.rift.json');
-const cli = spawnSync('python3', ['Testing/SaveGenerator/save_generator.py', '--output', output], {
+const cli = spawnSync('python3', ['test/Save Generator/save_generator.py', '--output', output], {
   cwd: root,
 });
 assert.equal(cli.status, 0, String(cli.stderr));
 const first = fs.readFileSync(output, 'utf8');
 assert.equal(
-  spawnSync('python3', ['Testing/SaveGenerator/save_generator.py', '--output', output], {
+  spawnSync('python3', ['test/Save Generator/save_generator.py', '--output', output], {
     cwd: root,
   }).status,
   2,
