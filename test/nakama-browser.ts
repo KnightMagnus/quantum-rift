@@ -303,11 +303,17 @@ try {
     0,
     'replacement presence starts a fresh sequence epoch',
   );
+  // Frames arriving while the old socket closes still belong to its sequence epoch.
+  // Only snapshots after this replacement presence's welcome can prove its reset.
+  const replacementWelcome = frames
+    .map((frame) => frame.direction === 'received' && frame.packet.t === 'welcome')
+    .lastIndexOf(true);
+  assert(replacementWelcome >= reconnectFrom);
   await page.click('#depart');
   await until(
     () =>
       frames
-        .slice(reconnectFrom)
+        .slice(replacementWelcome + 1)
         .some((frame) => frame.direction === 'received' && frame.packet.t === 'snap'),
     'fresh reconnected flight snapshot',
   );
