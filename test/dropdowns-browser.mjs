@@ -15,6 +15,15 @@ import {
 } from './helpers/browser-fixture.mjs';
 const out = evidenceDir('dropdowns');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-dropdowns-'));
+// Supply a progressed fixture explicitly; shipped startup has no testing accounts.
+const fixtureSeeds = path.join(dir, 'seeds.json');
+const captain = JSON.parse(fs.readFileSync(path.join(root, 'test/seeds_knight.json'), 'utf8'))[0];
+Object.assign(captain, {
+  name: 'Dropdown Captain',
+  pass: 'fixture-pass',
+  storedShips: 'specialists',
+});
+fs.writeFileSync(fixtureSeeds, JSON.stringify([captain]));
 const port = await availablePort();
 const origin = `http://127.0.0.1:${port}`;
 const server = spawn(process.execPath, ['--import', './test/seed-random.js', 'server/main.js'], {
@@ -24,7 +33,7 @@ const server = spawn(process.execPath, ['--import', './test/seed-random.js', 'se
     SOLO: '',
     PORT: String(port),
     DATA_DIR: path.join(dir, 'data'),
-    SEEDS_FILE: path.join(root, 'server/seeds.json'),
+    SEEDS_FILE: fixtureSeeds,
   },
   stdio: ['ignore', 'pipe', 'pipe'],
 });
@@ -82,8 +91,8 @@ try {
   await page.goto(origin);
   await audit('login document / map commodity and initialized dynamic controls');
   await capture('login');
-  await page.locator('#lname').fill('KNIGHT');
-  await page.locator('#lpass').fill('1234');
+  await page.locator('#lname').fill('Dropdown Captain');
+  await page.locator('#lpass').fill('fixture-pass');
   await page.locator('#lbtn').click();
   await page.waitForFunction(() => G.you && G.landed);
   for (let i = 0; i < 10 && (await page.locator('#storybox').isVisible()); i++)
