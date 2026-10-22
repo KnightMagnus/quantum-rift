@@ -10,16 +10,16 @@ export interface HostileOperations {
   openChest(
     this: HostileCapabilities,
     session: Session,
-    it: { chest?: string; lvl?: number },
+    item: { chest?: string; lvl?: number },
   ): boolean;
   holdoutStart(this: HostileCapabilities, session: Session): void;
   holdoutTick(this: HostileCapabilities, session: Session): void;
-  holdoutEnd(this: HostileCapabilities, session: Session, won: boolean, why?: string): void;
+  holdoutEnd(this: HostileCapabilities, session: Session, hasWon: boolean, reason?: string): void;
   onHoldoutKill(this: HostileCapabilities, _entity: Entity): void;
   eclipseChance(
     this: HostileCapabilities,
     system: SpaceSystem,
-    m?: Record<string, number> | null,
+    message?: Record<string, number> | null,
   ): number;
 }
 import type { HostileCapabilities } from './features.ts';
@@ -39,20 +39,22 @@ import { COOP_HOLDOUT } from '../shared/coop.ts';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
- * @param {number} v - Value to clamp.
- * @param {number} a - Minimum value.
- * @param {number} b - Maximum value.
+ * @param {number} value - Value to clamp.
+ * @param {number} firstValue - Minimum value.
+ * @param {number} secondValue - Maximum value.
  * @returns {number} Clamped value.
  */
-const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
+const clamp = (value: number, firstValue: number, secondValue: number): number =>
+  Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Select a random element from an array.
  * @template T
- * @param {T[]} a - Array of items.
+ * @param {T[]} firstValue - Array of items.
  * @returns {T} Selected item.
  */
-const pick = <T>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
+const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
+  firstValue[Math.floor(Math.random() * firstValue.length)];
 
 export const HostileOperations = {
   /**
@@ -91,8 +93,8 @@ export const HostileOperations = {
     session: Entity,
     entity: Entity | null | undefined,
   ) {
-    const C = CHESTS[session.faction];
-    if (!C || !entity || !entity.player) return;
+    const lootChestDef = CHESTS[session.faction];
+    if (!lootChestDef || !entity || !entity.player) return;
     const always = session.boss || session.holdoutBoss || session.kingpin;
     if (!always && Math.random() > CHEST_CHANCE * (space.m ? space.m.chest : 1)) return;
     space.loot.push({
@@ -109,37 +111,37 @@ export const HostileOperations = {
   /**
    * Open a loot chest, awarding credits, crafting materials, blueprints, and specialty items.
    * @param {Session} session - Player session opening the chest.
-   * @param {{chest: string, lvl?: number}} it - Loot item details.
+   * @param {{chest: string, lvl?: number}} item - Loot item details.
    * @returns {boolean} True if opened successfully.
    */
-  openChest(this: HostileCapabilities, session: Session, it: { chest?: string; lvl?: number }) {
+  openChest(this: HostileCapabilities, session: Session, item: { chest?: string; lvl?: number }) {
     const playerData = session.data,
-      C = CHESTS[it.chest!],
-      lvl = it.lvl || 1,
-      got = [],
-      _m = this.mods(playerData.sys);
+      lootChestDef = CHESTS[item.chest!],
+      level = item.lvl || 1,
+      received = [],
+      _mods = this.mods(playerData.sys);
     this.hostInit(playerData);
     this.specInit(playerData);
     this.tut(session, 'chest');
-    const cr = Math.round((200 + lvl * lvl * 40) * (0.7 + Math.random() * 0.6));
-    playerData.credits += cr;
-    playerData.stats.earned += cr;
-    got.push(`${credits(cr)} cr`);
-    const g = clamp(Math.floor(lvl / 9), 0, 4),
-      mt = pick(C.mats);
-    playerData.mats[mt][g]++;
-    got.push(`${mt} ${GRADES[g]}`);
+    const credits2 = Math.round((200 + level * level * 40) * (0.7 + Math.random() * 0.6));
+    playerData.credits += credits2;
+    playerData.stats.earned += credits2;
+    received.push(`${credits(credits2)} cr`);
+    const clamp2 = clamp(Math.floor(level / 9), 0, 4),
+      pick2 = pick(lootChestDef.mats);
+    playerData.mats[pick2][clamp2]++;
+    received.push(`${pick2} ${GRADES[clamp2]}`);
     if (Math.random() < 0.5) {
-      const sp = SPEC_BY_KEY[C.bp],
-        n = 1 + Math.floor(Math.random() * 3);
-      playerData.bp[sp.id] = (playerData.bp[sp.id] || 0) + n;
-      got.push(`${n} ${sp.name} blueprint${n > 1 ? 's' : ''}`);
+      const specialistShip = SPEC_BY_KEY[lootChestDef.bp],
+        count = 1 + Math.floor(Math.random() * 3);
+      playerData.bp[specialistShip.id] = (playerData.bp[specialistShip.id] || 0) + count;
+      received.push(`${count} ${specialistShip.name} blueprint${count > 1 ? 's' : ''}`);
     }
-    if (SPEC_BY_KEY[C.bp] && playerData.ship.hull === SPEC_BY_KEY[C.bp].id) {
-      playerData.spec[C.res] = (playerData.spec[C.res] || 0) + 2;
-      got.push(`2 ${C.res}`);
+    if (SPEC_BY_KEY[lootChestDef.bp] && playerData.ship.hull === SPEC_BY_KEY[lootChestDef.bp].id) {
+      playerData.spec[lootChestDef.res] = (playerData.spec[lootChestDef.res] || 0) + 2;
+      received.push(`2 ${lootChestDef.res}`);
     }
-    this.toast(session, `${C.name} (Lv ${lvl}): ${got.join(', ')}.`);
+    this.toast(session, `${lootChestDef.name} (Lv ${level}): ${received.join(', ')}.`);
     this.you(session);
     return true;
   },
@@ -152,9 +154,9 @@ export const HostileOperations = {
    */
   holdoutStart(this: HostileCapabilities, session: Session) {
     const playerData = session.data,
-      p = STELLARS[playerData.stellar!];
+      stellarBody = STELLARS[playerData.stellar!];
     this.hostInit(playerData);
-    if (!p || session.ent || !this.ownSite(playerData, p))
+    if (!stellarBody || session.ent || !this.ownSite(playerData, stellarBody))
       return this.toast(session, 'Start a Holdout from your Personal Station.');
     if (playerData.station.ops < 2) return this.toast(session, 'Holdouts need Station Tier 2.');
     const wait = playerData.holdout.lastT + HOLDOUT.cooldownH * 3600000 - Date.now();
@@ -187,150 +189,167 @@ export const HostileOperations = {
   holdoutTick(this: HostileCapabilities, session: Session) {
     const playerData = session.data;
     this.hostInit(playerData);
-    const H = playerData.holdout.active;
-    if (!H) return;
+    const savedHoldoutRun = playerData.holdout.active;
+    if (!savedHoldoutRun) return;
     const site = STELLARS[playerData.station.site!],
       here = session.ent && playerData.sys === site.system;
     if (!here) return this.holdoutEnd(session, false, 'You left the station.');
-    const sp = this.spaces[site.system];
-    if (!H.platforms.length) {
+    const space = this.spaces[site.system];
+    if (!savedHoldoutRun.platforms.length) {
       // deploy the platforms around the station
-      const n = HOLDOUT.platforms(playerData.station.defense!);
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2,
-          x = site.x + Math.cos(a) * 220,
-          y = site.y + Math.sin(a) * 220;
-        const p = sp.makeShip({
+      const platforms2 = HOLDOUT.platforms(playerData.station.defense!);
+      for (let index = 0; index < platforms2; index++) {
+        const firstValue = (index / platforms2) * Math.PI * 2,
+          positionX = site.x + Math.cos(firstValue) * 220,
+          positionY = site.y + Math.sin(firstValue) * 220;
+        const entity = space.makeShip({
           hull: 711,
           faction: 'quantum',
-          x,
-          y,
+          x: positionX,
+          y: positionY,
           ai: 'guard',
           owner: session.ent!.id,
           name: 'Defense Platform',
           bonus: { armorPct: 150, shieldPct: 150, damagePct: 60 },
         });
-        p.home = { x, y };
-        p.life = 1e9;
-        p.noDisable = true;
-        p.platform = true;
-        H.platforms.push(p.id);
+        entity.home = { x: positionX, y: positionY };
+        entity.life = 1e9;
+        entity.noDisable = true;
+        entity.platform = true;
+        savedHoldoutRun.platforms.push(entity.id);
       }
     }
-    const alive = H.ids.filter((id) => sp.ships.has(id));
-    if (H.wave && !alive.length) {
-      H.cleared = H.wave;
-      if (H.wave >= HOLDOUT.waves) return this.holdoutEnd(session, true);
-      if (!H.nextT) {
-        H.nextT = Date.now() + HOLDOUT.waveGap * 1000;
-        this.toast(session, `Wave ${H.wave} cleared. Next wave in ${HOLDOUT.waveGap} seconds.`);
+    const alive = savedHoldoutRun.ids.filter((identifier) => space.ships.has(identifier));
+    if (savedHoldoutRun.wave && !alive.length) {
+      savedHoldoutRun.cleared = savedHoldoutRun.wave;
+      if (savedHoldoutRun.wave >= HOLDOUT.waves) return this.holdoutEnd(session, true);
+      if (!savedHoldoutRun.nextT) {
+        savedHoldoutRun.nextT = Date.now() + HOLDOUT.waveGap * 1000;
+        this.toast(
+          session,
+          `Wave ${savedHoldoutRun.wave} cleared. Next wave in ${HOLDOUT.waveGap} seconds.`,
+        );
       }
     }
-    if (H.wave && alive.length && Date.now() - H.waveT! > HOLDOUT.timeoutMin * 60000)
-      return this.holdoutEnd(session, false, `Wave ${H.wave} overran the defenses.`);
-    if (H.nextT && Date.now() >= H.nextT && !alive.length) {
-      H.wave++;
-      H.nextT = 0;
-      H.waveT! = Date.now();
-      H.ids = [];
+    if (
+      savedHoldoutRun.wave &&
+      alive.length &&
+      Date.now() - savedHoldoutRun.waveT! > HOLDOUT.timeoutMin * 60000
+    )
+      return this.holdoutEnd(session, false, `Wave ${savedHoldoutRun.wave} overran the defenses.`);
+    if (savedHoldoutRun.nextT && Date.now() >= savedHoldoutRun.nextT && !alive.length) {
+      savedHoldoutRun.wave++;
+      savedHoldoutRun.nextT = 0;
+      savedHoldoutRun.waveT! = Date.now();
+      savedHoldoutRun.ids = [];
       const helpers = this.holdoutHelpers ? this.holdoutHelpers(playerData, site) : []; // co-op Holdout
-      H.helpers = [...new Set([...(H.helpers || []), ...helpers.map((o) => o.data.name)])];
-      const base = HOLDOUT.wave(H.wave),
+      savedHoldoutRun.helpers = [
+        ...new Set([
+          ...(savedHoldoutRun.helpers || []),
+          ...helpers.map((session) => session.data.name),
+        ]),
+      ];
+      const base = HOLDOUT.wave(savedHoldoutRun.wave),
         hulls = base.concat(
           Array.from(
             { length: helpers.length * COOP_HOLDOUT.extraPerHelper },
-            (_, i) => base[i % base.length],
+            (unused, index) => base[index % base.length],
           ),
         );
-      const ang = Math.random() * Math.PI * 2,
+      const angle = Math.random() * Math.PI * 2,
         scale = clamp(this.myPower(playerData) / 400, 0.6, 6),
-        pct = (scale - 1) * 60 + H.wave * 8 + helpers.length * COOP_HOLDOUT.pctPerHelper;
-      const defenders = [session.ent, ...helpers.map((o) => o.ent)];
-      hulls.forEach((h, i) => {
-        const a = ang + (i - hulls.length / 2) * 0.25,
-          x = site.x + Math.cos(a) * 1600,
-          y = site.y + Math.sin(a) * 1600;
-        const fac = h >= 760 ? 'umbral' : 'hollow',
-          e = sp.makeShip({
-            hull: h,
-            faction: fac,
-            x,
-            y,
-            a: a + Math.PI,
+        percentage =
+          (scale - 1) * 60 + savedHoldoutRun.wave * 8 + helpers.length * COOP_HOLDOUT.pctPerHelper;
+      const defenders = [session.ent, ...helpers.map((session) => session.ent)];
+      hulls.forEach((height, index) => {
+        const firstValue = angle + (index - hulls.length / 2) * 0.25,
+          positionX = site.x + Math.cos(firstValue) * 1600,
+          positionY = site.y + Math.sin(firstValue) * 1600;
+        const faction2 = height >= 760 ? 'umbral' : 'hollow',
+          entity = space.makeShip({
+            hull: height,
+            faction: faction2,
+            x: positionX,
+            y: positionY,
+            a: firstValue + Math.PI,
             ai: 'raid',
-            bonus: { shieldPct: pct, armorPct: pct },
+            bonus: { shieldPct: percentage, armorPct: percentage },
           });
-        e.life = 1e9;
-        e.holdout = playerData.name;
+        entity.life = 1e9;
+        entity.holdout = playerData.name;
         // Opt-in defense participants, not unrelated passing newcomers.
-        e.combatOwners = defenders.map((defender) => defender!.player!.id);
-        e.target = defenders[i % defenders.length];
-        if (H.wave === 10 && i === 0) {
-          e.holdoutBoss = true;
-          e.name = 'Holdout Warlord';
-          e.noDisable = true;
+        entity.combatOwners = defenders.map((defender) => defender!.player!.id);
+        entity.target = defenders[index % defenders.length];
+        if (savedHoldoutRun.wave === 10 && index === 0) {
+          entity.holdoutBoss = true;
+          entity.name = 'Holdout Warlord';
+          entity.noDisable = true;
         }
-        H.ids.push(e.id);
-        sp.events.push(['flash', Math.round(x), Math.round(y)]);
+        savedHoldoutRun.ids.push(entity.id);
+        space.events.push(['flash', Math.round(positionX), Math.round(positionY)]);
       });
-      this.toast(session, `Wave ${H.wave} of ${HOLDOUT.waves}: ${hulls.length} hostiles inbound.`);
+      this.toast(
+        session,
+        `Wave ${savedHoldoutRun.wave} of ${HOLDOUT.waves}: ${hulls.length} hostiles inbound.`,
+      );
       this.you(session);
     }
   },
   /**
    * Conclude a holdout event, despawn platforms/enemies, and distribute rewards.
    * @param {Session} session - Player session.
-   * @param {boolean} won - Whether all ten waves were completed.
-   * @param {string} [why] - Reason for termination if incomplete.
+   * @param {boolean} hasWon - Whether all ten waves were completed.
+   * @param {string} [reason] - Reason for termination if incomplete.
    * @returns {void}
    */
-  holdoutEnd(this: HostileCapabilities, session: Session, won: boolean, why?: string) {
+  holdoutEnd(this: HostileCapabilities, session: Session, hasWon: boolean, reason?: string) {
     const playerData = session.data,
-      H = playerData.holdout.active;
-    if (!H) return;
+      savedHoldoutRun = playerData.holdout.active;
+    if (!savedHoldoutRun) return;
     playerData.holdout.active = null;
     playerData.holdout.lastT = Date.now();
     const site = STELLARS[playerData.station.site!],
-      sp = this.live[site.system];
-    if (sp)
-      for (const id of [...H.platforms, ...H.ids]) {
-        const e = sp.ships.get(id);
-        if (e) sp.remove(e, 'jump');
+      space = this.live[site.system];
+    if (space)
+      for (const identifier of [...savedHoldoutRun.platforms, ...savedHoldoutRun.ids]) {
+        const entity = space.ships.get(identifier);
+        if (entity) space.remove(entity, 'jump');
       }
-    const n = H.cleared;
-    playerData.holdout.best = Math.max(playerData.holdout.best || 0, n);
+    const cleared2 = savedHoldoutRun.cleared;
+    playerData.holdout.best = Math.max(playerData.holdout.best || 0, cleared2);
     this.specInit(playerData);
-    if (!n) {
-      this.toast(session, `Holdout over. ${why || ''} No waves cleared.`);
+    if (!cleared2) {
+      this.toast(session, `Holdout over. ${reason || ''} No waves cleared.`);
       this.you(session);
       return;
     }
-    const R = HOLDOUT.reward(n),
-      got = [`${credits(R.credits)} cr`];
-    playerData.credits += R.credits;
-    playerData.stats.earned += R.credits;
-    for (let i = 0; i < Math.ceil(n / 3); i++) {
-      const mt = MATERIALS[i % 3];
-      playerData.mats[mt][R.grade]++;
-      got.push(`${mt} ${GRADES[R.grade]}`);
+    const holdoutReward2 = HOLDOUT.reward(cleared2),
+      received = [`${credits(holdoutReward2.credits)} cr`];
+    playerData.credits += holdoutReward2.credits;
+    playerData.stats.earned += holdoutReward2.credits;
+    for (let index = 0; index < Math.ceil(cleared2 / 3); index++) {
+      const materials = MATERIALS[index % 3];
+      playerData.mats[materials][holdoutReward2.grade]++;
+      received.push(`${materials} ${GRADES[holdoutReward2.grade]}`);
     }
-    const bw = SPEC_BY_KEY.bulwark;
-    playerData.bp[bw.id] = (playerData.bp[bw.id] || 0) + n;
-    got.push(`${n} Bulwark blueprints`);
-    if (playerData.ship.hull === bw.id) {
-      playerData.spec.insignia = (playerData.spec.insignia || 0) + R.insignia * 2;
-      got.push(`${R.insignia * 2} Raider Insignia`);
+    const specialistShip = SPEC_BY_KEY.bulwark;
+    playerData.bp[specialistShip.id] = (playerData.bp[specialistShip.id] || 0) + cleared2;
+    received.push(`${cleared2} Bulwark blueprints`);
+    if (playerData.ship.hull === specialistShip.id) {
+      playerData.spec.insignia = (playerData.spec.insignia || 0) + holdoutReward2.insignia * 2;
+      received.push(`${holdoutReward2.insignia * 2} Raider Insignia`);
     }
-    if (won) {
+    if (hasWon) {
       playerData.mats[MATERIALS[Math.floor(Math.random() * 3)]][4]++;
-      playerData.bp[bw.id] += 5;
-      got.push('a grade V crate', '5 more Bulwark blueprints');
+      playerData.bp[specialistShip.id] += 5;
+      received.push('a grade V crate', '5 more Bulwark blueprints');
     } // Grade V crate and five Bulwark blueprints.
-    const msg = `${won ? 'HOLDOUT WON: all ten waves beaten!' : `Holdout over after ${n} wave${n > 1 ? 's' : ''}. ${why || ''}`} Rewards: ${got.join(', ')}.`;
-    this.toast(session, msg);
-    this.log(playerData, msg);
-    this.notify(session, won ? 'Holdout won' : 'Holdout over', got.join(', '));
-    if (this.holdoutReward) this.holdoutReward(playerData, H, n, won, R); // Armada helpers share the rewards
+    const message = `${hasWon ? 'HOLDOUT WON: all ten waves beaten!' : `Holdout over after ${cleared2} wave${cleared2 > 1 ? 's' : ''}. ${reason || ''}`} Rewards: ${received.join(', ')}.`;
+    this.toast(session, message);
+    this.log(playerData, message);
+    this.notify(session, hasWon ? 'Holdout won' : 'Holdout over', received.join(', '));
+    if (this.holdoutReward)
+      this.holdoutReward(playerData, savedHoldoutRun, cleared2, hasWon, holdoutReward2); // Armada helpers share the rewards
     this.db.touch();
     this.you(session);
   },
@@ -345,17 +364,21 @@ export const HostileOperations = {
   /**
    * Compute the spawn probability for an Umbral Eclipse cell in a system.
    * @param {SpaceSystem} system - System metadata.
-   * @param {Record<string, number>} [m] - Active sector modifiers.
+   * @param {Record<string, number>} [message] - Active sector modifiers.
    * @returns {number} Spawn probability.
    */
-  eclipseChance(this: HostileCapabilities, system: SpaceSystem, m?: Record<string, number> | null) {
+  eclipseChance(
+    this: HostileCapabilities,
+    system: SpaceSystem,
+    message?: Record<string, number> | null,
+  ) {
     if (system.farside) return 0;
-    let c =
+    let component =
       system.danger >= 3 && ['umbral', 'deep', 'frontier'].includes(system.faction)
         ? ECLIPSE.chance
         : 0;
-    if (m && m.eclipse > 1 && system.danger >= 1 && system.faction !== 'quantum')
-      c += 0.08 * m.eclipse;
-    return c;
+    if (message && message.eclipse > 1 && system.danger >= 1 && system.faction !== 'quantum')
+      component += 0.08 * message.eclipse;
+    return component;
   },
 };

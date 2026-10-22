@@ -1,5 +1,5 @@
 import type { GradeLots } from '../shared/cargo-contracts.ts';
-import type { DB } from './db.ts';
+import type { DB as Database } from './db.ts';
 import type { FeatureServices } from './features.ts';
 import type { FloatingLoot, LootItem, Rock, Space } from './space.ts';
 export type MiningLease = { from: number; to: number; seam: boolean; captain?: string | null };
@@ -107,7 +107,7 @@ export type MiningPrivateWire = {
   revealed: { id: number; generation: number; seam: number; potential: string; hazard: string }[];
 };
 export type MiningSpace = Pick<Space, 'id' | 'rocks' | 'loot' | 'events' | 't' | 'sys'>;
-export type MiningDatabase = Pick<DB, 'world' | 'touch' | 'get' | 'key'>;
+export type MiningDatabase = Pick<Database, 'world' | 'touch' | 'get' | 'key'>;
 export type MiningCapabilities = {
   dredgeBlueprint: (captain: string, chance: number) => void;
   db: MiningDatabase;
@@ -115,7 +115,7 @@ export type MiningCapabilities = {
   pressureWork: FeatureServices['pressure']['work'];
   pressureRegrow: FeatureServices['pressure']['regrow'];
   paused: () => boolean;
-  endTick: (sp: MiningSpace) => void;
+  endTick: (miningSpace: MiningSpace) => void;
   bonus: FeatureServices['bonuses']['bonus'];
   mods: FeatureServices['fronts']['mods'];
   specOnMine: FeatureServices['specialists']['specOnMine'];

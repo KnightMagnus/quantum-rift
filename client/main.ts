@@ -239,9 +239,17 @@ import { setArtworkVersion } from './artwork.ts';
 import { initHails } from './hails_ui.ts';
 import { receiveShipChat } from './chat_bubbles.ts';
 // Quantum Rift client: connection, input, client-side prediction, render loop.
-import { SYS, STELLARS, FACTIONS, FACTION_HULLS } from '../shared/galaxy.ts';
+import { SYS as systemsById, STELLARS, FACTIONS, FACTION_HULLS } from '../shared/galaxy.ts';
 import { TUTORIAL } from '../shared/tutorial.ts';
-import { step, DT, weaponColor, augmentAssets, K, wrap, route } from '../shared/rules.ts';
+import {
+  step,
+  DT as tickDuration,
+  weaponColor,
+  augmentAssets,
+  K as physicsConstants,
+  wrap,
+  route,
+} from '../shared/rules.ts';
 import { STATES } from '../shared/living.ts';
 import {
   draw,
@@ -254,8 +262,8 @@ import {
   dmgNumber,
   addShake,
   resetRenderSession,
-  cam,
-  FAC,
+  cam as camera,
+  FAC as factionColors,
 } from './render.ts';
 import * as audio from './audio.ts';
 import { setRadioLevel, stopRadio, setUnlockedStations } from './radio.ts';
@@ -269,9 +277,9 @@ import { SPRITES } from '../shared/sprites26.ts';
 import { refreshStores } from './ui.ts';
 import {
   initUI,
-  hud,
+  hud as renderHud,
   toast,
-  ask,
+  ask as showConfirmation,
   chatLine,
   showLanded,
   hideLanded,
@@ -289,8 +297,8 @@ import {
 /** @import { GameAssets } from '../shared/rules.ts' */
 /** @import { RenderEntity } from './render.ts' */
 
-const $ = elementById;
-initLoginScene($('login'));
+const elementById2 = elementById;
+initLoginScene(elementById2('login'));
 
 /**
  * @typedef {object} ClientGameState
@@ -323,7 +331,7 @@ initLoginScene($('login'));
  * @property {((e: RenderEntity) => boolean)} [isAlly] Checks if entity is an allied wingmate.
  * @property {((e: RenderEntity) => boolean)} [hostile] Checks if entity is hostile to player.
  */
-const G: ClientGameState = (window.G = {
+const clientGameState: ClientGameState = (window.G = {
   A: null,
   you: null,
   sys: null,
@@ -340,7 +348,7 @@ const G: ClientGameState = (window.G = {
   route: [],
   navStellar: null,
   ammo: {},
-  FAC,
+  FAC: factionColors,
   ctab: 'missions',
   ltab: null,
   myId: 0,
@@ -371,19 +379,23 @@ const G: ClientGameState = (window.G = {
       }
     })(),
   ),
-  hostile(e) {
-    if (!e || !G.you) return false;
-    if (e.owner === G.myId || e.id === G.myId) return false;
-    const f = FAC[e.fac as unknown as number];
-    if (G.arena && e.fl & 16)
-      return !!e.name && !e.name.startsWith(G.arena.team === 'A' ? 'Azure' : 'Crimson');
-    if (e.fl & 16) return !!(G.you!.duel && G.you!.duel.with === e.name); // no open-galaxy PvP; only your duel opponent
-    if (G.isAlly && G.isAlly(e)) return false; // Armada members' wingmates
-    const F = FACTIONS[f];
-    if (!F) return false;
-    if (F.alwaysHostile) return true;
-    const rep = G.you!.rep[f] || 0;
-    return F.pirate ? rep < 30 : rep <= -30;
+  hostile(event) {
+    if (!event || !clientGameState.you) return false;
+    if (event.owner === clientGameState.myId || event.id === clientGameState.myId) return false;
+    const factionId = factionColors[event.fac as unknown as number];
+    if (clientGameState.arena && event.fl & 16)
+      return (
+        !!event.name &&
+        !event.name.startsWith(clientGameState.arena.team === 'A' ? 'Azure' : 'Crimson')
+      );
+    if (event.fl & 16)
+      return !!(clientGameState.you!.duel && clientGameState.you!.duel.with === event.name); // no open-galaxy PvP; only your duel opponent
+    if (clientGameState.isAlly && clientGameState.isAlly(event)) return false; // Armada members' wingmates
+    const factionDef = FACTIONS[factionId];
+    if (!factionDef) return false;
+    if (factionDef.alwaysHostile) return true;
+    const reputation = clientGameState.you!.rep[factionId] || 0;
+    return factionDef.pirate ? reputation < 30 : reputation <= -30;
   },
 } as Omit<
   ClientGameState,
@@ -417,7 +429,7 @@ const PALETTES = {
     ally: '#d6b4ff',
   },
 }; // blue/orange: safe for red-green colour blindness
-G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
+clientGameState.pal = PALETTES[clientGameState.opts.cb ? 'cb' : 'normal'];
 export const ACTIONS: Array<[string, string, string]> = [
   ['thrust', 'Thrust', 'KeyW'],
   ['left', 'Turn left', 'KeyA'],
@@ -460,32 +472,37 @@ export const ACTIONS: Array<[string, string, string]> = [
   ['dredgeInput', 'Set selected processing input', 'Equal'],
   ['dredgeOff', 'Dredge all off', 'Backslash'],
 ];
-const ALT: Record<string, string> = {
+const alternateBindings: Record<string, string> = {
   thrust: 'ArrowUp',
   left: 'ArrowLeft',
   right: 'ArrowRight',
   rev: 'ArrowDown',
   ab: 'ShiftRight',
 }; // the arrow keys always work too
-migrateBindings(G.opts, ACTIONS);
-const bound = (a: string) => binding(G.opts.keys, ACTIONS, a);
-const held = (a: string) => !!(keys[bound(a)!] || (ALT[a] && keys[ALT[a]]));
+migrateBindings(clientGameState.opts, ACTIONS);
+const bound = (firstValue: string) => binding(clientGameState.opts.keys, ACTIONS, firstValue);
+const held = (firstValue: string) =>
+  !!(
+    keys[bound(firstValue)!] ||
+    (alternateBindings[firstValue] && keys[alternateBindings[firstValue]])
+  );
 const actionOf = (code: string) => {
-  for (const [a] of ACTIONS) if (bound(a) === code || ALT[a] === code) return a;
+  for (const [firstValue] of ACTIONS)
+    if (bound(firstValue) === code || alternateBindings[firstValue] === code) return firstValue;
   return null;
 };
-if (!G.opts.v21) {
-  G.opts.v21 = true;
-  G.opts.vol = Math.min(G.opts.vol, 0.35);
-  G.opts.ui = Math.min(G.opts.ui ?? 0.55, 0.55);
-  G.opts.amb = Math.min(G.opts.amb ?? 0.35, 0.35);
+if (!clientGameState.opts.v21) {
+  clientGameState.opts.v21 = true;
+  clientGameState.opts.vol = Math.min(clientGameState.opts.vol, 0.35);
+  clientGameState.opts.ui = Math.min(clientGameState.opts.ui ?? 0.55, 0.55);
+  clientGameState.opts.amb = Math.min(clientGameState.opts.amb ?? 0.35, 0.35);
   try {
-    localStorage.setItem('rift.opts', JSON.stringify(G.opts));
+    localStorage.setItem('rift.opts', JSON.stringify(clientGameState.opts));
   } catch {}
 } // 2.1: quieter defaults, applied once to older settings
 function saveOpts() {
   try {
-    localStorage.setItem('rift.opts', JSON.stringify(G.opts));
+    localStorage.setItem('rift.opts', JSON.stringify(clientGameState.opts));
   } catch {}
 }
 function miningModalBlocked() {
@@ -496,18 +513,18 @@ function miningModalBlocked() {
 const miningUI = initMiningUI({
   industrialAudio: audio.industrial,
   towAudio: audio.towing,
-  G,
+  G: clientGameState,
   send,
   bound,
-  label: (c) => keyName(c!),
+  label: (component) => keyName(component!),
   blocked: () => typing() || miningModalBlocked(),
   contextBlocked: miningModalBlocked,
 });
-const refineryUI = initRefineryUI(G, send, () => {
-  if (G.landed && G.ltab === 'refinery') renderLanded();
+const refineryUI = initRefineryUI(clientGameState, send, () => {
+  if (clientGameState.landed && clientGameState.ltab === 'refinery') renderLanded();
 });
-const shipFunctions = initShipFunctions(G, send);
-const chatProjection = initChatProjection(G);
+const shipFunctions = initShipFunctions(clientGameState, send);
+const chatProjection = initChatProjection(clientGameState);
 setInterval(() => {
   miningUI.refresh();
   shipFunctions.refresh();
@@ -515,407 +532,456 @@ setInterval(() => {
   refineryUI.refresh();
 }, 100);
 function applyOpts() {
-  G.pal = PALETTES[G.opts.cb ? 'cb' : 'normal'];
-  document.documentElement.style.setProperty('--ui', String(G.opts.scale));
-  document.body.classList.toggle('scaled', G.opts.scale !== 1);
+  clientGameState.pal = PALETTES[clientGameState.opts.cb ? 'cb' : 'normal'];
+  document.documentElement.style.setProperty('--ui', String(clientGameState.opts.scale));
+  document.body.classList.toggle('scaled', clientGameState.opts.scale !== 1);
   audio.setMix({
-    vol: G.opts.vol,
-    sfx: G.opts.sfx,
-    ui: G.opts.ui ?? 0.8,
-    amb: G.opts.amb ?? 0.5,
-    music: G.opts.music ?? 0.6,
-    mute: G.opts.mute,
+    vol: clientGameState.opts.vol,
+    sfx: clientGameState.opts.sfx,
+    ui: clientGameState.opts.ui ?? 0.8,
+    amb: clientGameState.opts.amb ?? 0.5,
+    music: clientGameState.opts.music ?? 0.6,
+    mute: clientGameState.opts.mute,
   });
-  setRadioLevel(G.opts.mute ? 0 : G.opts.vol * G.opts.radio, G.opts.radio); // the radio is in the mixer
+  setRadioLevel(
+    clientGameState.opts.mute ? 0 : clientGameState.opts.vol * clientGameState.opts.radio,
+    clientGameState.opts.radio,
+  ); // the radio is in the mixer
 }
 applyOpts();
 // loading screen: warm the browser cache with the common ship sprites and station art while the login is shown
 (function preloadArt() {
   const hulls = [...new Set(Object.values(FACTION_HULLS).flat())];
   const urls = [
-    ...hulls.map((h) => `assets/ships/${h}.${SPRITES[h] ? 'webp' : 'png'}`),
-    ...[0, 1, 2, 3, 4, 5].map((k) => `assets/stations/${k}.png`),
+    ...hulls.map((height) => `assets/ships/${height}.${SPRITES[height] ? 'webp' : 'png'}`),
+    ...[0, 1, 2, 3, 4, 5].map((entryKey) => `assets/stations/${entryKey}.png`),
     'assets/hub.png',
     'assets/wormhole.png',
   ];
-  let n = 0;
+  let count = 0;
   const done = () => {
-    n++;
-    $('lloadbar').style.width = (100 * n) / urls.length + '%';
-    $('lloadt').textContent = `Loading ships… ${n} / ${urls.length}`;
-    if (n >= urls.length) $('lload').classList.add('done');
+    count++;
+    elementById2('lloadbar').style.width = (100 * count) / urls.length + '%';
+    elementById2('lloadt').textContent = `Loading ships… ${count} / ${urls.length}`;
+    if (count >= urls.length) elementById2('lload').classList.add('done');
   };
-  for (const u of urls) {
-    const im = new Image();
-    im.onload = im.onerror = done;
-    im.src = u;
+  for (const url2 of urls) {
+    const htmlImageElement = new Image();
+    htmlImageElement.onload = htmlImageElement.onerror = done;
+    htmlImageElement.src = url2;
   }
-  setTimeout(() => $('lload').classList.add('done'), 20000);
+  setTimeout(() => elementById2('lload').classList.add('done'), 20000);
 })();
-const canvas = $('view'),
-  ctx = canvas.getContext('2d')!,
-  rctx = $('radar').getContext('2d')!;
+const canvas = elementById2('view'),
+  canvasRenderingContext2D = canvas.getContext('2d')!,
+  canvasRenderingContext2D2 = elementById2('radar').getContext('2d')!;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null,
   sessionEpoch = 0,
   sessionDefaults: Record<string, unknown> | null = null;
-let ws: WebSocket | null = null,
-  seq = 0,
+let webSocket: WebSocket | null = null,
+  sequence = 0,
   history: Array<{ seq: number; inp: ClientInput }> = [],
   keys: Record<string, boolean | number> = {},
   _lastSnapT = 0;
-function send(m: NetworkMessage) {
-  if (ws && ws.readyState === 1) ws.send(JSON.stringify(m));
+function send(networkMessage: NetworkMessage) {
+  if (webSocket && webSocket.readyState === 1) webSocket.send(JSON.stringify(networkMessage));
 }
 
 // ------------------------------------------------------------------ login and connection
-$('lbtn').onclick = login;
+elementById2('lbtn').onclick = login;
 // the login theme starts on the first click or key on the login screen (browsers block sound until then)
 const loginMusic = () => {
-  if ($('login').classList.contains('hidden')) return;
+  if (elementById2('login').classList.contains('hidden')) return;
   audio.unlock();
   audio.startMusic();
   window.removeEventListener('pointerdown', loginMusic, true);
   window.removeEventListener('keydown', loginMusic, true);
 };
-$('musicbtn').onclick = (e) => {
-  e.stopPropagation();
+elementById2('musicbtn').onclick = (pointerEvent) => {
+  pointerEvent.stopPropagation();
   audio.unlock();
-  if ((G.opts.music ?? 0.6) > 0) {
-    G.opts.musicWas = G.opts.music ?? 0.6;
-    G.opts.music = 0;
-  } else G.opts.music = G.opts.musicWas || 0.6;
+  if ((clientGameState.opts.music ?? 0.6) > 0) {
+    clientGameState.opts.musicWas = clientGameState.opts.music ?? 0.6;
+    clientGameState.opts.music = 0;
+  } else clientGameState.opts.music = clientGameState.opts.musicWas || 0.6;
   applyOpts();
   saveOpts();
-  $('musicbtn').classList.toggle('off', !G.opts.music);
+  elementById2('musicbtn').classList.toggle('off', !clientGameState.opts.music);
   audio.startMusic();
 };
-$('musicbtn').classList.toggle('off', (G.opts.music ?? 0.6) === 0);
+elementById2('musicbtn').classList.toggle('off', (clientGameState.opts.music ?? 0.6) === 0);
 window.addEventListener('pointerdown', loginMusic, true);
 window.addEventListener('keydown', loginMusic, true);
 // interface sounds for every button, tab and chip
 document.addEventListener(
   'click',
-  (e) => {
-    const b = (e.target as HTMLInputElement).closest<HTMLButtonElement>(
+  (pointerEvent) => {
+    const htmlButtonElement = (pointerEvent.target as HTMLInputElement).closest<HTMLButtonElement>(
       'button, .btn, .chip, .card[data-act], .it, a[data-act], #ctabs button, #ltabs button',
     );
-    if (!b || b.disabled) return;
+    if (!htmlButtonElement || htmlButtonElement.disabled) return;
     audio.unlock();
-    const act = b.dataset.act!;
+    const action = htmlButtonElement.dataset.act!;
     if (
-      b.closest<HTMLElement>('#ltabs, #ctabs, .itabs, #gmodes, #cchan, #itabs') ||
-      act === 'stab' ||
-      act === 'rtree'
+      htmlButtonElement.closest<HTMLElement>('#ltabs, #ctabs, .itabs, #gmodes, #cchan, #itabs') ||
+      action === 'stab' ||
+      action === 'rtree'
     )
       return audio.ui('tab', 0.7);
-    if (act === 'trade')
-      return audio.ui(b.dataset.custom === 'buy' || +b.dataset.q! > 0 ? 'buy' : 'sell', 0.7);
-    if (act === 'sellall') return audio.ui('sell', 0.8);
+    if (action === 'trade')
+      return audio.ui(
+        htmlButtonElement.dataset.custom === 'buy' || +htmlButtonElement.dataset.q! > 0
+          ? 'buy'
+          : 'sell',
+        0.7,
+      );
+    if (action === 'sellall') return audio.ui('sell', 0.8);
     if (
-      act === 'buyship' ||
-      act === 'bm' ||
-      act === 'buystore' ||
-      (act === 'outfit' && +b.dataset.n! > 0) ||
-      (act === 'mat' && +b.dataset.q! > 0)
+      action === 'buyship' ||
+      action === 'bm' ||
+      action === 'buystore' ||
+      (action === 'outfit' && +htmlButtonElement.dataset.n! > 0) ||
+      (action === 'mat' && +htmlButtonElement.dataset.q! > 0)
     )
       return audio.ui('buy', 0.7);
-    if (act === 'outfit' && +b.dataset.n! < 0) return audio.ui('sell', 0.7);
-    if (act === 'accept' || act === 'arcopen' || b.id === 'storyyes')
+    if (action === 'outfit' && +htmlButtonElement.dataset.n! < 0) return audio.ui('sell', 0.7);
+    if (action === 'accept' || action === 'arcopen' || htmlButtonElement.id === 'storyyes')
       return audio.ui('accept', 0.7);
-    if (act === 'promote' || act === 'lower') return audio.ui('levelup', 0.6);
+    if (action === 'promote' || action === 'lower') return audio.ui('levelup', 0.6);
     audio.ui('click', 0.8);
   },
   true,
 );
-document.addEventListener('mouseover', (e) => {
-  const b =
-    (e.target as HTMLInputElement).closest &&
-    (e.target as HTMLInputElement).closest<HTMLElement>(
+document.addEventListener('mouseover', (mouseEvent) => {
+  const htmlElement =
+    (mouseEvent.target as HTMLInputElement).closest &&
+    (mouseEvent.target as HTMLInputElement).closest<HTMLElement>(
       '.btn:not(:disabled), button:not(:disabled), .chip',
     );
-  if (b && b !== G._hoverBtn) {
-    G._hoverBtn = b;
+  if (htmlElement && htmlElement !== clientGameState._hoverBtn) {
+    clientGameState._hoverBtn = htmlElement;
     audio.ui('hover', 0.18);
-  } else if (!b) G._hoverBtn = null;
+  } else if (!htmlElement) clientGameState._hoverBtn = null;
 });
-$('lpass').onkeydown = (e) => {
-  if (e.key === 'Enter') void login();
+elementById2('lpass').onkeydown = (keyboardEvent) => {
+  if (keyboardEvent.key === 'Enter') void login();
 };
 try {
-  $('lname').value = localStorage.getItem('rift.name') || '';
+  elementById2('lname').value = localStorage.getItem('rift.name') || '';
 } catch {}
 fetch('/api/status')
-  .then((r) => r.json())
-  .then((s) => {
-    setArtworkVersion(s.version);
-    $('lstat').textContent =
-      `${s.players} captain${s.players === 1 ? '' : 's'} in the Rift right now.`;
-    $('lver').textContent = 'Quantum Rift v' + s.version;
-    if (s.solo) soloLogin(s);
+  .then((response) => response.json())
+  .then((state) => {
+    setArtworkVersion(state.version);
+    elementById2('lstat').textContent =
+      `${state.players} captain${state.players === 1 ? '' : 's'} in the Rift right now.`;
+    elementById2('lver').textContent = 'Quantum Rift v' + state.version;
+    if (state.solo) soloLogin(state);
   })
   .catch(() => {});
 // solo mode: no passwords; pick a save slot, start a new captain, or load a save file
-function soloLogin(s: { slots: import('../server/game.ts').SaveSlotSummary[] }) {
-  G.solo = true;
+function soloLogin(state: { slots: import('../server/game.ts').SaveSlotSummary[] }) {
+  clientGameState.solo = true;
   document.body.classList.add('solo');
-  $('chatin').placeholder = 'Write a note in your log (Enter)';
-  $('lpass').classList.add('hidden');
-  $('lstat').textContent = 'Solo game: your saves live on this computer.';
-  $('lname').placeholder = 'New captain name';
-  $('lbtn').textContent = 'START NEW CAPTAIN';
-  const L = $('lslots');
-  L.classList.remove('hidden');
-  L.innerHTML =
+  elementById2('chatin').placeholder = 'Write a note in your log (Enter)';
+  elementById2('lpass').classList.add('hidden');
+  elementById2('lstat').textContent = 'Solo game: your saves live on this computer.';
+  elementById2('lname').placeholder = 'New captain name';
+  elementById2('lbtn').textContent = 'START NEW CAPTAIN';
+  const cachedElement = elementById2('lslots');
+  cachedElement.classList.remove('hidden');
+  cachedElement.innerHTML =
     `<div class="solotag">YOUR CAPTAINS</div>` +
-    (s.slots.length
-      ? s.slots
+    (state.slots.length
+      ? state.slots
           .map(
-            (c) =>
-              `<div class="slot"><div class="n"><b>${c.name.replace(/[<>&]/g, '')}</b><div class="dim small">${c.ship} · ${Math.round(c.credits).toLocaleString()} cr${c.ops ? ' · Station Tier ' + c.ops : ''} · ${c.sys}</div></div><a href="/api/export?name=${encodeURIComponent(c.name)}" download>EXPORT</a><button class="btn sm" data-slot="${c.name.replace(/"/g, '')}">PLAY</button></div>`,
+            (saveSlotSummary) =>
+              `<div class="slot"><div class="n"><b>${saveSlotSummary.name.replace(/[<>&]/g, '')}</b><div class="dim small">${saveSlotSummary.ship} · ${Math.round(saveSlotSummary.credits).toLocaleString()} cr${saveSlotSummary.ops ? ' · Station Tier ' + saveSlotSummary.ops : ''} · ${saveSlotSummary.sys}</div></div><a href="/api/export?name=${encodeURIComponent(saveSlotSummary.name)}" download>EXPORT</a><button class="btn sm" data-slot="${saveSlotSummary.name.replace(/"/g, '')}">PLAY</button></div>`,
           )
           .join('')
       : '<div class="dim small">No captains yet: name one above and start.</div>') +
     `<label class="btn sm" style="display:inline-flex;align-items:center;justify-content:center">LOAD A SAVE FILE<input type="file" id="limport" accept=".json" style="display:none"></label>`;
-  L.querySelectorAll<HTMLElement>('[data-slot]').forEach(
-    (b) =>
-      (b.onclick = () => {
-        $('lname').value = b.dataset.slot!;
+  cachedElement.querySelectorAll<HTMLElement>('[data-slot]').forEach(
+    (htmlElement) =>
+      (htmlElement.onclick = () => {
+        elementById2('lname').value = htmlElement.dataset.slot!;
         void login();
       }),
   );
-  $('limport').onchange = async (e) => {
-    const f = (e.target as HTMLInputElement).files![0];
-    if (!f) return;
-    const r = await fetch('/api/import', { method: 'POST', body: await f.text() });
-    const j = await r.json();
-    if (!j.ok) $('lerr').textContent = j.error;
+  elementById2('limport').onchange = async (event) => {
+    const file = (event.target as HTMLInputElement).files![0];
+    if (!file) return;
+    const response = await fetch('/api/import', { method: 'POST', body: await file.text() });
+    const innerIndex = await response.json();
+    if (!innerIndex.ok) elementById2('lerr').textContent = innerIndex.error;
     else location.reload();
   };
 }
 async function login() {
-  if ($('lbtn').disabled) return;
+  if (elementById2('lbtn').disabled) return;
   clearTimeout(reconnectTimer!);
   sessionEpoch++;
-  const previous = ws;
-  ws = null;
+  const previous = webSocket;
+  webSocket = null;
   previous?.close();
   audio.unlock();
-  const name = $('lname').value.trim(),
-    pass = G.solo ? '' : $('lpass').value;
-  $('lerr').textContent = '';
-  $('lbtn').disabled = true;
-  if (!G.A) {
-    const was = $('lstat').textContent;
-    $('lstat').textContent = 'Loading the galaxy...';
-    G.A = augmentAssets(await (await fetch('/shared/assets.json')).json());
-    initUI(G, send);
-    initCoop(G, send, { toast, ask, plot });
+  const name = elementById2('lname').value.trim(),
+    pass = clientGameState.solo ? '' : elementById2('lpass').value;
+  elementById2('lerr').textContent = '';
+  elementById2('lbtn').disabled = true;
+  if (!clientGameState.A) {
+    const textContent2 = elementById2('lstat').textContent;
+    elementById2('lstat').textContent = 'Loading the galaxy...';
+    clientGameState.A = augmentAssets(await (await fetch('/shared/assets.json')).json());
+    initUI(clientGameState, send);
+    initCoop(clientGameState, send, { toast, ask: showConfirmation, plot });
     // Capture only the clean initialized state; account data arrives over the socket later.
     sessionDefaults = Object.fromEntries(
-      Object.entries(G)
-        .filter(([k, v]) => !['A', 'opts', 'pal', 'views'].includes(k) && !(v instanceof Element))
-        .map(([k, v]) => [k, typeof v === 'function' ? v : structuredClone(v)]),
+      Object.entries(clientGameState)
+        .filter(
+          ([entryKey, value]) =>
+            !['A', 'opts', 'pal', 'views'].includes(entryKey) && !(value instanceof Element),
+        )
+        .map(([entryKey, value]) => [
+          entryKey,
+          typeof value === 'function' ? value : structuredClone(value),
+        ]),
     );
-    $('lstat').textContent = was;
+    elementById2('lstat').textContent = textContent2;
   } // the status line comes back if login fails
   try {
     localStorage.setItem('rift.name', name);
   } catch {}
-  G._cred = { name, pass };
-  G._kicked = false;
+  clientGameState._cred = { name, pass };
+  clientGameState._kicked = false;
   openSocket(0);
 }
 // a dropped connection reconnects on its own, signing back in as the same captain
 function openSocket(tries: number) {
-  if (!G._cred) return;
-  const { name, pass } = G._cred;
+  if (!clientGameState._cred) return;
+  const { name, pass } = clientGameState._cred;
   const epoch = sessionEpoch;
   const socket = new WebSocket(
     (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws',
   );
-  ws = socket;
-  const current = () => ws === socket && sessionEpoch === epoch;
+  webSocket = socket;
+  const current = () => webSocket === socket && sessionEpoch === epoch;
   socket.onopen = () => {
     if (current()) send({ t: 'hello', name, pass });
   };
-  socket.onmessage = (ev) => {
-    if (current()) onMessage(JSON.parse(ev.data));
+  socket.onmessage = (event) => {
+    if (current()) onMessage(JSON.parse(event.data));
   };
   socket.onclose = () => {
     if (!current()) return;
-    ws = null;
-    $('lbtn').disabled = false;
-    if (!G.you) return;
-    if (!G._kicked && tries < 30) {
+    webSocket = null;
+    elementById2('lbtn').disabled = false;
+    if (!clientGameState.you) return;
+    if (!clientGameState._kicked && tries < 30) {
       if (!tries) toast('Connection lost. Reconnecting...');
-      $('lstat').textContent = 'Reconnecting to the server...';
+      elementById2('lstat').textContent = 'Reconnecting to the server...';
       reconnectTimer = setTimeout(
         () => {
-          if (sessionEpoch === epoch && G._cred) openSocket(tries + 1);
+          if (sessionEpoch === epoch && clientGameState._cred) openSocket(tries + 1);
         },
         Math.min(8000, 1000 + tries * 700),
       );
       return;
     }
-    const reason = G._kicked
+    const reason = clientGameState._kicked
       ? 'Signed in somewhere else.'
       : 'Disconnected from the server. Sign in again when it is back.';
     // Terminal disconnect also returns a clean login, not a former captain's UI state.
     void logOut();
-    $('lerr').textContent = reason;
+    elementById2('lerr').textContent = reason;
   };
   socket.onerror = () => {
-    if (current() && !G.you) {
-      $('lerr').textContent = 'Could not reach the Quantum Rift server.';
-      $('lbtn').disabled = false;
+    if (current() && !clientGameState.you) {
+      elementById2('lerr').textContent = 'Could not reach the Quantum Rift server.';
+      elementById2('lbtn').disabled = false;
     }
   };
 }
-function onMessage(m: ServerMessage) {
-  if (hailUI.onMessage(m)) return;
-  switch (m.t) {
+function onMessage(serverMessage: ServerMessage) {
+  if (hailUI.onMessage(serverMessage)) return;
+  switch (serverMessage.t) {
     case 'error':
-      $('lerr').textContent = m.msg;
-      $('lbtn').disabled = false;
-      toast(m.msg);
-      if (/somewhere else/.test(m.msg)) G._kicked = true;
+      elementById2('lerr').textContent = serverMessage.msg;
+      elementById2('lbtn').disabled = false;
+      toast(serverMessage.msg);
+      if (/somewhere else/.test(serverMessage.msg)) clientGameState._kicked = true;
       break;
     case 'welcome':
-      G.contractPlan = null;
+      clientGameState.contractPlan = null;
       refineryUI.connected();
       audio.stopMusic();
       audio.preloadUi();
-      $('login').classList.add('hidden');
-      G.myName = m.name;
-      toast(G.you ? 'Reconnected.' : `Welcome to Quantum Rift, Captain ${m.name}.`);
+      elementById2('login').classList.add('hidden');
+      clientGameState.myName = serverMessage.name;
+      toast(
+        clientGameState.you
+          ? 'Reconnected.'
+          : `Welcome to Quantum Rift, Captain ${serverMessage.name}.`,
+      );
       break;
     case 'refineryFuelQuote':
-      G.refineryFuelQuote = m.quote;
-      if (G.landed && G.ltab === 'refinery') renderLanded();
+      clientGameState.refineryFuelQuote = serverMessage.quote;
+      if (clientGameState.landed && clientGameState.ltab === 'refinery') renderLanded();
       refreshCompanion();
       break;
     case 'refineryQuote':
-      if (refineryUI.receiveQuote(m.quote)) renderLanded();
+      if (refineryUI.receiveQuote(serverMessage.quote)) renderLanded();
       break;
     case 'refineryError':
-      refineryUI.failed(m.op);
-      if (G.landed && G.ltab === 'refinery') renderLanded();
+      refineryUI.failed(serverMessage.op);
+      if (clientGameState.landed && clientGameState.ltab === 'refinery') renderLanded();
       break;
     case 'refinery':
-      if (G.you) G.you!.refinery = m.data;
-      refineryUI.settled(m.op);
-      if (G.landed && G.ltab === 'refinery') renderLanded();
+      if (clientGameState.you) clientGameState.you!.refinery = serverMessage.data;
+      refineryUI.settled(serverMessage.op);
+      if (clientGameState.landed && clientGameState.ltab === 'refinery') renderLanded();
       refreshCompanion();
       break;
     case 'you': {
-      const first = !G.you;
-      G.you = m.d;
-      setUnlockedStations(G.you!.radioStations);
-      const restoredViews = G.views.load();
-      G.sys = m.d.sys;
+      const first = !clientGameState.you;
+      clientGameState.you = serverMessage.d;
+      setUnlockedStations(clientGameState.you!.radioStations);
+      const restoredViews = clientGameState.views.load();
+      clientGameState.sys = serverMessage.d.sys;
       coopYou(); // 2.6
-      for (const [w, n] of Object.entries(m.d.ship.ammo || {})) if (!G.view) G.ammo[w] = n;
-      if (G.landed) renderLanded();
+      for (const [width, count] of Object.entries(serverMessage.d.ship.ammo || {}))
+        if (!clientGameState.view) clientGameState.ammo[width] = count;
+      if (clientGameState.landed) renderLanded();
       refreshCompanion();
       refreshStores();
-      if (first || restoredViews) ctab(G.ctab || 'missions', false);
+      if (first || restoredViews) ctab(clientGameState.ctab || 'missions', false);
       renderTut();
       break;
     }
     case 'landed':
-      $('combatcontrols').classList.add('hidden');
-      G.combat = {};
-      if (!G.landed) audio.ui('dock', 0.8);
+      elementById2('combatcontrols').classList.add('hidden');
+      clientGameState.combat = {};
+      if (!clientGameState.landed) audio.ui('dock', 0.8);
       audio.setAmbience('station');
       setAuto(null);
-      G.landed = m;
-      G.sys = STELLARS[m.stellar]?.system || G.sys;
-      G.view = null;
-      G.ents.clear();
-      G.shots = [];
-      G.beams = [];
-      G.loot = [];
-      G.target = 0;
-      G.targetClearPending = false;
+      clientGameState.landed = serverMessage;
+      clientGameState.sys = STELLARS[serverMessage.stellar]?.system || clientGameState.sys;
+      clientGameState.view = null;
+      clientGameState.ents.clear();
+      clientGameState.shots = [];
+      clientGameState.beams = [];
+      clientGameState.loot = [];
+      clientGameState.target = 0;
+      clientGameState.targetClearPending = false;
       history = [];
       showLanded();
       refreshCompanion();
       audio.play(10110, 0, 0, 0.5);
       break;
     case 'space':
-      if (String(m.sys).startsWith('arena-') && !SYS[m.sys]) SYS[m.sys] = arenaSystem(m.sys);
+      if (String(serverMessage.sys).startsWith('arena-') && !systemsById[serverMessage.sys])
+        systemsById[serverMessage.sys] = arenaSystem(serverMessage.sys);
       {
-        const fromSpace = !!G.view && !G.landed;
-        if (G.landed) audio.ui('undock', 0.8);
+        const fromSpace = !!clientGameState.view && !clientGameState.landed;
+        if (clientGameState.landed) audio.ui('undock', 0.8);
         else if (fromSpace) {
           audio.ui('arrive', 0.8);
-          G._arriveT = performance.now();
-          G._jumping = false;
+          clientGameState._arriveT = performance.now();
+          clientGameState._jumping = false;
         }
         audio.setAmbience('space');
-        const go = G.autoRoute;
-        G.autoKeep = true;
+        const autoRoute2 = clientGameState.autoRoute;
+        clientGameState.autoKeep = true;
         setAuto(null);
-        G.autoRoute = go;
+        clientGameState.autoRoute = autoRoute2;
       }
-      G.landed = null;
+      clientGameState.landed = null;
       hideLanded();
-      G.sys = m.sys;
-      G.myId = m.id;
-      G.view = null;
-      G.ents.clear();
-      G.shots = [];
-      G.beams = [];
+      clientGameState.sys = serverMessage.sys;
+      clientGameState.myId = serverMessage.id;
+      clientGameState.view = null;
+      clientGameState.ents.clear();
+      clientGameState.shots = [];
+      clientGameState.beams = [];
       history = [];
-      G.rocks = (m.rocks || []).map(([id, x, y, r, ore, hp]) => ({ id, x, y, r, ore, hp }));
-      G.rockById = new Map(G.rocks.map((k) => [k.id, k]));
-      G.miningTarget = 0;
-      G.miningRocks = null;
-      G.mining = null;
-      G.miningPressure = null;
-      G.miningHazards = [];
-      receiveMining(G, m);
-      if (G.route.length && G.route[0] === m.sys) G.route.shift();
+      clientGameState.rocks = (serverMessage.rocks || []).map(
+        ([identifier, positionX, positionY, radius, oreCommodity, hullPoints]) => ({
+          id: identifier,
+          x: positionX,
+          y: positionY,
+          r: radius,
+          ore: oreCommodity,
+          hp: hullPoints,
+        }),
+      );
+      clientGameState.rockById = new Map(
+        clientGameState.rocks.map((entryKey) => [entryKey.id, entryKey]),
+      );
+      clientGameState.miningTarget = 0;
+      clientGameState.miningRocks = null;
+      clientGameState.mining = null;
+      clientGameState.miningPressure = null;
+      clientGameState.miningHazards = [];
+      receiveMining(clientGameState, serverMessage);
+      if (clientGameState.route.length && clientGameState.route[0] === serverMessage.sys)
+        clientGameState.route.shift();
       drawMini();
-      if (G.autoRoute && G.route.length) {
+      if (clientGameState.autoRoute && clientGameState.route.length) {
         const epoch = sessionEpoch;
         setTimeout(() => {
-          if (epoch === sessionEpoch && G.autoRoute && G.view && G.route.length && !G.auto) {
-            G.autoKeep = true;
-            setAuto({ mode: 'jump' }, `Autopilot: next jump to ${SYS[G.route[0]].name}.`);
+          if (
+            epoch === sessionEpoch &&
+            clientGameState.autoRoute &&
+            clientGameState.view &&
+            clientGameState.route.length &&
+            !clientGameState.auto
+          ) {
+            clientGameState.autoKeep = true;
+            setAuto(
+              { mode: 'jump' },
+              `Autopilot: next jump to ${systemsById[clientGameState.route[0]].name}.`,
+            );
           }
         }, 1500);
-      } else G.autoRoute = false;
+      } else clientGameState.autoRoute = false;
       {
-        const an = G.world && G.world.anomalies && G.world.anomalies[m.sys];
-        if (an && ANOMALIES[an])
-          toast(`${ANOMALIES[an].icon} ${ANOMALIES[an].name}: ${ANOMALIES[an].desc}`);
+        const angle =
+          clientGameState.world &&
+          clientGameState.world.anomalies &&
+          clientGameState.world.anomalies[serverMessage.sys];
+        if (angle && ANOMALIES[angle])
+          toast(`${ANOMALIES[angle].icon} ${ANOMALIES[angle].name}: ${ANOMALIES[angle].desc}`);
       }
-      G.navStellar = SYS[m.sys].stellars.find((p) => p.svc!.includes('L'))
-        ? SYS[m.sys].stellars.find((p) => p.svc!.includes('L'))!.id
+      clientGameState.navStellar = systemsById[serverMessage.sys].stellars.find((rawStellarBody) =>
+        rawStellarBody.svc!.includes('L'),
+      )
+        ? systemsById[serverMessage.sys].stellars.find((rawStellarBody) =>
+            rawStellarBody.svc!.includes('L'),
+          )!.id
         : null;
       break;
     case 'scene':
-      if (G.landed && m.sys === G.sys) onSnap(m);
+      if (clientGameState.landed && serverMessage.sys === clientGameState.sys)
+        onSnap(serverMessage);
       break;
     case 'snap':
-      if (!G.landed) onSnap(m);
+      if (!clientGameState.landed) onSnap(serverMessage);
       break;
     case 'toast':
       // A refused/invalid landing must release the pending autopilot rather than
       // leave a captain parked indefinitely or repeatedly request permission.
       if (
-        G.auto?.mode === 'land' &&
-        G.auto.sent &&
+        clientGameState.auto?.mode === 'land' &&
+        clientGameState.auto.sent &&
         /Too far from |Slow down to land|refuses you permission to land|Your ship is disabled/.test(
-          m.msg,
+          serverMessage.msg,
         )
       )
         setAuto(null);
-      toast(m.msg);
+      toast(serverMessage.msg);
       break;
     case 'armadaContract':
-      G.contractPlan = m.plan;
+      clientGameState.contractPlan = serverMessage.plan;
       drawMini();
       break;
     case 'social':
@@ -924,47 +990,59 @@ function onMessage(m: ServerMessage) {
     case 'trade2':
     case 'follow':
     case 'rally':
-      onCoopMsg(m);
-      if (m.t === 'social' && G.landed && G.ltab === 'jobs') renderLanded();
+      onCoopMsg(serverMessage);
+      if (serverMessage.t === 'social' && clientGameState.landed && clientGameState.ltab === 'jobs')
+        renderLanded();
       break; // friends, messages, trades, follow the leader
     case 'paused':
-      G.paused = m.on;
-      $('pausebox').classList.toggle('hidden', !m.on || G.quitting);
+      clientGameState.paused = serverMessage.on;
+      elementById2('pausebox').classList.toggle(
+        'hidden',
+        !serverMessage.on || clientGameState.quitting,
+      );
       break;
     case 'chat':
-      chatLine(m);
-      receiveShipChat(G, m);
-      if (m.from && m.from !== G.myName) audio.ui('chat', 0.7);
+      chatLine(serverMessage);
+      receiveShipChat(clientGameState, serverMessage);
+      if (serverMessage.from && serverMessage.from !== clientGameState.myName)
+        audio.ui('chat', 0.7);
       break;
     case 'story':
-      showStory(m);
+      showStory(serverMessage);
       break;
     case 'hail':
-      if ($('hailbox').classList.contains('hidden')) audio.ui('hail');
-      showHail(m);
+      if (elementById2('hailbox').classList.contains('hidden')) audio.ui('hail');
+      showHail(serverMessage);
       break; // 1.1
     case 'order':
-      G.order = m.o;
+      clientGameState.order = serverMessage.o;
       break;
     case 'rivals':
-      G.rivals = m.list;
+      clientGameState.rivals = serverMessage.list;
       // Rivals only affect Captains; preserve in-progress gestures on other tabs.
-      if (!$('infobox').classList.contains('hidden') && G.itab === 'captains') renderInfo();
+      if (
+        !elementById2('infobox').classList.contains('hidden') &&
+        clientGameState.itab === 'captains'
+      )
+        renderInfo();
       break;
     case 'world': {
       // a new trouble close by gets a beacon and a line of news
-      const was = G.world && G.world.states;
-      G.world = m;
+      const previous = clientGameState.world && clientGameState.world.states;
+      clientGameState.world = serverMessage;
       drawMini();
       refreshCompanion();
-      if (was && m.states && G.sys)
-        for (const [sys, st] of Object.entries(m.states))
-          if (!was[sys] && SYS[sys]) {
-            const r = sys === G.sys ? [] : route(SYS, G.sys!, sys);
-            if (r && r.length <= 3) {
+      if (previous && serverMessage.states && clientGameState.sys)
+        for (const [starSystem, livingPayloadState] of Object.entries(serverMessage.states))
+          if (!previous[starSystem] && systemsById[starSystem]) {
+            const radius =
+              starSystem === clientGameState.sys
+                ? []
+                : route(systemsById, clientGameState.sys!, starSystem);
+            if (radius && radius.length <= 3) {
               audio.ui('state', 0.6);
               toast(
-                `News: ${STATES[st.k] ? STATES[st.k].name.toLowerCase() : 'trouble'} in ${SYS[sys].name}${r.length ? `, ${r.length} jump${r.length > 1 ? 's' : ''} away` : ''}.`,
+                `News: ${STATES[livingPayloadState.k] ? STATES[livingPayloadState.k].name.toLowerCase() : 'trouble'} in ${systemsById[starSystem].name}${radius.length ? `, ${radius.length} jump${radius.length > 1 ? 's' : ''} away` : ''}.`,
               );
               break;
             }
@@ -972,67 +1050,76 @@ function onMessage(m: ServerMessage) {
       break;
     }
     case 'arena':
-      if (m.id) {
-        SYS[m.id] = SYS[m.id] || arenaSystem(m.id);
-        G.arena = m;
-      } else G.arena = null;
+      if (serverMessage.id) {
+        systemsById[serverMessage.id] =
+          systemsById[serverMessage.id] || arenaSystem(serverMessage.id);
+        clientGameState.arena = serverMessage;
+      } else clientGameState.arena = null;
       renderTut();
       break;
     case 'boards':
-      G.boards = G.boards || {};
-      G.boards[m.cat] = m.list;
-      if (G.landed) renderLanded();
+      clientGameState.boards = clientGameState.boards || {};
+      clientGameState.boards[serverMessage.cat] = serverMessage.list;
+      if (clientGameState.landed) renderLanded();
       break;
     case 'profile':
-      G.prof = m.p;
-      if (!m.p) toast('No captain by that name.');
-      if (G.landed) renderLanded();
+      clientGameState.prof = serverMessage.p;
+      if (!serverMessage.p) toast('No captain by that name.');
+      if (clientGameState.landed) renderLanded();
       break;
     case 'notify':
       if (
-        G.opts.notify &&
+        clientGameState.opts.notify &&
         document.hidden &&
         window.Notification &&
         Notification.permission === 'granted'
       ) {
         try {
-          new Notification('Quantum Rift: ' + m.title, {
-            body: m.body,
+          new Notification('Quantum Rift: ' + serverMessage.title, {
+            body: serverMessage.body,
             icon: 'assets/stations/5.png',
           });
         } catch {}
       }
       break;
     case 'sites':
-      G.sites = m.sites;
-      if (G.landed) showLanded();
+      clientGameState.sites = serverMessage.sites;
+      if (clientGameState.landed) showLanded();
       refreshCompanion();
       break;
     case 'dead':
       setAuto(null);
-      showDead(m);
+      showDead(serverMessage);
       audio.play(10115);
       break;
   }
 }
 
 const storyQ: StoryMessage[] = [];
-function showStory(m: StoryMessage | undefined) {
-  if (!G.you || !m) return;
-  if (!$('storybox').classList.contains('hidden')) {
-    storyQ.push(m);
+function showStory(storyMessage: StoryMessage | undefined) {
+  if (!clientGameState.you || !storyMessage) return;
+  if (!elementById2('storybox').classList.contains('hidden')) {
+    storyQ.push(storyMessage);
     return;
   } // one pop-up at a time: the rest wait their turn
-  $('storyt').textContent = m.title;
-  $('storyx').textContent = m.text;
-  document.querySelector<HTMLElement>('#storybox .storytag')!.textContent = m.tag || 'STORY';
-  $('storyb').innerHTML = m.done
+  elementById2('storyt').textContent = storyMessage.title;
+  elementById2('storyx').textContent = storyMessage.text;
+  document.querySelector<HTMLElement>('#storybox .storytag')!.textContent =
+    storyMessage.tag || 'STORY';
+  elementById2('storyb').innerHTML = storyMessage.done
     ? '<button class="btn" id="storyok">CONTINUE</button>'
-    : `<button class="btn sm" id="storyno">${m.ref || 'Not now'}</button><button class="btn" id="storyyes">${m.acc || 'Accept'}</button>`;
-  $('storybox').classList.remove('hidden');
-  audio.ui(/QUEST|SIDE STORY/.test(m.tag || '') ? 'quest' : m.done ? 'complete' : 'ping', 0.7); // story beats have their own sting
+    : `<button class="btn sm" id="storyno">${storyMessage.ref || 'Not now'}</button><button class="btn" id="storyyes">${storyMessage.acc || 'Accept'}</button>`;
+  elementById2('storybox').classList.remove('hidden');
+  audio.ui(
+    /QUEST|SIDE STORY/.test(storyMessage.tag || '')
+      ? 'quest'
+      : storyMessage.done
+        ? 'complete'
+        : 'ping',
+    0.7,
+  ); // story beats have their own sting
   const close = () => {
-    $('storybox').classList.add('hidden');
+    elementById2('storybox').classList.add('hidden');
     if (storyQ.length) {
       const epoch = sessionEpoch;
       setTimeout(() => {
@@ -1040,188 +1127,300 @@ function showStory(m: StoryMessage | undefined) {
       }, 150);
     }
   };
-  if (m.done) $('storyok').onclick = close;
+  if (storyMessage.done) elementById2('storyok').onclick = close;
   else {
-    $('storyno').onclick = close;
-    $('storyyes').onclick = () => {
-      send(m.arc ? { t: 'arcacc', fac: m.arc } : { t: 'storyacc', id: m.id });
+    elementById2('storyno').onclick = close;
+    elementById2('storyyes').onclick = () => {
+      send(
+        storyMessage.arc
+          ? { t: 'arcacc', fac: storyMessage.arc }
+          : { t: 'storyacc', id: storyMessage.id },
+      );
       close();
     };
   }
 }
-window.addEventListener('rift-story', (e) => showStory((e as CustomEvent).detail));
-window.addEventListener('rift-toast-sound', (e) =>
+window.addEventListener('rift-story', (event) => showStory((event as CustomEvent).detail));
+window.addEventListener('rift-toast-sound', (event) =>
   audio.ui(
-    (e as CustomEvent).detail,
-    (e as CustomEvent).detail === 'complete' || (e as CustomEvent).detail === 'alert' ? 0.8 : 0.55,
+    (event as CustomEvent).detail,
+    (event as CustomEvent).detail === 'complete' || (event as CustomEvent).detail === 'alert'
+      ? 0.8
+      : 0.55,
   ),
 );
 setInterval(() => {
-  if (G.you && G.ctab === 'missions') drawMini();
+  if (clientGameState.you && clientGameState.ctab === 'missions') drawMini();
 }, 10000); // keeps rush countdowns current
 // ------------------------------------------------------------------ snapshots and prediction
-function onSnap(m: SnapshotMessage) {
-  receiveMining(G, m);
-  G.combat = m.combat || {};
-  G.formation = !!m.formation;
+function onSnap(snapshotMessage: SnapshotMessage) {
+  receiveMining(clientGameState, snapshotMessage);
+  clientGameState.combat = snapshotMessage.combat || {};
+  clientGameState.formation = !!snapshotMessage.formation;
   shipFunctions.refresh();
-  $('combatstatus').textContent =
+  elementById2('combatstatus').textContent =
     ' · ' +
-    (G.combat.status || 'OFF') +
-    (G.combat.target ? ' · Target #' + G.combat.target : '') +
-    (G.combat.reason ? ' · ' + G.combat.reason : '');
-  $('combatassist').textContent = G.combat.on ? 'ASSIST ON' : 'COMBAT ASSIST';
-  $('combatdelegate').checked = !!G.combat.consent;
-  $('combatcoordinate').checked = !!G.combat.coordinating;
-  const now = performance.now();
-  _lastSnapT = now;
-  const [id, ack, x, y, vx, vy, a, sh, ar, fu, tgt, ammo] = (m.me || []) as NonNullable<
-    SnapshotMessage['me']
-  >;
-  if (m.me) G.myId = id;
+    (clientGameState.combat.status || 'OFF') +
+    (clientGameState.combat.target ? ' · Target #' + clientGameState.combat.target : '') +
+    (clientGameState.combat.reason ? ' · ' + clientGameState.combat.reason : '');
+  elementById2('combatassist').textContent = clientGameState.combat.on
+    ? 'ASSIST ON'
+    : 'COMBAT ASSIST';
+  elementById2('combatdelegate').checked = !!clientGameState.combat.consent;
+  elementById2('combatcoordinate').checked = !!clientGameState.combat.coordinating;
+  const currentTime = performance.now();
+  _lastSnapT = currentTime;
+  const [
+    identifier,
+    acknowledgement,
+    positionX,
+    positionY,
+    velocityX,
+    velocityY,
+    firstValue,
+    ship,
+    armor2,
+    fuel2,
+    target2,
+    ammo,
+  ] = (snapshotMessage.me || []) as NonNullable<SnapshotMessage['me']>;
+  if (snapshotMessage.me) clientGameState.myId = identifier;
   const seen = new Set();
-  for (const r of m.ships) {
-    const [eid, hull, ex, ey, ea, evx, evy, fl, esh, ear, fac, name, owner, pw] = r;
-    seen.add(eid);
-    let e = G.ents.get(eid);
-    if (!e) {
-      e = { id: eid, rx: ex, ry: ey } as RenderEntity;
-      G.ents.set(eid, e);
-    }
-    Object.assign(e, {
+  for (const ship3 of snapshotMessage.ships) {
+    const [
+      entityId,
       hull,
-      x: ex,
-      y: ey,
-      a: ea / 1000,
-      vx: evx,
-      vy: evy,
-      fl,
-      sh: esh,
-      ar: ear,
-      fac,
+      velocityErrorX,
+      velocityErrorY,
+      entityAngle,
+      entityVelocityX,
+      entityVelocityY,
+      flags,
+      entityShield,
+      entityArmor,
+      faction,
       name,
       owner,
-      pw,
-      t: now,
+      panelWidth,
+    ] = ship3;
+    seen.add(entityId);
+    let renderEntity = clientGameState.ents.get(entityId);
+    if (!renderEntity) {
+      renderEntity = { id: entityId, rx: velocityErrorX, ry: velocityErrorY } as RenderEntity;
+      clientGameState.ents.set(entityId, renderEntity);
+    }
+    Object.assign(renderEntity, {
+      hull,
+      x: velocityErrorX,
+      y: velocityErrorY,
+      a: entityAngle / 1000,
+      vx: entityVelocityX,
+      vy: entityVelocityY,
+      fl: flags,
+      sh: entityShield,
+      ar: entityArmor,
+      fac: faction,
+      name,
+      owner,
+      pw: panelWidth,
+      t: currentTime,
     });
-    if (Math.hypot(e.rx - ex, e.ry - ey) > 400) {
-      e.rx = ex;
-      e.ry = ey;
+    if (Math.hypot(renderEntity.rx - velocityErrorX, renderEntity.ry - velocityErrorY) > 400) {
+      renderEntity.rx = velocityErrorX;
+      renderEntity.ry = velocityErrorY;
     }
   }
   // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
-  for (const k of [...G.ents.keys()]) if (!seen.has(k)) G.ents.delete(k);
-  G.shots = m.shots.map(([sx, sy, svx, svy, w]) => ({ x: sx, y: sy, vx: svx, vy: svy, w, t: now }));
-  G.beams = m.beams.map(([bid, ba, len, w]) => ({ id: bid, a: ba, len, w }));
-  G.loot = m.loot.map(([lid, lx, ly, kind]) => ({ id: lid, x: lx, y: ly, kind }));
+  for (const entryKey of [...clientGameState.ents.keys()])
+    if (!seen.has(entryKey)) clientGameState.ents.delete(entryKey);
+  clientGameState.shots = snapshotMessage.shots.map(
+    ([screenX, screenY, smoothedVelocityX, smoothedVelocityY, width]) => ({
+      x: screenX,
+      y: screenY,
+      vx: smoothedVelocityX,
+      vy: smoothedVelocityY,
+      w: width,
+      t: currentTime,
+    }),
+  );
+  clientGameState.beams = snapshotMessage.beams.map(([bidPrice, bankAngle, length, width]) => ({
+    id: bidPrice,
+    a: bankAngle,
+    len: length,
+    w: width,
+  }));
+  clientGameState.loot = snapshotMessage.loot.map(([leaderId, localX, localY, kind]) => ({
+    id: leaderId,
+    x: localX,
+    y: localY,
+    kind,
+  }));
   // Observer snapshots never create a controllable ship.
-  if (!m.me) return;
-  for (const [w, n] of ammo) G.ammo[w] = n;
+  if (!snapshotMessage.me) return;
+  for (const [width, count] of ammo) clientGameState.ammo[width] = count;
   // A snapshot already in flight may still contain the target we just cleared.
   // Keep the explicit clear until the server confirms it, rather than restoring
   // a stale target which subsequent zero-target snapshots would otherwise retain.
-  if (G.targetClearPending && !tgt) G.targetClearPending = false;
-  if (!G.targetClearPending && (!G.target || !G.ents.has(G.target)))
-    G.target = tgt && G.ents.has(tgt) ? tgt : G.target && !G.ents.has(G.target) ? 0 : G.target;
-  // reconcile own ship: take the server state, replay inputs it has not seen yet
-  const me0 = G.ents.get(id);
-  if (me0) G.myHull = me0.hull;
-  const v = G.view || ({ id, rx: x, ry: y, ox: 0, oy: 0 } as ClientView);
-  const prevX = G.view ? G.view.x : x,
-    prevY = G.view ? G.view.y : y;
-  Object.assign(v, { id, x, y, vx, vy, a, shield: sh, armor: ar, fuel: fu, fl: me0 ? me0.fl : 0 });
-  history = history.filter((h) => h.seq > ack);
-  const st = G.you && G.you!.shipStats;
+  if (clientGameState.targetClearPending && !target2) clientGameState.targetClearPending = false;
   if (
-    st &&
-    me0 &&
-    !(me0.fl & 8) &&
-    !(G.combat.on || G.combat.delegated) &&
-    !(G.formation && !G.auto)
+    !clientGameState.targetClearPending &&
+    (!clientGameState.target || !clientGameState.ents.has(clientGameState.target))
   )
-    for (const h of history) step(v, st!, h.inp);
-  if (G.view) {
-    v.ox += prevX - v.x;
-    v.oy += prevY - v.y;
-    if (Math.hypot(v.ox, v.oy) > 300) v.ox = v.oy = 0;
+    clientGameState.target =
+      target2 && clientGameState.ents.has(target2)
+        ? target2
+        : clientGameState.target && !clientGameState.ents.has(clientGameState.target)
+          ? 0
+          : clientGameState.target;
+  // reconcile own ship: take the server state, replay inputs it has not seen yet
+  const renderEntity2 = clientGameState.ents.get(identifier);
+  if (renderEntity2) clientGameState.myHull = renderEntity2.hull;
+  const clientView =
+    clientGameState.view ||
+    ({ id: identifier, rx: positionX, ry: positionY, ox: 0, oy: 0 } as ClientView);
+  const previousX = clientGameState.view ? clientGameState.view.x : positionX,
+    previousY = clientGameState.view ? clientGameState.view.y : positionY;
+  Object.assign(clientView, {
+    id: identifier,
+    x: positionX,
+    y: positionY,
+    vx: velocityX,
+    vy: velocityY,
+    a: firstValue,
+    shield: ship,
+    armor: armor2,
+    fuel: fuel2,
+    fl: renderEntity2 ? renderEntity2.fl : 0,
+  });
+  history = history.filter((height) => height.seq > acknowledgement);
+  const computedShipStats = clientGameState.you && clientGameState.you!.shipStats;
+  if (
+    computedShipStats &&
+    renderEntity2 &&
+    !(renderEntity2.fl & 8) &&
+    !(clientGameState.combat.on || clientGameState.combat.delegated) &&
+    !(clientGameState.formation && !clientGameState.auto)
+  )
+    for (const history2 of history) step(clientView, computedShipStats!, history2.inp);
+  if (clientGameState.view) {
+    clientView.ox += previousX - clientView.x;
+    clientView.oy += previousY - clientView.y;
+    if (Math.hypot(clientView.ox, clientView.oy) > 300) clientView.ox = clientView.oy = 0;
   }
-  G.view = v;
+  clientGameState.view = clientView;
   {
     // 2.0 audio feedback: low shields, target lock, jump
-    const st2 = G.you && G.you!.shipStats,
-      shp = st2 ? v.shield / Math.max(1, st2.shield) : 1;
-    if (shp < 0.25 && !G._lowSh && v.armor < (st2 ? st2.armor : 1)) {
-      G._lowSh = true;
+    const computedShipStats = clientGameState.you && clientGameState.you!.shipStats,
+      shieldPercentage = computedShipStats
+        ? clientView.shield / Math.max(1, computedShipStats.shield)
+        : 1;
+    if (
+      shieldPercentage < 0.25 &&
+      !clientGameState._lowSh &&
+      clientView.armor < (computedShipStats ? computedShipStats.armor : 1)
+    ) {
+      clientGameState._lowSh = true;
       audio.ui('lowshield');
-    } else if (shp > 0.45) G._lowSh = false;
-    if (G.target && G.target !== G._lastTgt) audio.ui('lock', 0.7);
-    G._lastTgt = G.target;
-    if (v.fl & 8 && !G._jumping) {
-      G._jumping = true;
-      G._jumpStart = performance.now();
-      audio.ui(G.you && G.you!.shipStats && G.you!.shipStats.jumpFast ? 'jumpfast' : 'jump', 0.9);
-    } else if (!(v.fl & 8) && G._jumping && performance.now() - G._jumpStart! > 2500)
-      G._jumping = false; // the jump event usually starts it first
-    if (G._lastAr != null && v.armor < G._lastAr - 0.5) {
-      G._hurtT = performance.now();
+    } else if (shieldPercentage > 0.45) clientGameState._lowSh = false;
+    if (clientGameState.target && clientGameState.target !== clientGameState._lastTgt)
+      audio.ui('lock', 0.7);
+    clientGameState._lastTgt = clientGameState.target;
+    if (clientView.fl & 8 && !clientGameState._jumping) {
+      clientGameState._jumping = true;
+      clientGameState._jumpStart = performance.now();
+      audio.ui(
+        clientGameState.you &&
+          clientGameState.you!.shipStats &&
+          clientGameState.you!.shipStats.jumpFast
+          ? 'jumpfast'
+          : 'jump',
+        0.9,
+      );
+    } else if (
+      !(clientView.fl & 8) &&
+      clientGameState._jumping &&
+      performance.now() - clientGameState._jumpStart! > 2500
+    )
+      clientGameState._jumping = false; // the jump event usually starts it first
+    if (clientGameState._lastAr != null && clientView.armor < clientGameState._lastAr - 0.5) {
+      clientGameState._hurtT = performance.now();
     }
-    G._lastAr = v.armor;
+    clientGameState._lastAr = clientView.armor;
   }
-  for (const ev of m.ev) onEvent(ev);
+  for (const snapshotEvent of snapshotMessage.ev) onEvent(snapshotEvent);
 }
-function onEvent(ev: SnapshotEvent) {
-  const me = G.view,
-    dx = me ? ev[1] - me.x : 0,
-    dy = me ? ev[2] - me.y : 0;
-  switch (ev[0]) {
+function onEvent(snapshotEvent: SnapshotEvent) {
+  const clientView = clientGameState.view,
+    deltaX = clientView ? snapshotEvent[1] - clientView.x : 0,
+    deltaY = clientView ? snapshotEvent[2] - clientView.y : 0;
+  switch (snapshotEvent[0]) {
     case 'snd':
-      audio.play(ev[1], ev[2] - (me ? me.x : 0), ev[3] - (me ? me.y : 0), 0.55);
+      audio.play(
+        snapshotEvent[1],
+        snapshotEvent[2] - (clientView ? clientView.x : 0),
+        snapshotEvent[3] - (clientView ? clientView.y : 0),
+        0.55,
+      );
       break;
     case 'boom': {
-      boom(ev[1], ev[2], ev[3]);
-      audio.play(ev[3] > 120 ? 10115 : 241, dx, dy, 0.8);
-      const d = Math.hypot(dx, dy);
-      if (d < 900) addShake(Math.min(10, ev[3] / 25) * (1 - d / 900));
+      boom(snapshotEvent[1], snapshotEvent[2], snapshotEvent[3]);
+      audio.play(snapshotEvent[3] > 120 ? 10115 : 241, deltaX, deltaY, 0.8);
+      const distance = Math.hypot(deltaX, deltaY);
+      if (distance < 900) addShake(Math.min(10, snapshotEvent[3] / 25) * (1 - distance / 900));
       break;
     }
     case 'hit': {
-      spark(ev[1], ev[2], weaponColor(G.A!.weapons[ev[3]]));
-      if (ev.length > 4) {
-        const [, x, y, , tid, dmg, src, sh] = ev;
-        if (sh) shieldHit(tid, x, y);
-        if (G.opts.dmg && (src === G.myId || tid === G.myId))
-          dmgNumber(x, y - 10, dmg, src === G.myId);
-        if (tid === G.myId) addShake(Math.min(4, 1 + dmg / 60));
+      spark(
+        snapshotEvent[1],
+        snapshotEvent[2],
+        weaponColor(clientGameState.A!.weapons[snapshotEvent[3]]),
+      );
+      if (snapshotEvent.length > 4) {
+        const [, positionX, positionY, , targetId, damage, source, ship] = snapshotEvent;
+        if (ship) shieldHit(targetId, positionX, positionY);
+        if (
+          clientGameState.opts.dmg &&
+          (source === clientGameState.myId || targetId === clientGameState.myId)
+        )
+          dmgNumber(positionX, positionY - 10, damage, source === clientGameState.myId);
+        if (targetId === clientGameState.myId) addShake(Math.min(4, 1 + damage / 60));
       }
       break;
     }
     case 'blast':
-      blast(ev[1], ev[2], ev[3]);
+      blast(snapshotEvent[1], snapshotEvent[2], snapshotEvent[3]);
       break;
     case 'rock': {
-      const k = G.rockById && G.rockById.get(ev[1]);
-      if (k) k.hp = ev[2];
+      const entryKey = clientGameState.rockById && clientGameState.rockById.get(snapshotEvent[1]);
+      if (entryKey) entryKey.hp = snapshotEvent[2];
       break;
     }
     case 'flash':
-      flash(ev[1], ev[2]);
-      if (Math.hypot(dx, dy) > 80) audio.play('jumpfar', dx, dy, 0.8);
+      flash(snapshotEvent[1], snapshotEvent[2]);
+      if (Math.hypot(deltaX, deltaY) > 80) audio.play('jumpfar', deltaX, deltaY, 0.8);
       break; // your own jump has its own sound
     case 'jump':
-      if (ev[1] === G.myId && !G._jumping) {
-        G._jumping = true;
-        G._jumpStart = performance.now();
-        audio.ui(G.you && G.you!.shipStats && G.you!.shipStats.jumpFast ? 'jumpfast' : 'jump', 0.9);
+      if (snapshotEvent[1] === clientGameState.myId && !clientGameState._jumping) {
+        clientGameState._jumping = true;
+        clientGameState._jumpStart = performance.now();
+        audio.ui(
+          clientGameState.you &&
+            clientGameState.you!.shipStats &&
+            clientGameState.you!.shipStats.jumpFast
+            ? 'jumpfast'
+            : 'jump',
+          0.9,
+        );
       }
       break; // the spool starts the moment the server begins your jump
     case 'pickup':
       audio.play(10112, 0, 0, 0.6);
       break;
     case 'flee':
-      if (ev[1] === G.target) {
-        const e = G.ents.get(ev[1]);
+      if (snapshotEvent[1] === clientGameState.target) {
+        const renderEntity = clientGameState.ents.get(snapshotEvent[1]);
         toast(
-          `${(e && e.name) || (e && G.A!.ships[e.hull] ? 'The ' + G.A!.ships[e.hull].name : 'Your target')} breaks off and runs for the jump point!`,
+          `${(renderEntity && renderEntity.name) || (renderEntity && clientGameState.A!.ships[renderEntity.hull] ? 'The ' + clientGameState.A!.ships[renderEntity.hull].name : 'Your target')} breaks off and runs for the jump point!`,
         );
       }
       break; // 2.4
@@ -1233,79 +1432,85 @@ const typing = () =>
   document.activeElement &&
   (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) ||
     (document.activeElement as HTMLElement).isContentEditable);
-window.addEventListener('keydown', (e) => {
+window.addEventListener('keydown', (keyboardEvent) => {
   if (
-    (e.key === 'Enter' || e.key === ' ') &&
-    !$('storybox').classList.contains('hidden') &&
-    $('storyok')
+    (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') &&
+    !elementById2('storybox').classList.contains('hidden') &&
+    elementById2('storyok')
   ) {
-    e.preventDefault();
-    $('storyok').click();
+    keyboardEvent.preventDefault();
+    elementById2('storyok').click();
     return;
   } // Enter or Space continues a story pop-up
   // Native activation/focus keys belong to the focused control. Steering and
   // remapped actions still work after clicking a HUD button; separators consume
   // only their own sizing keys locally.
   if (
-    ['Tab', 'Enter', ' '].includes(e.key) &&
-    (e.target as HTMLInputElement).closest?.(
+    ['Tab', 'Enter', ' '].includes(keyboardEvent.key) &&
+    (keyboardEvent.target as HTMLInputElement).closest?.(
       'button, summary, a, [role="button"], [role="separator"]',
     )
   )
     return;
-  if (e.key === 'Enter' && G.you) {
-    const c = $('chatin');
-    if (document.activeElement === c) {
+  if (keyboardEvent.key === 'Enter' && clientGameState.you) {
+    const inputControl = elementById2('chatin');
+    if (document.activeElement === inputControl) {
       sendChat();
-      c.blur();
+      inputControl.blur();
     } else if (!typing()) {
-      c.focus();
+      inputControl.focus();
     }
-    e.preventDefault();
+    keyboardEvent.preventDefault();
     return;
   }
   if (typing()) {
-    if (e.key === 'Escape') (document.activeElement as HTMLElement).blur();
+    if (keyboardEvent.key === 'Escape') (document.activeElement as HTMLElement).blur();
     return;
   }
-  if (!G.you) return;
+  if (!clientGameState.you) return;
   audio.unlock();
-  keys[e.code] = true;
+  keys[keyboardEvent.code] = true;
   if (
-    ['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) ||
-    actionOf(e.code)
+    ['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(
+      keyboardEvent.code,
+    ) ||
+    actionOf(keyboardEvent.code)
   )
-    e.preventDefault();
-  if (e.repeat) return;
-  if (e.code === 'Escape') {
+    keyboardEvent.preventDefault();
+  if (keyboardEvent.repeat) return;
+  if (keyboardEvent.code === 'Escape') {
     closeMap();
     setTarget(0);
     return;
   }
-  if (e.code === 'KeyO') {
+  if (keyboardEvent.code === 'KeyO') {
     openOpts();
     return;
   }
-  if (G.landed && actionOf(e.code) === 'land' && !$('depart').disabled) {
+  if (
+    clientGameState.landed &&
+    actionOf(keyboardEvent.code) === 'land' &&
+    !elementById2('depart').disabled
+  ) {
     send({ t: 'depart' });
     return;
   } // L leaves the dock too
-  if (G.landed && /^Digit[1-9]$/.test(e.code) && G._ltabs) {
-    const k = G._ltabs[+e.code.slice(5) - 1];
-    if (k) {
-      G.ltab = k;
-      G.sel = null;
+  if (clientGameState.landed && /^Digit[1-9]$/.test(keyboardEvent.code) && clientGameState._ltabs) {
+    const entryKey = clientGameState._ltabs[+keyboardEvent.code.slice(5) - 1];
+    if (entryKey) {
+      clientGameState.ltab = entryKey;
+      clientGameState.sel = null;
       showLanded();
       audio.ui('tab', 0.7);
     }
     return;
   } // number keys pick landing tabs
-  if (e.key === '?' || e.code === 'F1') {
-    e.preventDefault();
+  if (keyboardEvent.key === '?' || keyboardEvent.code === 'F1') {
+    keyboardEvent.preventDefault();
     openControls();
     return;
   }
-  switch (actionOf(e.code)) {
+  switch (actionOf(keyboardEvent.code)) {
     case 'miningPanel':
     case 'towDeliver':
     case 'towOffer':
@@ -1317,13 +1522,13 @@ window.addEventListener('keydown', (e) => {
     case 'dredgeSweep':
     case 'dredgeHarvest':
     case 'dredgeSmelter':
-      miningUI.invokeMiningAction(actionOf(e.code)!);
+      miningUI.invokeMiningAction(actionOf(keyboardEvent.code)!);
       break;
     case 'surveyPulse':
       miningUI.invokeMiningAction('surveyPulse');
       break;
     case 'target':
-      cycleTarget(e.shiftKey ? -1 : 1);
+      cycleTarget(keyboardEvent.shiftKey ? -1 : 1);
       break;
     case 'nearest':
       nearestHostile();
@@ -1332,26 +1537,26 @@ window.addEventListener('keydown', (e) => {
       landRequest();
       break;
     case 'map':
-      $('gmap').classList.contains('hidden') ? openMap() : closeMap();
+      elementById2('gmap').classList.contains('hidden') ? openMap() : closeMap();
       break;
     case 'jump':
       jumpNext();
       break;
     case 'zoomin':
-      G.zoom = Math.min(2, G.zoom * 1.15);
+      clientGameState.zoom = Math.min(2, clientGameState.zoom * 1.15);
       break;
     case 'zoomout':
-      G.zoom = Math.max(0.35, G.zoom / 1.15);
+      clientGameState.zoom = Math.max(0.35, clientGameState.zoom / 1.15);
       break;
     case 'pause':
-      if (G.solo) send({ t: 'pause' });
+      if (clientGameState.solo) send({ t: 'pause' });
       break;
     case 'mute':
-      G.opts.mute = !G.opts.mute;
+      clientGameState.opts.mute = !clientGameState.opts.mute;
       applyOpts();
       saveOpts();
       volUi();
-      toast(G.opts.mute ? 'Sound muted (N to unmute).' : 'Sound on.');
+      toast(clientGameState.opts.mute ? 'Sound muted (N to unmute).' : 'Sound on.');
       break; // 2.1
     case 'board':
       openBoard();
@@ -1364,7 +1569,7 @@ window.addEventListener('keydown', (e) => {
       hailTarget();
       break;
     case 'info':
-      $('infobox').classList.contains('hidden') ? openInfo() : closeInfo();
+      elementById2('infobox').classList.contains('hidden') ? openInfo() : closeInfo();
       break;
     case 'stop':
       setAuto({ mode: 'stop' }, null);
@@ -1385,70 +1590,79 @@ window.addEventListener('keydown', (e) => {
       send({ t: 'order', o: 'loot' });
       break;
     case 'companion': {
-      if (!document.body.classList.contains('tray-open')) $('traytoggle').click();
-      const T = [
+      if (!document.body.classList.contains('tray-open')) elementById2('traytoggle').click();
+      const time = [
         'radio',
         'codex',
         'missions',
         'station',
         'ops',
-        ...(G.solo ? [] : ['captains']),
+        ...(clientGameState.solo ? [] : ['captains']),
         'log',
       ];
-      ctab(T[(T.indexOf(G.ctab) + 1) % T.length]);
+      ctab(time[(time.indexOf(clientGameState.ctab) + 1) % time.length]);
       break;
     }
   }
 });
-window.addEventListener('keyup', (e) => {
-  keys[e.code] = false;
+window.addEventListener('keyup', (keyboardEvent) => {
+  keys[keyboardEvent.code] = false;
 });
 window.addEventListener('blur', () => {
   keys = {};
 });
 function jumpNext() {
-  if (!G.route.length) return toast('Plot a course on the map first (M).');
-  G.autoRoute = G.route.length > 1; // J flies the whole plotted route, jump after jump
-  const S = SYS[G.sys!];
-  if (S && S.gate === G.route[0]) {
-    const w = S.stellars.find((p) => p.wormhole);
-    if (w) {
-      G.navStellar = w.id;
-      toast(`The next leg crosses ${w.name}: fly into the wormhole.`);
+  if (!clientGameState.route.length) return toast('Plot a course on the map first (M).');
+  clientGameState.autoRoute = clientGameState.route.length > 1; // J flies the whole plotted route, jump after jump
+  const starSystem = systemsById[clientGameState.sys!];
+  if (starSystem && starSystem.gate === clientGameState.route[0]) {
+    const rawStellarBody = starSystem.stellars.find((rawStellarBody) => rawStellarBody.wormhole);
+    if (rawStellarBody) {
+      clientGameState.navStellar = rawStellarBody.id;
+      toast(`The next leg crosses ${rawStellarBody.name}: fly into the wormhole.`);
     }
     return;
   }
-  const me = G.view;
-  if (me && S && S.stellars.some((p) => Math.hypot(me.x - p.x, me.y - p.y) < K.jumpClear)) {
+  const clientView = clientGameState.view;
+  if (
+    clientView &&
+    starSystem &&
+    starSystem.stellars.some(
+      (rawStellarBody) =>
+        Math.hypot(clientView.x - rawStellarBody.x, clientView.y - rawStellarBody.y) <
+        physicsConstants.jumpClear,
+    )
+  ) {
     setAuto(
       { mode: 'jump' },
       'Autopilot: flying clear of the planets to jump. Steer to take over.',
     );
     return;
   } // 1.0.3
-  send({ t: 'jump', to: G.route[0] });
+  send({ t: 'jump', to: clientGameState.route[0] });
 }
 // ------------------------------------------------------------------ 1.1 hailing
 function hailTarget() {
-  if (G.target && G.ents.get(G.target)) return send({ t: 'hail', id: G.target });
-  if (G.navStellar) return send({ t: 'hail', stellar: G.navStellar });
+  if (clientGameState.target && clientGameState.ents.get(clientGameState.target))
+    return send({ t: 'hail', id: clientGameState.target });
+  if (clientGameState.navStellar) return send({ t: 'hail', stellar: clientGameState.navStellar });
   toast('Target a ship (click or Tab) or select a planet (click it) to hail.');
 }
-const hailUI = initHails({ G, send, toast, cam });
-function showHail(m: HailConversation) {
-  hailUI.show(m);
+const hailUI = initHails({ G: clientGameState, send, toast, cam: camera });
+function showHail(hailConversation: HailConversation) {
+  hailUI.show(hailConversation);
 }
 
 window.addEventListener(
   'keydown',
-  (e) => {
+  (keyboardEvent) => {
     if (
-      !$('hailbox').classList.contains('hidden') &&
-      (e.key === 'Escape' || (e.code === 'KeyT' && !typing()))
+      !elementById2('hailbox').classList.contains('hidden') &&
+      (keyboardEvent.key === 'Escape' || (keyboardEvent.code === 'KeyT' && !typing()))
     ) {
-      $('hailbox').classList.add('hidden');
-      e.stopImmediatePropagation();
-      e.preventDefault();
+      elementById2('hailbox').classList.add('hidden');
+      keyboardEvent.stopImmediatePropagation();
+      keyboardEvent.preventDefault();
     }
   },
   true,
@@ -1458,218 +1672,261 @@ let infoReturnFocus: HTMLElement | null;
 function openInfo() {
   infoReturnFocus = document.activeElement as HTMLElement | null;
   audio.ui('open', 0.6);
-  $('infobox').classList.remove('hidden');
+  elementById2('infobox').classList.remove('hidden');
   send({ t: 'rivals' });
   renderInfo();
 }
 function closeInfo() {
   audio.ui('close', 0.6);
-  $('infobox').classList.add('hidden');
+  elementById2('infobox').classList.add('hidden');
   if (infoReturnFocus?.isConnected) infoReturnFocus.focus({ preventScroll: true });
 }
 function renderInfo() {
-  G.views.replace($('infobody'), infoHtml(G, G.itab || 'ship'), 'info:' + (G.itab || 'ship'));
-  $('itabs')
+  clientGameState.views.replace(
+    elementById2('infobody'),
+    infoHtml(clientGameState, clientGameState.itab || 'ship'),
+    'info:' + (clientGameState.itab || 'ship'),
+  );
+  elementById2('itabs')
     .querySelectorAll<HTMLElement>('button')
-    .forEach((b) => b.classList.toggle('on', b.dataset.it === (G.itab || 'ship')));
+    .forEach((htmlElement) =>
+      htmlElement.classList.toggle(
+        'on',
+        htmlElement.dataset.it === (clientGameState.itab || 'ship'),
+      ),
+    );
 }
-$('itabs').addEventListener('click', (e) => {
-  const b = (e.target as HTMLInputElement).closest<HTMLElement>('[data-it]');
-  if (!b) return;
-  G.itab = b.dataset.it!;
-  $('itabs')
+elementById2('itabs').addEventListener('click', (pointerEvent) => {
+  const htmlElement = (pointerEvent.target as HTMLInputElement).closest<HTMLElement>('[data-it]');
+  if (!htmlElement) return;
+  clientGameState.itab = htmlElement.dataset.it!;
+  elementById2('itabs')
     .querySelectorAll<HTMLElement>('button')
-    .forEach((x) => x.classList.toggle('on', x === b));
+    .forEach((htmlElement2) => htmlElement2.classList.toggle('on', htmlElement2 === htmlElement));
   renderInfo();
 });
-$('infobody').addEventListener('click', (e) => {
-  const pl = (e.target as HTMLInputElement).closest<HTMLElement>('[data-plot]');
-  if (pl) {
-    plot(pl.dataset.plot!);
-    toast(`Course plotted to ${SYS[pl.dataset.plot!].name}.`);
+elementById2('infobody').addEventListener('click', (pointerEvent) => {
+  const htmlElement = (pointerEvent.target as HTMLInputElement).closest<HTMLElement>('[data-plot]');
+  if (htmlElement) {
+    plot(htmlElement.dataset.plot!);
+    toast(`Course plotted to ${systemsById[htmlElement.dataset.plot!].name}.`);
     return;
   }
-  const b = (e.target as HTMLInputElement).closest<HTMLElement>('[data-jet],[data-ord]');
-  if (!b) return;
-  if (b.dataset.jet!) {
-    const lots = b.dataset.grade!
-      ? { common: 0, rich: 0, pure: 0, [b.dataset.grade!]: +b.dataset.n! }
+  const htmlElement2 = (pointerEvent.target as HTMLInputElement).closest<HTMLElement>(
+    '[data-jet],[data-ord]',
+  );
+  if (!htmlElement2) return;
+  if (htmlElement2.dataset.jet!) {
+    const lots = htmlElement2.dataset.grade!
+      ? { common: 0, rich: 0, pure: 0, [htmlElement2.dataset.grade!]: +htmlElement2.dataset.n! }
       : undefined;
-    send({ t: 'jettison', cid: b.dataset.jet!, n: +b.dataset.n! || 0, lots });
-  } else send({ t: 'order', o: b.dataset.ord! });
+    send({ t: 'jettison', cid: htmlElement2.dataset.jet!, n: +htmlElement2.dataset.n! || 0, lots });
+  } else send({ t: 'order', o: htmlElement2.dataset.ord! });
   const epoch = sessionEpoch;
   setTimeout(() => {
-    if (epoch === sessionEpoch && G.you) renderInfo();
+    if (epoch === sessionEpoch && clientGameState.you) renderInfo();
   }, 250);
 });
 window.addEventListener(
   'keydown',
-  (e) => {
+  (keyboardEvent) => {
     if (
-      !$('infobox').classList.contains('hidden') &&
-      (e.key === 'Escape' || e.code === 'KeyI') &&
+      !elementById2('infobox').classList.contains('hidden') &&
+      (keyboardEvent.key === 'Escape' || keyboardEvent.code === 'KeyI') &&
       !typing()
     ) {
       closeInfo();
-      e.stopImmediatePropagation();
-      e.preventDefault();
+      keyboardEvent.stopImmediatePropagation();
+      keyboardEvent.preventDefault();
     }
   },
   true,
 );
 // ------------------------------------------------------------------ 1.0.3 autopilot: fly to a planet, turn, brake and land; or fly clear and jump
-G.startAutoJump = () => {
+clientGameState.startAutoJump = () => {
   const epoch = sessionEpoch;
   return setTimeout(() => {
     if (epoch !== sessionEpoch) return;
-    if (G.view && G.route.length && !G.auto) {
-      G.autoKeep = true;
-      setAuto({ mode: 'jump' }, `Autopilot: following to ${SYS[G.route[0]].name}.`);
+    if (clientGameState.view && clientGameState.route.length && !clientGameState.auto) {
+      clientGameState.autoKeep = true;
+      setAuto(
+        { mode: 'jump' },
+        `Autopilot: following to ${systemsById[clientGameState.route[0]].name}.`,
+      );
     }
   }, 300);
 }; // follow the leader
-function setAuto(a: ClientGameState['auto'], msg?: string | null) {
-  if (a && (G.towing || G.you?.towing)?.attached) {
+function setAuto(firstValue: ClientGameState['auto'], message?: string | null) {
+  if (firstValue && (clientGameState.towing || clientGameState.you?.towing)?.attached) {
     toast('Towing: manual flight only; detach before automatic transit.');
     return;
   }
-  if (a) {
+  if (firstValue) {
     send({ t: 'combat', op: 'off' });
-    G.combat = {};
+    clientGameState.combat = {};
   }
-  if (a && !G.auto) audio.ui('autopilot', 0.8);
-  G.auto = a;
-  if (!a) G.autoRoute = G.autoRoute && G.autoKeep;
-  G.autoKeep = false;
-  $('autobadge').classList.toggle('hidden', !a);
-  if (a) {
-    $('autobadge').textContent =
-      a.mode === 'land'
+  if (firstValue && !clientGameState.auto) audio.ui('autopilot', 0.8);
+  clientGameState.auto = firstValue;
+  if (!firstValue)
+    clientGameState.autoRoute = clientGameState.autoRoute && clientGameState.autoKeep;
+  clientGameState.autoKeep = false;
+  elementById2('autobadge').classList.toggle('hidden', !firstValue);
+  if (firstValue) {
+    elementById2('autobadge').textContent =
+      firstValue.mode === 'land'
         ? 'AUTOPILOT · LANDING'
-        : a.mode === 'gateway'
+        : firstValue.mode === 'gateway'
           ? 'AUTOPILOT · GATEWAY'
-          : a.mode === 'stop'
+          : firstValue.mode === 'stop'
             ? 'FULL STOP'
-            : G.autoRoute && G.route.length > 1
-              ? `AUTOPILOT · ${G.route.length} JUMPS`
+            : clientGameState.autoRoute && clientGameState.route.length > 1
+              ? `AUTOPILOT · ${clientGameState.route.length} JUMPS`
               : 'AUTOPILOT · JUMP';
-    if (msg) toast(msg);
+    if (message) toast(message);
   }
 }
-function autopilot(inp: Record<string, number>): void {
-  const me = G.view,
-    st = G.you && G.you!.shipStats,
-    A = G.auto!,
-    S = SYS[G.sys!];
-  if (!me || !st || !S) return setAuto(null);
-  if (A.mode !== 'stop') {
+function autopilot(input: Record<string, number>): void {
+  const clientView = clientGameState.view,
+    computedShipStats = clientGameState.you && clientGameState.you!.shipStats,
+    firstValue = clientGameState.auto!,
+    starSystem = systemsById[clientGameState.sys!];
+  if (!clientView || !computedShipStats || !starSystem) return setAuto(null);
+  if (firstValue.mode !== 'stop') {
     const destination =
-      A.mode === 'land' || A.mode === 'gateway'
-        ? S.stellars.find((p) => p.id === A.id)
+      firstValue.mode === 'land' || firstValue.mode === 'gateway'
+        ? starSystem.stellars.find((rawStellarBody) => rawStellarBody.id === firstValue.id)
         : (() => {
-            const to = SYS[G.route[0]];
-            if (!to) return null;
-            const a = Math.atan2(to.x - S.x, -(to.y - S.y));
+            const starSystem2 = systemsById[clientGameState.route[0]];
+            if (!starSystem2) return null;
+            const atan = Math.atan2(starSystem2.x - starSystem.x, -(starSystem2.y - starSystem.y));
             return {
-              x: me.x + Math.sin(a) * (K.jumpClear + 1000),
-              y: me.y - Math.cos(a) * (K.jumpClear + 1000),
+              x: clientView.x + Math.sin(atan) * (physicsConstants.jumpClear + 1000),
+              y: clientView.y - Math.cos(atan) * (physicsConstants.jumpClear + 1000),
             };
           })();
-    const speed = Math.hypot(me.vx, me.vy);
+    const speed = Math.hypot(clientView.vx, clientView.vy);
     const stoppingMargin =
       1000 +
-      (speed * Math.PI) / Math.max(0.1, st.turn) +
-      (speed * speed) / (2 * Math.max(1, st.accel));
-    if (destination && coronaRouteBlocked(G.sys!, me, destination, stoppingMargin)) {
-      G.autoRoute = false;
+      (speed * Math.PI) / Math.max(0.1, computedShipStats.turn) +
+      (speed * speed) / (2 * Math.max(1, computedShipStats.accel));
+    if (
+      destination &&
+      coronaRouteBlocked(clientGameState.sys!, clientView, destination, stoppingMargin)
+    ) {
+      clientGameState.autoRoute = false;
       setAuto({ mode: 'stop' });
       toast(
         'Autopilot blocked: stellar collector keep-out. Braking; use manual flight to exit or harvest.',
       );
-      return autopilot(inp);
+      return autopilot(input);
     }
   }
-  if (A.mode === 'stop') {
+  if (firstValue.mode === 'stop') {
     // full stop: turn against your drift and burn until still
-    const sp = Math.hypot(me.vx, me.vy);
-    if (sp < 6) {
-      inp.thrust = 0;
+    const space = Math.hypot(clientView.vx, clientView.vy);
+    if (space < 6) {
+      input.thrust = 0;
       return setAuto(null);
     }
-    const da = wrap(Math.atan2(-me.vx, me.vy) - me.a);
-    inp.turn = Math.abs(da) < st.turn * DT ? 0 : Math.sign(da);
-    inp.thrust = Math.abs(da) < 0.25 && sp > 6 ? 1 : 0;
-    inp.rev = 0;
+    const wrap2 = wrap(Math.atan2(-clientView.vx, clientView.vy) - clientView.a);
+    input.turn = Math.abs(wrap2) < computedShipStats.turn * tickDuration ? 0 : Math.sign(wrap2);
+    input.thrust = Math.abs(wrap2) < 0.25 && space > 6 ? 1 : 0;
+    input.rev = 0;
     return;
   }
-  if (A.mode === 'gateway') {
-    const p = S.stellars.find((x) => x.id === A.id && x.wormhole);
-    if (!p || A.sys !== G.sys) return setAuto(null);
+  if (firstValue.mode === 'gateway') {
+    const rawStellarBody = starSystem.stellars.find(
+      (rawStellarBody) => rawStellarBody.id === firstValue.id && rawStellarBody.wormhole,
+    );
+    if (!rawStellarBody || firstValue.sys !== clientGameState.sys) return setAuto(null);
     // Aim inside the transit aperture; never send a landing request.
-    gatewayGuidance(me, st, p, inp);
+    gatewayGuidance(clientView, computedShipStats, rawStellarBody, input);
     return;
   }
-  if (A.mode === 'land') {
-    const p = S.stellars.find((x) => x.id === A.id);
-    if (!p) return setAuto(null);
-    landingGuidance(A, me, st, p, inp);
-    if (landingReady(A, me, G.ents.get(G.myId)!, st, p, performance.now()))
-      send({ t: 'land', stellar: p.id });
+  if (firstValue.mode === 'land') {
+    const rawStellarBody = starSystem.stellars.find(
+      (rawStellarBody3) => rawStellarBody3.id === firstValue.id,
+    );
+    if (!rawStellarBody) return setAuto(null);
+    landingGuidance(firstValue, clientView, computedShipStats, rawStellarBody, input);
+    if (
+      landingReady(
+        firstValue,
+        clientView,
+        clientGameState.ents.get(clientGameState.myId)!,
+        computedShipStats,
+        rawStellarBody,
+        performance.now(),
+      )
+    )
+      send({ t: 'land', stellar: rawStellarBody.id });
   } else {
-    const to = SYS[G.route[0]];
-    if (!to) return setAuto(null);
-    if (S.stellars.every((p) => Math.hypot(me.x - p.x, me.y - p.y) > K.jumpClear + 60)) {
-      const go = G.autoRoute;
-      G.autoKeep = true;
+    const starSystem2 = systemsById[clientGameState.route[0]];
+    if (!starSystem2) return setAuto(null);
+    if (
+      starSystem.stellars.every(
+        (rawStellarBody) =>
+          Math.hypot(clientView.x - rawStellarBody.x, clientView.y - rawStellarBody.y) >
+          physicsConstants.jumpClear + 60,
+      )
+    ) {
+      const autoRoute2 = clientGameState.autoRoute;
+      clientGameState.autoKeep = true;
       setAuto(null);
-      inp.thrust = 0;
+      input.thrust = 0;
       jumpNext();
-      G.autoRoute = go && G.route.length > 1;
+      clientGameState.autoRoute = autoRoute2 && clientGameState.route.length > 1;
       return;
     }
-    const ang = Math.atan2(to.x - S.x, -(to.y - S.y)),
-      da = wrap(ang - me.a);
-    inp.turn = Math.abs(da) < st.turn * DT ? 0 : Math.sign(da);
-    inp.thrust = Math.abs(da) < 0.5 ? 1 : 0;
-    inp.rev = 0;
+    const atan = Math.atan2(starSystem2.x - starSystem.x, -(starSystem2.y - starSystem.y)),
+      wrap3 = wrap(atan - clientView.a);
+    input.turn = Math.abs(wrap3) < computedShipStats.turn * tickDuration ? 0 : Math.sign(wrap3);
+    input.thrust = Math.abs(wrap3) < 0.5 ? 1 : 0;
+    input.rev = 0;
   }
 }
 function sendChat() {
-  const c = $('chatin'),
-    v = c.value.trim();
-  c.value = '';
-  if (!v) return;
-  if (G.solo) {
-    send({ t: 'note', text: v });
+  const inputControl = elementById2('chatin'),
+    trim2 = inputControl.value.trim();
+  inputControl.value = '';
+  if (!trim2) return;
+  if (clientGameState.solo) {
+    send({ t: 'note', text: trim2 });
     toast('Added to your log.');
     return;
   } // in a solo game the chat line writes notes in your captain's log
-  if (v.startsWith('/s ')) send({ t: 'chat', msg: v.slice(3), ch: 'sys' });
-  else if (v.startsWith('/a ') || v.startsWith('/f '))
-    send({ t: 'chat', msg: v.slice(3), ch: 'armada' });
-  else if (/^\/r \S/.test(v) && G.lastDmFrom)
-    send({ t: 'social', op: 'dm', name: G.lastDmFrom, msg: v.slice(3) });
-  else if (/^\/w \S/.test(v)) {
-    const m = v.match(/^\/w ("[^"]+"|\S+) (.+)$/);
-    if (m) send({ t: 'social', op: 'dm', name: m[1].replace(/"/g, ''), msg: m[2] });
-  } else if (G.chan) send({ t: 'chat', msg: v, ch: G.chan });
-  else send({ t: 'chat', msg: v });
+  if (trim2.startsWith('/s ')) send({ t: 'chat', msg: trim2.slice(3), ch: 'sys' });
+  else if (trim2.startsWith('/a ') || trim2.startsWith('/f '))
+    send({ t: 'chat', msg: trim2.slice(3), ch: 'armada' });
+  else if (/^\/r \S/.test(trim2) && clientGameState.lastDmFrom)
+    send({ t: 'social', op: 'dm', name: clientGameState.lastDmFrom, msg: trim2.slice(3) });
+  else if (/^\/w \S/.test(trim2)) {
+    const regExpMatchArray = trim2.match(/^\/w ("[^"]+"|\S+) (.+)$/);
+    if (regExpMatchArray)
+      send({
+        t: 'social',
+        op: 'dm',
+        name: regExpMatchArray[1].replace(/"/g, ''),
+        msg: regExpMatchArray[2],
+      });
+  } else if (clientGameState.chan) send({ t: 'chat', msg: trim2, ch: clientGameState.chan });
+  else send({ t: 'chat', msg: trim2 });
 }
 // Command bar: chat channel buttons, the controls card, and shortcuts to key bindings, options and the map
-$('cchan').addEventListener('click', (e) => {
-  const b = (e.target as HTMLInputElement).closest<HTMLElement>('[data-ch]');
-  if (!b) return;
-  G.chan = b.dataset.ch!;
-  $('cchan')
+elementById2('cchan').addEventListener('click', (pointerEvent) => {
+  const htmlElement = (pointerEvent.target as HTMLInputElement).closest<HTMLElement>('[data-ch]');
+  if (!htmlElement) return;
+  clientGameState.chan = htmlElement.dataset.ch!;
+  elementById2('cchan')
     .querySelectorAll<HTMLElement>('button')
-    .forEach((x) => x.classList.toggle('on', x === b));
-  $('chatin').placeholder =
-    G.chan === 'sys'
+    .forEach((htmlElement2) => htmlElement2.classList.toggle('on', htmlElement2 === htmlElement));
+  elementById2('chatin').placeholder =
+    clientGameState.chan === 'sys'
       ? 'Press Enter to talk to this system'
-      : G.chan === 'fleet'
+      : clientGameState.chan === 'fleet'
         ? 'Press Enter to talk to your fleet'
         : 'Press Enter to chat';
-  $('chatin').focus();
+  elementById2('chatin').focus();
 });
 const BASICS = [
   ['Left click', 'Target a ship, or plot a course on the map'],
@@ -1685,60 +1942,67 @@ const BASICS = [
  */
 function openControls(): void {
   audio.ui('open', 0.6);
-  $('ctrllist').innerHTML =
+  elementById2('ctrllist').innerHTML =
     '<div class="osect">FLIGHT AND COMBAT</div><div class="ctrlgrid">' +
     ACTIONS.map(
-      ([a, n]) =>
-        `<span class="k">${keyName(bound(a))}${ALT[a] ? ' / ' + keyName(ALT[a]) : ''}</span><span>${n}</span>`,
+      ([firstValue, count]) =>
+        `<span class="k">${keyName(bound(firstValue))}${alternateBindings[firstValue] ? ' / ' + keyName(alternateBindings[firstValue]) : ''}</span><span>${count}</span>`,
     ).join('') +
     '</div>' +
     '<div class="osect">MOUSE AND MENUS</div><div class="ctrlgrid">' +
-    BASICS.map(([k, n]) => `<span class="k">${k}</span><span>${n}</span>`).join('') +
+    BASICS.map(
+      ([entryKey, count]) => `<span class="k">${entryKey}</span><span>${count}</span>`,
+    ).join('') +
     '</div>';
-  $('ctrlbox').classList.remove('hidden');
+  elementById2('ctrlbox').classList.remove('hidden');
 }
 /**
  * Closes the flight controls reference dialog modal.
  * @returns {void}
  */
-const closeControls = (): void => $('ctrlbox').classList.add('hidden');
-$('cbhelp').onclick = openControls;
-$('ctrlclose').onclick = closeControls;
-$('ctrlkeys').onclick = () => {
+const closeControls = (): void => elementById2('ctrlbox').classList.add('hidden');
+elementById2('cbhelp').onclick = openControls;
+elementById2('ctrlclose').onclick = closeControls;
+elementById2('ctrlkeys').onclick = () => {
   closeControls();
   openOpts(true);
 };
 // Key binding editor remains available through Options and Controls.
-$('cbmap').onclick = () => ($('gmap').classList.contains('hidden') ? openMap() : closeMap());
+elementById2('cbmap').onclick = () =>
+  elementById2('gmap').classList.contains('hidden') ? openMap() : closeMap();
 /**
  * Cycles target lock through visible ships sorted by distance.
- * @param {number} dir Direction offset in target list (-1 for previous, 1 for next)
+ * @param {number} direction Direction offset in target list (-1 for previous, 1 for next)
  * @returns {void}
  */
-function cycleTarget(dir: number): void {
-  const me = G.view;
-  if (!me) return;
-  const list = [...G.ents.values()]
-    .filter((e) => e.id !== G.myId)
+function cycleTarget(direction: number): void {
+  const clientView = clientGameState.view;
+  if (!clientView) return;
+  const list = [...clientGameState.ents.values()]
+    .filter((renderEntity) => renderEntity.id !== clientGameState.myId)
     .sort(
-      (a, b) => Math.hypot(a.rx - me.rx, a.ry - me.ry) - Math.hypot(b.rx - me.rx, b.ry - me.ry),
+      (renderEntity, renderEntity2) =>
+        Math.hypot(renderEntity.rx - clientView.rx, renderEntity.ry - clientView.ry) -
+        Math.hypot(renderEntity2.rx - clientView.rx, renderEntity2.ry - clientView.ry),
     );
   if (!list.length) return;
-  const i = list.findIndex((e) => e.id === G.target);
-  const n = list[(i + dir + list.length) % list.length];
-  setTarget(n.id);
+  const index = list.findIndex((renderEntity) => renderEntity.id === clientGameState.target);
+  const renderEntity = list[(index + direction + list.length) % list.length];
+  setTarget(renderEntity.id);
 }
 /**
  * Finds and targets the nearest hostile ship in the current system.
  * @returns {void}
  */
 function nearestHostile(): void {
-  const me = G.view;
-  if (!me) return;
-  const list = [...G.ents.values()]
-    .filter((e) => G.hostile(e))
+  const clientView = clientGameState.view;
+  if (!clientView) return;
+  const list = [...clientGameState.ents.values()]
+    .filter((renderEntity) => clientGameState.hostile(renderEntity))
     .sort(
-      (a, b) => Math.hypot(a.rx - me.rx, a.ry - me.ry) - Math.hypot(b.rx - me.rx, b.ry - me.ry),
+      (renderEntity, renderEntity2) =>
+        Math.hypot(renderEntity.rx - clientView.rx, renderEntity.ry - clientView.ry) -
+        Math.hypot(renderEntity2.rx - clientView.rx, renderEntity2.ry - clientView.ry),
     );
   if (list.length) {
     setTarget(list[0].id);
@@ -1757,240 +2021,276 @@ function landRequest(pick?: {
   r: number;
   svc?: string;
 }): void {
-  const me = G.view,
-    S = SYS[G.sys!];
-  if (!me || !S) return;
-  const near = S.stellars
-    .filter((p) => p.svc!.includes('L'))
-    .sort((a, b) => Math.hypot(a.x - me.x, a.y - me.y) - Math.hypot(b.x - me.x, b.y - me.y))[0];
+  const clientView = clientGameState.view,
+    starSystem = systemsById[clientGameState.sys!];
+  if (!clientView || !starSystem) return;
+  const near = starSystem.stellars
+    .filter((rawStellarBody) => rawStellarBody.svc!.includes('L'))
+    .sort(
+      (rawStellarBody, rawStellarBody2) =>
+        Math.hypot(rawStellarBody.x - clientView.x, rawStellarBody.y - clientView.y) -
+        Math.hypot(rawStellarBody2.x - clientView.x, rawStellarBody2.y - clientView.y),
+    )[0];
   // L always chooses the nearest landable body; explicit double-clicks keep their destination.
-  const p = pick || near;
-  if (!p) return toast('Nowhere to land in this system.');
-  G.navStellar = p.id;
+  const position = pick || near;
+  if (!position) return toast('Nowhere to land in this system.');
+  clientGameState.navStellar = position.id;
   // Even a nearby click must settle first: predicted distance alone can race
   // the server at the edge of its landing radius while the ship is drifting.
-  setAuto({ mode: 'land', id: p.id }, `Autopilot: landing on ${p.name}. Steer to take over.`);
+  setAuto(
+    { mode: 'land', id: position.id },
+    `Autopilot: landing on ${position.name}. Steer to take over.`,
+  );
 }
 
 // ------------------------------------------------------------------ mouse: click to target, click a planet to set nav, double-click to land
 const mouse = { x: 0, y: 0, wx: 0, wy: 0, in: false, down: false };
 /**
  * Converts screen/canvas client coordinates to game world space coordinates.
- * @param {number} cx Client X coordinate
- * @param {number} cy Client Y coordinate
+ * @param {number} centerX Client X coordinate
+ * @param {number} centerY Client Y coordinate
  * @returns {[number, number]} World coordinates [wx, wy]
  */
-function toWorld(cx: number, cy: number): [number, number] {
-  const r = window.devicePixelRatio || 1,
-    rect = canvas.getBoundingClientRect();
+function toWorld(centerX: number, centerY: number): [number, number] {
+  const radius = window.devicePixelRatio || 1,
+    domRect = canvas.getBoundingClientRect();
   return [
-    ((cx - rect.left) * r - cam.W / 2) / cam.z + cam.cx,
-    ((cy - rect.top) * r - cam.H / 2) / cam.z + cam.cy,
+    ((centerX - domRect.left) * radius - camera.W / 2) / camera.z + camera.cx,
+    ((centerY - domRect.top) * radius - camera.H / 2) / camera.z + camera.cy,
   ];
 }
 /**
  * Identifies the nearest interactive ship or stellar body under the given world coordinates.
- * @param {number} wx World X coordinate
- * @param {number} wy World Y coordinate
+ * @param {number} worldX World X coordinate
+ * @param {number} worldY World Y coordinate
  * @returns {{ ship?: RenderEntity, stellar?: import('../shared/galaxy.ts').RawStellarBody } | null} Picked target or null
  */
 function pickAt(
-  wx: number,
-  wy: number,
+  worldX: number,
+  worldY: number,
 ): { ship?: RenderEntity; stellar?: import('../shared/galaxy.ts').RawStellarBody } | null {
-  if (!G.view || G.landed) return null;
+  if (!clientGameState.view || clientGameState.landed) return null;
   let best = null,
-    bd = Infinity;
-  for (const e of G.ents.values()) {
-    if (e.id === G.myId) continue;
-    const H = G.A!.ships[e.hull];
-    const r = Math.max(16 / cam.z, (H ? H.size : 50) * G.spriteScale * 0.42),
-      d = Math.hypot(e.rx - wx, e.ry - wy);
-    if (d < r && d < bd) {
-      bd = d;
-      best = { ship: e };
+    infinity = Infinity;
+  for (const renderEntity of clientGameState.ents.values()) {
+    if (renderEntity.id === clientGameState.myId) continue;
+    const shipHullAsset = clientGameState.A!.ships[renderEntity.hull];
+    const radius = Math.max(
+        16 / camera.z,
+        (shipHullAsset ? shipHullAsset.size : 50) * clientGameState.spriteScale * 0.42,
+      ),
+      distance = Math.hypot(renderEntity.rx - worldX, renderEntity.ry - worldY);
+    if (distance < radius && distance < infinity) {
+      infinity = distance;
+      best = { ship: renderEntity };
     }
   }
   if (best) return best;
-  const S = SYS[G.sys!];
-  if (!S) return null;
-  for (const p of S.stellars) {
-    const d = Math.hypot(p.x - wx, p.y - wy);
-    if (d < p.r * (p.hub ? 1 : 1.15) + 10 / cam.z && d < bd) {
-      bd = d;
-      best = { stellar: p };
+  const starSystem = systemsById[clientGameState.sys!];
+  if (!starSystem) return null;
+  for (const rawStellarBody of starSystem.stellars) {
+    const distance = Math.hypot(rawStellarBody.x - worldX, rawStellarBody.y - worldY);
+    if (
+      distance < rawStellarBody.r * (rawStellarBody.hub ? 1 : 1.15) + 10 / camera.z &&
+      distance < infinity
+    ) {
+      infinity = distance;
+      best = { stellar: rawStellarBody };
     }
   }
   return best;
 }
 /**
  * Determines the appropriate mouse cursor style based on hover target.
- * @param {{ ship?: RenderEntity, stellar?: import('../shared/galaxy.ts').RawStellarBody } | null} h Picked object under cursor
+ * @param {{ ship?: RenderEntity, stellar?: import('../shared/galaxy.ts').RawStellarBody } | null} height2 Picked object under cursor
  * @returns {string} CSS cursor identifier class suffix
  */
 function cursorFor(
-  h: { ship?: RenderEntity; stellar?: import('../shared/galaxy.ts').RawStellarBody } | null,
+  height: { ship?: RenderEntity; stellar?: import('../shared/galaxy.ts').RawStellarBody } | null,
 ): string {
-  if (G.opts.mouseAim && !h) return 'aim';
-  if (!h) return '';
-  if (h.ship)
-    return G.hostile(h.ship)
+  if (clientGameState.opts.mouseAim && !height) return 'aim';
+  if (!height) return '';
+  if (height.ship)
+    return clientGameState.hostile(height.ship)
       ? 'hostile'
-      : h.ship.owner === G.myId
+      : height.ship.owner === clientGameState.myId
         ? 'friendly'
-        : h.ship.fl & 16
+        : height.ship.fl & 16
           ? 'friendly'
           : 'neutral';
-  return h.stellar!.svc!.includes('L') ? 'land' : '';
+  return height.stellar!.svc!.includes('L') ? 'land' : '';
 }
 /**
  * Applies a cursor CSS class to the canvas element.
- * @param {string} c Cursor type name
+ * @param {string} component Cursor type name
  * @returns {void}
  */
-function setCursor(c: string): void {
-  if (canvas.dataset.cur! !== c) {
-    canvas.dataset.cur = c;
-    canvas.className = c ? 'cur-' + c : '';
+function setCursor(component: string): void {
+  if (canvas.dataset.cur! !== component) {
+    canvas.dataset.cur = component;
+    canvas.className = component ? 'cur-' + component : '';
   }
 }
 /**
  * Sets the active target ID and notifies the server.
- * @param {number} id Target entity ID or 0 to clear
+ * @param {number} identifier Target entity ID or 0 to clear
  * @returns {void}
  */
-function setTarget(id: number): void {
-  G.targetClearPending = id === 0;
-  G.target = id;
-  send({ t: 'target', id });
+function setTarget(identifier: number): void {
+  clientGameState.targetClearPending = identifier === 0;
+  clientGameState.target = identifier;
+  send({ t: 'target', id: identifier });
 }
-canvas.addEventListener('mousemove', (e) => {
+canvas.addEventListener('mousemove', (mouseEvent) => {
   if (
-    G.opts.mouseAim &&
-    (e.movementX || e.movementY) &&
-    G.combat &&
-    (G.combat.on || G.combat.delegated)
+    clientGameState.opts.mouseAim &&
+    (mouseEvent.movementX || mouseEvent.movementY) &&
+    clientGameState.combat &&
+    (clientGameState.combat.on || clientGameState.combat.delegated)
   ) {
     send({ t: 'combat', op: 'manual' });
-    G.combat.on = G.combat.delegated = false;
+    clientGameState.combat.on = clientGameState.combat.delegated = false;
   }
-  mouse.x = e.clientX;
-  mouse.y = e.clientY;
+  mouse.x = mouseEvent.clientX;
+  mouse.y = mouseEvent.clientY;
   mouse.in = true;
-  if (G._look) {
-    const dx = e.clientX - G._look.x,
-      dy = e.clientY - G._look.y;
-    if (Math.hypot(dx, dy) > 6) G._look.moved = true;
-    const r = canvas.getBoundingClientRect(),
-      k = canvas.width / r.width,
-      m = 3200,
-      L = 2.4 / G.zoom;
-    G._lookT = [Math.max(-m, Math.min(m, dx * k * L)), Math.max(-m, Math.min(m, dy * k * L))];
+  if (clientGameState._look) {
+    const deltaX = mouseEvent.clientX - clientGameState._look.x,
+      deltaY = mouseEvent.clientY - clientGameState._look.y;
+    if (Math.hypot(deltaX, deltaY) > 6) clientGameState._look.moved = true;
+    const domRect = canvas.getBoundingClientRect(),
+      entryKey = canvas.width / domRect.width,
+      message = 3200,
+      length = 2.4 / clientGameState.zoom;
+    clientGameState._lookT = [
+      Math.max(-message, Math.min(message, deltaX * entryKey * length)),
+      Math.max(-message, Math.min(message, deltaY * entryKey * length)),
+    ];
   }
-  [mouse.wx, mouse.wy] = toWorld(e.clientX, e.clientY);
-  const h = pickAt(mouse.wx, mouse.wy);
-  G.hover = h && h.ship ? h.ship.id : 0;
-  G.hoverStellar = h && h.stellar ? h.stellar.id : null;
-  setCursor(cursorFor(h));
+  [mouse.wx, mouse.wy] = toWorld(mouseEvent.clientX, mouseEvent.clientY);
+  const pickAt2 = pickAt(mouse.wx, mouse.wy);
+  clientGameState.hover = pickAt2 && pickAt2.ship ? pickAt2.ship.id : 0;
+  clientGameState.hoverStellar = pickAt2 && pickAt2.stellar ? pickAt2.stellar.id : null;
+  setCursor(cursorFor(pickAt2));
 });
 canvas.addEventListener('mouseleave', () => {
   mouse.in = false;
   mouse.down = false;
-  G.hover = 0;
-  G.hoverStellar = null;
+  clientGameState.hover = 0;
+  clientGameState.hoverStellar = null;
 });
-canvas.addEventListener('mousedown', (e) => {
-  if (!G.you || G.landed) return;
+canvas.addEventListener('mousedown', (mouseEvent) => {
+  if (!clientGameState.you || clientGameState.landed) return;
   audio.unlock();
   if (document.activeElement && document.activeElement.tagName === 'INPUT')
     (document.activeElement as HTMLElement).blur();
-  const [wx, wy] = toWorld(e.clientX, e.clientY),
-    h = pickAt(wx, wy);
-  if (e.button === 2) {
-    G._look = { t: performance.now(), x: e.clientX, y: e.clientY, moved: false };
+  const [worldX, worldY] = toWorld(mouseEvent.clientX, mouseEvent.clientY),
+    pickAt2 = pickAt(worldX, worldY);
+  if (mouseEvent.button === 2) {
+    clientGameState._look = {
+      t: performance.now(),
+      x: mouseEvent.clientX,
+      y: mouseEvent.clientY,
+      moved: false,
+    };
     return;
   } // hold right-click and move to look ahead (a quick click still clears your target)
-  if (e.button !== 0) return;
-  if (h && h.ship) {
-    setTarget(h.ship.id);
+  if (mouseEvent.button !== 0) return;
+  if (pickAt2 && pickAt2.ship) {
+    setTarget(pickAt2.ship.id);
     return;
   }
-  if (h && h.stellar) {
-    G.navStellar = h.stellar.id;
+  if (pickAt2 && pickAt2.stellar) {
+    clientGameState.navStellar = pickAt2.stellar.id;
     toast(
-      `Nav: ${h.stellar.name}${h.stellar.svc!.includes('L') ? ' (double-click to land; L chooses nearest)' : ''}`,
+      `Nav: ${pickAt2.stellar.name}${pickAt2.stellar.svc!.includes('L') ? ' (double-click to land; L chooses nearest)' : ''}`,
     );
     return;
   }
-  const rock = (G.rocks || []).find((k) => k.hp && Math.hypot(k.x - wx, k.y - wy) <= k.r + 8);
-  if (rock) G.miningTarget = rock.id;
-  const tow = (G.towing || G.you?.towing)?.objects.find(
-    (o) => !['delivered', 'destroyed'].includes(o!.status) && Math.hypot(o!.x - wx, o!.y - wy) < 52,
+  const rock = (clientGameState.rocks || []).find(
+    (entryKey) =>
+      entryKey.hp && Math.hypot(entryKey.x - worldX, entryKey.y - worldY) <= entryKey.r + 8,
   );
-  if (tow) {
-    G.towTarget = tow.id;
+  if (rock) clientGameState.miningTarget = rock.id;
+  const towObject = (clientGameState.towing || clientGameState.you?.towing)?.objects.find(
+    (options) =>
+      !['delivered', 'destroyed'].includes(options!.status) &&
+      Math.hypot(options!.x - worldX, options!.y - worldY) < 52,
+  );
+  if (towObject) {
+    clientGameState.towTarget = towObject.id;
     return;
   }
   // Only genuinely empty space clears combat selection; resource clicks retain it.
   if (!rock) setTarget(0);
-  if (G.opts.mouseAim) mouse.down = true; // mouse-aim mode: hold the left button on open space to fire
+  if (clientGameState.opts.mouseAim) mouse.down = true; // mouse-aim mode: hold the left button on open space to fire
 });
-window.addEventListener('mouseup', (e) => {
+window.addEventListener('mouseup', (mouseEvent) => {
   mouse.down = false;
-  if (e.button === 2 && G._look) {
-    if (!G._look.moved && performance.now() - G._look.t < 300) setTarget(0);
-    G._look = null;
-    G._lookT = null;
+  if (mouseEvent.button === 2 && clientGameState._look) {
+    if (!clientGameState._look.moved && performance.now() - clientGameState._look.t < 300)
+      setTarget(0);
+    clientGameState._look = null;
+    clientGameState._lookT = null;
   } // the view eases back to your ship
 });
-canvas.addEventListener('dblclick', (e) => {
-  if (!G.you || G.landed) return;
-  const [wx, wy] = toWorld(e.clientX, e.clientY),
-    h = pickAt(wx, wy);
-  if (h?.stellar?.wormhole) {
-    G.navStellar = h.stellar.id;
+canvas.addEventListener('dblclick', (mouseEvent) => {
+  if (!clientGameState.you || clientGameState.landed) return;
+  const [worldX, worldY] = toWorld(mouseEvent.clientX, mouseEvent.clientY),
+    pickAt2 = pickAt(worldX, worldY);
+  if (pickAt2?.stellar?.wormhole) {
+    clientGameState.navStellar = pickAt2.stellar.id;
     setAuto(
-      { mode: 'gateway', id: h.stellar.id, sys: G.sys },
-      `Autopilot: through ${h.stellar.name}. Steer to take over.`,
+      { mode: 'gateway', id: pickAt2.stellar.id, sys: clientGameState.sys },
+      `Autopilot: through ${pickAt2.stellar.name}. Steer to take over.`,
     );
-  } else if (h && h.stellar && h.stellar.svc!.includes('L')) landRequest(h.stellar);
+  } else if (pickAt2 && pickAt2.stellar && pickAt2.stellar.svc!.includes('L'))
+    landRequest(pickAt2.stellar);
 });
-canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('contextmenu', (pointerEvent) => pointerEvent.preventDefault());
 canvas.addEventListener(
   'wheel',
-  (e) => {
-    if (!G.view) return;
-    e.preventDefault();
-    G.zoom = e.deltaY < 0 ? Math.min(2, G.zoom * 1.1) : Math.max(0.35, G.zoom / 1.1);
+  (wheelEvent) => {
+    if (!clientGameState.view) return;
+    wheelEvent.preventDefault();
+    clientGameState.zoom =
+      wheelEvent.deltaY < 0
+        ? Math.min(2, clientGameState.zoom * 1.1)
+        : Math.max(0.35, clientGameState.zoom / 1.1);
   },
   { passive: false },
 );
 // radar: click a blip to target it
-$('radar').addEventListener('mousedown', (e) => {
-  const me = G.view;
-  if (!me) return;
-  const rc = $('radar'),
-    rect = rc.getBoundingClientRect(),
-    r = rc.width / rect.width,
-    mx = (e.clientX - rect.left) * r,
-    my = (e.clientY - rect.top) * r;
-  const W = rc.width,
-    H = rc.height,
-    k = (Math.min(W, H) / 2 / (G.radarR || 4200)) * 1.15;
+elementById2('radar').addEventListener('mousedown', (mouseEvent) => {
+  const clientView = clientGameState.view;
+  if (!clientView) return;
+  const htmlCanvasElement = elementById2('radar'),
+    domRect = htmlCanvasElement.getBoundingClientRect(),
+    radius = htmlCanvasElement.width / domRect.width,
+    mouseX = (mouseEvent.clientX - domRect.left) * radius,
+    mouseY = (mouseEvent.clientY - domRect.top) * radius;
+  const width2 = htmlCanvasElement.width,
+    height2 = htmlCanvasElement.height,
+    entryKey = (Math.min(width2, height2) / 2 / (clientGameState.radarR || 4200)) * 1.15;
   let best = null,
-    bd = 10 * r;
-  for (const en of G.ents.values()) {
-    if (en.id === G.myId) continue;
-    const d = Math.hypot(W / 2 + (en.rx - me.rx) * k - mx, H / 2 + (en.ry - me.ry) * k - my);
-    if (d < bd) {
-      bd = d;
-      best = en;
+    body = 10 * radius;
+  for (const renderEntity of clientGameState.ents.values()) {
+    if (renderEntity.id === clientGameState.myId) continue;
+    const distance = Math.hypot(
+      width2 / 2 + (renderEntity.rx - clientView.rx) * entryKey - mouseX,
+      height2 / 2 + (renderEntity.ry - clientView.ry) * entryKey - mouseY,
+    );
+    if (distance < body) {
+      body = distance;
+      best = renderEntity;
     }
   }
   if (best) setTarget(best.id);
-  else if (e.button === 2) setTarget(0);
+  else if (mouseEvent.button === 2) setTarget(0);
 });
-$('radar').addEventListener('contextmenu', (e) => e.preventDefault());
+elementById2('radar').addEventListener('contextmenu', (pointerEvent) =>
+  pointerEvent.preventDefault(),
+);
 
 // ------------------------------------------------------------------ boarding (B next to a disabled ship)
 /**
@@ -1998,52 +2298,67 @@ $('radar').addEventListener('contextmenu', (e) => e.preventDefault());
  * @returns {void}
  */
 function openBoard(): void {
-  const t = G.target ? G.ents.get(G.target) : null,
-    me = G.view;
-  if (!t || !(t.fl & 4)) return toast('Target a disabled ship to board it.');
-  const H = G.A!.ships[t.hull],
-    d = Math.hypot(t.rx - me!.rx, t.ry - me!.ry);
-  if (d > Math.max(120, (H.size + G.A!.ships[G.myHull || G.you!.ship.hull].size) * 0.5))
+  const renderEntity = clientGameState.target
+      ? clientGameState.ents.get(clientGameState.target)
+      : null,
+    clientView = clientGameState.view;
+  if (!renderEntity || !(renderEntity.fl & 4)) return toast('Target a disabled ship to board it.');
+  const shipHullAsset = clientGameState.A!.ships[renderEntity.hull],
+    distance = Math.hypot(renderEntity.rx - clientView!.rx, renderEntity.ry - clientView!.ry);
+  if (
+    distance >
+    Math.max(
+      120,
+      (shipHullAsset.size +
+        clientGameState.A!.ships[clientGameState.myHull || clientGameState.you!.ship.hull].size) *
+        0.5,
+    )
+  )
     return toast('Move alongside to board.');
-  $('boardin').innerHTML = boardHtml(G, t);
-  $('boardbox').classList.remove('hidden');
-  G.boarding = t.id;
+  elementById2('boardin').innerHTML = boardHtml(clientGameState, renderEntity);
+  elementById2('boardbox').classList.remove('hidden');
+  clientGameState.boarding = renderEntity.id;
 }
 /**
  * Closes the ship boarding action modal.
  * @returns {void}
  */
 function closeBoard(): void {
-  $('boardbox').classList.add('hidden');
-  G.boarding = 0;
+  elementById2('boardbox').classList.add('hidden');
+  clientGameState.boarding = 0;
 }
 /**
  * Sends a boarding action command (plunder, capture, rescue) to the server.
- * @param {string} act Boarding action type ('plunder' | 'capture' | 'rescue')
+ * @param {string} action Boarding action type ('plunder' | 'capture' | 'rescue')
  * @returns {void}
  */
-function doBoard(act: string): void {
-  if (act && G.boarding) send({ t: 'board', id: G.boarding, act });
+function doBoard(action: string): void {
+  if (action && clientGameState.boarding)
+    send({ t: 'board', id: clientGameState.boarding, act: action });
   closeBoard();
 }
-$('boardin').addEventListener('click', (e) => {
-  const b = (e.target as HTMLInputElement).closest<HTMLButtonElement>('[data-board]');
-  if (b && !b.disabled) doBoard(b.dataset.board!);
+elementById2('boardin').addEventListener('click', (pointerEvent) => {
+  const htmlButtonElement = (pointerEvent.target as HTMLInputElement).closest<HTMLButtonElement>(
+    '[data-board]',
+  );
+  if (htmlButtonElement && !htmlButtonElement.disabled) doBoard(htmlButtonElement.dataset.board!);
 });
 window.addEventListener(
   'keydown',
-  (e) => {
-    if ($('boardbox').classList.contains('hidden')) return;
-    const k = { Digit1: 'plunder', Digit2: 'capture', Digit3: 'rescue' }[e.code];
-    if (k) {
-      const b = $('boardin').querySelector<HTMLButtonElement>(`[data-board="${k}"]`);
-      if (b && !b.disabled) doBoard(k);
-      e.stopImmediatePropagation();
-      e.preventDefault();
-    } else if (e.key === 'Escape') {
+  (keyboardEvent) => {
+    if (elementById2('boardbox').classList.contains('hidden')) return;
+    const entryKey = { Digit1: 'plunder', Digit2: 'capture', Digit3: 'rescue' }[keyboardEvent.code];
+    if (entryKey) {
+      const htmlButtonElement = elementById2('boardin').querySelector<HTMLButtonElement>(
+        `[data-board="${entryKey}"]`,
+      );
+      if (htmlButtonElement && !htmlButtonElement.disabled) doBoard(entryKey);
+      keyboardEvent.stopImmediatePropagation();
+      keyboardEvent.preventDefault();
+    } else if (keyboardEvent.key === 'Escape') {
       closeBoard();
-      e.stopImmediatePropagation();
-      e.preventDefault();
+      keyboardEvent.stopImmediatePropagation();
+      keyboardEvent.preventDefault();
     }
   },
   true,
@@ -2055,29 +2370,31 @@ window.addEventListener(
  * @returns {void}
  */
 function renderTut(): void {
-  const i = G.you ? G.you!.tut : TUTORIAL.length,
-    T = TUTORIAL[i];
-  $('tut').classList.toggle(
+  const index = clientGameState.you ? clientGameState.you!.tut : TUTORIAL.length,
+    tutorialStep = TUTORIAL[index];
+  elementById2('tut').classList.toggle(
     'hidden',
-    !T || !!G.arena || !!(G.you && G.you!.duel && G.you!.duel.on),
+    !tutorialStep ||
+      !!clientGameState.arena ||
+      !!(clientGameState.you && clientGameState.you!.duel && clientGameState.you!.duel.on),
   ); // out of the way in the Crucible and in duels
-  if (!T) return;
-  $('tutn').textContent = `CAREER ${i + 1} / ${TUTORIAL.length}`;
-  $('tutt').textContent = T.title;
-  $('tutx').textContent = T.text;
-  $('tutr').textContent =
-    `Reward: ${T.reward.toLocaleString()} cr${T.mat ? ` + ${T.mat[0]} crate` : ''}`;
+  if (!tutorialStep) return;
+  elementById2('tutn').textContent = `CAREER ${index + 1} / ${TUTORIAL.length}`;
+  elementById2('tutt').textContent = tutorialStep.title;
+  elementById2('tutx').textContent = tutorialStep.text;
+  elementById2('tutr').textContent =
+    `Reward: ${tutorialStep.reward.toLocaleString()} cr${tutorialStep.mat ? ` + ${tutorialStep.mat[0]} crate` : ''}`;
 }
-$('tutn').parentElement!.style.cursor = 'pointer';
-$('tutn').title = 'Click to collapse or expand';
-$('tutn').onclick = () => {
-  G.opts.tutMin = !G.opts.tutMin;
+elementById2('tutn').parentElement!.style.cursor = 'pointer';
+elementById2('tutn').title = 'Click to collapse or expand';
+elementById2('tutn').onclick = () => {
+  clientGameState.opts.tutMin = !clientGameState.opts.tutMin;
   saveOpts();
-  $('tut').classList.toggle('mini', !!G.opts.tutMin);
+  elementById2('tut').classList.toggle('mini', !!clientGameState.opts.tutMin);
 }; // the career panel folds away
-$('tut').classList.toggle('mini', !!G.opts.tutMin);
-$('tutskip').onclick = () => {
-  ask('Hide the career guide? You will not get the remaining rewards.', () =>
+elementById2('tut').classList.toggle('mini', !!clientGameState.opts.tutMin);
+elementById2('tutskip').onclick = () => {
+  showConfirmation('Hide the career guide? You will not get the remaining rewards.', () =>
     send({ t: 'tutskip' }),
   );
 };
@@ -2087,11 +2404,11 @@ const CHECKS = ['dmg', 'shake', 'mouseAim', 'notify', 'cb', 'mute'];
 let rebinding: string | null = null;
 /**
  * Formats a KeyboardEvent.code string into a readable label.
- * @param {string} c KeyboardEvent code
+ * @param {string} component KeyboardEvent code
  * @returns {string} Human-friendly key name
  */
-const keyName = (c: string | null): string =>
-  !c
+const keyName = (component: string | null): string =>
+  !component
     ? 'assign key'
     : {
         Backquote: '`',
@@ -2113,8 +2430,8 @@ const keyName = (c: string | null): string =>
         ControlRight: 'Ctrl R',
         AltLeft: 'Alt L',
         AltRight: 'Alt R',
-      }[c] ||
-      c
+      }[component] ||
+      component
         .replace(/^Key/, '')
         .replace(/^Digit/, '')
         .replace(/^Numpad/, 'Num ');
@@ -2123,16 +2440,16 @@ const keyName = (c: string | null): string =>
  * @returns {void}
  */
 function renderKeys(): void {
-  $('optkeys').innerHTML = ACTIONS.map(
-    ([a, n]) =>
-      `<div class="kb"><span>${n}</span><button class="btn sm${rebinding === a ? ' on' : ''}" data-bind="${a}">${rebinding === a ? 'press a key…' : keyName(bound(a))}</button></div>`,
+  elementById2('optkeys').innerHTML = ACTIONS.map(
+    ([firstValue, count]) =>
+      `<div class="kb"><span>${count}</span><button class="btn sm${rebinding === firstValue ? ' on' : ''}" data-bind="${firstValue}">${rebinding === firstValue ? 'press a key…' : keyName(bound(firstValue))}</button></div>`,
   ).join('');
-  $('optkeys')
+  elementById2('optkeys')
     .querySelectorAll<HTMLElement>('[data-bind]')
     .forEach(
-      (b) =>
-        (b.onclick = () => {
-          rebinding = b.dataset.bind!;
+      (htmlElement) =>
+        (htmlElement.onclick = () => {
+          rebinding = htmlElement.dataset.bind!;
           renderKeys();
         }),
     );
@@ -2144,19 +2461,21 @@ function renderKeys(): void {
  */
 function openOpts(keysFirst?: boolean | PointerEvent): void {
   audio.ui('open', 0.6);
-  $('opts').classList.remove('hidden');
-  for (const k of CHECKS) ($('opt-' + k) as HTMLInputElement).checked = !!G.opts[k];
-  $('opt-scale').value = G.opts.scale;
-  $('opt-vol').value = G.opts.vol;
-  $('opt-sfx').value = G.opts.sfx;
-  $('opt-radio').value = G.opts.radio;
-  $('opt-ui').value = G.opts.ui ?? 0.8;
-  $('opt-amb').value = G.opts.amb ?? 0.5;
-  $('opt-music').value = G.opts.music ?? 0.6;
+  elementById2('opts').classList.remove('hidden');
+  for (const cHECKS of CHECKS)
+    (elementById2('opt-' + cHECKS) as HTMLInputElement).checked = !!clientGameState.opts[cHECKS];
+  elementById2('opt-scale').value = clientGameState.opts.scale;
+  elementById2('opt-vol').value = clientGameState.opts.vol;
+  elementById2('opt-sfx').value = clientGameState.opts.sfx;
+  elementById2('opt-radio').value = clientGameState.opts.radio;
+  elementById2('opt-ui').value = clientGameState.opts.ui ?? 0.8;
+  elementById2('opt-amb').value = clientGameState.opts.amb ?? 0.5;
+  elementById2('opt-music').value = clientGameState.opts.music ?? 0.6;
   rebinding = null;
   renderKeys();
   document.querySelectorAll<HTMLInputElement>('#opts input[type=range]').forEach(paintRange);
-  if (keysFirst === true) setTimeout(() => $('optkeys').scrollIntoView({ block: 'start' }), 0);
+  if (keysFirst === true)
+    setTimeout(() => elementById2('optkeys').scrollIntoView({ block: 'start' }), 0);
 }
 /**
  * Closes the settings modal dialog.
@@ -2164,89 +2483,94 @@ function openOpts(keysFirst?: boolean | PointerEvent): void {
  */
 function closeOpts(): void {
   audio.ui('close', 0.6);
-  $('opts').classList.add('hidden');
+  elementById2('opts').classList.add('hidden');
   rebinding = null;
 }
-$('optclose').onclick = closeOpts;
-$('optbtn').onclick = openOpts;
+elementById2('optclose').onclick = closeOpts;
+elementById2('optbtn').onclick = openOpts;
 // the quick volume control in the command bar: one master slider and a mute button
 /**
  * Updates an HTML range input's background fill gradient according to its value.
- * @param {HTMLInputElement} el Input slider element
+ * @param {HTMLInputElement} htmlInputElement Input slider element
  * @returns {void}
  */
-function paintRange(el: HTMLInputElement): void {
-  if (!el) return;
-  const p = ((+el.value - +el.min) / (+el.max - +el.min || 1)) * 100;
-  el.style.background = `linear-gradient(90deg,#e0362a ${p}%,#3a0808 ${p}%)`;
+function paintRange(htmlInputElement: HTMLInputElement): void {
+  if (!htmlInputElement) return;
+  const position =
+    ((+htmlInputElement.value - +htmlInputElement.min) /
+      (+htmlInputElement.max - +htmlInputElement.min || 1)) *
+    100;
+  htmlInputElement.style.background = `linear-gradient(90deg,#e0362a ${position}%,#3a0808 ${position}%)`;
 } // red fill
-document.addEventListener('input', (e) => {
+document.addEventListener('input', (event) => {
   if (
-    (e.target as HTMLInputElement).matches &&
-    (e.target as HTMLInputElement).matches('input[type=range]')
+    (event.target as HTMLInputElement).matches &&
+    (event.target as HTMLInputElement).matches('input[type=range]')
   )
-    paintRange(e.target as HTMLInputElement);
+    paintRange(event.target as HTMLInputElement);
 });
 /**
  * Syncs the volume quick-slider and mute button with current volume settings.
  * @returns {void}
  */
 function volUi(): void {
-  const b = $('cbvol');
-  if (!b) return;
-  b.textContent =
-    G.opts.mute || G.opts.vol <= 0.001
+  const htmlButtonElement = elementById2('cbvol');
+  if (!htmlButtonElement) return;
+  htmlButtonElement.textContent =
+    clientGameState.opts.mute || clientGameState.opts.vol <= 0.001
       ? '🔇'
-      : G.opts.vol < 0.3
+      : clientGameState.opts.vol < 0.3
         ? '🔈'
-        : G.opts.vol < 0.65
+        : clientGameState.opts.vol < 0.65
           ? '🔉'
           : '🔊';
   const label = document.createElement('span');
   label.className = 'utility-label';
-  label.textContent = G.opts.mute ? 'UNMUTE' : 'VOLUME';
-  b.append(label);
-  $('qvol').value = Math.round(G.opts.vol * 100);
-  paintRange($('qvol'));
-  $('qvoln').textContent = G.opts.mute ? 'muted' : Math.round(G.opts.vol * 100) + '%';
-  $('qmute').textContent = G.opts.mute ? 'UNMUTE' : 'MUTE';
+  label.textContent = clientGameState.opts.mute ? 'UNMUTE' : 'VOLUME';
+  htmlButtonElement.append(label);
+  elementById2('qvol').value = Math.round(clientGameState.opts.vol * 100);
+  paintRange(elementById2('qvol'));
+  elementById2('qvoln').textContent = clientGameState.opts.mute
+    ? 'muted'
+    : Math.round(clientGameState.opts.vol * 100) + '%';
+  elementById2('qmute').textContent = clientGameState.opts.mute ? 'UNMUTE' : 'MUTE';
 }
-$('cbvol').onclick = (e) => {
-  e.stopPropagation();
-  $('qvolbox').classList.toggle('hidden');
+elementById2('cbvol').onclick = (pointerEvent) => {
+  pointerEvent.stopPropagation();
+  elementById2('qvolbox').classList.toggle('hidden');
   volUi();
 };
-$('qvol').oninput = (e) => {
-  G.opts.vol = +(e.target as HTMLInputElement).value / 100;
-  if (G.opts.mute && G.opts.vol > 0) G.opts.mute = false;
+elementById2('qvol').oninput = (event) => {
+  clientGameState.opts.vol = +(event.target as HTMLInputElement).value / 100;
+  if (clientGameState.opts.mute && clientGameState.opts.vol > 0) clientGameState.opts.mute = false;
   applyOpts();
   saveOpts();
   volUi();
 };
-$('qmute').onclick = () => {
-  G.opts.mute = !G.opts.mute;
+elementById2('qmute').onclick = () => {
+  clientGameState.opts.mute = !clientGameState.opts.mute;
   applyOpts();
   saveOpts();
   volUi();
 };
-$('qmore').onclick = () => {
-  $('qvolbox').classList.add('hidden');
+elementById2('qmore').onclick = () => {
+  elementById2('qvolbox').classList.add('hidden');
   openOpts();
 };
-document.addEventListener('click', (e) => {
+document.addEventListener('click', (pointerEvent) => {
   if (
-    !(e.target as HTMLInputElement).closest<HTMLElement>('#qvolbox') &&
-    (e.target as HTMLInputElement).id !== 'cbvol'
+    !(pointerEvent.target as HTMLInputElement).closest<HTMLElement>('#qvolbox') &&
+    (pointerEvent.target as HTMLInputElement).id !== 'cbvol'
   )
-    $('qvolbox').classList.add('hidden');
+    elementById2('qvolbox').classList.add('hidden');
 });
 volUi();
-for (const k of CHECKS)
-  $('opt-' + k).onchange = (e) => {
-    G.opts[k] = (e.target as HTMLInputElement).checked;
+for (const cHECKS of CHECKS)
+  elementById2('opt-' + cHECKS).onchange = (event) => {
+    clientGameState.opts[cHECKS] = (event.target as HTMLInputElement).checked;
     if (
-      k === 'notify' &&
-      (e.target as HTMLInputElement).checked &&
+      cHECKS === 'notify' &&
+      (event.target as HTMLInputElement).checked &&
       window.Notification &&
       Notification.permission === 'default'
     )
@@ -2254,71 +2578,80 @@ for (const k of CHECKS)
     applyOpts();
     saveOpts();
   };
-for (const k of ['scale', 'vol', 'sfx', 'radio', 'ui', 'amb', 'music'])
-  $('opt-' + k).oninput = (e) => {
-    G.opts[k] = +(e.target as HTMLInputElement).value;
+for (const entryKey of ['scale', 'vol', 'sfx', 'radio', 'ui', 'amb', 'music'])
+  elementById2('opt-' + entryKey).oninput = (event) => {
+    clientGameState.opts[entryKey] = +(event.target as HTMLInputElement).value;
     applyOpts();
     saveOpts();
     audio.unlock();
-    if (k === 'vol' || k === 'sfx') audio.play('10100', 0, 0, 1);
-    if (k === 'ui') audio.ui('click');
+    if (entryKey === 'vol' || entryKey === 'sfx') audio.play('10100', 0, 0, 1);
+    if (entryKey === 'ui') audio.ui('click');
   };
-window.addEventListener('rift-radio-vol', (e) => {
-  G.opts.radio = (e as CustomEvent).detail;
+window.addEventListener('rift-radio-vol', (event) => {
+  clientGameState.opts.radio = (event as CustomEvent).detail;
   applyOpts();
   saveOpts();
 });
-$('optreset').onclick = () => {
-  G.opts.keys = {};
-  migrateBindings(G.opts, ACTIONS);
+elementById2('optreset').onclick = () => {
+  clientGameState.opts.keys = {};
+  migrateBindings(clientGameState.opts, ACTIONS);
   saveOpts();
   renderKeys();
 };
 window.addEventListener(
   'keydown',
-  (e) => {
-    if (!$('ctrlbox').classList.contains('hidden')) {
-      if (e.key === 'Escape' || e.key === 'Enter' || e.key === '?') {
+  (keyboardEvent) => {
+    if (!elementById2('ctrlbox').classList.contains('hidden')) {
+      if (
+        keyboardEvent.key === 'Escape' ||
+        keyboardEvent.key === 'Enter' ||
+        keyboardEvent.key === '?'
+      ) {
         closeControls();
-        e.preventDefault();
+        keyboardEvent.preventDefault();
       }
-      e.stopImmediatePropagation();
+      keyboardEvent.stopImmediatePropagation();
       return;
     }
-    if (!$('storebox').classList.contains('hidden') && e.key === 'Escape') {
-      $('storebox').classList.add('hidden');
-      e.stopImmediatePropagation();
+    if (!elementById2('storebox').classList.contains('hidden') && keyboardEvent.key === 'Escape') {
+      elementById2('storebox').classList.add('hidden');
+      keyboardEvent.stopImmediatePropagation();
       return;
     }
-    if ($('opts').classList.contains('hidden')) return;
+    if (elementById2('opts').classList.contains('hidden')) return;
     if (rebinding) {
       // the next key pressed becomes the binding (Escape cancels); a key used by another action is swapped off it
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      if (RESERVED_KEYS.has(e.code) && e.code !== 'Escape') {
+      keyboardEvent.preventDefault();
+      keyboardEvent.stopImmediatePropagation();
+      if (RESERVED_KEYS.has(keyboardEvent.code) && keyboardEvent.code !== 'Escape') {
         toast('This key is reserved for steering or a fixed interface control.');
         rebinding = null;
         renderKeys();
         return;
       } // 2.0.3
-      if (e.code === 'Backspace' || e.code === 'Delete') {
-        G.opts.keys[rebinding] = null;
+      if (keyboardEvent.code === 'Backspace' || keyboardEvent.code === 'Delete') {
+        clientGameState.opts.keys[rebinding] = null;
         saveOpts();
-      } else if (e.code !== 'Escape') {
-        for (const [a] of ACTIONS)
-          if (a !== rebinding && bound(a) === e.code) G.opts.keys[a] = bound(rebinding);
-        G.opts.keys[rebinding] = e.code;
+      } else if (keyboardEvent.code !== 'Escape') {
+        for (const [firstValue] of ACTIONS)
+          if (firstValue !== rebinding && bound(firstValue) === keyboardEvent.code)
+            clientGameState.opts.keys[firstValue] = bound(rebinding);
+        clientGameState.opts.keys[rebinding] = keyboardEvent.code;
         saveOpts();
       }
       rebinding = null;
       renderKeys();
       return;
     }
-    if (e.key === 'Escape' || e.key === 'Enter' || e.code === 'KeyO') {
+    if (
+      keyboardEvent.key === 'Escape' ||
+      keyboardEvent.key === 'Enter' ||
+      keyboardEvent.code === 'KeyO'
+    ) {
       closeOpts();
-      e.preventDefault();
+      keyboardEvent.preventDefault();
     }
-    e.stopImmediatePropagation(); // game keys are paused while options are open
+    keyboardEvent.stopImmediatePropagation(); // game keys are paused while options are open
   },
   true,
 );
@@ -2329,196 +2662,207 @@ window.addEventListener(
  * @returns {void}
  */
 function resize(): void {
-  const r = window.devicePixelRatio || 1;
-  canvas.width = canvas.clientWidth * r;
-  canvas.height = canvas.clientHeight * r;
-  ctx.imageSmoothingEnabled = true;
-  const rc = $('radar');
-  rc.width = Math.round(rc.clientWidth * r);
-  rc.height = Math.round(rc.clientHeight * r);
+  const radius = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * radius;
+  canvas.height = canvas.clientHeight * radius;
+  canvasRenderingContext2D.imageSmoothingEnabled = true;
+  const htmlCanvasElement = elementById2('radar');
+  htmlCanvasElement.width = Math.round(htmlCanvasElement.clientWidth * radius);
+  htmlCanvasElement.height = Math.round(htmlCanvasElement.clientHeight * radius);
 }
 window.addEventListener('resize', resize);
 // Sidebar reflow (including UI scale and persisted widths) also changes the radar.
-new ResizeObserver(resize).observe($('radar'));
+new ResizeObserver(resize).observe(elementById2('radar'));
 initSidebarSize(resize);
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.
- * @param {number} w Requested width in CSS pixels
+ * @param {number} width2 Requested width in CSS pixels
  * @returns {number} Clamped width in CSS pixels
  */
-function setHud(w: number): number {
+function setHud(width: number): number {
   // CSS temporarily caps the displayed width to the viewport without destroying
   // a restored preference. Pointer drags below apply that cap before saving.
-  w = Math.max(280, Math.min(760, w));
-  document.documentElement.style.setProperty('--tray-width', w + 'px');
+  width = Math.max(280, Math.min(760, width));
+  document.documentElement.style.setProperty('--tray-width', width + 'px');
   resize();
-  return w;
+  return width;
 }
 try {
-  const w = +localStorage.getItem('rift.hud')!;
-  if (w) setHud(w);
+  const width = +localStorage.getItem('rift.hud')!;
+  if (width) setHud(width);
 } catch {}
-$('hudgrip').addEventListener('pointerdown', (e) => {
-  e.preventDefault();
-  const g = $('hudgrip');
-  g.classList.add('drag');
-  const move = (ev: PointerEvent) => {
-    const w = setHud(Math.min(window.innerWidth * 0.6, window.innerWidth - ev.clientX));
+elementById2('hudgrip').addEventListener('pointerdown', (pointerEvent) => {
+  pointerEvent.preventDefault();
+  const cachedElement = elementById2('hudgrip');
+  cachedElement.classList.add('drag');
+  const move = (pointerEvent: PointerEvent) => {
+    const setHud2 = setHud(
+      Math.min(window.innerWidth * 0.6, window.innerWidth - pointerEvent.clientX),
+    );
     try {
-      localStorage.setItem('rift.hud', String(w));
+      localStorage.setItem('rift.hud', String(setHud2));
     } catch {}
   };
-  const up = () => {
-    g.classList.remove('drag');
+  const upward = () => {
+    cachedElement.classList.remove('drag');
     window.removeEventListener('pointermove', move);
-    window.removeEventListener('pointerup', up);
-    window.removeEventListener('pointercancel', up);
+    window.removeEventListener('pointerup', upward);
+    window.removeEventListener('pointercancel', upward);
     refreshCompanion();
   };
   window.addEventListener('pointermove', move);
-  window.addEventListener('pointerup', up);
-  window.addEventListener('pointercancel', up);
+  window.addEventListener('pointerup', upward);
+  window.addEventListener('pointercancel', upward);
 });
-$('traytoggle').onclick = () => {
+elementById2('traytoggle').onclick = () => {
   const open = document.body.classList.toggle('tray-open');
-  $('traytoggle').setAttribute('aria-expanded', String(open));
-  $('traytoggle').title = (open ? 'Close' : 'Open') + ' ship console tray';
-  $('hud').inert = !open;
+  elementById2('traytoggle').setAttribute('aria-expanded', String(open));
+  elementById2('traytoggle').title = (open ? 'Close' : 'Open') + ' ship console tray';
+  elementById2('hud').inert = !open;
   resize();
 };
-$('hud').inert = true;
+elementById2('hud').inert = true;
 resize();
 // ------------------------------------------------------------------ gamepad and touch controls
-const pad: { prev: boolean[] } = { prev: [] },
+const padding: { prev: boolean[] } = { prev: [] },
   touch: { keys: Record<string, boolean>; stick: { dx: number; dy: number } | null } = {
     keys: {},
     stick: null,
   };
 /**
  * Reads standard Gamepad API state and maps buttons/axes to ship inputs and commands.
- * @param {ClientInput} inp Mutable input state object
+ * @param {ClientInput} clientInput Mutable input state object
  * @returns {void}
  */
-function padInput(inp: ClientInput): void {
-  const gp = navigator.getGamepads ? [...navigator.getGamepads()].find(Boolean) : null;
-  if (!gp) return;
-  const B = (i: number) => gp.buttons[i] && gp.buttons[i].pressed,
-    edge = (i: number) => B(i) && !pad.prev[i],
-    ax = gp.axes[0] || 0,
-    ay = gp.axes[1] || 0;
-  if (Math.abs(ax) > 0.35) inp.turn = Math.sign(ax);
-  if (ay < -0.35 || B(7)) inp.thrust = 1;
-  if (B(13) || ay > 0.6) inp.rev = 1;
-  if (B(0)) inp.fire1 = 1;
-  if (B(1)) inp.fire2 = 1;
-  if (B(6)) inp.ab = 1;
+function padInput(clientInput: ClientInput): void {
+  const gamepad = navigator.getGamepads ? [...navigator.getGamepads()].find(Boolean) : null;
+  if (!gamepad) return;
+  const secondValue = (index: number) => gamepad.buttons[index] && gamepad.buttons[index].pressed,
+    edge = (index: number) => secondValue(index) && !padding.prev[index],
+    axisX = gamepad.axes[0] || 0,
+    axisY = gamepad.axes[1] || 0;
+  if (Math.abs(axisX) > 0.35) clientInput.turn = Math.sign(axisX);
+  if (axisY < -0.35 || secondValue(7)) clientInput.thrust = 1;
+  if (secondValue(13) || axisY > 0.6) clientInput.rev = 1;
+  if (secondValue(0)) clientInput.fire1 = 1;
+  if (secondValue(1)) clientInput.fire2 = 1;
+  if (secondValue(6)) clientInput.ab = 1;
   if (edge(2)) nearestHostile();
   if (edge(3)) landRequest();
   if (edge(4)) cycleTarget(-1);
   if (edge(5)) cycleTarget(1);
-  if (edge(9)) $('gmap').classList.contains('hidden') ? openMap() : closeMap();
+  if (edge(9)) elementById2('gmap').classList.contains('hidden') ? openMap() : closeMap();
   if (edge(8)) openBoard();
   if (edge(12)) jumpNext();
-  pad.prev = gp.buttons.map((b) => b.pressed);
+  padding.prev = gamepad.buttons.map((gamepadButton) => gamepadButton.pressed);
 }
 /**
  * Polls on-screen virtual joystick and touch action buttons for input state.
- * @param {ClientInput} inp Mutable input state object
+ * @param {ClientInput} clientInput Mutable input state object
  * @returns {void}
  */
-function touchInput(inp: ClientInput): void {
-  for (const k of ['fire1', 'fire2', 'ab'] as const) if (touch.keys[k]) inp[k] = 1;
-  const st = touch.stick;
-  if (!st || !G.view) return;
-  const mag = Math.hypot(st.dx, st.dy);
-  if (mag < 0.2) return;
-  const want = Math.atan2(st.dx, -st.dy);
-  let d = want - G.view.a;
-  d = Math.atan2(Math.sin(d), Math.cos(d));
-  const s_ = G.you && G.you!.shipStats;
-  if (Math.abs(d) > (s_ ? s_.turn * DT : 0.05)) inp.turn = Math.sign(d);
-  if (mag > 0.6 && Math.abs(d) < 0.8) inp.thrust = 1;
+function touchInput(clientInput: ClientInput): void {
+  for (const entryKey of ['fire1', 'fire2', 'ab'] as const)
+    if (touch.keys[entryKey]) clientInput[entryKey] = 1;
+  const stick2 = touch.stick;
+  if (!stick2 || !clientGameState.view) return;
+  const magnitude = Math.hypot(stick2.dx, stick2.dy);
+  if (magnitude < 0.2) return;
+  const want = Math.atan2(stick2.dx, -stick2.dy);
+  let distance = want - clientGameState.view.a;
+  distance = Math.atan2(Math.sin(distance), Math.cos(distance));
+  const computedShipStats = clientGameState.you && clientGameState.you!.shipStats;
+  if (Math.abs(distance) > (computedShipStats ? computedShipStats.turn * tickDuration : 0.05))
+    clientInput.turn = Math.sign(distance);
+  if (magnitude > 0.6 && Math.abs(distance) < 0.8) clientInput.thrust = 1;
 }
 if (
   'ontouchstart' in window ||
   ((window.matchMedia as typeof matchMedia | undefined) && matchMedia('(pointer: coarse)').matches)
 ) {
-  $('touch').classList.remove('hidden');
-  const stk = $('tstick'),
-    knob = stk.querySelector<HTMLElement>('i')!;
-  const move = (t: Touch) => {
-    const r = stk.getBoundingClientRect(),
-      cx = r.left + r.width / 2,
-      cy = r.top + r.height / 2;
-    let dx = (t.clientX - cx) / (r.width / 2),
-      dy = (t.clientY - cy) / (r.height / 2);
-    const m = Math.hypot(dx, dy);
-    if (m > 1) {
-      dx /= m;
-      dy /= m;
+  elementById2('touch').classList.remove('hidden');
+  const cachedElement = elementById2('tstick'),
+    knob = cachedElement.querySelector<HTMLElement>('i')!;
+  const move = (touch2: Touch) => {
+    const domRect = cachedElement.getBoundingClientRect(),
+      centerX = domRect.left + domRect.width / 2,
+      centerY = domRect.top + domRect.height / 2;
+    let deltaX = (touch2.clientX - centerX) / (domRect.width / 2),
+      deltaY = (touch2.clientY - centerY) / (domRect.height / 2);
+    const message = Math.hypot(deltaX, deltaY);
+    if (message > 1) {
+      deltaX /= message;
+      deltaY /= message;
     }
-    touch.stick = { dx, dy };
-    knob.style.transform = `translate(${dx * 50}px,${dy * 50}px)`;
+    touch.stick = { dx: deltaX, dy: deltaY };
+    knob.style.transform = `translate(${deltaX * 50}px,${deltaY * 50}px)`;
   };
-  stk.addEventListener(
+  cachedElement.addEventListener(
     'touchstart',
-    (e) => {
-      e.preventDefault();
+    (touchEvent) => {
+      touchEvent.preventDefault();
       audio.unlock();
-      move(e.targetTouches[0]);
+      move(touchEvent.targetTouches[0]);
     },
     { passive: false },
   );
-  stk.addEventListener(
+  cachedElement.addEventListener(
     'touchmove',
-    (e) => {
-      e.preventDefault();
-      move(e.targetTouches[0]);
+    (touchEvent) => {
+      touchEvent.preventDefault();
+      move(touchEvent.targetTouches[0]);
     },
     { passive: false },
   );
-  stk.addEventListener('touchend', () => {
+  cachedElement.addEventListener('touchend', () => {
     touch.stick = null;
     knob.style.transform = '';
   });
-  for (const b of $('tbtns').querySelectorAll<HTMLElement>('button')) {
-    b.addEventListener(
+  for (const htmlElement of elementById2('tbtns').querySelectorAll<HTMLElement>('button')) {
+    htmlElement.addEventListener(
       'touchstart',
-      (e) => {
-        e.preventDefault();
+      (touchEvent) => {
+        touchEvent.preventDefault();
         audio.unlock();
-        b.classList.add('on');
-        if (b.dataset.k!) touch.keys[b.dataset.k!] = true;
-        const t = b.dataset.tap!;
-        if (t === 'target') nearestHostile();
-        else if (t === 'land') landRequest();
-        else if (t === 'map') $('gmap').classList.contains('hidden') ? openMap() : closeMap();
-        else if (t === 'board') openBoard();
-        else if (t === 'jump') jumpNext();
+        htmlElement.classList.add('on');
+        if (htmlElement.dataset.k!) touch.keys[htmlElement.dataset.k!] = true;
+        const time = htmlElement.dataset.tap!;
+        if (time === 'target') nearestHostile();
+        else if (time === 'land') landRequest();
+        else if (time === 'map')
+          elementById2('gmap').classList.contains('hidden') ? openMap() : closeMap();
+        else if (time === 'board') openBoard();
+        else if (time === 'jump') jumpNext();
       },
       { passive: false },
     );
-    b.addEventListener('touchend', () => {
-      b.classList.remove('on');
-      if (b.dataset.k!) touch.keys[b.dataset.k!] = false;
+    htmlElement.addEventListener('touchend', () => {
+      htmlElement.classList.remove('on');
+      if (htmlElement.dataset.k!) touch.keys[htmlElement.dataset.k!] = false;
     });
   }
 }
-let acc = 0,
+let account = 0,
   last = performance.now();
 /**
  * Fixed physics and input update tick executed at fixed timestep (DT).
  * @returns {void}
  */
 function fixedTick(): void {
-  if (!G.view || G.landed || G.paused || G.quitting) return;
+  if (
+    !clientGameState.view ||
+    clientGameState.landed ||
+    clientGameState.paused ||
+    clientGameState.quitting
+  )
+    return;
   // Preserve automatic-control intent even if guidance completes or refuses this tick.
-  const towing = G.towing || G.you?.towing;
-  if (towing?.attached) G.auto = null;
-  G.view.towCap = towing?.attached ? towing.cap : undefined;
-  const navigationRequested = !!G.auto;
-  const inp = {
+  const towing = clientGameState.towing || clientGameState.you?.towing;
+  if (towing?.attached) clientGameState.auto = null;
+  clientGameState.view.towCap = towing?.attached ? towing.cap : undefined;
+  const navigationRequested = !!clientGameState.auto;
+  const input = {
     thrust: held('thrust') ? 1 : 0,
     turn: (held('right') ? 1 : 0) - (held('left') ? 1 : 0),
     rev: held('rev') ? 1 : 0,
@@ -2527,210 +2871,246 @@ function fixedTick(): void {
     fire2: held('fire2') || shipFunctions.secondary() ? 1 : 0,
   };
   if (
-    G.opts.mouseAim &&
+    clientGameState.opts.mouseAim &&
     mouse.in &&
-    (mouse.down || (!(G.combat && (G.combat.on || G.combat.delegated)) && !G.you?.armada?.follow))
+    (mouse.down ||
+      (!(
+        clientGameState.combat &&
+        (clientGameState.combat.on || clientGameState.combat.delegated)
+      ) &&
+        !clientGameState.you?.armada?.follow))
   ) {
     // mouse-aim: the ship turns toward the cursor unless you steer with the keys
-    if (!inp.turn) {
-      const want = Math.atan2(mouse.wx - G.view.x, -(mouse.wy - G.view.y));
-      let d = want - G.view.a;
-      d = Math.atan2(Math.sin(d), Math.cos(d));
-      const st = G.you && G.you!.shipStats;
-      if (Math.abs(d) > (st ? st.turn * DT : 0.05)) inp.turn = Math.sign(d);
+    if (!input.turn) {
+      const want = Math.atan2(
+        mouse.wx - clientGameState.view.x,
+        -(mouse.wy - clientGameState.view.y),
+      );
+      let distance = want - clientGameState.view.a;
+      distance = Math.atan2(Math.sin(distance), Math.cos(distance));
+      const computedShipStats = clientGameState.you && clientGameState.you!.shipStats;
+      if (Math.abs(distance) > (computedShipStats ? computedShipStats.turn * tickDuration : 0.05))
+        input.turn = Math.sign(distance);
     }
-    if (mouse.down) inp.fire1 = 1;
+    if (mouse.down) input.fire1 = 1;
   }
-  const manual0 = held('thrust') || held('left') || held('right') || held('rev'),
-    before = inp.thrust + '|' + inp.turn;
-  padInput(inp);
-  touchInput(inp);
+  const manual = held('thrust') || held('left') || held('right') || held('rev'),
+    before = input.thrust + '|' + input.turn;
+  padInput(input);
+  touchInput(input);
   // Human controls revoke Follow even while the leader is absent or Assist owns flight.
   // Navigation-generated controls below do not revoke leader-jump consent.
   if (
     !typing() &&
-    G.you?.armada?.follow &&
-    (inp.thrust || inp.turn || inp.rev || inp.ab || inp.fire1 || inp.fire2 || held('face'))
+    clientGameState.you?.armada?.follow &&
+    (input.thrust ||
+      input.turn ||
+      input.rev ||
+      input.ab ||
+      input.fire1 ||
+      input.fire2 ||
+      held('face'))
   ) {
     send({ t: 'armada', op: 'follow', on: false });
-    G.you!.armada.follow = false;
-    G.formation = false;
-    const checkbox = $('afollow');
+    clientGameState.you!.armada.follow = false;
+    clientGameState.formation = false;
+    const checkbox = elementById2('afollow');
     if (checkbox) checkbox.checked = false;
   }
-  if (G.combat && (G.combat.on || G.combat.delegated)) {
-    G.autoRoute = false;
-    if (G.auto) setAuto(null);
+  if (clientGameState.combat && (clientGameState.combat.on || clientGameState.combat.delegated)) {
+    clientGameState.autoRoute = false;
+    if (clientGameState.auto) setAuto(null);
   }
-  if (G.auto) {
-    if (manual0 || before !== inp.thrust + '|' + inp.turn) {
-      G.autoRoute = false;
+  if (clientGameState.auto) {
+    if (manual || before !== input.thrust + '|' + input.turn) {
+      clientGameState.autoRoute = false;
       setAuto(null);
       toast('Autopilot off.');
-    } else autopilot(inp);
+    } else autopilot(input);
   }
-  if (held('face') && !G.auto && G.target && G.ents.get(G.target)) {
+  if (
+    held('face') &&
+    !clientGameState.auto &&
+    clientGameState.target &&
+    clientGameState.ents.get(clientGameState.target)
+  ) {
     // hold E to turn toward your target (leading it)
-    const t = G.ents.get(G.target),
-      st = G.you!.shipStats,
-      lead = Math.min(1, Math.hypot(t!.rx - G.view.x, t!.ry - G.view.y) / 600);
-    const da = wrap(
+    const renderEntity = clientGameState.ents.get(clientGameState.target),
+      computedShipStats = clientGameState.you!.shipStats,
+      lead = Math.min(
+        1,
+        Math.hypot(
+          renderEntity!.rx - clientGameState.view.x,
+          renderEntity!.ry - clientGameState.view.y,
+        ) / 600,
+      );
+    const wrap2 = wrap(
       Math.atan2(
-        t!.rx + (t!.vx || 0) * lead - G.view.x,
-        -(t!.ry + (t!.vy || 0) * lead - G.view.y),
-      ) - G.view.a,
+        renderEntity!.rx + (renderEntity!.vx || 0) * lead - clientGameState.view.x,
+        -(renderEntity!.ry + (renderEntity!.vy || 0) * lead - clientGameState.view.y),
+      ) - clientGameState.view.a,
     );
-    inp.turn = Math.abs(da) < st!.turn * DT ? 0 : Math.sign(da);
+    input.turn = Math.abs(wrap2) < computedShipStats!.turn * tickDuration ? 0 : Math.sign(wrap2);
   }
-  if (typing() && !G.auto) {
-    inp.thrust = inp.turn = inp.rev = inp.ab = inp.fire1 = inp.fire2 = 0;
+  if (typing() && !clientGameState.auto) {
+    input.thrust = input.turn = input.rev = input.ab = input.fire1 = input.fire2 = 0;
   } // the autopilot keeps flying while you chat
-  audio.engine(inp.thrust ? (inp.ab ? 1.6 : 1) : inp.rev ? 0.3 : 0); // the engine hum follows your throttle
-  seq++;
+  audio.engine(input.thrust ? (input.ab ? 1.6 : 1) : input.rev ? 0.3 : 0); // the engine hum follows your throttle
+  sequence++;
   send({
     t: 'input',
-    seq,
-    th: inp.thrust,
-    tu: inp.turn,
-    ab: inp.ab,
-    rv: inp.rev,
-    f1: inp.fire1,
-    f2: inp.fire2,
-    nav: navigationRequested || !!G.auto,
+    seq: sequence,
+    th: input.thrust,
+    tu: input.turn,
+    ab: input.ab,
+    rv: input.rev,
+    f1: input.fire1,
+    f2: input.fire2,
+    nav: navigationRequested || !!clientGameState.auto,
   });
-  history.push({ seq, inp });
+  history.push({ seq: sequence, inp: input });
   if (history.length > 90) history.shift();
-  const me0 = G.ents.get(G.myId);
+  const renderEntity2 = clientGameState.ents.get(clientGameState.myId);
   if (
-    G.you &&
-    !(me0 && me0.fl & 8) &&
-    !(G.combat && (G.combat.on || G.combat.delegated)) &&
-    !(G.formation && !G.auto)
+    clientGameState.you &&
+    !(renderEntity2 && renderEntity2.fl & 8) &&
+    !(clientGameState.combat && (clientGameState.combat.on || clientGameState.combat.delegated)) &&
+    !(clientGameState.formation && !clientGameState.auto)
   )
-    step(G.view, G.you!.shipStats!, inp);
-  G.view.fl = (inp.thrust ? 1 : 0) | (inp.ab ? 2 : 0);
+    step(clientGameState.view, clientGameState.you!.shipStats!, input);
+  clientGameState.view.fl = (input.thrust ? 1 : 0) | (input.ab ? 2 : 0);
 }
 /**
  * Main animation and rendering frame loop driven by requestAnimationFrame.
- * @param {number} t High-resolution timestamp from requestAnimationFrame
+ * @param {number} time High-resolution timestamp from requestAnimationFrame
  * @returns {void}
  */
-function frame(t: number): void {
-  const dt = Math.min(0.1, (t - last) / 1000);
-  last = t;
+function frame(time: number): void {
+  const deltaTime = Math.min(0.1, (time - last) / 1000);
+  last = time;
   {
-    const tg = G._look && G._lookT && !G.landed ? G._lookT : [0, 0],
-      k = Math.min(1, dt * (G._look ? 7 : 5));
-    G.lookX = (G.lookX || 0) + (tg[0] - (G.lookX || 0)) * k;
-    G.lookY = (G.lookY || 0) + (tg[1] - (G.lookY || 0)) * k;
+    const targetLook =
+        clientGameState._look && clientGameState._lookT && !clientGameState.landed
+          ? clientGameState._lookT
+          : [0, 0],
+      entryKey = Math.min(1, deltaTime * (clientGameState._look ? 7 : 5));
+    clientGameState.lookX =
+      (clientGameState.lookX || 0) + (targetLook[0] - (clientGameState.lookX || 0)) * entryKey;
+    clientGameState.lookY =
+      (clientGameState.lookY || 0) + (targetLook[1] - (clientGameState.lookY || 0)) * entryKey;
   } // 2.1 look-ahead
-  acc += dt;
-  while (acc >= DT) {
+  account += deltaTime;
+  while (account >= tickDuration) {
     fixedTick();
-    acc -= DT;
+    account -= tickDuration;
   }
-  const me = G.view;
-  if (me) {
+  const clientView = clientGameState.view;
+  if (clientView) {
     // smooth out prediction corrections
-    me.ox *= Math.pow(0.0005, dt);
-    me.oy *= Math.pow(0.0005, dt);
-    me.rx = me.x + me.ox + me.vx * acc;
-    me.ry = me.y + me.oy + me.vy * acc;
+    clientView.ox *= Math.pow(0.0005, deltaTime);
+    clientView.oy *= Math.pow(0.0005, deltaTime);
+    clientView.rx = clientView.x + clientView.ox + clientView.vx * account;
+    clientView.ry = clientView.y + clientView.oy + clientView.vy * account;
   }
-  const now = performance.now();
-  for (const e of G.ents.values()) {
-    if (G.paused) continue;
-    if (me && e.id === G.myId) {
-      e.rx = me.rx;
-      e.ry = me.ry;
-      e.a = me.a;
-      e.fl = (e.fl & ~3) | me.fl;
+  const currentTime = performance.now();
+  for (const renderEntity of clientGameState.ents.values()) {
+    if (clientGameState.paused) continue;
+    if (clientView && renderEntity.id === clientGameState.myId) {
+      renderEntity.rx = clientView.rx;
+      renderEntity.ry = clientView.ry;
+      renderEntity.a = clientView.a;
+      renderEntity.fl = (renderEntity.fl & ~3) | clientView.fl;
       continue;
     }
-    const k = Math.min(0.25, (now - e.t!) / 1000),
-      tx = e.x + e.vx * k,
-      ty = e.y + e.vy * k;
-    const s = Math.min(1, dt * 14);
-    e.rx += (tx - e.rx) * s;
-    e.ry += (ty - e.ry) * s;
+    const entryKey = Math.min(0.25, (currentTime - renderEntity.t!) / 1000),
+      targetX = renderEntity.x + renderEntity.vx * entryKey,
+      targetY = renderEntity.y + renderEntity.vy * entryKey;
+    const state = Math.min(1, deltaTime * 14);
+    renderEntity.rx += (targetX - renderEntity.rx) * state;
+    renderEntity.ry += (targetY - renderEntity.ry) * state;
   }
-  for (const s of G.shots) {
-    if (G.paused) continue;
-    const k = (now - s.t) / 1000;
-    s.rx = s.x + s.vx * k;
-    s.ry = s.y + s.vy * k;
+  for (const shot of clientGameState.shots) {
+    if (clientGameState.paused) continue;
+    const entryKey = (currentTime - shot.t) / 1000;
+    shot.rx = shot.x + shot.vx * entryKey;
+    shot.ry = shot.y + shot.vy * entryKey;
   }
-  const shotsView = G.shots.map((s) => ({ ...s, x: s.rx ?? s.x, y: s.ry ?? s.y }));
-  if (G.sys)
+  const shotsView = clientGameState.shots.map((state) => ({
+    ...state,
+    x: state.rx ?? state.x,
+    y: state.ry ?? state.y,
+  }));
+  if (clientGameState.sys)
     draw(
-      { ...G, shots: shotsView, view: me, hostile: G.hostile },
-      ctx,
+      { ...clientGameState, shots: shotsView, view: clientView, hostile: clientGameState.hostile },
+      canvasRenderingContext2D,
       canvas.width,
       canvas.height,
-      dt,
-      now,
+      deltaTime,
+      currentTime,
     );
   else {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    canvasRenderingContext2D.fillStyle = '#000';
+    canvasRenderingContext2D.fillRect(0, 0, canvas.width, canvas.height);
   }
-  radar(G, rctx);
-  hud();
+  radar(clientGameState, canvasRenderingContext2D2);
+  renderHud();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 setInterval(() => {
-  if ((G.ctab === 'station' || G.ctab === 'ops') && G.you) refreshCompanion();
+  if ((clientGameState.ctab === 'station' || clientGameState.ctab === 'ops') && clientGameState.you)
+    refreshCompanion();
 }, 15000);
 
-$('combatassist').onclick = () => {
-  G.autoRoute = false;
+elementById2('combatassist').onclick = () => {
+  clientGameState.autoRoute = false;
   setAuto(null);
-  send({ t: 'combat', op: 'assist', on: !(G.combat && G.combat.on) });
+  send({ t: 'combat', op: 'assist', on: !(clientGameState.combat && clientGameState.combat.on) });
 };
-$('combatstop').onclick = () => send({ t: 'combat', op: 'off' });
-$('combatdelegate').onchange = (e) =>
-  send({ t: 'combat', op: 'delegate', on: (e.target as HTMLInputElement).checked });
-$('combatcoordinate').onchange = (e) =>
-  send({ t: 'combat', op: 'coordinate', on: (e.target as HTMLInputElement).checked });
+elementById2('combatstop').onclick = () => send({ t: 'combat', op: 'off' });
+elementById2('combatdelegate').onchange = (event) =>
+  send({ t: 'combat', op: 'delegate', on: (event.target as HTMLInputElement).checked });
+elementById2('combatcoordinate').onchange = (event) =>
+  send({ t: 'combat', op: 'coordinate', on: (event.target as HTMLInputElement).checked });
 
 // Escape belongs to existing dialogs/text inputs first. Logging out is always explicit.
 let quitFocus: HTMLElement | null = null,
   quitPaused = false;
 function cancelQuit() {
-  if ($('quitconfirm').disabled) return;
-  $('quitbox').classList.add('hidden');
-  G.quitting = false;
+  if (elementById2('quitconfirm').disabled) return;
+  elementById2('quitbox').classList.add('hidden');
+  clientGameState.quitting = false;
   if (quitPaused) send({ t: 'pause' });
   quitPaused = false;
-  $('pausebox').classList.toggle('hidden', !G.paused);
+  elementById2('pausebox').classList.toggle('hidden', !clientGameState.paused);
   quitFocus?.focus();
 }
 function openQuit() {
   quitFocus = document.activeElement as HTMLElement | null;
-  G.quitting = true;
+  clientGameState.quitting = true;
   keys = {};
   mouse.down = false;
   touch.keys = {};
   touch.stick = null;
-  send({ t: 'input', seq: ++seq, th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 });
-  quitPaused = !!G.solo && !G.paused;
+  send({ t: 'input', seq: ++sequence, th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 });
+  quitPaused = !!clientGameState.solo && !clientGameState.paused;
   if (quitPaused) send({ t: 'pause' });
-  $('pausebox').classList.add('hidden');
-  $('quitnote').textContent = G.solo
+  elementById2('pausebox').classList.add('hidden');
+  elementById2('quitnote').textContent = clientGameState.solo
     ? 'Your progress is saved when you log out.'
     : 'Your progress is saved when you log out. The online world keeps running.';
-  $('quitbox').classList.remove('hidden');
-  $('quitcancel').focus();
+  elementById2('quitbox').classList.remove('hidden');
+  elementById2('quitcancel').focus();
 }
 async function logOut() {
-  $('quitconfirm').disabled = $('quitcancel').disabled = true;
+  elementById2('quitconfirm').disabled = elementById2('quitcancel').disabled = true;
   clearTimeout(reconnectTimer!);
   sessionEpoch++;
   const epoch = sessionEpoch;
-  const socket = ws;
-  ws = null;
-  delete G._cred;
+  const socket = webSocket;
+  webSocket = null;
+  delete clientGameState._cred;
   // The server's normal close path detaches, docks and saves the captain before closing.
   if (socket && socket.readyState < WebSocket.CLOSING) {
     await new Promise((resolve) => {
@@ -2738,18 +3118,24 @@ async function logOut() {
       socket.close(1000, 'Log out');
     });
   }
-  G.views.reset();
-  const keep = { A: G.A, opts: G.opts, pal: G.pal, mapLegend: G.mapLegend, views: G.views };
-  const sessionState = G as unknown as Record<string, unknown>;
-  for (const key of Object.keys(G)) delete sessionState[key];
-  for (const [key, value] of Object.entries(sessionDefaults!))
-    sessionState[key] = typeof value === 'function' ? value : structuredClone(value);
-  Object.assign(G, keep);
+  clientGameState.views.reset();
+  const keep = {
+    A: clientGameState.A,
+    opts: clientGameState.opts,
+    pal: clientGameState.pal,
+    mapLegend: clientGameState.mapLegend,
+    views: clientGameState.views,
+  };
+  const sessionState = clientGameState as unknown as Record<string, unknown>;
+  for (const entryKey of Object.keys(clientGameState)) delete sessionState[entryKey];
+  for (const [entryKey, value] of Object.entries(sessionDefaults!))
+    sessionState[entryKey] = typeof value === 'function' ? value : structuredClone(value);
+  Object.assign(clientGameState, keep);
   keys = {};
   history = [];
-  seq = acc = _lastSnapT = 0;
+  sequence = account = _lastSnapT = 0;
   mouse.down = mouse.in = false;
-  pad.prev = [];
+  padding.prev = [];
   touch.keys = {};
   touch.stick = null;
   storyQ.length = 0;
@@ -2759,9 +3145,12 @@ async function logOut() {
   hailUI.reset();
   miningUI.refresh();
   closeMap();
-  document.querySelectorAll<HTMLElement>('.overlay').forEach((el) => el.classList.add('hidden'));
-  for (const id of ['pausebox', 'tut', 'combatcontrols']) $(id).classList.add('hidden');
-  for (const id of [
+  document
+    .querySelectorAll<HTMLElement>('.overlay')
+    .forEach((htmlElement) => htmlElement.classList.add('hidden'));
+  for (const identifier of ['pausebox', 'tut', 'combatcontrols'])
+    elementById2(identifier).classList.add('hidden');
+  for (const identifier of [
     'chatlog',
     'capview',
     'landbody',
@@ -2772,27 +3161,37 @@ async function logOut() {
     'hailtext',
     'hailopts',
   ])
-    $(id).replaceChildren();
+    elementById2(identifier).replaceChildren();
   // Clear persistent panel drafts too (for example, a former captain's tow recipient).
   document
     .querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input, textarea')
-    .forEach((el) => {
-      if (el.id !== 'lname' && ['text', 'search', 'password', 'textarea'].includes(el.type))
-        el.value = '';
+    .forEach((element) => {
+      if (
+        element.id !== 'lname' &&
+        ['text', 'search', 'password', 'textarea'].includes(element.type)
+      )
+        element.value = '';
     });
-  $('cchan')
+  elementById2('cchan')
     .querySelectorAll<HTMLElement>('button')
-    .forEach((b) => b.classList.toggle('on', b.dataset.ch === ''));
-  $('chatin').placeholder = G.solo ? 'Write a note in your log (Enter)' : 'Press Enter to chat';
-  $('itabs')
+    .forEach((htmlElement) => htmlElement.classList.toggle('on', htmlElement.dataset.ch === ''));
+  elementById2('chatin').placeholder = clientGameState.solo
+    ? 'Write a note in your log (Enter)'
+    : 'Press Enter to chat';
+  elementById2('itabs')
     .querySelectorAll<HTMLElement>('button')
-    .forEach((b) => b.classList.toggle('on', b.dataset.it === 'ship'));
-  $('qvolbox').classList.add('hidden');
-  $('lerr').textContent = '';
-  $('lbtn').disabled = $('quitconfirm').disabled = $('quitcancel').disabled = false;
-  $('login').classList.remove('hidden');
-  $('lname').focus();
-  $('lname').select();
+    .forEach((htmlElement) =>
+      htmlElement.classList.toggle('on', htmlElement.dataset.it === 'ship'),
+    );
+  elementById2('qvolbox').classList.add('hidden');
+  elementById2('lerr').textContent = '';
+  elementById2('lbtn').disabled =
+    elementById2('quitconfirm').disabled =
+    elementById2('quitcancel').disabled =
+      false;
+  elementById2('login').classList.remove('hidden');
+  elementById2('lname').focus();
+  elementById2('lname').select();
   audio.setAmbience(null);
   audio.industrial(false, 0);
   audio.towing(false);
@@ -2801,34 +3200,43 @@ async function logOut() {
   // Refresh Solo slot summaries only after the disconnect/save, without rebuilding event listeners.
   try {
     const status = await (await fetch('/api/status')).json();
-    if (epoch === sessionEpoch && !G.you && G.solo) soloLogin(status);
+    if (epoch === sessionEpoch && !clientGameState.you && clientGameState.solo) soloLogin(status);
   } catch {}
 }
-$('quitcancel').onclick = cancelQuit;
-$('quitconfirm').onclick = logOut;
+elementById2('quitcancel').onclick = cancelQuit;
+elementById2('quitconfirm').onclick = logOut;
 window.addEventListener(
   'keydown',
-  (e) => {
-    if (G.quitting) {
-      if (e.key === 'Escape' && !e.repeat && !$('quitconfirm').disabled) cancelQuit();
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        (document.activeElement === $('quitcancel') ? $('quitconfirm') : $('quitcancel')).focus();
+  (keyboardEvent) => {
+    if (clientGameState.quitting) {
+      if (
+        keyboardEvent.key === 'Escape' &&
+        !keyboardEvent.repeat &&
+        !elementById2('quitconfirm').disabled
+      )
+        cancelQuit();
+      if (keyboardEvent.key === 'Tab') {
+        keyboardEvent.preventDefault();
+        (document.activeElement === elementById2('quitcancel')
+          ? elementById2('quitconfirm')
+          : elementById2('quitcancel')
+        ).focus();
       }
-      e.stopImmediatePropagation();
-      if (!['Enter', ' ', 'Tab'].includes(e.key)) e.preventDefault();
+      keyboardEvent.stopImmediatePropagation();
+      if (!['Enter', ' ', 'Tab'].includes(keyboardEvent.key)) keyboardEvent.preventDefault();
       return;
     }
-    if (e.key !== 'Escape' || e.repeat || !G.you || typing()) return;
-    if (!$('qvolbox').classList.contains('hidden')) {
-      $('qvolbox').classList.add('hidden');
-      e.stopImmediatePropagation();
+    if (keyboardEvent.key !== 'Escape' || keyboardEvent.repeat || !clientGameState.you || typing())
+      return;
+    if (!elementById2('qvolbox').classList.contains('hidden')) {
+      elementById2('qvolbox').classList.add('hidden');
+      keyboardEvent.stopImmediatePropagation();
       return;
     }
     // Existing modals, map, and expanded mining panel consume this Escape instead.
     if (
       [...document.querySelectorAll<HTMLElement>('.overlay:not(.hidden)')].some(
-        (el) => el.id !== 'land',
+        (htmlElement) => htmlElement.id !== 'land',
       )
     )
       return;
@@ -2837,24 +3245,24 @@ window.addEventListener(
     );
     if (focusedPanel) {
       focusedPanel.querySelector<HTMLElement>('header button')?.click();
-      e.preventDefault();
-      e.stopImmediatePropagation();
+      keyboardEvent.preventDefault();
+      keyboardEvent.stopImmediatePropagation();
       return;
     }
     if (chatProjection.isOpen()) {
       chatProjection.collapse();
-      e.preventDefault();
-      e.stopImmediatePropagation();
+      keyboardEvent.preventDefault();
+      keyboardEvent.stopImmediatePropagation();
       return;
     }
-    if (!$('miningcontrols').classList.contains('hidden')) {
-      $('miningclose').click();
-      e.preventDefault();
-      e.stopImmediatePropagation();
+    if (!elementById2('miningcontrols').classList.contains('hidden')) {
+      elementById2('miningclose').click();
+      keyboardEvent.preventDefault();
+      keyboardEvent.stopImmediatePropagation();
       return;
     }
-    e.preventDefault();
-    e.stopImmediatePropagation();
+    keyboardEvent.preventDefault();
+    keyboardEvent.stopImmediatePropagation();
     openQuit();
   },
   true,

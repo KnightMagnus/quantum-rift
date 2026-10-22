@@ -69,7 +69,8 @@ type EffectFlags = {
   smoke?: never;
   num?: never;
 };
-type EffectVariant<K extends keyof EffectFlags, T> = Omit<EffectFlags, K> & T;
+type EffectVariant<KeyType extends keyof EffectFlags, ValueType> = Omit<EffectFlags, KeyType> &
+  ValueType;
 type EffectVelocity = { vx: number; vy: number } | { vx?: never; vy?: never };
 export type VisualEffect = {
   x: number;
@@ -133,7 +134,7 @@ import { backgroundScale } from './background_scale.ts';
 import { drawComet } from './comet.ts';
 import { ANOMALIES } from '../shared/fronts.ts';
 import { STATES } from '../shared/living.ts';
-import { SYS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
+import { SYS as systemsById, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
 import { weaponColor, weaponLook, price } from '../shared/rules.ts';
 
 /** @import { ClientGameState } from './main.ts' */
@@ -245,92 +246,111 @@ import { weaponColor, weaponLook, price } from '../shared/rules.ts';
 // Map views (system map modes): colour each system by trade price, services, your standing, or danger
 /**
  * Interpolates between two RGB color tuples.
- * @param {[number, number, number]} a Start RGB tuple
- * @param {[number, number, number]} b End RGB tuple
- * @param {number} t Interpolation factor (0 to 1)
+ * @param {[number, number, number]} firstValue Start RGB tuple
+ * @param {[number, number, number]} secondValue End RGB tuple
+ * @param {number} time Interpolation factor (0 to 1)
  * @returns {string} Formatted rgb(r, g, b) string
  */
-const lerpC = (a: [number, number, number], b: [number, number, number], t: number) =>
-  `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * Math.max(0, Math.min(1, t)))).join(',')})`;
+const interpolateColor = (
+  firstValue: [number, number, number],
+  secondValue: [number, number, number],
+  time: number,
+) =>
+  `rgb(${firstValue.map((value, index) => Math.round(value + (secondValue[index] - value) * Math.max(0, Math.min(1, time)))).join(',')})`;
 /**
  * Computes the best price-to-base ratio for a given commodity across a system's trade ports.
- * @param {GalaxySystem} s System object
- * @param {string} cid Commodity identifier
+ * @param {GalaxySystem} starSystem System object
+ * @param {string} captainId Commodity identifier
  * @returns {number | null} Price ratio or null if no trade service available
  */
-export function tradeRatio(s: GalaxySystem, cid: string): number | null {
-  const ps = s.stellars.filter(
+export function tradeRatio(starSystem: GalaxySystem, captainId: string): number | null {
+  const rawStellarBodys = starSystem.stellars.filter(
     (stellarBody) => stellarBody.svc && stellarBody.svc.includes('T') && !stellarBody.site,
   );
-  if (!ps.length) return null;
-  const base = COMMODITIES.find((c) => c.id === cid)!.base;
+  if (!rawStellarBodys.length) return null;
+  const base = COMMODITIES.find((commodityDef) => commodityDef.id === captainId)!.base;
   let best = null;
-  for (const stellarBody of ps) {
-    const v = price(stellarBody, cid);
-    if (v !== null && (best === null || v < best)) best = v;
+  for (const stellarBody of rawStellarBodys) {
+    const price2 = price(stellarBody, captainId);
+    if (price2 !== null && (best === null || price2 < best)) best = price2;
   }
   return best === null ? null : best / base;
 }
 /**
  * Determines system display color on the map according to the selected map mode.
- * @param {ClientGameState} G Global client game state
- * @param {GalaxySystem} s System object
+ * @param {ClientGameState} clientGameState Global client game state
+ * @param {GalaxySystem} starSystem System object
  * @param {boolean} seen Whether the system has been visited or discovered
  * @returns {string} CSS color string
  */
-function viewColor(G: ClientGameState, s: GalaxySystem, seen: boolean): string {
-  const mode = G.mapMode || 'factions';
-  if (mode === 'factions') return FACTIONS[s.faction].color;
+function viewColor(
+  clientGameState: ClientGameState,
+  starSystem: GalaxySystem,
+  seen: boolean,
+): string {
+  const mode = clientGameState.mapMode || 'factions';
+  if (mode === 'factions') return FACTIONS[starSystem.faction].color;
   if (!seen) return '#2a2e38';
   if (mode === 'trade') {
-    const r = tradeRatio(s, G.mapCid || 'food');
-    return r === null
+    const tradeRatio2 = tradeRatio(starSystem, clientGameState.mapCid || 'food');
+    return tradeRatio2 === null
       ? '#3a3e48'
-      : r < 1
-        ? lerpC([240, 220, 90], [60, 230, 110], (1 - r) / 0.25)
-        : lerpC([240, 220, 90], [255, 80, 60], (r - 1) / 0.25);
+      : tradeRatio2 < 1
+        ? interpolateColor([240, 220, 90], [60, 230, 110], (1 - tradeRatio2) / 0.25)
+        : interpolateColor([240, 220, 90], [255, 80, 60], (tradeRatio2 - 1) / 0.25);
   }
   if (mode === 'services') {
-    const y = s.stellars.some((stellarBody) => stellarBody.svc && stellarBody.svc.includes('Y')),
-      o = s.stellars.some((stellarBody) => stellarBody.svc && stellarBody.svc.includes('O'));
-    return y && o ? '#c38aff' : y ? '#5ab0ff' : o ? '#ffaa4a' : '#3a3e48';
+    const positionY = starSystem.stellars.some(
+        (stellarBody) => stellarBody.svc && stellarBody.svc.includes('Y'),
+      ),
+      options = starSystem.stellars.some(
+        (stellarBody) => stellarBody.svc && stellarBody.svc.includes('O'),
+      );
+    return positionY && options
+      ? '#c38aff'
+      : positionY
+        ? '#5ab0ff'
+        : options
+          ? '#ffaa4a'
+          : '#3a3e48';
   }
   if (mode === 'standing') {
-    const F = FACTIONS[s.faction];
-    if (F.region) return '#5a5e68';
-    const rep = (G.you && G.you.rep[s.faction]) || 0;
-    return rep >= 0
-      ? lerpC([200, 200, 120], [60, 230, 110], rep / 60)
-      : lerpC([200, 200, 120], [255, 60, 50], -rep / 60);
+    const factionDef = FACTIONS[starSystem.faction];
+    if (factionDef.region) return '#5a5e68';
+    const reputation = (clientGameState.you && clientGameState.you.rep[starSystem.faction]) || 0;
+    return reputation >= 0
+      ? interpolateColor([200, 200, 120], [60, 230, 110], reputation / 60)
+      : interpolateColor([200, 200, 120], [255, 60, 50], -reputation / 60);
   }
-  if (mode === 'danger') return lerpC([90, 200, 120], [255, 50, 40], s.danger / 6);
-  return FACTIONS[s.faction].color;
+  if (mode === 'danger')
+    return interpolateColor([90, 200, 120], [255, 50, 40], starSystem.danger / 6);
+  return FACTIONS[starSystem.faction].color;
 }
 
-const FAC = Object.keys(FACTIONS);
+const faction2 = Object.keys(FACTIONS);
 const wormImg = new Image();
 wormImg.src = 'assets/wormhole.png';
 const sheets = new Map<string, HTMLImageElement>();
 /**
  * Loads or retrieves a cached sprite sheet image for a given ship hull.
- * @param {ShipHull} H Ship hull specification object
+ * @param {ShipHull} shipHullAsset Ship hull specification object
  * @param {boolean} [glow] Whether to load the thruster glow variant
  * @returns {HTMLImageElement} Cached or newly requested HTML Image
  */
-export function sheet(H: ShipHull, glow?: boolean): HTMLImageElement {
+export function sheet(shipHullAsset: ShipHull, glow?: boolean): HTMLImageElement {
   // the sharper full-colour sheets (12 wide, with banking frames) where a hull has them
-  const k = H.id + (glow ? 'g' : '');
-  if (!sheets.has(k)) {
-    const im = new Image();
-    im.src = `assets/ships/${H.id}${glow ? '_glow' : ''}.${H.spr ? 'webp' : 'png'}`;
-    sheets.set(k, im);
+  const entryKey = shipHullAsset.id + (glow ? 'g' : '');
+  if (!sheets.has(entryKey)) {
+    const htmlImageElement = new Image();
+    htmlImageElement.src = `assets/ships/${shipHullAsset.id}${glow ? '_glow' : ''}.${shipHullAsset.spr ? 'webp' : 'png'}`;
+    sheets.set(entryKey, htmlImageElement);
   }
-  return sheets.get(k)!;
+  return sheets.get(entryKey)!;
 }
-const stationImgs = [0, 1, 2, 3, 4, 5].map((k) => {
-  const im = new Image();
-  im.src = `assets/stations/${k}.png`;
-  return im;
+const stationImgs = [0, 1, 2, 3, 4, 5].map((entryKey) => {
+  const htmlImageElement = new Image();
+  htmlImageElement.src = `assets/stations/${entryKey}.png`;
+  return htmlImageElement;
 });
 const hubImg = new Image();
 hubImg.src = 'assets/hub.png';
@@ -343,55 +363,66 @@ const HUB_FRAMES = 18,
  * @returns {() => number} Generator returning floats in [0, 1)
  */
 function seeded(seed: number): () => number {
-  let s = seed >>> 0 || 7;
+  let state = seed >>> 0 || 7;
   return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
   };
 }
 /**
  * Hashes a string using 32-bit FNV-1a.
- * @param {string} str Input string
+ * @param {string} text Input string
  * @returns {number} Unsigned 32-bit hash value
  */
-function hashStr(str: string): number {
-  let h = 2166136261;
-  for (const c of str) {
-    h ^= c.charCodeAt(0);
-    h = Math.imul(h, 16777619);
+function hashStr(text: string): number {
+  let height = 2166136261;
+  for (const text2 of text) {
+    height ^= text2.charCodeAt(0);
+    height = Math.imul(height, 16777619);
   }
-  return h >>> 0;
+  return height >>> 0;
 }
 
 // ------------------------------------------------------------------ backdrops
 const starCache = new Map<string, StarBackdrop>();
 /**
  * Generates and caches parallax star layers and faint nebulae for a solar system.
- * @param {string} sysId System identifier
+ * @param {string} systemId System identifier
  * @returns {{ layers: Array<{ L: Array<[number, number, number, number]>, depth: number, size: number }>, neb: Array<[number, number, number, number]> }} Star backdrop model
  */
-function stars(sysId: string): {
+function stars(systemId: string): {
   layers: Array<{ L: Array<[number, number, number, number]>; depth: number; size: number }>;
   neb: Array<[number, number, number, number]>;
 } {
-  if (starCache.has(sysId)) return starCache.get(sysId)!;
-  const r = seeded(hashStr(sysId)),
+  if (starCache.has(systemId)) return starCache.get(systemId)!;
+  const randomGenerator = seeded(hashStr(systemId)),
     layers = [];
-  for (const [n, depth, size] of [
+  for (const [count, depth, size] of [
     [260, 0.15, 1],
     [160, 0.35, 1.3],
     [70, 0.6, 1.8],
   ]) {
-    const L: [number, number, number, number][] = [];
-    for (let i = 0; i < n; i++) L.push([r() * 2048, r() * 2048, 0.35 + r() * 0.65, r()]);
-    layers.push({ L, depth, size });
+    const length: [number, number, number, number][] = [];
+    for (let index = 0; index < count; index++)
+      length.push([
+        randomGenerator() * 2048,
+        randomGenerator() * 2048,
+        0.35 + randomGenerator() * 0.65,
+        randomGenerator(),
+      ]);
+    layers.push({ L: length, depth, size });
   }
-  const neb: [number, number, number, number][] = [];
-  for (let i = 0; i < 4; i++)
-    neb.push([r() * 6000 - 3000, r() * 6000 - 3000, 900 + r() * 1600, r()]);
-  const v = { layers, neb };
-  starCache.set(sysId, v);
-  return v;
+  const nebula: [number, number, number, number][] = [];
+  for (let index = 0; index < 4; index++)
+    nebula.push([
+      randomGenerator() * 6000 - 3000,
+      randomGenerator() * 6000 - 3000,
+      900 + randomGenerator() * 1600,
+      randomGenerator(),
+    ]);
+  const value = { layers, neb: nebula };
+  starCache.set(systemId, value);
+  return value;
 }
 // ------------------------------------------------------------------ 2.2 scenery: every system gets its own sky and its own clutter, seeded from its id.
 // Scenery: every system gets its own sky and its own clutter, seeded from its id.
@@ -401,23 +432,24 @@ function stars(sysId: string): {
 const decorImgs: Record<string, HTMLImageElement> = {};
 /**
  * Loads and caches background decor assets by filename.
- * @param {string} n Asset filename key
+ * @param {string} count Asset filename key
  * @returns {HTMLImageElement} HTML Image instance
  */
-function decorImg(n: string): HTMLImageElement {
-  if (!decorImgs[n]) {
-    const im = new Image();
-    im.src = `assets/decor/${n}.webp`;
-    decorImgs[n] = im;
+function decorImg(count: string): HTMLImageElement {
+  if (!decorImgs[count]) {
+    const htmlImageElement = new Image();
+    htmlImageElement.src = `assets/decor/${count}.webp`;
+    decorImgs[count] = htmlImageElement;
   }
-  return decorImgs[n];
+  return decorImgs[count];
 }
 /**
  * Checks whether an image has completely loaded and has positive natural dimensions.
- * @param {HTMLImageElement} im Image element to test
+ * @param {HTMLImageElement} htmlImageElement Image element to test
  * @returns {boolean} True if ready to draw
  */
-const ready = (im: HTMLImageElement) => im.complete && im.naturalWidth;
+const ready = (htmlImageElement: HTMLImageElement) =>
+  htmlImageElement.complete && htmlImageElement.naturalWidth;
 const decorCache = new Map<string, DecorModel>();
 const NEB_BY_FAC: Record<string, number[]> = {
   umbral: [7, 1],
@@ -442,61 +474,67 @@ const SUNS = [
 const objImgs: Record<string, HTMLImageElement> = {}; // rendered asteroids and loot (tools/rift_objects.py)
 /**
  * Loads and caches rendered 3D object images (asteroids, minerals, crates).
- * @param {string} n Object name identifier
+ * @param {string} count Object name identifier
  * @returns {HTMLImageElement} Cached or newly created image
  */
-function objImg(n: string): HTMLImageElement {
-  let im = objImgs[n];
-  if (!im) {
-    im = objImgs[n] = new Image();
-    im.src = `assets/objects/${n}.webp`;
+function objImg(count: string): HTMLImageElement {
+  let htmlImageElement = objImgs[count];
+  if (!htmlImageElement) {
+    htmlImageElement = objImgs[count] = new Image();
+    htmlImageElement.src = `assets/objects/${count}.webp`;
   }
-  return im;
+  return htmlImageElement;
 }
 let rockSprites: HTMLCanvasElement[] | null = null;
 /**
  * Generates or retrieves procedural canvas textures for background asteroids.
- * @param {number} k Asteroid variant index
+ * @param {number} entryKey Asteroid variant index
  * @returns {HTMLCanvasElement} Off-screen canvas sprite
  */
-function rockSprite(k: number): HTMLCanvasElement {
+function rockSprite(entryKey: number): HTMLCanvasElement {
   // a few dark, lumpy background asteroids, drawn once
   if (!rockSprites)
-    rockSprites = Array.from({ length: 6 }, (_, i) => {
-      const r = seeded(77 + i),
-        c = document.createElement('canvas');
-      c.width = c.height = 64;
-      const x = c.getContext('2d')!;
-      x.beginPath();
-      const n = 9 + i;
-      for (let j = 0; j < n; j++) {
-        const a = (j / n) * 6.283,
-          d = 18 + r() * 12;
-        j
-          ? x.lineTo(32 + Math.cos(a) * d, 32 + Math.sin(a) * d)
-          : x.moveTo(32 + Math.cos(a) * d, 32 + Math.sin(a) * d);
+    rockSprites = Array.from({ length: 6 }, (unused, index) => {
+      const randomGenerator = seeded(77 + index),
+        htmlCanvasElement = document.createElement('canvas');
+      htmlCanvasElement.width = htmlCanvasElement.height = 64;
+      const canvasRenderingContext2D = htmlCanvasElement.getContext('2d')!;
+      canvasRenderingContext2D.beginPath();
+      const count = 9 + index;
+      for (let innerIndex = 0; innerIndex < count; innerIndex++) {
+        const firstValue = (innerIndex / count) * 6.283,
+          distance = 18 + randomGenerator() * 12;
+        innerIndex
+          ? canvasRenderingContext2D.lineTo(
+              32 + Math.cos(firstValue) * distance,
+              32 + Math.sin(firstValue) * distance,
+            )
+          : canvasRenderingContext2D.moveTo(
+              32 + Math.cos(firstValue) * distance,
+              32 + Math.sin(firstValue) * distance,
+            );
       }
-      x.closePath();
-      const g = x.createLinearGradient(10, 10, 54, 54);
-      g.addColorStop(0, '#6a645e');
-      g.addColorStop(1, '#1c1a19');
-      x.fillStyle = g;
-      x.fill();
-      return c;
+      canvasRenderingContext2D.closePath();
+      const canvasGradient = canvasRenderingContext2D.createLinearGradient(10, 10, 54, 54);
+      canvasGradient.addColorStop(0, '#6a645e');
+      canvasGradient.addColorStop(1, '#1c1a19');
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.fill();
+      return htmlCanvasElement;
     });
-  return rockSprites[k % 6];
+  return rockSprites[entryKey % 6];
 }
 /**
  * Procedurally generates and caches all ambient scenery and backdrop objects for a solar system.
- * @param {GalaxySystem} S Solar system specification
+ * @param {GalaxySystem} starSystem Solar system specification
  * @returns {Record<string, {x: number, y: number, r: number, color?: string}>} System scenery definitions object
  */
-function decorFor(S: GalaxySystem): DecorModel {
-  if (decorCache.has(S.id)) return decorCache.get(S.id)!;
-  if (S.arena) {
+function decorFor(starSystem: GalaxySystem): DecorModel {
+  if (decorCache.has(starSystem.id)) return decorCache.get(starSystem.id)!;
+  if (starSystem.arena) {
     // the Crucible has its own look: a ring of pylons in Azure and Crimson, dark crimson nebulae, no borrowed worlds
-    const r = seeded(hashStr('crucible')),
-      D: DecorModel = {
+    const randomGenerator = seeded(hashStr('crucible')),
+      decorModel: DecorModel = {
         sun: { x: 380, y: -260, size: 110, core: '255,216,208', halo: '255,90,80', depth: 0.03 },
         gal: [],
         hole: null,
@@ -519,39 +557,40 @@ function decorFor(S: GalaxySystem): DecorModel {
         meteorT: 99,
         arena: { R: 1150 },
       };
-    D.neb.push(
+    decorModel.neb.push(
       { img: 'nebula_7', x: -700, y: 100, size: 2600, rot: 0.4, a: 0.6, depth: 0.25 },
       { img: 'nebula_1', x: 800, y: 200, size: 2400, rot: 2.1, a: 0.5, depth: 0.25 },
     );
-    D.arc = { img: 'arc_1', x: 0, y: -700, size: 1400, rot: 0, depth: 0.14 };
-    for (let i = 0; i < 36; i++) {
-      const a = (i / 36) * 6.283;
-      D.beacons.push({
-        x: Math.cos(a) * 1150,
-        y: Math.sin(a) * 1150,
-        col: Math.cos(a) < 0 ? '#5aa8ff' : '#ff5a4a',
-        ph: i * 0.35,
+    decorModel.arc = { img: 'arc_1', x: 0, y: -700, size: 1400, rot: 0, depth: 0.14 };
+    for (let index = 0; index < 36; index++) {
+      const firstValue = (index / 36) * 6.283;
+      decorModel.beacons.push({
+        x: Math.cos(firstValue) * 1150,
+        y: Math.sin(firstValue) * 1150,
+        col: Math.cos(firstValue) < 0 ? '#5aa8ff' : '#ff5a4a',
+        ph: index * 0.35,
       });
     }
-    D.debris.push({
+    decorModel.debris.push({
       x: 0,
       y: 0,
       spin: 0.002,
       bits: Array.from({ length: 18 }, () => ({
-        a: r() * 6.283,
-        d: 420 + r() * 700,
-        s: 3 + r() * 6,
-        sp: (r() - 0.5) * 0.03,
-        rot: r() * 6,
+        a: randomGenerator() * 6.283,
+        d: 420 + randomGenerator() * 700,
+        s: 3 + randomGenerator() * 6,
+        sp: (randomGenerator() - 0.5) * 0.03,
+        rot: randomGenerator() * 6,
       })),
     });
-    decorCache.set(S.id, D);
-    return D;
+    decorCache.set(starSystem.id, decorModel);
+    return decorModel;
   }
-  const r = seeded(hashStr('decor:' + S.id)),
-    pick = <T>(a: readonly T[]): T => a[Math.floor(r() * a.length)],
-    wild = ['frontier', 'deep', 'umbral'].includes(S.faction) || S.farside;
-  const D: DecorModel = {
+  const currentRandomGenerator = seeded(hashStr('decor:' + starSystem.id)),
+    pick = <ValueType>(firstValue: readonly ValueType[]): ValueType =>
+      firstValue[Math.floor(currentRandomGenerator() * firstValue.length)],
+    wild = ['frontier', 'deep', 'umbral'].includes(starSystem.faction) || starSystem.farside;
+  const decorModel2: DecorModel = {
     sun: null,
     gal: [],
     hole: null,
@@ -570,61 +609,68 @@ function decorFor(S: GalaxySystem): DecorModel {
     sats: [],
     pods: [],
     beacons: [],
-    meteorT: r() * 10,
+    meteorT: currentRandomGenerator() * 10,
   };
-  const clear = (x: number, y: number, m: number) =>
-    S.stellars.every(
-      (stellarBody) => Math.hypot(stellarBody.x - x, stellarBody.y - y) > (stellarBody.r || 80) + m,
-    ) && Math.hypot(x, y) > 500;
-  const spot = (rmin: number, rmax: number, m: number): [number, number] | null => {
-    for (let i = 0; i < 30; i++) {
-      const a = r() * 6.283,
-        d = rmin + r() * (rmax - rmin),
-        x = Math.cos(a) * d,
-        y = Math.sin(a) * d;
-      if (clear(x, y, m)) return [x, y];
+  const clear = (positionX: number, positionY: number, message: number) =>
+    starSystem.stellars.every(
+      (stellarBody) =>
+        Math.hypot(stellarBody.x - positionX, stellarBody.y - positionY) >
+        (stellarBody.r || 80) + message,
+    ) && Math.hypot(positionX, positionY) > 500;
+  const spot = (
+    minimumRadius: number,
+    maximumRadius: number,
+    message: number,
+  ): [number, number] | null => {
+    for (let index = 0; index < 30; index++) {
+      const firstValue = currentRandomGenerator() * 6.283,
+        distance = minimumRadius + currentRandomGenerator() * (maximumRadius - minimumRadius),
+        positionX = Math.cos(firstValue) * distance,
+        positionY = Math.sin(firstValue) * distance;
+      if (clear(positionX, positionY, message)) return [positionX, positionY];
     }
     return null;
   };
-  const sc = pick(SUNS);
-  D.sun = {
-    x: (r() - 0.5) * 1800,
-    y: (r() - 0.5) * 1400,
-    size: 140 + r() * 220,
-    core: sc[0],
-    halo: sc[1],
+  const pick2 = pick(SUNS);
+  decorModel2.sun = {
+    x: (currentRandomGenerator() - 0.5) * 1800,
+    y: (currentRandomGenerator() - 0.5) * 1400,
+    size: 140 + currentRandomGenerator() * 220,
+    core: pick2[0],
+    halo: pick2[1],
     depth: 0.04,
   };
-  const ng = r() < 0.18 ? 0 : r() < 0.7 ? 1 : 2;
-  for (let i = 0; i < ng; i++)
-    D.gal.push({
-      img: 'galaxy_' + Math.floor(r() * 6),
-      x: (r() - 0.5) * 2600,
-      y: (r() - 0.5) * 2000,
-      size: 120 + r() * 220,
-      rot: r() * 6.283,
-      squash: 0.35 + r() * 0.65,
-      a: 0.28 + r() * 0.27,
-      depth: 0.02 + r() * 0.03,
+  const noiseGradient =
+    currentRandomGenerator() < 0.18 ? 0 : currentRandomGenerator() < 0.7 ? 1 : 2;
+  for (let index = 0; index < noiseGradient; index++)
+    decorModel2.gal.push({
+      img: 'galaxy_' + Math.floor(currentRandomGenerator() * 6),
+      x: (currentRandomGenerator() - 0.5) * 2600,
+      y: (currentRandomGenerator() - 0.5) * 2000,
+      size: 120 + currentRandomGenerator() * 220,
+      rot: currentRandomGenerator() * 6.283,
+      squash: 0.35 + currentRandomGenerator() * 0.65,
+      a: 0.28 + currentRandomGenerator() * 0.27,
+      depth: 0.02 + currentRandomGenerator() * 0.03,
     });
-  if (r() < (wild ? 0.25 : 0.04))
-    D.hole = {
-      x: (r() - 0.5) * 2400,
-      y: (r() - 0.5) * 1800,
-      size: 260 + r() * 260,
-      rot: (r() - 0.5) * 0.8,
+  if (currentRandomGenerator() < (wild ? 0.25 : 0.04))
+    decorModel2.hole = {
+      x: (currentRandomGenerator() - 0.5) * 2400,
+      y: (currentRandomGenerator() - 0.5) * 1800,
+      size: 260 + currentRandomGenerator() * 260,
+      rot: (currentRandomGenerator() - 0.5) * 0.8,
       depth: 0.05,
     };
-  else if (r() < 0.06)
-    D.pulsar = {
-      x: (r() - 0.5) * 2400,
-      y: (r() - 0.5) * 1800,
-      spin: 0.6 + r() * 1.4,
-      len: 260 + r() * 260,
+  else if (currentRandomGenerator() < 0.06)
+    decorModel2.pulsar = {
+      x: (currentRandomGenerator() - 0.5) * 2400,
+      y: (currentRandomGenerator() - 0.5) * 1800,
+      spin: 0.6 + currentRandomGenerator() * 1.4,
+      len: 260 + currentRandomGenerator() * 260,
       depth: 0.05,
     };
-  D.bgp = []; // background worlds painted by the planet renderer, unique to every system
-  const BGT: [string, number, number, number, number][] = [
+  decorModel2.bgp = []; // background worlds painted by the planet renderer, unique to every system
+  const backgroundTypes: [string, number, number, number, number][] = [
     ['gas giant ringed rings', 0, 360, 0.35, 0.65],
     ['gas giant storm bands', 0, 360, 0.3, 0.55],
     ['ice giant gas giant', 180, 230, 0.25, 0.6],
@@ -637,676 +683,893 @@ function decorFor(S: GalaxySystem): DecorModel {
     ['jungle garden world', 90, 140, 0.45, 0.4],
     ['frozen ice world', 185, 210, 0.15, 0.75],
   ];
-  const hsl2hex = (h: number, s_: number, l: number) => {
-    const k = (n: number) => (n + h / 30) % 12,
-      a = s_ * Math.min(l, 1 - l),
-      f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  const hsl2hex = (height: number, state: number, length: number) => {
+    const entryKey = (count: number) => (count + height / 30) % 12,
+      firstValue = state * Math.min(length, 1 - length),
+      factionId = (count: number) =>
+        length - firstValue * Math.max(-1, Math.min(entryKey(count) - 3, 9 - entryKey(count), 1));
     return (
       '#' +
-      [f(0), f(8), f(4)]
-        .map((v) =>
-          Math.round(v * 255)
+      [factionId(0), factionId(8), factionId(4)]
+        .map((value) =>
+          Math.round(value * 255)
             .toString(16)
             .padStart(2, '0'),
         )
         .join('')
     );
   };
-  const bgWorld = (k: number, big: boolean) => {
-    const T = big && r() < 0.62 ? BGT[Math.floor(r() * 3)] : BGT[Math.floor(r() * BGT.length)],
-      h = T[1] + r() * (T[2] - T[1]),
-      sat = Math.max(0.03, T[3] + (r() - 0.5) * 0.2),
-      lum = T[4] + (r() - 0.5) * 0.15;
+  const bgWorld = (entryKey: number, large: boolean) => {
+    const time =
+        large && currentRandomGenerator() < 0.62
+          ? backgroundTypes[Math.floor(currentRandomGenerator() * 3)]
+          : backgroundTypes[Math.floor(currentRandomGenerator() * backgroundTypes.length)],
+      height = time[1] + currentRandomGenerator() * (time[2] - time[1]),
+      saturation = Math.max(0.03, time[3] + (currentRandomGenerator() - 0.5) * 0.2),
+      luminance = time[4] + (currentRandomGenerator() - 0.5) * 0.15;
     return {
       p: {
-        id: `bg:${S.id}:${k}`,
+        id: `bg:${starSystem.id}:${entryKey}`,
         kind: 'planet',
-        color: hsl2hex(h, sat, lum),
-        desc: T[0],
+        color: hsl2hex(height, saturation, luminance),
+        desc: time[0],
         name: '',
-        r: big ? 120 + r() * 40 : 50 + r() * 40,
+        r: large ? 120 + currentRandomGenerator() * 40 : 50 + currentRandomGenerator() * 40,
         svc: '',
         tech: 0,
       },
-      x: (r() - 0.5) * 3200,
-      y: (r() - 0.5) * 2600,
-      size: big ? 260 + r() * 460 : 70 + r() * 120,
-      depth: big ? 0.08 + r() * 0.05 : 0.03 + r() * 0.03,
-      a: 0.8 + r() * 0.15,
+      x: (currentRandomGenerator() - 0.5) * 3200,
+      y: (currentRandomGenerator() - 0.5) * 2600,
+      size: large ? 260 + currentRandomGenerator() * 460 : 70 + currentRandomGenerator() * 120,
+      depth: large
+        ? 0.08 + currentRandomGenerator() * 0.05
+        : 0.03 + currentRandomGenerator() * 0.03,
+      a: 0.8 + currentRandomGenerator() * 0.15,
     };
   };
-  if (r() < 0.62) D.bgp.push(bgWorld(0, true));
-  if (r() < 0.38) D.bgp.push(bgWorld(1, false));
-  if (r() < 0.12) D.bgp.push(bgWorld(2, false));
-  if (r() < (wild ? 0.2 : 0.07))
-    D.arc = {
-      img: 'arc_' + Math.floor(r() * 2),
-      x: (r() - 0.5) * 4000,
-      y: (r() - 0.5) * 3200,
-      size: 900 + r() * 700,
-      rot: r() * 6.283,
+  if (currentRandomGenerator() < 0.62) decorModel2.bgp.push(bgWorld(0, true));
+  if (currentRandomGenerator() < 0.38) decorModel2.bgp.push(bgWorld(1, false));
+  if (currentRandomGenerator() < 0.12) decorModel2.bgp.push(bgWorld(2, false));
+  if (currentRandomGenerator() < (wild ? 0.2 : 0.07))
+    decorModel2.arc = {
+      img: 'arc_' + Math.floor(currentRandomGenerator() * 2),
+      x: (currentRandomGenerator() - 0.5) * 4000,
+      y: (currentRandomGenerator() - 0.5) * 3200,
+      size: 900 + currentRandomGenerator() * 700,
+      rot: currentRandomGenerator() * 6.283,
       depth: 0.14,
     }; // smaller, now that it is detailed
-  const fac = S.farside ? 'farside' : S.faction,
-    pool = NEB_BY_FAC[fac] || [0, 1, 2, 3, 4, 5, 6, 7],
-    nn = 1 + Math.floor(r() * 3) + (S.danger >= 3 ? 1 : 0);
-  for (let i = 0; i < nn; i++)
-    D.neb.push({
-      img: 'nebula_' + (r() < 0.7 ? pick(pool) : Math.floor(r() * 8)),
-      x: (r() - 0.5) * 7000,
-      y: (r() - 0.5) * 7000,
-      size: 1300 + r() * 1900,
-      rot: r() * 6.283,
-      a: 0.5 + r() * 0.35,
-      depth: 0.18 + r() * 0.3,
+  const faction3 = starSystem.farside ? 'farside' : starSystem.faction,
+    pool = NEB_BY_FAC[faction3] || [0, 1, 2, 3, 4, 5, 6, 7],
+    noise = 1 + Math.floor(currentRandomGenerator() * 3) + (starSystem.danger >= 3 ? 1 : 0);
+  for (let index = 0; index < noise; index++)
+    decorModel2.neb.push({
+      img:
+        'nebula_' +
+        (currentRandomGenerator() < 0.7 ? pick(pool) : Math.floor(currentRandomGenerator() * 8)),
+      x: (currentRandomGenerator() - 0.5) * 7000,
+      y: (currentRandomGenerator() - 0.5) * 7000,
+      size: 1300 + currentRandomGenerator() * 1900,
+      rot: currentRandomGenerator() * 6.283,
+      a: 0.5 + currentRandomGenerator() * 0.35,
+      depth: 0.18 + currentRandomGenerator() * 0.3,
     });
-  if (r() < 0.38) {
-    const a0 = r() * 6.283,
-      R = 1800 + r() * 2200;
-    D.belt = {
-      depth: 0.7 + r() * 0.15,
-      rocks: Array.from({ length: 30 + Math.floor(r() * 40) }, () => {
-        const a = a0 + (r() - 0.5) * 1.6;
+  if (currentRandomGenerator() < 0.38) {
+    const initialAngle = currentRandomGenerator() * 6.283,
+      radius = 1800 + currentRandomGenerator() * 2200;
+    decorModel2.belt = {
+      depth: 0.7 + currentRandomGenerator() * 0.15,
+      rocks: Array.from({ length: 30 + Math.floor(currentRandomGenerator() * 40) }, () => {
+        const firstValue = initialAngle + (currentRandomGenerator() - 0.5) * 1.6;
         return {
-          x: Math.cos(a) * (R + (r() - 0.5) * 500),
-          y: Math.sin(a) * (R + (r() - 0.5) * 500),
-          s: 8 + r() * 34,
-          k: Math.floor(r() * 6),
-          rot: r() * 6,
-          sp: (r() - 0.5) * 0.4,
+          x: Math.cos(firstValue) * (radius + (currentRandomGenerator() - 0.5) * 500),
+          y: Math.sin(firstValue) * (radius + (currentRandomGenerator() - 0.5) * 500),
+          s: 8 + currentRandomGenerator() * 34,
+          k: Math.floor(currentRandomGenerator() * 6),
+          rot: currentRandomGenerator() * 6,
+          sp: (currentRandomGenerator() - 0.5) * 0.4,
         };
       }),
     };
   }
-  if (r() < 0.08 + 0.05 * S.danger)
-    D.storm = {
-      x: (r() - 0.5) * 5000,
-      y: (r() - 0.5) * 5000,
-      R: 900 + r() * 900,
+  if (currentRandomGenerator() < 0.08 + 0.05 * starSystem.danger)
+    decorModel2.storm = {
+      x: (currentRandomGenerator() - 0.5) * 5000,
+      y: (currentRandomGenerator() - 0.5) * 5000,
+      R: 900 + currentRandomGenerator() * 900,
       img: 'nebula_' + pick([0, 5, 4]),
       depth: 0.9,
     };
-  if (r() < 0.26) {
-    const p = spot(1300, 3200, 600);
-    if (p)
-      D.derelict.push({
-        img: 'derelict_' + Math.floor(r() * 4),
-        x: p[0],
-        y: p[1],
-        size: 380 + r() * 260,
-        rot: r() * 6.283,
-        spin: (r() - 0.5) * 0.01,
+  if (currentRandomGenerator() < 0.26) {
+    const spot2 = spot(1300, 3200, 600);
+    if (spot2)
+      decorModel2.derelict.push({
+        img: 'derelict_' + Math.floor(currentRandomGenerator() * 4),
+        x: spot2[0],
+        y: spot2[1],
+        size: 380 + currentRandomGenerator() * 260,
+        rot: currentRandomGenerator() * 6.283,
+        spin: (currentRandomGenerator() - 0.5) * 0.01,
       });
   }
-  const wreckOdds = 0.32 + 0.1 * S.danger + (wild ? 0.2 : 0);
-  for (let i = 0; i < 2; i++)
-    if (r() < wreckOdds * (i ? 0.4 : 1)) {
-      const p = spot(1200, 3400, 700);
-      if (p)
-        D.wreck.push({
-          img: 'wreck_' + Math.floor(r() * 6),
-          x: p[0],
-          y: p[1],
-          size: 650 + r() * 650,
-          rot: r() * 6.283,
-          spin: (r() - 0.5) * 0.004,
-          bits: Array.from({ length: 10 + Math.floor(r() * 10) }, () => ({
-            a: r() * 6.283,
-            d: 0.35 + r() * 0.5,
-            s: 3 + r() * 9,
-            sp: (r() - 0.5) * 0.03,
-            rot: r() * 6,
+  const wreckOdds = 0.32 + 0.1 * starSystem.danger + (wild ? 0.2 : 0);
+  for (let index = 0; index < 2; index++)
+    if (currentRandomGenerator() < wreckOdds * (index ? 0.4 : 1)) {
+      const spot3 = spot(1200, 3400, 700);
+      if (spot3)
+        decorModel2.wreck.push({
+          img: 'wreck_' + Math.floor(currentRandomGenerator() * 6),
+          x: spot3[0],
+          y: spot3[1],
+          size: 650 + currentRandomGenerator() * 650,
+          rot: currentRandomGenerator() * 6.283,
+          spin: (currentRandomGenerator() - 0.5) * 0.004,
+          bits: Array.from({ length: 10 + Math.floor(currentRandomGenerator() * 10) }, () => ({
+            a: currentRandomGenerator() * 6.283,
+            d: 0.35 + currentRandomGenerator() * 0.5,
+            s: 3 + currentRandomGenerator() * 9,
+            sp: (currentRandomGenerator() - 0.5) * 0.03,
+            rot: currentRandomGenerator() * 6,
           })),
         });
     }
-  if (r() < 0.13 + (S.farside ? 0.3 : 0)) {
-    const p = spot(1600, 3600, 900);
-    if (p)
-      D.ruin.push({
-        img: 'ruin_' + Math.floor(r() * 2),
-        x: p[0],
-        y: p[1],
-        size: 1100 + r() * 700,
-        rot: r() * 6.283,
-        spin: (r() - 0.5) * 0.002,
+  if (currentRandomGenerator() < 0.13 + (starSystem.farside ? 0.3 : 0)) {
+    const spot4 = spot(1600, 3600, 900);
+    if (spot4)
+      decorModel2.ruin.push({
+        img: 'ruin_' + Math.floor(currentRandomGenerator() * 2),
+        x: spot4[0],
+        y: spot4[1],
+        size: 1100 + currentRandomGenerator() * 700,
+        rot: currentRandomGenerator() * 6.283,
+        spin: (currentRandomGenerator() - 0.5) * 0.002,
       });
   }
-  if (r() < (['ylith', 'frontier', 'deep'].includes(S.faction) || S.farside ? 0.45 : 0.14)) {
-    const p = spot(900, 3200, 400);
-    if (p)
-      for (let i = 0, n = 1 + Math.floor(r() * 3); i < n; i++)
-        D.crystal.push({
-          img: 'crystal_' + Math.floor(r() * 3),
-          x: p[0] + (r() - 0.5) * 500,
-          y: p[1] + (r() - 0.5) * 500,
-          size: 140 + r() * 220,
-          rot: r() * 6.283,
-          spin: (r() - 0.5) * 0.02,
-          ph: r() * 6,
+  if (
+    currentRandomGenerator() <
+    (['ylith', 'frontier', 'deep'].includes(starSystem.faction) || starSystem.farside ? 0.45 : 0.14)
+  ) {
+    const spot5 = spot(900, 3200, 400);
+    if (spot5)
+      for (
+        let index = 0, count = 1 + Math.floor(currentRandomGenerator() * 3);
+        index < count;
+        index++
+      )
+        decorModel2.crystal.push({
+          img: 'crystal_' + Math.floor(currentRandomGenerator() * 3),
+          x: spot5[0] + (currentRandomGenerator() - 0.5) * 500,
+          y: spot5[1] + (currentRandomGenerator() - 0.5) * 500,
+          size: 140 + currentRandomGenerator() * 220,
+          rot: currentRandomGenerator() * 6.283,
+          spin: (currentRandomGenerator() - 0.5) * 0.02,
+          ph: currentRandomGenerator() * 6,
         });
   }
-  if (r() < 0.3 + 0.06 * S.danger) {
-    const p = spot(800, 3000, 300);
-    if (p)
-      D.debris.push({
-        x: p[0],
-        y: p[1],
-        spin: (r() - 0.5) * 0.01,
-        bits: Array.from({ length: 25 + Math.floor(r() * 30) }, () => ({
-          a: r() * 6.283,
-          d: r() * 420,
-          s: 3 + r() * 14,
-          rot: r() * 6,
-          sp: (r() - 0.5) * 0.6,
-          hot: r() < 0.12,
+  if (currentRandomGenerator() < 0.3 + 0.06 * starSystem.danger) {
+    const spot6 = spot(800, 3000, 300);
+    if (spot6)
+      decorModel2.debris.push({
+        x: spot6[0],
+        y: spot6[1],
+        spin: (currentRandomGenerator() - 0.5) * 0.01,
+        bits: Array.from({ length: 25 + Math.floor(currentRandomGenerator() * 30) }, () => ({
+          a: currentRandomGenerator() * 6.283,
+          d: currentRandomGenerator() * 420,
+          s: 3 + currentRandomGenerator() * 14,
+          rot: currentRandomGenerator() * 6,
+          sp: (currentRandomGenerator() - 0.5) * 0.6,
+          hot: currentRandomGenerator() < 0.12,
         })),
       });
   }
-  if (r() < 0.3) {
-    const a = r() * 6.283;
-    D.comet = {
-      x0: Math.cos(a) * 5200,
-      y0: Math.sin(a) * 5200,
-      vx: -Math.cos(a + (r() - 0.5) * 0.9) * (14 + r() * 16),
-      vy: -Math.sin(a + (r() - 0.5) * 0.9) * (14 + r() * 16),
-      len: 380 + r() * 520,
-      hue: r() < 0.5 ? '170,220,255' : '190,255,230',
+  if (currentRandomGenerator() < 0.3) {
+    const firstValue = currentRandomGenerator() * 6.283;
+    decorModel2.comet = {
+      x0: Math.cos(firstValue) * 5200,
+      y0: Math.sin(firstValue) * 5200,
+      vx:
+        -Math.cos(firstValue + (currentRandomGenerator() - 0.5) * 0.9) *
+        (14 + currentRandomGenerator() * 16),
+      vy:
+        -Math.sin(firstValue + (currentRandomGenerator() - 0.5) * 0.9) *
+        (14 + currentRandomGenerator() * 16),
+      len: 380 + currentRandomGenerator() * 520,
+      hue: currentRandomGenerator() < 0.5 ? '170,220,255' : '190,255,230',
       period: 900,
     };
   }
-  for (const stellarBody of S.stellars) {
-    if (stellarBody.svc && stellarBody.svc.includes('L') && r() < 0.7)
-      for (let i = 0; i < 2; i++)
-        D.beacons.push({
-          x: stellarBody.x + Math.cos(r() * 6.283) * ((stellarBody.r || 80) + 140 + r() * 140),
-          y: stellarBody.y + Math.sin(r() * 6.283) * ((stellarBody.r || 80) + 140 + r() * 140),
-          col: i ? '#ff4a3a' : '#5aff8a',
-          ph: r() * 6.283,
+  for (const stellarBody of starSystem.stellars) {
+    if (stellarBody.svc && stellarBody.svc.includes('L') && currentRandomGenerator() < 0.7)
+      for (let index = 0; index < 2; index++)
+        decorModel2.beacons.push({
+          x:
+            stellarBody.x +
+            Math.cos(currentRandomGenerator() * 6.283) *
+              ((stellarBody.r || 80) + 140 + currentRandomGenerator() * 140),
+          y:
+            stellarBody.y +
+            Math.sin(currentRandomGenerator() * 6.283) *
+              ((stellarBody.r || 80) + 140 + currentRandomGenerator() * 140),
+          col: index ? '#ff4a3a' : '#5aff8a',
+          ph: currentRandomGenerator() * 6.283,
         });
-    if ((stellarBody.kind === 'planet' || stellarBody.kind === 'moon') && r() < 0.55)
-      D.sats.push({
+    if (
+      (stellarBody.kind === 'planet' || stellarBody.kind === 'moon') &&
+      currentRandomGenerator() < 0.55
+    )
+      decorModel2.sats.push({
         cx: stellarBody.x,
         cy: stellarBody.y,
-        R: (stellarBody.r || 100) + 90 + r() * 120,
-        a: r() * 6.283,
-        sp: (r() < 0.5 ? 1 : -1) * (0.02 + r() * 0.04),
-        img: 'satellite_' + Math.floor(r() * 3),
-        size: 30 + r() * 22,
+        R: (stellarBody.r || 100) + 90 + currentRandomGenerator() * 120,
+        a: currentRandomGenerator() * 6.283,
+        sp: (currentRandomGenerator() < 0.5 ? 1 : -1) * (0.02 + currentRandomGenerator() * 0.04),
+        img: 'satellite_' + Math.floor(currentRandomGenerator() * 3),
+        size: 30 + currentRandomGenerator() * 22,
       });
   }
-  if (r() < 0.45)
-    for (let i = 0, n = 2 + Math.floor(r() * 4); i < n; i++)
-      D.pods.push({
-        x: (r() - 0.5) * 5000,
-        y: (r() - 0.5) * 5000,
-        vx: (r() - 0.5) * 6,
-        vy: (r() - 0.5) * 6,
-        img: 'pod_' + Math.floor(r() * 3),
-        size: 24 + r() * 18,
-        rot: r() * 6,
-        sp: (r() - 0.5) * 0.4,
+  if (currentRandomGenerator() < 0.45)
+    for (
+      let index = 0, count = 2 + Math.floor(currentRandomGenerator() * 4);
+      index < count;
+      index++
+    )
+      decorModel2.pods.push({
+        x: (currentRandomGenerator() - 0.5) * 5000,
+        y: (currentRandomGenerator() - 0.5) * 5000,
+        vx: (currentRandomGenerator() - 0.5) * 6,
+        vy: (currentRandomGenerator() - 0.5) * 6,
+        img: 'pod_' + Math.floor(currentRandomGenerator() * 3),
+        size: 24 + currentRandomGenerator() * 18,
+        rot: currentRandomGenerator() * 6,
+        sp: (currentRandomGenerator() - 0.5) * 0.4,
       });
   // Authored Eventide sightlines are fixed after seeded generation: legacy scenery
   // consumes precisely the same RNG and new ports always frame their signature sky.
-  if (S.eventide) D.sun = { ...D.sun, x: 0, y: -210, size: 190, depth: 0.025 };
-  decorCache.set(S.id, D);
-  return D;
+  if (starSystem.eventide)
+    decorModel2.sun = { ...decorModel2.sun, x: 0, y: -210, size: 190, depth: 0.025 };
+  decorCache.set(starSystem.id, decorModel2);
+  return decorModel2;
 }
 /**
  * Projects a distant background object's coordinates into screen space using parallax depth.
- * @param {{ x: number, y: number, depth: number }} o Object with position and depth factor
- * @param {number} W Viewport width
- * @param {number} H Viewport height
- * @param {number} cx Camera center X
- * @param {number} cy Camera center Y
- * @param {number} zf Zoom scale factor for far objects
+ * @param {{ x: number, y: number, depth: number }} options Object with position and depth factor
+ * @param {number} width2 Viewport width
+ * @param {number} height2 Viewport height
+ * @param {number} centerX Camera center X
+ * @param {number} centerY Camera center Y
+ * @param {number} zoomFactor Zoom scale factor for far objects
  * @returns {[number, number]} Screen coordinates [x, y]
  */
 function farXY(
-  o: { x: number; y: number; depth: number },
-  W: number,
-  H: number,
-  cx: number,
-  cy: number,
-  zf: number,
+  options: { x: number; y: number; depth: number },
+  width: number,
+  height: number,
+  centerX: number,
+  centerY: number,
+  zoomFactor: number,
 ): [number, number] {
-  return [W / 2 + (o.x - cx * o.depth) * zf, H / 2 + (o.y - cy * o.depth) * zf];
+  return [
+    width / 2 + (options.x - centerX * options.depth) * zoomFactor,
+    height / 2 + (options.y - centerY * options.depth) * zoomFactor,
+  ];
 }
 /**
  * Renders deepest background elements: primary star, distant galaxies, pulsars, and nebulae.
- * @param {CanvasRenderingContext2D} ctx 2D rendering context
- * @param {GalaxySystem} S Solar system specification
- * @param {number} W Viewport width
- * @param {number} H Viewport height
- * @param {number} z Camera zoom level
- * @param {number} cx Camera center X
- * @param {number} cy Camera center Y
- * @param {number} now Timestamp in milliseconds
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
+ * @param {GalaxySystem} starSystem Solar system specification
+ * @param {number} width2 Viewport width
+ * @param {number} height2 Viewport height
+ * @param {number} positionZ Camera zoom level
+ * @param {number} centerX Camera center X
+ * @param {number} centerY Camera center Y
+ * @param {number} currentTime Timestamp in milliseconds
  * @returns {void}
  */
 function drawDecorFar(
-  ctx: CanvasRenderingContext2D,
-  S: GalaxySystem,
-  W: number,
-  H: number,
-  z: number,
-  cx: number,
-  cy: number,
-  now: number,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  starSystem: GalaxySystem,
+  width: number,
+  height: number,
+  positionZ: number,
+  centerX: number,
+  centerY: number,
+  currentTime: number,
 ): void {
-  const D = decorFor(S),
-    zf = Math.pow(z, 0.25),
-    t = now / 1000;
+  const decorModel = decorFor(starSystem),
+    zoomFactor = Math.pow(positionZ, 0.25),
+    time = currentTime / 1000;
   {
-    const s = D.sun!,
-      [x, y] = farXY(s, W, H, cx, cy, zf),
-      R = s.size * zf; // the system's star, far off, with a soft lens flare
-    if (x > -R * 3 && y > -R * 3 && x < W + R * 3 && y < H + R * 3) {
-      if (S.scene && ['binary', 'blackhole', 'rogue', 'pulsar'].includes(S.scene.kind))
-        drawExoticSky(ctx, S, x, y, R, now);
+    const state = decorModel.sun!,
+      [positionX, positionY] = farXY(state, width, height, centerX, centerY, zoomFactor),
+      radius = state.size * zoomFactor; // the system's star, far off, with a soft lens flare
+    if (
+      positionX > -radius * 3 &&
+      positionY > -radius * 3 &&
+      positionX < width + radius * 3 &&
+      positionY < height + radius * 3
+    ) {
+      if (
+        starSystem.scene &&
+        ['binary', 'blackhole', 'rogue', 'pulsar'].includes(starSystem.scene.kind)
+      )
+        drawExoticSky(
+          canvasRenderingContext2D,
+          starSystem,
+          positionX,
+          positionY,
+          radius,
+          currentTime,
+        );
       else {
-        drawStar(ctx, S, s, x, y, R, now);
-        if (S.scene) drawExoticSky(ctx, S, x + R * 2, y + R * 0.8, R * 0.7, now);
+        drawStar(
+          canvasRenderingContext2D,
+          starSystem,
+          state,
+          positionX,
+          positionY,
+          radius,
+          currentTime,
+        );
+        if (starSystem.scene)
+          drawExoticSky(
+            canvasRenderingContext2D,
+            starSystem,
+            positionX + radius * 2,
+            positionY + radius * 0.8,
+            radius * 0.7,
+            currentTime,
+          );
       }
     }
   }
-  ctx.globalCompositeOperation = 'lighter';
-  for (const g of D.gal) {
-    const im = decorImg(g.img);
-    if (!ready(im)) continue;
-    const [x, y] = farXY(g, W, H, cx, cy, zf),
-      s = g.size * zf;
-    if (x < -s || y < -s || x > W + s || y > H + s) continue;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(g.rot);
-    ctx.scale(1, g.squash);
-    ctx.globalAlpha = g.a;
-    ctx.drawImage(im, -s / 2, -s / 2, s, s);
-    ctx.restore();
+  canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+  for (const game of decorModel.gal) {
+    const htmlImageElement = decorImg(game.img);
+    if (!ready(htmlImageElement)) continue;
+    const [positionX, positionY] = farXY(game, width, height, centerX, centerY, zoomFactor),
+      state = game.size * zoomFactor;
+    if (
+      positionX < -state ||
+      positionY < -state ||
+      positionX > width + state ||
+      positionY > height + state
+    )
+      continue;
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.translate(positionX, positionY);
+    canvasRenderingContext2D.rotate(game.rot);
+    canvasRenderingContext2D.scale(1, game.squash);
+    canvasRenderingContext2D.globalAlpha = game.a;
+    canvasRenderingContext2D.drawImage(htmlImageElement, -state / 2, -state / 2, state, state);
+    canvasRenderingContext2D.restore();
   }
-  if (D.pulsar && !S.scene) {
-    const p = D.pulsar,
-      [x, y] = farXY(p, W, H, cx, cy, zf),
-      L = p.len * zf,
-      a = t * p.spin; // two lighthouse beams sweeping round
-    if (x > -L && y > -L && x < W + L && y < H + L)
-      for (const s2 of [0, Math.PI]) {
-        const ux = Math.cos(a + s2),
-          uy = Math.sin(a + s2) * 0.45,
-          g = ctx.createLinearGradient(x, y, x + ux * L, y + uy * L);
-        g.addColorStop(0, 'rgba(200,225,255,.6)');
-        g.addColorStop(1, 'rgba(120,170,255,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + ux * L - uy * L * 0.08, y + uy * L + ux * L * 0.08);
-        ctx.lineTo(x + ux * L + uy * L * 0.08, y + uy * L - ux * L * 0.08);
-        ctx.closePath();
-        ctx.fill();
+  if (decorModel.pulsar && !starSystem.scene) {
+    const pulsar2 = decorModel.pulsar,
+      [positionX, positionY] = farXY(pulsar2, width, height, centerX, centerY, zoomFactor),
+      length = pulsar2.len * zoomFactor,
+      firstValue = time * pulsar2.spin; // two lighthouse beams sweeping round
+    if (
+      positionX > -length &&
+      positionY > -length &&
+      positionX < width + length &&
+      positionY < height + length
+    )
+      for (const secondState of [0, Math.PI]) {
+        const unitX = Math.cos(firstValue + secondState),
+          unitY = Math.sin(firstValue + secondState) * 0.45,
+          canvasGradient = canvasRenderingContext2D.createLinearGradient(
+            positionX,
+            positionY,
+            positionX + unitX * length,
+            positionY + unitY * length,
+          );
+        canvasGradient.addColorStop(0, 'rgba(200,225,255,.6)');
+        canvasGradient.addColorStop(1, 'rgba(120,170,255,0)');
+        canvasRenderingContext2D.fillStyle = canvasGradient;
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.moveTo(positionX, positionY);
+        canvasRenderingContext2D.lineTo(
+          positionX + unitX * length - unitY * length * 0.08,
+          positionY + unitY * length + unitX * length * 0.08,
+        );
+        canvasRenderingContext2D.lineTo(
+          positionX + unitX * length + unitY * length * 0.08,
+          positionY + unitY * length - unitX * length * 0.08,
+        );
+        canvasRenderingContext2D.closePath();
+        canvasRenderingContext2D.fill();
       }
-    ctx.fillStyle = 'rgba(230,240,255,.95)';
-    ctx.beginPath();
-    ctx.arc(x, y, 2.5, 0, 6.283);
-    ctx.fill();
+    canvasRenderingContext2D.fillStyle = 'rgba(230,240,255,.95)';
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, 2.5, 0, 6.283);
+    canvasRenderingContext2D.fill();
   }
-  ctx.globalAlpha = 1;
-  ctx.globalCompositeOperation = 'source-over';
-  if (D.hole && !S.scene) {
-    const h = D.hole,
-      im = decorImg('blackhole_0');
-    if (ready(im)) {
-      const [x, y] = farXY(h, W, H, cx, cy, zf),
-        s = h.size * zf;
-      if (x > -s && y > -s && x < W + s && y < H + s) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(h.rot + Math.sin(t / 40) * 0.03);
-        ctx.drawImage(im, -s / 2, -s / 2, s, s);
-        ctx.restore();
+  canvasRenderingContext2D.globalAlpha = 1;
+  canvasRenderingContext2D.globalCompositeOperation = 'source-over';
+  if (decorModel.hole && !starSystem.scene) {
+    const hole2 = decorModel.hole,
+      htmlImageElement = decorImg('blackhole_0');
+    if (ready(htmlImageElement)) {
+      const [positionX, positionY] = farXY(hole2, width, height, centerX, centerY, zoomFactor),
+        state = hole2.size * zoomFactor;
+      if (
+        positionX > -state &&
+        positionY > -state &&
+        positionX < width + state &&
+        positionY < height + state
+      ) {
+        canvasRenderingContext2D.save();
+        canvasRenderingContext2D.translate(positionX, positionY);
+        canvasRenderingContext2D.rotate(hole2.rot + Math.sin(time / 40) * 0.03);
+        canvasRenderingContext2D.drawImage(htmlImageElement, -state / 2, -state / 2, state, state);
+        canvasRenderingContext2D.restore();
       }
     }
   }
   // Distant comet behind worlds and navigable scenery; use the rendered sun's parallax.
-  if (D.comet) {
-    const [x, y] = farXY(D.sun!, W, H, cx, cy, zf);
-    drawComet(ctx, D.comet, W, H, z, cx, cy, now, { x, y });
+  if (decorModel.comet) {
+    const [positionX, positionY] = farXY(
+      decorModel.sun!,
+      width,
+      height,
+      centerX,
+      centerY,
+      zoomFactor,
+    );
+    drawComet(
+      canvasRenderingContext2D,
+      decorModel.comet,
+      width,
+      height,
+      positionZ,
+      centerX,
+      centerY,
+      currentTime,
+      { x: positionX, y: positionY },
+    );
   }
-  for (const bp of [...D.bgp!].sort((a, b) => a.depth - b.depth)) {
+  for (const backgroundPlanet of [...decorModel.bgp!].sort(
+    (firstValue, secondValue) => firstValue.depth - secondValue.depth,
+  )) {
     // unique background worlds, the farthest first
-    const [x, y] = farXY(bp, W, H, cx, cy, zf),
-      s = bp.size * zf * backgroundScale('world', bp.p.desc);
-    if (x < -s * 2 || y < -s * 2 || x > W + s * 2 || y > H + s * 2) continue;
-    const P = planetSprite(bp.p, now);
-    if (!P) continue;
-    const w = (s * P.S) / P.D;
+    const [positionX, positionY] = farXY(
+        backgroundPlanet,
+        width,
+        height,
+        centerX,
+        centerY,
+        zoomFactor,
+      ),
+      state =
+        backgroundPlanet.size * zoomFactor * backgroundScale('world', backgroundPlanet.p.desc);
+    if (
+      positionX < -state * 2 ||
+      positionY < -state * 2 ||
+      positionX > width + state * 2 ||
+      positionY > height + state * 2
+    )
+      continue;
+    const planetSprite2 = planetSprite(backgroundPlanet.p, currentTime);
+    if (!planetSprite2) continue;
+    const width3 = (state * planetSprite2.S) / planetSprite2.D;
     // Distance changes apparent size, not opacity: the solid disk must occlude
     // stars behind it. The sprite itself supplies soft atmosphere/ring alpha.
-    ctx.globalAlpha = 1;
-    ctx.drawImage(P.canvas, x - w / 2, y - w / 2, w, w);
-    ctx.globalAlpha = 1;
+    canvasRenderingContext2D.globalAlpha = 1;
+    canvasRenderingContext2D.drawImage(
+      planetSprite2.canvas,
+      positionX - width3 / 2,
+      positionY - width3 / 2,
+      width3,
+      width3,
+    );
+    canvasRenderingContext2D.globalAlpha = 1;
   }
-  if (D.arc) {
-    const A_ = D.arc,
-      im = decorImg(A_.img);
-    if (ready(im)) {
-      const k = Math.pow(z, 0.4),
-        x = W / 2 + (A_.x - cx * A_.depth) * k,
-        y = H / 2 + (A_.y - cy * A_.depth) * k,
-        s = A_.size * k;
-      if (x > -s && y > -s && x < W + s && y < H + s) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(A_.rot);
-        ctx.globalAlpha = 0.8;
-        ctx.drawImage(im, -s / 2, -s / 2, s, s);
-        ctx.restore();
-        ctx.globalAlpha = 1;
+  if (decorModel.arc) {
+    const decorLayer = decorModel.arc,
+      htmlImageElement = decorImg(decorLayer.img);
+    if (ready(htmlImageElement)) {
+      const entryKey = Math.pow(positionZ, 0.4),
+        positionX = width / 2 + (decorLayer.x - centerX * decorLayer.depth) * entryKey,
+        positionY = height / 2 + (decorLayer.y - centerY * decorLayer.depth) * entryKey,
+        state = decorLayer.size * entryKey;
+      if (
+        positionX > -state &&
+        positionY > -state &&
+        positionX < width + state &&
+        positionY < height + state
+      ) {
+        canvasRenderingContext2D.save();
+        canvasRenderingContext2D.translate(positionX, positionY);
+        canvasRenderingContext2D.rotate(decorLayer.rot);
+        canvasRenderingContext2D.globalAlpha = 0.8;
+        canvasRenderingContext2D.drawImage(htmlImageElement, -state / 2, -state / 2, state, state);
+        canvasRenderingContext2D.restore();
+        canvasRenderingContext2D.globalAlpha = 1;
       }
     }
   }
-  ctx.globalCompositeOperation = 'lighter';
-  for (const n of D.neb) {
-    const im = decorImg(n.img);
-    if (!ready(im)) continue;
-    const k = Math.pow(z, 0.55),
-      x = W / 2 + (n.x - cx * n.depth) * k * 0.6,
-      y = H / 2 + (n.y - cy * n.depth) * k * 0.6,
-      s = n.size * k;
-    if (x < -s || y < -s || x > W + s || y > H + s) continue;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(n.rot + now / 600000);
-    ctx.globalAlpha = n.a;
-    ctx.drawImage(im, -s / 2, -s / 2, s, s);
-    ctx.restore();
+  canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+  for (const count of decorModel.neb) {
+    const htmlImageElement = decorImg(count.img);
+    if (!ready(htmlImageElement)) continue;
+    const entryKey = Math.pow(positionZ, 0.55),
+      positionX = width / 2 + (count.x - centerX * count.depth) * entryKey * 0.6,
+      positionY = height / 2 + (count.y - centerY * count.depth) * entryKey * 0.6,
+      state = count.size * entryKey;
+    if (
+      positionX < -state ||
+      positionY < -state ||
+      positionX > width + state ||
+      positionY > height + state
+    )
+      continue;
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.translate(positionX, positionY);
+    canvasRenderingContext2D.rotate(count.rot + currentTime / 600000);
+    canvasRenderingContext2D.globalAlpha = count.a;
+    canvasRenderingContext2D.drawImage(htmlImageElement, -state / 2, -state / 2, state, state);
+    canvasRenderingContext2D.restore();
   }
-  ctx.globalAlpha = 1;
-  ctx.globalCompositeOperation = 'source-over';
+  canvasRenderingContext2D.globalAlpha = 1;
+  canvasRenderingContext2D.globalCompositeOperation = 'source-over';
   // a shooting star now and then, far behind everything
   {
-    const per = 14,
-      ph = (t + D.meteorT) % per;
-    if (ph < 0.7) {
-      const r = seeded(Math.floor((t + D.meteorT) / per) + hashStr(S.id)),
-        x0 = r() * W,
-        y0 = r() * H * 0.6,
-        a = 0.4 + r() * 1.2,
-        L = 120 + r() * 160,
-        k = ph / 0.7;
-      const x = x0 + Math.cos(a) * L * k * 2,
-        y = y0 + Math.sin(a) * L * k * 2,
-        g = ctx.createLinearGradient(x, y, x - Math.cos(a) * L, y - Math.sin(a) * L);
-      g.addColorStop(0, `rgba(255,255,255,${0.7 * (1 - k)})`);
-      g.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.strokeStyle = g;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - Math.cos(a) * L, y - Math.sin(a) * L);
-      ctx.stroke();
+    const perUnit = 14,
+      phase = (time + decorModel.meteorT) % perUnit;
+    if (phase < 0.7) {
+      const randomGenerator = seeded(
+          Math.floor((time + decorModel.meteorT) / perUnit) + hashStr(starSystem.id),
+        ),
+        startX = randomGenerator() * width,
+        startY = randomGenerator() * height * 0.6,
+        firstValue = 0.4 + randomGenerator() * 1.2,
+        length = 120 + randomGenerator() * 160,
+        entryKey = phase / 0.7;
+      const positionX = startX + Math.cos(firstValue) * length * entryKey * 2,
+        positionY = startY + Math.sin(firstValue) * length * entryKey * 2,
+        canvasGradient = canvasRenderingContext2D.createLinearGradient(
+          positionX,
+          positionY,
+          positionX - Math.cos(firstValue) * length,
+          positionY - Math.sin(firstValue) * length,
+        );
+      canvasGradient.addColorStop(0, `rgba(255,255,255,${0.7 * (1 - entryKey)})`);
+      canvasGradient.addColorStop(1, 'rgba(255,255,255,0)');
+      canvasRenderingContext2D.strokeStyle = canvasGradient;
+      canvasRenderingContext2D.lineWidth = 1.5;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(positionX, positionY);
+      canvasRenderingContext2D.lineTo(
+        positionX - Math.cos(firstValue) * length,
+        positionY - Math.sin(firstValue) * length,
+      );
+      canvasRenderingContext2D.stroke();
     }
   }
 }
 /**
  * Renders mid-distance background clutter: asteroid drift belts and ion storm fields with lightning.
- * @param {CanvasRenderingContext2D} ctx 2D rendering context
- * @param {GalaxySystem} S Solar system specification
- * @param {number} W Viewport width
- * @param {number} H Viewport height
- * @param {number} z Camera zoom factor
- * @param {number} cx Camera center X
- * @param {number} cy Camera center Y
- * @param {number} now Timestamp in milliseconds
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
+ * @param {GalaxySystem} starSystem Solar system specification
+ * @param {number} width2 Viewport width
+ * @param {number} height2 Viewport height
+ * @param {number} positionZ Camera zoom factor
+ * @param {number} centerX Camera center X
+ * @param {number} centerY Camera center Y
+ * @param {number} currentTime Timestamp in milliseconds
  * @returns {void}
  */
 function drawDecorMid(
-  ctx: CanvasRenderingContext2D,
-  S: GalaxySystem,
-  W: number,
-  H: number,
-  z: number,
-  cx: number,
-  cy: number,
-  now: number,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  starSystem: GalaxySystem,
+  width: number,
+  height: number,
+  positionZ: number,
+  centerX: number,
+  centerY: number,
+  currentTime: number,
 ): void {
-  const D = decorFor(S),
-    t = now / 1000;
-  if (D.belt) {
-    const B = D.belt,
-      k = z * B.depth + z * (1 - B.depth) * 0.6;
-    ctx.globalAlpha = 0.6; // a drift of distant asteroids, a little behind the play field
-    for (const rk of B.rocks) {
-      const x = W / 2 + (rk.x - cx * B.depth) * k,
-        y = H / 2 + (rk.y - cy * B.depth) * k,
-        s = rk.s * k * 1.6;
-      if (x < -s || y < -s || x > W + s || y > H + s) continue;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(rk.rot + t * rk.sp);
-      ctx.drawImage(rockSprite(rk.k), -s / 2, -s / 2, s, s);
-      ctx.restore();
+  const decorModel = decorFor(starSystem),
+    time = currentTime / 1000;
+  if (decorModel.belt) {
+    const belt2 = decorModel.belt,
+      entryKey = positionZ * belt2.depth + positionZ * (1 - belt2.depth) * 0.6;
+    canvasRenderingContext2D.globalAlpha = 0.6; // a drift of distant asteroids, a little behind the play field
+    for (const rock of belt2.rocks) {
+      const positionX = width / 2 + (rock.x - centerX * belt2.depth) * entryKey,
+        positionY = height / 2 + (rock.y - centerY * belt2.depth) * entryKey,
+        state = rock.s * entryKey * 1.6;
+      if (
+        positionX < -state ||
+        positionY < -state ||
+        positionX > width + state ||
+        positionY > height + state
+      )
+        continue;
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(positionX, positionY);
+      canvasRenderingContext2D.rotate(rock.rot + time * rock.sp);
+      canvasRenderingContext2D.drawImage(rockSprite(rock.k), -state / 2, -state / 2, state, state);
+      canvasRenderingContext2D.restore();
     }
-    ctx.globalAlpha = 1;
+    canvasRenderingContext2D.globalAlpha = 1;
   }
-  if (D.storm) {
-    const st = D.storm,
-      k = z * st.depth + z * 0.1,
-      x = W / 2 + (st.x - cx * st.depth) * k,
-      y = H / 2 + (st.y - cy * st.depth) * k,
-      R = st.R * k; // an ion storm: a charged cloud with lightning
-    if (x > -R * 1.5 && y > -R * 1.5 && x < W + R * 1.5 && y < H + R * 1.5) {
-      const im = decorImg(st.img);
-      ctx.globalCompositeOperation = 'lighter';
-      if (ready(im)) {
-        ctx.globalAlpha = 0.55;
-        ctx.drawImage(im, x - R, y - R, R * 2, R * 2);
-        ctx.globalAlpha = 1;
+  if (decorModel.storm) {
+    const storm2 = decorModel.storm,
+      entryKey = positionZ * storm2.depth + positionZ * 0.1,
+      positionX = width / 2 + (storm2.x - centerX * storm2.depth) * entryKey,
+      positionY = height / 2 + (storm2.y - centerY * storm2.depth) * entryKey,
+      radius = storm2.R * entryKey; // an ion storm: a charged cloud with lightning
+    if (
+      positionX > -radius * 1.5 &&
+      positionY > -radius * 1.5 &&
+      positionX < width + radius * 1.5 &&
+      positionY < height + radius * 1.5
+    ) {
+      const htmlImageElement = decorImg(storm2.img);
+      canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+      if (ready(htmlImageElement)) {
+        canvasRenderingContext2D.globalAlpha = 0.55;
+        canvasRenderingContext2D.drawImage(
+          htmlImageElement,
+          positionX - radius,
+          positionY - radius,
+          radius * 2,
+          radius * 2,
+        );
+        canvasRenderingContext2D.globalAlpha = 1;
       }
-      const slot = Math.floor(t * 3),
-        r = seeded(slot * 131 + hashStr(S.id));
-      if (r() < 0.45) {
-        let px = x + (r() - 0.5) * R,
-          py = y + (r() - 0.5) * R;
-        const flick = 1 - (t * 3 - slot);
-        ctx.strokeStyle = `rgba(190,225,255,${0.85 * flick})`;
-        ctx.lineWidth = 1.6;
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        for (let i = 0; i < 9; i++) {
-          px += (r() - 0.5) * R * 0.25;
-          py += (r() - 0.3) * R * 0.18;
-          ctx.lineTo(px, py);
+      const slot = Math.floor(time * 3),
+        randomGenerator = seeded(slot * 131 + hashStr(starSystem.id));
+      if (randomGenerator() < 0.45) {
+        let pixelX = positionX + (randomGenerator() - 0.5) * radius,
+          pixelY = positionY + (randomGenerator() - 0.5) * radius;
+        const flicker = 1 - (time * 3 - slot);
+        canvasRenderingContext2D.strokeStyle = `rgba(190,225,255,${0.85 * flicker})`;
+        canvasRenderingContext2D.lineWidth = 1.6;
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.moveTo(pixelX, pixelY);
+        for (let index = 0; index < 9; index++) {
+          pixelX += (randomGenerator() - 0.5) * radius * 0.25;
+          pixelY += (randomGenerator() - 0.3) * radius * 0.18;
+          canvasRenderingContext2D.lineTo(pixelX, pixelY);
         }
-        ctx.stroke();
-        const gl = ctx.createRadialGradient(x, y, 0, x, y, R);
-        gl.addColorStop(0, `rgba(150,200,255,${0.12 * flick})`);
-        gl.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = gl;
-        ctx.beginPath();
-        ctx.arc(x, y, R, 0, 6.283);
-        ctx.fill();
+        canvasRenderingContext2D.stroke();
+        const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+          positionX,
+          positionY,
+          0,
+          positionX,
+          positionY,
+          radius,
+        );
+        canvasGradient.addColorStop(0, `rgba(150,200,255,${0.12 * flicker})`);
+        canvasGradient.addColorStop(1, 'rgba(0,0,0,0)');
+        canvasRenderingContext2D.fillStyle = canvasGradient;
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
+        canvasRenderingContext2D.fill();
       }
-      ctx.globalCompositeOperation = 'source-over';
+      canvasRenderingContext2D.globalCompositeOperation = 'source-over';
     }
   }
 }
 /**
  * Renders in-system foreground clutter: comets, derelicts, ancient ruins, satellites, and nav beacons.
- * @param {CanvasRenderingContext2D} ctx 2D rendering context
- * @param {GalaxySystem} S Solar system specification
- * @param {number} W Viewport width
- * @param {number} H Viewport height
- * @param {number} z Camera zoom factor
- * @param {(wx: number) => number} sx Screen X projector function
- * @param {(wy: number) => number} sy Screen Y projector function
- * @param {number} now Timestamp in milliseconds
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
+ * @param {GalaxySystem} starSystem Solar system specification
+ * @param {number} width2 Viewport width
+ * @param {number} height2 Viewport height
+ * @param {number} positionZ Camera zoom factor
+ * @param {(wx: number) => number} screenX Screen X projector function
+ * @param {(wy: number) => number} screenY Screen Y projector function
+ * @param {number} currentTime Timestamp in milliseconds
  * @returns {void}
  */
 function drawDecorNear(
-  ctx: CanvasRenderingContext2D,
-  S: GalaxySystem,
-  W: number,
-  H: number,
-  z: number,
-  sx: (wx: number) => number,
-  sy: (wy: number) => number,
-  now: number,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  starSystem: GalaxySystem,
+  width: number,
+  height: number,
+  positionZ: number,
+  screenX: (worldX: number) => number,
+  screenY: (worldY: number) => number,
+  currentTime: number,
 ): void {
-  const D = decorFor(S),
-    t = now / 1000,
-    onS = (x: number, y: number, s: number) => x > -s && y > -s && x < W + s && y < H + s;
+  const decorModel = decorFor(starSystem),
+    time = currentTime / 1000,
+    isOnScreen = (positionX: number, positionY: number, state: number) =>
+      positionX > -state &&
+      positionY > -state &&
+      positionX < width + state &&
+      positionY < height + state;
   const sprite = (
-    o: Omit<DecorSprite, 'spin'> & { spin?: number },
+    options: Omit<DecorSprite, 'spin'> & { spin?: number },
     alpha = 1,
-    spin = o.spin || 0,
+    spin = options.spin || 0,
   ) => {
-    const im = decorImg(o.img);
-    if (!ready(im)) return;
-    const x = sx(o.x),
-      y = sy(o.y),
-      s = o.size * z,
-      sh = (s * im.naturalHeight) / im.naturalWidth;
-    if (!onS(x, y, s)) return;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate((o.rot || 0) + t * spin);
-    ctx.globalAlpha = alpha;
-    ctx.drawImage(im, -s / 2, -sh / 2, s, sh);
-    ctx.restore();
-    ctx.globalAlpha = 1;
+    const htmlImageElement = decorImg(options.img);
+    if (!ready(htmlImageElement)) return;
+    const positionX = screenX(options.x),
+      positionY = screenY(options.y),
+      state = options.size * positionZ,
+      ship = (state * htmlImageElement.naturalHeight) / htmlImageElement.naturalWidth;
+    if (!isOnScreen(positionX, positionY, state)) return;
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.translate(positionX, positionY);
+    canvasRenderingContext2D.rotate((options.rot || 0) + time * spin);
+    canvasRenderingContext2D.globalAlpha = alpha;
+    canvasRenderingContext2D.drawImage(htmlImageElement, -state / 2, -ship / 2, state, ship);
+    canvasRenderingContext2D.restore();
+    canvasRenderingContext2D.globalAlpha = 1;
   };
-  for (const R of D.ruin) sprite(R, 0.92);
-  for (const o of D.derelict) sprite(o, 0.95);
-  for (const w of D.wreck) {
-    const im = decorImg(w.img);
-    if (!ready(im)) continue;
-    const x = sx(w.x),
-      y = sy(w.y),
-      s = w.size * z * backgroundScale('wreck'),
-      sh = (s * im.naturalHeight) / im.naturalWidth;
-    if (!onS(x, y, s)) continue;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(w.rot + t * w.spin);
-    ctx.fillStyle = 'rgba(95,90,85,.9)';
-    for (const b of w.bits) {
-      const a = b.a + t * b.sp,
-        bx = Math.cos(a) * s * b.d * 0.7,
-        by = Math.sin(a) * s * b.d * 0.6;
-      ctx.save();
-      ctx.translate(bx, by);
-      ctx.rotate(b.rot + t * b.sp * 8);
-      ctx.fillRect(-b.s * z, -b.s * z * 0.4, b.s * 2 * z, b.s * 0.8 * z);
-      ctx.restore();
+  for (const decorSprite of decorModel.ruin) sprite(decorSprite, 0.92);
+  for (const decorSprite of decorModel.derelict) sprite(decorSprite, 0.95);
+  for (const wreck2 of decorModel.wreck) {
+    const htmlImageElement = decorImg(wreck2.img);
+    if (!ready(htmlImageElement)) continue;
+    const positionX = screenX(wreck2.x),
+      positionY = screenY(wreck2.y),
+      state = wreck2.size * positionZ * backgroundScale('wreck'),
+      ship = (state * htmlImageElement.naturalHeight) / htmlImageElement.naturalWidth;
+    if (!isOnScreen(positionX, positionY, state)) continue;
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.translate(positionX, positionY);
+    canvasRenderingContext2D.rotate(wreck2.rot + time * wreck2.spin);
+    canvasRenderingContext2D.fillStyle = 'rgba(95,90,85,.9)';
+    for (const debrisBit of wreck2.bits) {
+      const firstValue = debrisBit.a + time * debrisBit.sp,
+        baseX = Math.cos(firstValue) * state * debrisBit.d * 0.7,
+        source = Math.sin(firstValue) * state * debrisBit.d * 0.6;
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(baseX, source);
+      canvasRenderingContext2D.rotate(debrisBit.rot + time * debrisBit.sp * 8);
+      canvasRenderingContext2D.fillRect(
+        -debrisBit.s * positionZ,
+        -debrisBit.s * positionZ * 0.4,
+        debrisBit.s * 2 * positionZ,
+        debrisBit.s * 0.8 * positionZ,
+      );
+      canvasRenderingContext2D.restore();
     }
-    ctx.drawImage(im, -s / 2, -sh / 2, s, sh);
-    ctx.restore();
+    canvasRenderingContext2D.drawImage(htmlImageElement, -state / 2, -ship / 2, state, ship);
+    canvasRenderingContext2D.restore();
   }
-  for (const f of D.debris) {
-    const x = sx(f.x),
-      y = sy(f.y);
-    if (!onS(x, y, 480 * z)) continue; // a battle's leftovers, slowly turning
-    for (const b of f.bits) {
-      const a = b.a + t * f.spin,
-        bx = x + Math.cos(a) * b.d * z,
-        by = y + Math.sin(a) * b.d * z * 0.8;
-      ctx.save();
-      ctx.translate(bx, by);
-      ctx.rotate(b.rot + t * b.sp);
-      ctx.fillStyle = b.hot
-        ? `rgba(255,${130 + 60 * Math.sin(t * 3 + b.rot)},60,.9)`
+  for (const debri of decorModel.debris) {
+    const positionX = screenX(debri.x),
+      positionY = screenY(debri.y);
+    if (!isOnScreen(positionX, positionY, 480 * positionZ)) continue; // a battle's leftovers, slowly turning
+    for (const debrisBit of debri.bits) {
+      const firstValue = debrisBit.a + time * debri.spin,
+        baseX = positionX + Math.cos(firstValue) * debrisBit.d * positionZ,
+        source = positionY + Math.sin(firstValue) * debrisBit.d * positionZ * 0.8;
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(baseX, source);
+      canvasRenderingContext2D.rotate(debrisBit.rot + time * debrisBit.sp);
+      canvasRenderingContext2D.fillStyle = debrisBit.hot
+        ? `rgba(255,${130 + 60 * Math.sin(time * 3 + debrisBit.rot)},60,.9)`
         : 'rgba(110,105,100,.95)';
-      ctx.beginPath();
-      ctx.moveTo(-b.s * z, -b.s * z * 0.3);
-      ctx.lineTo(b.s * z * 0.7, -b.s * z * 0.5);
-      ctx.lineTo(b.s * z, b.s * z * 0.4);
-      ctx.lineTo(-b.s * z * 0.4, b.s * z * 0.3);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(-debrisBit.s * positionZ, -debrisBit.s * positionZ * 0.3);
+      canvasRenderingContext2D.lineTo(
+        debrisBit.s * positionZ * 0.7,
+        -debrisBit.s * positionZ * 0.5,
+      );
+      canvasRenderingContext2D.lineTo(debrisBit.s * positionZ, debrisBit.s * positionZ * 0.4);
+      canvasRenderingContext2D.lineTo(
+        -debrisBit.s * positionZ * 0.4,
+        debrisBit.s * positionZ * 0.3,
+      );
+      canvasRenderingContext2D.closePath();
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.restore();
     }
   }
-  for (const c of D.crystal) {
-    sprite(c, 0.95);
-    const im = decorImg(c.img);
-    if (ready(im)) {
-      const x = sx(c.x),
-        y = sy(c.y),
-        s = c.size * z * 1.25;
-      if (onS(x, y, s)) {
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = 0.18 + 0.14 * Math.sin(t * 1.3 + c.ph);
-        ctx.translate(x, y);
-        ctx.rotate(c.rot + t * c.spin);
-        ctx.drawImage(im, -s / 2, -s / 2, s, s);
-        ctx.restore();
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = 'source-over';
+  for (const crystal2 of decorModel.crystal) {
+    sprite(crystal2, 0.95);
+    const htmlImageElement = decorImg(crystal2.img);
+    if (ready(htmlImageElement)) {
+      const positionX = screenX(crystal2.x),
+        positionY = screenY(crystal2.y),
+        state = crystal2.size * positionZ * 1.25;
+      if (isOnScreen(positionX, positionY, state)) {
+        canvasRenderingContext2D.save();
+        canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+        canvasRenderingContext2D.globalAlpha = 0.18 + 0.14 * Math.sin(time * 1.3 + crystal2.ph);
+        canvasRenderingContext2D.translate(positionX, positionY);
+        canvasRenderingContext2D.rotate(crystal2.rot + time * crystal2.spin);
+        canvasRenderingContext2D.drawImage(htmlImageElement, -state / 2, -state / 2, state, state);
+        canvasRenderingContext2D.restore();
+        canvasRenderingContext2D.globalAlpha = 1;
+        canvasRenderingContext2D.globalCompositeOperation = 'source-over';
       }
     }
   }
-  for (const sat of D.sats) {
-    const a = sat.a + t * sat.sp;
+  for (const sat2 of decorModel.sats) {
+    const firstValue = sat2.a + time * sat2.sp;
     sprite({
-      img: sat.img,
-      x: sat.cx + Math.cos(a) * sat.R,
-      y: sat.cy + Math.sin(a) * sat.R * 0.8,
-      size: sat.size,
-      rot: a + 1.57,
+      img: sat2.img,
+      x: sat2.cx + Math.cos(firstValue) * sat2.R,
+      y: sat2.cy + Math.sin(firstValue) * sat2.R * 0.8,
+      size: sat2.size,
+      rot: firstValue + 1.57,
     });
   }
-  for (const p of D.pods) {
+  for (const pod2 of decorModel.pods) {
     const span = 6000,
-      px = ((((p.x + p.vx * t) % span) + span * 1.5) % span) - span / 2,
-      py = ((((p.y + p.vy * t) % span) + span * 1.5) % span) - span / 2;
-    sprite({ img: p.img, x: px, y: py, size: p.size, rot: p.rot + t * p.sp });
+      pixelX = ((((pod2.x + pod2.vx * time) % span) + span * 1.5) % span) - span / 2,
+      pixelY = ((((pod2.y + pod2.vy * time) % span) + span * 1.5) % span) - span / 2;
+    sprite({
+      img: pod2.img,
+      x: pixelX,
+      y: pixelY,
+      size: pod2.size,
+      rot: pod2.rot + time * pod2.sp,
+    });
   }
-  if (D.arena) {
-    ctx.save();
-    ctx.setLineDash([10 * z + 4, 14 * z + 6]);
-    ctx.lineWidth = 1.5;
-    for (const [col, a0] of [
+  if (decorModel.arena) {
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.setLineDash([10 * positionZ + 4, 14 * positionZ + 6]);
+    canvasRenderingContext2D.lineWidth = 1.5;
+    for (const [column, initialAngle] of [
       ['rgba(90,168,255,.35)', Math.PI / 2],
       ['rgba(255,90,74,.35)', -Math.PI / 2],
     ] as [string, number][]) {
-      ctx.strokeStyle = col;
-      ctx.beginPath();
-      ctx.arc(sx(0), sy(0), D.arena.R * z, a0, a0 + Math.PI);
-      ctx.stroke();
+      canvasRenderingContext2D.strokeStyle = column;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(
+        screenX(0),
+        screenY(0),
+        decorModel.arena.R * positionZ,
+        initialAngle,
+        initialAngle + Math.PI,
+      );
+      canvasRenderingContext2D.stroke();
     }
-    ctx.restore();
+    canvasRenderingContext2D.restore();
   } // the Crucible's bounds
-  for (const b of D.beacons) {
-    const x = sx(b.x),
-      y = sy(b.y);
-    if (!onS(x, y, 20)) continue;
-    const on = Math.sin(t * 2.2 + b.ph) > 0.55;
-    ctx.fillStyle = '#556';
-    ctx.fillRect(x - 1.5 * z - 1, y - 1.5 * z - 1, 3 * z + 2, 3 * z + 2);
-    if (on) {
-      ctx.globalCompositeOperation = 'lighter';
-      const g = ctx.createRadialGradient(x, y, 0, x, y, 9 * z + 4);
-      g.addColorStop(0, b.col);
-      g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(x, y, 9 * z + 4, 0, 6.283);
-      ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
+  for (const beacon of decorModel.beacons) {
+    const positionX = screenX(beacon.x),
+      positionY = screenY(beacon.y);
+    if (!isOnScreen(positionX, positionY, 20)) continue;
+    const enabled = Math.sin(time * 2.2 + beacon.ph) > 0.55;
+    canvasRenderingContext2D.fillStyle = '#556';
+    canvasRenderingContext2D.fillRect(
+      positionX - 1.5 * positionZ - 1,
+      positionY - 1.5 * positionZ - 1,
+      3 * positionZ + 2,
+      3 * positionZ + 2,
+    );
+    if (enabled) {
+      canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+      const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+        positionX,
+        positionY,
+        0,
+        positionX,
+        positionY,
+        9 * positionZ + 4,
+      );
+      canvasGradient.addColorStop(0, beacon.col);
+      canvasGradient.addColorStop(1, 'rgba(0,0,0,0)');
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, 9 * positionZ + 4, 0, 6.283);
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.globalCompositeOperation = 'source-over';
     }
   }
 }
 const planetCache = new Map<string, HTMLCanvasElement>();
 /**
  * Converts a hexadecimal color string to an RGB number triplet.
- * @param {string} h Hex color code (e.g. '#ff8800')
+ * @param {string} height2 Hex color code (e.g. '#ff8800')
  * @returns {[number, number, number]} RGB color values [r, g, b]
  */
-function hexToRgb(h: string): [number, number, number] {
-  const n = parseInt(h.slice(1), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+function hexToRgb(hexColor: string): [number, number, number] {
+  const parseInt2 = parseInt(hexColor.slice(1), 16);
+  return [(parseInt2 >> 16) & 255, (parseInt2 >> 8) & 255, parseInt2 & 255];
 }
 // rendered station designs (tools/rift_stations.py), chosen by who built the station and what it is
 const stImgs: Record<string, HTMLImageElement> = {},
@@ -1318,10 +1581,11 @@ const stImgs: Record<string, HTMLImageElement> = {},
  */
 export function stationDesign(stellarBody: StellarBody): string {
   if (stPick.has(stellarBody.id)) return stPick.get(stellarBody.id)!;
-  const sysId = stellarBody.system || (STELLARS[stellarBody.id] && STELLARS[stellarBody.id].system),
-    f = SYS[sysId!] ? SYS[sysId!].faction : '',
-    d = ((stellarBody.desc || '') + ' ' + stellarBody.id).toLowerCase(),
-    h = hashStr(stellarBody.id);
+  const systemId =
+      stellarBody.system || (STELLARS[stellarBody.id] && STELLARS[stellarBody.id].system),
+    factionId = systemsById[systemId!] ? systemsById[systemId!].faction : '',
+    toLowerCase2 = ((stellarBody.desc || '') + ' ' + stellarBody.id).toLowerCase(),
+    hashStr2 = hashStr(stellarBody.id);
   const authored: Record<string, string> = {
     'twins-exchange': 'twin',
     'aureole-ring': 'ring',
@@ -1330,7 +1594,7 @@ export function stationDesign(stellarBody: StellarBody): string {
     'glasswake-foundry': 'forge',
     'palinode-observatory': 'crystal',
   };
-  const by =
+  const source =
     authored[stellarBody.id] ||
     (
       {
@@ -1340,20 +1604,20 @@ export function stationDesign(stellarBody: StellarBody): string {
         sarn: 'ring',
         quevari: 'spindle',
         umbral: 'disc',
-        lamp: h % 2 ? 'twin' : 'disc',
+        lamp: hashStr2 % 2 ? 'twin' : 'disc',
       } as Record<string, string>
-    )[f] ||
-    (f === 'korrund' ? (h % 3 ? 'rock' : 'forge') : null) ||
+    )[factionId] ||
+    (factionId === 'korrund' ? (hashStr2 % 3 ? 'rock' : 'forge') : null) ||
     (stellarBody.outlaw ||
     (STELLARS[stellarBody.id] && STELLARS[stellarBody.id].outlaw) ||
-    f === 'hollow'
+    factionId === 'hollow'
       ? 'junk'
       : null) ||
-    (f === 'farside' ? (h % 2 ? 'junk' : 'twin') : null) ||
-    (/shipyard|slipway|yards/.test(d) && f === 'quantum' ? 'yard' : null) ||
-    ['cross', 'ring', 'spindle', 'disc', 'twin'][h % 5];
-  stPick.set(stellarBody.id, by);
-  return by;
+    (factionId === 'farside' ? (hashStr2 % 2 ? 'junk' : 'twin') : null) ||
+    (/shipyard|slipway|yards/.test(toLowerCase2) && factionId === 'quantum' ? 'yard' : null) ||
+    ['cross', 'ring', 'spindle', 'disc', 'twin'][hashStr2 % 5];
+  stPick.set(stellarBody.id, source);
+  return source;
 }
 /**
  * Retrieves the loaded HTMLImageElement for a station's rendered sprite model.
@@ -1363,13 +1627,13 @@ export function stationDesign(stellarBody: StellarBody): string {
 function stationSprite(stellarBody: StellarBody): HTMLImageElement | HTMLCanvasElement | null {
   // Luna keeps the original glowing wheel rather than inheriting the generic shipyard.
   if (stellarBody.id === 'luna') return stationWheel(stellarBody)!;
-  const k = stationDesign(stellarBody);
-  let im = stImgs[k];
-  if (!im) {
-    im = stImgs[k] = new Image();
-    im.src = `assets/stations/s_${k}.webp`;
+  const stationDesign2 = stationDesign(stellarBody);
+  let htmlImageElement = stImgs[stationDesign2];
+  if (!htmlImageElement) {
+    htmlImageElement = stImgs[stationDesign2] = new Image();
+    htmlImageElement.src = `assets/stations/s_${stationDesign2}.webp`;
   }
-  return im.complete && im.naturalWidth ? im : null;
+  return htmlImageElement.complete && htmlImageElement.naturalWidth ? htmlImageElement : null;
 }
 /**
  * Generates or retrieves a pre-rendered off-screen canvas sprite for a planet or station.
@@ -1378,131 +1642,180 @@ function stationSprite(stellarBody: StellarBody): HTMLImageElement | HTMLCanvasE
  */
 function planetImage(stellarBody: StellarBody): HTMLCanvasElement {
   if (planetCache.has(stellarBody.id)) return planetCache.get(stellarBody.id)!;
-  const R = stellarBody.r,
-    S = Math.ceil(R * 2.6),
-    c = document.createElement('canvas');
-  c.width = c.height = S;
-  const g = c.getContext('2d')!,
-    cx = S / 2,
-    cy = S / 2,
-    [r0, g0, b0] = hexToRgb(stellarBody.color || '#888'),
-    rnd = seeded(hashStr(stellarBody.id));
+  const radius = stellarBody.r,
+    state = Math.ceil(radius * 2.6),
+    htmlCanvasElement = document.createElement('canvas');
+  htmlCanvasElement.width = htmlCanvasElement.height = state;
+  const canvasRenderingContext2D = htmlCanvasElement.getContext('2d')!,
+    centerX = state / 2,
+    centerY = state / 2,
+    [redChannel, greenChannel, blueChannel] = hexToRgb(stellarBody.color || '#888'),
+    randomGenerator = seeded(hashStr(stellarBody.id));
   if (stellarBody.kind === 'station') {
-    g.translate(cx, cy);
-    const ring = (rad: number, w: number, col: string) => {
-      g.beginPath();
-      g.arc(0, 0, rad, 0, Math.PI * 2);
-      g.lineWidth = w;
-      g.strokeStyle = col;
-      g.stroke();
+    canvasRenderingContext2D.translate(centerX, centerY);
+    const ring = (radius: number, width: number, column: string) => {
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(0, 0, radius, 0, Math.PI * 2);
+      canvasRenderingContext2D.lineWidth = width;
+      canvasRenderingContext2D.strokeStyle = column;
+      canvasRenderingContext2D.stroke();
     };
-    ring(R * 0.92, R * 0.16, `rgb(${r0 * 0.6},${g0 * 0.6},${b0 * 0.6})`);
     ring(
-      R * 0.92,
-      R * 0.05,
-      `rgb(${Math.min(255, r0 + 60)},${Math.min(255, g0 + 60)},${Math.min(255, b0 + 60)})`,
+      radius * 0.92,
+      radius * 0.16,
+      `rgb(${redChannel * 0.6},${greenChannel * 0.6},${blueChannel * 0.6})`,
     );
-    for (let k = 0; k < 6; k++) {
-      g.save();
-      g.rotate((k * Math.PI) / 3 + rnd());
-      g.fillStyle = `rgb(${r0 * 0.5},${g0 * 0.5},${b0 * 0.5})`;
-      g.fillRect(-R * 0.05, 0, R * 0.1, R * 0.86);
-      g.restore();
+    ring(
+      radius * 0.92,
+      radius * 0.05,
+      `rgb(${Math.min(255, redChannel + 60)},${Math.min(255, greenChannel + 60)},${Math.min(255, blueChannel + 60)})`,
+    );
+    for (let entryKey = 0; entryKey < 6; entryKey++) {
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.rotate((entryKey * Math.PI) / 3 + randomGenerator());
+      canvasRenderingContext2D.fillStyle = `rgb(${redChannel * 0.5},${greenChannel * 0.5},${blueChannel * 0.5})`;
+      canvasRenderingContext2D.fillRect(-radius * 0.05, 0, radius * 0.1, radius * 0.86);
+      canvasRenderingContext2D.restore();
     }
-    const hub = g.createRadialGradient(-R * 0.1, -R * 0.1, 2, 0, 0, R * 0.4);
-    hub.addColorStop(
+    const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+      -radius * 0.1,
+      -radius * 0.1,
+      2,
       0,
-      `rgb(${Math.min(255, r0 + 80)},${Math.min(255, g0 + 80)},${Math.min(255, b0 + 80)})`,
+      0,
+      radius * 0.4,
     );
-    hub.addColorStop(1, `rgb(${r0 * 0.3},${g0 * 0.3},${b0 * 0.3})`);
-    g.beginPath();
-    g.arc(0, 0, R * 0.38, 0, Math.PI * 2);
-    g.fillStyle = hub;
-    g.fill();
-    for (let k = 0; k < 24; k++) {
-      const a = (k / 24) * Math.PI * 2;
-      g.fillStyle = rnd() < 0.5 ? '#ffd88a' : '#9cf';
-      g.fillRect(Math.cos(a) * R * 0.92 - 1.5, Math.sin(a) * R * 0.92 - 1.5, 3, 3);
+    canvasGradient.addColorStop(
+      0,
+      `rgb(${Math.min(255, redChannel + 80)},${Math.min(255, greenChannel + 80)},${Math.min(255, blueChannel + 80)})`,
+    );
+    canvasGradient.addColorStop(
+      1,
+      `rgb(${redChannel * 0.3},${greenChannel * 0.3},${blueChannel * 0.3})`,
+    );
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(0, 0, radius * 0.38, 0, Math.PI * 2);
+    canvasRenderingContext2D.fillStyle = canvasGradient;
+    canvasRenderingContext2D.fill();
+    for (let entryKey = 0; entryKey < 24; entryKey++) {
+      const firstValue = (entryKey / 24) * Math.PI * 2;
+      canvasRenderingContext2D.fillStyle = randomGenerator() < 0.5 ? '#ffd88a' : '#9cf';
+      canvasRenderingContext2D.fillRect(
+        Math.cos(firstValue) * radius * 0.92 - 1.5,
+        Math.sin(firstValue) * radius * 0.92 - 1.5,
+        3,
+        3,
+      );
     }
   } else {
-    const grd = g.createRadialGradient(cx - R * 0.35, cy - R * 0.35, R * 0.1, cx, cy, R);
-    grd.addColorStop(
-      0,
-      `rgb(${Math.min(255, r0 + 70)},${Math.min(255, g0 + 70)},${Math.min(255, b0 + 70)})`,
+    const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+      centerX - radius * 0.35,
+      centerY - radius * 0.35,
+      radius * 0.1,
+      centerX,
+      centerY,
+      radius,
     );
-    grd.addColorStop(0.7, `rgb(${r0},${g0},${b0})`);
-    grd.addColorStop(1, `rgb(${r0 * 0.25},${g0 * 0.25},${b0 * 0.25})`);
-    g.save();
-    g.beginPath();
-    g.arc(cx, cy, R, 0, Math.PI * 2);
-    g.fillStyle = grd;
-    g.fill();
-    g.clip();
-    for (let k = 0; k < 14; k++) {
+    canvasGradient.addColorStop(
+      0,
+      `rgb(${Math.min(255, redChannel + 70)},${Math.min(255, greenChannel + 70)},${Math.min(255, blueChannel + 70)})`,
+    );
+    canvasGradient.addColorStop(0.7, `rgb(${redChannel},${greenChannel},${blueChannel})`);
+    canvasGradient.addColorStop(
+      1,
+      `rgb(${redChannel * 0.25},${greenChannel * 0.25},${blueChannel * 0.25})`,
+    );
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    canvasRenderingContext2D.fillStyle = canvasGradient;
+    canvasRenderingContext2D.fill();
+    canvasRenderingContext2D.clip();
+    for (let entryKey = 0; entryKey < 14; entryKey++) {
       // cloud bands / continents
-      g.globalAlpha = 0.08 + rnd() * 0.12;
-      g.fillStyle = rnd() < 0.5 ? '#fff' : `rgb(${r0 * 0.5},${g0 * 0.5},${b0 * 0.5})`;
-      g.beginPath();
-      g.ellipse(
-        cx + (rnd() - 0.5) * R * 1.6,
-        cy + (rnd() - 0.5) * R * 1.8,
-        R * (0.2 + rnd() * 0.6),
-        R * (0.05 + rnd() * 0.15),
-        (rnd() - 0.5) * 0.6,
+      canvasRenderingContext2D.globalAlpha = 0.08 + randomGenerator() * 0.12;
+      canvasRenderingContext2D.fillStyle =
+        randomGenerator() < 0.5
+          ? '#fff'
+          : `rgb(${redChannel * 0.5},${greenChannel * 0.5},${blueChannel * 0.5})`;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.ellipse(
+        centerX + (randomGenerator() - 0.5) * radius * 1.6,
+        centerY + (randomGenerator() - 0.5) * radius * 1.8,
+        radius * (0.2 + randomGenerator() * 0.6),
+        radius * (0.05 + randomGenerator() * 0.15),
+        (randomGenerator() - 0.5) * 0.6,
         0,
         Math.PI * 2,
       );
-      g.fill();
+      canvasRenderingContext2D.fill();
     }
     if (stellarBody.id === 'earth') {
       // Earth gets green-brown continents and white cloud swirls
-      for (let k = 0; k < 9; k++) {
-        g.globalAlpha = 0.9;
-        g.fillStyle = rnd() < 0.7 ? '#4f7a3a' : '#8a7a4a';
-        g.beginPath();
-        const ex = cx + (rnd() - 0.5) * R * 1.5,
-          ey = cy + (rnd() - 0.5) * R * 1.5;
-        for (let j = 0; j < 7; j++) {
-          const a2 = (j / 7) * Math.PI * 2,
-            rr = R * (0.12 + rnd() * 0.22);
-          g[j ? 'lineTo' : 'moveTo'](ex + Math.cos(a2) * rr * 1.4, ey + Math.sin(a2) * rr);
+      for (let entryKey = 0; entryKey < 9; entryKey++) {
+        canvasRenderingContext2D.globalAlpha = 0.9;
+        canvasRenderingContext2D.fillStyle = randomGenerator() < 0.7 ? '#4f7a3a' : '#8a7a4a';
+        canvasRenderingContext2D.beginPath();
+        const velocityErrorX = centerX + (randomGenerator() - 0.5) * radius * 1.5,
+          velocityErrorY = centerY + (randomGenerator() - 0.5) * radius * 1.5;
+        for (let innerIndex = 0; innerIndex < 7; innerIndex++) {
+          const firstValue = (innerIndex / 7) * Math.PI * 2,
+            radiusRatio = radius * (0.12 + randomGenerator() * 0.22);
+          canvasRenderingContext2D[innerIndex ? 'lineTo' : 'moveTo'](
+            velocityErrorX + Math.cos(firstValue) * radiusRatio * 1.4,
+            velocityErrorY + Math.sin(firstValue) * radiusRatio,
+          );
         }
-        g.closePath();
-        g.fill();
+        canvasRenderingContext2D.closePath();
+        canvasRenderingContext2D.fill();
       }
-      for (let k = 0; k < 10; k++) {
-        g.globalAlpha = 0.45;
-        g.fillStyle = '#fff';
-        g.beginPath();
-        g.ellipse(
-          cx + (rnd() - 0.5) * R * 1.7,
-          cy + (rnd() - 0.5) * R * 1.7,
-          R * (0.15 + rnd() * 0.4),
-          R * (0.03 + rnd() * 0.06),
-          (rnd() - 0.5) * 0.8,
+      for (let entryKey = 0; entryKey < 10; entryKey++) {
+        canvasRenderingContext2D.globalAlpha = 0.45;
+        canvasRenderingContext2D.fillStyle = '#fff';
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.ellipse(
+          centerX + (randomGenerator() - 0.5) * radius * 1.7,
+          centerY + (randomGenerator() - 0.5) * radius * 1.7,
+          radius * (0.15 + randomGenerator() * 0.4),
+          radius * (0.03 + randomGenerator() * 0.06),
+          (randomGenerator() - 0.5) * 0.8,
           0,
           Math.PI * 2,
         );
-        g.fill();
+        canvasRenderingContext2D.fill();
       }
     }
-    g.globalAlpha = 1;
-    const sh = g.createRadialGradient(cx - R * 0.6, cy - R * 0.6, R * 0.6, cx, cy, R * 1.25);
-    sh.addColorStop(0, 'rgba(0,0,0,0)');
-    sh.addColorStop(1, 'rgba(0,0,0,0.85)');
-    g.fillStyle = sh;
-    g.fillRect(0, 0, S, S);
-    g.restore();
-    const atm = g.createRadialGradient(cx, cy, R * 0.95, cx, cy, R * 1.15);
-    atm.addColorStop(0, `rgba(${r0},${g0},${b0},0.35)`);
-    atm.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = atm;
-    g.beginPath();
-    g.arc(cx, cy, R * 1.2, 0, Math.PI * 2);
-    g.fill();
+    canvasRenderingContext2D.globalAlpha = 1;
+    const canvasGradient2 = canvasRenderingContext2D.createRadialGradient(
+      centerX - radius * 0.6,
+      centerY - radius * 0.6,
+      radius * 0.6,
+      centerX,
+      centerY,
+      radius * 1.25,
+    );
+    canvasGradient2.addColorStop(0, 'rgba(0,0,0,0)');
+    canvasGradient2.addColorStop(1, 'rgba(0,0,0,0.85)');
+    canvasRenderingContext2D.fillStyle = canvasGradient2;
+    canvasRenderingContext2D.fillRect(0, 0, state, state);
+    canvasRenderingContext2D.restore();
+    const canvasGradient3 = canvasRenderingContext2D.createRadialGradient(
+      centerX,
+      centerY,
+      radius * 0.95,
+      centerX,
+      centerY,
+      radius * 1.15,
+    );
+    canvasGradient3.addColorStop(0, `rgba(${redChannel},${greenChannel},${blueChannel},0.35)`);
+    canvasGradient3.addColorStop(1, 'rgba(0,0,0,0)');
+    canvasRenderingContext2D.fillStyle = canvasGradient3;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(centerX, centerY, radius * 1.2, 0, Math.PI * 2);
+    canvasRenderingContext2D.fill();
   }
-  planetCache.set(stellarBody.id, c);
-  return c;
+  planetCache.set(stellarBody.id, htmlCanvasElement);
+  return htmlCanvasElement;
 }
 
 // ------------------------------------------------------------------ effects
@@ -1510,82 +1823,90 @@ function planetImage(stellarBody: StellarBody): HTMLCanvasElement {
  * Active transient visual effect particle objects.
  * @type {VisualEffect[]}
  */
-export const fx: VisualEffect[] = [];
+const visualEffects: VisualEffect[] = [];
+export { visualEffects as fx };
 const fxImgs: Record<string, HTMLImageElement> = {}; // rendered effects (tools/rift_fx.py)
 /**
  * Loads or returns cached visual effect sprites.
- * @param {string} n Effect sprite name
+ * @param {string} count Effect sprite name
  * @returns {HTMLImageElement} Effect sprite image
  */
-function fxImg(n: string): HTMLImageElement {
-  let im = fxImgs[n];
-  if (!im) {
-    im = fxImgs[n] = new Image();
-    im.src = `assets/fx/${n}.webp`;
+function fxImg(count: string): HTMLImageElement {
+  let htmlImageElement = fxImgs[count];
+  if (!htmlImageElement) {
+    htmlImageElement = fxImgs[count] = new Image();
+    htmlImageElement.src = `assets/fx/${count}.webp`;
   }
-  return im;
+  return htmlImageElement;
 }
-for (const n of ['boom_a', 'boom_b', 'boom_big', 'shards', 'flare']) fxImg(n);
+for (const count of ['boom_a', 'boom_b', 'boom_big', 'shards', 'flare']) fxImg(count);
 /**
  * Spawns an explosion visual effect with fireballs, shockwaves, smoke, and debris.
- * @param {number} x World coordinate X
- * @param {number} y World coordinate Y
+ * @param {number} positionX World coordinate X
+ * @param {number} positionY World coordinate Y
  * @param {number} [size=40] Explosion radius / size
  * @returns {void}
  */
-export function boom(x: number, y: number, size?: number): void {
+export function boom(positionX: number, positionY: number, size?: number): void {
   size = Math.max(20, size || 40);
-  const n = Math.min(70, 14 + size / 3);
-  fx.push({ x, y, ball: true, life: 0.35 + size / 900, max: 0.35 + size / 900, r: size * 0.6 }); // flash
+  const count = Math.min(70, 14 + size / 3);
+  visualEffects.push({
+    x: positionX,
+    y: positionY,
+    ball: true,
+    life: 0.35 + size / 900,
+    max: 0.35 + size / 900,
+    r: size * 0.6,
+  }); // flash
   {
-    const big = size > 120,
-      L = (big ? 1.5 : 0.95) + size / 700;
-    fx.push({
-      x,
-      y,
-      anim: big ? 'boom_big' : Math.random() < 0.5 ? 'boom_a' : 'boom_b',
-      life: L,
-      max: L,
-      r: size * (big ? 1.35 : 1.1),
+    const large = size > 120,
+      length = (large ? 1.5 : 0.95) + size / 700;
+    visualEffects.push({
+      x: positionX,
+      y: positionY,
+      anim: large ? 'boom_big' : Math.random() < 0.5 ? 'boom_a' : 'boom_b',
+      life: length,
+      max: length,
+      r: size * (large ? 1.35 : 1.1),
       rot: Math.random() * 6.283,
     });
   } // a rendered fireball
-  for (let i = 0; i < n; i++) {
-    const a = Math.random() * 6.283,
-      v = 30 + Math.random() * (60 + size);
-    fx.push({
-      x,
-      y,
-      vx: Math.cos(a) * v,
-      vy: Math.sin(a) * v,
+  for (let index = 0; index < count; index++) {
+    const firstValue = Math.random() * 6.283,
+      value = 30 + Math.random() * (60 + size);
+    visualEffects.push({
+      x: positionX,
+      y: positionY,
+      vx: Math.cos(firstValue) * value,
+      vy: Math.sin(firstValue) * value,
       life: 0.5 + Math.random() * 0.9,
       max: 1.4,
       c: Math.random() < 0.5 ? '#ffd27a' : '#ff6a3a',
       s: 1 + Math.random() * 2.5,
     });
   }
-  for (let i = 0; i < Math.min(14, 3 + size / 25); i++) {
-    const a = Math.random() * 6.283,
-      v = 20 + Math.random() * 60;
-    fx.push({
-      x,
-      y,
-      vx: Math.cos(a) * v,
-      vy: Math.sin(a) * v,
+  for (let index = 0; index < Math.min(14, 3 + size / 25); index++) {
+    const firstValue = Math.random() * 6.283,
+      value = 20 + Math.random() * 60;
+    visualEffects.push({
+      x: positionX,
+      y: positionY,
+      vx: Math.cos(firstValue) * value,
+      vy: Math.sin(firstValue) * value,
       smoke: true,
       life: 1.2 + Math.random(),
       max: 2.2,
       r: 8 + size * 0.15,
     });
   }
-  for (let i = 0; i < Math.min(10, 2 + size / 30); i++) {
-    const a = Math.random() * 6.283,
-      v = 40 + Math.random() * 120;
-    fx.push({
-      x,
-      y,
-      vx: Math.cos(a) * v,
-      vy: Math.sin(a) * v,
+  for (let index = 0; index < Math.min(10, 2 + size / 30); index++) {
+    const firstValue = Math.random() * 6.283,
+      value = 40 + Math.random() * 120;
+    visualEffects.push({
+      x: positionX,
+      y: positionY,
+      vx: Math.cos(firstValue) * value,
+      vy: Math.sin(firstValue) * value,
       debris: true,
       rot: Math.random() * 6,
       vr: (Math.random() - 0.5) * 12,
@@ -1594,54 +1915,103 @@ export function boom(x: number, y: number, size?: number): void {
       s: 2 + (Math.random() * size) / 40,
     });
   }
-  fx.push({ x, y, ring: true, life: 0.5, max: 0.5, r: size * 1.1, c: '#fff1c0' });
-  if (size > 120) fx.push({ x, y, ring: true, life: 0.9, max: 0.9, r: size * 2, c: '#ffb070' });
+  visualEffects.push({
+    x: positionX,
+    y: positionY,
+    ring: true,
+    life: 0.5,
+    max: 0.5,
+    r: size * 1.1,
+    c: '#fff1c0',
+  });
+  if (size > 120)
+    visualEffects.push({
+      x: positionX,
+      y: positionY,
+      ring: true,
+      life: 0.9,
+      max: 0.9,
+      r: size * 2,
+      c: '#ffb070',
+    });
 }
 /**
  * Spawns directional weapon impact sparks and a momentary flash flare.
- * @param {number} x World coordinate X
- * @param {number} y World coordinate Y
- * @param {string} [col='#fff'] Spark color code
+ * @param {number} positionX World coordinate X
+ * @param {number} positionY World coordinate Y
+ * @param {string} [column='#fff'] Spark color code
  * @returns {void}
  */
-export function spark(x: number, y: number, col?: string): void {
-  fx.push({ x, y, flare: true, life: 0.16, max: 0.16, r: 26, c: col });
-  for (let i = 0; i < 6; i++) {
-    const a = Math.random() * 6.283,
-      v = 40 + Math.random() * 90;
-    fx.push({
-      x,
-      y,
-      vx: Math.cos(a) * v,
-      vy: Math.sin(a) * v,
+export function spark(positionX: number, positionY: number, column?: string): void {
+  visualEffects.push({
+    x: positionX,
+    y: positionY,
+    flare: true,
+    life: 0.16,
+    max: 0.16,
+    r: 26,
+    c: column,
+  });
+  for (let index = 0; index < 6; index++) {
+    const firstValue = Math.random() * 6.283,
+      value = 40 + Math.random() * 90;
+    visualEffects.push({
+      x: positionX,
+      y: positionY,
+      vx: Math.cos(firstValue) * value,
+      vy: Math.sin(firstValue) * value,
       life: 0.25,
       max: 0.25,
-      c: col || '#fff',
+      c: column || '#fff',
       s: 1.6,
     });
   }
 }
 /**
  * Spawns a hyperspace jump departure or arrival visual flash effect.
- * @param {number} x World coordinate X
- * @param {number} y World coordinate Y
+ * @param {number} positionX World coordinate X
+ * @param {number} positionY World coordinate Y
  * @returns {void}
  */
-export function flash(x: number, y: number): void {
+export function flash(positionX: number, positionY: number): void {
   // a ship entering or leaving hyperspace: a hot core, a lens streak and two shock rings
-  fx.push({ x, y, hyper: true, life: 0.75, max: 0.75, r: 70 });
-  fx.push({ x, y, ring: true, life: 0.55, max: 0.55, r: 150, c: '#bfe2ff' });
-  fx.push({ x, y, ring: true, life: 0.9, max: 0.9, r: 260, c: '#7aa8ff' });
+  visualEffects.push({ x: positionX, y: positionY, hyper: true, life: 0.75, max: 0.75, r: 70 });
+  visualEffects.push({
+    x: positionX,
+    y: positionY,
+    ring: true,
+    life: 0.55,
+    max: 0.55,
+    r: 150,
+    c: '#bfe2ff',
+  });
+  visualEffects.push({
+    x: positionX,
+    y: positionY,
+    ring: true,
+    life: 0.9,
+    max: 0.9,
+    r: 260,
+    c: '#7aa8ff',
+  });
 }
 /**
  * Spawns an expanding circular blast wave effect.
- * @param {number} x World coordinate X
- * @param {number} y World coordinate Y
- * @param {number} r Maximum blast radius
+ * @param {number} positionX World coordinate X
+ * @param {number} positionY World coordinate Y
+ * @param {number} radius Maximum blast radius
  * @returns {void}
  */
-export function blast(x: number, y: number, r: number): void {
-  fx.push({ x, y, ring: true, life: 0.35, max: 0.35, r, c: '#ffcf8a' });
+export function blast(positionX: number, positionY: number, radius: number): void {
+  visualEffects.push({
+    x: positionX,
+    y: positionY,
+    ring: true,
+    life: 0.35,
+    max: 0.35,
+    r: radius,
+    c: '#ffcf8a',
+  });
 }
 // shield shimmer on the ship that was hit, and floating damage numbers
 /**
@@ -1651,38 +2021,52 @@ export function blast(x: number, y: number, r: number): void {
 export const shieldHits: Map<number, ShieldHit> = new Map();
 /**
  * Triggers a shield impact ripple shimmer effect on the target ship.
- * @param {number} id Ship entity ID
- * @param {number} x Impact world X
- * @param {number} y Impact world Y
+ * @param {number} identifier Ship entity ID
+ * @param {number} positionX Impact world X
+ * @param {number} positionY Impact world Y
  * @returns {void}
  */
-export function shieldHit(id: number, x: number, y: number): void {
-  shieldHits.set(id, { t: 0.35, hx: x, hy: y });
+export function shieldHit(identifier: number, positionX: number, positionY: number): void {
+  shieldHits.set(identifier, { t: 0.35, hx: positionX, hy: positionY });
 }
 /**
  * Creates or aggregates floating combat damage numbers on screen.
- * @param {number} x World coordinate X
- * @param {number} y World coordinate Y
- * @param {number} n Damage points
+ * @param {number} positionX World coordinate X
+ * @param {number} positionY World coordinate Y
+ * @param {number} count2 Damage points
  * @param {boolean} mine Whether this damage was dealt by the local player
  * @returns {void}
  */
-export function dmgNumber(x: number, y: number, n: number, mine: boolean): void {
-  if (n < 1) return;
-  for (let i = fx.length - 1; i >= Math.max(0, fx.length - 300); i--) {
-    const f = fx[i];
-    if (f.num && f.mine === mine && f.life > f.max - 0.45 && Math.hypot(f.x - x, f.y - y) < 70) {
-      f.num += Math.round(n);
-      f.life = f.max;
+export function dmgNumber(
+  positionX: number,
+  positionY: number,
+  count: number,
+  mine: boolean,
+): void {
+  if (count < 1) return;
+  for (
+    let index = visualEffects.length - 1;
+    index >= Math.max(0, visualEffects.length - 300);
+    index--
+  ) {
+    const factionId = visualEffects[index];
+    if (
+      factionId.num &&
+      factionId.mine === mine &&
+      factionId.life > factionId.max - 0.45 &&
+      Math.hypot(factionId.x - positionX, factionId.y - positionY) < 70
+    ) {
+      factionId.num += Math.round(count);
+      factionId.life = factionId.max;
       return;
     }
   } // hits close together add up into one number
-  fx.push({
-    x: x + (Math.random() - 0.5) * 16,
-    y,
+  visualEffects.push({
+    x: positionX + (Math.random() - 0.5) * 16,
+    y: positionY,
     vx: 0,
     vy: -45,
-    num: Math.round(n),
+    num: Math.round(count),
     mine,
     life: 0.9,
     max: 0.9,
@@ -1697,120 +2081,135 @@ export let shake: number = 0;
  * Global active camera state.
  * @type {CameraState}
  */
-export const cam: CameraState = { cx: 0, cy: 0, z: 1, W: 1, H: 1 };
+const cameraState: CameraState = { cx: 0, cy: 0, z: 1, W: 1, H: 1 };
+export { cameraState as cam };
 /**
  * Adds an impulse to the camera screen shake intensity.
- * @param {number} k Shake magnitude to add/clamp
+ * @param {number} entryKey Shake magnitude to add/clamp
  * @returns {void}
  */
-export function addShake(k: number): void {
-  shake = Math.max(shake, k);
+export function addShake(entryKey: number): void {
+  shake = Math.max(shake, entryKey);
 }
 
 // projectile drawing by look
-const glowC = new Map<string, HTMLCanvasElement>(); // a soft additive glow behind every bolt, and a fading trail
+const glowColor = new Map<string, HTMLCanvasElement>(); // a soft additive glow behind every bolt, and a fading trail
 /**
  * Generates or retrieves a radial glow sprite for projectile weapons.
- * @param {string} col Color hex string
+ * @param {string} column Color hex string
  * @returns {HTMLCanvasElement} Radial glow canvas sprite
  */
-function glowSprite(col: string): HTMLCanvasElement {
-  let c = glowC.get(col);
-  if (!c) {
-    c = document.createElement('canvas');
-    c.width = c.height = 64;
-    const g = c.getContext('2d')!,
-      gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-    gr.addColorStop(0, col);
-    gr.addColorStop(0.25, col + 'aa');
-    gr.addColorStop(1, col + '00');
-    g.fillStyle = gr;
-    g.fillRect(0, 0, 64, 64);
-    glowC.set(col, c);
+function glowSprite(column: string): HTMLCanvasElement {
+  let htmlCanvasElement = glowColor.get(column);
+  if (!htmlCanvasElement) {
+    htmlCanvasElement = document.createElement('canvas');
+    htmlCanvasElement.width = htmlCanvasElement.height = 64;
+    const canvasRenderingContext2D = htmlCanvasElement.getContext('2d')!,
+      canvasGradient = canvasRenderingContext2D.createRadialGradient(32, 32, 0, 32, 32, 32);
+    canvasGradient.addColorStop(0, column);
+    canvasGradient.addColorStop(0.25, column + 'aa');
+    canvasGradient.addColorStop(1, column + '00');
+    canvasRenderingContext2D.fillStyle = canvasGradient;
+    canvasRenderingContext2D.fillRect(0, 0, 64, 64);
+    glowColor.set(column, htmlCanvasElement);
   }
-  return c;
+  return htmlCanvasElement;
 }
 /**
  * Draws an individual projectile or missile shot on the canvas.
- * @param {CanvasRenderingContext2D} ctx 2D rendering context
- * @param {{x: number, y: number, vx: number, vy: number, c: string, w: number, life: number}} s Shot object definition
- * @param {number} x Screen coordinate X
- * @param {number} y Screen coordinate Y
- * @param {number} z Zoom scale factor
- * @param {number} now Timestamp in milliseconds
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
+ * @param {{x: number, y: number, vx: number, vy: number, c: string, w: number, life: number}} state Shot object definition
+ * @param {number} positionX Screen coordinate X
+ * @param {number} positionY Screen coordinate Y
+ * @param {number} positionZ Zoom scale factor
+ * @param {number} currentTime Timestamp in milliseconds
  * @returns {void}
  */
 function drawShot(
-  ctx: CanvasRenderingContext2D,
-  s: RenderShot & { col: string; look: string },
-  x: number,
-  y: number,
-  z: number,
-  now: number,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  state: RenderShot & { col: string; look: string },
+  positionX: number,
+  positionY: number,
+  positionZ: number,
+  currentTime: number,
 ): void {
-  const W_ = s.W,
-    col = s.col,
-    look = s.look,
-    sp = Math.hypot(s.vx, s.vy) || 1,
-    ux = s.vx / sp,
-    uy = s.vy / sp;
-  const zz = Math.max(0.7, z);
-  if (/^#[0-9a-f]{6}$/i.test(col) && look !== 'missile' && look !== 'rocket') {
-    ctx.globalCompositeOperation = 'lighter';
-    const gs = (look === 'torp' || look === 'sing' ? 46 : 22) * zz;
-    ctx.globalAlpha = 0.55;
-    ctx.drawImage(glowSprite(col), x - gs / 2, y - gs / 2, gs, gs);
+  const weaponAsset = state.W,
+    column = state.col,
+    look = state.look,
+    space = Math.hypot(state.vx, state.vy) || 1,
+    unitX = state.vx / space,
+    unitY = state.vy / space;
+  const effectZoom = Math.max(0.7, positionZ);
+  if (/^#[0-9a-f]{6}$/i.test(column) && look !== 'missile' && look !== 'rocket') {
+    canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+    const glowSize = (look === 'torp' || look === 'sing' ? 46 : 22) * effectZoom;
+    canvasRenderingContext2D.globalAlpha = 0.55;
+    canvasRenderingContext2D.drawImage(
+      glowSprite(column),
+      positionX - glowSize / 2,
+      positionY - glowSize / 2,
+      glowSize,
+      glowSize,
+    );
     if (look !== 'rail') {
-      const L = Math.min(40, sp * 0.03) * z,
-        gr = ctx.createLinearGradient(x, y, x - ux * L, y - uy * L);
-      gr.addColorStop(0, col + 'cc');
-      gr.addColorStop(1, col + '00');
-      ctx.strokeStyle = gr;
-      ctx.lineWidth = 3 * zz;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - ux * L, y - uy * L);
-      ctx.stroke();
+      const length = Math.min(40, space * 0.03) * positionZ,
+        canvasGradient = canvasRenderingContext2D.createLinearGradient(
+          positionX,
+          positionY,
+          positionX - unitX * length,
+          positionY - unitY * length,
+        );
+      canvasGradient.addColorStop(0, column + 'cc');
+      canvasGradient.addColorStop(1, column + '00');
+      canvasRenderingContext2D.strokeStyle = canvasGradient;
+      canvasRenderingContext2D.lineWidth = 3 * effectZoom;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(positionX, positionY);
+      canvasRenderingContext2D.lineTo(positionX - unitX * length, positionY - unitY * length);
+      canvasRenderingContext2D.stroke();
     }
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
+    canvasRenderingContext2D.globalAlpha = 1;
+    canvasRenderingContext2D.globalCompositeOperation = 'source-over';
   }
-  ctx.shadowColor = col;
-  ctx.shadowBlur = 8;
+  canvasRenderingContext2D.shadowColor = column;
+  canvasRenderingContext2D.shadowBlur = 8;
   switch (look) {
     case 'rail': {
-      const L = 26 * z;
-      ctx.strokeStyle = col;
-      ctx.lineWidth = 2 * zz;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - ux * L, y - uy * L);
-      ctx.stroke();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - ux * L * 0.6, y - uy * L * 0.6);
-      ctx.stroke();
+      const length = 26 * positionZ;
+      canvasRenderingContext2D.strokeStyle = column;
+      canvasRenderingContext2D.lineWidth = 2 * effectZoom;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(positionX, positionY);
+      canvasRenderingContext2D.lineTo(positionX - unitX * length, positionY - unitY * length);
+      canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.strokeStyle = '#fff';
+      canvasRenderingContext2D.lineWidth = 1;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(positionX, positionY);
+      canvasRenderingContext2D.lineTo(
+        positionX - unitX * length * 0.6,
+        positionY - unitY * length * 0.6,
+      );
+      canvasRenderingContext2D.stroke();
       break;
     }
     case 'pulse':
     case 'spit':
     case 'magma':
     case 'mining': {
-      const r = (look === 'magma' ? 4.5 : look === 'spit' ? 3.5 : 3) * zz;
-      ctx.fillStyle = col;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 6.283);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,.85)';
-      ctx.beginPath();
-      ctx.arc(x, y, r * 0.45, 0, 6.283);
-      ctx.fill();
+      const radius = (look === 'magma' ? 4.5 : look === 'spit' ? 3.5 : 3) * effectZoom;
+      canvasRenderingContext2D.fillStyle = column;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.fillStyle = 'rgba(255,255,255,.85)';
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius * 0.45, 0, 6.283);
+      canvasRenderingContext2D.fill();
       if (look === 'magma' && Math.random() < 0.5)
-        fx.push({
-          x: s.x,
-          y: s.y,
+        visualEffects.push({
+          x: state.x,
+          y: state.y,
           vx: (Math.random() - 0.5) * 20,
           vy: (Math.random() - 0.5) * 20,
           life: 0.35,
@@ -1822,20 +2221,29 @@ function drawShot(
     }
     case 'missile':
     case 'rocket': {
-      ctx.strokeStyle = '#ddd';
-      ctx.lineWidth = 2.5 * zz;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - ux * 7 * z, y - uy * 7 * z);
-      ctx.stroke();
-      ctx.fillStyle = col;
-      ctx.beginPath();
-      ctx.arc(x - ux * 8 * z, y - uy * 8 * z, 2.2 * zz, 0, 6.283);
-      ctx.fill();
+      canvasRenderingContext2D.strokeStyle = '#ddd';
+      canvasRenderingContext2D.lineWidth = 2.5 * effectZoom;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(positionX, positionY);
+      canvasRenderingContext2D.lineTo(
+        positionX - unitX * 7 * positionZ,
+        positionY - unitY * 7 * positionZ,
+      );
+      canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.fillStyle = column;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(
+        positionX - unitX * 8 * positionZ,
+        positionY - unitY * 8 * positionZ,
+        2.2 * effectZoom,
+        0,
+        6.283,
+      );
+      canvasRenderingContext2D.fill();
       if (Math.random() < 0.8)
-        fx.push({
-          x: s.x - ux * 8,
-          y: s.y - uy * 8,
+        visualEffects.push({
+          x: state.x - unitX * 8,
+          y: state.y - unitY * 8,
           vx: (Math.random() - 0.5) * 10,
           vy: (Math.random() - 0.5) * 10,
           smoke: true,
@@ -1847,92 +2255,125 @@ function drawShot(
     }
     case 'torp':
     case 'sing': {
-      const pulse = 1 + 0.25 * Math.sin(now / 70),
-        r = (look === 'sing' ? 8 : 6) * zz * pulse;
-      const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2);
-      g.addColorStop(0, '#fff');
-      g.addColorStop(0.3, col);
-      g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(x, y, r * 2.2, 0, 6.283);
-      ctx.fill();
+      const pulse = 1 + 0.25 * Math.sin(currentTime / 70),
+        radius = (look === 'sing' ? 8 : 6) * effectZoom * pulse;
+      const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+        positionX,
+        positionY,
+        0,
+        positionX,
+        positionY,
+        radius * 2.2,
+      );
+      canvasGradient.addColorStop(0, '#fff');
+      canvasGradient.addColorStop(0.3, column);
+      canvasGradient.addColorStop(1, 'rgba(0,0,0,0)');
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius * 2.2, 0, 6.283);
+      canvasRenderingContext2D.fill();
       if (look === 'sing') {
-        ctx.fillStyle = '#05000a';
-        ctx.beginPath();
-        ctx.arc(x, y, r * 0.55, 0, 6.283);
-        ctx.fill();
-        ctx.strokeStyle = '#c090ff';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(x, y, r * 1.1, now / 200, now / 200 + 4.5);
-        ctx.stroke();
+        canvasRenderingContext2D.fillStyle = '#05000a';
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.arc(positionX, positionY, radius * 0.55, 0, 6.283);
+        canvasRenderingContext2D.fill();
+        canvasRenderingContext2D.strokeStyle = '#c090ff';
+        canvasRenderingContext2D.lineWidth = 1.5;
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.arc(
+          positionX,
+          positionY,
+          radius * 1.1,
+          currentTime / 200,
+          currentTime / 200 + 4.5,
+        );
+        canvasRenderingContext2D.stroke();
       }
       if (Math.random() < 0.6)
-        fx.push({ x: s.x, y: s.y, vx: 0, vy: 0, life: 0.4, max: 0.4, c: col, s: 2.2 });
+        visualEffects.push({
+          x: state.x,
+          y: state.y,
+          vx: 0,
+          vy: 0,
+          life: 0.4,
+          max: 0.4,
+          c: column,
+          s: 2.2,
+        });
       break;
     }
     case 'mine': {
-      const on = Math.floor(now / 300) % 2;
-      ctx.fillStyle = '#555';
-      ctx.beginPath();
-      ctx.arc(x, y, 4 * zz, 0, 6.283);
-      ctx.fill();
-      ctx.fillStyle = on ? '#ff3a2a' : '#401010';
-      ctx.beginPath();
-      ctx.arc(x, y, 1.8 * zz, 0, 6.283);
-      ctx.fill();
+      const enabled = Math.floor(currentTime / 300) % 2;
+      canvasRenderingContext2D.fillStyle = '#555';
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, 4 * effectZoom, 0, 6.283);
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.fillStyle = enabled ? '#ff3a2a' : '#401010';
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, 1.8 * effectZoom, 0, 6.283);
+      canvasRenderingContext2D.fill();
       break;
     }
     case 'flak': {
-      ctx.fillStyle = col;
-      for (let k = 0; k < 3; k++) {
-        const o = (k - 1) * 3 * z;
-        ctx.fillRect(x - uy * o - 1.5, y + ux * o - 1.5, 3 * zz, 3 * zz);
+      canvasRenderingContext2D.fillStyle = column;
+      for (let entryKey = 0; entryKey < 3; entryKey++) {
+        const options = (entryKey - 1) * 3 * positionZ;
+        canvasRenderingContext2D.fillRect(
+          positionX - unitY * options - 1.5,
+          positionY + unitX * options - 1.5,
+          3 * effectZoom,
+          3 * effectZoom,
+        );
       }
       break;
     }
     case 'pd': {
-      ctx.strokeStyle = col;
-      ctx.lineWidth = 1.5 * zz;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - ux * 5 * z, y - uy * 5 * z);
-      ctx.stroke();
+      canvasRenderingContext2D.strokeStyle = column;
+      canvasRenderingContext2D.lineWidth = 1.5 * effectZoom;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(positionX, positionY);
+      canvasRenderingContext2D.lineTo(
+        positionX - unitX * 5 * positionZ,
+        positionY - unitY * 5 * positionZ,
+      );
+      canvasRenderingContext2D.stroke();
       break;
     }
     case 'shard': {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(now / 90);
-      ctx.fillStyle = col;
-      const r = 4.5 * zz;
-      ctx.beginPath();
-      ctx.moveTo(0, -r);
-      ctx.lineTo(r * 0.55, 0);
-      ctx.lineTo(0, r);
-      ctx.lineTo(-r * 0.55, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(positionX, positionY);
+      canvasRenderingContext2D.rotate(currentTime / 90);
+      canvasRenderingContext2D.fillStyle = column;
+      const radius = 4.5 * effectZoom;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(0, -radius);
+      canvasRenderingContext2D.lineTo(radius * 0.55, 0);
+      canvasRenderingContext2D.lineTo(0, radius);
+      canvasRenderingContext2D.lineTo(-radius * 0.55, 0);
+      canvasRenderingContext2D.closePath();
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.restore();
       break;
     }
     default: {
       // bolt: glowing streak with a white core
-      const big = W_ && W_.dmgA + W_.dmgS > 40,
-        L = (big ? 14 : 10) * z;
-      ctx.strokeStyle = col;
-      ctx.lineWidth = (big ? 4 : 2.6) * zz;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - ux * L, y - uy * L);
-      ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,.9)';
-      ctx.lineWidth = 1 * zz;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - ux * L * 0.7, y - uy * L * 0.7);
-      ctx.stroke();
+      const large = weaponAsset && weaponAsset.dmgA + weaponAsset.dmgS > 40,
+        length = (large ? 14 : 10) * positionZ;
+      canvasRenderingContext2D.strokeStyle = column;
+      canvasRenderingContext2D.lineWidth = (large ? 4 : 2.6) * effectZoom;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(positionX, positionY);
+      canvasRenderingContext2D.lineTo(positionX - unitX * length, positionY - unitY * length);
+      canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.strokeStyle = 'rgba(255,255,255,.9)';
+      canvasRenderingContext2D.lineWidth = 1 * effectZoom;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(positionX, positionY);
+      canvasRenderingContext2D.lineTo(
+        positionX - unitX * length * 0.7,
+        positionY - unitY * length * 0.7,
+      );
+      canvasRenderingContext2D.stroke();
     }
   }
 }
@@ -1941,99 +2382,131 @@ function drawShot(
 const rockCache = new Map<number, HTMLCanvasElement>();
 /**
  * Generates and caches an off-screen canvas sprite for a minable asteroid or gas deposit.
- * @param {{x: number, y: number, r: number, mat: string, qty: number}} k Mining rock or gas pocket definition
+ * @param {{x: number, y: number, r: number, mat: string, qty: number}} renderRock Mining rock or gas pocket definition
  * @returns {HTMLCanvasElement} Off-screen canvas sprite
  */
-function rockImage(k: RenderRock): HTMLCanvasElement {
-  const key = k.id;
-  if (rockCache.has(key)) return rockCache.get(key)!;
-  const R = k.r,
-    S = Math.ceil(R * 2.6),
-    c = document.createElement('canvas');
-  c.width = c.height = S;
-  const g = c.getContext('2d')!,
-    rnd = seeded(k.id * 7919 + 13),
-    cx = S / 2,
-    cy = S / 2;
-  if (k.ore === 'gas') {
+function rockImage(renderRock: RenderRock): HTMLCanvasElement {
+  const entryKey = renderRock.id;
+  if (rockCache.has(entryKey)) return rockCache.get(entryKey)!;
+  const radius = renderRock.r,
+    state = Math.ceil(radius * 2.6),
+    htmlCanvasElement = document.createElement('canvas');
+  htmlCanvasElement.width = htmlCanvasElement.height = state;
+  const canvasRenderingContext2D = htmlCanvasElement.getContext('2d')!,
+    randomGenerator = seeded(renderRock.id * 7919 + 13),
+    centerX = state / 2,
+    centerY = state / 2;
+  if (renderRock.ore === 'gas') {
     // a glowing pocket of volatile gas
-    for (let i = 0; i < 7; i++) {
-      const a = rnd() * 6.283,
-        d = rnd() * R * 0.5,
-        r = R * (0.5 + rnd() * 0.5),
-        x = cx + Math.cos(a) * d,
-        y = cy + Math.sin(a) * d;
-      const gr = g.createRadialGradient(x, y, 0, x, y, r);
-      gr.addColorStop(0, 'rgba(140,255,200,0.35)');
-      gr.addColorStop(0.6, 'rgba(60,170,160,0.18)');
-      gr.addColorStop(1, 'rgba(0,0,0,0)');
-      g.fillStyle = gr;
-      g.fillRect(0, 0, S, S);
+    for (let index = 0; index < 7; index++) {
+      const firstValue = randomGenerator() * 6.283,
+        distance = randomGenerator() * radius * 0.5,
+        radius2 = radius * (0.5 + randomGenerator() * 0.5),
+        positionX = centerX + Math.cos(firstValue) * distance,
+        positionY = centerY + Math.sin(firstValue) * distance;
+      const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+        positionX,
+        positionY,
+        0,
+        positionX,
+        positionY,
+        radius2,
+      );
+      canvasGradient.addColorStop(0, 'rgba(140,255,200,0.35)');
+      canvasGradient.addColorStop(0.6, 'rgba(60,170,160,0.18)');
+      canvasGradient.addColorStop(1, 'rgba(0,0,0,0)');
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.fillRect(0, 0, state, state);
     }
-  } else if (k.ore === 'shards') {
+  } else if (renderRock.ore === 'shards') {
     // a cluster of violet crystal
-    const n = 5 + Math.floor(rnd() * 4);
-    for (let i = 0; i < n; i++) {
-      const a = rnd() * 6.283,
-        L = R * (0.6 + rnd() * 0.6),
-        w = R * (0.14 + rnd() * 0.12),
-        bx = cx + Math.cos(a + 1.6) * rnd() * R * 0.25,
-        by = cy + Math.sin(a + 1.6) * rnd() * R * 0.25;
-      g.save();
-      g.translate(bx, by);
-      g.rotate(a);
-      const gr = g.createLinearGradient(-w, 0, w, 0);
-      gr.addColorStop(0, '#5a3a8a');
-      gr.addColorStop(0.5, '#e0c0ff');
-      gr.addColorStop(1, '#7a50b0');
-      g.fillStyle = gr;
-      g.beginPath();
-      g.moveTo(-w, 0);
-      g.lineTo(0, -L);
-      g.lineTo(w, 0);
-      g.lineTo(0, w * 0.6);
-      g.closePath();
-      g.fill();
-      g.restore();
+    const count = 5 + Math.floor(randomGenerator() * 4);
+    for (let index = 0; index < count; index++) {
+      const firstValue = randomGenerator() * 6.283,
+        length = radius * (0.6 + randomGenerator() * 0.6),
+        width = radius * (0.14 + randomGenerator() * 0.12),
+        baseX = centerX + Math.cos(firstValue + 1.6) * randomGenerator() * radius * 0.25,
+        source = centerY + Math.sin(firstValue + 1.6) * randomGenerator() * radius * 0.25;
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(baseX, source);
+      canvasRenderingContext2D.rotate(firstValue);
+      const canvasGradient = canvasRenderingContext2D.createLinearGradient(-width, 0, width, 0);
+      canvasGradient.addColorStop(0, '#5a3a8a');
+      canvasGradient.addColorStop(0.5, '#e0c0ff');
+      canvasGradient.addColorStop(1, '#7a50b0');
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(-width, 0);
+      canvasRenderingContext2D.lineTo(0, -length);
+      canvasRenderingContext2D.lineTo(width, 0);
+      canvasRenderingContext2D.lineTo(0, width * 0.6);
+      canvasRenderingContext2D.closePath();
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.restore();
     }
   } else {
     // a lumpy grey-brown asteroid
-    const n = 11,
-      pts = [];
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * 6.283,
-        r = R * (0.72 + rnd() * 0.32);
-      pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+    const count = 11,
+      points = [];
+    for (let index = 0; index < count; index++) {
+      const firstValue = (index / count) * 6.283,
+        radius3 = radius * (0.72 + randomGenerator() * 0.32);
+      points.push([
+        centerX + Math.cos(firstValue) * radius3,
+        centerY + Math.sin(firstValue) * radius3,
+      ]);
     }
-    const gr = g.createRadialGradient(cx - R * 0.4, cy - R * 0.4, R * 0.1, cx, cy, R * 1.1);
-    gr.addColorStop(0, '#9a8e80');
-    gr.addColorStop(0.7, '#5a524a');
-    gr.addColorStop(1, '#2a2622');
-    g.fillStyle = gr;
-    g.beginPath();
-    pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
-    g.closePath();
-    g.fill();
-    for (let i = 0; i < 5; i++) {
-      const x = cx + (rnd() - 0.5) * R,
-        y = cy + (rnd() - 0.5) * R,
-        r = R * (0.08 + rnd() * 0.12);
-      g.fillStyle = 'rgba(0,0,0,.25)';
-      g.beginPath();
-      g.arc(x, y, r, 0, 6.283);
-      g.fill();
-      g.fillStyle = 'rgba(255,255,255,.08)';
-      g.beginPath();
-      g.arc(x - r * 0.3, y - r * 0.3, r * 0.6, 0, 6.283);
-      g.fill();
+    const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+      centerX - radius * 0.4,
+      centerY - radius * 0.4,
+      radius * 0.1,
+      centerX,
+      centerY,
+      radius * 1.1,
+    );
+    canvasGradient.addColorStop(0, '#9a8e80');
+    canvasGradient.addColorStop(0.7, '#5a524a');
+    canvasGradient.addColorStop(1, '#2a2622');
+    canvasRenderingContext2D.fillStyle = canvasGradient;
+    canvasRenderingContext2D.beginPath();
+    points.forEach(([positionX, positionY], index) =>
+      index
+        ? canvasRenderingContext2D.lineTo(positionX, positionY)
+        : canvasRenderingContext2D.moveTo(positionX, positionY),
+    );
+    canvasRenderingContext2D.closePath();
+    canvasRenderingContext2D.fill();
+    for (let index = 0; index < 5; index++) {
+      const positionX = centerX + (randomGenerator() - 0.5) * radius,
+        positionY = centerY + (randomGenerator() - 0.5) * radius,
+        radius4 = radius * (0.08 + randomGenerator() * 0.12);
+      canvasRenderingContext2D.fillStyle = 'rgba(0,0,0,.25)';
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius4, 0, 6.283);
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.fillStyle = 'rgba(255,255,255,.08)';
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(
+        positionX - radius4 * 0.3,
+        positionY - radius4 * 0.3,
+        radius4 * 0.6,
+        0,
+        6.283,
+      );
+      canvasRenderingContext2D.fill();
     }
-    for (let i = 0; i < 4; i++) {
-      g.fillStyle = '#c9a85a';
-      g.fillRect(cx + (rnd() - 0.5) * R, cy + (rnd() - 0.5) * R, 2, 2);
+    for (let index = 0; index < 4; index++) {
+      canvasRenderingContext2D.fillStyle = '#c9a85a';
+      canvasRenderingContext2D.fillRect(
+        centerX + (randomGenerator() - 0.5) * radius,
+        centerY + (randomGenerator() - 0.5) * radius,
+        2,
+        2,
+      );
     }
   }
-  rockCache.set(key, c);
-  return c;
+  rockCache.set(entryKey, htmlCanvasElement);
+  return htmlCanvasElement;
 }
 const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae0']; // 5: hostile loot chest
 
@@ -2041,1006 +2514,1427 @@ const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae
 let tagRects: [number, number, number][] = []; // name tags already drawn this frame, so close ships' tags stack instead of overlapping
 /**
  * Master rendering pipeline: backdrop, stellar bodies, mining fields, loot, shots, beams, ships, effects, and HUD overlays.
- * @param {ClientGameState} G Game state object
- * @param {CanvasRenderingContext2D} ctx Destination canvas rendering context
- * @param {number} W Viewport width in pixels
- * @param {number} H Viewport height in pixels
- * @param {number} dt Delta time in seconds since previous frame
- * @param {number} now Timestamp in milliseconds
+ * @param {ClientGameState} clientGameState Game state object
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D Destination canvas rendering context
+ * @param {number} width2 Viewport width in pixels
+ * @param {number} height2 Viewport height in pixels
+ * @param {number} deltaTime Delta time in seconds since previous frame
+ * @param {number} currentTime Timestamp in milliseconds
  * @returns {void}
  */
 export function draw(
-  G: ClientGameState,
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  dt: number,
-  now: number,
+  clientGameState: ClientGameState,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  width2: number,
+  height2: number,
+  deltaTime: number,
+  currentTime: number,
 ): void {
   tagRects = [];
-  const me = G.view,
-    z = G.zoom,
-    S = SYS[G.sys!];
-  const dock = G.landed && STELLARS[G.landed.stellar];
-  let cx = dock ? dock.x : (me ? me.rx : 0) + (G.lookX || 0),
-    cy = dock ? dock.y : (me ? me.ry : 0) + (G.lookY || 0); // hold right-click to look ahead
-  Object.assign(cam, { cx, cy, z, W, H }); // un-shaken camera, used for mouse picking
-  if (shake && G.opts && G.opts.shake !== false) {
-    cx += ((Math.random() - 0.5) * shake * 2) / z;
-    cy += ((Math.random() - 0.5) * shake * 2) / z;
+  const clientView = clientGameState.view,
+    zoom2 = clientGameState.zoom,
+    starSystem = systemsById[clientGameState.sys!];
+  const dock = clientGameState.landed && STELLARS[clientGameState.landed.stellar];
+  let centerX = dock ? dock.x : (clientView ? clientView.rx : 0) + (clientGameState.lookX || 0),
+    centerY = dock ? dock.y : (clientView ? clientView.ry : 0) + (clientGameState.lookY || 0); // hold right-click to look ahead
+  Object.assign(cameraState, { cx: centerX, cy: centerY, z: zoom2, W: width2, H: height2 }); // un-shaken camera, used for mouse picking
+  if (shake && clientGameState.opts && clientGameState.opts.shake !== false) {
+    centerX += ((Math.random() - 0.5) * shake * 2) / zoom2;
+    centerY += ((Math.random() - 0.5) * shake * 2) / zoom2;
   }
-  const sx = (x: number) => (x - cx) * z + W / 2,
-    sy = (y: number) => (y - cy) * z + H / 2;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, W, H);
-  if (!S) return;
-  const st = stars(S.id),
-    fcol = hexToRgb(FACTIONS[S.faction].color);
-  for (const [nx, ny, nr, k] of st.neb) {
+  const screenX = (positionX: number) => (positionX - centerX) * zoom2 + width2 / 2,
+    screenY = (positionY: number) => (positionY - centerY) * zoom2 + height2 / 2;
+  canvasRenderingContext2D.fillStyle = '#000';
+  canvasRenderingContext2D.fillRect(0, 0, width2, height2);
+  if (!starSystem) return;
+  const stars2 = stars(starSystem.id),
+    hexToRgb2 = hexToRgb(FACTIONS[starSystem.faction].color);
+  for (const [nextX, nextY, nextRadius, entryKey] of stars2.neb) {
     // faint nebulae in the faction's colour
-    const x = sx(nx * 0.4 + cx * 0.6),
-      y = sy(ny * 0.4 + cy * 0.6),
-      r = nr * z * 0.6;
-    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, `rgba(${fcol[0]},${fcol[1]},${fcol[2]},${0.05 + k * 0.05})`);
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    const positionX = screenX(nextX * 0.4 + centerX * 0.6),
+      positionY = screenY(nextY * 0.4 + centerY * 0.6),
+      radius = nextRadius * zoom2 * 0.6;
+    const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+      positionX,
+      positionY,
+      0,
+      positionX,
+      positionY,
+      radius,
+    );
+    canvasGradient.addColorStop(
+      0,
+      `rgba(${hexToRgb2[0]},${hexToRgb2[1]},${hexToRgb2[2]},${0.05 + entryKey * 0.05})`,
+    );
+    canvasGradient.addColorStop(1, 'rgba(0,0,0,0)');
+    canvasRenderingContext2D.fillStyle = canvasGradient;
+    canvasRenderingContext2D.fillRect(
+      positionX - radius,
+      positionY - radius,
+      radius * 2,
+      radius * 2,
+    );
   }
-  drawDecorFar(ctx, S, W, H, z, cx, cy, now); // galaxies and gas clouds far behind the stars
-  for (const { L, depth, size } of st.layers) {
-    for (const [x0, y0, b, tw] of L) {
-      let x = (x0 - cx * depth) % 2048,
-        y = (y0 - cy * depth) % 2048;
-      if (x < 0) x += 2048;
-      if (y < 0) y += 2048;
-      for (let ox = x; ox < W + 2048; ox += 2048)
-        for (let oy = y; oy < H + 2048; oy += 2048) {
-          if (ox > W || oy > H) continue;
-          const v = Math.round(255 * b * (0.85 + 0.15 * Math.sin(now / 700 + tw * 20)));
-          ctx.fillStyle = `rgb(${v},${v},${Math.min(255, v + 20)})`;
-          ctx.fillRect(ox, oy, size, size);
+  drawDecorFar(
+    canvasRenderingContext2D,
+    starSystem,
+    width2,
+    height2,
+    zoom2,
+    centerX,
+    centerY,
+    currentTime,
+  ); // galaxies and gas clouds far behind the stars
+  for (const { L: length, depth, size } of stars2.layers) {
+    for (const [startX, startY, secondValue, textWidth] of length) {
+      let positionX = (startX - centerX * depth) % 2048,
+        positionY = (startY - centerY * depth) % 2048;
+      if (positionX < 0) positionX += 2048;
+      if (positionY < 0) positionY += 2048;
+      for (let positionX22 = positionX; positionX22 < width2 + 2048; positionX22 += 2048)
+        for (let positionY22 = positionY; positionY22 < height2 + 2048; positionY22 += 2048) {
+          if (positionX22 > width2 || positionY22 > height2) continue;
+          const value = Math.round(
+            255 * secondValue * (0.85 + 0.15 * Math.sin(currentTime / 700 + textWidth * 20)),
+          );
+          canvasRenderingContext2D.fillStyle = `rgb(${value},${value},${Math.min(255, value + 20)})`;
+          canvasRenderingContext2D.fillRect(positionX22, positionY22, size, size);
         }
     }
   }
-  drawDecorMid(ctx, S, W, H, z, cx, cy, now);
-  drawDecorNear(ctx, S, W, H, z, sx, sy, now); // 2.2 scenery in the system itself
-  drawPulseBoundary(ctx, S, sx, sy, z);
+  drawDecorMid(
+    canvasRenderingContext2D,
+    starSystem,
+    width2,
+    height2,
+    zoom2,
+    centerX,
+    centerY,
+    currentTime,
+  );
+  drawDecorNear(
+    canvasRenderingContext2D,
+    starSystem,
+    width2,
+    height2,
+    zoom2,
+    screenX,
+    screenY,
+    currentTime,
+  ); // 2.2 scenery in the system itself
+  drawPulseBoundary(canvasRenderingContext2D, starSystem, screenX, screenY, zoom2);
   // stellars
-  let P_;
-  for (const p of S.stellars) {
-    const x = sx(p.x),
-      y = sy(p.y);
-    if (x < -p.r * 3 * z || y < -p.r * 3 * z || x > W + p.r * 3 * z || y > H + p.r * 3 * z)
+  let position;
+  for (const rawStellarBody of starSystem.stellars) {
+    const positionX = screenX(rawStellarBody.x),
+      positionY = screenY(rawStellarBody.y);
+    if (
+      positionX < -rawStellarBody.r * 3 * zoom2 ||
+      positionY < -rawStellarBody.r * 3 * zoom2 ||
+      positionX > width2 + rawStellarBody.r * 3 * zoom2 ||
+      positionY > height2 + rawStellarBody.r * 3 * zoom2
+    )
       continue;
-    let label = p.name;
-    if (p.wormhole) {
+    let label = rawStellarBody.name;
+    if (rawStellarBody.wormhole) {
       // Original periodic Gateway frames; interpolate only to smooth display cadence.
       if (wormImg.complete && wormImg.naturalWidth) {
-        const frames = loopFrames(now, WORMHOLE.frames, WORMHOLE.frameMs),
-          fs = wormImg.naturalWidth / WORMHOLE.columns,
-          s = p.r * 2.6 * z;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(now / 9000);
-        ctx.globalCompositeOperation = 'lighter';
+        const frames = loopFrames(currentTime, WORMHOLE.frames, WORMHOLE.frameMs),
+          fileSystem = wormImg.naturalWidth / WORMHOLE.columns,
+          state = rawStellarBody.r * 2.6 * zoom2;
+        canvasRenderingContext2D.save();
+        canvasRenderingContext2D.translate(positionX, positionY);
+        canvasRenderingContext2D.rotate(currentTime / 9000);
+        canvasRenderingContext2D.globalCompositeOperation = 'lighter';
         // Additive weights preserve brightness, including the wrap from frame 31 to 0.
-        for (const [f, weight] of [
+        for (const [factionId, weight] of [
           [frames.first, 1 - frames.mix],
           [frames.second, frames.mix],
         ]) {
-          ctx.globalAlpha = weight;
-          ctx.drawImage(
+          canvasRenderingContext2D.globalAlpha = weight;
+          canvasRenderingContext2D.drawImage(
             wormImg,
-            (f % WORMHOLE.columns) * fs,
-            Math.floor(f / WORMHOLE.columns) * fs,
-            fs,
-            fs,
-            -s / 2,
-            -s / 2,
-            s,
-            s,
+            (factionId % WORMHOLE.columns) * fileSystem,
+            Math.floor(factionId / WORMHOLE.columns) * fileSystem,
+            fileSystem,
+            fileSystem,
+            -state / 2,
+            -state / 2,
+            state,
+            state,
           );
         }
-        ctx.restore();
+        canvasRenderingContext2D.restore();
       }
-    } else if (p.hub) {
+    } else if (rawStellarBody.hub) {
       // the Quantum Station hub turns slowly; neighbouring frames are cross-faded so the rotation is smooth
       if (hubImg.complete && hubImg.naturalWidth) {
-        const fs = hubImg.naturalWidth / 6,
-          s = p.r * 2.13 * z,
-          t = (now / 1000 / HUB_PERIOD) * HUB_FRAMES,
-          f0 = Math.floor(t) % HUB_FRAMES,
-          f1 = (f0 + 1) % HUB_FRAMES,
-          k = t - Math.floor(t);
-        ctx.drawImage(
+        const fileSystem = hubImg.naturalWidth / 6,
+          state = rawStellarBody.r * 2.13 * zoom2,
+          time = (currentTime / 1000 / HUB_PERIOD) * HUB_FRAMES,
+          factionId = Math.floor(time) % HUB_FRAMES,
+          factionId1 = (factionId + 1) % HUB_FRAMES,
+          entryKey = time - Math.floor(time);
+        canvasRenderingContext2D.drawImage(
           hubImg,
-          (f0 % 6) * fs,
-          Math.floor(f0 / 6) * fs,
-          fs,
-          fs,
-          x - s / 2,
-          y - s / 2,
-          s,
-          s,
+          (factionId % 6) * fileSystem,
+          Math.floor(factionId / 6) * fileSystem,
+          fileSystem,
+          fileSystem,
+          positionX - state / 2,
+          positionY - state / 2,
+          state,
+          state,
         );
-        ctx.globalAlpha = k;
-        ctx.drawImage(
+        canvasRenderingContext2D.globalAlpha = entryKey;
+        canvasRenderingContext2D.drawImage(
           hubImg,
-          (f1 % 6) * fs,
-          Math.floor(f1 / 6) * fs,
-          fs,
-          fs,
-          x - s / 2,
-          y - s / 2,
-          s,
-          s,
+          (factionId1 % 6) * fileSystem,
+          Math.floor(factionId1 / 6) * fileSystem,
+          fileSystem,
+          fileSystem,
+          positionX - state / 2,
+          positionY - state / 2,
+          state,
+          state,
         );
-        ctx.globalAlpha = 1;
+        canvasRenderingContext2D.globalAlpha = 1;
       }
-    } else if (p.site) {
-      const st = G.sites && G.sites[p.id],
-        ops = st ? st.ops : 0,
-        im = stationImgs[ops];
-      if (im.complete && im.naturalWidth) {
-        const s = p.r * (2.2 + ops * 0.25) * z;
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.drawImage(im, x - s / 2, y - s / 2, s, s);
-        ctx.globalCompositeOperation = 'source-over';
+    } else if (rawStellarBody.site) {
+      const state = clientGameState.sites && clientGameState.sites[rawStellarBody.id],
+        operations = state ? state.ops : 0,
+        htmlImageElement = stationImgs[operations];
+      if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
+        const state4 = rawStellarBody.r * (2.2 + operations * 0.25) * zoom2;
+        canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+        canvasRenderingContext2D.drawImage(
+          htmlImageElement,
+          positionX - state4 / 2,
+          positionY - state4 / 2,
+          state4,
+          state4,
+        );
+        canvasRenderingContext2D.globalCompositeOperation = 'source-over';
       }
-      label = st
-        ? `${st.owner}'s Personal Station · Station Tier ${ops}`
+      label = state
+        ? `${state.owner}'s Personal Station · Station Tier ${operations}`
         : 'Derelict Station Hull (unclaimed)';
-    } else if ((p.kind === 'planet' || p.kind === 'moon') && (P_ = planetSprite(p, now))) {
-      const w = P_.S * P_.scale * z;
-      ctx.drawImage(P_.canvas, x - w / 2, y - w / 2, w, w);
+    } else if (
+      (rawStellarBody.kind === 'planet' || rawStellarBody.kind === 'moon') &&
+      (position = planetSprite(rawStellarBody, currentTime))
+    ) {
+      const width = position.S * position.scale * zoom2;
+      canvasRenderingContext2D.drawImage(
+        position.canvas,
+        positionX - width / 2,
+        positionY - width / 2,
+        width,
+        width,
+      );
     } // procedural planets (old art until built)
-    else if (p.kind === 'station' && (P_ = stationSprite(p))) {
-      const s2 = p.r * 2.5 * z;
-      ctx.drawImage(P_, x - s2 / 2, y - s2 / 2, s2, s2);
+    else if (rawStellarBody.kind === 'station' && (position = stationSprite(rawStellarBody))) {
+      const secondState = rawStellarBody.r * 2.5 * zoom2;
+      canvasRenderingContext2D.drawImage(
+        position,
+        positionX - secondState / 2,
+        positionY - secondState / 2,
+        secondState,
+        secondState,
+      );
     } // rendered stations
     else {
-      const im = planetImage(p);
-      ctx.drawImage(
-        im,
-        x - (im.width * z) / 2,
-        y - (im.height * z) / 2,
-        im.width * z,
-        im.height * z,
+      const htmlCanvasElement = planetImage(rawStellarBody);
+      canvasRenderingContext2D.drawImage(
+        htmlCanvasElement,
+        positionX - (htmlCanvasElement.width * zoom2) / 2,
+        positionY - (htmlCanvasElement.height * zoom2) / 2,
+        htmlCanvasElement.width * zoom2,
+        htmlCanvasElement.height * zoom2,
       );
     }
-    if (G.hoverStellar === p.id && G.navStellar !== p.id) {
-      ctx.strokeStyle = 'rgba(255,255,255,.25)';
-      ctx.setLineDash([3, 6]);
-      ctx.beginPath();
-      ctx.arc(x, y, p.r * z * 1.15 + 8, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    if (
+      clientGameState.hoverStellar === rawStellarBody.id &&
+      clientGameState.navStellar !== rawStellarBody.id
+    ) {
+      canvasRenderingContext2D.strokeStyle = 'rgba(255,255,255,.25)';
+      canvasRenderingContext2D.setLineDash([3, 6]);
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(
+        positionX,
+        positionY,
+        rawStellarBody.r * zoom2 * 1.15 + 8,
+        0,
+        Math.PI * 2,
+      );
+      canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.setLineDash([]);
     }
-    if (G.navStellar === p.id) {
-      ctx.strokeStyle = 'rgba(120,200,255,.6)';
-      ctx.setLineDash([6, 6]);
-      ctx.beginPath();
-      ctx.arc(x, y, p.r * z * 1.15 + 8, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    if (clientGameState.navStellar === rawStellarBody.id) {
+      canvasRenderingContext2D.strokeStyle = 'rgba(120,200,255,.6)';
+      canvasRenderingContext2D.setLineDash([6, 6]);
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(
+        positionX,
+        positionY,
+        rawStellarBody.r * zoom2 * 1.15 + 8,
+        0,
+        Math.PI * 2,
+      );
+      canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.setLineDash([]);
     }
-    ctx.fillStyle = 'rgba(210,220,240,.8)';
-    ctx.font = '15px "Pixelify Sans", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(label, x, y + p.r * z + (p.hub ? -p.r * z * 0.25 : 18));
-    const colOwner = G.world && G.world.colonies && G.world.colonies[p.id];
+    canvasRenderingContext2D.fillStyle = 'rgba(210,220,240,.8)';
+    canvasRenderingContext2D.font = '15px "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.textAlign = 'center';
+    canvasRenderingContext2D.fillText(
+      label,
+      positionX,
+      positionY +
+        rawStellarBody.r * zoom2 +
+        (rawStellarBody.hub ? -rawStellarBody.r * zoom2 * 0.25 : 18),
+    );
+    const colOwner =
+      clientGameState.world &&
+      clientGameState.world.colonies &&
+      clientGameState.world.colonies[rawStellarBody.id];
     if (colOwner) {
-      ctx.fillStyle = '#ffd27a';
-      ctx.font = '14px "Pixelify Sans", sans-serif';
-      ctx.fillText(`${colOwner}'s colony`, x, y + p.r * z + 34);
+      canvasRenderingContext2D.fillStyle = '#ffd27a';
+      canvasRenderingContext2D.font = '14px "Pixelify Sans", sans-serif';
+      canvasRenderingContext2D.fillText(
+        `${colOwner}'s colony`,
+        positionX,
+        positionY + rawStellarBody.r * zoom2 + 34,
+      );
     }
   }
   // asteroids, gas pockets and crystal clusters
-  for (const k of G.rocks || []) {
-    if (!k.hp) continue;
-    const x = sx(k.x),
-      y = sy(k.y),
-      R = k.r * z;
-    if (x < -R * 2 || y < -R * 2 || x > W + R * 2 || y > H + R * 2) continue;
-    const ri =
-        k.ore !== 'gas' &&
-        objImg(k.ore === 'shards' ? 'crys' + (Math.abs(k.id) % 4) : 'rock' + (Math.abs(k.id) % 10)),
-      rr = ri && ri.complete && ri.naturalWidth; // rendered asteroids
-    const im = rr ? ri : rockImage(k),
-      s2 = rr ? k.r * 2.35 * z : im.width * z;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate((now / 1000) * (k.ore === 'gas' ? 0.05 : 0.12) * (k.id % 2 ? 1 : -1) + k.id);
-    ctx.globalAlpha = 0.45 + (0.55 * k.hp) / 100;
-    if (k.ore === 'gas') ctx.globalCompositeOperation = 'lighter';
-    ctx.drawImage(im, -s2 / 2, -s2 / 2, s2, s2);
-    ctx.restore();
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'source-over';
-    if (k.hp < 100 && k.hp > 0) {
-      ctx.fillStyle = 'rgba(0,0,0,.6)';
-      ctx.fillRect(x - R * 0.6, y + R + 4, R * 1.2, 3);
-      ctx.fillStyle = '#e8c070';
-      ctx.fillRect(x - R * 0.6, y + R + 4, (R * 1.2 * k.hp) / 100, 3);
+  for (const entryKey of clientGameState.rocks || []) {
+    if (!entryKey.hp) continue;
+    const positionX = screenX(entryKey.x),
+      positionY = screenY(entryKey.y),
+      radius = entryKey.r * zoom2;
+    if (
+      positionX < -radius * 2 ||
+      positionY < -radius * 2 ||
+      positionX > width2 + radius * 2 ||
+      positionY > height2 + radius * 2
+    )
+      continue;
+    const rowIndex =
+        entryKey.ore !== 'gas' &&
+        objImg(
+          entryKey.ore === 'shards'
+            ? 'crys' + (Math.abs(entryKey.id) % 4)
+            : 'rock' + (Math.abs(entryKey.id) % 10),
+        ),
+      radiusRatio = rowIndex && rowIndex.complete && rowIndex.naturalWidth; // rendered asteroids
+    const image = radiusRatio ? rowIndex : rockImage(entryKey),
+      secondState = radiusRatio ? entryKey.r * 2.35 * zoom2 : image.width * zoom2;
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.translate(positionX, positionY);
+    canvasRenderingContext2D.rotate(
+      (currentTime / 1000) * (entryKey.ore === 'gas' ? 0.05 : 0.12) * (entryKey.id % 2 ? 1 : -1) +
+        entryKey.id,
+    );
+    canvasRenderingContext2D.globalAlpha = 0.45 + (0.55 * entryKey.hp) / 100;
+    if (entryKey.ore === 'gas') canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+    canvasRenderingContext2D.drawImage(
+      image,
+      -secondState / 2,
+      -secondState / 2,
+      secondState,
+      secondState,
+    );
+    canvasRenderingContext2D.restore();
+    canvasRenderingContext2D.globalAlpha = 1;
+    canvasRenderingContext2D.globalCompositeOperation = 'source-over';
+    if (entryKey.hp < 100 && entryKey.hp > 0) {
+      canvasRenderingContext2D.fillStyle = 'rgba(0,0,0,.6)';
+      canvasRenderingContext2D.fillRect(
+        positionX - radius * 0.6,
+        positionY + radius + 4,
+        radius * 1.2,
+        3,
+      );
+      canvasRenderingContext2D.fillStyle = '#e8c070';
+      canvasRenderingContext2D.fillRect(
+        positionX - radius * 0.6,
+        positionY + radius + 4,
+        (radius * 1.2 * entryKey.hp) / 100,
+        3,
+      );
     }
   }
-  drawTowing(G, ctx, sx, sy, z, W, H);
-  drawMining(G, ctx, sx, sy, z, W, H, now);
-  for (const [px_, py_] of salvagePoints(G)) {
-    const x = sx(px_),
-      y = sy(py_);
-    ctx.strokeStyle = 'rgba(255,200,90,.6)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 6]);
-    ctx.beginPath();
-    ctx.arc(x, y, 160 * z, 0, 6.283);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#ffc85a';
-    ctx.font = '14px "Pixelify Sans", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('SALVAGE', x, y - 160 * z - 6);
+  drawTowing(clientGameState, canvasRenderingContext2D, screenX, screenY, zoom2, width2, height2);
+  drawMining(
+    clientGameState,
+    canvasRenderingContext2D,
+    screenX,
+    screenY,
+    zoom2,
+    width2,
+    height2,
+    currentTime,
+  );
+  for (const [pixelX, pixelY] of salvagePoints(clientGameState)) {
+    const positionX = screenX(pixelX),
+      positionY = screenY(pixelY);
+    canvasRenderingContext2D.strokeStyle = 'rgba(255,200,90,.6)';
+    canvasRenderingContext2D.lineWidth = 1.5;
+    canvasRenderingContext2D.setLineDash([4, 6]);
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, 160 * zoom2, 0, 6.283);
+    canvasRenderingContext2D.stroke();
+    canvasRenderingContext2D.setLineDash([]);
+    canvasRenderingContext2D.fillStyle = '#ffc85a';
+    canvasRenderingContext2D.font = '14px "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.textAlign = 'center';
+    canvasRenderingContext2D.fillText('SALVAGE', positionX, positionY - 160 * zoom2 - 6);
   } // 2.4 quest salvage
   // survey points for an active survey job here
-  for (const [px_, py_] of surveyPoints(G)) {
-    const x = sx(px_),
-      y = sy(py_);
-    ctx.strokeStyle = 'rgba(90,216,255,.55)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([8, 8]);
-    ctx.beginPath();
-    ctx.arc(x, y, 450 * z, 0, 6.283);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#5ad8ff';
-    ctx.font = '14px "Pixelify Sans", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('SURVEY POINT', x, y);
+  for (const [pixelX, pixelY] of surveyPoints(clientGameState)) {
+    const positionX = screenX(pixelX),
+      positionY = screenY(pixelY);
+    canvasRenderingContext2D.strokeStyle = 'rgba(90,216,255,.55)';
+    canvasRenderingContext2D.lineWidth = 1.5;
+    canvasRenderingContext2D.setLineDash([8, 8]);
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, 450 * zoom2, 0, 6.283);
+    canvasRenderingContext2D.stroke();
+    canvasRenderingContext2D.setLineDash([]);
+    canvasRenderingContext2D.fillStyle = '#5ad8ff';
+    canvasRenderingContext2D.font = '14px "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.textAlign = 'center';
+    canvasRenderingContext2D.fillText('SURVEY POINT', positionX, positionY);
   }
   // loot: credits (gold), salvage crates (blue), ore (brown), gas (green), crystal shards (violet)
-  for (const l of G.loot) {
-    const x = sx(l.x),
-      y = sy(l.y),
-      li = objImg('loot' + Math.min(5, l.kind || 0)); // rendered loot
-    if (li.complete && li.naturalWidth) {
-      const q = (l.kind === 5 ? 30 + Math.sin(now / 200) * 2 : 18) * Math.max(0.6, z);
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(now / 900 + l.id);
-      ctx.shadowColor = LOOT_COL[l.kind] || '#fff';
-      ctx.shadowBlur = l.kind === 5 ? 18 : 9;
-      ctx.drawImage(li, -q / 2, -q / 2, q, q);
-      ctx.restore();
+  for (const loot2 of clientGameState.loot) {
+    const positionX = screenX(loot2.x),
+      positionY = screenY(loot2.y),
+      htmlImageElement = objImg('loot' + Math.min(5, loot2.kind || 0)); // rendered loot
+    if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
+      const quantity =
+        (loot2.kind === 5 ? 30 + Math.sin(currentTime / 200) * 2 : 18) * Math.max(0.6, zoom2);
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(positionX, positionY);
+      canvasRenderingContext2D.rotate(currentTime / 900 + loot2.id);
+      canvasRenderingContext2D.shadowColor = LOOT_COL[loot2.kind] || '#fff';
+      canvasRenderingContext2D.shadowBlur = loot2.kind === 5 ? 18 : 9;
+      canvasRenderingContext2D.drawImage(
+        htmlImageElement,
+        -quantity / 2,
+        -quantity / 2,
+        quantity,
+        quantity,
+      );
+      canvasRenderingContext2D.restore();
       continue;
     }
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(now / 600 + l.id);
-    ctx.fillStyle = LOOT_COL[l.kind] || '#fff';
-    ctx.shadowColor = ctx.fillStyle;
-    ctx.shadowBlur = l.kind === 5 ? 16 : 8;
-    const q = l.kind === 5 ? 6 + Math.sin(now / 200) : l.kind >= 2 ? 3 : 4;
-    ctx.fillRect(-q * z, -q * z, q * 2 * z, q * 2 * z);
-    ctx.restore();
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.translate(positionX, positionY);
+    canvasRenderingContext2D.rotate(currentTime / 600 + loot2.id);
+    canvasRenderingContext2D.fillStyle = LOOT_COL[loot2.kind] || '#fff';
+    canvasRenderingContext2D.shadowColor = canvasRenderingContext2D.fillStyle;
+    canvasRenderingContext2D.shadowBlur = loot2.kind === 5 ? 16 : 8;
+    const quantity2 = loot2.kind === 5 ? 6 + Math.sin(currentTime / 200) : loot2.kind >= 2 ? 3 : 4;
+    canvasRenderingContext2D.fillRect(
+      -quantity2 * zoom2,
+      -quantity2 * zoom2,
+      quantity2 * 2 * zoom2,
+      quantity2 * 2 * zoom2,
+    );
+    canvasRenderingContext2D.restore();
   }
   // shots
-  ctx.lineCap = 'round';
-  for (const s of G.shots) {
-    const W_ = G.A!.weapons[s.w];
-    if (!s.col) {
-      s.W = W_;
-      s.col = weaponColor(W_);
-      s.look = weaponLook(W_);
+  canvasRenderingContext2D.lineCap = 'round';
+  for (const shot of clientGameState.shots) {
+    const weaponAsset = clientGameState.A!.weapons[shot.w];
+    if (!shot.col) {
+      shot.W = weaponAsset;
+      shot.col = weaponColor(weaponAsset);
+      shot.look = weaponLook(weaponAsset);
     }
-    const x = sx(s.x),
-      y = sy(s.y);
-    if (x < -40 || y < -40 || x > W + 40 || y > H + 40) continue;
-    drawShot(ctx, s as RenderShot & { col: string; look: string }, x, y, z, now);
+    const positionX = screenX(shot.x),
+      positionY = screenY(shot.y);
+    if (positionX < -40 || positionY < -40 || positionX > width2 + 40 || positionY > height2 + 40)
+      continue;
+    drawShot(
+      canvasRenderingContext2D,
+      shot as RenderShot & { col: string; look: string },
+      positionX,
+      positionY,
+      zoom2,
+      currentTime,
+    );
   }
-  ctx.shadowBlur = 0;
+  canvasRenderingContext2D.shadowBlur = 0;
   // ships
-  for (const e of G.ents.values()) drawShip(G, ctx, e, sx(e.rx), sy(e.ry), z, now);
-  if (me && G.ents.get(me.id)) {
-  } else if (me && G.myHull)
-    drawShip(G, ctx, { ...me, hull: G.myHull, fl: me.fl, id: me.id }, sx(me.rx), sy(me.ry), z, now);
+  for (const renderEntity of clientGameState.ents.values())
+    drawShip(
+      clientGameState,
+      canvasRenderingContext2D,
+      renderEntity,
+      screenX(renderEntity.rx),
+      screenY(renderEntity.ry),
+      zoom2,
+      currentTime,
+    );
+  if (clientView && clientGameState.ents.get(clientView.id)) {
+  } else if (clientView && clientGameState.myHull)
+    drawShip(
+      clientGameState,
+      canvasRenderingContext2D,
+      { ...clientView, hull: clientGameState.myHull, fl: clientView.fl, id: clientView.id },
+      screenX(clientView.rx),
+      screenY(clientView.ry),
+      zoom2,
+      currentTime,
+    );
   // beams
-  for (const b of G.beams) {
-    const e = b.id === (me && me.id) ? me : G.ents.get(b.id);
-    if (!e) continue;
-    const W_ = G.A!.weapons[b.w],
-      col = weaponColor(W_);
-    const x0 = sx(e.rx),
-      y0 = sy(e.ry),
-      a = b.a / 1000,
-      x1 = x0 + Math.sin(a) * b.len * z,
-      y1 = y0 - Math.cos(a) * b.len * z;
-    ctx.strokeStyle = col;
-    ctx.globalAlpha = 0.45;
-    ctx.lineWidth = 6 * Math.max(0.7, z);
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
+  for (const beam of clientGameState.beams) {
+    const event =
+      beam.id === (clientView && clientView.id) ? clientView : clientGameState.ents.get(beam.id);
+    if (!event) continue;
+    const weaponAsset = clientGameState.A!.weapons[beam.w],
+      weaponColor2 = weaponColor(weaponAsset);
+    const startX = screenX(event.rx),
+      startY = screenY(event.ry),
+      firstValue = beam.a / 1000,
+      positionX = startX + Math.sin(firstValue) * beam.len * zoom2,
+      positionY = startY - Math.cos(firstValue) * beam.len * zoom2;
+    canvasRenderingContext2D.strokeStyle = weaponColor2;
+    canvasRenderingContext2D.globalAlpha = 0.45;
+    canvasRenderingContext2D.lineWidth = 6 * Math.max(0.7, zoom2);
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.moveTo(startX, startY);
+    canvasRenderingContext2D.lineTo(positionX, positionY);
+    canvasRenderingContext2D.stroke();
+    canvasRenderingContext2D.globalAlpha = 1;
+    canvasRenderingContext2D.strokeStyle = '#fff';
+    canvasRenderingContext2D.lineWidth = 1.6;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.moveTo(startX, startY);
+    canvasRenderingContext2D.lineTo(positionX, positionY);
+    canvasRenderingContext2D.stroke();
   }
   // shield shimmer: an arc of the shield bubble facing the hit
-  for (const [id, h] of shieldHits) {
-    h.t -= dt;
-    if (h.t <= 0) {
-      shieldHits.delete(id);
+  for (const [identifier, shieldHit] of shieldHits) {
+    shieldHit.t -= deltaTime;
+    if (shieldHit.t <= 0) {
+      shieldHits.delete(identifier);
       continue;
     }
-    const e = id === (me && me.id) ? me : G.ents.get(id);
-    if (!e) continue;
-    const Hh = G.A!.ships[(e as RenderEntity).hull] || G.A!.ships[G.myHull];
-    const r = (Hh ? Hh.size : 60) * 0.42 * z * G.spriteScale;
-    const x = sx(e.rx),
-      y = sy(e.ry),
-      a = Math.atan2(h.hy - e.ry, h.hx - e.rx),
-      k = h.t / 0.35;
-    ctx.strokeStyle = `rgba(120,200,255,${0.8 * k})`;
-    ctx.lineWidth = 3;
-    ctx.shadowColor = '#7ad0ff';
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    ctx.arc(x, y, r, a - 0.9, a + 0.9);
-    ctx.stroke();
-    ctx.strokeStyle = `rgba(120,200,255,${0.2 * k})`;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, 6.283);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+    const event =
+      identifier === (clientView && clientView.id)
+        ? clientView
+        : clientGameState.ents.get(identifier);
+    if (!event) continue;
+    const shipHullAsset =
+      clientGameState.A!.ships[(event as RenderEntity).hull] ||
+      clientGameState.A!.ships[clientGameState.myHull];
+    const radius =
+      (shipHullAsset ? shipHullAsset.size : 60) * 0.42 * zoom2 * clientGameState.spriteScale;
+    const positionX = screenX(event.rx),
+      positionY = screenY(event.ry),
+      atan = Math.atan2(shieldHit.hy - event.ry, shieldHit.hx - event.rx),
+      entryKey = shieldHit.t / 0.35;
+    canvasRenderingContext2D.strokeStyle = `rgba(120,200,255,${0.8 * entryKey})`;
+    canvasRenderingContext2D.lineWidth = 3;
+    canvasRenderingContext2D.shadowColor = '#7ad0ff';
+    canvasRenderingContext2D.shadowBlur = 10;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, radius, atan - 0.9, atan + 0.9);
+    canvasRenderingContext2D.stroke();
+    canvasRenderingContext2D.strokeStyle = `rgba(120,200,255,${0.2 * entryKey})`;
+    canvasRenderingContext2D.lineWidth = 1.5;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
+    canvasRenderingContext2D.stroke();
+    canvasRenderingContext2D.shadowBlur = 0;
   }
   // effects
-  for (let i = fx.length - 1; i >= 0; i--) {
-    const f = fx[i];
-    f.life -= dt;
-    if (f.life <= 0) {
-      fx.splice(i, 1);
+  for (let index = visualEffects.length - 1; index >= 0; index--) {
+    const factionId = visualEffects[index];
+    factionId.life -= deltaTime;
+    if (factionId.life <= 0) {
+      visualEffects.splice(index, 1);
       continue;
     }
-    const k = f.life / f.max,
-      x = sx(f.x),
-      y = sy(f.y);
-    if (f.vx !== undefined) {
-      f.x += f.vx * dt;
-      f.y += f.vy * dt;
+    const entryKey = factionId.life / factionId.max,
+      positionX = screenX(factionId.x),
+      positionY = screenY(factionId.y);
+    if (factionId.vx !== undefined) {
+      factionId.x += factionId.vx * deltaTime;
+      factionId.y += factionId.vy * deltaTime;
     }
-    if (f.hyper) {
+    if (factionId.hyper) {
       // 2.1 hyperspace flash
-      const e = 1 - k,
-        R = f.r * z * (0.6 + e * 0.8),
-        g = ctx.createRadialGradient(x, y, 0, x, y, R);
-      g.addColorStop(0, `rgba(255,255,255,${k})`);
-      g.addColorStop(0.25, `rgba(200,230,255,${k * 0.85})`);
-      g.addColorStop(1, 'rgba(80,140,255,0)');
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(x, y, R, 0, 6.283);
-      ctx.fill();
-      const L = f.r * z * (2.5 + e * 5),
-        hg = ctx.createLinearGradient(x - L, y, x + L, y);
-      hg.addColorStop(0, 'rgba(120,180,255,0)');
-      hg.addColorStop(0.5, `rgba(235,245,255,${k * 0.9})`);
-      hg.addColorStop(1, 'rgba(120,180,255,0)');
-      ctx.fillStyle = hg;
-      ctx.fillRect(x - L, y - Math.max(1, 2.2 * z * k), L * 2, Math.max(2, 4.4 * z * k));
-      ctx.globalCompositeOperation = 'source-over';
+      const event = 1 - entryKey,
+        radius = factionId.r * zoom2 * (0.6 + event * 0.8),
+        canvasGradient = canvasRenderingContext2D.createRadialGradient(
+          positionX,
+          positionY,
+          0,
+          positionX,
+          positionY,
+          radius,
+        );
+      canvasGradient.addColorStop(0, `rgba(255,255,255,${entryKey})`);
+      canvasGradient.addColorStop(0.25, `rgba(200,230,255,${entryKey * 0.85})`);
+      canvasGradient.addColorStop(1, 'rgba(80,140,255,0)');
+      canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
+      canvasRenderingContext2D.fill();
+      const length = factionId.r * zoom2 * (2.5 + event * 5),
+        canvasGradient3 = canvasRenderingContext2D.createLinearGradient(
+          positionX - length,
+          positionY,
+          positionX + length,
+          positionY,
+        );
+      canvasGradient3.addColorStop(0, 'rgba(120,180,255,0)');
+      canvasGradient3.addColorStop(0.5, `rgba(235,245,255,${entryKey * 0.9})`);
+      canvasGradient3.addColorStop(1, 'rgba(120,180,255,0)');
+      canvasRenderingContext2D.fillStyle = canvasGradient3;
+      canvasRenderingContext2D.fillRect(
+        positionX - length,
+        positionY - Math.max(1, 2.2 * zoom2 * entryKey),
+        length * 2,
+        Math.max(2, 4.4 * zoom2 * entryKey),
+      );
+      canvasRenderingContext2D.globalCompositeOperation = 'source-over';
       continue;
     }
-    if (f.ring) {
-      ctx.globalAlpha = k;
-      ctx.strokeStyle = f.c;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(x, y, f.r * (1 - k) * z + 4, 0, Math.PI * 2);
-      if (f.fill) {
-        ctx.fillStyle = f.c;
-        ctx.globalAlpha = k * 0.5;
-        ctx.fill();
-      } else ctx.stroke();
-      ctx.globalAlpha = 1;
+    if (factionId.ring) {
+      canvasRenderingContext2D.globalAlpha = entryKey;
+      canvasRenderingContext2D.strokeStyle = factionId.c;
+      canvasRenderingContext2D.lineWidth = 3;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(
+        positionX,
+        positionY,
+        factionId.r * (1 - entryKey) * zoom2 + 4,
+        0,
+        Math.PI * 2,
+      );
+      if (factionId.fill) {
+        canvasRenderingContext2D.fillStyle = factionId.c;
+        canvasRenderingContext2D.globalAlpha = entryKey * 0.5;
+        canvasRenderingContext2D.fill();
+      } else canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.globalAlpha = 1;
       continue;
     }
-    if (f.anim) {
-      const im = fxImg(f.anim);
-      if (im.complete && im.naturalWidth) {
-        const fs = im.naturalWidth / 6,
-          fr = Math.min(23, Math.floor((1 - k) * 24)),
-          sz = f.r * 2.6 * z;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(f.rot);
-        ctx.drawImage(im, (fr % 6) * fs, Math.floor(fr / 6) * fs, fs, fs, -sz / 2, -sz / 2, sz, sz);
-        ctx.restore();
+    if (factionId.anim) {
+      const htmlImageElement = fxImg(factionId.anim);
+      if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
+        const fileSystem = htmlImageElement.naturalWidth / 6,
+          fraction = Math.min(23, Math.floor((1 - entryKey) * 24)),
+          size = factionId.r * 2.6 * zoom2;
+        canvasRenderingContext2D.save();
+        canvasRenderingContext2D.translate(positionX, positionY);
+        canvasRenderingContext2D.rotate(factionId.rot);
+        canvasRenderingContext2D.drawImage(
+          htmlImageElement,
+          (fraction % 6) * fileSystem,
+          Math.floor(fraction / 6) * fileSystem,
+          fileSystem,
+          fileSystem,
+          -size / 2,
+          -size / 2,
+          size,
+          size,
+        );
+        canvasRenderingContext2D.restore();
       }
       continue;
     }
-    if (f.flare) {
-      const im = fxImg('flare');
-      if (im.complete && im.naturalWidth) {
-        const sz = f.r * 2 * z * (0.6 + 0.4 * k);
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = k;
-        ctx.drawImage(im, x - sz / 2, y - sz / 2, sz, sz);
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = 'source-over';
+    if (factionId.flare) {
+      const htmlImageElement = fxImg('flare');
+      if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
+        const size = factionId.r * 2 * zoom2 * (0.6 + 0.4 * entryKey);
+        canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+        canvasRenderingContext2D.globalAlpha = entryKey;
+        canvasRenderingContext2D.drawImage(
+          htmlImageElement,
+          positionX - size / 2,
+          positionY - size / 2,
+          size,
+          size,
+        );
+        canvasRenderingContext2D.globalAlpha = 1;
+        canvasRenderingContext2D.globalCompositeOperation = 'source-over';
       }
       continue;
     }
-    if (f.debris && fxImg('shards').complete && fxImg('shards').naturalWidth) {
-      f.rot += f.vr * dt;
-      const im = fxImg('shards'),
-        si = f.si ?? (f.si = Math.floor(Math.random() * 8)),
-        sz = Math.max(6, f.s * 5) * z;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(f.rot);
-      ctx.globalAlpha = Math.min(1, k * 2);
-      ctx.drawImage(im, si * 48, 0, 48, 48, -sz / 2, -sz / 2, sz, sz);
-      if (k > 0.7) {
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = (k - 0.7) * 2;
-        ctx.drawImage(im, si * 48, 0, 48, 48, -sz / 2, -sz / 2, sz, sz);
-        ctx.globalCompositeOperation = 'source-over';
+    if (factionId.debris && fxImg('shards').complete && fxImg('shards').naturalWidth) {
+      factionId.rot += factionId.vr * deltaTime;
+      const htmlImageElement = fxImg('shards'),
+        systemIndex = factionId.si ?? (factionId.si = Math.floor(Math.random() * 8)),
+        size = Math.max(6, factionId.s * 5) * zoom2;
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(positionX, positionY);
+      canvasRenderingContext2D.rotate(factionId.rot);
+      canvasRenderingContext2D.globalAlpha = Math.min(1, entryKey * 2);
+      canvasRenderingContext2D.drawImage(
+        htmlImageElement,
+        systemIndex * 48,
+        0,
+        48,
+        48,
+        -size / 2,
+        -size / 2,
+        size,
+        size,
+      );
+      if (entryKey > 0.7) {
+        canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+        canvasRenderingContext2D.globalAlpha = (entryKey - 0.7) * 2;
+        canvasRenderingContext2D.drawImage(
+          htmlImageElement,
+          systemIndex * 48,
+          0,
+          48,
+          48,
+          -size / 2,
+          -size / 2,
+          size,
+          size,
+        );
+        canvasRenderingContext2D.globalCompositeOperation = 'source-over';
       }
-      ctx.restore();
-      ctx.globalAlpha = 1;
+      canvasRenderingContext2D.restore();
+      canvasRenderingContext2D.globalAlpha = 1;
       continue;
     }
-    if (f.ball) {
-      const r = f.r * (0.35 + 0.65 * (1 - k * k)) * z,
-        g = ctx.createRadialGradient(x, y, 0, x, y, r);
-      g.addColorStop(0, `rgba(255,255,230,${k})`);
-      g.addColorStop(0.35, `rgba(255,200,90,${k * 0.9})`);
-      g.addColorStop(0.7, `rgba(255,90,30,${k * 0.6})`);
-      g.addColorStop(1, 'rgba(80,20,0,0)');
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 6.283);
-      ctx.fill();
-      ctx.globalCompositeOperation = 'source-over';
+    if (factionId.ball) {
+      const radius = factionId.r * (0.35 + 0.65 * (1 - entryKey * entryKey)) * zoom2,
+        canvasGradient = canvasRenderingContext2D.createRadialGradient(
+          positionX,
+          positionY,
+          0,
+          positionX,
+          positionY,
+          radius,
+        );
+      canvasGradient.addColorStop(0, `rgba(255,255,230,${entryKey})`);
+      canvasGradient.addColorStop(0.35, `rgba(255,200,90,${entryKey * 0.9})`);
+      canvasGradient.addColorStop(0.7, `rgba(255,90,30,${entryKey * 0.6})`);
+      canvasGradient.addColorStop(1, 'rgba(80,20,0,0)');
+      canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.globalCompositeOperation = 'source-over';
       continue;
     }
-    if (f.smoke) {
-      f.vx *= 0.97;
-      f.vy *= 0.97;
-      const r = f.r * (1.6 - k) * z;
-      ctx.fillStyle = `rgba(90,85,80,${0.35 * k})`;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 6.283);
-      ctx.fill();
+    if (factionId.smoke) {
+      factionId.vx *= 0.97;
+      factionId.vy *= 0.97;
+      const radius = factionId.r * (1.6 - entryKey) * zoom2;
+      canvasRenderingContext2D.fillStyle = `rgba(90,85,80,${0.35 * entryKey})`;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
+      canvasRenderingContext2D.fill();
       continue;
     }
-    if (f.debris) {
-      f.rot += f.vr * dt;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(f.rot);
-      ctx.globalAlpha = Math.min(1, k * 2);
-      ctx.fillStyle = k > 0.7 ? '#ffb060' : '#6a6a70';
-      ctx.fillRect(-f.s * z, -f.s * z * 0.5, f.s * 2 * z, f.s * z);
-      ctx.restore();
-      ctx.globalAlpha = 1;
+    if (factionId.debris) {
+      factionId.rot += factionId.vr * deltaTime;
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(positionX, positionY);
+      canvasRenderingContext2D.rotate(factionId.rot);
+      canvasRenderingContext2D.globalAlpha = Math.min(1, entryKey * 2);
+      canvasRenderingContext2D.fillStyle = entryKey > 0.7 ? '#ffb060' : '#6a6a70';
+      canvasRenderingContext2D.fillRect(
+        -factionId.s * zoom2,
+        -factionId.s * zoom2 * 0.5,
+        factionId.s * 2 * zoom2,
+        factionId.s * zoom2,
+      );
+      canvasRenderingContext2D.restore();
+      canvasRenderingContext2D.globalAlpha = 1;
       continue;
     }
-    if (f.num !== undefined) {
-      ctx.globalAlpha = Math.min(1, k * 1.6);
-      ctx.font = `bold ${f.mine ? 15 : 13}px "Pixelify Sans", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#000';
-      ctx.strokeText(String(f.num), x, y);
-      ctx.fillStyle = f.mine ? '#ffd27a' : '#ff7a6a';
-      ctx.fillText(String(f.num), x, y);
-      ctx.globalAlpha = 1;
+    if (factionId.num !== undefined) {
+      canvasRenderingContext2D.globalAlpha = Math.min(1, entryKey * 1.6);
+      canvasRenderingContext2D.font = `bold ${factionId.mine ? 15 : 13}px "Pixelify Sans", sans-serif`;
+      canvasRenderingContext2D.textAlign = 'center';
+      canvasRenderingContext2D.lineWidth = 3;
+      canvasRenderingContext2D.strokeStyle = '#000';
+      canvasRenderingContext2D.strokeText(String(factionId.num), positionX, positionY);
+      canvasRenderingContext2D.fillStyle = factionId.mine ? '#ffd27a' : '#ff7a6a';
+      canvasRenderingContext2D.fillText(String(factionId.num), positionX, positionY);
+      canvasRenderingContext2D.globalAlpha = 1;
       continue;
     }
-    ctx.globalAlpha = k;
-    ctx.fillStyle = f.c;
-    ctx.fillRect(x, y, f.s * z + 0.5, f.s * z + 0.5);
-    ctx.globalAlpha = 1;
+    canvasRenderingContext2D.globalAlpha = entryKey;
+    canvasRenderingContext2D.fillStyle = factionId.c;
+    canvasRenderingContext2D.fillRect(
+      positionX,
+      positionY,
+      factionId.s * zoom2 + 0.5,
+      factionId.s * zoom2 + 0.5,
+    );
+    canvasRenderingContext2D.globalAlpha = 1;
   }
-  shake *= Math.pow(0.02, dt);
+  shake *= Math.pow(0.02, deltaTime);
   if (shake < 0.2) shake = 0;
-  hudOverlay(G, ctx, W, H, now, sx, sy, me);
+  hudOverlay(
+    clientGameState,
+    canvasRenderingContext2D,
+    width2,
+    height2,
+    currentTime,
+    screenX,
+    screenY,
+    clientView,
+  );
 }
 // ------------------------------------------------------------------ 2.0 screen-space feedback: edge arrows, damage, jumps
 /**
  * Renders an off-screen pointing arrow and label at the viewport perimeter.
- * @param {CanvasRenderingContext2D} ctx 2D rendering context
- * @param {number} W Viewport width
- * @param {number} H Viewport height
- * @param {number} x World-to-screen projected X coordinate
- * @param {number} y World-to-screen projected Y coordinate
- * @param {string} col CSS color string
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
+ * @param {number} width2 Viewport width
+ * @param {number} height2 Viewport height
+ * @param {number} positionX World-to-screen projected X coordinate
+ * @param {number} positionY World-to-screen projected Y coordinate
+ * @param {string} column CSS color string
  * @param {string} label Display text
- * @param {number} dist Distance in kilometers
+ * @param {number} distance Distance in kilometers
  * @returns {void}
  */
 function edgeArrow(
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  x: number,
-  y: number,
-  col: string,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  positionX: number,
+  positionY: number,
+  column: string,
   label: string,
-  dist: number,
+  distance: number,
 ): void {
-  const m = 46,
-    cxs = W / 2,
-    cys = H / 2,
-    dx = x - cxs,
-    dy = y - cys;
-  if (x > m && y > m && x < W - m && y < H - m) return;
-  const k = Math.min((W / 2 - m) / Math.abs(dx || 1e-6), (H / 2 - m) / Math.abs(dy || 1e-6)),
-    ex = cxs + dx * k,
-    ey = cys + dy * k,
-    a = Math.atan2(dy, dx);
-  ctx.save();
-  ctx.translate(ex, ey);
-  ctx.rotate(a);
-  ctx.fillStyle = col;
-  ctx.globalAlpha = 0.9;
-  ctx.beginPath();
-  ctx.moveTo(14, 0);
-  ctx.lineTo(-6, -9);
-  ctx.lineTo(-2, 0);
-  ctx.lineTo(-6, 9);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-  ctx.font = '13px "Pixelify Sans", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = col;
-  ctx.globalAlpha = 0.85;
-  const lx = ex - Math.cos(a) * 26,
-    ly = ey - Math.sin(a) * 22 + 4;
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = 'rgba(0,0,0,.7)';
-  const t = `${label} · ${Math.round(dist)} km`;
-  ctx.strokeText(t, lx, ly);
-  ctx.fillText(t, lx, ly);
-  ctx.globalAlpha = 1;
+  const message = 46,
+    screenCenterX = width / 2,
+    screenCenterY = height / 2,
+    deltaX = positionX - screenCenterX,
+    deltaY = positionY - screenCenterY;
+  if (
+    positionX > message &&
+    positionY > message &&
+    positionX < width - message &&
+    positionY < height - message
+  )
+    return;
+  const entryKey = Math.min(
+      (width / 2 - message) / Math.abs(deltaX || 1e-6),
+      (height / 2 - message) / Math.abs(deltaY || 1e-6),
+    ),
+    velocityErrorX = screenCenterX + deltaX * entryKey,
+    velocityErrorY = screenCenterY + deltaY * entryKey,
+    atan = Math.atan2(deltaY, deltaX);
+  canvasRenderingContext2D.save();
+  canvasRenderingContext2D.translate(velocityErrorX, velocityErrorY);
+  canvasRenderingContext2D.rotate(atan);
+  canvasRenderingContext2D.fillStyle = column;
+  canvasRenderingContext2D.globalAlpha = 0.9;
+  canvasRenderingContext2D.beginPath();
+  canvasRenderingContext2D.moveTo(14, 0);
+  canvasRenderingContext2D.lineTo(-6, -9);
+  canvasRenderingContext2D.lineTo(-2, 0);
+  canvasRenderingContext2D.lineTo(-6, 9);
+  canvasRenderingContext2D.closePath();
+  canvasRenderingContext2D.fill();
+  canvasRenderingContext2D.restore();
+  canvasRenderingContext2D.font = '13px "Pixelify Sans", sans-serif';
+  canvasRenderingContext2D.textAlign = 'center';
+  canvasRenderingContext2D.fillStyle = column;
+  canvasRenderingContext2D.globalAlpha = 0.85;
+  const localX = velocityErrorX - Math.cos(atan) * 26,
+    localY = velocityErrorY - Math.sin(atan) * 22 + 4;
+  canvasRenderingContext2D.lineWidth = 3;
+  canvasRenderingContext2D.strokeStyle = 'rgba(0,0,0,.7)';
+  const time = `${label} · ${Math.round(distance)} km`;
+  canvasRenderingContext2D.strokeText(time, localX, localY);
+  canvasRenderingContext2D.fillText(time, localX, localY);
+  canvasRenderingContext2D.globalAlpha = 1;
 }
-const STARS = Array.from({ length: 170 }, (_, i) => {
-  const r = (n: number) => {
-    const v = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
-    return v - Math.floor(v);
+const STARS = Array.from({ length: 170 }, (unused, index) => {
+  const radius = (count: number) => {
+    const value = Math.sin(index * 127.1 + count * 311.7) * 43758.5453;
+    return value - Math.floor(value);
   };
-  return { x: r(1), y: r(2), z: 0.35 + r(3) * 0.65, c: r(4) < 0.12 ? 'w' : r(4) < 0.4 ? 'b' : 'n' };
+  return {
+    x: radius(1),
+    y: radius(2),
+    z: 0.35 + radius(3) * 0.65,
+    c: radius(4) < 0.12 ? 'w' : radius(4) < 0.4 ? 'b' : 'n',
+  };
 });
 const STAR_COL: Record<string, string> = { n: '220,235,255', b: '150,195,255', w: '255,215,170' };
 /**
  * Renders directional starfield velocity streaks during hyperspace transitions.
- * @param {CanvasRenderingContext2D} ctx 2D rendering context
- * @param {number} W Viewport width
- * @param {number} H Viewport height
- * @param {number} a Ship heading angle
- * @param {number} len Streak length
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D rendering context
+ * @param {number} width2 Viewport width
+ * @param {number} height2 Viewport height
+ * @param {number} firstValue Ship heading angle
+ * @param {number} length2 Streak length
  * @param {number} alpha Opacity factor
  * @param {number} drift Drift distance
  * @returns {void}
  */
 function streaks(
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  a: number,
-  len: number,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  firstValue: number,
+  length: number,
   alpha: number,
   drift: number,
 ): void {
   // star streaks lying along heading a, sliding backwards past you
-  const ux = Math.sin(a),
-    uy = -Math.cos(a),
-    span = W + H;
-  ctx.lineCap = 'round';
-  for (const st of STARS) {
-    let px = (st.x * span - ux * drift * st.z) % span,
-      py = (st.y * span - uy * drift * st.z) % span;
-    if (px < 0) px += span;
-    if (py < 0) py += span;
-    px -= (span - W) / 2;
-    py -= (span - H) / 2;
-    if (px < -200 || py < -200 || px > W + 200 || py > H + 200) continue;
-    const l = len * st.z;
-    ctx.strokeStyle = `rgba(${STAR_COL[st.c]},${alpha * st.z})`;
-    ctx.lineWidth = 0.8 + st.z * 1.4;
-    ctx.beginPath();
-    ctx.moveTo(px, py);
-    ctx.lineTo(px - ux * l, py - uy * l);
-    ctx.stroke();
+  const unitX = Math.sin(firstValue),
+    unitY = -Math.cos(firstValue),
+    span = width + height;
+  canvasRenderingContext2D.lineCap = 'round';
+  for (const sTARS of STARS) {
+    let pixelX = (sTARS.x * span - unitX * drift * sTARS.z) % span,
+      pixelY = (sTARS.y * span - unitY * drift * sTARS.z) % span;
+    if (pixelX < 0) pixelX += span;
+    if (pixelY < 0) pixelY += span;
+    pixelX -= (span - width) / 2;
+    pixelY -= (span - height) / 2;
+    if (pixelX < -200 || pixelY < -200 || pixelX > width + 200 || pixelY > height + 200) continue;
+    const length3 = length * sTARS.z;
+    canvasRenderingContext2D.strokeStyle = `rgba(${STAR_COL[sTARS.c]},${alpha * sTARS.z})`;
+    canvasRenderingContext2D.lineWidth = 0.8 + sTARS.z * 1.4;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.moveTo(pixelX, pixelY);
+    canvasRenderingContext2D.lineTo(pixelX - unitX * length3, pixelY - unitY * length3);
+    canvasRenderingContext2D.stroke();
   }
 }
 /**
  * Renders hyperspace jump departure spool animation, rings, and flash.
- * @param {ClientGameState} G Game state
- * @param {CanvasRenderingContext2D} ctx 2D context
- * @param {number} W Viewport width
- * @param {number} H Viewport height
- * @param {number} now Timestamp in milliseconds
- * @param {number} x Ship screen X
- * @param {number} y Ship screen Y
- * @param {number} a Ship heading angle
+ * @param {ClientGameState} clientGameState Game state
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D context
+ * @param {number} width2 Viewport width
+ * @param {number} height2 Viewport height
+ * @param {number} currentTime Timestamp in milliseconds
+ * @param {number} positionX Ship screen X
+ * @param {number} positionY Ship screen Y
+ * @param {number} firstValue Ship heading angle
  * @returns {void}
  */
 function hyperOut(
-  G: ClientGameState,
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  now: number,
-  x: number,
-  y: number,
-  a: number,
+  clientGameState: ClientGameState,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  currentTime: number,
+  positionX: number,
+  positionY: number,
+  firstValue: number,
 ): void {
-  const st = G.you && G.you.shipStats,
-    dur = st && st.jumpFast ? 600 : 1600,
-    k = Math.min(1, (now - (G._jumpStart || now)) / dur);
+  const computedShipStats = clientGameState.you && clientGameState.you.shipStats,
+    duration = computedShipStats && computedShipStats.jumpFast ? 600 : 1600,
+    entryKey = Math.min(1, (currentTime - (clientGameState._jumpStart || currentTime)) / duration);
   // the edges darken as the drive spools
-  const vg = ctx.createRadialGradient(
-    W / 2,
-    H / 2,
-    Math.min(W, H) * 0.25,
-    W / 2,
-    H / 2,
-    Math.max(W, H) * 0.7,
+  const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+    width / 2,
+    height / 2,
+    Math.min(width, height) * 0.25,
+    width / 2,
+    height / 2,
+    Math.max(width, height) * 0.7,
   );
-  vg.addColorStop(0, 'rgba(0,0,10,0)');
-  vg.addColorStop(1, `rgba(0,4,20,${0.55 * Math.min(1, k * 2)})`);
-  ctx.fillStyle = vg;
-  ctx.fillRect(0, 0, W, H);
-  ctx.globalCompositeOperation = 'lighter';
-  if (k < 0.55)
-    for (let i = 0; i < 3; i++) {
+  canvasGradient.addColorStop(0, 'rgba(0,0,10,0)');
+  canvasGradient.addColorStop(1, `rgba(0,4,20,${0.55 * Math.min(1, entryKey * 2)})`);
+  canvasRenderingContext2D.fillStyle = canvasGradient;
+  canvasRenderingContext2D.fillRect(0, 0, width, height);
+  canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+  if (entryKey < 0.55)
+    for (let index = 0; index < 3; index++) {
       // rings of energy closing in on the ship
-      const q = (k / 0.55 + i / 3) % 1,
-        r = 22 + (1 - q) * 170;
-      ctx.strokeStyle = `rgba(150,200,255,${0.55 * q * (1 - (k / 0.55) * 0.6)})`;
-      ctx.lineWidth = 1.5 + q * 2;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 6.283);
-      ctx.stroke();
+      const quantity = (entryKey / 0.55 + index / 3) % 1,
+        radius = 22 + (1 - quantity) * 170;
+      canvasRenderingContext2D.strokeStyle = `rgba(150,200,255,${0.55 * quantity * (1 - (entryKey / 0.55) * 0.6)})`;
+      canvasRenderingContext2D.lineWidth = 1.5 + quantity * 2;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
+      canvasRenderingContext2D.stroke();
     }
-  const core = ctx.createRadialGradient(x, y, 0, x, y, 40 + 90 * k);
-  core.addColorStop(0, `rgba(220,240,255,${0.35 + 0.5 * k})`);
+  const core = canvasRenderingContext2D.createRadialGradient(
+    positionX,
+    positionY,
+    0,
+    positionX,
+    positionY,
+    40 + 90 * entryKey,
+  );
+  core.addColorStop(0, `rgba(220,240,255,${0.35 + 0.5 * entryKey})`);
   core.addColorStop(1, 'rgba(90,140,255,0)');
-  ctx.fillStyle = core;
-  ctx.beginPath();
-  ctx.arc(x, y, 40 + 90 * k, 0, 6.283);
-  ctx.fill();
-  const s2 = Math.max(0, (k - 0.25) / 0.75); // the stars stretch into streaks along your heading
-  if (s2 > 0)
-    streaks(ctx, W, H, a, 6 + s2 * s2 * Math.max(W, H) * 0.9, 0.25 + 0.6 * s2, s2 * s2 * 2600);
-  if (k > 0.82) {
+  canvasRenderingContext2D.fillStyle = core;
+  canvasRenderingContext2D.beginPath();
+  canvasRenderingContext2D.arc(positionX, positionY, 40 + 90 * entryKey, 0, 6.283);
+  canvasRenderingContext2D.fill();
+  const secondState = Math.max(0, (entryKey - 0.25) / 0.75); // the stars stretch into streaks along your heading
+  if (secondState > 0)
+    streaks(
+      canvasRenderingContext2D,
+      width,
+      height,
+      firstValue,
+      6 + secondState * secondState * Math.max(width, height) * 0.9,
+      0.25 + 0.6 * secondState,
+      secondState * secondState * 2600,
+    );
+  if (entryKey > 0.82) {
     // the bloom and lens streak as you leave
-    const b = (k - 0.82) / 0.18;
-    ctx.fillStyle = `rgba(225,238,255,${0.85 * b * b})`;
-    ctx.fillRect(0, 0, W, H);
-    const L = W * (0.3 + b),
-      hg = ctx.createLinearGradient(x - L, y, x + L, y);
-    hg.addColorStop(0, 'rgba(120,180,255,0)');
-    hg.addColorStop(0.5, `rgba(255,255,255,${0.9 * b})`);
-    hg.addColorStop(1, 'rgba(120,180,255,0)');
-    ctx.fillStyle = hg;
-    ctx.fillRect(x - L, y - 3 - 6 * b, L * 2, 6 + 12 * b);
+    const secondValue = (entryKey - 0.82) / 0.18;
+    canvasRenderingContext2D.fillStyle = `rgba(225,238,255,${0.85 * secondValue * secondValue})`;
+    canvasRenderingContext2D.fillRect(0, 0, width, height);
+    const length = width * (0.3 + secondValue),
+      canvasGradient = canvasRenderingContext2D.createLinearGradient(
+        positionX - length,
+        positionY,
+        positionX + length,
+        positionY,
+      );
+    canvasGradient.addColorStop(0, 'rgba(120,180,255,0)');
+    canvasGradient.addColorStop(0.5, `rgba(255,255,255,${0.9 * secondValue})`);
+    canvasGradient.addColorStop(1, 'rgba(120,180,255,0)');
+    canvasRenderingContext2D.fillStyle = canvasGradient;
+    canvasRenderingContext2D.fillRect(
+      positionX - length,
+      positionY - 3 - 6 * secondValue,
+      length * 2,
+      6 + 12 * secondValue,
+    );
   }
-  ctx.globalCompositeOperation = 'source-over';
+  canvasRenderingContext2D.globalCompositeOperation = 'source-over';
 }
 /**
  * Renders hyperspace jump arrival deceleration bloom and shockwave rings.
- * @param {ClientGameState} G Game state
- * @param {CanvasRenderingContext2D} ctx 2D context
- * @param {number} W Viewport width
- * @param {number} H Viewport height
- * @param {number} t Milliseconds elapsed since arrival
- * @param {number} x Ship screen X
- * @param {number} y Ship screen Y
- * @param {number} a Ship heading angle
+ * @param {ClientGameState} clientGameState Game state
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D context
+ * @param {number} width2 Viewport width
+ * @param {number} height2 Viewport height
+ * @param {number} time Milliseconds elapsed since arrival
+ * @param {number} positionX Ship screen X
+ * @param {number} positionY Ship screen Y
+ * @param {number} firstValue Ship heading angle
  * @returns {void}
  */
 function hyperIn(
-  G: ClientGameState,
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  t: number,
-  x: number,
-  y: number,
-  a: number,
+  clientGameState: ClientGameState,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  time: number,
+  positionX: number,
+  positionY: number,
+  firstValue: number,
 ): void {
-  const k = t / 1100; // 0 at arrival .. 1 settled
-  ctx.globalCompositeOperation = 'lighter';
-  const s2 = Math.max(0, 1 - k / 0.45);
-  if (s2 > 0)
-    streaks(ctx, W, H, a, 4 + s2 * s2 * Math.max(W, H) * 0.7, 0.8 * s2, 2600 + (1 - s2) * 900); // streaks collapse back into stars
-  for (const [d, col] of [
+  const entryKey = time / 1100; // 0 at arrival .. 1 settled
+  canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+  const secondState = Math.max(0, 1 - entryKey / 0.45);
+  if (secondState > 0)
+    streaks(
+      canvasRenderingContext2D,
+      width,
+      height,
+      firstValue,
+      4 + secondState * secondState * Math.max(width, height) * 0.7,
+      0.8 * secondState,
+      2600 + (1 - secondState) * 900,
+    ); // streaks collapse back into stars
+  for (const [distance, column] of [
     [0, '170,215,255'],
     [6, '255,170,200'],
   ] as [number, string][]) {
-    const r = 30 + k * Math.max(W, H) * 0.6 + d,
-      al = 0.6 * (1 - k);
-    ctx.strokeStyle = `rgba(${col},${al})`;
-    ctx.lineWidth = 3 * (1 - k) + 1;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, 6.283);
-    ctx.stroke();
+    const radius = 30 + entryKey * Math.max(width, height) * 0.6 + distance,
+      alpha = 0.6 * (1 - entryKey);
+    canvasRenderingContext2D.strokeStyle = `rgba(${column},${alpha})`;
+    canvasRenderingContext2D.lineWidth = 3 * (1 - entryKey) + 1;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
+    canvasRenderingContext2D.stroke();
   }
-  if (k < 0.5) {
-    const c = ctx.createRadialGradient(x, y, 0, x, y, 160);
-    c.addColorStop(0, `rgba(235,245,255,${0.8 * (1 - k * 2)})`);
-    c.addColorStop(1, 'rgba(120,170,255,0)');
-    ctx.fillStyle = c;
-    ctx.beginPath();
-    ctx.arc(x, y, 160, 0, 6.283);
-    ctx.fill();
+  if (entryKey < 0.5) {
+    const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+      positionX,
+      positionY,
+      0,
+      positionX,
+      positionY,
+      160,
+    );
+    canvasGradient.addColorStop(0, `rgba(235,245,255,${0.8 * (1 - entryKey * 2)})`);
+    canvasGradient.addColorStop(1, 'rgba(120,170,255,0)');
+    canvasRenderingContext2D.fillStyle = canvasGradient;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, 160, 0, 6.283);
+    canvasRenderingContext2D.fill();
   }
-  ctx.globalCompositeOperation = 'source-over';
-  if (k < 0.35) {
-    ctx.fillStyle = `rgba(225,238,255,${0.75 * (1 - k / 0.35) ** 2})`;
-    ctx.fillRect(0, 0, W, H);
+  canvasRenderingContext2D.globalCompositeOperation = 'source-over';
+  if (entryKey < 0.35) {
+    canvasRenderingContext2D.fillStyle = `rgba(225,238,255,${0.75 * (1 - entryKey / 0.35) ** 2})`;
+    canvasRenderingContext2D.fillRect(0, 0, width, height);
   }
 }
 /**
  * Renders screen-space HUD indicators, off-screen arrows, and damage vignettes.
- * @param {ClientGameState} G Game state
- * @param {CanvasRenderingContext2D} ctx 2D context
- * @param {number} W Viewport width
- * @param {number} H Viewport height
- * @param {number} now Timestamp in milliseconds
- * @param {(wx: number) => number} sx Screen X projector function
- * @param {(wy: number) => number} sy Screen Y projector function
- * @param {ClientView | null} me Current player view state
+ * @param {ClientGameState} clientGameState Game state
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D 2D context
+ * @param {number} width2 Viewport width
+ * @param {number} height2 Viewport height
+ * @param {number} currentTime Timestamp in milliseconds
+ * @param {(wx: number) => number} screenX Screen X projector function
+ * @param {(wy: number) => number} screenY Screen Y projector function
+ * @param {ClientView | null} clientView Current player view state
  * @returns {void}
  */
 function hudOverlay(
-  G: ClientGameState,
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  now: number,
-  sx: (wx: number) => number,
-  sy: (wy: number) => number,
-  me: ClientView | null,
+  clientGameState: ClientGameState,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  currentTime: number,
+  screenX: (worldX: number) => number,
+  screenY: (worldY: number) => number,
+  clientView: ClientView | null,
 ): void {
-  if (!me) return;
-  const S = SYS[G.sys!];
-  if (!S) return;
+  if (!clientView) return;
+  const starSystem = systemsById[clientGameState.sys!];
+  if (!starSystem) return;
   // mission objectives in this system, your nav point, and your target
   const seen = new Set();
-  for (const t of missionTargets(G))
-    if (t.stellar && !seen.has(t.stellar)) {
-      const p = S.stellars.find((x) => x.id === t.stellar);
-      if (p) {
-        seen.add(p.id);
+  for (const missionTarget of missionTargets(clientGameState))
+    if (missionTarget.stellar && !seen.has(missionTarget.stellar)) {
+      const rawStellarBody = starSystem.stellars.find(
+        (rawStellarBody) => rawStellarBody.id === missionTarget.stellar,
+      );
+      if (rawStellarBody) {
+        seen.add(rawStellarBody.id);
         edgeArrow(
-          ctx,
-          W,
-          H,
-          sx(p.x),
-          sy(p.y),
-          t.kind === 'story' || t.kind === 'arc' ? '#ffd65a' : '#ffb86a',
-          p.name,
-          Math.hypot(p.x - me.rx, p.y - me.ry),
+          canvasRenderingContext2D,
+          width,
+          height,
+          screenX(rawStellarBody.x),
+          screenY(rawStellarBody.y),
+          missionTarget.kind === 'story' || missionTarget.kind === 'arc' ? '#ffd65a' : '#ffb86a',
+          rawStellarBody.name,
+          Math.hypot(rawStellarBody.x - clientView.rx, rawStellarBody.y - clientView.ry),
         );
       }
     }
-  for (const [x, y] of salvagePoints(G))
-    edgeArrow(ctx, W, H, sx(x), sy(y), '#ffc85a', 'Salvage', Math.hypot(x - me.rx, y - me.ry)); // 2.4
-  if (G.navStellar && !seen.has(G.navStellar)) {
-    const p = S.stellars.find((x) => x.id === G.navStellar);
-    if (p)
+  for (const [positionX, positionY] of salvagePoints(clientGameState))
+    edgeArrow(
+      canvasRenderingContext2D,
+      width,
+      height,
+      screenX(positionX),
+      screenY(positionY),
+      '#ffc85a',
+      'Salvage',
+      Math.hypot(positionX - clientView.rx, positionY - clientView.ry),
+    ); // 2.4
+  if (clientGameState.navStellar && !seen.has(clientGameState.navStellar)) {
+    const rawStellarBody = starSystem.stellars.find(
+      (rawStellarBody3) => rawStellarBody3.id === clientGameState.navStellar,
+    );
+    if (rawStellarBody)
       edgeArrow(
-        ctx,
-        W,
-        H,
-        sx(p.x),
-        sy(p.y),
+        canvasRenderingContext2D,
+        width,
+        height,
+        screenX(rawStellarBody.x),
+        screenY(rawStellarBody.y),
         '#7ad0ff',
-        p.name,
-        Math.hypot(p.x - me.rx, p.y - me.ry),
+        rawStellarBody.name,
+        Math.hypot(rawStellarBody.x - clientView.rx, rawStellarBody.y - clientView.ry),
       );
   }
-  if (Math.hypot(G.lookX || 0, G.lookY || 0) > 50)
-    edgeArrow(ctx, W, H, sx(me.rx), sy(me.ry), '#9fe0ff', 'You', Math.hypot(G.lookX!, G.lookY!)); // 2.1 look-ahead
-  const T = G.target && G.ents.get(G.target);
-  if (T)
+  if (Math.hypot(clientGameState.lookX || 0, clientGameState.lookY || 0) > 50)
     edgeArrow(
-      ctx,
-      W,
-      H,
-      sx(T.rx),
-      sy(T.ry),
-      G.isAlly && G.isAlly(T) ? G.pal.ally : G.hostile(T) ? G.pal.hostile : G.pal.friend,
-      (T.name || (G.A!.ships[T.hull] || {}).name || 'target').split(' · ')[0],
-      Math.hypot(T.rx - me.rx, T.ry - me.ry),
+      canvasRenderingContext2D,
+      width,
+      height,
+      screenX(clientView.rx),
+      screenY(clientView.ry),
+      '#9fe0ff',
+      'You',
+      Math.hypot(clientGameState.lookX!, clientGameState.lookY!),
+    ); // 2.1 look-ahead
+  const time = clientGameState.target && clientGameState.ents.get(clientGameState.target);
+  if (time)
+    edgeArrow(
+      canvasRenderingContext2D,
+      width,
+      height,
+      screenX(time.rx),
+      screenY(time.ry),
+      clientGameState.isAlly && clientGameState.isAlly(time)
+        ? clientGameState.pal.ally
+        : clientGameState.hostile(time)
+          ? clientGameState.pal.hostile
+          : clientGameState.pal.friend,
+      (time.name || (clientGameState.A!.ships[time.hull] || {}).name || 'target').split(' · ')[0],
+      Math.hypot(time.rx - clientView.rx, time.ry - clientView.ry),
     );
-  drawShipChat(G as ClientGameState & { A: GameAssets }, ctx, W, H, sx, sy, now);
+  drawShipChat(
+    clientGameState as ClientGameState & { A: GameAssets },
+    canvasRenderingContext2D,
+    width,
+    height,
+    screenX,
+    screenY,
+    currentTime,
+  );
   // 2.1 hyperspace: spool rings, star streaks along your heading, a white bloom; arrival plays it in reverse with a shockwave
-  if (G._jumping || me.fl & 8) hyperOut(G, ctx, W, H, now, sx(me.rx), sy(me.ry), me.a);
-  if (G._arriveT && now - G._arriveT < 1100)
-    hyperIn(G, ctx, W, H, now - G._arriveT, sx(me.rx), sy(me.ry), me.a);
-  // damage: a red flash when your hull is hit, and a slow pulse when armour is low
-  const st = G.you && G.you.shipStats,
-    ar = st ? me.armor / Math.max(1, st.armor) : 1,
-    hurt = G._hurtT ? Math.max(0, 1 - (now - G._hurtT) / 450) : 0,
-    low = ar < 0.3 ? (0.35 + 0.25 * Math.sin(now / 260)) * (1 - ar / 0.3) : 0,
-    v = Math.max(hurt * 0.55, low);
-  if (v > 0.01) {
-    const g = ctx.createRadialGradient(
-      W / 2,
-      H / 2,
-      Math.min(W, H) * 0.35,
-      W / 2,
-      H / 2,
-      Math.max(W, H) * 0.75,
+  if (clientGameState._jumping || clientView.fl & 8)
+    hyperOut(
+      clientGameState,
+      canvasRenderingContext2D,
+      width,
+      height,
+      currentTime,
+      screenX(clientView.rx),
+      screenY(clientView.ry),
+      clientView.a,
     );
-    g.addColorStop(0, 'rgba(255,0,0,0)');
-    g.addColorStop(1, `rgba(200,10,0,${v})`);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
+  if (clientGameState._arriveT && currentTime - clientGameState._arriveT < 1100)
+    hyperIn(
+      clientGameState,
+      canvasRenderingContext2D,
+      width,
+      height,
+      currentTime - clientGameState._arriveT,
+      screenX(clientView.rx),
+      screenY(clientView.ry),
+      clientView.a,
+    );
+  // damage: a red flash when your hull is hit, and a slow pulse when armour is low
+  const computedShipStats = clientGameState.you && clientGameState.you.shipStats,
+    armor2 = computedShipStats ? clientView.armor / Math.max(1, computedShipStats.armor) : 1,
+    hurt = clientGameState._hurtT
+      ? Math.max(0, 1 - (currentTime - clientGameState._hurtT) / 450)
+      : 0,
+    lowerValue =
+      armor2 < 0.3 ? (0.35 + 0.25 * Math.sin(currentTime / 260)) * (1 - armor2 / 0.3) : 0,
+    value = Math.max(hurt * 0.55, lowerValue);
+  if (value > 0.01) {
+    const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+      width / 2,
+      height / 2,
+      Math.min(width, height) * 0.35,
+      width / 2,
+      height / 2,
+      Math.max(width, height) * 0.75,
+    );
+    canvasGradient.addColorStop(0, 'rgba(255,0,0,0)');
+    canvasGradient.addColorStop(1, `rgba(200,10,0,${value})`);
+    canvasRenderingContext2D.fillStyle = canvasGradient;
+    canvasRenderingContext2D.fillRect(0, 0, width, height);
   }
 }
 /**
  * Renders an individual ship sprite, engine trails, shield/armor bars, and name tags.
- * @param {ClientGameState} G Game state
- * @param {CanvasRenderingContext2D} ctx Destination canvas rendering context
- * @param {RenderEntity} e Ship entity to draw
- * @param {number} x Screen coordinate X
- * @param {number} y Screen coordinate Y
- * @param {number} z Zoom scale factor
- * @param {number} now Timestamp in milliseconds
+ * @param {ClientGameState} clientGameState Game state
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D Destination canvas rendering context
+ * @param {RenderEntity} renderShip Ship entity to draw
+ * @param {number} positionX Screen coordinate X
+ * @param {number} positionY Screen coordinate Y
+ * @param {number} positionZ Zoom scale factor
+ * @param {number} currentTime Timestamp in milliseconds
  * @returns {void}
  */
 export function drawShip(
-  G: ClientGameState,
-  ctx: CanvasRenderingContext2D,
-  e: RenderShip,
-  x: number,
-  y: number,
-  z: number,
-  now: number,
+  clientGameState: ClientGameState,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  renderShip: RenderShip,
+  positionX: number,
+  positionY: number,
+  positionZ: number,
+  currentTime: number,
 ): void {
-  const H = G.A!.ships[e.hull];
-  if (!H) return;
-  const sz = H.size,
-    scale = z * G.spriteScale,
-    w = sz * scale;
-  if (x < -w || y < -w || x > ctx.canvas.width + w || y > ctx.canvas.height + w) return;
-  const fr0 = ((Math.round(e.a / (Math.PI / 18)) % 36) + 36) % 36,
-    SP = H.spr,
-    fs = SP ? SP.fs : sz,
-    cols = SP ? SP.cols : 6;
-  const fr =
-      fr0 +
-      (SP && SP.banks && !(e.fl & 4)
+  const shipHullAsset = clientGameState.A!.ships[renderShip.hull];
+  if (!shipHullAsset) return;
+  const size2 = shipHullAsset.size,
+    scale = positionZ * clientGameState.spriteScale,
+    width2 = size2 * scale;
+  if (
+    positionX < -width2 ||
+    positionY < -width2 ||
+    positionX > canvasRenderingContext2D.canvas.width + width2 ||
+    positionY > canvasRenderingContext2D.canvas.height + width2
+  )
+    return;
+  const fraction0 = ((Math.round(renderShip.a / (Math.PI / 18)) % 36) + 36) % 36,
+    spriteSheetConfig = shipHullAsset.spr,
+    fileSystem = spriteSheetConfig ? spriteSheetConfig.fs : size2,
+    columns = spriteSheetConfig ? spriteSheetConfig.cols : 6;
+  const fraction =
+      fraction0 +
+      (spriteSheetConfig && spriteSheetConfig.banks && !(renderShip.fl & 4)
         ? shipBank(
-            e,
-            now,
-            e.id === G.myId && !(e.fl & 8) && !(G.combat?.on || G.combat?.delegated),
+            renderShip,
+            currentTime,
+            renderShip.id === clientGameState.myId &&
+              !(renderShip.fl & 8) &&
+              !(clientGameState.combat?.on || clientGameState.combat?.delegated),
           ) * 36
         : 0),
-    srcX = (fr % cols) * fs,
-    srcY = Math.floor(fr / cols) * fs;
-  const im = sheet(H);
-  if (e.fl & 8 && im.complete && im.naturalWidth) {
+    sourceX = (fraction % columns) * fileSystem,
+    sourceY = Math.floor(fraction / columns) * fileSystem;
+  const htmlImageElement = sheet(shipHullAsset);
+  if (renderShip.fl & 8 && htmlImageElement.complete && htmlImageElement.naturalWidth) {
     // a ship in hyperspace leaves a stretched, blue-shifted ghost trail
-    const ux = Math.sin(e.a),
-      uy = -Math.cos(e.a);
-    ctx.globalCompositeOperation = 'lighter';
-    for (let i = 6; i >= 1; i--) {
-      ctx.globalAlpha = 0.22 * (1 - i / 7);
-      const o = i * w * 0.32;
-      ctx.drawImage(im, srcX, srcY, fs, fs, x - ux * o - w / 2, y - uy * o - w / 2, w, w);
+    const unitX = Math.sin(renderShip.a),
+      unitY = -Math.cos(renderShip.a);
+    canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+    for (let index = 6; index >= 1; index--) {
+      canvasRenderingContext2D.globalAlpha = 0.22 * (1 - index / 7);
+      const options = index * width2 * 0.32;
+      canvasRenderingContext2D.drawImage(
+        htmlImageElement,
+        sourceX,
+        sourceY,
+        fileSystem,
+        fileSystem,
+        positionX - unitX * options - width2 / 2,
+        positionY - unitY * options - width2 / 2,
+        width2,
+        width2,
+      );
     }
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
-    const g = ctx.createRadialGradient(
-      x + ux * w * 0.35,
-      y + uy * w * 0.35,
+    canvasRenderingContext2D.globalCompositeOperation = 'source-over';
+    canvasRenderingContext2D.globalAlpha = 1;
+    const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+      positionX + unitX * width2 * 0.35,
+      positionY + unitY * width2 * 0.35,
       0,
-      x + ux * w * 0.35,
-      y + uy * w * 0.35,
-      w * 0.6,
+      positionX + unitX * width2 * 0.35,
+      positionY + unitY * width2 * 0.35,
+      width2 * 0.6,
     );
-    g.addColorStop(0, 'rgba(220,240,255,.85)');
-    g.addColorStop(1, 'rgba(120,170,255,0)');
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(x + ux * w * 0.35, y + uy * w * 0.35, w * 0.6, 0, 6.283);
-    ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
+    canvasGradient.addColorStop(0, 'rgba(220,240,255,.85)');
+    canvasGradient.addColorStop(1, 'rgba(120,170,255,0)');
+    canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+    canvasRenderingContext2D.fillStyle = canvasGradient;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(
+      positionX + unitX * width2 * 0.35,
+      positionY + unitY * width2 * 0.35,
+      width2 * 0.6,
+      0,
+      6.283,
+    );
+    canvasRenderingContext2D.fill();
+    canvasRenderingContext2D.globalCompositeOperation = 'source-over';
   }
-  if (e.fl & 32) {
-    ctx.shadowColor = 'rgba(255,205,90,.95)';
-    ctx.shadowBlur = Math.max(6, 16 * z);
+  if (renderShip.fl & 32) {
+    canvasRenderingContext2D.shadowColor = 'rgba(255,205,90,.95)';
+    canvasRenderingContext2D.shadowBlur = Math.max(6, 16 * positionZ);
   } // mastery Tier 5 gold trim
-  if (im.complete && im.naturalWidth)
-    ctx.drawImage(im, srcX, srcY, fs, fs, x - w / 2, y - w / 2, w, w);
+  if (htmlImageElement.complete && htmlImageElement.naturalWidth)
+    canvasRenderingContext2D.drawImage(
+      htmlImageElement,
+      sourceX,
+      sourceY,
+      fileSystem,
+      fileSystem,
+      positionX - width2 / 2,
+      positionY - width2 / 2,
+      width2,
+      width2,
+    );
   else {
-    ctx.fillStyle = '#888';
-    ctx.beginPath();
-    ctx.arc(x, y, w / 4, 0, 6.28);
-    ctx.fill();
+    canvasRenderingContext2D.fillStyle = '#888';
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, width2 / 4, 0, 6.28);
+    canvasRenderingContext2D.fill();
   }
-  ctx.shadowBlur = 0;
-  if (e.fl & 1 && H.glow && (!SP || SP.glow)) {
-    const g = sheet(H, true);
-    if (g.complete && g.naturalWidth) {
-      ctx.globalCompositeOperation = 'lighter';
+  canvasRenderingContext2D.shadowBlur = 0;
+  if (renderShip.fl & 1 && shipHullAsset.glow && (!spriteSheetConfig || spriteSheetConfig.glow)) {
+    const htmlImageElement = sheet(shipHullAsset, true);
+    if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
+      canvasRenderingContext2D.globalCompositeOperation = 'lighter';
       // Extrude the authored engine mask aft, preserving every nozzle and bank.
       // Bounded passes, no particle state or simulation changes.
-      const boost = !!(e.fl & 2),
-        heading = fr0 * (Math.PI / 18),
-        reduced = (G._exhaustReduced ??= matchMedia('(prefers-reduced-motion: reduce)').matches),
-        flicker = reduced ? 1 : 0.94 + 0.06 * Math.sin(now / 47 + e.id * 2.3),
-        length = w * (boost ? 0.32 : 0.14) * flicker;
-      ctx.save();
+      const boost = !!(renderShip.fl & 2),
+        heading = fraction0 * (Math.PI / 18),
+        reduced = (clientGameState._exhaustReduced ??= matchMedia(
+          '(prefers-reduced-motion: reduce)',
+        ).matches),
+        flicker = reduced ? 1 : 0.94 + 0.06 * Math.sin(currentTime / 47 + renderShip.id * 2.3),
+        length = width2 * (boost ? 0.32 : 0.14) * flicker;
+      canvasRenderingContext2D.save();
       // The authored glow is already soft. Per-pass canvas blur forces costly
       // full-sprite rasterization (12 times per engine per frame) on software GPUs.
       // Layer the existing mask directly so exhaust cannot stall flight input.
-      for (let i = 12; i >= 1; i--) {
-        const t = i / 12,
-          aft = length * t;
-        ctx.globalAlpha = (boost ? 0.38 : 0.26) * (1 - t * 0.85);
-        ctx.drawImage(
-          g,
-          srcX,
-          srcY,
-          fs,
-          fs,
-          x - w / 2 - Math.sin(heading) * aft,
-          y - w / 2 + Math.cos(heading) * aft,
-          w,
-          w,
+      for (let index = 12; index >= 1; index--) {
+        const time = index / 12,
+          after = length * time;
+        canvasRenderingContext2D.globalAlpha = (boost ? 0.38 : 0.26) * (1 - time * 0.85);
+        canvasRenderingContext2D.drawImage(
+          htmlImageElement,
+          sourceX,
+          sourceY,
+          fileSystem,
+          fileSystem,
+          positionX - width2 / 2 - Math.sin(heading) * after,
+          positionY - width2 / 2 + Math.cos(heading) * after,
+          width2,
+          width2,
         );
       }
-      ctx.restore();
-      ctx.globalAlpha = boost ? 1 : 0.8 * flicker;
-      ctx.drawImage(g, srcX, srcY, fs, fs, x - w / 2, y - w / 2, w, w);
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = 'source-over';
+      canvasRenderingContext2D.restore();
+      canvasRenderingContext2D.globalAlpha = boost ? 1 : 0.8 * flicker;
+      canvasRenderingContext2D.drawImage(
+        htmlImageElement,
+        sourceX,
+        sourceY,
+        fileSystem,
+        fileSystem,
+        positionX - width2 / 2,
+        positionY - width2 / 2,
+        width2,
+        width2,
+      );
+      canvasRenderingContext2D.globalAlpha = 1;
+      canvasRenderingContext2D.globalCompositeOperation = 'source-over';
     }
   }
-  ctx.globalAlpha = 1;
+  canvasRenderingContext2D.globalAlpha = 1;
   if (
-    fx.length < 1200 &&
-    e.ar != null &&
-    e.ar < 50 &&
-    !(e.fl & 8) &&
-    e.rx != null &&
-    Math.random() < ((50 - e.ar) / 50) * 0.4
+    visualEffects.length < 1200 &&
+    renderShip.ar != null &&
+    renderShip.ar < 50 &&
+    !(renderShip.fl & 8) &&
+    renderShip.rx != null &&
+    Math.random() < ((50 - renderShip.ar) / 50) * 0.4
   ) {
     // damaged ships trail smoke, and badly damaged ones burn
-    const ox = (Math.random() - 0.5) * sz * 0.4,
-      oy = (Math.random() - 0.5) * sz * 0.4;
-    fx.push({
-      x: e.rx + ox,
-      y: e.ry + oy,
-      vx: (e.vx || 0) * 0.3 + (Math.random() - 0.5) * 12,
-      vy: (e.vy || 0) * 0.3 + (Math.random() - 0.5) * 12,
+    const offsetX = (Math.random() - 0.5) * size2 * 0.4,
+      offsetY = (Math.random() - 0.5) * size2 * 0.4;
+    visualEffects.push({
+      x: renderShip.rx + offsetX,
+      y: renderShip.ry + offsetY,
+      vx: (renderShip.vx || 0) * 0.3 + (Math.random() - 0.5) * 12,
+      vy: (renderShip.vy || 0) * 0.3 + (Math.random() - 0.5) * 12,
       smoke: true,
       life: 1.1,
       max: 1.1,
-      r: 2.5 + sz * 0.03,
+      r: 2.5 + size2 * 0.03,
     });
-    if (e.ar < 25 && Math.random() < 0.45)
-      fx.push({
-        x: e.rx + ox,
-        y: e.ry + oy,
+    if (renderShip.ar < 25 && Math.random() < 0.45)
+      visualEffects.push({
+        x: renderShip.rx + offsetX,
+        y: renderShip.ry + offsetY,
         vx: (Math.random() - 0.5) * 50,
         vy: (Math.random() - 0.5) * 50,
         life: 0.3,
@@ -3049,530 +3943,662 @@ export function drawShip(
         s: 1.4,
       });
   }
-  if (e.fl & 4) {
-    ctx.fillStyle = 'rgba(255,120,60,.8)';
+  if (renderShip.fl & 4) {
+    canvasRenderingContext2D.fillStyle = 'rgba(255,120,60,.8)';
     if (Math.random() < 0.3)
-      ctx.fillRect(x + ((Math.random() - 0.5) * w) / 2, y + ((Math.random() - 0.5) * w) / 2, 2, 2);
+      canvasRenderingContext2D.fillRect(
+        positionX + ((Math.random() - 0.5) * width2) / 2,
+        positionY + ((Math.random() - 0.5) * width2) / 2,
+        2,
+        2,
+      );
   }
-  if (G.hover === e.id && G.target !== e.id) {
-    const r = w * 0.5 + 4;
-    ctx.strokeStyle = 'rgba(255,255,255,.35)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3, 4]);
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, 6.283);
-    ctx.stroke();
-    ctx.setLineDash([]);
+  if (clientGameState.hover === renderShip.id && clientGameState.target !== renderShip.id) {
+    const radius = width2 * 0.5 + 4;
+    canvasRenderingContext2D.strokeStyle = 'rgba(255,255,255,.35)';
+    canvasRenderingContext2D.lineWidth = 1;
+    canvasRenderingContext2D.setLineDash([3, 4]);
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
+    canvasRenderingContext2D.stroke();
+    canvasRenderingContext2D.setLineDash([]);
   }
-  const tgt = G.target === e.id;
-  const ally = G.isAlly && G.isAlly(e);
-  if (ally && !tgt) {
+  const target2 = clientGameState.target === renderShip.id;
+  const ally = clientGameState.isAlly && clientGameState.isAlly(renderShip);
+  if (ally && !target2) {
     // Armada members and their wingmates carry a green marker
-    const r = w * 0.55 + 5;
-    ctx.strokeStyle = G.pal.ally;
-    ctx.globalAlpha = 0.75;
-    ctx.lineWidth = 1.2;
-    for (let k = 0; k < 4; k++) {
-      const a = (k * Math.PI) / 2 + Math.PI / 4;
-      ctx.beginPath();
-      ctx.arc(x, y, r, a - 0.28, a + 0.28);
-      ctx.stroke();
+    const radius = width2 * 0.55 + 5;
+    canvasRenderingContext2D.strokeStyle = clientGameState.pal.ally;
+    canvasRenderingContext2D.globalAlpha = 0.75;
+    canvasRenderingContext2D.lineWidth = 1.2;
+    for (let entryKey = 0; entryKey < 4; entryKey++) {
+      const firstValue = (entryKey * Math.PI) / 2 + Math.PI / 4;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(
+        positionX,
+        positionY,
+        radius,
+        firstValue - 0.28,
+        firstValue + 0.28,
+      );
+      canvasRenderingContext2D.stroke();
     }
-    ctx.globalAlpha = 1;
+    canvasRenderingContext2D.globalAlpha = 1;
   }
-  if (tgt) {
-    const r = w * 0.55 + 6;
-    ctx.strokeStyle = ally ? G.pal.ally : G.hostile(e) ? G.pal.hostile : G.pal.friend;
-    ctx.lineWidth = 1.5;
-    for (const [dx, dy] of [
+  if (target2) {
+    const radius = width2 * 0.55 + 6;
+    canvasRenderingContext2D.strokeStyle = ally
+      ? clientGameState.pal.ally
+      : clientGameState.hostile(renderShip)
+        ? clientGameState.pal.hostile
+        : clientGameState.pal.friend;
+    canvasRenderingContext2D.lineWidth = 1.5;
+    for (const [deltaX, deltaY] of [
       [-1, -1],
       [1, -1],
       [1, 1],
       [-1, 1],
     ]) {
-      ctx.beginPath();
-      ctx.moveTo(x + dx * r, y + dy * r * 0.6);
-      ctx.lineTo(x + dx * r, y + dy * r);
-      ctx.lineTo(x + dx * r * 0.6, y + dy * r);
-      ctx.stroke();
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(
+        positionX + deltaX * radius,
+        positionY + deltaY * radius * 0.6,
+      );
+      canvasRenderingContext2D.lineTo(positionX + deltaX * radius, positionY + deltaY * radius);
+      canvasRenderingContext2D.lineTo(
+        positionX + deltaX * radius * 0.6,
+        positionY + deltaY * radius,
+      );
+      canvasRenderingContext2D.stroke();
     }
   }
-  if (e.name && (e.fl & 16 || e.fl & 64 || tgt || ally)) {
-    ctx.fillStyle = ally
-      ? G.pal.ally
-      : e.fl & 16
-        ? G.hostile(e)
-          ? G.pal.hostile
+  if (renderShip.name && (renderShip.fl & 16 || renderShip.fl & 64 || target2 || ally)) {
+    canvasRenderingContext2D.fillStyle = ally
+      ? clientGameState.pal.ally
+      : renderShip.fl & 16
+        ? clientGameState.hostile(renderShip)
+          ? clientGameState.pal.hostile
           : '#9cf'
-        : e.fl & 64
+        : renderShip.fl & 64
           ? '#f2c66a'
           : '#ddd'; // rival captains carry gold name tags
-    ctx.font = '15px "Pixelify Sans", sans-serif';
-    ctx.textAlign = 'center';
-    const tw = ctx.measureText(e.name).width;
-    let ty = y - w * 0.55 - 6;
+    canvasRenderingContext2D.font = '15px "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.textAlign = 'center';
+    const width3 = canvasRenderingContext2D.measureText(renderShip.name).width;
+    let targetY = positionY - width2 * 0.55 - 6;
     for (
-      let k = 0;
-      k < 6 &&
-      tagRects.some((q) => Math.abs(q[0] - x) < (q[2] + tw) / 2 + 4 && Math.abs(q[1] - ty) < 14);
-      k++
+      let entryKey = 0;
+      entryKey < 6 &&
+      tagRects.some(
+        (quantity) =>
+          Math.abs(quantity[0] - positionX) < (quantity[2] + width3) / 2 + 4 &&
+          Math.abs(quantity[1] - targetY) < 14,
+      );
+      entryKey++
     )
-      ty -= 14;
-    tagRects.push([x, ty, tw]);
-    ctx.fillText(e.name, x, ty);
+      targetY -= 14;
+    tagRects.push([positionX, targetY, width3]);
+    canvasRenderingContext2D.fillText(renderShip.name, positionX, targetY);
   }
 }
 
 // ------------------------------------------------------------------ radar
 /**
  * Renders the circular cockpit radar display with blips for ships, planets, loot, and asteroids.
- * @param {ClientGameState} G Game state object
- * @param {CanvasRenderingContext2D} ctx Radar canvas rendering context
+ * @param {ClientGameState} clientGameState Game state object
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D Radar canvas rendering context
  * @returns {void}
  */
-export function radar(G: ClientGameState, ctx: CanvasRenderingContext2D): void {
-  const W = ctx.canvas.width,
-    H = ctx.canvas.height,
-    me = G.view,
-    diameter = Math.min(W, H);
-  ctx.fillStyle = '#020408';
-  ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#0d2a1a';
-  ctx.lineWidth = 1;
-  for (let k = 1; k < 4; k++) {
-    ctx.beginPath();
-    ctx.arc(W / 2, H / 2, (k * diameter) / 6, 0, 6.28);
-    ctx.stroke();
+export function radar(
+  clientGameState: ClientGameState,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+): void {
+  const width2 = canvasRenderingContext2D.canvas.width,
+    height2 = canvasRenderingContext2D.canvas.height,
+    clientView = clientGameState.view,
+    diameter = Math.min(width2, height2);
+  canvasRenderingContext2D.fillStyle = '#020408';
+  canvasRenderingContext2D.fillRect(0, 0, width2, height2);
+  canvasRenderingContext2D.strokeStyle = '#0d2a1a';
+  canvasRenderingContext2D.lineWidth = 1;
+  for (let entryKey = 1; entryKey < 4; entryKey++) {
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(width2 / 2, height2 / 2, (entryKey * diameter) / 6, 0, 6.28);
+    canvasRenderingContext2D.stroke();
   }
-  if (!me) return;
-  const S = SYS[G.sys!],
-    neb = G.world && G.world.anomalies && G.world.anomalies[G.sys!] === 'nebula',
-    R = 4200 * (neb ? 0.5 : 1),
-    k = (diameter / 2 / R) * 1.15;
-  G.radarR = R;
-  const px = (x: number) => W / 2 + (x - me.rx) * k,
-    py = (y: number) => H / 2 + (y - me.ry) * k;
-  if (S)
-    for (const p of S.stellars) {
-      ctx.fillStyle = p.wormhole
+  if (!clientView) return;
+  const starSystem = systemsById[clientGameState.sys!],
+    nebula =
+      clientGameState.world &&
+      clientGameState.world.anomalies &&
+      clientGameState.world.anomalies[clientGameState.sys!] === 'nebula',
+    radius = 4200 * (nebula ? 0.5 : 1),
+    entryKey2 = (diameter / 2 / radius) * 1.15;
+  clientGameState.radarR = radius;
+  const pixelX = (positionX: number) => width2 / 2 + (positionX - clientView.rx) * entryKey2,
+    pixelY = (positionY: number) => height2 / 2 + (positionY - clientView.ry) * entryKey2;
+  if (starSystem)
+    for (const rawStellarBody of starSystem.stellars) {
+      canvasRenderingContext2D.fillStyle = rawStellarBody.wormhole
         ? '#9ac8ff'
-        : p.site
-          ? G.sites && G.sites[p.id]
+        : rawStellarBody.site
+          ? clientGameState.sites && clientGameState.sites[rawStellarBody.id]
             ? '#a8f'
             : '#776'
-          : p.hub
+          : rawStellarBody.hub
             ? '#9ab'
             : '#556';
-      ctx.beginPath();
-      ctx.arc(px(p.x), py(p.y), Math.max(2.5, p.r * k), 0, 6.28);
-      ctx.fill();
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(
+        pixelX(rawStellarBody.x),
+        pixelY(rawStellarBody.y),
+        Math.max(2.5, rawStellarBody.r * entryKey2),
+        0,
+        6.28,
+      );
+      canvasRenderingContext2D.fill();
     }
-  for (const k of G.rocks || [])
-    if (k.hp) {
-      ctx.fillStyle = k.ore === 'gas' ? '#2a6a5a' : k.ore === 'shards' ? '#6a4a8a' : '#4a4640';
-      ctx.fillRect(px(k.x) - 1, py(k.y) - 1, 2, 2);
+  for (const entryKey of clientGameState.rocks || [])
+    if (entryKey.hp) {
+      canvasRenderingContext2D.fillStyle =
+        entryKey.ore === 'gas' ? '#2a6a5a' : entryKey.ore === 'shards' ? '#6a4a8a' : '#4a4640';
+      canvasRenderingContext2D.fillRect(pixelX(entryKey.x) - 1, pixelY(entryKey.y) - 1, 2, 2);
     }
-  for (const l of G.loot) {
-    ctx.fillStyle = l.kind === 5 ? '#ff5ae0' : '#fff';
-    const q = l.kind === 5 ? 2 : 1;
-    ctx.fillRect(px(l.x) - q, py(l.y) - q, q * 2, q * 2);
+  for (const loot2 of clientGameState.loot) {
+    canvasRenderingContext2D.fillStyle = loot2.kind === 5 ? '#ff5ae0' : '#fff';
+    const quantity = loot2.kind === 5 ? 2 : 1;
+    canvasRenderingContext2D.fillRect(
+      pixelX(loot2.x) - quantity,
+      pixelY(loot2.y) - quantity,
+      quantity * 2,
+      quantity * 2,
+    );
   }
-  for (const [x, y] of salvagePoints(G)) {
-    ctx.strokeStyle = '#ffc85a';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.rect(px(x) - 4, py(y) - 4, 8, 8);
-    ctx.stroke();
+  for (const [positionX, positionY] of salvagePoints(clientGameState)) {
+    canvasRenderingContext2D.strokeStyle = '#ffc85a';
+    canvasRenderingContext2D.lineWidth = 1.5;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.rect(pixelX(positionX) - 4, pixelY(positionY) - 4, 8, 8);
+    canvasRenderingContext2D.stroke();
   }
-  for (const [x, y] of surveyPoints(G)) {
-    ctx.strokeStyle = '#5ad8ff';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(px(x), py(y), 5, 0, 6.28);
-    ctx.stroke();
+  for (const [positionX, positionY] of surveyPoints(clientGameState)) {
+    canvasRenderingContext2D.strokeStyle = '#5ad8ff';
+    canvasRenderingContext2D.lineWidth = 1.5;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(pixelX(positionX), pixelY(positionY), 5, 0, 6.28);
+    canvasRenderingContext2D.stroke();
   }
-  if (neb) {
-    ctx.fillStyle = 'rgba(150,120,255,.10)';
-    ctx.fillRect(0, 0, W, H);
+  if (nebula) {
+    canvasRenderingContext2D.fillStyle = 'rgba(150,120,255,.10)';
+    canvasRenderingContext2D.fillRect(0, 0, width2, height2);
   }
-  for (const e of G.ents.values()) {
-    if (e.id === me.id) continue;
-    const x = px(e.rx),
-      y = py(e.ry);
-    if (x < 0 || y < 0 || x > W || y > H) continue;
-    const hos = G.hostile(e),
-      al = G.isAlly && G.isAlly(e);
-    ctx.fillStyle =
-      e.owner === me.id
-        ? G.pal.own
-        : al
-          ? G.pal.ally
-          : e.fl & 16
-            ? hos
-              ? G.pal.hostile
-              : G.pal.player
-            : hos
-              ? G.pal.hostile
-              : G.pal.neutral;
-    const s = e.id === G.target ? 4 : al ? 3.2 : 2.5;
-    if (hos && G.opts.cb) {
-      ctx.beginPath();
-      ctx.moveTo(x, y - s);
-      ctx.lineTo(x + s, y);
-      ctx.lineTo(x, y + s);
-      ctx.lineTo(x - s, y);
-      ctx.fill();
+  for (const renderEntity of clientGameState.ents.values()) {
+    if (renderEntity.id === clientView.id) continue;
+    const positionX = pixelX(renderEntity.rx),
+      positionY = pixelY(renderEntity.ry);
+    if (positionX < 0 || positionY < 0 || positionX > width2 || positionY > height2) continue;
+    const hostile2 = clientGameState.hostile(renderEntity),
+      alpha = clientGameState.isAlly && clientGameState.isAlly(renderEntity);
+    canvasRenderingContext2D.fillStyle =
+      renderEntity.owner === clientView.id
+        ? clientGameState.pal.own
+        : alpha
+          ? clientGameState.pal.ally
+          : renderEntity.fl & 16
+            ? hostile2
+              ? clientGameState.pal.hostile
+              : clientGameState.pal.player
+            : hostile2
+              ? clientGameState.pal.hostile
+              : clientGameState.pal.neutral;
+    const state = renderEntity.id === clientGameState.target ? 4 : alpha ? 3.2 : 2.5;
+    if (hostile2 && clientGameState.opts.cb) {
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(positionX, positionY - state);
+      canvasRenderingContext2D.lineTo(positionX + state, positionY);
+      canvasRenderingContext2D.lineTo(positionX, positionY + state);
+      canvasRenderingContext2D.lineTo(positionX - state, positionY);
+      canvasRenderingContext2D.fill();
     } // colour-blind mode: hostiles are diamonds too
-    else ctx.fillRect(x - s / 2, y - s / 2, s, s);
+    else
+      canvasRenderingContext2D.fillRect(positionX - state / 2, positionY - state / 2, state, state);
   }
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(W / 2 - 2, H / 2 - 2, 4, 4);
+  canvasRenderingContext2D.fillStyle = '#fff';
+  canvasRenderingContext2D.fillRect(width2 / 2 - 2, height2 / 2 - 2, 4, 4);
 }
 
 // ------------------------------------------------------------------ galaxy map (minimap and full map)
 // opts.big: the full map (pan with drag, zoom with the wheel, view kept in G.mapView). Otherwise the companion minimap,
 // centred on the current system. Systems you have not visited are drawn as hollow rings.
-const SYS_LIST = Object.values(SYS);
+const SYS_LIST = Object.values(systemsById);
 const BOUNDS = (() => {
-  const xs = SYS_LIST.map((s) => s.x),
-    ys = SYS_LIST.map((s) => s.y);
+  const xScale = SYS_LIST.map((starSystem) => starSystem.x),
+    yScale = SYS_LIST.map((starSystem) => starSystem.y);
   return {
-    x0: Math.min(...xs) - 60,
-    x1: Math.max(...xs) + 60,
-    y0: Math.min(...ys) - 60,
-    y1: Math.max(...ys) + 60,
+    x0: Math.min(...xScale) - 60,
+    x1: Math.max(...xScale) + 60,
+    y0: Math.min(...yScale) - 60,
+    y1: Math.max(...yScale) + 60,
   };
 })();
 /**
  * Calculates optimal galaxy map viewport centering and zoom factor to fit all systems.
- * @param {number} W Canvas pixel width
- * @param {number} H Canvas pixel height
+ * @param {number} width2 Canvas pixel width
+ * @param {number} height2 Canvas pixel height
  * @returns {MapFit & { cx: number, cy: number, fit: number }} Map bounds fit object
  */
-export function mapFit(W: number, H: number): MapFit & { cx: number; cy: number; fit: number } {
-  const B = BOUNDS,
-    k = Math.min(W / (B.x1 - B.x0), H / (B.y1 - B.y0));
-  return { cx: (B.x0 + B.x1) / 2, cy: (B.y0 + B.y1) / 2, k, fit: k };
+export function mapFit(
+  width: number,
+  height: number,
+): MapFit & { cx: number; cy: number; fit: number } {
+  const bounds = BOUNDS,
+    entryKey = Math.min(width / (bounds.x1 - bounds.x0), height / (bounds.y1 - bounds.y0));
+  return {
+    cx: (bounds.x0 + bounds.x1) / 2,
+    cy: (bounds.y0 + bounds.y1) / 2,
+    k: entryKey,
+    fit: entryKey,
+  };
 }
 /**
  * Renders the 2D galaxy starmap or minimap including hyperspace lanes, faction territories, and route plots.
- * @param {ClientGameState} G Game state object
- * @param {CanvasRenderingContext2D} ctx Starmap canvas rendering context
- * @param {{ big?: boolean }} [opts={}] Map render options (big: full interactive starmap)
+ * @param {ClientGameState} clientGameState Game state object
+ * @param {CanvasRenderingContext2D} canvasRenderingContext2D Starmap canvas rendering context
+ * @param {{ big?: boolean }} [options={}] Map render options (big: full interactive starmap)
  * @returns {void}
  */
 export function galaxy(
-  G: ClientGameState,
-  ctx: CanvasRenderingContext2D,
-  opts: { big?: boolean } = {},
+  clientGameState: ClientGameState,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  options: { big?: boolean } = {},
 ): void {
-  const W = ctx.canvas.width,
-    H = ctx.canvas.height,
-    big = !!opts.big;
-  ctx.fillStyle = '#02030a';
-  ctx.fillRect(0, 0, W, H);
-  let V: MapFit;
-  if (big) {
-    if (!G.mapView || G.mapView.W !== W || G.mapView.H !== H) {
-      const f = mapFit(W, H),
-        old = G.mapView;
-      G.mapView = Object.assign(old || {}, { W, H, fit: f.fit }) as MapFit & {
+  const width2 = canvasRenderingContext2D.canvas.width,
+    height2 = canvasRenderingContext2D.canvas.height,
+    large = !!options.big;
+  canvasRenderingContext2D.fillStyle = '#02030a';
+  canvasRenderingContext2D.fillRect(0, 0, width2, height2);
+  let mapFit2: MapFit;
+  if (large) {
+    if (
+      !clientGameState.mapView ||
+      clientGameState.mapView.W !== width2 ||
+      clientGameState.mapView.H !== height2
+    ) {
+      const mapFit3 = mapFit(width2, height2),
+        mapView2 = clientGameState.mapView;
+      clientGameState.mapView = Object.assign(mapView2 || {}, {
+        W: width2,
+        H: height2,
+        fit: mapFit3.fit,
+      }) as MapFit & {
         W: number;
         H: number;
         prevFit?: number;
       };
-      if (!G.mapView.k) Object.assign(G.mapView, f);
-      else if (old!.prevFit) G.mapView.k *= f.fit / old!.prevFit;
-      G.mapView.prevFit = f.fit;
+      if (!clientGameState.mapView.k) Object.assign(clientGameState.mapView, mapFit3);
+      else if (mapView2!.prevFit) clientGameState.mapView.k *= mapFit3.fit / mapView2!.prevFit;
+      clientGameState.mapView.prevFit = mapFit3.fit;
     }
-    V = G.mapView!;
+    mapFit2 = clientGameState.mapView!;
   } // keep the zoom when the canvas is resized
   else {
-    const here = SYS[G.sys!] || SYS_LIST[0];
-    V = { cx: here.x, cy: here.y, k: Math.min(W, H) / 560 } as MapFit;
+    const here = systemsById[clientGameState.sys!] || SYS_LIST[0];
+    mapFit2 = { cx: here.x, cy: here.y, k: Math.min(width2, height2) / 560 } as MapFit;
   }
-  const P = (s: Point) => [W / 2 + (s.x - V.cx) * V.k, H / 2 + (s.y - V.cy) * V.k];
-  G[big ? 'mapXform' : 'miniXform'] = { cx: V.cx, cy: V.cy, k: V.k, W, H };
-  const explored = new Set((G.you && G.you.explored) || []),
-    zoom = big ? V.k / V.fit : 3;
-  const on = (x: number, y: number, m = 40) => x > -m && y > -m && x < W + m && y < H + m;
+  const position = (point: Point) => [
+    width2 / 2 + (point.x - mapFit2.cx) * mapFit2.k,
+    height2 / 2 + (point.y - mapFit2.cy) * mapFit2.k,
+  ];
+  clientGameState[large ? 'mapXform' : 'miniXform'] = {
+    cx: mapFit2.cx,
+    cy: mapFit2.cy,
+    k: mapFit2.k,
+    W: width2,
+    H: height2,
+  };
+  const explored = new Set((clientGameState.you && clientGameState.you.explored) || []),
+    zoom = large ? mapFit2.k / mapFit2.fit : 3;
+  const enabled = (positionX: number, positionY: number, message = 40) =>
+    positionX > -message &&
+    positionY > -message &&
+    positionX < width2 + message &&
+    positionY < height2 + message;
   // territory shading
-  ctx.globalCompositeOperation = 'lighter';
-  if ((G.mapMode || 'factions') === 'factions' || !big)
-    for (const s of SYS_LIST) {
-      const F = FACTIONS[s.faction];
-      if (F.region && s.faction !== 'deep') continue;
-      const [x, y] = P(s);
-      if (!on(x, y, 120 * V.k)) continue;
-      const r = 95 * V.k;
-      const g = ctx.createRadialGradient(x, y, 0, x, y, r),
-        c = hexToRgb(F.color);
-      g.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0.10)`);
-      g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+  if ((clientGameState.mapMode || 'factions') === 'factions' || !large)
+    for (const starSystem of SYS_LIST) {
+      const factionDef = FACTIONS[starSystem.faction];
+      if (factionDef.region && starSystem.faction !== 'deep') continue;
+      const [positionX, positionY] = position(starSystem);
+      if (!enabled(positionX, positionY, 120 * mapFit2.k)) continue;
+      const radius = 95 * mapFit2.k;
+      const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+          positionX,
+          positionY,
+          0,
+          positionX,
+          positionY,
+          radius,
+        ),
+        hexToRgb2 = hexToRgb(factionDef.color);
+      canvasGradient.addColorStop(0, `rgba(${hexToRgb2[0]},${hexToRgb2[1]},${hexToRgb2[2]},0.10)`);
+      canvasGradient.addColorStop(1, 'rgba(0,0,0,0)');
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.fillRect(
+        positionX - radius,
+        positionY - radius,
+        radius * 2,
+        radius * 2,
+      );
     }
-  ctx.globalCompositeOperation = 'source-over';
+  canvasRenderingContext2D.globalCompositeOperation = 'source-over';
   // routes
-  ctx.lineWidth = 1;
-  for (const s of SYS_LIST)
-    for (const l of s.links)
-      if (l > s.id) {
-        const [a, b] = P(s),
-          [c, d] = P(SYS[l]);
-        if (!on(a, b, 400) && !on(c, d, 400)) continue;
-        const known = explored.has(s.id) || explored.has(l);
-        ctx.strokeStyle = known ? '#34405a' : '#1c2232';
-        ctx.beginPath();
-        ctx.moveTo(a, b);
-        ctx.lineTo(c, d);
-        ctx.stroke();
+  canvasRenderingContext2D.lineWidth = 1;
+  for (const starSystem of SYS_LIST)
+    for (const link of starSystem.links)
+      if (link > starSystem.id) {
+        const [firstValue, secondValue] = position(starSystem),
+          [component, distance] = position(systemsById[link]);
+        if (!enabled(firstValue, secondValue, 400) && !enabled(component, distance, 400)) continue;
+        const known = explored.has(starSystem.id) || explored.has(link);
+        canvasRenderingContext2D.strokeStyle = known ? '#34405a' : '#1c2232';
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.moveTo(firstValue, secondValue);
+        canvasRenderingContext2D.lineTo(component, distance);
+        canvasRenderingContext2D.stroke();
       }
   // the Sol Gateway: a dashed, glowing link between Sol and the far mouth
-  for (const s of SYS_LIST)
-    if (s.gate && s.id < s.gate) {
-      const [a, b] = P(s),
-        [c, d] = P(SYS[s.gate]);
-      ctx.strokeStyle = 'rgba(154,200,255,.55)';
-      ctx.lineWidth = big ? 2 : 1.5;
-      ctx.setLineDash([3, 6]);
-      ctx.beginPath();
-      ctx.moveTo(a, b);
-      ctx.quadraticCurveTo((a + c) / 2 - (d - b) * 0.15, (b + d) / 2 + (c - a) * 0.15, c, d);
-      ctx.stroke();
-      ctx.setLineDash([]);
+  for (const starSystem of SYS_LIST)
+    if (starSystem.gate && starSystem.id < starSystem.gate) {
+      const [firstValue, secondValue] = position(starSystem),
+        [component, distance] = position(systemsById[starSystem.gate]);
+      canvasRenderingContext2D.strokeStyle = 'rgba(154,200,255,.55)';
+      canvasRenderingContext2D.lineWidth = large ? 2 : 1.5;
+      canvasRenderingContext2D.setLineDash([3, 6]);
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(firstValue, secondValue);
+      canvasRenderingContext2D.quadraticCurveTo(
+        (firstValue + component) / 2 - (distance - secondValue) * 0.15,
+        (secondValue + distance) / 2 + (component - firstValue) * 0.15,
+        component,
+        distance,
+      );
+      canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.setLineDash([]);
     }
-  const route = G.route || [];
-  if (route.length && SYS[G.sys!]) {
-    ctx.strokeStyle = '#ffd27a';
-    ctx.lineWidth = big ? 2.5 : 2;
-    ctx.beginPath();
-    let [a, b] = P(SYS[G.sys!]);
-    ctx.moveTo(a, b);
-    for (const r of route) {
-      [a, b] = P(SYS[r]);
-      ctx.lineTo(a, b);
+  const route = clientGameState.route || [];
+  if (route.length && systemsById[clientGameState.sys!]) {
+    canvasRenderingContext2D.strokeStyle = '#ffd27a';
+    canvasRenderingContext2D.lineWidth = large ? 2.5 : 2;
+    canvasRenderingContext2D.beginPath();
+    let [firstValue, secondValue] = position(systemsById[clientGameState.sys!]);
+    canvasRenderingContext2D.moveTo(firstValue, secondValue);
+    for (const route2 of route) {
+      [firstValue, secondValue] = position(systemsById[route2]);
+      canvasRenderingContext2D.lineTo(firstValue, secondValue);
     }
-    ctx.stroke();
+    canvasRenderingContext2D.stroke();
   }
   const onRoute = new Set(route),
-    sites = G.sites || {},
+    sites = clientGameState.sites || {},
     myStSys =
-      G.you &&
-      G.you.station &&
-      G.you.station.claimed &&
-      G.you.station.site &&
-      STELLARS[G.you.station.site]
-        ? STELLARS[G.you.station.site].system
+      clientGameState.you &&
+      clientGameState.you.station &&
+      clientGameState.you.station.claimed &&
+      clientGameState.you.station.site &&
+      STELLARS[clientGameState.you.station.site]
+        ? STELLARS[clientGameState.you.station.site].system
         : null;
   const allySys: Record<string, string[]> = {};
-  for (const m of (G.you && G.you.armada && G.you.armada.members) || [])
-    if (m.sysId && m.name !== G.myName) (allySys[m.sysId] = allySys[m.sysId] || []).push(m.name); // where your Armada is
-  for (const s of SYS_LIST) {
-    const [x, y] = P(s);
-    if (!on(x, y)) continue;
-    const F = FACTIONS[s.faction],
-      here = s.id === G.sys,
-      seen = explored.has(s.id) || !G.you,
-      r = big ? Math.max(3, Math.min(8, 3.2 * Math.sqrt(zoom))) : 4;
-    if (seen || (big && G.mapMode && G.mapMode !== 'factions')) {
-      ctx.fillStyle = big ? viewColor(G, s, seen) : F.color;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 6.283);
-      ctx.fill();
+  for (const message of (clientGameState.you &&
+    clientGameState.you.armada &&
+    clientGameState.you.armada.members) ||
+    [])
+    if (message.sysId && message.name !== clientGameState.myName)
+      (allySys[message.sysId] = allySys[message.sysId] || []).push(message.name); // where your Armada is
+  for (const starSystem of SYS_LIST) {
+    const [positionX, positionY] = position(starSystem);
+    if (!enabled(positionX, positionY)) continue;
+    const factionDef = FACTIONS[starSystem.faction],
+      here = starSystem.id === clientGameState.sys,
+      seen = explored.has(starSystem.id) || !clientGameState.you,
+      radius = large ? Math.max(3, Math.min(8, 3.2 * Math.sqrt(zoom))) : 4;
+    if (seen || (large && clientGameState.mapMode && clientGameState.mapMode !== 'factions')) {
+      canvasRenderingContext2D.fillStyle = large
+        ? viewColor(clientGameState, starSystem, seen)
+        : factionDef.color;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
+      canvasRenderingContext2D.fill();
     } else {
-      ctx.strokeStyle = F.color;
-      ctx.globalAlpha = 0.7;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(x, y, r - 0.5, 0, 6.283);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
+      canvasRenderingContext2D.strokeStyle = factionDef.color;
+      canvasRenderingContext2D.globalAlpha = 0.7;
+      canvasRenderingContext2D.lineWidth = 1.5;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius - 0.5, 0, 6.283);
+      canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.globalAlpha = 1;
     }
-    const site = s.stellars.find((p) => p.site);
-    if (site && (big ? zoom > 0.9 : true)) {
-      const own = sites[site.id];
-      ctx.fillStyle = own ? '#c0a0ff' : '#8a70b0';
-      const q = r + 2;
-      ctx.beginPath();
-      ctx.moveTo(x + q + 4, y - q);
-      ctx.lineTo(x + q + 7, y - q + 3);
-      ctx.lineTo(x + q + 4, y - q + 6);
-      ctx.lineTo(x + q + 1, y - q + 3);
-      ctx.fill();
+    const site = starSystem.stellars.find((rawStellarBody) => rawStellarBody.site);
+    if (site && (large ? zoom > 0.9 : true)) {
+      const site2 = sites[site.id];
+      canvasRenderingContext2D.fillStyle = site2 ? '#c0a0ff' : '#8a70b0';
+      const quantity = radius + 2;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(positionX + quantity + 4, positionY - quantity);
+      canvasRenderingContext2D.lineTo(positionX + quantity + 7, positionY - quantity + 3);
+      canvasRenderingContext2D.lineTo(positionX + quantity + 4, positionY - quantity + 6);
+      canvasRenderingContext2D.lineTo(positionX + quantity + 1, positionY - quantity + 3);
+      canvasRenderingContext2D.fill();
     }
-    if (myStSys === s.id) {
+    if (myStSys === starSystem.id) {
       // your Personal Station: a gold station mark with its Station Tier
-      const q = r + 9,
-        pulse2 = 0.6 + 0.4 * Math.sin(performance.now() / 500);
-      ctx.strokeStyle = `rgba(255,210,110,${0.75 + 0.25 * pulse2})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(x, y, q, 0, 6.283);
-      ctx.stroke();
-      for (let k = 0; k < 4; k++) {
-        const a = (k * Math.PI) / 2 + Math.PI / 4;
-        ctx.beginPath();
-        ctx.moveTo(x + Math.cos(a) * (q - 3), y + Math.sin(a) * (q - 3));
-        ctx.lineTo(x + Math.cos(a) * (q + 4), y + Math.sin(a) * (q + 4));
-        ctx.stroke();
+      const quantity = radius + 9,
+        pulse = 0.6 + 0.4 * Math.sin(performance.now() / 500);
+      canvasRenderingContext2D.strokeStyle = `rgba(255,210,110,${0.75 + 0.25 * pulse})`;
+      canvasRenderingContext2D.lineWidth = 2;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, quantity, 0, 6.283);
+      canvasRenderingContext2D.stroke();
+      for (let entryKey = 0; entryKey < 4; entryKey++) {
+        const firstValue = (entryKey * Math.PI) / 2 + Math.PI / 4;
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.moveTo(
+          positionX + Math.cos(firstValue) * (quantity - 3),
+          positionY + Math.sin(firstValue) * (quantity - 3),
+        );
+        canvasRenderingContext2D.lineTo(
+          positionX + Math.cos(firstValue) * (quantity + 4),
+          positionY + Math.sin(firstValue) * (quantity + 4),
+        );
+        canvasRenderingContext2D.stroke();
       }
-      if (big) {
-        ctx.font = 'bold 13px "Pixelify Sans", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#02030a';
-        const t = `YOUR STATION · T-${(G.you!.station && G.you!.station.ops) || 0}`;
-        ctx.strokeText(t, x, y - q - 6);
-        ctx.fillStyle = '#ffd27a';
-        ctx.fillText(t, x, y - q - 6);
+      if (large) {
+        canvasRenderingContext2D.font = 'bold 13px "Pixelify Sans", sans-serif';
+        canvasRenderingContext2D.textAlign = 'center';
+        canvasRenderingContext2D.lineWidth = 3;
+        canvasRenderingContext2D.strokeStyle = '#02030a';
+        const time = `YOUR STATION · T-${(clientGameState.you!.station && clientGameState.you!.station.ops) || 0}`;
+        canvasRenderingContext2D.strokeText(time, positionX, positionY - quantity - 6);
+        canvasRenderingContext2D.fillStyle = '#ffd27a';
+        canvasRenderingContext2D.fillText(time, positionX, positionY - quantity - 6);
       }
     }
-    if (allySys[s.id]) {
-      ctx.fillStyle = G.pal.ally;
-      for (let k = 0; k < Math.min(5, allySys[s.id].length); k++) {
-        ctx.beginPath();
-        ctx.arc(x - r - 4 - k * 6, y + r + 3, 2.6, 0, 6.283);
-        ctx.fill();
+    if (allySys[starSystem.id]) {
+      canvasRenderingContext2D.fillStyle = clientGameState.pal.ally;
+      for (let entryKey = 0; entryKey < Math.min(5, allySys[starSystem.id].length); entryKey++) {
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.arc(
+          positionX - radius - 4 - entryKey * 6,
+          positionY + radius + 3,
+          2.6,
+          0,
+          6.283,
+        );
+        canvasRenderingContext2D.fill();
       }
-      if (big && zoom > 0.8) {
-        ctx.font = '12px "Pixelify Sans", sans-serif';
-        ctx.textAlign = 'right';
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#02030a';
-        const t = allySys[s.id].join(', ');
-        ctx.strokeText(t, x - r - 4, y + r + 15);
-        ctx.fillText(t, x - r - 4, y + r + 15);
+      if (large && zoom > 0.8) {
+        canvasRenderingContext2D.font = '12px "Pixelify Sans", sans-serif';
+        canvasRenderingContext2D.textAlign = 'right';
+        canvasRenderingContext2D.lineWidth = 3;
+        canvasRenderingContext2D.strokeStyle = '#02030a';
+        const join2 = allySys[starSystem.id].join(', ');
+        canvasRenderingContext2D.strokeText(join2, positionX - radius - 4, positionY + radius + 15);
+        canvasRenderingContext2D.fillText(join2, positionX - radius - 4, positionY + radius + 15);
       }
     }
     if (here) {
-      ctx.strokeStyle = '#ff3a2a';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(x, y, r + 5, 0, 6.283);
-      ctx.stroke();
+      canvasRenderingContext2D.strokeStyle = '#ff3a2a';
+      canvasRenderingContext2D.lineWidth = 2;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius + 5, 0, 6.283);
+      canvasRenderingContext2D.stroke();
     }
-    if (G.hoverSys === s.id) {
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(x, y, r + 3, 0, 6.283);
-      ctx.stroke();
+    if (clientGameState.hoverSys === starSystem.id) {
+      canvasRenderingContext2D.strokeStyle = '#fff';
+      canvasRenderingContext2D.lineWidth = 1;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, radius + 3, 0, 6.283);
+      canvasRenderingContext2D.stroke();
     }
     const label =
       here ||
-      G.hoverSys === s.id ||
-      onRoute.has(s.id) ||
-      (big
-        ? zoom > 1.6 || (s.anchor && zoom > 0.95)
-        : SYS[G.sys!] && SYS[G.sys!].links.includes(s.id));
+      clientGameState.hoverSys === starSystem.id ||
+      onRoute.has(starSystem.id) ||
+      (large
+        ? zoom > 1.6 || (starSystem.anchor && zoom > 0.95)
+        : systemsById[clientGameState.sys!] &&
+          systemsById[clientGameState.sys!].links.includes(starSystem.id));
     if (label) {
-      ctx.font =
-        (big ? (here || s.anchor ? 'bold 12px' : '11px') : '9px') + ' "Pixelify Sans", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#02030a';
-      ctx.strokeText(s.name, x, y - r - 5);
-      ctx.fillStyle = here ? '#fff' : seen ? '#c8ccd8' : '#80869a';
-      ctx.fillText(s.name, x, y - r - 5);
+      canvasRenderingContext2D.font =
+        (large ? (here || starSystem.anchor ? 'bold 12px' : '11px') : '9px') +
+        ' "Pixelify Sans", sans-serif';
+      canvasRenderingContext2D.textAlign = 'center';
+      canvasRenderingContext2D.lineWidth = 3;
+      canvasRenderingContext2D.strokeStyle = '#02030a';
+      canvasRenderingContext2D.strokeText(starSystem.name, positionX, positionY - radius - 5);
+      canvasRenderingContext2D.fillStyle = here ? '#fff' : seen ? '#c8ccd8' : '#80869a';
+      canvasRenderingContext2D.fillText(starSystem.name, positionX, positionY - radius - 5);
     }
   }
   // 0.6 overlays: the invasion, anomalies (2.6: territory claims removed)
-  const Wd: Partial<NonNullable<ClientGameState['world']>> = G.world || {},
+  const width3: Partial<NonNullable<ClientGameState['world']>> = clientGameState.world || {},
     pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);
-  for (const [sid, an] of Object.entries(Wd.anomalies || {})) {
-    const S_ = SYS[sid],
-      A_ = ANOMALIES[an];
-    if (!S_ || !A_) continue;
-    const [x, y] = P(S_);
-    if (!on(x, y)) continue;
-    ctx.font = (big ? 'bold 15px' : '12px') + ' "Pixelify Sans", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = A_.color;
-    ctx.fillText(A_.icon, x + (big ? 12 : 8), y + (big ? 4 : 3));
+  for (const [sessionId, angle] of Object.entries(width3.anomalies || {})) {
+    const starSystem = systemsById[sessionId],
+      spaceAnomaly = ANOMALIES[angle];
+    if (!starSystem || !spaceAnomaly) continue;
+    const [positionX, positionY] = position(starSystem);
+    if (!enabled(positionX, positionY)) continue;
+    canvasRenderingContext2D.font = (large ? 'bold 15px' : '12px') + ' "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.textAlign = 'center';
+    canvasRenderingContext2D.fillStyle = spaceAnomaly.color;
+    canvasRenderingContext2D.fillText(
+      spaceAnomaly.icon,
+      positionX + (large ? 12 : 8),
+      positionY + (large ? 4 : 3),
+    );
   }
-  for (const [sid, st] of Object.entries(Wd.states || {})) {
-    const S_ = SYS[sid],
-      X = STATES[st.k];
-    if (!S_ || !X) continue;
-    const [x, y] = P(S_);
-    if (!on(x, y)) continue; // system states
-    ctx.strokeStyle = X.color + 'aa';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(x, y, big ? 10 : 7, 0, 6.283);
-    ctx.stroke();
-    if (big) {
-      ctx.font = '14px "Pixelify Sans", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(X.icon, x - 13, y + 4);
+  for (const [sessionId, livingPayloadState] of Object.entries(width3.states || {})) {
+    const starSystem = systemsById[sessionId],
+      systemState = STATES[livingPayloadState.k];
+    if (!starSystem || !systemState) continue;
+    const [positionX, positionY] = position(starSystem);
+    if (!enabled(positionX, positionY)) continue; // system states
+    canvasRenderingContext2D.strokeStyle = systemState.color + 'aa';
+    canvasRenderingContext2D.lineWidth = 1.5;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, large ? 10 : 7, 0, 6.283);
+    canvasRenderingContext2D.stroke();
+    if (large) {
+      canvasRenderingContext2D.font = '14px "Pixelify Sans", sans-serif';
+      canvasRenderingContext2D.textAlign = 'center';
+      canvasRenderingContext2D.fillText(systemState.icon, positionX - 13, positionY + 4);
     }
   }
-  if (Wd.invasion && SYS[Wd.invasion.sys]) {
-    const [x, y] = P(SYS[Wd.invasion.sys]);
-    ctx.strokeStyle = `rgba(255,60,40,${0.4 + 0.6 * pulse})`;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(x, y, (big ? 14 : 9) + pulse * 5, 0, 6.283);
-    ctx.stroke();
-    if (big) {
-      ctx.font = 'bold 13px "Pixelify Sans", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#ff5a40';
-      ctx.fillText('INVASION', x, y + 30);
+  if (width3.invasion && systemsById[width3.invasion.sys]) {
+    const [positionX, positionY] = position(systemsById[width3.invasion.sys]);
+    canvasRenderingContext2D.strokeStyle = `rgba(255,60,40,${0.4 + 0.6 * pulse})`;
+    canvasRenderingContext2D.lineWidth = 3;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(positionX, positionY, (large ? 14 : 9) + pulse * 5, 0, 6.283);
+    canvasRenderingContext2D.stroke();
+    if (large) {
+      canvasRenderingContext2D.font = 'bold 13px "Pixelify Sans", sans-serif';
+      canvasRenderingContext2D.textAlign = 'center';
+      canvasRenderingContext2D.fillStyle = '#ff5a40';
+      canvasRenderingContext2D.fillText('INVASION', positionX, positionY + 30);
     }
   }
   // active mission targets (gold diamond and ring; the main story is brighter)
-  for (const t of missionTargets(G)) {
-    const S_ = t.sys && SYS[t.sys];
-    if (!S_) continue;
-    const [x, y] = P(S_);
-    if (!on(x, y)) continue;
-    const q = (big ? 9 : 7) + pulse * 3,
-      col = t.kind === 'story' ? '255,214,90' : '255,190,110';
-    ctx.strokeStyle = `rgba(${col},${0.55 + 0.45 * pulse})`;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x, y - q);
-    ctx.lineTo(x + q, y);
-    ctx.lineTo(x, y + q);
-    ctx.lineTo(x - q, y);
-    ctx.closePath();
-    ctx.stroke();
-    if (big) {
-      const lab = t.kind === 'story' ? '★ ' + t.title : '◆ ' + t.title;
-      ctx.font = 'bold 13px "Pixelify Sans", sans-serif';
-      ctx.textAlign = 'left';
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#02030a';
-      ctx.strokeText(lab.length > 38 ? lab.slice(0, 36) + '…' : lab, x + q + 4, y + 4);
-      ctx.fillStyle = `rgb(${col})`;
-      ctx.fillText(lab.length > 38 ? lab.slice(0, 36) + '…' : lab, x + q + 4, y + 4);
+  for (const missionTarget of missionTargets(clientGameState)) {
+    const state = missionTarget.sys && systemsById[missionTarget.sys];
+    if (!state) continue;
+    const [positionX, positionY] = position(state);
+    if (!enabled(positionX, positionY)) continue;
+    const quantity = (large ? 9 : 7) + pulse * 3,
+      column = missionTarget.kind === 'story' ? '255,214,90' : '255,190,110';
+    canvasRenderingContext2D.strokeStyle = `rgba(${column},${0.55 + 0.45 * pulse})`;
+    canvasRenderingContext2D.lineWidth = 2;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.moveTo(positionX, positionY - quantity);
+    canvasRenderingContext2D.lineTo(positionX + quantity, positionY);
+    canvasRenderingContext2D.lineTo(positionX, positionY + quantity);
+    canvasRenderingContext2D.lineTo(positionX - quantity, positionY);
+    canvasRenderingContext2D.closePath();
+    canvasRenderingContext2D.stroke();
+    if (large) {
+      const label =
+        missionTarget.kind === 'story' ? '★ ' + missionTarget.title : '◆ ' + missionTarget.title;
+      canvasRenderingContext2D.font = 'bold 13px "Pixelify Sans", sans-serif';
+      canvasRenderingContext2D.textAlign = 'left';
+      canvasRenderingContext2D.lineWidth = 3;
+      canvasRenderingContext2D.strokeStyle = '#02030a';
+      canvasRenderingContext2D.strokeText(
+        label.length > 38 ? label.slice(0, 36) + '…' : label,
+        positionX + quantity + 4,
+        positionY + 4,
+      );
+      canvasRenderingContext2D.fillStyle = `rgb(${column})`;
+      canvasRenderingContext2D.fillText(
+        label.length > 38 ? label.slice(0, 36) + '…' : label,
+        positionX + quantity + 4,
+        positionY + 4,
+      );
     }
   }
-  if (big) {
-    const ch = SYS.coldharbor;
-    if (ch) {
-      const [x, y] = P(ch);
-      ctx.font = 'italic 14px "Pixelify Sans", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(216,200,144,.55)';
-      ctx.fillText('beyond the Gateway', x - 20 * V.k, y + 50 * V.k + 14);
+  if (large) {
+    const starSystem = systemsById.coldharbor;
+    if (starSystem) {
+      const [positionX, positionY] = position(starSystem);
+      canvasRenderingContext2D.font = 'italic 14px "Pixelify Sans", sans-serif';
+      canvasRenderingContext2D.textAlign = 'center';
+      canvasRenderingContext2D.fillStyle = 'rgba(216,200,144,.55)';
+      canvasRenderingContext2D.fillText(
+        'beyond the Gateway',
+        positionX - 20 * mapFit2.k,
+        positionY + 50 * mapFit2.k + 14,
+      );
     }
   }
-  if (big && G.mapLegend === false) return; // the legend can be hidden
-  if (big) {
-    ctx.fillStyle = 'rgba(2,3,10,.82)';
-    ctx.fillRect(0, H - (G.mapMode && G.mapMode !== 'factions' ? 26 : 42), W, 42);
+  if (large && clientGameState.mapLegend === false) return; // the legend can be hidden
+  if (large) {
+    canvasRenderingContext2D.fillStyle = 'rgba(2,3,10,.82)';
+    canvasRenderingContext2D.fillRect(
+      0,
+      height2 - (clientGameState.mapMode && clientGameState.mapMode !== 'factions' ? 26 : 42),
+      width2,
+      42,
+    );
   } // a backing strip so the legend never sits on top of system names
-  if (big && G.mapMode && G.mapMode !== 'factions') {
+  if (large && clientGameState.mapMode && clientGameState.mapMode !== 'factions') {
     // legend for the alternative views
-    const L =
+    const length =
       {
         trade: [
           [
             '#3ce66e',
-            `cheap ${(COMMODITIES.find((c) => c.id === (G.mapCid || 'food')) || {}).name || ''}`,
+            `cheap ${(COMMODITIES.find((commodityDef) => commodityDef.id === (clientGameState.mapCid || 'food')) || {}).name || ''}`,
           ],
           ['#f0dc5a', 'average'],
           ['#ff503c', 'expensive'],
@@ -3594,126 +4620,148 @@ export function galaxy(
           ['#5ac878', 'safe'],
           ['#ff3228', 'deadly'],
         ],
-      }[G.mapMode as 'trade' | 'services' | 'standing' | 'danger'] || [];
-    let lx = 12,
-      ly = H - 14;
-    ctx.font = '13px "Pixelify Sans", sans-serif';
-    ctx.textAlign = 'left';
-    for (const [c, n] of L) {
-      ctx.fillStyle = c;
-      ctx.beginPath();
-      ctx.arc(lx + 4, ly - 4, 4, 0, 6.283);
-      ctx.fill();
-      ctx.fillStyle = '#aaa';
-      ctx.fillText(n, lx + 12, ly);
-      lx += ctx.measureText(n).width + 30;
+      }[clientGameState.mapMode as 'trade' | 'services' | 'standing' | 'danger'] || [];
+    let localX = 12,
+      localY = height2 - 14;
+    canvasRenderingContext2D.font = '13px "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.textAlign = 'left';
+    for (const [component, count] of length) {
+      canvasRenderingContext2D.fillStyle = component;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(localX + 4, localY - 4, 4, 0, 6.283);
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.fillStyle = '#aaa';
+      canvasRenderingContext2D.fillText(count, localX + 12, localY);
+      localX += canvasRenderingContext2D.measureText(count).width + 30;
     }
-    ctx.fillStyle = '#666';
-    ctx.fillText('unvisited systems show grey', lx, ly);
-  } else if (big) {
+    canvasRenderingContext2D.fillStyle = '#666';
+    canvasRenderingContext2D.fillText('unvisited systems show grey', localX, localY);
+  } else if (large) {
     // legend
-    let lx = 12,
-      ly = H - 14;
-    ctx.font = '13px "Pixelify Sans", sans-serif';
-    ctx.textAlign = 'left';
-    for (const [_id, F] of Object.entries(FACTIONS)) {
-      if (F.hidden) continue;
-      ctx.fillStyle = F.color;
-      ctx.fillRect(lx, ly - 8, 8, 8);
-      ctx.fillStyle = '#aaa';
-      ctx.fillText(F.short, lx + 12, ly);
-      lx += ctx.measureText(F.short).width + 26;
+    let localX = 12,
+      localY = height2 - 14;
+    canvasRenderingContext2D.font = '13px "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.textAlign = 'left';
+    for (const [_unusedId, factionDef] of Object.entries(FACTIONS)) {
+      if (factionDef.hidden) continue;
+      canvasRenderingContext2D.fillStyle = factionDef.color;
+      canvasRenderingContext2D.fillRect(localX, localY - 8, 8, 8);
+      canvasRenderingContext2D.fillStyle = '#aaa';
+      canvasRenderingContext2D.fillText(factionDef.short, localX + 12, localY);
+      localX += canvasRenderingContext2D.measureText(factionDef.short).width + 26;
     }
-    ctx.strokeStyle = '#aaa';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(lx + 4, ly - 4, 3.5, 0, 6.283);
-    ctx.stroke();
-    ctx.fillStyle = '#aaa';
-    ctx.fillText('not yet visited', lx + 12, ly);
-    lx = 12;
-    ly -= 16;
-    ctx.fillStyle = '#ffd65a';
-    ctx.fillText('◇ mission target', lx, ly);
-    lx += 100;
-    ctx.fillStyle = '#ffd27a';
-    ctx.fillText('◎ your station', lx, ly);
-    lx += 92;
-    ctx.fillStyle = '#a890d0';
-    ctx.fillText('◆ station hull', lx, ly);
-    lx += 90;
-    if (!G.solo && G.you && G.you.armada && G.you.armada.members) {
-      ctx.fillStyle = G.pal.ally;
-      ctx.fillText('● Armada member', lx, ly);
-      lx += 104;
+    canvasRenderingContext2D.strokeStyle = '#aaa';
+    canvasRenderingContext2D.lineWidth = 1.5;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(localX + 4, localY - 4, 3.5, 0, 6.283);
+    canvasRenderingContext2D.stroke();
+    canvasRenderingContext2D.fillStyle = '#aaa';
+    canvasRenderingContext2D.fillText('not yet visited', localX + 12, localY);
+    localX = 12;
+    localY -= 16;
+    canvasRenderingContext2D.fillStyle = '#ffd65a';
+    canvasRenderingContext2D.fillText('◇ mission target', localX, localY);
+    localX += 100;
+    canvasRenderingContext2D.fillStyle = '#ffd27a';
+    canvasRenderingContext2D.fillText('◎ your station', localX, localY);
+    localX += 92;
+    canvasRenderingContext2D.fillStyle = '#a890d0';
+    canvasRenderingContext2D.fillText('◆ station hull', localX, localY);
+    localX += 90;
+    if (
+      !clientGameState.solo &&
+      clientGameState.you &&
+      clientGameState.you.armada &&
+      clientGameState.you.armada.members
+    ) {
+      canvasRenderingContext2D.fillStyle = clientGameState.pal.ally;
+      canvasRenderingContext2D.fillText('● Armada member', localX, localY);
+      localX += 104;
     }
-    ctx.fillStyle = '#ff5a40';
-    ctx.fillText('◯ invasion', lx, ly);
-    lx += 70; // no fleet claims in solo
-    for (const A_ of Object.values(ANOMALIES)) {
-      ctx.fillStyle = A_.color;
-      ctx.fillText(`${A_.icon} ${A_.name}`, lx, ly);
-      lx += ctx.measureText(`${A_.icon} ${A_.name}`).width + 14;
+    canvasRenderingContext2D.fillStyle = '#ff5a40';
+    canvasRenderingContext2D.fillText('◯ invasion', localX, localY);
+    localX += 70; // no fleet claims in solo
+    for (const spaceAnomaly of Object.values(ANOMALIES)) {
+      canvasRenderingContext2D.fillStyle = spaceAnomaly.color;
+      canvasRenderingContext2D.fillText(
+        `${spaceAnomaly.icon} ${spaceAnomaly.name}`,
+        localX,
+        localY,
+      );
+      localX +=
+        canvasRenderingContext2D.measureText(`${spaceAnomaly.icon} ${spaceAnomaly.name}`).width +
+        14;
     }
   }
 }
 /**
  * Tests for system click selection hit at given screen coordinates on galaxy map or minimap.
- * @param {ClientGameState} G Game state
- * @param {number} mx Screen X coordinate
- * @param {number} my Screen Y coordinate
+ * @param {ClientGameState} clientGameState Game state
+ * @param {number} mouseX Screen X coordinate
+ * @param {number} mouseY Screen Y coordinate
  * @param {boolean} [mini] Whether testing against companion minimap
  * @returns {string | null} Hit solar system ID or null
  */
-export function mapHit(G: ClientGameState, mx: number, my: number, mini?: boolean): string | null {
-  const t = mini ? G.miniXform : G.mapXform;
-  if (!t) return null;
+export function mapHit(
+  clientGameState: ClientGameState,
+  mouseX: number,
+  mouseY: number,
+  mini?: boolean,
+): string | null {
+  const mapTransform = mini ? clientGameState.miniXform : clientGameState.mapXform;
+  if (!mapTransform) return null;
   let best = null,
-    bd = 14;
-  for (const s of SYS_LIST) {
-    const x = t.W / 2 + (s.x - t.cx) * t.k,
-      y = t.H / 2 + (s.y - t.cy) * t.k,
-      d = Math.hypot(mx - x, my - y);
-    if (d < bd) {
-      bd = d;
-      best = s.id;
+    body = 14;
+  for (const starSystem of SYS_LIST) {
+    const positionX = mapTransform.W / 2 + (starSystem.x - mapTransform.cx) * mapTransform.k,
+      positionY = mapTransform.H / 2 + (starSystem.y - mapTransform.cy) * mapTransform.k,
+      distance = Math.hypot(mouseX - positionX, mouseY - positionY);
+    if (distance < body) {
+      body = distance;
+      best = starSystem.id;
     }
   }
   return best;
 }
 /**
  * Retrieves active salvage mission beacon world coordinates in current system.
- * @param {ClientGameState} G Game state
+ * @param {ClientGameState} clientGameState Game state
  * @returns {Array<[number, number]>} Array of salvage point world coordinates [x, y]
  */
-export function salvagePoints(G: ClientGameState): Array<[number, number]> {
-  const out: [number, number][] = [];
-  for (const m of (G.you && G.you.missions) || [])
-    if (m.type === 'salvage' && m.sys === G.sys && !m.done && m.point) out.push(m.point);
-  return out;
+export function salvagePoints(clientGameState: ClientGameState): Array<[number, number]> {
+  const result: [number, number][] = [];
+  for (const mission of (clientGameState.you && clientGameState.you.missions) || [])
+    if (
+      mission.type === 'salvage' &&
+      mission.sys === clientGameState.sys &&
+      !mission.done &&
+      mission.point
+    )
+      result.push(mission.point);
+  return result;
 }
 /**
  * Retrieves unvisited planetary survey beacon coordinates for active missions in current system.
- * @param {ClientGameState} G Game state
+ * @param {ClientGameState} clientGameState Game state
  * @returns {Array<[number, number]>} Array of survey point world coordinates [x, y]
  */
-export function surveyPoints(G: ClientGameState): Array<[number, number]> {
-  const out: [number, number][] = [];
-  if (!G.you) return out;
-  for (const m of G.you.missions || [])
-    if (m.type === 'survey' && m.sys === G.sys && !m.done)
-      m.points!.forEach((p, i) => {
-        if (!(m.seen || []).includes(i)) out.push(p);
+export function surveyPoints(clientGameState: ClientGameState): Array<[number, number]> {
+  const result: [number, number][] = [];
+  if (!clientGameState.you) return result;
+  for (const mission of clientGameState.you.missions || [])
+    if (mission.type === 'survey' && mission.sys === clientGameState.sys && !mission.done)
+      mission.points!.forEach((position, index) => {
+        if (!(mission.seen || []).includes(index)) result.push(position);
       });
-  return out;
+  return result;
 }
-export { FAC };
+export { faction2 as FAC };
 
 // World-bound visuals must not survive switching captains in the same document.
 export function resetRenderSession() {
-  fx.length = 0;
+  visualEffects.length = 0;
   shieldHits.clear();
   shake = 0;
   tagRects = [];
-  Object.assign(cam, { cx: 0, cy: 0, z: 1, W: 1, H: 1 });
+  Object.assign(cameraState, { cx: 0, cy: 0, z: 1, W: 1, H: 1 });
 }

@@ -53,35 +53,36 @@ export const CORONA_BANDS = Object.freeze([
     exit: 10,
   },
 ]);
-/** @param {string} sys @param {number} x @param {number} y */
-export function coronaAt(sys: string, x: number, y: number) {
+/** @param {string} starSystem @param {number} positionX @param {number} positionY */
+export function coronaAt(starSystem: string, positionX: number, positionY: number) {
   return (
     CORONA_BANDS.find(
-      (b) =>
-        b.sys === sys &&
-        Math.hypot(x - b.x, y - b.y) >= b.inner &&
-        Math.hypot(x - b.x, y - b.y) <= b.outer,
+      (secondValue) =>
+        secondValue.sys === starSystem &&
+        Math.hypot(positionX - secondValue.x, positionY - secondValue.y) >= secondValue.inner &&
+        Math.hypot(positionX - secondValue.x, positionY - secondValue.y) <= secondValue.outer,
     ) || null
   );
 }
 /** A swept forward cone samples the actual travelled segment, not just its endpoint.
- * @param {{x:number,y:number,a:number,vx:number,vy:number}} e @param {{x:number,y:number,r?:number}} target @param {number} dt */
+ * @param {{x:number,y:number,a:number,vx:number,vy:number}} event @param {{x:number,y:number,r?:number}} target @param {number} deltaTime */
 export function inSweep(
-  e: { x: number; y: number; a: number; vx: number; vy: number },
+  event: { x: number; y: number; a: number; vx: number; vy: number },
   target: { x: number; y: number; r?: number },
-  dt: number,
+  deltaTime: number,
 ) {
-  const sx = Math.sin(e.a),
-    cy = -Math.cos(e.a),
-    length = Math.hypot(e.vx, e.vy) * dt;
+  const screenX = Math.sin(event.a),
+    centerY = -Math.cos(event.a),
+    length = Math.hypot(event.vx, event.vy) * deltaTime;
   const samples = Math.max(1, Math.ceil(length / 40));
-  for (let i = 0; i <= samples; i++) {
-    const x = target.x - (e.x - (e.vx * dt * i) / samples),
-      y = target.y - (e.y - (e.vy * dt * i) / samples),
-      n = Math.hypot(x, y);
+  for (let index = 0; index <= samples; index++) {
+    const positionX = target.x - (event.x - (event.vx * deltaTime * index) / samples),
+      positionY = target.y - (event.y - (event.vy * deltaTime * index) / samples),
+      count = Math.hypot(positionX, positionY);
     if (
-      n <= INDUSTRIAL.sweepRadius + (target.r || 0) &&
-      (n < 1 || (x * sx + y * cy) / n >= Math.cos(INDUSTRIAL.cone))
+      count <= INDUSTRIAL.sweepRadius + (target.r || 0) &&
+      (count < 1 ||
+        (positionX * screenX + positionY * centerY) / count >= Math.cos(INDUSTRIAL.cone))
     )
       return true;
   }
@@ -90,22 +91,34 @@ export function inSweep(
 
 /** Conservative autopilot keep-out: route segments must clear the whole collector.
  * A margin includes stock stopping drift; manual harvesting flight remains available.
- * @param {string} sys @param {{x:number,y:number}} start
- * @param {{x:number,y:number}} end @param {number} [margin] */
+ * @param {string} starSystem @param {{x:number,y:number}} start
+ * @param {{x:number,y:number}} endPosition @param {number} [margin] */
 export function coronaRouteBlocked(
-  sys: string,
+  starSystem: string,
   start: { x: number; y: number },
-  end: { x: number; y: number },
+  endPosition: { x: number; y: number },
   margin: number = 1000,
 ) {
-  const dx = end.x - start.x,
-    dy = end.y - start.y,
-    length = dx * dx + dy * dy;
-  return CORONA_BANDS.some((b) => {
-    if (b.sys !== sys) return false;
-    const t = length
-      ? Math.max(0, Math.min(1, ((b.x - start.x) * dx + (b.y - start.y) * dy) / length))
+  const deltaX = endPosition.x - start.x,
+    deltaY = endPosition.y - start.y,
+    length = deltaX * deltaX + deltaY * deltaY;
+  return CORONA_BANDS.some((secondValue) => {
+    if (secondValue.sys !== starSystem) return false;
+    const time = length
+      ? Math.max(
+          0,
+          Math.min(
+            1,
+            ((secondValue.x - start.x) * deltaX + (secondValue.y - start.y) * deltaY) / length,
+          ),
+        )
       : 0;
-    return Math.hypot(start.x + t * dx - b.x, start.y + t * dy - b.y) <= b.outer + margin;
+    return (
+      Math.hypot(
+        start.x + time * deltaX - secondValue.x,
+        start.y + time * deltaY - secondValue.y,
+      ) <=
+      secondValue.outer + margin
+    );
   });
 }

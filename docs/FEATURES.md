@@ -114,17 +114,17 @@ meaningful tests registered in the canonical CI manifest in the same change.
   duplicate/unknown route handling, and authentication/flood/activity/action gates.
 - `npm run test:types`: positive calls compile; wrong fleet-order argument and a
   missing required capability must fail compilation. No suppression comments.
-- Existing `test/vNN.js`, simulation, fuzz and balance suites retain assertions;
+- Existing `test/vNN.ts`, simulation, fuzz and balance suites retain assertions;
   only internal feature access paths changed.
 
-`test/fixtures/features-v26.json` was captured from untouched commit
+`test/fixtures/features-v26.tson` was captured from untouched commit
 `47bea35a9f3d773efa9a9f075e5b361d9533b390`, not from the replacement. It records
 world/login phase traces, a sanitized fresh save, representative layered ship
 bonuses/stats, the world payload and mixed-case lookup. Regeneration requires a
 separate original checkout:
 
 ```sh
-REFERENCE_ROOT=/path/to/original-checkout node test/capture-features.js > test/fixtures/features-v26.json
+REFERENCE_ROOT=/path/to/original-checkout node test/capture-features.ts > test/fixtures/features-v26.tson
 ```
 
 The capture freezes time/RNG and disables interval scheduling only in its own
@@ -134,7 +134,7 @@ explain and review any intended fixture update.
 
 Some existing simulation assertions depend on random traffic/escort behavior.
 For a reproducible scenario without altering assertions, run e.g.
-`node --import ./test/seed-random.js test/v203.js`. The default seed is 123456789;
+`node --import ./test/seed-random.ts test/v203.ts`. The default seed is 123456789;
 set `RIFT_TEST_SEED` to explore another scenario. This helper is test-only and
 is not used by the game. A seeded pass is not a claim about every random seed.
 

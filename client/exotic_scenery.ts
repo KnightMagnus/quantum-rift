@@ -5,370 +5,435 @@ import { stationWheel } from './station_wheel.ts';
 import { drawStar } from './stars.ts';
 import { artworkUrl } from './artwork.ts';
 import { eventidePulse } from '../shared/eventide.ts';
-const TAU = Math.PI * 2;
+const fullCircleRadians = Math.PI * 2;
 const skies = new Map<string, HTMLCanvasElement>();
 const landings = new Map<string, Promise<string | null>>();
 function random(seed: string) {
-  let s = 2166136261;
-  for (const c of seed) s = Math.imul(s ^ c.charCodeAt(0), 16777619);
-  return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296;
+  let state = 2166136261;
+  for (const seed2 of seed) state = Math.imul(state ^ seed2.charCodeAt(0), 16777619);
+  return () => (state = (Math.imul(state, 1664525) + 1013904223) >>> 0) / 4294967296;
 }
 function ellipse(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  rx: number,
-  ry: number,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  positionX: number,
+  positionY: number,
+  relativeX: number,
+  relativeY: number,
   color: string,
   width = 1,
 ) {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
-  ctx.stroke();
+  canvasRenderingContext2D.strokeStyle = color;
+  canvasRenderingContext2D.lineWidth = width;
+  canvasRenderingContext2D.beginPath();
+  canvasRenderingContext2D.ellipse(
+    positionX,
+    positionY,
+    relativeX,
+    relativeY,
+    0,
+    0,
+    fullCircleRadians,
+  );
+  canvasRenderingContext2D.stroke();
 }
-function glow(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
-  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-  g.addColorStop(0, color);
-  g.addColorStop(1, 'transparent');
-  ctx.fillStyle = g;
-  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+function glow(
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  positionX: number,
+  positionY: number,
+  radius: number,
+  color: string,
+) {
+  const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+    positionX,
+    positionY,
+    0,
+    positionX,
+    positionY,
+    radius,
+  );
+  canvasGradient.addColorStop(0, color);
+  canvasGradient.addColorStop(1, 'transparent');
+  canvasRenderingContext2D.fillStyle = canvasGradient;
+  canvasRenderingContext2D.fillRect(positionX - radius, positionY - radius, radius * 2, radius * 2);
 }
-function skyArt(kind: string, id: string) {
-  const key = kind + ':' + id;
-  if (skies.has(key)) return skies.get(key)!;
-  const c = document.createElement('canvas');
-  c.width = 1100;
-  c.height = 760;
-  const ctx = c.getContext('2d')!,
-    rnd = random(key);
-  ctx.translate(550, 380);
+function skyArt(kind: string, identifier: string) {
+  const entryKey = kind + ':' + identifier;
+  if (skies.has(entryKey)) return skies.get(entryKey)!;
+  const htmlCanvasElement = document.createElement('canvas');
+  htmlCanvasElement.width = 1100;
+  htmlCanvasElement.height = 760;
+  const canvasRenderingContext2D = htmlCanvasElement.getContext('2d')!,
+    random2 = random(entryKey);
+  canvasRenderingContext2D.translate(550, 380);
   if (kind === 'blackhole') {
-    glow(ctx, 0, 0, 365, '#482037a0');
-    ctx.save();
-    ctx.rotate(-0.23);
+    glow(canvasRenderingContext2D, 0, 0, 365, '#482037a0');
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.rotate(-0.23);
     // Hundreds of separately seeded dust streamlets form a stratified accretion disk.
-    for (let i = 0; i < 280; i++) {
-      const r = 85 + rnd() * 260;
+    for (let index = 0; index < 280; index++) {
+      const radius = 85 + random2() * 260;
       ellipse(
-        ctx,
+        canvasRenderingContext2D,
         0,
         0,
-        r,
-        r * 0.22,
-        `rgba(255,${Math.floor(100 + rnd() * 135)},${Math.floor(40 + rnd() * 100)},${0.05 + rnd() * 0.2})`,
-        0.6 + rnd() * 2,
+        radius,
+        radius * 0.22,
+        `rgba(255,${Math.floor(100 + random2() * 135)},${Math.floor(40 + random2() * 100)},${0.05 + random2() * 0.2})`,
+        0.6 + random2() * 2,
       );
     }
-    glow(ctx, 0, -100, 130, '#ffbe6c44');
-    ellipse(ctx, 0, -26, 108, 104, '#ffdc9b99', 9);
-    ctx.fillStyle = '#010106';
-    ctx.beginPath();
-    ctx.arc(0, 0, 78, 0, TAU);
-    ctx.fill();
-    ellipse(ctx, 0, 0, 80, 80, '#fff0bc', 2.5);
+    glow(canvasRenderingContext2D, 0, -100, 130, '#ffbe6c44');
+    ellipse(canvasRenderingContext2D, 0, -26, 108, 104, '#ffdc9b99', 9);
+    canvasRenderingContext2D.fillStyle = '#010106';
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(0, 0, 78, 0, fullCircleRadians);
+    canvasRenderingContext2D.fill();
+    ellipse(canvasRenderingContext2D, 0, 0, 80, 80, '#fff0bc', 2.5);
     // The near side passes in front of the dark silhouette, not through its center.
-    for (let i = 0; i < 70; i++) {
-      const r = 95 + i * 3.1;
-      ctx.strokeStyle = `rgba(255,${180 - i},90,${0.34 - i * 0.003})`;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, r, r * 0.22, 0, 0, Math.PI);
-      ctx.stroke();
+    for (let index = 0; index < 70; index++) {
+      const radius = 95 + index * 3.1;
+      canvasRenderingContext2D.strokeStyle = `rgba(255,${180 - index},90,${0.34 - index * 0.003})`;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.ellipse(0, 0, radius, radius * 0.22, 0, 0, Math.PI);
+      canvasRenderingContext2D.stroke();
     }
-    ctx.restore();
+    canvasRenderingContext2D.restore();
   } else if (kind === 'pulsar') {
-    glow(ctx, 0, 0, 270, '#3263a944');
+    glow(canvasRenderingContext2D, 0, 0, 270, '#3263a944');
     // Broken hulls rather than identical sticks: tapered pressure vessels,
     // severed wings, exposed bays, panel seams and disconnected engine bells.
-    for (let i = 0; i < 38; i++) {
-      const angle = rnd() * TAU,
-        r = 110 + rnd() * 205,
-        scale = 0.35 + rnd() * 0.8;
-      ctx.save();
-      ctx.translate(Math.cos(angle) * r, Math.sin(angle) * r * 0.65);
-      ctx.rotate(angle + rnd() * 1.2);
-      ctx.scale(scale, scale);
-      ctx.globalAlpha = 0.35 + rnd() * 0.45;
-      const hull = ctx.createLinearGradient(0, -13, 0, 13);
+    for (let index = 0; index < 38; index++) {
+      const angle = random2() * fullCircleRadians,
+        radius = 110 + random2() * 205,
+        scale = 0.35 + random2() * 0.8;
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.65);
+      canvasRenderingContext2D.rotate(angle + random2() * 1.2);
+      canvasRenderingContext2D.scale(scale, scale);
+      canvasRenderingContext2D.globalAlpha = 0.35 + random2() * 0.45;
+      const hull = canvasRenderingContext2D.createLinearGradient(0, -13, 0, 13);
       hull.addColorStop(0, '#82919f');
       hull.addColorStop(0.35, '#435466');
       hull.addColorStop(1, '#111d2a');
-      ctx.fillStyle = hull;
-      ctx.beginPath();
-      ctx.moveTo(-32, -7);
-      ctx.lineTo(-16, -12);
-      ctx.lineTo(25, -9);
-      ctx.lineTo(39, -2);
-      ctx.lineTo(30, 6);
-      ctx.lineTo(3, 12);
-      ctx.lineTo(-24, 8);
-      ctx.lineTo(-21, 1);
-      ctx.lineTo(-32, -1);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#abb9c16e';
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-      ctx.fillStyle = '#1b2733';
-      ctx.beginPath();
-      ctx.moveTo(-13, -8);
-      ctx.lineTo(-25, -24);
-      ctx.lineTo(-3, -19);
-      ctx.lineTo(8, -6);
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(-7, 8);
-      ctx.lineTo(-16, 22);
-      ctx.lineTo(2, 18);
-      ctx.lineTo(12, 7);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#72849388';
-      for (let j = 0; j < 5; j++) {
-        const px = -18 + j * 9;
-        ctx.beginPath();
-        ctx.moveTo(px, -7);
-        ctx.lineTo(px + 2, 6);
-        ctx.stroke();
+      canvasRenderingContext2D.fillStyle = hull;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(-32, -7);
+      canvasRenderingContext2D.lineTo(-16, -12);
+      canvasRenderingContext2D.lineTo(25, -9);
+      canvasRenderingContext2D.lineTo(39, -2);
+      canvasRenderingContext2D.lineTo(30, 6);
+      canvasRenderingContext2D.lineTo(3, 12);
+      canvasRenderingContext2D.lineTo(-24, 8);
+      canvasRenderingContext2D.lineTo(-21, 1);
+      canvasRenderingContext2D.lineTo(-32, -1);
+      canvasRenderingContext2D.closePath();
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.strokeStyle = '#abb9c16e';
+      canvasRenderingContext2D.lineWidth = 0.8;
+      canvasRenderingContext2D.stroke();
+      canvasRenderingContext2D.fillStyle = '#1b2733';
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(-13, -8);
+      canvasRenderingContext2D.lineTo(-25, -24);
+      canvasRenderingContext2D.lineTo(-3, -19);
+      canvasRenderingContext2D.lineTo(8, -6);
+      canvasRenderingContext2D.closePath();
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(-7, 8);
+      canvasRenderingContext2D.lineTo(-16, 22);
+      canvasRenderingContext2D.lineTo(2, 18);
+      canvasRenderingContext2D.lineTo(12, 7);
+      canvasRenderingContext2D.closePath();
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.strokeStyle = '#72849388';
+      for (let innerIndex = 0; innerIndex < 5; innerIndex++) {
+        const pixelX = -18 + innerIndex * 9;
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.moveTo(pixelX, -7);
+        canvasRenderingContext2D.lineTo(pixelX + 2, 6);
+        canvasRenderingContext2D.stroke();
       }
-      ctx.fillStyle = '#070d15';
-      ctx.fillRect(-24, -4, 10, 7);
-      ctx.fillRect(3, -3, 13, 5);
-      ctx.fillStyle = '#9da6ae';
-      ctx.fillRect(-36, -3, 4, 5);
-      ctx.fillRect(-39, 4, 5, 3);
-      ctx.fillStyle = '#b99d6f88';
-      ctx.fillRect(23, -3, 4, 1);
-      ctx.restore();
+      canvasRenderingContext2D.fillStyle = '#070d15';
+      canvasRenderingContext2D.fillRect(-24, -4, 10, 7);
+      canvasRenderingContext2D.fillRect(3, -3, 13, 5);
+      canvasRenderingContext2D.fillStyle = '#9da6ae';
+      canvasRenderingContext2D.fillRect(-36, -3, 4, 5);
+      canvasRenderingContext2D.fillRect(-39, 4, 5, 3);
+      canvasRenderingContext2D.fillStyle = '#b99d6f88';
+      canvasRenderingContext2D.fillRect(23, -3, 4, 1);
+      canvasRenderingContext2D.restore();
     }
-    ctx.save();
-    ctx.rotate(-0.5);
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.rotate(-0.5);
     for (const sign of [-1, 1])
-      for (let i = 0; i < 26; i++) {
-        const y = (i - 13) * 0.7;
-        const g = ctx.createLinearGradient(0, 0, sign * 420, 0);
-        g.addColorStop(0, '#eaf8ff99');
-        g.addColorStop(0.2, '#78cfff44');
-        g.addColorStop(1, 'transparent');
-        ctx.strokeStyle = g;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(0, y * 0.1);
-        ctx.quadraticCurveTo(sign * 180, y, sign * 450, y * 3);
-        ctx.stroke();
+      for (let index = 0; index < 26; index++) {
+        const positionY = (index - 13) * 0.7;
+        const canvasGradient = canvasRenderingContext2D.createLinearGradient(0, 0, sign * 420, 0);
+        canvasGradient.addColorStop(0, '#eaf8ff99');
+        canvasGradient.addColorStop(0.2, '#78cfff44');
+        canvasGradient.addColorStop(1, 'transparent');
+        canvasRenderingContext2D.strokeStyle = canvasGradient;
+        canvasRenderingContext2D.lineWidth = 1.5;
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.moveTo(0, positionY * 0.1);
+        canvasRenderingContext2D.quadraticCurveTo(sign * 180, positionY, sign * 450, positionY * 3);
+        canvasRenderingContext2D.stroke();
       }
-    ctx.restore();
-    glow(ctx, 0, 0, 46, '#b9eaff');
-    glow(ctx, 0, 0, 12, '#ffffff');
+    canvasRenderingContext2D.restore();
+    glow(canvasRenderingContext2D, 0, 0, 46, '#b9eaff');
+    glow(canvasRenderingContext2D, 0, 0, 12, '#ffffff');
   } else if (kind === 'rogue' || kind === 'shattered') {
     const broken = kind === 'shattered';
-    glow(ctx, 0, 0, 245, broken ? '#ab62422a' : '#526bba20');
+    glow(canvasRenderingContext2D, 0, 0, 245, broken ? '#ab62422a' : '#526bba20');
     // Disk surface uses seeded crater/mountain strokes, not a plain silhouette.
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(0, 0, 172, 0, TAU);
-    ctx.clip();
-    const g = ctx.createLinearGradient(-170, -130, 140, 160);
-    g.addColorStop(0, broken ? '#a38069' : '#3a526d');
-    g.addColorStop(0.55, broken ? '#403331' : '#111b30');
-    g.addColorStop(1, '#02040c');
-    ctx.fillStyle = g;
-    ctx.fillRect(-175, -175, 350, 350);
-    for (let i = 0; i < 1100; i++) {
-      const x = (rnd() - 0.5) * 350,
-        y = (rnd() - 0.5) * 350;
-      ctx.strokeStyle = `rgba(160,175,184,${rnd() * 0.08})`;
-      ctx.beginPath();
-      ctx.arc(x, y, 2 + rnd() * 14, 0, TAU);
-      ctx.stroke();
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(0, 0, 172, 0, fullCircleRadians);
+    canvasRenderingContext2D.clip();
+    const canvasGradient = canvasRenderingContext2D.createLinearGradient(-170, -130, 140, 160);
+    canvasGradient.addColorStop(0, broken ? '#a38069' : '#3a526d');
+    canvasGradient.addColorStop(0.55, broken ? '#403331' : '#111b30');
+    canvasGradient.addColorStop(1, '#02040c');
+    canvasRenderingContext2D.fillStyle = canvasGradient;
+    canvasRenderingContext2D.fillRect(-175, -175, 350, 350);
+    for (let index = 0; index < 1100; index++) {
+      const positionX = (random2() - 0.5) * 350,
+        positionY = (random2() - 0.5) * 350;
+      canvasRenderingContext2D.strokeStyle = `rgba(160,175,184,${random2() * 0.08})`;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.arc(positionX, positionY, 2 + random2() * 14, 0, fullCircleRadians);
+      canvasRenderingContext2D.stroke();
     }
     if (broken) {
-      ctx.strokeStyle = '#ffb45d';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(-50, -170);
-      ctx.lineTo(10, -80);
-      ctx.lineTo(-15, -10);
-      ctx.lineTo(45, 35);
-      ctx.lineTo(20, 175);
-      ctx.stroke();
+      canvasRenderingContext2D.strokeStyle = '#ffb45d';
+      canvasRenderingContext2D.lineWidth = 3;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(-50, -170);
+      canvasRenderingContext2D.lineTo(10, -80);
+      canvasRenderingContext2D.lineTo(-15, -10);
+      canvasRenderingContext2D.lineTo(45, 35);
+      canvasRenderingContext2D.lineTo(20, 175);
+      canvasRenderingContext2D.stroke();
     }
-    ctx.restore();
-    ellipse(ctx, 0, 0, 173, 173, broken ? '#c68f6b55' : '#a8ceff66', 2);
-    for (let i = 0; i < (broken ? 160 : 35); i++) {
-      const a = rnd() * TAU,
-        r = 195 + rnd() * 150,
-        x = Math.cos(a) * r,
-        y = Math.sin(a) * r * 0.45;
-      ctx.fillStyle = broken ? '#8e7971' : '#38516b';
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(a);
-      ctx.fillRect(0, 0, 2 + rnd() * 9, 1 + rnd() * 5);
-      ctx.restore();
+    canvasRenderingContext2D.restore();
+    ellipse(canvasRenderingContext2D, 0, 0, 173, 173, broken ? '#c68f6b55' : '#a8ceff66', 2);
+    for (let index = 0; index < (broken ? 160 : 35); index++) {
+      const firstValue = random2() * fullCircleRadians,
+        radius = 195 + random2() * 150,
+        positionX = Math.cos(firstValue) * radius,
+        positionY = Math.sin(firstValue) * radius * 0.45;
+      canvasRenderingContext2D.fillStyle = broken ? '#8e7971' : '#38516b';
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(positionX, positionY);
+      canvasRenderingContext2D.rotate(firstValue);
+      canvasRenderingContext2D.fillRect(0, 0, 2 + random2() * 9, 1 + random2() * 5);
+      canvasRenderingContext2D.restore();
     }
   } else if (kind === 'observatory') {
     // Broken ancient interferometer arcs with suspended crystal receiver arrays.
-    for (let i = 0; i < 5; i++) {
-      ctx.strokeStyle = `rgba(137,198,221,${0.15 + i * 0.06})`;
-      ctx.lineWidth = 2 + i;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 170 + i * 25, 85 + i * 12, -0.3, 0.3, 5.6);
-      ctx.stroke();
+    for (let index = 0; index < 5; index++) {
+      canvasRenderingContext2D.strokeStyle = `rgba(137,198,221,${0.15 + index * 0.06})`;
+      canvasRenderingContext2D.lineWidth = 2 + index;
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.ellipse(0, 0, 170 + index * 25, 85 + index * 12, -0.3, 0.3, 5.6);
+      canvasRenderingContext2D.stroke();
     }
-    for (let i = 0; i < 28; i++) {
-      const a = (i / 28) * TAU,
-        x = Math.cos(a) * 245,
-        y = Math.sin(a) * 125;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(a);
-      ctx.fillStyle = '#446876';
-      ctx.fillRect(-10, -5, 20, 10);
-      ctx.fillStyle = '#9ae5f2';
-      ctx.fillRect(-6, -1, 12, 2);
-      ctx.restore();
+    for (let index = 0; index < 28; index++) {
+      const firstValue = (index / 28) * fullCircleRadians,
+        positionX = Math.cos(firstValue) * 245,
+        positionY = Math.sin(firstValue) * 125;
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(positionX, positionY);
+      canvasRenderingContext2D.rotate(firstValue);
+      canvasRenderingContext2D.fillStyle = '#446876';
+      canvasRenderingContext2D.fillRect(-10, -5, 20, 10);
+      canvasRenderingContext2D.fillStyle = '#9ae5f2';
+      canvasRenderingContext2D.fillRect(-6, -1, 12, 2);
+      canvasRenderingContext2D.restore();
     }
-    glow(ctx, 0, 0, 60, '#4cf2e52b');
+    glow(canvasRenderingContext2D, 0, 0, 60, '#4cf2e52b');
   }
-  skies.set(key, c);
+  skies.set(entryKey, htmlCanvasElement);
   if (skies.size > 24) skies.delete(skies.keys().next().value!);
-  return c;
+  return htmlCanvasElement;
 }
 export function drawExoticSky(
-  ctx: CanvasRenderingContext2D,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
   system: StarSystem,
-  x: number,
-  y: number,
+  positionX: number,
+  positionY: number,
   radius: number,
-  now = 0,
+  currentTime = 0,
 ) {
   const scene = system.scene;
   if (!scene) return;
-  ctx.save();
+  canvasRenderingContext2D.save();
   if (scene.kind === 'binary') {
-    const r = radius * 0.58;
+    const radius2 = radius * 0.58;
     drawStar(
-      ctx,
+      canvasRenderingContext2D,
       { ...system, id: system.id + '-red' },
       { core: '255,225,184', halo: '255,95,48' },
-      x - radius * 0.65,
-      y + radius * 0.06,
-      r,
-      now,
+      positionX - radius * 0.65,
+      positionY + radius * 0.06,
+      radius2,
+      currentTime,
     );
     drawStar(
-      ctx,
+      canvasRenderingContext2D,
       { ...system, id: system.id + '-blue' },
       { core: '236,249,255', halo: '95,169,255' },
-      x + radius * 0.8,
-      y - radius * 0.18,
-      r * 0.78,
-      now,
+      positionX + radius * 0.8,
+      positionY - radius * 0.18,
+      radius2 * 0.78,
+      currentTime,
     );
   } else {
-    const c = skyArt(scene.kind, system.id),
+    const htmlCanvasElement = skyArt(scene.kind, system.id),
       scale = (radius / 210) * (scene.scale || 1);
-    ctx.translate(x, y);
-    ctx.rotate(scene.rotation || 0);
-    ctx.drawImage(c, -550 * scale, -380 * scale, 1100 * scale, 760 * scale);
+    canvasRenderingContext2D.translate(positionX, positionY);
+    canvasRenderingContext2D.rotate(scene.rotation || 0);
+    canvasRenderingContext2D.drawImage(
+      htmlCanvasElement,
+      -550 * scale,
+      -380 * scale,
+      1100 * scale,
+      760 * scale,
+    );
   }
-  ctx.restore();
+  canvasRenderingContext2D.restore();
 }
 // Match all three flight-renderer branches: the unique hub, tiered personal hulls,
 // and faction/authored stations. A hub must never inherit Personal Station artwork.
-export function stationLandingSource(p: StellarBody, design: string | number, site?: StationSite) {
-  if (p.id === 'luna') return stationWheel(p)!.toDataURL('image/png');
-  if (p.hub) return artworkUrl('hub.png');
-  if (p.site) return artworkUrl(`stations/${Math.max(0, Math.min(5, site?.ops || 0))}.png`);
+export function stationLandingSource(
+  stellarBody: StellarBody,
+  design: string | number,
+  site?: StationSite,
+) {
+  if (stellarBody.id === 'luna') return stationWheel(stellarBody)!.toDataURL('image/png');
+  if (stellarBody.hub) return artworkUrl('hub.png');
+  if (stellarBody.site)
+    return artworkUrl(`stations/${Math.max(0, Math.min(5, site?.ops || 0))}.png`);
   return artworkUrl(`stations/s_${design}.webp`);
 }
 
 // Use the very same station silhouette as flight, avoiding unrelated stock landscapes.
 export function stationLanding(
-  p: StellarBody,
+  stellarBody: StellarBody,
   system: StarSystem,
   design: string | number,
   site?: StationSite,
 ) {
-  const source = stationLandingSource(p, design, site);
-  const key = p.id + ':' + source + ':' + (system.scene?.kind || 'normal');
-  if (landings.has(key)) return landings.get(key)!;
+  const source = stationLandingSource(stellarBody, design, site);
+  const entryKey = stellarBody.id + ':' + source + ':' + (system.scene?.kind || 'normal');
+  if (landings.has(entryKey)) return landings.get(entryKey)!;
   const promise = new Promise<string | null>((resolve) => {
-    const im = new Image();
-    im.onload = () => {
-      const c = document.createElement('canvas');
-      c.width = 1200;
-      c.height = 650;
-      const ctx = c.getContext('2d')!,
-        rnd = random(p.id);
-      ctx.fillStyle = '#030712';
-      ctx.fillRect(0, 0, 1200, 650);
-      for (let i = 0; i < 400; i++) {
-        ctx.fillStyle = `rgba(175,202,230,${0.15 + rnd() * 0.6})`;
-        ctx.fillRect(rnd() * 1200, rnd() * 650, 1 + rnd(), 1 + rnd());
+    const htmlImageElement = new Image();
+    htmlImageElement.onload = () => {
+      const htmlCanvasElement = document.createElement('canvas');
+      htmlCanvasElement.width = 1200;
+      htmlCanvasElement.height = 650;
+      const canvasRenderingContext2D = htmlCanvasElement.getContext('2d')!,
+        random2 = random(stellarBody.id);
+      canvasRenderingContext2D.fillStyle = '#030712';
+      canvasRenderingContext2D.fillRect(0, 0, 1200, 650);
+      for (let index = 0; index < 400; index++) {
+        canvasRenderingContext2D.fillStyle = `rgba(175,202,230,${0.15 + random2() * 0.6})`;
+        canvasRenderingContext2D.fillRect(
+          random2() * 1200,
+          random2() * 650,
+          1 + random2(),
+          1 + random2(),
+        );
       }
-      if (system.scene) drawExoticSky(ctx, system, 830, 235, 155, 0);
+      if (system.scene) drawExoticSky(canvasRenderingContext2D, system, 830, 235, 155, 0);
       else {
-        glow(ctx, 940, 130, 125, '#e8b26733');
-        glow(ctx, 940, 130, 24, '#fff2ce');
+        glow(canvasRenderingContext2D, 940, 130, 125, '#e8b26733');
+        glow(canvasRenderingContext2D, 940, 130, 24, '#fff2ce');
       }
-      const g = ctx.createRadialGradient(120, 740, 40, 120, 740, 460);
-      g.addColorStop(0, '#1b334c');
-      g.addColorStop(0.92, '#183e5a');
-      g.addColorStop(0.96, '#5e9dc5');
-      g.addColorStop(1, 'transparent');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 280, 620, 370);
-      const size = p.hub ? 560 : p.site ? 480 : 380;
+      const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+        120,
+        740,
+        40,
+        120,
+        740,
+        460,
+      );
+      canvasGradient.addColorStop(0, '#1b334c');
+      canvasGradient.addColorStop(0.92, '#183e5a');
+      canvasGradient.addColorStop(0.96, '#5e9dc5');
+      canvasGradient.addColorStop(1, 'transparent');
+      canvasRenderingContext2D.fillStyle = canvasGradient;
+      canvasRenderingContext2D.fillRect(0, 280, 620, 370);
+      const size = stellarBody.hub ? 560 : stellarBody.site ? 480 : 380;
       // The landing card crops wide panoramas on narrow windows; keep the
       // complete station silhouette within its central safe area.
-      if (p.hub) {
-        const frame = im.naturalWidth / 6;
-        ctx.drawImage(im, 0, 0, frame, frame, 600 - size / 2, 320 - size / 2, size, size);
-      } else ctx.drawImage(im, 600 - size / 2, 320 - size / 2, size, size);
-      resolve(c.toDataURL('image/png'));
+      if (stellarBody.hub) {
+        const frame = htmlImageElement.naturalWidth / 6;
+        canvasRenderingContext2D.drawImage(
+          htmlImageElement,
+          0,
+          0,
+          frame,
+          frame,
+          600 - size / 2,
+          320 - size / 2,
+          size,
+          size,
+        );
+      } else
+        canvasRenderingContext2D.drawImage(
+          htmlImageElement,
+          600 - size / 2,
+          320 - size / 2,
+          size,
+          size,
+        );
+      resolve(htmlCanvasElement.toDataURL('image/png'));
     };
-    im.onerror = () => {
+    htmlImageElement.onerror = () => {
       // A transient failure must not poison this station's cached landing forever.
-      landings.delete(key);
+      landings.delete(entryKey);
       resolve(null);
     };
-    im.src = source;
+    htmlImageElement.src = source;
   });
-  landings.set(key, promise);
+  landings.set(entryKey, promise);
   if (landings.size > 24) landings.delete(landings.keys().next().value!);
   return promise;
 }
 
 // Explicitly marked, bounded flight-space zone; the server owns damage and timing.
 export function drawPulseBoundary(
-  ctx: CanvasRenderingContext2D,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
   system: StarSystem,
-  sx: (x: number) => number,
-  sy: (y: number) => number,
+  screenX: (positionX: number) => number,
+  screenY: (positionY: number) => number,
   zoom: number,
 ) {
-  const h = system.scene?.hazard;
-  if (!h) return;
-  const x = sx(h.x),
-    y = sy(h.y),
-    r = h.r * zoom;
-  ctx.save();
-  const phase = eventidePulse(h, Date.now() / 1000);
-  ctx.strokeStyle =
+  const hazardDefinition = system.scene?.hazard;
+  if (!hazardDefinition) return;
+  const positionX = screenX(hazardDefinition.x),
+    positionY = screenY(hazardDefinition.y),
+    radius = hazardDefinition.r * zoom;
+  canvasRenderingContext2D.save();
+  const phase = eventidePulse(hazardDefinition, Date.now() / 1000);
+  canvasRenderingContext2D.strokeStyle =
     phase === 'active' ? '#ff7979cc' : phase === 'warning' ? '#ffcb72cc' : '#e9af6855';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([9, 10]);
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, TAU);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.font = '12px Tahoma';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#f4c183';
-  ctx.fillText(`PULSAR ${phase.toUpperCase()} · shield drain only`, x, y - r - 12);
-  ctx.restore();
+  canvasRenderingContext2D.lineWidth = 1.5;
+  canvasRenderingContext2D.setLineDash([9, 10]);
+  canvasRenderingContext2D.beginPath();
+  canvasRenderingContext2D.arc(positionX, positionY, radius, 0, fullCircleRadians);
+  canvasRenderingContext2D.stroke();
+  canvasRenderingContext2D.setLineDash([]);
+  canvasRenderingContext2D.font = '12px Tahoma';
+  canvasRenderingContext2D.textAlign = 'center';
+  canvasRenderingContext2D.fillStyle = '#f4c183';
+  canvasRenderingContext2D.fillText(
+    `PULSAR ${phase.toUpperCase()} · shield drain only`,
+    positionX,
+    positionY - radius - 12,
+  );
+  canvasRenderingContext2D.restore();
 }

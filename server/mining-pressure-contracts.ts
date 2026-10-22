@@ -1,4 +1,4 @@
-import type { DB } from './db.ts';
+import type { DB as Database } from './db.ts';
 import type { PlayerData, Session } from './game.ts';
 import type { Space } from './space.ts';
 export type CaptainPressure = {
@@ -62,11 +62,11 @@ export type PressureSpace = Pick<
   'id' | 'sys' | 'ships' | 'rocks' | 'makeShip' | 'root' | 'damage' | 'events'
 >;
 export type PressureCapabilities = {
-  db: Pick<DB, 'world' | 'get' | 'key' | 'touch'>;
+  db: Pick<Database, 'world' | 'get' | 'key' | 'touch'>;
   sessions: () => Iterable<Session>;
-  newcomer: (d: PlayerData) => boolean;
-  rush: (sys: string) => boolean;
-  toast: (s: Session, text: string) => void;
+  newcomer: (playerData: PlayerData) => boolean;
+  rush: (starSystem: string) => boolean;
+  toast: (session: Session, text: string) => void;
 };
 
 /** @import { DB } from './db.ts' */

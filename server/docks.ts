@@ -30,20 +30,20 @@ export interface DocksOperations {
   stored(
     this: DocksCapabilities,
     playerData: PlayerData,
-    uid: string | null | undefined,
+    userId: string | null | undefined,
   ): StoredShip | null;
-  wingMax(this: DocksCapabilities, playerData: PlayerData, k: number): number;
+  wingMax(this: DocksCapabilities, playerData: PlayerData, entryKey: number): number;
   slotOf(
     this: DocksCapabilities,
     playerData: PlayerData,
-    uid: string,
+    userId: string,
   ): { k: number; slot: 'lead' | number } | null;
-  unassign(this: DocksCapabilities, playerData: PlayerData, uid: string): void;
-  unwingOfficer(this: DocksCapabilities, playerData: PlayerData, oid: string | number): void;
+  unassign(this: DocksCapabilities, playerData: PlayerData, userId: string): void;
+  unwingOfficer(this: DocksCapabilities, playerData: PlayerData, officerId: string | number): void;
   wingOfficerAt(
     this: DocksCapabilities,
     playerData: PlayerData,
-    oid: string | number,
+    officerId: string | number,
   ): { k: number; w: number; r: string } | null;
   activeWings(
     this: DocksCapabilities,
@@ -53,7 +53,7 @@ export interface DocksOperations {
   wingBonus(
     this: DocksCapabilities,
     playerData: PlayerData,
-    w: Pick<SavedDockWing, 'cap' | 'crew'>,
+    width: Pick<SavedDockWing, 'cap' | 'crew'>,
   ): Record<string, number>;
   leadChanged(this: DocksCapabilities, playerData: PlayerData): void;
   docksPayload(this: DocksCapabilities, playerData: PlayerData): DocksPayload;
@@ -61,9 +61,9 @@ export interface DocksOperations {
   cleanBridge(
     this: DocksCapabilities,
     playerData: PlayerData,
-    b: PlayerData['bridge'] | undefined,
+    secondValue: PlayerData['bridge'] | undefined,
   ): PlayerData['bridge'];
-  wingRepair(this: DocksCapabilities, session: Session, uid: string): void;
+  wingRepair(this: DocksCapabilities, session: Session, userId: string): void;
   onWingLost(this: DocksCapabilities, entity: Entity): void;
   buyToHangar(this: DocksCapabilities, session: Session, hull: number): void;
 }
@@ -95,7 +95,9 @@ import { SPEC } from '../shared/specialty.ts';
 /** @import { Entity } from './space.ts' */
 
 /** @type {number | undefined} Hull ID for the Herald specialty ship. */
-const HERALD: number | undefined = (Object.values(SPEC).find((s) => s.key === 'herald') || {}).id;
+const HERALD: number | undefined = (
+  Object.values(SPEC).find((specialistShip) => specialistShip.key === 'herald') || {}
+).id;
 
 export const DocksOperations = {
   // ------------------------------------------------------------------ save upgrade and bookkeeping
@@ -108,44 +110,44 @@ export const DocksOperations = {
     this.hangarInit(playerData);
     if (!playerData.shipless && playerData.ship && !playerData.ship.uid!)
       playerData.ship.uid! = this.shipUid(playerData);
-    for (const x of playerData.dock) {
-      if (!x.ship.uid!) x.ship.uid! = this.shipUid(playerData);
-      if (x.escorts && x.escorts.length) {
-        const v = x.escorts.length * 500;
-        playerData.credits += v;
+    for (const storedShip of playerData.dock) {
+      if (!storedShip.ship.uid!) storedShip.ship.uid! = this.shipUid(playerData);
+      if (storedShip.escorts && storedShip.escorts.length) {
+        const value = storedShip.escorts.length * 500;
+        playerData.credits += value;
         this.log(
           playerData,
-          `Escort presets retired: ${credits(v)} credits refunded for the hired escorts of a stored ship.`,
+          `Escort presets retired: ${credits(value)} credits refunded for the hired escorts of a stored ship.`,
         );
       }
-      delete x.escorts;
+      delete storedShip.escorts;
     }
     if (!Array.isArray(playerData.docks)) {
       // first load under 2.1: Dock A holds the ship you fly, and your hired escorts become ships
       playerData.docks = [{ lead: playerData.shipless ? null : playerData.ship.uid!, wings: [] }];
       playerData.activeDock = 0;
-      for (const h of playerData.escorts || []) {
-        if (!this.A.ships[h]) continue;
-        if (this.A.ships[h].npcOnly) {
+      for (const height of playerData.escorts || []) {
+        if (!this.A.ships[height]) continue;
+        if (this.A.ships[height].npcOnly) {
           playerData.credits += 2500;
           this.log(
             playerData,
-            `${this.A.ships[h].name} stood down (retired in 2.6). 2,500 credits refunded.`,
+            `${this.A.ships[height].name} stood down (retired in 2.6). 2,500 credits refunded.`,
           );
           continue;
         }
         if (playerData.dock.length < this.dockSlots(playerData)) {
-          const ship = makeLoadout(this.A, h, this.A.ships[h].name);
+          const ship = makeLoadout(this.A, height, this.A.ships[height].name);
           ship.uid = this.shipUid(playerData);
           playerData.dock.push({ ship, bridge: {} });
           if (playerData.docks[0].wings.length < WINGS_PER_DOCK)
             playerData.docks[0].wings.push({ uid: ship.uid, cap: null, crew: null });
         } else {
-          const v = WINGMATES.includes(h) ? 500 : 2500;
-          playerData.credits += v;
+          const value = WINGMATES.includes(height) ? 500 : 2500;
+          playerData.credits += value;
           this.log(
             playerData,
-            `${this.A.ships[h].name} stood down: no free berth. ${credits(v)} credits refunded.`,
+            `${this.A.ships[height].name} stood down: no free berth. ${credits(value)} credits refunded.`,
           );
         }
       }
@@ -156,48 +158,53 @@ export const DocksOperations = {
     if (playerData.docks.length > this.dockCount(playerData)) {
       // five docks became four; ships in a dock that closed simply wait in the hangar
       if (playerData.activeDock >= this.dockCount(playerData)) {
-        const k = this.dockCount(playerData) - 1;
-        playerData.docks[k] = {
+        const entryKey = this.dockCount(playerData) - 1;
+        playerData.docks[entryKey] = {
           lead: playerData.shipless ? null : playerData.ship.uid!,
           wings: playerData.docks[playerData.activeDock].wings,
         };
-        playerData.activeDock = k;
+        playerData.activeDock = entryKey;
       }
       playerData.docks.length = this.dockCount(playerData);
     }
     if (!(playerData.activeDock >= 0 && playerData.activeDock < playerData.docks.length))
       playerData.activeDock = 0;
     // repair anything inconsistent: unknown ships, ships in two slots, the active lead must be the ship you fly
-    const owned = new Set(playerData.dock.map((x) => x.ship.uid!));
+    const owned = new Set(playerData.dock.map((storedShip) => storedShip.ship.uid!));
     if (!playerData.shipless) owned.add(playerData.ship.uid!);
     const seen = new Set(),
       oids = new Set(playerData.officers.map((officer) => officer.id)),
       crewSeen = new Set(Object.values(playerData.bridge || {}));
-    playerData.docks.forEach((k, i) => {
-      if (i === playerData.activeDock) k.lead = playerData.shipless ? null : playerData.ship.uid!;
+    playerData.docks.forEach((savedDock, index) => {
+      if (index === playerData.activeDock)
+        savedDock.lead = playerData.shipless ? null : playerData.ship.uid!;
       else if (
-        k.lead &&
-        (!owned.has(k.lead) ||
-          seen.has(k.lead) ||
-          k.lead === (playerData.shipless ? null : playerData.ship.uid!))
+        savedDock.lead &&
+        (!owned.has(savedDock.lead) ||
+          seen.has(savedDock.lead) ||
+          savedDock.lead === (playerData.shipless ? null : playerData.ship.uid!))
       )
-        k.lead = null;
-      if (k.lead) seen.add(k.lead);
-      k.wings = (k.wings || []).map((w) => {
+        savedDock.lead = null;
+      if (savedDock.lead) seen.add(savedDock.lead);
+      savedDock.wings = (savedDock.wings || []).map((savedDockWing) => {
         if (
-          !w ||
-          !w.uid ||
-          !owned.has(w.uid) ||
-          seen.has(w.uid) ||
-          w.uid === (playerData.shipless ? null : playerData.ship.uid!)
+          !savedDockWing ||
+          !savedDockWing.uid ||
+          !owned.has(savedDockWing.uid) ||
+          seen.has(savedDockWing.uid) ||
+          savedDockWing.uid === (playerData.shipless ? null : playerData.ship.uid!)
         )
           return null;
-        seen.add(w.uid);
-        for (const r of WING_CREW) {
-          if (w[r] && (!oids.has(w[r]) || crewSeen.has(w[r]))) w[r] = null;
-          if (w[r]) crewSeen.add(w[r]);
+        seen.add(savedDockWing.uid);
+        for (const wING_CREW of WING_CREW) {
+          if (
+            savedDockWing[wING_CREW] &&
+            (!oids.has(savedDockWing[wING_CREW]) || crewSeen.has(savedDockWing[wING_CREW]))
+          )
+            savedDockWing[wING_CREW] = null;
+          if (savedDockWing[wING_CREW]) crewSeen.add(savedDockWing[wING_CREW]);
         }
-        return w;
+        return savedDockWing;
       });
     });
     return playerData;
@@ -223,79 +230,91 @@ export const DocksOperations = {
   /**
    * Look up a stored ship entry by its unique identifier.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {string | null | undefined} uid - Ship unique identifier.
+   * @param {string | null | undefined} userId - Ship unique identifier.
    * @returns {StoredShip | null} Stored ship record or null if not found.
    */
-  stored(this: DocksCapabilities, playerData: PlayerData, uid: string | null | undefined) {
-    return uid ? playerData.dock.find((x) => x.ship.uid! === uid) || null : null;
+  stored(this: DocksCapabilities, playerData: PlayerData, userId: string | null | undefined) {
+    return userId
+      ? playerData.dock.find((storedShip) => storedShip.ship.uid! === userId) || null
+      : null;
   },
   /**
    * Determine the maximum number of wingmates allowed for a dock.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {number} k - Dock index.
+   * @param {number} entryKey - Dock index.
    * @returns {number} Maximum wingmate count.
    */
-  wingMax(this: DocksCapabilities, playerData: PlayerData, k: number) {
-    const D = playerData.docks[k];
-    if (!D) return 0;
+  wingMax(this: DocksCapabilities, playerData: PlayerData, entryKey: number) {
+    const savedDock = playerData.docks[entryKey];
+    if (!savedDock) return 0;
     const lead =
-      k === playerData.activeDock
+      entryKey === playerData.activeDock
         ? playerData.shipless
           ? null
           : playerData.ship
-        : (this.stored(playerData, D.lead) || {}).ship;
+        : (this.stored(playerData, savedDock.lead) || {}).ship;
     return WINGS_PER_DOCK + (lead && lead.hull === HERALD ? 1 : 0);
   },
   /**
    * Find the dock index and slot where a ship UID is assigned.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {string} uid - Ship unique identifier.
+   * @param {string} userId - Ship unique identifier.
    * @returns {{k: number, slot: 'lead' | number} | null} Slot coordinates or null.
    */
   slotOf(
     this: DocksCapabilities,
     playerData: PlayerData,
-    uid: string,
+    userId: string,
   ): { k: number; slot: 'lead' | number } | null {
-    for (const [i, k] of playerData.docks.entries()) {
-      if (k.lead === uid) return { k: i, slot: 'lead' };
-      const w = k.wings.findIndex((x) => x && x.uid === uid);
-      if (w >= 0) return { k: i, slot: w };
+    for (const [index, savedDock] of playerData.docks.entries()) {
+      if (savedDock.lead === userId) return { k: index, slot: 'lead' };
+      const index2 = savedDock.wings.findIndex(
+        (savedDockWing) => savedDockWing && savedDockWing.uid === userId,
+      );
+      if (index2 >= 0) return { k: index, slot: index2 };
     }
     return null;
   },
   /**
    * Remove a ship UID from all dock assignments (lead and wing slots).
    * @param {PlayerData} playerData - Saved player data.
-   * @param {string} uid - Ship unique identifier to unassign.
+   * @param {string} userId - Ship unique identifier to unassign.
    * @returns {void}
    */
-  unassign(this: DocksCapabilities, playerData: PlayerData, uid: string) {
-    for (const k of playerData.docks) {
-      if (k.lead === uid) k.lead = null;
-      k.wings = k.wings.map((w) => (w && w.uid === uid ? null : w));
+  unassign(this: DocksCapabilities, playerData: PlayerData, userId: string) {
+    for (const savedDock of playerData.docks) {
+      if (savedDock.lead === userId) savedDock.lead = null;
+      savedDock.wings = savedDock.wings.map((savedDockWing) =>
+        savedDockWing && savedDockWing.uid === userId ? null : savedDockWing,
+      );
     }
   },
   /**
    * Remove an officer from all wingmate crew assignments.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {string} oid - Officer identifier.
+   * @param {string} officerId - Officer identifier.
    * @returns {void}
    */
-  unwingOfficer(this: DocksCapabilities, playerData: PlayerData, oid: string | number) {
-    for (const k of playerData.docks)
-      for (const w of k.wings) if (w) for (const r of WING_CREW) if (w[r] === oid) w[r] = null;
+  unwingOfficer(this: DocksCapabilities, playerData: PlayerData, officerId: string | number) {
+    for (const savedDock of playerData.docks)
+      for (const savedDockWing of savedDock.wings)
+        if (savedDockWing)
+          for (const wING_CREW of WING_CREW)
+            if (savedDockWing[wING_CREW] === officerId) savedDockWing[wING_CREW] = null;
   },
   /**
    * Look up where an officer is assigned among wingmates.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {string} oid - Officer identifier.
+   * @param {string} officerId - Officer identifier.
    * @returns {{k: number, w: number, r: string} | null} Assignment location or null.
    */
-  wingOfficerAt(this: DocksCapabilities, playerData: PlayerData, oid: string | number) {
-    for (const [i, k] of playerData.docks.entries())
-      for (const [j, w] of k.wings.entries())
-        if (w) for (const r of WING_CREW) if (w[r] === oid) return { k: i, w: j, r };
+  wingOfficerAt(this: DocksCapabilities, playerData: PlayerData, officerId: string | number) {
+    for (const [index, savedDock] of playerData.docks.entries())
+      for (const [innerIndex, savedDockWing] of savedDock.wings.entries())
+        if (savedDockWing)
+          for (const wING_CREW of WING_CREW)
+            if (savedDockWing[wING_CREW] === officerId)
+              return { k: index, w: innerIndex, r: wING_CREW };
     return null;
   },
   // the wingmates of the active dock that are ready to fly
@@ -305,16 +324,20 @@ export const DocksOperations = {
    * @returns {Array<{w: SavedDockWing, i: number, x: StoredShip}>} Array of active wingmate info objects.
    */
   activeWings(this: DocksCapabilities, playerData: PlayerData) {
-    const D = playerData.docks && playerData.docks[playerData.activeDock];
-    if (!D || playerData.shipless) return [];
-    const now = Date.now(),
-      max = this.wingMax(playerData, playerData.activeDock);
-    return D.wings
-      .slice(0, max)
-      .map((w, i) => ({ w, i, x: w && this.stored(playerData, w.uid) }))
+    const savedDock = playerData.docks && playerData.docks[playerData.activeDock];
+    if (!savedDock || playerData.shipless) return [];
+    const currentTime = Date.now(),
+      wingMax2 = this.wingMax(playerData, playerData.activeDock);
+    return savedDock.wings
+      .slice(0, wingMax2)
+      .map((savedDockWing, index) => ({
+        w: savedDockWing,
+        i: index,
+        x: savedDockWing && this.stored(playerData, savedDockWing.uid),
+      }))
       .filter(
-        (o): o is { w: SavedDockWing; i: number; x: StoredShip } =>
-          !!(o.x && !(o.x.repairT! > now)),
+        (options): options is { w: SavedDockWing; i: number; x: StoredShip } =>
+          !!(options.x && !(options.x.repairT! > currentTime)),
       );
   },
   /**
@@ -323,20 +346,20 @@ export const DocksOperations = {
    * @returns {number[]} Array of hull IDs.
    */
   wingHulls(this: DocksCapabilities, playerData: PlayerData) {
-    return this.activeWings(playerData).map((o) => o.x.ship.hull);
+    return this.activeWings(playerData).map((options) => options.x.ship.hull);
   },
   /**
    * Calculate officer bonuses provided to a wingmate.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {Pick<SavedDockWing, 'cap' | 'crew'>} w - Wingmate slot configuration.
+   * @param {Pick<SavedDockWing, 'cap' | 'crew'>} width - Wingmate slot configuration.
    * @returns {Record<string, number>} Computed stat bonuses.
    */
   wingBonus(
     this: DocksCapabilities,
     playerData: PlayerData,
-    w: Pick<SavedDockWing, 'cap' | 'crew'>,
+    width: Pick<SavedDockWing, 'cap' | 'crew'>,
   ) {
-    return officerBonus(playerData.officers, { captain: w.cap, bridge1: w.crew });
+    return officerBonus(playerData.officers, { captain: width.cap, bridge1: width.crew });
   },
   // the new ship you fly took the active dock's lead slot (bought, rebuilt, rewarded)
   /**
@@ -356,15 +379,18 @@ export const DocksOperations = {
    * @returns {DocksPayload} Docks and stored ship overview payload.
    */
   docksPayload(this: DocksCapabilities, playerData: PlayerData): DocksPayload {
-    const now = Date.now(),
-      info = (x: StoredShip | null): DockShipPayload | null =>
-        x
+    const currentTime = Date.now(),
+      info = (storedShip: StoredShip | null): DockShipPayload | null =>
+        storedShip
           ? {
-              uid: x.ship.uid!,
-              hull: x.ship.hull,
-              name: x.ship.name,
-              repairT: x.repairT! > now ? x.repairT! : 0,
-              outfits: Object.values(x.ship.outfits || {}).reduce((a, b) => a + b, 0),
+              uid: storedShip.ship.uid!,
+              hull: storedShip.ship.hull,
+              name: storedShip.ship.name,
+              repairT: storedShip.repairT! > currentTime ? storedShip.repairT! : 0,
+              outfits: Object.values(storedShip.ship.outfits || {}).reduce(
+                (firstValue, secondValue) => firstValue + secondValue,
+                0,
+              ),
             }
           : null;
     const flying = playerData.shipless
@@ -380,26 +406,32 @@ export const DocksOperations = {
       active: playerData.activeDock,
       cap: this.dockSlots(playerData),
       count: this.dockCount(playerData),
-      list: playerData.docks.slice(0, this.dockCount(playerData)).map((k, i) => ({
-        letter: DOCK_LETTERS[i],
-        lead: i === playerData.activeDock ? flying : info(this.stored(playerData, k.lead)),
-        wingMax: this.wingMax(playerData, i),
-        wings: Array.from({ length: this.wingMax(playerData, i) }, (_, j) => {
-          const w = k.wings[j];
-          return w
-            ? { ...info(this.stored(playerData, w.uid))!, cap: w.cap || null, crew: w.crew || null }
+      list: playerData.docks.slice(0, this.dockCount(playerData)).map((savedDock, index) => ({
+        letter: DOCK_LETTERS[index],
+        lead:
+          index === playerData.activeDock ? flying : info(this.stored(playerData, savedDock.lead)),
+        wingMax: this.wingMax(playerData, index),
+        wings: Array.from({ length: this.wingMax(playerData, index) }, (unused, innerIndex) => {
+          const savedDockWing = savedDock.wings[innerIndex];
+          return savedDockWing
+            ? {
+                ...info(this.stored(playerData, savedDockWing.uid))!,
+                cap: savedDockWing.cap || null,
+                crew: savedDockWing.crew || null,
+              }
             : null;
         }),
       })),
-      stored: playerData.dock.map((x) => ({
-        ...info(x)!,
+      stored: playerData.dock.map((storedShip) => ({
+        ...info(storedShip)!,
         at: (() => {
-          const o = this.slotOf(playerData, x.ship.uid!);
-          return o
-            ? DOCK_LETTERS[o.k] + (o.slot === 'lead' ? ' lead' : ' wing ' + (o.slot + 1))
+          const slotOf2 = this.slotOf(playerData, storedShip.ship.uid!);
+          return slotOf2
+            ? DOCK_LETTERS[slotOf2.k] +
+                (slotOf2.slot === 'lead' ? ' lead' : ' wing ' + (slotOf2.slot + 1))
             : null;
         })(),
-        wingOnly: WING_ONLY.includes(x.ship.hull as number),
+        wingOnly: WING_ONLY.includes(storedShip.ship.hull as number),
       })),
     };
   },
@@ -413,58 +445,67 @@ export const DocksOperations = {
    */
   docksOp(this: DocksCapabilities, session: Session, message: NetworkMessage) {
     const playerData = this.docksInit(session.data),
-      p = STELLARS[playerData.stellar!];
+      stellarBody = STELLARS[playerData.stellar!];
     if (message.op === 'repair') return this.wingRepair(session, message.uid!);
     if (message.op === 'outfitterRepair') {
-      if (!p || session.ent || p.system !== playerData.sys || !this.outfitter(p, playerData))
+      if (
+        !stellarBody ||
+        session.ent ||
+        stellarBody.system !== playerData.sys ||
+        !this.outfitter(stellarBody, playerData)
+      )
         return this.toast(
           session,
           'Land at a planet or station with an outfitter to repair wingmates.',
         );
       return this.wingRepair(session, message.uid!);
     }
-    if (!p || session.ent || !this.ownSite(playerData, p))
+    if (!stellarBody || session.ent || !this.ownSite(playerData, stellarBody))
       return this.toast(session, 'Dock assignments are made at your Personal Station.');
-    const k = (message.k as number) | 0,
-      D = playerData.docks[k];
-    if (!D || k >= this.dockCount(playerData)) return;
-    const name = (x: StoredShip) => `${this.A.ships[x.ship.hull].name} "${x.ship.name}"`;
+    const entryKey = (message.k as number) | 0,
+      savedDock = playerData.docks[entryKey];
+    if (!savedDock || entryKey >= this.dockCount(playerData)) return;
+    const name = (storedShip: StoredShip) =>
+      `${this.A.ships[storedShip.ship.hull].name} "${storedShip.ship.name}"`;
     switch (message.op) {
       case 'activate': {
         // fly with another dock: its lead becomes your ship, and the old one goes back to its berth
-        if (k === playerData.activeDock) return;
-        const L = this.stored(playerData, D.lead);
-        if (!L)
-          return this.toast(session, `Dock ${DOCK_LETTERS[k]} has no lead ship. Assign one first.`);
-        const why = this.fitsJobs(playerData, L.ship);
-        if (why) return this.toast(session, why);
+        if (entryKey === playerData.activeDock) return;
+        const storedShip = this.stored(playerData, savedDock.lead);
+        if (!storedShip)
+          return this.toast(
+            session,
+            `Dock ${DOCK_LETTERS[entryKey]} has no lead ship. Assign one first.`,
+          );
+        const fitsJobs2 = this.fitsJobs(playerData, storedShip.ship);
+        if (fitsJobs2) return this.toast(session, fitsJobs2);
         if (
           playerData.specState &&
-          playerData.specState[L.ship.hull] &&
-          playerData.specState[L.ship.hull].upT! > Date.now()
+          playerData.specState[storedShip.ship.hull] &&
+          playerData.specState[storedShip.ship.hull].upT! > Date.now()
         )
           return this.toast(session, 'That ship is in the drydock for her tier-up.');
         if (!playerData.shipless) {
           playerData.dock.push({ ship: playerData.ship, bridge: playerData.bridge });
           playerData.docks[playerData.activeDock].lead = playerData.ship.uid!;
         }
-        playerData.dock = playerData.dock.filter((x) => x !== L);
-        playerData.ship = L.ship;
-        playerData.bridge = this.cleanBridge(playerData, L.bridge);
+        playerData.dock = playerData.dock.filter((storedShip2) => storedShip2 !== storedShip);
+        playerData.ship = storedShip.ship;
+        playerData.bridge = this.cleanBridge(playerData, storedShip.bridge);
         playerData.shipless = false;
         playerData.fuel = undefined;
-        playerData.activeDock = k;
+        playerData.activeDock = entryKey;
         this.toast(
           session,
-          `Dock ${DOCK_LETTERS[k]} is your active dock. Now flying the ${name(L)}.`,
+          `Dock ${DOCK_LETTERS[entryKey]} is your active dock. Now flying the ${name(storedShip)}.`,
         );
         break;
       }
       case 'assign': {
         // put a stored ship (or nothing) into a lead or wing slot
         const slot = message.slot === 'lead' ? 'lead' : (message.slot as number) | 0,
-          X = message.uid ? this.stored(playerData, message.uid) : null;
-        if (message.uid && !X)
+          storedShip = message.uid ? this.stored(playerData, message.uid) : null;
+        if (message.uid && !storedShip)
           return this.toast(
             session,
             playerData.ship && playerData.ship.uid! === message.uid
@@ -472,37 +513,42 @@ export const DocksOperations = {
               : 'That ship is not in your hangar.',
           );
         if (slot === 'lead') {
-          if (X && WING_ONLY.includes(X.ship.hull as number))
+          if (storedShip && WING_ONLY.includes(storedShip.ship.hull as number))
             return this.toast(
               session,
-              `The ${this.A.ships[X.ship.hull].name} flies only as a wingmate.`,
+              `The ${this.A.ships[storedShip.ship.hull].name} flies only as a wingmate.`,
             );
-          if (k === playerData.activeDock) {
+          if (entryKey === playerData.activeDock) {
             // changing the ship you fly
-            if (X) {
-              const why = this.fitsJobs(playerData, X.ship);
-              if (why) return this.toast(session, why);
+            if (storedShip) {
+              const fitsJobs3 = this.fitsJobs(playerData, storedShip.ship);
+              if (fitsJobs3) return this.toast(session, fitsJobs3);
             } else if (
-              Object.values(playerData.cargo).reduce((a, b) => a + b, 0) ||
+              Object.values(playerData.cargo).reduce(
+                (firstValue, secondValue) => firstValue + secondValue,
+                0,
+              ) ||
               this.jobCargo(playerData) ||
-              (playerData.missions || []).some((m) => m.type === 'passenger' && m.pax! > 0)
+              (playerData.missions || []).some(
+                (mission) => mission.type === 'passenger' && mission.pax! > 0,
+              )
             )
               return this.toast(
                 session,
                 'Unload your cargo and complete passenger and cargo missions before storing the ship you fly.',
               );
             if (!playerData.shipless) {
-              if (!X && playerData.dock.length >= this.dockSlots(playerData))
+              if (!storedShip && playerData.dock.length >= this.dockSlots(playerData))
                 return this.toast(session, 'Every berth is taken.');
               playerData.dock.push({ ship: playerData.ship, bridge: playerData.bridge });
             }
-            if (X) {
-              this.unassign(playerData, X.ship.uid!);
-              playerData.dock = playerData.dock.filter((x) => x !== X);
-              playerData.ship = X.ship;
-              playerData.bridge = this.cleanBridge(playerData, X.bridge);
+            if (storedShip) {
+              this.unassign(playerData, storedShip.ship.uid!);
+              playerData.dock = playerData.dock.filter((storedShip3) => storedShip3 !== storedShip);
+              playerData.ship = storedShip.ship;
+              playerData.bridge = this.cleanBridge(playerData, storedShip.bridge);
               playerData.shipless = false;
-              this.toast(session, `Now flying the ${name(X)}.`);
+              this.toast(session, `Now flying the ${name(storedShip)}.`);
             } else {
               playerData.ship = makeLoadout(this.A, 703, '');
               playerData.shipless = true;
@@ -512,43 +558,55 @@ export const DocksOperations = {
                 'Ship stored. You have no active ship: assign a lead to this dock, or switch docks.',
               );
             }
-            D.lead = playerData.shipless ? null : playerData.ship.uid!;
+            savedDock.lead = playerData.shipless ? null : playerData.ship.uid!;
             playerData.fuel = undefined;
           } else {
-            if (X) this.unassign(playerData, X.ship.uid!);
-            D.lead = X ? X.ship.uid! : null;
+            if (storedShip) this.unassign(playerData, storedShip.ship.uid!);
+            savedDock.lead = storedShip ? storedShip.ship.uid! : null;
           } // the DOCKS screen shows the change; no toast
         } else {
-          if (slot < 0 || slot >= this.wingMax(playerData, k)) return;
-          const old = D.wings[slot] || { cap: null, crew: null };
-          if (X) this.unassign(playerData, X.ship.uid!);
-          while (D.wings.length <= slot) D.wings.push(null);
-          D.wings[slot] = X
-            ? { uid: X.ship.uid!, cap: old.cap || null, crew: old.crew || null }
+          if (slot < 0 || slot >= this.wingMax(playerData, entryKey)) return;
+          const previousValue = savedDock.wings[slot] || { cap: null, crew: null };
+          if (storedShip) this.unassign(playerData, storedShip.ship.uid!);
+          while (savedDock.wings.length <= slot) savedDock.wings.push(null);
+          savedDock.wings[slot] = storedShip
+            ? {
+                uid: storedShip.ship.uid!,
+                cap: previousValue.cap || null,
+                crew: previousValue.crew || null,
+              }
             : null; // the slot keeps its officers
         }
         break;
       }
       case 'crew': {
         // officers for a wingmate: a captain and one crew member
-        const w = D.wings[message.w! | 0],
+        const savedDockWing = savedDock.wings[message.w! | 0],
           role = WING_CREW.includes(message.role as 'cap' | 'crew')
             ? (message.role as 'cap' | 'crew')
             : null;
-        if (!w || !role) return;
+        if (!savedDockWing || !role) return;
         if (!message.oid) {
-          w[role] = null;
+          savedDockWing[role] = null;
           break;
         }
-        const officer = playerData.officers.find((x) => x.id === message.oid);
+        const officer = playerData.officers.find(
+          (officerRecord) => officerRecord.id === message.oid,
+        );
         if (!officer) return;
-        if (playerData.shuttles.some((sh) => sh.crew === officer.id && sh.state === 'out'))
+        if (
+          playerData.shuttles.some(
+            (savedShuttle) => savedShuttle.crew === officer.id && savedShuttle.state === 'out',
+          )
+        )
           return this.toast(session, `${officer.name} is out on a shuttle job.`);
-        for (const k2 of BRIDGE_SLOTS)
-          if (playerData.bridge[k2] === officer.id) delete playerData.bridge[k2];
-        for (const sh of playerData.shuttles) if (sh.crew === officer.id) sh.crew = null;
+        for (const bRIDGE_SLOTS of BRIDGE_SLOTS)
+          if (playerData.bridge[bRIDGE_SLOTS] === officer.id)
+            delete playerData.bridge[bRIDGE_SLOTS];
+        for (const savedShuttle of playerData.shuttles)
+          if (savedShuttle.crew === officer.id) savedShuttle.crew = null;
         this.unwingOfficer(playerData, officer.id);
-        w[role] = officer.id;
+        savedDockWing[role] = officer.id;
         break;
       }
       default:
@@ -563,44 +621,46 @@ export const DocksOperations = {
   /**
    * Clean and validate bridge assignments against available officers.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {PlayerData['bridge'] | undefined} b - Bridge slot officer map.
+   * @param {PlayerData['bridge'] | undefined} secondValue - Bridge slot officer map.
    * @returns {PlayerData['bridge']} Sanitized bridge map.
    */
   cleanBridge(
     this: DocksCapabilities,
     playerData: PlayerData,
-    b: PlayerData['bridge'] | undefined,
+    secondValue: PlayerData['bridge'] | undefined,
   ) {
-    const out: PlayerData['bridge'] = {};
-    for (const k of BRIDGE_SLOTS)
+    const result: PlayerData['bridge'] = {};
+    for (const bRIDGE_SLOTS of BRIDGE_SLOTS)
       if (
-        b &&
-        b[k] &&
-        playerData.officers.some((officer) => officer.id === b[k]) &&
-        !this.wingOfficerAt(playerData, b[k])
+        secondValue &&
+        secondValue[bRIDGE_SLOTS] &&
+        playerData.officers.some((officer) => officer.id === secondValue[bRIDGE_SLOTS]) &&
+        !this.wingOfficerAt(playerData, secondValue[bRIDGE_SLOTS])
       )
-        out[k] = b[k];
-    const used = new Set(Object.values(out));
-    for (const x of playerData.dock)
-      for (const k of BRIDGE_SLOTS) if (x.bridge && used.has(x.bridge[k])) delete x.bridge[k];
-    return out;
+        result[bRIDGE_SLOTS] = secondValue[bRIDGE_SLOTS];
+    const used = new Set(Object.values(result));
+    for (const storedShip of playerData.dock)
+      for (const bRIDGE_SLOTS of BRIDGE_SLOTS)
+        if (storedShip.bridge && used.has(storedShip.bridge[bRIDGE_SLOTS]))
+          delete storedShip.bridge[bRIDGE_SLOTS];
+    return result;
   },
   /**
    * Instantly repair a damaged wingmate ship for a credit fee.
    * @param {Session} session - Player session.
-   * @param {string} uid - Unique ship identifier.
+   * @param {string} userId - Unique ship identifier.
    * @returns {void}
    */
-  wingRepair(this: DocksCapabilities, session: Session, uid: string) {
+  wingRepair(this: DocksCapabilities, session: Session, userId: string) {
     const playerData = session.data,
-      X = this.stored(playerData, uid);
-    if (!X || !(X.repairT! > Date.now())) return;
-    const cost = Math.round(repairBasis(this.A, X.ship.hull) * WING_REPAIR_COST);
+      storedShip = this.stored(playerData, userId);
+    if (!storedShip || !(storedShip.repairT! > Date.now())) return;
+    const cost = Math.round(repairBasis(this.A, storedShip.ship.hull) * WING_REPAIR_COST);
     if (playerData.credits < cost)
       return this.toast(session, `Rush repairs cost ${credits(cost)} credits.`);
     playerData.credits -= cost;
-    X.repairT = 0;
-    this.toast(session, `${X.ship.name} is repaired and ready to fly.`);
+    storedShip.repairT = 0;
+    this.toast(session, `${storedShip.ship.name} is repaired and ready to fly.`);
     this.db.touch();
     this.you(session);
   },
@@ -611,18 +671,18 @@ export const DocksOperations = {
    * @returns {void}
    */
   onWingLost(this: DocksCapabilities, entity: Entity) {
-    const s = [...this.sessions.values()].find((x) => x.id === entity.wingOf);
-    if (!s || !s.data) return;
-    const X = this.stored(s.data, entity.wingUid);
-    if (!X) return;
-    X.repairT = Date.now() + WING_REPAIR_MIN * 60000;
+    const session = [...this.sessions.values()].find((session) => session.id === entity.wingOf);
+    if (!session || !session.data) return;
+    const storedShip = this.stored(session.data, entity.wingUid);
+    if (!storedShip) return;
+    storedShip.repairT = Date.now() + WING_REPAIR_MIN * 60000;
     this.toast(
-      s,
-      `Wingmate ${X.ship.name} was knocked out and towed home. Repairs take ${WING_REPAIR_MIN} minutes (or pay to rush them at DOCKS or any landed outfitter).`,
+      session,
+      `Wingmate ${storedShip.ship.name} was knocked out and towed home. Repairs take ${WING_REPAIR_MIN} minutes (or pay to rush them at DOCKS or any landed outfitter).`,
     );
-    this.log(s.data, `Wingmate ${X.ship.name} was knocked out of the fight.`);
+    this.log(session.data, `Wingmate ${storedShip.ship.name} was knocked out of the fight.`);
     this.db.touch();
-    this.you(s);
+    this.you(session);
   },
   // buying a ship straight into your hangar (no trade-in)
   /**
@@ -633,9 +693,9 @@ export const DocksOperations = {
    */
   buyToHangar(this: DocksCapabilities, session: Session, hull: number) {
     const playerData = this.docksInit(session.data),
-      p = STELLARS[playerData.stellar!];
-    if (!p || session.ent) return;
-    const yard = this.yard(p, playerData) || [];
+      stellarBody = STELLARS[playerData.stellar!];
+    if (!stellarBody || session.ent) return;
+    const yard = this.yard(stellarBody, playerData) || [];
     if (!yard.includes(hull)) return;
     if (!playerData.station.site)
       return this.toast(session, 'You need a Personal Station to store ships.');
@@ -644,26 +704,29 @@ export const DocksOperations = {
         session,
         `Your hangar is full (${this.dockSlots(playerData)} berths). Sell a stored ship or raise your station's Station Tier.`,
       );
-    const H = this.A.ships[hull];
+    const shipHullAsset = this.A.ships[hull];
     if (
       WINGMATES.includes(hull) &&
       ((!playerData.shipless && playerData.ship.hull === hull) ||
-        playerData.dock.some((x) => x.ship.hull === hull))
+        playerData.dock.some((storedShip) => storedShip.ship.hull === hull))
     )
       return this.toast(
         session,
-        `${H.name} is already in your fleet. Each named companion can be recruited once.`,
+        `${shipHullAsset.name} is already in your fleet. Each named companion can be recruited once.`,
       );
-    if (playerData.credits < H.cost)
-      return this.toast(session, `You need ${credits(H.cost)} credits.`);
-    playerData.credits -= H.cost;
-    const ship = makeLoadout(this.A, hull, H.name);
+    if (playerData.credits < shipHullAsset.cost)
+      return this.toast(session, `You need ${credits(shipHullAsset.cost)} credits.`);
+    playerData.credits -= shipHullAsset.cost;
+    const ship = makeLoadout(this.A, hull, shipHullAsset.name);
     ship.uid = this.shipUid(playerData);
     playerData.dock.push({ ship, bridge: {} });
-    this.log(playerData, `Bought a ${H.name} at ${p.name}, delivered to your hangar.`);
+    this.log(
+      playerData,
+      `Bought a ${shipHullAsset.name} at ${stellarBody.name}, delivered to your hangar.`,
+    );
     this.toast(
       session,
-      `The ${H.name} is in your hangar. Assign her to a dock at your Personal Station.`,
+      `The ${shipHullAsset.name} is in your hangar. Assign her to a dock at your Personal Station.`,
     );
     this.db.touch();
     this.you(session);

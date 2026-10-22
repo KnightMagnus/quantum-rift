@@ -9,20 +9,20 @@ export interface StoryPayload {
 import type { SavedStory } from './save-contracts.ts';
 export interface StoryOperations {
   storyInit(this: StoryCapabilities, playerData: PlayerData): SavedStory;
-  storyDone(this: StoryCapabilities, playerData: PlayerData, id: string): boolean;
+  storyDone(this: StoryCapabilities, playerData: PlayerData, identifier: string): boolean;
   storyPayload(this: StoryCapabilities, playerData: PlayerData): StoryPayload;
   storyOffer(
     this: StoryCapabilities,
     playerData: PlayerData,
-    p: { id: string } | null,
+    position: { id: string } | null,
   ): StoryStep | null;
-  storyOnLand(this: StoryCapabilities, session: Session, p: { id: string }): void;
-  storyAccept(this: StoryCapabilities, session: Session, m: { id: string }): void;
-  storyComplete(this: StoryCapabilities, session: Session, st: StoryStep): void;
-  storyGift(this: StoryCapabilities, session: Session, st: StoryStep): void;
+  storyOnLand(this: StoryCapabilities, session: Session, position: { id: string }): void;
+  storyAccept(this: StoryCapabilities, session: Session, message: { id: string }): void;
+  storyComplete(this: StoryCapabilities, session: Session, storyStep: StoryStep): void;
+  storyGift(this: StoryCapabilities, session: Session, storyStep: StoryStep): void;
   storyArrive(this: StoryCapabilities, session: Session, space: Space): void;
   storyProgress(this: StoryCapabilities, session: Session, entity: Entity): void;
-  deepLocked(this: StoryCapabilities, playerData: PlayerData, to: string): boolean;
+  deepLocked(this: StoryCapabilities, playerData: PlayerData, destination: string): boolean;
 }
 import type { StoryCapabilities } from './features.ts';
 type StoryStep = import('../shared/story.ts').StoryStep & { locked?: string };
@@ -31,7 +31,7 @@ import type { Entity, Space } from './space.ts';
 
 import { clampStanding } from '../shared/reputation.ts';
 // Quantum Rift: the Que'vari storyline as golden main-story missions (offered in landing pop-ups), and the Deep gate.
-import { SYS, STELLARS, GRADES } from '../shared/galaxy.ts';
+import { SYS as systemsById, STELLARS, GRADES } from '../shared/galaxy.ts';
 import { STORY, STORY_SHIP, DEEP_UNLOCK } from '../shared/story.ts';
 import { makeLoadout, credits } from '../shared/rules.ts';
 
@@ -53,12 +53,12 @@ export const StoryOperations = {
   /**
    * Check whether a specific storyline mission has been completed.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {string} id - Story mission identifier.
+   * @param {string} identifier - Story mission identifier.
    * @returns {boolean} True if mission is completed.
    */
-  storyDone(this: StoryCapabilities, playerData: PlayerData, id: string) {
-    const S = this.storyInit(playerData);
-    return S.pass || S.done.includes(id);
+  storyDone(this: StoryCapabilities, playerData: PlayerData, identifier: string) {
+    const savedStory = this.storyInit(playerData);
+    return savedStory.pass || savedStory.done.includes(identifier);
   },
   /**
    * Construct story progress overview payload for client synchronization.
@@ -66,83 +66,95 @@ export const StoryOperations = {
    * @returns {Record<string, string | number | boolean>} Story overview payload.
    */
   storyPayload(this: StoryCapabilities, playerData: PlayerData) {
-    const S = this.storyInit(playerData),
-      cur = STORY[S.step];
+    const savedStory = this.storyInit(playerData),
+      storyMission = STORY[savedStory.step];
     return {
-      step: S.step,
+      step: savedStory.step,
       total: STORY.length,
-      done: S.done,
-      active: S.active
+      done: savedStory.done,
+      active: savedStory.active
         ? {
-            ...S.active,
-            title: STORY.find((x) => x.id === S.active!.id)!.title,
-            brief: STORY.find((x) => x.id === S.active!.id)!.brief,
+            ...savedStory.active,
+            title: STORY.find((storyMission) => storyMission.id === savedStory.active!.id)!.title,
+            brief: STORY.find((storyMission) => storyMission.id === savedStory.active!.id)!.brief,
           }
         : null,
-      next: cur && !S.active ? { title: cur.title, at: STELLARS[cur.at].name } : null,
-      pass: !!S.pass,
+      next:
+        storyMission && !savedStory.active
+          ? { title: storyMission.title, at: STELLARS[storyMission.at].name }
+          : null,
+      pass: !!savedStory.pass,
     };
   },
   // the story step on offer at this landing (if any)
   /**
    * Evaluate the story mission step on offer at a stellar landing.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {{id: string} | null} p - Landed stellar body.
+   * @param {{id: string} | null} position - Landed stellar body.
    * @returns {StoryStep | null} Available story step or null.
    */
-  storyOffer(this: StoryCapabilities, playerData: PlayerData, p: { id: string } | null) {
-    const S = this.storyInit(playerData),
-      st = STORY[S.step];
-    if (!st || S.active || !p || st.at !== p.id) return null;
-    if (st.minRep && (playerData.rep.quevari || 0) < st.minRep)
+  storyOffer(this: StoryCapabilities, playerData: PlayerData, position: { id: string } | null) {
+    const savedStory = this.storyInit(playerData),
+      storyMission = STORY[savedStory.step];
+    if (!storyMission || savedStory.active || !position || storyMission.at !== position.id)
+      return null;
+    if (storyMission.minRep && (playerData.rep.quevari || 0) < storyMission.minRep)
       return {
-        ...st,
-        locked: `The elders will ask more of you when your standing with the Que'vari reaches ${st.minRep} (it is ${playerData.rep.quevari || 0}).`,
+        ...storyMission,
+        locked: `The elders will ask more of you when your standing with the Que'vari reaches ${storyMission.minRep} (it is ${playerData.rep.quevari || 0}).`,
       };
-    return st;
+    return storyMission;
   },
   /**
    * Check active story mission completion or send landing mission offer.
    * @param {Session} session - Player session.
-   * @param {{id: string}} p - Landed stellar body.
+   * @param {{id: string}} position - Landed stellar body.
    * @returns {void}
    */
-  storyOnLand(this: StoryCapabilities, session: Session, p: { id: string }) {
+  storyOnLand(this: StoryCapabilities, session: Session, position: { id: string }) {
     const playerData = session.data,
-      S = this.storyInit(playerData),
-      a = S.active;
-    if (a) {
-      const st = STORY.find((x) => x.id === a.id)!;
-      if ((st.type === 'carry' && p.id === st.dest) || (a.ready && p.id === st.back))
-        this.storyComplete(session, st);
+      savedStory = this.storyInit(playerData),
+      active2 = savedStory.active;
+    if (active2) {
+      const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
+      if (
+        (storyMission.type === 'carry' && position.id === storyMission.dest) ||
+        (active2.ready && position.id === storyMission.back)
+      )
+        this.storyComplete(session, storyMission);
     }
-    const off = this.storyOffer(playerData, p);
-    if (off && !off.locked)
+    const storyStep = this.storyOffer(playerData, position);
+    if (storyStep && !storyStep.locked)
       this.send(session, {
         t: 'story',
-        id: off.id,
-        title: off.title,
-        text: off.text,
-        acc: off.acc,
-        ref: off.ref,
+        id: storyStep.id,
+        title: storyStep.title,
+        text: storyStep.text,
+        acc: storyStep.acc,
+        ref: storyStep.ref,
       });
   },
   /**
    * Accept an offered story mission.
    * @param {Session} session - Player session.
-   * @param {{id: string}} m - Accept message.
+   * @param {{id: string}} message - Accept message.
    * @returns {void}
    */
-  storyAccept(this: StoryCapabilities, session: Session, m: { id: string }) {
+  storyAccept(this: StoryCapabilities, session: Session, message: { id: string }) {
     const playerData = session.data,
-      S = this.storyInit(playerData),
-      p = STELLARS[playerData.stellar!],
-      st = this.storyOffer(playerData, p);
-    if (!st || st.locked || st.id !== m.id) return;
-    if (st.type === 'gift') return this.storyGift(session, st);
-    S.active = { id: st.id, got: 0, spawned: false, ready: st.type === 'carry' ? false : false };
-    this.log(playerData, `Story: ${st.title}. ${st.brief}`);
-    this.toast(session, `Story mission accepted: ${st.brief}`);
+      savedStory = this.storyInit(playerData),
+      stellarBody = STELLARS[playerData.stellar!],
+      storyStep = this.storyOffer(playerData, stellarBody);
+    if (!storyStep || storyStep.locked || storyStep.id !== message.id) return;
+    if (storyStep.type === 'gift') return this.storyGift(session, storyStep);
+    savedStory.active = {
+      id: storyStep.id,
+      got: 0,
+      spawned: false,
+      ready: storyStep.type === 'carry' ? false : false,
+    };
+    this.log(playerData, `Story: ${storyStep.title}. ${storyStep.brief}`);
+    this.toast(session, `Story mission accepted: ${storyStep.brief}`);
     this.db.touch();
     this.you(session);
     this.landed(session);
@@ -150,29 +162,32 @@ export const StoryOperations = {
   /**
    * Conclude a story mission, distributing credits, standing, and rewards.
    * @param {Session} session - Player session.
-   * @param {StoryStep} st - Story step definition.
+   * @param {StoryStep} storyStep - Story step definition.
    * @returns {void}
    */
-  storyComplete(this: StoryCapabilities, session: Session, st: StoryStep) {
+  storyComplete(this: StoryCapabilities, session: Session, storyStep: StoryStep) {
     const playerData = session.data,
-      S = this.storyInit(playerData);
-    S.active = null;
-    S.done.push(st.id);
-    S.step++;
-    playerData.credits += st.pay;
-    playerData.stats.earned += st.pay;
-    playerData.rep.quevari = clampStanding((playerData.rep.quevari || 0) + st.rep);
-    const got = [st.pay ? `${credits(st.pay)} credits` : '', `+${st.rep} Que'vari standing`];
-    if (st.crate) {
-      playerData.mats[st.crate[0]][st.crate[1]]++;
-      got.push(`${st.crate[0]} ${GRADES[st.crate[1]]}`);
+      savedStory = this.storyInit(playerData);
+    savedStory.active = null;
+    savedStory.done.push(storyStep.id);
+    savedStory.step++;
+    playerData.credits += storyStep.pay;
+    playerData.stats.earned += storyStep.pay;
+    playerData.rep.quevari = clampStanding((playerData.rep.quevari || 0) + storyStep.rep);
+    const received = [
+      storyStep.pay ? `${credits(storyStep.pay)} credits` : '',
+      `+${storyStep.rep} Que'vari standing`,
+    ];
+    if (storyStep.crate) {
+      playerData.mats[storyStep.crate[0]][storyStep.crate[1]]++;
+      received.push(`${storyStep.crate[0]} ${GRADES[storyStep.crate[1]]}`);
     }
-    this.log(playerData, `Story complete: ${st.title}.`);
+    this.log(playerData, `Story complete: ${storyStep.title}.`);
     this.send(session, {
       t: 'story',
-      id: st.id,
-      title: st.title,
-      text: st.done + `\n\nRewards: ${got.filter(Boolean).join(', ')}.`,
+      id: storyStep.id,
+      title: storyStep.title,
+      text: storyStep.done + `\n\nRewards: ${received.filter(Boolean).join(', ')}.`,
       done: true,
     });
     this.db.touch();
@@ -181,35 +196,41 @@ export const StoryOperations = {
   /**
    * Award the unique Que'vari flagship reward as part of the storyline culmination.
    * @param {Session} session - Player session.
-   * @param {StoryStep} st - Story step definition.
+   * @param {StoryStep} storyStep - Story step definition.
    * @returns {void}
    */
-  storyGift(this: StoryCapabilities, session: Session, st: StoryStep) {
+  storyGift(this: StoryCapabilities, session: Session, storyStep: StoryStep) {
     const playerData = session.data,
-      S = this.storyInit(playerData),
-      old = playerData.ship,
-      _H = this.A.ships[old.hull];
+      savedStory = this.storyInit(playerData),
+      shipLoadout = playerData.ship,
+      _shipHullAsset = this.A.ships[shipLoadout.hull];
     if (playerData.shipless) {
     } else if (playerData.dock.length < this.dockSlots(playerData))
-      playerData.dock.push({ ship: old, bridge: playerData.bridge });
+      playerData.dock.push({ ship: shipLoadout, bridge: playerData.bridge });
     else {
-      const v = this.tradeIn(playerData);
-      playerData.credits += v;
+      const tradeIn2 = this.tradeIn(playerData);
+      playerData.credits += tradeIn2;
     }
     playerData.ship = makeLoadout(this.A, STORY_SHIP, "Ina Que'var");
     playerData.shipless = false;
     playerData.fuel = undefined;
     if (this.leadChanged) this.leadChanged(playerData);
-    S.done.push(st.id);
-    S.step++;
-    playerData.rep.quevari = clampStanding((playerData.rep.quevari || 0) + st.rep);
+    savedStory.done.push(storyStep.id);
+    savedStory.step++;
+    playerData.rep.quevari = clampStanding((playerData.rep.quevari || 0) + storyStep.rep);
     this.log(playerData, "Took the helm of the Ina Que'var.");
     this.broadcast({
       t: 'chat',
       from: '',
       msg: `Over Ina Lumen, a great white sail-ship wakes for ${playerData.name}.`,
     });
-    this.send(session, { t: 'story', id: st.id, title: st.title, text: st.done, done: true });
+    this.send(session, {
+      t: 'story',
+      id: storyStep.id,
+      title: storyStep.title,
+      text: storyStep.done,
+      done: true,
+    });
     this.db.touch();
     this.you(session);
     this.landed(session);
@@ -223,52 +244,55 @@ export const StoryOperations = {
    */
   storyArrive(this: StoryCapabilities, session: Session, space: Space) {
     const playerData = session.data,
-      S = this.storyInit(playerData),
-      a = S.active;
-    if (!a || a.ready) return;
-    const st = STORY.find((x) => x.id === a.id)!;
-    if (st.sys !== playerData.sys || [...space.ships.values()].some((e) => e.story === session.id))
+      savedStory = this.storyInit(playerData),
+      active2 = savedStory.active;
+    if (!active2 || active2.ready) return;
+    const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
+    if (
+      storyMission.sys !== playerData.sys ||
+      [...space.ships.values()].some((entity) => entity.story === session.id)
+    )
       return;
     const entity = session.ent,
-      left = (st.count || 1) - a.got;
-    if (st.type === 'board')
-      for (let i = 0; i < left; i++) {
-        const ang = Math.random() * 6.283,
-          w = space.makeShip({
-            hull: st.hull,
-            faction: st.faction,
-            x: Math.cos(ang) * (800 + i * 300),
-            y: Math.sin(ang) * (800 + i * 300),
+      left = (storyMission.count || 1) - active2.got;
+    if (storyMission.type === 'board')
+      for (let index = 0; index < left; index++) {
+        const angle = Math.random() * 6.283,
+          entity = space.makeShip({
+            hull: storyMission.hull,
+            faction: storyMission.faction,
+            x: Math.cos(angle) * (800 + index * 300),
+            y: Math.sin(angle) * (800 + index * 300),
             name: 'Becalmed Sloop',
           });
-        w.disabled = true;
-        w.armor = w.st.armor * 0.1;
-        w.story = session.id;
-        w.storyBoard = true;
-        w.life = 1e9;
-        w.wreckT = 1e9;
-        w.rescueOf = { id: 'story', owner: session.id };
+        entity.disabled = true;
+        entity.armor = entity.st.armor * 0.1;
+        entity.story = session.id;
+        entity.storyBoard = true;
+        entity.life = 1e9;
+        entity.wreckT = 1e9;
+        entity.rescueOf = { id: 'story', owner: session.id };
       }
-    if (st.type === 'kill')
-      for (let i = 0; i < left; i++) {
-        const ang = Math.random() * 6.283,
-          h = space.makeShip({
-            hull: st.hull,
-            faction: st.faction,
-            x: Math.cos(ang) * 1400,
-            y: Math.sin(ang) * 1400,
+    if (storyMission.type === 'kill')
+      for (let index = 0; index < left; index++) {
+        const angle = Math.random() * 6.283,
+          entity3 = space.makeShip({
+            hull: storyMission.hull,
+            faction: storyMission.faction,
+            x: Math.cos(angle) * 1400,
+            y: Math.sin(angle) * 1400,
             ai: 'raid',
             name: 'Umbral Hunter',
           });
-        h.story = session.id;
-        h.storyKill = true;
-        h.life = 1e9;
-        h.target = entity;
+        entity3.story = session.id;
+        entity3.storyKill = true;
+        entity3.life = 1e9;
+        entity3.target = entity;
       }
-    if (st.type === 'boss') {
+    if (storyMission.type === 'boss') {
       const rightEntity = space.makeShip({
-        hull: st.hull,
-        faction: st.faction,
+        hull: storyMission.hull,
+        faction: storyMission.faction,
         x: 0,
         y: 0,
         ai: 'guard',
@@ -280,41 +304,41 @@ export const StoryOperations = {
       rightEntity.storyKill = true;
       rightEntity.life = 1e9;
       rightEntity.noDisable = true;
-      for (let i = 0; i < 2; i++) {
-        const g = space.makeShip({
+      for (let index = 0; index < 2; index++) {
+        const entity = space.makeShip({
           hull: 762,
           faction: 'umbral',
-          x: i ? 200 : -200,
+          x: index ? 200 : -200,
           y: 150,
           ai: 'escort',
           owner: rightEntity.id,
         });
-        g.life = 1e9;
+        entity.life = 1e9;
       }
-      st.allies!.forEach((h, i) => {
-        const al = space.makeShip({
-          hull: h,
+      storyMission.allies!.forEach((height, index) => {
+        const entity5 = space.makeShip({
+          hull: height,
           faction: 'quevari',
-          x: entity!.x + (i - 1.5) * 90,
+          x: entity!.x + (index - 1.5) * 90,
           y: entity!.y + 120,
           ai: 'escort',
           owner: entity!.id,
           name: "Que'vari Choir-of-War",
         });
-        al.life = 1e9;
-        al.storyAlly = true;
+        entity5.life = 1e9;
+        entity5.storyAlly = true;
       });
       this.toast(
         session,
         "The Que'vari choirs-of-war drop in beside you. The Night Anchor waits at the heart of Umbra.",
       );
     }
-    if (st.type === 'board')
+    if (storyMission.type === 'board')
       this.toast(
         session,
         `${left} becalmed sloop${left > 1 ? 's' : ''} drift in this system. Board each one and choose Rescue.`,
       );
-    if (st.type === 'kill')
+    if (storyMission.type === 'kill')
       this.toast(session, `${left} Umbral hunter${left > 1 ? 's' : ''} are closing in.`);
   },
   /**
@@ -325,18 +349,21 @@ export const StoryOperations = {
    */
   storyProgress(this: StoryCapabilities, session: Session, entity: Entity) {
     const playerData = session.data,
-      S = this.storyInit(playerData),
-      a = S.active;
-    if (!a || entity.story !== session.id) return;
-    const st = STORY.find((x) => x.id === a.id)!;
-    a.got++;
+      savedStory = this.storyInit(playerData),
+      active2 = savedStory.active;
+    if (!active2 || entity.story !== session.id) return;
+    const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
+    active2.got++;
     this.toast(
       session,
-      st.progress + (st.count && a.got < st.count ? ` (${a.got}/${st.count})` : ''),
+      storyMission.progress +
+        (storyMission.count && active2.got < storyMission.count
+          ? ` (${active2.got}/${storyMission.count})`
+          : ''),
     );
-    if (a.got >= (st.count || 1)) {
-      a.ready = true;
-      this.toast(session, `Return to ${STELLARS[st.back!].name}.`);
+    if (active2.got >= (storyMission.count || 1)) {
+      active2.ready = true;
+      this.toast(session, `Return to ${STELLARS[storyMission.back!].name}.`);
     }
     this.db.touch();
     this.you(session);
@@ -344,10 +371,14 @@ export const StoryOperations = {
   /**
    * Check whether a destination system is in deep space and locked behind story progression.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {string} to - Destination system ID.
+   * @param {string} destination - Destination system ID.
    * @returns {boolean} True if jump to Deep system is locked.
    */
-  deepLocked(this: StoryCapabilities, playerData: PlayerData, to: string) {
-    return SYS[to] && SYS[to].faction === 'deep' && !this.storyDone(playerData, DEEP_UNLOCK);
+  deepLocked(this: StoryCapabilities, playerData: PlayerData, destination: string) {
+    return (
+      systemsById[destination] &&
+      systemsById[destination].faction === 'deep' &&
+      !this.storyDone(playerData, DEEP_UNLOCK)
+    );
   },
 };

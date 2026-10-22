@@ -344,19 +344,19 @@ export class CombatAssist {
   /**
    * Processes a combat assist command operation from the client.
    * @param {CombatSession} session Player session sending the command.
-   * @param {CombatCommand} m Command message containing operation and parameters.
+   * @param {CombatCommand} combatCommand Command message containing operation and parameters.
    * @returns {void}
    */
-  command(session: CombatSession, m: CombatCommand): void {
+  command(session: CombatSession, combatCommand: CombatCommand): void {
     const combatState = this.state(session),
       entity = session.ent;
-    if (m.op === 'off') return this.stop(session, 'Combat assist off');
-    if (m.op === 'manual') return this.manual(session);
+    if (combatCommand.op === 'off') return this.stop(session, 'Combat assist off');
+    if (combatCommand.op === 'manual') return this.manual(session);
     if (!available(entity) || this.game.spaces[session.data.sys].sys.arena || entity.rescueT)
       return;
-    if (!['assist', 'coordinate', 'delegate'].includes(m.op)) return;
-    if (m.op === 'assist') {
-      combatState.on = m.on === true;
+    if (!['assist', 'coordinate', 'delegate'].includes(combatCommand.op)) return;
+    if (combatCommand.op === 'assist') {
+      combatState.on = combatCommand.on === true;
       combatState.focus = combatState.on;
       combatState.status = combatState.on ? 'READY' : 'OFF';
       combatState.reason = '';
@@ -365,15 +365,18 @@ export class CombatAssist {
       if (combatState.on) this.selected(session, entity.target, this.game.spaces[session.data.sys]);
       else this.stop(session, 'Combat assist off');
     }
-    if (m.op === 'coordinate') {
-      combatState.coordinating = m.on === true;
+    if (combatCommand.op === 'coordinate') {
+      combatState.coordinating = combatCommand.on === true;
       combatState.focus = combatState.coordinating || combatState.on;
     }
-    if (m.op === 'delegate') {
-      const a = this.game.features.coop.armadaOf(session.data);
+    if (combatCommand.op === 'delegate') {
+      const armadaState = this.game.features.coop.armadaOf(session.data);
       combatState.consent =
-        m.on === true && a && session.data.armadaFollow && a.leader !== session.data.name
-          ? { armada: a.id, leader: a.leader }
+        combatCommand.on === true &&
+        armadaState &&
+        session.data.armadaFollow &&
+        armadaState.leader !== session.data.name
+          ? { armada: armadaState.id, leader: armadaState.leader }
           : null;
       combatState.focus = combatState.on;
     }
@@ -458,14 +461,14 @@ export class CombatAssist {
    */
   delegation(session: CombatSession, space: CombatSpace): CombatSession | null {
     const combatState = this.state(session),
-      a = this.game.features.coop.armadaOf(session.data);
+      armadaState = this.game.features.coop.armadaOf(session.data);
     if (!combatState.consent) return null;
-    const leader = a && this.game.features.coop.sessionOf(a.leader);
+    const leader = armadaState && this.game.features.coop.sessionOf(armadaState.leader);
     if (
-      !a ||
-      a.id !== combatState.consent.armada ||
-      a.leader !== combatState.consent.leader ||
-      !a.members.includes(session.data.name) ||
+      !armadaState ||
+      armadaState.id !== combatState.consent.armada ||
+      armadaState.leader !== combatState.consent.leader ||
+      !armadaState.members.includes(session.data.name) ||
       !session.data.armadaFollow ||
       !leader ||
       leader === session ||
@@ -584,47 +587,51 @@ export class CombatAssist {
       session.ent.autoCombat = false;
       session.ent.combatTarget = null;
     }
-    for (const s of sessions) {
-      if (leaders.get(s)) continue;
-      const combatState = this.state(s),
-        group = sessions.filter((session) => session === s || leaders.get(session) === s),
+    for (const session2 of sessions) {
+      if (leaders.get(session2)) continue;
+      const combatState = this.state(session2),
+        group = sessions.filter(
+          (session) => session === session2 || leaders.get(session) === session2,
+        ),
         roots = new Set(group.map((session) => session.ent));
-      if (!s.ent.sharedCombat) continue;
+      if (!session2.ent.sharedCombat) continue;
       let target = space.ships.get(combatState.target);
-      if (!this.valid(space, s.ent, target)) {
+      if (!this.valid(space, session2.ent, target)) {
         const power = this.power(space, group);
         const attackers = [...space.ships.values()].filter(
           (entity) =>
-            this.valid(space, s.ent, entity) &&
+            this.valid(space, session2.ent, entity) &&
             // Passive Assist only defends against hostile attackers; it never hunts
             // neutral traffic merely because our primary guns could damage it.
-            space.isHostile(s.ent, entity) &&
+            space.isHostile(session2.ent, entity) &&
             // Stray fire during protected travel must not silently turn passive
             // Assist into an opt-in faction battle. Explicit selection above still can.
-            !space.newcomerTruce?.(entity, s.ent) &&
+            !space.newcomerTruce?.(entity, session2.ent) &&
             ((entity.target && roots.has(space.root(entity.target))) ||
               [...space.ships.values()].some(
-                (v) =>
-                  roots.has(space.root(v)) && v.lastHitBy === entity.id && space.t - v.hitT! < 8,
+                (entity2) =>
+                  roots.has(space.root(entity2)) &&
+                  entity2.lastHitBy === entity.id &&
+                  space.t - entity2.hitT! < 8,
               )),
         );
         attackers.sort(
           (leftEntity, rightEntity) =>
             winOdds(power, leftEntity.pw || 10) - winOdds(power, rightEntity.pw || 10) ||
-            Math.hypot(leftEntity.x - s.ent.x, leftEntity.y - s.ent.y) -
-              Math.hypot(rightEntity.x - s.ent.x, rightEntity.y - s.ent.y) ||
+            Math.hypot(leftEntity.x - session2.ent.x, leftEntity.y - session2.ent.y) -
+              Math.hypot(rightEntity.x - session2.ent.x, rightEntity.y - session2.ent.y) ||
             leftEntity.id - rightEntity.id,
         );
         target = attackers[0] || null;
       }
       for (const session of group) {
-        const oc = this.state(session);
-        oc.target = target ? target.id : 0;
-        oc.status = target ? 'ENGAGING' : 'READY';
-        oc.reason = '';
+        const combatState = this.state(session);
+        combatState.target = target ? target.id : 0;
+        combatState.status = target ? 'ENGAGING' : 'READY';
+        combatState.reason = '';
         session.ent.combatTarget = target;
         session.ent.sharedCombat = true;
-        session.ent.autoCombat = !!(oc.on || leaders.get(session));
+        session.ent.autoCombat = !!(combatState.on || leaders.get(session));
       }
     }
     // Preassign before entity iteration, including recall/hold overrides, so no stale offensive target survives a handoff.

@@ -82,8 +82,8 @@ export function levelOf(power: number): number {
  */
 // odds of winning a straight fight between two effective strengths (a logistic on the level gap)
 export function winOdds(mine: number, theirs: number): number {
-  const d = levelOf(mine) - levelOf(theirs);
-  return 1 / (1 + Math.exp(-d / 2.5));
+  const distance = levelOf(mine) - levelOf(theirs);
+  return 1 / (1 + Math.exp(-distance / 2.5));
 }
 
 /**
@@ -101,12 +101,16 @@ export function playerPower(
   bonus: HostileBonus = {},
   escorts: Array<number | string> = [],
 ): number {
-  const H = assets.ships[hull];
-  if (!H) return 10;
-  const b = 1 + ((bonus.damagePct || 0) + (bonus.shieldPct || 0) + (bonus.armorPct || 0)) / 300;
+  const shipHullAsset = assets.ships[hull];
+  if (!shipHullAsset) return 10;
+  const secondValue =
+    1 + ((bonus.damagePct || 0) + (bonus.shieldPct || 0) + (bonus.armorPct || 0)) / 300;
   return (
-    (H.strength || 10) * b +
-    escorts.reduce<number>((t, h) => t + ((assets.ships[h] || {}).strength || 0) * 0.6, 0)
+    (shipHullAsset.strength || 10) * secondValue +
+    escorts.reduce<number>(
+      (time, height) => time + ((assets.ships[height] || {}).strength || 0) * 0.6,
+      0,
+    )
   );
 }
 
@@ -164,7 +168,7 @@ export const HOLDOUT: HoldoutConfig = {
   cooldownH: 2,
   waveGap: 6,
   timeoutMin: 3,
-  wave(n) {
+  wave(count) {
     // wave n (1-10): which hulls attack
     const pools = [
       [705, 705, 708],
@@ -178,14 +182,19 @@ export const HOLDOUT: HoldoutConfig = {
       [762, 763, 763],
       [764, 763, 763, 762],
     ];
-    const p = pools[n - 1];
-    const out = [];
-    for (let i = 0; i < 2 + Math.ceil(n / 2); i++) out.push(p[i % p.length]);
-    if (n === 10) out[0] = 764;
-    return out;
+    const pool = pools[count - 1];
+    const result = [];
+    for (let index = 0; index < 2 + Math.ceil(count / 2); index++)
+      result.push(pool[index % pool.length]);
+    if (count === 10) result[0] = 764;
+    return result;
   },
-  reward(n) {
-    return { credits: 8000 * n * n, grade: Math.min(4, Math.floor(n / 3)), insignia: n };
+  reward(count) {
+    return {
+      credits: 8000 * count * count,
+      grade: Math.min(4, Math.floor(count / 3)),
+      insignia: count,
+    };
   },
   platforms(defense) {
     return 1 + Math.min(5, defense || 0);

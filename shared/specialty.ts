@@ -124,7 +124,7 @@ type SpecialistInput = Omit<
   SpecialistShip,
   'cat' | 'faction' | 'kind' | 'buy' | 'ai' | 'tech' | 'fuelRe' | 'armorRe' | 'glow' | 'crew'
 > & { finalCost?: number };
-const S = (o: SpecialistInput): SpecialistShip => ({
+const state = (specialistInput: SpecialistInput): SpecialistShip => ({
   cat: 'Specialist',
   faction: 'specialist',
   kind: 'specialist',
@@ -135,8 +135,8 @@ const S = (o: SpecialistInput): SpecialistShip => ({
   armorRe: 0,
   glow: true,
   crew: 40,
-  ...o,
-  cost: o.finalCost ?? Math.round((o.cost * 0.7) / 10000) * 10000,
+  ...specialistInput,
+  cost: specialistInput.finalCost ?? Math.round((specialistInput.cost * 0.7) / 10000) * 10000,
 }); // 1.0 balance: blueprints already gate these, so credits are 70%
 
 /**
@@ -144,7 +144,7 @@ const S = (o: SpecialistInput): SpecialistShip => ({
  * @type {SpecialistShip[]}
  */
 export const SPECIALISTS: SpecialistShip[] = [
-  S({
+  state({
     id: 815,
     key: 'star_dredge',
     name: 'Star Dredge',
@@ -176,7 +176,7 @@ export const SPECIALISTS: SpecialistShip[] = [
     loop: 'Earn blueprints by useful large-rock work in any hull. Build without plasma; gather plasma in marked shallow corona bands for parts.',
     desc: 'A broad underbite scoop ahead of three massive charcoal containers, carried by worn brown plating and grey industrial framing.',
   }),
-  S({
+  state({
     id: 805,
     key: 'lodestar',
     name: 'Lodestar',
@@ -207,7 +207,7 @@ export const SPECIALISTS: SpecialistShip[] = [
     loop: 'Mine rich asteroid veins (richness 2+).',
     desc: 'A Concord mining barge refitted by Korrund engineers: two ore-cutter arms that can split a mountain, four armored hoppers, and a hold sealed so tight the insurers call it unlosable.',
   }),
-  S({
+  state({
     id: 806,
     key: 'swarmbreaker',
     name: 'Swarmbreaker',
@@ -239,7 +239,7 @@ export const SPECIALISTS: SpecialistShip[] = [
     loop: 'Destroy Feral Swarm clusters (Vashari and Frontier space).',
     desc: 'A white hunter built around a forward resonance dish tuned to the frequency that cracks Vashari swarm chitin. The swarms hear her coming, and scatter.',
   }),
-  S({
+  state({
     id: 807,
     key: 'nightglass',
     name: 'Nightglass',
@@ -270,7 +270,7 @@ export const SPECIALISTS: SpecialistShip[] = [
     loop: 'Destroy Umbral ships.',
     desc: 'A dart of black glass edged in violet light. Her hull is grown from the same lightless lattice the Umbral use, which is why their sensors read her as one of their own until it is too late.',
   }),
-  S({
+  state({
     id: 808,
     key: 'corsair',
     name: 'Corsair',
@@ -301,7 +301,7 @@ export const SPECIALISTS: SpecialistShip[] = [
     loop: 'Board disabled ships.',
     desc: 'A heavy prize-taker with hooked clamps at the bow and a docking collar amidships. Every Corsair captain swears they only board pirates.',
   }),
-  S({
+  state({
     id: 809,
     key: 'herald',
     name: 'Herald',
@@ -332,7 +332,7 @@ export const SPECIALISTS: SpecialistShip[] = [
     loop: 'Win fights alongside your wingmates.',
     desc: 'A command yacht under a golden halo, its signal spire coordinating every ship in her wing. Wingmates fly tighter and braver when the Herald calls the turns.',
   }),
-  S({
+  state({
     id: 810,
     key: 'tidecaller',
     name: 'Tidecaller',
@@ -363,7 +363,7 @@ export const SPECIALISTS: SpecialistShip[] = [
     loop: 'Collect salvage from destroyed ships.',
     desc: 'A living ray grown by the Thalassi, her trailing tentacles strong enough to tow a freighter. She hums to the wreckage, and the wreckage comes.',
   }),
-  S({
+  state({
     id: 811,
     key: 'pathfinder',
     name: 'Pathfinder',
@@ -394,7 +394,7 @@ export const SPECIALISTS: SpecialistShip[] = [
     loop: 'Fly through anomaly systems; chart new systems.',
     desc: 'A slim long-range scout pushed by a jump-drive ring three times the size it should be. She has seen more of the Rift than any chart.',
   }),
-  S({
+  state({
     id: 812,
     key: 'bulwark',
     name: 'Bulwark',
@@ -426,7 +426,7 @@ export const SPECIALISTS: SpecialistShip[] = [
     loop: 'Defeat raids on your station.',
     desc: 'A fortress block ringed with shield pylons. She was designed to never leave home, and to make sure nobody else ever arrives uninvited.',
   }),
-  S({
+  state({
     id: 813,
     key: 'wraith',
     name: 'Wraith',
@@ -457,7 +457,7 @@ export const SPECIALISTS: SpecialistShip[] = [
     loop: 'Complete smuggling jobs.',
     desc: 'A faceted stealth flyer in matte charcoal, with only the faintest teal seams. Customs officers in six systems have her description on file. None of them have seen her.',
   }),
-  S({
+  state({
     id: 814,
     key: 'vanguard',
     name: 'Vanguard',
@@ -494,7 +494,7 @@ export const SPECIALISTS: SpecialistShip[] = [
  * @type {Object.<number, SpecialistShip>}
  */
 export const SPEC: Record<string | number, SpecialistShip> = Object.fromEntries(
-  SPECIALISTS.map((s) => [s.id, s]),
+  SPECIALISTS.map((specialistShip) => [specialistShip.id, specialistShip]),
 );
 
 /**
@@ -502,7 +502,7 @@ export const SPEC: Record<string | number, SpecialistShip> = Object.fromEntries(
  * @type {Object.<string, SpecialistShip>}
  */
 export const SPEC_BY_KEY: Record<string, SpecialistShip> = Object.fromEntries(
-  SPECIALISTS.map((s) => [s.key, s]),
+  SPECIALISTS.map((specialistShip) => [specialistShip.key, specialistShip]),
 );
 
 /**
@@ -564,12 +564,21 @@ export const TIER_UP_MIN: number[] = [0, 10, 20, 40, 80]; // minutes in drydock 
 // the specialty strength multiplier (1.0 at tier 1 with no special upgrades)
 /**
  * Calculates effective specialist ability bonus multiplier based on tier and component upgrades.
- * @param {SpecialistUpgradeState|null|undefined} st - Specialist component and tier upgrade state.
+ * @param {SpecialistUpgradeState|null|undefined} specialistUpgradeState - Specialist component and tier upgrade state.
  * @returns {number} Effectiveness multiplier (1.0 baseline).
  */
-export function specPower(st: SpecialistUpgradeState | null | undefined): number {
-  if (!st) return 1;
-  return 1 + 0.1 * (st.comp && st.comp.special ? st.comp.special : 0) + 0.05 * ((st.tier || 1) - 1);
+export function specPower(
+  specialistUpgradeState: SpecialistUpgradeState | null | undefined,
+): number {
+  if (!specialistUpgradeState) return 1;
+  return (
+    1 +
+    0.1 *
+      (specialistUpgradeState.comp && specialistUpgradeState.comp.special
+        ? specialistUpgradeState.comp.special
+        : 0) +
+    0.05 * ((specialistUpgradeState.tier || 1) - 1)
+  );
 }
 
 // Labels do not introduce new save slots or free stat multipliers.
@@ -581,8 +590,10 @@ export const DREDGE_COMPONENT_NAMES: Record<string, string> = {
   special: 'Smelter / Harvest Control',
 };
 export function specialistResource(
-  d: { cargo?: Record<string, number>; spec?: Record<string, number> },
-  sp: Pick<SpecialistShip, 'key' | 'res'>,
+  distance: { cargo?: Record<string, number>; spec?: Record<string, number> },
+  space: Pick<SpecialistShip, 'key' | 'res'>,
 ) {
-  return sp.key === 'star_dredge' ? d.cargo?.plasma || 0 : d.spec?.[sp.res] || 0;
+  return space.key === 'star_dredge'
+    ? distance.cargo?.plasma || 0
+    : distance.spec?.[space.res] || 0;
 }

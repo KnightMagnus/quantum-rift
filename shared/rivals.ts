@@ -185,30 +185,30 @@ const KIND_LIST = [
 const seeded = (seed: number) => linearRandom32(seed >>> 0 || 1);
 
 export const RIVALS = (() => {
-  const r = seeded(0x51f00d),
-    out: RivalDefinition[] = [],
-    usedF = new Set<number>(),
-    usedL = new Set<number>();
-  const take = (arr: readonly string[], used: Set<number>) => {
-    let i;
+  const randomGenerator = seeded(0x51f00d),
+    rivalDefinitions: RivalDefinition[] = [],
+    usedFirstNames = new Set<number>(),
+    usedLastNames = new Set<number>();
+  const take = (entries: readonly string[], used: Set<number>) => {
+    let index;
     do {
-      i = Math.floor(r() * arr.length);
-    } while (used.has(i));
-    used.add(i);
-    return arr[i];
+      index = Math.floor(randomGenerator() * entries.length);
+    } while (used.has(index));
+    used.add(index);
+    return entries[index];
   };
-  for (let i = 0; i < 30; i++) {
-    const kind = KIND_LIST[i],
-      K = KINDS[kind],
-      fac = K.facs[Math.floor(r() * K.facs.length)];
-    out.push({
-      id: 'r' + i,
-      name: `${take(FIRST, usedF)} ${take(LAST, usedL)}`,
+  for (let index = 0; index < 30; index++) {
+    const kind = KIND_LIST[index],
+      kinds = KINDS[kind],
+      faction = kinds.facs[Math.floor(randomGenerator() * kinds.facs.length)];
+    rivalDefinitions.push({
+      id: 'r' + index,
+      name: `${take(FIRST, usedFirstNames)} ${take(LAST, usedLastNames)}`,
       kind,
-      fac,
-      ship: SHIPNAMES[i],
-      temper: Math.min(1, K.temper + (r() - 0.5) * 0.3),
-      luck: 0.7 + r() * 0.6,
+      fac: faction,
+      ship: SHIPNAMES[index],
+      temper: Math.min(1, kinds.temper + (randomGenerator() - 0.5) * 0.3),
+      luck: 0.7 + randomGenerator() * 0.6,
     });
   }
   // Additional named captains
@@ -217,57 +217,73 @@ export const RIVALS = (() => {
     ['hunter', 'Six Flash', 'Quickdraw'],
   ];
   for (const [kind, name, ship] of named) {
-    const x = out.find((o) => o.kind === kind && !o.special)!;
-    x.name = name;
-    x.ship = ship;
-    x.special = true;
-    x.luck = Math.max(x.luck, 1.15);
+    const rivalDefinition = rivalDefinitions.find(
+      (rivalDefinition) => rivalDefinition.kind === kind && !rivalDefinition.special,
+    )!;
+    rivalDefinition.name = name;
+    rivalDefinition.ship = ship;
+    rivalDefinition.special = true;
+    rivalDefinition.luck = Math.max(rivalDefinition.luck, 1.15);
   }
-  return out;
+  return rivalDefinitions;
 })();
-export const RIVAL = Object.fromEntries(RIVALS.map((x) => [x.id, x]));
+export const RIVAL = Object.fromEntries(
+  RIVALS.map((rivalDefinition) => [rivalDefinition.id, rivalDefinition]),
+);
 
 // the hull a rival flies: the best their flag's yard sells that their wealth affords (pirates fly Hollow raiders)
 const ROLE_FIT: Record<string, (ship: ShipHullAsset) => boolean> = {
-  hunter: (s) => s.role !== 'survey',
-  pirate: (s) => s.role !== 'survey',
-  trader: (s) => s.role === 'survey' || s.cargo >= 40,
-  miner: (s) => s.role === 'survey' || s.cargo >= 40,
-  explorer: (s) => s.role === 'explorer' || s.role === 'interceptor',
+  hunter: (shipHullAsset) => shipHullAsset.role !== 'survey',
+  pirate: (shipHullAsset) => shipHullAsset.role !== 'survey',
+  trader: (shipHullAsset) => shipHullAsset.role === 'survey' || shipHullAsset.cargo >= 40,
+  miner: (shipHullAsset) => shipHullAsset.role === 'survey' || shipHullAsset.cargo >= 40,
+  explorer: (shipHullAsset) =>
+    shipHullAsset.role === 'explorer' || shipHullAsset.role === 'interceptor',
 };
 
 /**
  * Determines the best ship hull a rival captain can afford and fly according to their career and wealth.
- * @param {Object} A - Game assets database containing ship hull definitions.
- * @param {string} fac - Faction allegiance.
+ * @param {Object} gameAssets - Game assets database containing ship hull definitions.
+ * @param {string} faction - Faction allegiance.
  * @param {number} wealth - Total net worth / credits available to the rival.
  * @param {string} [kind] - Rival career kind (e.g. 'hunter', 'trader', 'miner').
  * @returns {number} Hull ID of the chosen ship.
  */
-export function rivalHull(A: GameAssets, fac: string, wealth: number, kind?: string): number {
-  const all = (FACTION_HULLS[fac] || FACTION_HULLS.spacer)
-    .map((h) => A.ships[h])
-    .filter((s) => s && s.cost > 0 && s.kind !== 'specialist');
-  const fit = kind && ROLE_FIT[kind] ? all.filter(ROLE_FIT[kind]) : all,
-    pool = (fit.length ? fit : all).sort((a, b) => a.cost - b.cost);
+export function rivalHull(
+  gameAssets: GameAssets,
+  faction: string,
+  wealth: number,
+  kind?: string,
+): number {
+  const shipHullAssets = (FACTION_HULLS[faction] || FACTION_HULLS.spacer)
+    .map((height) => gameAssets.ships[height])
+    .filter(
+      (shipHullAsset) =>
+        shipHullAsset && shipHullAsset.cost > 0 && shipHullAsset.kind !== 'specialist',
+    );
+  const shipHullAssets2 =
+      kind && ROLE_FIT[kind] ? shipHullAssets.filter(ROLE_FIT[kind]) : shipHullAssets,
+    pool = (shipHullAssets2.length ? shipHullAssets2 : shipHullAssets).sort(
+      (shipHullAsset, shipHullAsset2) => shipHullAsset.cost - shipHullAsset2.cost,
+    );
   let best = pool[0];
-  for (const s of pool) if (s.cost <= wealth * 0.6) best = s;
+  for (const shipHullAsset of pool) if (shipHullAsset.cost <= wealth * 0.6) best = shipHullAsset;
   return best ? best.id : 703;
 }
 
 /**
  * Evaluates rival captain disposition mood based on player relationship standing.
- * @param {number} rel - Relationship standing score between player and rival (-100 to +100).
+ * @param {number} relative - Relationship standing score between player and rival (-100 to +100).
  * @returns {RivalMood} Disposition mood classification.
  */
-export const MOOD = (rel: number) =>
-  rel <= -60
+export const MOOD = (relative: number) =>
+  relative <= -60
     ? 'nemesis'
-    : rel <= -30
+    : relative <= -30
       ? 'rival'
-      : rel >= 60
+      : relative >= 60
         ? 'ally'
-        : rel >= 25
+        : relative >= 25
           ? 'friendly'
           : 'neutral';
 
@@ -330,17 +346,22 @@ export const HAIL_LINES: Record<string, Record<string, string>> = {
  * Formatting templates for galaxy newsfeed broadcasts about rival captain activities.
  * @type {Record<string, (...args: (string | number)[]) => string>}
  */
-export const NEWS_TEMPLATES: Record<string, (...args: (string | number)[]) => string> = {
-  upgrade: (n, ship, place) => `${n} was seen at ${place} taking delivery of a new ${ship}.`,
-  bounty: (n, target) => `${n} collected the bounty on ${target}.`,
-  haul: (n, place, cr) => `${n} made ${cr} credits on a single trade run into ${place}.`,
-  lost: (n, by) =>
-    `${n}'s ship was destroyed${by ? ` by ${by}` : ''}. Insurers are reported to be furious.`,
-  strike: (n, place) => `${n} struck a rich vein near ${place}.`,
-  chart: (n, place) => `${n} charted a new route out of ${place}.`,
-  raid: (n, place) => `Hollow raider ${n} hit a convoy outside ${place}. Lanes there are on alert.`,
-  grudge: (n, you) => `${n} has posted a bounty on Captain ${you}. Watch your back.`,
-  allied: (n, you) => `${n} and Captain ${you} have been seen flying together.`,
+export const NEWS_TEMPLATES: Record<string, (...argumentsList: (string | number)[]) => string> = {
+  upgrade: (count, ship, place) =>
+    `${count} was seen at ${place} taking delivery of a new ${ship}.`,
+  bounty: (count, target) => `${count} collected the bounty on ${target}.`,
+  haul: (count, place, credits) =>
+    `${count} made ${credits} credits on a single trade run into ${place}.`,
+  lost: (count, source) =>
+    `${count}'s ship was destroyed${source ? ` by ${source}` : ''}. Insurers are reported to be furious.`,
+  strike: (count, place) => `${count} struck a rich vein near ${place}.`,
+  chart: (count, place) => `${count} charted a new route out of ${place}.`,
+  raid: (count, place) =>
+    `Hollow raider ${count} hit a convoy outside ${place}. Lanes there are on alert.`,
+  grudge: (count, playerPayload) =>
+    `${count} has posted a bounty on Captain ${playerPayload}. Watch your back.`,
+  allied: (count, playerPayload) =>
+    `${count} and Captain ${playerPayload} have been seen flying together.`,
 };
 
 // combat rating (ranked by target strength): earned from the strength of every ship you destroy; higher ranks unlock tougher,
@@ -366,12 +387,13 @@ export const RANKS: Array<[number, string]> = [
  * @returns {CombatRankInfo} Rank information and target score.
  */
 export function combatRank(score: number): CombatRankInfo {
-  let i = 0;
-  for (let k = 0; k < RANKS.length; k++) if (score >= RANKS[k][0]) i = k;
+  let index = 0;
+  for (let entryKey = 0; entryKey < RANKS.length; entryKey++)
+    if (score >= RANKS[entryKey][0]) index = entryKey;
   return {
-    i,
-    name: RANKS[i][1],
-    next: RANKS[i + 1] ? RANKS[i + 1][0] : null,
+    i: index,
+    name: RANKS[index][1],
+    next: RANKS[index + 1] ? RANKS[index + 1][0] : null,
     score: Math.round(score),
   };
 }

@@ -37,7 +37,7 @@ export type FactionStoreItem = {
   rep: number;
   give: Record<string, number | string | boolean>;
 };
-import { signedXorshift32 as rng } from './deterministic-random.ts';
+import { signedXorshift32 as randomGenerator } from './deterministic-random.ts';
 import { EXALTED_STANDING } from './reputation.ts';
 // Quantum Rift: data: invasions, anomalies, goals,
 // server events and faction stores. Shared by server and client.
@@ -201,26 +201,30 @@ export const ANOMALY: { hours: number; count: number } = { hours: 6, count: 9 };
  * @type {Object.<string, GoalTypeDef>}
  */
 export const GOAL_TYPES: Record<string, GoalTypeDef> = {
-  kills: { text: (n) => `Destroy ${n} pirate or hostile ships`, daily: [5, 10], weekly: [40, 60] },
-  jumps: { text: (n) => `Make ${n} hyperspace jumps`, daily: [6, 12], weekly: [50, 80] },
+  kills: {
+    text: (count) => `Destroy ${count} pirate or hostile ships`,
+    daily: [5, 10],
+    weekly: [40, 60],
+  },
+  jumps: { text: (count) => `Make ${count} hyperspace jumps`, daily: [6, 12], weekly: [50, 80] },
   trade: {
-    text: (n) => `Earn ${n.toLocaleString()} credits trading`,
+    text: (count) => `Earn ${count.toLocaleString()} credits trading`,
     daily: [20000, 60000],
     weekly: [300000, 600000],
   },
   mined: {
-    text: (n) => `Mine ${n} tons of ore, gas or shards`,
+    text: (count) => `Mine ${count} tons of ore, gas or shards`,
     daily: [20, 40],
     weekly: [150, 250],
   },
   shuttles: {
-    text: (n) => `Bring home ${n} successful shuttle runs`,
+    text: (count) => `Bring home ${count} successful shuttle runs`,
     daily: [2, 3],
     weekly: [12, 18],
   },
-  jobs: { text: (n) => `Complete ${n} jobs`, daily: [2, 4], weekly: [15, 25] },
-  charted: { text: (n) => `Chart ${n} new systems`, daily: [2, 4], weekly: [10, 15] },
-  boarded: { text: (n) => `Board ${n} disabled ships`, daily: [1, 2], weekly: [6, 10] },
+  jobs: { text: (count) => `Complete ${count} jobs`, daily: [2, 4], weekly: [15, 25] },
+  charted: { text: (count) => `Chart ${count} new systems`, daily: [2, 4], weekly: [10, 15] },
+  boarded: { text: (count) => `Board ${count} disabled ships`, daily: [1, 2], weekly: [6, 10] },
 };
 
 /**
@@ -439,68 +443,74 @@ export const SCAN: { range: number; chance: number; fine: number; cooldown: numb
 /**
  * Calculates deterministic system anomaly placements for the active 6-hour time window.
  * @param {Array<{ id: string, faction?: string, farside?: boolean }>} systems - Star systems array.
- * @param {number} [now=Date.now()] - Current epoch timestamp in milliseconds.
+ * @param {number} [currentTime=Date.now()] - Current epoch timestamp in milliseconds.
  * @returns {Object.<string, string>} Mapping of system ID to anomaly ID.
  */
 export function anomaliesAt(
   systems: Array<{ id: string; faction?: string; farside?: boolean }>,
-  now: number = Date.now(),
+  currentTime: number = Date.now(),
 ): Record<string, string> {
-  const win = Math.floor(now / (ANOMALY.hours * 3600000)),
-    r = rng(0xa11 + win * 7919),
-    out: Record<string, string> = {};
-  const pool = systems.filter((s) => s.faction !== 'quantum' && s.id !== 'qgate' && !s.farside),
+  const window = Math.floor(currentTime / (ANOMALY.hours * 3600000)),
+    radius = randomGenerator(0xa11 + window * 7919),
+    result: Record<string, string> = {};
+  const pool = systems.filter(
+      (state) => state.faction !== 'quantum' && state.id !== 'qgate' && !state.farside,
+    ),
     kinds = Object.keys(ANOMALIES);
-  for (let i = 0; i < ANOMALY.count && pool.length; i++) {
-    const s = pool.splice(Math.floor(r() * pool.length), 1)[0];
-    out[s.id] = kinds[Math.floor(r() * kinds.length)];
+  for (let index = 0; index < ANOMALY.count && pool.length; index++) {
+    const splice2 = pool.splice(Math.floor(radius() * pool.length), 1)[0];
+    result[splice2.id] = kinds[Math.floor(radius() * kinds.length)];
   }
-  return out;
+  return result;
 }
 
 /**
  * Resolves the active server event corresponding to a given timestamp.
- * @param {number} [now=Date.now()] - Epoch timestamp in milliseconds.
+ * @param {number} [currentTime=Date.now()] - Epoch timestamp in milliseconds.
  * @returns {ServerEvent|undefined} Active server event or monthly Gold Vein event.
  */
-export function eventAt(now: number = Date.now()): ServerEvent | undefined {
-  const d = new Date(now),
-    wd = d.getUTCDay(),
-    md = d.getUTCDate();
-  if ((wd === 6 && md <= 7) || (wd === 0 && md <= 8 && md >= 2)) return GOLD_VEIN; // the first full weekend of the month
-  return EVENTS.find((e) => e.day === wd);
+export function eventAt(currentTime: number = Date.now()): ServerEvent | undefined {
+  const date = new Date(currentTime),
+    utcDay = date.getUTCDay(),
+    utcDate = date.getUTCDate();
+  if ((utcDay === 6 && utcDate <= 7) || (utcDay === 0 && utcDate <= 8 && utcDate >= 2))
+    return GOLD_VEIN; // the first full weekend of the month
+  return EVENTS.find((serverEvent) => serverEvent.day === utcDay);
 }
 
 /**
  * Computes scheduled server events spanning n consecutive days from a starting timestamp.
- * @param {number} [now=Date.now()] - Epoch timestamp in milliseconds.
- * @param {number} [n=7] - Number of days to include in the schedule.
+ * @param {number} [currentTime=Date.now()] - Epoch timestamp in milliseconds.
+ * @param {number} [count=7] - Number of days to include in the schedule.
  * @returns {ScheduledEvent[]} Array of scheduled event windows with start and end timestamps.
  */
-export function eventCalendar(now: number = Date.now(), n: number = 7): ScheduledEvent[] {
-  const out = [],
-    day0 = Math.floor(now / 86400000);
-  for (let i = 0; i < n; i++) {
-    const t = (day0 + i) * 86400000;
-    out.push({ ...eventAt(t + 3600000), start: t, end: t + 86400000 });
+export function eventCalendar(
+  currentTime: number = Date.now(),
+  count: number = 7,
+): ScheduledEvent[] {
+  const result = [],
+    day0 = Math.floor(currentTime / 86400000);
+  for (let index = 0; index < count; index++) {
+    const time = (day0 + index) * 86400000;
+    result.push({ ...eventAt(time + 3600000), start: time, end: time + 86400000 });
   }
-  return out;
+  return result;
 }
 
 /**
  * Computes the epoch day index for UTC day boundaries.
- * @param {number} [now=Date.now()] - Epoch timestamp in milliseconds.
+ * @param {number} [currentTime=Date.now()] - Epoch timestamp in milliseconds.
  * @returns {number} Day index number.
  */
-export function dayKey(now: number = Date.now()): number {
-  return Math.floor(now / 86400000);
+export function dayKey(currentTime: number = Date.now()): number {
+  return Math.floor(currentTime / 86400000);
 }
 
 /**
  * Computes the epoch week index (starting Monday 00:00 UTC).
- * @param {number} [now=Date.now()] - Epoch timestamp in milliseconds.
+ * @param {number} [currentTime=Date.now()] - Epoch timestamp in milliseconds.
  * @returns {number} Week index number.
  */
-export function weekKey(now: number = Date.now()): number {
-  return Math.floor((now / 86400000 + 3) / 7);
+export function weekKey(currentTime: number = Date.now()): number {
+  return Math.floor((currentTime / 86400000 + 3) / 7);
 } // weeks start Monday 00:00 UTC

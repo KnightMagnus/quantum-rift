@@ -356,13 +356,14 @@ export const MASTERY: MasteryConfig = {
 
 /**
  * Calculates current ship mastery tier (1-5) achieved based on earned XP.
- * @param {number} xp - Accumulated hull mastery experience points.
+ * @param {number} experience - Accumulated hull mastery experience points.
  * @returns {number} Mastery tier level (1 to 5).
  */
-export function masteryTier(xp: number): number {
-  let t = 1;
-  for (let i = 1; i < MASTERY.tiers.length; i++) if (xp >= MASTERY.tiers[i]) t = i + 1;
-  return t;
+export function masteryTier(experience: number): number {
+  let time = 1;
+  for (let index = 1; index < MASTERY.tiers.length; index++)
+    if (experience >= MASTERY.tiers[index]) time = index + 1;
+  return time;
 }
 
 // ------------------------------------------------------------------ the arena: instanced, rated PvP away from the open galaxy
@@ -380,13 +381,13 @@ export const ARENA: ArenaConfig = {
 
 /**
  * Instantiates a temporary star system structure to host an arena match.
- * @param {string} id - Unique match or session identifier.
+ * @param {string} identifier - Unique match or session identifier.
  * @returns {ArenaSystem} Stand-in star system data for the arena combat instance.
  */
-export function arenaSystem(id: string): ArenaSystem {
+export function arenaSystem(identifier: string): ArenaSystem {
   // a stand-in system for an arena instance (registered on demand on both server and client)
   return {
-    id,
+    id: identifier,
     name: 'The Crucible',
     faction: 'quantum',
     x: 0,
@@ -401,15 +402,20 @@ export function arenaSystem(id: string): ArenaSystem {
 
 /**
  * Calculates standard Elo rating point change following a match outcome.
- * @param {number} ra - Rating of player A.
- * @param {number} rb - Rating of player B.
- * @param {boolean} aWon - True if player A won; false if player B won.
- * @param {number} [k=32] - Rating change sensitivity factor.
+ * @param {number} reputationAmount - Rating of player A.
+ * @param {number} rightBoundary - Rating of player B.
+ * @param {boolean} firstWon - True if player A won; false if player B won.
+ * @param {number} [entryKey=32] - Rating change sensitivity factor.
  * @returns {number} Net rating points gained or lost by player A.
  */
-export function elo(ra: number, rb: number, aWon: boolean, k: number = ARENA.k): number {
-  const ea = 1 / (1 + Math.pow(10, (rb - ra) / 400));
-  return Math.round(k * ((aWon ? 1 : 0) - ea));
+export function elo(
+  playerRating: number,
+  opponentRating: number,
+  playerWon: boolean,
+  ratingSensitivity: number = ARENA.k,
+): number {
+  const expectedScore = 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
+  return Math.round(ratingSensitivity * ((playerWon ? 1 : 0) - expectedScore));
 }
 
 // ------------------------------------------------------------------ the exchange (player market)

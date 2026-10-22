@@ -30,8 +30,8 @@ remaining registered cases so the failure summary is useful.
 To debug one case, run for example:
 
 ```sh
-node --import ./test/seed-random.js test/v24.js
-node test/sidebar-browser.mjs
+node --import ./test/seed-random.ts test/v24.ts
+node test/sidebar-browser.ts
 ```
 
 The frozen Luna wheel fingerprint protects its purple-wheel artwork. Change it only for an intentional artwork requirement change, not to

@@ -48,25 +48,25 @@ function validate(miningWorld: World) {
     typeof miningWorld.systems !== 'object'
   )
     throw new Error('Invalid mining save/version');
-  const ids = new Set();
-  for (const f of Object.values(miningWorld.systems)) {
+  const identifiers = new Set();
+  for (const savedField of Object.values(miningWorld.systems)) {
     if (
-      typeof f.config !== 'string' ||
-      !Array.isArray(f.rocks) ||
-      !Array.isArray(f.parcels) ||
-      !Array.isArray(f.history)
+      typeof savedField.config !== 'string' ||
+      !Array.isArray(savedField.rocks) ||
+      !Array.isArray(savedField.parcels) ||
+      !Array.isArray(savedField.history)
     )
       throw new Error('Invalid mining field');
-    for (const generation of [...f.rocks, ...f.history]) {
+    for (const generation of [...savedField.rocks, ...savedField.history]) {
       if (
         !Number.isSafeInteger(generation.id) ||
         generation.id >= 0 ||
         generation.id <= miningWorld.nextId ||
-        ids.has(generation.id)
+        identifiers.has(generation.id)
       )
         throw new Error('Invalid mining identity');
-      ids.add(generation.id);
-      for (const n of [
+      identifiers.add(generation.id);
+      for (const count of [
         generation.generation,
         generation.stage,
         generation.stages,
@@ -78,8 +78,8 @@ function validate(miningWorld: World) {
         generation.discarded,
         generation.emitted,
       ])
-        if (!Number.isSafeInteger(n) || n < 0) throw new Error('Invalid mining count');
-      for (const n of [
+        if (!Number.isSafeInteger(count) || count < 0) throw new Error('Invalid mining count');
+      for (const count of [
         generation.x,
         generation.y,
         generation.r,
@@ -93,7 +93,7 @@ function validate(miningWorld: World) {
         generation.releaseAt,
         generation.releaseHeat,
       ])
-        if (!Number.isFinite(n)) throw new Error('Invalid mining geometry/state');
+        if (!Number.isFinite(count)) throw new Error('Invalid mining geometry/state');
       if (
         generation.lastActivity !== undefined &&
         (!Number.isFinite(generation.lastActivity) ||
@@ -115,8 +115,12 @@ function validate(miningWorld: World) {
           Array.isArray(generation.dredgeContributors) ||
           Object.keys(generation.dredgeContributors).length > 64 ||
           !Object.entries(generation.dredgeContributors).every(
-            ([name, n]) =>
-              name.length > 0 && name.length <= 64 && Number.isFinite(n) && n >= 0 && n <= 1.5,
+            ([name, count]) =>
+              name.length > 0 &&
+              name.length <= 64 &&
+              Number.isFinite(count) &&
+              count >= 0 &&
+              count <= 1.5,
           ))
       )
         throw Error('Invalid industrial mining contributors');
@@ -133,28 +137,30 @@ function validate(miningWorld: World) {
         generation.releaseHeat < 0 ||
         generation.releaseHeat > 100 ||
         ![generation.ready, generation.penalty, generation.penaltyApplied].every(
-          (v) => typeof v === 'boolean',
+          (value) => typeof value === 'boolean',
         ) ||
         generation.hp < 0 ||
         generation.hp > generation.max ||
         generation.max <= 0 ||
         !Array.isArray(generation.tokens) ||
-        !generation.tokens.every((x) => typeof x === 'boolean') ||
+        !generation.tokens.every((positionX) => typeof positionX === 'boolean') ||
         !Array.isArray(generation.leases) ||
         !generation.leases.every(
-          (l) =>
-            Number.isFinite(l.from) &&
-            Number.isFinite(l.to) &&
-            l.from >= 0 &&
-            l.to >= l.from &&
-            l.to - l.from <= 1.000001 &&
-            typeof l.seam === 'boolean' &&
-            (l.captain === undefined || l.captain === null || typeof l.captain === 'string'),
+          (miningLease) =>
+            Number.isFinite(miningLease.from) &&
+            Number.isFinite(miningLease.to) &&
+            miningLease.from >= 0 &&
+            miningLease.to >= miningLease.from &&
+            miningLease.to - miningLease.from <= 1.000001 &&
+            typeof miningLease.seam === 'boolean' &&
+            (miningLease.captain === undefined ||
+              miningLease.captain === null ||
+              typeof miningLease.captain === 'string'),
         ) ||
         !generation.seen ||
         typeof generation.seen !== 'object' ||
         !Object.values(generation.seen).every(
-          (t) => Number.isFinite(t) && t >= 0 && t <= miningWorld.clock,
+          (time) => Number.isFinite(time) && time >= 0 && time <= miningWorld.clock,
         ) ||
         typeof generation.key !== 'string' ||
         !['ore', 'gas', 'shards'].includes(generation.ore)
@@ -169,47 +175,47 @@ function validate(miningWorld: World) {
       )
         throw new Error('Invalid mining budget');
     }
-    for (const miningLoot of f.parcels) {
+    for (const miningLoot of savedField.parcels) {
       if (
         !Number.isSafeInteger(miningLoot.id) ||
         miningLoot.id >= 0 ||
         miningLoot.id <= miningWorld.nextId ||
-        ids.has(miningLoot.id)
+        identifiers.has(miningLoot.id)
       )
         throw new Error('Invalid mining parcel identity');
-      ids.add(miningLoot.id);
+      identifiers.add(miningLoot.id);
       const gradeLots = miningLoot.it.remainingLots;
       if (
         !gradeLots ||
         !(
           /** @type {const} */ ((['common', 'rich', 'pure'] as const)).every(
-            (k) => Number.isSafeInteger(gradeLots[k]) && gradeLots[k] >= 0,
+            (entryKey) => Number.isSafeInteger(gradeLots[entryKey]) && gradeLots[entryKey] >= 0,
           )
         ) ||
         typeof miningLoot.it.generationKey !== 'string' ||
-        ![...f.rocks, ...f.history].some(
+        ![...savedField.rocks, ...savedField.history].some(
           (generation) =>
             generation.key === miningLoot.it.generationKey && generation.ore === miningLoot.it.ore,
         ) ||
         !Array.isArray(miningLoot.it.progressionTokens) ||
         !miningLoot.it.progressionTokens.every(
-          (t) =>
-            Number.isSafeInteger(t) &&
-            t >= 0 &&
-            [...f.rocks, ...f.history].some(
+          (time) =>
+            Number.isSafeInteger(time) &&
+            time >= 0 &&
+            [...savedField.rocks, ...savedField.history].some(
               (generation) =>
-                generation.key === miningLoot.it.generationKey && t < generation.tokens.length,
+                generation.key === miningLoot.it.generationKey && time < generation.tokens.length,
             ),
         ) ||
         !Number.isFinite(miningLoot.expires)
       )
         throw new Error('Invalid mining parcel');
     }
-    for (const generation of [...f.rocks, ...f.history])
+    for (const generation of [...savedField.rocks, ...savedField.history])
       if (generation.budget >= 0) {
-        const floating = f.parcels
+        const floating = savedField.parcels
           .filter((miningLoot) => miningLoot.it.generationKey === generation.key)
-          .reduce((n, miningLoot) => n + quantity(miningLoot.it), 0);
+          .reduce((count, miningLoot) => count + quantity(miningLoot.it), 0);
         if (
           generation.accepted +
             floating +
@@ -226,44 +232,47 @@ function validate(miningWorld: World) {
 function quantity(parcel: Parcel) {
   return parcel.remainingLots.common + parcel.remainingLots.rich + parcel.remainingLots.pure;
 }
-/** @param {World} miningWorld @param {Space} space @param {number} fi @param {number} i @param {{x:number,y:number,r:number,ore:string,rich:number,minor?:boolean}} f @param {number} generation @returns {Generation} */
+/** @param {World} miningWorld @param {Space} space @param {number} factionIndex @param {number} index @param {{x:number,y:number,r:number,ore:string,rich:number,minor?:boolean}} factionId @param {number} generation @returns {Generation} */
 function generate(
   miningWorld: World,
   space: Space,
-  fi: number,
-  i: number,
-  f: { x: number; y: number; r: number; ore: string; rich: number; minor?: boolean },
+  factionIndex: number,
+  index: number,
+  factionId: { x: number; y: number; r: number; ore: string; rich: number; minor?: boolean },
   generation: number,
 ): Generation {
-  const key = `${space.id}:${fi}:${i}:${generation}`,
-    seed = seedOf(key),
+  const entryKey = `${space.id}:${factionIndex}:${index}:${generation}`,
+    seed = seedOf(entryKey),
     random = randomOf(seed),
-    a = random() * Math.PI * 2,
-    d = Math.sqrt(random()) * f.r,
-    r = Math.round(16 + random() * (f.minor ? 7 : 30)),
-    max = Math.round(
-      (r * (f.ore === 'gas' ? 6 : f.ore === 'shards' ? 12 : 9) * (1 + f.rich * 0.5)) /
-        stageCount(r),
+    firstValue = random() * Math.PI * 2,
+    distance = Math.sqrt(random()) * factionId.r,
+    radius = Math.round(16 + random() * (factionId.minor ? 7 : 30)),
+    maximum = Math.round(
+      (radius *
+        (factionId.ore === 'gas' ? 6 : factionId.ore === 'shards' ? 12 : 9) *
+        (1 + factionId.rich * 0.5)) /
+        stageCount(radius),
     ),
-    n = Math.max(1, Math.round(r / 14)) + (f.rich - 1);
+    count = Math.max(1, Math.round(radius / 14)) + (factionId.rich - 1);
   let baseBudget = 0;
-  for (let j = 0; j < n; j++) baseBudget += f.rich + (random() < 0.4 ? 1 : 0);
+  for (let innerIndex = 0; innerIndex < count; innerIndex++)
+    baseBudget += factionId.rich + (random() < 0.4 ? 1 : 0);
   return {
     id: miningWorld.nextId--,
-    x: Math.round(f.x + Math.cos(a) * d),
-    y: Math.round(f.y + Math.sin(a) * d),
-    r,
-    ore: f.ore,
-    rich: f.rich,
-    hp: max,
-    max,
+    x: Math.round(factionId.x + Math.cos(firstValue) * distance),
+    y: Math.round(factionId.y + Math.sin(firstValue) * distance),
+    r: radius,
+    ore: factionId.ore,
+    rich: factionId.rich,
+    hp: maximum,
+    max: maximum,
     down: 0,
     evT: 0,
-    key,
+    key: entryKey,
     generation,
     seed,
     stage: 0,
-    stages: stageCount(r),
+    stages: stageCount(radius),
     heat: 0,
     work: 0,
     updated: miningWorld.clock,
@@ -280,7 +289,7 @@ function generate(
     expired: 0,
     discarded: 0,
     emitted: 0,
-    tokens: Array(n).fill(false),
+    tokens: Array(count).fill(false),
     leases: [],
     seen: {},
     captain: null,
@@ -291,7 +300,7 @@ function generate(
 /** @param {Capabilities} capabilities @param {Space} space @param {Generation} generation @param {boolean} clean */
 function emit(capabilities: Capabilities, space: Space, generation: Generation, clean: boolean) {
   const miningWorld = world(capabilities),
-    f = miningWorld.systems[space.id];
+    savedField = miningWorld.systems[space.id];
   // One generation opportunity: qualifying useful-contact contributor, never last damage.
   // Cap each of the first 64 participants at the 1.5s threshold; ties use account order.
   const contributor = Object.entries(generation.dredgeContributors || {})
@@ -299,8 +308,8 @@ function emit(capabilities: Capabilities, space: Space, generation: Generation, 
     .map(([name]) => name)
     .sort()[0];
   if (!generation.dredgeToken && generation.stages > 1 && contributor) {
-    const d = capabilities.db.get(contributor);
-    if (d) {
+    const playerAccount = capabilities.db.get(contributor);
+    if (playerAccount) {
       generation.dredgeToken = true;
       capabilities.dredgeBlueprint(contributor, INDUSTRIAL.blueprintChance);
     }
@@ -314,12 +323,12 @@ function emit(capabilities: Capabilities, space: Space, generation: Generation, 
         : 'ordinary';
   if (generation.budget < 0) {
     const account = generation.captain ? capabilities.db.get(generation.captain) : null;
-    const raw =
+    const rawData =
       generation.baseBudget *
       (1 + (account ? capabilities.bonus(account).miningPct || 0 : 0) / 100) *
       capabilities.mods(space.id).mining;
-    const rng = randomOf(generation.seed ^ 123456);
-    generation.budget = Math.floor(raw) + (rng() < raw % 1 ? 1 : 0);
+    const randomOf2 = randomOf(generation.seed ^ 123456);
+    generation.budget = Math.floor(rawData) + (randomOf2() < rawData % 1 ? 1 : 0);
     generation.pending = generation.budget;
   }
   if ((generation.heat >= MINING.overheat || generation.penalty) && !generation.penaltyApplied) {
@@ -330,18 +339,19 @@ function emit(capabilities: Capabilities, space: Space, generation: Generation, 
     generation.pending = keep;
   }
   const remainingStages = generation.stages - generation.stage,
-    n =
+    count =
       remainingStages === 1 ? generation.pending : Math.floor(generation.pending / remainingStages),
     random = randomOf(generation.seed ^ ((generation.stage + 1) * 17293)),
-    lots = generation.sweepCut ? sweepGrades(n, random) : rollGrades(n, clean, random),
-    clusters = Math.min(n, 2 + Math.floor(random() * 3));
+    lots = generation.sweepCut ? sweepGrades(count, random) : rollGrades(count, clean, random),
+    clusters = Math.min(count, 2 + Math.floor(random() * 3));
   const tokenIds = generation.tokens
-    .map((_, i) => i)
-    .filter((i) => i % generation.stages === generation.stage);
-  for (let j = 0; j < clusters; j++) {
-    const q = Math.ceil((lots.common + lots.rich + lots.pure) / (clusters - j)),
-      part = splitLots(lots, q);
-    for (const k of /** @type {const} */ (['common', 'rich', 'pure'] as const)) lots[k] -= part[k];
+    .map((unused, index) => index)
+    .filter((index) => index % generation.stages === generation.stage);
+  for (let innerIndex = 0; innerIndex < clusters; innerIndex++) {
+    const quantity = Math.ceil((lots.common + lots.rich + lots.pure) / (clusters - innerIndex)),
+      part = splitLots(lots, quantity);
+    for (const entryKey of /** @type {const} */ (['common', 'rich', 'pure'] as const))
+      lots[entryKey] -= part[entryKey];
     const parcel = {
       id: miningWorld.nextId--,
       x: generation.x + (random() - 0.5) * generation.r,
@@ -354,18 +364,18 @@ function emit(capabilities: Capabilities, space: Space, generation: Generation, 
       it: {
         ore: generation.ore,
         rich: generation.rich,
-        n: q,
+        n: quantity,
         remainingLots: part,
         generationKey: generation.key,
-        parcelKey: `${generation.key}:${generation.stage}:${j}`,
-        progressionTokens: tokenIds.filter((_, i) => i % clusters === j),
+        parcelKey: `${generation.key}:${generation.stage}:${innerIndex}`,
+        progressionTokens: tokenIds.filter((unused, index) => index % clusters === innerIndex),
       },
     };
-    f.parcels.push(parcel);
+    savedField.parcels.push(parcel);
     space.loot.push(parcel);
   }
-  generation.pending -= n;
-  generation.emitted += n;
+  generation.pending -= count;
+  generation.emitted += count;
   generation.stage++;
   generation.ready = false;
   generation.work = 0;
@@ -390,27 +400,27 @@ function emit(capabilities: Capabilities, space: Space, generation: Generation, 
   }
   capabilities.db.touch();
 }
-/** @param {Capabilities} capabilities @param {Space} space @param {Generation} generation @param {number} [now] */
+/** @param {Capabilities} capabilities @param {Space} space @param {Generation} generation @param {number} [clock2] */
 function update(
   capabilities: Capabilities,
   space: Space,
   generation: Generation,
-  now: number = world(capabilities).clock,
+  clock2: number = world(capabilities).clock,
 ) {
-  if (now < generation.updated) throw new Error('Mining clock moved backwards');
+  if (clock2 < generation.updated) throw new Error('Mining clock moved backwards');
   if (generation.down) return;
   // Integrate each contact/cooling segment in time order. Quiet systems can observe
   // both a threshold crossing and trailing cooling in the same update.
-  const points = [generation.updated, now];
-  for (const l of generation.leases)
-    if (l.to > generation.updated && l.from < now)
-      points.push(Math.max(generation.updated, l.from), Math.min(now, l.to));
-  points.sort((a, b) => a - b);
-  for (let i = 1; i < points.length; i++) {
-    const from = points[i - 1],
-      to = points[i];
-    if (to <= from) continue;
-    const { seconds, seamSeconds } = contactTime(generation.leases, from, to);
+  const points = [generation.updated, clock2];
+  for (const miningLease of generation.leases)
+    if (miningLease.to > generation.updated && miningLease.from < clock2)
+      points.push(Math.max(generation.updated, miningLease.from), Math.min(clock2, miningLease.to));
+  points.sort((firstValue, secondValue) => firstValue - secondValue);
+  for (let index = 1; index < points.length; index++) {
+    const from = points[index - 1],
+      point = points[index];
+    if (point <= from) continue;
+    const { seconds, seamSeconds } = contactTime(generation.leases, from, point);
     if (seconds > 0) {
       const heated = generation.heat + seconds * MINING.heatRate;
       const crosses = heated >= MINING.overheat - 1e-9;
@@ -423,24 +433,27 @@ function update(
       const captains = [
         ...new Set(
           generation.leases
-            .filter((l) => l.from < to && l.to > from && l.captain)
-            .map((l) => /** @type {string} */ (l.captain as string)),
+            .filter(
+              (miningLease) =>
+                miningLease.from < point && miningLease.to > from && miningLease.captain,
+            )
+            .map((miningLease) => /** @type {string} */ (miningLease.captain as string)),
         ),
       ];
       const contributions = (generation.dredgeContributors ||= Object.create(null));
       for (const name of captains) {
         if (!Object.hasOwn(contributions, name) && Object.keys(contributions).length >= 64)
           continue;
-        const own = contactTime(
-          generation.leases.filter((l) => l.captain === name),
+        const seconds2 = contactTime(
+          generation.leases.filter((miningLease) => miningLease.captain === name),
           from,
-          to,
+          point,
         ).seconds;
         Object.defineProperty(contributions, name, {
           value: Math.min(
             1.5,
             (Object.hasOwn(contributions, name) ? contributions[name] : 0) +
-              (own * useful) / seconds,
+              (seconds2 * useful) / seconds,
           ),
           writable: true,
           configurable: true,
@@ -450,24 +463,27 @@ function update(
       capabilities.pressureWork(space, generation, useful, captains);
       generation.heat = crosses ? MINING.overheat : heated;
       generation.releaseHeat = generation.heat;
-      generation.releaseAt = to + MINING.grace;
+      generation.releaseAt = point + MINING.grace;
       if (crosses) {
         generation.penalty = true; // Latched even if not ready, including across trailing cooling.
         if (generation.ready) {
           emit(capabilities, space, generation, false);
           // Emission ends this stage's leases at the crossing, not at observation.
-          generation.heat = Math.max(0, generation.heat - (now - from - useful) * MINING.cooling);
+          generation.heat = Math.max(
+            0,
+            generation.heat - (clock2 - from - useful) * MINING.cooling,
+          );
           break;
         }
       }
-    } else generation.heat = Math.max(0, generation.heat - (to - from) * MINING.cooling);
+    } else generation.heat = Math.max(0, generation.heat - (point - from) * MINING.cooling);
   }
-  generation.updated = now;
+  generation.updated = clock2;
   if (
     generation.ready &&
     generation.releaseAt &&
-    now > generation.releaseAt &&
-    generation.leases.every((l) => l.to < now - MINING.grace)
+    clock2 > generation.releaseAt &&
+    generation.leases.every((miningLease) => miningLease.to < clock2 - MINING.grace)
   )
     emit(
       capabilities,
@@ -478,30 +494,30 @@ function update(
         generation.releaseHeat >= 60 &&
         generation.releaseHeat <= 80,
     );
-  generation.leases = generation.leases.filter((l) => l.to > now - 1);
-  for (const [key, t] of Object.entries(generation.seen))
-    if (t < now - 10) delete generation.seen[key];
+  generation.leases = generation.leases.filter((miningLease) => miningLease.to > clock2 - 1);
+  for (const [entryKey, time] of Object.entries(generation.seen))
+    if (time < clock2 - 10) delete generation.seen[entryKey];
 }
-/** @param {number} n @param {()=>number} random */
-function sweepGrades(n: number, random: () => number) {
+/** @param {number} count @param {()=>number} random */
+function sweepGrades(count: number, random: () => number) {
   const lots = { common: 0, rich: 0, pure: 0 };
-  for (let i = 0; i < n; i++) lots[random() < 0.03 ? 'rich' : 'common']++;
+  for (let index = 0; index < count; index++) lots[random() < 0.03 ? 'rich' : 'common']++;
   return lots;
 }
 export const MiningOperations = {
   /** Stable across restart/sleep; a fresh projectile cannot alias a saved consumed shot.
    * @this {Capabilities} @returns {number} */
   shotId(this: Capabilities) {
-    const id = world(this).nextId--;
+    const identifier = world(this).nextId--;
     this.db.touch();
-    return id;
+    return identifier;
   },
   /** @this {Capabilities} */
   init(this: Capabilities) {
     if (this.db.world.mining) {
       validate(this.db.world.mining); // No offline work from stale saved collision leases.
-      for (const f of Object.values(this.db.world.mining.systems))
-        for (const generation of [...f.rocks, ...f.history]) {
+      for (const savedField of Object.values(this.db.world.mining.systems))
+        for (const generation of [...savedField.rocks, ...savedField.history]) {
           generation.leases = [];
           // Legacy saves have no reliable last-hit time: grant a full quiet interval.
           generation.lastActivity ??= this.db.world.mining.clock;
@@ -512,62 +528,73 @@ export const MiningOperations = {
       this.db.touch();
     }
   },
-  /** @this {Capabilities} @param {number} dt */
-  advanceClock(this: Capabilities, dt: number) {
-    if (!Number.isFinite(dt) || dt < 0 || dt > 1) throw new Error('Invalid mining timestep');
+  /** @this {Capabilities} @param {number} deltaTime */
+  advanceClock(this: Capabilities, deltaTime: number) {
+    if (!Number.isFinite(deltaTime) || deltaTime < 0 || deltaTime > 1)
+      throw new Error('Invalid mining timestep');
     if (this.paused()) return;
-    world(this).clock += dt;
+    world(this).clock += deltaTime;
     this.db.touch();
   },
   /** @this {Capabilities} @param {Space} space */
   openSpace(this: Capabilities, space: Space) {
     const miningWorld = world(this),
       config = JSON.stringify(space.sys.fields || []);
-    let f = miningWorld.systems[space.id];
-    if (f && f.config !== config) {
-      const previous = JSON.parse(f.config),
+    let savedField = miningWorld.systems[space.id];
+    if (savedField && savedField.config !== config) {
+      const previous = JSON.parse(savedField.config),
         next = space.sys.fields || [];
       // Only reviewed append-only industrial fields migrate. Old geometry, stable keys,
       // unspent mass and outstanding original parcels are never regenerated or reminted.
       if (
         !Array.isArray(previous) ||
         next.length < previous.length ||
-        JSON.stringify(next.slice(0, previous.length)) !== f.config ||
-        !next.slice(previous.length).every((x) => x.industrial === true && x.minor === true)
+        JSON.stringify(next.slice(0, previous.length)) !== savedField.config ||
+        !next
+          .slice(previous.length)
+          .every((positionX) => positionX.industrial === true && positionX.minor === true)
       )
         throw new Error(`Mining field config changed in ${space.id}; explicit migration required`);
-      for (let fi = previous.length; fi < next.length; fi++)
-        for (let i = 0; i < next[fi].rocks; i++)
-          f.rocks.push(generate(miningWorld, space, fi, i, next[fi], 0));
-      f.config = config;
+      for (let length2 = previous.length; length2 < next.length; length2++)
+        for (let index = 0; index < next[length2].rocks; index++)
+          savedField.rocks.push(generate(miningWorld, space, length2, index, next[length2], 0));
+      savedField.config = config;
       this.db.touch();
     }
-    if (!f) {
-      f = { config, rocks: [], parcels: [], history: [] };
-      for (const [fi, field] of (space.sys.fields || []).entries())
-        for (let i = 0; i < field.rocks; i++)
-          f.rocks.push(generate(miningWorld, space, fi, i, field, 0));
-      miningWorld.systems[space.id] = f;
+    if (!savedField) {
+      savedField = { config, rocks: [], parcels: [], history: [] };
+      for (const [factionIndex, field] of (space.sys.fields || []).entries())
+        for (let index = 0; index < field.rocks; index++)
+          savedField.rocks.push(generate(miningWorld, space, factionIndex, index, field, 0));
+      miningWorld.systems[space.id] = savedField;
       this.db.touch();
     }
-    space.rocks = f.rocks;
-    space.loot.push(...f.parcels);
+    space.rocks = savedField.rocks;
+    space.loot.push(...savedField.parcels);
     this.endTick(space);
   },
-  /** @this {Capabilities} @param {Space} space @param {Rock} rock @param {MiningContact} hit */
-  contact(this: Capabilities, space: Space, rock: Rock, hit: MiningContact) {
-    const generation = world(this).systems[space.id]?.rocks.find((r) => r === rock);
-    if (!generation || generation.down || !Number.isFinite(hit.damage) || hit.damage < 0) return;
-    const now = world(this).clock,
-      key = hit.source.contactId;
-    if (Object.hasOwn(generation.seen, key)) return;
+  /** @this {Capabilities} @param {Space} space @param {Rock} rock @param {MiningContact} miningContact */
+  contact(this: Capabilities, space: Space, rock: Rock, miningContact: MiningContact) {
+    const generation = world(this).systems[space.id]?.rocks.find(
+      (savedRockGeneration) => savedRockGeneration === rock,
+    );
+    if (
+      !generation ||
+      generation.down ||
+      !Number.isFinite(miningContact.damage) ||
+      miningContact.damage < 0
+    )
+      return;
+    const clock2 = world(this).clock,
+      contactId2 = miningContact.source.contactId;
+    if (Object.hasOwn(generation.seen, contactId2)) return;
     // A later arrival cannot extend an already expired ready-stage deadline.
     // Beams cover the preceding frame; compare against contact start so a
     // contiguous beam is not mistakenly cooled before its frame is admitted.
-    const from = hit.projectile ? now : Math.max(0, now - 1 / 30),
+    const from = miningContact.projectile ? clock2 : Math.max(0, clock2 - 1 / 30),
       previousEnd = Math.max(
         generation.releaseAt ? generation.releaseAt - MINING.grace : 0,
-        ...generation.leases.map((l) => l.to),
+        ...generation.leases.map((miningLease) => miningLease.to),
       );
     if (generation.ready && previousEnd && previousEnd + MINING.grace < from) {
       // Settle only through incoming contact start. Advancing to observation
@@ -575,28 +602,32 @@ export const MiningOperations = {
       update(this, space, generation, Math.max(generation.updated, from));
       if (generation.down) return;
     }
-    generation.lastActivity = now;
-    generation.seen[key] = now;
-    generation.captain = hit.source.captain;
-    const angle = Math.atan2(hit.y - generation.y, hit.x - generation.x),
+    generation.lastActivity = clock2;
+    generation.seen[contactId2] = clock2;
+    generation.captain = miningContact.source.captain;
+    const angle = Math.atan2(miningContact.y - generation.y, miningContact.x - generation.x),
       delta = Math.abs(
         Math.atan2(Math.sin(angle - generation.seam), Math.cos(angle - generation.seam)),
       ),
       seam = delta < MINING.seamWidth;
     generation.leases.push({
-      from: hit.projectile ? now : Math.max(0, now - 1 / 30),
-      to: hit.projectile ? now + Math.min(1, Math.max(1 / 30, hit.source.cadence)) : now,
+      from: miningContact.projectile ? clock2 : Math.max(0, clock2 - 1 / 30),
+      to: miningContact.projectile
+        ? clock2 + Math.min(1, Math.max(1 / 30, miningContact.source.cadence))
+        : clock2,
       seam,
-      captain: hit.source.captain,
+      captain: miningContact.source.captain,
     });
-    generation.hp = Math.max(0, generation.hp - hit.damage * 6 * (seam ? 1.25 : 1));
+    generation.hp = Math.max(0, generation.hp - miningContact.damage * 6 * (seam ? 1.25 : 1));
     if (!generation.hp) generation.ready = true;
     this.db.touch();
   },
   /** Sweep never finishes a clean-ready or multistage rock; same finite root budget.
    * @this {Capabilities} @param {Space} space @param {Rock} rock @param {number} damage @param {string} captain */
   sweep(this: Capabilities, space: Space, rock: Rock, damage: number, captain: string) {
-    const generation = world(this).systems[space.id]?.rocks.find((x) => x === rock);
+    const generation = world(this).systems[space.id]?.rocks.find(
+      (savedRockGeneration) => savedRockGeneration === rock,
+    );
     if (
       !generation ||
       generation.down ||
@@ -626,7 +657,9 @@ export const MiningOperations = {
     damage: number,
     captain: string | null = null,
   ) {
-    const generation = world(this).systems[space.id]?.rocks.find((r) => r === rock);
+    const generation = world(this).systems[space.id]?.rocks.find(
+      (savedRockGeneration) => savedRockGeneration === rock,
+    );
     if (!generation || generation.down || !Number.isFinite(damage) || damage <= 0) return;
     generation.lastActivity = world(this).clock;
     generation.hp = Math.max(0, generation.hp - damage);
@@ -639,10 +672,10 @@ export const MiningOperations = {
   /** @this {Capabilities} @param {Space} space */
   endTick(this: Capabilities, space: Space) {
     const miningWorld = world(this),
-      f = miningWorld.systems[space.id];
-    if (!f) return;
-    for (let i = 0; i < f.rocks.length; i++) {
-      const generation = f.rocks[i];
+      savedField = miningWorld.systems[space.id];
+    if (!savedField) return;
+    for (let index = 0; index < savedField.rocks.length; index++) {
+      const generation = savedField.rocks[index];
       update(this, space, generation);
       const abandoned =
         !generation.down &&
@@ -652,7 +685,7 @@ export const MiningOperations = {
           generation.ready) &&
         miningWorld.clock - (generation.lastActivity ?? generation.updated) >= MINING.idleRenewal &&
         !generation.ready &&
-        generation.leases.every((l) => l.to + MINING.grace < miningWorld.clock);
+        generation.leases.every((miningLease) => miningLease.to + MINING.grace < miningWorld.clock);
       if ((generation.down && miningWorld.clock >= generation.down) || abandoned) {
         // Retire, never reset, a generation: original parcels retain their ledger,
         // while unextracted material is explicitly discarded before natural renewal.
@@ -660,26 +693,26 @@ export const MiningOperations = {
         if (generation.budget >= 0) {
           generation.discarded += generation.pending;
           generation.pending = 0;
-          f.history.push(generation);
+          savedField.history.push(generation);
         }
-        const [_sys, fi, ri] = generation.key.split(':');
-        f.rocks[i] = generate(
+        const [_unusedSystem, factionIndex, rowIndex] = generation.key.split(':');
+        savedField.rocks[index] = generate(
           miningWorld,
           space,
-          Number(fi),
-          Number(ri),
-          (space.sys.fields || [])[Number(fi)],
+          Number(factionIndex),
+          Number(rowIndex),
+          (space.sys.fields || [])[Number(factionIndex)],
           generation.generation + 1,
         );
         space.events.push(['rock', generation.id, 0]);
         this.db.touch();
       }
     }
-    space.rocks = f.rocks;
-    for (const miningLoot of f.parcels) {
+    space.rocks = savedField.rocks;
+    for (const miningLoot of savedField.parcels) {
       if (miningLoot.expires <= miningWorld.clock && quantity(miningLoot.it) > 0) {
-        const generation = [...f.rocks, ...f.history].find(
-          (r) => r.key === miningLoot.it.generationKey,
+        const generation = [...savedField.rocks, ...savedField.history].find(
+          (savedRockGeneration) => savedRockGeneration.key === miningLoot.it.generationKey,
         );
         if (generation) {
           generation.expired += quantity(miningLoot.it);
@@ -689,24 +722,28 @@ export const MiningOperations = {
         this.db.touch();
       }
     }
-    f.parcels = f.parcels.filter((miningLoot) => !miningLoot.taken && quantity(miningLoot.it) > 0);
+    savedField.parcels = savedField.parcels.filter(
+      (miningLoot) => !miningLoot.taken && quantity(miningLoot.it) > 0,
+    );
     space.loot = space.loot.filter(
-      (p) =>
-        !('generationKey' in p.it) ||
-        f.parcels.includes(/** @type {SavedMiningLoot} */ (p as SavedMiningLoot)),
+      (floatingLoot) =>
+        !('generationKey' in floatingLoot.it) ||
+        savedField.parcels.includes(
+          /** @type {SavedMiningLoot} */ (floatingLoot as SavedMiningLoot),
+        ),
     );
     // No settled history is retained. Live parcels pin their original ledger until
     // accepted/expired; unsettled or inconsistent records remain for validation.
-    const live = new Set(f.parcels.map((miningLoot) => miningLoot.it.generationKey));
-    const history = f.history.filter(
+    const live = new Set(savedField.parcels.map((miningLoot) => miningLoot.it.generationKey));
+    const history = savedField.history.filter(
       (generation) =>
         live.has(generation.key) ||
         generation.budget < 0 ||
         generation.pending > 0 ||
         generation.accepted + generation.expired + generation.discarded !== generation.budget,
     );
-    if (history.length !== f.history.length) {
-      f.history = history;
+    if (history.length !== savedField.history.length) {
+      savedField.history = history;
       this.db.touch();
     }
   },
@@ -719,7 +756,10 @@ export const MiningOperations = {
   survey(this: Capabilities, session: Session, request: NetworkMessage & { op?: string }) {
     const entity = session.ent,
       miningWorld = world(this);
-    if (request.op !== 'survey' || Object.keys(request).some((k) => !['t', 'op'].includes(k)))
+    if (
+      request.op !== 'survey' ||
+      Object.keys(request).some((entryKey) => !['t', 'op'].includes(entryKey))
+    )
       return false;
     if (
       !session.data ||
@@ -731,9 +771,10 @@ export const MiningOperations = {
       this.paused()
     )
       return false;
-    const old = session.data.miningSurvey;
-    if (old && (!Number.isFinite(old.cooldownUntil) || old.version !== 1)) return false;
-    if (old && miningWorld.clock < old.cooldownUntil) return false;
+    const savedSurvey = session.data.miningSurvey;
+    if (savedSurvey && (!Number.isFinite(savedSurvey.cooldownUntil) || savedSurvey.version !== 1))
+      return false;
+    if (savedSurvey && miningWorld.clock < savedSurvey.cooldownUntil) return false;
     session.data.miningSurvey = {
       version: 1,
       cooldownUntil: miningWorld.clock + 10,
@@ -773,15 +814,15 @@ export const MiningOperations = {
   },
   /** @this {Capabilities} @param {Session} session @param {Space} space @returns {MiningPrivateWire} */
   payload(this: Capabilities, session: Session, space: Space) {
-    const now = world(this).clock,
+    const clock2 = world(this).clock,
       survey = session.data.miningSurvey;
     return {
       version: 1,
-      now,
+      now: clock2,
       cooldownUntil: survey?.cooldownUntil || 0,
       revealUntil: survey?.revealUntil || 0,
       revealed:
-        survey && survey.version === 1 && survey.sys === space.id && survey.revealUntil > now
+        survey && survey.version === 1 && survey.sys === space.id && survey.revealUntil > clock2
           ? (world(this).systems[space.id]?.rocks || [])
               .filter(
                 (generation) =>
@@ -798,15 +839,17 @@ export const MiningOperations = {
           : [],
     };
   },
-  /** @this {Capabilities} @param {Session} session @param {LootItem} item @param {number} n */
-  collected(this: Capabilities, session: Session, item: LootItem, n: number) {
+  /** @this {Capabilities} @param {Session} session @param {LootItem} item @param {number} count */
+  collected(this: Capabilities, session: Session, item: LootItem, count: number) {
     if (!item.generationKey) return;
     const miningWorld = world(this);
-    for (const f of Object.values(miningWorld.systems)) {
-      const generation = [...f.rocks, ...f.history].find((r) => r.key === item.generationKey);
+    for (const savedField of Object.values(miningWorld.systems)) {
+      const generation = [...savedField.rocks, ...savedField.history].find(
+        (savedRockGeneration) => savedRockGeneration.key === item.generationKey,
+      );
       if (!generation) continue;
-      generation.accepted += n;
-      this.pressureExtract(session, n);
+      generation.accepted += count;
+      this.pressureExtract(session, count);
       for (const token of item.progressionTokens || [])
         if (!generation.tokens[token]) {
           generation.tokens[token] = true;

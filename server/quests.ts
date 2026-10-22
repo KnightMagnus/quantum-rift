@@ -5,7 +5,7 @@ export interface QuestOperations {
   questInit(this: QuestsCapabilities, playerData: PlayerData): SavedQuests;
   contactAt(
     this: QuestsCapabilities,
-    p: {
+    position: {
       id: string;
       site?: boolean | Record<string, string>;
       svc: string;
@@ -16,55 +16,64 @@ export interface QuestOperations {
   questsPayload(this: QuestsCapabilities, playerData: PlayerData): QuestChain;
   questOffers(
     this: QuestsCapabilities,
-    p: { id: string; site?: boolean | Record<string, string>; svc: string; system: string } | null,
+    position: {
+      id: string;
+      site?: boolean | Record<string, string>;
+      svc: string;
+      system: string;
+    } | null,
     playerData: PlayerData,
   ): Array<Mission>;
   contactStory(
     this: QuestsCapabilities,
-    p: { system: string; id: string },
+    position: { system: string; id: string },
     playerData: PlayerData,
-    C: Record<string, string>,
+    component: Record<string, string>,
   ): { X: QuestChain; plan: Record<string, string> } | null;
-  chainReward(this: QuestsCapabilities, X: { steps: Array<QuestStep> }, lvl: number): QuestReward;
-  questRewardText(this: QuestsCapabilities, R: QuestReward): string;
+  chainReward(
+    this: QuestsCapabilities,
+    positionX: { steps: Array<QuestStep> },
+    level: number,
+  ): QuestReward;
+  questRewardText(this: QuestsCapabilities, questReward: QuestReward): string;
   questPlan(
     this: QuestsCapabilities,
-    p: { id: string; system: string },
+    position: { id: string; system: string },
     playerData: PlayerData,
-    X: QuestChain,
-    C: Record<string, string>,
-    r: () => number,
+    questChain: QuestChain,
+    component: Record<string, string>,
+    radius: () => number,
   ): Record<string, string> | null;
-  fill(this: QuestsCapabilities, t: string, P: Record<string, string>): string;
+  fill(this: QuestsCapabilities, time: string, position: Record<string, string>): string;
   questStart(
     this: QuestsCapabilities,
     session: Session,
-    o: { side?: string; story?: string },
+    options: { side?: string; story?: string },
   ): void;
   questStepJob(
     this: QuestsCapabilities,
     playerData: PlayerData,
     quest: QuestRecord,
-    i: number,
+    index: number,
   ): Mission;
   questPush(this: QuestsCapabilities, session: Session, quest: QuestRecord, first?: boolean): void;
   questAdvance(this: QuestsCapabilities, session: Session, mission: Mission): void;
   questFinish(this: QuestsCapabilities, session: Session, quest: QuestRecord): void;
-  questFail(this: QuestsCapabilities, session: Session, qid: string, why: string): void;
+  questFail(this: QuestsCapabilities, session: Session, questId: string, reason: string): void;
   questSweep(this: QuestsCapabilities, session: Session): void;
   barTalk(
     this: QuestsCapabilities,
-    p: StellarBody,
+    stellarBody: StellarBody,
     playerData: PlayerData,
   ): Record<string, string> | null;
   questSalvageIdle(this: QuestsCapabilities, session: Session): void;
-  questLoot(this: QuestsCapabilities, session: Session, it: { salvage?: string }): boolean;
+  questLoot(this: QuestsCapabilities, session: Session, item: { salvage?: string }): boolean;
 }
 import type { QuestsCapabilities } from './features.ts';
 import type { QuestRecord, QuestStep } from '../shared/quests.ts';
 import type { Mission, PlayerData, Session } from './game.ts';
 
-import { mulberry32 as rng, fnv1a } from '../shared/deterministic-random.ts';
+import { mulberry32 as randomGenerator, fnv1a } from '../shared/deterministic-random.ts';
 import { GalaxyGraph } from '../shared/galaxy-graph.ts';
 import { grantRadio } from './radio-discovery.ts';
 import { RADIO_STATIONS, SCIENTIST_STORY } from '../shared/radio-stations.ts';
@@ -73,7 +82,7 @@ import { clampStanding } from '../shared/reputation.ts';
 // handcrafted side stories wait at particular worlds. Each step is an ordinary job tagged with `m.quest`; finishing it
 // tells the next part of the story and posts the next step. Owned by game.features.quests.
 import {
-  SYS,
+  SYS as systemsById,
   STELLARS,
   FACTIONS,
   COMMODITIES,
@@ -92,19 +101,20 @@ import { occupiedPassengerSeats } from '../shared/passengers.ts';
 
 /**
  * 32-bit FNV-1a string hash function.
- * @param {string | number} str - Input key to hash.
+ * @param {string | number} text - Input key to hash.
  * @returns {number} 32-bit unsigned integer hash.
  */
-const hash = (str: string | number): number => fnv1a(String(str));
+const hash = (text: string | number): number => fnv1a(String(text));
 
 /**
  * Pick a random item from an array.
  * @template T
- * @param {() => number} r - Random generator function returning [0, 1).
- * @param {T[]} a - Array of items.
+ * @param {() => number} radius - Random generator function returning [0, 1).
+ * @param {T[]} firstValue - Array of items.
  * @returns {T} Selected element.
  */
-const pick = <T>(r: () => number, a: T[]): T => a[Math.floor(r() * a.length)];
+const pick = <ValueType>(radius: () => number, firstValue: ValueType[]): ValueType =>
+  firstValue[Math.floor(radius() * firstValue.length)];
 
 /** @type {number} Maximum number of active quests permitted simultaneously. */
 export const QUEST_MAX: number = 3; // quests in progress at once
@@ -145,16 +155,18 @@ const VILLAINS: string[] = [
 
 /**
  * Retrieve landable spaceports in a star system.
- * @param {string} sys - System ID.
+ * @param {string} starSystem - System ID.
  * @returns {Array<{id: string, name: string, system: string}>} List of stellar port objects.
  */
-const portsOf = (sys: string): Array<(typeof SYS)[string]['stellars'][number]> =>
-  SYS[sys].stellars.filter((x) => x.svc!.includes('L') && !x.site);
+const portsOf = (starSystem: string): Array<(typeof systemsById)[string]['stellars'][number]> =>
+  systemsById[starSystem].stellars.filter(
+    (rawStellarBody) => rawStellarBody.svc!.includes('L') && !rawStellarBody.site,
+  );
 
 /** @type {Record<string, Record<string, number>>} Jump distance cache by system ID. */
 const JCACHE: Record<string, Record<string, number>> = {};
 
-const galaxyGraph = new GalaxyGraph(SYS);
+const galaxyGraph = new GalaxyGraph(systemsById);
 
 /** @param {string} from @returns {Record<string, number>} */
 const jumpsFrom = (from: string): Record<string, number> =>
@@ -162,10 +174,10 @@ const jumpsFrom = (from: string): Record<string, number> =>
 
 /**
  * Map faction identifier to playable/officer race key.
- * @param {string} fac - Faction identifier.
+ * @param {string} faction - Faction identifier.
  * @returns {string} Corresponding race key.
  */
-const raceOf = (fac: string): string => (RACE_ROLES[fac] ? fac : 'quantum');
+const raceOf = (faction: string): string => (RACE_ROLES[faction] ? faction : 'quantum');
 
 // the most hold space and bunks any step of a story will ask for, so the job board can warn before you take it on
 /**
@@ -176,17 +188,20 @@ const raceOf = (fac: string): string => (RACE_ROLES[fac] ? fac : 'quantum');
 export const needsOf = (steps: Array<QuestStep>): { hold: number; pax: number } => ({
   hold: Math.max(
     0,
-    ...steps.map((st) =>
-      st.type === 'cargo'
-        ? st.qty || 4
-        : st.type === 'smuggle'
-          ? st.qty || 3
-          : st.type === 'supply'
-            ? st.qty || 0
+    ...steps.map((questStep) =>
+      questStep.type === 'cargo'
+        ? questStep.qty || 4
+        : questStep.type === 'smuggle'
+          ? questStep.qty || 3
+          : questStep.type === 'supply'
+            ? questStep.qty || 0
             : 0,
     ),
   ),
-  pax: Math.max(0, ...steps.map((st) => (st.type === 'passenger' ? st.pax || 1 : 0))),
+  pax: Math.max(
+    0,
+    ...steps.map((questStep) => (questStep.type === 'passenger' ? questStep.pax || 1 : 0)),
+  ),
 });
 
 export const QuestOperations = {
@@ -196,22 +211,22 @@ export const QuestOperations = {
    * @returns {Record<string, QuestRecord>} Initialized quests dictionary.
    */
   questInit(this: QuestsCapabilities, playerData: PlayerData) {
-    const q = (playerData.quests = playerData.quests || {});
-    q.active = q.active || {};
-    q.done = q.done || [];
-    q.contacts = q.contacts || {};
-    q.sides = q.sides || {};
-    return q;
+    const savedQuests = (playerData.quests = playerData.quests || {});
+    savedQuests.active = savedQuests.active || {};
+    savedQuests.done = savedQuests.done || [];
+    savedQuests.contacts = savedQuests.contacts || {};
+    savedQuests.sides = savedQuests.sides || {};
+    return savedQuests;
   },
   // every bar has a contact; who they are depends only on the world
   /**
    * Determine the unique bar contact stationed at a stellar body.
-   * @param {{id: string, site?: boolean | Record<string, string>, svc: string, system: string, outlaw?: boolean} | null} p - Stellar body.
+   * @param {{id: string, site?: boolean | Record<string, string>, svc: string, system: string, outlaw?: boolean} | null} position - Stellar body.
    * @returns {Record<string, string> | null} Contact descriptor or null if no bar available.
    */
   contactAt(
     this: QuestsCapabilities,
-    p: {
+    position: {
       id: string;
       site?: boolean | Record<string, string>;
       svc: string;
@@ -219,21 +234,27 @@ export const QuestOperations = {
       outlaw?: boolean;
     } | null,
   ) {
-    if (!p || p.site || !p.svc.includes('B')) return null;
-    const r = rng(hash('contact:' + p.id)),
-      S = SYS[p.system],
-      F = FACTIONS[S.faction] || {};
+    if (!position || position.site || !position.svc.includes('B')) return null;
+    const radius = randomGenerator(hash('contact:' + position.id)),
+      starSystem = systemsById[position.system],
+      factionDef = FACTIONS[starSystem.faction] || {};
     const kind =
-      p.outlaw || F.pirate ? 'shady' : S.danger >= 3 || S.farside || F.region ? 'wild' : 'lawful';
-    const race = raceOf(r() < 0.75 ? S.faction : pick(r, Object.keys(RACE_ROLES))),
-      N = OFFICER_NAMES[race];
+      position.outlaw || factionDef.pirate
+        ? 'shady'
+        : starSystem.danger >= 3 || starSystem.farside || factionDef.region
+          ? 'wild'
+          : 'lawful';
+    const race = raceOf(
+        radius() < 0.75 ? starSystem.faction : pick(radius, Object.keys(RACE_ROLES)),
+      ),
+      count = OFFICER_NAMES[race];
     return {
-      id: 'c:' + p.id,
-      at: p.id,
+      id: 'c:' + position.id,
+      at: position.id,
       kind,
       race,
-      name: pick(r, N[0]) + ' ' + pick(r, N[1]),
-      title: pick(r, CONTACT_TITLES[kind]),
+      name: pick(radius, count[0]) + ' ' + pick(radius, count[1]),
+      title: pick(radius, CONTACT_TITLES[kind]),
     };
   },
   /**
@@ -242,262 +263,308 @@ export const QuestOperations = {
    * @returns {QuestChain} Quests telemetry payload.
    */
   questsPayload(this: QuestsCapabilities, playerData: PlayerData) {
-    const q = this.questInit(playerData);
+    const savedQuests = this.questInit(playerData);
     return {
-      active: Object.values(q.active).map((a) => ({
-        qid: a.qid,
-        name: a.name,
-        giver: a.giver,
-        at: a.at,
-        step: a.step,
-        of: a.steps.length,
-        side: !!a.side,
-        ...(a.awaitingSeats ? { awaitingSeats: { ...a.awaitingSeats } } : {}),
+      active: Object.values(savedQuests.active).map((questRecord) => ({
+        qid: questRecord.qid,
+        name: questRecord.name,
+        giver: questRecord.giver,
+        at: questRecord.at,
+        step: questRecord.step,
+        of: questRecord.steps.length,
+        side: !!questRecord.side,
+        ...(questRecord.awaitingSeats ? { awaitingSeats: { ...questRecord.awaitingSeats } } : {}),
       })),
-      done: q.done.slice(-30),
+      done: savedQuests.done.slice(-30),
       contacts: Object.fromEntries(
-        Object.entries(q.contacts).map(([k, c]) => [k, { n: c.n || 0 }]),
+        Object.entries(savedQuests.contacts).map(([entryKey, component]) => [
+          entryKey,
+          { n: component.n || 0 },
+        ]),
       ),
     };
   },
   // ---- what a bar offers you: a side story that starts here, or this contact's next story
   /**
    * Generate available quest offerings at a stellar bar (side stories and procedural contact chains).
-   * @param {{id: string, site?: boolean | Record<string, string>, svc: string, system: string} | null} p - Stellar body.
+   * @param {{id: string, site?: boolean | Record<string, string>, svc: string, system: string} | null} position - Stellar body.
    * @param {PlayerData} playerData - Saved player data.
    * @returns {Array<Mission>} List of quest offers.
    */
   questOffers(
     this: QuestsCapabilities,
-    p: { id: string; site?: boolean | Record<string, string>; svc: string; system: string } | null,
+    position: {
+      id: string;
+      site?: boolean | Record<string, string>;
+      svc: string;
+      system: string;
+    } | null,
     playerData: PlayerData,
   ) {
-    const q = this.questInit(playerData),
-      out: Mission[] = [];
-    if (!p || !p.svc.includes('B') || p.site) return out;
-    const full = Object.keys(q.active).length >= QUEST_MAX;
-    for (const X of SIDE_STORIES)
-      if (X.at === p.id && !q.sides[X.id] && !q.active['s:' + X.id])
-        out.push({
-          id: 'q:s:' + X.id,
+    const savedQuests = this.questInit(playerData),
+      missions: Mission[] = [];
+    if (!position || !position.svc.includes('B') || position.site) return missions;
+    const full = Object.keys(savedQuests.active).length >= QUEST_MAX;
+    for (const sideStory of SIDE_STORIES)
+      if (
+        sideStory.at === position.id &&
+        !savedQuests.sides[sideStory.id] &&
+        !savedQuests.active['s:' + sideStory.id]
+      )
+        missions.push({
+          id: 'q:s:' + sideStory.id,
           type: 'quest',
-          side: X.id,
-          title: `★ ${X.name}`,
-          giver: X.giver,
-          sys: STELLARS[X.steps[0].sys!] ? STELLARS[X.steps[0].sys!].system : X.steps[0].sys!,
-          steps: X.steps.length,
-          reward: X.reward.credits,
+          side: sideStory.id,
+          title: `★ ${sideStory.name}`,
+          giver: sideStory.giver,
+          sys: STELLARS[sideStory.steps[0].sys!]
+            ? STELLARS[sideStory.steps[0].sys!].system
+            : sideStory.steps[0].sys!,
+          steps: sideStory.steps.length,
+          reward: sideStory.reward.credits,
           full,
-          text: X.intro,
-          rewardText: this.questRewardText(X.reward),
-          needs: needsOf(X.steps),
+          text: sideStory.intro,
+          rewardText: this.questRewardText(sideStory.reward),
+          needs: needsOf(sideStory.steps),
         });
-    const C = this.contactAt(p);
-    if (!C) return out;
-    const cs = q.contacts[C!.id] || {},
-      busy = Object.values(q.active).some((a) => a.contact === C.id);
-    if (busy || (cs.cool || 0) > Date.now()) return out;
-    const cur = this.contactStory(p, playerData, C);
-    if (!cur) return out;
-    const { X, plan } = cur;
-    const lvl = Math.min(STANDING.length - 1, cs.n || 0),
-      reward = this.chainReward(X, lvl);
-    out.push({
-      id: 'q:c:' + C.id + ':' + X.id + ':' + (cs.n || 0),
+    const contactAt2 = this.contactAt(position);
+    if (!contactAt2) return missions;
+    const cargoSpace = savedQuests.contacts[contactAt2!.id] || {},
+      busy = Object.values(savedQuests.active).some(
+        (questRecord) => questRecord.contact === contactAt2.id,
+      );
+    if (busy || (cargoSpace.cool || 0) > Date.now()) return missions;
+    const contactStory2 = this.contactStory(position, playerData, contactAt2);
+    if (!contactStory2) return missions;
+    const { X: questChain, plan } = contactStory2;
+    const level = Math.min(STANDING.length - 1, cargoSpace.n || 0),
+      reward = this.chainReward(questChain, level);
+    missions.push({
+      id: 'q:c:' + contactAt2.id + ':' + questChain.id + ':' + (cargoSpace.n || 0),
       type: 'quest',
-      story: X.id,
-      title: `✦ ${X.name}`,
-      giver: `${C.name}, ${C.title}`,
-      standing: STANDING[lvl],
+      story: questChain.id,
+      title: `✦ ${questChain.name}`,
+      giver: `${contactAt2.name}, ${contactAt2.title}`,
+      standing: STANDING[level],
       sys: plan.A,
-      steps: X.steps.length,
+      steps: questChain.steps.length,
       reward: reward.credits,
       full,
-      text: this.fill(X.intro, plan),
+      text: this.fill(questChain.intro, plan),
       rewardText: this.questRewardText(reward),
-      needs: needsOf(X.steps),
+      needs: needsOf(questChain.steps),
     });
-    return out;
+    return missions;
   },
   // which story this contact has for you next, and where it happens (the same every time you ask, until you finish one)
   /**
    * Determine next story chain and plan locations offered by a specific contact.
-   * @param {{system: string, id: string}} p - Stellar body.
+   * @param {{system: string, id: string}} position - Stellar body.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {Record<string, string>} C - Bar contact descriptor.
+   * @param {Record<string, string>} component - Bar contact descriptor.
    * @returns {{X: QuestChain, plan: Record<string, string>} | null} Selected chain and route plan, or null.
    */
   contactStory(
     this: QuestsCapabilities,
-    p: { system: string; id: string },
+    position: { system: string; id: string },
     playerData: PlayerData,
-    C: Record<string, string>,
+    component: Record<string, string>,
   ) {
-    const cs = this.questInit(playerData).contacts[C.id] || {},
-      pool = CHAINS.filter((X) => X.kind === 'any' || X.kind === C.kind);
-    const r = rng(hash(playerData.name + C.id + (cs.n || 0))),
-      fresh = pool.filter((x) => !(cs.last || []).includes(x.id));
-    const X = (fresh.length ? fresh : pool)[Math.floor(r() * (fresh.length || pool.length))],
-      plan = this.questPlan(p, playerData, X, C, r);
-    return plan ? { X, plan } : null;
+    const cargoSpace = this.questInit(playerData).contacts[component.id] || {},
+      pool = CHAINS.filter(
+        (questChain) => questChain.kind === 'any' || questChain.kind === component.kind,
+      );
+    const radius = randomGenerator(hash(playerData.name + component.id + (cargoSpace.n || 0))),
+      fresh = pool.filter((questChain) => !(cargoSpace.last || []).includes(questChain.id));
+    const questChain = (fresh.length ? fresh : pool)[
+        Math.floor(radius() * (fresh.length || pool.length))
+      ],
+      plan = this.questPlan(position, playerData, questChain, component, radius);
+    return plan ? { X: questChain, plan } : null;
   },
   /**
    * Calculate credit and item rewards for completing a quest chain at a given standing level.
-   * @param {{steps: Array<QuestStep>}} X - Story chain template.
-   * @param {number} lvl - Contact standing level (0-4).
+   * @param {{steps: Array<QuestStep>}} positionX - Story chain template.
+   * @param {number} level - Contact standing level (0-4).
    * @returns {QuestReward} Reward descriptor.
    */
-  chainReward(this: QuestsCapabilities, X: { steps: Array<QuestStep> }, lvl: number): QuestReward {
-    const n = X.steps.length;
+  chainReward(
+    this: QuestsCapabilities,
+    positionX: { steps: Array<QuestStep> },
+    level: number,
+  ): QuestReward {
+    const length2 = positionX.steps.length;
     return {
-      credits: Math.round((14000 + n * 7000) * (1 + 0.2 * lvl)),
-      crate: [null, Math.min(4, 1 + Math.floor(lvl / 2) + (n >= 4 ? 1 : 0))],
-      officer: lvl >= 2 && lvl % 2 === 0 ? 'any' : null,
-      bp: lvl >= 3 ? 3 + lvl : 0,
+      credits: Math.round((14000 + length2 * 7000) * (1 + 0.2 * level)),
+      crate: [null, Math.min(4, 1 + Math.floor(level / 2) + (length2 >= 4 ? 1 : 0))],
+      officer: level >= 2 && level % 2 === 0 ? 'any' : null,
+      bp: level >= 3 ? 3 + level : 0,
     };
   },
   /**
    * Format a textual summary of quest rewards for UI presentation.
-   * @param {QuestReward} R - Reward descriptor.
+   * @param {QuestReward} questReward - Reward descriptor.
    * @returns {string} Comma-separated reward description text.
    */
-  questRewardText(this: QuestsCapabilities, R: QuestReward) {
-    const a = R.credits ? [`${credits(R.credits)} credits`] : [];
-    if (R.radio)
-      a.push(`radio station: ${RADIO_STATIONS.find((s) => s.id === R.radio)?.name || R.radio}`);
-    if (R.crate) a.push(`a ${R.crate[0] || 'material'} ${GRADES[R.crate[1]]} crate`);
-    if (R.officer) a.push('a new officer');
-    if (R.bp) a.push(`${R.bp} specialist blueprints`);
-    return a.join(', ');
+  questRewardText(this: QuestsCapabilities, questReward: QuestReward) {
+    const firstValue = questReward.credits ? [`${credits(questReward.credits)} credits`] : [];
+    if (questReward.radio)
+      firstValue.push(
+        `radio station: ${RADIO_STATIONS.find((state) => state.id === questReward.radio)?.name || questReward.radio}`,
+      );
+    if (questReward.crate)
+      firstValue.push(
+        `a ${questReward.crate[0] || 'material'} ${GRADES[questReward.crate[1]]} crate`,
+      );
+    if (questReward.officer) firstValue.push('a new officer');
+    if (questReward.bp) firstValue.push(`${questReward.bp} specialist blueprints`);
+    return firstValue.join(', ');
   },
   // the places a generated story happens: A is close (1-2 jumps), B a little further and different from A
   /**
    * Select candidate stellar worlds, ships, and targets for a procedural quest chain.
-   * @param {{id: string, system: string}} p - Starting stellar body.
+   * @param {{id: string, system: string}} position - Starting stellar body.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {QuestChain} X - Quest chain template.
-   * @param {Record<string, string>} C - Contact descriptor.
-   * @param {() => number} r - Random generator function.
+   * @param {QuestChain} questChain - Quest chain template.
+   * @param {Record<string, string>} component - Contact descriptor.
+   * @param {() => number} radius - Random generator function.
    * @returns {Record<string, string> | null} Spatial and narrative plan variables, or null.
    */
   questPlan(
     this: QuestsCapabilities,
-    p: { id: string; system: string },
+    position: { id: string; system: string },
     playerData: PlayerData,
-    X: QuestChain,
-    C: Record<string, string>,
-    r: () => number,
+    questChain: QuestChain,
+    component: Record<string, string>,
+    radius: () => number,
   ) {
-    const all = Object.entries(jumpsFrom(p.system)).filter(
-      ([s, n]) =>
-        n >= 1 && n <= 4 && portsOf(s).length && SYS[s].faction !== 'umbral' && !SYS[s].arena,
+    const allEntries = Object.entries(jumpsFrom(position.system)).filter(
+      ([state, count]) =>
+        count >= 1 &&
+        count <= 4 &&
+        portsOf(state).length &&
+        systemsById[state].faction !== 'umbral' &&
+        !systemsById[state].arena,
     );
-    const cap = Math.max(2, (SYS[p.system].danger || 0) + 1),
-      calm = all.filter(([s]) => (SYS[s].danger || 0) <= cap); // stories stay about as dangerous as where they start
-    const near = calm.filter(([, n]) => n <= 2).length ? calm : all;
-    const A_ = near.filter(([, n]) => n <= 2),
-      B_ = near.filter(([_s, n]) => n >= 2);
-    if (!A_.length) return null;
-    const A = pick(r, A_)[0],
-      Bp = B_.filter(([s]) => s !== A),
-      B = Bp.length ? pick(r, Bp)[0] : (near.find(([s]) => s !== A) || [A])[0];
-    const X1 = pick(r, portsOf(A)),
-      Y1 = pick(r, portsOf(B));
+    const capacity = Math.max(2, (systemsById[position.system].danger || 0) + 1),
+      calm = allEntries.filter(([state]) => (systemsById[state].danger || 0) <= capacity); // stories stay about as dangerous as where they start
+    const near = calm.filter(([, count]) => count <= 2).length ? calm : allEntries;
+    const firstValue = near.filter(([, count]) => count <= 2),
+      secondValue = near.filter(([_state, count]) => count >= 2);
+    if (!firstValue.length) return null;
+    const pick2 = pick(radius, firstValue)[0],
+      blueprint = secondValue.filter(([state]) => state !== pick2),
+      secondValue2 = blueprint.length
+        ? pick(radius, blueprint)[0]
+        : (near.find(([state]) => state !== pick2) || [pick2])[0];
+    const rawStellarBody = pick(radius, portsOf(pick2)),
+      rawStellarBody2 = pick(radius, portsOf(secondValue2));
     return {
-      W: p.id,
-      Wsys: p.system,
-      A,
-      B,
-      X: X1.id,
-      Y: Y1.id,
-      ship: pick(r, SHIP_NAMES),
-      target: pick(r, VILLAINS),
-      contact: C ? C.name : '',
+      W: position.id,
+      Wsys: position.system,
+      A: pick2,
+      B: secondValue2,
+      X: rawStellarBody.id,
+      Y: rawStellarBody2.id,
+      ship: pick(radius, SHIP_NAMES),
+      target: pick(radius, VILLAINS),
+      contact: component ? component.name : '',
     };
   },
   /**
    * Substitute template placeholders with concrete planetary and narrative variables.
-   * @param {string} t - Template text with {placeholders}.
-   * @param {Record<string, string>} P - Quest plan parameters.
+   * @param {string} time - Template text with {placeholders}.
+   * @param {Record<string, string>} position - Quest plan parameters.
    * @returns {string} Interpolated narrative text.
    */
-  fill(this: QuestsCapabilities, t: string, P: Record<string, string>) {
-    const nm = (id: string) => (STELLARS[id] ? STELLARS[id].name : id);
-    return String(t).replace(/\{(\w+)\}/g, (m, k) =>
-      k === 'W' || k === 'X' || k === 'Y'
-        ? nm(P[k])
-        : k === 'Wsys' || k === 'A' || k === 'B'
-          ? SYS[P[k]]
-            ? SYS[P[k]].name
+  fill(this: QuestsCapabilities, time: string, position: Record<string, string>) {
+    const name2 = (identifier: string) =>
+      STELLARS[identifier] ? STELLARS[identifier].name : identifier;
+    return String(time).replace(/\{(\w+)\}/g, (message, entryKey) =>
+      entryKey === 'W' || entryKey === 'X' || entryKey === 'Y'
+        ? name2(position[entryKey])
+        : entryKey === 'Wsys' || entryKey === 'A' || entryKey === 'B'
+          ? systemsById[position[entryKey]]
+            ? systemsById[position[entryKey]].name
             : ''
-          : P[k] != null
-            ? P[k]
-            : m,
+          : position[entryKey] != null
+            ? position[entryKey]
+            : message,
     );
   },
   // ---- accepting
   /**
    * Accept and start an active side story or procedural contact quest.
    * @param {Session} session - Player session.
-   * @param {{side?: string, story?: string}} o - Quest offer descriptor.
+   * @param {{side?: string, story?: string}} options - Quest offer descriptor.
    * @returns {void}
    */
-  questStart(this: QuestsCapabilities, session: Session, o: { side?: string; story?: string }) {
+  questStart(
+    this: QuestsCapabilities,
+    session: Session,
+    options: { side?: string; story?: string },
+  ) {
     const playerData = session.data,
-      q = this.questInit(playerData),
-      p = STELLARS[playerData.stellar!];
-    if (Object.keys(q.active).length >= QUEST_MAX)
+      savedQuests = this.questInit(playerData),
+      stellarBody = STELLARS[playerData.stellar!];
+    if (Object.keys(savedQuests.active).length >= QUEST_MAX)
       return this.toast(
         session,
         `You can follow at most ${QUEST_MAX} stories at once. Finish or abandon one first.`,
       );
     if (playerData.missions.length >= 6) return this.toast(session, 'You already have six jobs.');
-    let Q: QuestRecord;
-    if (o.side) {
-      const X = SIDE_STORIES.find((x) => x.id === o.side);
-      if (!X || X.at !== p?.id || q.sides[X.id] || q.active['s:' + X.id]) return;
+    let questRecord: QuestRecord;
+    if (options.side) {
+      const sideStory = SIDE_STORIES.find((sideStory) => sideStory.id === options.side);
       if (
-        X.id === SCIENTIST_STORY &&
-        this.stats(playerData)!.cargo - this.holdUsed(playerData) < needsOf(X.steps).hold
+        !sideStory ||
+        sideStory.at !== stellarBody?.id ||
+        savedQuests.sides[sideStory.id] ||
+        savedQuests.active['s:' + sideStory.id]
+      )
+        return;
+      if (
+        sideStory.id === SCIENTIST_STORY &&
+        this.stats(playerData)!.cargo - this.holdUsed(playerData) < needsOf(sideStory.steps).hold
       )
         return this.toast(session, 'Free two tonnes of hold space for the repair kit first.');
-      Q = {
-        qid: 's:' + X.id,
-        side: X.id,
-        name: X.name,
-        giver: X.giver,
-        at: X.at,
-        plan: { W: X.at, Wsys: STELLARS[X.at].system, contact: X.giver },
-        steps: X.steps.map((st) => ({ ...st })),
+      questRecord = {
+        qid: 's:' + sideStory.id,
+        side: sideStory.id,
+        name: sideStory.name,
+        giver: sideStory.giver,
+        at: sideStory.at,
+        plan: { W: sideStory.at, Wsys: STELLARS[sideStory.at].system, contact: sideStory.giver },
+        steps: sideStory.steps.map((sideStoryStep) => ({ ...sideStoryStep })),
         step: 0,
         started: Date.now(),
         tries: 0,
       };
     } else {
-      const C = this.contactAt(p),
-        cur = C && this.contactStory(p, playerData, C);
-      if (!cur || cur.X.id !== o.story) return;
-      const cs = q.contacts[C!.id] || {},
-        X = cur.X,
-        plan = cur.plan;
-      Q = {
-        qid: 'c:' + C.id.slice(2) + ':' + X.id,
-        chain: X.id,
-        contact: C.id,
-        name: X.name,
-        giver: `${C.name}, ${C.title}`,
-        at: p.id,
+      const contactAt2 = this.contactAt(stellarBody),
+        current = contactAt2 && this.contactStory(stellarBody, playerData, contactAt2);
+      if (!current || current.X.id !== options.story) return;
+      const cargoSpace = savedQuests.contacts[contactAt2!.id] || {},
+        questChain = current.X,
+        plan = current.plan;
+      questRecord = {
+        qid: 'c:' + contactAt2.id.slice(2) + ':' + questChain.id,
+        chain: questChain.id,
+        contact: contactAt2.id,
+        name: questChain.name,
+        giver: `${contactAt2.name}, ${contactAt2.title}`,
+        at: stellarBody.id,
         plan,
-        steps: X.steps.map((st) => ({ ...st })),
+        steps: questChain.steps.map((questChainStep) => ({ ...questChainStep })),
         step: 0,
         started: Date.now(),
         tries: 0,
-        lvl: Math.min(STANDING.length - 1, cs.n || 0),
+        lvl: Math.min(STANDING.length - 1, cargoSpace.n || 0),
       };
     }
-    q.active[Q.qid] = Q;
-    this.log(playerData, `Story begun: ${Q.name} (${Q.giver}).`);
-    this.questPush(session, Q, true);
+    savedQuests.active[questRecord.qid] = questRecord;
+    this.log(playerData, `Story begun: ${questRecord.name} (${questRecord.giver}).`);
+    this.questPush(session, questRecord, true);
     this.db.touch();
     this.you(session);
     this.landed(session);
@@ -507,157 +574,186 @@ export const QuestOperations = {
    * Instantiate a concrete mission job object for a given quest step.
    * @param {PlayerData} playerData - Saved player data.
    * @param {QuestRecord} quest - Active quest state.
-   * @param {number} i - Step index.
+   * @param {number} index - Step index.
    * @returns {Mission} Concrete mission specification.
    */
   questStepJob(
     this: QuestsCapabilities,
     playerData: PlayerData,
     quest: QuestRecord,
-    i: number,
+    index: number,
   ): Mission {
-    const st = quest.steps[i],
-      P = quest.plan,
-      r = rng(hash(quest.qid + i + quest.started));
-    const sys = st.sys || (st.where === 'W' ? P.Wsys : st.where === 'B' ? P.B : P.A);
-    const port = st.sys
-      ? portsOf(st.sys)[0].id
-      : st.where === 'W'
-        ? P.W
-        : st.where === 'B'
-          ? P.Y
-          : P.X;
-    const S = SYS[sys],
+    const questStep = quest.steps[index],
+      questPlan = quest.plan,
+      radius = randomGenerator(hash(quest.qid + index + quest.started));
+    const starSystem =
+      questStep.sys ||
+      (questStep.where === 'W'
+        ? questPlan.Wsys
+        : questStep.where === 'B'
+          ? questPlan.B
+          : questPlan.A);
+    const port = questStep.sys
+      ? portsOf(questStep.sys)[0].id
+      : questStep.where === 'W'
+        ? questPlan.W
+        : questStep.where === 'B'
+          ? questPlan.Y
+          : questPlan.X;
+    const starSystem2 = systemsById[starSystem],
       jumps = 2,
-      dz = S.danger || 1;
-    const F = (t: string) => this.fill(t, { ...P, target: st.target || P.target });
-    const m = {
-      id: `${quest.qid}#${i}`,
-      quest: { qid: quest.qid, step: i, of: quest.steps.length, name: quest.name },
-      type: st.type,
-      sys,
-      title: F(st.title),
-      text: F(st.brief),
+      dangerMultiplier = starSystem2.danger || 1;
+    const factionId = (time: string) =>
+      this.fill(time, { ...questPlan, target: questStep.target || questPlan.target });
+    const mission = {
+      id: `${quest.qid}#${index}`,
+      quest: { qid: quest.qid, step: index, of: quest.steps.length, name: quest.name },
+      type: questStep.type,
+      sys: starSystem,
+      title: factionId(questStep.title),
+      text: factionId(questStep.brief),
       taken: Date.now(),
       owner: null,
     } as Mission;
-    switch (st.type) {
+    switch (questStep.type) {
       case 'cargo':
-        Object.assign(m, {
-          dest: st.dest || port,
-          cid: st.cid || 'equipment',
-          qty: st.qty || 4,
-          reward: Math.round(1500 + jumps * 1200 + (st.qty || 4) * 90),
+        Object.assign(mission, {
+          dest: questStep.dest || port,
+          cid: questStep.cid || 'equipment',
+          qty: questStep.qty || 4,
+          reward: Math.round(1500 + jumps * 1200 + (questStep.qty || 4) * 90),
         });
-        if (st.rush) {
-          m.rush = st.rush;
-          m.deadline = Date.now() + st.rush * 60000;
+        if (questStep.rush) {
+          mission.rush = questStep.rush;
+          mission.deadline = Date.now() + questStep.rush * 60000;
         }
         break;
       case 'smuggle':
-        Object.assign(m, {
-          dest: st.dest || port,
-          qty: st.qty || 3,
-          reward: Math.round(8000 + (st.qty || 3) * 600),
+        Object.assign(mission, {
+          dest: questStep.dest || port,
+          qty: questStep.qty || 3,
+          reward: Math.round(8000 + (questStep.qty || 3) * 600),
         });
         break;
       case 'passenger':
-        Object.assign(m, {
-          dest: st.dest || port,
-          pax: st.pax || 1,
-          reward: Math.round(2500 + (st.pax || 1) * 1200),
+        Object.assign(mission, {
+          dest: questStep.dest || port,
+          pax: questStep.pax || 1,
+          reward: Math.round(2500 + (questStep.pax || 1) * 1200),
         });
         break;
       case 'supply':
-        Object.assign(m, {
-          dest: st.dest || port,
-          cid: st.cid,
-          qty: st.qty,
+        Object.assign(mission, {
+          dest: questStep.dest || port,
+          cid: questStep.cid,
+          qty: questStep.qty,
           reward: Math.round(
-            (COMMODITIES.find((c) => c.id === st.cid) || { base: 100 }).base * st.qty! * 1.5 + 3000,
+            (COMMODITIES.find((commodityDef) => commodityDef.id === questStep.cid) || { base: 100 })
+              .base *
+              questStep.qty! *
+              1.5 +
+              3000,
           ),
         });
         break;
       case 'survey': {
-        const pts = S.stellars.slice(0, 3).map((x) => [x.x, x.y]);
-        while (pts.length < 3) {
-          const a = r() * 6.28,
-            dd = 900 + r() * 1100;
-          pts.push([Math.round(Math.cos(a) * dd), Math.round(Math.sin(a) * dd)]);
+        const points2 = starSystem2.stellars
+          .slice(0, 3)
+          .map((rawStellarBody) => [rawStellarBody.x, rawStellarBody.y]);
+        while (points2.length < 3) {
+          const firstValue = radius() * 6.28,
+            distanceSquared = 900 + radius() * 1100;
+          points2.push([
+            Math.round(Math.cos(firstValue) * distanceSquared),
+            Math.round(Math.sin(firstValue) * distanceSquared),
+          ]);
         }
-        Object.assign(m, { points: pts, reward: Math.round(4000 + dz * 1200) });
+        Object.assign(mission, {
+          points: points2,
+          reward: Math.round(4000 + dangerMultiplier * 1200),
+        });
         break;
       }
       case 'salvage': {
-        const a = r() * 6.28,
-          dd = 1200 + r() * 900;
-        Object.assign(m, {
-          point: [Math.round(Math.cos(a) * dd), Math.round(Math.sin(a) * dd)],
-          reward: Math.round(4500 + dz * 1200),
+        const firstValue = radius() * 6.28,
+          distanceSquared = 1200 + radius() * 900;
+        Object.assign(mission, {
+          point: [
+            Math.round(Math.cos(firstValue) * distanceSquared),
+            Math.round(Math.sin(firstValue) * distanceSquared),
+          ],
+          reward: Math.round(4500 + dangerMultiplier * 1200),
         });
         break;
       }
       case 'rescue':
-        Object.assign(m, {
-          hull: pick(r, [704, 705, 707]),
+        Object.assign(mission, {
+          hull: pick(radius, [704, 705, 707]),
           faction: 'spacer',
-          wreckName: P.ship || pick(r, SHIP_NAMES),
-          reward: Math.round(5000 + dz * 1500),
+          wreckName: questPlan.ship || pick(radius, SHIP_NAMES),
+          reward: Math.round(5000 + dangerMultiplier * 1500),
         });
         break;
       case 'bounty': {
-        const fac = st.hostile || 'hollow',
-          pool = TRAFFIC[fac].war
-            .filter((h) => this.A.ships[h])
-            .sort((a, b) => (this.A.ships[a].strength || 0) - (this.A.ships[b].strength || 0));
+        const faction2 = questStep.hostile || 'hollow',
+          pool = TRAFFIC[faction2].war
+            .filter((height) => this.A.ships[height])
+            .sort(
+              (firstValue, secondValue) =>
+                (this.A.ships[firstValue].strength || 0) -
+                (this.A.ships[secondValue].strength || 0),
+            );
         const hull =
             pool[
-              Math.min(pool.length - 1, Math.floor(pool.length * (0.25 + 0.15 * Math.min(4, dz))))
+              Math.min(
+                pool.length - 1,
+                Math.floor(pool.length * (0.25 + 0.15 * Math.min(4, dangerMultiplier))),
+              )
             ],
-          nm = st.target || P.target;
-        Object.assign(m, {
+          name = questStep.target || questPlan.target;
+        Object.assign(mission, {
           hull,
-          faction: fac,
-          targetName: nm,
+          faction: faction2,
+          targetName: name,
           reward: Math.round(5000 + (this.A.ships[hull].strength || 20) * 60),
         });
         break;
       }
       case 'assassinate': {
-        const ff = st.hostile || 'hollow';
-        Object.assign(m, {
-          hull: ff === 'umbral' ? 763 : 717,
-          guard: ff === 'umbral' ? 761 : 711,
-          faction: ff,
-          targetName: st.target || P.target,
-          reward: Math.round(22000 + dz * 5000),
+        const faction3 = questStep.hostile || 'hollow';
+        Object.assign(mission, {
+          hull: faction3 === 'umbral' ? 763 : 717,
+          guard: faction3 === 'umbral' ? 761 : 711,
+          faction: faction3,
+          targetName: questStep.target || questPlan.target,
+          reward: Math.round(22000 + dangerMultiplier * 5000),
         });
         break;
       }
       case 'convoy': {
-        const dest = pick(r, portsOf(sys));
-        Object.assign(m, {
-          dest: dest.id,
-          hull: pick(r, [704, 706, 712]),
+        const rawStellarBody = pick(radius, portsOf(starSystem));
+        Object.assign(mission, {
+          dest: rawStellarBody.id,
+          hull: pick(radius, [704, 706, 712]),
           faction: 'spacer',
-          convoyName: quest.side === 'caravan' ? 'Clockwork' : pick(r, SHIP_NAMES),
-          raiders: 2 + Math.min(2, dz >> 1),
-          raiderHull: pick(r, [705, 708, 711]),
-          reward: Math.round(6000 + dz * 2500),
+          convoyName: quest.side === 'caravan' ? 'Clockwork' : pick(radius, SHIP_NAMES),
+          raiders: 2 + Math.min(2, dangerMultiplier >> 1),
+          raiderHull: pick(radius, [705, 708, 711]),
+          reward: Math.round(6000 + dangerMultiplier * 2500),
         });
-        m.text = `${m.text} She is bound for ${dest.name}.`;
+        mission.text = `${mission.text} She is bound for ${rawStellarBody.name}.`;
         break;
       }
       case 'patrol':
-        Object.assign(m, {
-          need: st.need || 3,
+        Object.assign(mission, {
+          need: questStep.need || 3,
           got: 0,
-          reward: Math.round(3000 + (st.need || 3) * 2000 + dz * 1500),
+          reward: Math.round(3000 + (questStep.need || 3) * 2000 + dangerMultiplier * 1500),
         });
         break;
     }
-    if (quest.side) m.reward = Math.round(m.reward * 1.25);
-    return m;
+    if (quest.side) mission.reward = Math.round(mission.reward * 1.25);
+    return mission;
   },
   /**
    * Push current step's job onto the player's active mission list.
@@ -672,24 +768,31 @@ export const QuestOperations = {
     mission.owner = session.id;
     if (mission.type === 'passenger') {
       const waiting = quest.awaitingSeats,
-        at = waiting?.at || playerData.stellar || playerData.lastStellar || quest.at,
-        others = playerData.missions.filter((x) => x.id !== mission.id && !x.paid),
+        location = waiting?.at || playerData.stellar || playerData.lastStellar || quest.at,
+        others = playerData.missions.filter(
+          (mission2) => mission2.id !== mission.id && !mission2.paid,
+        ),
         free =
           (playerData.shipless ? 0 : this.stats(playerData)!.passengerSeats || 0) -
           occupiedPassengerSeats(others);
-      if (waiting && (session.ent || playerData.stellar !== at)) return false;
+      if (waiting && (session.ent || playerData.stellar !== location)) return false;
       if (free < mission.pax! || others.length >= 6) {
-        quest.awaitingSeats = { at, pax: mission.pax!, title: mission.title, text: mission.text };
+        quest.awaitingSeats = {
+          at: location,
+          pax: mission.pax!,
+          title: mission.title,
+          text: mission.text,
+        };
         if (!waiting)
           this.toast(
             session,
-            `${quest.name}: passengers are waiting at ${STELLARS[at]?.name || at}. Free ${mission.pax} passenger seats and a mission slot, then board here.`,
+            `${quest.name}: passengers are waiting at ${STELLARS[location]?.name || location}. Free ${mission.pax} passenger seats and a mission slot, then board here.`,
           );
         return false;
       }
       delete quest.awaitingSeats;
     }
-    playerData.missions = playerData.missions.filter((x) => x.id !== mission.id);
+    playerData.missions = playerData.missions.filter((mission2) => mission2.id !== mission.id);
     playerData.missions.push(mission);
     if (mission.type === 'cargo' || mission.type === 'smuggle') {
       const free = this.stats(playerData)!.cargo - this.holdUsed(playerData);
@@ -715,11 +818,11 @@ export const QuestOperations = {
    */
   questAdvance(this: QuestsCapabilities, session: Session, mission: Mission) {
     const playerData = session.data,
-      q = this.questInit(playerData),
-      quest = q.active[mission.quest!.qid];
+      savedQuests = this.questInit(playerData),
+      quest = savedQuests.active[mission.quest!.qid];
     if (!quest || quest.step !== mission.quest!.step) return;
-    const st = quest.steps[quest.step],
-      P = { ...quest.plan, target: st.target || quest.plan.target };
+    const questStep = quest.steps[quest.step],
+      position = { ...quest.plan, target: questStep.target || quest.plan.target };
     quest.step++;
     quest.tries = 0;
     if (quest.step >= quest.steps.length) return this.questFinish(session, quest);
@@ -729,7 +832,7 @@ export const QuestOperations = {
       tag: `${quest.side ? 'SIDE STORY' : 'QUEST'} · ${quest.name.toUpperCase()}`,
       title: mission.title,
       done: true,
-      text: `${this.fill(st.beat || '', P)}\n\nNext (step ${quest.step + 1} of ${quest.steps.length}): ${next.title}. ${next.text}`,
+      text: `${this.fill(questStep.beat || '', position)}\n\nNext (step ${quest.step + 1} of ${quest.steps.length}): ${next.title}. ${next.text}`,
     });
     this.questPush(session, quest, true);
     this.db.touch();
@@ -742,70 +845,78 @@ export const QuestOperations = {
    */
   questFinish(this: QuestsCapabilities, session: Session, quest: QuestRecord) {
     const playerData = session.data,
-      q = this.questInit(playerData);
-    if (q.active[quest.qid] !== quest) return;
-    delete q.active[quest.qid];
-    let R, endText, X;
+      savedQuests = this.questInit(playerData);
+    if (savedQuests.active[quest.qid] !== quest) return;
+    delete savedQuests.active[quest.qid];
+    let radius, endText, positionX;
     if (quest.side) {
-      X = SIDE_STORIES.find((x) => x.id === quest.side)!;
-      R = X.reward;
-      q.sides[quest.side] = Date.now();
-      endText = X.end;
+      positionX = SIDE_STORIES.find((sideStory) => sideStory.id === quest.side)!;
+      radius = positionX.reward;
+      savedQuests.sides[quest.side] = Date.now();
+      endText = positionX.end;
     } else {
-      X = CHAINS.find((x) => x.id === quest.chain)!;
-      R = this.chainReward(X, quest.lvl || 0);
-      endText = this.fill(X.end, quest.plan);
-      const cs = (q.contacts[quest.contact!] = q.contacts[quest.contact!] || {});
-      cs.n = (cs.n || 0) + 1;
-      cs.cool = Date.now() + CONTACT_COOL_MIN * 60000;
-      cs.last = [quest.chain, ...(cs.last || [])].slice(0, 3);
+      positionX = CHAINS.find((questChain) => questChain.id === quest.chain)!;
+      radius = this.chainReward(positionX, quest.lvl || 0);
+      endText = this.fill(positionX.end, quest.plan);
+      const cargoSpace = (savedQuests.contacts[quest.contact!] =
+        savedQuests.contacts[quest.contact!] || {});
+      cargoSpace.n = (cargoSpace.n || 0) + 1;
+      cargoSpace.cool = Date.now() + CONTACT_COOL_MIN * 60000;
+      cargoSpace.last = [quest.chain, ...(cargoSpace.last || [])].slice(0, 3);
     }
-    const got = R.credits ? [`${credits(R.credits)} credits`] : [];
-    if (R.radio && grantRadio(this, session, R.radio))
-      got.push(`radio station: ${RADIO_STATIONS.find((s) => s.id === R.radio)!.name}`);
-    playerData.credits += R.credits;
-    playerData.stats.earned += R.credits;
-    if (R.crate) {
-      const mt = R.crate[0] || MATERIALS[Math.floor(Math.random() * MATERIALS.length)],
-        g = R.crate[1];
-      playerData.mats[mt][g] = (playerData.mats[mt][g] || 0) + 1;
-      got.push(`a ${mt} ${GRADES[g]} crate`);
+    const received = radius.credits ? [`${credits(radius.credits)} credits`] : [];
+    if (radius.radio && grantRadio(this, session, radius.radio))
+      received.push(
+        `radio station: ${RADIO_STATIONS.find((state) => state.id === radius.radio)!.name}`,
+      );
+    playerData.credits += radius.credits;
+    playerData.stats.earned += radius.credits;
+    if (radius.crate) {
+      const materialType =
+          radius.crate[0] || MATERIALS[Math.floor(Math.random() * MATERIALS.length)],
+        crate2 = radius.crate[1];
+      playerData.mats[materialType][crate2] = (playerData.mats[materialType][crate2] || 0) + 1;
+      received.push(`a ${materialType} ${GRADES[crate2]} crate`);
     }
-    if (R.bp) {
-      const sp = SPECIALISTS[Math.abs(hash(quest.qid)) % SPECIALISTS.length];
+    if (radius.bp) {
+      const specialistShip = SPECIALISTS[Math.abs(hash(quest.qid)) % SPECIALISTS.length];
       playerData.bp = playerData.bp || {};
-      playerData.bp[sp.id] = (playerData.bp[sp.id] || 0) + R.bp;
-      got.push(`${R.bp} ${sp.name} blueprints`);
+      playerData.bp[specialistShip.id] = (playerData.bp[specialistShip.id] || 0) + radius.bp;
+      received.push(`${radius.bp} ${specialistShip.name} blueprints`);
     }
-    if (R.officer) {
+    if (radius.officer) {
       playerData.officers = playerData.officers || [];
       if (playerData.officers.length < 24) {
         const race =
-            R.officer === 'any' ? raceOf(SYS[STELLARS[quest.at].system].faction) : R.officer,
+            radius.officer === 'any'
+              ? raceOf(systemsById[STELLARS[quest.at].system].faction)
+              : radius.officer,
           roles = RACE_ROLES[race] || ['engineer'],
-          N = OFFICER_NAMES[race];
-        const o = {
+          count = OFFICER_NAMES[race];
+        const options = {
           id: this.uid(playerData),
           name:
-            N[0][Math.floor(Math.random() * N[0].length)] +
+            count[0][Math.floor(Math.random() * count[0].length)] +
             ' ' +
-            N[1][Math.floor(Math.random() * N[1].length)],
+            count[1][Math.floor(Math.random() * count[1].length)],
           race,
           role: roles[Math.floor(Math.random() * roles.length)],
           rarity: 2,
           lv: 3,
           xp: 0,
         };
-        playerData.officers.push(o);
-        got.push(
-          `${o.name} joins your crew (Rare ${ROLES[o.role] ? ROLES[o.role].name.toLowerCase() : o.role})`,
+        playerData.officers.push(options);
+        received.push(
+          `${options.name} joins your crew (Rare ${ROLES[options.role] ? ROLES[options.role].name.toLowerCase() : options.role})`,
         );
-      } else got.push('(no room on your roster for the officer who offered to join)');
+      } else received.push('(no room on your roster for the officer who offered to join)');
     }
-    const fac = SYS[STELLARS[quest.at].system].faction;
-    if (FACTIONS[fac] && !FACTIONS[fac].pirate)
-      playerData.rep[fac] = clampStanding((playerData.rep[fac] || 0) + (quest.side ? 8 : 4));
-    q.done.push({
+    const faction2 = systemsById[STELLARS[quest.at].system].faction;
+    if (FACTIONS[faction2] && !FACTIONS[faction2].pirate)
+      playerData.rep[faction2] = clampStanding(
+        (playerData.rep[faction2] || 0) + (quest.side ? 8 : 4),
+      );
+    savedQuests.done.push({
       id: quest.qid,
       name: quest.name,
       giver: quest.giver,
@@ -818,7 +929,7 @@ export const QuestOperations = {
       tag: `${quest.side ? 'SIDE STORY' : 'QUEST'} COMPLETE · ${quest.name.toUpperCase()}`,
       title: quest.name,
       done: true,
-      text: `${endText}\n\nRewards: ${got.join(', ')}.`,
+      text: `${endText}\n\nRewards: ${received.join(', ')}.`,
     });
     this.db.touch();
     this.you(session);
@@ -826,26 +937,29 @@ export const QuestOperations = {
   /**
    * Terminate and fail an active quest chain.
    * @param {Session} session - Player session.
-   * @param {string} qid - Quest ID string.
-   * @param {string} why - Explanation of failure.
+   * @param {string} questId - Quest ID string.
+   * @param {string} reason - Explanation of failure.
    * @returns {void}
    */
-  questFail(this: QuestsCapabilities, session: Session, qid: string, why: string) {
+  questFail(this: QuestsCapabilities, session: Session, questId: string, reason: string) {
     const playerData = session.data,
-      q = this.questInit(playerData),
-      quest = q.active[qid];
+      savedQuests = this.questInit(playerData),
+      quest = savedQuests.active[questId];
     if (!quest) return;
-    delete q.active[qid];
-    playerData.missions = playerData.missions.filter((m) => !(m.quest && m.quest.qid === qid));
+    delete savedQuests.active[questId];
+    playerData.missions = playerData.missions.filter(
+      (mission) => !(mission.quest && mission.quest.qid === questId),
+    );
     if (quest.contact) {
-      const cs = (q.contacts[quest.contact!] = q.contacts[quest.contact!] || {});
-      cs.cool = Date.now() + CONTACT_COOL_MIN * 60000;
+      const cargoSpace = (savedQuests.contacts[quest.contact!] =
+        savedQuests.contacts[quest.contact!] || {});
+      cargoSpace.cool = Date.now() + CONTACT_COOL_MIN * 60000;
     }
     this.toast(
       session,
-      `Story ended: ${quest.name} (${why}).${quest.side ? ' You can start it again where it began.' : ''}`,
+      `Story ended: ${quest.name} (${reason}).${quest.side ? ' You can start it again where it began.' : ''}`,
     );
-    this.log(playerData, `Story ended: ${quest.name} (${why}).`);
+    this.log(playerData, `Story ended: ${quest.name} (${reason}).`);
     this.db.touch();
   },
   // every two seconds: a step lost with your ship, a missed deadline or a destroyed convoy gets one more chance
@@ -856,16 +970,16 @@ export const QuestOperations = {
    */
   questSweep(this: QuestsCapabilities, session: Session) {
     const playerData = session.data,
-      q = playerData.quests;
-    if (!q || !q.active) return;
-    for (const Q of Object.values(q.active)) {
-      if (Q.awaitingSeats) {
+      savedQuests = playerData.quests;
+    if (!savedQuests || !savedQuests.active) return;
+    for (const questRecord of Object.values(savedQuests.active)) {
+      if (questRecord.awaitingSeats) {
         if (
           !session.ent &&
-          playerData.stellar === Q.awaitingSeats.at &&
-          this.questPush(session, Q, true)
+          playerData.stellar === questRecord.awaitingSeats.at &&
+          this.questPush(session, questRecord, true)
         ) {
-          this.toast(session, `${Q.name}: your waiting passengers have boarded.`);
+          this.toast(session, `${questRecord.name}: your waiting passengers have boarded.`);
           this.db.touch();
           this.you(session);
           this.landed(session);
@@ -873,17 +987,22 @@ export const QuestOperations = {
         // Waiting for a suitable ship is not a lost mission and consumes no retry.
         continue;
       }
-      if (playerData.missions.some((m) => m.quest && m.quest.qid === Q.qid)) continue;
-      if (Q.tries >= 1) {
-        this.questFail(session, Q.qid, 'the job failed twice');
+      if (
+        playerData.missions.some(
+          (mission) => mission.quest && mission.quest.qid === questRecord.qid,
+        )
+      )
+        continue;
+      if (questRecord.tries >= 1) {
+        this.questFail(session, questRecord.qid, 'the job failed twice');
         this.you(session);
         continue;
       }
-      Q.tries++;
-      this.questPush(session, Q, true);
+      questRecord.tries++;
+      this.questPush(session, questRecord, true);
       this.toast(
         session,
-        `${Q.name}: the step failed, but the story isn't over. Try again: ${Q.steps[Q.step] ? this.fill(Q.steps[Q.step].title, Q.plan) : ''}.`,
+        `${questRecord.name}: the step failed, but the story isn't over. Try again: ${questRecord.steps[questRecord.step] ? this.fill(questRecord.steps[questRecord.step].title, questRecord.plan) : ''}.`,
       );
       this.db.touch();
       this.you(session);
@@ -892,18 +1011,18 @@ export const QuestOperations = {
   // ---- the contact's talk at the bar: a greeting that knows you, and a rumour worth acting on
   /**
    * Retrieve dynamic conversation dialogue and trade/system rumors from a bar contact.
-   * @param {{id: string, system: string}} p - Landed stellar body.
+   * @param {{id: string, system: string}} stellarBody2 - Landed stellar body.
    * @param {PlayerData} playerData - Saved player data.
    * @returns {Record<string, string> | null} Bar dialogue descriptor, or null.
    */
-  barTalk(this: QuestsCapabilities, p: StellarBody, playerData: PlayerData) {
-    const C = this.contactAt(p);
-    if (!C) return null;
-    const q = this.questInit(playerData),
-      n = (q.contacts[C.id] || {}).n || 0,
-      lvl = Math.min(STANDING.length - 1, n),
-      win = Math.floor(Date.now() / 600000),
-      r = rng(hash(C.id + win));
+  barTalk(this: QuestsCapabilities, stellarBody2: StellarBody, playerData: PlayerData) {
+    const contactAt2 = this.contactAt(stellarBody2);
+    if (!contactAt2) return null;
+    const savedQuests = this.questInit(playerData),
+      count = (savedQuests.contacts[contactAt2.id] || {}).n || 0,
+      level = Math.min(STANDING.length - 1, count),
+      window = Math.floor(Date.now() / 600000),
+      radius = randomGenerator(hash(contactAt2.id + window));
     const hello = [
       [
         `"Haven't seen you in here before, Captain."`,
@@ -920,13 +1039,15 @@ export const QuestOperations = {
         `"I tell everyone about you, you know."`,
       ],
       [`"Old friend. Whatever you need, it's yours."`],
-    ][lvl];
+    ][level];
     const rumors = [],
-      near = Object.entries(jumpsFrom(p.system)).filter(([, j]) => j >= 1 && j <= 4);
-    for (const [sys, j] of near) {
-      const st = this.stateOf(sys);
-      if (!st) continue;
-      const S = SYS[sys];
+      near = Object.entries(jumpsFrom(stellarBody2.system)).filter(
+        ([, innerIndex]) => innerIndex >= 1 && innerIndex <= 4,
+      );
+    for (const [starSystem, innerIndex] of near) {
+      const livingState = this.stateOf(starSystem);
+      if (!livingState) continue;
+      const starSystem2 = systemsById[starSystem];
       const want = {
         famine: 'food',
         refugees: 'food',
@@ -935,31 +1056,35 @@ export const QuestOperations = {
         war: 'equipment',
         boom: 'luxury',
         festival: 'luxury',
-      }[st.kind];
+      }[livingState.kind];
       rumors.push(
-        `"Word is ${S.name} has troubles: ${{ famine: 'a famine', plague: 'a fever', boom: 'a boom on', war: 'a war on', pirates: 'pirates thick as flies', festival: 'a festival on', rush: 'a mining rush', refugees: 'refugees everywhere' }[st.kind]}. ${j} jump${j > 1 ? 's' : ''} from here.${want ? ` A hold full of ${COMMODITIES.find((c) => c.id === want)!.name.toLowerCase()} would sell for a fortune.` : st.kind === 'pirates' ? ' The bounties there pay extra.' : ''}"`,
+        `"Word is ${starSystem2.name} has troubles: ${{ famine: 'a famine', plague: 'a fever', boom: 'a boom on', war: 'a war on', pirates: 'pirates thick as flies', festival: 'a festival on', rush: 'a mining rush', refugees: 'refugees everywhere' }[livingState.kind]}. ${innerIndex} jump${innerIndex > 1 ? 's' : ''} from here.${want ? ` A hold full of ${COMMODITIES.find((commodityDef) => commodityDef.id === want)!.name.toLowerCase()} would sell for a fortune.` : livingState.kind === 'pirates' ? ' The bounties there pay extra.' : ''}"`,
       );
     }
-    const mk = this.market(p);
-    let tip = null;
-    if (mk) {
+    const marketItems = this.market(stellarBody2);
+    let tooltip = null;
+    if (marketItems) {
       const ports = near
-        .filter(([, j]) => j <= 2)
-        .flatMap(([sys]) =>
-          portsOf(sys)
-            .filter((x) => x.svc!.includes('T'))
-            .map((x) => STELLARS[x.id]),
+        .filter(([, innerIndex]) => innerIndex <= 2)
+        .flatMap(([starSystem]) =>
+          portsOf(starSystem)
+            .filter((rawStellarBody) => rawStellarBody.svc!.includes('T'))
+            .map((rawStellarBody) => STELLARS[rawStellarBody.id]),
         );
       let best = null;
-      for (const c of mk)
+      for (const marketItem of marketItems)
         for (const stellarBody of ports) {
-          const om = this.market(stellarBody);
-          const oc = om && om.find((x) => x.id === c.id);
-          if (oc && oc.price! - c.price! > (best ? best.gain : c.price! * 0.15))
-            best = { c, o: stellarBody, gain: oc.price! - c.price! };
+          const marketItems = this.market(stellarBody);
+          const marketItem2 =
+            marketItems && marketItems.find((marketItem3) => marketItem3.id === marketItem.id);
+          if (
+            marketItem2 &&
+            marketItem2.price! - marketItem.price! > (best ? best.gain : marketItem.price! * 0.15)
+          )
+            best = { c: marketItem, o: stellarBody, gain: marketItem2.price! - marketItem.price! };
         }
       if (best)
-        tip = `"Smart money buys ${best.c.name.toLowerCase()} here and sells at ${best.o.name}. ${credits(best.gain)} a ton, last I heard."`;
+        tooltip = `"Smart money buys ${best.c.name.toLowerCase()} here and sells at ${best.o.name}. ${credits(best.gain)} a ton, last I heard."`;
     }
     const flavour = {
       lawful: [
@@ -974,20 +1099,20 @@ export const QuestOperations = {
         `"Out here, the only law is fuel and nerve."`,
         `"Found a rock last week with shards in it the size of my fist. Gone now, of course."`,
       ],
-    }[C.kind];
-    const roll = r(),
+    }[contactAt2.kind];
+    const roll = radius(),
       rumor =
-        tip && roll < 0.4
-          ? tip
+        tooltip && roll < 0.4
+          ? tooltip
           : rumors.length && roll < 0.85
-            ? pick(r, rumors)
-            : tip || pick(r, flavour!);
+            ? pick(radius, rumors)
+            : tooltip || pick(radius, flavour!);
     return {
-      name: C.name,
-      title: C.title,
-      race: C.race,
-      standing: STANDING[lvl],
-      hello: pick(r, hello),
+      name: contactAt2.name,
+      title: contactAt2.title,
+      race: contactAt2.race,
+      standing: STANDING[level],
+      hello: pick(radius, hello),
       rumor,
     };
   },
@@ -1001,20 +1126,31 @@ export const QuestOperations = {
     const playerData = session.data,
       entity = session.ent;
     if (!entity) return;
-    const sp = this.spaces[playerData.sys];
-    if (!sp) return;
-    for (const m of playerData.missions) {
-      if (m.type !== 'salvage' || m.sys !== playerData.sys || m.done || !m.point) continue;
-      if (Math.hypot(m.point[0] - entity.x, m.point[1] - entity.y) > 1500) continue;
-      if (sp.loot.some((l) => !l.taken && l.it.salvage === m.id)) continue;
-      sp.loot.push({
-        id: sp.nextLootId(),
-        x: m.point[0],
-        y: m.point[1],
+    const space = this.spaces[playerData.sys];
+    if (!space) return;
+    for (const mission of playerData.missions) {
+      if (
+        mission.type !== 'salvage' ||
+        mission.sys !== playerData.sys ||
+        mission.done ||
+        !mission.point
+      )
+        continue;
+      if (Math.hypot(mission.point[0] - entity.x, mission.point[1] - entity.y) > 1500) continue;
+      if (
+        space.loot.some(
+          (floatingLoot) => !floatingLoot.taken && floatingLoot.it.salvage === mission.id,
+        )
+      )
+        continue;
+      space.loot.push({
+        id: space.nextLootId(),
+        x: mission.point[0],
+        y: mission.point[1],
         vx: 0,
         vy: 0,
-        it: { salvage: m.id, owner: session.id },
-        t: sp.t + 600,
+        it: { salvage: mission.id, owner: session.id },
+        t: space.t + 600,
         kind: 5,
       });
       this.toast(session, 'Salvage on your scanner: fly over the marked crate to scoop it up.');
@@ -1023,15 +1159,15 @@ export const QuestOperations = {
   /**
    * Handle collecting a quest salvage floating loot entity.
    * @param {Session} session - Player session.
-   * @param {{salvage: string}} it - Collected loot cargo item.
+   * @param {{salvage: string}} item - Collected loot cargo item.
    * @returns {boolean} True if matching salvage quest was completed.
    */
-  questLoot(this: QuestsCapabilities, session: Session, it: { salvage?: string }) {
+  questLoot(this: QuestsCapabilities, session: Session, item: { salvage?: string }) {
     const playerData = session.data,
-      m = playerData.missions.find((x) => x.id === it.salvage && !x.done);
-    if (!m) return false;
-    m.done = true;
-    this.toast(session, `Recovered: ${m.title}. Land anywhere to continue.`);
+      mission = playerData.missions.find((mission) => mission.id === item.salvage && !mission.done);
+    if (!mission) return false;
+    mission.done = true;
+    this.toast(session, `Recovered: ${mission.title}. Land anywhere to continue.`);
     this.db.touch();
     this.you(session);
     return true;

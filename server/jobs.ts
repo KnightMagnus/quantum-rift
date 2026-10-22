@@ -24,12 +24,15 @@ export type JobCapabilities = Pick<
 >;
 export type JobService = Pick<Game, 'offers' | 'accept' | 'completeOnLanding'>;
 
-import { signedXorshift32 as rng, fnv1a as hash } from '../shared/deterministic-random.ts';
+import {
+  signedXorshift32 as randomGenerator,
+  fnv1a as hash,
+} from '../shared/deterministic-random.ts';
 import { GalaxyGraph } from '../shared/galaxy-graph.ts';
 import { bindOperations } from './feature-service.ts';
 import {
   SYSTEMS,
-  SYS,
+  SYS as systemsById,
   STELLARS,
   COMMODITIES,
   TRAFFIC,
@@ -97,7 +100,7 @@ const BOUNTY_NAMES = [
   'Drey',
 ];
 
-const galaxyGraph = new GalaxyGraph(SYS);
+const galaxyGraph = new GalaxyGraph(systemsById);
 
 const JUMP_DISTANCES = Object.fromEntries(
   SYSTEMS.map((system) => [system.id, galaxyGraph.distances(system.id)]),
@@ -114,22 +117,22 @@ const JobOperations: JobOperations = {
   offers(this: JobCapabilities, stellarBody: StellarBody, playerData: PlayerData) {
     if (!stellarBody.svc.includes('B')) return [];
     const offerWindow = Math.floor(Date.now() / 600000),
-      random = rng(hash(stellarBody.id + offerWindow)),
+      random = randomGenerator(hash(stellarBody.id + offerWindow)),
       offers: Mission[] = [],
       originSystemId = stellarBody.system;
     const nearbySystems = Object.entries(JUMP_DISTANCES[originSystemId]).filter(
       ([systemId, jumpCount]) =>
         jumpCount >= 1 &&
         jumpCount <= 4 &&
-        SYS[systemId].stellars.some((candidatePort) => candidatePort.svc!.includes('L')) &&
-        SYS[systemId].faction !== 'umbral',
+        systemsById[systemId].stellars.some((candidatePort) => candidatePort.svc!.includes('L')) &&
+        systemsById[systemId].faction !== 'umbral',
     );
     const usedNames = new Set();
-    for (let i = 0; i < 5 && nearbySystems.length; i++) {
+    for (let index = 0; index < 5 && nearbySystems.length; index++) {
       const roll = random(),
         [destinationSystemId, jumps] = nearbySystems[Math.floor(random() * nearbySystems.length)],
-        destinationSystem = SYS[destinationSystemId];
-      const offerId = `${stellarBody.id}-${offerWindow}-${i}`;
+        destinationSystem = systemsById[destinationSystemId];
+      const offerId = `${stellarBody.id}-${offerWindow}-${index}`;
       if (roll < 0.65) {
         const landingPorts = destinationSystem.stellars.filter(
             (candidatePort) => candidatePort.svc!.includes('L') && !candidatePort.site,
@@ -219,8 +222,8 @@ const JobOperations: JobOperations = {
         random,
         nearbySystems,
         offerWindow,
-        (sys) => {
-          const landingPorts = SYS[sys!].stellars.filter(
+        (starSystem) => {
+          const landingPorts = systemsById[starSystem!].stellars.filter(
             (candidatePort) => candidatePort.svc!.includes('L') && !candidatePort.site,
           );
           return landingPorts.length
@@ -235,8 +238,8 @@ const JobOperations: JobOperations = {
       if (offer.type === 'bounty' || offer.type === 'assassinate')
         offer.reward = Math.round(offer.reward * (1 + 0.06 * rank));
     if (rank >= 5 && nearbySystems.length) {
-      const [sys] = nearbySystems[Math.floor(random() * nearbySystems.length)],
-        destinationSystem = SYS[sys],
+      const [starSystem] = nearbySystems[Math.floor(random() * nearbySystems.length)],
+        destinationSystem = systemsById[starSystem],
         eliteHullIds = [...TRAFFIC.umbral.war, ...TRAFFIC.hollow.war]
           .filter((hullId) => this.A.ships[hullId])
           .sort(
@@ -253,7 +256,7 @@ const JobOperations: JobOperations = {
         type: 'bounty',
         elite: true,
         title: `ELITE CONTRACT: ${targetName}`,
-        sys,
+        sys: starSystem,
         hull,
         faction: TRAFFIC.umbral.war.includes(hull) ? 'umbral' : 'hollow',
         targetName: targetName,
@@ -382,8 +385,8 @@ const JobOperations: JobOperations = {
             text: 'Lyra, Miri and Solenne hand you a digital copy of their album. "For our favourite captain. Keep us on the radio." Super-Idol Radio has been added to your console.',
           });
         }
-        playerData.rep[SYS[stellarBody.system].faction] = clampStanding(
-          (playerData.rep[SYS[stellarBody.system].faction] || 0) + 2,
+        playerData.rep[systemsById[stellarBody.system].faction] = clampStanding(
+          (playerData.rep[systemsById[stellarBody.system].faction] || 0) + 2,
         );
         if (Math.random() < 0.35) {
           const materialId = MATERIALS[Math.floor(Math.random() * 3)],

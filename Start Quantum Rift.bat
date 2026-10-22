@@ -11,5 +11,5 @@ if errorlevel 1 (
 )
 echo Starting Quantum Rift... keep this window open while you play. Close it to stop the server.
 start "" cmd /c "timeout /t 2 >nul & start http://localhost:8080"
-node tools\start.mjs
+node tools\start.ts
 pause

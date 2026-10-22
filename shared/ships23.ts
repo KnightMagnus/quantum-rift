@@ -74,10 +74,10 @@ export type Ship23Hull = Ship23Input & {
 
 /**
  * Factory helper generating common Quantum hull records with standardized defaults.
- * @param {Ship23Input} o - Raw hull attributes.
+ * @param {Ship23Input} ship23Input - Raw hull attributes.
  * @returns {Ship23Hull} Fully-specified hull object.
  */
-const Q = (o: Ship23Input) => ({
+const quantity = (ship23Input: Ship23Input) => ({
   cat: 'Quantum',
   faction: 'common',
   kind: 'hull',
@@ -88,8 +88,8 @@ const Q = (o: Ship23Input) => ({
   fastJump: false,
   glow: true,
   pilot: '',
-  ...o,
-  img: `ships/${o.id}_yard.png`,
+  ...ship23Input,
+  img: `ships/${ship23Input.id}_yard.png`,
 });
 
 /**
@@ -97,7 +97,7 @@ const Q = (o: Ship23Input) => ({
  * @type {Ship23Hull[]}
  */
 export const SHIPS23: Ship23Hull[] = [
-  Q({
+  quantity({
     id: 820,
     name: 'Wasp Skirmisher',
     sub: 'Light Fighter',
@@ -121,7 +121,7 @@ export const SHIPS23: Ship23Hull[] = [
     weapons: [[128, 2, 0]],
     desc: 'A stubby, cheap fighter: one oversized engine, two cheek blasters and a coat of hazard yellow. Militia squadrons buy them by the dozen; new captains buy one and learn to dodge.',
   }),
-  Q({
+  quantity({
     id: 821,
     name: 'Swift Courier',
     sub: 'Blockade Runner',
@@ -146,7 +146,7 @@ export const SHIPS23: Ship23Hull[] = [
     weapons: [[128, 1, 0]],
     desc: 'A needle with a cargo pod slung under its belly and two long outrigger engines. It carries little, but it carries it fast, and its tuned drive spools a jump in half the time.',
   }),
-  Q({
+  quantity({
     id: 822,
     name: 'Pelican Salvage Tug',
     sub: 'Salvage Tug',
@@ -170,7 +170,7 @@ export const SHIPS23: Ship23Hull[] = [
     weapons: [[130, 1, 0]],
     desc: 'A squat, scarred utility hull with a roomy hold and a reputation for surviving rough working conditions. Its simple machinery is easy to service at even the smallest port.',
   }),
-  Q({
+  quantity({
     id: 823,
     name: 'Sabre Corvette',
     sub: 'Corvette',
@@ -197,7 +197,7 @@ export const SHIPS23: Ship23Hull[] = [
     ],
     desc: "The Concord yards' all-rounder: a sleek wedge with a dorsal turret, swept fins and three engines. Fast enough to chase, tough enough to stay, and cheap enough to lose.",
   }),
-  Q({
+  quantity({
     id: 824,
     name: 'Caravel Trader',
     sub: 'Armed Merchantman',
@@ -221,7 +221,7 @@ export const SHIPS23: Ship23Hull[] = [
     weapons: [[130, 2, 0]],
     desc: 'A long cargo spine racked with colourful containers, a bridge up front and a turret at each end. Free traders run them in pairs; raiders learn to leave them alone.',
   }),
-  Q({
+  quantity({
     id: 825,
     name: 'Talon Strike Fighter',
     sub: 'Heavy Fighter',
@@ -248,7 +248,7 @@ export const SHIPS23: Ship23Hull[] = [
     ],
     desc: 'Forward-swept wings carrying rocket pods, twin tails and a two-seat canopy. The Talon goes in fast, empties its pods and is gone before the flak finds it.',
   }),
-  Q({
+  quantity({
     id: 826,
     name: 'Lighthouse Survey Cruiser',
     sub: 'Survey Cruiser',
@@ -276,7 +276,7 @@ export const SHIPS23: Ship23Hull[] = [
     ],
     desc: 'A long survey hull behind a great sensor dome ringed by a glowing halo array. Built to go further than anything else in the yards, and to come back with the charts.',
   }),
-  Q({
+  quantity({
     id: 827,
     name: 'Monarch Executive Yacht',
     sub: 'Executive Yacht',
@@ -303,7 +303,7 @@ export const SHIPS23: Ship23Hull[] = [
     ],
     desc: 'White hull, gold trim, an observation canopy the length of the ship and engines that make the Lacewing look slow. Bought by people who never ask what anything costs.',
   }),
-  Q({
+  quantity({
     id: 828,
     name: 'Aegis Escort Cruiser',
     sub: 'Escort Cruiser',
@@ -330,7 +330,7 @@ export const SHIPS23: Ship23Hull[] = [
     ],
     desc: 'A shield-wall hull studded with flak turrets and armoured flank plates, built to sit beside a convoy and make every missile and fighter regret the trip.',
   }),
-  Q({
+  quantity({
     id: 829,
     name: 'Vigil Heavy Cruiser',
     sub: 'Heavy Cruiser',

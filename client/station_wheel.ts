@@ -2,76 +2,92 @@
 // Deliberately retains the original color interpretation and seeded details.
 const wheels = new Map<string, HTMLCanvasElement>();
 function seeded(seed: number) {
-  let s = seed >>> 0 || 7;
+  let state = seed >>> 0 || 7;
   return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
   };
 }
 /**
  * Hashes a string using 32-bit FNV-1a.
- * @param {string} str Input string
+ * @param {string} text Input string
  * @returns {number} Unsigned 32-bit hash value
  */
-function hashStr(str: string) {
-  let h = 2166136261;
-  for (const c of str) {
-    h ^= c.charCodeAt(0);
-    h = Math.imul(h, 16777619);
+function hashStr(text: string) {
+  let height = 2166136261;
+  for (const text2 of text) {
+    height ^= text2.charCodeAt(0);
+    height = Math.imul(height, 16777619);
   }
-  return h >>> 0;
+  return height >>> 0;
 }
 
-/** @param {{id: string, r: number, color?: string}} p */
-export function stationWheel(p: { id: string; r: number; color?: string }) {
-  const key = `${p.id}:${p.r}:${p.color}`;
-  if (wheels.has(key)) return wheels.get(key);
-  const R = p.r,
-    S = Math.ceil(R * 2.6),
-    c = document.createElement('canvas');
-  c.width = c.height = S;
-  const g = c.getContext('2d')!,
-    cx = S / 2,
-    cy = S / 2;
-  const n = parseInt((p.color || '#888').slice(1), 16);
-  const [r0, g0, b0] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-  const rnd = seeded(hashStr(p.id));
-  g.translate(cx, cy);
-  const ring = (rad: number, w: number, col: string) => {
-    g.beginPath();
-    g.arc(0, 0, rad, 0, Math.PI * 2);
-    g.lineWidth = w;
-    g.strokeStyle = col;
-    g.stroke();
+/** @param {{id: string, r: number, color?: string}} position */
+export function stationWheel(position: { id: string; r: number; color?: string }) {
+  const entryKey3 = `${position.id}:${position.r}:${position.color}`;
+  if (wheels.has(entryKey3)) return wheels.get(entryKey3);
+  const radius = position.r,
+    state = Math.ceil(radius * 2.6),
+    htmlCanvasElement = document.createElement('canvas');
+  htmlCanvasElement.width = htmlCanvasElement.height = state;
+  const canvasRenderingContext2D = htmlCanvasElement.getContext('2d')!,
+    centerX = state / 2,
+    centerY = state / 2;
+  const parseInt2 = parseInt((position.color || '#888').slice(1), 16);
+  const [radius0, game, secondValue] = [
+    (parseInt2 >> 16) & 255,
+    (parseInt2 >> 8) & 255,
+    parseInt2 & 255,
+  ];
+  const randomGenerator = seeded(hashStr(position.id));
+  canvasRenderingContext2D.translate(centerX, centerY);
+  const ring = (radius: number, width: number, column: string) => {
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.arc(0, 0, radius, 0, Math.PI * 2);
+    canvasRenderingContext2D.lineWidth = width;
+    canvasRenderingContext2D.strokeStyle = column;
+    canvasRenderingContext2D.stroke();
   };
-  ring(R * 0.92, R * 0.16, `rgb(${r0 * 0.6},${g0 * 0.6},${b0 * 0.6})`);
+  ring(radius * 0.92, radius * 0.16, `rgb(${radius0 * 0.6},${game * 0.6},${secondValue * 0.6})`);
   ring(
-    R * 0.92,
-    R * 0.05,
-    `rgb(${Math.min(255, r0 + 60)},${Math.min(255, g0 + 60)},${Math.min(255, b0 + 60)})`,
+    radius * 0.92,
+    radius * 0.05,
+    `rgb(${Math.min(255, radius0 + 60)},${Math.min(255, game + 60)},${Math.min(255, secondValue + 60)})`,
   );
-  for (let k = 0; k < 6; k++) {
-    g.save();
-    g.rotate((k * Math.PI) / 3 + rnd());
-    g.fillStyle = `rgb(${r0 * 0.5},${g0 * 0.5},${b0 * 0.5})`;
-    g.fillRect(-R * 0.05, 0, R * 0.1, R * 0.86);
-    g.restore();
+  for (let entryKey = 0; entryKey < 6; entryKey++) {
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.rotate((entryKey * Math.PI) / 3 + randomGenerator());
+    canvasRenderingContext2D.fillStyle = `rgb(${radius0 * 0.5},${game * 0.5},${secondValue * 0.5})`;
+    canvasRenderingContext2D.fillRect(-radius * 0.05, 0, radius * 0.1, radius * 0.86);
+    canvasRenderingContext2D.restore();
   }
-  const hub = g.createRadialGradient(-R * 0.1, -R * 0.1, 2, 0, 0, R * 0.4);
-  hub.addColorStop(
+  const canvasGradient = canvasRenderingContext2D.createRadialGradient(
+    -radius * 0.1,
+    -radius * 0.1,
+    2,
     0,
-    `rgb(${Math.min(255, r0 + 80)},${Math.min(255, g0 + 80)},${Math.min(255, b0 + 80)})`,
+    0,
+    radius * 0.4,
   );
-  hub.addColorStop(1, `rgb(${r0 * 0.3},${g0 * 0.3},${b0 * 0.3})`);
-  g.beginPath();
-  g.arc(0, 0, R * 0.38, 0, Math.PI * 2);
-  g.fillStyle = hub;
-  g.fill();
-  for (let k = 0; k < 24; k++) {
-    const a = (k / 24) * Math.PI * 2;
-    g.fillStyle = rnd() < 0.5 ? '#ffd88a' : '#9cf';
-    g.fillRect(Math.cos(a) * R * 0.92 - 1.5, Math.sin(a) * R * 0.92 - 1.5, 3, 3);
+  canvasGradient.addColorStop(
+    0,
+    `rgb(${Math.min(255, radius0 + 80)},${Math.min(255, game + 80)},${Math.min(255, secondValue + 80)})`,
+  );
+  canvasGradient.addColorStop(1, `rgb(${radius0 * 0.3},${game * 0.3},${secondValue * 0.3})`);
+  canvasRenderingContext2D.beginPath();
+  canvasRenderingContext2D.arc(0, 0, radius * 0.38, 0, Math.PI * 2);
+  canvasRenderingContext2D.fillStyle = canvasGradient;
+  canvasRenderingContext2D.fill();
+  for (let entryKey = 0; entryKey < 24; entryKey++) {
+    const firstValue = (entryKey / 24) * Math.PI * 2;
+    canvasRenderingContext2D.fillStyle = randomGenerator() < 0.5 ? '#ffd88a' : '#9cf';
+    canvasRenderingContext2D.fillRect(
+      Math.cos(firstValue) * radius * 0.92 - 1.5,
+      Math.sin(firstValue) * radius * 0.92 - 1.5,
+      3,
+      3,
+    );
   }
-  wheels.set(key, c);
-  return c;
+  wheels.set(entryKey3, htmlCanvasElement);
+  return htmlCanvasElement;
 }

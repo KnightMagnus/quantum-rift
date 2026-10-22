@@ -258,7 +258,8 @@ export const TICK: number = 30; // simulation steps per second
  * Duration of a single simulation time step in seconds.
  * @type {number}
  */
-export const DT: number = 1 / TICK;
+const tickDuration: number = 1 / TICK;
+export { tickDuration as DT };
 
 /**
  * Raw asset physics units to Quantum Rift physics scaling factors.
@@ -279,7 +280,7 @@ export const DT: number = 1 / TICK;
  * @type {PhysicsConstants}
  */
 // Asset-space units -> simulation units
-export const K: PhysicsConstants = {
+const physicsConstants: PhysicsConstants = {
   speed: 0.45,
   accel: 0.55,
   turn: 3.0,
@@ -290,6 +291,7 @@ export const K: PhysicsConstants = {
   jumpFuel: 100,
   jumpClear: 1100,
 };
+export { physicsConstants as K };
 
 /**
  * Ship hull specification definition from asset database.
@@ -368,18 +370,28 @@ export const K: PhysicsConstants = {
  */
 // Add Quantum Rift's own weapons to the exported asset data (safe to call more than once)
 export function augmentAssets(assets: GameAssets): GameAssets {
-  for (const w of EXTRA_WEAPONS) if (!assets.weapons[w.id]) assets.weapons[w.id] = w;
-  for (const id of MINING_WEAPONS) if (assets.weapons[id]) assets.weapons[id].mining = true;
-  for (const S of SPECIALISTS)
-    if (!assets.ships[S.id]) assets.ships[S.id] = { ...S, img: `ships/${S.id}_yard.png` }; // specialty ships
-  for (const S of SHIPS23) if (!assets.ships[S.id]) assets.ships[S.id] = { ...S }; // new common Quantum hulls
-  for (const H of Object.values(assets.ships)) H.role = roleOf(H, assets.weapons) as RoleId; // class triangle roles
-  for (const M of [MK2_OF, MK3_OF])
-    for (const [b, mk] of Object.entries(M))
-      if (assets.ships[b] && assets.ships[mk]) assets.ships[mk].role = assets.ships[b].role; // refits keep their role
-  for (const id of [...Object.values(MK2_OF), ...Object.values(MK3_OF), ...ARMADA_HULLS])
-    if (assets.ships[id]) assets.ships[id].npcOnly = true; // enemy ships only
-  for (const [id, s] of Object.entries(SPRITES)) if (assets.ships[id]) assets.ships[id].spr = s; // sharper sheets with banking
+  for (const weaponAsset of EXTRA_WEAPONS)
+    if (!assets.weapons[weaponAsset.id]) assets.weapons[weaponAsset.id] = weaponAsset;
+  for (const mINING_WEAPONS of MINING_WEAPONS)
+    if (assets.weapons[mINING_WEAPONS]) assets.weapons[mINING_WEAPONS].mining = true;
+  for (const specialistShip of SPECIALISTS)
+    if (!assets.ships[specialistShip.id])
+      assets.ships[specialistShip.id] = {
+        ...specialistShip,
+        img: `ships/${specialistShip.id}_yard.png`,
+      }; // specialty ships
+  for (const ship23Hull of SHIPS23)
+    if (!assets.ships[ship23Hull.id]) assets.ships[ship23Hull.id] = { ...ship23Hull }; // new common Quantum hulls
+  for (const shipHullAsset of Object.values(assets.ships))
+    shipHullAsset.role = roleOf(shipHullAsset, assets.weapons) as RoleId; // class triangle roles
+  for (const message of [MK2_OF, MK3_OF])
+    for (const [secondValue, makeElement] of Object.entries(message))
+      if (assets.ships[secondValue] && assets.ships[makeElement])
+        assets.ships[makeElement].role = assets.ships[secondValue].role; // refits keep their role
+  for (const identifier of [...Object.values(MK2_OF), ...Object.values(MK3_OF), ...ARMADA_HULLS])
+    if (assets.ships[identifier]) assets.ships[identifier].npcOnly = true; // enemy ships only
+  for (const [identifier, spriteSheetConfig] of Object.entries(SPRITES))
+    if (assets.ships[identifier]) assets.ships[identifier].spr = spriteSheetConfig; // sharper sheets with banking
   return assets;
 }
 
@@ -389,9 +401,9 @@ export function augmentAssets(assets: GameAssets): GameAssets {
  * @returns {Record<string|number, OutfitAsset>} Merged map of all outfits.
  */
 export function allOutfits(assets: GameAssets): Record<string | number, OutfitAsset> {
-  const o = { ...assets.outfits };
-  for (const outfit of EXTRA_OUTFITS) o[outfit.id] = outfit;
-  return o;
+  const options = { ...assets.outfits };
+  for (const outfit of EXTRA_OUTFITS) options[outfit.id] = outfit;
+  return options;
 }
 
 /**
@@ -417,13 +429,13 @@ export function allOutfits(assets: GameAssets): Record<string | number, OutfitAs
 // A player's new ship: the hull's built-in weapons become ordinary outfits (so they can be sold or swapped) where an
 // outfit exists for them; anything else (fighter bays, special guns) stays fixed. Their mass is refunded as space.
 export function makeLoadout(assets: GameAssets, hull: number | string, name?: string): ShipLoadout {
-  const O = allOutfits(assets),
-    H = assets.ships[hull],
+  const allOutfits2 = allOutfits(assets),
+    shipHullAsset = assets.ships[hull],
     byWeapon: Record<string, OutfitAsset> = {};
-  for (const outfit of Object.values(O))
+  for (const outfit of Object.values(allOutfits2))
     if (outfit.eff && outfit.eff.weapon && !(outfit.eff.weapon in byWeapon))
       byWeapon[outfit.eff.weapon] = outfit;
-  const L: ShipLoadout = {
+  const shipLoadout: ShipLoadout = {
     hull,
     outfits: {},
     ammo: {},
@@ -431,16 +443,16 @@ export function makeLoadout(assets: GameAssets, hull: number | string, name?: st
     bonusSpace: 0,
     name: name || 'Rift Runner',
   };
-  for (const [w, n, a] of H.weapons) {
-    const o = byWeapon[w];
-    if (o) {
-      L.outfits[o.id] = (L.outfits[o.id] || 0) + n;
-      L.bonusSpace += (o.mass || 0) * n;
-    } else L.fixed.push([w, n, a]);
-    if (a) L.ammo[w] = (L.ammo[w] || 0) + a;
+  for (const [width, count, firstValue] of shipHullAsset.weapons) {
+    const outfitAsset = byWeapon[width];
+    if (outfitAsset) {
+      shipLoadout.outfits[outfitAsset.id] = (shipLoadout.outfits[outfitAsset.id] || 0) + count;
+      shipLoadout.bonusSpace += (outfitAsset.mass || 0) * count;
+    } else shipLoadout.fixed.push([width, count, firstValue]);
+    if (firstValue) shipLoadout.ammo[width] = (shipLoadout.ammo[width] || 0) + firstValue;
   }
-  L.stockOutfits = { ...L.outfits };
-  return L;
+  shipLoadout.stockOutfits = { ...shipLoadout.outfits };
+  return shipLoadout;
 }
 
 // A factory weapon bank is refittable even where its authored count exceeds a generic shop limit.
@@ -448,18 +460,18 @@ export function makeLoadout(assets: GameAssets, hull: number | string, name?: st
  * Resolves maximum purchasable/mountable limit for an outfit on a ship.
  * @param {GameAssets} assets - Game assets.
  * @param {ShipLoadout} ship - Ship loadout.
- * @param {string|number} id - Outfit ID.
+ * @param {string|number} identifier - Outfit ID.
  * @returns {number} Maximum allowed outfit count.
  */
 export function stockOutfitLimit(
   assets: GameAssets,
   ship: ShipLoadout,
-  id: string | number,
+  identifier: string | number,
 ): number {
-  const outfit = allOutfits(assets)[id];
+  const outfit = allOutfits(assets)[identifier];
   return Math.max(
     outfit?.max || 1,
-    outfit?.eff?.weapon ? makeLoadout(assets, ship.hull).outfits[id] || 0 : 0,
+    outfit?.eff?.weapon ? makeLoadout(assets, ship.hull).outfits[identifier] || 0 : 0,
   );
 }
 
@@ -476,9 +488,9 @@ export function loadoutBasis(
   hull: number | string,
 ): { stock: Record<string, number>; chassis: number; scale: number } {
   const stock = makeLoadout(assets, hull),
-    O = allOutfits(assets);
+    allOutfits2 = allOutfits(assets);
   const retail = Object.entries(stock.outfits).reduce(
-    (v, [id, n]) => v + (O[id]?.cost || 0) * n,
+    (value, [identifier, count]) => value + (allOutfits2[identifier]?.cost || 0) * count,
     0,
   );
   const gear = Math.min(retail, Math.max(0, assets.ships[hull]?.cost || 0) * 0.5);
@@ -499,11 +511,14 @@ export function loadoutBasis(
 export function repairBasis(assets: GameAssets, hull: number | string): number {
   const cost = assets.ships[hull]?.cost || 0;
   if (!(WINGMATES as readonly (number | string)[]).includes(hull)) return cost;
-  const O = allOutfits(assets),
+  const allOutfits2 = allOutfits(assets),
     stock = makeLoadout(assets, hull);
   return Math.max(
     cost,
-    Object.entries(stock.outfits).reduce((v, [id, n]) => v + (O[id]?.cost || 0) * n, 0),
+    Object.entries(stock.outfits).reduce(
+      (value, [identifier, count]) => value + (allOutfits2[identifier]?.cost || 0) * count,
+      0,
+    ),
   );
 }
 
@@ -518,13 +533,17 @@ export function repairBasis(assets: GameAssets, hull: number | string): number {
 export function ensureStockOutfits(assets: GameAssets, ship: ShipLoadout): Record<string, number> {
   const { stock } = loadoutBasis(assets, ship.hull);
   if (!ship.stockOutfits || typeof ship.stockOutfits !== 'object') ship.stockOutfits = { ...stock };
-  for (const id of Object.keys(ship.stockOutfits)) {
-    const n = Math.max(
+  for (const identifier of Object.keys(ship.stockOutfits)) {
+    const count = Math.max(
       0,
-      Math.min(Math.floor(ship.stockOutfits[id]) || 0, stock[id] || 0, ship.outfits?.[id] || 0),
+      Math.min(
+        Math.floor(ship.stockOutfits[identifier]) || 0,
+        stock[identifier] || 0,
+        ship.outfits?.[identifier] || 0,
+      ),
     );
-    if (n) ship.stockOutfits[id] = n;
-    else delete ship.stockOutfits[id];
+    if (count) ship.stockOutfits[identifier] = count;
+    else delete ship.stockOutfits[identifier];
   }
   return ship.stockOutfits;
 }
@@ -537,14 +556,18 @@ export function ensureStockOutfits(assets: GameAssets, ship: ShipLoadout): Recor
  */
 export function loadoutValue(assets: GameAssets, ship: ShipLoadout): number {
   const { stock, chassis, scale } = loadoutBasis(assets, ship.hull),
-    O = allOutfits(assets);
+    allOutfits2 = allOutfits(assets);
   let value = chassis;
-  for (const [id, n] of Object.entries(ship.outfits || {})) {
+  for (const [identifier, count] of Object.entries(ship.outfits || {})) {
     const original = Math.max(
       0,
-      Math.min(n, stock[id] || 0, ship.stockOutfits ? ship.stockOutfits[id] || 0 : stock[id] || 0),
+      Math.min(
+        count,
+        stock[identifier] || 0,
+        ship.stockOutfits ? ship.stockOutfits[identifier] || 0 : stock[identifier] || 0,
+      ),
     );
-    value += (O[id]?.cost || 0) * (n - original + original * scale);
+    value += (allOutfits2[identifier]?.cost || 0) * (count - original + original * scale);
   }
   return Math.round(value * 0.5);
 }
@@ -554,24 +577,24 @@ export function loadoutValue(assets: GameAssets, ship: ShipLoadout): number {
  * Calculates refund value when selling an installed outfit from a ship.
  * @param {GameAssets} assets - Game assets.
  * @param {ShipLoadout} ship - Ship loadout.
- * @param {string|number} id - Outfit ID.
+ * @param {string|number} identifier - Outfit ID.
  * @param {number} count - Quantity being sold.
  * @returns {number} Credit refund value.
  */
 export function outfitSaleValue(
   assets: GameAssets,
   ship: ShipLoadout,
-  id: string | number,
+  identifier: string | number,
   count: number,
 ): number {
   const originals = ensureStockOutfits(assets, ship),
     { scale } = loadoutBasis(assets, ship.hull);
-  const n = Math.max(0, Math.min(count, ship.outfits?.[id] || 0));
-  const original = Math.min(n, originals[id] || 0),
-    outfit = allOutfits(assets)[id];
-  originals[id] = (originals[id] || 0) - original;
-  if (!originals[id]) delete originals[id];
-  return Math.round((outfit?.cost || 0) * (n - original + original * scale) * 0.5);
+  const count2 = Math.max(0, Math.min(count, ship.outfits?.[identifier] || 0));
+  const original = Math.min(count2, originals[identifier] || 0),
+    outfit = allOutfits(assets)[identifier];
+  originals[identifier] = (originals[identifier] || 0) - original;
+  if (!originals[identifier]) delete originals[identifier];
+  return Math.round((outfit?.cost || 0) * (count2 - original + original * scale) * 0.5);
 }
 
 /**
@@ -636,59 +659,59 @@ export function shipStats(
   ship: ShipStatsLoadout,
   bonus: ShipStatsBonus = {},
 ): ComputedShipStats | null {
-  const H = assets.ships[ship.hull];
-  if (!H) return null;
-  const O = allOutfits(assets);
-  let shield = H.shield,
-    armor = H.armor,
-    accel = H.accel,
-    speed = H.speed,
-    turn = H.turn,
-    cargo = H.cargo,
-    fuel = H.fuel,
-    shieldRe = H.shieldRe,
-    armorRe = H.armorRe,
-    fuelRe = H.fuelRe,
+  const shipHullAsset = assets.ships[ship.hull];
+  if (!shipHullAsset) return null;
+  const allOutfits2 = allOutfits(assets);
+  let shield = shipHullAsset.shield,
+    armor = shipHullAsset.armor,
+    accel2 = shipHullAsset.accel,
+    speed = shipHullAsset.speed,
+    turn = shipHullAsset.turn,
+    cargo = shipHullAsset.cargo,
+    fuel = shipHullAsset.fuel,
+    shieldRe = shipHullAsset.shieldRe,
+    armorRe = shipHullAsset.armorRe,
+    fuelRe = shipHullAsset.fuelRe,
     used = 0,
     guns = 0,
     turrets = 0,
     afterburner = 0,
     cloak = 0,
     multiJump = 1,
-    jumpFast = H.fastJump ? 1 : 0;
+    jumpFast = shipHullAsset.fastJump ? 1 : 0;
   const weapons: Record<string, number> = {}; // weapon id -> count
-  const builtIn = ship.fixed !== undefined ? ship.fixed : H.weapons;
-  for (const [w, n] of builtIn) weapons[w] = (weapons[w] || 0) + n;
-  for (const [id, n] of Object.entries(ship.outfits || {})) {
-    const outfit = O[id];
-    if (!outfit || !n) continue;
-    used += (outfit.mass || 0) * n;
-    const e = outfit.eff || {};
-    if (e.weapon) {
-      weapons[e.weapon] = (weapons[e.weapon] || 0) + n;
-      if (outfit.turret) turrets += n;
-      else guns += n;
+  const builtIn = ship.fixed !== undefined ? ship.fixed : shipHullAsset.weapons;
+  for (const [width, count] of builtIn) weapons[width] = (weapons[width] || 0) + count;
+  for (const [identifier, count] of Object.entries(ship.outfits || {})) {
+    const outfit = allOutfits2[identifier];
+    if (!outfit || !count) continue;
+    used += (outfit.mass || 0) * count;
+    const event = outfit.eff || {};
+    if (event.weapon) {
+      weapons[event.weapon] = (weapons[event.weapon] || 0) + count;
+      if (outfit.turret) turrets += count;
+      else guns += count;
     }
-    shield += (e.shield || 0) * n;
-    armor += (e.armor || 0) * n;
-    accel += (e.accel || 0) * n;
-    speed += (e.speed || 0) * n;
-    turn += (e.turn || 0) * n;
-    cargo += (e.cargo || 0) * n;
-    fuel += (e.fuel || 0) * n;
-    shieldRe += (e.shieldRe || 0) * n;
-    armorRe += (e.armorRe || 0) * n;
-    fuelRe += (e.fuelRe || 0) * n;
-    afterburner = Math.max(afterburner, e.afterburner || 0);
-    if (e.cloak) cloak = 1;
-    if (e.multiJump) multiJump = Math.max(multiJump, e.multiJump);
-    if (e.jumpSpeed) jumpFast = 1;
+    shield += (event.shield || 0) * count;
+    armor += (event.armor || 0) * count;
+    accel2 += (event.accel || 0) * count;
+    speed += (event.speed || 0) * count;
+    turn += (event.turn || 0) * count;
+    cargo += (event.cargo || 0) * count;
+    fuel += (event.fuel || 0) * count;
+    shieldRe += (event.shieldRe || 0) * count;
+    armorRe += (event.armorRe || 0) * count;
+    fuelRe += (event.fuelRe || 0) * count;
+    afterburner = Math.max(afterburner, event.afterburner || 0);
+    if (event.cloak) cloak = 1;
+    if (event.multiJump) multiJump = Math.max(multiJump, event.multiJump);
+    if (event.jumpSpeed) jumpFast = 1;
   }
   shield *= 1 + (bonus.shieldPct || 0) / 100;
   armor *= 1 + (bonus.armorPct || 0) / 100;
   speed *= 1 + (bonus.speedPct || 0) / 100;
   turn *= 1 + (bonus.turnPct || 0) / 100;
-  accel *= 1 + (bonus.accelPct || 0) / 100;
+  accel2 *= 1 + (bonus.accelPct || 0) / 100;
   cargo = Math.round(cargo * (1 + (bonus.cargoPct || 0) / 100));
   shieldRe *= 1 + (bonus.shieldRePct || 0) / 100;
   fuelRe += (bonus.fuelRe || 0) * 30;
@@ -696,32 +719,34 @@ export function shipStats(
   if (bonus.jumpFast) jumpFast = 1;
   return {
     towRig:
-      Number(H.id) === 815 ||
+      Number(shipHullAsset.id) === 815 ||
       (cargo >= 60 &&
-        !['fighter', 'interceptor'].includes(H.role!) &&
-        Object.entries(ship.outfits || {}).some(([id, n]) => n > 0 && !!O[id]?.eff?.towRig)),
-    hull: H.id,
-    name: H.name,
-    size: H.size,
-    mass: H.mass,
-    maxSpeed: speed * K.speed,
-    accel: accel * K.accel,
-    turn: (turn * K.turn * Math.PI) / 180,
+        !['fighter', 'interceptor'].includes(shipHullAsset.role!) &&
+        Object.entries(ship.outfits || {}).some(
+          ([identifier, count]) => count > 0 && !!allOutfits2[identifier]?.eff?.towRig,
+        )),
+    hull: shipHullAsset.id,
+    name: shipHullAsset.name,
+    size: shipHullAsset.size,
+    mass: shipHullAsset.mass,
+    maxSpeed: speed * physicsConstants.speed,
+    accel: accel2 * physicsConstants.accel,
+    turn: (turn * physicsConstants.turn * Math.PI) / 180,
     shield: Math.round(shield),
     armor: Math.round(armor),
-    shieldRe: Math.max(0.5, shieldRe * K.shieldRe),
-    armorRe: armorRe * K.armorRe,
+    shieldRe: Math.max(0.5, shieldRe * physicsConstants.shieldRe),
+    armorRe: armorRe * physicsConstants.armorRe,
     fuel,
     fuelRe: fuelRe / 30,
     cargo,
-    passengerSeats: passengerSeats(H, ship),
-    space: H.space + (ship.bonusSpace || 0),
+    passengerSeats: passengerSeats(shipHullAsset, ship),
+    space: shipHullAsset.space + (ship.bonusSpace || 0),
     used,
-    free: H.space + (ship.bonusSpace || 0) - used,
+    free: shipHullAsset.space + (ship.bonusSpace || 0) - used,
     guns,
     turrets,
-    maxGuns: H.guns,
-    maxTurrets: H.turrets,
+    maxGuns: shipHullAsset.guns,
+    maxTurrets: shipHullAsset.turrets,
     afterburner,
     cloak,
     multiJump,
@@ -745,11 +770,12 @@ export function shipStats(
  * @returns {Record<string, number>} Aggregated stat bonuses.
  */
 export function researchBonus(station: StationState | null | undefined): Record<string, number> {
-  const b: Record<string, number> = {};
-  for (const r of RESEARCH)
-    if (station && station.done && station.done.includes(r.id))
-      for (const [k, v] of Object.entries(r.bonus)) b[k] = (b[k] || 0) + v;
-  return b;
+  const secondValue: Record<string, number> = {};
+  for (const researchNode of RESEARCH)
+    if (station && station.done && station.done.includes(researchNode.id))
+      for (const [entryKey, value] of Object.entries(researchNode.bonus))
+        secondValue[entryKey] = (secondValue[entryKey] || 0) + value;
+  return secondValue;
 }
 
 /**
@@ -771,11 +797,13 @@ export function researchBonus(station: StationState | null | undefined): Record<
  */
 // one officer's stat values: base x rarity, +10% per level above 1
 export function officerStats(officer: OfficerRecord): Record<string, number> {
-  const out: Record<string, number> = {},
-    R = ROLES[officer.role],
-    mult = RARITY[officer.rarity].mult * (1 + 0.1 * (officer.lv - 1)) * RANK_MULT(officer.rank); // rank adds 12% each
-  for (const k of R.stats) out[k] = Math.round(STAT_BASE[k] * mult * 10) / 10;
-  return out;
+  const result: Record<string, number> = {},
+    officerRole = ROLES[officer.role],
+    multiplier =
+      RARITY[officer.rarity].mult * (1 + 0.1 * (officer.lv - 1)) * RANK_MULT(officer.rank); // rank adds 12% each
+  for (const stat of officerRole.stats)
+    result[stat] = Math.round(STAT_BASE[stat] * multiplier * 10) / 10;
+  return result;
 }
 
 /**
@@ -790,22 +818,26 @@ export function officerBonus(
   officers: OfficerRecord[] | null | undefined,
   bridge: Record<string, string | number | null> | null | undefined,
 ): Record<string, number> {
-  const b: Record<string, number> = {},
+  const secondValue: Record<string, number> = {},
     races: Record<string, number> = {};
-  if (!officers || !bridge) return b;
+  if (!officers || !bridge) return secondValue;
   for (const slot of BRIDGE_SLOTS) {
-    const officer = officers.find((x) => x.id === bridge[slot]);
+    const officer = officers.find((officerRecord) => officerRecord.id === bridge[slot]);
     if (!officer) continue;
-    const k = slot === 'captain' ? 1.25 : 1;
-    for (const [s, v] of Object.entries(officerStats(officer))) b[s] = (b[s] || 0) + v * k;
-    for (const t of officer.traits || [])
-      if (TRAITS[t]) for (const [s, v] of Object.entries(TRAITS[t].bonus)) b[s] = (b[s] || 0) + v; // traits
+    const entryKey = slot === 'captain' ? 1.25 : 1;
+    for (const [state, value] of Object.entries(officerStats(officer)))
+      secondValue[state] = (secondValue[state] || 0) + value * entryKey;
+    for (const time of officer.traits || [])
+      if (TRAITS[time])
+        for (const [state, value] of Object.entries(TRAITS[time].bonus))
+          secondValue[state] = (secondValue[state] || 0) + value; // traits
     races[officer.race!] = (races[officer.race!] || 0) + 1;
   }
-  for (const [r, n] of Object.entries(races))
-    if (n >= 2 && SYNERGY[r])
-      for (const [s, v] of Object.entries(SYNERGY[r])) b[s] = (b[s] || 0) + v;
-  return b;
+  for (const [radius, count] of Object.entries(races))
+    if (count >= 2 && SYNERGY[radius])
+      for (const [state, value] of Object.entries(SYNERGY[radius]))
+        secondValue[state] = (secondValue[state] || 0) + value;
+  return secondValue;
 }
 
 /**
@@ -815,13 +847,15 @@ export function officerBonus(
  */
 // everything that modifies a captain's ship: research + bridge crew
 export function captainBonus(playerData: PlayerData): Record<string, number> {
-  const b = researchBonus(playerData.station),
-    o = officerBonus(playerData.officers, playerData.bridge);
-  for (const [k, v] of Object.entries(o)) b[k] = (b[k] || 0) + v;
-  for (const c of playerData.lower || [])
-    if (LOWER_DECK[c!])
-      for (const [k, v] of Object.entries(LOWER_DECK[c!].bonus)) b[k] = (b[k] || 0) + v; // lower-deck crew
-  return b;
+  const researchBonus2 = researchBonus(playerData.station),
+    officerBonus2 = officerBonus(playerData.officers, playerData.bridge);
+  for (const [entryKey, value] of Object.entries(officerBonus2))
+    researchBonus2[entryKey] = (researchBonus2[entryKey] || 0) + value;
+  for (const component of playerData.lower || [])
+    if (LOWER_DECK[component!])
+      for (const [entryKey, value] of Object.entries(LOWER_DECK[component!].bonus))
+        researchBonus2[entryKey] = (researchBonus2[entryKey] || 0) + value; // lower-deck crew
+  return researchBonus2;
 }
 
 /**
@@ -850,35 +884,46 @@ export function captainBonus(playerData: PlayerData): Record<string, number> {
 
 /**
  * Converts raw weapon asset definitions into live physics and combat parameters.
- * @param {WeaponAsset} w - Raw weapon definition from asset registry.
+ * @param {WeaponAsset} weaponAsset - Raw weapon definition from asset registry.
  * @returns {WeaponConfig} Configured weapon parameters.
  */
 // Weapon parameters in Rift units
-export function weaponParams(w: WeaponAsset): WeaponConfig {
-  const beam = w.type === 'beam' || w.type === 'turretbeam' || w.type === 'pdbeam';
-  const speed = Math.max(200, (w.speed || 1000) * K.shot);
-  const life = Math.max(0.4, ((w.duration || 30) / 30) * 1.4);
+export function weaponParams(weaponAsset: WeaponAsset): WeaponConfig {
+  const beam =
+    weaponAsset.type === 'beam' ||
+    weaponAsset.type === 'turretbeam' ||
+    weaponAsset.type === 'pdbeam';
+  const speed = Math.max(200, (weaponAsset.speed || 1000) * physicsConstants.shot);
+  const life = Math.max(0.4, ((weaponAsset.duration || 30) / 30) * 1.4);
   return {
     beam,
     speed,
     life,
-    range: beam ? w.beamLen || 360 : speed * life,
-    reload: Math.max(1, w.reload || 1) / 30,
+    range: beam ? weaponAsset.beamLen || 360 : speed * life,
+    reload: Math.max(1, weaponAsset.reload || 1) / 30,
     turret:
-      w.type === 'turret' || w.type === 'turretbeam' || w.type === 'pd' || w.type === 'pdbeam',
-    arc: w.type === 'frontturret' ? Math.PI / 6 : w.type === 'rearturret' ? Math.PI / 6 : 0,
-    homing: w.type === 'homing',
-    pd: w.type === 'pd' || w.type === 'pdbeam',
-    bay: w.type === 'bay',
-    rocket: w.type === 'rocket',
-    inacc: ((w.inacc || 0) * Math.PI) / 180,
-    dmgA: Math.max(0, w.dmgA || 0),
-    dmgS: Math.max(0, w.dmgS || 0),
-    continuous: beam && !(w.reload > 0),
-    color: weaponColor(w),
-    look: weaponLook(w),
-    blast: w.blast || 0,
-    ion: w.ion || 0,
+      weaponAsset.type === 'turret' ||
+      weaponAsset.type === 'turretbeam' ||
+      weaponAsset.type === 'pd' ||
+      weaponAsset.type === 'pdbeam',
+    arc:
+      weaponAsset.type === 'frontturret'
+        ? Math.PI / 6
+        : weaponAsset.type === 'rearturret'
+          ? Math.PI / 6
+          : 0,
+    homing: weaponAsset.type === 'homing',
+    pd: weaponAsset.type === 'pd' || weaponAsset.type === 'pdbeam',
+    bay: weaponAsset.type === 'bay',
+    rocket: weaponAsset.type === 'rocket',
+    inacc: ((weaponAsset.inacc || 0) * Math.PI) / 180,
+    dmgA: Math.max(0, weaponAsset.dmgA || 0),
+    dmgS: Math.max(0, weaponAsset.dmgS || 0),
+    continuous: beam && !(weaponAsset.reload > 0),
+    color: weaponColor(weaponAsset),
+    look: weaponLook(weaponAsset),
+    blast: weaponAsset.blast || 0,
+    ion: weaponAsset.ion || 0,
   };
 }
 
@@ -919,18 +964,18 @@ export const BEAM_COLORS: Record<number, string> = {
 };
 /**
  * Determines audio sound effect ID for a weapon discharge.
- * @param {WeaponAsset} w - Weapon asset definition.
+ * @param {WeaponAsset} weaponAsset - Weapon asset definition.
  * @returns {number} Sound effect resource ID.
  */
 // Stable sound references for weapon effects, with a nearest-match fallback.
-export function weaponSound(w: WeaponAsset): number {
-  if (w.sound! >= 36) return 200 + w.sound!;
-  const weapon = weaponParams(w);
+export function weaponSound(weaponAsset: WeaponAsset): number {
+  if (weaponAsset.sound! >= 36) return 200 + weaponAsset.sound!;
+  const weapon = weaponParams(weaponAsset);
   if (weapon.homing) return 238;
   if (weapon.beam) return 240;
   if (weapon.pd) return 236;
   if (weapon.bay) return 239;
-  return w.dmgA + w.dmgS > 40 ? 241 : 236;
+  return weaponAsset.dmgA + weaponAsset.dmgS > 40 ? 241 : 236;
 }
 
 /**
@@ -957,191 +1002,205 @@ export function weaponSound(w: WeaponAsset): number {
 
 /**
  * Advances flight physics for an entity by one simulation time step.
- * @param {FlightEntity} e - Ship entity state modified in place.
- * @param {ComputedShipStats} st - Ship performance attributes.
- * @param {FlightInput} inp - Flight control inputs.
- * @param {number} [dt=DT] - Step duration in seconds.
+ * @param {FlightEntity} flightEntity - Ship entity state modified in place.
+ * @param {ComputedShipStats} computedShipStats - Ship performance attributes.
+ * @param {FlightInput} flightInput - Flight control inputs.
+ * @param {number} [deltaTime=DT] - Step duration in seconds.
  * @returns {void}
  */
 // Flight: one fixed step. input: {thrust: 0/1, turn: -1/0/1, ab: 0/1, rev: 0/1}
 export function step(
-  e: FlightEntity,
-  st: ComputedShipStats,
-  inp: FlightInput,
-  dt: number = DT,
+  flightEntity: FlightEntity,
+  computedShipStats: ComputedShipStats,
+  flightInput: FlightInput,
+  deltaTime: number = tickDuration,
 ): void {
-  const navigationBrake = inp.navigation && inp.rev,
-    drift = navigationBrake ? Math.hypot(e.vx, e.vy) : 0,
-    navigationSettled = navigationBrake && drift <= Math.max(2, st.accel * dt * 0.55);
-  if (inp.rev) {
+  const navigationBrake = flightInput.navigation && flightInput.rev,
+    drift = navigationBrake ? Math.hypot(flightEntity.vx, flightEntity.vy) : 0,
+    navigationSettled =
+      navigationBrake && drift <= Math.max(2, computedShipStats.accel * deltaTime * 0.55);
+  if (flightInput.rev) {
     if (!navigationSettled) {
       // turn to face against the direction of travel
-      const want = wrap(Math.atan2(e.vx, -e.vy) + Math.PI);
-      let d = angDiff(want, e.a);
-      const t = st.turn * dt;
-      e.a += Math.abs(d) < t ? d : Math.sign(d) * t;
+      const want = wrap(Math.atan2(flightEntity.vx, -flightEntity.vy) + Math.PI);
+      let angDiff2 = angDiff(want, flightEntity.a);
+      const time = computedShipStats.turn * deltaTime;
+      flightEntity.a += Math.abs(angDiff2) < time ? angDiff2 : Math.sign(angDiff2) * time;
     }
-  } else e.a += (inp.turn || 0) * st.turn * dt;
-  e.a = wrap(e.a);
-  let acc = inp.thrust ? st.accel : 0,
-    max = st.maxSpeed;
-  if (inp.ab && st.afterburner && e.fuel > 0) {
-    acc *= 1.8;
-    max *= 1.4;
-    e.fuel -= 0.3;
+  } else flightEntity.a += (flightInput.turn || 0) * computedShipStats.turn * deltaTime;
+  flightEntity.a = wrap(flightEntity.a);
+  let account = flightInput.thrust ? computedShipStats.accel : 0,
+    maxSpeed2 = computedShipStats.maxSpeed;
+  if (flightInput.ab && computedShipStats.afterburner && flightEntity.fuel > 0) {
+    account *= 1.8;
+    maxSpeed2 *= 1.4;
+    flightEntity.fuel -= 0.3;
   }
-  if (navigationSettled) acc = 0;
+  if (navigationSettled) account = 0;
   // Delayed navigation input can remain held after the final braking pulse.
   // Once aligned, stop at zero rather than reverse drift and chase it through
   // another half-turn. Manual retrograde/thrust retains its existing physics.
   if (
     navigationBrake &&
-    acc * dt >= drift &&
-    (drift < 1e-8 || Math.abs(angDiff(wrap(Math.atan2(e.vx, -e.vy) + Math.PI), e.a)) < 1e-8)
+    account * deltaTime >= drift &&
+    (drift < 1e-8 ||
+      Math.abs(
+        angDiff(wrap(Math.atan2(flightEntity.vx, -flightEntity.vy) + Math.PI), flightEntity.a),
+      ) < 1e-8)
   ) {
-    e.vx = e.vy = 0;
-    acc = 0;
+    flightEntity.vx = flightEntity.vy = 0;
+    account = 0;
   }
-  if (acc) {
-    e.vx += Math.sin(e.a) * acc * dt;
-    e.vy -= Math.cos(e.a) * acc * dt;
+  if (account) {
+    flightEntity.vx += Math.sin(flightEntity.a) * account * deltaTime;
+    flightEntity.vy -= Math.cos(flightEntity.a) * account * deltaTime;
   }
-  const sp = Math.hypot(e.vx, e.vy);
-  if (sp > max) {
-    const k = Math.max(max / sp, 1 - 2 * dt);
-    e.vx *= k;
-    e.vy *= k;
+  const space = Math.hypot(flightEntity.vx, flightEntity.vy);
+  if (space > maxSpeed2) {
+    const entryKey = Math.max(maxSpeed2 / space, 1 - 2 * deltaTime);
+    flightEntity.vx *= entryKey;
+    flightEntity.vy *= entryKey;
   }
   // Tow is a hard physical limit after all acceleration/afterburner/catchup, before displacement.
-  if (Number.isFinite(e.towCap) && e.towCap! > 0) {
-    const speed = Math.hypot(e.vx, e.vy);
-    if (speed > e.towCap!) {
-      e.vx *= e.towCap! / speed;
-      e.vy *= e.towCap! / speed;
+  if (Number.isFinite(flightEntity.towCap) && flightEntity.towCap! > 0) {
+    const speed = Math.hypot(flightEntity.vx, flightEntity.vy);
+    if (speed > flightEntity.towCap!) {
+      flightEntity.vx *= flightEntity.towCap! / speed;
+      flightEntity.vy *= flightEntity.towCap! / speed;
     }
   }
-  e.x += e.vx * dt;
-  e.y += e.vy * dt;
+  flightEntity.x += flightEntity.vx * deltaTime;
+  flightEntity.y += flightEntity.vy * deltaTime;
 }
 
 /**
  * Wraps an angle in radians into the interval (-PI, PI].
- * @param {number} a - Angle in radians.
+ * @param {number} firstValue - Angle in radians.
  * @returns {number} Normalized angle in radians.
  */
-export function wrap(a: number): number {
-  while (a > Math.PI) a -= 2 * Math.PI;
-  while (a < -Math.PI) a += 2 * Math.PI;
-  return a;
+export function wrap(firstValue: number): number {
+  while (firstValue > Math.PI) firstValue -= 2 * Math.PI;
+  while (firstValue < -Math.PI) firstValue += 2 * Math.PI;
+  return firstValue;
 }
 
 /**
  * Computes the signed shortest angular difference between two angles in radians.
- * @param {number} a - First angle.
- * @param {number} b - Second angle.
+ * @param {number} firstValue - First angle.
+ * @param {number} secondValue - Second angle.
  * @returns {number} Angular difference between (-PI, PI].
  */
-export function angDiff(a: number, b: number): number {
-  return wrap(a - b);
+export function angDiff(firstValue: number, secondValue: number): number {
+  return wrap(firstValue - secondValue);
 }
 
 /**
  * Computes heading angle in radians from an origin entity to a destination coordinate (0 = up, clockwise).
- * @param {{ x: number, y: number }} e - Origin entity coordinates.
- * @param {number} x - Target X coordinate.
- * @param {number} y - Target Y coordinate.
+ * @param {{ x: number, y: number }} event - Origin entity coordinates.
+ * @param {number} positionX - Target X coordinate.
+ * @param {number} positionY - Target Y coordinate.
  * @returns {number} Angle in radians.
  */
-export function angleTo(e: { x: number; y: number }, x: number, y: number): number {
-  return Math.atan2(x - e.x, -(y - e.y));
+export function angleTo(
+  event: { x: number; y: number },
+  positionX: number,
+  positionY: number,
+): number {
+  return Math.atan2(positionX - event.x, -(positionY - event.y));
 } // 0 = up, clockwise
 
 /**
  * Calculates current market trading price for a commodity at a stellar station or planet, including time drift.
  * @param {{id: string, prices?: Record<string, number>}} stellar - Stellar object with market prices map.
- * @param {string} cid - Commodity identifier.
- * @param {number} [t=Date.now()] - Timestamp for deterministic market price drift.
+ * @param {string} captainId - Commodity identifier.
+ * @param {number} [time=Date.now()] - Timestamp for deterministic market price drift.
  * @returns {number|null} Current trade price in credits, or null if commodity not traded.
  */
 // Prices at a stellar for a commodity (level -1 / 0 / 1), with a slow drift by time so markets move
 export function price(
   stellar: { id: string; prices?: Record<string, number> },
-  cid: string,
-  t: number = Date.now(),
+  captainId: string,
+  time: number = Date.now(),
 ): number | null {
-  const c = COMMODITIES.find((c) => c.id === cid);
-  const lv = stellar.prices && stellar.prices[cid];
-  if (lv === undefined || !c) return null;
-  const drift = 1 + 0.06 * Math.sin(t / 3.6e6 + cid.length * 1.7 + stellar.id.length);
-  return Math.round(c.base * (1 + 0.28 * lv) * drift);
+  const commodityDef = COMMODITIES.find((commodityDef) => commodityDef.id === captainId);
+  const level = stellar.prices && stellar.prices[captainId];
+  if (level === undefined || !commodityDef) return null;
+  const drift = 1 + 0.06 * Math.sin(time / 3.6e6 + captainId.length * 1.7 + stellar.id.length);
+  return Math.round(commodityDef.base * (1 + 0.28 * level) * drift);
 }
 
 /**
  * Determines whether two faction identifiers are mutually hostile.
- * @param {string|null|undefined} a - First faction ID.
- * @param {string|null|undefined} b - Second faction ID.
+ * @param {string|null|undefined} firstValue - First faction ID.
+ * @param {string|null|undefined} secondValue - Second faction ID.
  * @returns {boolean} True if either faction considers the other an enemy.
  */
 export function hostileFactions(
-  a: string | null | undefined,
-  b: string | null | undefined,
+  firstValue: string | null | undefined,
+  secondValue: string | null | undefined,
 ): boolean {
-  if (!a || !b || a === b) return false;
+  if (!firstValue || !secondValue || firstValue === secondValue) return false;
   return (
-    (FACTIONS[a] && FACTIONS[a].hostile.includes(b)) ||
-    (FACTIONS[b] && FACTIONS[b].hostile.includes(a))
+    (FACTIONS[firstValue] && FACTIONS[firstValue].hostile.includes(secondValue)) ||
+    (FACTIONS[secondValue] && FACTIONS[secondValue].hostile.includes(firstValue))
   );
 }
 
 /**
  * Returns descriptive standing tier label corresponding to a numerical reputation score.
- * @param {number} v - Reputation value.
+ * @param {number} value2 - Reputation value.
  * @returns {'Exalted' | 'Honored' | 'Friendly' | 'Neutral' | 'Wanted' | 'Hunted'} Reputation label.
  */
 export function repLabel(
-  v: number,
+  value: number,
 ): 'Exalted' | 'Honored' | 'Friendly' | 'Neutral' | 'Wanted' | 'Hunted' {
-  return v >= EXALTED_STANDING
+  return value >= EXALTED_STANDING
     ? 'Exalted'
-    : v >= 50
+    : value >= 50
       ? 'Honored'
-      : v >= 20
+      : value >= 20
         ? 'Friendly'
-        : v > -20
+        : value > -20
           ? 'Neutral'
-          : v > -50
+          : value > -50
             ? 'Wanted'
             : 'Hunted';
 }
 
 /**
  * Formats a credit amount into a human-readable display string (e.g. "1.25M" or "25,000").
- * @param {number} n - Credit balance.
+ * @param {number} count2 - Credit balance.
  * @returns {string} Formatted credits string.
  */
-export function credits(n: number): string {
-  n = Math.round(n || 0);
-  return n >= 1e6 ? (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M' : n.toLocaleString('en-US');
+export function credits(count: number): string {
+  count = Math.round(count || 0);
+  return count >= 1e6
+    ? (count / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M'
+    : count.toLocaleString('en-US');
 }
 
 /**
  * Checks whether a given color hex string represents unset / black color.
- * @param {string|null|undefined} c - Color hex string.
+ * @param {string|null|undefined} component - Color hex string.
  * @returns {boolean} True if color is null, empty, or black.
  */
 // Legacy projectile records can use black as an unset colour; supply a visible fallback.
-const isBlack = (c: string | null | undefined) => !c || /^#?0{3}(0{3})?$/i.test(c);
+const isBlack = (component: string | null | undefined) =>
+  !component || /^#?0{3}(0{3})?$/i.test(component);
 
 /**
  * Determines the display render color for a weapon projectile or beam.
- * @param {WeaponAsset} w - Weapon asset definition.
+ * @param {WeaponAsset} weaponAsset - Weapon asset definition.
  * @returns {string} Hex color string.
  */
-export function weaponColor(w: WeaponAsset): string {
-  if (!w) return '#ffd27a';
-  if (!isBlack(w.color)) return w.color!;
-  const beam = w.type === 'beam' || w.type === 'turretbeam' || w.type === 'pdbeam';
-  return BEAM_COLORS[w.id] || (beam ? '#ff6a4a' : '#ffd27a');
+export function weaponColor(weaponAsset: WeaponAsset): string {
+  if (!weaponAsset) return '#ffd27a';
+  if (!isBlack(weaponAsset.color)) return weaponAsset.color!;
+  const beam =
+    weaponAsset.type === 'beam' ||
+    weaponAsset.type === 'turretbeam' ||
+    weaponAsset.type === 'pdbeam';
+  return BEAM_COLORS[weaponAsset.id] || (beam ? '#ff6a4a' : '#ffd27a');
 }
 
 /**
@@ -1175,64 +1234,74 @@ export const WEAPON_LOOKS: Record<number, string> = {
 
 /**
  * Resolves the visual projectile rendering style for a given weapon.
- * @param {WeaponAsset} w - Weapon asset definition.
+ * @param {WeaponAsset} weaponAsset - Weapon asset definition.
  * @returns {string} Projectile visual style name.
  */
-export function weaponLook(w: WeaponAsset): string {
-  if (!w) return 'bolt';
-  if (WEAPON_LOOKS[w.id]) return WEAPON_LOOKS[w.id];
-  if (w.look) return w.look;
-  if (w.type === 'homing') return w.dmgA + w.dmgS > 150 ? 'torp' : 'missile';
-  if (w.type === 'rocket') return 'rocket';
-  if (w.type === 'pd') return 'pd';
+export function weaponLook(weaponAsset: WeaponAsset): string {
+  if (!weaponAsset) return 'bolt';
+  if (WEAPON_LOOKS[weaponAsset.id]) return WEAPON_LOOKS[weaponAsset.id];
+  if (weaponAsset.look) return weaponAsset.look;
+  if (weaponAsset.type === 'homing')
+    return weaponAsset.dmgA + weaponAsset.dmgS > 150 ? 'torp' : 'missile';
+  if (weaponAsset.type === 'rocket') return 'rocket';
+  if (weaponAsset.type === 'pd') return 'pd';
   return 'bolt';
 }
 
 /**
  * A* pathfinding algorithm computing the shortest and safest hyperspace jump route between two star systems.
- * @param {Record<string, {x: number, y: number, danger: number, links: string[], gate?:string}>} SYS - Star systems dictionary keyed by system ID.
+ * @param {Record<string, {x: number, y: number, danger: number, links: string[], gate?:string}>} starSystem - Star systems dictionary keyed by system ID.
  * @param {string} from - Origin system ID.
- * @param {string} to - Destination system ID.
+ * @param {string} destination - Destination system ID.
  * @returns {string[]} Ordered array of system IDs to jump through (excluding origin).
  */
 // A* route between systems: fewest jumps, preferring safer systems when two routes are the same length
 export function route(
-  SYS: Record<string, { x: number; y: number; danger: number; links: string[]; gate?: string }>,
+  starSystem: Record<
+    string,
+    { x: number; y: number; danger: number; links: string[]; gate?: string }
+  >,
   from: string,
-  to: string,
+  destination: string,
 ): string[] {
-  if (!SYS[from] || !SYS[to]) return [];
-  const h = (id: string) => Math.hypot(SYS[id].x - SYS[to].x, SYS[id].y - SYS[to].y) / 240;
-  const g = { [from]: 0 },
-    prev: Record<string, string | null> = { [from]: null },
+  if (!starSystem[from] || !starSystem[destination]) return [];
+  const height = (identifier: string) =>
+    Math.hypot(
+      starSystem[identifier].x - starSystem[destination].x,
+      starSystem[identifier].y - starSystem[destination].y,
+    ) / 240;
+  const game = { [from]: 0 },
+    previous: Record<string, string | null> = { [from]: null },
     open = new Set([from]);
   while (open.size) {
-    let cur: string | null = null,
-      cf = Infinity;
-    for (const id of open) {
-      const f = g[id] + h(id);
-      if (f < cf) {
-        cf = f;
-        cur = id;
+    let current: string | null = null,
+      infinity = Infinity;
+    for (const open2 of open) {
+      const factionId = game[open2] + height(open2);
+      if (factionId < infinity) {
+        infinity = factionId;
+        current = open2;
       }
     }
-    if (cur === to) break;
-    open.delete(cur!);
-    for (const l of SYS[cur!].gate ? [...SYS[cur!].links, SYS[cur!].gate!] : SYS[cur!].links) {
-      const c = g[cur!] + 1 + SYS[l].danger * 0.08;
-      if (c < (g[l] ?? Infinity)) {
-        g[l] = c;
-        prev[l] = cur;
-        open.add(l);
+    if (current === destination) break;
+    open.delete(current!);
+    for (const length of starSystem[current!].gate
+      ? [...starSystem[current!].links, starSystem[current!].gate!]
+      : starSystem[current!].links) {
+      const component = game[current!] + 1 + starSystem[length].danger * 0.08;
+      if (component < (game[length] ?? Infinity)) {
+        game[length] = component;
+        previous[length] = current;
+        open.add(length);
       }
     }
   }
-  if (!(to in prev)) return [];
-  const r = [];
-  let c: string | null = to;
-  while (c && c !== from) {
-    r.unshift(c);
-    c = prev[c];
+  if (!(destination in previous)) return [];
+  const radius = [];
+  let destination2: string | null = destination;
+  while (destination2 && destination2 !== from) {
+    radius.unshift(destination2);
+    destination2 = previous[destination2];
   }
-  return r;
+  return radius;
 }

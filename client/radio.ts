@@ -9,33 +9,39 @@ interface RadioStation {
   playback: string;
   tracks: RadioTrack[];
 }
-import { escapeHtml as esc } from './html.ts';
+import { escapeHtml as escapeHtml2 } from './html.ts';
 // Original, bundled station playlists: no external player or network provider.
 import { RADIO_STATIONS } from '../shared/radio-stations.ts';
 export { RADIO_STATIONS };
 
 // A station-local shuffle bag plays every track before reshuffling. Remember the
 // previous selection across stop/tune changes to avoid boundary repeats.
-export function createShuffle<T>(tracks: readonly T[], random = Math.random) {
+export function createShuffle<ValueType>(tracks: readonly ValueType[], random = Math.random) {
   if (!tracks.length) return () => null;
-  let bag: T[] = [],
-    last: T | null | undefined = null;
+  let inventoryBag: ValueType[] = [],
+    last: ValueType | null | undefined = null;
   return () => {
-    if (!bag.length) {
-      bag = [...tracks];
-      for (let i = bag.length - 1; i > 0; i--) {
-        const j = Math.floor(random() * (i + 1));
-        [bag[i], bag[j]] = [bag[j], bag[i]];
+    if (!inventoryBag.length) {
+      inventoryBag = [...tracks];
+      for (let index = inventoryBag.length - 1; index > 0; index--) {
+        const innerIndex = Math.floor(random() * (index + 1));
+        [inventoryBag[index], inventoryBag[innerIndex]] = [
+          inventoryBag[innerIndex],
+          inventoryBag[index],
+        ];
       }
-      if (bag.length > 1 && bag[bag.length - 1] === last)
-        [bag[0], bag[bag.length - 1]] = [bag[bag.length - 1], bag[0]];
+      if (inventoryBag.length > 1 && inventoryBag[inventoryBag.length - 1] === last)
+        [inventoryBag[0], inventoryBag[inventoryBag.length - 1]] = [
+          inventoryBag[inventoryBag.length - 1],
+          inventoryBag[0],
+        ];
     }
-    last = bag.pop();
+    last = inventoryBag.pop();
     return last;
   };
 }
-export function createStationQueue(
-  station: Pick<RadioStation, 'playback' | 'tracks'>,
+export function createStationQueue<Track>(
+  station: { playback?: RadioStation['playback']; tracks: readonly Track[] },
   random = Math.random,
 ) {
   if (station.playback !== 'album') return createShuffle(station.tracks, random);
@@ -43,36 +49,37 @@ export function createStationQueue(
   return () => (station.tracks.length ? station.tracks[index++ % station.tracks.length] : null);
 }
 let unlocked = new Set([RADIO_STATIONS[0].id]);
-export function setUnlockedStations(ids: readonly string[] | null | undefined) {
-  unlocked = new Set(Array.isArray(ids) ? ids : [RADIO_STATIONS[0].id]);
-  if (cur && !unlocked.has(cur.id)) stopRadio();
+export function setUnlockedStations(identifiers: readonly string[] | null | undefined) {
+  unlocked = new Set(Array.isArray(identifiers) ? identifiers : [RADIO_STATIONS[0].id]);
+  if (radioStation && !unlocked.has(radioStation.id)) stopRadio();
 }
 const queues = new Map<string, () => RadioTrack | null | undefined>();
-let el: HTMLAudioElement | null = null,
+let htmlAudioElement: HTMLAudioElement | null = null,
   level = 0.8,
   shown = 0.8,
   token = 0,
-  box: HTMLElement | null = null,
-  cur: RadioStation | null = null;
+  htmlElement: HTMLElement | null = null,
+  radioStation: RadioStation | null = null;
 
-export function setRadioLevel(v: number, show = v) {
-  level = Math.max(0, Math.min(1, v));
+export function setRadioLevel(value2: number, show = value2) {
+  level = Math.max(0, Math.min(1, value2));
   shown = show;
-  if (el) el.volume = level;
-  const r = box?.querySelector<HTMLInputElement>('#rvol');
-  if (r && document.activeElement !== r) r.value = String(shown);
+  if (htmlAudioElement) htmlAudioElement.volume = level;
+  const htmlInputElement = htmlElement?.querySelector<HTMLInputElement>('#rvol');
+  if (htmlInputElement && document.activeElement !== htmlInputElement)
+    htmlInputElement.value = String(shown);
 }
 export function radioOn() {
-  return !!cur;
+  return !!radioStation;
 }
 function panel(state: string, track: { title?: string }, message = '') {
-  if (!box) return;
-  box.innerHTML =
+  if (!htmlElement) return;
+  htmlElement.innerHTML =
     '<div class="onair ' +
     state +
     '"><div class="oa-top"><span class="oa-led"></span>' +
     (state === 'live'
-      ? cur?.playback === 'album'
+      ? radioStation?.playback === 'album'
         ? 'ON AIR · ALBUM LOOP'
         : 'ON AIR · SHUFFLE'
       : state === 'tune'
@@ -81,83 +88,87 @@ function panel(state: string, track: { title?: string }, message = '') {
           ? 'STATION DISCOVERED'
           : 'SIGNAL INTERRUPTED') +
     '</div><div class="oa-name">' +
-    esc(cur?.name) +
+    escapeHtml2(radioStation?.name) +
     '</div><div class="oa-sub">' +
-    esc(cur?.sub) +
+    escapeHtml2(radioStation?.sub) +
     '</div><div class="oa-track" id="rtrack">♪ <b>' +
-    esc(cur?.id === 'super-idol' || state === 'empty' ? track.title : 'Broadcast') +
+    escapeHtml2(
+      radioStation?.id === 'super-idol' || state === 'empty' ? track.title : 'Broadcast',
+    ) +
     '</b>' +
-    (message ? '<br>' + esc(message) : '') +
+    (message ? '<br>' + escapeHtml2(message) : '') +
     '</div><div class="oa-ctrl"><label>VOL <input aria-label="Radio volume" type="range" id="rvol" min="0" max="1" step="0.05" value="' +
     shown +
     '"></label></div></div>';
-  const r = box.querySelector<HTMLInputElement>('#rvol')!;
-  r.oninput = () => window.dispatchEvent(new CustomEvent('rift-radio-vol', { detail: +r.value }));
+  const htmlInputElement = htmlElement.querySelector<HTMLInputElement>('#rvol')!;
+  htmlInputElement.oninput = () =>
+    window.dispatchEvent(new CustomEvent('rift-radio-vol', { detail: +htmlInputElement.value }));
 }
 function stopAudio() {
-  if (!el) return;
-  el.onended = el.onerror = null;
-  el.pause();
-  el.removeAttribute('src');
-  el.load();
-  el = null;
+  if (!htmlAudioElement) return;
+  htmlAudioElement.onended = htmlAudioElement.onerror = null;
+  htmlAudioElement.pause();
+  htmlAudioElement.removeAttribute('src');
+  htmlAudioElement.load();
+  htmlAudioElement = null;
 }
 async function nextTrack() {
-  if (!cur) return;
-  const my = ++token;
+  if (!radioStation) return;
+  const mouseY = ++token;
   stopAudio();
-  const track = queues.get(cur.id)!();
+  const track = queues.get(radioStation.id)!();
   if (!track) {
     panel('empty', { title: 'No recordings available yet' });
-    cur = null;
+    radioStation = null;
     return;
   }
-  const a = new Audio(track.url);
-  el = a;
-  a.preload = 'auto';
-  a.volume = level;
-  a.onended = () => {
-    if (my === token) void nextTrack();
+  const htmlAudioElement2 = new Audio(track.url);
+  htmlAudioElement = htmlAudioElement2;
+  htmlAudioElement2.preload = 'auto';
+  htmlAudioElement2.volume = level;
+  htmlAudioElement2.onended = () => {
+    if (mouseY === token) void nextTrack();
   };
-  a.onerror = () => {
-    if (my !== token) return;
+  htmlAudioElement2.onerror = () => {
+    if (mouseY !== token) return;
     panel('nosig', track, 'Select the station to retry.');
     stopAudio();
-    cur = null;
+    radioStation = null;
   };
   panel('tune', track);
   try {
-    await a.play();
-    if (my === token && cur) panel('live', track);
+    await htmlAudioElement2.play();
+    if (mouseY === token && radioStation) panel('live', track);
   } catch {
-    if (my !== token || !cur) return;
+    if (mouseY !== token || !radioStation) return;
     panel('nosig', track, 'Select the station to retry playback.');
     stopAudio();
-    cur = null;
+    radioStation = null;
   }
 }
-export async function playStation(s: { id: string }, target: HTMLElement) {
-  const station = RADIO_STATIONS.find((x) => x.id === s.id);
+export async function playStation(state: { id: string }, target: HTMLElement) {
+  const station = RADIO_STATIONS.find((positionX) => positionX.id === state.id);
   if (!station || !unlocked.has(station.id)) return;
-  box = target;
-  if (cur?.id === station.id && el && !el.paused) return;
-  cur = station;
-  if (!cur.tracks.length) {
+  htmlElement = target;
+  if (radioStation?.id === station.id && htmlAudioElement && !htmlAudioElement.paused) return;
+  radioStation = station;
+  if (!radioStation.tracks.length) {
     token++;
     stopAudio();
     panel('empty', { title: 'No recordings available yet' });
-    cur = null;
+    radioStation = null;
     return;
   }
-  if (cur.playback === 'album' || !queues.has(cur.id)) queues.set(cur.id, createStationQueue(cur));
+  if (radioStation.playback === 'album' || !queues.has(radioStation.id))
+    queues.set(radioStation.id, createStationQueue(radioStation));
   await nextTrack();
 }
 export function stopRadio(target?: HTMLElement) {
   token++;
-  cur = null;
+  radioStation = null;
   stopAudio();
-  box = target || box;
-  if (box)
-    box.innerHTML =
+  htmlElement = target || htmlElement;
+  if (htmlElement)
+    htmlElement.innerHTML =
       '<div class="nosig"><b>RADIO OFF</b><span class="dim">Pick a station to tune in</span></div>';
 }

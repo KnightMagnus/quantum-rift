@@ -226,24 +226,24 @@ export const EVENTIDE_LINKS = [
   ['glasswake', 'palinode'],
 ];
 export function addEventide(systems: StarSystem[]) {
-  const by = Object.fromEntries(systems.map((s) => [s.id, s])),
-    origin = by['vesper-gate'];
-  for (const E of EVENTIDE) {
-    if (by[E.id]) continue;
-    const sys: StarSystem = {
-      id: E.id,
-      name: E.name,
-      x: origin.x + E.dx,
-      y: origin.y + E.dy,
+  const fromEntries2 = Object.fromEntries(systems.map((starSystem) => [starSystem.id, starSystem])),
+    origin = fromEntries2['vesper-gate'];
+  for (const eventideDefinition of EVENTIDE) {
+    if (fromEntries2[eventideDefinition.id]) continue;
+    const starSystem: StarSystem = {
+      id: eventideDefinition.id,
+      name: eventideDefinition.name,
+      x: origin.x + eventideDefinition.dx,
+      y: origin.y + eventideDefinition.dy,
       faction: 'farside',
       farside: true,
       eventide: true,
-      danger: E.danger,
+      danger: eventideDefinition.danger,
       links: [],
-      scene: E.scene,
-      stellars: [{ ...E.port }, { ...E.world }],
+      scene: eventideDefinition.scene,
+      stellars: [{ ...eventideDefinition.port }, { ...eventideDefinition.world }],
       fields:
-        E.id === 'glasswake'
+        eventideDefinition.id === 'glasswake'
           ? [
               {
                 id: 'glasswake-shards',
@@ -258,45 +258,49 @@ export function addEventide(systems: StarSystem[]) {
             ]
           : [],
     };
-    systems.push(sys);
-    by[E.id] = sys;
+    systems.push(starSystem);
+    fromEntries2[eventideDefinition.id] = starSystem;
   }
-  for (const [a, b] of EVENTIDE_LINKS) {
-    if (!by[a].links.includes(b)) by[a].links.push(b);
-    if (!by[b].links.includes(a)) by[b].links.push(a);
+  for (const [firstValue, secondValue] of EVENTIDE_LINKS) {
+    if (!fromEntries2[firstValue].links.includes(secondValue))
+      fromEntries2[firstValue].links.push(secondValue);
+    if (!fromEntries2[secondValue].links.includes(firstValue))
+      fromEntries2[secondValue].links.push(firstValue);
   }
   // A few authored main-galaxy examples; no destination, market, ID or RNG changes.
-  for (const [id, kind] of [
+  for (const [identifier, kind] of [
     ['meridian', 'binary'],
     ['gloam', 'pulsar'],
     ['slagforge', 'shattered'],
   ])
-    if (by[id]) by[id].scene = { kind };
+    if (fromEntries2[identifier]) fromEntries2[identifier].scene = { kind };
 }
 export function eventideOffers(
-  p: StellarBody & { system: string; svc: string },
-  d: { missions: { id: string }[] },
-  win: number,
+  position: StellarBody & { system: string; svc: string },
+  distance: { missions: { id: string }[] },
+  window: number,
 ) {
-  const i = EVENTIDE.findIndex((s) => s.id === p.system);
-  if (i < 0 || !p.svc.includes('B')) return [];
-  const next = EVENTIDE[(i + 1) % EVENTIDE.length],
-    other = EVENTIDE[(i + 2) % EVENTIDE.length],
-    key = `eventide-${p.id}-${win}`;
+  const index = EVENTIDE.findIndex(
+    (eventideDefinition) => eventideDefinition.id === position.system,
+  );
+  if (index < 0 || !position.svc.includes('B')) return [];
+  const next = EVENTIDE[(index + 1) % EVENTIDE.length],
+    other = EVENTIDE[(index + 2) % EVENTIDE.length],
+    entryKey = `eventide-${position.id}-${window}`;
   return [
     {
-      id: key + '-supply',
+      id: entryKey + '-supply',
       type: 'cargo',
       title: `EVENTIDE: Supply ${next.port.name}`,
       sys: next.id,
       dest: next.port.id,
-      cid: i % 2 ? 'equipment' : 'medical',
+      cid: index % 2 ? 'equipment' : 'medical',
       qty: 8,
-      reward: 14500 + i * 1800,
-      text: `Carry eight tons of ${i % 2 ? 'equipment' : 'medical supplies'} to ${next.port.name} in ${next.name}. This marked route keeps the Eventide research and rescue stations provisioned.`,
+      reward: 14500 + index * 1800,
+      text: `Carry eight tons of ${index % 2 ? 'equipment' : 'medical supplies'} to ${next.port.name} in ${next.name}. This marked route keeps the Eventide research and rescue stations provisioned.`,
     },
     {
-      id: key + '-rescue',
+      id: entryKey + '-rescue',
       type: 'rescue',
       eventide: true,
       rescuePoint: [-1100, 900] as [number, number],
@@ -305,26 +309,31 @@ export function eventideOffers(
       hull: 704,
       faction: 'farside',
       wreckName: `${other.name} Survey Tender`,
-      reward: 18500 + i * 1800,
+      reward: 18500 + index * 1800,
       text: `A survey tender lost power in ${other.name}. Board it, rescue the crew, then land at a staffed port for payment. No trip into the marked radiation pocket is required.`,
     },
-  ].filter((o) => !d.missions.some((m) => m.id === o.id));
+  ].filter((options) => !distance.missions.some((message) => message.id === options.id));
 }
 // Same wall-clock phase on authoritative server and renderer; harmless outside the marked circle.
-export function eventidePulse(h: HazardDefinition, seconds: number) {
-  const phase = ((seconds % h.period) + h.period) % h.period;
-  return phase < h.on ? 'active' : phase >= h.period - h.warning ? 'warning' : 'quiet';
+export function eventidePulse(hazardDefinition: HazardDefinition, seconds: number) {
+  const phase =
+    ((seconds % hazardDefinition.period) + hazardDefinition.period) % hazardDefinition.period;
+  return phase < hazardDefinition.on
+    ? 'active'
+    : phase >= hazardDefinition.period - hazardDefinition.warning
+      ? 'warning'
+      : 'quiet';
 }
 export function eventideDrain(
-  sys: Pick<StarSystem, 'scene'>,
-  e: { state: string; x: number; y: number },
+  starSystem: Pick<StarSystem, 'scene'>,
+  event: { state: string; x: number; y: number },
   seconds: number,
 ) {
-  const h = sys.scene?.hazard;
-  return h &&
-    e.state === 'fly' &&
-    Math.hypot(e.x - h.x, e.y - h.y) < h.r &&
-    eventidePulse(h, seconds) === 'active'
-    ? h.drain
+  const hazardDefinition = starSystem.scene?.hazard;
+  return hazardDefinition &&
+    event.state === 'fly' &&
+    Math.hypot(event.x - hazardDefinition.x, event.y - hazardDefinition.y) < hazardDefinition.r &&
+    eventidePulse(hazardDefinition, seconds) === 'active'
+    ? hazardDefinition.drain
     : 0;
 }

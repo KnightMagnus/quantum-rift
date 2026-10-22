@@ -104,7 +104,7 @@ export function storedDuration(input: number) {
   return Math.round(300000 + (1500000 * input) / 300);
 }
 /** Locked-quote floor; liability must include pooled fractions, acquisition a conservative lower bound.
- * @param {number} bid @param {number} ask @param {number} service */
-export function refineryFee(bid: number, ask: number, service: number) {
-  return Math.max(1, Math.ceil(service), Math.ceil(bid - ask + 1));
+ * @param {number} bidPrice @param {number} showConfirmation @param {number} service */
+export function refineryFee(bidPrice: number, showConfirmation: number, service: number) {
+  return Math.max(1, Math.ceil(service), Math.ceil(bidPrice - showConfirmation + 1));
 }

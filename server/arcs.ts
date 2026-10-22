@@ -17,20 +17,24 @@ import type { ArcStep } from '../shared/arcs.ts';
 export type ArcOffer = ArcStep & { fac: string; locked?: string };
 export interface ArcsOperations {
   arcsInit(this: ArcsCapabilities, playerData: PlayerData): Record<string, SavedArc>;
-  arcState(this: ArcsCapabilities, playerData: PlayerData, f: string): SavedArc;
+  arcState(this: ArcsCapabilities, playerData: PlayerData, factionId: string): SavedArc;
   arcOffer(
     this: ArcsCapabilities,
     playerData: PlayerData,
-    p: { id: string },
-    f: string,
+    stellarBody: { id: string },
+    factionId: string,
   ): ArcOffer | null;
-  arcOffersAt(this: ArcsCapabilities, playerData: PlayerData, p: { id: string }): Array<ArcOffer>;
+  arcOffersAt(
+    this: ArcsCapabilities,
+    playerData: PlayerData,
+    stellarBody: { id: string },
+  ): Array<ArcOffer>;
   arcsPayload(this: ArcsCapabilities, playerData: PlayerData): ArcPayload[];
-  arcOnLand(this: ArcsCapabilities, session: Session, p: { id: string }): void;
-  arcAccept(this: ArcsCapabilities, session: Session, f: string): void;
-  arcComplete(this: ArcsCapabilities, session: Session, f: string): void;
+  arcOnLand(this: ArcsCapabilities, session: Session, stellarBody: { id: string }): void;
+  arcAccept(this: ArcsCapabilities, session: Session, factionId: string): void;
+  arcComplete(this: ArcsCapabilities, session: Session, factionId: string): void;
   arcArrive(this: ArcsCapabilities, session: Session, space: Space): void;
-  arcProgress(this: ArcsCapabilities, session: Session, x: Entity): void;
+  arcProgress(this: ArcsCapabilities, session: Session, entity: Entity): void;
   expeditionOffer(
     this: ArcsCapabilities,
     stellarBody: StellarBody,
@@ -45,7 +49,7 @@ import type { Entity, Space } from './space.ts';
 import { clampStanding } from '../shared/reputation.ts';
 // faction story arcs (three missions per power, offered at its capital) and Farside expeditions (procedural
 // survey -> derelict -> data-core chains beyond the Sol Gateway that hint at the region's purpose).
-import { SYS, SYSTEMS, STELLARS, FACTIONS, GRADES } from '../shared/galaxy.ts';
+import { SYS as systemsById, SYSTEMS, STELLARS, FACTIONS, GRADES } from '../shared/galaxy.ts';
 import { ARCS } from '../shared/arcs.ts';
 import { EXPEDITION_LORE } from '../shared/expeditions.ts';
 import { TRAITS } from '../shared/syndicate.ts';
@@ -67,45 +71,50 @@ export const ArcsOperations = {
   /**
    * Get or initialize the progress state for a specific faction arc.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {string} f - Faction key.
+   * @param {string} factionId - Faction key.
    * @returns {SavedArc} Arc progress state.
    */
-  arcState(this: ArcsCapabilities, playerData: PlayerData, f: string) {
-    const A = this.arcsInit(playerData);
-    if (!Object.prototype.hasOwnProperty.call(ARCS, f))
+  arcState(this: ArcsCapabilities, playerData: PlayerData, factionId: string) {
+    const arcsInit2 = this.arcsInit(playerData);
+    if (!Object.prototype.hasOwnProperty.call(ARCS, factionId))
       return { step: 0, active: null, done: true };
-    return (A[f] = A[f] || { step: 0, active: null, done: false });
+    return (arcsInit2[factionId] = arcsInit2[factionId] || { step: 0, active: null, done: false });
   }, // unknown arcs never touch the save
   // the arc step on offer at this world, if any
   /**
    * Evaluate the next arc mission step on offer at a stellar body.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {{id: string}} p - Current stellar body.
-   * @param {string} f - Faction key.
+   * @param {{id: string}} position - Current stellar body.
+   * @param {string} factionId - Faction key.
    * @returns {ArcOffer | null} Arc step offer details, or null if unavailable.
    */
-  arcOffer(this: ArcsCapabilities, playerData: PlayerData, p: { id: string }, f: string) {
-    const X = ARCS[f],
-      S = this.arcState(playerData, f),
-      st = X && X.steps[S.step];
-    if (!st || S.active || S.done || st.at !== p.id) return null;
-    if ((playerData.rep[f] || 0) < st.minRep)
+  arcOffer(
+    this: ArcsCapabilities,
+    playerData: PlayerData,
+    stellarBody: { id: string },
+    factionId: string,
+  ) {
+    const factionArc = ARCS[factionId],
+      savedArc = this.arcState(playerData, factionId),
+      arcStep = factionArc && factionArc.steps[savedArc.step];
+    if (!arcStep || savedArc.active || savedArc.done || arcStep.at !== stellarBody.id) return null;
+    if ((playerData.rep[factionId] || 0) < arcStep.minRep)
       return {
-        ...st,
-        fac: f,
-        locked: `The ${FACTIONS[f].name} will ask more of you when your standing reaches ${st.minRep} (it is ${playerData.rep[f] || 0}).`,
+        ...arcStep,
+        fac: factionId,
+        locked: `The ${FACTIONS[factionId].name} will ask more of you when your standing reaches ${arcStep.minRep} (it is ${playerData.rep[factionId] || 0}).`,
       };
-    return { ...st, fac: f };
+    return { ...arcStep, fac: factionId };
   },
   /**
    * List all available arc mission offers at a stellar body.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {{id: string}} p - Current stellar body.
+   * @param {{id: string}} position - Current stellar body.
    * @returns {Array<Mission>} List of arc mission offers.
    */
-  arcOffersAt(this: ArcsCapabilities, playerData: PlayerData, p: { id: string }) {
+  arcOffersAt(this: ArcsCapabilities, playerData: PlayerData, stellarBody: { id: string }) {
     return Object.keys(ARCS)
-      .map((f) => this.arcOffer(playerData, p, f))
+      .map((factionId) => this.arcOffer(playerData, stellarBody, factionId))
       .filter((offer): offer is ArcOffer => Boolean(offer));
   },
   /**
@@ -115,49 +124,55 @@ export const ArcsOperations = {
    */
   arcsPayload(this: ArcsCapabilities, playerData: PlayerData) {
     this.arcsInit(playerData);
-    return Object.keys(ARCS).map((f) => {
-      const X = ARCS[f],
-        S = this.arcState(playerData, f),
-        st = X.steps[S.step];
+    return Object.keys(ARCS).map((factionId) => {
+      const factionArc = ARCS[factionId],
+        savedArc = this.arcState(playerData, factionId),
+        arcStep = factionArc.steps[savedArc.step];
       return {
-        fac: f,
-        name: X.name,
-        step: S.step,
-        total: X.steps.length,
-        done: S.done,
-        active: S.active
+        fac: factionId,
+        name: factionArc.name,
+        step: savedArc.step,
+        total: factionArc.steps.length,
+        done: savedArc.done,
+        active: savedArc.active
           ? {
-              ...S.active,
-              title: X.steps[S.step].title,
-              brief: X.steps[S.step].brief,
-              type: X.steps[S.step].type,
-              sys: X.steps[S.step].sys,
-              dest: X.steps[S.step].dest,
-              back: X.steps[S.step].back,
-              count: X.steps[S.step].count,
+              ...savedArc.active,
+              title: factionArc.steps[savedArc.step].title,
+              brief: factionArc.steps[savedArc.step].brief,
+              type: factionArc.steps[savedArc.step].type,
+              sys: factionArc.steps[savedArc.step].sys,
+              dest: factionArc.steps[savedArc.step].dest,
+              back: factionArc.steps[savedArc.step].back,
+              count: factionArc.steps[savedArc.step].count,
             }
           : null,
-        next: !S.done && !S.active && st ? { title: st.title, at: st.at, minRep: st.minRep } : null,
+        next:
+          !savedArc.done && !savedArc.active && arcStep
+            ? { title: arcStep.title, at: arcStep.at, minRep: arcStep.minRep }
+            : null,
       };
     });
   },
   /**
    * Handle player landing event to check arc step completion or trigger offers.
    * @param {Session} session - Player session.
-   * @param {{id: string}} p - Landed stellar body.
+   * @param {{id: string}} position - Landed stellar body.
    * @returns {void}
    */
-  arcOnLand(this: ArcsCapabilities, session: Session, p: { id: string }) {
+  arcOnLand(this: ArcsCapabilities, session: Session, stellarBody: { id: string }) {
     const playerData = session.data;
-    for (const f of Object.keys(ARCS)) {
-      const S = this.arcState(playerData, f),
-        a = S.active;
-      if (!a) continue;
-      const st = ARCS[f].steps[S.step];
-      if ((st.type === 'carry' && p.id === st.dest) || (a.ready && p.id === st.back))
-        this.arcComplete(session, f);
+    for (const factionId of Object.keys(ARCS)) {
+      const savedArc = this.arcState(playerData, factionId),
+        active2 = savedArc.active;
+      if (!active2) continue;
+      const arcStep = ARCS[factionId].steps[savedArc.step];
+      if (
+        (arcStep.type === 'carry' && stellarBody.id === arcStep.dest) ||
+        (active2.ready && stellarBody.id === arcStep.back)
+      )
+        this.arcComplete(session, factionId);
     }
-    for (const mission of this.arcOffersAt(playerData, p))
+    for (const mission of this.arcOffersAt(playerData, stellarBody))
       if (!mission.locked)
         this.send(session, {
           t: 'story',
@@ -173,19 +188,20 @@ export const ArcsOperations = {
   /**
    * Accept an active faction arc mission offer.
    * @param {Session} session - Player session.
-   * @param {string} f - Faction key.
+   * @param {string} factionId - Faction key.
    * @returns {void}
    */
-  arcAccept(this: ArcsCapabilities, session: Session, f: string) {
-    if (typeof f !== 'string' || !Object.prototype.hasOwnProperty.call(ARCS, f)) return;
+  arcAccept(this: ArcsCapabilities, session: Session, factionId: string) {
+    if (typeof factionId !== 'string' || !Object.prototype.hasOwnProperty.call(ARCS, factionId))
+      return;
     const playerData = session.data,
-      p = STELLARS[playerData.stellar!],
-      o = p && this.arcOffer(playerData, p, f);
-    if (!o || o.locked) return;
-    const S = this.arcState(playerData, f);
-    S.active = { got: 0, ready: false };
-    this.log(playerData, `${ARCS[f].name}: ${o.title}. ${o.brief}`);
-    this.toast(session, `Accepted: ${o.brief}`);
+      stellarBody = STELLARS[playerData.stellar!],
+      arcOffer2 = stellarBody && this.arcOffer(playerData, stellarBody, factionId);
+    if (!arcOffer2 || arcOffer2.locked) return;
+    const savedArc = this.arcState(playerData, factionId);
+    savedArc.active = { got: 0, ready: false };
+    this.log(playerData, `${ARCS[factionId].name}: ${arcOffer2.title}. ${arcOffer2.brief}`);
+    this.toast(session, `Accepted: ${arcOffer2.brief}`);
     this.db.touch();
     this.you(session);
     this.landed(session);
@@ -193,56 +209,64 @@ export const ArcsOperations = {
   /**
    * Complete the active step of a faction arc, awarding credits, reputation, and rewards.
    * @param {Session} session - Player session.
-   * @param {string} f - Faction key.
+   * @param {string} factionId - Faction key.
    * @returns {void}
    */
-  arcComplete(this: ArcsCapabilities, session: Session, f: string) {
+  arcComplete(this: ArcsCapabilities, session: Session, factionId: string) {
     const playerData = session.data,
-      X = ARCS[f],
-      S = this.arcState(playerData, f),
-      st = X.steps[S.step];
-    S.active = null;
-    S.step++;
-    playerData.credits += st.pay;
-    playerData.stats.earned += st.pay;
-    playerData.rep[f] = clampStanding((playerData.rep[f] || 0) + 6);
-    const got = [`${credits(st.pay)} credits`, `+6 ${FACTIONS[f].short} standing`];
-    if (S.step >= X.steps.length) {
+      factionArc = ARCS[factionId],
+      savedArc = this.arcState(playerData, factionId),
+      arcStep = factionArc.steps[savedArc.step];
+    savedArc.active = null;
+    savedArc.step++;
+    playerData.credits += arcStep.pay;
+    playerData.stats.earned += arcStep.pay;
+    playerData.rep[factionId] = clampStanding((playerData.rep[factionId] || 0) + 6);
+    const received = [
+      `${credits(arcStep.pay)} credits`,
+      `+6 ${FACTIONS[factionId].short} standing`,
+    ];
+    if (savedArc.step >= factionArc.steps.length) {
       // the finale: a unique Epic officer and specialist blueprints
-      S.done = true;
+      savedArc.done = true;
       playerData.bp = playerData.bp || {};
-      playerData.bp[X.spec] = (playerData.bp[X.spec] || 0) + 10;
-      got.push(`10 ${this.A.ships[X.spec].name} blueprints`);
+      playerData.bp[factionArc.spec] = (playerData.bp[factionArc.spec] || 0) + 10;
+      received.push(`10 ${this.A.ships[factionArc.spec].name} blueprints`);
       const traits = Object.keys(TRAITS),
-        o = {
-          id: 'arc-' + f,
-          name: X.officer[0],
-          race: f,
-          role: X.officer[1],
+        options = {
+          id: 'arc-' + factionId,
+          name: factionArc.officer[0],
+          race: factionId,
+          role: factionArc.officer[1],
           rarity: 3,
           lv: 5,
           xp: 0,
           rank: 1,
           traits: [
             traits[
-              Math.abs(Array.from(f).reduce((a, c) => a * 31 + c.charCodeAt(0), 7)) % traits.length
+              Math.abs(
+                Array.from(factionId).reduce(
+                  (firstValue, component) => firstValue * 31 + component.charCodeAt(0),
+                  7,
+                ),
+              ) % traits.length
             ],
           ],
         };
       playerData.officers = playerData.officers || [];
-      if (!playerData.officers.some((x) => x.id === o.id)) {
-        playerData.officers.push(o);
-        got.push(`${o.name} joins your crew (Epic ${o.role}, Lieutenant)`);
+      if (!playerData.officers.some((officerRecord) => officerRecord.id === options.id)) {
+        playerData.officers.push(options);
+        received.push(`${options.name} joins your crew (Epic ${options.role}, Lieutenant)`);
       }
-      this.log(playerData, `Completed ${X.name} for the ${FACTIONS[f].name}.`);
+      this.log(playerData, `Completed ${factionArc.name} for the ${FACTIONS[factionId].name}.`);
     }
     this.send(session, {
       t: 'story',
-      arc: f,
-      id: `${f}:${st.i}`,
-      title: st.title,
-      tag: `${FACTIONS[f].name.toUpperCase()} · ${X.name}`,
-      text: st.done + `\n\nRewards: ${got.join(', ')}.`,
+      arc: factionId,
+      id: `${factionId}:${arcStep.i}`,
+      title: arcStep.title,
+      tag: `${FACTIONS[factionId].name.toUpperCase()} · ${factionArc.name}`,
+      text: arcStep.done + `\n\nRewards: ${received.join(', ')}.`,
       done: true,
     });
     this.db.touch();
@@ -258,54 +282,55 @@ export const ArcsOperations = {
   arcArrive(this: ArcsCapabilities, session: Session, space: Space) {
     const playerData = session.data,
       entity = session.ent;
-    for (const f of Object.keys(ARCS)) {
-      const S = this.arcState(playerData, f),
-        a = S.active;
-      if (!a || a.ready) continue;
-      const st = ARCS[f].steps[S.step];
+    for (const factionId of Object.keys(ARCS)) {
+      const savedArc = this.arcState(playerData, factionId),
+        active2 = savedArc.active;
+      if (!active2 || active2.ready) continue;
+      const arcStep = ARCS[factionId].steps[savedArc.step];
       if (
-        st.type === 'carry' ||
-        st.sys !== playerData.sys ||
+        arcStep.type === 'carry' ||
+        arcStep.sys !== playerData.sys ||
         [...space.ships.values()].some(
-          (x) => x.arcOf && x.arcOf.sid === session.id && x.arcOf.fac === f,
+          (entity) =>
+            entity.arcOf && entity.arcOf.sid === session.id && entity.arcOf.fac === factionId,
         )
       )
         continue;
-      const left = (st.count || 1) - a.got;
-      for (let i = 0; i < left; i++) {
-        const ang = Math.random() * 6.283,
-          dist = st.type === 'board' ? 800 + i * 300 : 1400;
-        const x = space.makeShip({
-          hull: st.hull,
-          faction: st.faction,
-          x: Math.cos(ang) * dist,
-          y: Math.sin(ang) * dist,
-          ai: st.type === 'board' ? null : st.type === 'boss' ? 'guard' : 'raid',
-          name: st.type === 'boss' ? st.bossName : null,
-          bonus: st.type === 'boss' ? { shieldPct: 80, armorPct: 80, damagePct: 30 } : {},
+      const left = (arcStep.count || 1) - active2.got;
+      for (let index = 0; index < left; index++) {
+        const angle = Math.random() * 6.283,
+          distance = arcStep.type === 'board' ? 800 + index * 300 : 1400;
+        const entity2 = space.makeShip({
+          hull: arcStep.hull,
+          faction: arcStep.faction,
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance,
+          ai: arcStep.type === 'board' ? null : arcStep.type === 'boss' ? 'guard' : 'raid',
+          name: arcStep.type === 'boss' ? arcStep.bossName : null,
+          bonus: arcStep.type === 'boss' ? { shieldPct: 80, armorPct: 80, damagePct: 30 } : {},
         });
-        x.arcOf = { sid: session.id, fac: f };
-        x.life = 1e9;
-        if (st.type === 'board') {
-          x.disabled = true;
-          x.armor = x.st.armor * 0.1;
-          x.wreckT = 1e9;
-          x.rescueOf = { id: 'arc', owner: session.id };
-          x.name = 'Drifting ' + this.A.ships[st.hull!].name;
+        entity2.arcOf = { sid: session.id, fac: factionId };
+        entity2.life = 1e9;
+        if (arcStep.type === 'board') {
+          entity2.disabled = true;
+          entity2.armor = entity2.st.armor * 0.1;
+          entity2.wreckT = 1e9;
+          entity2.rescueOf = { id: 'arc', owner: session.id };
+          entity2.name = 'Drifting ' + this.A.ships[arcStep.hull!].name;
         } else {
-          x.target = entity;
-          if (st.type === 'boss') {
-            x.home = { x: x.x, y: x.y };
-            x.noDisable = true;
+          entity2.target = entity;
+          if (arcStep.type === 'boss') {
+            entity2.home = { x: entity2.x, y: entity2.y };
+            entity2.noDisable = true;
           }
         }
       }
       this.toast(
         session,
-        st.type === 'board'
+        arcStep.type === 'board'
           ? `${left} drifting ship${left > 1 ? 's' : ''} here: board each one and choose Rescue.`
-          : st.type === 'boss'
-            ? `${st.bossName} is in this system.`
+          : arcStep.type === 'boss'
+            ? `${arcStep.bossName} is in this system.`
             : `${left} target${left > 1 ? 's' : ''} in this system.`,
       );
     }
@@ -313,26 +338,27 @@ export const ArcsOperations = {
   /**
    * Record combat or rescue progress for an encounter associated with an active arc.
    * @param {Session} session - Player session.
-   * @param {Entity} x - Destroyed or rescued entity.
+   * @param {Entity} entity - Destroyed or rescued entity.
    * @returns {void}
    */
-  arcProgress(this: ArcsCapabilities, session: Session, x: Entity) {
-    if (!x.arcOf || x.arcOf.sid !== session.id) return;
+  arcProgress(this: ArcsCapabilities, session: Session, entity: Entity) {
+    if (!entity.arcOf || entity.arcOf.sid !== session.id) return;
     const playerData = session.data,
-      f = x.arcOf.fac,
-      S = this.arcState(playerData, f),
-      a = S.active;
-    if (!a) return;
-    const st = ARCS[f].steps[S.step];
-    a.got++;
-    x.arcOf = null;
+      factionId = entity.arcOf.fac,
+      savedArc = this.arcState(playerData, factionId),
+      active2 = savedArc.active;
+    if (!active2) return;
+    const arcStep = ARCS[factionId].steps[savedArc.step];
+    active2.got++;
+    entity.arcOf = null;
     this.toast(
       session,
-      st.progress + (st.count && a.got < st.count ? ` (${a.got}/${st.count})` : ''),
+      arcStep.progress +
+        (arcStep.count && active2.got < arcStep.count ? ` (${active2.got}/${arcStep.count})` : ''),
     );
-    if (a.got >= (st.count || 1)) {
-      a.ready = true;
-      this.toast(session, `Return to ${STELLARS[st.back].name}.`);
+    if (active2.got >= (arcStep.count || 1)) {
+      active2.ready = true;
+      this.toast(session, `Return to ${STELLARS[arcStep.back].name}.`);
     }
     this.db.touch();
     this.you(session);
@@ -347,28 +373,35 @@ export const ArcsOperations = {
    * @returns {Mission | null} Expedition mission object or null if ineligible.
    */
   expeditionOffer(this: ArcsCapabilities, stellarBody: StellarBody, playerData: PlayerData) {
-    if (!SYS[stellarBody.system].farside || !stellarBody.svc.includes('B')) return null;
+    if (!systemsById[stellarBody.system].farside || !stellarBody.svc.includes('B')) return null;
     playerData.expd = playerData.expd || { n: 0 };
-    if (playerData.missions.some((m) => m.exp)) return null;
-    const n = playerData.expd.n,
-      fs = SYSTEMS.filter((S) => S.farside && !!S.eventide === !!SYS[stellarBody.system].eventide),
-      a = fs[(n * (SYS[stellarBody.system].eventide ? 1 : 3) + 1) % fs.length],
-      b = fs[(n * 5 + 4) % fs.length];
-    const pts: [number, number][] = [];
-    for (let i = 0; i < 3; i++) {
-      const ang = (i / 3) * 6.283 + n,
-        r = 900 + 500 * ((n + i) % 3);
-      pts.push([Math.round(Math.cos(ang) * r), Math.round(Math.sin(ang) * r)]);
+    if (playerData.missions.some((mission) => mission.exp)) return null;
+    const count = playerData.expd.n,
+      starSystems = SYSTEMS.filter(
+        (starSystem) =>
+          starSystem.farside &&
+          !!starSystem.eventide === !!systemsById[stellarBody.system].eventide,
+      ),
+      starSystem =
+        starSystems[
+          (count * (systemsById[stellarBody.system].eventide ? 1 : 3) + 1) % starSystems.length
+        ],
+      starSystem2 = starSystems[(count * 5 + 4) % starSystems.length];
+    const points2: [number, number][] = [];
+    for (let index = 0; index < 3; index++) {
+      const angle = (index / 3) * 6.283 + count,
+        radius = 900 + 500 * ((count + index) % 3);
+      points2.push([Math.round(Math.cos(angle) * radius), Math.round(Math.sin(angle) * radius)]);
     }
     return {
-      id: `exp-${n}`,
+      id: `exp-${count}`,
       type: 'survey',
-      exp: { n, stage: 1, b: b.id, home: stellarBody.id },
-      title: `EXPEDITION ${n + 1}: Survey ${a.name}`,
-      sys: a.id,
-      points: pts,
-      reward: 12000 + n * 6000,
-      text: `The ${SYS[stellarBody.system].eventide ? 'Eventide research annex' : 'Farside Settlers’ survey office'} wants readings from ${a.name}: pass close to three marked points. Every survey out here turns up something.`,
+      exp: { n: count, stage: 1, b: starSystem2.id, home: stellarBody.id },
+      title: `EXPEDITION ${count + 1}: Survey ${starSystem.name}`,
+      sys: starSystem.id,
+      points: points2,
+      reward: 12000 + count * 6000,
+      text: `The ${systemsById[stellarBody.system].eventide ? 'Eventide research annex' : 'Farside Settlers’ survey office'} wants readings from ${starSystem.name}: pass close to three marked points. Every survey out here turns up something.`,
     };
   },
   // a finished expedition stage becomes the next one
@@ -380,67 +413,73 @@ export const ArcsOperations = {
    */
   expeditionNext(this: ArcsCapabilities, session: Session, mission: Pick<Mission, 'exp'>) {
     const playerData = session.data,
-      E = mission.exp;
-    if (!E) return;
-    if (E.stage === 1) {
+      event = mission.exp;
+    if (!event) return;
+    if (event.stage === 1) {
       playerData.missions.push({
-        id: `exp-${E.n}-2`,
+        id: `exp-${event.n}-2`,
         type: 'rescue',
-        exp: { ...E, stage: 2 },
-        title: `EXPEDITION ${E.n + 1}: The derelict in ${SYS[E.b].name}`,
-        sys: E.b,
-        hull: [735, 707, 704][E.n % 3],
+        exp: { ...event, stage: 2 },
+        title: `EXPEDITION ${event.n + 1}: The derelict in ${systemsById[event.b].name}`,
+        sys: event.b,
+        hull: [735, 707, 704][event.n % 3],
         faction: 'farside',
         wreckName: `derelict of unknown make`,
-        reward: 15000 + E.n * 7000,
-        text: `Your survey picked up a derelict in ${SYS[E.b].name}, older than any hull on record. Board it and recover what you can.`,
+        reward: 15000 + event.n * 7000,
+        text: `Your survey picked up a derelict in ${systemsById[event.b].name}, older than any hull on record. Board it and recover what you can.`,
         owner: session.id,
         taken: Date.now(),
       });
-      this.toast(session, `Expedition: the survey found a derelict in ${SYS[E.b].name}.`);
-    } else if (E.stage === 2) {
-      if (playerData.stellar === E.home) {
+      this.toast(
+        session,
+        `Expedition: the survey found a derelict in ${systemsById[event.b].name}.`,
+      );
+    } else if (event.stage === 2) {
+      if (playerData.stellar === event.home) {
         // already home: hand the core straight over
-        const pay = 25000 + E.n * 9000;
-        playerData.credits += pay;
-        playerData.stats.earned += pay;
+        const payment = 25000 + event.n * 9000;
+        playerData.credits += payment;
+        playerData.stats.earned += payment;
         this.toast(
           session,
-          `You hand the data core to the survey office. +${credits(pay)} credits.`,
+          `You hand the data core to the survey office. +${credits(payment)} credits.`,
         );
-        return this.expeditionNext(session, { exp: { ...E, stage: 3 } });
+        return this.expeditionNext(session, { exp: { ...event, stage: 3 } });
       }
       playerData.missions.push({
-        id: `exp-${E.n}-3`,
+        id: `exp-${event.n}-3`,
         type: 'expret',
-        exp: { ...E, stage: 3 },
-        title: `EXPEDITION ${E.n + 1}: Bring the data core home`,
-        sys: STELLARS[E.home].system,
-        dest: E.home,
-        reward: 25000 + E.n * 9000,
-        text: `You recovered a data core from the derelict. Take it to ${STELLARS[E.home].name} for the survey office to read.`,
+        exp: { ...event, stage: 3 },
+        title: `EXPEDITION ${event.n + 1}: Bring the data core home`,
+        sys: STELLARS[event.home].system,
+        dest: event.home,
+        reward: 25000 + event.n * 9000,
+        text: `You recovered a data core from the derelict. Take it to ${STELLARS[event.home].name} for the survey office to read.`,
         owner: session.id,
         taken: Date.now(),
       });
-      this.toast(session, `Expedition: data core recovered. Take it to ${STELLARS[E.home].name}.`);
+      this.toast(
+        session,
+        `Expedition: data core recovered. Take it to ${STELLARS[event.home].name}.`,
+      );
     } else {
       playerData.expd = playerData.expd || { n: 0 };
-      const lore = EXPEDITION_LORE[E.n % EXPEDITION_LORE.length];
-      playerData.expd.n = E.n + 1;
+      const lore = EXPEDITION_LORE[event.n % EXPEDITION_LORE.length];
+      playerData.expd.n = event.n + 1;
       playerData.expd.lore = playerData.expd.lore || [];
-      if (!playerData.expd.lore.includes(E.n % EXPEDITION_LORE.length))
-        playerData.expd.lore.push(E.n % EXPEDITION_LORE.length);
-      const g = Math.min(4, 1 + Math.floor(E.n / 2));
-      playerData.mats.crystal[g]++;
+      if (!playerData.expd.lore.includes(event.n % EXPEDITION_LORE.length))
+        playerData.expd.lore.push(event.n % EXPEDITION_LORE.length);
+      const game = Math.min(4, 1 + Math.floor(event.n / 2));
+      playerData.mats.crystal[game]++;
       this.send(session, {
         t: 'story',
-        id: `exp:${E.n}`,
+        id: `exp:${event.n}`,
         title: lore.title,
         tag: 'FARSIDE EXPEDITION',
-        text: `${lore.text}\n\nRewards: a crystal ${GRADES[g]} crate, and the next expedition is on the board.`,
+        text: `${lore.text}\n\nRewards: a crystal ${GRADES[game]} crate, and the next expedition is on the board.`,
         done: true,
       });
-      this.log(playerData, `Expedition ${E.n + 1} decoded: ${lore.title}.`);
+      this.log(playerData, `Expedition ${event.n + 1} decoded: ${lore.title}.`);
     }
     this.db.touch();
     this.you(session);

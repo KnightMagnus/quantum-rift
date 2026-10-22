@@ -105,9 +105,9 @@ export interface CoopOperations {
   holdoutAnnounce(session: Session): void;
   holdoutReward(
     host: PlayerData,
-    run: SavedHoldoutRun,
+    savedHoldoutRun: SavedHoldoutRun,
     waves: number,
-    won: boolean,
+    hasWon: boolean,
     reward: { credits: number; grade: number },
   ): void;
   sessionOf(name: string): Session | null;
@@ -132,12 +132,15 @@ export interface CoopOperations {
   armadaBonus(data: PlayerData, bonus: Record<string, number>): void;
   atOwnStation(data: PlayerData): boolean;
   tradeClean(data: PlayerData, give: TradeOffer): TradeOffer | string;
-  tradePush(id: string): void;
-  tradeCancel(id: string, reason: string): void;
+  tradePush(identifier: string): void;
+  tradeCancel(identifier: string, reason: string): void;
   tradeDo(trade: TradeState): void;
   duelOf(session: Session | null | undefined): DuelState | null;
   duelSide(duel: DuelState, name: string): 'A' | 'B' | null;
-  dueling(a: PlayerReference | null, b: PlayerReference | null): boolean;
+  dueling(
+    playerReference: PlayerReference | null,
+    playerReference2: PlayerReference | null,
+  ): boolean;
   duelOut(session: Session, reason: string): void;
   duelSay(duel: DuelState, message: string): void;
   duelEnd(duel: DuelState, winner: 'A' | 'B' | null): void;

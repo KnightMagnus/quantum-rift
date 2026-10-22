@@ -92,17 +92,18 @@ export const SYN_TIERS: Array<[number, string]> = [
 
 /**
  * Computes the Syndicate tier, title, and progress toward next rank from standing points.
- * @param {number} pts - Total Syndicate reputation/standing points.
+ * @param {number} points - Total Syndicate reputation/standing points.
  * @returns {SyndicateTierInfo} Current tier details and points to next tier.
  */
-export function synTier(pts: number): SyndicateTierInfo {
-  let i = 0;
-  for (let k = 0; k < SYN_TIERS.length; k++) if ((pts || 0) >= SYN_TIERS[k][0]) i = k;
+export function synTier(points: number): SyndicateTierInfo {
+  let index = 0;
+  for (let entryKey = 0; entryKey < SYN_TIERS.length; entryKey++)
+    if ((points || 0) >= SYN_TIERS[entryKey][0]) index = entryKey;
   return {
-    i,
-    name: SYN_TIERS[i][1],
-    pts: Math.round(pts || 0),
-    next: SYN_TIERS[i + 1] ? SYN_TIERS[i + 1][0] : null,
+    i: index,
+    name: SYN_TIERS[index][1],
+    pts: Math.round(points || 0),
+    next: SYN_TIERS[index + 1] ? SYN_TIERS[index + 1][0] : null,
   };
 }
 
@@ -339,31 +340,31 @@ export const maxLoan = (credit: number, earned?: number) =>
 
 /**
  * Calculates required periodic loan installment payment.
- * @param {number} bal - Current outstanding loan principal balance.
+ * @param {number} balance - Current outstanding loan principal balance.
  * @param {number} credit - Player credit score.
  * @returns {number} Payment amount due for the current period.
  */
-export const loanPayment = (bal: number, credit: number) =>
-  bal <= 0
+export const loanPayment = (balance: number, credit: number) =>
+  balance <= 0
     ? 0
     : Math.min(
-        Math.ceil(bal * (1 + loanRate(credit))),
-        Math.max(BANK.minPay, Math.ceil(bal * 0.06 + bal * loanRate(credit))),
+        Math.ceil(balance * (1 + loanRate(credit))),
+        Math.max(BANK.minPay, Math.ceil(balance * 0.06 + balance * loanRate(credit))),
       );
 
 // ------------------------------------------------------------------ passengers (bunks) and rush jobs
 /**
  * Calculates passenger bunk capacity for a given ship hull or loadout.
- * @param {Object} H - Ship hull configuration object.
+ * @param {Object} height - Ship hull configuration object.
  * @param {Object} [loadout] - Fitted ship loadout.
  * @returns {number} Available passenger seats/bunks.
  */
 // Keep the historical helper name for existing mission and save integrations.
 export function bunks(
-  H: Pick<ShipHullAsset, 'id'> | null | undefined,
+  height: Pick<ShipHullAsset, 'id'> | null | undefined,
   loadout?: Pick<ShipLoadout, 'outfits'>,
 ): number {
-  return passengerSeats(H, loadout);
+  return passengerSeats(height, loadout);
 }
 
 /**

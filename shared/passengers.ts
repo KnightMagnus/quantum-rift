@@ -130,11 +130,11 @@ const SEATS_BY_HULL: Record<string, number> = {
 };
 
 export function passengerSeats(
-  H: Pick<ShipHullAsset, 'id'> | undefined | null,
+  height: Pick<ShipHullAsset, 'id'> | undefined | null,
   loadout?: Partial<Pick<ShipLoadout, 'outfits'>>,
 ) {
-  if (!H) return 0;
-  const base = SEATS_BY_HULL[H.id] ?? 2;
+  if (!height) return 0;
+  const base = SEATS_BY_HULL[height.id] ?? 2;
   const packs = Math.max(0, Math.floor(Number(loadout?.outfits?.[PASSENGER_PACK_ID]) || 0));
   return base + packs * PASSENGER_PACK_SEATS;
 }
@@ -143,6 +143,6 @@ export function occupiedPassengerSeats(
   missions: { type: string; paid?: boolean; pax?: number }[] = [],
 ) {
   return missions
-    .filter((m) => m.type === 'passenger' && !m.paid)
-    .reduce((total, m) => total + Math.max(0, Number(m.pax) || 0), 0);
+    .filter((message) => message.type === 'passenger' && !message.paid)
+    .reduce((total, message) => total + Math.max(0, Number(message.pax) || 0), 0);
 }

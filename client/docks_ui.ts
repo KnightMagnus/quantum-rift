@@ -19,7 +19,7 @@ export type DocksState = {
   stored: DockShip[];
 };
 
-import { escapeHtml as esc } from './html.ts';
+import { escapeHtml as escapeHtml2 } from './html.ts';
 import { artworkUrl } from './artwork.ts';
 // Docks: the DOCKS screen at your Personal Station, the dock switcher by the DEPART button, and the sidebar line.
 import { ROLES, RARITY } from '../shared/hangar.ts';
@@ -59,198 +59,208 @@ import { credits, repairBasis } from '../shared/rules.ts';
 
 /**
  * Returns remaining time in minutes until the specified timestamp.
- * @param {number} t Completion timestamp in ms
+ * @param {number} time Completion timestamp in ms
  * @returns {number} Remaining whole minutes (at least 1)
  */
-const mins = (t: number): number => Math.max(1, Math.ceil((t - Date.now()) / 60000));
+const minutes = (time: number): number => Math.max(1, Math.ceil((time - Date.now()) / 60000));
 
 /**
  * Renders a visual slot card for a lead or wingmate ship.
- * @param {ClientGameState} G Game state object
- * @param {DockShip|null} s Ship data
+ * @param {ClientGameState} clientGameState Game state object
+ * @param {DockShip|null} dockShip Ship data
  * @param {string} empty Placeholder text when slot is empty
  * @returns {string} HTML markup
  */
-function shipBox(G: ClientGameState, s: DockShip | null, empty: string): string {
-  if (!s)
+function shipBox(
+  clientGameState: ClientGameState,
+  dockShip: DockShip | null,
+  empty: string,
+): string {
+  if (!dockShip)
     return `<div class="dslot empty"><div class="dimg"></div><div class="dsn dim">${empty}</div></div>`;
-  const H = G.A!.ships[s.hull] || {};
-  return `<div class="dslot${s.repairT ? ' repair' : ''}"><img class="dimg" src="${artworkUrl(H.img!)}"><div class="dsn"><b>${esc(H.name)}</b><div class="dim small">"${esc(s.name)}"${s.flying ? ' · flying' : ''}${s.repairT ? ` · <span class="rep">repairs ${mins(s.repairT)} min</span>` : ''}</div></div></div>`;
+  const shipHullAsset = clientGameState.A!.ships[dockShip.hull] || {};
+  return `<div class="dslot${dockShip.repairT ? ' repair' : ''}"><img class="dimg" src="${artworkUrl(shipHullAsset.img!)}"><div class="dsn"><b>${escapeHtml2(shipHullAsset.name)}</b><div class="dim small">"${escapeHtml2(dockShip.name)}"${dockShip.flying ? ' · flying' : ''}${dockShip.repairT ? ` · <span class="rep">repairs ${minutes(dockShip.repairT)} min</span>` : ''}</div></div></div>`;
 }
 
 /**
  * Renders a drop-down selector of stored ships for an individual dock slot.
- * @param {ClientGameState} G Game state object
- * @param {DocksState} D Docks state
- * @param {number} k Dock index
+ * @param {ClientGameState} clientGameState Game state object
+ * @param {DocksState} docksState Docks state
+ * @param {number} entryKey Dock index
  * @param {string|number} slot Slot identifier ('lead' or wingmate index)
- * @param {DockShip|null} cur Currently assigned ship
+ * @param {DockShip|null} dockShip Currently assigned ship
  * @param {boolean} interactive Whether controls are interactive
  * @returns {string} HTML markup
  */
 function shipPick(
-  G: ClientGameState,
-  D: DocksState,
-  k: number,
+  clientGameState: ClientGameState,
+  docksState: DocksState,
+  entryKey: number,
   slot: string | number,
-  cur: DockShip | null,
+  dockShip: DockShip | null,
   interactive?: boolean,
 ): string {
   const label = (ship: DockShip) => {
-    const hull = (G.A!.ships[ship.hull] || {}).name;
+    const hull = (clientGameState.A!.ships[ship.hull] || {}).name;
     const custom = ship.name?.trim();
-    return esc(hull) + (custom && custom !== hull ? ` "${esc(ship.name)}"` : '');
+    return escapeHtml2(hull) + (custom && custom !== hull ? ` "${escapeHtml2(ship.name)}"` : '');
   };
   if (!interactive) return '';
-  const opts = D.stored
-    .filter((x) => slot !== 'lead' || !x.wingOnly)
-    .map((x) => {
-      return `<option value="${esc(x.uid)}"${cur && cur.uid === x.uid ? ' selected' : ''}>${label(x)}${x.at ? ` (${esc(x.at)})` : ''}</option>`;
+  const join2 = docksState.stored
+    .filter((dockShip) => slot !== 'lead' || !dockShip.wingOnly)
+    .map((dockShip2) => {
+      return `<option value="${escapeHtml2(dockShip2.uid)}"${dockShip && dockShip.uid === dockShip2.uid ? ' selected' : ''}>${label(dockShip2)}${dockShip2.at ? ` (${escapeHtml2(dockShip2.at)})` : ''}</option>`;
     })
     .join('');
   const curOpt =
-    cur && cur.flying
-      ? `<option value="${esc(cur.uid)}" selected>${label(cur)} (flying)</option>`
+    dockShip && dockShip.flying
+      ? `<option value="${escapeHtml2(dockShip.uid)}" selected>${label(dockShip)} (flying)</option>`
       : '';
-  return `<select class="dpick" data-dk="${k}" data-slot="${slot}"><option value="">${cur ? '— empty this slot —' : '— choose a stored ship —'}</option>${curOpt}${opts}</select>`;
+  return `<select class="dpick" data-dk="${entryKey}" data-slot="${slot}"><option value="">${dockShip ? '— empty this slot —' : '— choose a stored ship —'}</option>${curOpt}${join2}</select>`;
 }
 
 /**
  * Renders an officer assignment selector for a wingmate captain or crew role.
- * @param {ClientGameState} G Game state object
- * @param {number} k Dock index
- * @param {number} w Wing slot index
+ * @param {ClientGameState} clientGameState Game state object
+ * @param {number} entryKey Dock index
+ * @param {number} width Wing slot index
  * @param {'cap'|'crew'} role Officer assignment role
- * @param {number|string|null} oid Assigned officer ID
+ * @param {number|string|null} officerId Assigned officer ID
  * @param {boolean} interactive Whether controls are interactive
  * @returns {string} HTML markup
  */
 function crewPick(
-  G: ClientGameState,
-  k: number,
-  w: number,
+  clientGameState: ClientGameState,
+  entryKey: number,
+  width: number,
   role: 'cap' | 'crew',
-  oid: number | string | null | undefined,
+  officerId: number | string | null | undefined,
   interactive?: boolean,
 ): string {
-  const y = G.you!,
-    officer = y.officers.find((x) => x.id === oid);
+  const playerPayload = clientGameState.you!,
+    officer = playerPayload.officers.find((officerRecord) => officerRecord.id === officerId);
   if (!interactive)
-    return `<span class="dim small">${role === 'cap' ? 'Captain' : 'Crew'}: ${officer ? esc(officer.name) : 'none'}</span>`;
-  const opts = y.officers
+    return `<span class="dim small">${role === 'cap' ? 'Captain' : 'Crew'}: ${officer ? escapeHtml2(officer.name) : 'none'}</span>`;
+  const join2 = playerPayload.officers
     .map(
-      (x) =>
-        `<option value="${x.id}"${x.id === oid ? ' selected' : ''}>${esc(x.name)} · ${RARITY[x.rarity].name} ${ROLES[x.role].name} Lv ${x.lv}</option>`,
+      (officerRecord) =>
+        `<option value="${officerRecord.id}"${officerRecord.id === officerId ? ' selected' : ''}>${escapeHtml2(officerRecord.name)} · ${RARITY[officerRecord.rarity].name} ${ROLES[officerRecord.role].name} Lv ${officerRecord.lv}</option>`,
     )
     .join('');
-  return `<label class="dcrew"><span>${role === 'cap' ? 'CAPTAIN' : 'CREW'}</span><select data-dk="${k}" data-w="${w}" data-role="${role}"><option value="">none</option>${opts}</select></label>`;
+  return `<label class="dcrew"><span>${role === 'cap' ? 'CAPTAIN' : 'CREW'}</span><select data-dk="${entryKey}" data-w="${width}" data-role="${role}"><option value="">none</option>${join2}</select></label>`;
 }
 
 /**
  * Renders the full Personal Station Docks interface including bays, wingmates, and stored ships.
- * @param {ClientGameState} G Game state object
+ * @param {ClientGameState} clientGameState Game state object
  * @param {boolean} [interactive] Whether interactive buttons and select elements are enabled
  * @returns {string} HTML markup
  */
-export function docksHtml(G: ClientGameState, interactive?: boolean): string {
-  const y = G.you!,
-    D = y.docks;
-  if (!D) return '';
-  let h = `<div class="sect" style="margin-top:4px">DOCKS (${D.count} of 4)</div><div class="dim small">Each dock holds a lead ship and up to two wingmates, chosen from your stored ships. You fly the lead of your <b>active</b> dock, and its wingmates fly in formation with you. Officers you assign as a wingmate's captain and crew boost that ship. More docks open as your station's Station Tier rises.</div>`;
-  h +=
+export function docksHtml(clientGameState: ClientGameState, interactive?: boolean): string {
+  const playerPayload = clientGameState.you!,
+    docksPayload = playerPayload.docks;
+  if (!docksPayload) return '';
+  let height = `<div class="sect" style="margin-top:4px">DOCKS (${docksPayload.count} of 4)</div><div class="dim small">Each dock holds a lead ship and up to two wingmates, chosen from your stored ships. You fly the lead of your <b>active</b> dock, and its wingmates fly in formation with you. Officers you assign as a wingmate's captain and crew boost that ship. More docks open as your station's Station Tier rises.</div>`;
+  height +=
     `<div class="docks">` +
-    D.list
-      .map((k, i) => {
-        const act = i === D.active;
-        return `<div class="dock${act ? ' on' : ''}"><div class="dhead"><span class="dletter">DOCK ${k.letter}</span>${act ? '<span class="dact">ACTIVE</span>' : interactive && k.lead ? `<button class="btn sm" data-act="dockgo" data-k="${i}">FLY WITH DOCK ${k.letter}</button>` : ''}</div>
-      <div class="drole">LEAD SHIP</div>${shipBox(G, k.lead, 'No lead ship')}${shipPick(G, D, i, 'lead', k.lead, interactive)}
-      ${k.wings
+    docksPayload.list
+      .map((entryKey, index) => {
+        const action = index === docksPayload.active;
+        return `<div class="dock${action ? ' on' : ''}"><div class="dhead"><span class="dletter">DOCK ${entryKey.letter}</span>${action ? '<span class="dact">ACTIVE</span>' : interactive && entryKey.lead ? `<button class="btn sm" data-act="dockgo" data-k="${index}">FLY WITH DOCK ${entryKey.letter}</button>` : ''}</div>
+      <div class="drole">LEAD SHIP</div>${shipBox(clientGameState, entryKey.lead, 'No lead ship')}${shipPick(clientGameState, docksPayload, index, 'lead', entryKey.lead, interactive)}
+      ${entryKey.wings
         .map(
           (
-            w,
-            j,
-          ) => `<div class="drole">WINGMATE ${j + 1}</div>${shipBox(G, w, 'Empty wing slot')}${shipPick(G, D, i, j, w, interactive)}
-        ${w ? `<div class="dcrews">${crewPick(G, i, j, 'cap', w.cap, interactive)}${crewPick(G, i, j, 'crew', w.crew, interactive)}</div>${w.repairT ? `<button class="btn sm" data-act="wingrep" data-uid="${w.uid}">RUSH REPAIRS ${credits(Math.round(repairBasis(G.A!, w.hull) * WING_REPAIR_COST))}</button>` : ''}` : ''}`,
+            dockShipPayload,
+            innerIndex,
+          ) => `<div class="drole">WINGMATE ${innerIndex + 1}</div>${shipBox(clientGameState, dockShipPayload, 'Empty wing slot')}${shipPick(clientGameState, docksPayload, index, innerIndex, dockShipPayload, interactive)}
+        ${dockShipPayload ? `<div class="dcrews">${crewPick(clientGameState, index, innerIndex, 'cap', dockShipPayload.cap, interactive)}${crewPick(clientGameState, index, innerIndex, 'crew', dockShipPayload.crew, interactive)}</div>${dockShipPayload.repairT ? `<button class="btn sm" data-act="wingrep" data-uid="${dockShipPayload.uid}">RUSH REPAIRS ${credits(Math.round(repairBasis(clientGameState.A!, dockShipPayload.hull) * WING_REPAIR_COST))}</button>` : ''}` : ''}`,
         )
         .join('')}
     </div>`;
       })
       .join('') +
     `</div>`;
-  if (D.count < 4)
-    h += `<div class="dim small" style="margin-top:6px">Next dock opens at Station Tier ${NEXT_DOCK_OPS[D.count]}.</div>`;
-  h += `<div class="sect">STORED SHIPS (${D.stored.length} / ${D.cap} berths)</div>`;
-  if (!D.cap)
-    h +=
+  if (docksPayload.count < 4)
+    height += `<div class="dim small" style="margin-top:6px">Next dock opens at Station Tier ${NEXT_DOCK_OPS[docksPayload.count]}.</div>`;
+  height += `<div class="sect">STORED SHIPS (${docksPayload.stored.length} / ${docksPayload.cap} berths)</div>`;
+  if (!docksPayload.cap)
+    height +=
       '<p class="dim">Your hangar opens at Station Tier 1. Ships you buy can then be sent straight to it (BUY TO HANGAR in any shipyard).</p>';
-  h +=
-    D.stored
-      .map((x) => {
-        const H = G.A!.ships[x.hull] || {};
-        return `<div class="it dstore"><img src="${artworkUrl(H.img!)}"><div style="flex:1"><b>${esc(H.name)}</b> <span class="dim">"${esc(x.name)}"</span><div class="dim small">${x.at ? `Dock ${esc(x.at)}` : 'Unassigned'}${x.wingOnly ? ' · wingmate only' : ''}${x.repairT ? ` · <span class="rep">repairs ${mins(x.repairT)} min</span>` : ''}</div></div>${interactive ? `<button class="btn sm" data-act="dock" data-op="sell" data-uid="${x.uid}">SELL</button>` : ''}</div>`;
+  height +=
+    docksPayload.stored
+      .map((dockShipPayload) => {
+        const shipHullAsset = clientGameState.A!.ships[dockShipPayload.hull] || {};
+        return `<div class="it dstore"><img src="${artworkUrl(shipHullAsset.img!)}"><div style="flex:1"><b>${escapeHtml2(shipHullAsset.name)}</b> <span class="dim">"${escapeHtml2(dockShipPayload.name)}"</span><div class="dim small">${dockShipPayload.at ? `Dock ${escapeHtml2(dockShipPayload.at)}` : 'Unassigned'}${dockShipPayload.wingOnly ? ' · wingmate only' : ''}${dockShipPayload.repairT ? ` · <span class="rep">repairs ${minutes(dockShipPayload.repairT)} min</span>` : ''}</div></div>${interactive ? `<button class="btn sm" data-act="dock" data-op="sell" data-uid="${dockShipPayload.uid}">SELL</button>` : ''}</div>`;
       })
       .join('') ||
-    (D.cap
+    (docksPayload.cap
       ? '<p class="dim small">No stored ships. Buy ships into your hangar at any shipyard, or capture them by boarding.</p>'
       : '');
-  if (y.shipless)
-    h += `<div class="dim small" style="color:#ff8a7a;margin-top:6px">You have no active ship: choose a lead ship for your active dock, or fly with another dock.</div>`;
-  return h;
+  if (playerPayload.shipless)
+    height += `<div class="dim small" style="color:#ff8a7a;margin-top:6px">You have no active ship: choose a lead ship for your active dock, or fly with another dock.</div>`;
+  return height;
 }
 
 /**
  * Renders the dock switcher chips beside the DEPART button on landing screens.
- * @param {ClientGameState} G Game state object
+ * @param {ClientGameState} clientGameState Game state object
  * @param {boolean} atHome Whether landed at personal station
  * @returns {string} HTML markup
  */
-export function dockChips(G: ClientGameState, atHome: boolean): string {
-  const D = G.you && G.you!.docks;
-  if (!D || D.count < 2) return '';
-  return `<span class="dchips"><span class="dim small">DOCK</span>${D.list.map((k, i) => `<button class="btn sm dchip${i === D.active ? ' on' : ''}" ${atHome && i !== D.active && k.lead ? `data-act="dockgo" data-k="${i}"` : 'disabled'} title="${k.lead ? esc((G.A!.ships[k.lead.hull] || {}).name) + ` + ${k.wings.filter((ship): ship is NonNullable<typeof ship> => Boolean(ship)).length} wingmate(s)` : 'No lead ship'}">${k.letter}</button>`).join('')}</span>`;
+export function dockChips(clientGameState: ClientGameState, atHome: boolean): string {
+  const docksPayload = clientGameState.you && clientGameState.you!.docks;
+  if (!docksPayload || docksPayload.count < 2) return '';
+  return `<span class="dchips"><span class="dim small">DOCK</span>${docksPayload.list.map((entryKey, index) => `<button class="btn sm dchip${index === docksPayload.active ? ' on' : ''}" ${atHome && index !== docksPayload.active && entryKey.lead ? `data-act="dockgo" data-k="${index}"` : 'disabled'} title="${entryKey.lead ? escapeHtml2((clientGameState.A!.ships[entryKey.lead.hull] || {}).name) + ` + ${entryKey.wings.filter((ship): ship is NonNullable<typeof ship> => Boolean(ship)).length} wingmate(s)` : 'No lead ship'}">${entryKey.letter}</button>`).join('')}</span>`;
 }
 
 /**
  * Renders the compact sidebar status line for active dock and wingmate health.
- * @param {ClientGameState} G Game state object
+ * @param {ClientGameState} clientGameState Game state object
  * @returns {string} HTML markup or empty string
  */
-export function dockLine(G: ClientGameState): string {
-  const D = G.you && G.you!.docks;
-  if (!D) return '';
-  const k = D.list[D.active];
-  if (!k) return '';
-  const ws = k.wings.filter((ship): ship is NonNullable<typeof ship> => Boolean(ship));
-  if (!ws.length && D.count < 2) return '';
+export function dockLine(clientGameState: ClientGameState): string {
+  const docksPayload = clientGameState.you && clientGameState.you!.docks;
+  if (!docksPayload) return '';
+  const list2 = docksPayload.list[docksPayload.active];
+  if (!list2) return '';
+  const dockShipPayloads = list2.wings.filter((ship): ship is NonNullable<typeof ship> =>
+    Boolean(ship),
+  );
+  if (!dockShipPayloads.length && docksPayload.count < 2) return '';
   return (
-    `DOCK ${k.letter}` +
-    (ws.length
+    `DOCK ${list2.letter}` +
+    (dockShipPayloads.length
       ? ' · ' +
-        ws
+        dockShipPayloads
           .map(
-            (w) =>
-              `<span class="${w.repairT ? 'rep' : 'wok'}" title="${esc(w.name)}${w.repairT ? ': under repair' : ''}">◆</span>`,
+            (dockShipPayload) =>
+              `<span class="${dockShipPayload.repairT ? 'rep' : 'wok'}" title="${escapeHtml2(dockShipPayload.name)}${dockShipPayload.repairT ? ': under repair' : ''}">◆</span>`,
           )
           .join('') +
-        ` ${ws.filter((w) => !w.repairT).length} wingmate${ws.filter((w) => !w.repairT).length === 1 ? '' : 's'}`
+        ` ${dockShipPayloads.filter((dockShipPayload) => !dockShipPayload.repairT).length} wingmate${dockShipPayloads.filter((dockShipPayload) => !dockShipPayload.repairT).length === 1 ? '' : 's'}`
       : ' · no wingmates')
   );
 }
 
 /**
  * Quoted rush repairs at landed outfitter ports. Uses the same stored ships and fee as DOCKS.
- * @param {ClientGameState} G Game state object
+ * @param {ClientGameState} clientGameState Game state object
  * @returns {string} HTML markup
  */
-export function outfitterRepairsHtml(G: ClientGameState): string {
-  const y = G.you!,
-    disabled = (y.docks?.stored || []).filter((w) => w.repairT > Date.now());
+export function outfitterRepairsHtml(clientGameState: ClientGameState): string {
+  const playerPayload = clientGameState.you!,
+    disabled = (playerPayload.docks?.stored || []).filter(
+      (dockShipPayload) => dockShipPayload.repairT > Date.now(),
+    );
   return `<div class="sect">WINGMATE REPAIRS</div><p class="dim small">Disabled wingmates repair automatically for free after ${WING_REPAIR_MIN} minutes. Pay the quoted fee to finish repairs now; the ship remains in your hangar until launch.</p>${
     disabled.length
       ? disabled
-          .map((w) => {
-            const cost = Math.round(repairBasis(G.A!, w.hull) * WING_REPAIR_COST);
-            return `<div class="kv"><span><b>${esc(w.name)}</b> · ${esc(G.A!.ships[w.hull].name)} <span class="dim small">· ${mins(w.repairT)} min remaining</span></span><button class="btn sm" data-act="outfitterrep" data-uid="${esc(w.uid)}"${y.credits < cost ? ' disabled title="Not enough credits"' : ''}>RUSH REPAIRS ${credits(cost)}</button></div>`;
+          .map((dockShipPayload) => {
+            const cost = Math.round(
+              repairBasis(clientGameState.A!, dockShipPayload.hull) * WING_REPAIR_COST,
+            );
+            return `<div class="kv"><span><b>${escapeHtml2(dockShipPayload.name)}</b> · ${escapeHtml2(clientGameState.A!.ships[dockShipPayload.hull].name)} <span class="dim small">· ${minutes(dockShipPayload.repairT)} min remaining</span></span><button class="btn sm" data-act="outfitterrep" data-uid="${escapeHtml2(dockShipPayload.uid)}"${playerPayload.credits < cost ? ' disabled title="Not enough credits"' : ''}>RUSH REPAIRS ${credits(cost)}</button></div>`;
           })
           .join('')
       : '<p class="dim small">No disabled wingmates awaiting repairs.</p>'

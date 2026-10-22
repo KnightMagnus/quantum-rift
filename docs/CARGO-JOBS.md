@@ -61,9 +61,9 @@ does not resize them or reroll their rewards.
 
 ## Verification
 
-`cargo-couriers.js` samples all 18 inner boards across 128 windows, checks real
+`cargo-couriers.ts` samples all 18 inner boards across 128 windows, checks real
 stock-hauler fit, and exercises actual acceptance, capacity/slot/duplicate/forged
 denials, exact once-only payout, high-tonnage delivery and database reload.
-`mission-ui-browser.mjs` uses a fresh 15 t captain and actual HUD buttons to accept
+`mission-ui-browser.ts` uses a fresh 15 t captain and actual HUD buttons to accept
 both small shipments while a high-tonnage contract remains correctly disabled.
 Both are registered in the canonical regression inventory and CI.

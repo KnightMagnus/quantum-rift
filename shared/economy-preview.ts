@@ -35,19 +35,28 @@ export function tradePreview({
     market.price! <= 0
   )
     return { valid: false, buy: null, sale: null, warnings: [] };
-  let buyN = Math.max(0, Math.min(amount, Math.floor(freeHold)));
-  while (buyN > 0 && buyN * purchaseUnit(market.price!, buyN, tradePct, site) > credits)
-    buyN = Math.min(
-      buyN - 1,
-      Math.floor(credits / purchaseUnit(market.price!, buyN, tradePct, site)),
+  let purchaseCount = Math.max(0, Math.min(amount, Math.floor(freeHold)));
+  while (
+    purchaseCount > 0 &&
+    purchaseCount * purchaseUnit(market.price!, purchaseCount, tradePct, site) > credits
+  )
+    purchaseCount = Math.min(
+      purchaseCount - 1,
+      Math.floor(credits / purchaseUnit(market.price!, purchaseCount, tradePct, site)),
     );
-  const saleN = Math.max(0, Math.min(amount, cargo[market.id] || 0, market.sellCap ?? Infinity));
-  const buy = { tonnes: buyN, total: buyN * purchaseUnit(market.price!, buyN, tradePct, site) };
+  const saleCount = Math.max(
+    0,
+    Math.min(amount, cargo[market.id] || 0, market.sellCap ?? Infinity),
+  );
+  const purchase = {
+    tonnes: purchaseCount,
+    total: purchaseCount * purchaseUnit(market.price!, purchaseCount, tradePct, site),
+  };
   let sale = { tonnes: 0, total: 0, grades: { common: 0, rich: 0, pure: 0 } };
-  if (saleN) {
-    const take = planTake(cargo, cargoLots, market.id, saleN);
+  if (saleCount) {
+    const take = planTake(cargo, cargoLots, market.id, saleCount);
     sale = {
-      tonnes: saleN,
+      tonnes: saleCount,
       total: saleValue(market.price!, take.grades, tradePct, site, sell),
       grades: take.grades,
     };
@@ -62,12 +71,12 @@ export function tradePreview({
         sale.grades[grade] > 0 &&
         (lots[grade] || 0) - sale.grades[grade] <
           orders
-            .filter((o) => o.cid === market.id && o.grade === grade)
-            .reduce((n, o) => n + o.qty, 0),
+            .filter((options) => options.cid === market.id && options.grade === grade)
+            .reduce((count, options) => count + options.qty, 0),
     )
   )
     warnings.push(
       'Some of this cargo is still needed for a delivery. Selling it means replacing it later.',
     );
-  return { valid: true, buy, sale, warnings };
+  return { valid: true, buy: purchase, sale, warnings };
 }

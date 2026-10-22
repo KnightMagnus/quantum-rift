@@ -1,7 +1,7 @@
 type Point = { x: number; y: number };
 import type { StarSystem as SpaceSystem, RawStellarBody as StellarBody } from './galaxy.ts';
 import type { FactionDef } from './galaxy.ts';
-import { signedXorshift32 as rng, fnv1a as hashId } from './deterministic-random.ts';
+import { signedXorshift32 as randomGenerator, fnv1a as hashId } from './deterministic-random.ts';
 /** @import { SpaceSystem, RawStellarBody as StellarBody } from '../server/game.ts' */
 /** @import { FactionDef } from './galaxy.ts' */
 
@@ -215,33 +215,38 @@ const ROMAN: string[] = ['', ' II', ' III', ' IV', ' V', ' VI'];
 
 /**
  * Generates a unique star system name consistent with the faction's linguistic theme.
- * @param {string} fac - Faction identifier.
- * @param {() => number} r - Random number generator returning [0, 1).
+ * @param {string} faction - Faction identifier.
+ * @param {() => number} radius - Random number generator returning [0, 1).
  * @param {Set<string>} used - Set of names already in use to ensure uniqueness.
  * @returns {string} Unique procedural name.
  */
-function makeName(fac: string, r: () => number, used: Set<string>): string {
-  const N = NAMES[fac];
+function makeName(faction: string, radius: () => number, used: Set<string>): string {
+  const names = NAMES[faction];
   for (let tries = 0; tries < 40; tries++) {
-    let n;
-    if (fac === 'frontier' || fac === 'deep')
-      n = N[0][Math.floor(r() * N[0].length)] + ' ' + N[1][Math.floor(r() * N[1].length)];
+    let count;
+    if (faction === 'frontier' || faction === 'deep')
+      count =
+        names[0][Math.floor(radius() * names[0].length)] +
+        ' ' +
+        names[1][Math.floor(radius() * names[1].length)];
     else {
-      n = N[0][Math.floor(r() * N[0].length)] + N[1][Math.floor(r() * N[1].length)];
-      n = n[0].toUpperCase() + n.slice(1);
-      if (r() < 0.25) n += ' ' + N[2][Math.floor(r() * N[2].length)];
+      count =
+        names[0][Math.floor(radius() * names[0].length)] +
+        names[1][Math.floor(radius() * names[1].length)];
+      count = count[0].toUpperCase() + count.slice(1);
+      if (radius() < 0.25) count += ' ' + names[2][Math.floor(radius() * names[2].length)];
     }
-    if (!used.has(n)) {
-      used.add(n);
-      return n;
+    if (!used.has(count)) {
+      used.add(count);
+      return count;
     }
   }
-  const base = N[1][Math.floor(r() * N[1].length)];
-  for (const s of ROMAN) {
-    const n = base[0].toUpperCase() + base.slice(1) + s;
-    if (!used.has(n)) {
-      used.add(n);
-      return n;
+  const base = names[1][Math.floor(radius() * names[1].length)];
+  for (const rOMAN of ROMAN) {
+    const count = base[0].toUpperCase() + base.slice(1) + rOMAN;
+    if (!used.has(count)) {
+      used.add(count);
+      return count;
     }
   }
   return 'Uncharted ' + used.size;
@@ -249,11 +254,11 @@ function makeName(fac: string, r: () => number, used: Set<string>): string {
 
 /**
  * Converts a display name into a kebab-case identifier slug.
- * @param {string} s - Input text.
+ * @param {string} state - Input text.
  * @returns {string} Clean URL/ID slug string.
  */
-const slug = (s: string) =>
-  s
+const slug = (state: string) =>
+  state
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
@@ -475,122 +480,150 @@ const FIELD_ORE: Record<string, string[]> = {
 
 /**
  * Procedurally generates a celestial body (planet, station, or moon) within a star system.
- * @param {SpaceSystem} sys - Parent star system object.
- * @param {string} fac - System faction identifier.
- * @param {() => number} r - Random number generator returning [0, 1).
- * @param {number} k - Orbit index of this stellar body.
+ * @param {SpaceSystem} starSystem - Parent star system object.
+ * @param {string} faction - System faction identifier.
+ * @param {() => number} radius2 - Random number generator returning [0, 1).
+ * @param {number} entryKey - Orbit index of this stellar body.
  * @param {Set<string>} usedIds - Set of existing stellar IDs to avoid collisions.
  * @returns {StellarBody} Complete stellar body definition.
  */
 function makeStellar(
-  sys: SpaceSystem,
-  fac: string,
-  r: () => number,
-  k: number,
+  starSystem: SpaceSystem,
+  faction: string,
+  radius2: () => number,
+  entryKey: number,
   usedIds: Set<string>,
 ): StellarBody {
-  const roll = r(),
+  const roll = radius2(),
     kind = roll < 0.45 ? 'planet' : roll < 0.8 ? 'station' : 'moon';
-  const suff = KINDS[kind][Math.floor(r() * KINDS[kind].length)];
-  const nm =
-    k === 0 && kind === 'planet' && !suff
-      ? sys.name
-      : sys.name.split(' ')[0] + (suff ? ' ' + suff : ' ' + ['Alpha', 'Beta', 'Gamma'][k]);
-  let id = slug(nm);
-  while (usedIds.has(id)) id += '-' + k;
-  usedIds.add(id);
-  const pal = PALETTE[fac],
-    tech =
-      fac === 'umbral' || fac === 'deep'
+  const kinds = KINDS[kind][Math.floor(radius2() * KINDS[kind].length)];
+  const name2 =
+    entryKey === 0 && kind === 'planet' && !kinds
+      ? starSystem.name
+      : starSystem.name.split(' ')[0] +
+        (kinds ? ' ' + kinds : ' ' + ['Alpha', 'Beta', 'Gamma'][entryKey]);
+  let slug2 = slug(name2);
+  while (usedIds.has(slug2)) slug2 += '-' + entryKey;
+  usedIds.add(slug2);
+  const palette = PALETTE[faction],
+    technology =
+      faction === 'umbral' || faction === 'deep'
         ? 0
         : Math.max(
             1,
             Math.min(
               7,
-              Math.round(2 + r() * 4 + (fac === 'quantum' ? 1 : 0) - (fac === 'frontier' ? 1 : 0)),
+              Math.round(
+                2 +
+                  radius2() * 4 +
+                  (faction === 'quantum' ? 1 : 0) -
+                  (faction === 'frontier' ? 1 : 0),
+              ),
             ),
           );
-  let svc = 'LTB';
-  if (tech >= 3) svc += 'O';
-  if (tech >= 4 && r() < 0.45) svc += 'Y';
-  if (fac === 'umbral' || fac === 'deep') svc = r() < 0.35 && fac === 'deep' ? 'LT' : '';
+  let service = 'LTB';
+  if (technology >= 3) service += 'O';
+  if (technology >= 4 && radius2() < 0.45) service += 'Y';
+  if (faction === 'umbral' || faction === 'deep')
+    service = radius2() < 0.35 && faction === 'deep' ? 'LT' : '';
   const prices: Record<string, number> = {};
-  const [prod, want] = FAVOUR[fac] || [[], []];
-  for (const c of prod) if (r() < 0.75) prices[c] = -1;
-  for (const c of want) if (r() < 0.75) prices[c] = 1;
+  const [production, want] = FAVOUR[faction] || [[], []];
+  for (const production2 of production) if (radius2() < 0.75) prices[production2] = -1;
+  for (const want2 of want) if (radius2() < 0.75) prices[want2] = 1;
   while (Object.keys(prices).length < 4) {
-    const c = TRADEABLE[Math.floor(r() * TRADEABLE.length)];
-    if (!(c in prices)) prices[c] = Math.floor(r() * 3) - 1;
+    const tradeable = TRADEABLE[Math.floor(radius2() * TRADEABLE.length)];
+    if (!(tradeable in prices)) prices[tradeable] = Math.floor(radius2() * 3) - 1;
   }
   const radius =
     kind === 'planet'
-      ? 110 + Math.floor(r() * 60)
+      ? 110 + Math.floor(radius2() * 60)
       : kind === 'station'
-        ? 55 + Math.floor(r() * 30)
-        : 65 + Math.floor(r() * 30);
-  const ang = r() * Math.PI * 2,
-    dist = 300 + r() * 700 + k * 350;
-  const D = DESC[fac][kind];
-  const desc = D[Math.floor(r() * D.length)];
-  const st: StellarBody = {
-    id,
-    name: nm,
+        ? 55 + Math.floor(radius2() * 30)
+        : 65 + Math.floor(radius2() * 30);
+  const angle = radius2() * Math.PI * 2,
+    distance = 300 + radius2() * 700 + entryKey * 350;
+  const desc2 = DESC[faction][kind];
+  const desc22 = desc2[Math.floor(radius2() * desc2.length)];
+  const rawStellarBody: StellarBody = {
+    id: slug2,
+    name: name2,
     kind,
-    color: pal[Math.floor(r() * pal.length)],
+    color: palette[Math.floor(radius2() * palette.length)],
     r: radius,
-    x: Math.round(Math.cos(ang) * dist),
-    y: Math.round(Math.sin(ang) * dist),
-    svc,
-    tech,
+    x: Math.round(Math.cos(angle) * distance),
+    y: Math.round(Math.sin(angle) * distance),
+    svc: service,
+    tech: technology,
     prices,
-    desc,
+    desc: desc22,
     gen: true,
   };
-  if (fac === 'hollow' || fac === 'frontier' || fac === 'deep') st.outlaw = true; // (Farside worlds keep their own law)
-  if (!svc) delete st.prices;
-  return st;
+  if (faction === 'hollow' || faction === 'frontier' || faction === 'deep')
+    rawStellarBody.outlaw = true; // (Farside worlds keep their own law)
+  if (!service) delete rawStellarBody.prices;
+  return rawStellarBody;
 }
 
 // ------------------------------------------------------------------ geometry
 
 /**
  * Determines whether two 2D line segments properly intersect (excluding shared endpoints).
- * @param {{ x: number, y: number }} a - First endpoint of segment 1.
- * @param {{ x: number, y: number }} b - Second endpoint of segment 1.
- * @param {{ x: number, y: number }} c - First endpoint of segment 2.
- * @param {{ x: number, y: number }} d - Second endpoint of segment 2.
+ * @param {{ x: number, y: number }} firstValue - First endpoint of segment 1.
+ * @param {{ x: number, y: number }} secondValue - Second endpoint of segment 1.
+ * @param {{ x: number, y: number }} component - First endpoint of segment 2.
+ * @param {{ x: number, y: number }} distance - Second endpoint of segment 2.
  * @returns {boolean} True if segments properly cross.
  */
 function segCross(
-  a: { x: number; y: number },
-  b: { x: number; y: number },
-  c: { x: number; y: number },
-  d: { x: number; y: number },
+  firstValue: { x: number; y: number },
+  secondValue: { x: number; y: number },
+  component: { x: number; y: number },
+  distance: { x: number; y: number },
 ): boolean {
   // proper intersection of segments ab and cd (shared endpoints don't count)
-  if (a === c || a === d || b === c || b === d) return false;
-  const o = (p: Point, q: Point, r: Point) =>
-    Math.sign((q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x));
-  return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b);
+  if (
+    firstValue === component ||
+    firstValue === distance ||
+    secondValue === component ||
+    secondValue === distance
+  )
+    return false;
+  const options = (point: Point, point2: Point, point3: Point) =>
+    Math.sign(
+      (point2.x - point.x) * (point3.y - point.y) - (point2.y - point.y) * (point3.x - point.x),
+    );
+  return (
+    options(firstValue, secondValue, component) !== options(firstValue, secondValue, distance) &&
+    options(component, distance, firstValue) !== options(component, distance, secondValue)
+  );
 }
 
 /**
  * Calculates the shortest Euclidean distance from a point to a 2D line segment.
- * @param {{ x: number, y: number }} p - Target point coordinates.
- * @param {{ x: number, y: number }} a - Segment start coordinates.
- * @param {{ x: number, y: number }} b - Segment end coordinates.
+ * @param {{ x: number, y: number }} position - Target point coordinates.
+ * @param {{ x: number, y: number }} firstValue - Segment start coordinates.
+ * @param {{ x: number, y: number }} secondValue - Segment end coordinates.
  * @returns {number} Shortest distance.
  */
 function segDist(
-  p: { x: number; y: number },
-  a: { x: number; y: number },
-  b: { x: number; y: number },
+  position: { x: number; y: number },
+  firstValue: { x: number; y: number },
+  secondValue: { x: number; y: number },
 ): number {
-  const dx = b.x - a.x,
-    dy = b.y - a.y,
-    L = dx * dx + dy * dy || 1,
-    t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / L));
-  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  const deltaX = secondValue.x - firstValue.x,
+    deltaY = secondValue.y - firstValue.y,
+    length = deltaX * deltaX + deltaY * deltaY || 1,
+    time = Math.max(
+      0,
+      Math.min(
+        1,
+        ((position.x - firstValue.x) * deltaX + (position.y - firstValue.y) * deltaY) / length,
+      ),
+    );
+  return Math.hypot(
+    position.x - (firstValue.x + time * deltaX),
+    position.y - (firstValue.y + time * deltaY),
+  );
 }
 
 // ------------------------------------------------------------------ main
@@ -606,51 +639,56 @@ export function expandGalaxy(
   SYSTEMS: SpaceSystem[],
   _FACTIONS: Record<string, FactionDef>,
 ): SpaceSystem[] {
-  const r = rng(GEN_SEED);
-  const CX = 495,
-    CY = 370,
+  const radius = randomGenerator(GEN_SEED);
+  const centerX = 495,
+    centerY = 370,
     SCALE = 1.7;
   for (const system of SYSTEMS) {
-    system.x = Math.round(CX + (system.x - CX) * SCALE);
-    system.y = Math.round(CY + (system.y - CY) * SCALE);
+    system.x = Math.round(centerX + (system.x - centerX) * SCALE);
+    system.y = Math.round(centerY + (system.y - centerY) * SCALE);
     system.anchor = true;
   }
   const anchors = SYSTEMS.slice(),
-    byId = Object.fromEntries(SYSTEMS.map((system) => [system.id, system]));
+    fromEntries2 = Object.fromEntries(SYSTEMS.map((system) => [system.id, system]));
   const anchorEdges: [SpaceSystem, SpaceSystem][] = [];
   for (const system of anchors)
-    for (const l of system.links) if (l > system.id) anchorEdges.push([system, byId[l]]);
-  const RX = 1080,
-    RY = 900,
-    umbra = byId.umbra;
-  const deepDir = Math.atan2(umbra.y - CY, umbra.x - CX);
+    for (const link of system.links)
+      if (link > system.id) anchorEdges.push([system, fromEntries2[link]]);
+  const relativeX = 1080,
+    relativeY = 900,
+    umbra = fromEntries2.umbra;
+  const deepDir = Math.atan2(umbra.y - centerY, umbra.x - centerX);
   // Mitchell's best-candidate sampling: even spacing, no clumps
-  const pts = anchors.map((system) => ({ x: system.x, y: system.y }));
+  const points = anchors.map((system) => ({ x: system.x, y: system.y }));
   const want = TOTAL - anchors.length,
-    out: { x: number; y: number }[] = [];
-  while (out.length < want) {
+    result: { x: number; y: number }[] = [];
+  while (result.length < want) {
     let best = null,
-      bd = -1;
-    for (let c = 0; c < 30; c++) {
-      const a = r() * Math.PI * 2,
-        rr = Math.sqrt(r()),
-        p = { x: CX + Math.cos(a) * RX * rr, y: CY + Math.sin(a) * RY * rr };
-      let d = Infinity;
-      for (const q of pts) {
-        const e = Math.hypot(p.x - q.x, p.y - q.y);
-        if (e < d) d = e;
+      body = -1;
+    for (let component = 0; component < 30; component++) {
+      const firstValue = radius() * Math.PI * 2,
+        sqrt2 = Math.sqrt(radius()),
+        position = {
+          x: centerX + Math.cos(firstValue) * relativeX * sqrt2,
+          y: centerY + Math.sin(firstValue) * relativeY * sqrt2,
+        };
+      let infinity = Infinity;
+      for (const point of points) {
+        const event = Math.hypot(position.x - point.x, position.y - point.y);
+        if (event < infinity) infinity = event;
       }
       let clear = Infinity;
-      for (const [u, v] of anchorEdges) clear = Math.min(clear, segDist(p, u, v));
+      for (const [starSystem, starSystem2] of anchorEdges)
+        clear = Math.min(clear, segDist(position, starSystem, starSystem2));
       if (clear < 28) continue;
-      if (d > bd) {
-        bd = d;
-        best = p;
+      if (infinity > body) {
+        body = infinity;
+        best = position;
       }
     }
     if (!best) continue;
-    pts.push(best);
-    out.push(best);
+    points.push(best);
+    result.push(best);
   }
   // territories
   const used = new Set(SYSTEMS.map((system) => system.name)),
@@ -676,18 +714,26 @@ export function expandGalaxy(
     sarn: 14,
     thalassi: 14,
   };
-  const cnt: Record<string, number> = {};
-  for (const system of anchors) cnt[system.faction] = (cnt[system.faction] || 0) + 1;
-  const cls = out.map((p) => {
-    const rim = Math.hypot((p.x - CX) / RX, (p.y - CY) / RY);
-    const ang = Math.atan2(p.y - CY, p.x - CX),
-      da = Math.abs(Math.atan2(Math.sin(ang - deepDir), Math.cos(ang - deepDir)));
-    return { rim, fac: rim > 0.78 && da < 0.55 ? 'deep' : rim > 0.97 ? 'frontier' : null };
+  const count: Record<string, number> = {};
+  for (const system of anchors) count[system.faction] = (count[system.faction] || 0) + 1;
+  const className = result.map((position) => {
+    const rimLighting = Math.hypot(
+      (position.x - centerX) / relativeX,
+      (position.y - centerY) / relativeY,
+    );
+    const atan = Math.atan2(position.y - centerY, position.x - centerX),
+      angleDelta = Math.abs(Math.atan2(Math.sin(atan - deepDir), Math.cos(atan - deepDir)));
+    return {
+      rim: rimLighting,
+      fac:
+        rimLighting > 0.78 && angleDelta < 0.55 ? 'deep' : rimLighting > 0.97 ? 'frontier' : null,
+    };
   });
   // round-robin: every power under quota claims the free point closest to its territory so far (anchors + claimed points),
   // so boxed-in core powers grow outward instead of being starved by their neighbours
-  const terr: Record<string, { x: number; y: number }[]> = {};
-  for (const system of anchors) (terr[system.faction] = terr[system.faction] || []).push(system);
+  const terrain: Record<string, { x: number; y: number }[]> = {};
+  for (const system of anchors)
+    (terrain[system.faction] = terrain[system.faction] || []).push(system);
   const ORDER = [
     'quantum',
     'spacer',
@@ -702,147 +748,160 @@ export function expandGalaxy(
     'quevari',
   ];
   for (let round = 0; round < 60; round++) {
-    let any = false;
-    for (const f of ORDER) {
-      if ((cnt[f] || 0) >= TARGET[f]) continue;
+    let hasAnyMatch = false;
+    for (const oRDER of ORDER) {
+      if ((count[oRDER] || 0) >= TARGET[oRDER]) continue;
       let best = -1,
-        bd = f === 'quevari' ? 260 : round > 14 ? 480 : 330;
-      out.forEach((p, i) => {
-        if (cls[i].fac) return;
-        for (const q of terr[f]) {
-          const d = Math.hypot(p.x - q.x, p.y - q.y);
-          if (d < bd) {
-            bd = d;
-            best = i;
+        body = oRDER === 'quevari' ? 260 : round > 14 ? 480 : 330;
+      result.forEach((position, index) => {
+        if (className[index].fac) return;
+        for (const terrain2 of terrain[oRDER]) {
+          const distance = Math.hypot(position.x - terrain2.x, position.y - terrain2.y);
+          if (distance < body) {
+            body = distance;
+            best = index;
           }
         }
       });
       if (best < 0) continue;
-      cls[best].fac = f;
-      cnt[f] = (cnt[f] || 0) + 1;
-      terr[f].push(out[best]);
-      any = true;
+      className[best].fac = oRDER;
+      count[oRDER] = (count[oRDER] || 0) + 1;
+      terrain[oRDER].push(result[best]);
+      hasAnyMatch = true;
     }
-    if (!any && round > 14) break;
+    if (!hasAnyMatch && round > 14) break;
   }
-  for (const c of cls) if (!c.fac) c.fac = 'frontier';
-  for (let i = 0; i < out.length; i++) {
-    const p = out[i],
-      { fac, rim } = cls[i];
-    const name = makeName(fac!, r, used);
-    let id = slug(name);
-    while (usedIds.has(id) || byId[id]) id += '-x';
-    usedIds.add(id);
+  for (const className2 of className) if (!className2.fac) className2.fac = 'frontier';
+  for (let index = 0; index < result.length; index++) {
+    const result2 = result[index],
+      { fac: faction2, rim: rimLighting } = className[index];
+    const name = makeName(faction2!, radius, used);
+    let slug2 = slug(name);
+    while (usedIds.has(slug2) || fromEntries2[slug2]) slug2 += '-x';
+    usedIds.add(slug2);
     const danger = Math.max(
       0,
       Math.min(
         7,
-        BASE_DANGER[fac!] +
-          Math.floor(rim * 1.7) +
-          (r() < 0.25 ? 1 : 0) -
-          (fac === 'quantum' ? 1 : 0),
+        BASE_DANGER[faction2!] +
+          Math.floor(rimLighting * 1.7) +
+          (radius() < 0.25 ? 1 : 0) -
+          (faction2 === 'quantum' ? 1 : 0),
       ),
     );
-    const sys: SpaceSystem = {
-      id,
+    const starSystem: SpaceSystem = {
+      id: slug2,
       name,
-      faction: fac!,
-      x: Math.round(p.x),
-      y: Math.round(p.y),
+      faction: faction2!,
+      x: Math.round(result2.x),
+      y: Math.round(result2.y),
       links: [],
       danger,
       stellars: [],
       gen: true,
     };
-    let n = r() < 0.12 ? 0 : r() < 0.78 ? 1 : 2;
-    if (fac === 'frontier' && r() < 0.35) n = 0;
-    if (fac === 'deep') n = r() < 0.3 ? 1 : 0;
-    if (fac === 'umbral') n = r() < 0.4 ? 1 : 0;
-    for (let k = 0; k < n; k++) sys.stellars.push(makeStellar(sys, fac!, r, k, usedIds));
-    SYSTEMS.push(sys);
-    byId[id] = sys;
-    added.push(sys);
+    let count = radius() < 0.12 ? 0 : radius() < 0.78 ? 1 : 2;
+    if (faction2 === 'frontier' && radius() < 0.35) count = 0;
+    if (faction2 === 'deep') count = radius() < 0.3 ? 1 : 0;
+    if (faction2 === 'umbral') count = radius() < 0.4 ? 1 : 0;
+    for (let entryKey = 0; entryKey < count; entryKey++)
+      starSystem.stellars.push(makeStellar(starSystem, faction2!, radius, entryKey, usedIds));
+    SYSTEMS.push(starSystem);
+    fromEntries2[slug2] = starSystem;
+    added.push(starSystem);
   }
   // hyperspace routes: keep the anchor routes, then add the shortest non-crossing routes until everything is connected
-  const edges: [SpaceSystem, SpaceSystem][] = anchorEdges.map(([a, b]) => [a, b]);
-  const deg = new Map(SYSTEMS.map((system) => [system, system.links.length]));
+  const edges: [SpaceSystem, SpaceSystem][] = anchorEdges.map(([starSystem, starSystem5]) => [
+    starSystem,
+    starSystem5,
+  ]);
+  const degrees = new Map(SYSTEMS.map((system) => [system, system.links.length]));
   const parent = new Map(SYSTEMS.map((system) => [system, system]));
-  const find = (s: SpaceSystem): SpaceSystem => {
-    while (parent.get(s) !== s) {
-      parent.set(s, parent.get(parent.get(s)!)!);
-      s = parent.get(s)!;
+  const find = (starSystem: SpaceSystem): SpaceSystem => {
+    while (parent.get(starSystem) !== starSystem) {
+      parent.set(starSystem, parent.get(parent.get(starSystem)!)!);
+      starSystem = parent.get(starSystem)!;
     }
-    return s;
+    return starSystem;
   };
-  for (const [a, b] of edges) parent.set(find(a), find(b));
-  const cand: [number, SpaceSystem, SpaceSystem][] = [];
-  for (let i = 0; i < SYSTEMS.length; i++) {
-    const leftSystem = SYSTEMS[i];
+  for (const [starSystem, starSystem5] of edges) parent.set(find(starSystem), find(starSystem5));
+  const candidate: [number, SpaceSystem, SpaceSystem][] = [];
+  for (let index = 0; index < SYSTEMS.length; index++) {
+    const leftSystem = SYSTEMS[index];
     const near = SYSTEMS.map((rightSystem): [number, SpaceSystem] => [
       Math.hypot(leftSystem.x - rightSystem.x, leftSystem.y - rightSystem.y),
       rightSystem,
     ])
-      .filter(([d, b]) => b !== leftSystem && d < 230)
-      .sort((x, y) => x[0] - y[0])
+      .filter(([distance, starSystem]) => starSystem !== leftSystem && distance < 230)
+      .sort((positionX, positionY) => positionX[0] - positionY[0])
       .slice(0, 6);
-    for (const [d, b] of near) if (leftSystem.id < b.id) cand.push([d, leftSystem, b]);
+    for (const [distance, starSystem] of near)
+      if (leftSystem.id < starSystem.id) candidate.push([distance, leftSystem, starSystem]);
   }
-  cand.sort((x, y) => x[0] - y[0]);
-  const link = (a: SpaceSystem, b: SpaceSystem) => {
-    a.links.push(b.id);
-    b.links.push(a.id);
-    edges.push([a, b]);
-    deg.set(a, deg.get(a)! + 1);
-    deg.set(b, deg.get(b)! + 1);
-    parent.set(find(a), find(b));
+  candidate.sort((positionX, positionY) => positionX[0] - positionY[0]);
+  const link = (starSystem: SpaceSystem, starSystem8: SpaceSystem) => {
+    starSystem.links.push(starSystem8.id);
+    starSystem8.links.push(starSystem.id);
+    edges.push([starSystem, starSystem8]);
+    degrees.set(starSystem, degrees.get(starSystem)! + 1);
+    degrees.set(starSystem8, degrees.get(starSystem8)! + 1);
+    parent.set(find(starSystem), find(starSystem8));
   };
   for (const pass of [0, 1]) {
-    for (const [d, a, b] of cand) {
-      if (a.links.includes(b.id)) continue;
-      if (a.anchor && b.anchor) continue; // anchor-to-anchor routes are hand-made
-      const joins = find(a) !== find(b);
-      const maxDeg = (s: SpaceSystem) => (s.anchor ? 6 : 4);
-      if (deg.get(a)! >= maxDeg(a) || deg.get(b)! >= maxDeg(b)) {
+    for (const [distance, starSystem, starSystem8] of candidate) {
+      if (starSystem.links.includes(starSystem8.id)) continue;
+      if (starSystem.anchor && starSystem8.anchor) continue; // anchor-to-anchor routes are hand-made
+      const joins = find(starSystem) !== find(starSystem8);
+      const maxDeg = (starSystem9: SpaceSystem) => (starSystem9.anchor ? 6 : 4);
+      if (
+        degrees.get(starSystem)! >= maxDeg(starSystem) ||
+        degrees.get(starSystem8)! >= maxDeg(starSystem8)
+      ) {
         if (!joins || pass === 0) continue;
       }
-      if (!joins && (pass === 1 || r() > 0.6 || d > 170)) continue;
-      if (edges.some(([u, v]) => segCross(a, b, u, v))) continue;
-      link(a, b);
+      if (!joins && (pass === 1 || radius() > 0.6 || distance > 170)) continue;
+      if (
+        edges.some(([starSystem9, starSystem10]) =>
+          segCross(starSystem, starSystem8, starSystem9, starSystem10),
+        )
+      )
+        continue;
+      link(starSystem, starSystem8);
     }
   }
   // anything still cut off gets its shortest route, crossing or not
   for (let guard = 0; guard < 50; guard++) {
-    const root = find(byId.qgate),
+    const root = find(fromEntries2.qgate),
       lone = SYSTEMS.filter((system) => find(system) !== root);
     if (!lone.length) break;
     let best: [number, SpaceSystem, SpaceSystem] | null = null;
     for (const leftSystem of lone)
       for (const rightSystem of SYSTEMS)
         if (find(rightSystem) === root) {
-          const d = Math.hypot(leftSystem.x - rightSystem.x, leftSystem.y - rightSystem.y);
-          if (!best || d < best[0]) best = [d, leftSystem, rightSystem];
+          const distance = Math.hypot(leftSystem.x - rightSystem.x, leftSystem.y - rightSystem.y);
+          if (!best || distance < best[0]) best = [distance, leftSystem, rightSystem];
         }
     link(best![1], best![2]);
   }
   // asteroid fields and gas clouds (mining nodes)
   for (const system of SYSTEMS) {
     const kinds = FIELD_ORE[system.faction] || ['ore', 'gas'];
-    let n = system.faction === 'quantum' ? (r() < 0.3 ? 1 : 0) : r() < 0.55 ? 1 : 0;
+    let count = system.faction === 'quantum' ? (radius() < 0.3 ? 1 : 0) : radius() < 0.55 ? 1 : 0;
     if (system.faction === 'korrund' || system.faction === 'frontier' || system.faction === 'deep')
-      n += r() < 0.6 ? 1 : 0;
-    if (!system.stellars.length) n = Math.max(1, n);
+      count += radius() < 0.6 ? 1 : 0;
+    if (!system.stellars.length) count = Math.max(1, count);
     system.fields = [];
-    for (let k = 0; k < n; k++) {
-      const a = r() * Math.PI * 2,
-        d = 900 + r() * 900;
+    for (let entryKey = 0; entryKey < count; entryKey++) {
+      const firstValue = radius() * Math.PI * 2,
+        distance = 900 + radius() * 900;
       system.fields.push({
-        id: `${system.id}-f${k}`,
-        x: Math.round(Math.cos(a) * d),
-        y: Math.round(Math.sin(a) * d),
-        r: 260 + Math.round(r() * 200),
-        ore: kinds[Math.floor(r() * kinds.length)],
-        rich: Math.min(3, 1 + Math.floor((system.danger + r() * 3) / 3)),
-        rocks: 7 + Math.floor(r() * 7),
+        id: `${system.id}-f${entryKey}`,
+        x: Math.round(Math.cos(firstValue) * distance),
+        y: Math.round(Math.sin(firstValue) * distance),
+        r: 260 + Math.round(radius() * 200),
+        ore: kinds[Math.floor(radius() * kinds.length)],
+        rich: Math.min(3, 1 + Math.floor((system.danger + radius() * 3) / 3)),
+        rocks: 7 + Math.floor(radius() * 7),
       });
     }
   }
@@ -852,32 +911,37 @@ export function expandGalaxy(
 /**
  * Selects candidate derelict station hull locations in generated Frontier space.
  * @param {SpaceSystem[]} SYSTEMS - Generated star systems array.
- * @param {number} [n=10] - Number of sites to select.
+ * @param {number} [count=10] - Number of sites to select.
  * @returns {Array<[string, string, number, number]>} Array of site tuples [siteId, systemId, x, y].
  */
 // additional claimable station hulls in Frontier space (chosen deterministically from the generated systems)
 export function frontierSites(
   SYSTEMS: SpaceSystem[],
-  n: number = 10,
+  count: number = 10,
 ): Array<[string, string, number, number]> {
-  const r = rng(GEN_SEED ^ 0xbeef);
+  const radius = randomGenerator(GEN_SEED ^ 0xbeef);
   const pool = SYSTEMS.filter(
     (system) => system.gen && system.faction === 'frontier' && system.stellars.length <= 1,
   );
-  const out: [string, string, number, number][] = [];
-  while (out.length < n && pool.length) {
-    const s = pool.splice(Math.floor(r() * pool.length), 1)[0];
+  const result: [string, string, number, number][] = [];
+  while (result.length < count && pool.length) {
+    const starSystem = pool.splice(Math.floor(radius() * pool.length), 1)[0];
     if (
-      out.some((o) => {
-        const system = SYSTEMS.find((x) => x.id === o[1]);
-        return Math.hypot(system!.x - s.x, system!.y - s.y) < 260;
+      result.some((options) => {
+        const system = SYSTEMS.find((starSystem) => starSystem.id === options[1]);
+        return Math.hypot(system!.x - starSystem.x, system!.y - starSystem.y) < 260;
       })
     )
       continue;
-    const a = r() * Math.PI * 2;
-    out.push([`site-${s.id}`, s.id, Math.round(Math.cos(a) * 800), Math.round(Math.sin(a) * 800)]);
+    const firstValue = radius() * Math.PI * 2;
+    result.push([
+      `site-${starSystem.id}`,
+      starSystem.id,
+      Math.round(Math.cos(firstValue) * 800),
+      Math.round(Math.sin(firstValue) * 800),
+    ]);
   }
-  return out;
+  return result;
 }
 
 // ------------------------------------------------------------------ Sol and the Gateway region
@@ -932,8 +996,8 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
   sol: SpaceSystem;
   farside: SpaceSystem[];
 } {
-  const r = rng(GEN_SEED ^ 0x5011),
-    byId = Object.fromEntries(SYSTEMS.map((system) => [system.id, system]));
+  const radius = randomGenerator(GEN_SEED ^ 0x5011),
+    fromEntries2 = Object.fromEntries(SYSTEMS.map((system) => [system.id, system]));
   const used = new Set(SYSTEMS.map((system) => system.name)),
     usedIds = new Set(
       SYSTEMS.flatMap((system) => [
@@ -943,23 +1007,26 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
     );
   const edges: [SpaceSystem, SpaceSystem][] = [];
   for (const system of SYSTEMS)
-    for (const l of system.links) if (l > system.id) edges.push([system, byId[l]]);
+    for (const link of system.links) if (link > system.id) edges.push([system, fromEntries2[link]]);
   // Sol: the clear spot nearest the centre of the galaxy
-  const xs = SYSTEMS.map((system) => system.x),
-    ys = SYSTEMS.map((system) => system.y),
-    CX = (Math.min(...xs) + Math.max(...xs)) / 2,
-    CY = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const xScale = SYSTEMS.map((system) => system.x),
+    yScale = SYSTEMS.map((system) => system.y),
+    centerX = (Math.min(...xScale) + Math.max(...xScale)) / 2,
+    centerY = (Math.min(...yScale) + Math.max(...yScale)) / 2;
   let best = null;
-  for (let rad = 0; rad < 400 && !best; rad += 6)
-    for (let a = 0; a < 6.283 && !best; a += 0.21) {
-      const p = { x: CX + Math.cos(a) * rad, y: CY + Math.sin(a) * rad };
+  for (let radius = 0; radius < 400 && !best; radius += 6)
+    for (let firstValue = 0; firstValue < 6.283 && !best; firstValue += 0.21) {
+      const position = {
+        x: centerX + Math.cos(firstValue) * radius,
+        y: centerY + Math.sin(firstValue) * radius,
+      };
       if (
-        SYSTEMS.every((system) => Math.hypot(system.x - p.x, system.y - p.y) > 48) &&
-        edges.every(([u, v]) => segDist(p, u, v) > 20)
+        SYSTEMS.every((system) => Math.hypot(system.x - position.x, system.y - position.y) > 48) &&
+        edges.every(([starSystem, starSystem2]) => segDist(position, starSystem, starSystem2) > 20)
       )
-        best = p;
+        best = position;
     }
-  const sol: SpaceSystem = {
+  const starSystem: SpaceSystem = {
     id: 'sol',
     name: 'Sol',
     faction: 'quantum',
@@ -1016,46 +1083,56 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
   };
   // link Sol to its three nearest systems (non-crossing where possible)
   const near = SYSTEMS.map((system): [number, SpaceSystem] => [
-    Math.hypot(system.x - sol.x, system.y - sol.y),
+    Math.hypot(system.x - starSystem.x, system.y - starSystem.y),
     system,
-  ]).sort((a, b) => a[0] - b[0]);
-  let n = 0;
-  for (const [, s] of near) {
-    if (n >= 3) break;
-    if (n >= 2 && edges.some(([u, v]) => segCross(sol, s, u, v))) continue;
+  ]).sort((firstValue, secondValue) => firstValue[0] - secondValue[0]);
+  let count = 0;
+  for (const [, starSystem2] of near) {
+    if (count >= 3) break;
     if (
-      edges.some(([u, v]) => segCross(sol, s, u, v)) &&
-      n < 2 &&
-      near.indexOf(near.find((x) => x[1] === s)!) > 4
+      count >= 2 &&
+      edges.some(([starSystem3, starSystem4]) =>
+        segCross(starSystem, starSystem2, starSystem3, starSystem4),
+      )
     )
       continue;
-    sol.links.push(s.id);
-    s.links.push('sol');
-    n++;
+    if (
+      edges.some(([starSystem3, starSystem4]) =>
+        segCross(starSystem, starSystem2, starSystem3, starSystem4),
+      ) &&
+      count < 2 &&
+      near.indexOf(near.find((positionX) => positionX[1] === starSystem2)!) > 4
+    )
+      continue;
+    starSystem.links.push(starSystem2.id);
+    starSystem2.links.push('sol');
+    count++;
   }
-  SYSTEMS.push(sol);
+  SYSTEMS.push(starSystem);
   // Farside: off the north-west edge
-  const ox = Math.min(...xs) - 250,
-    oy = Math.min(...ys) - 30;
+  const offsetX = Math.min(...xScale) - 250,
+    offsetY = Math.min(...yScale) - 30;
   const added: SpaceSystem[] = [];
-  for (const [id, name, dx, dy, danger] of FARSIDE) {
-    const sys: SpaceSystem = {
-      id,
+  for (const [identifier, name, deltaX, deltaY, danger] of FARSIDE) {
+    const starSystem: SpaceSystem = {
+      id: identifier,
       name,
       faction: 'farside',
-      x: Math.round(ox + dx),
-      y: Math.round(oy + dy),
+      x: Math.round(offsetX + deltaX),
+      y: Math.round(offsetY + deltaY),
       links: [],
       danger,
       stellars: [],
       farside: true,
     };
-    const k = id === 'coldharbor' ? 2 : r() < 0.25 ? 0 : r() < 0.7 ? 1 : 2;
-    for (let i = 0; i < k; i++) sys.stellars.push(makeStellar(sys, 'farside', r, i, usedIds));
-    if (id === 'coldharbor') {
-      if (!sys.stellars.some((p) => p.svc!.includes('Y'))) sys.stellars[0].svc = 'LTOYB';
-      sys.gate = 'sol';
-      sys.stellars.push({
+    const entryKey = identifier === 'coldharbor' ? 2 : radius() < 0.25 ? 0 : radius() < 0.7 ? 1 : 2;
+    for (let index = 0; index < entryKey; index++)
+      starSystem.stellars.push(makeStellar(starSystem, 'farside', radius, index, usedIds));
+    if (identifier === 'coldharbor') {
+      if (!starSystem.stellars.some((rawStellarBody) => rawStellarBody.svc!.includes('Y')))
+        starSystem.stellars[0].svc = 'LTOYB';
+      starSystem.gate = 'sol';
+      starSystem.stellars.push({
         id: 'coldharbor-gate',
         name: 'The Far Gateway',
         kind: 'wormhole',
@@ -1070,33 +1147,33 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
         desc: 'The far mouth of the Sol Gateway. Through it, faintly, the light of home.',
       });
     }
-    for (const p of sys.stellars) p.outlaw = false;
-    const a = r() * 6.283,
-      d = 900 + r() * 700;
-    sys.fields =
-      r() < 0.6
+    for (const rawStellarBody of starSystem.stellars) rawStellarBody.outlaw = false;
+    const firstValue = radius() * 6.283,
+      distance = 900 + radius() * 700;
+    starSystem.fields =
+      radius() < 0.6
         ? [
             {
-              id: `${id}-f0`,
-              x: Math.round(Math.cos(a) * d),
-              y: Math.round(Math.sin(a) * d),
+              id: `${identifier}-f0`,
+              x: Math.round(Math.cos(firstValue) * distance),
+              y: Math.round(Math.sin(firstValue) * distance),
               r: 300,
-              ore: ['ore', 'shards', 'gas'][Math.floor(r() * 3)],
+              ore: ['ore', 'shards', 'gas'][Math.floor(radius() * 3)],
               rich: 1 + Math.floor(danger / 2),
               rocks: 9,
             },
           ]
         : [];
-    SYSTEMS.push(sys);
-    added.push(sys);
+    SYSTEMS.push(starSystem);
+    added.push(starSystem);
     used.add(name);
   }
-  const by = Object.fromEntries(added.map((s) => [s.id, s]));
-  for (const [a, b] of FARSIDE_LINKS) {
-    by[a].links.push(b);
-    by[b].links.push(a);
+  const fromEntries3 = Object.fromEntries(added.map((starSystem) => [starSystem.id, starSystem]));
+  for (const [firstValue, secondValue] of FARSIDE_LINKS) {
+    fromEntries3[firstValue].links.push(secondValue);
+    fromEntries3[secondValue].links.push(firstValue);
   }
-  return { sol, farside: added };
+  return { sol: starSystem, farside: added };
 }
 
 // ------------------------------------------------------------------ more moons and more asteroid fields
@@ -1144,70 +1221,81 @@ const MOON_NUM: string[] = ['I', 'II', 'III'];
 export function addMoonsAndFields(SYSTEMS: SpaceSystem[]): void {
   for (const system of SYSTEMS) {
     if (system.arena) continue;
-    const r = rng(hashId('moons:' + system.id) ^ GEN_SEED),
-      free = (x: number, y: number, rad: number, pad: number) =>
+    const radius = randomGenerator(hashId('moons:' + system.id) ^ GEN_SEED),
+      free = (positionX: number, positionY: number, radius: number, padding: number) =>
         system.stellars.every(
           (stellarBody) =>
-            Math.hypot(stellarBody.x - x, stellarBody.y - y) > (stellarBody.r || 60) + rad + pad,
+            Math.hypot(stellarBody.x - positionX, stellarBody.y - positionY) >
+            (stellarBody.r || 60) + radius + padding,
         );
     // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
-    for (const p of [...system.stellars]) {
-      if (p.kind !== 'planet' || p.hub || p.site || p.wormhole) continue;
-      const n = r() < 0.62 ? (r() < 0.3 ? 2 : 1) : 0,
+    for (const rawStellarBody of [...system.stellars]) {
+      if (
+        rawStellarBody.kind !== 'planet' ||
+        rawStellarBody.hub ||
+        rawStellarBody.site ||
+        rawStellarBody.wormhole
+      )
+        continue;
+      const count = radius() < 0.62 ? (radius() < 0.3 ? 2 : 1) : 0,
         have = system.stellars.filter((stellarBody) =>
-          stellarBody.id.startsWith(p.id + '-m'),
+          stellarBody.id.startsWith(rawStellarBody.id + '-m'),
         ).length;
-      for (let k = 0; k < n; k++) {
-        const rad = 30 + Math.round(r() * 24);
+      for (let entryKey = 0; entryKey < count; entryKey++) {
+        const radius2 = 30 + Math.round(radius() * 24);
         for (let tries = 0; tries < 12; tries++) {
-          const a = r() * Math.PI * 2,
-            d = (p.r || 120) + 170 + r() * 160 + k * 90,
-            x = Math.round(p.x + Math.cos(a) * d),
-            y = Math.round(p.y + Math.sin(a) * d);
-          if (!free(x, y, rad, 130) || Math.hypot(x, y) > 3300) continue;
+          const firstValue = radius() * Math.PI * 2,
+            distance = (rawStellarBody.r || 120) + 170 + radius() * 160 + entryKey * 90,
+            positionX = Math.round(rawStellarBody.x + Math.cos(firstValue) * distance),
+            positionY = Math.round(rawStellarBody.y + Math.sin(firstValue) * distance);
+          if (!free(positionX, positionY, radius2, 130) || Math.hypot(positionX, positionY) > 3300)
+            continue;
           system.stellars.push({
-            id: `${p.id}-m${have + k + 1}`,
-            name: /\s([IVX]+|\d+|Prime|Alpha|Beta|Gamma|Major|Minor)$/.test(p.name)
-              ? `${p.name}-${'abc'[have + k] || have + k + 1}`
-              : `${p.name} ${MOON_NUM[have + k] || have + k + 1}`,
+            id: `${rawStellarBody.id}-m${have + entryKey + 1}`,
+            name: /\s([IVX]+|\d+|Prime|Alpha|Beta|Gamma|Major|Minor)$/.test(rawStellarBody.name)
+              ? `${rawStellarBody.name}-${'abc'[have + entryKey] || have + entryKey + 1}`
+              : `${rawStellarBody.name} ${MOON_NUM[have + entryKey] || have + entryKey + 1}`,
             kind: 'moon',
-            color: MOON_COLORS[Math.floor(r() * MOON_COLORS.length)],
-            r: rad,
-            x,
-            y,
+            color: MOON_COLORS[Math.floor(radius() * MOON_COLORS.length)],
+            r: radius2,
+            x: positionX,
+            y: positionY,
             svc: '',
             tech: 0,
             desc:
-              MOON_DESC[Math.floor(r() * MOON_DESC.length)] +
-              ` It circles ${p.name}. Nobody lives there.`,
+              MOON_DESC[Math.floor(radius() * MOON_DESC.length)] +
+              ` It circles ${rawStellarBody.name}. Nobody lives there.`,
           });
           break;
         }
       }
     }
     // a few more rocks in the existing fields, and sometimes a whole new field
-    for (const f of system.fields || []) f.rocks = Math.round(f.rocks * 1.35);
+    for (const factionId of system.fields || [])
+      factionId.rocks = Math.round(factionId.rocks * 1.35);
     const kinds = FIELD_ORE[system.faction] || ['ore', 'gas', 'shards'];
-    const extra = system.farside ? (r() < 0.5 ? 1 : 0) : r() < 0.5 ? 1 : 0;
-    for (let k = 0; k < extra; k++) {
+    const extra = system.farside ? (radius() < 0.5 ? 1 : 0) : radius() < 0.5 ? 1 : 0;
+    for (let entryKey = 0; entryKey < extra; entryKey++) {
       for (let tries = 0; tries < 12; tries++) {
-        const a = r() * Math.PI * 2,
-          d = 1100 + r() * 1500,
-          x = Math.round(Math.cos(a) * d),
-          y = Math.round(Math.sin(a) * d);
+        const firstValue = radius() * Math.PI * 2,
+          distance = 1100 + radius() * 1500,
+          positionX = Math.round(Math.cos(firstValue) * distance),
+          positionY = Math.round(Math.sin(firstValue) * distance);
         if (
-          !free(x, y, 320, 200) ||
-          (system.fields || []).some((f) => Math.hypot(f.x - x, f.y - y) < 900)
+          !free(positionX, positionY, 320, 200) ||
+          (system.fields || []).some(
+            (factionId) => Math.hypot(factionId.x - positionX, factionId.y - positionY) < 900,
+          )
         )
           continue;
         (system.fields = system.fields || []).push({
-          id: `${system.id}-x${k}`,
-          x,
-          y,
-          r: 280 + Math.round(r() * 200),
-          ore: kinds[Math.floor(r() * kinds.length)],
-          rich: Math.min(3, 1 + Math.floor(((system.danger || 0) + r() * 3) / 3)),
-          rocks: 10 + Math.floor(r() * 8),
+          id: `${system.id}-x${entryKey}`,
+          x: positionX,
+          y: positionY,
+          r: 280 + Math.round(radius() * 200),
+          ore: kinds[Math.floor(radius() * kinds.length)],
+          rich: Math.min(3, 1 + Math.floor(((system.danger || 0) + radius() * 3) / 3)),
+          rocks: 10 + Math.floor(radius() * 8),
         });
         break;
       }

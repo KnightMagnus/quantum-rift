@@ -73,7 +73,7 @@ here. The ZIP contains source and build scripts, not a prebuilt Windows executab
 
 ## Updating the catalog
 
-From the repository root, run `node "test/Save Generator/export-catalog.mjs"`, then
+From the repository root, run `node "test/Save Generator/export-catalog.ts"`, then
 format `test/Save Generator/catalog.json` with the repository formatter. Re-run
 the save-generator regressions before distributing the refreshed tool. This folder
 is a beta testing utility and can be removed when it is no longer needed.

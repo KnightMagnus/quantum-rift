@@ -23,87 +23,101 @@ export type Account = { economyReceipt?: EconomyReceipt };
 /** @typedef {{from:string,to:string|null,departedAt:number,arrivedAt:number|null,purchases:number,serviceFees:number,sales:number,refunds:number}} TripReceipt */
 /** @typedef {{version:1,pending:DockCosts|null,trip:TripReceipt|null}} EconomyReceipt */
 /** @typedef {{economyReceipt?:EconomyReceipt}} Account */
-/** @param {DockCosts|TripReceipt|null} r */
-function cashValid(r: DockCosts | TripReceipt | null) {
+/** @param {DockCosts|TripReceipt|null} radius */
+function cashValid(radius: DockCosts | TripReceipt | null) {
   return (
-    !r ||
+    !radius ||
     (['purchases', 'serviceFees', 'sales', 'refunds'] as const).every(
-      (k) => Number.isSafeInteger(r[k]) && r[k] >= 0,
+      (entryKey) => Number.isSafeInteger(radius[entryKey]) && radius[entryKey] >= 0,
     )
   );
 }
-/** @param {EconomyReceipt|undefined} e @returns {e is EconomyReceipt} */
-function valid(e: EconomyReceipt | undefined): e is EconomyReceipt {
+/** @param {EconomyReceipt|undefined} economyReceipt @returns {e is EconomyReceipt} */
+function valid(economyReceipt: EconomyReceipt | undefined): economyReceipt is EconomyReceipt {
   return (
-    !!e &&
-    e.version === 1 &&
-    cashValid(e.pending) &&
-    cashValid(e.trip) &&
-    (!e.pending || typeof e.pending.port === 'string') &&
-    (!e.trip ||
-      (typeof e.trip.from === 'string' &&
-        Number.isSafeInteger(e.trip.departedAt) &&
-        (e.trip.to === null || typeof e.trip.to === 'string') &&
-        (e.trip.arrivedAt === null || Number.isSafeInteger(e.trip.arrivedAt))))
+    !!economyReceipt &&
+    economyReceipt.version === 1 &&
+    cashValid(economyReceipt.pending) &&
+    cashValid(economyReceipt.trip) &&
+    (!economyReceipt.pending || typeof economyReceipt.pending.port === 'string') &&
+    (!economyReceipt.trip ||
+      (typeof economyReceipt.trip.from === 'string' &&
+        Number.isSafeInteger(economyReceipt.trip.departedAt) &&
+        (economyReceipt.trip.to === null || typeof economyReceipt.trip.to === 'string') &&
+        (economyReceipt.trip.arrivedAt === null ||
+          Number.isSafeInteger(economyReceipt.trip.arrivedAt))))
   );
 }
-/** @param {Account} d @returns {EconomyReceipt} */
-function state(d: Account): EconomyReceipt {
-  if (!valid(d.economyReceipt)) d.economyReceipt = { version: 1, pending: null, trip: null };
-  return d.economyReceipt;
+/** @param {Account} account @returns {EconomyReceipt} */
+function state(account: Account): EconomyReceipt {
+  if (!valid(account.economyReceipt))
+    account.economyReceipt = { version: 1, pending: null, trip: null };
+  return account.economyReceipt;
 }
 /** Record only successful, authoritative settlements. No event can itself issue money.
- * @param {Account} d @param {string} port @param {'purchases'|'serviceFees'|'sales'|'refunds'} kind @param {number} amount */
+ * @param {Account} account @param {string} port @param {'purchases'|'serviceFees'|'sales'|'refunds'} kind @param {number} amount */
 export function recordEconomy(
-  d: Account,
+  account: Account,
   port: string,
   kind: 'purchases' | 'serviceFees' | 'sales' | 'refunds',
   amount: number,
 ) {
   if (!Number.isSafeInteger(amount) || amount <= 0) return;
-  const e = state(d);
-  if (['sales', 'refunds'].includes(kind) && e.trip?.arrivedAt != null && e.trip.to === port) {
-    if (Number.isSafeInteger(e.trip[kind] + amount)) e.trip[kind] += amount;
+  const economyReceipt = state(account);
+  if (
+    ['sales', 'refunds'].includes(kind) &&
+    economyReceipt.trip?.arrivedAt != null &&
+    economyReceipt.trip.to === port
+  ) {
+    if (Number.isSafeInteger(economyReceipt.trip[kind] + amount))
+      economyReceipt.trip[kind] += amount;
     return;
   }
-  if (!e.pending || e.pending.port !== port)
-    e.pending = { port, purchases: 0, serviceFees: 0, sales: 0, refunds: 0 };
-  if (Number.isSafeInteger(e.pending[kind] + amount)) e.pending[kind] += amount;
+  if (!economyReceipt.pending || economyReceipt.pending.port !== port)
+    economyReceipt.pending = { port, purchases: 0, serviceFees: 0, sales: 0, refunds: 0 };
+  if (Number.isSafeInteger(economyReceipt.pending[kind] + amount))
+    economyReceipt.pending[kind] += amount;
 }
 /** Supplies bought at the departure stop belong to the following trip, not the previous sale.
- * @param {Account} d @param {string} port @param {number} now */
-export function beginEconomyTrip(d: Account, port: string, now: number) {
-  const e = state(d),
-    p = e.pending?.port === port ? e.pending : null;
-  e.trip = {
+ * @param {Account} account @param {string} port @param {number} currentTime */
+export function beginEconomyTrip(account: Account, port: string, currentTime: number) {
+  const economyReceipt = state(account),
+    dockCosts = economyReceipt.pending?.port === port ? economyReceipt.pending : null;
+  economyReceipt.trip = {
     from: port,
     to: null,
-    departedAt: now,
+    departedAt: currentTime,
     arrivedAt: null,
-    purchases: p?.purchases || 0,
-    serviceFees: p?.serviceFees || 0,
-    sales: p?.sales || 0,
-    refunds: p?.refunds || 0,
+    purchases: dockCosts?.purchases || 0,
+    serviceFees: dockCosts?.serviceFees || 0,
+    sales: dockCosts?.sales || 0,
+    refunds: dockCosts?.refunds || 0,
   };
-  e.pending = null;
+  economyReceipt.pending = null;
 }
-/** @param {Account} d @param {string} port @param {number} now */
-export function arriveEconomyTrip(d: Account, port: string, now: number) {
-  const trip = valid(d.economyReceipt) ? d.economyReceipt.trip : null;
+/** @param {Account} account @param {string} port @param {number} currentTime */
+export function arriveEconomyTrip(account: Account, port: string, currentTime: number) {
+  const trip = valid(account.economyReceipt) ? account.economyReceipt.trip : null;
   if (trip && trip.arrivedAt === null) {
     trip.to = port;
-    trip.arrivedAt = now;
+    trip.arrivedAt = currentTime;
   }
 }
 /** Read-only: old saves do not gain state merely because their HUD is rendered.
- * @param {Account} d */
-export function economyReceipt(d: Account) {
-  const e = d.economyReceipt;
-  if (!valid(e)) return null;
+ * @param {Account} account */
+export function economyReceipt(account: Account) {
+  const economyReceipt2 = account.economyReceipt;
+  if (!valid(economyReceipt2)) return null;
   const receipt =
-    e.trip ||
-    (e.pending
-      ? { ...e.pending, from: e.pending.port, to: null, departedAt: null, arrivedAt: null }
+    economyReceipt2.trip ||
+    (economyReceipt2.pending
+      ? {
+          ...economyReceipt2.pending,
+          from: economyReceipt2.pending.port,
+          to: null,
+          departedAt: null,
+          arrivedAt: null,
+        }
       : null);
   if (!receipt) return null;
   return {

@@ -25,4 +25,4 @@ These remain heuristic odds, not calibrated probabilities: current armor/shield 
 
 ## Verification
 
-`node test/combat-assist.js` verifies deterministic power, targeting, authority and actual weapon-step invariants. `node test/combat-network.js [ws-url]` verifies three real WebSocket clients against a disposable local server. Existing regression/feature/type checks and the normal two-client network bot are unchanged. Desktop browser checks cover arming, takeover, stop, rearm and 1024/1440/1920-wide viewports; extended pursuit feel, high-latency play and large-Armada balance still need human playtesting.
+`node test/combat-assist.ts` verifies deterministic power, targeting, authority and actual weapon-step invariants. `node test/combat-network.ts [ws-url]` verifies three real WebSocket clients against a disposable local server. Existing regression/feature/type checks and the normal two-client network bot are unchanged. Desktop browser checks cover arming, takeover, stop, rearm and 1024/1440/1920-wide viewports; extended pursuit feel, high-latency play and large-Armada balance still need human playtesting.

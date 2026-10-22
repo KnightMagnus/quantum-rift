@@ -8,10 +8,10 @@ Linux, Windows and Apple Silicon macOS build.
 
 ## Install the local runtime
 
-With an existing Node installation, run:
+With an existing Node 22.18 or newer installation (native TypeScript support), run:
 
 ```sh
-node tools/runtime/install-node.mjs
+node tools/runtime/install-node.ts
 ```
 
 The installer downloads from the [official Node nightly archive](https://nodejs.org/download/nightly/v27.0.0-nightly20261020531d28fc36/)
@@ -46,7 +46,7 @@ commands rebuild before running. After changing source, rebuild before launching
 individual tests directly.
 
 `server/`, `shared/` and `client/` contain TypeScript source modules. Use explicit `.ts`
-extensions when importing application source, including from JavaScript test tools.
+extensions when importing application source, including from TypeScript test tools.
 Node 27 strips erasable types when tests import source directly. Keep TypeScript
 syntax erasable: no runtime enums, namespaces or constructor parameter properties.
 
@@ -58,19 +58,19 @@ paths. Both source and emitted server entry points use the repository root for
 catalogs and persistent data, preserving online and Solo save locations.
 
 Release archives must include `dist/`, original assets, `package.json`, the
-startup scripts, `tools/start.mjs` and `tools/runtime/`. `tools/package.sh` rebuilds
+startup scripts, `tools/start.ts` and `tools/runtime/`. `tools/package.sh` rebuilds
 and includes compiled output alongside tracked files, rejecting unexpected output.
 Players using a built archive need no npm dependencies or compiler;
 source checkouts do. Do not publish a source-only archive as ready to play.
 
 ## Checked scope
 
-`npm run typecheck` checks all application TypeScript with strict compiler options.
+`npm run typecheck` checks application, test and developer-tool TypeScript with strict compiler options.
 The source-coverage guard rejects application JavaScript, omitted modules and
-blanket type-check suppressions before compilation. Test harnesses and developer
-tools can remain JavaScript; their language does not exempt application imports
-from the strict project checks.
-`npm run typecheck:tsrs` checks both configurations with the pinned Rust-based
+blanket type-check suppressions before compilation. `tsconfig.tests.json` checks regression harnesses; `tsconfig.tools.json` checks
+developer tooling and the save-catalog exporter. Browser/server preload fixtures live in `test/fixtures/` and are checked by the test project; the regression inventory follows their helper dependencies. All source programs use TypeScript,
+while browser and server release artifacts remain emitted JavaScript.
+`npm run typecheck:tsrs` checks all configurations with the pinned Rust-based
 [tsrs checker](https://github.com/oxc-project/tsrs). CI runs it alongside `tsc`,
 including the valid/invalid contract fixtures through `npm run test:types:tsrs`.
 The pinned tsrs package provides Linux and macOS binaries, but no Windows binary;
@@ -79,7 +79,7 @@ Windows contributors can keep using `npm run typecheck`. Builds still use `tsc`.
 check both accepted calls and rejected argument/capability shapes. Type checking
 does not validate incoming JSON at runtime or prove every gameplay branch.
 
-`test/compiled-runtime.mjs` exercises online and Solo startup through both source
+`test/compiled-runtime.ts` exercises online and Solo startup through both source
 and compiled server entries, executable emitted browser/shared modules, original
 JSON/CSS assets, TypeScript URL denial and online save-import denial. Existing
 gameplay, browser, Windows persistence and save-generator suites remain required.
