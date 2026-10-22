@@ -34,3 +34,42 @@ Retain authoritative action handlers and keyboard routes. New icons require thre
 labeled alternatives and explicit user selection; provisional artwork is not approval.
 Add browser coverage for multiple expanded entries, long chat, keyboard/wheel
 reachability and narrow/scaled viewports in the canonical regression manifest.
+
+## Code readability
+
+Use descriptive names for variables, parameters, functions and types. Avoid opaque
+abbreviations and single-letter names except for conventional, short-lived indices
+or mathematical coordinates whose meaning is immediately clear.
+
+Keep JSDoc type references readable: declare named imported type aliases near the
+top of the module and reuse them instead of scattering inline `import(...).Type`
+expressions at points of use. Preserve useful type precision; do not replace types
+with `any` or introduce runtime imports solely for annotations.
+
+Prefer straightforward control flow, focused functions and explicit dependencies.
+Reduce unnecessary nesting and duplication when doing so clarifies intent; avoid
+clever shorthand, speculative abstractions and unrelated rewrites. Comments should
+explain non-obvious intent or constraints, not narrate obvious operations.
+
+Readability changes must preserve behavior and public contracts, including saved
+data and network field names. Keep changes reviewable and run relevant tests, type
+checks and formatting checks; do not weaken checks to accommodate a cleanup.
+
+## Documentation language
+
+Write documentation for its readers: describe current behavior, usage, architecture
+and necessary limitations accurately. Remove assistant-task instructions, prompt
+residue, conversation references, approval chatter and temporary progress updates
+from product and technical documentation. Keep durable contributor rules here,
+separate from reader-facing product documentation.
+
+Do not include development-diary stories about steps, phases or milestones completed
+along the way. Preserve substantive technical facts and user-relevant release notes
+without narrating the implementation process. Keep operational handoff notes outside
+shipped documentation.
+
+Review all repository-authored documentation prose and code comments for natural,
+plain technical language. Use the available humanization workflow to audit first,
+then rewrite only where needed. Preserve facts, caveats, examples, links, commands,
+JSDoc types and tags, tool directives, and license or attribution notices. Do not
+change executable code or quoted third-party material merely to alter its voice.

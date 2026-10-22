@@ -1,14 +1,7 @@
 # Quantum Rift: developer guide
 
-This guide is for anyone (or any AI assistant) picking up Quantum Rift's code. It covers:
-
-- how the game is built
-- the stages it went through
-- how to add a feature
-- how to test it
-- the resources it draws on
-
-Give an assistant this file plus `README.md` and it has the context to continue.
+This guide covers the game architecture, feature development, testing and asset tools.
+For installation and play, see [README.md](README.md).
 
 ## What it is
 
@@ -110,48 +103,21 @@ and was rebuilt from the assets of **EV Quantum**, a plug-in for EV Nova.
 - **Balance:** `test/balance.js` prints shipyard ladders, value for money, income per hour and hours to afford each
   milestone. It fails on outliers.
 
-## Programming stages so far
+## Ship sprites
 
-**EV Quantum (the desktop mod)**
+Catalog data is in `shared/assets.json`; binary assets are in `client/assets/`.
+See [the ship pipeline](tools/ships26/README.md) for `rift_ships26.py` usage.
 
-- The EV Nova plug-in was extended through versions 4.0 to 5.2: new ships, the Quantum Station, the Que'vari region and
-  the Sol Gateway idea.
-- Ships were designed in a Python 3D pipeline: a small hull-building language over a software renderer, producing
-  sprite sheets.
-- The sprites, weapons, outfits, sounds and landscapes were exported to `shared/assets.json` and `client/assets/`.
-- 2.6 re-rendered every ship from those 3D designs (`rift_ships26.py` in the development workspace, not shipped): full colour, frames up to twice the old size (200 px cap), and three roll sets (level, rolled right, rolled left) for ships up to 200 px. Sheets are `client/assets/ships/<id>.webp` and `<id>_glow.webp`, 12 frames wide; `shared/sprites26.js` lists frame size, columns and banking, and `augmentAssets` attaches it as `ship.spr`. The client picks the roll set from the ship's turn rate (`bankOf` in `client/render.js`), so ships bank into the turn. The old PNG sheets stay as a fallback for any hull without `spr`.
-
-**Quantum Rift (the web game)**
-
-| Version     | Name                   | What it added                                                                                                                                                                                                                                                                                                                                                         |
-| ----------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0.1–0.2     | Core                   | The online engine: accounts, 30 hand-made systems, trading, outfitting, combat, jobs, the Quantum Station, chat and a companion HUD                                                                                                                                                                                                                                   |
-| 0.3         | Clean Fire             | Weapon looks, mouse targeting, custom cursors, effects, the tutorial, escort slots, security hardening                                                                                                                                                                                                                                                                |
-| 0.4         | The Wide Rift          | A seeded generator growing 30 systems into 200 with territories; map pan, zoom and search; mining; sleeping systems                                                                                                                                                                                                                                                   |
-| 0.5         | Hangar Deck            | Shuttles, officers with synergies, research trees, refining, drydock presets, boarding (plunder, capture, rescue)                                                                                                                                                                                                                                                     |
-| 0.6         | Fleets and Fronts      | Fleets, territory and Dreadnoughts (all retired in 2.6), invasions, anomalies, events, goals, faction stores, new job types                                                                                                                                                                                                                                           |
-| 0.7         | Frontier Life          | Colonies, station raids, ship mastery, the arena, the exchange, leaderboards, profiles                                                                                                                                                                                                                                                                                |
-| 0.8         | Specialists            | The class triangle, ten specialty ships (blueprints, parts, components, tiers), the Sol Gateway and Farside, the Feral Swarm                                                                                                                                                                                                                                          |
-| 0.9         | Hostile Space          | Hostile levels and odds, loot chests, solo armadas, Station Holdout, weekly events, the Umbral Eclipse                                                                                                                                                                                                                                                                |
-| 1.0         | Launch                 | The main story, a 20-step career, solo mode with slots and backups, a balance pass, accessibility options                                                                                                                                                                                                                                                             |
-| 1.0.1–1.0.3 | Fixes and QoL          | Procedural planets, MISSIONS tab and map markers, command bar, autopilot landing and jumping, in-game radio, many fixes                                                                                                                                                                                                                                               |
-| 1.1         | Living Rift            | 30 rival captains, hailing, fleet orders, multi-jump autopilot, I panel, jettison, combat rating, news and market flashes                                                                                                                                                                                                                                             |
-| 1.2         | Syndicate and Officers | Syndicate and black market, officer ranks and traits, lower decks, bank, map views, passengers and rush jobs, faction arcs, Farside expeditions                                                                                                                                                                                                                       |
-| 2.0         | Polish                 | A synthesized audio pass (interface sounds, ambience, engine hum, login theme, mixer buses), HUD numbers, edge arrows, damage and jump feedback, styled toasts, tab hotkeys                                                                                                                                                                                           |
-| 2.6         | Together               | Captain Friends, DMs, the Armada (five captains and their wingmates), trading between stations, duels and Armada Duels, rescue, co-op Holdout, Armada contracts, Relocate Station, a new Crucible look; no open-galaxy PvP; sharper re-rendered ships with banking (WebP sheets, shared/sprites26.js); refits, solo armadas, directives, fleets and territory retired |
-| 2.5         | Rendered Rift          | Pre-rendered planets, stations, landing pictures for every world, fireballs and combat effects, asteroids, loot, outfit pictures and a login backdrop; styled dialogs, small-screen sidebar, market depth, new career steps and story sounds                                                                                                                          |
-| 2.4         | Living Galaxy          | System states and a market that remembers trades, contact questlines and six side stories, varied background worlds, combat AI personalities, bar talk, a CAREER page, shipyard comparison, outfitter filters, auto-reconnect, multiplayer screens hidden in solo                                                                                                     |
-| 2.3         | Busy Lanes             | Ten new common Quantum hulls (shared/ships23.js, art from the hull pipeline), 60 new moons and more asteroid fields (gen.js addMoonsAndFields), busier traffic                                                                                                                                                                                                        |
-| 2.2         | Living Skies           | Seeded scenery in every system (star, galaxies, gas giants, black holes, nebulae, asteroid drifts, ion storms, wrecks, derelicts, ruins, crystals, debris, comets, satellites, pods), right-click look-ahead, four docks, K and F reworked                                                                                                                            |
-| 2.1         | Docks                  | Docks A–E with a lead ship and two wingmate ships each, officers crewing wingmates, buy-to-hangar, friendly fire, a new hyperspace effect and sounds, quick volume                                                                                                                                                                                                    |
-| 2.0.1–2.0.3 | Fixes                  | NPC landing, crash-proofing (fuzzer, UI crawler), newcomer protection in inner space, a bug backlog                                                                                                                                                                                                                                                                   |
-
-The project docs (outside this zip) also hold the roadmap. Multiplayer group features are deferred, and the game is
-single-player focused for now.
+Ship sprites are generated from Python 3D hull designs. WebP sheets use full colour,
+frames up to 200 px and three roll sets (level, right and left). Files are
+`client/assets/ships/<id>.webp` and `<id>_glow.webp`, with 12 frames per row.
+`shared/sprites26.js` supplies frame dimensions, columns and banking; `augmentAssets`
+attaches those values as `ship.spr`. The client chooses a roll set from turn rate
+using `bankOf` in `client/render.js`. Hulls without `spr` use the older PNG sheets.
 
 ## Conventions
 
-- No npm dependencies. Node 18 or newer. ES modules everywhere.
+- No runtime npm dependencies. Node 18 or newer. ES modules everywhere.
 - Every feature gets a test, and the whole suite runs before a release.
 - **Art:**
   - Sprite PNGs are quantized to 256 colours to keep the zip small.

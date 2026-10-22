@@ -1,8 +1,7 @@
 # Cockpit and menu style
 
-The selected reference is the October 17, 2026 **Pixelify** integrated-Tray
-mockup, not its Orbitron font variant. Keep the larger readable Pixelify Sans
-text. The flight screenshot in the README shows the implemented interpretation.
+The cockpit uses an integrated Tray and readable Pixelify Sans text. The README
+flight screenshot shows the implemented design.
 
 ## Construction, not just a colour palette
 
@@ -31,8 +30,7 @@ Use the shared `.metal` frame, restrained oxide header rule, bevelled buttons an
 `.well`/list reading surfaces for the map, landing services, ship/captain info,
 Personal Station, settings, help and Tray tabs. Preserve semantic warnings and
 resource colours. Original landing, catalog and radar artwork stays in recessed
-screens, not replaced by decorative concept art. A reference flight mockup does
-not establish unshown menu contents or authorize gameplay changes.
+screens, not replaced by decorative concept art.
 
 ## Tray capacity
 
@@ -43,7 +41,7 @@ not establish unshown menu contents or authorize gameplay changes.
   (three 48px controls plus gaps); compact views use full-width stacked controls.
 - The continuous red screen rail is viewport chrome, not a child of the scrolling
   cockpit. Opening/resizing the Tray must not clip or recolor it. The decorative
-  left fin was removed because it overlapped the main tray; do not restore it.
+  left fin must not overlap the main Tray.
 
 - Fresh default: **520 CSS screen pixels**, growing with UI scale to at most
   760px (728px at 140%). The viewport cap still applies on compact screens.

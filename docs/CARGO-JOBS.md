@@ -2,8 +2,8 @@
 
 Jobs, missions and quests refer to the same system. Courier work should be the
 most broadly available, straightforward route to earning ship upgrades; combat
-and specialist careers remain optional alternatives. This change improves job
-availability, not a measured guarantee that cargo earns more per hour than every
+and specialist careers remain optional alternatives. Reliable board slots improve
+job availability; they do not establish that cargo earns more per hour than every
 other activity.
 
 ## Reliable small deliveries

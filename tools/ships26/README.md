@@ -1,10 +1,10 @@
-# Recovered original ship pipeline
+# Ship sprite pipeline
 
-Recovered from the user's `quantum-rift-ship-generator.zip` (v2.6 GitHub migration
-source), not reconstructed from flat images. `ORIGINAL-README.md` preserves the
-supplied instructions. Hull definitions, materials and renderer remain original.
-Local adaptations put data beside scripts, render banks for **all** sizes and
-restart workers per hull so material IDs cannot depend on scheduling.
+This v2.6 pipeline contains the original hull definitions, materials and renderer from
+`quantum-rift-ship-generator.zip`, not models reconstructed from flat images.
+`ORIGINAL-README.md` preserves the source instructions. Data lives beside the
+scripts; all ship sizes support bank frames. Workers restart per hull so material
+IDs cannot depend on scheduling.
 
 Python 3 with NumPy and Pillow (WebP support) is required. Use a virtual environment:
 

@@ -19,4 +19,4 @@ Radio functionality is unchanged. No new combat balance pass is included.
 
 ## Verification
 
-The gameplay batch passed 39 local Node suites, formatting/type checks, network checks and targeted Chromium checks. Hosted PR CI passed fresh Git LFS checkout and verification, formatting, types, feature/contract tests and regression checks after the asset-store repair. The release is tagged on the resulting tested upstream main commit.
+Coverage includes 39 Node suites, formatting/type checks, network checks and targeted Chromium checks. The release checks also verify Git LFS checkout and feature/type contracts.
