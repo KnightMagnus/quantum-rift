@@ -11,9 +11,6 @@ import { upgrade } from './ws.ts';
 import { DB as Database } from './db.ts';
 import { Game } from './game.ts';
 
-/** @import { GameAssets } from '../shared/rules.ts' */
-/** @import { Server, ServerResponse } from 'node:http' */
-
 /**
  * Root directory path of the Quantum Rift repository.
  * @type {string}

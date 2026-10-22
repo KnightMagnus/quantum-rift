@@ -96,13 +96,6 @@ import { assertLots, addLots, commonLots, planTake, applyTake } from '../shared/
 import { recordEconomy } from '../shared/economy-receipt.ts';
 import { WING_ONLY } from '../shared/docks.ts';
 
-/** @import { GradeLots } from '../shared/cargo-contracts.ts' */
-/** @import { Game } from './game.ts' */
-
-/** @typedef {import('./game.ts').Session} Session */
-/** @typedef {import('./game.ts').PlayerData} PlayerData */
-/** @typedef {import('./game.ts').StellarBody} StellarBody */
-/** @typedef {import('./game.ts').MarketItem} MarketItem */
 /**
  * Ordinary port commerce owns commodity/material transactions, shipyard and
  * outfitter operations. Uses the existing account and shared pricing/grade rules;
@@ -140,7 +133,6 @@ import { WING_ONLY } from '../shared/docks.ts';
  *   'outfit'>} PortService
  */
 
-/** @param {PortCapabilities} capabilities @returns {PortService} */
 export function createPortService(capabilities: PortCapabilities): PortService {
   return bindOperations(PortOperations, capabilities);
 }

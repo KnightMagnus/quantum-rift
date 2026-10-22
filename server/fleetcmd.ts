@@ -5,8 +5,6 @@ import type {
   CommandSession,
   FleetCommandsCapabilities,
 } from './contracts.ts';
-
-// @ts-check
 import {
   RAW_GRADES,
   planTake,
@@ -19,10 +17,6 @@ import {
 import { COMMODITIES } from '../shared/galaxy.ts';
 import { combatRank } from '../shared/rivals.ts';
 
-/** @import { GradeLots } from '../shared/cargo-contracts.ts' */
-/** @import { CargoLoot, CargoPlayer, CommandSession, FleetCommandsCapabilities } from './contracts.ts' */
-
-/** @type {Record<string, string>} */
 const ORDERS: Record<string, string> = {
   gather: 'Escorts: form up on me.',
   attack: 'Escorts: attack my target.',
@@ -33,7 +27,6 @@ const ORDERS: Record<string, string> = {
 // Simulation seconds before the dumping captain/fleet may scoop its own cargo again.
 export const JETTISON_OWNER_GRACE_SECONDS = 5;
 export const FleetCmdOperations = {
-  /** @this {FleetCommandsCapabilities} @param {CommandSession} session @param {string} options */
   fleetOrder(this: FleetCommandsCapabilities, session: CommandSession, options: string) {
     if (!ORDERS[options] || !session.ent) return;
     const entity = session.ent;
@@ -43,7 +36,7 @@ export const FleetCmdOperations = {
     this.send(session, { t: 'order', o: entity.order });
   },
   // throw cargo out of the hold: it floats free, and pirates chasing you may go for it instead
-  /** @this {FleetCommandsCapabilities} @param {CommandSession} session @param {string} captainId @param {number} count @param {GradeLots|'common-first'} [selection] */
+
   jettison(
     this: FleetCommandsCapabilities,
     session: CommandSession,
@@ -116,7 +109,7 @@ export const FleetCmdOperations = {
     this.you(session);
   },
   // picking jettisoned (or anyone's) cargo back up
-  /** @this {FleetCommandsCapabilities} @param {CommandSession} session @param {CargoLoot} cargoLoot */
+
   lootCargo(this: FleetCommandsCapabilities, session: CommandSession, cargoLoot: CargoLoot) {
     const playerData = session.data,
       grace = cargoLoot.jettisonPickup;
@@ -152,7 +145,7 @@ export const FleetCmdOperations = {
     this.you(session);
     return cargoLoot.n <= 0 ? true : false;
   },
-  /** @param {CargoPlayer} playerData */
+
   rankOf(playerData: CargoPlayer) {
     return combatRank((playerData.stats && playerData.stats.combat) || 0);
   },

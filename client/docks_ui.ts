@@ -26,8 +26,6 @@ import { ROLES, RARITY } from '../shared/hangar.ts';
 import { WING_REPAIR_COST, WING_REPAIR_MIN, NEXT_DOCK_OPS } from '../shared/docks.ts';
 import { credits, repairBasis } from '../shared/rules.ts';
 
-/** @import { ClientGameState } from './main.ts' */
-
 /**
  * @typedef {Object} DockShip
  * @property {string} [uid] Unique identifier of the ship instance

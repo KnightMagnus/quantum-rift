@@ -98,11 +98,6 @@ import {
 import { ROLES_INFO, BEATS } from '../shared/roles.ts';
 import { levelOf, winOdds } from '../shared/hostile.ts';
 
-/** @import { StellarBody } from '../server/game.ts' */
-/** @import { NetworkMessage } from '../server/message-registry.ts' */
-/** @import { ClientGameState } from './main.ts' */
-/** @import { ShipHull } from './render.ts' */
-
 // ------------------------------------------------------------------ type definitions
 /**
  * @typedef {Object} AskOptions

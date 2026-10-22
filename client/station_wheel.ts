@@ -22,7 +22,6 @@ function hashStr(text: string) {
   return height >>> 0;
 }
 
-/** @param {{id: string, r: number, color?: string}} position */
 export function stationWheel(position: { id: string; r: number; color?: string }) {
   const entryKey3 = `${position.id}:${position.r}:${position.color}`;
   if (wheels.has(entryKey3)) return wheels.get(entryKey3);

@@ -78,10 +78,6 @@ export type MessageRegistry = {
   types: readonly string[];
   dispatch: (type: string, session: Session, message: NetworkMessage) => void;
 };
-
-/** @import { CommandSession } from './contracts.ts' */
-
-// @ts-check
 /**
  * The registry only selects a fixed route. Authentication, flood limiting and
  * activity accounting remain ahead of it; individual routes retain validation.

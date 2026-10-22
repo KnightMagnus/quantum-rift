@@ -108,12 +108,6 @@ import {
 import { ROLES, RARITY, RACE_ROLES, OFFICER_NAMES, ROSTER_MAX } from '../shared/hangar.ts';
 import { captainBonus, shipStats, credits } from '../shared/rules.ts';
 
-/** @import { WorldEvent } from '../shared/fronts.ts' */
-/** @import { ComputedShipStats } from '../shared/rules.ts' */
-/** @import { CargoPlayer } from './contracts.ts' */
-/** @import { Mission, PlayerData, Session } from './game.ts' */
-/** @import { Entity, Space } from './space.ts' */
-
 /**
  * Clamp a numeric value between a lower and an upper bound.
  * @param {number} value - Value to clamp.

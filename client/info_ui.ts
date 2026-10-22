@@ -43,13 +43,6 @@ import { RANKS } from '../shared/rivals.ts';
 import { synBadge } from './syn_ui.ts';
 import { price } from '../shared/rules.ts';
 
-/** @import { StellarBody } from '../server/game.ts' */
-/** @import { ClientGameState } from './main.ts' */
-
-/**
- * @typedef {'ship' | 'career' | 'fleet' | 'captains'} InfoTab
- */
-
 /**
  * @typedef {Object} BestSaleResult
  * @property {StellarBody} p Stellar body object

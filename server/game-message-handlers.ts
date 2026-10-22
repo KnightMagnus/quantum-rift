@@ -34,10 +34,6 @@ export type MessageCapabilities = Pick<
 import { createMessageRegistry } from './message-registry.ts';
 import { TUTORIAL } from '../shared/tutorial.ts';
 
-/** @import { Game } from './game.ts' */
-/** @import { MessageRegistry, NetworkMessage } from './message-registry.ts' */
-
-/** @typedef {import('./game.ts').Session} Session */
 /**
  * Explicit switchboard dependencies, supplied by Game.createMessageHandlers.
  * Getters read current services/state; forwarding functions preserve Game as the

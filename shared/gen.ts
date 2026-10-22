@@ -2,8 +2,6 @@ type Point = { x: number; y: number };
 import type { StarSystem as SpaceSystem, RawStellarBody as StellarBody } from './galaxy.ts';
 import type { FactionDef } from './galaxy.ts';
 import { signedXorshift32 as randomGenerator, fnv1a as hashId } from './deterministic-random.ts';
-/** @import { SpaceSystem, RawStellarBody as StellarBody } from '../server/game.ts' */
-/** @import { FactionDef } from './galaxy.ts' */
 
 // Quantum Rift galaxy generator: grows the 30 hand-made anchor systems into a ~200-system galaxy.
 // Fully deterministic (fixed seed), so the server and every browser build the same galaxy.

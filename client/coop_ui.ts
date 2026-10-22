@@ -40,10 +40,6 @@ import { SYS as systemsById, COMMODITIES, MATERIALS, GRADES } from '../shared/ga
 import { ARMADA, TRADE, DUEL } from '../shared/coop.ts';
 import { credits } from '../shared/rules.ts';
 
-/** @import { NetworkMessage } from '../server/message-registry.ts' */
-/** @import { ClientGameState } from './main.ts' */
-/** @import { RenderEntity } from './render.ts' */
-
 /**
  * @typedef {Object} CoopHelpers
  * @property {(msg: string) => void} toast Show toast notification function

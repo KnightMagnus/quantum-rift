@@ -56,9 +56,6 @@ import {
 } from '../shared/frontier.ts';
 import { credits } from '../shared/rules.ts';
 
-/** @import { PlayerData } from '../server/game.ts' */
-/** @import { ClientGameState } from './main.ts' */
-
 /**
  * @typedef {Object} ColonyData
  * @property {boolean} [open] Whether world is unsettled

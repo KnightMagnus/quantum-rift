@@ -54,9 +54,6 @@ import {
 } from '../shared/rivals.ts';
 import { credits } from '../shared/rules.ts';
 
-/** @import { PlayerData, Session, SpaceSystem, StellarBody } from './game.ts' */
-/** @import { Entity, Space } from './space.ts' */
-
 /**
  * Clamp a numeric value between minimum and maximum bounds.
  * @param {number} value - Value to clamp.

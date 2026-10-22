@@ -47,12 +47,6 @@ import { destType } from './syndicate.ts';
 import { freightOffers } from './freight-offers.ts';
 import { grantRadio, radioTourOffer, advanceRadioTour } from './radio-discovery.ts';
 
-/** @import { Game } from './game.ts' */
-
-/** @typedef {import('./game.ts').Session} Session */
-/** @typedef {import('./game.ts').PlayerData} PlayerData */
-/** @typedef {import('./game.ts').StellarBody} StellarBody */
-/** @typedef {import('./game.ts').Mission} Mission */
 /**
  * Ordinary job board, acceptance and landing-completion owner. Feature-specific
  * stories, team contracts, mining orders and progression retain their owners.

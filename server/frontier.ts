@@ -138,11 +138,6 @@ import {
 } from '../shared/frontier.ts';
 import { credits } from '../shared/rules.ts';
 
-/** @import { CaptainProfile, ColonyData } from '../client/frontier_ui.ts' */
-/** @import { GradeLots } from '../shared/cargo-contracts.ts' */
-/** @import { PlayerData, Session } from './game.ts' */
-/** @import { Entity, Space } from './space.ts' */
-
 /**
  * Clamp a numeric value between a lower and an upper bound.
  * @param {number} value - Value to clamp.

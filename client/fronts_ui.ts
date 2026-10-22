@@ -21,9 +21,6 @@ import {
 import { credits, route } from '../shared/rules.ts';
 import { STATES } from '../shared/living.ts';
 
-/** @import { FactionDef } from '../shared/galaxy.ts' */
-/** @import { ClientGameState } from './main.ts' */
-
 /**
  * @typedef {Object} GoalEntry
  * @property {string} type Goal type key

@@ -6,7 +6,6 @@ export type Recipe = {
   base: number;
   pure: boolean;
 };
-// @ts-check
 // All new fees, capacity and timing numbers are provisional, not measured balance.
 export const REFINERY_RULES = Object.freeze({
   homeFeePerTon: 5,
@@ -35,8 +34,7 @@ export const REFINERY_RULES = Object.freeze({
   cancelFee: 10,
   collectionRadius: 500,
 });
-/** @typedef {{id:string,name:string,inputs:string[],output:string,base:number,pure:boolean}} Recipe */
-/** @type {readonly Recipe[]} */
+
 export const RECIPES: readonly Recipe[] = Object.freeze([
   {
     id: 'alloy',
@@ -87,7 +85,7 @@ export const RECIPES: readonly Recipe[] = Object.freeze([
     pure: false,
   },
 ]);
-/** @param {string} faction @param {boolean} home @param {Recipe} recipe */
+
 export function recovery(faction: string, home: boolean, recipe: Recipe) {
   if (home) return 100;
   if (faction === 'quantum') return 85;
@@ -95,11 +93,11 @@ export function recovery(faction: string, home: boolean, recipe: Recipe) {
   if (specialty) return !recipe.pure && recipe.inputs[0] === specialty ? 95 : 80;
   return ['outlaw', 'umbral', 'hollow'].includes(faction) ? 75 : 80;
 }
-/** @param {number} input @param {number} percent @param {boolean} composite */
+
 export function outputUnits(input: number, percent: number, composite: boolean) {
   return composite ? (input * percent) / 3 : input * percent;
 }
-/** @param {number} input */
+
 export function storedDuration(input: number) {
   return Math.round(300000 + (1500000 * input) / 300);
 }

@@ -1,34 +1,27 @@
 import type { Session } from './game.ts';
 import type { MiningSpace, SavedRockGeneration } from './mining-contracts.ts';
 import type { Entity } from './space.ts';
-type PressureCapabilities2 = import('./mining-pressure-contracts.ts').PressureCapabilities;
-export type { PressureCapabilities2 as C };
-export type Space = import('./mining-pressure-contracts.ts').PressureSpace;
-type SavedMiningPressure2 = import('./mining-pressure-contracts.ts').SavedMiningPressure;
-export type { SavedMiningPressure2 as W };
-
-// @ts-check
+import type {
+  PressureCapabilities,
+  PressureSpace,
+  SavedMiningPressure,
+} from './mining-pressure-contracts.ts';
+export type { PressureCapabilities as C };
+export type Space = PressureSpace;
+export type { SavedMiningPressure as W };
 import { PRESSURE as pressureRules } from '../shared/mining-pressure-rules.ts';
 
-/** @import { Session } from './game.ts' */
-/** @import { MiningSpace, SavedRockGeneration } from './mining-contracts.ts' */
-/** @import { PressureWire } from './mining-pressure-contracts.ts' */
-/** @import { Entity } from './space.ts' */
-/** @typedef {import('./mining-pressure-contracts.ts').PressureCapabilities} C */
-/** @typedef {import('./mining-pressure-contracts.ts').PressureSpace} Space */
-/** @typedef {import('./mining-pressure-contracts.ts').SavedMiningPressure} W */
-/** @param {C} capabilities @returns {W} */
-function state(capabilities: PressureCapabilities2): SavedMiningPressure2 {
+function state(capabilities: PressureCapabilities): SavedMiningPressure {
   const savedMiningPressure = capabilities.db.world.miningPressure;
   if (!savedMiningPressure) throw Error('Mining pressure unavailable');
   return savedMiningPressure;
 }
-/** @param {C} capabilities */
-function currentTime(capabilities: PressureCapabilities2) {
+
+function currentTime(capabilities: PressureCapabilities) {
   return capabilities.db.world.mining?.clock || 0;
 }
-/** @param {C} capabilities @param {string} owner @param {string} starSystem */
-function captain(capabilities: PressureCapabilities2, owner: string, starSystem: string) {
+
+function captain(capabilities: PressureCapabilities, owner: string, starSystem: string) {
   const savedMiningPressure = state(capabilities),
     clock = currentTime(capabilities);
   let captainPressure = savedMiningPressure.captains.find(
@@ -54,8 +47,8 @@ function captain(capabilities: PressureCapabilities2, owner: string, starSystem:
   if (captainPressure.noise < pressureRules.warn) captainPressure.warned = false;
   return captainPressure;
 }
-/** @param {C} capabilities @param {string} owner @param {string} starSystem */
-function online(capabilities: PressureCapabilities2, owner: string, starSystem: string) {
+
+function online(capabilities: PressureCapabilities, owner: string, starSystem: string) {
   return [...capabilities.sessions()].find(
     (session) =>
       session.data &&
@@ -65,8 +58,8 @@ function online(capabilities: PressureCapabilities2, owner: string, starSystem: 
       !session.ent.dead,
   );
 }
-/** @param {C} capabilities @param {string} owner @param {string} starSystem */
-function scope(capabilities: PressureCapabilities2, owner: string, starSystem: string) {
+
+function scope(capabilities: PressureCapabilities, owner: string, starSystem: string) {
   const session2 = online(capabilities, owner, starSystem);
   if (!session2) return [];
   const consent = state(capabilities).consent.find(
@@ -102,9 +95,9 @@ function scope(capabilities: PressureCapabilities2, owner: string, starSystem: s
     ),
   ];
 }
-/** @param {C} capabilities @param {Space} space @param {string[]} owners @param {number[]} sessions @param {Entity} entity */
+
 function eligible(
-  capabilities: PressureCapabilities2,
+  capabilities: PressureCapabilities,
   space: Space,
   owners: string[],
   sessions: number[],
@@ -151,8 +144,8 @@ function eligible(
     )
   );
 }
-/** @param {C} capabilities @param {Pick<Space,'id'>} space @param {string} entryKey */
-function field(capabilities: PressureCapabilities2, space: Pick<Space, 'id'>, entryKey: string) {
+
+function field(capabilities: PressureCapabilities, space: Pick<Space, 'id'>, entryKey: string) {
   const savedMiningPressure = state(capabilities),
     clock = currentTime(capabilities);
   let miningFieldRecovery = savedMiningPressure.fields.find(
@@ -170,8 +163,7 @@ function field(capabilities: PressureCapabilities2, space: Pick<Space, 'id'>, en
   return miningFieldRecovery;
 }
 export const MiningPressureOperations = {
-  /** @this {C} */
-  init(this: PressureCapabilities2) {
+  init(this: PressureCapabilities) {
     const savedMiningPressure = this.db.world.miningPressure;
     if (!savedMiningPressure) {
       this.db.world.miningPressure = {
@@ -248,9 +240,9 @@ export const MiningPressureOperations = {
     savedMiningPressure.consent = [];
     this.db.touch();
   },
-  /** @this {C} @param {MiningSpace} space @param {SavedRockGeneration} rock @param {number} seconds @param {readonly string[]} [captains] */
+
   work(
-    this: PressureCapabilities2,
+    this: PressureCapabilities,
     space: MiningSpace,
     rock: SavedRockGeneration,
     seconds: number,
@@ -302,14 +294,14 @@ export const MiningPressureOperations = {
     }
     this.db.touch();
   },
-  /** @this {C} @param {MiningSpace} space @param {SavedRockGeneration} rock */
-  regrow(this: PressureCapabilities2, space: MiningSpace, rock: SavedRockGeneration) {
+
+  regrow(this: PressureCapabilities, space: MiningSpace, rock: SavedRockGeneration) {
     const miningFieldRecovery = field(this, space, rock.key.split(':').slice(0, 2).join(':'));
     return (1 + miningFieldRecovery.recovery / 100) * (this.rush(space.id) ? 0.85 : 1);
   },
   /** Public bounded field evolution reuses the existing recovery owner, not a second ledger.
    * @this {C} @param {string} starSystem @param {number} index */
-  fieldState(this: PressureCapabilities2, starSystem: string, index: number) {
+  fieldState(this: PressureCapabilities, starSystem: string, index: number) {
     const miningFieldRecovery = field(this, { id: starSystem }, `${starSystem}:${index}`);
     return {
       recovery: miningFieldRecovery.recovery,
@@ -322,8 +314,8 @@ export const MiningPressureOperations = {
       factor: (1 + miningFieldRecovery.recovery / 100) * (this.rush(starSystem) ? 0.85 : 1),
     };
   },
-  /** @this {C} @param {Space} space */
-  pressureTick(this: PressureCapabilities2, space: Space) {
+
+  pressureTick(this: PressureCapabilities, space: Space) {
     const savedMiningPressure = state(this),
       clock = currentTime(this);
     for (const miningHazard of savedMiningPressure.hazards)
@@ -419,7 +411,7 @@ export const MiningPressureOperations = {
         owner,
         participants: participants.map((session) => this.db.key(session.data.name)),
         sessions: participants.map((session) => session.id),
-        ids: /** @type {number[]} */ ([] as number[]),
+        ids: [] as number[],
         at: clock,
         active: true,
       };
@@ -483,7 +475,7 @@ export const MiningPressureOperations = {
   },
   /** A scoped encounter is hostile only to its current consenting captain hulls.
    * @this {C} @param {Space} space @param {Entity} leftEntity @param {Entity} rightEntity @returns {boolean|null} */
-  allow(this: PressureCapabilities2, space: Space, leftEntity: Entity, rightEntity: Entity) {
+  allow(this: PressureCapabilities, space: Space, leftEntity: Entity, rightEntity: Entity) {
     const identifier = leftEntity.miningEncounter || rightEntity.miningEncounter;
     if (!identifier) return null;
     if (leftEntity.miningEncounter && rightEntity.miningEncounter) return false;
@@ -500,9 +492,9 @@ export const MiningPressureOperations = {
     if (leftEntity.miningEncounter && other !== root) return false; // Never punish friendly wingmates for captain noise.
     return eligible(this, space, miningEncounter2.participants, miningEncounter2.sessions, root);
   },
-  /** @this {C} @param {Space} space @param {string|undefined} identifier @param {Entity} target */
+
   shotAllowed(
-    this: PressureCapabilities2,
+    this: PressureCapabilities,
     space: Space,
     identifier: string | undefined,
     target: Entity,
@@ -519,8 +511,8 @@ export const MiningPressureOperations = {
       eligible(this, space, miningEncounter.participants, miningEncounter.sessions, target)
     );
   },
-  /** @this {C} @param {Session} session @param {number} tonnes */
-  extracted(this: PressureCapabilities2, session: Session, tonnes: number) {
+
+  extracted(this: PressureCapabilities, session: Session, tonnes: number) {
     if (tonnes <= 0) return;
     const captainPressure = captain(this, this.db.key(session.data.name), session.data.sys);
     captainPressure.noise = Math.min(
@@ -536,8 +528,8 @@ export const MiningPressureOperations = {
     }
     this.db.touch();
   },
-  /** @this {C} @param {Session} session @returns {PressureWire} */
-  payload(this: PressureCapabilities2, session: Session) {
+
+  payload(this: PressureCapabilities, session: Session) {
     const captainPressure = captain(this, this.db.key(session.data.name), session.data.sys);
     return {
       noise: captainPressure.noise,
@@ -557,8 +549,8 @@ export const MiningPressureOperations = {
       ),
     };
   },
-  /** @this {C} @param {string} starSystem */
-  hazards(this: PressureCapabilities2, starSystem: string) {
+
+  hazards(this: PressureCapabilities, starSystem: string) {
     return state(this)
       .hazards.filter((miningHazard) => miningHazard.sys === starSystem && !miningHazard.resolved)
       .map((miningHazard) => ({
@@ -569,8 +561,8 @@ export const MiningPressureOperations = {
         detonateAt: miningHazard.detonateAt,
       }));
   },
-  /** @this {C} @param {Session} session @param {{op?:string}} message */
-  consent(this: PressureCapabilities2, session: Session, message: { op?: string }) {
+
+  consent(this: PressureCapabilities, session: Session, message: { op?: string }) {
     if (
       !session.ent ||
       Object.keys(message).some((entryKey) => !['t', 'op'].includes(entryKey)) ||

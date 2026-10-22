@@ -120,13 +120,6 @@ export type MiningCapabilities = {
   mods: FeatureServices['fronts']['mods'];
   specOnMine: FeatureServices['specialists']['specOnMine'];
 };
-
-/** @import { GradeLots } from '../shared/cargo-contracts.ts' */
-/** @import { DB } from './db.ts' */
-/** @import { FeatureServices } from './features.ts' */
-/** @import { FloatingLoot, LootItem, Rock, Space } from './space.ts' */
-
-// @ts-check
 /**
  * @typedef {object} MiningLease
  * @property {number} from

@@ -17,13 +17,8 @@ export type TripReceipt = {
 };
 export type EconomyReceipt = { version: 1; pending: DockCosts | null; trip: TripReceipt | null };
 export type Account = { economyReceipt?: EconomyReceipt };
-// @ts-check
 // A small cash-flow recap, not a profit calculator or a second source of credits.
-/** @typedef {{port:string,purchases:number,serviceFees:number,sales:number,refunds:number}} DockCosts */
-/** @typedef {{from:string,to:string|null,departedAt:number,arrivedAt:number|null,purchases:number,serviceFees:number,sales:number,refunds:number}} TripReceipt */
-/** @typedef {{version:1,pending:DockCosts|null,trip:TripReceipt|null}} EconomyReceipt */
-/** @typedef {{economyReceipt?:EconomyReceipt}} Account */
-/** @param {DockCosts|TripReceipt|null} radius */
+
 function cashValid(radius: DockCosts | TripReceipt | null) {
   return (
     !radius ||
@@ -32,7 +27,7 @@ function cashValid(radius: DockCosts | TripReceipt | null) {
     )
   );
 }
-/** @param {EconomyReceipt|undefined} economyReceipt @returns {e is EconomyReceipt} */
+
 function valid(economyReceipt: EconomyReceipt | undefined): economyReceipt is EconomyReceipt {
   return (
     !!economyReceipt &&
@@ -48,7 +43,7 @@ function valid(economyReceipt: EconomyReceipt | undefined): economyReceipt is Ec
           Number.isSafeInteger(economyReceipt.trip.arrivedAt))))
   );
 }
-/** @param {Account} account @returns {EconomyReceipt} */
+
 function state(account: Account): EconomyReceipt {
   if (!valid(account.economyReceipt))
     account.economyReceipt = { version: 1, pending: null, trip: null };
@@ -95,7 +90,7 @@ export function beginEconomyTrip(account: Account, port: string, currentTime: nu
   };
   economyReceipt.pending = null;
 }
-/** @param {Account} account @param {string} port @param {number} currentTime */
+
 export function arriveEconomyTrip(account: Account, port: string, currentTime: number) {
   const trip = valid(account.economyReceipt) ? account.economyReceipt.trip : null;
   if (trip && trip.arrivedAt === null) {

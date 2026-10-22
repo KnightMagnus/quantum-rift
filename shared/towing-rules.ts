@@ -1,4 +1,3 @@
-// @ts-check
 // Central provisional tuning. All grace/recovery uses the existing mining logical clock.
 const freeze2 = Object.freeze({
   rig: 9920,
@@ -28,13 +27,13 @@ export const UNKNOWN_MOTHERLODE_ART = Object.freeze({
   color: '#929aa5',
   kind: 'unknown',
 });
-/** @param {{ore?:string, revealed?:boolean}} object */
+
 export function motherlodeArt(object: { ore?: string; revealed?: boolean }) {
   if (!object.revealed || !Object.hasOwn(MOTHERLODE_ART, object.ore || ''))
     return UNKNOWN_MOTHERLODE_ART;
   return MOTHERLODE_ART[object.ore as keyof typeof MOTHERLODE_ART];
 }
-/** @param {number|string} hull */
+
 export function towSpeed(hull: number | string) {
   return Number(hull) === 815 ? freeze2.dredgeCap : freeze2.otherCap;
 }

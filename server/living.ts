@@ -39,9 +39,6 @@ import { SYSTEMS, SYS as systemsById, FACTIONS, COMMODITIES } from '../shared/ga
 import { STATES, STATE_SHARE, STATE_MIN, TRADE_IMPACT } from '../shared/living.ts';
 import { credits } from '../shared/rules.ts';
 
-/** @import { Mission, PlayerData, Session, SpaceSystem, StellarBody } from './game.ts' */
-/** @import { Entity, Space } from './space.ts' */
-
 /**
  * Clamp a numeric value between minimum and maximum bounds.
  * @param {number} value - Value to clamp.
@@ -62,7 +59,7 @@ const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
   firstValue[Math.floor(Math.random() * firstValue.length)];
 
 /** @type {Record<string, (system: SpaceSystem | Record<string, string | number>, state?: LivingState) => string>} Headline generators for system events. */
-/** @type {Record<string, (system: SpaceSystem | Record<string, string | number>, state?: LivingState) => string>} */
+
 const START_NEWS: Record<
   string,
   (system: SpaceSystem | Record<string, string | number>, state?: LivingState) => string

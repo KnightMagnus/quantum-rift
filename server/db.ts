@@ -38,13 +38,6 @@ import fileSystem from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-/** @import { PlayerData } from './game.ts' */
-/** @import { IndustrialWorld } from './industrial-contracts.ts' */
-/** @import { SavedMiningWorld } from './mining-contracts.ts' */
-/** @import { SavedMiningPressure } from './mining-pressure-contracts.ts' */
-/** @import { SavedRefinery } from './refinery-contracts.ts' */
-/** @import { TowWorld } from './towing-contracts.ts' */
-
 /**
  * Persisted player account record and save file state.
  * @typedef {object} AccountCredentials
@@ -54,8 +47,6 @@ import crypto from 'node:crypto';
  * @property {number} created Account creation timestamp in milliseconds.
  * @property {PlayerData} [data] Associated player save state data.
  */
-
-/** @typedef {PlayerData & AccountCredentials} PlayerAccount */
 
 /**
  * Persisted galaxy world state data.
@@ -88,10 +79,9 @@ export class DB {
    * @param {string} direction Storage directory path for player and world database files.
    */
   constructor(direction: string) {
-    /** @type {string} */
     this.dir = direction;
     fileSystem.mkdirSync(direction, { recursive: true });
-    /** @type {string} */
+
     this.file = path.join(direction, 'players.json');
     this.wfile = path.join(direction, 'world.json');
     this.journal = path.join(direction, 'checkpoint.json');
@@ -114,19 +104,19 @@ export class DB {
       fileSystem.unlinkSync(this.journal);
       this.syncDirectory();
     }
-    /** @type {Record<string, PlayerAccount>} */
+
     this.players = Object.create(null); // no prototype, so names like __proto__ can never reach object internals
     try {
       Object.assign(this.players, JSON.parse(fileSystem.readFileSync(this.file, 'utf8')));
     } catch {}
-    /** @type {string} */
+
     this.wfile = path.join(direction, 'world.json');
-    /** @type {WorldData} */
+
     this.world = { sites: {} } as WorldData;
     try {
       this.world = JSON.parse(fileSystem.readFileSync(this.wfile, 'utf8'));
     } catch {}
-    /** @type {boolean} */
+
     this.economicFrozen = false;
     this.dirty = false;
     setInterval(() => {
@@ -226,7 +216,7 @@ export class DB {
    * Atomically flushes dirty in-memory player and world state to disk via temporary files.
    * @returns {void}
    */
-  /** @param {string} file @param {string} text */
+
   writeDurable(file: string, text: string) {
     const openSync2 = fileSystem.openSync(file, 'w');
     try {

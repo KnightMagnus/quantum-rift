@@ -137,7 +137,6 @@ import { STATES } from '../shared/living.ts';
 import { SYS as systemsById, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
 import { weaponColor, weaponLook, price } from '../shared/rules.ts';
 
-/** @import { ClientGameState } from './main.ts' */
 // ------------------------------------------------------------------ type definitions
 /**
  * @typedef {Object} StellarBody

@@ -7,8 +7,6 @@ export type Capabilities = import('./mining-contracts.ts').MiningCapabilities;
 export type World = import('./mining-contracts.ts').SavedMiningWorld;
 export type Space = import('./mining-contracts.ts').MiningSpace;
 export type Parcel = import('./mining-contracts.ts').MiningParcel;
-
-// @ts-check
 import {
   MINING,
   seedOf,
@@ -20,16 +18,6 @@ import {
 import { INDUSTRIAL } from '../shared/industrial-rules.ts';
 import { splitLots } from '../shared/cargo-lots.ts';
 
-/** @import { Session } from './game.ts' */
-/** @import { NetworkMessage } from './message-registry.ts' */
-/** @import { MiningContact, SavedMiningLoot } from './mining-contracts.ts' */
-/** @import { LootItem, Rock } from './space.ts' */
-/** @typedef {import('./mining-contracts.ts').SavedRockGeneration} Generation */
-/** @typedef {import('./mining-contracts.ts').MiningCapabilities} Capabilities */
-/** @typedef {import('./mining-contracts.ts').SavedMiningWorld} World */
-/** @typedef {import('./mining-contracts.ts').MiningSpace} Space */
-/** @typedef {import('./mining-contracts.ts').MiningParcel} Parcel */
-/** @param {Capabilities} capabilities @returns {World} */
 function world(capabilities: Capabilities): World {
   const miningWorld = capabilities.db.world.mining;
   if (!miningWorld) throw new Error('Mining not initialized');
@@ -187,10 +175,8 @@ function validate(miningWorld: World) {
       const gradeLots = miningLoot.it.remainingLots;
       if (
         !gradeLots ||
-        !(
-          /** @type {const} */ ((['common', 'rich', 'pure'] as const)).every(
-            (entryKey) => Number.isSafeInteger(gradeLots[entryKey]) && gradeLots[entryKey] >= 0,
-          )
+        !(['common', 'rich', 'pure'] as const).every(
+          (entryKey) => Number.isSafeInteger(gradeLots[entryKey]) && gradeLots[entryKey] >= 0,
         ) ||
         typeof miningLoot.it.generationKey !== 'string' ||
         ![...savedField.rocks, ...savedField.history].some(
@@ -228,11 +214,11 @@ function validate(miningWorld: World) {
       }
   }
 }
-/** @param {Parcel} parcel */
+
 function quantity(parcel: Parcel) {
   return parcel.remainingLots.common + parcel.remainingLots.rich + parcel.remainingLots.pure;
 }
-/** @param {World} miningWorld @param {Space} space @param {number} factionIndex @param {number} index @param {{x:number,y:number,r:number,ore:string,rich:number,minor?:boolean}} factionId @param {number} generation @returns {Generation} */
+
 function generate(
   miningWorld: World,
   space: Space,
@@ -297,7 +283,7 @@ function generate(
     seam: random() * Math.PI * 2,
   };
 }
-/** @param {Capabilities} capabilities @param {Space} space @param {Generation} generation @param {boolean} clean */
+
 function emit(capabilities: Capabilities, space: Space, generation: Generation, clean: boolean) {
   const miningWorld = world(capabilities),
     savedField = miningWorld.systems[space.id];
@@ -350,8 +336,7 @@ function emit(capabilities: Capabilities, space: Space, generation: Generation, 
   for (let innerIndex = 0; innerIndex < clusters; innerIndex++) {
     const quantity = Math.ceil((lots.common + lots.rich + lots.pure) / (clusters - innerIndex)),
       part = splitLots(lots, quantity);
-    for (const entryKey of /** @type {const} */ (['common', 'rich', 'pure'] as const))
-      lots[entryKey] -= part[entryKey];
+    for (const entryKey of ['common', 'rich', 'pure'] as const) lots[entryKey] -= part[entryKey];
     const parcel = {
       id: miningWorld.nextId--,
       x: generation.x + (random() - 0.5) * generation.r,
@@ -400,7 +385,7 @@ function emit(capabilities: Capabilities, space: Space, generation: Generation, 
   }
   capabilities.db.touch();
 }
-/** @param {Capabilities} capabilities @param {Space} space @param {Generation} generation @param {number} [clock2] */
+
 function update(
   capabilities: Capabilities,
   space: Space,
@@ -437,7 +422,7 @@ function update(
               (miningLease) =>
                 miningLease.from < point && miningLease.to > from && miningLease.captain,
             )
-            .map((miningLease) => /** @type {string} */ (miningLease.captain as string)),
+            .map((miningLease) => miningLease.captain as string),
         ),
       ];
       const contributions = (generation.dredgeContributors ||= Object.create(null));
@@ -498,7 +483,7 @@ function update(
   for (const [entryKey, time] of Object.entries(generation.seen))
     if (time < clock2 - 10) delete generation.seen[entryKey];
 }
-/** @param {number} count @param {()=>number} random */
+
 function sweepGrades(count: number, random: () => number) {
   const lots = { common: 0, rich: 0, pure: 0 };
   for (let index = 0; index < count; index++) lots[random() < 0.03 ? 'rich' : 'common']++;
@@ -512,7 +497,7 @@ export const MiningOperations = {
     this.db.touch();
     return identifier;
   },
-  /** @this {Capabilities} */
+
   init(this: Capabilities) {
     if (this.db.world.mining) {
       validate(this.db.world.mining); // No offline work from stale saved collision leases.
@@ -528,7 +513,7 @@ export const MiningOperations = {
       this.db.touch();
     }
   },
-  /** @this {Capabilities} @param {number} deltaTime */
+
   advanceClock(this: Capabilities, deltaTime: number) {
     if (!Number.isFinite(deltaTime) || deltaTime < 0 || deltaTime > 1)
       throw new Error('Invalid mining timestep');
@@ -536,7 +521,7 @@ export const MiningOperations = {
     world(this).clock += deltaTime;
     this.db.touch();
   },
-  /** @this {Capabilities} @param {Space} space */
+
   openSpace(this: Capabilities, space: Space) {
     const miningWorld = world(this),
       config = JSON.stringify(space.sys.fields || []);
@@ -573,7 +558,7 @@ export const MiningOperations = {
     space.loot.push(...savedField.parcels);
     this.endTick(space);
   },
-  /** @this {Capabilities} @param {Space} space @param {Rock} rock @param {MiningContact} miningContact */
+
   contact(this: Capabilities, space: Space, rock: Rock, miningContact: MiningContact) {
     const generation = world(this).systems[space.id]?.rocks.find(
       (savedRockGeneration) => savedRockGeneration === rock,
@@ -649,7 +634,7 @@ export const MiningOperations = {
     this.db.touch();
     return spent;
   },
-  /** @this {Capabilities} @param {Space} space @param {Rock} rock @param {number} damage @param {string|null} [captain] */
+
   ordinary(
     this: Capabilities,
     space: Space,
@@ -669,7 +654,7 @@ export const MiningOperations = {
     }
     this.db.touch();
   },
-  /** @this {Capabilities} @param {Space} space */
+
   endTick(this: Capabilities, space: Space) {
     const miningWorld = world(this),
       savedField = miningWorld.systems[space.id];
@@ -728,9 +713,7 @@ export const MiningOperations = {
     space.loot = space.loot.filter(
       (floatingLoot) =>
         !('generationKey' in floatingLoot.it) ||
-        savedField.parcels.includes(
-          /** @type {SavedMiningLoot} */ (floatingLoot as SavedMiningLoot),
-        ),
+        savedField.parcels.includes(floatingLoot as SavedMiningLoot),
     );
     // No settled history is retained. Live parcels pin their original ledger until
     // accepted/expired; unsettled or inconsistent records remain for validation.
@@ -747,12 +730,12 @@ export const MiningOperations = {
       this.db.touch();
     }
   },
-  /** @this {Capabilities} @param {Space} space */
+
   suspendSpace(this: Capabilities, space: Space) {
     this.endTick(space);
     this.db.touch();
   },
-  /** @this {Capabilities} @param {Session} session @param {NetworkMessage & {op?:string}} request */
+
   survey(this: Capabilities, session: Session, request: NetworkMessage & { op?: string }) {
     const entity = session.ent,
       miningWorld = world(this);
@@ -786,7 +769,7 @@ export const MiningOperations = {
     this.db.touch();
     return true;
   },
-  /** @this {Capabilities} @param {Space} space @returns {MiningRocksWire} */
+
   rocksPayload(this: Capabilities, space: Space) {
     this.endTick(space);
     return {
@@ -812,7 +795,7 @@ export const MiningOperations = {
       })),
     };
   },
-  /** @this {Capabilities} @param {Session} session @param {Space} space @returns {MiningPrivateWire} */
+
   payload(this: Capabilities, session: Session, space: Space) {
     const clock2 = world(this).clock,
       survey = session.data.miningSurvey;
@@ -839,7 +822,7 @@ export const MiningOperations = {
           : [],
     };
   },
-  /** @this {Capabilities} @param {Session} session @param {LootItem} item @param {number} count */
+
   collected(this: Capabilities, session: Session, item: LootItem, count: number) {
     if (!item.generationKey) return;
     const miningWorld = world(this);

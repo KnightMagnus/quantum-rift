@@ -89,11 +89,6 @@ import { BRIDGE_SLOTS } from '../shared/hangar.ts';
 import { officerBonus, makeLoadout, repairBasis, credits } from '../shared/rules.ts';
 import { SPEC } from '../shared/specialty.ts';
 
-/** @import { ShipLoadout } from '../shared/rules.ts' */
-/** @import { PlayerData, Session } from './game.ts' */
-/** @import { NetworkMessage } from './message-registry.ts' */
-/** @import { Entity } from './space.ts' */
-
 /** @type {number | undefined} Hull ID for the Herald specialty ship. */
 const HERALD: number | undefined = (
   Object.values(SPEC).find((specialistShip) => specialistShip.key === 'herald') || {}

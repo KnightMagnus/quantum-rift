@@ -55,9 +55,6 @@ import { EXPEDITION_LORE } from '../shared/expeditions.ts';
 import { TRAITS } from '../shared/syndicate.ts';
 import { credits } from '../shared/rules.ts';
 
-/** @import { Mission, PlayerData, Session, StellarBody } from './game.ts' */
-/** @import { Entity, Space } from './space.ts' */
-
 export const ArcsOperations = {
   /**
    * Initialize or retrieve the player's arc state dictionary.

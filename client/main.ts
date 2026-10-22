@@ -293,10 +293,6 @@ import {
   ctab,
 } from './ui.ts';
 
-/** @import { PlayerData, StellarBody } from '../server/game.ts' */
-/** @import { GameAssets } from '../shared/rules.ts' */
-/** @import { RenderEntity } from './render.ts' */
-
 const elementById2 = elementById;
 initLoginScene(elementById2('login'));
 

@@ -22,10 +22,6 @@ import { SYS as systemsById, STELLARS, FACTIONS, COMMODITIES } from '../shared/g
 import { RIVAL, MOOD } from '../shared/rivals.ts';
 import { credits } from '../shared/rules.ts';
 
-/** @import { PlayerData, Session } from './game.ts' */
-/** @import { NetworkMessage } from './message-registry.ts' */
-/** @import { Entity, Space } from './space.ts' */
-
 /**
  * Clamp a numeric value between minimum and maximum bounds.
  * @param {number} value - Value to clamp.

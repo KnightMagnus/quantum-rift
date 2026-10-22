@@ -35,10 +35,6 @@ import { SYS as systemsById, STELLARS, GRADES } from '../shared/galaxy.ts';
 import { STORY, STORY_SHIP, DEEP_UNLOCK } from '../shared/story.ts';
 import { makeLoadout, credits } from '../shared/rules.ts';
 
-/** @import { StoryStep } from '../shared/story.ts' */
-/** @import { PlayerData, Session } from './game.ts' */
-/** @import { Entity, Space } from './space.ts' */
-
 export const StoryOperations = {
   /**
    * Initialize or retrieve player story progress state.

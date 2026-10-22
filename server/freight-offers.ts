@@ -6,9 +6,6 @@ import { GalaxyGraph } from '../shared/galaxy-graph.ts';
 import { SYSTEMS, SYS as systemsById, FACTIONS, START, COMMODITIES } from '../shared/galaxy.ts';
 import { route } from '../shared/rules.ts';
 
-/** @import { StellarBody } from '../shared/galaxy.ts' */
-/** @import { Mission } from './game.ts' */
-
 // Stable public board slots, independent of a captain's ship, money or combat rank.
 // Each band gives an existing class of hauler useful work without hiding smaller jobs.
 export const FREIGHT_BANDS = [

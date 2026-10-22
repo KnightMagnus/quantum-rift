@@ -36,8 +36,6 @@ import {
 } from '../shared/hangar.ts';
 import { officerStats, credits } from '../shared/rules.ts';
 
-/** @import { ClientGameState } from './main.ts' */
-
 /**
  * @typedef {Object} OfficerEntry
  * @property {number|string} id Unique officer ID

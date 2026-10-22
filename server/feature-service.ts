@@ -1,11 +1,6 @@
 export type BoundOperations<ValueType extends object> = {
   [KeyType in keyof ValueType]: OmitThisParameter<ValueType[KeyType]>;
 };
-
-// @ts-check
-
-/** @template {object} T @typedef {{[K in keyof T]: OmitThisParameter<T[K]>}} BoundOperations */
-
 /**
  * Bind a feature's operations to its explicit capability facade. This does not
  * install methods on Game, resolve names, or expose the coordinator to features.
@@ -23,9 +18,7 @@ export function bindOperations<ValueType extends object>(
     if (typeof operation !== 'function')
       throw new TypeError(`Feature operation ${name} must be a function`);
   }
-  return /** @type {BoundOperations<T>} */ (
-    Object.seal(
-      Object.fromEntries(entries.map(([name, operation]) => [name, operation.bind(capabilities)])),
-    ) as BoundOperations<ValueType>
-  );
+  return Object.seal(
+    Object.fromEntries(entries.map(([name, operation]) => [name, operation.bind(capabilities)])),
+  ) as BoundOperations<ValueType>;
 }

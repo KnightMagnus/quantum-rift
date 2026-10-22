@@ -8,8 +8,6 @@ export type TutorialStep = {
   reward: number;
   mat?: [string, number, number];
 };
-/** @import { PlayerData } from '../server/game.ts' */
-/** @import { GameAssets } from './rules.ts' */
 
 // The career guide (1.0): twenty goals from first flight to your first capital ship. The first five are the original
 // first-flight tutorial (event goals); the rest are checked against your progress. The client shows the current one.
