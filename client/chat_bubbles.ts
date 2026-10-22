@@ -93,6 +93,19 @@ export function wrapShipChat(
   return lines;
 }
 
+/** Remove expired or unavailable speech bubbles during presentation update. */
+export function updateShipChat(state: ShipChatState, currentTime: number): void {
+  if (!state.chatBubbles) return;
+  if (!state.view || state.landed || state.view.armor <= 0) {
+    state.chatBubbles.clear();
+    return;
+  }
+  for (const [id, bubble] of state.chatBubbles) {
+    const entity = state.ents.get(id);
+    if (bubble.until <= currentTime || bubble.sys !== state.sys || !entity || entity.ar <= 0)
+      state.chatBubbles.delete(id);
+  }
+}
 export function drawShipChat(
   shipChatState: ShipChatState,
   canvasRenderingContext2D: CanvasRenderingContext2D,
@@ -101,10 +114,11 @@ export function drawShipChat(
   screenX: (positionX: number) => number,
   screenY: (positionY: number) => number,
   currentTime: number,
+  prune = true,
 ) {
+  if (prune) updateShipChat(shipChatState, currentTime);
   if (!shipChatState.chatBubbles) return;
   if (!shipChatState.view || shipChatState.landed || shipChatState.view.armor <= 0) {
-    shipChatState.chatBubbles.clear();
     return;
   }
   canvasRenderingContext2D.save();
@@ -119,7 +133,6 @@ export function drawShipChat(
       !entity ||
       entity.ar <= 0
     ) {
-      shipChatState.chatBubbles.delete(identifier);
       continue;
     }
     if (!(entity.fl & 16) || entity.fl & 8) continue;

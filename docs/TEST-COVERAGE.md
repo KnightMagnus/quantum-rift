@@ -609,3 +609,17 @@ replaces the market provider after service construction and proves a denied trad
 changes neither credits nor exact cargo lots; the provider retains its Game
 receiver. Constructorless ship-economy fixtures explicitly initialize the port
 service and retain stock/refit/recruitment assertions.
+
+## Native browser engine
+
+`excalibur-runtime` registers `excalibur-runtime-browser.ts` in the browser CI lane.
+It exercises the production Engine/SpaceScene, display-only physics and decoded
+native Sprite registries, physical-pixel camera picking at DPR 1/2 and zoom limits,
+responsive canvas size, keyboard thrust, typing/blur release, sequenced input,
+actor removal, local module loading and a script CSP without unsafe-eval. It runs
+Chromium WebGL and the explicit Canvas fallback. Existing input/audio, logout,
+sidebar, asset and gameplay assertions remain registered.
+
+These checks do not establish cross-browser parity, every weapon animation, a
+frame-time improvement, or all lifecycle/network latency combinations. The Canvas
+fallback cannot apply the WebGL additive glow material.

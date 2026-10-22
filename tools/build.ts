@@ -1,4 +1,5 @@
 import fileSystem from 'node:fs';
+import { build } from 'esbuild';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -22,4 +23,25 @@ fileSystem.copyFileSync(
   path.join(rootDirectory, 'server/seeds.json'),
   path.join(output, 'server/seeds.json'),
 );
+// Bundle only the engine dependency graph. Stateful HUD/audio/render helpers remain
+// ordinary local modules, so production and browser harnesses share one instance.
+await build({
+  entryPoints: [path.join(rootDirectory, 'client/engine.ts')],
+  outfile: path.join(output, 'client/engine.js'),
+  bundle: true,
+  platform: 'browser',
+  format: 'esm',
+  target: 'es2022',
+  plugins: [
+    {
+      name: 'preserve-client-helpers',
+      setup(builder) {
+        builder.onResolve({ filter: /(?:render|login_scene)\.ts$|\.\.\/shared\// }, (args) => ({
+          path: args.path.replace(/\.ts$/, '.js'),
+          external: true,
+        }));
+      },
+    },
+  ],
+});
 console.log('Compiled server, shared and browser modules into dist/.');

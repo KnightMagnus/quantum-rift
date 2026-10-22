@@ -43,6 +43,7 @@ declare global {
   const pressureDescriptor: PropertyDescriptor;
   const gcanvas: HTMLCanvasElement;
   interface Window {
+    readonly RiftEngine: import('../client/engine.ts').FlightEngine;
     wire: RecordedInput[];
     testSocket: WebSocket;
     __testSocket: WebSocket;
