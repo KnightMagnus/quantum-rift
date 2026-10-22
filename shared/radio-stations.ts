@@ -107,7 +107,7 @@ export const RADIO_STATIONS = [
   {
     id: 'super-idol',
     name: 'Super-Idol Radio',
-    sub: 'The Spacepop tour album · in order',
+    sub: 'The Spacepop tour album',
     playback: 'album',
     tracks: [
       {
