@@ -1,0 +1,1 @@
+<div class="kv"><span><b><%= it.armada2Name %></b></span><span class="small"><%~ it.armada2Members %>/<%~ it.armada2Members2 %> online</span></div>

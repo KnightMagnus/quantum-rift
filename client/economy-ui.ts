@@ -1,3 +1,15 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderEconomyUiTradeEstimateHtmlFragment001,
+  renderEconomyUiTradeEstimateHtmlFragment002,
+  renderEconomyUiTradeEstimateHtmlFragment003,
+  renderEconomyUiTradeEstimateHtmlFragment004,
+  renderEconomyUiTradeEstimateHtmlFragment005,
+  renderEconomyUiTradeEstimateHtmlFragment006,
+  renderEconomyUiTradeEstimateHtmlFragment007,
+  renderEconomyUiReceiptHtmlFragment008,
+  renderEconomyUiReceiptHtmlFragment009,
+} from './eta-templates.ts';
 import type { ClientGameState } from './main.ts';
 import type { TradePreviewInput } from '../shared/economy-preview.ts';
 
@@ -31,11 +43,34 @@ export function tradeEstimateHtml(
       orders: playerPayload.refinery?.orders || [],
     });
   } catch {
-    return '<span class="dim small">Cargo changed. Wait for the latest hold information.</span>';
+    return renderEconomyUiTradeEstimateHtmlFragment001();
   }
-  if (!position.valid)
-    return '<span class="dim small">Enter a whole number to see the cost.</span>';
-  return `<span>Buy ${position.buy!.tonnes} t: <b>${credits2(position.buy!.total)}</b>${(playerPayload.cargo[market!.id] || 0) > 0 ? ` · Sell ${position.sale!.tonnes} t: <b>${credits2(position.sale!.total)}</b>` : ''}</span>${position.buy!.tonnes < Number(rawAmount) ? '<span class="dim small">Purchase is limited by your credits or free hold.</span>' : ''}${(playerPayload.cargo[market!.id] || 0) > 0 && position.sale!.tonnes < Number(rawAmount) ? '<span class="dim small">Sale is limited by cargo aboard or what this port will buy.</span>' : ''}${position.warnings.map((width) => `<span class="jwarn">${escapeHtml2(width)}</span>`).join('')}`;
+  if (!position.valid) return renderEconomyUiTradeEstimateHtmlFragment002();
+  return renderEconomyUiTradeEstimateHtmlFragment003({
+    positionBuy: legacyHtml(position.buy!.tonnes),
+    credits2: legacyHtml(credits2(position.buy!.total)),
+    playerPayloadCargo: legacyHtml(
+      (playerPayload.cargo[market!.id] || 0) > 0
+        ? renderEconomyUiTradeEstimateHtmlFragment004({
+            positionSale: legacyHtml(position.sale!.tonnes),
+            credits2: legacyHtml(credits2(position.sale!.total)),
+          })
+        : '',
+    ),
+    positionBuy2: legacyHtml(
+      position.buy!.tonnes < Number(rawAmount) ? renderEconomyUiTradeEstimateHtmlFragment005() : '',
+    ),
+    playerPayloadCargo2: legacyHtml(
+      (playerPayload.cargo[market!.id] || 0) > 0 && position.sale!.tonnes < Number(rawAmount)
+        ? renderEconomyUiTradeEstimateHtmlFragment006()
+        : '',
+    ),
+    positionWarningsMap: legacyHtml(
+      position.warnings
+        .map((width) => renderEconomyUiTradeEstimateHtmlFragment007({ width: width }))
+        .join(''),
+    ),
+  });
 }
 export function receiptHtml(clientGameState: ClientGameState) {
   const economyReceipt2 = clientGameState.you?.economyReceipt;
@@ -46,7 +81,24 @@ export function receiptHtml(clientGameState: ClientGameState) {
     economyReceipt2.departedAt === null
       ? 'This stop'
       : `${place(economyReceipt2.from)} → ${place(economyReceipt2.to)}`;
-  return `<details class="trip-receipt"${clientGameState.economyReceiptOpen ? ' open' : ''}><summary>Recent trip · ${economyReceipt2.net >= 0 ? '+' : ''}${credits2(economyReceipt2.net)} <span class="dim small">goods and refining only</span></summary><div class="small">${label}</div><div class="kv"><span>Sold goods</span><span>${credits2(economyReceipt2.sales)}</span></div><div class="kv"><span>Bought goods</span><span>−${credits2(economyReceipt2.purchases)}</span></div><div class="kv"><span>Refining costs</span><span>−${credits2(economyReceipt2.serviceFees)}</span></div>${economyReceipt2.refunds ? `<div class="kv"><span>Service refunds</span><span>+${credits2(economyReceipt2.refunds)}</span></div>` : ''}<p class="dim small">Supplies bought before departure and sales at your latest stop. New purchases belong to your next trip. This is not your full profit: other rewards, fuel, repairs and ship costs are not included.</p></details>`;
+  return renderEconomyUiReceiptHtmlFragment008({
+    clientGameStateEconomyReceiptOpen: legacyHtml(
+      clientGameState.economyReceiptOpen ? ' open' : '',
+    ),
+    economyReceipt2Net: legacyHtml(economyReceipt2.net >= 0 ? '+' : ''),
+    credits2: legacyHtml(credits2(economyReceipt2.net)),
+    label: legacyHtml(label),
+    credits22: legacyHtml(credits2(economyReceipt2.sales)),
+    credits23: legacyHtml(credits2(economyReceipt2.purchases)),
+    credits24: legacyHtml(credits2(economyReceipt2.serviceFees)),
+    economyReceipt2Refunds: legacyHtml(
+      economyReceipt2.refunds
+        ? renderEconomyUiReceiptHtmlFragment009({
+            credits2: legacyHtml(credits2(economyReceipt2.refunds)),
+          })
+        : '',
+    ),
+  });
 }
 const initialized = new WeakSet();
 export function initEconomyUI(clientGameState: ClientGameState) {

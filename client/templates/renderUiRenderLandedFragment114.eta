@@ -1,0 +1,1 @@
+<span class="qtag"><%= it.missionQuestName %> <%~ it.missionQuestStep %>/<%~ it.missionQuestOf %></span> 

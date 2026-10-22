@@ -1,0 +1,1 @@
+<div class="kv"><span style="color:#7ad0ff">In the drydock for Tier <%~ it.savedSpecialistTier %></span><span><%~ it.minutes %> left</span></div>

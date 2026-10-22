@@ -1,0 +1,1 @@
+<div class="evbox" style="border-color:<%~ it.ANOMALIES %>66"><b style="color:<%~ it.ANOMALIES2 %>"><%~ it.ANOMALIES3 %> <%= it.ANOMALIES4 %></b> in this system<div class="small"><%= it.ANOMALIES5 %></div></div>

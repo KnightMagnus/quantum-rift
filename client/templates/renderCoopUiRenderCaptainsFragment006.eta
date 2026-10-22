@@ -1,0 +1,1 @@
+<button class="btn sm <%~ it.clientGameStateCtabSub %>" data-cs="<%~ it.entryKey %>"><%~ it.count %><%~ it.entryKey2 %><%~ it.entryKey3 %></button>

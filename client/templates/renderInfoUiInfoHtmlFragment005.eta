@@ -1,0 +1,1 @@
+<button class="btn sm" data-jet="<%~ it.component %>" data-grade="<%~ it.game %>" data-n="<%~ it.MathMin %>">DUMP <%~ it.MathMin2 %></button> <button class="btn sm" data-jet="<%~ it.component2 %>" data-grade="<%~ it.game2 %>" data-n="<%~ it.quantity %>">DUMP ALL <%~ it.gameToUpperCase %></button>

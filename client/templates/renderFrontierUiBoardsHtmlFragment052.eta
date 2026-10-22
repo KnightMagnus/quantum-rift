@@ -1,0 +1,4 @@
+<div class="ocard"><div class="oname"><b style="font-size:15px"><%= it.captainProfileName %></b> <%~ it.captainProfileOnline %></div>
+    <div class="kv"><span>Flies</span><span><%= it.captainProfileShip %> "<%= it.captainProfileShipName %>"</span></div><div class="kv"><span>Station</span><span><%~ it.captainProfileSite %></span></div>
+    <div class="kv"><span>Colonies</span><span><%~ it.captainProfileColoniesMap %></span></div><div class="kv"><span>Record</span><span><%~ it.captainProfileKills %> kills · <%~ it.captainProfileJumps %> jumps · <%~ it.captainProfileMined %> t mined · <%~ it.credits %> earned</span></div>
+    <div class="kv"><span>Arena</span><span><%~ it.captainProfileArena %></span></div><%~ it.captainProfileMastery %><div class="kv"><span>Officers</span><span><%~ it.captainProfileOfficers %></span></div></div>

@@ -1,0 +1,1 @@
+<span>Buy <%~ it.positionBuy %> t: <b><%~ it.credits2 %></b><%~ it.playerPayloadCargo %></span><%~ it.positionBuy2 %><%~ it.playerPayloadCargo2 %><%~ it.positionWarningsMap %>

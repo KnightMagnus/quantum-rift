@@ -1,0 +1,1 @@
+<div class="kv"><span>Turrets level <%~ it.level %> (+<%~ it.nextRating %>)</span><span><%~ it.credits %> + <%~ it.mats %><%~ it.interactive %></span></div>

@@ -1,0 +1,1 @@
+<div class="sect">SHIP MASTERY</div><div class="kv"><span><span style="color:#ffd27a"><%~ it.stars %></span> Tier <%~ it.masteryTier2 %></span><span class="small"><%~ it.tier %></span></div><%~ it.tier2 %><div class="dim small"><%~ it.buffText %><%~ it.masteryTier22 %></div>

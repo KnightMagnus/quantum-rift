@@ -1,3 +1,4 @@
+import { renderChatProjectionInitChatProjectionFragment001 } from './eta-templates.ts';
 // One live history, projected from its existing console. Sending and channel routes stay unchanged.
 export function initChatProjection(game: { you?: unknown }) {
   const byIdentifier = (identifier: string) => document.getElementById(identifier)!;
@@ -8,7 +9,7 @@ export function initChatProjection(game: { you?: unknown }) {
   const toggle = byIdentifier('chatexpand');
   const parked = document.createElement('div');
   parked.className = 'chat-projector-status';
-  parked.innerHTML = '<span aria-hidden="true">◇</span> HISTORY PROJECTED ABOVE';
+  parked.innerHTML = renderChatProjectionInitChatProjectionFragment001();
   let open = false;
 
   function blocked() {

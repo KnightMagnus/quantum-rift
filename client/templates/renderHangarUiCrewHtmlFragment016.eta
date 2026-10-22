@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="off" data-op="assign" data-oid="<%~ it.officerId %>" data-slot="<%~ it.entryKey %>"><%~ it.entryKey2 %></button>

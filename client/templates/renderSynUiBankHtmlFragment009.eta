@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="bank" data-op="pay">PAY</button><button class="btn sm" data-act="bank" data-op="payall">PAY ALL</button>

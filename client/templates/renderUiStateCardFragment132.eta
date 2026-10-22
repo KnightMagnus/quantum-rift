@@ -1,0 +1,1 @@
+<div class="small"><%~ it.goal %><%~ it.livingPayloadStateNeed %></div><div class="sbar"><i style="width:<%~ it.MathRound %>%;background:<%~ it.systemStateColor %>"></i></div>

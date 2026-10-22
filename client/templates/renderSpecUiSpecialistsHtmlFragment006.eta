@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="spec" data-op="parts" data-id="<%~ it.specialistShipId %>">REFINE <%~ it.MathFloor %></button>

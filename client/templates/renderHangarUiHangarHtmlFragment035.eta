@@ -1,0 +1,1 @@
+<div class="ocard"><div class="oname"><img src="<%~ it.artworkUrl %>" style="width:44px;height:30px;object-fit:contain;vertical-align:middle"> <b><%= it.shuttleCraftName %></b> <span class="dim small"><%~ it.savedShuttleRuns %> runs</span></div><%~ it.crew %><%~ it.body %><%~ it.atHome %></div>

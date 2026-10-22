@@ -1,0 +1,1 @@
+ <button class="btn sm" data-act="ainvite" data-n="<%= it.optionsName %>">INVITE</button>

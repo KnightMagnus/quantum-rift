@@ -1,0 +1,1 @@
+<option value="<%~ it.officerRecordId %>"<%~ it.officerRecordId2 %>><%= it.officerRecordName %> · <%~ it.RARITY %> <%~ it.ROLES %> Lv <%~ it.officerRecordLv %></option>

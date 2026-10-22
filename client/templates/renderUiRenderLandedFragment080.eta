@@ -1,0 +1,1 @@
+<div class="sect">STATION MATERIALS</div><table class="tbl"><tr><th>CRATE</th><th>PRICE</th><th>HELD</th><th></th></tr><%~ it.length2MatsMap %></table>

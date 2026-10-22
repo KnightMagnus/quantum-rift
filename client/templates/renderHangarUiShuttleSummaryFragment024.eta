@@ -1,0 +1,1 @@
+<div class="kv"><span><%= it.shuttleCraftName %></span><span class="small"><%~ it.state2 %></span></div>

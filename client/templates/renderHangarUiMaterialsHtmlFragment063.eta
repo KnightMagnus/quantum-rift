@@ -1,0 +1,1 @@
+ <a href="#" class="small" data-act="st" data-op="refine" data-mat="<%~ it.message %>" data-g="<%~ it.game %>" data-n="1" title="Refine <%~ it.REFINE_UPNeed %> into one grade <%~ it.GRADES %> (<%~ it.credits %> cr)">▲</a>

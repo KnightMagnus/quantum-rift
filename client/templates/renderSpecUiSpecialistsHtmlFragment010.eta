@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="spec" data-op="comp" data-c="<%~ it.component %>"><%~ it.costParts %> parts + <%~ it.credits %></button>

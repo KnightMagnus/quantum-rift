@@ -1,3 +1,8 @@
+import { renderShipFunctionsRegisterAttribute001 } from './eta-templates.ts';
+import {
+  renderShipFunctionsRegisterFragment001,
+  renderShipFunctionsInitShipFunctionsFragment002,
+} from './eta-templates.ts';
 interface ShipFunctionState {
   you?: {
     name: string;
@@ -96,7 +101,8 @@ export function initShipFunctions(
     button.setAttribute('aria-controls', panel.id);
     button.setAttribute('aria-expanded', 'false');
     if (!existing) {
-      button.innerHTML = '<img src="assets/hud/' + icon + '.svg" alt="" aria-hidden="true">';
+      button.innerHTML =
+        renderShipFunctionsRegisterFragment001() + icon + renderShipFunctionsRegisterAttribute001();
       const header = document.createElement('header');
       const title = document.createElement('strong');
       title.textContent = name === 'Combat' ? 'Combat assist' : name;
@@ -229,8 +235,7 @@ export function initShipFunctions(
     const button = document.getElementById(identifier)!;
     button.classList.add('function-icon');
     if (identifier === 'cbmap')
-      button.innerHTML =
-        '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 6l8-3 10 3 8-3v23l-8 3-10-3-8 3zM11 3v23M21 6v23" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+      button.innerHTML = renderShipFunctionsInitShipFunctionsFragment002();
     const text = document.createElement('span');
     text.className = 'function-label';
     text.textContent = label;

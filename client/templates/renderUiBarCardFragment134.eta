@@ -1,0 +1,1 @@
+<div class="barcard"><div class="sect" style="margin-top:0">AT THE BAR</div><div><b><%= it.contact2Name %></b> <span class="dim">· <%= it.contact2Title %> · <%= it.contact2Standing %></span></div><div class="qintro"><%= it.contact2Hello %></div><div class="rumor"><%= it.contact2Rumor %></div><%~ it.story %></div>

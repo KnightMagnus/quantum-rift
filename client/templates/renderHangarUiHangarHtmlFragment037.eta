@@ -1,0 +1,1 @@
+ <button class="btn sm" data-act="sh" data-op="scrap" data-sid="<%~ it.savedShuttleId %>">SCRAP</button>

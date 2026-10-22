@@ -1,0 +1,1 @@
+ <span class="flashtag <%~ it.marketItemPrice %>"><%~ it.marketItemPrice2 %></span>

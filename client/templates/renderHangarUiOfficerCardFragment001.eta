@@ -1,0 +1,2 @@
+<div class="ocard" style="border-color:<%~ it.officerRarityColor %>55"><div class="oname"><b style="color:<%~ it.officerRarityColor2 %>"><%= it.officerRecordName %></b> <span class="dim small"><%~ it.officerRarityName %> <%~ it.ROLES %> · <span style="color:<%~ it.factionDefColor %>"><%~ it.factionDefShort %></span> · Lv <%~ it.officerRecordLv %></span></div>
+    <div class="small"><%~ it.statText %></div><%~ it.officerRecordXp %><%~ it.extra %></div>

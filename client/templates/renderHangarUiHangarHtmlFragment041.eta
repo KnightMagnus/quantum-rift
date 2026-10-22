@@ -1,0 +1,1 @@
+<%~ it.credits %> + <%~ it.shuttleCraftMatsMap %> <button class="btn sm" data-act="sh" data-op="build" data-kind="<%~ it.entryKey %>">BUILD</button>

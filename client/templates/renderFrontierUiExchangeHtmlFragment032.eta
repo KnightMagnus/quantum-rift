@@ -1,0 +1,1 @@
+<option value="com:<%~ it.commodityDefId %>"><%= it.commodityDefName %></option>

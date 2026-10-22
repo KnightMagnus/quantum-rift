@@ -1,0 +1,1 @@
+<span class="cr"><b>Your pay:</b> <%= it.missionDetails2Pay %></span>

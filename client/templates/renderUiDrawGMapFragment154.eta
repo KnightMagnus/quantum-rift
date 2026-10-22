@@ -1,0 +1,1 @@
+<br><span>Your standing with <%~ it.FACTIONS %>: <b><%~ it.clientGameStateYou %></b></span>

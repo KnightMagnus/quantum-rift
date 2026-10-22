@@ -1,0 +1,1 @@
+<div class="it dmrow" data-cact="dm" data-n="<%= it.count %>"><div class="n"><div><b><%= it.count2 %></b><%~ it.clientGameStateUnread %></div><div class="s"><%~ it.lastFrom %></div></div></div>

@@ -1,0 +1,1 @@
+<span class="<%~ it.dockShipPayloadRepairT %>" title="<%= it.dockShipPayloadName %><%~ it.dockShipPayloadRepairT2 %>">◆</span>

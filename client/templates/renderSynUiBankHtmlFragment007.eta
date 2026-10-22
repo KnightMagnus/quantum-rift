@@ -1,0 +1,1 @@
+<div class="kv"><span>Balance</span><span class="cr"><%~ it.credits2 %></span></div><div class="kv"><span>Next payment</span><span>about <%~ it.credits22 %> in <%~ it.minutes %> min</span></div>

@@ -1,0 +1,1 @@
+<div class="kv"><span>Upgrade to level <%~ it.componentLv %></span><span><%~ it.credits %> + <%~ it.mats %> <button class="btn sm" data-act="col" data-op="upgrade">UPGRADE</button></span></div>

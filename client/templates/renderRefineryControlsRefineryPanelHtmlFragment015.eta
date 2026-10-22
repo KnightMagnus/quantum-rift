@@ -1,0 +1,1 @@
+<div class="rrow"><span><%~ it.miningOrderQty %> t <%= it.miningOrderGrade %> <%= it.title %> · pays <%~ it.miningOrderRewardToLocaleString %> credits</span><button class="btn sm" data-refinery="accept" data-order="1" data-id="<%= it.miningOrderId %>" data-port="<%= it.miningOrderPort %>">ACCEPT DELIVERY</button></div>

@@ -1,0 +1,1 @@
+<div class="kv"><span>Best mastery</span><span><%= it.captainProfileMasteryShip %> · Tier <%~ it.captainProfileMasteryTier %></span></div>

@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="bm" data-id="<%~ it.positionXId %>"<%~ it.playerPayloadCredits %>>BUY</button>

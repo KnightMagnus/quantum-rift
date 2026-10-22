@@ -1,0 +1,1 @@
+<tr><td><%= it.name2 %></td><td style="color:<%~ it.reputation %>"><%~ it.factionStoreItemRep %></td><td><%~ it.factionStoreItemTokens %></td><td><%~ it.factionStoreItemCredits %></td><td style="text-align:right"><button class="btn sm" data-act="buystore" data-f="<%~ it.faction %>" data-id="<%~ it.factionStoreItemId %>" <%~ it.allowed %>>BUY</button></td></tr>

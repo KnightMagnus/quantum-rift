@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="st" data-op="process" data-id="<%~ it.oreCommodity %>">1 CRATE</button> <button class="btn sm" data-act="st" data-op="process" data-id="<%~ it.oreCommodity2 %>" data-all="1">ALL <%~ it.count %></button>

@@ -1,0 +1,1 @@
+<div class="kv"><span>Location</span><span><%= it.systemsById %></span></div><div class="ops"><%~ it.map %></div>

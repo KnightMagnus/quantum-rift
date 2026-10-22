@@ -1,0 +1,1 @@
+<div class="rankrow"><span class="rank"><%~ it.RANKS_OFF %></span><%~ it.traits %><%~ it.button %></div>

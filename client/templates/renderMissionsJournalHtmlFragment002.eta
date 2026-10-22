@@ -1,0 +1,1 @@
+<div class="kv small"><span><%~ it.positionXSide %> <%= it.positionXName %></span><span class="dim"><%= it.positionXGiver %></span></div>

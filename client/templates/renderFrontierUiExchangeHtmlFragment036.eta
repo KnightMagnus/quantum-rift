@@ -1,0 +1,1 @@
+<tr><td><%= it.name %></td><td class="lo"><%~ it.secondValueBid %></td><td><%~ it.secondValueBids %></td><td class="hi"><%~ it.secondValueAsk %></td><td><%~ it.secondValueAsks %></td></tr>

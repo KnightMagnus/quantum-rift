@@ -1,0 +1,4 @@
+<div style="padding:6px"><a href="#" id="cback" style="color:#d88">&lsaquo; back</a><div style="text-align:center"><img src="<%~ it.artworkUrl %>" style="max-width:100%;max-height:150px"></div>
+      <b style="color:#fff;font-size:14px"><%= it.shipHullAssetName %></b> <span class="cr" style="float:right"><%~ it.shipHullAssetKind %></span><div class="dim"><%= it.shipHullAssetSub %> · <%~ it.roleTag %></div><div class="dim small"><%= it.ROLES_INFO %></div>
+      <%~ it.statLines %><div class="sect">WHERE TO GET IT</div><div style="color:#bfe0ff"><%= it.where %></div>
+      <%~ it.shipHullAssetPilot %><div class="sect">DESCRIPTION</div><div style="white-space:pre-wrap;line-height:1.4"><%= it.shipHullAssetDesc %></div></div>

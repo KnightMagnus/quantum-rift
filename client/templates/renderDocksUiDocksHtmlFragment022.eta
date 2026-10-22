@@ -1,0 +1,1 @@
+<div class="it dstore"><img src="<%~ it.artworkUrl %>"><div style="flex:1"><b><%= it.shipHullAssetName %></b> <span class="dim">"<%= it.dockShipPayloadName %>"</span><div class="dim small"><%~ it.dockShipPayloadAt %><%~ it.dockShipPayloadWingOnly %><%~ it.dockShipPayloadRepairT %></div></div><%~ it.interactive %></div>

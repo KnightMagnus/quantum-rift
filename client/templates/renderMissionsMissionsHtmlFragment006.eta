@@ -1,0 +1,7 @@
+<div data-mission-key="<%= it.missionTargetKey %>" class="mcard<%~ it.missionTargetKind %><%~ it.missionTargetUrgent %>">
+      <%~ it.missionTargetKind2 %>
+      <div class="t"><%= it.missionTargetTitle %></div>
+      <div class="mstat"><%= it.missionTargetStatus %></div><%~ it.missionFactsHtml %>
+      <%~ it.missionTargetKind3 %>
+      <div class="mfoot"><button class="btn sm" data-pin="<%= it.missionTargetKey2 %>" aria-pressed="<%~ it.clientGameStatePinnedObjective %>"><%~ it.clientGameStatePinnedObjective2 %></button><span class="dim small"><%~ it.jumps %></span><%~ it.missionTargetSys %><%~ it.missionTargetPendingQuest %></div>
+    </div>

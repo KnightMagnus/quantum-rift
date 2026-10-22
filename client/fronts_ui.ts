@@ -1,3 +1,35 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderFrontsUiGoalRowsFragment001,
+  renderFrontsUiGoalRowsFragment002,
+  renderFrontsUiOpsHtmlFragment003,
+  renderFrontsUiOpsHtmlFragment004,
+  renderFrontsUiOpsHtmlFragment005,
+  renderFrontsUiOpsHtmlFragment006,
+  renderFrontsUiOpsHtmlFragment007,
+  renderFrontsUiOpsHtmlFragment008,
+  renderFrontsUiOpsHtmlFragment009,
+  renderFrontsUiOpsHtmlFragment010,
+  renderFrontsUiOpsHtmlFragment011,
+  renderFrontsUiOpsHtmlFragment012,
+  renderFrontsUiOpsHtmlFragment013,
+  renderFrontsUiOpsHtmlFragment014,
+  renderFrontsUiOpsHtmlFragment015,
+  renderFrontsUiOpsHtmlFragment016,
+  renderFrontsUiOpsHtmlFragment017,
+  renderFrontsUiOpsHtmlFragment018,
+  renderFrontsUiOpsHtmlFragment019,
+  renderFrontsUiOpsHtmlFragment020,
+  renderFrontsUiOpsHtmlFragment021,
+  renderFrontsUiOpsHtmlFragment022,
+  renderFrontsUiOpsHtmlFragment023,
+  renderFrontsUiOpsHtmlFragment024,
+  renderFrontsUiStoreMenuHtmlFragment025,
+  renderFrontsUiStoreMenuHtmlFragment026,
+  renderFrontsUiStoreHtmlFragment027,
+  renderFrontsUiStoreHtmlFragment028,
+  renderFrontsUiStoreHtmlFragment029,
+} from './eta-templates.ts';
 import type { FactionDef } from '../shared/galaxy.ts';
 import type { ClientGameState } from './main.ts';
 export type GoalEntry = {
@@ -51,7 +83,6 @@ export type CalendarEvent = {
   end: number;
 };
 
-import { escapeHtml as escapeHtml2 } from './html.ts';
 // Quantum Rift: interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
 import { SYS as systemsById, FACTIONS, GRADES } from '../shared/galaxy.ts';
 import {
@@ -87,9 +118,22 @@ const left = (time: number): string => {
  */
 function goalRows(list: GoalEntry[], period: 'daily' | 'weekly'): string {
   return list
-    .map(
-      (goalEntry, index) =>
-        `<div class="goal ${goalEntry.claimed ? 'claimed' : ''}"><div class="kv"><span>${escapeHtml2(GOAL_TYPES[goalEntry.type].text(goalEntry.n))}</span><span class="small">${goalEntry.claimed ? '✓ claimed' : goalEntry.got >= goalEntry.n ? `<button class="btn sm" data-act="goal" data-p="${period}" data-i="${index}">CLAIM</button>` : `${goalEntry.type === 'trade' ? credits(goalEntry.got) : goalEntry.got} / ${goalEntry.type === 'trade' ? credits(goalEntry.n) : goalEntry.n}`}</span></div><div class="xpbar"><i style="width:${Math.min(100, (100 * goalEntry.got) / goalEntry.n)}%"></i></div></div>`,
+    .map((goalEntry, index) =>
+      renderFrontsUiGoalRowsFragment001({
+        goalEntryClaimed: legacyHtml(goalEntry.claimed ? 'claimed' : ''),
+        GOAL_TYPES: GOAL_TYPES[goalEntry.type].text(goalEntry.n),
+        goalEntryClaimed2: legacyHtml(
+          goalEntry.claimed
+            ? '✓ claimed'
+            : goalEntry.got >= goalEntry.n
+              ? renderFrontsUiGoalRowsFragment002({
+                  period: legacyHtml(period),
+                  index: legacyHtml(index),
+                })
+              : `${goalEntry.type === 'trade' ? credits(goalEntry.got) : goalEntry.got} / ${goalEntry.type === 'trade' ? credits(goalEntry.n) : goalEntry.n}`,
+        ),
+        MathMin: legacyHtml(Math.min(100, (100 * goalEntry.got) / goalEntry.n)),
+      }),
     )
     .join('');
 }
@@ -104,20 +148,43 @@ export function opsHtml(clientGameState: ClientGameState): string {
     width: Partial<NonNullable<ClientGameState['world']>> = clientGameState.world || {},
     serverEvent = width.event,
     _here = systemsById[clientGameState.sys!];
-  let height =
-    '<button class="btn sm" data-act="stores" style="margin-bottom:6px">FACTION STORES</button>';
+  let height = renderFrontsUiOpsHtmlFragment003();
   const story2 = playerPayload.story;
   if (story2 && (story2.active || story2.next))
-    height += `<div class="evbox" style="border-color:#c9a24a"><div class="small" style="color:#c9a24a;letter-spacing:2px">MAIN STORY ${story2.step + 1}/${story2.total}</div><b style="color:#ffe2a0">${escapeHtml2(story2.active ? story2.active.title : story2.next!.title)}</b><div class="small">${escapeHtml2(story2.active ? (story2.active.ready ? 'Done: return to collect.' : story2.active.brief) : 'Waiting for you at ' + story2.next!.at + '.')}</div></div>`;
+    height += renderFrontsUiOpsHtmlFragment004({
+      story2Step: legacyHtml(story2.step + 1),
+      story2Total: legacyHtml(story2.total),
+      story2Active: story2.active ? story2.active.title : story2.next!.title,
+      story2Active2: story2.active
+        ? story2.active.ready
+          ? 'Done: return to collect.'
+          : story2.active.brief
+        : 'Waiting for you at ' + story2.next!.at + '.',
+    });
   if (serverEvent)
-    height += `<div class="evbox"><div class="dim small">${clientGameState.solo ? 'EVENT' : 'SERVER EVENT'}</div><b>${escapeHtml2(serverEvent.name)}</b><div class="small">${escapeHtml2(serverEvent.desc)}</div></div>`;
+    height += renderFrontsUiOpsHtmlFragment005({
+      clientGameStateSolo: legacyHtml(clientGameState.solo ? 'EVENT' : 'SERVER EVENT'),
+      serverEventName: serverEvent.name,
+      serverEventDesc: serverEvent.desc,
+    });
   if (width.invasion) {
     const starSystem = systemsById[width.invasion.sys];
-    height += `<div class="evbox inv"><div class="small" style="color:#ff8a70">INVASION · ${left(width.invasion.until)} left</div><b>${escapeHtml2(width.invasion.name)}</b> in <a href="#" data-act="plotto" data-sys="${starSystem.id}">${escapeHtml2(starSystem.name)}</a><div class="dim small">Everyone who damages it shares the bounty.</div></div>`;
+    height += renderFrontsUiOpsHtmlFragment006({
+      left: legacyHtml(left(width.invasion.until)),
+      widthInvasionName: width.invasion.name,
+      starSystemId: legacyHtml(starSystem.id),
+      starSystemName: starSystem.name,
+    });
   }
   const angle = width.anomalies && width.anomalies[clientGameState.sys!];
   if (angle)
-    height += `<div class="evbox" style="border-color:${ANOMALIES[angle].color}66"><b style="color:${ANOMALIES[angle].color}">${ANOMALIES[angle].icon} ${escapeHtml2(ANOMALIES[angle].name)}</b> in this system<div class="small">${escapeHtml2(ANOMALIES[angle].desc)}</div></div>`;
+    height += renderFrontsUiOpsHtmlFragment007({
+      ANOMALIES: legacyHtml(ANOMALIES[angle].color),
+      ANOMALIES2: legacyHtml(ANOMALIES[angle].color),
+      ANOMALIES3: legacyHtml(ANOMALIES[angle].icon),
+      ANOMALIES4: ANOMALIES[angle].name,
+      ANOMALIES5: ANOMALIES[angle].desc,
+    });
   {
     const near = Object.entries(width.states || {})
       .filter(
@@ -138,50 +205,97 @@ export function opsHtml(clientGameState: ClientGameState): string {
       .slice(0, 8); // the Rift today
     if (near.length)
       height +=
-        `<div class="sect">THE RIFT TODAY <span class="dim small">troubled systems near you</span></div>` +
+        renderFrontsUiOpsHtmlFragment008() +
         near
           .map(([starSystem, livingPayloadState, innerIndex]) => {
             const systemState = STATES[livingPayloadState.k];
-            return `<div class="kv"><span><span style="color:${systemState.color}">${systemState.icon} ${systemState.name}</span> · ${escapeHtml2(systemsById[starSystem].name)}${livingPayloadState.need ? ` <span class="dim small">${livingPayloadState.got}/${livingPayloadState.need}</span>` : ''}</span><span class="small dim">${innerIndex ? innerIndex + ' jump' + (innerIndex > 1 ? 's' : '') : 'here'} <button class="btn sm" data-plot="${starSystem}">PLOT</button></span></div>`;
+            return renderFrontsUiOpsHtmlFragment009({
+              systemStateColor: legacyHtml(systemState.color),
+              systemStateIcon: legacyHtml(systemState.icon),
+              systemStateName: legacyHtml(systemState.name),
+              systemsById: systemsById[starSystem].name,
+              livingPayloadStateNeed: legacyHtml(
+                livingPayloadState.need
+                  ? renderFrontsUiOpsHtmlFragment010({
+                      livingPayloadStateGot: legacyHtml(livingPayloadState.got),
+                      livingPayloadStateNeed: legacyHtml(livingPayloadState.need),
+                    })
+                  : '',
+              ),
+              innerIndex: legacyHtml(
+                innerIndex ? innerIndex + ' jump' + (innerIndex > 1 ? 's' : '') : 'here',
+              ),
+              starSystem: legacyHtml(starSystem),
+            });
           })
           .join('');
   }
   {
     if (playerPayload.holdout && playerPayload.holdout.active)
-      height += `<div class="evbox inv"><b>HOLDOUT</b> · wave ${playerPayload.holdout.wave} of 10 · stay in your station's system</div>`;
+      height += renderFrontsUiOpsHtmlFragment011({
+        playerPayloadHoldoutWave: legacyHtml(playerPayload.holdout.wave),
+      });
   }
   if (playerPayload.goals) {
     height +=
-      `<div class="sect">DAILY GOALS <span class="dim small">${credits(GOAL_REWARD.daily.credits)} cr + ${GOAL_REWARD.daily.tokens} scrip each</span></div>` +
-      goalRows(playerPayload.goals.daily!, 'daily');
+      renderFrontsUiOpsHtmlFragment012({
+        credits: legacyHtml(credits(GOAL_REWARD.daily.credits)),
+        GOAL_REWARDDailyTokens: legacyHtml(GOAL_REWARD.daily.tokens),
+      }) + goalRows(playerPayload.goals.daily!, 'daily');
     height +=
-      `<div class="sect">WEEKLY GOALS <span class="dim small">${credits(GOAL_REWARD.weekly.credits)} cr + ${GOAL_REWARD.weekly.tokens} scrip each</span></div>` +
-      goalRows(playerPayload.goals.weekly!, 'weekly');
+      renderFrontsUiOpsHtmlFragment013({
+        credits: legacyHtml(credits(GOAL_REWARD.weekly.credits)),
+        GOAL_REWARDWeeklyTokens: legacyHtml(GOAL_REWARD.weekly.tokens),
+      }) + goalRows(playerPayload.goals.weekly!, 'weekly');
   }
   // the Armada at a glance (full controls in the ALLIES tab); multiplayer only
   const armada2 = playerPayload.armada;
   if (!clientGameState.solo) {
-    height += `<div class="sect">ARMADA</div>`;
-    if (!armada2)
-      height +=
-        '<p class="dim small">You are not in an Armada. Form one, or accept an invite, from the ALLIES tab.</p>';
+    height += renderFrontsUiOpsHtmlFragment014();
+    if (!armada2) height += renderFrontsUiOpsHtmlFragment015();
     else
       height +=
-        `<div class="kv"><span><b>${escapeHtml2(armada2.name)}</b></span><span class="small">${armada2.members!.filter((message) => message.online).length}/${armada2.members!.length} online</span></div>` +
+        renderFrontsUiOpsHtmlFragment016({
+          armada2Name: armada2.name,
+          armada2Members: legacyHtml(armada2.members!.filter((message) => message.online).length),
+          armada2Members2: legacyHtml(armada2.members!.length),
+        }) +
         armada2
-          .members!.map(
-            (message) =>
-              `<div class="kv"><span>${message.online ? '<b style="color:var(--ok)">●</b>' : '<span class="dim">○</span>'} ${escapeHtml2(message.name)}${message.name === armada2.leader ? ' <span class="dim small">leader</span>' : ''}</span><span class="dim small">${escapeHtml2(message.sys || '')}</span></div>`,
+          .members!.map((message) =>
+            renderFrontsUiOpsHtmlFragment017({
+              messageOnline: legacyHtml(
+                message.online
+                  ? renderFrontsUiOpsHtmlFragment018()
+                  : renderFrontsUiOpsHtmlFragment019(),
+              ),
+              messageName: message.name,
+              messageName2: legacyHtml(
+                message.name === armada2.leader ? renderFrontsUiOpsHtmlFragment020() : '',
+              ),
+              messageSys: message.sys || '',
+            }),
           )
           .join('');
   }
   if (width.calendar)
     height +=
-      '<div class="sect">EVENT CALENDAR</div>' +
+      renderFrontsUiOpsHtmlFragment021() +
       width.calendar
-        .map(
-          (scheduledEvent, index) =>
-            `<div class="kv"><span>${index === 0 ? '<b>' : ''}${escapeHtml2(scheduledEvent.name)}${index === 0 ? '</b>' : ''}</span><span class="dim small">${index === 0 ? 'ends in ' + left(scheduledEvent.end) : new Date(scheduledEvent.start).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span></div>`,
+        .map((scheduledEvent, index) =>
+          renderFrontsUiOpsHtmlFragment022({
+            index: legacyHtml(index === 0 ? renderFrontsUiOpsHtmlFragment023() : ''),
+            scheduledEventName: scheduledEvent.name,
+            index2: legacyHtml(index === 0 ? renderFrontsUiOpsHtmlFragment024() : ''),
+            index3: legacyHtml(
+              index === 0
+                ? 'ends in ' + left(scheduledEvent.end)
+                : new Date(scheduledEvent.start).toLocaleDateString(undefined, {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  }),
+            ),
+          }),
         )
         .join('');
   return height;
@@ -221,10 +335,27 @@ export function storeMenuHtml(
       const factionDef = FACTIONS_[entryKey],
         reputation = playerPayload.rep[entryKey] || 0,
         token = (playerPayload.tokens && playerPayload.tokens[entryKey]) || 0;
-      return `<div class="sfac ${entryKey === faction ? 'on' : ''}" data-act="sfac" data-f="${entryKey}"><b style="color:${factionDef.color}">${escapeHtml2(factionDef.short)}</b><span class="dim small">${reputation} · ${token} tokens</span></div>`;
+      return renderFrontsUiStoreMenuHtmlFragment025({
+        entryKey: legacyHtml(entryKey === faction ? 'on' : ''),
+        entryKey2: legacyHtml(entryKey),
+        factionDefColor: legacyHtml(factionDef.color),
+        factionDefShort: factionDef.short,
+        reputation: legacyHtml(reputation),
+        token: legacyHtml(token),
+      });
     })
     .join('');
-  return `<div class="store-heading"><div class="faction-screen"><img id="faction-insignia" src="assets/factions/${faction}.svg" alt="${escapeHtml2(FACTIONS_[faction].name)} insignia" data-faction="${faction}" width="112" height="112"></div><h2>FACTION STORES <span class="dim small">Rift scrip: ${(playerPayload.tokens && playerPayload.tokens.any) || 0} · ${clientGameState.landed ? 'purchases are delivered to you here' : 'land anywhere to buy'}</span></h2></div><div class="sgrid"><div class="sfacs">${side}</div><div class="sbody well">${storeHtml(clientGameState, faction)}</div></div><button class="btn sm" data-act="sclose">CLOSE (Esc)</button>`;
+  return renderFrontsUiStoreMenuHtmlFragment026({
+    faction: legacyHtml(faction),
+    FACTIONS_: FACTIONS_[faction].name,
+    faction2: legacyHtml(faction),
+    playerPayloadTokens: legacyHtml((playerPayload.tokens && playerPayload.tokens.any) || 0),
+    clientGameStateLanded: legacyHtml(
+      clientGameState.landed ? 'purchases are delivered to you here' : 'land anywhere to buy',
+    ),
+    side: legacyHtml(side),
+    storeHtml: legacyHtml(storeHtml(clientGameState, faction)),
+  });
 }
 
 /**
@@ -244,9 +375,17 @@ export function storeHtml(clientGameState: ClientGameState, facArg?: string): st
   const tier = [...STORE_TIERS]
     .reverse()
     .find((factionStoreTier) => reputation >= factionStoreTier.rep);
-  let height = `<div class="sect" style="margin-top:0">${escapeHtml2(factionDef.name.toUpperCase())} QUARTERMASTER</div><div class="kv"><span>Your standing</span><span style="color:${factionDef.color}">${reputation} ${tier ? '· ' + tier.name : ''}</span></div>
-    <div class="kv"><span>${factionDef.short} tokens</span><span>${token}</span></div><div class="kv"><span>Rift scrip <span class="dim small">(any store)</span></span><span>${scrip}</span></div>
-    <div class="dim small">Earn ${factionDef.short} tokens by finishing jobs in ${factionDef.short} space and their commissions. Daily and weekly goals pay Rift scrip, which any store accepts.</div><table class="tbl"><tr><th>ITEM</th><th>STANDING</th><th>TOKENS</th><th>CREDITS</th><th></th></tr>`;
+  let height = renderFrontsUiStoreHtmlFragment027({
+    factionDefNameToUpperCase: factionDef.name.toUpperCase(),
+    factionDefColor: legacyHtml(factionDef.color),
+    reputation: legacyHtml(reputation),
+    tier: legacyHtml(tier ? '· ' + tier.name : ''),
+    factionDefShort: legacyHtml(factionDef.short),
+    token: legacyHtml(token),
+    scrip: legacyHtml(scrip),
+    factionDefShort2: legacyHtml(factionDef.short),
+    factionDefShort3: legacyHtml(factionDef.short),
+  });
   for (const factionStoreItem of STORE_ITEMS) {
     const name2 = factionStoreItem.give.crate
       ? `${STORE_MAT[faction]} crate (grade ${GRADES[factionStoreItem.give.crate as number]})`
@@ -256,7 +395,18 @@ export function storeHtml(clientGameState: ClientGameState, facArg?: string): st
       reputation >= factionStoreItem.rep &&
       token + scrip >= factionStoreItem.tokens &&
       playerPayload.credits >= factionStoreItem.credits;
-    height += `<tr><td>${escapeHtml2(name2)}</td><td style="color:${reputation >= factionStoreItem.rep ? '#8ff0ad' : '#ff9a8a'}">${factionStoreItem.rep}</td><td>${factionStoreItem.tokens}</td><td>${factionStoreItem.credits ? credits(factionStoreItem.credits) : '-'}</td><td style="text-align:right"><button class="btn sm" data-act="buystore" data-f="${faction}" data-id="${factionStoreItem.id}" ${allowed ? '' : 'disabled'}>BUY</button></td></tr>`;
+    height += renderFrontsUiStoreHtmlFragment028({
+      name2: name2,
+      reputation: legacyHtml(reputation >= factionStoreItem.rep ? '#8ff0ad' : '#ff9a8a'),
+      factionStoreItemRep: legacyHtml(factionStoreItem.rep),
+      factionStoreItemTokens: legacyHtml(factionStoreItem.tokens),
+      factionStoreItemCredits: legacyHtml(
+        factionStoreItem.credits ? credits(factionStoreItem.credits) : '-',
+      ),
+      faction: legacyHtml(faction),
+      factionStoreItemId: legacyHtml(factionStoreItem.id),
+      allowed: legacyHtml(allowed ? '' : 'disabled'),
+    });
   }
-  return height + '</table>';
+  return height + renderFrontsUiStoreHtmlFragment029();
 }

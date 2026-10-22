@@ -1,0 +1,1 @@
+<select data-lowersel="<%~ it.index %>"><%~ it.ObjectEntries %></select><button class="btn sm" data-act="lower" data-op="hire" data-i="<%~ it.index2 %>">HIRE</button>

@@ -1,0 +1,1 @@
+<option value="<%~ it.stellarBodyId %>"><%= it.systemsById %> · <%= it.FACTIONS %> space · danger <%~ it.systemsById2 %></option>

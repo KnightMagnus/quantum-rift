@@ -1,0 +1,1 @@
+<div class="card story arc" style="cursor:default"><div class="storytag"><%= it.FACTIONS %> · <%= it.optionsArc %></div><div class="t"><%= it.optionsTitle %></div><div><%= it.optionsBrief %></div><%~ it.optionsLocked %></div>

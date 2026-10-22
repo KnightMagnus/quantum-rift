@@ -1,0 +1,1 @@
+ <a href="#" data-act="st" data-op="unqueue" data-id="<%~ it.identifier %>" title="Remove">✕</a>

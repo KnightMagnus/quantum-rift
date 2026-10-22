@@ -1,0 +1,1 @@
+<br><span><%= it.commodityDef %>: <%~ it.rawStellarBodys %> <span class="dim">(average <%~ it.commodityDef2 %>)</span></span>

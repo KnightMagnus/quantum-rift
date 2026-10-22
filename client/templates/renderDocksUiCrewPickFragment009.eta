@@ -1,0 +1,1 @@
+<label class="dcrew"><span><%~ it.role %></span><select data-dk="<%~ it.entryKey %>" data-w="<%~ it.width %>" data-role="<%~ it.role2 %>"><option value="">none</option><%~ it.join2 %></select></label>

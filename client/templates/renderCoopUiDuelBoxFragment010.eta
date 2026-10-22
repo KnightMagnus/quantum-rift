@@ -1,0 +1,1 @@
+<div class="evbox inv"><b><%~ it.duel2Armada %></b> <%~ it.duel2On %> · against <%= it.duel2FoesJoin %><div class="dim small">It ends at disabled, or as a draw after <%~ it.DUELMinutes %> minutes. Leaving the system or landing counts as yielding.</div><button class="btn sm" data-cact="yield">YIELD</button></div>

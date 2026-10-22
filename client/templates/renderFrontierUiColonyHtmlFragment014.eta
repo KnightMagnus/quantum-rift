@@ -1,0 +1,1 @@
+<div class="kv"><span><b><%= it.colonyBuildingName %></b> <span class="dim small"><%= it.colonyBuildingDesc %></span></span><span><%~ it.credits %> <button class="btn sm" data-act="col" data-op="build" data-kind="<%~ it.entryKey %>">BUILD</button></span></div>

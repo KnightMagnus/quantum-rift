@@ -1,0 +1,1 @@
+<div class="goal <%~ it.goalEntryClaimed %>"><div class="kv"><span><%= it.GOAL_TYPES %></span><span class="small"><%~ it.goalEntryClaimed2 %></span></div><div class="xpbar"><i style="width:<%~ it.MathMin %>%"></i></div></div>

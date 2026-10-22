@@ -1,0 +1,3 @@
+<div class="detail"><img src="<%~ it.artworkUrl %>"><div><b style="font-size:16px;color:#fff"><%= it.shipHullAssetName %></b> <span class="dim"><%= it.shipHullAssetSub %></span> <%~ it.roleTag %><%~ it.shipHullAssetCargo %><%~ it.statLines %>
+        <div class="kv"><span>Price</span><span class="cr"><%~ it.credits %></span></div><%~ it.WING_ONLYIncludes %><%~ it.constValue %>
+        <p style="white-space:pre-wrap;line-height:1.4;color:#ccc"><%= it.shipHullAssetDesc %></p></div></div><div class="ysort small">Sort by <select id="ysort"><%~ it.cost %></select></div><div class="cards"><%~ it.yardSorted %></div>

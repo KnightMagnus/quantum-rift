@@ -1,3 +1,76 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderCoopUiViewFragment001,
+  renderCoopUiViewFragment002,
+  renderCoopUiViewFragment003,
+  renderCoopUiRenderCaptainsFragment004,
+  renderCoopUiRenderCaptainsFragment005,
+  renderCoopUiRenderCaptainsFragment006,
+  renderCoopUiDuelBoxFragment007,
+  renderCoopUiDuelBoxFragment008,
+  renderCoopUiDuelBoxFragment009,
+  renderCoopUiDuelBoxFragment010,
+  renderCoopUiFriendsHtmlFragment011,
+  renderCoopUiFriendsHtmlFragment012,
+  renderCoopUiFriendsHtmlFragment013,
+  renderCoopUiFriendsHtmlFragment014,
+  renderCoopUiFriendsHtmlFragment015,
+  renderCoopUiFriendsHtmlFragment016,
+  renderCoopUiFriendsHtmlFragment017,
+  renderCoopUiFriendsHtmlFragment018,
+  renderCoopUiFriendsHtmlFragment019,
+  renderCoopUiFriendsHtmlFragment020,
+  renderCoopUiFriendsHtmlFragment021,
+  renderCoopUiFriendsHtmlFragment022,
+  renderCoopUiFriendsHtmlFragment023,
+  renderCoopUiFriendsHtmlFragment024,
+  renderCoopUiFriendsHtmlFragment025,
+  renderCoopUiFriendsHtmlFragment026,
+  renderCoopUiFriendsHtmlFragment027,
+  renderCoopUiFriendsHtmlFragment028,
+  renderCoopUiFriendsHtmlFragment029,
+  renderCoopUiDmHtmlFragment030,
+  renderCoopUiDmHtmlFragment031,
+  renderCoopUiDmHtmlFragment032,
+  renderCoopUiDmHtmlFragment033,
+  renderCoopUiDmHtmlFragment034,
+  renderCoopUiDmHtmlFragment035,
+  renderCoopUiDmHtmlFragment036,
+  renderCoopUiArmadaHtmlFragment037,
+  renderCoopUiArmadaHtmlFragment038,
+  renderCoopUiArmadaHtmlFragment039,
+  renderCoopUiArmadaHtmlFragment040,
+  renderCoopUiArmadaHtmlFragment041,
+  renderCoopUiArmadaHtmlFragment042,
+  renderCoopUiArmadaHtmlFragment043,
+  renderCoopUiArmadaHtmlFragment044,
+  renderCoopUiArmadaHtmlFragment045,
+  renderCoopUiArmadaHtmlFragment046,
+  renderCoopUiArmadaHtmlFragment047,
+  renderCoopUiArmadaHtmlFragment048,
+  renderCoopUiArmadaHtmlFragment049,
+  renderCoopUiArmadaHtmlFragment050,
+  renderCoopUiArmadaHtmlFragment051,
+  renderCoopUiArmadaHtmlFragment052,
+  renderCoopUiArmadaHtmlFragment053,
+  renderCoopUiArmadaHtmlFragment054,
+  renderCoopUiArmadaHtmlFragment055,
+  renderCoopUiArmadaHtmlFragment056,
+  renderCoopUiArmadaHtmlFragment057,
+  renderCoopUiOfferListFragment058,
+  renderCoopUiOfferListFragment059,
+  renderCoopUiTradeHtmlFragment060,
+  renderCoopUiTradeHtmlFragment061,
+  renderCoopUiTradeHtmlFragment062,
+  renderCoopUiTradeHtmlFragment063,
+  renderCoopUiTradeHtmlFragment064,
+  renderCoopUiTradeHtmlFragment065,
+  renderCoopUiTradeHtmlFragment066,
+  renderCoopUiTradeHtmlFragment067,
+  renderCoopUiTradeHtmlFragment068,
+  renderCoopUiTradeHtmlFragment069,
+  renderCoopUiTradeHtmlFragment070,
+} from './eta-templates.ts';
 import type { SocialMessage } from './protocol.ts';
 import { elementById } from './dom.ts';
 import type { NetworkMessage } from '../server/message-registry.ts';
@@ -112,9 +185,9 @@ const elapsedTime = (time: number): string => {
         : `${Math.floor(message / 1440)}d ago`;
 };
 const presenceIndicators = {
-  online: '<b style="color:var(--ok)">●</b>',
-  away: '<b style="color:#e0b040">●</b>',
-  offline: '<span class="dim">○</span>',
+  online: renderCoopUiViewFragment001(),
+  away: renderCoopUiViewFragment002(),
+  offline: renderCoopUiViewFragment003(),
 };
 let clientGameState: ClientGameState;
 let send: (message: NetworkMessage) => void;
@@ -353,8 +426,7 @@ export function renderCaptains(): void {
   const cachedElement = elementById2('capview');
   if (!cachedElement) return;
   if (clientGameState.solo) {
-    cachedElement.innerHTML =
-      '<p class="dim">Friends, the Armada and trading are for online games.</p>';
+    cachedElement.innerHTML = renderCoopUiRenderCaptainsFragment004();
     return;
   }
   const subscriptions = [
@@ -367,7 +439,27 @@ export function renderCaptains(): void {
     (firstValue, secondValue) => firstValue + secondValue,
     0,
   );
-  let height = `<div class="itabs capsub">${subscriptions.map(([entryKey, count]) => `<button class="btn sm ${clientGameState.ctabSub === entryKey ? 'on' : ''}" data-cs="${entryKey}">${count}${entryKey === 'dm' && unreadCount ? ` (${unreadCount})` : ''}${entryKey === 'friends' && clientGameState.social && clientGameState.social.inReq.length ? ` (${clientGameState.social.inReq.length})` : ''}</button>`).join('')}</div>`;
+  let height = renderCoopUiRenderCaptainsFragment005({
+    subscriptionsMap: legacyHtml(
+      subscriptions
+        .map(([entryKey, count]) =>
+          renderCoopUiRenderCaptainsFragment006({
+            clientGameStateCtabSub: legacyHtml(clientGameState.ctabSub === entryKey ? 'on' : ''),
+            entryKey: legacyHtml(entryKey),
+            count: legacyHtml(count),
+            entryKey2: legacyHtml(entryKey === 'dm' && unreadCount ? ` (${unreadCount})` : ''),
+            entryKey3: legacyHtml(
+              entryKey === 'friends' &&
+                clientGameState.social &&
+                clientGameState.social.inReq.length
+                ? ` (${clientGameState.social.inReq.length})`
+                : '',
+            ),
+          }),
+        )
+        .join(''),
+    ),
+  });
   height += duelBox();
   height +=
     clientGameState.ctabSub === 'friends'
@@ -400,8 +492,18 @@ function duelBox(): string {
   const duel2 = clientGameState.you!.duel;
   if (!duel2) return '';
   if (duel2.invite)
-    return `<div class="evbox inv"><b>${escapeHtml2(duel2.invite.from)}</b> challenges ${duel2.invite.armada ? 'your Armada to an <b>Armada Duel</b>' : 'you to a <b>duel</b>'}. A fight to disabled; nobody loses a ship.<div style="margin-top:4px"><button class="btn sm" data-cact="duelok">ACCEPT</button> <button class="btn sm" data-cact="duelno">DECLINE</button></div></div>`;
-  return `<div class="evbox inv"><b>${duel2.armada ? 'ARMADA DUEL' : 'DUEL'}</b> ${duel2.on ? '· weapons free' : '· starting'} · against ${escapeHtml2(duel2.foes.join(', '))}<div class="dim small">It ends at disabled, or as a draw after ${DUEL.minutes} minutes. Leaving the system or landing counts as yielding.</div><button class="btn sm" data-cact="yield">YIELD</button></div>`;
+    return renderCoopUiDuelBoxFragment007({
+      duel2InviteFrom: duel2.invite.from,
+      duel2InviteArmada: legacyHtml(
+        duel2.invite.armada ? renderCoopUiDuelBoxFragment008() : renderCoopUiDuelBoxFragment009(),
+      ),
+    });
+  return renderCoopUiDuelBoxFragment010({
+    duel2Armada: legacyHtml(duel2.armada ? 'ARMADA DUEL' : 'DUEL'),
+    duel2On: legacyHtml(duel2.on ? '· weapons free' : '· starting'),
+    duel2FoesJoin: duel2.foes.join(', '),
+    DUELMinutes: legacyHtml(DUEL.minutes),
+  });
 }
 
 /**
@@ -410,7 +512,7 @@ function duelBox(): string {
  */
 function friendsHtml(): string {
   const socialState = clientGameState.social;
-  if (!socialState) return '<p class="dim">Loading...</p>';
+  if (!socialState) return renderCoopUiFriendsHtmlFragment011();
   let height = '';
   const time =
       clientGameState.view &&
@@ -422,47 +524,89 @@ function friendsHtml(): string {
         : '';
   if (targetName) {
     const fraction = socialState.friends.some((friendEntry) => friendEntry.name === targetName);
-    height += `<div class="evbox"><div class="dim small">TARGETED CAPTAIN</div><b>${escapeHtml2(targetName)}</b><div class="frbtn" style="margin-left:0">${fraction ? '' : `<button class="btn sm" data-cact="fadd2" data-n="${escapeHtml2(targetName)}">ADD FRIEND</button>`} <button class="btn sm" data-cact="ainv" data-n="${escapeHtml2(targetName)}">INVITE TO ARMADA</button> ${isAlly(time) ? '' : `<button class="btn sm" data-cact="duel" data-n="${escapeHtml2(targetName)}">DUEL</button>`} <button class="btn sm" data-cact="dm" data-n="${escapeHtml2(targetName)}">MESSAGE</button></div></div>`;
+    height += renderCoopUiFriendsHtmlFragment012({
+      targetName: targetName,
+      fraction: legacyHtml(
+        fraction ? '' : renderCoopUiFriendsHtmlFragment013({ targetName: targetName }),
+      ),
+      targetName2: targetName,
+      isAlly: legacyHtml(
+        isAlly(time) ? '' : renderCoopUiFriendsHtmlFragment014({ targetName: targetName }),
+      ),
+      targetName3: targetName,
+    });
   }
-  height += `<div class="rrow"><input id="fadd" placeholder="Captain name" maxlength="20"><button class="btn sm" data-cact="fadd">ADD FRIEND</button></div>`;
+  height += renderCoopUiFriendsHtmlFragment015();
   if (socialState.inReq.length)
     height +=
-      '<div class="sect">FRIEND REQUESTS</div>' +
+      renderCoopUiFriendsHtmlFragment016() +
       socialState.inReq
-        .map(
-          (count) =>
-            `<div class="kv"><span>${escapeHtml2(count)}</span><span><button class="btn sm" data-cact="facc" data-n="${escapeHtml2(count)}">ACCEPT</button> <button class="btn sm" data-cact="fdec" data-n="${escapeHtml2(count)}">DECLINE</button></span></div>`,
+        .map((count) =>
+          renderCoopUiFriendsHtmlFragment017({ count: count, count2: count, count3: count }),
         )
         .join('');
-  height += `<div class="sect">FRIENDS (${socialState.friends.length})</div>`;
+  height += renderCoopUiFriendsHtmlFragment018({
+    socialStateFriendsLength: legacyHtml(socialState.friends.length),
+  });
   height += socialState.friends.length
     ? socialState.friends
-        .map(
-          (
-            friendEntry,
-          ) => `<div class="frow"><div class="kv"><span>${presenceIndicators[friendEntry.status]} <b>${escapeHtml2(friendEntry.name)}</b></span><span class="dim small">${friendEntry.status === 'offline' ? (friendEntry.last ? 'seen ' + elapsedTime(friendEntry.last) : 'offline') : friendEntry.status === 'away' ? 'away' : ''}${friendEntry.sys ? ` · ${friendEntry.sysId ? `<a href="#" data-cact="plot" data-sys="${escapeHtml2(friendEntry.sysId)}">${escapeHtml2(friendEntry.sys)}</a>` : escapeHtml2(friendEntry.sys)}` : ''}</span></div>
-      <div class="frbtn"><button class="btn sm" data-cact="dm" data-n="${escapeHtml2(friendEntry.name)}">MESSAGE</button>${friendEntry.status !== 'offline' ? ` <button class="btn sm" data-cact="ainv" data-n="${escapeHtml2(friendEntry.name)}">INVITE</button>` : ''}${friendEntry.status !== 'offline' && clientGameState.landed && clientGameState.landed!.site && clientGameState.landed!.site.own ? ` <button class="btn sm" data-cact="topen" data-n="${escapeHtml2(friendEntry.name)}">TRADE</button>` : ''}${friendEntry.status !== 'offline' && clientGameState.view ? ` <button class="btn sm" data-cact="duel" data-n="${escapeHtml2(friendEntry.name)}">DUEL</button>` : ''} <button class="btn sm" data-cact="fdel" data-n="${escapeHtml2(friendEntry.name)}">REMOVE</button></div></div>`,
+        .map((friendEntry) =>
+          renderCoopUiFriendsHtmlFragment019({
+            presenceIndicators: legacyHtml(presenceIndicators[friendEntry.status]),
+            friendEntryName: friendEntry.name,
+            friendEntryStatus: legacyHtml(
+              friendEntry.status === 'offline'
+                ? friendEntry.last
+                  ? 'seen ' + elapsedTime(friendEntry.last)
+                  : 'offline'
+                : friendEntry.status === 'away'
+                  ? 'away'
+                  : '',
+            ),
+            friendEntrySys: legacyHtml(
+              friendEntry.sys
+                ? ` · ${friendEntry.sysId ? renderCoopUiFriendsHtmlFragment020({ friendEntrySysId: friendEntry.sysId, friendEntrySys: friendEntry.sys }) : escapeHtml2(friendEntry.sys)}`
+                : '',
+            ),
+            friendEntryName2: friendEntry.name,
+            friendEntryStatus2: legacyHtml(
+              friendEntry.status !== 'offline'
+                ? renderCoopUiFriendsHtmlFragment021({ friendEntryName: friendEntry.name })
+                : '',
+            ),
+            friendEntryStatus3: legacyHtml(
+              friendEntry.status !== 'offline' &&
+                clientGameState.landed &&
+                clientGameState.landed!.site &&
+                clientGameState.landed!.site.own
+                ? renderCoopUiFriendsHtmlFragment022({ friendEntryName: friendEntry.name })
+                : '',
+            ),
+            friendEntryStatus4: legacyHtml(
+              friendEntry.status !== 'offline' && clientGameState.view
+                ? renderCoopUiFriendsHtmlFragment023({ friendEntryName: friendEntry.name })
+                : '',
+            ),
+            friendEntryName3: friendEntry.name,
+          }),
         )
         .join('')
-    : '<p class="dim small">No friends yet. Add a captain by name, or from the captains online list at Quantum Station.</p>';
+    : renderCoopUiFriendsHtmlFragment024();
   if (socialState.outReq.length)
     height +=
-      '<div class="sect">SENT REQUESTS</div>' +
+      renderCoopUiFriendsHtmlFragment025() +
       socialState.outReq
-        .map(
-          (count) =>
-            `<div class="kv"><span class="dim">${escapeHtml2(count)}</span><span><button class="btn sm" data-cact="fcan" data-n="${escapeHtml2(count)}">CANCEL</button></span></div>`,
-        )
+        .map((count) => renderCoopUiFriendsHtmlFragment026({ count: count, count2: count }))
         .join('');
-  height += `<div class="sect">PRIVACY</div><label class="small"><input type="checkbox" id="pdmall" ${socialState.dmAll ? 'checked' : ''}> Take messages from captains who are not my friends</label><br><label class="small"><input type="checkbox" id="phide" ${socialState.hideSys ? 'checked' : ''}> Hide my location from friends</label>`;
+  height += renderCoopUiFriendsHtmlFragment027({
+    socialStateDmAll: legacyHtml(socialState.dmAll ? 'checked' : ''),
+    socialStateHideSys: legacyHtml(socialState.hideSys ? 'checked' : ''),
+  });
   if (socialState.blocks.length)
     height +=
-      '<div class="sect">BLOCKED</div>' +
+      renderCoopUiFriendsHtmlFragment028() +
       socialState.blocks
-        .map(
-          (count) =>
-            `<div class="kv"><span class="dim">${escapeHtml2(count)}</span><span><button class="btn sm" data-cact="unblock" data-n="${escapeHtml2(count)}">UNBLOCK</button></span></div>`,
-        )
+        .map((count) => renderCoopUiFriendsHtmlFragment029({ count: count, count2: count }))
         .join('');
   return height;
 }
@@ -481,20 +625,59 @@ function dmHtml() {
         clientGameState.social.friends.find(
           (friendEntry) => friendEntry.name === clientGameState.dmWith,
         );
-    return `<div class="kv"><span><a href="#" data-cact="dmback" style="color:#d88">&lsaquo; all</a> &nbsp;${friendEntry ? presenceIndicators[friendEntry.status] : ''} <b>${escapeHtml2(clientGameState.dmWith)}</b></span><span><button class="btn sm" data-cact="block" data-n="${escapeHtml2(clientGameState.dmWith)}">BLOCK</button></span></div>
-      <div class="dmlog" id="dmlog">${list.map((directMessage) => `<div class="dm ${directMessage.from === clientGameState.myName ? 'me' : ''}"><span class="dim small">${new Date(directMessage.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${directMessage.off ? ' · delivered when they log in' : ''}</span><div>${escapeHtml2(directMessage.msg)}</div></div>`).join('') || '<p class="dim small">No messages yet. Say hello.</p>'}</div>
-      <div class="rrow"><input id="dmin" placeholder="Message ${escapeHtml2(clientGameState.dmWith)} (Enter)" maxlength="400"><button class="btn sm" data-cact="dmsend">SEND</button></div>`;
+    return renderCoopUiDmHtmlFragment030({
+      friendEntry: legacyHtml(friendEntry ? presenceIndicators[friendEntry.status] : ''),
+      clientGameStateDmWith: clientGameState.dmWith,
+      clientGameStateDmWith2: clientGameState.dmWith,
+      listMap: legacyHtml(
+        list
+          .map((directMessage) =>
+            renderCoopUiDmHtmlFragment031({
+              directMessageFrom: legacyHtml(
+                directMessage.from === clientGameState.myName ? 'me' : '',
+              ),
+              Date: legacyHtml(
+                new Date(directMessage.t).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+              ),
+              directMessageOff: legacyHtml(
+                directMessage.off ? ' · delivered when they log in' : '',
+              ),
+              directMessageMsg: directMessage.msg,
+            }),
+          )
+          .join('') || renderCoopUiDmHtmlFragment032(),
+      ),
+      clientGameStateDmWith3: clientGameState.dmWith,
+    });
   }
   return (
-    `<div class="dim small" style="margin:4px 0">Message a friend from the FRIENDS list, or type <b>/w name message</b> in chat. Messages to offline captains are delivered when they log in.</div>` +
+    renderCoopUiDmHtmlFragment033() +
     (sort2.length
       ? sort2
           .map((count) => {
             const last: Partial<DirectMessage> = clientGameState.dms[count].at(-1) || {};
-            return `<div class="it dmrow" data-cact="dm" data-n="${escapeHtml2(count)}"><div class="n"><div><b>${escapeHtml2(count)}</b>${clientGameState.unread[count] ? ` <span class="pill on">${clientGameState.unread[count]} new</span>` : ''}</div><div class="s">${escapeHtml2((last.from === clientGameState.myName ? 'You: ' : '') + (last.msg || '')).slice(0, 70)}</div></div></div>`;
+            return renderCoopUiDmHtmlFragment034({
+              count: count,
+              count2: count,
+              clientGameStateUnread: legacyHtml(
+                clientGameState.unread[count]
+                  ? renderCoopUiDmHtmlFragment035({
+                      clientGameStateUnread: legacyHtml(clientGameState.unread[count]),
+                    })
+                  : '',
+              ),
+              lastFrom: legacyHtml(
+                escapeHtml2(
+                  (last.from === clientGameState.myName ? 'You: ' : '') + (last.msg || ''),
+                ).slice(0, 70),
+              ),
+            });
           })
           .join('')
-      : '<p class="dim small">No conversations yet.</p>')
+      : renderCoopUiDmHtmlFragment036())
   );
 }
 function armadaHtml() {
@@ -503,45 +686,113 @@ function armadaHtml() {
   let height = '';
   if (armada2 && armada2.invites && armada2.invites.length)
     height +=
-      '<div class="sect" style="margin-top:4px">INVITES</div>' +
+      renderCoopUiArmadaHtmlFragment037() +
       armada2.invites
-        .map(
-          (positionX) =>
-            `<div class="kv"><span><b>${escapeHtml2(positionX.name)}</b> <span class="dim small">led by ${escapeHtml2(positionX.leader)} · ${positionX.n}/${ARMADA.max}</span></span><span><button class="btn sm" data-cact="aacc" data-id="${escapeHtml2(positionX.id)}">JOIN</button> <button class="btn sm" data-cact="adec" data-id="${escapeHtml2(positionX.id)}">DECLINE</button></span></div>`,
+        .map((positionX) =>
+          renderCoopUiArmadaHtmlFragment038({
+            positionXName: positionX.name,
+            positionXLeader: positionX.leader,
+            positionXN: legacyHtml(positionX.n),
+            ARMADAMax: legacyHtml(ARMADA.max),
+            positionXId: positionX.id,
+            positionXId2: positionX.id,
+          }),
         )
         .join('');
   if (!armada2 || armada2.none) {
     return (
       height +
-      `<div class="sect">FORM AN ARMADA</div><div class="rrow"><input id="aname" placeholder="Armada name (optional)" maxlength="24"><button class="btn sm" data-cact="aform">FORM</button></div>
-      <div class="rrow"><input id="ainv" placeholder="Captain online (creates Armada)" maxlength="20"><button class="btn sm" data-cact="ainv2">INVITE</button></div>
-      <div class="dim small">An Armada is a short co-op group of up to ${ARMADA.max} captains, each with their own wingmates. Members and their wingmates can't hurt each other and show in green. You get a private chat (/a), +5% shield recharge and bounties while another member shares your system, a share of each other's bounties and kill credit, Armada contracts, co-op Holdouts, and a rescue window if your ship goes down. It disbands when everyone has been offline for ${ARMADA.idleMin} minutes.</div>`
+      renderCoopUiArmadaHtmlFragment039({
+        ARMADAMax: legacyHtml(ARMADA.max),
+        ARMADAIdleMin: legacyHtml(ARMADA.idleMin),
+      })
     );
   }
   const lead = armada2.leader === myName2;
-  height += `<div class="sect" style="margin-top:4px">${escapeHtml2(armada2.name)} <span class="dim small">${armada2.members!.length}/${armada2.max}</span></div>`;
+  height += renderCoopUiArmadaHtmlFragment040({
+    armada2Name: armada2.name,
+    armada2Members: legacyHtml(armada2.members!.length),
+    armada2Max: legacyHtml(armada2.max),
+  });
   height += armada2
     .members!.map((message) => {
       const live = liveMember(message.name);
-      return `<div class="frow"><div class="kv"><span>${message.online ? presenceIndicators.online : presenceIndicators.offline} <b style="color:${message.name === myName2 ? '#ddd' : '#7af0a0'}">${escapeHtml2(message.name)}</b>${message.name === armada2.leader ? ' <span class="dim small">leader</span>' : ''}</span><span class="dim small">${escapeHtml2(message.hull)}${message.sys ? ` · ${message.sysId ? `<a href="#" data-cact="plot" data-sys="${escapeHtml2(message.sysId)}">${escapeHtml2(message.sys)}</a>` : escapeHtml2(message.sys)}` : ''}${message.landed ? ' · landed' : ''}</span></div>
-      ${live ? `<div class="bars2"><div class="bar thin"><i style="width:${live.sh}%"></i></div><div class="bar thin"><i class="ar" style="width:${live.ar}%"></i></div></div>` : ''}
-      ${message.name !== myName2 ? `<div class="frbtn"><button class="btn sm" data-cact="dm" data-n="${escapeHtml2(message.name)}">MESSAGE</button>${message.online && clientGameState.landed && clientGameState.landed!.site && clientGameState.landed!.site.own ? ` <button class="btn sm" data-cact="topen" data-n="${escapeHtml2(message.name)}">TRADE</button>` : ''}${lead ? ` <button class="btn sm" data-cact="alead" data-n="${escapeHtml2(message.name)}">MAKE LEADER</button> <button class="btn sm" data-cact="akick" data-n="${escapeHtml2(message.name)}">REMOVE</button>` : ''}</div>` : ''}</div>`;
+      return renderCoopUiArmadaHtmlFragment041({
+        messageOnline: legacyHtml(
+          message.online ? presenceIndicators.online : presenceIndicators.offline,
+        ),
+        messageName: legacyHtml(message.name === myName2 ? '#ddd' : '#7af0a0'),
+        messageName2: message.name,
+        messageName3: legacyHtml(
+          message.name === armada2.leader ? renderCoopUiArmadaHtmlFragment042() : '',
+        ),
+        messageHull: message.hull,
+        messageSys: legacyHtml(
+          message.sys
+            ? ` · ${message.sysId ? renderCoopUiArmadaHtmlFragment043({ messageSysId: message.sysId, messageSys: message.sys }) : escapeHtml2(message.sys)}`
+            : '',
+        ),
+        messageLanded: legacyHtml(message.landed ? ' · landed' : ''),
+        live: legacyHtml(
+          live
+            ? renderCoopUiArmadaHtmlFragment044({
+                liveSh: legacyHtml(live.sh),
+                liveAr: legacyHtml(live.ar),
+              })
+            : '',
+        ),
+        messageName4: legacyHtml(
+          message.name !== myName2
+            ? renderCoopUiArmadaHtmlFragment045({
+                messageName: message.name,
+                messageOnline: legacyHtml(
+                  message.online &&
+                    clientGameState.landed &&
+                    clientGameState.landed!.site &&
+                    clientGameState.landed!.site.own
+                    ? renderCoopUiArmadaHtmlFragment046({ messageName: message.name })
+                    : '',
+                ),
+                lead: legacyHtml(
+                  lead
+                    ? renderCoopUiArmadaHtmlFragment047({
+                        messageName: message.name,
+                        messageName2: message.name,
+                      })
+                    : '',
+                ),
+              })
+            : '',
+        ),
+      });
     })
     .join('');
   if (armada2.pending && armada2.pending.length)
-    height += `<div class="dim small">Invited: ${armada2.pending.map(escapeHtml2).join(', ')}</div>`;
+    height += renderCoopUiArmadaHtmlFragment048({
+      armada2PendingMap: legacyHtml(armada2.pending.map(escapeHtml2).join(', ')),
+    });
   if (armada2.members!.length + (armada2.pending || []).length < armada2.max!)
-    height += `<div class="rrow"><input id="ainv" placeholder="Invite any captain online, by name" maxlength="20"><button class="btn sm" data-cact="ainv2">INVITE</button></div>`;
-  height += `<div class="rrow"><button class="btn sm" data-cact="rally" title="Plot a course to you for every member">📣 CALL THE ARMADA TO ME</button></div>`;
+    height += renderCoopUiArmadaHtmlFragment049();
+  height += renderCoopUiArmadaHtmlFragment050();
   height += lead
-    ? '<div class="dim small">You lead this Armada. Other captains enable Follow the Leader here; you fly normally. Invite, JOIN, then Follow — no friend request needed.</div>'
-    : `<label class="small"><input type="checkbox" id="afollow" data-cact="afollow" ${armada2.follow ? 'checked' : ''}> Follow the Leader (V formation + jumps)</label><div class="dim small">JOIN does not enable Follow: opt in here. Both ships must be in flight in the same system. Your ship needs its own jump fuel and route access. Manual flight or weapons input turns Follow off. Combat Assist takes priority. Re-enable after reconnecting or a leader change.</div>`;
+    ? renderCoopUiArmadaHtmlFragment051()
+    : renderCoopUiArmadaHtmlFragment052({
+        armada2Follow: legacyHtml(armada2.follow ? 'checked' : ''),
+      });
   if (lead && clientGameState.view) {
     const time = clientGameState.target && clientGameState.ents.get(clientGameState.target),
       targetName = time && time.fl & 16 ? String(time.name || '') : '';
-    height += `<div class="sect">ARMADA DUEL</div><div class="dim small">Target another Armada's leader in this system to challenge their Armada: every member here fights for their side, to disabled, nothing lost.</div>${targetName && !isAlly(time) ? `<button class="btn sm" data-cact="aduel" data-n="${escapeHtml2(targetName)}">CHALLENGE ${escapeHtml2(targetName)}'S ARMADA</button>` : '<p class="dim small">No captain targeted.</p>'}`;
+    height += renderCoopUiArmadaHtmlFragment053({
+      targetName: legacyHtml(
+        targetName && !isAlly(time)
+          ? renderCoopUiArmadaHtmlFragment054({ targetName: targetName, targetName2: targetName })
+          : renderCoopUiArmadaHtmlFragment055(),
+      ),
+    });
   }
-  height += `<div style="margin-top:8px">${lead ? '<button class="btn sm" data-cact="arename">RENAME</button> ' : ''}<button class="btn sm" data-cact="aleave">LEAVE ARMADA</button></div>`;
+  height += renderCoopUiArmadaHtmlFragment056({
+    lead: legacyHtml(lead ? renderCoopUiArmadaHtmlFragment057() : ''),
+  });
   return height;
 }
 function liveMember(name: string) {
@@ -602,8 +853,8 @@ function offerList(tradeOffer: TradeOffer | null | undefined) {
   for (const [entryKey, count] of Object.entries((tradeOffer && tradeOffer.items) || {}))
     rows.push(`${count} ${itemName(entryKey)}`);
   return rows.length
-    ? rows.map((radius) => `<div>${escapeHtml2(radius)}</div>`).join('')
-    : '<div class="dim">nothing yet</div>';
+    ? rows.map((radius) => renderCoopUiOfferListFragment058({ radius: radius })).join('')
+    : renderCoopUiOfferListFragment059();
 }
 function tradeHtml() {
   const tradeState = clientGameState.trade,
@@ -611,39 +862,59 @@ function tradeHtml() {
       clientGameState.landed && clientGameState.landed!.site && clientGameState.landed!.site.own;
   if (!tradeState) {
     return (
-      `<div class="dim small" style="margin:6px 0">Trade credits, goods, crates, blueprints and parts with friends and Armada members. Both captains must be docked at their <b>own</b> Personal Station; nobody docks at anyone else's.</div>` +
-      (atHome
-        ? `<div class="rrow"><input id="tname" placeholder="Captain to trade with" maxlength="20"><button class="btn sm" data-cact="topen2">OPEN TRADE</button></div>`
-        : '<p class="dim small">Dock at your own Personal Station to trade.</p>')
+      renderCoopUiTradeHtmlFragment060() +
+      (atHome ? renderCoopUiTradeHtmlFragment061() : renderCoopUiTradeHtmlFragment062())
     );
   }
   const mine =
     clientGameState.tdraft ||
     (clientGameState.tdraft = JSON.parse(JSON.stringify(tradeState.mine || {})));
   const join2 = tradeItems()
-    .map(
-      ([entryKey, count, maximum]) =>
-        `<option value="${escapeHtml2(entryKey)}">${escapeHtml2(count)} · ${maximum}</option>`,
+    .map(([entryKey, count, maximum]) =>
+      renderCoopUiTradeHtmlFragment063({
+        entryKey: entryKey,
+        count: count,
+        maximum: legacyHtml(maximum),
+      }),
     )
     .join('');
-  return `<div class="sect" style="margin-top:4px">TRADE WITH ${escapeHtml2(tradeState.with).toUpperCase()}</div>
-    <div class="tgrid"><div><div class="dim small">YOU GIVE ${tradeState.lock.me ? '🔒' : ''}${tradeState.ok.me ? ' ✓' : ''}</div>${offerList(tradeState.mine)}</div><div><div class="dim small">THEY GIVE ${tradeState.lock.them ? '🔒' : ''}${tradeState.ok.them ? ' ✓' : ''}</div>${offerList(tradeState.theirs)}</div></div>
-    ${
+  return renderCoopUiTradeHtmlFragment064({
+    tradeStateWith: legacyHtml(escapeHtml2(tradeState.with).toUpperCase()),
+    tradeStateLockMe: legacyHtml(tradeState.lock.me ? '🔒' : ''),
+    tradeStateOkMe: legacyHtml(tradeState.ok.me ? ' ✓' : ''),
+    offerList: legacyHtml(offerList(tradeState.mine)),
+    tradeStateLockThem: legacyHtml(tradeState.lock.them ? '🔒' : ''),
+    tradeStateOkThem: legacyHtml(tradeState.ok.them ? ' ✓' : ''),
+    offerList2: legacyHtml(offerList(tradeState.theirs)),
+    tradeStateLockMe2: legacyHtml(
       tradeState.lock.me
         ? ''
-        : `<div class="sect">YOUR OFFER</div>
-      <div class="rrow"><input id="tcr" type="number" min="0" placeholder="credits" value="${mine.credits || ''}"><span class="dim small">${Math.round(TRADE.fee * 100)}% fee on credits</span></div>
-      <div class="rrow"><select id="titem">${join2 || '<option value="">(nothing to trade)</option>'}</select><input id="tqty" type="number" min="1" value="1" style="width:60px"><button class="btn sm" data-cact="tadd">ADD</button></div>
-      ${Object.entries(mine.items || {})
-        .map(
-          ([entryKey, count]) =>
-            `<div class="kv"><span>${String(count)} ${escapeHtml2(itemName(entryKey))}</span><span><button class="btn sm" data-cact="tdel" data-k="${escapeHtml2(entryKey)}">✕</button></span></div>`,
-        )
-        .join('')}
-      <button class="btn sm" data-cact="tsend">UPDATE OFFER</button>`
-    }
-    <div style="margin-top:8px">${tradeState.lock.me ? '<button class="btn sm" data-cact="tunlock">UNLOCK</button>' : '<button class="btn sm" data-cact="tlock">LOCK OFFER</button>'} ${tradeState.lock.me && tradeState.lock.them && !tradeState.ok.me ? '<button class="btn sm" data-cact="tok">CONFIRM TRADE</button>' : ''} <button class="btn sm" data-cact="tcancel">CANCEL</button></div>
-    <div class="dim small">Both sides lock their offer, then both confirm. Any change unlocks both. Goods you receive go into your hold, or exchange storage if it is full.</div>`;
+        : renderCoopUiTradeHtmlFragment065({
+            mineCredits: legacyHtml(mine.credits || ''),
+            MathRound: legacyHtml(Math.round(TRADE.fee * 100)),
+            join2: legacyHtml(join2 || renderCoopUiTradeHtmlFragment066()),
+            ObjectEntries: legacyHtml(
+              Object.entries(mine.items || {})
+                .map(([entryKey, count]) =>
+                  renderCoopUiTradeHtmlFragment067({
+                    count: legacyHtml(String(count)),
+                    itemName: itemName(entryKey),
+                    entryKey: entryKey,
+                  }),
+                )
+                .join(''),
+            ),
+          }),
+    ),
+    tradeStateLockMe3: legacyHtml(
+      tradeState.lock.me ? renderCoopUiTradeHtmlFragment068() : renderCoopUiTradeHtmlFragment069(),
+    ),
+    tradeStateLockMe4: legacyHtml(
+      tradeState.lock.me && tradeState.lock.them && !tradeState.ok.me
+        ? renderCoopUiTradeHtmlFragment070()
+        : '',
+    ),
+  });
 }
 
 // ------------------------------------------------------------------ clicks

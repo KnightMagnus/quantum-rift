@@ -1,0 +1,1 @@
+<table class="tbl"><tr><th>#</th><th>CAPTAIN</th><th><%= it.BOARDS %></th></tr><%~ it.secondValueMap %></table>

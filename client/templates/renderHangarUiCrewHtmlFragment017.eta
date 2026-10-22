@@ -1,0 +1,1 @@
+ <button class="btn sm" data-act="off" data-op="dismiss" data-oid="<%~ it.officerId %>">DISMISS</button>

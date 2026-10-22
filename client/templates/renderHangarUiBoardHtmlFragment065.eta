@@ -1,0 +1,5 @@
+<h2>BOARDING: <%= it.boardedTargetName %></h2><p class="dim"><%= it.shipHullAssetName %> · <%~ it.factionDef %> · disabled and drifting</p>
+    <div class="bopts"><button class="btn" data-board="plunder">1 · PLUNDER<br><span class="small">credits, cargo, maybe a crate<%~ it.lawful %></span></button>
+    <button class="btn" data-board="capture" <%~ it.crew %>>2 · CAPTURE<br><span class="small"><%~ it.crew2 %></span></button>
+    <button class="btn" data-board="rescue">3 · <%~ it.lawful2 %><br><span class="small"><%~ it.lawful3 %></span></button></div>
+    <button class="btn sm" data-board="">CANCEL (Esc)</button>

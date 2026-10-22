@@ -1,0 +1,1 @@
+<div class="evbox"><div class="dim small"><%~ it.clientGameStateSolo %></div><b><%= it.serverEventName %></b><div class="small"><%= it.serverEventDesc %></div></div>

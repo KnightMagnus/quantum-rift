@@ -1,3 +1,17 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderMissionDetailsMissionFactsHtmlFragment001,
+  renderMissionDetailsMissionFactsHtmlFragment002,
+  renderMissionDetailsMissionFactsHtmlFragment003,
+  renderMissionDetailsMissionFactsHtmlFragment004,
+  renderMissionDetailsMissionFactsHtmlFragment005,
+  renderMissionDetailsMissionFiltersHtmlFragment006,
+  renderMissionDetailsMissionFiltersHtmlFragment007,
+  renderMissionDetailsContractPlanHtmlFragment008,
+  renderMissionDetailsContractPlanHtmlFragment009,
+  renderMissionDetailsContractPlanHtmlFragment010,
+  renderMissionDetailsContractPlanHtmlFragment011,
+} from './eta-templates.ts';
 import type { ClientGameState } from './main.ts';
 import type { Mission } from '../server/game.ts';
 import type { MissionTarget } from './missions.ts';
@@ -8,7 +22,6 @@ export type MissionDetailsInput = Omit<Partial<Mission>, 'quest' | 'sys'> &
     quest?: Mission['quest'] | boolean;
   } & { team?: unknown };
 
-import { escapeHtml as escapeHtml2 } from './html.ts';
 import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
 import { route } from '../shared/rules.ts';
 import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.ts';
@@ -135,7 +148,44 @@ export function missionFactsHtml(
 ) {
   if (missionDetailsInput.kind === 'career') return '';
   const missionDetails2 = missionDetails(clientGameState, missionDetailsInput, active);
-  return `<div class="mission-facts small"><span><b>Travel:</b> ${missionDetails2.jumps === null ? 'see briefing' : missionDetails2.jumps === 0 ? 'this system' : missionDetails2.jumps + (missionDetails2.jumps === 1 ? ' jump' : ' jumps')}</span><span><b>Danger:</b> ${escapeHtml2(missionDetails2.risk)}</span><span><b>Hold needed:</b> ${missionDetails2.cargo} t${!active && missionDetails2.cargo ? ` (${missionDetails2.free} t free)` : ''}</span>${missionDetailsInput.type === 'passenger' ? `<span><b>Seats:</b> ${missionDetailsInput.pax || 1} needed · ${missionDetails2.seats} free</span>` : ''}<span><b>Turn in:</b> ${escapeHtml2(missionDetails2.turnIn)}</span>${missionDetailsInput.reward != null ? `<span class="cr"><b>Your pay:</b> ${escapeHtml2(missionDetails2.pay)}</span>` : ''}${missionDetailsInput.type === 'warband' && !active ? `<span>Team pool: ${missionDetailsInput.reward!.toLocaleString()} credits, split only between captains who agree. Review exact shares before starting.</span>` : ''}${active && missionDetailsInput.team ? '<span>Your saved share stays fixed if teammates leave. Reconnect to finish or collect; late joiners are not added.</span>' : ''}</div>`;
+  return renderMissionDetailsMissionFactsHtmlFragment001({
+    missionDetails2Jumps: legacyHtml(
+      missionDetails2.jumps === null
+        ? 'see briefing'
+        : missionDetails2.jumps === 0
+          ? 'this system'
+          : missionDetails2.jumps + (missionDetails2.jumps === 1 ? ' jump' : ' jumps'),
+    ),
+    missionDetails2Risk: missionDetails2.risk,
+    missionDetails2Cargo: legacyHtml(missionDetails2.cargo),
+    active: legacyHtml(!active && missionDetails2.cargo ? ` (${missionDetails2.free} t free)` : ''),
+    missionDetailsInputType: legacyHtml(
+      missionDetailsInput.type === 'passenger'
+        ? renderMissionDetailsMissionFactsHtmlFragment002({
+            missionDetailsInputPax: legacyHtml(missionDetailsInput.pax || 1),
+            missionDetails2Seats: legacyHtml(missionDetails2.seats),
+          })
+        : '',
+    ),
+    missionDetails2TurnIn: missionDetails2.turnIn,
+    missionDetailsInputReward: legacyHtml(
+      missionDetailsInput.reward != null
+        ? renderMissionDetailsMissionFactsHtmlFragment003({
+            missionDetails2Pay: missionDetails2.pay,
+          })
+        : '',
+    ),
+    missionDetailsInputType2: legacyHtml(
+      missionDetailsInput.type === 'warband' && !active
+        ? renderMissionDetailsMissionFactsHtmlFragment004({
+            missionDetailsInputReward: legacyHtml(missionDetailsInput.reward!.toLocaleString()),
+          })
+        : '',
+    ),
+    active2: legacyHtml(
+      active && missionDetailsInput.team ? renderMissionDetailsMissionFactsHtmlFragment005() : '',
+    ),
+  });
 }
 export function filterMissions<ValueType extends MissionDetailsInput>(
   clientGameState: ClientGameState,
@@ -159,7 +209,35 @@ export function missionFiltersHtml(
   clientGameState: ClientGameState,
   scope: 'job' | 'mission' = 'job',
 ) {
-  return `<div class="mission-filters"><label class="small">${scope === 'job' ? 'Job' : 'Mission'} type <select data-mission-filter="${scope}Type" aria-label="${scope === 'job' ? 'Job' : 'Mission'} type">${kinds.map(([entryKey, count]) => `<option value="${entryKey}"${(clientGameState[(scope + 'Type') as 'jobType'] || 'all') === entryKey ? ' selected' : ''}>${count}</option>`).join('')}</select></label><label class="small"><input type="checkbox" data-mission-filter="${scope}Feasible"${clientGameState[(scope + 'Feasible') as 'jobFeasible'] ? ' checked' : ''}> ${scope === 'job' ? 'Can take now' : 'Fits current ship'}</label><label class="small"><input type="checkbox" data-mission-filter="${scope}Nearby"${clientGameState[(scope + 'Nearby') as 'jobNearby'] ? ' checked' : ''}> Within 1 jump</label></div>`;
+  return renderMissionDetailsMissionFiltersHtmlFragment006({
+    scope: legacyHtml(scope === 'job' ? 'Job' : 'Mission'),
+    scope2: legacyHtml(scope),
+    scope3: legacyHtml(scope === 'job' ? 'Job' : 'Mission'),
+    kindsMap: legacyHtml(
+      kinds
+        .map(([entryKey, count]) =>
+          renderMissionDetailsMissionFiltersHtmlFragment007({
+            entryKey: legacyHtml(entryKey),
+            clientGameState: legacyHtml(
+              (clientGameState[(scope + 'Type') as 'jobType'] || 'all') === entryKey
+                ? ' selected'
+                : '',
+            ),
+            count: legacyHtml(count),
+          }),
+        )
+        .join(''),
+    ),
+    scope4: legacyHtml(scope),
+    clientGameState: legacyHtml(
+      clientGameState[(scope + 'Feasible') as 'jobFeasible'] ? ' checked' : '',
+    ),
+    scope5: legacyHtml(scope === 'job' ? 'Can take now' : 'Fits current ship'),
+    scope6: legacyHtml(scope),
+    clientGameState2: legacyHtml(
+      clientGameState[(scope + 'Nearby') as 'jobNearby'] ? ' checked' : '',
+    ),
+  });
 }
 export function contractPlanHtml(clientGameState: ClientGameState) {
   const contractPlan2 = clientGameState.contractPlan;
@@ -168,6 +246,53 @@ export function contractPlanHtml(clientGameState: ClientGameState) {
     proposer = contractPlan2.proposer === clientGameState.you?.name;
   if (!mine) return '';
   const button = (operation: string, label: string, disabled = false) =>
-    `<button class="btn sm" data-contract="${operation}"${disabled ? ' disabled' : ''}>${label}</button>`;
-  return `<section class="mcard contract-plan"><div class="sect">PLAN A TEAM CONTRACT</div><b>${escapeHtml2(contractPlan2.title)}</b><p class="small">Nothing is assigned until every listed captain chooses Ready and ${escapeHtml2(contractPlan2.proposer)} starts. Leaving or disconnecting cancels the plan. Accepted shares stay fixed; late joiners are not added.</p><ul class="small">${contractPlan2.roster.map((radius) => `<li>${escapeHtml2(radius.name)} · <b>${radius.share.toLocaleString()} cr</b> · ${radius.ready ? '✓ Ready' : 'Waiting'} · ${radius.slots} job slots free</li>`).join('')}</ul>${contractPlan2.skipped.map((radius) => `<p class="small dim">${escapeHtml2(radius.name)}: ${escapeHtml2(radius.reason)}</p>`).join('')}<p class="small cr">Your share: ${mine.share.toLocaleString()} credits. Team pool: ${contractPlan2.pool.toLocaleString()} credits.</p><div class="mfoot">${button('contractReady', mine.ready ? '✓ READY' : 'READY', mine.ready)}${proposer ? button('contractStart', 'START TEAM CONTRACT', !contractPlan2.roster.every((radius) => radius.ready && radius.slots > 0)) : ''}${button(proposer ? 'contractCancel' : 'contractDecline', proposer ? 'CANCEL PLAN' : 'NO THANKS')}</div><p class="dim small">This divides the team contract pool. Ordinary shared combat bounties are separate extra rewards.</p></section>`;
+    renderMissionDetailsContractPlanHtmlFragment008({
+      operation: legacyHtml(operation),
+      disabled: legacyHtml(disabled ? ' disabled' : ''),
+      label: legacyHtml(label),
+    });
+  return renderMissionDetailsContractPlanHtmlFragment009({
+    contractPlan2Title: contractPlan2.title,
+    contractPlan2Proposer: contractPlan2.proposer,
+    contractPlan2RosterMap: legacyHtml(
+      contractPlan2.roster
+        .map((radius) =>
+          renderMissionDetailsContractPlanHtmlFragment010({
+            radiusName: radius.name,
+            radiusShareToLocaleString: legacyHtml(radius.share.toLocaleString()),
+            radiusReady: legacyHtml(radius.ready ? '✓ Ready' : 'Waiting'),
+            radiusSlots: legacyHtml(radius.slots),
+          }),
+        )
+        .join(''),
+    ),
+    contractPlan2SkippedMap: legacyHtml(
+      contractPlan2.skipped
+        .map((radius) =>
+          renderMissionDetailsContractPlanHtmlFragment011({
+            radiusName: radius.name,
+            radiusReason: radius.reason,
+          }),
+        )
+        .join(''),
+    ),
+    mineShareToLocaleString: legacyHtml(mine.share.toLocaleString()),
+    contractPlan2PoolToLocaleString: legacyHtml(contractPlan2.pool.toLocaleString()),
+    button: legacyHtml(button('contractReady', mine.ready ? '✓ READY' : 'READY', mine.ready)),
+    proposer: legacyHtml(
+      proposer
+        ? button(
+            'contractStart',
+            'START TEAM CONTRACT',
+            !contractPlan2.roster.every((radius) => radius.ready && radius.slots > 0),
+          )
+        : '',
+    ),
+    button2: legacyHtml(
+      button(
+        proposer ? 'contractCancel' : 'contractDecline',
+        proposer ? 'CANCEL PLAN' : 'NO THANKS',
+      ),
+    ),
+  });
 }

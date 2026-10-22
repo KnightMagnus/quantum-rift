@@ -1,0 +1,1 @@
+<div class="evbox"><div class="dim small">TARGETED CAPTAIN</div><b><%= it.targetName %></b><div class="frbtn" style="margin-left:0"><%~ it.fraction %> <button class="btn sm" data-cact="ainv" data-n="<%= it.targetName2 %>">INVITE TO ARMADA</button> <%~ it.isAlly %> <button class="btn sm" data-cact="dm" data-n="<%= it.targetName3 %>">MESSAGE</button></div></div>

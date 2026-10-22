@@ -1,0 +1,1 @@
+<div class="small" style="color:var(--ok)">Ready</div><div class="rrow"><select data-crew="<%~ it.savedShuttleId %>"><option value="">No crew</option><%~ it.playerPayloadOfficers %></select></div>

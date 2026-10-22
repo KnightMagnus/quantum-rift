@@ -1,0 +1,1 @@
+<table class="tbl"><tr><th>ITEM</th><th>BEST BID</th><th>BIDS</th><th>BEST ASK</th><th>ASKS</th></tr><%~ it.positionXBookMap %></table>

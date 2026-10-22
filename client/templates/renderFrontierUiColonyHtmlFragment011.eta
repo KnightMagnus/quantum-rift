@@ -1,0 +1,1 @@
+<div class="kv"><span><b><%= it.BUILDINGS %></b> <span class="dim small"><%~ it.BUILDINGS2 %></span></span><span><button class="btn sm" data-act="col" data-op="demolish" data-i="<%~ it.index %>">DEMOLISH</button></span></div>

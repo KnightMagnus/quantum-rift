@@ -1,0 +1,2 @@
+<div class="drole">WINGMATE <%~ it.innerIndex %></div><%~ it.shipBox %><%~ it.shipPick %>
+        <%~ it.dockShipPayload %>

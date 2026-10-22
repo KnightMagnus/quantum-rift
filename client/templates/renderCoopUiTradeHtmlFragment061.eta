@@ -1,0 +1,1 @@
+<div class="rrow"><input id="tname" placeholder="Captain to trade with" maxlength="20"><button class="btn sm" data-cact="topen2">OPEN TRADE</button></div>

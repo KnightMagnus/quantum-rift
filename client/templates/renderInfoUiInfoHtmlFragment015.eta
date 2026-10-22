@@ -1,0 +1,3 @@
+<div class="sect" style="margin-top:0">WINGMATE ORDERS</div><div class="dim small" style="margin-bottom:6px">Orders apply to your escorts, wingmates and fighters. Give the same order again to cancel it.</div>
+      <div class="ords"><%~ it.order2Map %></div>
+      <div class="sect">WINGMATES<%~ it.playerPayloadDocks %></div><%~ it.constValue %>

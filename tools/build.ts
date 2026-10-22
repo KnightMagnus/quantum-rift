@@ -3,11 +3,22 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { checkApplicationTypeScript } from './typescript-scope.ts';
+import { generateTemplates } from './eta-generate.ts';
 
 const rootDirectory = fileURLToPath(new URL('../', import.meta.url));
+await generateTemplates();
 checkApplicationTypeScript(rootDirectory);
 const output = path.join(rootDirectory, 'dist');
-fileSystem.rmSync(output, { recursive: true, force: true });
+// Preserve earlier output for inspection instead of deleting it.
+fileSystem.mkdirSync(path.join(rootDirectory, '.artifacts'), { recursive: true });
+if (fileSystem.existsSync(output))
+  fileSystem.renameSync(
+    output,
+    path.join(
+      fileSystem.mkdtempSync(path.join(rootDirectory, '.artifacts', 'dist-before-')),
+      'dist',
+    ),
+  );
 for (const config of ['tsconfig.core.json', 'tsconfig.build.json']) {
   const result = spawnSync(
     process.execPath,

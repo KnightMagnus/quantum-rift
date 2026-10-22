@@ -1,0 +1,2 @@
+<div class="sect">STATION HOLDOUT</div><div class="dim small">Defend your Personal Station through ten escalating waves, with your ship, your wingmates and <%~ it.MathMin %> defense platforms (more with turret levels). The rewards grow with every wave: credits, crates, Bulwark blueprints, and a grade V crate for beating all ten. You can start one every 2 hours.<%~ it.clientGameStateSolo %></div>
+    <div class="kv"><span>Best: wave <%~ it.height2Best %> of 10</span><span><%~ it.height2Active %></span></div>

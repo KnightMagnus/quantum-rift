@@ -1,0 +1,3 @@
+<div class="card story quest" style="cursor:default"><div class="storytag"><%~ it.missionSide %> · <%= it.missionGiver %><%~ it.missionStanding %></div><div class="t"><%= it.missionTitle %></div><div class="qintro"><%= it.missionText %></div>
+    <div class="p"><%~ it.missionSteps %> steps, starting in <%~ it.systemsById %><%~ it.count %> · each step pays, and finishing earns <span class="cr"><%= it.missionRewardText %></span></div>
+    <%~ it.missionFull %><%~ it.clientGameStateYou %><%~ it.questNeeds %><div><button class="btn sm" data-act="accept" data-id="<%= it.missionId %>"<%~ it.missionFull2 %>>TAKE IT ON</button><%~ it.missionSys %></div></div>

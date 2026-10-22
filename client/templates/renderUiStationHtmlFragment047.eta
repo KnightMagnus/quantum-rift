@@ -1,0 +1,1 @@
+<div class="kv"><span>Defense rating</span><span><%~ it.playerPayloadDefense %></span></div>

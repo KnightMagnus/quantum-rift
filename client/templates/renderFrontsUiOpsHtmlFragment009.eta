@@ -1,0 +1,1 @@
+<div class="kv"><span><span style="color:<%~ it.systemStateColor %>"><%~ it.systemStateIcon %> <%~ it.systemStateName %></span> · <%= it.systemsById %><%~ it.livingPayloadStateNeed %></span><span class="small dim"><%~ it.innerIndex %> <button class="btn sm" data-plot="<%~ it.starSystem %>">PLOT</button></span></div>

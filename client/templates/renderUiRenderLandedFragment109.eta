@@ -1,0 +1,1 @@
+<div class="jwarn" style="color:#ffb070">⚠ <%= it.jobInfo2Note %></div>

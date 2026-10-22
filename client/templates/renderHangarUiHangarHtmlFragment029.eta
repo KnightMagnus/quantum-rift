@@ -1,0 +1,1 @@
+<div class="small" style="color:#7ad0ff"><%= it.savedShuttleJob %></div><div class="xpbar"><i style="width:<%~ it.percentage %>%;background:#7ad0ff"></i></div><div class="dim small">Back in <%~ it.minutes2 %> · <%~ it.MathRound %>% odds</div>

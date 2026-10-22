@@ -1,0 +1,1 @@
+<div class="sect">ORE PROCESSING</div><div class="dim small"><%~ it.ORE_PROCESSPer %> t of mined ore + <%~ it.credits %> cr make one grade <%~ it.GRADES %> crate. Higher Station Tiers refine better grades.</div>

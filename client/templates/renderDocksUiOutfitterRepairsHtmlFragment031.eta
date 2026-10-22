@@ -1,0 +1,1 @@
+<div class="kv"><span><b><%= it.dockShipPayloadName %></b> · <%= it.clientGameStateA %> <span class="dim small">· <%~ it.minutes %> min remaining</span></span><button class="btn sm" data-act="outfitterrep" data-uid="<%= it.dockShipPayloadUid %>"<%~ it.playerPayloadCredits %>>RUSH REPAIRS <%~ it.credits %></button></div>

@@ -1,0 +1,1 @@
+<div class="kv"><span>Queue (<%~ it.quantityLength %>/<%~ it.RESEARCH_QUEUE_MAX %>)<%~ it.stationStateWaiting %></span><span class="small"><%~ it.quantityMap %></span></div>

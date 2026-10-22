@@ -1,0 +1,1 @@
+ <button class="btn sm" data-cact="duel" data-n="<%= it.friendEntryName %>">DUEL</button>

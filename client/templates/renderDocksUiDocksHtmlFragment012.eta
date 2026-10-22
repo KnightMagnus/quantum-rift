@@ -1,0 +1,4 @@
+<div class="dock<%~ it.action %>"><div class="dhead"><span class="dletter">DOCK <%~ it.entryKeyLetter %></span><%~ it.action2 %></div>
+      <div class="drole">LEAD SHIP</div><%~ it.shipBox %><%~ it.shipPick %>
+      <%~ it.entryKeyWings %>
+    </div>

@@ -1,0 +1,1 @@
+<span><b>Seats:</b> <%~ it.missionDetailsInputPax %> needed · <%~ it.missionDetails2Seats %> free</span>

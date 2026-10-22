@@ -1,0 +1,1 @@
+ <button class="btn sm" data-act="outfit" data-id="<%~ it.identifier %>" data-n="-1"<%~ it.owner %>>SELL</button>

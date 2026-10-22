@@ -1,6 +1,15 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderRefineryUiRefineryJobsHtmlFragment001,
+  renderRefineryUiRefineryJobsHtmlFragment002,
+  renderRefineryUiRefineryJobsHtmlFragment003,
+  renderRefineryUiRefineryJobsHtmlFragment004,
+  renderRefineryUiRefineryJobsHtmlFragment005,
+  renderRefineryUiRefineryJobsHtmlFragment006,
+  renderRefineryUiRefineryJobsHtmlFragment007,
+} from './eta-templates.ts';
 import type { RefineryClientState } from './refinery-controls.ts';
 
-import { escapeHtml as escapeHtml2 } from './html.ts';
 import { refineryPanelHtml, initRefineryControls } from './refinery-controls.ts';
 import { RECIPES, REFINERY_RULES as refineryRules } from '../shared/refinery-rules.ts';
 import { STELLARS, COMMODITIES } from '../shared/galaxy.ts';
@@ -19,7 +28,118 @@ export function refineryJobsHtml(refineryClientState: RefineryClientState) {
           )),
     ),
     ready = data.ready.filter((refineryReady) => refineryReady.units > 0);
-  return `<section class="refineryjobs"><div class="sect">REFINERY · YOUR JOBS AND GOODS</div><p class="dim small">Jobs keep running while you are away. Collect here when docked or within 500 units. Only you can collect your goods. Smaller amounts stay stored until they add up to a whole tonne.</p>${batches.map((refineryBatch) => `<div class="mcard"><b>${escapeHtml2(title(refineryBatch.quote.output))} · ${escapeHtml2(refineryBatch.status.toUpperCase())}</b><div>${escapeHtml2(STELLARS[refineryBatch.port]?.name || refineryBatch.port)} · ${(refineryBatch.quote.units / 300).toFixed(3)}t · <span data-ref-time="${refineryBatch.readyAt}" data-ref-start="${refineryBatch.startAt}" data-ref-status="${refineryBatch.status}">${refineryBatch.status === 'queued' ? 'cancellable for 30s' : refineryBatch.status === 'processing' ? 'processing' : 'cancelled — exact input returns only'}</span></div>${refineryBatch.status === 'queued' ? `<button class="btn sm" data-refinery="cancel" data-id="${escapeHtml2(refineryBatch.id)}" data-port="${escapeHtml2(refineryBatch.port)}">CANCEL · ${refineryBatch.quote.cancelFee}cr handling</button>` : ''}${refineryBatch.status === 'cancelled' && refineryBatch.returns.some((refineryInput) => Object.values(refineryInput.lots).some(Boolean)) ? `<button class="btn sm" data-refinery="returns" data-id="${escapeHtml2(refineryBatch.id)}" data-port="${escapeHtml2(refineryBatch.port)}">COLLECT RETURNED CARGO</button>` : ''}<button class="btn sm" data-plot="${escapeHtml2(STELLARS[refineryBatch.port]?.system)}">PLOT PORT</button></div>`).join('')}${ready.map((refineryReady) => `<div class="rrow"><span>${escapeHtml2(title(refineryReady.cid))} · ${(refineryReady.units / 300).toFixed(3)}t at ${escapeHtml2(STELLARS[refineryReady.port]?.name || refineryReady.port)}</span><button class="btn sm" data-refinery="claim" data-recipe="${RECIPES.find((recipe) => recipe.output === refineryReady.cid)?.id}" data-port="${escapeHtml2(refineryReady.port)}" ${refineryReady.units < 300 ? 'disabled title="At least 1 tonne must be ready. Smaller amounts stay stored."' : ''}>COLLECT WHAT FITS</button></div>`).join('')}${data.orders.map((miningOrder) => `<div class="mcard"><b>DELIVERY ${miningOrder.qty}t ${escapeHtml2(miningOrder.grade)} ${escapeHtml2(title(miningOrder.cid))}</b><p>${escapeHtml2(STELLARS[miningOrder.port]?.name || miningOrder.port)} · ${miningOrder.reward}cr · Bring this grade before ${new Date(miningOrder.deadline).toLocaleTimeString()}</p><button class="btn sm" data-refinery="deliver" data-order="1" data-id="${escapeHtml2(miningOrder.id)}" data-port="${escapeHtml2(miningOrder.port)}">DELIVER CARGO</button><button class="btn sm" data-refinery="cancelOrder" data-order="1" data-id="${escapeHtml2(miningOrder.id)}" data-port="${escapeHtml2(miningOrder.port)}">CANCEL ORDER</button></div>`).join('')}<div class="rrow"><span>Fuel Cells: ${refineryClientState.you!.cargo?.fuel_cells || 0}t · each adds ${refineryRules.fuelPerCell} fuel, uses the cell</span><button class="btn sm" data-refinery="fuelQuote" ${!refineryClientState.you!.cargo?.fuel_cells ? 'disabled' : ''}>USE 1 CELL → ${refineryRules.fuelPerCell} FUEL</button></div>${refineryClientState.refineryFuelQuote ? `<div class="mcard"><b>USE A FUEL CELL?</b><p>${refineryClientState.refineryFuelQuote.n} cell → ${refineryClientState.refineryFuelQuote.gain} fuel · ${refineryClientState.refineryFuelQuote.before} → ${refineryClientState.refineryFuelQuote.before + refineryClientState.refineryFuelQuote.gain} / ${refineryClientState.refineryFuelQuote.capacity}. This uses one cell. Your ship must have room for the full amount of fuel.</p><button class="btn sm" data-refinery="fuel" data-id="${escapeHtml2(refineryClientState.refineryFuelQuote.id)}">USE CELL</button></div>` : ''}</section>`;
+  return renderRefineryUiRefineryJobsHtmlFragment001({
+    batchesMap: legacyHtml(
+      batches
+        .map((refineryBatch) =>
+          renderRefineryUiRefineryJobsHtmlFragment002({
+            title: title(refineryBatch.quote.output),
+            refineryBatchStatusToUpperCase: refineryBatch.status.toUpperCase(),
+            STELLARS: STELLARS[refineryBatch.port]?.name || refineryBatch.port,
+            refineryBatchQuoteUnits: legacyHtml((refineryBatch.quote.units / 300).toFixed(3)),
+            refineryBatchReadyAt: legacyHtml(refineryBatch.readyAt),
+            refineryBatchStartAt: legacyHtml(refineryBatch.startAt),
+            refineryBatchStatus: legacyHtml(refineryBatch.status),
+            refineryBatchStatus2: legacyHtml(
+              refineryBatch.status === 'queued'
+                ? 'cancellable for 30s'
+                : refineryBatch.status === 'processing'
+                  ? 'processing'
+                  : 'cancelled — exact input returns only',
+            ),
+            refineryBatchStatus3: legacyHtml(
+              refineryBatch.status === 'queued'
+                ? renderRefineryUiRefineryJobsHtmlFragment003({
+                    refineryBatchId: refineryBatch.id,
+                    refineryBatchPort: refineryBatch.port,
+                    refineryBatchQuoteCancelFee: legacyHtml(refineryBatch.quote.cancelFee),
+                  })
+                : '',
+            ),
+            refineryBatchStatus4: legacyHtml(
+              refineryBatch.status === 'cancelled' &&
+                refineryBatch.returns.some((refineryInput) =>
+                  Object.values(refineryInput.lots).some(Boolean),
+                )
+                ? renderRefineryUiRefineryJobsHtmlFragment004({
+                    refineryBatchId: refineryBatch.id,
+                    refineryBatchPort: refineryBatch.port,
+                  })
+                : '',
+            ),
+            STELLARS2: STELLARS[refineryBatch.port]?.system,
+          }),
+        )
+        .join(''),
+    ),
+    readyMap: legacyHtml(
+      ready
+        .map((refineryReady) =>
+          renderRefineryUiRefineryJobsHtmlFragment005({
+            title: title(refineryReady.cid),
+            refineryReadyUnits: legacyHtml((refineryReady.units / 300).toFixed(3)),
+            STELLARS: STELLARS[refineryReady.port]?.name || refineryReady.port,
+            RECIPESFind: legacyHtml(
+              RECIPES.find((recipe) => recipe.output === refineryReady.cid)?.id,
+            ),
+            refineryReadyPort: refineryReady.port,
+            refineryReadyUnits2: legacyHtml(
+              refineryReady.units < 300
+                ? 'disabled title="At least 1 tonne must be ready. Smaller amounts stay stored."'
+                : '',
+            ),
+          }),
+        )
+        .join(''),
+    ),
+    dataOrdersMap: legacyHtml(
+      data.orders
+        .map((miningOrder) =>
+          renderRefineryUiRefineryJobsHtmlFragment006({
+            miningOrderQty: legacyHtml(miningOrder.qty),
+            miningOrderGrade: miningOrder.grade,
+            title: title(miningOrder.cid),
+            STELLARS: STELLARS[miningOrder.port]?.name || miningOrder.port,
+            miningOrderReward: legacyHtml(miningOrder.reward),
+            Date: legacyHtml(new Date(miningOrder.deadline).toLocaleTimeString()),
+            miningOrderId: miningOrder.id,
+            miningOrderPort: miningOrder.port,
+            miningOrderId2: miningOrder.id,
+            miningOrderPort2: miningOrder.port,
+          }),
+        )
+        .join(''),
+    ),
+    refineryClientStateYou: legacyHtml(refineryClientState.you!.cargo?.fuel_cells || 0),
+    refineryRulesFuelPerCell: legacyHtml(refineryRules.fuelPerCell),
+    refineryClientStateYou2: legacyHtml(
+      !refineryClientState.you!.cargo?.fuel_cells ? 'disabled' : '',
+    ),
+    refineryRulesFuelPerCell2: legacyHtml(refineryRules.fuelPerCell),
+    refineryClientStateRefineryFuelQuote: legacyHtml(
+      refineryClientState.refineryFuelQuote
+        ? renderRefineryUiRefineryJobsHtmlFragment007({
+            refineryClientStateRefineryFuelQuoteN: legacyHtml(
+              refineryClientState.refineryFuelQuote.n,
+            ),
+            refineryClientStateRefineryFuelQuoteGain: legacyHtml(
+              refineryClientState.refineryFuelQuote.gain,
+            ),
+            refineryClientStateRefineryFuelQuoteBefore: legacyHtml(
+              refineryClientState.refineryFuelQuote.before,
+            ),
+            refineryClientStateRefineryFuelQuoteBefore2: legacyHtml(
+              refineryClientState.refineryFuelQuote.before +
+                refineryClientState.refineryFuelQuote.gain,
+            ),
+            refineryClientStateRefineryFuelQuoteCapacity: legacyHtml(
+              refineryClientState.refineryFuelQuote.capacity,
+            ),
+            refineryClientStateRefineryFuelQuoteId: refineryClientState.refineryFuelQuote.id,
+          })
+        : '',
+    ),
+  });
 }
 export function refineryHtml(refineryClientState: RefineryClientState) {
   return refineryPanelHtml(refineryClientState, refineryJobsHtml(refineryClientState));

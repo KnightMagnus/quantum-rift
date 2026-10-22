@@ -1,0 +1,2 @@
+<div class="sect" style="margin-top:0">THE CRUCIBLE</div><p>Rated team fights in an instanced arena, away from the open galaxy. You fly your current ship without wingmates or escorts. Losing costs no insurance, and the arena crew repair you for free. The last team flying wins. If time runs out, the team with the most hull and shields left wins.</p>
+    <div class="kv"><span>Your rating</span><span><b><%~ it.firstValueRating %></b> <span class="dim small"><%~ it.firstValueW %> W · <%~ it.firstValueL %> L</span></span></div>

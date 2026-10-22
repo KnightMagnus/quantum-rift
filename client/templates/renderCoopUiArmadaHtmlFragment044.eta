@@ -1,0 +1,1 @@
+<div class="bars2"><div class="bar thin"><i style="width:<%~ it.liveSh %>%"></i></div><div class="bar thin"><i class="ar" style="width:<%~ it.liveAr %>%"></i></div></div>

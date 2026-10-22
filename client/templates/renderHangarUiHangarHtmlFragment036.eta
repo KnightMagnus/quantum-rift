@@ -1,0 +1,1 @@
+<div class="dim small">Crew: <%= it.crewName %></div>

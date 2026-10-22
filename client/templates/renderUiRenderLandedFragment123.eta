@@ -1,0 +1,1 @@
+<span class="pill on"><%= it.count %></span>

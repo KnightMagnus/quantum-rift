@@ -1,0 +1,1 @@
+<select class="dpick" data-dk="<%~ it.entryKey %>" data-slot="<%~ it.slot %>"><option value=""><%~ it.dockShip %></option><%~ it.curOpt %><%~ it.join2 %></select>

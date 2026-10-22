@@ -1,0 +1,2 @@
+<div class="sect" style="margin-top:4px">REFINERY</div><div class="meter"><%~ it.ArrayFrom %></div>
+        <div class="kv"><span><%~ it.stationStateRefUnits %> of <%~ it.capacity %> units</span><span><%~ it.stationStateRefUnits2 %></span></div><%~ it.interactive %>

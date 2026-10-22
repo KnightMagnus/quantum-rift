@@ -1,0 +1,1 @@
+<div class="card story" style="cursor:default"><div class="storytag">MAIN STORY · IN PROGRESS</div><div class="t"><%= it.activeStoryTitle %></div><div><%= it.activeStoryBrief %></div><%~ it.activeStoryReady %></div>

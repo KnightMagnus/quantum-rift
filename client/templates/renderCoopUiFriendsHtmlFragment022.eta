@@ -1,0 +1,1 @@
+ <button class="btn sm" data-cact="topen" data-n="<%= it.friendEntryName %>">TRADE</button>

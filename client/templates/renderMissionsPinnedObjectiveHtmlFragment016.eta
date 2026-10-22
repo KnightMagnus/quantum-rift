@@ -1,0 +1,1 @@
+<button class="btn sm" data-plot="<%= it.missionTargetSys %>">PLOT COURSE</button>

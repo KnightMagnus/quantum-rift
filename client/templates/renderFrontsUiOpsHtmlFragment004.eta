@@ -1,0 +1,1 @@
+<div class="evbox" style="border-color:#c9a24a"><div class="small" style="color:#c9a24a;letter-spacing:2px">MAIN STORY <%~ it.story2Step %>/<%~ it.story2Total %></div><b style="color:#ffe2a0"><%= it.story2Active %></b><div class="small"><%= it.story2Active2 %></div></div>

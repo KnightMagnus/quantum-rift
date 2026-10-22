@@ -1,3 +1,31 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderSpecUiViewFragment001,
+  renderSpecUiViewFragment002,
+  renderSpecUiSpecialistsHtmlFragment003,
+  renderSpecUiSpecialistsHtmlFragment004,
+  renderSpecUiSpecialistsHtmlFragment005,
+  renderSpecUiSpecialistsHtmlFragment006,
+  renderSpecUiSpecialistsHtmlFragment007,
+  renderSpecUiSpecialistsHtmlFragment008,
+  renderSpecUiSpecialistsHtmlFragment009,
+  renderSpecUiSpecialistsHtmlFragment010,
+  renderSpecUiSpecialistsHtmlFragment011,
+  renderSpecUiSpecialistsHtmlFragment012,
+  renderSpecUiSpecialistsHtmlFragment013,
+  renderSpecUiSpecialistsHtmlFragment014,
+  renderSpecUiSpecialistsHtmlFragment015,
+  renderSpecUiSpecialistsHtmlFragment016,
+  renderSpecUiSpecialistsHtmlFragment017,
+  renderSpecUiSpecialistsHtmlFragment018,
+  renderSpecUiSpecialistsHtmlFragment019,
+  renderSpecUiSpecialistsHtmlFragment020,
+  renderSpecUiSpecialistsHtmlFragment021,
+  renderSpecUiSpecialistsHtmlFragment022,
+  renderSpecUiSpecialistsHtmlFragment023,
+  renderSpecUiSpecialistsHtmlFragment024,
+  renderSpecUiSpecialistsHtmlFragment025,
+} from './eta-templates.ts';
 import type { ClientGameState } from './main.ts';
 export type SpecialistComponent = {
   /** Display name of component */
@@ -39,7 +67,6 @@ export type SpecialistProgress = {
   upT?: number;
 };
 
-import { escapeHtml as escapeHtml2 } from './html.ts';
 import { artworkUrl } from './artwork.ts';
 // Quantum Rift: interface: the Specialists section of the station (blueprints, building, parts, components, tier-ups).
 import { GRADES } from '../shared/galaxy.ts';
@@ -78,7 +105,14 @@ const minutes = (milliseconds: number): string => {
  * @returns HTML markup
  */
 const response = (entryKey: string, count: number): string =>
-  `<span style="color:${SPEC_RES[entryKey].color}">${entryKey === 'plasma' ? '<img alt="Plasma" width="20" height="20" src="/assets/icons/dredge-plasma.png">' : SPEC_RES[entryKey].icon} ${count} ${escapeHtml2(SPEC_RES[entryKey].name)}</span>`;
+  renderSpecUiViewFragment001({
+    SPEC_RES: legacyHtml(SPEC_RES[entryKey].color),
+    entryKey: legacyHtml(
+      entryKey === 'plasma' ? renderSpecUiViewFragment002() : SPEC_RES[entryKey].icon,
+    ),
+    count: legacyHtml(count),
+    SPEC_RES2: SPEC_RES[entryKey].name,
+  });
 
 /**
  * Renders the full Specialists screen at the Personal Station or docked view.
@@ -93,7 +127,11 @@ export function specialistsHtml(clientGameState: ClientGameState, interactive?: 
     parts = playerPayload.parts || {},
     sessionState = playerPayload.specState || {},
     specialistShip = SPEC[playerPayload.ship.hull];
-  let height = `<div class="dim small">${SPECIALISTS.length} one-of-a-kind ships, each built for a single job. Each job drops that ship's <b>blueprints</b>, whatever you fly. Flying the specialist itself earns its unique resource, which the station refines into <b>parts</b> (${PART_RATE} to 1). Parts upgrade her five components, and a full set unlocks a timed <b>tier-up</b> in the drydock, up to Tier ${TIER_MAX}.</div>`;
+  let height = renderSpecUiSpecialistsHtmlFragment003({
+    SPECIALISTSLength: legacyHtml(SPECIALISTS.length),
+    PART_RATE: legacyHtml(PART_RATE),
+    TIER_MAX: legacyHtml(TIER_MAX),
+  });
   if (specialistShip) {
     // the specialist you are flying
     const savedSpecialist = sessionState[specialistShip.id] || { tier: 1, comp: {} },
@@ -102,62 +140,151 @@ export function specialistsHtml(clientGameState: ClientGameState, interactive?: 
       full = Object.keys(COMPONENTS).every(
         (component) => (savedSpecialist.comp[component] || 0) >= savedSpecialist.tier,
       );
-    height += `<div class="ocard" style="border-color:#c9a24a88;margin-top:6px"><div class="oname"><img src="${artworkUrl(clientGameState.A!.ships[specialistShip.id].img!)}" style="width:84px;height:64px;object-fit:contain;float:left;margin-right:8px"><b style="font-size:15px;color:#fff">${escapeHtml2(specialistShip.name)}</b> <span class="dim">${escapeHtml2(specialistShip.sub)}</span> <span style="color:${ROLES_INFO[specialistShip.role].color}">${ROLES_INFO[specialistShip.role].icon} ${ROLES_INFO[specialistShip.role].name}</span>
-      <div style="color:#ffd27a">${'★'.repeat(savedSpecialist.tier)}${'☆'.repeat(TIER_MAX - savedSpecialist.tier)} Tier ${savedSpecialist.tier} · specialty ${Math.round(specPower2 * 100)}%</div><div class="small">${escapeHtml2(specialistShip.ability)}</div></div>
-      <div class="kv" style="clear:both"><span>${response(specialistShip.res, specialistResource(playerPayload, specialistShip))}</span><span>${specialistShip.key === 'star_dredge' ? '<img alt="Industrial part" width="20" height="20" src="/assets/icons/dredge-part.png">' : ''}${parts[specialistShip.id] || 0} parts ${interactive && specialistResource(playerPayload, specialistShip) >= PART_RATE ? `<button class="btn sm" data-act="spec" data-op="parts" data-id="${specialistShip.id}">REFINE ${Math.floor(specialistResource(playerPayload, specialistShip) / PART_RATE)}</button>` : ''}</span></div>`;
+    height += renderSpecUiSpecialistsHtmlFragment004({
+      artworkUrl: legacyHtml(artworkUrl(clientGameState.A!.ships[specialistShip.id].img!)),
+      specialistShipName: specialistShip.name,
+      specialistShipSub: specialistShip.sub,
+      ROLES_INFO: legacyHtml(ROLES_INFO[specialistShip.role].color),
+      ROLES_INFO2: legacyHtml(ROLES_INFO[specialistShip.role].icon),
+      ROLES_INFO3: legacyHtml(ROLES_INFO[specialistShip.role].name),
+      repeat: legacyHtml('★'.repeat(savedSpecialist.tier)),
+      repeat2: legacyHtml('☆'.repeat(TIER_MAX - savedSpecialist.tier)),
+      savedSpecialistTier: legacyHtml(savedSpecialist.tier),
+      MathRound: legacyHtml(Math.round(specPower2 * 100)),
+      specialistShipAbility: specialistShip.ability,
+      response: legacyHtml(
+        response(specialistShip.res, specialistResource(playerPayload, specialistShip)),
+      ),
+      specialistShipKey: legacyHtml(
+        specialistShip.key === 'star_dredge' ? renderSpecUiSpecialistsHtmlFragment005() : '',
+      ),
+      parts: legacyHtml(parts[specialistShip.id] || 0),
+      interactive: legacyHtml(
+        interactive && specialistResource(playerPayload, specialistShip) >= PART_RATE
+          ? renderSpecUiSpecialistsHtmlFragment006({
+              specialistShipId: legacyHtml(specialistShip.id),
+              MathFloor: legacyHtml(
+                Math.floor(specialistResource(playerPayload, specialistShip) / PART_RATE),
+              ),
+            })
+          : '',
+      ),
+    });
     if (savedSpecialist.upT && savedSpecialist.upT > Date.now())
-      height += `<div class="kv"><span style="color:#7ad0ff">In the drydock for Tier ${savedSpecialist.tier + 1}</span><span>${minutes(savedSpecialist.upT - Date.now())} left</span></div>`;
+      height += renderSpecUiSpecialistsHtmlFragment007({
+        savedSpecialistTier: legacyHtml(savedSpecialist.tier + 1),
+        minutes: legacyHtml(minutes(savedSpecialist.upT - Date.now())),
+      });
     else {
       height +=
-        '<table class="tbl"><tr><th>COMPONENT</th><th>LEVEL</th><th>EACH LEVEL</th><th></th></tr>' +
+        renderSpecUiSpecialistsHtmlFragment008() +
         Object.entries(COMPONENTS)
           .map(([component, specialistComponent]) => {
             const level = savedSpecialist.comp[component] || 0,
               allowed = level < savedSpecialist.tier;
-            return `<tr><td>${specialistShip.key === 'star_dredge' ? DREDGE_COMPONENT_NAMES[component] : specialistComponent.name}</td><td>${level} / ${savedSpecialist.tier}</td><td class="dim small">${Object.entries(
-              specialistComponent.bonus,
-            )
-              .map(([entryKey, value]) =>
-                entryKey === 'ability'
-                  ? specialistShip.key === 'star_dredge'
-                    ? '−1% active heat demand (cap20%; no output/rate gain)'
-                    : `+${value}% specialty`
-                  : `+${value}% ${entryKey.replace('Pct', '')}`,
-              )
-              .join(
-                ', ',
-              )}</td><td style="text-align:right">${allowed ? (interactive ? `<button class="btn sm" data-act="spec" data-op="comp" data-c="${component}">${cost.parts} parts + ${credits(cost.credits)}</button>` : `<span class="dim small">${cost.parts} parts</span>`) : '<span style="color:var(--ok)">✓</span>'}</td></tr>`;
+            return renderSpecUiSpecialistsHtmlFragment009({
+              specialistShipKey: legacyHtml(
+                specialistShip.key === 'star_dredge'
+                  ? DREDGE_COMPONENT_NAMES[component]
+                  : specialistComponent.name,
+              ),
+              level: legacyHtml(level),
+              savedSpecialistTier: legacyHtml(savedSpecialist.tier),
+              ObjectEntries: legacyHtml(
+                Object.entries(specialistComponent.bonus)
+                  .map(([entryKey, value]) =>
+                    entryKey === 'ability'
+                      ? specialistShip.key === 'star_dredge'
+                        ? '−1% active heat demand (cap20%; no output/rate gain)'
+                        : `+${value}% specialty`
+                      : `+${value}% ${entryKey.replace('Pct', '')}`,
+                  )
+                  .join(', '),
+              ),
+              allowed: legacyHtml(
+                allowed
+                  ? interactive
+                    ? renderSpecUiSpecialistsHtmlFragment010({
+                        component: legacyHtml(component),
+                        costParts: legacyHtml(cost.parts),
+                        credits: legacyHtml(credits(cost.credits)),
+                      })
+                    : renderSpecUiSpecialistsHtmlFragment011({ costParts: legacyHtml(cost.parts) })
+                  : renderSpecUiSpecialistsHtmlFragment012(),
+              ),
+            });
           })
           .join('') +
-        '</table>';
+        renderSpecUiSpecialistsHtmlFragment013();
       if (savedSpecialist.tier < TIER_MAX)
         height += full
           ? interactive
-            ? `<button class="btn sm" data-act="spec" data-op="tierup">TIER UP TO ${savedSpecialist.tier + 1} (${TIER_UP_MIN[savedSpecialist.tier]} min in drydock)</button>`
-            : `<div class="dim small">Ready for Tier ${savedSpecialist.tier + 1}. Tier her up at your station.</div>`
-          : `<div class="dim small">Upgrade every component to unlock Tier ${savedSpecialist.tier + 1}.</div>`;
+            ? renderSpecUiSpecialistsHtmlFragment014({
+                savedSpecialistTier: legacyHtml(savedSpecialist.tier + 1),
+                TIER_UP_MIN: legacyHtml(TIER_UP_MIN[savedSpecialist.tier]),
+              })
+            : renderSpecUiSpecialistsHtmlFragment015({
+                savedSpecialistTier: legacyHtml(savedSpecialist.tier + 1),
+              })
+          : renderSpecUiSpecialistsHtmlFragment016({
+              savedSpecialistTier: legacyHtml(savedSpecialist.tier + 1),
+            });
     }
-    height += '</div>';
+    height += renderSpecUiSpecialistsHtmlFragment017();
   }
   height +=
-    '<div class="sect">THE SPECIALISTS</div><div class="ogrid">' +
+    renderSpecUiSpecialistsHtmlFragment018() +
     SPECIALISTS.map((specialistShip) => {
       const count = blueprint[specialistShip.id] || 0,
         roleInfo = ROLES_INFO[specialistShip.role],
         savedSpecialist = sessionState[specialistShip.id];
       const button = interactive
         ? playerPayload.station.ops < BUILD.ops
-          ? `<span class="dim small">Station Tier ${BUILD.ops}</span>`
+          ? renderSpecUiSpecialistsHtmlFragment019({ BUILDOps: legacyHtml(BUILD.ops) })
           : count >= BP_NEED
-            ? `<button class="btn sm" data-act="spec" data-op="build" data-id="${specialistShip.id}">BUILD · ${credits(specialistShip.cost)}</button>`
+            ? renderSpecUiSpecialistsHtmlFragment020({
+                specialistShipId: legacyHtml(specialistShip.id),
+                credits: legacyHtml(credits(specialistShip.cost)),
+              })
             : ''
         : '';
-      return `<div class="ocard"><div class="oname"><img src="${artworkUrl(clientGameState.A!.ships[specialistShip.id].img!)}" style="width:64px;height:48px;object-fit:contain;float:left;margin-right:6px"><b>${escapeHtml2(specialistShip.name)}</b> <span class="small" style="color:${roleInfo.color}">${roleInfo.icon} ${roleInfo.name}</span>${savedSpecialist ? ` <span style="color:#ffd27a" class="small">T${savedSpecialist.tier}</span>` : ''}<div class="dim small">${escapeHtml2(specialistShip.sub)}</div></div>
-      <div class="small" style="clear:both">${escapeHtml2(specialistShip.ability)}</div><div class="dim small">Loop: ${escapeHtml2(specialistShip.loop)}</div>
-      <div class="kv"><span class="small">${specialistShip.key === 'star_dredge' ? '<img alt="Blueprint" width="24" height="24" src="/assets/icons/dredge-blueprint.png">' : ''} Blueprints ${Math.min(count, BP_NEED)}/${BP_NEED}</span><span class="small">${response(specialistShip.res, specialistResource(playerPayload, specialistShip))} · ${parts[specialistShip.id] || 0} parts</span></div><div class="xpbar"><i style="width:${Math.min(100, (100 * count) / BP_NEED)}%;background:#c9a24a"></i></div>${button}</div>`;
+      return renderSpecUiSpecialistsHtmlFragment021({
+        artworkUrl: legacyHtml(artworkUrl(clientGameState.A!.ships[specialistShip.id].img!)),
+        specialistShipName: specialistShip.name,
+        roleInfoColor: legacyHtml(roleInfo.color),
+        roleInfoIcon: legacyHtml(roleInfo.icon),
+        roleInfoName: legacyHtml(roleInfo.name),
+        savedSpecialist: legacyHtml(
+          savedSpecialist
+            ? renderSpecUiSpecialistsHtmlFragment022({
+                savedSpecialistTier: legacyHtml(savedSpecialist.tier),
+              })
+            : '',
+        ),
+        specialistShipSub: specialistShip.sub,
+        specialistShipAbility: specialistShip.ability,
+        specialistShipLoop: specialistShip.loop,
+        specialistShipKey: legacyHtml(
+          specialistShip.key === 'star_dredge' ? renderSpecUiSpecialistsHtmlFragment023() : '',
+        ),
+        MathMin: legacyHtml(Math.min(count, BP_NEED)),
+        BP_NEED: legacyHtml(BP_NEED),
+        response: legacyHtml(
+          response(specialistShip.res, specialistResource(playerPayload, specialistShip)),
+        ),
+        parts: legacyHtml(parts[specialistShip.id] || 0),
+        MathMin2: legacyHtml(Math.min(100, (100 * count) / BP_NEED)),
+        button: legacyHtml(button),
+      });
     }).join('') +
-    '</div>';
+    renderSpecUiSpecialistsHtmlFragment024();
   if (interactive)
-    height += `<div class="dim small">Building a specialist also takes ${BUILD.mats.map(([message, game, count]) => `${count} ${message} ${GRADES[game]}`).join(', ')}. Your current ship is traded in, or store it in the drydock first.</div>`;
+    height += renderSpecUiSpecialistsHtmlFragment025({
+      BUILDMatsMap: legacyHtml(
+        BUILD.mats
+          .map(([message, game, count]) => `${count} ${message} ${GRADES[game]}`)
+          .join(', '),
+      ),
+    });
   return height;
 }

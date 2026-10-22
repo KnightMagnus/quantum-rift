@@ -1,0 +1,1 @@
+<button class="btn sm<%~ it.entryKey %>" data-act="ocat" data-k="<%~ it.entryKey2 %>"><%~ it.count %></button>

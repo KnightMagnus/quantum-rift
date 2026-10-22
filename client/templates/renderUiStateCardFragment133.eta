@@ -1,0 +1,1 @@
+ <b><%~ it.livingPayloadStateGot %> / <%~ it.livingPayloadStateNeed %></b>

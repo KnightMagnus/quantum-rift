@@ -1,0 +1,2 @@
+<tr class="<%~ it.positionXLocked %>"><td><b><%= it.positionXName %></b></td><td class="dim small"><%= it.positionXDesc %></td><td class="cr"><%~ it.credits2 %></td>
+      <td style="text-align:right"><%~ it.positionXLocked2 %></td></tr>

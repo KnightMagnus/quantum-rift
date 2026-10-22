@@ -1,0 +1,1 @@
+<div class="dim small"><%= it.missionTargetText %></div>

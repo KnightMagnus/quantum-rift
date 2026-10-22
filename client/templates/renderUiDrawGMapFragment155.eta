@@ -1,0 +1,1 @@
+<%~ it.myHome %><b style="color:<%~ it.FACTIONS %>"><%= it.starSystemName %></b> · <%~ it.FACTIONS2 %><%~ it.stateOfSys %> · danger <span class="dgr"><%~ it.ArrayFrom %></span> <%~ it.starSystemDanger %><%~ it.lawfulness %><%~ it.jumps %><%~ it.seen %><%~ it.extra %><br><span class="dim"><%~ it.starSystemStellarsMap %><%~ it.fields %><%~ it.constValue %></span>

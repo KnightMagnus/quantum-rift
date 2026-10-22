@@ -1,0 +1,1 @@
+<li><%= it.radiusName %> · <b><%~ it.radiusShareToLocaleString %> cr</b> · <%~ it.radiusReady %> · <%~ it.radiusSlots %> job slots free</li>

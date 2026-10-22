@@ -1,0 +1,3 @@
+<div class="kv"><span><a href="#" data-cact="dmback" style="color:#d88">&lsaquo; all</a> &nbsp;<%~ it.friendEntry %> <b><%= it.clientGameStateDmWith %></b></span><span><button class="btn sm" data-cact="block" data-n="<%= it.clientGameStateDmWith2 %>">BLOCK</button></span></div>
+      <div class="dmlog" id="dmlog"><%~ it.listMap %></div>
+      <div class="rrow"><input id="dmin" placeholder="Message <%= it.clientGameStateDmWith3 %> (Enter)" maxlength="400"><button class="btn sm" data-cact="dmsend">SEND</button></div>

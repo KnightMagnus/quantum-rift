@@ -1,0 +1,1 @@
+<option value="<%~ it.entryKey %>"><%= it.lowerDeckRoleName %> · <%= it.lowerDeckRoleDesc %> · <%~ it.credits2 %> cr</option>

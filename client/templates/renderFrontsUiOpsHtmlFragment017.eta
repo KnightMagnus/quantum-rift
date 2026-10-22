@@ -1,0 +1,1 @@
+<div class="kv"><span><%~ it.messageOnline %> <%= it.messageName %><%~ it.messageName2 %></span><span class="dim small"><%= it.messageSys %></span></div>

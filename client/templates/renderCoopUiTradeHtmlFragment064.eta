@@ -1,0 +1,5 @@
+<div class="sect" style="margin-top:4px">TRADE WITH <%~ it.tradeStateWith %></div>
+    <div class="tgrid"><div><div class="dim small">YOU GIVE <%~ it.tradeStateLockMe %><%~ it.tradeStateOkMe %></div><%~ it.offerList %></div><div><div class="dim small">THEY GIVE <%~ it.tradeStateLockThem %><%~ it.tradeStateOkThem %></div><%~ it.offerList2 %></div></div>
+    <%~ it.tradeStateLockMe2 %>
+    <div style="margin-top:8px"><%~ it.tradeStateLockMe3 %> <%~ it.tradeStateLockMe4 %> <button class="btn sm" data-cact="tcancel">CANCEL</button></div>
+    <div class="dim small">Both sides lock their offer, then both confirm. Any change unlocks both. Goods you receive go into your hold, or exchange storage if it is full.</div>

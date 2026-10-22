@@ -1,0 +1,1 @@
+<label class="btn sm" style="display:inline-flex;align-items:center;justify-content:center">LOAD A SAVE FILE<input type="file" id="limport" accept=".json" style="display:none"></label>

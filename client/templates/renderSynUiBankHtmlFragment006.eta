@@ -1,0 +1,9 @@
+<div class="igrid"><div><div class="sect" style="margin-top:0">THE BANK OF THE RIFT</div>
+      <div class="kv"><span>Credit rating</span><span><b><%~ it.playerPayloadCredit %></b> <span class="dim small">(300 to 850)</span></span></div>
+      <div class="kv"><span>Interest</span><span><%~ it.bank2Rate %>% every <%~ it.bank2Period %> minutes of play</span></div>
+      <div class="kv"><span>You can borrow up to</span><span class="cr"><%~ it.credits2 %></span></div>
+      <p class="dim small">Payments are taken automatically every <%~ it.bank2Period2 %> minutes while you play. Paying on time raises your rating and lowers your interest; missing one adds interest and drops your rating. Bigger earnings unlock bigger loans.</p>
+    </div><div><div class="sect" style="margin-top:0">YOUR LOAN</div>
+      <%~ it.balance %>
+      <div class="rrow"><input id="bankamt" type="number" min="1000" step="1000" placeholder="Amount" value="<%~ it.MathMin %>"><button class="btn sm" data-act="bank" data-op="borrow"<%~ it.room %>>BORROW</button><%~ it.balance2 %></div>
+    </div></div>

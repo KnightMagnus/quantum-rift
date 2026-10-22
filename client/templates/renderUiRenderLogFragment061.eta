@@ -1,0 +1,1 @@
+<div class="logentry"><div class="d"><%~ it.Date %></div><%= it.eventText %></div>

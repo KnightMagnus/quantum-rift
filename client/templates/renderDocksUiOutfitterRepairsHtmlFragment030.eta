@@ -1,0 +1,1 @@
+<div class="sect">WINGMATE REPAIRS</div><p class="dim small">Disabled wingmates repair automatically for free after <%~ it.WING_REPAIR_MIN %> minutes. Pay the quoted fee to finish repairs now; the ship remains in your hangar until launch.</p><%~ it.disabledLength %>

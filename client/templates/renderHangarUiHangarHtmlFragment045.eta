@@ -1,0 +1,1 @@
+<option value="<%~ it.savedShuttleId %>" <%~ it.SHUTTLES %>><%= it.SHUTTLES2 %><%~ it.shuttleJobTypeFit %></option>

@@ -1,0 +1,1 @@
+<div class="kv small"><span><%~ it.firstValueSide %> <%= it.firstValueName %></span><span class="dim">step <%~ it.firstValueStep %> of <%~ it.firstValueOf %></span></div>

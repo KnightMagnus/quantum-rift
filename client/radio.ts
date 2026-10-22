@@ -1,3 +1,15 @@
+import {
+  renderRadioPanelFragment001,
+  renderRadioPanelFragment002,
+  renderRadioPanelFragment003,
+  renderRadioPanelFragment004,
+  renderRadioPanelFragment005,
+  renderRadioPanelFragment006,
+  renderRadioPanelFragment007,
+  renderRadioPanelFragment008,
+  renderRadioPanelFragment009,
+  renderRadioStopRadioFragment010,
+} from './eta-templates.ts';
 interface RadioTrack {
   url: string;
   title?: string;
@@ -75,9 +87,9 @@ export function radioOn() {
 function panel(state: string, track: { title?: string }, message = '') {
   if (!htmlElement) return;
   htmlElement.innerHTML =
-    '<div class="onair ' +
+    renderRadioPanelFragment001() +
     state +
-    '"><div class="oa-top"><span class="oa-led"></span>' +
+    renderRadioPanelFragment002() +
     (state === 'live'
       ? radioStation?.playback === 'album'
         ? 'ON AIR · ALBUM LOOP'
@@ -87,19 +99,19 @@ function panel(state: string, track: { title?: string }, message = '') {
         : state === 'empty'
           ? 'STATION DISCOVERED'
           : 'SIGNAL INTERRUPTED') +
-    '</div><div class="oa-name">' +
+    renderRadioPanelFragment003() +
     escapeHtml2(radioStation?.name) +
-    '</div><div class="oa-sub">' +
+    renderRadioPanelFragment004() +
     escapeHtml2(radioStation?.sub) +
-    '</div><div class="oa-track" id="rtrack">♪ <b>' +
+    renderRadioPanelFragment005() +
     escapeHtml2(
       radioStation?.id === 'super-idol' || state === 'empty' ? track.title : 'Broadcast',
     ) +
-    '</b>' +
-    (message ? '<br>' + escapeHtml2(message) : '') +
-    '</div><div class="oa-ctrl"><label>VOL <input aria-label="Radio volume" type="range" id="rvol" min="0" max="1" step="0.05" value="' +
+    renderRadioPanelFragment006() +
+    (message ? renderRadioPanelFragment007() + escapeHtml2(message) : '') +
+    renderRadioPanelFragment008() +
     shown +
-    '"></label></div></div>';
+    renderRadioPanelFragment009();
   const htmlInputElement = htmlElement.querySelector<HTMLInputElement>('#rvol')!;
   htmlInputElement.oninput = () =>
     window.dispatchEvent(new CustomEvent('rift-radio-vol', { detail: +htmlInputElement.value }));
@@ -168,7 +180,5 @@ export function stopRadio(target?: HTMLElement) {
   radioStation = null;
   stopAudio();
   htmlElement = target || htmlElement;
-  if (htmlElement)
-    htmlElement.innerHTML =
-      '<div class="nosig"><b>RADIO OFF</b><span class="dim">Pick a station to tune in</span></div>';
+  if (htmlElement) htmlElement.innerHTML = renderRadioStopRadioFragment010();
 }

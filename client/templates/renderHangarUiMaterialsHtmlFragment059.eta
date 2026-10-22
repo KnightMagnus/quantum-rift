@@ -1,0 +1,1 @@
+<div class="sect">MATERIALS</div><table class="tbl"><tr><th></th><%~ it.GRADESMap %></tr><%~ it.MATERIALSMap %></table>

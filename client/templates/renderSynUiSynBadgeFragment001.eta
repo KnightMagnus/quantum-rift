@@ -1,0 +1,1 @@
+<div class="kv"><span>Syndicate standing</span><span><b style="color:#d88aff"><%= it.syndicateTierInfoName %></b> <span class="dim"><%~ it.credits2 %><%~ it.syndicateTierInfoNext %></span></span></div>

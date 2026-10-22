@@ -1,0 +1,3 @@
+<div class="frow"><div class="kv"><span><%~ it.messageOnline %> <b style="color:<%~ it.messageName %>"><%= it.messageName2 %></b><%~ it.messageName3 %></span><span class="dim small"><%= it.messageHull %><%~ it.messageSys %><%~ it.messageLanded %></span></div>
+      <%~ it.live %>
+      <%~ it.messageName4 %></div>

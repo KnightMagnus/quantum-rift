@@ -1,0 +1,3 @@
+<div class="sect" style="margin-top:0"><%= it.factionDefNameToUpperCase %> QUARTERMASTER</div><div class="kv"><span>Your standing</span><span style="color:<%~ it.factionDefColor %>"><%~ it.reputation %> <%~ it.tier %></span></div>
+    <div class="kv"><span><%~ it.factionDefShort %> tokens</span><span><%~ it.token %></span></div><div class="kv"><span>Rift scrip <span class="dim small">(any store)</span></span><span><%~ it.scrip %></span></div>
+    <div class="dim small">Earn <%~ it.factionDefShort2 %> tokens by finishing jobs in <%~ it.factionDefShort3 %> space and their commissions. Daily and weekly goals pay Rift scrip, which any store accepts.</div><table class="tbl"><tr><th>ITEM</th><th>STANDING</th><th>TOKENS</th><th>CREDITS</th><th></th></tr>

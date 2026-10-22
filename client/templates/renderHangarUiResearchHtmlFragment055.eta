@@ -1,0 +1,1 @@
+<span class="chip <%~ it.time %>" data-act="rtree" data-t="<%~ it.time2 %>"><%~ it.timeToUpperCase %> <%~ it.RESEARCHFilter %>/<%~ it.RESEARCHFilter2 %></span>

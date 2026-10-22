@@ -1,0 +1,1 @@
+<div class="kv"><span>Next: Station Tier <%~ it.nextLv %></span><span><%= it.nextTitle %></span></div><div class="kv"><span>Cost</span><span><%~ it.credits %> cr + <%~ it.nextMatsMap %></span></div><div class="dim small">Unlocks: <%= it.nextUnlock %></div>

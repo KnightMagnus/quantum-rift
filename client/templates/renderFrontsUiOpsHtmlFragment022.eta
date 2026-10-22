@@ -1,0 +1,1 @@
+<div class="kv"><span><%~ it.index %><%= it.scheduledEventName %><%~ it.index2 %></span><span class="dim small"><%~ it.index3 %></span></div>

@@ -1,0 +1,1 @@
+<button class="btn sm mab" data-questdrop="<%= it.missionTargetPendingQuest %>" title="Abandon this story">✕</button>

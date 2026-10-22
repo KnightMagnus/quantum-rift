@@ -1,0 +1,1 @@
+<button class="btn sm" data-cact="aduel" data-n="<%= it.targetName %>">CHALLENGE <%= it.targetName2 %>'S ARMADA</button>

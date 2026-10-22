@@ -1,0 +1,1 @@
+<div class="evbox inv"><b><%= it.duel2InviteFrom %></b> challenges <%~ it.duel2InviteArmada %>. A fight to disabled; nobody loses a ship.<div style="margin-top:4px"><button class="btn sm" data-cact="duelok">ACCEPT</button> <button class="btn sm" data-cact="duelno">DECLINE</button></div></div>

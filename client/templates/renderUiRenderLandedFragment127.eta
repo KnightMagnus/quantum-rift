@@ -1,0 +1,1 @@
+<tr><td><%~ it.index %></td><td><%= it.timeName %><%~ it.timeAi %></td><td class="dim"><%= it.timeShip %></td><td class="cr"><%~ it.credits %></td><td><%~ it.timeKills %></td></tr>

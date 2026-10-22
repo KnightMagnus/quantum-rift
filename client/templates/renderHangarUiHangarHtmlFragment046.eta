@@ -1,0 +1,2 @@
+<div class="card" style="cursor:default"><div class="t"><%= it.shuttleJobTitle %></div><div class="dim small"><%~ it.shuttleJobTypeName %> · <%= it.starSystemName %> (<%~ it.FACTIONS %>) · <%~ it.shuttleJobJumps %> jumps · danger <%~ it.shuttleJobDanger %> · ~<%~ it.minutes2 %> · best: <%~ it.SHUTTLES %></div><div class="p"><%~ it.join3 %></div>
+      <%~ it.join2 %></div>

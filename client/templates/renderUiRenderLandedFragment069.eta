@@ -1,0 +1,5 @@
+<div class="detail"><img src="<%~ it.artworkUrl %>"><div><div class="sect" style="margin-top:0">YOUR SHIP</div><b style="font-size:15px;color:#fff"><%= it.computedShipStats %></b> <span class="dim">"<%= it.playerPayloadShipName %>"</span> <%~ it.roleTag %>
+        <div class="kv"><span>Shield / Armor</span><span><%~ it.computedShipStats2 %> / <%~ it.computedShipStats3 %></span></div><div class="kv"><span>Speed</span><span><%~ it.MathRound %></span></div><div class="kv"><span>Fuel</span><span><%~ it.MathFloor %> jumps (refuelled)</span></div>
+        <div class="kv"><span>Cargo</span><span><%~ it.ObjectEntries %></span></div>
+        <%~ it.masteryHtml %><%~ it.synBadge %><div class="sect">STANDING</div><%~ it.ObjectEntries2 %>
+        <div class="sect">RENAME SHIP</div><div class="rrow"><input id="rename" value="<%= it.playerPayloadShipName2 %>" maxlength="28"><button class="btn sm" data-act="rename">RENAME</button></div></div></div>

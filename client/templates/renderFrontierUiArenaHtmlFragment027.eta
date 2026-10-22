@@ -1,0 +1,1 @@
+<div class="kv"><span><b><%~ it.mode %></b> <span class="dim small"><%~ it.firstValueSizes %> queued, <%~ it.count %> needed</span></span><span><%~ it.firstValueQueued %></span></div>

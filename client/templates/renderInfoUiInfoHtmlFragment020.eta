@@ -1,0 +1,2 @@
+<tr><td><b><%= it.radiusName %></b></td><td><%= it.radiusKind %></td><td><span style="color:<%~ it.FACTIONS %>"><%= it.FACTIONS2 %></span></td><td><%= it.radiusShip %></td>
+      <td><%~ it.radiusSys %></td><td style="color:<%~ it.MOODC %>"><%~ it.radiusMood %> (<%~ it.radiusRel %>)</td></tr>

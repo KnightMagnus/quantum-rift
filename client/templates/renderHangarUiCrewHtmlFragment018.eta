@@ -1,0 +1,1 @@
+<%~ it.rankLine %><div class="dim small"><%~ it.where2 %></div><div><%~ it.buttons %></div>

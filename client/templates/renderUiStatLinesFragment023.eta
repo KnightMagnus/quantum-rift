@@ -1,0 +1,1 @@
+<div class="dim small">Compared with your <%= it.shipHullAsset2Name %> (the white tick on each bar).</div>

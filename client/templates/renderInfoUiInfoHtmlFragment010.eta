@@ -1,0 +1,1 @@
+<button class="btn sm" data-jet="<%~ it.component %>" data-n="<%~ it.MathMin %>">DUMP 5</button> <button class="btn sm" data-jet="<%~ it.component2 %>" data-n="0">DUMP ALL</button>

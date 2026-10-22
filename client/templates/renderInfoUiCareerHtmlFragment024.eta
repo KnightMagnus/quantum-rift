@@ -1,0 +1,1 @@
+<div class="kv small"><span><%= it.SPEC %></span><span><%~ it.MathMin %> / <%~ it.BP_NEED %><%~ it.count %></span></div>

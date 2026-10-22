@@ -1,0 +1,19 @@
+<div class="igrid"><div>
+    <div class="sect" style="margin-top:0">HOLDINGS</div>
+    <%~ it.keyValueRow %><%~ it.keyValueRow2 %><%~ it.playerPayloadLoan %>
+    <%~ it.keyValueRow3 %><%~ it.docks %>
+    <%~ it.keyValueRow4 %>
+    <%~ it.keyValueRow5 %>
+    <%~ it.keyValueRow6 %>
+    <%~ it.keyValueRow7 %><%~ it.keyValueRow8 %>
+    <%~ it.join2 %>
+  </div><div>
+    <div class="sect" style="margin-top:0">PROGRESS</div>
+    <%~ it.keyValueRow9 %>
+    <%~ it.keyValueRow10 %><%~ it.keyValueRow11 %>
+    <%~ it.keyValueRow12 %><%~ it.keyValueRow13 %>
+    <%~ it.keyValueRow14 %><%~ it.keyValueRow15 %>
+    <%~ it.keyValueRow16 %><%~ it.keyValueRow17 %>
+    <%~ it.keyValueRow18 %><%~ it.stateMined %>
+    <%~ it.quantityActive %>
+  </div></div>

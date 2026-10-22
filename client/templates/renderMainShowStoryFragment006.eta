@@ -1,0 +1,1 @@
+<button class="btn sm" id="storyno"><%~ it.storyMessageRef %></button><button class="btn" id="storyyes"><%~ it.storyMessageAcc %></button>

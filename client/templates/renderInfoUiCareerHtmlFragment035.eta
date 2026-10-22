@@ -1,0 +1,1 @@
+<span style="color:<%~ it.RARITY %>"><%~ it.count %> <%~ it.RARITY2 %></span>

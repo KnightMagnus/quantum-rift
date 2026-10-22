@@ -1,0 +1,5 @@
+<div class="detail" style="grid-template-columns:1fr 1fr"><div><%~ it.clientGameStateSolo %><%~ it.clientGameStateSolo2 %>
+        <%~ it.clientGameStateSolo3 %>
+        <div class="sect"<%~ it.clientGameStateSolo4 %>>STATION REGISTRY</div><%~ it.communityPayload %></div>
+        <div><div class="sect" style="margin-top:0">TOP CAPTAINS (credits earned)</div><table class="tbl"><tr><th>#</th><th>CAPTAIN</th><th>SHIP</th><th>EARNED</th><th>KILLS</th></tr><%~ it.communityPayload2 %></table>
+        <%~ it.boardsHtml %><p class="dim">Quantum Station is the Rift's meeting place. Claim one of the derelict station hulls listed in the registry to build your Personal Station.</p></div></div>

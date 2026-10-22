@@ -1,0 +1,1 @@
+<div class="sect">RELOCATE STATION</div><div class="dim small">Warp your Personal Station to any unclaimed hull. Everything comes with it: Station Tier, research, refinery, docks and stored ships. The old hull is left for someone else to claim. Costs <%~ it.credits %> cr + <%~ it.RELOCATEMatsMap %>; once every <%~ it.RELOCATECooldownH %> hours.</div>

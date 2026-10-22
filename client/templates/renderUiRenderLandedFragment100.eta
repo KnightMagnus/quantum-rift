@@ -1,0 +1,1 @@
+<div class="card story" style="cursor:default"><div class="storytag">MAIN STORY</div><div class="t"><%= it.story2Title %></div><div><%= it.story2Brief %></div><%~ it.story2Locked %></div>

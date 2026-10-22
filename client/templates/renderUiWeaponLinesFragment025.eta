@@ -1,0 +1,1 @@
+<div class="kv"><span>Type</span><span><%~ it.weaponAssetType %></span></div><div class="kv"><span>Damage</span><span><%~ it.weaponAssetDmgS %> shield · <%~ it.weaponAssetDmgA %> armor<%~ it.weaponConfigContinuous %></span></div><div class="kv"><span>Range</span><span><%~ it.MathRound %></span></div>

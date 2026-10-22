@@ -1,0 +1,1 @@
+<b class="small">PINNED · <%= it.missionTargetTitle %></b><div class="small"><%= it.missionTargetStatus %></div><div class="mfoot"><%~ it.missionTargetSys %><button class="btn sm" data-pin="<%= it.missionTargetKey %>" aria-label="Unpin objective">UNPIN</button></div>

@@ -1,3 +1,22 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderMissionsJournalHtmlFragment001,
+  renderMissionsJournalHtmlFragment002,
+  renderMissionsMissionsHtmlFragment003,
+  renderMissionsMissionsHtmlFragment004,
+  renderMissionsMissionsHtmlFragment005,
+  renderMissionsMissionsHtmlFragment006,
+  renderMissionsMissionsHtmlFragment007,
+  renderMissionsMissionsHtmlFragment008,
+  renderMissionsMissionsHtmlFragment009,
+  renderMissionsMissionsHtmlFragment010,
+  renderMissionsMissionsHtmlFragment011,
+  renderMissionsMissionsHtmlFragment012,
+  renderMissionsMissionsHtmlFragment013,
+  renderMissionsMissionsHtmlFragment014,
+  renderMissionsPinnedObjectiveHtmlFragment015,
+  renderMissionsPinnedObjectiveHtmlFragment016,
+} from './eta-templates.ts';
 import type { ClientGameState } from './main.ts';
 export type MissionKind = 'story' | 'career' | 'arc' | 'job';
 export type MissionTarget = {
@@ -42,7 +61,6 @@ export type MissionTarget = {
   pendingQuest?: string;
 };
 
-import { escapeDoubleQuotedHtml as escapeHtml } from './html.ts';
 import {
   missionFactsHtml,
   filterMissions,
@@ -253,14 +271,22 @@ export function missionTargets(clientGameState: ClientGameState): MissionTarget[
 function journalHtml(clientGameState: ClientGameState): string {
   const quests2 = clientGameState.you!.quests;
   if (!quests2 || !quests2.done || !quests2.done.length) return '';
-  return `<details class="journal"><summary>STORY JOURNAL · ${quests2.done.length} finished</summary>${quests2.done
-    .slice()
-    .reverse()
-    .map(
-      (positionX) =>
-        `<div class="kv small"><span>${positionX.side ? '★' : '✦'} ${escapeHtml(positionX.name)}</span><span class="dim">${escapeHtml(positionX.giver)}</span></div>`,
-    )
-    .join('')}</details>`;
+  return renderMissionsJournalHtmlFragment001({
+    quests2DoneLength: legacyHtml(quests2.done.length),
+    quests2Done: legacyHtml(
+      quests2.done
+        .slice()
+        .reverse()
+        .map((positionX) =>
+          renderMissionsJournalHtmlFragment002({
+            positionXSide: legacyHtml(positionX.side ? '★' : '✦'),
+            positionXName: positionX.name,
+            positionXGiver: positionX.giver,
+          }),
+        )
+        .join(''),
+    ),
+  });
 }
 
 /**
@@ -276,22 +302,16 @@ export function missionsHtml(clientGameState: ClientGameState): string {
       missionFiltersHtml(clientGameState, 'mission') +
       refineryJobsHtml(clientGameState);
   if (!missionTargets2.length)
-    return (
-      refinery +
-      '<div class="dim small" style="padding:6px">No active missions. Mission boards (the JOBS tab when landed) post new work every ten minutes, and the contact at each spaceport bar has a story for you.</div>' +
-      journalHtml(clientGameState)
-    );
+    return refinery + renderMissionsMissionsHtmlFragment003() + journalHtml(clientGameState);
   return (
     refinery +
-    (!shown.length
-      ? '<p class="dim small">No missions match these filters. Your other objectives are still tracked.</p>'
-      : '') +
+    (!shown.length ? renderMissionsMissionsHtmlFragment004() : '') +
     shown
       .map((missionTarget) => {
         let jumps = '';
         if (missionTarget.sys && clientGameState.sys) {
           if (missionTarget.sys === clientGameState.sys)
-            jumps = '<span style="color:var(--ok)">in this system</span>';
+            jumps = renderMissionsMissionsHtmlFragment005();
           else {
             const route2 = route(systemsById, clientGameState.sys, missionTarget.sys);
             jumps =
@@ -300,13 +320,61 @@ export function missionsHtml(clientGameState: ClientGameState): string {
                 : 'no known route';
           }
         }
-        return `<div data-mission-key="${escapeHtml(missionTarget.key)}" class="mcard${missionTarget.kind === 'story' || missionTarget.kind === 'arc' ? ' story' : missionTarget.kind === 'career' ? ' career' : ''}${missionTarget.urgent ? ' urgent' : ''}">
-      ${missionTarget.kind === 'story' ? '<div class="storytag">MAIN STORY</div>' : missionTarget.kind === 'career' ? '<div class="careertag">CAREER</div>' : missionTarget.kind === 'arc' ? `<div class="storytag">${escapeHtml(missionTarget.tag || 'FACTION STORY')}</div>` : ''}
-      <div class="t">${escapeHtml(missionTarget.title)}</div>
-      <div class="mstat">${escapeHtml(missionTarget.status)}</div>${missionFactsHtml(clientGameState, missionTarget, true)}
-      ${missionTarget.kind === 'story' && missionTargets2.some((missionTarget) => missionTarget.kind === 'career') ? `<details class="small dim"><summary>The story can wait until you know the ropes. Read more</summary>${escapeHtml(missionTarget.text)}</details>` : `<div class="dim small">${escapeHtml(missionTarget.text)}</div>`}
-      <div class="mfoot"><button class="btn sm" data-pin="${escapeHtml(missionTarget.key)}" aria-pressed="${clientGameState.pinnedObjective === missionTarget.key}">${clientGameState.pinnedObjective === missionTarget.key ? 'UNPIN' : 'PIN'}</button><span class="dim small">${jumps}</span>${missionTarget.sys && missionTarget.sys !== clientGameState.sys ? `<button class="btn sm" data-plot="${escapeHtml(missionTarget.sys)}">PLOT COURSE</button>` : ''}${missionTarget.pendingQuest ? `<button class="btn sm mab" data-questdrop="${escapeHtml(missionTarget.pendingQuest)}" title="Abandon this story">✕</button>` : missionTarget.kind === 'job' || missionTarget.quest || (missionTarget.kind === 'arc' && missionTarget.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${escapeHtml(missionTarget.key)}" title="Drop this job">✕</button>` : ''}</div>
-    </div>`;
+        return renderMissionsMissionsHtmlFragment006({
+          missionTargetKey: missionTarget.key,
+          missionTargetKind: legacyHtml(
+            missionTarget.kind === 'story' || missionTarget.kind === 'arc'
+              ? ' story'
+              : missionTarget.kind === 'career'
+                ? ' career'
+                : '',
+          ),
+          missionTargetUrgent: legacyHtml(missionTarget.urgent ? ' urgent' : ''),
+          missionTargetKind2: legacyHtml(
+            missionTarget.kind === 'story'
+              ? renderMissionsMissionsHtmlFragment007()
+              : missionTarget.kind === 'career'
+                ? renderMissionsMissionsHtmlFragment008()
+                : missionTarget.kind === 'arc'
+                  ? renderMissionsMissionsHtmlFragment009({
+                      missionTargetTag: missionTarget.tag || 'FACTION STORY',
+                    })
+                  : '',
+          ),
+          missionTargetTitle: missionTarget.title,
+          missionTargetStatus: missionTarget.status,
+          missionFactsHtml: legacyHtml(missionFactsHtml(clientGameState, missionTarget, true)),
+          missionTargetKind3: legacyHtml(
+            missionTarget.kind === 'story' &&
+              missionTargets2.some((missionTarget) => missionTarget.kind === 'career')
+              ? renderMissionsMissionsHtmlFragment010({ missionTargetText: missionTarget.text })
+              : renderMissionsMissionsHtmlFragment011({ missionTargetText: missionTarget.text }),
+          ),
+          missionTargetKey2: missionTarget.key,
+          clientGameStatePinnedObjective: legacyHtml(
+            clientGameState.pinnedObjective === missionTarget.key,
+          ),
+          clientGameStatePinnedObjective2: legacyHtml(
+            clientGameState.pinnedObjective === missionTarget.key ? 'UNPIN' : 'PIN',
+          ),
+          jumps: legacyHtml(jumps),
+          missionTargetSys: legacyHtml(
+            missionTarget.sys && missionTarget.sys !== clientGameState.sys
+              ? renderMissionsMissionsHtmlFragment012({ missionTargetSys: missionTarget.sys })
+              : '',
+          ),
+          missionTargetPendingQuest: legacyHtml(
+            missionTarget.pendingQuest
+              ? renderMissionsMissionsHtmlFragment013({
+                  missionTargetPendingQuest: missionTarget.pendingQuest,
+                })
+              : missionTarget.kind === 'job' ||
+                  missionTarget.quest ||
+                  (missionTarget.kind === 'arc' && missionTarget.tag === 'FARSIDE EXPEDITION')
+                ? renderMissionsMissionsHtmlFragment014({ missionTargetKey: missionTarget.key })
+                : '',
+          ),
+        });
       })
       .join('') +
     journalHtml(clientGameState)
@@ -319,5 +387,14 @@ export function pinnedObjectiveHtml(clientGameState: ClientGameState) {
     (missionTarget) => missionTarget.key === clientGameState.pinnedObjective,
   );
   if (!missionTarget) return '';
-  return `<b class="small">PINNED · ${escapeHtml(missionTarget.title)}</b><div class="small">${escapeHtml(missionTarget.status)}</div><div class="mfoot">${missionTarget.sys && missionTarget.sys !== clientGameState.sys ? `<button class="btn sm" data-plot="${escapeHtml(missionTarget.sys)}">PLOT COURSE</button>` : ''}<button class="btn sm" data-pin="${escapeHtml(missionTarget.key)}" aria-label="Unpin objective">UNPIN</button></div>`;
+  return renderMissionsPinnedObjectiveHtmlFragment015({
+    missionTargetTitle: missionTarget.title,
+    missionTargetStatus: missionTarget.status,
+    missionTargetSys: legacyHtml(
+      missionTarget.sys && missionTarget.sys !== clientGameState.sys
+        ? renderMissionsPinnedObjectiveHtmlFragment016({ missionTargetSys: missionTarget.sys })
+        : '',
+    ),
+    missionTargetKey: missionTarget.key,
+  });
 }

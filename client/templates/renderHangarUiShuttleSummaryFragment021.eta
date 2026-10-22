@@ -1,0 +1,1 @@
+<span style="color:#7ad0ff"><%= it.savedShuttleJob %> · back in <%~ it.minutes2 %></span>

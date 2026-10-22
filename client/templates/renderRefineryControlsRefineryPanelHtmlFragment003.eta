@@ -1,0 +1,20 @@
+<div class="sect">REFINERY<%~ it.dataHome %></div>
+    <p class="dim">Turn raw cargo into trade goods. Choose what to make; the cost and result appear below. Construction crates use your station's separate workshop.</p>
+    <div class="rrow refinery-form">
+      <label>Make <select id="refrecipe"><%~ it.RECIPESMap %></select></label>
+      <label>Use grade <select id="refgrade"<%~ it.recipePure %>><%~ it.common %></select></label>
+      <label><%~ it.recipeInputsLength %> <input id="refquantity" type="number" required min="<%~ it.recipePure2 %>" max="<%~ it.MathFloor %>" step="<%~ it.recipePure3 %>" value="<%= it.draftN %>" inputmode="numeric"></label>
+      <label>Speed <select id="refmode"><option value="stored"<%~ it.choice2Mode %>>Standard · ready later</option><option value="instant"<%~ it.choice2Mode2 %>>Express · ready now</option></select></label>
+    </div>
+    <div class="mcard" id="refquote" aria-live="polite">
+      <b>YOU USE</b><p><%~ it.inputs %></p>
+      <%~ it.recipePure4 %>
+      <%~ it.premium %>
+      <%~ it.reserved %>
+      <%~ it.valid %>
+      <%~ it.refineryQuote2 %>
+      <%~ it.refineryClientStatePaused %>
+      <button class="btn" data-refinery="submit"<%~ it.refineryQuote22 %><%~ it.ready %>><%~ it.refineryClientStateRefineryBusy %></button>
+      <%~ it.refineryClientStateRefineryCostError %>
+    </div>
+    <div class="sect">DELIVERIES WANTED</div><%~ it.dataOffersMap %><%~ it.jobs %>

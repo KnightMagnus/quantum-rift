@@ -1,0 +1,5 @@
+<div class="sect">YOUR OFFER</div>
+      <div class="rrow"><input id="tcr" type="number" min="0" placeholder="credits" value="<%~ it.mineCredits %>"><span class="dim small"><%~ it.MathRound %>% fee on credits</span></div>
+      <div class="rrow"><select id="titem"><%~ it.join2 %></select><input id="tqty" type="number" min="1" value="1" style="width:60px"><button class="btn sm" data-cact="tadd">ADD</button></div>
+      <%~ it.ObjectEntries %>
+      <button class="btn sm" data-cact="tsend">UPDATE OFFER</button>

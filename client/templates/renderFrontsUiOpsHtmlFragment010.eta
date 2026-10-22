@@ -1,0 +1,1 @@
+ <span class="dim small"><%~ it.livingPayloadStateGot %>/<%~ it.livingPayloadStateNeed %></span>

@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node tools/start.ts",
     "test": "node test/bot.ts",
-    "typecheck": "node tools/typescript-scope.ts && tsrs --noEmit && tsrs -p tsconfig.core.json --noEmit && tsrs -p tsconfig.tools.json --noEmit && tsrs -p tsconfig.tests.json --noEmit",
+    "typecheck": "npm run templates:check && node tools/typescript-scope.ts && tsrs --noEmit && tsrs -p tsconfig.core.json --noEmit && tsrs -p tsconfig.tools.json --noEmit && tsrs -p tsconfig.tests.json --noEmit",
     "test:features": "node test/features.ts",
     "test:types": "node test/typecheck-contracts.ts",
     "format": "oxfmt --write .",
@@ -24,7 +24,9 @@
     "lint": "oxlint --deny-warnings && npm run lint:types",
     "lint:fix": "oxlint --fix",
     "lint:types": "node tools/lint-types.ts",
-    "test:tooling": "node test/tooling-contracts.ts"
+    "test:tooling": "node test/tooling-contracts.ts",
+    "templates:generate": "node tools/eta-generate.ts",
+    "templates:check": "node tools/eta-generate.ts --check"
   },
   "engines": {
     "node": ">=27.0.0-0 <28"
@@ -32,6 +34,7 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "eta": "4.6.0",
     "husky": "^9.1.7",
     "oxc-parser": "0.155.0",
     "oxfmt": "0.74.0",

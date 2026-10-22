@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="wingrep" data-uid="<%~ it.dockShipPayloadUid %>">RUSH REPAIRS <%~ it.credits %></button>

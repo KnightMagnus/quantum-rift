@@ -1,0 +1,1 @@
+<span class="role" style="color:<%~ it.roleInfoColor %>" title="<%~ it.roleInfoDesc %>"><%~ it.roleInfoIcon %> <%~ it.roleInfoName %></span>

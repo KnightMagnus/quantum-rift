@@ -1,0 +1,3 @@
+<div class="ocard" style="border-color:#c9a24a88;margin-top:6px"><div class="oname"><img src="<%~ it.artworkUrl %>" style="width:84px;height:64px;object-fit:contain;float:left;margin-right:8px"><b style="font-size:15px;color:#fff"><%= it.specialistShipName %></b> <span class="dim"><%= it.specialistShipSub %></span> <span style="color:<%~ it.ROLES_INFO %>"><%~ it.ROLES_INFO2 %> <%~ it.ROLES_INFO3 %></span>
+      <div style="color:#ffd27a"><%~ it.repeat %><%~ it.repeat2 %> Tier <%~ it.savedSpecialistTier %> · specialty <%~ it.MathRound %>%</div><div class="small"><%= it.specialistShipAbility %></div></div>
+      <div class="kv" style="clear:both"><span><%~ it.response %></span><span><%~ it.specialistShipKey %><%~ it.parts %> parts <%~ it.interactive %></span></div>

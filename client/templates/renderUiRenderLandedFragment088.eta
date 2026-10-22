@@ -1,0 +1,1 @@
+<button class="btn" data-act="buyship" data-h="<%~ it.shipHullAssetId %>">BUY AND FLY</button>

@@ -1,0 +1,1 @@
+<b style="color:<%~ it.FACTIONS %>"><%~ it.FACTIONS2 %></b> (<%~ it.ObjectEntries %>)

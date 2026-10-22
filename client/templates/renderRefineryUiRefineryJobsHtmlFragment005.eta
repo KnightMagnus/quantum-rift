@@ -1,0 +1,1 @@
+<div class="rrow"><span><%= it.title %> · <%~ it.refineryReadyUnits %>t at <%= it.STELLARS %></span><button class="btn sm" data-refinery="claim" data-recipe="<%~ it.RECIPESFind %>" data-port="<%= it.refineryReadyPort %>" <%~ it.refineryReadyUnits2 %>>COLLECT WHAT FITS</button></div>

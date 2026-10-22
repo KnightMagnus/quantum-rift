@@ -1,0 +1,1 @@
+<button class="btn sm" data-cact="fadd2" data-n="<%= it.targetName %>">ADD FRIEND</button>

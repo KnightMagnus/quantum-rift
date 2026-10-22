@@ -1,0 +1,1 @@
+<span class="mv <%~ it.marketItemMoved %>" title="Moved by this system's state and by what captains have traded here"><%~ it.marketItemMoved2 %><%~ it.MathAbs %>%</span>

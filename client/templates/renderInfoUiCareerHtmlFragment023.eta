@@ -1,0 +1,1 @@
+<div class="kv"><span><%~ it.entryKey %></span><span><%~ it.value %></span></div>

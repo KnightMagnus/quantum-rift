@@ -1,0 +1,2 @@
+<div class="kv"><span>Trade-in of your <%= it.computedShipStats %></span><span>-<%~ it.credits %></span></div>
+        <div class="kv"><span>You pay to fly her</span><span class="cr"><%~ it.credits2 %></span></div>

@@ -1,0 +1,2 @@
+<div class="frow"><div class="kv"><span><%~ it.presenceIndicators %> <b><%= it.friendEntryName %></b></span><span class="dim small"><%~ it.friendEntryStatus %><%~ it.friendEntrySys %></span></div>
+      <div class="frbtn"><button class="btn sm" data-cact="dm" data-n="<%= it.friendEntryName2 %>">MESSAGE</button><%~ it.friendEntryStatus2 %><%~ it.friendEntryStatus3 %><%~ it.friendEntryStatus4 %> <button class="btn sm" data-cact="fdel" data-n="<%= it.friendEntryName3 %>">REMOVE</button></div></div>

@@ -1,0 +1,1 @@
+<div class="kv"><span><%~ it.exchangeOrderSideToUpperCase %> <%~ it.exchangeOrderQty %> <%= it.name %> @ <%~ it.credits %></span><span><button class="btn sm" data-act="xcancel" data-id="<%~ it.exchangeOrderId %>">CANCEL</button></span></div>

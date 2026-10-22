@@ -1,0 +1,1 @@
+<div class="stat"><span><%~ it.entryKey %></span><div class="bar"><i style="width:<%~ it.MathMin %>%"></i><%~ it.shipHullAsset2 %></div><span style="width:44px;text-align:right"><%~ it.format %></span><%~ it.shipHullAsset22 %></div>

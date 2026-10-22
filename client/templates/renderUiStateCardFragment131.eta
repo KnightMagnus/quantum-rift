@@ -1,0 +1,1 @@
+<div class="statecard" style="border-color:<%~ it.systemStateColor %>"><div><b style="color:<%~ it.systemStateColor2 %>"><%~ it.systemStateIcon %> <%~ it.systemStateNameToUpperCase %></b> <span class="dim small">· about <%~ it.left %> min left</span></div><div class="small"><%= it.systemStateDesc %></div><div class="small dim"><%~ it.prices %></div><%~ it.goal %></div>

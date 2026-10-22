@@ -1,0 +1,2 @@
+<tr><td><%~ it.outfitAssetIcon %></td><td title="<%= it.outfitAssetDesc %>"><%= it.outfitAssetName %></td><td class="dim small"><%= it.effect %></td><td><%~ it.outfitAssetMass %></td><td class="cr"><%~ it.credits %></td><td><%~ it.owner %></td>
+          <td style="text-align:right"><button class="btn sm" data-act="outfit" data-id="<%~ it.identifier %>" data-n="<%~ it.count %>"<%~ it.reason %>>BUY<%~ it.outfitAssetEff %></button><%~ it.outfitAssetEff2 %></td></tr>

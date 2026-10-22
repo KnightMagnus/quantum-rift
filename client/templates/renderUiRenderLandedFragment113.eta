@@ -1,0 +1,1 @@
+<div class="kv"><span><%~ it.missionQuest %><%= it.missionTitle %><%~ it.missionType %><%~ it.missionDone %></span><span><%~ it.credits %> <button class="btn sm" data-act="abandon" data-id="<%~ it.missionId %>">ABANDON</button></span></div>

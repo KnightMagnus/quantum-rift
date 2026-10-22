@@ -1,0 +1,1 @@
+<div class="small" style="margin-top:4px">Has a story for you: <b style="color:#ffe2a0"><%= it.storyTitle %></b> <button class="btn sm" data-act="ltab" data-t="jobs">SEE JOBS</button></div>

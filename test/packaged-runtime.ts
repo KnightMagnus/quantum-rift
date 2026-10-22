@@ -56,7 +56,7 @@ try {
       recursive: true,
       encoding: 'utf8',
     })) {
-      if (!/\.(?:js|ts)$/.test(filename)) continue;
+      if (!/\.(?:js|ts|eta)$/.test(filename)) continue;
       copy(path.join(directory, filename));
     }
   }
@@ -71,6 +71,8 @@ try {
     'client/index.html',
     'client/style.css',
     'tools/build.ts',
+    'tools/eta-generate.ts',
+    'client/templates/manifest.json',
     'tools/typescript-scope.ts',
     'tools/start.ts',
     'tools/runtime/node27.json',
@@ -120,6 +122,10 @@ try {
     JSON.parse(fileSystem.readFileSync(path.join(output, 'package-manifest.json'), 'utf8'));
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/server/main.js'));
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/client/html.js'));
+  assert.ok(
+    manifest.files.some(({ path: filename }) => filename === 'dist/client/eta-templates.js'),
+  );
+  assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/client/eta-runtime.js'));
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/server/seeds.json'));
   assert.equal(
     manifest.files.some(({ path: filename }) => /stale-secret|private|node_modules/.test(filename)),
@@ -152,6 +158,10 @@ try {
     const module = await fetch(origin + '/html.js');
     assert.equal(module.status, 200);
     assert.match(await module.text(), /export function escapeHtml/);
+    const templates = await fetch(origin + '/eta-templates.js');
+    assert.equal(templates.status, 200);
+    assert.match(await templates.text(), /export function renderMissionDetailsMissionFactsHtml/);
+    assert.equal((await fetch(origin + '/eta-runtime.js')).status, 200);
     assert.equal((await fetch(origin + '/shared/assets.json')).status, 200);
   } finally {
     await cleanup(server, null, serverLog, data);

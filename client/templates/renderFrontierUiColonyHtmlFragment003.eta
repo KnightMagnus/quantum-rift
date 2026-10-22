@@ -1,0 +1,1 @@
+<div class="sect" style="margin-top:0"><%= it.componentName %></div><p>Settled by Captain <%= it.componentOwner %> (level <%~ it.componentLv %>).</p>

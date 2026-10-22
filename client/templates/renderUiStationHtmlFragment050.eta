@@ -1,0 +1,1 @@
+<p class="dim small">Warp core recharging: <%~ it.MathCeil %> h.</p>

@@ -1,0 +1,1 @@
+<div class="noship"><b>NO ACTIVE SHIP</b><div>You can't depart until you choose a ship. <%~ it.playerPayloadDock %></div><div><%~ it.playerPayloadDock2 %><%~ it.length2Yard %></div></div>

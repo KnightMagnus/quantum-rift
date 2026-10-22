@@ -1,0 +1,1 @@
+<div class="dim small">Passenger seats: <%~ it.occupiedPassengerSeats %> occupied / <%~ it.passengerSeats %> total. Bridge officers and working crew have separate accommodation.</div>

@@ -1,0 +1,4 @@
+<p>Derelict Concord station hulls drift in systems across the Rift. Land on one and claim it, and it becomes your Personal Station: build it up through five Station Tiers for a refinery that works while you fly, a research lab, wingmates and Exotic ships.</p>
+      <%~ it.stationStateClaimed %>
+      <%~ it.canClaim %><%~ it.unclaimedList %>
+      <div class="sect">SPECIALISTS</div><%~ it.specialistsHtml %>

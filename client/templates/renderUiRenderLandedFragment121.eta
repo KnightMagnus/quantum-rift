@@ -1,0 +1,1 @@
+ <button class="btn sm" data-act="addfriend" data-n="<%= it.optionsName %>">+ FRIEND</button>

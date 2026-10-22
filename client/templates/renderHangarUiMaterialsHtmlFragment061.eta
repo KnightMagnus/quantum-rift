@@ -1,0 +1,1 @@
+<tr><td><%~ it.message %></td><%~ it.playerPayloadMats %></tr>

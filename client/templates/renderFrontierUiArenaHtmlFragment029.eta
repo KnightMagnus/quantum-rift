@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="arena" data-op="queue" data-mode="<%~ it.mode %>">QUEUE</button>

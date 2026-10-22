@@ -1,0 +1,1 @@
+<span class="small" style="display:inline-block;width:49%"><span style="color:<%~ it.factionDefColor %>"><%~ it.factionDefShort %></span> <span class="dim"><%~ it.repLabel %> (<%~ it.playerPayloadRep %>)</span></span>

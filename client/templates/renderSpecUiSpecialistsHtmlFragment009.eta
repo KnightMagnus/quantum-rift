@@ -1,0 +1,1 @@
+<tr><td><%~ it.specialistShipKey %></td><td><%~ it.level %> / <%~ it.savedSpecialistTier %></td><td class="dim small"><%~ it.ObjectEntries %></td><td style="text-align:right"><%~ it.allowed %></td></tr>

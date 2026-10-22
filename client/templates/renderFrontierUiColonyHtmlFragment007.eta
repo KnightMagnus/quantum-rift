@@ -1,0 +1,1 @@
+<div class="kv"><span><%= it.commodityName %></span><span><%~ it.entryKey %></span></div>

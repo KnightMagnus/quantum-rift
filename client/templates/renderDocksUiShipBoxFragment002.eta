@@ -1,0 +1,1 @@
+<div class="dslot<%~ it.dockShipRepairT %>"><img class="dimg" src="<%~ it.artworkUrl %>"><div class="dsn"><b><%= it.shipHullAssetName %></b><div class="dim small">"<%= it.dockShipName %>"<%~ it.dockShipFlying %><%~ it.dockShipRepairT2 %></div></div></div>

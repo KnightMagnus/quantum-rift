@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="sh" data-op="repair" data-sid="<%~ it.savedShuttleId %>">REPAIR <%~ it.credits %></button>

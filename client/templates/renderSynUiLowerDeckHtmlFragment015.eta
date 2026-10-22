@@ -1,0 +1,1 @@
+<b><%= it.componentName %></b><div class="dim small"><%= it.componentDesc %></div><button class="btn sm" data-act="lower" data-op="dismiss" data-i="<%~ it.index %>">DISMISS</button>

@@ -1,0 +1,1 @@
+<div class="dm <%~ it.directMessageFrom %>"><span class="dim small"><%~ it.Date %><%~ it.directMessageOff %></span><div><%= it.directMessageMsg %></div></div>

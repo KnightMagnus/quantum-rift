@@ -1,0 +1,1 @@
+<div class="kv"><span><%= it.name2 %> <span class="dim">(<%~ it.have %> t)</span> → <%~ it.material %> <%~ it.GRADES %></span><span><%~ it.interactive %></span></div>

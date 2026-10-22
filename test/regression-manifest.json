@@ -93,7 +93,8 @@
     "compiled-runtime.ts",
     "deterministic-core.ts",
     "packaged-runtime.ts",
-    "tooling-contracts.ts"
+    "tooling-contracts.ts",
+    "eta-templates.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -128,7 +129,8 @@
     "sidebar-sizing-browser.ts",
     "mission-ui-browser.ts",
     "radio-browser.ts",
-    "save-generator-browser.ts"
+    "save-generator-browser.ts",
+    "eta-templates-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -508,7 +510,8 @@
     "fixtures/mining-preload.ts": ["helpers/required.ts"],
     "fixtures/refinery-preload.ts": ["helpers/required.ts"],
     "fixtures/dredge-preload.ts": ["helpers/required.ts"],
-    "fixtures/towing-preload.ts": ["helpers/required.ts"]
+    "fixtures/towing-preload.ts": ["helpers/required.ts"],
+    "eta-templates-browser.ts": ["helpers/browser-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],

@@ -1,0 +1,4 @@
+<div style="padding:6px"><a href="#" id="cback" style="color:#d88">&lsaquo; back</a><div style="text-align:center"><%~ it.outfitAssetIcon %></div>
+      <b style="color:#fff;font-size:14px"><%= it.outfitAssetName %></b> <span class="cr" style="float:right"><%~ it.credits %> cr</span>
+      <div class="kv"><span>Mass</span><span><%~ it.outfitAssetMass %> t</span></div><div class="kv"><span>Max</span><span><%~ it.outfitAssetMax %></span></div><%~ it.weaponLines %>
+      <div class="sect">DESCRIPTION</div><div style="white-space:pre-wrap;line-height:1.4"><%= it.outfitAssetDesc %></div></div>

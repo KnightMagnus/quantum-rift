@@ -1,0 +1,1 @@
+<span class="k"><%~ it.keyName %><%~ it.alternateBindings %></span><span><%~ it.count %></span>

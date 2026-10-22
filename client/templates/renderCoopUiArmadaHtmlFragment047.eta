@@ -1,0 +1,1 @@
+ <button class="btn sm" data-cact="alead" data-n="<%= it.messageName %>">MAKE LEADER</button> <button class="btn sm" data-cact="akick" data-n="<%= it.messageName2 %>">REMOVE</button>

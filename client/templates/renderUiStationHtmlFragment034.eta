@@ -1,0 +1,1 @@
+<button class="btn sm <%~ it.entryKey %>" data-act="stab" data-k="<%~ it.entryKey2 %>" <%~ it.stationStateOps %>><%~ it.count %></button>

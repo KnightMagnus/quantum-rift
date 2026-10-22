@@ -1,0 +1,1 @@
+<p style="color:var(--cr)">Your station progress (Station Tier <%~ it.stationStateOps %>) is kept and moves to the hull you claim.</p>

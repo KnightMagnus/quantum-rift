@@ -1,3 +1,19 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderMainSoloLoginFragment001,
+  renderMainSoloLoginFragment002,
+  renderMainSoloLoginFragment003,
+  renderMainSoloLoginFragment004,
+  renderMainShowStoryFragment005,
+  renderMainShowStoryFragment006,
+  renderMainOpenControlsFragment007,
+  renderMainOpenControlsFragment008,
+  renderMainOpenControlsFragment009,
+  renderMainOpenControlsFragment010,
+  renderMainOpenControlsFragment011,
+  renderMainOpenControlsFragment012,
+  renderMainRenderKeysFragment013,
+} from './eta-templates.ts';
 import type {
   ServerMessage,
   SnapshotMessage,
@@ -715,16 +731,25 @@ function soloLogin(state: { slots: import('../server/game.ts').SaveSlotSummary[]
   const cachedElement = elementById2('lslots');
   cachedElement.classList.remove('hidden');
   cachedElement.innerHTML =
-    `<div class="solotag">YOUR CAPTAINS</div>` +
+    renderMainSoloLoginFragment001() +
     (state.slots.length
       ? state.slots
-          .map(
-            (saveSlotSummary) =>
-              `<div class="slot"><div class="n"><b>${saveSlotSummary.name.replace(/[<>&]/g, '')}</b><div class="dim small">${saveSlotSummary.ship} · ${Math.round(saveSlotSummary.credits).toLocaleString()} cr${saveSlotSummary.ops ? ' · Station Tier ' + saveSlotSummary.ops : ''} · ${saveSlotSummary.sys}</div></div><a href="/api/export?name=${encodeURIComponent(saveSlotSummary.name)}" download>EXPORT</a><button class="btn sm" data-slot="${saveSlotSummary.name.replace(/"/g, '')}">PLAY</button></div>`,
+          .map((saveSlotSummary) =>
+            renderMainSoloLoginFragment002({
+              saveSlotSummaryNameReplace: legacyHtml(saveSlotSummary.name.replace(/[<>&]/g, '')),
+              saveSlotSummaryShip: legacyHtml(saveSlotSummary.ship),
+              MathRound: legacyHtml(Math.round(saveSlotSummary.credits).toLocaleString()),
+              saveSlotSummaryOps: legacyHtml(
+                saveSlotSummary.ops ? ' · Station Tier ' + saveSlotSummary.ops : '',
+              ),
+              saveSlotSummarySys: legacyHtml(saveSlotSummary.sys),
+              encodeURIComponent: legacyHtml(encodeURIComponent(saveSlotSummary.name)),
+              saveSlotSummaryNameReplace2: legacyHtml(saveSlotSummary.name.replace(/"/g, '')),
+            }),
           )
           .join('')
-      : '<div class="dim small">No captains yet: name one above and start.</div>') +
-    `<label class="btn sm" style="display:inline-flex;align-items:center;justify-content:center">LOAD A SAVE FILE<input type="file" id="limport" accept=".json" style="display:none"></label>`;
+      : renderMainSoloLoginFragment003()) +
+    renderMainSoloLoginFragment004();
   cachedElement.querySelectorAll<HTMLElement>('[data-slot]').forEach(
     (htmlElement) =>
       (htmlElement.onclick = () => {
@@ -1131,8 +1156,11 @@ function showStory(storyMessage: StoryMessage | undefined) {
   document.querySelector<HTMLElement>('#storybox .storytag')!.textContent =
     storyMessage.tag || 'STORY';
   elementById2('storyb').innerHTML = storyMessage.done
-    ? '<button class="btn" id="storyok">CONTINUE</button>'
-    : `<button class="btn sm" id="storyno">${storyMessage.ref || 'Not now'}</button><button class="btn" id="storyyes">${storyMessage.acc || 'Accept'}</button>`;
+    ? renderMainShowStoryFragment005()
+    : renderMainShowStoryFragment006({
+        storyMessageRef: legacyHtml(storyMessage.ref || 'Not now'),
+        storyMessageAcc: legacyHtml(storyMessage.acc || 'Accept'),
+      });
   elementById2('storybox').classList.remove('hidden');
   audio.ui(
     /QUEST|SIDE STORY/.test(storyMessage.tag || '')
@@ -1966,17 +1994,25 @@ const BASICS = [
 function openControls(): void {
   audio.ui('open', 0.6);
   elementById2('ctrllist').innerHTML =
-    '<div class="osect">FLIGHT AND COMBAT</div><div class="ctrlgrid">' +
-    ACTIONS.map(
-      ([firstValue, count]) =>
-        `<span class="k">${keyName(bound(firstValue))}${alternateBindings[firstValue] ? ' / ' + keyName(alternateBindings[firstValue]) : ''}</span><span>${count}</span>`,
+    renderMainOpenControlsFragment007() +
+    ACTIONS.map(([firstValue, count]) =>
+      renderMainOpenControlsFragment008({
+        keyName: legacyHtml(keyName(bound(firstValue))),
+        alternateBindings: legacyHtml(
+          alternateBindings[firstValue] ? ' / ' + keyName(alternateBindings[firstValue]) : '',
+        ),
+        count: legacyHtml(count),
+      }),
     ).join('') +
-    '</div>' +
-    '<div class="osect">MOUSE AND MENUS</div><div class="ctrlgrid">' +
-    BASICS.map(
-      ([entryKey, count]) => `<span class="k">${entryKey}</span><span>${count}</span>`,
+    renderMainOpenControlsFragment009() +
+    renderMainOpenControlsFragment010() +
+    BASICS.map(([entryKey, count]) =>
+      renderMainOpenControlsFragment011({
+        entryKey: legacyHtml(entryKey),
+        count: legacyHtml(count),
+      }),
     ).join('') +
-    '</div>';
+    renderMainOpenControlsFragment012();
   elementById2('ctrlbox').classList.remove('hidden');
 }
 /**
@@ -2452,9 +2488,15 @@ const keyName = (component: string | null): string =>
  * Renders keybinding assignment rows in the options menu.
  */
 function renderKeys(): void {
-  elementById2('optkeys').innerHTML = ACTIONS.map(
-    ([firstValue, count]) =>
-      `<div class="kb"><span>${count}</span><button class="btn sm${rebinding === firstValue ? ' on' : ''}" data-bind="${firstValue}">${rebinding === firstValue ? 'press a key…' : keyName(bound(firstValue))}</button></div>`,
+  elementById2('optkeys').innerHTML = ACTIONS.map(([firstValue, count]) =>
+    renderMainRenderKeysFragment013({
+      count: legacyHtml(count),
+      rebinding: legacyHtml(rebinding === firstValue ? ' on' : ''),
+      firstValue: legacyHtml(firstValue),
+      rebinding2: legacyHtml(
+        rebinding === firstValue ? 'press a key…' : keyName(bound(firstValue)),
+      ),
+    }),
   ).join('');
   elementById2('optkeys')
     .querySelectorAll<HTMLElement>('[data-bind]')

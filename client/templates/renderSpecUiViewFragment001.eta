@@ -1,0 +1,1 @@
+<span style="color:<%~ it.SPEC_RES %>"><%~ it.entryKey %> <%~ it.count %> <%= it.SPEC_RES2 %></span>

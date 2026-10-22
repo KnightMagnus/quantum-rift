@@ -28,8 +28,22 @@ const assertCondition = (condition: unknown, message: string) => {
 };
 process.env.SEEDS_FILE = '/nonexistent';
 const clientDirectory = decodeURIComponent(new URL('../client/', import.meta.url).pathname),
-  read = (feature: string) =>
-    filesystem.readFileSync(clientDirectory + feature.replace(/\.js$/, '.ts'), 'utf8');
+  read = (feature: string) => {
+    const filename = feature.replace(/\.js$/, '.ts');
+    const templates = JSON.parse(
+      filesystem.readFileSync(clientDirectory + 'templates/manifest.json', 'utf8'),
+    ) as { source: string; name: string }[];
+    // Static view assertions follow this owner's authored Eta fragments, not every template.
+    return (
+      filesystem.readFileSync(clientDirectory + filename, 'utf8') +
+      templates
+        .filter((template) => template.source === 'client/' + filename)
+        .map((template) =>
+          filesystem.readFileSync(clientDirectory + 'templates/' + template.name + '.eta', 'utf8'),
+        )
+        .join('\n')
+    );
+  };
 {
   const parseFailures: string[] = [];
   for (const feature of filesystem

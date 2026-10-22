@@ -1,0 +1,1 @@
+Lv <%~ it.levelOf %> · <span style="color:<%~ it.column %>"><%~ it.MathRound %>% estimated odds</span>

@@ -1,0 +1,1 @@
+<%~ it.NumberIsFinite %> t <%= it.choice2Grade %> <%= it.title %> <span class="dim small">(<%~ it.have %> t aboard)</span>

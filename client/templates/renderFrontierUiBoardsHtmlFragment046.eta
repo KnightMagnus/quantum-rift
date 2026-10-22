@@ -1,0 +1,1 @@
+<span class="chip <%~ it.entryKey %>" data-act="board" data-cat="<%~ it.entryKey2 %>"><%~ it.leaderboardCategoryName %></span>

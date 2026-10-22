@@ -1,0 +1,1 @@
+<div class="sect">SEND CREDITS</div><div class="rrow"><input id="xto" placeholder="captain name" maxlength="20"><input id="xamt" type="number" min="1000" placeholder="credits" style="width:120px"><button class="btn sm" data-act="xsend">SEND</button></div>

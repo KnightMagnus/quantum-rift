@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="spec" data-op="build" data-id="<%~ it.specialistShipId %>">BUILD · <%~ it.credits %></button>

@@ -1,0 +1,1 @@
+<span style="color:<%~ it.systemStateColor %>"><%~ it.systemStateIcon %> <%~ it.systemStateName %><%~ it.livingPayloadStateK %></span><%~ it.livingPayloadStateNeed %>

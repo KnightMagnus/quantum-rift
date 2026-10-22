@@ -1,0 +1,1 @@
+<div class="kv"><span class="cr"><%~ it.credits %> cr</span><button class="btn sm" data-act="off" data-op="hire" data-id="<%~ it.barOfficerId %>">HIRE</button></div>

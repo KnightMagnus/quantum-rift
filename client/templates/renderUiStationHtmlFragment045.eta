@@ -1,0 +1,1 @@
+<div class="kv"><span>Research</span><span><%~ it.stationStateActive %><%~ it.stationStateQueue %></span></div>

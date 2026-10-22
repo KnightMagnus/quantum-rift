@@ -1,0 +1,1 @@
+<div class="kv"><span><%= it.missionTitle %></span><span><%~ it.missionQty %> t</span></div>

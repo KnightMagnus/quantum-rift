@@ -1,0 +1,1 @@
+<div class="sect" style="margin-top:4px"><%= it.armada2Name %> <span class="dim small"><%~ it.armada2Members %>/<%~ it.armada2Max %></span></div>

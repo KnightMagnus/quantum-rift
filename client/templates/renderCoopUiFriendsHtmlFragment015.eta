@@ -1,0 +1,1 @@
+<div class="rrow"><input id="fadd" placeholder="Captain name" maxlength="20"><button class="btn sm" data-cact="fadd">ADD FRIEND</button></div>

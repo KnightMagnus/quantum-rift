@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="dockgo" data-k="<%~ it.index %>">FLY WITH DOCK <%~ it.entryKeyLetter %></button>

@@ -1,3 +1,71 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderHangarUiOfficerCardFragment001,
+  renderHangarUiOfficerCardFragment002,
+  renderHangarUiCrewHtmlFragment003,
+  renderHangarUiCrewHtmlFragment004,
+  renderHangarUiCrewHtmlFragment005,
+  renderHangarUiCrewHtmlFragment006,
+  renderHangarUiCrewHtmlFragment007,
+  renderHangarUiCrewHtmlFragment008,
+  renderHangarUiCrewHtmlFragment009,
+  renderHangarUiCrewHtmlFragment010,
+  renderHangarUiCrewHtmlFragment011,
+  renderHangarUiCrewHtmlFragment012,
+  renderHangarUiCrewHtmlFragment013,
+  renderHangarUiCrewHtmlFragment014,
+  renderHangarUiCrewHtmlFragment015,
+  renderHangarUiCrewHtmlFragment016,
+  renderHangarUiCrewHtmlFragment017,
+  renderHangarUiCrewHtmlFragment018,
+  renderHangarUiCrewHtmlFragment019,
+  renderHangarUiShuttleSummaryFragment020,
+  renderHangarUiShuttleSummaryFragment021,
+  renderHangarUiShuttleSummaryFragment022,
+  renderHangarUiShuttleSummaryFragment023,
+  renderHangarUiShuttleSummaryFragment024,
+  renderHangarUiHangarHtmlFragment025,
+  renderHangarUiHangarHtmlFragment026,
+  renderHangarUiHangarHtmlFragment027,
+  renderHangarUiHangarHtmlFragment028,
+  renderHangarUiHangarHtmlFragment029,
+  renderHangarUiHangarHtmlFragment030,
+  renderHangarUiHangarHtmlFragment031,
+  renderHangarUiHangarHtmlFragment032,
+  renderHangarUiHangarHtmlFragment033,
+  renderHangarUiHangarHtmlFragment034,
+  renderHangarUiHangarHtmlFragment035,
+  renderHangarUiHangarHtmlFragment036,
+  renderHangarUiHangarHtmlFragment037,
+  renderHangarUiHangarHtmlFragment038,
+  renderHangarUiHangarHtmlFragment039,
+  renderHangarUiHangarHtmlFragment040,
+  renderHangarUiHangarHtmlFragment041,
+  renderHangarUiHangarHtmlFragment042,
+  renderHangarUiHangarHtmlFragment043,
+  renderHangarUiHangarHtmlFragment044,
+  renderHangarUiHangarHtmlFragment045,
+  renderHangarUiHangarHtmlFragment046,
+  renderHangarUiHangarHtmlFragment047,
+  renderHangarUiHangarHtmlFragment048,
+  renderHangarUiResearchHtmlFragment049,
+  renderHangarUiResearchHtmlFragment050,
+  renderHangarUiResearchHtmlFragment051,
+  renderHangarUiResearchHtmlFragment052,
+  renderHangarUiResearchHtmlFragment053,
+  renderHangarUiResearchHtmlFragment054,
+  renderHangarUiResearchHtmlFragment055,
+  renderHangarUiResearchHtmlFragment056,
+  renderHangarUiResearchHtmlFragment057,
+  renderHangarUiResearchHtmlFragment058,
+  renderHangarUiMaterialsHtmlFragment059,
+  renderHangarUiMaterialsHtmlFragment060,
+  renderHangarUiMaterialsHtmlFragment061,
+  renderHangarUiMaterialsHtmlFragment062,
+  renderHangarUiMaterialsHtmlFragment063,
+  renderHangarUiMaterialsHtmlFragment064,
+  renderHangarUiBoardHtmlFragment065,
+} from './eta-templates.ts';
 import type { OfficerRecord } from '../shared/rules.ts';
 import type { ClientGameState } from './main.ts';
 export type OfficerEntry = OfficerRecord;
@@ -98,8 +166,30 @@ function officerCard(
 ): string {
   const officerRarity = RARITY[officerRecord.rarity],
     factionDef = FACTIONS[officerRecord.race!];
-  return `<div class="ocard" style="border-color:${officerRarity.color}55"><div class="oname"><b style="color:${officerRarity.color}">${escapeHtml2(officerRecord.name)}</b> <span class="dim small">${officerRarity.name} ${ROLES[officerRecord.role].name} · <span style="color:${factionDef.color}">${factionDef.short}</span> · Lv ${officerRecord.lv}</span></div>
-    <div class="small">${statText(officerRecord)}</div>${officerRecord.xp !== undefined && officerRecord.lv < MAX_LEVEL && officerRecord.id !== undefined && typeof officerRecord.id === 'number' ? `<div class="xpbar"><i style="width:${Math.min(100, (100 * officerRecord.xp) / XP_LEVEL(officerRecord.lv))}%"></i></div>` : ''}${extra || ''}</div>`;
+  return renderHangarUiOfficerCardFragment001({
+    officerRarityColor: legacyHtml(officerRarity.color),
+    officerRarityColor2: legacyHtml(officerRarity.color),
+    officerRecordName: officerRecord.name,
+    officerRarityName: legacyHtml(officerRarity.name),
+    ROLES: legacyHtml(ROLES[officerRecord.role].name),
+    factionDefColor: legacyHtml(factionDef.color),
+    factionDefShort: legacyHtml(factionDef.short),
+    officerRecordLv: legacyHtml(officerRecord.lv),
+    statText: legacyHtml(statText(officerRecord)),
+    officerRecordXp: legacyHtml(
+      officerRecord.xp !== undefined &&
+        officerRecord.lv < MAX_LEVEL &&
+        officerRecord.id !== undefined &&
+        typeof officerRecord.id === 'number'
+        ? renderHangarUiOfficerCardFragment002({
+            MathMin: legacyHtml(
+              Math.min(100, (100 * officerRecord.xp) / XP_LEVEL(officerRecord.lv)),
+            ),
+          })
+        : '',
+    ),
+    extra: legacyHtml(extra || ''),
+  });
 }
 
 /**
@@ -130,14 +220,25 @@ function where(clientGameState: ClientGameState, officerRecord: OfficerEntry): s
 export function crewHtml(clientGameState: ClientGameState): string {
   const playerPayload = clientGameState.you!,
     length2 = clientGameState.landed!;
-  let height = '<div class="sect" style="margin-top:0">YOUR BRIDGE</div><div class="bridge">';
+  let height = renderHangarUiCrewHtmlFragment003();
   for (const bRIDGE_SLOTS of BRIDGE_SLOTS) {
     const officer = playerPayload.officers.find(
       (officerRecord) => officerRecord.id === playerPayload.bridge[bRIDGE_SLOTS],
     );
-    height += `<div class="slot"><div class="dim small">${bRIDGE_SLOTS === 'captain' ? 'CAPTAIN (x1.25)' : 'BRIDGE OFFICER'}</div>${officer ? officerCard(clientGameState, officer, `<button class="btn sm" data-act="off" data-op="assign" data-oid="${officer.id}" data-slot="">STAND DOWN</button>`) : '<div class="dim">Empty</div>'}</div>`;
+    height += renderHangarUiCrewHtmlFragment004({
+      bRIDGE_SLOTS: legacyHtml(bRIDGE_SLOTS === 'captain' ? 'CAPTAIN (x1.25)' : 'BRIDGE OFFICER'),
+      officer: legacyHtml(
+        officer
+          ? officerCard(
+              clientGameState,
+              officer,
+              renderHangarUiCrewHtmlFragment005({ officerId: legacyHtml(officer.id) }),
+            )
+          : renderHangarUiCrewHtmlFragment006(),
+      ),
+    });
   }
-  height += '</div>';
+  height += renderHangarUiCrewHtmlFragment007();
   const races: Record<string, number> = {};
   for (const bRIDGE_SLOTS of BRIDGE_SLOTS) {
     const officer = playerPayload.officers.find(
@@ -148,43 +249,53 @@ export function crewHtml(clientGameState: ClientGameState): string {
   const synergies = Object.entries(races).filter(
     ([radius, count]) => count >= 2 && SYNERGY[radius],
   );
-  height += `<div class="dim small">Two or more officers of one race on the bridge unlock a synergy bonus.${
-    synergies.length
-      ? ' Active: ' +
-        synergies
-          .map(
-            ([radius]) =>
-              `<b style="color:${FACTIONS[radius].color}">${FACTIONS[radius].short}</b> (${Object.entries(
-                SYNERGY[radius],
+  height += renderHangarUiCrewHtmlFragment008({
+    synergiesLength: legacyHtml(
+      synergies.length
+        ? ' Active: ' +
+            synergies
+              .map(([radius]) =>
+                renderHangarUiCrewHtmlFragment009({
+                  FACTIONS: legacyHtml(FACTIONS[radius].color),
+                  FACTIONS2: legacyHtml(FACTIONS[radius].short),
+                  ObjectEntries: legacyHtml(
+                    Object.entries(SYNERGY[radius])
+                      .map(
+                        ([entryKey, value]) =>
+                          `+${value}${entryKey === 'fuel' ? '' : '%'} ${STAT_NAME[entryKey]}`,
+                      )
+                      .join(', '),
+                  ),
+                }),
               )
-                .map(
-                  ([entryKey, value]) =>
-                    `+${value}${entryKey === 'fuel' ? '' : '%'} ${STAT_NAME[entryKey]}`,
-                )
-                .join(', ')})`,
-          )
-          .join(', ')
-      : ''
-  }</div>`;
+              .join(', ')
+        : '',
+    ),
+  });
   if (length2 && length2.bar && length2.bar.length) {
     height +=
-      `<div class="sect">THE BAR: OFFICERS LOOKING FOR A BERTH</div><div class="ogrid">` +
+      renderHangarUiCrewHtmlFragment010() +
       length2.bar
         .map((barOfficer) =>
           officerCard(
             clientGameState,
             barOfficer,
-            `<div class="kv"><span class="cr">${credits(barOfficer.cost)} cr</span><button class="btn sm" data-act="off" data-op="hire" data-id="${barOfficer.id}">HIRE</button></div>`,
+            renderHangarUiCrewHtmlFragment011({
+              credits: legacyHtml(credits(barOfficer.cost)),
+              barOfficerId: legacyHtml(barOfficer.id),
+            }),
           ),
         )
         .join('') +
-      '</div><div class="dim small">New faces arrive every hour.</div>';
+      renderHangarUiCrewHtmlFragment012();
   }
-  height += `<div class="sect">ROSTER (${playerPayload.officers.length}/${ROSTER_MAX})</div>`;
-  if (!playerPayload.officers.length)
-    height += '<p class="dim">No officers yet. Hire them at bars on inhabited worlds.</p>';
+  height += renderHangarUiCrewHtmlFragment013({
+    playerPayloadOfficersLength: legacyHtml(playerPayload.officers.length),
+    ROSTER_MAX: legacyHtml(ROSTER_MAX),
+  });
+  if (!playerPayload.officers.length) height += renderHangarUiCrewHtmlFragment014();
   height +=
-    '<div class="ogrid">' +
+    renderHangarUiCrewHtmlFragment015() +
     playerPayload.officers
       .map((officer) => {
         const where2 = where(clientGameState, officer),
@@ -192,20 +303,32 @@ export function crewHtml(clientGameState: ClientGameState): string {
         const buttons = result
           ? ''
           : BRIDGE_SLOTS.filter((entryKey) => playerPayload.bridge[entryKey] !== officer.id)
-              .map(
-                (entryKey) =>
-                  `<button class="btn sm" data-act="off" data-op="assign" data-oid="${officer.id}" data-slot="${entryKey}">${entryKey === 'captain' ? 'CAPTAIN' : entryKey === 'bridge1' ? 'BRIDGE 1' : 'BRIDGE 2'}</button>`,
+              .map((entryKey) =>
+                renderHangarUiCrewHtmlFragment016({
+                  officerId: legacyHtml(officer.id),
+                  entryKey: legacyHtml(entryKey),
+                  entryKey2: legacyHtml(
+                    entryKey === 'captain'
+                      ? 'CAPTAIN'
+                      : entryKey === 'bridge1'
+                        ? 'BRIDGE 1'
+                        : 'BRIDGE 2',
+                  ),
+                }),
               )
-              .join(' ') +
-            ` <button class="btn sm" data-act="off" data-op="dismiss" data-oid="${officer.id}">DISMISS</button>`;
+              .join(' ') + renderHangarUiCrewHtmlFragment017({ officerId: legacyHtml(officer.id) });
         return officerCard(
           clientGameState,
           officer,
-          `${rankLine(clientGameState, officer, true)}<div class="dim small">${where2 ? 'Serving: ' + escapeHtml2(where2) : 'Off duty'}</div><div>${buttons}</div>`,
+          renderHangarUiCrewHtmlFragment018({
+            rankLine: legacyHtml(rankLine(clientGameState, officer, true)),
+            where2: legacyHtml(where2 ? 'Serving: ' + escapeHtml2(where2) : 'Off duty'),
+            buttons: legacyHtml(buttons),
+          }),
         );
       })
       .join('') +
-    '</div>';
+    renderHangarUiCrewHtmlFragment019();
   height += lowerDeckHtml(clientGameState); // 1.2
   return height;
 }
@@ -222,17 +345,23 @@ export function shuttleSummary(clientGameState: ClientGameState): string {
     currentTime = Date.now();
   if (!playerPayload.shuttles.length) return '';
   return (
-    '<div class="sect">SHUTTLES</div>' +
+    renderHangarUiShuttleSummaryFragment020() +
     playerPayload.shuttles
       .map((savedShuttle) => {
         const shuttleCraft = SHUTTLES[savedShuttle.kind];
         const state2 =
           savedShuttle.state === 'out'
-            ? `<span style="color:#7ad0ff">${escapeHtml2(savedShuttle.job!.title)} · back in ${minutes2(savedShuttle.ends! - currentTime)}</span>`
+            ? renderHangarUiShuttleSummaryFragment021({
+                savedShuttleJob: savedShuttle.job!.title,
+                minutes2: legacyHtml(minutes2(savedShuttle.ends! - currentTime)),
+              })
             : savedShuttle.state === 'damaged'
-              ? '<span style="color:#ff9a8a">damaged</span>'
-              : '<span style="color:var(--ok)">ready</span>';
-        return `<div class="kv"><span>${escapeHtml2(shuttleCraft.name)}</span><span class="small">${state2}</span></div>`;
+              ? renderHangarUiShuttleSummaryFragment022()
+              : renderHangarUiShuttleSummaryFragment023();
+        return renderHangarUiShuttleSummaryFragment024({
+          shuttleCraftName: shuttleCraft.name,
+          state2: legacyHtml(state2),
+        });
       })
       .join('')
   );
@@ -248,10 +377,12 @@ export function hangarHtml(clientGameState: ClientGameState, atHome: boolean): s
   const playerPayload = clientGameState.you!,
     currentTime = Date.now(),
     stationState = playerPayload.station;
-  if (!stationState.site)
-    return '<p class="dim">Claim a station hull first. Its hangar launches shuttles on jobs while you fly.</p>';
-  let height = `<div class="sect" style="margin-top:0">HANGAR BAYS (${playerPayload.shuttles.length}/${playerPayload.bays})</div>`;
-  if (!playerPayload.bays) height += '<p class="dim">The hangar opens at Station Tier 2.</p>';
+  if (!stationState.site) return renderHangarUiHangarHtmlFragment025();
+  let height = renderHangarUiHangarHtmlFragment026({
+    playerPayloadShuttlesLength: legacyHtml(playerPayload.shuttles.length),
+    playerPayloadBays: legacyHtml(playerPayload.bays),
+  });
+  if (!playerPayload.bays) height += renderHangarUiHangarHtmlFragment027();
   const idle = playerPayload.shuttles.filter((savedShuttle) => savedShuttle.state === 'idle'),
     _crewFree = playerPayload.officers.filter(
       (officer) =>
@@ -261,7 +392,7 @@ export function hangarHtml(clientGameState: ClientGameState, atHome: boolean): s
         ),
     );
   height +=
-    '<div class="ogrid">' +
+    renderHangarUiHangarHtmlFragment028() +
     playerPayload.shuttles
       .map((savedShuttle) => {
         const shuttleCraft = SHUTTLES[savedShuttle.kind],
@@ -278,41 +409,105 @@ export function hangarHtml(clientGameState: ClientGameState, atHome: boolean): s
               0,
               Math.min(100, 100 - (100 * (savedShuttle.ends! - currentTime)) / total),
             );
-          body = `<div class="small" style="color:#7ad0ff">${escapeHtml2(savedShuttle.job!.title)}</div><div class="xpbar"><i style="width:${percentage}%;background:#7ad0ff"></i></div><div class="dim small">Back in ${minutes2(savedShuttle.ends! - currentTime)} · ${Math.round(savedShuttle.chance! * 100)}% odds</div>`;
+          body = renderHangarUiHangarHtmlFragment029({
+            savedShuttleJob: savedShuttle.job!.title,
+            percentage: legacyHtml(percentage),
+            minutes2: legacyHtml(minutes2(savedShuttle.ends! - currentTime)),
+            MathRound: legacyHtml(Math.round(savedShuttle.chance! * 100)),
+          });
         } else if (savedShuttle.state === 'damaged')
-          body = `<div class="small" style="color:#ff9a8a">Damaged</div>${atHome ? `<button class="btn sm" data-act="sh" data-op="repair" data-sid="${savedShuttle.id}">REPAIR ${credits(Math.round(shuttleCraft.cost * SHUTTLE_REPAIR))}</button>` : '<div class="dim small">Repair at your station.</div>'}`;
+          body = renderHangarUiHangarHtmlFragment030({
+            atHome: legacyHtml(
+              atHome
+                ? renderHangarUiHangarHtmlFragment031({
+                    savedShuttleId: legacyHtml(savedShuttle.id),
+                    credits: legacyHtml(credits(Math.round(shuttleCraft.cost * SHUTTLE_REPAIR))),
+                  })
+                : renderHangarUiHangarHtmlFragment032(),
+            ),
+          });
         else
-          body = `<div class="small" style="color:var(--ok)">Ready</div><div class="rrow"><select data-crew="${savedShuttle.id}"><option value="">No crew</option>${playerPayload.officers
-            .filter(
-              (officer) =>
-                !playerPayload.shuttles.some(
-                  (savedShuttle2) =>
-                    savedShuttle2.crew === officer.id &&
-                    savedShuttle2 !== savedShuttle &&
-                    savedShuttle2.state === 'out',
-                ),
-            )
-            .map(
-              (officer) =>
-                `<option value="${officer.id}" ${officer.id === savedShuttle.crew ? 'selected' : ''}>${escapeHtml2(officer.name)} (${ROLES[officer.role].name} ${officer.lv})</option>`,
-            )
-            .join('')}</select></div>`;
-        return `<div class="ocard"><div class="oname"><img src="${artworkUrl(clientGameState.A!.ships[shuttleCraft.hull].img!)}" style="width:44px;height:30px;object-fit:contain;vertical-align:middle"> <b>${escapeHtml2(shuttleCraft.name)}</b> <span class="dim small">${savedShuttle.runs} runs</span></div>${crew && savedShuttle.state !== 'idle' ? `<div class="dim small">Crew: ${escapeHtml2(crew.name)}</div>` : ''}${body}${atHome && savedShuttle.state !== 'out' ? ` <button class="btn sm" data-act="sh" data-op="scrap" data-sid="${savedShuttle.id}">SCRAP</button>` : ''}</div>`;
+          body = renderHangarUiHangarHtmlFragment033({
+            savedShuttleId: legacyHtml(savedShuttle.id),
+            playerPayloadOfficers: legacyHtml(
+              playerPayload.officers
+                .filter(
+                  (officer) =>
+                    !playerPayload.shuttles.some(
+                      (savedShuttle2) =>
+                        savedShuttle2.crew === officer.id &&
+                        savedShuttle2 !== savedShuttle &&
+                        savedShuttle2.state === 'out',
+                    ),
+                )
+                .map((officer) =>
+                  renderHangarUiHangarHtmlFragment034({
+                    officerId: legacyHtml(officer.id),
+                    officerId2: legacyHtml(officer.id === savedShuttle.crew ? 'selected' : ''),
+                    officerName: officer.name,
+                    ROLES: legacyHtml(ROLES[officer.role].name),
+                    officerLv: legacyHtml(officer.lv),
+                  }),
+                )
+                .join(''),
+            ),
+          });
+        return renderHangarUiHangarHtmlFragment035({
+          artworkUrl: legacyHtml(artworkUrl(clientGameState.A!.ships[shuttleCraft.hull].img!)),
+          shuttleCraftName: shuttleCraft.name,
+          savedShuttleRuns: legacyHtml(savedShuttle.runs),
+          crew: legacyHtml(
+            crew && savedShuttle.state !== 'idle'
+              ? renderHangarUiHangarHtmlFragment036({ crewName: crew.name })
+              : '',
+          ),
+          body: legacyHtml(body),
+          atHome: legacyHtml(
+            atHome && savedShuttle.state !== 'out'
+              ? renderHangarUiHangarHtmlFragment037({ savedShuttleId: legacyHtml(savedShuttle.id) })
+              : '',
+          ),
+        });
       })
       .join('') +
-    '</div>';
+    renderHangarUiHangarHtmlFragment038();
   if (atHome && playerPayload.shuttles.length < playerPayload.bays) {
     height +=
-      '<div class="sect">BUILD A SHUTTLE</div>' +
+      renderHangarUiHangarHtmlFragment039() +
       Object.entries(SHUTTLES)
-        .map(
-          ([entryKey, shuttleCraft]) =>
-            `<div class="kv"><span><b>${escapeHtml2(shuttleCraft.name)}</b> <span class="dim small">${escapeHtml2(shuttleCraft.desc)}</span></span><span class="small">${stationState.ops >= shuttleCraft.ops ? `${credits(shuttleCraft.cost)} + ${shuttleCraft.mats.map(([message, game]) => `<span style="color:${playerPayload.mats[message][game] >= 1 ? '#8ff0ad' : '#ff9a8a'}">${message} ${GRADES[game]}</span>`).join(', ')} <button class="btn sm" data-act="sh" data-op="build" data-kind="${entryKey}">BUILD</button>` : `<span class="dim">Station Tier ${shuttleCraft.ops}</span>`}</span></div>`,
+        .map(([entryKey, shuttleCraft]) =>
+          renderHangarUiHangarHtmlFragment040({
+            shuttleCraftName: shuttleCraft.name,
+            shuttleCraftDesc: shuttleCraft.desc,
+            stationStateOps: legacyHtml(
+              stationState.ops >= shuttleCraft.ops
+                ? renderHangarUiHangarHtmlFragment041({
+                    credits: legacyHtml(credits(shuttleCraft.cost)),
+                    shuttleCraftMatsMap: legacyHtml(
+                      shuttleCraft.mats
+                        .map(([message, game]) =>
+                          renderHangarUiHangarHtmlFragment042({
+                            playerPayloadMats: legacyHtml(
+                              playerPayload.mats[message][game] >= 1 ? '#8ff0ad' : '#ff9a8a',
+                            ),
+                            message: legacyHtml(message),
+                            GRADES: legacyHtml(GRADES[game]),
+                          }),
+                        )
+                        .join(', '),
+                    ),
+                    entryKey: legacyHtml(entryKey),
+                  })
+                : renderHangarUiHangarHtmlFragment043({
+                    shuttleCraftOps: legacyHtml(shuttleCraft.ops),
+                  }),
+            ),
+          }),
         )
         .join('');
   }
   // job board
-  height += `<div class="sect">HANGAR JOB BOARD</div><div class="dim small">Jobs run in real time, even while you are offline. A shuttle suited to the job and a crew officer (scouts best) raise the odds. Dangerous systems pay more and can cost you the shuttle.</div>`;
+  height += renderHangarUiHangarHtmlFragment044();
   height +=
     playerPayload.board
       .map((shuttleJob) => {
@@ -332,15 +527,41 @@ export function hangarHtml(clientGameState: ClientGameState, atHome: boolean): s
           .filter(Boolean)
           .join(' · ');
         const join2 = idle
-          .map(
-            (savedShuttle) =>
-              `<option value="${savedShuttle.id}" ${SHUTTLES[savedShuttle.kind] && shuttleJobType.fit === savedShuttle.kind ? 'selected' : ''}>${escapeHtml2(SHUTTLES[savedShuttle.kind].name)}${shuttleJobType.fit === savedShuttle.kind ? ' ★' : ''}</option>`,
+          .map((savedShuttle) =>
+            renderHangarUiHangarHtmlFragment045({
+              savedShuttleId: legacyHtml(savedShuttle.id),
+              SHUTTLES: legacyHtml(
+                SHUTTLES[savedShuttle.kind] && shuttleJobType.fit === savedShuttle.kind
+                  ? 'selected'
+                  : '',
+              ),
+              SHUTTLES2: SHUTTLES[savedShuttle.kind].name,
+              shuttleJobTypeFit: legacyHtml(shuttleJobType.fit === savedShuttle.kind ? ' ★' : ''),
+            }),
           )
           .join('');
-        return `<div class="card" style="cursor:default"><div class="t">${escapeHtml2(shuttleJob.title)}</div><div class="dim small">${shuttleJobType.name} · ${escapeHtml2(starSystem.name)} (${FACTIONS[starSystem.faction].short}) · ${shuttleJob.jumps} jumps · danger ${shuttleJob.danger} · ~${minutes2(shuttleJob.minutes * 60000)} · best: ${SHUTTLES[shuttleJobType.fit].name}</div><div class="p">${join3}</div>
-      ${join2 ? `<div class="rrow"><select data-job="${shuttleJob.id}">${join2}</select><button class="btn sm" data-act="sh" data-op="send" data-job="${shuttleJob.id}">LAUNCH</button></div>` : ''}</div>`;
+        return renderHangarUiHangarHtmlFragment046({
+          shuttleJobTitle: shuttleJob.title,
+          shuttleJobTypeName: legacyHtml(shuttleJobType.name),
+          starSystemName: starSystem.name,
+          FACTIONS: legacyHtml(FACTIONS[starSystem.faction].short),
+          shuttleJobJumps: legacyHtml(shuttleJob.jumps),
+          shuttleJobDanger: legacyHtml(shuttleJob.danger),
+          minutes2: legacyHtml(minutes2(shuttleJob.minutes * 60000)),
+          SHUTTLES: legacyHtml(SHUTTLES[shuttleJobType.fit].name),
+          join3: legacyHtml(join3),
+          join2: legacyHtml(
+            join2
+              ? renderHangarUiHangarHtmlFragment047({
+                  shuttleJobId: legacyHtml(shuttleJob.id),
+                  join2: legacyHtml(join2),
+                  shuttleJobId2: legacyHtml(shuttleJob.id),
+                })
+              : '',
+          ),
+        });
       })
-      .join('') || '<p class="dim">No jobs posted. The board refreshes every three hours.</p>';
+      .join('') || renderHangarUiHangarHtmlFragment048();
   return height;
 }
 
@@ -357,17 +578,53 @@ export function researchHtml(clientGameState: ClientGameState, interactive?: boo
     stationState = playerPayload.station,
     currentTime = Date.now(),
     quantity = stationState.queue || [];
-  let height = '<div class="sect">RESEARCH LAB</div>';
+  let height = renderHangarUiResearchHtmlFragment049();
   if (stationState.active) {
     const researchNode = RESEARCH.find(
       (researchNode) => researchNode.id === stationState.active!.id,
     )!;
-    height += `<div class="kv"><span>In progress</span><span><b>${escapeHtml2(researchNode.name)}</b> · ${minutes2(stationState.active.ends - currentTime)}</span></div>`;
+    height += renderHangarUiResearchHtmlFragment050({
+      researchNodeName: researchNode.name,
+      minutes2: legacyHtml(minutes2(stationState.active.ends - currentTime)),
+    });
   }
   if (quantity.length)
-    height += `<div class="kv"><span>Queue (${quantity.length}/${RESEARCH_QUEUE_MAX})${stationState.waiting ? ' <span style="color:#ff9a8a">waiting for resources</span>' : ''}</span><span class="small">${quantity.map((identifier) => `${escapeHtml2(RESEARCH.find((researchNode) => researchNode.id === identifier)!.name)}${interactive ? ` <a href="#" data-act="st" data-op="unqueue" data-id="${identifier}" title="Remove">✕</a>` : ''}`).join(' → ')}</span></div>`;
+    height += renderHangarUiResearchHtmlFragment051({
+      quantityLength: legacyHtml(quantity.length),
+      RESEARCH_QUEUE_MAX: legacyHtml(RESEARCH_QUEUE_MAX),
+      stationStateWaiting: legacyHtml(
+        stationState.waiting ? renderHangarUiResearchHtmlFragment052() : '',
+      ),
+      quantityMap: legacyHtml(
+        quantity
+          .map(
+            (identifier) =>
+              `${escapeHtml2(RESEARCH.find((researchNode) => researchNode.id === identifier)!.name)}${interactive ? renderHangarUiResearchHtmlFragment053({ identifier: legacyHtml(identifier) }) : ''}`,
+          )
+          .join(' → '),
+      ),
+    });
   clientGameState.rtree = clientGameState.rtree || 'Combat';
-  height += `<div class="chips">${RESEARCH_TREES.map((time) => `<span class="chip ${time === clientGameState.rtree ? 'on' : ''}" data-act="rtree" data-t="${time}">${time.toUpperCase()} ${RESEARCH.filter((researchNode) => researchNode.tree === time && stationState.done.includes(researchNode.id)).length}/${RESEARCH.filter((researchNode) => researchNode.tree === time).length}</span>`).join('')}</div>`;
+  height += renderHangarUiResearchHtmlFragment054({
+    RESEARCH_TREESMap: legacyHtml(
+      RESEARCH_TREES.map((time) =>
+        renderHangarUiResearchHtmlFragment055({
+          time: legacyHtml(time === clientGameState.rtree ? 'on' : ''),
+          time2: legacyHtml(time),
+          timeToUpperCase: legacyHtml(time.toUpperCase()),
+          RESEARCHFilter: legacyHtml(
+            RESEARCH.filter(
+              (researchNode) =>
+                researchNode.tree === time && stationState.done.includes(researchNode.id),
+            ).length,
+          ),
+          RESEARCHFilter2: legacyHtml(
+            RESEARCH.filter((researchNode) => researchNode.tree === time).length,
+          ),
+        }),
+      ).join(''),
+    ),
+  });
   for (const researchNode of RESEARCH.filter(
     (researchNode3) => researchNode3.tree === clientGameState.rtree,
   )) {
@@ -379,7 +636,30 @@ export function researchHtml(clientGameState: ClientGameState, interactive?: boo
     const join2 = Object.entries(researchNode.bonus)
       .map(([entryKey, value]) => `${entryKey}+${value}`)
       .join(' ');
-    height += `<div class="kv"><span style="color:${done ? '#8ff0ad' : available ? '#ddd' : '#555'}">${done ? '✓ ' : ''}${escapeHtml2(researchNode.name)}${researchNode.needs ? ` <span class="dim small">after ${escapeHtml2(RESEARCH.find((researchNode3) => researchNode3.id === researchNode.needs)!.name)}</span>` : ''}<div class="dim small">${escapeHtml2(join2)}</div></span><span class="small">${done ? 'done' : queued ? 'queued' : available ? `${credits(researchNode.cost)} + ${researchNode.mats.map(([message, game]) => message + ' ' + GRADES[game]).join(', ')} · ${researchNode.minutes}m ${interactive ? `<button class="btn sm" data-act="st" data-op="research" data-id="${researchNode.id}">${stationState.active || (researchNode.needs && !stationState.done.includes(researchNode.needs)) ? 'QUEUE' : 'START'}</button>` : ''}` : `Station Tier ${researchNode.ops}`}</span></div>`;
+    height += renderHangarUiResearchHtmlFragment056({
+      done: legacyHtml(done ? '#8ff0ad' : available ? '#ddd' : '#555'),
+      done2: legacyHtml(done ? '✓ ' : ''),
+      researchNodeName: researchNode.name,
+      researchNodeNeeds: legacyHtml(
+        researchNode.needs
+          ? renderHangarUiResearchHtmlFragment057({
+              RESEARCHFind: RESEARCH.find(
+                (researchNode3) => researchNode3.id === researchNode.needs,
+              )!.name,
+            })
+          : '',
+      ),
+      join2: join2,
+      done3: legacyHtml(
+        done
+          ? 'done'
+          : queued
+            ? 'queued'
+            : available
+              ? `${credits(researchNode.cost)} + ${researchNode.mats.map(([message, game]) => message + ' ' + GRADES[game]).join(', ')} · ${researchNode.minutes}m ${interactive ? renderHangarUiResearchHtmlFragment058({ researchNodeId: legacyHtml(researchNode.id), stationStateActive: legacyHtml(stationState.active || (researchNode.needs && !stationState.done.includes(researchNode.needs)) ? 'QUEUE' : 'START') }) : ''}`
+              : `Station Tier ${researchNode.ops}`,
+      ),
+    });
   }
   return height;
 }
@@ -392,9 +672,43 @@ export function researchHtml(clientGameState: ClientGameState, interactive?: boo
  */
 export function materialsHtml(clientGameState: ClientGameState, interactive?: boolean): string {
   const playerPayload = clientGameState.you!;
-  let height = `<div class="sect">MATERIALS</div><table class="tbl"><tr><th></th>${GRADES.map((game) => `<th>${game}</th>`).join('')}</tr>${MATERIALS.map((message) => `<tr><td>${message}</td>${playerPayload.mats[message].map((count, game) => `<td style="color:${count ? '#fff' : '#444'}">${count}${interactive && game < 4 && count >= REFINE_UP.need ? ` <a href="#" class="small" data-act="st" data-op="refine" data-mat="${message}" data-g="${game}" data-n="1" title="Refine ${REFINE_UP.need} into one grade ${GRADES[game + 1]} (${credits(REFINE_UP.cost[game])} cr)">▲</a>` : ''}</td>`).join('')}</tr>`).join('')}</table>`;
+  let height = renderHangarUiMaterialsHtmlFragment059({
+    GRADESMap: legacyHtml(
+      GRADES.map((game) => renderHangarUiMaterialsHtmlFragment060({ game: legacyHtml(game) })).join(
+        '',
+      ),
+    ),
+    MATERIALSMap: legacyHtml(
+      MATERIALS.map((message) =>
+        renderHangarUiMaterialsHtmlFragment061({
+          message: legacyHtml(message),
+          playerPayloadMats: legacyHtml(
+            playerPayload.mats[message]
+              .map((count, game) =>
+                renderHangarUiMaterialsHtmlFragment062({
+                  count: legacyHtml(count ? '#fff' : '#444'),
+                  count2: legacyHtml(count),
+                  interactive: legacyHtml(
+                    interactive && game < 4 && count >= REFINE_UP.need
+                      ? renderHangarUiMaterialsHtmlFragment063({
+                          message: legacyHtml(message),
+                          game: legacyHtml(game),
+                          REFINE_UPNeed: legacyHtml(REFINE_UP.need),
+                          GRADES: legacyHtml(GRADES[game + 1]),
+                          credits: legacyHtml(credits(REFINE_UP.cost[game])),
+                        })
+                      : '',
+                  ),
+                }),
+              )
+              .join(''),
+          ),
+        }),
+      ).join(''),
+    ),
+  });
   if (interactive)
-    height += `<div class="dim small">▲ refines ${REFINE_UP.need} crates into one of the next grade. <a href="#" data-act="refineall">Refine all</a></div>`;
+    height += renderHangarUiMaterialsHtmlFragment064({ REFINE_UPNeed: legacyHtml(REFINE_UP.need) });
   return height;
 }
 
@@ -414,9 +728,18 @@ export function boardHtml(clientGameState: ClientGameState, boardedTarget: Board
       !factionDef.pirate &&
       clientGameState.FAC[boardedTarget.fac as number] !== 'umbral';
   const crew = BRIDGE_SLOTS.filter((entryKey) => clientGameState.you!.bridge[entryKey]).length;
-  return `<h2>BOARDING: ${escapeHtml2(boardedTarget.name || shipHullAsset.name)}</h2><p class="dim">${escapeHtml2(shipHullAsset.name)} · ${factionDef ? factionDef.name : ''} · disabled and drifting</p>
-    <div class="bopts"><button class="btn" data-board="plunder">1 · PLUNDER<br><span class="small">credits, cargo, maybe a crate${lawful ? ' · standing -8' : ''}</span></button>
-    <button class="btn" data-board="capture" ${crew ? '' : 'disabled'}>2 · CAPTURE<br><span class="small">${crew ? `prize crew of ${crew} officer${crew > 1 ? 's' : ''} · to your drydock${lawful ? ' · standing -15' : ''}` : 'needs an officer on the bridge'}</span></button>
-    <button class="btn" data-board="rescue">3 · ${lawful ? 'RESCUE' : 'ARREST'}<br><span class="small">${lawful ? 'standing +6 and a reward' : 'a Concord reward'}</span></button></div>
-    <button class="btn sm" data-board="">CANCEL (Esc)</button>`;
+  return renderHangarUiBoardHtmlFragment065({
+    boardedTargetName: boardedTarget.name || shipHullAsset.name,
+    shipHullAssetName: shipHullAsset.name,
+    factionDef: legacyHtml(factionDef ? factionDef.name : ''),
+    lawful: legacyHtml(lawful ? ' · standing -8' : ''),
+    crew: legacyHtml(crew ? '' : 'disabled'),
+    crew2: legacyHtml(
+      crew
+        ? `prize crew of ${crew} officer${crew > 1 ? 's' : ''} · to your drydock${lawful ? ' · standing -15' : ''}`
+        : 'needs an officer on the bridge',
+    ),
+    lawful2: legacyHtml(lawful ? 'RESCUE' : 'ARREST'),
+    lawful3: legacyHtml(lawful ? 'standing +6 and a reward' : 'a Concord reward'),
+  });
 }

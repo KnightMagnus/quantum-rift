@@ -1,0 +1,1 @@
+<div class="kv"><span><%~ it.count %> <%= it.itemName %></span><span><button class="btn sm" data-cact="tdel" data-k="<%= it.entryKey %>">✕</button></span></div>

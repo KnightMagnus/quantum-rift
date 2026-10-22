@@ -1,0 +1,1 @@
+<div class="kv small"><span>↳ <%~ it.game %></span><span><%~ it.quantity %> t <%~ it.inSpace %></span></div>

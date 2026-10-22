@@ -1,0 +1,1 @@
+<div class="evbox inv"><div class="small" style="color:#ff8a70">INVASION · <%~ it.left %> left</div><b><%= it.widthInvasionName %></b> in <a href="#" data-act="plotto" data-sys="<%~ it.starSystemId %>"><%= it.starSystemName %></a><div class="dim small">Everyone who damages it shares the bounty.</div></div>

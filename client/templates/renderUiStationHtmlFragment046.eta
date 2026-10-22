@@ -1,0 +1,1 @@
+<div class="kv"><span>Hangar</span><span><%~ it.playerPayloadShuttlesFilter %> of <%~ it.playerPayloadShuttlesLength %> shuttles out</span></div>

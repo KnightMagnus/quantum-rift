@@ -1,0 +1,1 @@
+<div class="sect" style="margin-top:0"><%= it.componentNameToUpperCase %> · LEVEL <%~ it.componentLv %></div><div class="kv"><span>Building slots</span><span><%~ it.componentBuildingsLength %> / <%~ it.colonyLevelInfoSlots %></span></div><div class="kv"><span>Production</span><span>x<%~ it.colonyLevelInfoMult %></span></div>

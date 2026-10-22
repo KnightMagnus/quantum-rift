@@ -1,0 +1,1 @@
+<button class="btn sm <%~ it.entryKey %>" data-lt="<%~ it.entryKey2 %>" title="<%~ it.index %>"><%~ it.count %></button>

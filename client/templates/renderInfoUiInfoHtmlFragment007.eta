@@ -1,0 +1,1 @@
+<div class="small dim">Best nearby: <b style="color:var(--cr)"><%~ it.credits2 %></b> at <%= it.bestSaleResultPName %><%~ it.bestSaleResultJumps %><%~ it.playerPayloadPaid %> <%~ it.bestSaleResultJumps2 %></div>

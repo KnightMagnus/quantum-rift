@@ -1,3 +1,23 @@
+import { legacyHtml } from './eta-runtime.ts';
+import { renderRefineryControlsRefineryPanelHtmlAttribute001 } from './eta-templates.ts';
+import {
+  renderRefineryControlsRefineryPanelHtmlFragment001,
+  renderRefineryControlsRefineryPanelHtmlFragment002,
+  renderRefineryControlsRefineryPanelHtmlFragment003,
+  renderRefineryControlsRefineryPanelHtmlFragment004,
+  renderRefineryControlsRefineryPanelHtmlFragment005,
+  renderRefineryControlsRefineryPanelHtmlFragment006,
+  renderRefineryControlsRefineryPanelHtmlFragment007,
+  renderRefineryControlsRefineryPanelHtmlFragment008,
+  renderRefineryControlsRefineryPanelHtmlFragment009,
+  renderRefineryControlsRefineryPanelHtmlFragment010,
+  renderRefineryControlsRefineryPanelHtmlFragment011,
+  renderRefineryControlsRefineryPanelHtmlFragment012,
+  renderRefineryControlsRefineryPanelHtmlFragment013,
+  renderRefineryControlsRefineryPanelHtmlFragment014,
+  renderRefineryControlsRefineryPanelHtmlFragment015,
+  renderRefineryControlsRefineryPanelHtmlFragment016,
+} from './eta-templates.ts';
 import type { RefineryQuote, RefineryWire, FuelQuote } from '../server/refinery-contracts.ts';
 import type { CargoLedger, RawGrade } from '../shared/cargo-contracts.ts';
 import type { Recipe } from '../shared/refinery-rules.ts';
@@ -34,7 +54,6 @@ export interface RefineryClientState {
   paused?: boolean;
 }
 
-import { escapeHtml as escapeHtml2 } from './html.ts';
 import { RECIPES, REFINERY_RULES as refineryRules } from '../shared/refinery-rules.ts';
 import { COMMODITIES } from '../shared/galaxy.ts';
 
@@ -91,7 +110,7 @@ export function matchingRefineryCost(
 }
 export function refineryPanelHtml(refineryClientState: RefineryClientState, jobs: string) {
   const data = refineryClientState.you?.refinery || refineryClientState.landed?.refinery;
-  if (!data) return '<p>Refinery unavailable.</p>';
+  if (!data) return renderRefineryControlsRefineryPanelHtmlFragment001();
   const draft = refineryDraft(refineryClientState),
     choice2 = choice(refineryClientState),
     recipe = choice2.recipe || RECIPES[0];
@@ -118,31 +137,132 @@ export function refineryPanelHtml(refineryClientState: RefineryClientState, jobs
     !refineryClientState.refineryBusy &&
     !refineryClientState.paused;
   const inputs = recipe.inputs
-    .map(
-      (captainId) =>
-        `${Number.isFinite(choice2.n) ? choice2.n : '?'} t ${escapeHtml2(choice2.grade)} ${escapeHtml2(title(captainId))} <span class="dim small">(${have(captainId)} t aboard)</span>`,
+    .map((captainId) =>
+      renderRefineryControlsRefineryPanelHtmlFragment002({
+        NumberIsFinite: legacyHtml(Number.isFinite(choice2.n) ? choice2.n : '?'),
+        choice2Grade: choice2.grade,
+        title: title(captainId),
+        have: legacyHtml(have(captainId)),
+      }),
     )
     .join(' + ');
-  return `<div class="sect">REFINERY${data.home ? ' · YOUR STATION' : ''}</div>
-    <p class="dim">Turn raw cargo into trade goods. Choose what to make; the cost and result appear below. Construction crates use your station's separate workshop.</p>
-    <div class="rrow refinery-form">
-      <label>Make <select id="refrecipe">${RECIPES.map((recipe2) => `<option value="${recipe2.id}"${recipe2.id === draft.recipe ? ' selected' : ''}>${escapeHtml2(recipe2.name)}</option>`).join('')}</select></label>
-      <label>Use grade <select id="refgrade"${recipe.pure || recipe.inputs[0] === 'plasma' ? ' disabled' : ''}>${['common', 'rich', 'pure'].map((game) => `<option${game === choice2.grade ? ' selected' : ''}>${game}</option>`).join('')}</select></label>
-      <label>${recipe.inputs.length > 1 ? 'Tonnes of each material' : 'Tonnes'} <input id="refquantity" type="number" required min="${recipe.pure ? 3 : 1}" max="${Math.floor((choice2.mode === 'instant' ? refineryRules.instantCap : refineryRules.storedCap) / recipe.inputs.length)}" step="${recipe.pure ? 3 : 1}" value="${escapeHtml2(draft.n)}" inputmode="numeric"></label>
-      <label>Speed <select id="refmode"><option value="stored"${choice2.mode === 'stored' ? ' selected' : ''}>Standard · ready later</option><option value="instant"${choice2.mode === 'instant' ? ' selected' : ''}>Express · ready now</option></select></label>
-    </div>
-    <div class="mcard" id="refquote" aria-live="polite">
-      <b>YOU USE</b><p>${inputs}</p>
-      ${recipe.pure ? '<p class="dim small">Composite Plating needs equal amounts of pure ore, gas and shards, in groups of 3 tonnes each.</p>' : ''}
-      ${premium ? '<p class="jwarn">Rich and pure cargo sell for more, but give no extra output here. Common cargo is usually the better choice.</p>' : ''}
-      ${reserved ? '<p class="jwarn">This uses cargo you still need for a delivery. You may refine it, but you will need to replace it to finish that job.</p>' : ''}
-      ${!valid(choice2) ? '<p class="jwarn">Choose a whole amount within the limits above.</p>' : !enough ? '<p class="jwarn">Not enough of the selected cargo grade aboard. <button class="btn sm" data-act="ltab" data-t="trade">CHECK TRADE CARGO</button></p>' : ''}
-      ${refineryQuote2 ? `<b>YOU GET</b><p>${(refineryQuote2.units / refineryRules.units).toFixed(3)} t ${escapeHtml2(title(refineryQuote2.output))} · ${refineryQuote2.mode === 'instant' ? 'ready to collect now' : `ready in about ${Math.ceil((refineryQuote2.duration + refineryRules.queueMs) / 60000)} min`}</p><p><b>Total cost: ${refineryQuote2.fee.toLocaleString()} credits</b>${refineryClientState.you!.credits < refineryQuote2.fee ? ' · not enough credits' : ''}</p><p class="dim small">${refineryQuote2.recovery}% of the usable material is recovered. Collect whole tonnes here; smaller amounts stay safely stored.${refineryQuote2.mode === 'stored' ? ` You can cancel during the first 30 seconds for ${refineryQuote2.cancelFee} credits.` : ''}</p>` : `<p class="dim">${refineryClientState.refineryCostError ? 'Could not load the current cost. Try again when connected.' : 'Checking the current cost…'}</p>`}
-      ${refineryClientState.paused ? '<p class="jwarn">Solo is paused. Resume before starting a job.</p>' : ''}
-      <button class="btn" data-refinery="submit"${refineryQuote2 ? ` data-id="${escapeHtml2(refineryQuote2.id)}"` : ''}${ready ? '' : ' disabled'}>${refineryClientState.refineryBusy ? 'STARTING…' : refineryQuote2 ? `START REFINING · ${refineryQuote2.fee.toLocaleString()} CR` : 'START REFINING'}</button>
-      ${refineryClientState.refineryCostError ? '<button class="btn sm" data-refinery="retry">UPDATE COST</button>' : ''}
-    </div>
-    <div class="sect">DELIVERIES WANTED</div>${data.offers.map((miningOrder) => `<div class="rrow"><span>${miningOrder.qty} t ${escapeHtml2(miningOrder.grade)} ${escapeHtml2(title(miningOrder.cid))} · pays ${miningOrder.reward.toLocaleString()} credits</span><button class="btn sm" data-refinery="accept" data-order="1" data-id="${escapeHtml2(miningOrder.id)}" data-port="${escapeHtml2(miningOrder.port)}">ACCEPT DELIVERY</button></div>`).join('') || '<p class="dim">No deliveries wanted here right now.</p>'}${jobs}`;
+  return renderRefineryControlsRefineryPanelHtmlFragment003({
+    dataHome: legacyHtml(data.home ? ' · YOUR STATION' : ''),
+    RECIPESMap: legacyHtml(
+      RECIPES.map((recipe2) =>
+        renderRefineryControlsRefineryPanelHtmlFragment004({
+          recipe2Id: legacyHtml(recipe2.id),
+          recipe2Id2: legacyHtml(recipe2.id === draft.recipe ? ' selected' : ''),
+          recipe2Name: recipe2.name,
+        }),
+      ).join(''),
+    ),
+    recipePure: legacyHtml(recipe.pure || recipe.inputs[0] === 'plasma' ? ' disabled' : ''),
+    common: legacyHtml(
+      ['common', 'rich', 'pure']
+        .map((game) =>
+          renderRefineryControlsRefineryPanelHtmlFragment005({
+            game: legacyHtml(game === choice2.grade ? ' selected' : ''),
+            game2: legacyHtml(game),
+          }),
+        )
+        .join(''),
+    ),
+    recipeInputsLength: legacyHtml(recipe.inputs.length > 1 ? 'Tonnes of each material' : 'Tonnes'),
+    recipePure2: legacyHtml(recipe.pure ? 3 : 1),
+    MathFloor: legacyHtml(
+      Math.floor(
+        (choice2.mode === 'instant' ? refineryRules.instantCap : refineryRules.storedCap) /
+          recipe.inputs.length,
+      ),
+    ),
+    recipePure3: legacyHtml(recipe.pure ? 3 : 1),
+    draftN: draft.n,
+    choice2Mode: legacyHtml(choice2.mode === 'stored' ? ' selected' : ''),
+    choice2Mode2: legacyHtml(choice2.mode === 'instant' ? ' selected' : ''),
+    inputs: legacyHtml(inputs),
+    recipePure4: legacyHtml(
+      recipe.pure ? renderRefineryControlsRefineryPanelHtmlFragment006() : '',
+    ),
+    premium: legacyHtml(premium ? renderRefineryControlsRefineryPanelHtmlFragment007() : ''),
+    reserved: legacyHtml(reserved ? renderRefineryControlsRefineryPanelHtmlFragment008() : ''),
+    valid: legacyHtml(
+      !valid(choice2)
+        ? renderRefineryControlsRefineryPanelHtmlFragment009()
+        : !enough
+          ? renderRefineryControlsRefineryPanelHtmlFragment010()
+          : '',
+    ),
+    refineryQuote2: legacyHtml(
+      refineryQuote2
+        ? renderRefineryControlsRefineryPanelHtmlFragment011({
+            refineryQuote2Units: legacyHtml(
+              (refineryQuote2.units / refineryRules.units).toFixed(3),
+            ),
+            title: title(refineryQuote2.output),
+            refineryQuote2Mode: legacyHtml(
+              refineryQuote2.mode === 'instant'
+                ? 'ready to collect now'
+                : `ready in about ${Math.ceil((refineryQuote2.duration + refineryRules.queueMs) / 60000)} min`,
+            ),
+            refineryQuote2FeeToLocaleString: legacyHtml(refineryQuote2.fee.toLocaleString()),
+            refineryClientStateYou: legacyHtml(
+              refineryClientState.you!.credits < refineryQuote2.fee ? ' · not enough credits' : '',
+            ),
+            refineryQuote2Recovery: legacyHtml(refineryQuote2.recovery),
+            refineryQuote2Mode2: legacyHtml(
+              refineryQuote2.mode === 'stored'
+                ? ` You can cancel during the first 30 seconds for ${refineryQuote2.cancelFee} credits.`
+                : '',
+            ),
+          })
+        : renderRefineryControlsRefineryPanelHtmlFragment012({
+            refineryClientStateRefineryCostError: legacyHtml(
+              refineryClientState.refineryCostError
+                ? 'Could not load the current cost. Try again when connected.'
+                : 'Checking the current cost…',
+            ),
+          }),
+    ),
+    refineryClientStatePaused: legacyHtml(
+      refineryClientState.paused ? renderRefineryControlsRefineryPanelHtmlFragment013() : '',
+    ),
+    refineryQuote22: legacyHtml(
+      refineryQuote2
+        ? renderRefineryControlsRefineryPanelHtmlAttribute001({
+            refineryQuote2Id: refineryQuote2.id,
+          })
+        : '',
+    ),
+    ready: legacyHtml(ready ? '' : ' disabled'),
+    refineryClientStateRefineryBusy: legacyHtml(
+      refineryClientState.refineryBusy
+        ? 'STARTING…'
+        : refineryQuote2
+          ? `START REFINING · ${refineryQuote2.fee.toLocaleString()} CR`
+          : 'START REFINING',
+    ),
+    refineryClientStateRefineryCostError: legacyHtml(
+      refineryClientState.refineryCostError
+        ? renderRefineryControlsRefineryPanelHtmlFragment014()
+        : '',
+    ),
+    dataOffersMap: legacyHtml(
+      data.offers
+        .map((miningOrder) =>
+          renderRefineryControlsRefineryPanelHtmlFragment015({
+            miningOrderQty: legacyHtml(miningOrder.qty),
+            miningOrderGrade: miningOrder.grade,
+            title: title(miningOrder.cid),
+            miningOrderRewardToLocaleString: legacyHtml(miningOrder.reward.toLocaleString()),
+            miningOrderId: miningOrder.id,
+            miningOrderPort: miningOrder.port,
+          }),
+        )
+        .join('') || renderRefineryControlsRefineryPanelHtmlFragment016(),
+    ),
+    jobs: legacyHtml(jobs),
+  });
 }
 export function initRefineryControls(
   refineryClientState: RefineryClientState,

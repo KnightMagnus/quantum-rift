@@ -1,0 +1,3 @@
+<div class="sect" style="margin-top:0">UNSETTLED WORLD</div><p><%= it.stellarBodyName %> has no flag. Settle it to build farms, mines, habitats and permanent-buff installations that work while you are away.</p>
+    <div class="kv"><span>Charter</span><span><%~ it.credits %> cr + <%~ it.mats %></span></div><div class="kv"><span>Your colonies</span><span><%~ it.playerPayloadColoniesLength %> of <%~ it.playerPayloadStationOps %></span></div>
+    <button class="btn" data-act="col" data-op="found">FOUND A COLONY</button>

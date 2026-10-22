@@ -1,0 +1,1 @@
+<div class="kv"><span><%= it.stateSystem %></span><span><%~ it.stateOwner %></span></div>

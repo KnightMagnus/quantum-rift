@@ -1,0 +1,1 @@
+<span class="chip <%~ it.component %>" data-c="<%~ it.component2 %>"><%~ it.component3 %></span>

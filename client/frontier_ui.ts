@@ -1,3 +1,61 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderFrontierUiViewFragment001,
+  renderFrontierUiColonyHtmlFragment002,
+  renderFrontierUiColonyHtmlFragment003,
+  renderFrontierUiColonyHtmlFragment004,
+  renderFrontierUiColonyHtmlFragment005,
+  renderFrontierUiColonyHtmlFragment006,
+  renderFrontierUiColonyHtmlFragment007,
+  renderFrontierUiColonyHtmlFragment008,
+  renderFrontierUiColonyHtmlFragment009,
+  renderFrontierUiColonyHtmlFragment010,
+  renderFrontierUiColonyHtmlFragment011,
+  renderFrontierUiColonyHtmlFragment012,
+  renderFrontierUiColonyHtmlFragment013,
+  renderFrontierUiColonyHtmlFragment014,
+  renderFrontierUiColonyHtmlFragment015,
+  renderFrontierUiDefenseHtmlFragment016,
+  renderFrontierUiDefenseHtmlFragment017,
+  renderFrontierUiDefenseHtmlFragment018,
+  renderFrontierUiDefenseHtmlFragment019,
+  renderFrontierUiDefenseHtmlFragment020,
+  renderFrontierUiDefenseHtmlFragment021,
+  renderFrontierUiDefenseHtmlFragment022,
+  renderFrontierUiDefenseHtmlFragment023,
+  renderFrontierUiMasteryHtmlFragment024,
+  renderFrontierUiMasteryHtmlFragment025,
+  renderFrontierUiArenaHtmlFragment026,
+  renderFrontierUiArenaHtmlFragment027,
+  renderFrontierUiArenaHtmlFragment028,
+  renderFrontierUiArenaHtmlFragment029,
+  renderFrontierUiArenaHtmlFragment030,
+  renderFrontierUiExchangeHtmlFragment031,
+  renderFrontierUiExchangeHtmlFragment032,
+  renderFrontierUiExchangeHtmlFragment033,
+  renderFrontierUiExchangeHtmlFragment034,
+  renderFrontierUiExchangeHtmlFragment035,
+  renderFrontierUiExchangeHtmlFragment036,
+  renderFrontierUiExchangeHtmlFragment037,
+  renderFrontierUiExchangeHtmlFragment038,
+  renderFrontierUiExchangeHtmlFragment039,
+  renderFrontierUiExchangeHtmlFragment040,
+  renderFrontierUiExchangeHtmlFragment041,
+  renderFrontierUiExchangeHtmlFragment042,
+  renderFrontierUiExchangeHtmlFragment043,
+  renderFrontierUiExchangeHtmlFragment044,
+  renderFrontierUiBoardsHtmlFragment045,
+  renderFrontierUiBoardsHtmlFragment046,
+  renderFrontierUiBoardsHtmlFragment047,
+  renderFrontierUiBoardsHtmlFragment048,
+  renderFrontierUiBoardsHtmlFragment049,
+  renderFrontierUiBoardsHtmlFragment050,
+  renderFrontierUiBoardsHtmlFragment051,
+  renderFrontierUiBoardsHtmlFragment052,
+  renderFrontierUiBoardsHtmlFragment053,
+  renderFrontierUiBoardsHtmlFragment054,
+  renderFrontierUiBoardsHtmlFragment055,
+} from './eta-templates.ts';
 import type { PlayerPayload as PlayerData } from './main.ts';
 import type { ClientGameState } from './main.ts';
 export type ColonyData = {
@@ -122,9 +180,15 @@ import { credits } from '../shared/rules.ts';
  */
 const mats = (playerPayload: PlayerData, list: Array<[string, number, number]>): string =>
   list
-    .map(
-      ([message, game, count]) =>
-        `<span style="color:${playerPayload.mats[message][game] >= count ? '#8ff0ad' : '#ff9a8a'}">${count > 1 ? count + ' ' : ''}${message} ${GRADES[game]}</span>`,
+    .map(([message, game, count]) =>
+      renderFrontierUiViewFragment001({
+        playerPayloadMats: legacyHtml(
+          playerPayload.mats[message][game] >= count ? '#8ff0ad' : '#ff9a8a',
+        ),
+        count: legacyHtml(count > 1 ? count + ' ' : ''),
+        message: legacyHtml(message),
+        GRADES: legacyHtml(GRADES[game]),
+      }),
     )
     .join(', ');
 
@@ -165,24 +229,58 @@ export function colonyHtml(clientGameState: ClientGameState): string {
     component = length2.colony!,
     stellarBody = STELLARS[length2.stellar];
   if (component.open)
-    return `<div class="sect" style="margin-top:0">UNSETTLED WORLD</div><p>${escapeHtml2(stellarBody.name)} has no flag. Settle it to build farms, mines, habitats and permanent-buff installations that work while you are away.</p>
-    <div class="kv"><span>Charter</span><span>${credits(COLONY.cost)} cr + ${mats(playerPayload, COLONY.mats)}</span></div><div class="kv"><span>Your colonies</span><span>${playerPayload.colonies.length} of ${playerPayload.station.ops >= 5 ? COLONY.maxAtOps5 : COLONY.max}</span></div>
-    <button class="btn" data-act="col" data-op="found">FOUND A COLONY</button>`;
+    return renderFrontierUiColonyHtmlFragment002({
+      stellarBodyName: stellarBody.name,
+      credits: legacyHtml(credits(COLONY.cost)),
+      mats: legacyHtml(mats(playerPayload, COLONY.mats)),
+      playerPayloadColoniesLength: legacyHtml(playerPayload.colonies.length),
+      playerPayloadStationOps: legacyHtml(
+        playerPayload.station.ops >= 5 ? COLONY.maxAtOps5 : COLONY.max,
+      ),
+    });
   if (!component.own)
-    return `<div class="sect" style="margin-top:0">${escapeHtml2(component.name)}</div><p>Settled by Captain ${escapeHtml2(component.owner)} (level ${component.lv}).</p>`;
+    return renderFrontierUiColonyHtmlFragment003({
+      componentName: component.name,
+      componentOwner: component.owner,
+      componentLv: legacyHtml(component.lv),
+    });
   const colonyLevelInfo = COLONY_LEVELS[component.lv]!,
     next = COLONY_LEVELS[component.lv + 1];
-  let height = `<div class="sect" style="margin-top:0">${escapeHtml2(component.name.toUpperCase())} · LEVEL ${component.lv}</div><div class="kv"><span>Building slots</span><span>${component.buildings.length} / ${colonyLevelInfo.slots}</span></div><div class="kv"><span>Production</span><span>x${colonyLevelInfo.mult}</span></div>`;
+  let height = renderFrontierUiColonyHtmlFragment004({
+    componentNameToUpperCase: component.name.toUpperCase(),
+    componentLv: legacyHtml(component.lv),
+    componentBuildingsLength: legacyHtml(component.buildings.length),
+    colonyLevelInfoSlots: legacyHtml(colonyLevelInfo.slots),
+    colonyLevelInfoMult: legacyHtml(colonyLevelInfo.mult),
+  });
   if (next)
-    height += `<div class="kv"><span>Upgrade to level ${component.lv + 1}</span><span>${credits(next.cost!)} + ${mats(playerPayload, next.mats!)} <button class="btn sm" data-act="col" data-op="upgrade">UPGRADE</button></span></div>`;
+    height += renderFrontierUiColonyHtmlFragment005({
+      componentLv: legacyHtml(component.lv + 1),
+      credits: legacyHtml(credits(next.cost!)),
+      mats: legacyHtml(mats(playerPayload, next.mats!)),
+    });
   const store = Object.entries(component.store).filter(([, value]) => value >= 1);
-  height += `<div class="sect">STOCKPILE</div>${store.length ? store.map(([entryKey, value]) => `<div class="kv"><span>${escapeHtml2(commodityName(entryKey))}</span><span>${entryKey === 'credits' ? credits(value) : value + ' t'}</span></div>`).join('') + '<button class="btn sm" data-act="col" data-op="collect">COLLECT</button>' : '<p class="dim small">Nothing yet. Stockpiles hold a day of production.</p>'}`;
+  height += renderFrontierUiColonyHtmlFragment006({
+    storeLength: legacyHtml(
+      store.length
+        ? store
+            .map(([entryKey, value]) =>
+              renderFrontierUiColonyHtmlFragment007({
+                commodityName: commodityName(entryKey),
+                entryKey: legacyHtml(entryKey === 'credits' ? credits(value) : value + ' t'),
+              }),
+            )
+            .join('') + renderFrontierUiColonyHtmlFragment008()
+        : renderFrontierUiColonyHtmlFragment009(),
+    ),
+  });
   height +=
-    '<div class="sect">BUILDINGS</div>' +
+    renderFrontierUiColonyHtmlFragment010() +
     (component.buildings
-      .map(
-        (secondValue, index) =>
-          `<div class="kv"><span><b>${escapeHtml2(BUILDINGS[secondValue].name)}</b> <span class="dim small">${
+      .map((secondValue, index) =>
+        renderFrontierUiColonyHtmlFragment011({
+          BUILDINGS: BUILDINGS[secondValue].name,
+          BUILDINGS2: legacyHtml(
             BUILDINGS[secondValue].produce
               ? Object.entries(BUILDINGS[secondValue].produce)
                   .map(
@@ -190,25 +288,30 @@ export function colonyHtml(clientGameState: ClientGameState): string {
                       `${entryKey === 'credits' ? credits(value * colonyLevelInfo.mult) + ' cr' : (value * colonyLevelInfo.mult).toFixed(1) + ' t ' + commodityName(entryKey)}/h`,
                   )
                   .join(', ')
-              : buffText(BUILDINGS[secondValue].buff!)
-          }</span></span><span><button class="btn sm" data-act="col" data-op="demolish" data-i="${index}">DEMOLISH</button></span></div>`,
+              : buffText(BUILDINGS[secondValue].buff!),
+          ),
+          index: legacyHtml(index),
+        }),
       )
-      .join('') || '<p class="dim small">No buildings.</p>');
+      .join('') || renderFrontierUiColonyHtmlFragment012());
   if (component.buildings.length < colonyLevelInfo.slots)
     height +=
-      '<div class="sect">BUILD</div>' +
+      renderFrontierUiColonyHtmlFragment013() +
       Object.entries(BUILDINGS)
         .filter(
           ([entryKey, colonyBuilding]) =>
             !(colonyBuilding.buff && component.buildings.includes(entryKey)),
         )
-        .map(
-          ([entryKey, colonyBuilding]) =>
-            `<div class="kv"><span><b>${escapeHtml2(colonyBuilding.name)}</b> <span class="dim small">${escapeHtml2(colonyBuilding.desc)}</span></span><span>${credits(colonyBuilding.cost)} <button class="btn sm" data-act="col" data-op="build" data-kind="${entryKey}">BUILD</button></span></div>`,
+        .map(([entryKey, colonyBuilding]) =>
+          renderFrontierUiColonyHtmlFragment014({
+            colonyBuildingName: colonyBuilding.name,
+            colonyBuildingDesc: colonyBuilding.desc,
+            credits: legacyHtml(credits(colonyBuilding.cost)),
+            entryKey: legacyHtml(entryKey),
+          }),
         )
         .join('');
-  height +=
-    '<div style="margin-top:8px"><button class="btn sm" data-act="col" data-op="abandon">ABANDON COLONY</button></div>';
+  height += renderFrontierUiColonyHtmlFragment015();
   return height;
 }
 
@@ -226,17 +329,45 @@ export function defenseHtml(clientGameState: ClientGameState, interactive?: bool
   if (stationState.ops < DEFENSE.minOps) return '';
   const level = stationState.defense || 0,
     next = DEFENSE.levels[level + 1];
-  let height = `<div class="sect">DEFENSE</div><div class="kv"><span>Defense rating</span><span><b>${playerPayload.defense}</b> <span class="dim small">(turrets level ${level})</span></span></div><div class="dim small">Raiders hit Personal Stations every ${DEFENSE.everyH} hours. If you are in the system they attack live and you can fight them off; otherwise the turrets decide it. A lost raid loots the refinery and some low-grade crates.</div>`;
+  let height = renderFrontierUiDefenseHtmlFragment016({
+    playerPayloadDefense: legacyHtml(playerPayload.defense),
+    level: legacyHtml(level),
+    DEFENSEEveryH: legacyHtml(DEFENSE.everyH),
+  });
   const height2: { best: number; lastT: number; active?: boolean; wave?: number } =
       playerPayload.holdout || {
         best: 0,
         lastT: 0,
       },
     wait = (height2.lastT || 0) + 2 * 3600000 - Date.now();
-  height += `<div class="sect">STATION HOLDOUT</div><div class="dim small">Defend your Personal Station through ten escalating waves, with your ship, your wingmates and ${1 + Math.min(5, level)} defense platforms (more with turret levels). The rewards grow with every wave: credits, crates, Bulwark blueprints, and a grade V crate for beating all ten. You can start one every 2 hours.${clientGameState.solo ? '' : ' Your Armada is called when it starts: every member who flies in adds hostiles to each wave and shares the rewards.'}</div>
-    <div class="kv"><span>Best: wave ${height2.best || 0} of 10</span><span>${height2.active ? `<b style="color:#ff8a70">in progress: wave ${height2.wave}</b>` : wait > 0 ? `<span class="dim">ready in ${Math.ceil(wait / 60000)} min</span>` : interactive ? '<button class="btn sm" data-act="holdout">START HOLDOUT</button>' : '<span class="dim">land at your station to start</span>'}</span></div>`;
+  height += renderFrontierUiDefenseHtmlFragment017({
+    MathMin: legacyHtml(1 + Math.min(5, level)),
+    clientGameStateSolo: legacyHtml(
+      clientGameState.solo
+        ? ''
+        : ' Your Armada is called when it starts: every member who flies in adds hostiles to each wave and shares the rewards.',
+    ),
+    height2Best: legacyHtml(height2.best || 0),
+    height2Active: legacyHtml(
+      height2.active
+        ? renderFrontierUiDefenseHtmlFragment018({ height2Wave: legacyHtml(height2.wave) })
+        : wait > 0
+          ? renderFrontierUiDefenseHtmlFragment019({
+              MathCeil: legacyHtml(Math.ceil(wait / 60000)),
+            })
+          : interactive
+            ? renderFrontierUiDefenseHtmlFragment020()
+            : renderFrontierUiDefenseHtmlFragment021(),
+    ),
+  });
   if (next)
-    height += `<div class="kv"><span>Turrets level ${level + 1} (+${next.rating - DEFENSE.levels[level].rating})</span><span>${credits(next.cost!)} + ${mats(playerPayload, next.mats!)}${interactive ? ' <button class="btn sm" data-act="st" data-op="defense">UPGRADE</button>' : ''}</span></div>`;
+    height += renderFrontierUiDefenseHtmlFragment022({
+      level: legacyHtml(level + 1),
+      nextRating: legacyHtml(next.rating - DEFENSE.levels[level].rating),
+      credits: legacyHtml(credits(next.cost!)),
+      mats: legacyHtml(mats(playerPayload, next.mats!)),
+      interactive: legacyHtml(interactive ? renderFrontierUiDefenseHtmlFragment023() : ''),
+    });
   return height;
 }
 
@@ -253,7 +384,28 @@ export function masteryHtml(clientGameState: ClientGameState): string {
     masteryTier2 = masteryTier(experience),
     tier = MASTERY.tiers[masteryTier2];
   const stars = '★'.repeat(masteryTier2) + '☆'.repeat(5 - masteryTier2);
-  return `<div class="sect">SHIP MASTERY</div><div class="kv"><span><span style="color:#ffd27a">${stars}</span> Tier ${masteryTier2}</span><span class="small">${tier !== undefined ? `${Math.floor(experience)} / ${tier} xp` : 'mastered'}</span></div>${tier !== undefined ? `<div class="xpbar"><i style="width:${Math.min(100, (100 * (experience - MASTERY.tiers[masteryTier2 - 1])) / (tier - MASTERY.tiers[masteryTier2 - 1]))}%"></i></div>` : ''}<div class="dim small">${buffText(MASTERY.bonus[masteryTier2]) || 'Fly this hull to unlock bonuses.'}${masteryTier2 >= 5 ? ' · gold trim' : ''}</div>`;
+  return renderFrontierUiMasteryHtmlFragment024({
+    stars: legacyHtml(stars),
+    masteryTier2: legacyHtml(masteryTier2),
+    tier: legacyHtml(tier !== undefined ? `${Math.floor(experience)} / ${tier} xp` : 'mastered'),
+    tier2: legacyHtml(
+      tier !== undefined
+        ? renderFrontierUiMasteryHtmlFragment025({
+            MathMin: legacyHtml(
+              Math.min(
+                100,
+                (100 * (experience - MASTERY.tiers[masteryTier2 - 1])) /
+                  (tier - MASTERY.tiers[masteryTier2 - 1]),
+              ),
+            ),
+          })
+        : '',
+    ),
+    buffText: legacyHtml(
+      buffText(MASTERY.bonus[masteryTier2]) || 'Fly this hull to unlock bonuses.',
+    ),
+    masteryTier22: legacyHtml(masteryTier2 >= 5 ? ' · gold trim' : ''),
+  });
 }
 
 // ------------------------------------------------------------------ ARENA tab
@@ -265,11 +417,23 @@ export function masteryHtml(clientGameState: ClientGameState): string {
  */
 export function arenaHtml(clientGameState: ClientGameState): string {
   const firstValue = clientGameState.you!.arena || { rating: ARENA.start, w: 0, l: 0, sizes: {} };
-  let height = `<div class="sect" style="margin-top:0">THE CRUCIBLE</div><p>Rated team fights in an instanced arena, away from the open galaxy. You fly your current ship without wingmates or escorts. Losing costs no insurance, and the arena crew repair you for free. The last team flying wins. If time runs out, the team with the most hull and shields left wins.</p>
-    <div class="kv"><span>Your rating</span><span><b>${firstValue.rating}</b> <span class="dim small">${firstValue.w} W · ${firstValue.l} L</span></span></div>`;
+  let height = renderFrontierUiArenaHtmlFragment026({
+    firstValueRating: legacyHtml(firstValue.rating),
+    firstValueW: legacyHtml(firstValue.w),
+    firstValueL: legacyHtml(firstValue.l),
+  });
   for (const [mode, count] of Object.entries(ARENA.modes))
-    height += `<div class="kv"><span><b>${mode}</b> <span class="dim small">${(firstValue.sizes || {})[mode] || 0} queued, ${count * 2} needed</span></span><span>${firstValue.queued === mode ? '<button class="btn sm" data-act="arena" data-op="leave">LEAVE QUEUE</button>' : `<button class="btn sm" data-act="arena" data-op="queue" data-mode="${mode}">QUEUE</button>`}</span></div>`;
-  height += `<div class="dim small">Winners earn ${credits(15000)} credits per team member slot. Rating moves with each result (Elo).</div>`;
+    height += renderFrontierUiArenaHtmlFragment027({
+      mode: legacyHtml(mode),
+      firstValueSizes: legacyHtml((firstValue.sizes || {})[mode] || 0),
+      count: legacyHtml(count * 2),
+      firstValueQueued: legacyHtml(
+        firstValue.queued === mode
+          ? renderFrontierUiArenaHtmlFragment028()
+          : renderFrontierUiArenaHtmlFragment029({ mode: legacyHtml(mode) }),
+      ),
+    });
+  height += renderFrontierUiArenaHtmlFragment030({ credits: legacyHtml(credits(15000)) });
   return height;
 }
 
@@ -285,46 +449,78 @@ export function exchangeHtml(clientGameState: ClientGameState): string {
     positionX = clientGameState.landed!.exchange!;
   const options =
     MATERIALS.flatMap((message) =>
-      GRADES.map(
-        (game, index) =>
-          `<option value="mat:${message}:${index}">${message} ${game} crate</option>`,
+      GRADES.map((game, index) =>
+        renderFrontierUiExchangeHtmlFragment031({
+          message: legacyHtml(message),
+          index: legacyHtml(index),
+          message2: legacyHtml(message),
+          game: legacyHtml(game),
+        }),
       ),
     ).join('') +
-    COMMODITIES.map(
-      (commodityDef) =>
-        `<option value="com:${commodityDef.id}">${escapeHtml2(commodityDef.name)}</option>`,
+    COMMODITIES.map((commodityDef) =>
+      renderFrontierUiExchangeHtmlFragment032({
+        commodityDefId: legacyHtml(commodityDef.id),
+        commodityDefName: commodityDef.name,
+      }),
     ).join('');
-  let height = `<div class="sect" style="margin-top:0">THE EXCHANGE</div><div class="dim small">Player-to-player orders shared across every market in the Rift. Sell orders hold your goods in escrow, and buy orders hold your credits. Crossing orders fill at the resting price, and sellers pay a ${EXCHANGE.fee * 100}% fee. Bought commodities wait in exchange storage, and crates go straight to your stock.</div>
-    <div class="rrow"><select id="xitem">${options}</select><select id="xside"><option value="sell">SELL</option><option value="buy">BUY</option></select><input id="xqty" type="number" min="1" value="1" style="width:70px" title="quantity"><input id="xprice" type="number" min="1" placeholder="price each" style="width:110px"><button class="btn sm" data-act="xplace">PLACE</button></div>`;
+  let height = renderFrontierUiExchangeHtmlFragment033({
+    EXCHANGEFee: legacyHtml(EXCHANGE.fee * 100),
+    options: legacyHtml(options),
+  });
   const name = (exchangeItem: import('../server/world-contracts.ts').ExchangeItem) =>
     exchangeItem.kind === 'mat'
       ? `${exchangeItem.mat} ${GRADES[exchangeItem.grade]}`
       : commodityName(exchangeItem.cid);
   height +=
-    '<div class="sect">ORDER BOOK</div>' +
+    renderFrontierUiExchangeHtmlFragment034() +
     (positionX.book.length
-      ? `<table class="tbl"><tr><th>ITEM</th><th>BEST BID</th><th>BIDS</th><th>BEST ASK</th><th>ASKS</th></tr>${positionX.book.map((secondValue) => `<tr><td>${escapeHtml2(name(secondValue.item))}</td><td class="lo">${secondValue.bid ? credits(secondValue.bid) : '-'}</td><td>${secondValue.bids}</td><td class="hi">${secondValue.ask ? credits(secondValue.ask) : '-'}</td><td>${secondValue.asks}</td></tr>`).join('')}</table>`
-      : '<p class="dim">No orders yet.</p>');
+      ? renderFrontierUiExchangeHtmlFragment035({
+          positionXBookMap: legacyHtml(
+            positionX.book
+              .map((secondValue) =>
+                renderFrontierUiExchangeHtmlFragment036({
+                  name: name(secondValue.item),
+                  secondValueBid: legacyHtml(secondValue.bid ? credits(secondValue.bid) : '-'),
+                  secondValueBids: legacyHtml(secondValue.bids),
+                  secondValueAsk: legacyHtml(secondValue.ask ? credits(secondValue.ask) : '-'),
+                  secondValueAsks: legacyHtml(secondValue.asks),
+                }),
+              )
+              .join(''),
+          ),
+        })
+      : renderFrontierUiExchangeHtmlFragment037());
   height +=
-    `<div class="sect">YOUR ORDERS (${positionX.mine.length}/${EXCHANGE.maxOrders})</div>` +
+    renderFrontierUiExchangeHtmlFragment038({
+      positionXMineLength: legacyHtml(positionX.mine.length),
+      EXCHANGEMaxOrders: legacyHtml(EXCHANGE.maxOrders),
+    }) +
     (positionX.mine
-      .map(
-        (exchangeOrder) =>
-          `<div class="kv"><span>${exchangeOrder.side.toUpperCase()} ${exchangeOrder.qty} ${escapeHtml2(name(exchangeOrder.item))} @ ${credits(exchangeOrder.price)}</span><span><button class="btn sm" data-act="xcancel" data-id="${exchangeOrder.id}">CANCEL</button></span></div>`,
+      .map((exchangeOrder) =>
+        renderFrontierUiExchangeHtmlFragment039({
+          exchangeOrderSideToUpperCase: legacyHtml(exchangeOrder.side.toUpperCase()),
+          exchangeOrderQty: legacyHtml(exchangeOrder.qty),
+          name: name(exchangeOrder.item),
+          credits: legacyHtml(credits(exchangeOrder.price)),
+          exchangeOrderId: legacyHtml(exchangeOrder.id),
+        }),
       )
-      .join('') || '<p class="dim small">None.</p>');
+      .join('') || renderFrontierUiExchangeHtmlFragment040());
   const state = Object.entries(positionX.storage || {});
   if (state.length)
     height +=
-      '<div class="sect">EXCHANGE STORAGE</div>' +
+      renderFrontierUiExchangeHtmlFragment041() +
       state
-        .map(
-          ([entryKey, value]) =>
-            `<div class="kv"><span>${escapeHtml2(commodityName(entryKey))}</span><span>${value} t</span></div>`,
+        .map(([entryKey, value]) =>
+          renderFrontierUiExchangeHtmlFragment042({
+            commodityName: commodityName(entryKey),
+            value: legacyHtml(value),
+          }),
         )
         .join('') +
-      '<button class="btn sm" data-act="xcollect">LOAD INTO HOLD</button>';
-  height += `<div class="sect">SEND CREDITS</div><div class="rrow"><input id="xto" placeholder="captain name" maxlength="20"><input id="xamt" type="number" min="1000" placeholder="credits" style="width:120px"><button class="btn sm" data-act="xsend">SEND</button></div>`;
+      renderFrontierUiExchangeHtmlFragment043();
+  height += renderFrontierUiExchangeHtmlFragment044();
   return height;
 }
 
@@ -338,21 +534,78 @@ export function exchangeHtml(clientGameState: ClientGameState): string {
 export function boardsHtml(clientGameState: ClientGameState): string {
   const category = clientGameState.boardCat || 'earned',
     secondValue = clientGameState.boards && clientGameState.boards[category];
-  let height = `<div class="sect">LEADERBOARDS</div><div class="chips">${Object.entries(BOARDS)
-    .map(
-      ([entryKey, leaderboardCategory]) =>
-        `<span class="chip ${entryKey === category ? 'on' : ''}" data-act="board" data-cat="${entryKey}">${leaderboardCategory.name}</span>`,
-    )
-    .join('')}</div>`;
+  let height = renderFrontierUiBoardsHtmlFragment045({
+    ObjectEntries: legacyHtml(
+      Object.entries(BOARDS)
+        .map(([entryKey, leaderboardCategory]) =>
+          renderFrontierUiBoardsHtmlFragment046({
+            entryKey: legacyHtml(entryKey === category ? 'on' : ''),
+            entryKey2: legacyHtml(entryKey),
+            leaderboardCategoryName: legacyHtml(leaderboardCategory.name),
+          }),
+        )
+        .join(''),
+    ),
+  });
   height += secondValue
-    ? `<table class="tbl"><tr><th>#</th><th>CAPTAIN</th><th>${escapeHtml2(BOARDS[category].name.toUpperCase())}</th></tr>${secondValue.map((radius, index) => `<tr><td>${index + 1}</td><td><a href="#" data-act="prof" data-n="${escapeHtml2(radius.name)}">${radius.fleet ? `[${escapeHtml2(radius.fleet)}] ` : ''}${escapeHtml2(radius.name)}</a>${radius.ai ? ' <span class="aitag">captain</span>' : ''}</td><td>${category === 'earned' ? credits(radius.v) : radius.v.toLocaleString()}</td></tr>`).join('')}</table>`
-    : '<p class="dim small">Loading...</p>';
-  height += `<div class="rrow"><input id="profq" placeholder="Look up a captain"><button class="btn sm" data-act="profgo">PROFILE</button></div>`;
+    ? renderFrontierUiBoardsHtmlFragment047({
+        BOARDS: BOARDS[category].name.toUpperCase(),
+        secondValueMap: legacyHtml(
+          secondValue
+            .map((radius, index) =>
+              renderFrontierUiBoardsHtmlFragment048({
+                index: legacyHtml(index + 1),
+                radiusName: radius.name,
+                radiusFleet: legacyHtml(radius.fleet ? `[${escapeHtml2(radius.fleet)}] ` : ''),
+                radiusName2: radius.name,
+                radiusAi: legacyHtml(radius.ai ? renderFrontierUiBoardsHtmlFragment049() : ''),
+                category: legacyHtml(
+                  category === 'earned' ? credits(radius.v) : radius.v.toLocaleString(),
+                ),
+              }),
+            )
+            .join(''),
+        ),
+      })
+    : renderFrontierUiBoardsHtmlFragment050();
+  height += renderFrontierUiBoardsHtmlFragment051();
   const captainProfile = clientGameState.prof;
   if (captainProfile)
-    height += `<div class="ocard"><div class="oname"><b style="font-size:15px">${escapeHtml2(captainProfile.name)}</b> ${captainProfile.online ? '<span style="color:var(--ok)">● online</span>' : '<span class="dim">offline</span>'}</div>
-    <div class="kv"><span>Flies</span><span>${escapeHtml2(captainProfile.ship)} "${escapeHtml2(captainProfile.shipName)}"</span></div><div class="kv"><span>Station</span><span>${captainProfile.site ? `${escapeHtml2(captainProfile.site)} · Station Tier ${captainProfile.ops}` : 'none'}</span></div>
-    <div class="kv"><span>Colonies</span><span>${captainProfile.colonies.map(escapeHtml2).join(', ') || 'none'}</span></div><div class="kv"><span>Record</span><span>${captainProfile.kills} kills · ${captainProfile.jumps} jumps · ${captainProfile.mined} t mined · ${credits(captainProfile.earned)} earned</span></div>
-    <div class="kv"><span>Arena</span><span>${captainProfile.arena ? `${captainProfile.arena.rating} (${captainProfile.arena.w}-${captainProfile.arena.l})` : 'unrated'}</span></div>${captainProfile.mastery ? `<div class="kv"><span>Best mastery</span><span>${escapeHtml2(captainProfile.mastery.ship)} · Tier ${captainProfile.mastery.tier}</span></div>` : ''}<div class="kv"><span>Officers</span><span>${captainProfile.officers}</span></div></div>`;
+    height += renderFrontierUiBoardsHtmlFragment052({
+      captainProfileName: captainProfile.name,
+      captainProfileOnline: legacyHtml(
+        captainProfile.online
+          ? renderFrontierUiBoardsHtmlFragment053()
+          : renderFrontierUiBoardsHtmlFragment054(),
+      ),
+      captainProfileShip: captainProfile.ship,
+      captainProfileShipName: captainProfile.shipName,
+      captainProfileSite: legacyHtml(
+        captainProfile.site
+          ? `${escapeHtml2(captainProfile.site)} · Station Tier ${captainProfile.ops}`
+          : 'none',
+      ),
+      captainProfileColoniesMap: legacyHtml(
+        captainProfile.colonies.map(escapeHtml2).join(', ') || 'none',
+      ),
+      captainProfileKills: legacyHtml(captainProfile.kills),
+      captainProfileJumps: legacyHtml(captainProfile.jumps),
+      captainProfileMined: legacyHtml(captainProfile.mined),
+      credits: legacyHtml(credits(captainProfile.earned)),
+      captainProfileArena: legacyHtml(
+        captainProfile.arena
+          ? `${captainProfile.arena.rating} (${captainProfile.arena.w}-${captainProfile.arena.l})`
+          : 'unrated',
+      ),
+      captainProfileMastery: legacyHtml(
+        captainProfile.mastery
+          ? renderFrontierUiBoardsHtmlFragment055({
+              captainProfileMasteryShip: captainProfile.mastery.ship,
+              captainProfileMasteryTier: legacyHtml(captainProfile.mastery.tier),
+            })
+          : '',
+      ),
+      captainProfileOfficers: legacyHtml(captainProfile.officers),
+    });
   return height;
 }

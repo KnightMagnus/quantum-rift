@@ -1,0 +1,1 @@
+<span style="color:<%~ it.playerPayloadMats %>"><%~ it.count %><%~ it.message %> <%~ it.GRADES %></span>

@@ -1,3 +1,47 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderInfoUiInfoHtmlFragment001,
+  renderInfoUiInfoHtmlFragment002,
+  renderInfoUiInfoHtmlFragment003,
+  renderInfoUiInfoHtmlFragment004,
+  renderInfoUiInfoHtmlFragment005,
+  renderInfoUiInfoHtmlFragment006,
+  renderInfoUiInfoHtmlFragment007,
+  renderInfoUiInfoHtmlFragment008,
+  renderInfoUiInfoHtmlFragment009,
+  renderInfoUiInfoHtmlFragment010,
+  renderInfoUiInfoHtmlFragment011,
+  renderInfoUiInfoHtmlFragment012,
+  renderInfoUiInfoHtmlFragment013,
+  renderInfoUiInfoHtmlFragment014,
+  renderInfoUiInfoHtmlFragment015,
+  renderInfoUiInfoHtmlFragment016,
+  renderInfoUiInfoHtmlFragment017,
+  renderInfoUiInfoHtmlFragment018,
+  renderInfoUiInfoHtmlFragment019,
+  renderInfoUiInfoHtmlFragment020,
+  renderInfoUiInfoHtmlFragment021,
+  renderInfoUiInfoHtmlFragment022,
+  renderInfoUiCareerHtmlFragment023,
+  renderInfoUiCareerHtmlFragment024,
+  renderInfoUiCareerHtmlFragment025,
+  renderInfoUiCareerHtmlFragment026,
+  renderInfoUiCareerHtmlFragment027,
+  renderInfoUiCareerHtmlFragment028,
+  renderInfoUiCareerHtmlFragment029,
+  renderInfoUiCareerHtmlFragment030,
+  renderInfoUiCareerHtmlFragment031,
+  renderInfoUiCareerHtmlFragment032,
+  renderInfoUiCareerHtmlFragment033,
+  renderInfoUiCareerHtmlFragment034,
+  renderInfoUiCareerHtmlFragment035,
+  renderInfoUiCareerHtmlFragment036,
+  renderInfoUiCareerHtmlFragment037,
+  renderInfoUiCareerHtmlFragment038,
+  renderInfoUiCareerHtmlFragment039,
+  renderInfoUiCareerHtmlFragment040,
+  renderInfoUiCareerHtmlFragment041,
+} from './eta-templates.ts';
 import type { StellarBody } from '../server/game.ts';
 import type { ClientGameState } from './main.ts';
 export type InfoTab = 'ship' | 'career' | 'fleet' | 'captains';
@@ -123,25 +167,55 @@ export function infoHtml(clientGameState: ClientGameState, activeTab?: string): 
     const progressBar = rank.next
       ? Math.min(100, (100 * (rank.score - RANKS[rank.i][0])) / (rank.next - RANKS[rank.i][0]))
       : 100;
-    return `<div class="igrid"><div>
-      <div class="sect" style="margin-top:0">SHIP</div>
-      ${
+    return renderInfoUiInfoHtmlFragment001({
+      playerPayloadShipless: legacyHtml(
         playerPayload.shipless
-          ? '<p class="dim">No active ship.</p>'
-          : `<div style="display:flex;gap:10px;align-items:center"><img src="${artworkUrl(shipHullAsset.img!)}" style="width:120px;height:90px;object-fit:contain"><div><b style="color:#fff;font-size:15px">${escapeHtml(shipHullAsset.name)}</b><div class="dim">"${escapeHtml(playerPayload.ship.name)}"</div></div></div>
-      <div class="kv"><span>Shield / armor</span><span>${credits2(computedShipStats.shield)} / ${credits2(computedShipStats.armor)}</span></div><div class="kv"><span>Speed / turn</span><span>${credits2(computedShipStats.maxSpeed / 0.45)} / ${credits2((computedShipStats.turn * 57.3) / 3)}</span></div>
-      <div class="kv"><span>Cargo</span><span>${playerPayload.cargoUsed} / ${computedShipStats.cargo} t</span></div><div class="kv"><span>Passenger seats</span><span>${(playerPayload.missions || []).filter((mission) => mission.type === 'passenger').reduce((sumValues, mission) => sumValues + (mission.pax || 0), 0)} / ${computedShipStats.passengerSeats} occupied</span></div><div class="kv"><span>Outfit space</span><span>${computedShipStats.free} of ${computedShipStats.space} free</span></div>
-      <div class="kv"><span>Guns / turrets</span><span>${computedShipStats.guns}/${computedShipStats.maxGuns} · ${computedShipStats.turrets}/${computedShipStats.maxTurrets}</span></div><div class="kv"><span>Fuel</span><span>${Math.floor(((clientGameState.view && clientGameState.view.fuel) ?? playerPayload.fuel) / 100)} jumps</span></div>`
-      }
-      <div class="sect">COMBAT RATING</div><div class="kv"><span><b style="color:#ffd27a">${escapeHtml(rank.name)}</b></span><span class="dim">${credits2(rank.score)}${rank.next ? ` / ${credits2(rank.next)}` : ''}</span></div>
-      <div class="rbar"><i style="width:${progressBar}%"></i></div><div class="dim small">Destroying ships raises your rating. Competent captains are offered Wanted contracts, and Dangerous ones get elite contracts.</div>
-      <div class="sect">RECORD</div>${synBadge(playerPayload)}<div class="kv"><span>Commendations</span><span>${playerPayload.shards || 0}</span></div>
-      <div class="kv"><span>Credit rating</span><span>${playerPayload.credit || 600}${playerPayload.loan ? ` · loan ${credits2(playerPayload.loan.bal)} cr` : ''}</span></div>
-      <div class="kv"><span>Faction stories</span><span>${(playerPayload.arcs || []).filter((firstValue) => firstValue.done).length} of ${(playerPayload.arcs || []).length} complete</span></div>
-      <div class="kv"><span>Farside expeditions</span><span>${(playerPayload.expd && playerPayload.expd.n) || 0} decoded</span></div>
-    </div><div>
-      <div class="sect" style="margin-top:0">CARGO</div>
-      ${
+          ? renderInfoUiInfoHtmlFragment002()
+          : renderInfoUiInfoHtmlFragment003({
+              artworkUrl: legacyHtml(artworkUrl(shipHullAsset.img!)),
+              shipHullAssetName: shipHullAsset.name,
+              playerPayloadShipName: playerPayload.ship.name,
+              credits2: legacyHtml(credits2(computedShipStats.shield)),
+              credits22: legacyHtml(credits2(computedShipStats.armor)),
+              credits23: legacyHtml(credits2(computedShipStats.maxSpeed / 0.45)),
+              credits24: legacyHtml(credits2((computedShipStats.turn * 57.3) / 3)),
+              playerPayloadCargoUsed: legacyHtml(playerPayload.cargoUsed),
+              computedShipStatsCargo: legacyHtml(computedShipStats.cargo),
+              playerPayloadMissions: legacyHtml(
+                (playerPayload.missions || [])
+                  .filter((mission) => mission.type === 'passenger')
+                  .reduce((sumValues, mission) => sumValues + (mission.pax || 0), 0),
+              ),
+              computedShipStatsPassengerSeats: legacyHtml(computedShipStats.passengerSeats),
+              computedShipStatsFree: legacyHtml(computedShipStats.free),
+              computedShipStatsSpace: legacyHtml(computedShipStats.space),
+              computedShipStatsGuns: legacyHtml(computedShipStats.guns),
+              computedShipStatsMaxGuns: legacyHtml(computedShipStats.maxGuns),
+              computedShipStatsTurrets: legacyHtml(computedShipStats.turrets),
+              computedShipStatsMaxTurrets: legacyHtml(computedShipStats.maxTurrets),
+              MathFloor: legacyHtml(
+                Math.floor(
+                  ((clientGameState.view && clientGameState.view.fuel) ?? playerPayload.fuel) / 100,
+                ),
+              ),
+            }),
+      ),
+      rankName: rank.name,
+      credits2: legacyHtml(credits2(rank.score)),
+      rankNext: legacyHtml(rank.next ? ` / ${credits2(rank.next)}` : ''),
+      progressBar: legacyHtml(progressBar),
+      synBadge: legacyHtml(synBadge(playerPayload)),
+      playerPayloadShards: legacyHtml(playerPayload.shards || 0),
+      playerPayloadCredit: legacyHtml(playerPayload.credit || 600),
+      playerPayloadLoan: legacyHtml(
+        playerPayload.loan ? ` · loan ${credits2(playerPayload.loan.bal)} cr` : '',
+      ),
+      playerPayloadArcs: legacyHtml(
+        (playerPayload.arcs || []).filter((firstValue) => firstValue.done).length,
+      ),
+      playerPayloadArcs2: legacyHtml((playerPayload.arcs || []).length),
+      playerPayloadExpd: legacyHtml((playerPayload.expd && playerPayload.expd.n) || 0),
+      cargoLength: legacyHtml(
         cargo.length
           ? cargo
               .map(([component, count]) => {
@@ -151,61 +225,168 @@ export function infoHtml(clientGameState: ClientGameState, activeTab?: string): 
                 const bestSaleResult = bestSale(clientGameState, component);
                 const grades = Object.entries(playerPayload.cargoLots?.byCommodity[component] || {})
                   .filter(([, quantity]) => quantity > 0)
-                  .map(
-                    ([game, quantity]) =>
-                      `<div class="kv small"><span>↳ ${game}</span><span>${quantity} t ${inSpace ? `<button class="btn sm" data-jet="${component}" data-grade="${game}" data-n="${Math.min(5, quantity)}">DUMP ${Math.min(5, quantity)}</button> <button class="btn sm" data-jet="${component}" data-grade="${game}" data-n="${quantity}">DUMP ALL ${game.toUpperCase()}</button>` : ''}</span></div>`,
+                  .map(([game, quantity]) =>
+                    renderInfoUiInfoHtmlFragment004({
+                      game: legacyHtml(game),
+                      quantity: legacyHtml(quantity),
+                      inSpace: legacyHtml(
+                        inSpace
+                          ? renderInfoUiInfoHtmlFragment005({
+                              component: legacyHtml(component),
+                              game: legacyHtml(game),
+                              MathMin: legacyHtml(Math.min(5, quantity)),
+                              MathMin2: legacyHtml(Math.min(5, quantity)),
+                              component2: legacyHtml(component),
+                              game2: legacyHtml(game),
+                              quantity: legacyHtml(quantity),
+                              gameToUpperCase: legacyHtml(game.toUpperCase()),
+                            })
+                          : '',
+                      ),
+                    }),
                   )
                   .join('');
-                return `<div class="kv"><span>${escapeHtml(commodityDef ? commodityDef.name : component)}${bestSaleResult ? `<div class="small dim">Best nearby: <b style="color:var(--cr)">${credits2(bestSaleResult.price)}</b> at ${escapeHtml(bestSaleResult.p.name)}${bestSaleResult.jumps ? ` (${bestSaleResult.jumps} jump${bestSaleResult.jumps > 1 ? 's' : ''})` : ' (this system)'}${playerPayload.paid && playerPayload.paid[component] ? ` · you paid ${credits2(playerPayload.paid[component])}` : ''} ${bestSaleResult.jumps ? `<button class="btn sm" data-plot="${bestSaleResult.p.system}">PLOT</button>` : ''}</div>` : '<div class="small dim">No market you have visited nearby buys this.</div>'}</span><span>${count} t ${inSpace ? `<button class="btn sm" data-jet="${component}" data-n="${Math.min(5, count)}">DUMP 5</button> <button class="btn sm" data-jet="${component}" data-n="0">DUMP ALL</button>` : ''}</span></div>${grades}`;
+                return renderInfoUiInfoHtmlFragment006({
+                  commodityDef: commodityDef ? commodityDef.name : component,
+                  bestSaleResult: legacyHtml(
+                    bestSaleResult
+                      ? renderInfoUiInfoHtmlFragment007({
+                          credits2: legacyHtml(credits2(bestSaleResult.price)),
+                          bestSaleResultPName: bestSaleResult.p.name,
+                          bestSaleResultJumps: legacyHtml(
+                            bestSaleResult.jumps
+                              ? ` (${bestSaleResult.jumps} jump${bestSaleResult.jumps > 1 ? 's' : ''})`
+                              : ' (this system)',
+                          ),
+                          playerPayloadPaid: legacyHtml(
+                            playerPayload.paid && playerPayload.paid[component]
+                              ? ` · you paid ${credits2(playerPayload.paid[component])}`
+                              : '',
+                          ),
+                          bestSaleResultJumps2: legacyHtml(
+                            bestSaleResult.jumps
+                              ? renderInfoUiInfoHtmlFragment008({
+                                  bestSaleResultPSystem: legacyHtml(bestSaleResult.p.system),
+                                })
+                              : '',
+                          ),
+                        })
+                      : renderInfoUiInfoHtmlFragment009(),
+                  ),
+                  count: legacyHtml(count),
+                  inSpace: legacyHtml(
+                    inSpace
+                      ? renderInfoUiInfoHtmlFragment010({
+                          component: legacyHtml(component),
+                          MathMin: legacyHtml(Math.min(5, count)),
+                          component2: legacyHtml(component),
+                        })
+                      : '',
+                  ),
+                  grades: legacyHtml(grades),
+                });
               })
               .join('')
-          : '<p class="dim">The hold is empty.</p>'
-      }
-      ${cargo.length ? `<div class="dim small">${inSpace ? 'Jettisoned cargo floats free. Raiders chasing you often go for it instead.' : 'You can jettison cargo in space.'}</div>` : ''}
-      <div class="sect">MISSION CARGO</div>${
+          : renderInfoUiInfoHtmlFragment011(),
+      ),
+      cargoLength2: legacyHtml(
+        cargo.length
+          ? renderInfoUiInfoHtmlFragment012({
+              inSpace: legacyHtml(
+                inSpace
+                  ? 'Jettisoned cargo floats free. Raiders chasing you often go for it instead.'
+                  : 'You can jettison cargo in space.',
+              ),
+            })
+          : '',
+      ),
+      playerPayloadMissions: legacyHtml(
         (playerPayload.missions || [])
           .filter((mission) => mission.qty)
-          .map(
-            (mission) =>
-              `<div class="kv"><span>${escapeHtml(mission.title)}</span><span>${mission.qty} t</span></div>`,
+          .map((mission) =>
+            renderInfoUiInfoHtmlFragment013({
+              missionTitle: mission.title,
+              missionQty: legacyHtml(mission.qty),
+            }),
           )
-          .join('') || '<p class="dim">None.</p>'
-      }
-    </div></div>`;
+          .join('') || renderInfoUiInfoHtmlFragment014(),
+      ),
+    });
   }
   if (activeTab === 'career') return careerHtml(clientGameState); // 2.4
   if (activeTab === 'fleet') {
     const order3 = clientGameState.order || 'gather';
-    return `<div class="sect" style="margin-top:0">WINGMATE ORDERS</div><div class="dim small" style="margin-bottom:6px">Orders apply to your escorts, wingmates and fighters. Give the same order again to cancel it.</div>
-      <div class="ords">${order2.map(([entryKey, count, entryKey2]) => `<button class="btn ${order3 === entryKey ? 'on' : ''}" data-ord="${entryKey}">${count} <span class="dim small">(${entryKey2})</span></button>`).join('')}</div>
-      <div class="sect">WINGMATES${playerPayload.docks ? ` · DOCK ${playerPayload.docks.list[playerPayload.docks.active].letter}` : ''}</div>${(() => {
-        const entryKey =
-            playerPayload.docks && playerPayload.docks.list[playerPayload.docks.active],
-          webSocket = entryKey ? entryKey.wings.filter(Boolean) : [];
-        return webSocket.length
-          ? webSocket
-              .map((dockShipPayload) => {
-                const shipHullAsset = clientGameState.A!.ships[dockShipPayload!.hull] || {};
-                return `<div class="kv"><span><img src="${artworkUrl(shipHullAsset.img!)}" style="width:40px;height:28px;object-fit:contain;vertical-align:middle"> ${escapeHtml(dockShipPayload!.name)}</span><span class="dim">${dockShipPayload!.repairT ? 'under repair' : escapeHtml(shipHullAsset.name)}</span></div>`;
-              })
-              .join('')
-          : '<p class="dim">No wingmates in your active dock. Assign stored ships as wingmates at your Personal Station (STATION, then DOCKS).</p>';
-      })()}`;
+    return renderInfoUiInfoHtmlFragment015({
+      order2Map: legacyHtml(
+        order2
+          .map(([entryKey, count, entryKey2]) =>
+            renderInfoUiInfoHtmlFragment016({
+              order3: legacyHtml(order3 === entryKey ? 'on' : ''),
+              entryKey: legacyHtml(entryKey),
+              count: legacyHtml(count),
+              entryKey2: legacyHtml(entryKey2),
+            }),
+          )
+          .join(''),
+      ),
+      playerPayloadDocks: legacyHtml(
+        playerPayload.docks
+          ? ` · DOCK ${playerPayload.docks.list[playerPayload.docks.active].letter}`
+          : '',
+      ),
+      constValue: legacyHtml(
+        (() => {
+          const entryKey =
+              playerPayload.docks && playerPayload.docks.list[playerPayload.docks.active],
+            webSocket = entryKey ? entryKey.wings.filter(Boolean) : [];
+          return webSocket.length
+            ? webSocket
+                .map((dockShipPayload) => {
+                  const shipHullAsset = clientGameState.A!.ships[dockShipPayload!.hull] || {};
+                  return renderInfoUiInfoHtmlFragment017({
+                    artworkUrl: legacyHtml(artworkUrl(shipHullAsset.img!)),
+                    dockShipPayload: dockShipPayload!.name,
+                    dockShipPayload2: legacyHtml(
+                      dockShipPayload!.repairT ? 'under repair' : escapeHtml(shipHullAsset.name),
+                    ),
+                  });
+                })
+                .join('')
+            : renderInfoUiInfoHtmlFragment018();
+        })(),
+      ),
+    });
   }
   // captains
   const list = (clientGameState.rivals || [])
       .slice()
       .sort((firstValue, secondValue) => secondValue.rel - firstValue.rel),
     seen = new Set(playerPayload.explored || []);
-  return `<div class="dim small" style="margin-bottom:6px">Thirty captains with careers of their own. Hail them (T) to talk. Help them in a fight and they warm to you; fire on them and they will remember.</div>
-    <table class="tbl"><tr><th>CAPTAIN</th><th>CAREER</th><th>FLAG</th><th>SHIP</th><th>LAST SEEN</th><th>STANDING</th></tr>${list
-      .map(
-        (
-          radius,
-        ) => `<tr><td><b>${escapeHtml(radius.name)}</b></td><td>${escapeHtml(radius.kind)}</td><td><span style="color:${FACTIONS[radius.fac] ? FACTIONS[radius.fac].color : '#aaa'}">${escapeHtml(FACTIONS[radius.fac] ? FACTIONS[radius.fac].short : radius.fac)}</span></td><td>${escapeHtml(radius.ship)}</td>
-      <td>${radius.sys ? (seen.has(radius.sys) ? escapeHtml(systemsById[radius.sys].name) : '<span class="dim">uncharted space</span>') : '<span class="dim">grounded</span>'}</td><td style="color:${MOODC[radius.mood]}">${radius.mood[0].toUpperCase() + radius.mood.slice(1)} (${radius.rel})</td></tr>`,
-      )
-      .join('')}</table>`;
+  return renderInfoUiInfoHtmlFragment019({
+    list: legacyHtml(
+      list
+        .map((radius) =>
+          renderInfoUiInfoHtmlFragment020({
+            radiusName: radius.name,
+            radiusKind: radius.kind,
+            FACTIONS: legacyHtml(FACTIONS[radius.fac] ? FACTIONS[radius.fac].color : '#aaa'),
+            FACTIONS2: FACTIONS[radius.fac] ? FACTIONS[radius.fac].short : radius.fac,
+            radiusShip: radius.ship,
+            radiusSys: legacyHtml(
+              radius.sys
+                ? seen.has(radius.sys)
+                  ? escapeHtml(systemsById[radius.sys].name)
+                  : renderInfoUiInfoHtmlFragment021()
+                : renderInfoUiInfoHtmlFragment022(),
+            ),
+            MOODC: legacyHtml(MOODC[radius.mood]),
+            radiusMood: legacyHtml(radius.mood[0].toUpperCase() + radius.mood.slice(1)),
+            radiusRel: legacyHtml(radius.rel),
+          }),
+        )
+        .join(''),
+    ),
+  });
 }
 
 // everything you own and everything you have done, on one page
@@ -241,7 +422,7 @@ function careerHtml(clientGameState: ClientGameState): string {
     cargoVal -
     (playerPayload.loan ? playerPayload.loan.bal : 0);
   const keyValueRow = (entryKey: string, value: string | number) =>
-    `<div class="kv"><span>${entryKey}</span><span>${value}</span></div>`;
+    renderInfoUiCareerHtmlFragment023({ entryKey: legacyHtml(entryKey), value: legacyHtml(value) });
   const stationState = playerPayload.station || {},
     site = stationState.site && STELLARS[stationState.site],
     state = playerPayload.stats || {},
@@ -256,49 +437,179 @@ function careerHtml(clientGameState: ClientGameState): string {
   );
   const join2 = Object.entries(playerPayload.bp || {})
     .filter(([identifier, count]) => count > 0 && SPEC[identifier])
-    .map(
-      ([identifier, count]) =>
-        `<div class="kv small"><span>${escapeHtml(SPEC[identifier].name)}</span><span>${Math.min(count, BP_NEED)} / ${BP_NEED}${count >= BP_NEED ? ' <b style="color:var(--ok)">ready</b>' : ''}</span></div>`,
+    .map(([identifier, count]) =>
+      renderInfoUiCareerHtmlFragment024({
+        SPEC: SPEC[identifier].name,
+        MathMin: legacyHtml(Math.min(count, BP_NEED)),
+        BP_NEED: legacyHtml(BP_NEED),
+        count: legacyHtml(count >= BP_NEED ? renderInfoUiCareerHtmlFragment025() : ''),
+      }),
     )
     .join('');
   const docks = playerPayload.docks
     ? playerPayload.docks.list
-        .map(
-          (entryKey) =>
-            `<div class="kv small"><span>Dock ${entryKey.letter}${entryKey.letter === playerPayload.docks.list[playerPayload.docks.active].letter ? ' <span style="color:var(--ok)">(active)</span>' : ''}</span><span>${entryKey.lead && assets.ships[entryKey.lead.hull] ? escapeHtml(assets.ships[entryKey.lead.hull].name) : '<span class="dim">no lead</span>'}${entryKey.wings.filter(Boolean).length ? ` + ${entryKey.wings.filter(Boolean).length} wing` : ''}</span></div>`,
+        .map((entryKey) =>
+          renderInfoUiCareerHtmlFragment026({
+            entryKeyLetter: legacyHtml(entryKey.letter),
+            entryKeyLetter2: legacyHtml(
+              entryKey.letter === playerPayload.docks.list[playerPayload.docks.active].letter
+                ? renderInfoUiCareerHtmlFragment027()
+                : '',
+            ),
+            entryKeyLead: legacyHtml(
+              entryKey.lead && assets.ships[entryKey.lead.hull]
+                ? escapeHtml(assets.ships[entryKey.lead.hull].name)
+                : renderInfoUiCareerHtmlFragment028(),
+            ),
+            entryKeyWingsFilter: legacyHtml(
+              entryKey.wings.filter(Boolean).length
+                ? ` + ${entryKey.wings.filter(Boolean).length} wing`
+                : '',
+            ),
+          }),
         )
         .join('')
     : '';
-  return `<div class="igrid"><div>
-    <div class="sect" style="margin-top:0">HOLDINGS</div>
-    ${keyValueRow('<b>Net worth</b>', `<b class="cr">${credits2(worth)} cr</b>`)}${keyValueRow('Credits', credits2(playerPayload.credits))}${playerPayload.loan ? keyValueRow('Loan', `−${credits2(playerPayload.loan.bal)}`) : ''}
-    ${keyValueRow('Ships', `${(playerPayload.shipless ? 0 : 1) + stored.length} <span class="dim small">(${credits2((playerPayload.shipless ? 0 : shipVal(playerPayload.ship)) + stored.reduce((firstValue, loadout) => firstValue + shipVal(loadout), 0))} cr)</span>`)}${docks}
-    ${keyValueRow('Personal Station', site ? `Station Tier ${stationState.ops} · ${escapeHtml(systemsById[site.system].name)}` : '<span class="dim">none yet</span>')}
-    ${keyValueRow('Colonies', (playerPayload.colonies || []).length ? playerPayload.colonies.map((component) => `${escapeHtml(component.name)} (Lv ${component.lv})`).join(', ') : '<span class="dim">none</span>')}
-    ${keyValueRow(
-      'Officers',
-      (playerPayload.officers || []).length
-        ? Object.entries(officers2)
-            .sort((firstValue, secondValue) => Number(secondValue[0]) - Number(firstValue[0]))
-            .map(
-              ([radius, count]) =>
-                `<span style="color:${RARITY[Number(radius)].color}">${count} ${RARITY[Number(radius)].name}</span>`,
-            )
-            .join(', ')
-        : '<span class="dim">none</span>',
-    )}
-    ${keyValueRow('Material crates', crates)}${keyValueRow('Cargo', `${playerPayload.cargoUsed || 0} t <span class="dim small">(about ${credits2(cargoVal)} cr)</span>`)}
-    ${join2 ? `<div class="sect">BLUEPRINTS</div>${join2}` : ''}
-  </div><div>
-    <div class="sect" style="margin-top:0">PROGRESS</div>
-    ${keyValueRow('Main story', screenY.pass ? 'complete' : `chapter ${Math.min((screenY.step || 0) + 1, screenY.total || 1)} of ${screenY.total || '?'}`)}
-    ${keyValueRow('Side stories', `${quantity.done.filter((positionX) => positionX.side).length} of 6`)}${keyValueRow('Contact stories', `${quantity.done.filter((positionX) => !positionX.side).length} finished · ${Object.values(quantity.contacts || {}).filter((component) => component.n >= 2).length} trusted contacts`)}
-    ${keyValueRow('Faction stories', `${(playerPayload.arcs || []).filter((firstValue) => firstValue.done).length} of ${(playerPayload.arcs || []).length}`)}${keyValueRow('Farside expeditions', (playerPayload.expd && playerPayload.expd.n) || 0)}
-    ${keyValueRow('Combat rating', `<b style="color:#ffd27a">${escapeHtml((playerPayload.rank || {}).name || 'Harmless')}</b>`)}${keyValueRow('Ships destroyed', credits2(state.kills || 0))}
-    ${keyValueRow('Systems explored', `${(playerPayload.explored || []).length} of ${SYSTEMS.filter((starSystem) => !starSystem.arena).length}`)}${keyValueRow('Jumps made', credits2(state.jumps || 0))}
-    ${keyValueRow('Credits earned', credits2(state.earned || 0))}${state.mined ? keyValueRow('Ore mined', `${credits2(state.mined)} t`) : ''}
-    ${(quantity.active || []).length ? `<div class="sect">STORIES UNDER WAY</div>${quantity.active.map((firstValue) => `<div class="kv small"><span>${firstValue.side ? '★' : '✦'} ${escapeHtml(firstValue.name)}</span><span class="dim">step ${firstValue.step + 1} of ${firstValue.of}</span></div>`).join('')}` : ''}
-  </div></div>`;
+  return renderInfoUiCareerHtmlFragment029({
+    keyValueRow: legacyHtml(
+      keyValueRow(
+        renderInfoUiCareerHtmlFragment030(),
+        renderInfoUiCareerHtmlFragment031({ credits2: legacyHtml(credits2(worth)) }),
+      ),
+    ),
+    keyValueRow2: legacyHtml(keyValueRow('Credits', credits2(playerPayload.credits))),
+    playerPayloadLoan: legacyHtml(
+      playerPayload.loan ? keyValueRow('Loan', `−${credits2(playerPayload.loan.bal)}`) : '',
+    ),
+    keyValueRow3: legacyHtml(
+      keyValueRow(
+        'Ships',
+        renderInfoUiCareerHtmlFragment032({
+          playerPayloadShipless: legacyHtml((playerPayload.shipless ? 0 : 1) + stored.length),
+          credits2: legacyHtml(
+            credits2(
+              (playerPayload.shipless ? 0 : shipVal(playerPayload.ship)) +
+                stored.reduce((firstValue, loadout) => firstValue + shipVal(loadout), 0),
+            ),
+          ),
+        }),
+      ),
+    ),
+    docks: legacyHtml(docks),
+    keyValueRow4: legacyHtml(
+      keyValueRow(
+        'Personal Station',
+        site
+          ? `Station Tier ${stationState.ops} · ${escapeHtml(systemsById[site.system].name)}`
+          : renderInfoUiCareerHtmlFragment033(),
+      ),
+    ),
+    keyValueRow5: legacyHtml(
+      keyValueRow(
+        'Colonies',
+        (playerPayload.colonies || []).length
+          ? playerPayload.colonies
+              .map((component) => `${escapeHtml(component.name)} (Lv ${component.lv})`)
+              .join(', ')
+          : renderInfoUiCareerHtmlFragment034(),
+      ),
+    ),
+    keyValueRow6: legacyHtml(
+      keyValueRow(
+        'Officers',
+        (playerPayload.officers || []).length
+          ? Object.entries(officers2)
+              .sort((firstValue, secondValue) => Number(secondValue[0]) - Number(firstValue[0]))
+              .map(([radius, count]) =>
+                renderInfoUiCareerHtmlFragment035({
+                  RARITY: legacyHtml(RARITY[Number(radius)].color),
+                  count: legacyHtml(count),
+                  RARITY2: legacyHtml(RARITY[Number(radius)].name),
+                }),
+              )
+              .join(', ')
+          : renderInfoUiCareerHtmlFragment036(),
+      ),
+    ),
+    keyValueRow7: legacyHtml(keyValueRow('Material crates', crates)),
+    keyValueRow8: legacyHtml(
+      keyValueRow(
+        'Cargo',
+        renderInfoUiCareerHtmlFragment037({
+          playerPayloadCargoUsed: legacyHtml(playerPayload.cargoUsed || 0),
+          credits2: legacyHtml(credits2(cargoVal)),
+        }),
+      ),
+    ),
+    join2: legacyHtml(join2 ? renderInfoUiCareerHtmlFragment038({ join2: legacyHtml(join2) }) : ''),
+    keyValueRow9: legacyHtml(
+      keyValueRow(
+        'Main story',
+        screenY.pass
+          ? 'complete'
+          : `chapter ${Math.min((screenY.step || 0) + 1, screenY.total || 1)} of ${screenY.total || '?'}`,
+      ),
+    ),
+    keyValueRow10: legacyHtml(
+      keyValueRow(
+        'Side stories',
+        `${quantity.done.filter((positionX) => positionX.side).length} of 6`,
+      ),
+    ),
+    keyValueRow11: legacyHtml(
+      keyValueRow(
+        'Contact stories',
+        `${quantity.done.filter((positionX) => !positionX.side).length} finished · ${Object.values(quantity.contacts || {}).filter((component) => component.n >= 2).length} trusted contacts`,
+      ),
+    ),
+    keyValueRow12: legacyHtml(
+      keyValueRow(
+        'Faction stories',
+        `${(playerPayload.arcs || []).filter((firstValue) => firstValue.done).length} of ${(playerPayload.arcs || []).length}`,
+      ),
+    ),
+    keyValueRow13: legacyHtml(
+      keyValueRow('Farside expeditions', (playerPayload.expd && playerPayload.expd.n) || 0),
+    ),
+    keyValueRow14: legacyHtml(
+      keyValueRow(
+        'Combat rating',
+        renderInfoUiCareerHtmlFragment039({
+          playerPayloadRank: (playerPayload.rank || {}).name || 'Harmless',
+        }),
+      ),
+    ),
+    keyValueRow15: legacyHtml(keyValueRow('Ships destroyed', credits2(state.kills || 0))),
+    keyValueRow16: legacyHtml(
+      keyValueRow(
+        'Systems explored',
+        `${(playerPayload.explored || []).length} of ${SYSTEMS.filter((starSystem) => !starSystem.arena).length}`,
+      ),
+    ),
+    keyValueRow17: legacyHtml(keyValueRow('Jumps made', credits2(state.jumps || 0))),
+    keyValueRow18: legacyHtml(keyValueRow('Credits earned', credits2(state.earned || 0))),
+    stateMined: legacyHtml(
+      state.mined ? keyValueRow('Ore mined', `${credits2(state.mined)} t`) : '',
+    ),
+    quantityActive: legacyHtml(
+      (quantity.active || []).length
+        ? renderInfoUiCareerHtmlFragment040({
+            quantityActiveMap: legacyHtml(
+              quantity.active
+                .map((firstValue) =>
+                  renderInfoUiCareerHtmlFragment041({
+                    firstValueSide: legacyHtml(firstValue.side ? '★' : '✦'),
+                    firstValueName: firstValue.name,
+                    firstValueStep: legacyHtml(firstValue.step + 1),
+                    firstValueOf: legacyHtml(firstValue.of),
+                  }),
+                )
+                .join(''),
+            ),
+          })
+        : '',
+    ),
+  });
 }
 
 // where a good in your hold sells best, among the markets you have visited within four jumps

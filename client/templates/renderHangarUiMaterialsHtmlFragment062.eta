@@ -1,0 +1,1 @@
+<td style="color:<%~ it.count %>"><%~ it.count2 %><%~ it.interactive %></td>

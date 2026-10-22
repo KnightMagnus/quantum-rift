@@ -1,0 +1,15 @@
+<div class="igrid"><div>
+      <div class="sect" style="margin-top:0">SHIP</div>
+      <%~ it.playerPayloadShipless %>
+      <div class="sect">COMBAT RATING</div><div class="kv"><span><b style="color:#ffd27a"><%= it.rankName %></b></span><span class="dim"><%~ it.credits2 %><%~ it.rankNext %></span></div>
+      <div class="rbar"><i style="width:<%~ it.progressBar %>%"></i></div><div class="dim small">Destroying ships raises your rating. Competent captains are offered Wanted contracts, and Dangerous ones get elite contracts.</div>
+      <div class="sect">RECORD</div><%~ it.synBadge %><div class="kv"><span>Commendations</span><span><%~ it.playerPayloadShards %></span></div>
+      <div class="kv"><span>Credit rating</span><span><%~ it.playerPayloadCredit %><%~ it.playerPayloadLoan %></span></div>
+      <div class="kv"><span>Faction stories</span><span><%~ it.playerPayloadArcs %> of <%~ it.playerPayloadArcs2 %> complete</span></div>
+      <div class="kv"><span>Farside expeditions</span><span><%~ it.playerPayloadExpd %> decoded</span></div>
+    </div><div>
+      <div class="sect" style="margin-top:0">CARGO</div>
+      <%~ it.cargoLength %>
+      <%~ it.cargoLength2 %>
+      <div class="sect">MISSION CARGO</div><%~ it.playerPayloadMissions %>
+    </div></div>

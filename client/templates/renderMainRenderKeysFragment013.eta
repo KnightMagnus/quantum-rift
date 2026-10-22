@@ -1,0 +1,1 @@
+<div class="kb"><span><%~ it.count %></span><button class="btn sm<%~ it.rebinding %>" data-bind="<%~ it.firstValue %>"><%~ it.rebinding2 %></button></div>

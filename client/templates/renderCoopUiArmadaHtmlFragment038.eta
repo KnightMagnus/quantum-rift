@@ -1,0 +1,1 @@
+<div class="kv"><span><b><%= it.positionXName %></b> <span class="dim small">led by <%= it.positionXLeader %> · <%~ it.positionXN %>/<%~ it.ARMADAMax %></span></span><span><button class="btn sm" data-cact="aacc" data-id="<%= it.positionXId %>">JOIN</button> <button class="btn sm" data-cact="adec" data-id="<%= it.positionXId2 %>">DECLINE</button></span></div>

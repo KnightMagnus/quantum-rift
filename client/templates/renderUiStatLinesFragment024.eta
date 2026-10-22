@@ -1,0 +1,1 @@
+<div class="kv"><span>Passenger seats</span><span><%~ it.passengerSeats %> dedicated<%~ it.shipHullAsset2 %></span></div><div class="kv"><span>Hardpoints</span><span><%~ it.shipHullAssetGuns %> guns · <%~ it.shipHullAssetTurrets %> turrets</span></div><div class="kv"><span>Armament</span><span style="text-align:right"><%~ it.shipHullAssetWeaponsMap %></span></div>

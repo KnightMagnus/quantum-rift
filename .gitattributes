@@ -30,3 +30,6 @@ client/assets/sfx/music_login31.mp3 -filter -diff -merge -text
 
 # Small reproducible cockpit cursors ship directly in ordinary clones.
 client/assets/cursors/*.png -filter -diff -merge -text
+
+# Eta fragments preserve literal trailing spaces from the original HTML output.
+client/templates/*.eta whitespace=-blank-at-eol

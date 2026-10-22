@@ -1,0 +1,1 @@
+<div class="kv"><span style="color:<%~ it.done %>"><%~ it.done2 %><%= it.researchNodeName %><%~ it.researchNodeNeeds %><div class="dim small"><%= it.join2 %></div></span><span class="small"><%~ it.done3 %></span></div>

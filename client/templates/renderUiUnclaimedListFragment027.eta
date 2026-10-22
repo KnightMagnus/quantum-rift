@@ -1,0 +1,1 @@
+<div class="kv"><span><%= it.systemsById %></span><span class="dim"><%= it.FACTIONS %> space</span></div>

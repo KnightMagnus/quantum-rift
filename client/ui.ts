@@ -1,3 +1,175 @@
+import { legacyHtml } from './eta-runtime.ts';
+import {
+  renderUiChatLineAttribute001,
+  renderUiChatLineAttribute002,
+  renderUiStationHtmlAttribute003,
+  renderUiRenderLandedAttribute004,
+  renderUiRenderLandedAttribute005,
+  renderUiRenderLandedAttribute006,
+  renderUiRenderLandedAttribute007,
+  renderUiRenderLandedAttribute008,
+} from './eta-templates.ts';
+import {
+  renderUiViewFragment001,
+  renderUiChatLineFragment002,
+  renderUiHudFragment003,
+  renderUiHudFragment004,
+  renderUiHudFragment005,
+  renderUiHudFragment006,
+  renderUiHudFragment007,
+  renderUiRenderRadioFragment008,
+  renderUiRenderRadioFragment009,
+  renderUiRenderRadioFragment010,
+  renderUiRenderCodexFragment011,
+  renderUiRenderCodexFragment012,
+  renderUiRenderCodexFragment013,
+  renderUiRenderCodexFragment014,
+  renderUiCodexDetailFragment015,
+  renderUiCodexDetailFragment016,
+  renderUiCodexDetailFragment017,
+  renderUiCodexDetailFragment018,
+  renderUiStatLinesFragment019,
+  renderUiStatLinesFragment020,
+  renderUiStatLinesFragment021,
+  renderUiStatLinesFragment022,
+  renderUiStatLinesFragment023,
+  renderUiStatLinesFragment024,
+  renderUiWeaponLinesFragment025,
+  renderUiUnclaimedListFragment026,
+  renderUiUnclaimedListFragment027,
+  renderUiUnclaimedListFragment028,
+  renderUiStationHtmlFragment029,
+  renderUiStationHtmlFragment030,
+  renderUiStationHtmlFragment031,
+  renderUiStationHtmlFragment032,
+  renderUiStationHtmlFragment033,
+  renderUiStationHtmlFragment034,
+  renderUiStationHtmlFragment035,
+  renderUiStationHtmlFragment036,
+  renderUiStationHtmlFragment037,
+  renderUiStationHtmlFragment038,
+  renderUiStationHtmlFragment039,
+  renderUiStationHtmlFragment040,
+  renderUiStationHtmlFragment041,
+  renderUiStationHtmlFragment042,
+  renderUiStationHtmlFragment043,
+  renderUiStationHtmlFragment044,
+  renderUiStationHtmlFragment045,
+  renderUiStationHtmlFragment046,
+  renderUiStationHtmlFragment047,
+  renderUiStationHtmlFragment048,
+  renderUiStationHtmlFragment049,
+  renderUiStationHtmlFragment050,
+  renderUiStationHtmlFragment051,
+  renderUiStationHtmlFragment052,
+  renderUiStationHtmlFragment053,
+  renderUiStationHtmlFragment054,
+  renderUiStationHtmlFragment055,
+  renderUiStationHtmlFragment056,
+  renderUiStationHtmlFragment057,
+  renderUiStationHtmlFragment058,
+  renderUiStationHtmlFragment059,
+  renderUiStationHtmlFragment060,
+  renderUiRenderLogFragment061,
+  renderUiRenderLogFragment062,
+  renderUiShowLandedFragment063,
+  renderUiRenderLandedFragment064,
+  renderUiRenderLandedFragment065,
+  renderUiRenderLandedFragment066,
+  renderUiRenderLandedFragment067,
+  renderUiRenderLandedFragment068,
+  renderUiRenderLandedFragment069,
+  renderUiRenderLandedFragment070,
+  renderUiRenderLandedFragment071,
+  renderUiRenderLandedFragment072,
+  renderUiRenderLandedFragment073,
+  renderUiRenderLandedFragment074,
+  renderUiRenderLandedFragment075,
+  renderUiRenderLandedFragment076,
+  renderUiRenderLandedFragment077,
+  renderUiRenderLandedFragment078,
+  renderUiRenderLandedFragment079,
+  renderUiRenderLandedFragment080,
+  renderUiRenderLandedFragment081,
+  renderUiRenderLandedFragment082,
+  renderUiRenderLandedFragment083,
+  renderUiRenderLandedFragment084,
+  renderUiRenderLandedFragment085,
+  renderUiRenderLandedFragment086,
+  renderUiRenderLandedFragment087,
+  renderUiRenderLandedFragment088,
+  renderUiRenderLandedFragment089,
+  renderUiRenderLandedFragment090,
+  renderUiRenderLandedFragment091,
+  renderUiRenderLandedFragment092,
+  renderUiRenderLandedFragment093,
+  renderUiRenderLandedFragment094,
+  renderUiRenderLandedFragment095,
+  renderUiRenderLandedFragment096,
+  renderUiRenderLandedFragment097,
+  renderUiRenderLandedFragment098,
+  renderUiRenderLandedFragment099,
+  renderUiRenderLandedFragment100,
+  renderUiRenderLandedFragment101,
+  renderUiRenderLandedFragment102,
+  renderUiRenderLandedFragment103,
+  renderUiRenderLandedFragment104,
+  renderUiRenderLandedFragment105,
+  renderUiRenderLandedFragment106,
+  renderUiRenderLandedFragment107,
+  renderUiRenderLandedFragment108,
+  renderUiRenderLandedFragment109,
+  renderUiRenderLandedFragment110,
+  renderUiRenderLandedFragment111,
+  renderUiRenderLandedFragment112,
+  renderUiRenderLandedFragment113,
+  renderUiRenderLandedFragment114,
+  renderUiRenderLandedFragment115,
+  renderUiRenderLandedFragment116,
+  renderUiRenderLandedFragment117,
+  renderUiRenderLandedFragment118,
+  renderUiRenderLandedFragment119,
+  renderUiRenderLandedFragment120,
+  renderUiRenderLandedFragment121,
+  renderUiRenderLandedFragment122,
+  renderUiRenderLandedFragment123,
+  renderUiRenderLandedFragment124,
+  renderUiRenderLandedFragment125,
+  renderUiRenderLandedFragment126,
+  renderUiRenderLandedFragment127,
+  renderUiRenderLandedFragment128,
+  renderUiStateLineFragment129,
+  renderUiStateLineFragment130,
+  renderUiStateCardFragment131,
+  renderUiStateCardFragment132,
+  renderUiStateCardFragment133,
+  renderUiBarCardFragment134,
+  renderUiBarCardFragment135,
+  renderUiBarCardFragment136,
+  renderUiBarCardFragment137,
+  renderUiBarCardFragment138,
+  renderUiQuestNeedsFragment139,
+  renderUiQuestCardFragment140,
+  renderUiQuestCardFragment141,
+  renderUiQuestCardFragment142,
+  renderUiQuestCardFragment143,
+  renderUiQuestCardFragment144,
+  renderUiSearchMapFragment145,
+  renderUiSearchMapFragment146,
+  renderUiViewFragment147,
+  renderUiDrawGMapFragment148,
+  renderUiDrawGMapFragment149,
+  renderUiDrawGMapFragment150,
+  renderUiDrawGMapFragment151,
+  renderUiDrawGMapFragment152,
+  renderUiDrawGMapFragment153,
+  renderUiDrawGMapFragment154,
+  renderUiDrawGMapFragment155,
+  renderUiDrawGMapFragment156,
+  renderUiDrawGMapFragment157,
+  renderUiDrawGMapFragment158,
+  renderUiDrawGMapFragment159,
+} from './eta-templates.ts';
 import type { PlayerPayload, LandedPayload } from './main.ts';
 import type { Mission } from '../server/game.ts';
 import type { OutfitAsset } from '../shared/rules.ts';
@@ -157,7 +329,12 @@ const elementById2 = elementById;
 export const roleTag = (height: { role?: RoleId }): string => {
   const roleInfo = ROLES_INFO[(height && height.role)!];
   return roleInfo
-    ? `<span class="role" style="color:${roleInfo.color}" title="${roleInfo.desc}">${roleInfo.icon} ${roleInfo.name}</span>`
+    ? renderUiViewFragment001({
+        roleInfoColor: legacyHtml(roleInfo.color),
+        roleInfoDesc: legacyHtml(roleInfo.desc),
+        roleInfoIcon: legacyHtml(roleInfo.icon),
+        roleInfoName: legacyHtml(roleInfo.name),
+      })
     : '';
 };
 
@@ -651,7 +828,18 @@ export function chatLine(message: { msg: string; from?: string; ch?: string }): 
     htmlDivElement.className = 'sys';
     htmlDivElement.textContent = message.msg;
   } else
-    htmlDivElement.innerHTML = `<b${message.ch === 'armada' ? ' class="armada"' : ''}${!clientGameState.solo && message.from !== clientGameState.myName ? ` data-dm="${escapeHtml2(message.from)}" title="Message ${escapeHtml2(message.from)}"` : ''}>${message.ch === 'armada' ? '[Armada] ' : ''}${escapeHtml2(message.from)}${message.ch === 'sys' ? ' (system)' : ''}:</b> ${escapeHtml2(message.msg)}`; // click a name to message them
+    htmlDivElement.innerHTML = renderUiChatLineFragment002({
+      messageCh: legacyHtml(message.ch === 'armada' ? renderUiChatLineAttribute001() : ''),
+      clientGameStateSolo: legacyHtml(
+        !clientGameState.solo && message.from !== clientGameState.myName
+          ? renderUiChatLineAttribute002({ messageFrom: message.from, messageFrom2: message.from })
+          : '',
+      ),
+      messageCh2: legacyHtml(message.ch === 'armada' ? '[Armada] ' : ''),
+      messageFrom: message.from,
+      messageCh3: legacyHtml(message.ch === 'sys' ? ' (system)' : ''),
+      messageMsg: message.msg,
+    }); // click a name to message them
   const cachedElement = elementById2('chatlog');
   const atBottom =
     cachedElement.scrollHeight - cachedElement.clientHeight - cachedElement.scrollTop < 4;
@@ -767,7 +955,9 @@ export function hud(): void {
   if (renderEntity) {
     const shipHullAsset = clientGameState.A!.ships[renderEntity.hull];
     if ((elementById2('tg-img').dataset.h as string | number) != renderEntity.hull) {
-      elementById2('tg-img').innerHTML = `<img src="${artworkUrl(shipHullAsset.img!)}" alt="">`;
+      elementById2('tg-img').innerHTML = renderUiHudFragment003({
+        artworkUrl: legacyHtml(artworkUrl(shipHullAsset.img!)),
+      });
       elementById2('tg-img').dataset.h = String(renderEntity.hull);
     }
     elementById2('tg-name').textContent = renderEntity.name || shipHullAsset.name;
@@ -806,7 +996,11 @@ export function hud(): void {
               Math.hypot(renderEntity.rx - clientView.rx, renderEntity.ry - clientView.ry),
             ) + ' km · '
           : '') +
-        `Lv ${levelOf(renderEntity.pw || 10)} · <span style="color:${column}">${Math.round(winOdds2 * 100)}% estimated odds</span>`;
+        renderUiHudFragment004({
+          levelOf: legacyHtml(levelOf(renderEntity.pw || 10)),
+          column: legacyHtml(column),
+          MathRound: legacyHtml(Math.round(winOdds2 * 100)),
+        });
     }
     elementById2('tg-bars').style.visibility = 'visible';
     {
@@ -823,7 +1017,17 @@ export function hud(): void {
         cachedElement._k = entryKey;
         cachedElement.classList.toggle('hidden', !capacity);
         cachedElement.innerHTML = capacity
-          ? `${ally ? '' : `<button class="btn sm" data-tga="invite">INVITE</button><button class="btn sm" data-tga="duel">DUEL</button>`}<button class="btn sm" data-tga="dm">✉</button>${clientGameState.social && clientGameState.social.friends.some((friendEntry) => friendEntry.name === renderEntity.name) ? '' : '<button class="btn sm" data-tga="friend">+ FRIEND</button>'}`
+          ? renderUiHudFragment005({
+              ally: legacyHtml(ally ? '' : renderUiHudFragment006()),
+              clientGameStateSocial: legacyHtml(
+                clientGameState.social &&
+                  clientGameState.social.friends.some(
+                    (friendEntry) => friendEntry.name === renderEntity.name,
+                  )
+                  ? ''
+                  : renderUiHudFragment007(),
+              ),
+            })
           : '';
         cachedElement.dataset.n = capacity ? renderEntity.name : '';
       }
@@ -986,16 +1190,27 @@ function renderRadio() {
   setUnlockedStations(clientGameState.you?.radioStations);
   elementById2('rlist').innerHTML = list.length
     ? list
-        .map(
-          (radioStation, index) =>
-            `<div class="it" data-i="${index}" role="button" tabindex="0" aria-label="Play ${escapeHtml2(radioStation.name)}"><div class="n"><div>${escapeHtml2(radioStation.name)}</div><div class="s">${escapeHtml2(radioStation.sub)}</div></div><span class="star" role="button" tabindex="0" aria-label="Favorite ${escapeHtml2(radioStation.name)}" data-star="${index}" style="color:${favorites.some((radioStation2) => radioStation2.id === radioStation.id) ? '#e6b84a' : '#555'};font-size:15px">★</span></div>`,
+        .map((radioStation, index) =>
+          renderUiRenderRadioFragment008({
+            index: legacyHtml(index),
+            radioStationName: radioStation.name,
+            radioStationName2: radioStation.name,
+            radioStationSub: radioStation.sub,
+            radioStationName3: radioStation.name,
+            index2: legacyHtml(index),
+            favoritesSome: legacyHtml(
+              favorites.some((radioStation2) => radioStation2.id === radioStation.id)
+                ? '#e6b84a'
+                : '#555',
+            ),
+          }),
         )
         .join('')
-    : '<div class="dim small" style="padding:8px">' +
+    : renderUiRenderRadioFragment009() +
       (clientGameState.radioTab === 'fav'
         ? 'No favorites yet. Choose STATIONS, then use a star to save one.'
         : 'No stations match. Explore to discover more broadcasts.') +
-      '</div>';
+      renderUiRenderRadioFragment010();
   for (const htmlElement of elementById2('rlist').querySelectorAll<HTMLElement>('[role=button]'))
     htmlElement.onkeydown = (keyboardEvent) => {
       if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
@@ -1044,9 +1259,12 @@ function renderCodex(): void {
     allOutfits2 = allOutfits(clientGameState.A!);
   const categories = ['Ships', 'Outfits', 'Weapons'];
   elementById2('cchips').innerHTML = categories
-    .map(
-      (component) =>
-        `<span class="chip ${component === codexCat ? 'on' : ''}" data-c="${component}">${component}</span>`,
+    .map((component) =>
+      renderUiRenderCodexFragment011({
+        component: legacyHtml(component === codexCat ? 'on' : ''),
+        component2: legacyHtml(component),
+        component3: legacyHtml(component),
+      }),
     )
     .join('');
   elementById2('cchips')
@@ -1105,9 +1323,18 @@ function renderCodex(): void {
       (index.name + ' ' + index.sub).toLowerCase().includes(toLowerCase2),
     );
   const html = items
-    .map(
-      (index) =>
-        `<div class="it" data-k="${index.key}">${index.img ? `<img src="${index.img}" alt="">` : '<span style="width:40px"></span>'}<div class="n"><div>${escapeHtml2(index.name)}</div><div class="s">${escapeHtml2(index.sub)}</div></div><span class="cr small">${index.cost}</span></div>`,
+    .map((index) =>
+      renderUiRenderCodexFragment012({
+        indexKey: legacyHtml(index.key),
+        indexImg: legacyHtml(
+          index.img
+            ? renderUiRenderCodexFragment013({ indexImg: legacyHtml(index.img) })
+            : renderUiRenderCodexFragment014(),
+        ),
+        indexName: index.name,
+        indexSub: index.sub,
+        indexCost: legacyHtml(index.cost),
+      }),
     )
     .join('');
   clientGameState.views.replace(
@@ -1152,18 +1379,39 @@ function codexDetail(entryKey: string): void {
                 : [735, 736].includes(identifier)
                   ? 'Quantum Station shipyard'
                   : 'Shipyards of: ' + (factionsSelling(identifier).join(', ') || 'none');
-    elementById2('clist').innerHTML =
-      `<div style="padding:6px"><a href="#" id="cback" style="color:#d88">&lsaquo; back</a><div style="text-align:center"><img src="${artworkUrl(shipHullAsset.img!)}" style="max-width:100%;max-height:150px"></div>
-      <b style="color:#fff;font-size:14px">${escapeHtml2(shipHullAsset.name)}</b> <span class="cr" style="float:right">${shipHullAsset.kind === 'wingmate' ? 'hire' : credits(shipHullAsset.cost) + ' cr'}</span><div class="dim">${escapeHtml2(shipHullAsset.sub)} · ${roleTag(shipHullAsset)}</div><div class="dim small">${escapeHtml2((ROLES_INFO[shipHullAsset.role!] || {}).desc || '')}</div>
-      ${statLines(shipHullAsset)}<div class="sect">WHERE TO GET IT</div><div style="color:#bfe0ff">${escapeHtml2(where)}</div>
-      ${shipHullAsset.pilot ? `<div class="sect">PILOT</div><div style="white-space:pre-wrap;line-height:1.4">${escapeHtml2(shipHullAsset.pilot)}</div>` : ''}<div class="sect">DESCRIPTION</div><div style="white-space:pre-wrap;line-height:1.4">${escapeHtml2(shipHullAsset.desc)}</div></div>`;
+    elementById2('clist').innerHTML = renderUiCodexDetailFragment015({
+      artworkUrl: legacyHtml(artworkUrl(shipHullAsset.img!)),
+      shipHullAssetName: shipHullAsset.name,
+      shipHullAssetKind: legacyHtml(
+        shipHullAsset.kind === 'wingmate' ? 'hire' : credits(shipHullAsset.cost) + ' cr',
+      ),
+      shipHullAssetSub: shipHullAsset.sub,
+      roleTag: legacyHtml(roleTag(shipHullAsset)),
+      ROLES_INFO: (ROLES_INFO[shipHullAsset.role!] || {}).desc || '',
+      statLines: legacyHtml(statLines(shipHullAsset)),
+      where: where,
+      shipHullAssetPilot: legacyHtml(
+        shipHullAsset.pilot
+          ? renderUiCodexDetailFragment016({ shipHullAssetPilot: shipHullAsset.pilot })
+          : '',
+      ),
+      shipHullAssetDesc: shipHullAsset.desc,
+    });
   } else {
     const outfitAsset = allOutfits(clientGameState.A!)[identifier];
-    elementById2('clist').innerHTML =
-      `<div style="padding:6px"><a href="#" id="cback" style="color:#d88">&lsaquo; back</a><div style="text-align:center">${outfitAsset.icon ? `<img src="${artworkUrl(outfitAsset.icon)}">` : ''}</div>
-      <b style="color:#fff;font-size:14px">${escapeHtml2(outfitAsset.name)}</b> <span class="cr" style="float:right">${credits(outfitAsset.cost)} cr</span>
-      <div class="kv"><span>Mass</span><span>${outfitAsset.mass || 0} t</span></div><div class="kv"><span>Max</span><span>${outfitAsset.max || 1}</span></div>${weaponLines(outfitAsset)}
-      <div class="sect">DESCRIPTION</div><div style="white-space:pre-wrap;line-height:1.4">${escapeHtml2(outfitAsset.desc)}</div></div>`;
+    elementById2('clist').innerHTML = renderUiCodexDetailFragment017({
+      outfitAssetIcon: legacyHtml(
+        outfitAsset.icon
+          ? renderUiCodexDetailFragment018({ artworkUrl: legacyHtml(artworkUrl(outfitAsset.icon)) })
+          : '',
+      ),
+      outfitAssetName: outfitAsset.name,
+      credits: legacyHtml(credits(outfitAsset.cost)),
+      outfitAssetMass: legacyHtml(outfitAsset.mass || 0),
+      outfitAssetMax: legacyHtml(outfitAsset.max || 1),
+      weaponLines: legacyHtml(weaponLines(outfitAsset)),
+      outfitAssetDesc: outfitAsset.desc,
+    });
   }
   elementById2('cback').onclick = (pointerEvent) => {
     pointerEvent.preventDefault();
@@ -1203,20 +1451,61 @@ function statLines(shipHullAsset: ShipHull, shipHullAsset2?: ShipHull | null): s
           Math.floor((shipHullAsset2[entryKey] || 0) / 100)
         : Math.round((shipHullAsset[entryKey] || 0) - (shipHullAsset2[entryKey] || 0));
     return firstValue
-      ? `<span class="dlt ${firstValue > 0 ? 'up' : 'dn'}">${firstValue > 0 ? '+' : ''}${firstValue}</span>`
-      : '<span class="dlt">=</span>';
+      ? renderUiStatLinesFragment019({
+          firstValue: legacyHtml(firstValue > 0 ? 'up' : 'dn'),
+          firstValue2: legacyHtml(firstValue > 0 ? '+' : ''),
+          firstValue3: legacyHtml(firstValue),
+        })
+      : renderUiStatLinesFragment020();
   };
   return (
     (['shield', 'armor', 'speed', 'accel', 'turn', 'cargo', 'fuel', 'space'] as const)
-      .map(
-        (entryKey) =>
-          `<div class="stat"><span>${entryKey[0].toUpperCase() + entryKey.slice(1)}</span><div class="bar"><i style="width:${Math.min(100, 100 * Math.sqrt((shipHullAsset[entryKey] || 0) / STATMAX[entryKey]))}%"></i>${shipHullAsset2 && shipHullAsset2 !== shipHullAsset ? `<b class="was" style="left:${Math.min(100, 100 * Math.sqrt((shipHullAsset2[entryKey] || 0) / STATMAX[entryKey]))}%"></b>` : ''}</div><span style="width:44px;text-align:right">${format(entryKey, shipHullAsset[entryKey])}</span>${shipHullAsset2 && shipHullAsset2 !== shipHullAsset ? delta(entryKey) : ''}</div>`,
+      .map((entryKey) =>
+        renderUiStatLinesFragment021({
+          entryKey: legacyHtml(entryKey[0].toUpperCase() + entryKey.slice(1)),
+          MathMin: legacyHtml(
+            Math.min(100, 100 * Math.sqrt((shipHullAsset[entryKey] || 0) / STATMAX[entryKey])),
+          ),
+          shipHullAsset2: legacyHtml(
+            shipHullAsset2 && shipHullAsset2 !== shipHullAsset
+              ? renderUiStatLinesFragment022({
+                  MathMin: legacyHtml(
+                    Math.min(
+                      100,
+                      100 * Math.sqrt((shipHullAsset2[entryKey] || 0) / STATMAX[entryKey]),
+                    ),
+                  ),
+                })
+              : '',
+          ),
+          format: legacyHtml(format(entryKey, shipHullAsset[entryKey])),
+          shipHullAsset22: legacyHtml(
+            shipHullAsset2 && shipHullAsset2 !== shipHullAsset ? delta(entryKey) : '',
+          ),
+        }),
       )
       .join('') +
     (shipHullAsset2 && shipHullAsset2 !== shipHullAsset
-      ? `<div class="dim small">Compared with your ${escapeHtml2(shipHullAsset2.name)} (the white tick on each bar).</div>`
+      ? renderUiStatLinesFragment023({ shipHullAsset2Name: shipHullAsset2.name })
       : '') +
-    `<div class="kv"><span>Passenger seats</span><span>${passengerSeats(shipHullAsset)} dedicated${shipHullAsset2 && shipHullAsset2 !== shipHullAsset ? ` (your stock hull: ${passengerSeats(shipHullAsset2)})` : ''}</span></div><div class="kv"><span>Hardpoints</span><span>${shipHullAsset.guns} guns · ${shipHullAsset.turrets} turrets</span></div><div class="kv"><span>Armament</span><span style="text-align:right">${shipHullAsset.weapons.map(([width, count]) => `${clientGameState.A!.weapons[width] ? clientGameState.A!.weapons[width].name : width} ×${count}`).join(', ') || 'none'}</span></div>`
+    renderUiStatLinesFragment024({
+      passengerSeats: legacyHtml(passengerSeats(shipHullAsset)),
+      shipHullAsset2: legacyHtml(
+        shipHullAsset2 && shipHullAsset2 !== shipHullAsset
+          ? ` (your stock hull: ${passengerSeats(shipHullAsset2)})`
+          : '',
+      ),
+      shipHullAssetGuns: legacyHtml(shipHullAsset.guns),
+      shipHullAssetTurrets: legacyHtml(shipHullAsset.turrets),
+      shipHullAssetWeaponsMap: legacyHtml(
+        shipHullAsset.weapons
+          .map(
+            ([width, count]) =>
+              `${clientGameState.A!.weapons[width] ? clientGameState.A!.weapons[width].name : width} ×${count}`,
+          )
+          .join(', ') || 'none',
+      ),
+    })
   );
 }
 /**
@@ -1230,7 +1519,13 @@ function weaponLines(outfitAsset: OutfitAsset): string {
     : null;
   if (!weaponAsset) return '';
   const weaponConfig = weaponParams(weaponAsset);
-  return `<div class="kv"><span>Type</span><span>${weaponAsset.type}</span></div><div class="kv"><span>Damage</span><span>${weaponAsset.dmgS} shield · ${weaponAsset.dmgA} armor${weaponConfig.continuous ? ' per tick' : ''}</span></div><div class="kv"><span>Range</span><span>${Math.round(weaponConfig.range)}</span></div>`;
+  return renderUiWeaponLinesFragment025({
+    weaponAssetType: legacyHtml(weaponAsset.type),
+    weaponAssetDmgS: legacyHtml(weaponAsset.dmgS),
+    weaponAssetDmgA: legacyHtml(weaponAsset.dmgA),
+    weaponConfigContinuous: legacyHtml(weaponConfig.continuous ? ' per tick' : ''),
+    MathRound: legacyHtml(Math.round(weaponConfig.range)),
+  });
 }
 // station dashboard
 /**
@@ -1242,14 +1537,16 @@ function unclaimedList(): string {
     (stellarBody) => !(clientGameState.sites && clientGameState.sites[stellarBody.id]),
   );
   return free.length
-    ? `<div class="sect">UNCLAIMED HULLS (${free.length})</div>` +
+    ? renderUiUnclaimedListFragment026({ freeLength: legacyHtml(free.length) }) +
         free
-          .map(
-            (stellarBody) =>
-              `<div class="kv"><span>${escapeHtml2(systemsById[stellarBody.system].name)}</span><span class="dim">${escapeHtml2(FACTIONS[systemsById[stellarBody.system].faction].short)} space</span></div>`,
+          .map((stellarBody) =>
+            renderUiUnclaimedListFragment027({
+              systemsById: systemsById[stellarBody.system].name,
+              FACTIONS: FACTIONS[systemsById[stellarBody.system].faction].short,
+            }),
           )
           .join('')
-    : '<p class="dim">Every hull has been claimed.</p>';
+    : renderUiUnclaimedListFragment028();
 }
 // the station screen: one button per department, like rooms of the station
 const STATION_SECTIONS: Array<[string, string, number]> = [
@@ -1274,10 +1571,18 @@ function stationHtml(interactive?: boolean): string {
     here = length2 && length2.site;
   if (!stationState.site) {
     const canClaim = here && !here.owner;
-    return `<p>Derelict Concord station hulls drift in systems across the Rift. Land on one and claim it, and it becomes your Personal Station: build it up through five Station Tiers for a refinery that works while you fly, a research lab, wingmates and Exotic ships.</p>
-      ${stationState.claimed ? `<p style="color:var(--cr)">Your station progress (Station Tier ${stationState.ops}) is kept and moves to the hull you claim.</p>` : ''}
-      ${canClaim ? '<button class="btn big" data-act="st" data-op="claim">CLAIM THIS HULL</button>' : '<p class="dim">Fly to an unclaimed hull (shown on your radar in grey-violet) and land on it.</p>'}${unclaimedList()}
-      <div class="sect">SPECIALISTS</div>${specialistsHtml(clientGameState, false)}`;
+    return renderUiStationHtmlFragment029({
+      stationStateClaimed: legacyHtml(
+        stationState.claimed
+          ? renderUiStationHtmlFragment030({ stationStateOps: legacyHtml(stationState.ops) })
+          : '',
+      ),
+      canClaim: legacyHtml(
+        canClaim ? renderUiStationHtmlFragment031() : renderUiStationHtmlFragment032(),
+      ),
+      unclaimedList: legacyHtml(unclaimedList()),
+      specialistsHtml: legacyHtml(specialistsHtml(clientGameState, false)),
+    });
   }
   interactive = (interactive && here && here.own) as boolean;
   const where = STELLARS[stationState.site],
@@ -1286,35 +1591,111 @@ function stationHtml(interactive?: boolean): string {
     )
       ? clientGameState.stab
       : 'ops');
-  let height = `<div class="stnav">${STATION_SECTIONS.map(([entryKey, count, operations]) => `<button class="btn sm ${entryKey === seconds ? 'on' : ''}" data-act="stab" data-k="${entryKey}" ${stationState.ops < operations ? 'disabled title="Opens at Station Tier ' + operations + '"' : ''}>${count}</button>`).join('')}</div>`;
+  let height = renderUiStationHtmlFragment033({
+    STATION_SECTIONSMap: legacyHtml(
+      STATION_SECTIONS.map(([entryKey, count, operations]) =>
+        renderUiStationHtmlFragment034({
+          entryKey: legacyHtml(entryKey === seconds ? 'on' : ''),
+          entryKey2: legacyHtml(entryKey),
+          stationStateOps: legacyHtml(
+            stationState.ops < operations
+              ? renderUiStationHtmlAttribute003() + operations + '"'
+              : '',
+          ),
+          count: legacyHtml(count),
+        }),
+      ).join(''),
+    ),
+  });
   if (!interactive)
-    height += `<div class="dim small" style="margin:4px 0">Your Personal Station is in ${escapeHtml2(systemsById[where.system].name)}. Land there to manage it.</div>`;
+    height += renderUiStationHtmlFragment035({ systemsById: systemsById[where.system].name });
   const capacity = REFINERY.silo + (researchBonus(stationState).silo || 0),
     perUnit = REFINERY.minutes[stationState.ops] * 60000;
   switch (seconds) {
     case 'ops': {
       const next = operationLevels[stationState.ops];
-      height += `<div class="kv"><span>Location</span><span>${escapeHtml2(systemsById[where.system].name)}</span></div><div class="ops">${[1, 2, 3, 4, 5].map((entryKey) => `<div class="${stationState.ops >= entryKey ? 'on' : ''}">T-${entryKey}</div>`).join('')}</div>`;
+      height += renderUiStationHtmlFragment036({
+        systemsById: systemsById[where.system].name,
+        map: legacyHtml(
+          [1, 2, 3, 4, 5]
+            .map((entryKey) =>
+              renderUiStationHtmlFragment037({
+                stationStateOps: legacyHtml(stationState.ops >= entryKey ? 'on' : ''),
+                entryKey: legacyHtml(entryKey),
+              }),
+            )
+            .join(''),
+        ),
+      });
       if (next)
         height +=
-          `<div class="kv"><span>Next: Station Tier ${next.lv}</span><span>${escapeHtml2(next.title)}</span></div><div class="kv"><span>Cost</span><span>${credits(next.cost)} cr + ${next.mats.map(([message, game, count]) => `<span style="color:${playerPayload.mats[message][game] >= count ? '#8ff0ad' : '#ff9a8a'}">${message} ${GRADES[game]}</span>`).join(', ')}</span></div><div class="dim small">Unlocks: ${escapeHtml2(next.unlock)}</div>` +
-          (interactive
-            ? `<button class="btn sm" data-act="st" data-op="upgrade">BUILD T-${next.lv}</button>`
-            : '');
-      else
-        height +=
-          '<div class="kv"><span>Status</span><span style="color:var(--ok)">Fully built</span></div>';
-      height += '<div class="sect">AT A GLANCE</div>';
+          renderUiStationHtmlFragment038({
+            nextLv: legacyHtml(next.lv),
+            nextTitle: next.title,
+            credits: legacyHtml(credits(next.cost)),
+            nextMatsMap: legacyHtml(
+              next.mats
+                .map(([message, game, count]) =>
+                  renderUiStationHtmlFragment039({
+                    playerPayloadMats: legacyHtml(
+                      playerPayload.mats[message][game] >= count ? '#8ff0ad' : '#ff9a8a',
+                    ),
+                    message: legacyHtml(message),
+                    GRADES: legacyHtml(GRADES[game]),
+                  }),
+                )
+                .join(', '),
+            ),
+            nextUnlock: next.unlock,
+          }) + (interactive ? renderUiStationHtmlFragment040({ nextLv: legacyHtml(next.lv) }) : '');
+      else height += renderUiStationHtmlFragment041();
+      height += renderUiStationHtmlFragment042();
       if (stationState.ops >= 1)
-        height += `<div class="kv"><span>Refinery</span><span>${stationState.refUnits} / ${capacity} units${stationState.refUnits >= capacity ? ' · <b>full</b>' : ''}</span></div>`;
+        height += renderUiStationHtmlFragment043({
+          stationStateRefUnits: legacyHtml(stationState.refUnits),
+          capacity: legacyHtml(capacity),
+          stationStateRefUnits2: legacyHtml(
+            stationState.refUnits >= capacity ? renderUiStationHtmlFragment044() : '',
+          ),
+        });
       if (stationState.ops >= 2)
-        height += `<div class="kv"><span>Research</span><span>${stationState.active ? escapeHtml2(RESEARCH.find((researchNode) => researchNode.id === stationState.active!.id)!.name) + ' · ' + Math.max(0, Math.ceil((stationState.active.ends - currentTime) / 60000)) + ' min' : 'idle'}${stationState.queue && stationState.queue.length ? ` (+${stationState.queue.length} queued)` : ''}</span></div>`;
+        height += renderUiStationHtmlFragment045({
+          stationStateActive: legacyHtml(
+            stationState.active
+              ? escapeHtml2(
+                  RESEARCH.find((researchNode) => researchNode.id === stationState.active!.id)!
+                    .name,
+                ) +
+                  ' · ' +
+                  Math.max(0, Math.ceil((stationState.active.ends - currentTime) / 60000)) +
+                  ' min'
+              : 'idle',
+          ),
+          stationStateQueue: legacyHtml(
+            stationState.queue && stationState.queue.length
+              ? ` (+${stationState.queue.length} queued)`
+              : '',
+          ),
+        });
       if (playerPayload.shuttles.length)
-        height += `<div class="kv"><span>Hangar</span><span>${playerPayload.shuttles.filter((savedShuttle) => savedShuttle.state === 'out').length} of ${playerPayload.shuttles.length} shuttles out</span></div>`;
+        height += renderUiStationHtmlFragment046({
+          playerPayloadShuttlesFilter: legacyHtml(
+            playerPayload.shuttles.filter((savedShuttle) => savedShuttle.state === 'out').length,
+          ),
+          playerPayloadShuttlesLength: legacyHtml(playerPayload.shuttles.length),
+        });
       if (stationState.ops >= 2)
-        height += `<div class="kv"><span>Defense rating</span><span>${playerPayload.defense}</span></div>`;
+        height += renderUiStationHtmlFragment047({
+          playerPayloadDefense: legacyHtml(playerPayload.defense),
+        });
       if (playerPayload.dock.length)
-        height += `<div class="kv"><span>Docks</span><span>${playerPayload.docks ? `${playerPayload.docks.count} docks · ${playerPayload.dock.length} stored ship${playerPayload.dock.length === 1 ? '' : 's'}` : playerPayload.dock.length + ' stored'}</span></div>`;
+        height += renderUiStationHtmlFragment048({
+          playerPayloadDocks: legacyHtml(
+            playerPayload.docks
+              ? `${playerPayload.docks.count} docks · ${playerPayload.dock.length} stored ship${playerPayload.dock.length === 1 ? '' : 's'}`
+              : playerPayload.dock.length + ' stored',
+          ),
+        });
       height += materialsHtml(clientGameState, false);
       if (interactive && stationState.site && here && here.own) {
         // warp the station to another hull
@@ -1325,13 +1706,32 @@ function stationHtml(interactive?: boolean): string {
           ),
           cost = relocateCost(stationState.ops),
           wait = (stationState.relocT || 0) + RELOCATE.cooldownH * 3600000 - currentTime;
-        height += `<div class="sect">RELOCATE STATION</div><div class="dim small">Warp your Personal Station to any unclaimed hull. Everything comes with it: Station Tier, research, refinery, docks and stored ships. The old hull is left for someone else to claim. Costs ${credits(cost)} cr + ${RELOCATE.mats.map(([message, game]) => message + ' ' + GRADES[game]).join(', ')}; once every ${RELOCATE.cooldownH} hours.</div>`;
+        height += renderUiStationHtmlFragment049({
+          credits: legacyHtml(credits(cost)),
+          RELOCATEMatsMap: legacyHtml(
+            RELOCATE.mats.map(([message, game]) => message + ' ' + GRADES[game]).join(', '),
+          ),
+          RELOCATECooldownH: legacyHtml(RELOCATE.cooldownH),
+        });
         height +=
           wait > 0
-            ? `<p class="dim small">Warp core recharging: ${Math.ceil(wait / 3600000)} h.</p>`
+            ? renderUiStationHtmlFragment050({ MathCeil: legacyHtml(Math.ceil(wait / 3600000)) })
             : free.length
-              ? `<div class="rrow"><select id="relsite">${free.map((stellarBody) => `<option value="${stellarBody.id}">${escapeHtml2(systemsById[stellarBody.system].name)} · ${escapeHtml2(FACTIONS[systemsById[stellarBody.system].faction].short)} space · danger ${systemsById[stellarBody.system].danger}</option>`).join('')}</select><button class="btn sm" data-act="relocate">WARP STATION</button></div>`
-              : '<p class="dim small">No unclaimed hulls right now.</p>';
+              ? renderUiStationHtmlFragment051({
+                  freeMap: legacyHtml(
+                    free
+                      .map((stellarBody) =>
+                        renderUiStationHtmlFragment052({
+                          stellarBodyId: legacyHtml(stellarBody.id),
+                          systemsById: systemsById[stellarBody.system].name,
+                          FACTIONS: FACTIONS[systemsById[stellarBody.system].faction].short,
+                          systemsById2: legacyHtml(systemsById[stellarBody.system].danger),
+                        }),
+                      )
+                      .join(''),
+                  ),
+                })
+              : renderUiStationHtmlFragment053();
       }
       break;
     }
@@ -1340,18 +1740,53 @@ function stationHtml(interactive?: boolean): string {
         stationState.refUnits < capacity && perUnit
           ? Math.max(0, Math.ceil((perUnit - (currentTime - stationState.refT)) / 60000))
           : 0;
-      height += `<div class="sect" style="margin-top:4px">REFINERY</div><div class="meter">${Array.from({ length: capacity }, (unused, index) => `<i class="${index < stationState.refUnits ? 'on' : ''}"></i>`).join('')}</div>
-        <div class="kv"><span>${stationState.refUnits} of ${capacity} units</span><span>${stationState.refUnits >= capacity ? 'Silos full' : `next in ~${estimatedTime} min`}</span></div>${interactive && stationState.refUnits ? '<button class="btn sm" data-act="st" data-op="collect">COLLECT</button>' : ''}`;
+      height += renderUiStationHtmlFragment054({
+        ArrayFrom: legacyHtml(
+          Array.from({ length: capacity }, (unused, index) =>
+            renderUiStationHtmlFragment055({
+              index: legacyHtml(index < stationState.refUnits ? 'on' : ''),
+            }),
+          ).join(''),
+        ),
+        stationStateRefUnits: legacyHtml(stationState.refUnits),
+        capacity: legacyHtml(capacity),
+        stationStateRefUnits2: legacyHtml(
+          stationState.refUnits >= capacity ? 'Silos full' : `next in ~${estimatedTime} min`,
+        ),
+        interactive: legacyHtml(
+          interactive && stationState.refUnits ? renderUiStationHtmlFragment056() : '',
+        ),
+      });
       const game = Math.min(
         4,
         ORE_PROCESS.grade[stationState.ops] + (researchBonus(stationState).processGrade || 0),
       );
-      height += `<div class="sect">ORE PROCESSING</div><div class="dim small">${ORE_PROCESS.per} t of mined ore + ${credits(ORE_PROCESS.cost)} cr make one grade ${GRADES[game]} crate. Higher Station Tiers refine better grades.</div>`;
+      height += renderUiStationHtmlFragment057({
+        ORE_PROCESSPer: legacyHtml(ORE_PROCESS.per),
+        credits: legacyHtml(credits(ORE_PROCESS.cost)),
+        GRADES: legacyHtml(GRADES[game]),
+      });
       for (const [oreCommodity, material] of Object.entries(ORE_PROCESS.to)) {
         const have = (playerPayload.cargo && playerPayload.cargo[oreCommodity]) || 0,
           count = Math.floor(have / ORE_PROCESS.per),
           name2 = COMMODITIES.find((commodityDef) => commodityDef.id === oreCommodity)!.name;
-        height += `<div class="kv"><span>${escapeHtml2(name2)} <span class="dim">(${have} t)</span> → ${material} ${GRADES[game]}</span><span>${interactive && count ? `<button class="btn sm" data-act="st" data-op="process" data-id="${oreCommodity}">1 CRATE</button> <button class="btn sm" data-act="st" data-op="process" data-id="${oreCommodity}" data-all="1">ALL ${count}</button>` : `<span class="dim">${count ? count + ' ready' : 'need ' + ORE_PROCESS.per + ' t'}</span>`}</span></div>`;
+        height += renderUiStationHtmlFragment058({
+          name2: name2,
+          have: legacyHtml(have),
+          material: legacyHtml(material),
+          GRADES: legacyHtml(GRADES[game]),
+          interactive: legacyHtml(
+            interactive && count
+              ? renderUiStationHtmlFragment059({
+                  oreCommodity: legacyHtml(oreCommodity),
+                  oreCommodity2: legacyHtml(oreCommodity),
+                  count: legacyHtml(count),
+                })
+              : renderUiStationHtmlFragment060({
+                  count: legacyHtml(count ? count + ' ready' : 'need ' + ORE_PROCESS.per + ' t'),
+                }),
+          ),
+        });
       }
       height += materialsHtml(clientGameState, interactive);
       break;
@@ -1396,11 +1831,13 @@ function renderLog(): void {
     playerPayload.log
       .slice()
       .reverse()
-      .map(
-        (event) =>
-          `<div class="logentry"><div class="d">${new Date(event.t).toLocaleString()}</div>${escapeHtml2(event.text)}</div>`,
+      .map((event) =>
+        renderUiRenderLogFragment061({
+          Date: legacyHtml(new Date(event.t).toLocaleString()),
+          eventText: event.text,
+        }),
       )
-      .join('') || '<div class="dim small">Your log is empty.</div>';
+      .join('') || renderUiRenderLogFragment062();
 }
 
 // ------------------------------------------------------------------ landing screen
@@ -1503,9 +1940,13 @@ export function showLanded(): void {
   clientGameState.lastTab[length2.stellar] = clientGameState.ltab!;
   clientGameState._ltabs = available2.map(([entryKey]) => entryKey);
   elementById2('ltabs').innerHTML = available2
-    .map(
-      ([entryKey, count], index) =>
-        `<button class="btn sm ${entryKey === clientGameState.ltab ? 'on' : ''}" data-lt="${entryKey}" title="${index < 9 ? 'Key ' + (index + 1) : ''}">${count}</button>`,
+    .map(([entryKey, count], index) =>
+      renderUiShowLandedFragment063({
+        entryKey: legacyHtml(entryKey === clientGameState.ltab ? 'on' : ''),
+        entryKey2: legacyHtml(entryKey),
+        index: legacyHtml(index < 9 ? 'Key ' + (index + 1) : ''),
+        count: legacyHtml(count),
+      }),
     )
     .join('');
   elementById2('ltabs')
@@ -1590,60 +2031,227 @@ export function renderLanded(): void {
       height += stateCard(stellarBody.system); // 2.4
       height += barCard(length2); // the contact at the bar, and what this world trades in
       if (length2.news && length2.news.length)
-        height += `<div class="newsbox"><div class="sect" style="margin-top:0">SPACEPORT NEWS</div>${length2.news
-          .slice(0, 4)
-          .map((count) => `<div class="newsit">${escapeHtml2(count)}</div>`)
-          .join('')}</div>`; // 1.1
+        height += renderUiRenderLandedFragment064({
+          length2News: legacyHtml(
+            length2.news
+              .slice(0, 4)
+              .map((count) => renderUiRenderLandedFragment065({ count: count }))
+              .join(''),
+          ),
+        }); // 1.1
       if (playerPayload.shipless)
-        height += `<div class="noship"><b>NO ACTIVE SHIP</b><div>You can't depart until you choose a ship. ${playerPayload.dock && playerPayload.dock.length ? 'Open STATION, then DOCKS, and choose a lead ship for your active dock.' : 'Buy one at a SHIPYARD.'}</div><div>${playerPayload.dock && playerPayload.dock.length ? '<button class="btn sm" data-act="gotodock">OPEN DRYDOCK</button> ' : ''}${length2.yard ? '<button class="btn sm" data-act="ltab" data-t="yard">SHIPYARD</button>' : ''}</div></div>`;
+        height += renderUiRenderLandedFragment066({
+          playerPayloadDock: legacyHtml(
+            playerPayload.dock && playerPayload.dock.length
+              ? 'Open STATION, then DOCKS, and choose a lead ship for your active dock.'
+              : 'Buy one at a SHIPYARD.',
+          ),
+          playerPayloadDock2: legacyHtml(
+            playerPayload.dock && playerPayload.dock.length
+              ? renderUiRenderLandedFragment067()
+              : '',
+          ),
+          length2Yard: legacyHtml(length2.yard ? renderUiRenderLandedFragment068() : ''),
+        });
       if (!playerPayload.shipless)
-        height += `<div class="detail"><img src="${artworkUrl(clientGameState.A!.ships[playerPayload.ship.hull].img!)}"><div><div class="sect" style="margin-top:0">YOUR SHIP</div><b style="font-size:15px;color:#fff">${escapeHtml2(computedShipStats!.name)}</b> <span class="dim">"${escapeHtml2(playerPayload.ship.name)}"</span> ${roleTag(clientGameState.A!.ships[playerPayload.ship.hull])}
-        <div class="kv"><span>Shield / Armor</span><span>${computedShipStats!.shield} / ${computedShipStats!.armor}</span></div><div class="kv"><span>Speed</span><span>${Math.round(computedShipStats!.maxSpeed)}</span></div><div class="kv"><span>Fuel</span><span>${Math.floor(computedShipStats!.fuel / 100)} jumps (refuelled)</span></div>
-        <div class="kv"><span>Cargo</span><span>${
-          Object.entries(playerPayload.cargo)
-            .map(
-              ([component, count]) =>
-                `${count}t ${COMMODITIES.find((commodityDef) => commodityDef.id === component)!.name}`,
-            )
-            .join(', ') || 'empty'
-        }</span></div>
-        ${masteryHtml(clientGameState)}${synBadge(playerPayload)}<div class="sect">STANDING</div>${Object.entries(
-          FACTIONS,
-        )
-          .filter(([, factionDef]) => !factionDef.hidden && !factionDef.region)
-          .map(
-            ([factionId, factionDef]) =>
-              `<span class="small" style="display:inline-block;width:49%"><span style="color:${factionDef.color}">${factionDef.short}</span> <span class="dim">${repLabel(playerPayload.rep[factionId] || 0)} (${playerPayload.rep[factionId] || 0})</span></span>`,
-          )
-          .join('')}
-        <div class="sect">RENAME SHIP</div><div class="rrow"><input id="rename" value="${escapeHtml2(playerPayload.ship.name)}" maxlength="28"><button class="btn sm" data-act="rename">RENAME</button></div></div></div>`;
+        height += renderUiRenderLandedFragment069({
+          artworkUrl: legacyHtml(
+            artworkUrl(clientGameState.A!.ships[playerPayload.ship.hull].img!),
+          ),
+          computedShipStats: computedShipStats!.name,
+          playerPayloadShipName: playerPayload.ship.name,
+          roleTag: legacyHtml(roleTag(clientGameState.A!.ships[playerPayload.ship.hull])),
+          computedShipStats2: legacyHtml(computedShipStats!.shield),
+          computedShipStats3: legacyHtml(computedShipStats!.armor),
+          MathRound: legacyHtml(Math.round(computedShipStats!.maxSpeed)),
+          MathFloor: legacyHtml(Math.floor(computedShipStats!.fuel / 100)),
+          ObjectEntries: legacyHtml(
+            Object.entries(playerPayload.cargo)
+              .map(
+                ([component, count]) =>
+                  `${count}t ${COMMODITIES.find((commodityDef) => commodityDef.id === component)!.name}`,
+              )
+              .join(', ') || 'empty',
+          ),
+          masteryHtml: legacyHtml(masteryHtml(clientGameState)),
+          synBadge: legacyHtml(synBadge(playerPayload)),
+          ObjectEntries2: legacyHtml(
+            Object.entries(FACTIONS)
+              .filter(([, factionDef]) => !factionDef.hidden && !factionDef.region)
+              .map(([factionId, factionDef]) =>
+                renderUiRenderLandedFragment070({
+                  factionDefColor: legacyHtml(factionDef.color),
+                  factionDefShort: legacyHtml(factionDef.short),
+                  repLabel: legacyHtml(repLabel(playerPayload.rep[factionId] || 0)),
+                  playerPayloadRep: legacyHtml(playerPayload.rep[factionId] || 0),
+                }),
+              )
+              .join(''),
+          ),
+          playerPayloadShipName2: playerPayload.ship.name,
+        });
       break;
     }
     case 'trade': {
       height += receiptHtml(clientGameState);
       if (length2.market)
-        height += `<table class="tbl"><tr><th>COMMODITY</th><th>PRICE</th><th>HOLD</th><th></th></tr>${length2.market
-          .map((marketItem) => {
-            const base = COMMODITIES.find(
-              (commodityDef) => commodityDef.id === marketItem.id,
-            )!.base;
-            const gradeRows = Object.entries(
-              playerPayload.cargoLots?.byCommodity[marketItem.id] || {},
-            )
-              .filter(([, count]) => count > 0)
-              .map(
-                ([grade, count]) =>
-                  `<tr class="small"><td>↳ ${grade}</td><td>${grade === 'pure' ? '1.6' : grade === 'rich' ? '1.3' : '1'}× raw sale value</td><td>${count} t</td><td style="text-align:right"><button class="btn sm" data-act="trade" data-c="${marketItem.id}" data-grade="${grade}" data-q="-1">SELL 1</button> <button class="btn sm" data-act="trade" data-c="${marketItem.id}" data-grade="${grade}" data-q="${-count}">SELL ${grade.toUpperCase()}</button></td></tr>`,
-              )
-              .join('');
-            return `<tr><td>${escapeHtml2(marketItem.name)}${marketItem.sellCap !== undefined ? ` <span class="dim small">buyer: ${marketItem.sellCap}t left today</span>` : ''}${marketItem.flash ? ` <span class="flashtag ${marketItem.price! > base ? 'up' : 'dn'}">${marketItem.price! > base ? 'SHORTAGE' : 'GLUT'}</span>` : ''}</td><td class="${marketItem.price! < base * 0.9 ? 'lo' : marketItem.price! > base * 1.1 ? 'hi' : ''}">${credits(marketItem.price!)}${marketItem.moved ? `<span class="mv ${marketItem.moved > 0 ? 'up' : 'dn'}" title="Moved by this system's state and by what captains have traded here">${marketItem.moved > 0 ? '▲' : '▼'}${Math.abs(marketItem.moved)}%</span>` : ''}</td><td>${playerPayload.cargo[marketItem.id] || 0}${playerPayload.cargo[marketItem.id] && playerPayload.paid && playerPayload.paid[marketItem.id] ? ` <span class="small ${marketItem.price! >= playerPayload.paid[marketItem.id] ? 'pgain' : 'ploss'}" title="What you paid per ton, on average">paid ${credits(playerPayload.paid[marketItem.id])}</span>` : ''}</td>
-        <td style="text-align:right"><button class="btn sm" data-act="trade" data-c="${marketItem.id}" data-q="1"${holdFree(playerPayload) > 0 ? '' : ' disabled title="Hold full"'}>BUY</button> <button class="btn sm" data-act="trade" data-c="${marketItem.id}" data-q="10"${holdFree(playerPayload) > 0 ? '' : ' disabled title="Hold full"'}>+10</button> <button class="btn sm" data-act="trade" data-c="${marketItem.id}" data-q="${Math.max(0, Math.min(holdFree(playerPayload), Math.floor(playerPayload.credits / marketItem.price!)))}" title="Fill your hold with what you can afford"${Math.min(holdFree(playerPayload), Math.floor(playerPayload.credits / marketItem.price!)) > 0 ? '' : ' disabled'}>MAX</button> <button class="btn sm" data-act="trade" data-c="${marketItem.id}" data-q="-1">SELL</button> <button class="btn sm" data-act="trade" data-c="${marketItem.id}" data-q="-999">ALL</button><div class="trade-custom"><label>Amount <input class="trade-amount" data-c="${marketItem.id}" type="number" required min="1" max="2147483647" step="1" inputmode="numeric" aria-label="${escapeHtml2(marketItem.name)} trade amount in tons" value="${escapeHtml2(amounts.get(marketItem.id) ?? '1')}"></label><button class="btn sm" data-act="trade" data-c="${marketItem.id}" data-custom="buy">BUY AMOUNT</button><button class="btn sm" data-act="trade" data-c="${marketItem.id}" data-custom="sell">SELL AMOUNT</button></div><div class="trade-estimate small" data-trade-estimate="${escapeHtml2(marketItem.id)}">${tradeEstimateHtml(clientGameState, marketItem, amounts.get(marketItem.id) ?? '1')}</div></td></tr>${gradeRows}`;
-          })
-          .join(
-            '',
-          )}</table><div class="tradefoot"><span class="dim small">Estimates include cargo grade, your perks and the size of the order. There is no separate trading fee. Prices can change before you click; a price here does not promise the same price elsewhere. Green is cheap here, red is high. Hold: ${playerPayload.cargoUsed + (playerPayload.jobCargo || 0)} / ${computedShipStats!.cargo} t${playerPayload.jobCargo ? ` (${playerPayload.jobCargo} t is job cargo)` : ''}.</span>${holdFree(playerPayload) <= 0 ? '<span class="jwarn">Hold full. Sell cargo or finish a delivery to make room.</span>' : ''}${length2.market.some((marketItem) => playerPayload.cargo[marketItem.id]) ? `<button class="btn sm" data-act="sellall">SELL ALL CARGO</button>` : ''}</div>`;
+        height += renderUiRenderLandedFragment071({
+          length2Market: legacyHtml(
+            length2.market
+              .map((marketItem) => {
+                const base = COMMODITIES.find(
+                  (commodityDef) => commodityDef.id === marketItem.id,
+                )!.base;
+                const gradeRows = Object.entries(
+                  playerPayload.cargoLots?.byCommodity[marketItem.id] || {},
+                )
+                  .filter(([, count]) => count > 0)
+                  .map(([grade, count]) =>
+                    renderUiRenderLandedFragment072({
+                      grade: legacyHtml(grade),
+                      grade2: legacyHtml(grade === 'pure' ? '1.6' : grade === 'rich' ? '1.3' : '1'),
+                      count: legacyHtml(count),
+                      marketItemId: legacyHtml(marketItem.id),
+                      grade3: legacyHtml(grade),
+                      marketItemId2: legacyHtml(marketItem.id),
+                      grade4: legacyHtml(grade),
+                      count2: legacyHtml(-count),
+                      gradeToUpperCase: legacyHtml(grade.toUpperCase()),
+                    }),
+                  )
+                  .join('');
+                return renderUiRenderLandedFragment073({
+                  marketItemName: marketItem.name,
+                  marketItemSellCap: legacyHtml(
+                    marketItem.sellCap !== undefined
+                      ? renderUiRenderLandedFragment074({
+                          marketItemSellCap: legacyHtml(marketItem.sellCap),
+                        })
+                      : '',
+                  ),
+                  marketItemFlash: legacyHtml(
+                    marketItem.flash
+                      ? renderUiRenderLandedFragment075({
+                          marketItemPrice: legacyHtml(marketItem.price! > base ? 'up' : 'dn'),
+                          marketItemPrice2: legacyHtml(
+                            marketItem.price! > base ? 'SHORTAGE' : 'GLUT',
+                          ),
+                        })
+                      : '',
+                  ),
+                  marketItemPrice: legacyHtml(
+                    marketItem.price! < base * 0.9
+                      ? 'lo'
+                      : marketItem.price! > base * 1.1
+                        ? 'hi'
+                        : '',
+                  ),
+                  credits: legacyHtml(credits(marketItem.price!)),
+                  marketItemMoved: legacyHtml(
+                    marketItem.moved
+                      ? renderUiRenderLandedFragment076({
+                          marketItemMoved: legacyHtml(marketItem.moved > 0 ? 'up' : 'dn'),
+                          marketItemMoved2: legacyHtml(marketItem.moved > 0 ? '▲' : '▼'),
+                          MathAbs: legacyHtml(Math.abs(marketItem.moved)),
+                        })
+                      : '',
+                  ),
+                  playerPayloadCargo: legacyHtml(playerPayload.cargo[marketItem.id] || 0),
+                  playerPayloadCargo2: legacyHtml(
+                    playerPayload.cargo[marketItem.id] &&
+                      playerPayload.paid &&
+                      playerPayload.paid[marketItem.id]
+                      ? renderUiRenderLandedFragment077({
+                          marketItemPrice: legacyHtml(
+                            marketItem.price! >= playerPayload.paid[marketItem.id]
+                              ? 'pgain'
+                              : 'ploss',
+                          ),
+                          credits: legacyHtml(credits(playerPayload.paid[marketItem.id])),
+                        })
+                      : '',
+                  ),
+                  marketItemId: legacyHtml(marketItem.id),
+                  holdFree: legacyHtml(
+                    holdFree(playerPayload) > 0 ? '' : renderUiRenderLandedAttribute004(),
+                  ),
+                  marketItemId2: legacyHtml(marketItem.id),
+                  holdFree2: legacyHtml(
+                    holdFree(playerPayload) > 0 ? '' : renderUiRenderLandedAttribute005(),
+                  ),
+                  marketItemId3: legacyHtml(marketItem.id),
+                  MathMax: legacyHtml(
+                    Math.max(
+                      0,
+                      Math.min(
+                        holdFree(playerPayload),
+                        Math.floor(playerPayload.credits / marketItem.price!),
+                      ),
+                    ),
+                  ),
+                  MathMin: legacyHtml(
+                    Math.min(
+                      holdFree(playerPayload),
+                      Math.floor(playerPayload.credits / marketItem.price!),
+                    ) > 0
+                      ? ''
+                      : ' disabled',
+                  ),
+                  marketItemId4: legacyHtml(marketItem.id),
+                  marketItemId5: legacyHtml(marketItem.id),
+                  marketItemId6: legacyHtml(marketItem.id),
+                  marketItemName2: marketItem.name,
+                  amountsGet: amounts.get(marketItem.id) ?? '1',
+                  marketItemId7: legacyHtml(marketItem.id),
+                  marketItemId8: legacyHtml(marketItem.id),
+                  marketItemId9: marketItem.id,
+                  tradeEstimateHtml: legacyHtml(
+                    tradeEstimateHtml(
+                      clientGameState,
+                      marketItem,
+                      amounts.get(marketItem.id) ?? '1',
+                    ),
+                  ),
+                  gradeRows: legacyHtml(gradeRows),
+                });
+              })
+              .join(''),
+          ),
+          playerPayloadCargoUsed: legacyHtml(
+            playerPayload.cargoUsed + (playerPayload.jobCargo || 0),
+          ),
+          computedShipStats: legacyHtml(computedShipStats!.cargo),
+          playerPayloadJobCargo: legacyHtml(
+            playerPayload.jobCargo ? ` (${playerPayload.jobCargo} t is job cargo)` : '',
+          ),
+          holdFree: legacyHtml(
+            holdFree(playerPayload) <= 0 ? renderUiRenderLandedFragment078() : '',
+          ),
+          length2MarketSome: legacyHtml(
+            length2.market.some((marketItem) => playerPayload.cargo[marketItem.id])
+              ? renderUiRenderLandedFragment079()
+              : '',
+          ),
+        });
       if (length2.mats.length)
-        height += `<div class="sect">STATION MATERIALS</div><table class="tbl"><tr><th>CRATE</th><th>PRICE</th><th>HELD</th><th></th></tr>${length2.mats.map((message) => `<tr><td>${message.mat} ${GRADES[message.grade]}</td><td>${credits(message.price)}</td><td>${playerPayload.mats[message.mat][message.grade]}</td><td style="text-align:right"><button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="1">BUY</button> <button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="-1">SELL</button></td></tr>`).join('')}</table>`;
+        height += renderUiRenderLandedFragment080({
+          length2MatsMap: legacyHtml(
+            length2.mats
+              .map((message) =>
+                renderUiRenderLandedFragment081({
+                  messageMat: legacyHtml(message.mat),
+                  GRADES: legacyHtml(GRADES[message.grade]),
+                  credits: legacyHtml(credits(message.price)),
+                  playerPayloadMats: legacyHtml(playerPayload.mats[message.mat][message.grade]),
+                  messageMat2: legacyHtml(message.mat),
+                  messageGrade: legacyHtml(message.grade),
+                  messageMat3: legacyHtml(message.mat),
+                  messageGrade2: legacyHtml(message.grade),
+                }),
+              )
+              .join(''),
+          ),
+        });
       break;
     }
     case 'yard': {
@@ -1653,49 +2261,100 @@ export function renderLanded(): void {
           : length2.yard![0];
       const shipHullAsset = clientGameState.A!.ships[selected],
         trade = tradeIn(playerPayload);
-      height = `<div class="detail"><img src="${artworkUrl(shipHullAsset.img!)}"><div><b style="font-size:16px;color:#fff">${escapeHtml2(shipHullAsset.name)}</b> <span class="dim">${escapeHtml2(shipHullAsset.sub)}</span> ${roleTag(shipHullAsset)}${shipHullAsset.cargo ? '' : ' <span class="nocargo">NO CARGO HOLD</span>'}${statLines(shipHullAsset, playerPayload.shipless ? null : clientGameState.A!.ships[playerPayload.ship.hull])}
-        <div class="kv"><span>Price</span><span class="cr">${credits(shipHullAsset.cost)}</span></div>${
+      height = renderUiRenderLandedFragment082({
+        artworkUrl: legacyHtml(artworkUrl(shipHullAsset.img!)),
+        shipHullAssetName: shipHullAsset.name,
+        shipHullAssetSub: shipHullAsset.sub,
+        roleTag: legacyHtml(roleTag(shipHullAsset)),
+        shipHullAssetCargo: legacyHtml(
+          shipHullAsset.cargo ? '' : renderUiRenderLandedFragment083(),
+        ),
+        statLines: legacyHtml(
+          statLines(
+            shipHullAsset,
+            playerPayload.shipless ? null : clientGameState.A!.ships[playerPayload.ship.hull],
+          ),
+        ),
+        credits: legacyHtml(credits(shipHullAsset.cost)),
+        WING_ONLYIncludes: legacyHtml(
           WING_ONLY.includes(shipHullAsset.id) ||
-          (!playerPayload.shipless && shipHullAsset.id === playerPayload.ship.hull) ||
-          playerPayload.shipless
+            (!playerPayload.shipless && shipHullAsset.id === playerPayload.ship.hull) ||
+            playerPayload.shipless
             ? ''
-            : `<div class="kv"><span>Trade-in of your ${escapeHtml2(computedShipStats!.name)}</span><span>-${credits(trade)}</span></div>
-        <div class="kv"><span>You pay to fly her</span><span class="cr">${credits(Math.max(0, shipHullAsset.cost - trade))}</span></div>`
-        }${(() => {
-          const docksPayload = playerPayload.docks,
-            room = docksPayload && docksPayload.cap > docksPayload.stored.length,
-            includes2 = WING_ONLY.includes(shipHullAsset.id); // buy to fly, or buy into your hangar
-          const hangarButton =
-            playerPayload.station && playerPayload.station.site
-              ? `<button class="btn" data-act="buyhangar" data-h="${shipHullAsset.id}"${room ? '' : ' disabled title="Your hangar is full"'}>BUY TO HANGAR${docksPayload ? ` (${docksPayload.stored.length}/${docksPayload.cap})` : ''}</button>`
-              : '';
-          if (includes2)
-            return `<p class="dim small">Flies only as a wingmate: it goes to your hangar, then assign it to a dock.</p>${hangarButton}`;
-          return (
-            (!playerPayload.shipless && shipHullAsset.id === playerPayload.ship.hull
-              ? '<p class="dim">You fly this ship.</p>'
-              : `<button class="btn" data-act="buyship" data-h="${shipHullAsset.id}">BUY AND FLY</button>`) +
-            ' ' +
-            hangarButton
-          );
-        })()}
-        <p style="white-space:pre-wrap;line-height:1.4;color:#ccc">${escapeHtml2(shipHullAsset.desc)}</p></div></div><div class="ysort small">Sort by <select id="ysort">${[
-          ['cost', 'price'],
-          ['cargo', 'cargo'],
-          ['speed', 'speed'],
-          ['strength', 'fighting strength'],
-          ['shield', 'shields'],
-        ]
-          .map(
-            ([entryKey, count]) =>
-              `<option value="${entryKey}"${(clientGameState.ysort || 'cost') === entryKey ? ' selected' : ''}>${count}</option>`,
-          )
-          .join('')}</select></div><div class="cards">${yardSorted(length2.yard)
-          .map((height3) => {
-            const shipHullAsset = clientGameState.A!.ships[height3];
-            return `<div class="card ${height3 === selected ? 'sel' : ''}" data-act="sel" data-h="${height3}"><img src="${artworkUrl(shipHullAsset.img!)}"><div class="t">${escapeHtml2(shipHullAsset.name)}</div><div class="dim small">${escapeHtml2(shipHullAsset.sub)}</div><div class="small">${roleTag(shipHullAsset)}${shipHullAsset.cargo ? '' : ' <span class="nocargo">NO CARGO HOLD</span>'}</div><div class="p">${credits(shipHullAsset.cost)}</div></div>`;
-          })
-          .join('')}</div>`;
+            : renderUiRenderLandedFragment084({
+                computedShipStats: computedShipStats!.name,
+                credits: legacyHtml(credits(trade)),
+                credits2: legacyHtml(credits(Math.max(0, shipHullAsset.cost - trade))),
+              }),
+        ),
+        constValue: legacyHtml(
+          (() => {
+            const docksPayload = playerPayload.docks,
+              room = docksPayload && docksPayload.cap > docksPayload.stored.length,
+              includes2 = WING_ONLY.includes(shipHullAsset.id); // buy to fly, or buy into your hangar
+            const hangarButton =
+              playerPayload.station && playerPayload.station.site
+                ? renderUiRenderLandedFragment085({
+                    shipHullAssetId: legacyHtml(shipHullAsset.id),
+                    room: legacyHtml(room ? '' : renderUiRenderLandedAttribute006()),
+                    docksPayload: legacyHtml(
+                      docksPayload ? ` (${docksPayload.stored.length}/${docksPayload.cap})` : '',
+                    ),
+                  })
+                : '';
+            if (includes2)
+              return renderUiRenderLandedFragment086({ hangarButton: legacyHtml(hangarButton) });
+            return (
+              (!playerPayload.shipless && shipHullAsset.id === playerPayload.ship.hull
+                ? renderUiRenderLandedFragment087()
+                : renderUiRenderLandedFragment088({
+                    shipHullAssetId: legacyHtml(shipHullAsset.id),
+                  })) +
+              ' ' +
+              hangarButton
+            );
+          })(),
+        ),
+        shipHullAssetDesc: shipHullAsset.desc,
+        cost: legacyHtml(
+          [
+            ['cost', 'price'],
+            ['cargo', 'cargo'],
+            ['speed', 'speed'],
+            ['strength', 'fighting strength'],
+            ['shield', 'shields'],
+          ]
+            .map(([entryKey, count]) =>
+              renderUiRenderLandedFragment089({
+                entryKey: legacyHtml(entryKey),
+                clientGameStateYsort: legacyHtml(
+                  (clientGameState.ysort || 'cost') === entryKey ? ' selected' : '',
+                ),
+                count: legacyHtml(count),
+              }),
+            )
+            .join(''),
+        ),
+        yardSorted: legacyHtml(
+          yardSorted(length2.yard)
+            .map((height3) => {
+              const shipHullAsset = clientGameState.A!.ships[height3];
+              return renderUiRenderLandedFragment090({
+                height3: legacyHtml(height3 === selected ? 'sel' : ''),
+                height32: legacyHtml(height3),
+                artworkUrl: legacyHtml(artworkUrl(shipHullAsset.img!)),
+                shipHullAssetName: shipHullAsset.name,
+                shipHullAssetSub: shipHullAsset.sub,
+                roleTag: legacyHtml(roleTag(shipHullAsset)),
+                shipHullAssetCargo: legacyHtml(
+                  shipHullAsset.cargo ? '' : renderUiRenderLandedFragment091(),
+                ),
+                credits: legacyHtml(credits(shipHullAsset.cost)),
+              });
+            })
+            .join(''),
+        ),
+      });
       break;
     }
     case 'outfit': {
@@ -1739,111 +2398,236 @@ export function renderLanded(): void {
           (category === 'all' || outfitCat(allOutfits2[identifier]) === category) &&
           (!clientGameState.ofit || fits(allOutfits2[identifier])),
       );
-      height = `<div class="ocats"><label class="small ofit"><input type="checkbox" id="ofit"${clientGameState.ofit ? ' checked' : ''}> only what fits</label>${categories
-        .filter(
-          ([entryKey]) =>
-            entryKey === 'all' ||
-            length2.outfitter!.some(
-              (identifier) => outfitCat(allOutfits2[identifier]) === entryKey,
-            ),
-        )
-        .map(
-          ([entryKey, count]) =>
-            `<button class="btn sm${entryKey === category ? ' on' : ''}" data-act="ocat" data-k="${entryKey}">${count}</button>`,
-        )
-        .join(
-          '',
-        )}</div><p class="dim small">Outfit space ${computedShipStats!.free} t free · guns ${computedShipStats!.guns}/${computedShipStats!.maxGuns} · turrets ${computedShipStats!.turrets}/${computedShipStats!.maxTurrets} · passenger seats ${occupiedPassengerSeats(playerPayload.missions)}/${passengerSeats(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship)}</p><p class="dim small">Factory equipment is included in the hull price and sells at its factory value. Separately purchased equipment sells for half its retail price.</p><table class="tbl"><tr><th></th><th>OUTFIT</th><th>EFFECT</th><th>MASS</th><th>PRICE</th><th>OWNED</th><th></th></tr>${list
-        .map((identifier) => {
-          const outfitAsset = allOutfits2[identifier],
-            owner = outfitAsset.eff!.ammo
-              ? (clientGameState.ammo[outfitAsset.eff!.ammo] ??
-                playerPayload.ship.ammo[outfitAsset.eff!.ammo] ??
-                0)
-              : playerPayload.ship.outfits[identifier] || 0;
-          const width =
-              outfitAsset.eff!.weapon && clientGameState.A!.weapons[outfitAsset.eff!.weapon],
-            weaponConfig = width ? weaponParams(width) : null; // guns show damage and range; ammo says if you have a launcher
-          const hasLauncher =
-            outfitAsset.eff!.ammo &&
-            ((computedShipStats!.weapons && computedShipStats!.weapons[outfitAsset.eff!.ammo]) ||
-              Object.keys(playerPayload.ship.outfits).some(
-                (entryKey) =>
-                  allOutfits2[entryKey] &&
-                  allOutfits2[entryKey].eff!.weapon === outfitAsset.eff!.ammo,
-              )); // fixed launchers count too
-          const effect = width
-            ? `${width.type}${outfitAsset.turret ? ' turret' : ''} · ${Math.round((width.dmgA || 0) + (width.dmgS || 0))} dmg · ${Math.round(weaponConfig!.range)} range`
-            : outfitAsset.eff!.ammo
-              ? hasLauncher
-                ? 'ammunition'
-                : 'ammunition · needs its launcher'
-              : Object.entries(outfitAsset.eff!)
-                  .map(
-                    ([entryKey, value]) =>
-                      `${entryKey === 'passengerSeats' ? 'Passenger seats' : entryKey} ${value > 0 ? '+' : ''}${value}`,
-                  )
-                  .join(', ');
-          const count = outfitAsset.eff!.ammo ? 10 : 1,
-            reason =
-              !outfitAsset.eff!.ammo &&
-              owner >= stockOutfitLimit(clientGameState.A!, playerPayload.ship, identifier)
-                ? `Maximum fitted: ${stockOutfitLimit(clientGameState.A!, playerPayload.ship, identifier)}`
-                : outfitAsset.eff!.ammo && !hasLauncher
-                  ? 'You have nothing that fires this'
-                  : playerPayload.credits < outfitAsset.cost * count
-                    ? 'Not enough credits'
-                    : !outfitAsset.eff!.ammo && (outfitAsset.mass || 0) > computedShipStats!.free
-                      ? 'Not enough outfit space'
-                      : width &&
-                          (outfitAsset.turret
-                            ? computedShipStats!.turrets >= computedShipStats!.maxTurrets
-                            : computedShipStats!.guns >= computedShipStats!.maxGuns)
-                        ? `No free ${outfitAsset.turret ? 'turret' : 'gun'} mounts`
-                        : '';
-          return `<tr><td>${outfitAsset.icon ? `<img src="${artworkUrl(outfitAsset.icon)}" style="width:32px;height:32px">` : ''}</td><td title="${escapeHtml2(outfitAsset.desc)}">${escapeHtml2(outfitAsset.name)}</td><td class="dim small">${escapeHtml2(effect)}</td><td>${outfitAsset.mass || 0}</td><td class="cr">${credits(outfitAsset.cost)}</td><td>${owner}</td>
-          <td style="text-align:right"><button class="btn sm" data-act="outfit" data-id="${identifier}" data-n="${count}"${reason ? ` disabled title="${reason}"` : ''}>BUY${outfitAsset.eff!.ammo ? ' 10' : ''}</button>${outfitAsset.eff!.ammo ? '' : ` <button class="btn sm" data-act="outfit" data-id="${identifier}" data-n="-1"${owner ? '' : ' disabled'}>SELL</button>`}</td></tr>`;
-        })
-        .join('')}</table>`;
+      height = renderUiRenderLandedFragment092({
+        clientGameStateOfit: legacyHtml(clientGameState.ofit ? ' checked' : ''),
+        categories: legacyHtml(
+          categories
+            .filter(
+              ([entryKey]) =>
+                entryKey === 'all' ||
+                length2.outfitter!.some(
+                  (identifier) => outfitCat(allOutfits2[identifier]) === entryKey,
+                ),
+            )
+            .map(([entryKey, count]) =>
+              renderUiRenderLandedFragment093({
+                entryKey: legacyHtml(entryKey === category ? ' on' : ''),
+                entryKey2: legacyHtml(entryKey),
+                count: legacyHtml(count),
+              }),
+            )
+            .join(''),
+        ),
+        computedShipStats: legacyHtml(computedShipStats!.free),
+        computedShipStats2: legacyHtml(computedShipStats!.guns),
+        computedShipStats3: legacyHtml(computedShipStats!.maxGuns),
+        computedShipStats4: legacyHtml(computedShipStats!.turrets),
+        computedShipStats5: legacyHtml(computedShipStats!.maxTurrets),
+        occupiedPassengerSeats: legacyHtml(occupiedPassengerSeats(playerPayload.missions)),
+        passengerSeats: legacyHtml(
+          passengerSeats(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship),
+        ),
+        list: legacyHtml(
+          list
+            .map((identifier) => {
+              const outfitAsset = allOutfits2[identifier],
+                owner = outfitAsset.eff!.ammo
+                  ? (clientGameState.ammo[outfitAsset.eff!.ammo] ??
+                    playerPayload.ship.ammo[outfitAsset.eff!.ammo] ??
+                    0)
+                  : playerPayload.ship.outfits[identifier] || 0;
+              const width =
+                  outfitAsset.eff!.weapon && clientGameState.A!.weapons[outfitAsset.eff!.weapon],
+                weaponConfig = width ? weaponParams(width) : null; // guns show damage and range; ammo says if you have a launcher
+              const hasLauncher =
+                outfitAsset.eff!.ammo &&
+                ((computedShipStats!.weapons &&
+                  computedShipStats!.weapons[outfitAsset.eff!.ammo]) ||
+                  Object.keys(playerPayload.ship.outfits).some(
+                    (entryKey) =>
+                      allOutfits2[entryKey] &&
+                      allOutfits2[entryKey].eff!.weapon === outfitAsset.eff!.ammo,
+                  )); // fixed launchers count too
+              const effect = width
+                ? `${width.type}${outfitAsset.turret ? ' turret' : ''} · ${Math.round((width.dmgA || 0) + (width.dmgS || 0))} dmg · ${Math.round(weaponConfig!.range)} range`
+                : outfitAsset.eff!.ammo
+                  ? hasLauncher
+                    ? 'ammunition'
+                    : 'ammunition · needs its launcher'
+                  : Object.entries(outfitAsset.eff!)
+                      .map(
+                        ([entryKey, value]) =>
+                          `${entryKey === 'passengerSeats' ? 'Passenger seats' : entryKey} ${value > 0 ? '+' : ''}${value}`,
+                      )
+                      .join(', ');
+              const count = outfitAsset.eff!.ammo ? 10 : 1,
+                reason =
+                  !outfitAsset.eff!.ammo &&
+                  owner >= stockOutfitLimit(clientGameState.A!, playerPayload.ship, identifier)
+                    ? `Maximum fitted: ${stockOutfitLimit(clientGameState.A!, playerPayload.ship, identifier)}`
+                    : outfitAsset.eff!.ammo && !hasLauncher
+                      ? 'You have nothing that fires this'
+                      : playerPayload.credits < outfitAsset.cost * count
+                        ? 'Not enough credits'
+                        : !outfitAsset.eff!.ammo &&
+                            (outfitAsset.mass || 0) > computedShipStats!.free
+                          ? 'Not enough outfit space'
+                          : width &&
+                              (outfitAsset.turret
+                                ? computedShipStats!.turrets >= computedShipStats!.maxTurrets
+                                : computedShipStats!.guns >= computedShipStats!.maxGuns)
+                            ? `No free ${outfitAsset.turret ? 'turret' : 'gun'} mounts`
+                            : '';
+              return renderUiRenderLandedFragment094({
+                outfitAssetIcon: legacyHtml(
+                  outfitAsset.icon
+                    ? renderUiRenderLandedFragment095({
+                        artworkUrl: legacyHtml(artworkUrl(outfitAsset.icon)),
+                      })
+                    : '',
+                ),
+                outfitAssetDesc: outfitAsset.desc,
+                outfitAssetName: outfitAsset.name,
+                effect: effect,
+                outfitAssetMass: legacyHtml(outfitAsset.mass || 0),
+                credits: legacyHtml(credits(outfitAsset.cost)),
+                owner: legacyHtml(owner),
+                identifier: legacyHtml(identifier),
+                count: legacyHtml(count),
+                reason: legacyHtml(
+                  reason ? renderUiRenderLandedAttribute007({ reason: legacyHtml(reason) }) : '',
+                ),
+                outfitAssetEff: legacyHtml(outfitAsset.eff!.ammo ? ' 10' : ''),
+                outfitAssetEff2: legacyHtml(
+                  outfitAsset.eff!.ammo
+                    ? ''
+                    : renderUiRenderLandedFragment096({
+                        identifier: legacyHtml(identifier),
+                        owner: legacyHtml(owner ? '' : ' disabled'),
+                      }),
+                ),
+              });
+            })
+            .join(''),
+        ),
+      });
       const owned = Object.entries(playerPayload.ship.outfits).filter(
         ([identifier]) => !length2.outfitter!.includes(+identifier),
       );
       if (owned.length)
-        height += `<div class="sect">FITTED ELSEWHERE</div>${owned.map(([identifier, count]) => `<div class="kv"><span>${escapeHtml2(allOutfits2[identifier].name)} ×${count}</span><span><button class="btn sm" data-act="outfit" data-id="${identifier}" data-n="-1">SELL</button></span></div>`).join('')}`;
+        height += renderUiRenderLandedFragment097({
+          ownedMap: legacyHtml(
+            owned
+              .map(([identifier, count]) =>
+                renderUiRenderLandedFragment098({
+                  allOutfits2: allOutfits2[identifier].name,
+                  count: legacyHtml(count),
+                  identifier: legacyHtml(identifier),
+                }),
+              )
+              .join(''),
+          ),
+        });
       height = outfitterRepairsHtml(clientGameState) + height;
       break;
     }
     case 'jobs': {
       const story2 = length2.story,
         activeStory = playerPayload.story && playerPayload.story.active;
-      height = `<div class="dim small">Passenger seats: ${occupiedPassengerSeats(playerPayload.missions)} occupied / ${passengerSeats(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship)} total. Bridge officers and working crew have separate accommodation.</div>`;
+      height = renderUiRenderLandedFragment099({
+        occupiedPassengerSeats: legacyHtml(occupiedPassengerSeats(playerPayload.missions)),
+        passengerSeats: legacyHtml(
+          passengerSeats(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship),
+        ),
+      });
       if (story2)
-        height += `<div class="card story" style="cursor:default"><div class="storytag">MAIN STORY</div><div class="t">${escapeHtml2(story2.title)}</div><div>${escapeHtml2(story2.brief)}</div>${story2.locked ? `<div class="dim small">${escapeHtml2(story2.locked)}</div>` : `<div><button class="btn sm" data-act="storyopen">READ</button></div>`}</div>`;
+        height += renderUiRenderLandedFragment100({
+          story2Title: story2.title,
+          story2Brief: story2.brief,
+          story2Locked: legacyHtml(
+            story2.locked
+              ? renderUiRenderLandedFragment101({ story2Locked: story2.locked })
+              : renderUiRenderLandedFragment102(),
+          ),
+        });
       height += arcCardsHtml(clientGameState); // 1.2 faction arcs
       if (activeStory)
-        height += `<div class="card story" style="cursor:default"><div class="storytag">MAIN STORY · IN PROGRESS</div><div class="t">${escapeHtml2(activeStory.title)}</div><div>${escapeHtml2(activeStory.brief)}</div>${activeStory.ready ? '<div style="color:var(--ok)">Done: return to collect.</div>' : activeStory.got ? `<div class="dim small">${activeStory.got} so far</div>` : ''}</div>`;
+        height += renderUiRenderLandedFragment103({
+          activeStoryTitle: activeStory.title,
+          activeStoryBrief: activeStory.brief,
+          activeStoryReady: legacyHtml(
+            activeStory.ready
+              ? renderUiRenderLandedFragment104()
+              : activeStory.got
+                ? renderUiRenderLandedFragment105({ activeStoryGot: legacyHtml(activeStory.got) })
+                : '',
+          ),
+        });
       height +=
-        `<div class="sect" style="margin-top:0">JOBS ON OFFER</div>` +
+        renderUiRenderLandedFragment106() +
         missionFiltersHtml(clientGameState) +
         (filterMissions(clientGameState, length2.offers).length
           ? filterMissions(clientGameState, length2.offers)
               .map((mission) => {
                 if (mission.type === 'quest') return questCard(mission);
                 const jobInfo2 = jobInfo(mission, playerPayload);
-                return `<div class="card" data-offer-type="${escapeHtml2(mission.type)}" style="cursor:default"><div class="t">${escapeHtml2(mission.title)}</div><div>${escapeHtml2(mission.text)}</div>${missionFactsHtml(clientGameState, mission)}${jobInfo2.warn ? `<div class="jwarn">${jobInfo2.warn}</div>` : ''}${jobInfo2.note ? `<div class="jwarn" style="color:#ffb070">⚠ ${escapeHtml2(jobInfo2.note)}</div>` : ''}<div><button class="btn sm" data-act="accept" data-id="${mission.id}"${jobInfo2.warn ? ' disabled' : ''}>${mission.type === 'warband' ? 'PLAN TEAM CONTRACT' : 'ACCEPT'}</button>${mission.sys && mission.sys !== clientGameState.sys ? ` <button class="btn sm" data-plot="${mission.sys}">PLOT</button>` : ''}</div></div>`;
+                return renderUiRenderLandedFragment107({
+                  missionType: mission.type,
+                  missionTitle: mission.title,
+                  missionText: mission.text,
+                  missionFactsHtml: legacyHtml(missionFactsHtml(clientGameState, mission)),
+                  jobInfo2Warn: legacyHtml(
+                    jobInfo2.warn
+                      ? renderUiRenderLandedFragment108({ jobInfo2Warn: legacyHtml(jobInfo2.warn) })
+                      : '',
+                  ),
+                  jobInfo2Note: legacyHtml(
+                    jobInfo2.note
+                      ? renderUiRenderLandedFragment109({ jobInfo2Note: jobInfo2.note })
+                      : '',
+                  ),
+                  missionId: legacyHtml(mission.id),
+                  jobInfo2Warn2: legacyHtml(jobInfo2.warn ? ' disabled' : ''),
+                  missionType2: legacyHtml(
+                    mission.type === 'warband' ? 'PLAN TEAM CONTRACT' : 'ACCEPT',
+                  ),
+                  missionSys: legacyHtml(
+                    mission.sys && mission.sys !== clientGameState.sys
+                      ? renderUiRenderLandedFragment110({ missionSys: legacyHtml(mission.sys) })
+                      : '',
+                  ),
+                });
               })
               .join('')
-          : '<p class="dim">No jobs match these filters right now. Choose All types or turn off a filter to see the rest. Boards refresh every ten minutes.</p>');
+          : renderUiRenderLandedFragment111());
       height +=
-        `<div class="sect">YOUR JOBS (${playerPayload.missions.length}/6)</div>` +
+        renderUiRenderLandedFragment112({
+          playerPayloadMissionsLength: legacyHtml(playerPayload.missions.length),
+        }) +
         (playerPayload.missions.length
           ? playerPayload.missions
-              .map(
-                (mission) =>
-                  `<div class="kv"><span>${mission.quest ? `<span class="qtag">${escapeHtml2(mission.quest.name)} ${mission.quest.step + 1}/${mission.quest.of}</span> ` : ''}${escapeHtml2(mission.title)}${mission.type === 'patrol' ? ` (${mission.got}/${mission.need})` : ''}${mission.done ? ' <b style="color:var(--ok)">done: land to collect</b>' : ''}</span><span>${credits(mission.reward)} <button class="btn sm" data-act="abandon" data-id="${mission.id}">ABANDON</button></span></div>`,
+              .map((mission) =>
+                renderUiRenderLandedFragment113({
+                  missionQuest: legacyHtml(
+                    mission.quest
+                      ? renderUiRenderLandedFragment114({
+                          missionQuestName: mission.quest.name,
+                          missionQuestStep: legacyHtml(mission.quest.step + 1),
+                          missionQuestOf: legacyHtml(mission.quest.of),
+                        })
+                      : '',
+                  ),
+                  missionTitle: mission.title,
+                  missionType: legacyHtml(
+                    mission.type === 'patrol' ? ` (${mission.got}/${mission.need})` : '',
+                  ),
+                  missionDone: legacyHtml(mission.done ? renderUiRenderLandedFragment115() : ''),
+                  credits: legacyHtml(credits(mission.reward)),
+                  missionId: legacyHtml(mission.id),
+                }),
               )
               .join('')
-          : '<p class="dim">None.</p>');
+          : renderUiRenderLandedFragment116());
       break;
     }
     case 'station':
@@ -1877,11 +2661,86 @@ export function renderLanded(): void {
         send({ t: 'boards', cat: clientGameState.boardCat || 'earned' });
       }
       const communityPayload = length2.community;
-      height = `<div class="detail" style="grid-template-columns:1fr 1fr"><div>${clientGameState.solo ? '' : `<div class="sect" style="margin-top:0">CAPTAINS ONLINE (${communityPayload!.online.length})</div>`}${clientGameState.solo ? '' : communityPayload!.online.map((options) => `<div class="kv"><span>${escapeHtml2(options.name)}${options.name !== clientGameState.myName ? ` <button class="btn sm" data-act="ainvite" data-n="${escapeHtml2(options.name)}">INVITE</button>` : ''}${options.name !== clientGameState.myName && !(clientGameState.social && clientGameState.social.friends.some((friendEntry) => friendEntry.name === options.name)) ? ` <button class="btn sm" data-act="addfriend" data-n="${escapeHtml2(options.name)}">+ FRIEND</button>` : ''}</span><span>${escapeHtml2(options.sys)}</span></div>`).join('')}
-        ${clientGameState.solo ? '' : `<div class="sect">DOCKED HERE</div><div>${communityPayload!.docked.map((count) => `<span class="pill on">${escapeHtml2(count)}</span>`).join('') || '<span class="dim">Nobody else right now.</span>'}</div>`}
-        <div class="sect"${clientGameState.solo ? ' style="margin-top:0"' : ''}>STATION REGISTRY</div>${communityPayload!.stations.map((state) => `<div class="kv"><span>${escapeHtml2(state.system)}</span><span>${state.owner ? `${escapeHtml2(state.owner)} · Station Tier ${state.ops}` : '<span class="dim">unclaimed hull</span>'}</span></div>`).join('')}</div>
-        <div><div class="sect" style="margin-top:0">TOP CAPTAINS (credits earned)</div><table class="tbl"><tr><th>#</th><th>CAPTAIN</th><th>SHIP</th><th>EARNED</th><th>KILLS</th></tr>${communityPayload!.top.map((time, index) => `<tr><td>${index + 1}</td><td>${escapeHtml2(time.name)}${time.ai ? ' <span class="aitag">captain</span>' : ''}</td><td class="dim">${escapeHtml2(time.ship)}</td><td class="cr">${credits(time.earned)}</td><td>${time.kills}</td></tr>`).join('')}</table>
-        ${boardsHtml(clientGameState)}<p class="dim">Quantum Station is the Rift's meeting place. Claim one of the derelict station hulls listed in the registry to build your Personal Station.</p></div></div>`;
+      height = renderUiRenderLandedFragment117({
+        clientGameStateSolo: legacyHtml(
+          clientGameState.solo
+            ? ''
+            : renderUiRenderLandedFragment118({
+                communityPayload: legacyHtml(communityPayload!.online.length),
+              }),
+        ),
+        clientGameStateSolo2: legacyHtml(
+          clientGameState.solo
+            ? ''
+            : communityPayload!.online
+                .map((options) =>
+                  renderUiRenderLandedFragment119({
+                    optionsName: options.name,
+                    optionsName2: legacyHtml(
+                      options.name !== clientGameState.myName
+                        ? renderUiRenderLandedFragment120({ optionsName: options.name })
+                        : '',
+                    ),
+                    optionsName3: legacyHtml(
+                      options.name !== clientGameState.myName &&
+                        !(
+                          clientGameState.social &&
+                          clientGameState.social.friends.some(
+                            (friendEntry) => friendEntry.name === options.name,
+                          )
+                        )
+                        ? renderUiRenderLandedFragment121({ optionsName: options.name })
+                        : '',
+                    ),
+                    optionsSys: options.sys,
+                  }),
+                )
+                .join(''),
+        ),
+        clientGameStateSolo3: legacyHtml(
+          clientGameState.solo
+            ? ''
+            : renderUiRenderLandedFragment122({
+                communityPayload: legacyHtml(
+                  communityPayload!.docked
+                    .map((count) => renderUiRenderLandedFragment123({ count: count }))
+                    .join('') || renderUiRenderLandedFragment124(),
+                ),
+              }),
+        ),
+        clientGameStateSolo4: legacyHtml(
+          clientGameState.solo ? renderUiRenderLandedAttribute008() : '',
+        ),
+        communityPayload: legacyHtml(
+          communityPayload!.stations
+            .map((state) =>
+              renderUiRenderLandedFragment125({
+                stateSystem: state.system,
+                stateOwner: legacyHtml(
+                  state.owner
+                    ? `${escapeHtml2(state.owner)} · Station Tier ${state.ops}`
+                    : renderUiRenderLandedFragment126(),
+                ),
+              }),
+            )
+            .join(''),
+        ),
+        communityPayload2: legacyHtml(
+          communityPayload!.top
+            .map((time, index) =>
+              renderUiRenderLandedFragment127({
+                index: legacyHtml(index + 1),
+                timeName: time.name,
+                timeAi: legacyHtml(time.ai ? renderUiRenderLandedFragment128() : ''),
+                timeShip: time.ship,
+                credits: legacyHtml(credits(time.earned)),
+                timeKills: legacyHtml(time.kills),
+              }),
+            )
+            .join(''),
+        ),
+        boardsHtml: legacyHtml(boardsHtml(clientGameState)),
+      });
       break;
     }
   }
@@ -1920,7 +2779,24 @@ function stateLine(starSystem: number | string | null): string {
   const livingPayloadState = stateOfSys(starSystem);
   if (!livingPayloadState) return '';
   const systemState = STATES[livingPayloadState.k];
-  return `<span style="color:${systemState.color}">${systemState.icon} ${systemState.name}${livingPayloadState.k === 'war' && livingPayloadState.enemy ? ` with the ${escapeHtml2(FACTIONS[livingPayloadState.enemy!].short)}` : ''}</span>${livingPayloadState.need ? ` <span class="dim">(${livingPayloadState.got}/${livingPayloadState.need})</span>` : ''}`;
+  return renderUiStateLineFragment129({
+    systemStateColor: legacyHtml(systemState.color),
+    systemStateIcon: legacyHtml(systemState.icon),
+    systemStateName: legacyHtml(systemState.name),
+    livingPayloadStateK: legacyHtml(
+      livingPayloadState.k === 'war' && livingPayloadState.enemy
+        ? ` with the ${escapeHtml2(FACTIONS[livingPayloadState.enemy!].short)}`
+        : '',
+    ),
+    livingPayloadStateNeed: legacyHtml(
+      livingPayloadState.need
+        ? renderUiStateLineFragment130({
+            livingPayloadStateGot: legacyHtml(livingPayloadState.got),
+            livingPayloadStateNeed: legacyHtml(livingPayloadState.need),
+          })
+        : '',
+    ),
+  });
 }
 /**
  * Renders an informational card showing system state details, price shifts, and goals.
@@ -1943,7 +2819,34 @@ function stateCard(starSystem: number | string | null): string {
       ? `Sell ${systemState.need.qty} t of ${systemState.need.cid} at markets here (or deliver supply jobs) to end it.`
       : `Destroy ${systemState.need.qty} ${systemState.need.kills === 'pirate' ? 'raiders' : escapeHtml2(FACTIONS[livingPayloadState.enemy!].name) + ' ships'} here to end it.`
     : '';
-  return `<div class="statecard" style="border-color:${systemState.color}"><div><b style="color:${systemState.color}">${systemState.icon} ${systemState.name.toUpperCase()}</b> <span class="dim small">· about ${left} min left</span></div><div class="small">${escapeHtml2(systemState.desc)}</div><div class="small dim">${prices}</div>${goal ? `<div class="small">${goal}${livingPayloadState.need ? ` <b>${livingPayloadState.got} / ${livingPayloadState.need}</b>` : ''}</div><div class="sbar"><i style="width:${Math.round((100 * livingPayloadState.got) / Math.max(1, livingPayloadState.need))}%;background:${systemState.color}"></i></div>` : ''}</div>`;
+  return renderUiStateCardFragment131({
+    systemStateColor: legacyHtml(systemState.color),
+    systemStateColor2: legacyHtml(systemState.color),
+    systemStateIcon: legacyHtml(systemState.icon),
+    systemStateNameToUpperCase: legacyHtml(systemState.name.toUpperCase()),
+    left: legacyHtml(left),
+    systemStateDesc: systemState.desc,
+    prices: legacyHtml(prices),
+    goal: legacyHtml(
+      goal
+        ? renderUiStateCardFragment132({
+            goal: legacyHtml(goal),
+            livingPayloadStateNeed: legacyHtml(
+              livingPayloadState.need
+                ? renderUiStateCardFragment133({
+                    livingPayloadStateGot: legacyHtml(livingPayloadState.got),
+                    livingPayloadStateNeed: legacyHtml(livingPayloadState.need),
+                  })
+                : '',
+            ),
+            MathRound: legacyHtml(
+              Math.round((100 * livingPayloadState.got) / Math.max(1, livingPayloadState.need)),
+            ),
+            systemStateColor: legacyHtml(systemState.color),
+          })
+        : '',
+    ),
+  });
 }
 // how far a job is and whether its cargo fits your hold
 /**
@@ -1969,7 +2872,14 @@ function barCard(length2: LandedState): string {
   if (length2.contact) {
     const contact2 = length2.contact,
       story = (length2.offers || []).find((mission) => mission.type === 'quest');
-    height += `<div class="barcard"><div class="sect" style="margin-top:0">AT THE BAR</div><div><b>${escapeHtml2(contact2.name)}</b> <span class="dim">· ${escapeHtml2(contact2.title)} · ${escapeHtml2(contact2.standing)}</span></div><div class="qintro">${escapeHtml2(contact2.hello)}</div><div class="rumor">${escapeHtml2(contact2.rumor)}</div>${story ? `<div class="small" style="margin-top:4px">Has a story for you: <b style="color:#ffe2a0">${escapeHtml2(story.title)}</b> <button class="btn sm" data-act="ltab" data-t="jobs">SEE JOBS</button></div>` : ''}</div>`;
+    height += renderUiBarCardFragment134({
+      contact2Name: contact2.name,
+      contact2Title: contact2.title,
+      contact2Standing: contact2.standing,
+      contact2Hello: contact2.hello,
+      contact2Rumor: contact2.rumor,
+      story: legacyHtml(story ? renderUiBarCardFragment135({ storyTitle: story.title }) : ''),
+    });
   }
   if (length2.market && length2.market.length) {
     const sort2 = length2.market
@@ -1986,7 +2896,27 @@ function barCard(length2: LandedState): string {
         .slice(-2)
         .reverse();
     if (cheap.length || dear.length)
-      height += `<div class="small spec">${cheap.length ? `<span>Exports: <b style="color:var(--ok)">${cheap.map((positionX) => escapeHtml2(positionX.c.name)).join(', ')}</b> (cheap here)</span>` : ''}${cheap.length && dear.length ? ' · ' : ''}${dear.length ? `<span>Wants: <b style="color:#ffb070">${dear.map((positionX) => escapeHtml2(positionX.c.name)).join(', ')}</b> (pays well)</span>` : ''}</div>`;
+      height += renderUiBarCardFragment136({
+        cheapLength: legacyHtml(
+          cheap.length
+            ? renderUiBarCardFragment137({
+                cheapMap: legacyHtml(
+                  cheap.map((positionX) => escapeHtml2(positionX.c.name)).join(', '),
+                ),
+              })
+            : '',
+        ),
+        cheapLength2: legacyHtml(cheap.length && dear.length ? ' · ' : ''),
+        dearLength: legacyHtml(
+          dear.length
+            ? renderUiBarCardFragment138({
+                dearMap: legacyHtml(
+                  dear.map((positionX) => escapeHtml2(positionX.c.name)).join(', '),
+                ),
+              })
+            : '',
+        ),
+      });
   }
   return height;
 }
@@ -2007,9 +2937,7 @@ function questNeeds(mission: LandedOffer): string {
     );
   if (needs2.pax && bunkInfo(clientGameState, { type: 'passenger', pax: needs2.pax }))
     width.push(`one step carries ${needs2.pax} passenger${needs2.pax > 1 ? 's' : ''}`);
-  return width.length
-    ? `<div class="jwarn" style="color:#ffb070">⚠ ${escapeHtml2(width.join('; '))}. You can take it on and switch ships for that step.</div>`
-    : '';
+  return width.length ? renderUiQuestNeedsFragment139({ widthJoin: width.join('; ') }) : '';
 }
 // a contact's story or a side story on the job board
 /**
@@ -2022,9 +2950,35 @@ function questCard(mission: LandedOffer): string {
     mission.sys === clientGameState.sys
       ? 0
       : (route(systemsById, clientGameState.sys!, mission.sys) || []).length;
-  return `<div class="card story quest" style="cursor:default"><div class="storytag">${mission.side ? 'SIDE STORY' : 'CONTACT'} · ${escapeHtml2(mission.giver)}${mission.standing ? ` · <span class="dim">${escapeHtml2(mission.standing)}</span>` : ''}</div><div class="t">${escapeHtml2(mission.title)}</div><div class="qintro">${escapeHtml2(mission.text)}</div>
-    <div class="p">${mission.steps} steps, starting in ${systemsById[mission.sys] ? escapeHtml2(systemsById[mission.sys].name) : 'nearby'}${count ? ` (${count} jump${count > 1 ? 's' : ''})` : ''} · each step pays, and finishing earns <span class="cr">${escapeHtml2(mission.rewardText)}</span></div>
-    ${mission.full ? '<div class="jwarn">You are already following three stories.</div>' : ''}${clientGameState.you!.missions.length >= 6 ? '<div class="jwarn">All six job slots are full. Finish or abandon a job first.</div>' : ''}${questNeeds(mission)}<div><button class="btn sm" data-act="accept" data-id="${escapeHtml2(mission.id)}"${mission.full || clientGameState.you!.missions.length >= 6 ? ' disabled' : ''}>TAKE IT ON</button>${mission.sys && mission.sys !== clientGameState.sys ? ` <button class="btn sm" data-plot="${mission.sys}">PLOT</button>` : ''}</div></div>`;
+  return renderUiQuestCardFragment140({
+    missionSide: legacyHtml(mission.side ? 'SIDE STORY' : 'CONTACT'),
+    missionGiver: mission.giver,
+    missionStanding: legacyHtml(
+      mission.standing ? renderUiQuestCardFragment141({ missionStanding: mission.standing }) : '',
+    ),
+    missionTitle: mission.title,
+    missionText: mission.text,
+    missionSteps: legacyHtml(mission.steps),
+    systemsById: legacyHtml(
+      systemsById[mission.sys] ? escapeHtml2(systemsById[mission.sys].name) : 'nearby',
+    ),
+    count: legacyHtml(count ? ` (${count} jump${count > 1 ? 's' : ''})` : ''),
+    missionRewardText: mission.rewardText,
+    missionFull: legacyHtml(mission.full ? renderUiQuestCardFragment142() : ''),
+    clientGameStateYou: legacyHtml(
+      clientGameState.you!.missions.length >= 6 ? renderUiQuestCardFragment143() : '',
+    ),
+    questNeeds: legacyHtml(questNeeds(mission)),
+    missionId: mission.id,
+    missionFull2: legacyHtml(
+      mission.full || clientGameState.you!.missions.length >= 6 ? ' disabled' : '',
+    ),
+    missionSys: legacyHtml(
+      mission.sys && mission.sys !== clientGameState.sys
+        ? renderUiQuestCardFragment144({ missionSys: legacyHtml(mission.sys) })
+        : '',
+    ),
+  });
 }
 /**
  * Sorts shipyard hull IDs by the current sort criterion (cost, cargo, speed, strength, shield).
@@ -2604,11 +3558,14 @@ function searchMap(): void {
   elementById2('gresults').innerHTML =
     hits
       .slice(0, 8)
-      .map(
-        ([identifier, count, subscription]) =>
-          `<div class="it" data-sys="${identifier}"><b>${escapeHtml2(count)}</b> <span class="dim">${escapeHtml2(subscription)}</span></div>`,
+      .map(([identifier, count, subscription]) =>
+        renderUiSearchMapFragment145({
+          identifier: legacyHtml(identifier),
+          count: count,
+          subscription: subscription,
+        }),
       )
-      .join('') || '<div class="dim">No match.</div>';
+      .join('') || renderUiSearchMapFragment146();
 }
 /**
  * Closes the galaxy map overlay.
@@ -2622,7 +3579,12 @@ export function closeMap(): void {
 elementById2('gcid').innerHTML = COMMODITIES.filter(
   (commodityDef) => !['ore', 'gas', 'shards'].includes(commodityDef.id),
 )
-  .map((commodityDef) => `<option value="${commodityDef.id}">${commodityDef.name}</option>`)
+  .map((commodityDef) =>
+    renderUiViewFragment147({
+      commodityDefId: legacyHtml(commodityDef.id),
+      commodityDefName: legacyHtml(commodityDef.name),
+    }),
+  )
   .join('');
 elementById2('gcid').onchange = (event) => {
   clientGameState.mapCid = (event.target as HTMLInputElement).value;
@@ -2672,8 +3634,7 @@ function drawGMap(): void {
             ({ ore: 'asteroid field', gas: 'gas cloud', shards: 'crystal field' })[factionId.ore],
         )
         .join(', ');
-    const lawfulness =
-      starSystem.danger >= 3 ? ' · <span style="color:#f77">lawless: PvP allowed</span>' : '';
+    const lawfulness = starSystem.danger >= 3 ? renderUiDrawGMapFragment148() : '';
     const jumps =
       clientGameState.route && clientGameState.route.includes(starSystem.id)
         ? ` · ${clientGameState.route.indexOf(starSystem.id) + 1} jump${clientGameState.route.indexOf(starSystem.id) ? 's' : ''} away`
@@ -2687,55 +3648,114 @@ function drawGMap(): void {
             rawStellarBody.svc && rawStellarBody.svc!.includes('T') && !rawStellarBody.site,
         );
       extra = rawStellarBodys.length
-        ? `<br><span>${escapeHtml2(commodityDef!.name)}: ${rawStellarBodys
-            .map((rawStellarBody) => {
-              const price2 = price(rawStellarBody, captainId);
-              return price2 === null
-                ? ''
-                : `${escapeHtml2(rawStellarBody.name)} <b class="${price2 < commodityDef!.base * 0.92 ? 'lo' : price2 > commodityDef!.base * 1.08 ? 'hi' : ''}">${price2.toLocaleString()}</b>`;
-            })
-            .filter(Boolean)
-            .join(' · ')} <span class="dim">(average ${commodityDef!.base})</span></span>`
-        : '<br><span class="dim">No market here.</span>';
+        ? renderUiDrawGMapFragment149({
+            commodityDef: commodityDef!.name,
+            rawStellarBodys: legacyHtml(
+              rawStellarBodys
+                .map((rawStellarBody) => {
+                  const price2 = price(rawStellarBody, captainId);
+                  return price2 === null
+                    ? ''
+                    : renderUiDrawGMapFragment150({
+                        rawStellarBodyName: rawStellarBody.name,
+                        price2: legacyHtml(
+                          price2 < commodityDef!.base * 0.92
+                            ? 'lo'
+                            : price2 > commodityDef!.base * 1.08
+                              ? 'hi'
+                              : '',
+                        ),
+                        price2ToLocaleString: legacyHtml(price2.toLocaleString()),
+                      });
+                })
+                .filter(Boolean)
+                .join(' · '),
+            ),
+            commodityDef2: legacyHtml(commodityDef!.base),
+          })
+        : renderUiDrawGMapFragment151();
     }
     if (seen && clientGameState.mapMode === 'services')
-      extra = `<br><span>${
-        starSystem.stellars
-          .filter((rawStellarBody) => rawStellarBody.svc && /[YO]/.test(rawStellarBody.svc))
-          .map(
-            (rawStellarBody) =>
-              `${escapeHtml2(rawStellarBody.name)}: ${[rawStellarBody.svc!.includes('Y') ? 'shipyard' : '', rawStellarBody.svc!.includes('O') ? 'outfitter' : ''].filter(Boolean).join(' + ')}`,
-          )
-          .join(' · ') || '<span class="dim">No shipyard or outfitter.</span>'
-      }</span>`;
+      extra = renderUiDrawGMapFragment152({
+        starSystemStellars: legacyHtml(
+          starSystem.stellars
+            .filter((rawStellarBody) => rawStellarBody.svc && /[YO]/.test(rawStellarBody.svc))
+            .map(
+              (rawStellarBody) =>
+                `${escapeHtml2(rawStellarBody.name)}: ${[rawStellarBody.svc!.includes('Y') ? 'shipyard' : '', rawStellarBody.svc!.includes('O') ? 'outfitter' : ''].filter(Boolean).join(' + ')}`,
+            )
+            .join(' · ') || renderUiDrawGMapFragment153(),
+        ),
+      });
     if (clientGameState.mapMode === 'standing' && clientGameState.you!)
-      extra = `<br><span>Your standing with ${FACTIONS[starSystem.faction].name}: <b>${clientGameState.you!.rep[starSystem.faction] || 0}</b></span>`;
+      extra = renderUiDrawGMapFragment154({
+        FACTIONS: legacyHtml(FACTIONS[starSystem.faction].name),
+        clientGameStateYou: legacyHtml(clientGameState.you!.rep[starSystem.faction] || 0),
+      });
     const myHome =
       clientGameState.you &&
       clientGameState.you!.station &&
       clientGameState.you!.station.claimed &&
       STELLARS[clientGameState.you!.station.site!] &&
       STELLARS[clientGameState.you!.station.site!].system === starSystem.id;
-    elementById2('ginfo').innerHTML =
-      `${myHome ? '<span style="color:#ffd27a">◎ YOUR STATION · </span>' : ''}<b style="color:${FACTIONS[starSystem.faction].color}">${escapeHtml2(starSystem.name)}</b> · ${FACTIONS[starSystem.faction].name}${stateOfSys(starSystem.id) ? ' · ' + stateLine(starSystem.id) : ''} · danger <span class="dgr">${Array.from({ length: 7 }, (unused, index) => `<i class="${index < starSystem.danger ? 'on' : ''}"></i>`).join('')}</span> ${starSystem.danger}${lawfulness}${jumps}${seen ? '' : ' · <i>not yet visited</i>'}${extra}<br><span class="dim">${starSystem.stellars.map((rawStellarBody) => (rawStellarBody.site ? `${rawStellarBody.name}${clientGameState.sites && clientGameState.sites[rawStellarBody.id] ? ' (' + escapeHtml2(clientGameState.sites[rawStellarBody.id].owner) + ', Station Tier ' + clientGameState.sites[rawStellarBody.id].ops + ')' : ' (unclaimed)'}` : `${rawStellarBody.name} (${[rawStellarBody.svc!.includes('Y') && 'shipyard', rawStellarBody.svc!.includes('O') && 'outfitter', rawStellarBody.svc!.includes('T') && 'market', rawStellarBody.svc!.includes('B') && 'jobs'].filter(Boolean).join(', ') || 'no services'})`)).join(' · ') || 'No inhabited worlds.'}${fields ? ' · Mining: ' + fields : ''}${(() => {
-        const cargo2 = Object.keys(
-            (clientGameState.you && clientGameState.you!.cargo) || {},
-          ).filter((component) => clientGameState.you!.cargo[component] > 0),
-          buys = cargo2.filter((component) =>
-            starSystem.stellars.some((rawStellarBody) => {
-              const stellarBody = STELLARS[rawStellarBody.id];
-              return (
-                stellarBody &&
-                !stellarBody.site &&
-                (stellarBody.svc || '').includes('T') &&
-                price(stellarBody, component) !== null
-              );
-            }),
-          );
-        return buys.length
-          ? ` · <span style="color:var(--ok)">buys your ${buys.map((component) => COMMODITIES.find((commodityDef) => commodityDef.id === component)!.name.toLowerCase()).join(', ')}</span>`
-          : '';
-      })()}</span>`; // 2.5.2
+    elementById2('ginfo').innerHTML = renderUiDrawGMapFragment155({
+      myHome: legacyHtml(myHome ? renderUiDrawGMapFragment156() : ''),
+      FACTIONS: legacyHtml(FACTIONS[starSystem.faction].color),
+      starSystemName: starSystem.name,
+      FACTIONS2: legacyHtml(FACTIONS[starSystem.faction].name),
+      stateOfSys: legacyHtml(stateOfSys(starSystem.id) ? ' · ' + stateLine(starSystem.id) : ''),
+      ArrayFrom: legacyHtml(
+        Array.from({ length: 7 }, (unused, index) =>
+          renderUiDrawGMapFragment157({ index: legacyHtml(index < starSystem.danger ? 'on' : '') }),
+        ).join(''),
+      ),
+      starSystemDanger: legacyHtml(starSystem.danger),
+      lawfulness: legacyHtml(lawfulness),
+      jumps: legacyHtml(jumps),
+      seen: legacyHtml(seen ? '' : renderUiDrawGMapFragment158()),
+      extra: legacyHtml(extra),
+      starSystemStellarsMap: legacyHtml(
+        starSystem.stellars
+          .map((rawStellarBody) =>
+            rawStellarBody.site
+              ? `${rawStellarBody.name}${clientGameState.sites && clientGameState.sites[rawStellarBody.id] ? ' (' + escapeHtml2(clientGameState.sites[rawStellarBody.id].owner) + ', Station Tier ' + clientGameState.sites[rawStellarBody.id].ops + ')' : ' (unclaimed)'}`
+              : `${rawStellarBody.name} (${[rawStellarBody.svc!.includes('Y') && 'shipyard', rawStellarBody.svc!.includes('O') && 'outfitter', rawStellarBody.svc!.includes('T') && 'market', rawStellarBody.svc!.includes('B') && 'jobs'].filter(Boolean).join(', ') || 'no services'})`,
+          )
+          .join(' · ') || 'No inhabited worlds.',
+      ),
+      fields: legacyHtml(fields ? ' · Mining: ' + fields : ''),
+      constValue: legacyHtml(
+        (() => {
+          const cargo2 = Object.keys(
+              (clientGameState.you && clientGameState.you!.cargo) || {},
+            ).filter((component) => clientGameState.you!.cargo[component] > 0),
+            buys = cargo2.filter((component) =>
+              starSystem.stellars.some((rawStellarBody) => {
+                const stellarBody = STELLARS[rawStellarBody.id];
+                return (
+                  stellarBody &&
+                  !stellarBody.site &&
+                  (stellarBody.svc || '').includes('T') &&
+                  price(stellarBody, component) !== null
+                );
+              }),
+            );
+          return buys.length
+            ? renderUiDrawGMapFragment159({
+                buysMap: legacyHtml(
+                  buys
+                    .map((component) =>
+                      COMMODITIES.find(
+                        (commodityDef) => commodityDef.id === component,
+                      )!.name.toLowerCase(),
+                    )
+                    .join(', '),
+                ),
+              })
+            : '';
+        })(),
+      ),
+    }); // 2.5.2
   }
 }
 /**

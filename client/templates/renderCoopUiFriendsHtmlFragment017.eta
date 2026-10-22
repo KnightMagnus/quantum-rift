@@ -1,0 +1,1 @@
+<div class="kv"><span><%= it.count %></span><span><button class="btn sm" data-cact="facc" data-n="<%= it.count2 %>">ACCEPT</button> <button class="btn sm" data-cact="fdec" data-n="<%= it.count3 %>">DECLINE</button></span></div>

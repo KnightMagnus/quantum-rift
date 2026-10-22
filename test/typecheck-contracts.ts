@@ -164,8 +164,28 @@ createPortService({toast() {}});
 `);
   assert.notEqual(result.status, 0, 'port operations require explicit core capabilities');
   assert.match(result.stdout + result.stderr, /missing/);
+  const templateFixture = `import { legacyHtml } from '${modulePath('../client/eta-runtime.ts')}';
+import { renderMissionDetailsMissionFactsHtmlFragment002 } from '${modulePath('../client/eta-templates.ts')}';
+`;
+  result = check(
+    templateFixture +
+      'renderMissionDetailsMissionFactsHtmlFragment002({missionDetailsInputPax:legacyHtml(1),missionDetails2Seats:legacyHtml(2)});',
+  );
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  result = check(
+    templateFixture +
+      'renderMissionDetailsMissionFactsHtmlFragment002({missionDetailsInputPax:"unreviewed markup",missionDetails2Seats:legacyHtml(2)});',
+  );
+  assert.notEqual(result.status, 0, 'Raw Eta slots require an explicit audited fragment boundary');
+  assert.match(result.stdout + result.stderr, /LegacyHtmlFragment/);
+  result = check(
+    templateFixture +
+      'renderMissionDetailsMissionFactsHtmlFragment002({missionDetailsInputPax:legacyHtml(1)});',
+  );
+  assert.notEqual(result.status, 0, 'Generated view models require every declared slot');
+  assert.match(result.stdout + result.stderr, /missionDetails2Seats/);
   console.log(
-    'Typed valid calls/grade selections pass; invalid argument, grade quantity and missing capability are rejected.',
+    'Typed valid calls/grade selections and Eta models pass; unbranded/missing raw fields are rejected; invalid argument, grade quantity and missing capability are rejected.',
   );
 } finally {
   filesystem.rmSync(directory, { recursive: true, force: true });

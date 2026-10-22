@@ -1,0 +1,1 @@
+<div class="sect">PRIVACY</div><label class="small"><input type="checkbox" id="pdmall" <%~ it.socialStateDmAll %>> Take messages from captains who are not my friends</label><br><label class="small"><input type="checkbox" id="phide" <%~ it.socialStateHideSys %>> Hide my location from friends</label>

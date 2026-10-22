@@ -1,0 +1,1 @@
+<tr><td><%~ it.index %></td><td><a href="#" data-act="prof" data-n="<%= it.radiusName %>"><%~ it.radiusFleet %><%= it.radiusName2 %></a><%~ it.radiusAi %></td><td><%~ it.category %></td></tr>

@@ -1,0 +1,1 @@
+<div class="sfac <%~ it.entryKey %>" data-act="sfac" data-f="<%~ it.entryKey2 %>"><b style="color:<%~ it.factionDefColor %>"><%= it.factionDefShort %></b><span class="dim small"><%~ it.reputation %> · <%~ it.token %> tokens</span></div>

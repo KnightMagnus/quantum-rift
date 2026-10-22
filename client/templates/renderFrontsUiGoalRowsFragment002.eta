@@ -1,0 +1,1 @@
+<button class="btn sm" data-act="goal" data-p="<%~ it.period %>" data-i="<%~ it.index %>">CLAIM</button>

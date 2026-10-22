@@ -1,0 +1,1 @@
+<div class="rrow"><select data-job="<%~ it.shuttleJobId %>"><%~ it.join2 %></select><button class="btn sm" data-act="sh" data-op="send" data-job="<%~ it.shuttleJobId2 %>">LAUNCH</button></div>

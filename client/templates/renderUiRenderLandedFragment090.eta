@@ -1,0 +1,1 @@
+<div class="card <%~ it.height3 %>" data-act="sel" data-h="<%~ it.height32 %>"><img src="<%~ it.artworkUrl %>"><div class="t"><%= it.shipHullAssetName %></div><div class="dim small"><%= it.shipHullAssetSub %></div><div class="small"><%~ it.roleTag %><%~ it.shipHullAssetCargo %></div><div class="p"><%~ it.credits %></div></div>
