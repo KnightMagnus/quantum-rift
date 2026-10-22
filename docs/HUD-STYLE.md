@@ -65,10 +65,10 @@ Capture actual populated game states, not HTML concepts, at 1600×1000 and
 families and a fully expanded function stack. Update the README gallery with
 implemented captures. Use isolated fixture saves, never player saves.
 
-`cockpit-browser.mjs` covers typography/artwork, real menu actions, tray defaults,
+`cockpit-browser.ts` covers typography/artwork, real menu actions, tray defaults,
 live drag at 0.8/1/1.4 scale, saved-width reload, viewport-shrink recovery and literal
-hail-marker edge containment. `ship-functions-browser.mjs`,
-`mining-panel-browser.mjs` and `sidebar-browser.mjs` cover multi-panel flow,
+hail-marker edge containment. `ship-functions-browser.ts`,
+`mining-panel-browser.ts` and `sidebar-browser.ts` cover multi-panel flow,
 reachability and narrow/scaled cases. Run the canonical regression manifest; a
 screenshot or passing geometry check alone is not functional verification.
 

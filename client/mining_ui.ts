@@ -9,15 +9,15 @@ export interface MiningUIOptions {
   label: (code: string | null) => string;
   blocked: () => boolean;
   contextBlocked?: () => boolean;
-  industrialAudio?: (on: boolean, heat: number) => void;
-  towAudio?: (on: boolean, tension: number) => void;
+  industrialAudio?: (enabled: boolean, heat: number) => void;
+  towAudio?: (enabled: boolean, tension: number) => void;
 }
 
 import { miningPanelState } from './mining-panel-state.ts';
 import { initTowingUI } from './towing_ui.ts';
 // One action entry point for keyboard and contextual cockpit button.
 export function initMiningUI({
-  G,
+  G: clientGameState,
   send,
   bound,
   label,
@@ -35,7 +35,13 @@ export function initMiningUI({
   let open = false,
     identity: string | null = null;
   const currentIdentity = () =>
-    G.you ? G.you!.name + ':' + G.you!.ship?.hull + ':' + G.myId : null;
+    clientGameState.you
+      ? clientGameState.you!.name +
+        ':' +
+        clientGameState.you!.ship?.hull +
+        ':' +
+        clientGameState.myId
+      : null;
   function setOpen(value: boolean) {
     open = value;
     if (open) identity = currentIdentity();
@@ -51,37 +57,55 @@ export function initMiningUI({
     indicator.focus();
   };
   // Native button activation must not become Enter-to-chat or Space-to-fire.
-  const buttonKeys = (e: KeyboardEvent) => {
+  const buttonKeys = (keyboardEvent: KeyboardEvent) => {
     if (
-      ['Enter', ' '].includes(e.key) &&
-      ['BUTTON', 'SUMMARY'].includes((e.target as HTMLInputElement).tagName)
+      ['Enter', ' '].includes(keyboardEvent.key) &&
+      ['BUTTON', 'SUMMARY'].includes((keyboardEvent.target as HTMLInputElement).tagName)
     )
-      e.stopPropagation();
+      keyboardEvent.stopPropagation();
   };
   indicator.addEventListener('keydown', buttonKeys);
   root.addEventListener('keydown', buttonKeys);
-  root.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      e.stopPropagation();
+  root.addEventListener('keydown', (keyboardEvent) => {
+    if (keyboardEvent.key === 'Escape') {
+      keyboardEvent.stopPropagation();
       close.click();
     }
   });
-  const towUI = initTowingUI({ G, send, bound, label, blocked: contextBlocked, towAudio, root });
+  const initTowingUI2 = initTowingUI({
+    G: clientGameState,
+    send,
+    bound,
+    label,
+    blocked: contextBlocked,
+    towAudio,
+    root,
+  });
   function invokeMiningAction(action: string) {
-    if (blocked() || G.paused || G.landed || !G.you || !G.view || !miningPanelState(G).visible)
+    if (
+      blocked() ||
+      clientGameState.paused ||
+      clientGameState.landed ||
+      !clientGameState.you ||
+      !clientGameState.view ||
+      !miningPanelState(clientGameState).visible
+    )
       return false;
     if (action === 'miningPanel') {
       setOpen(!open);
       return true;
     }
     if (['towToggle', 'towDeliver', 'towOffer', 'towAccept'].includes(action))
-      return towUI.invoke(action);
+      return initTowingUI2.invoke(action);
     if (action === 'miningGroup') {
-      send({ t: 'miningPressure', op: G.miningPressure?.groupConsent ? 'leave' : 'join' });
+      send({
+        t: 'miningPressure',
+        op: clientGameState.miningPressure?.groupConsent ? 'leave' : 'join',
+      });
       return true;
     }
     if (action === 'dredgeInput' || action === 'dredgeOff') {
-      if (G.you!.ship?.hull !== 815) return false;
+      if (clientGameState.you!.ship?.hull !== 815) return false;
       send(
         action === 'dredgeOff'
           ? { t: 'industrial', op: 'off' }
@@ -90,7 +114,7 @@ export function initMiningUI({
       return true;
     }
     if (['dredgeSweep', 'dredgeHarvest', 'dredgeSmelter'].includes(action)) {
-      if (G.you!.ship?.hull !== 815) return false;
+      if (clientGameState.you!.ship?.hull !== 815) return false;
       send({
         t: 'industrial',
         op: (
@@ -102,80 +126,93 @@ export function initMiningUI({
       });
       return true;
     }
-    if (action !== 'surveyPulse' || blocked() || !G.you || !G.view || G.landed || G.paused)
+    if (
+      action !== 'surveyPulse' ||
+      blocked() ||
+      !clientGameState.you ||
+      !clientGameState.view ||
+      clientGameState.landed ||
+      clientGameState.paused
+    )
       return false;
-    const m = G.mining;
-    if (m && m.cooldownUntil > m.now) return false;
+    const miningPrivateWire = clientGameState.mining;
+    if (miningPrivateWire && miningPrivateWire.cooldownUntil > miningPrivateWire.now) return false;
     send({ t: 'mining', op: 'survey' });
     return true;
   }
   function refresh() {
-    towUI.refresh();
-    const state = miningPanelState(G);
-    const fly = state.visible && elementById('login').classList.contains('hidden');
+    initTowingUI2.refresh();
+    const state = miningPanelState(clientGameState);
+    const flightVisible = state.visible && elementById('login').classList.contains('hidden');
     const nextIdentity = currentIdentity();
-    if (!fly || nextIdentity !== identity) setOpen(false);
+    if (!flightVisible || nextIdentity !== identity) setOpen(false);
     identity = nextIdentity;
     indicator.classList.toggle(
       'hidden',
-      !G.you || !elementById('login').classList.contains('hidden'),
+      !clientGameState.you || !elementById('login').classList.contains('hidden'),
     );
-    indicator.disabled = !fly;
-    indicator.setAttribute('aria-disabled', String(!fly));
-    root.classList.toggle('hidden', !fly || !open);
+    indicator.disabled = !flightVisible;
+    indicator.setAttribute('aria-disabled', String(!flightVisible));
+    root.classList.toggle('hidden', !flightVisible || !open);
     indicator.title = state.active
       ? 'Mining operations active — open controls'
       : 'Open mining controls';
     indicator.classList.toggle('active', state.active);
     indicator.setAttribute(
       'aria-label',
-      G.miningPressure?.warn
+      clientGameState.miningPressure?.warn
         ? 'Mining controls — high mining noise'
         : state.active
           ? 'Mining controls — operations active'
           : 'Mining controls',
     );
-    if (!fly) indicator.title = 'Mining unavailable — requires a mining ship or tow rig in flight';
+    if (!flightVisible)
+      indicator.title = 'Mining unavailable — requires a mining ship or tow rig in flight';
     indicator.title += ` · ${label(bound('miningPanel'))}`;
-    consent.textContent = `${G.miningPressure?.groupConsent ? 'Leave' : 'Join'} group mining · ${label(bound('miningGroup'))}`;
+    consent.textContent = `${clientGameState.miningPressure?.groupConsent ? 'Leave' : 'Join'} group mining · ${label(bound('miningGroup'))}`;
     choose.textContent = `SET INPUT · ${label(bound('dredgeInput'))}`;
-    off.textContent = `ALL OFF · ${label(bound('dredgeOff'))}`;
-    const danger = G.miningPressure?.warn;
+    htmlButtonElement2.textContent = `ALL OFF · ${label(bound('dredgeOff'))}`;
+    const danger = clientGameState.miningPressure?.warn;
     indicator.classList.toggle('warning', !!danger);
     cargo.textContent =
       state.free > 0
         ? state.free + ' / ' + state.capacity + ' t free'
         : 'Hold full — unload cargo to collect more';
     if (danger) cargo.textContent += ' · Mining noise is high — danger may follow';
-    if (!fly) {
+    if (!flightVisible) {
       industrialAudio(false, 0);
       return;
     }
-    industrial.hidden = G.you?.ship?.hull !== 815;
-    const im = G.industrial || G.you?.industrial;
-    if (im) {
-      industrialAudio(!!im.inputs.sweep, im.heat);
-      heat.textContent = `SHIP HEAT ${im.heat.toFixed(0)}/100 · ${im.heat >= 150 ? 'CRITICAL HULL DAMAGE' : im.heat >= 120 ? 'SHIELD DRAIN' : im.heat >= 70 ? 'WARNING' : 'SAFE'} · ${im.reason} · ${im.safeSeconds.toFixed(0)}s to cutoff`;
-      for (const [action, b] of industrialButtons) {
+    industrial.hidden = clientGameState.you?.ship?.hull !== 815;
+    const image = clientGameState.industrial || clientGameState.you?.industrial;
+    if (image) {
+      industrialAudio(!!image.inputs.sweep, image.heat);
+      heat.textContent = `SHIP HEAT ${image.heat.toFixed(0)}/100 · ${image.heat >= 150 ? 'CRITICAL HULL DAMAGE' : image.heat >= 120 ? 'SHIELD DRAIN' : image.heat >= 70 ? 'WARNING' : 'SAFE'} · ${image.reason} · ${image.safeSeconds.toFixed(0)}s to cutoff`;
+      for (const [action, htmlButtonElement] of industrialButtons) {
         const mode = (
           { dredgeSweep: 'sweep', dredgeHarvest: 'harvest', dredgeSmelter: 'smelter' } as const
         )[action as 'dredgeSweep' | 'dredgeHarvest' | 'dredgeSmelter'];
-        b.textContent = `${mode.toUpperCase()} ${im[mode] ? 'ON' : 'OFF'} · ${label(bound(action))}`;
-        b.disabled = (blocked() || G.paused) as boolean;
+        htmlButtonElement.textContent = `${mode.toUpperCase()} ${image[mode] ? 'ON' : 'OFF'} · ${label(bound(action))}`;
+        htmlButtonElement.disabled = (blocked() || clientGameState.paused) as boolean;
       }
-      property.textContent = `Heat sources: SWEEP ${im.inputs.sweep.toFixed(1)} / SMELTER ${im.inputs.smelter.toFixed(1)} / CORONA ${im.inputs.corona.toFixed(1)}. Mobile: ${im.workMs / 1000}/10s per input tonne · ${Object.entries(
-        im.outputs,
+      property.textContent = `Heat sources: SWEEP ${image.inputs.sweep.toFixed(1)} / SMELTER ${image.inputs.smelter.toFixed(1)} / CORONA ${image.inputs.corona.toFixed(1)}. Mobile: ${image.workMs / 1000}/10s per input tonne · ${Object.entries(
+        image.outputs,
       )
-        .map(([k, v]) => k + ' ' + v + '/300')
+        .map(([entryKey, value]) => entryKey + ' ' + value + '/300')
         .join(
           ' ',
-        )}. 70% recovery, 6 input t/min, no offline work. ${im.stock} ${(im.bands || []).map((b) => 'ENTRY ' + b.entry.x + ',' + b.entry.y + ' → EAST').join(' ')}`;
+        )}. 70% recovery, 6 input t/min, no offline work. ${image.stock} ${(image.bands || []).map((secondValue) => 'ENTRY ' + secondValue.entry.x + ',' + secondValue.entry.y + ' → EAST').join(' ')}`;
     }
-    const m = G.mining,
-      remaining = Math.max(0, (m?.cooldownUntil || 0) - (m?.now || 0));
+    const miningPrivateWire = clientGameState.mining,
+      remaining = Math.max(
+        0,
+        (miningPrivateWire?.cooldownUntil || 0) - (miningPrivateWire?.now || 0),
+      );
     button.textContent = `Scan nearby rocks · ${label(bound('surveyPulse'))}${remaining ? ` · ${Math.ceil(remaining)}s` : ''}`;
-    button.disabled = blocked() || !!G.paused || remaining > 0;
-    const record = G.miningRocks?.rocks.find((r) => r.id === G.miningTarget);
+    button.disabled = blocked() || !!clientGameState.paused || remaining > 0;
+    const record = clientGameState.miningRocks?.rocks.find(
+      (miningRockWire) => miningRockWire.id === clientGameState.miningTarget,
+    );
     meter.textContent = record?.down
       ? `${record.lastCut === 'clean' ? 'Clean cut' : 'Rock opened'} — collect the released material`
       : record && !record.down
@@ -199,52 +236,52 @@ export function initMiningUI({
   industrial.append(heat);
   const industrialButtons: Array<[string, HTMLButtonElement]> = [];
   for (const action of ['dredgeSweep', 'dredgeHarvest', 'dredgeSmelter']) {
-    const b = document.createElement('button');
-    b.title = (
+    const htmlButtonElement = document.createElement('button');
+    htmlButtonElement.title = (
       {
         dredgeSweep: 'Collect loose field material',
         dredgeHarvest: 'Collect plasma in a stellar corona',
         dredgeSmelter: 'Process carried material aboard the ship',
       } as Record<string, string>
     )[action];
-    b.className = 'btn sm';
-    b.id = action;
-    b.onclick = () => invokeMiningAction(action);
-    industrialButtons.push([action, b]);
-    industrial.append(b);
+    htmlButtonElement.className = 'btn sm';
+    htmlButtonElement.id = action;
+    htmlButtonElement.onclick = () => invokeMiningAction(action);
+    industrialButtons.push([action, htmlButtonElement]);
+    industrial.append(htmlButtonElement);
   }
   const recipes = document.createElement('select');
   recipes.id = 'mobilerecipe';
   recipes.setAttribute('aria-label', 'Material to process');
-  for (const [id, name] of [
+  for (const [identifier, name] of [
     ['alloy', 'Ore → Alloy'],
     ['cells', 'Gas → Cells'],
     ['cut', 'Shards → Crystal'],
   ]) {
-    const o = document.createElement('option');
-    o.value = id;
-    o.textContent = name;
-    recipes.append(o);
+    const htmlOptionElement = document.createElement('option');
+    htmlOptionElement.value = identifier;
+    htmlOptionElement.textContent = name;
+    recipes.append(htmlOptionElement);
   }
   const grade = document.createElement('select');
   grade.id = 'mobilegrade';
   grade.setAttribute('aria-label', 'Input material quality');
-  for (const id of ['common', 'rich', 'pure']) {
-    const o = document.createElement('option');
-    o.value = id;
-    o.textContent = id;
-    grade.append(o);
+  for (const identifier of ['common', 'rich', 'pure']) {
+    const htmlOptionElement = document.createElement('option');
+    htmlOptionElement.value = identifier;
+    htmlOptionElement.textContent = identifier;
+    grade.append(htmlOptionElement);
   }
   const choose = document.createElement('button');
   choose.className = 'btn sm';
   choose.textContent = 'SET INPUT';
   choose.onclick = () => invokeMiningAction('dredgeInput');
-  const off = document.createElement('button');
-  off.className = 'btn sm';
-  off.id = 'industrialoff';
-  off.textContent = 'ALL OFF';
-  off.onclick = () => invokeMiningAction('dredgeOff');
-  industrial.append(recipes, grade, choose, off);
+  const htmlButtonElement2 = document.createElement('button');
+  htmlButtonElement2.className = 'btn sm';
+  htmlButtonElement2.id = 'industrialoff';
+  htmlButtonElement2.textContent = 'ALL OFF';
+  htmlButtonElement2.onclick = () => invokeMiningAction('dredgeOff');
+  industrial.append(recipes, grade, choose, htmlButtonElement2);
   industrial.append(industrialDetails);
   root.append(industrial);
   const consent = document.createElement('button');
@@ -263,27 +300,32 @@ export function initMiningUI({
   button.onclick = () => invokeMiningAction('surveyPulse');
   return { invokeMiningAction, refresh };
 }
-export function receiveMining(G: ClientGameState, message: MiningMessage) {
-  if (Object.hasOwn(message, 'towing')) G.towing = message.towing;
-  if (Object.hasOwn(message, 'industrial')) G.industrial = message.industrial;
-  if (message.miningPressure) G.miningPressure = message.miningPressure;
-  if (message.miningHazards) G.miningHazards = message.miningHazards;
+export function receiveMining(clientGameState: ClientGameState, message: MiningMessage) {
+  if (Object.hasOwn(message, 'towing')) clientGameState.towing = message.towing;
+  if (Object.hasOwn(message, 'industrial')) clientGameState.industrial = message.industrial;
+  if (message.miningPressure) clientGameState.miningPressure = message.miningPressure;
+  if (message.miningHazards) clientGameState.miningHazards = message.miningHazards;
   const wire = message.miningRocks;
   if (!wire || wire.version !== 1 || !Array.isArray(wire.rocks) || !Number.isFinite(wire.now))
     return;
-  if (G.miningRocks && wire.now < G.miningRocks.now) return;
-  const old = G.miningRocks?.rocks.find((r) => r.id === G.miningTarget);
-  G.miningRocks = wire;
-  G.mining = message.mining?.version === 1 ? message.mining : null;
-  const selected = wire.rocks.find((r) => r.id === G.miningTarget);
-  if (!selected || (old && old.generation !== selected.generation)) G.miningTarget = 0;
-  G.rocks = wire.rocks.map((r) => ({
-    id: r.id,
-    x: r.x,
-    y: r.y,
-    r: r.r,
-    ore: r.ore,
-    hp: r.down ? 0 : Math.max(1, r.hp),
+  if (clientGameState.miningRocks && wire.now < clientGameState.miningRocks.now) return;
+  const miningRockWire2 = clientGameState.miningRocks?.rocks.find(
+    (miningRockWire) => miningRockWire.id === clientGameState.miningTarget,
+  );
+  clientGameState.miningRocks = wire;
+  clientGameState.mining = message.mining?.version === 1 ? message.mining : null;
+  const selected = wire.rocks.find(
+    (miningRockWire) => miningRockWire.id === clientGameState.miningTarget,
+  );
+  if (!selected || (miningRockWire2 && miningRockWire2.generation !== selected.generation))
+    clientGameState.miningTarget = 0;
+  clientGameState.rocks = wire.rocks.map((miningRockWire) => ({
+    id: miningRockWire.id,
+    x: miningRockWire.x,
+    y: miningRockWire.y,
+    r: miningRockWire.r,
+    ore: miningRockWire.ore,
+    hp: miningRockWire.down ? 0 : Math.max(1, miningRockWire.hp),
   }));
-  G.rockById = new Map(G.rocks.map((r) => [r.id, r]));
+  clientGameState.rockById = new Map(clientGameState.rocks.map((radius) => [radius.id, radius]));
 }

@@ -32,4 +32,4 @@ Nominal DPS below is `(armor + shield damage) × 30 / reload`; it is a tuning co
 
 ## Verification
 
-Run `node test/original-weapons.js` for mount/class, loadout/reference, save-ID, tuning progression and branding checks. Existing combat and mining regression suites verify integration.
+Run `node test/original-weapons.ts` for mount/class, loadout/reference, save-ID, tuning progression and branding checks. Existing combat and mining regression suites verify integration.

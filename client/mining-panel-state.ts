@@ -14,25 +14,32 @@ export interface MiningPanelState {
 }
 // UI visibility only: mining/towing authority remains on the server.
 import { ShipCapacity } from '../shared/ship-capacity.ts';
-export function miningPanelState(G: MiningPanelState) {
-  const y = G.you!,
-    st = y?.shipStats;
-  const capacity = Math.max(0, st?.cargo || 0);
+export function miningPanelState(miningPanelState2: MiningPanelState) {
+  const positionY = miningPanelState2.you!,
+    shipStats2 = positionY?.shipStats;
+  const capacity = Math.max(0, shipStats2?.cargo || 0);
   const active = !!(
-    G.towing?.attached ||
-    G.towing?.offers?.length ||
-    G.industrial?.sweep ||
-    G.industrial?.harvest ||
-    G.industrial?.smelter
+    miningPanelState2.towing?.attached ||
+    miningPanelState2.towing?.offers?.length ||
+    miningPanelState2.industrial?.sweep ||
+    miningPanelState2.industrial?.harvest ||
+    miningPanelState2.industrial?.smelter
   );
   // Survey is the existing miners/haulers role; a fitted tow rig is an explicit
   // industrial capability. Do not confuse a full hold with no cargo capacity.
   const eligible =
-    capacity > 0 && (G.A?.ships[y?.ship?.hull as string | number]?.role === 'survey' || st?.towRig);
+    capacity > 0 &&
+    (miningPanelState2.A?.ships[positionY?.ship?.hull as string | number]?.role === 'survey' ||
+      shipStats2?.towRig);
   return {
-    visible: !!y && !y.shipless && !G.landed && !!G.view && (eligible || active),
+    visible:
+      !!positionY &&
+      !positionY.shipless &&
+      !miningPanelState2.landed &&
+      !!miningPanelState2.view &&
+      (eligible || active),
     capacity,
-    free: new ShipCapacity(capacity, y?.cargoUsed || 0, y?.jobCargo || 0).available,
+    free: new ShipCapacity(capacity, positionY?.cargoUsed || 0, positionY?.jobCargo || 0).available,
     active,
   };
 }

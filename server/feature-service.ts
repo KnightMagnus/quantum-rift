@@ -1,4 +1,6 @@
-export type BoundOperations<T extends object> = { [K in keyof T]: OmitThisParameter<T[K]> };
+export type BoundOperations<ValueType extends object> = {
+  [KeyType in keyof ValueType]: OmitThisParameter<ValueType[KeyType]>;
+};
 
 // @ts-check
 
@@ -12,10 +14,10 @@ export type BoundOperations<T extends object> = { [K in keyof T]: OmitThisParame
  * @param {ThisParameterType<T[keyof T]>} capabilities
  * @returns {BoundOperations<T>}
  */
-export function bindOperations<T extends object>(
-  operations: T,
-  capabilities: ThisParameterType<T[keyof T]>,
-): BoundOperations<T> {
+export function bindOperations<ValueType extends object>(
+  operations: ValueType,
+  capabilities: ThisParameterType<ValueType[keyof ValueType]>,
+): BoundOperations<ValueType> {
   const entries = Object.entries(operations);
   for (const [name, operation] of entries) {
     if (typeof operation !== 'function')
@@ -24,6 +26,6 @@ export function bindOperations<T extends object>(
   return /** @type {BoundOperations<T>} */ (
     Object.seal(
       Object.fromEntries(entries.map(([name, operation]) => [name, operation.bind(capabilities)])),
-    ) as BoundOperations<T>
+    ) as BoundOperations<ValueType>
   );
 }

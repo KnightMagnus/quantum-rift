@@ -7,7 +7,7 @@ export interface HailOperations {
   ): { sp: Space; e: Entity; root: Entity } | null;
   hail(this: HailCapabilities, session: Session, message: NetworkMessage): void;
   hailOpt(this: HailCapabilities, session: Session, message: NetworkMessage): void;
-  hailPlanet(this: HailCapabilities, session: Session, id: string): void;
+  hailPlanet(this: HailCapabilities, session: Session, identifier: string): void;
   hailPlanetOpt(this: HailCapabilities, session: Session, message: NetworkMessage): void;
 }
 import type { HailCapabilities } from './features.ts';
@@ -18,7 +18,7 @@ import type { Entity, Space } from './space.ts';
 import { contextualHail } from './hail-dialogue.ts';
 // hailing. Talk to the ship you have targeted or the planet you have selected:
 // bribe pirates, ask traders for fuel or repairs when stranded, bribe a planet for landing rights, trade words with rivals.
-import { SYS, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
+import { SYS as systemsById, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
 import { RIVAL, MOOD } from '../shared/rivals.ts';
 import { credits } from '../shared/rules.ts';
 
@@ -28,20 +28,22 @@ import { credits } from '../shared/rules.ts';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
- * @param {number} v - Value to clamp.
- * @param {number} a - Minimum value.
- * @param {number} b - Maximum value.
+ * @param {number} value - Value to clamp.
+ * @param {number} firstValue - Minimum value.
+ * @param {number} secondValue - Maximum value.
  * @returns {number} Clamped value.
  */
-const _clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
+const _clamp = (value: number, firstValue: number, secondValue: number): number =>
+  Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Select a random element from an array.
  * @template T
- * @param {T[]} a - Array of items.
+ * @param {T[]} firstValue - Array of items.
  * @returns {T} Selected item.
  */
-const pick = <T>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
+const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
+  firstValue[Math.floor(Math.random() * firstValue.length)];
 
 export const HailOperations = {
   /**
@@ -50,12 +52,20 @@ export const HailOperations = {
    * @returns {number} Credit cost to bribe.
    */
   bribeCost(this: HailCapabilities, playerData: PlayerData) {
-    const H = this.A.ships[playerData.ship.hull],
+    const shipHullAsset = this.A.ships[playerData.ship.hull],
       cargo = Object.entries(playerData.cargo).reduce(
-        (a, [c, n]) => a + n * ((COMMODITIES.find((x) => x.id === c) || {}).base || 100),
+        (firstValue, [component, count]) =>
+          firstValue +
+          count *
+            ((COMMODITIES.find((commodityDef) => commodityDef.id === component) || {}).base || 100),
         0,
       );
-    return Math.max(800, Math.round(((H && H.cost) || 0) * 0.02 + cargo * 0.4) / 100) * 100;
+    return (
+      Math.max(
+        800,
+        Math.round(((shipHullAsset && shipHullAsset.cost) || 0) * 0.02 + cargo * 0.4) / 100,
+      ) * 100
+    );
   },
   /**
    * Find and validate the targeted ship for a hail within comms range.
@@ -67,15 +77,15 @@ export const HailOperations = {
     const playerData = session.data,
       entity = session.ent!;
     if (!entity || entity.state !== 'fly') return null;
-    const sp = this.spaces[playerData.sys],
-      e = sp.ships.get((message.id as number) | 0);
-    if (!e || e.dead || e === entity) return null;
-    if (e.player) return { sp, e, root: sp.root(e) };
-    if (Math.hypot(e.x - entity.x, e.y - entity.y) > 3500) {
+    const space = this.spaces[playerData.sys],
+      entity2 = space.ships.get((message.id as number) | 0);
+    if (!entity2 || entity2.dead || entity2 === entity) return null;
+    if (entity2.player) return { sp: space, e: entity2, root: space.root(entity2) };
+    if (Math.hypot(entity2.x - entity.x, entity2.y - entity.y) > 3500) {
       this.toast(session, 'Too far away to hail.');
       return null;
     }
-    return { sp, e, root: sp.root(e) };
+    return { sp: space, e: entity2, root: space.root(entity2) };
   },
   /**
    * Open communications with a targeted ship or selected planet.
@@ -86,54 +96,63 @@ export const HailOperations = {
   hail(this: HailCapabilities, session: Session, message: NetworkMessage) {
     const playerData = session.data;
     if (message.stellar) return this.hailPlanet(session, message.stellar);
-    const T = this.hailTarget(session, message);
-    if (!T) return;
-    const { sp, e, root } = T;
-    if (e.player) return this.hails.player(session, e);
-    const F = FACTIONS[root.faction] || {},
-      name = (e.name || this.A.ships[e.hull].name).split(' · ')[0],
+    const hailTarget2 = this.hailTarget(session, message);
+    if (!hailTarget2) return;
+    const { sp: space, e: entity2, root } = hailTarget2;
+    if (entity2.player) return this.hails.player(session, entity2);
+    const factionDef = FACTIONS[root.faction] || {},
+      name = (entity2.name || this.A.ships[entity2.hull].name).split(' · ')[0],
       entity = session.ent!;
-    const say = (text: string, opts: Array<{ k: string; label: string }> = []) =>
-      this.send(session, { t: 'hail', id: e.id, who: name, sub: F.name || '', text, opts });
-    if (sp.root(e) === entity) return say(`${name}: standing by, Captain. Give the order.`);
-    if (e.disabled) return say(contextualHail(session, e, sp));
+    const announce = (text: string, options: Array<{ k: string; label: string }> = []) =>
+      this.send(session, {
+        t: 'hail',
+        id: entity2.id,
+        who: name,
+        sub: factionDef.name || '',
+        text,
+        opts: options,
+      });
+    if (space.root(entity2) === entity)
+      return announce(`${name}: standing by, Captain. Give the order.`);
+    if (entity2.disabled) return announce(contextualHail(session, entity2, space));
     if (root.huntOf)
-      return say(
+      return announce(
         root.huntOf === session.id
           ? 'Nothing personal, Captain. Somebody paid good money for your hull.'
           : 'Move along. We are working.',
       );
     if (root.faction === 'umbral' || root.faction === 'eclipse' || root.faction === 'swarm')
-      return say(
+      return announce(
         root.faction === 'swarm'
           ? 'A wet clicking, then nothing.'
           : 'The Umbral do not answer. Only a low hum, and the static of a light going out.',
       );
-    const hostile = sp.isHostile(root, entity);
+    const hostile = space.isHostile(root, entity);
     if (root.rival && !hostile) {
-      const R = RIVAL[root.rival],
-        rel = this.relOf(playerData, root.rival),
-        mood = MOOD(rel),
-        opts = [];
-      opts.push(
+      const rivalDefinition = RIVAL[root.rival],
+        relOf2 = this.relOf(playerData, root.rival),
+        mood = MOOD(relOf2),
+        options = [];
+      options.push(
         { k: 'praise', label: 'Compliment their flying' },
         { k: 'taunt', label: 'Taunt them' },
       );
-      if (rel >= 60 && !e.owner) opts.push({ k: 'fly', label: 'Ask them to fly with you' });
-      return say(
-        `${contextualHail(session, root, sp, rel)}\n\n(${R.name} · ${mood} · relation ${rel})`,
-        opts,
+      if (relOf2 >= 60 && !entity2.owner)
+        options.push({ k: 'fly', label: 'Ask them to fly with you' });
+      return announce(
+        `${contextualHail(session, root, space, relOf2)}\n\n(${rivalDefinition.name} · ${mood} · relation ${relOf2})`,
+        options,
       );
     }
-    if (hostile && (F.pirate || root.rival)) {
+    if (hostile && (factionDef.pirate || root.rival)) {
       const cost = this.bribeCost(playerData),
         mine = this.myPower(playerData),
         theirs =
           (root.pw || 10) +
-          [...sp.ships.values()]
-            .filter((x) => x.owner === root.id)
-            .reduce((a, x) => a + (x.pw || 10), 0);
-      const opts = [
+          [...space.ships.values()]
+            .filter((entity) => entity.owner === root.id)
+            .reduce((firstValue, entity) => firstValue + (entity.pw || 10), 0);
+      const options = [
         { k: 'bribe', label: `Pay them off (${credits(cost)} cr)` },
         {
           k: 'threat',
@@ -141,44 +160,44 @@ export const HailOperations = {
         },
       ];
       if (root.rival) {
-        const rel = this.relOf(playerData, root.rival);
-        opts.push({
+        const relOf3 = this.relOf(playerData, root.rival);
+        options.push({
           k: 'settle',
-          label: `Settle the grudge (${credits(5000 + Math.abs(rel) * 400)} cr)`,
+          label: `Settle the grudge (${credits(5000 + Math.abs(relOf3) * 400)} cr)`,
         });
       }
-      return say(
+      return announce(
         root.rival
-          ? contextualHail(session, root, sp, this.relOf(playerData, root.rival))
-          : contextualHail(session, root, sp) +
+          ? contextualHail(session, root, space, this.relOf(playerData, root.rival))
+          : contextualHail(session, root, space) +
               ' ' +
               pick([
                 'Cargo or coffin, Captain. Your call.',
                 'Nice ship. Be a shame if something happened to it. Unless you pay.',
                 'Power down your weapons and send the toll.',
               ]),
-        opts,
+        options,
       );
     }
     if (hostile) {
       // a lawful patrol that wants you dead
       const cost = 3000 + Math.abs(playerData.rep[root.faction] || 0) * 150;
-      return say(
-        contextualHail(session, root, sp) +
+      return announce(
+        contextualHail(session, root, space) +
           ' You are wanted in this space, Captain. Power down and prepare to be boarded.',
         [{ k: 'bribe', label: `Offer a "fine" (${credits(cost)} cr)` }],
       );
     }
-    const opts = [],
+    const options3 = [],
       fuelLow = entity.fuel < 100,
       hurt = entity.armor < entity.st.armor * 0.5;
     if (fuelLow)
-      opts.push({
+      options3.push({
         k: 'fuel',
         label: `Ask for fuel (${(playerData.rep[root.faction] || 0) >= 30 ? 'free, friends help friends' : '600 cr'})`,
       });
-    if (hurt) opts.push({ k: 'repair', label: 'Ask for emergency repairs (1,500 cr)' });
-    return say(contextualHail(session, e, sp), opts);
+    if (hurt) options3.push({ k: 'repair', label: 'Ask for emergency repairs (1,500 cr)' });
+    return announce(contextualHail(session, entity2, space), options3);
   },
   /**
    * Process a player's selected dialogue response or negotiation option in a hail.
@@ -189,23 +208,23 @@ export const HailOperations = {
   hailOpt(this: HailCapabilities, session: Session, message: NetworkMessage) {
     const playerData = session.data;
     if (message.stellar) return this.hailPlanetOpt(session, message);
-    const T = this.hailTarget(session, message);
-    if (!T) return;
-    const { sp, e, root } = T;
-    if (e.player || e.disabled) return;
+    const hailTarget2 = this.hailTarget(session, message);
+    if (!hailTarget2) return;
+    const { sp: space, e: entity2, root } = hailTarget2;
+    if (entity2.player || entity2.disabled) return;
     const entity = session.ent!,
-      name = (e.name || this.A.ships[e.hull].name).split(' · ')[0];
-    const say = (text: string) =>
-      this.send(session, { t: 'hail', id: e.id, who: name, text, opts: [] });
-    const group = [root, ...[...sp.ships.values()].filter((x) => x.owner === root.id)];
+      name = (entity2.name || this.A.ships[entity2.hull].name).split(' · ')[0];
+    const announce = (text: string) =>
+      this.send(session, { t: 'hail', id: entity2.id, who: name, text, opts: [] });
+    const group = [root, ...[...space.ships.values()].filter((entity) => entity.owner === root.id)];
     const calm = () => {
-      for (const x of group) {
-        x.bribed = x.bribed || new Set();
-        x.bribed.add(session.id);
-        x.aggro.delete(entity.id);
-        if (x.target === entity) x.target = null;
-        entity.aggro.delete(x.id);
-        sp.root(entity).aggro.delete(x.id);
+      for (const entity3 of group) {
+        entity3.bribed = entity3.bribed || new Set();
+        entity3.bribed.add(session.id);
+        entity3.aggro.delete(entity.id);
+        if (entity3.target === entity) entity3.target = null;
+        entity.aggro.delete(entity3.id);
+        space.root(entity).aggro.delete(entity3.id);
       }
     };
     switch (message.k) {
@@ -214,12 +233,12 @@ export const HailOperations = {
           cost = lawful
             ? 3000 + Math.abs(playerData.rep[root.faction] || 0) * 150
             : this.bribeCost(playerData);
-        if (playerData.credits < cost) return say("You don't have the credits. Pity.");
+        if (playerData.credits < cost) return announce("You don't have the credits. Pity.");
         playerData.credits -= cost;
         calm();
         this.you(session);
         this.log(playerData, `Paid ${credits(cost)} credits to be left alone.`);
-        return say(
+        return announce(
           lawful
             ? 'Fine paid. We never saw you, Captain. Move along.'
             : 'Pleasure doing business. Off you go.',
@@ -227,37 +246,39 @@ export const HailOperations = {
       }
       case 'threat': {
         const mine = this.myPower(playerData),
-          theirs = (root.pw || 10) + group.slice(1).reduce((a, x) => a + (x.pw || 10), 0);
+          theirs =
+            (root.pw || 10) +
+            group.slice(1).reduce((firstValue, entity) => firstValue + (entity.pw || 10), 0);
         if (mine > theirs * 1.6) {
-          for (const x of group) {
-            x.ai = 'flee';
-            x.target = null;
-            x.aggro.delete(entity.id);
+          for (const entity3 of group) {
+            entity3.ai = 'flee';
+            entity3.target = null;
+            entity3.aggro.delete(entity.id);
           }
-          return say('...all right, all right! We are going!');
+          return announce('...all right, all right! We are going!');
         }
         root.aggro.add(entity.id);
-        return say('Big words for a small ship. Get them!');
+        return announce('Big words for a small ship. Get them!');
       }
       case 'settle': {
         if (!root.rival) return;
-        const rel = this.relOf(playerData, root.rival),
-          cost = 5000 + Math.abs(rel) * 400;
-        if (playerData.credits < cost) return say('Come back when you can afford an apology.');
+        const relOf2 = this.relOf(playerData, root.rival),
+          cost = 5000 + Math.abs(relOf2) * 400;
+        if (playerData.credits < cost) return announce('Come back when you can afford an apology.');
         playerData.credits -= cost;
-        this.rivalRel(session, root.rival, Math.min(55, -rel - 10), 'you settled the grudge');
+        this.rivalRel(session, root.rival, Math.min(55, -relOf2 - 10), 'you settled the grudge');
         calm();
         this.you(session);
-        return say('...fine. Water under the bridge. For now.');
+        return announce('...fine. Water under the bridge. For now.');
       }
       case 'praise': {
         if (!root.rival) return;
         session.praiseT = session.praiseT || {};
         if (session.praiseT[root.rival] && Date.now() - session.praiseT[root.rival] < 10 * 60000)
-          return say('You said that already. Flattery has diminishing returns, Captain.');
+          return announce('You said that already. Flattery has diminishing returns, Captain.');
         session.praiseT[root.rival] = Date.now();
         this.rivalRel(session, root.rival, 4);
-        return say(
+        return announce(
           pick([
             'Ha! Kind of you to notice.',
             'Flattery will get you everywhere, Captain.',
@@ -268,7 +289,7 @@ export const HailOperations = {
       case 'taunt': {
         if (!root.rival) return;
         this.rivalRel(session, root.rival, -10, 'you taunted them');
-        return say(
+        return announce(
           pick([
             'Say that again when I am in range.',
             'Cute. I will remember that.',
@@ -286,25 +307,25 @@ export const HailOperations = {
           session,
           `${RIVAL[root.rival].name} flies with you until you leave this system.`,
         );
-        return say('Lead the way, partner.');
+        return announce('Lead the way, partner.');
       }
       case 'fuel': {
-        if (entity.fuel >= 100) return say('Your tanks look fine to me.');
+        if (entity.fuel >= 100) return announce('Your tanks look fine to me.');
         const free = (playerData.rep[root.faction] || 0) >= 30;
         if (!free && playerData.credits < 600)
-          return say('Sorry, Captain. Fuel is not free out here.');
+          return announce('Sorry, Captain. Fuel is not free out here.');
         if (!free) playerData.credits -= 600;
         entity.fuel = Math.min(entity.st.fuel, entity.fuel + 100);
         this.you(session);
-        return say('Transferring enough for one jump. Safe travels.');
+        return announce('Transferring enough for one jump. Safe travels.');
       }
       case 'repair': {
-        if (entity.armor >= entity.st.armor * 0.5) return say('You look sound enough.');
-        if (playerData.credits < 1500) return say('Repairs cost money, Captain.');
+        if (entity.armor >= entity.st.armor * 0.5) return announce('You look sound enough.');
+        if (playerData.credits < 1500) return announce('Repairs cost money, Captain.');
         playerData.credits -= 1500;
         entity.armor = Math.min(entity.st.armor, entity.armor + entity.st.armor * 0.25);
         this.you(session);
-        return say('Patched you up. It will hold until you reach a shipyard.');
+        return announce('Patched you up. It will hold until you reach a shipyard.');
       }
     }
   },
@@ -312,32 +333,38 @@ export const HailOperations = {
   /**
    * Hail a planet's docking control for landing clearance.
    * @param {Session} session - Player session.
-   * @param {string} id - Stellar body identifier.
+   * @param {string} identifier - Stellar body identifier.
    * @returns {void}
    */
-  hailPlanet(this: HailCapabilities, session: Session, id: string) {
+  hailPlanet(this: HailCapabilities, session: Session, identifier: string) {
     const playerData = session.data,
-      stellarBody = STELLARS[id];
+      stellarBody = STELLARS[identifier];
     if (!stellarBody || stellarBody.system !== playerData.sys) return;
-    const say = (text: string, opts: Array<{ k: string; label: string }> = []) =>
+    const announce = (text: string, options: Array<{ k: string; label: string }> = []) =>
       this.send(session, {
         t: 'hail',
-        stellar: id,
+        stellar: identifier,
         who: stellarBody.name,
         sub: 'Docking control',
         text,
-        opts,
+        opts: options,
       });
-    if (!stellarBody.svc.includes('L')) return say('No reply. Nothing down there is listening.');
-    const fac = SYS[stellarBody.system].faction,
-      rep = playerData.rep[fac] || 0,
-      pass = playerData.landPass && playerData.landPass[id] > Date.now();
-    if (!stellarBody.outlaw && rep <= -30 && !pass)
-      return say(
+    if (!stellarBody.svc.includes('L'))
+      return announce('No reply. Nothing down there is listening.');
+    const faction2 = systemsById[stellarBody.system].faction,
+      reputation = playerData.rep[faction2] || 0,
+      pass = playerData.landPass && playerData.landPass[identifier] > Date.now();
+    if (!stellarBody.outlaw && reputation <= -30 && !pass)
+      return announce(
         `${stellarBody.name} docking control. Your record precedes you, Captain. Landing clearance denied.`,
-        [{ k: 'bribe', label: `Make a "donation" (${credits(2000 + Math.abs(rep) * 200)} cr)` }],
+        [
+          {
+            k: 'bribe',
+            label: `Make a "donation" (${credits(2000 + Math.abs(reputation) * 200)} cr)`,
+          },
+        ],
       );
-    return say(
+    return announce(
       pass
         ? 'Your clearance is on file, Captain. Come on down.'
         : pick([
@@ -357,8 +384,8 @@ export const HailOperations = {
     const playerData = session.data,
       stellarBody = STELLARS[message.stellar!];
     if (!stellarBody || stellarBody.system !== playerData.sys || message.k !== 'bribe') return;
-    const rep = playerData.rep[SYS[stellarBody.system].faction] || 0,
-      cost = 2000 + Math.abs(rep) * 200;
+    const reputation = playerData.rep[systemsById[stellarBody.system].faction] || 0,
+      cost = 2000 + Math.abs(reputation) * 200;
     if (playerData.credits < cost)
       return this.send(session, {
         t: 'hail',

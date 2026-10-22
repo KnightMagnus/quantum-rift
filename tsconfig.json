@@ -10,7 +10,23 @@
     "types": ["node"],
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
-    "rewriteRelativeImportExtensions": true
+    "rewriteRelativeImportExtensions": true,
+    "paths": {
+      "/*.js": ["./client/*.ts"],
+      "/client/*.js": ["./client/*.ts"],
+      "/shared/*.js": ["./shared/*.ts"],
+      "/client/render-before.js": ["./client/render.ts"],
+      "/client/render-after.js": ["./client/render.ts"],
+      "/regression-render.js": ["./client/render.ts"]
+    },
+    "verbatimModuleSyntax": true
   },
-  "include": ["server/**/*.ts", "client/**/*.ts", "shared/**/*.ts"]
+  "include": [
+    "server/**/*.ts",
+    "client/**/*.ts",
+    "shared/**/*.ts",
+    "test/**/*.ts",
+    "tools/**/*.ts",
+    "Testing/**/*.ts"
+  ]
 }

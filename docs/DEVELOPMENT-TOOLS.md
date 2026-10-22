@@ -3,15 +3,15 @@
 Use the pinned Node runtime described in [TYPESCRIPT-RUNTIME.md](TYPESCRIPT-RUNTIME.md).
 Install with `npm ci`; no global tool installation is required.
 
-| Command                                          | Scope                                                                                                             |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `npm run lint`                                   | Oxlint correctness rules across JavaScript and TypeScript, then type-aware lint for all application `.ts` sources |
-| `npm run lint:fix`                               | Oxlint safe fixes; review the diff before committing                                                              |
-| `npm run format`                                 | Oxfmt formatting across supported source, configuration and documentation files                                   |
-| `npm run format:check`                           | Read-only formatting gate                                                                                         |
-| `npm run typecheck`                              | Portable TypeScript checks, including the strict core configuration                                               |
-| `npm run typecheck:tsrs`                         | Additional Rust type checks on supported native platforms                                                         |
-| `npm run test:types` / `npm run test:types:tsrs` | Valid and deliberately invalid contract fixtures                                                                  |
+| Command                                          | Scope                                                                                                                        |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `npm run lint`                                   | Oxlint correctness rules across JavaScript and TypeScript, then type-aware lint for application, test and tool `.ts` sources |
+| `npm run lint:fix`                               | Oxlint safe fixes; review the diff before committing                                                                         |
+| `npm run format`                                 | Oxfmt formatting across supported source, configuration and documentation files                                              |
+| `npm run format:check`                           | Read-only formatting gate                                                                                                    |
+| `npm run typecheck`                              | Portable TypeScript checks, including the strict core configuration                                                          |
+| `npm run typecheck:tsrs`                         | Fast Rust type checks on supported native platforms (also `npm run typecheck:fast`)                                          |
+| `npm run test:types` / `npm run test:types:tsrs` | Valid and deliberately invalid contract fixtures                                                                             |
 
 ## Lint and formatting policy
 
@@ -25,11 +25,10 @@ collections and intentional control-character sanitizers; these rules remain
 enabled everywhere else.
 
 Type-aware lint uses oxlint-tsgolint 7.0.2004, which uses Go's TypeScript engine,
-not the Rust tsrs checker. `tools/lint-types.mjs` discovers all application `.ts`
-files without shell-specific glob expansion. The type-aware scope covers all
-application modules. JavaScript test harnesses and developer tools receive
-ordinary correctness lint. The build and typecheck commands reject unchecked
-JavaScript inside application source directories.
+not the Rust tsrs checker. `tools/lint-types.ts` discovers all application, test and tool `.ts`
+files without shell-specific glob expansion. The type-aware scope covers application modules, regression harnesses and developer tools.
+Strict compiler projects also check the complete test and tool inventories. The build and
+typecheck commands reject unchecked JavaScript inside application source directories.
 
 Oxfmt 0.74.0 replaces the direct Prettier dependency. `.oxfmtrc.json` keeps single
 quotes, 100-column lines and the existing save/output exclusions. Import and

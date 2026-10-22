@@ -33,24 +33,24 @@ export interface ShipChatMessage {
 const segments = (text: string) =>
   typeof Intl.Segmenter === 'function'
     ? [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)].map(
-        (s) => s.segment,
+        (segmentData) => segmentData.segment,
       )
     : Array.from(text);
 
 export function receiveShipChat(
-  G: ShipChatState,
+  shipChatState: ShipChatState,
   message: ShipChatMessage,
-  now = performance.now(),
+  currentTime = performance.now(),
 ) {
   // The server supplies the active entity ID. Never attach messages by display name.
   if (
     message.ch !== 'sys' ||
-    message.sys !== G.sys ||
+    message.sys !== shipChatState.sys ||
     !Number.isSafeInteger(message.ship) ||
     message.ship <= 0 ||
     typeof message.msg !== 'string' ||
-    G.landed ||
-    !G.view
+    shipChatState.landed ||
+    !shipChatState.view
   )
     return false;
   // oxlint-disable-next-line no-control-regex -- Reject or sanitize control characters in player text.
@@ -59,10 +59,10 @@ export function receiveShipChat(
     .join('')
     .trim();
   if (!text) return false;
-  const bubbles = (G.chatBubbles ||= new Map());
+  const bubbles = (shipChatState.chatBubbles ||= new Map());
   // Updating a ship replaces its bubble instead of stacking chat over the battlefield.
   bubbles.delete(message.ship);
-  bubbles.set(message.ship, { text, sys: message.sys, until: now + CHAT_BUBBLE_MS });
+  bubbles.set(message.ship, { text, sys: message.sys, until: currentTime + CHAT_BUBBLE_MS });
   while (bubbles.size > MAX_BUBBLES) bubbles.delete(bubbles.keys().next().value!);
   return true;
 }
@@ -76,8 +76,8 @@ export function wrapShipChat(
   const glyphs = segments(text);
   const lines = [];
   let line = '';
-  for (let i = 0; i < glyphs.length; i++) {
-    const glyph = glyphs[i];
+  for (let index = 0; index < glyphs.length; index++) {
+    const glyph = glyphs[index];
     if (line && measure(line + glyph) > width) {
       if (lines.length === maxLines - 1) {
         while (line && measure(line + '…') > width) line = segments(line).slice(0, -1).join('');
@@ -94,74 +94,105 @@ export function wrapShipChat(
 }
 
 export function drawShipChat(
-  G: ShipChatState,
-  ctx: CanvasRenderingContext2D,
-  W: number,
-  H: number,
-  sx: (x: number) => number,
-  sy: (y: number) => number,
-  now: number,
+  shipChatState: ShipChatState,
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  width2: number,
+  height2: number,
+  screenX: (positionX: number) => number,
+  screenY: (positionY: number) => number,
+  currentTime: number,
 ) {
-  if (!G.chatBubbles) return;
-  if (!G.view || G.landed || G.view.armor <= 0) {
-    G.chatBubbles.clear();
+  if (!shipChatState.chatBubbles) return;
+  if (!shipChatState.view || shipChatState.landed || shipChatState.view.armor <= 0) {
+    shipChatState.chatBubbles.clear();
     return;
   }
-  ctx.save();
-  ctx.font = '15px "Pixelify Sans", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  for (const [id, bubble] of G.chatBubbles) {
-    const entity = G.ents.get(id);
-    if (bubble.until <= now || bubble.sys !== G.sys || !entity || entity.ar <= 0) {
-      G.chatBubbles.delete(id);
+  canvasRenderingContext2D.save();
+  canvasRenderingContext2D.font = '15px "Pixelify Sans", sans-serif';
+  canvasRenderingContext2D.textAlign = 'center';
+  canvasRenderingContext2D.textBaseline = 'top';
+  for (const [identifier, bubble] of shipChatState.chatBubbles) {
+    const entity = shipChatState.ents.get(identifier);
+    if (
+      bubble.until <= currentTime ||
+      bubble.sys !== shipChatState.sys ||
+      !entity ||
+      entity.ar <= 0
+    ) {
+      shipChatState.chatBubbles.delete(identifier);
       continue;
     }
     if (!(entity.fl & 16) || entity.fl & 8) continue;
-    const ship = id === G.myId ? G.view : entity;
-    const x = sx(ship.rx),
-      y = sy(ship.ry);
-    if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0 || x > W || y > H) continue;
-    const maxWidth = Math.min(260, W - 48);
+    const ship = identifier === shipChatState.myId ? shipChatState.view : entity;
+    const positionX = screenX(ship.rx),
+      positionY = screenY(ship.ry);
+    if (
+      !Number.isFinite(positionX) ||
+      !Number.isFinite(positionY) ||
+      positionX < 0 ||
+      positionY < 0 ||
+      positionX > width2 ||
+      positionY > height2
+    )
+      continue;
+    const maxWidth = Math.min(260, width2 - 48);
     if (maxWidth < 30) continue;
-    const lines = wrapShipChat(bubble.text, (s) => ctx.measureText(s).width, maxWidth);
+    const lines = wrapShipChat(
+      bubble.text,
+      (state) => canvasRenderingContext2D.measureText(state).width,
+      maxWidth,
+    );
     const width = Math.min(
-        W - 16,
-        Math.max(220, Math.max(...lines.map((s) => ctx.measureText(s).width)) + 24),
+        width2 - 16,
+        Math.max(
+          220,
+          Math.max(...lines.map((state) => canvasRenderingContext2D.measureText(state).width)) + 24,
+        ),
       ),
       height = lines.length * 19 + 42,
-      size = G.A!.ships[entity.hull]?.size || 30,
-      left = Math.max(4, Math.min(W - width - 4, x - width / 2)),
-      top = Math.max(4, y - size * G.zoom * G.spriteScale * 0.55 - height - 27);
-    ctx.globalAlpha = Math.min(1, (bubble.until - now) / 700);
-    ctx.fillStyle = 'rgba(40,54,62,.97)';
-    ctx.strokeStyle = '#627780';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.rect(left, top, width, height);
-    ctx.fill();
-    ctx.stroke();
-    ctx.strokeStyle = '#33454d';
-    ctx.strokeRect(left + 3, top + 3, width - 6, height - 6);
-    ctx.fillStyle = 'rgba(0,0,0,.12)';
-    for (let scan = top + 5; scan < top + height - 3; scan += 3)
-      ctx.fillRect(left + 4, scan, width - 8, 1);
-    ctx.fillStyle = '#3a4b54';
-    ctx.beginPath();
-    ctx.moveTo(Math.max(left + 5, Math.min(left + width - 5, x)) - 4, top + height);
-    ctx.lineTo(x, top + height + 6);
-    ctx.lineTo(Math.max(left + 5, Math.min(left + width - 5, x)) + 4, top + height);
-    ctx.fill();
-    ctx.fillStyle = '#09161d';
-    ctx.fillRect(left + 8, top + 26, width - 16, height - 34);
-    ctx.strokeStyle = '#52656b';
-    ctx.strokeRect(left + 8, top + 26, width - 16, height - 34);
-    ctx.font = '11px "Pixelify Sans", sans-serif';
-    ctx.fillStyle = '#d69a74';
-    ctx.fillText('SYSTEM COMMS', left + width / 2, top + 8);
-    ctx.font = '15px "Pixelify Sans", sans-serif';
-    ctx.fillStyle = '#eef7ff';
-    lines.forEach((line, i) => ctx.fillText(line, left + width / 2, top + 31 + i * 19));
+      size = shipChatState.A!.ships[entity.hull]?.size || 30,
+      left = Math.max(4, Math.min(width2 - width - 4, positionX - width / 2)),
+      topOffset = Math.max(
+        4,
+        positionY - size * shipChatState.zoom * shipChatState.spriteScale * 0.55 - height - 27,
+      );
+    canvasRenderingContext2D.globalAlpha = Math.min(1, (bubble.until - currentTime) / 700);
+    canvasRenderingContext2D.fillStyle = 'rgba(40,54,62,.97)';
+    canvasRenderingContext2D.strokeStyle = '#627780';
+    canvasRenderingContext2D.lineWidth = 1;
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.rect(left, topOffset, width, height);
+    canvasRenderingContext2D.fill();
+    canvasRenderingContext2D.stroke();
+    canvasRenderingContext2D.strokeStyle = '#33454d';
+    canvasRenderingContext2D.strokeRect(left + 3, topOffset + 3, width - 6, height - 6);
+    canvasRenderingContext2D.fillStyle = 'rgba(0,0,0,.12)';
+    for (let scan = topOffset + 5; scan < topOffset + height - 3; scan += 3)
+      canvasRenderingContext2D.fillRect(left + 4, scan, width - 8, 1);
+    canvasRenderingContext2D.fillStyle = '#3a4b54';
+    canvasRenderingContext2D.beginPath();
+    canvasRenderingContext2D.moveTo(
+      Math.max(left + 5, Math.min(left + width - 5, positionX)) - 4,
+      topOffset + height,
+    );
+    canvasRenderingContext2D.lineTo(positionX, topOffset + height + 6);
+    canvasRenderingContext2D.lineTo(
+      Math.max(left + 5, Math.min(left + width - 5, positionX)) + 4,
+      topOffset + height,
+    );
+    canvasRenderingContext2D.fill();
+    canvasRenderingContext2D.fillStyle = '#09161d';
+    canvasRenderingContext2D.fillRect(left + 8, topOffset + 26, width - 16, height - 34);
+    canvasRenderingContext2D.strokeStyle = '#52656b';
+    canvasRenderingContext2D.strokeRect(left + 8, topOffset + 26, width - 16, height - 34);
+    canvasRenderingContext2D.font = '11px "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.fillStyle = '#d69a74';
+    canvasRenderingContext2D.fillText('SYSTEM COMMS', left + width / 2, topOffset + 8);
+    canvasRenderingContext2D.font = '15px "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.fillStyle = '#eef7ff';
+    lines.forEach((line, index) =>
+      canvasRenderingContext2D.fillText(line, left + width / 2, topOffset + 31 + index * 19),
+    );
   }
-  ctx.restore();
+  canvasRenderingContext2D.restore();
 }

@@ -1,6 +1,6 @@
 // Device-level layout preferences, like the existing sidebar width preference.
 export function initSidebarSize(resized: () => void) {
-  const hud = document.getElementById('hud')!;
+  const htmlElement = document.getElementById('hud')!;
   let preferences: Record<string, number> = {};
   try {
     const saved = JSON.parse(localStorage.getItem('rift.hudHeights') || 'null');
@@ -21,7 +21,7 @@ export function initSidebarSize(resized: () => void) {
       min: 180,
     },
   ];
-  const scale = () => hud.getBoundingClientRect().height / hud.offsetHeight || 1;
+  const scale = () => htmlElement.getBoundingClientRect().height / htmlElement.offsetHeight || 1;
   const limit = (part: (typeof parts)[number]) =>
     Math.max(part.min, Math.floor((innerHeight / scale()) * 0.8));
   function apply() {
@@ -86,19 +86,19 @@ export function initSidebarSize(resized: () => void) {
         );
         apply();
       };
-      const end = () => {
+      const endPosition = () => {
         part.grip.classList.remove('drag');
         part.grip.removeEventListener('pointermove', move);
-        part.grip.removeEventListener('pointerup', end);
-        part.grip.removeEventListener('pointercancel', end);
+        part.grip.removeEventListener('pointerup', endPosition);
+        part.grip.removeEventListener('pointercancel', endPosition);
         save();
       };
       part.grip.addEventListener('pointermove', move);
-      part.grip.addEventListener('pointerup', end);
-      part.grip.addEventListener('pointercancel', end);
+      part.grip.addEventListener('pointerup', endPosition);
+      part.grip.addEventListener('pointercancel', endPosition);
     });
   }
-  new ResizeObserver(apply).observe(hud);
+  new ResizeObserver(apply).observe(htmlElement);
   window.addEventListener('resize', apply);
   apply();
 }

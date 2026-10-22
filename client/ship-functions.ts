@@ -32,11 +32,16 @@ interface FunctionRegistration {
   icon?: string;
 }
 // Presentation only: actions keep their existing authoritative message/input routes.
-export function initShipFunctions(G: ShipFunctionState, send: (message: object) => void) {
+export function initShipFunctions(
+  shipFunctionState: ShipFunctionState,
+  send: (message: object) => void,
+) {
   const stack = document.getElementById('functionstack')!;
-  document.getElementById('chatlog')!.addEventListener('keydown', (e) => {
-    if (['ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', ' '].includes(e.key))
-      e.stopPropagation();
+  document.getElementById('chatlog')!.addEventListener('keydown', (keyboardEvent) => {
+    if (
+      ['ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', ' '].includes(keyboardEvent.key)
+    )
+      keyboardEvent.stopPropagation();
   });
   const entries: FunctionEntry[] = [];
   const dock = document.getElementById('functiondock')!;
@@ -45,11 +50,11 @@ export function initShipFunctions(G: ShipFunctionState, send: (message: object) 
   document
     .getElementById('consoleutilities')!
     .append(document.querySelector<HTMLElement>('.cbtns')!);
-  for (const [id, name] of [
+  for (const [identifier, name] of [
     ['optbtn', 'SETTINGS'],
     ['cbhelp', 'HELP'],
   ]) {
-    const button = document.getElementById(id)!;
+    const button = document.getElementById(identifier)!;
     if (!button.querySelector<HTMLElement>('.utility-label')) {
       const label = document.createElement('span');
       label.className = 'utility-label';
@@ -59,27 +64,33 @@ export function initShipFunctions(G: ShipFunctionState, send: (message: object) 
   }
   let identity: string | null | undefined, sector: string | null | undefined;
   let droneUntil = 0;
-  const flying = () => !!G.you && !!G.view && !G.landed && !G.you!.shipless;
+  const flying = () =>
+    !!shipFunctionState.you &&
+    !!shipFunctionState.view &&
+    !shipFunctionState.landed &&
+    !shipFunctionState.you!.shipless;
   const hasDrones = () =>
-    Object.keys(G.you?.shipStats?.weapons || {}).some((w) => G.A?.weapons[w]?.type === 'bay');
+    Object.keys(shipFunctionState.you?.shipStats?.weapons || {}).some(
+      (width) => shipFunctionState.A?.weapons[width]?.type === 'bay',
+    );
   const hasFleet = () =>
-    G.you?.docks?.list[G.you!.docks.active]?.wings.some(Boolean) ||
+    shipFunctionState.you?.docks?.list[shipFunctionState.you!.docks.active]?.wings.some(Boolean) ||
     hasDrones() ||
-    (G.order && G.order !== 'gather');
+    (shipFunctionState.order && shipFunctionState.order !== 'gather');
   function register({
-    id,
+    id: identifier,
     name,
     panel,
     available,
     existing = false,
-    icon = id,
+    icon = identifier,
   }: FunctionRegistration) {
-    const row = document.createElement('div');
-    row.className = 'function-entry';
+    const htmlDivElement = document.createElement('div');
+    htmlDivElement.className = 'function-entry';
     const button = existing
-      ? (document.getElementById(id + 'indicator')! as HTMLButtonElement)
+      ? (document.getElementById(identifier + 'indicator')! as HTMLButtonElement)
       : document.createElement('button');
-    button.id = id + 'indicator';
+    button.id = identifier + 'indicator';
     button.classList.add('function-icon');
     button.setAttribute('aria-label', name + ' controls');
     button.setAttribute('aria-controls', panel.id);
@@ -103,9 +114,9 @@ export function initShipFunctions(G: ShipFunctionState, send: (message: object) 
         setOpen(false);
         button.focus();
       };
-      panel.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          e.stopPropagation();
+      panel.addEventListener('keydown', (keyboardEvent) => {
+        if (keyboardEvent.key === 'Escape') {
+          keyboardEvent.stopPropagation();
           close.click();
         }
       });
@@ -132,8 +143,8 @@ export function initShipFunctions(G: ShipFunctionState, send: (message: object) 
       )[name] || name;
     button.append(label);
     dock.append(button);
-    row.append(panel);
-    stack.append(row);
+    htmlDivElement.append(panel);
+    stack.append(htmlDivElement);
     entries.push({ button, panel, available, existing, setOpen });
   }
   register({
@@ -154,32 +165,37 @@ export function initShipFunctions(G: ShipFunctionState, send: (message: object) 
     name: 'Towing',
     panel: document.getElementById('towcontrols')!,
     available: () =>
-      flying() && !!(G.towing?.rig || G.towing?.attached || G.towing?.offers?.length),
+      flying() &&
+      !!(
+        shipFunctionState.towing?.rig ||
+        shipFunctionState.towing?.attached ||
+        shipFunctionState.towing?.offers?.length
+      ),
   });
   register({
     id: 'industrial',
     name: 'Processing',
     icon: 'processing',
     panel: document.getElementById('industrialcontrols')!,
-    available: () => flying() && G.you!.ship?.hull === 815,
+    available: () => flying() && shipFunctionState.you!.ship?.hull === 815,
   });
   const fleet = document.createElement('div');
   fleet.id = 'fleetcontrols';
-  for (const [o, label] of [
+  for (const [options, label] of [
     ['attack', 'Attack target'],
     ['gather', 'Form up'],
     ['hold', 'Hold position'],
     ['holdfire', 'Hold fire'],
     ['loot', 'Collect loot'],
   ]) {
-    const b = document.createElement('button');
-    b.className = 'btn sm';
-    b.textContent = label;
-    b.dataset.order = o;
-    b.onclick = () => {
-      if (flying() && !G.paused && hasFleet()) send({ t: 'order', o });
+    const htmlButtonElement = document.createElement('button');
+    htmlButtonElement.className = 'btn sm';
+    htmlButtonElement.textContent = label;
+    htmlButtonElement.dataset.order = options;
+    htmlButtonElement.onclick = () => {
+      if (flying() && !shipFunctionState.paused && hasFleet()) send({ t: 'order', o: options });
     };
-    fleet.append(b);
+    fleet.append(htmlButtonElement);
   }
   register({
     id: 'fleet',
@@ -194,7 +210,7 @@ export function initShipFunctions(G: ShipFunctionState, send: (message: object) 
   launch.className = 'btn sm';
   launch.textContent = 'Launch / recall drones';
   launch.onclick = () => {
-    if (flying() && !G.paused && hasDrones()) droneUntil = performance.now() + 150;
+    if (flying() && !shipFunctionState.paused && hasDrones()) droneUntil = performance.now() + 150;
   };
   const note = document.createElement('p');
   note.textContent =
@@ -206,13 +222,13 @@ export function initShipFunctions(G: ShipFunctionState, send: (message: object) 
     panel: drones,
     available: () => flying() && hasDrones(),
   });
-  for (const [id, label] of [
+  for (const [identifier, label] of [
     ['hailindicator', 'Hail'],
     ['cbmap', 'Map'],
   ]) {
-    const button = document.getElementById(id)!;
+    const button = document.getElementById(identifier)!;
     button.classList.add('function-icon');
-    if (id === 'cbmap')
+    if (identifier === 'cbmap')
       button.innerHTML =
         '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 6l8-3 10 3 8-3v23l-8 3-10-3-8 3zM11 3v23M21 6v23" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
     const text = document.createElement('span');
@@ -221,7 +237,7 @@ export function initShipFunctions(G: ShipFunctionState, send: (message: object) 
     button.append(text);
     dock.append(button);
   }
-  for (const id of [
+  for (const identifier of [
     'combatindicator',
     'miningindicator',
     'towingindicator',
@@ -231,40 +247,54 @@ export function initShipFunctions(G: ShipFunctionState, send: (message: object) 
     'hailindicator',
     'cbmap',
   ])
-    dock.append(document.getElementById(id)!);
-  dock.addEventListener('keydown', (e) => {
-    if (['Enter', ' '].includes(e.key)) e.stopPropagation();
+    dock.append(document.getElementById(identifier)!);
+  dock.addEventListener('keydown', (keyboardEvent) => {
+    if (['Enter', ' '].includes(keyboardEvent.key)) keyboardEvent.stopPropagation();
   });
-  stack.addEventListener('keydown', (e) => {
+  stack.addEventListener('keydown', (keyboardEvent) => {
     if (
-      ['Enter', ' '].includes(e.key) &&
-      ['BUTTON', 'SUMMARY', 'INPUT', 'SELECT'].includes((e.target as HTMLElement).tagName)
+      ['Enter', ' '].includes(keyboardEvent.key) &&
+      ['BUTTON', 'SUMMARY', 'INPUT', 'SELECT'].includes(
+        (keyboardEvent.target as HTMLElement).tagName,
+      )
     )
-      e.stopPropagation();
+      keyboardEvent.stopPropagation();
   });
   return {
-    secondary: () => performance.now() < droneUntil && flying() && !G.paused && hasDrones(),
+    secondary: () =>
+      performance.now() < droneUntil && flying() && !shipFunctionState.paused && hasDrones(),
     refresh() {
-      if (sector !== G.sys) {
-        sector = G.sys;
+      if (sector !== shipFunctionState.sys) {
+        sector = shipFunctionState.sys;
         document.getElementById('commssector')!.textContent =
-          'COMMS / ' + (G.sys || 'SHIP NETWORK').toUpperCase() + (G.sys ? ' SECTOR' : '');
+          'COMMS / ' +
+          (shipFunctionState.sys || 'SHIP NETWORK').toUpperCase() +
+          (shipFunctionState.sys ? ' SECTOR' : '');
       }
-      const logged = !!G.you && document.getElementById('login')!.classList.contains('hidden');
-      const next = G.you ? G.you!.name + ':' + G.you!.ship?.hull + ':' + G.myId : null;
-      for (const e of entries) {
-        if (e.existing) continue;
-        const available = logged && e.available();
-        e.button.classList.toggle('hidden', !logged);
-        e.button.disabled = !available;
-        e.button.setAttribute('aria-disabled', String(!available));
-        e.button.title = available
-          ? e.button.getAttribute('aria-label')!
-          : e.button.getAttribute('aria-label') + ' — unavailable';
-        if (!available || identity !== next) e.setOpen(false);
-        e.panel.hidden = false; // The registry owns panel visibility.
+      const logged =
+        !!shipFunctionState.you && document.getElementById('login')!.classList.contains('hidden');
+      const next = shipFunctionState.you
+        ? shipFunctionState.you!.name +
+          ':' +
+          shipFunctionState.you!.ship?.hull +
+          ':' +
+          shipFunctionState.myId
+        : null;
+      for (const functionEntry of entries) {
+        if (functionEntry.existing) continue;
+        const available = logged && functionEntry.available();
+        functionEntry.button.classList.toggle('hidden', !logged);
+        functionEntry.button.disabled = !available;
+        functionEntry.button.setAttribute('aria-disabled', String(!available));
+        functionEntry.button.title = available
+          ? functionEntry.button.getAttribute('aria-label')!
+          : functionEntry.button.getAttribute('aria-label') + ' — unavailable';
+        if (!available || identity !== next) functionEntry.setOpen(false);
+        functionEntry.panel.hidden = false; // The registry owns panel visibility.
       }
-      document.getElementById('combatindicator')!.classList.toggle('active', !!G.combat?.on);
+      document
+        .getElementById('combatindicator')!
+        .classList.toggle('active', !!shipFunctionState.combat?.on);
       if (identity !== next || !flying()) droneUntil = 0;
       identity = next;
     },

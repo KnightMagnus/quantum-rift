@@ -72,7 +72,7 @@ export type PortService = Pick<
 
 import { bindOperations } from './feature-service.ts';
 import {
-  SYS,
+  SYS as systemsById,
   STELLARS,
   COMMODITIES,
   MATERIALS,
@@ -171,9 +171,9 @@ const PortOperations: PortOperations = {
         : null;
     }
     if (!stellarBody.svc.includes('T')) return null;
-    const now = Date.now();
+    const currentTime = Date.now();
     return COMMODITIES.map((commodity) => {
-      const basePrice = price(stellarBody, commodity.id, now),
+      const basePrice = price(stellarBody, commodity.id, currentTime),
         marketMultiplier = this.features.living.livingMult(stellarBody, commodity.id);
       return {
         id: commodity.id,
@@ -328,7 +328,7 @@ const PortOperations: PortOperations = {
    * @this {PortCapabilities}
    */
   matsFor(this: PortCapabilities, stellarBody: StellarBody, playerData?: PlayerData) {
-    const factionId = SYS[stellarBody.system].faction,
+    const factionId = systemsById[stellarBody.system].faction,
       materialOffers: Array<{ mat: string; grade: number; price: number }> = [];
     if (
       stellarBody.hub ||
@@ -417,7 +417,7 @@ const PortOperations: PortOperations = {
       );
     }
     if (!stellarBody.svc.includes('Y')) return null;
-    const factionId = SYS[stellarBody.system].faction,
+    const factionId = systemsById[stellarBody.system].faction,
       list = new Set<number>();
     for (const hullId of FACTION_HULLS[factionId] || []) {
       const hullDefinition = this.A.ships[hullId];
@@ -496,7 +496,7 @@ const PortOperations: PortOperations = {
     )
       return null;
     if (!stellarBody.site && !stellarBody.svc.includes('O')) return null;
-    const factionId = stellarBody.site ? 'quantum' : SYS[stellarBody.system].faction,
+    const factionId = stellarBody.site ? 'quantum' : systemsById[stellarBody.system].faction,
       outfitIds = [];
     for (const outfit of Object.values(this.O)) {
       if (outfit.faction && outfit.faction !== factionId) continue;

@@ -10,7 +10,7 @@ not permission to relax checkpoint checks or retry until green.
 
 Suppress constructor timers synchronously while building the seed, restore the
 native timer functions immediately afterward, finish seeding and flush, then start
-the one authoritative child server. See `test/sidebar-browser.mjs`. Use temporary
+the one authoritative child server. See `test/sidebar-browser.ts`. Use temporary
 saves, bounded waits and cleanup; never a player's data directory. Do not leave a
 parent simulation ticking beside the child or add a second mutating DB instance.
 When investigating a browser timeout, inspect the first server error as well as

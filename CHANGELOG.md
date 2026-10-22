@@ -401,7 +401,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 
 ### 2.0.2
 
-- **Malformed-message handling** (`test/fuzz.js`):
+- **Malformed-message handling** (`test/fuzz.ts`):
   - captain names like `__proto__` are refused, and saves can no longer be corrupted through them
   - profile and leaderboard lookups with odd names no longer error
   - bogus faction-arc requests no longer write junk into saves
@@ -559,7 +559,7 @@ An art update in the spirit of EV Nova's pre-rendered look, plus a polish pass.
 - **Solo mode.** A separate launcher runs a private single-player server: no passwords, pause (P), save slots on the login
   screen, and export and import of captains.
 - **Backups.** Every server keeps a rolling backup of all saves every 30 minutes.
-- **Balance pass.** A new balance report (`test/balance.js`) checks every shipyard ladder, value for money and the time
+- **Balance pass.** A new balance report (`test/balance.ts`) checks every shipyard ladder, value for money and the time
   each milestone takes to afford.
   - Specialists now cost 30% fewer credits, since blueprints already gate them.
 - **Accessibility and options.**

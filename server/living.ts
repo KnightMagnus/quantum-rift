@@ -2,29 +2,29 @@ import type { LivingState, LivingPayloadState } from './world-contracts.ts';
 export interface LivingOperations {
   livingInit(this: LivingCapabilities): void;
   marketSystems(this: LivingCapabilities): string[];
-  stateOf(this: LivingCapabilities, sysId: string): LivingState | null;
+  stateOf(this: LivingCapabilities, systemId: string): LivingState | null;
   warEnemy(this: LivingCapabilities, system: SpaceSystem): string | null;
   livingTick(this: LivingCapabilities): void;
   statesPayload(this: LivingCapabilities): Record<string, LivingPayloadState>;
-  impact(this: LivingCapabilities, sid: string, cid: string): number;
-  addImpact(this: LivingCapabilities, sid: string, cid: string, tons: number): void;
-  livingMult(this: LivingCapabilities, stellarBody: StellarBody, cid: string): number;
+  impact(this: LivingCapabilities, sessionId: string, captainId: string): number;
+  addImpact(this: LivingCapabilities, sessionId: string, captainId: string, tons: number): void;
+  livingMult(this: LivingCapabilities, stellarBody: StellarBody, captainId: string): number;
   stateProgress(
     this: LivingCapabilities,
     session: Session,
-    sys: string,
+    starSystem: string,
     what: string,
-    n: number,
+    count: number,
   ): void;
-  resolveState(this: LivingCapabilities, session: Session, sys: string): void;
-  stateOnKill(this: LivingCapabilities, session: Session, npc: Entity, space: Space): void;
+  resolveState(this: LivingCapabilities, session: Session, starSystem: string): void;
+  stateOnKill(this: LivingCapabilities, session: Session, entity: Entity, space: Space): void;
   stateOffers(
     this: LivingCapabilities,
     stellarBody: StellarBody,
     playerData: PlayerData,
-    r: () => number,
+    radius: () => number,
     near: Array<[string, number]>,
-    win: number,
+    window: number,
   ): Array<Mission>;
   supplyReady(this: LivingCapabilities, playerData: PlayerData, mission: Mission): boolean;
 }
@@ -35,7 +35,7 @@ import type { Entity, Space } from './space.ts';
 import { clampStanding } from '../shared/reputation.ts';
 // Quantum Rift: system states that come and go, a market that remembers what captains sold, and
 // supply jobs that pay you to bring what a troubled system needs. Owned by game.features.living.
-import { SYSTEMS, SYS, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
+import { SYSTEMS, SYS as systemsById, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
 import { STATES, STATE_SHARE, STATE_MIN, TRADE_IMPACT } from '../shared/living.ts';
 import { credits } from '../shared/rules.ts';
 
@@ -44,20 +44,22 @@ import { credits } from '../shared/rules.ts';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
- * @param {number} v - Value to clamp.
- * @param {number} a - Minimum value.
- * @param {number} b - Maximum value.
+ * @param {number} value - Value to clamp.
+ * @param {number} firstValue - Minimum value.
+ * @param {number} secondValue - Maximum value.
  * @returns {number} Clamped value.
  */
-const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
+const clamp = (value: number, firstValue: number, secondValue: number): number =>
+  Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Pick a random item from an array.
  * @template T
- * @param {T[]} a - Array of items.
+ * @param {T[]} firstValue - Array of items.
  * @returns {T} Chosen item.
  */
-const pick = <T>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
+const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
+  firstValue[Math.floor(Math.random() * firstValue.length)];
 
 /** @type {Record<string, (system: SpaceSystem | Record<string, string | number>, state?: LivingState) => string>} Headline generators for system events. */
 /** @type {Record<string, (system: SpaceSystem | Record<string, string | number>, state?: LivingState) => string>} */
@@ -65,16 +67,17 @@ const START_NEWS: Record<
   string,
   (system: SpaceSystem | Record<string, string | number>, state?: LivingState) => string
 > = {
-  famine: (S) => `Famine grips ${S.name}: food prices have doubled and relief is needed.`,
-  plague: (S) => `A fever spreads through ${S.name}. Medical supplies are urgently needed.`,
-  boom: (S) => `${S.name} is booming: luxuries and equipment are selling high.`,
-  war: (S, st) =>
-    `War in ${S.name}: ${FACTIONS[st!.enemy!].name} ships are attacking the ${FACTIONS[S.faction].short}.`,
-  pirates: (S) => `Raiders have the lanes in ${S.name}. Bounties there pay half again.`,
-  festival: (S) => `A festival fills the spaceports of ${S.name}.`,
-  rush: (S) =>
-    `A mining rush in ${S.name}: refineries posted finite sourcing orders and fields are recovering faster.`,
-  refugees: (S) => `Refugees are pouring into ${S.name}. Food, medicine and passage are scarce.`,
+  famine: (state) => `Famine grips ${state.name}: food prices have doubled and relief is needed.`,
+  plague: (state) => `A fever spreads through ${state.name}. Medical supplies are urgently needed.`,
+  boom: (state) => `${state.name} is booming: luxuries and equipment are selling high.`,
+  war: (state, livingState) =>
+    `War in ${state.name}: ${FACTIONS[livingState!.enemy!].name} ships are attacking the ${FACTIONS[state.faction].short}.`,
+  pirates: (state) => `Raiders have the lanes in ${state.name}. Bounties there pay half again.`,
+  festival: (state) => `A festival fills the spaceports of ${state.name}.`,
+  rush: (state) =>
+    `A mining rush in ${state.name}: refineries posted finite sourcing orders and fields are recovering faster.`,
+  refugees: (state) =>
+    `Refugees are pouring into ${state.name}. Food, medicine and passage are scarce.`,
 };
 
 export const LivingOperations = {
@@ -83,10 +86,10 @@ export const LivingOperations = {
    * @returns {void}
    */
   livingInit(this: LivingCapabilities) {
-    const W = this.db.world;
-    W.states = W.states || {};
-    W.stateCool = W.stateCool || {};
-    W.tradeImpact = W.tradeImpact || {};
+    const worldData = this.db.world;
+    worldData.states = worldData.states || {};
+    worldData.stateCool = worldData.stateCool || {};
+    worldData.tradeImpact = worldData.tradeImpact || {};
   },
   /**
    * Get all non-arena systems with active trade ports.
@@ -96,22 +99,22 @@ export const LivingOperations = {
     return (
       this._mkt ||
       (this._mkt = SYSTEMS.filter(
-        (S) =>
-          !S.arena &&
-          S.stellars.some(
+        (starSystem) =>
+          !starSystem.arena &&
+          starSystem.stellars.some(
             (stellarBody) => stellarBody.svc && stellarBody.svc.includes('T') && !stellarBody.site,
           ),
-      ).map((S) => S.id))
+      ).map((starSystem) => starSystem.id))
     );
   },
   /**
    * Look up the currently active event state for a system.
-   * @param {string} sysId - System ID.
+   * @param {string} systemId - System ID.
    * @returns {Record<string, string | number | boolean> | null} System state object or null if none active.
    */
-  stateOf(this: LivingCapabilities, sysId: string) {
-    const st = this.db.world.states && this.db.world.states[sysId];
-    return st && st.until > Date.now() ? st : null;
+  stateOf(this: LivingCapabilities, systemId: string) {
+    const livingState = this.db.world.states && this.db.world.states[systemId];
+    return livingState && livingState.until > Date.now() ? livingState : null;
   },
   // a war needs an enemy: a power hostile to the system's owner, preferably one next door
   /**
@@ -120,19 +123,26 @@ export const LivingOperations = {
    * @returns {string | null} Hostile enemy faction key or null.
    */
   warEnemy(this: LivingCapabilities, system: SpaceSystem) {
-    const F = FACTIONS[system.faction];
-    if (!F || F.region || F.pirate || system.faction === 'umbral') return null;
+    const factionDef = FACTIONS[system.faction];
+    if (!factionDef || factionDef.region || factionDef.pirate || system.faction === 'umbral')
+      return null;
     const next = new Set(
       system.links
-        .map((l) => SYS[l].faction)
+        .map((length) => systemsById[length].faction)
         .filter(
-          (f) =>
-            f !== system.faction && FACTIONS[f] && !FACTIONS[f].region && F.hostile.includes(f),
+          (factionId) =>
+            factionId !== system.faction &&
+            FACTIONS[factionId] &&
+            !FACTIONS[factionId].region &&
+            factionDef.hostile.includes(factionId),
         ),
     );
     const pool = next.size
       ? [...next]
-      : F.hostile.filter((f) => FACTIONS[f] && !FACTIONS[f].region && f !== 'umbral');
+      : factionDef.hostile.filter(
+          (factionId) =>
+            FACTIONS[factionId] && !FACTIONS[factionId].region && factionId !== 'umbral',
+        );
     return pool.length ? pick(pool) : null;
   },
   /**
@@ -141,57 +151,61 @@ export const LivingOperations = {
    */
   livingTick(this: LivingCapabilities) {
     this.livingInit();
-    const W = this.db.world,
-      now = Date.now();
+    const worldData = this.db.world,
+      currentTime = Date.now();
     let changed = false;
-    for (const [sys, st] of Object.entries(W.states))
-      if (st.until <= now) {
-        delete W.states[sys];
-        W.stateCool[sys] = now + 20 * 60000;
+    for (const [starSystem, livingState] of Object.entries(worldData.states))
+      if (livingState.until <= currentTime) {
+        delete worldData.states[starSystem];
+        worldData.stateCool[starSystem] = currentTime + 20 * 60000;
         this.news(
-          STATES[st.kind].end
-            .replace('{sys}', SYS[sys].name)
-            .replace('{fac}', FACTIONS[SYS[sys].faction].name),
+          STATES[livingState.kind].end
+            .replace('{sys}', systemsById[starSystem].name)
+            .replace('{fac}', FACTIONS[systemsById[starSystem].faction].name),
         );
         changed = true;
       }
     const want = Math.round(this.marketSystems().length * STATE_SHARE);
     for (
-      let tries = 0, lim = this._livingStarted ? 6 : want * 3;
-      Object.keys(W.states).length < want && tries < lim;
+      let tries = 0, limit = this._livingStarted ? 6 : want * 3;
+      Object.keys(worldData.states).length < want && tries < limit;
       tries++
     ) {
-      const sys = pick(this.marketSystems()),
-        S = SYS[sys];
-      if (W.states[sys] || (W.stateCool[sys] || 0) > now) continue;
+      const pick2 = pick(this.marketSystems()),
+        starSystem = systemsById[pick2];
+      if (worldData.states[pick2] || (worldData.stateCool[pick2] || 0) > currentTime) continue;
       const kinds = Object.entries(STATES).filter(
-        ([k]) =>
-          !((k === 'war' || k === 'pirates') && S.stellars.some((x) => x.hub)) &&
-          (k !== 'war' || this.warEnemy(S)) &&
-          (k !== 'rush' || (S.fields || []).length) &&
-          (k !== 'pirates' || !FACTIONS[S.faction].pirate),
+        ([entryKey]) =>
+          !(
+            (entryKey === 'war' || entryKey === 'pirates') &&
+            starSystem.stellars.some((rawStellarBody) => rawStellarBody.hub)
+          ) &&
+          (entryKey !== 'war' || this.warEnemy(starSystem)) &&
+          (entryKey !== 'rush' || (starSystem.fields || []).length) &&
+          (entryKey !== 'pirates' || !FACTIONS[starSystem.faction].pirate),
       );
-      let tot = kinds.reduce((a, [, X]) => a + X.weight, 0),
-        roll = Math.random() * tot,
+      let total = kinds.reduce((firstValue, [, systemState]) => firstValue + systemState.weight, 0),
+        roll = Math.random() * total,
         kind = kinds[0][0];
-      for (const [k, X] of kinds) {
-        roll -= X.weight;
+      for (const [entryKey, systemState] of kinds) {
+        roll -= systemState.weight;
         if (roll <= 0) {
-          kind = k;
+          kind = entryKey;
           break;
         }
       }
-      const X = STATES[kind],
-        st: LivingState = {
+      const systemState2 = STATES[kind],
+        livingState: LivingState = {
           kind,
-          start: now,
-          until: now + (STATE_MIN[0] + Math.random() * (STATE_MIN[1] - STATE_MIN[0])) * 60000,
+          start: currentTime,
+          until:
+            currentTime + (STATE_MIN[0] + Math.random() * (STATE_MIN[1] - STATE_MIN[0])) * 60000,
           got: 0,
-          need: X.need ? X.need!.qty : 0,
+          need: systemState2.need ? systemState2.need!.qty : 0,
         };
-      if (kind === 'war') st!.enemy = this.warEnemy(S);
-      W.states[sys] = st;
-      this.news(START_NEWS[kind](S, st));
+      if (kind === 'war') livingState!.enemy = this.warEnemy(starSystem);
+      worldData.states[pick2] = livingState;
+      this.news(START_NEWS[kind](starSystem, livingState));
       changed = true;
     }
     this._livingStarted = true;
@@ -205,51 +219,52 @@ export const LivingOperations = {
    * @returns {Record<string, Record<string, string | number>>} Active system states map.
    */
   statesPayload(this: LivingCapabilities) {
-    const out: Record<string, LivingPayloadState> = {};
-    for (const [sys, st] of Object.entries(this.db.world.states || {}))
-      if (st.until > Date.now())
-        out[sys] = {
-          k: st.kind,
-          got: st.got,
-          need: st.need,
-          until: st.until,
-          enemy: st!.enemy || null,
+    const result: Record<string, LivingPayloadState> = {};
+    for (const [starSystem, livingState] of Object.entries(this.db.world.states || {}))
+      if (livingState.until > Date.now())
+        result[starSystem] = {
+          k: livingState.kind,
+          got: livingState.got,
+          need: livingState.need,
+          until: livingState.until,
+          enemy: livingState!.enemy || null,
         };
-    return out;
+    return result;
   },
   // ---- prices: the system's state and what captains have been selling or buying at this world
   /**
    * Calculate decayed trade impact factor on prices for a commodity at a stellar port.
-   * @param {string} sid - Stellar port ID.
-   * @param {string} cid - Commodity ID.
+   * @param {string} sessionId - Stellar port ID.
+   * @param {string} captainId - Commodity ID.
    * @returns {number} Fractional impact on price.
    */
-  impact(this: LivingCapabilities, sid: string, cid: string) {
-    const T = (this.db.world.tradeImpact || {})[sid];
-    const x = T && T[cid];
-    if (!x) return 0;
-    const v = x.v * Math.pow(0.5, (Date.now() - x.t) / (TRADE_IMPACT.halfLifeMin * 60000));
-    if (Math.abs(v) < 0.004) {
-      delete T[cid];
+  impact(this: LivingCapabilities, sessionId: string, captainId: string) {
+    const time = (this.db.world.tradeImpact || {})[sessionId];
+    const positionX = time && time[captainId];
+    if (!positionX) return 0;
+    const value =
+      positionX.v * Math.pow(0.5, (Date.now() - positionX.t) / (TRADE_IMPACT.halfLifeMin * 60000));
+    if (Math.abs(value) < 0.004) {
+      delete time[captainId];
       return 0;
     }
-    return v;
+    return value;
   },
   /**
    * Record trade volume and apply price impact for a commodity at a stellar port.
-   * @param {string} sid - Stellar port ID.
-   * @param {string} cid - Commodity ID.
+   * @param {string} sessionId - Stellar port ID.
+   * @param {string} captainId - Commodity ID.
    * @param {number} tons - Traded volume (positive for sales, negative for purchases).
    * @returns {void}
    */
-  addImpact(this: LivingCapabilities, sid: string, cid: string, tons: number) {
+  addImpact(this: LivingCapabilities, sessionId: string, captainId: string, tons: number) {
     // tons > 0: sold here (the price falls); < 0: bought here (the price rises)
-    const W = this.db.world;
-    W.tradeImpact = W.tradeImpact || {};
-    const T = (W.tradeImpact[sid] = W.tradeImpact[sid] || {});
-    T[cid] = {
+    const worldData = this.db.world;
+    worldData.tradeImpact = worldData.tradeImpact || {};
+    const time = (worldData.tradeImpact[sessionId] = worldData.tradeImpact[sessionId] || {});
+    time[captainId] = {
       v: clamp(
-        this.impact(sid, cid) + tons * TRADE_IMPACT.perTon,
+        this.impact(sessionId, captainId) + tons * TRADE_IMPACT.perTon,
         -TRADE_IMPACT.max,
         TRADE_IMPACT.max,
       ),
@@ -259,117 +274,132 @@ export const LivingOperations = {
   /**
    * Calculate effective price multiplier from active system event and player trade impact.
    * @param {StellarBody} stellarBody - Stellar body object.
-   * @param {string} cid - Commodity ID.
+   * @param {string} captainId - Commodity ID.
    * @returns {number} Price multiplier.
    */
-  livingMult(this: LivingCapabilities, stellarBody: StellarBody, cid: string) {
-    const st = this.stateOf(stellarBody.system),
-      sm = st ? STATES[st.kind].prices[cid] || 1 : 1;
-    return sm * (1 - this.impact(stellarBody.id, cid));
+  livingMult(this: LivingCapabilities, stellarBody: StellarBody, captainId: string) {
+    const livingState = this.stateOf(stellarBody.system),
+      stationMarket = livingState ? STATES[livingState.kind].prices[captainId] || 1 : 1;
+    return stationMarket * (1 - this.impact(stellarBody.id, captainId));
   },
   // ---- captains ending states early
   /**
    * Contribute progress towards resolving an active troubled system event.
    * @param {Session} session - Player session.
-   * @param {string} sys - System ID.
+   * @param {string} starSystem - System ID.
    * @param {string} what - Progress category key (e.g. 'cid:food', 'kill:pirate').
-   * @param {number} n - Amount of progress units.
+   * @param {number} count - Amount of progress units.
    * @returns {void}
    */
-  stateProgress(this: LivingCapabilities, session: Session, sys: string, what: string, n: number) {
-    const st = this.stateOf(sys);
-    if (!st || !st.need) return;
-    const X = STATES[st.kind];
+  stateProgress(
+    this: LivingCapabilities,
+    session: Session,
+    starSystem: string,
+    what: string,
+    count: number,
+  ) {
+    const livingState = this.stateOf(starSystem);
+    if (!livingState || !livingState.need) return;
+    const systemState = STATES[livingState.kind];
     const counts =
-      (X.need!.cid && what === 'cid:' + X.need!.cid) ||
-      (X.need!.kills === 'pirate' && what === 'kill:pirate') ||
-      (X.need!.kills === 'enemy' && what === 'kill:' + st!.enemy);
+      (systemState.need!.cid && what === 'cid:' + systemState.need!.cid) ||
+      (systemState.need!.kills === 'pirate' && what === 'kill:pirate') ||
+      (systemState.need!.kills === 'enemy' && what === 'kill:' + livingState!.enemy);
     if (!counts) return;
     session.data.stats.stateHelp = (session.data.stats.stateHelp || 0) + 1; // the career step
-    const before = st.got;
-    st.got = Math.min(st.need, st.got + n);
+    const before = livingState.got;
+    livingState.got = Math.min(livingState.need, livingState.got + count);
     this.db.touch();
-    if (st.got >= st.need) return this.resolveState(session, sys);
-    if (Math.floor(before / (st.need / 4)) !== Math.floor(st.got / (st.need / 4)))
+    if (livingState.got >= livingState.need) return this.resolveState(session, starSystem);
+    if (
+      Math.floor(before / (livingState.need / 4)) !==
+      Math.floor(livingState.got / (livingState.need / 4))
+    )
       this.toast(
         session,
-        `${X.name} in ${SYS[sys].name}: ${st.got} / ${st.need} ${X.need!.cid ? 't delivered' : 'destroyed'}.`,
+        `${systemState.name} in ${systemsById[starSystem].name}: ${livingState.got} / ${livingState.need} ${systemState.need!.cid ? 't delivered' : 'destroyed'}.`,
       );
   },
   /**
    * Conclude an active system state early due to player contribution, distributing rewards.
    * @param {Session} session - Player session that triggered resolution.
-   * @param {string} sys - System ID.
+   * @param {string} starSystem - System ID.
    * @returns {void}
    */
-  resolveState(this: LivingCapabilities, session: Session, sys: string) {
-    const W = this.db.world,
-      st = W.states[sys],
-      X = STATES[st.kind],
-      S = SYS[sys],
+  resolveState(this: LivingCapabilities, session: Session, starSystem: string) {
+    const worldData = this.db.world,
+      livingState = worldData.states[starSystem],
+      systemState = STATES[livingState.kind],
+      starSystem2 = systemsById[starSystem],
       playerData = session.data;
-    delete W.states[sys];
-    W.stateCool[sys] = Date.now() + 30 * 60000;
+    delete worldData.states[starSystem];
+    worldData.stateCool[starSystem] = Date.now() + 30 * 60000;
     this.worldKey = null;
-    const reward = 15000 + st.need * 120;
+    const reward = 15000 + livingState.need * 120;
     playerData.credits += reward;
     playerData.stats.earned += reward;
-    playerData.rep[S.faction] = clampStanding((playerData.rep[S.faction] || 0) + 6);
+    playerData.rep[starSystem2.faction] = clampStanding(
+      (playerData.rep[starSystem2.faction] || 0) + 6,
+    );
     this.news(
-      `${X.end.replace('{sys}', S.name).replace('{fac}', FACTIONS[S.faction].name)} ${playerData.name} led the effort.`,
+      `${systemState.end.replace('{sys}', starSystem2.name).replace('{fac}', FACTIONS[starSystem2.faction].name)} ${playerData.name} led the effort.`,
     );
     this.toast(
       session,
-      `You ended the ${X.name.toLowerCase()} in ${S.name}! The ${FACTIONS[S.faction].short} pay you ${credits(reward)} credits (+6 standing).`,
+      `You ended the ${systemState.name.toLowerCase()} in ${starSystem2.name}! The ${FACTIONS[starSystem2.faction].short} pay you ${credits(reward)} credits (+6 standing).`,
     );
-    this.log(playerData, `Ended the ${X.name.toLowerCase()} in ${S.name}.`);
+    this.log(playerData, `Ended the ${systemState.name.toLowerCase()} in ${starSystem2.name}.`);
     this.db.touch();
     this.you(session);
   },
   /**
    * Check killed NPC to progress pirate or war crisis states in the system.
    * @param {Session} session - Player session scoring the kill.
-   * @param {Entity} npc - Killed NPC entity.
+   * @param {Entity} entity - Killed NPC entity.
    * @param {Space} space - Space instance where the kill occurred.
    * @returns {void}
    */
-  stateOnKill(this: LivingCapabilities, session: Session, npc: Entity, space: Space) {
-    const F = FACTIONS[npc.faction] || {};
-    if (F.pirate || npc.faction === 'hollow')
+  stateOnKill(this: LivingCapabilities, session: Session, entity: Entity, space: Space) {
+    const factionDef = FACTIONS[entity.faction] || {};
+    if (factionDef.pirate || entity.faction === 'hollow')
       this.stateProgress(session, space.id, 'kill:pirate', 1);
-    this.stateProgress(session, space.id, 'kill:' + npc.faction, 1);
+    this.stateProgress(session, space.id, 'kill:' + entity.faction, 1);
   },
   // ---- the jobs a troubled system posts (merged into nearby job boards)
   /**
    * Generate emergency relief, patrol, or evacuation jobs for nearby troubled systems.
    * @param {StellarBody} stellarBody - Landed stellar body.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {() => number} r - Seeded RNG function.
+   * @param {() => number} radius - Seeded RNG function.
    * @param {Array<[string, number]>} near - Array of [systemId, jumps] tuples.
-   * @param {number} win - Time window seed.
+   * @param {number} window - Time window seed.
    * @returns {Array<Mission>} Generated mission objects.
    */
   stateOffers(
     this: LivingCapabilities,
     stellarBody: StellarBody,
     playerData: PlayerData,
-    r: () => number,
+    radius: () => number,
     near: Array<[string, number]>,
-    win: number,
+    window: number,
   ) {
-    const out = [],
+    const result = [],
       here: Array<[string, number]> = [[stellarBody.system, 0], ...near];
-    for (const [sys, jumps] of here) {
-      const st = this.stateOf(sys);
-      if (!st) continue;
-      const S = SYS[sys],
-        X = STATES[st.kind];
-      const ports = S.stellars.filter(
-        (x) => x.id !== stellarBody.id && x.svc && x.svc.includes('T') && !x.site,
+    for (const [starSystem, jumps] of here) {
+      const livingState = this.stateOf(starSystem);
+      if (!livingState) continue;
+      const starSystem2 = systemsById[starSystem],
+        systemState = STATES[livingState.kind];
+      const ports = starSystem2.stellars.filter(
+        (rawStellarBody) =>
+          rawStellarBody.id !== stellarBody.id &&
+          rawStellarBody.svc &&
+          rawStellarBody.svc.includes('T') &&
+          !rawStellarBody.site,
       );
       if (!ports.length) continue;
-      const dest = ports[Math.floor(r() * ports.length)],
-        id = `${stellarBody.id}-${win}-st-${sys}`;
+      const rawStellarBody = ports[Math.floor(radius() * ports.length)],
+        identifier = `${stellarBody.id}-${window}-st-${starSystem}`;
       const supply = {
         famine: 'food',
         refugees: 'food',
@@ -378,64 +408,73 @@ export const LivingOperations = {
         war: 'equipment',
         boom: 'luxury',
         festival: 'luxury',
-      }[st.kind];
+      }[livingState.kind];
       if (supply) {
-        const c = COMMODITIES.find((x) => x.id === supply)!,
-          qty = 8 + Math.floor(r() * 18);
-        out.push({
-          id,
+        const commodityDef = COMMODITIES.find((commodityDef) => commodityDef.id === supply)!,
+          quantity = 8 + Math.floor(radius() * 18);
+        result.push({
+          id: identifier,
           type: 'supply',
-          state: st.kind,
+          state: livingState.kind,
           cid: supply,
-          qty,
-          sys,
-          dest: dest.id,
-          reward: Math.round((c.base * qty * 1.6 + 3000 + jumps * 1200) * (X.need ? 1.25 : 1)),
-          title: `${X.icon} ${X.name}: bring ${qty} t of ${c.name.toLowerCase()} to ${dest.name}`,
-          text: `${X.desc} Buy ${qty} tons of ${c.name.toLowerCase()} wherever it is cheap and deliver it from your own hold to ${dest.name} in ${S.name} (${jumps ? jumps + ' jump' + (jumps > 1 ? 's' : '') : 'this system'}). Pays well above market.`,
+          qty: quantity,
+          sys: starSystem,
+          dest: rawStellarBody.id,
+          reward: Math.round(
+            (commodityDef.base * quantity * 1.6 + 3000 + jumps * 1200) *
+              (systemState.need ? 1.25 : 1),
+          ),
+          title: `${systemState.icon} ${systemState.name}: bring ${quantity} t of ${commodityDef.name.toLowerCase()} to ${rawStellarBody.name}`,
+          text: `${systemState.desc} Buy ${quantity} tons of ${commodityDef.name.toLowerCase()} wherever it is cheap and deliver it from your own hold to ${rawStellarBody.name} in ${starSystem2.name} (${jumps ? jumps + ' jump' + (jumps > 1 ? 's' : '') : 'this system'}). Pays well above market.`,
         });
       }
-      if (st.kind === 'pirates' || st.kind === 'war') {
-        const need = 3 + Math.floor(r() * 3);
-        out.push({
-          id: id + 'p',
+      if (livingState.kind === 'pirates' || livingState.kind === 'war') {
+        const need = 3 + Math.floor(radius() * 3);
+        result.push({
+          id: identifier + 'p',
           type: 'patrol',
-          state: st.kind,
-          sys,
+          state: livingState.kind,
+          sys: starSystem,
           need,
           got: 0,
-          reward: Math.round((4000 + need * 2400 + S.danger * 1800) * 1.4),
+          reward: Math.round((4000 + need * 2400 + starSystem2.danger * 1800) * 1.4),
           title:
-            st.kind === 'war' ? `⚔ Hold the line in ${S.name}` : `☠ Clear the lanes of ${S.name}`,
+            livingState.kind === 'war'
+              ? `⚔ Hold the line in ${starSystem2.name}`
+              : `☠ Clear the lanes of ${starSystem2.name}`,
           text:
-            st.kind === 'war'
-              ? `Destroy ${need} ${FACTIONS[st!.enemy!].name} warships in ${S.name}, then land anywhere to be paid.`
-              : `Destroy ${need} raiders in ${S.name}, then land anywhere to be paid. Every kill helps break the scourge.`,
+            livingState.kind === 'war'
+              ? `Destroy ${need} ${FACTIONS[livingState!.enemy!].name} warships in ${starSystem2.name}, then land anywhere to be paid.`
+              : `Destroy ${need} raiders in ${starSystem2.name}, then land anywhere to be paid. Every kill helps break the scourge.`,
         });
       }
-      if (X.passengers) {
-        const other = near.filter(([s2]) => s2 !== sys)[
-          Math.floor(r() * Math.max(1, near.length - 1))
+      if (systemState.passengers) {
+        const other = near.filter(([secondState]) => secondState !== starSystem)[
+          Math.floor(radius() * Math.max(1, near.length - 1))
         ];
-        const to =
-          other && SYS[other[0]].stellars.find((x) => x.svc && x.svc.includes('L') && !x.site);
-        if (to) {
-          const pax = 2 + (Math.floor(r() * 4) * X.passengers) / 2;
-          out.push({
-            id: id + 'x',
+        const rawStellarBody =
+          other &&
+          systemsById[other[0]].stellars.find(
+            (rawStellarBody3) =>
+              rawStellarBody3.svc && rawStellarBody3.svc.includes('L') && !rawStellarBody3.site,
+          );
+        if (rawStellarBody) {
+          const passengers2 = 2 + (Math.floor(radius() * 4) * systemState.passengers) / 2;
+          result.push({
+            id: identifier + 'x',
             type: 'passenger',
-            state: st.kind,
+            state: livingState.kind,
             sys: other[0],
-            dest: to.id,
-            pax: Math.round(pax),
-            reward: Math.round(2500 + other[1] * 1600 + pax * 1300),
-            title: `${X.icon} Passage for ${Math.round(pax)} from ${S.name} to ${to.name}`,
-            text: `${st.kind === 'refugees' ? 'Refugees' : 'Festival-goers'} need passage to ${to.name}. Each passenger needs a bunk.`,
+            dest: rawStellarBody.id,
+            pax: Math.round(passengers2),
+            reward: Math.round(2500 + other[1] * 1600 + passengers2 * 1300),
+            title: `${systemState.icon} Passage for ${Math.round(passengers2)} from ${starSystem2.name} to ${rawStellarBody.name}`,
+            text: `${livingState.kind === 'refugees' ? 'Refugees' : 'Festival-goers'} need passage to ${rawStellarBody.name}. Each passenger needs a bunk.`,
           });
         }
       }
     }
-    return out;
+    return result;
   },
   // a supply job completes when you land at its destination with the goods in your hold
   /**

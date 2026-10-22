@@ -31,7 +31,10 @@ export type TutorialStep = {
  * @returns {number} Total count of equipped outfits.
  */
 const outfits = (playerData: PlayerData) =>
-  Object.values(playerData.ship.outfits || {}).reduce((a, b) => a + b, 0);
+  Object.values(playerData.ship.outfits || {}).reduce(
+    (firstValue, secondValue) => firstValue + secondValue,
+    0,
+  );
 
 /**
  * Ordered sequence of career guide tutorial steps.
@@ -135,7 +138,10 @@ export const TUTORIAL: TutorialStep[] = [
     reward: 20000,
   },
   {
-    check: (playerData) => (playerData.shuttles || []).some((s) => s.runs > 0 || s.state === 'out'),
+    check: (playerData) =>
+      (playerData.shuttles || []).some(
+        (savedShuttle) => savedShuttle.runs > 0 || savedShuttle.state === 'out',
+      ),
     title: 'Launch a shuttle',
     text: 'Build a shuttle in your station HANGAR and send it on a job from the hangar board.',
     reward: 15000,

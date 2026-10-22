@@ -362,7 +362,7 @@ import { IndustrialOperations } from './industrial.ts';
 import { MiningOperations } from './mining.ts';
 import { RefineryOperations } from './refinery.ts';
 import { MiningPressureOperations } from './mining-pressure.ts';
-import { SYS, STELLARS, SITE_PRICES, COMMODITIES } from '../shared/galaxy.ts';
+import { SYS as systemsById, STELLARS, SITE_PRICES, COMMODITIES } from '../shared/galaxy.ts';
 import { price } from '../shared/rules.ts';
 import { purchaseUnit, saleValue } from './trade-pricing.ts';
 import { bindOperations } from './feature-service.ts';
@@ -1583,10 +1583,10 @@ export function createFeatures(core: Game): FeatureServices {
       const session = features.sessions.sessionOf(captain);
       if (session) features.specialists.specGain(session, 'star_dredge', 0, chance);
       else {
-        const d = core.db.get(captain);
-        if (d && Math.random() < chance) {
-          d.bp ??= {};
-          d.bp[815] = (d.bp[815] || 0) + 1;
+        const playerAccount = core.db.get(captain);
+        if (playerAccount && Math.random() < chance) {
+          playerAccount.bp ??= {};
+          playerAccount.bp[815] = (playerAccount.bp[815] || 0) + 1;
           core.db.touch();
         }
       }
@@ -1608,14 +1608,14 @@ export function createFeatures(core: Game): FeatureServices {
     fuelCapacity: (playerData) => features.shipStats.stats(playerData)?.fuel || 0,
     access(playerData, port) {
       const stellarBody = /** @type {StellarBody} */ (STELLARS[port] as StellarBody),
-        ent = features.sessions.sessionOf(playerData.name)?.ent;
+        entity = features.sessions.sessionOf(playerData.name)?.ent;
       if (!stellarBody) return { available: false, home: false, faction: '', near: false };
       const home = !!(
           stellarBody.site &&
           core.ownSite(playerData, stellarBody) &&
           (playerData.station?.ops || 0) >= 1
         ),
-        faction = stellarBody.outlaw ? 'outlaw' : SYS[stellarBody.system].faction,
+        faction = stellarBody.outlaw ? 'outlaw' : systemsById[stellarBody.system].faction,
         eligible =
           home ||
           (!stellarBody.site && stellarBody.svc.includes('T') && stellarBody.svc.includes('O')),
@@ -1627,55 +1627,64 @@ export function createFeatures(core: Game): FeatureServices {
           stellarBody.system === playerData.sys &&
           (playerData.stellar === port ||
             !!(
-              ent && Math.hypot(ent.x - stellarBody.x, ent.y - stellarBody.y) <= stellarBody.r + 500
+              entity &&
+              Math.hypot(entity.x - stellarBody.x, entity.y - stellarBody.y) <= stellarBody.r + 500
             ));
       return { available: !!(eligible && allowed), home, faction, near };
     },
-    pricing(playerData, port, cid, now) {
+    pricing(playerData, port, captainId, currentTime) {
       const stellarBody = /** @type {StellarBody} */ (STELLARS[port] as StellarBody);
       if (!stellarBody) throw Error('Unknown port.');
-      const pr0 = price(
+      const price2 = price(
           stellarBody.site ? { ...stellarBody, prices: SITE_PRICES } : stellarBody,
-          cid,
-          now,
+          captainId,
+          currentTime,
         ),
-        fallback = COMMODITIES.find((c) => c.id === cid)?.base;
-      if (pr0 === null && !fallback) throw Error('Unknown commodity.');
-      const flash = stellarBody.site ? 1 : features.rivals.flashMult(stellarBody.id, cid),
-        living = stellarBody.site ? 1 : features.living.livingMult(stellarBody, cid),
-        pr = Math.round((pr0 ?? fallback ?? 0) * flash * living),
+        fallback = COMMODITIES.find((commodityDef) => commodityDef.id === captainId)?.base;
+      if (price2 === null && !fallback) throw Error('Unknown commodity.');
+      const flash = stellarBody.site ? 1 : features.rivals.flashMult(stellarBody.id, captainId),
+        living = stellarBody.site ? 1 : features.living.livingMult(stellarBody, captainId),
+        price3 = Math.round((price2 ?? fallback ?? 0) * flash * living),
         bonus = features.bonuses.bonus(playerData).tradePct || 0,
         sell = features.fronts.mods(stellarBody.system).sell;
       return {
-        ask: purchaseUnit(pr, 1, bonus, !!stellarBody.site),
-        bid: saleValue(pr, { common: 1, rich: 0, pure: 0 }, bonus, !!stellarBody.site, sell),
-        fingerprint: JSON.stringify([pr, bonus, sell, flash, living, pr0 === null]),
+        ask: purchaseUnit(price3, 1, bonus, !!stellarBody.site),
+        bid: saleValue(price3, { common: 1, rich: 0, pure: 0 }, bonus, !!stellarBody.site, sell),
+        fingerprint: JSON.stringify([price3, bonus, sell, flash, living, price2 === null]),
       };
     },
-    rushProgress(s, event, delivered) {
-      const st = features.living.stateOf(s.data.sys);
-      if (!st || st.kind !== 'rush' || String(st.until) !== event) return;
-      const old = Number(st.miningOrderGot) || 0;
-      if (delivered <= old) return;
-      st.miningOrderGot = delivered;
-      features.living.stateProgress(s, s.data.sys, 'cid:ore', delivered - old);
+    rushProgress(refinerySession, event, delivered) {
+      const livingState = features.living.stateOf(refinerySession.data.sys);
+      if (!livingState || livingState.kind !== 'rush' || String(livingState.until) !== event)
+        return;
+      const previousValue = Number(livingState.miningOrderGot) || 0;
+      if (delivered <= previousValue) return;
+      livingState.miningOrderGot = delivered;
+      features.living.stateProgress(
+        refinerySession,
+        refinerySession.data.sys,
+        'cid:ore',
+        delivered - previousValue,
+      );
       try {
         core.db.flush();
-      } catch (e) {
+      } catch (event) {
         core.db.economicFrozen = true;
-        throw e;
+        throw event;
       }
     },
-    rush(sys) {
-      const st = features.living.stateOf(sys);
-      return st?.kind === 'rush' ? { id: String(st.until), until: Number(st.until) } : null;
+    rush(starSystem) {
+      const livingState = features.living.stateOf(starSystem);
+      return livingState?.kind === 'rush'
+        ? { id: String(livingState.until), until: Number(livingState.until) }
+        : null;
     },
     get payload() {
       return features.refinery.payload;
     },
-    refresh(s) {
-      core.you(s);
-      if (s.data.stellar) core.landed(s);
+    refresh(refinerySession) {
+      core.you(refinerySession);
+      if (refinerySession.data.stellar) core.landed(refinerySession);
     },
     send: core.send.bind(core),
     toast: core.toast.bind(core),
@@ -1688,7 +1697,7 @@ export function createFeatures(core: Game): FeatureServices {
     },
     sessions: () => core.sessions.values(),
     newcomer: (playerData) => !!core.newcomer(playerData),
-    rush: (sys) => features.living.stateOf(sys)?.kind === 'rush',
+    rush: (starSystem) => features.living.stateOf(starSystem)?.kind === 'rush',
     toast: core.toast.bind(core),
   };
   features.pressure = bindOperations(MiningPressureOperations, pressureCapabilities);
@@ -1734,7 +1743,7 @@ export function createFeatures(core: Game): FeatureServices {
           core.holdUsed(/** @type {RefineryPlayer} */ (playerData as RefineryPlayer)),
       ),
     stats: (playerData) => features.shipStats.stats(playerData),
-    field: (sys, field) => features.pressure.fieldState(sys, field),
+    field: (starSystem, field) => features.pressure.fieldState(starSystem, field),
   };
   features.towing = bindOperations(TowingOperations, towingCapabilities);
   return Object.freeze(features);

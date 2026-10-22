@@ -56,8 +56,8 @@ import { GalaxyGraph } from './galaxy-graph.ts';
 // faction story arcs. Three missions for each of seven powers, separate from the main story. Each arc is offered
 // at that power's capital once you have earned some standing there, and ends in a unique Epic officer and specialist
 // blueprints. Places are worked out from the map, so text uses {home}, {dest}, {s1} and {s2} placeholders.
-import { SYSTEMS, SYS } from './galaxy.ts';
-const galaxyGraph = new GalaxyGraph(SYS);
+import { SYSTEMS, SYS as systemsById } from './galaxy.ts';
+const galaxyGraph = new GalaxyGraph(systemsById);
 
 /**
  * @typedef {Object} ArcStepRaw
@@ -399,14 +399,16 @@ export const ARC_PAY: number[] = [20000, 45000, 120000];
 // work out each arc's places: the capital (highest-tech world with a bar), a friendly neighbour, and a rougher system nearby
 /**
  * Resolves origin, transit, and destination stations and systems for a faction's arc based on the galaxy map.
- * @param {string} fac - Faction ID key.
+ * @param {string} faction2 - Faction ID key.
  * @returns {ArcPlaces|null} Resolved places for the storyline missions, or null if faction lacks valid worlds.
  */
-function placesFor(fac: string): ArcPlaces | null {
-  const mine = SYSTEMS.filter((S) => S.faction === fac && !S.farside);
+function placesFor(faction2: string): ArcPlaces | null {
+  const mine = SYSTEMS.filter(
+    (starSystem) => starSystem.faction === faction2 && !starSystem.farside,
+  );
   const worlds = mine
-    .flatMap((S) =>
-      S.stellars
+    .flatMap((starSystem) =>
+      starSystem.stellars
         .filter(
           (stellarBody) =>
             stellarBody.svc &&
@@ -414,32 +416,42 @@ function placesFor(fac: string): ArcPlaces | null {
             stellarBody.svc.includes('L') &&
             !stellarBody.site,
         )
-        .map((stellarBody) => ({ p: stellarBody, S })),
+        .map((stellarBody) => ({ p: stellarBody, S: starSystem })),
     )
-    .sort((a, b) => (b.p.tech || 0) - (a.p.tech || 0) || a.p.id.localeCompare(b.p.id));
+    .sort(
+      (firstValue, secondValue) =>
+        (secondValue.p.tech || 0) - (firstValue.p.tech || 0) ||
+        firstValue.p.id.localeCompare(secondValue.p.id),
+    );
   if (!worlds.length) return null;
   const home = worlds[0];
-  let s1 = null,
-    s2 = null;
+  let state = null,
+    secondState = null;
   for (const [systemId, distance] of galaxyGraph.walk(home.S.id)) {
     if (!distance) continue;
-    const S = SYS[systemId];
-    if (S.arena || S.faction === 'deep' || S.farside) continue;
+    const starSystem = systemsById[systemId];
+    if (starSystem.arena || starSystem.faction === 'deep' || starSystem.farside) continue;
     if (
-      !s1 &&
-      S.faction === fac &&
-      S.stellars.some(
+      !state &&
+      starSystem.faction === faction2 &&
+      starSystem.stellars.some(
         (stellarBody) => stellarBody.svc && stellarBody.svc.includes('L') && !stellarBody.site,
       )
     )
-      s1 = S;
-    if (!s2 && S.id !== home.S.id && S.danger >= 2 && S.faction !== 'quevari') s2 = S;
-    if (s1 && s2) break;
+      state = starSystem;
+    if (
+      !secondState &&
+      starSystem.id !== home.S.id &&
+      starSystem.danger >= 2 &&
+      starSystem.faction !== 'quevari'
+    )
+      secondState = starSystem;
+    if (state && secondState) break;
   }
-  s1 = s1 || home.S;
-  s2 = s2 || s1;
-  const dest =
-    s1.stellars.find(
+  state = state || home.S;
+  secondState = secondState || state;
+  const rawStellarBody =
+    state.stellars.find(
       (stellarBody) =>
         stellarBody.svc &&
         stellarBody.svc.includes('L') &&
@@ -450,59 +462,59 @@ function placesFor(fac: string): ArcPlaces | null {
     at: home.p.id,
     home: home.p.name,
     homeSys: home.S.id,
-    s1: s1.id,
-    s2: s2.id,
-    dest: dest.id,
-    destName: dest.name,
+    s1: state.id,
+    s2: secondState.id,
+    dest: rawStellarBody.id,
+    destName: rawStellarBody.name,
   };
 }
 
 /**
  * Replaces geographic template placeholders ({home}, {dest}, {s1}, {s2}) with resolved station and system names.
- * @param {string} t - Narrative text template containing placeholders.
- * @param {ArcPlaces} P - Resolved location metadata.
+ * @param {string} time - Narrative text template containing placeholders.
+ * @param {ArcPlaces} arcPlaces - Resolved location metadata.
  * @returns {string} Text with all location placeholders populated.
  */
-const fill = (t: string, P: ArcPlaces) =>
-  (t || '')
-    .replace(/\{home\}/g, P.home)
-    .replace(/\{dest\}/g, P.destName)
-    .replace(/\{s1\}/g, SYS[P.s1].name)
-    .replace(/\{s2\}/g, SYS[P.s2].name);
+const fill = (time: string, arcPlaces: ArcPlaces) =>
+  (time || '')
+    .replace(/\{home\}/g, arcPlaces.home)
+    .replace(/\{dest\}/g, arcPlaces.destName)
+    .replace(/\{s1\}/g, systemsById[arcPlaces.s1].name)
+    .replace(/\{s2\}/g, systemsById[arcPlaces.s2].name);
 
 /**
  * Complete collection of faction storyline arcs keyed by faction identifier.
  * @type {Object.<string, FactionArc>}
  */
 export const ARCS: Record<string, FactionArc> = Object.fromEntries(
-  ARC_FACS.map((f) => {
-    const P = placesFor(f),
-      T = ARC_TEXT[f];
-    if (!P) return [f, null];
+  ARC_FACS.map((factionId) => {
+    const arcPlaces = placesFor(factionId),
+      arcTemplate = ARC_TEXT[factionId];
+    if (!arcPlaces) return [factionId, null];
     return [
-      f,
+      factionId,
       {
-        fac: f,
-        name: T.name,
-        spec: T.spec,
-        officer: T.officer,
-        places: P,
-        steps: T.steps.map((st, i) => ({
-          ...st,
-          i,
-          title: st.title,
-          text: fill(st.text, P),
-          brief: fill(st.brief, P),
-          done: fill(st.done, P),
-          progress: st.progress,
-          at: P.at,
-          back: P.at,
-          dest: st.type === 'carry' ? P.dest : null,
-          sys: st.type === 'carry' ? P.s1 : P.s2,
-          minRep: ARC_MIN_REP[i],
-          pay: ARC_PAY[i],
+        fac: factionId,
+        name: arcTemplate.name,
+        spec: arcTemplate.spec,
+        officer: arcTemplate.officer,
+        places: arcPlaces,
+        steps: arcTemplate.steps.map((arcStepRaw, index) => ({
+          ...arcStepRaw,
+          i: index,
+          title: arcStepRaw.title,
+          text: fill(arcStepRaw.text, arcPlaces),
+          brief: fill(arcStepRaw.brief, arcPlaces),
+          done: fill(arcStepRaw.done, arcPlaces),
+          progress: arcStepRaw.progress,
+          at: arcPlaces.at,
+          back: arcPlaces.at,
+          dest: arcStepRaw.type === 'carry' ? arcPlaces.dest : null,
+          sys: arcStepRaw.type === 'carry' ? arcPlaces.s1 : arcPlaces.s2,
+          minRep: ARC_MIN_REP[index],
+          pay: ARC_PAY[index],
         })),
       },
     ];
-  }).filter(([, v]) => v),
+  }).filter(([, value]) => value),
 );

@@ -119,37 +119,45 @@ const OVERRIDE: Record<number, RoleId> = { 735: 'explorer', 716: 'battleship' };
 
 /**
  * Determines the role of a ship hull from its attributes or hardcoded overrides.
- * @param {ShipHullRef|null|undefined} H - Ship hull definition or ship instance.
- * @param {Record<string|number, WeaponRef>|null|undefined} [W] - Weapon definitions map keyed by weapon ID.
+ * @param {ShipHullRef|null|undefined} shipHullRef - Ship hull definition or ship instance.
+ * @param {Record<string|number, WeaponRef>|null|undefined} [width] - Weapon definitions map keyed by weapon ID.
  * @returns {RoleId|string} The resolved ship role.
  */
 export function roleOf(
-  H: ShipHullRef | null | undefined,
-  W?: Record<string | number, WeaponRef> | null,
+  shipHullRef: ShipHullRef | null | undefined,
+  width?: Record<string | number, WeaponRef> | null,
 ): string {
-  if (!H) return 'explorer';
-  if (H.role) return H.role;
-  if (OVERRIDE[H.id!]) return OVERRIDE[H.id!];
-  if (W && (H.weapons || []).some(([w]) => W[w] && W[w].type === 'bay')) return 'carrier';
-  const dur = (H.shield || 0) + (H.armor || 0);
-  if ((H.cargo || 0) >= 45 && H.cargo! >= (H.strength || 0) * 0.9) return 'survey';
-  if ((H.speed || 0) >= 450) return 'interceptor';
-  if (dur >= 1900 && (H.speed || 0) <= 430) return 'battleship';
+  if (!shipHullRef) return 'explorer';
+  if (shipHullRef.role) return shipHullRef.role;
+  if (OVERRIDE[shipHullRef.id!]) return OVERRIDE[shipHullRef.id!];
+  if (
+    width &&
+    (shipHullRef.weapons || []).some(([width2]) => width[width2] && width[width2].type === 'bay')
+  )
+    return 'carrier';
+  const duration = (shipHullRef.shield || 0) + (shipHullRef.armor || 0);
+  if ((shipHullRef.cargo || 0) >= 45 && shipHullRef.cargo! >= (shipHullRef.strength || 0) * 0.9)
+    return 'survey';
+  if ((shipHullRef.speed || 0) >= 450) return 'interceptor';
+  if (duration >= 1900 && (shipHullRef.speed || 0) <= 430) return 'battleship';
   return 'explorer';
 }
 
 /**
  * Calculates the damage multiplier for an attacker of role `a` hitting a target of role `t`.
- * @param {RoleId|string|null|undefined} a - Attacker role.
- * @param {RoleId|string|null|undefined} t - Target role.
+ * @param {RoleId|string|null|undefined} firstValue - Attacker role.
+ * @param {RoleId|string|null|undefined} time - Target role.
  * @returns {number} Damage multiplier.
  */
 // damage multiplier for an attacker of role a hitting a target of role t
-export function roleMult(a: string | null | undefined, t: string | null | undefined): number {
-  if (!a || !t) return 1;
-  let m = 1;
-  if (BEATS[a] === t) m *= COUNTER.dmg;
-  if (BEATS[t] === a) m *= COUNTER.taken;
-  if (a === 'survey') m *= COUNTER.survey;
-  return m;
+export function roleMult(
+  firstValue: string | null | undefined,
+  time: string | null | undefined,
+): number {
+  if (!firstValue || !time) return 1;
+  let message = 1;
+  if (BEATS[firstValue] === time) message *= COUNTER.dmg;
+  if (BEATS[time] === firstValue) message *= COUNTER.taken;
+  if (firstValue === 'survey') message *= COUNTER.survey;
+  return message;
 }

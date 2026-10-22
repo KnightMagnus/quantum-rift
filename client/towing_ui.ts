@@ -3,7 +3,7 @@ import type { TowRequest } from '../server/towing-contracts.ts';
 
 import { STELLARS } from '../shared/galaxy.ts';
 export function initTowingUI({
-  G,
+  G: clientGameState,
   send,
   bound,
   label,
@@ -22,7 +22,7 @@ export function initTowingUI({
   select.id = 'towselect';
   select.setAttribute('aria-label', 'Motherlode selection');
   select.onchange = () => {
-    G.towTarget = Number(select.value);
+    clientGameState.towTarget = Number(select.value);
   };
   const toggle = document.createElement('button');
   toggle.id = 'towtoggle';
@@ -57,32 +57,41 @@ export function initTowingUI({
   details.append(summary, recipient, offer, help);
   panel.append(status, select, toggle, port, deliver, accept, details);
   root.append(panel);
-  const wire = () => G.towing || G.you?.towing;
+  const wire = () => clientGameState.towing || clientGameState.you?.towing;
   const object = () => {
-    const w = wire();
-    return w?.objects.find((o) => o!.id === (w.attached || G.towTarget));
+    const wire2 = wire();
+    return wire2?.objects.find(
+      (options) => options!.id === (wire2.attached || clientGameState.towTarget),
+    );
   };
-  function request(op: TowRequest['op'], extra: Partial<TowRequest> = {}) {
-    const o = object();
-    if (!o || blocked() || G.paused || G.landed) return false;
-    send({ t: 'towing', op, id: o.id, revision: o.revision, ...extra });
+  function request(operation: TowRequest['op'], extra: Partial<TowRequest> = {}) {
+    const object2 = object();
+    if (!object2 || blocked() || clientGameState.paused || clientGameState.landed) return false;
+    send({ t: 'towing', op: operation, id: object2.id, revision: object2.revision, ...extra });
     return true;
   }
   function invoke(action = 'towToggle') {
-    const w = wire();
+    const wire2 = wire();
     if (action === 'towDeliver')
-      return w?.attached ? request('deliver', { port: port.value }) : false;
+      return wire2?.attached ? request('deliver', { port: port.value }) : false;
     if (action === 'towOffer')
-      return w?.attached && recipient.value.trim()
+      return wire2?.attached && recipient.value.trim()
         ? request('offer', { to: recipient.value.trim() })
         : false;
     if (action === 'towAccept') {
-      const x = w?.offers[0];
-      if (!x || blocked() || G.paused || G.landed || !G.view) return false;
-      send({ t: 'towing', op: 'accept', id: x.id, revision: x.revision });
+      const offer = wire2?.offers[0];
+      if (
+        !offer ||
+        blocked() ||
+        clientGameState.paused ||
+        clientGameState.landed ||
+        !clientGameState.view
+      )
+        return false;
+      send({ t: 'towing', op: 'accept', id: offer.id, revision: offer.revision });
       return true;
     }
-    return request(w?.attached ? 'detach' : 'attach');
+    return request(wire2?.attached ? 'detach' : 'attach');
   }
   toggle.onclick = () => invoke();
   deliver.onclick = () => invoke('towDeliver');
@@ -91,87 +100,94 @@ export function initTowingUI({
   let signature = '',
     portSignature = '';
   function refresh() {
-    const w = wire();
-    panel.hidden = (!G.you ||
-      G.landed ||
-      !G.view ||
-      !(w?.rig || w?.attached || w?.offers?.length)) as boolean;
-    if (!w || panel.hidden) {
+    const wire2 = wire();
+    panel.hidden = (!clientGameState.you ||
+      clientGameState.landed ||
+      !clientGameState.view ||
+      !(wire2?.rig || wire2?.attached || wire2?.offers?.length)) as boolean;
+    if (!wire2 || panel.hidden) {
       towAudio(false, 0);
       return;
     }
-    const load = w.objects.find((o) => o!.id === w.attached);
+    const load = wire2.objects.find((options) => options!.id === wire2.attached);
     towAudio(
-      !!load && !G.paused,
-      load ? Math.hypot(load.x - G.view!.x, load.y - G.view!.y) / 320 : 0,
+      !!load && !clientGameState.paused,
+      load
+        ? Math.hypot(load.x - clientGameState.view!.x, load.y - clientGameState.view!.y) / 320
+        : 0,
     );
-    const visible = w.objects.filter((o) => !['delivered', 'destroyed'].includes(o!.status));
-    const sig = visible.map((o) => o!.id + ':' + o!.status).join();
-    if (signature !== sig) {
-      signature = sig;
+    const visible = wire2.objects.filter(
+      (options) => !['delivered', 'destroyed'].includes(options!.status),
+    );
+    const join2 = visible.map((options) => options!.id + ':' + options!.status).join();
+    if (signature !== join2) {
+      signature = join2;
       select.replaceChildren(
-        ...visible.map((o) => {
-          const v = document.createElement('option');
-          v.value = String(o!.id);
-          v.textContent = `MOTHERLODE ${o!.id} · ${o!.ore} · ${o!.status.toUpperCase()}`;
-          return v;
+        ...visible.map((options) => {
+          const htmlOptionElement = document.createElement('option');
+          htmlOptionElement.value = String(options!.id);
+          htmlOptionElement.textContent = `MOTHERLODE ${options!.id} · ${options!.ore} · ${options!.status.toUpperCase()}`;
+          return htmlOptionElement;
         }),
       );
     }
-    if (!visible.some((o) => o!.id === G.towTarget))
-      G.towTarget = visible.reduce<(typeof visible)[number] | null>(
-        (best, o) =>
+    if (!visible.some((options) => options!.id === clientGameState.towTarget))
+      clientGameState.towTarget = visible.reduce<(typeof visible)[number] | null>(
+        (best, options) =>
           !best ||
-          Math.hypot(o!.x - G.view!.x, o!.y - G.view!.y) <
-            Math.hypot(best.x - G.view!.x, best.y - G.view!.y)
-            ? o
+          Math.hypot(options!.x - clientGameState.view!.x, options!.y - clientGameState.view!.y) <
+            Math.hypot(best.x - clientGameState.view!.x, best.y - clientGameState.view!.y)
+            ? options
             : best,
         null,
       )?.id;
-    select.value = String(w.attached || G.towTarget || '');
-    const o = object(),
-      ports = o?.ports || [],
-      ps = ports.join();
-    if (ps !== portSignature) {
-      portSignature = ps;
+    select.value = String(wire2.attached || clientGameState.towTarget || '');
+    const object2 = object(),
+      ports = object2?.ports || [],
+      join3 = ports.join();
+    if (join3 !== portSignature) {
+      portSignature = join3;
       port.replaceChildren(
-        ...ports.map((id) => {
-          const x = document.createElement('option');
-          x.value = id;
-          x.textContent = STELLARS[id]?.name || id;
-          return x;
+        ...ports.map((identifier) => {
+          const htmlOptionElement = document.createElement('option');
+          htmlOptionElement.value = identifier;
+          htmlOptionElement.textContent = STELLARS[identifier]?.name || identifier;
+          return htmlOptionElement;
         }),
       );
     }
-    status.textContent = o
-      ? `${o.ore} motherlode · ${o.mass ?? '?'} t. ${o.status === 'detached' ? `Reserved for ${o.owner || 'owner'}: ${Math.max(0, Math.ceil(o.graceUntil - w.now))}s remaining. ` : ''}${w.attached ? `Towing · speed limit ${w.cap}. Approach an ACCEPTS MOTHERLODE marker for automatic delivery.` : o.revealed ? 'Approach the deposit to attach.' : 'Scan to reveal its yield and delivery ports.'}`
+    status.textContent = object2
+      ? `${object2.ore} motherlode · ${object2.mass ?? '?'} t. ${object2.status === 'detached' ? `Reserved for ${object2.owner || 'owner'}: ${Math.max(0, Math.ceil(object2.graceUntil - wire2.now))}s remaining. ` : ''}${wire2.attached ? `Towing · speed limit ${wire2.cap}. Approach an ACCEPTS MOTHERLODE marker for automatic delivery.` : object2.revealed ? 'Approach the deposit to attach.' : 'Scan to reveal its yield and delivery ports.'}`
       : 'No large deposits nearby. Scan in another field.';
     deliver.textContent = `Deliver now · ${label(bound('towDeliver'))} (also automatic)`;
     offer.textContent = `OFFER TRANSFER · ${label(bound('towOffer'))}`;
-    toggle.textContent = `${w.attached ? 'DETACH' : 'ATTACH'} · ${label(bound('towToggle'))}`;
-    toggle.disabled = (!o || blocked() || G.paused) as boolean;
-    deliver.disabled = (!w.attached || !ports.length || blocked() || G.paused) as boolean;
-    offer.disabled = (!w.attached || blocked() || G.paused) as boolean;
-    toggle.title = G.paused
+    toggle.textContent = `${wire2.attached ? 'DETACH' : 'ATTACH'} · ${label(bound('towToggle'))}`;
+    toggle.disabled = (!object2 || blocked() || clientGameState.paused) as boolean;
+    deliver.disabled = (!wire2.attached ||
+      !ports.length ||
+      blocked() ||
+      clientGameState.paused) as boolean;
+    offer.disabled = (!wire2.attached || blocked() || clientGameState.paused) as boolean;
+    toggle.title = clientGameState.paused
       ? 'Resume Solo to use towing.'
-      : !o
+      : !object2
         ? 'Scan a deposit to find a tow load.'
         : blocked()
           ? 'Close the open menu or text field first.'
           : '';
-    deliver.title = !w.attached
+    deliver.title = !wire2.attached
       ? 'Attach a load first.'
       : !ports.length
         ? 'Scan the load to find a delivery port.'
-        : G.paused
+        : clientGameState.paused
           ? 'Resume Solo to deliver.'
           : '';
-    offer.title = !w.attached
+    offer.title = !wire2.attached
       ? 'Attach a load before offering it.'
       : 'The other captain must accept; nothing transfers automatically.';
-    accept.hidden = !w.offers.length;
-    if (w.offers.length)
-      accept.textContent = `ACCEPT ${w.offers[0].from}'S TRANSFER · ${label(bound('towAccept'))} (explicit consent)`;
+    accept.hidden = !wire2.offers.length;
+    if (wire2.offers.length)
+      accept.textContent = `ACCEPT ${wire2.offers[0].from}'S TRANSFER · ${label(bound('towAccept'))} (explicit consent)`;
   }
   return { invoke, refresh };
 }

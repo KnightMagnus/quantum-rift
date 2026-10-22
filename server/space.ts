@@ -388,7 +388,7 @@ import { eventideDrain } from '../shared/eventide.ts';
  */
 
 // One star system's live simulation: ships (players, their escorts, NPC traffic), shots, beams, loot.
-import { SYS, TRAFFIC, FACTIONS, MATERIALS } from '../shared/galaxy.ts';
+import { SYS as systemsById, TRAFFIC, FACTIONS, MATERIALS } from '../shared/galaxy.ts';
 import { roleMult } from '../shared/roles.ts';
 import { STATES } from '../shared/living.ts';
 import {
@@ -400,8 +400,8 @@ import {
   angDiff,
   angleTo,
   hostileFactions,
-  K,
-  DT,
+  K as physicsConstants,
+  DT as tickDuration,
 } from '../shared/rules.ts';
 
 /** @import { GradeLots } from '../shared/cargo-contracts.ts' */
@@ -424,26 +424,29 @@ const SLOTS = [
 /**
  * Calculates Euclidean distance between an entity and coordinates.
  * @param {Entity} entity Source entity.
- * @param {number} x Target X coordinate.
- * @param {number} y Target Y coordinate.
+ * @param {number} positionX Target X coordinate.
+ * @param {number} positionY Target Y coordinate.
  * @returns {number} Distance in world units.
  */
-const d0 = (entity: Entity, x: number, y: number): number => Math.hypot(x - entity.x, y - entity.y);
-const FAC = Object.keys(FACTIONS);
+const distance0 = (entity: Entity, positionX: number, positionY: number): number =>
+  Math.hypot(positionX - entity.x, positionY - entity.y);
+const faction2 = Object.keys(FACTIONS);
 /**
  * Generates a random float in range [a, b).
- * @param {number} a Minimum bound.
- * @param {number} b Maximum bound.
+ * @param {number} firstValue Minimum bound.
+ * @param {number} secondValue Maximum bound.
  * @returns {number} Random float.
  */
-const rnd = (a: number, b: number): number => a + Math.random() * (b - a);
+const random2 = (firstValue: number, secondValue: number): number =>
+  firstValue + Math.random() * (secondValue - firstValue);
 /**
  * Picks a random element from an array.
  * @template T
- * @param {T[]} arr Source array.
+ * @param {T[]} entries2 Source array.
  * @returns {T} Randomly selected element.
  */
-const pick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const pick = <ValueType>(entries: ValueType[]): ValueType =>
+  entries[Math.floor(Math.random() * entries.length)];
 
 /**
  * Live 2D space simulation for a single star system.
@@ -497,13 +500,13 @@ export class Space {
   /**
    * Initializes a live system space simulation.
    * @param {Game} game Server game instance.
-   * @param {string} sysId Unique star system ID.
+   * @param {string} systemId Unique star system ID.
    */
-  constructor(game: Game, sysId: string) {
+  constructor(game: Game, systemId: string) {
     this.game = game;
     this.A = game.A;
-    this.sys = SYS[sysId];
-    this.id = sysId;
+    this.sys = systemsById[systemId];
+    this.id = systemId;
     this.ships = new Map();
     this.shots = [];
     this.beams = [];
@@ -513,7 +516,11 @@ export class Space {
     this.spawnT = 1;
     this.players = 0;
     if (!this.sys.arena)
-      for (let i = 0, n = 5 + this.sys.danger + Math.floor(this.ports().length / 2); i < n; i++)
+      for (
+        let index = 0, count = 5 + this.sys.danger + Math.floor(this.ports().length / 2);
+        index < count;
+        index++
+      )
         this.spawnTraffic(true); // busier systems
     // asteroids and gas pockets in the system's mining fields: they break into ore that ships scoop up, and regrow
     this.rocks = [];
@@ -524,49 +531,54 @@ export class Space {
    * @returns {Array<[number, number, number, number, string, number]>} Compact array of [id, x, y, radius, ore, hpPct].
    */
   rocksPayload(): Array<[number, number, number, number, string, number]> {
-    return this.rocks.map((k) => [
-      k.id,
-      k.x,
-      k.y,
-      k.r,
-      k.ore,
-      k.down ? 0 : Math.round((100 * k.hp) / k.max),
+    return this.rocks.map((rock) => [
+      rock.id,
+      rock.x,
+      rock.y,
+      rock.r,
+      rock.ore,
+      rock.down ? 0 : Math.round((100 * rock.hp) / rock.max),
     ]);
   }
   /**
    * Applies weapon damage to an asteroid rock, spawning floating ore chunks when broken.
-   * @param {Rock} k Target asteroid rock.
-   * @param {number} dmg Incoming weapon damage.
+   * @param {Rock} rock Target asteroid rock.
+   * @param {number} damage2 Incoming weapon damage.
    * @param {boolean} mining Whether damage originates from a mining laser.
    * @returns {void}
    */
-  hitRock(k: Rock, dmg: number, mining: boolean, captain: string | null | undefined = null): void {
+  hitRock(
+    rock: Rock,
+    damage: number,
+    mining: boolean,
+    captain: string | null | undefined = null,
+  ): void {
     // Legacy direct damage retains ordinary output; clean credit requires actual collision provenance.
-    this.game.features.mining.ordinary(this, k, dmg * (mining ? 6 : 1), captain);
+    this.game.features.mining.ordinary(this, rock, damage * (mining ? 6 : 1), captain);
   }
   /**
    * Finds an active asteroid rock intersecting coordinates.
-   * @param {number} x Coordinate X.
-   * @param {number} y Coordinate Y.
-   * @param {number} [pad=0] Hitbox expansion padding.
+   * @param {number} positionX Coordinate X.
+   * @param {number} positionY Coordinate Y.
+   * @param {number} [padding=0] Hitbox expansion padding.
    * @returns {Rock | null} Colliding rock, or null if none.
    */
-  rockAt(x: number, y: number, pad: number = 0): Rock | null {
-    for (const k of this.rocks)
+  rockAt(positionX: number, positionY: number, padding: number = 0): Rock | null {
+    for (const rock of this.rocks)
       if (
-        !k.down &&
-        Math.abs(k.x - x) < k.r + pad &&
-        Math.abs(k.y - y) < k.r + pad &&
-        Math.hypot(k.x - x, k.y - y) < k.r + pad
+        !rock.down &&
+        Math.abs(rock.x - positionX) < rock.r + padding &&
+        Math.abs(rock.y - positionY) < rock.r + padding &&
+        Math.hypot(rock.x - positionX, rock.y - positionY) < rock.r + padding
       )
-        return k;
+        return rock;
     return null;
   }
 
   // ------------------------------------------------------------------ ships
   /**
    * Spawns and registers a new ship entity in this space simulation.
-   * @param {object} o Ship initialization parameters.
+   * @param {object} options Ship initialization parameters.
    * @param {ShipLoadout} [o.loadout] Ship loadout with hull, outfits, weapons, and ammo.
    * @param {number} [o.hull] Hull ID if no loadout specified.
    * @param {string} [o.faction] Faction affiliation ID.
@@ -590,7 +602,7 @@ export class Space {
    * @param {Record<number, number>} [o.ammo] Weapon ammo counts.
    * @returns {Entity} The initialized and registered ship entity.
    */
-  makeShip(o: {
+  makeShip(entity: {
     loadout?: ShipLoadout;
     hull?: number;
     faction?: string;
@@ -613,25 +625,25 @@ export class Space {
     pers?: string;
     ammo?: Record<string | number, number>;
   }): Entity {
-    const loadout = o.loadout || { hull: o.hull!, outfits: {} };
-    const st = shipStats(this.A, loadout, o.bonus || {})!;
-    const e = {
+    const loadout = entity.loadout || { hull: entity.hull!, outfits: {} };
+    const computedShipStats = shipStats(this.A, loadout, entity.bonus || {})!;
+    const currentEntity = {
       id: NEXT++,
       hull: loadout.hull,
-      faction: o.faction || 'spacer',
-      x: o.x || 0,
-      y: o.y || 0,
-      vx: o.vx || 0,
-      vy: o.vy || 0,
-      a: o.a || 0,
-      st,
-      shield: o.shield ?? st.shield,
-      armor: o.armor ?? st.armor,
-      fuel: o.fuel ?? st.fuel,
-      ai: o.ai || null,
-      player: o.player || null,
-      owner: o.owner || null,
-      name: o.name || null,
+      faction: entity.faction || 'spacer',
+      x: entity.x || 0,
+      y: entity.y || 0,
+      vx: entity.vx || 0,
+      vy: entity.vy || 0,
+      a: entity.a || 0,
+      st: computedShipStats,
+      shield: entity.shield ?? computedShipStats.shield,
+      armor: entity.armor ?? computedShipStats.armor,
+      fuel: entity.fuel ?? computedShipStats.fuel,
+      ai: entity.ai || null,
+      player: entity.player || null,
+      owner: entity.owner || null,
+      name: entity.name || null,
       target: null,
       aggro: new Set(),
       inp: { thrust: 0, turn: 0 },
@@ -640,35 +652,35 @@ export class Space {
       born: this.t,
       think: 0,
       dest: null,
-      state: o.state || 'fly',
+      state: entity.state || 'fly',
       jumpT: 0,
-      mission: o.mission || null,
-      life: rnd(150, 300),
-      cargo: o.cargo || 0,
+      mission: entity.mission || null,
+      life: random2(150, 300),
+      cargo: entity.cargo || 0,
       strength: this.A.ships[loadout.hull].strength || 10,
     } as Omit<Entity, 'pw'> & { pw?: number };
-    const H = this.A.ships[loadout.hull];
-    e.role = H.role;
-    if (!e.player) {
-      const F = FACTIONS[e.faction] || {},
-        r = Math.random();
-      e.pers =
-        o.pers ||
-        (F.pirate
-          ? r < 0.15
+    const shipHullAsset = this.A.ships[loadout.hull];
+    currentEntity.role = shipHullAsset.role;
+    if (!currentEntity.player) {
+      const factionDef = FACTIONS[currentEntity.faction] || {},
+        radius = Math.random();
+      currentEntity.pers =
+        entity.pers ||
+        (factionDef.pirate
+          ? radius < 0.15
             ? 'cautious'
-            : r < 0.6
+            : radius < 0.6
               ? 'steady'
               : 'reckless'
-          : r < 0.35
+          : radius < 0.35
             ? 'cautious'
-            : r < 0.85
+            : radius < 0.85
               ? 'steady'
               : 'reckless');
     } // how a captain fights
-    const statBonuses = o.bonus || {};
-    e.pw = Math.round(
-      (H.strength || 10) *
+    const statBonuses = entity.bonus || {};
+    currentEntity.pw = Math.round(
+      (shipHullAsset.strength || 10) *
         (1 +
           ((statBonuses.shieldPct || 0) +
             (statBonuses.armorPct || 0) +
@@ -676,43 +688,44 @@ export class Space {
             300),
     ); // effective strength (levels)
     const defAmmo: Record<string, number> = {};
-    for (const [w, , a] of H.weapons) defAmmo[w] = (defAmmo[w] || 0) + a!;
-    for (const [w, n] of Object.entries(st.weapons)) {
-      const W = this.A.weapons[w];
-      if (!W) continue;
-      const weapon = weaponParams(W);
-      const needsAmmo = (weapon.homing || weapon.rocket || weapon.bay) && W.ammo !== -1;
+    for (const [width, , firstValue] of shipHullAsset.weapons)
+      defAmmo[width] = (defAmmo[width] || 0) + firstValue!;
+    for (const [width, count] of Object.entries(computedShipStats.weapons)) {
+      const weaponAsset = this.A.weapons[width];
+      if (!weaponAsset) continue;
+      const weapon = weaponParams(weaponAsset);
+      const needsAmmo = (weapon.homing || weapon.rocket || weapon.bay) && weaponAsset.ammo !== -1;
       const ammo = needsAmmo
-        ? o.ammo && o.ammo[w] !== undefined
-          ? o.ammo[w]
-          : defAmmo[w] || 0
+        ? entity.ammo && entity.ammo[width] !== undefined
+          ? entity.ammo[width]
+          : defAmmo[width] || 0
         : Infinity;
-      e.guns.push({
-        w: +w,
-        n,
+      currentEntity.guns.push({
+        w: +width,
+        n: count,
         p: weapon,
-        cd: rnd(0, weapon.reload),
+        cd: random2(0, weapon.reload),
         ammo,
-        snd: weaponSound(W),
+        snd: weaponSound(weaponAsset),
         sec: weapon.homing || weapon.rocket || weapon.bay,
         sndT: 0,
       });
     }
-    this.ships.set(e.id, e as Entity);
-    return e as Entity;
+    this.ships.set(currentEntity.id, currentEntity as Entity);
+    return currentEntity as Entity;
   }
   /**
    * Removes a ship entity from simulation and flags it as dead.
    * @param {Entity} entity Ship entity to remove.
-   * @param {string} [why] Visual flash effect trigger reason (e.g. 'jump').
+   * @param {string} [reason] Visual flash effect trigger reason (e.g. 'jump').
    * @returns {void}
    */
-  remove(entity: Entity, why?: string): void {
+  remove(entity: Entity, reason?: string): void {
     if (entity.player && entity.player.s.ent === entity && this.game.db.world.towing)
       this.game.features.towing.detach(entity.player.s);
     entity.dead = true;
     this.ships.delete(entity.id);
-    if (why) this.events.push(['flash', Math.round(entity.x), Math.round(entity.y)]);
+    if (reason) this.events.push(['flash', Math.round(entity.x), Math.round(entity.y)]);
   }
   /**
    * Resolves the top-level owner or wing leader for an entity (traversing up to 4 levels).
@@ -723,10 +736,11 @@ export class Space {
   root(entity: Entity): Entity;
   root(entity: Entity | null): Entity | null;
   root(entity: Entity | null): Entity | null {
-    let r: Entity | null = entity,
-      k = 0;
-    while (r && r.owner && k++ < 4) r = this.ships.get(r.owner) || null;
-    return r || entity;
+    let entity2: Entity | null = entity,
+      entryKey = 0;
+    while (entity2 && entity2.owner && entryKey++ < 4)
+      entity2 = this.ships.get(entity2.owner) || null;
+    return entity2 || entity;
   }
   /**
    * Gets cached list of landing-capable ports in this system.
@@ -746,8 +760,8 @@ export class Space {
    * @returns {number | null} Player session ID, or null if NPC.
    */
   pid(entity: Entity): number | null {
-    const r = this.root(entity);
-    return r && r.player ? r.player.id : null;
+    const entity2 = this.root(entity);
+    return entity2 && entity2.player ? entity2.player.id : null;
   }
   // Session-only hostility lasts through landing/relaunch, but not the next system visit.
   beginVisit(session: Session) {
@@ -755,58 +769,60 @@ export class Space {
       session.retaliationVisit = { sys: this.id, factions: new Set() };
     return session.retaliationVisit;
   }
-  localRetaliation(npc: Entity, player: Entity) {
+  localRetaliation(entity: Entity, player: Entity) {
     const visit = player?.player?.s?.retaliationVisit;
-    return !!(visit?.sys === this.id && visit.factions.has(npc.faction));
+    return !!(visit?.sys === this.id && visit.factions.has(entity.faction));
   }
   // Ambient NPCs overlook below-Tier-3 captains throughout the main galaxy.
   // This is target-acquisition protection, not immunity to stray fire.
-  newcomerTruce(e: Entity | null, o: Entity) {
-    const entity = this.root(o),
-      re = this.root(e);
-    if (!entity?.player || !re || re.player || this.sys.farside || this.sys.arena) return false;
-    if (!this.game.newcomer?.(entity.player.s?.data) || this.localRetaliation(re, entity))
+  newcomerTruce(entity2: Entity | null, entity3: Entity) {
+    const entity = this.root(entity3),
+      entity4 = this.root(entity2);
+    if (!entity?.player || !entity4 || entity4.player || this.sys.farside || this.sys.arena)
+      return false;
+    if (!this.game.newcomer?.(entity.player.s?.data) || this.localRetaliation(entity4, entity))
       return false;
     if (
-      re.aggro.has(entity.id) ||
-      entity.aggro.has(re.id) ||
-      re.mission?.owner === entity.player.id ||
-      (re.storyKill && re.story === entity.player.id) ||
-      re.arcOf?.sid === entity.player.id ||
-      re.huntOf === entity.player.id ||
-      re.combatOwners?.includes(entity.player.id) ||
-      (re.kingpin &&
+      entity4.aggro.has(entity.id) ||
+      entity.aggro.has(entity4.id) ||
+      entity4.mission?.owner === entity.player.id ||
+      (entity4.storyKill && entity4.story === entity.player.id) ||
+      entity4.arcOf?.sid === entity.player.id ||
+      entity4.huntOf === entity.player.id ||
+      entity4.combatOwners?.includes(entity.player.id) ||
+      (entity4.kingpin &&
         entity.player.s?.data.missions?.some(
-          (m) => m.type === 'warband' && m.id === re.kingpin && !m.done,
+          (mission) =>
+            mission.type === 'warband' && mission.id === entity4.kingpin && !mission.done,
         ))
     )
       return false;
     return true;
   }
   /** Targeting truce; short arrival grace remains separate from newcomer eligibility. */
-  spared(e: Entity, o: Entity) {
-    const entity = this.root(o),
-      re = this.root(e);
-    if (!entity?.player || !re || re.player) return false;
-    if (this.localRetaliation(re, entity)) return false;
-    return entity.graceT! > this.t || this.newcomerTruce(e, o);
+  spared(entity2: Entity, entity3: Entity) {
+    const entity = this.root(entity3),
+      entity4 = this.root(entity2);
+    if (!entity?.player || !entity4 || entity4.player) return false;
+    if (this.localRetaliation(entity4, entity)) return false;
+    return entity.graceT! > this.t || this.newcomerTruce(entity2, entity3);
   }
   // Idle wingmates must not turn a captain's protected passage into an unsolicited fight.
-  canAcquire(e: Entity, o: Entity) {
-    if (e.industrialRoot || o.industrialRoot) return false;
+  canAcquire(entity: Entity, entity3: Entity) {
+    if (entity.industrialRoot || entity3.industrialRoot) return false;
     if (
-      (e.miningEncounter || o.miningEncounter) &&
-      this.game.features.pressure.allow(this, e, o) === false
+      (entity.miningEncounter || entity3.miningEncounter) &&
+      this.game.features.pressure.allow(this, entity, entity3) === false
     )
       return false;
-    if (this.spared(e, o)) return false;
-    const lead = this.root(e);
+    if (this.spared(entity, entity3)) return false;
+    const lead = this.root(entity);
     return !(
-      !e.player &&
+      !entity.player &&
       lead?.player &&
-      !this.ordered(e, o) &&
-      !(lead.sharedCombat && lead.combatTarget === o) &&
-      this.newcomerTruce(o, e)
+      !this.ordered(entity, entity3) &&
+      !(lead.sharedCombat && lead.combatTarget === entity3) &&
+      this.newcomerTruce(entity3, entity)
     );
   }
   // can a's fire hurt b? Hostiles always; a captain's own guns also hit any ship not on their side (like EV Nova),
@@ -815,23 +831,23 @@ export class Space {
   /**
    * Checks whether an escort entity is ordered by its player leader to attack target.
    * @param {Entity} entity Escort entity.
-   * @param {Entity} t Candidate target entity.
+   * @param {Entity} entity2 Candidate target entity.
    * @returns {boolean} True if escort is explicitly ordered to attack target.
    */
-  ordered(entity: Entity, t: Entity): boolean {
-    const r = this.root(entity);
+  ordered(entity: Entity, entity2: Entity): boolean {
+    const entity3 = this.root(entity);
     if (
       !entity.owner ||
-      !r ||
-      !r.player ||
-      r.order !== 'attack' ||
-      !r.target ||
-      r.target.dead ||
+      !entity3 ||
+      !entity3.player ||
+      entity3.order !== 'attack' ||
+      !entity3.target ||
+      entity3.target.dead ||
       this.sys.arena
     )
       return false;
-    const rt = this.root(t);
-    return rt === this.root(r.target) && rt !== r && !rt.player;
+    const entity4 = this.root(entity2);
+    return entity4 === this.root(entity3.target) && entity4 !== entity3 && !entity4.player;
   }
   /**
    * Determines whether weapon fire from entity a can damage entity b.
@@ -869,8 +885,13 @@ export class Space {
    * @returns {boolean} True if inner territory.
    */
   inner(): boolean {
-    const S = this.sys;
-    return S.danger <= 2 && !S.farside && !S.arena && !['umbral', 'deep'].includes(S.faction);
+    const starSystem = this.sys;
+    return (
+      starSystem.danger <= 2 &&
+      !starSystem.farside &&
+      !starSystem.arena &&
+      !['umbral', 'deep'].includes(starSystem.faction)
+    );
   }
 
   /**
@@ -894,37 +915,45 @@ export class Space {
         : null;
     if (scoped !== null) return scoped;
     const entity = this.root(leftEntity),
-      rb = this.root(rightEntity);
-    if (entity === rb) return false;
-    if (entity.rescueT! > this.t || rb.rescueT! > this.t) return false; // a downed captain waiting for rescue is left alone
-    const pa = entity.player,
-      pb = rb.player;
-    if (this.sys.arena) return !!(entity.team && rb.team && entity.team !== rb.team); // arena: teams only
-    if (pa && pb && this.game.features.coop.sameArmada(pa, pb)) return false; // Armada members and their wingmates never fight
-    if (pa && pb)
-      return !!(this.game.features.coop.dueling && this.game.features.coop.dueling(pa, pb)); // no open-galaxy PvP, whatever was fired; only agreed duels (and the Crucible, above)
-    if (entity.aggro.has(rb.id) || rb.aggro.has(entity.id)) return true;
+      entity2 = this.root(rightEntity);
+    if (entity === entity2) return false;
+    if (entity.rescueT! > this.t || entity2.rescueT! > this.t) return false; // a downed captain waiting for rescue is left alone
+    const playerReference = entity.player,
+      playerReference2 = entity2.player;
+    if (this.sys.arena) return !!(entity.team && entity2.team && entity.team !== entity2.team); // arena: teams only
     if (
-      ((entity.boss || entity.bossMinion || entity.kingpin) && pb) ||
-      ((rb.boss || rb.bossMinion || rb.kingpin) && pa)
+      playerReference &&
+      playerReference2 &&
+      this.game.features.coop.sameArmada(playerReference, playerReference2)
+    )
+      return false; // Armada members and their wingmates never fight
+    if (playerReference && playerReference2)
+      return !!(
+        this.game.features.coop.dueling &&
+        this.game.features.coop.dueling(playerReference, playerReference2)
+      ); // no open-galaxy PvP, whatever was fired; only agreed duels (and the Crucible, above)
+    if (entity.aggro.has(entity2.id) || entity2.aggro.has(entity.id)) return true;
+    if (
+      ((entity.boss || entity.bossMinion || entity.kingpin) && playerReference2) ||
+      ((entity2.boss || entity2.bossMinion || entity2.kingpin) && playerReference)
     )
       return true; // Armada contract kingpins too   // invasion bosses attack everyone
-    if (pa || pb) {
-      const p = (pa || pb)!,
-        npc = pa ? rb : entity,
-        rep = p.rep[npc.faction] || 0,
-        F = FACTIONS[npc.faction];
-      if (this.localRetaliation(npc, pa ? entity : rb)) return true;
-      const rh = this.game.features.rivals.rivalHostile
-        ? this.game.features.rivals.rivalHostile(npc, p)
+    if (playerReference || playerReference2) {
+      const playerReference3 = (playerReference || playerReference2)!,
+        entity3 = playerReference ? entity2 : entity,
+        reputation = playerReference3.rep[entity3.faction] || 0,
+        factionDef = FACTIONS[entity3.faction];
+      if (this.localRetaliation(entity3, playerReference ? entity : entity2)) return true;
+      const rivalHostile2 = this.game.features.rivals.rivalHostile
+        ? this.game.features.rivals.rivalHostile(entity3, playerReference3)
         : undefined;
-      if (rh !== undefined) return rh; // rivals, hired guns, bribes
-      if (F && F.pirate) return rep < 30;
-      if (F && F.alwaysHostile) return true;
-      if (npc.mission && npc.mission.owner === p.id) return true;
-      return rep <= -30;
+      if (rivalHostile2 !== undefined) return rivalHostile2; // rivals, hired guns, bribes
+      if (factionDef && factionDef.pirate) return reputation < 30;
+      if (factionDef && factionDef.alwaysHostile) return true;
+      if (entity3.mission && entity3.mission.owner === playerReference3.id) return true;
+      return reputation <= -30;
     }
-    return hostileFactions(entity.faction, rb.faction);
+    return hostileFactions(entity.faction, entity2.faction);
   }
 
   // ------------------------------------------------------------------ traffic
@@ -934,131 +963,159 @@ export class Space {
    * @returns {Entity | void} The lead spawned ship entity, if any.
    */
   spawnTraffic(initial?: boolean): Entity | null | void {
-    const S = this.sys;
+    const starSystem = this.sys;
     if (
-      (S.faction === 'vashari' || S.faction === 'frontier') &&
+      (starSystem.faction === 'vashari' || starSystem.faction === 'frontier') &&
       Math.random() < 0.14 * (this.m ? this.m.swarm : 1)
     )
       return this.spawnSwarm(initial);
     if (
       this.game.features.hostile.eclipseChance &&
-      Math.random() < this.game.features.hostile.eclipseChance(S, this.m)
+      Math.random() < this.game.features.hostile.eclipseChance(starSystem, this.m)
     )
       return this.spawnEclipse(initial);
-    let fac = S.faction;
-    if (FACTIONS[fac].region) {
+    let faction3 = starSystem.faction;
+    if (FACTIONS[faction3].region) {
       // Frontier and the Deep fly no flag: traffic comes from the neighbours, raiders and scavengers
       if (!this.nearFacs) {
-        const ns = new Set<string>();
-        for (const l of S.links) {
-          const f = SYS[l].faction;
-          if (!FACTIONS[f].region && !FACTIONS[f].pirate) ns.add(f);
+        const neutralSystems = new Set<string>();
+        for (const link of starSystem.links) {
+          const faction4 = systemsById[link].faction;
+          if (!FACTIONS[faction4].region && !FACTIONS[faction4].pirate)
+            neutralSystems.add(faction4);
         }
-        this.nearFacs = [...ns, 'spacer', 'spacer'];
+        this.nearFacs = [...neutralSystems, 'spacer', 'spacer'];
       }
-      const roll0 = Math.random();
-      if (fac === 'deep') fac = roll0 < 0.7 ? 'umbral' : 'hollow';
-      else fac = roll0 < 0.12 * S.danger ? 'hollow' : pick(this.nearFacs);
+      const roll = Math.random();
+      if (faction3 === 'deep') faction3 = roll < 0.7 ? 'umbral' : 'hollow';
+      else faction3 = roll < 0.12 * starSystem.danger ? 'hollow' : pick(this.nearFacs);
     }
-    const T = TRAFFIC[fac];
+    const traffic = TRAFFIC[faction3];
     let kind,
-      f = fac,
+      faction32 = faction3,
       roll = Math.random();
-    const st = this.game.features.living.stateOf
+    const livingState = this.game.features.living.stateOf
         ? this.game.features.living.stateOf(this.id)
         : null,
-      SX = st ? STATES[st.kind] : null; // the system's state shapes its traffic
-    if (st && st.kind === 'war' && st.enemy && TRAFFIC[st.enemy] && Math.random() < 0.35) {
-      const lead = this.spawnGroup('patrol', st.enemy, TRAFFIC[st.enemy].war, initial);
+      systemState = livingState ? STATES[livingState.kind] : null; // the system's state shapes its traffic
+    if (
+      livingState &&
+      livingState.kind === 'war' &&
+      livingState.enemy &&
+      TRAFFIC[livingState.enemy] &&
+      Math.random() < 0.35
+    ) {
+      const lead = this.spawnGroup(
+        'patrol',
+        livingState.enemy,
+        TRAFFIC[livingState.enemy].war,
+        initial,
+      );
       if (lead)
-        for (const e of this.ships.values())
-          if (e === lead || e.owner === lead.id) e.warFleet = true;
+        for (const entity of this.ships.values())
+          if (entity === lead || entity.owner === lead.id) entity.warFleet = true;
       return lead;
     } // tagged, so newcomers are spared
-    if (st && st.kind === 'pirates' && Math.random() < 0.3) roll = -1; // force a raid roll below
-    if (FACTIONS[fac].pirate) kind = 'raid';
-    else if ((S.danger >= 2 || roll < 0) && roll < 0.08 * S.danger * (this.m ? this.m.raid : 1)) {
+    if (livingState && livingState.kind === 'pirates' && Math.random() < 0.3) roll = -1; // force a raid roll below
+    if (FACTIONS[faction3].pirate) kind = 'raid';
+    else if (
+      (starSystem.danger >= 2 || roll < 0) &&
+      roll < 0.08 * starSystem.danger * (this.m ? this.m.raid : 1)
+    ) {
       kind = 'raid';
-      f = Math.random() < 0.3 && S.danger >= 3 && !S.farside ? 'umbral' : 'hollow';
-    } else if (roll < 0.68 && T.traders.length) kind = 'trade';
+      faction32 =
+        Math.random() < 0.3 && starSystem.danger >= 3 && !starSystem.farside ? 'umbral' : 'hollow';
+    } else if (roll < 0.68 && traffic.traders.length) kind = 'trade';
     else if (roll < 0.82) {
       kind = 'trade';
-      f = 'spacer';
+      faction32 = 'spacer';
     } else kind = 'patrol';
     if (
       kind === 'raid' &&
-      FACTIONS[S.faction].pirate &&
-      [...this.ships.values()].filter((e) => e.ai === 'raid' && !e.owner && !e.mission).length >=
-        3 + Math.floor(S.danger / 2)
+      FACTIONS[starSystem.faction].pirate &&
+      [...this.ships.values()].filter(
+        (entity) => entity.ai === 'raid' && !entity.owner && !entity.mission,
+      ).length >=
+        3 + Math.floor(starSystem.danger / 2)
     ) {
       kind = 'trade';
-      f = 'spacer';
+      faction32 = 'spacer';
     } // pirate havens get visiting smugglers and free traders too
     else if (
       kind === 'raid' &&
-      !FACTIONS[S.faction].pirate &&
-      [...this.ships.values()].filter((e) => e.ai === 'raid' && !e.owner && !e.mission).length >=
-        (this.inner() ? 1 : 2) + Math.floor(S.danger / 2) + ((SX && SX.raidCap) || 0)
+      !FACTIONS[starSystem.faction].pirate &&
+      [...this.ships.values()].filter(
+        (entity) => entity.ai === 'raid' && !entity.owner && !entity.mission,
+      ).length >=
+        (this.inner() ? 1 : 2) +
+          Math.floor(starSystem.danger / 2) +
+          ((systemState && systemState.raidCap) || 0)
     ) {
       kind = 'trade';
-      f = T.traders.length ? fac : 'spacer';
+      faction32 = traffic.traders.length ? faction3 : 'spacer';
       roll = 1;
     } // raiders don't pile up while traders come and go
     let pool =
       kind === 'trade'
-        ? TRAFFIC[f].traders.length
-          ? TRAFFIC[f].traders
+        ? TRAFFIC[faction32].traders.length
+          ? TRAFFIC[faction32].traders
           : TRAFFIC.spacer.traders
-        : TRAFFIC[f].war;
+        : TRAFFIC[faction32].war;
     if (kind === 'raid' && this.inner() && pool.length > 2)
       pool = [...pool]
-        .sort((a, b) => ((this.A.ships[a] || {}).cost || 0) - ((this.A.ships[b] || {}).cost || 0))
+        .sort(
+          (firstValue, secondValue) =>
+            ((this.A.ships[firstValue] || {}).cost || 0) -
+            ((this.A.ships[secondValue] || {}).cost || 0),
+        )
         .slice(0, pool.length - 1); // no destroyers raiding inner space
     const hull = pick(pool);
     if (!this.A.ships[hull]) return;
-    const n =
+    const count =
       kind === 'trade'
         ? Math.random() < 0.22
           ? 2 + (Math.random() < 0.4 ? 1 : 0)
           : 1
-        : (Math.random() < 0.4 ? 2 : 1) + (kind === 'raid' && S.danger > 3 ? 1 : 0); // some traders run in small convoys
+        : (Math.random() < 0.4 ? 2 : 1) + (kind === 'raid' && starSystem.danger > 3 ? 1 : 0); // some traders run in small convoys
     let lead = null;
-    for (let i = 0; i < n; i++) {
-      const h =
-        i === 0
+    for (let index = 0; index < count; index++) {
+      const height =
+        index === 0
           ? hull
           : pick(
-              pool.filter((x) => (this.A.ships[x].cost || 0) <= (this.A.ships[hull].cost || 1e9)) ||
-                pool,
+              pool.filter(
+                (positionX) =>
+                  (this.A.ships[positionX].cost || 0) <= (this.A.ships[hull].cost || 1e9),
+              ) || pool,
             );
-      let x, y, a, v;
+      let positionX, positionY, firstValue, value;
       if (initial) {
-        x = rnd(-1800, 1800);
-        y = rnd(-1800, 1800);
-        a = rnd(-Math.PI, Math.PI);
-        v = 30;
+        positionX = random2(-1800, 1800);
+        positionY = random2(-1800, 1800);
+        firstValue = random2(-Math.PI, Math.PI);
+        value = 30;
       } else if (kind === 'trade' && this.ports().length && Math.random() < 0.45) {
         // take off from a spaceport
         const stellarBody = pick(this.ports());
-        x = stellarBody.x + rnd(-40, 40);
-        y = stellarBody.y + rnd(-40, 40);
-        a = rnd(-Math.PI, Math.PI);
-        v = 10;
+        positionX = stellarBody.x + random2(-40, 40);
+        positionY = stellarBody.y + random2(-40, 40);
+        firstValue = random2(-Math.PI, Math.PI);
+        value = 10;
       } else {
-        const ang = rnd(-Math.PI, Math.PI);
-        x = Math.sin(ang) * 2600;
-        y = -Math.cos(ang) * 2600;
-        a = wrap(ang + Math.PI);
-        v = 140;
+        const angle = random2(-Math.PI, Math.PI);
+        positionX = Math.sin(angle) * 2600;
+        positionY = -Math.cos(angle) * 2600;
+        firstValue = wrap(angle + Math.PI);
+        value = 140;
       }
       const entity = this.makeShip({
-        hull: h,
-        faction: f,
-        x: x + i * 60,
-        y: y + i * 50,
-        a,
-        vx: Math.sin(a) * v,
-        vy: -Math.cos(a) * v,
+        hull: height,
+        faction: faction32,
+        x: positionX + index * 60,
+        y: positionY + index * 50,
+        a: firstValue,
+        vx: Math.sin(firstValue) * value,
+        vy: -Math.cos(firstValue) * value,
         ai: kind,
         owner: lead ? lead.id : null,
       });
@@ -1074,43 +1131,43 @@ export class Space {
   /**
    * Spawns a coordinated group of ships flying in formation.
    * @param {string} kind AI behavior ('patrol', 'raid', 'trade').
-   * @param {string} f Faction identifier.
+   * @param {string} factionId Faction identifier.
    * @param {number[]} pool Available hull ID options.
    * @param {boolean} [initial] True if spawning initial population.
    * @returns {Entity | null} Lead ship entity, or null.
    */
   spawnGroup(
     kind: string,
-    f: string,
+    factionId: string,
     pool: number[],
     initial?: boolean,
   ): Entity | null | undefined {
-    const hull = pick(pool.filter((h) => this.A.ships[h]));
+    const hull = pick(pool.filter((height) => this.A.ships[height]));
     if (!hull) return;
-    const ang = rnd(-Math.PI, Math.PI),
-      n = 1 + (Math.random() < 0.5 ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
+    const angle = random2(-Math.PI, Math.PI),
+      count = 1 + (Math.random() < 0.5 ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
     let lead = null;
-    for (let i = 0; i < n; i++) {
-      const x = initial ? rnd(-1800, 1800) : Math.sin(ang) * 2600,
-        y = initial ? rnd(-1800, 1800) : -Math.cos(ang) * 2600,
-        a = wrap(ang + Math.PI);
+    for (let index = 0; index < count; index++) {
+      const positionX = initial ? random2(-1800, 1800) : Math.sin(angle) * 2600,
+        positionY = initial ? random2(-1800, 1800) : -Math.cos(angle) * 2600,
+        wrap2 = wrap(angle + Math.PI);
       const entity = this.makeShip({
-        hull: i
+        hull: index
           ? pick(
               pool.filter(
-                (h) =>
-                  this.A.ships[h] &&
-                  (this.A.ships[h].cost || 0) <= (this.A.ships[hull].cost || 1e9),
+                (height) =>
+                  this.A.ships[height] &&
+                  (this.A.ships[height].cost || 0) <= (this.A.ships[hull].cost || 1e9),
               ),
             ) || hull
           : hull,
-        faction: f,
-        x: x + i * 70,
-        y: y + i * 50,
-        a,
-        vx: Math.sin(a) * 120,
-        vy: -Math.cos(a) * 120,
-        ai: i ? 'escort' : kind,
+        faction: factionId,
+        x: positionX + index * 70,
+        y: positionY + index * 50,
+        a: wrap2,
+        vx: Math.sin(wrap2) * 120,
+        vy: -Math.cos(wrap2) * 120,
+        ai: index ? 'escort' : kind,
         owner: lead ? lead.id : null,
       });
       if (!initial) this.events.push(['flash', Math.round(entity.x), Math.round(entity.y)]);
@@ -1125,33 +1182,33 @@ export class Space {
    * @returns {Entity | null} Lead swarm entity, or null.
    */
   spawnSwarm(initial?: boolean): Entity | null {
-    const ang = Math.random() * Math.PI * 2,
-      d = initial ? 600 + Math.random() * 1400 : 2400,
-      x = Math.cos(ang) * d,
-      y = Math.sin(ang) * d;
+    const angle = Math.random() * Math.PI * 2,
+      distance = initial ? 600 + Math.random() * 1400 : 2400,
+      positionX = Math.cos(angle) * distance,
+      positionY = Math.sin(angle) * distance;
     const lead = this.makeShip({
       hull: 765,
       faction: 'swarm',
-      x,
-      y,
-      a: ang + Math.PI,
+      x: positionX,
+      y: positionY,
+      a: angle + Math.PI,
       ai: 'raid',
       name: 'Swarm Brood-Leader',
     });
-    const n = 4 + Math.floor(Math.random() * 4);
-    for (let i = 0; i < n; i++) {
+    const count = 4 + Math.floor(Math.random() * 4);
+    for (let index = 0; index < count; index++) {
       const entity = this.makeShip({
-        hull: i % 3 ? 718 : 765,
+        hull: index % 3 ? 718 : 765,
         faction: 'swarm',
-        x: x + (Math.random() - 0.5) * 160,
-        y: y + (Math.random() - 0.5) * 160,
-        a: ang + Math.PI,
+        x: positionX + (Math.random() - 0.5) * 160,
+        y: positionY + (Math.random() - 0.5) * 160,
+        a: angle + Math.PI,
         ai: 'escort',
         owner: lead.id,
       });
       entity.swarmling = true;
     }
-    if (!initial) this.events.push(['flash', Math.round(x), Math.round(y)]);
+    if (!initial) this.events.push(['flash', Math.round(positionX), Math.round(positionY)]);
     return lead;
   }
   // an Umbral Eclipse cell, violet-lit and far from home
@@ -1161,30 +1218,30 @@ export class Space {
    * @returns {Entity | null} Lead cultist entity, or null.
    */
   spawnEclipse(initial?: boolean): Entity | null {
-    const ang = Math.random() * Math.PI * 2,
-      d = initial ? 700 + Math.random() * 1300 : 2400,
-      x = Math.cos(ang) * d,
-      y = Math.sin(ang) * d;
+    const angle = Math.random() * Math.PI * 2,
+      distance = initial ? 700 + Math.random() * 1300 : 2400,
+      positionX = Math.cos(angle) * distance,
+      positionY = Math.sin(angle) * distance;
     const lead = this.makeShip({
       hull: Math.random() < 0.35 ? 763 : 762,
       faction: 'eclipse',
-      x,
-      y,
-      a: ang + Math.PI,
+      x: positionX,
+      y: positionY,
+      a: angle + Math.PI,
       ai: 'raid',
       name: 'Eclipse Cell',
     });
-    for (let i = 0; i < 2 + Math.floor(Math.random() * 2); i++)
+    for (let index = 0; index < 2 + Math.floor(Math.random() * 2); index++)
       this.makeShip({
-        hull: i ? 761 : 762,
+        hull: index ? 761 : 762,
         faction: 'eclipse',
-        x: x + (i - 1) * 110,
-        y: y + 90,
-        a: ang + Math.PI,
+        x: positionX + (index - 1) * 110,
+        y: positionY + 90,
+        a: angle + Math.PI,
         ai: 'escort',
         owner: lead.id,
       });
-    if (!initial) this.events.push(['flash', Math.round(x), Math.round(y)]);
+    if (!initial) this.events.push(['flash', Math.round(positionX), Math.round(positionY)]);
     return lead;
   }
   /**
@@ -1201,13 +1258,13 @@ export class Space {
    */
   spawnMissionTarget(mission: Mission): Entity | null {
     const hull = mission.hull,
-      ang = rnd(-Math.PI, Math.PI);
+      angle = random2(-Math.PI, Math.PI);
     const entity = this.makeShip({
       hull,
       faction: mission.faction,
-      x: Math.sin(ang) * 1500,
-      y: -Math.cos(ang) * 1500,
-      a: wrap(ang + Math.PI),
+      x: Math.sin(angle) * 1500,
+      y: -Math.cos(angle) * 1500,
+      a: wrap(angle + Math.PI),
       ai: 'raid',
       name: mission.targetName,
       mission: { id: mission.id, owner: mission.owner },
@@ -1221,78 +1278,80 @@ export class Space {
   /**
    * Computes steering heading and thrust inputs for an entity navigating to coordinates.
    * @param {Entity} entity Ship entity to steer.
-   * @param {number} tx Target X coordinate.
-   * @param {number} ty Target Y coordinate.
+   * @param {number} targetX Target X coordinate.
+   * @param {number} targetY Target Y coordinate.
    * @param {boolean} arrive Whether to brake and bring velocity to zero at target.
-   * @param {number} [tvx=0] Target velocity X for formation matching.
-   * @param {number} [tvy=0] Target velocity Y for formation matching.
+   * @param {number} [targetVelocityX=0] Target velocity X for formation matching.
+   * @param {number} [targetVelocityY=0] Target velocity Y for formation matching.
    * @param {boolean} [landing=false] Keep landing cruise pointed toward its destination.
    * @returns {number} Distance remaining to target coordinates.
    */
   steer(
     entity: Entity,
-    tx: number,
-    ty: number,
+    targetX: number,
+    targetY: number,
     arrive: boolean,
-    tvx: number = 0,
-    tvy: number = 0,
+    targetVelocityX: number = 0,
+    targetVelocityY: number = 0,
     landing: boolean = false,
   ): number {
-    const st = entity.st,
-      dx = tx - entity.x,
-      dy = ty - entity.y,
-      d = Math.hypot(dx, dy),
-      sp = Math.hypot(entity.vx, entity.vy);
-    const want = Math.atan2(dx, -dy),
+    const computedShipStats = entity.st,
+      deltaX = targetX - entity.x,
+      deltaY = targetY - entity.y,
+      distance = Math.hypot(deltaX, deltaY),
+      space = Math.hypot(entity.vx, entity.vy);
+    const want = Math.atan2(deltaX, -deltaY),
       diff = angDiff(want, entity.a);
     if (arrive) {
       // plan a speed that falls to zero at the target (allowing time to turn around), and steer to close the velocity error
-      const tflip = Math.PI / Math.max(0.3, st.turn),
-        ux = d > 1 ? dx / d : 0,
-        uy = d > 1 ? dy / d : 0;
+      const flipTime = Math.PI / Math.max(0.3, computedShipStats.turn),
+        unitX = distance > 1 ? deltaX / distance : 0,
+        unitY = distance > 1 ? deltaY / distance : 0;
       const vAllow = Math.min(
-        st.maxSpeed * 0.95,
-        Math.sqrt(2 * st.accel * Math.max(0, d - 10 - sp * tflip * 0.6)) * 0.8,
+        computedShipStats.maxSpeed * 0.95,
+        Math.sqrt(
+          2 * computedShipStats.accel * Math.max(0, distance - 10 - space * flipTime * 0.6),
+        ) * 0.8,
       );
-      const ex = tvx + ux * vAllow - entity.vx,
-        ey = tvy + uy * vAllow - entity.vy,
-        em = Math.hypot(ex, ey);
+      const velocityErrorX = targetVelocityX + unitX * vAllow - entity.vx,
+        velocityErrorY = targetVelocityY + unitY * vAllow - entity.vy,
+        errorMagnitude = Math.hypot(velocityErrorX, velocityErrorY);
       // Match player landing policy: tiny longitudinal speed corrections must not
       // leave a cruising ship sideways. Keep actual lateral correction and the
       // existing turn-time/braking envelope; formation steering is unchanged.
-      const lateral = (entity.vx * dy - entity.vy * dx) / (d || 1);
+      const lateral = (entity.vx * deltaY - entity.vy * deltaX) / (distance || 1);
       if (
         landing &&
-        vAllow === st.maxSpeed * 0.95 &&
+        vAllow === computedShipStats.maxSpeed * 0.95 &&
         Math.abs(lateral) < 8 &&
-        entity.vx * dx + entity.vy * dy >= 0
+        entity.vx * deltaX + entity.vy * deltaY >= 0
       ) {
         entity.inp = {
-          turn: Math.abs(diff) < st.turn * DT ? 0 : Math.sign(diff),
-          thrust: Math.abs(diff) < 0.15 && sp < vAllow - 8 ? 1 : 0,
+          turn: Math.abs(diff) < computedShipStats.turn * tickDuration ? 0 : Math.sign(diff),
+          thrust: Math.abs(diff) < 0.15 && space < vAllow - 8 ? 1 : 0,
         };
-        if (Math.abs(diff) < st.turn * DT) entity.a = want;
-        return d;
+        if (Math.abs(diff) < computedShipStats.turn * tickDuration) entity.a = want;
+        return distance;
       }
-      if (em < 8) {
+      if (errorMagnitude < 8) {
         entity.inp = { turn: 0, thrust: 0 };
-        return d;
+        return distance;
       }
-      const wa = Math.atan2(ex, -ey),
-        da = angDiff(wa, entity.a);
+      const atan = Math.atan2(velocityErrorX, -velocityErrorY),
+        angDiff2 = angDiff(atan, entity.a);
       entity.inp = {
-        turn: Math.abs(da) < st.turn * DT ? 0 : Math.sign(da),
-        thrust: Math.abs(da) < 0.45 && em > 12 ? 1 : 0,
+        turn: Math.abs(angDiff2) < computedShipStats.turn * tickDuration ? 0 : Math.sign(angDiff2),
+        thrust: Math.abs(angDiff2) < 0.45 && errorMagnitude > 12 ? 1 : 0,
       };
-      if (Math.abs(da) < st.turn * DT) entity.a = wa;
-      return d;
+      if (Math.abs(angDiff2) < computedShipStats.turn * tickDuration) entity.a = atan;
+      return distance;
     }
     entity.inp = {
-      turn: Math.abs(diff) < st.turn * DT ? 0 : Math.sign(diff),
+      turn: Math.abs(diff) < computedShipStats.turn * tickDuration ? 0 : Math.sign(diff),
       thrust: Math.abs(diff) < 0.7 ? 1 : 0,
     };
-    if (Math.abs(diff) < st.turn * DT) entity.a = want;
-    return d;
+    if (Math.abs(diff) < computedShipStats.turn * tickDuration) entity.a = want;
+    return distance;
   }
   /**
    * Scans nearby space for the closest valid hostile target entity.
@@ -1302,19 +1361,21 @@ export class Space {
    */
   findTarget(entity: Entity, range: number = 1800): Entity | null {
     let best = null,
-      bd = range;
-    for (const o of this.ships.values()) {
+      range2 = range;
+    for (const entity2 of this.ships.values()) {
       if (
-        o === entity ||
-        o.state !== 'fly' ||
-        !this.isHostile(entity, o) ||
-        !this.canAcquire(entity, o)
+        entity2 === entity ||
+        entity2.state !== 'fly' ||
+        !this.isHostile(entity, entity2) ||
+        !this.canAcquire(entity, entity2)
       )
         continue;
-      const d = Math.hypot(o.x - entity.x, o.y - entity.y) * (o.hull === 813 && o.player ? 3 : 1); // the Wraith is noticed at a third of the range
-      if (d < bd) {
-        bd = d;
-        best = o;
+      const distance =
+        Math.hypot(entity2.x - entity.x, entity2.y - entity.y) *
+        (entity2.hull === 813 && entity2.player ? 3 : 1); // the Wraith is noticed at a third of the range
+      if (distance < range2) {
+        range2 = distance;
+        best = entity2;
       }
     }
     return best;
@@ -1326,7 +1387,7 @@ export class Space {
    */
   ai(entity: Entity): void {
     if (entity.player) return;
-    entity.think -= DT;
+    entity.think -= tickDuration;
     const owner = entity.owner ? this.ships.get(entity.owner) : null;
     if (entity.ai === 'escort' && !owner)
       entity.ai = entity.fighterOf ? 'leave' : entity.tradeMate ? 'trade' : 'patrol'; // a convoy whose leader landed goes about its own trade
@@ -1368,31 +1429,34 @@ export class Space {
           }
         } // raiders chasing jettisoned cargo
         if (entity.ai === 'escort' && owner) {
-          const ord = owner.order || 'gather'; // 1.1 fleet commands: gather, attack, hold, holdfire, loot
+          const order2 = owner.order || 'gather'; // 1.1 fleet commands: gather, attack, hold, holdfire, loot
           if (entity.ordSeq !== owner.orderSeq) {
             entity.ordSeq = owner.orderSeq;
             entity.holdAt = { x: entity.x, y: entity.y };
-            if (ord === 'holdfire' || ord === 'loot') entity.target = null;
+            if (order2 === 'holdfire' || order2 === 'loot') entity.target = null;
           }
-          const ot =
+          const entity2 =
             owner.target &&
             !owner.target.dead &&
             (this.isHostile(entity, owner.target) ||
-              (ord === 'attack' && this.ordered(entity, owner.target)))
+              (order2 === 'attack' && this.ordered(entity, owner.target)))
               ? owner.target
               : null;
           const attacker = [...this.root(owner).aggro]
-            .map((id) => this.ships.get(id))
-            .find((s) => s && !s.dead);
-          if (ord === 'holdfire' || (ord === 'loot' && !attacker)) entity.target = null;
-          else if (ord === 'attack') entity.target = ot || attacker || null;
-          else if (ord === 'hold') {
-            const near = (t: Entity | null | undefined) =>
-              t && Math.hypot(t.x - entity.holdAt!.x, t.y - entity.holdAt!.y) < 900 ? t : null;
-            entity.target = near(ot) || near(attacker) || near(this.findTarget(entity, 600));
+            .map((identifier) => this.ships.get(identifier))
+            .find((entity) => entity && !entity.dead);
+          if (order2 === 'holdfire' || (order2 === 'loot' && !attacker)) entity.target = null;
+          else if (order2 === 'attack') entity.target = entity2 || attacker || null;
+          else if (order2 === 'hold') {
+            const near = (entity3: Entity | null | undefined) =>
+              entity3 &&
+              Math.hypot(entity3.x - entity.holdAt!.x, entity3.y - entity.holdAt!.y) < 900
+                ? entity3
+                : null;
+            entity.target = near(entity2) || near(attacker) || near(this.findTarget(entity, 600));
           } else
             entity.target =
-              ot ||
+              entity2 ||
               attacker ||
               (owner.player ? null : this.findTarget(entity, 900)) ||
               (owner.player ? this.findTarget(entity, 700) : null);
@@ -1445,8 +1509,8 @@ export class Space {
           entity.dest =
             this.ports().length && Math.random() < 0.75
               ? pick(this.ports())
-              : { x: rnd(-3000, 3000), y: rnd(-3000, 3000), out: true }; // traders fly to worlds they can land on
-        const d = this.steer(
+              : { x: random2(-3000, 3000), y: random2(-3000, 3000), out: true }; // traders fly to worlds they can land on
+        const steer2 = this.steer(
           entity,
           entity.dest.x,
           entity.dest.y,
@@ -1457,7 +1521,7 @@ export class Space {
         );
         if (
           !entity.dest.out &&
-          d < Math.max(40, (entity.dest.r || 60) * 0.5) &&
+          steer2 < Math.max(40, (entity.dest.r || 60) * 0.5) &&
           Math.hypot(entity.vx, entity.vy) < 45
         ) {
           // settled over the pad: land
@@ -1468,14 +1532,14 @@ export class Space {
           this.game.hails?.landed(entity, this);
           this.remove(entity);
         }
-        if (entity.dest.out && d < 200) entity.ai = 'leave';
+        if (entity.dest.out && steer2 < 200) entity.ai = 'leave';
         break;
       }
       case 'guard': {
         // Dreadnoughts and invasion bosses hold station near their anchor point
-        const h = entity.home || { x: 0, y: 0 },
-          dd = Math.hypot(h.x - entity.x, h.y - entity.y);
-        if (dd > 250) this.steer(entity, h.x, h.y, true);
+        const height = entity.home || { x: 0, y: 0 },
+          distanceSquared = Math.hypot(height.x - entity.x, height.y - entity.y);
+        if (distanceSquared > 250) this.steer(entity, height.x, height.y, true);
         else {
           entity.inp = { turn: 1, thrust: Math.hypot(entity.vx, entity.vy) < 15 ? 1 : 0 };
         }
@@ -1487,10 +1551,10 @@ export class Space {
           entity.dest =
             Math.random() < 0.5 && this.sys.stellars.length
               ? {
-                  x: pick(this.sys.stellars).x + rnd(-400, 400),
-                  y: pick(this.sys.stellars).y + rnd(-400, 400),
+                  x: pick(this.sys.stellars).x + random2(-400, 400),
+                  y: pick(this.sys.stellars).y + random2(-400, 400),
                 }
-              : { x: rnd(-2000, 2000), y: rnd(-2000, 2000) };
+              : { x: random2(-2000, 2000), y: random2(-2000, 2000) };
         this.steer(entity, entity.dest.x, entity.dest.y, false);
         entity.inp.thrust =
           entity.inp.thrust && Math.hypot(entity.vx, entity.vy) < entity.st.maxSpeed * 0.6 ? 1 : 0;
@@ -1499,35 +1563,38 @@ export class Space {
       case 'escort': {
         if (!owner) break;
         if (entity.recall) {
-          const d = this.steer(entity, owner.x, owner.y, true, owner.vx, owner.vy);
+          const steer3 = this.steer(entity, owner.x, owner.y, true, owner.vx, owner.vy);
           entity.catchup = owner.st;
-          if (d < Math.max(50, owner.st.size * 0.35)) this.dock(entity, owner);
+          if (steer3 < Math.max(50, owner.st.size * 0.35)) this.dock(entity, owner);
           break;
         } // drones flying home
-        const ord = owner.order || 'gather';
-        if (ord === 'hold' && entity.holdAt) {
-          const d = this.steer(entity, entity.holdAt!.x, entity.holdAt!.y, true);
-          if (d < 60) entity.inp = { turn: 0, thrust: 0 };
+        const order3 = owner.order || 'gather';
+        if (order3 === 'hold' && entity.holdAt) {
+          const steer4 = this.steer(entity, entity.holdAt!.x, entity.holdAt!.y, true);
+          if (steer4 < 60) entity.inp = { turn: 0, thrust: 0 };
           break;
         }
-        if (ord === 'loot') {
+        if (order3 === 'loot') {
           // sweep up nearby loot for the fleet's owner
           let best = null,
-            bd = 1800;
-          for (const l of this.loot) {
-            if (l.taken) continue;
-            const dd = Math.hypot(l.x - entity.x, l.y - entity.y);
-            if (dd < bd) {
-              bd = dd;
-              best = l;
+            body = 1800;
+          for (const floatingLoot of this.loot) {
+            if (floatingLoot.taken) continue;
+            const distanceSquared = Math.hypot(
+              floatingLoot.x - entity.x,
+              floatingLoot.y - entity.y,
+            );
+            if (distanceSquared < body) {
+              body = distanceSquared;
+              best = floatingLoot;
             }
           }
-          const rp = this.root(owner).player;
-          if (best && rp) {
+          const playerReference = this.root(owner).player;
+          if (best && playerReference) {
             this.steer(entity, best.x, best.y, true);
             if (
-              bd < Math.max(40, entity.st.size * 0.5) &&
-              this.game.onLoot(rp, best.it) !== false
+              body < Math.max(40, entity.st.size * 0.5) &&
+              this.game.onLoot(playerReference, best.it) !== false
             ) {
               best.taken = true;
               this.events.push(['pickup', best.id]);
@@ -1538,35 +1605,36 @@ export class Space {
         if (entity.slot == null) {
           // each escort keeps its own formation slot
           const used = new Set();
-          for (const o of this.ships.values())
-            if (o !== entity && o.owner === entity.owner && o.slot != null) used.add(o.slot);
-          let i = 0;
-          while (used.has(i)) i++;
-          entity.slot = i;
+          for (const entity3 of this.ships.values())
+            if (entity3 !== entity && entity3.owner === entity.owner && entity3.slot != null)
+              used.add(entity3.slot);
+          let index = 0;
+          while (used.has(index)) index++;
+          entity.slot = index;
         }
-        const [lat, back] = SLOTS[entity.slot % SLOTS.length],
+        const [lateralOffset, back] = SLOTS[entity.slot % SLOTS.length],
           ring = Math.floor(entity.slot / SLOTS.length),
-          sz = Math.max(60, owner.st.size * 0.5);
-        const L = lat * (55 + sz * 0.4),
-          B = back * (60 + sz * 0.45) + ring * 70;
-        const ox = owner.x + Math.cos(owner.a) * L - Math.sin(owner.a) * B,
-          oy = owner.y + Math.sin(owner.a) * L + Math.cos(owner.a) * B;
-        const d = this.steer(
+          size2 = Math.max(60, owner.st.size * 0.5);
+        const length2 = lateralOffset * (55 + size2 * 0.4),
+          secondValue = back * (60 + size2 * 0.45) + ring * 70;
+        const offsetX = owner.x + Math.cos(owner.a) * length2 - Math.sin(owner.a) * secondValue,
+          offsetY = owner.y + Math.sin(owner.a) * length2 + Math.cos(owner.a) * secondValue;
+        const steer5 = this.steer(
           entity,
-          ox,
-          oy,
-          d0(entity, ox, oy) > 250 ? false : true,
+          offsetX,
+          offsetY,
+          distance0(entity, offsetX, offsetY) > 250 ? false : true,
           owner.vx,
           owner.vy,
         );
-        entity.catchup = d > 200 ? owner.st : null; // escorts can always keep up with the ship they guard
-        if (d < 120) {
-          const sp = Math.hypot(owner.vx, owner.vy);
-          if (sp > 30) {
-            const da = angDiff(owner.a, entity.a);
+        entity.catchup = steer5 > 200 ? owner.st : null; // escorts can always keep up with the ship they guard
+        if (steer5 < 120) {
+          const space = Math.hypot(owner.vx, owner.vy);
+          if (space > 30) {
+            const angDiff2 = angDiff(owner.a, entity.a);
             entity.inp = {
-              turn: Math.sign(da),
-              thrust: Math.hypot(entity.vx, entity.vy) < sp ? 1 : 0,
+              turn: Math.sign(angDiff2),
+              thrust: Math.hypot(entity.vx, entity.vy) < space ? 1 : 0,
             };
           }
         }
@@ -1575,7 +1643,7 @@ export class Space {
           owner &&
           !owner.player &&
           !owner.target &&
-          d < 60 &&
+          steer5 < 60 &&
           this.t - entity.born > 20
         ) {
           this.dock(entity, owner);
@@ -1584,8 +1652,13 @@ export class Space {
       }
       case 'flee':
       case 'leave': {
-        const ang = Math.atan2(entity.x, -entity.y) || 0.01;
-        this.steer(entity, entity.x + Math.sin(ang) * 2000, entity.y - Math.cos(ang) * 2000, false);
+        const angle = Math.atan2(entity.x, -entity.y) || 0.01;
+        this.steer(
+          entity,
+          entity.x + Math.sin(angle) * 2000,
+          entity.y - Math.cos(angle) * 2000,
+          false,
+        );
         if (Math.hypot(entity.x, entity.y) > 2800) {
           if (entity.rival) {
             entity.ai = entity.rivalAi || 'patrol';
@@ -1604,9 +1677,9 @@ export class Space {
    * @returns {boolean} True if ship should disengage and flee.
    */
   mayFlee(entity: Entity): boolean {
-    const thr = { cautious: 0.45, steady: 0.27, reckless: 0 }[entity.pers!] || 0;
+    const retreatThreshold = { cautious: 0.45, steady: 0.27, reckless: 0 }[entity.pers!] || 0;
     if (
-      !thr ||
+      !retreatThreshold ||
       entity.owner ||
       entity.mission ||
       entity.rival ||
@@ -1619,7 +1692,9 @@ export class Space {
       this.sys.arena
     )
       return false;
-    return entity.armor < entity.st.armor * thr && entity.shield < entity.st.shield * 0.15;
+    return (
+      entity.armor < entity.st.armor * retreatThreshold && entity.shield < entity.st.shield * 0.15
+    );
   }
   // a ship under attack calls nearby ships of its own side to help
   /**
@@ -1632,21 +1707,25 @@ export class Space {
     if (entity.miningEncounter || attacker.miningEncounter) return;
     if (entity.player || this.sys.arena || (entity.helpT || -99) > this.t - 5) return;
     entity.helpT = this.t;
-    for (const o of this.ships.values()) {
+    for (const entity2 of this.ships.values()) {
       if (
-        o === entity ||
-        o.player ||
-        o.owner ||
-        o.faction !== entity.faction ||
-        o.target ||
-        o.dead ||
-        o.disabled ||
-        (o.ai !== 'patrol' && o.ai !== 'raid' && o.ai !== 'guard')
+        entity2 === entity ||
+        entity2.player ||
+        entity2.owner ||
+        entity2.faction !== entity.faction ||
+        entity2.target ||
+        entity2.dead ||
+        entity2.disabled ||
+        (entity2.ai !== 'patrol' && entity2.ai !== 'raid' && entity2.ai !== 'guard')
       )
         continue;
-      if (Math.hypot(o.x - entity.x, o.y - entity.y) > 1800 || this.spared(o, attacker)) continue;
-      o.aggro.add(attacker.id);
-      o.target = attacker;
+      if (
+        Math.hypot(entity2.x - entity.x, entity2.y - entity.y) > 1800 ||
+        this.spared(entity2, attacker)
+      )
+        continue;
+      entity2.aggro.add(attacker.id);
+      entity2.target = attacker;
     }
   }
   /**
@@ -1656,84 +1735,94 @@ export class Space {
    * @returns {void}
    */
   dock(entity: Entity, owner: Entity): void {
-    const g = owner.guns.find((g) => g.p.bay && this.A.weapons[g.w].launch === entity.hull);
-    if (g && g.ammo !== Infinity) g.ammo++;
+    const weaponMount = owner.guns.find(
+      (weaponMount) => weaponMount.p.bay && this.A.weapons[weaponMount.w].launch === entity.hull,
+    );
+    if (weaponMount && weaponMount.ammo !== Infinity) weaponMount.ammo++;
     this.remove(entity);
   }
   /**
    * Computes combat maneuvering, broadside circling, and attack vectoring toward target.
    * @param {Entity} entity Attacking ship entity.
-   * @param {Entity} t Target enemy ship entity.
+   * @param {Entity} entity2 Target enemy ship entity.
    * @returns {void}
    */
-  fight(entity: Entity, t: Entity): void {
+  fight(entity: Entity, entity2: Entity): void {
     const primaryOnly = entity.autoCombat || (entity.owner && this.root(entity).sharedCombat);
     const best = entity.guns
-      .filter((g) => !g.p.pd && g.ammo > 0 && (!primaryOnly || !g.sec))
-      .reduce((m, g) => Math.max(m, g.p.range), 300);
-    const dx = t.x - entity.x,
-      dy = t.y - entity.y,
-      d = Math.hypot(dx, dy);
-    const lead = Math.min(1.2, d / 600);
-    const lx = t.x + (t.vx - entity.vx) * lead,
-      ly = t.y + (t.vy - entity.vy) * lead;
+      .filter(
+        (weaponMount) =>
+          !weaponMount.p.pd && weaponMount.ammo > 0 && (!primaryOnly || !weaponMount.sec),
+      )
+      .reduce((message, weaponMount) => Math.max(message, weaponMount.p.range), 300);
+    const deltaX = entity2.x - entity.x,
+      deltaY = entity2.y - entity.y,
+      distance = Math.hypot(deltaX, deltaY);
+    const lead = Math.min(1.2, distance / 600);
+    const localX = entity2.x + (entity2.vx - entity.vx) * lead,
+      localY = entity2.y + (entity2.vy - entity.vy) * lead;
     if (
       entity.st.size >= 110 &&
       entity.st.turrets >= 2 &&
-      d < best * 1.1 &&
-      d > Math.max(140, entity.st.size)
+      distance < best * 1.1 &&
+      distance > Math.max(140, entity.st.size)
     ) {
       // capitals with turrets circle and fire broadsides instead of ramming
       const side = entity.id % 2 ? 1 : -1,
-        ta =
-          Math.atan2(dx, -dy) +
-          side * (Math.PI / 2 - (d > best * 0.8 ? 0.35 : d < best * 0.5 ? -0.35 : 0));
-      this.steer(entity, entity.x + Math.sin(ta) * 300, entity.y - Math.cos(ta) * 300, false);
+        targetAngle =
+          Math.atan2(deltaX, -deltaY) +
+          side * (Math.PI / 2 - (distance > best * 0.8 ? 0.35 : distance < best * 0.5 ? -0.35 : 0));
+      this.steer(
+        entity,
+        entity.x + Math.sin(targetAngle) * 300,
+        entity.y - Math.cos(targetAngle) * 300,
+        false,
+      );
       entity.inp.thrust =
         Math.hypot(entity.vx, entity.vy) < entity.st.maxSpeed * 0.6 ? entity.inp.thrust : 0;
-    } else if (d > best * 0.75) this.steer(entity, lx, ly, false);
-    else if (d < Math.max(120, entity.st.size * 0.9)) {
-      const away = Math.atan2(-dx, dy) + 0.8;
+    } else if (distance > best * 0.75) this.steer(entity, localX, localY, false);
+    else if (distance < Math.max(120, entity.st.size * 0.9)) {
+      const away = Math.atan2(-deltaX, deltaY) + 0.8;
       this.steer(entity, entity.x + Math.sin(away) * 300, entity.y - Math.cos(away) * 300, false);
     } else {
-      this.steer(entity, lx, ly, false);
+      this.steer(entity, localX, localY, false);
       entity.inp.thrust =
         Math.hypot(entity.vx, entity.vy) < entity.st.maxSpeed * 0.5 ? entity.inp.thrust : 0;
     }
-    entity.fireAt = t;
+    entity.fireAt = entity2;
   }
 
   // ------------------------------------------------------------------ combat
   /**
    * Discharges a weapon mount, creating ballistic projectiles, guided missiles, or drone fighters.
    * @param {Entity} entity Firing ship entity.
-   * @param {WeaponMount} g Weapon mount being discharged.
-   * @param {Entity | null} t Target entity, if guided.
+   * @param {WeaponMount} weaponMount Weapon mount being discharged.
+   * @param {Entity | null} entity2 Target entity, if guided.
    * @param {number} angle Fire orientation heading in radians.
    * @returns {void}
    */
-  fire(entity: Entity, g: WeaponMount, t: Entity | null, angle: number): void {
-    const weapon = g.p,
-      W = this.A.weapons[g.w];
+  fire(entity: Entity, weaponMount: WeaponMount, entity2: Entity | null, angle: number): void {
+    const weapon = weaponMount.p,
+      weaponAsset = this.A.weapons[weaponMount.w];
     const captain = this.root(entity).player?.s.name;
     const provenance = {
       captain: captain ? this.game.db.key(captain) : null,
       source: entity.id,
-      mount: entity.guns.indexOf(g),
-      weapon: g.w,
-      cadence: weapon.reload / Math.max(1, g.n),
-      contactId: `beam:${this.game.db.world.mining?.clock}:${entity.id}:${entity.guns.indexOf(g)}:${this.t}`,
+      mount: entity.guns.indexOf(weaponMount),
+      weapon: weaponMount.w,
+      cadence: weapon.reload / Math.max(1, weaponMount.n),
+      contactId: `beam:${this.game.db.world.mining?.clock}:${entity.id}:${entity.guns.indexOf(weaponMount)}:${this.t}`,
     };
-    if (g.ammo <= 0) return;
+    if (weaponMount.ammo <= 0) return;
     if (weapon.bay) {
-      const launch = W.launch;
+      const launch = weaponAsset.launch;
       if (!launch || !this.A.ships[launch]) return;
       if (
-        [...this.ships.values()].filter((s) => s.fighterOf === entity.id).length >=
-        Math.min(6, g.n * 4)
+        [...this.ships.values()].filter((entity3) => entity3.fighterOf === entity.id).length >=
+        Math.min(6, weaponMount.n * 4)
       )
         return;
-      const f = this.makeShip({
+      const entity3 = this.makeShip({
         hull: launch,
         faction: entity.faction,
         x: entity.x,
@@ -1744,172 +1833,185 @@ export class Space {
         ai: 'escort',
         owner: entity.id,
       });
-      f.fighterOf = entity.id;
-      f.life = 1e9;
-      g.ammo--;
-      g.cd = 2.5;
-      this.sound(entity, g);
+      entity3.fighterOf = entity.id;
+      entity3.life = 1e9;
+      weaponMount.ammo--;
+      weaponMount.cd = 2.5;
+      this.sound(entity, weaponMount);
       return;
     }
-    if (weapon.homing || weapon.rocket) g.ammo--;
-    g.cd = weapon.reload / Math.max(1, g.n);
-    const ang = angle + (Math.random() - 0.5) * weapon.inacc;
-    const dm = entity.st.damageMul || 1;
+    if (weapon.homing || weapon.rocket) weaponMount.ammo--;
+    weaponMount.cd = weapon.reload / Math.max(1, weaponMount.n);
+    const angle2 = angle + (Math.random() - 0.5) * weapon.inacc;
+    const damageMultiplier = entity.st.damageMul || 1;
     if (weapon.beam) {
-      const len = weapon.range;
-      let hit = this.ray(entity, ang, len);
-      const rk = this.rayRock(entity, ang, hit ? hit.d : len);
-      if (rk) {
+      const range2 = weapon.range;
+      let hitResult = this.ray(entity, angle2, range2);
+      const rayRock2 = this.rayRock(entity, angle2, hitResult ? hitResult.d : range2);
+      if (rayRock2) {
         this.beams.push({
           id: entity.id,
-          a: ang,
-          len: rk.d,
-          w: g.w,
-          until: this.t + (weapon.continuous ? DT * 1.5 : 0.12),
+          a: angle2,
+          len: rayRock2.d,
+          w: weaponMount.w,
+          until: this.t + (weapon.continuous ? tickDuration * 1.5 : 0.12),
         });
         const damage =
           (weapon.dmgA + weapon.dmgS * 0.3) *
-          (weapon.continuous ? K.beamDps * DT * Math.max(1, g.n) : 1);
-        if (W.mining)
-          this.game.features.mining.contact(this, rk.k, {
+          (weapon.continuous
+            ? physicsConstants.beamDps * tickDuration * Math.max(1, weaponMount.n)
+            : 1);
+        if (weaponAsset.mining)
+          this.game.features.mining.contact(this, rayRock2.k, {
             source: provenance,
             damage,
-            x: rk.x,
-            y: rk.y,
+            x: rayRock2.x,
+            y: rayRock2.y,
             projectile: false,
           });
-        else this.hitRock(rk.k, damage, false, provenance.captain);
-        if (!weapon.continuous || this.t - g.sndT > 0.6) this.sound(entity, g);
-        if (weapon.continuous) g.cd = 0;
+        else this.hitRock(rayRock2.k, damage, false, provenance.captain);
+        if (!weapon.continuous || this.t - weaponMount.sndT > 0.6) this.sound(entity, weaponMount);
+        if (weapon.continuous) weaponMount.cd = 0;
         return;
       }
-      const dur = weapon.continuous ? DT * 1.5 : 0.12;
+      const duration = weapon.continuous ? tickDuration * 1.5 : 0.12;
       this.beams.push({
         id: entity.id,
-        a: ang,
-        len: hit ? hit.d : len,
-        w: g.w,
-        until: this.t + dur,
+        a: angle2,
+        len: hitResult ? hitResult.d : range2,
+        w: weaponMount.w,
+        until: this.t + duration,
       });
-      if (hit) {
-        const k = weapon.continuous ? K.beamDps * DT * Math.max(1, g.n) : 1;
-        const bm = this.m ? this.m.beam : 1,
-          r = this.damage(
-            hit.s,
-            weapon.dmgA * k * dm * bm,
-            weapon.dmgS * k * dm * bm,
+      if (hitResult) {
+        const entryKey = weapon.continuous
+          ? physicsConstants.beamDps * tickDuration * Math.max(1, weaponMount.n)
+          : 1;
+        const beamMultiplier = this.m ? this.m.beam : 1,
+          damage2 = this.damage(
+            hitResult.s,
+            weapon.dmgA * entryKey * damageMultiplier * beamMultiplier,
+            weapon.dmgS * entryKey * damageMultiplier * beamMultiplier,
             entity,
             weapon.ion,
           );
         if (weapon.continuous) {
-          hit.s.beamAcc = (hit.s.beamAcc || 0) + (r as [number, number, number])[0];
-          if (this.t - (hit.s.beamEvT || 0) > 0.3) {
-            hit.s.beamEvT = this.t;
-            this.hitEv(hit.x, hit.y, g.w, hit.s, [
-              hit.s.beamAcc!,
-              (r as [number, number, number])[1],
-              (r as [number, number, number])[2],
+          hitResult.s.beamAcc =
+            (hitResult.s.beamAcc || 0) + (damage2 as [number, number, number])[0];
+          if (this.t - (hitResult.s.beamEvT || 0) > 0.3) {
+            hitResult.s.beamEvT = this.t;
+            this.hitEv(hitResult.x, hitResult.y, weaponMount.w, hitResult.s, [
+              hitResult.s.beamAcc!,
+              (damage2 as [number, number, number])[1],
+              (damage2 as [number, number, number])[2],
             ]);
-            hit.s.beamAcc = 0;
+            hitResult.s.beamAcc = 0;
           }
-        } else this.hitEv(hit.x, hit.y, g.w, hit.s, r);
+        } else this.hitEv(hitResult.x, hitResult.y, weaponMount.w, hitResult.s, damage2);
       }
-      if (!weapon.continuous || this.t - g.sndT > 0.6) this.sound(entity, g);
-      if (weapon.continuous) g.cd = 0;
+      if (!weapon.continuous || this.t - weaponMount.sndT > 0.6) this.sound(entity, weaponMount);
+      if (weapon.continuous) weaponMount.cd = 0;
       return;
     }
-    const sp = weapon.speed;
-    const ox = entity.x + Math.sin(entity.a) * entity.st.size * 0.35,
-      oy = entity.y - Math.cos(entity.a) * entity.st.size * 0.35;
+    const speed2 = weapon.speed;
+    const offsetX = entity.x + Math.sin(entity.a) * entity.st.size * 0.35,
+      offsetY = entity.y - Math.cos(entity.a) * entity.st.size * 0.35;
     const shotId = NEXT++;
     this.shots.push({
       id: shotId,
       miningEncounter: entity.miningEncounter,
-      mining: W.mining
+      mining: weaponAsset.mining
         ? Object.freeze({ ...provenance, contactId: `shot:${this.game.features.mining.shotId()}` })
         : null,
       captain: provenance.captain,
-      x: ox,
-      y: oy,
-      vx: entity.vx * (weapon.homing ? 0.3 : 1) + Math.sin(ang) * sp,
-      vy: entity.vy * (weapon.homing ? 0.3 : 1) - Math.cos(ang) * sp,
+      x: offsetX,
+      y: offsetY,
+      vx: entity.vx * (weapon.homing ? 0.3 : 1) + Math.sin(angle2) * speed2,
+      vy: entity.vy * (weapon.homing ? 0.3 : 1) - Math.cos(angle2) * speed2,
       life: weapon.life,
-      w: g.w,
+      w: weaponMount.w,
       p: weapon,
       owner: entity.id,
-      target: weapon.homing ? t : null,
-      dmgA: weapon.dmgA * dm,
-      dmgS: weapon.dmgS * dm,
+      target: weapon.homing ? entity2 : null,
+      dmgA: weapon.dmgA * damageMultiplier,
+      dmgS: weapon.dmgS * damageMultiplier,
       pd: 0,
     });
-    this.sound(entity, g);
+    this.sound(entity, weaponMount);
   }
   /**
    * Emits a weapon discharge sound effect event, rate-limited to avoid audio flood.
    * @param {Entity} entity Firing ship entity.
-   * @param {WeaponMount} g Weapon mount producing sound.
+   * @param {WeaponMount} weaponMount Weapon mount producing sound.
    * @returns {void}
    */
-  sound(entity: Entity, g: WeaponMount): void {
-    if (this.t - g.sndT > 0.12) {
-      g.sndT = this.t;
-      this.events.push(['snd', g.snd, Math.round(entity.x), Math.round(entity.y)]);
+  sound(entity: Entity, weaponMount: WeaponMount): void {
+    if (this.t - weaponMount.sndT > 0.12) {
+      weaponMount.sndT = this.t;
+      this.events.push(['snd', weaponMount.snd, Math.round(entity.x), Math.round(entity.y)]);
     }
   }
   /**
    * Performs raycast collision check for instant-hit continuous beam lasers against ships.
    * @param {Entity} entity Firing ship entity.
-   * @param {number} ang Beam trajectory heading in radians.
-   * @param {number} len Maximum beam range.
+   * @param {number} angle2 Beam trajectory heading in radians.
+   * @param {number} length2 Maximum beam range.
    * @returns {{s: Entity, d: number, x: number, y: number} | null} Hit ship and intersection point, or null.
    */
   ray(
     entity: Entity,
-    ang: number,
-    len: number,
+    angle: number,
+    length: number,
   ): { s: Entity; d: number; x: number; y: number } | null {
-    const dx = Math.sin(ang),
-      dy = -Math.cos(ang);
+    const deltaX = Math.sin(angle),
+      deltaY = -Math.cos(angle);
     let best = null;
-    for (const s of this.ships.values()) {
-      if (s === entity || s.state !== 'fly' || !this.canHit(entity, s)) continue;
-      const rx = s.x - entity.x,
-        ry = s.y - entity.y,
-        along = rx * dx + ry * dy;
-      if (along < 0 || along > len) continue;
-      const perp = Math.abs(rx * dy - ry * dx),
-        r = Math.max(10, s.st.size * 0.32);
-      if (perp < r && (!best || along < best.d))
-        best = { s, d: along, x: entity.x + dx * along, y: entity.y + dy * along };
+    for (const entity2 of this.ships.values()) {
+      if (entity2 === entity || entity2.state !== 'fly' || !this.canHit(entity, entity2)) continue;
+      const relativeX = entity2.x - entity.x,
+        relativeY = entity2.y - entity.y,
+        along = relativeX * deltaX + relativeY * deltaY;
+      if (along < 0 || along > length) continue;
+      const perpendicular = Math.abs(relativeX * deltaY - relativeY * deltaX),
+        radius = Math.max(10, entity2.st.size * 0.32);
+      if (perpendicular < radius && (!best || along < best.d))
+        best = { s: entity2, d: along, x: entity.x + deltaX * along, y: entity.y + deltaY * along };
     }
     return best;
   }
   /**
    * Performs raycast collision check for mining laser beams against asteroid rocks.
    * @param {Entity} entity Firing ship entity.
-   * @param {number} ang Beam trajectory heading in radians.
-   * @param {number} len Maximum beam range.
+   * @param {number} angle2 Beam trajectory heading in radians.
+   * @param {number} length2 Maximum beam range.
    * @returns {{k: Rock, d: number, x:number, y:number} | null} Hit rock and distance, or null.
    */
   rayRock(
     entity: Entity,
-    ang: number,
-    len: number,
+    angle: number,
+    length: number,
   ): { k: Rock; d: number; x: number; y: number } | null {
-    const dx = Math.sin(ang),
-      dy = -Math.cos(ang);
+    const deltaX = Math.sin(angle),
+      deltaY = -Math.cos(angle);
     let best = null;
-    for (const k of this.rocks) {
-      if (k.down) continue;
-      const rx = k.x - entity.x,
-        ry = k.y - entity.y,
-        along = rx * dx + ry * dy;
-      if (along < -k.r || along > len + k.r) continue;
-      const perp = Math.abs(rx * dy - ry * dx);
-      if (perp < k.r) {
-        const d = Math.max(0, along - Math.sqrt(k.r * k.r - perp * perp));
-        if (d <= len && (!best || d < best.d))
-          best = { k, d, x: entity.x + dx * d, y: entity.y + dy * d };
+    for (const rock of this.rocks) {
+      if (rock.down) continue;
+      const relativeX = rock.x - entity.x,
+        relativeY = rock.y - entity.y,
+        along = relativeX * deltaX + relativeY * deltaY;
+      if (along < -rock.r || along > length + rock.r) continue;
+      const perpendicular = Math.abs(relativeX * deltaY - relativeY * deltaX);
+      if (perpendicular < rock.r) {
+        const distance = Math.max(
+          0,
+          along - Math.sqrt(rock.r * rock.r - perpendicular * perpendicular),
+        );
+        if (distance <= length && (!best || distance < best.d))
+          best = {
+            k: rock,
+            d: distance,
+            x: entity.x + deltaX * distance,
+            y: entity.y + deltaY * distance,
+          };
       }
     }
     return best;
@@ -1921,49 +2023,55 @@ export class Space {
    * @returns {void}
    */
   toggleDrones(entity: Entity): void {
-    const out = [...this.ships.values()].filter((s) => s.fighterOf === entity.id && !s.dead);
-    const say = (m: string) => {
-      if (entity.player && entity.player.s && this.game.toast) this.game.toast(entity.player.s, m);
+    const entitys = [...this.ships.values()].filter(
+      (entity2) => entity2.fighterOf === entity.id && !entity2.dead,
+    );
+    const announce = (message: string) => {
+      if (entity.player && entity.player.s && this.game.toast)
+        this.game.toast(entity.player.s, message);
     };
-    if (out.some((f) => !f.recall)) {
-      for (const f of out) {
-        f.recall = true;
-        f.target = null;
+    if (entitys.some((entity) => !entity.recall)) {
+      for (const entity of entitys) {
+        entity.recall = true;
+        entity.target = null;
       }
-      say(`Drones recalled (${out.length}). Tap F to launch them again.`);
+      announce(`Drones recalled (${entitys.length}). Tap F to launch them again.`);
       return;
     }
-    let n = 0;
-    for (const g of entity.guns) {
-      if (!g.p.bay) continue;
-      const W = this.A.weapons[g.w],
-        launch = W && W.launch;
+    let count = 0;
+    for (const weaponMount of entity.guns) {
+      if (!weaponMount.p.bay) continue;
+      const weaponAsset = this.A.weapons[weaponMount.w],
+        launch = weaponAsset && weaponAsset.launch;
       if (!launch || !this.A.ships[launch]) continue;
-      const cap = Math.min(6, g.n * 4);
+      const capacity = Math.min(6, weaponMount.n * 4);
       while (
-        g.ammo > 0 &&
-        [...this.ships.values()].filter((s) => s.fighterOf === entity.id).length < cap
+        weaponMount.ammo > 0 &&
+        [...this.ships.values()].filter((entity3) => entity3.fighterOf === entity.id).length <
+          capacity
       ) {
-        const a = entity.a + (n % 2 ? 1 : -1) * (0.6 + 0.25 * n),
-          f = this.makeShip({
+        const firstValue = entity.a + (count % 2 ? 1 : -1) * (0.6 + 0.25 * count),
+          entity3 = this.makeShip({
             hull: launch,
             faction: entity.faction,
-            x: entity.x + Math.sin(a) * 30,
-            y: entity.y - Math.cos(a) * 30,
-            a,
-            vx: entity.vx + Math.sin(a) * 60,
-            vy: entity.vy - Math.cos(a) * 60,
+            x: entity.x + Math.sin(firstValue) * 30,
+            y: entity.y - Math.cos(firstValue) * 30,
+            a: firstValue,
+            vx: entity.vx + Math.sin(firstValue) * 60,
+            vy: entity.vy - Math.cos(firstValue) * 60,
             ai: 'escort',
             owner: entity.id,
           });
-        f.fighterOf = entity.id;
-        f.life = 1e9;
-        if (g.ammo !== Infinity) g.ammo--;
-        n++;
+        entity3.fighterOf = entity.id;
+        entity3.life = 1e9;
+        if (weaponMount.ammo !== Infinity) weaponMount.ammo--;
+        count++;
       }
-      if (n) this.sound(entity, g);
+      if (count) this.sound(entity, weaponMount);
     }
-    say(n ? `Drones launched (${n}). Tap F to recall them.` : 'No drones left in the bays.');
+    announce(
+      count ? `Drones launched (${count}). Tap F to recall them.` : 'No drones left in the bays.',
+    );
   }
   /**
    * Evaluates weapon mount cooldowns, target alignment, point defense, and triggers firing.
@@ -1971,154 +2079,172 @@ export class Space {
    * @returns {void}
    */
   weapons(entity: Entity): void {
-    const inp = entity.inp || {},
+    const input = entity.inp || {},
       automated = entity.autoCombat || (entity.owner && this.root(entity).sharedCombat),
-      t = entity.autoCombat
+      entity2 = entity.autoCombat
         ? entity.combatTarget
         : entity.player
           ? entity.target && this.ships.get(entity.target.id)
             ? entity.target
             : null
           : entity.fireAt;
-    if (t && !entity.player && !this.canAcquire(entity, t)) {
+    if (entity2 && !entity.player && !this.canAcquire(entity, entity2)) {
       entity.fireAt = null;
       return;
     }
     if (entity.player && !automated) {
-      const f2 = inp.fire2 ? 1 : 0;
-      if (f2 && !entity._f2 && entity.guns.some((g) => g.p.bay)) this.toggleDrones(entity);
-      entity._f2 = f2;
+      const factionId = input.fire2 ? 1 : 0;
+      if (factionId && !entity._f2 && entity.guns.some((weaponMount) => weaponMount.p.bay))
+        this.toggleDrones(entity);
+      entity._f2 = factionId;
     }
-    for (const g of entity.guns) {
-      g.cd -= DT;
-      if (g.cd > 0 || g.ammo <= 0) continue;
-      const weapon = g.p;
+    for (const weaponMount of entity.guns) {
+      weaponMount.cd -= tickDuration;
+      if (weaponMount.cd > 0 || weaponMount.ammo <= 0) continue;
+      const weapon = weaponMount.p;
       if (weapon.pd) {
         // point defense: shoot down missiles and fighters
         let best = null,
-          bd = weapon.range;
-        for (const s of this.shots) {
-          if (!s.target || !s.p.homing) continue;
-          const o = this.ships.get(s.owner);
-          if (!o || !this.isHostile(entity, o)) continue;
-          const d = Math.hypot(s.x - entity.x, s.y - entity.y);
-          if (d < bd) {
-            bd = d;
-            best = s;
+          range2 = weapon.range;
+        for (const shot of this.shots) {
+          if (!shot.target || !shot.p.homing) continue;
+          const entity3 = this.ships.get(shot.owner);
+          if (!entity3 || !this.isHostile(entity, entity3)) continue;
+          const distance = Math.hypot(shot.x - entity.x, shot.y - entity.y);
+          if (distance < range2) {
+            range2 = distance;
+            best = shot;
           }
         }
         if (best) {
           if (Math.random() < 0.35) {
             best.life = 0;
-            this.events.push(['hit', Math.round(best.x), Math.round(best.y), g.w]);
+            this.events.push(['hit', Math.round(best.x), Math.round(best.y), weaponMount.w]);
           }
-          this.fire(entity, g, null, angleTo(entity, best.x, best.y));
+          this.fire(entity, weaponMount, null, angleTo(entity, best.x, best.y));
           continue;
         }
-        const f = [...this.ships.values()].find(
-          (s) =>
-            s.fighterOf &&
-            this.isHostile(entity, s) &&
-            this.canAcquire(entity, s) &&
-            Math.hypot(s.x - entity.x, s.y - entity.y) < weapon.range,
+        const entity4 = [...this.ships.values()].find(
+          (entity5) =>
+            entity5.fighterOf &&
+            this.isHostile(entity, entity5) &&
+            this.canAcquire(entity, entity5) &&
+            Math.hypot(entity5.x - entity.x, entity5.y - entity.y) < weapon.range,
         );
-        if (f) this.fire(entity, g, f, angleTo(entity, f.x, f.y));
+        if (entity4) this.fire(entity, weaponMount, entity4, angleTo(entity, entity4.x, entity4.y));
         continue;
       }
-      if (automated && g.sec) continue;
-      if (automated && (!t || !this.game.combatAssist.valid(this, this.root(entity), t))) continue;
+      if (automated && weaponMount.sec) continue;
+      if (
+        automated &&
+        (!entity2 || !this.game.combatAssist.valid(this, this.root(entity), entity2))
+      )
+        continue;
       if (weapon.bay && entity.player) continue; // bays launch and recall on a tap of F (toggleDrones)
       const wantFire = entity.autoCombat
-        ? !!t
+        ? !!entity2
         : entity.player
-          ? g.sec
-            ? inp.fire2
-            : inp.fire1
-          : !!t;
+          ? weaponMount.sec
+            ? input.fire2
+            : input.fire1
+          : !!entity2;
       if (!wantFire) continue;
       // Manual mining uses the existing aim/heading, independently of combat selection.
       // Other weapons and delegated combat keep their targeting/leading behavior.
-      const tgt =
-        entity.player && !automated && this.A.weapons[g.w]?.mining ? null : t && !t.dead ? t : null;
+      const entity5 =
+        entity.player && !automated && this.A.weapons[weaponMount.w]?.mining
+          ? null
+          : entity2 && !entity2.dead
+            ? entity2
+            : null;
       if (weapon.bay || weapon.homing) {
-        if (tgt || !weapon.homing) this.fire(entity, g, tgt, entity.a);
+        if (entity5 || !weapon.homing) this.fire(entity, weaponMount, entity5, entity.a);
         continue;
       }
-      if (tgt) {
-        const d = Math.hypot(tgt.x - entity.x, tgt.y - entity.y);
-        if ((!entity.player || automated) && d > weapon.range * 1.05) continue;
-        const tt = weapon.beam ? 0 : d / weapon.speed;
-        const aim = angleTo(
+      if (entity5) {
+        const distance = Math.hypot(entity5.x - entity.x, entity5.y - entity.y);
+        if ((!entity.player || automated) && distance > weapon.range * 1.05) continue;
+        const travelTime = weapon.beam ? 0 : distance / weapon.speed;
+        const angleTo2 = angleTo(
           entity,
-          tgt.x + (tgt.vx - entity.vx) * tt,
-          tgt.y + (tgt.vy - entity.vy) * tt,
+          entity5.x + (entity5.vx - entity.vx) * travelTime,
+          entity5.y + (entity5.vy - entity.vy) * travelTime,
         );
         if (weapon.turret) {
-          if (d < weapon.range * 1.1 || (entity.player && !automated))
-            this.fire(entity, g, tgt, aim);
+          if (distance < weapon.range * 1.1 || (entity.player && !automated))
+            this.fire(entity, weaponMount, entity5, angleTo2);
           continue;
         }
-        if (weapon.arc && Math.abs(angDiff(aim, entity.a)) < weapon.arc) {
-          this.fire(entity, g, tgt, aim);
+        if (weapon.arc && Math.abs(angDiff(angleTo2, entity.a)) < weapon.arc) {
+          this.fire(entity, weaponMount, entity5, angleTo2);
           continue;
         }
-        if ((!entity.player || automated) && Math.abs(angDiff(aim, entity.a)) > 0.18) continue;
+        if ((!entity.player || automated) && Math.abs(angDiff(angleTo2, entity.a)) > 0.18) continue;
       } else if (!entity.player) continue;
-      this.fire(entity, g, tgt, entity.a);
+      this.fire(entity, weaponMount, entity5, entity.a);
     }
   }
   /**
    * Applies armor and shield damage to a ship, resolving role multipliers and kill thresholds.
    * @param {Entity} entity Ship entity receiving damage.
-   * @param {number} dA Base armor / hull damage.
-   * @param {number} dS Base shield damage.
-   * @param {Entity | null} [src] Attacker entity source.
-   * @param {boolean} [_ion] Whether weapon inflicts ion damage.
+   * @param {number} angleDelta Base armor / hull damage.
+   * @param {number} shieldDamage Base shield damage.
+   * @param {Entity | null} [entity2] Attacker entity source.
+   * @param {boolean} [unusedIon] Whether weapon inflicts ion damage.
    * @returns {[number, number, number] | void} Tuple [damageDealt, hitShieldsFlag, shooterRootId].
    */
   damage(
     entity: Entity,
-    dA: number,
-    dS: number,
-    src?: Entity | null,
-    _ion?: number | boolean,
+    angleDelta: number,
+    shieldDamage: number,
+    entity2?: Entity | null,
+    _unusedIon?: number | boolean,
   ): [number, number, number] | void {
-    if (entity.industrialRoot) return [0, 0, src?.id || 0]; // Utility collectors cannot tank combat or grant rewards.
+    if (entity.industrialRoot) return [0, 0, entity2?.id || 0]; // Utility collectors cannot tank combat or grant rewards.
     if (
-      src &&
-      (src.miningEncounter || entity.miningEncounter) &&
-      this.game.features.pressure.allow(this, src, entity) === false
+      entity2 &&
+      (entity2.miningEncounter || entity.miningEncounter) &&
+      this.game.features.pressure.allow(this, entity2, entity) === false
     )
       return;
     if (entity.dead) return;
-    const srcRoot = src ? this.root(src) : null;
-    if (src && src.role && entity.role) {
-      const rm = roleMult(src.role, entity.role);
-      dA *= rm;
-      dS *= rm;
+    const srcRoot = entity2 ? this.root(entity2) : null;
+    if (entity2 && entity2.role && entity.role) {
+      const roleMult2 = roleMult(entity2.role, entity.role);
+      angleDelta *= roleMult2;
+      shieldDamage *= roleMult2;
     } // the class triangle
-    if (src && this.game.features.specialists.specMult) {
-      const sm = this.game.features.specialists.specMult(this.root(src), src, entity);
-      dA *= sm;
-      dS *= sm;
+    if (entity2 && this.game.features.specialists.specMult) {
+      const specMult2 = this.game.features.specialists.specMult(
+        this.root(entity2),
+        entity2,
+        entity,
+      );
+      angleDelta *= specMult2;
+      shieldDamage *= specMult2;
     } // specialty ships
-    const sh0 = entity.shield,
-      ar0 = entity.armor,
+    const shield2 = entity.shield,
+      armor2 = entity.armor,
       hadShield = entity.shield > 0;
     if (entity.shield > 0) {
-      entity.shield -= dS;
+      entity.shield -= shieldDamage;
       if (entity.shield < 0) {
-        entity.armor += entity.shield * (dA / Math.max(1, dS)) * 0.5;
+        entity.armor += entity.shield * (angleDelta / Math.max(1, shieldDamage)) * 0.5;
         entity.shield = 0;
       }
-    } else entity.armor -= dA;
+    } else entity.armor -= angleDelta;
     entity.hitT = this.t;
-    if (src) entity.lastHitBy = src.id;
-    const done = Math.max(0, sh0 - entity.shield) + Math.max(0, ar0 - entity.armor);
+    if (entity2) entity.lastHitBy = entity2.id;
+    const done = Math.max(0, shield2 - entity.shield) + Math.max(0, armor2 - entity.armor);
     // Incidental NPC fire does not make an overlooked captain's wing initiate
     // retaliation and thereby attract the entire faction. Deliberate outgoing
     // damage still creates normal visit-local hostility and reputation costs.
-    if (done > 0 && srcRoot && srcRoot !== this.root(entity) && !this.newcomerTruce(src!, entity)) {
+    if (
+      done > 0 &&
+      srcRoot &&
+      srcRoot !== this.root(entity) &&
+      !this.newcomerTruce(entity2!, entity)
+    ) {
       const victim = this.root(entity),
         first = !victim.aggro.has(srcRoot.id);
       if (srcRoot.player?.s && !victim.player && !this.sys.arena)
@@ -2151,37 +2277,44 @@ export class Space {
   // hit event: x, y, weapon, target id, damage dealt, shooter (root) id, 1 if it hit shields
   /**
    * Emits a hit event packet for client particle effects and damage numbers.
-   * @param {number} x Hit position X.
-   * @param {number} y Hit position Y.
-   * @param {number} w Weapon ID that scored the hit.
+   * @param {number} positionX Hit position X.
+   * @param {number} positionY Hit position Y.
+   * @param {number} width Weapon ID that scored the hit.
    * @param {Entity} entity Target ship entity.
-   * @param {[number, number, number]} r Damage outcome tuple.
+   * @param {[number, number, number]} radius Damage outcome tuple.
    * @returns {void}
    */
-  hitEv(x: number, y: number, w: number, entity: Entity, r: [number, number, number] | void): void {
+  hitEv(
+    positionX: number,
+    positionY: number,
+    width: number,
+    entity: Entity,
+    radius: [number, number, number] | void,
+  ): void {
     this.events.push([
       'hit',
-      Math.round(x),
-      Math.round(y),
-      w,
+      Math.round(positionX),
+      Math.round(positionY),
+      width,
       entity.id,
-      Math.round((r as [number, number, number])[0]),
-      (r as [number, number, number])[2],
-      (r as [number, number, number])[1],
+      Math.round((radius as [number, number, number])[0]),
+      (radius as [number, number, number])[2],
+      (radius as [number, number, number])[1],
     ]);
   }
   /**
    * Destroys a ship entity, triggering explosions, bounty rewards, death handling, and salvage drop.
    * @param {Entity} entity Ship entity destroyed.
-   * @param {Entity | null} [by] Killer root entity, if any.
+   * @param {Entity | null} [entity2] Killer root entity, if any.
    * @returns {void}
    */
-  kill(entity: Entity, by?: Entity | null): void {
+  kill(entity: Entity, entity2?: Entity | null): void {
     this.events.push(['boom', Math.round(entity.x), Math.round(entity.y), entity.st.size]);
     this.remove(entity);
-    for (const f of this.ships.values()) if (f.fighterOf === entity.id) f.ai = 'leave';
+    for (const entity3 of this.ships.values())
+      if (entity3.fighterOf === entity.id) entity3.ai = 'leave';
     if (entity.player) {
-      this.game.onPlayerDeath(entity.player, this, by);
+      this.game.onPlayerDeath(entity.player, this, entity2);
       return;
     }
     if (entity.industrialRoot) return; // No farmable salvage, bounty or replacement ammo.
@@ -2191,15 +2324,15 @@ export class Space {
       this.game.features.docks.onWingLost(entity); // 2.1
     if (entity.wave) this.game.features.frontier.onWaveKill(entity);
     if (this.game.features.hostile.maybeChest)
-      this.game.features.hostile.maybeChest(this, entity, by);
-    if (by && by.player)
+      this.game.features.hostile.maybeChest(this, entity, entity2);
+    if (entity2 && entity2.player)
       this.game.onKill(
-        by.player,
+        entity2.player,
         entity,
         this,
-        (entity.lastHitBy && entity.lastHitBy !== by.id) as boolean | undefined,
+        (entity.lastHitBy && entity.lastHitBy !== entity2.id) as boolean | undefined,
       );
-    if (!entity.fighterOf && Math.random() < (by && by.hull === 810 ? 0.82 : 0.55))
+    if (!entity.fighterOf && Math.random() < (entity2 && entity2.hull === 810 ? 0.82 : 0.55))
       this.dropLoot(entity);
   }
   /**
@@ -2208,24 +2341,24 @@ export class Space {
    * @returns {void}
    */
   dropLoot(entity: Entity): void {
-    const str = entity.strength || 10,
+    const text = entity.strength || 10,
       items = [];
-    items.push({ credits: Math.round(str * rnd(15, 40)) });
+    items.push({ credits: Math.round(text * random2(15, 40)) });
     if (Math.random() < 0.35)
       items.push({
         mat: pick(MATERIALS),
-        grade: Math.min(4, Math.floor(Math.random() * (1 + str / 300))),
+        grade: Math.min(4, Math.floor(Math.random() * (1 + text / 300))),
       });
-    for (const it of items)
+    for (const item of items)
       this.loot.push({
         id: NEXT++,
-        x: entity.x + rnd(-30, 30),
-        y: entity.y + rnd(-30, 30),
-        vx: entity.vx * 0.3 + rnd(-20, 20),
-        vy: entity.vy * 0.3 + rnd(-20, 20),
-        it,
+        x: entity.x + random2(-30, 30),
+        y: entity.y + random2(-30, 30),
+        vx: entity.vx * 0.3 + random2(-20, 20),
+        vy: entity.vy * 0.3 + random2(-20, 20),
+        it: item,
         t: this.t,
-        kind: it.mat ? 1 : 0,
+        kind: item.mat ? 1 : 0,
       });
   }
 
@@ -2235,206 +2368,232 @@ export class Space {
    * @returns {void}
    */
   tick(): void {
-    this.t += DT;
+    this.t += tickDuration;
     if (!this.m || ++this.mT % 30 === 0) {
       this.m = this.game.features.fronts.mods ? this.game.features.fronts.mods(this.id) : null;
       this.mT = this.mT || 1;
     }
-    const S = this.sys;
+    const starSystem = this.sys;
     if (this.players > 0 && !this.sys.arena) {
-      this.spawnT -= DT;
-      const SX = this.game.features.living.stateOf && this.game.features.living.stateOf(this.id),
-        tm = SX ? STATES[SX.kind].traders || 1 : 1;
+      this.spawnT -= tickDuration;
+      const livingState =
+          this.game.features.living.stateOf && this.game.features.living.stateOf(this.id),
+        time = livingState ? STATES[livingState.kind].traders || 1 : 1;
       const want = Math.min(
         28,
-        (6 + this.ports().length * 2 + S.stellars.length * 0.5 + S.danger * 1.5) * tm,
+        (6 + this.ports().length * 2 + starSystem.stellars.length * 0.5 + starSystem.danger * 1.5) *
+          time,
       ); // more traffic everywhere; 2.4: booms and festivals bring more
-      const npcs = [...this.ships.values()].filter((e) => !e.player && !e.owner).length;
+      const length2 = [...this.ships.values()].filter(
+        (entity) => !entity.player && !entity.owner,
+      ).length;
       if (this.spawnT <= 0) {
-        this.spawnT = rnd(2, 5);
-        if (npcs < want) this.spawnTraffic(false);
+        this.spawnT = random2(2, 5);
+        if (length2 < want) this.spawnTraffic(false);
       }
     }
     this.game.combatAssist?.resolve(this);
     const formations = formationTargets(this);
-    for (const e of this.ships.values()) {
-      if (e.towCap && e.player) {
-        formations.delete(e.id);
-        e.catchup = null;
-        if (e.autoCombat) this.game.combatAssist.stop(e.player.s, 'Towing requires manual flight');
-        if (e.state === 'jumpout') e.state = 'fly';
+    for (const entity of this.ships.values()) {
+      if (entity.towCap && entity.player) {
+        formations.delete(entity.id);
+        entity.catchup = null;
+        if (entity.autoCombat)
+          this.game.combatAssist.stop(entity.player.s, 'Towing requires manual flight');
+        if (entity.state === 'jumpout') entity.state = 'fly';
       }
-      if (e.state === 'jumpout') {
-        e.jumpT -= DT;
-        const sp = e.st.maxSpeed * 3;
-        e.vx = Math.sin(e.a) * sp;
-        e.vy = -Math.cos(e.a) * sp;
-        e.x += e.vx * DT;
-        e.y += e.vy * DT;
-        if (e.jumpT <= 0) this.game.finishJump(e, this);
+      if (entity.state === 'jumpout') {
+        entity.jumpT -= tickDuration;
+        const space = entity.st.maxSpeed * 3;
+        entity.vx = Math.sin(entity.a) * space;
+        entity.vy = -Math.cos(entity.a) * space;
+        entity.x += entity.vx * tickDuration;
+        entity.y += entity.vy * tickDuration;
+        if (entity.jumpT <= 0) this.game.finishJump(entity, this);
         continue;
       }
-      if (e.industrialRoot) continue; // Industrial controller owns noncombat movement/collection.
-      if (e.player) {
-        const q = e.player.inputs;
-        const inp = q.length ? q.shift() : e.player.lastInput;
-        if (inp) {
-          e.player.lastInput = inp;
-          e.inp = inp;
-          e.seq = inp.seq;
-          if (inp.navigation) {
-            formations.delete(e.id);
-            e.player.s.armadaFormationTarget = null;
+      if (entity.industrialRoot) continue; // Industrial controller owns noncombat movement/collection.
+      if (entity.player) {
+        const playerInputs = entity.player.inputs;
+        const input = playerInputs.length ? playerInputs.shift() : entity.player.lastInput;
+        if (input) {
+          entity.player.lastInput = input;
+          entity.inp = input;
+          entity.seq = input.seq;
+          if (input.navigation) {
+            formations.delete(entity.id);
+            entity.player.s.armadaFormationTarget = null;
           }
           if (
-            formations.has(e.id) &&
-            !inp.navigation &&
-            (inp.thrust || inp.turn || inp.ab || inp.rev || inp.fire1 || inp.fire2)
+            formations.has(entity.id) &&
+            !input.navigation &&
+            (input.thrust || input.turn || input.ab || input.rev || input.fire1 || input.fire2)
           ) {
-            cancelFormation(this.game, e.player.s, 'manual flight or weapons input');
-            formations.delete(e.id);
+            cancelFormation(this.game, entity.player.s, 'manual flight or weapons input');
+            formations.delete(entity.id);
           }
         }
-      } else this.ai(e);
-      if (formations.has(e.id) && !e.autoCombat) steerFormation(e, formations.get(e.id)!);
-      if (e.player && e.autoCombat) {
-        e.inp = {};
-        e.fireAt = null;
-        if (this.game.combatAssist.valid(this, e, e.combatTarget)) {
-          this.fight(e, e.combatTarget);
-          e.inp.fire1 = 1;
+      } else this.ai(entity);
+      if (formations.has(entity.id) && !entity.autoCombat)
+        steerFormation(entity, formations.get(entity.id)!);
+      if (entity.player && entity.autoCombat) {
+        entity.inp = {};
+        entity.fireAt = null;
+        if (this.game.combatAssist.valid(this, entity, entity.combatTarget)) {
+          this.fight(entity, entity.combatTarget);
+          entity.inp.fire1 = 1;
         }
       }
-      if (e.player && e.autoCombat && !this.game.combatAssist.valid(this, e, e.combatTarget))
-        e.inp = {};
-      const st = e.catchup
+      if (
+        entity.player &&
+        entity.autoCombat &&
+        !this.game.combatAssist.valid(this, entity, entity.combatTarget)
+      )
+        entity.inp = {};
+      const computedShipStats = entity.catchup
         ? {
-            ...e.st,
-            maxSpeed: Math.max(e.st.maxSpeed, e.catchup.maxSpeed * 1.15),
-            accel: Math.max(e.st.accel, e.catchup.accel * 1.1),
-            turn: Math.max(e.st.turn, e.catchup.turn),
+            ...entity.st,
+            maxSpeed: Math.max(entity.st.maxSpeed, entity.catchup.maxSpeed * 1.15),
+            accel: Math.max(entity.st.accel, entity.catchup.accel * 1.1),
+            turn: Math.max(entity.st.turn, entity.catchup.turn),
           }
-        : e.st;
-      step(e, st, e.disabled ? {} : e.inp);
-      e.shield = Math.min(
-        e.st.shield,
-        e.shield +
-          e.st.shieldRe *
-            DT *
-            (this.t - (e.hitT || -9) > 2 ? 1 : 0.4) *
+        : entity.st;
+      step(entity, computedShipStats, entity.disabled ? {} : entity.inp);
+      entity.shield = Math.min(
+        entity.st.shield,
+        entity.shield +
+          entity.st.shieldRe *
+            tickDuration *
+            (this.t - (entity.hitT || -9) > 2 ? 1 : 0.4) *
             (this.m ? this.m.shieldRe : 1) *
-            (e.coopRe || 1),
+            (entity.coopRe || 1),
       ); // coopRe is the Armada buff
-      const radiation = eventideDrain(this.sys, e, Date.now() / 1000);
-      if (radiation) e.shield = Math.max(0, e.shield - radiation * DT);
-      if (e.st.armorRe) e.armor = Math.min(e.st.armor, e.armor + e.st.armorRe * DT);
-      if (e.st.fuelRe) e.fuel = Math.min(e.st.fuel, e.fuel + e.st.fuelRe * DT);
-      if (!e.disabled) this.weapons(e);
-      if (e.wormExit) {
-        const mouth = this.sys.stellars.find((stellarBody) => stellarBody.id === e.wormExit);
-        if (!mouth || Math.hypot(mouth.x - e.x, mouth.y - e.y) > mouth.r * 0.65)
-          e.wormExit = undefined;
+      const radiation = eventideDrain(this.sys, entity, Date.now() / 1000);
+      if (radiation) entity.shield = Math.max(0, entity.shield - radiation * tickDuration);
+      if (entity.st.armorRe)
+        entity.armor = Math.min(entity.st.armor, entity.armor + entity.st.armorRe * tickDuration);
+      if (entity.st.fuelRe)
+        entity.fuel = Math.min(entity.st.fuel, entity.fuel + entity.st.fuelRe * tickDuration);
+      if (!entity.disabled) this.weapons(entity);
+      if (entity.wormExit) {
+        const mouth = this.sys.stellars.find((stellarBody) => stellarBody.id === entity.wormExit);
+        if (!mouth || Math.hypot(mouth.x - entity.x, mouth.y - entity.y) > mouth.r * 0.65)
+          entity.wormExit = undefined;
       }
-      if (e.player && e.state === 'fly' && this.sys.gate && !e.wormExit && !(e.wormT! > this.t))
+      if (
+        entity.player &&
+        entity.state === 'fly' &&
+        this.sys.gate &&
+        !entity.wormExit &&
+        !(entity.wormT! > this.t)
+      )
         for (const stellarBody of this.sys.stellars)
           if (
             stellarBody.wormhole &&
-            !e.towCap &&
-            Math.hypot(stellarBody.x - e.x, stellarBody.y - e.y) < stellarBody.r * 0.5
+            !entity.towCap &&
+            Math.hypot(stellarBody.x - entity.x, stellarBody.y - entity.y) < stellarBody.r * 0.5
           ) {
-            this.game.wormholeTransit(e, this, stellarBody);
+            this.game.wormholeTransit(entity, this, stellarBody);
             break;
           }
     }
-    for (const s of this.shots) {
-      if (s.target && !s.target.dead) {
-        const want = angleTo(s, s.target.x, s.target.y),
-          cur = Math.atan2(s.vx, -s.vy),
-          d = angDiff(want, cur),
-          sp = Math.hypot(s.vx, s.vy);
-        const na = cur + Math.max(-3 * DT, Math.min(3 * DT, d));
-        s.vx = Math.sin(na) * sp;
-        s.vy = -Math.cos(na) * sp;
+    for (const shot of this.shots) {
+      if (shot.target && !shot.target.dead) {
+        const want = angleTo(shot, shot.target.x, shot.target.y),
+          atan = Math.atan2(shot.vx, -shot.vy),
+          angDiff2 = angDiff(want, atan),
+          space = Math.hypot(shot.vx, shot.vy);
+        const normalAngle =
+          atan + Math.max(-3 * tickDuration, Math.min(3 * tickDuration, angDiff2));
+        shot.vx = Math.sin(normalAngle) * space;
+        shot.vy = -Math.cos(normalAngle) * space;
       }
-      s.x += s.vx * DT;
-      s.y += s.vy * DT;
-      s.life -= DT;
-      if (s.life <= 0) continue;
-      const owner = this.ships.get(s.owner);
-      for (const e of this.ships.values()) {
-        if (e.industrialRoot || e.id === s.owner || e.state !== 'fly') continue;
+      shot.x += shot.vx * tickDuration;
+      shot.y += shot.vy * tickDuration;
+      shot.life -= tickDuration;
+      if (shot.life <= 0) continue;
+      const owner = this.ships.get(shot.owner);
+      for (const entity of this.ships.values()) {
+        if (entity.industrialRoot || entity.id === shot.owner || entity.state !== 'fly') continue;
         if (
-          s.miningEncounter &&
-          !this.game.features.pressure.shotAllowed(this, s.miningEncounter, e)
+          shot.miningEncounter &&
+          !this.game.features.pressure.shotAllowed(this, shot.miningEncounter, entity)
         )
           continue;
-        if (owner ? !this.canHit(owner, e) : false) continue;
-        const r = Math.max(9, e.st.size * 0.32);
+        if (owner ? !this.canHit(owner, entity) : false) continue;
+        const radius = Math.max(9, entity.st.size * 0.32);
         if (
-          Math.abs(e.x - s.x) < r &&
-          Math.abs(e.y - s.y) < r &&
-          Math.hypot(e.x - s.x, e.y - s.y) < r
+          Math.abs(entity.x - shot.x) < radius &&
+          Math.abs(entity.y - shot.y) < radius &&
+          Math.hypot(entity.x - shot.x, entity.y - shot.y) < radius
         ) {
-          const r = this.damage(e, s.dmgA, s.dmgS, owner || null, s.p.ion);
-          s.life = 0;
-          this.hitEv(s.x, s.y, s.w, e, r);
-          if (s.p.blast) this.events.push(['blast', Math.round(s.x), Math.round(s.y), s.p.blast]);
-          if (s.p.blast)
-            for (const o of this.ships.values())
+          const damage2 = this.damage(entity, shot.dmgA, shot.dmgS, owner || null, shot.p.ion);
+          shot.life = 0;
+          this.hitEv(shot.x, shot.y, shot.w, entity, damage2);
+          if (shot.p.blast)
+            this.events.push(['blast', Math.round(shot.x), Math.round(shot.y), shot.p.blast]);
+          if (shot.p.blast)
+            for (const entity4 of this.ships.values())
               if (
-                o !== e &&
+                entity4 !== entity &&
                 owner &&
-                (!s.miningEncounter ||
-                  this.game.features.pressure.shotAllowed(this, s.miningEncounter, o)) &&
-                this.canHit(owner, o) &&
-                Math.hypot(o.x - s.x, o.y - s.y) < s.p.blast
+                (!shot.miningEncounter ||
+                  this.game.features.pressure.shotAllowed(this, shot.miningEncounter, entity4)) &&
+                this.canHit(owner, entity4) &&
+                Math.hypot(entity4.x - shot.x, entity4.y - shot.y) < shot.p.blast
               )
-                this.damage(o, s.dmgA * 0.5, s.dmgS * 0.5, owner);
+                this.damage(entity4, shot.dmgA * 0.5, shot.dmgS * 0.5, owner);
           break;
         }
       }
-      if (s.life > 0 && this.rocks.length) {
-        const k = this.rockAt(s.x, s.y);
-        if (k) {
-          if (s.mining)
-            this.game.features.mining.contact(this, k, {
-              source: s.mining,
-              damage: s.dmgA + s.dmgS * 0.3,
-              x: s.x,
-              y: s.y,
+      if (shot.life > 0 && this.rocks.length) {
+        const rock = this.rockAt(shot.x, shot.y);
+        if (rock) {
+          if (shot.mining)
+            this.game.features.mining.contact(this, rock, {
+              source: shot.mining,
+              damage: shot.dmgA + shot.dmgS * 0.3,
+              x: shot.x,
+              y: shot.y,
               projectile: true,
             });
-          else this.hitRock(k, s.dmgA + s.dmgS * 0.3, false, s.captain);
-          s.life = 0;
-          this.events.push(['hit', Math.round(s.x), Math.round(s.y), s.w]);
+          else this.hitRock(rock, shot.dmgA + shot.dmgS * 0.3, false, shot.captain);
+          shot.life = 0;
+          this.events.push(['hit', Math.round(shot.x), Math.round(shot.y), shot.w]);
         }
       }
     }
-    this.shots = this.shots.filter((s) => s.life > 0);
-    this.beams = this.beams.filter((b) => b.until > this.t && this.ships.has(b.id));
+    this.shots = this.shots.filter((shot) => shot.life > 0);
+    this.beams = this.beams.filter((beam) => beam.until > this.t && this.ships.has(beam.id));
     this.game.features.towing.towingTick(this);
-    if ([...this.ships.values()].some((e) => e.player && e.hull === 815))
-      this.game.features.industrial.industrialTick(this, DT);
+    if ([...this.ships.values()].some((entity) => entity.player && entity.hull === 815))
+      this.game.features.industrial.industrialTick(this, tickDuration);
     this.game.features.mining.endTick(this);
     this.game.features.pressure.pressureTick(this);
-    for (const l of this.loot) {
-      l.x += l.vx * DT;
-      l.y += l.vy * DT;
-      l.vx *= 0.99;
-      l.vy *= 0.99;
+    for (const floatingLoot of this.loot) {
+      floatingLoot.x += floatingLoot.vx * tickDuration;
+      floatingLoot.y += floatingLoot.vy * tickDuration;
+      floatingLoot.vx *= 0.99;
+      floatingLoot.vy *= 0.99;
     }
-    this.loot = this.loot.filter((l) => l.it.generationKey || this.t - l.t < (l.it.ore ? 150 : 90));
-    for (const e of this.ships.values())
-      if (e.player && e.state === 'fly') {
-        const reach = Math.max(30, e.st.size * 0.5) * (e.hull === 810 ? 4 : 1); // the Tidecaller's tractor tentacles
-        for (const l of this.loot)
-          if (!l.taken && Math.hypot(l.x - e.x, l.y - e.y) < reach) {
-            if (this.game.onLoot(e.player, l.it) === false) continue;
-            l.taken = true;
-            this.events.push(['pickup', l.id]);
+    this.loot = this.loot.filter(
+      (floatingLoot) =>
+        floatingLoot.it.generationKey || this.t - floatingLoot.t < (floatingLoot.it.ore ? 150 : 90),
+    );
+    for (const entity of this.ships.values())
+      if (entity.player && entity.state === 'fly') {
+        const reach = Math.max(30, entity.st.size * 0.5) * (entity.hull === 810 ? 4 : 1); // the Tidecaller's tractor tentacles
+        for (const floatingLoot of this.loot)
+          if (
+            !floatingLoot.taken &&
+            Math.hypot(floatingLoot.x - entity.x, floatingLoot.y - entity.y) < reach
+          ) {
+            if (this.game.onLoot(entity.player, floatingLoot.it) === false) continue;
+            floatingLoot.taken = true;
+            this.events.push(['pickup', floatingLoot.id]);
           }
       }
-    this.loot = this.loot.filter((l) => !l.taken);
+    this.loot = this.loot.filter((floatingLoot) => !floatingLoot.taken);
   }
   /**
    * Compiles compact network snapshot of all ships, shots, beams, and loot in this system.
@@ -2442,45 +2601,56 @@ export class Space {
    */
   snapshot(): SpaceSnapshot {
     const ships = [];
-    for (const e of this.ships.values()) {
-      const fl =
-        (e.inp && e.inp.thrust ? 1 : 0) |
-        (e.inp && e.inp.ab ? 2 : 0) |
-        (e.disabled ? 4 : 0) |
-        (e.state === 'jumpout' ? 8 : 0) |
-        (e.player ? 16 : 0) |
-        (e.elite ? 32 : 0) |
-        (e.rival ? 64 : 0);
+    for (const entity of this.ships.values()) {
+      const flags =
+        (entity.inp && entity.inp.thrust ? 1 : 0) |
+        (entity.inp && entity.inp.ab ? 2 : 0) |
+        (entity.disabled ? 4 : 0) |
+        (entity.state === 'jumpout' ? 8 : 0) |
+        (entity.player ? 16 : 0) |
+        (entity.elite ? 32 : 0) |
+        (entity.rival ? 64 : 0);
       ships.push([
-        e.id,
-        e.hull,
-        Math.round(e.x),
-        Math.round(e.y),
-        Math.round(e.a * 1000),
-        Math.round(e.vx),
-        Math.round(e.vy),
-        fl,
-        Math.round((100 * e.shield) / Math.max(1, e.st.shield)),
-        Math.round((100 * e.armor) / Math.max(1, e.st.armor)),
-        FAC.indexOf(e.faction),
-        e.player
-          ? (this.sys.arena ? `${e.team === 'A' ? 'Azure' : 'Crimson'} · ` : '') + e.player.name
-          : e.name || null,
-        e.owner || 0,
-        e.pw || 0,
+        entity.id,
+        entity.hull,
+        Math.round(entity.x),
+        Math.round(entity.y),
+        Math.round(entity.a * 1000),
+        Math.round(entity.vx),
+        Math.round(entity.vy),
+        flags,
+        Math.round((100 * entity.shield) / Math.max(1, entity.st.shield)),
+        Math.round((100 * entity.armor) / Math.max(1, entity.st.armor)),
+        faction2.indexOf(entity.faction),
+        entity.player
+          ? (this.sys.arena ? `${entity.team === 'A' ? 'Azure' : 'Crimson'} · ` : '') +
+            entity.player.name
+          : entity.name || null,
+        entity.owner || 0,
+        entity.pw || 0,
       ]);
     }
-    const shots = this.shots.map((s) => [
-      Math.round(s.x),
-      Math.round(s.y),
-      Math.round(s.vx),
-      Math.round(s.vy),
-      s.w,
+    const shots = this.shots.map((shot) => [
+      Math.round(shot.x),
+      Math.round(shot.y),
+      Math.round(shot.vx),
+      Math.round(shot.vy),
+      shot.w,
     ]);
-    const beams = this.beams.map((b) => [b.id, Math.round(b.a * 1000), Math.round(b.len), b.w]);
-    const loot = this.loot.map((l) => [l.id, Math.round(l.x), Math.round(l.y), l.kind]);
-    const ev = this.events;
+    const beams = this.beams.map((beam) => [
+      beam.id,
+      Math.round(beam.a * 1000),
+      Math.round(beam.len),
+      beam.w,
+    ]);
+    const loot = this.loot.map((floatingLoot) => [
+      floatingLoot.id,
+      Math.round(floatingLoot.x),
+      Math.round(floatingLoot.y),
+      floatingLoot.kind,
+    ]);
+    const events2 = this.events;
     this.events = [];
-    return { ships, shots, beams, loot, ev };
+    return { ships, shots, beams, loot, ev: events2 };
   }
 }

@@ -23,7 +23,7 @@ Playwright is optional and supplied separately, not a new game runtime dependenc
 ```sh
 PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs \
 POISON_CACHE=1 EXPECT_FIXED=1 \
-node test/catalog-browser.mjs "$PWD" /absolute/evidence/directory
+node test/catalog-browser.ts "$PWD" /absolute/evidence/directory
 ```
 
 Omit `POISON_CACHE` for a cold load. For the v2.8.2 negative control, point the first positional argument at the extracted complete v2.8.2 release and omit `EXPECT_FIXED`; the harness asserts the partial failures. The test creates a disposable Solo save and local servers on ports 18896 and 18897. It does not modify existing saves.

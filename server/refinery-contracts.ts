@@ -1,6 +1,6 @@
 import type { CargoLedger, CargoTotals, GradeLots } from '../shared/cargo-contracts.ts';
 import type { Recipe } from '../shared/refinery-rules.ts';
-import type { DB } from './db.ts';
+import type { DB as Database } from './db.ts';
 import type { Mission, PlayerData, Session } from './game.ts';
 export type RefineryPlayer = PlayerData & {
   cargo: CargoTotals;
@@ -126,27 +126,27 @@ export type RefineryRequest = {
   n?: number;
 };
 export type RefineryCapabilities = {
-  db: Pick<DB, 'world' | 'touch' | 'flush' | 'get' | 'key' | 'journal' | 'economicFrozen'>;
+  db: Pick<Database, 'world' | 'touch' | 'flush' | 'get' | 'key' | 'journal' | 'economicFrozen'>;
   now: () => number;
   paused: () => boolean;
-  room: (d: RefineryPlayer) => number;
-  fuelCapacity: (d: RefineryPlayer) => number;
+  room: (refineryPlayer: RefineryPlayer) => number;
+  fuelCapacity: (refineryPlayer: RefineryPlayer) => number;
   access: (
-    d: RefineryPlayer,
+    refineryPlayer: RefineryPlayer,
     port: string,
   ) => { available: boolean; home: boolean; faction: string; near: boolean };
   pricing: (
-    d: RefineryPlayer,
+    refineryPlayer: RefineryPlayer,
     port: string,
-    cid: string,
-    now: number,
+    captainId: string,
+    currentTime: number,
   ) => { ask: number; bid: number; fingerprint: string };
-  rushProgress: (s: RefinerySession, event: string, delivered: number) => void;
-  rush: (sys: string) => { id: string; until: number } | null;
-  payload: (s: RefinerySession) => RefineryWire;
-  refresh: (s: RefinerySession) => void;
-  send: (s: RefinerySession, m: object) => void;
-  toast: (s: RefinerySession, text: string) => void;
+  rushProgress: (refinerySession: RefinerySession, event: string, delivered: number) => void;
+  rush: (starSystem: string) => { id: string; until: number } | null;
+  payload: (refinerySession: RefinerySession) => RefineryWire;
+  refresh: (refinerySession: RefinerySession) => void;
+  send: (refinerySession: RefinerySession, message: object) => void;
+  toast: (refinerySession: RefinerySession, text: string) => void;
 };
 
 /** @import { CargoLedger, CargoTotals, GradeLots } from '../shared/cargo-contracts.ts' */

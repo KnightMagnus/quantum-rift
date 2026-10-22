@@ -23,7 +23,7 @@ def main():
     subprocess.run(['git','-C',str(ROOT),'diff','--quiet','HEAD','--'],check=True)
     # dist is intentionally untracked. Rebuild it rather than packaging stale
     # output or leaving players with a source-only archive that cannot launch.
-    subprocess.run(['node',str(ROOT/'tools/build.mjs')],cwd=ROOT,check=True)
+    subprocess.run(['node',str(ROOT/'tools/build.ts')],cwd=ROOT,check=True)
     version = json.loads((ROOT/'package.json').read_text())['version']
     name = 'Quantum Rift v' + version
     out = args.output.resolve()

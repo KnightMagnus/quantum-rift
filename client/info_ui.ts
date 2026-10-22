@@ -25,11 +25,18 @@ export type ShipStats = {
   maxTurrets: number;
 };
 
-import { escapeDoubleQuotedHtml as esc } from './html.ts';
+import { escapeDoubleQuotedHtml as escapeHtml } from './html.ts';
 import { artworkUrl } from './artwork.ts';
 // the ship and captain panel (I), the player information view: your ship, cargo (with jettison), combat
 // rating, fleet orders, and the rival captains of the Rift with how they feel about you.
-import { SYS, SYSTEMS, STELLARS, FACTIONS, COMMODITIES, MATERIALS } from '../shared/galaxy.ts';
+import {
+  SYS as systemsById,
+  SYSTEMS,
+  STELLARS,
+  FACTIONS,
+  COMMODITIES,
+  MATERIALS,
+} from '../shared/galaxy.ts';
 import { SPEC, BP_NEED } from '../shared/specialty.ts';
 import { RARITY } from '../shared/hangar.ts';
 import { RANKS } from '../shared/rivals.ts';
@@ -78,11 +85,11 @@ import { price } from '../shared/rules.ts';
 
 /**
  * Formats a number to rounded, localized string.
- * @param {number} n Input number
+ * @param {number} count Input number
  * @returns {string} Formatted number string
  */
-const cr = (n: number): string => Math.round(n).toLocaleString();
-const ORD = [
+const credits2 = (count: number): string => Math.round(count).toLocaleString();
+const order2 = [
   ['gather', 'Form up', 'G'],
   ['attack', 'Attack my target', 'K'],
   ['hold', 'Hold position', 'H'],
@@ -99,95 +106,103 @@ const MOODC = {
 
 /**
  * Renders the Info panel (I key) including ship stats, cargo jettison, career ledger, wingmate orders, and rival captains.
- * @param {ClientGameState} G Game state object
- * @param {InfoTab|string} [tab] Sub-tab to render ('ship', 'career', 'fleet', or 'captains')
+ * @param {ClientGameState} clientGameState Game state object
+ * @param {InfoTab|string} [activeTab] Sub-tab to render ('ship', 'career', 'fleet', or 'captains')
  * @returns {string} HTML markup
  */
-export function infoHtml(G: ClientGameState, tab?: string): string {
-  const y = G.you!;
-  if (!y) return '';
-  const st = y.shipStats!,
-    H = G.A!.ships[y.ship.hull],
-    rank = y.rank || { name: 'Harmless', score: 0, next: 400, i: 0 };
-  if (tab === 'ship') {
-    const cargo = Object.entries(y.cargo || {}).filter(([, n]) => n > 0),
-      inSpace = !!G.view && !G.landed;
-    const bar = rank.next
+export function infoHtml(clientGameState: ClientGameState, activeTab?: string): string {
+  const playerPayload = clientGameState.you!;
+  if (!playerPayload) return '';
+  const computedShipStats = playerPayload.shipStats!,
+    shipHullAsset = clientGameState.A!.ships[playerPayload.ship.hull],
+    rank = playerPayload.rank || { name: 'Harmless', score: 0, next: 400, i: 0 };
+  if (activeTab === 'ship') {
+    const cargo = Object.entries(playerPayload.cargo || {}).filter(([, count]) => count > 0),
+      inSpace = !!clientGameState.view && !clientGameState.landed;
+    const progressBar = rank.next
       ? Math.min(100, (100 * (rank.score - RANKS[rank.i][0])) / (rank.next - RANKS[rank.i][0]))
       : 100;
     return `<div class="igrid"><div>
       <div class="sect" style="margin-top:0">SHIP</div>
       ${
-        y.shipless
+        playerPayload.shipless
           ? '<p class="dim">No active ship.</p>'
-          : `<div style="display:flex;gap:10px;align-items:center"><img src="${artworkUrl(H.img!)}" style="width:120px;height:90px;object-fit:contain"><div><b style="color:#fff;font-size:15px">${esc(H.name)}</b><div class="dim">"${esc(y.ship.name)}"</div></div></div>
-      <div class="kv"><span>Shield / armor</span><span>${cr(st.shield)} / ${cr(st.armor)}</span></div><div class="kv"><span>Speed / turn</span><span>${cr(st.maxSpeed / 0.45)} / ${cr((st.turn * 57.3) / 3)}</span></div>
-      <div class="kv"><span>Cargo</span><span>${y.cargoUsed} / ${st.cargo} t</span></div><div class="kv"><span>Passenger seats</span><span>${(y.missions || []).filter((m) => m.type === 'passenger').reduce((sum, m) => sum + (m.pax || 0), 0)} / ${st.passengerSeats} occupied</span></div><div class="kv"><span>Outfit space</span><span>${st.free} of ${st.space} free</span></div>
-      <div class="kv"><span>Guns / turrets</span><span>${st.guns}/${st.maxGuns} · ${st.turrets}/${st.maxTurrets}</span></div><div class="kv"><span>Fuel</span><span>${Math.floor(((G.view && G.view.fuel) ?? y.fuel) / 100)} jumps</span></div>`
+          : `<div style="display:flex;gap:10px;align-items:center"><img src="${artworkUrl(shipHullAsset.img!)}" style="width:120px;height:90px;object-fit:contain"><div><b style="color:#fff;font-size:15px">${escapeHtml(shipHullAsset.name)}</b><div class="dim">"${escapeHtml(playerPayload.ship.name)}"</div></div></div>
+      <div class="kv"><span>Shield / armor</span><span>${credits2(computedShipStats.shield)} / ${credits2(computedShipStats.armor)}</span></div><div class="kv"><span>Speed / turn</span><span>${credits2(computedShipStats.maxSpeed / 0.45)} / ${credits2((computedShipStats.turn * 57.3) / 3)}</span></div>
+      <div class="kv"><span>Cargo</span><span>${playerPayload.cargoUsed} / ${computedShipStats.cargo} t</span></div><div class="kv"><span>Passenger seats</span><span>${(playerPayload.missions || []).filter((mission) => mission.type === 'passenger').reduce((sumValues, mission) => sumValues + (mission.pax || 0), 0)} / ${computedShipStats.passengerSeats} occupied</span></div><div class="kv"><span>Outfit space</span><span>${computedShipStats.free} of ${computedShipStats.space} free</span></div>
+      <div class="kv"><span>Guns / turrets</span><span>${computedShipStats.guns}/${computedShipStats.maxGuns} · ${computedShipStats.turrets}/${computedShipStats.maxTurrets}</span></div><div class="kv"><span>Fuel</span><span>${Math.floor(((clientGameState.view && clientGameState.view.fuel) ?? playerPayload.fuel) / 100)} jumps</span></div>`
       }
-      <div class="sect">COMBAT RATING</div><div class="kv"><span><b style="color:#ffd27a">${esc(rank.name)}</b></span><span class="dim">${cr(rank.score)}${rank.next ? ` / ${cr(rank.next)}` : ''}</span></div>
-      <div class="rbar"><i style="width:${bar}%"></i></div><div class="dim small">Destroying ships raises your rating. Competent captains are offered Wanted contracts, and Dangerous ones get elite contracts.</div>
-      <div class="sect">RECORD</div>${synBadge(y)}<div class="kv"><span>Commendations</span><span>${y.shards || 0}</span></div>
-      <div class="kv"><span>Credit rating</span><span>${y.credit || 600}${y.loan ? ` · loan ${cr(y.loan.bal)} cr` : ''}</span></div>
-      <div class="kv"><span>Faction stories</span><span>${(y.arcs || []).filter((a) => a.done).length} of ${(y.arcs || []).length} complete</span></div>
-      <div class="kv"><span>Farside expeditions</span><span>${(y.expd && y.expd.n) || 0} decoded</span></div>
+      <div class="sect">COMBAT RATING</div><div class="kv"><span><b style="color:#ffd27a">${escapeHtml(rank.name)}</b></span><span class="dim">${credits2(rank.score)}${rank.next ? ` / ${credits2(rank.next)}` : ''}</span></div>
+      <div class="rbar"><i style="width:${progressBar}%"></i></div><div class="dim small">Destroying ships raises your rating. Competent captains are offered Wanted contracts, and Dangerous ones get elite contracts.</div>
+      <div class="sect">RECORD</div>${synBadge(playerPayload)}<div class="kv"><span>Commendations</span><span>${playerPayload.shards || 0}</span></div>
+      <div class="kv"><span>Credit rating</span><span>${playerPayload.credit || 600}${playerPayload.loan ? ` · loan ${credits2(playerPayload.loan.bal)} cr` : ''}</span></div>
+      <div class="kv"><span>Faction stories</span><span>${(playerPayload.arcs || []).filter((firstValue) => firstValue.done).length} of ${(playerPayload.arcs || []).length} complete</span></div>
+      <div class="kv"><span>Farside expeditions</span><span>${(playerPayload.expd && playerPayload.expd.n) || 0} decoded</span></div>
     </div><div>
       <div class="sect" style="margin-top:0">CARGO</div>
       ${
         cargo.length
           ? cargo
-              .map(([c, n]) => {
-                const C = COMMODITIES.find((x) => x.id === c);
-                const B = bestSale(G, c);
-                const grades = Object.entries(y.cargoLots?.byCommodity[c] || {})
-                  .filter(([, q]) => q > 0)
+              .map(([component, count]) => {
+                const commodityDef = COMMODITIES.find(
+                  (commodityDef) => commodityDef.id === component,
+                );
+                const bestSaleResult = bestSale(clientGameState, component);
+                const grades = Object.entries(playerPayload.cargoLots?.byCommodity[component] || {})
+                  .filter(([, quantity]) => quantity > 0)
                   .map(
-                    ([g, q]) =>
-                      `<div class="kv small"><span>↳ ${g}</span><span>${q} t ${inSpace ? `<button class="btn sm" data-jet="${c}" data-grade="${g}" data-n="${Math.min(5, q)}">DUMP ${Math.min(5, q)}</button> <button class="btn sm" data-jet="${c}" data-grade="${g}" data-n="${q}">DUMP ALL ${g.toUpperCase()}</button>` : ''}</span></div>`,
+                    ([game, quantity]) =>
+                      `<div class="kv small"><span>↳ ${game}</span><span>${quantity} t ${inSpace ? `<button class="btn sm" data-jet="${component}" data-grade="${game}" data-n="${Math.min(5, quantity)}">DUMP ${Math.min(5, quantity)}</button> <button class="btn sm" data-jet="${component}" data-grade="${game}" data-n="${quantity}">DUMP ALL ${game.toUpperCase()}</button>` : ''}</span></div>`,
                   )
                   .join('');
-                return `<div class="kv"><span>${esc(C ? C.name : c)}${B ? `<div class="small dim">Best nearby: <b style="color:var(--cr)">${cr(B.price)}</b> at ${esc(B.p.name)}${B.jumps ? ` (${B.jumps} jump${B.jumps > 1 ? 's' : ''})` : ' (this system)'}${y.paid && y.paid[c] ? ` · you paid ${cr(y.paid[c])}` : ''} ${B.jumps ? `<button class="btn sm" data-plot="${B.p.system}">PLOT</button>` : ''}</div>` : '<div class="small dim">No market you have visited nearby buys this.</div>'}</span><span>${n} t ${inSpace ? `<button class="btn sm" data-jet="${c}" data-n="${Math.min(5, n)}">DUMP 5</button> <button class="btn sm" data-jet="${c}" data-n="0">DUMP ALL</button>` : ''}</span></div>${grades}`;
+                return `<div class="kv"><span>${escapeHtml(commodityDef ? commodityDef.name : component)}${bestSaleResult ? `<div class="small dim">Best nearby: <b style="color:var(--cr)">${credits2(bestSaleResult.price)}</b> at ${escapeHtml(bestSaleResult.p.name)}${bestSaleResult.jumps ? ` (${bestSaleResult.jumps} jump${bestSaleResult.jumps > 1 ? 's' : ''})` : ' (this system)'}${playerPayload.paid && playerPayload.paid[component] ? ` · you paid ${credits2(playerPayload.paid[component])}` : ''} ${bestSaleResult.jumps ? `<button class="btn sm" data-plot="${bestSaleResult.p.system}">PLOT</button>` : ''}</div>` : '<div class="small dim">No market you have visited nearby buys this.</div>'}</span><span>${count} t ${inSpace ? `<button class="btn sm" data-jet="${component}" data-n="${Math.min(5, count)}">DUMP 5</button> <button class="btn sm" data-jet="${component}" data-n="0">DUMP ALL</button>` : ''}</span></div>${grades}`;
               })
               .join('')
           : '<p class="dim">The hold is empty.</p>'
       }
       ${cargo.length ? `<div class="dim small">${inSpace ? 'Jettisoned cargo floats free. Raiders chasing you often go for it instead.' : 'You can jettison cargo in space.'}</div>` : ''}
       <div class="sect">MISSION CARGO</div>${
-        (y.missions || [])
-          .filter((m) => m.qty)
-          .map((m) => `<div class="kv"><span>${esc(m.title)}</span><span>${m.qty} t</span></div>`)
+        (playerPayload.missions || [])
+          .filter((mission) => mission.qty)
+          .map(
+            (mission) =>
+              `<div class="kv"><span>${escapeHtml(mission.title)}</span><span>${mission.qty} t</span></div>`,
+          )
           .join('') || '<p class="dim">None.</p>'
       }
     </div></div>`;
   }
-  if (tab === 'career') return careerHtml(G); // 2.4
-  if (tab === 'fleet') {
-    const ord = G.order || 'gather';
+  if (activeTab === 'career') return careerHtml(clientGameState); // 2.4
+  if (activeTab === 'fleet') {
+    const order3 = clientGameState.order || 'gather';
     return `<div class="sect" style="margin-top:0">WINGMATE ORDERS</div><div class="dim small" style="margin-bottom:6px">Orders apply to your escorts, wingmates and fighters. Give the same order again to cancel it.</div>
-      <div class="ords">${ORD.map(([k, n, key]) => `<button class="btn ${ord === k ? 'on' : ''}" data-ord="${k}">${n} <span class="dim small">(${key})</span></button>`).join('')}</div>
-      <div class="sect">WINGMATES${y.docks ? ` · DOCK ${y.docks.list[y.docks.active].letter}` : ''}</div>${(() => {
-        const k = y.docks && y.docks.list[y.docks.active],
-          ws = k ? k.wings.filter(Boolean) : [];
-        return ws.length
-          ? ws
-              .map((w) => {
-                const E = G.A!.ships[w!.hull] || {};
-                return `<div class="kv"><span><img src="${artworkUrl(E.img!)}" style="width:40px;height:28px;object-fit:contain;vertical-align:middle"> ${esc(w!.name)}</span><span class="dim">${w!.repairT ? 'under repair' : esc(E.name)}</span></div>`;
+      <div class="ords">${order2.map(([entryKey, count, entryKey2]) => `<button class="btn ${order3 === entryKey ? 'on' : ''}" data-ord="${entryKey}">${count} <span class="dim small">(${entryKey2})</span></button>`).join('')}</div>
+      <div class="sect">WINGMATES${playerPayload.docks ? ` · DOCK ${playerPayload.docks.list[playerPayload.docks.active].letter}` : ''}</div>${(() => {
+        const entryKey =
+            playerPayload.docks && playerPayload.docks.list[playerPayload.docks.active],
+          webSocket = entryKey ? entryKey.wings.filter(Boolean) : [];
+        return webSocket.length
+          ? webSocket
+              .map((dockShipPayload) => {
+                const shipHullAsset = clientGameState.A!.ships[dockShipPayload!.hull] || {};
+                return `<div class="kv"><span><img src="${artworkUrl(shipHullAsset.img!)}" style="width:40px;height:28px;object-fit:contain;vertical-align:middle"> ${escapeHtml(dockShipPayload!.name)}</span><span class="dim">${dockShipPayload!.repairT ? 'under repair' : escapeHtml(shipHullAsset.name)}</span></div>`;
               })
               .join('')
           : '<p class="dim">No wingmates in your active dock. Assign stored ships as wingmates at your Personal Station (STATION, then DOCKS).</p>';
       })()}`;
   }
   // captains
-  const list = (G.rivals || []).slice().sort((a, b) => b.rel - a.rel),
-    seen = new Set(y.explored || []);
+  const list = (clientGameState.rivals || [])
+      .slice()
+      .sort((firstValue, secondValue) => secondValue.rel - firstValue.rel),
+    seen = new Set(playerPayload.explored || []);
   return `<div class="dim small" style="margin-bottom:6px">Thirty captains with careers of their own. Hail them (T) to talk. Help them in a fight and they warm to you; fire on them and they will remember.</div>
     <table class="tbl"><tr><th>CAPTAIN</th><th>CAREER</th><th>FLAG</th><th>SHIP</th><th>LAST SEEN</th><th>STANDING</th></tr>${list
       .map(
         (
-          r,
-        ) => `<tr><td><b>${esc(r.name)}</b></td><td>${esc(r.kind)}</td><td><span style="color:${FACTIONS[r.fac] ? FACTIONS[r.fac].color : '#aaa'}">${esc(FACTIONS[r.fac] ? FACTIONS[r.fac].short : r.fac)}</span></td><td>${esc(r.ship)}</td>
-      <td>${r.sys ? (seen.has(r.sys) ? esc(SYS[r.sys].name) : '<span class="dim">uncharted space</span>') : '<span class="dim">grounded</span>'}</td><td style="color:${MOODC[r.mood]}">${r.mood[0].toUpperCase() + r.mood.slice(1)} (${r.rel})</td></tr>`,
+          radius,
+        ) => `<tr><td><b>${escapeHtml(radius.name)}</b></td><td>${escapeHtml(radius.kind)}</td><td><span style="color:${FACTIONS[radius.fac] ? FACTIONS[radius.fac].color : '#aaa'}">${escapeHtml(FACTIONS[radius.fac] ? FACTIONS[radius.fac].short : radius.fac)}</span></td><td>${escapeHtml(radius.ship)}</td>
+      <td>${radius.sys ? (seen.has(radius.sys) ? escapeHtml(systemsById[radius.sys].name) : '<span class="dim">uncharted space</span>') : '<span class="dim">grounded</span>'}</td><td style="color:${MOODC[radius.mood]}">${radius.mood[0].toUpperCase() + radius.mood.slice(1)} (${radius.rel})</td></tr>`,
       )
       .join('')}</table>`;
 }
@@ -196,81 +211,92 @@ export function infoHtml(G: ClientGameState, tab?: string): string {
 
 /**
  * Renders the career overview ledger (holdings, net worth, story progress, exploration record).
- * @param {ClientGameState} G Game state object
+ * @param {ClientGameState} clientGameState Game state object
  * @returns {string} HTML markup
  */
-function careerHtml(G: ClientGameState): string {
-  const y = G.you!,
-    assets = G.A!,
-    shipVal = (sh: { hull: string | number } | null | undefined) =>
-      sh && assets.ships[sh.hull] ? assets.ships[sh.hull].cost || 0 : 0;
-  const stored = (y.dock || []).map((x) => x.ship).filter(Boolean),
-    cargoVal = Object.entries(y.cargo || {}).reduce(
-      (a, [c, n]) => a + (COMMODITIES.find((x) => x.id === c) || { base: 0 }).base * n,
+function careerHtml(clientGameState: ClientGameState): string {
+  const playerPayload = clientGameState.you!,
+    assets = clientGameState.A!,
+    shipVal = (ship: { hull: string | number } | null | undefined) =>
+      ship && assets.ships[ship.hull] ? assets.ships[ship.hull].cost || 0 : 0;
+  const stored = (playerPayload.dock || []).map((storedShip) => storedShip.ship).filter(Boolean),
+    cargoVal = Object.entries(playerPayload.cargo || {}).reduce(
+      (firstValue, [component, count]) =>
+        firstValue +
+        (COMMODITIES.find((commodityDef) => commodityDef.id === component) || { base: 0 }).base *
+          count,
       0,
     );
-  const crates = MATERIALS.reduce((a, m) => a + (y.mats[m] || []).reduce((b, n) => b + n, 0), 0);
+  const crates = MATERIALS.reduce(
+    (firstValue, message) =>
+      firstValue +
+      (playerPayload.mats[message] || []).reduce((secondValue, count) => secondValue + count, 0),
+    0,
+  );
   const worth =
-    y.credits +
-    (y.shipless ? 0 : shipVal(y.ship)) +
-    stored.reduce((a, loadout) => a + shipVal(loadout), 0) +
+    playerPayload.credits +
+    (playerPayload.shipless ? 0 : shipVal(playerPayload.ship)) +
+    stored.reduce((firstValue, loadout) => firstValue + shipVal(loadout), 0) +
     cargoVal -
-    (y.loan ? y.loan.bal : 0);
-  const kv = (k: string, v: string | number) =>
-    `<div class="kv"><span>${k}</span><span>${v}</span></div>`;
-  const S = y.station || {},
-    site = S.site && STELLARS[S.site],
-    st = y.stats || {},
-    Q = y.quests || { done: [], active: [] },
-    SY = y.story || {};
-  const offs = (y.officers || []).reduce(
-    (a, officer) => ((a[officer.rarity] = (a[officer.rarity] || 0) + 1), a),
+    (playerPayload.loan ? playerPayload.loan.bal : 0);
+  const keyValueRow = (entryKey: string, value: string | number) =>
+    `<div class="kv"><span>${entryKey}</span><span>${value}</span></div>`;
+  const stationState = playerPayload.station || {},
+    site = stationState.site && STELLARS[stationState.site],
+    state = playerPayload.stats || {},
+    quantity = playerPayload.quests || { done: [], active: [] },
+    screenY = playerPayload.story || {};
+  const officers2 = (playerPayload.officers || []).reduce(
+    (firstValue, officer) => (
+      (firstValue[officer.rarity] = (firstValue[officer.rarity] || 0) + 1),
+      firstValue
+    ),
     {} as Record<number, number>,
   );
-  const bps = Object.entries(y.bp || {})
-    .filter(([id, n]) => n > 0 && SPEC[id])
+  const join2 = Object.entries(playerPayload.bp || {})
+    .filter(([identifier, count]) => count > 0 && SPEC[identifier])
     .map(
-      ([id, n]) =>
-        `<div class="kv small"><span>${esc(SPEC[id].name)}</span><span>${Math.min(n, BP_NEED)} / ${BP_NEED}${n >= BP_NEED ? ' <b style="color:var(--ok)">ready</b>' : ''}</span></div>`,
+      ([identifier, count]) =>
+        `<div class="kv small"><span>${escapeHtml(SPEC[identifier].name)}</span><span>${Math.min(count, BP_NEED)} / ${BP_NEED}${count >= BP_NEED ? ' <b style="color:var(--ok)">ready</b>' : ''}</span></div>`,
     )
     .join('');
-  const docks = y.docks
-    ? y.docks.list
+  const docks = playerPayload.docks
+    ? playerPayload.docks.list
         .map(
-          (k) =>
-            `<div class="kv small"><span>Dock ${k.letter}${k.letter === y.docks.list[y.docks.active].letter ? ' <span style="color:var(--ok)">(active)</span>' : ''}</span><span>${k.lead && assets.ships[k.lead.hull] ? esc(assets.ships[k.lead.hull].name) : '<span class="dim">no lead</span>'}${k.wings.filter(Boolean).length ? ` + ${k.wings.filter(Boolean).length} wing` : ''}</span></div>`,
+          (entryKey) =>
+            `<div class="kv small"><span>Dock ${entryKey.letter}${entryKey.letter === playerPayload.docks.list[playerPayload.docks.active].letter ? ' <span style="color:var(--ok)">(active)</span>' : ''}</span><span>${entryKey.lead && assets.ships[entryKey.lead.hull] ? escapeHtml(assets.ships[entryKey.lead.hull].name) : '<span class="dim">no lead</span>'}${entryKey.wings.filter(Boolean).length ? ` + ${entryKey.wings.filter(Boolean).length} wing` : ''}</span></div>`,
         )
         .join('')
     : '';
   return `<div class="igrid"><div>
     <div class="sect" style="margin-top:0">HOLDINGS</div>
-    ${kv('<b>Net worth</b>', `<b class="cr">${cr(worth)} cr</b>`)}${kv('Credits', cr(y.credits))}${y.loan ? kv('Loan', `−${cr(y.loan.bal)}`) : ''}
-    ${kv('Ships', `${(y.shipless ? 0 : 1) + stored.length} <span class="dim small">(${cr((y.shipless ? 0 : shipVal(y.ship)) + stored.reduce((a, loadout) => a + shipVal(loadout), 0))} cr)</span>`)}${docks}
-    ${kv('Personal Station', site ? `Station Tier ${S.ops} · ${esc(SYS[site.system].name)}` : '<span class="dim">none yet</span>')}
-    ${kv('Colonies', (y.colonies || []).length ? y.colonies.map((c) => `${esc(c.name)} (Lv ${c.lv})`).join(', ') : '<span class="dim">none</span>')}
-    ${kv(
+    ${keyValueRow('<b>Net worth</b>', `<b class="cr">${credits2(worth)} cr</b>`)}${keyValueRow('Credits', credits2(playerPayload.credits))}${playerPayload.loan ? keyValueRow('Loan', `−${credits2(playerPayload.loan.bal)}`) : ''}
+    ${keyValueRow('Ships', `${(playerPayload.shipless ? 0 : 1) + stored.length} <span class="dim small">(${credits2((playerPayload.shipless ? 0 : shipVal(playerPayload.ship)) + stored.reduce((firstValue, loadout) => firstValue + shipVal(loadout), 0))} cr)</span>`)}${docks}
+    ${keyValueRow('Personal Station', site ? `Station Tier ${stationState.ops} · ${escapeHtml(systemsById[site.system].name)}` : '<span class="dim">none yet</span>')}
+    ${keyValueRow('Colonies', (playerPayload.colonies || []).length ? playerPayload.colonies.map((component) => `${escapeHtml(component.name)} (Lv ${component.lv})`).join(', ') : '<span class="dim">none</span>')}
+    ${keyValueRow(
       'Officers',
-      (y.officers || []).length
-        ? Object.entries(offs)
-            .sort((a, b) => Number(b[0]) - Number(a[0]))
+      (playerPayload.officers || []).length
+        ? Object.entries(officers2)
+            .sort((firstValue, secondValue) => Number(secondValue[0]) - Number(firstValue[0]))
             .map(
-              ([r, n]) =>
-                `<span style="color:${RARITY[Number(r)].color}">${n} ${RARITY[Number(r)].name}</span>`,
+              ([radius, count]) =>
+                `<span style="color:${RARITY[Number(radius)].color}">${count} ${RARITY[Number(radius)].name}</span>`,
             )
             .join(', ')
         : '<span class="dim">none</span>',
     )}
-    ${kv('Material crates', crates)}${kv('Cargo', `${y.cargoUsed || 0} t <span class="dim small">(about ${cr(cargoVal)} cr)</span>`)}
-    ${bps ? `<div class="sect">BLUEPRINTS</div>${bps}` : ''}
+    ${keyValueRow('Material crates', crates)}${keyValueRow('Cargo', `${playerPayload.cargoUsed || 0} t <span class="dim small">(about ${credits2(cargoVal)} cr)</span>`)}
+    ${join2 ? `<div class="sect">BLUEPRINTS</div>${join2}` : ''}
   </div><div>
     <div class="sect" style="margin-top:0">PROGRESS</div>
-    ${kv('Main story', SY.pass ? 'complete' : `chapter ${Math.min((SY.step || 0) + 1, SY.total || 1)} of ${SY.total || '?'}`)}
-    ${kv('Side stories', `${Q.done.filter((x) => x.side).length} of 6`)}${kv('Contact stories', `${Q.done.filter((x) => !x.side).length} finished · ${Object.values(Q.contacts || {}).filter((c) => c.n >= 2).length} trusted contacts`)}
-    ${kv('Faction stories', `${(y.arcs || []).filter((a) => a.done).length} of ${(y.arcs || []).length}`)}${kv('Farside expeditions', (y.expd && y.expd.n) || 0)}
-    ${kv('Combat rating', `<b style="color:#ffd27a">${esc((y.rank || {}).name || 'Harmless')}</b>`)}${kv('Ships destroyed', cr(st.kills || 0))}
-    ${kv('Systems explored', `${(y.explored || []).length} of ${SYSTEMS.filter((x) => !x.arena).length}`)}${kv('Jumps made', cr(st.jumps || 0))}
-    ${kv('Credits earned', cr(st.earned || 0))}${st.mined ? kv('Ore mined', `${cr(st.mined)} t`) : ''}
-    ${(Q.active || []).length ? `<div class="sect">STORIES UNDER WAY</div>${Q.active.map((a) => `<div class="kv small"><span>${a.side ? '★' : '✦'} ${esc(a.name)}</span><span class="dim">step ${a.step + 1} of ${a.of}</span></div>`).join('')}` : ''}
+    ${keyValueRow('Main story', screenY.pass ? 'complete' : `chapter ${Math.min((screenY.step || 0) + 1, screenY.total || 1)} of ${screenY.total || '?'}`)}
+    ${keyValueRow('Side stories', `${quantity.done.filter((positionX) => positionX.side).length} of 6`)}${keyValueRow('Contact stories', `${quantity.done.filter((positionX) => !positionX.side).length} finished · ${Object.values(quantity.contacts || {}).filter((component) => component.n >= 2).length} trusted contacts`)}
+    ${keyValueRow('Faction stories', `${(playerPayload.arcs || []).filter((firstValue) => firstValue.done).length} of ${(playerPayload.arcs || []).length}`)}${keyValueRow('Farside expeditions', (playerPayload.expd && playerPayload.expd.n) || 0)}
+    ${keyValueRow('Combat rating', `<b style="color:#ffd27a">${escapeHtml((playerPayload.rank || {}).name || 'Harmless')}</b>`)}${keyValueRow('Ships destroyed', credits2(state.kills || 0))}
+    ${keyValueRow('Systems explored', `${(playerPayload.explored || []).length} of ${SYSTEMS.filter((starSystem) => !starSystem.arena).length}`)}${keyValueRow('Jumps made', credits2(state.jumps || 0))}
+    ${keyValueRow('Credits earned', credits2(state.earned || 0))}${state.mined ? keyValueRow('Ore mined', `${credits2(state.mined)} t`) : ''}
+    ${(quantity.active || []).length ? `<div class="sect">STORIES UNDER WAY</div>${quantity.active.map((firstValue) => `<div class="kv small"><span>${firstValue.side ? '★' : '✦'} ${escapeHtml(firstValue.name)}</span><span class="dim">step ${firstValue.step + 1} of ${firstValue.of}</span></div>`).join('')}` : ''}
   </div></div>`;
 }
 
@@ -278,34 +304,38 @@ function careerHtml(G: ClientGameState): string {
 
 /**
  * Finds the nearby explored trade port within four jumps offering the best sale price for a commodity.
- * @param {ClientGameState} G Game state object
- * @param {string} cid Commodity identifier
+ * @param {ClientGameState} clientGameState Game state object
+ * @param {string} captainId Commodity identifier
  * @returns {BestSaleResult|null} Best sale location, price, and jumps distance or null
  */
-export function bestSale(G: ClientGameState, cid: string): BestSaleResult | null {
-  const y = G.you!,
-    seen = new Set(y.explored || []),
-    dist: Record<string, number> = { [G.sys!]: 0 },
-    q = [G.sys!],
-    now = Date.now();
+export function bestSale(
+  clientGameState: ClientGameState,
+  captainId: string,
+): BestSaleResult | null {
+  const playerPayload = clientGameState.you!,
+    seen = new Set(playerPayload.explored || []),
+    distance: Record<string, number> = { [clientGameState.sys!]: 0 },
+    quantity = [clientGameState.sys!],
+    currentTime = Date.now();
   let best = null;
-  while (q.length) {
-    const s = q.shift()!;
-    if (dist[s] >= 4) continue;
-    for (const l of SYS[s] ? SYS[s].links : [])
-      if (dist[l] === undefined) {
-        dist[l] = dist[s] + 1;
-        q.push(l);
+  while (quantity.length) {
+    const state = quantity.shift()!;
+    if (distance[state] >= 4) continue;
+    for (const length of systemsById[state] ? systemsById[state].links : [])
+      if (distance[length] === undefined) {
+        distance[length] = distance[state] + 1;
+        quantity.push(length);
       }
   }
-  for (const [sid, j] of Object.entries(dist)) {
-    if (!seen.has(sid) && sid !== G.sys) continue;
-    for (const sp of SYS[sid].stellars) {
-      const p = STELLARS[sp.id];
-      if (!p || p.site || !(p.svc || '').includes('T')) continue;
-      const pr = price(p, cid, now);
-      if (pr === null) continue;
-      if (!best || pr - j * 6 > best.price - best.jumps * 6) best = { p, price: pr, jumps: j };
+  for (const [sessionId, innerIndex] of Object.entries(distance)) {
+    if (!seen.has(sessionId) && sessionId !== clientGameState.sys) continue;
+    for (const rawStellarBody of systemsById[sessionId].stellars) {
+      const stellarBody = STELLARS[rawStellarBody.id];
+      if (!stellarBody || stellarBody.site || !(stellarBody.svc || '').includes('T')) continue;
+      const price2 = price(stellarBody, captainId, currentTime);
+      if (price2 === null) continue;
+      if (!best || price2 - innerIndex * 6 > best.price - best.jumps * 6)
+        best = { p: stellarBody, price: price2, jumps: innerIndex };
     }
   }
   return best;

@@ -47,38 +47,40 @@ interface HailCapabilities {
   cam: { cx: number; cy: number; z: number; W: number; H: number };
 }
 // Incoming calls only update a badge. A player action opens a conversation; flight never pauses.
-export function initHails({ G, send, toast: _toast, cam }: HailCapabilities) {
-  const $ = (id: string) => document.getElementById(id)!;
+export function initHails({ G: hailState, send, toast: _toast, cam: camera }: HailCapabilities) {
+  const elementById = (identifier: string) => document.getElementById(identifier)!;
   let entries: HailEntry[] = [],
     active: HailConversation | null = null,
     allow = true,
     marker: HailMarker | null = null;
-  const button = (text: string, fn: () => void, target = $('hailopts')) => {
-    const b = document.createElement('button');
-    b.className = 'btn sm';
-    b.textContent = text;
-    b.onclick = fn;
-    target.append(b);
-    return b;
+  const button = (text: string, callback: () => void, target = elementById('hailopts')) => {
+    const htmlButtonElement = document.createElement('button');
+    htmlButtonElement.className = 'btn sm';
+    htmlButtonElement.textContent = text;
+    htmlButtonElement.onclick = callback;
+    target.append(htmlButtonElement);
+    return htmlButtonElement;
   };
   const close = () => {
-    $('hailbox').classList.add('hidden');
+    elementById('hailbox').classList.add('hidden');
     active = null;
   };
   function inbox() {
     active = null;
-    $('hailwho').textContent = 'Incoming hails';
-    $('hailsub').textContent = '· communications';
-    $('hailtext').textContent = entries.length
+    elementById('hailwho').textContent = 'Incoming hails';
+    elementById('hailsub').textContent = '· communications';
+    elementById('hailtext').textContent = entries.length
       ? 'Choose a sender. Unavailable calls remain readable as archived transmissions until you leave or dismiss them.'
       : 'No pending hails.';
-    $('hailopts').replaceChildren();
-    for (const q of entries) {
+    elementById('hailopts').replaceChildren();
+    for (const hailEntry of entries) {
       button(
-        `${q.unread ? '● ' : ''}${q.who} · ${q.archived ? 'archived' : q.kind === 'player' ? 'captain' : 'NPC'}`,
-        () => send({ t: 'hailin', op: 'open', key: q.key }),
+        `${hailEntry.unread ? '● ' : ''}${hailEntry.who} · ${hailEntry.archived ? 'archived' : hailEntry.kind === 'player' ? 'captain' : 'NPC'}`,
+        () => send({ t: 'hailin', op: 'open', key: hailEntry.key }),
       );
-      button(`Dismiss ${q.who}`, () => send({ t: 'hailin', op: 'dismiss', key: q.key }));
+      button(`Dismiss ${hailEntry.who}`, () =>
+        send({ t: 'hailin', op: 'dismiss', key: hailEntry.key }),
+      );
     }
     const label = document.createElement('label'),
       check = document.createElement('input');
@@ -91,18 +93,18 @@ export function initHails({ G, send, toast: _toast, cam }: HailCapabilities) {
         ' Allow player hails (existing friend / Armada / message privacy still applies)',
       ),
     );
-    $('hailopts').append(label);
+    elementById('hailopts').append(label);
     button('CLOSE', close);
-    $('hailbox').classList.remove('hidden');
+    elementById('hailbox').classList.remove('hidden');
   }
-  function show(m: HailConversation) {
-    active = m;
-    $('hailwho').textContent = m.who || '';
-    $('hailsub').textContent = m.sub ? `· ${m.sub}` : '';
-    $('hailtext').textContent = m.text || '';
-    const opts = $('hailopts');
-    opts.replaceChildren();
-    if (m.player) {
+  function show(hailConversation: HailConversation) {
+    active = hailConversation;
+    elementById('hailwho').textContent = hailConversation.who || '';
+    elementById('hailsub').textContent = hailConversation.sub ? `· ${hailConversation.sub}` : '';
+    elementById('hailtext').textContent = hailConversation.text || '';
+    const htmlElement = elementById('hailopts');
+    htmlElement.replaceChildren();
+    if (hailConversation.player) {
       const input = document.createElement('input');
       input.id = 'hailcompose';
       input.type = 'text';
@@ -118,101 +120,120 @@ export function initHails({ G, send, toast: _toast, cam }: HailCapabilities) {
       const submit = () => {
         const text = input.value.trim();
         if (!text) return;
-        send({ t: 'hailin', op: 'send', id: m.player, text });
+        send({ t: 'hailin', op: 'send', id: hailConversation.player, text });
         input.value = '';
         count.textContent = '0/100';
       };
-      input.onkeydown = (e) => {
-        e.stopPropagation();
-        if (e.key === 'Enter') {
-          e.preventDefault();
+      input.onkeydown = (keyboardEvent) => {
+        keyboardEvent.stopPropagation();
+        if (keyboardEvent.key === 'Enter') {
+          keyboardEvent.preventDefault();
           submit();
         }
-        if (e.key === 'Escape') close();
+        if (keyboardEvent.key === 'Escape') close();
       };
-      opts.append(input, count);
+      htmlElement.append(input, count);
       button('SEND', submit);
     }
-    for (const o of m.opts || [])
-      button(o.label, () =>
+    for (const options of hailConversation.opts || [])
+      button(options.label, () =>
         send(
-          m.key
-            ? { t: 'hailin', op: 'answer', key: m.key, k: o.k }
-            : { t: 'hailopt', ...(m.stellar ? { stellar: m.stellar } : { id: m.id }), k: o.k },
+          hailConversation.key
+            ? { t: 'hailin', op: 'answer', key: hailConversation.key, k: options.k }
+            : {
+                t: 'hailopt',
+                ...(hailConversation.stellar
+                  ? { stellar: hailConversation.stellar }
+                  : { id: hailConversation.id }),
+                k: options.k,
+              },
         ),
       );
     button('INBOX', inbox);
     button('CLOSE', close);
-    $('hailbox').classList.remove('hidden');
+    elementById('hailbox').classList.remove('hidden');
   }
-  $('hailindicator').onclick = () => {
+  elementById('hailindicator').onclick = () => {
     send({ t: 'hailin', op: 'list' });
     inbox();
   };
   function onMessage(message: { t: string }) {
-    const m = message as Partial<HailMessage>;
-    if (m.t === 'hailinbox') {
-      entries = m.entries || [];
-      allow = m.allow !== false;
-      const unread = entries.filter((q) => q.unread).length;
-      $('hailindicator').classList.toggle('hidden', !G.you || !!G.landed || !entries.length);
-      $('hailcount').textContent = String(unread || entries.length);
-      $('hailindicator').setAttribute(
-        'aria-label',
-        `${entries.filter((q) => !q.archived).length} pending hails, ${entries.filter((q) => q.archived).length} archived, ${unread} unread. Open communications inbox.`,
+    const message2 = message as Partial<HailMessage>;
+    if (message2.t === 'hailinbox') {
+      entries = message2.entries || [];
+      allow = message2.allow !== false;
+      const unread = entries.filter((hailEntry) => hailEntry.unread).length;
+      elementById('hailindicator').classList.toggle(
+        'hidden',
+        !hailState.you || !!hailState.landed || !entries.length,
       );
-      if (!$('hailbox').classList.contains('hidden') && !active) inbox();
-      const current = active?.key && entries.find((q) => q.key === active!.key);
+      elementById('hailcount').textContent = String(unread || entries.length);
+      elementById('hailindicator').setAttribute(
+        'aria-label',
+        `${entries.filter((hailEntry) => !hailEntry.archived).length} pending hails, ${entries.filter((hailEntry) => hailEntry.archived).length} archived, ${unread} unread. Open communications inbox.`,
+      );
+      if (!elementById('hailbox').classList.contains('hidden') && !active) inbox();
+      const current = active?.key && entries.find((hailEntry) => hailEntry.key === active!.key);
       if ((current as HailEntry | undefined)?.archived) {
-        $('hailopts').replaceChildren();
+        elementById('hailopts').replaceChildren();
         button('INBOX', inbox);
         button('CLOSE', close);
       }
       if (active?.key && !current) {
-        $('hailtext').textContent = 'This hail has ended or expired.';
-        $('hailopts').replaceChildren();
+        elementById('hailtext').textContent = 'This hail has ended or expired.';
+        elementById('hailopts').replaceChildren();
         button('INBOX', inbox);
         button('CLOSE', close);
       }
       return true;
     }
-    if (m.t === 'hailmark') {
-      marker = m.until! > Date.now() ? { ...(m as HailMessage), sys: G.sys } : null;
+    if (message2.t === 'hailmark') {
+      marker =
+        message2.until! > Date.now() ? { ...(message2 as HailMessage), sys: hailState.sys } : null;
       return true;
     }
     return false;
   }
   function frame() {
-    const mark = $('hailmarker');
-    if (!marker || marker.until < Date.now() || marker.sys !== G.sys || G.landed || !G.view) {
+    const mark = elementById('hailmarker');
+    if (
+      !marker ||
+      marker.until < Date.now() ||
+      marker.sys !== hailState.sys ||
+      hailState.landed ||
+      !hailState.view
+    ) {
       mark.classList.add('hidden');
-      if (marker && (marker.until < Date.now() || marker.sys !== G.sys)) marker = null;
+      if (marker && (marker.until < Date.now() || marker.sys !== hailState.sys)) marker = null;
     } else {
-      const target = marker.id && G.ents.get(marker.id),
-        x = target ? target.rx : marker.x,
-        y = target ? target.ry : marker.y;
+      const target = marker.id && hailState.ents.get(marker.id),
+        positionX = target ? target.rx : marker.x,
+        positionY = target ? target.ry : marker.y;
       if (marker.id && !target) {
         marker = null;
         mark.classList.add('hidden');
       } else {
-        const view = $('view').getBoundingClientRect();
-        const px = ((x - cam.cx) * cam.z * view.width) / cam.W + view.width / 2,
-          py = ((y - cam.cy) * cam.z * view.height) / cam.H + view.height / 2;
+        const view = elementById('view').getBoundingClientRect();
+        const pixelX =
+            ((positionX - camera.cx) * camera.z * view.width) / camera.W + view.width / 2,
+          pixelY = ((positionY - camera.cy) * camera.z * view.height) / camera.H + view.height / 2;
         let body = mark.querySelector<HTMLElement>('.hail-marker-body');
         if (!body) {
           body = document.createElement('div');
           body.className = 'hail-marker-body';
           mark.replaceChildren(body);
         }
-        body.textContent = `◇ ${marker.label} (${Math.round(x)}, ${Math.round(y)})`;
+        body.textContent = `◇ ${marker.label} (${Math.round(positionX)}, ${Math.round(positionY)})`;
         mark.classList.remove('hidden');
         const frame = mark.getBoundingClientRect();
-        mark.style.left = `${Math.max(8, Math.min(view.width - frame.width - 8, px - frame.width / 2))}px`;
-        mark.style.top = `${Math.max(8, Math.min(view.height - frame.height - 8, py - frame.height - 20))}px`;
+        mark.style.left = `${Math.max(8, Math.min(view.width - frame.width - 8, pixelX - frame.width / 2))}px`;
+        mark.style.top = `${Math.max(8, Math.min(view.height - frame.height - 8, pixelY - frame.height - 20))}px`;
       }
     }
-    $('hailindicator').style.visibility =
-      !G.you || G.landed || ($('login') && !$('login').classList.contains('hidden'))
+    elementById('hailindicator').style.visibility =
+      !hailState.you ||
+      hailState.landed ||
+      (elementById('login') && !elementById('login').classList.contains('hidden'))
         ? 'hidden'
         : 'visible';
     requestAnimationFrame(frame);
@@ -228,8 +249,8 @@ export function initHails({ G, send, toast: _toast, cam }: HailCapabilities) {
       active = marker = null;
       allow = true;
       close();
-      $('hailindicator').classList.add('hidden');
-      $('hailmarker').classList.add('hidden');
+      elementById('hailindicator').classList.add('hidden');
+      elementById('hailmarker').classList.add('hidden');
     },
   };
 }

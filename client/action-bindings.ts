@@ -33,29 +33,35 @@ export function binding(
 ): string | null {
   if (Object.hasOwn(keys, action))
     return typeof keys[action] === 'string' && keys[action] ? keys[action] : null;
-  return actions.find((a) => a[0] === action)?.[2] || null;
+  return actions.find((actionBinding) => actionBinding[0] === action)?.[2] || null;
 }
-export function migrateBindings<T extends BindingOptions>(
-  opts: T,
+export function migrateBindings<ValueType extends BindingOptions>(
+  options: ValueType,
   actions: readonly ActionBinding[],
-): T {
-  const keys = opts.keys && typeof opts.keys === 'object' ? opts.keys : (opts.keys = {});
+): ValueType {
+  const keys =
+    options.keys && typeof options.keys === 'object' ? options.keys : (options.keys = {});
   if (!Object.hasOwn(keys, 'surveyPulse')) {
     const used = new Set(
-      actions.filter((a) => a[0] !== 'surveyPulse').map((a) => binding(keys, actions, a[0])),
+      actions
+        .filter((actionBinding) => actionBinding[0] !== 'surveyPulse')
+        .map((actionBinding) => binding(keys, actions, actionBinding[0])),
     );
     const scan = (value: unknown): void => {
       if (typeof value === 'string' && value.startsWith('Key')) used.add(value);
       else if (value && typeof value === 'object') Object.values(value).forEach(scan);
     };
-    scan(opts);
+    scan(options);
     keys.surveyPulse = !used.has('KeyV') && !RESERVED_KEYS.has('KeyV') ? 'KeyV' : null;
   }
   // Older clients inserted all four nulls automatically. Upgrade that exact
   // untouched legacy bundle once; preserve custom and individually unbound keys.
   const legacy = ['dredgeSweep', 'dredgeHarvest', 'dredgeSmelter', 'towToggle'];
-  if (!opts.miningKeysVersion && legacy.every((a) => Object.hasOwn(keys, a) && keys[a] === null))
-    for (const a of legacy) delete keys[a];
+  if (
+    !options.miningKeysVersion &&
+    legacy.every((firstValue) => Object.hasOwn(keys, firstValue) && keys[firstValue] === null)
+  )
+    for (const legacy2 of legacy) delete keys[legacy2];
   const mining = [
     'miningPanel',
     ...legacy,
@@ -67,17 +73,21 @@ export function migrateBindings<T extends BindingOptions>(
     'dredgeOff',
   ];
   const used = new Set(
-    actions.filter((a) => !mining.includes(a[0])).map((a) => binding(keys, actions, a[0])),
+    actions
+      .filter((actionBinding) => !mining.includes(actionBinding[0]))
+      .map((actionBinding) => binding(keys, actions, actionBinding[0])),
   );
-  for (const [a, value] of Object.entries(keys))
-    if (!mining.includes(a) && typeof value === 'string') used.add(value);
-  for (const a of mining) if (Object.hasOwn(keys, a) && keys[a]) used.add(keys[a]);
-  for (const a of mining) {
-    if (Object.hasOwn(keys, a)) continue;
-    const candidate = actions.find((row) => row[0] === a)?.[2];
-    keys[a] = candidate && !used.has(candidate) && !RESERVED_KEYS.has(candidate) ? candidate : null;
-    if (keys[a]) used.add(keys[a]);
+  for (const [firstValue, value] of Object.entries(keys))
+    if (!mining.includes(firstValue) && typeof value === 'string') used.add(value);
+  for (const mining2 of mining)
+    if (Object.hasOwn(keys, mining2) && keys[mining2]) used.add(keys[mining2]);
+  for (const mining3 of mining) {
+    if (Object.hasOwn(keys, mining3)) continue;
+    const candidate = actions.find((actionBinding) => actionBinding[0] === mining3)?.[2];
+    keys[mining3] =
+      candidate && !used.has(candidate) && !RESERVED_KEYS.has(candidate) ? candidate : null;
+    if (keys[mining3]) used.add(keys[mining3]);
   }
-  opts.miningKeysVersion = 1;
-  return opts;
+  options.miningKeysVersion = 1;
+  return options;
 }

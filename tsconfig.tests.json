@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "erasableSyntaxOnly": true,
+    "paths": {
+      "/*.js": ["./client/*.ts"],
+      "/client/*.js": ["./client/*.ts"],
+      "/shared/*.js": ["./shared/*.ts"],
+      "/client/render-before.js": ["./client/render.ts"],
+      "/client/render-after.js": ["./client/render.ts"],
+      "/regression-render.js": ["./client/render.ts"]
+    }
+  },
+  "include": ["test/**/*.ts"]
+}

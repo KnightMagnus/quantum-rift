@@ -23,7 +23,7 @@ import { migrateCargoLots, planTake, moveLots } from '../shared/cargo-lots.ts';
 //   co-op Holdout and Armada contracts (group kingpins in the old Mk II and Mk III refits)
 //   the 2.6 save migration: refits, the Armada escort hulls, directives, fleets and territory were retired
 import {
-  SYS,
+  SYS as systemsById,
   STELLARS,
   MATERIALS,
   GRADES,
@@ -39,21 +39,27 @@ import { credits, makeLoadout, shipStats, allOutfits } from '../shared/rules.ts'
 
 /**
  * Clamps a numeric value between a minimum and maximum bound.
- * @param {number} v - Numeric value to clamp.
- * @param {number} a - Minimum bound.
- * @param {number} b - Maximum bound.
+ * @param {number} value - Numeric value to clamp.
+ * @param {number} firstValue - Minimum bound.
+ * @param {number} secondValue - Maximum bound.
  * @returns {number} Clamped value.
  */
-const _clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
+const _clamp = (value: number, firstValue: number, secondValue: number): number =>
+  Math.max(firstValue, Math.min(secondValue, value));
 
 /**
  * Mapping from refit hull ID to base hull info and refit generation.
  * @type {Record<number, { base: number, mk: number, via?: number }>}
  */
 const BASE_OF: Record<string | number, { base: number; mk: number; via?: number }> = {};
-for (const [b, m] of Object.entries(MK2_OF)) BASE_OF[m] = { base: +b, mk: 2 };
-for (const [m2, m3] of Object.entries(MK3_OF))
-  BASE_OF[m3] = { base: BASE_OF[m2] ? BASE_OF[m2].base : +m2, mk: 3, via: +m2 };
+for (const [secondValue, message] of Object.entries(MK2_OF))
+  BASE_OF[message] = { base: +secondValue, mk: 2 };
+for (const [message, message3] of Object.entries(MK3_OF))
+  BASE_OF[message3] = {
+    base: BASE_OF[message] ? BASE_OF[message].base : +message,
+    mk: 3,
+    via: +message,
+  };
 
 /**
  * Credit refund valuation for retired unused directive tiers.
@@ -63,11 +69,11 @@ const DIRECTIVE_VALUE: Record<string | number, number> = { 1: 90000, 2: 240000, 
 
 /**
  * Sanitizes and truncates a captain name to 20 characters.
- * @param {string} [n] - Raw name string.
+ * @param {string} [count] - Raw name string.
  * @returns {string} Trimmed and sanitized name.
  */
-const cleanName = (n?: string): string =>
-  String(n || '')
+const cleanName = (count?: string): string =>
+  String(count || '')
     .trim()
     .slice(0, 20);
 
@@ -81,34 +87,37 @@ export const CoopOperations = {
    * @returns {void}
    */
   coopInit(this: CoopCapabilities) {
-    const W = this.db.world;
-    W.armadas = W.armadas || {};
+    const worldData = this.db.world;
+    worldData.armadas = worldData.armadas || {};
     this.duels = this.duels || {};
     this.trades = this.trades || {};
     this.nextCoopId = this.nextCoopId || 1;
     // the 0.6 fleets are gone. Each fleet bank is shared out between its members, and the founder gets the fee back.
-    if (W.fleets && Object.keys(W.fleets).length) {
-      for (const F of Object.values(W.fleets)) {
-        const members = (F.members || [])
-            .map((n) => this.db.get(n))
+    if (worldData.fleets && Object.keys(worldData.fleets).length) {
+      for (const legacyFleet of Object.values(worldData.fleets)) {
+        const members = (legacyFleet.members || [])
+            .map((count) => this.db.get(count))
             .filter((player): player is NonNullable<typeof player> => Boolean(player)),
-          share = members.length ? Math.floor((F.bank || 0) / members.length) : 0;
-        for (const p of members) {
-          p.credits += share;
-          p.log = p.log || [];
-          p.log.push({
+          share = members.length ? Math.floor((legacyFleet.bank || 0) / members.length) : 0;
+        for (const member of members) {
+          member.credits += share;
+          member.log = member.log || [];
+          member.log.push({
             t: Date.now(),
-            text: `Fleets were retired in 2.6 (the Armada replaces them). [${F.tag}] ${F.name} was wound up${share ? `: your share of the fleet bank, ${credits(share)} credits, was paid to you` : ''}.`,
+            text: `Fleets were retired in 2.6 (the Armada replaces them). [${legacyFleet.tag}] ${legacyFleet.name} was wound up${share ? `: your share of the fleet bank, ${credits(share)} credits, was paid to you` : ''}.`,
           });
         }
-        const L = this.db.get(F.leader);
-        if (L) {
-          L.credits += 50000;
-          L.log.push({ t: Date.now(), text: 'The 50,000 credit fleet founding fee was refunded.' });
+        const playerAccount = this.db.get(legacyFleet.leader);
+        if (playerAccount) {
+          playerAccount.credits += 50000;
+          playerAccount.log.push({
+            t: Date.now(),
+            text: 'The 50,000 credit fleet founding fee was refunded.',
+          });
         }
       }
     }
-    for (const k of ['fleets', 'claims', 'cooldown'] as const) delete W[k];
+    for (const entryKey of ['fleets', 'claims', 'cooldown'] as const) delete worldData[entryKey];
     this.db.touch();
   },
   /**
@@ -120,18 +129,18 @@ export const CoopOperations = {
     if (playerData.v26) return;
     playerData.v26 = true;
     delete playerData.fleet;
-    const O = allOutfits(this.A),
+    const allOutfits2 = allOutfits(this.A),
       notes = [];
     let refund = 0;
     const mats: Array<[string, number, number]> = [];
     // a refit goes back to its base hull; what the refit cost is refunded and outfits that no longer fit are bought back
     const revert = (ship: ShipLoadout) => {
-      const B = BASE_OF[ship.hull];
-      if (!B || !this.A.ships[B.base]) return ship;
-      const mkCost = (h: number | string, mk3: boolean) =>
-        Math.round(this.A.ships[h].cost * (mk3 ? 0.45 : 0.3));
-      if (B.mk === 3) {
-        refund += mkCost(ship.hull, true) + mkCost(B.via!, false);
+      const secondValue = BASE_OF[ship.hull];
+      if (!secondValue || !this.A.ships[secondValue.base]) return ship;
+      const mkCost = (height: number | string, makeElement: boolean) =>
+        Math.round(this.A.ships[height].cost * (makeElement ? 0.45 : 0.3));
+      if (secondValue.mk === 3) {
+        refund += mkCost(ship.hull, true) + mkCost(secondValue.via!, false);
         mats.push(
           ['alloy', 4, 1],
           ['crystal', 4, 1],
@@ -144,49 +153,59 @@ export const CoopOperations = {
         refund += mkCost(ship.hull, false);
         mats.push(['alloy', 2, 1], ['crystal', 2, 1], ['isotope', 0, 1]);
       }
-      const old = this.A.ships[ship.hull].name,
-        fresh = makeLoadout(this.A, B.base, ship.name);
+      const name3 = this.A.ships[ship.hull].name,
+        fresh = makeLoadout(this.A, secondValue.base, ship.name);
       fresh.uid = ship.uid;
       fresh.ammo = { ...fresh.ammo };
-      for (const [id, n] of Object.entries(ship.outfits || {})) {
-        let left = n - (fresh.outfits[id] || 0);
+      for (const [identifier, count] of Object.entries(ship.outfits || {})) {
+        let left = count - (fresh.outfits[identifier] || 0);
         while (left > 0) {
-          fresh.outfits[id] = (fresh.outfits[id] || 0) + 1;
-          const st = shipStats(this.A, fresh)!;
-          if (st.free < 0 || st.guns > st.maxGuns || st.turrets > st.maxTurrets) {
-            fresh.outfits[id]--;
-            if (!fresh.outfits[id]) delete fresh.outfits[id];
+          fresh.outfits[identifier] = (fresh.outfits[identifier] || 0) + 1;
+          const computedShipStats = shipStats(this.A, fresh)!;
+          if (
+            computedShipStats.free < 0 ||
+            computedShipStats.guns > computedShipStats.maxGuns ||
+            computedShipStats.turrets > computedShipStats.maxTurrets
+          ) {
+            fresh.outfits[identifier]--;
+            if (!fresh.outfits[identifier]) delete fresh.outfits[identifier];
             break;
           }
           left--;
         }
-        if (left > 0 && O[id]) refund += (O[id].cost || 0) * left;
+        if (left > 0 && allOutfits2[identifier])
+          refund += (allOutfits2[identifier].cost || 0) * left;
       }
-      for (const [w, a] of Object.entries(ship.ammo || {}))
-        if (Object.keys(shipStats(this.A, fresh)!.weapons).includes(String(w)))
-          fresh.ammo[w] = Math.max(fresh.ammo[w] || 0, a);
-      notes.push(`${ship.name || old} (${old}) is a ${this.A.ships[B.base].name} again`);
+      for (const [width, firstValue] of Object.entries(ship.ammo || {}))
+        if (Object.keys(shipStats(this.A, fresh)!.weapons).includes(String(width)))
+          fresh.ammo[width] = Math.max(fresh.ammo[width] || 0, firstValue);
+      notes.push(
+        `${ship.name || name3} (${name3}) is a ${this.A.ships[secondValue.base].name} again`,
+      );
       return fresh;
     };
     if (!playerData.shipless && playerData.ship) playerData.ship = revert(playerData.ship);
-    for (const x of playerData.dock || []) x.ship = revert(x.ship);
+    for (const storedShip of playerData.dock || []) storedShip.ship = revert(storedShip.ship);
     // the station's Armada escorts are retired: refunded at full price with their outfits
-    const gone = (playerData.dock || []).filter((x) =>
-      ARMADA_HULLS.includes(x.ship.hull as number),
+    const gone = (playerData.dock || []).filter((storedShip) =>
+      ARMADA_HULLS.includes(storedShip.ship.hull as number),
     );
-    for (const x of gone) {
-      refund += this.A.ships[x.ship.hull].cost || 0;
-      for (const [id, n] of Object.entries(x.ship.outfits || {}))
-        if (O[id]) refund += (O[id].cost || 0) * n;
-      notes.push(`the ${this.A.ships[x.ship.hull].name} stood down`);
+    for (const storedShip of gone) {
+      refund += this.A.ships[storedShip.ship.hull].cost || 0;
+      for (const [identifier, count] of Object.entries(storedShip.ship.outfits || {}))
+        if (allOutfits2[identifier]) refund += (allOutfits2[identifier].cost || 0) * count;
+      notes.push(`the ${this.A.ships[storedShip.ship.hull].name} stood down`);
     }
     if (gone.length) {
-      playerData.dock = playerData.dock.filter((x) => !gone.includes(x));
-      for (const k of playerData.docks || []) {
-        k.wings = (k.wings || []).map((w) =>
-          w && gone.some((x) => x.ship.uid === w.uid) ? null : w,
+      playerData.dock = playerData.dock.filter((storedShip) => !gone.includes(storedShip));
+      for (const savedDock of playerData.docks || []) {
+        savedDock.wings = (savedDock.wings || []).map((savedDockWing) =>
+          savedDockWing && gone.some((storedShip) => storedShip.ship.uid === savedDockWing.uid)
+            ? null
+            : savedDockWing,
         );
-        if (gone.some((x) => x.ship.uid === k.lead)) k.lead = null;
+        if (gone.some((storedShip) => storedShip.ship.uid === savedDock.lead))
+          savedDock.lead = null;
       }
     }
     if (
@@ -200,15 +219,16 @@ export const CoopOperations = {
     }
     // unused directives are bought back at their old store price
     if (playerData.directives) {
-      for (const [t, n] of Object.entries(playerData.directives))
-        if (n > 0) {
-          refund += (DIRECTIVE_VALUE[t] || 0) * n;
-          notes.push(`${n} unused directive${n > 1 ? 's' : ''} bought back`);
+      for (const [time, count] of Object.entries(playerData.directives))
+        if (count > 0) {
+          refund += (DIRECTIVE_VALUE[time] || 0) * count;
+          notes.push(`${count} unused directive${count > 1 ? 's' : ''} bought back`);
         }
       delete playerData.directives;
     }
     if (playerData.mats)
-      for (const [m, g, n] of mats) if (playerData.mats[m]) playerData.mats[m][g] += n;
+      for (const [message, game, count] of mats)
+        if (playerData.mats[message]) playerData.mats[message][game] += count;
     if (refund || notes.length) {
       playerData.credits += refund;
       playerData.log = playerData.log || [];
@@ -226,8 +246,9 @@ export const CoopOperations = {
    * @returns {Session | null} Active session or null if not online.
    */
   sessionOf(this: CoopCapabilities, name: string) {
-    const k = this.db.key(name);
-    for (const o of this.sessions.values()) if (o.data && this.db.key(o.data.name) === k) return o;
+    const entryKey = this.db.key(name);
+    for (const session of this.sessions.values())
+      if (session.data && this.db.key(session.data.name) === entryKey) return session;
     return null;
   },
   /**
@@ -250,8 +271,8 @@ export const CoopOperations = {
    * @returns {boolean} True if the name is found in the list.
    */
   has(this: CoopCapabilities, list: string[], name: string) {
-    const k = this.db.key(name);
-    return list.some((n) => this.db.key(n) === k);
+    const entryKey = this.db.key(name);
+    return list.some((count) => this.db.key(count) === entryKey);
   },
   /**
    * Removes all entries matching a captain name from a list of names.
@@ -260,8 +281,8 @@ export const CoopOperations = {
    * @returns {string[]} New list with matching names removed.
    */
   drop(this: CoopCapabilities, list: string[], name: string) {
-    const k = this.db.key(name);
-    return list.filter((n) => this.db.key(n) !== k);
+    const entryKey = this.db.key(name);
+    return list.filter((count) => this.db.key(count) !== entryKey);
   },
   /**
    * Checks whether a captain is blocked by the target player profile.
@@ -305,423 +326,488 @@ export const CoopOperations = {
         armada: this.armadaPayload(session.data),
       });
   },
-  socialPayload(this: CoopCapabilities, d: PlayerData) {
+  socialPayload(this: CoopCapabilities, playerData: PlayerData) {
     if (this.solo) return null;
-    this.socialInit(d);
-    const row = (n: string) => {
-      const p = this.db.get(n);
-      if (!p) return null;
-      const st = this.statusOf(n);
+    this.socialInit(playerData);
+    const rowIndex = (count: string) => {
+      const playerAccount = this.db.get(count);
+      if (!playerAccount) return null;
+      const statusOf2 = this.statusOf(count);
       return {
-        name: p.name,
-        status: st,
-        sys: st !== 'offline' && !p.hideSys && SYS[p.sys] ? SYS[p.sys].name : '',
-        sysId: st !== 'offline' && !p.hideSys ? p.sys : null,
-        last: p.lastSeen || 0,
+        name: playerAccount.name,
+        status: statusOf2,
+        sys:
+          statusOf2 !== 'offline' && !playerAccount.hideSys && systemsById[playerAccount.sys]
+            ? systemsById[playerAccount.sys].name
+            : '',
+        sysId: statusOf2 !== 'offline' && !playerAccount.hideSys ? playerAccount.sys : null,
+        last: playerAccount.lastSeen || 0,
       };
     };
     return {
-      friends: d.friends
-        .map(row)
-        .filter((row): row is NonNullable<typeof row> => Boolean(row))
+      friends: playerData.friends
+        .map(rowIndex)
+        .filter((rowIndex): rowIndex is NonNullable<typeof rowIndex> => Boolean(rowIndex))
         .sort(
-          (a, b) =>
-            ((a.status === 'offline') as unknown as number) -
-              ((b.status === 'offline') as unknown as number) || a.name.localeCompare(b.name),
+          (firstValue, secondValue) =>
+            ((firstValue.status === 'offline') as unknown as number) -
+              ((secondValue.status === 'offline') as unknown as number) ||
+            firstValue.name.localeCompare(secondValue.name),
         ),
-      inReq: d.freqIn.slice(),
-      outReq: d.freqOut.slice(),
-      blocks: d.blocks.slice(),
-      dmAll: !!d.dmAll,
-      hideSys: !!d.hideSys,
+      inReq: playerData.freqIn.slice(),
+      outReq: playerData.freqOut.slice(),
+      blocks: playerData.blocks.slice(),
+      dmAll: !!playerData.dmAll,
+      hideSys: !!playerData.hideSys,
     };
   },
   // tell a captain's online friends (and Armada) that their status changed
-  presence(this: CoopCapabilities, d: PlayerData) {
-    if (this.solo || !d) return;
-    for (const o of this.sessions.values())
+  presence(this: CoopCapabilities, playerData: PlayerData) {
+    if (this.solo || !playerData) return;
+    for (const session of this.sessions.values())
       if (
-        o.data &&
-        o.data !== d &&
-        ((o.data.friends && this.has(o.data.friends, d.name)) ||
-          (d.armada && o.data.armada === d.armada))
+        session.data &&
+        session.data !== playerData &&
+        ((session.data.friends && this.has(session.data.friends, playerData.name)) ||
+          (playerData.armada && session.data.armada === playerData.armada))
       )
-        this.pushSocial(o.data.name);
+        this.pushSocial(session.data.name);
   },
-  coopLogin(this: CoopCapabilities, s: Session) {
-    const playerData = this.socialInit(s.data);
-    s.actT = Date.now();
+  coopLogin(this: CoopCapabilities, session: Session) {
+    const playerData = this.socialInit(session.data);
+    session.actT = Date.now();
     playerData.armadaFollow = false; // Flight consent never survives reconnects.
-    s.armadaFormationLeader = null;
+    session.armadaFormationLeader = null;
     if (this.solo) return;
     if (playerData.armada && !this.db.world.armadas[playerData.armada]) playerData.armada = null;
     if (playerData.mail.length) {
-      this.send(s, { t: 'dms', list: playerData.mail });
+      this.send(session, { t: 'dms', list: playerData.mail });
       this.toast(
-        s,
+        session,
         `${playerData.mail.length} message${playerData.mail.length > 1 ? 's' : ''} arrived while you were away (ALLIES tab).`,
       );
       playerData.mail = [];
     }
     if (playerData.freqIn.length)
       this.toast(
-        s,
+        session,
         `Friend request${playerData.freqIn.length > 1 ? 's' : ''} from ${playerData.freqIn.join(', ')} (ALLIES tab).`,
       );
-    const A = this.armadaOf(playerData);
-    if (A) {
-      A.emptyT = 0;
-      this.armadaChat(A, `${playerData.name} is online.`, playerData.name);
+    const armadaState = this.armadaOf(playerData);
+    if (armadaState) {
+      armadaState.emptyT = 0;
+      this.armadaChat(armadaState, `${playerData.name} is online.`, playerData.name);
     }
     this.presence(playerData);
   },
-  coopLogout(this: CoopCapabilities, s: Session) {
-    cleanContractPlans(this, s);
-    const d = s.data;
-    if (!d || this.solo) return;
-    d.lastSeen = Date.now();
-    if (s.duel) this.duelOut(s, 'left the Rift');
-    if (s.trade) this.tradeCancel(s.trade, `${d.name} left the Rift.`);
-    const A = this.armadaOf(d);
-    if (A) this.armadaChat(A, `${d.name} went offline.`, d.name);
-    setTimeout(() => this.presence(d), 50);
+  coopLogout(this: CoopCapabilities, session: Session) {
+    cleanContractPlans(this, session);
+    const playerData = session.data;
+    if (!playerData || this.solo) return;
+    playerData.lastSeen = Date.now();
+    if (session.duel) this.duelOut(session, 'left the Rift');
+    if (session.trade) this.tradeCancel(session.trade, `${playerData.name} left the Rift.`);
+    const armadaState = this.armadaOf(playerData);
+    if (armadaState)
+      this.armadaChat(armadaState, `${playerData.name} went offline.`, playerData.name);
+    setTimeout(() => this.presence(playerData), 50);
   },
 
   // ------------------------------------------------------------------ Captain Friends and DMs
-  socialOp(this: CoopCapabilities, s: Session, m: CoopMessage) {
-    const playerData = this.socialInit(s.data);
+  socialOp(this: CoopCapabilities, session2: Session, coopMessage: CoopMessage) {
+    const playerData = this.socialInit(session2.data);
     if (this.solo) return;
-    const say = (msg: string) => this.toast(s, msg),
-      name = cleanName(m.name),
-      p = name ? this.db.get(name) : null;
-    switch (m.op) {
+    const announce = (message: string) => this.toast(session2, message),
+      name = cleanName(coopMessage.name),
+      playerAccount = name ? this.db.get(name) : null;
+    switch (coopMessage.op) {
       case 'add': {
-        if (!p) return say(`No captain called ${name}.`);
-        if (p === playerData) return say('That is you.');
-        this.socialInit(p);
-        if (this.has(playerData.friends, p.name))
-          return say(`${p.name} is already on your friends list.`);
+        if (!playerAccount) return announce(`No captain called ${name}.`);
+        if (playerAccount === playerData) return announce('That is you.');
+        this.socialInit(playerAccount);
+        if (this.has(playerData.friends, playerAccount.name))
+          return announce(`${playerAccount.name} is already on your friends list.`);
         if (playerData.friends.length >= SOCIAL.friendsMax)
-          return say(`Your friends list is full (${SOCIAL.friendsMax}).`);
-        if (this.has(playerData.freqIn, p.name))
-          return this.socialOp(s, { op: 'accept', name: p.name });
-        if (this.blocked(playerData, p.name))
-          playerData.blocks = this.drop(playerData.blocks, p.name);
-        if (!this.has(playerData.freqOut, p.name)) playerData.freqOut.push(p.name);
-        if (!this.blocked(p, playerData.name) && !this.has(p.freqIn, playerData.name)) {
-          p.freqIn.push(playerData.name);
-          const session = this.sessionOf(p.name);
+          return announce(`Your friends list is full (${SOCIAL.friendsMax}).`);
+        if (this.has(playerData.freqIn, playerAccount.name))
+          return this.socialOp(session2, { op: 'accept', name: playerAccount.name });
+        if (this.blocked(playerData, playerAccount.name))
+          playerData.blocks = this.drop(playerData.blocks, playerAccount.name);
+        if (!this.has(playerData.freqOut, playerAccount.name))
+          playerData.freqOut.push(playerAccount.name);
+        if (
+          !this.blocked(playerAccount, playerData.name) &&
+          !this.has(playerAccount.freqIn, playerData.name)
+        ) {
+          playerAccount.freqIn.push(playerData.name);
+          const session = this.sessionOf(playerAccount.name);
           if (session) {
             this.toast(session, `${playerData.name} wants to add you as a friend (ALLIES tab).`);
-            this.pushSocial(p.name);
+            this.pushSocial(playerAccount.name);
           }
         }
-        say(`Friend request sent to ${p.name}.`);
+        announce(`Friend request sent to ${playerAccount.name}.`);
         break;
       }
       case 'accept': {
-        if (!p || !this.has(playerData.freqIn, p.name)) return;
-        this.socialInit(p);
-        playerData.freqIn = this.drop(playerData.freqIn, p.name);
-        p.freqOut = this.drop(p.freqOut, playerData.name);
-        if (!this.has(playerData.friends, p.name)) playerData.friends.push(p.name);
-        if (!this.has(p.friends, playerData.name)) p.friends.push(playerData.name);
-        say(`${p.name} is now your friend.`);
-        const session = this.sessionOf(p.name);
+        if (!playerAccount || !this.has(playerData.freqIn, playerAccount.name)) return;
+        this.socialInit(playerAccount);
+        playerData.freqIn = this.drop(playerData.freqIn, playerAccount.name);
+        playerAccount.freqOut = this.drop(playerAccount.freqOut, playerData.name);
+        if (!this.has(playerData.friends, playerAccount.name))
+          playerData.friends.push(playerAccount.name);
+        if (!this.has(playerAccount.friends, playerData.name))
+          playerAccount.friends.push(playerData.name);
+        announce(`${playerAccount.name} is now your friend.`);
+        const session = this.sessionOf(playerAccount.name);
         if (session) this.toast(session, `${playerData.name} accepted your friend request.`);
-        this.pushSocial(p.name);
+        this.pushSocial(playerAccount.name);
         break;
       }
       case 'decline':
-        if (p) {
-          this.socialInit(p);
-          playerData.freqIn = this.drop(playerData.freqIn, p.name);
-          p.freqOut = this.drop(p.freqOut, playerData.name);
-          this.pushSocial(p.name);
+        if (playerAccount) {
+          this.socialInit(playerAccount);
+          playerData.freqIn = this.drop(playerData.freqIn, playerAccount.name);
+          playerAccount.freqOut = this.drop(playerAccount.freqOut, playerData.name);
+          this.pushSocial(playerAccount.name);
         }
         break;
       case 'cancel':
-        if (p) {
-          this.socialInit(p);
-          playerData.freqOut = this.drop(playerData.freqOut, p.name);
-          p.freqIn = this.drop(p.freqIn, playerData.name);
-          this.pushSocial(p.name);
+        if (playerAccount) {
+          this.socialInit(playerAccount);
+          playerData.freqOut = this.drop(playerData.freqOut, playerAccount.name);
+          playerAccount.freqIn = this.drop(playerAccount.freqIn, playerData.name);
+          this.pushSocial(playerAccount.name);
         }
         break;
       case 'remove':
-        if (p) {
-          this.socialInit(p);
-          playerData.friends = this.drop(playerData.friends, p.name);
-          p.friends = this.drop(p.friends, playerData.name);
-          say(`${p.name} was removed from your friends.`);
-          this.pushSocial(p.name);
+        if (playerAccount) {
+          this.socialInit(playerAccount);
+          playerData.friends = this.drop(playerData.friends, playerAccount.name);
+          playerAccount.friends = this.drop(playerAccount.friends, playerData.name);
+          announce(`${playerAccount.name} was removed from your friends.`);
+          this.pushSocial(playerAccount.name);
         }
         break;
       case 'block': {
-        if (!p || p === playerData) return;
-        this.socialInit(p);
-        if (!this.blocked(playerData, p.name)) playerData.blocks.push(p.name);
-        playerData.friends = this.drop(playerData.friends, p.name);
-        p.friends = this.drop(p.friends, playerData.name);
-        playerData.freqIn = this.drop(playerData.freqIn, p.name);
-        playerData.freqOut = this.drop(playerData.freqOut, p.name);
-        p.freqIn = this.drop(p.freqIn, playerData.name);
-        p.freqOut = this.drop(p.freqOut, playerData.name);
-        say(
-          `${p.name} is blocked: no messages, requests or invites from them, and you will not see their chat.`,
+        if (!playerAccount || playerAccount === playerData) return;
+        this.socialInit(playerAccount);
+        if (!this.blocked(playerData, playerAccount.name))
+          playerData.blocks.push(playerAccount.name);
+        playerData.friends = this.drop(playerData.friends, playerAccount.name);
+        playerAccount.friends = this.drop(playerAccount.friends, playerData.name);
+        playerData.freqIn = this.drop(playerData.freqIn, playerAccount.name);
+        playerData.freqOut = this.drop(playerData.freqOut, playerAccount.name);
+        playerAccount.freqIn = this.drop(playerAccount.freqIn, playerData.name);
+        playerAccount.freqOut = this.drop(playerAccount.freqOut, playerData.name);
+        announce(
+          `${playerAccount.name} is blocked: no messages, requests or invites from them, and you will not see their chat.`,
         );
-        this.pushSocial(p.name);
+        this.pushSocial(playerAccount.name);
         break;
       }
       case 'unblock':
-        if (p) {
-          playerData.blocks = this.drop(playerData.blocks, p.name);
-          say(`${p.name} is unblocked.`);
+        if (playerAccount) {
+          playerData.blocks = this.drop(playerData.blocks, playerAccount.name);
+          announce(`${playerAccount.name} is unblocked.`);
         }
         break;
       case 'prefs':
-        playerData.dmAll = !!m.dmAll;
-        playerData.hideSys = !!m.hideSys;
+        playerData.dmAll = !!coopMessage.dmAll;
+        playerData.hideSys = !!coopMessage.hideSys;
         this.presence(playerData);
         break;
       case 'dm':
-        return this.dm(s, p, m.msg);
+        return this.dm(session2, playerAccount, coopMessage.msg);
       default:
         return;
     }
     this.db.touch();
-    this.send(s, { t: 'social', social: this.socialPayload(playerData) });
+    this.send(session2, { t: 'social', social: this.socialPayload(playerData) });
   },
-  dm(this: CoopCapabilities, s: Session, p: PlayerData | null | undefined, text?: string) {
-    const d = s.data,
-      msg = String(text || '')
+  dm(
+    this: CoopCapabilities,
+    session2: Session,
+    playerData: PlayerData | null | undefined,
+    text?: string,
+  ) {
+    const playerData3 = session2.data,
+      slice2 = String(text || '')
         // oxlint-disable-next-line no-control-regex -- Reject or sanitize control characters in player text.
         .replace(/[\u0000-\u001f]/g, ' ')
         .trim()
         .slice(0, SOCIAL.dmLen);
-    if (!msg) return;
-    if (!p) return this.toast(s, 'No captain by that name.');
-    if (p === d) return;
-    const now = Date.now();
-    if (now - (s.dmT || 0) < SOCIAL.dmGapMs) return;
-    s.dmT = now;
-    this.socialInit(p);
-    const friends = this.has(d.friends, p.name),
-      mates = d.armada && d.armada === p.armada;
-    if (this.blocked(p, d.name) || (!friends && !mates && !p.dmAll))
+    if (!slice2) return;
+    if (!playerData) return this.toast(session2, 'No captain by that name.');
+    if (playerData === playerData3) return;
+    const currentTime = Date.now();
+    if (currentTime - (session2.dmT || 0) < SOCIAL.dmGapMs) return;
+    session2.dmT = currentTime;
+    this.socialInit(playerData);
+    const friends = this.has(playerData3.friends, playerData.name),
+      mates = playerData3.armada && playerData3.armada === playerData.armada;
+    if (this.blocked(playerData, playerData3.name) || (!friends && !mates && !playerData.dmAll))
       return this.toast(
-        s,
-        `${p.name} only takes messages from friends. Send a friend request first.`,
+        session2,
+        `${playerData.name} only takes messages from friends. Send a friend request first.`,
       );
-    const note = { from: d.name, to: p.name, msg, at: now },
-      session = this.sessionOf(p.name);
+    const note = { from: playerData3.name, to: playerData.name, msg: slice2, at: currentTime },
+      session = this.sessionOf(playerData.name);
     if (session) this.send(session, { t: 'dm', ...note });
     else {
-      p.mail.push(note);
-      const mine = p.mail.filter((x) => x.from === d.name);
-      if (mine.length > SOCIAL.mailMax) p.mail.splice(p.mail.indexOf(mine[0]), 1);
+      playerData.mail.push(note);
+      const mine = playerData.mail.filter((savedMail) => savedMail.from === playerData3.name);
+      if (mine.length > SOCIAL.mailMax) playerData.mail.splice(playerData.mail.indexOf(mine[0]), 1);
       this.db.touch();
     }
-    this.send(s, { t: 'dm', ...note, sent: true, offline: !session });
+    this.send(session2, { t: 'dm', ...note, sent: true, offline: !session });
   },
 
   // ------------------------------------------------------------------ the Armada
-  armadaOf(this: CoopCapabilities, d: Pick<PlayerData, 'armada'> | null | undefined) {
-    return d && d.armada ? this.db.world.armadas[d.armada] || null : null;
+  armadaOf(this: CoopCapabilities, distance: Pick<PlayerData, 'armada'> | null | undefined) {
+    return distance && distance.armada ? this.db.world.armadas[distance.armada] || null : null;
   },
-  sameArmada(this: CoopCapabilities, pa: PlayerReference | null, pb: PlayerReference | null) {
-    const a = pa && pa.s && pa.s.data,
-      b = pb && pb.s && pb.s.data;
-    return !!(a && b && a.armada && a.armada === b.armada);
-  },
-  armadaChat(this: CoopCapabilities, A: ArmadaState, msg: string, skip?: string) {
-    this.broadcast(
-      { t: 'chat', from: '', msg: `[Armada] ${msg}`, ch: 'armada' },
-      (o) => o.data.armada === A.id && o.data.name !== skip,
+  sameArmada(
+    this: CoopCapabilities,
+    playerReference: PlayerReference | null,
+    playerReference2: PlayerReference | null,
+  ) {
+    const playerData = playerReference && playerReference.s && playerReference.s.data,
+      playerData3 = playerReference2 && playerReference2.s && playerReference2.s.data;
+    return !!(
+      playerData &&
+      playerData3 &&
+      playerData.armada &&
+      playerData.armada === playerData3.armada
     );
   },
-  armadaPayload(this: CoopCapabilities, d: PlayerData) {
+  armadaChat(this: CoopCapabilities, armadaState: ArmadaState, message: string, skip?: string) {
+    this.broadcast(
+      { t: 'chat', from: '', msg: `[Armada] ${message}`, ch: 'armada' },
+      (session) => session.data.armada === armadaState.id && session.data.name !== skip,
+    );
+  },
+  armadaPayload(this: CoopCapabilities, playerData: PlayerData) {
     if (this.solo) return null;
-    const W = this.db.world,
-      A = this.armadaOf(d);
-    const invites = Object.values(W.armadas)
-      .filter((X) => X.invites && X.invites[this.db.key(d.name)] > Date.now())
-      .map((X) => ({ id: X.id, name: X.name, leader: X.leader, n: X.members.length }));
-    if (!A) return invites.length ? { none: true, invites } : null;
-    const member = (n: string) => {
-      const p = this.db.get(n),
-        session = this.sessionOf(n);
+    const worldData = this.db.world,
+      armadaState = this.armadaOf(playerData);
+    const invites = Object.values(worldData.armadas)
+      .filter(
+        (armadaState) =>
+          armadaState.invites && armadaState.invites[this.db.key(playerData.name)] > Date.now(),
+      )
+      .map((armadaState) => ({
+        id: armadaState.id,
+        name: armadaState.name,
+        leader: armadaState.leader,
+        n: armadaState.members.length,
+      }));
+    if (!armadaState) return invites.length ? { none: true, invites } : null;
+    const member = (count: string) => {
+      const playerAccount = this.db.get(count),
+        session = this.sessionOf(count);
       return {
-        name: p ? p.name : n,
+        name: playerAccount ? playerAccount.name : count,
         online: !!session,
-        sys: session && p && SYS[p.sys] ? SYS[p.sys].name : '',
-        sysId: session && p ? p.sys : null,
-        hull: p && !p.shipless && p.ship ? this.A.ships[p.ship.hull].name : '',
+        sys:
+          session && playerAccount && systemsById[playerAccount.sys]
+            ? systemsById[playerAccount.sys].name
+            : '',
+        sysId: session && playerAccount ? playerAccount.sys : null,
+        hull:
+          playerAccount && !playerAccount.shipless && playerAccount.ship
+            ? this.A.ships[playerAccount.ship.hull].name
+            : '',
         landed: !!(session && !session.ent),
-        jobSlots: p ? Math.max(0, 6 - p.missions.length) : 0,
+        jobSlots: playerAccount ? Math.max(0, 6 - playerAccount.missions.length) : 0,
       };
     };
     return {
-      id: A.id,
-      name: A.name,
-      leader: A.leader,
-      members: A.members.map(member),
-      pending: Object.entries(A.invites || {})
-        .filter(([, t]) => t > Date.now())
-        .map(([k]) => (this.db.get(k) || { name: k }).name),
-      follow: !!d.armadaFollow,
-      followingFlight: !!this.sessionOf(d.name)?.armadaFormationTarget,
+      id: armadaState.id,
+      name: armadaState.name,
+      leader: armadaState.leader,
+      members: armadaState.members.map(member),
+      pending: Object.entries(armadaState.invites || {})
+        .filter(([, time]) => time > Date.now())
+        .map(([entryKey]) => (this.db.get(entryKey) || { name: entryKey }).name),
+      follow: !!playerData.armadaFollow,
+      followingFlight: !!this.sessionOf(playerData.name)?.armadaFormationTarget,
       invites,
       max: ARMADA.max,
     };
   },
-  armadaPush(this: CoopCapabilities, A: ArmadaState) {
-    for (const n of A.members) this.pushSocial(n);
+  armadaPush(this: CoopCapabilities, armadaState: ArmadaState) {
+    for (const member of armadaState.members) this.pushSocial(member);
   },
-  armadaOp(this: CoopCapabilities, s: Session, m: CoopMessage) {
-    if (['contractReady', 'contractDecline', 'contractStart', 'contractCancel'].includes(m.op))
-      return respondContract(this, s, m);
-    if (this.solo) return this.toast(s, 'The Armada is for online games.');
-    const d = s.data,
-      W = this.db.world,
-      A = this.armadaOf(d),
-      say = (msg: string) => this.toast(s, msg);
-    switch (m.op) {
+  armadaOp(this: CoopCapabilities, session2: Session, coopMessage: CoopMessage) {
+    if (
+      ['contractReady', 'contractDecline', 'contractStart', 'contractCancel'].includes(
+        coopMessage.op,
+      )
+    )
+      return respondContract(this, session2, coopMessage);
+    if (this.solo) return this.toast(session2, 'The Armada is for online games.');
+    const playerData = session2.data,
+      worldData = this.db.world,
+      armadaState = this.armadaOf(playerData),
+      announce = (message: string) => this.toast(session2, message);
+    switch (coopMessage.op) {
       case 'form': {
-        if (A) return say('Leave your Armada first.');
-        let name = String(m.name || '').trim();
-        if (!name) name = `${d.name.slice(0, 15)}'s Armada`;
+        if (armadaState) return announce('Leave your Armada first.');
+        let name = String(coopMessage.name || '').trim();
+        if (!name) name = `${playerData.name.slice(0, 15)}'s Armada`;
         if (!ARMADA.nameRe.test(name))
-          return say('An Armada name is 3-24 letters, numbers, spaces or dashes.');
-        const id = 'a' + Date.now().toString(36) + this.nextCoopId++;
-        W.armadas[id] = {
-          id,
+          return announce('An Armada name is 3-24 letters, numbers, spaces or dashes.');
+        const identifier = 'a' + Date.now().toString(36) + this.nextCoopId++;
+        worldData.armadas[identifier] = {
+          id: identifier,
           name,
-          leader: d.name,
-          members: [d.name],
+          leader: playerData.name,
+          members: [playerData.name],
           invites: {},
           t: Date.now(),
           emptyT: 0,
         };
-        d.armada = id;
-        this.log(d, `Formed the Armada "${name}".`);
-        say(`Armada "${name}" formed. Invite up to ${ARMADA.max - 1} more captains.`);
+        playerData.armada = identifier;
+        this.log(playerData, `Formed the Armada "${name}".`);
+        announce(`Armada "${name}" formed. Invite up to ${ARMADA.max - 1} more captains.`);
         break;
       }
       case 'invite': {
-        const p = this.db.get(cleanName(m.name)),
-          o = p && this.sessionOf(p.name);
-        if (!p || p === d) return say('No captain by that name.');
-        if (!o) return say(`${p.name} is not online.`);
-        let A_ = A;
-        if (!A_) {
+        const playerAccount = this.db.get(cleanName(coopMessage.name)),
+          session = playerAccount && this.sessionOf(playerAccount.name);
+        if (!playerAccount || playerAccount === playerData)
+          return announce('No captain by that name.');
+        if (!session) return announce(`${playerAccount.name} is not online.`);
+        let armadaState2 = armadaState;
+        if (!armadaState2) {
           // inviting with no Armada forms one first
-          const id = 'a' + Date.now().toString(36) + this.nextCoopId++;
-          A_ = W.armadas[id] = {
-            id,
-            name: `${d.name.slice(0, 15)}'s Armada`,
-            leader: d.name,
-            members: [d.name],
+          const identifier = 'a' + Date.now().toString(36) + this.nextCoopId++;
+          armadaState2 = worldData.armadas[identifier] = {
+            id: identifier,
+            name: `${playerData.name.slice(0, 15)}'s Armada`,
+            leader: playerData.name,
+            members: [playerData.name],
             invites: {},
             t: Date.now(),
             emptyT: 0,
           };
-          d.armada = id;
-          this.log(d, `Formed the Armada "${A_.name}".`);
+          playerData.armada = identifier;
+          this.log(playerData, `Formed the Armada "${armadaState2.name}".`);
         }
-        if (p.armada === A_.id) return say(`${p.name} is already in your Armada.`);
-        this.socialInit(p);
-        if (this.blocked(p, d.name)) return say(`${p.name} is not taking invites.`);
-        const live = Object.values(A_.invites).filter((t) => t > Date.now()).length;
-        if (A_.members.length + live >= ARMADA.max)
-          return say(`An Armada holds ${ARMADA.max} captains.`);
-        A_.invites[this.db.key(p.name)] = Date.now() + ARMADA.inviteMin * 60000;
-        this.toast(o, `${d.name} invites you to the Armada "${A_.name}" (ALLIES tab).`);
-        this.notify(o, 'Armada invite', `${d.name} invites you to "${A_.name}".`);
-        this.pushSocial(p.name);
-        say(`Invite sent to ${p.name}.`);
+        if (playerAccount.armada === armadaState2.id)
+          return announce(`${playerAccount.name} is already in your Armada.`);
+        this.socialInit(playerAccount);
+        if (this.blocked(playerAccount, playerData.name))
+          return announce(`${playerAccount.name} is not taking invites.`);
+        const live = Object.values(armadaState2.invites).filter((time) => time > Date.now()).length;
+        if (armadaState2.members.length + live >= ARMADA.max)
+          return announce(`An Armada holds ${ARMADA.max} captains.`);
+        armadaState2.invites[this.db.key(playerAccount.name)] =
+          Date.now() + ARMADA.inviteMin * 60000;
+        this.toast(
+          session,
+          `${playerData.name} invites you to the Armada "${armadaState2.name}" (ALLIES tab).`,
+        );
+        this.notify(
+          session,
+          'Armada invite',
+          `${playerData.name} invites you to "${armadaState2.name}".`,
+        );
+        this.pushSocial(playerAccount.name);
+        announce(`Invite sent to ${playerAccount.name}.`);
         break;
       }
       case 'accept': {
-        const X = W.armadas[m.id!];
-        const k = this.db.key(d.name);
-        if (!X || !(X.invites[k] > Date.now())) return say('That invite has lapsed.');
-        if (A) return say('Leave your Armada first.');
-        delete X.invites[k];
-        if (X.members.length >= ARMADA.max) return say('That Armada is full.');
-        X.members.push(d.name);
-        d.armada = X.id;
-        X.emptyT = 0;
-        this.armadaChat(X, `${d.name} joined the Armada.`);
-        this.log(d, `Joined the Armada "${X.name}".`);
-        this.armadaPush(X);
-        this.armadaRefresh(X);
+        const armadaState3 = worldData.armadas[coopMessage.id!];
+        const entryKey = this.db.key(playerData.name);
+        if (!armadaState3 || !(armadaState3.invites[entryKey] > Date.now()))
+          return announce('That invite has lapsed.');
+        if (armadaState) return announce('Leave your Armada first.');
+        delete armadaState3.invites[entryKey];
+        if (armadaState3.members.length >= ARMADA.max) return announce('That Armada is full.');
+        armadaState3.members.push(playerData.name);
+        playerData.armada = armadaState3.id;
+        armadaState3.emptyT = 0;
+        this.armadaChat(armadaState3, `${playerData.name} joined the Armada.`);
+        this.log(playerData, `Joined the Armada "${armadaState3.name}".`);
+        this.armadaPush(armadaState3);
+        this.armadaRefresh(armadaState3);
         break;
       }
       case 'decline': {
-        const X = W.armadas[m.id!];
-        if (X) {
-          delete X.invites[this.db.key(d.name)];
-          this.pushSocial(X.leader);
+        const armadaState = worldData.armadas[coopMessage.id!];
+        if (armadaState) {
+          delete armadaState.invites[this.db.key(playerData.name)];
+          this.pushSocial(armadaState.leader);
         }
         break;
       }
       case 'leave':
-        if (A) this.armadaLeave(d, A, 'left the Armada');
+        if (armadaState) this.armadaLeave(playerData, armadaState, 'left the Armada');
         break;
       case 'kick': {
-        if (!A || A.leader !== d.name) return;
-        const p = this.db.get(cleanName(m.name));
-        if (!p || p === d || p.armada !== A.id) return;
-        this.armadaLeave(p, A, 'was removed from the Armada');
+        if (!armadaState || armadaState.leader !== playerData.name) return;
+        const playerAccount = this.db.get(cleanName(coopMessage.name));
+        if (
+          !playerAccount ||
+          playerAccount === playerData ||
+          playerAccount.armada !== armadaState.id
+        )
+          return;
+        this.armadaLeave(playerAccount, armadaState, 'was removed from the Armada');
         break;
       }
       case 'lead': {
-        if (!A || A.leader !== d.name) return;
-        const p = this.db.get(cleanName(m.name));
-        if (!p || p.armada !== A.id) return;
-        A.leader = p.name;
-        this.armadaChat(A, `${p.name} now leads the Armada.`);
-        this.armadaPush(A);
+        if (!armadaState || armadaState.leader !== playerData.name) return;
+        const playerAccount = this.db.get(cleanName(coopMessage.name));
+        if (!playerAccount || playerAccount.armada !== armadaState.id) return;
+        armadaState.leader = playerAccount.name;
+        this.armadaChat(armadaState, `${playerAccount.name} now leads the Armada.`);
+        this.armadaPush(armadaState);
         break;
       }
       case 'rename': {
-        if (!A || A.leader !== d.name) return;
-        const name = String(m.name || '').trim();
+        if (!armadaState || armadaState.leader !== playerData.name) return;
+        const name = String(coopMessage.name || '').trim();
         if (!ARMADA.nameRe.test(name))
-          return say('An Armada name is 3-24 letters, numbers, spaces or dashes.');
-        A.name = name;
-        this.armadaChat(A, `The Armada is now called "${name}".`);
-        this.armadaPush(A);
+          return announce('An Armada name is 3-24 letters, numbers, spaces or dashes.');
+        armadaState.name = name;
+        this.armadaChat(armadaState, `The Armada is now called "${name}".`);
+        this.armadaPush(armadaState);
         break;
       }
       case 'uninvite':
-        if (A) {
-          delete A.invites[this.db.key(cleanName(m.name))];
+        if (armadaState) {
+          delete armadaState.invites[this.db.key(cleanName(coopMessage.name))];
         }
         break;
       case 'rally': {
         // call every member to your system: their course is plotted
-        if (!A) return;
-        const now = Date.now();
-        if (now - (s.rallyT || 0) < 20000) return say('Give them a moment before calling again.');
-        s.rallyT = now;
-        for (const n of A.members) {
-          const session = this.sessionOf(n);
-          if (session && session !== s)
-            this.send(session, { t: 'rally', sys: d.sys, from: d.name });
+        if (!armadaState) return;
+        const currentTime = Date.now();
+        if (currentTime - (session2.rallyT || 0) < 20000)
+          return announce('Give them a moment before calling again.');
+        session2.rallyT = currentTime;
+        for (const member of armadaState.members) {
+          const session = this.sessionOf(member);
+          if (session && session !== session2)
+            this.send(session, { t: 'rally', sys: playerData.sys, from: playerData.name });
         }
-        this.armadaChat(A, `${d.name} calls the Armada to ${SYS[d.sys].name}.`);
+        this.armadaChat(
+          armadaState,
+          `${playerData.name} calls the Armada to ${systemsById[playerData.sys].name}.`,
+        );
         return;
       }
       case 'follow':
-        d.armadaFollow = !!m.on;
-        s.armadaFormationLeader = m.on && A ? A.leader : null;
-        s.armadaFormationTarget = null;
-        s.inputs = [];
-        s.lastInput = {};
-        say(
-          m.on
+        playerData.armadaFollow = !!coopMessage.on;
+        session2.armadaFormationLeader = coopMessage.on && armadaState ? armadaState.leader : null;
+        session2.armadaFormationTarget = null;
+        session2.inputs = [];
+        session2.lastInput = {};
+        announce(
+          coopMessage.on
             ? 'Following in V formation and following jumps. Manual flight or weapons input turns Follow off; Combat Assist takes priority.'
             : 'Follow the leader: off.',
         );
@@ -730,531 +816,627 @@ export const CoopOperations = {
         return;
     }
     this.db.touch();
-    this.you(s);
+    this.you(session2);
   },
-  armadaLeave(this: CoopCapabilities, p: PlayerData, A: ArmadaState, why: string) {
-    A.members = A.members.filter((n) => this.db.key(n) !== this.db.key(p.name));
-    p.armada = null;
-    p.armadaFollow = false;
-    this.log(p, `Left the Armada "${A.name}".`);
-    this.armadaChat(A, `${p.name} ${why}.`);
-    const session = this.sessionOf(p.name);
+  armadaLeave(
+    this: CoopCapabilities,
+    playerData: PlayerData,
+    armadaState: ArmadaState,
+    reason: string,
+  ) {
+    armadaState.members = armadaState.members.filter(
+      (count) => this.db.key(count) !== this.db.key(playerData.name),
+    );
+    playerData.armada = null;
+    playerData.armadaFollow = false;
+    this.log(playerData, `Left the Armada "${armadaState.name}".`);
+    this.armadaChat(armadaState, `${playerData.name} ${reason}.`);
+    const session = this.sessionOf(playerData.name);
     if (session) {
       this.toast(
         session,
-        `You ${why === 'left the Armada' ? 'left' : 'were removed from'} the Armada "${A.name}".`,
+        `You ${reason === 'left the Armada' ? 'left' : 'were removed from'} the Armada "${armadaState.name}".`,
       );
       this.you(session);
     }
-    if (!A.members.length) {
-      delete this.db.world.armadas[A.id];
+    if (!armadaState.members.length) {
+      delete this.db.world.armadas[armadaState.id];
       return;
     }
-    if (this.db.key(A.leader) === this.db.key(p.name)) {
-      A.leader = A.members[0];
-      this.armadaChat(A, `${A.leader} now leads the Armada.`);
+    if (this.db.key(armadaState.leader) === this.db.key(playerData.name)) {
+      armadaState.leader = armadaState.members[0];
+      this.armadaChat(armadaState, `${armadaState.leader} now leads the Armada.`);
     }
-    this.armadaPush(A);
-    this.armadaRefresh(A);
+    this.armadaPush(armadaState);
+    this.armadaRefresh(armadaState);
   },
   armadaForget(this: CoopCapabilities, name: string) {
-    for (const A of Object.values(this.db.world.armadas || {}))
-      if (A.members.some((n) => this.db.key(n) === this.db.key(name))) {
-        const p = this.db.get(name);
-        if (p) this.armadaLeave(p, A, 'left the Armada');
+    for (const armadaState of Object.values(this.db.world.armadas || {}))
+      if (armadaState.members.some((count) => this.db.key(count) === this.db.key(name))) {
+        const playerAccount = this.db.get(name);
+        if (playerAccount) this.armadaLeave(playerAccount, armadaState, 'left the Armada');
       }
   },
   // members who share a system with another member get the buff; called when anyone arrives, leaves or joins
-  armadaRefresh(this: CoopCapabilities, A: ArmadaState) {
-    for (const n of A.members) {
-      const session = this.sessionOf(n);
+  armadaRefresh(this: CoopCapabilities, armadaState: ArmadaState) {
+    for (const member of armadaState.members) {
+      const session = this.sessionOf(member);
       if (session && session.ent)
         session.ent.coopRe = this.armadaNear(session.data) ? ARMADA.buff.shieldRe : 1;
     }
   },
-  armadaNear(this: CoopCapabilities, d: PlayerData) {
-    if (!d.armada) return 0;
-    let n = 0;
-    for (const o of this.sessions.values())
-      if (o.data && o.data !== d && o.data.armada === d.armada && o.data.sys === d.sys && o.ent)
-        n++;
-    return n;
+  armadaNear(this: CoopCapabilities, playerData: PlayerData) {
+    if (!playerData.armada) return 0;
+    let count = 0;
+    for (const session of this.sessions.values())
+      if (
+        session.data &&
+        session.data !== playerData &&
+        session.data.armada === playerData.armada &&
+        session.data.sys === playerData.sys &&
+        session.ent
+      )
+        count++;
+    return count;
   },
-  armadaBonus(this: CoopCapabilities, d: PlayerData, b: Record<string, number>) {
-    if (this.armadaNear(d)) b.armadaBounty = (b.armadaBounty || 1) * ARMADA.buff.bounty;
+  armadaBonus(this: CoopCapabilities, playerData: PlayerData, secondValue: Record<string, number>) {
+    if (this.armadaNear(playerData))
+      secondValue.armadaBounty = (secondValue.armadaBounty || 1) * ARMADA.buff.bounty;
   },
   // bounty: the killer gets +5% with a member nearby; members in the system get kill credit and a share (paid on top)
-  shareBounty(this: CoopCapabilities, s: Session, amount: number, space: Space, _npc: Entity) {
-    const d = s.data;
-    if (!d.armada) return;
+  shareBounty(
+    this: CoopCapabilities,
+    session: Session,
+    amount: number,
+    space: Space,
+    _npc: Entity,
+  ) {
+    const playerData = session.data;
+    if (!playerData.armada) return;
     const near = [...this.sessions.values()].filter(
-      (o) => o !== s && o.data && o.data.armada === d.armada && o.ent && o.data.sys === space.id,
+      (session3) =>
+        session3 !== session &&
+        session3.data &&
+        session3.data.armada === playerData.armada &&
+        session3.ent &&
+        session3.data.sys === space.id,
     );
     if (!near.length) return;
-    const ev = this.mods(space.id).armadaBounty || 1,
-      extra = Math.round(amount * (ARMADA.buff.bounty - 1) * ev);
-    d.credits += extra;
-    d.stats.earned += extra;
-    for (const o of near) {
-      const k = Math.round(amount * ARMADA.share * ev);
-      o.data.credits += k;
-      o.data.stats.earned += k;
-      this.goal(o, 'kills');
-      for (const m of o.data.missions)
-        if (m.type === 'patrol' && m.sys === space.id && !m.done) {
-          m.got!++;
-          if (m.got! >= m.need!) {
-            m.done = true;
-            this.toast(o, 'Patrol complete. Land anywhere to collect your pay.');
+    const event = this.mods(space.id).armadaBounty || 1,
+      extra = Math.round(amount * (ARMADA.buff.bounty - 1) * event);
+    playerData.credits += extra;
+    playerData.stats.earned += extra;
+    for (const session3 of near) {
+      const entryKey = Math.round(amount * ARMADA.share * event);
+      session3.data.credits += entryKey;
+      session3.data.stats.earned += entryKey;
+      this.goal(session3, 'kills');
+      for (const mission of session3.data.missions)
+        if (mission.type === 'patrol' && mission.sys === space.id && !mission.done) {
+          mission.got!++;
+          if (mission.got! >= mission.need!) {
+            mission.done = true;
+            this.toast(session3, 'Patrol complete. Land anywhere to collect your pay.');
           }
         }
-      this.toast(o, `Armada share: ${credits(k)} credits from ${d.name}'s kill.`);
-      this.you(o);
+      this.toast(
+        session3,
+        `Armada share: ${credits(entryKey)} credits from ${playerData.name}'s kill.`,
+      );
+      this.you(session3);
     }
   },
   // follow the leader: members in the same system who opted in get the leader's destination for their autopilot
-  armadaLeaderJump(this: CoopCapabilities, s: Session, to: string) {
-    const d = s.data,
-      A = this.armadaOf(d);
-    if (!A || this.db.key(A.leader) !== this.db.key(d.name)) return;
-    for (const o of this.sessions.values())
+  armadaLeaderJump(this: CoopCapabilities, session: Session, destination: string) {
+    const playerData = session.data,
+      armadaState = this.armadaOf(playerData);
+    if (!armadaState || this.db.key(armadaState.leader) !== this.db.key(playerData.name)) return;
+    for (const session3 of this.sessions.values())
       if (
-        o !== s &&
-        o.data &&
-        o.data.armada === A.id &&
-        o.data.armadaFollow &&
-        o.data.sys === d.sys &&
-        o.ent
+        session3 !== session &&
+        session3.data &&
+        session3.data.armada === armadaState.id &&
+        session3.data.armadaFollow &&
+        session3.data.sys === playerData.sys &&
+        session3.ent
       )
-        this.send(o, { t: 'follow', to, leader: d.name });
+        this.send(session3, { t: 'follow', to: destination, leader: playerData.name });
   },
 
   // ------------------------------------------------------------------ trading between Personal Stations
-  atOwnStation(this: CoopCapabilities, d: PlayerData) {
-    const stellarBody = STELLARS[d.stellar!];
-    return !!(stellarBody && stellarBody.site && this.ownSite(d, stellarBody));
+  atOwnStation(this: CoopCapabilities, playerData: PlayerData) {
+    const stellarBody = STELLARS[playerData.stellar!];
+    return !!(stellarBody && stellarBody.site && this.ownSite(playerData, stellarBody));
   },
-  tradeOp(this: CoopCapabilities, s: Session, m: CoopMessage) {
+  tradeOp(this: CoopCapabilities, session: Session, coopMessage: CoopMessage) {
     if (this.solo) return;
-    const d = s.data,
-      say = (msg: string) => this.toast(s, msg);
-    if (!this.atOwnStation(d))
-      return say('Trade from your own Personal Station: dock there first.');
-    switch (m.op) {
+    const playerData = session.data,
+      announce = (message: string) => this.toast(session, message);
+    if (!this.atOwnStation(playerData))
+      return announce('Trade from your own Personal Station: dock there first.');
+    switch (coopMessage.op) {
       case 'open': {
-        const p = this.db.get(cleanName(m.name)),
-          o = p && this.sessionOf(p.name);
-        if (!p || p === d) return say('No captain by that name.');
-        if (!o) return say(`${p.name} is not online.`);
-        if (!(this.has(this.socialInit(d).friends, p.name) || (d.armada && d.armada === p.armada)))
-          return say('You can trade with friends and Armada members.');
-        if (this.blocked(p, d.name)) return say(`${p.name} is not trading.`);
-        if (s.trade || o.trade)
-          return say(s.trade ? 'Finish your open trade first.' : `${p.name} is already trading.`);
-        if (!this.atOwnStation(p))
-          return say(`${p.name} needs to be docked at their own Personal Station.`);
-        const id = 't' + this.nextCoopId++;
-        this.trades[id] = {
-          id,
-          a: d.name,
-          b: p.name,
-          give: { [d.name]: {}, [p.name]: {} },
+        const playerAccount = this.db.get(cleanName(coopMessage.name)),
+          session3 = playerAccount && this.sessionOf(playerAccount.name);
+        if (!playerAccount || playerAccount === playerData)
+          return announce('No captain by that name.');
+        if (!session3) return announce(`${playerAccount.name} is not online.`);
+        if (
+          !(
+            this.has(this.socialInit(playerData).friends, playerAccount.name) ||
+            (playerData.armada && playerData.armada === playerAccount.armada)
+          )
+        )
+          return announce('You can trade with friends and Armada members.');
+        if (this.blocked(playerAccount, playerData.name))
+          return announce(`${playerAccount.name} is not trading.`);
+        if (session.trade || session3.trade)
+          return announce(
+            session.trade
+              ? 'Finish your open trade first.'
+              : `${playerAccount.name} is already trading.`,
+          );
+        if (!this.atOwnStation(playerAccount))
+          return announce(
+            `${playerAccount.name} needs to be docked at their own Personal Station.`,
+          );
+        const identifier = 't' + this.nextCoopId++;
+        this.trades[identifier] = {
+          id: identifier,
+          a: playerData.name,
+          b: playerAccount.name,
+          give: { [playerData.name]: {}, [playerAccount.name]: {} },
           lock: {},
           ok: {},
           t: Date.now(),
         };
-        s.trade = id;
-        o.trade = id;
-        this.toast(o, `${d.name} opened a trade with you (ALLIES tab).`);
-        this.tradePush(id);
+        session.trade = identifier;
+        session3.trade = identifier;
+        this.toast(session3, `${playerData.name} opened a trade with you (ALLIES tab).`);
+        this.tradePush(identifier);
         return;
       }
       case 'offer': {
-        const T = this.trades[s.trade!];
-        if (!T) return;
-        const g = this.tradeClean(d, m.give || {});
-        if (typeof g === 'string') return say(g);
-        if (JSON.stringify(g) !== JSON.stringify(T.give[d.name])) {
-          T.give[d.name] = g;
-          T.lock = {};
-          T.ok = {};
+        const tradeState = this.trades[session.trade!];
+        if (!tradeState) return;
+        const tradeClean2 = this.tradeClean(playerData, coopMessage.give || {});
+        if (typeof tradeClean2 === 'string') return announce(tradeClean2);
+        if (JSON.stringify(tradeClean2) !== JSON.stringify(tradeState.give[playerData.name])) {
+          tradeState.give[playerData.name] = tradeClean2;
+          tradeState.lock = {};
+          tradeState.ok = {};
         } // any real change unlocks both sides
-        T.t = Date.now();
-        this.tradePush(T.id);
+        tradeState.t = Date.now();
+        this.tradePush(tradeState.id);
         return;
       }
       case 'lock': {
-        const T = this.trades[s.trade!];
-        if (!T) return;
-        T.lock[d.name] = !!m.on;
-        if (!m.on) T.ok = {};
-        T.t = Date.now();
-        this.tradePush(T.id);
+        const tradeState = this.trades[session.trade!];
+        if (!tradeState) return;
+        tradeState.lock[playerData.name] = !!coopMessage.on;
+        if (!coopMessage.on) tradeState.ok = {};
+        tradeState.t = Date.now();
+        this.tradePush(tradeState.id);
         return;
       }
       case 'confirm': {
-        const T = this.trades[s.trade!];
-        if (!T) return;
-        if (!T.lock[T.a] || !T.lock[T.b]) return say('Both sides lock their offer first.');
-        T.ok[d.name] = true;
-        T.t = Date.now();
-        if (T.ok[T.a] && T.ok[T.b]) return this.tradeDo(T);
-        this.tradePush(T.id);
+        const tradeState = this.trades[session.trade!];
+        if (!tradeState) return;
+        if (!tradeState.lock[tradeState.a] || !tradeState.lock[tradeState.b])
+          return announce('Both sides lock their offer first.');
+        tradeState.ok[playerData.name] = true;
+        tradeState.t = Date.now();
+        if (tradeState.ok[tradeState.a] && tradeState.ok[tradeState.b])
+          return this.tradeDo(tradeState);
+        this.tradePush(tradeState.id);
         return;
       }
       case 'cancel':
-        if (s.trade) this.tradeCancel(s.trade, `${d.name} cancelled the trade.`);
+        if (session.trade)
+          this.tradeCancel(session.trade, `${playerData.name} cancelled the trade.`);
         return;
     }
   },
   // what a captain can put up: credits, goods in the hold, crates, specialist blueprints and parts
-  tradeClean(this: CoopCapabilities, d: PlayerData, give: TradeOffer) {
-    const g: TradeOffer = {},
-      n = (v: number | undefined) => Math.max(0, Math.floor(+v! || 0));
+  tradeClean(this: CoopCapabilities, playerData: PlayerData, give: TradeOffer) {
+    const tradeOffer: TradeOffer = {},
+      count = (value: number | undefined) => Math.max(0, Math.floor(+value! || 0));
     let lines = 0;
-    if (n(give.credits)) {
-      if (n(give.credits) > d.credits) return 'You do not have that many credits.';
-      g.credits = n(give.credits);
+    if (count(give.credits)) {
+      if (count(give.credits) > playerData.credits) return 'You do not have that many credits.';
+      tradeOffer.credits = count(give.credits);
     }
-    for (const [k, v] of Object.entries(give.items || {})) {
-      const q = n(v);
-      if (!q) continue;
+    for (const [entryKey, value] of Object.entries(give.items || {})) {
+      const quantity = count(value);
+      if (!quantity) continue;
       if (++lines > TRADE.maxLines) return `Up to ${TRADE.maxLines} different items per side.`;
-      const [kind, a, b] = String(k).split(':');
+      const [kind, firstValue, secondValue] = String(entryKey).split(':');
       if (kind === 'cargo') {
         try {
-          planTake(d.cargo, d.cargoLots, a, q, give.lots?.[a]);
+          planTake(
+            playerData.cargo,
+            playerData.cargoLots,
+            firstValue,
+            quantity,
+            give.lots?.[firstValue],
+          );
         } catch {
           return 'You do not have those cargo grades in your hold.';
         }
-        if (give.lots?.[a]) (g.lots = g.lots || {})[a] = { ...give.lots[a] };
+        if (give.lots?.[firstValue])
+          (tradeOffer.lots = tradeOffer.lots || {})[firstValue] = { ...give.lots[firstValue] };
       } else if (kind === 'mat') {
-        if (!MATERIALS.includes(a) || !(d.mats[a] && d.mats[a][+b] >= q))
+        if (
+          !MATERIALS.includes(firstValue) ||
+          !(playerData.mats[firstValue] && playerData.mats[firstValue][+secondValue] >= quantity)
+        )
           return 'You do not have those crates.';
       } else if (kind === 'bp') {
-        if (!((d.bp || {})[a] >= q)) return 'You do not have those blueprints.';
+        if (!((playerData.bp || {})[firstValue] >= quantity))
+          return 'You do not have those blueprints.';
       } else if (kind === 'parts') {
-        if (!((d.parts || {})[a] >= q)) return 'You do not have those parts.';
+        if (!((playerData.parts || {})[firstValue] >= quantity))
+          return 'You do not have those parts.';
       } else return 'That cannot be traded.';
-      (g.items = g.items || {})[k] = q;
+      (tradeOffer.items = tradeOffer.items || {})[entryKey] = quantity;
     }
-    return g;
+    return tradeOffer;
   },
-  tradePush(this: CoopCapabilities, id: string) {
-    const T = this.trades[id];
-    if (!T) return;
-    for (const [me, them] of [
-      [T.a, T.b],
-      [T.b, T.a],
+  tradePush(this: CoopCapabilities, identifier: string) {
+    const tradeState = this.trades[identifier];
+    if (!tradeState) return;
+    for (const [player, them] of [
+      [tradeState.a, tradeState.b],
+      [tradeState.b, tradeState.a],
     ] as const) {
-      const session = this.sessionOf(me);
+      const session = this.sessionOf(player);
       if (session)
         this.send(session, {
           t: 'trade2',
           trade: {
-            id,
+            id: identifier,
             with: them,
-            mine: T.give[me],
-            theirs: T.give[them],
-            lock: { me: !!T.lock[me], them: !!T.lock[them] },
-            ok: { me: !!T.ok[me], them: !!T.ok[them] },
+            mine: tradeState.give[player],
+            theirs: tradeState.give[them],
+            lock: { me: !!tradeState.lock[player], them: !!tradeState.lock[them] },
+            ok: { me: !!tradeState.ok[player], them: !!tradeState.ok[them] },
             fee: TRADE.fee,
           },
         });
     }
   },
-  tradeCancel(this: CoopCapabilities, id: string, why: string) {
-    const T = this.trades[id];
-    if (!T) return;
-    delete this.trades[id];
-    for (const n of [T.a, T.b]) {
-      const session = this.sessionOf(n);
+  tradeCancel(this: CoopCapabilities, identifier: string, reason: string) {
+    const tradeState = this.trades[identifier];
+    if (!tradeState) return;
+    delete this.trades[identifier];
+    for (const count of [tradeState.a, tradeState.b]) {
+      const session = this.sessionOf(count);
       if (session) {
         session.trade = null;
         this.send(session, { t: 'trade2', trade: null });
-        if (why) this.toast(session, why);
+        if (reason) this.toast(session, reason);
       }
     }
   },
-  tradeDo(this: CoopCapabilities, T: TradeState) {
-    const pa = this.db.get(T.a),
-      pb = this.db.get(T.b),
-      session = this.sessionOf(T.a),
-      sb = this.sessionOf(T.b);
-    if (!pa || !pb || !session || !sb || !this.atOwnStation(pa) || !this.atOwnStation(pb))
+  tradeDo(this: CoopCapabilities, tradeState: TradeState) {
+    const playerAccount = this.db.get(tradeState.a),
+      playerAccount2 = this.db.get(tradeState.b),
+      session = this.sessionOf(tradeState.a),
+      session2 = this.sessionOf(tradeState.b);
+    if (
+      !playerAccount ||
+      !playerAccount2 ||
+      !session ||
+      !session2 ||
+      !this.atOwnStation(playerAccount) ||
+      !this.atOwnStation(playerAccount2)
+    )
       return this.tradeCancel(
-        T.id,
+        tradeState.id,
         'Trade cancelled: both captains must stay docked at their own stations.',
       );
     // check everything again at the moment of the swap, so a trade either completes fully or not at all
-    for (const [p, g] of [
-      [pa, T.give[T.a]],
-      [pb, T.give[T.b]],
+    for (const [playerAccount3, tradeOffer] of [
+      [playerAccount, tradeState.give[tradeState.a]],
+      [playerAccount2, tradeState.give[tradeState.b]],
     ] as const) {
-      const c = this.tradeClean(p, g);
-      if (typeof c === 'string')
+      const tradeClean2 = this.tradeClean(playerAccount3, tradeOffer);
+      if (typeof tradeClean2 === 'string')
         return this.tradeCancel(
-          T.id,
-          `Trade cancelled: ${p.name} no longer has everything offered.`,
+          tradeState.id,
+          `Trade cancelled: ${playerAccount3.name} no longer has everything offered.`,
         );
     }
     try {
-      const a = structuredClone(pa),
-        b = structuredClone(pb);
-      migrateCargoLots(a);
-      migrateCargoLots(b);
-      for (const [from, to, g] of [
-        [a, b, T.give[T.a]],
-        [b, a, T.give[T.b]],
+      const playerAccount4 = structuredClone(playerAccount),
+        playerAccount5 = structuredClone(playerAccount2);
+      migrateCargoLots(playerAccount4);
+      migrateCargoLots(playerAccount5);
+      for (const [from, playerAccount, tradeOffer] of [
+        [playerAccount4, playerAccount5, tradeState.give[tradeState.a]],
+        [playerAccount5, playerAccount4, tradeState.give[tradeState.b]],
       ] as const)
-        for (const [k, q] of Object.entries(g.items || {}))
-          if (k.startsWith('cargo:'))
+        for (const [entryKey, quantity] of Object.entries(tradeOffer.items || {}))
+          if (entryKey.startsWith('cargo:'))
             moveLots(
               from.cargo,
               from.cargoLots,
-              to.storage,
-              to.storageLots,
-              k.split(':')[1],
-              q,
-              g.lots?.[k.split(':')[1]],
+              playerAccount.storage,
+              playerAccount.storageLots,
+              entryKey.split(':')[1],
+              quantity,
+              tradeOffer.lots?.[entryKey.split(':')[1]],
             );
     } catch {
-      return this.tradeCancel(T.id, 'Trade cancelled: cargo validation failed.');
+      return this.tradeCancel(tradeState.id, 'Trade cancelled: cargo validation failed.');
     }
-    migrateCargoLots(pa);
-    migrateCargoLots(pb);
-    const move = (from: PlayerData, to: PlayerData, g: TradeOffer) => {
-      const got = [];
-      if (g.credits) {
-        from.credits -= g.credits;
-        const net = Math.round(g.credits * (1 - TRADE.fee));
-        to.credits += net;
-        got.push(`${credits(net)} credits`);
+    migrateCargoLots(playerAccount);
+    migrateCargoLots(playerAccount2);
+    const move = (from: PlayerData, playerData: PlayerData, tradeOffer: TradeOffer) => {
+      const received = [];
+      if (tradeOffer.credits) {
+        from.credits -= tradeOffer.credits;
+        const network = Math.round(tradeOffer.credits * (1 - TRADE.fee));
+        playerData.credits += network;
+        received.push(`${credits(network)} credits`);
       }
-      for (const [k, q] of Object.entries(g.items || {})) {
-        const [kind, a, b] = k.split(':');
+      for (const [entryKey, quantity] of Object.entries(tradeOffer.items || {})) {
+        const [kind, firstValue, secondValue] = entryKey.split(':');
         if (kind === 'cargo') {
-          moveLots(from.cargo, from.cargoLots, to.storage, to.storageLots, a, q, g.lots?.[a]);
-          const C = COMMODITIES.find((c) => c.id === a);
-          got.push(`${q} t ${C ? C.name : a}`);
+          moveLots(
+            from.cargo,
+            from.cargoLots,
+            playerData.storage,
+            playerData.storageLots,
+            firstValue,
+            quantity,
+            tradeOffer.lots?.[firstValue],
+          );
+          const commodityDef = COMMODITIES.find((commodityDef) => commodityDef.id === firstValue);
+          received.push(`${quantity} t ${commodityDef ? commodityDef.name : firstValue}`);
         }
         if (kind === 'mat') {
-          from.mats[a][+b] -= q;
-          to.mats[a][+b] += q;
-          got.push(`${q} ${a} ${GRADES[+b]}`);
+          from.mats[firstValue][+secondValue] -= quantity;
+          playerData.mats[firstValue][+secondValue] += quantity;
+          received.push(`${quantity} ${firstValue} ${GRADES[+secondValue]}`);
         }
         if (kind === 'bp') {
-          from.bp[a] -= q;
-          to.bp = to.bp || {};
-          to.bp[a] = (to.bp[a] || 0) + q;
-          got.push(`${q} ${this.A.ships[a] ? this.A.ships[a].name : ''} blueprints`);
+          from.bp[firstValue] -= quantity;
+          playerData.bp = playerData.bp || {};
+          playerData.bp[firstValue] = (playerData.bp[firstValue] || 0) + quantity;
+          received.push(
+            `${quantity} ${this.A.ships[firstValue] ? this.A.ships[firstValue].name : ''} blueprints`,
+          );
         }
         if (kind === 'parts') {
-          from.parts[a] -= q;
-          to.parts = to.parts || {};
-          to.parts[a] = (to.parts[a] || 0) + q;
-          got.push(`${q} ${this.A.ships[a] ? this.A.ships[a].name : ''} parts`);
+          from.parts[firstValue] -= quantity;
+          playerData.parts = playerData.parts || {};
+          playerData.parts[firstValue] = (playerData.parts[firstValue] || 0) + quantity;
+          received.push(
+            `${quantity} ${this.A.ships[firstValue] ? this.A.ships[firstValue].name : ''} parts`,
+          );
         }
       }
-      return got;
+      return received;
     };
-    const toB = move(pa, pb, T.give[T.a]),
-      toA = move(pb, pa, T.give[T.b]);
+    const move2 = move(playerAccount, playerAccount2, tradeState.give[tradeState.a]),
+      move3 = move(playerAccount2, playerAccount, tradeState.give[tradeState.b]);
     // goods land in station storage, then go into the hold if there is room
-    for (const [p, _o] of [
-      [pa, session],
-      [pb, sb],
+    for (const [playerAccount7, _session] of [
+      [playerAccount, session],
+      [playerAccount2, session2],
     ] as const) {
-      if (!p.storage) continue;
-      const st = this.stats(p)!;
-      let room = st.cargo - this.holdUsed(p);
-      for (const [k, v] of Object.entries(p.storage)) {
-        const q = Math.min(v, Math.max(0, room));
-        if (q > 0) {
+      if (!playerAccount7.storage) continue;
+      const computedShipStats = this.stats(playerAccount7)!;
+      let room = computedShipStats.cargo - this.holdUsed(playerAccount7);
+      for (const [entryKey, value] of Object.entries(playerAccount7.storage)) {
+        const quantity = Math.min(value, Math.max(0, room));
+        if (quantity > 0) {
           moveLots(
-            p.storage,
-            p.storageLots,
-            p.cargo,
-            p.cargoLots,
-            k,
-            q,
+            playerAccount7.storage,
+            playerAccount7.storageLots,
+            playerAccount7.cargo,
+            playerAccount7.cargoLots,
+            entryKey,
+            quantity,
             'common-first',
             Math.max(0, room),
           );
-          room -= q;
-          if (!p.storage[k]) delete p.storage[k];
+          room -= quantity;
+          if (!playerAccount7.storage[entryKey]) delete playerAccount7.storage[entryKey];
         }
       }
     }
-    const line = (got: string[]) => (got.length ? got.join(', ') : 'nothing');
-    this.log(pa, `Traded with ${pb.name}: gave ${line(toB)}; got ${line(toA)}.`);
-    this.log(pb, `Traded with ${pa.name}: gave ${line(toA)}; got ${line(toB)}.`);
-    delete this.trades[T.id];
-    session.trade = sb.trade = null;
-    for (const [o, got, w] of [
-      [session, toA, pb.name],
-      [sb, toB, pa.name],
+    const line = (received: string[]) => (received.length ? received.join(', ') : 'nothing');
+    this.log(
+      playerAccount,
+      `Traded with ${playerAccount2.name}: gave ${line(move2)}; got ${line(move3)}.`,
+    );
+    this.log(
+      playerAccount2,
+      `Traded with ${playerAccount.name}: gave ${line(move3)}; got ${line(move2)}.`,
+    );
+    delete this.trades[tradeState.id];
+    session.trade = session2.trade = null;
+    for (const [session4, received, width] of [
+      [session, move3, playerAccount2.name],
+      [session2, move2, playerAccount.name],
     ] as const) {
-      this.send(o, { t: 'trade2', trade: null });
+      this.send(session4, { t: 'trade2', trade: null });
       this.toast(
-        o,
-        `Trade with ${w} complete. You received ${line(got)}.${got.some((x) => / t /.test(x)) ? ' Goods that did not fit your hold wait in exchange storage.' : ''}`,
+        session4,
+        `Trade with ${width} complete. You received ${line(received)}.${received.some((positionX) => / t /.test(positionX)) ? ' Goods that did not fit your hold wait in exchange storage.' : ''}`,
       );
-      this.you(o);
-      this.landed(o);
+      this.you(session4);
+      this.landed(session4);
     }
     this.db.touch();
   },
 
   // ------------------------------------------------------------------ duels and Armada Duels
-  duelOf(this: CoopCapabilities, s: Session) {
-    return s && s.duel ? this.duels[s.duel] || null : null;
+  duelOf(this: CoopCapabilities, session: Session) {
+    return session && session.duel ? this.duels[session.duel] || null : null;
   },
-  duelSide(this: CoopCapabilities, D: DuelState, name: string) {
-    const k = this.db.key(name);
-    return D.sides.A.some((n) => this.db.key(n) === k)
+  duelSide(this: CoopCapabilities, duelState: DuelState, name: string) {
+    const entryKey = this.db.key(name);
+    return duelState.sides.A.some((count) => this.db.key(count) === entryKey)
       ? 'A'
-      : D.sides.B.some((n) => this.db.key(n) === k)
+      : duelState.sides.B.some((count) => this.db.key(count) === entryKey)
         ? 'B'
         : null;
   },
-  dueling(this: CoopCapabilities, pa: PlayerReference | null, pb: PlayerReference | null) {
-    const a = pa && pa.s,
-      b = pb && pb.s;
-    if (!a || !b || !a.duel || a.duel !== b.duel) return false;
-    const D = this.duels[a.duel];
-    if (!D || !D.on) return false;
-    const x = this.duelSide(D, pa.name),
-      y = this.duelSide(D, pb.name);
+  dueling(
+    this: CoopCapabilities,
+    playerReference: PlayerReference | null,
+    playerReference2: PlayerReference | null,
+  ) {
+    const session = playerReference && playerReference.s,
+      session3 = playerReference2 && playerReference2.s;
+    if (!session || !session3 || !session.duel || session.duel !== session3.duel) return false;
+    const duelState = this.duels[session.duel];
+    if (!duelState || !duelState.on) return false;
+    const duelSide2 = this.duelSide(duelState, playerReference.name),
+      duelSide3 = this.duelSide(duelState, playerReference2.name);
     return !!(
-      x &&
-      y &&
-      x !== y &&
-      !D.out.has(this.db.key(pa.name)) &&
-      !D.out.has(this.db.key(pb.name))
+      duelSide2 &&
+      duelSide3 &&
+      duelSide2 !== duelSide3 &&
+      !duelState.out.has(this.db.key(playerReference.name)) &&
+      !duelState.out.has(this.db.key(playerReference2.name))
     );
   },
-  duelPayload(this: CoopCapabilities, s: Session) {
-    const D = this.duelOf(s);
-    if (!D) return s && s.duelInv ? { invite: s.duelInv } : null;
-    const mine = this.duelSide(D, s.data.name),
-      foes = D.sides[mine === 'A' ? 'B' : 'A'];
+  duelPayload(this: CoopCapabilities, session: Session) {
+    const duelState = this.duelOf(session);
+    if (!duelState) return session && session.duelInv ? { invite: session.duelInv } : null;
+    const mine = this.duelSide(duelState, session.data.name),
+      foes = duelState.sides[mine === 'A' ? 'B' : 'A'];
     return {
-      id: D.id,
-      armada: D.armada,
-      on: D.on,
+      id: duelState.id,
+      armada: duelState.armada,
+      on: duelState.on,
       with: foes.length === 1 ? foes[0] : null,
       foes,
-      friends: D.sides[mine!],
-      out: [...D.out],
-      until: D.until,
+      friends: duelState.sides[mine!],
+      out: [...duelState.out],
+      until: duelState.until,
     };
   },
-  duelOp(this: CoopCapabilities, s: Session, m: CoopMessage) {
+  duelOp(this: CoopCapabilities, session2: Session, coopMessage: CoopMessage) {
     if (this.solo) return;
-    const d = s.data,
-      say = (msg: string) => this.toast(s, msg);
-    if (SYS[d.sys] && SYS[d.sys].arena) return say('Not in the Crucible.');
-    switch (m.op) {
+    const playerData = session2.data,
+      announce = (message: string) => this.toast(session2, message);
+    if (systemsById[playerData.sys] && systemsById[playerData.sys].arena)
+      return announce('Not in the Crucible.');
+    switch (coopMessage.op) {
       case 'challenge': {
-        const p = this.db.get(cleanName(m.name)),
-          o = p && this.sessionOf(p.name);
-        if (!o || p === d) return say('Challenge a captain who is online.');
-        if (!s.ent || !o.ent || o.data.sys !== d.sys)
-          return say('Both captains must be flying in the same system.');
-        if (s.duel || o.duel) return say('One of you is already in a duel.');
-        if (this.blocked(p, d.name)) return say(`${p.name} is not taking challenges.`);
-        if (d.armada && d.armada === p.armada)
-          return say('Armada members cannot duel each other. Leave the Armada first.');
-        const armada = !!m.armada;
+        const playerAccount = this.db.get(cleanName(coopMessage.name)),
+          session = playerAccount && this.sessionOf(playerAccount.name);
+        if (!session || playerAccount === playerData)
+          return announce('Challenge a captain who is online.');
+        if (!session2.ent || !session.ent || session.data.sys !== playerData.sys)
+          return announce('Both captains must be flying in the same system.');
+        if (session2.duel || session.duel) return announce('One of you is already in a duel.');
+        if (this.blocked(playerAccount, playerData.name))
+          return announce(`${playerAccount.name} is not taking challenges.`);
+        if (playerData.armada && playerData.armada === playerAccount.armada)
+          return announce('Armada members cannot duel each other. Leave the Armada first.');
+        const armada = !!coopMessage.armada;
         if (armada) {
-          const A = this.armadaOf(d),
-            B = this.armadaOf(p);
-          if (!A || !B)
-            return say('An Armada Duel is between two Armadas: both captains need one.');
+          const armadaState = this.armadaOf(playerData),
+            armadaState2 = this.armadaOf(playerAccount);
+          if (!armadaState || !armadaState2)
+            return announce('An Armada Duel is between two Armadas: both captains need one.');
           if (
-            this.db.key(A.leader) !== this.db.key(d.name) ||
-            this.db.key(B.leader) !== this.db.key(p.name)
+            this.db.key(armadaState.leader) !== this.db.key(playerData.name) ||
+            this.db.key(armadaState2.leader) !== this.db.key(playerAccount.name)
           )
-            return say('Armada Duels are agreed between the two leaders.');
+            return announce('Armada Duels are agreed between the two leaders.');
         }
-        o.duelInv = { from: d.name, armada, t: Date.now() + DUEL.inviteSec * 1000 };
+        session.duelInv = {
+          from: playerData.name,
+          armada,
+          t: Date.now() + DUEL.inviteSec * 1000,
+        };
         this.toast(
-          o,
-          `${d.name} challenges ${armada ? 'your Armada to an Armada Duel' : 'you to a duel'}: a fight to disabled, nothing lost. Accept in the ALLIES tab within ${DUEL.inviteSec} seconds.`,
+          session,
+          `${playerData.name} challenges ${armada ? 'your Armada to an Armada Duel' : 'you to a duel'}: a fight to disabled, nothing lost. Accept in the ALLIES tab within ${DUEL.inviteSec} seconds.`,
         );
-        this.you(o);
-        say(`Challenge sent to ${p.name}.`);
+        this.you(session);
+        announce(`Challenge sent to ${playerAccount.name}.`);
         return;
       }
       case 'accept': {
-        const I = s.duelInv;
-        if (!I || I.t < Date.now()) {
-          s.duelInv = null;
-          this.you(s);
-          return say('That challenge has lapsed.');
+        const duelInvite = session2.duelInv;
+        if (!duelInvite || duelInvite.t < Date.now()) {
+          session2.duelInv = null;
+          this.you(session2);
+          return announce('That challenge has lapsed.');
         }
-        const session = this.sessionOf(I.from);
-        s.duelInv = null;
+        const session = this.sessionOf(duelInvite.from);
+        session2.duelInv = null;
         if (
           !session ||
           !session.ent ||
-          !s.ent ||
-          session.data.sys !== d.sys ||
+          !session2.ent ||
+          session.data.sys !== playerData.sys ||
           session.duel ||
-          s.duel
+          session2.duel
         ) {
-          this.you(s);
-          return say('The challenger is no longer here.');
+          this.you(session2);
+          return announce('The challenger is no longer here.');
         }
-        let A = [session.data.name],
-          B = [d.name];
-        if (I.armada) {
-          const XA = this.armadaOf(session.data),
-            XB = this.armadaOf(d);
-          if (!XA || !XB) return say('Both captains need their Armadas.');
-          const here = (X: ArmadaState) =>
-            X.members
-              .map((n) => this.sessionOf(n))
-              .filter((x): x is Session => Boolean(x && x.ent && x.data.sys === d.sys && !x.duel))
-              .map((x) => x.data.name);
-          A = here(XA);
-          B = here(XB);
+        let firstValue = [session.data.name],
+          secondValue = [playerData.name];
+        if (duelInvite.armada) {
+          const armadaState = this.armadaOf(session.data),
+            armadaState4 = this.armadaOf(playerData);
+          if (!armadaState || !armadaState4) return announce('Both captains need their Armadas.');
+          const here = (armadaState5: ArmadaState) =>
+            armadaState5.members
+              .map((count) => this.sessionOf(count))
+              .filter((session): session is Session =>
+                Boolean(
+                  session && session.ent && session.data.sys === playerData.sys && !session.duel,
+                ),
+              )
+              .map((session) => session.data.name);
+          firstValue = here(armadaState);
+          secondValue = here(armadaState4);
         }
-        const id = 'd' + this.nextCoopId++;
-        const D = (this.duels[id] = {
-          id,
-          armada: !!I.armada,
-          sys: d.sys,
-          sides: { A, B },
+        const identifier = 'd' + this.nextCoopId++;
+        const distance = (this.duels[identifier] = {
+          id: identifier,
+          armada: !!duelInvite.armada,
+          sys: playerData.sys,
+          sides: { A: firstValue, B: secondValue },
           out: new Set(),
           on: false,
           startT: Date.now() + 5000,
           until: Date.now() + 5000 + DUEL.minutes * 60000,
         });
-        for (const n of [...A, ...B]) {
-          const x = this.sessionOf(n);
-          if (x) {
-            x.duel = id;
+        for (const count of [...firstValue, ...secondValue]) {
+          const session = this.sessionOf(count);
+          if (session) {
+            session.duel = identifier;
             this.toast(
-              x,
-              `${D.armada ? 'ARMADA DUEL' : 'DUEL'}: ${A.join(', ')} against ${B.join(', ')}. Weapons free in 5 seconds. It ends at disabled; nobody loses a ship.`,
+              session,
+              `${distance.armada ? 'ARMADA DUEL' : 'DUEL'}: ${firstValue.join(', ')} against ${secondValue.join(', ')}. Weapons free in 5 seconds. It ends at disabled; nobody loses a ship.`,
             );
-            this.you(x);
+            this.you(session);
           }
         }
         return;
       }
       case 'decline':
-        if (s.duelInv) {
-          const session = this.sessionOf(s.duelInv.from);
-          if (session) this.toast(session, `${d.name} declined the challenge.`);
-          s.duelInv = null;
-          this.you(s);
+        if (session2.duelInv) {
+          const session = this.sessionOf(session2.duelInv.from);
+          if (session) this.toast(session, `${playerData.name} declined the challenge.`);
+          session2.duelInv = null;
+          this.you(session2);
         }
         return;
       case 'yield':
-        if (s.duel) this.duelOut(s, 'yielded');
+        if (session2.duel) this.duelOut(session2, 'yielded');
         return;
     }
   },
@@ -1266,196 +1448,219 @@ export const CoopOperations = {
     if (ship.armor > floor) return false;
     ship.armor = floor;
     if (ship === root) {
-      const o = root.player!.s;
-      this.duelOut(o, `was disabled by ${srcRoot.player!.name}`);
+      const session = root.player!.s;
+      this.duelOut(session, `was disabled by ${srcRoot.player!.name}`);
     }
     return true;
   },
-  duelOut(this: CoopCapabilities, s: Session, why: string) {
-    const D = this.duelOf(s);
-    if (!D) return;
-    const k = this.db.key(s.data.name);
-    if (!D.out.has(k)) {
-      D.out.add(k);
-      this.duelSay(D, `${s.data.name} ${why}.`);
+  duelOut(this: CoopCapabilities, session: Session, reason: string) {
+    const duelState = this.duelOf(session);
+    if (!duelState) return;
+    const entryKey = this.db.key(session.data.name);
+    if (!duelState.out.has(entryKey)) {
+      duelState.out.add(entryKey);
+      this.duelSay(duelState, `${session.data.name} ${reason}.`);
     }
-    s.duel = null;
-    this.you(s);
-    const alive = (side: 'A' | 'B') => D.sides[side].filter((n) => !D.out.has(this.db.key(n)));
-    if (!alive('A').length || !alive('B').length) this.duelEnd(D, !alive('A').length ? 'B' : 'A');
+    session.duel = null;
+    this.you(session);
+    const alive = (side: 'A' | 'B') =>
+      duelState.sides[side].filter((count) => !duelState.out.has(this.db.key(count)));
+    if (!alive('A').length || !alive('B').length)
+      this.duelEnd(duelState, !alive('A').length ? 'B' : 'A');
   },
-  duelSay(this: CoopCapabilities, D: DuelState, msg: string) {
-    for (const n of [...D.sides.A, ...D.sides.B]) {
-      const session = this.sessionOf(n);
-      if (session) this.toast(session, msg);
+  duelSay(this: CoopCapabilities, duelState: DuelState, message: string) {
+    for (const count of [...duelState.sides.A, ...duelState.sides.B]) {
+      const session = this.sessionOf(count);
+      if (session) this.toast(session, message);
     }
   },
-  duelEnd(this: CoopCapabilities, D: DuelState, win: 'A' | 'B' | null) {
-    if (!this.duels[D.id]) return;
-    delete this.duels[D.id];
-    const names = (side: 'A' | 'B') => D.sides[side].join(', ');
-    const msg = win
-      ? `${D.armada ? 'Armada Duel' : 'Duel'} won by ${names(win)} against ${names(win === 'A' ? 'B' : 'A')}.`
-      : `The ${D.armada ? 'Armada Duel' : 'duel'} between ${names('A')} and ${names('B')} ended in a draw.`;
-    for (const n of [...D.sides.A, ...D.sides.B]) {
-      const session = this.sessionOf(n);
-      const p = this.db.get(n);
-      if (p) {
-        p.duels = p.duels || { w: 0, l: 0, d: 0 };
-        const side = this.duelSide(D, n);
-        p.duels[!win ? 'd' : side === win ? 'w' : 'l']++;
+  duelEnd(this: CoopCapabilities, duelState: DuelState, window: 'A' | 'B' | null) {
+    if (!this.duels[duelState.id]) return;
+    delete this.duels[duelState.id];
+    const names = (side: 'A' | 'B') => duelState.sides[side].join(', ');
+    const message = window
+      ? `${duelState.armada ? 'Armada Duel' : 'Duel'} won by ${names(window)} against ${names(window === 'A' ? 'B' : 'A')}.`
+      : `The ${duelState.armada ? 'Armada Duel' : 'duel'} between ${names('A')} and ${names('B')} ended in a draw.`;
+    for (const count of [...duelState.sides.A, ...duelState.sides.B]) {
+      const session = this.sessionOf(count);
+      const playerAccount = this.db.get(count);
+      if (playerAccount) {
+        playerAccount.duels = playerAccount.duels || { w: 0, l: 0, d: 0 };
+        const side = this.duelSide(duelState, count);
+        playerAccount.duels[!window ? 'd' : side === window ? 'w' : 'l']++;
       }
       if (session) {
-        if (session.duel === D.id) session.duel = null;
-        this.toast(session, msg);
+        if (session.duel === duelState.id) session.duel = null;
+        this.toast(session, message);
         this.you(session);
       }
     }
     this.broadcast(
-      { t: 'chat', from: '', msg, ch: 'sys', sys: D.sys },
-      (o) => o.data.sys === D.sys,
+      { t: 'chat', from: '', msg: message, ch: 'sys', sys: duelState.sys },
+      (session) => session.data.sys === duelState.sys,
     );
   },
   duelTick(this: CoopCapabilities) {
-    const now = Date.now();
-    for (const D of Object.values(this.duels)) {
-      if (!D.on && now >= D.startT) {
-        D.on = true;
-        this.duelSay(D, 'Weapons free!');
-        for (const n of [...D.sides.A, ...D.sides.B]) {
-          const session = this.sessionOf(n);
+    const currentTime = Date.now();
+    for (const duelState of Object.values(this.duels)) {
+      if (!duelState.on && currentTime >= duelState.startT) {
+        duelState.on = true;
+        this.duelSay(duelState, 'Weapons free!');
+        for (const count of [...duelState.sides.A, ...duelState.sides.B]) {
+          const session = this.sessionOf(count);
           if (session) this.you(session);
         }
       }
-      for (const n of [...D.sides.A, ...D.sides.B]) {
-        if (D.out.has(this.db.key(n))) continue;
-        const session = this.sessionOf(n);
-        if (!session || !session.ent || session.data.sys !== D.sys) {
+      for (const count of [...duelState.sides.A, ...duelState.sides.B]) {
+        if (duelState.out.has(this.db.key(count))) continue;
+        const session = this.sessionOf(count);
+        if (!session || !session.ent || session.data.sys !== duelState.sys) {
           if (session) this.duelOut(session, 'left the fight');
           else {
-            D.out.add(this.db.key(n));
+            duelState.out.add(this.db.key(count));
           }
         }
       }
-      if (!this.duels[D.id]) continue;
-      if (now > D.until) this.duelEnd(D, null);
+      if (!this.duels[duelState.id]) continue;
+      if (currentTime > duelState.until) this.duelEnd(duelState, null);
     }
-    for (const o of this.sessions.values())
-      if (o.duelInv && o.duelInv.t < now) {
-        o.duelInv = null;
-        this.you(o);
+    for (const session of this.sessions.values())
+      if (session.duelInv && session.duelInv.t < currentTime) {
+        session.duelInv = null;
+        this.you(session);
       }
   },
 
   // ------------------------------------------------------------------ Armada rescue: a downed captain waits for a member to board them
-  rescueHold(this: CoopCapabilities, e: Entity, by: Entity | null, space: Space) {
-    if (this.solo || !e.player || space.sys.arena || e.rescueT) return false;
-    const s = e.player.s,
-      d = s && s.data;
-    if (!d || !d.armada) return false;
+  rescueHold(this: CoopCapabilities, entity: Entity, entity2: Entity | null, space: Space) {
+    if (this.solo || !entity.player || space.sys.arena || entity.rescueT) return false;
+    const session = entity.player.s,
+      playerData = session && session.data;
+    if (!playerData || !playerData.armada) return false;
     const mates = [...this.sessions.values()].filter(
-      (o) => o !== s && o.data && o.data.armada === d.armada && o.ent && o.data.sys === d.sys,
+      (session3) =>
+        session3 !== session &&
+        session3.data &&
+        session3.data.armada === playerData.armada &&
+        session3.ent &&
+        session3.data.sys === playerData.sys,
     );
     if (!mates.length) return false;
-    e.armor = 1;
-    e.shield = 0;
-    e.disabled = true;
-    e.inp = { thrust: 0, turn: 0 };
-    e.rescueT = space.t + RESCUE.windowSec;
-    e.disT = space.t;
+    entity.armor = 1;
+    entity.shield = 0;
+    entity.disabled = true;
+    entity.inp = { thrust: 0, turn: 0 };
+    entity.rescueT = space.t + RESCUE.windowSec;
+    entity.disT = space.t;
     this.toast(
-      s,
+      session,
       `Your ship is disabled! An Armada member can board you (B) within ${RESCUE.windowSec} seconds to patch you up. Nobody can fire on you meanwhile.`,
     );
-    for (const o of mates) {
+    for (const session3 of mates) {
       this.toast(
-        o,
-        `${d.name} is disabled in this system! Fly alongside, target them and board (B) to patch them up within ${RESCUE.windowSec} seconds.`,
+        session3,
+        `${playerData.name} is disabled in this system! Fly alongside, target them and board (B) to patch them up within ${RESCUE.windowSec} seconds.`,
       );
-      this.notify(o, 'Armada captain down', `${d.name} needs a rescue.`);
+      this.notify(session3, 'Armada captain down', `${playerData.name} needs a rescue.`);
     }
     return true;
   },
-  rescueBoard(this: CoopCapabilities, s: Session, t: Entity) {
-    const d = s.data,
-      e = s.ent!,
-      sp = this.spaces[d.sys];
-    if (!t.rescueT || t.rescueT < sp.t || !t.player || !t.player.s || !t.player.s.data)
-      return this.toast(s, 'Only disabled ships can be boarded.');
-    if (!d.armada || t.player.s.data.armada !== d.armada)
-      return this.toast(s, "Only their Armada can board a captain's ship.");
-    const dist = Math.hypot(t.x - e.x, t.y - e.y),
-      rel = Math.hypot(t.vx - e.vx, t.vy - e.vy);
-    if (dist > Math.max(120, (t.st.size + e.st.size) * 0.5))
-      return this.toast(s, 'Move alongside to board.');
-    if (rel > 90) return this.toast(s, 'Match speed to board.');
-    t.disabled = false;
-    t.rescueT = 0;
-    t.armor = Math.max(t.armor, t.st.armor * RESCUE.repair);
-    t.graceT = sp.t + 4;
-    d.stats.rescues = (d.stats.rescues || 0) + 1;
-    this.officerXp(s, 20);
-    this.toast(s, `You patched up ${t.player.name}'s ship.`);
-    this.toast(t.player.s, `${d.name} boarded and patched you up. Back in the fight!`);
-    this.log(d, `Rescued ${t.player.name} in ${SYS[d.sys].name}.`);
-    this.log(t.player.s.data, `${d.name} rescued you in ${SYS[d.sys].name}.`);
+  rescueBoard(this: CoopCapabilities, session: Session, entity: Entity) {
+    const playerData = session.data,
+      entity2 = session.ent!,
+      space = this.spaces[playerData.sys];
+    if (
+      !entity.rescueT ||
+      entity.rescueT < space.t ||
+      !entity.player ||
+      !entity.player.s ||
+      !entity.player.s.data
+    )
+      return this.toast(session, 'Only disabled ships can be boarded.');
+    if (!playerData.armada || entity.player.s.data.armada !== playerData.armada)
+      return this.toast(session, "Only their Armada can board a captain's ship.");
+    const distance = Math.hypot(entity.x - entity2.x, entity.y - entity2.y),
+      relative = Math.hypot(entity.vx - entity2.vx, entity.vy - entity2.vy);
+    if (distance > Math.max(120, (entity.st.size + entity2.st.size) * 0.5))
+      return this.toast(session, 'Move alongside to board.');
+    if (relative > 90) return this.toast(session, 'Match speed to board.');
+    entity.disabled = false;
+    entity.rescueT = 0;
+    entity.armor = Math.max(entity.armor, entity.st.armor * RESCUE.repair);
+    entity.graceT = space.t + 4;
+    playerData.stats.rescues = (playerData.stats.rescues || 0) + 1;
+    this.officerXp(session, 20);
+    this.toast(session, `You patched up ${entity.player.name}'s ship.`);
+    this.toast(
+      entity.player.s,
+      `${playerData.name} boarded and patched you up. Back in the fight!`,
+    );
+    this.log(playerData, `Rescued ${entity.player.name} in ${systemsById[playerData.sys].name}.`);
+    this.log(
+      entity.player.s.data,
+      `${playerData.name} rescued you in ${systemsById[playerData.sys].name}.`,
+    );
     this.db.touch();
-    this.you(s);
+    this.you(session);
   },
   rescueTick(this: CoopCapabilities) {
-    for (const sp of Object.values(this.live))
+    for (const space of Object.values(this.live))
       // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
-      for (const e of [...sp.ships.values()])
-        if (e.player && e.rescueT && sp.t > e.rescueT) {
-          e.rescueT = 0;
-          e.disabled = false;
-          e.armor = 0;
-          this.toast(e.player.s, 'Nobody reached you in time. The insurers take over.');
-          sp.kill(e, null);
+      for (const entity of [...space.ships.values()])
+        if (entity.player && entity.rescueT && space.t > entity.rescueT) {
+          entity.rescueT = 0;
+          entity.disabled = false;
+          entity.armor = 0;
+          this.toast(entity.player.s, 'Nobody reached you in time. The insurers take over.');
+          space.kill(entity, null);
         }
   },
 
   // ------------------------------------------------------------------ co-op Holdout: helpers from the host's Armada
-  holdoutHelpers(this: CoopCapabilities, d: PlayerData, site: StellarBody) {
-    if (this.solo || !d.armada) return [];
+  holdoutHelpers(this: CoopCapabilities, playerData: PlayerData, site: StellarBody) {
+    if (this.solo || !playerData.armada) return [];
     return [...this.sessions.values()].filter(
-      (o) =>
-        o.data && o.data !== d && o.data.armada === d.armada && o.ent && o.data.sys === site.system,
+      (session) =>
+        session.data &&
+        session.data !== playerData &&
+        session.data.armada === playerData.armada &&
+        session.ent &&
+        session.data.sys === site.system,
     );
   },
-  holdoutAnnounce(this: CoopCapabilities, s: Session) {
-    const d = s.data,
-      A = this.armadaOf(d);
-    if (!A) return;
-    const site = STELLARS[d.station.site!];
+  holdoutAnnounce(this: CoopCapabilities, session: Session) {
+    const playerData = session.data,
+      armadaState = this.armadaOf(playerData);
+    if (!armadaState) return;
+    const site = STELLARS[playerData.station.site!];
     this.armadaChat(
-      A,
-      `${d.name} started a Station Holdout at their station in ${SYS[site.system].name}. Fly in to help: every helper shares the rewards.`,
-      d.name,
+      armadaState,
+      `${playerData.name} started a Station Holdout at their station in ${systemsById[site.system].name}. Fly in to help: every helper shares the rewards.`,
+      playerData.name,
     );
   },
   holdoutReward(
     this: CoopCapabilities,
     host: PlayerData,
-    H: SavedHoldoutRun,
-    n: number,
-    won: boolean,
-    R: { credits: number; grade: number },
+    savedHoldoutRun: SavedHoldoutRun,
+    count: number,
+    hasWon: boolean,
+    radius: { credits: number; grade: number },
   ) {
     const site = STELLARS[host.station.site!];
-    for (const name of H.helpers || []) {
+    for (const name of savedHoldoutRun.helpers || []) {
       const session = this.sessionOf(name);
       if (!session || !session.ent || session.data.sys !== site.system) continue;
       const playerData = session.data,
-        cr = Math.round(R.credits * COOP_HOLDOUT.helperShare),
-        mt = MATERIALS[Math.floor(Math.random() * 3)];
-      playerData.credits += cr;
-      playerData.stats.earned += cr;
-      playerData.mats[mt][R.grade]++;
+        credits2 = Math.round(radius.credits * COOP_HOLDOUT.helperShare),
+        materials = MATERIALS[Math.floor(Math.random() * 3)];
+      playerData.credits += credits2;
+      playerData.stats.earned += credits2;
+      playerData.mats[materials][radius.grade]++;
       playerData.bp = playerData.bp || {};
-      const msg = `Holdout at ${host.name}'s station ${won ? 'WON' : `over after ${n} wave${n > 1 ? 's' : ''}`}. Your share: ${credits(cr)} cr and a ${mt} ${GRADES[R.grade]} crate.`;
-      this.toast(session, msg);
-      this.log(playerData, msg);
+      const message = `Holdout at ${host.name}'s station ${hasWon ? 'WON' : `over after ${count} wave${count > 1 ? 's' : ''}`}. Your share: ${credits(credits2)} cr and a ${materials} ${GRADES[radius.grade]} crate.`;
+      this.toast(session, message);
+      this.log(playerData, message);
       this.you(session);
     }
   },
@@ -1463,88 +1668,95 @@ export const CoopOperations = {
   // ------------------------------------------------------------------ Armada contracts (group kingpins in the old refits)
   coopOffers(
     this: CoopCapabilities,
-    p: StellarBody,
-    d: PlayerData,
-    r: () => number,
+    stellarBody: StellarBody,
+    playerData: PlayerData,
+    radius: () => number,
     near: Array<[string, number]>,
-    win: number,
+    window: number,
   ) {
     if (this.solo || !near.length) return [];
-    const [sys, jumps] = near[Math.floor(r() * near.length)],
-      S = SYS[sys];
-    const nm = WARBAND.names[Math.floor(r() * WARBAND.names.length)],
-      lead = WARBAND.leads[Math.floor(r() * WARBAND.leads.length)];
+    const [starSystem, jumps] = near[Math.floor(radius() * near.length)],
+      starSystem2 = systemsById[starSystem];
+    const name2 = WARBAND.names[Math.floor(radius() * WARBAND.names.length)],
+      lead = WARBAND.leads[Math.floor(radius() * WARBAND.leads.length)];
     if (!this.A.ships[lead]) return [];
     return [
       {
-        id: `${p.id}-${win}-wb`,
+        id: `${stellarBody.id}-${window}-wb`,
         type: 'warband',
-        title: `ARMADA CONTRACT: ${nm}`,
-        sys,
+        title: `ARMADA CONTRACT: ${name2}`,
+        sys: starSystem,
         hull: lead,
         faction: 'hollow',
-        targetName: nm,
-        reward: Math.round(WARBAND.rewardBase + S.danger * WARBAND.rewardDanger + jumps * 4000),
-        text: `${nm} deserted with a squadron of the Concord's old refits and holds the ${S.name} system in a ${this.A.ships[lead].name}. Too much for one ship: this contract needs an Armada of ${WARBAND.minMembers} or more. Choose your team before starting. Only captains who agree join and share the contract pool.`,
+        targetName: name2,
+        reward: Math.round(
+          WARBAND.rewardBase + starSystem2.danger * WARBAND.rewardDanger + jumps * 4000,
+        ),
+        text: `${name2} deserted with a squadron of the Concord's old refits and holds the ${starSystem2.name} system in a ${this.A.ships[lead].name}. Too much for one ship: this contract needs an Armada of ${WARBAND.minMembers} or more. Choose your team before starting. Only captains who agree join and share the contract pool.`,
       },
     ];
   },
-  warbandAccept(this: CoopCapabilities, s: Session, o: Mission) {
-    return proposeContract(this, s, o);
+  warbandAccept(this: CoopCapabilities, session: Session, mission: Mission) {
+    return proposeContract(this, session, mission);
   },
-  warbandArrive(this: CoopCapabilities, s: Session, sp: Space) {
-    for (const m of s.data.missions) {
-      if (m.type !== 'warband' || m.done || m.sys !== s.data.sys) continue;
-      if ([...sp.ships.values()].some((x) => x.kingpin === m.id)) continue;
-      const members = Math.max(1, (this.armadaNear(s.data) || 0) + 1),
-        pct = (members - 1) * WARBAND.pctPerMember;
-      const t = sp.spawnMissionTarget({ ...m, owner: s.id })!;
-      t.kingpin = m.id;
-      if (m.offerVersion === 1 && Array.isArray(m.team)) t.contractTeam = [...m.team];
-      t.noDisable = true;
-      if (pct) {
-        t.st.shield *= 1 + pct / 100;
-        t.st.armor *= 1 + pct / 100;
-        t.shield = t.st.shield;
-        t.armor = t.st.armor;
+  warbandArrive(this: CoopCapabilities, session: Session, space: Space) {
+    for (const mission of session.data.missions) {
+      if (mission.type !== 'warband' || mission.done || mission.sys !== session.data.sys) continue;
+      if ([...space.ships.values()].some((entity) => entity.kingpin === mission.id)) continue;
+      const members = Math.max(1, (this.armadaNear(session.data) || 0) + 1),
+        percentage = (members - 1) * WARBAND.pctPerMember;
+      const entity = space.spawnMissionTarget({ ...mission, owner: session.id })!;
+      entity.kingpin = mission.id;
+      if (mission.offerVersion === 1 && Array.isArray(mission.team))
+        entity.contractTeam = [...mission.team];
+      entity.noDisable = true;
+      if (percentage) {
+        entity.st.shield *= 1 + percentage / 100;
+        entity.st.armor *= 1 + percentage / 100;
+        entity.shield = entity.st.shield;
+        entity.armor = entity.st.armor;
       }
-      const n = WARBAND.guardsBase + members * WARBAND.guardsPerMember;
-      for (let i = 0; i < n; i++) {
-        const h = WARBAND.guards[i % WARBAND.guards.length],
-          a = (i / n) * Math.PI * 2;
-        const g = sp.makeShip({
-          hull: h,
+      const count = WARBAND.guardsBase + members * WARBAND.guardsPerMember;
+      for (let index = 0; index < count; index++) {
+        const guard = WARBAND.guards[index % WARBAND.guards.length],
+          firstValue = (index / count) * Math.PI * 2;
+        const entity2 = space.makeShip({
+          hull: guard,
           faction: 'hollow',
-          x: t.x + Math.cos(a) * 160,
-          y: t.y + Math.sin(a) * 160,
+          x: entity.x + Math.cos(firstValue) * 160,
+          y: entity.y + Math.sin(firstValue) * 160,
           ai: 'escort',
-          owner: t.id,
-          name: `${m.targetName}'s ${this.A.ships[h].name}`,
-          bonus: { shieldPct: pct * 0.5, armorPct: pct * 0.5 },
+          owner: entity.id,
+          name: `${mission.targetName}'s ${this.A.ships[guard].name}`,
+          bonus: { shieldPct: percentage * 0.5, armorPct: percentage * 0.5 },
         });
-        g.life = 1e9;
-        g.kingpinGuard = m.id;
+        entity2.life = 1e9;
+        entity2.kingpinGuard = mission.id;
       }
-      for (const o of this.sessions.values())
-        if (o.data && o.data.sys === s.data.sys && o.data.missions.some((x) => x.id === m.id))
+      for (const session3 of this.sessions.values())
+        if (
+          session3.data &&
+          session3.data.sys === session.data.sys &&
+          session3.data.missions.some((mission2) => mission2.id === mission.id)
+        )
           this.toast(
-            o,
-            `${m.targetName} is here in a ${this.A.ships[m.hull!].name}, with ${n} refitted escorts.`,
+            session3,
+            `${mission.targetName} is here in a ${this.A.ships[mission.hull!].name}, with ${count} refitted escorts.`,
           );
     }
   },
-  warbandDown(this: CoopCapabilities, npc: Entity) {
-    if (completeTeamContract(this, npc)) return;
-    for (const o of this.sessions.values())
-      if (o.data)
-        for (const m of o.data.missions)
-          if (m.type === 'warband' && m.id === npc.kingpin && !m.done) {
-            m.done = true;
+  warbandDown(this: CoopCapabilities, entity: Entity) {
+    if (completeTeamContract(this, entity)) return;
+    for (const session of this.sessions.values())
+      if (session.data)
+        for (const mission of session.data.missions)
+          if (mission.type === 'warband' && mission.id === entity.kingpin && !mission.done) {
+            mission.done = true;
             this.toast(
-              o,
-              `Armada contract complete: ${m.targetName} is finished. Land anywhere to collect your ${credits(m.reward)} credits.`,
+              session,
+              `Armada contract complete: ${mission.targetName} is finished. Land anywhere to collect your ${credits(mission.reward)} credits.`,
             );
-            this.you(o);
+            this.you(session);
           }
   },
 
@@ -1552,29 +1764,31 @@ export const CoopOperations = {
   coopTick(this: CoopCapabilities) {
     if (this.solo) return;
     cleanContractPlans(this);
-    const now = Date.now(),
-      W = this.db.world;
-    for (const A of Object.values(W.armadas)) {
-      for (const [k, t] of Object.entries(A.invites || {})) if (t < now) delete A.invites[k];
-      const online = A.members.some((n) => this.sessionOf(n));
-      if (online) A.emptyT = 0;
-      else if (!A.emptyT) A.emptyT = now;
-      else if (now - A.emptyT > ARMADA.idleMin * 60000) {
-        for (const n of A.members) {
-          const p = this.db.get(n);
-          if (p && p.armada === A.id) {
-            p.armada = null;
-            p.armadaFollow = false;
+    const currentTime = Date.now(),
+      worldData = this.db.world;
+    for (const armadaState of Object.values(worldData.armadas)) {
+      for (const [entryKey, time] of Object.entries(armadaState.invites || {}))
+        if (time < currentTime) delete armadaState.invites[entryKey];
+      const online = armadaState.members.some((count) => this.sessionOf(count));
+      if (online) armadaState.emptyT = 0;
+      else if (!armadaState.emptyT) armadaState.emptyT = currentTime;
+      else if (currentTime - armadaState.emptyT > ARMADA.idleMin * 60000) {
+        for (const member of armadaState.members) {
+          const playerAccount = this.db.get(member);
+          if (playerAccount && playerAccount.armada === armadaState.id) {
+            playerAccount.armada = null;
+            playerAccount.armadaFollow = false;
           }
         }
-        delete W.armadas[A.id];
+        delete worldData.armadas[armadaState.id];
         this.db.touch();
         continue;
       }
-      this.armadaRefresh(A);
+      this.armadaRefresh(armadaState);
     }
-    for (const T of Object.values(this.trades))
-      if (now - T.t > TRADE.idleMin * 60000) this.tradeCancel(T.id, 'The trade timed out.');
+    for (const tradeState of Object.values(this.trades))
+      if (currentTime - tradeState.t > TRADE.idleMin * 60000)
+        this.tradeCancel(tradeState.id, 'The trade timed out.');
     this.duelTick();
     this.rescueTick();
   },

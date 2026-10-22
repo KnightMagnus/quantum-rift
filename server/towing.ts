@@ -1,14 +1,16 @@
 import type { RefineryPlayer } from './refinery-contracts.ts';
 import type { Space } from './space.ts';
 import type { TowRequest } from './towing-contracts.ts';
-export type C = import('./towing-contracts.ts').TowCapabilities;
-export type W = import('./towing-contracts.ts').TowWorld;
+type TowCapabilities2 = import('./towing-contracts.ts').TowCapabilities;
+export type { TowCapabilities2 as C };
+type TowWorld2 = import('./towing-contracts.ts').TowWorld;
+export type { TowWorld2 as W };
 export type ObjectRecord = import('./towing-contracts.ts').Motherlode;
 export type Session = import('./towing-contracts.ts').Session;
 
 // @ts-check
-import { SYS, STELLARS } from '../shared/galaxy.ts';
-import { TOW, towSpeed } from '../shared/towing-rules.ts';
+import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
+import { TOW as towingRules, towSpeed } from '../shared/towing-rules.ts';
 import { addLots, assertLots } from '../shared/cargo-lots.ts';
 
 /** @import { RefineryPlayer } from './refinery-contracts.ts' */
@@ -22,33 +24,36 @@ class DeliveryHoldFull extends Error {}
 /** @type {WeakMap<Session, string>} */
 const deliveryNotices: WeakMap<Session, string> = new WeakMap();
 /** @param {C} capabilities @returns {W} */
-function state(capabilities: C): W {
-  const w = capabilities.db.world.towing;
-  if (!w) throw Error('Towing unavailable');
-  return w;
+function state(capabilities: TowCapabilities2): TowWorld2 {
+  const towWorld = capabilities.db.world.towing;
+  if (!towWorld) throw Error('Towing unavailable');
+  return towWorld;
 }
 /** @param {C} capabilities */
-function now(capabilities: C) {
+function currentTime(capabilities: TowCapabilities2) {
   return capabilities.db.world.mining?.clock || 0;
 }
 /** @param {C} capabilities @param {Session} session */
-function key(capabilities: C, session: Session) {
+function entryKey2(capabilities: TowCapabilities2, session: Session) {
   return capabilities.db.key(session.data.name);
 }
-/** @param {ObjectRecord} o */
-function active(o: ObjectRecord) {
-  return o.status === 'attached';
+/** @param {ObjectRecord} motherlode */
+function active(motherlode: ObjectRecord) {
+  return motherlode.status === 'attached';
 }
 /** @param {C} capabilities @param {Session} session */
-function attached(capabilities: C, session: Session) {
+function attached(capabilities: TowCapabilities2, session: Session) {
   return state(capabilities)
-    .slots.map((x) => x.object)
-    .find((o) => o && active(o) && o.owner === key(capabilities, session));
+    .slots.map((towSlot) => towSlot.object)
+    .find(
+      (motherlode) =>
+        motherlode && active(motherlode) && motherlode.owner === entryKey2(capabilities, session),
+    );
 }
 /** @param {C} capabilities @param {Session} session */
-function flight(capabilities: C, session: Session) {
+function flight(capabilities: TowCapabilities2, session: Session) {
   const entity = session.ent,
-    st = capabilities.stats(session.data);
+    computedShipStats = capabilities.stats(session.data);
   if (
     capabilities.paused() ||
     capabilities.db.economicFrozen ||
@@ -61,155 +66,175 @@ function flight(capabilities: C, session: Session) {
     throw Error('Towing requires a living active flight and recovered economy');
   if (
     !session.data.ship.uid ||
-    !st?.towRig ||
-    st.cargo < TOW.minCargo ||
+    !computedShipStats?.towRig ||
+    computedShipStats.cargo < towingRules.minCargo ||
     entity.fighterOf ||
     entity.wormExit
   )
     throw Error('Fit a Tow Rig on a cargo hull of at least 60t (stock Dredge included)');
   return entity;
 }
-/** @param {W} w */
-function validate(w: W) {
+/** @param {W} towWorld */
+function validate(towWorld: TowWorld2) {
   if (
-    w.version !== 1 ||
-    !Number.isSafeInteger(w.nextId) ||
-    w.nextId < 1 ||
-    !Array.isArray(w.slots) ||
-    !Array.isArray(w.receipts) ||
-    !Array.isArray(w.offers) ||
-    w.receipts.length > TOW.receiptLimit ||
-    w.offers.length > w.slots.length
+    towWorld.version !== 1 ||
+    !Number.isSafeInteger(towWorld.nextId) ||
+    towWorld.nextId < 1 ||
+    !Array.isArray(towWorld.slots) ||
+    !Array.isArray(towWorld.receipts) ||
+    !Array.isArray(towWorld.offers) ||
+    towWorld.receipts.length > towingRules.receiptLimit ||
+    towWorld.offers.length > towWorld.slots.length
   )
     throw Error('Invalid towing schema');
-  const ids = new Set(),
+  const identifiers = new Set(),
     owners = new Set(),
     ships = new Set(),
     keys = new Set();
-  for (const slot of w.slots) {
+  for (const slot of towWorld.slots) {
     if (
       keys.has(slot.key) ||
-      !SYS[slot.sys]?.fields?.[slot.field] ||
+      !systemsById[slot.sys]?.fields?.[slot.field] ||
       slot.key !== `${slot.sys}:${slot.field}` ||
       !Number.isSafeInteger(slot.field) ||
       slot.field < 0 ||
       slot.field >= 3 ||
-      slot.issued !== slot.epoch * TOW.mass ||
+      slot.issued !== slot.epoch * towingRules.mass ||
       ![slot.epoch, slot.issued, slot.delivered, slot.discarded].every(
-        (n) => Number.isSafeInteger(n) && n >= 0,
+        (count) => Number.isSafeInteger(count) && count >= 0,
       ) ||
       !Number.isFinite(slot.nextAt) ||
       slot.nextAt < 0
     )
       throw Error('Invalid tow source');
     keys.add(slot.key);
-    const o = slot.object;
+    const motherlode = slot.object;
     let reserved = 0;
-    if (o) {
+    if (motherlode) {
       if (
-        !Number.isSafeInteger(o.id) ||
-        o.id < 1 ||
-        o.id >= w.nextId ||
-        ids.has(o.id) ||
-        o.epoch !== slot.epoch ||
-        o.epoch < 1 ||
-        o.slot !== slot.key ||
-        o.sys !== slot.sys ||
-        o.mass !== TOW.mass ||
-        !['ore', 'gas', 'shards'].includes(o.ore) ||
-        !['available', 'attached', 'detached', 'delivered', 'destroyed'].includes(o.status) ||
-        !Number.isSafeInteger(o.revision) ||
-        o.revision < 1 ||
-        !Number.isFinite(o.graceUntil) ||
-        o.graceUntil < 0 ||
-        ![o.x, o.y, o.vx, o.vy, o.hp].every(Number.isFinite) ||
-        o.hp < 0 ||
-        o.hp > 100 ||
-        !Array.isArray(o.acceptPorts) ||
-        !o.acceptPorts.length ||
-        o.acceptPorts.some((p) => STELLARS[p]?.system !== o.sys || !STELLARS[p]?.svc?.includes('L'))
+        !Number.isSafeInteger(motherlode.id) ||
+        motherlode.id < 1 ||
+        motherlode.id >= towWorld.nextId ||
+        identifiers.has(motherlode.id) ||
+        motherlode.epoch !== slot.epoch ||
+        motherlode.epoch < 1 ||
+        motherlode.slot !== slot.key ||
+        motherlode.sys !== slot.sys ||
+        motherlode.mass !== towingRules.mass ||
+        !['ore', 'gas', 'shards'].includes(motherlode.ore) ||
+        !['available', 'attached', 'detached', 'delivered', 'destroyed'].includes(
+          motherlode.status,
+        ) ||
+        !Number.isSafeInteger(motherlode.revision) ||
+        motherlode.revision < 1 ||
+        !Number.isFinite(motherlode.graceUntil) ||
+        motherlode.graceUntil < 0 ||
+        ![motherlode.x, motherlode.y, motherlode.vx, motherlode.vy, motherlode.hp].every(
+          Number.isFinite,
+        ) ||
+        motherlode.hp < 0 ||
+        motherlode.hp > 100 ||
+        !Array.isArray(motherlode.acceptPorts) ||
+        !motherlode.acceptPorts.length ||
+        motherlode.acceptPorts.some(
+          (position) =>
+            STELLARS[position]?.system !== motherlode.sys ||
+            !STELLARS[position]?.svc?.includes('L'),
+        )
       )
         throw Error('Invalid motherlode');
       if (
-        !o.lots ||
-        Object.keys(o.lots).sort().join() !== 'common,pure,rich' ||
-        Object.values(o.lots).some((n) => !Number.isSafeInteger(n) || n < 0) ||
-        Object.values(o.lots).reduce((a, b) => a + b, 0) !== o.mass
+        !motherlode.lots ||
+        Object.keys(motherlode.lots).sort().join() !== 'common,pure,rich' ||
+        Object.values(motherlode.lots).some((count) => !Number.isSafeInteger(count) || count < 0) ||
+        Object.values(motherlode.lots).reduce(
+          (firstValue, secondValue) => firstValue + secondValue,
+          0,
+        ) !== motherlode.mass
       )
         throw Error('Invalid motherlode mass/grades');
       if (
-        (o.owner !== null &&
-          (typeof o.owner !== 'string' || !o.owner || o.owner !== o.owner.trim().toLowerCase())) ||
-        (o.ship !== null && (typeof o.ship !== 'string' || !o.ship))
+        (motherlode.owner !== null &&
+          (typeof motherlode.owner !== 'string' ||
+            !motherlode.owner ||
+            motherlode.owner !== motherlode.owner.trim().toLowerCase())) ||
+        (motherlode.ship !== null && (typeof motherlode.ship !== 'string' || !motherlode.ship))
       )
         throw Error('Invalid tow identity');
-      if (active(o)) {
+      if (active(motherlode)) {
         if (
-          !o.owner ||
-          !o.ship ||
-          o.graceUntil !== 0 ||
-          owners.has(o.owner) ||
-          ships.has(o.owner + ':' + o.ship)
+          !motherlode.owner ||
+          !motherlode.ship ||
+          motherlode.graceUntil !== 0 ||
+          owners.has(motherlode.owner) ||
+          ships.has(motherlode.owner + ':' + motherlode.ship)
         )
           throw Error('Duplicate tow owner/hull');
-        owners.add(o.owner);
-        ships.add(o.owner + ':' + o.ship);
+        owners.add(motherlode.owner);
+        ships.add(motherlode.owner + ':' + motherlode.ship);
       }
-      if (o.status === 'available' && (o.owner !== null || o.ship !== null || o.graceUntil !== 0))
-        throw Error('Invalid available owner');
-      if (o.status === 'detached' && (!o.owner || !o.ship)) throw Error('Invalid detached owner');
       if (
-        (o.status === 'delivered' || o.status === 'destroyed') &&
-        o.hp !== (o.status === 'destroyed' ? 0 : 100)
+        motherlode.status === 'available' &&
+        (motherlode.owner !== null || motherlode.ship !== null || motherlode.graceUntil !== 0)
+      )
+        throw Error('Invalid available owner');
+      if (motherlode.status === 'detached' && (!motherlode.owner || !motherlode.ship))
+        throw Error('Invalid detached owner');
+      if (
+        (motherlode.status === 'delivered' || motherlode.status === 'destroyed') &&
+        motherlode.hp !== (motherlode.status === 'destroyed' ? 0 : 100)
       )
         throw Error('Invalid terminal object');
-      ids.add(o.id);
-      if (!['delivered', 'destroyed'].includes(o.status)) reserved = o.mass;
+      identifiers.add(motherlode.id);
+      if (!['delivered', 'destroyed'].includes(motherlode.status)) reserved = motherlode.mass;
     }
     if (slot.issued !== slot.delivered + slot.discarded + reserved)
       throw Error('Tow source conservation failure');
   }
   const receipts = new Set();
-  for (const r of w.receipts) {
+  for (const towReceipt of towWorld.receipts) {
     if (
-      !Number.isSafeInteger(r.id) ||
-      r.id < 1 ||
-      r.id >= w.nextId ||
-      receipts.has(r.id) ||
-      typeof r.owner !== 'string' ||
-      !r.owner ||
-      r.owner !== r.owner.trim().toLowerCase() ||
-      !STELLARS[r.port] ||
-      !['ore', 'gas', 'shards'].includes(r.ore) ||
-      r.mass !== TOW.mass ||
-      Object.keys(r.lots || {})
+      !Number.isSafeInteger(towReceipt.id) ||
+      towReceipt.id < 1 ||
+      towReceipt.id >= towWorld.nextId ||
+      receipts.has(towReceipt.id) ||
+      typeof towReceipt.owner !== 'string' ||
+      !towReceipt.owner ||
+      towReceipt.owner !== towReceipt.owner.trim().toLowerCase() ||
+      !STELLARS[towReceipt.port] ||
+      !['ore', 'gas', 'shards'].includes(towReceipt.ore) ||
+      towReceipt.mass !== towingRules.mass ||
+      Object.keys(towReceipt.lots || {})
         .sort()
         .join() !== 'common,pure,rich' ||
-      Object.values(r.lots).some((n) => !Number.isSafeInteger(n) || n < 0) ||
-      Object.values(r.lots).reduce((a, b) => a + b, 0) !== r.mass
+      Object.values(towReceipt.lots).some((count) => !Number.isSafeInteger(count) || count < 0) ||
+      Object.values(towReceipt.lots).reduce(
+        (firstValue, secondValue) => firstValue + secondValue,
+        0,
+      ) !== towReceipt.mass
     )
       throw Error('Invalid tow receipt');
-    const live = w.slots.find((x) => x.object?.id === r.id)?.object;
+    const live = towWorld.slots.find((towSlot) => towSlot.object?.id === towReceipt.id)?.object;
     if (
       live &&
       (live.status !== 'delivered' ||
-        live.owner !== r.owner ||
-        live.ore !== r.ore ||
-        JSON.stringify(live.lots) !== JSON.stringify(r.lots))
+        live.owner !== towReceipt.owner ||
+        live.ore !== towReceipt.ore ||
+        JSON.stringify(live.lots) !== JSON.stringify(towReceipt.lots))
     )
       throw Error('Invalid receipt/object correspondence');
-    receipts.add(r.id);
+    receipts.add(towReceipt.id);
   }
   const offerIds = new Set();
-  for (const offer of w.offers) {
-    const o = w.slots.find((x) => x.object?.id === offer.id)?.object;
+  for (const offer of towWorld.offers) {
+    const motherlode = towWorld.slots.find((towSlot) => towSlot.object?.id === offer.id)?.object;
     if (
       offerIds.has(offer.id) ||
-      !o ||
-      !active(o) ||
-      o.owner !== offer.from ||
-      o.ship !== offer.fromShip ||
-      o.revision !== offer.revision ||
+      !motherlode ||
+      !active(motherlode) ||
+      motherlode.owner !== offer.from ||
+      motherlode.ship !== offer.fromShip ||
+      motherlode.revision !== offer.revision ||
       !Number.isFinite(offer.until) ||
       offer.until < 0 ||
       !Number.isSafeInteger(offer.revision) ||
@@ -225,73 +250,86 @@ function validate(w: W) {
     offerIds.add(offer.id);
   }
 }
-/** @param {C} capabilities @param {ObjectRecord} o */
-function release(capabilities: C, o: ObjectRecord) {
-  if (!active(o)) return;
-  o.status = 'detached';
-  o.graceUntil = now(capabilities) + TOW.grace;
-  o.revision++;
-  o.vx = o.vy = 0;
-  state(capabilities).offers = state(capabilities).offers.filter((x) => x.id !== o.id);
+/** @param {C} capabilities @param {ObjectRecord} motherlode */
+function release(capabilities: TowCapabilities2, motherlode: ObjectRecord) {
+  if (!active(motherlode)) return;
+  motherlode.status = 'detached';
+  motherlode.graceUntil = currentTime(capabilities) + towingRules.grace;
+  motherlode.revision++;
+  motherlode.vx = motherlode.vy = 0;
+  state(capabilities).offers = state(capabilities).offers.filter(
+    (towOffer) => towOffer.id !== motherlode.id,
+  );
 }
-/** @param {C} capabilities @param {Session} session @param {()=>void} fn */
-function transaction(capabilities: C, session: Session, fn: () => void) {
+/** @param {C} capabilities @param {Session} session @param {()=>void} callback */
+function transaction(capabilities: TowCapabilities2, session: Session, callback: () => void) {
   if (capabilities.db.economicFrozen || capabilities.paused())
     throw Error('Towing economy requires recovery/unpause');
   const playerData = /** @type {RefineryPlayer} */ (session.data as RefineryPlayer),
-    old = { cargo: playerData.cargo, cargoLots: playerData.cargoLots },
-    w = capabilities.db.world.towing;
+    previousValue = { cargo: playerData.cargo, cargoLots: playerData.cargoLots },
+    towWorld = capabilities.db.world.towing;
   playerData.cargo = structuredClone(playerData.cargo);
   playerData.cargoLots = structuredClone(playerData.cargoLots);
-  capabilities.db.world.towing = structuredClone(w);
+  capabilities.db.world.towing = structuredClone(towWorld);
   try {
-    fn();
+    callback();
     assertLots(playerData.cargo, playerData.cargoLots);
     validate(state(capabilities));
     capabilities.db.touch();
     capabilities.db.flush();
   } catch (error) {
     if (!capabilities.db.economicFrozen) {
-      Object.assign(playerData, old);
-      capabilities.db.world.towing = w;
+      Object.assign(playerData, previousValue);
+      capabilities.db.world.towing = towWorld;
     }
     throw error;
   }
 }
 /** Load-centred collection radius: the port body plus its existing 180-unit approach apron.
- * @param {{x:number,y:number}} p @param {{x:number,y:number}} a @param {{x:number,y:number}} b */
+ * @param {{x:number,y:number}} position @param {{x:number,y:number}} firstValue @param {{x:number,y:number}} secondValue */
 function crossesPort(
-  p: { x: number; y: number },
-  a: { x: number; y: number },
-  b: { x: number; y: number },
+  position: { x: number; y: number },
+  firstValue: { x: number; y: number },
+  secondValue: { x: number; y: number },
 ) {
-  const dx = b.x - a.x,
-    dy = b.y - a.y;
-  const t = Math.max(
+  const deltaX = secondValue.x - firstValue.x,
+    deltaY = secondValue.y - firstValue.y;
+  const time = Math.max(
     0,
-    Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1)),
+    Math.min(
+      1,
+      ((position.x - firstValue.x) * deltaX + (position.y - firstValue.y) * deltaY) /
+        (deltaX * deltaX + deltaY * deltaY || 1),
+    ),
   );
-  return Math.hypot(a.x + dx * t - p.x, a.y + dy * t - p.y);
+  return Math.hypot(
+    firstValue.x + deltaX * time - position.x,
+    firstValue.y + deltaY * time - position.y,
+  );
 }
 /** Shared by explicit delivery and the authoritative physics tick. Never accepts client coordinates.
- * @param {C} capabilities @param {Session} session @param {ObjectRecord} o @param {string} port
+ * @param {C} capabilities @param {Session} session @param {ObjectRecord} motherlode @param {string} port
  * @param {{x:number,y:number}} [previous] */
 function deliver(
-  capabilities: C,
+  capabilities: TowCapabilities2,
   session: Session,
-  o: ObjectRecord,
+  motherlode: ObjectRecord,
   port: string,
-  previous: { x: number; y: number } = o,
+  previous: { x: number; y: number } = motherlode,
 ) {
   const entity = flight(capabilities, session),
     stellarBody = STELLARS[port];
-  if (!active(o) || o.owner !== key(capabilities, session) || o.ship !== session.data.ship.uid)
+  if (
+    !active(motherlode) ||
+    motherlode.owner !== entryKey2(capabilities, session) ||
+    motherlode.ship !== session.data.ship.uid
+  )
     throw Error('Only current tow owner may deliver');
   if (
     !stellarBody ||
-    !o.acceptPorts.includes(stellarBody.id) ||
-    stellarBody.system !== o.sys ||
-    crossesPort(stellarBody, previous, o) > stellarBody.r + TOW.deliveryApron
+    !motherlode.acceptPorts.includes(stellarBody.id) ||
+    stellarBody.system !== motherlode.sys ||
+    crossesPort(stellarBody, previous, motherlode) > stellarBody.r + towingRules.deliveryApron
   )
     throw Error('Bring the motherlode into an accepted port collection zone');
   const pass =
@@ -299,50 +337,52 @@ function deliver(
     0;
   if (
     !stellarBody.outlaw &&
-    (session.data.rep?.[SYS[o.sys].faction] || 0) <= -30 &&
+    (session.data.rep?.[systemsById[motherlode.sys].faction] || 0) <= -30 &&
     pass <= Date.now()
   )
     throw Error('Port refuses delivery permission');
-  if (capabilities.room(session.data) < o.mass)
-    throw new DeliveryHoldFull(`Need ${o.mass}t free hold; store cargo or detach first`);
+  if (capabilities.room(session.data) < motherlode.mass)
+    throw new DeliveryHoldFull(`Need ${motherlode.mass}t free hold; store cargo or detach first`);
   transaction(capabilities, session, () => {
-    const ws = state(capabilities),
-      ss = ws.slots.find((x) => x.object?.id === o.id);
-    if (!ss?.object) throw Error('Missing source');
+    const towWorld = state(capabilities),
+      towSlot = towWorld.slots.find((towSlot) => towSlot.object?.id === motherlode.id);
+    if (!towSlot?.object) throw Error('Missing source');
     addLots(
       /** @type {RefineryPlayer} */ ((session.data as RefineryPlayer)).cargo,
       /** @type {RefineryPlayer} */ ((session.data as RefineryPlayer)).cargoLots,
-      { cid: o.ore, qty: o.mass, grades: { ...o.lots } },
+      { cid: motherlode.ore, qty: motherlode.mass, grades: { ...motherlode.lots } },
       capabilities.room(session.data),
     );
-    ss.object.status = 'delivered';
-    ss.object.revision++;
-    ss.delivered += o.mass;
-    ss.nextAt = now(capabilities) + TOW.recovery * capabilities.field(o.sys, ss.field).factor;
-    ws.offers = ws.offers.filter((x) => x.id !== o.id);
-    ws.receipts.push({
-      id: o.id,
-      owner: key(capabilities, session),
+    towSlot.object.status = 'delivered';
+    towSlot.object.revision++;
+    towSlot.delivered += motherlode.mass;
+    towSlot.nextAt =
+      currentTime(capabilities) +
+      towingRules.recovery * capabilities.field(motherlode.sys, towSlot.field).factor;
+    towWorld.offers = towWorld.offers.filter((towOffer) => towOffer.id !== motherlode.id);
+    towWorld.receipts.push({
+      id: motherlode.id,
+      owner: entryKey2(capabilities, session),
       port: stellarBody.id,
-      ore: o.ore,
-      lots: { ...o.lots },
-      mass: o.mass,
+      ore: motherlode.ore,
+      lots: { ...motherlode.lots },
+      mass: motherlode.mass,
     });
-    ws.receipts = ws.receipts.slice(-TOW.receiptLimit);
+    towWorld.receipts = towWorld.receipts.slice(-towingRules.receiptLimit);
   });
   entity.towCap = undefined;
   capabilities.toast(
     session,
-    `Motherlode delivered: ${o.mass}t ${o.ore}; no second credit/fragment reward.`,
+    `Motherlode delivered: ${motherlode.mass}t ${motherlode.ore}; no second credit/fragment reward.`,
   );
 }
-/** @param {C} capabilities @param {string} sys */
-function ensure(capabilities: C, sys: string) {
+/** @param {C} capabilities @param {string} starSystem */
+function ensure(capabilities: TowCapabilities2, starSystem: string) {
   if (capabilities.db.economicFrozen || capabilities.paused()) return;
-  const w = state(capabilities),
-    S = SYS[sys];
-  if (!S || S.arena || !S.fields?.length) return;
-  const ports = S.stellars
+  const towWorld = state(capabilities),
+    starSystem2 = systemsById[starSystem];
+  if (!starSystem2 || starSystem2.arena || !starSystem2.fields?.length) return;
+  const ports = starSystem2.stellars
     .filter(
       (stellarBody) =>
         stellarBody.svc?.includes('L') &&
@@ -353,14 +393,14 @@ function ensure(capabilities: C, sys: string) {
     .map((stellarBody) => stellarBody.id);
   if (!ports.length) return;
   // One separately authored finite source per field, capped at three. Never a normal-rock copy.
-  for (const [i, f] of S.fields.slice(0, 3).entries()) {
-    const slotKey = `${sys}:${i}`;
-    let slot = w.slots.find((s) => s.key === slotKey);
+  for (const [index, factionId] of starSystem2.fields.slice(0, 3).entries()) {
+    const slotKey = `${starSystem}:${index}`;
+    let slot = towWorld.slots.find((towSlot) => towSlot.key === slotKey);
     if (!slot) {
       slot = {
         key: slotKey,
-        sys,
-        field: i,
+        sys: starSystem,
+        field: index,
         epoch: 0,
         issued: 0,
         delivered: 0,
@@ -368,27 +408,30 @@ function ensure(capabilities: C, sys: string) {
         nextAt: 0,
         object: null,
       };
-      w.slots.push(slot);
+      towWorld.slots.push(slot);
     }
     if (slot.object && !['delivered', 'destroyed'].includes(slot.object.status)) continue;
-    if (now(capabilities) < slot.nextAt) continue;
+    if (currentTime(capabilities) < slot.nextAt) continue;
     // IDs and accumulated conservation counters must never wrap into stale authority.
-    if (w.nextId >= Number.MAX_SAFE_INTEGER || slot.issued > Number.MAX_SAFE_INTEGER - TOW.mass)
+    if (
+      towWorld.nextId >= Number.MAX_SAFE_INTEGER ||
+      slot.issued > Number.MAX_SAFE_INTEGER - towingRules.mass
+    )
       continue;
     // Lazy wake issues at most one current finite object, never accumulated offline rewards.
     slot.epoch++;
-    slot.issued += TOW.mass;
+    slot.issued += towingRules.mass;
     slot.object = {
-      id: w.nextId++,
+      id: towWorld.nextId++,
       epoch: slot.epoch,
       slot: slotKey,
-      sys,
-      x: f.x + 120,
-      y: f.y,
+      sys: starSystem,
+      x: factionId.x + 120,
+      y: factionId.y,
       vx: 0,
       vy: 0,
-      mass: TOW.mass,
-      ore: ['ore', 'gas', 'shards'][i % 3],
+      mass: towingRules.mass,
+      ore: ['ore', 'gas', 'shards'][index % 3],
       lots: { common: 18, rich: 5, pure: 1 },
       hp: 100,
       status: 'available',
@@ -403,48 +446,51 @@ function ensure(capabilities: C, sys: string) {
 }
 export const TowingOperations = {
   /** @this {C} */
-  init(this: C) {
+  init(this: TowCapabilities2) {
     if (!this.db.world.towing)
       this.db.world.towing = { version: 1, nextId: 1, slots: [], receipts: [], offers: [] };
-    const w = state(this);
-    validate(w);
-    for (const o of w.slots.map((s) => s.object)) if (o) release(this, o);
-    w.offers = [];
+    const towWorld = state(this);
+    validate(towWorld);
+    for (const motherlode of towWorld.slots.map((towSlot) => towSlot.object))
+      if (motherlode) release(this, motherlode);
+    towWorld.offers = [];
     this.db.touch();
   },
-  /** @this {C} @param {string} sys */
-  ensure(this: C, sys: string) {
-    ensure(this, sys);
+  /** @this {C} @param {string} starSystem */
+  ensure(this: TowCapabilities2, starSystem: string) {
+    ensure(this, starSystem);
   },
   /** @this {C} @param {Session} session */
-  attached(this: C, session: Session) {
+  attached(this: TowCapabilities2, session: Session) {
     return attached(this, session) || null;
   },
   /** @this {C} @param {Session} session */
-  detach(this: C, session: Session) {
-    const o = attached(this, session);
-    if (!o) return false;
-    release(this, o);
+  detach(this: TowCapabilities2, session: Session) {
+    const motherlode = attached(this, session);
+    if (!motherlode) return false;
+    release(this, motherlode);
     if (session.ent) session.ent.towCap = undefined;
     this.db.touch();
     return true;
   },
   /** @this {C} @param {Space} space */
-  towingTick(this: C, space: Space) {
+  towingTick(this: TowCapabilities2, space: Space) {
     if (this.paused() || this.db.economicFrozen) return;
     ensure(this, space.id);
-    const w = state(this);
-    w.offers = w.offers.filter((x) => x.until > now(this));
-    for (const index of w.slots.flatMap((x, i) => (x.sys === space.id ? [i] : []))) {
+    const towWorld = state(this);
+    towWorld.offers = towWorld.offers.filter((towOffer) => towOffer.until > currentTime(this));
+    for (const index of towWorld.slots.flatMap((towSlot, index) =>
+      towSlot.sys === space.id ? [index] : [],
+    )) {
       const slot = state(this).slots[index];
-      const o = slot.object;
-      if (!o || !active(o)) continue;
+      const motherlode = slot.object;
+      if (!motherlode || !active(motherlode)) continue;
       const session = [...this.sessions()].find(
-        (s) =>
-          s.data &&
-          key(this, s) === o.owner &&
-          s.data.sys === space.id &&
-          s.data.ship.uid === o.ship,
+        (session) =>
+          session.data &&
+          entryKey2(this, session) === motherlode.owner &&
+          session.data.sys === space.id &&
+          session.data.ship.uid === motherlode.ship,
       );
       const entity = session?.ent;
       if (
@@ -454,35 +500,36 @@ export const TowingOperations = {
         entity.disabled ||
         entity.state !== 'fly' ||
         entity.towCap !== towSpeed(entity.hull) ||
-        Math.hypot(entity.x - o.x, entity.y - o.y) > TOW.breakRange
+        Math.hypot(entity.x - motherlode.x, entity.y - motherlode.y) > towingRules.breakRange
       ) {
-        release(this, o);
+        release(this, motherlode);
         if (entity) entity.towCap = undefined;
         continue;
       }
-      const previous = { x: o.x, y: o.y };
-      const tx = entity.x - Math.sin(entity.a) * TOW.tether,
-        ty = entity.y + Math.cos(entity.a) * TOW.tether,
-        dx = tx - o.x,
-        dy = ty - o.y,
-        dist = Math.hypot(dx, dy),
-        speed = Math.min(towSpeed(entity.hull), dist * 2),
-        dt = 1 / 30;
-      o.vx = dist ? (dx / dist) * speed : 0;
-      o.vy = dist ? (dy / dist) * speed : 0;
-      o.x += o.vx * dt;
-      o.y += o.vy * dt;
-      const ports = o.acceptPorts
-        .map((id) => STELLARS[id])
+      const previous = { x: motherlode.x, y: motherlode.y };
+      const targetX = entity.x - Math.sin(entity.a) * towingRules.tether,
+        targetY = entity.y + Math.cos(entity.a) * towingRules.tether,
+        deltaX = targetX - motherlode.x,
+        deltaY = targetY - motherlode.y,
+        distance = Math.hypot(deltaX, deltaY),
+        speed = Math.min(towSpeed(entity.hull), distance * 2),
+        deltaTime = 1 / 30;
+      motherlode.vx = distance ? (deltaX / distance) * speed : 0;
+      motherlode.vy = distance ? (deltaY / distance) * speed : 0;
+      motherlode.x += motherlode.vx * deltaTime;
+      motherlode.y += motherlode.vy * deltaTime;
+      const ports = motherlode.acceptPorts
+        .map((identifier) => STELLARS[identifier])
         .filter(
           (stellarBody) =>
-            stellarBody?.system === o.sys &&
-            crossesPort(stellarBody, previous, o) <= stellarBody.r + TOW.deliveryApron,
+            stellarBody?.system === motherlode.sys &&
+            crossesPort(stellarBody, previous, motherlode) <=
+              stellarBody.r + towingRules.deliveryApron,
         );
       if (!ports.length) deliveryNotices.delete(session);
       for (const port of ports) {
         try {
-          deliver(this, session, o, port.id, previous);
+          deliver(this, session, motherlode, port.id, previous);
           deliveryNotices.delete(session);
           this.refresh(session);
           break;
@@ -490,18 +537,18 @@ export const TowingOperations = {
           // No room: leave the intact, owned load safely at the port so the pilot
           // can land, unload and reattach. Never discard cargo or mint partial output.
           if (error instanceof DeliveryHoldFull && !this.db.economicFrozen) {
-            release(this, o);
+            release(this, motherlode);
             entity.towCap = undefined;
             this.toast(
               session,
-              `Motherlode safely detached: need ${o.mass}t free hold. Unload, then reattach within ${TOW.grace}s to deliver.`,
+              `Motherlode safely detached: need ${motherlode.mass}t free hold. Unload, then reattach within ${towingRules.grace}s to deliver.`,
             );
             this.refresh(session);
             break;
           }
           if (port === ports.at(-1)) {
             const reason = error instanceof Error ? error.message : 'Port cannot accept delivery';
-            const notice = `${o.id}:${port.id}:${reason}`;
+            const notice = `${motherlode.id}:${port.id}:${reason}`;
             if (deliveryNotices.get(session) !== notice) this.toast(session, reason);
             deliveryNotices.set(session, notice);
           }
@@ -510,154 +557,178 @@ export const TowingOperations = {
       this.db.touch();
     }
   },
-  /** @this {C} @param {Session} session @param {TowRequest} q */
-  command(this: C, session: Session, q: TowRequest) {
+  /** @this {C} @param {Session} session @param {TowRequest} towRequest */
+  command(this: TowCapabilities2, session: Session, towRequest: TowRequest) {
     try {
       if (
         !session.data ||
-        !['attach', 'detach', 'offer', 'accept', 'deliver'].includes(q.op || '') ||
-        Object.keys(q).some((k) => !['t', 'op', 'id', 'revision', 'to', 'port'].includes(k)) ||
-        (q.to !== undefined && (typeof q.to !== 'string' || !q.to.trim() || q.to.length > 64)) ||
-        (q.port !== undefined && typeof q.port !== 'string') ||
-        !Number.isSafeInteger(q.id) ||
-        !Number.isSafeInteger(q.revision)
+        !['attach', 'detach', 'offer', 'accept', 'deliver'].includes(towRequest.op || '') ||
+        Object.keys(towRequest).some(
+          (entryKey) => !['t', 'op', 'id', 'revision', 'to', 'port'].includes(entryKey),
+        ) ||
+        (towRequest.to !== undefined &&
+          (typeof towRequest.to !== 'string' ||
+            !towRequest.to.trim() ||
+            towRequest.to.length > 64)) ||
+        (towRequest.port !== undefined && typeof towRequest.port !== 'string') ||
+        !Number.isSafeInteger(towRequest.id) ||
+        !Number.isSafeInteger(towRequest.revision)
       )
         throw Error('Invalid towing request');
-      if ((q.op !== 'offer' && q.to !== undefined) || (q.op !== 'deliver' && q.port !== undefined))
+      if (
+        (towRequest.op !== 'offer' && towRequest.to !== undefined) ||
+        (towRequest.op !== 'deliver' && towRequest.port !== undefined)
+      )
         throw Error('Unexpected towing authority');
       if (this.db.economicFrozen || this.paused()) throw Error('Towing requires recovery/unpause');
-      const w = state(this),
-        receipt = w.receipts.find((x) => x.id === q.id),
-        account = key(this, session);
-      if (q.op === 'deliver' && receipt) {
-        if (receipt.owner !== account || receipt.port !== q.port) throw Error('Already delivered');
+      const towWorld = state(this),
+        receipt = towWorld.receipts.find((towReceipt) => towReceipt.id === towRequest.id),
+        account = entryKey2(this, session);
+      if (towRequest.op === 'deliver' && receipt) {
+        if (receipt.owner !== account || receipt.port !== towRequest.port)
+          throw Error('Already delivered');
         this.toast(session, 'Motherlode already delivered once; no additional output.');
         return true;
       }
-      const slot = w.slots.find((x) => x.object?.id === q.id),
-        o = slot?.object;
+      const slot = towWorld.slots.find((towSlot) => towSlot.object?.id === towRequest.id),
+        motherlode = slot?.object;
       if (
         !slot ||
-        !o ||
-        ['delivered', 'destroyed'].includes(o.status) ||
-        o.revision !== q.revision ||
-        o.sys !== session.data.sys
+        !motherlode ||
+        ['delivered', 'destroyed'].includes(motherlode.status) ||
+        motherlode.revision !== towRequest.revision ||
+        motherlode.sys !== session.data.sys
       )
         throw Error('Motherlode changed; refresh selection');
       const entity = flight(this, session),
-        distance = Math.hypot(entity.x - o.x, entity.y - o.y);
-      if (q.op === 'attach') {
+        distance = Math.hypot(entity.x - motherlode.x, entity.y - motherlode.y);
+      if (towRequest.op === 'attach') {
         if (
-          active(o) ||
+          active(motherlode) ||
           attached(this, session) ||
-          distance > TOW.attachRange ||
-          (o.status === 'detached' && o.owner !== account && now(this) < o.graceUntil)
+          distance > towingRules.attachRange ||
+          (motherlode.status === 'detached' &&
+            motherlode.owner !== account &&
+            currentTime(this) < motherlode.graceUntil)
         )
           throw Error('Motherlode unavailable, too far or reserved');
         const scan = session.data.miningSurvey;
         if (
-          o.owner !== account &&
+          motherlode.owner !== account &&
           (!scan ||
-            scan.sys !== o.sys ||
-            scan.revealUntil < now(this) ||
-            Math.hypot(scan.x - o.x, scan.y - o.y) > 1500)
+            scan.sys !== motherlode.sys ||
+            scan.revealUntil < currentTime(this) ||
+            Math.hypot(scan.x - motherlode.x, scan.y - motherlode.y) > 1500)
         )
           throw Error('Survey this motherlode first');
         if (
           Math.hypot(entity.vx, entity.vy) > towSpeed(entity.hull) ||
-          Math.hypot(entity.vx - o.vx, entity.vy - o.vy) > towSpeed(entity.hull)
+          Math.hypot(entity.vx - motherlode.vx, entity.vy - motherlode.vy) > towSpeed(entity.hull)
         )
           throw Error('Slow below tow cap before attachment');
-        o.status = 'attached';
-        o.owner = account;
-        o.ship = session.data.ship.uid || null;
-        o.graceUntil = 0;
-        o.revision++;
+        motherlode.status = 'attached';
+        motherlode.owner = account;
+        motherlode.ship = session.data.ship.uid || null;
+        motherlode.graceUntil = 0;
+        motherlode.revision++;
         entity.towCap = towSpeed(entity.hull);
         this.stopCombat(session);
         session.data.armadaFollow = false;
         if (session.data.ship.industrial) session.data.ship.industrial.harvest = false;
-      } else if (q.op === 'accept') {
-        const offer = w.offers.find(
-            (x) =>
-              x.id === o.id && x.to === account && x.revision === o.revision && x.until > now(this),
+      } else if (towRequest.op === 'accept') {
+        const offer = towWorld.offers.find(
+            (towOffer) =>
+              towOffer.id === motherlode.id &&
+              towOffer.to === account &&
+              towOffer.revision === motherlode.revision &&
+              towOffer.until > currentTime(this),
           ),
-          from = offer && [...this.sessions()].find((x) => x.data && key(this, x) === offer.from);
+          from =
+            offer &&
+            [...this.sessions()].find(
+              (session) => session.data && entryKey2(this, session) === offer.from,
+            );
         if (
           !offer ||
           !from?.ent ||
-          !active(o) ||
-          o.owner !== offer.from ||
+          !active(motherlode) ||
+          motherlode.owner !== offer.from ||
           from.ent.id !== offer.fromEntity ||
           entity.id !== offer.toEntity ||
           from.data.ship.uid !== offer.fromShip ||
           session.data.ship.uid !== offer.toShip ||
-          from.data.sys !== o.sys ||
+          from.data.sys !== motherlode.sys ||
           from.ent.dead ||
           from.ent.disabled ||
           from.ent.state !== 'fly' ||
-          o.ship !== from.data.ship.uid ||
-          Math.hypot(from.ent.x - o.x, from.ent.y - o.y) > TOW.breakRange ||
-          distance > TOW.attachRange ||
-          Math.hypot(from.ent.x - entity.x, from.ent.y - entity.y) > TOW.attachRange ||
+          motherlode.ship !== from.data.ship.uid ||
+          Math.hypot(from.ent.x - motherlode.x, from.ent.y - motherlode.y) >
+            towingRules.breakRange ||
+          distance > towingRules.attachRange ||
+          Math.hypot(from.ent.x - entity.x, from.ent.y - entity.y) > towingRules.attachRange ||
           attached(this, session) ||
           Math.hypot(entity.vx, entity.vy) > towSpeed(entity.hull) ||
-          Math.hypot(entity.vx - o.vx, entity.vy - o.vy) > towSpeed(entity.hull)
+          Math.hypot(entity.vx - motherlode.vx, entity.vy - motherlode.vy) > towSpeed(entity.hull)
         )
           throw Error('Transfer expired or flight/range changed');
         // Carry no velocity above the recipient's cap into snapshots/checkpoints.
-        const carried = Math.hypot(o.vx, o.vy),
-          cap = towSpeed(entity.hull);
-        if (carried > cap) {
-          o.vx *= cap / carried;
-          o.vy *= cap / carried;
+        const carried = Math.hypot(motherlode.vx, motherlode.vy),
+          towSpeed2 = towSpeed(entity.hull);
+        if (carried > towSpeed2) {
+          motherlode.vx *= towSpeed2 / carried;
+          motherlode.vy *= towSpeed2 / carried;
         }
         from.ent.towCap = undefined;
-        o.owner = account;
-        o.ship = session.data.ship.uid || null;
-        o.revision++;
+        motherlode.owner = account;
+        motherlode.ship = session.data.ship.uid || null;
+        motherlode.revision++;
         entity.towCap = towSpeed(entity.hull);
-        w.offers = w.offers.filter((x) => x.id !== o.id);
+        towWorld.offers = towWorld.offers.filter((towOffer) => towOffer.id !== motherlode.id);
         this.stopCombat(session);
         session.data.armadaFollow = false;
         if (session.data.ship.industrial) session.data.ship.industrial.harvest = false;
         this.refresh(from);
       } else {
-        if (!active(o) || o.owner !== account || o.ship !== session.data.ship.uid)
+        if (
+          !active(motherlode) ||
+          motherlode.owner !== account ||
+          motherlode.ship !== session.data.ship.uid
+        )
           throw Error('Only current tow owner may do that');
-        if (q.op === 'detach') {
-          release(this, o);
+        if (towRequest.op === 'detach') {
+          release(this, motherlode);
           entity.towCap = undefined;
-        } else if (q.op === 'offer') {
-          const to = [...this.sessions()].find(
-            (x) => x.data && this.db.key(x.data.name) === this.db.key(q.to || ''),
+        } else if (towRequest.op === 'offer') {
+          const session2 = [...this.sessions()].find(
+            (session) =>
+              session.data && this.db.key(session.data.name) === this.db.key(towRequest.to || ''),
           );
-          if (!to || to === session || to.data.sys !== o.sys)
+          if (!session2 || session2 === session || session2.data.sys !== motherlode.sys)
             throw Error('Choose another nearby captain');
-          const target = flight(this, to);
+          const target = flight(this, session2);
           if (
-            attached(this, to) ||
-            Math.hypot(target.x - entity.x, target.y - entity.y) > TOW.attachRange
+            attached(this, session2) ||
+            Math.hypot(target.x - entity.x, target.y - entity.y) > towingRules.attachRange
           )
             throw Error('Recipient unavailable or too far');
-          w.offers = w.offers.filter((x) => x.id !== o.id);
-          w.offers.push({
-            id: o.id,
-            revision: o.revision,
+          towWorld.offers = towWorld.offers.filter((towOffer) => towOffer.id !== motherlode.id);
+          towWorld.offers.push({
+            id: motherlode.id,
+            revision: motherlode.revision,
             from: account,
-            to: key(this, to),
+            to: entryKey2(this, session2),
             fromShip: session.data.ship.uid || '',
-            toShip: to.data.ship.uid || '',
+            toShip: session2.data.ship.uid || '',
             fromEntity: entity.id,
             toEntity: target.id,
-            until: now(this) + TOW.offerSeconds,
+            until: currentTime(this) + towingRules.offerSeconds,
           });
           this.toast(
-            to,
-            `${session.data.name} offers motherlode ${o.id}; accept explicitly in TOW controls.`,
+            session2,
+            `${session.data.name} offers motherlode ${motherlode.id}; accept explicitly in TOW controls.`,
           );
-        } else if (q.op === 'deliver') {
-          deliver(this, session, o, q.port || '');
+        } else if (towRequest.op === 'deliver') {
+          deliver(this, session, motherlode, towRequest.port || '');
         }
       }
       validate(state(this));
@@ -670,80 +741,81 @@ export const TowingOperations = {
     }
   },
   /** Authorized object-only destruction. No generic neutral weapon/hazard collision path calls it.
-   * @this {C} @param {Session} session @param {number} id @param {number} revision */
-  destroy(this: C, session: Session, id: number, revision: number) {
+   * @this {C} @param {Session} session @param {number} identifier @param {number} revision */
+  destroy(this: TowCapabilities2, session: Session, identifier: number, revision: number) {
     if (this.db.economicFrozen || this.paused()) return false;
-    const slot = state(this).slots.find((x) => x.object?.id === id),
-      o = slot?.object;
+    const slot = state(this).slots.find((towSlot) => towSlot.object?.id === identifier),
+      motherlode = slot?.object;
     if (
       !slot ||
-      !o ||
-      o.status !== 'attached' ||
-      o.owner !== key(this, session) ||
-      o.ship !== session.data.ship.uid ||
-      o.revision !== revision
+      !motherlode ||
+      motherlode.status !== 'attached' ||
+      motherlode.owner !== entryKey2(this, session) ||
+      motherlode.ship !== session.data.ship.uid ||
+      motherlode.revision !== revision
     )
       return false;
-    o.hp = 0;
-    o.status = 'destroyed';
-    o.revision++;
-    slot.discarded += o.mass;
-    slot.nextAt = now(this) + TOW.recovery * this.field(o.sys, slot.field).factor;
-    state(this).offers = state(this).offers.filter((x) => x.id !== o.id);
+    motherlode.hp = 0;
+    motherlode.status = 'destroyed';
+    motherlode.revision++;
+    slot.discarded += motherlode.mass;
+    slot.nextAt =
+      currentTime(this) + towingRules.recovery * this.field(motherlode.sys, slot.field).factor;
+    state(this).offers = state(this).offers.filter((towOffer) => towOffer.id !== motherlode.id);
     if (session.ent) session.ent.towCap = undefined;
     this.db.touch();
     return true;
   },
   /** @this {C} @param {Session} session */
-  payload(this: C, session: Session) {
+  payload(this: TowCapabilities2, session: Session) {
     if (!session.data) return null;
     ensure(this, session.data.sys);
     const scan = session.data.miningSurvey,
-      account = key(this, session),
-      w = state(this);
+      account = entryKey2(this, session),
+      towWorld = state(this);
     return {
       version: 1,
-      now: now(this),
+      now: currentTime(this),
       cap: towSpeed(session.data.ship.hull),
       rig: !!this.stats(session.data)?.towRig,
       attached: attached(this, session)?.id || null,
-      objects: w.slots
-        .filter((x) => x.sys === session.data.sys)
+      objects: towWorld.slots
+        .filter((towSlot) => towSlot.sys === session.data.sys)
         .map((slot) => {
-          const o = slot.object;
-          if (!o) return null;
+          const motherlode = slot.object;
+          if (!motherlode) return null;
           const revealed =
-            o.owner === account ||
+            motherlode.owner === account ||
             !!(
               scan &&
-              scan.sys === o.sys &&
-              scan.revealUntil >= now(this) &&
-              Math.hypot(scan.x - o.x, scan.y - o.y) <= 1500
+              scan.sys === motherlode.sys &&
+              scan.revealUntil >= currentTime(this) &&
+              Math.hypot(scan.x - motherlode.x, scan.y - motherlode.y) <= 1500
             );
           return {
-            id: o.id,
-            revision: o.revision,
-            x: o.x,
-            y: o.y,
-            vx: o.vx,
-            vy: o.vy,
-            ore: o.ore,
-            status: o.status,
-            owner: o.owner,
-            graceUntil: o.graceUntil,
-            mass: revealed ? o.mass : null,
-            ports: revealed ? o.acceptPorts : [],
+            id: motherlode.id,
+            revision: motherlode.revision,
+            x: motherlode.x,
+            y: motherlode.y,
+            vx: motherlode.vx,
+            vy: motherlode.vy,
+            ore: motherlode.ore,
+            status: motherlode.status,
+            owner: motherlode.owner,
+            graceUntil: motherlode.graceUntil,
+            mass: revealed ? motherlode.mass : null,
+            ports: revealed ? motherlode.acceptPorts : [],
             revealed,
-            field: this.field(o.sys, slot.field),
-            hp: o.hp,
-            tug: active(o)
+            field: this.field(motherlode.sys, slot.field),
+            hp: motherlode.hp,
+            tug: active(motherlode)
               ? (() => {
                   const entity = [...this.sessions()].find(
-                    (x) =>
-                      x.data &&
-                      key(this, x) === o.owner &&
-                      x.data.ship.uid === o.ship &&
-                      x.data.sys === o.sys,
+                    (session) =>
+                      session.data &&
+                      entryKey2(this, session) === motherlode.owner &&
+                      session.data.ship.uid === motherlode.ship &&
+                      session.data.sys === motherlode.sys,
                   )?.ent;
                   return entity ? { x: entity.x, y: entity.y } : null;
                 })()
@@ -751,9 +823,14 @@ export const TowingOperations = {
           };
         })
         .filter((object): object is NonNullable<typeof object> => Boolean(object)),
-      offers: w.offers
-        .filter((x) => x.to === account && x.until > now(this))
-        .map((x) => ({ id: x.id, revision: x.revision, from: x.from, until: x.until })),
+      offers: towWorld.offers
+        .filter((towOffer) => towOffer.to === account && towOffer.until > currentTime(this))
+        .map((towOffer) => ({
+          id: towOffer.id,
+          revision: towOffer.revision,
+          from: towOffer.from,
+          until: towOffer.until,
+        })),
     };
   },
 };

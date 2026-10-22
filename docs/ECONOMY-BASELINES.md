@@ -45,7 +45,7 @@ zero only after verifying that, rather than assuming unknown costs are zero.
 
 ## Record format and analysis
 
-`tools/economy-baseline.mjs` accepts an array of observations. Each record requires:
+`tools/economy-baseline.ts` accepts an array of observations. Each record requires:
 
 - `id`, `career`, `band`, `risk`, `seed`, `profile` (`standard` or `stress-only`).
 - `durationSeconds:1800`, `activeSeconds`, `openingCredits`, `closingCredits`.
@@ -53,7 +53,7 @@ zero only after verifying that, rather than assuming unknown costs are zero.
 - `capitalCredits`, `holdRequired`, `lossesCredits`, `nextUpgradeCost`.
 - `closedLoop`, `unmeasuredCosts:[]`, `notes:[]`.
 
-Run `node tools/economy-baseline.mjs observations.json report.json`.
+Run `node tools/economy-baseline.ts observations.json report.json`.
 Incomplete evidence fails by default; `--allow-partial` produces an explicitly
 incomplete report. Never turn missing runs into synthetic data. Net cash, active and
 wall-clock rates, idle time, losses, capital/hold and estimated upgrade time are

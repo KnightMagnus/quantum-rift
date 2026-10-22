@@ -26,123 +26,155 @@ export interface RefineryClientState {
   paused?: boolean;
 }
 
-import { escapeHtml as esc } from './html.ts';
-import { RECIPES, REFINERY_RULES as R } from '../shared/refinery-rules.ts';
+import { escapeHtml as escapeHtml2 } from './html.ts';
+import { RECIPES, REFINERY_RULES as refineryRules } from '../shared/refinery-rules.ts';
 import { COMMODITIES } from '../shared/galaxy.ts';
 
-const title = (cid: string) => COMMODITIES.find((c) => c.id === cid)?.name || cid;
-export function refineryDraft(G: RefineryClientState) {
-  return (G.refineryDraft ||= { recipe: 'alloy', grade: 'common', n: '3', mode: 'stored' });
+const title = (captainId: string) =>
+  COMMODITIES.find((commodityDef) => commodityDef.id === captainId)?.name || captainId;
+export function refineryDraft(refineryClientState: RefineryClientState) {
+  return (refineryClientState.refineryDraft ||= {
+    recipe: 'alloy',
+    grade: 'common',
+    n: '3',
+    mode: 'stored',
+  });
 }
-function choice(G: RefineryClientState) {
-  const draft = refineryDraft(G),
-    recipe = RECIPES.find((r) => r.id === draft.recipe),
-    n = Number(draft.n);
+function choice(refineryClientState: RefineryClientState) {
+  const draft = refineryDraft(refineryClientState),
+    recipe = RECIPES.find((recipe2) => recipe2.id === draft.recipe),
+    count = Number(draft.n);
   const grade = recipe?.pure ? 'pure' : recipe?.inputs[0] === 'plasma' ? 'common' : draft.grade;
-  return { ...draft, grade, recipe, n };
+  return { ...draft, grade, recipe, n: count };
 }
-function valid(c: ReturnType<typeof choice>): c is ReturnType<typeof choice> & { recipe: Recipe } {
-  return (c.recipe &&
-    Number.isSafeInteger(c.n) &&
-    c.n > 0 &&
-    ['common', 'rich', 'pure'].includes(c.grade) &&
-    ['stored', 'instant'].includes(c.mode) &&
-    c.n * c.recipe.inputs.length <= (c.mode === 'instant' ? R.instantCap : R.storedCap) &&
-    (!c.recipe.pure || c.n % 3 === 0)) as boolean;
+function valid(
+  component: ReturnType<typeof choice>,
+): component is ReturnType<typeof choice> & { recipe: Recipe } {
+  return (component.recipe &&
+    Number.isSafeInteger(component.n) &&
+    component.n > 0 &&
+    ['common', 'rich', 'pure'].includes(component.grade) &&
+    ['stored', 'instant'].includes(component.mode) &&
+    component.n * component.recipe.inputs.length <=
+      (component.mode === 'instant' ? refineryRules.instantCap : refineryRules.storedCap) &&
+    (!component.recipe.pure || component.n % 3 === 0)) as boolean;
 }
 export function matchingRefineryCost(
-  G: RefineryClientState,
-  q: RefineryQuote | null | undefined,
-): q is RefineryQuote {
-  const c = choice(G);
+  refineryClientState: RefineryClientState,
+  refineryQuote: RefineryQuote | null | undefined,
+): refineryQuote is RefineryQuote {
+  const choice2 = choice(refineryClientState);
   return (
-    !!q &&
-    valid(c) &&
-    q.port === G.landed?.stellar &&
-    q.recipe === c.recipe.id &&
-    q.mode === c.mode &&
-    q.expires > Date.now() &&
-    q.inputs.length === c.recipe.inputs.length &&
-    q.inputs.every(
-      (i, n) =>
-        i.cid === c.recipe.inputs[n] &&
-        Object.entries(i.lots).every(([g, v]) => v === (g === c.grade ? c.n : 0)),
+    !!refineryQuote &&
+    valid(choice2) &&
+    refineryQuote.port === refineryClientState.landed?.stellar &&
+    refineryQuote.recipe === choice2.recipe.id &&
+    refineryQuote.mode === choice2.mode &&
+    refineryQuote.expires > Date.now() &&
+    refineryQuote.inputs.length === choice2.recipe.inputs.length &&
+    refineryQuote.inputs.every(
+      (refineryInput, count) =>
+        refineryInput.cid === choice2.recipe.inputs[count] &&
+        Object.entries(refineryInput.lots).every(
+          ([game, value]) => value === (game === choice2.grade ? choice2.n : 0),
+        ),
     )
   );
 }
-export function refineryPanelHtml(G: RefineryClientState, jobs: string) {
-  const data = G.you?.refinery || G.landed?.refinery;
+export function refineryPanelHtml(refineryClientState: RefineryClientState, jobs: string) {
+  const data = refineryClientState.you?.refinery || refineryClientState.landed?.refinery;
   if (!data) return '<p>Refinery unavailable.</p>';
-  const draft = refineryDraft(G),
-    c = choice(G),
-    recipe = c.recipe || RECIPES[0];
-  const q = matchingRefineryCost(G, G.refineryQuote) ? G.refineryQuote : null;
-  const have = (cid: string) => G.you?.cargoLots?.byCommodity?.[cid]?.[c.grade as RawGrade] || 0;
-  const enough = valid(c) && recipe.inputs.every((cid) => have(cid) >= c.n);
-  const reserved = recipe.inputs.some((cid) => {
+  const draft = refineryDraft(refineryClientState),
+    choice2 = choice(refineryClientState),
+    recipe = choice2.recipe || RECIPES[0];
+  const refineryQuote2 = matchingRefineryCost(
+    refineryClientState,
+    refineryClientState.refineryQuote,
+  )
+    ? refineryClientState.refineryQuote
+    : null;
+  const have = (captainId: string) =>
+    refineryClientState.you?.cargoLots?.byCommodity?.[captainId]?.[choice2.grade as RawGrade] || 0;
+  const enough = valid(choice2) && recipe.inputs.every((captainId) => have(captainId) >= choice2.n);
+  const reserved = recipe.inputs.some((captainId) => {
     const promised = (data.orders || [])
-      .filter((o) => o.cid === cid && o.grade === c.grade)
-      .reduce((n, o) => n + o.qty, 0);
-    return promised > 0 && have(cid) - c.n < promised;
+      .filter((miningOrder) => miningOrder.cid === captainId && miningOrder.grade === choice2.grade)
+      .reduce((count, miningOrder) => count + miningOrder.qty, 0);
+    return promised > 0 && have(captainId) - choice2.n < promised;
   });
-  const premium = c.grade !== 'common' && !recipe.pure;
-  const ready = q && enough && (G.you?.credits as number) >= q.fee && !G.refineryBusy && !G.paused;
+  const premium = choice2.grade !== 'common' && !recipe.pure;
+  const ready =
+    refineryQuote2 &&
+    enough &&
+    (refineryClientState.you?.credits as number) >= refineryQuote2.fee &&
+    !refineryClientState.refineryBusy &&
+    !refineryClientState.paused;
   const inputs = recipe.inputs
     .map(
-      (cid) =>
-        `${Number.isFinite(c.n) ? c.n : '?'} t ${esc(c.grade)} ${esc(title(cid))} <span class="dim small">(${have(cid)} t aboard)</span>`,
+      (captainId) =>
+        `${Number.isFinite(choice2.n) ? choice2.n : '?'} t ${escapeHtml2(choice2.grade)} ${escapeHtml2(title(captainId))} <span class="dim small">(${have(captainId)} t aboard)</span>`,
     )
     .join(' + ');
   return `<div class="sect">REFINERY${data.home ? ' · YOUR STATION' : ''}</div>
     <p class="dim">Turn raw cargo into trade goods. Choose what to make; the cost and result appear below. Construction crates use your station's separate workshop.</p>
     <div class="rrow refinery-form">
-      <label>Make <select id="refrecipe">${RECIPES.map((r) => `<option value="${r.id}"${r.id === draft.recipe ? ' selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>
-      <label>Use grade <select id="refgrade"${recipe.pure || recipe.inputs[0] === 'plasma' ? ' disabled' : ''}>${['common', 'rich', 'pure'].map((g) => `<option${g === c.grade ? ' selected' : ''}>${g}</option>`).join('')}</select></label>
-      <label>${recipe.inputs.length > 1 ? 'Tonnes of each material' : 'Tonnes'} <input id="refquantity" type="number" required min="${recipe.pure ? 3 : 1}" max="${Math.floor((c.mode === 'instant' ? R.instantCap : R.storedCap) / recipe.inputs.length)}" step="${recipe.pure ? 3 : 1}" value="${esc(draft.n)}" inputmode="numeric"></label>
-      <label>Speed <select id="refmode"><option value="stored"${c.mode === 'stored' ? ' selected' : ''}>Standard · ready later</option><option value="instant"${c.mode === 'instant' ? ' selected' : ''}>Express · ready now</option></select></label>
+      <label>Make <select id="refrecipe">${RECIPES.map((recipe2) => `<option value="${recipe2.id}"${recipe2.id === draft.recipe ? ' selected' : ''}>${escapeHtml2(recipe2.name)}</option>`).join('')}</select></label>
+      <label>Use grade <select id="refgrade"${recipe.pure || recipe.inputs[0] === 'plasma' ? ' disabled' : ''}>${['common', 'rich', 'pure'].map((game) => `<option${game === choice2.grade ? ' selected' : ''}>${game}</option>`).join('')}</select></label>
+      <label>${recipe.inputs.length > 1 ? 'Tonnes of each material' : 'Tonnes'} <input id="refquantity" type="number" required min="${recipe.pure ? 3 : 1}" max="${Math.floor((choice2.mode === 'instant' ? refineryRules.instantCap : refineryRules.storedCap) / recipe.inputs.length)}" step="${recipe.pure ? 3 : 1}" value="${escapeHtml2(draft.n)}" inputmode="numeric"></label>
+      <label>Speed <select id="refmode"><option value="stored"${choice2.mode === 'stored' ? ' selected' : ''}>Standard · ready later</option><option value="instant"${choice2.mode === 'instant' ? ' selected' : ''}>Express · ready now</option></select></label>
     </div>
     <div class="mcard" id="refquote" aria-live="polite">
       <b>YOU USE</b><p>${inputs}</p>
       ${recipe.pure ? '<p class="dim small">Composite Plating needs equal amounts of pure ore, gas and shards, in groups of 3 tonnes each.</p>' : ''}
       ${premium ? '<p class="jwarn">Rich and pure cargo sell for more, but give no extra output here. Common cargo is usually the better choice.</p>' : ''}
       ${reserved ? '<p class="jwarn">This uses cargo you still need for a delivery. You may refine it, but you will need to replace it to finish that job.</p>' : ''}
-      ${!valid(c) ? '<p class="jwarn">Choose a whole amount within the limits above.</p>' : !enough ? '<p class="jwarn">Not enough of the selected cargo grade aboard. <button class="btn sm" data-act="ltab" data-t="trade">CHECK TRADE CARGO</button></p>' : ''}
-      ${q ? `<b>YOU GET</b><p>${(q.units / R.units).toFixed(3)} t ${esc(title(q.output))} · ${q.mode === 'instant' ? 'ready to collect now' : `ready in about ${Math.ceil((q.duration + R.queueMs) / 60000)} min`}</p><p><b>Total cost: ${q.fee.toLocaleString()} credits</b>${G.you!.credits < q.fee ? ' · not enough credits' : ''}</p><p class="dim small">${q.recovery}% of the usable material is recovered. Collect whole tonnes here; smaller amounts stay safely stored.${q.mode === 'stored' ? ` You can cancel during the first 30 seconds for ${q.cancelFee} credits.` : ''}</p>` : `<p class="dim">${G.refineryCostError ? 'Could not load the current cost. Try again when connected.' : 'Checking the current cost…'}</p>`}
-      ${G.paused ? '<p class="jwarn">Solo is paused. Resume before starting a job.</p>' : ''}
-      <button class="btn" data-refinery="submit"${q ? ` data-id="${esc(q.id)}"` : ''}${ready ? '' : ' disabled'}>${G.refineryBusy ? 'STARTING…' : q ? `START REFINING · ${q.fee.toLocaleString()} CR` : 'START REFINING'}</button>
-      ${G.refineryCostError ? '<button class="btn sm" data-refinery="retry">UPDATE COST</button>' : ''}
+      ${!valid(choice2) ? '<p class="jwarn">Choose a whole amount within the limits above.</p>' : !enough ? '<p class="jwarn">Not enough of the selected cargo grade aboard. <button class="btn sm" data-act="ltab" data-t="trade">CHECK TRADE CARGO</button></p>' : ''}
+      ${refineryQuote2 ? `<b>YOU GET</b><p>${(refineryQuote2.units / refineryRules.units).toFixed(3)} t ${escapeHtml2(title(refineryQuote2.output))} · ${refineryQuote2.mode === 'instant' ? 'ready to collect now' : `ready in about ${Math.ceil((refineryQuote2.duration + refineryRules.queueMs) / 60000)} min`}</p><p><b>Total cost: ${refineryQuote2.fee.toLocaleString()} credits</b>${refineryClientState.you!.credits < refineryQuote2.fee ? ' · not enough credits' : ''}</p><p class="dim small">${refineryQuote2.recovery}% of the usable material is recovered. Collect whole tonnes here; smaller amounts stay safely stored.${refineryQuote2.mode === 'stored' ? ` You can cancel during the first 30 seconds for ${refineryQuote2.cancelFee} credits.` : ''}</p>` : `<p class="dim">${refineryClientState.refineryCostError ? 'Could not load the current cost. Try again when connected.' : 'Checking the current cost…'}</p>`}
+      ${refineryClientState.paused ? '<p class="jwarn">Solo is paused. Resume before starting a job.</p>' : ''}
+      <button class="btn" data-refinery="submit"${refineryQuote2 ? ` data-id="${escapeHtml2(refineryQuote2.id)}"` : ''}${ready ? '' : ' disabled'}>${refineryClientState.refineryBusy ? 'STARTING…' : refineryQuote2 ? `START REFINING · ${refineryQuote2.fee.toLocaleString()} CR` : 'START REFINING'}</button>
+      ${refineryClientState.refineryCostError ? '<button class="btn sm" data-refinery="retry">UPDATE COST</button>' : ''}
     </div>
-    <div class="sect">DELIVERIES WANTED</div>${data.offers.map((o) => `<div class="rrow"><span>${o.qty} t ${esc(o.grade)} ${esc(title(o.cid))} · pays ${o.reward.toLocaleString()} credits</span><button class="btn sm" data-refinery="accept" data-order="1" data-id="${esc(o.id)}" data-port="${esc(o.port)}">ACCEPT DELIVERY</button></div>`).join('') || '<p class="dim">No deliveries wanted here right now.</p>'}${jobs}`;
+    <div class="sect">DELIVERIES WANTED</div>${data.offers.map((miningOrder) => `<div class="rrow"><span>${miningOrder.qty} t ${escapeHtml2(miningOrder.grade)} ${escapeHtml2(title(miningOrder.cid))} · pays ${miningOrder.reward.toLocaleString()} credits</span><button class="btn sm" data-refinery="accept" data-order="1" data-id="${escapeHtml2(miningOrder.id)}" data-port="${escapeHtml2(miningOrder.port)}">ACCEPT DELIVERY</button></div>`).join('') || '<p class="dim">No deliveries wanted here right now.</p>'}${jobs}`;
 }
 export function initRefineryControls(
-  G: RefineryClientState,
+  refineryClientState: RefineryClientState,
   send: (message: object) => void,
   render: () => void,
 ) {
-  let key: string | null = null,
+  let entryKey2: string | null = null,
     waiting = false,
     requestedAt = 0,
     notBefore = 0,
     owner: string | undefined | null = null,
     submittedAt = 0;
   const active = () =>
-    G.you && G.landed && G.ltab === 'refinery' && document.getElementById('refrecipe');
+    refineryClientState.you &&
+    refineryClientState.landed &&
+    refineryClientState.ltab === 'refinery' &&
+    document.getElementById('refrecipe');
   function requestKey() {
-    const c = choice(G);
-    return JSON.stringify([G.you?.name, G.landed?.stellar, c.recipe?.id, c.grade, c.n, c.mode]);
+    const choice2 = choice(refineryClientState);
+    return JSON.stringify([
+      refineryClientState.you?.name,
+      refineryClientState.landed?.stellar,
+      choice2.recipe?.id,
+      choice2.grade,
+      choice2.n,
+      choice2.mode,
+    ]);
   }
   function changed() {
-    key = null;
+    entryKey2 = null;
     waiting = false;
-    G.refineryQuote = null;
-    G.refineryCostError = false;
+    refineryClientState.refineryQuote = null;
+    refineryClientState.refineryCostError = false;
     notBefore = Date.now() + 250;
     const button = document.querySelector<HTMLButtonElement>('[data-refinery="submit"]');
     if (button) button.disabled = true;
   }
   document.addEventListener('input', (event) => {
     if ((event.target as HTMLInputElement).id !== 'refquantity') return;
-    refineryDraft(G).n = (event.target as HTMLInputElement).value;
+    refineryDraft(refineryClientState).n = (event.target as HTMLInputElement).value;
     changed();
   });
   document.addEventListener('change', (event) => {
@@ -153,139 +185,156 @@ export function initRefineryControls(
     };
     const field = fields[(event.target as HTMLInputElement).id];
     if (!field) return;
-    refineryDraft(G)[field] = (event.target as HTMLInputElement).value;
+    refineryDraft(refineryClientState)[field] = (event.target as HTMLInputElement).value;
     changed();
     render();
   });
   document.addEventListener('click', (event) => {
-    const b = (event.target as HTMLInputElement).closest<HTMLButtonElement>('[data-refinery]');
-    if (!b || b.disabled || G.paused) return;
+    const htmlButtonElement = (event.target as HTMLInputElement).closest<HTMLButtonElement>(
+      '[data-refinery]',
+    );
+    if (!htmlButtonElement || htmlButtonElement.disabled || refineryClientState.paused) return;
     event.preventDefault();
-    const op = b.dataset.refinery;
-    if (op === 'retry') {
+    const refinery2 = htmlButtonElement.dataset.refinery;
+    if (refinery2 === 'retry') {
       changed();
       return;
     }
-    if (op === 'submit') {
+    if (refinery2 === 'submit') {
       if (
-        G.refineryBusy ||
-        !matchingRefineryCost(G, G.refineryQuote) ||
-        b.dataset.id !== G.refineryQuote!.id
+        refineryClientState.refineryBusy ||
+        !matchingRefineryCost(refineryClientState, refineryClientState.refineryQuote) ||
+        htmlButtonElement.dataset.id !== refineryClientState.refineryQuote!.id
       ) {
         changed();
         render();
         return;
       }
-      G.refineryBusy = true;
-      G.refineryChecking = false;
+      refineryClientState.refineryBusy = true;
+      refineryClientState.refineryChecking = false;
       submittedAt = Date.now();
-      b.disabled = true;
-      b.textContent = 'STARTING…';
+      htmlButtonElement.disabled = true;
+      htmlButtonElement.textContent = 'STARTING…';
     }
-    const m: { t: string; op?: string; id?: string; port?: string; recipe?: string; n?: number } = {
-      t: b.dataset.order ? 'miningOrder' : 'refinery',
-      op,
+    const message: {
+      t: string;
+      op?: string;
+      id?: string;
+      port?: string;
+      recipe?: string;
+      n?: number;
+    } = {
+      t: htmlButtonElement.dataset.order ? 'miningOrder' : 'refinery',
+      op: refinery2,
     };
-    for (const k of ['id', 'port', 'recipe'])
-      if (b.dataset[k]) m[k as 'id' | 'port' | 'recipe'] = b.dataset[k];
-    if (['cancel', 'submit'].includes(op!)) delete m.port;
-    if (op === 'fuelQuote') m.n = 1;
-    if (op === 'fuel') G.refineryFuelQuote = null;
-    send(m);
+    for (const entryKey of ['id', 'port', 'recipe'])
+      if (htmlButtonElement.dataset[entryKey])
+        message[entryKey as 'id' | 'port' | 'recipe'] = htmlButtonElement.dataset[entryKey];
+    if (['cancel', 'submit'].includes(refinery2!)) delete message.port;
+    if (refinery2 === 'fuelQuote') message.n = 1;
+    if (refinery2 === 'fuel') refineryClientState.refineryFuelQuote = null;
+    send(message);
   });
   return {
-    receiveQuote(q: RefineryQuote) {
-      if (!active() || !matchingRefineryCost(G, q) || key !== requestKey()) return false;
+    receiveQuote(refineryQuote2: RefineryQuote) {
+      if (
+        !active() ||
+        !matchingRefineryCost(refineryClientState, refineryQuote2) ||
+        entryKey2 !== requestKey()
+      )
+        return false;
       waiting = false;
-      G.refineryQuote = q;
-      G.refineryCostError = false;
+      refineryClientState.refineryQuote = refineryQuote2;
+      refineryClientState.refineryCostError = false;
       return true;
     },
     connected() {
-      G.refineryChecking = false;
+      refineryClientState.refineryChecking = false;
     },
-    settled(op: string) {
+    settled(operation: string) {
       if (
-        G.refineryBusy &&
-        !['submit', 'list'].includes(op) &&
-        !G.you?.refinery?.batches?.some((b) => b.quote.id === G.refineryQuote?.id)
+        refineryClientState.refineryBusy &&
+        !['submit', 'list'].includes(operation) &&
+        !refineryClientState.you?.refinery?.batches?.some(
+          (refineryBatch) => refineryBatch.quote.id === refineryClientState.refineryQuote?.id,
+        )
       )
         return;
-      G.refineryBusy = false;
-      G.refineryChecking = false;
+      refineryClientState.refineryBusy = false;
+      refineryClientState.refineryChecking = false;
       changed();
     },
-    failed(op: string) {
-      if (!['preview', 'quote', 'submit'].includes(op)) return;
+    failed(operation: string) {
+      if (!['preview', 'quote', 'submit'].includes(operation)) return;
       waiting = false;
-      G.refineryBusy = false;
-      G.refineryQuote = null;
-      if (op === 'submit') {
+      refineryClientState.refineryBusy = false;
+      refineryClientState.refineryQuote = null;
+      if (operation === 'submit') {
         changed();
         return;
       }
-      G.refineryCostError = true;
+      refineryClientState.refineryCostError = true;
     },
     refresh() {
-      if (owner !== G.you?.name) {
-        owner = G.you?.name;
-        key = null;
+      if (owner !== refineryClientState.you?.name) {
+        owner = refineryClientState.you?.name;
+        entryKey2 = null;
         waiting = false;
-        G.refineryDraft = null;
-        G.refineryQuote = null;
-        G.refineryBusy = false;
-        G.refineryCostError = false;
+        refineryClientState.refineryDraft = null;
+        refineryClientState.refineryQuote = null;
+        refineryClientState.refineryBusy = false;
+        refineryClientState.refineryCostError = false;
       }
       if (!active()) {
-        key = null;
+        entryKey2 = null;
         waiting = false;
         return;
       }
-      if (G.paused) return;
-      if (G.refineryBusy) {
+      if (refineryClientState.paused) return;
+      if (refineryClientState.refineryBusy) {
         // Query authoritative state after a delayed response; never auto-submit again.
-        if (!G.refineryChecking && Date.now() - submittedAt > 5000) {
-          G.refineryChecking = true;
+        if (!refineryClientState.refineryChecking && Date.now() - submittedAt > 5000) {
+          refineryClientState.refineryChecking = true;
           send({ t: 'refinery', op: 'list' });
           render();
         }
         return;
       }
-      if (G.refineryCostError || Date.now() < notBefore) return;
+      if (refineryClientState.refineryCostError || Date.now() < notBefore) return;
       if (waiting) {
         if (Date.now() - requestedAt > 5000) {
           waiting = false;
-          G.refineryCostError = true;
+          refineryClientState.refineryCostError = true;
           render();
         }
         return;
       }
-      const c = choice(G),
+      const choice2 = choice(refineryClientState),
         next = requestKey();
-      if (!valid(c)) {
-        if (key !== next) {
-          key = next;
+      if (!valid(choice2)) {
+        if (entryKey2 !== next) {
+          entryKey2 = next;
           render();
         }
         return;
       }
       if (
-        key === next &&
-        matchingRefineryCost(G, G.refineryQuote) &&
-        G.refineryQuote.expires - Date.now() > 3000
+        entryKey2 === next &&
+        matchingRefineryCost(refineryClientState, refineryClientState.refineryQuote) &&
+        refineryClientState.refineryQuote.expires - Date.now() > 3000
       )
         return;
-      key = next;
+      entryKey2 = next;
       requestedAt = Date.now();
       waiting = true;
-      G.refineryQuote = null;
+      refineryClientState.refineryQuote = null;
       send({
         t: 'refinery',
         op: 'preview',
-        recipe: c.recipe.id,
-        grade: c.grade,
-        mode: c.mode,
-        n: c.n,
+        recipe: choice2.recipe.id,
+        grade: choice2.grade,
+        mode: choice2.mode,
+        n: choice2.n,
       });
       render();
     },

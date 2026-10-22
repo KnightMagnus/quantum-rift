@@ -33,46 +33,48 @@ const ORDERS: Record<string, string> = {
 // Simulation seconds before the dumping captain/fleet may scoop its own cargo again.
 export const JETTISON_OWNER_GRACE_SECONDS = 5;
 export const FleetCmdOperations = {
-  /** @this {FleetCommandsCapabilities} @param {CommandSession} session @param {string} o */
-  fleetOrder(this: FleetCommandsCapabilities, session: CommandSession, o: string) {
-    if (!ORDERS[o] || !session.ent) return;
+  /** @this {FleetCommandsCapabilities} @param {CommandSession} session @param {string} options */
+  fleetOrder(this: FleetCommandsCapabilities, session: CommandSession, options: string) {
+    if (!ORDERS[options] || !session.ent) return;
     const entity = session.ent;
-    entity.order = entity.order === o && o !== 'gather' ? 'gather' : o;
+    entity.order = entity.order === options && options !== 'gather' ? 'gather' : options;
     entity.orderSeq = (entity.orderSeq || 0) + 1; // giving the same order again cancels it
-    this.toast(session, entity.order === o ? ORDERS[o] : ORDERS.gather);
+    this.toast(session, entity.order === options ? ORDERS[options] : ORDERS.gather);
     this.send(session, { t: 'order', o: entity.order });
   },
   // throw cargo out of the hold: it floats free, and pirates chasing you may go for it instead
-  /** @this {FleetCommandsCapabilities} @param {CommandSession} session @param {string} cid @param {number} n @param {GradeLots|'common-first'} [selection] */
+  /** @this {FleetCommandsCapabilities} @param {CommandSession} session @param {string} captainId @param {number} count @param {GradeLots|'common-first'} [selection] */
   jettison(
     this: FleetCommandsCapabilities,
     session: CommandSession,
-    cid: string,
-    n: number,
+    captainId: string,
+    count: number,
     selection: GradeLots | 'common-first' = 'common-first',
   ) {
     const playerData = session.data,
       entity = session.ent;
     if (!entity || entity.state !== 'fly')
       return this.toast(session, 'You can only jettison cargo in space.');
-    const have = playerData.cargo[cid] || 0;
-    n = Math.min(have, n > 0 ? n : have);
-    if (!n) return;
+    const have = playerData.cargo[captainId] || 0;
+    count = Math.min(have, count > 0 ? count : have);
+    if (!count) return;
     let take;
     try {
-      take = planTake(playerData.cargo, playerData.cargoLots, cid, n, selection);
+      take = planTake(playerData.cargo, playerData.cargoLots, captainId, count, selection);
     } catch {
       return this.toast(session, 'Those cargo grades are unavailable.');
     }
     applyTake(playerData.cargo, playerData.cargoLots, take);
     const remaining = { ...take.grades };
     const space = this.spaces[playerData.sys],
-      c = COMMODITIES.find((x) => x.id === cid);
-    for (let i = 0, k = Math.min(4, Math.ceil(n / 5)); i < k; i++) {
-      const part = Math.ceil(n / k) - (i === k - 1 ? Math.ceil(n / k) * k - n : 0);
+      commodityDef = COMMODITIES.find((commodityDef) => commodityDef.id === captainId);
+    for (let index = 0, entryKey = Math.min(4, Math.ceil(count / 5)); index < entryKey; index++) {
+      const part =
+        Math.ceil(count / entryKey) -
+        (index === entryKey - 1 ? Math.ceil(count / entryKey) * entryKey - count : 0);
       if (part <= 0) continue;
       const lots = splitLots(remaining, part);
-      for (const g of RAW_GRADES) remaining[g] -= lots[g];
+      for (const rAW_GRADES of RAW_GRADES) remaining[rAW_GRADES] -= lots[rAW_GRADES];
       space.loot.push({
         id: space.nextLootId(),
         x: entity.x - Math.sin(entity.a) * 40 + (Math.random() - 0.5) * 40,
@@ -80,7 +82,7 @@ export const FleetCmdOperations = {
         vx: entity.vx * 0.4 + (Math.random() - 0.5) * 40,
         vy: entity.vy * 0.4 + (Math.random() - 0.5) * 40,
         it: {
-          cargo: cid,
+          cargo: captainId,
           n: part,
           lots,
           jettisonPickup: {
@@ -94,30 +96,30 @@ export const FleetCmdOperations = {
       });
     }
     let lured = 0;
-    for (const x of space.ships.values())
+    for (const entity2 of space.ships.values())
       if (
-        !x.player &&
-        x.target === entity &&
-        space.root(x).faction === 'hollow' &&
+        !entity2.player &&
+        entity2.target === entity &&
+        space.root(entity2).faction === 'hollow' &&
         Math.random() < 0.7
       ) {
-        x.target = null;
-        x.aggro.delete(entity.id);
-        x.distractT = space.t + 20;
-        x.dest = { x: entity.x, y: entity.y };
+        entity2.target = null;
+        entity2.aggro.delete(entity.id);
+        entity2.distractT = space.t + 20;
+        entity2.dest = { x: entity.x, y: entity.y };
         lured++;
       }
     this.toast(
       session,
-      `Jettisoned ${n} t of ${c ? c.name.toLowerCase() : cid}. Own fleet pickup paused ${JETTISON_OWNER_GRACE_SECONDS}s.${lured ? ` ${lured} raider${lured > 1 ? 's' : ''} went for it.` : ''}`,
+      `Jettisoned ${count} t of ${commodityDef ? commodityDef.name.toLowerCase() : captainId}. Own fleet pickup paused ${JETTISON_OWNER_GRACE_SECONDS}s.${lured ? ` ${lured} raider${lured > 1 ? 's' : ''} went for it.` : ''}`,
     );
     this.you(session);
   },
   // picking jettisoned (or anyone's) cargo back up
-  /** @this {FleetCommandsCapabilities} @param {CommandSession} session @param {CargoLoot} it */
-  lootCargo(this: FleetCommandsCapabilities, session: CommandSession, it: CargoLoot) {
+  /** @this {FleetCommandsCapabilities} @param {CommandSession} session @param {CargoLoot} cargoLoot */
+  lootCargo(this: FleetCommandsCapabilities, session: CommandSession, cargoLoot: CargoLoot) {
     const playerData = session.data,
-      grace = it.jettisonPickup;
+      grace = cargoLoot.jettisonPickup;
     // All player/wing/drone pickup paths resolve to this captain authority.
     if (
       grace &&
@@ -126,26 +128,29 @@ export const FleetCmdOperations = {
       this.spaces[playerData.sys]?.t < grace.until
     )
       return false;
-    const st = this.stats(playerData);
-    if (!st) throw new TypeError('Cannot collect cargo without valid ship stats');
+    const stats2 = this.stats(playerData);
+    if (!stats2) throw new TypeError('Cannot collect cargo without valid ship stats');
     const used = this.holdUsed(playerData),
-      n = Math.min(it.n, st.cargo - used);
-    if (n <= 0) return false;
-    const remaining = it.lots === undefined ? commonLots(it.cargo, it.n).grades : it.lots;
-    const selected = splitLots(remaining, n);
+      count = Math.min(cargoLoot.n, stats2.cargo - used);
+    if (count <= 0) return false;
+    const remaining =
+      cargoLoot.lots === undefined
+        ? commonLots(cargoLoot.cargo, cargoLoot.n).grades
+        : cargoLoot.lots;
+    const selected = splitLots(remaining, count);
     addLots(
       playerData.cargo,
       playerData.cargoLots,
-      { cid: it.cargo, qty: n, grades: selected },
-      Math.max(0, st.cargo - used),
+      { cid: cargoLoot.cargo, qty: count, grades: selected },
+      Math.max(0, stats2.cargo - used),
     );
-    it.lots = remaining;
-    for (const g of RAW_GRADES) remaining[g] -= selected[g];
-    it.n -= n;
-    const c = COMMODITIES.find((x) => x.id === it.cargo);
-    this.toast(session, `+${n} t ${c ? c.name : it.cargo}`);
+    cargoLoot.lots = remaining;
+    for (const rAW_GRADES of RAW_GRADES) remaining[rAW_GRADES] -= selected[rAW_GRADES];
+    cargoLoot.n -= count;
+    const commodityDef = COMMODITIES.find((commodityDef) => commodityDef.id === cargoLoot.cargo);
+    this.toast(session, `+${count} t ${commodityDef ? commodityDef.name : cargoLoot.cargo}`);
     this.you(session);
-    return it.n <= 0 ? true : false;
+    return cargoLoot.n <= 0 ? true : false;
   },
   /** @param {CargoPlayer} playerData */
   rankOf(playerData: CargoPlayer) {

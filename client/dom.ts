@@ -102,10 +102,10 @@ type KnownControls = {
   xto: InputControl;
   ysort: HTMLSelectElement;
 };
-export function elementById<Key extends string>(
-  id: Key,
-): Key extends keyof KnownControls ? KnownControls[Key] : CachedElement {
-  return document.getElementById(id)! as Key extends keyof KnownControls
-    ? KnownControls[Key]
+export function elementById<KeyType extends string>(
+  identifier: KeyType,
+): KeyType extends keyof KnownControls ? KnownControls[KeyType] : CachedElement {
+  return document.getElementById(identifier)! as KeyType extends keyof KnownControls
+    ? KnownControls[KeyType]
     : CachedElement;
 }

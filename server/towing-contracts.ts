@@ -1,5 +1,5 @@
 import type { ComputedShipStats } from '../shared/rules.ts';
-import type { DB } from './db.ts';
+import type { DB as Database } from './db.ts';
 import type { PlayerData } from './game.ts';
 export type Lots = import('../shared/cargo-contracts.ts').GradeLots;
 export type TowStatus = 'available' | 'attached' | 'detached' | 'delivered' | 'destroyed';
@@ -70,15 +70,15 @@ export type TowRequest = {
 };
 export type Session = import('./game.ts').Session;
 export type TowCapabilities = {
-  db: Pick<DB, 'world' | 'players' | 'touch' | 'flush' | 'economicFrozen' | 'key'>;
+  db: Pick<Database, 'world' | 'players' | 'touch' | 'flush' | 'economicFrozen' | 'key'>;
   paused: () => boolean;
   sessions: () => IterableIterator<Session>;
-  refresh: (s: Session) => void;
-  toast: (s: Session, text: string) => void;
-  stopCombat: (s: Session) => void;
-  room: (d: PlayerData) => number;
-  stats: (d: PlayerData) => ComputedShipStats | null;
-  field: (sys: string, field: number) => { recovery: number; label: string; factor: number };
+  refresh: (session: Session) => void;
+  toast: (session: Session, text: string) => void;
+  stopCombat: (session: Session) => void;
+  room: (playerData: PlayerData) => number;
+  stats: (playerData: PlayerData) => ComputedShipStats | null;
+  field: (starSystem: string, field: number) => { recovery: number; label: string; factor: number };
 };
 
 /** @import { ComputedShipStats } from '../shared/rules.ts' */

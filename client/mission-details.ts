@@ -8,8 +8,8 @@ export type MissionDetailsInput = Omit<Partial<Mission>, 'quest' | 'sys'> &
     quest?: Mission['quest'] | boolean;
   } & { team?: unknown };
 
-import { escapeHtml as esc } from './html.ts';
-import { SYS, STELLARS } from '../shared/galaxy.ts';
+import { escapeHtml as escapeHtml2 } from './html.ts';
+import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
 import { route } from '../shared/rules.ts';
 import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.ts';
 import { contractShares } from '../shared/mission-payouts.ts';
@@ -24,112 +24,150 @@ const kinds = [
   ['story', 'Stories'],
   ['team', 'Team contracts'],
 ];
-export function missionKind(o: MissionDetailsInput) {
+export function missionKind(missionDetailsInput: MissionDetailsInput) {
   if (
-    o.kind === 'story' ||
-    o.kind === 'arc' ||
-    o.kind === 'career' ||
-    o.quest ||
-    o.type === 'quest'
+    missionDetailsInput.kind === 'story' ||
+    missionDetailsInput.kind === 'arc' ||
+    missionDetailsInput.kind === 'career' ||
+    missionDetailsInput.quest ||
+    missionDetailsInput.type === 'quest'
   )
     return 'story';
-  if (o.type === 'warband') return 'team';
-  if (['cargo', 'smuggle', 'supply'].includes(o.type!)) return 'cargo';
-  if (o.type === 'passenger') return 'passenger';
-  if (['bounty', 'assassinate', 'patrol'].includes(o.type!)) return 'combat';
+  if (missionDetailsInput.type === 'warband') return 'team';
+  if (['cargo', 'smuggle', 'supply'].includes(missionDetailsInput.type!)) return 'cargo';
+  if (missionDetailsInput.type === 'passenger') return 'passenger';
+  if (['bounty', 'assassinate', 'patrol'].includes(missionDetailsInput.type!)) return 'combat';
   return 'explore';
 }
-export function missionDetails(G: ClientGameState, o: MissionDetailsInput, active = false) {
-  const y = G.you!,
-    system = o.sys || STELLARS[(o.dest || o.stellar)!]?.system;
-  const path = system && G.sys ? route(SYS, G.sys, system) : null;
-  const jumps = o.done || system === G.sys ? 0 : path?.length || null;
-  const cargo = ['cargo', 'smuggle', 'supply'].includes(o.type!) ? o.qty || 0 : 0;
+export function missionDetails(
+  clientGameState: ClientGameState,
+  missionDetailsInput: MissionDetailsInput,
+  active = false,
+) {
+  const playerPayload = clientGameState.you!,
+    system =
+      missionDetailsInput.sys ||
+      STELLARS[(missionDetailsInput.dest || missionDetailsInput.stellar)!]?.system;
+  const path =
+    system && clientGameState.sys ? route(systemsById, clientGameState.sys, system) : null;
+  const jumps =
+    missionDetailsInput.done || system === clientGameState.sys ? 0 : path?.length || null;
+  const cargo = ['cargo', 'smuggle', 'supply'].includes(missionDetailsInput.type!)
+    ? missionDetailsInput.qty || 0
+    : 0;
   const free = new ShipCapacity(
-    y.shipStats?.cargo || 0,
-    y.cargoUsed || 0,
-    reservedCargoTonnes(y.missions),
+    playerPayload.shipStats?.cargo || 0,
+    playerPayload.cargoUsed || 0,
+    reservedCargoTonnes(playerPayload.missions),
   ).available;
-  const capacity = passengerSeats(G.A!.ships[y.ship?.hull], y.ship);
-  const seats = Math.max(0, capacity - occupiedPassengerSeats(y.missions));
-  const team = (y.armada?.members || []).filter((m) => m.online && m.jobSlots > 0);
+  const capacity = passengerSeats(
+    clientGameState.A!.ships[playerPayload.ship?.hull],
+    playerPayload.ship,
+  );
+  const seats = Math.max(0, capacity - occupiedPassengerSeats(playerPayload.missions));
+  const team = (playerPayload.armada?.members || []).filter(
+    (message) => message.online && message.jobSlots > 0,
+  );
   const reasons = [];
-  if (!active && y.missions.length >= 6)
+  if (!active && playerPayload.missions.length >= 6)
     reasons.push('All six job slots are full. Finish or abandon a job first.');
   if (
-    !o.done &&
-    ['cargo', 'smuggle'].includes(o.type!) &&
-    cargo > (active ? y.shipStats?.cargo || 0 : free)
+    !missionDetailsInput.done &&
+    ['cargo', 'smuggle'].includes(missionDetailsInput.type!) &&
+    cargo > (active ? playerPayload.shipStats?.cargo || 0 : free)
   )
     reasons.push(
-      `Needs ${cargo} t of ${active ? 'hold capacity' : 'free hold'}; you have ${active ? y.shipStats?.cargo || 0 : free} t.`,
+      `Needs ${cargo} t of ${active ? 'hold capacity' : 'free hold'}; you have ${active ? playerPayload.shipStats?.cargo || 0 : free} t.`,
     );
-  if (!o.done && o.type === 'passenger' && (o.pax || 1) > (active ? capacity : seats))
+  if (
+    !missionDetailsInput.done &&
+    missionDetailsInput.type === 'passenger' &&
+    (missionDetailsInput.pax || 1) > (active ? capacity : seats)
+  )
     reasons.push(
-      `Needs ${o.pax || 1} ${active ? 'passenger seats' : 'free passenger seats'}; you have ${active ? capacity : seats}.`,
+      `Needs ${missionDetailsInput.pax || 1} ${active ? 'passenger seats' : 'free passenger seats'}; you have ${active ? capacity : seats}.`,
     );
-  if (!active && o.type === 'warband' && team.length < 2)
+  if (!active && missionDetailsInput.type === 'warband' && team.length < 2)
     reasons.push(
       'Needs two online Armada captains with free job slots. Open Allies to form a team.',
     );
-  let danger = SYS[system!]?.danger;
-  if (o.type === 'warband') danger = Math.max(4, danger || 0);
-  if (['patrol', 'bounty', 'assassinate'].includes(o.type!)) danger = Math.max(2, danger || 0);
-  if (o.hull && G.A!.ships[o.hull]?.strength > (G.A!.ships[y.ship?.hull]?.strength || 10) * 1.6)
+  let danger = systemsById[system!]?.danger;
+  if (missionDetailsInput.type === 'warband') danger = Math.max(4, danger || 0);
+  if (['patrol', 'bounty', 'assassinate'].includes(missionDetailsInput.type!))
+    danger = Math.max(2, danger || 0);
+  if (
+    missionDetailsInput.hull &&
+    clientGameState.A!.ships[missionDetailsInput.hull]?.strength >
+      (clientGameState.A!.ships[playerPayload.ship?.hull]?.strength || 10) * 1.6
+  )
     danger = Math.max(4, danger || 0);
   const risk =
     danger == null ? 'See briefing' : danger >= 4 ? '▲ High' : danger >= 2 ? '◆ Moderate' : '● Low';
-  const dest = STELLARS[(o.dest || o.stellar)!];
-  const turnIn = dest
-    ? `Land at ${dest.name} (${SYS[dest.system].name})`
-    : o.type === 'warband' ||
-        ['bounty', 'patrol', 'assassinate', 'survey', 'salvage', 'rescue'].includes(o.type!)
+  const stellarBody = STELLARS[(missionDetailsInput.dest || missionDetailsInput.stellar)!];
+  const turnIn = stellarBody
+    ? `Land at ${stellarBody.name} (${systemsById[stellarBody.system].name})`
+    : missionDetailsInput.type === 'warband' ||
+        ['bounty', 'patrol', 'assassinate', 'survey', 'salvage', 'rescue'].includes(
+          missionDetailsInput.type!,
+        )
       ? 'Land anywhere after completing the objective'
-      : o.status || 'See the briefing';
-  let pay = o.reward == null ? 'See briefing' : `${o.reward!.toLocaleString()} credits`;
-  if (!active && o.type === 'warband') {
+      : missionDetailsInput.status || 'See the briefing';
+  let payment =
+    missionDetailsInput.reward == null
+      ? 'See briefing'
+      : `${missionDetailsInput.reward!.toLocaleString()} credits`;
+  if (!active && missionDetailsInput.type === 'warband') {
     const share = contractShares(
-      o.reward!,
-      team.map((m) => m.name),
-    ).find((m) => m.name === y.name)?.share;
-    pay =
+      missionDetailsInput.reward!,
+      team.map((message) => message.name),
+    ).find((message) => message.name === playerPayload.name)?.share;
+    payment =
       share == null
         ? 'Choose a team first'
         : `about ${share.toLocaleString()} credits if all ${team.length} eligible captains join`;
   }
-  return { jumps, risk, cargo, free, seats, reasons, turnIn, pay };
+  return { jumps, risk, cargo, free, seats, reasons, turnIn, pay: payment };
 }
-export function missionFactsHtml(G: ClientGameState, o: MissionDetailsInput, active = false) {
-  if (o.kind === 'career') return '';
-  const d = missionDetails(G, o, active);
-  return `<div class="mission-facts small"><span><b>Travel:</b> ${d.jumps === null ? 'see briefing' : d.jumps === 0 ? 'this system' : d.jumps + (d.jumps === 1 ? ' jump' : ' jumps')}</span><span><b>Danger:</b> ${esc(d.risk)}</span><span><b>Hold needed:</b> ${d.cargo} t${!active && d.cargo ? ` (${d.free} t free)` : ''}</span>${o.type === 'passenger' ? `<span><b>Seats:</b> ${o.pax || 1} needed · ${d.seats} free</span>` : ''}<span><b>Turn in:</b> ${esc(d.turnIn)}</span>${o.reward != null ? `<span class="cr"><b>Your pay:</b> ${esc(d.pay)}</span>` : ''}${o.type === 'warband' && !active ? `<span>Team pool: ${o.reward!.toLocaleString()} credits, split only between captains who agree. Review exact shares before starting.</span>` : ''}${active && o.team ? '<span>Your saved share stays fixed if teammates leave. Reconnect to finish or collect; late joiners are not added.</span>' : ''}</div>`;
+export function missionFactsHtml(
+  clientGameState: ClientGameState,
+  missionDetailsInput: MissionDetailsInput,
+  active = false,
+) {
+  if (missionDetailsInput.kind === 'career') return '';
+  const missionDetails2 = missionDetails(clientGameState, missionDetailsInput, active);
+  return `<div class="mission-facts small"><span><b>Travel:</b> ${missionDetails2.jumps === null ? 'see briefing' : missionDetails2.jumps === 0 ? 'this system' : missionDetails2.jumps + (missionDetails2.jumps === 1 ? ' jump' : ' jumps')}</span><span><b>Danger:</b> ${escapeHtml2(missionDetails2.risk)}</span><span><b>Hold needed:</b> ${missionDetails2.cargo} t${!active && missionDetails2.cargo ? ` (${missionDetails2.free} t free)` : ''}</span>${missionDetailsInput.type === 'passenger' ? `<span><b>Seats:</b> ${missionDetailsInput.pax || 1} needed · ${missionDetails2.seats} free</span>` : ''}<span><b>Turn in:</b> ${escapeHtml2(missionDetails2.turnIn)}</span>${missionDetailsInput.reward != null ? `<span class="cr"><b>Your pay:</b> ${escapeHtml2(missionDetails2.pay)}</span>` : ''}${missionDetailsInput.type === 'warband' && !active ? `<span>Team pool: ${missionDetailsInput.reward!.toLocaleString()} credits, split only between captains who agree. Review exact shares before starting.</span>` : ''}${active && missionDetailsInput.team ? '<span>Your saved share stays fixed if teammates leave. Reconnect to finish or collect; late joiners are not added.</span>' : ''}</div>`;
 }
-export function filterMissions<T extends MissionDetailsInput>(
-  G: ClientGameState,
-  offers: T[],
+export function filterMissions<ValueType extends MissionDetailsInput>(
+  clientGameState: ClientGameState,
+  offers: ValueType[],
   scope: 'job' | 'mission' = 'job',
   active = false,
 ) {
-  return offers.filter((o) => {
-    const d = missionDetails(G, o, active),
-      type = G[(scope + 'Type') as 'jobType'] || 'all';
+  return offers.filter((options) => {
+    const missionDetails2 = missionDetails(clientGameState, options, active),
+      type = clientGameState[(scope + 'Type') as 'jobType'] || 'all';
     return (
-      (type === 'all' || missionKind(o) === type) &&
-      (!G[(scope + 'Feasible') as 'jobFeasible'] || !d.reasons.length) &&
-      (!G[(scope + 'Nearby') as 'jobNearby'] || (d.jumps !== null && d.jumps <= 1))
+      (type === 'all' || missionKind(options) === type) &&
+      (!clientGameState[(scope + 'Feasible') as 'jobFeasible'] ||
+        !missionDetails2.reasons.length) &&
+      (!clientGameState[(scope + 'Nearby') as 'jobNearby'] ||
+        (missionDetails2.jumps !== null && missionDetails2.jumps <= 1))
     );
   });
 }
-export function missionFiltersHtml(G: ClientGameState, scope: 'job' | 'mission' = 'job') {
-  return `<div class="mission-filters"><label class="small">${scope === 'job' ? 'Job' : 'Mission'} type <select data-mission-filter="${scope}Type" aria-label="${scope === 'job' ? 'Job' : 'Mission'} type">${kinds.map(([k, n]) => `<option value="${k}"${(G[(scope + 'Type') as 'jobType'] || 'all') === k ? ' selected' : ''}>${n}</option>`).join('')}</select></label><label class="small"><input type="checkbox" data-mission-filter="${scope}Feasible"${G[(scope + 'Feasible') as 'jobFeasible'] ? ' checked' : ''}> ${scope === 'job' ? 'Can take now' : 'Fits current ship'}</label><label class="small"><input type="checkbox" data-mission-filter="${scope}Nearby"${G[(scope + 'Nearby') as 'jobNearby'] ? ' checked' : ''}> Within 1 jump</label></div>`;
+export function missionFiltersHtml(
+  clientGameState: ClientGameState,
+  scope: 'job' | 'mission' = 'job',
+) {
+  return `<div class="mission-filters"><label class="small">${scope === 'job' ? 'Job' : 'Mission'} type <select data-mission-filter="${scope}Type" aria-label="${scope === 'job' ? 'Job' : 'Mission'} type">${kinds.map(([entryKey, count]) => `<option value="${entryKey}"${(clientGameState[(scope + 'Type') as 'jobType'] || 'all') === entryKey ? ' selected' : ''}>${count}</option>`).join('')}</select></label><label class="small"><input type="checkbox" data-mission-filter="${scope}Feasible"${clientGameState[(scope + 'Feasible') as 'jobFeasible'] ? ' checked' : ''}> ${scope === 'job' ? 'Can take now' : 'Fits current ship'}</label><label class="small"><input type="checkbox" data-mission-filter="${scope}Nearby"${clientGameState[(scope + 'Nearby') as 'jobNearby'] ? ' checked' : ''}> Within 1 jump</label></div>`;
 }
-export function contractPlanHtml(G: ClientGameState) {
-  const p = G.contractPlan;
-  if (!p) return '';
-  const mine = p.roster.find((r) => r.name === G.you?.name),
-    proposer = p.proposer === G.you?.name;
+export function contractPlanHtml(clientGameState: ClientGameState) {
+  const contractPlan2 = clientGameState.contractPlan;
+  if (!contractPlan2) return '';
+  const mine = contractPlan2.roster.find((radius) => radius.name === clientGameState.you?.name),
+    proposer = contractPlan2.proposer === clientGameState.you?.name;
   if (!mine) return '';
-  const button = (op: string, label: string, disabled = false) =>
-    `<button class="btn sm" data-contract="${op}"${disabled ? ' disabled' : ''}>${label}</button>`;
-  return `<section class="mcard contract-plan"><div class="sect">PLAN A TEAM CONTRACT</div><b>${esc(p.title)}</b><p class="small">Nothing is assigned until every listed captain chooses Ready and ${esc(p.proposer)} starts. Leaving or disconnecting cancels the plan. Accepted shares stay fixed; late joiners are not added.</p><ul class="small">${p.roster.map((r) => `<li>${esc(r.name)} · <b>${r.share.toLocaleString()} cr</b> · ${r.ready ? '✓ Ready' : 'Waiting'} · ${r.slots} job slots free</li>`).join('')}</ul>${p.skipped.map((r) => `<p class="small dim">${esc(r.name)}: ${esc(r.reason)}</p>`).join('')}<p class="small cr">Your share: ${mine.share.toLocaleString()} credits. Team pool: ${p.pool.toLocaleString()} credits.</p><div class="mfoot">${button('contractReady', mine.ready ? '✓ READY' : 'READY', mine.ready)}${proposer ? button('contractStart', 'START TEAM CONTRACT', !p.roster.every((r) => r.ready && r.slots > 0)) : ''}${button(proposer ? 'contractCancel' : 'contractDecline', proposer ? 'CANCEL PLAN' : 'NO THANKS')}</div><p class="dim small">This divides the team contract pool. Ordinary shared combat bounties are separate extra rewards.</p></section>`;
+  const button = (operation: string, label: string, disabled = false) =>
+    `<button class="btn sm" data-contract="${operation}"${disabled ? ' disabled' : ''}>${label}</button>`;
+  return `<section class="mcard contract-plan"><div class="sect">PLAN A TEAM CONTRACT</div><b>${escapeHtml2(contractPlan2.title)}</b><p class="small">Nothing is assigned until every listed captain chooses Ready and ${escapeHtml2(contractPlan2.proposer)} starts. Leaving or disconnecting cancels the plan. Accepted shares stay fixed; late joiners are not added.</p><ul class="small">${contractPlan2.roster.map((radius) => `<li>${escapeHtml2(radius.name)} · <b>${radius.share.toLocaleString()} cr</b> · ${radius.ready ? '✓ Ready' : 'Waiting'} · ${radius.slots} job slots free</li>`).join('')}</ul>${contractPlan2.skipped.map((radius) => `<p class="small dim">${escapeHtml2(radius.name)}: ${escapeHtml2(radius.reason)}</p>`).join('')}<p class="small cr">Your share: ${mine.share.toLocaleString()} credits. Team pool: ${contractPlan2.pool.toLocaleString()} credits.</p><div class="mfoot">${button('contractReady', mine.ready ? '✓ READY' : 'READY', mine.ready)}${proposer ? button('contractStart', 'START TEAM CONTRACT', !contractPlan2.roster.every((radius) => radius.ready && radius.slots > 0)) : ''}${button(proposer ? 'contractCancel' : 'contractDecline', proposer ? 'CANCEL PLAN' : 'NO THANKS')}</div><p class="dim small">This divides the team contract pool. Ordinary shared combat bounties are separate extra rewards.</p></section>`;
 }

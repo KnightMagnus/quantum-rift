@@ -29,36 +29,37 @@ export function stageCount(radius: number) {
 /** @param {number} quantity @param {boolean} clean @param {()=>number} random @returns {GradeLots} */
 export function rollGrades(quantity: number, clean: boolean, random: () => number): GradeLots {
   const lots = { common: 0, rich: 0, pure: 0 };
-  for (let i = 0; i < quantity; i++) {
-    const n = random();
-    if (n < (clean ? 0.65 : 0.9)) lots.common++;
-    else if (n < (clean ? 0.93 : 0.99)) lots.rich++;
+  for (let index = 0; index < quantity; index++) {
+    const count = random();
+    if (count < (clean ? 0.65 : 0.9)) lots.common++;
+    else if (count < (clean ? 0.93 : 0.99)) lots.rich++;
     else lots.pure++;
   }
   return lots;
 }
 /** Union contact seconds: multiple mounts/captains never duplicate elapsed time.
- * @param {{from:number,to:number,seam:boolean}[]} spans @param {number} from @param {number} to @returns {{seconds:number,seamSeconds:number}} */
+ * @param {{from:number,to:number,seam:boolean}[]} spans @param {number} from @param {number} destination @returns {{seconds:number,seamSeconds:number}} */
 export function contactTime(
   spans: { from: number; to: number; seam: boolean }[],
   from: number,
-  to: number,
+  destination: number,
 ): { seconds: number; seamSeconds: number } {
-  const points = [from, to];
-  for (const s of spans) {
-    if (s.to > from && s.from < to) points.push(Math.max(from, s.from), Math.min(to, s.to));
+  const points = [from, destination];
+  for (const span of spans) {
+    if (span.to > from && span.from < destination)
+      points.push(Math.max(from, span.from), Math.min(destination, span.to));
   }
-  points.sort((a, b) => a - b);
+  points.sort((firstValue, secondValue) => firstValue - secondValue);
   let seconds = 0,
     seamSeconds = 0;
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1],
-      b = points[i];
-    if (b <= a) continue;
-    const active = spans.filter((s) => s.from < b && s.to > a);
+  for (let index = 1; index < points.length; index++) {
+    const point = points[index - 1],
+      point2 = points[index];
+    if (point2 <= point) continue;
+    const active = spans.filter((state) => state.from < point2 && state.to > point);
     if (active.length) {
-      seconds += b - a;
-      if (active.some((s) => s.seam)) seamSeconds += b - a;
+      seconds += point2 - point;
+      if (active.some((state) => state.seam)) seamSeconds += point2 - point;
     }
   }
   return { seconds, seamSeconds };

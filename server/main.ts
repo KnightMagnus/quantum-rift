@@ -4,11 +4,11 @@ import type { Server, ServerResponse } from 'node:http';
 // Quantum Rift server entry: static files, WebSocket game connection, local game endpoints.
 // Run: node server/main.js   (PORT and DATA_DIR environment variables are optional)
 import http from 'node:http';
-import fs from 'node:fs';
+import fileSystem from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { upgrade } from './ws.ts';
-import { DB } from './db.ts';
+import { DB as Database } from './db.ts';
 import { Game } from './game.ts';
 
 /** @import { GameAssets } from '../shared/rules.ts' */
@@ -19,7 +19,7 @@ import { Game } from './game.ts';
  * @type {string}
  */
 const moduleRoot: string = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const ROOT = fs.existsSync(path.join(moduleRoot, 'package.json'))
+const ROOT = fileSystem.existsSync(path.join(moduleRoot, 'package.json'))
   ? moduleRoot
   : path.dirname(moduleRoot);
 const compiledRoot = path.join(ROOT, 'dist');
@@ -41,7 +41,7 @@ const SOLO: boolean = !!process.env.SOLO; // solo mode: a private game on this c
  * @type {string}
  */
 const VERSION: string = JSON.parse(
-  fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'),
+  fileSystem.readFileSync(path.join(ROOT, 'package.json'), 'utf8'),
 ).version;
 
 /**
@@ -49,14 +49,14 @@ const VERSION: string = JSON.parse(
  * @type {GameAssets}
  */
 const assets: GameAssets = JSON.parse(
-  fs.readFileSync(path.join(ROOT, 'shared', 'assets.json'), 'utf8'),
+  fileSystem.readFileSync(path.join(ROOT, 'shared', 'assets.json'), 'utf8'),
 );
 
 /**
  * Database persistence manager for player accounts and world state.
  * @type {DB}
  */
-const database: DB = new DB(process.env.DATA_DIR || path.join(ROOT, 'data'));
+const database: Database = new Database(process.env.DATA_DIR || path.join(ROOT, 'data'));
 
 /**
  * Primary game engine instance managing active systems, entities, and client sessions.
@@ -86,56 +86,56 @@ const TYPES: Record<string, string> = {
 
 /**
  * Streams a local static file to an HTTP response with appropriate MIME headers and caching.
- * @param {ServerResponse} res Outgoing HTTP server response.
+ * @param {ServerResponse} response Outgoing HTTP server response.
  * @param {string} file Absolute filesystem path to the target static file.
  * @param {boolean} cache Whether to enable client-side 1-day public caching.
  * @returns {void}
  */
-function serve(res: ServerResponse, file: string, cache: boolean, range?: string): void {
-  fs.stat(file, (err, st) => {
-    if (err || !st.isFile()) {
-      res.writeHead(404);
-      res.end('not found');
+function serve(response: ServerResponse, file: string, cache: boolean, range?: string): void {
+  fileSystem.stat(file, (errnoException, stats) => {
+    if (errnoException || !stats.isFile()) {
+      response.writeHead(404);
+      response.end('not found');
       return;
     }
     if (path.extname(file) === '.mp3' && range) {
-      const m = /^bytes=(\d*)-(\d*)$/.exec(range);
-      let start = m?.[1] ? Number(m[1]) : 0;
-      let end = m?.[2] ? Number(m[2]) : st.size - 1;
-      if (m && !m[1] && m[2]) {
-        start = Math.max(0, st.size - Number(m[2]));
-        end = st.size - 1;
+      const regExpExecArray = /^bytes=(\d*)-(\d*)$/.exec(range);
+      let start = regExpExecArray?.[1] ? Number(regExpExecArray[1]) : 0;
+      let endPosition = regExpExecArray?.[2] ? Number(regExpExecArray[2]) : stats.size - 1;
+      if (regExpExecArray && !regExpExecArray[1] && regExpExecArray[2]) {
+        start = Math.max(0, stats.size - Number(regExpExecArray[2]));
+        endPosition = stats.size - 1;
       }
-      end = Math.min(end, st.size - 1);
+      endPosition = Math.min(endPosition, stats.size - 1);
       if (
-        !m ||
-        (!m[1] && !m[2]) ||
+        !regExpExecArray ||
+        (!regExpExecArray[1] && !regExpExecArray[2]) ||
         !Number.isSafeInteger(start) ||
-        !Number.isSafeInteger(end) ||
-        start > end ||
-        start >= st.size
+        !Number.isSafeInteger(endPosition) ||
+        start > endPosition ||
+        start >= stats.size
       ) {
-        res.writeHead(416, { 'Content-Range': 'bytes */' + st.size });
-        res.end();
+        response.writeHead(416, { 'Content-Range': 'bytes */' + stats.size });
+        response.end();
         return;
       }
-      res.writeHead(206, {
+      response.writeHead(206, {
         'Content-Type': 'audio/mpeg',
         'Accept-Ranges': 'bytes',
-        'Content-Range': 'bytes ' + start + '-' + end + '/' + st.size,
-        'Content-Length': end - start + 1,
+        'Content-Range': 'bytes ' + start + '-' + endPosition + '/' + stats.size,
+        'Content-Length': endPosition - start + 1,
         'Cache-Control': cache ? 'public, max-age=86400' : 'no-cache',
       });
-      fs.createReadStream(file, { start, end }).pipe(res);
+      fileSystem.createReadStream(file, { start, end: endPosition }).pipe(response);
       return;
     }
-    res.writeHead(200, {
+    response.writeHead(200, {
       ...(path.extname(file) === '.mp3' ? { 'Accept-Ranges': 'bytes' } : {}),
       'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream',
-      'Content-Length': st.size,
+      'Content-Length': stats.size,
       'Cache-Control': cache ? 'public, max-age=86400' : 'no-cache',
     });
-    fs.createReadStream(file).pipe(res);
+    fileSystem.createReadStream(file).pipe(response);
   });
 }
 
@@ -143,14 +143,14 @@ function serve(res: ServerResponse, file: string, cache: boolean, range?: string
  * Main HTTP application server handling REST API endpoints, static assets, and WebSocket handshakes.
  * @type {Server}
  */
-const server: Server = http.createServer(async (req, res) => {
-  const url = new URL(req.url!, 'http://x');
-  let p = decodeURIComponent(url.pathname);
-  if (p === '/api/status') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(
+const server: Server = http.createServer(async (incomingMessage, response) => {
+  const targetUrl = new URL(incomingMessage.url!, 'http://x');
+  let decodeURIComponent2 = decodeURIComponent(targetUrl.pathname);
+  if (decodeURIComponent2 === '/api/status') {
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.end(
       JSON.stringify({
-        players: [...game.sessions.values()].filter((s) => s.data).length,
+        players: [...game.sessions.values()].filter((session) => session.data).length,
         version: VERSION,
         solo: SOLO,
         slots: SOLO ? game.slots() : undefined,
@@ -158,54 +158,56 @@ const server: Server = http.createServer(async (req, res) => {
     );
     return;
   }
-  if (SOLO && p === '/api/export') {
+  if (SOLO && decodeURIComponent2 === '/api/export') {
     // download a save
-    const pl = database.get(url.searchParams.get('name') || '');
-    if (!pl) {
-      res.writeHead(404);
-      res.end();
+    const playerAccount = database.get(targetUrl.searchParams.get('name') || '');
+    if (!playerAccount) {
+      response.writeHead(404);
+      response.end();
       return;
     }
-    const { salt, hash, ...save } = pl;
-    res.writeHead(200, {
+    const { salt, hash, ...save } = playerAccount;
+    response.writeHead(200, {
       'Content-Type': 'application/json',
-      'Content-Disposition': `attachment; filename="${pl.name.replace(/[^A-Za-z0-9_-]/g, '_')}.rift.json"`,
+      'Content-Disposition': `attachment; filename="${playerAccount.name.replace(/[^A-Za-z0-9_-]/g, '_')}.rift.json"`,
     });
-    res.end(JSON.stringify({ rift: VERSION, save }));
+    response.end(JSON.stringify({ rift: VERSION, save }));
     return;
   }
-  if (SOLO && p === '/api/import' && req.method === 'POST') {
+  if (SOLO && decodeURIComponent2 === '/api/import' && incomingMessage.method === 'POST') {
     // load a save file
     let body = '';
-    req.on('data', (c) => {
-      body += c;
-      if (body.length > 8e6) req.destroy();
+    incomingMessage.on('data', (component) => {
+      body += component;
+      if (body.length > 8e6) incomingMessage.destroy();
     });
-    req.on('end', () => {
+    incomingMessage.on('end', () => {
       try {
-        const j = JSON.parse(body),
-          sv = j.save || j;
-        const n = game.importSave(sv);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true, name: n }));
-      } catch (e) {
-        res.writeHead(400);
-        res.end(JSON.stringify({ ok: false, error: String((e as Error).message || e) }));
+        const parse2 = JSON.parse(body),
+          savedValue = parse2.save || parse2;
+        const importSave2 = game.importSave(savedValue);
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify({ ok: true, name: importSave2 }));
+      } catch (event) {
+        response.writeHead(400);
+        response.end(
+          JSON.stringify({ ok: false, error: String((event as Error).message || event) }),
+        );
       }
     });
     return;
   }
-  if (p === '/') p = '/index.html';
-  if (path.extname(p) === '.ts') {
-    res.writeHead(404);
-    res.end('not found');
+  if (decodeURIComponent2 === '/') decodeURIComponent2 = '/index.html';
+  if (path.extname(decodeURIComponent2) === '.ts') {
+    response.writeHead(404);
+    response.end('not found');
     return;
   }
-  const base = p.startsWith('/shared/') ? ROOT : path.join(ROOT, 'client');
-  let file = path.normalize(path.join(base, p));
+  const base = decodeURIComponent2.startsWith('/shared/') ? ROOT : path.join(ROOT, 'client');
+  let file = path.normalize(path.join(base, decodeURIComponent2));
   if (!file.startsWith(base)) {
-    res.writeHead(403);
-    res.end();
+    response.writeHead(403);
+    response.end();
     return;
   }
   // Browser imports need emitted JavaScript, never raw TypeScript. Images, HTML,
@@ -214,34 +216,37 @@ const server: Server = http.createServer(async (req, res) => {
     file = path.join(compiledRoot, path.relative(ROOT, file));
   }
   const catalog =
-    (p.startsWith('/assets/ships/') && p.endsWith('_yard.png')) || p.startsWith('/assets/icons/');
+    (decodeURIComponent2.startsWith('/assets/ships/') &&
+      decodeURIComponent2.endsWith('_yard.png')) ||
+    decodeURIComponent2.startsWith('/assets/icons/');
   serve(
-    res,
+    response,
     file,
-    p.startsWith('/assets/') && (!catalog || url.searchParams.get('v') === VERSION),
-    req.headers.range,
+    decodeURIComponent2.startsWith('/assets/') &&
+      (!catalog || targetUrl.searchParams.get('v') === VERSION),
+    incomingMessage.headers.range,
   );
 });
 
-server.on('upgrade', (req, sock) => {
-  if (req.url!.startsWith('/ws'))
-    upgrade(req, sock as import('node:net').Socket, (ws) =>
+server.on('upgrade', (incomingMessage, duplex) => {
+  if (incomingMessage.url!.startsWith('/ws'))
+    upgrade(incomingMessage, duplex as import('node:net').Socket, (socket) =>
       game.connect(
-        ws,
-        ((req.headers['x-forwarded-for'] || '') as string).split(',')[0].trim() ||
-          (sock as import('node:net').Socket).remoteAddress ||
+        socket,
+        ((incomingMessage.headers['x-forwarded-for'] || '') as string).split(',')[0].trim() ||
+          (duplex as import('node:net').Socket).remoteAddress ||
           '?',
       ),
     );
-  else sock.destroy();
+  else duplex.destroy();
 });
 
-server.on('error', (e) => {
-  if ('code' in e && e.code === 'EADDRINUSE')
+server.on('error', (error2) => {
+  if ('code' in error2 && error2.code === 'EADDRINUSE')
     console.error(
       `\nPort ${PORT} is already in use: another Quantum Rift server (maybe an older version) is still running.\nClose its window first, then start this one again.\n`,
     );
-  else console.error(e);
+  else console.error(error2);
   process.exit(1);
 });
 
@@ -262,5 +267,5 @@ process.on('SIGTERM', () => {
 });
 
 // log anything that slips through rather than letting the server die mid-game
-process.on('uncaughtException', (e) => console.error('uncaught', e));
-process.on('unhandledRejection', (e) => console.error('unhandled rejection', e));
+process.on('uncaughtException', (error2) => console.error('uncaught', error2));
+process.on('unhandledRejection', (event) => console.error('unhandled rejection', event));

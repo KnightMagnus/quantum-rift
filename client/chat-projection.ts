@@ -1,11 +1,11 @@
 // One live history, projected from its existing console. Sending and channel routes stay unchanged.
-export function initChatProjection(G: { you?: unknown }) {
-  const byId = (id: string) => document.getElementById(id)!;
-  const consoleChat = byId('consolechat');
-  const home = byId('chat');
-  const log = byId('chatlog');
-  const panel = byId('chatprojection');
-  const toggle = byId('chatexpand');
+export function initChatProjection(game: { you?: unknown }) {
+  const byIdentifier = (identifier: string) => document.getElementById(identifier)!;
+  const consoleChat = byIdentifier('consolechat');
+  const home = byIdentifier('chat');
+  const htmlElement2 = byIdentifier('chatlog');
+  const panel = byIdentifier('chatprojection');
+  const toggle = byIdentifier('chatexpand');
   const parked = document.createElement('div');
   parked.className = 'chat-projector-status';
   parked.innerHTML = '<span aria-hidden="true">◇</span> HISTORY PROJECTED ABOVE';
@@ -13,17 +13,18 @@ export function initChatProjection(G: { you?: unknown }) {
 
   function blocked() {
     return (
-      !G.you ||
+      !game.you ||
       [...document.querySelectorAll<HTMLElement>('.overlay:not(.hidden)')].some(
-        (el) => el.id !== 'land',
+        (htmlElement) => htmlElement.id !== 'land',
       )
     );
   }
   function position() {
     if (!open) return;
-    const atBottom = log.scrollHeight - log.clientHeight - log.scrollTop < 4;
+    const atBottom =
+      htmlElement2.scrollHeight - htmlElement2.clientHeight - htmlElement2.scrollTop < 4;
     const anchor = consoleChat.getBoundingClientRect();
-    const cockpit = byId('cockpit').getBoundingClientRect();
+    const cockpit = byIdentifier('cockpit').getBoundingClientRect();
     const right = Math.min(innerWidth - 12, cockpit.right - 8);
     const left = Math.max(12, Math.min(anchor.left, right - 160));
     const width = Math.max(0, Math.min(anchor.width, right - left));
@@ -43,19 +44,20 @@ export function initChatProjection(G: { you?: unknown }) {
     panel.style.top = bottom - height + 'px';
     panel.style.width = width + 'px';
     panel.style.height = height + 'px';
-    if (atBottom) log.scrollTop = log.scrollHeight;
+    if (atBottom) htmlElement2.scrollTop = htmlElement2.scrollHeight;
   }
   function setOpen(value: boolean, restoreFocus = false) {
     if (value && blocked()) return;
-    const atBottom = log.scrollHeight - log.clientHeight - log.scrollTop < 4;
-    const scroll = log.scrollTop;
-    const hadFocus = log.contains(document.activeElement);
+    const atBottom =
+      htmlElement2.scrollHeight - htmlElement2.clientHeight - htmlElement2.scrollTop < 4;
+    const scroll = htmlElement2.scrollTop;
+    const hadFocus = htmlElement2.contains(document.activeElement);
     open = value;
     if (open) {
       home.append(parked);
-      panel.insertBefore(log, panel.querySelector<HTMLElement>('.projection-footer'));
+      panel.insertBefore(htmlElement2, panel.querySelector<HTMLElement>('.projection-footer'));
     } else {
-      home.append(log);
+      home.append(htmlElement2);
       parked.remove();
     }
     panel.classList.toggle('hidden', !open);
@@ -70,20 +72,24 @@ export function initChatProjection(G: { you?: unknown }) {
       ? 'COLLAPSE'
       : 'EXPAND';
     if (open) position();
-    log.scrollTop = atBottom ? log.scrollHeight : scroll;
+    htmlElement2.scrollTop = atBottom ? htmlElement2.scrollHeight : scroll;
     if (restoreFocus) toggle.focus({ preventScroll: true });
-    else if (hadFocus) log.focus({ preventScroll: true });
+    else if (hadFocus) htmlElement2.focus({ preventScroll: true });
   }
   toggle.onclick = () => setOpen(!open);
   // Keep button activation and history navigation out of the flight shortcuts.
-  panel.addEventListener('keydown', (e) => {
-    if (['Enter', ' ', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key))
-      e.stopPropagation();
+  panel.addEventListener('keydown', (keyboardEvent) => {
+    if (
+      ['Enter', ' ', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(
+        keyboardEvent.key,
+      )
+    )
+      keyboardEvent.stopPropagation();
   });
   const observer = new ResizeObserver(position);
   observer.observe(consoleChat);
-  observer.observe(byId('cockpit'));
-  byId('cockpit').addEventListener('scroll', position, { passive: true });
+  observer.observe(byIdentifier('cockpit'));
+  byIdentifier('cockpit').addEventListener('scroll', position, { passive: true });
   window.addEventListener('resize', position);
   return {
     isOpen: () => open,

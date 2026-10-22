@@ -79,7 +79,7 @@ change executable code or quoted third-party material merely to alter its voice.
 Keep `Testing/SaveGenerator/` functional for every future release while this beta
 testing tool remains in the repository. When the version, fresh-save schema, ships,
 station sites, landing ports, research or tutorial/radio defaults change, refresh
-its catalog with `node Testing/SaveGenerator/export-catalog.mjs` and format the
+its catalog with `node Testing/SaveGenerator/export-catalog.ts` and format the
 result. Update its instructions and Windows scripts when their requirements change.
 
 Preserve the generator's custom credits, ship, station location/tier and player-name

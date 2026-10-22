@@ -66,13 +66,13 @@ declare global {
  * @property {AmbienceLoopState} loop Loop scheduler state
  */
 
-let ctx: AudioContext | null = null,
+let audioContext: AudioContext | null = null,
   master: GainNode | null = null;
-const bus: Partial<Record<MixerBus, GainNode>> = {};
+const audioBus: Partial<Record<MixerBus, GainNode>> = {};
 const buffers = new Map<string | number, AudioBuffer>(),
   loading = new Map<string | number, Promise<AudioBuffer | null>>();
 export let volume = 0.6;
-let lv = { sfx: 1, ui: 0.8, amb: 0.5, music: 0.6 },
+let level2 = { sfx: 1, ui: 0.8, amb: 0.5, music: 0.6 },
   muted = false;
 
 /**
@@ -87,19 +87,19 @@ const level = () => (muted ? 0 : volume);
  * @returns {void}
  */
 export function unlock() {
-  if (ctx) {
-    if (ctx.state === 'suspended') void ctx.resume();
+  if (audioContext) {
+    if (audioContext.state === 'suspended') void audioContext.resume();
     return;
   }
   try {
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    master = ctx!.createGain();
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    master = audioContext!.createGain();
     master.gain.value = level();
-    master.connect(ctx.destination);
-    for (const k of mixerBuses) {
-      bus[k] = ctx!.createGain();
-      bus[k]!.gain.value = lv[k];
-      bus[k]!.connect(master);
+    master.connect(audioContext.destination);
+    for (const mixerBus of mixerBuses) {
+      audioBus[mixerBus] = audioContext!.createGain();
+      audioBus[mixerBus]!.gain.value = level2[mixerBus];
+      audioBus[mixerBus]!.connect(master);
     }
     if (pendingMusic) {
       pendingMusic = false;
@@ -107,56 +107,62 @@ export function unlock() {
     }
     if (wantAmb) setAmbience(wantAmb, true);
   } catch {
-    ctx = null;
+    audioContext = null;
   }
 }
 
 /**
  * Sets the master volume level.
- * @param {number} v Volume level (0..1)
+ * @param {number} value2 Volume level (0..1)
  * @returns {void}
  */
-export function setVolume(v: number) {
-  volume = v;
+export function setVolume(value2: number) {
+  volume = value2;
   if (master) master.gain.value = level();
 }
 
 /**
  * Updates mixer settings including master volume, mute state, and individual bus levels.
- * @param {AudioMixOptions} o Mixer options to apply
+ * @param {AudioMixOptions} audioMixOptions Mixer options to apply
  * @returns {void}
  */
-export function setMix(o: AudioMixOptions) {
-  if (o.vol != null) volume = o.vol;
-  if (o.mute != null) muted = o.mute;
-  for (const k of mixerBuses)
-    if (o[k] != null) {
-      lv[k] = o[k];
-      if (bus[k]) bus[k]!.gain.setTargetAtTime(o[k], ctx!.currentTime, 0.05);
+export function setMix(audioMixOptions: AudioMixOptions) {
+  if (audioMixOptions.vol != null) volume = audioMixOptions.vol;
+  if (audioMixOptions.mute != null) muted = audioMixOptions.mute;
+  for (const mixerBus of mixerBuses)
+    if (audioMixOptions[mixerBus] != null) {
+      level2[mixerBus] = audioMixOptions[mixerBus];
+      if (audioBus[mixerBus])
+        audioBus[mixerBus]!.gain.setTargetAtTime(
+          audioMixOptions[mixerBus],
+          audioContext!.currentTime,
+          0.05,
+        );
     }
   if (master) master.gain.value = level();
 }
 /**
  * Loads and decodes an audio file by ID into memory.
- * @param {string|number} id Sound identifier or EV sound resource ID
+ * @param {string|number} identifier Sound identifier or EV sound resource ID
  * @returns {Promise<AudioBuffer|null>|undefined}
  */
-function load(id: string | number) {
-  if (buffers.has(id) || loading.has(id) || !ctx) return loading.get(id);
-  const url =
-    typeof id === 'string' && /^[a-z]/.test(id)
-      ? `assets/sfx/${id}${id.startsWith('amb_') || id.startsWith('music_') ? '.mp3' : '.wav'}`
-      : `assets/sounds/${id}.wav`;
-  const p = fetch(url)
-    .then((r) => r.arrayBuffer())
-    .then((b) => ctx!.decodeAudioData(b))
-    .then((buf) => {
-      buffers.set(id, buf);
-      return buf;
+function load(identifier: string | number) {
+  if (buffers.has(identifier) || loading.has(identifier) || !audioContext)
+    return loading.get(identifier);
+  const targetUrl =
+    typeof identifier === 'string' && /^[a-z]/.test(identifier)
+      ? `assets/sfx/${identifier}${identifier.startsWith('amb_') || identifier.startsWith('music_') ? '.mp3' : '.wav'}`
+      : `assets/sounds/${identifier}.wav`;
+  const catch2 = fetch(targetUrl)
+    .then((response) => response.arrayBuffer())
+    .then((arrayBuffer) => audioContext!.decodeAudioData(arrayBuffer))
+    .then((audioBuffer) => {
+      buffers.set(identifier, audioBuffer);
+      return audioBuffer;
     })
     .catch(() => null);
-  loading.set(id, p);
-  return p;
+  loading.set(identifier, catch2);
+  return catch2;
 }
 let recent = 0,
   recentT = 0;
@@ -164,50 +170,50 @@ let recent = 0,
 
 /**
  * Plays a positional combat sound effect with distance attenuation and stereo panning.
- * @param {string|number} id Sound identifier or resource number
- * @param {number} [dx=0] Horizontal offset relative to listener
- * @param {number} [dy=0] Vertical offset relative to listener
+ * @param {string|number} identifier Sound identifier or resource number
+ * @param {number} [deltaX=0] Horizontal offset relative to listener
+ * @param {number} [deltaY=0] Vertical offset relative to listener
  * @param {number} [gain=1] Playback gain multiplier
  * @returns {void}
  */
-export function play(id: string | number, dx = 0, dy = 0, gain = 1) {
-  if (!ctx || !id) return;
-  void load(id);
-  const buf = buffers.get(id);
-  if (!buf) return;
-  const now = ctx!.currentTime;
-  if (now - recentT > 0.05) {
-    recentT = now;
+export function play(identifier: string | number, deltaX = 0, deltaY = 0, gain = 1) {
+  if (!audioContext || !identifier) return;
+  void load(identifier);
+  const audioBuffer = buffers.get(identifier);
+  if (!audioBuffer) return;
+  const currentTime2 = audioContext!.currentTime;
+  if (currentTime2 - recentT > 0.05) {
+    recentT = currentTime2;
     recent = 0;
   }
   if (++recent > 6) return; // don't stack dozens at once
-  const d = Math.hypot(dx, dy),
-    g = gain * Math.max(0, 1 - d / 1600);
-  if (g < 0.03) return;
-  const src = ctx!.createBufferSource();
-  src.buffer = buf;
-  const gn = ctx!.createGain();
-  gn.gain.value = g;
-  let node: AudioNode = gn;
-  if (ctx.createStereoPanner) {
-    const p = ctx.createStereoPanner();
-    p.pan.value = Math.max(-1, Math.min(1, dx / 900));
-    gn.connect(p);
-    node = p;
+  const distance = Math.hypot(deltaX, deltaY),
+    game = gain * Math.max(0, 1 - distance / 1600);
+  if (game < 0.03) return;
+  const audioBufferSourceNode = audioContext!.createBufferSource();
+  audioBufferSourceNode.buffer = audioBuffer;
+  const gainNode = audioContext!.createGain();
+  gainNode.gain.value = game;
+  let node: AudioNode = gainNode;
+  if (audioContext.createStereoPanner) {
+    const stereoPannerNode = audioContext.createStereoPanner();
+    stereoPannerNode.pan.value = Math.max(-1, Math.min(1, deltaX / 900));
+    gainNode.connect(stereoPannerNode);
+    node = stereoPannerNode;
   }
-  src.connect(gn);
-  node.connect((bus.sfx || master)!);
-  src.start();
+  audioBufferSourceNode.connect(gainNode);
+  node.connect((audioBus.sfx || master)!);
+  audioBufferSourceNode.start();
 }
 
 /**
  * Preloads a list of sound IDs into memory.
- * @param {Array<string|number>} ids Array of sound identifiers to preload
+ * @param {Array<string|number>} identifiers Array of sound identifiers to preload
  * @returns {void}
  */
-export function preload(ids: Array<string | number>) {
-  if (!ctx) return;
-  for (const id of ids) void load(id);
+export function preload(identifiers: Array<string | number>) {
+  if (!audioContext) return;
+  for (const identifier of identifiers) void load(identifier);
 }
 
 // ------------------------------------------------------------------ 2.0 interface sounds
@@ -231,22 +237,22 @@ const UI_GAP: Record<string, number> = {
  * @returns {void}
  */
 export function ui(name: string, gain = 1, rate = 1) {
-  if (!ctx) return;
-  const id = 'ui_' + name;
-  void load(id);
-  const buf = buffers.get(id);
-  if (!buf) return;
-  const now = ctx!.currentTime;
-  if (lastUi[name] != null && now - lastUi[name] < (UI_GAP[name] || 0.05)) return;
-  lastUi[name] = now;
-  const src = ctx!.createBufferSource();
-  src.buffer = buf;
-  src.playbackRate.value = rate * (1 + (Math.random() - 0.5) * 0.04);
-  const g = ctx!.createGain();
-  g.gain.value = gain;
-  src.connect(g);
-  g.connect((bus.ui || master)!);
-  src.start();
+  if (!audioContext) return;
+  const identifier = 'ui_' + name;
+  void load(identifier);
+  const audioBuffer = buffers.get(identifier);
+  if (!audioBuffer) return;
+  const currentTime2 = audioContext!.currentTime;
+  if (lastUi[name] != null && currentTime2 - lastUi[name] < (UI_GAP[name] || 0.05)) return;
+  lastUi[name] = currentTime2;
+  const audioBufferSourceNode = audioContext!.createBufferSource();
+  audioBufferSourceNode.buffer = audioBuffer;
+  audioBufferSourceNode.playbackRate.value = rate * (1 + (Math.random() - 0.5) * 0.04);
+  const gainNode = audioContext!.createGain();
+  gainNode.gain.value = gain;
+  audioBufferSourceNode.connect(gainNode);
+  gainNode.connect((audioBus.ui || master)!);
+  audioBufferSourceNode.start();
 }
 
 /**
@@ -254,9 +260,9 @@ export function ui(name: string, gain = 1, rate = 1) {
  * @returns {void}
  */
 export function preloadUi() {
-  if (!ctx) return;
+  if (!audioContext) return;
   void load('jumpfar');
-  for (const n of [
+  for (const count of [
     'click',
     'hover',
     'tab',
@@ -286,7 +292,7 @@ export function preloadUi() {
     'quest',
     'state',
   ])
-    void load('ui_' + n);
+    void load('ui_' + count);
 }
 
 // ------------------------------------------------------------------ ambience: looping beds cross-faded so mp3 padding never clicks
@@ -294,87 +300,97 @@ let wantAmb: AmbienceLocation = null;
 const ambNow: Record<string, AmbienceBedState> = {};
 /**
  * Schedules overlapping copies of an ambient loop with crossfades.
- * @param {string} id Sound ID for the ambience track
+ * @param {string} identifier Sound ID for the ambience track
  * @param {GainNode} gainNode Target gain node
  * @returns {AmbienceLoopState}
  */
-function loopBed(id: string, gainNode: GainNode) {
+function loopBed(identifier: string, gainNode: GainNode) {
   // schedules overlapping copies of the loop with 2 s cross-fades, forever, until stopped
-  const st: AmbienceLoopState = { stop: false, srcs: [] };
-  void load(id)!.then((buf) => {
-    if (!buf || st.stop) return;
-    const xf = 2,
-      dur = buf.duration;
-    const go = (when: number) => {
-      if (st.stop) return;
-      const src = ctx!.createBufferSource();
-      src.buffer = buf;
-      const g = ctx!.createGain();
-      src.connect(g);
-      g.connect(gainNode);
-      g.gain.setValueAtTime(0, when);
-      g.gain.linearRampToValueAtTime(1, when + xf);
-      g.gain.setValueAtTime(1, when + dur - xf);
-      g.gain.linearRampToValueAtTime(0, when + dur);
-      src.start(when);
-      src.stop(when + dur + 0.05);
-      st.srcs.push(src);
-      src.onended = () => {
-        st.srcs = st.srcs.filter((s) => s !== src);
-        src.disconnect();
-        g.disconnect();
+  const ambienceLoopState: AmbienceLoopState = { stop: false, srcs: [] };
+  void load(identifier)!.then((audioBuffer) => {
+    if (!audioBuffer || ambienceLoopState.stop) return;
+    const transform = 2,
+      duration2 = audioBuffer.duration;
+    const navigate = (when: number) => {
+      if (ambienceLoopState.stop) return;
+      const audioBufferSourceNode = audioContext!.createBufferSource();
+      audioBufferSourceNode.buffer = audioBuffer;
+      const gainNode2 = audioContext!.createGain();
+      audioBufferSourceNode.connect(gainNode2);
+      gainNode2.connect(gainNode);
+      gainNode2.gain.setValueAtTime(0, when);
+      gainNode2.gain.linearRampToValueAtTime(1, when + transform);
+      gainNode2.gain.setValueAtTime(1, when + duration2 - transform);
+      gainNode2.gain.linearRampToValueAtTime(0, when + duration2);
+      audioBufferSourceNode.start(when);
+      audioBufferSourceNode.stop(when + duration2 + 0.05);
+      ambienceLoopState.srcs.push(audioBufferSourceNode);
+      audioBufferSourceNode.onended = () => {
+        ambienceLoopState.srcs = ambienceLoopState.srcs.filter(
+          (audioBufferSourceNode2) => audioBufferSourceNode2 !== audioBufferSourceNode,
+        );
+        audioBufferSourceNode.disconnect();
+        gainNode2.disconnect();
       };
-      st.timer = setTimeout(
-        () => go(when + dur - xf),
-        Math.max(0, (when + dur - xf - ctx!.currentTime - 1) * 1000),
+      ambienceLoopState.timer = setTimeout(
+        () => navigate(when + duration2 - transform),
+        Math.max(0, (when + duration2 - transform - audioContext!.currentTime - 1) * 1000),
       );
     };
-    go(ctx!.currentTime + 0.05);
+    navigate(audioContext!.currentTime + 0.05);
   });
-  return st;
+  return ambienceLoopState;
 }
 
 /**
  * Manages an ambient audio bed (creation, volume target scheduling, and cross-fade out).
  * @param {string} name Ambience bed name ('space', 'station', 'engine')
- * @param {boolean} on Whether the bed should be active
+ * @param {boolean} enabled Whether the bed should be active
  * @param {number} [target=1] Target gain level when on
  * @param {number} [fade=1.5] Fade duration in seconds
  * @returns {void}
  */
-function bed(name: string, on: boolean, target = 1, fade = 1.5) {
-  if (!ctx) return;
-  let b = ambNow[name];
-  if (on && !b) {
-    const g = ctx!.createGain();
-    g.gain.value = 0;
-    let f: BiquadFilterNode | null = null;
+function createAudioBed(name: string, enabled: boolean, target = 1, fade = 1.5) {
+  if (!audioContext) return;
+  let ambienceBedState = ambNow[name];
+  if (enabled && !ambienceBedState) {
+    const gainNode = audioContext!.createGain();
+    gainNode.gain.value = 0;
+    let biquadFilterNode: BiquadFilterNode | null = null;
     if (name === 'engine') {
-      f = ctx.createBiquadFilter();
-      f.type = 'lowpass';
-      f.frequency.value = 400;
-      f.Q.value = 0.7;
-      g.connect(f);
-      f.connect(bus.amb!);
-    } else g.connect(bus.amb!);
-    b = ambNow[name] = { g, f, loop: loopBed('amb_' + name, g) };
+      biquadFilterNode = audioContext.createBiquadFilter();
+      biquadFilterNode.type = 'lowpass';
+      biquadFilterNode.frequency.value = 400;
+      biquadFilterNode.Q.value = 0.7;
+      gainNode.connect(biquadFilterNode);
+      biquadFilterNode.connect(audioBus.amb!);
+    } else gainNode.connect(audioBus.amb!);
+    ambienceBedState = ambNow[name] = {
+      g: gainNode,
+      f: biquadFilterNode,
+      loop: loopBed('amb_' + name, gainNode),
+    };
   }
-  if (!b) return;
-  b.g.gain.cancelScheduledValues(ctx!.currentTime);
-  b.g.gain.setTargetAtTime(on ? target : 0, ctx!.currentTime, fade / 3);
-  if (!on) {
-    const k = b;
+  if (!ambienceBedState) return;
+  ambienceBedState.g.gain.cancelScheduledValues(audioContext!.currentTime);
+  ambienceBedState.g.gain.setTargetAtTime(
+    enabled ? target : 0,
+    audioContext!.currentTime,
+    fade / 3,
+  );
+  if (!enabled) {
+    const ambienceBedState2 = ambienceBedState;
     delete ambNow[name];
     setTimeout(
       () => {
-        k.loop.stop = true;
-        clearTimeout(k.loop.timer);
-        for (const s of k.loop.srcs)
+        ambienceBedState2.loop.stop = true;
+        clearTimeout(ambienceBedState2.loop.timer);
+        for (const audioBufferSourceNode of ambienceBedState2.loop.srcs)
           try {
-            s.stop();
+            audioBufferSourceNode.stop();
           } catch {}
-        k.g.disconnect();
-        if (k.f) k.f.disconnect();
+        ambienceBedState2.g.disconnect();
+        if (ambienceBedState2.f) ambienceBedState2.f.disconnect();
       },
       fade * 1000 + 300,
     );
@@ -390,10 +406,10 @@ function bed(name: string, on: boolean, target = 1, fade = 1.5) {
 export function setAmbience(where: AmbienceLocation, force = false) {
   if (where === wantAmb && !force) return;
   wantAmb = where;
-  if (!ctx) return;
-  bed('space', where === 'space', 0.35);
-  bed('station', where === 'station', 0.45);
-  bed('engine', where === 'space', 0.0001);
+  if (!audioContext) return;
+  createAudioBed('space', where === 'space', 0.35);
+  createAudioBed('station', where === 'station', 0.45);
+  createAudioBed('engine', where === 'space', 0.0001);
 }
 
 /**
@@ -401,16 +417,17 @@ export function setAmbience(where: AmbienceLocation, force = false) {
  * @param {number} level Throttle level (0 idle .. 1 thrust, 1.6 afterburner)
  * @returns {void}
  */
-let engT = 0;
+let engineTime = 0;
 export function engine(level: number) {
-  const b = ambNow.engine;
-  if (!ctx || !b) return;
-  const now = ctx!.currentTime;
-  if (now - engT < 0.08) return;
-  engT = now;
-  const L = Math.min(1.6, level);
-  b.g.gain.setTargetAtTime(0.14 + 0.5 * L, now, 0.25);
-  if (b.f) b.f.frequency.setTargetAtTime(380 + 1300 * L, now, 0.3); // throttle opens the filter
+  const ambienceBedState = ambNow.engine;
+  if (!audioContext || !ambienceBedState) return;
+  const currentTime2 = audioContext!.currentTime;
+  if (currentTime2 - engineTime < 0.08) return;
+  engineTime = currentTime2;
+  const length = Math.min(1.6, level);
+  ambienceBedState.g.gain.setTargetAtTime(0.14 + 0.5 * length, currentTime2, 0.25);
+  if (ambienceBedState.f)
+    ambienceBedState.f.frequency.setTargetAtTime(380 + 1300 * length, currentTime2, 0.3); // throttle opens the filter
 }
 
 // ------------------------------------------------------------------ music: the login screen only (in the game, the radio is the music)
@@ -425,19 +442,19 @@ let musicSrc: AudioBufferSourceNode | null = null,
 export function startMusic() {
   pendingMusicAllowed = true;
   const request = ++musicRequest;
-  if (!ctx) {
+  if (!audioContext) {
     pendingMusic = true;
     return;
   }
   if (musicSrc) return;
-  void load('music_login33')!.then((buf) => {
-    if (!buf || musicSrc || !pendingMusicAllowed || request !== musicRequest) return;
-    musicGain = ctx!.createGain();
+  void load('music_login33')!.then((audioBuffer) => {
+    if (!audioBuffer || musicSrc || !pendingMusicAllowed || request !== musicRequest) return;
+    musicGain = audioContext!.createGain();
     musicGain.gain.value = 0;
-    musicGain.connect(bus.music!);
-    musicGain.gain.linearRampToValueAtTime(0.9, ctx!.currentTime + 3);
-    musicSrc = ctx!.createBufferSource();
-    musicSrc.buffer = buf;
+    musicGain.connect(audioBus.music!);
+    musicGain.gain.linearRampToValueAtTime(0.9, audioContext!.currentTime + 3);
+    musicSrc = audioContext!.createBufferSource();
+    musicSrc.buffer = audioBuffer;
     musicSrc.loop = true;
     musicSrc.connect(musicGain);
     musicSrc.start();
@@ -455,19 +472,19 @@ export function stopMusic(fade = 2.5) {
   pendingMusicAllowed = false;
   musicRequest++;
   pendingMusic = false;
-  if (!musicSrc || !ctx) return;
-  const s = musicSrc,
-    g = musicGain!;
+  if (!musicSrc || !audioContext) return;
+  const audioBufferSourceNode = musicSrc,
+    gainNode = musicGain!;
   musicSrc = null;
-  g.gain.cancelScheduledValues(ctx!.currentTime);
-  g.gain.setValueAtTime(g.gain.value, ctx!.currentTime);
-  g.gain.linearRampToValueAtTime(0, ctx!.currentTime + fade);
+  gainNode.gain.cancelScheduledValues(audioContext!.currentTime);
+  gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext!.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0, audioContext!.currentTime + fade);
   setTimeout(
     () => {
       try {
-        s.stop();
+        audioBufferSourceNode.stop();
       } catch {}
-      g.disconnect();
+      gainNode.disconnect();
     },
     fade * 1000 + 200,
   );
@@ -479,12 +496,14 @@ export function stopMusic(fade = 2.5) {
  */
 export function debug() {
   return {
-    ctx: ctx && ctx.state,
+    ctx: audioContext && audioContext.state,
     amb: Object.keys(ambNow),
     music: !!musicSrc,
     buffers: buffers.size,
     towVoices: towVoice ? 1 : 0,
-    towGain: towVoice ? towGain!.gain.value * (bus.sfx?.gain.value ?? 1) * master!.gain.value : 0,
+    towGain: towVoice
+      ? towGain!.gain.value * (audioBus.sfx?.gain.value ?? 1) * master!.gain.value
+      : 0,
   };
 }
 
@@ -492,27 +511,27 @@ export function debug() {
 let industrialVoice: OscillatorNode | null = null,
   industrialGain: GainNode | null = null,
   industrialStage = 0;
-export function industrial(on: boolean, heat: number) {
+export function industrial(enabled: boolean, heat: number) {
   const stage = heat >= 150 ? 3 : heat >= 120 ? 2 : heat >= 70 ? 1 : 0;
   if (stage > industrialStage) ui('error', 0.32, 0.8 + stage * 0.2);
   industrialStage = stage;
-  if (!ctx) return;
-  if (on && !industrialVoice) {
-    industrialVoice = ctx.createOscillator();
-    industrialGain = ctx!.createGain();
+  if (!audioContext) return;
+  if (enabled && !industrialVoice) {
+    industrialVoice = audioContext.createOscillator();
+    industrialGain = audioContext!.createGain();
     industrialVoice.type = 'triangle';
     industrialGain.gain.value = 0.018;
     industrialVoice.connect(industrialGain);
-    industrialGain.connect((bus.sfx || master)!);
+    industrialGain.connect((audioBus.sfx || master)!);
     industrialVoice.start();
   }
-  if (industrialVoice && on)
+  if (industrialVoice && enabled)
     industrialVoice.frequency.setTargetAtTime(
       55 + Math.min(150, heat) * 0.35,
-      ctx!.currentTime,
+      audioContext!.currentTime,
       0.2,
     );
-  if (industrialVoice && !on) {
+  if (industrialVoice && !enabled) {
     industrialVoice.stop();
     industrialVoice.disconnect();
     industrialGain!.disconnect();
@@ -523,23 +542,23 @@ export function industrial(on: boolean, heat: number) {
 // One restrained tether-strain voice, downstream of the existing effects/master/mute mixer.
 let towVoice: OscillatorNode | null = null,
   towGain: GainNode | null = null;
-export function towing(on: boolean, tension = 0) {
-  if (!ctx) return;
+export function towing(enabled: boolean, tension = 0) {
+  if (!audioContext) return;
   const strain = Math.max(0, Math.min(1, Number(tension) || 0));
-  if (on && !towVoice) {
-    towVoice = ctx.createOscillator();
-    towGain = ctx!.createGain();
+  if (enabled && !towVoice) {
+    towVoice = audioContext.createOscillator();
+    towGain = audioContext!.createGain();
     towVoice.type = 'triangle';
     towGain!.gain.value = 0.006;
     towVoice.connect(towGain);
-    towGain.connect((bus.sfx || master)!);
+    towGain.connect((audioBus.sfx || master)!);
     towVoice.start();
   }
-  if (on && towVoice) {
-    towVoice.frequency.setTargetAtTime(45 + 35 * strain, ctx!.currentTime, 0.25);
-    towGain!.gain.setTargetAtTime(0.006 + 0.008 * strain, ctx!.currentTime, 0.25);
+  if (enabled && towVoice) {
+    towVoice.frequency.setTargetAtTime(45 + 35 * strain, audioContext!.currentTime, 0.25);
+    towGain!.gain.setTargetAtTime(0.006 + 0.008 * strain, audioContext!.currentTime, 0.25);
   }
-  if (!on && towVoice) {
+  if (!enabled && towVoice) {
     towVoice.stop();
     towVoice.disconnect();
     towGain!.disconnect();

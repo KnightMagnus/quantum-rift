@@ -143,7 +143,7 @@ See [DEVELOPMENT-TOOLS.md](DEVELOPMENT-TOOLS.md) for lint, formatting and compil
    [test/regression-manifest.json](../test/regression-manifest.json); read its
    tests first. [TEST-COVERAGE.md](TEST-COVERAGE.md) explains scope and omissions.
 2. Run focused cases while developing. For routing changes, start with
-   `node test/message-routing.js`, `npm run test:features` and the relevant real
+   `node test/message-routing.ts`, `npm run test:features` and the relevant real
    action/network tests. Fuzzing discovers routes from the runtime registry, not
    source-code switch patterns.
 3. Run existing gates:

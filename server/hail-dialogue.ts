@@ -2,7 +2,7 @@ import type { Session, Entity } from './game.ts';
 import type { Space } from './space.ts';
 
 // Authored, factual traffic dialogue. No generated text or imaginary cargo/destinations.
-import { SYS } from '../shared/galaxy.ts';
+import { SYS as systemsById } from '../shared/galaxy.ts';
 import { RIVAL, HAIL_LINES, HAIL_SPECIAL, MOOD } from '../shared/rivals.ts';
 const openings: Record<string, string[]> = {
   trade: [
@@ -100,29 +100,29 @@ const voices = [
   'There is a tale in every jump.',
 ];
 const rivalIds = Object.keys(RIVAL);
-export function contextualHail(s: Session, e: Entity, sp: Space, rel = 0) {
-  if (!s.hailLedger || s.hailLedger.space !== sp)
-    s.hailLedger = { space: sp, used: new Set(), seq: 0 };
-  const ledger = s.hailLedger;
-  const name = e.name || `Traffic ${e.id}`;
-  const task = e.disabled
+export function contextualHail(session: Session, entity: Entity, space2: Space, relative = 0) {
+  if (!session.hailLedger || session.hailLedger.space !== space2)
+    session.hailLedger = { space: space2, used: new Set(), seq: 0 };
+  const ledger = session.hailLedger;
+  const name = entity.name || `Traffic ${entity.id}`;
+  const task = entity.disabled
     ? 'disabled'
-    : e.target
+    : entity.target
       ? 'combat'
-      : e.ai && openings[e.ai]
-        ? e.ai
+      : entity.ai && openings[entity.ai]
+        ? entity.ai
         : 'trade';
-  const status = e.disabled
+  const status = entity.disabled
     ? 'Maneuvering systems offline.'
-    : e.armor < e.st.armor * 0.5
+    : entity.armor < entity.st.armor * 0.5
       ? 'Our armor is badly damaged.'
-      : e.shield < e.st.shield * 0.35
+      : entity.shield < entity.st.shield * 0.35
         ? 'Our shields are low.'
         : 'Flight systems responding.';
-  const context = `${name}, ${SYS[sp.id]?.name || sp.id}. ${status}${e.dest?.name ? ` Course set for ${e.dest.name}.` : ''}`;
-  const R = e.rival && RIVAL[e.rival];
-  const signature = R
-    ? `${(HAIL_SPECIAL[R.name] || HAIL_LINES[R.kind])[MOOD(rel)]} ${voices[rivalIds.indexOf(String(e.rival)) % voices.length] || voices[0]}`
+  const context = `${name}, ${systemsById[space2.id]?.name || space2.id}. ${status}${entity.dest?.name ? ` Course set for ${entity.dest.name}.` : ''}`;
+  const radius = entity.rival && RIVAL[entity.rival];
+  const signature = radius
+    ? `${(HAIL_SPECIAL[radius.name] || HAIL_LINES[radius.kind])[MOOD(relative)]} ${voices[rivalIds.indexOf(String(entity.rival)) % voices.length] || voices[0]}`
     : '';
   for (const opening of openings[task!]) {
     const text = `${opening} ${context}${signature ? `\n\n${signature}` : ''}`;
@@ -132,7 +132,7 @@ export function contextualHail(s: Session, e: Entity, sp: Space, rel = 0) {
     }
   }
   // Meaningful fallback identifies ship, task and local coordinates, never cosmetic punctuation.
-  const text = `${context} ${task === 'trade' ? 'Local traffic' : task} reporting position ${Math.round(e.x)}, ${Math.round(e.y)}. ${signature}`;
+  const text = `${context} ${task === 'trade' ? 'Local traffic' : task} reporting position ${Math.round(entity.x)}, ${Math.round(entity.y)}. ${signature}`;
   ledger.used.add(text);
   return text;
 }

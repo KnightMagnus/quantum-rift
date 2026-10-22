@@ -12,7 +12,7 @@ export type SceneDefinition = {
   scale?: number;
   rotation?: number;
   hazard?: HazardDefinition;
-  [key: string]: unknown;
+  [entryKey: string]: unknown;
 };
 import type { OutfitAsset, WeaponAsset } from './rules.ts';
 export type FactionDef = {
@@ -281,11 +281,11 @@ export const GRADES: string[] = ['I', 'II', 'III', 'IV', 'V'];
 
 /**
  * Helper function normalizing price level definitions for stellar bodies.
- * @param {Record<string, number>} o - Map of commodity ID to price tier (-1, 0, 1).
+ * @param {Record<string, number>} options - Map of commodity ID to price tier (-1, 0, 1).
  * @returns {Record<string, number>} Normalized price map.
  */
 // price levels per stellar: -1 low (they produce it), 0 normal, 1 high (they want it). Unlisted = not traded.
-const P = (o: Record<string, number>) => o;
+const position = (options: Record<string, number>) => options;
 
 /**
  * Celestial body (planet, moon, station, asteroid field, or claimable site) orbiting within a star system.
@@ -353,7 +353,7 @@ export const SYSTEMS: StarSystem[] = [
         tech: 6,
         hub: true,
         land: 10955,
-        prices: P({
+        prices: position({
           ore: 0,
           gas: 0,
           shards: 0,
@@ -375,7 +375,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 600,
         svc: 'LTOYB',
         tech: 5,
-        prices: P({ food: -1, industrial: 0, luxury: 1, equipment: 0, medical: 0 }),
+        prices: position({ food: -1, industrial: 0, luxury: 1, equipment: 0, medical: 0 }),
         desc: "A blue ocean world under a dome of orbital mirrors. The Concord's capital, busy and bright.",
       },
     ],
@@ -399,7 +399,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 300,
         svc: 'LTOYB',
         tech: 7,
-        prices: P({ ore: 1, gas: 0, metal: 1, industrial: -1, equipment: -1 }),
+        prices: position({ ore: 1, gas: 0, metal: 1, industrial: -1, equipment: -1 }),
         desc: "The Concord's shipyards: ten kilometres of slipways and the smell of hot metal.",
       },
     ],
@@ -423,7 +423,7 @@ export const SYSTEMS: StarSystem[] = [
         y: -400,
         svc: 'LTOB',
         tech: 4,
-        prices: P({ food: -1, luxury: 0, medical: 1, crystal: 1 }),
+        prices: position({ food: -1, luxury: 0, medical: 1, crystal: 1 }),
         desc: 'Garden terraces and quiet harbors. Rich captains retire here.',
       },
     ],
@@ -448,7 +448,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 300,
         svc: 'LTOYB',
         tech: 3,
-        prices: P({
+        prices: position({
           ore: 0,
           gas: 0,
           shards: 0,
@@ -482,7 +482,7 @@ export const SYSTEMS: StarSystem[] = [
         y: -250,
         svc: 'LTYB',
         tech: 3,
-        prices: P({ metal: -1, food: 1, industrial: 0, silk: 1 }),
+        prices: position({ metal: -1, food: 1, industrial: 0, silk: 1 }),
         desc: 'Fuel, food and freight contracts. The Spacer families keep their records here.',
       },
       {
@@ -495,7 +495,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 500,
         svc: 'LTB',
         tech: 1,
-        prices: P({ food: -1, equipment: 1 }),
+        prices: position({ food: -1, equipment: 1 }),
         desc: 'A frozen moon with a single dome and a very good bar.',
       },
     ],
@@ -519,7 +519,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 500,
         svc: 'LTOB',
         tech: 3,
-        prices: P({ food: -1, medical: -1, luxury: 1, equipment: 1 }),
+        prices: position({ food: -1, medical: -1, luxury: 1, equipment: 1 }),
         desc: 'A water world of floating towns. Free Spacers come here to marry, trade and mend their ships.',
       },
     ],
@@ -545,7 +545,7 @@ export const SYSTEMS: StarSystem[] = [
         svc: 'LTOYB',
         tech: 5,
         land: 10950,
-        prices: P({ luxury: -1, medical: 1, metal: 1 }),
+        prices: position({ luxury: -1, medical: 1, metal: 1 }),
         desc: 'A ring of dark metal kilometres across, warm light leaking through every seam. The Lamplighters have lived here longer than anyone remembers.',
       },
     ],
@@ -569,7 +569,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 200,
         svc: 'LTB',
         tech: 2,
-        prices: P({ food: 1, industrial: -1 }),
+        prices: position({ food: 1, industrial: -1 }),
         desc: 'An amber desert world with a lamp burning on every hilltop.',
       },
     ],
@@ -595,7 +595,7 @@ export const SYSTEMS: StarSystem[] = [
         svc: 'LTB',
         tech: 2,
         outlaw: true,
-        prices: P({ luxury: -1, equipment: -1, medical: 1, food: 1 }),
+        prices: position({ luxury: -1, equipment: -1, medical: 1, food: 1 }),
         desc: 'A shattered moon in a cloud of wreckage. Nobody here asks where your cargo came from.',
       },
     ],
@@ -620,7 +620,7 @@ export const SYSTEMS: StarSystem[] = [
         svc: 'LTOYB',
         tech: 4,
         outlaw: true,
-        prices: P({ ore: 0, shards: 1, equipment: -1, metal: -1, luxury: 1 }),
+        prices: position({ ore: 0, shards: 1, equipment: -1, metal: -1, luxury: 1 }),
         desc: "A gutted battleship grown over with salvage scaffolds: the Hollow's fortress and black market.",
       },
     ],
@@ -645,7 +645,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 300,
         svc: 'LTOYB',
         tech: 6,
-        prices: P({ silk: -1, food: 0, metal: 1, equipment: 1 }),
+        prices: position({ silk: -1, food: 0, metal: 1, equipment: 1 }),
         desc: 'A jungle world humming with the wings of a billion Vashari. The hive-spires are grown, not built.',
       },
     ],
@@ -669,7 +669,7 @@ export const SYSTEMS: StarSystem[] = [
         y: -200,
         svc: 'LTB',
         tech: 2,
-        prices: P({ silk: -1, industrial: 1 }),
+        prices: position({ silk: -1, industrial: 1 }),
         desc: 'A moon carpeted in shed carapaces, where the Vashari harvest chitin for their hulls.',
       },
     ],
@@ -693,7 +693,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 400,
         svc: 'LTOYB',
         tech: 7,
-        prices: P({ silk: -1, medical: 1, crystal: 1 }),
+        prices: position({ silk: -1, medical: 1, crystal: 1 }),
         desc: 'A living spire where Brood Queens are raised. Outsiders are welcome, and watched by ten thousand eyes.',
       },
     ],
@@ -718,7 +718,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 400,
         svc: 'LTOYB',
         tech: 6,
-        prices: P({ ore: 1, gas: 1, metal: -1, industrial: -1, food: 1, luxury: 1 }),
+        prices: position({ ore: 1, gas: 1, metal: -1, industrial: -1, food: 1, luxury: 1 }),
         desc: 'A volcanic world crusted in black glass, its rivers running orange. The Korrund forges never cool.',
       },
     ],
@@ -742,7 +742,7 @@ export const SYSTEMS: StarSystem[] = [
         y: -300,
         svc: 'LTB',
         tech: 3,
-        prices: P({ ore: 1, gas: 1, metal: -1, equipment: 1 }),
+        prices: position({ ore: 1, gas: 1, metal: -1, equipment: 1 }),
         desc: 'A mining anvil sunk into an asteroid the size of a moon.',
       },
     ],
@@ -766,7 +766,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 300,
         svc: 'LTOYB',
         tech: 7,
-        prices: P({ metal: -1, medical: 1, food: 1 }),
+        prices: position({ metal: -1, medical: 1, food: 1 }),
         desc: 'A world that is mostly mountain. The Korrund mountain-lords hold court inside its peaks.',
       },
     ],
@@ -791,7 +791,7 @@ export const SYSTEMS: StarSystem[] = [
         y: -300,
         svc: 'LTOYB',
         tech: 6,
-        prices: P({ shards: 1, crystal: -1, luxury: -1, metal: 1 }),
+        prices: position({ shards: 1, crystal: -1, luxury: -1, metal: 1 }),
         desc: 'A world of crystal plains that ring when the wind blows. The Ylith tune their cities like instruments.',
       },
     ],
@@ -815,7 +815,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 300,
         svc: 'LTOYB',
         tech: 7,
-        prices: P({ shards: 1, crystal: -1, food: 1 }),
+        prices: position({ shards: 1, crystal: -1, food: 1 }),
         desc: 'A floating hall of crystal where the great Ylith carriers are grown like frost.',
       },
     ],
@@ -839,7 +839,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 300,
         svc: 'LTB',
         tech: 3,
-        prices: P({ crystal: -1, industrial: 1 }),
+        prices: position({ crystal: -1, industrial: 1 }),
         desc: 'A moon split open to show a heart of violet crystal. Ylith freighters load here.',
       },
     ],
@@ -864,7 +864,7 @@ export const SYSTEMS: StarSystem[] = [
         y: -200,
         svc: 'LTOYB',
         tech: 5,
-        prices: P({ food: 0, luxury: -1, equipment: 1, silk: 1, crystal: 1 }),
+        prices: position({ food: 0, luxury: -1, equipment: 1, silk: 1, crystal: 1 }),
         desc: 'A great wheel of a station where Sarn caravans gather. There is always music.',
       },
     ],
@@ -888,7 +888,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 300,
         svc: 'LTOYB',
         tech: 7,
-        prices: P({ luxury: -1, food: -1, metal: 1, medical: 1 }),
+        prices: position({ luxury: -1, food: -1, metal: 1, medical: 1 }),
         desc: 'A desert world of tents and brass towers where the Grand Caravans winter.',
       },
     ],
@@ -912,7 +912,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 300,
         svc: 'LTB',
         tech: 2,
-        prices: P({ equipment: -1, industrial: 1 }),
+        prices: position({ equipment: -1, industrial: 1 }),
         desc: 'A repair moon where Sarn wheelwrights straighten bent spokes and patch canvas.',
       },
     ],
@@ -937,7 +937,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 300,
         svc: 'LTOYB',
         tech: 6,
-        prices: P({ gas: 1, food: -1, medical: -1, metal: 1, industrial: 1 }),
+        prices: position({ gas: 1, food: -1, medical: -1, metal: 1, industrial: 1 }),
         desc: 'A world of one endless ocean. The Thalassi rise to meet visitors in shining bells of living water.',
       },
     ],
@@ -961,7 +961,7 @@ export const SYSTEMS: StarSystem[] = [
         y: -300,
         svc: 'LTB',
         tech: 3,
-        prices: P({ food: -1, luxury: 1 }),
+        prices: position({ food: -1, luxury: 1 }),
         desc: 'A coral reef grown in orbit, glowing pink and blue. Polyp Darts spawn here in clouds.',
       },
     ],
@@ -985,7 +985,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 400,
         svc: 'LTOYB',
         tech: 7,
-        prices: P({ medical: -1, crystal: 1, equipment: 1 }),
+        prices: position({ medical: -1, crystal: 1, equipment: 1 }),
         desc: 'A dark ocean world lit only by its creatures. The Abyssal Carriers are born here.',
       },
     ],
@@ -1011,7 +1011,7 @@ export const SYSTEMS: StarSystem[] = [
         svc: 'LTB',
         tech: 3,
         land: 10958,
-        prices: P({ luxury: 0, medical: 1, crystal: 1 }),
+        prices: position({ luxury: 0, medical: 1, crystal: 1 }),
         desc: "A white spire at the edge of Que'vari space, where the People of Light greet strangers.",
       },
     ],
@@ -1036,7 +1036,7 @@ export const SYSTEMS: StarSystem[] = [
         svc: 'LTOYB',
         tech: 7,
         land: 10957,
-        prices: P({ luxury: -1, crystal: 1, food: 1 }),
+        prices: position({ luxury: -1, crystal: 1, food: 1 }),
         desc: "The Que'vari homeworld: white cities under sails of light-blue energy fabric.",
       },
     ],
@@ -1060,7 +1060,7 @@ export const SYSTEMS: StarSystem[] = [
         y: 300,
         svc: 'LTOB',
         tech: 5,
-        prices: P({ crystal: -1, industrial: 1 }),
+        prices: position({ crystal: -1, industrial: 1 }),
         desc: "A Que'vari sail-yard where electro-sails are woven and mended.",
       },
     ],
@@ -1128,11 +1128,11 @@ export const SITES: StellarBody[] = (
     ['site-geodesy', 'geodesy', -700, -500],
     ...frontierSites(SYSTEMS, 10),
   ] as [string, string, number, number][]
-).map(([id, system, x, y]) => ({
-  id,
+).map(([identifier, system, positionX, positionY]) => ({
+  id: identifier,
   system,
-  x,
-  y,
+  x: positionX,
+  y: positionY,
   name: 'Derelict Station Hull',
   kind: 'site',
   color: '#887',
@@ -1143,7 +1143,7 @@ export const SITES: StellarBody[] = (
   desc: 'A gutted Concord station hull, adrift but sound. Claim it and it becomes your Personal Station: dock, refinery, lab and shipyard.',
 }));
 for (const stellarBody of SITES)
-  SYSTEMS.find((s) => s.id === stellarBody.system)!.stellars.push(stellarBody);
+  SYSTEMS.find((starSystem) => starSystem.id === stellarBody.system)!.stellars.push(stellarBody);
 addSolGateway(SYSTEMS); // Sol (with Earth and the Gateway wormhole) and the ten Farside systems
 addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded pass: no existing ids change)
 // more markets buy what captains mine. Worlds near asteroid fields, and mining and alien peoples, take ore, gas and
@@ -1158,8 +1158,8 @@ addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded
     'thalassi',
     'vashari',
   ]);
-  for (const S of SYSTEMS)
-    for (const stellarBody of S.stellars) {
+  for (const starSystem of SYSTEMS)
+    for (const stellarBody of starSystem.stellars) {
       if (
         !stellarBody.prices ||
         !(stellarBody.svc || '').includes('T') ||
@@ -1167,11 +1167,11 @@ addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded
         stellarBody.hub
       )
         continue;
-      const h = fnv1a(stellarBody.id + ':mine');
-      const near = (S.fields || []).length > 0,
-        kin = MINERS.has(S.faction),
-        roll = (h % 1000) / 1000;
-      if (!('shards' in stellarBody.prices) && (near || kin) && roll < 0.42)
+      const fnv1a2 = fnv1a(stellarBody.id + ':mine');
+      const near = (starSystem.fields || []).length > 0,
+        entityKind = MINERS.has(starSystem.faction),
+        roll = (fnv1a2 % 1000) / 1000;
+      if (!('shards' in stellarBody.prices) && (near || entityKind) && roll < 0.42)
         stellarBody.prices.shards = 1;
       if (!('ore' in stellarBody.prices) && near && roll > 0.7) stellarBody.prices.ore = 0;
       if (!('gas' in stellarBody.prices) && near && roll > 0.55 && roll < 0.75)
@@ -1181,7 +1181,7 @@ addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded
 addEventide(SYSTEMS); // Append authored v2.9 content without consuming legacy generation RNG.
 // Move only the authored mouth AFTER generation so collision rejection and RNG stay stable.
 {
-  const gate = SYSTEMS.find((s) => s.id === 'coldharbor')!.stellars.find(
+  const gate = SYSTEMS.find((starSystem) => starSystem.id === 'coldharbor')!.stellars.find(
     (stellarBody) => stellarBody.id === 'coldharbor-gate',
   )!;
   gate.x = 2200;
@@ -1192,15 +1192,21 @@ addEventide(SYSTEMS); // Append authored v2.9 content without consuming legacy g
  * Fast lookup map of star systems keyed by system ID.
  * @type {Record<string, StarSystem>}
  */
-export const SYS: Record<string, StarSystem> = Object.fromEntries(SYSTEMS.map((s) => [s.id, s]));
+const fromEntries2: Record<string, StarSystem> = Object.fromEntries(
+  SYSTEMS.map((starSystem) => [starSystem.id, starSystem]),
+);
+export { fromEntries2 as SYS };
 
 /**
  * Fast lookup map of all celestial bodies keyed by stellar ID.
  * @type {Record<string, StellarBody>}
  */
 export const STELLARS = Object.fromEntries(
-  SYSTEMS.flatMap((s) =>
-    s.stellars.map((stellarBody) => [stellarBody.id, { ...stellarBody, system: s.id }]),
+  SYSTEMS.flatMap((starSystem) =>
+    starSystem.stellars.map((stellarBody) => [
+      stellarBody.id,
+      { ...stellarBody, system: starSystem.id },
+    ]),
   ),
 ) as Record<string, StellarBody>;
 
@@ -1633,7 +1639,7 @@ export const ORE_PROCESS: {
  * @type {OpsLevelDef[]}
  */
 // Quantum Station: Ops levels, research, refinery
-export const OPS: OpsLevelDef[] = [
+const opsLevelDefs: OpsLevelDef[] = [
   {
     lv: 1,
     title: 'Restore Docking',
@@ -1685,6 +1691,7 @@ export const OPS: OpsLevelDef[] = [
     unlock: 'Exotics, Constitution',
   },
 ];
+export { opsLevelDefs as OPS };
 
 /**
  * Parameters and requirements for relocating a Personal Station to another derelict hull site.
@@ -1700,10 +1707,11 @@ export const RELOCATE: {
 
 /**
  * Calculates credit cost to relocate a Personal Station based on current Ops level.
- * @param {number} [ops=0] - Current station Ops level.
+ * @param {number} [operations=0] - Current station Ops level.
  * @returns {number} Credit relocation cost.
  */
-export const relocateCost = (ops?: number) => RELOCATE.base + RELOCATE.perOps * (ops || 0);
+export const relocateCost = (operations?: number) =>
+  RELOCATE.base + RELOCATE.perOps * (operations || 0);
 
 export { RESEARCH2 as RESEARCH } from './hangar.ts'; // four research trees (see shared/hangar.js)
 
@@ -1775,7 +1783,7 @@ export const ARMADA_HULLS: number[] = [757, 758, 759]; // the old station Armada
 // Deterministic refinery/processed-good markets; ordinary nonservice pads unchanged.
 for (const stellarBody of Object.values(STELLARS))
   if (!stellarBody.site && stellarBody.svc!.includes('T') && stellarBody.svc!.includes('O'))
-    for (const id of [
+    for (const identifier of [
       'alloy_ingots',
       'fuel_cells',
       'cut_crystal',
@@ -1784,8 +1792,8 @@ for (const stellarBody of Object.values(STELLARS))
       'quantum_fuel',
       'exotic_matter',
     ])
-      stellarBody.prices![id] = 0;
-for (const id of [
+      stellarBody.prices![identifier] = 0;
+for (const identifier of [
   'alloy_ingots',
   'fuel_cells',
   'cut_crystal',
@@ -1794,19 +1802,19 @@ for (const id of [
   'quantum_fuel',
   'exotic_matter',
 ])
-  SITE_PRICES[id] = 0;
+  SITE_PRICES[identifier] = 0;
 
 // Authored finite minor pockets support industrial bulk without changing existing fields.
-for (const [sys, ore] of [
+for (const [starSystem, oreCommodity] of [
   ['meridian', 'ore'],
   ['halcyon', 'gas'],
 ])
-  SYS[sys].fields!.push({
-    id: `${sys}-industrial-minor`,
+  fromEntries2[starSystem].fields!.push({
+    id: `${starSystem}-industrial-minor`,
     x: 4200,
     y: -4000,
     r: 700,
-    ore,
+    ore: oreCommodity,
     rich: 2,
     rocks: 20,
     minor: true,

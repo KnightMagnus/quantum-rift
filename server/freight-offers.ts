@@ -3,7 +3,7 @@ import type { Mission } from './game.ts';
 
 import { xorshift32, fnv1a } from '../shared/deterministic-random.ts';
 import { GalaxyGraph } from '../shared/galaxy-graph.ts';
-import { SYSTEMS, SYS, FACTIONS, START, COMMODITIES } from '../shared/galaxy.ts';
+import { SYSTEMS, SYS as systemsById, FACTIONS, START, COMMODITIES } from '../shared/galaxy.ts';
 import { route } from '../shared/rules.ts';
 
 /** @import { StellarBody } from '../shared/galaxy.ts' */
@@ -19,25 +19,32 @@ export const FREIGHT_BANDS = [
   [900, 1800],
 ];
 
-const lawful = (s: StarSystem | undefined, danger: number) =>
-  s &&
-  s.danger <= danger &&
-  !s.farside &&
-  !s.arena &&
-  !FACTIONS[s.faction].region &&
-  !FACTIONS[s.faction].pirate &&
-  s.stellars.some((p) => p.svc!.includes('L') && !p.site && !p.outlaw);
+const lawful = (starSystem: StarSystem | undefined, danger: number) =>
+  starSystem &&
+  starSystem.danger <= danger &&
+  !starSystem.farside &&
+  !starSystem.arena &&
+  !FACTIONS[starSystem.faction].region &&
+  !FACTIONS[starSystem.faction].pirate &&
+  starSystem.stellars.some(
+    (rawStellarBody) =>
+      rawStellarBody.svc!.includes('L') && !rawStellarBody.site && !rawStellarBody.outlaw,
+  );
 
-const galaxyGraph = new GalaxyGraph(SYS);
+const galaxyGraph = new GalaxyGraph(systemsById);
 
 function distances(origin: string, allowed: Set<string>, limit: number) {
   return new Map(galaxyGraph.walk(origin, { allowed, maxDepth: limit }));
 }
 
-const quiet = new Set(SYSTEMS.filter((s) => lawful(s, 1)).map((s) => s.id));
+const quiet = new Set(
+  SYSTEMS.filter((starSystem) => lawful(starSystem, 1)).map((starSystem) => starSystem.id),
+);
 // "Inner" means the low-danger, lawful neighbourhood within two quiet jumps of Concordia.
 export const INNER_FREIGHT_SYSTEMS = new Set(distances(START.system, quiet, 2).keys());
-const trade = new Set(SYSTEMS.filter((s) => lawful(s, 2)).map((s) => s.id));
+const trade = new Set(
+  SYSTEMS.filter((starSystem) => lawful(starSystem, 2)).map((starSystem) => starSystem.id),
+);
 
 function random(seed: string) {
   return xorshift32(fnv1a(seed));
@@ -50,51 +57,62 @@ function random(seed: string) {
  */
 export function freightOffers(port: StellarBody, window: number): Mission[] {
   if (!port.svc.includes('B') || port.site || port.outlaw || !trade.has(port.system)) return [];
-  const r = random(`${port.id}:${window}:freight`),
-    out: Mission[] = [];
+  const radius = random(`${port.id}:${window}:freight`),
+    missions: Mission[] = [];
   const destinations = (allowed: Set<string>, limit: number) =>
-    [...distances(port.system, allowed, limit)].flatMap(([id, n]) => {
-      if (!n) return [];
+    [...distances(port.system, allowed, limit)].flatMap(([identifier, count]) => {
+      if (!count) return [];
       // Match the actual Plot route, not only an alternative safe path through the graph.
-      const path = route(SYS, port.system, id);
-      return path.length > 0 && path.length <= limit && path.every((sid) => allowed.has(sid))
-        ? SYS[id].stellars
+      const path = route(systemsById, port.system, identifier);
+      return path.length > 0 &&
+        path.length <= limit &&
+        path.every((sessionId) => allowed.has(sessionId))
+        ? systemsById[identifier].stellars
             .filter(
               (stellarBody) =>
                 stellarBody.svc!.includes('L') && !stellarBody.site && !stellarBody.outlaw,
             )
-            .map((stellarBody) => ({ p: stellarBody, sys: id, jumps: path.length }))
+            .map((stellarBody) => ({ p: stellarBody, sys: identifier, jumps: path.length }))
         : [];
     });
-  function add(
+  function appendEntry(
     slot: string,
-    qty: number,
+    quantity: number,
     choices: Array<{ p: RawStellarBody; sys: string; jumps: number }>,
     bulk: boolean,
   ) {
     if (!choices.length) return;
-    const { p, sys, jumps } = choices[Math.floor(r() * choices.length)],
-      commodity = COMMODITIES[Math.floor(r() * COMMODITIES.length)];
-    out.push({
+    const {
+        p: rawStellarBody,
+        sys: starSystem,
+        jumps,
+      } = choices[Math.floor(radius() * choices.length)],
+      commodity = COMMODITIES[Math.floor(radius() * COMMODITIES.length)];
+    missions.push({
       id: `${port.id}-${window}-freight-${slot}`,
       type: 'cargo',
-      title: `${bulk ? 'Freight' : 'Courier'}: ${qty} t of ${commodity.name}`,
-      sys,
-      dest: p.id,
+      title: `${bulk ? 'Freight' : 'Courier'}: ${quantity} t of ${commodity.name}`,
+      sys: starSystem,
+      dest: rawStellarBody.id,
       cid: commodity.id,
-      qty,
-      reward: Math.round((800 + jumps * 1100 + qty * (60 + (bulk ? jumps * 20 : 0))) * 1.35),
-      text: `The sender supplies the shipment. Carry ${qty} tons of ${commodity.name.toLowerCase()} to ${p.name} in ${SYS[sys].name} (${jumps} jump${jumps === 1 ? '' : 's'}). No purchase needed and no deadline.`,
+      qty: quantity,
+      reward: Math.round((800 + jumps * 1100 + quantity * (60 + (bulk ? jumps * 20 : 0))) * 1.35),
+      text: `The sender supplies the shipment. Carry ${quantity} tons of ${commodity.name.toLowerCase()} to ${rawStellarBody.name} in ${systemsById[starSystem].name} (${jumps} jump${jumps === 1 ? '' : 's'}). No purchase needed and no deadline.`,
     });
   }
   if (INNER_FREIGHT_SYSTEMS.has(port.system)) {
     const nearby = destinations(INNER_FREIGHT_SYSTEMS, 2);
     // Even a 5 t scout fits the first; both together fit the empty 15 t starter.
-    add('courier-0', 3 + Math.floor(r() * 3), nearby, false);
-    add('courier-1', 6 + Math.floor(r() * 5), nearby, false);
+    appendEntry('courier-0', 3 + Math.floor(radius() * 3), nearby, false);
+    appendEntry('courier-1', 6 + Math.floor(radius() * 5), nearby, false);
   }
   const routes = destinations(trade, 4);
-  for (const [i, [min, max]] of FREIGHT_BANDS.entries())
-    add(`bulk-${i}`, min + Math.floor(r() * ((max - min) / 5 + 1)) * 5, routes, true);
-  return out;
+  for (const [index, [minimum, maximum]] of FREIGHT_BANDS.entries())
+    appendEntry(
+      `bulk-${index}`,
+      minimum + Math.floor(radius() * ((maximum - minimum) / 5 + 1)) * 5,
+      routes,
+      true,
+    );
+  return missions;
 }

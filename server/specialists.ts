@@ -4,37 +4,37 @@ export interface SpecialistOperations {
     this: SpecialistsCapabilities,
     playerData: PlayerData,
   ): ((typeof SPEC)[number] & { power: number }) | null;
-  flying(this: SpecialistsCapabilities, playerData: PlayerData, key: string): boolean;
+  flying(this: SpecialistsCapabilities, playerData: PlayerData, entryKey: string): boolean;
   power(this: SpecialistsCapabilities, playerData: PlayerData): number;
   bonus(this: SpecialistsCapabilities, playerData: PlayerData): Record<string, number>;
   specGain(
     this: SpecialistsCapabilities,
     session: Session,
-    key: string,
-    resN: number,
+    entryKey: string,
+    resourceCount: number,
     bpChance: number,
-    bpN?: number,
+    blueprintCount?: number,
   ): void;
-  specMult(this: SpecialistsCapabilities, srcRoot: Entity, src: Entity, entity: Entity): number;
+  specMult(this: SpecialistsCapabilities, srcRoot: Entity, entity2: Entity, entity: Entity): number;
   specOnKill(
     this: SpecialistsCapabilities,
     session: Session,
-    npc: Entity,
+    entity: Entity,
     space: Space,
     byEscort?: boolean,
   ): void;
   specOnBoard(this: SpecialistsCapabilities, session: Session): void;
   specOnLoot(this: SpecialistsCapabilities, session: Session): void;
-  specOnMine(this: SpecialistsCapabilities, session: Session, it: { rich?: number }): void;
+  specOnMine(this: SpecialistsCapabilities, session: Session, item: { rich?: number }): void;
   specOnChart(this: SpecialistsCapabilities, session: Session): void;
-  specOnRaid(this: SpecialistsCapabilities, session: Session, won: boolean): void;
+  specOnRaid(this: SpecialistsCapabilities, session: Session, hasWon: boolean): void;
   specOnJob(this: SpecialistsCapabilities, session: Session, mission: Mission): void;
   specIdle(this: SpecialistsCapabilities, session: Session): void;
   pathfinderJump(
     this: SpecialistsCapabilities,
     playerData: PlayerData,
     from: string,
-    to: string,
+    destination: string,
   ): string | null;
   specOp(this: SpecialistsCapabilities, session: Session, message: NetworkMessage): void;
   specCheck(this: SpecialistsCapabilities, playerData: PlayerData): boolean;
@@ -47,7 +47,7 @@ import type { Entity, Space } from './space.ts';
 
 // Quantum Rift: server feature operations: specialty-ship abilities, unique resources, blueprints,
 // building, parts, components and timed tier-ups.
-import { SYS, STELLARS, FACTIONS, GRADES } from '../shared/galaxy.ts';
+import { SYS as systemsById, STELLARS, FACTIONS, GRADES } from '../shared/galaxy.ts';
 import {
   SPEC,
   SPEC_RES,
@@ -69,8 +69,8 @@ import { makeLoadout, credits } from '../shared/rules.ts';
 /** @import { Entity, Space } from './space.ts' */
 
 /** @type {Record<string, number>} Map of specialist keys to hull IDs. */
-const KEY: Record<string, number> = Object.fromEntries(
-  Object.values(SPEC).map((s) => [s.key, s.id]),
+const fromEntries2: Record<string, number> = Object.fromEntries(
+  Object.values(SPEC).map((specialistShip) => [specialistShip.key, specialistShip.id]),
 );
 
 export const SpecialistOperations = {
@@ -92,19 +92,19 @@ export const SpecialistOperations = {
    * @returns {(typeof SPEC[number] & {power:number}) | null} Active specialist object or null.
    */
   specOf(this: SpecialistsCapabilities, playerData: PlayerData) {
-    const S_ = SPEC[playerData.ship.hull];
-    if (!S_) return null;
+    const specialistShip = SPEC[playerData.ship.hull];
+    if (!specialistShip) return null;
     this.specInit(playerData);
-    return { ...S_, power: specPower(playerData.specState[S_.id]) };
+    return { ...specialistShip, power: specPower(playerData.specState[specialistShip.id]) };
   },
   /**
    * Check whether the player is currently piloting a specialist ship of the specified key.
    * @param {PlayerData} playerData - Saved player data.
-   * @param {string} key - Specialist key.
+   * @param {string} entryKey - Specialist key.
    * @returns {boolean} True if flying the specified specialist.
    */
-  flying(this: SpecialistsCapabilities, playerData: PlayerData, key: string) {
-    return playerData && playerData.ship && playerData.ship.hull === KEY[key!];
+  flying(this: SpecialistsCapabilities, playerData: PlayerData, entryKey: string) {
+    return playerData && playerData.ship && playerData.ship.hull === fromEntries2[entryKey!];
   },
   /**
    * Get the current specialist power multiplier.
@@ -112,8 +112,8 @@ export const SpecialistOperations = {
    * @returns {number} Power multiplier.
    */
   power(this: SpecialistsCapabilities, playerData: PlayerData) {
-    const s = this.specOf(playerData);
-    return s ? s.power : 1;
+    const specOf2 = this.specOf(playerData);
+    return specOf2 ? specOf2.power : 1;
   },
   /**
    * Compute aggregated stat bonuses from base frontier stats plus active specialist components and traits.
@@ -121,92 +121,101 @@ export const SpecialistOperations = {
    * @returns {Record<string, number>} Combined ship stat bonuses.
    */
   bonus(this: SpecialistsCapabilities, playerData: PlayerData) {
-    const b = this.frontierBonus(playerData),
-      sp = this.specOf(playerData);
-    if (!sp) return b;
-    const st = playerData.specState[sp.id] || { comp: {} };
-    for (const [c, lv] of Object.entries(st.comp || {}))
-      for (const [k, v] of Object.entries(COMPONENTS[c].bonus))
-        if (k !== 'ability') b[k] = (b[k] || 0) + v * lv;
-    if (sp.key === 'lodestar') b.miningPct = (b.miningPct || 0) + 200 * sp.power;
+    const frontierBonus2 = this.frontierBonus(playerData),
+      specOf2 = this.specOf(playerData);
+    if (!specOf2) return frontierBonus2;
+    const savedSpecialist = playerData.specState[specOf2.id] || { comp: {} };
+    for (const [component, level] of Object.entries(savedSpecialist.comp || {}))
+      for (const [entryKey, value] of Object.entries(COMPONENTS[component].bonus))
+        if (entryKey !== 'ability')
+          frontierBonus2[entryKey] = (frontierBonus2[entryKey] || 0) + value * level;
+    if (specOf2.key === 'lodestar')
+      frontierBonus2.miningPct = (frontierBonus2.miningPct || 0) + 200 * specOf2.power;
     if (
-      sp.key === 'bulwark' &&
+      specOf2.key === 'bulwark' &&
       playerData.station.site &&
       STELLARS[playerData.station.site].system === playerData.sys
     ) {
-      b.shieldPct = (b.shieldPct || 0) + 50 * sp.power;
-      b.damagePct = (b.damagePct || 0) + 50 * sp.power;
+      frontierBonus2.shieldPct = (frontierBonus2.shieldPct || 0) + 50 * specOf2.power;
+      frontierBonus2.damagePct = (frontierBonus2.damagePct || 0) + 50 * specOf2.power;
     }
-    return b;
+    return frontierBonus2;
   },
   // earn a specialty resource (only while flying that specialist) and/or blueprints (flying anything)
   /**
    * Award specialty resource and/or blueprint drops for activities.
    * @param {Session} session - Player session.
-   * @param {string} key - Specialist key.
-   * @param {number} resN - Resource amount.
+   * @param {string} entryKey - Specialist key.
+   * @param {number} resourceCount - Resource amount.
    * @param {number} bpChance - Blueprint chance.
-   * @param {number} [bpN=1] - Number of blueprints.
+   * @param {number} [blueprintCount=1] - Number of blueprints.
    * @returns {void}
    */
   specGain(
     this: SpecialistsCapabilities,
     session: Session,
-    key: string,
-    resN: number,
+    entryKey: string,
+    resourceCount: number,
     bpChance: number,
-    bpN: number = 1,
+    blueprintCount: number = 1,
   ) {
     const playerData = session.data;
     this.specInit(playerData);
-    const id = KEY[key!],
-      S_ = SPEC[id];
-    let msg = [];
-    if (resN && this.flying(playerData, key)) {
-      const n = Math.max(1, Math.round(resN * this.power(playerData)));
-      playerData.spec[S_.res] = (playerData.spec[S_.res] || 0) + n;
-      msg.push(`+${n} ${SPEC_RES[S_.res].name}`);
+    const fromEntries = fromEntries2[entryKey!],
+      specialistShip = SPEC[fromEntries];
+    let message = [];
+    if (resourceCount && this.flying(playerData, entryKey)) {
+      const count = Math.max(1, Math.round(resourceCount * this.power(playerData)));
+      playerData.spec[specialistShip.res] = (playerData.spec[specialistShip.res] || 0) + count;
+      message.push(`+${count} ${SPEC_RES[specialistShip.res].name}`);
     }
     if (bpChance && Math.random() < bpChance) {
-      playerData.bp[id] = (playerData.bp[id] || 0) + bpN;
-      msg.push(
-        `+${bpN} ${S_.name} blueprint${bpN > 1 ? 's' : ''} (${Math.min(playerData.bp[id], BP_NEED)}/${BP_NEED})`,
+      playerData.bp[fromEntries] = (playerData.bp[fromEntries] || 0) + blueprintCount;
+      message.push(
+        `+${blueprintCount} ${specialistShip.name} blueprint${blueprintCount > 1 ? 's' : ''} (${Math.min(playerData.bp[fromEntries], BP_NEED)}/${BP_NEED})`,
       );
-      if (playerData.bp[id] >= BP_NEED && playerData.bp[id] - bpN < BP_NEED)
-        this.log(playerData, `Enough blueprints to build the ${S_.name}.`);
+      if (
+        playerData.bp[fromEntries] >= BP_NEED &&
+        playerData.bp[fromEntries] - blueprintCount < BP_NEED
+      )
+        this.log(playerData, `Enough blueprints to build the ${specialistShip.name}.`);
     }
-    if (msg.length) this.toast(session, msg.join(' · '));
+    if (message.length) this.toast(session, message.join(' · '));
   },
   // damage multiplier from the attacker's specialty against this target (called by Space.damage)
   /**
    * Compute specialist weapon damage multiplier against a target.
    * @param {Entity} srcRoot - Attacking root entity.
-   * @param {Entity} src - Direct projectile or damage source entity.
+   * @param {Entity} entity2 - Direct projectile or damage source entity.
    * @param {Entity} entity - Target entity taking damage.
    * @returns {number} Damage multiplier factor.
    */
-  specMult(this: SpecialistsCapabilities, srcRoot: Entity, src: Entity, entity: Entity) {
+  specMult(this: SpecialistsCapabilities, srcRoot: Entity, entity2: Entity, entity: Entity) {
     if (!srcRoot || !srcRoot.player) return 1;
     const playerData = srcRoot.player.s && srcRoot.player.s.data;
     if (!playerData) return 1;
-    const sp = this.specOf(playerData);
-    if (!sp) return 1;
-    const F = FACTIONS[entity.faction] || {},
-      own = src === srcRoot;
-    if (sp.key === 'herald' && !own) return 1 + 0.25 * sp.power; // escorts fight harder
-    if (!own) return 1;
-    if (sp.key === 'swarmbreaker' && entity.faction === 'swarm') return 1 + 0.6 * sp.power;
-    if (sp.key === 'nightglass' && (entity.faction === 'umbral' || entity.boss))
-      return 1 + 0.5 * sp.power;
-    if (sp.key === 'vanguard' && (F.pirate || F.alwaysHostile || entity.mission || entity.boss))
-      return 1 + 0.4 * sp.power;
+    const specOf2 = this.specOf(playerData);
+    if (!specOf2) return 1;
+    const factionDef = FACTIONS[entity.faction] || {},
+      owner = entity2 === srcRoot;
+    if (specOf2.key === 'herald' && !owner) return 1 + 0.25 * specOf2.power; // escorts fight harder
+    if (!owner) return 1;
+    if (specOf2.key === 'swarmbreaker' && entity.faction === 'swarm')
+      return 1 + 0.6 * specOf2.power;
+    if (specOf2.key === 'nightglass' && (entity.faction === 'umbral' || entity.boss))
+      return 1 + 0.5 * specOf2.power;
+    if (
+      specOf2.key === 'vanguard' &&
+      (factionDef.pirate || factionDef.alwaysHostile || entity.mission || entity.boss)
+    )
+      return 1 + 0.4 * specOf2.power;
     return 1;
   },
   // hooks from the rest of the game
   /**
    * Hook called when an NPC ship is destroyed to grant specialist rewards.
    * @param {Session} session - Player session.
-   * @param {Entity} npc - Defeated NPC entity.
+   * @param {Entity} entity2 - Defeated NPC entity.
    * @param {Space} space - Space instance.
    * @param {boolean} [byEscort] - True if escort ship scored the final blow.
    * @returns {void}
@@ -214,25 +223,25 @@ export const SpecialistOperations = {
   specOnKill(
     this: SpecialistsCapabilities,
     session: Session,
-    npc: Entity,
+    entity: Entity,
     space: Space,
     byEscort?: boolean,
   ) {
     const playerData = session.data;
-    if (npc.faction === 'swarm')
+    if (entity.faction === 'swarm')
       this.specGain(session, 'swarmbreaker', 1 + (Math.random() < 0.4 ? 1 : 0), 0.18);
-    if (npc.faction === 'umbral')
-      this.specGain(session, 'nightglass', 1 + Math.floor((npc.strength || 10) / 300), 0.12);
-    if ((FACTIONS[npc.faction] || {}).pirate)
+    if (entity.faction === 'umbral')
+      this.specGain(session, 'nightglass', 1 + Math.floor((entity.strength || 10) / 300), 0.12);
+    if ((FACTIONS[entity.faction] || {}).pirate)
       this.specGain(
         session,
         'vanguard',
-        npc.mission ? 3 : 1,
-        npc.mission ? 0.6 : 0.03,
-        npc.mission ? 3 : 1,
+        entity.mission ? 3 : 1,
+        entity.mission ? 0.6 : 0.03,
+        entity.mission ? 3 : 1,
       );
     if (byEscort && this.wingHulls(playerData).length) this.specGain(session, 'herald', 1, 0.1);
-    if (npc.wave) this.specGain(session, 'bulwark', 1, 0.2);
+    if (entity.wave) this.specGain(session, 'bulwark', 1, 0.2);
   },
   /**
    * Hook called when player boards a disabled vessel to reward Corsair materials.
@@ -253,11 +262,11 @@ export const SpecialistOperations = {
   /**
    * Hook called when mining asteroid chunks to reward Lodestar resources.
    * @param {Session} session - Player session.
-   * @param {{rich?: number}} it - Mined item details.
+   * @param {{rich?: number}} item - Mined item details.
    * @returns {void}
    */
-  specOnMine(this: SpecialistsCapabilities, session: Session, it: { rich?: number }) {
-    if ((it.rich || 1) >= 2 && Math.random() < 0.5)
+  specOnMine(this: SpecialistsCapabilities, session: Session, item: { rich?: number }) {
+    if ((item.rich || 1) >= 2 && Math.random() < 0.5)
       this.specGain(session, 'lodestar', 1, 0.15, 1 + (Math.random() < 0.3 ? 1 : 0));
   },
   /**
@@ -271,11 +280,11 @@ export const SpecialistOperations = {
   /**
    * Hook called when defending or winning an outpost raid to reward Bulwark blueprints.
    * @param {Session} session - Player session.
-   * @param {boolean} won - True if raid was successful.
+   * @param {boolean} hasWon - True if raid was successful.
    * @returns {void}
    */
-  specOnRaid(this: SpecialistsCapabilities, session: Session, won: boolean) {
-    if (won) this.specGain(session, 'bulwark', 3, 1, 3 + Math.floor(Math.random() * 3));
+  specOnRaid(this: SpecialistsCapabilities, session: Session, hasWon: boolean) {
+    if (hasWon) this.specGain(session, 'bulwark', 3, 1, 3 + Math.floor(Math.random() * 3));
   },
   /**
    * Hook called upon completing jobs to reward specialized blueprints and resources.
@@ -317,13 +326,20 @@ export const SpecialistOperations = {
    * Evaluate whether Pathfinder ability can skip an intermediate hyperspace link.
    * @param {PlayerData} playerData - Saved player data.
    * @param {string} from - Departure system.
-   * @param {string} to - Destination system.
+   * @param {string} destination - Destination system.
    * @returns {string | null} Intermediate system skipped, or null if jump not possible.
    */
-  pathfinderJump(this: SpecialistsCapabilities, playerData: PlayerData, from: string, to: string) {
+  pathfinderJump(
+    this: SpecialistsCapabilities,
+    playerData: PlayerData,
+    from: string,
+    destination: string,
+  ) {
     if (!this.flying(playerData, 'pathfinder')) return null;
-    const mid = SYS[from].links.find((m) => SYS[m].links.includes(to));
-    return mid || null;
+    const midpoint = systemsById[from].links.find((message) =>
+      systemsById[message].links.includes(destination),
+    );
+    return midpoint || null;
   },
 
   // ------------------------------------------------------------------ the station: build, refine parts, upgrade, tier up
@@ -335,110 +351,134 @@ export const SpecialistOperations = {
    */
   specOp(this: SpecialistsCapabilities, session: Session, message: NetworkMessage) {
     const playerData = session.data,
-      p = STELLARS[playerData.stellar!];
+      stellarBody = STELLARS[playerData.stellar!];
     this.specInit(playerData);
-    if (!p || session.ent || !this.ownSite(playerData, p))
+    if (!stellarBody || session.ent || !this.ownSite(playerData, stellarBody))
       return this.toast(session, 'Specialist work happens at your Personal Station.');
-    const S = playerData.station;
+    const stationState = playerData.station;
     switch (message.op) {
       case 'build': {
-        const sp = SPEC[(message.id as number) | 0];
-        if (!sp) return;
-        if (S.ops < BUILD.ops)
+        const specialistShip = SPEC[(message.id as number) | 0];
+        if (!specialistShip) return;
+        if (stationState.ops < BUILD.ops)
           return this.toast(session, `Specialists are built at Station Tier ${BUILD.ops}.`);
-        if ((playerData.bp[sp.id] || 0) < BP_NEED)
+        if ((playerData.bp[specialistShip.id] || 0) < BP_NEED)
           return this.toast(
             session,
-            `You need ${BP_NEED} ${sp.name} blueprints (you have ${playerData.bp[sp.id] || 0}).`,
+            `You need ${BP_NEED} ${specialistShip.name} blueprints (you have ${playerData.bp[specialistShip.id] || 0}).`,
           );
-        const cost = sp.cost - this.tradeIn(playerData);
+        const cost = specialistShip.cost - this.tradeIn(playerData);
         if (playerData.credits < cost || !this.hasMats(playerData, BUILD.mats))
           return this.toast(
             session,
-            `Building the ${sp.name} takes ${credits(cost)} credits (after trade-in) and ${BUILD.mats.map(([a, g, n]) => `${n} ${a} ${GRADES[g]}`).join(', ')}.`,
+            `Building the ${specialistShip.name} takes ${credits(cost)} credits (after trade-in) and ${BUILD.mats.map(([firstValue, game, count]) => `${count} ${firstValue} ${GRADES[game]}`).join(', ')}.`,
           );
         if (
-          this.fitsJobs(playerData, makeLoadout(this.A, sp.id, sp.name)) ||
-          this.holdUsed(playerData) > sp.cargo
+          this.fitsJobs(playerData, makeLoadout(this.A, specialistShip.id, specialistShip.name)) ||
+          this.holdUsed(playerData) > specialistShip.cargo
         )
           return this.toast(session, 'Sell some cargo first.');
         playerData.credits -= cost;
         this.takeMats(playerData, BUILD.mats);
-        playerData.bp[sp.id] -= BP_NEED;
-        playerData.ship = makeLoadout(this.A, sp.id, sp.name);
+        playerData.bp[specialistShip.id] -= BP_NEED;
+        playerData.ship = makeLoadout(this.A, specialistShip.id, specialistShip.name);
         playerData.shipless = false;
         playerData.fuel = undefined;
-        playerData.specState[sp.id] = playerData.specState[sp.id] || { tier: 1, comp: {} };
-        this.log(playerData, `Built the specialist ${sp.name} (${sp.sub}).`);
-        this.toast(session, `The ${sp.name} is yours: ${sp.ability}`);
+        playerData.specState[specialistShip.id] = playerData.specState[specialistShip.id] || {
+          tier: 1,
+          comp: {},
+        };
+        this.log(
+          playerData,
+          `Built the specialist ${specialistShip.name} (${specialistShip.sub}).`,
+        );
+        this.toast(session, `The ${specialistShip.name} is yours: ${specialistShip.ability}`);
         this.broadcast({
           t: 'chat',
           from: '',
-          msg: `${playerData.name} launched a ${sp.name}, the Rift's newest ${sp.sub.toLowerCase()}.`,
+          msg: `${playerData.name} launched a ${specialistShip.name}, the Rift's newest ${specialistShip.sub.toLowerCase()}.`,
         });
         break;
       }
       case 'parts': {
-        const sp = SPEC[(message.id as number) | 0];
-        if (!sp) return;
-        const have = specialistResource(playerData, sp),
-          n = Math.floor(have / PART_RATE);
-        if (!n)
+        const specialistShip = SPEC[(message.id as number) | 0];
+        if (!specialistShip) return;
+        const have = specialistResource(playerData, specialistShip),
+          count = Math.floor(have / PART_RATE);
+        if (!count)
           return this.toast(
             session,
-            `You need ${PART_RATE} ${SPEC_RES[sp.res].name} per ${sp.name} part.`,
+            `You need ${PART_RATE} ${SPEC_RES[specialistShip.res].name} per ${specialistShip.name} part.`,
           );
-        if (sp.key === 'star_dredge') {
-          const take = planTake(playerData.cargo, playerData.cargoLots, 'plasma', n * PART_RATE);
+        if (specialistShip.key === 'star_dredge') {
+          const take = planTake(
+            playerData.cargo,
+            playerData.cargoLots,
+            'plasma',
+            count * PART_RATE,
+          );
           applyTake(playerData.cargo, playerData.cargoLots, take);
-        } else playerData.spec[sp.res] -= n * PART_RATE;
-        playerData.parts[sp.id] = (playerData.parts[sp.id] || 0) + n;
+        } else playerData.spec[specialistShip.res] -= count * PART_RATE;
+        playerData.parts[specialistShip.id] = (playerData.parts[specialistShip.id] || 0) + count;
         this.toast(
           session,
-          `Refined ${n * PART_RATE} ${SPEC_RES[sp.res].name} into ${n} ${sp.name} part${n > 1 ? 's' : ''}.`,
+          `Refined ${count * PART_RATE} ${SPEC_RES[specialistShip.res].name} into ${count} ${specialistShip.name} part${count > 1 ? 's' : ''}.`,
         );
         break;
       }
       case 'comp': {
-        const sp = SPEC[playerData.ship.hull];
-        if (!sp) return this.toast(session, 'Fly the specialist you want to upgrade.');
-        const st = (playerData.specState[sp.id] = playerData.specState[sp.id] || {
+        const specialistShip = SPEC[playerData.ship.hull];
+        if (!specialistShip) return this.toast(session, 'Fly the specialist you want to upgrade.');
+        const savedSpecialist = (playerData.specState[specialistShip.id] = playerData.specState[
+            specialistShip.id
+          ] || {
             tier: 1,
             comp: {},
           }),
-          c = message.c!;
-        if (!COMPONENTS[c]) return;
-        if (st.upT) return this.toast(session, 'She is in the drydock for her tier-up.');
-        if ((st.comp[c] || 0) >= st.tier)
+          component = message.c!;
+        if (!COMPONENTS[component]) return;
+        if (savedSpecialist.upT)
+          return this.toast(session, 'She is in the drydock for her tier-up.');
+        if ((savedSpecialist.comp[component] || 0) >= savedSpecialist.tier)
           return this.toast(
             session,
-            `${COMPONENTS[c].name} is already upgraded for Tier ${st.tier}. Tier her up to go further.`,
+            `${COMPONENTS[component].name} is already upgraded for Tier ${savedSpecialist.tier}. Tier her up to go further.`,
           );
-        const cost = COMP_COST(st.tier);
-        if ((playerData.parts[sp.id] || 0) < cost.parts || playerData.credits < cost.credits)
+        const cost = COMP_COST(savedSpecialist.tier);
+        if (
+          (playerData.parts[specialistShip.id] || 0) < cost.parts ||
+          playerData.credits < cost.credits
+        )
           return this.toast(
             session,
-            `That upgrade takes ${cost.parts} ${sp.name} parts and ${credits(cost.credits)} credits.`,
+            `That upgrade takes ${cost.parts} ${specialistShip.name} parts and ${credits(cost.credits)} credits.`,
           );
-        playerData.parts[sp.id] -= cost.parts;
+        playerData.parts[specialistShip.id] -= cost.parts;
         playerData.credits -= cost.credits;
-        st.comp[c] = (st.comp[c] || 0) + 1;
-        this.toast(session, `${sp.name} ${COMPONENTS[c].name} upgraded (level ${st.comp[c]}).`);
+        savedSpecialist.comp[component] = (savedSpecialist.comp[component] || 0) + 1;
+        this.toast(
+          session,
+          `${specialistShip.name} ${COMPONENTS[component].name} upgraded (level ${savedSpecialist.comp[component]}).`,
+        );
         break;
       }
       case 'tierup': {
-        const sp = SPEC[playerData.ship.hull];
-        if (!sp) return;
-        const st = playerData.specState[sp.id];
-        if (!st || st.upT) return;
-        if (st.tier >= TIER_MAX)
-          return this.toast(session, `The ${sp.name} is at Tier ${TIER_MAX}.`);
-        if (Object.keys(COMPONENTS).some((c) => (st.comp[c] || 0) < st.tier))
+        const specialistShip = SPEC[playerData.ship.hull];
+        if (!specialistShip) return;
+        const savedSpecialist = playerData.specState[specialistShip.id];
+        if (!savedSpecialist || savedSpecialist.upT) return;
+        if (savedSpecialist.tier >= TIER_MAX)
+          return this.toast(session, `The ${specialistShip.name} is at Tier ${TIER_MAX}.`);
+        if (
+          Object.keys(COMPONENTS).some(
+            (component) => (savedSpecialist.comp[component] || 0) < savedSpecialist.tier,
+          )
+        )
           return this.toast(session, 'Upgrade every component for this tier first.');
-        st.upT = Date.now() + TIER_UP_MIN[st.tier] * 60000;
+        savedSpecialist.upT = Date.now() + TIER_UP_MIN[savedSpecialist.tier] * 60000;
         this.toast(
           session,
-          `The ${sp.name} goes into the drydock for Tier ${st.tier + 1}: ${TIER_UP_MIN[st.tier]} minutes. She cannot fly until it is done.`,
+          `The ${specialistShip.name} goes into the drydock for Tier ${savedSpecialist.tier + 1}: ${TIER_UP_MIN[savedSpecialist.tier]} minutes. She cannot fly until it is done.`,
         );
         break;
       }
@@ -457,11 +497,11 @@ export const SpecialistOperations = {
    */
   specCheck(this: SpecialistsCapabilities, playerData: PlayerData) {
     this.specInit(playerData);
-    for (const [id, st] of Object.entries(playerData.specState))
-      if (st.upT && Date.now() >= st.upT) {
-        st.upT = null;
-        st.tier++;
-        this.log(playerData, `${SPEC[id].name} reached Tier ${st.tier}.`);
+    for (const [identifier, savedSpecialist] of Object.entries(playerData.specState))
+      if (savedSpecialist.upT && Date.now() >= savedSpecialist.upT) {
+        savedSpecialist.upT = null;
+        savedSpecialist.tier++;
+        this.log(playerData, `${SPEC[identifier].name} reached Tier ${savedSpecialist.tier}.`);
         return true;
       }
     return false;
@@ -472,7 +512,7 @@ export const SpecialistOperations = {
    * @returns {boolean} True if active ship is in drydock.
    */
   inDrydock(this: SpecialistsCapabilities, playerData: PlayerData) {
-    const st = playerData.specState && playerData.specState[playerData.ship.hull];
-    return !!(st && st.upT && Date.now() < st.upT);
+    const savedSpecialist = playerData.specState && playerData.specState[playerData.ship.hull];
+    return !!(savedSpecialist && savedSpecialist.upT && Date.now() < savedSpecialist.upT);
   },
 };

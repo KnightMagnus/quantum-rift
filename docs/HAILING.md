@@ -35,13 +35,13 @@ The rendezvous/escort marker tracks the accepted sender; the intel marker is a f
 Checks:
 
 ```sh
-node test/hailing.js
+node test/hailing.ts
 npm run test:features
 npm run typecheck
 # With a disposable server, never a live account/data directory:
-node test/hailing-network.js ws://localhost:18766/ws
+node test/hailing-network.ts ws://localhost:18766/ws
 # Optional separately installed Playwright:
-PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node test/hailing-browser.mjs http://localhost:18766
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node test/hailing-browser.ts http://localhost:18766
 ```
 
 The focused service test covers Unicode, sender ownership, blocks/privacy, rate limiting, coalescing, invalid and replayed actions, insufficient resources, actual-landing reward/replay/separation, rounded non-player intel, source exclusions, queue caps, expiry and active-ship resets. Two real WebSocket clients cover authenticated identity, reply, nonmodal delivery, flood/block behavior and forged player options. Browser checks cover incoming badge/focus, literal HTML-looking text, Unicode composer/reply, typing T safely, inbox key/Escape, desktop/sidebar resizing, continuous simulation and page errors.

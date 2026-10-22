@@ -49,7 +49,7 @@ interface HailRequest {
 type FlyingSession = Session & { ent: Entity };
 
 import { clampStanding } from '../shared/reputation.ts';
-import { SYS, FACTIONS } from '../shared/galaxy.ts';
+import { SYS as systemsById, FACTIONS } from '../shared/galaxy.ts';
 import { contextualHail } from './hail-dialogue.ts';
 
 export const HAIL_LIMITS = Object.freeze({
@@ -69,10 +69,17 @@ export function hailText(value: unknown) {
     ? text
     : null;
 }
-const flying = (s: Session | undefined): s is FlyingSession =>
-  !!(s?.data && s.ent && !s.ent.dead && !s.ent.disabled && s.ent.state === 'fly');
-const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
-const silent = (e: Entity) => ['umbral', 'eclipse', 'swarm'].includes(e.faction);
+const flying = (session: Session | undefined): session is FlyingSession =>
+  !!(
+    session?.data &&
+    session.ent &&
+    !session.ent.dead &&
+    !session.ent.disabled &&
+    session.ent.state === 'fly'
+  );
+const distance = (point: Point, point2: Point) =>
+  Math.hypot(point.x - point2.x, point.y - point2.y);
+const silent = (entity: Entity) => ['umbral', 'eclipse', 'swarm'].includes(entity.faction);
 
 /** Ephemeral, server-owned calls. Persist only communication preferences and real accepted job rewards. */
 export class HailService {
@@ -83,18 +90,18 @@ export class HailService {
   declare states: Map<number, HailState>;
   declare encounters: Map<string, unknown>;
 
-  constructor(game: Game, now = () => Date.now(), random = Math.random) {
+  constructor(game: Game, currentTime = () => Date.now(), random = Math.random) {
     this.game = game;
-    this.now = now;
+    this.now = currentTime;
     this.random = random;
     this.states = new Map();
     this.serial = 0;
     this.encounters = new Map();
   }
-  state(s: Session): HailState {
-    let st = this.states.get(s.id);
-    if (!st) {
-      st = {
+  state(session: Session): HailState {
+    let hailState = this.states.get(session.id);
+    if (!hailState) {
+      hailState = {
         space: null,
         ent: null,
         queue: [],
@@ -105,110 +112,118 @@ export class HailService {
         sent: 0,
         escort: null,
       };
-      this.states.set(s.id, st);
+      this.states.set(session.id, hailState);
     }
     // Hails never own system activation. The lazy spaces proxy would wake a
     // docked player's otherwise sleeping system on every communications tick.
-    const sp = flying(s) ? this.game.live[s.data.sys] || null : null;
-    if (st.space !== sp || st.ent !== s.ent) {
-      this.cancelEscort(s, st);
-      st.space = sp;
-      st.ent = s.ent;
-      st.queue = [];
-      st.history = [];
-      st.next = this.now() + 180000 + this.random() * 180000;
-      s.hailLedger = null;
-      this.push(s, st);
+    const space2 = flying(session) ? this.game.live[session.data.sys] || null : null;
+    if (hailState.space !== space2 || hailState.ent !== session.ent) {
+      this.cancelEscort(session, hailState);
+      hailState.space = space2;
+      hailState.ent = session.ent;
+      hailState.queue = [];
+      hailState.history = [];
+      hailState.next = this.now() + 180000 + this.random() * 180000;
+      session.hailLedger = null;
+      this.push(session, hailState);
     }
-    return st;
+    return hailState;
   }
-  push(s: Session, st = this.states.get(s.id)) {
-    if (!st || !s.data) return;
-    this.game.send(s, {
+  push(session: Session, hailState = this.states.get(session.id)) {
+    if (!hailState || !session.data) return;
+    this.game.send(session, {
       t: 'hailinbox',
-      allow: s.data.playerHails !== false,
-      entries: [...st.queue, ...st.history].map((q) => ({
-        key: q.key,
-        who: q.who,
-        kind: q.kind,
-        unread: !q.read,
-        expires: q.expires,
-        archived: !!q.archived,
+      allow: session.data.playerHails !== false,
+      entries: [...hailState.queue, ...hailState.history].map((hailEntry) => ({
+        key: hailEntry.key,
+        who: hailEntry.who,
+        kind: hailEntry.kind,
+        unread: !hailEntry.read,
+        expires: hailEntry.expires,
+        archived: !!hailEntry.archived,
       })),
     });
   }
-  archive(st: HailState, q: HailEntry) {
-    st.queue = st.queue.filter((x) => x !== q);
-    if (q.kind === 'player') return; // Player privacy/blocks retain their original removal semantics.
-    q.archived = true;
-    st.history = [q, ...st.history.filter((x) => x !== q)].slice(0, HAIL_LIMITS.history);
+  archive(hailState: HailState, hailEntry: HailEntry) {
+    hailState.queue = hailState.queue.filter((hailEntry2) => hailEntry2 !== hailEntry);
+    if (hailEntry.kind === 'player') return; // Player privacy/blocks retain their original removal semantics.
+    hailEntry.archived = true;
+    hailState.history = [
+      hailEntry,
+      ...hailState.history.filter((hailEntry2) => hailEntry2 !== hailEntry),
+    ].slice(0, HAIL_LIMITS.history);
   }
   // Solo pause stops encounter time as well as the simulation. Opening a menu
   // must not consume a caller's remaining response window.
-  resume(dt: number) {
+  resume(deltaTime: number) {
     const spaces = new Set<Space>();
-    for (const st of this.states.values()) {
-      st.next += dt;
-      for (const q of st.queue) {
-        q.expires += dt;
-        if (q.opened) q.opened += dt;
+    for (const hailState of this.states.values()) {
+      hailState.next += deltaTime;
+      for (const hailEntry of hailState.queue) {
+        hailEntry.expires += deltaTime;
+        if (hailEntry.opened) hailEntry.opened += deltaTime;
       }
-      if (st.escort) st.escort.expires += dt;
-      if (st.space) spaces.add(st.space);
+      if (hailState.escort) hailState.escort.expires += deltaTime;
+      if (hailState.space) spaces.add(hailState.space);
     }
-    for (const sp of spaces)
-      for (const e of sp.ships.values()) {
-        if (e.hailOfferUntil) e.hailOfferUntil += dt;
-        if (e.hailEscort) e.hailEscort.expires += dt;
+    for (const space of spaces)
+      for (const entity of space.ships.values()) {
+        if (entity.hailOfferUntil) entity.hailOfferUntil += deltaTime;
+        if (entity.hailEscort) entity.hailEscort.expires += deltaTime;
       }
   }
-  source(s: Session, q: HailEntry): Entity | null {
-    if (!flying(s) || s.data.sys !== q.sys) return null;
-    const sp = this.game.live[q.sys],
-      e = sp?.ships.get(q.source);
-    if (!e || e.dead) return null;
-    if (q.kind === 'player') {
-      const other = e.player?.s;
-      return other && other.ent === e && this.canContact(other, s) ? e : null;
+  source(session: Session, hailEntry: HailEntry): Entity | null {
+    if (!flying(session) || session.data.sys !== hailEntry.sys) return null;
+    const space = this.game.live[hailEntry.sys],
+      entity = space?.ships.get(hailEntry.source);
+    if (!entity || entity.dead) return null;
+    if (hailEntry.kind === 'player') {
+      const other = entity.player?.s;
+      return other && other.ent === entity && this.canContact(other, session) ? entity : null;
     }
-    return (!e.player &&
-      !e.owner &&
-      (q.reason === 'distress' || !e.disabled) &&
-      !silent(e) &&
-      !sp.isHostile(e, s.ent)) ||
-      (e && q.reason === 'security' && !e.dead && !e.disabled)
-      ? e
+    return (!entity.player &&
+      !entity.owner &&
+      (hailEntry.reason === 'distress' || !entity.disabled) &&
+      !silent(entity) &&
+      !space.isHostile(entity, session.ent)) ||
+      (entity && hailEntry.reason === 'security' && !entity.dead && !entity.disabled)
+      ? entity
       : null;
   }
-  canContact(from: Session | undefined, to: Session | undefined): to is FlyingSession {
+  canContact(from: Session | undefined, session: Session | undefined): session is FlyingSession {
     if (
       !from ||
-      !to ||
+      !session ||
       this.game.sessions.get(from?.id) !== from ||
-      this.game.sessions.get(to?.id) !== to ||
+      this.game.sessions.get(session?.id) !== session ||
       !flying(from) ||
-      !flying(to) ||
-      from === to ||
-      from.data.sys !== to.data.sys ||
-      to.data.playerHails === false
+      !flying(session) ||
+      from === session ||
+      from.data.sys !== session.data.sys ||
+      session.data.playerHails === false
     )
       return false;
-    const c = this.game.features.coop;
-    if (c.blocked(from.data, to.data.name) || c.blocked(to.data, from.data.name)) return false;
+    const coop2 = this.game.features.coop;
+    if (coop2.blocked(from.data, session.data.name) || coop2.blocked(session.data, from.data.name))
+      return false;
     // Existing unsolicited-DM privacy remains authoritative for this new channel too.
-    const friend = (to.data.friends || []).some(
-      (n) => n.toLowerCase() === from.data.name.toLowerCase(),
+    const friend = (session.data.friends || []).some(
+      (count) => count.toLowerCase() === from.data.name.toLowerCase(),
     );
-    const a = c.armadaOf(to.data),
-      b = c.armadaOf(from.data);
-    return !!(to.data.dmAll || friend || (a && b && a.id === b.id));
+    const armadaState = coop2.armadaOf(session.data),
+      armadaState2 = coop2.armadaOf(from.data);
+    return !!(
+      session.data.dmAll ||
+      friend ||
+      (armadaState && armadaState2 && armadaState.id === armadaState2.id)
+    );
   }
-  player(s: Session, target: Entity | undefined, text?: unknown) {
+  player(session: Session, target: Entity | undefined, text?: unknown) {
     const other = target?.player?.s;
-    if (!this.canContact(s, other) || other.ent !== target)
-      return this.game.toast(s, 'That captain is not accepting hails here.');
+    if (!this.canContact(session, other) || other.ent !== target)
+      return this.game.toast(session, 'That captain is not accepting hails here.');
     if (text === undefined)
-      return this.game.send(s, {
+      return this.game.send(session, {
         t: 'hail',
         player: target!.id,
         id: target!.id,
@@ -218,40 +233,45 @@ export class HailService {
         opts: [],
       });
     const value = hailText(text);
-    if (!value) return this.game.toast(s, 'Hails must contain 1–100 characters.');
-    const st = this.state(s),
-      now = this.now();
+    if (!value) return this.game.toast(session, 'Hails must contain 1–100 characters.');
+    const hailState = this.state(session),
+      currentTime = this.now();
     if (
-      now - st.sent < HAIL_LIMITS.sender ||
-      now - (st.pairs.get(other.id) || 0) < HAIL_LIMITS.pair
+      currentTime - hailState.sent < HAIL_LIMITS.sender ||
+      currentTime - (hailState.pairs.get(other.id) || 0) < HAIL_LIMITS.pair
     )
-      return this.game.toast(s, 'Give that captain a moment before hailing again.');
+      return this.game.toast(session, 'Give that captain a moment before hailing again.');
     const inbox = this.state(other);
-    let q = inbox.queue.find((q) => q.kind === 'player' && q.source === s.ent!.id);
-    if (!q && inbox.queue.filter((q) => q.kind === 'player').length >= HAIL_LIMITS.player)
-      return this.game.toast(s, 'That captain’s hail inbox is full.');
-    st.sent = now;
-    st.pairs.set(other.id, now);
-    if (!q) {
-      q = {
+    let hailEntry = inbox.queue.find(
+      (hailEntry) => hailEntry.kind === 'player' && hailEntry.source === session.ent!.id,
+    );
+    if (
+      !hailEntry &&
+      inbox.queue.filter((hailEntry) => hailEntry.kind === 'player').length >= HAIL_LIMITS.player
+    )
+      return this.game.toast(session, 'That captain’s hail inbox is full.');
+    hailState.sent = currentTime;
+    hailState.pairs.set(other.id, currentTime);
+    if (!hailEntry) {
+      hailEntry = {
         key: `h${++this.serial}`,
         kind: 'player',
-        source: s.ent!.id,
-        sys: s.data.sys,
-        who: s.data.name,
+        source: session.ent!.id,
+        sys: session.data.sys,
+        who: session.data.name,
         text: value,
-        expires: now + HAIL_LIMITS.expires,
+        expires: currentTime + HAIL_LIMITS.expires,
       };
-      inbox.queue.push(q);
+      inbox.queue.push(hailEntry);
     }
-    Object.assign(q, {
-      who: s.data.name,
+    Object.assign(hailEntry, {
+      who: session.data.name,
       text: value,
       read: false,
-      expires: now + HAIL_LIMITS.expires,
+      expires: currentTime + HAIL_LIMITS.expires,
     });
     this.push(other, inbox);
-    this.game.send(s, {
+    this.game.send(session, {
       t: 'hail',
       player: target!.id,
       id: target!.id,
@@ -260,341 +280,405 @@ export class HailService {
       opts: [],
     });
   }
-  request(s: Session, m: HailRequest) {
-    const st = this.state(s),
-      now = this.now();
-    if (m.op === 'prefs') {
-      s.data.playerHails = m.allow === true;
+  request(session: Session, hailRequest: HailRequest) {
+    const hailState = this.state(session),
+      currentTime = this.now();
+    if (hailRequest.op === 'prefs') {
+      session.data.playerHails = hailRequest.allow === true;
       this.game.db.touch();
-      return this.push(s, st);
+      return this.push(session, hailState);
     }
-    if (m.op === 'list') return this.push(s, st);
-    if (m.op === 'send')
-      return this.player(s, this.game.live[s.data.sys]?.ships.get(Number(m.id)), m.text);
-    const q = [...st.queue, ...st.history].find((q) => q.key === m.key);
-    if (!q) return this.game.toast(s, 'That hail has ended.');
-    if (m.op === 'dismiss') {
-      st.queue = st.queue.filter((x) => x !== q);
-      st.history = st.history.filter((x) => x !== q);
-      return this.push(s, st);
+    if (hailRequest.op === 'list') return this.push(session, hailState);
+    if (hailRequest.op === 'send')
+      return this.player(
+        session,
+        this.game.live[session.data.sys]?.ships.get(Number(hailRequest.id)),
+        hailRequest.text,
+      );
+    const hailEntry = [...hailState.queue, ...hailState.history].find(
+      (hailEntry) => hailEntry.key === hailRequest.key,
+    );
+    if (!hailEntry) return this.game.toast(session, 'That hail has ended.');
+    if (hailRequest.op === 'dismiss') {
+      hailState.queue = hailState.queue.filter((hailEntry2) => hailEntry2 !== hailEntry);
+      hailState.history = hailState.history.filter((hailEntry2) => hailEntry2 !== hailEntry);
+      return this.push(session, hailState);
     }
-    const e = this.source(s, q);
-    if (q.archived || !e || q.expires <= now) {
-      this.archive(st, q);
-      if (q.kind === 'player') {
-        this.push(s, st);
-        return this.game.toast(s, 'That hail has ended.');
+    const entity = this.source(session, hailEntry);
+    if (hailEntry.archived || !entity || hailEntry.expires <= currentTime) {
+      this.archive(hailState, hailEntry);
+      if (hailEntry.kind === 'player') {
+        this.push(session, hailState);
+        return this.game.toast(session, 'That hail has ended.');
       }
-      if (m.op === 'open') q.read = true;
-      this.push(s, st);
-      return this.game.send(s, {
+      if (hailRequest.op === 'open') hailEntry.read = true;
+      this.push(session, hailState);
+      return this.game.send(session, {
         t: 'hail',
-        who: q.who,
-        text: `${q.text}\n\n[Archived transmission: this hail has expired or the sender is no longer available. No actions remain available.]`,
+        who: hailEntry.who,
+        text: `${hailEntry.text}\n\n[Archived transmission: this hail has expired or the sender is no longer available. No actions remain available.]`,
         opts: [],
       });
     }
-    if (m.op === 'open') {
-      q.read = true;
-      q.opened = now;
-      q.expires = Math.max(q.expires, now + 30000);
-      this.push(s, st);
-      return this.game.send(s, {
+    if (hailRequest.op === 'open') {
+      hailEntry.read = true;
+      hailEntry.opened = currentTime;
+      hailEntry.expires = Math.max(hailEntry.expires, currentTime + 30000);
+      this.push(session, hailState);
+      return this.game.send(session, {
         t: 'hail',
-        key: q.key,
-        player: q.kind === 'player' ? e.id : undefined,
-        who: q.who,
-        sub: q.kind === 'player' ? 'Private hail' : q.reason,
-        text: q.text,
-        opts: q.opts || [],
+        key: hailEntry.key,
+        player: hailEntry.kind === 'player' ? entity.id : undefined,
+        who: hailEntry.who,
+        sub: hailEntry.kind === 'player' ? 'Private hail' : hailEntry.reason,
+        text: hailEntry.text,
+        opts: hailEntry.opts || [],
       });
     }
-    if (m.op !== 'answer' || !q.opened || !(q.opts || []).some((o) => o.k === m.k)) return;
-    if (q.kind !== 'npc') return;
-    return this.resolve(s, st, q, e, m.k as string);
+    if (
+      hailRequest.op !== 'answer' ||
+      !hailEntry.opened ||
+      !(hailEntry.opts || []).some((hailOption) => hailOption.k === hailRequest.k)
+    )
+      return;
+    if (hailEntry.kind !== 'npc') return;
+    return this.resolve(session, hailState, hailEntry, entity, hailRequest.k as string);
   }
   enqueue(
-    s: Session,
-    e: Entity,
+    session: Session,
+    entity: Entity,
     reason: string,
     text: string,
-    opts: HailOption[] = [],
+    hailOptions: HailOption[] = [],
     details: HailDetails = {},
   ) {
-    const st = this.state(s),
-      now = this.now();
+    const hailState = this.state(session),
+      currentTime = this.now();
     if (
-      st.queue.filter((q) => q.kind === 'npc').length >= HAIL_LIMITS.npc ||
-      st.queue.some((q) => q.source === e.id)
+      hailState.queue.filter((hailEntry) => hailEntry.kind === 'npc').length >= HAIL_LIMITS.npc ||
+      hailState.queue.some((hailEntry) => hailEntry.source === entity.id)
     )
       return false;
-    if (e.rival && now - (st.named.get(e.rival) || 0) < HAIL_LIMITS.named) return false;
-    if (e.rival) st.named.set(e.rival, now);
-    st.queue.push({
+    if (entity.rival && currentTime - (hailState.named.get(entity.rival) || 0) < HAIL_LIMITS.named)
+      return false;
+    if (entity.rival) hailState.named.set(entity.rival, currentTime);
+    hailState.queue.push({
       key: `h${++this.serial}`,
       kind: 'npc',
-      source: e.id,
-      who: e.name || `${this.game.A.ships[e.hull].name} · transponder ${e.id}`,
-      sys: s.data.sys,
+      source: entity.id,
+      who: entity.name || `${this.game.A.ships[entity.hull].name} · transponder ${entity.id}`,
+      sys: session.data.sys,
       reason,
       text,
-      opts,
-      expires: now + HAIL_LIMITS.expires,
+      opts: hailOptions,
+      expires: currentTime + HAIL_LIMITS.expires,
       ...details,
     });
-    this.push(s, st);
+    this.push(session, hailState);
     return true;
   }
-  offer(s: Session, e: Entity, reason: string) {
-    const sp = this.game.live[s.data.sys],
-      now = this.now();
-    if (!sp || !flying(s)) return false;
+  offer(session: Session, entity: Entity, reason: string) {
+    const space = this.game.live[session.data.sys],
+      currentTime = this.now();
+    if (!space || !flying(session)) return false;
     if (
-      e.hailOfferUntil! > now ||
-      e.hailResolved ||
-      e.owner ||
-      e.player ||
-      e.mission ||
-      e.convoyOf ||
-      silent(e)
+      entity.hailOfferUntil! > currentTime ||
+      entity.hailResolved ||
+      entity.owner ||
+      entity.player ||
+      entity.mission ||
+      entity.convoyOf ||
+      silent(entity)
     )
       return false;
-    const hostile = sp.isHostile(e, s.ent);
-    const opts: HailOption[] = [],
+    const hostile = space.isHostile(entity, session.ent);
+    const hailOptions: HailOption[] = [],
       details: HailDetails = {};
     let text;
     if (reason === 'security') {
-      if (e.ai !== 'patrol' || FACTIONS[e.faction]?.pirate || (s.data.rep[e.faction] || 0) > -20)
+      if (
+        entity.ai !== 'patrol' ||
+        FACTIONS[entity.faction]?.pirate ||
+        (session.data.rep[entity.faction] || 0) > -20
+      )
         return false;
-      text = `${e.name || 'Local security'}: your standing with ${FACTIONS[e.faction]?.name || e.faction} is poor. Leave ${SYS[sp.id].name}. This is a warning, not a new countdown.`;
+      text = `${entity.name || 'Local security'}: your standing with ${FACTIONS[entity.faction]?.name || entity.faction} is poor. Leave ${systemsById[space.id].name}. This is a warning, not a new countdown.`;
     } else {
       // Space.ai leaves the last target attached when a ship becomes disabled.
       // That stale combat pointer must not suppress a friendly survivor's distress.
-      if (hostile || (e.target && !(reason === 'distress' && e.disabled))) return false;
+      if (hostile || (entity.target && !(reason === 'distress' && entity.disabled))) return false;
       if (reason === 'distress') {
-        if (e.armor >= e.st.armor * 0.5 || e.rescueOf || e.boss || e.dread) return false;
+        if (entity.armor >= entity.st.armor * 0.5 || entity.rescueOf || entity.boss || entity.dread)
+          return false;
         text =
           'Our hull is badly damaged. Can you rendezvous and help? Accept marks our transponder; emergency supplies cost 250 cr when you arrive within 180 units.';
-        opts.push({ k: 'rendezvous', label: 'Mark rescue rendezvous (no charge yet)' });
-      } else if (e.disabled) return false;
+        hailOptions.push({ k: 'rendezvous', label: 'Mark rescue rendezvous (no charge yet)' });
+      } else if (entity.disabled) return false;
       else if (reason === 'fuel') {
-        if (e.ai !== 'trade' || e.fuel >= 100 || e.hailFuelHelp) return false;
-        text = `Our tanks read ${Math.floor(e.fuel)} fuel. Could you spare 50 units? We can only accept this transfer once.`;
-        opts.push({ k: 'donateFuel', label: 'Transfer 50 fuel (within 500 units)' });
+        if (entity.ai !== 'trade' || entity.fuel >= 100 || entity.hailFuelHelp) return false;
+        text = `Our tanks read ${Math.floor(entity.fuel)} fuel. Could you spare 50 units? We can only accept this transfer once.`;
+        hailOptions.push({ k: 'donateFuel', label: 'Transfer 50 fuel (within 500 units)' });
       } else if (reason === 'escort') {
         if (
-          e.ai !== 'trade' ||
-          !e.dest ||
-          e.dest.out ||
-          !e.dest.id ||
-          stEscort(this, s) ||
-          e.hailEscort
+          entity.ai !== 'trade' ||
+          !entity.dest ||
+          entity.dest.out ||
+          !entity.dest.id ||
+          stEscort(this, session) ||
+          entity.hailEscort
         )
           return false;
-        text = `We are making for ${e.dest.name}. Stay within 3,500 units until we land for 750 cr. Leaving this system, docking, separation or losing us fails the job. Five-minute limit; no raiders are spawned.`;
-        opts.push({ k: 'escort', label: `Escort to ${e.dest.name} (750 cr)` });
-        details.dest = { ...e.dest, id: e.dest.id };
+        text = `We are making for ${entity.dest.name}. Stay within 3,500 units until we land for 750 cr. Leaving this system, docking, separation or losing us fails the job. Five-minute limit; no raiders are spawned.`;
+        hailOptions.push({ k: 'escort', label: `Escort to ${entity.dest.name} (750 cr)` });
+        details.dest = { ...entity.dest, id: entity.dest.id };
       } else if (reason === 'intel') {
-        const threat = [...sp.ships.values()].find(
-          (x) =>
-            !x.player &&
-            !x.owner &&
-            !x.mission &&
-            !x.dead &&
-            !x.disabled &&
-            sp.isHostile(x, s.ent) &&
-            distance(x, e) < 1800,
+        const threat = [...space.ships.values()].find(
+          (entity2) =>
+            !entity2.player &&
+            !entity2.owner &&
+            !entity2.mission &&
+            !entity2.dead &&
+            !entity2.disabled &&
+            space.isHostile(entity2, session.ent) &&
+            distance(entity2, entity) < 1800,
         );
         if (!threat) return false;
         text =
           'We have a hostile NPC contact nearby. I can share a rough, position fix from this transmission—not live tracking.';
-        opts.push({ k: 'intel', label: 'Receive approximate contact fix' });
+        hailOptions.push({ k: 'intel', label: 'Receive approximate contact fix' });
         details.intel = {
           x: Math.round(threat.x / 250) * 250,
           y: Math.round(threat.y / 250) * 250,
         };
       } else if (reason === 'greeting') {
-        if (!e.rival || this.game.features.rivals.relOf(s.data, e.rival) < 30) return false;
-        text = contextualHail(s, e, sp, this.game.features.rivals.relOf(s.data, e.rival));
+        if (!entity.rival || this.game.features.rivals.relOf(session.data, entity.rival) < 30)
+          return false;
+        text = contextualHail(
+          session,
+          entity,
+          space,
+          this.game.features.rivals.relOf(session.data, entity.rival),
+        );
       } else if (reason === 'beg') {
         // A concrete, one-time simulated hardship; never claim this is tracked NPC wealth.
-        if (e.rival || e.ai !== 'trade') return false;
-        e.hailHardship = { requested: 100, resolved: false };
+        if (entity.rival || entity.ai !== 'trade') return false;
+        entity.hailHardship = { requested: 100, resolved: false };
         text =
           'A small favor, Captain? I am asking for a one-time gift of 100 credits. No reward, no obligation.';
-        opts.push({ k: 'gift', label: 'Give 100 cr (within 500 units)' });
+        hailOptions.push({ k: 'gift', label: 'Give 100 cr (within 500 units)' });
       } else return false;
     }
-    if (!this.enqueue(s, e, reason, text, opts, details)) return false;
-    e.hailOfferUntil = now + HAIL_LIMITS.expires;
+    if (!this.enqueue(session, entity, reason, text, hailOptions, details)) return false;
+    entity.hailOfferUntil = currentTime + HAIL_LIMITS.expires;
     return true;
   }
-  resolve(s: Session, st: HailState, q: HailEntry, e: Entity, action: string) {
-    const g = this.game,
-      me = s.ent!,
-      now = this.now();
+  resolve(
+    session: Session,
+    hailState: HailState,
+    hailEntry: HailEntry,
+    entity: Entity,
+    action: string,
+  ) {
+    const game2 = this.game,
+      entity2 = session.ent!,
+      currentTime = this.now();
     const finish = (text: string) => {
-      st.queue = st.queue.filter((x) => x !== q);
-      this.push(s, st);
-      g.send(s, { t: 'hail', who: q.who, text, opts: [] });
+      hailState.queue = hailState.queue.filter((hailEntry2) => hailEntry2 !== hailEntry);
+      this.push(session, hailState);
+      game2.send(session, { t: 'hail', who: hailEntry.who, text, opts: [] });
     };
-    if (e.hailResolved && action !== 'repair')
+    if (entity.hailResolved && action !== 'repair')
       return finish('Another captain already helped us. Thank you.');
     if (action === 'rendezvous') {
-      q.opts = [{ k: 'repair', label: 'Supply emergency repairs (250 cr, within 180 units)' }];
-      q.text =
+      hailEntry.opts = [
+        { k: 'repair', label: 'Supply emergency repairs (250 cr, within 180 units)' },
+      ];
+      hailEntry.text =
         'Rendezvous marked. Approach within 180 units, then reopen this hail to supply repairs.';
-      q.expires = now + HAIL_LIMITS.expires;
-      g.send(s, {
+      hailEntry.expires = currentTime + HAIL_LIMITS.expires;
+      game2.send(session, {
         t: 'hailmark',
-        id: e.id,
-        x: e.x,
-        y: e.y,
+        id: entity.id,
+        x: entity.x,
+        y: entity.y,
         label: 'Rescue rendezvous',
-        until: q.expires,
+        until: hailEntry.expires,
       });
-      return g.send(s, { t: 'hail', key: q.key, who: q.who, text: q.text, opts: q.opts });
+      return game2.send(session, {
+        t: 'hail',
+        key: hailEntry.key,
+        who: hailEntry.who,
+        text: hailEntry.text,
+        opts: hailEntry.opts,
+      });
     }
     if (action === 'intel') {
-      g.send(s, {
+      game2.send(session, {
         t: 'hailmark',
-        ...q.intel,
+        ...hailEntry.intel,
         label: 'Last reported hostile contact',
-        until: now + 60000,
+        until: currentTime + 60000,
       });
       return finish(
-        `Approximate contact: ${q.intel!.x}, ${q.intel!.y}. The fix expires in one minute and is not live tracking.`,
+        `Approximate contact: ${hailEntry.intel!.x}, ${hailEntry.intel!.y}. The fix expires in one minute and is not live tracking.`,
       );
     }
     if (action === 'escort') {
       if (
-        st.escort ||
-        e.hailEscort ||
-        e.disabled ||
-        e.target ||
-        !e.dest ||
-        e.dest.id !== q.dest!.id ||
-        distance(me, e) > 3500
+        hailState.escort ||
+        entity.hailEscort ||
+        entity.disabled ||
+        entity.target ||
+        !entity.dest ||
+        entity.dest.id !== hailEntry.dest!.id ||
+        distance(entity2, entity) > 3500
       )
         return finish('That escort is no longer available.');
-      e.hailEscort = { owner: s.id, expires: now + 300000, dest: q.dest!.id };
-      e.life = Math.max(e.life, 330);
-      st.escort = { source: e.id, sys: q.sys, expires: now + 300000 };
-      g.send(s, {
+      entity.hailEscort = {
+        owner: session.id,
+        expires: currentTime + 300000,
+        dest: hailEntry.dest!.id,
+      };
+      entity.life = Math.max(entity.life, 330);
+      hailState.escort = { source: entity.id, sys: hailEntry.sys, expires: currentTime + 300000 };
+      game2.send(session, {
         t: 'hailmark',
-        id: e.id,
-        x: e.x,
-        y: e.y,
-        label: `Escort to ${q.dest!.name}`,
-        until: now + 300000,
+        id: entity.id,
+        x: entity.x,
+        y: entity.y,
+        label: `Escort to ${hailEntry.dest!.name}`,
+        until: currentTime + 300000,
       });
       return finish(
-        `Escort accepted. Remain within 3,500 units until ${q.who} actually lands at ${q.dest!.name}.`,
+        `Escort accepted. Remain within 3,500 units until ${hailEntry.who} actually lands at ${hailEntry.dest!.name}.`,
       );
     }
     const range = action === 'repair' ? 180 : 500;
-    if (distance(me, e) > range) return g.toast(s, `Approach within ${range} units first.`);
+    if (distance(entity2, entity) > range)
+      return game2.toast(session, `Approach within ${range} units first.`);
     if (action === 'donateFuel') {
-      if (e.hailFuelHelp || e.fuel >= 100 || e.st.fuel - e.fuel < 50 || me.fuel < 50)
-        return g.toast(s, 'The 50-unit transfer is no longer possible.');
-      me.fuel -= 50;
-      s.data.fuel = me.fuel;
-      e.fuel += 50;
-      e.hailFuelHelp = true;
+      if (
+        entity.hailFuelHelp ||
+        entity.fuel >= 100 ||
+        entity.st.fuel - entity.fuel < 50 ||
+        entity2.fuel < 50
+      )
+        return game2.toast(session, 'The 50-unit transfer is no longer possible.');
+      entity2.fuel -= 50;
+      session.data.fuel = entity2.fuel;
+      entity.fuel += 50;
+      entity.hailFuelHelp = true;
     } else if (action === 'gift') {
-      if (!e.hailHardship || e.hailHardship.resolved || s.data.credits < 100)
-        return g.toast(s, 'The donation is no longer possible or you lack 100 cr.');
-      s.data.credits -= 100;
-      e.hailHardship.resolved = true;
+      if (!entity.hailHardship || entity.hailHardship.resolved || session.data.credits < 100)
+        return game2.toast(session, 'The donation is no longer possible or you lack 100 cr.');
+      session.data.credits -= 100;
+      entity.hailHardship.resolved = true;
     } else if (action === 'repair') {
-      if (e.hailRepaired || e.armor >= e.st.armor * 0.5 || s.data.credits < 250)
-        return g.toast(s, 'Repairs are no longer needed or you lack 250 cr.');
-      s.data.credits -= 250;
-      e.armor = Math.max(e.armor, e.st.armor * 0.55);
-      e.disabled = false;
-      e.disT = 0;
-      e.hailRepaired = true;
-      if (e.rival) g.features.rivals.rivalRel(s, e.rival, 6, 'you supplied emergency repairs');
-      else s.data.rep[e.faction] = clampStanding((s.data.rep[e.faction] || 0) + 1);
+      if (
+        entity.hailRepaired ||
+        entity.armor >= entity.st.armor * 0.5 ||
+        session.data.credits < 250
+      )
+        return game2.toast(session, 'Repairs are no longer needed or you lack 250 cr.');
+      session.data.credits -= 250;
+      entity.armor = Math.max(entity.armor, entity.st.armor * 0.55);
+      entity.disabled = false;
+      entity.disT = 0;
+      entity.hailRepaired = true;
+      if (entity.rival)
+        game2.features.rivals.rivalRel(session, entity.rival, 6, 'you supplied emergency repairs');
+      else
+        session.data.rep[entity.faction] = clampStanding(
+          (session.data.rep[entity.faction] || 0) + 1,
+        );
     } else return;
-    e.hailResolved = true;
-    g.db.touch();
-    g.you(s);
+    entity.hailResolved = true;
+    game2.db.touch();
+    game2.you(session);
     return finish('Assistance received. Thank you, Captain.');
   }
-  cancelEscort(s: Session | Pick<Session, 'id'>, st: HailState | undefined) {
-    if (!st?.escort) return;
-    const sp = this.game.live[st.escort.sys],
-      e = sp?.ships.get(st.escort.source);
-    if (e?.hailEscort?.owner === s.id) delete e.hailEscort;
-    st.escort = null;
-    if ('data' in s && s.data) {
-      this.game.toast(s, 'Spontaneous escort ended without reward.');
-      this.game.send(s, { t: 'hailmark', until: 0 });
+  cancelEscort(state: Session | Pick<Session, 'id'>, hailState: HailState | undefined) {
+    if (!hailState?.escort) return;
+    const space = this.game.live[hailState.escort.sys],
+      entity = space?.ships.get(hailState.escort.source);
+    if (entity?.hailEscort?.owner === state.id) delete entity.hailEscort;
+    hailState.escort = null;
+    if ('data' in state && state.data) {
+      this.game.toast(state, 'Spontaneous escort ended without reward.');
+      this.game.send(state, { t: 'hailmark', until: 0 });
     }
   }
-  landed(e: Entity, sp: Space) {
-    const job = e.hailEscort;
-    if (!job) return;
-    delete e.hailEscort;
-    const s = this.game.sessions.get(job.owner),
-      st = s && this.states.get(s.id);
+  landed(entity: Entity, space: Space) {
+    const hailEscort2 = entity.hailEscort;
+    if (!hailEscort2) return;
+    delete entity.hailEscort;
+    const session = this.game.sessions.get(hailEscort2.owner),
+      hailState = session && this.states.get(session.id);
     if (
-      !st?.escort ||
-      !flying(s) ||
-      s.data.sys !== sp.id ||
-      this.now() > job.expires ||
-      distance(s.ent, e) > 3500 ||
-      e.dest?.id !== job.dest
+      !hailState?.escort ||
+      !flying(session) ||
+      session.data.sys !== space.id ||
+      this.now() > hailEscort2.expires ||
+      distance(session.ent, entity) > 3500 ||
+      entity.dest?.id !== hailEscort2.dest
     ) {
-      if (st) this.cancelEscort(s!, st);
+      if (hailState) this.cancelEscort(session!, hailState);
       return;
     }
-    st.escort = null;
-    e.hailResolved = true;
-    s.data.credits += 750;
+    hailState.escort = null;
+    entity.hailResolved = true;
+    session.data.credits += 750;
     this.game.db.touch();
-    this.game.you(s);
-    this.game.toast(s, 'Spontaneous escort completed: 750 cr.');
-    this.game.send(s, { t: 'hailmark', until: 0 });
+    this.game.you(session);
+    this.game.toast(session, 'Spontaneous escort completed: 750 cr.');
+    this.game.send(session, { t: 'hailmark', until: 0 });
   }
   tick() {
-    const g = this.game,
-      now = this.now();
-    for (const [id, st] of this.states)
-      if (!g.sessions.has(id)) {
-        this.cancelEscort({ id }, st);
-        this.states.delete(id);
+    const game2 = this.game,
+      currentTime = this.now();
+    for (const [identifier, hailState] of this.states)
+      if (!game2.sessions.has(identifier)) {
+        this.cancelEscort({ id: identifier }, hailState);
+        this.states.delete(identifier);
       }
-    for (const s of g.sessions.values()) {
-      if (!s.data) continue;
-      const st = this.state(s),
-        sp = st.space;
-      const before = st.queue.length;
+    for (const session of game2.sessions.values()) {
+      if (!session.data) continue;
+      const hailState = this.state(session),
+        space2 = hailState.space;
+      const before = hailState.queue.length;
       // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
-      for (const q of [...st.queue])
-        if (q.expires <= now || !this.source(s, q)) this.archive(st, q);
-      if (before !== st.queue.length) this.push(s, st);
-      if (st.escort) {
-        const e = sp?.ships.get(st.escort.source);
-        if (!flying(s) || !e || e.dead || now > st.escort.expires || distance(s.ent, e) > 3500)
-          this.cancelEscort(s, st);
+      for (const hailEntry of [...hailState.queue])
+        if (hailEntry.expires <= currentTime || !this.source(session, hailEntry))
+          this.archive(hailState, hailEntry);
+      if (before !== hailState.queue.length) this.push(session, hailState);
+      if (hailState.escort) {
+        const entity = space2?.ships.get(hailState.escort.source);
+        if (
+          !flying(session) ||
+          !entity ||
+          entity.dead ||
+          currentTime > hailState.escort.expires ||
+          distance(session.ent, entity) > 3500
+        )
+          this.cancelEscort(session, hailState);
       }
-      if (!sp || !flying(s) || now < st.next) continue;
-      st.next = now + 180000 + this.random() * 180000;
+      if (!space2 || !flying(session) || currentTime < hailState.next) continue;
+      hailState.next = currentTime + 180000 + this.random() * 180000;
       const combat =
-        (s.ent.target && sp.isHostile(s.ent, s.ent.target)) ||
-        [...sp.ships.values()].some((e) => e.target && sp.root(e.target) === s.ent);
-      const candidates = [...sp.ships.values()].filter(
-        (e) =>
-          !e.player &&
-          !e.owner &&
-          !e.dead &&
-          !e.mission &&
-          !e.convoyOf &&
-          !e.huntOf &&
-          !silent(e) &&
-          distance(e, s.ent) < 3500,
+        (session.ent.target && space2.isHostile(session.ent, session.ent.target)) ||
+        [...space2.ships.values()].some(
+          (entity) => entity.target && space2.root(entity.target) === session.ent,
+        );
+      const candidates = [...space2.ships.values()].filter(
+        (entity) =>
+          !entity.player &&
+          !entity.owner &&
+          !entity.dead &&
+          !entity.mission &&
+          !entity.convoyOf &&
+          !entity.huntOf &&
+          !silent(entity) &&
+          distance(entity, session.ent) < 3500,
       );
       // Shuffle candidates and topics, with true emergencies before routine chatter.
       const topics = combat
@@ -606,15 +690,16 @@ export class HailService {
           ];
       // Some ordinary traders enter with an explicit, real fuel shortage. This is
       // encounter state, not a claim that all NPC traffic simulates fuel economy.
-      for (const e of candidates)
-        if (e.ai === 'trade' && !e.rival && e.hailFuelChecked === undefined) {
-          e.hailFuelChecked = true;
-          if (this.random() < 0.12 && e.st.fuel >= 100) e.fuel = Math.min(e.fuel, 50);
+      for (const entity of candidates)
+        if (entity.ai === 'trade' && !entity.rival && entity.hailFuelChecked === undefined) {
+          entity.hailFuelChecked = true;
+          if (this.random() < 0.12 && entity.st.fuel >= 100)
+            entity.fuel = Math.min(entity.fuel, 50);
         }
       let sent = false;
       for (const reason of topics) {
-        for (const e of candidates.sort(() => this.random() - 0.5))
-          if (this.offer(s, e, reason)) {
+        for (const entity of candidates.sort(() => this.random() - 0.5))
+          if (this.offer(session, entity, reason)) {
             sent = true;
             break;
           }
@@ -623,6 +708,6 @@ export class HailService {
     }
   }
 }
-function stEscort(service: HailService, s: Session) {
-  return service.states.get(s.id)?.escort;
+function stEscort(service: HailService, session: Session) {
+  return service.states.get(session.id)?.escort;
 }

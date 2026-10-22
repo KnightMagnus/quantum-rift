@@ -182,9 +182,9 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       (session: Session, message: NetworkMessage) => {
         const playerData = session.data;
         if (session.ent) {
-          const sp = capabilities.spaces[playerData.sys];
-          session.ent.target = message.id ? sp.ships.get(message.id as number) || null : null;
-          capabilities.combatAssist.selected(session, session.ent.target, sp);
+          const space = capabilities.spaces[playerData.sys];
+          session.ent.target = message.id ? space.ships.get(message.id as number) || null : null;
+          capabilities.combatAssist.selected(session, session.ent.target, space);
           if (session.ent.target) capabilities.tut(session, 'target');
         }
         return;
@@ -336,7 +336,7 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
         const playerData = session.data;
         {
           // an abandoned bounty's target leaves too
-          const gone = playerData.missions.find((x) => x.id === message.id);
+          const gone = playerData.missions.find((mission) => mission.id === message.id);
           if (!gone) return;
           if (gone.type === 'miningOrder')
             return capabilities.features.refinery.command(
@@ -344,18 +344,18 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
               { t: 'miningOrder', op: 'cancelOrder', id: gone.id, port: gone.dest },
               true,
             );
-          playerData.missions = playerData.missions.filter((x) => x !== gone);
+          playerData.missions = playerData.missions.filter((mission) => mission !== gone);
           if (gone.quest)
             capabilities.features.quests.questFail(session, gone.quest.qid, 'abandoned'); // abandoning a step ends the story
           if (gone.sys && capabilities.live[gone.sys]) {
-            const sp = capabilities.live[gone.sys];
+            const space = capabilities.live[gone.sys];
             // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
-            for (const x of [...sp.ships.values()])
-              if (x.mission && x.mission.id === gone.id) {
-                x.mission = null;
-                x.ai = 'leave';
-                x.target = null;
-                x.life = 0;
+            for (const entity of [...space.ships.values()])
+              if (entity.mission && entity.mission.id === gone.id) {
+                entity.mission = null;
+                entity.ai = 'leave';
+                entity.target = null;
+                entity.life = 0;
               }
           }
           capabilities.log(playerData, `Abandoned: ${gone.title}.`);
@@ -881,7 +881,7 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
       (session: Session, _message: NetworkMessage) => {
         if (
           capabilities.solo &&
-          [...capabilities.sessions.values()].filter((x) => x.data).length === 1
+          [...capabilities.sessions.values()].filter((session) => session.data).length === 1
         ) {
           capabilities.setPaused(!capabilities.paused);
           capabilities.send(session, { t: 'paused', on: capabilities.paused });
@@ -894,9 +894,10 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
 
 /**
  * Clamps a numeric value between minimum and maximum bounds.
- * @param {number} v Input value.
- * @param {number} a Minimum bound.
- * @param {number} b Maximum bound.
+ * @param {number} value Input value.
+ * @param {number} firstValue Minimum bound.
+ * @param {number} secondValue Maximum bound.
  * @returns {number} Clamped value.
  */
-const clamp = (v: number, a: number, b: number): number => Math.max(a, Math.min(b, v));
+const clamp = (value: number, firstValue: number, secondValue: number): number =>
+  Math.max(firstValue, Math.min(secondValue, value));

@@ -34,7 +34,7 @@ export type WorldData = FeatureWorldState & {
 };
 
 // Player accounts and saves: one JSON file, written atomically. Passwords are scrypt-hashed.
-import fs from 'node:fs';
+import fileSystem from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
@@ -85,19 +85,19 @@ export class DB {
 
   /**
    * Initializes the database in the target directory and loads existing data from disk.
-   * @param {string} dir Storage directory path for player and world database files.
+   * @param {string} direction Storage directory path for player and world database files.
    */
-  constructor(dir: string) {
+  constructor(direction: string) {
     /** @type {string} */
-    this.dir = dir;
-    fs.mkdirSync(dir, { recursive: true });
+    this.dir = direction;
+    fileSystem.mkdirSync(direction, { recursive: true });
     /** @type {string} */
-    this.file = path.join(dir, 'players.json');
-    this.wfile = path.join(dir, 'world.json');
-    this.journal = path.join(dir, 'checkpoint.json');
+    this.file = path.join(direction, 'players.json');
+    this.wfile = path.join(direction, 'world.json');
+    this.journal = path.join(direction, 'checkpoint.json');
     // Complete a committed checkpoint before exposing either half to Game.
-    if (fs.existsSync(this.journal)) {
-      const saved = JSON.parse(fs.readFileSync(this.journal, 'utf8'));
+    if (fileSystem.existsSync(this.journal)) {
+      const saved = JSON.parse(fileSystem.readFileSync(this.journal, 'utf8'));
       if (
         saved.version !== 1 ||
         typeof saved.players !== 'string' ||
@@ -107,24 +107,24 @@ export class DB {
       JSON.parse(saved.players);
       JSON.parse(saved.world);
       this.writeDurable(this.file + '.tmp', saved.players);
-      fs.renameSync(this.file + '.tmp', this.file);
+      fileSystem.renameSync(this.file + '.tmp', this.file);
       this.writeDurable(this.wfile + '.tmp', saved.world);
-      fs.renameSync(this.wfile + '.tmp', this.wfile);
+      fileSystem.renameSync(this.wfile + '.tmp', this.wfile);
       this.syncDirectory();
-      fs.unlinkSync(this.journal);
+      fileSystem.unlinkSync(this.journal);
       this.syncDirectory();
     }
     /** @type {Record<string, PlayerAccount>} */
     this.players = Object.create(null); // no prototype, so names like __proto__ can never reach object internals
     try {
-      Object.assign(this.players, JSON.parse(fs.readFileSync(this.file, 'utf8')));
+      Object.assign(this.players, JSON.parse(fileSystem.readFileSync(this.file, 'utf8')));
     } catch {}
     /** @type {string} */
-    this.wfile = path.join(dir, 'world.json');
+    this.wfile = path.join(direction, 'world.json');
     /** @type {WorldData} */
     this.world = { sites: {} } as WorldData;
     try {
-      this.world = JSON.parse(fs.readFileSync(this.wfile, 'utf8'));
+      this.world = JSON.parse(fileSystem.readFileSync(this.wfile, 'utf8'));
     } catch {}
     /** @type {boolean} */
     this.economicFrozen = false;
@@ -143,18 +143,19 @@ export class DB {
    */
   backup(): void {
     try {
-      if (!fs.existsSync(this.file) || fs.existsSync(this.journal)) return;
+      if (!fileSystem.existsSync(this.file) || fileSystem.existsSync(this.journal)) return;
       const root = path.join(this.dir, 'backups'),
         stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19),
-        dst = path.join(root, stamp);
-      fs.mkdirSync(dst, { recursive: true });
-      fs.copyFileSync(this.file, path.join(dst, 'players.json'));
-      if (fs.existsSync(this.wfile)) fs.copyFileSync(this.wfile, path.join(dst, 'world.json'));
-      const all = fs.readdirSync(root).sort();
-      for (const old of all.slice(0, Math.max(0, all.length - 12)))
-        fs.rmSync(path.join(root, old), { recursive: true, force: true });
-    } catch (e) {
-      console.error('backup failed', (e as Error).message);
+        join2 = path.join(root, stamp);
+      fileSystem.mkdirSync(join2, { recursive: true });
+      fileSystem.copyFileSync(this.file, path.join(join2, 'players.json'));
+      if (fileSystem.existsSync(this.wfile))
+        fileSystem.copyFileSync(this.wfile, path.join(join2, 'world.json'));
+      const sort2 = fileSystem.readdirSync(root).sort();
+      for (const slice2 of sort2.slice(0, Math.max(0, sort2.length - 12)))
+        fileSystem.rmSync(path.join(root, slice2), { recursive: true, force: true });
+    } catch (event) {
+      console.error('backup failed', (event as Error).message);
     }
   }
 
@@ -173,8 +174,10 @@ export class DB {
    * @returns {PlayerAccount | null} Player account record or null if not found.
    */
   get(name: string): PlayerAccount | null {
-    const k = this.key(name);
-    return Object.prototype.hasOwnProperty.call(this.players, k) ? this.players[k] : null;
+    const entryKey = this.key(name);
+    return Object.prototype.hasOwnProperty.call(this.players, entryKey)
+      ? this.players[entryKey]
+      : null;
   }
 
   /**
@@ -187,28 +190,28 @@ export class DB {
   create(name: string, pass: string, fresh: Partial<Omit<PlayerData, 'name'>>): PlayerAccount {
     const salt = crypto.randomBytes(16).toString('hex');
     const hash = crypto.scryptSync(pass, salt, 32).toString('hex');
-    const p = {
+    const playerAccount = {
       name: String(name).trim(),
       salt,
       hash,
       created: Date.now(),
       ...fresh,
     } as PlayerAccount;
-    this.players[this.key(name)] = p;
+    this.players[this.key(name)] = playerAccount;
     this.dirty = true;
     this.flush();
-    return p;
+    return playerAccount;
   }
 
   /**
    * Verifies a plaintext password against a player's stored scrypt hash using timing-safe comparison.
-   * @param {PlayerAccount} p Stored player account record.
+   * @param {PlayerAccount} playerAccount Stored player account record.
    * @param {string} pass Plaintext password to verify.
    * @returns {boolean} True if the password matches the stored hash, false otherwise.
    */
-  check(p: PlayerAccount, pass: string): boolean {
-    const h = crypto.scryptSync(pass, p.salt, 32);
-    return crypto.timingSafeEqual(h, Buffer.from(p.hash, 'hex'));
+  check(playerAccount: PlayerAccount, pass: string): boolean {
+    const nonSharedBuffer = crypto.scryptSync(pass, playerAccount.salt, 32);
+    return crypto.timingSafeEqual(nonSharedBuffer, Buffer.from(playerAccount.hash, 'hex'));
   }
 
   /**
@@ -225,12 +228,12 @@ export class DB {
    */
   /** @param {string} file @param {string} text */
   writeDurable(file: string, text: string) {
-    const fd = fs.openSync(file, 'w');
+    const openSync2 = fileSystem.openSync(file, 'w');
     try {
-      fs.writeFileSync(fd, text);
-      fs.fsyncSync(fd);
+      fileSystem.writeFileSync(openSync2, text);
+      fileSystem.fsyncSync(openSync2);
     } finally {
-      fs.closeSync(fd);
+      fileSystem.closeSync(openSync2);
     }
   }
   syncDirectory() {
@@ -238,11 +241,11 @@ export class DB {
     // Keep regular-file fsyncs and journal recovery; only POSIX directory syncing
     // is unavailable here (so Windows has no extra directory-metadata barrier).
     if (process.platform === 'win32') return;
-    const fd = fs.openSync(this.dir, 'r');
+    const openSync2 = fileSystem.openSync(this.dir, 'r');
     try {
-      fs.fsyncSync(fd);
+      fileSystem.fsyncSync(openSync2);
     } finally {
-      fs.closeSync(fd);
+      fileSystem.closeSync(openSync2);
     }
   }
   flush() {
@@ -251,7 +254,7 @@ export class DB {
     if (!this.dirty) return;
     // Journal commit point precedes both renames. Recovery rolls both halves forward.
     // Never overwrite a committed journal after a failed flush: require restart/recovery.
-    if (fs.existsSync(this.journal))
+    if (fileSystem.existsSync(this.journal))
       throw new Error('Pending database checkpoint requires recovery');
     const players = JSON.stringify(this.players),
       world = JSON.stringify(this.world);
@@ -259,14 +262,14 @@ export class DB {
     // Once journal installation is attempted its outcome may be uncertain, even
     // if an error arrives after unlink. Never roll memory back or autosave over it.
     try {
-      fs.renameSync(this.journal + '.tmp', this.journal);
+      fileSystem.renameSync(this.journal + '.tmp', this.journal);
       this.syncDirectory();
       this.writeDurable(this.file + '.tmp', players);
-      fs.renameSync(this.file + '.tmp', this.file);
+      fileSystem.renameSync(this.file + '.tmp', this.file);
       this.writeDurable(this.wfile + '.tmp', world);
-      fs.renameSync(this.wfile + '.tmp', this.wfile);
+      fileSystem.renameSync(this.wfile + '.tmp', this.wfile);
       this.syncDirectory();
-      fs.unlinkSync(this.journal);
+      fileSystem.unlinkSync(this.journal);
       this.syncDirectory();
     } catch (error) {
       this.economicFrozen = true;

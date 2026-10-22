@@ -1,4 +1,4 @@
-import type { DB } from './db.ts';
+import type { DB as Database } from './db.ts';
 import type { FeatureServices } from './features.ts';
 import type { PlayerReference } from './game.ts';
 import type { RefineryPlayer } from './refinery-contracts.ts';
@@ -30,14 +30,14 @@ export type IndustrialRequest = {
 };
 export type Session = import('./game.ts').Session;
 export type IndustrialCapabilities = {
-  db: Pick<DB, 'world' | 'players' | 'touch' | 'flush' | 'economicFrozen'>;
+  db: Pick<Database, 'world' | 'players' | 'touch' | 'flush' | 'economicFrozen'>;
   paused: () => boolean;
-  room: (d: RefineryPlayer) => number;
-  power: (d: RefineryPlayer) => number;
+  room: (refineryPlayer: RefineryPlayer) => number;
+  power: (refineryPlayer: RefineryPlayer) => number;
   sweep: FeatureServices['mining']['sweep'];
-  loot: (p: PlayerReference, it: LootItem) => boolean | void;
-  refresh: (s: Session) => void;
-  toast: (s: Session, text: string) => void;
+  loot: (playerReference: PlayerReference, lootItem: LootItem) => boolean | void;
+  refresh: (session: Session) => void;
+  toast: (session: Session, text: string) => void;
 };
 
 /** @import { DB } from './db.ts' */

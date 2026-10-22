@@ -405,10 +405,10 @@ export const ROSTER_MAX: number = 24; // room for wingmate captains and crews
 
 /**
  * Calculates cumulative experience points required to advance an officer to the next level.
- * @param {number} lv - Target officer level.
+ * @param {number} level - Target officer level.
  * @returns {number} Required experience points.
  */
-export const XP_LEVEL = (lv: number) => 100 * lv * lv; // xp needed to reach the next level
+export const XP_LEVEL = (level: number) => 100 * level * level; // xp needed to reach the next level
 
 /**
  * Maximum obtainable officer level cap.
