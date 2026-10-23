@@ -1,3 +1,4 @@
+import { attentionPayload, type RecentPatrolScan } from './attention.ts';
 export interface SeedOfficer {
   name: string;
   role: string;
@@ -224,6 +225,8 @@ export interface FormationTarget {
   gap: number;
 }
 export type Session = {
+  /** Last real patrol scan, transient and private to this connection. */
+  attentionScan?: RecentPatrolScan;
   rep?: Record<string, number>;
   refinerySignature?: string;
   huntT?: number;
@@ -3290,6 +3293,7 @@ export class Game<Storage extends Database = Database> {
           JSON.stringify({
             t: 'snap',
             ...spaceSnapshot,
+            attention: attentionPayload(session, this.spaces[starSystem]),
             miningRocks: this.features.mining.rocksPayload(this.spaces[starSystem]),
             mining: this.features.mining.payload(session, this.spaces[starSystem]),
             industrial: this.features.industrial.payload(session),

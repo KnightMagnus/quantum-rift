@@ -729,3 +729,13 @@ through ordinary-toast bursts, ordinary expiry and the end of its ten-second
 fade. Other notice timing is unchanged. Radio queue and album behavior remain
 covered with the simplified ON AIR label. These checks do not certify physical
 speaker output or every device’s autoplay policy.
+
+## Responsive cockpit and attention
+
+`responsive-hud-attention`: canonical unit tests `attention.ts` and `attention-scan.ts` cover current weapon-target selection, cancellation, death, disabled sources, system departure and recent patrol-scan expiry. Orange reports a completed scan, not a new scanning mechanic or inferred nearby threat. The real patrol action is exercised for both contraband outcomes and scan eligibility limits.
+
+`responsive-hud-browser.ts` measures fixed controls, expanding center chat, sidebar clearance and overflow at 1920×1080, 2560×1440, 3840×2160, 3440×1440 and 5120×1440. Real authenticated game screens cover flight, landing, map, captain details (shortcut and original key), settings, multiple function panels and expanded chat. Narrow checks include 1440×1000, 1024×768, 640×700 and 640×480. A deterministic server fixture supplies targeting/recent-scan state through real snapshots; the browser checks combat precedence, server-driven expiry and visible reduced-motion colors. Existing cockpit/sidebar/function/chat and native runtime regressions remain registered. This is Chromium coverage, not a cross-browser or physical-device claim.
+
+`attention-runtime.ts` exercises actual Game/Space ticks with two flying captains and one docked observer: real NPC AI/fight targeting, real patrol-scan production, per-recipient packet isolation, unchanged public tuple shapes, AI cancellation, the production NPC disable threshold and incapable-patrol denial. Native `nakama-network.ts` additionally verifies encoded attention keys and boolean types on actual authenticated Goja match snapshots. This native contract check does not claim deterministic native combat encounters; the shared real-game fixture owns that evidence.
+
+The responsive browser test also opens the tray at 1100/1101/1200/1250/1251 px, checks utility controls cannot intersect chat and exercises the input. It disconnects the real game socket from both active alert colors and checks immediate clear and successful reconnect with a new authoritative ship identity. The default sidebar still fits all seven tabs, including unread badges, without shrinking the larger text: spacing comes from tab padding/gaps instead.

@@ -250,3 +250,7 @@ instance, including when browser tests import them. Releases need no CDN or
 node_modules at runtime. Procedural full-viewport Graphics rasterize at up to 30Hz;
 native entities and simulation retain the Engine update cadence. These layers remain
 a rendering cost, not evidence of a general performance improvement.
+
+## Private cockpit attention
+
+`server/attention.ts` projects live weapon-target selection and the last patrol scan into recipient-only booleans. `Game.tick` attaches them inside each flying captain's own snapshot; shared `Space.snapshot` and docked scenes do not publish those flags or new target identities. The real patrol action in `FrontsOperations.missionIdle` records one transient three-second recent-scan notification, never saved data. The browser shows combat red before recent-scan orange; reduced-motion mode retains color without blinking. Auto-combat reads its actual combatTarget, not the UI selection; existing rules still forbid auto-combat targeting player-root ships.

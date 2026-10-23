@@ -830,6 +830,7 @@ function openSocket(tries: number) {
   };
   socket.onclose = () => {
     if (!current()) return;
+    updateAttention();
     flightEngine.input.clear();
     mouse.down = false;
     touch.keys = {};
@@ -929,6 +930,7 @@ function onMessage(serverMessage: ServerMessage) {
       break;
     }
     case 'landed':
+      updateAttention();
       elementById2('combatcontrols').classList.add('hidden');
       clientGameState.combat = {};
       if (!clientGameState.landed) audio.ui('dock', 0.8);
@@ -970,6 +972,7 @@ function onMessage(serverMessage: ServerMessage) {
       hideLanded();
       clientGameState.sys = serverMessage.sys;
       clientGameState.myId = serverMessage.id;
+      updateAttention();
       clientGameState.view = null;
       clientGameState.ents.clear();
       clientGameState.shots = [];
@@ -1224,7 +1227,23 @@ setInterval(() => {
   if (clientGameState.you && clientGameState.ctab === 'missions') drawMini();
 }, 10000); // keeps rush countdowns current
 // ------------------------------------------------------------------ snapshots and prediction
+function updateAttention(attention?: SnapshotMessage['attention']) {
+  const indicator = elementById2('attentionindicator');
+  const state = attention?.targeted ? 'targeted' : attention?.scanned ? 'scanned' : 'clear';
+  const label =
+    state === 'targeted'
+      ? 'Combat alert: another ship is targeting you'
+      : state === 'scanned'
+        ? 'Patrol scanned your hold recently'
+        : 'No combat targeting or recent scan';
+  indicator.dataset.state = state;
+  if (indicator.getAttribute('aria-label') !== label) {
+    indicator.setAttribute('aria-label', label);
+    indicator.title = label;
+  }
+}
 function onSnap(snapshotMessage: SnapshotMessage) {
+  updateAttention(clientGameState.landed ? undefined : snapshotMessage.attention);
   receiveMining(clientGameState, snapshotMessage);
   clientGameState.combat = snapshotMessage.combat || {};
   clientGameState.formation = !!snapshotMessage.formation;
@@ -1746,6 +1765,8 @@ function openInfo() {
   send({ t: 'rivals' });
   renderInfo();
 }
+elementById2('captainshortcut').onclick = () =>
+  elementById2('infobox').classList.contains('hidden') ? openInfo() : closeInfo();
 function closeInfo() {
   audio.ui('close', 0.6);
   elementById2('infobox').classList.add('hidden');
@@ -3184,6 +3205,7 @@ async function logOut(reason = '') {
   for (const [entryKey, value] of Object.entries(sessionDefaults!))
     sessionState[entryKey] = typeof value === 'function' ? value : structuredClone(value);
   Object.assign(clientGameState, keep);
+  updateAttention();
   flightEngine.input.clear();
   history = [];
   sequence = account = _lastSnapT = 0;

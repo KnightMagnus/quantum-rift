@@ -238,7 +238,7 @@ try {
     const before = await measure();
     assert.equal(before.pageOverflow, false);
     assert.equal(before.tabs.length, 7);
-    assert.ok(Math.abs(before.hudWidth + before.canvasWidth - viewportScenario.w) < 2);
+    assert.ok(Math.abs(before.hudWidth + before.canvasWidth + 12 - viewportScenario.w) < 2);
     assert.ok(
       before.tabs.every((tabBounds2) => tabBounds2.visible),
       'Every tab is visible without scrolling: ' +
@@ -357,7 +357,10 @@ try {
     assert.ok(shell.vent.y >= shell.buttons.y + shell.buttons.h, 'Vent stays below controls');
     assert.equal(shell.rail.position, 'fixed');
     assert.equal(shell.wingCount, 0, 'Decorative fin no longer overlaps the main HUD tray');
-    assert.ok(shell.chat.w <= 590, 'COMMS has a maximum width');
+    assert.ok(
+      shell.chat.w > 0 && shell.chat.x + shell.chat.w <= shell.utility.x,
+      'COMMS uses the available center track',
+    );
     assert.ok(
       shell.utility.x >= shell.chat.x + shell.chat.w,
       'Utilities have their own reserved track',

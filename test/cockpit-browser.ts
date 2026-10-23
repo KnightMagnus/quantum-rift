@@ -155,7 +155,7 @@ try {
     initialPixels.cssHeight * initialPixels.dpr,
     'First login has correct backing height before any resize event',
   );
-  assert.equal(await page.locator('#functiondock > button').count(), 8);
+  assert.equal(await page.locator('#functiondock > button').count(), 9);
   assert.equal(await page.locator('#cbkeys').count(), 0, 'No redundant Keys button');
   assert.equal(await page.locator('#traytoggle').getAttribute('aria-expanded'), 'false');
   await page.waitForFunction(() =>
@@ -259,8 +259,8 @@ try {
         const chat = await page.locator('#consolechat').boundingBox(),
           utility = await page.locator('#consoleutilities').boundingBox();
         assert.ok(
-          utility!.x >= chat!.x + chat!.width - 1 && utility!.x - chat!.x - chat!.width <= 20,
-          'Utilities remain adjacent to chat',
+          utility!.x >= chat!.x + chat!.width - 1 && utility!.x - chat!.x - chat!.width <= 100,
+          'Utilities stay in the reserved end track beside centered chat',
         );
         const dock = await page.locator('#functiondock').boundingBox();
         if (width <= 1250)
@@ -463,7 +463,7 @@ try {
   );
   assert.deepEqual(errors, []);
   console.log(
-    'Cockpit font, original login/landed artwork, ship-name/chat typography, eight icons, connected tray, keyboard/tab/popup reachability and narrow/scaled layout passed.',
+    'Cockpit font, original login/landed artwork, ship-name/chat typography, nine buttons plus attention status, connected tray, keyboard/tab/popup reachability and narrow/scaled layout passed.',
   );
 } catch (error) {
   await failureEvidence(browser, feature.out, error);

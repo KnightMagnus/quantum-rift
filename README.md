@@ -56,6 +56,7 @@ one authoritative server on the host’s computer; Solo retains its separate loc
 - Form an **Armada** to travel together, share bounties and take on co-op contracts and station defenses. Review team-contract shares and choose Ready before joining.
 - Keep in touch through friends lists, private messages, local chat and player hails, with privacy and blocking controls.
 - Expand chat into a holographic history screen above the cockpit without leaving the flight view.
+- Larger cockpit text and flexible widescreen chat keep the controls readable without stretching buttons. The helmet opens ship and captain details (also **I**). The alert blinks red for another ship’s combat targeting, or orange for three seconds after a real patrol scan. Red wins when both apply; reduced-motion mode keeps the color without blinking.
 - Trade credits, cargo and crafting supplies between captains.
 - Choose your PvP: consensual duels or rated team matches in the **Crucible** arena, rather than open-world player hunting.
 
@@ -120,23 +121,23 @@ Save imports remain Solo-only.
 
 **Flight cockpit**
 
-![Flight in Concordia with the sidebar closed](docs/screenshots/flight-excalibur.png)
+![Responsive flight cockpit in Meridian with the sidebar closed](docs/screenshots/responsive-flight.png)
 
 **Expanded chat projection**
 
-![Chat history projected upward from the flight console](docs/screenshots/chat-projection.png)
+![Chat history projected upward from the flight console](docs/screenshots/responsive-chat.png)
 
 **System radar and sidebar**
 
-![Expanded sidebar with square system radar](docs/screenshots/tray-31.png)
+![Expanded sidebar with square system radar](docs/screenshots/responsive-sidebar.png)
 
 **Landed services**
 
-![Landed service menu with system traffic behind it](docs/screenshots/landing-31.png)
+![Landed service menu with system traffic behind it](docs/screenshots/responsive-landed.png)
 
 **Galaxy map**
 
-![In-game galaxy map menu](docs/screenshots/map-fidelity.png)
+![In-game galaxy map menu](docs/screenshots/responsive-map.png)
 
 **Discoverable radio stations**
 
