@@ -1141,9 +1141,6 @@ input.trade-amount[type='number'] {
   #commsheader {
     font-size: 9px;
   }
-  #commsheader .comms-live {
-    display: none;
-  }
   #cbar .cchan button {
     font-size: 10px;
     padding: 0 3px;
@@ -1390,11 +1387,6 @@ body.tray-open #cbar #chatin {
   text-overflow: ellipsis;
   flex: 1;
 }
-#commsheader .comms-live {
-  align-self: center;
-  color: #87b6a3;
-  font-size: 9px;
-}
 #chatexpand {
   flex: 0 0 auto;
   display: inline-flex;
@@ -1539,7 +1531,6 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   }
 }
 @media (max-width: 760px) {
-  #commsheader .comms-live,
   #chatexpand .chat-toggle-label {
     display: none;
   }

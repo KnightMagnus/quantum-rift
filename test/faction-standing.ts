@@ -10,7 +10,7 @@ import path from 'node:path';
 import { legacySocket } from './helpers/legacy-fixture.ts';
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
-import { FACTIONS, STELLARS } from '../shared/galaxy.ts';
+import { FACTIONS, STELLARS, SYS } from '../shared/galaxy.ts';
 import { repLabel } from '../shared/rules.ts';
 import { STORY } from '../shared/story.ts';
 import { ARCS } from '../shared/arcs.ts';
@@ -219,6 +219,76 @@ const again = login(loaded);
 assert.equal(again.d.rep.quantum, 275);
 assert.equal(again.d.rep.quevari, 100);
 assert.equal(FACTIONS.quantum.pirate, undefined);
+// Location authority: every landable public faction port, even without a trade service.
+const storeFacs = Object.keys(FACTIONS).filter(
+  (k) => !FACTIONS[k].region && !FACTIONS[k].hidden && k !== 'umbral',
+);
+for (const port of Object.values(STELLARS)) {
+  if (port.site || !port.svc.includes('L')) continue;
+  const fac = SYS[port.system].faction;
+  assert.equal(game.features.fronts.storeFor(port), storeFacs.includes(fac) ? fac : null);
+}
+for (const fac of storeFacs) {
+  const ports = Object.values(STELLARS).filter(
+    (p) => !p.site && p.svc.includes('L') && SYS[p.system].faction === fac,
+  );
+  const port = ports.find((p) => !p.svc.includes('T')) || ports[0];
+  assert.ok(port, `Landable port for ${fac}`);
+  playerData.sys = port.system;
+  playerData.stellar = port.id;
+  playerData.rep[fac] = 100;
+  playerData.tokens = Object.fromEntries(storeFacs.map((k) => [k, 100]));
+  const other = requiredFixtureValue(storeFacs.find((k) => k !== fac));
+  const before = JSON.stringify([playerData.rep, playerData.tokens, playerData.credits]);
+  send({ t: 'store', fac: other, id: 'writ' });
+  assert.equal(
+    JSON.stringify([playerData.rep, playerData.tokens, playerData.credits]),
+    before,
+    'Foreign store cannot be purchased at a public port',
+  );
+  send({ t: 'store', fac, id: 'writ' });
+  assert.equal(playerData.rep[fac], 110, `Local ${fac} store works`);
+  assert.equal(playerData.tokens[fac], 88);
+}
+const site = requiredFixtureValue(Object.values(STELLARS).find((p) => p.site));
+playerData.sys = site.system;
+playerData.stellar = site.id;
+playerData.station.site = site.id;
+for (const fac of storeFacs) {
+  playerData.rep[fac] = 100;
+  playerData.tokens[fac] = 100;
+  send({ t: 'store', fac, id: 'writ' });
+  assert.equal(playerData.rep[fac], 110, 'Own Personal Station retains every faction store');
+}
+const beforeMalformed = JSON.stringify([playerData.rep, playerData.tokens, playerData.credits]);
+for (const fac of ['__proto__', 'constructor', 'toString', 'unknown', {}, [], 3, null]) {
+  send({ t: 'store', fac, id: 'writ' });
+  assert.equal(
+    JSON.stringify([playerData.rep, playerData.tokens, playerData.credits]),
+    beforeMalformed,
+    'Invalid faction cannot corrupt station purchases',
+  );
+}
+send({ t: 'store', fac: 'quantum', id: {} });
+assert.equal(
+  JSON.stringify([playerData.rep, playerData.tokens, playerData.credits]),
+  beforeMalformed,
+);
+playerData.station.site = undefined;
+const beforeDenied = JSON.stringify([playerData.rep, playerData.tokens, playerData.credits]);
+send({ t: 'store', fac: 'quantum', id: 'writ' });
+assert.equal(
+  JSON.stringify([playerData.rep, playerData.tokens, playerData.credits]),
+  beforeDenied,
+  'Other or unclaimed Personal Station does not grant remote stores',
+);
+playerData.stellar = null;
+send({ t: 'store', fac: 'quantum', id: 'writ' });
+assert.equal(
+  JSON.stringify([playerData.rep, playerData.tokens, playerData.credits]),
+  beforeDenied,
+  'No purchases in flight',
+);
 console.log(
   'Faction standing: actual job/story/arc/commission/kill/hit/store/save-login regressions passed.',
 );

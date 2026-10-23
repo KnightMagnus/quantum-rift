@@ -63,6 +63,9 @@
   max-width: 560px;
   text-align: center;
 }
+#toasts div.newcomer-protection {
+  animation-duration: 10s;
+}
 @keyframes fade {
   0% {
     opacity: 0;

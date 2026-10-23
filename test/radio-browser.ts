@@ -230,19 +230,21 @@ try {
     RADIO_STATIONS.map((session) => session.name),
   );
   await page.getByRole('button', { name: 'Play Wave Function Collapse', exact: true }).click();
-  await page.locator('#rnow').getByText('ON AIR · SHUFFLE', { exact: true }).waitFor();
+  await page.locator('#rnow').getByText('ON AIR', { exact: true }).waitFor();
   assert.equal(
     await page.locator('#rtrack b').innerText(),
     'Broadcast',
     'real recording title hidden for station 1',
   );
   await page.getByRole('button', { name: 'Play Super-Idol Radio', exact: true }).click();
-  await page.locator('#rnow').getByText('ON AIR · ALBUM LOOP', { exact: true }).waitFor();
+  await page.locator('#rnow').getByText('ON AIR', { exact: true }).waitFor();
   assert.equal(
     await page.locator('#rtrack b').innerText(),
     'title' in RADIO_STATIONS[4].tracks[0] ? RADIO_STATIONS[4].tracks[0].title : undefined,
     'published first album track is visible',
   );
+  assert.doesNotMatch(await page.locator('#rnow').innerText(), /in order|album loop|shuffle/i);
+  assert.equal(await page.locator('#commsheader .comms-live').count(), 0);
   // Use the actual QoL keyboard handles for a readable five-station screenshot.
   await page.locator('#radarheightgrip').focus();
   await page.keyboard.press('Home');
@@ -324,7 +326,7 @@ try {
       '/fixture/radio-A.wav',
     ],
   );
-  await page.locator('#rnow').getByText('ON AIR · ALBUM LOOP', { exact: true }).waitFor();
+  await page.locator('#rnow').getByText('ON AIR', { exact: true }).waitFor();
   await page.locator('#rvol').focus();
   await page.keyboard.press('Home');
   await page.waitForFunction(() => radioAudio.volume === 0);

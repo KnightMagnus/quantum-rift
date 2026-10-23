@@ -536,26 +536,42 @@ export const FrontsOperations = {
       site?: boolean | Record<string, string | number>;
     } | null,
   ) {
-    if (!position || position.site || !position.svc.includes('T')) return null;
+    if (!position || position.site || !position.svc.includes('L')) return null;
     const faction2 = systemsById[position.system].faction;
-    return FACTIONS[faction2].region || faction2 === 'umbral' ? null : faction2;
+    return FACTIONS[faction2].region || FACTIONS[faction2].hidden || faction2 === 'umbral'
+      ? null
+      : faction2;
   },
   /**
    * Purchase an item or contract from a faction store.
    * @param session - Player session.
    * @param message - Purchase operation payload.
    */
-  storeBuy(this: FrontsCapabilities, session: Session, message: { fac: string; id: string }) {
-    // the faction stores are their own menu, open from any landing (standing still gates the stock)
+  storeBuy(this: FrontsCapabilities, session: Session, message: { fac?: string; id: string }) {
+    // Only an owned Personal Station offers stores outside the local faction.
+    if (
+      (message.fac !== undefined && typeof message.fac !== 'string') ||
+      typeof message.id !== 'string'
+    )
+      return;
     const playerData = session.data,
       stellarBody = STELLARS[playerData.stellar!],
-      factionDef = FACTIONS[message.fac],
-      faction =
-        factionDef && !factionDef.region && !factionDef.hidden && message.fac !== 'umbral'
-          ? message.fac
-          : this.storeFor(stellarBody);
+      local = this.storeFor(stellarBody),
+      faction = message.fac || local || (this.ownSite(playerData, stellarBody) ? 'quantum' : null),
+      factionDef = faction && Object.hasOwn(FACTIONS, faction) ? FACTIONS[faction] : undefined;
     if (!faction || session.ent || !stellarBody)
       return this.toast(session, 'Faction stores deliver to you while you are landed.');
+    if (
+      !factionDef ||
+      factionDef.region ||
+      factionDef.hidden ||
+      faction === 'umbral' ||
+      (!this.ownSite(playerData, stellarBody) && faction !== local)
+    )
+      return this.toast(
+        session,
+        'Visit this faction’s system or your Personal Station for that store.',
+      );
     const factionStoreItem = STORE_ITEMS.find(
       (factionStoreItem) => factionStoreItem.id === message.id,
     );

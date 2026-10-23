@@ -7,10 +7,25 @@ import { failureEvidence } from './helpers/browser-fixture.ts';
 const feature = await miningFixture('polish');
 let browser;
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--autoplay-policy=document-user-activation-required'],
+  });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await page.goto(feature.origin);
-  assert.equal(await page.evaluate(async () => (await import('/audio.js')).debug().ctx), null);
+  const session = await page.context().newCDPSession(page);
+  const initialAudio = await session.send('Runtime.evaluate', {
+    expression: `(async () => ({ ctx: (await import('/audio.js')).debug().ctx, activated: navigator.userActivation.hasBeenActive }))()`,
+    awaitPromise: true,
+    returnByValue: true,
+    userGesture: false,
+  });
+  assert.equal(initialAudio.exceptionDetails, undefined);
+  assert.deepEqual(
+    initialAudio.result.value,
+    { ctx: 'suspended', activated: false },
+    'Page-load audio stays suspended before interaction when autoplay is blocked',
+  );
   await page.fill('#lname', 'Mining Alpha');
   await page.fill('#lpass', 'fixture');
   await page.click('#lbtn');

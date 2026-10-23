@@ -710,3 +710,22 @@ and extra visible tail pixels are bounded independently of registry/Sprite count
 These checks do not establish cross-browser parity, every weapon animation, a
 frame-time improvement, or all lifecycle/network latency combinations. The Canvas
 fallback cannot apply the WebGL additive glow material.
+
+## `faction-store-locations`: local stores and standing
+
+`faction-stores-browser.ts` loads real saved captains at all 11 eligible faction
+landings, including non-trade ports where available. It checks one local store
+button, no button in the DOM at neutral or visitor landings, local-only selectors,
+all stores at the captain’s own Personal Station, decoded insignia and actual
+purchases. The selected faction’s standing appears above the store on open and
+updates from the server’s player payload after buying a standing writ.
+`faction-standing.ts` checks every landable public port and resource-preserving
+foreign-faction, unclaimed station and flight denials through store messages.
+
+`input-audio-browser.ts` checks login music before activation under explicit
+allowed and blocked autoplay policies, real-interaction recovery and stopping
+the theme on login. Its native timer and DOM checks retain the newcomer notice
+through ordinary-toast bursts, ordinary expiry and the end of its ten-second
+fade. Other notice timing is unchanged. Radio queue and album behavior remain
+covered with the simplified ON AIR label. These checks do not certify physical
+speaker output or every device’s autoplay policy.
