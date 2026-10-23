@@ -49,6 +49,48 @@ function setup(count: number) {
     });
   return { g: game, pilots, A: assets, offer, last, begin, reply };
 }
+// Exercise expiration independently of the browser scenario's stable initial window.
+const nativeNow = Date.now;
+let boundaryTime = 1800000000000 + 599999;
+try {
+  Date.now = () => boundaryTime;
+  const { g: game, pilots, offer, last } = setup(2);
+  const before = pilots.map((session) => ({
+    credits: requiredFixtureValue(session).data.credits,
+    missions: structuredClone(requiredFixtureValue(session).data.missions),
+  }));
+  boundaryTime += 1;
+  const currentOffer = game
+    .offers(STELLARS.concordia, requiredFixtureValue(pilots[0]).data)
+    .find((mission) => mission.type === 'warband');
+  assert.ok(currentOffer);
+  assert.notEqual(currentOffer.id, offer.id, 'Job IDs rotate at the real ten-minute boundary');
+  game.accept(pilots[0], offer.id);
+  assert.ok(
+    pilots.every((session) => last(session) == null),
+    'Expired offer creates no plan',
+  );
+  assert.deepEqual(
+    pilots.map((session) => ({
+      credits: requiredFixtureValue(session).data.credits,
+      missions: requiredFixtureValue(session).data.missions,
+    })),
+    before,
+    'Expired offer cannot assign jobs or change captain credits',
+  );
+  game.accept(pilots[0], currentOffer.id);
+  assert.equal(
+    last(pilots[0])?.roster.length,
+    2,
+    'Current replacement opens the real consent plan',
+  );
+  assert.ok(
+    pilots.every((session) => requiredFixtureValue(session).data.missions.length === 0),
+    'Refreshing an offer still cannot bypass Ready and Start',
+  );
+} finally {
+  Date.now = nativeNow;
+}
 for (const count of [2, 4]) {
   const { g: game, pilots, A: message, offer, begin, reply } = setup(count),
     plan = begin();

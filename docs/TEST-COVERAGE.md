@@ -147,7 +147,7 @@ coverage is not a measured credits-per-hour or all-career balance comparison.
 
 ## 3.2.1 mission choices
 
-`mission-choices` adds `mission-consent.ts` (real authoritative 2/4-captain sessions) and `mission-ui-browser.ts` (two real WebSocket/browser captains). Coverage includes board facts, visible denial reasons, retained filters, separate plotting/acceptance, explicit Ready/Start, exact integer-pool shares, revised-roster consent, refusal, capacity changes, reconnect/leave/late join, persisted offline completion and duplicate turn-in. Existing accepted rewards and legacy contracts are not migrated. `v26.ts` now exercises the new consent gate before its existing actual kingpin/escort/completion checks. There is no measured career-rate or reward-balance claim.
+`mission-choices` adds `mission-consent.ts` (real authoritative 2/4-captain sessions) and `mission-ui-browser.ts` (two real WebSocket/browser captains). Coverage includes authoritative rejection of expired team-offer IDs across the ten-minute boundary, unchanged captain credits/jobs on denial, acceptance of the refreshed offer without bypassing consent, board facts, visible denial reasons, retained filters, separate plotting/acceptance, explicit Ready/Start, exact integer-pool shares, revised-roster consent, refusal, capacity changes, reconnect/leave/late join, persisted offline completion and duplicate turn-in. Existing accepted rewards and legacy contracts are not migrated. `v26.ts` now exercises the new consent gate before its existing actual kingpin/escort/completion checks. There is no measured career-rate or reward-balance claim.
 
 ## 3.2.1 cockpit QoL
 
