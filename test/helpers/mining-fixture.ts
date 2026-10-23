@@ -22,7 +22,7 @@ export async function until<Value>(
   }
   throw Error(label);
 }
-export async function miningFixture(name: string) {
+export async function miningFixture(name: string, extraPreload?: string) {
   const directory = tempDataDir('rift-mining-play-'),
     output = evidenceDir(name),
     data = path.join(directory, 'data'),
@@ -64,7 +64,14 @@ export async function miningFixture(name: string) {
     origin = `http://127.0.0.1:${port}`,
     server = spawn(
       process.execPath,
-      ['--import', './test/seed-random.ts', '--import', fixture, 'server/local-main.ts'],
+      [
+        '--import',
+        './test/seed-random.ts',
+        '--import',
+        fixture,
+        ...(extraPreload ? ['--import', extraPreload] : []),
+        'server/local-main.ts',
+      ],
       {
         cwd: root,
         env: {

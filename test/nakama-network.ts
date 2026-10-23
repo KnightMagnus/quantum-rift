@@ -168,6 +168,9 @@ try {
     for (const packet of connection.packets.filter((entry) => entry.t === 'snap')) {
       assert(packet.me.slice(0, 11).every(Number.isFinite));
       assert.equal(packet.me[0], connection.latest('snap')!.me[0]);
+      assert.deepEqual(Object.keys(packet.attention).sort(), ['scanned', 'targeted']);
+      assert.equal(typeof packet.attention.targeted, 'boolean');
+      assert.equal(typeof packet.attention.scanned, 'boolean');
     }
     for (const packet of connection.packets.filter((entry) => entry.t === 'you'))
       assert.equal(packet.d.name.toLowerCase(), connection === first ? 'alice' : 'bob');

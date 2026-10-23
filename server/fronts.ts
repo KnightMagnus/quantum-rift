@@ -790,6 +790,9 @@ export const FrontsOperations = {
         this.you(session);
       }
       if (
+        !entity.dead &&
+        !entity.disabled &&
+        entity.state === 'fly' &&
         mission.type === 'smuggle' &&
         !mission.done &&
         !FACTIONS[starSystem.faction].region &&
@@ -801,11 +804,19 @@ export const FrontsOperations = {
         const entity2 = [...space.ships.values()].find(
           (entity3) =>
             entity3.ai === 'patrol' &&
+            !entity3.dead &&
+            !entity3.disabled &&
+            entity3.state === 'fly' &&
             entity3.faction === starSystem.faction &&
             Math.hypot(entity3.x - entity.x, entity3.y - entity.y) < SCAN.range,
         );
         if (!entity2) continue;
         mission.scanT = currentTime;
+        session.attentionScan = {
+          system: playerData.sys,
+          entity: entity.id,
+          until: currentTime + 3000,
+        };
         if (
           Math.random() <
           SCAN.chance *

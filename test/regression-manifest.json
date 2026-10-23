@@ -105,7 +105,10 @@
     "nakama-world-lease.ts",
     "friend-host-config.ts",
     "friend-host-network.ts",
-    "friend-save-owner.ts"
+    "friend-save-owner.ts",
+    "attention.ts",
+    "attention-scan.ts",
+    "attention-runtime.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -144,7 +147,8 @@
     "excalibur-runtime-browser.ts",
     "nakama-browser.ts",
     "friend-host-browser.ts",
-    "faction-stores-browser.ts"
+    "faction-stores-browser.ts",
+    "responsive-hud-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -531,7 +535,19 @@
     "friend-host-network.ts": ["helpers/friend-host.ts"],
     "friend-host-browser.ts": ["helpers/friend-host.ts"],
     "helpers/friend-host.ts": ["helpers/browser-fixture.ts"],
-    "faction-stores-browser.ts": ["helpers/browser-fixture.ts"]
+    "faction-stores-browser.ts": ["helpers/browser-fixture.ts"],
+    "attention.ts": ["helpers/mocks.ts"],
+    "responsive-hud-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "fixtures/attention-preload.ts"
+    ],
+    "attention-scan.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts", "helpers/required.ts"],
+    "attention-runtime.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1077,7 +1093,7 @@
       ],
       "services": [],
       "tests": ["cockpit-browser.ts", "ship-functions-browser.ts", "sidebar-browser.ts"],
-      "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, eight-button compact cockpit, real Map/Hail activation, connected collapsed tray with actual pointer resize drag, scale-aware 520px menu-fitting default and wrapping compact tabs, scale-invariant maximum, saved-width reload and viewport-shrink recovery, literal framed-hail edge containment, first-login canvas pixel sizing, keyboard tab/popup reachability and normal/narrow/scaled layout."
+      "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, nine-button cockpit with recipient-only attention, real Map/Hail activation, connected collapsed tray with actual pointer resize drag, scale-aware 520px menu-fitting default and wrapping compact tabs, scale-invariant maximum, saved-width reload and viewport-shrink recovery, literal framed-hail edge containment, first-login canvas pixel sizing, keyboard tab/popup reachability and normal/narrow/scaled layout."
     },
     {
       "id": "presentation-polish",
@@ -1269,6 +1285,19 @@
       "services": ["fronts"],
       "tests": ["faction-standing.ts", "faction-stores-browser.ts"],
       "asserts": "Every landable public faction port offers only its faction store, including ports without trade service. Actual local purchases, foreign request resource-preserving denial, own Personal Station all-store selection and purchases, visitor/neutral/flight denial, stale selection recovery, decoded faction crests and no Bulletin store or chat Live label. Store button is absent from the DOM at neutral and visitor landings; selected faction standing is visible on open and refreshes from authoritative purchase payloads."
+    },
+    {
+      "id": "responsive-hud-attention",
+      "owners": ["server/attention.ts", "client/cockpit.css", "client/main.ts"],
+      "services": [],
+      "tests": [
+        "attention.ts",
+        "responsive-hud-browser.ts",
+        "attention-scan.ts",
+        "attention-runtime.ts",
+        "nakama-network.ts"
+      ],
+      "asserts": "Recipient-only actual combat targeting, death/departure/cancel clearing, truthful recent patrol scan expiry, red precedence and reduced motion; 12.5% larger text, fixed widescreen button geometry, fluid center chat, sidebar gap, responsive landed/map/captain/settings surfaces and narrow preservation."
     }
   ],
   "routes": {

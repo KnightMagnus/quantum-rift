@@ -1,4 +1,5 @@
 import type { ClientGameState, PlayerPayload, LandedPayload, ContractPlan } from './main.ts';
+import type { AttentionPayload } from '../server/attention.ts';
 import type { CombatPayload } from '../server/combat-assist.ts';
 import type { MiningPrivateWire, MiningRocksWire } from '../server/mining-contracts.ts';
 import type { PressureWire, MiningHazard } from '../server/mining-pressure-contracts.ts';
@@ -76,6 +77,8 @@ export interface SnapshotMessage extends MiningMessage {
   beams: Array<[number, number, number, number]>;
   loot: Array<[number, number, number, number]>;
   ev: SnapshotEvent[];
+  /** Recipient-only combat intent and recent scan notification. */
+  attention?: AttentionPayload;
   combat?: CombatPayload;
   formation?: boolean;
   me?: [

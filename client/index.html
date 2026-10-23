@@ -188,7 +188,31 @@
     <div id="flightstatus" aria-label="Ship status"></div>
     <div id="viewscreen-trim" aria-hidden="true"></div>
     <div id="cockpit" class="metal">
-      <div id="functiondock" aria-label="Ship function shortcuts"></div>
+      <div id="functiondock" aria-label="Ship function shortcuts">
+        <button
+          id="captainshortcut"
+          class="function-icon"
+          type="button"
+          title="Ship and captain details (I)"
+          aria-label="Ship and captain details"
+        >
+          <img src="assets/hud/captain.svg" alt="" aria-hidden="true" /><span class="function-label"
+            >CAPTAIN</span
+          >
+        </button>
+        <div
+          id="attentionindicator"
+          class="function-icon"
+          role="status"
+          aria-label="No combat targeting or recent scan"
+          title="No combat targeting or recent scan"
+        >
+          <img src="assets/hud/attention.svg" alt="" aria-hidden="true" /><span
+            class="function-label"
+            >ALERT</span
+          >
+        </div>
+      </div>
       <div id="consolechat" class="well">
         <header id="commsheader">
           <span id="commssector">COMMS / SHIP NETWORK</span>

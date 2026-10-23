@@ -24,13 +24,13 @@ body * {
   font-family: 'Pixelify Sans', sans-serif !important;
 }
 body {
-  font-size: 16px;
+  font-size: 18px;
 }
 button,
 input,
 select,
 textarea {
-  font-size: 15px;
+  font-size: 16.875px;
 }
 .small,
 .dim.small,
@@ -39,7 +39,7 @@ textarea {
 .cchan button,
 #ctabs button,
 .bv {
-  font-size: 14px;
+  font-size: 15.75px;
 }
 .metal,
 #shipfunctions .function-panel {
@@ -127,7 +127,7 @@ select:focus-visible {
   width: min(520px, 94%);
 }
 .landbox {
-  height: min(660px, 96%);
+  height: min(745px, 96%);
   gap: 8px;
   grid-template-columns: minmax(170px, 28%) 1fr;
 }
@@ -155,7 +155,7 @@ select:focus-visible {
   padding: 8px;
 }
 .landhead h2 {
-  font-size: 28px;
+  font-size: 31.5px;
 }
 #radarwrap {
   border: 5px solid #192730;
@@ -242,14 +242,14 @@ body.scaled #hud {
   color: #e0b18f;
   background: linear-gradient(90deg, #46555e, #1b2a33);
   box-shadow: -2px 2px 5px #000;
-  font-size: 22px;
+  font-size: 24.75px;
   z-index: 1;
 }
 #traytoggle span {
   display: block;
   writing-mode: vertical-rl;
   margin: 5px auto;
-  font-size: 13px;
+  font-size: 14.625px;
   letter-spacing: 2px;
 }
 body.tray-open #traytrim {
@@ -314,7 +314,7 @@ body.tray-open #traytoggle {
   bottom: 4px;
   left: 0;
   right: 0;
-  font-size: 12px;
+  font-size: 13.5px;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -333,7 +333,7 @@ body.tray-open #traytoggle {
   position: absolute;
   top: 0;
   right: 1px;
-  font-size: 13px;
+  font-size: 14.625px;
   min-width: 15px;
   padding: 1px;
   border-radius: 4px;
@@ -373,7 +373,7 @@ body.tray-open #traytoggle {
 #shipfunctions .function-panel {
   padding: 9px;
   margin-bottom: 7px;
-  font-size: 15px;
+  font-size: 16.875px;
   border-radius: 4px;
 }
 #consolechat #chat {
@@ -395,7 +395,7 @@ body.tray-open #traytoggle {
   overflow: auto;
   justify-content: initial;
   overflow-wrap: anywhere;
-  font-size: 15px;
+  font-size: 16.875px;
   padding: 0 3px;
 }
 body:has(#land:not(.hidden)) #chatlog {
@@ -425,13 +425,13 @@ body:has(#land:not(.hidden)) #chatlog {
 #cbar .cchan button {
   height: 22px;
   padding: 0 7px;
-  font-size: 13px;
+  font-size: 14.625px;
 }
 #cbar #chatin {
   width: 100%;
   min-width: 0;
   height: 25px;
-  font-size: 14px;
+  font-size: 15.75px;
   padding: 0 6px;
 }
 #consoleutilities {
@@ -446,7 +446,7 @@ body:has(#land:not(.hidden)) #chatlog {
 #consoleutilities .cb {
   width: 56px;
   height: 48px;
-  font-size: 24px;
+  font-size: 27px;
   border-radius: 4px;
 }
 #qvolbox {
@@ -455,7 +455,7 @@ body:has(#land:not(.hidden)) #chatlog {
   left: auto;
 }
 #hailmarker {
-  font-size: 15px;
+  font-size: 16.875px;
   border: 4px solid #354750;
   background: #0b1c20;
   color: #e1b391;
@@ -494,7 +494,7 @@ body:has(#login:not(.hidden)) #traytrim {
     gap: 5px;
   }
   #functiondock .function-label {
-    font-size: 10px;
+    font-size: 11.25px;
   }
   #functiondock .function-icon img,
   #functiondock .function-icon svg {
@@ -507,7 +507,7 @@ body:has(#login:not(.hidden)) #traytrim {
   #consoleutilities .cb {
     width: 32px;
     height: 34px;
-    font-size: 19px;
+    font-size: 21.375px;
   }
   #consolechat {
     padding: 4px;
@@ -527,7 +527,7 @@ body:has(#login:not(.hidden)) #traytrim {
     padding-left: 4px;
   }
   #functiondock .function-label {
-    font-size: 9px;
+    font-size: 10.125px;
   }
   #functiondock .function-icon img,
   #functiondock .function-icon svg {
@@ -535,7 +535,7 @@ body:has(#login:not(.hidden)) #traytrim {
     height: 21px;
   }
   #cbar .cchan button {
-    font-size: 10px;
+    font-size: 11.25px;
     padding: 0 4px;
   }
   .landbox {
@@ -548,7 +548,7 @@ body:has(#login:not(.hidden)) #traytrim {
   z-index: auto;
 }
 #functiondock #industrialindicator .function-label {
-  font-size: 11px;
+  font-size: 12.375px;
 }
 #flightstatus {
   position: fixed;
@@ -556,7 +556,7 @@ body:has(#login:not(.hidden)) #traytrim {
   top: 18px;
   z-index: 4;
   text-align: right;
-  font-size: 15px;
+  font-size: 16.875px;
   line-height: 1.5;
   color: #b4c7c7;
   text-shadow: 0 1px 3px #000;
@@ -748,7 +748,7 @@ input.trade-amount[type='number'] {
 .console-serial {
   position: absolute;
   bottom: 5px;
-  font-size: 10px;
+  font-size: 11.25px;
   letter-spacing: 2px;
   color: #8b999e;
   pointer-events: none;
@@ -780,13 +780,13 @@ input.trade-amount[type='number'] {
 }
 #functiondock .function-label {
   bottom: -15px;
-  font-size: 11px;
+  font-size: 12.375px;
   letter-spacing: 0.5px;
   text-shadow: 0 1px #000;
   line-height: 13px;
 }
 #functiondock #industrialindicator .function-label {
-  font-size: 11px;
+  font-size: 12.375px;
 }
 #consolechat {
   align-self: center;
@@ -805,7 +805,7 @@ input.trade-amount[type='number'] {
   display: flex;
   justify-content: space-between;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12.375px;
   letter-spacing: 1px;
   color: #b8c9c4;
   padding: 2px 0 5px;
@@ -814,7 +814,7 @@ input.trade-amount[type='number'] {
   white-space: nowrap;
 }
 #consolechat #chatlog {
-  font-size: 14px;
+  font-size: 15.75px;
   line-height: 1.35;
   padding-top: 4px;
 }
@@ -843,7 +843,7 @@ input.trade-amount[type='number'] {
 #cbar .cchan button {
   height: 23px;
   padding: 0 5px;
-  font-size: 12px;
+  font-size: 13.5px;
 }
 #consoleutilities {
   align-self: start;
@@ -859,7 +859,7 @@ input.trade-amount[type='number'] {
 #consoleutilities .cb {
   width: 100%;
   height: 52px;
-  font-size: 20px;
+  font-size: 22.5px;
   position: relative;
   padding: 3px 3px 17px;
 }
@@ -869,7 +869,7 @@ input.trade-amount[type='number'] {
   bottom: 5px;
   left: 0;
   right: 0;
-  font-size: 11px;
+  font-size: 12.375px;
   line-height: 12px;
   letter-spacing: 0.5px;
   pointer-events: none;
@@ -947,7 +947,7 @@ input.trade-amount[type='number'] {
   padding: 0 2px 7px;
   margin: 0 0 8px;
   min-height: 30px;
-  font-size: 15px;
+  font-size: 16.875px;
 }
 #shipfunctions .function-body {
   padding: 9px;
@@ -991,7 +991,7 @@ input.trade-amount[type='number'] {
   box-shadow: inset 0 2px 6px #0009;
 }
 #cpanel h3 {
-  font-size: 17px;
+  font-size: 19.125px;
   padding: 8px 4px;
   margin-top: 4px;
 }
@@ -1030,7 +1030,7 @@ input.trade-amount[type='number'] {
   content: 'INCOMING HAIL';
   display: block;
   color: #d69a74;
-  font-size: 12px;
+  font-size: 13.5px;
   letter-spacing: 1.5px;
   padding: 2px 0 6px;
   margin-bottom: 5px;
@@ -1058,10 +1058,10 @@ input.trade-amount[type='number'] {
     gap: 4px;
   }
   #consoleutilities .cb {
-    font-size: 18px;
+    font-size: 20.25px;
   }
   .utility-label {
-    font-size: 9px;
+    font-size: 10.125px;
     letter-spacing: 0;
   }
   #consolechat #cbar {
@@ -1072,7 +1072,7 @@ input.trade-amount[type='number'] {
     height: 23px;
   }
   #commsheader {
-    font-size: 10px;
+    font-size: 11.25px;
     letter-spacing: 0;
   }
   #shipfunctions {
@@ -1096,11 +1096,11 @@ input.trade-amount[type='number'] {
     height: 32px;
   }
   #functiondock .function-label {
-    font-size: 10px;
+    font-size: 11.25px;
     letter-spacing: 0;
   }
   #functiondock #industrialindicator .function-label {
-    font-size: 10px;
+    font-size: 11.25px;
   }
   #consolechat {
     height: 130px;
@@ -1118,11 +1118,11 @@ input.trade-amount[type='number'] {
   #consoleutilities .cb {
     width: 34px;
     height: 35px;
-    font-size: 17px;
+    font-size: 19.125px;
     padding: 0 0 9px;
   }
   .utility-label {
-    font-size: 7px;
+    font-size: 7.875px;
     bottom: 1px;
   }
   .console-vent,
@@ -1132,21 +1132,21 @@ input.trade-amount[type='number'] {
   }
   .console-brand {
     left: 12px;
-    font-size: 8px;
+    font-size: 9px;
     letter-spacing: 1px;
   }
   #cockpit::before {
     inset: 10px 20px 15px 2px;
   }
   #commsheader {
-    font-size: 9px;
+    font-size: 10.125px;
   }
   #cbar .cchan button {
-    font-size: 10px;
+    font-size: 11.25px;
     padding: 0 3px;
   }
   #consolechat #chatlog {
-    font-size: 13px;
+    font-size: 14.625px;
   }
 }
 @media (max-width: 480px) {
@@ -1161,13 +1161,13 @@ input.trade-amount[type='number'] {
   }
   #functiondock .function-label,
   #functiondock #industrialindicator .function-label {
-    font-size: 8px;
+    font-size: 9px;
   }
   #consoleutilities .cb {
     width: 28px;
   }
   #commsheader {
-    font-size: 8px;
+    font-size: 9px;
   }
 }
 /* Recessed reading surfaces in the auxiliary menus. */
@@ -1289,7 +1289,7 @@ body.tray-open #consoleutilities .cbtns {
   gap: 6px;
 }
 body.tray-open #consoleutilities .utility-label {
-  font-size: 9px;
+  font-size: 10.125px;
   letter-spacing: 0;
 }
 body.tray-open #consolechat #cbar {
@@ -1376,7 +1376,7 @@ body.tray-open #cbar #chatin {
     height: 64px;
   }
   #storein .store-heading h2 {
-    font-size: 19px;
+    font-size: 21.375px;
   }
 }
 
@@ -1399,7 +1399,7 @@ body.tray-open #cbar #chatin {
   border-radius: 3px;
   background: #0a2528;
   color: #b5eee1;
-  font-size: 10px;
+  font-size: 11.25px;
   letter-spacing: 0.5px;
   cursor: pointer;
 }
@@ -1424,13 +1424,13 @@ body.tray-open #cbar #chatin {
   gap: 10px;
   height: 100%;
   color: #8fc8ba;
-  font-size: 10px;
+  font-size: 11.25px;
   letter-spacing: 1px;
   text-align: center;
   background: radial-gradient(ellipse at bottom, #5fe1c520, transparent 70%);
 }
 .chat-projector-status > span {
-  font-size: 25px;
+  font-size: 28.125px;
   color: #a3efdc;
 }
 #chatprojection {
@@ -1475,7 +1475,7 @@ body.tray-open #cbar #chatin {
   gap: 8px;
   padding-bottom: 8px;
   border-bottom: 1px solid #8cddcb55;
-  font-size: 11px;
+  font-size: 12.375px;
   letter-spacing: 1px;
 }
 .projection-light {
@@ -1492,7 +1492,7 @@ body.tray-open #cbar #chatin {
   scrollbar-gutter: stable;
   padding: 10px 4px;
   line-height: 1.5;
-  font-size: 15px;
+  font-size: 16.875px;
   overflow-wrap: anywhere;
 }
 #chatprojection #chatlog > div {
@@ -1505,7 +1505,7 @@ body.tray-open #cbar #chatin {
   padding-top: 6px;
   border-top: 1px solid #8cddcb33;
   color: #83b6ac;
-  font-size: 9px;
+  font-size: 10.125px;
   letter-spacing: 1px;
 }
 body:has(#land:not(.hidden)) #chatprojection {
@@ -1541,11 +1541,11 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
     padding: 8px;
   }
   #chatprojection > header {
-    font-size: 9px;
+    font-size: 10.125px;
     letter-spacing: 0;
   }
   #chatprojection #chatlog {
-    font-size: 13px;
+    font-size: 14.625px;
   }
 }
 
@@ -1576,4 +1576,198 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
 #cpanel.custom-height {
   flex: 0 0 auto;
   min-height: 180px;
+}
+
+/* A shared center track absorbs wide-screen space without stretching controls. */
+#cockpit {
+  grid-template-columns: 360px minmax(0, 1fr) 360px;
+}
+#functiondock {
+  grid-template-columns: repeat(5, 58px);
+  grid-template-rows: repeat(2, 48px);
+}
+#functiondock .function-icon {
+  width: 58px;
+  flex-shrink: 0;
+}
+#attentionindicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: #a1b0b6;
+  border: 1px solid #697b82;
+  background: #101c23;
+}
+#attentionindicator img {
+  width: 24px;
+  height: 24px;
+  opacity: 0.45;
+  filter: none;
+}
+#attentionindicator[data-state='targeted'] {
+  color: #ff554c;
+  border-color: currentColor;
+  animation: attention-blink 1s steps(2, jump-none) infinite;
+}
+#attentionindicator[data-state='scanned'] {
+  color: #ffae42;
+  border-color: currentColor;
+  animation: attention-blink 1s steps(2, jump-none) infinite;
+}
+#attentionindicator[data-state='targeted'] img,
+#attentionindicator[data-state='scanned'] img {
+  opacity: 1;
+}
+#attentionindicator[data-state='targeted'] img {
+  filter: brightness(0) saturate(100%) invert(45%) sepia(86%) saturate(1911%) hue-rotate(330deg);
+}
+#attentionindicator[data-state='scanned'] img {
+  filter: brightness(0) saturate(100%) invert(77%) sepia(65%) saturate(1210%) hue-rotate(334deg);
+}
+@keyframes attention-blink {
+  50% {
+    opacity: 0.5;
+  }
+}
+/* Reserve an actual canvas gap, so right-aligned scene text cannot sit under the tray. */
+#view {
+  width: calc(100% - var(--hud) - 12px);
+}
+#infobox .gbox,
+#gmap .gbox {
+  width: clamp(320px, 70vw, 1200px);
+}
+#land .landbox {
+  width: clamp(320px, 82vw, 1400px);
+}
+#gmap .gbox,
+#land .landbox,
+#infobox .gbox {
+  min-width: 0;
+  max-width: calc(100% - 20px);
+}
+#commsheader {
+  min-width: 0;
+}
+#commssector {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (min-width: 1101px) {
+  #consoleutilities .cb {
+    width: 90px;
+    flex-shrink: 0;
+  }
+  #consoleutilities .cbtns {
+    grid-template-columns: repeat(3, 90px);
+  }
+}
+@media (max-width: 1100px) {
+  #cockpit {
+    grid-template-columns: 260px minmax(0, 1fr) 180px;
+    padding-left: 20px;
+    padding-right: 36px;
+    gap: 12px;
+  }
+  #functiondock {
+    grid-template-columns: repeat(5, 42px);
+    gap: 8px 5px;
+    padding: 8px;
+  }
+  #functiondock .function-icon {
+    width: 42px;
+  }
+  #functiondock .function-label {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  #commsheader .comms-live {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  #cockpit {
+    grid-template-columns: 190px minmax(0, 1fr) 38px;
+    padding: 15px 28px 18px 8px;
+    gap: 7px;
+  }
+  #functiondock {
+    grid-template-columns: repeat(5, 32px);
+    padding: 5px 4px;
+    gap: 8px 4px;
+  }
+  #functiondock .function-icon {
+    width: 32px;
+  }
+  #functiondock .function-label,
+  #functiondock #industrialindicator .function-label {
+    font-size: 9px;
+  }
+  #commssector {
+    display: none;
+  }
+  #consolechat #cbar {
+    flex-wrap: wrap;
+  }
+  #cbar #chatin {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+}
+@media (max-width: 480px) {
+  #cockpit {
+    grid-template-columns: 154px minmax(0, 1fr) 30px;
+    gap: 4px;
+    padding-left: 4px;
+  }
+  #functiondock {
+    grid-template-columns: repeat(5, 26px);
+    gap: 8px 2px;
+    padding: 5px 3px;
+  }
+  #functiondock .function-icon {
+    width: 26px;
+  }
+  #functiondock .function-label,
+  #functiondock #industrialindicator .function-label {
+    font-size: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #attentionindicator[data-state] {
+    animation: none;
+  }
+}
+
+#consolechat {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (min-width: 1101px) {
+  body:not(.tray-open) #consoleutilities {
+    width: 290px;
+    justify-self: end;
+  }
+}
+@media (min-width: 1251px) {
+  body.tray-open #cockpit {
+    grid-template-columns: 360px minmax(0, 1fr) 360px;
+    justify-content: stretch;
+  }
+  body.tray-open #consoleutilities {
+    width: 290px;
+    justify-self: end;
+  }
+}
+
+/* Larger tab labels keep their readable size; recover room from chrome, not text. */
+#ctabs {
+  gap: 2px;
+}
+#ctabs button {
+  padding-inline: 2px;
+  letter-spacing: 0;
 }
