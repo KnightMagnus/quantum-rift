@@ -2,6 +2,14 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.3.2 — Friend games and native online hosting
+
+- Add explicit friend-game launchers with one host-owned shared world, separate password captains and independent private saves; retain Solo-only pause and import/export.
+- Use native Nakama authentication, sessions, authoritative matches and PostgreSQL checkpoints for dedicated online play. Services require operator setup; existing local saves do not migrate automatically.
+- Run the flight scene, camera, input and native sprite entities through ExcaliburJS, retaining the existing cockpit and authoritative game simulation.
+- Convert application source to native TypeScript with strict checks; ship compiled modules and bundled libraries for play without installing dependencies.
+- Refresh the beta Solo save generator catalog for 3.3.2. See the [release notes](docs/RELEASE-3.3.2.md) for runtime, update and networking limits.
+
 ### 3.3.1 — Maintenance and freight progression
 
 - Guarantee two small, supplied-cargo deliveries on inner-system job boards, sized so an empty starting ship can take both.

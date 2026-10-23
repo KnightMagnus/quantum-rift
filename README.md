@@ -8,16 +8,12 @@
 
 **A space trading and combat game in your browser.**
 
-3.3.1 is a maintenance release: clearer server ownership, organized stylesheets,
-and a [developer code-navigation guide](docs/CODE-NAVIGATION.md). Gameplay and
-save formats are unchanged by the cleanup. See the [release notes](docs/RELEASE-3.3.1.md).
-
-The download above is the published release archive and predates this checkout’s
-native online backend and friend-host mode. This checkout offers local Solo,
-a friend-hosted universe saved on one player’s computer, and dedicated online
-play with Nakama 3.41.0 and PostgreSQL. See [hosting choices](docs/HOSTING.md)
-and [dedicated online hosting](docs/NAKAMA.md).
-No new release or production migration is implied.
+3.3.2 adds a friend-hosted universe alongside local Solo and dedicated online
+play. The flight viewport uses ExcaliburJS, and dedicated online authority runs
+inside Nakama 3.41.0 with PostgreSQL. See the [release notes](docs/RELEASE-3.3.2.md),
+[friend-hosting guide](docs/HOSTING.md) and [dedicated hosting guide](docs/NAKAMA.md).
+Solo and friend games need no Nakama or PostgreSQL service. Dedicated hosting
+requires operator configuration; the download does not deploy those services.
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
@@ -79,14 +75,14 @@ The computer running the game needs the **pinned Node 27 prerelease** and a mode
 
 Download and extract the release above, then:
 
-- **Windows:** double-click **`Start Solo Game.bat`** for a private game, or **`Start Quantum Rift.bat`** to host multiplayer.
-- **macOS / Linux:** open a terminal in the extracted folder and run `sh start-solo.command` for a private game, or `sh start.command` to host multiplayer.
-- **Any platform, from a terminal:** run `node tools/start.ts` in the extracted folder to host multiplayer.
+- **Windows:** double-click **`Start Solo Game.bat`** for a private game, or **`Start Friend Game.bat`** to host friends.
+- **macOS / Linux:** open a terminal in the extracted folder and run `sh start-solo.command` for a private game, or `sh start-friends.command` to host friends.
+- **Any platform, from a terminal:** run `node tools/start.ts --friends` to host friends. Ordinary `node tools/start.ts` selects dedicated online hosting and requires separately configured Nakama and PostgreSQL.
 
 Open **http://localhost:8080** if the browser does not open automatically. Keep the server window open while playing. Solo games accept connections only from your computer; for multiplayer on the same network, friends open `http://<host-computer-address>:8080`.
 
 When updating, close the old game server window first. Preserve your `data/` and
-`solo-data/` save folders; do not replace them with empty folders from a new copy.
+`solo-data/` and `friend-data/` save folders; do not replace them with empty folders from a new copy.
 
 ## Run this source checkout
 

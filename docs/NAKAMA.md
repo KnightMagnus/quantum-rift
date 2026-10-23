@@ -2,9 +2,8 @@
 
 Dedicated online mode uses Nakama 3.41.0 for authentication, sessions,
 sockets, match presence and authoritative simulation, with PostgreSQL for durable
-storage. Local verification uses PostgreSQL 18.6. The published 3.3.1 archive
-predates this backend; this guide describes the checkout, not a new release or a
-completed production deployment.
+storage. Local verification uses PostgreSQL 18.6. The 3.3.2 complete release
+includes the compiled Nakama runtime, but no configured production services.
 
 For a player-hosted universe without Nakama or PostgreSQL, see
 [friend hosting](HOSTING.md). Ordinary startup still selects the dedicated native
@@ -20,8 +19,8 @@ and [configuration](https://heroiclabs.com/docs/nakama/getting-started/configura
 documentation. This repository does not supply a production deployment or an
 automatic port-opening workflow.
 
-Build the source checkout with `npm ci` and `npm run build`, then start the web
-host with `node tools/start.ts`.
+Extract the complete release, then start the web host with `node tools/start.ts`.
+For a source checkout, first run `npm ci` and `npm run build`.
 
 The build produces normal server/browser modules and the self-contained Nakama
 runtime `dist/nakama/quantum-rift.js`. Configure Nakama to load that runtime. Merge these tested settings into the
