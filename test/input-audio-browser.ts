@@ -98,9 +98,11 @@ try {
   assert.equal(keyboardInitial.result.value.activated, false);
   assert.equal(keyboardInitial.result.value.ctx, 'suspended');
   await keyboardPage.keyboard.press('Tab');
-  await keyboardPage.waitForFunction(
-    async () => (await import('/audio.js')).debug().ctx === 'running',
-  );
+  // Resuming the context can finish before the score's asynchronous fetch/decode.
+  await keyboardPage.waitForFunction(async () => {
+    const audio = (await import('/audio.js')).debug();
+    return audio.ctx === 'running' && audio.music;
+  });
   assert.equal(
     await keyboardPage.evaluate(async () => (await import('/audio.js')).debug().music),
     true,
