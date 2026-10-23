@@ -2,6 +2,7 @@ import entries from './portrait-catalog.json' with { type: 'json' };
 
 /** Trusted portrait metadata; neither callers nor saved URLs choose image paths. */
 export const PORTRAITS = Object.freeze(entries);
+const genericByEntity = new WeakMap<object, string>();
 const byId = new Map(entries.map((entry) => [entry.id, entry]));
 export const PLAYER_PORTRAITS = Object.freeze(entries.filter((entry) => entry.playerSelectable));
 /** Only generic catalog identities are selectable by captains. */
@@ -30,12 +31,17 @@ export function npcPortrait(
   system: string,
 ): string {
   const named = entity.rival && byId.get(`npc-${entity.rival}`);
-  return named
-    ? named.id
-    : genericPortrait(
-        `${system}:${entity.faction}:${entity.name || 'unnamed'}:${entity.hull}`,
-        entity.faction,
-      );
+  if (named) return named.id;
+  const captured = genericByEntity.get(entity);
+  if (captured) return captured;
+  // Named generic captains retain their face across travel and hull changes.
+  // Unnamed traffic uses a reproducible spawn class, captured for that entity's life.
+  const identity = entity.name
+    ? `captain:${entity.name}`
+    : `${system}:${entity.faction}:unnamed:${entity.hull}`;
+  const selected = genericPortrait(identity, entity.faction);
+  genericByEntity.set(entity, selected);
+  return selected;
 }
 /** Never interpolate an untrusted path into an image URL. */
 export function portraitAsset(value: unknown): string {

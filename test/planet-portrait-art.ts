@@ -140,3 +140,20 @@ assert.ok(!genericPortrait('stable captain', 'unknown').startsWith('npc-'));
 console.log(
   'Planet scene identities, colony stages, trusted portrait catalog and exact artwork payloads passed.',
 );
+
+const wanderingCaptain = { name: 'Stable generic captain', faction: 'spacer', hull: 1 };
+const originalFace = npcPortrait(wanderingCaptain, 'qgate');
+wanderingCaptain.hull = 2;
+assert.equal(npcPortrait(wanderingCaptain, 'farreach'), originalFace);
+assert.equal(
+  npcPortrait({ ...wanderingCaptain }, 'sol'),
+  originalFace,
+  'named generic identity survives a reconstructed entity, travel and hull change',
+);
+const unnamedTraffic = { name: null, faction: 'spacer', hull: 1 };
+const trafficFace = npcPortrait(unnamedTraffic, 'qgate');
+assert.equal(
+  npcPortrait(unnamedTraffic, 'farreach'),
+  trafficFace,
+  'active unnamed traffic retains its captured face across travel',
+);
