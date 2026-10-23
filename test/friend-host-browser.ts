@@ -131,6 +131,14 @@ try {
       }),
     'friends observe browser host movement',
   );
+  // A short initial flight can batch several socket events into one host turn.
+  // Observe the same sustained interval used after reconnect before measuring Hz.
+  await until(() => {
+    const commands = frames
+      .slice(start)
+      .filter((frame) => frame.direction === 'sent' && frame.packet.t === 'input');
+    return commands.length >= 5 && commands.at(-1)!.at - commands[0].at >= 1800;
+  }, 'sustained initial input measurement');
   const inputs = frames
     .slice(start)
     .filter((frame) => frame.direction === 'sent' && frame.packet.t === 'input');
@@ -144,8 +152,15 @@ try {
   );
   const inputMs = inputs.at(-1)!.at - inputs[0].at;
   const inputHz = (inputs.length - 1) / (inputMs / 1000);
+  checks.flight = {
+    before,
+    after,
+    commands: inputs.length,
+    inputMs,
+    inputHz,
+    observedByFriends: 2,
+  };
   assert(inputHz >= 15 && inputHz <= 45, 'No duplicated input clock: ' + inputHz);
-  checks.flight = { before, after, commands: inputs.length, inputHz, observedByFriends: 2 };
   friends[0].send({ t: 'chat', ch: 'sys', msg: 'Friends are flying together.' });
   await page.waitForFunction(() =>
     document.body.textContent?.includes('Friends are flying together.'),
