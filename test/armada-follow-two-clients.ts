@@ -109,6 +109,9 @@ try {
     pages.push(page);
     page.on('pageerror', (entity) => errors.push(String(entity)));
     await page.goto(origin);
+    await page.waitForFunction(
+      () => typeof G !== 'undefined' && !!document.getElementById('lver')!.textContent,
+    );
     await page.fill('#lname', name);
     await page.fill('#lpass', 'fixture');
     await page.click('#lbtn');

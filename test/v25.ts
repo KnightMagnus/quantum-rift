@@ -1,3 +1,4 @@
+import { landscapeScene } from '../shared/landscapes.ts';
 import { mockPlayerData, mockSession } from './helpers/mocks.ts';
 import type { GameAssets } from '../shared/rules.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
@@ -111,20 +112,17 @@ assertCondition(
   'twelve station designs, each with a space sprite and a landing picture',
 );
 // landing pictures
-const requiredFixtureValue2 = requiredFixtureValue(
-    stripTypeScriptTypes(read('ui.js')).match(/const LAND_SCENES\s*= (\{[\s\S]*?\});/),
-  )[1],
-  scenes = [...requiredFixtureValue2.matchAll(/'([a-z_0-9]+)'/g)]
-    .map((message) => message[1])
-    .filter(
-      (entry) =>
-        !/^(terran|city|ocean|desert|ice|lava|barren|gas|toxic|crystal)$/.test(entry) ||
-        filesystem.existsSync(assetDirectory + `land/l_${entry}.jpg`),
-    );
+const scenes = [
+  ...new Set(
+    Object.values(STELLARS)
+      .filter((body) => body.kind !== 'station' && !body.hub && !body.site)
+      .map((body) => landscapeScene(body)),
+  ),
+];
 assertCondition(
   scenes.length >= 20 &&
-    scenes.every((entry) => filesystem.existsSync(assetDirectory + `land/l_${entry}.jpg`)),
-  `${scenes.length} landing scenes referenced by the client all exist`,
+    scenes.every((key) => filesystem.existsSync(assetDirectory + `land/${key}.jpg`)),
+  `${scenes.length} stable planetary scenes selected by the client all exist`,
 );
 for (const entry of [
   'earth',
@@ -188,8 +186,15 @@ const size = (playerData: string): number =>
     ? size(assetDirectory + 'radio/')
     : 0;
   assertCondition(
-    size(assetDirectory) - ships - radio < 29e6,
-    `client art besides separately packaged ships/radio stays small enough for one zip (${((size(assetDirectory) - ships - radio) / 1e6).toFixed(1)} MB; 2.6 ship sheets ${(ships / 1e6).toFixed(1)} MB ship as part 2)`,
+    size(assetDirectory) -
+      ships -
+      radio -
+      size(assetDirectory + 'land/') -
+      size(assetDirectory + 'portraits/') <
+      25e6 &&
+      size(assetDirectory + 'land/') < 25e6 &&
+      size(assetDirectory + 'portraits/') < 35e6,
+    `client art budgets: miscellaneous under25 MB, landscapes under25 MB, portraits under35 MB; bounded multipart delivery (${((size(assetDirectory) - ships - radio - size(assetDirectory + 'land/') - size(assetDirectory + 'portraits/')) / 1e6).toFixed(1)} MB miscellaneous, ${(size(assetDirectory + 'land/') / 1e6).toFixed(1)} MB landscapes, ${(size(assetDirectory + 'portraits/') / 1e6).toFixed(1)} MB portraits)`,
   );
 }
 // polish

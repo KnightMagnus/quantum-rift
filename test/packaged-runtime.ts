@@ -151,6 +151,8 @@ try {
     'tsconfig.core.json',
     'tsconfig.build.json',
     'shared/assets.json',
+    'shared/landscape-worlds.json',
+    'shared/portrait-catalog.json',
     'server/seeds.json',
     'client/index.html',
     'client/style.css',
@@ -259,6 +261,8 @@ try {
     'dist/nakama/quantum-rift.js',
     'dist/client/connection.js',
     'dist/shared/assets.json',
+    'dist/shared/landscape-worlds.json',
+    'dist/shared/portrait-catalog.json',
   ])
     assert(manifest.files.some(({ path: filename }) => filename === required));
   assert.equal(
