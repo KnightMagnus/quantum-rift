@@ -2,6 +2,7 @@
   "schema": 1,
   "unit": [
     "coverage-inventory.ts",
+    "regression-runner-contracts.ts",
     "excalibur-contracts.ts",
     "v03.ts",
     "v04.ts",
