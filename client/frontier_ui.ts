@@ -1,3 +1,6 @@
+import { portraitAsset } from '../shared/portraits.ts';
+import { landscapeScene, colonyStage } from '../shared/landscapes.ts';
+import { artworkUrl } from './artwork.ts';
 import type { PlayerPayload as PlayerData } from './main.ts';
 import type { ClientGameState } from './main.ts';
 export type ColonyData = {
@@ -55,6 +58,8 @@ export type ExchangeBookEntry = {
   asks: number;
 };
 export type CaptainProfile = {
+  /** Public catalog portrait identity. */
+  portraitId: string;
   /** Captain name */
   name: string;
 
@@ -164,15 +169,24 @@ export function colonyHtml(clientGameState: ClientGameState): string {
     length2 = clientGameState.landed!,
     component = length2.colony!,
     stellarBody = STELLARS[length2.stellar];
+  const illustration = `<div class="colony-illustration"><img width="612" height="285" src="${artworkUrl(`land/${landscapeScene(stellarBody, component.open ? 0 : component.lv)}.jpg`)}" alt="${escapeHtml2(stellarBody.name)} · ${component.open ? 'unsettled' : `settlement stage ${colonyStage(component.lv)}`}" /></div>`;
   if (component.open)
-    return `<div class="sect" style="margin-top:0">UNSETTLED WORLD</div><p>${escapeHtml2(stellarBody.name)} has no flag. Settle it to build farms, mines, habitats and permanent-buff installations that work while you are away.</p>
+    return (
+      illustration +
+      `<div class="sect" style="margin-top:0">UNSETTLED WORLD</div><p>${escapeHtml2(stellarBody.name)} has no flag. Settle it to build farms, mines, habitats and permanent-buff installations that work while you are away.</p>
     <div class="kv"><span>Charter</span><span>${credits(COLONY.cost)} cr + ${mats(playerPayload, COLONY.mats)}</span></div><div class="kv"><span>Your colonies</span><span>${playerPayload.colonies.length} of ${playerPayload.station.ops >= 5 ? COLONY.maxAtOps5 : COLONY.max}</span></div>
-    <button class="btn" data-act="col" data-op="found">FOUND A COLONY</button>`;
+    <button class="btn" data-act="col" data-op="found">FOUND A COLONY</button>`
+    );
   if (!component.own)
-    return `<div class="sect" style="margin-top:0">${escapeHtml2(component.name)}</div><p>Settled by Captain ${escapeHtml2(component.owner)} (level ${component.lv}).</p>`;
+    return (
+      illustration +
+      `<div class="sect" style="margin-top:0">${escapeHtml2(component.name)}</div><p>Settled by Captain ${escapeHtml2(component.owner)} (level ${component.lv}).</p>`
+    );
   const colonyLevelInfo = COLONY_LEVELS[component.lv]!,
     next = COLONY_LEVELS[component.lv + 1];
-  let height = `<div class="sect" style="margin-top:0">${escapeHtml2(component.name.toUpperCase())} · LEVEL ${component.lv}</div><div class="kv"><span>Building slots</span><span>${component.buildings.length} / ${colonyLevelInfo.slots}</span></div><div class="kv"><span>Production</span><span>x${colonyLevelInfo.mult}</span></div>`;
+  let height =
+    illustration +
+    `<div class="sect" style="margin-top:0">${escapeHtml2(component.name.toUpperCase())} · LEVEL ${component.lv}</div><div class="kv"><span>Building slots</span><span>${component.buildings.length} / ${colonyLevelInfo.slots}</span></div><div class="kv"><span>Production</span><span>x${colonyLevelInfo.mult}</span></div>`;
   if (next)
     height += `<div class="kv"><span>Upgrade to level ${component.lv + 1}</span><span>${credits(next.cost!)} + ${mats(playerPayload, next.mats!)} <button class="btn sm" data-act="col" data-op="upgrade">UPGRADE</button></span></div>`;
   const store = Object.entries(component.store).filter(([, value]) => value >= 1);
@@ -350,7 +364,7 @@ export function boardsHtml(clientGameState: ClientGameState): string {
   height += `<div class="rrow"><input id="profq" placeholder="Look up a captain"><button class="btn sm" data-act="profgo">PROFILE</button></div>`;
   const captainProfile = clientGameState.prof;
   if (captainProfile)
-    height += `<div class="ocard"><div class="oname"><b style="font-size:15px">${escapeHtml2(captainProfile.name)}</b> ${captainProfile.online ? '<span style="color:var(--ok)">● online</span>' : '<span class="dim">offline</span>'}</div>
+    height += `<div class="ocard"><div class="portrait-window metal"><img width="160" height="160" src="${artworkUrl(portraitAsset(captainProfile.portraitId))}" alt="${escapeHtml2(captainProfile.name)} portrait" /></div><div class="oname"><b style="font-size:15px">${escapeHtml2(captainProfile.name)}</b> ${captainProfile.online ? '<span style="color:var(--ok)">● online</span>' : '<span class="dim">offline</span>'}</div>
     <div class="kv"><span>Flies</span><span>${escapeHtml2(captainProfile.ship)} "${escapeHtml2(captainProfile.shipName)}"</span></div><div class="kv"><span>Station</span><span>${captainProfile.site ? `${escapeHtml2(captainProfile.site)} · Station Tier ${captainProfile.ops}` : 'none'}</span></div>
     <div class="kv"><span>Colonies</span><span>${captainProfile.colonies.map(escapeHtml2).join(', ') || 'none'}</span></div><div class="kv"><span>Record</span><span>${captainProfile.kills} kills · ${captainProfile.jumps} jumps · ${captainProfile.mined} t mined · ${credits(captainProfile.earned)} earned</span></div>
     <div class="kv"><span>Arena</span><span>${captainProfile.arena ? `${captainProfile.arena.rating} (${captainProfile.arena.w}-${captainProfile.arena.l})` : 'unrated'}</span></div>${captainProfile.mastery ? `<div class="kv"><span>Best mastery</span><span>${escapeHtml2(captainProfile.mastery.ship)} · Tier ${captainProfile.mastery.tier}</span></div>` : ''}<div class="kv"><span>Officers</span><span>${captainProfile.officers}</span></div></div>`;

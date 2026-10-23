@@ -1,0 +1,562 @@
+[
+  {
+    "id": "npc-r0",
+    "faction": "lamp",
+    "label": "Soren Ironside",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r0"
+  },
+  {
+    "id": "npc-r1",
+    "faction": "spacer",
+    "label": "Wade Calloway",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r1"
+  },
+  {
+    "id": "npc-r2",
+    "faction": "spacer",
+    "label": "Lysa Moreau",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r2"
+  },
+  {
+    "id": "npc-r3",
+    "faction": "sarn",
+    "label": "Juno Marlowe",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r3"
+  },
+  {
+    "id": "npc-r4",
+    "faction": "spacer",
+    "label": "Mags Brannigan",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r4"
+  },
+  {
+    "id": "npc-r5",
+    "faction": "sarn",
+    "label": "Esme Strand",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r5"
+  },
+  {
+    "id": "npc-r6",
+    "faction": "thalassi",
+    "label": "Greta Reyes",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r6"
+  },
+  {
+    "id": "npc-r7",
+    "faction": "vashari",
+    "label": "Six Flash",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r7"
+  },
+  {
+    "id": "npc-r8",
+    "faction": "ylith",
+    "label": "Bram Quill",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r8"
+  },
+  {
+    "id": "npc-r9",
+    "faction": "vashari",
+    "label": "Vera Hollow-Eye",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r9"
+  },
+  {
+    "id": "npc-r10",
+    "faction": "quantum",
+    "label": "Hale Nakamura",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r10"
+  },
+  {
+    "id": "npc-r11",
+    "faction": "spacer",
+    "label": "Anya Rourke",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r11"
+  },
+  {
+    "id": "npc-r12",
+    "faction": "spacer",
+    "label": "Ulric Duskwater",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r12"
+  },
+  {
+    "id": "npc-r13",
+    "faction": "korrund",
+    "label": "Oona Thorne",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r13"
+  },
+  {
+    "id": "npc-r14",
+    "faction": "spacer",
+    "label": "Dorian Kestrel",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r14"
+  },
+  {
+    "id": "npc-r15",
+    "faction": "farside",
+    "label": "Tamsin Vance",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r15"
+  },
+  {
+    "id": "npc-r16",
+    "faction": "korrund",
+    "label": "Xan Okonkwo",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r16"
+  },
+  {
+    "id": "npc-r17",
+    "faction": "quantum",
+    "label": "Ines Okafor",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r17"
+  },
+  {
+    "id": "npc-r18",
+    "faction": "quantum",
+    "label": "Quint Marsh",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r18"
+  },
+  {
+    "id": "npc-r19",
+    "faction": "spacer",
+    "label": "Rhea Kell",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r19"
+  },
+  {
+    "id": "npc-r20",
+    "faction": "ylith",
+    "label": "Jory Achterberg",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r20"
+  },
+  {
+    "id": "npc-r21",
+    "faction": "hollow",
+    "label": "Madcow Soul",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r21"
+  },
+  {
+    "id": "npc-r22",
+    "faction": "hollow",
+    "label": "Yara Galloway",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r22"
+  },
+  {
+    "id": "npc-r23",
+    "faction": "hollow",
+    "label": "Delphine Sato",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r23"
+  },
+  {
+    "id": "npc-r24",
+    "faction": "hollow",
+    "label": "Ezra Voss",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r24"
+  },
+  {
+    "id": "npc-r25",
+    "faction": "hollow",
+    "label": "Zed Vashti",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r25"
+  },
+  {
+    "id": "npc-r26",
+    "faction": "ylith",
+    "label": "Fenn Fairweather",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r26"
+  },
+  {
+    "id": "npc-r27",
+    "faction": "korrund",
+    "label": "Pell Lindqvist",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r27"
+  },
+  {
+    "id": "npc-r28",
+    "faction": "lamp",
+    "label": "Cassia Petrov",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r28"
+  },
+  {
+    "id": "npc-r29",
+    "faction": "hollow",
+    "label": "Nico Abara",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": "r29"
+  },
+  {
+    "id": "generic-quantum-01",
+    "faction": "quantum",
+    "label": "Quantum Concord 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-spacer-01",
+    "faction": "spacer",
+    "label": "Free Spacers 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-lamp-01",
+    "faction": "lamp",
+    "label": "Lamplighters 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-hollow-01",
+    "faction": "hollow",
+    "label": "The Hollow 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-quevari-01",
+    "faction": "quevari",
+    "label": "Que\u2019vari 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-umbral-01",
+    "faction": "umbral",
+    "label": "The Umbral 01",
+    "playerSelectable": false,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-sarn-01",
+    "faction": "sarn",
+    "label": "The Sarn 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-farside-01",
+    "faction": "farside",
+    "label": "Farside Settlers 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-frontier-01",
+    "faction": "frontier",
+    "label": "Frontier independent 01",
+    "playerSelectable": true,
+    "poolEligible": false,
+    "npcId": null
+  },
+  {
+    "id": "generic-deep-01",
+    "faction": "deep",
+    "label": "Deep independent 01",
+    "playerSelectable": true,
+    "poolEligible": false,
+    "npcId": null
+  },
+  {
+    "id": "generic-swarm-01",
+    "faction": "swarm",
+    "label": "Feral Swarm 01",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": null
+  },
+  {
+    "id": "generic-eclipse-01",
+    "faction": "eclipse",
+    "label": "Umbral Eclipse 01",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": null
+  },
+  {
+    "id": "generic-vashari-01",
+    "faction": "vashari",
+    "label": "The Vashari 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-korrund-01",
+    "faction": "korrund",
+    "label": "The Korrund 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-ylith-01",
+    "faction": "ylith",
+    "label": "The Ylith 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-thalassi-01",
+    "faction": "thalassi",
+    "label": "The Thalassi 01",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-quantum-02",
+    "faction": "quantum",
+    "label": "Quantum Concord 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-quantum-03",
+    "faction": "quantum",
+    "label": "Quantum Concord 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-spacer-02",
+    "faction": "spacer",
+    "label": "Free Spacers 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-spacer-03",
+    "faction": "spacer",
+    "label": "Free Spacers 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-lamp-02",
+    "faction": "lamp",
+    "label": "Lamplighters 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-lamp-03",
+    "faction": "lamp",
+    "label": "Lamplighters 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-hollow-02",
+    "faction": "hollow",
+    "label": "The Hollow 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-hollow-03",
+    "faction": "hollow",
+    "label": "The Hollow 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-quevari-02",
+    "faction": "quevari",
+    "label": "Que\u2019vari 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-quevari-03",
+    "faction": "quevari",
+    "label": "Que\u2019vari 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-umbral-02",
+    "faction": "umbral",
+    "label": "The Umbral 02",
+    "playerSelectable": false,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-umbral-03",
+    "faction": "umbral",
+    "label": "The Umbral 03",
+    "playerSelectable": false,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-vashari-02",
+    "faction": "vashari",
+    "label": "The Vashari 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-vashari-03",
+    "faction": "vashari",
+    "label": "The Vashari 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-korrund-02",
+    "faction": "korrund",
+    "label": "The Korrund 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-korrund-03",
+    "faction": "korrund",
+    "label": "The Korrund 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-ylith-02",
+    "faction": "ylith",
+    "label": "The Ylith 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-ylith-03",
+    "faction": "ylith",
+    "label": "The Ylith 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-sarn-02",
+    "faction": "sarn",
+    "label": "The Sarn 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-sarn-03",
+    "faction": "sarn",
+    "label": "The Sarn 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-thalassi-02",
+    "faction": "thalassi",
+    "label": "The Thalassi 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-thalassi-03",
+    "faction": "thalassi",
+    "label": "The Thalassi 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-farside-02",
+    "faction": "farside",
+    "label": "Farside Settlers 02",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  },
+  {
+    "id": "generic-farside-03",
+    "faction": "farside",
+    "label": "Farside Settlers 03",
+    "playerSelectable": true,
+    "poolEligible": true,
+    "npcId": null
+  }
+]

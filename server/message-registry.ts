@@ -10,6 +10,9 @@ export type NetworkMessage = {
   /** Message type identifier. */
   t?: string;
 
+  /** Allowlisted personal portrait identity. */
+  portraitId?: unknown;
+
   /** Allowlisted operation, validated by its route. */
   op?: string;
 

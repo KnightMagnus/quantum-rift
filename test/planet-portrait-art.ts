@@ -1,0 +1,117 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import worlds from '../shared/landscape-worlds.json' with { type: 'json' };
+import inventory from '../tools/landscape-inventory.json' with { type: 'json' };
+import portraits from '../tools/portrait-inventory.json' with { type: 'json' };
+import { landscapeScene, colonyStage } from '../shared/landscapes.ts';
+import { STELLARS } from '../shared/galaxy.ts';
+import { RIVALS } from '../shared/rivals.ts';
+import {
+  PORTRAITS,
+  PLAYER_PORTRAITS,
+  npcPortrait,
+  genericPortrait,
+  playerPortrait,
+  portraitAsset,
+  isPlayerPortrait,
+} from '../shared/portraits.ts';
+
+assert.equal(Object.keys(worlds).length, 179);
+const assets = new Set(inventory.map((item) => item.file));
+assert.equal(inventory.length, 908);
+assert.ok(inventory.every((item) => !item.file.startsWith('l_st_')));
+for (const item of inventory.filter((item) => item.stage === 0)) {
+  for (const stage of [1, 2, 3])
+    assert.ok(assets.has(item.file.replace('.jpg', `_col${stage}.jpg`)), item.file);
+}
+for (const biome of [
+  'terran',
+  'city',
+  'jungle',
+  'ocean',
+  'desert',
+  'ice',
+  'lava',
+  'barren',
+  'gas',
+  'toxic',
+  'crystal',
+]) {
+  const families = inventory.filter(
+    (item) => item.kind === 'family' && item.stage === 0 && item.biome === biome,
+  );
+  assert.ok(families.length >= 4, biome);
+  assert.equal(new Set(families.map((item) => item.sha256)).size, families.length, biome);
+}
+for (const [id, key] of Object.entries(worlds)) {
+  const body = STELLARS[id];
+  assert.ok(body && body.kind !== 'station', id);
+  assert.equal(landscapeScene(body), key, id);
+  for (const level of [0, 1, 2, 3, 4, 5, -1, NaN, 6, '2', null]) {
+    const expected =
+      typeof level === 'number' && level >= 1 && level <= 5 ? [0, 1, 2, 2, 3, 3][level] : 0;
+    assert.equal(colonyStage(level), expected);
+    assert.equal(landscapeScene(body, level), key + (expected ? `_col${expected}` : ''));
+    assert.ok(assets.has(landscapeScene(body, level) + '.jpg'));
+  }
+}
+for (const body of Object.values(STELLARS).filter((body) => body.kind === 'station'))
+  assert.equal(landscapeScene(body, 5), '');
+const future = { ...STELLARS.earth, id: 'future-ridge' };
+assert.equal(landscapeScene(future), landscapeScene(structuredClone(future)));
+assert.ok(assets.has(landscapeScene(future) + '.jpg'));
+for (const item of inventory) {
+  const bytes = fs.readFileSync(new URL('../client/assets/land/' + item.file, import.meta.url));
+  assert.equal(bytes.length, item.bytes, item.file);
+  assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), item.sha256, item.file);
+  assert.equal(bytes.readUInt16BE(0), 0xffd8);
+}
+assert.equal(PORTRAITS.length, 70);
+const named = PORTRAITS.filter((entry) => entry.npcId);
+assert.equal(named.length, 30);
+assert.equal(new Set(named.map((entry) => entry.id)).size, 30);
+assert.deepEqual(
+  named
+    .map((entry) => entry.npcId)
+    .sort((left, right) => String(left).localeCompare(String(right))),
+  RIVALS.map((rival) => rival.id).sort(),
+);
+for (const rival of RIVALS)
+  assert.equal(
+    npcPortrait({ rival: rival.id, faction: rival.fac, hull: 1 }, 'sol'),
+    'npc-' + rival.id,
+  );
+for (const item of portraits.entries) {
+  const bytes = fs.readFileSync(
+    new URL('../client/assets/portraits/' + item.id + '.png', import.meta.url),
+  );
+  assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), item.sha256, item.id);
+  assert.equal(bytes.readUInt32BE(16), 512);
+  assert.equal(bytes.readUInt32BE(20), 512);
+}
+for (const invalid of [
+  undefined,
+  null,
+  '',
+  5,
+  {},
+  'npc-r0',
+  'https://evil/a',
+  '../a',
+  '<script>',
+]) {
+  assert.equal(isPlayerPortrait(invalid), false);
+  assert.equal(playerPortrait(invalid), PLAYER_PORTRAITS[0].id);
+  assert.equal(portraitAsset(invalid).startsWith('portraits/'), true);
+  assert.equal(portraitAsset(invalid).includes('..'), false);
+}
+for (const entry of PLAYER_PORTRAITS) assert.equal(isPlayerPortrait(entry.id), true);
+assert.equal(
+  genericPortrait('stable captain', 'spacer'),
+  genericPortrait('stable captain', 'spacer'),
+);
+assert.ok(!genericPortrait('stable captain', 'unknown').startsWith('npc-'));
+console.log(
+  'Planet scene identities, colony stages, trusted portrait catalog and exact artwork payloads passed.',
+);

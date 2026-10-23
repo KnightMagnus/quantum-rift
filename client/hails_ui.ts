@@ -1,3 +1,5 @@
+import { portraitAsset } from '../shared/portraits.ts';
+import { artworkUrl } from './artwork.ts';
 interface HailEntry {
   key: string;
   who: string;
@@ -6,6 +8,8 @@ interface HailEntry {
   kind: string;
 }
 interface HailConversation {
+  /** Authoritative catalog identity sent with this conversation. */
+  portraitId?: string;
   who?: string;
   sub?: string;
   text?: string;
@@ -61,11 +65,17 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
     target.append(htmlButtonElement);
     return htmlButtonElement;
   };
+  const clearPortrait = () => {
+    elementById('hailportraitwindow').classList.add('hidden');
+    elementById('hailportrait').removeAttribute('src');
+  };
   const close = () => {
+    clearPortrait();
     elementById('hailbox').classList.add('hidden');
     active = null;
   };
   function inbox() {
+    clearPortrait();
     active = null;
     elementById('hailwho').textContent = 'Incoming hails';
     elementById('hailsub').textContent = '· communications';
@@ -99,6 +109,10 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
   }
   function show(hailConversation: HailConversation) {
     active = hailConversation;
+    const portrait = elementById('hailportrait') as HTMLImageElement;
+    portrait.src = artworkUrl(portraitAsset(hailConversation.portraitId));
+    portrait.alt = `${hailConversation.who || 'Caller'} portrait`;
+    elementById('hailportraitwindow').classList.remove('hidden');
     elementById('hailwho').textContent = hailConversation.who || '';
     elementById('hailsub').textContent = hailConversation.sub ? `· ${hailConversation.sub}` : '';
     elementById('hailtext').textContent = hailConversation.text || '';

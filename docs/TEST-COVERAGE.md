@@ -791,3 +791,6 @@ lamp-brightness, reduced-motion event-loss, resize and lifecycle checks. Station
 lamp dimming uses a precomputed black alpha mask instead of filtering the full
 mutable atlas on each paint. Private headless 4x-CPU profiles are constrained-host
 comparisons, not physical midrange-laptop or audible-output certification.
+## Planetary landscapes and portraits
+
+`planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser and hail windows. Native service startup and authentication remain covered by the existing Nakama regressions; the portrait unit fixture is not a replacement for those service checks.

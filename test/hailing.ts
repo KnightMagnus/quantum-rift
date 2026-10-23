@@ -1,8 +1,10 @@
+import { PLAYER_PORTRAITS } from '../shared/portraits.ts';
 import { mockGame, mockSpace, mockSession, mockEntity } from './helpers/mocks.ts';
 import type { FixtureShape } from './helpers/mocks.ts';
 import type { Entity, Session, Game } from '../server/game.ts';
 type CapturedHail = {
   to: number;
+  portraitId?: string;
   t?: string;
   key?: string;
   player?: number;
@@ -112,10 +114,12 @@ const nonPlayerShip = (
 assert.equal(hailText('😀'.repeat(100)), '😀'.repeat(100));
 assert.equal(hailText('😀'.repeat(101)), null);
 for (const entry of ['', '  ', {}, '\u0000']) assert.equal(hailText(entry), null);
+session.data.portraitId = PLAYER_PORTRAITS.at(-1)!.id;
 service.player(session, session2.ent, '<img onerror=bad>');
 let shipStats = service.state(session2);
 assert.equal(shipStats.queue.length, 1);
 assert.equal(shipStats.queue[0].text, '<img onerror=bad>');
+assert.equal(shipStats.queue[0].portraitId, session.data.portraitId);
 const propertyKey = shipStats.queue[0].key;
 assert.ok(
   !sent.some((message2) => message2.to === session2.id && message2.t === 'hail'),
@@ -128,6 +132,7 @@ assert.ok(
 );
 service.request(session2, { op: 'open', key: propertyKey });
 assert.equal(requiredFixtureValue(sent.at(-1)).player, session.ent.id);
+assert.equal(requiredFixtureValue(sent.at(-1)).portraitId, session.data.portraitId);
 service.player(session, session2.ent, 'flood');
 assert.equal(shipStats.queue[0].text, '<img onerror=bad>');
 currentTime += 11000;
@@ -288,6 +293,12 @@ assert.ok(
   'opening inbox recovers original text',
 );
 assert.deepEqual(requiredFixtureValue(sent.at(-1)).opts, [], 'archive has no actionable offers');
+assert.ok(archived.portraitId);
+assert.equal(
+  requiredFixtureValue(sent.at(-1)).portraitId,
+  archived.portraitId,
+  'despawned caller keeps captured face',
+);
 service.request(session, { op: 'answer', key: archived.key, k: 'gift' });
 assert.equal(session.data.credits, creditsBeforeArchive, 'expired actions cannot spend credits');
 service.request(session, { op: 'dismiss', key: archived.key });

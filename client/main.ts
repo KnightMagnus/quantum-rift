@@ -1,4 +1,5 @@
 import { LandingFeedback, landingRefusal } from './landing-feedback.ts';
+import { initProfile } from './profile_ui.ts';
 import type {
   ServerMessage,
   SnapshotMessage,
@@ -868,6 +869,7 @@ function openSocket(tries: number) {
   };
 }
 function onMessage(serverMessage: ServerMessage) {
+  if (profileUI.onMessage(serverMessage)) return;
   if (hailUI.onMessage(serverMessage)) return;
   switch (serverMessage.t) {
     case 'error':
@@ -1524,9 +1526,10 @@ function onEvent(snapshotEvent: SnapshotEvent) {
 
 // ------------------------------------------------------------------ input
 const typing = () =>
-  document.activeElement &&
-  (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) ||
-    (document.activeElement as HTMLElement).isContentEditable);
+  (elementById2('profiledialog') as HTMLDialogElement).open ||
+  (document.activeElement &&
+    (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) ||
+      (document.activeElement as HTMLElement).isContentEditable));
 window.addEventListener('keydown', (keyboardEvent) => {
   if (
     (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') &&
@@ -1742,6 +1745,7 @@ function hailTarget() {
   if (clientGameState.navStellar) return send({ t: 'hail', stellar: clientGameState.navStellar });
   toast('Target a ship (click or Tab) or select a planet (click it) to hail.');
 }
+const profileUI = initProfile(clientGameState, send);
 const hailUI = initHails({ G: clientGameState, send, toast, cam: camera });
 function showHail(hailConversation: HailConversation) {
   hailUI.show(hailConversation);
@@ -1754,7 +1758,7 @@ window.addEventListener(
       !elementById2('hailbox').classList.contains('hidden') &&
       (keyboardEvent.key === 'Escape' || (keyboardEvent.code === 'KeyT' && !typing()))
     ) {
-      elementById2('hailbox').classList.add('hidden');
+      hailUI.close();
       keyboardEvent.stopImmediatePropagation();
       keyboardEvent.preventDefault();
     }
@@ -3258,6 +3262,7 @@ async function logOut(reason = '') {
   quitFocus = null;
   resetRenderSession();
   hailUI.reset();
+  profileUI.reset();
   miningUI.refresh();
   closeMap();
   document
@@ -3343,6 +3348,7 @@ window.addEventListener(
       if (!['Enter', ' ', 'Tab'].includes(keyboardEvent.key)) keyboardEvent.preventDefault();
       return;
     }
+    if ((elementById2('profiledialog') as HTMLDialogElement).open) return;
     if (keyboardEvent.key !== 'Escape' || keyboardEvent.repeat || !clientGameState.you || typing())
       return;
     if (!elementById2('qvolbox').classList.contains('hidden')) {

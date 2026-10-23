@@ -1,3 +1,5 @@
+import { planetType } from '../shared/planet-type.ts';
+export { planetType } from '../shared/planet-type.ts';
 export interface PlanetDef {
   /** World celestial identifier. */
   id: string;
@@ -252,33 +254,6 @@ function hueSaturationLightness(colorChannels: ColorChannels) {
  * @param planetDef - Stellar object descriptor.
  * @returns Planet biome category (e.g. 'earth', 'lava', 'gas', 'ocean', 'terran', 'desert', 'ice', 'crystal', 'toxic', 'barren').
  */
-export function planetType(planetDef: PlanetDef): Biome {
-  if (planetDef.id === 'earth') return 'earth';
-  if (planetDef.id === 'luna') return 'barren';
-  const distance =
-      (planetDef.desc || '').toLowerCase() + ' ' + (planetDef.name || '').toLowerCase(),
-    randomGenerator = seeded(hashStr(planetDef.id + 't'));
-  const containsEntry = (...width: string[]) =>
-    width.some((positionX) => distance.includes(positionX));
-  if (containsEntry('volcan', 'lava', 'molten', 'magma', 'forge', 'smelt')) return 'lava';
-  if (containsEntry('gas giant', 'giant', 'storm', 'rings', 'ring ')) return 'gas';
-  if (containsEntry('crystal', 'glass')) return 'crystal';
-  if (containsEntry('ice', 'frozen', 'snow', 'glacier', 'tundra')) return 'ice';
-  if (containsEntry('desert', 'dune', 'sand', 'dust')) return 'desert';
-  if (containsEntry('ocean', 'water', 'sea ', 'seas', 'reef', 'island')) return 'ocean';
-  if (containsEntry('jungle', 'garden', 'farm', 'forest', 'orchard', 'green')) return 'terran';
-  if (containsEntry('toxic', 'acid', 'poison', 'swamp')) return 'toxic';
-  if (containsEntry('dead', 'barren', 'airless', 'mine', 'rock')) return 'barren';
-  if (planetDef.kind === 'moon') return randomGenerator() < 0.3 ? 'ice' : 'barren';
-  const [redChannel, greenChannel, blueChannel] = hueSaturationLightness(hexToRgb(planetDef.color));
-  if (planetDef.r >= 160 && randomGenerator() < 0.6) return 'gas';
-  if (greenChannel < 0.18) return blueChannel > 0.6 ? 'ice' : 'barren';
-  if (redChannel >= 180 && redChannel < 250) return randomGenerator() < 0.75 ? 'ocean' : 'ice';
-  if (redChannel >= 80 && redChannel < 180) return randomGenerator() < 0.7 ? 'terran' : 'toxic';
-  if (redChannel >= 250 && redChannel < 330) return randomGenerator() < 0.6 ? 'gas' : 'crystal';
-  if (redChannel < 20 || redChannel >= 330) return randomGenerator() < 0.55 ? 'lava' : 'desert';
-  return randomGenerator() < 0.7 ? 'desert' : 'gas';
-}
 
 // ---------------------------------------------------------------- surface textures
 // returns { col: Uint8ClampedArray(TW*TH*3), emis: Uint8Array (night lights / glow), cloud: Uint8Array|null, atm: [r,g,b]|null, rings, spin }

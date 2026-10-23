@@ -140,6 +140,8 @@ select:focus-visible {
     0 0 0 1px #718088;
 }
 .landpic::after,
+.portrait-window::after,
+.colony-illustration::after,
 #radarwrap::after,
 #consolechat::after {
   content: '';

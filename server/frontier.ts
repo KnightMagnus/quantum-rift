@@ -1,3 +1,4 @@
+import { playerPortrait } from '../shared/portraits.ts';
 import type {
   ArenaMatch,
   ColonyState as ColonyData,
@@ -1382,6 +1383,7 @@ export const FrontierOperations = {
     return playerAccounts
       .map<{ name: string; fleet?: string | null; ai?: boolean; v: number }>((playerAccount) => ({
         name: playerAccount.name,
+        portraitId: playerPortrait(playerAccount.portraitId),
         fleet: null,
         v: Math.round(value(playerAccount)),
       }))
@@ -1403,6 +1405,7 @@ export const FrontierOperations = {
     )[0];
     return {
       name: playerAccount.name,
+      portraitId: playerPortrait(playerAccount.portraitId),
       fleet: null,
       ship: this.A.ships[playerAccount.ship.hull].name,
       shipName: playerAccount.ship.name,

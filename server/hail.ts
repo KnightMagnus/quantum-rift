@@ -1,3 +1,4 @@
+import { npcPortrait, genericPortrait } from '../shared/portraits.ts';
 export interface HailOperations {
   bribeCost(this: HailCapabilities, playerData: PlayerData): number;
   hailTarget(
@@ -100,6 +101,7 @@ export const HailOperations = {
     const announce = (text: string, options: Array<{ k: string; label: string }> = []) =>
       this.send(session, {
         t: 'hail',
+        portraitId: npcPortrait(entity2, playerData.sys),
         id: entity2.id,
         who: name,
         sub: factionDef.name || '',
@@ -208,7 +210,14 @@ export const HailOperations = {
     const entity = session.ent!,
       name = (entity2.name || this.A.ships[entity2.hull].name).split(' · ')[0];
     const announce = (text: string) =>
-      this.send(session, { t: 'hail', id: entity2.id, who: name, text, opts: [] });
+      this.send(session, {
+        t: 'hail',
+        portraitId: npcPortrait(entity2, playerData.sys),
+        id: entity2.id,
+        who: name,
+        text,
+        opts: [],
+      });
     const group = [root, ...[...space.ships.values()].filter((entity) => entity.owner === root.id)];
     const calm = () => {
       for (const entity3 of group) {
@@ -335,6 +344,10 @@ export const HailOperations = {
     const announce = (text: string, options: Array<{ k: string; label: string }> = []) =>
       this.send(session, {
         t: 'hail',
+        portraitId: genericPortrait(
+          `control:${identifier}`,
+          systemsById[stellarBody.system].faction,
+        ),
         stellar: identifier,
         who: stellarBody.name,
         sub: 'Docking control',
@@ -380,6 +393,10 @@ export const HailOperations = {
     if (playerData.credits < cost)
       return this.send(session, {
         t: 'hail',
+        portraitId: genericPortrait(
+          `control:${stellarBody.id}`,
+          systemsById[stellarBody.system].faction,
+        ),
         stellar: stellarBody.id,
         who: stellarBody.name,
         text: 'That is not enough to make us forget, Captain.',
@@ -392,6 +409,10 @@ export const HailOperations = {
     this.db.touch();
     this.send(session, {
       t: 'hail',
+      portraitId: genericPortrait(
+        `control:${stellarBody.id}`,
+        systemsById[stellarBody.system].faction,
+      ),
       stellar: stellarBody.id,
       who: stellarBody.name,
       text: 'Clearance granted for the next thirty minutes. This conversation never happened.',

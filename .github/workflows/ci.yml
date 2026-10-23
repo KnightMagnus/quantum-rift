@@ -72,6 +72,9 @@ jobs:
           echo "POSTGRES_BIN=$(pg_config --bindir)" >> "$GITHUB_ENV"
           test -x "$(pg_config --bindir)/initdb"
 
+      - name: Install pinned procedural landscape dependencies
+        run: python -m pip install -r tools/landscape-requirements.txt
+
       - name: Complete server and gameplay regression inventory
         run: npm run test:regression:unit
 
