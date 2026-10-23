@@ -66,7 +66,6 @@ import type { ArenaMatch, RaidWave } from './world-contracts.ts';
 import type { InvasionBoss } from '../shared/fronts.ts';
 import type { TradeState, DuelState, DuelInvite } from './coop-contracts.ts';
 export type StellarBody = import('../shared/galaxy.ts').StellarBody;
-import type { Socket as ClientSocket } from './ws.ts';
 import type {
   FeaturePlayerState,
   StoredShip,
@@ -86,7 +85,8 @@ import type {
 } from '../shared/rules.ts';
 import type { CombatAssist as CombatAssistCombatAssist, CombatState } from './combat-assist.ts';
 import type { CargoLoot } from './contracts.ts';
-import type { DB as Database } from './db.ts';
+import type { GameStorage as Database } from './game-storage.ts';
+import type { GamePlatform, GameConnection } from './game-platform.ts';
 import type { FeatureServices } from './features.ts';
 import type { MessageCapabilities } from './game-message-handlers.ts';
 import type { JobCapabilities, JobService } from './jobs.ts';
@@ -94,7 +94,6 @@ import type { MessageRegistry, NetworkMessage } from './message-registry.ts';
 import type { SavedSurvey } from './mining-contracts.ts';
 import type { PortCapabilities, PortService } from './port-services.ts';
 import type { LootItem, Space as SpaceSpace } from './space.ts';
-import type { EventEmitter } from 'node:events';
 export type Entity = import('./space.ts').Entity;
 export type PlayerInput = {
   /** Automatic navigation input. */
@@ -243,12 +242,10 @@ export type Session = {
   id: number;
 
   /** Client WebSocket connection. */
-  sock: EventEmitter & {
-    send: (data: string | Buffer | Uint8Array | object) => void;
-    close: () => void;
-    open: boolean;
-    backlog: number;
-  };
+  sock: GameConnection;
+
+  /** Native match ingress applies the latest validated control on the current authoritative tick. */
+  inputScheduling?: 'match';
 
   /** Remote client IP address. */
   ip: string;
@@ -537,7 +534,6 @@ import { CombatAssist } from './combat-assist.ts';
 import { createGameMessageHandlers } from './game-message-handlers.ts';
 import { createFeatures } from './features.ts';
 import { TUTORIAL, tutMigrate, TUT_VERSION } from '../shared/tutorial.ts';
-import fileSystem from 'node:fs';
 // Quantum Rift game server: sessions, the galaxy's systems, landing services, missions, Quantum Station.
 import {
   SYSTEMS,
@@ -589,12 +585,12 @@ const galaxyGraph = new GalaxyGraph(systemsById);
  * Manages player accounts, client network sessions, world and system state,
  * trade markets, mission boards, station management, and game loops.
  */
-export class Game {
+export class Game<Storage extends Database = Database> {
   /** Game assets object containing ships, weapons, outfits, and commodities. */
   declare A: GameAssets;
 
-  /** Persistent JSON database instance for player accounts and world state. */
-  declare db: Database;
+  /** Authority-owned player accounts and world storage. */
+  declare db: Storage;
 
   /** Outfit definitions lookup by ID. */
   declare O: Record<string | number, OutfitAsset>;
@@ -650,6 +646,9 @@ export class Game {
    * Modular feature service delegations.
    */
   declare features: FeatureServices;
+
+  /** Host services; explicit platforms keep the core independent of Node. */
+  declare platform: GamePlatform;
 
   /** Timestamp when solo mode was paused. */
   declare pausedAt: number;
@@ -720,9 +719,15 @@ export class Game {
   /**
    * Initializes the game server, assets, storage, features, and tick loop.
    * @param assets Game assets object containing ships, weapons, outfits, and commodities.
-   * @param database Persistent JSON database instance for player accounts and world state.
+   * @param database Authority-owned player/world storage.
+   * @param platform Host services; omitted for the local Node database adapter.
    */
-  constructor(assets: GameAssets, database: Database) {
+  constructor(assets: GameAssets, database: Storage, platform?: GamePlatform) {
+    const host = platform ?? database.gamePlatform?.();
+    if (!host) throw new Error('Game requires an explicit host platform');
+    if (host.automaticClock && !host.startClock)
+      throw new Error('Automatic game clock requires platform.startClock');
+    this.platform = host;
     augmentAssets(assets);
     this.A = assets;
     this.db = database;
@@ -760,15 +765,16 @@ export class Game {
     this.features.living.livingInit();
     this.features.living.livingTick();
     this.seed();
-    setInterval(() => {
-      try {
-        this.tick();
-      } catch (event) {
-        this.tickErr = (this.tickErr || 0) + 1;
-        if (this.tickErr < 20 || this.tickErr % 500 === 0)
-          console.error('tick error', this.tickErr, event);
-      }
-    }, 1000 / TICK); // one bad ship never takes the server down
+    if (host.automaticClock)
+      host.startClock!(() => {
+        try {
+          this.tick();
+        } catch (event) {
+          this.tickErr = (this.tickErr || 0) + 1;
+          if (this.tickErr < 20 || this.tickErr % 500 === 0)
+            console.error('tick error', this.tickErr, event);
+        }
+      }, 1000 / TICK); // one bad ship never takes the server down
   }
 
   // solo mode: save slots and save files
@@ -845,20 +851,10 @@ export class Game {
   // Seed accounts are created on startup. sync:true explicitly upgrades existing saves;
   // sync:'create' applies the same setup only once, without resetting a saved captain.
   /**
-   * Populates showcase and developer seed accounts defined in seeds.json.
+   * Populates showcase and developer accounts supplied by the host platform.
    */
   seed(): void {
-    let list: SeedDefinition[] = [];
-    try {
-      list = JSON.parse(
-        fileSystem.readFileSync(
-          process.env.SEEDS_FILE || new URL('./seeds.json', import.meta.url),
-          'utf8',
-        ),
-      );
-    } catch {
-      return;
-    }
+    const list = this.platform.seedDefinitions;
     for (const seedDefinition of list) {
       if (seedDefinition.retire && seedDefinition.name) {
         this.retireAccount(seedDefinition.name);
@@ -1133,7 +1129,7 @@ export class Game {
    * @param socket WebSocket client connection.
    * @param ipAddress Remote client IP address.
    */
-  connect(socket: ClientSocket, ipAddress: string = '?'): void {
+  connect(socket: GameConnection, ipAddress: string = '?'): void {
     const session = {
       id: this.nextSid++,
       sock: socket,

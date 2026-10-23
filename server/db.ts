@@ -1,3 +1,6 @@
+import type { SeedDefinition } from './game.ts';
+import type { GamePlatform } from './game-platform.ts';
+import type { GameStorage } from './game-storage.ts';
 import type { FeatureWorldState } from './world-contracts.ts';
 
 import type { PlayerData } from './game.ts';
@@ -57,7 +60,7 @@ import crypto from 'node:crypto';
  * Player account and world state persistence engine managing JSON files, atomic writes,
  * and rolling backups. Passwords are scrypt-hashed with unique salts.
  */
-export class DB {
+export class DB implements GameStorage {
   declare journal: string;
 
   declare dir: string;
@@ -118,6 +121,38 @@ export class DB {
     }, 15000).unref();
     setInterval(() => this.backup(), 30 * 60000).unref();
     setTimeout(() => this.backup(), 60000).unref();
+  }
+
+  /** Node-only startup services. Portable hosts pass their platform directly to Game. */
+  gamePlatform(): GamePlatform {
+    let seedDefinitions: SeedDefinition[] = [];
+    try {
+      seedDefinitions = JSON.parse(
+        fileSystem.readFileSync(
+          process.env.SEEDS_FILE || new URL('./seeds.json', import.meta.url),
+          'utf8',
+        ),
+      );
+    } catch {
+      /* Missing optional local seed file leaves the account store unchanged. */
+    }
+    return {
+      seedDefinitions,
+      automaticClock: true,
+      startClock: (callback, intervalMs) => {
+        setInterval(callback, intervalMs);
+      },
+      defer: (callback, delayMs) => {
+        setTimeout(callback, delayMs);
+      },
+      randomUUID: () => crypto.randomUUID(),
+      invasionNow: process.env.INVASION_NOW,
+    };
+  }
+
+  /** An installed journal or an uncertain commit must not be rolled back in memory. */
+  hasPendingCheckpoint(): boolean {
+    return this.economicFrozen || fileSystem.existsSync(this.journal);
   }
 
   /**

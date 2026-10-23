@@ -70,7 +70,7 @@ const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
 const server = spawn(
   process.execPath,
-  ['--import', './test/seed-random.ts', '--import', preload, 'server/main.ts'],
+  ['--import', './test/seed-random.ts', '--import', preload, 'server/local-main.ts'],
   {
     cwd: root,
     env: {

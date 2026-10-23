@@ -39,7 +39,7 @@ contracts and regression suites. Windows CI exercises the same native-tool gates
 ## One compiler for checking and emission
 
 The pinned Rust compiler, tsrs 0.18.0-ts7.1.0-dev.20260929, performs all type
-checks, contract checks and JavaScript emission. There are no tsc command paths
+checks, contract checks and ordinary-module JavaScript emission. There are no tsc command paths
 or duplicate compiler gates. The build preserves relative import rewriting and
 checks types before emitting browser and server modules.
 
@@ -66,9 +66,39 @@ negative contract fixtures and compiled-runtime regressions remain required.
 Oxc Parser 0.155.0 replaces the feature-inventory test’s indirect use of
 Prettier’s Babel parser. The test walks its ESTree AST, checks parse diagnostics
 and still verifies all 20 providers against the unchanged dependency inventory.
-Minification/bundling is not a current release requirement; source modules remain
-debuggable. A standalone resolver has no additional consumer: existing Node and
-browser module resolution remains unchanged.
+Ordinary source modules remain debuggable. Native online runtime and SDK bundles
+are the exceptions described below; existing ordinary Node and browser module
+resolution remains unchanged.
+
+## Native runtime build and tests
+
+`npm run build` also runs the native build path in `tools/build-nakama.ts`.
+esbuild bundles the shared Game and its dependencies; Babel 8 lowers syntax only
+for the ES5 Nakama artifact at `dist/nakama/quantum-rift.js`. These tools do not
+replace tsrs as the checker/emitter of ordinary application modules. The official
+Nakama JavaScript SDK 2.8.0 browser transport is bundled locally; no external
+script CDN is required. The unchanged official `server/nakama-runtime.d.ts` is
+excluded from formatting to preserve upstream bytes, not to relax application
+formatting or type gates. See [third-party notices](third-party/README.md).
+
+Native fixture prerequisites:
+
+- `node tools/runtime/install-nakama.ts` installs the checksum-verified official
+  Linux x64 Nakama 3.41.0 binary at
+  `.artifacts/nakama/nakama-3.41.0/nakama`. It does not deploy or start a service.
+- Tests accept `NAKAMA_BINARY` for an operator-provided binary on other platforms.
+- Set `POSTGRES_BIN` to the PostgreSQL executable directory reported by
+  `pg_config --bindir`; native fixtures require it. CI supplies this setting.
+- Browser cases also require Playwright Chromium, installed with
+  `npx playwright install --with-deps chromium`.
+
+Run `npm run test:regression:unit`, `npm run test:regression:browser`, or the full
+`npm run test:regression` command. The native helper starts disposable
+PostgreSQL/Nakama services with isolated storage and bounded cleanup; it does not
+use player saves, production credentials or an existing service. See
+[native coverage](TEST-COVERAGE.md#native-online-authority) for what those tests
+establish. Production service configuration remains an operator prerequisite,
+documented in [NAKAMA.md](NAKAMA.md).
 
 ## Upstream references
 

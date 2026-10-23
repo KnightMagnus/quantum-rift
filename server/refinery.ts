@@ -10,7 +10,6 @@ type SavedRefinery2 = import('./refinery-contracts.ts').SavedRefinery;
 export type { SavedRefinery2 as W };
 export type Session = import('./refinery-contracts.ts').RefinerySession;
 export type Quote = import('./refinery-contracts.ts').RefineryQuote;
-import fileSystem from 'node:fs';
 import { recordEconomy } from '../shared/economy-receipt.ts';
 import {
   RECIPES,
@@ -453,8 +452,7 @@ function transaction(
   try {
     capabilities.db.flush();
   } catch (event) {
-    if (capabilities.db.economicFrozen || fileSystem.existsSync(capabilities.db.journal))
-      capabilities.db.economicFrozen = true;
+    if (capabilities.db.hasPendingCheckpoint()) capabilities.db.economicFrozen = true;
     else {
       Object.assign(playerData, prior);
       capabilities.db.world.refinery = savedRefinery;

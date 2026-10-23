@@ -4,6 +4,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { checkApplicationTypeScript } from './typescript-scope.ts';
+import { buildNakamaRuntime } from './build-nakama.ts';
 
 const rootDirectory = fileURLToPath(new URL('../', import.meta.url));
 checkApplicationTypeScript(rootDirectory);
@@ -45,3 +46,14 @@ await build({
   ],
 });
 console.log('Compiled server, shared and browser modules into dist/.');
+
+// The SDK is bundled once for the transport; engine/HUD/audio helpers retain their existing owners.
+await build({
+  entryPoints: [path.join(rootDirectory, 'client/connection.ts')],
+  outfile: path.join(output, 'client/connection.js'),
+  bundle: true,
+  platform: 'browser',
+  format: 'esm',
+  target: 'es2022',
+});
+await buildNakamaRuntime(rootDirectory);

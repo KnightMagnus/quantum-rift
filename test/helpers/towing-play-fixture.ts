@@ -56,7 +56,7 @@ export async function towingFixture(name: string) {
     origin = `http://127.0.0.1:${port}`,
     server = spawn(
       process.execPath,
-      ['--import', './test/seed-random.ts', '--import', preload, 'server/main.ts'],
+      ['--import', './test/seed-random.ts', '--import', preload, 'server/local-main.ts'],
       {
         cwd: root,
         env: {

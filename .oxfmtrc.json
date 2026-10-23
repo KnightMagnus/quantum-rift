@@ -10,7 +10,8 @@
     "*.log",
     ".artifacts/",
     "out/",
-    "dist/"
+    "dist/",
+    "server/nakama-runtime.d.ts"
   ],
   "sortImports": false
 }

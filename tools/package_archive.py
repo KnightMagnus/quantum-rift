@@ -39,7 +39,7 @@ def main():
         mode, _, stage = info.decode().split()
         filename = rawname.decode()
         if mode not in ['100644','100755'] or stage != '0': raise ValueError('Unsupported Git entry: '+filename)
-        if filename.split('/')[0] in ['.git','node_modules','data','solo-data','.artifacts'] or filename.endswith('.log') or filename=='CONTINUE.md': raise ValueError('Private/runtime file tracked: '+filename)
+        if filename.split('/')[0] in ['.git','node_modules','data','solo-data','friend-data','.artifacts'] or filename.endswith('.log') or filename=='CONTINUE.md': raise ValueError('Private/runtime file tracked: '+filename)
         p=ROOT/filename
         if p.is_symlink() or not p.is_file(): raise ValueError('Missing/nonregular package file: '+filename)
         data=p.read_bytes()
@@ -49,7 +49,7 @@ def main():
         if len(data)>27_000_000:raise ValueError('Individual file exceeds multipart limit: '+filename)
         records.append(dict(path=filename,size=len(data),sha256=digest,mode=int(mode[-3:],8)))
     compiled = ROOT/'dist'
-    compiled_inventory = {'dist/server/seeds.json'}
+    compiled_inventory = {'dist/server/seeds.json', 'dist/shared/assets.json', 'dist/nakama/quantum-rift.js'}
     for row in records:
         source = Path(row['path'])
         if source.parts[0] in ['server','shared','client'] and source.suffix in ['.js','.ts'] and not source.name.endswith('.d.ts'):

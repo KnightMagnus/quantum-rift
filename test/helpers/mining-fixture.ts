@@ -64,7 +64,7 @@ export async function miningFixture(name: string) {
     origin = `http://127.0.0.1:${port}`,
     server = spawn(
       process.execPath,
-      ['--import', './test/seed-random.ts', '--import', fixture, 'server/main.ts'],
+      ['--import', './test/seed-random.ts', '--import', fixture, 'server/local-main.ts'],
       {
         cwd: root,
         env: {

@@ -127,8 +127,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
           (session.combat.on || session.combat.consent)
         )
           capabilities.combatAssist.manual(session);
-        if (session.ent && session.inputs.length < 8)
-          session.inputs.push({
+        if (session.ent && (session.inputScheduling === 'match' || session.inputs.length < 8)) {
+          const input = {
             seq: message.seq! | 0,
             thrust: message.th ? 1 : 0,
             turn: clamp(message.tu! | 0, -1, 1),
@@ -137,7 +137,10 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
             fire1: message.f1 ? 1 : 0,
             fire2: message.f2 ? 1 : 0,
             navigation: !!message.nav,
-          });
+          };
+          if (session.inputScheduling === 'match') session.lastInput = input;
+          else session.inputs.push(input);
+        }
         return;
       },
     ],

@@ -49,7 +49,7 @@ const server = spawn(
     path.join(root, 'test/helpers/seed-random.ts'),
     '--import',
     fixture,
-    'server/main.ts',
+    'server/local-main.ts',
   ],
   {
     cwd: root,

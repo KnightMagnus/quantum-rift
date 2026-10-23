@@ -15,7 +15,6 @@ interface ContractPlan {
   skipped: Array<{ name: string; reason: string }>;
 }
 
-import { randomUUID } from 'node:crypto';
 import { contractShares } from '../shared/mission-payouts.ts';
 import { WARBAND } from '../shared/coop.ts';
 
@@ -109,7 +108,7 @@ export function proposeContract(
       'At least two online captains need a free job slot. No jobs were assigned.',
     );
   const plan = {
-    id: randomUUID(),
+    id: coopCapabilities.platform.randomUUID(),
     revision: 1,
     armada: armada.id,
     proposer: session.data.name,

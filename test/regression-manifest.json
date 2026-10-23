@@ -94,7 +94,18 @@
     "compiled-runtime.ts",
     "deterministic-core.ts",
     "packaged-runtime.ts",
-    "tooling-contracts.ts"
+    "tooling-contracts.ts",
+    "portable-game-core.ts",
+    "nakama-storage.ts",
+    "nakama-legacy-transition.ts",
+    "nakama-client-connection.ts",
+    "authority-callbacks.ts",
+    "nakama-network.ts",
+    "nakama-diagnostics.ts",
+    "nakama-world-lease.ts",
+    "friend-host-config.ts",
+    "friend-host-network.ts",
+    "friend-save-owner.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -130,7 +141,9 @@
     "mission-ui-browser.ts",
     "radio-browser.ts",
     "save-generator-browser.ts",
-    "excalibur-runtime-browser.ts"
+    "excalibur-runtime-browser.ts",
+    "nakama-browser.ts",
+    "friend-host-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -398,7 +411,7 @@
     ],
     "compiled-runtime.ts": ["helpers/browser-fixture.ts"],
     "deterministic-core.ts": ["helpers/mocks.ts"],
-    "packaged-runtime.ts": ["helpers/browser-fixture.ts"],
+    "packaged-runtime.ts": ["helpers/browser-fixture.ts", "helpers/nakama-service.ts"],
     "chat-projection-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "sidebar-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
     "armada-formation-network.ts": [
@@ -510,7 +523,13 @@
     "fixtures/mining-preload.ts": ["helpers/required.ts"],
     "fixtures/refinery-preload.ts": ["helpers/required.ts"],
     "fixtures/dredge-preload.ts": ["helpers/required.ts"],
-    "fixtures/towing-preload.ts": ["helpers/required.ts"]
+    "fixtures/towing-preload.ts": ["helpers/required.ts"],
+    "nakama-network.ts": ["helpers/nakama-service.ts"],
+    "nakama-browser.ts": ["helpers/nakama-service.ts"],
+    "nakama-diagnostics.ts": ["helpers/nakama-service.ts"],
+    "friend-host-network.ts": ["helpers/friend-host.ts"],
+    "friend-host-browser.ts": ["helpers/friend-host.ts"],
+    "helpers/friend-host.ts": ["helpers/browser-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -870,7 +889,7 @@
         "radio-browser.ts",
         "radio-content.ts"
       ],
-      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Saved radio unlocks survive login without captain-name privileges; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1–4 and separate new login theme; original theme preserved."
+      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Saved radio unlocks survive login without captain-name privileges; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1\u20134 and separate new login theme; original theme preserved."
     },
     {
       "id": "economy-balance",
@@ -1140,7 +1159,7 @@
       "owners": ["server/freight-offers.ts", "server/game.ts", "server/jobs.ts"],
       "services": [],
       "tests": ["cargo-couriers.ts", "mission-ui-browser.ts", "v203.ts", "cargo-flows.ts"],
-      "asserts": "Two lawful untimed 3–5t/6–10t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."
+      "asserts": "Two lawful untimed 3\u20135t/6\u201310t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."
     },
     {
       "id": "reusable-core",
@@ -1181,6 +1200,55 @@
         "sidebar-sizing-browser.ts"
       ],
       "asserts": "Production Engine, uncropped zoom-2 projectile pixel references across headings/speeds/iteration orders/backends, native decoded Sprite entities, display-only physics, original sequenced input stream, typing/blur, physical-pixel camera at DPR1/2 and zoom limits, responsive resizing, actor cleanup, local modules and no unsafe-eval."
+    },
+    {
+      "id": "nakama-online",
+      "owners": [
+        "server/nakama-world.ts",
+        "server/nakama-host.ts",
+        "server/nakama-auth.ts",
+        "server/nakama-storage.ts",
+        "server/nakama-migration.ts",
+        "server/game-platform.ts",
+        "server/game-storage.ts",
+        "client/connection.ts",
+        "shared/nakama-contracts.ts",
+        "tools/build-nakama.ts",
+        "server/nakama-world-lease.ts"
+      ],
+      "services": [],
+      "tests": [
+        "portable-game-core.ts",
+        "nakama-storage.ts",
+        "nakama-legacy-transition.ts",
+        "nakama-client-connection.ts",
+        "authority-callbacks.ts",
+        "nakama-network.ts",
+        "nakama-browser.ts",
+        "nakama-diagnostics.ts",
+        "nakama-world-lease.ts"
+      ],
+      "asserts": "Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/flood/replay denials; legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency. Reference/Solo tests are separate and no full native-feature coverage is implied."
+    },
+    {
+      "id": "friend-hosting",
+      "owners": [
+        "server/main.ts",
+        "server/local-main.ts",
+        "server/friend-host-config.ts",
+        "client/connection.ts",
+        "tools/start.ts",
+        "server/friend-save-owner.ts"
+      ],
+      "services": [],
+      "tests": [
+        "friend-host-config.ts",
+        "friend-host-network.ts",
+        "friend-host-browser.ts",
+        "packaged-runtime.ts",
+        "friend-save-owner.ts"
+      ],
+      "asserts": "Explicit password-protected listen-server hosting with one Game and durable independent friend saves; three captain ownership, movement and interaction; denial of Solo-only import/pause and foreign Origins; browser physical controls, reconnect, restart and extracted artifact execution without native service dependencies."
     }
   ],
   "routes": {
@@ -1200,7 +1268,10 @@
       "input-audio-browser.ts",
       "landing-autopilot-browser.ts",
       "armada-follow-two-clients.ts",
-      "message-routing.ts"
+      "message-routing.ts",
+      "portable-game-core.ts",
+      "nakama-network.ts",
+      "nakama-browser.ts"
     ],
     "target": ["v03.ts", "mining-ui-browser.ts", "message-routing.ts"],
     "tutskip": ["v03.ts", "message-routing.ts"],
@@ -1218,7 +1289,9 @@
       "v21.ts",
       "v24.ts",
       "armada-follow-two-clients.ts",
-      "message-routing.ts"
+      "message-routing.ts",
+      "nakama-network.ts",
+      "nakama-browser.ts"
     ],
     "jump": [
       "armada-formation-network.ts",

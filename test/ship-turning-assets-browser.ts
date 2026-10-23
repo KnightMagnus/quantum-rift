@@ -17,7 +17,7 @@ const output = evidenceDir('ship-turning-assets');
 const directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-ship-turning-'));
 const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.ts'], {
+const server = spawn(process.execPath, ['server/local-main.ts'], {
   cwd: root,
   env: {
     ...process.env,

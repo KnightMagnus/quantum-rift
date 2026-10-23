@@ -1,4 +1,4 @@
-import type { DB as Database } from './db.ts';
+import type { GameStorage as Database } from './game-storage.ts';
 import type { PlayerData, Session } from './game.ts';
 import type { Space } from './space.ts';
 export type CaptainPressure = {

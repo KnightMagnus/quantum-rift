@@ -77,6 +77,7 @@ export type HangarCapabilities = Pick<
 export type FrontsCapabilities = Pick<
   Game,
   | 'A'
+  | 'platform'
   | '_an'
   | '_anW'
   | 'broadcast'
@@ -300,6 +301,7 @@ export type QuestsCapabilities = Pick<
 export type CoopCapabilities = Pick<
   Game,
   | 'A'
+  | 'platform'
   | 'broadcast'
   | 'db'
   | 'duels'
@@ -508,6 +510,9 @@ export function createFeatures(core: Game): FeatureServices {
   features.hangar = bindOperations(HangarOperations, hangarCapabilities);
 
   const frontsCapabilities: FrontsCapabilities = {
+    get platform() {
+      return core.platform;
+    },
     get A() {
       return core.A;
     },
@@ -1320,6 +1325,9 @@ export function createFeatures(core: Game): FeatureServices {
   features.quests = bindOperations(QuestOperations, questsCapabilities);
 
   const coopCapabilities: CoopCapabilities = {
+    get platform() {
+      return core.platform;
+    },
     get A() {
       return core.A;
     },

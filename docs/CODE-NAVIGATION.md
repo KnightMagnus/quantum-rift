@@ -7,10 +7,16 @@ or fully typed. For running the game, use the public README.
 ## Entry points
 
 1. Read `package.json` for startup, test commands and the current version.
-2. Read [server/main.ts](../server/main.ts): it loads assets and the DB, creates
-   `Game`, serves files and connects WebSockets.
-3. Follow [Game](../server/game.ts)'s constructor: live systems, sessions, named
-   feature services, combat/hailing services, fixed message routes and tick loop.
+2. Read [server/main.ts](../server/main.ts): default dedicated startup selects the static
+   [Nakama web host](../server/nakama-host.ts); Solo and explicit `HOST_FRIENDS=1`
+   select [the local platform](../server/local-main.ts). The dedicated web host has no Game,
+   database or gameplay WebSocket.
+3. Follow [the native match](../server/nakama-world.ts) into
+   [Game](../server/game.ts)'s constructor: live systems, sessions, named feature
+   services and fixed message routes. Nakama advances online simulation; the local
+   platform owns the Solo or friend-game timer. Friend mode has one Game and local
+   journal store, not a second Nakama clock. See [hosting choices](HOSTING.md)
+   and [native hosting](NAKAMA.md).
 4. Read [FEATURES.md](FEATURES.md) before changing composition. Its explicit
    service boundaries and remaining shared state are migration seams.
 5. Follow one action below rather than reading every large file front to back.
@@ -34,7 +40,7 @@ stay compatible with each release while the tool is present.
 
 ```mermaid
 flowchart TD
-  A[Browser job board] --> B[accept packet over WebSocket]
+  A[Browser job board] --> B[accept packet over native match or local socket]
   B --> C[Game.onMessage entry gates]
   C --> D[Fixed action switchboard]
   D --> E[Game.accept authoritative checks]
@@ -46,8 +52,11 @@ flowchart TD
 1. [client/ui.ts](../client/ui.ts) builds the board and sends the action;
    [client/mission-details.ts](../client/mission-details.ts) explains requirements
    and [client/missions.ts](../client/missions.ts) manages mission presentation.
-2. [server/main.ts](../server/main.ts) upgrades the WebSocket and calls
-   `Game.connect`; that session listener parses messages and calls `Game.onMessage`.
+2. [client/connection.ts](../client/connection.ts) sends online actions through the
+   native SDK. [server/nakama-world.ts](../server/nakama-world.ts) resolves the
+   authenticated captain, bounds match ingress and passes actions to `Game.onMessage`.
+   Solo and friend games use the local platform’s WebSocket and `Game.connect`
+   listener. Friend games retain password login; Solo does not.
 3. [server/game.ts](../server/game.ts)'s `onMessage` applies flood, login,
    checkpoint-recovery freeze and activity gates **before** routing.
 4. [server/game-message-handlers.ts](../server/game-message-handlers.ts) maps
@@ -59,12 +68,16 @@ flowchart TD
    [server/freight-offers.ts](../server/freight-offers.ts) supplies the stable freight tiers.
    `Game.completeOnLanding` forwards ordinary landing completion to that owner; special mission
    progression also lives in named quest/co-op providers.
-6. `you` and `landed` send refreshed payloads. [server/db.ts](../server/db.ts)
-   owns persistence; sending a refresh is not itself a save commit.
+6. `you` and `landed` send refreshed payloads.
+   [Nakama storage](../server/nakama-storage.ts) owns the atomic online checkpoint;
+   [the local DB](../server/db.ts) retains separate Solo/friend persistence. Sending a refresh is
+   not itself a save commit.
 
 For other actions, find the outgoing packet's `t`, look it up in the fixed
-switchboard, then follow the named method/service. `hello` is handled by the
-unauthenticated entry gate, not the authenticated route registry.
+switchboard, then follow the named method/service. Native joins establish the
+server-owned identity before the internal Game hello; client hello packets cannot
+choose a captain. Solo/friend/reference hello uses the existing pre-login entry
+gate, not the authenticated route registry.
 
 Useful searches from the repository root:
 
@@ -79,7 +92,9 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 
 | Change                                          | Start with                                                  | Important companions                                                                                         |
 | ----------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Startup, HTTP, local endpoints                  | `server/main.ts`                                            | `server/ws.ts`, `server/db.ts`                                                                               |
+| Startup and static HTTP                         | `server/main.ts`, `server/nakama-host.ts`                   | `tools/start.ts`, `docs/NAKAMA.md`                                                                           |
+| Native sessions, match ingress and clock        | `server/nakama-world.ts`, `server/nakama-auth.ts`           | `server/nakama-identity-gates.ts`, `server/nakama-storage.ts`                                                |
+| Solo/friend endpoints and reference fixtures    | `server/local-main.ts`                                      | `server/ws.ts`, `server/db.ts`, `server/friend-host-config.ts`                                               |
 | Login, sessions, travel, ordinary port services | `server/game.ts`                                            | `server/space.ts`, `shared/galaxy.ts`                                                                        |
 | Incoming action names/routing                   | `server/game-message-handlers.ts`                           | `Game.createMessageHandlers`, `Game.onMessage`, `server/message-registry.ts`                                 |
 | Feature wiring/dependencies                     | `server/features.ts`                                        | `server/feature-service.ts`, `docs/FEATURES.md`, `docs/feature-inventory.json`                               |
@@ -110,9 +125,16 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
   [TYPESCRIPT-RUNTIME.md](TYPESCRIPT-RUNTIME.md) for the checked scope and startup
   commands.
 
-- **Persistent accounts/world:** `DB` stores these. Ordinary changes mark it
-  dirty; journal/checkpoint systems have stronger commit and recovery rules.
+- **Persistent accounts/world:** the structural `GameStorage` port selects
+  `NakamaDatabase` online and `DB` locally. Ordinary changes mark storage dirty;
+  native CAS checkpoints and local journals have explicit commit/recovery rules.
   Preserve these boundaries rather than adding another save path.
+- **Friend-host startup and exposure:** `server/friend-host-config.ts` validates
+  explicit mode, binding, port, public origin and the separate `friend-data/`
+  directory. `tools/start.ts --friends` is the LAN opt-in used by the friend
+  launchers. `/api/status` advertises `mode: "friends"` and `localTransport: true`;
+  `client/connection.ts` selects the local socket only with that mode pair or
+  Solo. The server owns login, world state and the clock; browsers are clients.
 - **Live sessions/active systems:** `Game` owns session and live-space maps.
   `Space` advances a system's simulation. Accessing `game.spaces[id]` can lazily
   wake a system: it is not an inert lookup table.

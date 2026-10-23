@@ -47,7 +47,7 @@ for (const user of users) {
 }
 const port = Number(process.env.RIFT_BROWSER_PORT || 18773);
 const origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.ts'], {
+const server = spawn(process.execPath, ['server/local-main.ts'], {
   cwd: root,
   env: { ...process.env, PORT: String(port), DATA_DIR: path.join(directory, 'data') },
   stdio: ['ignore', 'pipe', 'pipe'],

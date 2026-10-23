@@ -68,7 +68,7 @@ const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
 const server = spawn(
   process.execPath,
-  ['--import', path.join(root, 'test/helpers/seed-random.ts'), 'server/main.ts'],
+  ['--import', path.join(root, 'test/helpers/seed-random.ts'), 'server/local-main.ts'],
   {
     cwd: root,
     env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: path.join(directory, 'data') },

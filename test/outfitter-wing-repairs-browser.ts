@@ -52,7 +52,7 @@ game.db.touch();
 game.db.flush();
 const port = Number(process.env.REPAIR_TEST_PORT || 18974),
   origin = `http://127.0.0.1:${port}`,
-  server = spawn(process.execPath, ['server/main.ts'], {
+  server = spawn(process.execPath, ['server/local-main.ts'], {
     cwd: path.resolve('.'),
     env: {
       ...process.env,

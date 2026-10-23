@@ -1349,7 +1349,7 @@ export function credits(count: number): string {
   count = Math.round(count || 0);
   return count >= 1e6
     ? (count / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M'
-    : count.toLocaleString('en-US');
+    : String(count).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 /**

@@ -58,7 +58,7 @@ for (const solo of [false, true]) {
     DATA_DIR: data,
   };
   delete environment.SEEDS_FILE;
-  const server = spawn(process.execPath, ['server/main.ts'], {
+  const server = spawn(process.execPath, ['server/local-main.ts'], {
     cwd: root,
     env: environment,
     stdio: ['ignore', 'pipe', 'pipe'],

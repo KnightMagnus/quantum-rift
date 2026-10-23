@@ -21,7 +21,7 @@ jobs:
   ci:
     name: Lint, Format, Types & Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout repository with Git LFS
         uses: actions/checkout@v4
@@ -66,6 +66,12 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Prepare pinned native Nakama and PostgreSQL test binaries
+        run: |
+          node tools/runtime/install-nakama.ts
+          echo "POSTGRES_BIN=$(pg_config --bindir)" >> "$GITHUB_ENV"
+          test -x "$(pg_config --bindir)/initdb"
+
       - name: Complete server and gameplay regression inventory
         run: npm run test:regression:unit
 
@@ -84,6 +90,8 @@ jobs:
     # Full browser inventory includes multi-hull flight and station sweeps.
     # Individual regression subprocesses retain their strict 180s deadlines.
     timeout-minutes: 30
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.artifacts/playwright
     steps:
       - uses: actions/checkout@v4
         with:
@@ -102,6 +110,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Prepare pinned native Nakama and PostgreSQL test binaries
+        run: |
+          node tools/runtime/install-nakama.ts
+          echo "POSTGRES_BIN=$(pg_config --bindir)" >> "$GITHUB_ENV"
+          test -x "$(pg_config --bindir)/initdb"
+
       - name: Durable browser regression suite
         run: npm run test:regression:browser
       - name: Preserve browser evidence and server logs

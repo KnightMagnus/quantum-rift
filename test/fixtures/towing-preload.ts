@@ -6,7 +6,7 @@ import { STELLARS } from '../../shared/galaxy.ts';
 const fixtureState: { game?: Game } = {};
 // oxlint-disable-next-line typescript/unbound-method -- Preserve the prototype implementation; invoke it with explicit call(this, ...) below.
 const originalSpawnPlayer = Game.prototype.spawnPlayer;
-Game.prototype.spawnPlayer = function (session, ...argumentsList) {
+Game.prototype.spawnPlayer = function (this: Game, session, ...argumentsList) {
   originalSpawnPlayer.call(this, session, ...argumentsList);
   fixtureState.game = this;
   if (!session.data.name.startsWith('Tow')) return;

@@ -24,7 +24,7 @@ import { type CargoTotals, type CargoLedger } from '../shared/cargo-contracts.ts
 
 const oldInterval = globalThis.setInterval,
   oldRandom = Math.random;
-let game: Game;
+let game: Game<Database>;
 try {
   globalThis.setInterval = Object.assign(() => {
     const timer = oldInterval(() => {}, 2147483647);

@@ -35,7 +35,7 @@ const fixture = resolvePreloadFile(
 
 const port = Number(process.env.RIFT_BROWSER_PORT || 18776);
 const origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['--import', fixture, 'server/main.ts'], {
+const server = spawn(process.execPath, ['--import', fixture, 'server/local-main.ts'], {
   cwd: root,
   env: {
     ...process.env,

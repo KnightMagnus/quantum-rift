@@ -24,7 +24,7 @@ let active: Session | undefined,
   shots = 0,
   previousWrite = 0;
 const spawnPlayer = Reflect.get(Game.prototype, 'spawnPlayer') as typeof Game.prototype.spawnPlayer;
-Game.prototype.spawnPlayer = function (session, ...args) {
+Game.prototype.spawnPlayer = function (this: Game, session, ...args) {
   spawnPlayer.call(this, session, ...args);
   if (session.data.name !== 'Browser Assist') return;
   if (preloadConfig.protection && session.data.sys !== 'dimmer') {

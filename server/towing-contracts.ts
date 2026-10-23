@@ -1,5 +1,5 @@
 import type { ComputedShipStats } from '../shared/rules.ts';
-import type { DB as Database } from './db.ts';
+import type { GameStorage as Database } from './game-storage.ts';
 import type { PlayerData } from './game.ts';
 export type Lots = import('../shared/cargo-contracts.ts').GradeLots;
 export type TowStatus = 'available' | 'attached' | 'detached' | 'delivered' | 'destroyed';

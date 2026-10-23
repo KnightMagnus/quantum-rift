@@ -9,6 +9,87 @@ The existing feature test checks all 20 providers against the unchanged inventor
 Both TypeScript and tsrs run valid/invalid contract fixtures; tsrs remains a
 Linux CI check because its pinned native package has no Windows binary.
 
+## Friend-host authority
+
+The `friend-hosting` system registers configuration, save-ownership and
+real-process network checks in the unit/server lane and a browser check in the
+browser lane. The fixtures use isolated synthetic accounts and a private friend
+save directory, not player saves or a running Nakama service.
+
+| Program                  | Behavior contract                                                                                                                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `friend-host-config.ts`  | Loopback default, explicit bind/port, incompatible mode/save/seed rejection, protected-store aliases, origin denial, empty developer seeds and mode-paired local transport selection                           |
+| `friend-save-owner.ts`   | Two hosts on different ports cannot own one save directory; clean-stop restart and fail-closed stale-lock recovery, private POSIX save permissions and HTTP/WebSocket Host denial                              |
+| `friend-host-network.ts` | Three password-protected captains on one real server, private output, missing/wrong-password denial, Solo endpoint/pause denial, shared flight/input progress, reconnect and account/world restart persistence |
+| `friend-host-browser.ts` | Real browser password sign-in, same-origin gameplay socket, physical flight with bounded latency, input cadence, reconnect and runtime-error checks                                                            |
+
+The program contracts are separate from individual run results or hosted-CI
+status. Loopback processes and browser latency fixtures do not prove
+LAN/VPN routing, router port forwarding, public Internet access, TLS deployment,
+Windows/macOS launcher execution or every gameplay/device/network case. They do
+not establish cross-backend synchronization or full native Nakama parity.
+
+See [HOSTING.md](HOSTING.md) for the player workflow and save boundaries.
+
+## Native online authority
+
+The `nakama-online` system covers the pinned Nakama 3.41.0 boundary; local native
+verification uses PostgreSQL 18.6 and SDK 2.8.0. The network and browser integration
+programs use disposable native services supplied by `helpers/nakama-service.ts`;
+the focused cases run without those services:
+
+| Program                       | Behavior contract                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------------------ |
+| `portable-game-core.ts`       | Shared Game portability without Node-owned online timing                                         |
+| `nakama-storage.ts`           | Private storage, full checkpoint CAS and fail-closed uncertain commits                           |
+| `nakama-legacy-transition.ts` | Synthetic offline preview/apply, idempotence, guarded rollback and legacy password compatibility |
+| `nakama-client-connection.ts` | Native client connection/session ownership and retained local-authority transport boundary       |
+| `authority-callbacks.ts`      | Serial scheduled callbacks advanced by the match clock                                           |
+| `nakama-network.ts`           | Real Nakama/PostgreSQL authentication, authoritative match, persistence and denial behavior      |
+| `nakama-browser.ts`           | Browser sign-in, native flight transport/prediction, reconnect, logout and account switching     |
+
+Local native network checks exercise actual Goja legacy-scrypt first login,
+once-only bcrypt-sha256 upgrade and repeat login with encoded names; wrong
+passwords and stripped session vars;
+actual Game accounts and private `you` packets; non-custom joins, forged tokens
+and private storage permission denial; depart, finite flight, movement and input
+acknowledgement; future/replayed/spoofed/flooded input with continued progress for
+another captain; duplicate-sign-in replacement without stale input; access/refresh
+revocation; and restart restoration of actual account/world state.
+
+The native browser case exercises space-containing display names, physical thrust
+and turn under 70 ms CDP network latency, finite authoritative state and a rendered
+prediction delta below 500, contiguous input sequence numbers and
+physical input release before captures. A test-only counter seed reaches the
+long-lived sequence boundary without advancing physics or adding an input loop;
+physical controls cross 4096, then a fresh native welcome must reset the epoch
+and new controls must acknowledge, move and turn after reconnect. It also checks reconnect balance,
+successful native HTTP session logout with state clearing and no auto-reconnect,
+Bravo/Alpha account switching with retained balances, and absence of console/page
+errors. These are bounded local observations, not all-network/device guarantees.
+
+Existing business-rule and browser regressions explicitly use
+`server/local-main.ts` and the `localAuthority` transport. Their gameplay
+assertions remain reference-backend evidence, not proof that every feature was
+accepted through native online transport. The Game features run inside the native
+match, but this does not turn reference tests into full native parity coverage.
+Synthetic migration coverage is not evidence of a real player-data import.
+`nakama-world-lease.ts` exercises expired/re-entrant singleton creation, loser
+retirement and lost publish acknowledgement recovery. Negative calls into the
+actual match callbacks verify pending/orphan worlds do not advance deferred work,
+Game ticks or joins; those narrow SDK spies are not a substitute for the separate
+actual Game/Space native tests.
+
+`nakama-diagnostics.ts` checks token redaction across bearer, URL and JSON
+delimiters, base64url signature tails and private absolute paths. CI retains only
+sanitized summaries and synthetic-player screenshots, not service configuration,
+databases, browser profiles or raw authentication traffic.
+
+Focused core, storage, legacy, client and serial-callback cases and local native
+network/browser checks have passed; full canonical, clean-install, archive and
+hosted-CI results must be checked separately. No production-readiness or complete
+social-service replacement claim follows from this inventory.
+
 ## Reusable foundations
 
 `reusable-core` checks ordered galaxy traversal against an independent baseline,

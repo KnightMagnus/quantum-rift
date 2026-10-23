@@ -27,7 +27,7 @@ pilot.explored.push('sol');
 database.create('Solar Observer', 'solo', pilot);
 const port = Number(process.env.RIFT_BROWSER_PORT || 18837),
   origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.ts'], {
+const server = spawn(process.execPath, ['server/local-main.ts'], {
   cwd: root,
   env: { ...process.env, SOLO: '1', PORT: String(port), DATA_DIR: path.join(directory, 'data') },
   stdio: ['ignore', 'pipe', 'pipe'],

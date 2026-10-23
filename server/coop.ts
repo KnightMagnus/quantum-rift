@@ -402,7 +402,7 @@ export const CoopOperations = {
     const armadaState = this.armadaOf(playerData);
     if (armadaState)
       this.armadaChat(armadaState, `${playerData.name} went offline.`, playerData.name);
-    setTimeout(() => this.presence(playerData), 50);
+    this.platform.defer(() => this.presence(playerData), 50);
   },
 
   // ------------------------------------------------------------------ Captain Friends and DMs

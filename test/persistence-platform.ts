@@ -117,7 +117,7 @@ for (const solo of [false, true]) {
   const output = evidenceDir(solo ? 'windows-solo' : 'windows-online');
   const server = spawn(
     process.execPath,
-    ['--import', pathToFileURL(preload).href, 'server/main.ts'],
+    ['--import', pathToFileURL(preload).href, 'server/local-main.ts'],
     {
       cwd: root,
       env: {

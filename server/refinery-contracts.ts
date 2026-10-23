@@ -1,6 +1,6 @@
 import type { CargoLedger, CargoTotals, GradeLots } from '../shared/cargo-contracts.ts';
 import type { Recipe } from '../shared/refinery-rules.ts';
-import type { DB as Database } from './db.ts';
+import type { GameStorage as Database } from './game-storage.ts';
 import type { Mission, PlayerData, Session } from './game.ts';
 export type RefineryPlayer = PlayerData & {
   cargo: CargoTotals;
@@ -126,7 +126,10 @@ export type RefineryRequest = {
   n?: number;
 };
 export type RefineryCapabilities = {
-  db: Pick<Database, 'world' | 'touch' | 'flush' | 'get' | 'key' | 'journal' | 'economicFrozen'>;
+  db: Pick<
+    Database,
+    'world' | 'touch' | 'flush' | 'get' | 'key' | 'hasPendingCheckpoint' | 'economicFrozen'
+  >;
   now: () => number;
   paused: () => boolean;
   room: (refineryPlayer: RefineryPlayer) => number;
