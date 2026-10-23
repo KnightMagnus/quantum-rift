@@ -76,6 +76,7 @@ export type HangarCapabilities = Pick<
   Pick<BoundOperations<SyndicateOperations>, 'synGain'>;
 export type FrontsCapabilities = Pick<
   Game,
+  | 'ownSite'
   | 'A'
   | 'platform'
   | '_an'
@@ -510,6 +511,7 @@ export function createFeatures(core: Game): FeatureServices {
   features.hangar = bindOperations(HangarOperations, hangarCapabilities);
 
   const frontsCapabilities: FrontsCapabilities = {
+    ownSite: core.ownSite.bind(core),
     get platform() {
       return core.platform;
     },

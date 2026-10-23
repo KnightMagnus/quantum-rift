@@ -183,15 +183,7 @@ for (const solo of [false, true]) {
       .locator('#storein [data-act="sfac"]')
       .evaluateAll((elements) => elements.map((entity) => entity.dataset.f));
     const { FACTIONS } = await import('../shared/galaxy.ts');
-    assert.deepEqual(
-      factionIds,
-      Object.entries(FACTIONS)
-        .filter(
-          ([candidateFactionId, feature3]) =>
-            !feature3.region && !feature3.hidden && candidateFactionId !== 'umbral',
-        )
-        .map(([availableFactionId]) => availableFactionId),
-    );
+    assert.deepEqual(factionIds, [await page.evaluate(() => G.landed!.store)]);
     for (const identifier of factionIds) {
       await page.locator('#storein [data-f="' + identifier + '"][data-act="sfac"]').click();
       const image = page.locator('#faction-insignia');

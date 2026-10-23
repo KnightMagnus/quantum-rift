@@ -104,8 +104,7 @@ export function opsHtml(clientGameState: ClientGameState): string {
     width: Partial<NonNullable<ClientGameState['world']>> = clientGameState.world || {},
     serverEvent = width.event,
     _here = systemsById[clientGameState.sys!];
-  let height =
-    '<button class="btn sm" data-act="stores" style="margin-bottom:6px">FACTION STORES</button>';
+  let height = '';
   const story2 = playerPayload.story;
   if (story2 && (story2.active || story2.next))
     height += `<div class="evbox" style="border-color:#c9a24a"><div class="small" style="color:#c9a24a;letter-spacing:2px">MAIN STORY ${story2.step + 1}/${story2.total}</div><b style="color:#ffe2a0">${escapeHtml2(story2.active ? story2.active.title : story2.next!.title)}</b><div class="small">${escapeHtml2(story2.active ? (story2.active.ready ? 'Done: return to collect.' : story2.active.brief) : 'Waiting for you at ' + story2.next!.at + '.')}</div></div>`;
@@ -199,22 +198,35 @@ export const STORE_FACS = (FACTIONS_: Record<string, FactionDef>): string[] =>
     )
     .map(([entryKey]) => entryKey);
 
+/** Stores authorized by the current landing payload; only an owned station offers all factions. */
+export function availableStoreFactions(
+  state: ClientGameState,
+  factions: Record<string, FactionDef>,
+): string[] {
+  if (!state.you || !state.landed || state.you.stellar !== state.landed.stellar) return [];
+  const available = STORE_FACS(factions);
+  if (state.landed.site?.own) return available;
+  const local = state.landed.store;
+  return local && available.includes(local) ? [local] : [];
+}
+
 /**
- * Renders the modal Faction Stores quartermaster dialog with faction selector tabs.
- * @param clientGameState Game state object
- * @param FACTIONS_ Faction definitions
- * @returns HTML markup
+ * Renders the stores authorized at the current landing.
+ * @param clientGameState Current player and landing payloads.
+ * @param FACTIONS_ Faction definitions.
+ * @returns Store dialog markup, or an empty string when unavailable.
  */
 export function storeMenuHtml(
   clientGameState: ClientGameState,
   FACTIONS_: Record<string, FactionDef>,
 ): string {
   const playerPayload = clientGameState.you!,
-    factions = STORE_FACS(FACTIONS_),
+    factions = availableStoreFactions(clientGameState, FACTIONS_),
     faction =
       clientGameState.storeFac && factions.includes(clientGameState.storeFac)
         ? clientGameState.storeFac
-        : (clientGameState.landed && clientGameState.landed!.store) || 'quantum';
+        : factions[0];
+  if (!faction) return '';
   clientGameState.storeFac = faction;
   const side = factions
     .map((entryKey) => {
@@ -224,7 +236,7 @@ export function storeMenuHtml(
       return `<div class="sfac ${entryKey === faction ? 'on' : ''}" data-act="sfac" data-f="${entryKey}"><b style="color:${factionDef.color}">${escapeHtml2(factionDef.short)}</b><span class="dim small">${reputation} · ${token} tokens</span></div>`;
     })
     .join('');
-  return `<div class="store-heading"><div class="faction-screen"><img id="faction-insignia" src="assets/factions/${faction}.svg" alt="${escapeHtml2(FACTIONS_[faction].name)} insignia" data-faction="${faction}" width="112" height="112"></div><h2>FACTION STORES <span class="dim small">Rift scrip: ${(playerPayload.tokens && playerPayload.tokens.any) || 0} · ${clientGameState.landed ? 'purchases are delivered to you here' : 'land anywhere to buy'}</span></h2></div><div class="sgrid"><div class="sfacs">${side}</div><div class="sbody well">${storeHtml(clientGameState, faction)}</div></div><button class="btn sm" data-act="sclose">CLOSE (Esc)</button>`;
+  return `<div class="store-heading"><div class="faction-screen"><img id="faction-insignia" src="assets/factions/${faction}.svg" alt="${escapeHtml2(FACTIONS_[faction].name)} insignia" data-faction="${faction}" width="112" height="112"></div><h2>${clientGameState.landed?.site?.own ? 'FACTION STORES' : 'FACTION STORE'} <span class="dim small">Rift scrip: ${(playerPayload.tokens && playerPayload.tokens.any) || 0} · purchases are delivered to you here</span></h2></div><div id="store-standing" class="kv" data-faction="${faction}" data-standing="${playerPayload.rep[faction] || 0}"><span>Your standing with ${escapeHtml2(FACTIONS_[faction].name)}</span><b>${playerPayload.rep[faction] || 0}</b></div><div class="sgrid"><div class="sfacs">${side}</div><div class="sbody well">${storeHtml(clientGameState, faction)}</div></div><button class="btn sm" data-act="sclose">CLOSE (Esc)</button>`;
 }
 
 /**

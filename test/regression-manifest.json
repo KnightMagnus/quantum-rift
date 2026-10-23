@@ -143,7 +143,8 @@
     "save-generator-browser.ts",
     "excalibur-runtime-browser.ts",
     "nakama-browser.ts",
-    "friend-host-browser.ts"
+    "friend-host-browser.ts",
+    "faction-stores-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -529,7 +530,8 @@
     "nakama-diagnostics.ts": ["helpers/nakama-service.ts"],
     "friend-host-network.ts": ["helpers/friend-host.ts"],
     "friend-host-browser.ts": ["helpers/friend-host.ts"],
-    "helpers/friend-host.ts": ["helpers/browser-fixture.ts"]
+    "helpers/friend-host.ts": ["helpers/browser-fixture.ts"],
+    "faction-stores-browser.ts": ["helpers/browser-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -912,10 +914,15 @@
     },
     {
       "id": "input-audio",
-      "owners": ["client/main.ts", "client/audio.ts"],
+      "owners": [
+        "client/main.ts",
+        "client/audio.ts",
+        "client/ui.ts",
+        "client/style-communications.css"
+      ],
       "services": [],
       "tests": ["input-audio-browser.ts"],
-      "asserts": "Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification."
+      "asserts": "Login music starts without interaction when autoplay is allowed; blocked autoplay remains suspended until interaction and login stops the theme. Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification. Newcomer intro notice has a ten-second animation and native DOM lifetime, survives ordinary-toast queue pressure, remains readable beyond ordinary expiry, and disappears near ten seconds; other notice timing is unchanged."
     },
     {
       "id": "cargo-grade-ledger",
@@ -1249,6 +1256,19 @@
         "friend-save-owner.ts"
       ],
       "asserts": "Explicit password-protected listen-server hosting with one Game and durable independent friend saves; three captain ownership, movement and interaction; denial of Solo-only import/pause and foreign Origins; browser physical controls, reconnect, restart and extracted artifact execution without native service dependencies."
+    },
+    {
+      "id": "faction-store-locations",
+      "owners": [
+        "server/fronts.ts",
+        "server/features.ts",
+        "client/fronts_ui.ts",
+        "client/ui.ts",
+        "client/index.html"
+      ],
+      "services": ["fronts"],
+      "tests": ["faction-standing.ts", "faction-stores-browser.ts"],
+      "asserts": "Every landable public faction port offers only its faction store, including ports without trade service. Actual local purchases, foreign request resource-preserving denial, own Personal Station all-store selection and purchases, visitor/neutral/flight denial, stale selection recovery, decoded faction crests and no Bulletin store or chat Live label. Store button is absent from the DOM at neutral and visitor landings; selected faction standing is visible on open and refreshes from authoritative purchase payloads."
     }
   ],
   "routes": {
@@ -1369,7 +1389,7 @@
     "trade2": ["cargo-flows.ts", "v26.ts", "message-routing.ts"],
     "duel": ["v26.ts", "message-routing.ts"],
     "goal": ["v06.ts", "message-routing.ts"],
-    "store": ["faction-standing.ts", "v06.ts", "message-routing.ts"],
+    "store": ["faction-standing.ts", "v06.ts", "message-routing.ts", "faction-stores-browser.ts"],
     "colony": ["v07.ts", "message-routing.ts"],
     "arena": ["v07.ts", "message-routing.ts"],
     "exchange": ["cargo-flows.ts", "v07.ts", "message-routing.ts"],

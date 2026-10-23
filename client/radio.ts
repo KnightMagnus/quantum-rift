@@ -79,9 +79,7 @@ function panel(state: string, track: { title?: string }, message = '') {
     state +
     '"><div class="oa-top"><span class="oa-led"></span>' +
     (state === 'live'
-      ? radioStation?.playback === 'album'
-        ? 'ON AIR · ALBUM LOOP'
-        : 'ON AIR · SHUFFLE'
+      ? 'ON AIR'
       : state === 'tune'
         ? 'TUNING'
         : state === 'empty'

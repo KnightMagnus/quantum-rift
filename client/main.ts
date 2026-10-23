@@ -620,7 +620,7 @@ function send(networkMessage: NetworkMessage) {
 
 // ------------------------------------------------------------------ login and connection
 elementById2('lbtn').onclick = login;
-// the login theme starts on the first click or key on the login screen (browsers block sound until then)
+// Browsers that block autoplay resume the theme on the first click or key.
 const loginMusic = () => {
   if (elementById2('login').classList.contains('hidden')) return;
   audio.unlock();
@@ -643,6 +643,9 @@ elementById2('musicbtn').onclick = (pointerEvent) => {
 elementById2('musicbtn').classList.toggle('off', (clientGameState.opts.music ?? 0.6) === 0);
 window.addEventListener('pointerdown', loginMusic, true);
 window.addEventListener('keydown', loginMusic, true);
+// Attempt playback now; browser policy may require the gesture fallback.
+audio.unlock();
+audio.startMusic();
 // interface sounds for every button, tab and chip
 document.addEventListener(
   'click',
@@ -963,6 +966,7 @@ function onMessage(serverMessage: ServerMessage) {
         clientGameState.autoRoute = autoRoute2;
       }
       clientGameState.landed = null;
+      refreshStores();
       hideLanded();
       clientGameState.sys = serverMessage.sys;
       clientGameState.myId = serverMessage.id;
@@ -3201,6 +3205,8 @@ async function logOut(reason = '') {
     elementById2(identifier).classList.add('hidden');
   for (const identifier of [
     'chatlog',
+    'storein',
+    'storebuttonslot',
     'capview',
     'landbody',
     'infobody',

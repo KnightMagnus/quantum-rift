@@ -5,9 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
-import { DB } from '../server/db.js';
-import { Game } from '../server/game.js';
-import { FACTIONS, STELLARS, SYS } from '../shared/galaxy.js';
+import { DB } from '../server/db.ts';
+import { Game } from '../server/game.ts';
+import type { PlayerData } from '../server/game.ts';
+import type { StellarBody } from '../shared/galaxy.ts';
+import { FACTIONS, STELLARS, SYS } from '../shared/galaxy.ts';
 import {
   root,
   availablePort,
@@ -15,20 +17,21 @@ import {
   ready,
   cleanup,
   failureEvidence,
-} from './helpers/browser-fixture.mjs';
+} from './helpers/browser-fixture.ts';
 const out = evidenceDir('faction-stores');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rift-store-ui-'));
-const A = JSON.parse(fs.readFileSync(path.join(root, 'shared/assets.json')));
+const A = JSON.parse(fs.readFileSync(path.join(root, 'shared/assets.json'), 'utf8'));
 const db = new DB(path.join(dir, 'data'));
 const facs = Object.keys(FACTIONS).filter(
   (k) => !FACTIONS[k].region && !FACTIONS[k].hidden && k !== 'umbral',
 );
 const ports = Object.values(STELLARS).filter((p) => !p.site && p.svc.includes('L'));
 const site = Object.values(STELLARS).find((p) => p.site);
-const cases = facs.map((fac) => {
-  const local = ports.filter((p) => SYS[p.system].faction === fac);
-  return { name: `Store ${fac}`, port: local.find((p) => !p.svc.includes('T')) || local[0], fac };
-});
+const cases: { name: string; port: StellarBody | undefined; fac?: string; own?: boolean }[] =
+  facs.map((fac) => {
+    const local = ports.filter((p) => SYS[p.system].faction === fac);
+    return { name: `Store ${fac}`, port: local.find((p) => !p.svc.includes('T')) || local[0], fac };
+  });
 cases.push({ name: 'Store Owner', port: site, own: true });
 cases.push({ name: 'Store Visitor', port: site });
 cases.push({
@@ -37,16 +40,16 @@ cases.push({
 });
 for (const c of cases) {
   assert.ok(c.port, c.name + ' has a real landing');
-  const d = Game.prototype.fresh.call({ A });
+  const d = Game.prototype.fresh.call({ A }) as PlayerData;
   d.tut = 999;
-  d.story = { done: ['start'], active: null };
+  d.story = { done: ['start'], active: null, step: 0 };
   d.sys = c.port.system;
   d.stellar = c.port.id;
   d.credits = 1e6;
   d.rep = { ...d.rep, ...Object.fromEntries(facs.map((f) => [f, 100])) };
   d.tokens = Object.fromEntries(facs.map((f) => [f, 100]));
   if (c.own) {
-    d.station.site = site.id;
+    d.station.site = site!.id;
     d.station.ops = 1;
   }
   db.create(c.name, 'fixture', d);
@@ -54,7 +57,7 @@ for (const c of cases) {
 db.flush();
 const port = await availablePort();
 const origin = `http://127.0.0.1:${port}`;
-const server = spawn(process.execPath, ['server/main.js'], {
+const server = spawn(process.execPath, ['server/local-main.ts'], {
   cwd: root,
   env: {
     ...process.env,
@@ -75,7 +78,7 @@ try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   for (const c of cases) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-    const errors = [];
+    const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(String(e)));
     await page.goto(origin);
     await page.locator(`[data-slot="${c.name}"]`).click();
@@ -92,6 +95,7 @@ try {
     );
     await page.locator('#traytoggle').click();
     const available = !!(c.own || c.fac);
+    assert.equal(await page.locator('#storesbtn').count(), available ? 1 : 0);
     assert.equal(await page.locator('#storesbtn').isVisible(), available);
     if (available) {
       assert.equal(
@@ -108,11 +112,17 @@ try {
       );
       for (const fac of expected) {
         await page.locator(`#storein [data-act="sfac"][data-f="${fac}"]`).click();
+        assert.equal(await page.locator('#store-standing').getAttribute('data-faction'), fac);
+        assert.equal(await page.locator('#store-standing').getAttribute('data-standing'), '100');
+        assert.match(
+          await page.locator('#store-standing').innerText(),
+          new RegExp(FACTIONS[fac!].name),
+        );
         const image = page.locator('#faction-insignia');
-        await image.evaluate((im) => im.decode());
+        await image.evaluate((im) => (im as HTMLImageElement).decode());
         assert.equal(await image.getAttribute('data-faction'), fac);
-        assert.equal(await image.getAttribute('alt'), `${FACTIONS[fac].name} insignia`);
-        assert.ok(await image.evaluate((im) => im.naturalWidth > 0));
+        assert.equal(await image.getAttribute('alt'), `${FACTIONS[fac!].name} insignia`);
+        assert.ok(await image.evaluate((im) => (im as HTMLImageElement).naturalWidth > 0));
         assert.deepEqual(
           await page
             .locator('#storein [data-act="buystore"]')
@@ -123,9 +133,13 @@ try {
       const chosen = c.own ? facs.at(-1) : c.fac;
       await page.locator('#storein [data-id="writ"]').click();
       await page.waitForFunction(
-        (fac) => G.you.rep[fac] === 110 && G.you.tokens[fac] === 88,
+        (fac) => G.you!.rep[fac!] === 110 && G.you!.tokens[fac!] === 88,
         chosen,
       );
+      await page.waitForFunction(
+        () => document.querySelector('#store-standing')?.getAttribute('data-standing') === '110',
+      );
+      assert.equal(await page.locator('#store-standing').getAttribute('data-faction'), chosen);
       if (!c.own) {
         // Stale selection cannot expose another faction after opening/re-rendering.
         await page.evaluate(async () => {
@@ -151,10 +165,31 @@ try {
         'Unavailable landing cannot open a stale store',
       );
     }
+    // Clear all store state when changing captains, including the same station location.
+    if (c.own) {
+      await page.locator('#storebuttonslot button').click();
+      await page.keyboard.press('Escape');
+      await page.keyboard.press('Escape');
+      await page.locator('#quitconfirm').click();
+      await page.locator('#login:not(.hidden)').waitFor();
+      assert.equal(await page.locator('#storesbtn').count(), 0);
+      assert.equal(await page.locator('#storein').innerText(), '');
+      await page.locator('[data-slot="Store Visitor"]').click();
+      await page.waitForFunction(() => G.you && G.landed);
+      assert.equal(await page.locator('#storesbtn').count(), 0);
+      await page.evaluate(async () => (await import('/ui.js')).openStores());
+      assert.equal(await page.locator('#storebox').isVisible(), false);
+      await page.reload();
+      await page.locator('[data-slot="Store Owner"]').click();
+      await page.waitForFunction(() => G.you && G.landed);
+      assert.equal(await page.locator('#storesbtn').count(), 1);
+      await page.locator('#storesbtn').click();
+      assert.equal(await page.locator('#storein [data-act="sfac"]').count(), facs.length);
+    }
     assert.deepEqual(errors, []);
     results.push({
       name: c.name,
-      stellar: c.port.id,
+      stellar: c.port!.id,
       available,
       factions: c.own ? facs : c.fac ? [c.fac] : [],
     });

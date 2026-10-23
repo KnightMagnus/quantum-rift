@@ -132,7 +132,7 @@ import { docksHtml, dockChips, dockLine, outfitterRepairsHtml } from './docks_ui
 import { WING_ONLY } from '../shared/docks.ts';
 import { STATES } from '../shared/living.ts';
 import { REFINE_UP } from '../shared/hangar.ts';
-import { opsHtml, storeMenuHtml } from './fronts_ui.ts';
+import { opsHtml, storeMenuHtml, availableStoreFactions } from './fronts_ui.ts';
 import { renderCaptains } from './coop_ui.ts';
 import {
   colonyHtml,
@@ -255,7 +255,7 @@ export function initUI(
     }
   });
   elementById2('storein').addEventListener('click', onAct);
-  elementById2('storesbtn').onclick = () => openStores();
+
   elementById2('landbody').addEventListener('click', onAct);
   elementById2('landbody').addEventListener('click', (pointerEvent) => {
     const htmlElement = (pointerEvent.target as HTMLInputElement).closest<HTMLElement>(
@@ -637,9 +637,16 @@ export function toast(message: string): void {
   const htmlDivElement = document.createElement('div');
   htmlDivElement.textContent = message;
   htmlDivElement.className = 't-' + kind;
+  const newcomer = message.startsWith('Newcomer protection:');
+  if (newcomer) htmlDivElement.classList.add('newcomer-protection');
   elementById2('toasts').appendChild(htmlDivElement);
-  setTimeout(() => htmlDivElement.remove(), 5200);
-  while (elementById2('toasts').children.length > 4) elementById2('toasts').firstChild!.remove();
+  setTimeout(() => htmlDivElement.remove(), newcomer ? 10000 : 5200);
+  // Preserve the introduction's reading time during bursts of ordinary notices.
+  while (elementById2('toasts').children.length > 4) {
+    const oldest = elementById2('toasts').querySelector(':scope > div:not(.newcomer-protection)');
+    if (!oldest) break;
+    oldest.remove();
+  }
 }
 /**
  * Appends a message entry or system notification to the in-game chat log.
@@ -1429,6 +1436,17 @@ export function showLanded(): void {
     stellarBody = STELLARS[length2.stellar];
   elementById2('land').classList.remove('hidden');
   const site = length2.site;
+  const storeSlot = elementById2('storebuttonslot');
+  storeSlot.replaceChildren();
+  if (availableStoreFactions(clientGameState, FACTIONS).length) {
+    const button = document.createElement('button');
+    button.id = 'storesbtn';
+    button.className = 'btn';
+    button.textContent = site?.own ? 'FACTION STORES' : 'FACTION STORE';
+    button.onclick = () => openStores();
+    storeSlot.appendChild(button);
+  }
+  refreshStores();
   elementById2('landname').textContent = site
     ? site.owner
       ? `${site.owner}'s Personal Station`
@@ -1524,7 +1542,7 @@ export function showLanded(): void {
  * Opens the faction storehouse / item storage dialog.
  */
 export function openStores(): void {
-  if (!clientGameState.you!) return;
+  if (!clientGameState.you || !availableStoreFactions(clientGameState, FACTIONS).length) return;
   elementById2('storein').innerHTML = storeMenuHtml(clientGameState, FACTIONS);
   elementById2('storebox').classList.remove('hidden');
 }
@@ -1532,6 +1550,12 @@ export function openStores(): void {
  * Refreshes the faction storehouse UI if it is currently open.
  */
 export function refreshStores(): void {
+  if (!availableStoreFactions(clientGameState, FACTIONS).length) {
+    elementById2('storebox').classList.add('hidden');
+    elementById2('storein').replaceChildren();
+    clientGameState.storeFac = undefined;
+    return;
+  }
   if (!elementById2('storebox').classList.contains('hidden'))
     elementById2('storein').innerHTML = storeMenuHtml(clientGameState, FACTIONS);
 }
