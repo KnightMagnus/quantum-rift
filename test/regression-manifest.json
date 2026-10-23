@@ -109,7 +109,9 @@
     "attention.ts",
     "attention-scan.ts",
     "attention-runtime.ts",
-    "landing-feedback.ts"
+    "landing-feedback.ts",
+    "login-traffic.ts",
+    "purchase-audio.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -150,7 +152,9 @@
     "friend-host-browser.ts",
     "faction-stores-browser.ts",
     "responsive-hud-browser.ts",
-    "sidebar-gauges-browser.ts"
+    "sidebar-gauges-browser.ts",
+    "audio-flyby-browser.ts",
+    "audio-defaults-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -555,7 +559,11 @@
       "helpers/refinery-play-fixture.ts",
       "helpers/browser-fixture.ts",
       "fixtures/sidebar-gauges-preload.ts"
-    ]
+    ],
+    "login-traffic.ts": [],
+    "purchase-audio.ts": ["helpers/temp-data.ts"],
+    "audio-flyby-browser.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
+    "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -847,10 +855,10 @@
     },
     {
       "id": "login-scene",
-      "owners": ["client/login_scene.ts"],
+      "owners": ["client/login_scene.ts", "client/login-traffic.ts"],
       "services": [],
-      "tests": ["login-scene-browser.ts"],
-      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced-motion static pose/no recurring draws despite suppressed native change delivery, normal resume and rendering lifecycle. Actual hub sprite cross-fade and navigation-light pulses, shared rotating/cloud planet pixels, 30% smaller apparent planet diameter. Displayed lamp pixel brightness changes; real logout resumes shared planet motion and reduced-motion freezes again after gameplay."
+      "tests": ["login-scene-browser.ts", "login-traffic.ts", "audio-flyby-browser.ts"],
+      "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced-motion static pose/no recurring draws despite suppressed native change delivery, normal resume and rendering lifecycle. Actual hub sprite cross-fade and navigation-light pulses, shared rotating/cloud planet pixels, 30% smaller apparent planet diameter. Displayed lamp pixel brightness changes; real logout resumes shared planet motion and reduced-motion freezes again after gameplay. Actual WebAudio source/context time stages real catalog-strength formations, bounds traffic to eleven sprites and resets on natural loop without another source; suspension freezes playback position."
     },
     {
       "id": "sidebar-scrollbars",
@@ -945,8 +953,13 @@
         "client/style-communications.css"
       ],
       "services": [],
-      "tests": ["input-audio-browser.ts"],
-      "asserts": "Login music starts without interaction when autoplay is allowed; blocked autoplay remains suspended until interaction and login stops the theme. Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification. Newcomer intro notice has a ten-second animation and native DOM lifetime, survives ordinary-toast queue pressure, remains readable beyond ordinary expiry, and disappears near ten seconds; other notice timing is unchanged."
+      "tests": [
+        "input-audio-browser.ts",
+        "purchase-audio.ts",
+        "audio-flyby-browser.ts",
+        "audio-defaults-browser.ts"
+      ],
+      "asserts": "Login music starts without interaction when autoplay is allowed; blocked autoplay remains suspended until interaction and login stops the theme. Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification. Newcomer intro notice has a ten-second animation and native DOM lifetime, survives ordinary-toast queue pressure, remains readable beyond ordinary expiry, and disappears near ten seconds; other notice timing is unchanged. Fresh effects default to 50% without rewriting stored mixer values. The original reproducible 240ms purchase confirmation has an 18% peak and is decoded/played by an actual trade control on the unchanged interface bus. A real seeded shipyard hangar buy plays once on confirmation and settles; cancellation, sales and disabled controls do not play the purchase signal."
     },
     {
       "id": "cargo-grade-ledger",

@@ -55,7 +55,7 @@ const audioBus: Partial<Record<MixerBus, GainNode>> = {};
 const buffers = new Map<string | number, AudioBuffer>(),
   loading = new Map<string | number, Promise<AudioBuffer | null>>();
 export let volume = 0.6;
-let level2 = { sfx: 1, ui: 0.8, amb: 0.5, music: 0.6 },
+let level2 = { sfx: 0.5, ui: 0.8, amb: 0.5, music: 0.6 },
   muted = false;
 
 /**
@@ -404,6 +404,8 @@ export function engine(level: number) {
 let musicSrc: AudioBufferSourceNode | null = null,
   musicGain: GainNode | null = null,
   pendingMusic = false;
+let musicStartedAt = 0,
+  musicEpoch = 0;
 
 /**
  * Starts login screen theme music with fade-in.
@@ -426,11 +428,31 @@ export function startMusic() {
     musicSrc.buffer = audioBuffer;
     musicSrc.loop = true;
     musicSrc.connect(musicGain);
+    musicStartedAt = audioContext!.currentTime;
+    musicEpoch++;
     musicSrc.start();
   });
 }
 let pendingMusicAllowed = true,
   musicRequest = 0;
+
+/** Current source/context playback position; suspended WebAudio time does not advance. */
+export function loginMusicTimeline() {
+  const duration = musicSrc?.buffer?.duration ?? 0;
+  return {
+    /** Loop-relative playback seconds, not wall-clock scene time. */
+    position:
+      duration && audioContext
+        ? Math.max(0, audioContext.currentTime - musicStartedAt) % duration
+        : 0,
+    /** Actual decoded theme length in seconds. */
+    duration,
+    /** A source only advances while its owning context is running. */
+    playing: !!musicSrc && audioContext?.state === 'running',
+    /** Changes when a new source starts, including after logout. */
+    epoch: musicEpoch,
+  };
+}
 
 /**
  * Fades out and stops login screen theme music.
@@ -444,6 +466,11 @@ export function stopMusic(fade = 2.5) {
   const audioBufferSourceNode = musicSrc,
     gainNode = musicGain!;
   musicSrc = null;
+  if (fade <= 0) {
+    audioBufferSourceNode.stop();
+    gainNode.disconnect();
+    return;
+  }
   gainNode.gain.cancelScheduledValues(audioContext!.currentTime);
   gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext!.currentTime);
   gainNode.gain.linearRampToValueAtTime(0, audioContext!.currentTime + fade);
@@ -465,6 +492,13 @@ export function debug() {
   return {
     /** Audio context state or null */
     ctx: audioContext && audioContext.state,
+
+    /** Current mixer targets and actual bus gains, without changing playback. */
+    mix: { ...level2 },
+    gains: Object.fromEntries(
+      mixerBuses.map((bus) => [bus, audioBus[bus]?.gain.value ?? level2[bus]]),
+    ),
+    master: level(),
 
     /** Active ambience bed names */
     amb: Object.keys(ambNow),

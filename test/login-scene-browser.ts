@@ -487,7 +487,7 @@ try {
   assert.equal(fallback.matches, true, 'Actual production media query changed');
   assert.equal(fallback.deliveries, 0, 'No reduce callback was forwarded to production');
   const expectedX =
-    0.12 * (fallback.width + 240) - 120 - 30 * Math.min(1.25, Math.max(0.6, fallback.width / 1440));
+    0.12 * (fallback.width + 240) - 120 - 16 * Math.min(1.25, Math.max(0.6, fallback.width / 1440));
   assert.ok(
     Math.abs(fallback.x - expectedX) < 0.01,
     'Lost-event fallback repaints the independent phase-zero traffic pose',

@@ -2,6 +2,7 @@
 (oscillators, filtered noise, envelopes, a synthetic reverb), so every clip is original.
 usage: python3 tools/rift_audio.py client/assets/sfx      (needs numpy, scipy and ffmpeg for the mp3s)"""
 import sys, os, subprocess, wave
+from rift_purchase_audio import write_purchase
 import numpy as np
 from scipy.signal import butter, sosfilt, fftconvolve
 
@@ -53,7 +54,7 @@ wav('ui_tab', mix(blip(880, 0.06, 'tri', d=0.02), at(blip(1320, 0.06, 'tri', d=0
 wav('ui_open', mix(bp(noise(0.28), 300, 3000) * adsr(int(0.28 * SR), 0.12, 0.08, 0.3, 0.08), blip(300, 0.28, 'sine', a=0.1, d=0.15, f2=900) * 0.4))
 wav('ui_close', mix(bp(noise(0.22), 300, 2500) * adsr(int(0.22 * SR), 0.01, 0.08, 0.3, 0.12), blip(800, 0.22, 'sine', d=0.1, f2=250) * 0.4))
 wav('ui_error', mix(blip(140, 0.12, 'saw', d=0.08), at(blip(110, 0.14, 'saw', d=0.1), 0.13, 0.3)) * 0.7)
-wav('ui_buy', verb(mix(blip(1568, 0.25, 'sine', d=0.12), blip(2093, 0.3, 'sine', d=0.15) * 0.6, at(blip(2637, 0.3, 'sine', d=0.18) * 0.5, 0.06, 0.4)), 0.6, 0.2))
+write_purchase(os.path.join(OUT, 'ui_buy.wav'))
 wav('ui_sell', verb(mix(blip(2093, 0.2, 'sine', d=0.1), at(blip(1568, 0.25, 'sine', d=0.12), 0.07, 0.35), at(blip(1319, 0.3, 'sine', d=0.15), 0.14, 0.45)), 0.6, 0.2))
 wav('ui_toast', verb(mix(blip(1046, 0.3, 'sine', d=0.18), blip(1568, 0.3, 'sine', d=0.12) * 0.35), 0.8, 0.25), peak=0.6)
 wav('ui_accept', verb(mix(*[at(blip(note(m), 0.25, 'tri', d=0.12), i * 0.08, 0.6) for i, m in enumerate([72, 76, 79])]), 0.8, 0.3))

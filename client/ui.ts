@@ -1,3 +1,4 @@
+import { ui as playInterfaceSound } from './audio.ts';
 import type { PlayerPayload, LandedPayload } from './main.ts';
 import type { Mission } from '../server/game.ts';
 import type { OutfitAsset } from '../shared/rules.ts';
@@ -2292,7 +2293,10 @@ function onAct(mouseEvent: MouseEvent): void {
     case 'buyhangar':
       ask(
         `Buy the ${clientGameState.A!.ships[domStringMap.h!].name} for ${credits(clientGameState.A!.ships[domStringMap.h!].cost)} credits and send her to your Personal Station's hangar?`,
-        () => send({ t: 'buyship', hull: +domStringMap.h!, store: true }),
+        () => {
+          playInterfaceSound('buy', 0.7);
+          send({ t: 'buyship', hull: +domStringMap.h!, store: true });
+        },
       );
       break;
     case 'buyship':

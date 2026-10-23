@@ -98,9 +98,11 @@ try {
   assert.equal(keyboardInitial.result.value.activated, false);
   assert.equal(keyboardInitial.result.value.ctx, 'suspended');
   await keyboardPage.keyboard.press('Tab');
-  await keyboardPage.waitForFunction(
-    async () => (await import('/audio.js')).debug().ctx === 'running',
-  );
+  // Poll synchronously: an async predicate returns a truthy Promise before decode finishes.
+  await keyboardPage.waitForFunction(() => {
+    const audio = window.RiftAudio.debug();
+    return audio.ctx === 'running' && audio.music;
+  });
   assert.equal(
     await keyboardPage.evaluate(async () => (await import('/audio.js')).debug().music),
     true,
@@ -151,7 +153,7 @@ try {
     'Blocked autoplay queues the theme without bypassing browser policy',
   );
   await page.locator('#lname').click();
-  await page.waitForFunction(async () => (await import('/audio.js')).debug().ctx === 'running');
+  await page.waitForFunction(() => window.RiftAudio.debug().ctx === 'running');
   await page.locator('[data-slot="Input Audio"]').click();
   await page.waitForFunction(() => G.you && G.landed);
   assert.equal(

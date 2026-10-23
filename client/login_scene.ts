@@ -5,28 +5,9 @@ import { SPRITES } from '../shared/sprites26.ts';
 import { planetSprite } from './planets.ts';
 import { loopFrames } from './animation_frames.ts';
 
-const TRAFFIC = [
-  { hull: 703, lane: 0.19, phase: 0.12, speed: 0.019, size: 60, right: true },
-  { hull: 706, lane: 0.74, phase: 0.79, speed: 0.012, size: 112, right: false },
-  { hull: 708, lane: 0.38, phase: 0.83, speed: 0.016, size: 74, right: true },
-  { hull: 711, lane: 0.85, phase: 0.3, speed: 0.009, size: 130, right: true },
-  { hull: 704, lane: 0.53, phase: 0.08, speed: 0.022, size: 54, right: false },
-  { hull: 705, lane: 0.11, phase: 0.62, speed: 0.014, size: 46, right: false },
-];
-
-/** Decorative traffic positions; seconds are active scene time, not wall time. */
-export function loginTraffic(seconds: number, width: number, height: number) {
-  const scale = Math.min(1.25, Math.max(0.6, width / 1440));
-  return TRAFFIC.map((ship) => {
-    const progress = (ship.phase + seconds * ship.speed) % 1;
-    return {
-      ...ship,
-      x: (ship.right ? progress : 1 - progress) * (width + 240) - 120,
-      y: ship.lane * height,
-      size: ship.size * scale,
-    };
-  });
-}
+import { LOGIN_HULLS, loginTraffic } from './login-traffic.ts';
+import { loginMusicTimeline } from './audio.ts';
+export { loginTraffic } from './login-traffic.ts';
 
 let engineTick: ((time: number) => void) | undefined;
 /** Decorative login artwork shares the engine clock without owning a second RAF. */
@@ -52,7 +33,7 @@ export function initLoginScene(login: HTMLElement) {
   canvas.dataset.system = system.id;
   canvas.dataset.station = station.id;
   canvas.dataset.planet = planet.id;
-  canvas.dataset.hulls = TRAFFIC.map((ship) => ship.hull).join(',');
+  canvas.dataset.hulls = LOGIN_HULLS.map((ship) => ship.hull).join(',');
   const images = new Map<string, HTMLImageElement>();
   let width = 0,
     height = 0,
@@ -80,6 +61,8 @@ export function initLoginScene(login: HTMLElement) {
   // Extract the actual asset's red/green navigation lights once, not each frame.
   const hubLights = document.createElement('canvas');
   const lights = hubLights.getContext('2d')!;
+  const darkHubLights = document.createElement('canvas');
+  const darkLights = darkHubLights.getContext('2d')!;
   htmlImageElement2.addEventListener('load', () => {
     // Half-resolution glow mask is enough for tiny lamps, at one quarter the memory.
     hubLights.width = htmlImageElement2.naturalWidth / 2;
@@ -99,10 +82,17 @@ export function initLoginScene(login: HTMLElement) {
         pixels.data[index + 3] = 0;
     }
     lights.putImageData(pixels, 0, 0);
+    // The same alpha mask with black RGB replaces a full-atlas brightness filter
+    // on every paint. Keep the original colored mask for the additive lamps.
+    darkHubLights.width = hubLights.width;
+    darkHubLights.height = hubLights.height;
+    for (let index = 0; index < pixels.data.length; index += 4)
+      pixels.data[index] = pixels.data[index + 1] = pixels.data[index + 2] = 0;
+    darkLights.putImageData(pixels, 0, 0);
     if (visible()) paint();
   });
   const nebula = image('decor/nebula_2.webp');
-  for (const { hull } of TRAFFIC) image(`ships/${hull}.webp`);
+  for (const { hull } of LOGIN_HULLS) image(`ships/${hull}.webp`);
 
   // A crisp, deterministic star field is cached at display resolution.
   function resize() {
@@ -219,10 +209,9 @@ export function initLoginScene(login: HTMLElement) {
           // Dim the baked-in lamps first so bright source pixels can visibly pulse
           // instead of immediately saturating under an additive overlay.
           canvasRenderingContext2D.shadowBlur = 0;
-          canvasRenderingContext2D.filter = 'brightness(0)';
           canvasRenderingContext2D.globalAlpha = weight * 0.8;
           canvasRenderingContext2D.drawImage(
-            hubLights,
+            darkHubLights,
             screenX / 2,
             screenY / 2,
             fileSystem / 2,
@@ -255,7 +244,12 @@ export function initLoginScene(login: HTMLElement) {
       canvasRenderingContext2D.globalAlpha = 1;
       canvasRenderingContext2D.restore();
     }
-    for (const ship of loginTraffic(motion.matches ? 0 : elapsed, width, height)) {
+    const timeline = loginMusicTimeline();
+    const trafficTime = motion.matches ? 0 : timeline.position;
+    canvas.dataset.trackPosition = String(trafficTime);
+    canvas.dataset.trackDuration = String(timeline.duration);
+    canvas.dataset.trackPlaying = String(timeline.playing);
+    for (const ship of loginTraffic(trafficTime, width, height, timeline.duration)) {
       const htmlImageElement = images.get(`ships/${ship.hull}.webp`),
         sprite = SPRITES[ship.hull],
         heading = ship.right ? 9 : 27,
@@ -276,7 +270,7 @@ export function initLoginScene(login: HTMLElement) {
     }
     canvas.dataset.ready =
       loaded(htmlImageElement2) &&
-      TRAFFIC.every(({ hull }) => loaded(images.get(`ships/${hull}.webp`)))
+      LOGIN_HULLS.every(({ hull }) => loaded(images.get(`ships/${hull}.webp`)))
         ? 'true'
         : 'false';
   }

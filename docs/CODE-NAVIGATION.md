@@ -267,3 +267,16 @@ state. Connection teardown clears the collapsed readout before another snapshot.
 selects a semantic situation and retains an already active approach; authoritative
 landing refusals release the approach without resetting that situation. Manual
 cancellation, session changes and a new situation allow a fresh notification.
+
+### Login playback and decorative traffic
+
+`client/audio.ts` owns the login source and exposes its loop-relative context time.
+`client/login-traffic.ts` uses that position and decoded duration for a deterministic,
+bounded schedule of actual catalog hulls; it creates no physics entities or clock.
+`client/login_scene.ts` paints those positions from the existing engine update and
+retains its visibility and reduced-motion lifecycle. Source replacement resets the
+playback epoch, while an ordinary score loop reuses the source.
+
+`tools/rift_purchase_audio.py` writes the original short purchase signal using only
+standard-library oscillators and envelopes. `tools/rift_audio.py` delegates to it,
+so regenerating the broad sound library does not restore the retired sharp jingle.

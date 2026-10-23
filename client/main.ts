@@ -392,7 +392,7 @@ const clientGameState: ClientGameState = (window.G = {
       cb: false,
       scale: 1,
       vol: 0.35,
-      sfx: 0.75,
+      sfx: 0.5,
       radio: 0.8,
       ui: 0.55,
       amb: 0.35,
@@ -889,7 +889,7 @@ function onMessage(serverMessage: ServerMessage) {
       }
       clientGameState.contractPlan = null;
       refineryUI.connected();
-      audio.stopMusic();
+      audio.stopMusic(0);
       audio.preloadUi();
       elementById2('login').classList.add('hidden');
       clientGameState.myName = serverMessage.name;

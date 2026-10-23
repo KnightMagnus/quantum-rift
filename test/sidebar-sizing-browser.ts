@@ -46,6 +46,12 @@ try {
     await page.mouse.up();
   }
   await drag('#radarheightgrip', -110);
+  await page.waitForFunction(
+    (initialHeight) =>
+      initialHeight - document.getElementById('radar')!.getBoundingClientRect().height > 80,
+    initial!.height,
+    { timeout: 3000 },
+  );
   const smaller = await radar.boundingBox();
   assert.ok(initial!.height - smaller!.height > 80, 'Mouse drag changes minimap height');
   assert.ok(
@@ -195,10 +201,17 @@ try {
     document.body.classList.remove('scaled');
   });
   await page.setViewportSize({ width: 1440, height: 1440 });
-  await page.waitForFunction(() => {
-    const radar = document.getElementById('radar')!.getBoundingClientRect();
-    return Math.abs(radar.width - radar.height) < 1;
-  });
+  // Removing scale can leave the already-square radar unchanged while ResizeObserver
+  // has not yet allocated the menu. Await both actual layout outcomes before reading.
+  await page.waitForFunction(
+    () => {
+      const radar = document.getElementById('radar')!.getBoundingClientRect();
+      const menu = document.getElementById('cpanel')!.getBoundingClientRect();
+      return Math.abs(radar.width - radar.height) < 1 && Math.abs(menu.bottom - 1431) < 2;
+    },
+    null,
+    { timeout: 3000 },
+  );
   assert.equal(
     await page
       .locator('#menuheightgrip')
