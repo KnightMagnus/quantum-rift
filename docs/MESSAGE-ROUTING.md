@@ -11,8 +11,9 @@ Keep these responsibilities distinct:
 
 - `Game.onMessage`: authentication, flood limiting, economic-freeze and activity
   gates, in their existing order.
-- `createGameMessageHandlers`: the same 56 named actions, field coercion and
-  calls to their existing owners. Inline legacy actions are moved intact.
+- `createGameMessageHandlers`: 57 named actions, field validation/coercion and
+  calls to their owners. The `portrait` action accepts only selectable catalog IDs
+  and changes only the authenticated captain's saved portrait.
 - `createMessageRegistry`: duplicate detection, fixed route listing, dispatch
   and ignored unknown/inherited names.
 
