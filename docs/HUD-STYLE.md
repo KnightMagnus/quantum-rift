@@ -15,7 +15,7 @@ flight screenshot shows the implemented design.
   do not shrink the desktop design's text to fit a narrow screenshot.
 - Function controls use compact key faces, separate visible labels and a small
   indicator. An expanded panel gets the warm oxide active treatment. Keep all
-  ship functions in the registry and scrollable stack in `client/ship-functions.js`.
+  ship functions in the registry and scrollable stack in `client/ship-functions.ts`.
 - COMMS has its own sector/status header, scrolling history, channel controls and
   entry row. Keep long histories inside the screen instead of stretching the deck.
 - A popup has a raised steel header and a distinct recessed `.function-body`.
@@ -65,10 +65,10 @@ Capture actual populated game states, not HTML concepts, at 1600×1000 and
 families and a fully expanded function stack. Update the README gallery with
 implemented captures. Use isolated fixture saves, never player saves.
 
-`cockpit-browser.mjs` covers typography/artwork, real menu actions, tray defaults,
+`cockpit-browser.ts` covers typography/artwork, real menu actions, tray defaults,
 live drag at 0.8/1/1.4 scale, saved-width reload, viewport-shrink recovery and literal
-hail-marker edge containment. `ship-functions-browser.mjs`,
-`mining-panel-browser.mjs` and `sidebar-browser.mjs` cover multi-panel flow,
+hail-marker edge containment. `ship-functions-browser.ts`,
+`mining-panel-browser.ts` and `sidebar-browser.ts` cover multi-panel flow,
 reachability and narrow/scaled cases. Run the canonical regression manifest; a
 screenshot or passing geometry check alone is not functional verification.
 

@@ -13,5 +13,5 @@ echo Starting your private Quantum Rift game... keep this window open while you 
 set SOLO=1
 set DATA_DIR=%~dp0solo-data
 start "" cmd /c "timeout /t 2 >nul & start http://localhost:8080"
-node tools\start.mjs
+node tools\start.ts
 pause

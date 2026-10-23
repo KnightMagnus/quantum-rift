@@ -14,6 +14,10 @@ save formats are unchanged by the cleanup. See the [release notes](docs/RELEASE-
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
+The flight viewport uses [ExcaliburJS](https://excaliburjs.com/) for its scene,
+camera, input and native sprite entities. The existing server simulation, saves
+and HTML cockpit remain in place; engine scripts are included locally.
+
 ## Features
 
 ### Explore the galaxy
@@ -61,7 +65,7 @@ Fly a ship through a living galaxy of more than 200 star systems. Trade between 
 
 ## Requirements
 
-The computer running the game needs the **pinned Node 27 prerelease** and a modern browser. Run `node tools/runtime/install-node.mjs` once with an existing Node installation to install the runtime locally without changing system Node. Built release archives need no npm dependencies or compiler; source checkouts require `npm ci` and `npm run build`. See [runtime and build instructions](docs/TYPESCRIPT-RUNTIME.md) for supported platforms. Friends joining your server only need a browser.
+The computer running the game needs the **pinned Node 27 prerelease** and a modern browser. Run `node tools/runtime/install-node.ts` once with an existing Node installation to install the runtime locally without changing system Node. Built release archives need no npm dependencies or compiler; source checkouts require `npm ci` and `npm run build`. See [runtime and build instructions](docs/TYPESCRIPT-RUNTIME.md) for supported platforms. Friends joining your server only need a browser.
 
 ## Launch
 
@@ -69,7 +73,7 @@ Download and extract the release above, then:
 
 - **Windows:** double-click **`Start Solo Game.bat`** for a private game, or **`Start Quantum Rift.bat`** to host multiplayer.
 - **macOS / Linux:** open a terminal in the extracted folder and run `sh start-solo.command` for a private game, or `sh start.command` to host multiplayer.
-- **Any platform, from a terminal:** run `node tools/start.mjs` in the extracted folder to host multiplayer.
+- **Any platform, from a terminal:** run `node tools/start.ts` in the extracted folder to host multiplayer.
 
 Open **http://localhost:8080** if the browser does not open automatically. Keep the server window open while playing. Solo games accept connections only from your computer; for multiplayer on the same network, friends open `http://<host-computer-address>:8080`.
 
@@ -82,7 +86,7 @@ For custom Solo test captains, use the [save generator](test/Save%20Generator/RE
 
 **Flight cockpit**
 
-![Flight in Concordia with the sidebar closed](docs/screenshots/cockpit-31.png)
+![Flight in Concordia with the sidebar closed](docs/screenshots/flight-excalibur.png)
 
 **Expanded chat projection**
 

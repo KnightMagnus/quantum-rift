@@ -1,7 +1,7 @@
 # Faction insignias
 
 Original local SVG insignias in client/assets/factions use the exact canonical
-FACTIONS color from shared/galaxy.js for their crest stroke. Dark recessed fields
+FACTIONS color from shared/galaxy.ts for their crest stroke. Dark recessed fields
 and engraved shadows match the cockpit viewscreens; colors are not an alternative
 palette. The store header selects its image from the existing faction selection,
 without adding clicks or changing stock, standing, prices or purchase authority.
@@ -25,8 +25,8 @@ without adding clicks or changing stock, standing, prices or purchase authority.
 | Feral Swarm        | connected brood cells                           | wild Vashari drone clusters              |
 | Umbral Eclipse     | occulted disc / eight rays                      | roaming Umbral cells                     |
 
-Sources: shared/galaxy.js faction roster, shared/gen.js location descriptions,
-shared/arcs.js faction arcs, shared/story.js Que'vari story. Motifs are original
+Sources: shared/galaxy.ts faction roster, shared/gen.ts location descriptions,
+shared/arcs.ts faction arcs, shared/story.ts Que'vari story. Motifs are original
 interpretations, not claims of previously canonical flags. All 16 roster entries
 have assets; the existing store exposes 11 (region/hidden powers and Umbral remain
 excluded by STORE_FACS). Tests decode and switch all 11 selectable images, match

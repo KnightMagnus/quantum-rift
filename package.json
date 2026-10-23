@@ -3,30 +3,28 @@
   "version": "3.3.1",
   "description": "Quantum Rift: an online multiplayer space trading and combat game.",
   "type": "module",
-  "main": "server/main.js",
+  "main": "dist/server/main.js",
   "scripts": {
-    "start": "node tools/start.mjs",
-    "test": "node test/bot.js",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.core.json --noEmit",
-    "typecheck:tsrs": "tsrs --noEmit && tsrs -p tsconfig.core.json --noEmit",
-    "test:features": "node test/features.js",
-    "test:types": "node test/typecheck-contracts.js",
-    "test:types:tsrs": "node test/typecheck-contracts.js --tsrs",
+    "start": "node tools/start.ts",
+    "test": "node test/bot.ts",
+    "typecheck": "node tools/typescript-scope.ts && tsrs --noEmit && tsrs -p tsconfig.core.json --noEmit && tsrs -p tsconfig.tools.json --noEmit && tsrs -p tsconfig.tests.json --noEmit",
+    "test:features": "node test/features.ts",
+    "test:types": "node test/typecheck-contracts.ts",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "prepare": "husky && npm run build",
-    "test:regression:unit": "node test/regression-runner.mjs unit",
-    "test:regression:browser": "node test/regression-runner.mjs browser",
-    "test:regression": "node test/regression-runner.mjs all",
-    "build": "node tools/build.mjs",
+    "test:regression:unit": "node test/regression-runner.ts unit",
+    "test:regression:browser": "node test/regression-runner.ts browser",
+    "test:regression": "node test/regression-runner.ts all",
+    "build": "node tools/build.ts",
     "prestart": "npm run build",
     "pretest:regression": "npm run build",
     "pretest:regression:unit": "npm run build",
     "pretest:regression:browser": "npm run build",
     "lint": "oxlint --deny-warnings && npm run lint:types",
     "lint:fix": "oxlint --fix",
-    "lint:types": "node tools/lint-types.mjs",
-    "test:tooling": "node test/tooling-contracts.mjs"
+    "lint:types": "node tools/lint-types.ts",
+    "test:tooling": "node test/tooling-contracts.ts"
   },
   "engines": {
     "node": ">=27.0.0-0 <28"
@@ -34,13 +32,16 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "esbuild": "0.25.12",
     "husky": "^9.1.7",
     "oxc-parser": "0.155.0",
     "oxfmt": "0.74.0",
     "oxlint": "1.89.0",
     "oxlint-tsgolint": "7.0.2004",
     "playwright": "1.64.1",
-    "tsrs": "0.18.0-ts7.1.0-dev.20260929",
-    "typescript": "^7.0.2"
+    "tsrs": "0.18.0-ts7.1.0-dev.20260929"
+  },
+  "dependencies": {
+    "excalibur": "0.32.0"
   }
 }

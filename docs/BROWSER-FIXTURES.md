@@ -3,14 +3,14 @@
 ## One writer for each temporary save
 
 A setup `Game` is a seed builder, not a second live server. Its normal constructor
-starts background simulation/autosave work. If the test then spawns `server/main.js`
+starts background simulation/autosave work. If the test then spawns `server/main.ts`
 against the same directory, the two processes can race over `checkpoint.json.tmp`.
 The resulting database freeze is real protection responding to an invalid fixture,
 not permission to relax checkpoint checks or retry until green.
 
 Suppress constructor timers synchronously while building the seed, restore the
 native timer functions immediately afterward, finish seeding and flush, then start
-the one authoritative child server. See `test/sidebar-browser.mjs`. Use temporary
+the one authoritative child server. See `test/sidebar-browser.ts`. Use temporary
 saves, bounded waits and cleanup; never a player's data directory. Do not leave a
 parent simulation ticking beside the child or add a second mutating DB instance.
 When investigating a browser timeout, inspect the first server error as well as
@@ -18,7 +18,7 @@ the screenshot and client error; later frozen-database errors can be consequence
 
 ## Keep presentation services out of session snapshots
 
-`client/main.js` snapshots clean serializable state for logout. A helper containing
+`client/main.ts` snapshots clean serializable state for logout. A helper containing
 methods, DOM handles or closures is not serializable with `structuredClone`.
 Explicitly retain/reset such a service rather than putting it into that snapshot.
 Browser preferences must be loaded for the authenticated captain, not the last

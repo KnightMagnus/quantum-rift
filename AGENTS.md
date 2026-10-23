@@ -26,7 +26,7 @@ limits. A passing suite does not prove every branch, random seed or device.
 ## Ship-function cockpit convention
 
 Existing and future special ship functions belong in the shared registry in
-client/ship-functions.js: a distinct accessible icon with a collapsible panel,
+client/ship-functions.ts: a distinct accessible icon with a collapsible panel,
 in normal flow above chat. Never add fixed-position function panels or offsets
 per icon. Keep Mining visible but disabled when unavailable. Capability-specific
 Towing, Dredge Processing, Fleet/Formation and Drones appear when applicable.
@@ -40,6 +40,10 @@ reachability and narrow/scaled viewports in the canonical regression manifest.
 Use descriptive names for variables, parameters, functions and types. Avoid opaque
 abbreviations and single-letter names except for conventional, short-lived indices
 or mathematical coordinates whose meaning is immediately clear.
+
+Document native TypeScript types at their declarations. Put field descriptions on
+the corresponding interface/type members, not in detached `TypeName fields:` lists
+or duplicate JSDoc type declarations. Preserve explanatory text when moving it.
 
 Keep JSDoc type references readable: declare named imported type aliases near the
 top of the module and reuse them instead of scattering inline `import(...).Type`
@@ -79,7 +83,7 @@ change executable code or quoted third-party material merely to alter its voice.
 Keep `test/Save Generator/` functional for every future release while this beta
 testing tool remains in the repository. When the version, fresh-save schema, ships,
 station sites, landing ports, research or tutorial/radio defaults change, refresh
-its catalog with `node "test/Save Generator/export-catalog.mjs"` and format the
+its catalog with `node "test/Save Generator/export-catalog.ts"` and format the
 result. Update its instructions and Windows scripts when their requirements change.
 
 Preserve the generator's custom credits, ship, station location/tier and player-name

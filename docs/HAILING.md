@@ -30,18 +30,18 @@ The rendezvous/escort marker tracks the accepted sender; the intel marker is a f
 
 ## Implementation boundaries and verification
 
-`server/hail-service.js` owns ephemeral queue, cooldown, source identity, resource/reward validation and encounter lifecycle. `server/hail-dialogue.js` owns contextual authored responses. Existing `HailOperations` keep outgoing services and delegate player targets to the service through an explicit feature capability. The `hailin` message route is behind the normal authentication/flood/activity gates. `client/hails_ui.js` uses DOM text nodes for all messages and option labels.
+`server/hail-service.ts` owns ephemeral queue, cooldown, source identity, resource/reward validation and encounter lifecycle. `server/hail-dialogue.ts` owns contextual authored responses. Existing `HailOperations` keep outgoing services and delegate player targets to the service through an explicit feature capability. The `hailin` message route is behind the normal authentication/flood/activity gates. `client/hails_ui.ts` uses DOM text nodes for all messages and option labels.
 
 Checks:
 
 ```sh
-node test/hailing.js
+node test/hailing.ts
 npm run test:features
 npm run typecheck
 # With a disposable server, never a live account/data directory:
-node test/hailing-network.js ws://localhost:18766/ws
+node test/hailing-network.ts ws://localhost:18766/ws
 # Optional separately installed Playwright:
-PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node test/hailing-browser.mjs http://localhost:18766
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node test/hailing-browser.ts http://localhost:18766
 ```
 
 The focused service test covers Unicode, sender ownership, blocks/privacy, rate limiting, coalescing, invalid and replayed actions, insufficient resources, actual-landing reward/replay/separation, rounded non-player intel, source exclusions, queue caps, expiry and active-ship resets. Two real WebSocket clients cover authenticated identity, reply, nonmodal delivery, flood/block behavior and forged player options. Browser checks cover incoming badge/focus, literal HTML-looking text, Unicode composer/reply, typing T safely, inbox key/Escape, desktop/sidebar resizing, continuous simulation and page errors.

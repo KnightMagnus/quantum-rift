@@ -1,0 +1,20 @@
+// Provisional, unbalanced tuning. All time below is mining logical simulation time.
+export const PRESSURE = Object.freeze({
+  fieldWorkRecovery: 0.5,
+  encounterShips: 2,
+  spawnClearance: 700,
+  portClearance: 1000,
+  noisePerSecond: 7,
+  noisePerTonne: 1,
+  decay: 0.6,
+  warn: 70,
+  threshold: 100,
+  cooldown: 300,
+  telegraph: 2,
+  radius: 260,
+  blast: 45,
+  consent: 600,
+  encounterLife: 120,
+  fieldMax: 40,
+  fieldDecay: 0.2,
+});

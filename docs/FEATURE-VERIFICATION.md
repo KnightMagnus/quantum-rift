@@ -2,7 +2,7 @@
 
 ## Independent reference
 
-`test/fixtures/features-v26.json` uses baseline commit
+`test/fixtures/features-v26.tson` uses baseline commit
 `47bea35a9f3d773efa9a9f075e5b361d9533b390`. The fixture records deterministic
 world/login behavior, a sanitized save, layered bonuses and stats, world payloads
 and case-insensitive session lookup. Keep this reference independent of the
@@ -19,7 +19,7 @@ implementation being checked; see [FEATURES.md](FEATURES.md) for capture command
 - `git diff --check` checks whitespace.
 
 For a reproducible simulation, run
-`node --import ./test/seed-random.js test/<suite>.js`. The default seed is 123456789. A seeded pass does not cover all random traffic or escort scenarios.
+`node --import ./test/seed-random.ts test/<suite>.ts`. The default seed is 123456789. A seeded pass does not cover all random traffic or escort scenarios.
 
 ## Limits
 

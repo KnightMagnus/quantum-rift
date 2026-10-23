@@ -36,8 +36,12 @@ jobs:
           git lfs fsck
           node -e 'const fs = require("fs"); const s = fs.statSync("client/assets/hub.png"); if (s.size < 10000) throw new Error("LFS pointer not resolved: " + s.size);'
 
+      - name: Bootstrap native TypeScript support
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Install pinned project-local Node 27 nightly
-        run: node tools/runtime/install-node.mjs
+        run: node tools/runtime/install-node.ts
 
       - name: Install dependencies
         run: npm ci
@@ -45,16 +49,11 @@ jobs:
       - name: Check formatting with Oxfmt
         run: npm run format:check
 
-      - name: Lint JavaScript and typed foundations with Oxlint
+      - name: Lint TypeScript application, tests and tooling with Oxlint
         run: npm run lint
 
-      - name: Typecheck
+      - name: Strict typecheck of application, tests and tools
         run: npm run typecheck
-
-      - name: Additional tsrs type and contract checks
-        run: |
-          npm run typecheck:tsrs
-          npm run test:types:tsrs
 
       - name: Feature parity test
         run: npm run test:features
@@ -90,8 +89,12 @@ jobs:
         with:
           lfs: true
           persist-credentials: false
+      - name: Bootstrap native TypeScript support
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Install pinned project-local Node 27 nightly
-        run: node tools/runtime/install-node.mjs
+        run: node tools/runtime/install-node.ts
       - run: npm ci
       - name: Install pinned Playwright Chromium and Linux dependencies
         run: npx playwright install --with-deps chromium
@@ -113,16 +116,50 @@ jobs:
   windows-startup:
     name: Native Windows persistence and startup
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Bootstrap native TypeScript support
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Install pinned project-local Node 27 nightly
-        run: node tools/runtime/install-node.mjs
+        run: node tools/runtime/install-node.ts
+      # The pinned npm release has no Windows binary. Build the same release,
+      # not another checker, and let its launcher use TSRS_BINARY.
+      - name: Checkout pinned native Rust compiler source
+        uses: actions/checkout@v4
+        with:
+          repository: oxc-project/tsrs
+          ref: 5f92808bc92bb97b06212153ab73d28d551c0b9b
+          path: .artifacts/tsrs-source
+          persist-credentials: false
+      - name: Cache native Windows compiler build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .artifacts/tsrs-source/target
+          key: windows-tsrs-5f92808bc92bb97b06212153ab73d28d551c0b9b-rust-1.99.1
+      - name: Build pinned tsrs for native Windows
+        shell: pwsh
+        env:
+          TSRS_TS_VERSION: 7.1.0-dev.20260930.4
+        run: |
+          rustup toolchain install 1.99.1 --profile minimal
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo +1.99.1 build --manifest-path .artifacts/tsrs-source/Cargo.toml --profile ci --locked -p tsrs_cli --bin tsrs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $compiler = (Resolve-Path .artifacts/tsrs-source/target/ci/tsrs.exe).Path
+          & $compiler --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "TSRS_BINARY=$compiler" >> $env:GITHUB_ENV
       - name: Install and compile browser modules
         run: npm ci
-      - name: Windows Oxc and portable type checks
+      - name: Windows Oxc and native Rust type checks
         run: |
           npm run lint
           npm run format:check
@@ -131,7 +168,7 @@ jobs:
           npm run test:tooling
           npm run test:features
       - name: Windows online and Solo startup regression
-        run: node test/persistence-platform.mjs
+        run: node test/persistence-platform.ts
       - name: Preserve Windows startup evidence
         if: always()
         uses: actions/upload-artifact@v4

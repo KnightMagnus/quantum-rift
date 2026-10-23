@@ -5,7 +5,7 @@ For a codebase map and a concrete action trace, see [CODE-NAVIGATION.md](CODE-NA
 ## Service composition
 
 `Game` owns `game.features`, a fixed set of named service objects assembled in
-`server/features.js`. `Space`, routes and coordinator code call a named service,
+`server/features.ts`. `Space`, routes and coordinator code call a named service,
 for example `game.features.fleetcmd.fleetOrder(session, order)`.
 
 Each existing implementation module exports an `*Operations` object. The
@@ -54,30 +54,27 @@ are unchanged.
 ignored. The existing flood, authentication and activity gates execute **before**
 registry dispatch. Routes retain their coercion, checks and action-specific
 permissions. Market `trade` and captain-to-captain `trade2` are separate routes.
-JSDoc does not validate decoded JSON at runtime.
+TypeScript does not validate decoded JSON at runtime.
 
-## Typing coverage: deliberately gradual
+## TypeScript source and runtime
 
-`npm install` installs development-only TypeScript and Node type definitions.
-`npm run typecheck` runs `tsc --noEmit`: no game output, player dependency or
-browser build is added. The game still starts directly with Node without those
-dev dependencies installed.
+All application modules in `server/`, `shared/` and `client/` use native TypeScript.
+`npm run typecheck` checks the complete application with strict settings and
+verifies that no application JavaScript, omitted source files or blanket type-check
+suppressions bypass those checks. `npm run test:types` verifies that invalid
+feature calls and incomplete capability objects are rejected.
 
-Checked now (`// @ts-check`):
+`npm run build` compiles application modules into `dist/` and rewrites relative
+TypeScript imports to JavaScript imports. The server and browser use that compiled
+output; `npm start` builds before launching the server. Release archives include
+compiled output, so players do not need development dependencies to run them.
+Development and tests use the pinned Node runtime described in
+[the runtime guide](TYPESCRIPT-RUNTIME.md).
 
-- composition and every explicit facade's shape/signature imports;
-- service binding and the message registry;
-- Fleet Commands' complete implementation;
-- the concrete `CargoPlayer`, `CommandSession`, `CommandEntity`, `CommandSpace`
-  and `FleetCommandsCapabilities` boundary contracts in `server/contracts.js`.
-
-**Not claimed checked:** the other 14 legacy implementation bodies, full saved
-player/world schemas, all wire payloads or shared physics internals. Their inferred
-function imports check wiring/names and some arity/return relationships, but
-legacy parameters can still infer as `any`. Explicit state typed `unknown` is not
-a completed schema. Do not interpret a clean typecheck as proof these bodies are
-fully typed. New and touched operations should adopt concrete JSDoc types and
-`@ts-check` as part of their change, without blanket `any` or suppressions.
+Types describe saved state, live entities, capabilities and protocol payloads;
+they do not validate decoded JSON at runtime. Preserve existing validation and
+migration logic. Use concrete types for new operations without blanket `any` or
+suppressions.
 
 Fleet Commands checks an explicit null ship-stats case before accessing cargo;
 it still throws a `TypeError` for an invalid hull, with a clearer message. Valid
@@ -94,10 +91,10 @@ these shared changes small prerequisite changes for parallel feature work.
 
 1. Give the feature a unique namespace and explicit exports. Do not install any
    methods on `Game.prototype` or accept the unrestricted `Game` as a dependency.
-2. Declare concrete JSDoc inputs, outputs and minimum capabilities, with separate
+2. Declare concrete TypeScript inputs, outputs and minimum capabilities, with separate
    saved/live/protocol types where appropriate. New implementation code is checked.
 3. Add the capability object and `FeatureServices` entry explicitly in
-   `server/features.js`. Reference named providers, not arbitrary client strings.
+   `server/features.ts`. Reference named providers, not arbitrary client strings.
 4. Add explicit initialization/migration/logout/tick/payload calls only as needed,
    in the correct phase. Declare cadence and state ownership in the inventory.
 5. Add fixed message entries in `createMessageHandlers`. Keep validation and
@@ -117,17 +114,17 @@ meaningful tests registered in the canonical CI manifest in the same change.
   duplicate/unknown route handling, and authentication/flood/activity/action gates.
 - `npm run test:types`: positive calls compile; wrong fleet-order argument and a
   missing required capability must fail compilation. No suppression comments.
-- Existing `test/vNN.js`, simulation, fuzz and balance suites retain assertions;
+- Existing `test/vNN.ts`, simulation, fuzz and balance suites retain assertions;
   only internal feature access paths changed.
 
-`test/fixtures/features-v26.json` was captured from untouched commit
+`test/fixtures/features-v26.tson` was captured from untouched commit
 `47bea35a9f3d773efa9a9f075e5b361d9533b390`, not from the replacement. It records
 world/login phase traces, a sanitized fresh save, representative layered ship
 bonuses/stats, the world payload and mixed-case lookup. Regeneration requires a
 separate original checkout:
 
 ```sh
-REFERENCE_ROOT=/path/to/original-checkout node test/capture-features.js > test/fixtures/features-v26.json
+REFERENCE_ROOT=/path/to/original-checkout node test/capture-features.ts > test/fixtures/features-v26.tson
 ```
 
 The capture freezes time/RNG and disables interval scheduling only in its own
@@ -137,13 +134,13 @@ explain and review any intended fixture update.
 
 Some existing simulation assertions depend on random traffic/escort behavior.
 For a reproducible scenario without altering assertions, run e.g.
-`node --import ./test/seed-random.js test/v203.js`. The default seed is 123456789;
+`node --import ./test/seed-random.ts test/v203.ts`. The default seed is 123456789;
 set `RIFT_TEST_SEED` to explore another scenario. This helper is test-only and
 is not used by the game. A seeded pass is not a claim about every random seed.
 
 ## Raw cargo accounting boundary
 
-`shared/cargo-lots.js` owns strict, versioned integer-tonne lots. Totals remain
+`shared/cargo-lots.ts` owns strict, versioned integer-tonne lots. Totals remain
 authoritative. New saves initialize empty cargo/storage ledgers; authenticated
 login and solo import migrate missing legacy records to common only. Existing
 malformed premium records reject loading/import rather than resetting grades.
@@ -174,12 +171,12 @@ attempt (even a full hold), retains exact partial remainder, and claims one
 progression hook on first accepted material. Cutting supplies once-resolved parcel lots and preserves this
 conservation/progression contract rather than stacking a second yield path.
 
-Scoped TypeScript includes all cargo writer modules and checks the Fleet Commands
-boundary plus shared ledger contracts. These checks do not cover the full game.
+Strict TypeScript checks include all cargo writers, the Fleet Commands boundary
+and shared ledger contracts. Static checks do not replace behavioral regressions.
 
 ## Mining survey/cutting provider
 
-`features.mining` is composed by `bindOperations` with concrete `MiningCapabilities` in `server/mining-contracts.js`; it receives only DB/world access, pause query, named bonus/modifier/progression functions and its named tick operation. `MiningSpace` arguments expose only the rock/loot adapter, not unrestricted Game. Pure contact-union, grade and stage rules live in `shared/mining-rules.js`. Real collision provenance captures the normalized source captain at firing; clients can request only a validated survey pulse.
+`features.mining` is composed by `bindOperations` with concrete `MiningCapabilities` in `server/mining-contracts.ts`; it receives only DB/world access, pause query, named bonus/modifier/progression functions and its named tick operation. `MiningSpace` arguments expose only the rock/loot adapter, not unrestricted Game. Pure contact-union, grade and stage rules live in `shared/mining-rules.ts`. Real collision provenance captures the normalized source captain at firing; clients can request only a validated survey pulse.
 
 World schema 1 persists deterministic geometry/generations, ready/heat/work, resolved finite budget, exact parcel remainders and original economic progression tokens. All three tools retain sixfold HP effectiveness; stage HP partitions original durability across 1/2/3 stages. Readiness latches until authoritative contact release; clean affects grade rather than mass. Tapper leases use its real cadence and merge time across mounts/captains. Survey is private, radius 1500, cooldown 10 s/reveal 6 s; gas is presented as vents/pressure. All values are provisional.
 
@@ -253,23 +250,23 @@ balance rather than giving other mining sources an additional duplicate payout.
 
 ## Ordinary job ownership
 
-`server/jobs.js` owns ordinary board generation, acceptance and landing-completion
+`server/jobs.ts` owns ordinary board generation, acceptance and landing-completion
 operations, with `Game.offers/accept/completeOnLanding` retained as compatibility
 entry points. `Game.createJobService` provides eleven explicit live capabilities.
 The service uses the same account mission array and DB: no new save store, copied
 state, lifecycle hook, protocol action or feature-provider namespace is added.
 Auth/flood/freeze gates stay in `Game.onMessage`; Story Jobs, Armada contracts,
 mining orders and specialized progression retain their existing providers.
-Legacy operation bodies are unchecked; JSDoc boundary and positive/negative type
-fixtures do not claim a complete wire/save schema migration.
+Operation bodies and capability boundaries are checked by strict TypeScript.
+Positive/negative type fixtures do not replace runtime wire validation.
 
 ## Ordinary port-commerce ownership
 
-`server/port-services.js` owns ordinary market/material trading, shipyard/trade-in
+`server/port-services.ts` owns ordinary market/material trading, shipyard/trade-in
 and outfitter operations. The existing Game methods forward to `game.portService`;
 `Game.createPortService` supplies nineteen explicit live capabilities, preserving
 current provider lookup and method receiver. Shared trade pricing, exact cargo
 lots, finite refined-goods demand, station access, job capacity and settlement
 remain the same existing authorities. No second inventory/save store, new route,
-feature namespace or lifecycle hook is introduced. The operation bodies remain
-legacy unchecked JavaScript; positive/negative boundary types are not wire validation.
+feature namespace or lifecycle hook is introduced. Operation bodies are checked by strict TypeScript; positive/negative boundary
+types are not runtime wire validation.

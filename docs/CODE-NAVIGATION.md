@@ -7,9 +7,9 @@ or fully typed. For running the game, use the public README.
 ## Entry points
 
 1. Read `package.json` for startup, test commands and the current version.
-2. Read [server/main.js](../server/main.js): it loads assets and the DB, creates
+2. Read [server/main.ts](../server/main.ts): it loads assets and the DB, creates
    `Game`, serves files and connects WebSockets.
-3. Follow [Game](../server/game.js)'s constructor: live systems, sessions, named
+3. Follow [Game](../server/game.ts)'s constructor: live systems, sessions, named
    feature services, combat/hailing services, fixed message routes and tick loop.
 4. Read [FEATURES.md](FEATURES.md) before changing composition. Its explicit
    service boundaries and remaining shared state are migration seams.
@@ -43,23 +43,23 @@ flowchart TD
   G --> A
 ```
 
-1. [client/ui.js](../client/ui.js) builds the board and sends the action;
-   [client/mission-details.js](../client/mission-details.js) explains requirements
-   and [client/missions.js](../client/missions.js) manages mission presentation.
-2. [server/main.js](../server/main.js) upgrades the WebSocket and calls
+1. [client/ui.ts](../client/ui.ts) builds the board and sends the action;
+   [client/mission-details.ts](../client/mission-details.ts) explains requirements
+   and [client/missions.ts](../client/missions.ts) manages mission presentation.
+2. [server/main.ts](../server/main.ts) upgrades the WebSocket and calls
    `Game.connect`; that session listener parses messages and calls `Game.onMessage`.
-3. [server/game.js](../server/game.js)'s `onMessage` applies flood, login,
+3. [server/game.ts](../server/game.ts)'s `onMessage` applies flood, login,
    checkpoint-recovery freeze and activity gates **before** routing.
-4. [server/game-message-handlers.js](../server/game-message-handlers.js) maps
+4. [server/game-message-handlers.ts](../server/game-message-handlers.ts) maps
    `accept` to the core method. It is the action switchboard, not a separate
    reward or permission authority.
-5. `Game.accept` forwards to [server/jobs.js](../server/jobs.js), the ordinary
+5. `Game.accept` forwards to [server/jobs.ts](../server/jobs.ts), the ordinary
    job owner. It checks the current offer, job limits and real hold/bunk space,
    then records the accepted contract. `Game.offers` forwards to the same job service;
-   [server/freight-offers.js](../server/freight-offers.js) supplies the stable freight tiers.
+   [server/freight-offers.ts](../server/freight-offers.ts) supplies the stable freight tiers.
    `Game.completeOnLanding` forwards ordinary landing completion to that owner; special mission
    progression also lives in named quest/co-op providers.
-6. `you` and `landed` send refreshed payloads. [server/db.js](../server/db.js)
+6. `you` and `landed` send refreshed payloads. [server/db.ts](../server/db.ts)
    owns persistence; sending a refresh is not itself a save commit.
 
 For other actions, find the outgoing packet's `t`, look it up in the fixed
@@ -70,8 +70,8 @@ Useful searches from the repository root:
 
 ```sh
 rg -n "'accept'|accept\(s|completeOnLanding" client server
-rg -n 'createMessageHandlers|onMessage\(s' server/game.js
-rg -n "'trade'|'refinery'" server/game-message-handlers.js
+rg -n 'createMessageHandlers|onMessage\(s' server/game.ts
+rg -n "'trade'|'refinery'" server/game-message-handlers.ts
 rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.json
 ```
 
@@ -79,22 +79,22 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 
 | Change                                          | Start with                                                  | Important companions                                                                                         |
 | ----------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Startup, HTTP, local endpoints                  | `server/main.js`                                            | `server/ws.js`, `server/db.js`                                                                               |
-| Login, sessions, travel, ordinary port services | `server/game.js`                                            | `server/space.js`, `shared/galaxy.js`                                                                        |
-| Incoming action names/routing                   | `server/game-message-handlers.js`                           | `Game.createMessageHandlers`, `Game.onMessage`, `server/message-registry.js`                                 |
-| Feature wiring/dependencies                     | `server/features.js`                                        | `server/feature-service.js`, `docs/FEATURES.md`, `docs/feature-inventory.json`                               |
-| Flight physics, collisions, system entities     | `server/space.js`                                           | `server/combat-assist.js`, `shared/rules.js`                                                                 |
-| Cargo, trading and grades                       | `server/port-services.js`, `shared/cargo-lots.js`           | `server/trade-pricing.js`, `shared/trade-pricing.js`, `shared/economy-preview.js`                            |
-| Public jobs and hauling                         | `Game.offers/accept/completeOnLanding`                      | `server/freight-offers.js`, `shared/passengers.js`, `docs/CARGO-JOBS.md`                                     |
-| Story Jobs and quest steps                      | `server/quests.js`, `shared/quests.js`                      | `server/story.js`, `shared/story.js`, `server/arcs.js`, `shared/arcs.js`                                     |
-| Team missions/consent                           | `server/coop.js`                                            | `server/warband-consent.js`, `shared/mission-payouts.js`, `docs/MISSION-REWARDS.md`                          |
+| Startup, HTTP, local endpoints                  | `server/main.ts`                                            | `server/ws.ts`, `server/db.ts`                                                                               |
+| Login, sessions, travel, ordinary port services | `server/game.ts`                                            | `server/space.ts`, `shared/galaxy.ts`                                                                        |
+| Incoming action names/routing                   | `server/game-message-handlers.ts`                           | `Game.createMessageHandlers`, `Game.onMessage`, `server/message-registry.ts`                                 |
+| Feature wiring/dependencies                     | `server/features.ts`                                        | `server/feature-service.ts`, `docs/FEATURES.md`, `docs/feature-inventory.json`                               |
+| Flight physics, collisions, system entities     | `server/space.ts`                                           | `server/combat-assist.ts`, `shared/rules.ts`                                                                 |
+| Cargo, trading and grades                       | `server/port-services.ts`, `shared/cargo-lots.ts`           | `server/trade-pricing.ts`, `shared/trade-pricing.ts`, `shared/economy-preview.ts`                            |
+| Public jobs and hauling                         | `Game.offers/accept/completeOnLanding`                      | `server/freight-offers.ts`, `shared/passengers.ts`, `docs/CARGO-JOBS.md`                                     |
+| Story Jobs and quest steps                      | `server/quests.ts`, `shared/quests.ts`                      | `server/story.ts`, `shared/story.ts`, `server/arcs.ts`, `shared/arcs.ts`                                     |
+| Team missions/consent                           | `server/coop.ts`                                            | `server/warband-consent.ts`, `shared/mission-payouts.ts`, `docs/MISSION-REWARDS.md`                          |
 | Mining/refining/industrial/towing               | Corresponding `server/` provider                            | Matching `*-contracts.js`, `shared/*-rules.js`, browser panels                                               |
-| Hails/dialogue                                  | `server/hail-service.js`, `server/hail-dialogue.js`         | `server/hail.js`, `client/hails_ui.js`, `docs/HAILING.md`                                                    |
-| Radio/discovery                                 | `shared/radio-stations.js`, `server/radio-discovery.js`     | `client/radio.js`, `client/audio.js`, `docs/RADIO.md`                                                        |
-| Browser connection/input/loop                   | `client/main.js`                                            | `client/action-bindings.js`, travel autopilot modules                                                        |
-| Menus/HUD                                       | `client/ui.js`, `client/style.css`, `client/cockpit.css`    | `client/cockpit-state.js`, `client/sidebar-size.js`, `client/chat-projection.js`, `client/ship-functions.js` |
-| Scene/ship drawing                              | `client/render.js`                                          | `client/artwork.js`, animation/ship-banking modules, `client/assets/`                                        |
-| Galaxy/hulls/loadouts/stats                     | `shared/galaxy.js`, `shared/assets.json`, `shared/rules.js` | Shared bonus/stats owners in `server/features.js`                                                            |
+| Hails/dialogue                                  | `server/hail-service.ts`, `server/hail-dialogue.ts`         | `server/hail.ts`, `client/hails_ui.ts`, `docs/HAILING.md`                                                    |
+| Radio/discovery                                 | `shared/radio-stations.ts`, `server/radio-discovery.ts`     | `client/radio.ts`, `client/audio.ts`, `docs/RADIO.md`                                                        |
+| Browser connection/input/loop                   | `client/main.ts`                                            | `client/action-bindings.ts`, travel autopilot modules                                                        |
+| Menus/HUD                                       | `client/ui.ts`, `client/style.css`, `client/cockpit.css`    | `client/cockpit-state.ts`, `client/sidebar-size.ts`, `client/chat-projection.ts`, `client/ship-functions.ts` |
+| Scene/ship drawing                              | `client/render.ts`                                          | `client/artwork.ts`, animation/ship-banking modules, `client/assets/`                                        |
+| Galaxy/hulls/loadouts/stats                     | `shared/galaxy.ts`, `shared/assets.json`, `shared/rules.ts` | Shared bonus/stats owners in `server/features.ts`                                                            |
 
 ## Who owns which information?
 
@@ -104,7 +104,7 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
   and mission hold allocation without owning inventory or granting permission to
   load cargo. `client/html.ts` preserves the existing escaping policies for HTML
   text and double-quoted attributes; it is not a URL or script sanitizer.
-- **TypeScript execution:** foundational modules use native TypeScript source.
+- **TypeScript execution:** application modules use native TypeScript source.
   Node strips erasable types when executing source; browser modules are compiled
   into `dist`. Type stripping is not type checking. See
   [TYPESCRIPT-RUNTIME.md](TYPESCRIPT-RUNTIME.md) for the checked scope and startup
@@ -143,7 +143,7 @@ See [DEVELOPMENT-TOOLS.md](DEVELOPMENT-TOOLS.md) for lint, formatting and compil
    [test/regression-manifest.json](../test/regression-manifest.json); read its
    tests first. [TEST-COVERAGE.md](TEST-COVERAGE.md) explains scope and omissions.
 2. Run focused cases while developing. For routing changes, start with
-   `node test/message-routing.js`, `npm run test:features` and the relevant real
+   `node test/message-routing.ts`, `npm run test:features` and the relevant real
    action/network tests. Fuzzing discovers routes from the runtime registry, not
    source-code switch patterns.
 3. Run existing gates:
@@ -164,13 +164,14 @@ See [DEVELOPMENT-TOOLS.md](DEVELOPMENT-TOOLS.md) for lint, formatting and compil
 5. Use temporary saves and fixtures, never a real captain's account. Do not
    include private saves, dependencies or source-audio masters in a PR.
 
-TypeScript/JSDoc checks are selective: `checkJs` is not globally enabled. Large
-legacy bodies, including the moved action implementations, remain unchecked.
-A typed boundary does not runtime-validate incoming JSON or prove every branch.
+Strict TypeScript checks cover application modules, including action implementations.
+The source-coverage guard rejects unchecked application JavaScript and modules
+omitted from the compiler project. Static types do not runtime-validate incoming
+JSON or prove every branch.
 
 ## Action-routing boundary
 
-Action routing lives in `server/game-message-handlers.js`; entry gates and service
+Action routing lives in `server/game-message-handlers.ts`; entry gates and service
 implementations retain their own owners. Ordinary jobs and port commerce have
 separate services; station and session methods still remain in `Game`.
 [MESSAGE-ROUTING.md](MESSAGE-ROUTING.md) describes the routing contract and fixtures.
@@ -196,3 +197,34 @@ their cascade order and the same asset-relative directory:
 The last two files contain cross-component overrides and duplicate selectors. Do not regroup selectors or reorder imports without checking their
 cascade and responsive behavior. The separate `cockpit.css` and `login_scene.css`
 keep their existing document positions. No preprocessor or bundler is required.
+
+## Flight engine
+
+Excalibur 0.32.0 owns the browser flight clock in `client/engine.ts` and the
+persistent `SpaceScene` in `client/space-scene.ts`. `client/main.ts` still owns
+networking, the original DT accumulator/prediction and DOM command routing.
+`client/engine-input.ts` reads physical keys through Excalibur and queues short
+presses until a simulation tick. Typing and modal controls keep their DOM behavior.
+
+`client/world-actors.ts` reconciles display-only Actors and native Sprite graphics
+for ships, rocks, loot and projectiles. Actors never receive authoritative
+velocities, collisions or ownership of gameplay. Authored hull heading/bank frames
+and thruster masks remain in use. Procedural scenery, beams, links and overlays
+use ordered screen-space Canvas Graphics below, between and above native entities.
+Effect lifetimes and motion advance in `updateEffects`, not in those draw callbacks.
+
+The engine camera projects world entities and resolves pointer coordinates.
+Resolution deliberately uses CSS size times DPR with engine pixelRatio 1, retaining
+the existing physical-pixel zoom. Picking subtracts visual shake. Radar/map/login
+remain separate presentation canvases; login artwork shares the engine clock.
+Software WebGL drivers select the supported Canvas backend before Engine construction.
+`?renderer=canvas` or `?renderer=webgl` explicitly selects either backend without
+replacing the live canvas. Canvas uses normal alpha compositing for native glow;
+WebGL uses an additive material.
+
+The browser build bundles the engine dependency graph into `dist/client/engine.js`.
+Existing stateful audio/HUD/render helpers remain local modules with one shared
+instance, including when browser tests import them. Releases need no CDN or
+node_modules at runtime. Procedural full-viewport Graphics rasterize at up to 30Hz;
+native entities and simulation retain the Engine update cadence. These layers remain
+a rendering cost, not evidence of a general performance improvement.

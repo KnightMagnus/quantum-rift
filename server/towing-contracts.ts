@@ -1,0 +1,82 @@
+import type { ComputedShipStats } from '../shared/rules.ts';
+import type { DB as Database } from './db.ts';
+import type { PlayerData } from './game.ts';
+export type Lots = import('../shared/cargo-contracts.ts').GradeLots;
+export type TowStatus = 'available' | 'attached' | 'detached' | 'delivered' | 'destroyed';
+export type Motherlode = {
+  id: number;
+  epoch: number;
+  slot: string;
+  sys: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  mass: number;
+  ore: string;
+  lots: Lots;
+  hp: number;
+  status: TowStatus;
+  owner: string | null;
+  ship: string | null;
+  graceUntil: number;
+  revision: number;
+  acceptPorts: string[];
+};
+export type TowSlot = {
+  key: string;
+  sys: string;
+  field: number;
+  epoch: number;
+  issued: number;
+  delivered: number;
+  discarded: number;
+  nextAt: number;
+  object: Motherlode | null;
+};
+export type TowReceipt = {
+  id: number;
+  owner: string;
+  port: string;
+  ore: string;
+  lots: Lots;
+  mass: number;
+};
+export type TowOffer = {
+  id: number;
+  revision: number;
+  from: string;
+  to: string;
+  fromShip: string;
+  toShip: string;
+  fromEntity: number;
+  toEntity: number;
+  until: number;
+};
+export type TowWorld = {
+  version: 1;
+  nextId: number;
+  slots: TowSlot[];
+  receipts: TowReceipt[];
+  offers: TowOffer[];
+};
+export type TowRequest = {
+  t?: string;
+  op?: 'attach' | 'detach' | 'offer' | 'accept' | 'deliver';
+  id?: number;
+  revision?: number;
+  to?: string;
+  port?: string;
+};
+export type Session = import('./game.ts').Session;
+export type TowCapabilities = {
+  db: Pick<Database, 'world' | 'players' | 'touch' | 'flush' | 'economicFrozen' | 'key'>;
+  paused: () => boolean;
+  sessions: () => IterableIterator<Session>;
+  refresh: (session: Session) => void;
+  toast: (session: Session, text: string) => void;
+  stopCombat: (session: Session) => void;
+  room: (playerData: PlayerData) => number;
+  stats: (playerData: PlayerData) => ComputedShipStats | null;
+  field: (starSystem: string, field: number) => { recovery: number; label: string; factor: number };
+};
