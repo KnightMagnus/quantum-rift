@@ -6,13 +6,15 @@ No Nakama, PostgreSQL, paid cloud service or separate player installation is
 required. Friends need a modern browser and a reachable address for the host.
 This is a listen server, not mesh networking or peer-to-peer simulation.
 
-The published release archive predates this mode. Use a built source checkout
-with the [pinned runtime](TYPESCRIPT-RUNTIME.md). Ordinary startup still selects
+The 3.3.2 complete release includes compiled modules and friend launchers. Use
+the [pinned runtime](TYPESCRIPT-RUNTIME.md). Ordinary startup still selects
 [dedicated native Nakama](NAKAMA.md), not friend hosting.
 
 ## Start and invite
 
-1. Install the pinned runtime, then run `npm ci` and `npm run build` in the checkout.
+1. Install the pinned runtime and extract the complete release ZIP. No dependency
+   installation or build is needed to play. For a source checkout, run `npm ci`
+   and `npm run build` first.
 2. On Windows, open **Start Friend Game.bat**. On macOS/Linux, run
    `sh start-friends.command`. The terminal equivalent is
    `node tools/start.ts --friends`. These explicitly opt into LAN listening by
