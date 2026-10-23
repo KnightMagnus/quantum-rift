@@ -56,6 +56,9 @@ and private storage permission denial; depart, finite flight, movement and input
 acknowledgement; future/replayed/spoofed/flooded input with continued progress for
 another captain; duplicate-sign-in replacement without stale input; access/refresh
 revocation; and restart restoration of actual account/world state.
+Socket delivery can split a flood across match callbacks, so the highest
+acknowledged sequence is not a count of admitted packets. The native flood checks
+peer progress, submitted-sequence bounds and authoritative physics.
 
 The native browser case exercises space-containing display names, physical thrust
 and turn under 70 ms CDP network latency, finite authoritative state and a rendered
@@ -78,7 +81,10 @@ Synthetic migration coverage is not evidence of a real player-data import.
 retirement and lost publish acknowledgement recovery. Negative calls into the
 actual match callbacks verify pending/orphan worlds do not advance deferred work,
 Game ticks or joins; those narrow SDK spies are not a substitute for the separate
-actual Game/Space native tests.
+actual Game/Space native tests. A deterministic batch through the actual ingress
+callback supplies 150 inputs from one session and ten from another: exactly eight
+per session are admitted, rejected packets cannot advance acknowledgement, and
+the next callback restores each session's budget.
 
 `nakama-diagnostics.ts` checks token redaction across bearer, URL and JSON
 delimiters, base64url signature tails and private absolute paths. CI retains only

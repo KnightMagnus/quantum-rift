@@ -215,14 +215,17 @@ try {
   await until(() => second.latest('snap')!.me[1] === 1, 'other captain progresses during flood');
   await delay(250);
   const after = first.latest('snap')!.me;
-  assert(after[1] < 152, 'Flood must not admit every packet in one tick');
+  result.flood = { submitted: 150, priorSequence: prior[1], acknowledgedSequence: after[1] };
+  // Transport may split the flood across match callbacks. A highest sequence is
+  // not an admission count; nakama-world-lease verifies the exact per-batch cap.
+  assert(after[1] >= 3 && after[1] <= 152, 'Flood acknowledges only submitted input sequences');
   assert(
     Math.hypot(after[2] - prior[2], after[3] - prior[3]) <
       10000 * ((performance.now() - before) / 1000 + 1),
     'Input count must not speed up physics',
   );
   checks.push(
-    '150-packet flood bounded; other captain progresses; client position, credits and dt remain non-authoritative',
+    '150-packet native flood preserves peer progress and bounded physics; client position, credits and dt remain non-authoritative',
   );
   const duplicate = await service.connect(alice);
   await duplicate.socket.joinMatch(matchId);
@@ -313,6 +316,7 @@ try {
         status: result.status,
         checks,
         legacyAuthenticationMs: result.legacyAuthenticationMs,
+        flood: result.flood,
         error: typeof result.error === 'string' ? sanitizedDiagnostic(result.error) : undefined,
         cleanupError:
           typeof result.cleanupError === 'string'
