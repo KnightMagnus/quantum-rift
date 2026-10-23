@@ -1,3 +1,4 @@
+import { PLAYER_PORTRAITS } from '../shared/portraits.ts';
 import { evidenceDir } from './helpers/browser-fixture.ts';
 import { scryptSync } from 'node:crypto';
 import { customCaptainId } from '../shared/nakama-contracts.ts';
@@ -147,6 +148,35 @@ try {
   );
   const send = (connection: typeof first, packet: object, opcode = 1) =>
     connection.socket.sendMatchState(matchId, opcode, JSON.stringify(packet));
+  const selectedPortrait = PLAYER_PORTRAITS.at(-1)!.id;
+  const otherPortrait = PLAYER_PORTRAITS[1].id;
+  await send(first, { t: 'portrait', portraitId: selectedPortrait });
+  await until(
+    () => first.latest('portrait')?.ok === true,
+    'native portrait selection acknowledged',
+  );
+  assert.equal(first.latest('you')!.d.portraitId, selectedPortrait);
+  await send(second, {
+    t: 'portrait',
+    portraitId: otherPortrait,
+    name: 'alice',
+    target: first.latest('welcome')!.id,
+  });
+  await until(
+    () => second.latest('portrait')?.ok === true,
+    'spoofed target stays bound to authenticated captain',
+  );
+  assert.equal(second.latest('you')!.d.portraitId, otherPortrait);
+  assert.equal(first.latest('you')!.d.portraitId, selectedPortrait);
+  await send(second, { t: 'portrait', portraitId: '../outside.png' });
+  await until(() => second.latest('portrait')?.ok === false, 'invalid native portrait rejected');
+  assert.equal(second.latest('you')!.d.portraitId, otherPortrait);
+  await send(second, { t: 'profile', name: 'alice' });
+  await until(() => second.latest('profile')?.p, 'public profile portrait projection');
+  assert.equal(second.latest('profile')!.p.portraitId, selectedPortrait);
+  checks.push(
+    'Native authenticated portrait selection, spoofed-target isolation, invalid-path denial and public profile projection',
+  );
   await send(first, { t: 'depart' });
   await send(second, { t: 'depart' });
   await until(() => first.latest('snap') && second.latest('snap'), 'actual flight snapshots');
@@ -263,6 +293,8 @@ try {
     ),
   );
   assert(checkpoint.players.alice);
+  assert.equal(checkpoint.players.alice.portraitId, selectedPortrait);
+  assert.equal(checkpoint.players.bob.portraitId, otherPortrait);
   assert(checkpoint.players.bob);
   assert(checkpoint.world.sites);
   const revision = checkpoint.revision;
@@ -274,6 +306,11 @@ try {
   await restored.socket.joinMatch(restoredMatch);
   await until(() => restored.latest('you'), 'durable account restored after server restart');
   assert.equal(restored.latest('you')!.d.credits, initialCredits);
+  assert.equal(
+    restored.latest('you')!.d.portraitId,
+    selectedPortrait,
+    'portrait survives real native service restart and reauthentication',
+  );
   assert.deepEqual(restored.latest('you')!.d.ship, duplicate.latest('you')!.d.ship);
   const recovered = JSON.parse(
     await service.query(

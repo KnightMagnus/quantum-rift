@@ -1341,7 +1341,8 @@
         "planet-portrait-art.ts",
         "portrait-persistence.ts",
         "planet-portrait-browser.ts",
-        "landscape-generation.ts"
+        "landscape-generation.ts",
+        "nakama-network.ts"
       ],
       "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork."
     }
@@ -1506,7 +1507,7 @@
     "miningPressure": ["mining-pressure.ts", "refinery-ui-browser.ts", "message-routing.ts"],
     "industrial": ["dredge-network.ts", "dredge-browser.ts", "message-routing.ts"],
     "towing": ["towing-network.ts", "towing-browser.ts", "message-routing.ts"],
-    "portrait": ["portrait-persistence.ts", "planet-portrait-browser.ts"]
+    "portrait": ["portrait-persistence.ts", "planet-portrait-browser.ts", "nakama-network.ts"]
   },
   "tooling": [
     "capture-features.ts",
