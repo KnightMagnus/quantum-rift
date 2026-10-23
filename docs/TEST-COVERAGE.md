@@ -764,3 +764,30 @@ hull or assistive-technology combination.
 approaches and counts newly created notices, not just retained DOM children. It
 also repeats an authoritative permission refusal after five seconds. Unrelated
 toasts retain their existing behavior; no global notification timeout is used.
+
+## Login traffic and purchase audio
+
+`login-traffic.ts` checks the real catalog subset, early light craft, progressively
+stronger formations, trailing escort slots, the eleven-sprite bound and loop reset.
+`audio-flyby-browser.ts` supplies a short decoded WAV as the score fixture, then
+uses the real WebAudio source and context to observe visible mid/late hull draws,
+suspension, natural loop and immediate login stop. It also buys through a real
+Trade control and checks the decoded 240ms signal and actual independent mixer
+bus gains. A seeded station owner buys to the hangar through the confirmation
+dialog; stored-ship count verifies settlement. Cancelled confirmations, sales
+and disabled controls do not play the purchase signal.
+The owner-supplied theme remains unchanged; `radio-audio.ts` retains its recording
+hash checks. These checks do not establish subjective listening quality.
+
+`purchase-audio.ts` reproduces the checked-in original oscillator signal exactly
+and checks its duration, mono PCM format, 18% peak, attack and tail. Both the focused
+generator and the broad legacy generator use the same source. `audio-defaults-browser.ts`
+checks fresh, empty and malformed options plus saved zero, mute, fractional and
+full-volume values. Existing options migrations remain in place; no new preference
+migration or reset is introduced.
+
+The existing login-scene browser test retains the actual station/planet artwork,
+lamp-brightness, reduced-motion event-loss, resize and lifecycle checks. Station
+lamp dimming uses a precomputed black alpha mask instead of filtering the full
+mutable atlas on each paint. Private headless 4x-CPU profiles are constrained-host
+comparisons, not physical midrange-laptop or audible-output certification.

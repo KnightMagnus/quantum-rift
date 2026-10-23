@@ -30,3 +30,6 @@ client/assets/sfx/music_login31.mp3 -filter -diff -merge -text
 
 # Small reproducible cockpit cursors ship directly in ordinary clones.
 client/assets/cursors/*.png -filter -diff -merge -text
+
+# Small deterministic purchase confirmation needs no separate LFS hydration.
+client/assets/sfx/ui_buy.wav -filter -diff -merge -text

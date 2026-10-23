@@ -119,6 +119,10 @@ Save imports remain Solo-only.
 
 ## Screenshots
 
+**Login traffic**
+
+![A capital ship and its escorts crossing the login observation window](docs/screenshots/login-formation.png)
+
 **Flight cockpit**
 
 ![Responsive flight cockpit in Meridian with the sidebar closed](docs/screenshots/responsive-flight.png)
