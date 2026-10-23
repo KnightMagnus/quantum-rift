@@ -188,11 +188,23 @@ try {
       await page.getByRole('button', { name: 'CLOSE', exact: true }).click();
       await page.setViewportSize({ width: 600, height: 780 });
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      await page.click('#landprofilebtn');
-      await page.locator('#portraitclose').focus();
-      const bounds = await page.locator('#portraitclose').boundingBox();
-      assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= 780);
-      await page.keyboard.press('Escape');
+      for (const scale of [0.8, 1, 1.4]) {
+        await page.evaluate((value) => {
+          document.documentElement.style.setProperty('--ui', String(value));
+          document.body.classList.toggle('scaled', value !== 1);
+        }, scale);
+        await page.click('#landprofilebtn');
+        await page.locator('#portraitclose').focus();
+        const bounds = await page.locator('#portraitclose').boundingBox();
+        const modal = await page.locator('#profiledialog').boundingBox();
+        assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= 780);
+        assert.ok(modal && modal.x >= 0 && modal.x + modal.width <= 600);
+        await page.keyboard.press('Escape');
+      }
+      await page.evaluate(() => {
+        document.documentElement.style.setProperty('--ui', '1');
+        document.body.classList.remove('scaled');
+      });
       await page.locator('[data-op="abandon"]').focus();
       const colonyControl = await page.locator('[data-op="abandon"]').boundingBox();
       assert.ok(

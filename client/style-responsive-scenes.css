@@ -760,3 +760,10 @@ body.solo .mp {
   max-width: 100%;
   object-fit: cover;
 }
+
+body.scaled #profiledialog {
+  zoom: var(--ui);
+  width: min(680px, calc(90vw / var(--ui)));
+  max-width: calc(90vw / var(--ui));
+  max-height: calc(88dvh / var(--ui));
+}
