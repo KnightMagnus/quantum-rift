@@ -18,6 +18,8 @@ import { root, availablePort, evidenceDir, ready, cleanup } from './browser-fixt
 import { type Browser } from 'playwright';
 export { until } from './mining-fixture.ts';
 interface RefineryFixtureOptions {
+  /** Additional isolated server-only instrumentation for the owning browser case. */
+  serverPreloads?: string[];
   /** Start server time midway through a job window while real elapsed time and timers continue. */
   stableJobWindow?: boolean;
 }
@@ -88,7 +90,10 @@ export async function refineryFixture(name: string, options: RefineryFixtureOpti
 
   // Keep this UI scenario within one offer window without freezing elapsed time or timers.
   // The normal board regenerates IDs every ten minutes, including during acceptance.
-  const serverImports: string[] = [];
+  const serverImports: string[] = (options.serverPreloads ?? []).flatMap((filename) => [
+    '--import',
+    filename,
+  ]);
   if (options.stableJobWindow) {
     const clockPreload = path.join(directory, 'job-window-clock.mjs');
     fileSystem.writeFileSync(

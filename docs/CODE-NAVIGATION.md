@@ -254,3 +254,16 @@ a rendering cost, not evidence of a general performance improvement.
 ## Private cockpit attention
 
 `server/attention.ts` projects live weapon-target selection and the last patrol scan into recipient-only booleans. `Game.tick` attaches them inside each flying captain's own snapshot; shared `Space.snapshot` and docked scenes do not publish those flags or new target identities. The real patrol action in `FrontsOperations.missionIdle` records one transient three-second recent-scan notification, never saved data. The browser shows combat red before recent-scan orange; reduced-motion mode retains color without blinking. Auto-combat reads its actual combatTarget, not the UI selection; existing rules still forbid auto-combat targeting player-root ships.
+
+### Sidebar sizing and landing notices
+
+`client/sidebar-size.ts` owns device-local desired heights under
+`rift.hudHeights`. It allocates the lower menu and minimap against measured sidebar
+chrome, preserving desired values when the viewport temporarily clamps them.
+`client/ui.ts` renders expanded and collapsed gauges from the same player/view
+state. Connection teardown clears the collapsed readout before another snapshot.
+
+`client/landing-feedback.ts` owns only landing-notice suppression. `landRequest`
+selects a semantic situation and retains an already active approach; authoritative
+landing refusals release the approach without resetting that situation. Manual
+cancellation, session changes and a new situation allow a fresh notification.

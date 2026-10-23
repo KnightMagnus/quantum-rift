@@ -194,8 +194,38 @@ try {
       traceStart = fileSystem.existsSync(traceFile)
         ? fileSystem.readFileSync(traceFile, 'utf8').length
         : 0;
+    const landingNotices: string[] = [];
+    await page.exposeFunction('recordLandingNotice', (message: string) =>
+      landingNotices.push(message),
+    );
+    await page.evaluate(() => {
+      new MutationObserver((records) => {
+        for (const record of records)
+          for (const node of record.addedNodes)
+            if (
+              node instanceof HTMLElement &&
+              node.textContent?.startsWith('Autopilot: landing on ')
+            )
+              void (
+                window as unknown as { recordLandingNotice(message: string): Promise<void> }
+              ).recordLandingNotice(node.textContent);
+      }).observe(document.getElementById('toasts')!, { childList: true });
+    });
     await page.keyboard.press('l');
     await page.waitForFunction((identifier) => G.auto?.id === identifier, landingScenario2.port);
+    const attempt = await page.evaluate(() => ({ phase: G.auto?.phase, settled: G.auto?.settled }));
+    for (let repeat = 0; repeat < 10; repeat++) await page.keyboard.press('l');
+    assert.equal(
+      landingNotices.length,
+      1,
+      'Ten real repeated landing keys create one notice, not merely four retained DOM toasts',
+    );
+    if (attempt.phase)
+      assert.notEqual(
+        await page.evaluate(() => G.auto?.phase),
+        undefined,
+        'Repeated request retains the live approach',
+      );
     if (landingScenario2.cruise) {
       await page.waitForTimeout(3500);
       const cruise = await page.evaluate(async () => {
@@ -362,11 +392,38 @@ try {
   await deniedPage.waitForFunction(() => G.you && G.landed);
   await deniedPage.click('#depart');
   await deniedPage.waitForFunction(() => G.view && !G.landed);
+  const refusalNotices: string[] = [];
+  await deniedPage.exposeFunction('recordRefusalNotice', (message: string) =>
+    refusalNotices.push(message),
+  );
+  await deniedPage.evaluate(() => {
+    new MutationObserver((records) => {
+      for (const record of records)
+        for (const node of record.addedNodes)
+          if (
+            node instanceof HTMLElement &&
+            node.textContent?.includes('refuses you permission to land')
+          )
+            void (
+              window as unknown as { recordRefusalNotice(message: string): Promise<void> }
+            ).recordRefusalNotice(node.textContent);
+    }).observe(document.getElementById('toasts')!, { childList: true });
+  });
   await deniedPage.keyboard.press('l');
   await deniedPage.waitForFunction(() => !!G.auto);
   await deniedPage.waitForFunction(() => !G.auto, {}, { timeout: 15000 });
   assert.equal(await deniedPage.evaluate(() => G.landed), null);
   assert.match(await deniedPage.locator('body').innerText(), /refuses you permission to land/);
+  for (let attempt = 0; attempt < 10; attempt++) await deniedPage.keyboard.press('l');
+  await deniedPage.waitForFunction(() => !G.auto, {}, { timeout: 15000 });
+  await deniedPage.waitForTimeout(5200);
+  await deniedPage.keyboard.press('l');
+  await deniedPage.waitForFunction(() => !G.auto, {}, { timeout: 15000 });
+  assert.equal(
+    refusalNotices.length,
+    1,
+    'Repeated authoritative refusal stays quiet after five seconds without a changed situation',
+  );
   fileSystem.writeFileSync(
     path.join(evidence, 'permission-denial.json'),
     JSON.stringify({ landed: false, autopilotCancelled: true }),

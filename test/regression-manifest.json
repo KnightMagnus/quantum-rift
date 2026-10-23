@@ -108,7 +108,8 @@
     "friend-save-owner.ts",
     "attention.ts",
     "attention-scan.ts",
-    "attention-runtime.ts"
+    "attention-runtime.ts",
+    "landing-feedback.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -148,7 +149,8 @@
     "nakama-browser.ts",
     "friend-host-browser.ts",
     "faction-stores-browser.ts",
-    "responsive-hud-browser.ts"
+    "responsive-hud-browser.ts",
+    "sidebar-gauges-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -547,6 +549,12 @@
       "helpers/refinery-fixture.ts",
       "helpers/mocks.ts",
       "helpers/required.ts"
+    ],
+    "landing-feedback.ts": [],
+    "sidebar-gauges-browser.ts": [
+      "helpers/refinery-play-fixture.ts",
+      "helpers/browser-fixture.ts",
+      "fixtures/sidebar-gauges-preload.ts"
     ]
   },
   "characterization": ["features.ts"],
@@ -1148,7 +1156,8 @@
         "client/main.ts",
         "client/refinery-controls.ts",
         "client/towing_ui.ts",
-        "client/sidebar-size.ts"
+        "client/sidebar-size.ts",
+        "client/landing-feedback.ts"
       ],
       "services": [],
       "tests": [
@@ -1157,9 +1166,12 @@
         "logout-browser.ts",
         "sidebar-browser.ts",
         "input-audio-browser.ts",
-        "sidebar-sizing-browser.ts"
+        "sidebar-sizing-browser.ts",
+        "landing-feedback.ts",
+        "landing-autopilot-browser.ts",
+        "sidebar-gauges-browser.ts"
       ],
-      "asserts": "Per-captain remembered views and deliberate single objective pin survive reload without leaking between accounts; detail/back restores list focus/scroll, unavailable cargo links to Trade, native keyboard controls and narrow/scaled Tray stay usable without taking flight focus. Independent vertical map/menu pointer/touch/keyboard sizing, reload persistence, zoom-safe limits and automatic reset preserve backing geometry and reachability."
+      "asserts": "Per-captain remembered views and deliberate single objective pin survive reload without leaking between accounts; detail/back restores list focus/scroll, unavailable cargo links to Trade, native keyboard controls and narrow/scaled Tray stay usable without taking flight focus. Independent vertical map/menu pointer/touch/keyboard sizing, reload persistence, zoom-safe limits and automatic reset preserve backing geometry and reachability. The menu top divider reallocates available space without rewriting stored sizes. Collapsed flight meters track authoritative damage, shield regeneration and fuel changes. Repeated landing requests retain one live approach and one notice per unchanged situation."
     },
     {
       "id": "mission-choices",
@@ -1324,7 +1336,13 @@
     ],
     "target": ["v03.ts", "mining-ui-browser.ts", "message-routing.ts"],
     "tutskip": ["v03.ts", "message-routing.ts"],
-    "land": ["bot.ts", "v11.ts", "landing-autopilot-browser.ts", "message-routing.ts"],
+    "land": [
+      "bot.ts",
+      "v11.ts",
+      "landing-autopilot-browser.ts",
+      "message-routing.ts",
+      "landing-feedback.ts"
+    ],
     "depart": [
       "armada-formation-network.ts",
       "bot.ts",
