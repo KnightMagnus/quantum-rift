@@ -87,9 +87,9 @@ jobs:
   browser-regressions:
     name: Browser gameplay and client regressions
     runs-on: ubuntu-latest
-    # Full browser inventory includes multi-hull flight and station sweeps.
+    # Allow cold browser installation plus the full flight and station sweeps.
     # Individual regression subprocesses retain their strict 180s deadlines.
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.artifacts/playwright
     steps:
