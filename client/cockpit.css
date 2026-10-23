@@ -1656,6 +1656,30 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+#consoleutilities #profilebtn {
+  font-size: 12px;
+  letter-spacing: 0;
+  padding: 3px;
+}
+#profilebtn .profile-short {
+  display: none;
+}
+@media (max-width: 1100px) {
+  #profilebtn .profile-full {
+    display: none;
+  }
+  #profilebtn .profile-short {
+    display: inline;
+  }
+}
+@media (max-width: 1250px) {
+  body.tray-open #profilebtn .profile-full {
+    display: none;
+  }
+  body.tray-open #profilebtn .profile-short {
+    display: inline;
+  }
+}
 @media (min-width: 1101px) {
   #consoleutilities .cb {
     width: 90px;

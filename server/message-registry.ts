@@ -13,6 +13,9 @@ export type NetworkMessage = {
   /** Allowlisted personal portrait identity. */
   portraitId?: unknown;
 
+  /** Optional bounded correlation token for portrait-save acknowledgements. */
+  portraitRequestId?: unknown;
+
   /** Allowlisted operation, validated by its route. */
   op?: string;
 

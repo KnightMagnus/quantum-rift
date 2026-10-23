@@ -13,8 +13,14 @@ export function initProfile(state: ProfileState, send: (message: object) => void
   const status = document.getElementById('portraitstatus')!;
   const save = document.getElementById('portraitsave') as HTMLButtonElement;
   let selected = '',
-    pending = false,
+    requestSequence = 0,
     previousFocus: HTMLElement | null = null;
+  let pending: { requestId: string; timer: ReturnType<typeof setTimeout> } | null = null;
+  const clearPending = () => {
+    if (pending) clearTimeout(pending.timer);
+    pending = null;
+    save.disabled = false;
+  };
   const showPreview = () => {
     preview.src = artworkUrl(portraitAsset(selected));
   };
@@ -51,7 +57,10 @@ export function initProfile(state: ProfileState, send: (message: object) => void
   }
   for (const id of ['profilebtn', 'landprofilebtn']) document.getElementById(id)!.onclick = open;
   document.getElementById('portraitclose')!.onclick = () => dialog.close();
-  dialog.addEventListener('close', () => previousFocus?.focus());
+  dialog.addEventListener('close', () => {
+    clearPending();
+    previousFocus?.focus();
+  });
   // The native top layer owns keys even when an ordinary game overlay remains underneath.
   window.addEventListener(
     'keydown',
@@ -67,23 +76,34 @@ export function initProfile(state: ProfileState, send: (message: object) => void
   );
   save.onclick = () => {
     if (!state.you || pending) return;
-    pending = true;
+    const requestId = String(++requestSequence);
+    pending = {
+      requestId,
+      timer: setTimeout(() => {
+        clearPending();
+        status.textContent = 'No confirmation received. Check your selection and try again.';
+      }, 10000),
+    };
     save.disabled = true;
     status.textContent = 'Saving…';
-    send({ t: 'portrait', portraitId: selected });
+    send({ t: 'portrait', portraitId: selected, portraitRequestId: requestId });
   };
   return {
     reset() {
-      pending = false;
-      save.disabled = false;
+      clearPending();
       dialog.close();
       preview.removeAttribute('src');
       status.textContent = '';
     },
-    onMessage(message: { t?: string; ok?: boolean; portraitId?: unknown }) {
+    onMessage(message: {
+      t?: string;
+      ok?: boolean;
+      portraitId?: unknown;
+      portraitRequestId?: unknown;
+    }) {
       if (message.t !== 'portrait') return false;
-      pending = false;
-      save.disabled = false;
+      if (!pending || message.portraitRequestId !== pending.requestId) return true;
+      clearPending();
       status.textContent = message.ok
         ? message.portraitId === selected
           ? 'Saved.'

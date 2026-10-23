@@ -53,14 +53,23 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
     [
       'portrait',
       (session, message) => {
+        const request =
+          typeof message.portraitRequestId === 'string' && message.portraitRequestId.length <= 64
+            ? { portraitRequestId: message.portraitRequestId }
+            : {};
         if (!isPlayerPortrait(message.portraitId)) {
-          capabilities.send(session, { t: 'portrait', ok: false });
+          capabilities.send(session, { t: 'portrait', ok: false, ...request });
           return;
         }
         session.data.portraitId = message.portraitId;
         capabilities.db.touch();
         capabilities.you(session);
-        capabilities.send(session, { t: 'portrait', ok: true, portraitId: message.portraitId });
+        capabilities.send(session, {
+          t: 'portrait',
+          ok: true,
+          portraitId: message.portraitId,
+          ...request,
+        });
       },
     ],
     [

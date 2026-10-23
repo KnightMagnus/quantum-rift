@@ -47,6 +47,25 @@ assert.deepEqual(
   'selection changes only authenticated captain portrait',
 );
 assert.deepEqual(packets.at(-1), { t: 'portrait', ok: true, portraitId: chosen });
+game.onMessage(session, { t: 'portrait', portraitId: '../bad', portraitRequestId: 'denied-1' });
+assert.deepEqual(packets.at(-1), {
+  t: 'portrait',
+  ok: false,
+  portraitRequestId: 'denied-1',
+});
+game.onMessage(session, { t: 'portrait', portraitId: chosen, portraitRequestId: 'saved-2' });
+assert.deepEqual(packets.at(-1), {
+  t: 'portrait',
+  ok: true,
+  portraitId: chosen,
+  portraitRequestId: 'saved-2',
+});
+game.onMessage(session, {
+  t: 'portrait',
+  portraitId: chosen,
+  portraitRequestId: 'x'.repeat(65),
+});
+assert.deepEqual(packets.at(-1), { t: 'portrait', ok: true, portraitId: chosen });
 assert.deepEqual(
   otherAccount,
   originalOther,

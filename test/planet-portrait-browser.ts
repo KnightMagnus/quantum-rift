@@ -18,6 +18,12 @@ import {
   failureEvidence,
 } from './helpers/browser-fixture.ts';
 
+type PortraitTestWindow = Window & {
+  artSocket?: WebSocket;
+  heldPortraits?: string[];
+  portraitFault?: 'hold' | 'deny';
+};
+
 const output = evidenceDir('planet-portrait');
 const directory = tempDataDir('planet-portrait-browser-');
 const db = new DB(path.join(directory, 'data'));
@@ -156,6 +162,79 @@ try {
       await page.click('#lbtn');
       await page.waitForFunction(() => !!G.landed);
       assert.equal(await page.evaluate(() => G.you!.portraitId), PLAYER_PORTRAITS.at(-1)!.id);
+      // Fault the transport, not the chooser: denial and missing acknowledgements must recover.
+      await page.evaluate(() => {
+        const testWindow = window as PortraitTestWindow;
+        const socket = testWindow.artSocket!;
+        const originalSend = socket.send.bind(socket);
+        testWindow.heldPortraits = [];
+        socket.send = (data) => {
+          if (typeof data === 'string') {
+            const packet = JSON.parse(data);
+            if (packet.t === 'portrait' && testWindow.portraitFault === 'hold') {
+              testWindow.heldPortraits!.push(data);
+              return;
+            }
+            if (packet.t === 'portrait' && testWindow.portraitFault === 'deny') {
+              originalSend(JSON.stringify({ ...packet, portraitId: '../denied.png' }));
+              return;
+            }
+          }
+          originalSend(data);
+        };
+        testWindow.portraitFault = 'deny';
+      });
+      await page.click('#landprofilebtn');
+      await page.click('#portraitsave');
+      await page.waitForFunction(() =>
+        document.getElementById('portraitstatus')!.textContent!.includes('was not saved'),
+      );
+      assert.equal(await page.locator('#portraitsave').isEnabled(), true);
+      assert.equal(await page.evaluate(() => G.you!.portraitId), PLAYER_PORTRAITS.at(-1)!.id);
+      await page.evaluate(() => ((window as PortraitTestWindow).portraitFault = 'hold'));
+      await page.click('#portraitsave');
+      assert.equal(await page.locator('#portraitsave').isDisabled(), true);
+      await page.waitForFunction(
+        () => document.getElementById('portraitstatus')!.textContent!.includes('No confirmation'),
+        null,
+        { timeout: 15000 },
+      );
+      assert.equal(await page.locator('#portraitsave').isEnabled(), true);
+      await page.click('#portraitsave');
+      await page.evaluate(() => {
+        const testWindow = window as PortraitTestWindow;
+        const old = JSON.parse(testWindow.heldPortraits![0]);
+        testWindow.artSocket!.dispatchEvent(
+          new MessageEvent('message', {
+            data: JSON.stringify({ ...old, ok: true }),
+          }),
+        );
+      });
+      assert.equal(await page.locator('#portraitstatus').innerText(), 'Saving…');
+      assert.equal(await page.locator('#portraitsave').isDisabled(), true);
+      await page.keyboard.press('Escape');
+      await page.click('#landprofilebtn');
+      assert.equal(await page.locator('#portraitsave').isEnabled(), true);
+      await page.click('#portraitsave');
+      await page.evaluate(() => {
+        const testWindow = window as PortraitTestWindow;
+        const old = JSON.parse(testWindow.heldPortraits![1]);
+        testWindow.artSocket!.dispatchEvent(
+          new MessageEvent('message', { data: JSON.stringify({ ...old, ok: true }) }),
+        );
+      });
+      assert.equal(await page.locator('#portraitsave').isDisabled(), true);
+      assert.equal(await page.locator('#portraitstatus').innerText(), 'Saving…');
+      await page.evaluate(() => {
+        const testWindow = window as PortraitTestWindow;
+        testWindow.portraitFault = undefined;
+        testWindow.artSocket!.send(testWindow.heldPortraits!.at(-1)!);
+      });
+      await page.waitForFunction(
+        () => document.getElementById('portraitstatus')!.textContent === 'Saved.',
+      );
+      assert.equal(await page.locator('#portraitsave').isEnabled(), true);
+      await page.keyboard.press('Escape');
       // A real outgoing docking-control hail carries its server-assigned portrait.
       await page.evaluate(() => {
         (window as Window & { artSocket?: WebSocket }).artSocket!.send(
@@ -209,7 +288,17 @@ try {
           document.documentElement.style.setProperty('--ui', String(value));
           document.body.classList.toggle('scaled', value !== 1);
         }, scale);
-        await page.click('#landprofilebtn');
+        const profileFits = await page.locator('#profilebtn').evaluate((button) => {
+          const label = document.createRange();
+          label.selectNodeContents(button);
+          const text = label.getBoundingClientRect();
+          const bounds = button.getBoundingClientRect();
+          return text.width <= bounds.width && button.scrollWidth <= button.clientWidth;
+        });
+        assert.equal(profileFits, true, `flight PROFILE label fits at scale ${scale}`);
+        if (scale === 1)
+          await page.screenshot({ path: path.join(output, 'compact-profile-button.png') });
+        await page.click('#profilebtn');
         const priorChoice = await page.locator('#portraitchoices input:checked').inputValue();
         await page.keyboard.press('ArrowRight');
         assert.notEqual(
@@ -237,6 +326,13 @@ try {
       await page.setViewportSize({ width: 1280, height: 900 });
       await page.click('#depart');
       await page.waitForFunction(() => !G.landed);
+      const profileFits = await page.locator('#profilebtn').evaluate((button) => {
+        const label = document.createRange();
+        label.selectNodeContents(button);
+        return label.getBoundingClientRect().width <= button.getBoundingClientRect().width;
+      });
+      assert.equal(profileFits, true, 'flight PROFILE label fits desktop button');
+      await page.screenshot({ path: path.join(output, 'flight-profile-button.png') });
       await page.click('#profilebtn');
       assert.equal(
         await page.locator('#profiledialog').evaluate((dialog: HTMLDialogElement) => dialog.open),
