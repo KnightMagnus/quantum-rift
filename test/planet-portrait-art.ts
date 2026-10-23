@@ -1,3 +1,4 @@
+import legacyWorlds from '../tools/landscape-legacy-worlds.json' with { type: 'json' };
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
@@ -18,6 +19,20 @@ import {
 } from '../shared/portraits.ts';
 
 assert.equal(Object.keys(worlds).length, 179);
+const explicitMigrations: Record<string, string> = {
+  'gloam-remnant': 'gloam_remnant',
+  inalumen: 'inalumen',
+  slag: 'slag',
+  'nightjar-refuge': 'nightjar_refuge',
+};
+for (const legacy of legacyWorlds) {
+  const actualBase = landscapeScene(STELLARS[legacy.id]).split('__')[0];
+  assert.equal(
+    actualBase,
+    'l_' + (explicitMigrations[legacy.id] || legacy.scene),
+    `independent legacy identity ${legacy.id}`,
+  );
+}
 const assets = new Set(inventory.map((item) => item.file));
 assert.equal(inventory.length, 908);
 assert.ok(inventory.every((item) => !item.file.startsWith('l_st_')));
@@ -61,6 +76,16 @@ for (const body of Object.values(STELLARS).filter((body) => body.kind === 'stati
 const future = { ...STELLARS.earth, id: 'future-ridge' };
 assert.equal(landscapeScene(future), landscapeScene(structuredClone(future)));
 assert.ok(assets.has(landscapeScene(future) + '.jpg'));
+const futureCity = { ...future, desc: 'Garden city capital', id: 'future-city' };
+const futureJungle = { ...future, desc: 'Jungle forest garden', id: 'future-jungle' };
+assert.ok(
+  ['l_city1', 'l_city2', 'l_city_harbor', 'l_city_terraces'].includes(landscapeScene(futureCity)),
+);
+assert.ok(
+  ['l_jungle1', 'l_jungle2', 'l_jungle_delta', 'l_jungle_highlands'].includes(
+    landscapeScene(futureJungle),
+  ),
+);
 for (const item of inventory) {
   const bytes = fs.readFileSync(new URL('../client/assets/land/' + item.file, import.meta.url));
   assert.equal(bytes.length, item.bytes, item.file);

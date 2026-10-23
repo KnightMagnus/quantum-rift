@@ -34,7 +34,12 @@ export function landscapeScene(body: StellarBody, level: unknown = 0): string {
   if (!key) {
     let hash = 2166136261;
     for (const character of body.id) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);
-    const family = families[planetType(body)] || families.barren;
+    let biome: string = planetType(body);
+    const description = `${body.desc || ''} ${body.name}`.toLowerCase();
+    if (biome === 'terran' && /(city|capital|sprawl|metropol|towers|arcolog)/.test(description))
+      biome = 'city';
+    else if (biome === 'terran' && /(jungle|forest|garden)/.test(description)) biome = 'jungle';
+    const family = families[biome] || families.barren;
     key = 'l_' + family[(hash >>> 0) % family.length];
   }
   const stage = colonyStage(level);
