@@ -1,3 +1,4 @@
+import { LandingFeedback } from '../client/landing-feedback.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
 import assert from 'node:assert/strict';
 import { stripTypeScriptTypes } from 'node:module';
@@ -283,6 +284,7 @@ assert.ok(source2.units >= 0 && source2.units < INDUSTRIAL.sourceUnits);
     const sent: { t: string; nav?: boolean }[] = [],
       warnings: string[] = [];
     const context = virtualMachine.createContext({
+      landingFeedback: new LandingFeedback(),
       clientGameState: game,
       systemsById,
       physicsConstants,

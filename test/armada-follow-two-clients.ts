@@ -112,7 +112,7 @@ try {
     await page.fill('#lname', name);
     await page.fill('#lpass', 'fixture');
     await page.click('#lbtn');
-    await page.waitForFunction(() => G.you && G.landed);
+    await page.waitForFunction(() => typeof G !== 'undefined' && G.you && G.landed);
   }
   const [leader, follower] = pages;
   // Exercise the shortest actual player setup: direct INVITE auto-forms the

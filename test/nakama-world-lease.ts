@@ -186,3 +186,81 @@ assert.equal(
 console.log(
   'Actual native callback wiring: no pending/orphan simulation or join; published owner advances; orphan signal retires.',
 );
+
+// Supply one real callback batch rather than assuming socket writes share a tick.
+function ingressConnection(userId: string) {
+  const received: number[] = [];
+  return {
+    open: true,
+    presence: { userId },
+    lastSequence: 0,
+    received,
+    receive: (text: string) => received.push(JSON.parse(text).seq),
+  };
+}
+const flooded = ingressConnection('flooded-user');
+const peer = ingressConnection('peer-user');
+const ingressState = {
+  ...callbackState,
+  authorityReady: true,
+  connections: new Map([
+    ['flooded-session', flooded],
+    ['peer-session', peer],
+  ]),
+};
+const ingressPorts: Pick<nkruntime.Nakama, 'binaryToString'> = {
+  binaryToString: (data) => new TextDecoder().decode(data),
+};
+function inputMessage(sessionId: string, userId: string, sequence: number) {
+  return {
+    sender: { sessionId, userId },
+    opCode: 1,
+    data: new TextEncoder().encode(JSON.stringify({ t: 'input', seq: sequence, th: 0 })).buffer,
+  };
+}
+const ingressHandle = { world: () => ingressState };
+function advanceBatch(messages: ReturnType<typeof inputMessage>[], tick: number) {
+  return Reflect.apply(advanceWorld, undefined, [
+    {},
+    { error: () => {} },
+    ingressPorts,
+    {},
+    tick,
+    ingressHandle,
+    messages,
+  ]);
+}
+advanceBatch(
+  [
+    ...Array.from({ length: 150 }, (_, index) =>
+      inputMessage('flooded-session', 'flooded-user', index + 1),
+    ),
+    ...Array.from({ length: 10 }, (_, index) =>
+      inputMessage('peer-session', 'peer-user', index + 1),
+    ),
+  ],
+  2,
+);
+assert.deepEqual(flooded.received, [1, 2, 3, 4, 5, 6, 7, 8], 'Exactly eight flood inputs admitted');
+assert.deepEqual(
+  peer.received,
+  [1, 2, 3, 4, 5, 6, 7, 8],
+  'The peer retains its independent budget',
+);
+assert.equal(flooded.lastSequence, 8, 'Dropped packets cannot advance the acknowledgement');
+advanceBatch(
+  [
+    inputMessage('flooded-session', 'flooded-user', 151),
+    inputMessage('peer-session', 'peer-user', 9),
+  ],
+  3,
+);
+assert.deepEqual(
+  flooded.received,
+  [1, 2, 3, 4, 5, 6, 7, 8, 151],
+  'Admission resets on the next tick',
+);
+assert.deepEqual(peer.received, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+console.log(
+  'Actual native ingress callback: eight-message per-session cap, peer fairness and next-tick reset passed.',
+);

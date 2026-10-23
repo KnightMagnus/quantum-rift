@@ -668,6 +668,14 @@ export function chatLine(message: { msg: string; from?: string; ch?: string }): 
 }
 
 // ------------------------------------------------------------------ HUD (every frame)
+/** Clear the collapsed readout until another authoritative snapshot arrives. */
+export function clearFlightStatus(): void {
+  const status = elementById2('flightstatus');
+  status.replaceChildren();
+  delete status.dataset.readout;
+  status.dataset.disconnected = 'true';
+  status.classList.add('hidden');
+}
 /**
  * Updates primary HUD elements: shield/armor/fuel meters, speed, target card, and nav waypoint.
  */
@@ -675,7 +683,11 @@ export function hud(): void {
   if (!clientGameState) return;
   const clientView = clientGameState.view,
     playerPayload = clientGameState.you!;
-  if (!playerPayload) return;
+  if (!playerPayload) {
+    elementById2('flightstatus').replaceChildren();
+    delete elementById2('flightstatus').dataset.readout;
+    return;
+  }
   const computedShipStats = playerPayload.shipStats;
   const ship2 = clientView ? clientView.shield : computedShipStats!.shield,
     armor2 = clientView ? clientView.armor : computedShipStats!.armor,
@@ -739,18 +751,48 @@ export function hud(): void {
   const flightStatus = elementById2('flightstatus');
   const readout = [
     elementById2('shipnm').textContent,
-    `SHIELD ${elementById2('v-sh').textContent} · ARMOR ${elementById2('v-ar').textContent}`,
-    `FUEL ${Math.round(fuel2 ?? 0)} · ${elementById2('cr').textContent}`,
+    String(ship2),
+    String(computedShipStats!.shield),
+    String(armor2),
+    String(computedShipStats!.armor),
+    String(fuel2),
+    String(computedShipStats!.fuel),
+    elementById2('cr').textContent,
   ];
-  if (flightStatus.dataset.readout! !== readout.join('|')) {
+  if (!flightStatus.dataset.disconnected && flightStatus.dataset.readout !== readout.join('|')) {
     flightStatus.dataset.readout = readout.join('|');
-    flightStatus.replaceChildren(
-      ...readout.map((text) => {
-        const line = document.createElement('div');
-        line.textContent = text;
-        return line;
-      }),
-    );
+    const name = document.createElement('div');
+    name.textContent = readout[0];
+    const gauges = [
+      { label: 'SHIELD', value: ship2, maximum: computedShipStats!.shield, style: '' },
+      { label: 'ARMOR', value: armor2, maximum: computedShipStats!.armor, style: 'ar' },
+      { label: 'FUEL', value: fuel2, maximum: computedShipStats!.fuel, style: 'fu' },
+    ].map(({ label, value, maximum, style }) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      const caption = document.createElement('span');
+      caption.className = 'lbl';
+      caption.textContent = label;
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.setAttribute('role', 'meter');
+      bar.setAttribute('aria-label', label);
+      bar.setAttribute('aria-valuemin', '0');
+      bar.setAttribute('aria-valuemax', String(Math.max(1, maximum)));
+      bar.setAttribute('aria-valuenow', String(Math.max(0, Math.min(maximum, value))));
+      const fill = document.createElement('i');
+      fill.className = style;
+      fill.style.width = Math.max(0, Math.min(100, (100 * value) / Math.max(1, maximum))) + '%';
+      const text = document.createElement('b');
+      text.className = 'bv';
+      text.textContent = Math.round(value) + ' / ' + Math.round(maximum);
+      bar.append(fill, text);
+      row.append(caption, bar);
+      return row;
+    });
+    const creditsLine = document.createElement('div');
+    creditsLine.textContent = readout.at(-1)!;
+    flightStatus.replaceChildren(name, ...gauges, creditsLine);
   }
   elementById2('sysname').textContent =
     (systemsById[clientGameState.sys!]

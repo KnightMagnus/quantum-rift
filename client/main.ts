@@ -1,3 +1,4 @@
+import { LandingFeedback, landingRefusal } from './landing-feedback.ts';
 import type {
   ServerMessage,
   SnapshotMessage,
@@ -340,6 +341,7 @@ import { refreshStores } from './ui.ts';
 import {
   initUI,
   hud as renderHud,
+  clearFlightStatus,
   toast,
   ask as showConfirmation,
   chatLine,
@@ -831,6 +833,8 @@ function openSocket(tries: number) {
   socket.onclose = () => {
     if (!current()) return;
     updateAttention();
+    clearFlightStatus();
+    landingFeedback.reset();
     flightEngine.input.clear();
     mouse.down = false;
     touch.keys = {};
@@ -1041,19 +1045,16 @@ function onMessage(serverMessage: ServerMessage) {
     case 'snap':
       if (!clientGameState.landed) onSnap(serverMessage);
       break;
-    case 'toast':
-      // A refused/invalid landing must release the pending autopilot rather than
-      // leave a captain parked indefinitely or repeatedly request permission.
-      if (
+    case 'toast': {
+      const refusal =
+        landingRefusal(serverMessage.msg) &&
         clientGameState.auto?.mode === 'land' &&
-        clientGameState.auto.sent &&
-        /Too far from |Slow down to land|refuses you permission to land|Your ship is disabled/.test(
-          serverMessage.msg,
-        )
-      )
-        setAuto(null);
-      toast(serverMessage.msg);
+        !!clientGameState.auto.sent;
+      if (refusal && clientGameState.auto?.mode === 'land' && clientGameState.auto.sent)
+        setAuto(null, undefined, true);
+      if (!refusal || landingFeedback.notice(serverMessage.msg)) toast(serverMessage.msg);
       break;
+    }
     case 'armadaContract':
       clientGameState.contractPlan = serverMessage.plan;
       drawMini();
@@ -1085,6 +1086,8 @@ function onMessage(serverMessage: ServerMessage) {
       showStory(serverMessage);
       break;
     case 'hail':
+      // Landing permission may have changed through the authoritative dialogue.
+      landingFeedback.reset();
       if (elementById2('hailbox').classList.contains('hidden')) audio.ui('hail');
       showHail(serverMessage);
       break; // 1.1
@@ -1243,6 +1246,8 @@ function updateAttention(attention?: SnapshotMessage['attention']) {
   }
 }
 function onSnap(snapshotMessage: SnapshotMessage) {
+  delete elementById2('flightstatus').dataset.disconnected;
+  elementById2('flightstatus').classList.remove('hidden');
   updateAttention(clientGameState.landed ? undefined : snapshotMessage.attention);
   receiveMining(clientGameState, snapshotMessage);
   clientGameState.combat = snapshotMessage.combat || {};
@@ -1847,7 +1852,14 @@ clientGameState.startAutoJump = () => {
     }
   }, 300);
 }; // follow the leader
-function setAuto(firstValue: ClientGameState['auto'], message?: string | null) {
+const landingFeedback = new LandingFeedback();
+function setAuto(
+  firstValue: ClientGameState['auto'],
+  message?: string | null,
+  preserveLandingFeedback = false,
+) {
+  if (!preserveLandingFeedback && (!firstValue || firstValue.mode !== 'land'))
+    landingFeedback.reset();
   if (firstValue && (clientGameState.towing || clientGameState.you?.towing)?.attached) {
     toast('Towing: manual flight only; detach before automatic transit.');
     return;
@@ -2119,14 +2131,40 @@ function landRequest(pick?: {
     )[0];
   // L always chooses the nearest landable body; explicit double-clicks keep their destination.
   const position = pick || near;
-  if (!position) return toast('Nowhere to land in this system.');
+  const towing = !!(clientGameState.towing || clientGameState.you?.towing)?.attached;
+  const distance = position
+    ? Math.hypot(position.x - clientView.x, position.y - clientView.y)
+    : Infinity;
+  const speed = Math.hypot(clientView.vx, clientView.vy);
+  landingFeedback.situation(
+    JSON.stringify([
+      sessionEpoch,
+      clientGameState.myId,
+      clientGameState.sys,
+      position?.id ?? 'none',
+      towing,
+      !!((clientGameState.ents.get(clientGameState.myId)?.fl ?? 0) & 4),
+      distance <= (position?.r ?? 0) + 60,
+      speed <= 80,
+      (clientGameState.you?.rep[starSystem.faction] ?? 0) <= -30,
+    ]),
+  );
+  if (!position) {
+    const message = 'Nowhere to land in this system.';
+    if (landingFeedback.notice(message)) toast(message);
+    return;
+  }
+  if (towing) {
+    const message = 'Towing: manual flight only; detach before automatic transit.';
+    if (landingFeedback.notice(message)) toast(message);
+    return;
+  }
+  if (clientGameState.auto?.mode === 'land' && clientGameState.auto.id === position.id) return;
   clientGameState.navStellar = position.id;
   // Even a nearby click must settle first: predicted distance alone can race
   // the server at the edge of its landing radius while the ship is drifting.
-  setAuto(
-    { mode: 'land', id: position.id },
-    `Autopilot: landing on ${position.name}. Steer to take over.`,
-  );
+  const message = `Autopilot: landing on ${position.name}. Steer to take over.`;
+  setAuto({ mode: 'land', id: position.id }, landingFeedback.notice(message) ? message : undefined);
 }
 
 // ------------------------------------------------------------------ mouse: click to target, click a planet to set nav, double-click to land
@@ -3206,6 +3244,8 @@ async function logOut(reason = '') {
     sessionState[entryKey] = typeof value === 'function' ? value : structuredClone(value);
   Object.assign(clientGameState, keep);
   updateAttention();
+  clearFlightStatus();
+  landingFeedback.reset();
   flightEngine.input.clear();
   history = [];
   sequence = account = _lastSnapT = 0;

@@ -1771,3 +1771,29 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   padding-inline: 2px;
   letter-spacing: 0;
 }
+
+/* The lower menu stays attached to the sidebar floor; its top divider allocates
+   space against the minimap while status and navigation remain in normal flow. */
+#radarwrap {
+  flex: 0 0 auto;
+}
+#cpanel,
+#cpanel.custom-height {
+  flex: 0 0 auto;
+  min-height: 180px;
+}
+
+body.tray-open #flightstatus {
+  display: none;
+}
+#flightstatus {
+  width: min(320px, calc(100vw - 52px));
+}
+#flightstatus .row {
+  gap: 8px;
+}
+#flightstatus .bar {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}

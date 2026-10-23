@@ -56,6 +56,9 @@ and private storage permission denial; depart, finite flight, movement and input
 acknowledgement; future/replayed/spoofed/flooded input with continued progress for
 another captain; duplicate-sign-in replacement without stale input; access/refresh
 revocation; and restart restoration of actual account/world state.
+Socket delivery can split a flood across match callbacks, so the highest
+acknowledged sequence is not a count of admitted packets. The native flood checks
+peer progress, submitted-sequence bounds and authoritative physics.
 
 The native browser case exercises space-containing display names, physical thrust
 and turn under 70 ms CDP network latency, finite authoritative state and a rendered
@@ -78,7 +81,10 @@ Synthetic migration coverage is not evidence of a real player-data import.
 retirement and lost publish acknowledgement recovery. Negative calls into the
 actual match callbacks verify pending/orphan worlds do not advance deferred work,
 Game ticks or joins; those narrow SDK spies are not a substitute for the separate
-actual Game/Space native tests.
+actual Game/Space native tests. A deterministic batch through the actual ingress
+callback supplies 150 inputs from one session and ten from another: exactly eight
+per session are admitted, rejected packets cannot advance acknowledgement, and
+the next callback restores each session's budget.
 
 `nakama-diagnostics.ts` checks token redaction across bearer, URL and JSON
 delimiters, base64url signature tails and private absolute paths. CI retains only
@@ -739,3 +745,22 @@ speaker output or every device’s autoplay policy.
 `attention-runtime.ts` exercises actual Game/Space ticks with two flying captains and one docked observer: real NPC AI/fight targeting, real patrol-scan production, per-recipient packet isolation, unchanged public tuple shapes, AI cancellation, the production NPC disable threshold and incapable-patrol denial. Native `nakama-network.ts` additionally verifies encoded attention keys and boolean types on actual authenticated Goja match snapshots. This native contract check does not claim deterministic native combat encounters; the shared real-game fixture owns that evidence.
 
 The responsive browser test also opens the tray at 1100/1101/1200/1250/1251 px, checks utility controls cannot intersect chat and exercises the input. It disconnects the real game socket from both active alert colors and checks immediate clear and successful reconnect with a new authoritative ship identity. The default sidebar still fits all seven tabs, including unread badges, without shrinking the larger text: spacing comes from tab padding/gaps instead.
+
+## Sidebar allocation and landing feedback
+
+`sidebar-sizing-browser.ts` exercises the lower menu's top divider with mouse,
+touch and keyboard input, saved desired heights, UI scaling, viewport limits and
+independent resets. The lower menu fills the space below its divider; the minimap
+uses the remaining space. Temporary viewport limits do not rewrite saved sizes.
+
+`sidebar-gauges-browser.ts` reads actual server snapshots after fixture damage and
+fuel changes, then checks production shield regeneration, meter fill, visibility,
+socket-close clearing, reconnect and account switching. The expanded sidebar hides
+the duplicate viewscreen readout. These synthetic accounts do not establish every
+hull or assistive-technology combination.
+
+`landing-feedback.ts` checks situation changes and scoped refusal recognition.
+`landing-autopilot-browser.ts` sends repeated real landing keys during physical
+approaches and counts newly created notices, not just retained DOM children. It
+also repeats an authoritative permission refusal after five seconds. Unrelated
+toasts retain their existing behavior; no global notification timeout is used.

@@ -8,7 +8,7 @@ let browser;
 try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({
-    viewport: { width: 1440, height: 1000 },
+    viewport: { width: 1440, height: 1440 },
     hasTouch: true,
   });
   const page = await context.newPage();
@@ -68,16 +68,19 @@ try {
   await page.locator('#menuheightgrip').focus();
   await page.keyboard.press('End');
   const largeMenu = (await menu.boundingBox())!.height;
-  await drag('#menuheightgrip', -90);
+  await drag('#menuheightgrip', 90);
   assert.ok(
     largeMenu - (await menu.boundingBox())!.height > 60,
     'The lower menu has its own draggable height',
   );
-  const mapHeight = (await radar.boundingBox())!.height;
+  const mapPreference = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('rift.hudHeights')!).radar,
+  );
   await page.locator('#menuheightgrip').focus();
   await page.keyboard.press('ArrowUp');
   assert.ok(
-    Math.abs((await radar.boundingBox())!.height - mapHeight) < 1,
+    (await page.evaluate(() => JSON.parse(localStorage.getItem('rift.hudHeights')!).radar)) ===
+      mapPreference,
     'Changing the menu does not overwrite the minimap preference',
   );
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('rift.hudHeights')!));
@@ -114,7 +117,7 @@ try {
   });
   await page.locator('#menuheightgrip').focus();
   const beforeKey = (await menu.boundingBox())!.height;
-  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('ArrowDown');
   assert.ok(
     beforeKey - (await menu.boundingBox())!.height > 15,
     'Keyboard sizing respects UI zoom',
@@ -134,14 +137,85 @@ try {
   await page.screenshot({ path: path.join(feature.out, 'sidebar-custom-heights.png') });
   await page.locator('#radarheightgrip').focus();
   await page.keyboard.press('Enter');
-  const reset = await radar.boundingBox();
-  assert.ok(Math.abs(reset!.width - reset!.height) < 1, 'Enter restores the square automatic map');
+  assert.equal(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('rift.hudHeights')!).radar),
+    undefined,
+    'Enter removes only the minimap preference; the menu allocation remains active',
+  );
+  await page.setViewportSize({ width: 1440, height: 1440 });
+  await page.waitForFunction(() => {
+    const bounds = document.getElementById('radar')!.getBoundingClientRect();
+    return Math.abs(bounds.width - bounds.height) < 1;
+  });
+  assert.ok(
+    (await radar.boundingBox())!.width > 0,
+    'Reset radar remains square with the saved custom menu after enlargement',
+  );
+  await page.locator('#menuheightgrip').focus();
+  await page.keyboard.press('Home');
+  const smallMenuPreference = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('rift.hudHeights')!).menu,
+  );
+  await page.locator('#radarheightgrip').focus();
+  await page.keyboard.press('Enter');
+  const resetGeometry = await page.evaluate(() => {
+    const frame = document.getElementById('radarwrap')!.getBoundingClientRect();
+    const canvas = document.getElementById('radar')!.getBoundingClientRect();
+    const menu = document.getElementById('cpanel')!.getBoundingClientRect();
+    const sidebar = document.getElementById('hud')!;
+    const sidebarBounds = sidebar.getBoundingClientRect();
+    const scale = sidebarBounds.height / sidebar.offsetHeight;
+    return {
+      frame: [frame.width, frame.height],
+      canvas: [canvas.width, canvas.height],
+      bottom: menu.bottom,
+      floor: sidebarBounds.bottom - parseFloat(getComputedStyle(sidebar).paddingBottom) * scale,
+      preference: JSON.parse(localStorage.getItem('rift.hudHeights')!).menu,
+    };
+  });
+  assert.ok(
+    Math.abs(resetGeometry.frame[0] - resetGeometry.frame[1]) < 1 &&
+      Math.abs(resetGeometry.canvas[0] - resetGeometry.canvas[1]) < 1,
+    'Automatic radar frame and canvas stay square with a small saved menu on a tall viewport',
+  );
+  assert.ok(
+    Math.abs(resetGeometry.bottom - resetGeometry.floor) < 2,
+    'Small saved menu remains attached to the sidebar floor',
+  );
+  assert.equal(resetGeometry.preference, smallMenuPreference, 'Radar reset preserves menu choice');
   await page.locator('#menuheightgrip').focus();
   await page.keyboard.press('Enter');
   assert.equal(
     await menu.evaluate((element3) => element3.classList.contains('custom-height')),
     false,
     'Reset restores automatic menu layout',
+  );
+  await page.evaluate(() => {
+    document.documentElement.style.removeProperty('--ui');
+    document.body.classList.remove('scaled');
+  });
+  await page.setViewportSize({ width: 1440, height: 1440 });
+  await page.waitForFunction(() => {
+    const radar = document.getElementById('radar')!.getBoundingClientRect();
+    return Math.abs(radar.width - radar.height) < 1;
+  });
+  assert.equal(
+    await page
+      .locator('#menuheightgrip')
+      .evaluate(
+        (element) =>
+          !!(
+            element.compareDocumentPosition(document.getElementById('ctabs')!) &
+            Node.DOCUMENT_POSITION_FOLLOWING
+          ),
+      ),
+    true,
+    'Only the top divider remains',
+  );
+  const bounds = await page.locator('#cpanel').boundingBox();
+  assert.ok(
+    Math.abs(bounds!.y + bounds!.height - 1431) < 2,
+    'Lower menu follows the sidebar floor rather than leaving blank space',
   );
   assert.deepEqual(errors, []);
   console.log(
