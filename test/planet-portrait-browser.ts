@@ -183,6 +183,22 @@ try {
         'hail uses the exact final landed-art static fuzz',
       );
       await page.screenshot({ path: path.join(output, 'docking-hail.png') });
+      await page.click('#profilebtn');
+      assert.equal(
+        await page.locator('#profiledialog').evaluate((dialog: HTMLDialogElement) => dialog.open),
+        true,
+      );
+      await page.keyboard.press('Escape');
+      assert.equal(
+        await page.locator('#profiledialog').evaluate((dialog: HTMLDialogElement) => dialog.open),
+        false,
+      );
+      assert.equal(
+        await page.locator('#hailbox').isVisible(),
+        true,
+        'Escape closes only the topmost profile, not the underlying hail',
+      );
+
       await page.getByRole('button', { name: 'INBOX', exact: true }).click();
       assert.equal(await page.locator('#hailportrait').getAttribute('src'), null);
       await page.getByRole('button', { name: 'CLOSE', exact: true }).click();
@@ -194,6 +210,14 @@ try {
           document.body.classList.toggle('scaled', value !== 1);
         }, scale);
         await page.click('#landprofilebtn');
+        const priorChoice = await page.locator('#portraitchoices input:checked').inputValue();
+        await page.keyboard.press('ArrowRight');
+        assert.notEqual(
+          await page.locator('#portraitchoices input:checked').inputValue(),
+          priorChoice,
+          'native radio keyboard navigation remains available',
+        );
+        assert.match(await page.locator('#portraitstatus').innerText(), /not saved/);
         await page.locator('#portraitclose').focus();
         const bounds = await page.locator('#portraitclose').boundingBox();
         const modal = await page.locator('#profiledialog').boundingBox();

@@ -52,13 +52,19 @@ export function initProfile(state: ProfileState, send: (message: object) => void
   for (const id of ['profilebtn', 'landprofilebtn']) document.getElementById(id)!.onclick = open;
   document.getElementById('portraitclose')!.onclick = () => dialog.close();
   dialog.addEventListener('close', () => previousFocus?.focus());
-  dialog.addEventListener('keydown', (event) => {
-    event.stopPropagation();
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      dialog.close();
-    }
-  });
+  // The native top layer owns keys even when an ordinary game overlay remains underneath.
+  window.addEventListener(
+    'keydown',
+    (event) => {
+      if (!dialog.open) return;
+      event.stopImmediatePropagation();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        dialog.close();
+      }
+    },
+    true,
+  );
   save.onclick = () => {
     if (!state.you || pending) return;
     pending = true;
