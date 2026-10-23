@@ -1,6 +1,6 @@
 # Quantum Rift
 
-![Friend-hosted universe login with separate captain name and password fields](docs/screenshots/friend-host-login.png)
+![Quantum Rift login with music-timed ship formations](docs/screenshots/login-formation.png)
 
 **Quantum Rift is currently in beta and under ongoing development. All features are subject to change.**
 
@@ -8,19 +8,20 @@
 
 **A space trading and combat game in your browser.**
 
-3.3.2 adds a friend-hosted universe alongside local Solo and dedicated online
-play. The flight viewport uses ExcaliburJS, and dedicated online authority runs
-inside Nakama 3.41.0 with PostgreSQL. See the [release notes](docs/RELEASE-3.3.2.md),
-[friend-hosting guide](docs/HOSTING.md) and [dedicated hosting guide](docs/NAKAMA.md).
-Solo and friend games need no Nakama or PostgreSQL service. Dedicated hosting
-requires operator configuration; the download does not deploy those services.
+**3.3.3 — Trinity Stable Beta** adds cockpit and sidebar
+refinements, music-timed login flybys, quieter default effects, planetary colony
+scenes and selectable captain portraits. See the [release notes](docs/RELEASE-3.3.3.md).
 
 Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
 The flight viewport uses [ExcaliburJS](https://excaliburjs.com/) for its scene,
 camera, input and native sprite entities. The shared game simulation and HTML cockpit remain in place; engine scripts are
-included locally. Dedicated online authority runs inside Nakama. Friend games run
-one authoritative server on the host’s computer; Solo retains its separate local database.
+included locally. Dedicated online authority runs inside Nakama 3.41.0 with PostgreSQL.
+Friend games run one authoritative server on the host’s computer; Solo retains its
+separate local database. Solo and friend games need no Nakama or PostgreSQL service.
+Dedicated hosting requires operator configuration; the download does not deploy
+those services. See [friend hosting](docs/HOSTING.md) and
+[dedicated hosting](docs/NAKAMA.md).
 
 ## Features
 
@@ -28,6 +29,7 @@ one authoritative server on the host’s computer; Solo retains its separate loc
 
 - Travel between distinctive star systems, rendered planets and stations, from busy trade routes to the remote Eventide frontier.
 - Meet traders, convoys, patrols, pirates and rival captains with their own personalities and careers.
+- Visit illustrated worlds and see colonies grow through three settlement stages.
 - Discover faction stories, spaceport questlines and a main story hidden in the Rift.
 - Hail passing ships for conversation, assistance and encounters. Incoming calls wait until you choose to answer.
 
@@ -64,10 +66,10 @@ one authoritative server on the host’s computer; Solo retains its separate loc
 
 - Solo mode includes pause, save slots and save-file import and export. A newcomer truce limits ambient hostility while you establish your station; missions and deliberate aggression can still lead to combat.
 - Remap controls, adjust interface scale, use a colour-blind palette, or play with a gamepad or touch controls.
+- Choose a captain portrait through **PROFILE** while flying or landed (**ME** in compact flight layouts). Your face appears in public profiles and player hails.
 - Resize the Tray, minimap and tabbed menu to suit your screen. Keep browsing positions and filters, and pin one next objective without hiding your other missions.
 - Login music starts on page load when your browser allows autoplay; otherwise it starts on your first interaction. Saved mute and music levels still apply.
 - Buy from the local Faction Store while landed in faction space, or visit every faction’s store at your own Personal Station. The store shows your standing with the selected faction and updates it after purchases.
-- Login music starts on page load when your browser allows autoplay; otherwise it starts on your first interaction. Saved mute and music levels still apply.
 - Discover five radio stations through exploration and special jobs, with 32 owner-supplied songs and a full-album Spacepop tour reward. Stations shuffle their music except the Super-Idol album, which plays in order.
 - Run locally in your browser with the project’s pinned Node.js runtime. Built releases need no package installation or compilation.
 
@@ -139,6 +141,18 @@ Save imports remain Solo-only.
 
 ![Landed service menu with system traffic behind it](docs/screenshots/responsive-landed.png)
 
+**Growing colonies**
+
+![A level-five colony on Far Prime with its settlement-stage illustration](docs/screenshots/colony-stage3.png)
+
+**Captain portraits**
+
+![Captain profile with selectable portrait cards and the saved portrait preview](docs/screenshots/profile-chooser.png)
+
+**Hails and caller portraits**
+
+![Docking-control hail displaying the caller portrait over the landed colony view](docs/screenshots/docking-hail.png)
+
 **Galaxy map**
 
 ![In-game galaxy map menu](docs/screenshots/responsive-map.png)
@@ -150,3 +164,7 @@ Save imports remain Solo-only.
 **Local faction store**
 
 ![The local Concord store with live faction standing while landed in Concord space](docs/screenshots/faction-store-local.png)
+
+**Friend-hosted universe**
+
+![Friend-hosted universe login with separate captain name and password fields](docs/screenshots/friend-host-login.png)

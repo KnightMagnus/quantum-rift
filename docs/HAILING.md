@@ -12,7 +12,7 @@ The inbox includes **Allow player hails**. Existing Captain privacy also applies
 
 Hail windows show a framed caller portrait with the same static scanline effect as landed artwork. Thirty named captains have individual portraits. Other NPC portraits are selected deterministically from faction pools; opening the same call does not reroll the face. Archived NPC transmissions retain their captured portrait after the sender leaves. Closing the window or returning to the inbox clears the caller image.
 
-Open **PROFILE** from the flight command bar or landed world header to choose your captain portrait. The preview is not saved until you select **SAVE PORTRAIT** and receive server confirmation. Your choice appears in public captain profiles and player hails, and uses the existing Solo or native online account storage. Named NPC portraits are not selectable. Escape closes the chooser and returns focus to the button that opened it.
+Open **PROFILE** from the flight command bar or landed world header to choose your captain portrait; compact flight controls label the button **ME**. The preview is not saved until you select **SAVE PORTRAIT** and receive server confirmation. Your choice appears in public captain profiles and player hails, and uses the existing Solo or native online account storage. Named NPC portraits are not selectable. Escape closes the chooser and returns focus to the button that opened it.
 
 ## NPC dialogue and pacing
 
