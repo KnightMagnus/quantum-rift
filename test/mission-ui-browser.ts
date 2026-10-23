@@ -1,14 +1,34 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import type { Buffer } from 'node:buffer';
+import fileSystem from 'node:fs';
 import { chromium, type Page } from 'playwright';
 import { refineryFixture } from './helpers/refinery-play-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
-const feature = await refineryFixture('mission-board');
+const feature = await refineryFixture('mission-board', { stableJobWindow: true });
 let browser;
+const diagnosticPages: Page[] = [];
+const events: { at: number; captain: number; direction: string; message: unknown }[] = [];
+const errors: string[] = [];
 try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({ viewport: { width: 1500, height: 1050 } });
   await context.addInitScript(() => {
+    window.pointerTrace = [];
+    for (const type of ['pointerdown', 'pointerup', 'click'])
+      document.addEventListener(
+        type,
+        (event) => {
+          window.pointerTrace.push({
+            at: performance.now(),
+            type,
+            target: (event.target as HTMLElement).outerHTML?.slice(0, 500),
+            x: (event as MouseEvent).clientX,
+            y: (event as MouseEvent).clientY,
+          });
+        },
+        true,
+      );
     const Native = WebSocket;
     window.WebSocket = class extends Native {
       constructor(...args: ConstructorParameters<typeof WebSocket>) {
@@ -19,10 +39,24 @@ try {
   });
   const firstCaptain = await context.newPage(),
     secondCaptain = await context.newPage(),
-    courier = await context.newPage(),
-    errors: string[] = [];
-  for (const page of [firstCaptain, secondCaptain, courier])
+    courier = await context.newPage();
+  diagnosticPages.push(firstCaptain, secondCaptain, courier);
+  for (const [captain, page] of diagnosticPages.entries()) {
     page.on('pageerror', (event) => errors.push(String(event)));
+    page.on('websocket', (socket) => {
+      const record = (direction: string, { payload }: { payload: string | Buffer }) => {
+        try {
+          const message = JSON.parse(String(payload));
+          if (
+            ['accept', 'armada', 'armadaContract', 'social', 'toast', 'landed'].includes(message.t)
+          )
+            events.push({ at: Date.now(), captain, direction, message });
+        } catch {}
+      };
+      socket.on('framesent', (frame) => record('sent', frame));
+      socket.on('framereceived', (frame) => record('received', frame));
+    });
+  }
   const login = async (page: Page, name: string) => {
     await page.goto(feature.origin);
     await page.fill('#lname', name);
@@ -271,6 +305,31 @@ try {
     'Real board facts, disabled reasons, remembered feasible/type filters, focus-safe team invitation, explicit Ready/Start, exact shares, pinning and reconnect passed.',
   );
 } catch (error) {
+  const state = await Promise.all(
+    diagnosticPages
+      .filter((page) => !page.isClosed())
+      .map((page) =>
+        page
+          .evaluate(() => ({
+            at: Date.now(),
+            captain: G.you?.name,
+            armada: G.you?.armada,
+            missions: G.you?.missions,
+            plan: G.contractPlan,
+            offers: G.landed?.offers,
+            pointers: window.pointerTrace,
+          }))
+          .catch(() => null),
+      ),
+  );
+  fileSystem.writeFileSync(
+    path.join(feature.out, 'failure-state.json'),
+    JSON.stringify(
+      { node: process.version, browser: browser?.version(), errors, events, state },
+      null,
+      2,
+    ),
+  );
   await failureEvidence(browser, feature.out, error);
   throw error;
 } finally {

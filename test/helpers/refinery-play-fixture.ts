@@ -17,7 +17,11 @@ import { tempDataDir } from './temp-data.ts';
 import { root, availablePort, evidenceDir, ready, cleanup } from './browser-fixture.ts';
 import { type Browser } from 'playwright';
 export { until } from './mining-fixture.ts';
-export async function refineryFixture(name: string) {
+interface RefineryFixtureOptions {
+  /** Start server time midway through a job window while real elapsed time and timers continue. */
+  stableJobWindow?: boolean;
+}
+export async function refineryFixture(name: string, options: RefineryFixtureOptions = {}) {
   const directory = tempDataDir('rift-refinery-play-'),
     output = evidenceDir(name),
     data = path.join(directory, 'data'),
@@ -82,11 +86,34 @@ export async function refineryFixture(name: string) {
   const telemetry = path.join(output, 'telemetry.json'),
     preload = path.join(root, 'test/fixtures/refinery-preload.ts');
 
+  // Keep this UI scenario within one offer window without freezing elapsed time or timers.
+  // The normal board regenerates IDs every ten minutes, including during acceptance.
+  const serverImports: string[] = [];
+  if (options.stableJobWindow) {
+    const clockPreload = path.join(directory, 'job-window-clock.mjs');
+    fileSystem.writeFileSync(
+      clockPreload,
+      `
+      const nativeNow = Date.now;
+      const started = nativeNow();
+      const midpoint = Math.floor(started / 600000) * 600000 + 300000;
+      Date.now = () => midpoint + nativeNow() - started;
+    `,
+    );
+    serverImports.push('--import', clockPreload);
+  }
   const portNumber = await availablePort(),
     origin = `http://127.0.0.1:${portNumber}`,
     server = spawn(
       process.execPath,
-      ['--import', './test/seed-random.ts', '--import', preload, 'server/local-main.ts'],
+      [
+        ...serverImports,
+        '--import',
+        './test/seed-random.ts',
+        '--import',
+        preload,
+        'server/local-main.ts',
+      ],
       {
         cwd: root,
         env: {
