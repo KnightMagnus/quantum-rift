@@ -103,7 +103,18 @@ try {
         return send.call(this, data);
       };
     });
-    await page.goto(origin + (renderer === 'auto' ? '/' : '/?renderer=' + renderer));
+    if (renderer === 'webgl' && ratio === 1) {
+      await page.goto(origin);
+      await page.waitForFunction(
+        () => document.querySelector<HTMLCanvasElement>('#view')?.dataset.engine,
+      );
+      assert.equal(
+        await page.evaluate(() => window.RiftEngine.scene.health),
+        undefined,
+        'browser diagnostics default off',
+      );
+    }
+    await page.goto(origin + '/?health=1' + (renderer === 'auto' ? '' : '&renderer=' + renderer));
     await page.waitForFunction(
       () => document.querySelector<HTMLCanvasElement>('#view')?.dataset.engine,
     );
@@ -488,6 +499,27 @@ try {
     assert.ok(
       requests.filter((url) => /\.js(?:\?|$)/.test(url)).every((url) => url.startsWith(origin)),
       'offline engine modules are local',
+    );
+    const health = await page.evaluate(() => window.RiftEngine.scene.health?.report());
+    assert.ok(health?.browserUpdateMs && health.browserUpdateMs.count > 30);
+    assert.ok(health?.browserDrawMs && health.browserDrawMs.count > 30);
+    assert.ok(Object.values(health).every((metric) => metric.retained <= 512));
+    fileSystem.writeFileSync(
+      path.join(output, 'health-' + renderer + '-dpr' + ratio + '.json'),
+      JSON.stringify(
+        {
+          browser: browser.version(),
+          viewport: page.viewportSize(),
+          ratio,
+          requestedRenderer: renderer,
+          actualRenderer: native.renderer,
+          workload:
+            'existing Engine flight/input/camera/effects fixture, 1 captain, mixed lifecycle',
+          health,
+        },
+        null,
+        2,
+      ),
     );
     await context.close();
     console.log('Native Engine/input/camera/lifecycle/CSP:', renderer, 'DPR', ratio, 'PASS');

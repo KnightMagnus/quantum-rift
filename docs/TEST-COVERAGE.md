@@ -816,3 +816,16 @@ comparisons, not physical midrange-laptop or audible-output certification.
 ## Planetary landscapes and portraits
 
 `planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation, bounded acknowledgement tokens and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser and hail windows, denied or unconfirmed save recovery, stale-reply isolation and profile-button label fit at narrow/scaled and desktop sizes. `nakama-network.ts` verifies selected portraits through real Nakama authentication and match ingress, spoofed-target isolation, public lookup, PostgreSQL checkpoint storage and a native service restart. The adapter unit fixture remains a separate bounded persistence check.
+
+## Performance and operational health
+
+`health.ts` checks bounded numeric sampling, UTF-8 sizing, failed-checkpoint freeze
+privacy, and enabled/disabled authoritative parity across six seeded workloads.
+The scenarios cover real combat, mining/towing, concentrated/distributed captains,
+reconnect state and accelerated soak. Snapshot/checkpoint size ceilings guard
+fixture payload growth, not latency on unmeasured hardware.
+`excalibur-runtime-browser.ts` also checks opt-in update/draw samples in the actual
+Canvas/WebGL Engine at its existing DPR combinations and saves numeric reports.
+See [PERFORMANCE.md](PERFORMANCE.md) for interpretation, commands and limits.
+In-process memory-CAS measurements exclude production PostgreSQL/network latency;
+accelerated soak does not establish wall-clock or multihour endurance.

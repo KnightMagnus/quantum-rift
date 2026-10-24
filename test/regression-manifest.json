@@ -115,7 +115,8 @@
     "purchase-audio.ts",
     "planet-portrait-art.ts",
     "portrait-persistence.ts",
-    "landscape-generation.ts"
+    "landscape-generation.ts",
+    "health.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -1346,6 +1347,18 @@
         "nakama-network.ts"
       ],
       "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork."
+    },
+    {
+      "id": "performance-health",
+      "services": [],
+      "tests": ["health.ts", "excalibur-runtime-browser.ts"],
+      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples.",
+      "owners": [
+        "shared/health.ts",
+        "server/game.ts",
+        "server/nakama-storage.ts",
+        "client/space-scene.ts"
+      ]
     }
   ],
   "routes": {
