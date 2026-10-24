@@ -8,6 +8,12 @@ Incoming NPC/player calls update an amber circular communications badge at the u
 
 The inbox includes **Allow player hails**. Existing Captain privacy also applies: the recipient must accept unsolicited messages, be a friend, or share an Armada. Both directions of blocking prohibit hails. Both players must remain online, flying and in the same system; there is no 3,500-unit player range limit, offline mailbox, remote trade or chat injection. The server resolves the recipient's live ship identity and ignores supplied sender names. Each sender may send once per five seconds, and once per recipient per ten seconds. Messages from the same sender coalesce into the most recent call; at most eight player senders are queued independently of the three-call NPC allowance.
 
+## Caller portraits and personal profile
+
+Hail windows show a framed caller portrait with the same static scanline effect as landed artwork. Thirty named captains have individual portraits. Other NPC portraits are selected deterministically from faction pools; opening the same call does not reroll the face. Archived NPC transmissions retain their captured portrait after the sender leaves. Closing the window or returning to the inbox clears the caller image.
+
+Open **PROFILE** from the flight command bar or landed world header to choose your captain portrait. The preview is not saved until you select **SAVE PORTRAIT** and receive server confirmation. Your choice appears in public captain profiles and player hails, and uses the existing Solo or native online account storage. Named NPC portraits are not selectable. Escape closes the chooser and returns focus to the button that opened it.
+
 ## NPC dialogue and pacing
 
 Contextual text uses actual ship identity, task, combat/disabled state, armor/shield status, system and real destination when available. Eight authored openings per principal activity and thirty stable named-captain verbal signatures combine with the existing relationship-sensitive voice catalog. A per-player/system-visit ledger avoids complete routine-response repetition, with factual ship/task/position fallbacks; special silent/alien/hunter behavior is retained. No live language-model dependency or fictional cargo manifests are introduced.

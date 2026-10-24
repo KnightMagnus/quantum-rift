@@ -1,3 +1,4 @@
+import { isPlayerPortrait } from '../shared/portraits.ts';
 import type { Game } from './game.ts';
 import type { MessageRegistry, NetworkMessage } from './message-registry.ts';
 export type Session = import('./game.ts').Session;
@@ -49,6 +50,28 @@ import { TUTORIAL } from '../shared/tutorial.ts';
  */
 export function createGameMessageHandlers(capabilities: MessageCapabilities): MessageRegistry {
   return createMessageRegistry([
+    [
+      'portrait',
+      (session, message) => {
+        const request =
+          typeof message.portraitRequestId === 'string' && message.portraitRequestId.length <= 64
+            ? { portraitRequestId: message.portraitRequestId }
+            : {};
+        if (!isPlayerPortrait(message.portraitId)) {
+          capabilities.send(session, { t: 'portrait', ok: false, ...request });
+          return;
+        }
+        session.data.portraitId = message.portraitId;
+        capabilities.db.touch();
+        capabilities.you(session);
+        capabilities.send(session, {
+          t: 'portrait',
+          ok: true,
+          portraitId: message.portraitId,
+          ...request,
+        });
+      },
+    ],
     [
       'towing',
       (session, message) =>

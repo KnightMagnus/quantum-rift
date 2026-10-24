@@ -24,7 +24,9 @@ export function characterizeRouting(GameClass: typeof Game) {
   }[] = [];
   const probe = Object.create(GameClass.prototype) as Game;
   // Route construction must not read mutable services before their late setup.
-  const types = [...probe.createMessageHandlers().types];
+  // Portrait selection is new behavior, covered by portrait-persistence.ts; retain
+  // the independent pre-extraction baseline for every original route unchanged.
+  const types = [...probe.createMessageHandlers().types].filter((type) => type !== 'portrait');
   const messages: Record<string, Record<string, unknown>> = {
     input: { seq: '7', th: 1, tu: 9, ab: 1, rv: 0, f1: 1, f2: 0, nav: true },
     target: { id: 'enemy' },

@@ -1,10 +1,10 @@
 import { ui as playInterfaceSound } from './audio.ts';
+import { landscapeScene } from '../shared/landscapes.ts';
 import type { PlayerPayload, LandedPayload } from './main.ts';
 import type { Mission } from '../server/game.ts';
 import type { OutfitAsset } from '../shared/rules.ts';
 import type { RoleId } from '../shared/roles.ts';
 import { elementById } from './dom.ts';
-import type { StellarBody } from '../server/game.ts';
 import type { NetworkMessage } from '../server/message-registry.ts';
 import type { ClientGameState } from './main.ts';
 import type { ShipHull } from './render.ts';
@@ -126,7 +126,6 @@ import {
   price,
 } from '../shared/rules.ts';
 import { galaxy, mapHit, mapFit, stationDesign } from './render.ts';
-import { planetType } from './planets.ts';
 import { crewHtml, hangarHtml, researchHtml, materialsHtml } from './hangar_ui.ts';
 import { specialistsHtml } from './spec_ui.ts';
 import { docksHtml, dockChips, dockLine, outfitterRepairsHtml } from './docks_ui.ts';
@@ -553,44 +552,6 @@ const TOAST_SND: Array<[RegExp, string]> = [
     'error',
   ],
 ];
-// which rendered landing picture (tools/rift_landscapes.py) a world shows
-const LAND_SCENES: Record<string, string[]> = {
-  terran: ['terran_city1', 'terran_city2', 'terran_wild1', 'terran_wild2', 'jungle1', 'jungle2'],
-  city: ['city1', 'city2', 'terran_city1'],
-  ocean: ['ocean1', 'ocean2'],
-  desert: ['desert1', 'desert2', 'desert3'],
-  ice: ['ice1', 'ice2'],
-  lava: ['lava1', 'lava2'],
-  barren: ['moon1', 'moon2', 'moon3'],
-  gas: ['gas1', 'gas2'],
-  toxic: ['toxic1', 'toxic2'],
-  crystal: ['crystal1', 'crystal2'],
-};
-/**
- * Selects the landscape illustration image key for a landed planetary or station body.
- * @param stellarBody Landed stellar body definition
- * @returns Image asset key name
- */
-function landScene(stellarBody: StellarBody): string {
-  if (stellarBody.id === 'earth') return 'l_earth';
-  if (stellarBody.kind === 'station') return 'l_st_' + stationDesign(stellarBody);
-  let height = 2166136261;
-  for (const component of stellarBody.id)
-    height = Math.imul(height ^ component.charCodeAt(0), 16777619);
-  height >>>= 0;
-  if (stellarBody.outlaw) return ['l_moon2', 'l_lava2', 'l_desert2'][height % 3]; // outlaw dens look the part
-  let planetType2: string = planetType(stellarBody);
-  const toLowerCase2 = ((stellarBody.desc || '') + ' ' + stellarBody.name).toLowerCase();
-  if (
-    planetType2 === 'terran' &&
-    /(city|capital|sprawl|metropol|towers|arcolog)/.test(toLowerCase2)
-  )
-    planetType2 = 'city';
-  if (planetType2 === 'terran' && /(jungle|forest|garden)/.test(toLowerCase2))
-    return ['l_jungle1', 'l_jungle2'][height % 2];
-  const length2 = LAND_SCENES[planetType2] || LAND_SCENES.barren;
-  return 'l_' + length2[height % length2.length];
-}
 // a styled confirmation dialog in place of the browser's own confirm box
 /**
  * Displays a styled confirmation modal dialog with confirm/cancel action handlers.
@@ -1511,9 +1472,7 @@ export function showLanded(): void {
   // legacy stock station or Personal Station photograph.
   elementById2('landpic').style.backgroundImage = station
     ? `radial-gradient(circle at 40% 40%, ${stellarBody.color}, #000 75%)`
-    : stellarBody.land && stellarBody.land !== 'earth'
-      ? `url(assets/land/${{ 10957: 'l_inalumen', 10958: 'l_threshold' }[stellarBody.land] || stellarBody.land}.jpg)`
-      : `url(assets/land/${landScene(stellarBody)}.jpg), radial-gradient(circle at 40% 40%, ${stellarBody.color}, #000 75%)`;
+    : `url(${artworkUrl(`land/${landscapeScene(stellarBody)}.jpg`)}), radial-gradient(circle at 40% 40%, ${stellarBody.color}, #000 75%)`;
   if (station) {
     const landing = length2;
     void stationLanding(

@@ -111,7 +111,10 @@
     "attention-runtime.ts",
     "landing-feedback.ts",
     "login-traffic.ts",
-    "purchase-audio.ts"
+    "purchase-audio.ts",
+    "planet-portrait-art.ts",
+    "portrait-persistence.ts",
+    "landscape-generation.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -154,7 +157,8 @@
     "responsive-hud-browser.ts",
     "sidebar-gauges-browser.ts",
     "audio-flyby-browser.ts",
-    "audio-defaults-browser.ts"
+    "audio-defaults-browser.ts",
+    "planet-portrait-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -1323,6 +1327,24 @@
         "nakama-network.ts"
       ],
       "asserts": "Recipient-only actual combat targeting, death/departure/cancel clearing, truthful recent patrol scan expiry, red precedence and reduced motion; 12.5% larger text, fixed widescreen button geometry, fluid center chat, sidebar gap, responsive landed/map/captain/settings surfaces and narrow preservation."
+    },
+    {
+      "id": "planet-portrait-art",
+      "services": [],
+      "owners": [
+        "shared/landscapes.ts",
+        "shared/portraits.ts",
+        "client/profile_ui.ts",
+        "client/hails_ui.ts"
+      ],
+      "tests": [
+        "planet-portrait-art.ts",
+        "portrait-persistence.ts",
+        "planet-portrait-browser.ts",
+        "landscape-generation.ts",
+        "nakama-network.ts"
+      ],
+      "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork."
     }
   ],
   "routes": {
@@ -1484,7 +1506,8 @@
     "miningOrder": ["refinery-network.ts", "refinery.ts", "message-routing.ts"],
     "miningPressure": ["mining-pressure.ts", "refinery-ui-browser.ts", "message-routing.ts"],
     "industrial": ["dredge-network.ts", "dredge-browser.ts", "message-routing.ts"],
-    "towing": ["towing-network.ts", "towing-browser.ts", "message-routing.ts"]
+    "towing": ["towing-network.ts", "towing-browser.ts", "message-routing.ts"],
+    "portrait": ["portrait-persistence.ts", "planet-portrait-browser.ts", "nakama-network.ts"]
   },
   "tooling": [
     "capture-features.ts",

@@ -1,3 +1,4 @@
+import { playerPortrait } from '../shared/portraits.ts';
 import { attentionPayload, type RecentPatrolScan } from './attention.ts';
 export interface SeedOfficer {
   name: string;
@@ -122,6 +123,8 @@ export type PlayerInput = {
   fire2: number;
 };
 export type PlayerData = FeaturePlayerState & {
+  /** Catalog portrait choice, optional for legacy checkpoints. */
+  portraitId?: string;
   id?: number;
 
   /** Recent trip cash flow; never a source of credits. */
@@ -1275,6 +1278,7 @@ export class Game<Storage extends Database = Database> {
   ) {
     return {
       name: playerData.name,
+      portraitId: playerPortrait(playerData.portraitId),
       credits: playerData.credits,
       sys: playerData.sys,
       stellar: playerData.stellar,

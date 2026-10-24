@@ -167,7 +167,9 @@
       </div>
       <input id="chatin" placeholder="Press Enter to chat" maxlength="240" />
       <div class="cbtns">
-        <button class="cb" id="cbmap" title="Galaxy map (M)">MAP</button
+        <button class="cb" id="profilebtn" title="Captain profile" aria-label="Captain profile">
+          <span class="profile-full">PROFILE</span><span class="profile-short">ME</span></button
+        ><button class="cb" id="cbmap" title="Galaxy map (M)">MAP</button
         ><button class="cb" id="cbvol" title="Volume (N mutes)">🔉</button
         ><button class="cb" id="optbtn" title="Options (O)">&#9881;</button
         ><button class="cb q" id="cbhelp" title="Controls (?)">
@@ -265,6 +267,9 @@
     <div id="hailbox" class="overlay hidden">
       <div class="loginbox metal hailin">
         <div class="hailtag">HAILING <span id="hailsub"></span></div>
+        <div id="hailportraitwindow" class="portrait-window metal hidden">
+          <img id="hailportrait" width="160" height="160" alt="Caller portrait" />
+        </div>
         <h2 id="hailwho"></h2>
         <p id="hailtext"></p>
         <div class="hailbtns" id="hailopts"></div>
@@ -430,6 +435,7 @@
         <div class="landpic" id="landpic"></div>
         <div class="landhead">
           <h2 id="landname"></h2>
+          <button class="btn sm" id="landprofilebtn">PROFILE</button>
           <div id="landfac" class="dim"></div>
           <p id="landdesc"></p>
         </div>
@@ -443,6 +449,19 @@
       </div>
     </div>
 
+    <dialog id="profiledialog" class="metal" aria-labelledby="profiletitle">
+      <h2 id="profiletitle">PROFILE · <span id="profilename"></span></h2>
+      <div class="portrait-window metal">
+        <img id="portraitpreview" width="160" height="160" alt="Selected captain portrait" />
+      </div>
+      <fieldset>
+        <legend>Captain portrait</legend>
+        <div id="portraitchoices"></div>
+      </fieldset>
+      <p id="portraitstatus" role="status"></p>
+      <button id="portraitsave" class="btn">SAVE PORTRAIT</button>
+      <button id="portraitclose" class="btn">CLOSE</button>
+    </dialog>
     <!-- options -->
     <div id="opts" class="overlay hidden">
       <div class="loginbox metal optbox">

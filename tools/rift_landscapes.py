@@ -4,7 +4,9 @@ height-field terrain lit by the sun with aerial perspective and reflective water
 domes, spires, forges, crystal) from the hull pipeline, depth-tested into the terrain. Stations get an exterior shot of
 their rendered design (tools/rift_stations.py) above a planet's limb.
 Output: client/assets/land/<scene>.jpg (612x285) and scenes.json.
-usage: python3 tools/rift_landscapes.py client/assets/land [only]      (needs numpy and Pillow)"""
+usage: python3 tools/rift_landscapes.py client/assets/land [only]      (needs numpy and Pillow)
+For planetary context variants and colony stages use rift_colony_landscapes.py OUTPUT [SCENE].
+That entrypoint never renders stations; rift_earth_colonies.py OUTPUT retains original Earth."""
 import sys, os, json, math, zlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np

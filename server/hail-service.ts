@@ -1,3 +1,4 @@
+import { playerPortrait, npcPortrait } from '../shared/portraits.ts';
 import type { Game, Session, Entity } from './game.ts';
 import type { Space } from './space.ts';
 
@@ -14,6 +15,8 @@ interface HailDetails {
   intel?: Point;
 }
 interface HailEntry extends HailDetails {
+  /** Captured sender identity survives archive and despawn. */
+  portraitId: string;
   key: string;
   kind: 'player' | 'npc';
   source: number;
@@ -137,6 +140,7 @@ export class HailService {
       entries: [...hailState.queue, ...hailState.history].map((hailEntry) => ({
         key: hailEntry.key,
         who: hailEntry.who,
+        portraitId: hailEntry.portraitId,
         kind: hailEntry.kind,
         unread: !hailEntry.read,
         expires: hailEntry.expires,
@@ -228,6 +232,7 @@ export class HailService {
         player: target!.id,
         id: target!.id,
         who: other.data.name,
+        portraitId: playerPortrait(other.data.portraitId),
         sub: 'Same-system private hail',
         text: 'Send a short hail. No trade or transfers on this channel.',
         opts: [],
@@ -259,6 +264,7 @@ export class HailService {
         source: session.ent!.id,
         sys: session.data.sys,
         who: session.data.name,
+        portraitId: playerPortrait(session.data.portraitId),
         text: value,
         expires: currentTime + HAIL_LIMITS.expires,
       };
@@ -266,6 +272,7 @@ export class HailService {
     }
     Object.assign(hailEntry, {
       who: session.data.name,
+      portraitId: playerPortrait(session.data.portraitId),
       text: value,
       read: false,
       expires: currentTime + HAIL_LIMITS.expires,
@@ -276,6 +283,7 @@ export class HailService {
       player: target!.id,
       id: target!.id,
       who: other.data.name,
+      portraitId: playerPortrait(other.data.portraitId),
       text: `Hail sent: ${value}`,
       opts: [],
     });
@@ -316,6 +324,7 @@ export class HailService {
       return this.game.send(session, {
         t: 'hail',
         who: hailEntry.who,
+        portraitId: hailEntry.portraitId,
         text: `${hailEntry.text}\n\n[Archived transmission: this hail has expired or the sender is no longer available. No actions remain available.]`,
         opts: [],
       });
@@ -330,6 +339,7 @@ export class HailService {
         key: hailEntry.key,
         player: hailEntry.kind === 'player' ? entity.id : undefined,
         who: hailEntry.who,
+        portraitId: hailEntry.portraitId,
         sub: hailEntry.kind === 'player' ? 'Private hail' : hailEntry.reason,
         text: hailEntry.text,
         opts: hailEntry.opts || [],
@@ -365,6 +375,7 @@ export class HailService {
     hailState.queue.push({
       key: `h${++this.serial}`,
       kind: 'npc',
+      portraitId: npcPortrait(entity, session.data.sys),
       source: entity.id,
       who: entity.name || `${this.game.A.ships[entity.hull].name} · transponder ${entity.id}`,
       sys: session.data.sys,
@@ -485,7 +496,13 @@ export class HailService {
     const finish = (text: string) => {
       hailState.queue = hailState.queue.filter((hailEntry2) => hailEntry2 !== hailEntry);
       this.push(session, hailState);
-      game2.send(session, { t: 'hail', who: hailEntry.who, text, opts: [] });
+      game2.send(session, {
+        t: 'hail',
+        who: hailEntry.who,
+        portraitId: hailEntry.portraitId,
+        text,
+        opts: [],
+      });
     };
     if (entity.hailResolved && action !== 'repair')
       return finish('Another captain already helped us. Thank you.');
@@ -508,6 +525,7 @@ export class HailService {
         t: 'hail',
         key: hailEntry.key,
         who: hailEntry.who,
+        portraitId: hailEntry.portraitId,
         text: hailEntry.text,
         opts: hailEntry.opts,
       });

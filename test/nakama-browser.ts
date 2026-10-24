@@ -191,6 +191,12 @@ try {
   checks.alpha = alpha;
   await page.waitForFunction(() => window.RiftAudio.debug().ctx === 'running');
   assert.equal(await page.locator('#view').getAttribute('data-engine'), 'excalibur-0.32.0');
+  // Seed while docked: the production flight loop must not emit inputs across the reset.
+  const firstInput = frames.length;
+  await page.evaluate(() => {
+    if (!G.landed) throw new Error('Sequence fixture requires a docked captain');
+    Reflect.set(window, 'testSequence', 4090);
+  });
   await page.click('#depart');
   await page.waitForFunction(
     () => G.view && !G.landed && window.RiftEngine.scene.display.actors.has('ship:' + G.myId),
@@ -211,8 +217,6 @@ try {
     const actor = window.RiftEngine.scene.display.actors.get('ship:' + G.myId)!;
     return [actor.pos.x, actor.pos.y, G.view!.rx, G.view!.ry];
   });
-  const firstInput = frames.length;
-  await page.evaluate(() => Reflect.set(window, 'testSequence', 4090));
   await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
   try {
     await page.keyboard.down('w');
@@ -261,6 +265,7 @@ try {
     .slice(firstInput)
     .filter((frame) => frame.direction === 'sent' && frame.packet.t === 'input');
   assert(inputs.length >= 3);
+  assert.equal(inputs[0].packet.seq, 4091, 'first flight input follows the docked seed');
   assert(
     inputs.every(
       (frame, index) => !index || frame.packet.seq === Number(inputs[index - 1].packet.seq) + 1,
