@@ -317,6 +317,11 @@ try {
   assert.equal(identity.station, 'qstation');
   assert.equal(identity.planet, 'concordia');
   assert.equal(identity.running, 'true');
+  // Traffic follows music playback, which browser policy can suspend until a gesture.
+  await page.keyboard.press('Shift');
+  await page.waitForFunction(
+    () => document.querySelector<HTMLElement>('.login-scene')?.dataset.trackPlaying === 'true',
+  );
   await page.screenshot({ path: path.join(output, 'desktop-start.png') });
   const first = await canvas.evaluate((element3) => (element3 as HTMLCanvasElement).toDataURL());
   await page.waitForTimeout(1400);
