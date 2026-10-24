@@ -1,3 +1,4 @@
+import { legacyStorySystems } from './helpers/legacy-story-systems.ts';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import filesystem from 'node:fs';
@@ -107,8 +108,14 @@ try {
     });
     assert.equal(sha256(buyers), baseline.buyers[origin], `Nearest buyer ${origin}`);
   }
+  // Keep the original ordered-port golden. Moving the service-free Gateway
+  // changes only its outer array position; all actual offers use current ports.
+  const legacyPortIds = legacyStorySystems(Object.values(systemsById)).flatMap((system) =>
+    system.stellars.map((stellar) => stellar.id),
+  );
   for (const [window, expected] of Object.entries(baseline.freight)) {
-    const offers = Object.values(STELLARS).map((port) => [port.id, freightOffers(port, +window)]);
+    assert.deepEqual(freightOffers(STELLARS['sol-gateway'], +window), []);
+    const offers = legacyPortIds.map((id) => [id, freightOffers(STELLARS[id], +window)]);
     assert.equal(sha256(offers), expected, `Freight offers window ${window}`);
   }
 } finally {

@@ -1,6 +1,6 @@
 import type { Entity } from '../server/game.ts';
 import { mockSession, mockPlayerData, mockMission } from './helpers/mocks.ts';
-import type { StarSystem } from '../shared/galaxy.ts';
+import { legacyStorySystems } from './helpers/legacy-story-systems.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
 // Authored v2.9 topology, old-save compatibility and normal mission lifecycle.
 import assert from 'node:assert/strict';
@@ -24,9 +24,7 @@ assert.equal(
 );
 // Golden source: untouched v2.8.3 generation, normalized ONLY for intentional Terra display text.
 // Scenes and the one new Vesper branch are additions; every legacy generated property stays exact.
-const legacy: StarSystem[] = JSON.parse(
-  JSON.stringify(SYSTEMS.filter((starSystem) => !starSystem.eventide)),
-);
+const legacy = legacyStorySystems(SYSTEMS.filter((starSystem) => !starSystem.eventide));
 for (const starSystem of legacy) {
   // v3.0.4 changes only this display name; retain the strict legacy-world golden.
   if (starSystem.id === 'qgate') {
@@ -55,47 +53,6 @@ for (const starSystem of legacy) {
     }
   starSystem.links = starSystem.links.filter((identifier: string) => !identifiers.has(identifier));
 }
-// Reverse only the authored Gateway relocation and two lore descriptions for
-// this pre-existing generation golden. Transit and new descriptions have their
-// own behavior checks; generated worlds, prices and RNG remain under this hash.
-const legacySol = legacy.find((system) => system.id === 'sol')!;
-const legacyConcordia = legacy.find((system) => system.id === 'qgate')!;
-const legacyColdharbor = legacy.find((system) => system.id === 'coldharbor')!;
-const legacyGateway = legacyConcordia.stellars.find((stellar) => stellar.id === 'sol-gateway')!;
-legacyConcordia.stellars = legacyConcordia.stellars.filter((stellar) => stellar !== legacyGateway);
-delete legacyConcordia.gate;
-legacy[legacy.indexOf(legacySol)] = Object.fromEntries(
-  Object.entries(legacySol).flatMap(([key, value]) =>
-    key === 'sol'
-      ? [
-          ['gate', 'coldharbor'],
-          [key, value],
-        ]
-      : [[key, value]],
-  ),
-) as StarSystem;
-legacyGateway.name = 'The Sol Gateway';
-legacyGateway.x = -700;
-legacyGateway.y = -520;
-legacyGateway.desc =
-  'A stable wormhole that opened beyond the orbit of Neptune. The far side is somewhere off the edge of every chart.';
-legacySol.stellars.push(legacyGateway);
-legacySol.stellars.find((stellar) => stellar.id === 'luna')!.desc =
-  'The old lunar shipyards, now a customs station watching over the Gateway.';
-legacyColdharbor.gate = 'sol';
-const legacyFarGateway = legacyColdharbor.stellars.find(
-  (stellar) => stellar.id === 'coldharbor-gate',
-)!;
-legacyFarGateway.wormhole = 'sol';
-legacyFarGateway.desc = 'The far mouth of the Sol Gateway. Through it, faintly, the light of home.';
-for (const system of legacy)
-  for (const stellar of system.stellars)
-    if (
-      stellar.desc ===
-      'Grey seas and long twilights. The settlers here came through the Gateway three generations ago and never looked back.'
-    )
-      stellar.desc =
-        'Grey seas and long twilights. The settlers here do not talk about how they arrived.';
 for (const systemId of Object.values(legacy))
   if (systemId.fields) systemId.fields = systemId.fields.filter((feature) => !feature.industrial);
 assert.equal(

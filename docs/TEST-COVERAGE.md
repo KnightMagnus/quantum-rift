@@ -103,7 +103,10 @@ including every galaxy origin, freight offers and nearest buyers. It also checks
 hold allocation and mission reservations, signed versus clamped free capacity,
 and the existing HTML-escaping policies. Independent original-source fixtures also
 check random streams, hashes, the generated galaxy, rivals, arcs and 651 radio-tour
-starts. Compiled startup checks cover online/Solo entry points, the default seed
+starts. Story-only Gateway placement, routing metadata and lore changes are reversed
+on cloned systems for the original goldens; all other generated data stays under
+strict comparison. Freight uses current ports in the original body order and
+explicitly checks that the moved Gateway has no offers. Compiled startup checks cover online/Solo entry points, the default seed
 catalog and executable browser modules. Release packaging checks rebuild compiled
 output, reject untracked source output, exclude private/stale files and launch an
 extracted archive without compiler dependencies. The archive fixture uses real

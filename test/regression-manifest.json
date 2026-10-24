@@ -293,7 +293,7 @@
       "helpers/required.ts",
       "helpers/story-foundations.ts"
     ],
-    "eventide.ts": ["helpers/mocks.ts", "helpers/required.ts"],
+    "eventide.ts": ["helpers/mocks.ts", "helpers/required.ts", "helpers/legacy-story-systems.ts"],
     "companion-fixes.ts": ["helpers/mocks.ts"],
     "hailing.ts": ["helpers/mocks.ts", "helpers/required.ts"],
     "chat-bubbles.ts": ["helpers/mocks.ts", "helpers/required.ts"],
@@ -431,7 +431,8 @@
       "helpers/temp-data.ts"
     ],
     "compiled-runtime.ts": ["helpers/browser-fixture.ts"],
-    "deterministic-core.ts": ["helpers/mocks.ts"],
+    "deterministic-core.ts": ["helpers/mocks.ts", "helpers/legacy-story-systems.ts"],
+    "galaxy-graph.ts": ["helpers/legacy-story-systems.ts"],
     "packaged-runtime.ts": ["helpers/browser-fixture.ts", "helpers/nakama-service.ts"],
     "chat-projection-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "sidebar-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
