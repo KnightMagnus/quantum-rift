@@ -759,6 +759,8 @@ sidebar, asset and gameplay assertions remain registered.
 Projectile pixels are compared with an uncropped production procedural reference at
 zoom 2, three headings and two same-weapon speeds in both iteration orders. Missing
 and extra visible tail pixels are bounded independently of registry/Sprite counts.
+Deferred canvas blob encoding also verifies that undecoded images cannot create
+zero-size Sprites that later expand to the wrong zoomed size.
 
 These checks do not establish cross-browser parity, every weapon animation, a
 frame-time improvement, or all lifecycle/network latency combinations. The Canvas
