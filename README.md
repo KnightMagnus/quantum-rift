@@ -1,27 +1,14 @@
 # Quantum Rift
 
-![Quantum Rift login with music-timed ship formations](docs/screenshots/login-formation.png)
+**A space trading and combat game in your browser.**
+
+Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
 
 **Quantum Rift is currently in beta and under ongoing development. All features are subject to change.**
 
 ## [Download Quantum Rift](https://github.com/KnightMagnus/quantum-rift/releases/latest/download/Quantum-Rift-latest.zip)
 
-**A space trading and combat game in your browser.**
-
-**3.3.3 — Trinity Stable Beta** adds cockpit and sidebar
-refinements, music-timed login flybys, quieter default effects, planetary colony
-scenes and selectable captain portraits. See the [release notes](docs/RELEASE-3.3.3.md).
-
-Fly a ship through a living galaxy of more than 200 star systems. Trade between worlds, take jobs and bounties, mine asteroids, fight pirates, build up a Personal Station, and lead a fleet of crewed wingmates. Play alone, or host a server where friends team up in an Armada.
-
-The flight viewport uses [ExcaliburJS](https://excaliburjs.com/) for its scene,
-camera, input and native sprite entities. The shared game simulation and HTML cockpit remain in place; engine scripts are
-included locally. Dedicated online authority runs inside Nakama 3.41.0 with PostgreSQL.
-Friend games run one authoritative server on the host’s computer; Solo retains its
-separate local database. Solo and friend games need no Nakama or PostgreSQL service.
-Dedicated hosting requires operator configuration; the download does not deploy
-those services. See [friend hosting](docs/HOSTING.md) and
-[dedicated hosting](docs/NAKAMA.md).
+Download the latest release, extract it, and follow the launch instructions below.
 
 ## Features
 
@@ -36,7 +23,6 @@ those services. See [friend hosting](docs/HOSTING.md) and
 ### Trade, mine and take jobs
 
 - Trade on markets shaped by shortages, local events and what captains buy and sell.
-- See the expected cost or sale value before trading, keep a compact trip recap, and start refining from a plain-language cost-and-output summary.
 - Earn your way through deliveries, passenger runs, bounties, patrols, rescues and smuggling. Compare travel, room needed, danger and your payout before choosing a job.
 - Mine asteroid, gas and crystal fields; survey deposits, refine your haul and tow large finds home with specialized equipment.
 - Follow faction and Syndicate careers, develop colonies, earn combat ratings and climb the leaderboards.
@@ -57,8 +43,6 @@ those services. See [friend hosting](docs/HOSTING.md) and
 
 - Form an **Armada** to travel together, share bounties and take on co-op contracts and station defenses. Review team-contract shares and choose Ready before joining.
 - Keep in touch through friends lists, private messages, local chat and player hails, with privacy and blocking controls.
-- Expand chat into a holographic history screen above the cockpit without leaving the flight view.
-- Larger cockpit text and flexible widescreen chat keep the controls readable without stretching buttons. The helmet opens ship and captain details (also **I**). The alert blinks red for another ship’s combat targeting, or orange for three seconds after a real patrol scan. Red wins when both apply; reduced-motion mode keeps the color without blinking.
 - Trade credits, cargo and crafting supplies between captains.
 - Choose your PvP: consensual duels or rated team matches in the **Crucible** arena, rather than open-world player hunting.
 
@@ -66,58 +50,31 @@ those services. See [friend hosting](docs/HOSTING.md) and
 
 - Solo mode includes pause, save slots and save-file import and export. A newcomer truce limits ambient hostility while you establish your station; missions and deliberate aggression can still lead to combat.
 - Remap controls, adjust interface scale, use a colour-blind palette, or play with a gamepad or touch controls.
-- Choose a captain portrait through **PROFILE** while flying or landed (**ME** in compact flight layouts). Your face appears in public profiles and player hails.
+- Choose a captain portrait under **Captain → Profile** while flying or landed. Your face appears in public profiles and player hails.
 - Resize the Tray, minimap and tabbed menu to suit your screen. Keep browsing positions and filters, and pin one next objective without hiding your other missions.
-- Login music starts on page load when your browser allows autoplay; otherwise it starts on your first interaction. Saved mute and music levels still apply.
-- Buy from the local Faction Store while landed in faction space, or visit every faction’s store at your own Personal Station. The store shows your standing with the selected faction and updates it after purchases.
-- Discover five radio stations through exploration and special jobs, with 32 owner-supplied songs and a full-album Spacepop tour reward. Stations shuffle their music except the Super-Idol album, which plays in order.
-- Run locally in your browser with the project’s pinned Node.js runtime. Built releases need no package installation or compilation.
+- Discover radio stations through exploration and special jobs.
 
-## Requirements
+## Start playing
 
-The computer running the game needs the **pinned Node 27 prerelease** and a modern browser. Run `node tools/runtime/install-node.ts` once with an existing Node installation to install the runtime locally without changing system Node. Built release archives need no npm dependencies or compiler; source checkouts require `npm ci` and `npm run build`. See [runtime and build instructions](docs/TYPESCRIPT-RUNTIME.md) for supported platforms. Friends joining your server only need a browser.
+You need a modern browser. The computer running a downloaded game also needs the [supported runtime](docs/TYPESCRIPT-RUNTIME.md#install-the-local-runtime); the setup guide lists compatible systems. Friends joining your game only need a browser.
 
-## Launch the published archive
-
-Download and extract the release above, then:
+After completing that one-time setup, open the extracted game folder:
 
 - **Windows:** double-click **`Start Solo Game.bat`** for a private game, or **`Start Friend Game.bat`** to host friends.
 - **macOS / Linux:** open a terminal in the extracted folder and run `sh start-solo.command` for a private game, or `sh start-friends.command` to host friends.
-- **Any platform, from a terminal:** run `node tools/start.ts --friends` to host friends. Ordinary `node tools/start.ts` selects dedicated online hosting and requires separately configured Nakama and PostgreSQL.
 
-Open **http://localhost:8080** if the browser does not open automatically. Keep the server window open while playing. Solo games accept connections only from your computer; for multiplayer on the same network, friends open `http://<host-computer-address>:8080`.
+Open **http://localhost:8080** if the browser does not open automatically. Keep the server window open while playing. Solo games accept connections only from your computer; for multiplayer on the same network, friends open `http://<host-computer-address>:8080`. Each player uses a different captain name and their own password. See the [friend-host guide](docs/HOSTING.md) for inviting players and keeping backups.
 
-When updating, close the old game server window first. Preserve your `data/` and
-`solo-data/` and `friend-data/` save folders; do not replace them with empty folders from a new copy.
+When updating, close the old game server window first. Preserve your `data/`, `solo-data/` and `friend-data/` save folders; do not replace them with empty folders from a new copy. Solo and friend games keep separate progress; saves do not automatically transfer between modes. Save imports remain Solo-only.
 
-## Run this source checkout
+## Guides
 
-After installing the pinned Node runtime, run `npm ci` and `npm run build`.
-Choose how to play:
-
-| Mode             | Start                                                               | Where progress lives                             |
-| ---------------- | ------------------------------------------------------------------- | ------------------------------------------------ |
-| Solo             | `Start Solo Game.bat` or `sh start-solo.command`                    | Local Solo saves, with pause and import/export   |
-| Host friends     | `Start Friend Game.bat` or `sh start-friends.command`               | One shared universe in the host’s `friend-data/` |
-| Dedicated online | `node tools/start.ts`, with separately configured Nakama/PostgreSQL | Native server storage                            |
-
-The friend launcher opens the host’s browser and explicitly enables LAN listening.
-Keep its server window open. The host plays in the same browser game as everyone
-else; friends open the host’s LAN or VPN URL, not `localhost`. Each player uses a
-different captain name and their own password. The login status identifies a
-friend-hosted universe. Friend games have no Solo pause or save import/export and
-start without demo accounts. See [the friend-host guide](docs/HOSTING.md) for
-addresses, binding, backups and Internet access limits.
-
-Ordinary startup still selects the dedicated native backend: it starts only the
-static web host, not Nakama or PostgreSQL. Configure those services separately
-using [NAKAMA.md](docs/NAKAMA.md). Neither startup route opens router ports or
-changes firewall rules automatically.
-
-Preserve `friend-data/`, `data/` and `solo-data/` when changing checkouts. These
-stores do not automatically import or synchronize with each other. For custom
-Solo test captains, use the [save generator](test/Save%20Generator/README.md).
-Save imports remain Solo-only.
+- [Runtime requirements and building from source](docs/TYPESCRIPT-RUNTIME.md)
+- [Hosting a game for friends](docs/HOSTING.md)
+- [Dedicated server setup](docs/NAKAMA.md)
+- [Beta Solo save generator](test/Save%20Generator/README.md)
+- [Development tools](docs/DEVELOPMENT-TOOLS.md) and [code navigation](docs/CODE-NAVIGATION.md)
+- [Release notes](docs/RELEASE-3.3.3.md)
 
 ## Screenshots
 
@@ -156,6 +113,10 @@ Save imports remain Solo-only.
 **Galaxy map**
 
 ![In-game galaxy map menu](docs/screenshots/responsive-map.png)
+
+**Settings and key bindings**
+
+![Horizontal flight, sound and key-binding control bays](docs/screenshots/cockpit-settings.png)
 
 **Discoverable radio stations**
 

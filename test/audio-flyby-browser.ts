@@ -192,25 +192,55 @@ try {
   const before = await page.evaluate(
     () =>
       (window as unknown as { audioFlybyProbe: AudioProbe }).audioFlybyProbe.sources.filter(
-        (source) => Math.abs(source.duration - 0.24) < 0.001,
+        (source) => Math.abs(source.duration - 0.32) < 0.001,
       ).length,
   );
+  const retiredCount = () =>
+    page.evaluate(
+      () =>
+        (window as unknown as { audioFlybyProbe: AudioProbe }).audioFlybyProbe.sources.filter(
+          (source) => Math.abs(source.duration - 1.7) < 0.00001,
+        ).length,
+    );
+  const commodity = await buy.getAttribute('data-c');
+  const cargoBefore = await page.evaluate((id) => G.you!.cargo[id!] || 0, commodity);
+  const creditsBefore = await page.evaluate(() => G.you!.credits);
+  const retiredBeforePurchase = await retiredCount();
   await buy.click();
   await page.waitForFunction(
     (count) =>
       (window as unknown as { audioFlybyProbe: AudioProbe }).audioFlybyProbe.sources.filter(
-        (source) => Math.abs(source.duration - 0.24) < 0.001,
+        (source) => Math.abs(source.duration - 0.32) < 0.001,
       ).length > count,
     before,
   );
+  await page.waitForFunction(({ id, quantity }) => (G.you!.cargo[id!] || 0) === quantity + 1, {
+    id: commodity,
+    quantity: cargoBefore,
+  });
+  assert.ok(
+    (await page.evaluate(() => G.you!.credits)) < creditsBefore,
+    'Authoritative purchase settles credits',
+  );
+  await page.waitForTimeout(300);
+  const retiredAfterPurchase = await retiredCount();
+  console.log('Retired upgrade cue on actual purchase:', {
+    retiredBeforePurchase,
+    retiredAfterPurchase,
+  });
+  assert.equal(
+    retiredAfterPurchase,
+    retiredBeforePurchase,
+    'Buying cargo must not replay the legacy upgrade cue through landed refresh',
+  );
   const purchase = await page.evaluate(async () => ({
     sources: (window as unknown as { audioFlybyProbe: AudioProbe }).audioFlybyProbe.sources.filter(
-      (source) => Math.abs(source.duration - 0.24) < 0.001,
+      (source) => Math.abs(source.duration - 0.32) < 0.001,
     ),
     audio: (await import('/audio.js')).debug(),
   }));
   assert.ok(
-    purchase.sources.at(-1)!.peak <= 0.181,
+    purchase.sources.at(-1)!.peak <= 0.105,
     'Real trade control uses the newly decoded gentle signal',
   );
   assert.equal(purchase.audio.mix.sfx, 0.5);
@@ -222,11 +252,40 @@ try {
       Math.abs(purchase.audio.gains[bus] - expected) < 0.0001,
       `${bus} WebAudio bus retains its independent gain`,
     );
+  assert.equal(
+    filesystem.existsSync(path.join(root, 'client/assets/sounds/10110.wav')),
+    false,
+    'Retired cue is not shipped',
+  );
+  assert.equal(
+    JSON.parse(filesystem.readFileSync(path.join(root, 'shared/assets.json'), 'utf8')).sounds[
+      '10110'
+    ],
+    undefined,
+    'Retired cue is absent from the catalog',
+  );
+  const retiredRequests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().endsWith('/sounds/10110.wav')) retiredRequests.push(request.url());
+  });
+  await page.evaluate(async () => {
+    const audio = await import('/audio.js');
+    audio.preload([10110, '10110']);
+    audio.play(10110);
+    audio.play('10110');
+  });
+  await page.waitForTimeout(150);
+  assert.deepEqual(
+    retiredRequests,
+    [],
+    'Retired cue cannot load through numeric/string/preload paths',
+  );
+  assert.equal(await retiredCount(), 0, 'Retired cue never plays during login or purchase');
   const purchaseCount = () =>
     page.evaluate(
       () =>
         (window as unknown as { audioFlybyProbe: AudioProbe }).audioFlybyProbe.sources.filter(
-          (source) => Math.abs(source.duration - 0.24) < 0.001,
+          (source) => Math.abs(source.duration - 0.32) < 0.001,
         ).length,
     );
   const beforeSell = await purchaseCount();
@@ -263,6 +322,11 @@ try {
   await page.waitForTimeout(150);
   assert.equal(await purchaseCount(), beforeHangar + 1);
   assert.equal(await page.locator('#askbox').isVisible(), false);
+  assert.equal(
+    await retiredCount(),
+    0,
+    'Trade, sale and hangar refreshes never replay retired cue',
+  );
   assert.deepEqual(errors, []);
   filesystem.writeFileSync(
     path.join(fixture.out, 'playback.json'),
