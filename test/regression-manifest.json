@@ -115,7 +115,8 @@
     "purchase-audio.ts",
     "planet-portrait-art.ts",
     "portrait-persistence.ts",
-    "landscape-generation.ts"
+    "landscape-generation.ts",
+    "wire-contracts.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -575,6 +576,7 @@
     "purchase-audio.ts": ["helpers/temp-data.ts"],
     "audio-flyby-browser.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"],
+    "wire-contracts.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts"],
     "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "helpers/story-foundations.ts": ["helpers/mocks.ts"]
   },
@@ -951,11 +953,14 @@
         "server/features.ts",
         "server/message-registry.ts",
         "server/game.ts",
-        "server/game-message-handlers.ts"
+        "server/game-message-handlers.ts",
+        "shared/wire-actions.ts",
+        "shared/wire-payloads.ts",
+        "shared/refinery-wire.ts"
       ],
       "services": [],
-      "tests": ["fuzz.ts", "message-routing.ts"],
-      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage. Fixed pre-extraction traces cover all 56 routes, argument coercion, call order, representative mutations and live dependencies; authenticated entry checks retain freeze/activity/flood order. This is routing parity, not complete delegated-rule coverage."
+      "tests": ["fuzz.ts", "message-routing.ts", "wire-contracts.ts"],
+      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage. Fixed pre-extraction traces cover all 56 routes, argument coercion, call order, representative mutations and live dependencies; authenticated entry checks retain freeze/activity/flood order. This is routing parity, not complete delegated-rule coverage. Economic contracts bound trade/refinery/miningOrder/towing shape and preserve numeric-text trade coercion; real account/world malformed-request denials and bounded you/landed/quote headers are covered."
     },
     {
       "id": "input-audio",
@@ -1442,7 +1447,8 @@
       "cargo-ui-browser.ts",
       "trade-amount-browser.ts",
       "economy-32.ts",
-      "message-routing.ts"
+      "message-routing.ts",
+      "wire-contracts.ts"
     ],
     "buyship": ["sim.ts", "v21.ts", "message-routing.ts"],
     "docks": [
@@ -1533,12 +1539,18 @@
       "refinery-network.ts",
       "refinery-ui-browser.ts",
       "economy-32.ts",
-      "message-routing.ts"
+      "message-routing.ts",
+      "wire-contracts.ts"
     ],
-    "miningOrder": ["refinery-network.ts", "refinery.ts", "message-routing.ts"],
+    "miningOrder": [
+      "refinery-network.ts",
+      "refinery.ts",
+      "message-routing.ts",
+      "wire-contracts.ts"
+    ],
     "miningPressure": ["mining-pressure.ts", "refinery-ui-browser.ts", "message-routing.ts"],
     "industrial": ["dredge-network.ts", "dredge-browser.ts", "message-routing.ts"],
-    "towing": ["towing-network.ts", "towing-browser.ts", "message-routing.ts"],
+    "towing": ["towing-network.ts", "towing-browser.ts", "message-routing.ts", "wire-contracts.ts"],
     "portrait": ["portrait-persistence.ts", "planet-portrait-browser.ts", "nakama-network.ts"]
   },
   "tooling": [

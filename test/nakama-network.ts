@@ -93,6 +93,36 @@ try {
   assert(first.latest('you')!.d.ship);
   assert(Number.isFinite(first.latest('you')!.d.credits));
   const initialCredits = first.latest('you')!.d.credits;
+  const economicBefore = JSON.stringify({
+    credits: first.latest('you')!.d.credits,
+    cargo: first.latest('you')!.d.cargo,
+  });
+  for (const packet of [
+    null,
+    [],
+    { t: 'trade', cid: 'food', qty: null },
+    { t: 'trade', cid: 'food', qty: [] },
+    { t: 'trade', cid: 'x'.repeat(201), qty: 3 },
+    { t: 'refinery', op: 'quote', recipe: 'alloy', n: null },
+    { t: 'miningOrder', op: 'accept', id: [] },
+    { t: 'towing', op: 'deliver', id: 1, revision: null },
+  ]) {
+    await first.socket.sendMatchState(matchId, 1, JSON.stringify(packet));
+    await delay(40);
+  }
+  await first.socket.sendMatchState(matchId, 1, JSON.stringify({ t: 'refinery', op: 'list' }));
+  await until(() => first.latest('refinery'), 'native economic denial barrier');
+  assert.equal(
+    JSON.stringify({
+      credits: first.latest('you')!.d.credits,
+      cargo: first.latest('you')!.d.cargo,
+    }),
+    economicBefore,
+  );
+  checks.push(
+    'Real native malformed economic requests preserve credits and cargo, followed by a valid refinery request',
+  );
+
   checks.push(
     'Singleton authoritative world; actual Game welcome, fresh captain ship and finite credits',
   );

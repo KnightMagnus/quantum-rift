@@ -30,6 +30,32 @@ try {
   assert.ok(!unauth.you);
   const firstEntry = await peer('Refinery Alpha'),
     secondEntry = await peer('Refinery Bravo');
+  const deniedBefore = JSON.stringify({
+    credits: firstEntry.you.credits,
+    cargo: firstEntry.you.cargo,
+  });
+  const denialPackets = [
+    null,
+    [],
+    { t: 'trade', cid: 'food', qty: null },
+    { t: 'trade', cid: 'food', qty: [] },
+    { t: 'trade', cid: 'x'.repeat(201), qty: 3 },
+    { t: 'refinery', op: 'quote', recipe: 'alloy', n: null },
+    { t: 'miningOrder', op: 'accept', id: [] },
+    { t: 'towing', op: 'deliver', id: 1, revision: null, port: feature.port },
+  ];
+  for (const packet of denialPackets) firstEntry.ws.send(JSON.stringify(packet));
+  firstEntry.send({ t: 'refinery', op: 'list' });
+  const messagesBefore = firstEntry.messages.length;
+  await until(
+    () => firstEntry.messages.slice(messagesBefore).some((message) => message.t === 'refinery'),
+    'denial barrier',
+  );
+  assert.equal(
+    JSON.stringify({ credits: firstEntry.you.credits, cargo: firstEntry.you.cargo }),
+    deniedBefore,
+    'real local transport malformed economic requests preserve inventory and credits',
+  );
   assert.ok(firstEntry.you.refinery.batches.length);
   assert.equal(secondEntry.you.refinery.batches.length, 0, 'owner-onlyjobs');
   assert.equal(firstEntry.you.refinery.ready[0].units, 765, 'offline maturity once');
