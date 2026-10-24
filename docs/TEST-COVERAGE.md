@@ -806,7 +806,9 @@ full-volume values. Existing options migrations remain in place; no new preferen
 migration or reset is introduced.
 
 The existing login-scene browser test retains the actual station/planet artwork,
-lamp-brightness, reduced-motion event-loss, resize and lifecycle checks. Station
+lamp-brightness, reduced-motion event-loss, resize and lifecycle checks. It verifies
+that blocked autoplay holds traffic still before any user activation, then uses a
+real click to start playback before checking movement of all six courier hulls. Station
 lamp dimming uses a precomputed black alpha mask instead of filtering the full
 mutable atlas on each paint. Private headless 4x-CPU profiles are constrained-host
 comparisons, not physical midrange-laptop or audible-output certification.
