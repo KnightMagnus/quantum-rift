@@ -193,6 +193,13 @@ JSON or prove every branch.
 
 ## Action-routing boundary
 
+Economic request shapes live in `shared/wire-actions.ts`; refinery and towing
+services reuse those validators for direct calls as well as transport dispatch.
+`shared/refinery-wire.ts` owns refinery payload types without client/server
+implementation dependencies. `shared/wire-payloads.ts` bounds economic receive
+payloads and validates player/port headers and quote shapes, not every nested
+player or offer schema.
+
 Action routing lives in `server/game-message-handlers.ts`; entry gates and service
 implementations retain their own owners. Ordinary jobs and port commerce have
 separate services; station and session methods still remain in `Game`.
