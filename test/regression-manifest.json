@@ -115,7 +115,9 @@
     "purchase-audio.ts",
     "planet-portrait-art.ts",
     "portrait-persistence.ts",
-    "landscape-generation.ts"
+    "landscape-generation.ts",
+    "release-readiness.ts",
+    "archive-verification.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -159,7 +161,8 @@
     "sidebar-gauges-browser.ts",
     "audio-flyby-browser.ts",
     "audio-defaults-browser.ts",
-    "planet-portrait-browser.ts"
+    "planet-portrait-browser.ts",
+    "platform-browser-smoke.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -568,7 +571,9 @@
     "login-traffic.ts": [],
     "purchase-audio.ts": ["helpers/temp-data.ts"],
     "audio-flyby-browser.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
-    "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"]
+    "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"],
+    "archive-verification.ts": ["helpers/temp-data.ts"],
+    "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1346,6 +1351,22 @@
         "nakama-network.ts"
       ],
       "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork."
+    },
+    {
+      "id": "release-platform-gates",
+      "owners": [
+        "tools/release-readiness.ts",
+        "tools/verify_archive.py",
+        ".github/workflows/ci.yml"
+      ],
+      "services": [],
+      "tests": [
+        "release-readiness.ts",
+        "archive-verification.ts",
+        "platform-browser-smoke.ts",
+        "packaged-runtime.ts"
+      ],
+      "asserts": "Readiness fails closed for every missing, failed, skipped or cancelled supported lane. Exact archive hashes, full inventory, content and modes are checked before extraction; unsafe, duplicate and changed entries fail without partial extraction. Narrow engine login, keyboard/modal isolation, canvas fallback and exported/imported captain playability remain distinct from full Chromium coverage. CI also executes a single complete built archive across native OSes without npm dependencies."
     }
   ],
   "routes": {
@@ -1514,7 +1535,8 @@
     "capture-features.ts",
     "regression-browser.ts",
     "regression-runner.ts",
-    "seed-random.ts"
+    "seed-random.ts",
+    "release-archive-smoke.ts"
   ],
   "supplemental": {
     "background-scale-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",

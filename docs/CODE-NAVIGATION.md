@@ -280,3 +280,11 @@ playback epoch, while an ordinary score loop reuses the source.
 `tools/rift_purchase_audio.py` writes the original short purchase signal using only
 standard-library oscillators and envelopes. `tools/rift_audio.py` delegates to it,
 so regenerating the broad sound library does not restore the retired sharp jingle.
+
+## Release gates
+
+[RELEASE-READINESS.md](RELEASE-READINESS.md) describes the aggregate, immutable
+archive matrix and rollback limits. `tools/release-readiness.ts` owns fail-closed
+lane evaluation; `tools/verify_archive.py` owns hash/inventory checks before
+extraction. `test/release-archive-smoke.ts` runs the built artifact without npm
+dependencies. Existing quality/server/browser/Windows check names remain intact.

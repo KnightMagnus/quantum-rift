@@ -258,7 +258,7 @@ jobs:
       - name: Build standalone EXE
         working-directory: test/Save Generator
         run: |
-          python -m pip install pyinstaller
+          python -m pip install -r tools/save-generator-requirements.txt
           python -m PyInstaller --noconfirm --clean --onefile --windowed --name "Quantum Rift Save Generator" --add-data "catalog.json;." save_generator.py
       - name: Verify packaged EXE creates a custom save
         run: |
@@ -277,5 +277,139 @@ jobs:
         with:
           name: quantum-rift-save-generator-windows
           path: test/Save Generator/dist/Quantum Rift Save Generator.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  release-archive:
+    name: Build hashed release archive
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node tools/runtime/install-node.ts
+      - run: npm ci
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build clean complete archive and manifest
+        run: python tools/package_archive.py --complete-only --output .artifacts/release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-archive
+          path: .artifacts/release/
+          if-no-files-found: error
+          retention-days: 7
+
+  archive-smoke:
+    name: Extracted release (${{ matrix.os }})
+    needs: [release-archive]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node tools/runtime/install-node.ts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-archive
+          path: .artifacts/release
+      - name: Verify exact archive and run without npm dependencies
+        run: |
+          mkdir -p .artifacts/temp
+          export TMPDIR="$(node -p 'require("path").resolve(".artifacts/temp")')"
+          export TMP="$TMPDIR" TEMP="$TMPDIR"
+          export RIFT_RELEASE_MANIFEST="$(node -p 'require("path").resolve(".artifacts/release/package-manifest.json")')"
+          export RIFT_RELEASE_ARCHIVE="$(node -e 'const p=require("path"),f=require("fs");process.stdout.write(p.join(p.dirname(process.env.RIFT_RELEASE_MANIFEST),JSON.parse(f.readFileSync(process.env.RIFT_RELEASE_MANIFEST)).archives[0].name))')"
+          node test/release-archive-smoke.ts
+      - name: Preserve hashed archive runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-archive-evidence-${{ matrix.os }}
+          path: .artifacts/regression/release-archive/
+          if-no-files-found: error
+          retention-days: 7
+
+  platform-browser-smoke:
+    name: Browser engine smoke (${{ matrix.engine }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [firefox, webkit]
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.artifacts/playwright
+      RIFT_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node tools/runtime/install-node.ts
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - run: node test/platform-browser-smoke.ts
+      - name: Preserve engine smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: platform-browser-evidence-${{ matrix.engine }}
+          path: .artifacts/regression/
+          if-no-files-found: error
+          retention-days: 7
+
+  release-readiness:
+    name: Release readiness
+    needs:
+      [
+        quality,
+        unit-regressions,
+        browser-regressions,
+        windows-startup,
+        save-generator-windows,
+        platform-browser-smoke,
+        archive-smoke,
+      ]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node tools/runtime/install-node.ts
+      - name: Require all supported lanes on this commit
+        env:
+          RELEASE_NEEDS: ${{ toJSON(needs) }}
+        run: node tools/release-readiness.ts
+      - name: Preserve readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-readiness
+          path: .artifacts/release-readiness.json
           if-no-files-found: error
           retention-days: 7
