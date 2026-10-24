@@ -37,7 +37,10 @@ const errors: string[] = [],
   results = [];
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--autoplay-policy=document-user-activation-required'],
+  });
   const context = await browser.newContext({
     viewport: { width: 1440, height: 960 },
     deviceScaleFactor: 2,
@@ -258,6 +261,45 @@ try {
       failedAssets.push(`${result.status()} ${result.url()}`);
   });
   await page.goto(origin);
+  // Read without Playwright's evaluation gesture: blocked music must hold traffic still.
+  const session = await context.newCDPSession(page);
+  const blocked = await session.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const audio = await import('/audio.js');
+      const deadline = performance.now() + 15000;
+      while (document.querySelector('.login-scene')?.dataset.ready !== 'true') {
+        if (performance.now() >= deadline) throw Error('Login artwork did not become ready');
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+      const before = Object.fromEntries(Object.entries(window.sceneTest.ships)
+        .map(([hull, ship]) => [hull, ship.last]));
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return {
+        activated: navigator.userActivation.hasBeenActive,
+        timeline: audio.loginMusicTimeline(),
+        before,
+        after: Object.fromEntries(Object.entries(window.sceneTest.ships)
+          .map(([hull, ship]) => [hull, ship.last])),
+      };
+    })()`,
+    awaitPromise: true,
+    returnByValue: true,
+    userGesture: false,
+  });
+  assert.equal(blocked.exceptionDetails, undefined, 'Blocked-autoplay observation completed');
+  const blockedState = blocked.result.value;
+  assert.equal(blockedState.activated, false, 'No gesture before the blocked-autoplay check');
+  assert.equal(blockedState.timeline.playing, false);
+  assert.equal(blockedState.timeline.position, 0);
+  assert.equal(Object.keys(blockedState.before).length, 6);
+  assert.deepEqual(blockedState.after, blockedState.before, 'Blocked music holds traffic still');
+  results.push({ check: 'Blocked autoplay holds traffic at its initial pose', status: 'pass' });
+  await session.detach();
+  await page.locator('#lname').click();
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector<HTMLElement>('.login-scene');
+    return canvas?.dataset.trackPlaying === 'true' && Number(canvas.dataset.trackPosition) > 0;
+  });
   assert.equal(await page.locator('#login .login-location').count(), 0);
   assert.doesNotMatch(
     await page.locator('#login').innerText(),
