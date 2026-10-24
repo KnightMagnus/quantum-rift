@@ -1,5 +1,33 @@
 # Game regression coverage inventory
 
+## Economic wire boundary
+
+`shared/wire-actions.ts` owns trade, refinery, mining-order and towing request
+shapes. Both local sockets and native matches reach the same Game routes and
+service validators. Auth, flood, checkpoint freeze and activity gates remain in
+Game; ownership, pricing, location, receipts and settlement remain in services.
+Trade still accepts finite numeric text and uses signed 32-bit truncation.
+Refinery and towing reject unexpected authority fields; malformed numeric values
+and oversized identifiers cannot reach settlement.
+
+`wire-contracts.ts` checks parsers, legacy coercion, malformed account/world
+no-mutation denials and entry-gate order. `refinery-network.ts` and
+`nakama-network.ts` send malformed economic packets through actual local and
+native services and verify unchanged credits/cargo followed by a valid request.
+`nakama-client-connection.ts` verifies identical economic receive validation for
+Solo, friend and native connections. Compiler fixtures reject invalid economic
+request discriminators and non-scalar quantities. Independent routing traces
+remain unchanged.
+
+`shared/refinery-wire.ts` contains implementation-independent refinery payload
+types. `shared/wire-payloads.ts` validates complete quote field shapes and the
+`you`/`landed` economic headers, with finite-number, depth, string, collection and
+total-node bounds across their nested data. These headers are not complete
+runtime schemas for player state or port offers. The client retains inferred
+application types for those nested structures; other action families and server
+payloads still need migration. Static typing and bounded traversal do not prove
+nested semantic validity or authorize client economic decisions.
+
 ## Development tooling
 
 `tooling-contracts.ts` runs in the unit CI lane. It checks that Oxlint accepts
