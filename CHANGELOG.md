@@ -2,6 +2,15 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.3.3 — Trinity Stable Beta
+
+- Refine cockpit text, chat, captain details and combat/patrol alerts, with responsive layouts and reduced-motion behavior.
+- Keep automatic radar square, retain sidebar sizing preferences and improve landing feedback without changing server landing authority.
+- Time login ship flybys to the playing theme. Reduce the fresh effects default to 50% while preserving saved levels, explicit zero and mute; add a softer purchase sound for purchases, not sales or cancelled confirmations.
+- Add 908 planetary illustrations across 227 scene sets, with three settlement stages selected from authoritative colony levels. Preserve 179 existing world mappings and keep station artwork separate.
+- Add 70 captain portraits, including 30 named rivals. Choose an available generic portrait through PROFILE; retain server-authoritative saves, public profiles and caller identity in live and archived hails.
+- Refresh the beta Solo save generator catalog for 3.3.3. See the [release notes](docs/RELEASE-3.3.3.md) for update and hosting limits.
+
 ### 3.3.2 — Friend games and native online hosting
 
 - Add explicit friend-game launchers with one host-owned shared world, separate password captains and independent private saves; retain Solo-only pause and import/export.
