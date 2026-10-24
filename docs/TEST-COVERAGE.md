@@ -846,6 +846,8 @@ links, duplicates and missing files before extraction. Chromium runs the registe
 engine smoke in the canonical browser group; additional CI jobs run that same case
 on Firefox and WebKit. `release-archive-smoke.ts` is a CI artifact entry point, not
 a skipped canonical regression: it requires complete-archive inputs, executes on
-three native OS families and retains commit/hash/runtime reports. See
+three native OS families and retains commit/hash/runtime reports. It requires clean
+launcher IPC shutdown and verifies the purchased balance after restart, without
+waiting for the periodic save timer. See
 [release readiness](RELEASE-READINESS.md) for scope, manual checks and rollback
 limits, including pending cross-version fixture integration.

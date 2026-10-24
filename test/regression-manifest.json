@@ -1360,6 +1360,8 @@
       "id": "release-platform-gates",
       "owners": [
         "tools/release-readiness.ts",
+        "tools/start.ts",
+        "server/local-main.ts",
         "tools/verify_archive.py",
         ".github/workflows/ci.yml"
       ],

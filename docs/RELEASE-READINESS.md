@@ -14,7 +14,10 @@ The complete archive is built once on Linux, then those identical bytes are
 verified and extracted on Linux x64, Windows x64 and Apple Silicon macOS. Runtime
 checks do not run `npm install` in the extracted game. They import a synthetic
 Solo captain, log in, buy a commodity, export, stop and restart, and compare the
-saved credit balance. They do not exercise every OS/browser combination or native
+saved credit balance. Shutdown uses an inherited launcher IPC channel and requires
+a clean exit after the local database flush, including on Windows where process
+termination does not deliver SIGTERM handlers. It exposes no network shutdown
+endpoint. These checks do not exercise every OS/browser combination or native
 Nakama on every OS. The existing packaged-runtime regression separately exercises
 extracted Solo, friend authentication/persistence and native Nakama flight.
 

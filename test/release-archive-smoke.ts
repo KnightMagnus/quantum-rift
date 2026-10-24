@@ -86,9 +86,10 @@ try {
           DATA_DIR: data,
           SEEDS_FILE: path.join(scratch, 'no-seeds.json'),
         },
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
       });
       const log = fileSystem.createWriteStream(path.join(evidence, 'server-' + restart + '.log'));
+      assert(server.stdout && server.stderr);
       server.stdout.pipe(log, { end: false });
       server.stderr.pipe(log, { end: false });
       let socket: WebSocket | undefined;
@@ -145,16 +146,22 @@ try {
         }
         const exported = await (await fetch(origin + '/api/export?name=Release%20Pilot')).json();
         assert.equal(exported.save.credits, expectedCredits);
+        socket.close();
+        // Exercise the launcher's real flush-and-exit path before the periodic
+        // journal flush; Windows SIGTERM would bypass it and lose the purchase.
+        const exited = once(server, 'exit', { signal: AbortSignal.timeout(5000) });
+        server.send('shutdown');
+        const [exitCode, signal] = await exited;
+        assert.equal(exitCode, 0, 'Archive shutdown completes its save flush');
+        assert.equal(signal, null, 'Archive shutdown must not require forced termination');
       } finally {
         socket?.close();
-        server.kill('SIGTERM');
-        await Promise.race([
-          once(server, 'exit'),
-          new Promise((resolve) => setTimeout(resolve, 5000)),
-        ]);
         if (server.exitCode === null && server.signalCode === null) {
-          server.kill('SIGKILL');
-          await once(server, 'exit');
+          const exited = once(server, 'exit');
+          if (process.platform === 'win32') {
+            spawnSync('taskkill', ['/pid', String(server.pid), '/T', '/F']);
+          } else server.kill('SIGKILL');
+          await exited;
         }
         log.end();
       }
