@@ -834,3 +834,7 @@ Existing mute/mixer, portrait-denial/persistence and authoritative alert regress
 absent from the shipped assets/catalog and cannot load through numeric, string or
 preload calls. A real cargo purchase and subsequent sale/hangar refreshes retain
 the quiet purchase confirmation without replaying that sound from `landed`.
+
+### Story groundwork
+
+`story-foundations` is covered by the existing Gateway, story and expedition suites. The Gateway suite reuses its isolated game for the stable stellar ID, Concordia approach, unchanged qv rewards, spoiler bounds, fixed Aureole hulk, and accepted expedition compatibility checks. Browser coverage verifies both transit directions and the stationary non-interactive scenery. The existing generation golden remains unchanged after explicitly reversing only the authored Gateway relocation and lore edits. No Index/Nhal combat, later story acts or endings are implemented by these checks.

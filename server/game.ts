@@ -2186,9 +2186,9 @@ export class Game<Storage extends Database = Database> {
         );
   }
 
-  // flying into the Sol Gateway (or its far mouth) crosses instantly, with no fuel cost
+  // flying into the Gateway (or its far mouth) crosses instantly, with no fuel cost
   /**
-   * Handles instantaneous transit through Sol Gateway wormholes without fuel consumption.
+   * Handles instantaneous transit through Gateway wormholes without fuel consumption.
    * @param entity Ship entity entering wormhole.
    * @param space Origin space.
    * @param stellarBody Wormhole gateway stellar body.
@@ -2225,8 +2225,8 @@ export class Game<Storage extends Database = Database> {
       this.log(
         playerData,
         starSystem.farside
-          ? 'Passed through the Sol Gateway. The stars on the far side match no chart.'
-          : 'Came home through the Gateway to Sol.',
+          ? 'Passed through the Gateway. The stars on the far side match no chart.'
+          : 'Came home through the Gateway to Concordia.',
       );
     }
     const firstValue = Math.random() * Math.PI * 2;

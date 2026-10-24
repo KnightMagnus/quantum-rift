@@ -1,3 +1,4 @@
+import { EXPEDITION_HULK } from '../shared/expeditions.ts';
 import type { GameAssets, WeaponAsset } from '../shared/rules.ts';
 export type RenderShot = {
   x: number;
@@ -995,6 +996,17 @@ function decorFor(starSystem: GalaxySystem): DecorModel {
   // consumes precisely the same RNG and new ports always frame their signature sky.
   if (starSystem.eventide)
     decorModel2.sun = { ...decorModel2.sun, x: 0, y: -210, size: 190, depth: 0.025 };
+  if (starSystem.id === EXPEDITION_HULK.system)
+    decorModel2.derelict = [
+      {
+        img: 'derelict_0',
+        x: EXPEDITION_HULK.x,
+        y: EXPEDITION_HULK.y,
+        size: EXPEDITION_HULK.size,
+        rot: 0,
+        spin: 0,
+      },
+    ];
   decorCache.set(starSystem.id, decorModel2);
   return decorModel2;
 }
@@ -4498,7 +4510,7 @@ export function galaxy(
         canvasRenderingContext2D.lineTo(component, distance);
         canvasRenderingContext2D.stroke();
       }
-  // the Sol Gateway: a dashed, glowing link between Sol and the far mouth
+  // the Gateway: a dashed, glowing link between Concordia and the far mouth
   for (const starSystem of SYS_LIST)
     if (starSystem.gate && starSystem.id < starSystem.gate) {
       const [firstValue, secondValue] = position(starSystem),

@@ -48,10 +48,10 @@ import type { Entity, Space } from './space.ts';
 
 import { clampStanding } from '../shared/reputation.ts';
 // faction story arcs (three missions per power, offered at its capital) and Farside expeditions (procedural
-// survey -> derelict -> data-core chains beyond the Sol Gateway that hint at the region's purpose).
+// survey -> derelict -> data-core chains beyond the Gateway that hint at the region's purpose).
 import { SYS as systemsById, SYSTEMS, STELLARS, FACTIONS, GRADES } from '../shared/galaxy.ts';
 import { ARCS } from '../shared/arcs.ts';
-import { EXPEDITION_LORE } from '../shared/expeditions.ts';
+import { EXPEDITION_LORE, EXPEDITION_HULK } from '../shared/expeditions.ts';
 import { TRAITS } from '../shared/syndicate.ts';
 import { credits } from '../shared/rules.ts';
 
@@ -377,8 +377,7 @@ export const ArcsOperations = {
       starSystem =
         starSystems[
           (count * (systemsById[stellarBody.system].eventide ? 1 : 3) + 1) % starSystems.length
-        ],
-      starSystem2 = starSystems[(count * 5 + 4) % starSystems.length];
+        ];
     const points2: [number, number][] = [];
     for (let index = 0; index < 3; index++) {
       const angle = (index / 3) * 6.283 + count,
@@ -388,7 +387,12 @@ export const ArcsOperations = {
     return {
       id: `exp-${count}`,
       type: 'survey',
-      exp: { n: count, stage: 1, b: starSystem2.id, home: stellarBody.id },
+      exp: {
+        n: count,
+        stage: 1,
+        b: EXPEDITION_HULK.system,
+        home: stellarBody.id,
+      },
       title: `EXPEDITION ${count + 1}: Survey ${starSystem.name}`,
       sys: starSystem.id,
       points: points2,
@@ -415,9 +419,13 @@ export const ArcsOperations = {
         sys: event.b,
         hull: [735, 707, 704][event.n % 3],
         faction: 'farside',
-        wreckName: `derelict of unknown make`,
+        wreckName:
+          event.b === EXPEDITION_HULK.system ? 'Hulk survey cradle' : 'derelict of unknown make',
         reward: 15000 + event.n * 7000,
-        text: `Your survey picked up a derelict in ${systemsById[event.b].name}, older than any hull on record. Board it and recover what you can.`,
+        text:
+          event.b !== EXPEDITION_HULK.system
+            ? `Your survey picked up a derelict in ${systemsById[event.b].name}, older than any hull on record. Board it and recover what you can.`
+            : 'Your readings lead back to the vast, dark hulk in Aureole. It has never moved. Board the survey cradle beside it and recover a data core; the hulk itself is silent.',
         owner: session.id,
         taken: Date.now(),
       });

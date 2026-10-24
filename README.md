@@ -17,7 +17,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 - Travel between distinctive star systems, rendered planets and stations, from busy trade routes to the remote Eventide frontier.
 - Meet traders, convoys, patrols, pirates and rival captains with their own personalities and careers.
 - Visit illustrated worlds and see colonies grow through three settlement stages.
-- Discover faction stories, spaceport questlines and a main story hidden in the Rift.
+- Cross the Gateway near Quantum Station into Farside, recover ancient data cores, and discover faction stories, spaceport questlines and a main story hidden in the Rift.
 - Hail passing ships for conversation, assistance and encounters. Incoming calls wait until you choose to answer.
 
 ### Trade, mine and take jobs
@@ -77,6 +77,14 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 - [Release notes](docs/RELEASE-3.3.3.md)
 
 ## Screenshots
+
+**The Gateway in Concordia**
+
+![Flying past the Gateway near Quantum Station](docs/screenshots/concordia-gateway.png)
+
+**Farside exploration**
+
+![The silent hulk north of Aureole Research Ring](docs/screenshots/aureole-hulk.png)
 
 **Login traffic**
 

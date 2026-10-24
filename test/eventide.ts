@@ -55,6 +55,47 @@ for (const starSystem of legacy) {
     }
   starSystem.links = starSystem.links.filter((identifier: string) => !identifiers.has(identifier));
 }
+// Reverse only the authored Gateway relocation and two lore descriptions for
+// this pre-existing generation golden. Transit and new descriptions have their
+// own behavior checks; generated worlds, prices and RNG remain under this hash.
+const legacySol = legacy.find((system) => system.id === 'sol')!;
+const legacyConcordia = legacy.find((system) => system.id === 'qgate')!;
+const legacyColdharbor = legacy.find((system) => system.id === 'coldharbor')!;
+const legacyGateway = legacyConcordia.stellars.find((stellar) => stellar.id === 'sol-gateway')!;
+legacyConcordia.stellars = legacyConcordia.stellars.filter((stellar) => stellar !== legacyGateway);
+delete legacyConcordia.gate;
+legacy[legacy.indexOf(legacySol)] = Object.fromEntries(
+  Object.entries(legacySol).flatMap(([key, value]) =>
+    key === 'sol'
+      ? [
+          ['gate', 'coldharbor'],
+          [key, value],
+        ]
+      : [[key, value]],
+  ),
+) as StarSystem;
+legacyGateway.name = 'The Sol Gateway';
+legacyGateway.x = -700;
+legacyGateway.y = -520;
+legacyGateway.desc =
+  'A stable wormhole that opened beyond the orbit of Neptune. The far side is somewhere off the edge of every chart.';
+legacySol.stellars.push(legacyGateway);
+legacySol.stellars.find((stellar) => stellar.id === 'luna')!.desc =
+  'The old lunar shipyards, now a customs station watching over the Gateway.';
+legacyColdharbor.gate = 'sol';
+const legacyFarGateway = legacyColdharbor.stellars.find(
+  (stellar) => stellar.id === 'coldharbor-gate',
+)!;
+legacyFarGateway.wormhole = 'sol';
+legacyFarGateway.desc = 'The far mouth of the Sol Gateway. Through it, faintly, the light of home.';
+for (const system of legacy)
+  for (const stellar of system.stellars)
+    if (
+      stellar.desc ===
+      'Grey seas and long twilights. The settlers here came through the Gateway three generations ago and never looked back.'
+    )
+      stellar.desc =
+        'Grey seas and long twilights. The settlers here do not talk about how they arrived.';
 for (const systemId of Object.values(legacy))
   if (systemId.fields) systemId.fields = systemId.fields.filter((feature) => !feature.industrial);
 assert.equal(
@@ -266,7 +307,7 @@ try {
   }
   pulseSpace.remove(requiredFixtureValue(shipEntity));
   session.ent = null;
-  // Existing save counts still select the same original ten-system expeditions.
+  // Existing save counts retain the survey order; new recoveries use the fixed hulk.
   playerData.sys = 'coldharbor';
   playerData.stellar = systemsById.coldharbor.stellars[0].id;
   playerData.expd.n = 0;
@@ -275,7 +316,7 @@ try {
     playerData,
   );
   assert.equal(requiredFixtureValue(previousState).sys, 'mirrorfall');
-  assert.equal(requiredFixtureValue(previousState).exp.b, 'quietude');
+  assert.equal(requiredFixtureValue(previousState).exp.b, 'aureole');
   console.log(
     JSON.stringify(
       {

@@ -288,7 +288,11 @@
     "balance.ts": ["helpers/required.ts"],
     "landing-autopilot.ts": ["helpers/required.ts"],
     "faction-standing.ts": ["helpers/legacy-fixture.ts", "helpers/mocks.ts", "helpers/required.ts"],
-    "gateway-navigation.ts": ["helpers/mocks.ts", "helpers/required.ts"],
+    "gateway-navigation.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts",
+      "helpers/story-foundations.ts"
+    ],
     "eventide.ts": ["helpers/mocks.ts", "helpers/required.ts"],
     "companion-fixes.ts": ["helpers/mocks.ts"],
     "hailing.ts": ["helpers/mocks.ts", "helpers/required.ts"],
@@ -570,7 +574,8 @@
     "purchase-audio.ts": ["helpers/temp-data.ts"],
     "audio-flyby-browser.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"],
-    "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"]
+    "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
+    "helpers/story-foundations.ts": ["helpers/mocks.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1350,6 +1355,27 @@
         "cockpit-layout-browser.ts"
       ],
       "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork. Profile is a Captain-menu tab, without independent HUD/landed profile buttons."
+    },
+    {
+      "id": "story-foundations",
+      "owners": [
+        "shared/story.ts",
+        "shared/expeditions.ts",
+        "shared/galaxy.ts",
+        "server/arcs.ts",
+        "server/fronts.ts",
+        "client/render.ts"
+      ],
+      "tests": [
+        "v08.ts",
+        "v10.ts",
+        "v12.ts",
+        "eventide.ts",
+        "gateway-navigation.ts",
+        "gateway-browser.ts"
+      ],
+      "asserts": "Concordia Gateway travel, stable stellar ID and generated galaxy, unchanged qv rewards, fixed Farside hulk and accepted expedition compatibility.",
+      "services": []
     }
   ],
   "routes": {
