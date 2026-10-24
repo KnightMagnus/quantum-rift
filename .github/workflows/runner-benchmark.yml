@@ -1,0 +1,53 @@
+name: Runner worker benchmark
+
+on:
+  push:
+    branches: ['bench/runner-workers-20261024']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    name: ${{ matrix.group }} / ${{ matrix.workers }} workers / shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [unit, browser]
+        workers: [1, 2]
+        shard: [1, 2, 3, 4]
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.artifacts/playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node tools/runtime/install-node.ts
+      - run: npm ci
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare pinned services
+        run: |
+          node tools/runtime/install-nakama.ts
+          echo "POSTGRES_BIN=$(pg_config --bindir)" >> "$GITHUB_ENV"
+          test -x "$(pg_config --bindir)/initdb"
+      - if: matrix.group == 'unit'
+        run: python -m pip install -r tools/landscape-requirements.txt
+      - if: matrix.group == 'browser'
+        run: npx playwright install --with-deps chromium
+      - name: Measure regression execution
+        run: python tools/benchmark-regressions.py ${{ matrix.group }} ${{ matrix.workers }} ${{ matrix.shard }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-${{ matrix.group }}-${{ matrix.workers }}w-${{ matrix.shard }}
+          path: .artifacts/regression/
+          retention-days: 7
