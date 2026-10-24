@@ -40,7 +40,7 @@ const friendConfig =
   environment.HOST_FRIENDS === '1' ? friendHostConfig(environment, rootDirectory) : undefined;
 const child = spawn(binary, [path.join(rootDirectory, 'dist/server/main.js')], {
   cwd: rootDirectory,
-  stdio: launchFriends ? ['inherit', 'pipe', 'inherit'] : 'inherit',
+  stdio: ['inherit', launchFriends ? 'pipe' : 'inherit', 'inherit', 'ipc'],
   env: environment,
 });
 // Wait for this child's listening log before probing; an occupied port must not open an older world.
@@ -97,6 +97,12 @@ child.on('error', (error) => {
   process.exitCode = 1;
 });
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => child.kill(signal));
+// Windows kill(SIGTERM) cannot run shutdown handlers. Supervisors use this private
+// inherited channel instead; there is no HTTP or game-message shutdown endpoint.
+process.on('message', (message) => {
+  if (message === 'shutdown' && child.connected) child.send('shutdown');
+});
 child.on('exit', (code) => {
   process.exitCode = code || 0;
+  if (process.connected) process.disconnect?.();
 });

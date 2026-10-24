@@ -116,6 +116,8 @@
     "planet-portrait-art.ts",
     "portrait-persistence.ts",
     "landscape-generation.ts",
+    "release-readiness.ts",
+    "archive-verification.ts",
     "wire-contracts.ts"
   ],
   "browser": [
@@ -161,6 +163,7 @@
     "audio-flyby-browser.ts",
     "audio-defaults-browser.ts",
     "planet-portrait-browser.ts",
+    "platform-browser-smoke.ts",
     "cockpit-layout-browser.ts"
   ],
   "children": {
@@ -571,6 +574,8 @@
     "purchase-audio.ts": ["helpers/temp-data.ts"],
     "audio-flyby-browser.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"],
+    "archive-verification.ts": ["helpers/temp-data.ts"],
+    "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "wire-contracts.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts"],
     "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"]
   },
@@ -1259,7 +1264,7 @@
         "logout-browser.ts",
         "sidebar-sizing-browser.ts"
       ],
-      "asserts": "Production Engine, uncropped zoom-2 projectile pixel references across headings/speeds/iteration orders/backends, native decoded Sprite entities, display-only physics, original sequenced input stream, typing/blur, physical-pixel camera at DPR1/2 and zoom limits, responsive resizing, actor cleanup, local modules and no unsafe-eval."
+      "asserts": "Production Engine, uncropped zoom-2 projectile pixel references across headings/speeds/iteration orders/backends, native decoded Sprite entities, deferred canvas encoding rejects zero-dimension Sprites, display-only physics, original sequenced input stream, typing/blur, physical-pixel camera at DPR1/2 and zoom limits, responsive resizing, actor cleanup, local modules and no unsafe-eval."
     },
     {
       "id": "nakama-online",
@@ -1355,6 +1360,24 @@
         "cockpit-layout-browser.ts"
       ],
       "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork. Profile is a Captain-menu tab, without independent HUD/landed profile buttons."
+    },
+    {
+      "id": "release-platform-gates",
+      "owners": [
+        "tools/release-readiness.ts",
+        "tools/start.ts",
+        "server/local-main.ts",
+        "tools/verify_archive.py",
+        ".github/workflows/ci.yml"
+      ],
+      "services": [],
+      "tests": [
+        "release-readiness.ts",
+        "archive-verification.ts",
+        "platform-browser-smoke.ts",
+        "packaged-runtime.ts"
+      ],
+      "asserts": "Readiness fails closed for every missing, failed, skipped or cancelled supported lane. Exact archive hashes, full inventory, content and modes are checked before extraction; unsafe, duplicate and changed entries fail without partial extraction. Narrow engine login, keyboard/modal isolation, canvas fallback and exported/imported captain playability remain distinct from full Chromium coverage. CI also executes a single complete built archive across native OSes without npm dependencies."
     }
   ],
   "routes": {
@@ -1530,7 +1553,8 @@
     "capture-features.ts",
     "regression-browser.ts",
     "regression-runner.ts",
-    "seed-random.ts"
+    "seed-random.ts",
+    "release-archive-smoke.ts"
   ],
   "supplemental": {
     "background-scale-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
