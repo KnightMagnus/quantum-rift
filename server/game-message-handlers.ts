@@ -1,3 +1,4 @@
+import { parseTradeAction } from '../shared/wire-actions.ts';
 import { isPlayerPortrait } from '../shared/portraits.ts';
 import type { Game } from './game.ts';
 import type { MessageRegistry, NetworkMessage } from './message-registry.ts';
@@ -247,7 +248,9 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
        * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
-        capabilities.trade(session, message.cid!, message.qty! | 0, message.lots);
+        const request = parseTradeAction(message);
+        if (request)
+          capabilities.trade(session, request.cid, Number(request.qty) | 0, request.lots);
         return;
       },
     ],

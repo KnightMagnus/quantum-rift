@@ -1,3 +1,4 @@
+import { validTowingRequest, validTowingAuthority } from '../shared/wire-actions.ts';
 import type { RefineryPlayer } from './refinery-contracts.ts';
 import type { Space } from './space.ts';
 import type { TowRequest } from './towing-contracts.ts';
@@ -549,26 +550,8 @@ export const TowingOperations = {
 
   command(this: TowCapabilities2, session: Session, towRequest: TowRequest) {
     try {
-      if (
-        !session.data ||
-        !['attach', 'detach', 'offer', 'accept', 'deliver'].includes(towRequest.op || '') ||
-        Object.keys(towRequest).some(
-          (entryKey) => !['t', 'op', 'id', 'revision', 'to', 'port'].includes(entryKey),
-        ) ||
-        (towRequest.to !== undefined &&
-          (typeof towRequest.to !== 'string' ||
-            !towRequest.to.trim() ||
-            towRequest.to.length > 64)) ||
-        (towRequest.port !== undefined && typeof towRequest.port !== 'string') ||
-        !Number.isSafeInteger(towRequest.id) ||
-        !Number.isSafeInteger(towRequest.revision)
-      )
-        throw Error('Invalid towing request');
-      if (
-        (towRequest.op !== 'offer' && towRequest.to !== undefined) ||
-        (towRequest.op !== 'deliver' && towRequest.port !== undefined)
-      )
-        throw Error('Unexpected towing authority');
+      if (!session.data || !validTowingRequest(towRequest)) throw Error('Invalid towing request');
+      if (!validTowingAuthority(towRequest)) throw Error('Unexpected towing authority');
       if (this.db.economicFrozen || this.paused()) throw Error('Towing requires recovery/unpause');
       const towWorld = state(this),
         receipt = towWorld.receipts.find((towReceipt) => towReceipt.id === towRequest.id),

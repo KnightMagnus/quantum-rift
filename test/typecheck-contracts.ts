@@ -164,6 +164,19 @@ createPortService({toast() {}});
 `);
   assert.notEqual(result.status, 0, 'port operations require explicit core capabilities');
   assert.match(result.stdout + result.stderr, /missing/);
+  result = check(`import type { EconomicAction } from '${modulePath('../shared/wire-actions.ts')}';
+const request: EconomicAction = {t: 'trade', cid: 'food', qty: '3'}; void request;`);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  result = check(`import type { EconomicAction } from '${modulePath('../shared/wire-actions.ts')}';
+const request: EconomicAction = {t: 'trade', cid: 'food', qty: {count: 3}}; void request;`);
+  assert.notEqual(result.status, 0, 'trade quantity must be scalar');
+  result = check(`import type { EconomicAction } from '${modulePath('../shared/wire-actions.ts')}';
+const request: EconomicAction = {t: 'towing', op: 'quote', id: 1, revision: 1}; void request;`);
+  assert.notEqual(result.status, 0, 'towing discriminator rejects refinery operations');
+  result = check(`import type { EconomicAction } from '${modulePath('../shared/wire-actions.ts')}';
+const request: EconomicAction = {t: 'refinery', op: 'accept', id: 'order'}; void request;`);
+  assert.notEqual(result.status, 0, 'refinery discriminator rejects mining-order operations');
+
   console.log(
     'Typed valid calls/grade selections pass; invalid argument, grade quantity and missing capability are rejected.',
   );

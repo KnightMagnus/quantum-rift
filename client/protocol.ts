@@ -1,9 +1,10 @@
+import type { StateMessage } from '../shared/wire-payloads.ts';
 import type { ClientGameState, PlayerPayload, LandedPayload, ContractPlan } from './main.ts';
 import type { AttentionPayload } from '../server/attention.ts';
 import type { CombatPayload } from '../server/combat-assist.ts';
 import type { MiningPrivateWire, MiningRocksWire } from '../server/mining-contracts.ts';
 import type { PressureWire, MiningHazard } from '../server/mining-pressure-contracts.ts';
-import type { RefineryQuote, RefineryWire, FuelQuote } from '../server/refinery-contracts.ts';
+import type { RefineryQuote, RefineryWire, FuelQuote } from '../shared/refinery-wire.ts';
 import type { SocialState, TradeState } from './coop_ui.ts';
 export interface StoryMessage {
   t: 'story';
@@ -107,8 +108,7 @@ export type ServerMessage =
   | { t: 'refineryQuote'; quote: RefineryQuote }
   | { t: 'refineryError'; op: string }
   | { t: 'refinery'; op: string; data: RefineryWire }
-  | { t: 'you'; d: PlayerPayload }
-  | (LandedPayload & { t: 'landed' })
+  | StateMessage<PlayerPayload, LandedPayload>
   | (MiningMessage & {
       t: 'space';
       id: number;

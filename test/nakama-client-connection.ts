@@ -215,6 +215,63 @@ await test(
 );
 
 await test(
+  'economic packet headers are validated on native and local receive paths',
+  { timeout: 2000 },
+  async () => {
+    const valid = {
+      t: 'you',
+      d: { name: 'Captain', sys: 'meridian', credits: 12, cargo: {}, ship: {} },
+    };
+    const packets = [
+      null,
+      [],
+      { t: 'you', d: null },
+      { ...valid, d: { ...valid.d, credits: null } },
+      { t: 'refineryQuote', quote: {} },
+      { t: 'landed', stellar: 'earth', offers: null },
+      valid,
+      { t: 'landed', stellar: 'earth', offers: [], yard: null, outfitter: null, mats: [] },
+    ];
+    const native = fixture();
+    await native.opened;
+    for (const packet of packets) native.emit(packet);
+    assert.deepEqual(
+      native.received.map((packet) => JSON.parse(packet)),
+      packets.slice(-2),
+    );
+    await native.connection.logout();
+    for (const mode of ['solo', 'friends'] as const) {
+      let local!: WebSocket;
+      const received: unknown[] = [];
+      const connection = createGameConnection(
+        {
+          solo: mode === 'solo',
+          mode: mode === 'friends' ? 'friends' : undefined,
+          localTransport: true,
+          localUrl: 'ws://fixture.invalid',
+        },
+        credentials,
+        {
+          async createNakamaClient() {
+            throw new Error('unexpected native connection');
+          },
+          createLocalSocket() {
+            local = {} as WebSocket;
+            return local;
+          },
+        },
+      );
+      connection.onmessage = (event) => received.push(JSON.parse(event.data));
+      await setImmediate();
+      local.onopen?.({} as Event);
+      for (const packet of packets)
+        local.onmessage?.({ data: JSON.stringify(packet) } as MessageEvent);
+      assert.deepEqual(received, packets.slice(-2), mode + ' uses identical receive validation');
+    }
+  },
+);
+
+await test(
   'only server opcode 2 for the joined match reaches the game; malformed snapshots are ignored',
   { timeout: 2000 },
   async () => {
