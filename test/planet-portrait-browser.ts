@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+import { chromium, type Page } from 'playwright';
 import { DB } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { STELLARS } from '../shared/galaxy.ts';
@@ -23,6 +23,12 @@ type PortraitTestWindow = Window & {
   heldPortraits?: string[];
   portraitFault?: 'hold' | 'deny';
 };
+
+async function openProfile(page: Page) {
+  if (!(await page.locator('#infobox').isVisible())) await page.click('#captainshortcut');
+  await page.click('[data-it="profile"]');
+  await page.locator('#captainprofile').waitFor({ state: 'visible' });
+}
 
 const output = evidenceDir('planet-portrait');
 const directory = tempDataDir('planet-portrait-browser-');
@@ -138,7 +144,7 @@ try {
     );
     if (index === 4) {
       await page.screenshot({ path: path.join(output, 'colony-stage3.png') });
-      await page.click('#landprofilebtn');
+      await openProfile(page);
       await page.locator('#portraitpreview').evaluate((image: HTMLImageElement) => image.decode());
       await page.locator(`input[value="${PLAYER_PORTRAITS.at(-1)!.id}"]`).check();
       assert.match(await page.locator('#portraitstatus').innerText(), /not saved/);
@@ -146,16 +152,13 @@ try {
       await page.waitForFunction(
         () => document.getElementById('portraitstatus')!.textContent === 'Saved.',
       );
-      await page.locator('#profiledialog').evaluate((dialog) => {
-        dialog.scrollTop = 0;
+      await page.locator('#captainprofile').evaluate((panel) => {
+        panel.scrollTop = 0;
       });
       await page.screenshot({ path: path.join(output, 'profile-chooser.png') });
       await page.keyboard.press('Escape');
-      assert.equal(
-        await page.locator('#profiledialog').evaluate((dialog: HTMLDialogElement) => dialog.open),
-        false,
-      );
-      assert.equal(await page.evaluate(() => document.activeElement?.id), 'landprofilebtn');
+      assert.equal(await page.locator('#captainprofile').isVisible(), false);
+      assert.equal(await page.evaluate(() => document.activeElement?.id), 'captainshortcut');
       await page.reload();
       await page.waitForFunction(() => typeof G !== 'undefined');
       await page.fill('#lname', fixture.name);
@@ -184,7 +187,7 @@ try {
         };
         testWindow.portraitFault = 'deny';
       });
-      await page.click('#landprofilebtn');
+      await openProfile(page);
       await page.click('#portraitsave');
       await page.waitForFunction(() =>
         document.getElementById('portraitstatus')!.textContent!.includes('was not saved'),
@@ -192,8 +195,26 @@ try {
       assert.equal(await page.locator('#portraitsave').isEnabled(), true);
       assert.equal(await page.evaluate(() => G.you!.portraitId), PLAYER_PORTRAITS.at(-1)!.id);
       await page.evaluate(() => ((window as PortraitTestWindow).portraitFault = 'hold'));
+      await page.locator('#portraitchoices input').nth(3).check();
       await page.click('#portraitsave');
       assert.equal(await page.locator('#portraitsave').isDisabled(), true);
+      await page.locator('#portraitchoices input:checked').focus();
+      await page.keyboard.press('Tab');
+      assert.equal(
+        await page
+          .locator('[data-it="ship"]')
+          .evaluate((element) => element === document.activeElement),
+        true,
+        'Pending-save radio group wraps Tab to Captain navigation',
+      );
+      await page.keyboard.press('Shift+Tab');
+      assert.equal(
+        await page
+          .locator('#portraitchoices input:checked')
+          .evaluate((element) => element === document.activeElement),
+        true,
+        'Reverse Tab returns to the checked portrait, not another radio',
+      );
       await page.waitForFunction(
         () => document.getElementById('portraitstatus')!.textContent!.includes('No confirmation'),
         null,
@@ -213,7 +234,7 @@ try {
       assert.equal(await page.locator('#portraitstatus').innerText(), 'Saving…');
       assert.equal(await page.locator('#portraitsave').isDisabled(), true);
       await page.keyboard.press('Escape');
-      await page.click('#landprofilebtn');
+      await openProfile(page);
       assert.equal(await page.locator('#portraitsave').isEnabled(), true);
       await page.click('#portraitsave');
       await page.evaluate(() => {
@@ -262,16 +283,10 @@ try {
         'hail uses the exact final landed-art static fuzz',
       );
       await page.screenshot({ path: path.join(output, 'docking-hail.png') });
-      await page.click('#profilebtn');
-      assert.equal(
-        await page.locator('#profiledialog').evaluate((dialog: HTMLDialogElement) => dialog.open),
-        true,
-      );
+      await openProfile(page);
+      assert.equal(await page.locator('#captainprofile').isVisible(), true);
       await page.keyboard.press('Escape');
-      assert.equal(
-        await page.locator('#profiledialog').evaluate((dialog: HTMLDialogElement) => dialog.open),
-        false,
-      );
+      assert.equal(await page.locator('#captainprofile').isVisible(), false);
       assert.equal(
         await page.locator('#hailbox').isVisible(),
         true,
@@ -288,17 +303,18 @@ try {
           document.documentElement.style.setProperty('--ui', String(value));
           document.body.classList.toggle('scaled', value !== 1);
         }, scale);
-        const profileFits = await page.locator('#profilebtn').evaluate((button) => {
+        const profileFits = await page.locator('#captainshortcut').evaluate((button) => {
           const label = document.createRange();
-          label.selectNodeContents(button);
+          label.selectNodeContents(button.querySelector('.function-label')!);
           const text = label.getBoundingClientRect();
-          const bounds = button.getBoundingClientRect();
-          return text.width <= bounds.width && button.scrollWidth <= button.clientWidth;
+          const bounds = button.querySelector('.function-label')!.getBoundingClientRect();
+          return text.width <= bounds.width && bounds.width <= button.getBoundingClientRect().width;
         });
-        assert.equal(profileFits, true, `flight PROFILE label fits at scale ${scale}`);
+        assert.equal(profileFits, true, `Captain shortcut label fits at scale ${scale}`);
         if (scale === 1)
           await page.screenshot({ path: path.join(output, 'compact-profile-button.png') });
-        await page.click('#profilebtn');
+        await openProfile(page);
+        await page.locator('#portraitchoices input:checked').focus();
         const priorChoice = await page.locator('#portraitchoices input:checked').inputValue();
         await page.keyboard.press('ArrowRight');
         assert.notEqual(
@@ -307,9 +323,9 @@ try {
           'native radio keyboard navigation remains available',
         );
         assert.match(await page.locator('#portraitstatus').innerText(), /not saved/);
-        await page.locator('#portraitclose').focus();
-        const bounds = await page.locator('#portraitclose').boundingBox();
-        const modal = await page.locator('#profiledialog').boundingBox();
+        await page.locator('#portraitsave').focus();
+        const bounds = await page.locator('#portraitsave').boundingBox();
+        const modal = await page.locator('#infobox .gbox').boundingBox();
         assert.ok(bounds && bounds.y >= 0 && bounds.y + bounds.height <= 780);
         assert.ok(modal && modal.x >= 0 && modal.x + modal.width <= 600);
         await page.keyboard.press('Escape');
@@ -326,18 +342,15 @@ try {
       await page.setViewportSize({ width: 1280, height: 900 });
       await page.click('#depart');
       await page.waitForFunction(() => !G.landed);
-      const profileFits = await page.locator('#profilebtn').evaluate((button) => {
+      const profileFits = await page.locator('#captainshortcut').evaluate((button) => {
         const label = document.createRange();
-        label.selectNodeContents(button);
+        label.selectNodeContents(button.querySelector('.function-label')!);
         return label.getBoundingClientRect().width <= button.getBoundingClientRect().width;
       });
-      assert.equal(profileFits, true, 'flight PROFILE label fits desktop button');
+      assert.equal(profileFits, true, 'Captain shortcut label fits desktop button');
       await page.screenshot({ path: path.join(output, 'flight-profile-button.png') });
-      await page.click('#profilebtn');
-      assert.equal(
-        await page.locator('#profiledialog').evaluate((dialog: HTMLDialogElement) => dialog.open),
-        true,
-      );
+      await openProfile(page);
+      assert.equal(await page.locator('#captainprofile').isVisible(), true);
       await page.keyboard.press('Escape');
     }
     assert.deepEqual(errors, []);

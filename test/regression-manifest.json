@@ -160,7 +160,8 @@
     "sidebar-gauges-browser.ts",
     "audio-flyby-browser.ts",
     "audio-defaults-browser.ts",
-    "planet-portrait-browser.ts"
+    "planet-portrait-browser.ts",
+    "cockpit-layout-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -570,7 +571,8 @@
     "purchase-audio.ts": ["helpers/temp-data.ts"],
     "audio-flyby-browser.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"],
-    "wire-contracts.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts"]
+    "wire-contracts.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts"],
+    "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -969,7 +971,7 @@
         "audio-flyby-browser.ts",
         "audio-defaults-browser.ts"
       ],
-      "asserts": "Login music starts without interaction when autoplay is allowed; blocked autoplay remains suspended until interaction and login stops the theme. Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification. Newcomer intro notice has a ten-second animation and native DOM lifetime, survives ordinary-toast queue pressure, remains readable beyond ordinary expiry, and disappears near ten seconds; other notice timing is unchanged. Fresh effects default to 50% without rewriting stored mixer values. The original reproducible 240ms purchase confirmation has an 18% peak and is decoded/played by an actual trade control on the unchanged interface bus. A real seeded shipyard hangar buy plays once on confirmation and settles; cancellation, sales and disabled controls do not play the purchase signal."
+      "asserts": "Login music starts without interaction when autoplay is allowed; blocked autoplay remains suspended until interaction and login stops the theme. Persistent mixer volumes/mute and N shortcut, emulated gamepad axes/deadzone/fire in actual outgoing WebSocket packets, touch fire/release/map. Not physical-device or audible-output certification. Newcomer intro notice has a ten-second animation and native DOM lifetime, survives ordinary-toast queue pressure, remains readable beyond ordinary expiry, and disappears near ten seconds; other notice timing is unchanged. Fresh effects default to 50% without rewriting stored mixer values. The selected-B reproducible 320ms purchase confirmation has a 10.5% peak and 4% RMS and is decoded/played by an actual trade control on the unchanged interface bus. A real seeded shipyard hangar buy plays once on confirmation and settles; cancellation, sales and disabled controls do not play the purchase signal."
     },
     {
       "id": "cargo-grade-ledger",
@@ -1330,9 +1332,10 @@
         "responsive-hud-browser.ts",
         "attention-scan.ts",
         "attention-runtime.ts",
-        "nakama-network.ts"
+        "nakama-network.ts",
+        "cockpit-layout-browser.ts"
       ],
-      "asserts": "Recipient-only actual combat targeting, death/departure/cancel clearing, truthful recent patrol scan expiry, red precedence and reduced motion; 12.5% larger text, fixed widescreen button geometry, fluid center chat, sidebar gap, responsive landed/map/captain/settings surfaces and narrow preservation."
+      "asserts": "Recipient-only actual combat targeting, death/departure/cancel clearing, truthful recent patrol scan expiry, red precedence and reduced motion; 12.5% larger text, fixed widescreen button geometry, fluid center chat, sidebar gap, responsive landed/map/captain/settings surfaces and narrow preservation. Centered labels, consistent button-only LEDs, upper-right alert above Captain, landscape settings with real key reassignment and 15% larger ultrawide map/landing panels."
     },
     {
       "id": "planet-portrait-art",
@@ -1348,9 +1351,10 @@
         "portrait-persistence.ts",
         "planet-portrait-browser.ts",
         "landscape-generation.ts",
-        "nakama-network.ts"
+        "nakama-network.ts",
+        "cockpit-layout-browser.ts"
       ],
-      "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork."
+      "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork. Profile is a Captain-menu tab, without independent HUD/landed profile buttons."
     }
   ],
   "routes": {
