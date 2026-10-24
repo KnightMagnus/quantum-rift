@@ -117,7 +117,7 @@ try {
         }[] = [];
         socket = new WebSocket(origin.replace('http:', 'ws:') + '/ws');
         socket.addEventListener('message', (event) => packets.push(JSON.parse(String(event.data))));
-        await once(socket, 'open');
+        await once(socket, 'open', { signal: AbortSignal.timeout(5000) });
         socket.send(JSON.stringify({ t: 'hello', name: 'Release Pilot', pass: '' }));
         await until(() => packets.some((packet) => packet.t === 'you'), 'archive login');
         const current = packets.find((packet) => packet.t === 'you')!.d!;

@@ -11,7 +11,7 @@ export const releaseLanes = [
   'platform-browser-smoke',
   'archive-smoke',
 ] as const;
-/** Parse GitHub's needs object without accepting missing or unexpected readiness lanes. */
+/** Parse GitHub's needs object; every declared readiness lane must be present. */
 export function readiness(needs: unknown, head: string) {
   if (!head || !needs || typeof needs !== 'object' || Array.isArray(needs))
     throw Error('Missing readiness commit or lanes');
