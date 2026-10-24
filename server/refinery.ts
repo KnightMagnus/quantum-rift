@@ -1,3 +1,4 @@
+import { validRefineryRequest } from '../shared/wire-actions.ts';
 import type {
   FuelQuote,
   MiningOrder,
@@ -1174,39 +1175,7 @@ export const RefineryOperations = {
     refineryRequest: RefineryRequest,
     orders: boolean = false,
   ) {
-    const allowed = orders
-      ? ['accept', 'deliver', 'cancelOrder']
-      : ['quote', 'preview', 'submit', 'claim', 'cancel', 'returns', 'fuelQuote', 'fuel', 'list'];
-
-    const fields: Record<string, readonly string[]> = {
-      quote: ['t', 'op', 'port', 'recipe', 'grade', 'mode', 'n'],
-      preview: ['t', 'op', 'port', 'recipe', 'grade', 'mode', 'n'],
-      submit: ['t', 'op', 'id'],
-      claim: ['t', 'op', 'port', 'recipe'],
-      cancel: ['t', 'op', 'id'],
-      returns: ['t', 'op', 'port', 'id'],
-      fuelQuote: ['t', 'op', 'n'],
-      fuel: ['t', 'op', 'id'],
-      list: ['t', 'op'],
-      accept: ['t', 'op', 'id', 'port'],
-      deliver: ['t', 'op', 'id', 'port'],
-      cancelOrder: ['t', 'op', 'id', 'port'],
-    };
-    if (
-      !refineryRequest ||
-      !allowed.includes(refineryRequest.op || '') ||
-      ![Object.prototype, null].includes(Object.getPrototypeOf(refineryRequest)) ||
-      Reflect.ownKeys(refineryRequest).some(
-        (entryKey) =>
-          typeof entryKey !== 'string' || !fields[refineryRequest.op || '']?.includes(entryKey),
-      ) ||
-      (['id', 'port', 'recipe', 'grade', 'mode'] as const).some(
-        (entryKey) =>
-          refineryRequest[entryKey] !== undefined &&
-          (typeof refineryRequest[entryKey] !== 'string' || refineryRequest[entryKey].length > 200),
-      )
-    )
-      return;
+    if (!validRefineryRequest(refineryRequest, orders)) return;
 
     try {
       if (this.paused() || this.db.economicFrozen)

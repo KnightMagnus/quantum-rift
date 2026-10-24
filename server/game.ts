@@ -1,3 +1,4 @@
+import { wireRecord } from '../shared/wire-actions.ts';
 import { playerPortrait } from '../shared/portraits.ts';
 import { attentionPayload, type RecentPatrolScan } from './attention.ts';
 export interface SeedOfficer {
@@ -1634,15 +1635,17 @@ export class Game<Storage extends Database = Database> {
   /**
    * Ingests, rate-limits, authenticates, and dispatches an incoming client message.
    * @param session Source session.
-   * @param message Incoming parsed client message.
+   * @param incoming Incoming decoded client value.
    */
-  onMessage(session: Session, message: NetworkMessage): void {
+  onMessage(session: Session, incoming: unknown): void {
     const currentTime = Date.now();
     if (currentTime - session.msgT > 1000) {
       session.msgT = currentTime;
       session.msgs = 0;
     }
     if (++session.msgs > 120) return; // flood guard
+    if (!wireRecord(incoming)) return;
+    const message = incoming as NetworkMessage;
     if (!session.data) {
       if (message.t === 'hello') this.hello(session, message);
       return;

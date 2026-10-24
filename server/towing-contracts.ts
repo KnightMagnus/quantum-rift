@@ -1,3 +1,4 @@
+import type { TowingAction } from '../shared/wire-actions.ts';
 import type { ComputedShipStats } from '../shared/rules.ts';
 import type { GameStorage as Database } from './game-storage.ts';
 import type { PlayerData } from './game.ts';
@@ -60,14 +61,8 @@ export type TowWorld = {
   receipts: TowReceipt[];
   offers: TowOffer[];
 };
-export type TowRequest = {
-  t?: string;
-  op?: 'attach' | 'detach' | 'offer' | 'accept' | 'deliver';
-  id?: number;
-  revision?: number;
-  to?: string;
-  port?: string;
-};
+/** Legacy direct-service request; transport envelopes use TowingAction. */
+export type TowRequest = Omit<Partial<TowingAction>, 't'> & { t?: string };
 export type Session = import('./game.ts').Session;
 export type TowCapabilities = {
   db: Pick<Database, 'world' | 'players' | 'touch' | 'flush' | 'economicFrozen' | 'key'>;
