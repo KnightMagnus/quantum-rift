@@ -5,16 +5,16 @@ interface ProfileState {
   /** Latest authoritative private player projection. */
   you: { name: string; portraitId: string } | null;
 }
-/** Personal profile chooser uses a native modal, with server-confirmed saves only. */
+/** Captain-menu profile tab, with server-confirmed saves only. */
 export function initProfile(state: ProfileState, send: (message: object) => void) {
-  const dialog = document.getElementById('profiledialog') as HTMLDialogElement;
+  const panel = document.getElementById('captainprofile')!;
   const choices = document.getElementById('portraitchoices')!;
   const preview = document.getElementById('portraitpreview') as HTMLImageElement;
   const status = document.getElementById('portraitstatus')!;
   const save = document.getElementById('portraitsave') as HTMLButtonElement;
   let selected = '',
     requestSequence = 0,
-    previousFocus: HTMLElement | null = null;
+    visible = false;
   let pending: { requestId: string; timer: ReturnType<typeof setTimeout> } | null = null;
   const clearPending = () => {
     if (pending) clearTimeout(pending.timer);
@@ -44,36 +44,17 @@ export function initProfile(state: ProfileState, send: (message: object) => void
     choices.append(label);
   }
   function open() {
-    if (!state.you || dialog.open) return;
-    previousFocus = document.activeElement as HTMLElement | null;
+    if (!state.you || visible) return;
+    visible = true;
     selected = playerPortrait(state.you.portraitId);
     showPreview();
     document.getElementById('profilename')!.textContent = state.you.name;
     for (const radio of choices.querySelectorAll<HTMLInputElement>('input'))
       radio.checked = radio.value === selected;
     status.textContent = 'Choose a portrait for your public profile and player hails.';
-    dialog.showModal();
+    panel.classList.remove('hidden');
     choices.querySelector<HTMLInputElement>('input:checked')?.focus();
   }
-  for (const id of ['profilebtn', 'landprofilebtn']) document.getElementById(id)!.onclick = open;
-  document.getElementById('portraitclose')!.onclick = () => dialog.close();
-  dialog.addEventListener('close', () => {
-    clearPending();
-    previousFocus?.focus();
-  });
-  // The native top layer owns keys even when an ordinary game overlay remains underneath.
-  window.addEventListener(
-    'keydown',
-    (event) => {
-      if (!dialog.open) return;
-      event.stopImmediatePropagation();
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        dialog.close();
-      }
-    },
-    true,
-  );
   save.onclick = () => {
     if (!state.you || pending) return;
     const requestId = String(++requestSequence);
@@ -89,9 +70,16 @@ export function initProfile(state: ProfileState, send: (message: object) => void
     send({ t: 'portrait', portraitId: selected, portraitRequestId: requestId });
   };
   return {
+    show: open,
+    hide() {
+      visible = false;
+      panel.classList.add('hidden');
+      clearPending();
+    },
     reset() {
       clearPending();
-      dialog.close();
+      visible = false;
+      panel.classList.add('hidden');
       preview.removeAttribute('src');
       status.textContent = '';
     },

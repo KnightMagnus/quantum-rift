@@ -319,6 +319,7 @@ body.tray-open #traytoggle {
   font-size: 13.5px;
   line-height: 1;
   text-transform: uppercase;
+  text-align: center;
 }
 #functiondock .function-icon:disabled {
   opacity: 0.55;
@@ -1238,11 +1239,11 @@ body:has(#login:not(.hidden)) #viewscreen-trim {
   pointer-events: none;
 }
 
-#functiondock .function-icon::after {
+#functiondock button.function-icon::after {
   content: '';
   position: absolute;
   left: calc(50% - 4px);
-  bottom: 2px;
+  bottom: 3px;
   width: 8px;
   height: 2px;
   border: 1px solid #0e1012;
@@ -1254,7 +1255,7 @@ body:has(#login:not(.hidden)) #viewscreen-trim {
   background: linear-gradient(#9a5b4b, #633025 12%, #421a15 90%, #24100d);
   color: #ffe3ce;
 }
-#functiondock .function-icon[aria-expanded='true']::after {
+#functiondock button.function-icon[aria-expanded='true']::after {
   background: #edaa72;
   box-shadow: 0 0 4px #c5753f;
 }
@@ -1592,7 +1593,10 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   width: 58px;
   flex-shrink: 0;
 }
-#attentionindicator {
+#functiondock #attentionindicator {
+  grid-column: 5;
+  grid-row: 1;
+  cursor: default;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1601,18 +1605,22 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   border: 1px solid #697b82;
   background: #101c23;
 }
+#functiondock #captainshortcut {
+  grid-column: 5;
+  grid-row: 2;
+}
 #attentionindicator img {
   width: 24px;
   height: 24px;
   opacity: 0.45;
   filter: none;
 }
-#attentionindicator[data-state='targeted'] {
+#functiondock #attentionindicator[data-state='targeted'] {
   color: #ff554c;
   border-color: currentColor;
   animation: attention-blink 1s steps(2, jump-none) infinite;
 }
-#attentionindicator[data-state='scanned'] {
+#functiondock #attentionindicator[data-state='scanned'] {
   color: #ffae42;
   border-color: currentColor;
   animation: attention-blink 1s steps(2, jump-none) infinite;
@@ -1636,12 +1644,16 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
 #view {
   width: calc(100% - var(--hud) - 12px);
 }
-#infobox .gbox,
-#gmap .gbox {
+#infobox .gbox {
   width: clamp(320px, 70vw, 1200px);
 }
+#gmap .gbox {
+  width: clamp(320px, 80.5vw, 1380px);
+  height: min(989px, 96%);
+}
 #land .landbox {
-  width: clamp(320px, 82vw, 1400px);
+  width: clamp(320px, 94.3vw, 1610px);
+  height: min(856.75px, 96%);
 }
 #gmap .gbox,
 #land .landbox,
@@ -1655,30 +1667,6 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
 #commssector {
   overflow: hidden;
   text-overflow: ellipsis;
-}
-#consoleutilities #profilebtn {
-  font-size: 12px;
-  letter-spacing: 0;
-  padding: 3px;
-}
-#profilebtn .profile-short {
-  display: none;
-}
-@media (max-width: 1100px) {
-  #profilebtn .profile-full {
-    display: none;
-  }
-  #profilebtn .profile-short {
-    display: inline;
-  }
-}
-@media (max-width: 1250px) {
-  body.tray-open #profilebtn .profile-full {
-    display: none;
-  }
-  body.tray-open #profilebtn .profile-short {
-    display: inline;
-  }
 }
 @media (min-width: 1101px) {
   #consoleutilities .cb {
@@ -1728,7 +1716,7 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   }
   #functiondock .function-label,
   #functiondock #industrialindicator .function-label {
-    font-size: 9px;
+    font-size: 7px;
   }
   #commssector {
     display: none;
@@ -1757,11 +1745,11 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   }
   #functiondock .function-label,
   #functiondock #industrialindicator .function-label {
-    font-size: 8px;
+    font-size: 7px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  #attentionindicator[data-state] {
+  #functiondock #attentionindicator[data-state] {
     animation: none;
   }
 }
@@ -1822,4 +1810,149 @@ body.tray-open #flightstatus {
   flex: 1;
   min-width: 0;
   text-align: center;
+}
+
+/* Captain profile remains inside the same information window as ship and career. */
+#captainprofile {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+#captainprofile h2 {
+  margin-bottom: 14px;
+}
+.profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+.profile-summary .portrait-window {
+  flex: 0 0 auto;
+}
+#captainprofile fieldset {
+  min-width: 0;
+  border: 1px solid #596970;
+  padding: 12px;
+}
+#captainprofile #portraitchoices {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+#captainprofile #portraitchoices label {
+  cursor: pointer;
+  gap: 4px;
+}
+#captainprofile #portraitchoices label:has(input:focus-visible) {
+  outline: 2px solid #e4ba96;
+  outline-offset: 2px;
+}
+#captainprofile #portraitchoices label:has(input:checked) {
+  border-color: #e4ba96;
+  background: #2d352f;
+}
+#infobox .itabs {
+  flex-wrap: wrap;
+}
+
+/* Landscape settings: controls scroll inside three equipment bays, not one tall strip. */
+#opts .optbox {
+  display: flex;
+  width: min(1280px, calc(100% - 24px));
+  height: min(720px, calc(100% - 24px));
+  min-width: 0;
+  padding: 20px;
+}
+#opts h1 {
+  margin: 0;
+  font-size: 23px;
+  letter-spacing: 2px;
+}
+.options-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1.3fr);
+  gap: 18px;
+  flex: 1;
+  min-height: 0;
+}
+.options-section {
+  overflow: auto;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #64747a;
+  background: #0c181ce8;
+  box-shadow: inset 0 2px 8px #0009;
+  scrollbar-gutter: stable;
+}
+.options-section > label {
+  margin-bottom: 16px;
+}
+.options-section .osect:first-child {
+  margin-top: 0;
+}
+#opts #optkeys {
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  background: none;
+}
+#opts #optclose {
+  flex-shrink: 0;
+  align-self: flex-end;
+  min-width: 150px;
+}
+#opts .kb {
+  gap: 12px;
+}
+#opts .kb > span {
+  min-width: 0;
+}
+#opts .kb > button {
+  flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  #opts .optbox {
+    height: calc(100% - 16px);
+    padding: 12px;
+  }
+  .options-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+  .options-keys {
+    grid-column: 1 / -1;
+    min-height: 180px;
+  }
+  .options-section {
+    min-height: 0;
+  }
+  #opts h1 {
+    font-size: 18px;
+  }
+}
+@media (max-width: 600px) {
+  .options-body {
+    display: block;
+    overflow: auto;
+  }
+  .options-section {
+    overflow: visible;
+    margin-bottom: 10px;
+  }
+  #opts .optbox {
+    gap: 8px;
+  }
+  .profile-summary {
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .profile-summary img {
+    width: 96px;
+    height: 96px;
+  }
+}
+
+/* Captain details remain above an active hail when opened from the console. */
+#infobox {
+  z-index: 25;
 }

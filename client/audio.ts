@@ -124,7 +124,10 @@ export function setMix(audioMixOptions: AudioMixOptions) {
  * Loads and decodes an audio file by ID into memory.
  * @param identifier Sound identifier or EV sound resource ID
  */
+// Retired upgrade cue is blocked even for stale or data-driven sound requests.
+const retiredSound = (identifier: string | number) => String(identifier) === '10110';
 function load(identifier: string | number) {
+  if (retiredSound(identifier)) return;
   if (buffers.has(identifier) || loading.has(identifier) || !audioContext)
     return loading.get(identifier);
   const targetUrl =
@@ -154,7 +157,7 @@ let recent = 0,
  * @param gain Playback gain multiplier
  */
 export function play(identifier: string | number, deltaX = 0, deltaY = 0, gain = 1) {
-  if (!audioContext || !identifier) return;
+  if (!audioContext || !identifier || retiredSound(identifier)) return;
   void load(identifier);
   const audioBuffer = buffers.get(identifier);
   if (!audioBuffer) return;
