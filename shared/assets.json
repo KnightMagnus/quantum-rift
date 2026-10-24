@@ -5378,7 +5378,6 @@
     "10100": "Quantum: amb_station",
     "10101": "Quantum: amb_derelict",
     "10102": "Quantum: amb_lantern",
-    "10110": "Quantum: ev_upgrade",
     "10111": "Quantum: ev_warp",
     "10112": "Quantum: ev_collect",
     "10113": "Quantum: ev_chest",

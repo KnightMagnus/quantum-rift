@@ -25,13 +25,13 @@ try {
     samples.push(actual.readInt16LE(index) / 32768);
   const peak = Math.max(...samples.map(Math.abs));
   const rms = Math.sqrt(samples.reduce((sum, sample) => sum + sample * sample, 0) / samples.length);
-  assert.equal(samples.length / 22050, 0.24);
-  assert.ok(peak <= 0.181 && peak >= 0.179, 'Quiet peak, no clipping or automatic renormalization');
-  assert.ok(rms < 0.04);
+  assert.equal(samples.length / 22050, 0.32);
+  assert.ok(peak <= 0.105 && peak >= 0.104, 'Quiet peak, no clipping or automatic renormalization');
+  assert.ok(rms >= 0.0399 && rms <= 0.0401, 'Selected B RMS');
   assert.ok(Math.max(...samples.slice(0, 100).map(Math.abs)) < 0.04, 'Soft onset');
   assert.ok(Math.max(...samples.slice(-300).map(Math.abs)) < 0.002, 'Short tapered tail');
   console.log(
-    JSON.stringify({ duration: 0.24, peak, rms, bytes: actual.length, reproducible: true }),
+    JSON.stringify({ duration: 0.32, peak, rms, bytes: actual.length, reproducible: true }),
   );
 } finally {
   filesystem.rmSync(directory, { recursive: true, force: true });

@@ -791,7 +791,7 @@ stronger formations, trailing escort slots, the eleven-sprite bound and loop res
 `audio-flyby-browser.ts` supplies a short decoded WAV as the score fixture, then
 uses the real WebAudio source and context to observe visible mid/late hull draws,
 suspension, natural loop and immediate login stop. It also buys through a real
-Trade control and checks the decoded 240ms signal and actual independent mixer
+Trade control and checks the decoded selected-B 320ms signal and actual independent mixer
 bus gains. A seeded station owner buys to the hangar through the confirmation
 dialog; stored-ship count verifies settlement. Cancelled confirmations, sales
 and disabled controls do not play the purchase signal.
@@ -799,7 +799,7 @@ The owner-supplied theme remains unchanged; `radio-audio.ts` retains its recordi
 hash checks. These checks do not establish subjective listening quality.
 
 `purchase-audio.ts` reproduces the checked-in original oscillator signal exactly
-and checks its duration, mono PCM format, 18% peak, attack and tail. Both the focused
+and checks its duration, mono PCM format, 10.5% peak and 4% RMS, attack and tail. Both the focused
 generator and the broad legacy generator use the same source. `audio-defaults-browser.ts`
 checks fresh, empty and malformed options plus saved zero, mute, fractional and
 full-volume values. Existing options migrations remain in place; no new preference
@@ -815,4 +815,22 @@ comparisons, not physical midrange-laptop or audible-output certification.
 
 ## Planetary landscapes and portraits
 
-`planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation, bounded acknowledgement tokens and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser and hail windows, denied or unconfirmed save recovery, stale-reply isolation and profile-button label fit at narrow/scaled and desktop sizes. `nakama-network.ts` verifies selected portraits through real Nakama authentication and match ingress, spoofed-target isolation, public lookup, PostgreSQL checkpoint storage and a native service restart. The adapter unit fixture remains a separate bounded persistence check.
+`planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation, bounded acknowledgement tokens and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser and hail windows, denied or unconfirmed save recovery, stale-reply isolation and Captain-tab controls at narrow/scaled and desktop sizes. `nakama-network.ts` verifies selected portraits through real Nakama authentication and match ingress, spoofed-target isolation, public lookup, PostgreSQL checkpoint storage and a native service restart. The adapter unit fixture remains a separate bounded persistence check.
+
+## Functional cockpit layout
+
+`cockpit-layout-browser.ts` runs the functional cockpit through a real
+local game fixture. At 3440×1440 it checks the map at 1380×989 and the landed
+window at 1610×856.75, each 15% larger than the previous size caps. It verifies
+centered labels, identical LED geometry on pressable controls, and a non-clickable
+warning lens above Captain without a button LED. Profile selection and confirmed
+saving use a tab inside Captain, with no separate flight or landed profile button.
+The browser checks keyboard isolation, focus containment, nested settings Escape
+priority, actual key reassignment, and narrow/scaled menu containment.
+
+Existing mute/mixer, portrait-denial/persistence and authoritative alert regressions remain registered.
+
+`audio-flyby-browser.ts` also verifies that the retired `10110` upgrade sound is
+absent from the shipped assets/catalog and cannot load through numeric, string or
+preload calls. A real cargo purchase and subsequent sale/hangar refreshes retain
+the quiet purchase confirmation without replaying that sound from `landed`.

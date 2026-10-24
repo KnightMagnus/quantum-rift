@@ -11,19 +11,31 @@ import wave
 
 
 def purchase_samples():
-    """Return 240 ms of mono PCM at 22050 Hz with a soft attack and short tail."""
+    """Return the warm two-note confirmation: 320 ms of mono PCM at 22050 Hz."""
     rate = 22050
-    duration = 0.24
+    duration = 0.32
+    sample_count = round(rate * duration)
+    remaining_duration = (sample_count - 1) / rate
     samples = []
-    for index in range(round(rate * duration)):
+    for index in range(sample_count):
         time = index / rate
-        attack = math.sin(min(1, time / 0.018) * math.pi / 2) ** 2
-        decay = math.exp(-max(0, time - 0.018) / 0.038)
-        release = min(1, (duration - time) / 0.025) ** 2
-        tone = math.sin(2 * math.pi * 660 * time) + 0.22 * math.sin(2 * math.pi * 880 * time)
-        samples.append(attack * decay * release * tone)
-    scale = 0.18 / max(map(abs, samples))
+        value = 0.0
+        for onset, frequency in ((0.0, 349.23), (0.135, 440.0)):
+            note_time = time - onset
+            if 0 <= note_time < 0.18:
+                envelope = soft_window(note_time, 0.18, 0.024, 0.080)
+                value += math.sin(2 * math.pi * frequency * note_time) * envelope * math.exp(-note_time / 0.09)
+        samples.append(value * soft_window(time, remaining_duration))
+    rms = math.sqrt(sum(value * value for value in samples) / len(samples))
+    scale = min(0.16 / max(map(abs, samples)), 0.040 / rms)
     return rate, [round(value * scale * 32767) for value in samples]
+
+
+def soft_window(time, duration, attack=0.012, release=0.035):
+    """Round each note's attack and release with a smooth taper."""
+    rise = math.sin(min(1.0, max(0.0, time / attack)) * math.pi / 2) ** 2
+    fall = math.sin(min(1.0, max(0.0, (duration - time) / release)) * math.pi / 2) ** 2
+    return rise * fall
 
 
 def write_purchase(output):

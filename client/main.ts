@@ -954,7 +954,6 @@ function onMessage(serverMessage: ServerMessage) {
       history = [];
       showLanded();
       refreshCompanion();
-      audio.play(10110, 0, 0, 0.5);
       break;
     case 'space':
       if (String(serverMessage.sys).startsWith('arena-') && !systemsById[serverMessage.sys])
@@ -1526,7 +1525,8 @@ function onEvent(snapshotEvent: SnapshotEvent) {
 
 // ------------------------------------------------------------------ input
 const typing = () =>
-  (elementById2('profiledialog') as HTMLDialogElement).open ||
+  (!elementById2('infobox').classList.contains('hidden') &&
+    !elementById2('captainprofile').classList.contains('hidden')) ||
   (document.activeElement &&
     (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) ||
       (document.activeElement as HTMLElement).isContentEditable));
@@ -1756,6 +1756,7 @@ window.addEventListener(
   (keyboardEvent) => {
     if (
       !elementById2('hailbox').classList.contains('hidden') &&
+      elementById2('infobox').classList.contains('hidden') &&
       (keyboardEvent.key === 'Escape' || (keyboardEvent.code === 'KeyT' && !typing()))
     ) {
       hailUI.close();
@@ -1777,16 +1778,22 @@ function openInfo() {
 elementById2('captainshortcut').onclick = () =>
   elementById2('infobox').classList.contains('hidden') ? openInfo() : closeInfo();
 function closeInfo() {
+  profileUI.hide();
   audio.ui('close', 0.6);
   elementById2('infobox').classList.add('hidden');
   if (infoReturnFocus?.isConnected) infoReturnFocus.focus({ preventScroll: true });
 }
 function renderInfo() {
-  clientGameState.views.replace(
-    elementById2('infobody'),
-    infoHtml(clientGameState, clientGameState.itab || 'ship'),
-    'info:' + (clientGameState.itab || 'ship'),
-  );
+  const profileSelected = clientGameState.itab === 'profile';
+  elementById2('infobody').classList.toggle('hidden', profileSelected);
+  if (profileSelected) profileUI.show();
+  else profileUI.hide();
+  if (!profileSelected)
+    clientGameState.views.replace(
+      elementById2('infobody'),
+      infoHtml(clientGameState, clientGameState.itab || 'ship'),
+      'info:' + (clientGameState.itab || 'ship'),
+    );
   elementById2('itabs')
     .querySelectorAll<HTMLElement>('button')
     .forEach((htmlElement) =>
@@ -1831,9 +1838,38 @@ window.addEventListener(
   'keydown',
   (keyboardEvent) => {
     if (
+      keyboardEvent.key === 'Tab' &&
+      clientGameState.itab === 'profile' &&
       !elementById2('infobox').classList.contains('hidden') &&
-      (keyboardEvent.key === 'Escape' || keyboardEvent.code === 'KeyI') &&
-      !typing()
+      elementById2('opts').classList.contains('hidden') &&
+      elementById2('ctrlbox').classList.contains('hidden')
+    ) {
+      const controls = [
+        ...elementById2('infobox').querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex="0"]',
+        ),
+      ].filter(
+        (element) =>
+          element.offsetParent !== null &&
+          (!(element instanceof HTMLInputElement) || element.type !== 'radio' || element.checked),
+      );
+      const first = controls[0],
+        last = controls.at(-1);
+      if (keyboardEvent.shiftKey && document.activeElement === first) {
+        keyboardEvent.preventDefault();
+        last?.focus();
+      } else if (!keyboardEvent.shiftKey && document.activeElement === last) {
+        keyboardEvent.preventDefault();
+        first?.focus();
+      }
+      keyboardEvent.stopImmediatePropagation();
+      return;
+    }
+    if (
+      !elementById2('infobox').classList.contains('hidden') &&
+      elementById2('opts').classList.contains('hidden') &&
+      elementById2('ctrlbox').classList.contains('hidden') &&
+      (keyboardEvent.key === 'Escape' || (keyboardEvent.code === 'KeyI' && !typing()))
     ) {
       closeInfo();
       keyboardEvent.stopImmediatePropagation();
@@ -3348,7 +3384,6 @@ window.addEventListener(
       if (!['Enter', ' ', 'Tab'].includes(keyboardEvent.key)) keyboardEvent.preventDefault();
       return;
     }
-    if ((elementById2('profiledialog') as HTMLDialogElement).open) return;
     if (keyboardEvent.key !== 'Escape' || keyboardEvent.repeat || !clientGameState.you || typing())
       return;
     if (!elementById2('qvolbox').classList.contains('hidden')) {

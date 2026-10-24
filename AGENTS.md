@@ -78,6 +78,22 @@ then rewrite only where needed. Preserve facts, caveats, examples, links, comman
 JSDoc types and tags, tool directives, and license or attribution notices. Do not
 change executable code or quoted third-party material merely to alter its voice.
 
+## README and screenshot maintenance
+
+Open the README with an evergreen, player-facing game overview: the core game,
+beta status, download and how to start playing. Never lead with technical
+architecture, runtime internals, or a latest-feature or release spotlight. Keep
+detailed engineering, build and hosting setup in linked `docs/` guides, and put
+release-specific changes in release notes. Retain concise player launch guidance
+and link to truthful compatibility requirements. Keep the feature overview focused
+on core play; avoid update-by-update clutter and duplicate feature bullets.
+
+On every relevant feature or graphical update, refresh the README text and its
+actual implemented-game screenshots. Keep the gallery representative of current
+artwork and behavior. Never use concept renders or mockup images as proof of the
+implemented game. Verify screenshot links and capture the current game rather
+than retaining stale images of replaced artwork or controls.
+
 ## Beta save generator maintenance
 
 Keep `test/Save Generator/` functional for every future release while this beta
