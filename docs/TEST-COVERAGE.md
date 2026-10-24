@@ -819,7 +819,7 @@ comparisons, not physical midrange-laptop or audible-output certification.
 
 ## Performance and operational health
 
-`health.ts` checks bounded numeric sampling, UTF-8 sizing, failed-checkpoint freeze
+The `performance-health` system registers `health.ts` for bounded numeric sampling, UTF-8 sizing, failed-checkpoint freeze
 privacy, and enabled/disabled authoritative parity across six seeded workloads.
 The scenarios cover real combat, mining/towing, concentrated/distributed captains,
 reconnect state and accelerated soak. Snapshot/checkpoint size ceilings guard
