@@ -14,6 +14,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
+import { SYS } from '../shared/galaxy.ts';
 const directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-gate-browser-'));
 const evidence = path.resolve(process.argv[2] || evidenceDir('gateway'));
 fileSystem.mkdirSync(evidence, { recursive: true });
@@ -22,10 +23,15 @@ const database = new Database(path.join(directory, 'data')),
     JSON.parse(fileSystem.readFileSync(path.join(root, 'shared/assets.json')).toString()),
     database,
   );
-for (const systemId of ['sol', 'coldharbor']) {
+for (const systemId of ['qgate', 'coldharbor', 'aureole']) {
   const playerData = database.create('Gate ' + systemId, '', game.fresh());
   playerData.sys = systemId;
-  playerData.stellar = systemId === 'sol' ? 'luna' : 'coldharbor';
+  playerData.stellar =
+    systemId === 'qgate'
+      ? 'qstation'
+      : systemId === 'aureole'
+        ? SYS.aureole.stellars.find((stellar) => stellar.svc?.includes('L'))!.id
+        : 'coldharbor';
   playerData.tut = 999;
   playerData.story = { done: ['start'], active: null, step: 0 };
 }
@@ -71,7 +77,7 @@ try {
     args: ['--no-sandbox'],
   });
   const results = [];
-  for (const systemId2 of ['sol', 'coldharbor']) {
+  for (const systemId2 of ['qgate', 'coldharbor']) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }),
       errors: string[] = [],
       sent: { t: string; [entryKey: string]: unknown }[] = [];
@@ -107,6 +113,7 @@ try {
         y: result.top + ((player!.y - camera.cy) * camera.z + camera.H / 2) / pixelRatio,
       };
     });
+    await page.screenshot({ path: path.join(evidence, systemId2 + '-gateway.png') });
     await page.mouse.dblclick(point.x, point.y);
     await page.waitForFunction(() => G.auto?.mode === 'gateway');
     await page.waitForFunction((baseline) => G.sys !== baseline, systemId2, { timeout: 45000 });
@@ -119,6 +126,29 @@ try {
     results.push({ origin: systemId2, destination: dest, noBounce: true, landRequests: 0, errors });
     await page.close();
   }
+  const hulkPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await hulkPage.route('**/render.js', async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, body: (await response.text()) + '\nexport { decorFor };' });
+  });
+  await hulkPage.goto(origin);
+  await hulkPage.locator('[data-slot="Gate aureole"]').click();
+  await hulkPage.waitForFunction(() => G.you && G.landed);
+  await hulkPage.click('#depart');
+  await hulkPage.waitForFunction(() => G.view && !G.landed);
+  const hulk = await hulkPage.evaluate(async () => {
+    const { SYS } = await import('/shared/galaxy.js');
+    const { decorFor } = (await import('/render.js')) as typeof import('./helpers/render-probe.ts');
+    return decorFor(SYS.aureole).derelict;
+  });
+  assert.equal(hulk.length, 1, 'one permanent hulk, not a new random wreck each visit');
+  assert.equal(hulk[0].spin, 0, 'the dormant hulk never moves');
+  assert.equal(hulk[0].size, 1800);
+  for (let index = 0; index < 6; index++) await hulkPage.keyboard.press('x');
+  await hulkPage.waitForFunction(() => G.zoom < 0.45);
+  await hulkPage.waitForTimeout(250);
+  await hulkPage.screenshot({ path: path.join(evidence, 'aureole-hulk.png') });
+  await hulkPage.close();
   fileSystem.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(results, null, 2));
   console.log(results);
 } catch (error) {

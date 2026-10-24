@@ -1,3 +1,4 @@
+import { verifyStoryFoundations } from './helpers/story-foundations.ts';
 import { mockSession } from './helpers/mocks.ts';
 import type { Entity } from '../server/space.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
@@ -18,7 +19,7 @@ try {
   );
   const playerData = { ...game.fresh(), name: 'Gateway Test' };
   playerData.name = 'Gateway Test';
-  playerData.sys = 'sol';
+  playerData.sys = 'qgate';
   playerData.stellar = null;
   playerData.tut = 999;
   const session = mockSession({
@@ -29,7 +30,7 @@ try {
   });
   game.sessions.set(session.id, session);
   game.spawnPlayer(session, 0, 0, 0, 0);
-  for (const origin of ['sol', 'coldharbor']) {
+  for (const origin of ['qgate', 'coldharbor']) {
     const player = systemsById[origin].stellars.find((stellarBody) => stellarBody.wormhole);
     const shipStats3 = requiredFixtureValue(shipStats(game.A, makeLoadout(game.A, 704)));
     // Near the center, aligned ships keep thrusting regardless of drift speed/direction.
@@ -135,6 +136,7 @@ try {
       ) > Math.hypot(600 - stellarBody.x, 600 - stellarBody.y),
     );
   }
+  verifyStoryFoundations(game);
   console.log(
     'Gateway both directions: aperture guidance, center exit, stopped anti-bounce and rearm passed.',
   );

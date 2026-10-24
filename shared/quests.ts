@@ -646,7 +646,7 @@ export const SIDE_STORIES: SideStory[] = [
         type: 'survey',
         sys: 'coldharbor',
         title: 'Listen at Coldharbor',
-        brief: 'Pass through the Sol Gateway and survey Coldharbor, where the signal is loudest.',
+        brief: 'Pass through the Gateway and survey Coldharbor, where the signal is loudest.',
         beat: 'The signal is coming from deeper in: an old relay buoy somewhere in Coldharbor.',
       },
       {

@@ -1,3 +1,4 @@
+import { EXPEDITION_HULK } from '../../shared/expeditions.ts';
 import type { Session } from '../../server/game.ts';
 // Isolated production-runtime instrumentation used only by its owning regression test.
 import { Game } from '../../server/game.ts';
@@ -14,8 +15,8 @@ Game.prototype.spawnPlayer = function (
     );
     session._gatewayFixturePlaced = true;
     Object.assign(session.ent!, {
-      x: player!.x + 250,
-      y: player!.y,
+      x: player ? player.x + 250 : EXPEDITION_HULK.x + 600,
+      y: player ? player.y : EXPEDITION_HULK.y,
       vx: 0,
       vy: 0,
       a: -Math.PI / 2,

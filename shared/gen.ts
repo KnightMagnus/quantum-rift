@@ -366,7 +366,7 @@ const DESC: Record<string, Record<string, string[]>> = {
   farside: {
     planet: [
       'A quiet world beyond the Gateway, settled by people who followed the light through.',
-      'Grey seas and long twilights. The settlers here do not talk about how they arrived.',
+      'Grey seas and long twilights. The settlers here came through the Gateway three generations ago and never looked back.',
     ],
     station: [
       'A Farside waystation, patched together from ships that never went home.',
@@ -1049,7 +1049,7 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
         svc: 'LTOB',
         tech: 6,
         prices: { equipment: -1, industrial: -1, food: 1 },
-        desc: 'The old lunar shipyards, now a customs station watching over the Gateway.',
+        desc: 'The old lunar shipyards, still turning out hulls for the Concord.',
       },
       {
         id: 'sol-gateway',

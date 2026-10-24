@@ -1,3 +1,4 @@
+import { legacyStorySystems } from './helpers/legacy-story-systems.ts';
 import { mockPlayerData } from './helpers/mocks.ts';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
@@ -88,9 +89,13 @@ const sha256 = (
   value: Record<string, StarSystem> | Record<string, FactionArc> | (string | string[] | null)[][],
 ) => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 assert.equal(
-  sha256(systemsById),
+  sha256(
+    Object.fromEntries(
+      legacyStorySystems(Object.values(systemsById)).map((system) => [system.id, system]),
+    ),
+  ),
   baseline.galaxy,
-  'Generated topology, prices, bodies and field identities are unchanged',
+  'Generated topology, prices, bodies and fields match after reviewed story-only reversals',
 );
 assert.equal(
   sha256(ARCS),
