@@ -193,11 +193,30 @@ npm run test:regression:browser
 
 Node 22+ is required for development tests. Production retains its separate
 runtime requirements. `.github/workflows/ci.yml` executes both manifest groups
-in separate jobs, preserving formatting, type checks, feature characterization,
+in four independent server workers and four independent browser workers, preserving
+formatting, type checks, feature characterization,
 contract checks and every previously included regression. No registered program
 is run twice across those jobs. Each case has isolated temporary data, seeded
 fixtures, a hard deadline and process cleanup. Logs, screenshots and JSON results
 are retained in `.artifacts/regression/` and uploaded even on CI failure.
+
+Each worker runs its assigned programs sequentially on its own VM, so tests cannot
+collide on fixed ports, save files, browser resources or generated repository files.
+Shards use the manifest order modulo the worker count: every registered program
+belongs to exactly one shard. Append `-- --shard=1/4` to either group command to
+reproduce one worker. Omit the option for the complete local lane. The worker count
+and matrix must be changed together in the workflow. More workers require more
+hosted-runner capacity and repeat dependency installation; no fixed speedup is
+assumed. Matrix failure does not cancel sibling workers, and evidence artifacts
+have distinct shard names. The existing required check names aggregate all shard
+outcomes and fail on failure, cancellation or skipped dependencies.
+
+`regression-runner-contracts.ts` checks exactly-once assignment for the real
+manifest, invalid shard rejection, subprocess failure and timeout reporting,
+cancellation, descendant cleanup and retained logs. Runtime deadlines remain
+180 seconds per program, or 240 seconds for `network-systems.ts`. Cancellation
+signals the active process tree, allowing up to five seconds for fixture cleanup
+before forced termination, removes its temporary directory and exits nonzero.
 
 ## Behavior systems
 
@@ -787,7 +806,9 @@ full-volume values. Existing options migrations remain in place; no new preferen
 migration or reset is introduced.
 
 The existing login-scene browser test retains the actual station/planet artwork,
-lamp-brightness, reduced-motion event-loss, resize and lifecycle checks. Station
+lamp-brightness, reduced-motion event-loss, resize and lifecycle checks. It verifies
+that blocked autoplay holds traffic still before any user activation, then uses a
+real click to start playback before checking movement of all six courier hulls. Station
 lamp dimming uses a precomputed black alpha mask instead of filtering the full
 mutable atlas on each paint. Private headless 4x-CPU profiles are constrained-host
 comparisons, not physical midrange-laptop or audible-output certification.
