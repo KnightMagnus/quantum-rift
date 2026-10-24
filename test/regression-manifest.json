@@ -116,6 +116,7 @@
     "planet-portrait-art.ts",
     "portrait-persistence.ts",
     "landscape-generation.ts",
+    "health.ts",
     "wire-contracts.ts"
   ],
   "browser": [
@@ -1259,7 +1260,7 @@
         "logout-browser.ts",
         "sidebar-sizing-browser.ts"
       ],
-      "asserts": "Production Engine, uncropped zoom-2 projectile pixel references across headings/speeds/iteration orders/backends, native decoded Sprite entities, display-only physics, original sequenced input stream, typing/blur, physical-pixel camera at DPR1/2 and zoom limits, responsive resizing, actor cleanup, local modules and no unsafe-eval."
+      "asserts": "Production Engine, uncropped zoom-2 projectile pixel references across headings/speeds/iteration orders/backends, native decoded Sprite entities, deferred canvas encoding rejects zero-dimension Sprites, display-only physics, original sequenced input stream, typing/blur, physical-pixel camera at DPR1/2 and zoom limits, responsive resizing, actor cleanup, local modules and no unsafe-eval."
     },
     {
       "id": "nakama-online",
@@ -1355,6 +1356,18 @@
         "cockpit-layout-browser.ts"
       ],
       "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork. Profile is a Captain-menu tab, without independent HUD/landed profile buttons."
+    },
+    {
+      "id": "performance-health",
+      "services": [],
+      "tests": ["health.ts", "excalibur-runtime-browser.ts"],
+      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples.",
+      "owners": [
+        "shared/health.ts",
+        "server/game.ts",
+        "server/nakama-storage.ts",
+        "client/space-scene.ts"
+      ]
     }
   ],
   "routes": {

@@ -1,3 +1,4 @@
+import { browserHealth } from './health.ts';
 import {
   Actor,
   Canvas,
@@ -16,9 +17,12 @@ import { updateLoginScene } from './login_scene.ts';
 
 /** The sole flight scene: native entities interleaved with procedural screen-space layers. */
 export class SpaceScene extends Scene {
+  /** Developer-only bounded timings when ?health=1; absent otherwise. */
+  readonly health = browserHealth;
   readonly display = new WorldActors(this);
   private layers: { actor: Actor; graphic: Canvas }[] = [];
   private now = 0;
+  private drawStarted = 0;
   private nextRaster = 0;
   private system: string | null | undefined;
   updates = 0;
@@ -75,6 +79,7 @@ void main() { fragColor = vec4(texture(u_graphic, v_uv).rgb * u_opacity, 0.0); }
     setWorldProjection((x, y) => engine.screen.worldToScreenCoordinates(vec(x, y)));
   }
   onPreUpdate(engine: Engine, elapsed: number): void {
+    const started = browserHealth?.now() ?? 0;
     this.updates++;
     this.now = performance.now();
     updateLoginScene(this.now);
@@ -111,6 +116,14 @@ void main() { fragColor = vec4(texture(u_graphic, v_uv).rgb * u_opacity, 0.0); }
         graphic.height = engine.screen.resolution.height;
       }
     }
+    if (browserHealth) browserHealth.observe('browserUpdateMs', browserHealth.now() - started);
+  }
+  onPreDraw(): void {
+    this.drawStarted = browserHealth?.now() ?? 0;
+  }
+  onPostDraw(): void {
+    if (browserHealth)
+      browserHealth.observe('browserDrawMs', browserHealth.now() - this.drawStarted);
   }
   onDeactivate(): void {
     this.display.clear();
