@@ -727,18 +727,6 @@ body.solo .mp {
   object-fit: cover;
   display: block;
 }
-#profiledialog {
-  color: var(--text);
-  width: min(680px, 90vw);
-  box-sizing: border-box;
-  max-width: 90vw;
-  max-height: 88dvh;
-  overflow: auto;
-  padding: 18px;
-}
-#profiledialog::backdrop {
-  background: #000b;
-}
 #portraitchoices {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -759,11 +747,4 @@ body.solo .mp {
 #portraitchoices img {
   max-width: 100%;
   object-fit: cover;
-}
-
-body.scaled #profiledialog {
-  zoom: var(--ui);
-  width: min(680px, calc(90vw / var(--ui)));
-  max-width: calc(90vw / var(--ui));
-  max-height: calc(88dvh / var(--ui));
 }

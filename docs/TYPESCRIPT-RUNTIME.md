@@ -45,6 +45,34 @@ npm start
 commands rebuild before running. After changing source, rebuild before launching
 individual tests directly.
 
+### Choose a play mode
+
+After building a source checkout, choose a launcher:
+
+| Mode             | Start                                                               | Where progress lives                             |
+| ---------------- | ------------------------------------------------------------------- | ------------------------------------------------ |
+| Solo             | `Start Solo Game.bat` or `sh start-solo.command`                    | Local Solo saves, with pause and import/export   |
+| Host friends     | `Start Friend Game.bat` or `sh start-friends.command`               | One shared universe in the host’s `friend-data/` |
+| Dedicated online | `node tools/start.ts`, with separately configured Nakama/PostgreSQL | Native server storage                            |
+
+The terminal equivalent for friend hosting is `node tools/start.ts --friends`.
+The friend launcher opens the host’s browser and explicitly enables LAN listening;
+friends use the host’s LAN or VPN URL, not their own `localhost`. See the
+[friend-host guide](HOSTING.md) for addresses, backups and access limits.
+
+Ordinary `node tools/start.ts` and `npm start` select dedicated online hosting.
+They start the static web host, not Nakama or PostgreSQL; configure those services
+separately using the [dedicated-host guide](NAKAMA.md). Neither launcher opens
+router ports or changes firewall rules automatically. Solo and friend games need
+no Nakama or PostgreSQL service.
+
+Preserve `friend-data/`, `data/` and `solo-data/` when changing checkouts. These
+stores do not automatically import or synchronize with each other. Save imports
+remain Solo-only. The [beta save generator](../test/Save%20Generator/README.md)
+creates custom Solo test captains.
+
+### Source and release layout
+
 `server/`, `shared/` and `client/` contain TypeScript source modules. Use explicit `.ts`
 extensions when importing application source, including from TypeScript test tools.
 Node 27 strips erasable types when tests import source directly. Keep TypeScript
