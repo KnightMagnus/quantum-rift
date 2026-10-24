@@ -19,6 +19,12 @@ export class WorldActors {
     this.scene = scene;
   }
 
+  private imageReady(resource: ImageSource): boolean {
+    // Canvas ImageSource marks isLoaded before its asynchronous blob has decoded.
+    // Zero dimensions let Sprite later replace the requested zoomed size with native size.
+    return resource.isLoaded() && resource.width > 0 && resource.height > 0;
+  }
+
   private sprite(
     image: HTMLImageElement | HTMLCanvasElement,
     size: number,
@@ -33,7 +39,7 @@ export class WorldActors {
           : ImageSource.fromHtmlCanvasElement(image);
       this.images.set(image, resource);
     }
-    if (!resource.isLoaded()) return null;
+    if (!this.imageReady(resource)) return null;
     return new Sprite({
       image: resource,
       sourceView: source,
@@ -276,12 +282,12 @@ export class WorldActors {
           if (this.shotGraphics.size > 256)
             this.shotGraphics.delete(this.shotGraphics.keys().next().value!);
         }
-        if (!resource.isLoaded()) {
+        if (!this.imageReady(resource)) {
           const prefix = shot.w + ':';
           const suffix = identity;
           const loaded = [...this.shotGraphics].find(
             ([cachedKey, image]) =>
-              cachedKey.startsWith(prefix) && cachedKey.endsWith(suffix) && image.isLoaded(),
+              cachedKey.startsWith(prefix) && cachedKey.endsWith(suffix) && this.imageReady(image),
           );
           if (!loaded) return;
           resource = loaded[1];

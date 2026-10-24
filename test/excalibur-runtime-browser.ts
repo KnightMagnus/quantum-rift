@@ -103,7 +103,18 @@ try {
         return send.call(this, data);
       };
     });
-    await page.goto(origin + (renderer === 'auto' ? '/' : '/?renderer=' + renderer));
+    if (renderer === 'webgl' && ratio === 1) {
+      await page.goto(origin);
+      await page.waitForFunction(
+        () => document.querySelector<HTMLCanvasElement>('#view')?.dataset.engine,
+      );
+      assert.equal(
+        await page.evaluate(() => window.RiftEngine.scene.health),
+        undefined,
+        'browser diagnostics default off',
+      );
+    }
+    await page.goto(origin + '/?health=1' + (renderer === 'auto' ? '' : '&renderer=' + renderer));
     await page.waitForFunction(
       () => document.querySelector<HTMLCanvasElement>('#view')?.dataset.engine,
     );
@@ -308,11 +319,51 @@ try {
               shots,
               zoom: 2,
             };
-            scene.display.update(state, 0);
-            await new Promise((resolve) => setTimeout(resolve, 40));
-            scene.display.update(state, 0);
+            // Hold blob encoding so each backend exercises the undecoded-image boundary.
+            const toBlob = Reflect.get(
+              HTMLCanvasElement.prototype,
+              'toBlob',
+            ) as HTMLCanvasElement['toBlob'];
+            const pendingBlobs: (() => void)[] = [];
+            HTMLCanvasElement.prototype.toBlob = function (callback, ...options) {
+              pendingBlobs.push(() => toBlob.call(this, callback, ...options));
+            };
+            let prematureActors: number;
+            try {
+              scene.display.update(state, 0);
+              prematureActors = scene.display.actors.size;
+            } finally {
+              HTMLCanvasElement.prototype.toBlob = toBlob;
+              for (const release of pendingBlobs) release();
+            }
+            const decodedBy = performance.now() + 5000;
+            while (scene.display.actors.size !== shots.length) {
+              if (performance.now() >= decodedBy) throw Error('Projectile sprites did not decode');
+              await new Promise((resolve) => setTimeout(resolve, 10));
+              scene.display.update(state, 0);
+            }
             await engine.start();
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            // Actor.kill() queues removal for an engine update. A wall-clock
+            // delay can capture a new shot together with a previous case's tail.
+            await new Promise<void>((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                engine.off('postupdate', settled);
+                reject(Error('Projectile actors did not settle after update'));
+              }, 5000);
+              const settled = () => {
+                const current = new Set(scene.display.actors.values());
+                const registered = scene.actors.filter((actor) => actor.name.startsWith('shot:'));
+                if (
+                  registered.length === shots.length &&
+                  registered.every((actor) => current.has(actor))
+                ) {
+                  clearTimeout(timeout);
+                  engine.off('postupdate', settled);
+                  resolve();
+                }
+              };
+              engine.on('postupdate', settled);
+            });
             const image = await engine.screenshot(true);
             engine.stop();
             const capture = document.createElement('canvas');
@@ -360,6 +411,7 @@ try {
                 if (present >= 12 && brightness < 3) excess++;
               }
               results.push({
+                prematureActors,
                 heading,
                 speed: speeds[index],
                 order: speeds.join(','),
@@ -386,6 +438,7 @@ try {
       JSON.stringify(projectilePixels, null, 2),
     );
     for (const pixel of projectilePixels) {
+      assert.equal(pixel.prematureActors, 0, 'undecoded canvas images must not create Sprites');
       assert.ok(pixel.energy > 1000, 'uncropped reference contains visible authored projectile');
       assert.ok(pixel.error < 0.18, JSON.stringify(pixel));
       assert.ok(
@@ -488,6 +541,27 @@ try {
     assert.ok(
       requests.filter((url) => /\.js(?:\?|$)/.test(url)).every((url) => url.startsWith(origin)),
       'offline engine modules are local',
+    );
+    const health = await page.evaluate(() => window.RiftEngine.scene.health?.report());
+    assert.ok(health?.browserUpdateMs && health.browserUpdateMs.count > 30);
+    assert.ok(health?.browserDrawMs && health.browserDrawMs.count > 30);
+    assert.ok(Object.values(health).every((metric) => metric.retained <= 512));
+    fileSystem.writeFileSync(
+      path.join(output, 'health-' + renderer + '-dpr' + ratio + '.json'),
+      JSON.stringify(
+        {
+          browser: browser.version(),
+          viewport: page.viewportSize(),
+          ratio,
+          requestedRenderer: renderer,
+          actualRenderer: native.renderer,
+          workload:
+            'existing Engine flight/input/camera/effects fixture, 1 captain, mixed lifecycle',
+          health,
+        },
+        null,
+        2,
+      ),
     );
     await context.close();
     console.log('Native Engine/input/camera/lifecycle/CSP:', renderer, 'DPR', ratio, 'PASS');

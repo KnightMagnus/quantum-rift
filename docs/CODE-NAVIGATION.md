@@ -92,6 +92,7 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 
 | Change                                          | Start with                                                  | Important companions                                                                                         |
 | ----------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Performance and operational diagnostics         | `shared/health.ts`, `docs/PERFORMANCE.md`                   | `tools/performance-baseline.ts`, `test/helpers/performance-scenarios.ts`                                     |
 | Startup and static HTTP                         | `server/main.ts`, `server/nakama-host.ts`                   | `tools/start.ts`, `docs/NAKAMA.md`                                                                           |
 | Native sessions, match ingress and clock        | `server/nakama-world.ts`, `server/nakama-auth.ts`           | `server/nakama-identity-gates.ts`, `server/nakama-storage.ts`                                                |
 | Solo/friend endpoints and reference fixtures    | `server/local-main.ts`                                      | `server/ws.ts`, `server/db.ts`, `server/friend-host-config.ts`                                               |
