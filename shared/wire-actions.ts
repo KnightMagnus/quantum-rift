@@ -152,7 +152,7 @@ export function validRefineryRequest(value: unknown, orders: boolean): boolean {
 export function parseRefineryAction(value: unknown): RefineryAction | null {
   if (
     !wireRecord(value) ||
-    !['refinery', 'miningOrder'].includes(String(value.t)) ||
+    (value.t !== 'refinery' && value.t !== 'miningOrder') ||
     !validRefineryRequest(value, value.t === 'miningOrder') ||
     (value.n !== undefined && (typeof value.n !== 'number' || !Number.isFinite(value.n)))
   )
@@ -164,7 +164,8 @@ export function validTowingRequest(value: unknown): boolean {
   if (
     !wireRecord(value) ||
     !fields(value, ['t', 'op', 'id', 'revision', 'to', 'port']) ||
-    !['attach', 'detach', 'offer', 'accept', 'deliver'].includes(String(value.op)) ||
+    typeof value.op !== 'string' ||
+    !['attach', 'detach', 'offer', 'accept', 'deliver'].includes(value.op) ||
     !Number.isSafeInteger(value.id) ||
     !Number.isSafeInteger(value.revision) ||
     (value.to !== undefined && (!text(value.to, 64) || !value.to.trim())) ||

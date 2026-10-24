@@ -26,6 +26,8 @@ for (const invalid of [
   assert.equal(parseTradeAction(invalid), null);
 }
 assert.ok(parseRefineryAction({ t: 'refinery', op: 'list' }));
+assert.equal(parseRefineryAction({ t: ['refinery'], op: 'list' }), null);
+assert.equal(parseTowingAction({ t: 'towing', op: ['attach'], id: 1, revision: 1 }), null);
 assert.ok(parseRefineryAction({ t: 'miningOrder', op: 'accept', id: 'order' }));
 assert.equal(parseRefineryAction({ t: 'refinery', op: 'accept' }), null);
 assert.equal(parseRefineryAction({ t: 'refinery', op: 'quote', n: NaN }), null);
@@ -48,6 +50,7 @@ for (const incoming of [
   { t: 'refinery', op: 'submit', id: 'x'.repeat(201) },
   { t: 'miningOrder', op: 'accept', id: [] },
   { t: 'towing', op: 'deliver', id: 1, revision: Infinity, port: 'earth' },
+  { t: 'towing', op: ['attach'], id: 1, revision: 1 },
 ])
   game.onMessage(session, incoming);
 assert.equal(
