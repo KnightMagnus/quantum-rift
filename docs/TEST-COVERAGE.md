@@ -28,6 +28,22 @@ application types for those nested structures; other action families and server
 payloads still need migration. Static typing and bounded traversal do not prove
 nested semantic validity or authorize client economic decisions.
 
+## Native wall-clock performance
+
+`performance-native.ts` belongs to `performance-health` and runs disposable native
+Nakama/Goja, PostgreSQL and SDK sockets. Its 32-second concentrated flight case
+observes real input progress and movement, bounded packet/error retention,
+900-tick numeric health summaries, authoritative reconnect, actual checkpoints,
+process restart and restored nondefault captain markers. It verifies invalid
+workload/CLI limits before resource creation, fixed numeric health extraction and
+cleanup after a real post-join injected failure. Numeric reports exclude payloads,
+identifiers, credentials and exception contents. The companion
+`tools/performance-native.ts` defaults to 60 measured seconds for repeatable host
+observations. No latency or production-capacity threshold is asserted; client
+seeding is not server determinism. Distributed/combat/mining native workloads,
+Internet conditions, browser rendering and multihour soak coverage remain absent.
+See [PERFORMANCE.md](PERFORMANCE.md) for pacing, retention and timing semantics.
+
 ## Development tooling
 
 `tooling-contracts.ts` runs in the unit CI lane. It checks that Oxlint accepts

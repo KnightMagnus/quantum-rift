@@ -121,3 +121,76 @@ The 30 Hz simulation has a 33.33 ms cadence, which alone is not a measured laten
 SLO. Optimize only a hot path established by those measurements, with separate
 authoritative parity coverage. Current instrumentation does not prove multihour
 stability, weak-device rendering, GC tail latency or production checkpoint speed.
+
+## Native wall-clock workload
+
+The separate native harness runs the built Goja match in disposable Nakama and
+PostgreSQL processes, with real SDK sockets over loopback. Build first and provide
+`POSTGRES_BIN` as for the native network regressions; `NAKAMA_BINARY` can select the
+pinned installed Nakama binary.
+
+```sh
+npm run build
+node tools/performance-native.ts --output=/private/artifacts/native-run-1.json \
+  --duration=60 --captains=4 --seed=1701
+node tools/performance-native.ts --output=/private/artifacts/native-run-2.json \
+  --duration=60 --captains=4 --seed=1701
+node test/performance-native.ts
+```
+
+The default workload lasts 60 measured wall-clock seconds with four fresh
+captains in their common initial system. Limits are 32–300 integer seconds,
+1–12 captains and an unsigned 32-bit client seed. Invalid or duplicate arguments
+fail before creating services or an output file. Output must be an absolute path;
+the tool creates a new mode-0600 file and refuses to overwrite one. Setup and
+restart time are additional to the measured flight duration. The fixture watchdog
+is duration plus 120 seconds, at most 420 seconds. Ordinary native fixture tests
+retain their existing 180-second watchdog, warning-level logger and packet history.
+
+The client sends seeded thrust/turn inputs at a target 10 Hz without firing. The
+seed selects client actions only: it does not fix native server RNG, NPC activity
+or OS scheduling. One captain disconnects halfway through the measured interval.
+The normal server policy docks disconnected captains in-system; the harness waits
+for authoritative player state and requests ordinary departure to resume flight.
+After measurement it verifies input acknowledgements and actual movement, reads
+numeric checkpoint metadata, restarts Nakama without replacing PostgreSQL, then
+checks all captains' saved portrait markers, credits, hulls and systems before
+resuming flight. No server state is injected to simulate this continuity.
+
+Native health is enabled in the generated fixture's `runtime.env` with
+`RIFT_HEALTH=1`, together with info-level logging. The report copies only fixed
+numeric fields from `World health` summaries; arbitrary log messages, identifiers,
+packets, SDK errors, credentials and tokens are not copied. Private fixture logs,
+configuration and database files are not numeric reports and must remain private.
+The 32-second registered regression crosses the 900-tick health logging cadence;
+it also checks invalid limits, bounded collectors and cleanup after an injected
+post-join failure. Existing native network coverage still exercises ordinary
+fixture defaults.
+
+Each connection retains at most 64 recent packets, 64 recent errors and three
+fixed latest-state packets (`you`, `snap`, `scene`). Lifetime packet/byte/error and
+snapshot/byte counters do not depend on this diagnostic window. Receive totals
+cover each connection's full lifetime, including joins and restart. Input counters
+count only the scheduled measured-flight inputs, not setup/control commands or
+SDK framing. Numeric snapshot
+gap and send-drift samples retain at most 512 values. At most 32 fixed health
+summaries enter one report. The artifact includes source HEAD and dirty status,
+actual binary/SDK versions, Node/platform/CPU/memory/load, driver CPU usage,
+pre-restart native process CPU/RSS samples, measured and total monotonic elapsed
+time, reconnect/restart readiness and process cleanup counts.
+
+`reconnectMs` ends at authoritative player state; `reconnectToFlightMs` additionally
+includes departure and the first flying snapshot. `restartToStateMs` ends at the
+last restored captain's player state, including earlier captains' departures;
+`restartToFlightMs` also includes the final departure. Snapshot gaps are receive
+intervals, not round-trip latency. Send drift includes client scheduling, serial
+sends and reconnect work. Native CPU samples use `ps` integer CPU seconds; the
+PostgreSQL parent excludes its backend workers. Driver CPU includes setup and
+cleanup and is not server CPU. Health timings retain the production `Date.now()`
+resolution and window semantics described above.
+
+Repeat runs and compare their spread on the same host before drawing conclusions.
+These concentrated fresh-captain flight/reconnect/checkpoint runs do not measure
+distributed, combat or mining workloads, Internet latency, browser/GPU work,
+production player capacity, a latency SLO or multihour stability. The accelerated
+in-process scenarios remain separate measurements, not native workload ports.

@@ -120,7 +120,8 @@
     "archive-verification.ts",
     "health.ts",
     "wire-contracts.ts",
-    "story-continuation.ts"
+    "story-continuation.ts",
+    "performance-native.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -612,7 +613,15 @@
     "archive-verification.ts": ["helpers/temp-data.ts"],
     "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "helpers/story-seeded-motion.ts": ["helpers/mocks.ts"],
-    "overlay-input-browser.ts": ["helpers/browser-fixture.ts", "helpers/temp-data.ts"]
+    "overlay-input-browser.ts": ["helpers/browser-fixture.ts", "helpers/temp-data.ts"],
+    "performance-native.ts": [
+      "helpers/native-performance.ts",
+      "helpers/native-packet-collector.ts",
+      "helpers/nakama-service.ts",
+      "helpers/browser-fixture.ts"
+    ],
+    "helpers/native-performance.ts": ["helpers/nakama-service.ts"],
+    "helpers/nakama-service.ts": ["helpers/native-packet-collector.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1482,13 +1491,17 @@
     {
       "id": "performance-health",
       "services": [],
-      "tests": ["health.ts", "excalibur-runtime-browser.ts"],
-      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples.",
+      "tests": ["health.ts", "excalibur-runtime-browser.ts", "performance-native.ts"],
+      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples. Real wall-clock native flight, bounded SDK packet retention, monotonic send drift and snapshot gaps, failure cleanup, authoritative reconnect, PostgreSQL checkpoint and process-restart continuity. Limits and numeric-only health parsing deny malformed input before resources.",
       "owners": [
         "shared/health.ts",
         "server/game.ts",
         "server/nakama-storage.ts",
-        "client/space-scene.ts"
+        "client/space-scene.ts",
+        "tools/performance-native.ts",
+        "test/helpers/native-performance.ts",
+        "test/helpers/native-packet-collector.ts",
+        "test/helpers/nakama-service.ts"
       ]
     },
     {
@@ -1525,7 +1538,8 @@
       "portable-game-core.ts",
       "nakama-network.ts",
       "nakama-browser.ts",
-      "overlay-input-browser.ts"
+      "overlay-input-browser.ts",
+      "performance-native.ts"
     ],
     "target": ["v03.ts", "mining-ui-browser.ts", "message-routing.ts"],
     "tutskip": ["v03.ts", "message-routing.ts"],
@@ -1551,7 +1565,8 @@
       "armada-follow-two-clients.ts",
       "message-routing.ts",
       "nakama-network.ts",
-      "nakama-browser.ts"
+      "nakama-browser.ts",
+      "performance-native.ts"
     ],
     "jump": [
       "armada-formation-network.ts",
@@ -1672,7 +1687,12 @@
     "miningPressure": ["mining-pressure.ts", "refinery-ui-browser.ts", "message-routing.ts"],
     "industrial": ["dredge-network.ts", "dredge-browser.ts", "message-routing.ts"],
     "towing": ["towing-network.ts", "towing-browser.ts", "message-routing.ts", "wire-contracts.ts"],
-    "portrait": ["portrait-persistence.ts", "planet-portrait-browser.ts", "nakama-network.ts"]
+    "portrait": [
+      "portrait-persistence.ts",
+      "planet-portrait-browser.ts",
+      "nakama-network.ts",
+      "performance-native.ts"
+    ]
   },
   "tooling": [
     "capture-features.ts",

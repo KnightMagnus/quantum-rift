@@ -1,3 +1,4 @@
+import { NativePacketCollector } from './native-packet-collector.ts';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -42,6 +43,18 @@ interface Child {
   result?: { code: number | null; signal: string | null };
   error?: string;
 }
+/** Explicit fixture-only observability and watchdog settings; ordinary tests retain defaults. */
+export interface NakamaFixtureOptions {
+  /** Include numeric world health summaries in the private native runtime log. */
+  runtimeHealth?: boolean;
+  /** Total fixture watchdog, including setup and cleanup, between 30 seconds and less than 10 minutes. */
+  deadlineMs?: number;
+}
+/** Bound retained diagnostic packets for sustained scenarios without changing socket delivery. */
+export interface NakamaConnectionOptions {
+  /** Maximum recent packets and errors; bounded mode also caches three fixed state types. Omitted preserves fixture retention. */
+  retainedLimit?: number;
+}
 /** Native disposable services, without simulated game authority or a Node relay. */
 export class NakamaService {
   readonly run: string;
@@ -57,13 +70,23 @@ export class NakamaService {
   private password = randomBytes(24).toString('hex');
   private cleanupPromise?: Promise<unknown>;
   private deadline: ReturnType<typeof setTimeout>;
+  private readonly options: NakamaFixtureOptions;
   private onTerm = () => {
     void this.cleanup().finally(() => process.exit(143));
   };
   private onInterrupt = () => {
     void this.cleanup().finally(() => process.exit(130));
   };
-  constructor(runtimeFile = path.join(repository, 'dist/nakama/quantum-rift.js')) {
+  constructor(
+    runtimeFile = path.join(repository, 'dist/nakama/quantum-rift.js'),
+    options: NakamaFixtureOptions = {},
+  ) {
+    const deadlineMs = options.deadlineMs ?? 180000;
+    if (!Number.isInteger(deadlineMs) || deadlineMs < 30000 || deadlineMs >= 600000)
+      throw new Error('Native fixture deadline must be 30000..599999 milliseconds');
+    if (options.runtimeHealth !== undefined && typeof options.runtimeHealth !== 'boolean')
+      throw new Error('Native fixture runtimeHealth must be boolean');
+    this.options = options;
     this.runtimeFile = runtimeFile;
     process.umask(0o077);
     const temporary = path.join(privateRoot, 'temp');
@@ -74,7 +97,7 @@ export class NakamaService {
     this.deadline = setTimeout(() => {
       console.error('Native game deadline exceeded');
       void this.cleanup().finally(() => process.exit(1));
-    }, 180000);
+    }, deadlineMs);
     process.once('SIGTERM', this.onTerm);
     process.once('SIGINT', this.onInterrupt);
   }
@@ -252,9 +275,10 @@ export class NakamaService {
         http_key: secret(),
         js_min_count: 1,
         js_max_count: 4,
+        ...(this.options.runtimeHealth ? { env: ['RIFT_HEALTH=1'] } : {}),
       },
       match: { input_queue_size: 512 },
-      logger: { level: 'warn' },
+      logger: { level: this.options.runtimeHealth ? 'info' : 'warn' },
       shutdown_grace_sec: 1,
     };
     this.configPath = path.join(this.run, 'nakama.json');
@@ -320,17 +344,21 @@ export class NakamaService {
       .digest('base64url');
     return Session.restore(unsigned + '.' + signature, '');
   }
-  async connect(session: Session) {
-    const socket = this.client.createSocket(false, false, undefined, 5000);
-    this.sockets.push(socket);
+  async connect(session: Session, options: NakamaConnectionOptions = {}) {
     const packets: Record<string, any>[] = [];
     const errors: unknown[] = [];
+    const collector = new NativePacketCollector(packets, errors, options.retainedLimit);
+    const socket = this.client.createSocket(false, false, undefined, 5000);
+    this.sockets.push(socket);
     let disconnected = false;
     socket.onmatchdata = (message) => {
       assert.equal(message.op_code, 2);
-      packets.push(JSON.parse(new TextDecoder().decode(message.data)));
+      const packet = JSON.parse(new TextDecoder().decode(message.data));
+      collector.receive(packet, message.data.byteLength, packet.t);
     };
-    socket.onerror = (error) => errors.push(error);
+    socket.onerror = (error) => {
+      collector.error(error);
+    };
     socket.ondisconnect = () => {
       disconnected = true;
     };
@@ -339,14 +367,27 @@ export class NakamaService {
       socket,
       packets,
       errors,
+      get receivedPackets() {
+        return collector.receivedPackets;
+      },
+      get receivedBytes() {
+        return collector.receivedBytes;
+      },
+      get errorCount() {
+        return collector.errorCount;
+      },
+      receiveReport: () => collector.report(),
       get disconnected() {
         return disconnected;
       },
       latest(type: string) {
-        return packets
-          .slice()
-          .reverse()
-          .find((packet) => packet.t === type);
+        return (
+          collector.latestState(type) ??
+          packets
+            .slice()
+            .reverse()
+            .find((packet) => packet.t === type)
+        );
       },
     };
   }
