@@ -1771,10 +1771,10 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   body.tray-open #cockpit {
     grid-template-columns: 360px minmax(0, 1fr) 360px;
     justify-content: stretch;
-    padding-right: 32px;
   }
   body.tray-open #consoleutilities {
     width: 290px;
+    margin-right: 16px;
     justify-self: end;
   }
 }
