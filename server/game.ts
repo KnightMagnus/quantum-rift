@@ -525,6 +525,7 @@ export type ShipStats = import('../shared/rules.ts').ComputedShipStats;
 import { GalaxyGraph } from '../shared/galaxy-graph.ts';
 import { commodityCargoTonnes, reservedCargoTonnes } from '../shared/ship-capacity.ts';
 import { createPortService } from './port-services.ts';
+import { createStationProgress, type StationProgress } from './station-progress.ts';
 import { discoverRadio } from './radio-discovery.ts';
 import { createJobService } from './jobs.ts';
 import { beginEconomyTrip, arriveEconomyTrip, economyReceipt } from '../shared/economy-receipt.ts';
@@ -556,7 +557,6 @@ import {
   START,
   OPS as operationLevels,
   RESEARCH,
-  REFINERY,
   ORE_PROCESS,
   RELOCATE,
   relocateCost,
@@ -625,6 +625,9 @@ export class Game<Storage extends Database = Database> {
 
   /** Ordinary market, material, shipyard and outfitter owner. */
   declare portService: PortService;
+
+  /** Personal Station refinery accrual and research-completion owner. */
+  declare stationProgress: StationProgress;
 
   /** Combat assist controller. */
   declare combatAssist: CombatAssistCombatAssist;
@@ -763,6 +766,11 @@ export class Game<Storage extends Database = Database> {
     this.features = createFeatures(this);
     this.jobService = this.createJobService();
     this.portService = this.createPortService();
+    this.stationProgress = createStationProgress({
+      hangarInit: (playerData) => this.features.hangar.hangarInit(playerData),
+      startQueued: (playerData) => this.features.hangar.startQueued(playerData),
+      log: (playerData, text) => this.log(playerData, text),
+    });
     this.combatAssist = new CombatAssist(this);
     this.hails = new HailService(this);
     this.messageHandlers = this.createMessageHandlers();
@@ -2873,31 +2881,7 @@ export class Game<Storage extends Database = Database> {
    * @param playerData Player save data.
    */
   checkStation(playerData: PlayerData): void {
-    const stationState = playerData.station;
-    if (!stationState.claimed) return;
-    this.features.hangar.hangarInit(playerData);
-    const researchBonus2 = researchBonus(stationState),
-      currentTime = Date.now(),
-      perUnit =
-        (REFINERY.minutes[stationState.ops] * 60000) /
-        (1 + (researchBonus2.refineSpeed || 0) / 100),
-      capacity = REFINERY.silo + (researchBonus2.silo || 0);
-    if (stationState.ops >= 1 && perUnit > 0) {
-      while (stationState.refUnits < capacity && currentTime - stationState.refT >= perUnit) {
-        stationState.refUnits++;
-        stationState.refT += perUnit;
-      }
-      if (stationState.refUnits >= capacity) stationState.refT = currentTime;
-    }
-    if (stationState.active && currentTime >= stationState.active.ends) {
-      stationState.done.push(stationState.active.id);
-      this.log(
-        playerData,
-        `Research complete: ${RESEARCH.find((researchNode) => researchNode.id === stationState.active!.id)!.name}.`,
-      );
-      stationState.active = null;
-    }
-    this.features.hangar.startQueued(playerData);
+    this.stationProgress.advance(playerData);
   }
   /**
    * Verifies if player has required material quantities.

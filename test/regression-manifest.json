@@ -25,6 +25,7 @@
     "v252.ts",
     "v26.ts",
     "sim.ts",
+    "station-progress.ts",
     "balance.ts",
     "landing-autopilot.ts",
     "faction-standing.ts",
@@ -811,10 +812,10 @@
     },
     {
       "id": "station-progression",
-      "owners": ["server/game.ts", "server/hangar.ts"],
+      "owners": ["server/game.ts", "server/hangar.ts", "server/station-progress.ts"],
       "services": [],
-      "tests": ["sim.ts", "v05.ts", "v26.ts"],
-      "asserts": "Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates."
+      "tests": ["sim.ts", "v05.ts", "v26.ts", "station-progress.ts"],
+      "asserts": "Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates. Station timers preserve exact maturity, partial/capped accrual, bonus/completion/queue ordering, live owner replacement, queued-project denial and once-only settlement, you/idle/route refresh and persistence across reopen."
     },
     {
       "id": "market-materials",
@@ -1606,6 +1607,7 @@
     ],
     "abandon": ["v203.ts", "v24.ts", "radio-discovery.ts", "message-routing.ts"],
     "station": [
+      "station-progress.ts",
       "cargo-flows.ts",
       "sim.ts",
       "v04.ts",
