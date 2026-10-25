@@ -590,7 +590,11 @@
     "purchase-audio.ts": ["helpers/temp-data.ts"],
     "audio-flyby-browser.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"],
-    "wire-contracts.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts"],
+    "wire-contracts.ts": [
+      "helpers/mocks.ts",
+      "helpers/refinery-fixture.ts",
+      "helpers/dredge-fixture.ts"
+    ],
     "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "helpers/story-foundations.ts": ["helpers/mocks.ts"],
     "helpers/index-worksite.ts": ["helpers/mocks.ts"],
@@ -994,7 +998,7 @@
       ],
       "services": [],
       "tests": ["fuzz.ts", "message-routing.ts", "wire-contracts.ts"],
-      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage. Fixed pre-extraction traces cover all 56 routes, argument coercion, call order, representative mutations and live dependencies; authenticated entry checks retain freeze/activity/flood order. This is routing parity, not complete delegated-rule coverage. Economic contracts bound trade/refinery/miningOrder/towing shape and preserve numeric-text trade coercion; real account/world malformed-request denials and bounded you/landed/quote headers are covered."
+      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage. Fixed pre-extraction traces cover all 56 routes, argument coercion, call order, representative mutations and live dependencies; authenticated entry checks retain freeze/activity/flood order. This is routing parity, not complete delegated-rule coverage. Economic contracts bound trade/refinery/miningOrder/towing/industrial shape and preserve numeric-text trade coercion; real account/world malformed-request denials and bounded you/landed/quote headers are covered."
     },
     {
       "id": "input-audio",
@@ -1088,6 +1092,8 @@
       "services": ["industrial"],
       "owners": [
         "server/industrial.ts",
+        "server/industrial-contracts.ts",
+        "shared/wire-actions.ts",
         "shared/industrial-rules.ts",
         "server/specialists.ts",
         "client/mining_ui.ts",
@@ -1099,9 +1105,10 @@
         "dredge-corona.ts",
         "dredge-economy.ts",
         "dredge-network.ts",
-        "dredge-browser.ts"
+        "dredge-browser.ts",
+        "wire-contracts.ts"
       ],
-      "asserts": "No-plasma real specialist build; finite root-only sweep mass and two utility collectors; exact mobile grade/remainder/checkpoint ownership; stock real flight plasma escape and thermal damage ordering; finite one-way economy, private checked WS modes and actual production sprite/control rendering. Per-captain cooperative/restart blueprint qualification, missing-input work discard without transfer, passive corona exit warnings and automatic route keep-out."
+      "asserts": "No-plasma real specialist build; finite root-only sweep mass and two utility collectors; exact mobile grade/remainder/checkpoint ownership; stock real flight plasma escape and thermal damage ordering; finite one-way economy, private checked WS modes and actual production sprite/control rendering. Shared industrial request bounds, direct/routed malformed no-mutation before initialization, optional direct-call discriminator and legacy all-off selectors. Per-captain cooperative/restart blueprint qualification, missing-input work discard without transfer, passive corona exit warnings and automatic route keep-out."
     },
     {
       "id": "towing-motherlodes",
@@ -1670,7 +1677,13 @@
       "wire-contracts.ts"
     ],
     "miningPressure": ["mining-pressure.ts", "refinery-ui-browser.ts", "message-routing.ts"],
-    "industrial": ["dredge-network.ts", "dredge-browser.ts", "message-routing.ts"],
+    "industrial": [
+      "dredge-network.ts",
+      "dredge-browser.ts",
+      "message-routing.ts",
+      "wire-contracts.ts",
+      "nakama-network.ts"
+    ],
     "towing": ["towing-network.ts", "towing-browser.ts", "message-routing.ts", "wire-contracts.ts"],
     "portrait": ["portrait-persistence.ts", "planet-portrait-browser.ts", "nakama-network.ts"]
   },

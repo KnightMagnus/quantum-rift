@@ -1,3 +1,4 @@
+import { validIndustrialRequest } from '../shared/wire-actions.ts';
 import type { Session } from './game.ts';
 import type { IndustrialRequest, IndustrialWorld } from './industrial-contracts.ts';
 import type { Entity, Space } from './space.ts';
@@ -181,21 +182,22 @@ export const IndustrialOperations = {
         this.db.economicFrozen
       )
         throw Error('Industrial controls require an active Star Dredge flight');
+      if (!validIndustrialRequest(industrialRequest)) throw Error('Invalid industrial request');
       if (
-        Object.keys(industrialRequest).some(
-          (entryKey) => !['t', 'op', 'recipe', 'grade'].includes(entryKey),
-        )
+        industrialRequest.op === 'recipe' &&
+        (!['alloy', 'cells', 'cut'].includes(industrialRequest.recipe || '') ||
+          !['common', 'rich', 'pure'].includes(industrialRequest.grade || ''))
       )
-        throw Error('Unknown industrial authority field');
+        throw Error('Choose a mobile recipe and exact input grade');
+      if (
+        ['sweep', 'smelter', 'harvest'].includes(industrialRequest.op!) &&
+        (industrialRequest.recipe !== undefined || industrialRequest.grade !== undefined)
+      )
+        throw Error('Mode request has no economic fields');
       const industrialShip = state(session.data as Player);
       if (industrialRequest.op === 'off') {
         industrialShip.sweep = industrialShip.harvest = industrialShip.smelter = false;
       } else if (industrialRequest.op === 'recipe') {
-        if (
-          !['alloy', 'cells', 'cut'].includes(industrialRequest.recipe || '') ||
-          !['common', 'rich', 'pure'].includes(industrialRequest.grade || '')
-        )
-          throw Error('Choose a mobile recipe and exact input grade');
         if (
           industrialShip.workMs > 0 &&
           (industrialRequest.recipe !== industrialShip.recipe ||
@@ -219,8 +221,6 @@ export const IndustrialOperations = {
         industrialRequest.op === 'smelter' ||
         industrialRequest.op === 'harvest'
       ) {
-        if (industrialRequest.recipe !== undefined || industrialRequest.grade !== undefined)
-          throw Error('Mode request has no economic fields');
         if (
           industrialRequest.op === 'harvest' &&
           !industrialShip.harvest &&
