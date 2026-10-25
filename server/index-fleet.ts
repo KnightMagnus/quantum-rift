@@ -146,6 +146,8 @@ function formationPoint(
   const actor = world.actors[slot];
   if (actor.parent !== undefined) {
     const parent = world.actors[actor.parent];
+    // Split blades converge on their saved parent position so peaceful rejoin can finish.
+    if (actor.blade) return { x: parent.x, y: parent.y };
     const center = formationPoint(space, world, actor.parent);
     const siblings = world.actors.filter(
       (candidate) => candidate.parent === actor.parent && !candidate.dead && !candidate.hidden,
@@ -177,6 +179,10 @@ function separateNeutralMachines(space: Space, world: IndexFleetWorld): boolean 
       for (let rightIndex = leftIndex + 1; rightIndex < machines.length; rightIndex++) {
         const right = machines[rightIndex];
         const rightSlot = local(space).entities.get(right.id)!;
+        const leftActor = world.actors[leftSlot];
+        const rightActor = world.actors[rightSlot];
+        // Sibling blades must converge to merge; unrelated hulls still keep their clearance.
+        if (leftActor.blade && rightActor.blade && leftActor.parent === rightActor.parent) continue;
         const deltaX = right.x - left.x;
         const deltaY = right.y - left.y;
         const distance = Math.hypot(deltaX, deltaY);

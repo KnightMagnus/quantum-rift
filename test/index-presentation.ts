@@ -174,6 +174,59 @@ assert.deepEqual(
   stored.actors.map((actor) => [actor.x, actor.y]),
 );
 assert.equal(stored.remaining, 36);
+// Split blades must fly back under production steering, not be teleported into merge range.
+const mergeWorld: IndexFleetWorld = {
+  ...structuredClone(world),
+  actors: [
+    {
+      hull: 916,
+      base: 916,
+      armor: game.A.ships[916].armor - 90,
+      shield: game.A.ships[916].shield - 60,
+      x: -800,
+      y: 0,
+      dead: false,
+      hidden: false,
+      readyAt: 0,
+      hitAt: -100,
+      launched: 0,
+    },
+  ],
+};
+worlds.glasswake = mergeWorld;
+survey = mixedSpace();
+IndexFleetOperations.open.call(capabilities, survey);
+const trident = [...survey.ships.values()][0];
+const originalHealth = { armor: trident.armor, shield: trident.shield };
+IndexFleetOperations.damaged.call(capabilities, survey, trident, trident, 1);
+let splitObserved = false;
+let mergedAfterMotion = false;
+for (let tick = 0; tick < 2250; tick++) {
+  clock += DT;
+  survey.t += DT;
+  for (const entity of survey.ships.values()) {
+    IndexFleetOperations.ai.call(capabilities, survey, entity);
+    if (survey.ships.has(entity.id)) step(entity, entity.st, entity.inp);
+  }
+  if ([...survey.ships.values()].some((entity) => Number(entity.hull) === 918))
+    splitObserved = true;
+  IndexFleetOperations.fleetTick.call(capabilities, survey);
+  const rejoined = [...survey.ships.values()].find((entity) => Number(entity.hull) === 916);
+  if (splitObserved && rejoined) {
+    assert.equal(rejoined.armor, originalHealth.armor, 'Natural rejoin preserves damaged armor');
+    assert.equal(
+      rejoined.shield,
+      originalHealth.shield,
+      'Natural rejoin preserves damaged shields',
+    );
+    assert.equal(survey.ships.size, 1, 'Rejoin removes its separate blades');
+    mergedAfterMotion = true;
+    break;
+  }
+}
+assert(splitObserved, 'Actual damage starts a timed Trident split');
+assert(mergedAfterMotion, 'Peaceful blades naturally return and rejoin through real physics');
+assert.equal(mergeWorld.remaining, world.remaining, 'Natural rejoin spends no replacement budget');
 const output = path.resolve(
   process.env.RIFT_TEST_ARTIFACTS || '.artifacts/regression',
   'index-presentation',

@@ -1035,7 +1035,9 @@ image failures check actual ship-art fallback and no humanoid substitution.
 `index-presentation.ts` checks outgoing/incoming/archive identities for every
 Index and Nhal hull, and advances a densely packed seven-large-hull fixture
 through 1,800 production steering/physics ticks with footprint clearance and
-restore/health/budget checks. This accelerated 60-second fixture is not a
+restore/health/budget checks. A separate damage-triggered split must naturally
+return and rejoin through production steering without restoring lost health or
+spending replacement budget. The mixed-hull accelerated 60-second fixture is not a
 wall-clock soak or proof of every combat interleaving. Existing story and faction
 regressions retain reward, equipment, neutrality and finite-source coverage.
 
