@@ -2,6 +2,13 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.4.1 (public release 0.3.4.1)
+
+- Keep expanded cockpit buttons and the vent inside the frame on ultrawide screens, with more space between sidebar text and trim.
+- Keep HAIL visible but disabled while landed. Hide motherlode targeting highlights when the ship cannot mine, without hiding deposit artwork.
+- Give confirmation, quit and boarding dialogs shared priority, keyboard focus and manual-input blocking. Keep autopilot navigation running while menus are open.
+- Refresh affected gameplay screenshots and the beta Solo save generator catalog. See the [release notes](docs/RELEASE-3.4.1.md).
+
 ### 3.4.0 — Trinity Stable Beta-A (public release 0.3.4)
 
 - Extend the main story through Acts II and III, landed decisions and captain-specific endings. Preserve the original Que'vari objectives and rewards.
