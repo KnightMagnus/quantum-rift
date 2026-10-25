@@ -512,17 +512,27 @@ try {
         scene.display.update({ ...replacement, shots: [] }, 0);
         const emptySnapshotRemovesActors = scene.display.actors.size === 0 && first.isKilled();
         // Only time-dependent looks keep separate animation phases in the bounded cache.
-        const weaponWithLook = (looks: string[]) =>
-          Object.values(G.A!.weapons).find((entry) => looks.includes(weaponLook(entry)))!.id;
         const canvasAt = (weaponId: number, now: number) => {
           scene.display.update({ ...snapshot, shots: [{ ...shot(1000, 0), w: weaponId }] }, now);
           return canvasFor(0);
         };
-        const staticWeapon = weaponWithLook(['bolt']);
-        const animatedWeapon = weaponWithLook(['torp', 'sing', 'mine', 'shard']);
-        const staticLookSharesPhases = canvasAt(staticWeapon, 0) === canvasAt(staticWeapon, 500);
-        const animatedLookKeepsPhases =
-          canvasAt(animatedWeapon, 0) !== canvasAt(animatedWeapon, 500);
+        const phaseChecks: Record<string, boolean> = {};
+        const weaponsByLook = new Map(
+          Object.values(G.A!.weapons).map((entry) => [weaponLook(entry), entry]),
+        );
+        for (const look of ['torp', 'sing', 'mine', 'shard']) {
+          phaseChecks[look + ' fixture exists'] = weaponsByLook.has(look);
+        }
+        for (const [look, entry] of weaponsByLook) {
+          const canvases = Array.from({ length: 16 }, (_, phase) => canvasAt(entry.id, phase * 45));
+          const animated = ['torp', 'sing', 'mine', 'shard'].includes(look);
+          phaseChecks[look + ' draws every phase'] = canvases.every((canvas) => !!canvas);
+          phaseChecks[look + ' phase cache identity'] =
+            new Set(canvases).size === (animated ? 16 : 1);
+          phaseChecks[look + ' reuses wrapped phase'] = canvasAt(entry.id, 720) === canvases[0];
+          const pixels = new Set(canvases.map((canvas) => canvas?.toDataURL()));
+          phaseChecks[look + ' visible animation'] = animated ? pixels.size > 1 : pixels.size === 1;
+        }
         return {
           nearbySpeedsShareCanvas,
           retainedActor,
@@ -531,8 +541,7 @@ try {
           shrunkRegistry,
           differentBucketHasOwnCanvas,
           emptySnapshotRemovesActors,
-          staticLookSharesPhases,
-          animatedLookKeepsPhases,
+          ...phaseChecks,
         };
       } finally {
         scene.display.clear();
