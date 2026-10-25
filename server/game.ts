@@ -255,6 +255,9 @@ export type Session = {
   /** Client WebSocket connection. */
   sock: GameConnection;
 
+  /** Terminal denial survives buffered packets emitted while a local socket closes. */
+  compatibilityRejected?: boolean;
+
   /** Native match ingress applies the latest validated control on the current authoritative tick. */
   inputScheduling?: 'match';
 
@@ -1663,6 +1666,7 @@ export class Game<Storage extends Database = Database> {
    * @param incoming Incoming decoded client value.
    */
   onMessage(session: Session, incoming: unknown): void {
+    if (session.compatibilityRejected) return;
     const currentTime = Date.now();
     if (currentTime - session.msgT > 1000) {
       session.msgT = currentTime;
@@ -1686,7 +1690,9 @@ export class Game<Storage extends Database = Database> {
    * @param message2 Authentication handshake payload.
    */
   hello(session: Session, message2: { name?: string; pass?: string; protocol?: unknown }): void {
+    if (session.compatibilityRejected) return;
     if (!supportedProtocol(message2.protocol)) {
+      session.compatibilityRejected = true;
       this.send(session, { t: 'error', code: 'UPDATE_REQUIRED', msg: COMPATIBILITY_MESSAGE });
       session.sock.close();
       return;

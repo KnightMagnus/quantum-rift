@@ -1,3 +1,5 @@
+import { EventEmitter } from 'node:events';
+import { Socket } from '../server/ws.ts';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -38,6 +40,8 @@ for (const protocol of [2, 0, -1, '1', null, {}, []]) {
   assert.equal(supportedProtocol(protocol), false);
   const { socket, session } = connect();
   game.onMessage(session, { t: 'hello', name: 'Rejected Captain', protocol });
+  game.onMessage(session, { t: 'hello', name: 'Rejected Captain', protocol: 1 });
+  game.hello(session, { name: 'Rejected Captain', protocol: 1 });
   game.onMessage(session, { t: 'trade', c: 'food', n: 1 });
   assert.equal(session.data, null);
   assert.equal(socket.open, false);
@@ -70,4 +74,35 @@ for (const protocol of [GAME_PROTOCOL, undefined]) {
 }
 console.log(
   'Protocol compatibility: supported and legacy admission, malformed/future denial before login, committed progress and reconnect passed.',
+);
+
+class BufferedWire extends EventEmitter {
+  writableLength = 0;
+  ended = false;
+  setNoDelay() {}
+  write() {
+    return true;
+  }
+  end() {
+    this.ended = true;
+  }
+}
+const wire = new BufferedWire();
+const socket = new Socket(wire as unknown as import('node:net').Socket);
+game.connect(socket);
+const frame = (protocol: number) => {
+  const payload = Buffer.from(JSON.stringify({ t: 'hello', name: 'Buffered Captain', protocol }));
+  assert(payload.length < 126);
+  return Buffer.concat([Buffer.from([0x81, 0x80 | payload.length, 0, 0, 0, 0]), payload]);
+};
+wire.emit('data', Buffer.concat([frame(2), frame(1)]));
+assert.equal(wire.ended, true);
+assert.equal(
+  database.get('Buffered Captain'),
+  null,
+  'coalesced frames cannot revive a rejected socket',
+);
+assert.equal(
+  [...game.sessions.values()].some((session) => session.name === 'Buffered Captain'),
+  false,
 );
