@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { verifyStorySeededMotion } from './helpers/story-seeded-motion.ts';
 import { verifyStoryIntegrationEdges } from './helpers/story-integration-edge.ts';
 import filesystem from 'node:fs';
 import path from 'node:path';
@@ -101,6 +102,18 @@ try {
     (entity) => entity.story === session.id && entity.storyKill,
   );
   assert.equal(enemies.length, 3);
+  game.features.hail.hail(session, { id: enemies[0].id });
+  const creatureHail = packets[packets.length - 1];
+  assert.equal(
+    creatureHail.machineHull,
+    900,
+    'a creature is shown as its actual hull, never a captain portrait',
+  );
+  assert.equal(creatureHail.portraitId, undefined);
+  assert.deepEqual(creatureHail.opts, [], 'the Nhal offer no conversation or trade');
+  const contactFuel = session.ent!.fuel;
+  game.features.hail.hailOpt(session, { id: enemies[0].id, k: 'fuel' });
+  assert.equal(session.ent!.fuel, contactFuel, 'forged creature dialogue options are inert');
   game.spawnPlayer(innocent, 0, 100, 0, 0);
   assert.equal(
     border.canHit(innocent.ent!, enemies[0]),
@@ -264,6 +277,7 @@ try {
   game.completeOnLanding(session, STELLARS.qstation);
   assert.ok(player.quests.sides['index-report'], 'real delivery finishes Index report');
   verifyStoryIntegrationEdges(game);
+  verifyStorySeededMotion(game.A);
   console.log(
     'Story authority: main missions, exhaustive ending gates, personal combat, checkpoint choices, side prerequisites, hidden worlds and reward-free harness crossing passed.',
   );

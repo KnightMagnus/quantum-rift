@@ -101,14 +101,26 @@ export const HailOperations = {
     const announce = (text: string, options: Array<{ k: string; label: string }> = []) =>
       this.send(session, {
         t: 'hail',
-        portraitId: entity2.indexWorksite ? undefined : npcPortrait(entity2, playerData.sys),
-        machineHull: entity2.indexWorksite ? Number(entity2.hull) : undefined,
+        portraitId:
+          entity2.indexWorksite || entity2.faction === 'nhal'
+            ? undefined
+            : npcPortrait(entity2, playerData.sys),
+        machineHull:
+          entity2.indexWorksite || entity2.faction === 'nhal' ? Number(entity2.hull) : undefined,
         id: entity2.id,
         who: name,
         sub: factionDef.name || '',
-        text,
+        text:
+          text +
+          (entity2.faction === 'ylith' && !playerData.story?.flags?.breach_started
+            ? '\n\nCaptains keep bringing us different accounts of the same voyage. It is said the Core keeps everyone’s version from contradicting the others.'
+            : ''),
         opts: options,
       });
+    if (entity2.faction === 'nhal')
+      return announce(
+        'A low song fills the channel. No voice answers, and no trading signal is accepted.',
+      );
     const realityFlags = playerData.story?.flags;
     if (
       realityFlags?.main_ending === 'unsettling' &&
@@ -135,10 +147,7 @@ export const HailOperations = {
           'The station is ahead, bright as a dockyard. The Thalassi found us. Can you see where they are pointing?',
         );
     }
-    if (entity2.faction === 'ylith' && !realityFlags?.breach_started)
-      return announce(
-        'Captains keep bringing us different accounts of the same voyage. It is said the Core keeps everyone’s version from contradicting the others. Perhaps your next captain will remember this conversation differently.',
-      );
+
     if (entity2.indexWorksite)
       return announce(
         'Index worksite. Leave marked material alone. Transit and unmarked resources are unrestricted. The Archive records; the Quarry extracts.',
@@ -242,14 +251,18 @@ export const HailOperations = {
     const hailTarget2 = this.hailTarget(session, message);
     if (!hailTarget2) return;
     const { sp: space, e: entity2, root } = hailTarget2;
-    if (entity2.player || entity2.disabled) return;
+    if (entity2.player || entity2.disabled || entity2.faction === 'nhal') return;
     const entity = session.ent!,
       name = (entity2.name || this.A.ships[entity2.hull].name).split(' · ')[0];
     const announce = (text: string) =>
       this.send(session, {
         t: 'hail',
-        portraitId: entity2.indexWorksite ? undefined : npcPortrait(entity2, playerData.sys),
-        machineHull: entity2.indexWorksite ? Number(entity2.hull) : undefined,
+        portraitId:
+          entity2.indexWorksite || entity2.faction === 'nhal'
+            ? undefined
+            : npcPortrait(entity2, playerData.sys),
+        machineHull:
+          entity2.indexWorksite || entity2.faction === 'nhal' ? Number(entity2.hull) : undefined,
         id: entity2.id,
         who: name,
         text,

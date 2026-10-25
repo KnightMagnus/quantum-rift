@@ -599,13 +599,18 @@
       "fixtures/preload-story-browser.ts",
       "helpers/story-witness.ts"
     ],
-    "story-continuation.ts": ["helpers/mocks.ts", "helpers/story-integration-edge.ts"],
+    "story-continuation.ts": [
+      "helpers/mocks.ts",
+      "helpers/story-integration-edge.ts",
+      "helpers/story-seeded-motion.ts"
+    ],
     "helpers/nhal.ts": ["helpers/mocks.ts"],
     "helpers/index-fleet.ts": ["helpers/mocks.ts"],
     "helpers/story-witness.ts": ["helpers/mocks.ts"],
     "helpers/story-integration-edge.ts": ["helpers/mocks.ts"],
     "archive-verification.ts": ["helpers/temp-data.ts"],
-    "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"]
+    "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
+    "helpers/story-seeded-motion.ts": ["helpers/mocks.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],

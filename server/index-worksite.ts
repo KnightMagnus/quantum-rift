@@ -242,7 +242,7 @@ export const IndexOperations = {
     entity.target = target || null;
     if (target && entity.hull !== 914) space.steer(entity, target.x, target.y, true);
     else {
-      const slot = entity.id % 6;
+      const slot = (entity.indexSlot ?? 0) % 6;
       space.steer(
         entity,
         (parent?.x ?? INDEX_SITE.x) + Math.cos(slot) * 180,

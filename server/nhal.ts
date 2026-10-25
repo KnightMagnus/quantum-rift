@@ -32,6 +32,8 @@ interface Status {
   source?: number;
 }
 interface Creature {
+  /** Encounter-local order fixes movement independently of process-wide wire IDs. */
+  ordinal: number;
   /** Finite offspring allowance attached to this parent identity. */
   launched: number;
   /** Parent identity for no-reward offspring. */
@@ -136,6 +138,7 @@ function spawn(
   });
   entity.noDisable = true;
   local(space).creatures.set(entity.id, {
+    ordinal: budget.spawned,
     launched: 0,
     parent,
     readyAt: space.t + 3,
@@ -252,6 +255,7 @@ export const NhalOperations = {
     entity.noDisable = true;
     entity.story = owner;
     local(space).creatures.set(entity.id, {
+      ordinal: slot,
       launched: 0,
       readyAt: space.t + 3,
       hitAt: space.t,
@@ -313,8 +317,8 @@ export const NhalOperations = {
       state.latch = undefined;
       space.steer(
         entity,
-        Math.sin(space.t * 0.03 + entity.id) * 1700,
-        Math.cos(space.t * 0.03 + entity.id) * 1700,
+        Math.sin(space.t * 0.03 + state.ordinal) * 1700,
+        Math.cos(space.t * 0.03 + state.ordinal) * 1700,
         false,
       );
       return true;
@@ -472,7 +476,7 @@ export const NhalOperations = {
       entity.fireAt = target;
       entity.inp.fire1 = 1;
     } else if (hull === 904) {
-      const side = entity.id % 2 ? 1 : -1;
+      const side = state.ordinal % 2 ? 1 : -1;
       space.steer(
         entity,
         target.x + Math.cos(space.t * 0.7) * 260 * side,

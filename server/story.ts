@@ -533,6 +533,10 @@ export const StoryOperations = {
     }
     if (playerData.quests?.active?.['s:keepers-dimming'] && space.id === 'shoalight')
       this.nhal.storyCreature(space, 901, session.id, 1200, -600, 10);
+    if (playerData.quests?.active?.['s:nhal-eye'] && space.id === 'the-pale-eye') {
+      this.nhal.storyCreature(space, 901, session.id, 800, -1600, 10);
+      this.nhal.storyCreature(space, 901, session.id, -800, -1600, 11);
+    }
     if (flags.nhal_ending === 'kill' && space.sys.faction === 'deep')
       this.nhal.storyCreature(space, 904, session.id, 1300, -900, 11);
     if (!active2 || active2.ready) return;

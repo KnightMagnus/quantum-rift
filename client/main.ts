@@ -1213,6 +1213,11 @@ function showStory(storyMessage: StoryMessage | undefined) {
   };
   if (storyMessage.choices?.length) {
     elementById2('storyb').replaceChildren();
+    const deferChoice = document.createElement('button');
+    deferChoice.className = 'btn sm';
+    deferChoice.textContent = storyMessage.ref || 'Decide later';
+    deferChoice.onclick = close;
+    elementById2('storyb').append(deferChoice);
     for (const choice of storyMessage.choices) {
       const button = document.createElement('button');
       button.className = 'btn';

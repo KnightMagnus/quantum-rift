@@ -49,6 +49,31 @@ assert.throws(
   /scope/,
 );
 assert.equal(database.check(pilot, ''), false);
+pilot.story = {
+  step: 13,
+  active: null,
+  done: ['choice'],
+  flags: {
+    d1: 'index',
+    d2: 'umbral',
+    index_ending: 'survey_complete',
+    nhal_ending: 'witness',
+    main_ending: 'table',
+    crossed_quantum_rift: true,
+  },
+  flight: { sys: 'beyond-rift', x: 0, y: 400, a: 0 },
+};
+const otherReality = database.withAuthenticatedCaptain('Other', () =>
+  database.create('Other', 'ignored', {
+    credits: 1,
+    story: {
+      step: 13,
+      active: null,
+      done: ['choice'],
+      flags: { main_ending: 'unsettling', unsettled_with: 'ylith' },
+    },
+  }),
+);
 database.world.sites.home = 'pilot';
 pilot.credits = 9;
 database.touch();
@@ -56,6 +81,20 @@ database.flush();
 const recovered = new NakamaDatabase(storage);
 assert.equal(recovered.get(' PILOT ')?.credits, 9);
 assert.equal(recovered.world.sites.home, 'pilot');
+assert.deepEqual(
+  recovered.get('Pilot')!.story,
+  pilot.story,
+  'all personal story choices and reward-free portal flight survive native atomic checkpoint',
+);
+assert.deepEqual(
+  recovered.get('Other')!.story,
+  otherReality.story,
+  'different captain endings remain isolated in the same native world',
+);
+assert.notEqual(
+  recovered.get('Other')!.story.flags?.main_ending,
+  recovered.get('Pilot')!.story.flags?.main_ending,
+);
 assert.deepEqual(
   JSON.parse(JSON.stringify(recovered.players)),
   JSON.parse(JSON.stringify(database.players)),

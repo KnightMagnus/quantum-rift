@@ -569,10 +569,12 @@ export const IndexFleetOperations = {
       entity.inp.fire1 = 1;
     } else {
       const parent = actor.parent !== undefined ? world.actors[actor.parent] : undefined;
+      // Formation geometry belongs to the saved roster, not the process-wide wire ID allocator.
+      const formationSlot = local(space).entities.get(entity.id)!;
       space.steer(
         entity,
-        (parent?.x ?? world.site.x) + Math.cos(entity.id) * 180,
-        (parent?.y ?? world.site.y) + Math.sin(entity.id) * 180,
+        (parent?.x ?? world.site.x) + Math.cos(formationSlot) * 180,
+        (parent?.y ?? world.site.y) + Math.sin(formationSlot) * 180,
         true,
       );
       if (actor.base === 914) entity.target = null; // A neutral sampler scan cannot fire or trigger retaliation.

@@ -929,6 +929,7 @@ blades with persistent loss and one reward, bounded Kernel reboot and Talon esca
 Browser checks cover supplied faction artwork and the actual private Vigil,
 prepared Dreamer witness route and player-ship ark departure. These are deterministic
 fixtures, not an exhaustive balance, seed, hardware or human multiplayer playtest.
+
 ## Performance and operational health
 
 The `performance-health` system registers `health.ts` for bounded numeric sampling, UTF-8 sizing, failed-checkpoint freeze
