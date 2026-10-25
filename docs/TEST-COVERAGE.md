@@ -2,7 +2,7 @@
 
 ## Economic wire boundary
 
-`shared/wire-actions.ts` owns trade, refinery, mining-order and towing request
+`shared/wire-actions.ts` owns trade, refinery, mining-order, towing and industrial request
 shapes. Both local sockets and native matches reach the same Game routes and
 service validators. Auth, flood, checkpoint freeze and activity gates remain in
 Game; ownership, pricing, location, receipts and settlement remain in services.
@@ -18,6 +18,19 @@ native services and verify unchanged credits/cargo followed by a valid request.
 Solo, friend and native connections. Compiler fixtures reject invalid economic
 request discriminators and non-scalar quantities. Independent routing traces
 remain unchanged.
+
+Industrial controls validate plain records, operation names and bounded text
+selectors before initializing ship state. Recipe/catalog, exact-grade, flight,
+hull, pause, freeze and harvest prerequisites remain server-owned. Direct calls
+may omit `t`; `off` retains its legacy behavior of ignoring bounded text selectors.
+`wire-contracts.ts` checks malformed roots, null/array/object/nonfinite selectors,
+oversized text and forged production fields against both initialized and missing
+ship state, comparing the full saved player and world before and after each
+request. It also checks valid toggles, exact-grade selection, all-off behavior and
+flight/economic denials. `dredge-network.ts` follows malformed local packets with
+successful harvest/off commands. `nakama-network.ts` sends malformed industrial
+packets from an ordinary fresh captain; this covers native denial/continued
+service, not successful native Dredge controls or complete transport parity.
 
 `shared/refinery-wire.ts` contains implementation-independent refinery payload
 types. `shared/wire-payloads.ts` validates complete quote field shapes and the
@@ -971,6 +984,19 @@ blocked outgoing actions, canvas pointer and touch handlers, disabled/repeated
 boarding shortcuts, typing and callback cleanup on reset. It uses a synthetic
 absent boarding target and does not claim a successful authoritative boarding.
 
+Options and Controls share those priority and focus checks, including confirmation
+above either dialog, Controls above the galaxy map, and Change Keys returning to
+the cockpit trigger. The fixture exercises native checkbox, range, Reset and
+Close keyboard activation; binding-capture cancellation, reserved-key denial,
+duplicate-key swaps, Delete/Backspace unbinding and saved custom bindings. It
+checks that neither dialog sends Solo pause commands and held keyboard/gamepad
+input remains blocked after closing until release. A seeded navigation intent
+continues through real guidance in both dialogs; reset clears pending binding
+capture without changing the saved binding.
+Focus fallback checks cover a removed opener above Options and Controls closing
+above the still-open, independently owned map; focus cannot remain in the hidden
+dialog. Closing an underlay also preserves existing valid focus in the top dialog.
+
 `logout-browser.ts` retains real Solo and online-style login/logout, temporary
 pause restoration, account isolation and persistence. `input-audio-browser.ts`
 retains gamepad and touch activation outside dialogs. These tests emulate device
@@ -994,3 +1020,16 @@ without duplicate charges or completion logs. It records state and callback
 traces for before/after comparison. It does not certify every research node or
 transport. Native checkpoint recovery and network behavior remain separate suite
 contracts.
+
+## Save catalog and local restore rehearsal
+
+`save-migrations.ts` exercises detached cargo/storage migration, legacy/current
+synthetic fixtures, corrupt/unsupported rejection without source mutation,
+read-only disposable CLI restores and committed-journal precedence. It rejects
+malformed local snapshot envelopes and injected access errors without empty-state
+fallback, then checks five real journal fault boundaries, freeze and reopen/retry.
+Credits, unrelated goods, station ownership and progression remain unchanged.
+The existing cargo, import/login, generator and native checkpoint tests retain
+their separate coverage. This is not full feature-schema validation, native
+restore coverage or an old/new executable archive-matrix rehearsal; see
+[SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md).

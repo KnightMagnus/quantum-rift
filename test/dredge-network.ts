@@ -45,6 +45,24 @@ try {
   secondEntry.send({ t: 'industrial', op: 'harvest' });
   await delay(60);
   assert.equal(secondEntry.snap.industrial, null, 'wrong hull cannot harvest');
+  const industrialBefore = JSON.stringify(firstEntry.you.industrial);
+  for (const packet of [
+    { t: 'industrial', op: null },
+    { t: 'industrial', op: [] },
+    { t: 'industrial', op: 'recipe', recipe: [], grade: 'common' },
+    { t: 'industrial', op: 'recipe', recipe: 'alloy', grade: null },
+    { t: 'industrial', op: 'recipe', recipe: 'x'.repeat(201), grade: 'common' },
+    { t: 'industrial', op: 'off', recipe: Infinity },
+  ]) {
+    const responseCount = firstEntry.messages.filter((message) => message.t === 'toast').length;
+    firstEntry.send(packet);
+    await until(
+      () => firstEntry.messages.filter((message) => message.t === 'toast').length > responseCount,
+      'malformed industrial denial',
+    );
+    assert.equal(JSON.stringify(firstEntry.you.industrial), industrialBefore);
+    assert.equal(firstEntry.snap.industrial!.harvest, false);
+  }
   firstEntry.send({ t: 'industrial', op: 'harvest' });
   await until(() => firstEntry.snap.industrial!.harvest, 'server opt-in');
   await until(() => firstEntry.you.cargo.plasma >= 1, 'real finite harvest through WebSocket');

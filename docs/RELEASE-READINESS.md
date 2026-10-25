@@ -68,7 +68,9 @@ login and state again before resuming play. This loses candidate-only progress;
 retain that directory for recovery rather than overwriting it.
 
 Current automated evidence covers same-version exported/imported saves, journal
-recovery and guarded native legacy rollback. Version-catalog migration/restore
+recovery and guarded native legacy rollback. The
+[cargo-only catalog rehearsal](SAVE-MIGRATIONS.md) uses synthetic schema fixtures,
+not historical executable archives. Version-catalog migration/restore
 fixtures from issue #84 must be wired into the artifact matrix before claiming
 cross-version upgrade/rollback coverage. A release requiring a schema transition
 is not ready on same-version smoke alone.

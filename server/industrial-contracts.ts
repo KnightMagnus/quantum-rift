@@ -1,3 +1,4 @@
+import type { IndustrialAction } from '../shared/wire-actions.ts';
 import type { GameStorage as Database } from './game-storage.ts';
 import type { FeatureServices } from './features.ts';
 import type { PlayerReference } from './game.ts';
@@ -22,10 +23,9 @@ export type IndustrialWorld = {
   version: 1;
   sources: Record<string, { units: number; last: number }>;
 };
-export type IndustrialRequest = {
-  t?: string;
-  op?: 'sweep' | 'harvest' | 'smelter' | 'recipe' | 'off';
-  recipe?: string;
+/** Legacy direct-call input; the owner validates the operation at runtime. */
+export type IndustrialRequest = Omit<Partial<IndustrialAction>, 'grade'> & {
+  /** Exact input grade for mobile processing. */
   grade?: 'common' | 'rich' | 'pure';
 };
 export type Session = import('./game.ts').Session;

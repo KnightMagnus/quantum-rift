@@ -112,6 +112,15 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 | Scene/ship drawing                              | `client/render.ts`                                          | `client/artwork.ts`, animation/ship-banking modules, `client/assets/`                                        |
 | Galaxy/hulls/loadouts/stats                     | `shared/galaxy.ts`, `shared/assets.json`, `shared/rules.ts` | Shared bonus/stats owners in `server/features.ts`                                                            |
 
+## Save compatibility checks
+
+`server/save-migrations.ts` catalogs existing migration owners without changing
+live lifecycle order. `tools/save-restore-verify.ts` rehearses only the existing
+cargo/storage-ledger migration on disposable local copies. See
+[SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md) for commands and limits. `server/db.ts`
+rejects corrupt or unreadable local snapshots instead of silently resetting them;
+feature validation and native CAS authority remain with their existing owners.
+
 ## Who owns which information?
 
 - **Reusable foundations:** `shared/galaxy-graph.ts` owns ordered link traversal;
@@ -201,7 +210,7 @@ JSON or prove every branch.
 
 ## Action-routing boundary
 
-Economic request shapes live in `shared/wire-actions.ts`; refinery and towing
+Economic request shapes live in `shared/wire-actions.ts`; refinery, towing and industrial
 services reuse those validators for direct calls as well as transport dispatch.
 `shared/refinery-wire.ts` owns refinery payload types without client/server
 implementation dependencies. `shared/wire-payloads.ts` bounds economic receive
@@ -300,11 +309,22 @@ so regenerating the broad sound library does not restore the retired sharp jingl
 ## Modal and manual-input ownership
 
 `client/overlay-controller.ts` owns priority, keyboard capture, native Tab wrapping
-and focus return for confirmation, quit and boarding dialogs. Their existing
-owners still render content and decide whether an action is allowed. Confirmation
-sits above quit, and quit above boarding. Enter and Space activate the focused
-native button; Cancel receives initial focus in confirmation and quit dialogs.
-Logout drops pending callbacks and focus references.
+and focus return for confirmation, quit, boarding, Options and Controls dialogs.
+Their existing owners still render content and decide whether an action is
+allowed. Confirmation sits above quit; Controls and Options retain their existing
+visual priorities below quit and above boarding. Enter and Space activate the
+focused native button; Cancel receives initial focus in confirmation and quit,
+and Close in Options and Controls. Logout drops pending callbacks, binding capture
+and focus references.
+
+Options owns rebinding and saved settings. Its policy handles pending key capture
+before default Escape dismissal: the first Escape cancels capture without closing
+Options. The controller otherwise leaves native settings controls and button
+activation intact. Rebuilding binding rows returns focus to the same action.
+Controls owns its reference content and Change Keys transition into Options.
+If a closing dialog cannot return focus to its opener, the surviving managed
+dialog receives its initial focus. An unmigrated overlay receives container focus
+without changing its action or keyboard owner.
 
 The controller's DOM-derived blocking context is passed into the engine input
 latch rather than importing another controller instance into the engine bundle.
