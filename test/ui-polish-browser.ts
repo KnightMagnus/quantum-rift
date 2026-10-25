@@ -275,9 +275,21 @@ try {
   await index.evaluate(async () => {
     (await import('/artwork.js')).setArtworkVersion('missing-all-machine-fixture');
   });
+  // The inbox already hides the portrait; observe this conversation's failed requests first.
+  const missingPrimary = index.waitForRequest((request) =>
+    request.url().includes('912_yard.png?v=missing-all-machine-fixture'),
+  );
+  const missingFallback = index.waitForRequest((request) =>
+    request.url().includes('910_yard.png?v=missing-all-machine-fixture'),
+  );
   await index.click('#hailindicator');
   await index.locator('#hailopts button').filter({ hasText: 'Index Mutable' }).first().click();
-  await index.locator('#hailportraitwindow').waitFor({ state: 'hidden' });
+  await Promise.all([missingPrimary, missingFallback]);
+  await index.waitForFunction(
+    () =>
+      document.getElementById('hailportraitwindow')!.classList.contains('hidden') &&
+      !document.getElementById('hailportrait')!.hasAttribute('src'),
+  );
   assert.equal(await index.locator('#hailportrait').getAttribute('src'), null);
   assert.deepEqual(errors, []);
   filesystem.writeFileSync(
