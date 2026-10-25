@@ -1,3 +1,5 @@
+import type { MiningPanelState } from './mining-panel-state.ts';
+import { miningPanelState } from './mining-panel-state.ts';
 interface TowObject {
   id: number;
   status: string;
@@ -14,9 +16,9 @@ interface TowSnapshot {
   objects: TowObject[];
   attached?: number | null;
 }
-export interface TowingRenderState {
+export interface TowingRenderState extends MiningPanelState {
   towing?: TowSnapshot | null;
-  you?: { towing?: TowSnapshot | null } | null;
+  you?: (NonNullable<MiningPanelState['you']> & { towing?: TowSnapshot | null }) | null;
   towTarget?: number;
   view?: { x: number; y: number } | null;
   opts: { cb?: boolean };
@@ -43,6 +45,7 @@ export function drawTowing(
 ) {
   const towSnapshot = towingRenderState.towing || towingRenderState.you?.towing;
   if (!towSnapshot) return;
+  const showHighlights = miningPanelState(towingRenderState).visible;
   canvasRenderingContext2D.save();
   const pixelX = devicePixelRatio || 1;
   canvasRenderingContext2D.font = `bold ${14 * pixelX}px "Pixelify Sans", sans-serif`;
@@ -207,6 +210,8 @@ export function drawTowing(
       }
     }
     canvasRenderingContext2D.restore();
+    // Keep the physical deposit visible without industrial targeting clutter.
+    if (!showHighlights) continue;
     canvasRenderingContext2D.strokeStyle = towingRenderState.opts.cb
       ? '#fff0a0'
       : motherlodeArt2.color;

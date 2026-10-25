@@ -170,7 +170,7 @@ select:focus-visible {
 #hud {
   height: calc(100% - var(--cbar));
   width: var(--hud);
-  padding: 8px 9px 8px 14px;
+  padding: 8px 9px 8px 28px;
   gap: 6px;
   z-index: 8;
   overflow: auto;
@@ -181,6 +181,7 @@ body:not(.tray-open) #hud {
 }
 body.scaled #hud {
   zoom: var(--ui);
+  padding-left: calc(28px / var(--ui));
   width: calc(var(--hud) / var(--ui));
   height: calc((100vh - var(--cbar)) / var(--ui));
 }
@@ -1773,16 +1774,17 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   }
   body.tray-open #consoleutilities {
     width: 290px;
+    margin-right: 16px;
     justify-self: end;
   }
 }
 
 /* Larger tab labels keep their readable size; recover room from chrome, not text. */
 #ctabs {
-  gap: 2px;
+  gap: 1px;
 }
 #ctabs button {
-  padding-inline: 2px;
+  padding-inline: 1px;
   letter-spacing: 0;
 }
 
