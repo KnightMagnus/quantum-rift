@@ -4,7 +4,7 @@ import fileSystem from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
-import type { GraphicsGroup, GraphicsGrouping, Sprite } from 'excalibur';
+import type { Graphic, GraphicsGroup, GraphicsGrouping, Sprite } from 'excalibur';
 import { DB } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets, DT } from '../shared/rules.ts';
@@ -319,28 +319,22 @@ try {
               shots,
               zoom: 2,
             };
-            // Hold blob encoding so each backend exercises the undecoded-image boundary.
+            // Busy fights mint many projectile frames; a PNG blob round trip per frame stalls updates.
             const toBlob = Reflect.get(
               HTMLCanvasElement.prototype,
               'toBlob',
             ) as HTMLCanvasElement['toBlob'];
-            const pendingBlobs: (() => void)[] = [];
+            let blobEncodes = 0;
             HTMLCanvasElement.prototype.toBlob = function (callback, ...options) {
-              pendingBlobs.push(() => toBlob.call(this, callback, ...options));
+              blobEncodes++;
+              return toBlob.call(this, callback, ...options);
             };
-            let prematureActors: number;
+            let firstUpdateActors: number;
             try {
               scene.display.update(state, 0);
-              prematureActors = scene.display.actors.size;
+              firstUpdateActors = scene.display.actors.size;
             } finally {
               HTMLCanvasElement.prototype.toBlob = toBlob;
-              for (const release of pendingBlobs) release();
-            }
-            const decodedBy = performance.now() + 5000;
-            while (scene.display.actors.size !== shots.length) {
-              if (performance.now() >= decodedBy) throw Error('Projectile sprites did not decode');
-              await new Promise((resolve) => setTimeout(resolve, 10));
-              scene.display.update(state, 0);
             }
             await engine.start();
             // Actor.kill() queues removal for an engine update. A wall-clock
@@ -411,7 +405,9 @@ try {
                 if (present >= 12 && brightness < 3) excess++;
               }
               results.push({
-                prematureActors,
+                blobEncodes,
+                firstUpdateActors,
+                shotCount: shots.length,
                 heading,
                 speed: speeds[index],
                 order: speeds.join(','),
@@ -438,7 +434,12 @@ try {
       JSON.stringify(projectilePixels, null, 2),
     );
     for (const pixel of projectilePixels) {
-      assert.equal(pixel.prematureActors, 0, 'undecoded canvas images must not create Sprites');
+      assert.equal(pixel.blobEncodes, 0, 'projectile frames must not round-trip through PNG blobs');
+      assert.equal(
+        pixel.firstUpdateActors,
+        pixel.shotCount,
+        'projectile frames are drawable on their first update',
+      );
       assert.ok(pixel.energy > 1000, 'uncropped reference contains visible authored projectile');
       assert.ok(pixel.error < 0.18, JSON.stringify(pixel));
       assert.ok(
@@ -450,6 +451,84 @@ try {
         'native projectile must retain visible reference tail: ' + JSON.stringify(pixel),
       );
     }
+
+    const projectileReuse = await page.evaluate(() => {
+      const { engine, scene } = window.RiftEngine;
+      engine.stop();
+      scene.display.clear();
+      const weapon = Number(Object.keys(G.A!.weapons)[0]);
+      const shot = (speed: number, x: number) => ({
+        x,
+        y: 0,
+        rx: x,
+        ry: 0,
+        vx: speed,
+        vy: 0,
+        w: weapon,
+        t: 0,
+      });
+      const snapshot = {
+        ...G,
+        ents: new Map(),
+        view: null,
+        rocks: [],
+        loot: [],
+        zoom: 2,
+        shots: [shot(1000, -100), shot(1001, 100)],
+      };
+      const canvasFor = (index: number) =>
+        (
+          scene.display.actors.get('shot:' + index)?.graphics.current as
+            | (Graphic & { canvas: HTMLCanvasElement })
+            | undefined
+        )?.canvas;
+      try {
+        scene.display.update(snapshot, 0);
+        const first = scene.display.actors.get('shot:0')!;
+        const second = scene.display.actors.get('shot:1')!;
+        const initialCanvas = canvasFor(0);
+        const nearbySpeedsShareCanvas = !!initialCanvas && initialCanvas === canvasFor(1);
+        // A replacement packet has fresh objects and a fresh timestamp, not mutated old shots.
+        first.graphics.opacity = 0.25;
+        const replacement = {
+          ...snapshot,
+          shots: [{ ...shot(1002, 42), y: 18, rx: 43, ry: 19, vx: 0, vy: 1002, t: 500 }],
+        };
+        scene.display.update(replacement, 0);
+        const retainedActor = scene.display.actors.get('shot:0') === first;
+        const refreshedPresentation =
+          first.pos.x === 43 &&
+          first.pos.y === 19 &&
+          first.rotation === Math.PI / 2 &&
+          first.graphics.opacity === 1;
+        const replacementSharesCanvas = initialCanvas === canvasFor(0);
+        const shrunkRegistry =
+          scene.display.actors.size === 1 &&
+          !scene.display.actors.has('shot:1') &&
+          second.isKilled();
+        scene.display.update({ ...replacement, shots: [shot(1030, 0)] }, 0);
+        const differentBucketHasOwnCanvas = !!canvasFor(0) && canvasFor(0) !== initialCanvas;
+        scene.display.update({ ...replacement, shots: [] }, 0);
+        const emptySnapshotRemovesActors = scene.display.actors.size === 0 && first.isKilled();
+        return {
+          nearbySpeedsShareCanvas,
+          retainedActor,
+          refreshedPresentation,
+          replacementSharesCanvas,
+          shrunkRegistry,
+          differentBucketHasOwnCanvas,
+          emptySnapshotRemovesActors,
+        };
+      } finally {
+        scene.display.clear();
+      }
+    });
+    for (const [behavior, passed] of Object.entries(projectileReuse)) {
+      assert.equal(passed, true, 'projectile reuse: ' + behavior);
+    }
+    await page.evaluate(async () => {
+      await window.RiftEngine.engine.start();
+    });
 
     // Fixture-only entities verify actual registries, Sprite decode and removal, without changing the server.
     const registry = await page.evaluate(async () => {
