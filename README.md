@@ -17,7 +17,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 - Travel between distinctive star systems, rendered planets and stations, from busy trade routes to the remote Eventide frontier.
 - Meet traders, convoys, patrols, pirates and rival captains with their own personalities and careers.
 - Visit illustrated worlds and see colonies grow through three settlement stages.
-- Cross the Gateway near Quantum Station into Farside, recover ancient data cores, and follow faction stories and spaceport questlines. The main story follows your captain through choices, rival peoples and different endings.
+- Discover new places and follow faction stories and spaceport questlines. Your captain's choices shape the main story.
 - Hail passing ships for conversation, assistance and encounters. Incoming calls wait until you choose to answer.
 
 ### Trade, mine and take jobs
@@ -82,18 +82,6 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 
 ![Flying past the Gateway near Quantum Station](docs/screenshots/concordia-gateway.png)
 
-**Farside exploration**
-
-![The silent hulk north of Aureole Research Ring](docs/screenshots/aureole-hulk.png)
-
-**Story encounters**
-
-![Sel’ani’s character portrait in a main-story dialogue](docs/screenshots/main-story-portrait.png)
-
-**Beyond the Rift**
-
-![A captain flying beside the far-side rift under the arrival sky](docs/screenshots/beyond-rift.png)
-
 **Login traffic**
 
 ![A capital ship and its escorts crossing the login observation window](docs/screenshots/login-formation.png)
@@ -145,10 +133,6 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 **Settings and key bindings**
 
 ![Horizontal flight, sound and key-binding control bays](docs/screenshots/cockpit-settings.png)
-
-**Discoverable radio stations**
-
-![Playing the owner-supplied Super-Idol album with all five stations unlocked](docs/screenshots/radio-discovery-draft.png)
 
 **Local faction store**
 
