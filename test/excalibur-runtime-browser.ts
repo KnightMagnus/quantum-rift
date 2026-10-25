@@ -319,28 +319,22 @@ try {
               shots,
               zoom: 2,
             };
-            // Hold blob encoding so each backend exercises the undecoded-image boundary.
+            // Busy fights mint many projectile frames; a PNG blob round trip per frame stalls updates.
             const toBlob = Reflect.get(
               HTMLCanvasElement.prototype,
               'toBlob',
             ) as HTMLCanvasElement['toBlob'];
-            const pendingBlobs: (() => void)[] = [];
+            let blobEncodes = 0;
             HTMLCanvasElement.prototype.toBlob = function (callback, ...options) {
-              pendingBlobs.push(() => toBlob.call(this, callback, ...options));
+              blobEncodes++;
+              return toBlob.call(this, callback, ...options);
             };
-            let prematureActors: number;
+            let firstUpdateActors: number;
             try {
               scene.display.update(state, 0);
-              prematureActors = scene.display.actors.size;
+              firstUpdateActors = scene.display.actors.size;
             } finally {
               HTMLCanvasElement.prototype.toBlob = toBlob;
-              for (const release of pendingBlobs) release();
-            }
-            const decodedBy = performance.now() + 5000;
-            while (scene.display.actors.size !== shots.length) {
-              if (performance.now() >= decodedBy) throw Error('Projectile sprites did not decode');
-              await new Promise((resolve) => setTimeout(resolve, 10));
-              scene.display.update(state, 0);
             }
             await engine.start();
             // Actor.kill() queues removal for an engine update. A wall-clock
@@ -411,7 +405,9 @@ try {
                 if (present >= 12 && brightness < 3) excess++;
               }
               results.push({
-                prematureActors,
+                blobEncodes,
+                firstUpdateActors,
+                shotCount: shots.length,
                 heading,
                 speed: speeds[index],
                 order: speeds.join(','),
@@ -438,7 +434,12 @@ try {
       JSON.stringify(projectilePixels, null, 2),
     );
     for (const pixel of projectilePixels) {
-      assert.equal(pixel.prematureActors, 0, 'undecoded canvas images must not create Sprites');
+      assert.equal(pixel.blobEncodes, 0, 'projectile frames must not round-trip through PNG blobs');
+      assert.equal(
+        pixel.firstUpdateActors,
+        pixel.shotCount,
+        'projectile frames are drawable on their first update',
+      );
       assert.ok(pixel.energy > 1000, 'uncropped reference contains visible authored projectile');
       assert.ok(pixel.error < 0.18, JSON.stringify(pixel));
       assert.ok(
