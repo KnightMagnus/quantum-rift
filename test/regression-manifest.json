@@ -124,7 +124,8 @@
     "wire-contracts.ts",
     "story-continuation.ts",
     "index-presentation.ts",
-    "performance-native.ts"
+    "performance-native.ts",
+    "protocol-compatibility.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -173,7 +174,8 @@
     "cockpit-layout-browser.ts",
     "story-realities-browser.ts",
     "overlay-input-browser.ts",
-    "ui-polish-browser.ts"
+    "ui-polish-browser.ts",
+    "protocol-compatibility-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -1558,6 +1560,26 @@
       "services": [],
       "tests": ["overlay-input-browser.ts", "logout-browser.ts", "input-audio-browser.ts"],
       "asserts": "Confirmation, quit, boarding, Options and Controls have one keyboard owner, explicit priority and safe focus return. Options preserves native settings/button activation, pending-capture Escape cancellation, reserved-key denial, swaps, unbinding and saved bindings. Controls retains Change Keys and consumes Escape above the map. Blocking dialogs suppress manual keyboard/pointer/touch/gamepad commands and held input remains latched until release; other overlay owners remain unchanged."
+    },
+    {
+      "id": "protocol-compatibility",
+      "owners": [
+        "shared/protocol.ts",
+        "client/connection.ts",
+        "client/main.ts",
+        "server/game.ts",
+        "server/nakama-world.ts",
+        "server/local-main.ts",
+        "server/nakama-host.ts"
+      ],
+      "services": [],
+      "tests": [
+        "protocol-compatibility.ts",
+        "protocol-compatibility-browser.ts",
+        "nakama-client-connection.ts",
+        "nakama-network.ts"
+      ],
+      "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC checks, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
     }
   ],
   "routes": {

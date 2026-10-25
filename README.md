@@ -65,7 +65,7 @@ After completing that one-time setup, open the extracted game folder:
 
 Open **http://localhost:8080** if the browser does not open automatically. Keep the server window open while playing. Solo games accept connections only from your computer; for multiplayer on the same network, friends open `http://<host-computer-address>:8080`. Each player uses a different captain name and their own password. See the [friend-host guide](docs/HOSTING.md) for inviting players and keeping backups.
 
-When updating, close the old game server window first. Preserve your `data/`, `solo-data/` and `friend-data/` save folders; do not replace them with empty folders from a new copy. Solo and friend games keep separate progress; saves do not automatically transfer between modes. Save imports remain Solo-only.
+When updating, close the old game server window first. Preserve your `data/`, `solo-data/` and `friend-data/` save folders; do not replace them with empty folders from a new copy. Solo and friend games keep separate progress; saves do not automatically transfer between modes. Save imports remain Solo-only. If the game asks you to refresh after an update, choose **Refresh Game Page**; if it still cannot connect, check that the host has updated too. See [connection compatibility](docs/PROTOCOL-COMPATIBILITY.md).
 
 ## Guides
 

@@ -1,3 +1,4 @@
+import { GAME_PROTOCOL } from '../shared/protocol.ts';
 import type { Server, ServerResponse } from 'node:http';
 
 // Online HTTP host only: static files and public native-service connection settings.
@@ -110,11 +111,12 @@ const server: Server = http.createServer(async (incomingMessage, response) => {
   );
   let decodeURIComponent2 = decodeURIComponent(targetUrl.pathname);
   if (decodeURIComponent2 === '/api/status') {
-    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     response.end(
       JSON.stringify({
         players: null,
         version: VERSION,
+        protocol: GAME_PROTOCOL,
         solo: false,
         nakama: {
           host: process.env.NAKAMA_HOST || targetUrl.hostname || '127.0.0.1',

@@ -1,3 +1,4 @@
+import { GAME_PROTOCOL, COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
 import { validEconomicPayload } from '../shared/wire-payloads.ts';
 import { customCaptainId } from '../shared/nakama-contracts.ts';
 import type { Client, Session, Socket } from '@heroiclabs/nakama-js';
@@ -64,8 +65,15 @@ export interface NakamaClient {
 export interface ConnectionDependencies {
   createNakamaClient(config: NakamaConfig): Promise<NakamaClient>;
   createLocalSocket(url: string): WebSocket;
+  /** Fresh authority advertisement on every connection, including reconnect. */
+  readStatus?(): Promise<{ protocol?: unknown }>;
 }
 const dependencies: ConnectionDependencies = {
+  async readStatus() {
+    const response = await fetch('/api/status', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Status unavailable');
+    return response.json();
+  },
   async createNakamaClient(config) {
     const { Client } = await import('@heroiclabs/nakama-js');
     // First legacy scrypt verification is slower in Goja; it upgrades once to native bcrypt.
@@ -195,6 +203,7 @@ export function createGameConnection(
     if (state === 3) return;
     connection.onerror?.(message);
     socket?.disconnect(false);
+    local?.close();
     finish();
   };
   const receive = (data: string) => {
@@ -202,6 +211,10 @@ export function createGameConnection(
     try {
       packet = JSON.parse(data);
     } catch {
+      return;
+    }
+    if (record(packet) && packet.t === 'error' && packet.code === 'UPDATE_REQUIRED') {
+      fail(COMPATIBILITY_MESSAGE);
       return;
     }
     if (validPacket(packet) && state < 2) connection.onmessage?.({ data });
@@ -217,6 +230,13 @@ export function createGameConnection(
     send(data) {
       if (connection.readyState !== 1) return;
       if (local) {
+        try {
+          const packet: unknown = JSON.parse(data);
+          if (record(packet) && packet.t === 'hello')
+            data = JSON.stringify({ ...packet, protocol: GAME_PROTOCOL });
+        } catch {
+          // Keep non-JSON transport handling with the local server.
+        }
         local.send(data);
         return;
       }
@@ -258,6 +278,9 @@ export function createGameConnection(
   const started = Promise.resolve()
     .then(async () => {
       if (state === 3) return;
+      const status = await services.readStatus?.();
+      if (state === 3) return;
+      if (!supportedProtocol(status?.protocol)) throw new Error(COMPATIBILITY_MESSAGE);
       if (config.solo || (config.mode === 'friends' && config.localTransport === true)) {
         local = services.createLocalSocket(config.localUrl);
         local.onopen = () => {
@@ -301,8 +324,9 @@ export function createGameConnection(
         typeof response.payload === 'string' ? JSON.parse(response.payload) : response.payload;
       if (!record(payload) || typeof payload.matchId !== 'string' || !payload.matchId)
         throw new Error('The online world is unavailable.');
+      if (!supportedProtocol(payload.protocol)) throw new Error(COMPATIBILITY_MESSAGE);
       matchId = payload.matchId;
-      await socket.joinMatch(matchId);
+      await socket.joinMatch(matchId, undefined, { protocol: String(GAME_PROTOCOL) });
       if (state === 3) {
         socket.disconnect(false);
         return;
@@ -313,9 +337,13 @@ export function createGameConnection(
     .catch((error: unknown) => {
       // Server auth errors may be Response objects; do not expose credentials or tokens.
       const message =
-        record(error) && (error.status === 401 || error.status === 403 || error.code === 16)
-          ? 'Captain name or password was not accepted.'
-          : undefined;
+        record(error) &&
+        typeof error.message === 'string' &&
+        error.message.includes(COMPATIBILITY_MESSAGE)
+          ? COMPATIBILITY_MESSAGE
+          : record(error) && (error.status === 401 || error.status === 403 || error.code === 16)
+            ? 'Captain name or password was not accepted.'
+            : undefined;
       fail(message);
     });
   return connection;

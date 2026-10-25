@@ -1,3 +1,4 @@
+import { GAME_PROTOCOL } from '../shared/protocol.ts';
 import type { GameAssets } from '../shared/rules.ts';
 import type { Server, ServerResponse } from 'node:http';
 
@@ -155,11 +156,12 @@ const server: Server = http.createServer(async (incomingMessage, response) => {
   const targetUrl = new URL(incomingMessage.url!, 'http://x');
   let decodeURIComponent2 = decodeURIComponent(targetUrl.pathname);
   if (decodeURIComponent2 === '/api/status') {
-    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     response.end(
       JSON.stringify({
         players: [...game.sessions.values()].filter((session) => session.data).length,
         version: VERSION,
+        protocol: GAME_PROTOCOL,
         solo: SOLO,
         slots: SOLO ? game.slots() : undefined,
         localAuthority: !SOLO,

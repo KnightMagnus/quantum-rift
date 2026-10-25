@@ -62,6 +62,9 @@ function fixture(
     connect?: Promise<Session>;
     denied?: boolean;
     badWorld?: boolean;
+    protocol?: unknown;
+    status?: { protocol?: unknown };
+    freshStatus?: () => Promise<{ protocol?: unknown }>;
   } = {},
 ) {
   const authEntered = deferred<void>();
@@ -93,7 +96,9 @@ function fixture(
     disconnect() {
       disconnects++;
     },
-    async joinMatch(id) {
+    async joinMatch(id, token, metadata) {
+      assert.equal(token, undefined);
+      assert.deepEqual(metadata, { protocol: '1' });
       assert.equal(id, match.match_id);
       joinEntered.resolve();
       return options.join ?? match;
@@ -117,7 +122,9 @@ function fixture(
       assert.equal(value, session);
       assert.equal(id, 'qr_world');
       assert.deepEqual(input, {});
-      return { payload: options.badWorld ? {} : { matchId: match.match_id } };
+      return {
+        payload: options.badWorld ? {} : { matchId: match.match_id, protocol: options.protocol },
+      };
     },
     async sessionLogout(value, access, refresh) {
       revocations.push({ session: value, token: access, refresh });
@@ -130,6 +137,7 @@ function fixture(
     },
   };
   const services: ConnectionDependencies = {
+    readStatus: options.freshStatus ?? (async () => options.status ?? {}),
     async createNakamaClient(value) {
       assert.deepEqual(value, config.nakama);
       return client;
@@ -516,7 +524,7 @@ await test(
     const hello = JSON.stringify({ t: 'hello', name: 'Solo Captain', pass: '' });
     connection.send(hello);
     assert.deepEqual(JSON.parse(await received.promise), { t: 'welcome', name: 'Solo Captain' });
-    assert.deepEqual(actions, [hello]);
+    assert.deepEqual(actions, [JSON.stringify({ ...JSON.parse(hello), protocol: 1 })]);
     await connection.logout();
     await serverClosed.promise;
     connection.send('already-closed');
@@ -524,6 +532,38 @@ await test(
     assert.equal(connection.readyState, 3);
     assert.equal(nakamaCalls, 0);
     assert.equal(closes, 1);
-    assert.deepEqual(actions, [hello]);
+    assert.deepEqual(actions, [JSON.stringify({ ...JSON.parse(hello), protocol: 1 })]);
+  },
+);
+
+await test(
+  'compatibility preflight and native RPC deny unsupported worlds before joining',
+  { timeout: 2000 },
+  async () => {
+    for (const protocol of [2, 0, null, '1', {}, []]) {
+      const subject = fixture({ status: { protocol } });
+      await subject.closed;
+      assert.equal(subject.authCalls.length, 0, 'preflight must precede native authentication');
+      assert.equal(subject.counts().opens, 0);
+      assert.match(subject.errors[0]!, /Refresh this page/);
+      const rpc = fixture({ protocol });
+      await rpc.closed;
+      assert.equal(rpc.counts().opens, 0);
+      assert.match(rpc.errors[0]!, /Refresh this page/);
+    }
+    for (const protocol of [1, undefined]) {
+      const subject = fixture({ status: { protocol }, protocol });
+      await subject.opened;
+      await subject.connection.logout();
+    }
+    let reads = 0;
+    const freshStatus = async () => ({ protocol: ++reads === 1 ? 1 : 2 });
+    const initial = fixture({ freshStatus });
+    await initial.opened;
+    await initial.connection.logout();
+    const reconnect = fixture({ freshStatus });
+    await reconnect.closed;
+    assert.equal(reads, 2, 'reconnect must not reuse a cached compatibility decision');
+    assert.equal(reconnect.authCalls.length, 0);
   },
 );

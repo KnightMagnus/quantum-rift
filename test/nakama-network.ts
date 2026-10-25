@@ -78,14 +78,25 @@ try {
   );
   const world = async (session: Session) => {
     const response = await client.rpc(session, 'qr_world', {});
+    assert.equal((response.payload as { protocol: number }).protocol, 1);
     return (response.payload as { matchId: string }).matchId;
   };
   const matchId = await world(alice);
   assert.equal(await world(bob), matchId);
   const first = await service.connect(alice);
   const second = await service.connect(bob);
-  assert.equal((await first.socket.joinMatch(matchId)).authoritative, true);
+  for (const protocol of ['2', '0', 'bad', '']) {
+    await assert.rejects(first.socket.joinMatch(matchId, undefined, { protocol }));
+    assert.equal(first.latest('you'), undefined, 'rejected protocol cannot enter the Game');
+  }
+  assert.equal(
+    (await first.socket.joinMatch(matchId, undefined, { protocol: '1' })).authoritative,
+    true,
+  );
   await second.socket.joinMatch(matchId);
+  checks.push(
+    'Future/malformed native join epochs denied before Game login; current and missing legacy epochs admitted',
+  );
   await until(() => first.latest('you') && second.latest('you'), 'real Game hello/you');
   assert.equal(first.latest('welcome')!.name.toLowerCase(), 'alice');
   assert.equal(first.latest('you')!.d.name.toLowerCase(), 'alice');
@@ -292,6 +303,14 @@ try {
     '150-packet native flood preserves peer progress and bounded physics; client position, credits and dt remain non-authoritative',
   );
   const duplicate = await service.connect(alice);
+  await assert.rejects(duplicate.socket.joinMatch(matchId, undefined, { protocol: '2' }));
+  assert.equal(duplicate.latest('you'), undefined);
+  assert.equal(
+    first.disconnected,
+    false,
+    'incompatible reconnect must not replace the active captain',
+  );
+  assert.equal(first.latest('you')!.d.credits, initialCredits);
   await duplicate.socket.joinMatch(matchId);
   await until(() => duplicate.latest('you'), 'duplicate sign-in replacement');
   await until(

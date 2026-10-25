@@ -1,3 +1,4 @@
+import { COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
 import { storySystemVisible } from '../shared/story-world.ts';
 import { utf8Bytes } from '../shared/health.ts';
 import type { HealthMonitor } from '../shared/health.ts';
@@ -1684,7 +1685,12 @@ export class Game<Storage extends Database = Database> {
    * @param session Unauthenticated session.
    * @param message2 Authentication handshake payload.
    */
-  hello(session: Session, message2: { name?: string; pass?: string }): void {
+  hello(session: Session, message2: { name?: string; pass?: string; protocol?: unknown }): void {
+    if (!supportedProtocol(message2.protocol)) {
+      this.send(session, { t: 'error', code: 'UPDATE_REQUIRED', msg: COMPATIBILITY_MESSAGE });
+      session.sock.close();
+      return;
+    }
     const name = String(message2.name || '').trim(),
       pass = String(message2.pass || '');
     if (
