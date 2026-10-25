@@ -289,6 +289,26 @@ playback epoch, while an ordinary score loop reuses the source.
 standard-library oscillators and envelopes. `tools/rift_audio.py` delegates to it,
 so regenerating the broad sound library does not restore the retired sharp jingle.
 
+## Modal and manual-input ownership
+
+`client/overlay-controller.ts` owns priority, keyboard capture, native Tab wrapping
+and focus return for confirmation, quit and boarding dialogs. Their existing
+owners still render content and decide whether an action is allowed. Confirmation
+sits above quit, and quit above boarding. Enter and Space activate the focused
+native button; Cancel receives initial focus in confirmation and quit dialogs.
+Logout drops pending callbacks and focus references.
+
+The controller's DOM-derived blocking context is passed into the engine input
+latch rather than importing another controller instance into the engine bundle.
+Keyboard, canvas/radar pointer, touch and gamepad manual controls use that same
+context. Held keys and gamepad controls must release before resuming. Existing
+navigation can continue while a dialog is open; opening a dialog does not pause
+the shared world. Solo quit keeps its existing temporary pause behavior.
+
+Other overlays retain their existing dismissal and focus owners. The landing
+screen is not a flight-blocking modal in this context; its existing docked-state
+gates remain authoritative. Mining retains its additional landed-state denial.
+
 ## Release gates
 
 [RELEASE-READINESS.md](RELEASE-READINESS.md) describes the aggregate, immutable

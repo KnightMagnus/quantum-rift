@@ -27,6 +27,23 @@ try {
   await login();
   const radar = page.locator('#radar'),
     menu = page.locator('#cpanel');
+  // ResizeObserver must finish the automatic allocation before the comparison baseline.
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForFunction(
+    () => {
+      const sidebar = document.getElementById('hud')!;
+      const wrapper = document.getElementById('radarwrap')!;
+      const style = getComputedStyle(sidebar);
+      const scale = sidebar.getBoundingClientRect().width / sidebar.offsetWidth;
+      const available =
+        sidebar.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      return (
+        available > 96 && Math.abs(wrapper.getBoundingClientRect().width - available * scale) < 1
+      );
+    },
+    undefined,
+    { timeout: 3000 },
+  );
   const initial = await radar.boundingBox();
   assert.ok(Math.abs(initial!.width - initial!.height) < 1, 'Automatic minimap starts square');
   async function drag(identifier: string, verticalDelta: number) {
@@ -38,6 +55,10 @@ try {
       boundingBox2!.y + boundingBox2!.height / 2,
     );
     await page.mouse.down();
+    await grip.evaluate((element) => {
+      if (!element.classList.contains('drag'))
+        throw Error('Resize grip did not capture the pointer');
+    });
     await page.mouse.move(
       boundingBox2!.x + boundingBox2!.width / 2,
       boundingBox2!.y + boundingBox2!.height / 2 + verticalDelta,

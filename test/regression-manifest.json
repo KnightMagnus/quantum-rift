@@ -167,7 +167,8 @@
     "planet-portrait-browser.ts",
     "platform-browser-smoke.ts",
     "cockpit-layout-browser.ts",
-    "story-realities-browser.ts"
+    "story-realities-browser.ts",
+    "overlay-input-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -610,7 +611,8 @@
     "helpers/story-integration-edge.ts": ["helpers/mocks.ts"],
     "archive-verification.ts": ["helpers/temp-data.ts"],
     "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
-    "helpers/story-seeded-motion.ts": ["helpers/mocks.ts"]
+    "helpers/story-seeded-motion.ts": ["helpers/mocks.ts"],
+    "overlay-input-browser.ts": ["helpers/browser-fixture.ts", "helpers/temp-data.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1488,6 +1490,18 @@
         "server/nakama-storage.ts",
         "client/space-scene.ts"
       ]
+    },
+    {
+      "id": "modal-input-ownership",
+      "owners": [
+        "client/overlay-controller.ts",
+        "client/main.ts",
+        "client/ui.ts",
+        "client/engine-input.ts"
+      ],
+      "services": [],
+      "tests": ["overlay-input-browser.ts", "logout-browser.ts", "input-audio-browser.ts"],
+      "asserts": "Confirmation, quit and boarding have one keyboard owner, explicit priority and safe focus return. Blocking dialogs suppress manual keyboard/pointer/touch/gamepad commands and held input remains latched until release; other overlay owners remain unchanged."
     }
   ],
   "routes": {
@@ -1510,7 +1524,8 @@
       "message-routing.ts",
       "portable-game-core.ts",
       "nakama-network.ts",
-      "nakama-browser.ts"
+      "nakama-browser.ts",
+      "overlay-input-browser.ts"
     ],
     "target": ["v03.ts", "mining-ui-browser.ts", "message-routing.ts"],
     "tutskip": ["v03.ts", "message-routing.ts"],

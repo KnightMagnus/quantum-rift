@@ -1,3 +1,4 @@
+import { overlays } from './overlay-controller.ts';
 import { storySystemVisible, storyDescription } from '../shared/story-world.ts';
 import { ui as playInterfaceSound } from './audio.ts';
 import { landscapeScene } from '../shared/landscapes.ts';
@@ -554,6 +555,17 @@ const TOAST_SND: Array<[RegExp, string]> = [
   ],
 ];
 // a styled confirmation dialog in place of the browser's own confirm box
+let finishAsk: ((confirmed: boolean) => void) | null = null;
+overlays.register({
+  id: 'askbox',
+  priority: 210,
+  dismiss: () => finishAsk?.(false),
+  initialFocus: () => elementById('askno'),
+  reset: () => {
+    finishAsk = null;
+    elementById('askyes').onclick = elementById('askno').onclick = null;
+  },
+});
 /**
  * Displays a styled confirmation modal dialog with confirm/cancel action handlers.
  * @param message2 Confirmation message prompt
@@ -561,32 +573,19 @@ const TOAST_SND: Array<[RegExp, string]> = [
  * @param askOptions Optional configuration including button labels
  */
 export function ask(message: string, confirmed: () => void, askOptions: AskOptions = {}): void {
-  const returnTo = document.activeElement as HTMLElement | null;
-  const cachedElement = elementById('askbox');
   elementById('askx').textContent = message;
   elementById('askyes').textContent = askOptions.yes || 'CONFIRM';
-  cachedElement!.classList.remove('hidden');
   const done = (isValid: boolean) => {
-    cachedElement!.classList.add('hidden');
-    window.removeEventListener('keydown', entryKey, true);
+    if (finishAsk !== done) return;
+    finishAsk = null;
     elementById('askyes').onclick = elementById('askno').onclick = null;
+    overlays.close('askbox');
     if (isValid) confirmed();
-    if (returnTo?.isConnected) returnTo.focus({ preventScroll: true });
   };
-  const entryKey = (keyboardEvent: KeyboardEvent) => {
-    if (keyboardEvent.key === 'Escape') {
-      keyboardEvent.stopPropagation();
-      keyboardEvent.preventDefault();
-      done(false);
-    } else if (keyboardEvent.key === 'Enter') {
-      keyboardEvent.stopPropagation();
-      keyboardEvent.preventDefault();
-      done(true);
-    }
-  };
-  window.addEventListener('keydown', entryKey, true);
+  finishAsk = done;
   elementById('askyes').onclick = () => done(true);
   elementById('askno').onclick = () => done(false);
+  overlays.open('askbox');
 }
 /**
  * Renders a transient notification toast banner on screen with an audio sting.

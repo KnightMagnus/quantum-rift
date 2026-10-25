@@ -575,8 +575,23 @@
       </div>
     </div>
     <div id="storebox" class="overlay hidden"><div class="gbox metal" id="storein"></div></div>
-    <div id="boardbox" class="overlay hidden"><div class="loginbox metal" id="boardin"></div></div>
-    <div id="askbox" class="overlay hidden">
+    <div
+      id="boardbox"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Board ship"
+    >
+      <div class="loginbox metal" id="boardin"></div>
+    </div>
+    <div
+      id="askbox"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Confirmation"
+      aria-describedby="askx"
+    >
       <div class="loginbox metal askin">
         <div class="storytag">CONFIRM</div>
         <p id="askx"></p>

@@ -11,7 +11,9 @@ export class FlightInput {
   private pending = new Set<string>();
   private blocked = new Set<string>();
   private engine: Engine;
-  constructor(engine: Engine) {
+  private contextBlocked: () => boolean;
+  constructor(engine: Engine, contextBlocked: () => boolean = () => false) {
+    this.contextBlocked = contextBlocked;
     this.engine = engine;
     // Raw button state is only a safety latch, not a second command dispatcher.
     window.addEventListener(
@@ -46,6 +48,7 @@ export class FlightInput {
         target instanceof HTMLElement &&
         (target.matches('input, textarea, select') || target.isContentEditable);
       if (
+        this.contextBlocked() ||
         editing ||
         !document.getElementById('opts')?.classList.contains('hidden') ||
         !document.getElementById('login')?.classList.contains('hidden')
@@ -58,6 +61,10 @@ export class FlightInput {
     engine.input.keyboard.on('release', (event) => this.blocked.delete(event.key));
   }
   held(code: string | null | undefined): boolean {
+    if (this.contextBlocked()) {
+      this.clear();
+      return false;
+    }
     return (
       !!code &&
       keyCodes.has(code) &&
