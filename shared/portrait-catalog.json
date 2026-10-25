@@ -558,5 +558,45 @@
     "playerSelectable": true,
     "poolEligible": true,
     "npcId": null
+  },
+  {
+    "id": "story-selani",
+    "faction": "quevari",
+    "label": "Sel’ani",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": null
+  },
+  {
+    "id": "story-elders",
+    "faction": "quevari",
+    "label": "The elders of Ina Lumen",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": null
+  },
+  {
+    "id": "story-sailwright",
+    "faction": "quevari",
+    "label": "The rescued sailwright",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": null
+  },
+  {
+    "id": "story-clerk",
+    "faction": "spacer",
+    "label": "The Northmark survey clerk",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": null
+  },
+  {
+    "id": "story-prisoner",
+    "faction": "umbral",
+    "label": "The Umbral prisoner",
+    "playerSelectable": false,
+    "poolEligible": false,
+    "npcId": null
   }
 ]

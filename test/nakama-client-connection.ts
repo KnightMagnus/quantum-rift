@@ -300,21 +300,36 @@ await test(
     subject.emit({ ...snapshot, ships: [[1, 2]] });
     subject.emit({ ...snapshot, shots: [[1, 2, null, 4, 5]] });
     subject.emit({ ...snapshot, ev: [null] });
+    subject.emit({ ...snapshot, nhal: { slow: 0, ichor: Infinity, latch: 0 } });
+    subject.emit({ ...snapshot, nhal: { slow: 0, ichor: 16, latch: 0 } });
+    subject.emit({ ...snapshot, nhal: { slow: '0', ichor: 0, latch: 0 } });
+    subject.emit({ ...snapshot, ships: [[...snapshot.ships[0], 'forged-ending']] });
+    subject.emit({ ...snapshot, shots: [[1, 2, 3, 4, 5, 'forged-owner']] });
+    subject.emit({ ...snapshot, loot: [[1, 2, 3, 4, 2]] });
+    const storySnapshot = {
+      ...snapshot,
+      ships: [[...snapshot.ships[0], 'table']],
+      shots: [[1, 2, 3, 4, 5, 1]],
+      nhal: { slow: 2, ichor: 4, latch: 0 },
+      loot: [[1, 2, 3, 4, 1]],
+    };
     subject.emit({ t: 'welcome', name: 'Captain Name' });
     subject.emit(snapshot);
+    subject.emit(storySnapshot);
     subject.emit({ ...snapshot, t: 'scene', me: undefined });
     assert.deepEqual(
       subject.received.map((value) => JSON.parse(value)),
       [
         { t: 'welcome', name: 'Captain Name' },
         snapshot,
+        storySnapshot,
         JSON.parse(JSON.stringify({ ...snapshot, t: 'scene', me: undefined })),
       ],
     );
     assert.equal(subject.errors.length, 0);
     await subject.connection.logout();
     subject.emit({ t: 'welcome', name: 'stale' });
-    assert.equal(subject.received.length, 3);
+    assert.equal(subject.received.length, 4);
   },
 );
 

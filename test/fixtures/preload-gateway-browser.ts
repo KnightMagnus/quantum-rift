@@ -15,8 +15,9 @@ Game.prototype.spawnPlayer = function (
     );
     session._gatewayFixturePlaced = true;
     Object.assign(session.ent!, {
-      x: player ? player.x + 250 : EXPEDITION_HULK.x + 600,
-      y: player ? player.y : EXPEDITION_HULK.y,
+      x:
+        session.data.sys === 'glasswake' ? 1300 : player ? player.x + 250 : EXPEDITION_HULK.x + 600,
+      y: session.data.sys === 'glasswake' ? 500 : player ? player.y : EXPEDITION_HULK.y,
       vx: 0,
       vy: 0,
       a: -Math.PI / 2,
@@ -24,5 +25,6 @@ Game.prototype.spawnPlayer = function (
   }
   // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before removing live entities.
   for (const entity of [...this.spaces[session.data.sys].ships.values()])
-    if (!entity.player) this.spaces[session.data.sys].remove(entity);
+    if (!entity.player && !(session.data.sys === 'glasswake' && entity.indexWorksite))
+      this.spaces[session.data.sys].remove(entity);
 };

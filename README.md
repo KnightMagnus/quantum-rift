@@ -17,7 +17,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 - Travel between distinctive star systems, rendered planets and stations, from busy trade routes to the remote Eventide frontier.
 - Meet traders, convoys, patrols, pirates and rival captains with their own personalities and careers.
 - Visit illustrated worlds and see colonies grow through three settlement stages.
-- Cross the Gateway near Quantum Station into Farside, recover ancient data cores, and discover faction stories, spaceport questlines and a main story hidden in the Rift.
+- Cross the Gateway near Quantum Station into Farside, recover ancient data cores, and follow faction stories and spaceport questlines. The main story follows your captain through choices, rival peoples and different endings.
 - Hail passing ships for conversation, assistance and encounters. Incoming calls wait until you choose to answer.
 
 ### Trade, mine and take jobs
@@ -74,7 +74,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 - [Dedicated server setup](docs/NAKAMA.md)
 - [Beta Solo save generator](test/Save%20Generator/README.md)
 - [Development tools](docs/DEVELOPMENT-TOOLS.md) and [code navigation](docs/CODE-NAVIGATION.md)
-- [Release notes](docs/RELEASE-3.3.3.md)
+- [Release notes](docs/RELEASE-3.4.0.md)
 
 ## Screenshots
 
@@ -85,6 +85,14 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 **Farside exploration**
 
 ![The silent hulk north of Aureole Research Ring](docs/screenshots/aureole-hulk.png)
+
+**Story encounters**
+
+![Sel’ani’s character portrait in a main-story dialogue](docs/screenshots/main-story-portrait.png)
+
+**Beyond the Rift**
+
+![A captain flying beside the far-side rift under the arrival sky](docs/screenshots/beyond-rift.png)
 
 **Login traffic**
 

@@ -16,8 +16,12 @@ export interface StoryMessage {
   ref?: string;
   acc?: string;
   arc?: string;
+  choices?: Array<{ value: string; label: string }>;
+  sequence?: 'ark-departure';
 }
 export interface HailConversation {
+  /** Known NPC-only machine hull, shown instead of a captain portrait. */
+  machineHull?: number;
   t: 'hail';
   who?: string;
   sub?: string;
@@ -72,14 +76,22 @@ export interface SnapshotMessage extends MiningMessage {
       string | null,
       number,
       number,
+      (string | null)?,
+      number?,
+      number?,
+      number?,
+      number?,
     ]
   >;
-  shots: Array<[number, number, number, number, number]>;
+  shots: Array<[number, number, number, number, number, number?]>;
   beams: Array<[number, number, number, number]>;
-  loot: Array<[number, number, number, number]>;
+  /** Salvage tuple ends with an optional Index-claim marker. */
+  loot: Array<[number, number, number, number, number?]>;
   ev: SnapshotEvent[];
   /** Recipient-only combat intent and recent scan notification. */
   attention?: AttentionPayload;
+  /** One countdown per active creature status, never a stacking icon list. */
+  nhal?: { slow: number; ichor: number; latch: number };
   combat?: CombatPayload;
   formation?: boolean;
   me?: [

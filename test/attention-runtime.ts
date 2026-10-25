@@ -102,10 +102,48 @@ try {
     'targeted',
   ]);
   const publicShips = space.snapshot().ships;
+  for (const ship of publicShips) {
+    assert.ok(
+      ship.length === 14 || ship.length === 15,
+      'public snapshot retains the 14-field base with one optional ending',
+    );
+    for (let index = 0; index < 14; index++) {
+      if (index === 11)
+        assert.ok(
+          ship[index] === null || typeof ship[index] === 'string',
+          'name field remains nullable text',
+        );
+      else
+        assert.ok(
+          typeof ship[index] === 'number' && Number.isFinite(ship[index]),
+          `base field ${index} remains a finite number`,
+        );
+    }
+    if (ship.length === 15)
+      assert.ok(
+        ship[14] === null ||
+          (typeof ship[14] === 'string' &&
+            ['long_dream', 'table', 'unsettling', 'captains_watch'].includes(ship[14])),
+        'only a public ending enum or null follows the base tuple',
+      );
+    assert.equal(ship.length, 15, 'current producer appends exactly one public ending field');
+  }
   assert.ok(
-    publicShips.every((ship) => ship.length === 14),
-    'Public ship tuples unchanged',
+    publicShips.every((ship) => ship[14] === null),
+    'captains without endings and NPCs expose no story decisions',
   );
+  const story = game.features.story.storyInit(alpha.data);
+  const priorFlags = story.flags;
+  for (const ending of ['long_dream', 'table', 'unsettling', 'captains_watch'] as const) {
+    story.flags = { main_ending: ending, d1: 'hollow', d2: 'umbral' };
+    const published = required(space.snapshot().ships.find((ship) => ship[0] === recipient.id));
+    assert.deepEqual(
+      published.slice(14),
+      [ending],
+      'only the exact ending enum is appended, not private choices',
+    );
+  }
+  story.flags = priorFlags;
   attacker.armor = attacker.st.armor * 0.1;
   advance();
   assert.equal(attacker.disabled, true, 'Actual production NPC disable threshold reached');

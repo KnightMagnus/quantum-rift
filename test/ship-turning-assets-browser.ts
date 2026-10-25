@@ -62,20 +62,26 @@ try {
     const proof = [];
     for (const hull of Object.values(assets.ships)) {
       const session = SPRITES[hull.id];
-      if (!session?.banks) throw Error(`${hull.id}: missing bank mapping`);
+      if (!session) throw Error(`${hull.id}: missing sprite mapping`);
+      if (hull.id < 900 && !session.banks) throw Error(`${hull.id}: existing banking mapping lost`);
       const layers = [];
       for (const suffix of ['', ...(session.glow ? ['_glow'] : [])]) {
         const image = new Image();
         image.src = `/assets/ships/${hull.id}${suffix}.webp`;
         await image.decode();
-        if (image.width !== session.fs * session.cols || image.height !== session.fs * 9)
-          throw Error(`${hull.id}${suffix}: incomplete108-frame sheet`);
+        const frameCount = session.banks ? 108 : 36;
+        const validRows = session.banks ? [9] : [3, 9];
+        if (
+          image.width !== session.fs * session.cols ||
+          !validRows.includes(image.height / session.fs)
+        )
+          throw Error(`${hull.id}${suffix}: incomplete${frameCount}-frame sheet`);
         const canvas = document.createElement('canvas');
         canvas.width = session.fs;
         canvas.height = session.fs;
         const drawingContext = canvas.getContext('2d', { willReadFrequently: true });
         const frames: ImageDataArray[] = [];
-        for (let index = 0; index < 108; index++) {
+        for (let index = 0; index < frameCount; index++) {
           drawingContext!.clearRect(0, 0, session.fs, session.fs);
           drawingContext!.drawImage(
             image,
@@ -96,7 +102,7 @@ try {
             throw Error(`${hull.id}: empty frame${index}`);
           frames.push(pixels);
         }
-        if (!suffix)
+        if (!suffix && session.banks)
           for (let bank = 1; bank <= 2; bank++)
             for (let heading = 0; heading < 36; heading++) {
               if (
@@ -107,7 +113,7 @@ try {
               )
                 throw Error(`${hull.id}: duplicated bank${bank} heading${heading}`);
             }
-        layers.push({ suffix, frames: 108, width: image.width, height: image.height });
+        layers.push({ suffix, frames: frameCount, width: image.width, height: image.height });
         if (!suffix && repaired.has(hull.id)) {
           context!.fillStyle = 'white';
           context!.fillText(`${hull.id} ${hull.name} | level / right / left`, 5, record * 160 + 18);
@@ -131,7 +137,7 @@ try {
         }
       }
       const rate = shipStats(assets, makeLoadout(assets, hull.id))!.turn;
-      for (const direction of [-1, 1]) {
+      for (const direction of session.banks ? [-1, 1] : []) {
         const entity = { a: 0, t: 0 };
         let bank = 0;
         for (let sample = 0; sample < 30; sample++) {
@@ -153,7 +159,17 @@ try {
       contact: contact.toDataURL('image/png'),
     };
   });
-  assert.equal(result.hulls, 122);
+  assert.equal(result.hulls, 146);
+  assert.equal(
+    result.proof.filter((hull) => hull.id < 900).length,
+    122,
+    'all original hulls retain strict banking coverage',
+  );
+  assert.equal(
+    result.proof.filter((hull) => hull.id >= 900).length,
+    24,
+    'every new combat form decodes its declared frames',
+  );
   assert.equal(result.repaired, 17);
   fileSystem.writeFileSync(
     path.join(output, 'fleet-banks.png'),
@@ -162,7 +178,7 @@ try {
   Reflect.deleteProperty(result, 'contact');
   fileSystem.writeFileSync(path.join(output, 'RESULTS.json'), JSON.stringify(result, null, 2));
   console.log(
-    'Ship turning assets: all122 hulls decode108 nonempty/distinct base frames, matched glow geometry, both stock-rate runtime bank signals;17 repaired hull contact sheet.',
+    'Ship turning assets: all122 original hulls retain108-frame banking;24 new faction forms decode declared level/bank frames and glow;17 repaired hull contact sheet.',
   );
 } catch (error) {
   await failureEvidence(browser, output, error);

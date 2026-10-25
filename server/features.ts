@@ -1,3 +1,9 @@
+import type { IndexCapabilities } from './index-worksite.ts';
+import { IndexFleetOperations } from './index-fleet.ts';
+import type { IndexFleetCapabilities } from './index-fleet.ts';
+import type { NhalCapabilities } from './nhal.ts';
+import { NhalOperations } from './nhal.ts';
+import { IndexOperations } from './index-worksite.ts';
 import type { CoopOperations } from './coop-contracts.ts';
 
 import type { CombatSession } from './combat-assist.ts';
@@ -9,6 +15,9 @@ import type { PressureCapabilities } from './mining-pressure-contracts.ts';
 import type { RefineryCapabilities, RefineryPlayer } from './refinery-contracts.ts';
 import type { TowCapabilities } from './towing-contracts.ts';
 export type FeatureServices = {
+  index: BoundOperations<typeof IndexOperations>;
+  nhal: BoundOperations<typeof NhalOperations>;
+  indexFleet: BoundOperations<typeof IndexFleetOperations>;
   towing: BoundOperations<typeof TowingOperations>;
   industrial: BoundOperations<typeof IndustrialOperations>;
   mining: BoundOperations<typeof MiningOperations>;
@@ -194,14 +203,14 @@ export type HostileCapabilities = Pick<
   Pick<BoundOperations<DocksOperations>, 'wingHulls'>;
 export type StoryCapabilities = Pick<
   Game,
-  'A' | 'broadcast' | 'db' | 'landed' | 'log' | 'send' | 'toast' | 'tradeIn' | 'you'
+  'A' | 'broadcast' | 'db' | 'landed' | 'depart' | 'log' | 'send' | 'toast' | 'tradeIn' | 'you'
 > &
   Pick<BoundOperations<HangarOperations>, 'dockSlots'> &
   Pick<BoundOperations<DocksOperations>, 'leadChanged'> &
   Pick<
     BoundOperations<StoryOperations>,
     'storyComplete' | 'storyDone' | 'storyGift' | 'storyInit' | 'storyOffer'
-  >;
+  > & { nhal: FeatureServices['nhal'] } & Pick<BoundOperations<FrontsOperations>, 'stats'>;
 export type RivalsCapabilities = Pick<
   Game,
   'A' | 'db' | 'live' | 'log' | 'rivalEnts' | 'sessions' | 'spaces' | 'toast'
@@ -217,8 +226,10 @@ export type HailCapabilities = Pick<
   Pick<
     BoundOperations<HailOperations>,
     'bribeCost' | 'hailPlanet' | 'hailPlanetOpt' | 'hailTarget'
+  > & { index: FeatureServices['index']; indexFleet: FeatureServices['indexFleet'] } & Pick<
+    BoundOperations<HostileOperations>,
+    'myPower'
   > &
-  Pick<BoundOperations<HostileOperations>, 'myPower'> &
   Pick<BoundOperations<RivalsOperations>, 'relOf' | 'rivalRel'>;
 export type FleetCommandsCapabilities = import('./contracts.ts').FleetCommandsCapabilities;
 export type SyndicateCapabilities = Pick<Game, 'A' | 'db' | 'landed' | 'log' | 'toast' | 'you'> &
@@ -385,6 +396,50 @@ import { CoopOperations as CoopImplementation } from './coop.ts';
 
 export function createFeatures(core: Game): FeatureServices {
   const features: FeatureServices = {} as FeatureServices;
+  const indexCapabilities: IndexCapabilities = {
+    extract: (space, rock, damage) => features.mining.ordinary(space, rock, damage, null),
+    get db() {
+      return core.db;
+    },
+    sessions: () => core.sessions.values(),
+    toast: core.toast.bind(core),
+  };
+  features.index = bindOperations(IndexOperations, indexCapabilities);
+  const indexFleetCapabilities: IndexFleetCapabilities = {
+    fleets: () => (core.db.world.indexFleets ||= {}),
+    clock: () => core.db.world.mining?.clock || 0,
+    key: (entity) => (entity.player ? core.db.key(entity.player.s.data.name) : null),
+    provoked: (space, visitor) =>
+      visitor.player?.s.data.story?.flags?.index_ending === 'silence' ||
+      (space.id === 'glasswake' &&
+        !!visitor.player &&
+        (core.db.world.indexWorksite?.offenders[core.db.key(visitor.player.s.data.name)]?.until ||
+          0) > (core.db.world.mining?.clock || 0)),
+    extract: (space, rock, damage) => features.mining.ordinary(space, rock, damage, null),
+    virginRock: (space, site) =>
+      core.db.world.mining?.systems[space.id]?.rocks.find(
+        (rock) =>
+          !rock.down &&
+          !rock.dredgeToken &&
+          !rock.work &&
+          rock.hp === rock.max &&
+          rock.stage === 0 &&
+          !rock.heat &&
+          !Object.keys(rock.seen).length &&
+          !rock.leases.length &&
+          Math.hypot(rock.x - site.x, rock.y - site.y) < 800,
+      ) || null,
+    touch: () => core.db.touch(),
+    toast: core.toast.bind(core),
+  };
+  features.indexFleet = bindOperations(IndexFleetOperations, indexFleetCapabilities);
+  const nhalCapabilities: NhalCapabilities = {
+    populations: () => (core.db.world.nhal ||= {}),
+    clock: () => core.db.world.mining?.clock || 0,
+    touch: () => core.db.touch(),
+    toast: core.toast.bind(core),
+  };
+  features.nhal = bindOperations(NhalOperations, nhalCapabilities);
 
   const hangarCapabilities: HangarCapabilities = {
     holdUsed: core.holdUsed.bind(core),
@@ -883,6 +938,13 @@ export function createFeatures(core: Game): FeatureServices {
   features.hostile = bindOperations(HostileOperations, hostileCapabilities);
 
   const storyCapabilities: StoryCapabilities = {
+    get stats() {
+      return features.fronts.stats;
+    },
+    depart: core.depart.bind(core),
+    get nhal() {
+      return features.nhal;
+    },
     get A() {
       return core.A;
     },
@@ -984,6 +1046,12 @@ export function createFeatures(core: Game): FeatureServices {
   features.rivals = bindOperations(RivalsOperations, rivalsCapabilities);
 
   const hailCapabilities: HailCapabilities = {
+    get index() {
+      return features.index;
+    },
+    get indexFleet() {
+      return features.indexFleet;
+    },
     get hails() {
       return core.hails;
     },
@@ -1508,6 +1576,13 @@ export function createFeatures(core: Game): FeatureServices {
   features.sessions = { sessionOf: features.coop.sessionOf };
 
   const miningCapabilities: MiningCapabilities = {
+    indexMining: (system, rock, captain) => {
+      if (system === 'glasswake') features.index.mining(system, rock, captain);
+      const session = [...core.sessions.values()].find(
+        (candidate) => candidate.ent && core.db.key(candidate.data.name) === captain,
+      );
+      if (session?.ent) features.indexFleet.mining(core.spaces[system], rock, session.ent);
+    },
     get db() {
       return core.db;
     },

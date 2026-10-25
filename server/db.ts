@@ -1,3 +1,6 @@
+import type { IndexFleetWorld } from './index-fleet.ts';
+import type { NhalPopulation } from './nhal.ts';
+import type { IndexWorld } from './index-worksite.ts';
 import { HealthMonitor } from '../shared/health.ts';
 import type { SeedDefinition } from './game.ts';
 import type { GamePlatform } from './game-platform.ts';
@@ -47,6 +50,12 @@ export type WorldData = FeatureWorldState & {
 
   /** World sites and player claim data. */
   sites: Record<string, string>;
+  /** Neutral Index worksite timers and finite replacements. */
+  indexWorksite?: IndexWorld;
+  /** Native Deep finite population budgets. */
+  nhal?: Record<string, NhalPopulation>;
+  /** One finite neutral workgroup per Farside system. */
+  indexFleets?: Record<string, IndexFleetWorld>;
   mining?: SavedMiningWorld;
   refinery?: SavedRefinery;
   miningPressure?: SavedMiningPressure;

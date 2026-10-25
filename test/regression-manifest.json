@@ -119,7 +119,8 @@
     "release-readiness.ts",
     "archive-verification.ts",
     "health.ts",
-    "wire-contracts.ts"
+    "wire-contracts.ts",
+    "story-continuation.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -165,7 +166,8 @@
     "audio-defaults-browser.ts",
     "planet-portrait-browser.ts",
     "platform-browser-smoke.ts",
-    "cockpit-layout-browser.ts"
+    "cockpit-layout-browser.ts",
+    "story-realities-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -298,7 +300,14 @@
       "helpers/required.ts",
       "helpers/story-foundations.ts"
     ],
-    "eventide.ts": ["helpers/mocks.ts", "helpers/required.ts", "helpers/legacy-story-systems.ts"],
+    "eventide.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts",
+      "helpers/legacy-story-systems.ts",
+      "helpers/index-worksite.ts",
+      "helpers/nhal.ts",
+      "helpers/index-fleet.ts"
+    ],
     "companion-fixes.ts": ["helpers/mocks.ts"],
     "hailing.ts": ["helpers/mocks.ts", "helpers/required.ts"],
     "chat-bubbles.ts": ["helpers/mocks.ts", "helpers/required.ts"],
@@ -580,11 +589,28 @@
     "purchase-audio.ts": ["helpers/temp-data.ts"],
     "audio-flyby-browser.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"],
-    "archive-verification.ts": ["helpers/temp-data.ts"],
-    "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "wire-contracts.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts"],
     "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "helpers/story-foundations.ts": ["helpers/mocks.ts"]
+    "helpers/story-foundations.ts": ["helpers/mocks.ts"],
+    "helpers/index-worksite.ts": ["helpers/mocks.ts"],
+    "story-realities-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/story-reality.ts",
+      "fixtures/preload-story-browser.ts",
+      "helpers/story-witness.ts"
+    ],
+    "story-continuation.ts": [
+      "helpers/mocks.ts",
+      "helpers/story-integration-edge.ts",
+      "helpers/story-seeded-motion.ts"
+    ],
+    "helpers/nhal.ts": ["helpers/mocks.ts"],
+    "helpers/index-fleet.ts": ["helpers/mocks.ts"],
+    "helpers/story-witness.ts": ["helpers/mocks.ts"],
+    "helpers/story-integration-edge.ts": ["helpers/mocks.ts"],
+    "archive-verification.ts": ["helpers/temp-data.ts"],
+    "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
+    "helpers/story-seeded-motion.ts": ["helpers/mocks.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1356,7 +1382,8 @@
         "shared/landscapes.ts",
         "shared/portraits.ts",
         "client/profile_ui.ts",
-        "client/hails_ui.ts"
+        "client/hails_ui.ts",
+        "client/story-portraits.ts"
       ],
       "tests": [
         "planet-portrait-art.ts",
@@ -1366,25 +1393,7 @@
         "nakama-network.ts",
         "cockpit-layout-browser.ts"
       ],
-      "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork. Profile is a Captain-menu tab, without independent HUD/landed profile buttons."
-    },
-    {
-      "id": "release-platform-gates",
-      "owners": [
-        "tools/release-readiness.ts",
-        "tools/start.ts",
-        "server/local-main.ts",
-        "tools/verify_archive.py",
-        ".github/workflows/ci.yml"
-      ],
-      "services": [],
-      "tests": [
-        "release-readiness.ts",
-        "archive-verification.ts",
-        "platform-browser-smoke.ts",
-        "packaged-runtime.ts"
-      ],
-      "asserts": "Readiness fails closed for every missing, failed, skipped or cancelled supported lane. Exact archive hashes, full inventory, content and modes are checked before extraction; unsafe, duplicate and changed entries fail without partial extraction. Narrow engine login, keyboard/modal isolation, canvas fallback and exported/imported captain playability remain distinct from full Chromium coverage. CI also executes a single complete built archive across native OSes without npm dependencies."
+      "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork. Profile is a Captain-menu tab, without independent HUD/landed profile buttons. Main-story encounter portraits, completion-specific identities, text-only fallback and narrow dialogue controls."
     },
     {
       "id": "story-foundations",
@@ -1406,6 +1415,67 @@
       ],
       "asserts": "Concordia Gateway travel, stable stellar ID and generated galaxy, unchanged qv rewards, fixed Farside hulk and accepted expedition compatibility.",
       "services": []
+    },
+    {
+      "id": "index-worksite",
+      "owners": [
+        "server/index-worksite.ts",
+        "shared/index.ts",
+        "shared/quests.ts",
+        "client/mining_render.ts"
+      ],
+      "services": ["index"],
+      "tests": ["eventide.ts", "gateway-browser.ts"],
+      "asserts": "Neutral worksite and unmarked resource safety; exact-rock warnings and captain-root provocation, innocent captain and NPC safety, bounded disengagement and persisted encounter health/claim/replacement budgets; shared finite mining allocations, passive salvage exclusion, explicit hail theft, parent cleanup, peaceful personal survey/recovery quest and real browser artwork/hail cues."
+    },
+    {
+      "id": "story-realities",
+      "owners": [
+        "client/story-reality.ts",
+        "client/world-actors.ts",
+        "client/render.ts",
+        "client/ui.ts",
+        "client/info_ui.ts"
+      ],
+      "tests": ["story-realities-browser.ts"],
+      "services": [],
+      "asserts": "Viewer-only Act III and permanent Unsettling faction ghosts, owner chains, friend/group precedence, native hull/glow/name opacity with opaque targets, reduced effects, hidden chart picking and supplied endgame atlas/backdrop artwork."
+    },
+    {
+      "id": "story-continuation",
+      "owners": [
+        "server/story.ts",
+        "shared/story.ts",
+        "shared/story-continuation.ts",
+        "shared/story-world.ts",
+        "shared/story-quests.ts",
+        "shared/story-quest-gates.ts",
+        "server/nhal.ts",
+        "shared/nhal.ts",
+        "server/index-fleet.ts",
+        "shared/index-fleet.ts"
+      ],
+      "services": ["story", "nhal", "indexFleet"],
+      "tests": ["story-continuation.ts", "eventide.ts", "story-realities-browser.ts"],
+      "asserts": "Captain-scoped decisions, finale availability branches, denial and persistence; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups."
+    },
+    {
+      "id": "release-platform-gates",
+      "owners": [
+        "tools/release-readiness.ts",
+        "tools/start.ts",
+        "server/local-main.ts",
+        "tools/verify_archive.py",
+        ".github/workflows/ci.yml"
+      ],
+      "services": [],
+      "tests": [
+        "release-readiness.ts",
+        "archive-verification.ts",
+        "platform-browser-smoke.ts",
+        "packaged-runtime.ts"
+      ],
+      "asserts": "Readiness fails closed for every missing, failed, skipped or cancelled supported lane. Exact archive hashes, full inventory, content and modes are checked before extraction; unsafe, duplicate and changed entries fail without partial extraction. Narrow engine login, keyboard/modal isolation, canvas fallback and exported/imported captain playability remain distinct from full Chromium coverage. CI also executes a single complete built archive across native OSes without npm dependencies."
     },
     {
       "id": "performance-health",

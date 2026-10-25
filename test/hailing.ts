@@ -76,6 +76,9 @@ const game = mockGame({
   you() {},
   db: { touch() {} },
   features: {
+    nhal: { ai: () => false },
+    indexFleet: { ai: () => false },
+    index: { ai: () => false },
     coop: {
       blocked: (playerData, quantity) => playerData!.blocks.includes(quantity), // This fixture has no armadas; retain its saved-ID sentinel boundary.
       armadaOf: ((playerData: { armada?: unknown }) =>
@@ -84,6 +87,7 @@ const game = mockGame({
     rivals: { relOf: () => 40, rivalRel() {} },
   },
 });
+message.game = game;
 const service = (game.hails = new HailService(
   game,
   () => currentTime,
@@ -111,6 +115,13 @@ const nonPlayerShip = (
   message.ships.set(identifier, shipEntity);
   return shipEntity;
 };
+const silentNhal = nonPlayerShip(983, { faction: 'nhal' });
+assert.equal(
+  service.offer(session, silentNhal, 'beg'),
+  false,
+  'Nhal never receive generic organic dialogue even when the fixture is nonhostile',
+);
+message.ships.delete(silentNhal.id);
 assert.equal(hailText('😀'.repeat(100)), '😀'.repeat(100));
 assert.equal(hailText('😀'.repeat(101)), null);
 for (const entry of ['', '  ', {}, '\u0000']) assert.equal(hailText(entry), null);

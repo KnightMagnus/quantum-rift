@@ -102,8 +102,10 @@ assertCondition(
   'the Deep is locked until the story opens it',
 );
 assertCondition(
-  STORY.length === 5 && STORY.every((session) => STELLARS[session.at]),
-  'five story missions, each offered at a real world',
+  STORY.length === 13 &&
+    STORY.slice(0, 5).length === 5 &&
+    STORY.every((session) => STELLARS[session.at]),
+  'five original story missions and eight continuation missions, all offered at real worlds',
 );
 land(firstEntry, 'threshold');
 const legacyPacket = firstEntry.last('story');

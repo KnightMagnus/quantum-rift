@@ -24,7 +24,44 @@ export interface StoredShip {
   bridge?: Record<string, number | string | null>;
   escorts?: Array<{ ship: ShipLoadout }>;
 }
+/** Per-captain choices never mutate shared faction or market state. */
+export interface StoryFlags {
+  /** Manifest recipient chosen at the berth. */
+  d1?: 'concord' | 'hollow' | 'index';
+  /** The fate of the captured Umbral crew. */
+  d2?: 'umbral' | 'quevari';
+  /** The instruction sent to the Kernel after collecting all accounts. */
+  index_ending?: 'survey_complete' | 'concord_property' | 'silence';
+  /** The irreversible resolution of the Dreamer encounter. */
+  nhal_ending?: 'kill' | 'seal' | 'witness';
+  /** This captain’s finale; never a global world flag. */
+  main_ending?: 'long_dream' | 'table' | 'unsettling' | 'captains_watch';
+  /** The people whose reality an Unsettling captain joins. */
+  unsettled_with?: string;
+  /** Act III presentation and personal encounter gate. */
+  breach_started?: boolean;
+  /** The keepers have prepared all ten lamps for the Table. */
+  lamps_relit?: boolean;
+  /** Whether the keepers help rebuild the Night Anchor. */
+  morrow_umbral?: 'reconcile' | 'feud';
+  /** The captain has reached the far-side placeholder. */
+  crossed_quantum_rift?: boolean;
+  /** The starless vigil mission scene is temporarily accessible. */
+  founding_vigil?: boolean;
+  /** The five components were assembled, even if their original hull is lost. */
+  harness_built?: boolean;
+  /** Lethal damage permanently excludes witnessing or sealing this Dreamer. */
+  dreamer_defeated?: boolean;
+  /** A Thalassi contact has supplied the missing convoy’s bearing. */
+  convoy_visible?: boolean;
+  /** Unique honorary title from the chosen Unsettling people. */
+  title?: string;
+}
 export interface SavedStory {
+  /** Reward-free portal space has no dock; resume the actual ship there. */
+  flight?: { sys: string; x: number; y: number; a: number };
+  /** Persistent decisions and personal presentation gates. */
+  flags?: StoryFlags;
   step: number;
   active: { id: string; got: number; spawned: boolean; ready: boolean; allies?: number[] } | null;
   done: string[];

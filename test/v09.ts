@@ -211,5 +211,24 @@ for (let index = 0; index < 120 && !errorCount; index++) {
   );
 }
 assertCondition(errorCount, `Umbral Eclipse cells roam ${requiredFixtureValue(starSystem2).name}`);
+const existingEclipse = [...message3.ships.values()].filter((ship) => ship.faction === 'eclipse');
+assertCondition(
+  existingEclipse.length >= 3 && existingEclipse.length <= 4,
+  'Deep exception is one bounded Eclipse cell',
+);
+for (let index = 0; index < 120; index++) message3.spawnTraffic(false);
+assertCondition(
+  [...message3.ships.values()].filter((ship) => ship.faction === 'eclipse').length ===
+    existingEclipse.length,
+  'repeated traffic polls cannot stack Eclipse cells in the Deep',
+);
+assertCondition(
+  [...message3.ships.values()].some((ship) => ship.faction === 'nhal'),
+  'native Nhal remain present beside the tagged event encounter',
+);
+assertCondition(
+  [...message3.ships.values()].every((ship) => ['nhal', 'eclipse'].includes(ship.faction)),
+  'the tagged exception never restores ordinary Umbral or Hollow Deep traffic',
+);
 console.log('ALL 0.9 TESTS PASSED');
 process.exit(0);

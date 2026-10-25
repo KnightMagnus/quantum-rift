@@ -45,8 +45,19 @@ try {
     await page.locator('#storyb button').first().click();
   await page.locator('[data-lt="refinery"]').click();
   await page.waitForSelector('#refrecipe');
+  // The first quote can replace this form between separate Playwright calls.
+  // Observe the live control's geometry atomically rather than a detached handle.
+  const quantityHeight = await page.waitForFunction(
+    () => {
+      const height = document.querySelector('#refquantity')?.getBoundingClientRect().height;
+      return height && height > 0 ? height : false;
+    },
+    undefined,
+    { timeout: 5000 },
+  );
+  const measuredQuantityHeight = await quantityHeight.jsonValue();
   assert.ok(
-    (await page.locator('#refquantity').boundingBox())!.height <= 40,
+    typeof measuredQuantityHeight === 'number' && measuredQuantityHeight <= 40,
     'Tonnes input stays a compact single-line control',
   );
   assert.equal(

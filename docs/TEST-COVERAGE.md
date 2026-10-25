@@ -33,7 +33,7 @@ nested semantic validity or authorize client economic decisions.
 `tooling-contracts.ts` runs in the unit CI lane. It checks that Oxlint accepts
 valid source and rejects unused bindings and floating promises, and that Oxc
 Parser preserves optional/member access needed by the feature-dependency audit.
-The existing feature test checks all 20 providers against the unchanged inventory.
+The existing feature test checks all 21 providers against the unchanged inventory.
 Both TypeScript and tsrs run valid/invalid contract fixtures; tsrs remains a
 Linux CI check because its pinned native package has no Windows binary.
 
@@ -849,7 +849,7 @@ comparisons, not physical midrange-laptop or audible-output certification.
 
 ## Planetary landscapes and portraits
 
-`planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation, bounded acknowledgement tokens and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser and hail windows, denied or unconfirmed save recovery, stale-reply isolation and Captain-tab controls at narrow/scaled and desktop sizes. `nakama-network.ts` verifies selected portraits through real Nakama authentication and match ingress, spoofed-target isolation, public lookup, PostgreSQL checkpoint storage and a native service restart. The adapter unit fixture remains a separate bounded persistence check.
+`planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation, bounded acknowledgement tokens and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser and hail windows, denied or unconfirmed save recovery, stale-reply isolation and Captain-tab controls at narrow/scaled and desktop sizes. `nakama-network.ts` verifies selected portraits through real Nakama authentication and match ingress, spoofed-target isolation, public lookup, PostgreSQL checkpoint storage and a native service restart. The adapter unit fixture remains a separate bounded persistence check. Main-story portrait coverage checks the five character identities, completion-specific faces, exclusion from player and generic pools, text-only fallback, decoded browser images and narrow-screen dialogue controls.
 
 ## Functional cockpit layout
 
@@ -888,6 +888,53 @@ limits, including pending cross-version fixture integration.
 ### Story groundwork
 
 `story-foundations` is covered by the existing Gateway, story and expedition suites. The Gateway suite reuses its isolated game for the stable stellar ID, Concordia approach, unchanged qv rewards, spoiler bounds, fixed Aureole hulk, and accepted expedition compatibility checks. Browser coverage verifies both transit directions and the stationary non-interactive scenery. The existing generation golden remains unchanged after explicitly reversing only the authored Gateway relocation and lore edits. No Index/Nhal combat, later story acts or endings are implemented by these checks.
+
+## Index worksite
+
+The `index-worksite` contract extends the existing Eventide and Gateway browser
+fixtures. The server case checks neutral passage despite standing, exact-rock
+warnings, captain/wing attribution, innocent bystanders, NPC damage, disengagement,
+unload-safe health and finite replacement counts, conserved extraction, deliberate
+salvage theft and the peaceful per-captain Last Survey quest. The browser checks
+live sprite decoding, claim data and the real hail controls. Transformations,
+Kernel tactics, regional sorties and later story missions are not covered here.
+
+## Personal story realities and endgame artwork
+
+The `story-realities` contract uses `story-realities-browser.ts` to exercise the native actor registry with isolated viewer
+state: Act III ghost opacity, engine glow, friend-game precedence, different-ending
+ghosts, a persisted real Reduced effects options toggle, faded nameplates and opaque target outlines. Its helper
+checks ownership chains, cyclic owners, NPC faction lenses and private scenery
+visibility. The browser also denies selection of hidden story systems and captures
+a saved captain flying in Beyond the Rift with the supplied arrival backdrop and
+animated atlas. An eligible saved captain chooses the Table through the real story
+UI, launches into their own ship view, and watches the supplied awake ark render
+without adding a targetable combat entity. These presentation fixtures do not grant progress or prove online
+combat authority; authoritative choices and access gates have separate story tests.
+
+## Story continuation and faction encounters
+
+`story-continuation` checks the authoritative Acts II and III lifecycle, landed
+choice denials and replay protection, per-captain flags, exhaustive ending gates,
+actual journal persistence and hidden-place travel gates. Portal tests require a
+fitted unique Harness, verify turn-away without it, cross and return through the
+real server operation, and deny extra rewards or outfit resale. Authored quest
+prerequisites and all destination references are checked separately from combat.
+
+The registered Eventide helpers exercise native Nhal population staging, finite
+Watcher and brood budgets, latch/status escape, regeneration, rivalry and no
+generic bounty. Transforming Index checks cover neutral captain attribution,
+Mutable/Hive postures, Loom clearance and shared finite extraction, real Trident
+blades with persistent loss and one reward, bounded Kernel reboot and Talon escape.
+Browser checks cover supplied faction artwork and the actual private Vigil,
+prepared Dreamer witness route and player-ship ark departure. The all-port job
+regression includes the real Table board, denies locked queries and hidden offer
+injection, and keeps encounter-only salvage out of public freight. Original graph,
+freight, arc and radio-tour goldens retain their baseline hashes after exact
+reviewed story-content reversals. Stock travelling hulls retain closed-loop landing
+and banking bounds; deployed NPC work postures keep all braking checks and have
+explicitly tested transit counterparts. These are deterministic
+fixtures, not an exhaustive balance, seed, hardware or human multiplayer playtest.
 
 ## Performance and operational health
 

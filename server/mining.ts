@@ -589,6 +589,12 @@ export const MiningOperations = {
       update(this, space, generation, Math.max(generation.updated, from));
       if (generation.down) return;
     }
+    if (
+      (space.indexWorksite?.claim === rock.id ||
+        this.db.world.indexFleets?.[space.id]?.claim === rock.id) &&
+      miningContact.damage > 0
+    )
+      this.indexMining(space.id, rock.id, miningContact.source.captain);
     generation.lastActivity = clock2;
     generation.seen[contactId2] = clock2;
     generation.captain = miningContact.source.captain;
@@ -613,6 +619,11 @@ export const MiningOperations = {
    * Sweep never finishes a clean-ready or multistage rock; same finite root budget.
    */
   sweep(this: Capabilities, space: Space, rock: Rock, damage: number, captain: string) {
+    if (
+      space.indexWorksite?.claim === rock.id ||
+      this.db.world.indexFleets?.[space.id]?.claim === rock.id
+    )
+      return 0;
     const generation = world(this).systems[space.id]?.rocks.find(
       (savedRockGeneration) => savedRockGeneration === rock,
     );
@@ -649,6 +660,8 @@ export const MiningOperations = {
       (savedRockGeneration) => savedRockGeneration === rock,
     );
     if (!generation || generation.down || !Number.isFinite(damage) || damage <= 0) return;
+    if (space.indexWorksite?.claim === rock.id && captain)
+      this.indexMining(space.id, rock.id, captain);
     generation.lastActivity = world(this).clock;
     generation.hp = Math.max(0, generation.hp - damage);
     if (!generation.hp) {
@@ -795,6 +808,7 @@ export const MiningOperations = {
         acquired: generation.work >= 0.6,
         down: !!generation.down,
         gas: generation.ore === 'gas',
+        ...(space.indexWorksite?.claim === generation.id ? { indexClaim: true } : {}),
       })),
     };
   },

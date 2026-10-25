@@ -1030,6 +1030,8 @@ export const HangarOperations = {
     if (distance > Math.max(120, (entity2.st.size + entity.st.size) * 0.5))
       return this.toast(session, 'Move alongside to board.');
     if (relative > 90) return this.toast(session, 'Match speed to board.');
+    if ((entity2.faction === 'nhal' || entity2.faction === 'index') && message.act !== 'rescue')
+      return this.toast(session, 'These hulls cannot be captured or plundered.');
     const shipHullAsset = this.A.ships[entity2.hull],
       factionDef = FACTIONS[entity2.faction],
       lawful = factionDef && !factionDef.pirate && entity2.faction !== 'umbral',
@@ -1156,6 +1158,19 @@ export const HangarOperations = {
         return done();
       }
       case 'rescue': {
+        if (entity2.hull === 903 && entity2.rescueOf) {
+          const mission = playerData.missions.find(
+            (job) => job.id === entity2.rescueOf!.id && job.quest?.qid === 's:nhal-ossuary',
+          );
+          if (mission) {
+            mission.done = true;
+            this.toast(
+              session,
+              'Pod records secured. These are unchosen lives, not prisoners or passengers.',
+            );
+            return done();
+          }
+        }
         if (entity2.storyBoard && this.storyProgress) this.storyProgress(session, entity2);
         if (entity2.arcOf && this.arcProgress) this.arcProgress(session, entity2);
         if (entity2.rescueOf) {

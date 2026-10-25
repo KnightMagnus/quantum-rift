@@ -91,21 +91,36 @@ const sha256 = (
     | (string | { id: string; j: number } | null)[][]
     | (string | Mission[])[][],
 ) => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
-const galaxy = new GalaxyGraph(systemsById);
+// Personal story destinations are reviewed additions, not generated topology.
+// Keep the untouched golden against exactly the original systems/links.
+const legacySystems = Object.fromEntries(
+  legacyStorySystems(Object.values(systemsById)).map((system) => [system.id, system]),
+);
+const galaxy = new GalaxyGraph(legacySystems);
 const originalClock = Date.now;
 Date.now = () => baseline.time;
 try {
-  assert.deepEqual(Object.keys(baseline.distances), Object.keys(systemsById));
-  for (const origin of Object.keys(systemsById)) {
+  assert.deepEqual(Object.keys(baseline.distances), Object.keys(legacySystems));
+  for (const origin of Object.keys(legacySystems)) {
     assert.equal(
       sha256(galaxy.distances(origin)),
       baseline.distances[origin],
       `Distances ${origin}`,
     );
-    const buyers = COMMODITIES.map(({ id: identifier }) => {
-      const buyer = Game.prototype.nearestBuyer.call({}, origin, identifier);
-      return [identifier, buyer && { id: buyer.p.id, j: buyer.j }];
-    });
+    const addedSalvage = new Set([
+      'nhal_bone',
+      'nhal_ichor',
+      'nhal_eye',
+      'index_core',
+      'index_parts',
+    ]);
+    assert.equal(COMMODITIES.filter(({ id }) => addedSalvage.has(id)).length, 5);
+    const buyers = COMMODITIES.filter(({ id }) => !addedSalvage.has(id)).map(
+      ({ id: identifier }) => {
+        const buyer = Game.prototype.nearestBuyer.call({}, origin, identifier);
+        return [identifier, buyer && { id: buyer.p.id, j: buyer.j }];
+      },
+    );
     assert.equal(sha256(buyers), baseline.buyers[origin], `Nearest buyer ${origin}`);
   }
   // Keep the original ordered-port golden. Moving the service-free Gateway

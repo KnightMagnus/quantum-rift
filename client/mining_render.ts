@@ -1,4 +1,6 @@
 interface MiningRock {
+  /** Server-owned claim on this specific rock. */
+  indexClaim?: boolean;
   id: number;
   down?: boolean;
   x: number;
@@ -16,6 +18,8 @@ interface MiningReveal {
   hazard: string;
 }
 export interface MiningRenderState {
+  /** Snapshot salvage markers; only the server assigns claims. */
+  loot?: Array<{ x: number; y: number; indexClaim?: boolean }>;
   you?: { sys?: string } | null;
   opts: { scale?: number; cb?: boolean; motion?: boolean };
   miningRocks?: { version: number; rocks: MiningRock[] } | null;
@@ -68,6 +72,23 @@ export function drawMining(
     canvasRenderingContext2D.strokeRect(positionX - 15, positionY - 15, 30, 30);
   }
   canvasRenderingContext2D.restore();
+  const claimedSalvage = miningRenderState.loot?.filter((parcel) => parcel.indexClaim) || [];
+  if (claimedSalvage.length) {
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.strokeStyle = '#ffcf8a';
+    canvasRenderingContext2D.fillStyle = '#ffcf8a';
+    canvasRenderingContext2D.font = 'bold 13px "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.textAlign = 'center';
+    for (const parcel of claimedSalvage)
+      canvasRenderingContext2D.strokeRect(screenX(parcel.x) - 9, screenY(parcel.y) - 9, 18, 18);
+    const parcel = claimedSalvage[0];
+    canvasRenderingContext2D.fillText(
+      '⚠ INDEX SALVAGE — hail a machine to take',
+      screenX(parcel.x),
+      screenY(parcel.y) - 18,
+    );
+    canvasRenderingContext2D.restore();
+  }
   const wire = miningRenderState.miningRocks;
   if (!wire || wire.version !== 1) return;
   const reveal = new Map(
@@ -83,13 +104,25 @@ export function drawMining(
     if (miningRock.down) continue;
     const shown = reveal.get(miningRock.id),
       selected = miningRock.id === miningRenderState.miningTarget;
-    if (!shown && !selected && miningRock.heat < 1) continue;
+    if (!shown && !selected && !miningRock.indexClaim && miningRock.heat < 1) continue;
     const positionX = screenX(miningRock.x),
       positionY = screenY(miningRock.y),
       radius = miningRock.r * positionZ + 6;
     if (positionX < -100 || positionX > width + 100 || positionY < -100 || positionY > height + 100)
       continue;
-    canvasRenderingContext2D.strokeStyle = miningRenderState.opts.cb ? '#fff0a0' : '#7de8ea';
+    if (miningRock.indexClaim) {
+      canvasRenderingContext2D.fillStyle = '#ffcf8a';
+      canvasRenderingContext2D.fillText(
+        '⚠ INDEX CLAIM — leave marked material alone',
+        positionX,
+        positionY - radius - 12,
+      );
+    }
+    canvasRenderingContext2D.strokeStyle = miningRock.indexClaim
+      ? '#ffcf8a'
+      : miningRenderState.opts.cb
+        ? '#fff0a0'
+        : '#7de8ea';
     canvasRenderingContext2D.lineWidth = selected ? 3 : 2;
     canvasRenderingContext2D.setLineDash(shown ? [7, 4] : [2, 6]);
     canvasRenderingContext2D.beginPath();

@@ -450,6 +450,7 @@ const PortOperations: PortOperations = {
     const factionId = stellarBody.site ? 'quantum' : systemsById[stellarBody.system].faction,
       outfitIds = [];
     for (const outfit of Object.values(this.O)) {
+      if (outfit.id === 9021) continue;
       if (outfit.faction && outfit.faction !== factionId) continue;
       const factionExclusive =
         FACTION_OUTFITS[factionId] && FACTION_OUTFITS[factionId].includes(outfit.id);
@@ -484,6 +485,7 @@ const PortOperations: PortOperations = {
     if (!port || session.ent || !quantity) return;
     const outfit = this.O[outfitId];
     if (!outfit) return;
+    if (outfitId === 9021) return this.toast(session, 'The Rift Harness cannot be bought or sold.');
     if (playerData.shipless)
       return this.toast(
         session,

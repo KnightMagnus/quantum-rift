@@ -106,6 +106,8 @@ export type MiningRockWire = {
   acquired: boolean;
   down: boolean;
   gas: boolean;
+  /** Exact live Index claim, never a whole field. */
+  indexClaim?: boolean;
 };
 export type MiningRocksWire = { version: 1; now: number; rocks: MiningRockWire[] };
 export type MiningPrivateWire = {
@@ -115,9 +117,14 @@ export type MiningPrivateWire = {
   revealUntil: number;
   revealed: { id: number; generation: number; seam: number; potential: string; hazard: string }[];
 };
-export type MiningSpace = Pick<Space, 'id' | 'rocks' | 'loot' | 'events' | 't' | 'sys'>;
+export type MiningSpace = Pick<
+  Space,
+  'id' | 'rocks' | 'loot' | 'events' | 't' | 'sys' | 'indexWorksite'
+>;
 export type MiningDatabase = Pick<Database, 'world' | 'touch' | 'get' | 'key'>;
 export type MiningCapabilities = {
+  /** Notify exact claimed-rock extraction without changing mining allocation. */
+  indexMining: (system: string, rock: number, captain: string | null) => void;
   dredgeBlueprint: (captain: string, chance: number) => void;
   db: MiningDatabase;
   pressureExtract: FeatureServices['pressure']['extracted'];

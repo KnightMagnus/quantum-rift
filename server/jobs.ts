@@ -29,6 +29,7 @@ import {
   fnv1a as hash,
 } from '../shared/deterministic-random.ts';
 import { GalaxyGraph } from '../shared/galaxy-graph.ts';
+import { storySystemVisible } from '../shared/story-world.ts';
 import { bindOperations } from './feature-service.ts';
 import {
   SYSTEMS,
@@ -84,7 +85,16 @@ const BOUNTY_NAMES = [
 const galaxyGraph = new GalaxyGraph(systemsById);
 
 const JUMP_DISTANCES = Object.fromEntries(
-  SYSTEMS.map((system) => [system.id, galaxyGraph.distances(system.id)]),
+  SYSTEMS.map((system) => [
+    system.id,
+    galaxyGraph.distances(system.id, { canEnter: (id) => storySystemVisible(undefined, id) }),
+  ]),
+);
+
+// Encounter salvage is sold by its discoverer, never supplied as ordinary freight.
+const FREIGHT_COMMODITIES = COMMODITIES.filter(
+  (commodity) =>
+    !['nhal_bone', 'nhal_ichor', 'nhal_eye', 'index_core', 'index_parts'].includes(commodity.id),
 );
 
 const JobOperations: JobOperations = {
@@ -95,12 +105,17 @@ const JobOperations: JobOperations = {
    * @returns Available job board missions.
    */
   offers(this: JobCapabilities, stellarBody: StellarBody, playerData: PlayerData) {
-    if (!stellarBody.svc.includes('B')) return [];
+    const flags = playerData.story?.flags;
+    if (!stellarBody.svc.includes('B') || !storySystemVisible(flags, stellarBody.system)) return [];
     const offerWindow = Math.floor(Date.now() / 600000),
       random = randomGenerator(hash(stellarBody.id + offerWindow)),
       offers: Mission[] = [],
       originSystemId = stellarBody.system;
-    const nearbySystems = Object.entries(JUMP_DISTANCES[originSystemId]).filter(
+    const distances =
+      flags?.main_ending === 'table' || flags?.founding_vigil
+        ? galaxyGraph.distances(originSystemId, { canEnter: (id) => storySystemVisible(flags, id) })
+        : JUMP_DISTANCES[originSystemId];
+    const nearbySystems = Object.entries(distances).filter(
       ([systemId, jumpCount]) =>
         jumpCount >= 1 &&
         jumpCount <= 4 &&
@@ -119,7 +134,7 @@ const JobOperations: JobOperations = {
           ),
           destinationPort = landingPorts[Math.floor(random() * landingPorts.length)]; // never to an empty derelict hull
         if (!destinationPort) continue;
-        const commodity = COMMODITIES[Math.floor(random() * COMMODITIES.length)],
+        const commodity = FREIGHT_COMMODITIES[Math.floor(random() * FREIGHT_COMMODITIES.length)],
           cargoTonnes = 5 + Math.floor(random() * 26);
         offers.push({
           id: offerId,
@@ -253,7 +268,11 @@ const JobOperations: JobOperations = {
         (offer) =>
           !playerData.missions.some((acceptedMission) => acceptedMission.id === offer.id) &&
           !(destType(offer) && offer.dest === stellarBody.id) &&
-          !(offer.type === 'assassinate' && rank < 3),
+          !(offer.type === 'assassinate' && rank < 3) &&
+          (!offer.sys || storySystemVisible(flags, offer.sys)) &&
+          (!offer.dest ||
+            !STELLARS[offer.dest] ||
+            storySystemVisible(flags, STELLARS[offer.dest].system)),
       )
       .map((offer) => ({ ...offer, offerVersion: 1 }));
   },

@@ -32,6 +32,11 @@ const actual = JSON.parse(
 const expected = JSON.parse(
   fileSystem.readFileSync(new URL('./fixtures/features-v26.json', import.meta.url), 'utf8'),
 );
+// The Index has no standing ladder; its hidden zero entry is the only new captain field.
+assert.equal(actual.saved.rep.nhal, 0);
+delete actual.saved.rep.nhal;
+assert.equal(actual.saved.rep.index, 0);
+delete actual.saved.rep.index;
 assert.deepEqual(actual, expected);
 console.log('Baseline initialization, login, save, bonus/stats, world and name lookup parity.');
 
@@ -205,7 +210,7 @@ const composition = fileSystem.readFileSync(
   new URL('../server/features.ts', import.meta.url),
   'utf8',
 );
-assert.equal(new Set(manifest.features.map((feature) => feature.file)).size, 20);
+assert.equal(new Set(manifest.features.map((feature) => feature.file)).size, 23);
 for (const feature of manifest.features) {
   const module = await import(`../server/${feature.module || feature.file}.ts`);
   const operations = module[feature.exportName];
@@ -256,7 +261,7 @@ for (const feature of manifest.features) {
       method + ' must not be installed on Game',
     );
 }
-console.log('All 20 feature exports and explicit dependencies match the checked-in inventory.');
+console.log('All 23 feature exports and explicit dependencies match the checked-in inventory.');
 
 const directory = fileSystem.mkdtempSync(
   path.join(operatingSystem.tmpdir(), 'rift-feature-security-'),
@@ -295,7 +300,7 @@ try {
   assert.equal(dispatched.length, 2, 'flooded action must not dispatch');
   assert.ok(routes.types.includes('trade') && routes.types.includes('trade2'));
   assert.equal(new Set(routes.types).size, routes.types.length);
-  assert.equal(Object.keys(game.features).length, 24);
+  assert.equal(Object.keys(game.features).length, 27);
   const cargo = { food: 10 };
   const notices: string[] = [];
   game.toast = (_session, message) => notices.push(message);

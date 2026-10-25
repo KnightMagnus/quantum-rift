@@ -2,6 +2,15 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.4.0 — Trinity Stable Beta-A (public release 0.3.4)
+
+- Extend the main story through Acts II and III, landed decisions and captain-specific endings. Preserve the original Que'vari objectives and rewards.
+- Add Index worksites and investigations, native Nhal encounters, the Dreamer and the Lamplighter keepers' chain, with ties to existing faction and port stories.
+- Move the Gateway to Concordia while retaining its saved ID. Give the fixed Aureole hulk its dormant artwork and show the awake ark in the finale.
+- Add private story destinations, Riftproofing and the Rift Harness, with an animated Quantum Rift and a returnable far-side arrival scene. The far side has no onward campaign yet.
+- Show personal realities through descriptions, scenery and viewer-only ghost effects. Preserve shared markets and simulation, solid group/friend-game captains and reduced-effects behavior.
+- Refresh actual-game screenshots and the beta Solo save generator catalog. Keep its custom controls while excluding NPC-only ships. See the [release notes](docs/RELEASE-3.4.0.md) for update, hosting and placeholder limits.
+
 ### 3.3.3 — Trinity Stable Beta
 
 - Refine cockpit text, chat, captain details and combat/patrol alerts, with responsive layouts and reduced-motion behavior.

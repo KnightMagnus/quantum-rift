@@ -302,9 +302,20 @@ assertCondition(
 );
 
 // ---- side stories
+const legacySideStories = SIDE_STORIES.filter((story) =>
+  [
+    'lantern',
+    'saltiron',
+    'caravan',
+    'hollowwar',
+    'archive',
+    'farlight',
+    'sideways-apology',
+  ].includes(story.id),
+);
 assertCondition(
-  SIDE_STORIES.length === 7 &&
-    SIDE_STORIES.every(
+  legacySideStories.length === 7 &&
+    legacySideStories.every(
       (sideStory) =>
         STELLARS[sideStory.at] &&
         STELLARS[sideStory.at].svc.includes('B') &&
@@ -315,7 +326,7 @@ assertCondition(
   'seven side stories, each starting at a world with a bar',
 );
 assertCondition(
-  !SIDE_STORIES.some((sideStory) =>
+  !legacySideStories.some((sideStory) =>
     ['threshold', 'inalumen', 'dimmer'].some(
       (propertyKey) =>
         sideStory.at.includes(propertyKey) ||

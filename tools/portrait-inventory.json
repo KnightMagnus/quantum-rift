@@ -2166,6 +2166,166 @@
         "width": 1536,
         "height": 1024
       }
+    },
+    {
+      "id": "story-selani",
+      "path": "portraits/story-selani.png",
+      "faction": "quevari",
+      "label": "Sel’ani",
+      "role": "story encounter",
+      "npcId": null,
+      "playerSelectable": false,
+      "poolEligible": false,
+      "anatomyProposed": false,
+      "appearanceProposed": true,
+      "identityCanon": true,
+      "hailPolicy": "existing-game-rules",
+      "regionOnly": false,
+      "width": 512,
+      "height": 512,
+      "bytes": 492607,
+      "sha256": "51fabf6c2def092e30ec451f2a13717db1363aa55a89399a67ce15f31ee3113e",
+      "source": "generated/story-selani.png",
+      "sourceCell": 0,
+      "sourceCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "sourceDimensions": {
+        "width": 2048,
+        "height": 2048
+      },
+      "identityRevision": 2
+    },
+    {
+      "id": "story-elders",
+      "path": "portraits/story-elders.png",
+      "faction": "quevari",
+      "label": "The elders of Ina Lumen",
+      "role": "story encounter",
+      "npcId": null,
+      "playerSelectable": false,
+      "poolEligible": false,
+      "anatomyProposed": false,
+      "appearanceProposed": true,
+      "identityCanon": true,
+      "hailPolicy": "existing-game-rules",
+      "regionOnly": false,
+      "width": 512,
+      "height": 512,
+      "bytes": 477156,
+      "sha256": "93a74c26d52a7682c74977d897c735f611a1ed047335d1c2139a2ad217bb7756",
+      "source": "generated/story-elders.png",
+      "sourceCell": 0,
+      "sourceCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "sourceDimensions": {
+        "width": 2048,
+        "height": 2048
+      },
+      "identityRevision": 2
+    },
+    {
+      "id": "story-sailwright",
+      "path": "portraits/story-sailwright.png",
+      "faction": "quevari",
+      "label": "The rescued sailwright",
+      "role": "story encounter",
+      "npcId": null,
+      "playerSelectable": false,
+      "poolEligible": false,
+      "anatomyProposed": false,
+      "appearanceProposed": true,
+      "identityCanon": true,
+      "hailPolicy": "existing-game-rules",
+      "regionOnly": false,
+      "width": 512,
+      "height": 512,
+      "bytes": 508049,
+      "sha256": "1ddf5133ad7b6788b3421118b0c7467fba99e3e4c29996c0e36b6887f25abfe3",
+      "source": "generated/story-sailwright.png",
+      "sourceCell": 0,
+      "sourceCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "sourceDimensions": {
+        "width": 2048,
+        "height": 2048
+      },
+      "identityRevision": 2
+    },
+    {
+      "id": "story-clerk",
+      "path": "portraits/story-clerk.png",
+      "faction": "spacer",
+      "label": "The Northmark survey clerk",
+      "role": "story encounter",
+      "npcId": null,
+      "playerSelectable": false,
+      "poolEligible": false,
+      "anatomyProposed": false,
+      "appearanceProposed": true,
+      "identityCanon": true,
+      "hailPolicy": "existing-game-rules",
+      "regionOnly": false,
+      "width": 512,
+      "height": 512,
+      "bytes": 414028,
+      "sha256": "3d5e18cd16b432073af4099232bbbadf5129c7de952f4902f3adf7595e258845",
+      "source": "generated/story-clerk.png",
+      "sourceCell": 0,
+      "sourceCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "sourceDimensions": {
+        "width": 2048,
+        "height": 2048
+      },
+      "identityRevision": 2
+    },
+    {
+      "id": "story-prisoner",
+      "path": "portraits/story-prisoner.png",
+      "faction": "umbral",
+      "label": "The Umbral prisoner",
+      "role": "story encounter",
+      "npcId": null,
+      "playerSelectable": false,
+      "poolEligible": false,
+      "anatomyProposed": false,
+      "appearanceProposed": true,
+      "identityCanon": true,
+      "hailPolicy": "existing-game-rules",
+      "regionOnly": false,
+      "width": 512,
+      "height": 512,
+      "bytes": 425547,
+      "sha256": "cc8025c7939cbabcb937ed72f12646373851a08f7bc56a5cfc96be96a56b33a0",
+      "source": "generated/story-prisoner.png",
+      "sourceCell": 0,
+      "sourceCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "sourceDimensions": {
+        "width": 2048,
+        "height": 2048
+      },
+      "identityRevision": 2
     }
   ],
   "pools": {

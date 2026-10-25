@@ -237,6 +237,9 @@
 }
 .storyin {
   width: min(620px, 92vw);
+  box-sizing: border-box;
+  max-height: 94dvh;
+  overflow-y: auto;
   border: 2px solid #c9a24a;
   box-shadow: 0 0 30px rgba(201, 162, 74, 0.35);
 }
@@ -247,6 +250,25 @@
     serif;
   color: #ffe2a0;
   text-shadow: 0 2px 6px #000;
+}
+#storycharacter {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 0;
+}
+#storyportrait {
+  flex: 0 0 auto;
+  width: 112px;
+  height: 112px;
+  object-fit: cover;
+  border: 1px solid #c9a24a;
+  border-radius: 4px;
+  background: #080a10;
+}
+#storycharactername {
+  color: #ffe2a0;
+  overflow-wrap: anywhere;
 }
 .storyin p {
   white-space: pre-wrap;

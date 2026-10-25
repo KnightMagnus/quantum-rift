@@ -31,7 +31,7 @@ for port in CATALOG['locations']:
     cases.append(create_save(tier=0, location=port['id']))
 for invalid in [{'name':'x'}, {'name':'constructor'}, {'credits':-1}, {'credits':1.5},
                 {'credits':9007199254740992}, {'ship':-1}, {'site':'missing'},
-                {'tier':6}, {'tier':0}, {'location':'missing'}]:
+                {'tier':6}, {'tier':0}, {'location':'missing'}] + [{'ship':hull} for hull in range(900, 927)]:
     try:
         create_save(**invalid)
         raise AssertionError('Accepted invalid input: ' + str(invalid))
@@ -65,8 +65,14 @@ assert.equal(
 );
 assert.deepEqual(
   catalog.ships.map((ship) => ship.id),
-  Object.values(game.A.ships).map((ship) => ship.id),
-  'generator must contain every current hull',
+  Object.values(game.A.ships)
+    .filter((ship) => !ship.npcOnly)
+    .map((ship) => ship.id),
+  'generator must contain every player-eligible hull and no NPC-only hulls',
+);
+assert.ok(
+  !catalog.ships.some((ship) => ship.id >= 900 && ship.id <= 926),
+  'Index, Nhal and story-only ark hulls cannot be minted by the beta tool',
 );
 assert.deepEqual(
   catalog.sites.map(({ id: identifier, system }) => ({ id: identifier, system })),
@@ -174,6 +180,6 @@ assert.equal(
 );
 assert.equal(fileSystem.readFileSync(output, 'utf8'), first, 'CLI preserves existing files');
 console.log(
-  `PASS ${cases.length} generated saves imported and logged in; all hulls/sites/tiers/ports, conflict/release/reload safety, invalid input and overwrite denial`,
+  `PASS ${cases.length} generated saves imported and logged in; all player hulls/sites/tiers/ports, NPC-only hull denial, conflict/release/reload safety, invalid input and overwrite denial`,
 );
 process.exit(0);

@@ -93,22 +93,53 @@ function validPacket(value: unknown): boolean {
     !value.ships.every(
       (ship: unknown) =>
         Array.isArray(ship) &&
-        ship.length === 14 &&
+        (ship.length === 14 || ship.length === 15 || ship.length === 19) &&
         ship.every((field: unknown, index: number) =>
-          index === 11
-            ? field === null || typeof field === 'string'
-            : typeof field === 'number' && Number.isFinite(field),
+          index >= 15
+            ? typeof field === 'number' &&
+              Number.isInteger(field) &&
+              field >= (index === 16 ? -1 : 0) &&
+              field <= (index === 18 ? 7 : 1000000)
+            : index === 14
+              ? field === null ||
+                (typeof field === 'string' &&
+                  ['long_dream', 'table', 'unsettling', 'captains_watch'].includes(field))
+              : index === 11
+                ? field === null || typeof field === 'string'
+                : typeof field === 'number' && Number.isFinite(field),
         ),
     )
   )
     return false;
+  if (value.nhal !== undefined) {
+    const status = value.nhal;
+    if (
+      !record(status) ||
+      !['slow', 'ichor', 'latch'].every(
+        (key) =>
+          typeof status[key] === 'number' &&
+          Number.isInteger(status[key]) &&
+          Number(status[key]) >= 0 &&
+          Number(status[key]) <= 15,
+      )
+    )
+      return false;
+  }
   for (const [key, length] of [
     ['shots', 5],
     ['beams', 4],
     ['loot', 4],
   ] as const) {
     const entries = value[key];
-    if (!Array.isArray(entries) || !entries.every((entry: unknown) => numbers(entry, length)))
+    if (
+      !Array.isArray(entries) ||
+      !entries.every(
+        (entry: unknown) =>
+          numbers(entry, length) ||
+          (key === 'shots' && numbers(entry, 6)) ||
+          (key === 'loot' && numbers(entry, 5) && (entry as number[])[4] === 1),
+      )
+    )
       return false;
   }
   if (

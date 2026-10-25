@@ -45,6 +45,10 @@ export type StoryMission = {
   /** Special item or commodity reward tuple [itemType, quantity]. */
   crate?: [string, number];
 
+  /** Decision field and legal labelled values, resolved only while landed. */
+  decision?: 'd1' | 'd2' | 'nhal_ending' | 'main_ending';
+  choices?: Array<{ value: string; label: string }>;
+
   /** Narrative dialog text presented when offered. */
   text: string;
 
@@ -69,6 +73,8 @@ export type StoryMission = {
 /**
  * Main Que'vari golden story mission chain progression.
  */
+import { CONTINUATION } from './story-continuation.ts';
+
 export const STORY: StoryMission[] = [
   {
     id: 'qv1',
@@ -163,6 +169,7 @@ export const STORY: StoryMission[] = [
     ref: 'Not yet',
     done: "The Ina Que'var is yours. Your old ship is waiting in your drydock (or was sold for you, if every berth was full).",
   },
+  ...CONTINUATION,
 ];
 
 /**

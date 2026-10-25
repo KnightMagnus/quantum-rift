@@ -3,6 +3,7 @@ import type { Scene, Graphic, GraphicsGrouping, Material } from 'excalibur';
 import type { ClientGameState } from './main.ts';
 import type { RenderShip } from './render.ts';
 import { sheet, shipFrame, objImg, rockImage, drawShot } from './render.ts';
+import { storyShipOpacity } from './story-reality.ts';
 import { weaponColor, weaponLook } from '../shared/rules.ts';
 
 /** Display-only entity registry. Authoritative velocities never enter Actor motion. */
@@ -69,6 +70,7 @@ export class WorldActors {
 
   private ship(state: ClientGameState, ship: RenderShip, now: number, live: Set<string>): void {
     const hull = state.A?.ships[ship.hull];
+    const realityOpacity = storyShipOpacity(state, ship, now);
     if (!hull) return;
     const frame = shipFrame(state, ship, now),
       size = hull.size * state.spriteScale;
@@ -189,8 +191,9 @@ export class WorldActors {
         live,
       );
       glowActor.graphics.material = this.additive;
+      glowActor.graphics.opacity = realityOpacity;
     }
-    this.bind(
+    const actor = this.bind(
       'ship:' + ship.id,
       ship.rx,
       ship.ry,
@@ -198,6 +201,8 @@ export class WorldActors {
       new GraphicsGroup({ members, useAnchor: false }),
       live,
     );
+    actor.graphics.opacity = realityOpacity;
+    sprite.tint = realityOpacity < 0.6 ? new Color(205, 225, 255) : Color.White;
   }
 
   update(state: ClientGameState, now: number): void {
@@ -305,6 +310,9 @@ export class WorldActors {
           live,
         );
         actor.rotation = Math.atan2(shot.vy, shot.vx);
+        const source = (shot as typeof shot & { owner?: number }).owner;
+        const owner = source ? state.ents.get(source) : undefined;
+        actor.graphics.opacity = owner ? storyShipOpacity(state, owner, now) : 1;
       });
     }
     for (const [key, actor] of this.actors)

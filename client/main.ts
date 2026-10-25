@@ -1,5 +1,6 @@
 import { LandingFeedback, landingRefusal } from './landing-feedback.ts';
 import { initProfile } from './profile_ui.ts';
+import { renderStoryPortrait } from './story-portraits.ts';
 import type {
   ServerMessage,
   SnapshotMessage,
@@ -8,6 +9,7 @@ import type {
   HailConversation,
 } from './protocol.ts';
 import type { AutopilotState } from './landing_autopilot.ts';
+import { startStorySequence } from './render.ts';
 import type { NetworkMessage } from '../server/message-registry.ts';
 import { elementById } from './dom.ts';
 import { createGameConnection } from './connection.ts';
@@ -69,6 +71,8 @@ export interface ClientOptions {
   v21?: boolean;
   dmg: boolean;
   shake: boolean;
+  /** Disable story shimmer and flashing transitions without hiding targeting. */
+  reducedEffects?: boolean;
   mouseAim: boolean;
   notify: boolean;
   cb: boolean;
@@ -84,6 +88,8 @@ export interface ClientOptions {
   musicWas?: number;
 }
 export type ClientGameState = RefineryClientState & {
+  /** Friend-hosted captains always share one reality. */
+  friendGame?: boolean;
   /** Game assets dictionary. */
   A: GameAssets | null;
 
@@ -126,7 +132,7 @@ export type ClientGameState = RefineryClientState & {
   beams: Array<{ id: number; a: number; len: number; w: number }>;
 
   /** Floating loot canisters. */
-  loot: Array<{ id: number; x: number; y: number; kind: number }>;
+  loot: Array<{ id: number; x: number; y: number; kind: number; indexClaim?: boolean }>;
 
   /** Current target entity ID. */
   target: number;
@@ -388,6 +394,7 @@ const clientGameState: ClientGameState = (window.G = {
     {
       dmg: true,
       shake: true,
+      reducedEffects: false,
       mouseAim: false,
       notify: false,
       cb: false,
@@ -712,6 +719,7 @@ const statusRequest = fetch('/api/status')
     nakamaConfig = state.nakama;
     localReferenceTransport = state.localAuthority === true;
     friendHostTransport = state.mode === 'friends' && state.localTransport === true;
+    clientGameState.friendGame = friendHostTransport;
     setArtworkVersion(state.version);
     elementById2('lstat').textContent = friendHostTransport
       ? 'Friend-hosted universe. Sign in with your own captain and password.'
@@ -1180,8 +1188,11 @@ function showStory(storyMessage: StoryMessage | undefined) {
     storyQ.push(storyMessage);
     return;
   } // one pop-up at a time: the rest wait their turn
+  if (storyMessage.sequence)
+    startStorySequence(clientGameState, storyMessage.sequence, performance.now());
   elementById2('storyt').textContent = storyMessage.title;
   elementById2('storyx').textContent = storyMessage.text;
+  renderStoryPortrait(storyMessage);
   document.querySelector<HTMLElement>('#storybox .storytag')!.textContent =
     storyMessage.tag || 'STORY';
   elementById2('storyb').innerHTML = storyMessage.done
@@ -1205,6 +1216,25 @@ function showStory(storyMessage: StoryMessage | undefined) {
       }, 150);
     }
   };
+  if (storyMessage.choices?.length) {
+    elementById2('storyb').replaceChildren();
+    const deferChoice = document.createElement('button');
+    deferChoice.className = 'btn sm';
+    deferChoice.textContent = storyMessage.ref || 'Decide later';
+    deferChoice.onclick = close;
+    elementById2('storyb').append(deferChoice);
+    for (const choice of storyMessage.choices) {
+      const button = document.createElement('button');
+      button.className = 'btn';
+      button.textContent = choice.label;
+      button.onclick = () => {
+        send({ t: 'storyacc', id: storyMessage.id, choice: choice.value });
+        close();
+      };
+      elementById2('storyb').append(button);
+    }
+    return;
+  }
   if (storyMessage.done) elementById2('storyok').onclick = close;
   else {
     elementById2('storyno').onclick = close;
@@ -1231,15 +1261,24 @@ setInterval(() => {
   if (clientGameState.you && clientGameState.ctab === 'missions') drawMini();
 }, 10000); // keeps rush countdowns current
 // ------------------------------------------------------------------ snapshots and prediction
-function updateAttention(attention?: SnapshotMessage['attention']) {
+function updateAttention(attention?: SnapshotMessage['attention'], nhal?: SnapshotMessage['nhal']) {
   const indicator = elementById2('attentionindicator');
+  const creatureLabels = [
+    nhal?.ichor ? `Ichor ${nhal.ichor}s` : '',
+    nhal?.slow ? `Drag ${nhal.slow}s` : '',
+    nhal?.latch ? `Latch ${nhal.latch}s` : '',
+  ].filter(Boolean);
+  indicator.querySelector('.function-label')!.textContent = creatureLabels.length
+    ? creatureLabels[0]
+    : 'ALERT';
   const state = attention?.targeted ? 'targeted' : attention?.scanned ? 'scanned' : 'clear';
-  const label =
+  const targetingLabel =
     state === 'targeted'
       ? 'Combat alert: another ship is targeting you'
       : state === 'scanned'
         ? 'Patrol scanned your hold recently'
         : 'No combat targeting or recent scan';
+  const label = targetingLabel + (creatureLabels.length ? ' — ' + creatureLabels.join(', ') : '');
   indicator.dataset.state = state;
   if (indicator.getAttribute('aria-label') !== label) {
     indicator.setAttribute('aria-label', label);
@@ -1249,7 +1288,10 @@ function updateAttention(attention?: SnapshotMessage['attention']) {
 function onSnap(snapshotMessage: SnapshotMessage) {
   delete elementById2('flightstatus').dataset.disconnected;
   elementById2('flightstatus').classList.remove('hidden');
-  updateAttention(clientGameState.landed ? undefined : snapshotMessage.attention);
+  updateAttention(
+    clientGameState.landed ? undefined : snapshotMessage.attention,
+    clientGameState.landed ? undefined : snapshotMessage.nhal,
+  );
   receiveMining(clientGameState, snapshotMessage);
   clientGameState.combat = snapshotMessage.combat || {};
   clientGameState.formation = !!snapshotMessage.formation;
@@ -1298,6 +1340,11 @@ function onSnap(snapshotMessage: SnapshotMessage) {
       name,
       owner,
       panelWidth,
+      storyEnding,
+      machineSlot,
+      machineParent,
+      machineTransition,
+      machineBlades,
     ] = ship3;
     seen.add(entityId);
     let renderEntity = clientGameState.ents.get(entityId);
@@ -1319,6 +1366,16 @@ function onSnap(snapshotMessage: SnapshotMessage) {
       name,
       owner,
       pw: panelWidth,
+      storyEnding,
+      indexState:
+        machineSlot === undefined
+          ? undefined
+          : {
+              slot: machineSlot,
+              parent: machineParent!,
+              transition: machineTransition!,
+              blades: machineBlades!,
+            },
       t: currentTime,
     });
     if (Math.hypot(renderEntity.rx - velocityErrorX, renderEntity.ry - velocityErrorY) > 400) {
@@ -1330,12 +1387,13 @@ function onSnap(snapshotMessage: SnapshotMessage) {
   for (const entryKey of [...clientGameState.ents.keys()])
     if (!seen.has(entryKey)) clientGameState.ents.delete(entryKey);
   clientGameState.shots = snapshotMessage.shots.map(
-    ([screenX, screenY, smoothedVelocityX, smoothedVelocityY, width]) => ({
+    ([screenX, screenY, smoothedVelocityX, smoothedVelocityY, width, owner]) => ({
       x: screenX,
       y: screenY,
       vx: smoothedVelocityX,
       vy: smoothedVelocityY,
       w: width,
+      owner,
       t: currentTime,
     }),
   );
@@ -1345,12 +1403,15 @@ function onSnap(snapshotMessage: SnapshotMessage) {
     len: length,
     w: width,
   }));
-  clientGameState.loot = snapshotMessage.loot.map(([leaderId, localX, localY, kind]) => ({
-    id: leaderId,
-    x: localX,
-    y: localY,
-    kind,
-  }));
+  clientGameState.loot = snapshotMessage.loot.map(
+    ([leaderId, localX, localY, kind, indexClaim]) => ({
+      id: leaderId,
+      x: localX,
+      y: localY,
+      kind,
+      indexClaim: !!indexClaim,
+    }),
+  );
   // Observer snapshots never create a controllable ship.
   if (!snapshotMessage.me) return;
   for (const [width, count] of ammo) clientGameState.ammo[width] = count;
@@ -2576,7 +2637,7 @@ elementById2('tutskip').onclick = () => {
 };
 
 // ------------------------------------------------------------------ options
-const CHECKS = ['dmg', 'shake', 'mouseAim', 'notify', 'cb', 'mute'];
+const CHECKS = ['dmg', 'shake', 'reducedEffects', 'mouseAim', 'notify', 'cb', 'mute'];
 let rebinding: string | null = null;
 /**
  * Formats a KeyboardEvent.code string into a readable label.

@@ -376,17 +376,21 @@
         "storyGift",
         "storyArrive",
         "storyProgress",
-        "deepLocked"
+        "deepLocked",
+        "storyTick"
       ],
       "uses": [
         "A",
         "broadcast",
         "db",
+        "depart",
         "dockSlots",
         "landed",
         "leadChanged",
         "log",
+        "nhal",
         "send",
+        "stats",
         "storyComplete",
         "storyDone",
         "storyGift",
@@ -462,6 +466,8 @@
         "hailPlanetOpt",
         "hailTarget",
         "hails",
+        "index",
+        "indexFleet",
         "log",
         "myPower",
         "relOf",
@@ -877,6 +883,7 @@
         "db",
         "dredgeBlueprint",
         "endTick",
+        "indexMining",
         "mods",
         "paused",
         "pressureExtract",
@@ -957,6 +964,47 @@
         "stopCombat",
         "toast"
       ]
+    },
+    {
+      "file": "index",
+      "module": "index-worksite",
+      "exportName": "IndexOperations",
+      "methods": ["open", "allow", "damaged", "mining", "pickup", "take", "ai", "indexTick"],
+      "uses": ["db", "extract", "sessions", "toast"]
+    },
+    {
+      "file": "nhal",
+      "module": "nhal",
+      "exportName": "NhalOperations",
+      "methods": [
+        "spawnTraffic",
+        "storyDreamer",
+        "allow",
+        "damaged",
+        "ai",
+        "nhalTick",
+        "killed",
+        "storyCreature",
+        "status"
+      ],
+      "uses": ["clock", "populations", "toast", "touch"]
+    },
+    {
+      "file": "indexFleet",
+      "module": "index-fleet",
+      "exportName": "IndexFleetOperations",
+      "methods": [
+        "open",
+        "allow",
+        "damageScale",
+        "damaged",
+        "mining",
+        "take",
+        "ai",
+        "fleetTick",
+        "killed"
+      ],
+      "uses": ["clock", "extract", "fleets", "key", "provoked", "toast", "touch", "virginRock"]
     }
   ]
 }

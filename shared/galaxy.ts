@@ -14,6 +14,7 @@ export type SceneDefinition = {
   hazard?: HazardDefinition;
   [entryKey: string]: unknown;
 };
+import { NHAL_SALVAGE } from './nhal.ts';
 import type { OutfitAsset, WeaponAsset } from './rules.ts';
 
 /** Faction organization attributes and diplomatic relationships. */
@@ -312,6 +313,7 @@ import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from '.
  * Master catalog of all galactic factions and territorial powers.
  */
 export const FACTIONS: Record<string, FactionDef> = {
+  index: { name: 'The Index', short: 'Index', color: '#71d6e0', hostile: [], hidden: true },
   quantum: {
     name: 'Quantum Concord',
     short: 'Concord',
@@ -409,6 +411,15 @@ export const FACTIONS: Record<string, FactionDef> = {
     region: true,
   },
   // the Umbral Eclipse: violet-lit Umbral cells that roam far from home (hostile to all; no territory, store or standing)
+  nhal: {
+    name: 'The Nhal',
+    short: 'Nhal',
+    color: '#8aa67a',
+    hostile: ['umbral', 'hollow'],
+    alwaysHostile: true,
+    hidden: true,
+    region: true,
+  },
   eclipse: {
     name: 'Umbral Eclipse',
     short: 'Eclipse',
@@ -434,6 +445,9 @@ export const FACTIONS: Record<string, FactionDef> = {
  * List of commodities traded across markets and harvested from asteroids.
  */
 export const COMMODITIES: CommodityDef[] = [
+  ...NHAL_SALVAGE,
+  { id: 'index_core', name: 'Index Core', base: 12000 },
+  { id: 'index_parts', name: 'Index Machine Parts', base: 1800 },
   { id: 'plasma', name: 'Stellar Plasma', base: 500 },
   { id: 'quantum_fuel', name: 'Quantum Fuel', base: 1200 },
   { id: 'exotic_matter', name: 'Exotic Matter', base: 1800 },
@@ -1326,6 +1340,127 @@ addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded
     }
 }
 addEventide(SYSTEMS); // Append authored v2.9 content without consuming legacy generation RNG.
+export const PERSONAL_SYSTEMS: StarSystem[] = [];
+// Add authored personal-story places after generation; existing seeds and IDs stay stable.
+{
+  const ring = SYSTEMS.filter((system) =>
+    [
+      'coldharbor',
+      'mirrorfall',
+      'greyline',
+      'sable-reach',
+      'quietude',
+      'ember-drift',
+      'lowtide',
+      'vesper-gate',
+      'northmark',
+      'ninefold',
+    ].includes(system.id),
+  );
+  const centreX = Math.round(ring.reduce((total, system) => total + system.x, 0) / ring.length);
+  const centreY = Math.round(ring.reduce((total, system) => total + system.y, 0) / ring.length);
+  const nearest = [...ring].sort(
+    (left, right) =>
+      Math.hypot(left.x - centreX, left.y - centreY) -
+      Math.hypot(right.x - centreX, right.y - centreY),
+  )[0];
+  const edge = SYSTEMS.find((system) => system.id === 'ninefold')!;
+  const table: StarSystem = {
+    id: 'table',
+    name: 'The Table',
+    faction: 'farside',
+    x: centreX,
+    y: centreY,
+    links: [nearest.id],
+    danger: 0,
+    farside: true,
+    desc: 'The first place in the Rift that everyone sees the same way.',
+    stellars: [
+      {
+        id: 'table-station',
+        name: 'The Table',
+        kind: 'station',
+        x: 0,
+        y: 0,
+        r: 100,
+        svc: 'LTORB',
+        tech: 1,
+        prices: { food: 0, equipment: 0 },
+        desc: 'A place at the table for every people. The last chair is no longer empty.',
+      },
+    ],
+  };
+  nearest.links.push('table');
+  const rift: StarSystem = {
+    id: 'quantum-rift',
+    name: 'The Quantum Rift',
+    faction: 'farside',
+    x: edge.x - 25,
+    y: edge.y - 100,
+    links: [edge.id],
+    danger: 0,
+    farside: true,
+    gate: 'beyond-rift',
+    stellars: [
+      {
+        id: 'quantum-rift-mouth',
+        name: 'The Quantum Rift',
+        kind: 'wormhole',
+        x: 0,
+        y: 0,
+        r: 600,
+        svc: '',
+        tech: 0,
+        wormhole: 'beyond-rift',
+        exit: 'beyond-rift-mouth',
+        desc: 'The Second Door. No ordinary ship survives its crossing.',
+      },
+    ],
+  };
+  edge.links.push('quantum-rift');
+  const beyond: StarSystem = {
+    id: 'beyond-rift',
+    farside: true,
+    name: 'Beyond the Rift',
+    faction: 'farside',
+    x: edge.x - 25,
+    y: edge.y - 230,
+    links: [],
+    danger: 0,
+    gate: 'quantum-rift',
+    stellars: [
+      {
+        id: 'beyond-rift-mouth',
+        name: 'The Far Side',
+        kind: 'wormhole',
+        x: 0,
+        y: 0,
+        r: 600,
+        svc: '',
+        tech: 0,
+        wormhole: 'quantum-rift',
+        exit: 'quantum-rift-mouth',
+        desc: 'The only way home. Beyond it, the Rift waits unchanged.',
+      },
+    ],
+  };
+  const vigil: StarSystem = {
+    id: 'founding-vigil',
+    farside: true,
+    name: 'The Founding Vigil',
+    faction: 'farside',
+    x: centreX,
+    y: centreY,
+    links: [nearest.id],
+    danger: 0,
+    desc: 'A starless mission bearing at the empty centre of the ten lamps.',
+    stellars: [],
+    scene: { kind: 'founding-vigil' },
+  };
+  nearest.links.push('founding-vigil');
+  PERSONAL_SYSTEMS.push(table, rift, beyond, vigil);
+}
+
 // Preserve generated bodies, fields and IDs before moving the authored Gateway.
 {
   const sol = SYSTEMS.find((system) => system.id === 'sol')!;
@@ -1358,8 +1493,25 @@ addEventide(SYSTEMS); // Append authored v2.9 content without consuming legacy g
 /**
  * Fast lookup map of star systems keyed by system ID.
  */
+for (const system of SYSTEMS)
+  for (const port of system.stellars) {
+    if (['thrum', 'brood', 'tide', 'deep'].includes(port.id)) {
+      port.prices ||= {};
+      port.prices.nhal_bone = 1;
+      port.prices.nhal_ichor = 1;
+    }
+    if (['glasswake-foundry', 'slag', 'hold'].includes(port.id)) {
+      port.prices ||= {};
+      port.prices.index_core = 1;
+      port.prices.index_parts = 1;
+    }
+    if (port.id === 'facet') {
+      port.prices ||= {};
+      port.prices.nhal_eye = 2;
+    }
+  }
 const fromEntries2: Record<string, StarSystem> = Object.fromEntries(
-  SYSTEMS.map((starSystem) => [starSystem.id, starSystem]),
+  [...SYSTEMS, ...PERSONAL_SYSTEMS].map((starSystem) => [starSystem.id, starSystem]),
 );
 export { fromEntries2 as SYS };
 
@@ -1367,7 +1519,7 @@ export { fromEntries2 as SYS };
  * Fast lookup map of all celestial bodies keyed by stellar ID.
  */
 export const STELLARS = Object.fromEntries(
-  SYSTEMS.flatMap((starSystem) =>
+  [...SYSTEMS, ...PERSONAL_SYSTEMS].flatMap((starSystem) =>
     starSystem.stellars.map((stellarBody) => [
       stellarBody.id,
       { ...stellarBody, system: starSystem.id },
@@ -1474,6 +1626,16 @@ export const FACTION_OUTFITS: Record<string, number[]> = {
  */
 // Generic weapon outfits. Stable weapon IDs keep existing ship loadouts and saves compatible.
 export const EXTRA_OUTFITS: Array<OutfitAsset> = [
+  {
+    id: 9021,
+    name: 'Rift Harness',
+    cost: 0,
+    mass: 5,
+    max: 1,
+    tech: 99,
+    eff: { riftHarness: 1 },
+    desc: 'Five peoples’ work, holding one route through the Quantum Rift. Unique and non-tradeable.',
+  },
   {
     id: 9920,
     name: 'Tow Rig',

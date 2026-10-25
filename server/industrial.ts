@@ -377,7 +377,11 @@ export const IndustrialOperations = {
       // Drones are physical noncombat collectors; deterministic sequential selection avoids duplicate acceptance.
       for (const [index, entity2] of drones(space, entity).entries()) {
         const target = space.loot.find(
-          (floatingLoot) => !floatingLoot.taken && inSweep(entity, floatingLoot, deltaTime),
+          (floatingLoot) =>
+            !floatingLoot.taken &&
+            !floatingLoot.it.indexClaim &&
+            !floatingLoot.it.indexTakenBy &&
+            inSweep(entity, floatingLoot, deltaTime),
         );
         const targetX = target?.x ?? entity.x + (index ? 65 : -65),
           targetY = target?.y ?? entity.y + 40,
