@@ -109,13 +109,13 @@ assert.deepEqual(
 
 const command = fileURLToPath(new URL('../tools/validate-content.ts', import.meta.url));
 const run = (args: string[]) =>
-  spawnSync(process.execPath, [command, ...args], { encoding: 'utf8' });
+  spawnSync(process.execPath, [command, ...args], { encoding: 'utf8', timeout: 10000 });
 const success = run([]);
 assert.equal(success.status, 0, success.stderr);
 assert.match(success.stdout, /Content validation passed: \d+ ships/);
 const failure = run([
   '--asset-root',
-  fileURLToPath(new URL('./missing-content-assets', import.meta.url)),
+  fileURLToPath(new URL('./content-validation.ts/not-a-directory', import.meta.url)),
 ]);
 assert.equal(failure.status, 1, failure.stderr);
 assert.match(failure.stderr, /ships\[703\]\.img: missing client\/assets\/ships\/703_yard.png/);
