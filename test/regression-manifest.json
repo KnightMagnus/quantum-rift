@@ -118,6 +118,7 @@
     "landscape-generation.ts",
     "release-readiness.ts",
     "archive-verification.ts",
+    "health.ts",
     "wire-contracts.ts"
   ],
   "browser": [
@@ -1378,6 +1379,18 @@
         "packaged-runtime.ts"
       ],
       "asserts": "Readiness fails closed for every missing, failed, skipped or cancelled supported lane. Exact archive hashes, full inventory, content and modes are checked before extraction; unsafe, duplicate and changed entries fail without partial extraction. Narrow engine login, keyboard/modal isolation, canvas fallback and exported/imported captain playability remain distinct from full Chromium coverage. CI also executes a single complete built archive across native OSes without npm dependencies."
+    },
+    {
+      "id": "performance-health",
+      "services": [],
+      "tests": ["health.ts", "excalibur-runtime-browser.ts"],
+      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples.",
+      "owners": [
+        "shared/health.ts",
+        "server/game.ts",
+        "server/nakama-storage.ts",
+        "client/space-scene.ts"
+      ]
     }
   ],
   "routes": {

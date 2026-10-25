@@ -1,7 +1,10 @@
+import type { HealthMonitor } from '../shared/health.ts';
 import type { SeedDefinition } from './game.ts';
 
 /** Host services used by the shared authoritative game. No host globals are read here. */
 export interface GamePlatform {
+  /** Optional host-owned bounded numeric diagnostics. */
+  health?: HealthMonitor;
   /** Startup accounts; an empty list disables showcase/developer seeding. */
   seedDefinitions: readonly SeedDefinition[];
   /** False when the host calls Game.tick from its authoritative match loop. */

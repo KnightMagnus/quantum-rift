@@ -1,3 +1,5 @@
+import { utf8Bytes } from '../shared/health.ts';
+import type { HealthMonitor } from '../shared/health.ts';
 import { wireRecord } from '../shared/wire-actions.ts';
 import { playerPortrait } from '../shared/portraits.ts';
 import { attentionPayload, type RecentPatrolScan } from './attention.ts';
@@ -723,6 +725,8 @@ export class Game<Storage extends Database = Database> {
    * Legacy feature state; see docs/FEATURES.md.
    */
   solo: boolean | undefined;
+  /** Optional numeric diagnostics; never part of saved or network state. */
+  health?: HealthMonitor;
   /**
    * Initializes the game server, assets, storage, features, and tick loop.
    * @param assets Game assets object containing ships, weapons, outfits, and commodities.
@@ -735,6 +739,7 @@ export class Game<Storage extends Database = Database> {
     if (host.automaticClock && !host.startClock)
       throw new Error('Automatic game clock requires platform.startClock');
     this.platform = host;
+    this.health = host.health;
     augmentAssets(assets);
     this.A = assets;
     this.db = database;
@@ -776,10 +781,10 @@ export class Game<Storage extends Database = Database> {
       host.startClock!(() => {
         try {
           this.tick();
-        } catch (event) {
+        } catch {
           this.tickErr = (this.tickErr || 0) + 1;
           if (this.tickErr < 20 || this.tickErr % 500 === 0)
-            console.error('tick error', this.tickErr, event);
+            console.error('tick error', this.tickErr);
         }
       }, 1000 / TICK); // one bad ship never takes the server down
   }
@@ -1137,6 +1142,7 @@ export class Game<Storage extends Database = Database> {
    * @param ipAddress Remote client IP address.
    */
   connect(socket: GameConnection, ipAddress: string = '?'): void {
+    this.health?.observe('connections', 1);
     const session = {
       id: this.nextSid++,
       sock: socket,
@@ -1165,6 +1171,7 @@ export class Game<Storage extends Database = Database> {
    * @param session Session disconnecting.
    */
   disconnect(session: Session): void {
+    this.health?.observe('disconnects', 1);
     if (session.data) this.features.towing.detach(session);
     if (session.data) this.features.industrial.stop(session);
     if (session.data && this.sessions.has(session.id)) this.features.coop.coopLogout(session); // duels, trades, presence
@@ -1716,6 +1723,7 @@ export class Game<Storage extends Database = Database> {
         msg: 'Cargo save validation failed. Contact the server operator.',
       });
     }
+    if (!session.isNew) this.health?.observe('returningLogins', 1);
     session.data = playerAccount;
     session.name = playerAccount.name;
     playerAccount.id = session.id;
@@ -3178,7 +3186,33 @@ export class Game<Storage extends Database = Database> {
    * Main server engine simulation tick loop: ticks spaces, features, and sends state snapshots.
    */
   tick(): void {
+    const health = this.health;
+    if (!health) return this.advanceTick();
+    const started = health.now();
+    if (this.db.economicFrozen) health.observe('frozenTicks', 1);
+    try {
+      this.advanceTick();
+    } catch (error) {
+      health.observe('tickFailures', 1);
+      throw error;
+    } finally {
+      health.observe('tickMs', health.now() - started);
+      const spaces = Object.values(this.live);
+      health.observe('systems', spaces.length);
+      health.observe(
+        'entities',
+        spaces.reduce((sum, space) => sum + space.ships.size, 0),
+      );
+      health.observe(
+        'shots',
+        spaces.reduce((sum, space) => sum + space.shots.length, 0),
+      );
+    }
+  }
+  private advanceTick(): void {
     if (this.db.economicFrozen) return;
+    const health = this.health;
+    let stageStarted = health?.now() ?? 0;
     if (this.paused) {
       if (![...this.sessions.values()].some((session) => session.data)) this.setPaused(false);
       return;
@@ -3252,6 +3286,8 @@ export class Game<Storage extends Database = Database> {
         this.broadcast(worldPayload2);
       }
     }
+    if (health) health.observe('featuresMs', health.now() - stageStarted);
+    stageStarted = health?.now() ?? 0;
     // Docked observers keep the real system awake without a player entity.
     const observed = new Set();
     for (const session of this.sessions.values())
@@ -3263,9 +3299,10 @@ export class Game<Storage extends Database = Database> {
       const safeTick = () => {
         try {
           space.tick();
-        } catch (event) {
+        } catch {
+          health?.observe('spaceFailures', 1);
           space.errs = (space.errs || 0) + 1;
-          if (space.errs < 5) console.error('space tick error', space.id, event);
+          if (space.errs < 5) console.error('space tick error', space.id, space.errs);
         }
       };
       if (space.players > 0 || observed.has(space.id)) {
@@ -3277,13 +3314,17 @@ export class Game<Storage extends Database = Database> {
         if (space.quietT > 120 && !space.keep) this.sleep(space);
       }
     }
+    if (health) health.observe('spacesMs', health.now() - stageStarted);
     if (this.tickN % 2) return;
+    stageStarted = health?.now() ?? 0;
     const bySystem: Record<string, Session[]> = {};
     for (const session of this.sessions.values())
       if (session.data && (session.ent || observed.has(session.data.sys)))
         (bySystem[session.data.sys] = bySystem[session.data.sys] || []).push(session);
     for (const [starSystem, list] of Object.entries(bySystem)) {
+      const snapshotStarted = health?.now() ?? 0;
       const spaceSnapshot = this.spaces[starSystem].snapshot();
+      if (health) health.observe('snapshotBuildMs', health.now() - snapshotStarted);
       for (const session of list) {
         const entity = session.ent;
         if (!entity) {
@@ -3295,40 +3336,44 @@ export class Game<Storage extends Database = Database> {
           });
           continue;
         }
-        this.send(
-          session,
-          JSON.stringify({
-            t: 'snap',
-            ...spaceSnapshot,
-            attention: attentionPayload(session, this.spaces[starSystem]),
-            miningRocks: this.features.mining.rocksPayload(this.spaces[starSystem]),
-            mining: this.features.mining.payload(session, this.spaces[starSystem]),
-            industrial: this.features.industrial.payload(session),
-            towing: this.features.towing.payload(session),
-            miningPressure: this.features.pressure.payload(session),
-            miningHazards: this.features.pressure.hazards(starSystem),
-            combat: this.combatAssist.payload(session, this.spaces[starSystem]),
-            formation: !!session.armadaFormationTarget,
-            me: [
-              entity.id,
-              entity.seq || 0,
-              +entity.x.toFixed(2),
-              +entity.y.toFixed(2),
-              +entity.vx.toFixed(2),
-              +entity.vy.toFixed(2),
-              +entity.a.toFixed(4),
-              Math.round(entity.shield),
-              Math.round(entity.armor),
-              Math.round(entity.fuel),
-              entity.target ? entity.target.id : 0,
-              entity.guns
-                .filter((weaponMount) => weaponMount.ammo !== Infinity)
-                .map((weaponMount) => [weaponMount.w, weaponMount.ammo]),
-            ],
-          }),
-        );
+        const serializeStarted = health?.now() ?? 0;
+        const serialized = JSON.stringify({
+          t: 'snap',
+          ...spaceSnapshot,
+          attention: attentionPayload(session, this.spaces[starSystem]),
+          miningRocks: this.features.mining.rocksPayload(this.spaces[starSystem]),
+          mining: this.features.mining.payload(session, this.spaces[starSystem]),
+          industrial: this.features.industrial.payload(session),
+          towing: this.features.towing.payload(session),
+          miningPressure: this.features.pressure.payload(session),
+          miningHazards: this.features.pressure.hazards(starSystem),
+          combat: this.combatAssist.payload(session, this.spaces[starSystem]),
+          formation: !!session.armadaFormationTarget,
+          me: [
+            entity.id,
+            entity.seq || 0,
+            +entity.x.toFixed(2),
+            +entity.y.toFixed(2),
+            +entity.vx.toFixed(2),
+            +entity.vy.toFixed(2),
+            +entity.a.toFixed(4),
+            Math.round(entity.shield),
+            Math.round(entity.armor),
+            Math.round(entity.fuel),
+            entity.target ? entity.target.id : 0,
+            entity.guns
+              .filter((weaponMount) => weaponMount.ammo !== Infinity)
+              .map((weaponMount) => [weaponMount.w, weaponMount.ammo]),
+          ],
+        });
+        if (health) {
+          health.observe('snapshotSerializeMs', health.now() - serializeStarted);
+          health.observe('snapshotBytes', utf8Bytes(serialized));
+        }
+        this.send(session, serialized);
       }
     }
+    if (health) health.observe('snapshotsMs', health.now() - stageStarted);
     for (const space of Object.values(this.live)) if (!bySystem[space.id]) space.events = [];
   }
 }

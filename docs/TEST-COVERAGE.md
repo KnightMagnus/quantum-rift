@@ -881,3 +881,16 @@ launcher IPC shutdown and verifies the purchased balance after restart, without
 waiting for the periodic save timer. See
 [release readiness](RELEASE-READINESS.md) for scope, manual checks and rollback
 limits, including pending cross-version fixture integration.
+
+## Performance and operational health
+
+The `performance-health` system registers `health.ts` for bounded numeric sampling, UTF-8 sizing, failed-checkpoint freeze
+privacy, and enabled/disabled authoritative parity across six seeded workloads.
+The scenarios cover real combat, mining/towing, concentrated/distributed captains,
+reconnect state and accelerated soak. Snapshot/checkpoint size ceilings guard
+fixture payload growth, not latency on unmeasured hardware.
+`excalibur-runtime-browser.ts` also checks opt-in update/draw samples in the actual
+Canvas/WebGL Engine at its existing DPR combinations and saves numeric reports.
+See [PERFORMANCE.md](PERFORMANCE.md) for interpretation, commands and limits.
+In-process memory-CAS measurements exclude production PostgreSQL/network latency;
+accelerated soak does not establish wall-clock or multihour endurance.
