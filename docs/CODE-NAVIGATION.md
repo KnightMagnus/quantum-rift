@@ -147,6 +147,13 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
   settlement, shipyard purchases/trade-in and outfitter operations. Existing Game
   entry points remain, the same account inventories are used, and shared pricing/
   grade helpers retain their arithmetic. Previewing a trade never settles one.
+- **Personal Station progress:** `game.stationProgress` advances refinery accrual
+  and research completion on the existing captain record. `Game.checkStation`
+  remains the entry point used by player refreshes, station actions and idle
+  checks. Narrow callbacks resolve the current hangar and log owners at call
+  time. Hangar still owns queued research settlement; Game still owns station
+  permission checks, idle notifications and storage dirty flags. Progress uses
+  wall time without installing another clock or save path.
 - **Feature operations:** `game.features.<name>` exposes named services with
   explicit capability facades. Some state still lives on `Game` or in shared
   account/world objects. These are not fully isolated workers.
@@ -203,7 +210,8 @@ player or offer schema.
 
 Action routing lives in `server/game-message-handlers.ts`; entry gates and service
 implementations retain their own owners. Ordinary jobs and port commerce have
-separate services; station and session methods still remain in `Game`.
+separate services. Station timer advancement lives in `server/station-progress.ts`;
+station action permissions, settlement and session methods remain in `Game`.
 [MESSAGE-ROUTING.md](MESSAGE-ROUTING.md) describes the routing contract and fixtures.
 
 ## UI stylesheet ownership and order
