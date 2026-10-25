@@ -66,6 +66,30 @@ import fileSystem from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
+/** Missing files are fresh state; unreadable or corrupt existing files are not. */
+function readSavedJson(filename: string): unknown {
+  let serialized: string;
+  try {
+    serialized = fileSystem.readFileSync(filename, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
+    throw error;
+  }
+  return JSON.parse(serialized);
+}
+
+function savedRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** Only envelope shape is checked here; feature owners retain their validators. */
+function validateLocalSnapshots(players: unknown, world: unknown): void {
+  if (!savedRecord(players) || Object.values(players).some((account) => !savedRecord(account)))
+    throw new Error('Invalid local player snapshot');
+  if (!savedRecord(world) || !savedRecord(world.sites))
+    throw new Error('Invalid local world snapshot');
+}
+
 /**
  * Player account and world state persistence engine managing JSON files, atomic writes,
  * and rolling backups. Passwords are scrypt-hashed with unique salts.
@@ -93,16 +117,16 @@ export class DB implements GameStorage {
     this.wfile = path.join(direction, 'world.json');
     this.journal = path.join(direction, 'checkpoint.json');
     // Complete a committed checkpoint before exposing either half to Game.
-    if (fileSystem.existsSync(this.journal)) {
-      const saved = JSON.parse(fileSystem.readFileSync(this.journal, 'utf8'));
+    const saved = readSavedJson(this.journal);
+    if (saved !== undefined) {
       if (
+        !savedRecord(saved) ||
         saved.version !== 1 ||
         typeof saved.players !== 'string' ||
         typeof saved.world !== 'string'
       )
         throw new Error('Invalid committed database checkpoint');
-      JSON.parse(saved.players);
-      JSON.parse(saved.world);
+      validateLocalSnapshots(JSON.parse(saved.players), JSON.parse(saved.world));
       this.writeDurable(this.file + '.tmp', saved.players);
       fileSystem.renameSync(this.file + '.tmp', this.file);
       this.writeDurable(this.wfile + '.tmp', saved.world);
@@ -112,17 +136,14 @@ export class DB implements GameStorage {
       this.syncDirectory();
     }
 
-    this.players = Object.create(null); // no prototype, so names like __proto__ can never reach object internals
-    try {
-      Object.assign(this.players, JSON.parse(fileSystem.readFileSync(this.file, 'utf8')));
-    } catch {}
-
-    this.wfile = path.join(direction, 'world.json');
-
-    this.world = { sites: {} } as WorldData;
-    try {
-      this.world = JSON.parse(fileSystem.readFileSync(this.wfile, 'utf8'));
-    } catch {}
+    const savedPlayers = readSavedJson(this.file);
+    const savedWorld = readSavedJson(this.wfile);
+    const players = savedPlayers === undefined ? {} : savedPlayers;
+    const world = savedWorld === undefined ? { sites: {} } : savedWorld;
+    validateLocalSnapshots(players, world);
+    // No prototype, so saved names cannot reach object internals.
+    this.players = Object.assign(Object.create(null), players);
+    this.world = world as WorldData;
 
     this.economicFrozen = false;
     this.dirty = false;
