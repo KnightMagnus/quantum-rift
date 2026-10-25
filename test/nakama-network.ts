@@ -100,6 +100,10 @@ try {
   for (const packet of [
     null,
     [],
+    { t: 'industrial', op: [] },
+    { t: 'industrial', op: 'recipe', recipe: [], grade: 'common' },
+    { t: 'industrial', op: 'recipe', recipe: 'alloy', grade: null },
+    { t: 'industrial', op: 'recipe', recipe: 'x'.repeat(201), grade: 'common' },
     { t: 'trade', cid: 'food', qty: null },
     { t: 'trade', cid: 'food', qty: [] },
     { t: 'trade', cid: 'x'.repeat(201), qty: 3 },

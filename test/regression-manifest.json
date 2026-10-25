@@ -25,6 +25,7 @@
     "v252.ts",
     "v26.ts",
     "sim.ts",
+    "station-progress.ts",
     "balance.ts",
     "landing-autopilot.ts",
     "faction-standing.ts",
@@ -59,6 +60,7 @@
     "websocket-transport.ts",
     "http-api.ts",
     "network-systems.ts",
+    "save-migrations.ts",
     "cargo-lots.ts",
     "cargo-flows.ts",
     "mining.ts",
@@ -591,7 +593,11 @@
     "purchase-audio.ts": ["helpers/temp-data.ts"],
     "audio-flyby-browser.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"],
-    "wire-contracts.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts"],
+    "wire-contracts.ts": [
+      "helpers/mocks.ts",
+      "helpers/refinery-fixture.ts",
+      "helpers/dredge-fixture.ts"
+    ],
     "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "helpers/story-foundations.ts": ["helpers/mocks.ts"],
     "helpers/index-worksite.ts": ["helpers/mocks.ts"],
@@ -621,7 +627,8 @@
       "helpers/browser-fixture.ts"
     ],
     "helpers/native-performance.ts": ["helpers/nakama-service.ts"],
-    "helpers/nakama-service.ts": ["helpers/native-packet-collector.ts"]
+    "helpers/nakama-service.ts": ["helpers/native-packet-collector.ts"],
+    "save-migrations.ts": ["helpers/temp-data.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -633,7 +640,8 @@
         "server/game.ts",
         "client/main.ts",
         "client/hails_ui.ts",
-        "client/render.ts"
+        "client/render.ts",
+        "server/save-migrations.ts"
       ],
       "services": [],
       "tests": [
@@ -646,9 +654,10 @@
         "http-api.ts",
         "logout-browser.ts",
         "save-generator.ts",
-        "save-generator-browser.ts"
+        "save-generator-browser.ts",
+        "save-migrations.ts"
       ],
-      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Empty default seeds in online/Solo startup, preserved existing accounts/credentials and claims, explicit operator fixtures, no name-based radio unlocks; Python-generated saves across every hull/site/tier/port, real import/login and file-picker UI, invalid settings and overwrite denial, station-claim conflict/release/reload safety. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect."
+      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Empty default seeds in online/Solo startup, preserved existing accounts/credentials and claims, explicit operator fixtures, no name-based radio unlocks; Python-generated saves across every hull/site/tier/port, real import/login and file-picker UI, invalid settings and overwrite denial, station-claim conflict/release/reload safety. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect. Cargo-only detached migration and disposable restore rehearsal preserve source bytes, reject corrupt/unsupported ledgers and malformed/unreadable local snapshots, and retain journal freeze/reopen behavior."
     },
     {
       "id": "protocol-http",
@@ -812,10 +821,10 @@
     },
     {
       "id": "station-progression",
-      "owners": ["server/game.ts", "server/hangar.ts"],
+      "owners": ["server/game.ts", "server/hangar.ts", "server/station-progress.ts"],
       "services": [],
-      "tests": ["sim.ts", "v05.ts", "v26.ts"],
-      "asserts": "Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates."
+      "tests": ["sim.ts", "v05.ts", "v26.ts", "station-progress.ts"],
+      "asserts": "Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates. Station timers preserve exact maturity, partial/capped accrual, bonus/completion/queue ordering, live owner replacement, queued-project denial and once-only settlement, you/idle/route refresh and persistence across reopen."
     },
     {
       "id": "market-materials",
@@ -1003,7 +1012,7 @@
       ],
       "services": [],
       "tests": ["fuzz.ts", "message-routing.ts", "wire-contracts.ts"],
-      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage. Fixed pre-extraction traces cover all 56 routes, argument coercion, call order, representative mutations and live dependencies; authenticated entry checks retain freeze/activity/flood order. This is routing parity, not complete delegated-rule coverage. Economic contracts bound trade/refinery/miningOrder/towing shape and preserve numeric-text trade coercion; real account/world malformed-request denials and bounded you/landed/quote headers are covered."
+      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage. Fixed pre-extraction traces cover all 56 routes, argument coercion, call order, representative mutations and live dependencies; authenticated entry checks retain freeze/activity/flood order. This is routing parity, not complete delegated-rule coverage. Economic contracts bound trade/refinery/miningOrder/towing/industrial shape and preserve numeric-text trade coercion; real account/world malformed-request denials and bounded you/landed/quote headers are covered."
     },
     {
       "id": "input-audio",
@@ -1097,6 +1106,8 @@
       "services": ["industrial"],
       "owners": [
         "server/industrial.ts",
+        "server/industrial-contracts.ts",
+        "shared/wire-actions.ts",
         "shared/industrial-rules.ts",
         "server/specialists.ts",
         "client/mining_ui.ts",
@@ -1108,9 +1119,10 @@
         "dredge-corona.ts",
         "dredge-economy.ts",
         "dredge-network.ts",
-        "dredge-browser.ts"
+        "dredge-browser.ts",
+        "wire-contracts.ts"
       ],
-      "asserts": "No-plasma real specialist build; finite root-only sweep mass and two utility collectors; exact mobile grade/remainder/checkpoint ownership; stock real flight plasma escape and thermal damage ordering; finite one-way economy, private checked WS modes and actual production sprite/control rendering. Per-captain cooperative/restart blueprint qualification, missing-input work discard without transfer, passive corona exit warnings and automatic route keep-out."
+      "asserts": "No-plasma real specialist build; finite root-only sweep mass and two utility collectors; exact mobile grade/remainder/checkpoint ownership; stock real flight plasma escape and thermal damage ordering; finite one-way economy, private checked WS modes and actual production sprite/control rendering. Shared industrial request bounds, direct/routed malformed no-mutation before initialization, optional direct-call discriminator and legacy all-off selectors. Per-captain cooperative/restart blueprint qualification, missing-input work discard without transfer, passive corona exit warnings and automatic route keep-out."
     },
     {
       "id": "towing-motherlodes",
@@ -1514,7 +1526,7 @@
       ],
       "services": [],
       "tests": ["overlay-input-browser.ts", "logout-browser.ts", "input-audio-browser.ts"],
-      "asserts": "Confirmation, quit and boarding have one keyboard owner, explicit priority and safe focus return. Blocking dialogs suppress manual keyboard/pointer/touch/gamepad commands and held input remains latched until release; other overlay owners remain unchanged."
+      "asserts": "Confirmation, quit, boarding, Options and Controls have one keyboard owner, explicit priority and safe focus return. Options preserves native settings/button activation, pending-capture Escape cancellation, reserved-key denial, swaps, unbinding and saved bindings. Controls retains Change Keys and consumes Escape above the map. Blocking dialogs suppress manual keyboard/pointer/touch/gamepad commands and held input remains latched until release; other overlay owners remain unchanged."
     }
   ],
   "routes": {
@@ -1610,6 +1622,7 @@
     ],
     "abandon": ["v203.ts", "v24.ts", "radio-discovery.ts", "message-routing.ts"],
     "station": [
+      "station-progress.ts",
       "cargo-flows.ts",
       "sim.ts",
       "v04.ts",
@@ -1685,7 +1698,13 @@
       "wire-contracts.ts"
     ],
     "miningPressure": ["mining-pressure.ts", "refinery-ui-browser.ts", "message-routing.ts"],
-    "industrial": ["dredge-network.ts", "dredge-browser.ts", "message-routing.ts"],
+    "industrial": [
+      "dredge-network.ts",
+      "dredge-browser.ts",
+      "message-routing.ts",
+      "wire-contracts.ts",
+      "nakama-network.ts"
+    ],
     "towing": ["towing-network.ts", "towing-browser.ts", "message-routing.ts", "wire-contracts.ts"],
     "portrait": [
       "portrait-persistence.ts",

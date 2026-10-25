@@ -98,6 +98,21 @@ const operations = {run};
 `);
   assert.equal(result.status, 0, 'typed industrial mode request');
   result =
+    check(`import type { IndustrialAction } from '${modulePath('../shared/wire-actions.ts')}';
+const request: IndustrialAction = {t:'industrial',op:'recipe',recipe:'alloy',grade:'pure'}; void request;`);
+  assert.equal(result.status, 0, 'shared industrial request');
+  for (const request of [
+    "{t:'industrial',op:'claim'}",
+    "{t:'industrial',op:'recipe',recipe:[]}",
+    "{t:'industrial',op:'recipe',grade:3}",
+    "{t:'industrial',op:'harvest',heat:0}",
+  ]) {
+    result =
+      check(`import type { IndustrialAction } from '${modulePath('../shared/wire-actions.ts')}';
+const request: IndustrialAction = ${request}; void request;`);
+    assert.notEqual(result.status, 0, 'invalid industrial operation, selector or authority');
+  }
+  result =
     check(`const forged: import('${modulePath('industrial-contracts.js')}').IndustrialRequest ={op:'harvest',heat:0,n:999};
 `);
   assert.notEqual(result.status, 0, 'client heat and yield authority rejected');

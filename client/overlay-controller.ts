@@ -8,7 +8,10 @@ export interface OverlayPolicy {
   dismiss: () => void;
   /** Safe initial native control, resolved after the owner renders its content. */
   initialFocus: () => HTMLElement | null;
-  /** Optional dialog shortcut. Return true only when its default was handled. */
+  /**
+   * Optional owner shortcut or pending-edit cancellation, before default dismissal.
+   * Return true only when its native default was handled.
+   */
   keyDown?: (event: KeyboardEvent) => boolean;
   /** Clear pending owner callbacks on logout without submitting or restoring focus. */
   reset?: () => void;
@@ -64,8 +67,40 @@ export class OverlayController {
     const returnTo = this.returnFocus.get(id);
     this.returnFocus.delete(id);
     const top = this.top();
-    if (returnTo?.isConnected && !returnTo.closest('.hidden') && (!top || top.contains(returnTo)))
+    const active = document.activeElement;
+    if (
+      top &&
+      active &&
+      top.contains(active) &&
+      active.getClientRects().length &&
+      !active.matches(':disabled')
+    )
+      return;
+    if (
+      returnTo?.isConnected &&
+      !returnTo.closest('.hidden') &&
+      returnTo.getClientRects().length &&
+      !returnTo.matches(':disabled') &&
+      (!top || top.contains(returnTo))
+    ) {
       returnTo.focus({ preventScroll: true });
+      return;
+    }
+    if (top) {
+      const initial = this.policies.get(top.id)?.initialFocus();
+      if (
+        initial?.isConnected &&
+        top.contains(initial) &&
+        initial.getClientRects().length &&
+        !initial.matches(':disabled')
+      ) {
+        initial.focus({ preventScroll: true });
+      } else {
+        // An unmigrated overlay keeps its actions; focus its container, not an arbitrary button.
+        if (!top.hasAttribute('tabindex')) top.tabIndex = -1;
+        top.focus({ preventScroll: true });
+      }
+    }
   }
 
   /** Drop references during account teardown without focusing former-account UI. */
@@ -109,7 +144,9 @@ export class OverlayController {
     // Unmigrated overlays keep their existing keyboard owners.
     if (!policy || !top) return;
     event.stopImmediatePropagation();
-    if (event.key === 'Escape') {
+    if (policy.keyDown?.(event)) {
+      event.preventDefault();
+    } else if (event.key === 'Escape') {
       event.preventDefault();
       if (!event.repeat) policy.dismiss();
     } else if (event.key === 'Tab') {
@@ -128,7 +165,7 @@ export class OverlayController {
         event.preventDefault();
         (event.shiftKey ? last : first)?.focus();
       }
-    } else if (policy.keyDown?.(event)) event.preventDefault();
+    }
   }
 }
 
