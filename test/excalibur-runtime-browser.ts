@@ -452,7 +452,8 @@ try {
       );
     }
 
-    const projectileReuse = await page.evaluate(() => {
+    const projectileReuse = await page.evaluate(async () => {
+      const { weaponLook } = await import('/shared/rules.js');
       const { engine, scene } = window.RiftEngine;
       engine.stop();
       scene.display.clear();
@@ -510,6 +511,18 @@ try {
         const differentBucketHasOwnCanvas = !!canvasFor(0) && canvasFor(0) !== initialCanvas;
         scene.display.update({ ...replacement, shots: [] }, 0);
         const emptySnapshotRemovesActors = scene.display.actors.size === 0 && first.isKilled();
+        // Only time-dependent looks keep separate animation phases in the bounded cache.
+        const weaponWithLook = (looks: string[]) =>
+          Object.values(G.A!.weapons).find((entry) => looks.includes(weaponLook(entry)))!.id;
+        const canvasAt = (weaponId: number, now: number) => {
+          scene.display.update({ ...snapshot, shots: [{ ...shot(1000, 0), w: weaponId }] }, now);
+          return canvasFor(0);
+        };
+        const staticWeapon = weaponWithLook(['bolt']);
+        const animatedWeapon = weaponWithLook(['torp', 'sing', 'mine', 'shard']);
+        const staticLookSharesPhases = canvasAt(staticWeapon, 0) === canvasAt(staticWeapon, 500);
+        const animatedLookKeepsPhases =
+          canvasAt(animatedWeapon, 0) !== canvasAt(animatedWeapon, 500);
         return {
           nearbySpeedsShareCanvas,
           retainedActor,
@@ -518,6 +531,8 @@ try {
           shrunkRegistry,
           differentBucketHasOwnCanvas,
           emptySnapshotRemovesActors,
+          staticLookSharesPhases,
+          animatedLookKeepsPhases,
         };
       } finally {
         scene.display.clear();

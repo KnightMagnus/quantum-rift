@@ -795,7 +795,8 @@ and extra visible tail pixels are bounded independently of registry/Sprite count
 Projectile frames must be drawable on their first update without any canvas PNG
 blob encoding; that round trip previously stalled busy fights. Nearby speeds share
 a cached canvas at a fixed phase and zoom, while a different trail bucket gets its
-own canvas. Replacement snapshots retain Actors and refresh position, heading and
+own canvas. Static projectile looks share one cached frame across animation phases;
+time-dependent looks keep their phases. Replacement snapshots retain Actors and refresh position, heading and
 opacity; shrinking and empty snapshots remove obsolete Actors.
 
 These checks do not establish cross-browser parity, every weapon animation, a
