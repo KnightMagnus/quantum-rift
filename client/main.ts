@@ -1,5 +1,6 @@
 import { LandingFeedback, landingRefusal } from './landing-feedback.ts';
 import { initProfile } from './profile_ui.ts';
+import { renderStoryPortrait } from './story-portraits.ts';
 import type {
   ServerMessage,
   SnapshotMessage,
@@ -1191,6 +1192,7 @@ function showStory(storyMessage: StoryMessage | undefined) {
     startStorySequence(clientGameState, storyMessage.sequence, performance.now());
   elementById2('storyt').textContent = storyMessage.title;
   elementById2('storyx').textContent = storyMessage.text;
+  renderStoryPortrait(storyMessage);
   document.querySelector<HTMLElement>('#storybox .storytag')!.textContent =
     storyMessage.tag || 'STORY';
   elementById2('storyb').innerHTML = storyMessage.done

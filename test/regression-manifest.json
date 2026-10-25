@@ -1382,7 +1382,8 @@
         "shared/landscapes.ts",
         "shared/portraits.ts",
         "client/profile_ui.ts",
-        "client/hails_ui.ts"
+        "client/hails_ui.ts",
+        "client/story-portraits.ts"
       ],
       "tests": [
         "planet-portrait-art.ts",
@@ -1392,7 +1393,7 @@
         "nakama-network.ts",
         "cockpit-layout-browser.ts"
       ],
-      "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork. Profile is a Captain-menu tab, without independent HUD/landed profile buttons."
+      "asserts": "Stable explicit world identities, all colony stages and owner branches, trusted portrait catalog, authenticated personal mutation, Solo/native checkpoint reload and actual browser chooser/hail artwork. Profile is a Captain-menu tab, without independent HUD/landed profile buttons. Main-story encounter portraits, completion-specific identities, text-only fallback and narrow dialogue controls."
     },
     {
       "id": "story-foundations",

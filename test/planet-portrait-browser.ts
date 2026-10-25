@@ -8,6 +8,7 @@ import { Game } from '../server/game.ts';
 import { STELLARS } from '../shared/galaxy.ts';
 import { landscapeScene } from '../shared/landscapes.ts';
 import { PLAYER_PORTRAITS } from '../shared/portraits.ts';
+import { STORY } from '../shared/story.ts';
 import { tempDataDir } from './helpers/temp-data.ts';
 import {
   root,
@@ -116,6 +117,73 @@ try {
     await page.click('#lbtn');
     await page.waitForFunction(() => !!G.landed);
     assert.equal(await page.evaluate(() => G.landed!.stellar), fixture.world);
+    if (index === 0) {
+      for (const encounter of [
+        { id: 'qv1', portrait: 'story-selani' },
+        { id: 'qv3', portrait: 'story-elders' },
+        { id: 'qv2', done: true, portrait: 'story-sailwright' },
+        { id: 'guests', portrait: 'story-clerk' },
+        { id: 'shades-below', portrait: 'story-prisoner' },
+      ]) {
+        const mission = STORY.find((mission) => mission.id === encounter.id)!;
+        await page.evaluate(
+          ({ mission, done }) => {
+            window.dispatchEvent(
+              new CustomEvent('rift-story', {
+                detail: {
+                  t: 'story',
+                  id: mission.id,
+                  title: mission.title,
+                  text: done ? mission.done : mission.text,
+                  done,
+                  acc: mission.acc,
+                  ref: mission.ref,
+                },
+              }),
+            );
+          },
+          { mission, done: encounter.done },
+        );
+        const portrait = page.locator('#storyportrait');
+        await portrait.evaluate((image: HTMLImageElement) => image.decode());
+        assert.ok((await portrait.getAttribute('src'))!.includes(encounter.portrait));
+        assert.ok(await portrait.getAttribute('alt'));
+        assert.equal(await page.locator('#storycharacter').isVisible(), true);
+        if (encounter.id === 'qv1') {
+          await page.locator('#storybox').evaluate((panel) => {
+            for (const animation of panel.getAnimations({ subtree: true })) {
+              if (animation.effect?.getComputedTiming().iterations !== Infinity) animation.finish();
+            }
+          });
+          await page.screenshot({ path: path.join(output, 'main-story-portrait.png') });
+          await page.setViewportSize({ width: 390, height: 640 });
+          await page.locator('#storyyes').scrollIntoViewIfNeeded();
+          const button = await page.locator('#storyyes').boundingBox();
+          assert.ok(button && button.y >= 0 && button.y + button.height <= 640);
+          const panel = await page.locator('#storybox .storyin').boundingBox();
+          assert.ok(panel && panel.x >= 0 && panel.x + panel.width <= 390);
+          await page.setViewportSize({ width: 1280, height: 900 });
+        }
+        await page.click(encounter.done ? '#storyok' : '#storyno');
+      }
+      await page.evaluate(() =>
+        window.dispatchEvent(
+          new CustomEvent('rift-story', {
+            detail: {
+              t: 'story',
+              id: 'unknown-story',
+              title: 'A text-only encounter',
+              text: 'No character portrait belongs to this encounter.',
+              done: true,
+            },
+          }),
+        ),
+      );
+      assert.equal(await page.locator('#storycharacter').isVisible(), false);
+      assert.equal(await page.locator('#storyportrait').getAttribute('src'), null);
+      assert.equal(await page.locator('#storycharactername').textContent(), '');
+      await page.click('#storyok');
+    }
     await page.locator('[data-lt="colony"]').click();
     const illustration = page.locator('.colony-illustration img');
     await illustration.evaluate((image: HTMLImageElement) => image.decode());

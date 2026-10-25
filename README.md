@@ -86,6 +86,10 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 
 ![The silent hulk north of Aureole Research Ring](docs/screenshots/aureole-hulk.png)
 
+**Story encounters**
+
+![Sel’ani’s character portrait in a main-story dialogue](docs/screenshots/main-story-portrait.png)
+
 **Beyond the Rift**
 
 ![A captain flying beside the far-side rift under the arrival sky](docs/screenshots/beyond-rift.png)

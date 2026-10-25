@@ -8,6 +8,7 @@ import portraits from '../tools/portrait-inventory.json' with { type: 'json' };
 import { landscapeScene, colonyStage } from '../shared/landscapes.ts';
 import { STELLARS } from '../shared/galaxy.ts';
 import { RIVALS } from '../shared/rivals.ts';
+import { storyCharacter } from '../client/story-portraits.ts';
 import {
   PORTRAITS,
   PLAYER_PORTRAITS,
@@ -92,7 +93,24 @@ for (const item of inventory) {
   assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), item.sha256, item.file);
   assert.equal(bytes.readUInt16BE(0), 0xffd8);
 }
-assert.equal(PORTRAITS.length, 70);
+assert.equal(PORTRAITS.length, 75);
+for (const id of [
+  'story-selani',
+  'story-elders',
+  'story-sailwright',
+  'story-clerk',
+  'story-prisoner',
+]) {
+  assert.ok(PORTRAITS.some((entry) => entry.id === id));
+  assert.equal(isPlayerPortrait(id), false, 'story identities cannot be selected by players');
+  assert.equal(PORTRAITS.find((entry) => entry.id === id)!.poolEligible, false);
+}
+assert.equal(storyCharacter({ id: 'qv2' })?.portrait, 'story-selani');
+assert.equal(storyCharacter({ id: 'qv2', done: true })?.portrait, 'story-sailwright');
+assert.equal(storyCharacter({ id: 'qv4', done: true })?.portrait, 'story-elders');
+assert.equal(storyCharacter({ id: 'guests', done: true }), null, 'the Archive is not the clerk');
+assert.equal(storyCharacter({ id: 'qv1', arc: 'concord' }), null);
+assert.equal(storyCharacter({ id: '../bad' }), null);
 const named = PORTRAITS.filter((entry) => entry.npcId);
 assert.equal(named.length, 30);
 assert.equal(new Set(named.map((entry) => entry.id)).size, 30);
