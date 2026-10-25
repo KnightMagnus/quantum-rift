@@ -948,3 +948,19 @@ Canvas/WebGL Engine at its existing DPR combinations and saves numeric reports.
 See [PERFORMANCE.md](PERFORMANCE.md) for interpretation, commands and limits.
 In-process memory-CAS measurements exclude production PostgreSQL/network latency;
 accelerated soak does not establish wall-clock or multihour endurance.
+
+## `modal-input-ownership`: dialogs and manual controls
+
+`overlay-input-browser.ts` checks nested confirmation/quit and
+confirmation/boarding priority, one Escape consumer, Tab wrapping and focus
+return. Native Enter cancels or confirms according to the focused button. The
+fixture checks a custom thrust binding, release-latched keys and gamepad controls,
+blocked outgoing actions, canvas pointer and touch handlers, disabled/repeated
+boarding shortcuts, typing and callback cleanup on reset. It uses a synthetic
+absent boarding target and does not claim a successful authoritative boarding.
+
+`logout-browser.ts` retains real Solo and online-style login/logout, temporary
+pause restoration, account isolation and persistence. `input-audio-browser.ts`
+retains gamepad and touch activation outside dialogs. These tests emulate device
+APIs; they do not certify physical hardware. Other overlays still have their
+existing dismissal/focus owners and are not claimed as controller migrations.

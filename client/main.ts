@@ -1,3 +1,4 @@
+import { overlays } from './overlay-controller.ts';
 import { LandingFeedback, landingRefusal } from './landing-feedback.ts';
 import { initProfile } from './profile_ui.ts';
 import { renderStoryPortrait } from './story-portraits.ts';
@@ -365,6 +366,7 @@ import {
 } from './ui.ts';
 
 const elementById2 = elementById;
+overlays.start(clearManualFlightInput);
 initLoginScene(elementById2('login'));
 
 const clientGameState: ClientGameState = (window.G = {
@@ -545,8 +547,7 @@ function saveOpts() {
   } catch {}
 }
 function miningModalBlocked() {
-  // Includes account/quit confirmation and future overlays without a stale ID list.
-  return !!document.querySelector<HTMLElement>('.overlay:not(.hidden)');
+  return !!clientGameState.landed || overlays.blocksFlight();
 }
 
 const miningUI = initMiningUI({
@@ -613,7 +614,9 @@ applyOpts();
 })();
 const canvas = elementById2('view'),
   canvasRenderingContext2D2 = elementById2('radar').getContext('2d')!;
-const flightEngine = new FlightEngine(canvas, clientGameState, frame);
+const flightEngine = new FlightEngine(canvas, clientGameState, frame, () =>
+  overlays.blocksFlight(),
+);
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null,
   sessionEpoch = 0,
   sessionDefaults: Record<string, unknown> | null = null;
@@ -1611,7 +1614,7 @@ window.addEventListener('keydown', (keyboardEvent) => {
     )
   )
     return;
-  if (keyboardEvent.key === 'Enter' && clientGameState.you) {
+  if (keyboardEvent.key === 'Enter' && clientGameState.you && !overlays.blocksFlight()) {
     const inputControl = elementById2('chatin');
     if (document.activeElement === inputControl) {
       sendChat();
@@ -1627,6 +1630,16 @@ window.addEventListener('keydown', (keyboardEvent) => {
     return;
   }
   if (!clientGameState.you) return;
+  if (overlays.blocksFlight()) {
+    if (
+      !elementById2('gmap').classList.contains('hidden') &&
+      (keyboardEvent.code === 'Escape' || actionOf(keyboardEvent.code) === 'map')
+    ) {
+      keyboardEvent.preventDefault();
+      closeMap();
+    }
+    return;
+  }
   audio.unlock();
   if (
     ['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(
@@ -1764,10 +1777,7 @@ window.addEventListener('keydown', (keyboardEvent) => {
   }
 });
 window.addEventListener('blur', () => {
-  flightEngine.input.clear();
-  mouse.down = false;
-  clientGameState._look = null;
-  clientGameState._lookT = null;
+  clearManualFlightInput();
 });
 function jumpNext() {
   if (!clientGameState.route.length) return toast('Plot a course on the map first (M).');
@@ -2362,6 +2372,7 @@ function setTarget(identifier: number): void {
 }
 flightEngine.engine.input.pointers.on('move', (event) => {
   const mouseEvent = event.nativeEvent as MouseEvent;
+  if (overlays.blocksFlight()) return;
   if (
     clientGameState.opts.mouseAim &&
     (mouseEvent.movementX || mouseEvent.movementY) &&
@@ -2400,6 +2411,7 @@ document.addEventListener('visibilitychange', () => {
   clientGameState._lookT = null;
   touch.keys = {};
   touch.stick = null;
+  padding.blocked = true;
 });
 canvas.addEventListener('pointercancel', () => {
   mouse.down = false;
@@ -2416,7 +2428,7 @@ canvas.addEventListener('mouseleave', () => {
 });
 flightEngine.engine.input.pointers.on('down', (event) => {
   const mouseEvent = event.nativeEvent as MouseEvent;
-  if (!clientGameState.you || clientGameState.landed) return;
+  if (!clientGameState.you || clientGameState.landed || overlays.blocksFlight()) return;
   audio.unlock();
   if (document.activeElement && document.activeElement.tagName === 'INPUT')
     (document.activeElement as HTMLElement).blur();
@@ -2468,7 +2480,7 @@ window.addEventListener('pointerup', () => {
 flightEngine.engine.input.pointers.on('up', (event) => {
   const mouseEvent = event.nativeEvent as MouseEvent;
   mouse.down = false;
-  if (mouseEvent.button === 2 && clientGameState._look) {
+  if (!overlays.blocksFlight() && mouseEvent.button === 2 && clientGameState._look) {
     if (!clientGameState._look.moved && performance.now() - clientGameState._look.t < 300)
       setTarget(0);
     clientGameState._look = null;
@@ -2476,7 +2488,7 @@ flightEngine.engine.input.pointers.on('up', (event) => {
   } // the view eases back to your ship
 });
 canvas.addEventListener('dblclick', (mouseEvent) => {
-  if (!clientGameState.you || clientGameState.landed) return;
+  if (!clientGameState.you || clientGameState.landed || overlays.blocksFlight()) return;
   const [worldX, worldY] = toWorld(mouseEvent.clientX, mouseEvent.clientY),
     pickAt2 = pickAt(worldX, worldY);
   if (pickAt2?.stellar?.wormhole) {
@@ -2492,7 +2504,7 @@ canvas.addEventListener('contextmenu', (pointerEvent) => pointerEvent.preventDef
 canvas.addEventListener(
   'wheel',
   (wheelEvent) => {
-    if (!clientGameState.view) return;
+    if (!clientGameState.view || overlays.blocksFlight()) return;
     wheelEvent.preventDefault();
     clientGameState.zoom =
       wheelEvent.deltaY < 0
@@ -2504,7 +2516,7 @@ canvas.addEventListener(
 // radar: click a blip to target it
 elementById2('radar').addEventListener('mousedown', (mouseEvent) => {
   const clientView = clientGameState.view;
-  if (!clientView) return;
+  if (!clientView || overlays.blocksFlight()) return;
   const htmlCanvasElement = elementById2('radar'),
     domRect = htmlCanvasElement.getBoundingClientRect(),
     radius = htmlCanvasElement.width / domRect.width,
@@ -2556,15 +2568,15 @@ function openBoard(): void {
   )
     return toast('Move alongside to board.');
   elementById2('boardin').innerHTML = boardHtml(clientGameState, renderEntity);
-  elementById2('boardbox').classList.remove('hidden');
   clientGameState.boarding = renderEntity.id;
+  overlays.open('boardbox');
 }
 /**
  * Closes the ship boarding action modal.
  */
 function closeBoard(): void {
-  elementById2('boardbox').classList.add('hidden');
   clientGameState.boarding = 0;
+  overlays.close('boardbox');
 }
 /**
  * Sends a boarding action command (plunder, capture, rescue) to the server.
@@ -2581,26 +2593,21 @@ elementById2('boardin').addEventListener('click', (pointerEvent) => {
   );
   if (htmlButtonElement && !htmlButtonElement.disabled) doBoard(htmlButtonElement.dataset.board!);
 });
-window.addEventListener(
-  'keydown',
-  (keyboardEvent) => {
-    if (elementById2('boardbox').classList.contains('hidden')) return;
-    const entryKey = { Digit1: 'plunder', Digit2: 'capture', Digit3: 'rescue' }[keyboardEvent.code];
-    if (entryKey) {
-      const htmlButtonElement = elementById2('boardin').querySelector<HTMLButtonElement>(
-        `[data-board="${entryKey}"]`,
-      );
-      if (htmlButtonElement && !htmlButtonElement.disabled) doBoard(entryKey);
-      keyboardEvent.stopImmediatePropagation();
-      keyboardEvent.preventDefault();
-    } else if (keyboardEvent.key === 'Escape') {
-      closeBoard();
-      keyboardEvent.stopImmediatePropagation();
-      keyboardEvent.preventDefault();
-    }
+overlays.register({
+  id: 'boardbox',
+  priority: 10,
+  dismiss: closeBoard,
+  initialFocus: () => elementById2('boardin').querySelector<HTMLElement>('[data-board=""]'),
+  keyDown: (event) => {
+    const action = { Digit1: 'plunder', Digit2: 'capture', Digit3: 'rescue' }[event.code];
+    if (!action) return false;
+    const button = elementById2('boardin').querySelector<HTMLButtonElement>(
+      `[data-board="${action}"]`,
+    );
+    if (!event.repeat && button && !button.disabled) doBoard(action);
+    return true;
   },
-  true,
-);
+});
 
 // ------------------------------------------------------------------ tutorial panel
 /**
@@ -2958,7 +2965,7 @@ elementById2('traytoggle').onclick = () => {
 elementById2('hud').inert = true;
 resize();
 // ------------------------------------------------------------------ gamepad and touch controls
-const padding: { prev: boolean[] } = { prev: [] },
+const padding: { prev: boolean[]; blocked: boolean } = { prev: [], blocked: false },
   touch: { keys: Record<string, boolean>; stick: { dx: number; dy: number } | null } = {
     keys: {},
     stick: null,
@@ -2969,7 +2976,31 @@ const padding: { prev: boolean[] } = { prev: [] },
  */
 function padInput(clientInput: ClientInput): void {
   const gamepad = navigator.getGamepads ? [...navigator.getGamepads()].find(Boolean) : null;
-  if (!gamepad) return;
+  if (!gamepad) {
+    padding.blocked = false;
+    return;
+  }
+  if (
+    gamepad.buttons[9]?.pressed &&
+    !padding.prev[9] &&
+    !typing() &&
+    !overlays.hasExclusiveDialog() &&
+    !elementById2('gmap').classList.contains('hidden')
+  ) {
+    closeMap();
+    padding.prev = gamepad.buttons.map((button) => button.pressed);
+    padding.blocked = true;
+    return;
+  }
+  const blocked = !!typing() || overlays.blocksFlight() || document.hidden;
+  if (blocked || padding.blocked) {
+    padding.prev = gamepad.buttons.map((button) => button.pressed);
+    padding.blocked =
+      blocked ||
+      gamepad.buttons.some((button) => button.pressed) ||
+      gamepad.axes.some((axis) => Math.abs(axis) > 0.2);
+    return;
+  }
   const secondValue = (index: number) => gamepad.buttons[index] && gamepad.buttons[index].pressed,
     edge = (index: number) => secondValue(index) && !padding.prev[index],
     axisX = gamepad.axes[0] || 0,
@@ -2994,6 +3025,7 @@ function padInput(clientInput: ClientInput): void {
  * @param clientInput Mutable input state object
  */
 function touchInput(clientInput: ClientInput): void {
+  if (typing() || overlays.blocksFlight()) return;
   for (const entryKey of ['fire1', 'fire2', 'ab'] as const)
     if (touch.keys[entryKey]) clientInput[entryKey] = 1;
   const stick2 = touch.stick;
@@ -3033,6 +3065,7 @@ if (
     'touchstart',
     (touchEvent) => {
       touchEvent.preventDefault();
+      if (typing() || overlays.blocksFlight()) return;
       audio.unlock();
       move(touchEvent.targetTouches[0]);
     },
@@ -3042,6 +3075,7 @@ if (
     'touchmove',
     (touchEvent) => {
       touchEvent.preventDefault();
+      if (typing() || overlays.blocksFlight()) return;
       move(touchEvent.targetTouches[0]);
     },
     { passive: false },
@@ -3055,6 +3089,16 @@ if (
       'touchstart',
       (touchEvent) => {
         touchEvent.preventDefault();
+        if (
+          htmlElement.dataset.tap === 'map' &&
+          !typing() &&
+          !overlays.hasExclusiveDialog() &&
+          !elementById2('gmap').classList.contains('hidden')
+        ) {
+          closeMap();
+          return;
+        }
+        if (typing() || overlays.blocksFlight()) return;
         audio.unlock();
         htmlElement.classList.add('on');
         if (htmlElement.dataset.k!) touch.keys[htmlElement.dataset.k!] = true;
@@ -3074,6 +3118,17 @@ if (
     });
   }
 }
+function clearManualFlightInput(): void {
+  flightEngine.input.clear();
+  mouse.down = false;
+  clientGameState._look = null;
+  clientGameState._lookT = null;
+  touch.keys = {};
+  touch.stick = null;
+  padding.blocked = true;
+  if (clientGameState.view && !clientGameState.landed)
+    send({ t: 'input', seq: ++sequence, th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 });
+}
 let account = 0,
   last = performance.now();
 /**
@@ -3087,6 +3142,13 @@ function fixedTick(): void {
     clientGameState.quitting
   )
     return;
+  if (overlays.blocksFlight()) {
+    flightEngine.input.clear();
+    mouse.down = false;
+    touch.keys = {};
+    touch.stick = null;
+    padding.blocked = true;
+  }
   // Preserve automatic-control intent even if guidance completes or refuses this tick.
   const towing = clientGameState.towing || clientGameState.you?.towing;
   if (towing?.attached) clientGameState.auto = null;
@@ -3098,9 +3160,12 @@ function fixedTick(): void {
     rev: held('rev') ? 1 : 0,
     ab: held('ab') ? 1 : 0,
     fire1: held('fire1') ? 1 : 0,
-    fire2: held('fire2') || shipFunctions.secondary() ? 1 : 0,
+    fire2:
+      held('fire2') || (!typing() && !overlays.blocksFlight() && shipFunctions.secondary()) ? 1 : 0,
   };
   if (
+    !typing() &&
+    !overlays.blocksFlight() &&
     clientGameState.opts.mouseAim &&
     mouse.in &&
     (mouse.down ||
@@ -3182,7 +3247,7 @@ function fixedTick(): void {
     );
     input.turn = Math.abs(wrap2) < computedShipStats!.turn * tickDuration ? 0 : Math.sign(wrap2);
   }
-  if (typing()) {
+  if (typing() || overlays.blocksFlight()) {
     input.fire1 = input.fire2 = 0;
     if (!clientGameState.auto) input.thrust = input.turn = input.rev = input.ab = 0;
   } // the autopilot keeps flying while you chat
@@ -3288,33 +3353,24 @@ elementById2('combatcoordinate').onchange = (event) =>
   send({ t: 'combat', op: 'coordinate', on: (event.target as HTMLInputElement).checked });
 
 // Escape belongs to existing dialogs/text inputs first. Logging out is always explicit.
-let quitFocus: HTMLElement | null = null,
-  quitPaused = false;
+let quitPaused = false;
 function cancelQuit() {
   if (elementById2('quitconfirm').disabled) return;
-  elementById2('quitbox').classList.add('hidden');
   clientGameState.quitting = false;
   if (quitPaused) send({ t: 'pause' });
   quitPaused = false;
   elementById2('pausebox').classList.toggle('hidden', !clientGameState.paused);
-  quitFocus?.focus();
+  overlays.close('quitbox');
 }
 function openQuit() {
-  quitFocus = document.activeElement as HTMLElement | null;
   clientGameState.quitting = true;
-  flightEngine.input.clear();
-  mouse.down = false;
-  touch.keys = {};
-  touch.stick = null;
-  send({ t: 'input', seq: ++sequence, th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 });
   quitPaused = !!clientGameState.solo && !clientGameState.paused;
   if (quitPaused) send({ t: 'pause' });
   elementById2('pausebox').classList.add('hidden');
   elementById2('quitnote').textContent = clientGameState.solo
     ? 'Your progress is saved when you log out.'
     : 'Your progress is saved when you log out. The online world keeps running.';
-  elementById2('quitbox').classList.remove('hidden');
-  elementById2('quitcancel').focus();
+  overlays.open('quitbox');
 }
 async function logOut(reason = '') {
   elementById2('quitconfirm').disabled = elementById2('quitcancel').disabled = true;
@@ -3356,7 +3412,7 @@ async function logOut(reason = '') {
   touch.stick = null;
   storyQ.length = 0;
   quitPaused = false;
-  quitFocus = null;
+  overlays.reset();
   resetRenderSession();
   hailUI.reset();
   profileUI.reset();
@@ -3422,29 +3478,17 @@ async function logOut(reason = '') {
     if (epoch === sessionEpoch && !clientGameState.you && clientGameState.solo) soloLogin(status);
   } catch {}
 }
+overlays.register({
+  id: 'quitbox',
+  priority: 200,
+  dismiss: cancelQuit,
+  initialFocus: () => elementById2('quitcancel'),
+});
 elementById2('quitcancel').onclick = cancelQuit;
 elementById2('quitconfirm').onclick = () => logOut();
 window.addEventListener(
   'keydown',
   (keyboardEvent) => {
-    if (clientGameState.quitting) {
-      if (
-        keyboardEvent.key === 'Escape' &&
-        !keyboardEvent.repeat &&
-        !elementById2('quitconfirm').disabled
-      )
-        cancelQuit();
-      if (keyboardEvent.key === 'Tab') {
-        keyboardEvent.preventDefault();
-        (document.activeElement === elementById2('quitcancel')
-          ? elementById2('quitconfirm')
-          : elementById2('quitcancel')
-        ).focus();
-      }
-      keyboardEvent.stopImmediatePropagation();
-      if (!['Enter', ' ', 'Tab'].includes(keyboardEvent.key)) keyboardEvent.preventDefault();
-      return;
-    }
     if (keyboardEvent.key !== 'Escape' || keyboardEvent.repeat || !clientGameState.you || typing())
       return;
     if (!elementById2('qvolbox').classList.contains('hidden')) {

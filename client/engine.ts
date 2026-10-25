@@ -10,7 +10,12 @@ export class FlightEngine {
   readonly scene: SpaceScene;
   readonly input: FlightInput;
   private canvas: HTMLCanvasElement;
-  constructor(canvas: HTMLCanvasElement, state: ClientGameState, advance: (time: number) => void) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    state: ClientGameState,
+    advance: (time: number) => void,
+    blocked: () => boolean = () => false,
+  ) {
     this.canvas = canvas;
     const useCanvas = canvasBackend(new URLSearchParams(location.search).get('renderer'));
     if (useCanvas) Flags.useCanvasGraphicsContext();
@@ -32,7 +37,7 @@ export class FlightEngine {
     });
     this.scene = new SpaceScene(state, advance);
     this.engine.add('space', this.scene);
-    this.input = new FlightInput(this.engine);
+    this.input = new FlightInput(this.engine, blocked);
     this.resize();
     new ResizeObserver(() => this.resize()).observe(canvas);
     const watchRatio = () => {
