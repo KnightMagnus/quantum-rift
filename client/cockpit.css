@@ -1780,6 +1780,23 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   }
 }
 
+/* Keep chat usable beside the open Tray without moving controls into fastener gutters. */
+@media (min-width: 1251px) and (max-width: 1600px) {
+  body.tray-open #cockpit {
+    grid-template-columns: 360px minmax(160px, 1fr) 234px;
+  }
+  body.tray-open #consoleutilities {
+    width: 234px;
+    margin-right: 0;
+  }
+  body.tray-open #consoleutilities .cb {
+    width: 74px;
+  }
+  body.tray-open #consoleutilities .cbtns {
+    grid-template-columns: repeat(3, 74px);
+  }
+}
+
 /* Larger tab labels keep their readable size; recover room from chrome, not text. */
 #ctabs {
   gap: 1px;
