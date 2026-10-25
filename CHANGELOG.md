@@ -2,6 +2,15 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 3.4.2
+
+- Fit ultrawide landed windows to usable flight space; keep cockpit screws clear of controls and preserve chat beside the open Tray.
+- Widen Controls into two columns with a narrow-screen fallback.
+- Separate neutral large Index hulls, retain natural Trident rejoin and use ship-only Index/Nhal hail portraits.
+- Hide the story harness from Codex outfit browsing, searches and stale detail links without removing earned equipment.
+- Integrate shared Options/Controls focus, typed message routing, station timer ownership, stopped-backup cargo rehearsal and bounded native performance measurements.
+- Refresh actual gameplay screenshots and the beta Solo save generator catalog. See the [release notes](docs/RELEASE-3.4.2.md).
+
 ### 3.4.1 (public release 0.3.4.1)
 
 - Keep expanded cockpit buttons and the vent inside the frame on ultrawide screens, with more space between sidebar text and trim.
