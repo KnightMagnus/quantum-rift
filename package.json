@@ -17,6 +17,7 @@
     "test:regression:browser": "node test/regression-runner.ts browser",
     "test:regression": "node test/regression-runner.ts all",
     "build": "node tools/build.ts",
+    "validate:content": "node tools/validate-content.ts",
     "prestart": "npm run build",
     "pretest:regression": "npm run build",
     "pretest:regression:unit": "npm run build",
