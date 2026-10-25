@@ -976,3 +976,16 @@ pause restoration, account isolation and persistence. `input-audio-browser.ts`
 retains gamepad and touch activation outside dialogs. These tests emulate device
 APIs; they do not certify physical hardware. Other overlays still have their
 existing dismissal/focus owners and are not claimed as controller migrations.
+
+## Save catalog and local restore rehearsal
+
+`save-migrations.ts` exercises detached cargo/storage migration, legacy/current
+synthetic fixtures, corrupt/unsupported rejection without source mutation,
+read-only disposable CLI restores and committed-journal precedence. It rejects
+malformed local snapshot envelopes and injected access errors without empty-state
+fallback, then checks five real journal fault boundaries, freeze and reopen/retry.
+Credits, unrelated goods, station ownership and progression remain unchanged.
+The existing cargo, import/login, generator and native checkpoint tests retain
+their separate coverage. This is not full feature-schema validation, native
+restore coverage or an old/new executable archive-matrix rehearsal; see
+[SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md).

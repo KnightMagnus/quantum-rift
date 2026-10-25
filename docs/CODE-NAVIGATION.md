@@ -112,6 +112,15 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 | Scene/ship drawing                              | `client/render.ts`                                          | `client/artwork.ts`, animation/ship-banking modules, `client/assets/`                                        |
 | Galaxy/hulls/loadouts/stats                     | `shared/galaxy.ts`, `shared/assets.json`, `shared/rules.ts` | Shared bonus/stats owners in `server/features.ts`                                                            |
 
+## Save compatibility checks
+
+`server/save-migrations.ts` catalogs existing migration owners without changing
+live lifecycle order. `tools/save-restore-verify.ts` rehearses only the existing
+cargo/storage-ledger migration on disposable local copies. See
+[SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md) for commands and limits. `server/db.ts`
+rejects corrupt or unreadable local snapshots instead of silently resetting them;
+feature validation and native CAS authority remain with their existing owners.
+
 ## Who owns which information?
 
 - **Reusable foundations:** `shared/galaxy-graph.ts` owns ordered link traversal;

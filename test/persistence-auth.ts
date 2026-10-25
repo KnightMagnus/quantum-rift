@@ -90,9 +90,9 @@ assert.equal(
 const corrupt = tempDataDir('rift-corrupt-');
 fileSystem.writeFileSync(path.join(corrupt, 'players.json'), '{broken');
 fileSystem.writeFileSync(path.join(corrupt, 'world.json'), '{broken');
-const recover = new Database(corrupt);
-assert.equal(Object.keys(recover.players).length, 0);
-assert.deepEqual(recover.world, { sites: {} });
+assert.throws(() => new Database(corrupt), SyntaxError);
+assert.equal(fileSystem.readFileSync(path.join(corrupt, 'players.json'), 'utf8'), '{broken');
+assert.equal(fileSystem.readFileSync(path.join(corrupt, 'world.json'), 'utf8'), '{broken');
 
 const game = new Game(
   JSON.parse(fileSystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8')),
