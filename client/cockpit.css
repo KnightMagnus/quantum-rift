@@ -1783,7 +1783,7 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   gap: 2px;
 }
 #ctabs button {
-  padding-inline: 2px;
+  padding-inline: 1px;
   letter-spacing: 0;
 }
 
