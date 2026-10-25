@@ -131,7 +131,10 @@ including every galaxy origin, freight offers and nearest buyers. It also checks
 hold allocation and mission reservations, signed versus clamped free capacity,
 and the existing HTML-escaping policies. Independent original-source fixtures also
 check random streams, hashes, the generated galaxy, rivals, arcs and 651 radio-tour
-starts. Compiled startup checks cover online/Solo entry points, the default seed
+starts. Story-only Gateway placement, routing metadata and lore changes are reversed
+on cloned systems for the original goldens; all other generated data stays under
+strict comparison. Freight uses current ports in the original body order and
+explicitly checks that the moved Gateway has no offers. Compiled startup checks cover online/Solo entry points, the default seed
 catalog and executable browser modules. Release packaging checks rebuild compiled
 output, reject untracked source output, exclude private/stale files and launch an
 extracted archive without compiler dependencies. The archive fixture uses real
@@ -881,6 +884,10 @@ launcher IPC shutdown and verifies the purchased balance after restart, without
 waiting for the periodic save timer. See
 [release readiness](RELEASE-READINESS.md) for scope, manual checks and rollback
 limits, including pending cross-version fixture integration.
+
+### Story groundwork
+
+`story-foundations` is covered by the existing Gateway, story and expedition suites. The Gateway suite reuses its isolated game for the stable stellar ID, Concordia approach, unchanged qv rewards, spoiler bounds, fixed Aureole hulk, and accepted expedition compatibility checks. Browser coverage verifies both transit directions and the stationary non-interactive scenery. The existing generation golden remains unchanged after explicitly reversing only the authored Gateway relocation and lore edits. No Index/Nhal combat, later story acts or endings are implemented by these checks.
 
 ## Performance and operational health
 

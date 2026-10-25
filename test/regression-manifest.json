@@ -293,8 +293,12 @@
     "balance.ts": ["helpers/required.ts"],
     "landing-autopilot.ts": ["helpers/required.ts"],
     "faction-standing.ts": ["helpers/legacy-fixture.ts", "helpers/mocks.ts", "helpers/required.ts"],
-    "gateway-navigation.ts": ["helpers/mocks.ts", "helpers/required.ts"],
-    "eventide.ts": ["helpers/mocks.ts", "helpers/required.ts"],
+    "gateway-navigation.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts",
+      "helpers/story-foundations.ts"
+    ],
+    "eventide.ts": ["helpers/mocks.ts", "helpers/required.ts", "helpers/legacy-story-systems.ts"],
     "companion-fixes.ts": ["helpers/mocks.ts"],
     "hailing.ts": ["helpers/mocks.ts", "helpers/required.ts"],
     "chat-bubbles.ts": ["helpers/mocks.ts", "helpers/required.ts"],
@@ -432,7 +436,8 @@
       "helpers/temp-data.ts"
     ],
     "compiled-runtime.ts": ["helpers/browser-fixture.ts"],
-    "deterministic-core.ts": ["helpers/mocks.ts"],
+    "deterministic-core.ts": ["helpers/mocks.ts", "helpers/legacy-story-systems.ts"],
+    "galaxy-graph.ts": ["helpers/legacy-story-systems.ts"],
     "packaged-runtime.ts": ["helpers/browser-fixture.ts", "helpers/nakama-service.ts"],
     "chat-projection-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "sidebar-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
@@ -578,7 +583,8 @@
     "archive-verification.ts": ["helpers/temp-data.ts"],
     "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "wire-contracts.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts"],
-    "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"]
+    "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
+    "helpers/story-foundations.ts": ["helpers/mocks.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1379,6 +1385,27 @@
         "packaged-runtime.ts"
       ],
       "asserts": "Readiness fails closed for every missing, failed, skipped or cancelled supported lane. Exact archive hashes, full inventory, content and modes are checked before extraction; unsafe, duplicate and changed entries fail without partial extraction. Narrow engine login, keyboard/modal isolation, canvas fallback and exported/imported captain playability remain distinct from full Chromium coverage. CI also executes a single complete built archive across native OSes without npm dependencies."
+    },
+    {
+      "id": "story-foundations",
+      "owners": [
+        "shared/story.ts",
+        "shared/expeditions.ts",
+        "shared/galaxy.ts",
+        "server/arcs.ts",
+        "server/fronts.ts",
+        "client/render.ts"
+      ],
+      "tests": [
+        "v08.ts",
+        "v10.ts",
+        "v12.ts",
+        "eventide.ts",
+        "gateway-navigation.ts",
+        "gateway-browser.ts"
+      ],
+      "asserts": "Concordia Gateway travel, stable stellar ID and generated galaxy, unchanged qv rewards, fixed Farside hulk and accepted expedition compatibility.",
+      "services": []
     },
     {
       "id": "performance-health",
