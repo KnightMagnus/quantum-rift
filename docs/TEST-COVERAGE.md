@@ -980,6 +980,9 @@ checks that neither dialog sends Solo pause commands and held keyboard/gamepad
 input remains blocked after closing until release. A seeded navigation intent
 continues through real guidance in both dialogs; reset clears pending binding
 capture without changing the saved binding.
+Focus fallback checks cover a removed opener above Options and Controls closing
+above the still-open, independently owned map; focus cannot remain in the hidden
+dialog. Closing an underlay also preserves existing valid focus in the top dialog.
 
 `logout-browser.ts` retains real Solo and online-style login/logout, temporary
 pause restoration, account isolation and persistence. `input-audio-browser.ts`

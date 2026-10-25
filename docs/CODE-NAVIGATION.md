@@ -305,6 +305,9 @@ before default Escape dismissal: the first Escape cancels capture without closin
 Options. The controller otherwise leaves native settings controls and button
 activation intact. Rebuilding binding rows returns focus to the same action.
 Controls owns its reference content and Change Keys transition into Options.
+If a closing dialog cannot return focus to its opener, the surviving managed
+dialog receives its initial focus. An unmigrated overlay receives container focus
+without changing its action or keyboard owner.
 
 The controller's DOM-derived blocking context is passed into the engine input
 latch rather than importing another controller instance into the engine bundle.

@@ -67,8 +67,40 @@ export class OverlayController {
     const returnTo = this.returnFocus.get(id);
     this.returnFocus.delete(id);
     const top = this.top();
-    if (returnTo?.isConnected && !returnTo.closest('.hidden') && (!top || top.contains(returnTo)))
+    const active = document.activeElement;
+    if (
+      top &&
+      active &&
+      top.contains(active) &&
+      active.getClientRects().length &&
+      !active.matches(':disabled')
+    )
+      return;
+    if (
+      returnTo?.isConnected &&
+      !returnTo.closest('.hidden') &&
+      returnTo.getClientRects().length &&
+      !returnTo.matches(':disabled') &&
+      (!top || top.contains(returnTo))
+    ) {
       returnTo.focus({ preventScroll: true });
+      return;
+    }
+    if (top) {
+      const initial = this.policies.get(top.id)?.initialFocus();
+      if (
+        initial?.isConnected &&
+        top.contains(initial) &&
+        initial.getClientRects().length &&
+        !initial.matches(':disabled')
+      ) {
+        initial.focus({ preventScroll: true });
+      } else {
+        // An unmigrated overlay keeps its actions; focus its container, not an arbitrary button.
+        if (!top.hasAttribute('tabindex')) top.tabIndex = -1;
+        top.focus({ preventScroll: true });
+      }
+    }
   }
 
   /** Drop references during account teardown without focusing former-account UI. */

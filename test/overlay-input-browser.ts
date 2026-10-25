@@ -280,6 +280,38 @@ try {
   await page.keyboard.press('Shift+Tab');
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'optclose');
 
+  await page.evaluate(() => {
+    const transient = document.createElement('button');
+    transient.id = 'transient-option-trigger';
+    transient.textContent = 'Transient fixture trigger';
+    document.querySelector('#opts .options-body')!.append(transient);
+    transient.focus();
+  });
+  await ask();
+  await page.evaluate(() => document.getElementById('transient-option-trigger')!.remove());
+  await page.keyboard.press('Escape');
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.id),
+    'optclose',
+    'A surviving managed dialog restores its initial focus when the opener disappears',
+  );
+
+  await ask();
+  await page.evaluate(async () =>
+    (await import('/overlay-controller.js')).overlays.open('ctrlbox'),
+  );
+  await page.locator('#askyes').focus();
+  await page.evaluate(async () =>
+    (await import('/overlay-controller.js')).overlays.close('ctrlbox'),
+  );
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.id),
+    'askyes',
+    'Closing an underlay preserves valid focus in the surviving top dialog',
+  );
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'optclose');
+
   const damageChecked = await page.locator('#opt-dmg').isChecked();
   await page.locator('#opt-dmg').focus();
   await page.keyboard.press('Space');
@@ -384,6 +416,11 @@ try {
     await page.locator('#gmap').isVisible(),
     true,
     'Controls consumes Escape before map',
+  );
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.id),
+    'gmap',
+    'A surviving unmanaged overlay receives safe container focus, not hidden Controls focus',
   );
   await page.keyboard.press('Escape');
   await page.locator('#gmap').waitFor({ state: 'hidden' });
@@ -563,6 +600,7 @@ try {
         optionsControlsFocus: true,
         nativeSettingsControls: true,
         controlsMapPriority: true,
+        survivingOverlayFocusFallback: true,
         navigationContinues: true,
         heldKeyRelease: true,
         customBinding: true,
