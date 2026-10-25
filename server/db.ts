@@ -1,6 +1,7 @@
 import type { IndexFleetWorld } from './index-fleet.ts';
 import type { NhalPopulation } from './nhal.ts';
 import type { IndexWorld } from './index-worksite.ts';
+import { HealthMonitor } from '../shared/health.ts';
 import type { SeedDefinition } from './game.ts';
 import type { GamePlatform } from './game-platform.ts';
 import type { GameStorage } from './game-storage.ts';
@@ -146,6 +147,7 @@ export class DB implements GameStorage {
       /* Missing optional local seed file leaves the account store unchanged. */
     }
     return {
+      health: process.env.RIFT_HEALTH === '1' ? new HealthMonitor() : undefined,
       seedDefinitions,
       automaticClock: true,
       startClock: (callback, intervalMs) => {

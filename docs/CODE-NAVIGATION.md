@@ -92,6 +92,7 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 
 | Change                                          | Start with                                                  | Important companions                                                                                         |
 | ----------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Performance and operational diagnostics         | `shared/health.ts`, `docs/PERFORMANCE.md`                   | `tools/performance-baseline.ts`, `test/helpers/performance-scenarios.ts`                                     |
 | Startup and static HTTP                         | `server/main.ts`, `server/nakama-host.ts`                   | `tools/start.ts`, `docs/NAKAMA.md`                                                                           |
 | Native sessions, match ingress and clock        | `server/nakama-world.ts`, `server/nakama-auth.ts`           | `server/nakama-identity-gates.ts`, `server/nakama-storage.ts`                                                |
 | Solo/friend endpoints and reference fixtures    | `server/local-main.ts`                                      | `server/ws.ts`, `server/db.ts`, `server/friend-host-config.ts`                                               |
@@ -287,3 +288,11 @@ playback epoch, while an ordinary score loop reuses the source.
 `tools/rift_purchase_audio.py` writes the original short purchase signal using only
 standard-library oscillators and envelopes. `tools/rift_audio.py` delegates to it,
 so regenerating the broad sound library does not restore the retired sharp jingle.
+
+## Release gates
+
+[RELEASE-READINESS.md](RELEASE-READINESS.md) describes the aggregate, immutable
+archive matrix and rollback limits. `tools/release-readiness.ts` owns fail-closed
+lane evaluation; `tools/verify_archive.py` owns hash/inventory checks before
+extraction. `test/release-archive-smoke.ts` runs the built artifact without npm
+dependencies. Existing quality/server/browser/Windows check names remain intact.

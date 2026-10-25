@@ -116,6 +116,9 @@
     "planet-portrait-art.ts",
     "portrait-persistence.ts",
     "landscape-generation.ts",
+    "release-readiness.ts",
+    "archive-verification.ts",
+    "health.ts",
     "wire-contracts.ts",
     "story-continuation.ts"
   ],
@@ -162,6 +165,7 @@
     "audio-flyby-browser.ts",
     "audio-defaults-browser.ts",
     "planet-portrait-browser.ts",
+    "platform-browser-smoke.ts",
     "cockpit-layout-browser.ts",
     "story-realities-browser.ts"
   ],
@@ -599,7 +603,9 @@
     "helpers/nhal.ts": ["helpers/mocks.ts"],
     "helpers/index-fleet.ts": ["helpers/mocks.ts"],
     "helpers/story-witness.ts": ["helpers/mocks.ts"],
-    "helpers/story-integration-edge.ts": ["helpers/mocks.ts"]
+    "helpers/story-integration-edge.ts": ["helpers/mocks.ts"],
+    "archive-verification.ts": ["helpers/temp-data.ts"],
+    "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1286,7 +1292,7 @@
         "logout-browser.ts",
         "sidebar-sizing-browser.ts"
       ],
-      "asserts": "Production Engine, uncropped zoom-2 projectile pixel references across headings/speeds/iteration orders/backends, native decoded Sprite entities, display-only physics, original sequenced input stream, typing/blur, physical-pixel camera at DPR1/2 and zoom limits, responsive resizing, actor cleanup, local modules and no unsafe-eval."
+      "asserts": "Production Engine, uncropped zoom-2 projectile pixel references across headings/speeds/iteration orders/backends, native decoded Sprite entities, deferred canvas encoding rejects zero-dimension Sprites, display-only physics, original sequenced input stream, typing/blur, physical-pixel camera at DPR1/2 and zoom limits, responsive resizing, actor cleanup, local modules and no unsafe-eval."
     },
     {
       "id": "nakama-online",
@@ -1446,6 +1452,36 @@
       "services": ["story", "nhal", "indexFleet"],
       "tests": ["story-continuation.ts", "eventide.ts", "story-realities-browser.ts"],
       "asserts": "Captain-scoped decisions, finale availability branches, denial and persistence; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups."
+    },
+    {
+      "id": "release-platform-gates",
+      "owners": [
+        "tools/release-readiness.ts",
+        "tools/start.ts",
+        "server/local-main.ts",
+        "tools/verify_archive.py",
+        ".github/workflows/ci.yml"
+      ],
+      "services": [],
+      "tests": [
+        "release-readiness.ts",
+        "archive-verification.ts",
+        "platform-browser-smoke.ts",
+        "packaged-runtime.ts"
+      ],
+      "asserts": "Readiness fails closed for every missing, failed, skipped or cancelled supported lane. Exact archive hashes, full inventory, content and modes are checked before extraction; unsafe, duplicate and changed entries fail without partial extraction. Narrow engine login, keyboard/modal isolation, canvas fallback and exported/imported captain playability remain distinct from full Chromium coverage. CI also executes a single complete built archive across native OSes without npm dependencies."
+    },
+    {
+      "id": "performance-health",
+      "services": [],
+      "tests": ["health.ts", "excalibur-runtime-browser.ts"],
+      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples.",
+      "owners": [
+        "shared/health.ts",
+        "server/game.ts",
+        "server/nakama-storage.ts",
+        "client/space-scene.ts"
+      ]
     }
   ],
   "routes": {
@@ -1621,7 +1657,8 @@
     "capture-features.ts",
     "regression-browser.ts",
     "regression-runner.ts",
-    "seed-random.ts"
+    "seed-random.ts",
+    "release-archive-smoke.ts"
   ],
   "supplemental": {
     "background-scale-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",

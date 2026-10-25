@@ -1,3 +1,4 @@
+import { HealthMonitor } from '../shared/health.ts';
 export { denyUnsupportedIdentity, identityHooks } from './nakama-identity-gates.ts';
 import { Game } from './game.ts';
 import type { Session } from './game.ts';
@@ -143,9 +144,11 @@ export const initializeWorld: nkruntime.MatchInitFunction<WorldHandle> = functio
     worldAuthority(nakamaStorageBackend(nk), leaseId, matchId) === 'lost'
   )
     throw new Error('World reservation lost');
-  const database = new NakamaDatabase(nakamaStorageBackend(nk));
+  const health = ctx.env?.RIFT_HEALTH === '1' ? new HealthMonitor() : undefined;
+  const database = new NakamaDatabase(nakamaStorageBackend(nk), health);
   const deferred = new AuthorityCallbacks();
   const platform: GamePlatform = {
+    health,
     automaticClock: false,
     seedDefinitions: [],
     randomUUID: () => nk.uuidv4(),
@@ -321,9 +324,11 @@ export const advanceWorld: nkruntime.MatchLoopFunction<WorldHandle> = function a
   try {
     state.game.tick();
     if (tick % 450 === 0) state.database.flush();
-  } catch (error) {
-    logger.error('World tick failed: %s', String(error));
+  } catch {
+    logger.error('World tick failed; health counters contain no payloads.');
   }
+  if (state.game.health && tick % 900 === 0)
+    logger.info('World health: %s', JSON.stringify(state.game.health.report()));
   return { state: handle };
 };
 export const terminateWorld: nkruntime.MatchTerminateFunction<WorldHandle> =

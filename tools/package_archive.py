@@ -19,6 +19,7 @@ def git(*args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--complete-only', action='store_true', help='Skip matching multipart archives')
     args = parser.parse_args()
     subprocess.run(['git','-C',str(ROOT),'diff','--quiet','HEAD','--'],check=True)
     # dist is intentionally untracked. Rebuild it rather than packaging stale
@@ -81,7 +82,7 @@ def main():
     complete=out/(name+'.zip')
     write_zip(complete,records)
     outputs=[complete]
-    if complete.stat().st_size>28_000_000:
+    if complete.stat().st_size>28_000_000 and not args.complete_only:
         groups=[[]]; size=0
         # Uncompressed budget leaves ample room for ZIP headers, even if audio cannot compress further.
         for row in records:

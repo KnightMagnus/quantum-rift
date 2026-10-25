@@ -310,6 +310,14 @@ function shutdown(): void {
 }
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+// The launcher owns this inherited IPC channel, including on Windows where
+// terminating a process with SIGTERM does not deliver a graceful signal.
+if (process.connected) {
+  process.on('message', (message) => {
+    if (message === 'shutdown') shutdown();
+  });
+  process.on('disconnect', shutdown);
+}
 
 // log anything that slips through rather than letting the server die mid-game
 process.on('uncaughtException', (error2) => console.error('uncaught', error2));
