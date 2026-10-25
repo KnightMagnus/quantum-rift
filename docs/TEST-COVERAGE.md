@@ -948,3 +948,15 @@ Canvas/WebGL Engine at its existing DPR combinations and saves numeric reports.
 See [PERFORMANCE.md](PERFORMANCE.md) for interpretation, commands and limits.
 In-process memory-CAS measurements exclude production PostgreSQL/network latency;
 accelerated soak does not establish wall-clock or multihour endurance.
+
+## HUD containment and availability
+
+`cockpit-layout-browser.ts` checks expanded-tray utility buttons and vent against
+the inset cockpit frame at 1920, 2560, 3440 and 5120px widths, at 1× and 1.4× UI
+scale. Status, navigation and menu panels must clear the sidebar trim by at least
+3px. It also checks that HAIL stays visible and disabled while landed and becomes
+enabled after takeoff.
+
+`motherlode-art-browser.ts` checks that non-mining ships see the physical deposit
+without its targeting outline or label. Mining-capable ships and captains actively
+towing a load retain highlights. Both programs run in the canonical browser suite.

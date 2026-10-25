@@ -135,8 +135,75 @@ try {
             1.4,
           );
         }
-      return { known, hidden, attached, owned, detached, hiddenAttached };
+      const highlights = (eligible: boolean, active = false) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 300;
+        const drawing = canvas.getContext('2d')!;
+        const labels: string[] = [];
+        let frames = 0;
+        const strokeRect = drawing.strokeRect.bind(drawing);
+        drawing.strokeRect = (x, y, width, height) => {
+          frames++;
+          strokeRect(x, y, width, height);
+        };
+        const fillText = drawing.fillText.bind(drawing);
+        drawing.fillText = (text, x, y) => {
+          labels.push(text);
+          fillText(text, x, y);
+        };
+        drawTowing(
+          {
+            opts: {},
+            view: { x: 100, y: 100 },
+            you: { ship: { hull: 1 }, shipStats: { cargo: 100 } },
+            A: { ships: { 1: { role: eligible ? 'survey' : 'combat' } } },
+            towing: {
+              attached: active ? 1 : null,
+              objects: [
+                {
+                  id: 1,
+                  x: 200,
+                  y: 100,
+                  ore: 'ore',
+                  status: 'available',
+                  revealed: true,
+                  field: { label: 'Fixture' },
+                  ports: [],
+                },
+              ],
+            },
+          },
+          drawing,
+          (value) => value,
+          (value) => value,
+          1,
+          400,
+          300,
+        );
+        return { labels, frames, material: Array.from(drawing.getImageData(195, 95, 10, 10).data) };
+      };
+      const miner = highlights(true),
+        fighter = highlights(false),
+        towing = highlights(false, true);
+      return { known, hidden, attached, owned, detached, hiddenAttached, miner, fighter, towing };
     }, broken);
+    assert.ok(
+      result.miner.labels.some((text) => text.startsWith('MOTHERLODE')),
+      'Mining ship has deposit highlights',
+    );
+    assert.equal(result.fighter.frames, 0, 'Non-mining ship has no motherlode outline');
+    assert.ok(result.miner.frames > 0, 'Mining ship has motherlode outlines');
+    assert.equal(result.fighter.labels.length, 0, 'Non-mining ship has no motherlode labels');
+    assert.deepEqual(
+      result.fighter.material,
+      result.miner.material,
+      'Physical deposit stays visible to non-miners',
+    );
+    assert.ok(
+      result.towing.labels.some((text) => text.startsWith('MOTHERLODE')),
+      'Active towing retains its load highlight',
+    );
     assert.equal(
       new Set(result.known).size,
       4,

@@ -253,11 +253,12 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
       }
     }
     elementById('hailindicator').style.visibility =
-      !hailState.you ||
-      hailState.landed ||
-      (elementById('login') && !elementById('login').classList.contains('hidden'))
+      !hailState.you || (elementById('login') && !elementById('login').classList.contains('hidden'))
         ? 'hidden'
         : 'visible';
+    const hailButton = elementById('hailindicator') as HTMLButtonElement;
+    hailButton.disabled = !hailState.you || !!hailState.landed;
+    elementById('hailindicator').setAttribute('aria-disabled', String(hailButton.disabled));
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

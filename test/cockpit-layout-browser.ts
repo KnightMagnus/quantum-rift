@@ -77,6 +77,19 @@ try {
       await page.locator('#profilebtn, #landprofilebtn, dialog#profiledialog').count(),
       0,
     );
+    await page.waitForFunction(
+      () => document.getElementById('hailindicator')!.getAttribute('aria-disabled') === 'true',
+    );
+    assert.equal(
+      await page.locator('#hailindicator').isVisible(),
+      true,
+      'Landed HAIL stays visible',
+    );
+    assert.equal(
+      await page.locator('#hailindicator').isDisabled(),
+      true,
+      'Landed HAIL cannot open',
+    );
     const landed = await contained(page, '#land .landbox');
     assert.ok(Math.abs(landed.width - 1610) < 1, 'Landed width grows from 1400px by 15%');
     assert.ok(Math.abs(landed.height - 856.75) < 1, 'Landed height grows from 745px by 15%');
@@ -156,7 +169,48 @@ try {
       );
       if (entry.pressable) assert.deepEqual(entry.led, captain.led, entry.id + ' consistent LED');
     }
+    assert.equal(await page.locator('#hailindicator').isEnabled(), true, 'Takeoff restores HAIL');
     await capture(page, 'functional-flight-3440x1440');
+    await page.click('#traytoggle');
+    for (const width of [1920, 2560, 3440, 5120]) {
+      await page.setViewportSize({ width, height: 1440 });
+      for (const scale of [1, 1.4]) {
+        await page.evaluate((scale) => {
+          document.documentElement.style.setProperty('--ui', String(scale));
+          document.body.classList.toggle('scaled', scale !== 1);
+        }, scale);
+        const gaps = await page.evaluate(() => {
+          const cockpit = document.getElementById('cockpit')!.getBoundingClientRect();
+          const trim = document.getElementById('traytrim')!.getBoundingClientRect();
+          return {
+            controls: [...document.querySelectorAll('#consoleutilities .cb, .console-vent')].map(
+              (element) => cockpit.right - element.getBoundingClientRect().right,
+            ),
+            sidebar: ['status', 'nav', 'cpanel']
+              .map((id) => {
+                const element = document.getElementById(id);
+                return element ? element.getBoundingClientRect().left - trim.right : null;
+              })
+              .filter((gap) => gap !== null),
+          };
+        });
+        assert.ok(
+          gaps.controls.every((gap) => gap >= 28),
+          'Utilities and vent stay inside inset frame: ' + JSON.stringify({ width, scale, gaps }),
+        );
+        assert.ok(
+          gaps.sidebar.length && gaps.sidebar.every((gap) => gap >= 3),
+          'Sidebar clears trim: ' + JSON.stringify({ width, scale, gaps }),
+        );
+      }
+    }
+    await page.evaluate(() => {
+      document.documentElement.style.setProperty('--ui', '1');
+      document.body.classList.remove('scaled');
+    });
+    await page.setViewportSize({ width: 3440, height: 1440 });
+    await capture(page, 'hud-ultrawide-sidebar');
+    await page.click('#traytoggle');
     await page
       .locator('#cockpit')
       .screenshot({ path: path.join(fixture.out, 'functional-console-3440.png') });

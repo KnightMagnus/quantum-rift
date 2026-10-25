@@ -170,7 +170,7 @@ select:focus-visible {
 #hud {
   height: calc(100% - var(--cbar));
   width: var(--hud);
-  padding: 8px 9px 8px 14px;
+  padding: 8px 9px 8px 28px;
   gap: 6px;
   z-index: 8;
   overflow: auto;
@@ -1770,6 +1770,7 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   body.tray-open #cockpit {
     grid-template-columns: 360px minmax(0, 1fr) 360px;
     justify-content: stretch;
+    padding-right: 32px;
   }
   body.tray-open #consoleutilities {
     width: 290px;
