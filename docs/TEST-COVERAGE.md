@@ -404,9 +404,10 @@ operation value or malformed payload branch. Pre-dispatch `hello` is covered by
 
 ## Known limits and deliberate exclusions
 
-- Browser CI uses pinned Chromium. This is not Firefox/Safari, physical gamepad,
-  real touch hardware, screen-reader, audio-listening or exhaustive resolution
-  certification. Synthetic input/UI checks verify software behavior only.
+- Full browser CI uses pinned Chromium. Narrow Firefox/WebKit engine smoke covers
+  login, keyboard/modal isolation, canvas fallback and exported/imported Solo saves.
+  This is not shipping Safari, physical gamepad/touch, screen-reader, audible-output
+  or exhaustive resolution certification. Synthetic input/UI checks verify software behavior only.
 - Radio checks use bundled recordings and offline playback fixtures. They do not
   establish subjective listening quality or external broadcast availability.
 - Visual assets have decode/identity/layout checks and supporting screenshots;
@@ -867,6 +868,22 @@ Existing mute/mixer, portrait-denial/persistence and authoritative alert regress
 absent from the shipped assets/catalog and cannot load through numeric, string or
 preload calls. A real cargo purchase and subsequent sale/hangar refreshes retain
 the quiet purchase confirmation without replaying that sound from `landed`.
+
+## Release/platform gates
+
+`release-platform-gates` maps `release-readiness.ts`, `archive-verification.ts`,
+`platform-browser-smoke.ts` and existing `packaged-runtime.ts`. Readiness tests deny
+every missing, failed, cancelled or skipped required lane. Archive verification
+tests verify exact bytes/modes/inventory and reject tampering, traversal, symbolic
+links, duplicates and missing files before extraction. Chromium runs the registered
+engine smoke in the canonical browser group; additional CI jobs run that same case
+on Firefox and WebKit. `release-archive-smoke.ts` is a CI artifact entry point, not
+a skipped canonical regression: it requires complete-archive inputs, executes on
+three native OS families and retains commit/hash/runtime reports. It requires clean
+launcher IPC shutdown and verifies the purchased balance after restart, without
+waiting for the periodic save timer. See
+[release readiness](RELEASE-READINESS.md) for scope, manual checks and rollback
+limits, including pending cross-version fixture integration.
 
 ### Story groundwork
 

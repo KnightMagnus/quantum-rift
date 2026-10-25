@@ -1,0 +1,33 @@
+name: Pinned runtime compatibility
+on:
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-compatibility:
+    name: Pinned runtime and lockfile (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node tools/runtime/install-node.ts
+      - name: Install exact lockfile without rebuilding assets
+        run: npm ci --ignore-scripts
+      - name: Check native runtime, lockfile and command contracts
+        run: |
+          node --version
+          npm ls --all
+          node test/features.ts
+          node test/excalibur-contracts.ts
+          node test/release-readiness.ts
