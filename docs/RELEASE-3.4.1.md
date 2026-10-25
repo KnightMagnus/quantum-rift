@@ -37,5 +37,4 @@ custom captain, credits, ship and station controls. See the
 [generator instructions](../test/Save%20Generator/README.md).
 
 The game remains in beta. Browser device emulation does not certify physical touch
-or gamepad hardware. The story and far-side content limits described in the
-[0.3.4 notes](RELEASE-3.4.0.md) still apply.
+or gamepad hardware. Some content remains under development.

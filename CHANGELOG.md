@@ -7,7 +7,7 @@ Every release, newest first. The main story is left out on purpose.
 - Fit ultrawide landed windows to usable flight space; keep cockpit screws clear of controls and preserve chat beside the open Tray.
 - Widen Controls into two columns with a narrow-screen fallback.
 - Separate neutral large Index hulls, retain natural Trident rejoin and use ship-only Index/Nhal hail portraits.
-- Hide the story harness from Codex outfit browsing, searches and stale detail links without removing earned equipment.
+- Keep undiscovered story rewards out of Codex browsing, searches and stale detail links without removing earned equipment.
 - Integrate shared Options/Controls focus, typed message routing, station timer ownership, stopped-backup cargo rehearsal and bounded native performance measurements.
 - Refresh actual gameplay screenshots and the beta Solo save generator catalog. See the [release notes](docs/RELEASE-3.4.2.md).
 
@@ -20,12 +20,9 @@ Every release, newest first. The main story is left out on purpose.
 
 ### 3.4.0 — Trinity Stable Beta-A (public release 0.3.4)
 
-- Extend the main story through Acts II and III, landed decisions and captain-specific endings. Preserve the original Que'vari objectives and rewards.
-- Add Index worksites and investigations, native Nhal encounters, the Dreamer and the Lamplighter keepers' chain, with ties to existing faction and port stories.
-- Move the Gateway to Concordia while retaining its saved ID. Give the fixed Aureole hulk its dormant artwork and show the awake ark in the finale.
-- Add private story destinations, Riftproofing and the Rift Harness, with an animated Quantum Rift and a returnable far-side arrival scene. The far side has no onward campaign yet.
-- Show personal realities through descriptions, scenery and viewer-only ghost effects. Preserve shared markets and simulation, solid group/friend-game captains and reduced-effects behavior.
-- Refresh actual-game screenshots and the beta Solo save generator catalog. Keep its custom controls while excluding NPC-only ships. See the [release notes](docs/RELEASE-3.4.0.md) for update, hosting and placeholder limits.
+- Expand the main story, exploration and character dialogue while preserving existing progress and rewards.
+- Keep story progress and choices private to each captain in Solo and online play; preserve shared markets and ordinary world simulation.
+- Refresh gameplay artwork and the beta Solo save generator catalog. Keep its custom controls while excluding NPC-only ships. See the [release notes](docs/RELEASE-3.4.0.md) for update and hosting guidance.
 
 ### 3.3.3 — Trinity Stable Beta
 
@@ -53,9 +50,7 @@ Every release, newest first. The main story is left out on purpose.
 ### 3.3.0 — Discoverable radio and owner-supplied music
 
 - Replace the external radio provider with five discoverable stations, saved per captain and announced through existing discovery popups.
-- Start with Wave Function Collapse; discover QVRI Que'vari Radio in any Que'vari system and Signal Superposition Radio in Lost Signal.
-- Earn Interdimensional Radio by helping a scientist grandfather and his grandson repair their unusual ship in a Ninefold Prime Story Job.
-- Encounter a very rare three-passenger, five-system Spacepop tour. Receive credits and Super-Idol Radio after the last show, playing its album in order on repeat.
+- Discover additional radio stations through exploration and special jobs.
 - Supply 32 owner-provided recordings across the five stations (7/4/7/6/8 tracks), compressed for game delivery. Hide song names for stations 1–4; show the Super-Idol album titles in published order.
 - Replace active login music with the separately supplied Station spatiale recording, preserving the original theme file. Keep the existing HUD, favorites, search, mixer and mute controls.
 

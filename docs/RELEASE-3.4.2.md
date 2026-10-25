@@ -9,7 +9,7 @@ Package version: **3.4.2**. Release tag: **v3.4.2**.
 - Controls opens in a wider, two-column layout, with a single-column fallback on narrow screens.
 - Neutral Index fleets give larger hulls more room. Split Tridents can still return and rejoin without restoring lost health or spending replacement ships.
 - Index and Nhal hails use ship artwork, including incoming and archived hails. Missing artwork falls back to another ship image or no portrait, never a humanoid captain.
-- The story-only Rift Harness no longer appears in Codex outfit browsing, searches or stale detail links. Its story reward, fitting and inventory behavior remain available when earned.
+- Undiscovered story rewards no longer appear in Codex outfit browsing, searches or stale detail links. Earned rewards remain available.
 
 ## Controls and reliability
 
@@ -46,5 +46,4 @@ custom captain, credits, ship and station controls. See the
 [generator instructions](../test/Save%20Generator/README.md).
 
 The game remains in beta. Browser device emulation does not certify physical touch
-or gamepad hardware. The story and far-side content limits described in the
-[0.3.4 notes](RELEASE-3.4.0.md) still apply.
+or gamepad hardware. Some content remains under development.

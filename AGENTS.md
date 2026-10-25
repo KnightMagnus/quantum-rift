@@ -94,6 +94,14 @@ artwork and behavior. Never use concept renders or mockup images as proof of the
 implemented game. Verify screenshot links and capture the current game rather
 than retaining stale images of replaced artwork or controls.
 
+Never publish story spoilers in the README, screenshots, captions, alt text,
+changelogs, release notes or release announcements. Do not reveal twists, endings,
+hidden destinations, story-only equipment, undiscovered rewards or puzzle solutions.
+Use ordinary early-game scenes for public galleries; review visible dialogue,
+notifications, maps and unlocked menus as well as the main scene. Remove rejected
+screenshots from tracked documentation and release packages, not just README links.
+Keep necessary in-game story assets intact. When uncertain, omit the scene or detail.
+
 ## Beta save generator maintenance
 
 Keep `test/Save Generator/` functional for every future release while this beta
