@@ -1,6 +1,8 @@
 // The official SDK is an ambient script, not an importable module.
 // oxlint-disable-next-line typescript/triple-slash-reference
 /// <reference path="./nakama-runtime.d.ts" />
+import { utf8Bytes } from '../shared/health.ts';
+import type { HealthMonitor } from '../shared/health.ts';
 import type { GameStorage } from './game-storage.ts';
 import type { PlayerAccount, WorldData } from './db.ts';
 import type { PlayerData } from './game.ts';
@@ -87,7 +89,10 @@ export class NakamaDatabase implements GameStorage {
   private revision: number;
   private migrationId?: string;
   private authenticated: string | null = null;
-  constructor(backend: StorageBackend) {
+  /** Optional host-owned diagnostics, excluded from checkpoints. */
+  health?: HealthMonitor;
+  constructor(backend: StorageBackend, health?: HealthMonitor) {
+    this.health = health;
     this.backend = backend;
     const saved = backend.read(NAKAMA_CHECKPOINT_KEY);
     if (saved) {
@@ -157,6 +162,7 @@ export class NakamaDatabase implements GameStorage {
     if (this.economicFrozen)
       throw new Error('Database frozen; checkpoint requires recovery by restart');
     if (!this.dirty) return;
+    const started = this.health?.now() ?? 0;
     const checkpoint: NakamaCheckpoint = {
       schema: 1,
       revision: this.revision + 1,
@@ -165,14 +171,23 @@ export class NakamaDatabase implements GameStorage {
       ...(this.migrationId ? { migrationId: this.migrationId } : {}),
     };
     validateCheckpoint(checkpoint);
-    const detached: NakamaCheckpoint = JSON.parse(JSON.stringify(checkpoint));
+    const serializeStarted = this.health?.now() ?? 0;
+    const serialized = JSON.stringify(checkpoint);
+    const detached: NakamaCheckpoint = JSON.parse(serialized);
+    if (this.health) {
+      this.health.observe('checkpointSerializeMs', this.health.now() - serializeStarted);
+      this.health.observe('checkpointBytes', utf8Bytes(serialized));
+    }
     // Write errors may follow a committed transaction with a lost acknowledgement.
     // No rollback or retry can safely run until a new VM reads the durable checkpoint.
     try {
       this.version = this.backend.write(NAKAMA_CHECKPOINT_KEY, detached, this.version);
     } catch (error) {
       this.economicFrozen = true;
+      this.health?.observe('checkpointFreezes', 1);
       throw error;
+    } finally {
+      if (this.health) this.health.observe('checkpointMs', this.health.now() - started);
     }
     this.revision++;
     this.dirty = false;

@@ -762,6 +762,8 @@ sidebar, asset and gameplay assertions remain registered.
 Projectile pixels are compared with an uncropped production procedural reference at
 zoom 2, three headings and two same-weapon speeds in both iteration orders. Missing
 and extra visible tail pixels are bounded independently of registry/Sprite counts.
+Deferred canvas blob encoding also verifies that undecoded images cannot create
+zero-size Sprites that later expand to the wrong zoomed size.
 
 These checks do not establish cross-browser parity, every weapon animation, a
 frame-time improvement, or all lifecycle/network latency combinations. The Canvas
@@ -869,3 +871,16 @@ the quiet purchase confirmation without replaying that sound from `landed`.
 ### Story groundwork
 
 `story-foundations` is covered by the existing Gateway, story and expedition suites. The Gateway suite reuses its isolated game for the stable stellar ID, Concordia approach, unchanged qv rewards, spoiler bounds, fixed Aureole hulk, and accepted expedition compatibility checks. Browser coverage verifies both transit directions and the stationary non-interactive scenery. The existing generation golden remains unchanged after explicitly reversing only the authored Gateway relocation and lore edits. No Index/Nhal combat, later story acts or endings are implemented by these checks.
+
+## Performance and operational health
+
+The `performance-health` system registers `health.ts` for bounded numeric sampling, UTF-8 sizing, failed-checkpoint freeze
+privacy, and enabled/disabled authoritative parity across six seeded workloads.
+The scenarios cover real combat, mining/towing, concentrated/distributed captains,
+reconnect state and accelerated soak. Snapshot/checkpoint size ceilings guard
+fixture payload growth, not latency on unmeasured hardware.
+`excalibur-runtime-browser.ts` also checks opt-in update/draw samples in the actual
+Canvas/WebGL Engine at its existing DPR combinations and saves numeric reports.
+See [PERFORMANCE.md](PERFORMANCE.md) for interpretation, commands and limits.
+In-process memory-CAS measurements exclude production PostgreSQL/network latency;
+accelerated soak does not establish wall-clock or multihour endurance.
