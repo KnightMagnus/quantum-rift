@@ -116,7 +116,8 @@
     "planet-portrait-art.ts",
     "portrait-persistence.ts",
     "landscape-generation.ts",
-    "wire-contracts.ts"
+    "wire-contracts.ts",
+    "story-continuation.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -161,7 +162,8 @@
     "audio-flyby-browser.ts",
     "audio-defaults-browser.ts",
     "planet-portrait-browser.ts",
-    "cockpit-layout-browser.ts"
+    "cockpit-layout-browser.ts",
+    "story-realities-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -294,7 +296,14 @@
       "helpers/required.ts",
       "helpers/story-foundations.ts"
     ],
-    "eventide.ts": ["helpers/mocks.ts", "helpers/required.ts", "helpers/legacy-story-systems.ts"],
+    "eventide.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts",
+      "helpers/legacy-story-systems.ts",
+      "helpers/index-worksite.ts",
+      "helpers/nhal.ts",
+      "helpers/index-fleet.ts"
+    ],
     "companion-fixes.ts": ["helpers/mocks.ts"],
     "hailing.ts": ["helpers/mocks.ts", "helpers/required.ts"],
     "chat-bubbles.ts": ["helpers/mocks.ts", "helpers/required.ts"],
@@ -578,7 +587,19 @@
     "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"],
     "wire-contracts.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts"],
     "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "helpers/story-foundations.ts": ["helpers/mocks.ts"]
+    "helpers/story-foundations.ts": ["helpers/mocks.ts"],
+    "helpers/index-worksite.ts": ["helpers/mocks.ts"],
+    "story-realities-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/story-reality.ts",
+      "fixtures/preload-story-browser.ts",
+      "helpers/story-witness.ts"
+    ],
+    "story-continuation.ts": ["helpers/mocks.ts", "helpers/story-integration-edge.ts"],
+    "helpers/nhal.ts": ["helpers/mocks.ts"],
+    "helpers/index-fleet.ts": ["helpers/mocks.ts"],
+    "helpers/story-witness.ts": ["helpers/mocks.ts"],
+    "helpers/story-integration-edge.ts": ["helpers/mocks.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1382,6 +1403,49 @@
       ],
       "asserts": "Concordia Gateway travel, stable stellar ID and generated galaxy, unchanged qv rewards, fixed Farside hulk and accepted expedition compatibility.",
       "services": []
+    },
+    {
+      "id": "index-worksite",
+      "owners": [
+        "server/index-worksite.ts",
+        "shared/index.ts",
+        "shared/quests.ts",
+        "client/mining_render.ts"
+      ],
+      "services": ["index"],
+      "tests": ["eventide.ts", "gateway-browser.ts"],
+      "asserts": "Neutral worksite and unmarked resource safety; exact-rock warnings and captain-root provocation, innocent captain and NPC safety, bounded disengagement and persisted encounter health/claim/replacement budgets; shared finite mining allocations, passive salvage exclusion, explicit hail theft, parent cleanup, peaceful personal survey/recovery quest and real browser artwork/hail cues."
+    },
+    {
+      "id": "story-realities",
+      "owners": [
+        "client/story-reality.ts",
+        "client/world-actors.ts",
+        "client/render.ts",
+        "client/ui.ts",
+        "client/info_ui.ts"
+      ],
+      "tests": ["story-realities-browser.ts"],
+      "services": [],
+      "asserts": "Viewer-only Act III and permanent Unsettling faction ghosts, owner chains, friend/group precedence, native hull/glow/name opacity with opaque targets, reduced effects, hidden chart picking and supplied endgame atlas/backdrop artwork."
+    },
+    {
+      "id": "story-continuation",
+      "owners": [
+        "server/story.ts",
+        "shared/story.ts",
+        "shared/story-continuation.ts",
+        "shared/story-world.ts",
+        "shared/story-quests.ts",
+        "shared/story-quest-gates.ts",
+        "server/nhal.ts",
+        "shared/nhal.ts",
+        "server/index-fleet.ts",
+        "shared/index-fleet.ts"
+      ],
+      "services": ["story", "nhal", "indexFleet"],
+      "tests": ["story-continuation.ts", "eventide.ts", "story-realities-browser.ts"],
+      "asserts": "Captain-scoped decisions, finale availability branches, denial and persistence; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups."
     }
   ],
   "routes": {

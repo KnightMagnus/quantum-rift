@@ -3,7 +3,23 @@ import type { StarSystem } from '../../shared/galaxy.ts';
 
 /** Reverse only reviewed story content changes for the original generation goldens. */
 export function legacyStorySystems(systems: StarSystem[]): StarSystem[] {
-  const legacy: StarSystem[] = structuredClone(systems);
+  const additions = new Set(['table', 'quantum-rift', 'beyond-rift', 'founding-vigil']);
+  const legacy: StarSystem[] = structuredClone(
+    systems.filter((system) => !additions.has(system.id)),
+  );
+  for (const system of legacy) {
+    system.links = system.links.filter((link) => !additions.has(link));
+    for (const stellar of system.stellars)
+      if (stellar.prices)
+        for (const commodity of [
+          'nhal_bone',
+          'nhal_ichor',
+          'nhal_eye',
+          'index_core',
+          'index_parts',
+        ])
+          delete stellar.prices[commodity];
+  }
   const currentGateway = legacy
     .find((system) => system.id === 'qgate')!
     .stellars.find((stellar) => stellar.id === 'sol-gateway')!;

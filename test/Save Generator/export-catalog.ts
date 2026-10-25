@@ -13,11 +13,13 @@ template.station.refT = 0;
 const catalog = {
   version: JSON.parse(fileSystem.readFileSync('package.json', 'utf8')).version,
   template,
-  ships: Object.values(assets.ships).map((hull) => ({
-    id: hull.id,
-    name: hull.name,
-    loadout: makeLoadout(assets, hull.id, hull.name),
-  })),
+  ships: Object.values(assets.ships)
+    .filter((hull) => !hull.npcOnly)
+    .map((hull) => ({
+      id: hull.id,
+      name: hull.name,
+      loadout: makeLoadout(assets, hull.id, hull.name),
+    })),
   locations: SYSTEMS.flatMap((system) =>
     system.stellars
       .filter((port) => port.svc!.includes('L') && !port.site)

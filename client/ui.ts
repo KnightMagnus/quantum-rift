@@ -1,3 +1,4 @@
+import { storySystemVisible, storyDescription } from '../shared/story-world.ts';
 import { ui as playInterfaceSound } from './audio.ts';
 import { landscapeScene } from '../shared/landscapes.ts';
 import type { PlayerPayload, LandedPayload } from './main.ts';
@@ -646,9 +647,20 @@ export function hud(): void {
   const clientView = clientGameState.view,
     playerPayload = clientGameState.you!;
   if (!playerPayload) {
+    document.documentElement.style.removeProperty('--red');
+    document.documentElement.style.removeProperty('--red2');
     elementById2('flightstatus').replaceChildren();
     delete elementById2('flightstatus').dataset.readout;
     return;
+  }
+  const storyFlags = playerPayload.story?.flags;
+  const accent =
+    storyFlags?.main_ending === 'unsettling' && storyFlags.unsettled_with
+      ? FACTIONS[storyFlags.unsettled_with]?.color
+      : null;
+  for (const variable of ['--red', '--red2']) {
+    if (accent) document.documentElement.style.setProperty(variable, accent);
+    else document.documentElement.style.removeProperty(variable);
   }
   const computedShipStats = playerPayload.shipStats;
   const ship2 = clientView ? clientView.shield : computedShipStats!.shield,
@@ -1458,7 +1470,7 @@ export function showLanded(): void {
     : stellarBody.name;
   elementById2('landfac').textContent =
     `${systemsById[stellarBody.system].name} system · ${site ? (site.owner ? `Personal Station · Station Tier ${site.ops}` : 'unclaimed') : FACTIONS[systemsById[stellarBody.system].faction].name}`;
-  elementById2('landdesc').textContent = (
+  const landingDescription = (
     site
       ? site.own
         ? 'Your Personal Station. Build it up through Station Tier 1-5: refinery, research lab, drydock, wingmates and the station shipyard.'
@@ -1467,6 +1479,11 @@ export function showLanded(): void {
           : stellarBody.desc
       : stellarBody.desc || ''
   )!;
+  elementById2('landdesc').textContent = storyDescription(
+    clientGameState.you?.story?.flags,
+    stellarBody.id,
+    landingDescription,
+  );
   const station = stellarBody.hub || stellarBody.site || stellarBody.kind === 'station';
   // Keep a neutral backdrop while matching artwork loads, never an unrelated
   // legacy stock station or Personal Station photograph.
@@ -2624,6 +2641,7 @@ function searchMap(): void {
   }
   const hits = [];
   for (const starSystem of Object.values(systemsById)) {
+    if (!storySystemVisible(clientGameState.you?.story?.flags, starSystem.id)) continue;
     if (starSystem.name.toLowerCase().includes(toLowerCase2))
       hits.push([starSystem.id, starSystem.name, FACTIONS[starSystem.faction].short]);
     for (const rawStellarBody of starSystem.stellars)

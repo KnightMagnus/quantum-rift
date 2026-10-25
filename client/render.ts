@@ -1,3 +1,8 @@
+import { storyShipOpacity, storyScenery, reducedStoryEffects } from './story-reality.ts';
+import type { RealityEnding, RealityFlags } from './story-reality.ts';
+import { storySystemVisible } from '../shared/story-world.ts';
+import { FARSIDE } from '../shared/gen.ts';
+import { SPRITES } from '../shared/sprites26.ts';
 import { EXPEDITION_HULK } from '../shared/expeditions.ts';
 import type { GameAssets, WeaponAsset } from '../shared/rules.ts';
 export type RenderShot = {
@@ -234,6 +239,8 @@ export type MapTransform = {
 };
 export type ShipHull = import('../shared/rules.ts').ShipHullAsset;
 export type RenderEntity = {
+  /** Optional bounded Index form/roster metadata for late joiners. */
+  indexState?: { slot: number; parent: number; transition: number; blades: number };
   /** Unique entity ID */
   id: number;
 
@@ -278,6 +285,9 @@ export type RenderEntity = {
 
   /** Player owner ID if companion or drone */
   owner?: number;
+
+  /** Public ending of this human captain; companions resolve their parent. */
+  storyEnding?: RealityEnding;
 
   /** Power level or aura */
   pw?: number;
@@ -398,6 +408,62 @@ function viewColor(
 const faction2 = Object.keys(FACTIONS);
 const wormImg = new Image();
 wormImg.src = 'assets/wormhole.png';
+const quantumRiftImg = new Image();
+quantumRiftImg.src = 'assets/quantum_rift.png';
+const arrivalBackdrop = new Image();
+arrivalBackdrop.src = 'assets/milky_way_arrival_backdrop.jpg';
+const dormantArkImage = new Image();
+dormantArkImage.src = 'assets/ships/925.webp';
+const awakeArkImage = new Image();
+awakeArkImage.src = 'assets/ships/926.webp';
+const riftBlend = document.createElement('canvas');
+riftBlend.width = riftBlend.height = WORMHOLE.frameSize;
+const riftBlendContext = riftBlend.getContext('2d')!;
+/** Keep weighted atlas interpolation offscreen so the dark tear still covers stars. */
+function drawQuantumRift(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  now: number,
+) {
+  if (!ready(quantumRiftImg)) return;
+  const frames = loopFrames(now, WORMHOLE.frames, WORMHOLE.frameMs);
+  riftBlendContext.clearRect(0, 0, WORMHOLE.frameSize, WORMHOLE.frameSize);
+  riftBlendContext.globalCompositeOperation = 'lighter';
+  for (const [frame, weight] of [
+    [frames.first, 1 - frames.mix],
+    [frames.second, frames.mix],
+  ]) {
+    riftBlendContext.globalAlpha = weight;
+    riftBlendContext.drawImage(
+      quantumRiftImg,
+      (frame % 8) * 320,
+      Math.floor(frame / 8) * 320,
+      320,
+      320,
+      0,
+      0,
+      320,
+      320,
+    );
+  }
+  context.save();
+  context.globalCompositeOperation = 'source-over';
+  context.drawImage(riftBlend, x - size / 2, y - size / 2, size, size);
+  context.restore();
+}
+type StorySequence = { kind: 'ark-departure' | 'rift-crossing'; began: number };
+const storySequences = new WeakMap<ClientGameState, StorySequence>();
+const previousStorySystem = new WeakMap<ClientGameState, string | null>();
+/** Presentation hook; it cannot move the ship, fit equipment or commit story progress. */
+export function startStorySequence(
+  state: ClientGameState,
+  kind: StorySequence['kind'],
+  now = performance.now(),
+): void {
+  storySequences.set(state, { kind, began: now });
+}
 const sheets = new Map<string, HTMLImageElement>();
 /**
  * Loads or retrieves a cached sprite sheet image for a given ship hull.
@@ -1481,7 +1547,9 @@ function drawDecorNear(
     canvasRenderingContext2D.globalAlpha = 1;
   };
   for (const decorSprite of decorModel.ruin) sprite(decorSprite, 0.92);
-  for (const decorSprite of decorModel.derelict) sprite(decorSprite, 0.95);
+  // The authored ark metadata stays stable; its actual sheet is captain-specific.
+  if (starSystem.id !== EXPEDITION_HULK.system)
+    for (const decorSprite of decorModel.derelict) sprite(decorSprite, 0.95);
   for (const wreck2 of decorModel.wreck) {
     const htmlImageElement = decorImg(wreck2.img);
     if (!ready(htmlImageElement)) continue;
@@ -2593,6 +2661,25 @@ export function draw(
     canvasRenderingContext2D.fillStyle = '#000';
     canvasRenderingContext2D.fillRect(0, 0, width2, height2);
     if (!starSystem) return;
+    if (
+      starSystem.id === 'beyond-rift' &&
+      arrivalBackdrop.complete &&
+      arrivalBackdrop.naturalWidth
+    ) {
+      const cover = Math.max(
+        width2 / arrivalBackdrop.naturalWidth,
+        height2 / arrivalBackdrop.naturalHeight,
+      );
+      const imageWidth = arrivalBackdrop.naturalWidth * cover,
+        imageHeight = arrivalBackdrop.naturalHeight * cover;
+      canvasRenderingContext2D.drawImage(
+        arrivalBackdrop,
+        (width2 - imageWidth) / 2,
+        (height2 - imageHeight) / 2,
+        imageWidth,
+        imageHeight,
+      );
+    }
     const stars2 = stars(starSystem.id),
       hexToRgb2 = hexToRgb(FACTIONS[starSystem.faction].color);
     for (const [nextX, nextY, nextRadius, entryKey] of stars2.neb) {
@@ -2621,16 +2708,17 @@ export function draw(
         radius * 2,
       );
     }
-    drawDecorFar(
-      canvasRenderingContext2D,
-      starSystem,
-      width2,
-      height2,
-      zoom2,
-      centerX,
-      centerY,
-      currentTime,
-    ); // galaxies and gas clouds far behind the stars
+    if (!['beyond-rift', 'founding-vigil'].includes(starSystem.id))
+      drawDecorFar(
+        canvasRenderingContext2D,
+        starSystem,
+        width2,
+        height2,
+        zoom2,
+        centerX,
+        centerY,
+        currentTime,
+      ); // galaxies and gas clouds far behind the stars
     for (const { L: length, depth, size } of stars2.layers) {
       for (const [startX, startY, secondValue, textWidth] of length) {
         let positionX = (startX - centerX * depth) % 2048,
@@ -2648,27 +2736,120 @@ export function draw(
           }
       }
     }
-    drawDecorMid(
-      canvasRenderingContext2D,
-      starSystem,
-      width2,
-      height2,
-      zoom2,
-      centerX,
-      centerY,
-      currentTime,
-    );
-    drawDecorNear(
-      canvasRenderingContext2D,
-      starSystem,
-      width2,
-      height2,
-      zoom2,
-      screenX,
-      screenY,
-      currentTime,
-    ); // 2.2 scenery in the system itself
-    drawPulseBoundary(canvasRenderingContext2D, starSystem, screenX, screenY, zoom2);
+    const lens = clientGameState.you?.story?.flags as RealityFlags | undefined;
+    const lensColor =
+      lens?.main_ending === 'unsettling' && lens.unsettled_with
+        ? FACTIONS[lens.unsettled_with]?.color
+        : null;
+    if (lensColor) {
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.globalAlpha = 0.055;
+      canvasRenderingContext2D.fillStyle = lensColor;
+      canvasRenderingContext2D.fillRect(0, 0, width2, height2);
+      canvasRenderingContext2D.restore();
+    }
+    if (!['beyond-rift', 'founding-vigil'].includes(starSystem.id))
+      drawDecorMid(
+        canvasRenderingContext2D,
+        starSystem,
+        width2,
+        height2,
+        zoom2,
+        centerX,
+        centerY,
+        currentTime,
+      );
+    if (!['beyond-rift', 'founding-vigil'].includes(starSystem.id))
+      drawDecorNear(
+        canvasRenderingContext2D,
+        starSystem,
+        width2,
+        height2,
+        zoom2,
+        screenX,
+        screenY,
+        currentTime,
+      ); // 2.2 scenery in the system itself
+    if (!['beyond-rift', 'founding-vigil'].includes(starSystem.id))
+      drawPulseBoundary(canvasRenderingContext2D, starSystem, screenX, screenY, zoom2);
+    const reality = storyScenery(clientGameState.you?.story?.flags as RealityFlags | undefined);
+    if (starSystem.id === EXPEDITION_HULK.system && reality.dormantArk) {
+      const frame = SPRITES[925],
+        size = EXPEDITION_HULK.size * zoom2;
+      if (dormantArkImage.complete && dormantArkImage.naturalWidth) {
+        canvasRenderingContext2D.save();
+        canvasRenderingContext2D.filter = 'brightness(0.45)';
+        canvasRenderingContext2D.drawImage(
+          dormantArkImage,
+          0,
+          0,
+          frame.fs,
+          frame.fs,
+          screenX(EXPEDITION_HULK.x) - size / 2,
+          screenY(EXPEDITION_HULK.y) - size / 2,
+          size,
+          size,
+        );
+        canvasRenderingContext2D.restore();
+      }
+    }
+    if (starSystem.id === 'dimmer' && reality.breachSetpieces) {
+      const station = stationImgs[0];
+      const x = screenX(1600),
+        y = screenY(-900),
+        size = 450 * zoom2;
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.globalAlpha = reducedStoryEffects(clientGameState)
+        ? 0.7
+        : 0.65 + 0.1 * Math.sin(currentTime / 2100);
+      if (ready(station))
+        canvasRenderingContext2D.drawImage(station, x - size / 2, y - size / 2, size, size);
+      canvasRenderingContext2D.fillStyle = '#c9c0df';
+      canvasRenderingContext2D.font = '13px "Pixelify Sans", sans-serif';
+      canvasRenderingContext2D.textAlign = 'center';
+      canvasRenderingContext2D.fillText('Border station — disputed contact', x, y - size / 2 - 10);
+      canvasRenderingContext2D.restore();
+    }
+    if (starSystem.id === 'founding-vigil' && reality.foundingVigil) {
+      const vigil = decorImg('derelict_0');
+      if (ready(vigil))
+        canvasRenderingContext2D.drawImage(
+          vigil,
+          screenX(0) - 300 * zoom2,
+          screenY(0) - 300 * zoom2,
+          600 * zoom2,
+          600 * zoom2,
+        );
+    }
+    const sequence = storySequences.get(clientGameState);
+    if (sequence?.kind === 'ark-departure' && clientView) {
+      const progress = Math.min(1, Math.max(0, (currentTime - sequence.began) / 12000));
+      const extent = Math.min(width2, height2),
+        worldSpan = extent / zoom2;
+      const destinationX = clientView.rx + worldSpan * 0.3,
+        destinationY = clientView.ry - worldSpan * 0.22;
+      drawQuantumRift(
+        canvasRenderingContext2D,
+        screenX(destinationX),
+        screenY(destinationY),
+        extent * 0.45,
+        currentTime,
+      );
+      if (ready(awakeArkImage)) {
+        const size = extent * 0.35 * (1 - Math.max(0, (progress - 0.8) / 0.2));
+        canvasRenderingContext2D.drawImage(
+          awakeArkImage,
+          9 * 480,
+          0,
+          480,
+          480,
+          screenX(clientView.rx + worldSpan * (-0.3 + 0.6 * progress)) - size / 2,
+          screenY(destinationY) - size / 2,
+          size,
+          size,
+        );
+      }
+    }
     // stellars
     let position;
     for (const rawStellarBody of starSystem.stellars) {
@@ -2683,15 +2864,25 @@ export function draw(
         continue;
       let label = rawStellarBody.name;
       if (rawStellarBody.wormhole) {
+        const quantum = starSystem.id === 'quantum-rift' || starSystem.id === 'beyond-rift';
+        const portalImage = quantum ? quantumRiftImg : wormImg;
         // Original periodic Gateway frames; interpolate only to smooth display cadence.
-        if (wormImg.complete && wormImg.naturalWidth) {
+        if (quantum) {
+          drawQuantumRift(
+            canvasRenderingContext2D,
+            positionX,
+            positionY,
+            rawStellarBody.r * 2.6 * zoom2,
+            currentTime,
+          );
+        } else if (portalImage.complete && portalImage.naturalWidth) {
           const frames = loopFrames(currentTime, WORMHOLE.frames, WORMHOLE.frameMs),
-            fileSystem = wormImg.naturalWidth / WORMHOLE.columns,
+            fileSystem = portalImage.naturalWidth / WORMHOLE.columns,
             state = rawStellarBody.r * 2.6 * zoom2;
           canvasRenderingContext2D.save();
           canvasRenderingContext2D.translate(positionX, positionY);
-          canvasRenderingContext2D.rotate(currentTime / 9000);
-          canvasRenderingContext2D.globalCompositeOperation = 'lighter';
+          if (!quantum) canvasRenderingContext2D.rotate(currentTime / 9000);
+          canvasRenderingContext2D.globalCompositeOperation = quantum ? 'source-over' : 'lighter';
           // Additive weights preserve brightness, including the wrap from frame 31 to 0.
           for (const [factionId, weight] of [
             [frames.first, 1 - frames.mix],
@@ -2699,7 +2890,7 @@ export function draw(
           ]) {
             canvasRenderingContext2D.globalAlpha = weight;
             canvasRenderingContext2D.drawImage(
-              wormImg,
+              portalImage,
               (factionId % WORMHOLE.columns) * fileSystem,
               Math.floor(factionId / WORMHOLE.columns) * fileSystem,
               fileSystem,
@@ -2713,6 +2904,28 @@ export function draw(
           canvasRenderingContext2D.restore();
         }
       } else if (rawStellarBody.hub) {
+        if (reality.core !== 'gone' && reality.core !== 'dark') {
+          const lightRadius = rawStellarBody.r * zoom2;
+          const coreLight = canvasRenderingContext2D.createRadialGradient(
+            positionX,
+            positionY,
+            0,
+            positionX,
+            positionY,
+            lightRadius,
+          );
+          const intensity =
+            reality.core === 'awake' ? 0.34 : reality.core === 'asleep' ? 0.035 : 0.08;
+          coreLight.addColorStop(0, `rgba(174,155,255,${intensity})`);
+          coreLight.addColorStop(1, 'rgba(174,155,255,0)');
+          canvasRenderingContext2D.fillStyle = coreLight;
+          canvasRenderingContext2D.fillRect(
+            positionX - lightRadius,
+            positionY - lightRadius,
+            lightRadius * 2,
+            lightRadius * 2,
+          );
+        }
         // the Quantum Station hub turns slowly; neighbouring frames are cross-faded so the rotation is smooth
         if (hubImg.complete && hubImg.naturalWidth) {
           const fileSystem = hubImg.naturalWidth / 6,
@@ -3100,14 +3313,16 @@ export function draw(
       firstValue = beam.a / 1000,
       positionX = startX + Math.sin(firstValue) * beam.len * zoom2,
       positionY = startY - Math.cos(firstValue) * beam.len * zoom2;
+    const beamOwner = clientGameState.ents.get(beam.id);
+    const opacity = beamOwner ? storyShipOpacity(clientGameState, beamOwner, currentTime) : 1;
     canvasRenderingContext2D.strokeStyle = weaponColor2;
-    canvasRenderingContext2D.globalAlpha = 0.45;
+    canvasRenderingContext2D.globalAlpha = 0.45 * opacity;
     canvasRenderingContext2D.lineWidth = 6 * Math.max(0.7, zoom2);
     canvasRenderingContext2D.beginPath();
     canvasRenderingContext2D.moveTo(startX, startY);
     canvasRenderingContext2D.lineTo(positionX, positionY);
     canvasRenderingContext2D.stroke();
-    canvasRenderingContext2D.globalAlpha = 1;
+    canvasRenderingContext2D.globalAlpha = opacity;
     canvasRenderingContext2D.strokeStyle = '#fff';
     canvasRenderingContext2D.lineWidth = 1.6;
     canvasRenderingContext2D.beginPath();
@@ -3115,6 +3330,7 @@ export function draw(
     canvasRenderingContext2D.lineTo(positionX, positionY);
     canvasRenderingContext2D.stroke();
   }
+  canvasRenderingContext2D.globalAlpha = 1;
   // shield shimmer: an arc of the shield bubble facing the hit
   for (const [identifier, shieldHit] of shieldHits) {
     const event =
@@ -3791,6 +4007,31 @@ function hudOverlay(
       screenY(clientView.ry),
       clientView.a,
     );
+  const storySequence = storySequences.get(clientGameState);
+  if (storySequence?.kind === 'rift-crossing') {
+    const progress = Math.min(1, Math.max(0, (currentTime - storySequence.began) / 2800));
+    const reduced = reducedStoryEffects(clientGameState);
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.globalAlpha = reduced
+      ? 0.12 * (1 - progress)
+      : (0.16 + 0.18 * Math.sin(progress * Math.PI * 7) ** 2) * (1 - progress);
+    canvasRenderingContext2D.fillStyle = '#a372fa';
+    canvasRenderingContext2D.fillRect(0, 0, width, height);
+    if (!reduced) {
+      canvasRenderingContext2D.strokeStyle = '#e4c4ff';
+      canvasRenderingContext2D.lineWidth = 3;
+      for (let index = 0; index < 5; index++) {
+        const x = (width * (index + 0.5)) / 5;
+        canvasRenderingContext2D.beginPath();
+        canvasRenderingContext2D.moveTo(x, 0);
+        canvasRenderingContext2D.lineTo(x + Math.sin(currentTime / 95 + index) * 90, height * 0.35);
+        canvasRenderingContext2D.lineTo(x - 60, height * 0.65);
+        canvasRenderingContext2D.lineTo(x + 40, height);
+        canvasRenderingContext2D.stroke();
+      }
+    }
+    canvasRenderingContext2D.restore();
+  }
   // damage: a red flash when your hull is hit, and a slow pulse when armour is low
   const computedShipStats = clientGameState.you && clientGameState.you.shipStats,
     armor2 = computedShipStats ? clientView.armor / Math.max(1, computedShipStats.armor) : 1,
@@ -3874,6 +4115,21 @@ export function updateEffects(
   deltaTime: number,
   currentTime: number,
 ): void {
+  const previousSystem = previousStorySystem.get(clientGameState);
+  if (
+    (previousSystem === 'quantum-rift' && clientGameState.sys === 'beyond-rift') ||
+    (previousSystem === 'beyond-rift' && clientGameState.sys === 'quantum-rift')
+  )
+    startStorySequence(clientGameState, 'rift-crossing', currentTime);
+  previousStorySystem.set(clientGameState, clientGameState.sys);
+  const sequence = storySequences.get(clientGameState);
+  if (sequence) {
+    const elapsed = currentTime - sequence.began;
+    if (elapsed > (sequence.kind === 'rift-crossing' ? 2800 : 12000))
+      storySequences.delete(clientGameState);
+    else if (sequence.kind === 'rift-crossing' && !reducedStoryEffects(clientGameState))
+      shake = Math.max(shake, 16 * (1 - elapsed / 2800));
+  }
   updateShipChat(clientGameState, currentTime);
   for (const [identifier, hit] of shieldHits) {
     hit.t -= deltaTime;
@@ -4022,7 +4278,10 @@ export function drawShip(
     renderShip,
     currentTime,
   );
+  const realityOpacity = storyShipOpacity(clientGameState, renderShip, currentTime);
   if (!overlaysOnly) {
+    canvasRenderingContext2D.save();
+    canvasRenderingContext2D.globalAlpha = realityOpacity;
     const htmlImageElement = sheet(shipHullAsset);
     if (renderShip.fl & 8 && htmlImageElement.complete && htmlImageElement.naturalWidth) {
       // a ship in hyperspace leaves a stretched, blue-shifted ghost trail
@@ -4030,7 +4289,7 @@ export function drawShip(
         unitY = -Math.cos(renderShip.a);
       canvasRenderingContext2D.globalCompositeOperation = 'lighter';
       for (let index = 6; index >= 1; index--) {
-        canvasRenderingContext2D.globalAlpha = 0.22 * (1 - index / 7);
+        canvasRenderingContext2D.globalAlpha = realityOpacity * 0.22 * (1 - index / 7);
         const options = index * width2 * 0.32;
         canvasRenderingContext2D.drawImage(
           htmlImageElement,
@@ -4045,7 +4304,7 @@ export function drawShip(
         );
       }
       canvasRenderingContext2D.globalCompositeOperation = 'source-over';
-      canvasRenderingContext2D.globalAlpha = 1;
+      canvasRenderingContext2D.globalAlpha = realityOpacity;
       const canvasGradient = canvasRenderingContext2D.createRadialGradient(
         positionX + unitX * width2 * 0.35,
         positionY + unitY * width2 * 0.35,
@@ -4112,7 +4371,8 @@ export function drawShip(
         for (let index = 12; index >= 1; index--) {
           const time = index / 12,
             after = length * time;
-          canvasRenderingContext2D.globalAlpha = (boost ? 0.38 : 0.26) * (1 - time * 0.85);
+          canvasRenderingContext2D.globalAlpha =
+            realityOpacity * (boost ? 0.38 : 0.26) * (1 - time * 0.85);
           canvasRenderingContext2D.drawImage(
             htmlImageElement,
             sourceX,
@@ -4126,7 +4386,7 @@ export function drawShip(
           );
         }
         canvasRenderingContext2D.restore();
-        canvasRenderingContext2D.globalAlpha = boost ? 1 : 0.8 * flicker;
+        canvasRenderingContext2D.globalAlpha = realityOpacity * (boost ? 1 : 0.8 * flicker);
         canvasRenderingContext2D.drawImage(
           htmlImageElement,
           sourceX,
@@ -4138,11 +4398,11 @@ export function drawShip(
           width2,
           width2,
         );
-        canvasRenderingContext2D.globalAlpha = 1;
+        canvasRenderingContext2D.globalAlpha = realityOpacity;
         canvasRenderingContext2D.globalCompositeOperation = 'source-over';
       }
     }
-    canvasRenderingContext2D.globalAlpha = 1;
+    canvasRenderingContext2D.restore();
   }
   if (renderShip.fl & 4) {
     canvasRenderingContext2D.fillStyle = 'rgba(255,120,60,.8)';
@@ -4239,7 +4499,9 @@ export function drawShip(
     )
       targetY -= 14;
     tagRects.push([positionX, targetY, width3]);
+    canvasRenderingContext2D.globalAlpha = realityOpacity;
     canvasRenderingContext2D.fillText(renderShip.name, positionX, targetY);
+    canvasRenderingContext2D.globalAlpha = 1;
   }
 }
 
@@ -4372,8 +4634,9 @@ export function radar(
 // centred on the current system. Systems you have not visited are drawn as hollow rings.
 const SYS_LIST = Object.values(systemsById);
 const BOUNDS = (() => {
-  const xScale = SYS_LIST.map((starSystem) => starSystem.x),
-    yScale = SYS_LIST.map((starSystem) => starSystem.y);
+  const baseSystems = SYS_LIST.filter((system) => storySystemVisible({}, system.id));
+  const xScale = baseSystems.map((starSystem) => starSystem.x),
+    yScale = baseSystems.map((starSystem) => starSystem.y);
   return {
     x0: Math.min(...xScale) - 60,
     x1: Math.max(...xScale) + 60,
@@ -4390,8 +4653,17 @@ const BOUNDS = (() => {
 export function mapFit(
   width: number,
   height: number,
+  flags?: RealityFlags,
 ): MapFit & { cx: number; cy: number; fit: number } {
-  const bounds = BOUNDS,
+  const visibleSystems = SYS_LIST.filter((system) => storySystemVisible(flags || {}, system.id));
+  const bounds = flags
+      ? {
+          x0: Math.min(...visibleSystems.map((system) => system.x)) - 60,
+          x1: Math.max(...visibleSystems.map((system) => system.x)) + 60,
+          y0: Math.min(...visibleSystems.map((system) => system.y)) - 60,
+          y1: Math.max(...visibleSystems.map((system) => system.y)) + 60,
+        }
+      : BOUNDS,
     entryKey = Math.min(width / (bounds.x1 - bounds.x0), height / (bounds.y1 - bounds.y0));
   return {
     cx: (bounds.x0 + bounds.x1) / 2,
@@ -4411,6 +4683,9 @@ export function galaxy(
   canvasRenderingContext2D: CanvasRenderingContext2D,
   options: { big?: boolean } = {},
 ): void {
+  const flags = clientGameState.you?.story?.flags as RealityFlags | undefined;
+  const visibleSystems = SYS_LIST.filter((system) => storySystemVisible(flags || {}, system.id));
+  const visibleIds = new Set(visibleSystems.map((system) => system.id));
   const width2 = canvasRenderingContext2D.canvas.width,
     height2 = canvasRenderingContext2D.canvas.height,
     large = !!options.big;
@@ -4423,7 +4698,7 @@ export function galaxy(
       clientGameState.mapView.W !== width2 ||
       clientGameState.mapView.H !== height2
     ) {
-      const mapFit3 = mapFit(width2, height2),
+      const mapFit3 = mapFit(width2, height2, flags),
         mapView2 = clientGameState.mapView;
       clientGameState.mapView = Object.assign(mapView2 || {}, {
         W: width2,
@@ -4466,10 +4741,23 @@ export function galaxy(
     positionY > -message &&
     positionX < width2 + message &&
     positionY < height2 + message;
+  if (flags?.founding_vigil && flags.main_ending !== 'table') {
+    const center = {
+      x: FARSIDE.reduce((sum, system) => sum + system[2], 0) / FARSIDE.length,
+      y: FARSIDE.reduce((sum, system) => sum + system[3], 0) / FARSIDE.length,
+    };
+    const [x, y] = position(center);
+    canvasRenderingContext2D.strokeStyle = '#d8c89c';
+    canvasRenderingContext2D.strokeRect(x - 5, y - 5, 10, 10);
+    canvasRenderingContext2D.fillStyle = '#d8c89c';
+    canvasRenderingContext2D.font = '12px "Pixelify Sans", sans-serif';
+    canvasRenderingContext2D.fillText('The Founding Vigil', x + 10, y - 5);
+  }
   // territory shading
   canvasRenderingContext2D.globalCompositeOperation = 'lighter';
   if ((clientGameState.mapMode || 'factions') === 'factions' || !large)
-    for (const starSystem of SYS_LIST) {
+    for (const starSystem of visibleSystems) {
+      if (starSystem.id === 'founding-vigil') continue;
       const factionDef = FACTIONS[starSystem.faction];
       if (factionDef.region && starSystem.faction !== 'deep') continue;
       const [positionX, positionY] = position(starSystem);
@@ -4497,9 +4785,9 @@ export function galaxy(
   canvasRenderingContext2D.globalCompositeOperation = 'source-over';
   // routes
   canvasRenderingContext2D.lineWidth = 1;
-  for (const starSystem of SYS_LIST)
+  for (const starSystem of visibleSystems)
     for (const link of starSystem.links)
-      if (link > starSystem.id) {
+      if (link > starSystem.id && visibleIds.has(link)) {
         const [firstValue, secondValue] = position(starSystem),
           [component, distance] = position(systemsById[link]);
         if (!enabled(firstValue, secondValue, 400) && !enabled(component, distance, 400)) continue;
@@ -4511,8 +4799,8 @@ export function galaxy(
         canvasRenderingContext2D.stroke();
       }
   // the Gateway: a dashed, glowing link between Concordia and the far mouth
-  for (const starSystem of SYS_LIST)
-    if (starSystem.gate && starSystem.id < starSystem.gate) {
+  for (const starSystem of visibleSystems)
+    if (starSystem.gate && starSystem.id < starSystem.gate && visibleIds.has(starSystem.gate)) {
       const [firstValue, secondValue] = position(starSystem),
         [component, distance] = position(systemsById[starSystem.gate]);
       canvasRenderingContext2D.strokeStyle = 'rgba(154,200,255,.55)';
@@ -4529,7 +4817,7 @@ export function galaxy(
       canvasRenderingContext2D.stroke();
       canvasRenderingContext2D.setLineDash([]);
     }
-  const route = clientGameState.route || [];
+  const route = (clientGameState.route || []).filter((id) => visibleIds.has(id));
   if (route.length && systemsById[clientGameState.sys!]) {
     canvasRenderingContext2D.strokeStyle = '#ffd27a';
     canvasRenderingContext2D.lineWidth = large ? 2.5 : 2;
@@ -4559,7 +4847,8 @@ export function galaxy(
     [])
     if (message.sysId && message.name !== clientGameState.myName)
       (allySys[message.sysId] = allySys[message.sysId] || []).push(message.name); // where your Armada is
-  for (const starSystem of SYS_LIST) {
+  for (const starSystem of visibleSystems) {
+    if (starSystem.id === 'founding-vigil') continue;
     const [positionX, positionY] = position(starSystem);
     if (!enabled(positionX, positionY)) continue;
     const factionDef = FACTIONS[starSystem.faction],
@@ -4916,6 +5205,7 @@ export function mapHit(
   let best = null,
     body = 14;
   for (const starSystem of SYS_LIST) {
+    if (!storySystemVisible(clientGameState.you?.story?.flags || {}, starSystem.id)) continue;
     const positionX = mapTransform.W / 2 + (starSystem.x - mapTransform.cx) * mapTransform.k,
       positionY = mapTransform.H / 2 + (starSystem.y - mapTransform.cy) * mapTransform.k,
       distance = Math.hypot(mouseX - positionX, mouseY - positionY);

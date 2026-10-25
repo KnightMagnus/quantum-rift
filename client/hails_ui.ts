@@ -1,3 +1,4 @@
+import { INDEX_HULLS } from '../shared/index.ts';
 import { portraitAsset } from '../shared/portraits.ts';
 import { artworkUrl } from './artwork.ts';
 interface HailEntry {
@@ -8,6 +9,8 @@ interface HailEntry {
   kind: string;
 }
 interface HailConversation {
+  /** Known NPC-only machine hull, shown instead of a captain portrait. */
+  machineHull?: number;
   /** Authoritative catalog identity sent with this conversation. */
   portraitId?: string;
   who?: string;
@@ -110,8 +113,13 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
   function show(hailConversation: HailConversation) {
     active = hailConversation;
     const portrait = elementById('hailportrait') as HTMLImageElement;
-    portrait.src = artworkUrl(portraitAsset(hailConversation.portraitId));
-    portrait.alt = `${hailConversation.who || 'Caller'} portrait`;
+    const machine = INDEX_HULLS.find((hull) => hull.id === hailConversation.machineHull);
+    portrait.src = artworkUrl(
+      machine ? `ships/${machine.id}_yard.png` : portraitAsset(hailConversation.portraitId),
+    );
+    portrait.alt = machine
+      ? `${machine.name} survey machine`
+      : `${hailConversation.who || 'Caller'} portrait`;
     elementById('hailportraitwindow').classList.remove('hidden');
     elementById('hailwho').textContent = hailConversation.who || '';
     elementById('hailsub').textContent = hailConversation.sub ? `· ${hailConversation.sub}` : '';

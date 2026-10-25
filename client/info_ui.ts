@@ -1,3 +1,4 @@
+import { storySystemVisible } from '../shared/story-world.ts';
 import type { StellarBody } from '../server/game.ts';
 import type { ClientGameState } from './main.ts';
 export type InfoTab = 'ship' | 'career' | 'fleet' | 'captains';
@@ -73,6 +74,7 @@ import { artworkUrl } from './artwork.ts';
 import {
   SYS as systemsById,
   SYSTEMS,
+  PERSONAL_SYSTEMS,
   STELLARS,
   FACTIONS,
   COMMODITIES,
@@ -294,8 +296,8 @@ function careerHtml(clientGameState: ClientGameState): string {
     ${keyValueRow('Main story', screenY.pass ? 'complete' : `chapter ${Math.min((screenY.step || 0) + 1, screenY.total || 1)} of ${screenY.total || '?'}`)}
     ${keyValueRow('Side stories', `${quantity.done.filter((positionX) => positionX.side).length} of 6`)}${keyValueRow('Contact stories', `${quantity.done.filter((positionX) => !positionX.side).length} finished · ${Object.values(quantity.contacts || {}).filter((component) => component.n >= 2).length} trusted contacts`)}
     ${keyValueRow('Faction stories', `${(playerPayload.arcs || []).filter((firstValue) => firstValue.done).length} of ${(playerPayload.arcs || []).length}`)}${keyValueRow('Farside expeditions', (playerPayload.expd && playerPayload.expd.n) || 0)}
-    ${keyValueRow('Combat rating', `<b style="color:#ffd27a">${escapeHtml((playerPayload.rank || {}).name || 'Harmless')}</b>`)}${keyValueRow('Ships destroyed', credits2(state.kills || 0))}
-    ${keyValueRow('Systems explored', `${(playerPayload.explored || []).length} of ${SYSTEMS.filter((starSystem) => !starSystem.arena).length}`)}${keyValueRow('Jumps made', credits2(state.jumps || 0))}
+    ${playerPayload.story?.flags?.title ? keyValueRow('Title', escapeHtml(playerPayload.story.flags.title)) : ''}${keyValueRow('Combat rating', `<b style="color:#ffd27a">${escapeHtml((playerPayload.rank || {}).name || 'Harmless')}</b>`)}${keyValueRow('Ships destroyed', credits2(state.kills || 0))}
+    ${keyValueRow('Systems explored', `${(playerPayload.explored || []).filter((id) => id !== 'founding-vigil' && storySystemVisible(playerPayload.story?.flags, id)).length} of ${[...SYSTEMS, ...PERSONAL_SYSTEMS].filter((starSystem) => !starSystem.arena && starSystem.id !== 'founding-vigil' && storySystemVisible(playerPayload.story?.flags, starSystem.id)).length}`)}${keyValueRow('Jumps made', credits2(state.jumps || 0))}
     ${keyValueRow('Credits earned', credits2(state.earned || 0))}${state.mined ? keyValueRow('Ore mined', `${credits2(state.mined)} t`) : ''}
     ${(quantity.active || []).length ? `<div class="sect">STORIES UNDER WAY</div>${quantity.active.map((firstValue) => `<div class="kv small"><span>${firstValue.side ? '★' : '✦'} ${escapeHtml(firstValue.name)}</span><span class="dim">step ${firstValue.step + 1} of ${firstValue.of}</span></div>`).join('')}` : ''}
   </div></div>`;

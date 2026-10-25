@@ -1,3 +1,6 @@
+import { INDEX_FLEET_HULLS } from './index-fleet.ts';
+import { NHAL_HULLS, NHAL_WEAPONS } from './nhal.ts';
+import { INDEX_HULLS } from './index.ts';
 import type { RoleId } from './roles.ts';
 import type { PlayerData } from '../server/game.ts';
 import type { IndustrialShip } from '../server/industrial-contracts.ts';
@@ -674,7 +677,7 @@ export { physicsConstants as K };
  */
 // Add Quantum Rift's own weapons to the exported asset data (safe to call more than once)
 export function augmentAssets(assets: GameAssets): GameAssets {
-  for (const weaponAsset of EXTRA_WEAPONS)
+  for (const weaponAsset of [...EXTRA_WEAPONS, ...NHAL_WEAPONS])
     if (!assets.weapons[weaponAsset.id]) assets.weapons[weaponAsset.id] = weaponAsset;
   for (const mINING_WEAPONS of MINING_WEAPONS)
     if (assets.weapons[mINING_WEAPONS]) assets.weapons[mINING_WEAPONS].mining = true;
@@ -684,7 +687,7 @@ export function augmentAssets(assets: GameAssets): GameAssets {
         ...specialistShip,
         img: `ships/${specialistShip.id}_yard.png`,
       }; // specialty ships
-  for (const ship23Hull of SHIPS23)
+  for (const ship23Hull of [...SHIPS23, ...INDEX_HULLS, ...INDEX_FLEET_HULLS, ...NHAL_HULLS])
     if (!assets.ships[ship23Hull.id]) assets.ships[ship23Hull.id] = { ...ship23Hull }; // new common Quantum hulls
   for (const shipHullAsset of Object.values(assets.ships))
     shipHullAsset.role = roleOf(shipHullAsset, assets.weapons) as RoleId; // class triangle roles

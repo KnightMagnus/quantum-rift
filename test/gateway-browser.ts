@@ -23,15 +23,17 @@ const database = new Database(path.join(directory, 'data')),
     JSON.parse(fileSystem.readFileSync(path.join(root, 'shared/assets.json')).toString()),
     database,
   );
-for (const systemId of ['qgate', 'coldharbor', 'aureole']) {
+for (const systemId of ['qgate', 'coldharbor', 'aureole', 'glasswake']) {
   const playerData = database.create('Gate ' + systemId, '', game.fresh());
   playerData.sys = systemId;
   playerData.stellar =
     systemId === 'qgate'
       ? 'qstation'
-      : systemId === 'aureole'
-        ? SYS.aureole.stellars.find((stellar) => stellar.svc?.includes('L'))!.id
-        : 'coldharbor';
+      : systemId === 'glasswake'
+        ? 'glasswake-foundry'
+        : systemId === 'aureole'
+          ? SYS.aureole.stellars.find((stellar) => stellar.svc?.includes('L'))!.id
+          : 'coldharbor';
   playerData.tut = 999;
   playerData.story = { done: ['start'], active: null, step: 0 };
 }
@@ -126,6 +128,68 @@ try {
     results.push({ origin: systemId2, destination: dest, noBounce: true, landRequests: 0, errors });
     await page.close();
   }
+  const indexPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  const indexErrors: string[] = [];
+  indexPage.on('pageerror', (error) => indexErrors.push(String(error)));
+  await indexPage.goto(origin);
+  await indexPage.locator('[data-slot="Gate glasswake"]').click();
+  await indexPage.waitForFunction(() => G.you && G.landed);
+  await indexPage.click('#depart');
+  await indexPage.waitForFunction(
+    () => G.view && !G.landed && G.miningRocks?.rocks.some((rock) => rock.indexClaim),
+  );
+  await indexPage.waitForFunction(() => [...G.ents.values()].some((entity) => entity.hull === 910));
+  const art = await indexPage.evaluate(async () => {
+    const images = await Promise.all(
+      [909, 910, 911, 914, 915].map(async (id) => {
+        const image = new Image();
+        image.src = `/assets/ships/${id}.webp`;
+        await image.decode();
+        return { id, width: image.naturalWidth, height: image.naturalHeight };
+      }),
+    );
+    G.opts.mouseAim = false;
+    return images;
+  });
+  assert.ok(
+    art.every((image) => image.width > 0 && image.height > 0),
+    'approved live sprite sheets decode',
+  );
+  await indexPage.keyboard.press('x');
+  await indexPage.keyboard.press('x');
+  await indexPage.waitForTimeout(6500);
+  await indexPage.screenshot({ path: path.join(evidence, 'index-worksite.png') });
+  await indexPage.evaluate(() => {
+    const quarry = [...G.ents.values()].find((entity) => entity.hull === 910)!;
+    G.target = quarry.id;
+  });
+  await indexPage.keyboard.press('t');
+  await indexPage.waitForSelector('#hailbox:not(.hidden)');
+  assert.match(
+    await indexPage.locator('#hailtext').innerText(),
+    /Transit and unmarked resources are unrestricted/,
+  );
+  assert.match(
+    await indexPage.locator('#hailopts').innerText(),
+    /Take nearby claimed salvage.*Index will attack/,
+  );
+  assert.match(
+    (await indexPage.locator('#hailportrait').getAttribute('src')) || '',
+    /910_yard\.png/,
+  );
+  assert.equal(
+    await indexPage
+      .locator('#hailportrait')
+      .evaluate(
+        (element) =>
+          (element as HTMLImageElement).complete && (element as HTMLImageElement).naturalWidth > 0,
+      ),
+    true,
+  );
+  assert.deepEqual(indexErrors, []);
+  await indexPage.screenshot({ path: path.join(evidence, 'index-worksite-hail.png') });
+  await indexPage.close();
+  results.push({ index: true, art, errors: indexErrors });
   const hulkPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await hulkPage.route('**/render.js', async (route) => {
     const response = await route.fetch();

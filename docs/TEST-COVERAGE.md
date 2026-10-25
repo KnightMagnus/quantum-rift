@@ -33,7 +33,7 @@ nested semantic validity or authorize client economic decisions.
 `tooling-contracts.ts` runs in the unit CI lane. It checks that Oxlint accepts
 valid source and rejects unused bindings and floating promises, and that Oxc
 Parser preserves optional/member access needed by the feature-dependency audit.
-The existing feature test checks all 20 providers against the unchanged inventory.
+The existing feature test checks all 21 providers against the unchanged inventory.
 Both TypeScript and tsrs run valid/invalid contract fixtures; tsrs remains a
 Linux CI check because its pinned native package has no Windows binary.
 
@@ -869,3 +869,44 @@ the quiet purchase confirmation without replaying that sound from `landed`.
 ### Story groundwork
 
 `story-foundations` is covered by the existing Gateway, story and expedition suites. The Gateway suite reuses its isolated game for the stable stellar ID, Concordia approach, unchanged qv rewards, spoiler bounds, fixed Aureole hulk, and accepted expedition compatibility checks. Browser coverage verifies both transit directions and the stationary non-interactive scenery. The existing generation golden remains unchanged after explicitly reversing only the authored Gateway relocation and lore edits. No Index/Nhal combat, later story acts or endings are implemented by these checks.
+
+## Index worksite
+
+The `index-worksite` contract extends the existing Eventide and Gateway browser
+fixtures. The server case checks neutral passage despite standing, exact-rock
+warnings, captain/wing attribution, innocent bystanders, NPC damage, disengagement,
+unload-safe health and finite replacement counts, conserved extraction, deliberate
+salvage theft and the peaceful per-captain Last Survey quest. The browser checks
+live sprite decoding, claim data and the real hail controls. Transformations,
+Kernel tactics, regional sorties and later story missions are not covered here.
+
+## Personal story realities and endgame artwork
+
+The `story-realities` contract uses `story-realities-browser.ts` to exercise the native actor registry with isolated viewer
+state: Act III ghost opacity, engine glow, friend-game precedence, different-ending
+ghosts, reduced effects, faded nameplates and opaque target outlines. Its helper
+checks ownership chains, cyclic owners, NPC faction lenses and private scenery
+visibility. The browser also denies selection of hidden story systems and captures
+a saved captain flying in Beyond the Rift with the supplied arrival backdrop and
+animated atlas. An eligible saved captain chooses the Table through the real story
+UI, launches into their own ship view, and watches the supplied awake ark render
+without adding a targetable combat entity. These presentation fixtures do not grant progress or prove online
+combat authority; authoritative choices and access gates have separate story tests.
+
+## Story continuation and faction encounters
+
+`story-continuation` checks the authoritative Acts II and III lifecycle, landed
+choice denials and replay protection, per-captain flags, exhaustive ending gates,
+actual journal persistence and hidden-place travel gates. Portal tests require a
+fitted unique Harness, verify turn-away without it, cross and return through the
+real server operation, and deny extra rewards or outfit resale. Authored quest
+prerequisites and all destination references are checked separately from combat.
+
+The registered Eventide helpers exercise native Nhal population staging, finite
+Watcher and brood budgets, latch/status escape, regeneration, rivalry and no
+generic bounty. Transforming Index checks cover neutral captain attribution,
+Mutable/Hive postures, Loom clearance and shared finite extraction, real Trident
+blades with persistent loss and one reward, bounded Kernel reboot and Talon escape.
+Browser checks cover supplied faction artwork and the actual private Vigil,
+prepared Dreamer witness route and player-ship ark departure. These are deterministic
+fixtures, not an exhaustive balance, seed, hardware or human multiplayer playtest.

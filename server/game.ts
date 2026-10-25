@@ -1201,7 +1201,15 @@ export class Game<Storage extends Database = Database> {
             Math.hypot(leftStellarBody.x - entity.x, leftStellarBody.y - entity.y) -
             Math.hypot(rightStellarBody.x - entity.x, rightStellarBody.y - entity.y),
         )[0];
-      if (here) playerData.stellar = here.id;
+      if (
+        ['quantum-rift', 'beyond-rift'].includes(playerData.sys) &&
+        playerData.story.flags?.main_ending === 'table'
+      ) {
+        playerData.story.flight = { sys: playerData.sys, x: entity.x, y: entity.y, a: entity.a };
+        playerData.stellar = null;
+        playerData.shieldNow = entity.shield;
+        playerData.armorNow = entity.armor;
+      } else if (here) playerData.stellar = here.id;
       else {
         const back =
           playerData.lastStellar && STELLARS[playerData.lastStellar]
@@ -1732,11 +1740,22 @@ export class Game<Storage extends Database = Database> {
         (starSystem) => starSystem.id,
       ); // captains from before 0.4 know the old 30 systems
     session.rep = playerAccount.rep;
-    if (!STELLARS[playerAccount.stellar!]) {
+    const savedStoryFlight = playerAccount.story.flight;
+    const resumeStoryFlight = !!(
+      savedStoryFlight &&
+      ['quantum-rift', 'beyond-rift'].includes(savedStoryFlight.sys) &&
+      playerAccount.story.flags?.main_ending === 'table' &&
+      (savedStoryFlight.sys !== 'beyond-rift' || playerAccount.story.flags.crossed_quantum_rift)
+    );
+    if (resumeStoryFlight) {
+      playerAccount.sys = savedStoryFlight!.sys;
+      playerAccount.stellar = null;
+    }
+    if (!resumeStoryFlight && !STELLARS[playerAccount.stellar!]) {
       playerAccount.sys = START.system;
       playerAccount.stellar = START.stellar;
     }
-    if (STELLARS[playerAccount.stellar!].system !== playerAccount.sys)
+    if (!resumeStoryFlight && STELLARS[playerAccount.stellar!].system !== playerAccount.sys)
       playerAccount.sys = STELLARS[playerAccount.stellar!].system; // repair saves from the old log-off bug
     this.send(session, { t: 'welcome', id: session.id, name: playerAccount.name });
     this.send(session, { t: 'sites', sites: this.sitesPayload() });
@@ -1744,9 +1763,14 @@ export class Game<Storage extends Database = Database> {
     this.features.coop.coopLogin(session); // Armada membership, offline DMs, friends' status
     this.idleCheck(session);
     this.you(session);
-    this.landed(session);
-    this.features.story.storyOnLand(session, STELLARS[playerAccount.stellar!]);
-    this.features.arcs.arcOnLand(session, STELLARS[playerAccount.stellar!]); // a story step waiting where you logged off still pops up
+    if (resumeStoryFlight) {
+      const flight = savedStoryFlight!;
+      this.spawnPlayer(session, flight.x, flight.y, flight.a, 0);
+    } else {
+      this.landed(session);
+      this.features.story.storyOnLand(session, STELLARS[playerAccount.stellar!]);
+      this.features.arcs.arcOnLand(session, STELLARS[playerAccount.stellar!]);
+    } // a story step waiting where you logged off still pops up
     if (!this.solo)
       this.broadcast({ t: 'chat', from: '', msg: `${playerAccount.name} entered the Rift.` }); // no join messages in a solo game
     if (session.isNew)
@@ -1796,6 +1820,17 @@ export class Game<Storage extends Database = Database> {
     value: number,
   ): void {
     this.features.towing.detach(session);
+    if (
+      ['quantum-rift', 'beyond-rift'].includes(session.data.sys) &&
+      session.data.story?.flags?.main_ending === 'table'
+    )
+      session.data.story.flight = {
+        sys: session.data.sys,
+        x: positionX,
+        y: positionY,
+        a: firstValue,
+      };
+    else if (session.data.story) delete session.data.story.flight;
     if (!session.data.ship.uid) session.data.ship.uid = this.features.docks.shipUid(session.data);
     if (session.combat) this.combatAssist.stop(session, 'New flight state; rearm explicitly');
     const playerData = session.data,
@@ -2201,6 +2236,39 @@ export class Game<Storage extends Database = Database> {
     space: SpaceSpace,
     stellarBody: import('../shared/galaxy.ts').RawStellarBody,
   ): void {
+    const crossingCaptain = entity.player?.s;
+    if (crossingCaptain && ['quantum-rift', 'beyond-rift'].includes(space.id)) {
+      if (
+        crossingCaptain.data.story?.flags?.main_ending !== 'table' ||
+        (space.id === 'quantum-rift' && !(crossingCaptain.data.ship.outfits[9021] > 0))
+      ) {
+        const angle = Math.atan2(entity.y - stellarBody.y, entity.x - stellarBody.x);
+        entity.x = stellarBody.x + Math.cos(angle) * (stellarBody.r + 120);
+        entity.y = stellarBody.y + Math.sin(angle) * (stellarBody.r + 120);
+        entity.vx = Math.cos(angle) * 180;
+        entity.vy = Math.sin(angle) * 180;
+        entity.wormT = space.t + 5;
+        return this.toast(
+          crossingCaptain,
+          'The Quantum Rift will tear this ship apart. Fit the Rift Harness before approaching.',
+        );
+      }
+      if (space.id === 'quantum-rift') {
+        const flags = (crossingCaptain.data.story.flags ||= {});
+        const firstCrossing = !flags.crossed_quantum_rift;
+        flags.crossed_quantum_rift = true;
+        this.db.touch();
+        if (firstCrossing) {
+          this.send(crossingCaptain, {
+            t: 'story',
+            id: 'beyond-arrival',
+            title: 'Beyond the Rift',
+            done: true,
+            text: 'New galaxy detected. Stellar match against the Concord Archive’s pre-Rift sky charts: the Milky Way.\n\nAhead lies humanity’s home galaxy, lost since the night the stars changed. The Index survey core adds: these are its makers’ stars too. The Riftweavers came from the Milky Way. The way onward is uncharted. For now, the only route home is back through the rift.',
+          });
+        }
+      }
+    }
     if (entity.player && this.features.towing.attached(entity.player.s))
       return this.toast(entity.player.s, 'Detach the motherlode before Gateway transit.');
     const session = entity.player!.s,
@@ -2254,7 +2322,9 @@ export class Game<Storage extends Database = Database> {
       session,
       starSystem.farside
         ? `Through the Gateway: ${starSystem.name}.${first ? ' Nothing out here is on any chart.' : ''}`
-        : 'Back through the Gateway: Sol.',
+        : ['quantum-rift', 'beyond-rift'].includes(starSystem.id)
+          ? `Through the Quantum Rift: ${starSystem.name}.`
+          : 'Back through the Gateway: Concordia.',
     );
     this.you(session);
   }
@@ -2328,7 +2398,10 @@ export class Game<Storage extends Database = Database> {
       this.you(session);
       return;
     }
-    if (factionDef.pirate || factionDef.alwaysHostile || entity.mission) {
+    if (entity.faction === 'nhal') {
+      this.features.fronts.goal(session, 'kills');
+      this.tut(session, 'kill');
+    } else if (factionDef.pirate || factionDef.alwaysHostile || entity.mission) {
       const stateBountyMultiplier = (() => {
         const livingState = this.features.living.stateOf(space.id);
         return (livingState && STATES[livingState.kind].bounty) || 1;
@@ -2375,6 +2448,7 @@ export class Game<Storage extends Database = Database> {
         mission2.type === 'patrol' &&
         mission2.sys === space.id &&
         (factionDef.pirate ||
+          factionDef.alwaysHostile ||
           FACTIONS[systemsById[mission2.sys].faction].hostile.includes(entity.faction)) &&
         !mission2.done
       ) {
@@ -2397,6 +2471,7 @@ export class Game<Storage extends Database = Database> {
     const session = playerReference.s,
       playerData = session.data;
     if (!playerData) return;
+    if (playerData.story) delete playerData.story.flight;
     this.features.towing.detach(session);
     if (space.sys.arena && this.features.frontier.onArenaDeath(session, space)) return;
     if (session.ent) this.dropEscorts(space, session.ent, 'jump'); // escorts no longer linger after you are destroyed
@@ -2474,6 +2549,7 @@ export class Game<Storage extends Database = Database> {
     const session = playerReference.s,
       playerData = session.data;
     if (!playerData) return;
+    if (!this.features.index.pickup(session, lootItem)) return false;
     if (lootItem.cargo) return this.features.fleetcmd.lootCargo(session, lootItem as CargoLoot); // jettisoned cargo
     if (lootItem.salvage) return this.features.quests.questLoot(session, lootItem); // a quest's salvage
     if (lootItem.ore) {
@@ -3285,12 +3361,27 @@ export class Game<Storage extends Database = Database> {
     for (const [starSystem, list] of Object.entries(bySystem)) {
       const spaceSnapshot = this.spaces[starSystem].snapshot();
       for (const session of list) {
+        const privateSpace = this.spaces[starSystem];
+        const visible = (identifier: number) => {
+          const actor = privateSpace.ships.get(identifier);
+          return (
+            !actor ||
+            ((!actor.story || actor.story === session.id) &&
+              (!actor.storySight || !!session.data.story.flags?.convoy_visible))
+          );
+        };
+        const personalSnapshot = {
+          ...spaceSnapshot,
+          ships: spaceSnapshot.ships.filter((row) => visible(Number(row[0]))),
+          shots: spaceSnapshot.shots.filter((row) => visible(Number(row[5]))),
+          beams: spaceSnapshot.beams.filter((row) => visible(Number(row[0]))),
+        };
         const entity = session.ent;
         if (!entity) {
           this.send(session, {
             t: 'scene',
             sys: starSystem,
-            ...spaceSnapshot,
+            ...personalSnapshot,
             miningRocks: this.features.mining.rocksPayload(this.spaces[starSystem]),
           });
           continue;
@@ -3299,8 +3390,9 @@ export class Game<Storage extends Database = Database> {
           session,
           JSON.stringify({
             t: 'snap',
-            ...spaceSnapshot,
+            ...personalSnapshot,
             attention: attentionPayload(session, this.spaces[starSystem]),
+            nhal: this.features.nhal.status(this.spaces[starSystem], entity),
             miningRocks: this.features.mining.rocksPayload(this.spaces[starSystem]),
             mining: this.features.mining.payload(session, this.spaces[starSystem]),
             industrial: this.features.industrial.payload(session),

@@ -1,3 +1,6 @@
+import { verifyNhal } from './helpers/nhal.ts';
+import { verifyIndexFleet } from './helpers/index-fleet.ts';
+import { verifyIndexWorksite } from './helpers/index-worksite.ts';
 import type { Entity } from '../server/game.ts';
 import { mockSession, mockPlayerData, mockMission } from './helpers/mocks.ts';
 import { legacyStorySystems } from './helpers/legacy-story-systems.ts';
@@ -20,7 +23,7 @@ assert.equal(identifiers.size, 6);
 assert.equal(new Set(SYSTEMS.map((starSystem) => starSystem.id)).size, SYSTEMS.length);
 assert.equal(
   new Set(SYSTEMS.flatMap((starSystem) => starSystem.stellars.map((player) => player.id))).size,
-  Object.keys(STELLARS).length,
+  Object.keys(STELLARS).length - 3,
 );
 // Golden source: untouched v2.8.3 generation, normalized ONLY for intentional Terra display text.
 // Scenes and the one new Vesper branch are additions; every legacy generated property stays exact.
@@ -113,6 +116,9 @@ for (const identifier of ['meridian', 'gloam', 'slagforge'])
 
 const directory = filesystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-eventide-'));
 try {
+  verifyIndexWorksite(directory);
+  verifyNhal();
+  verifyIndexFleet();
   const assets = JSON.parse(
       filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
     ),

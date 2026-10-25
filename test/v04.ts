@@ -74,7 +74,7 @@ while (pendingSystemIds.length) {
     }
 }
 assertCondition(
-  seen.size === SYSTEMS.length,
+  seen.size === Object.keys(systemsById).length,
   'every system can be reached from Concordia (Farside through the Sol Gateway)',
 );
 assertCondition(

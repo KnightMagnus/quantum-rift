@@ -93,6 +93,7 @@ import {
 import { CHAINS, SIDE_STORIES, CONTACT_TITLES } from '../shared/quests.ts';
 import { OFFICER_NAMES, RACE_ROLES, ROLES } from '../shared/hangar.ts';
 import { SPECIALISTS } from '../shared/specialty.ts';
+import { sideStoryAvailable } from '../shared/story-quest-gates.ts';
 import { credits } from '../shared/rules.ts';
 import { occupiedPassengerSeats } from '../shared/passengers.ts';
 
@@ -315,6 +316,7 @@ export const QuestOperations = {
     for (const sideStory of SIDE_STORIES)
       if (
         sideStory.at === position.id &&
+        sideStoryAvailable(sideStory, playerData) &&
         !savedQuests.sides[sideStory.id] &&
         !savedQuests.active['s:' + sideStory.id]
       )
@@ -524,6 +526,7 @@ export const QuestOperations = {
       const sideStory = SIDE_STORIES.find((sideStory) => sideStory.id === options.side);
       if (
         !sideStory ||
+        !sideStoryAvailable(sideStory, playerData) ||
         sideStory.at !== stellarBody?.id ||
         savedQuests.sides[sideStory.id] ||
         savedQuests.active['s:' + sideStory.id]
@@ -534,6 +537,9 @@ export const QuestOperations = {
         this.stats(playerData)!.cargo - this.holdUsed(playerData) < needsOf(sideStory.steps).hold
       )
         return this.toast(session, 'Free two tonnes of hold space for the repair kit first.');
+      if (sideStory.id === 'keepers-vigil') (playerData.story.flags ||= {}).founding_vigil = true;
+      if (sideStory.id === 'rift-harness' && this.stats(playerData)!.free < 5)
+        return this.toast(session, 'Free five outfit space before assembling the Rift Harness.');
       questRecord = {
         qid: 's:' + sideStory.id,
         side: sideStory.id,
@@ -541,7 +547,14 @@ export const QuestOperations = {
         giver: sideStory.giver,
         at: sideStory.at,
         plan: { W: sideStory.at, Wsys: STELLARS[sideStory.at].system, contact: sideStory.giver },
-        steps: sideStory.steps.map((sideStoryStep) => ({ ...sideStoryStep })),
+        steps: sideStory.steps.map((sideStoryStep) => ({
+          ...sideStoryStep,
+          ...(sideStory.id === 'nhal-ossuary' && sideStoryStep.type === 'rescue'
+            ? {
+                beat: `Inside a pod sleeps ${playerData.officers?.find((officer) => ['Ada Castell', 'Tully Longstride', 'Thrix Wingsworn', 'Basalt Harrowmere', 'Seren Of-The-Veil', 'Merchant-Prince Odesh', 'Maren Deepcurrent'].includes(officer.name))?.name || playerData.officers?.[0]?.name || 'a crew member with a familiar face'}. Their hands bear a scar the living crewmate never earned. The pod records an unchosen life, not a passenger to claim.`,
+              }
+            : {}),
+        })),
         step: 0,
         started: Date.now(),
         tries: 0,
@@ -600,7 +613,7 @@ export const QuestOperations = {
           ? questPlan.B
           : questPlan.A);
     const port = questStep.sys
-      ? portsOf(questStep.sys)[0].id
+      ? portsOf(questStep.sys)[0]?.id || quest.at
       : questStep.where === 'W'
         ? questPlan.W
         : questStep.where === 'B'
@@ -675,7 +688,7 @@ export const QuestOperations = {
           ]);
         }
         Object.assign(mission, {
-          points: points2,
+          points: questStep.points ? questStep.points.map((point) => [...point]) : points2,
           reward: Math.round(4000 + dangerMultiplier * 1200),
         });
         break;
@@ -684,18 +697,20 @@ export const QuestOperations = {
         const firstValue = radius() * 6.28,
           distanceSquared = 1200 + radius() * 900;
         Object.assign(mission, {
-          point: [
-            Math.round(Math.cos(firstValue) * distanceSquared),
-            Math.round(Math.sin(firstValue) * distanceSquared),
-          ],
+          point: questStep.point
+            ? [...questStep.point]
+            : [
+                Math.round(Math.cos(firstValue) * distanceSquared),
+                Math.round(Math.sin(firstValue) * distanceSquared),
+              ],
           reward: Math.round(4500 + dangerMultiplier * 1200),
         });
         break;
       }
       case 'rescue':
         Object.assign(mission, {
-          hull: pick(radius, [704, 705, 707]),
-          faction: 'spacer',
+          hull: questStep.hull || pick(radius, [704, 705, 707]),
+          faction: questStep.faction || 'spacer',
           wreckName: questPlan.ship || pick(radius, SHIP_NAMES),
           reward: Math.round(5000 + dangerMultiplier * 1500),
         });
@@ -829,7 +844,14 @@ export const QuestOperations = {
       position = { ...quest.plan, target: questStep.target || quest.plan.target };
     quest.step++;
     quest.tries = 0;
-    if (quest.step >= quest.steps.length) return this.questFinish(session, quest);
+    if (quest.step >= quest.steps.length) {
+      this.questFinish(session, quest);
+      if (savedQuests.active[quest.qid]) {
+        quest.completionPending = quest.at;
+        this.db.touch();
+      }
+      return;
+    }
     const next = this.questStepJob(playerData, quest, quest.step);
     this.send(session, {
       t: 'story',
@@ -850,12 +872,23 @@ export const QuestOperations = {
     const playerData = session.data,
       savedQuests = this.questInit(playerData);
     if (savedQuests.active[quest.qid] !== quest) return;
+    if (quest.side === 'rift-harness' && this.stats(playerData)!.free < 5)
+      return this.toast(
+        session,
+        'Free five outfit space, then return to finish fitting the Rift Harness.',
+      );
     delete savedQuests.active[quest.qid];
     let radius, endText, positionX;
     if (quest.side) {
       positionX = SIDE_STORIES.find((sideStory) => sideStory.id === quest.side)!;
       radius = positionX.reward;
       savedQuests.sides[quest.side] = Date.now();
+      if (quest.side === 'keepers-vigil') (playerData.story.flags ||= {}).founding_vigil = false;
+      if (quest.side === 'keepers-lights') (playerData.story.flags ||= {}).lamps_relit = true;
+      if (quest.side === 'rift-harness') {
+        (playerData.story.flags ||= {}).harness_built = true;
+        playerData.ship.outfits[9021] = 1;
+      }
       endText = positionX.end;
     } else {
       positionX = CHAINS.find((questChain) => questChain.id === quest.chain)!;
@@ -974,6 +1007,18 @@ export const QuestOperations = {
       savedQuests = playerData.quests;
     if (!savedQuests || !savedQuests.active) return;
     for (const questRecord of Object.values(savedQuests.active)) {
+      if (questRecord.completionPending) {
+        if (
+          !session.ent &&
+          playerData.stellar === questRecord.completionPending &&
+          this.stats(playerData)!.free >= 5
+        ) {
+          this.questFinish(session, questRecord);
+          this.you(session);
+          this.landed(session);
+        }
+        continue;
+      }
       if (questRecord.awaitingSeats) {
         if (
           !session.ent &&

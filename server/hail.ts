@@ -101,13 +101,49 @@ export const HailOperations = {
     const announce = (text: string, options: Array<{ k: string; label: string }> = []) =>
       this.send(session, {
         t: 'hail',
-        portraitId: npcPortrait(entity2, playerData.sys),
+        portraitId: entity2.indexWorksite ? undefined : npcPortrait(entity2, playerData.sys),
+        machineHull: entity2.indexWorksite ? Number(entity2.hull) : undefined,
         id: entity2.id,
         who: name,
         sub: factionDef.name || '',
         text,
         opts: options,
       });
+    const realityFlags = playerData.story?.flags;
+    if (
+      realityFlags?.main_ending === 'unsettling' &&
+      entity2.faction !== realityFlags.unsettled_with
+    )
+      return announce(
+        'Your voice reaches me from somewhere beside the channel. I can still trade with you, Captain. I cannot quite see your face.',
+      );
+    if (realityFlags?.breach_started && !realityFlags.main_ending && space.id === 'dimmer') {
+      if (entity2.faction === 'thalassi') {
+        realityFlags.convoy_visible = true;
+        this.db.touch();
+        this.you(session);
+        return announce(
+          'The Spacer convoy is at 1600, minus 900. Their channel is clear to us. Everyone else insists it is empty space. Follow our bearing.',
+        );
+      }
+      if (entity2.faction === 'umbral')
+        return announce(
+          'There is no station at that bearing. There has never been a station there. Put out your lights.',
+        );
+      if (entity2.faction === 'spacer')
+        return announce(
+          'The station is ahead, bright as a dockyard. The Thalassi found us. Can you see where they are pointing?',
+        );
+    }
+    if (entity2.faction === 'ylith' && !realityFlags?.breach_started)
+      return announce(
+        'Captains keep bringing us different accounts of the same voyage. It is said the Core keeps everyone’s version from contradicting the others. Perhaps your next captain will remember this conversation differently.',
+      );
+    if (entity2.indexWorksite)
+      return announce(
+        'Index worksite. Leave marked material alone. Transit and unmarked resources are unrestricted. The Archive records; the Quarry extracts.',
+        [{ k: 'index-take', label: 'Take nearby claimed salvage — Index will attack' }],
+      );
     if (space.root(entity2) === entity)
       return announce(`${name}: standing by, Captain. Give the order.`);
     if (entity2.disabled) return announce(contextualHail(session, entity2, space));
@@ -212,12 +248,29 @@ export const HailOperations = {
     const announce = (text: string) =>
       this.send(session, {
         t: 'hail',
-        portraitId: npcPortrait(entity2, playerData.sys),
+        portraitId: entity2.indexWorksite ? undefined : npcPortrait(entity2, playerData.sys),
+        machineHull: entity2.indexWorksite ? Number(entity2.hull) : undefined,
         id: entity2.id,
         who: name,
         text,
         opts: [],
       });
+    if (entity2.indexWorksite) {
+      if (message.k === 'index-take') {
+        if (space.id === 'glasswake') this.index.take(session, space);
+        else {
+          const parcel = space.loot.find(
+            (item) =>
+              !item.taken &&
+              item.it.indexClaim &&
+              Math.hypot(item.x - session.ent!.x, item.y - session.ent!.y) <= 250,
+          );
+          if (parcel) this.indexFleet.take(space, session.ent!, parcel.it);
+          else this.toast(session, 'No marked salvage within 250 units.');
+        }
+      }
+      return;
+    }
     const group = [root, ...[...space.ships.values()].filter((entity) => entity.owner === root.id)];
     const calm = () => {
       for (const entity3 of group) {
@@ -368,6 +421,10 @@ export const HailOperations = {
             label: `Make a "donation" (${credits(2000 + Math.abs(reputation) * 200)} cr)`,
           },
         ],
+      );
+    if (identifier === 'qstation' && playerData.story?.flags?.main_ending === 'captains_watch')
+      return announce(
+        'Your own voice answers from the heart of the station: I am here. The berth is held. You are clear to land, Captain.',
       );
     return announce(
       pass

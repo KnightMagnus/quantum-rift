@@ -1,5 +1,5 @@
 {
-  "version": "3.3.3",
+  "version": "3.4.0",
   "template": {
     "credits": 30000,
     "sys": "qgate",
@@ -19,6 +19,7 @@
     "storageLots": { "version": 1, "byCommodity": {} },
     "mats": { "alloy": [0, 0, 0, 0, 0], "crystal": [0, 0, 0, 0, 0], "isotope": [0, 0, 0, 0, 0] },
     "rep": {
+      "index": 0,
       "quantum": 10,
       "spacer": 0,
       "lamp": 0,
@@ -34,6 +35,7 @@
       "farside": 0,
       "deep": 0,
       "swarm": 0,
+      "nhal": 0,
       "eclipse": 0
     },
     "missions": [],
@@ -255,201 +257,6 @@
       }
     },
     {
-      "id": 720,
-      "name": "Gnat Skiff Mk II",
-      "loadout": {
-        "hull": 720,
-        "outfits": { "9001": 1 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 2,
-        "name": "Gnat Skiff Mk II",
-        "stockOutfits": { "9001": 1 }
-      }
-    },
-    {
-      "id": 721,
-      "name": "Kestrel Scout Mk II",
-      "loadout": {
-        "hull": 721,
-        "outfits": { "9001": 2 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 4,
-        "name": "Kestrel Scout Mk II",
-        "stockOutfits": { "9001": 2 }
-      }
-    },
-    {
-      "id": 722,
-      "name": "Dory Hauler Mk II",
-      "loadout": {
-        "hull": 722,
-        "outfits": { "9003": 1 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 4,
-        "name": "Dory Hauler Mk II",
-        "stockOutfits": { "9003": 1 }
-      }
-    },
-    {
-      "id": 723,
-      "name": "Cutlass Interceptor Mk II",
-      "loadout": {
-        "hull": 723,
-        "outfits": { "600": 1, "9002": 2 },
-        "ammo": { "332": 8 },
-        "fixed": [],
-        "bonusSpace": 12,
-        "name": "Cutlass Interceptor Mk II",
-        "stockOutfits": { "600": 1, "9002": 2 }
-      }
-    },
-    {
-      "id": 724,
-      "name": "Mule Tender Mk II",
-      "loadout": {
-        "hull": 724,
-        "outfits": { "9003": 2 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 8,
-        "name": "Mule Tender Mk II",
-        "stockOutfits": { "9003": 2 }
-      }
-    },
-    {
-      "id": 725,
-      "name": "Wayfarer Mk II",
-      "loadout": {
-        "hull": 725,
-        "outfits": { "598": 1, "9001": 1 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 7,
-        "name": "Wayfarer Mk II",
-        "stockOutfits": { "598": 1, "9001": 1 }
-      }
-    },
-    {
-      "id": 726,
-      "name": "Lacewing Sail Yacht Mk II",
-      "loadout": {
-        "hull": 726,
-        "outfits": { "9006": 2 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 8,
-        "name": "Lacewing Sail Yacht Mk II",
-        "stockOutfits": { "9006": 2 }
-      }
-    },
-    {
-      "id": 727,
-      "name": "Ore Crawler Mk II",
-      "loadout": {
-        "hull": 727,
-        "outfits": { "9003": 1, "9017": 1 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 6,
-        "name": "Ore Crawler Mk II",
-        "stockOutfits": { "9003": 1, "9017": 1 }
-      }
-    },
-    {
-      "id": 728,
-      "name": "Bramble Gunboat Mk II",
-      "loadout": {
-        "hull": 728,
-        "outfits": { "598": 2, "9004": 2 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 22,
-        "name": "Bramble Gunboat Mk II",
-        "stockOutfits": { "598": 2, "9004": 2 }
-      }
-    },
-    {
-      "id": 729,
-      "name": "Longhaul Barge Mk II",
-      "loadout": {
-        "hull": 729,
-        "outfits": { "9003": 2 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 8,
-        "name": "Longhaul Barge Mk II",
-        "stockOutfits": { "9003": 2 }
-      }
-    },
-    {
-      "id": 730,
-      "name": "Halberd Frigate Mk II",
-      "loadout": {
-        "hull": 730,
-        "outfits": { "600": 2, "9002": 2, "9004": 1 },
-        "ammo": { "332": 24 },
-        "fixed": [],
-        "bonusSpace": 24,
-        "name": "Halberd Frigate Mk II",
-        "stockOutfits": { "600": 2, "9002": 2, "9004": 1 }
-      }
-    },
-    {
-      "id": 731,
-      "name": "Pilgrim Liner Mk II",
-      "loadout": {
-        "hull": 731,
-        "outfits": { "598": 2, "9003": 1 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 14,
-        "name": "Pilgrim Liner Mk II",
-        "stockOutfits": { "598": 2, "9003": 1 }
-      }
-    },
-    {
-      "id": 732,
-      "name": "Hive Tender Mk II",
-      "loadout": {
-        "hull": 732,
-        "outfits": { "598": 2, "602": 1 },
-        "ammo": { "333": 4 },
-        "fixed": [],
-        "bonusSpace": 30,
-        "name": "Hive Tender Mk II",
-        "stockOutfits": { "598": 2, "602": 1 }
-      }
-    },
-    {
-      "id": 733,
-      "name": "Tempest Destroyer Mk II",
-      "loadout": {
-        "hull": 733,
-        "outfits": { "600": 2, "9005": 2 },
-        "ammo": { "332": 30 },
-        "fixed": [[143, 2, 0]],
-        "bonusSpace": 36,
-        "name": "Tempest Destroyer Mk II",
-        "stockOutfits": { "600": 2, "9005": 2 }
-      }
-    },
-    {
-      "id": 734,
-      "name": "Bastion Dreadnought Mk II",
-      "loadout": {
-        "hull": 734,
-        "outfits": { "599": 1, "600": 2, "9005": 4 },
-        "ammo": { "332": 40 },
-        "fixed": [],
-        "bonusSpace": 68,
-        "name": "Bastion Dreadnought Mk II",
-        "stockOutfits": { "599": 1, "600": 2, "9005": 4 }
-      }
-    },
-    {
       "id": 735,
       "name": "Halo Surveyor",
       "loadout": {
@@ -580,84 +387,6 @@
       }
     },
     {
-      "id": 745,
-      "name": "Cutlass Interceptor Mk III",
-      "loadout": {
-        "hull": 745,
-        "outfits": { "600": 1, "9002": 3 },
-        "ammo": { "332": 8 },
-        "fixed": [],
-        "bonusSpace": 15,
-        "name": "Cutlass Interceptor Mk III",
-        "stockOutfits": { "600": 1, "9002": 3 }
-      }
-    },
-    {
-      "id": 746,
-      "name": "Halberd Frigate Mk III",
-      "loadout": {
-        "hull": 746,
-        "outfits": { "600": 2, "9002": 3, "9004": 1 },
-        "ammo": { "332": 24 },
-        "fixed": [],
-        "bonusSpace": 27,
-        "name": "Halberd Frigate Mk III",
-        "stockOutfits": { "600": 2, "9002": 3, "9004": 1 }
-      }
-    },
-    {
-      "id": 747,
-      "name": "Bramble Gunboat Mk III",
-      "loadout": {
-        "hull": 747,
-        "outfits": { "598": 3, "9004": 2 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 27,
-        "name": "Bramble Gunboat Mk III",
-        "stockOutfits": { "598": 3, "9004": 2 }
-      }
-    },
-    {
-      "id": 748,
-      "name": "Hive Tender Mk III",
-      "loadout": {
-        "hull": 748,
-        "outfits": { "598": 2, "602": 2 },
-        "ammo": { "333": 4 },
-        "fixed": [],
-        "bonusSpace": 50,
-        "name": "Hive Tender Mk III",
-        "stockOutfits": { "598": 2, "602": 2 }
-      }
-    },
-    {
-      "id": 749,
-      "name": "Tempest Destroyer Mk III",
-      "loadout": {
-        "hull": 749,
-        "outfits": { "600": 2, "9005": 2 },
-        "ammo": { "332": 30 },
-        "fixed": [[143, 3, 0]],
-        "bonusSpace": 36,
-        "name": "Tempest Destroyer Mk III",
-        "stockOutfits": { "600": 2, "9005": 2 }
-      }
-    },
-    {
-      "id": 750,
-      "name": "Bastion Dreadnought Mk III",
-      "loadout": {
-        "hull": 750,
-        "outfits": { "599": 1, "600": 2, "9005": 5 },
-        "ammo": { "332": 40 },
-        "fixed": [],
-        "bonusSpace": 80,
-        "name": "Bastion Dreadnought Mk III",
-        "stockOutfits": { "599": 1, "600": 2, "9005": 5 }
-      }
-    },
-    {
       "id": 751,
       "name": "Sable Okoro",
       "loadout": {
@@ -733,45 +462,6 @@
         "bonusSpace": 43,
         "name": "Tomas Eriksen-Kai",
         "stockOutfits": { "598": 3, "599": 1, "602": 1 }
-      }
-    },
-    {
-      "id": 757,
-      "name": "Armada Frigate",
-      "loadout": {
-        "hull": 757,
-        "outfits": { "600": 2, "9002": 3, "9004": 1 },
-        "ammo": { "332": 24 },
-        "fixed": [],
-        "bonusSpace": 27,
-        "name": "Armada Frigate",
-        "stockOutfits": { "600": 2, "9002": 3, "9004": 1 }
-      }
-    },
-    {
-      "id": 758,
-      "name": "Armada Destroyer",
-      "loadout": {
-        "hull": 758,
-        "outfits": { "600": 2, "9005": 2 },
-        "ammo": { "332": 30 },
-        "fixed": [[143, 3, 0]],
-        "bonusSpace": 36,
-        "name": "Armada Destroyer",
-        "stockOutfits": { "600": 2, "9005": 2 }
-      }
-    },
-    {
-      "id": 759,
-      "name": "Armada Carrier",
-      "loadout": {
-        "hull": 759,
-        "outfits": { "598": 2, "602": 2 },
-        "ammo": { "333": 4 },
-        "fixed": [],
-        "bonusSpace": 50,
-        "name": "Armada Carrier",
-        "stockOutfits": { "598": 2, "602": 2 }
       }
     },
     {

@@ -164,7 +164,7 @@ const ARC_TEXT: Record<string, ArcTemplate> = {
         text: 'The courier leak led somewhere: three Hollow ships are running Concord codes out of {s2}. The Admiralty wants them gone, quietly.',
         brief: 'Destroy the three Hollow ships using stolen codes in {s2}, then return to {home}.',
         progress: 'One of the code-runners breaks apart.',
-        done: 'The stolen codes go dark one by one. In the Admiralty, someone is quietly arrested.',
+        done: 'The stolen codes go dark one by one. In the Admiralty, someone is quietly arrested. One code opens the sealed lower decks of Quantum Station, where the Core sits. The Ledger Thief wanted to know what was down there.',
       },
       {
         type: 'boss',
@@ -189,7 +189,7 @@ const ARC_TEXT: Record<string, ArcTemplate> = {
         title: 'Spare Parts',
         text: 'The Free Spacers\' guild-mother hands you a manifest. "A drive coil, for a family stranded at {dest}. Spacers look after Spacers."',
         brief: 'Deliver the drive coil to {dest} ({s1}).',
-        done: 'A whole family cheers as the coil is fitted. The youngest makes you a crooked paper medal.',
+        done: 'A whole family cheers as the coil is fitted. The youngest makes you a crooked paper medal. Their old drive coil burned out when the lane moved under them.',
       },
       {
         type: 'board',
@@ -211,7 +211,8 @@ const ARC_TEXT: Record<string, ArcTemplate> = {
         title: 'Gallows Jack',
         text: 'The raider who has been picking off Spacer haulers, Gallows Jack, has been spotted in {s2}. The guild has had enough.',
         brief: 'Destroy Gallows Jack in {s2}, then return to {home}.',
-        progress: 'Gallows Jack goes down in flames.',
+        progress:
+          'Gallows Jack goes down in flames. His route log lists a system on no chart. Nobody comments on it.',
         done: 'Tully Longstride, the guild\'s best navigator, signs on with you. "Anyone who does that much for the Spacers deserves a pilot who knows every back-lane." She brings Pathfinder charts.',
       },
     ],
@@ -245,7 +246,7 @@ const ARC_TEXT: Record<string, ArcTemplate> = {
         faction: 'swarm',
         bossName: 'The Brood-Mother',
         title: 'The Brood-Mother',
-        text: 'At the heart of the feral swarm in {s2} is a brood-mother, vast and maddened. The Vashari cannot bring themselves to kill her. They ask you to.',
+        text: 'At the heart of the feral swarm in {s2} is a brood-mother, vast and maddened. Her drones heard a song from the Deep, and passed it back to her. The Vashari cannot bring themselves to kill her. They ask you to.',
         brief: 'Destroy the Feral Brood-Mother in {s2}, then return to {home}.',
         progress: "The Brood-Mother's song ends.",
         done: 'Thrix Wingsworn, a Vashari gunner, steps forward. "I will fly with the one who freed our mother," he says. The Swarmbreaker plans are yours.',
@@ -262,7 +263,7 @@ const ARC_TEXT: Record<string, ArcTemplate> = {
         title: 'The Deep Core',
         text: 'A Korrund forge-elder slides a heavy crate across the table. "A core sample from our deepest mine. The assayers at {dest} must see it. Do not drop it."',
         brief: 'Carry the core sample to {dest} ({s1}).',
-        done: 'The assayers go very quiet when they open the crate. Then they start shouting, happily, in three languages.',
+        done: 'The assayers go very quiet when they open the crate. Then they start shouting, happily, in three languages. The sample is worked material, like scaffolding, not rock. Basalt Harrowmere keeps a piece.',
       },
       {
         type: 'kill',
@@ -319,7 +320,8 @@ const ARC_TEXT: Record<string, ArcTemplate> = {
         title: 'The Veil-Drinker',
         text: 'Something larger hunts in {s2} now, an Umbral ship the seers call the Veil-Drinker.',
         brief: 'Destroy the Veil-Drinker in {s2}, then return to {home}.',
-        progress: 'The Veil-Drinker breaks apart.',
+        progress:
+          'The Veil-Drinker breaks apart. Its last transmission says: "You don’t know what we’re hiding you from."',
         done: 'Seren Of-The-Veil, an Ylith scout, chooses you. "I saw this," she says. "I have seen what comes next." The Nightglass plans are a gift.',
       },
     ],
@@ -355,7 +357,8 @@ const ARC_TEXT: Record<string, ArcTemplate> = {
         title: 'The Defaulter',
         text: 'The man behind the debts, known only as the Defaulter, owes the Sarn a fortune and waits in {s2} with a warship.',
         brief: 'Destroy the Defaulter in {s2}, then return to {home}.',
-        progress: "The Defaulter's account is closed.",
+        progress:
+          "The Defaulter's account is closed. His books list debts paid in events that never happened, in a hand that is not his. The broker files them without comment.",
         done: 'Merchant-Prince Odesh signs on as your quartermaster. "I invest in winners," he says, and hands over Vanguard plans as a signing bonus.',
       },
     ],
@@ -381,7 +384,7 @@ const ARC_TEXT: Record<string, ArcTemplate> = {
         text: 'Two Thalassi song-ships went silent in {s2}. Their crews may still be alive.',
         brief: 'Board the two silent song-ships in {s2} (choose Rescue), then return to {home}.',
         progress: 'The song-ship hums back to life.',
-        done: 'The rescued singers sing for you, and the whole station stops to listen.',
+        done: 'The rescued singers sing for you, and the whole station stops to listen. Before the Wrecker found them, something sang back on their channel. Maren Deepcurrent keeps the recording.',
       },
       {
         type: 'boss',

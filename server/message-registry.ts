@@ -22,6 +22,9 @@ export type NetworkMessage = {
   /** Target entity or item identifier. */
   id?: string | number;
 
+  /** Story decision, validated against saved prerequisites by the story owner. */
+  choice?: string;
+
   /** Faction identifier. */
   fac?: string;
 

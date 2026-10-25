@@ -54,6 +54,10 @@ export type QuestChain = {
   end: string;
 };
 export type SideStoryStep = {
+  /** Authored survey points, in system coordinates. */
+  points?: number[][];
+  /** Authored recovery location, in system coordinates. */
+  point?: [number, number];
   need?: number;
   pax?: number;
 
@@ -109,6 +113,14 @@ export type SideStoryReward = {
   bp?: number;
 };
 export type SideStory = {
+  /** All listed side-story IDs must be completed before this offer exists. */
+  afterSides?: string[];
+  /** Main-story completion prerequisites, checked both on offer and acceptance. */
+  afterStory?: string[];
+  /** A saved choice required before this side story can start. */
+  flag?: { key: 'main_ending' | 'd2'; value: string };
+  /** Translated expedition fragment count prerequisite. */
+  fragments?: number;
   /** Unique side story identifier. */
   id: string;
 
@@ -157,6 +169,8 @@ export type QuestRecord = {
   contact?: string;
   lvl?: number;
   reward?: QuestReward;
+  /** A fully paid assembly waits here without minting another job. */
+  completionPending?: string;
   awaitingSeats?: { at: string; pax: number; title: string; text: string };
 };
 // Quantum Rift: questlines. Two kinds:
@@ -440,7 +454,43 @@ export const CHAINS: QuestChain[] = [
 /**
  * Handcrafted narrative side quest storylines starting at specific worlds.
  */
+import { STORY_QUESTS } from './story-quests.ts';
 export const SIDE_STORIES: SideStory[] = [
+  ...STORY_QUESTS,
+  {
+    id: 'index-last-survey',
+    name: 'The Last Survey',
+    at: 'glasswake-foundry',
+    giver: 'Shardwright survey technician',
+    intro:
+      'They have surveyed this fragment nine times. They are preparing to do it again. A foundry technician lays nine identical charts on the counter. "The Index leave our ships alone. Leave their marked rock alone and they will leave yours alone, too. Can you watch a pass, then recover the record their Archive has set aside? No shooting. We have tried asking loudly."',
+    steps: [
+      {
+        type: 'survey',
+        sys: 'glasswake',
+        title: 'Watch the worksite',
+        points: [
+          [850, 250],
+          [1750, 250],
+          [1300, 1100],
+        ],
+        brief:
+          'Observe the marked Index worksite in Glasswake from three survey points. Leave marked material alone; no combat is needed.',
+        beat: 'The Samplers pass over the same exposed layers. The Quarry follows. The Archive records a sky that does not match any foundry chart. Its next transmission marks one damaged record for collection.',
+      },
+      {
+        type: 'salvage',
+        sys: 'glasswake',
+        title: 'A record set aside',
+        point: [1600, 300],
+        brief:
+          'Collect the damaged survey record set aside by the Archive near the worksite. This record is freely offered, not claimed salvage.',
+        beat: 'The record names no maker. Its oldest stars were catalogued long before the Index reached Glasswake. At the end, one instruction repeats: observe.',
+      },
+    ],
+    end: 'The technician files a tenth chart beside the others. "Different sky. Same fragment. I would call that a mistake, but they have rather more practice than we do." The Archive acknowledges the recovered record. No weapon has to be fired.',
+    reward: { credits: 30000 },
+  },
   {
     id: 'lantern',
     name: 'The Last Lantern',
@@ -569,7 +619,7 @@ export const SIDE_STORIES: SideStory[] = [
         sys: 'emberlight',
         title: 'Recover her flight recorder',
         brief: 'Fly to the transponder in Emberlight and recover the old flight recorder.',
-        beat: "The recorder's last minutes show her holding off three raiders so her squadron could escape. The raiders' leader still flies out of Gloam.",
+        beat: "The recorder's last minutes show her holding off three raiders so her squadron could escape. The raiders' leader still flies out of Gloam. The recorder also holds one minute of flight that never happened.",
       },
       {
         type: 'bounty',
@@ -620,7 +670,7 @@ export const SIDE_STORIES: SideStory[] = [
         cid: 'luxury',
         title: 'Bait for a collector',
         brief: 'Carry a forged "lost archive" to Terra to draw the collector out.',
-        beat: 'The collector takes the bait, and the Concord Watch takes the collector. The stolen records are recovered.',
+        beat: 'The collector takes the bait, and the Concord Watch takes the collector. The stolen records are recovered. Among them are old-sky charts from before the Rift: stars that match nothing here, and early Concord surveys of the Core, filed and forgotten.',
       },
       {
         type: 'cargo',
@@ -640,7 +690,7 @@ export const SIDE_STORIES: SideStory[] = [
     at: 'earth',
     giver: 'Dr. Mara Feld',
     intro:
-      'An astronomer with ink-stained fingers spreads star charts across the bar. "Since the Gateway opened, something on the far side has been sending a signal back through it. Every eleven hours, like a heartbeat. I need someone to go through and listen."',
+      'An astronomer with ink-stained fingers spreads star charts across the bar. "Since we first got a ship through the Gateway, something on the far side has been sending a signal back through it. Every eleven hours, like a heartbeat. I need someone to go through and listen."',
     steps: [
       {
         type: 'survey',

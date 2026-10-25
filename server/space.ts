@@ -1,3 +1,4 @@
+import type { IndexWorksite } from './index-worksite.ts';
 import type { RawStellarBody } from '../shared/galaxy.ts';
 import type { GradeLots } from '../shared/cargo-contracts.ts';
 import type { GameAssets, ShipLoadout, ShipStatsBonus, WeaponConfig } from '../shared/rules.ts';
@@ -48,6 +49,12 @@ export interface EntityFeatureState {
   story?: number;
   storyBoard?: boolean;
   storyAlly?: boolean;
+  /** A personal convoy cannot be found until a Thalassi contact gives its bearing. */
+  storySight?: 'thalassi';
+  /** The choir holds a truthful channel rather than attacking the Dreamer. */
+  storySinger?: boolean;
+  /** Logical slot, parent slot, transition milliseconds and surviving-blade bitmask. */
+  indexState?: [number, number, number, number];
   holdAt?: { x: number; y: number };
   home?: { x: number; y: number };
   wreckT?: number;
@@ -72,6 +79,12 @@ export interface EntityFeatureState {
   holdoutBoss?: boolean;
 }
 export type Entity = EntityFeatureState & {
+  /** Member of the bounded, neutral Index workgroup. */
+  indexWorksite?: boolean;
+  /** Carrying parent, separate from combat root ownership. */
+  indexParent?: number;
+  /** Persisted finite roster position. */
+  indexSlot?: number;
   /** Unique entity simulation ID. */
   id: number;
 
@@ -473,6 +486,10 @@ export type Beam = {
   until: number;
 };
 export type LootItem = {
+  /** Explicit Index salvage claim; automatic collectors must skip it. */
+  indexClaim?: boolean;
+  /** Captain who explicitly chose to take this parcel. */
+  indexTakenBy?: string;
   lots?: GradeLots;
   lvl?: number;
 
@@ -645,6 +662,8 @@ export class Space {
    * Active ships, escorts, drones, and traffic in this system.
    */
   declare ships: Map<number, Entity>;
+  /** Transient identities of the initial neutral Index worksite. */
+  declare indexWorksite?: IndexWorksite;
 
   /** Active ballistic and guided weapon projectiles. */
   declare shots: Shot[];
@@ -725,6 +744,7 @@ export class Space {
     // asteroids and gas pockets in the system's mining fields: they break into ore that ships scoop up, and regrow
     this.rocks = [];
     this.game.features.mining.openSpace(this);
+    this.game.features.index.open(this);
   }
   /**
    * Generates compact serialized state array of asteroid field rocks for client rendering.
@@ -1080,6 +1100,13 @@ export class Space {
 
   /** Checks whether attacks can connect and damage target. */
   canHit(attacker: Entity, rightEntity: Entity): boolean {
+    const sourceCaptain = this.root(attacker).player?.id;
+    const targetCaptain = this.root(rightEntity).player?.id;
+    if (
+      (rightEntity.story && sourceCaptain && rightEntity.story !== sourceCaptain) ||
+      (attacker.story && targetCaptain && attacker.story !== targetCaptain)
+    )
+      return false;
     if (attacker.industrialRoot || rightEntity.industrialRoot) return false;
     if (
       (attacker.miningEncounter || rightEntity.miningEncounter) &&
@@ -1135,6 +1162,26 @@ export class Space {
       rightEntity.dead
     )
       return false;
+    const firstCaptain = this.root(leftEntity).player;
+    const secondCaptain = this.root(rightEntity).player;
+    if (
+      (leftEntity.story && secondCaptain && leftEntity.story !== secondCaptain.id) ||
+      (rightEntity.story && firstCaptain && rightEntity.story !== firstCaptain.id)
+    )
+      return false;
+    if (
+      (firstCaptain?.s.data.story?.flags?.d2 === 'umbral' && rightEntity.faction === 'umbral') ||
+      (secondCaptain?.s.data.story?.flags?.d2 === 'umbral' && leftEntity.faction === 'umbral')
+    ) {
+      if (!leftEntity.aggro.has(rightEntity.id) && !rightEntity.aggro.has(leftEntity.id))
+        return false;
+    }
+    const nhalHostility = this.game.features.nhal.allow(this, leftEntity, rightEntity);
+    if (nhalHostility !== null) return nhalHostility;
+    const fleetHostility = this.game.features.indexFleet.allow(this, leftEntity, rightEntity);
+    if (fleetHostility !== null) return fleetHostility;
+    const indexHostility = this.game.features.index.allow(this, leftEntity, rightEntity);
+    if (indexHostility !== null) return indexHostility;
     const scoped =
       leftEntity.miningEncounter || rightEntity.miningEncounter
         ? this.game.features.pressure.allow(this, leftEntity, rightEntity)
@@ -1190,6 +1237,9 @@ export class Space {
    */
   spawnTraffic(initial?: boolean): Entity | null | void {
     const starSystem = this.sys;
+    if (['table', 'quantum-rift', 'beyond-rift', 'founding-vigil'].includes(starSystem.id))
+      return null;
+    if (starSystem.faction === 'deep') return this.game.features.nhal.spawnTraffic(this, initial);
     if (
       (starSystem.faction === 'vashari' || starSystem.faction === 'frontier') &&
       Math.random() < 0.14 * (this.m ? this.m.swarm : 1)
@@ -1614,6 +1664,16 @@ export class Space {
    */
   ai(entity: Entity): void {
     if (entity.player) return;
+    if (entity.storySinger) {
+      entity.inp = {};
+      entity.fireAt = null;
+      entity.target = null;
+      this.steer(entity, entity.home!.x, entity.home!.y, false);
+      return;
+    }
+    if (this.game.features.nhal.ai(this, entity)) return;
+    if (this.game.features.indexFleet.ai(this, entity)) return;
+    if (this.game.features.index.ai(this, entity)) return;
     entity.think -= tickDuration;
     const owner = entity.owner ? this.ships.get(entity.owner) : null;
     if (entity.ai === 'escort' && !owner)
@@ -1806,7 +1866,8 @@ export class Space {
           let best = null,
             body = 1800;
           for (const floatingLoot of this.loot) {
-            if (floatingLoot.taken) continue;
+            if (floatingLoot.taken || floatingLoot.it.indexClaim || floatingLoot.it.indexTakenBy)
+              continue;
             const distanceSquared = Math.hypot(
               floatingLoot.x - entity.x,
               floatingLoot.y - entity.y,
@@ -2420,6 +2481,9 @@ export class Space {
     entity2?: Entity | null,
     _unusedIon?: number | boolean,
   ): [number, number, number] | void {
+    const fleetScale = this.game.features.indexFleet.damageScale(this, entity);
+    angleDelta *= fleetScale;
+    shieldDamage *= fleetScale;
     if (entity.industrialRoot) return [0, 0, entity2?.id || 0]; // Utility collectors cannot tank combat or grant rewards.
     if (
       entity2 &&
@@ -2456,6 +2520,9 @@ export class Space {
     entity.hitT = this.t;
     if (entity2) entity.lastHitBy = entity2.id;
     const done = Math.max(0, shield2 - entity.shield) + Math.max(0, armor2 - entity.armor);
+    if (done > 0 && entity2) this.game.features.nhal.damaged(this, entity, entity2, done);
+    if (done > 0 && entity2) this.game.features.indexFleet.damaged(this, entity, entity2, done);
+    if (done > 0 && entity2) this.game.features.index.damaged(this, entity, entity2);
     // Incidental NPC fire does not make an overlooked captain's wing initiate
     // retaliation and thereby attract the entire faction. Deliberate outgoing
     // damage still creates normal visit-local hostility and reputation costs.
@@ -2463,6 +2530,8 @@ export class Space {
       done > 0 &&
       srcRoot &&
       srcRoot !== this.root(entity) &&
+      !entity.indexWorksite &&
+      !srcRoot.indexWorksite &&
       !this.newcomerTruce(entity2!, entity)
     ) {
       const victim = this.root(entity),
@@ -2473,7 +2542,14 @@ export class Space {
       if (!entity.player && !entity.target && entity.ai !== 'flee') entity.target = srcRoot;
       if (first && !entity.owner) this.callHelp(entity, srcRoot);
     }
-    if (srcRoot && srcRoot.player && !entity.player) this.game.onHit(srcRoot.player, entity, this);
+    if (
+      srcRoot &&
+      srcRoot.player &&
+      !entity.player &&
+      !entity.indexWorksite &&
+      entity.faction !== 'nhal'
+    )
+      this.game.onHit(srcRoot.player, entity, this);
     if (entity.boss) this.game.features.fronts.onBossDamage(entity, srcRoot, done);
     if (
       srcRoot &&
@@ -2535,6 +2611,18 @@ export class Space {
       this.game.onPlayerDeath(entity.player, this, entity2);
       return;
     }
+    if (this.game.features.nhal.killed(this, entity, entity2)) {
+      if (entity2?.player)
+        this.game.onKill(
+          entity2.player,
+          entity,
+          this,
+          (entity.lastHitBy && entity.lastHitBy !== entity2.id) as boolean | undefined,
+        );
+      return;
+    }
+    if (this.game.features.indexFleet.killed(this, entity, entity2)) return;
+    if (entity.indexWorksite) return; // Worksite machines never grant generic bounty or drone loot.
     if (entity.industrialRoot) return; // No farmable salvage, bounty or replacement ammo.
     if (entity.boss) this.game.features.fronts.onBossKilled(entity, this);
     if (entity.convoyOf) this.game.features.fronts.onConvoyLost(entity);
@@ -2786,6 +2874,12 @@ export class Space {
       this.game.features.industrial.industrialTick(this, tickDuration);
     this.game.features.mining.endTick(this);
     this.game.features.pressure.pressureTick(this);
+    this.game.features.index.indexTick(this);
+    this.game.features.indexFleet.fleetTick(this);
+    this.game.features.nhal.nhalTick(this);
+    for (const session of this.game.sessions.values())
+      if (session.data?.sys === this.id)
+        this.game.features.story.storyTick(session, this, tickDuration);
     for (const floatingLoot of this.loot) {
       floatingLoot.x += floatingLoot.vx * tickDuration;
       floatingLoot.y += floatingLoot.vy * tickDuration;
@@ -2844,6 +2938,8 @@ export class Space {
           : entity.name || null,
         entity.owner || 0,
         entity.pw || 0,
+        entity.player?.s.data.story?.flags?.main_ending || null,
+        ...(entity.indexState || []),
       ]);
     }
     const shots = this.shots.map((shot) => [
@@ -2852,6 +2948,7 @@ export class Space {
       Math.round(shot.vx),
       Math.round(shot.vy),
       shot.w,
+      shot.owner,
     ]);
     const beams = this.beams.map((beam) => [
       beam.id,
@@ -2864,6 +2961,7 @@ export class Space {
       Math.round(floatingLoot.x),
       Math.round(floatingLoot.y),
       floatingLoot.kind,
+      ...(floatingLoot.it.indexClaim ? [1] : []),
     ]);
     const events2 = this.events;
     this.events = [];
