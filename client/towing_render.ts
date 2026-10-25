@@ -1,4 +1,5 @@
-import { miningPanelState, type MiningPanelState } from './mining-panel-state.ts';
+import type { MiningPanelState } from './mining-panel-state.ts';
+import { miningPanelState } from './mining-panel-state.ts';
 interface TowObject {
   id: number;
   status: string;
