@@ -63,8 +63,19 @@ export type TowingAction = {
   /** Delivery destination, permitted only for delivery. */
   port?: string;
 };
+/** Mobile industrial controls; production amounts remain server-owned. */
+export type IndustrialAction = {
+  /** Fixed route discriminator. */
+  t: 'industrial';
+  /** Requested mode toggle, recipe selection or all-off command. */
+  op: 'sweep' | 'harvest' | 'smelter' | 'recipe' | 'off';
+  /** Mobile recipe selector; the service checks its catalog. */
+  recipe?: string;
+  /** Exact input grade selector; the service checks supported grades. */
+  grade?: string;
+};
 /** Migrated economic request families; not a claim that all routes are validated. */
-export type EconomicAction = TradeAction | RefineryAction | TowingAction;
+export type EconomicAction = TradeAction | RefineryAction | TowingAction | IndustrialAction;
 
 /** Plain decoded JSON object, excluding arrays and custom prototypes. */
 export function wireRecord(value: unknown): value is Record<string, unknown> {
@@ -188,5 +199,24 @@ export function parseTowingAction(value: unknown): TowingAction | null {
     validTowingRequest(value) &&
     validTowingAuthority(value)
     ? (value as TowingAction)
+    : null;
+}
+
+/** Bound direct industrial calls without requiring their transport discriminator. */
+export function validIndustrialRequest(value: unknown): boolean {
+  return (
+    wireRecord(value) &&
+    fields(value, ['t', 'op', 'recipe', 'grade']) &&
+    (value.t === undefined || value.t === 'industrial') &&
+    typeof value.op === 'string' &&
+    ['sweep', 'harvest', 'smelter', 'recipe', 'off'].includes(value.op) &&
+    (value.recipe === undefined || text(value.recipe)) &&
+    (value.grade === undefined || text(value.grade))
+  );
+}
+/** Parse industrial envelopes without changing selectors or granting production. */
+export function parseIndustrialAction(value: unknown): IndustrialAction | null {
+  return wireRecord(value) && value.t === 'industrial' && validIndustrialRequest(value)
+    ? (value as IndustrialAction)
     : null;
 }

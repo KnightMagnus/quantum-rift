@@ -194,7 +194,7 @@ JSON or prove every branch.
 
 ## Action-routing boundary
 
-Economic request shapes live in `shared/wire-actions.ts`; refinery and towing
+Economic request shapes live in `shared/wire-actions.ts`; refinery, towing and industrial
 services reuse those validators for direct calls as well as transport dispatch.
 `shared/refinery-wire.ts` owns refinery payload types without client/server
 implementation dependencies. `shared/wire-payloads.ts` bounds economic receive
