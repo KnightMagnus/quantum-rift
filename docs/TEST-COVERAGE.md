@@ -2,7 +2,7 @@
 
 ## Economic wire boundary
 
-`shared/wire-actions.ts` owns trade, refinery, mining-order and towing request
+`shared/wire-actions.ts` owns trade, refinery, mining-order, towing and industrial request
 shapes. Both local sockets and native matches reach the same Game routes and
 service validators. Auth, flood, checkpoint freeze and activity gates remain in
 Game; ownership, pricing, location, receipts and settlement remain in services.
@@ -19,6 +19,19 @@ Solo, friend and native connections. Compiler fixtures reject invalid economic
 request discriminators and non-scalar quantities. Independent routing traces
 remain unchanged.
 
+Industrial controls validate plain records, operation names and bounded text
+selectors before initializing ship state. Recipe/catalog, exact-grade, flight,
+hull, pause, freeze and harvest prerequisites remain server-owned. Direct calls
+may omit `t`; `off` retains its legacy behavior of ignoring bounded text selectors.
+`wire-contracts.ts` checks malformed roots, null/array/object/nonfinite selectors,
+oversized text and forged production fields against both initialized and missing
+ship state, comparing the full saved player and world before and after each
+request. It also checks valid toggles, exact-grade selection, all-off behavior and
+flight/economic denials. `dredge-network.ts` follows malformed local packets with
+successful harvest/off commands. `nakama-network.ts` sends malformed industrial
+packets from an ordinary fresh captain; this covers native denial/continued
+service, not successful native Dredge controls or complete transport parity.
+
 `shared/refinery-wire.ts` contains implementation-independent refinery payload
 types. `shared/wire-payloads.ts` validates complete quote field shapes and the
 `you`/`landed` economic headers, with finite-number, depth, string, collection and
@@ -27,6 +40,22 @@ runtime schemas for player state or port offers. The client retains inferred
 application types for those nested structures; other action families and server
 payloads still need migration. Static typing and bounded traversal do not prove
 nested semantic validity or authorize client economic decisions.
+
+## Native wall-clock performance
+
+`performance-native.ts` belongs to `performance-health` and runs disposable native
+Nakama/Goja, PostgreSQL and SDK sockets. Its 32-second concentrated flight case
+observes real input progress and movement, bounded packet/error retention,
+900-tick numeric health summaries, authoritative reconnect, actual checkpoints,
+process restart and restored nondefault captain markers. It verifies invalid
+workload/CLI limits before resource creation, fixed numeric health extraction and
+cleanup after a real post-join injected failure. Numeric reports exclude payloads,
+identifiers, credentials and exception contents. The companion
+`tools/performance-native.ts` defaults to 60 measured seconds for repeatable host
+observations. No latency or production-capacity threshold is asserted; client
+seeding is not server determinism. Distributed/combat/mining native workloads,
+Internet conditions, browser rendering and multihour soak coverage remain absent.
+See [PERFORMANCE.md](PERFORMANCE.md) for pacing, retention and timing semantics.
 
 ## Development tooling
 
@@ -282,7 +311,7 @@ owner. Legacy `vNN` names are retained for traceability, and now run in CI.
 | `sleep-traffic-ai`        | `server/space.ts`                                                                                                                | [v04.ts](../test/v04.ts), [v201.ts](../test/v201.ts), [v23.ts](../test/v23.ts), [v24.ts](../test/v24.ts), [sim.ts](../test/sim.ts)                                                                                                 | Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `cargo-grade-ledger`      | `shared/cargo-lots.ts`, `shared/cargo-contracts.ts`                                                                              | [cargo-lots.ts](../test/cargo-lots.ts)                                                                                                                                                                                             | Versioned/idempotent cargo + storage migration, exact grade denial, immutable single-use withdrawals, atomic bounded transfers, fixed partial pickups, seeded per-grade conservation and real DB roundtrip. Pure prerequisite; production writer integration is separate.                                                                                                                                                                                                                                                                                                                                                  |
 | `mining-existing`         | `server/space.ts`, `server/game.ts`                                                                                              | [v04.ts](../test/v04.ts), [v05.ts](../test/v05.ts), [v252.ts](../test/v252.ts)                                                                                                                                                     | Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Staged cutting/survey coverage is listed separately under `mining-cutting`.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `station-progression`     | `server/game.ts`, `server/hangar.ts`                                                                                             | [sim.ts](../test/sim.ts), [v05.ts](../test/v05.ts), [v26.ts](../test/v26.ts)                                                                                                                                                       | Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `station-progression`     | `server/game.ts`, `server/hangar.ts`, `server/station-progress.ts`                                                               | [sim.ts](../test/sim.ts), [v05.ts](../test/v05.ts), [v26.ts](../test/v26.ts), [station-progress.ts](../test/station-progress.ts)                                                                                                   | Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates. Timers preserve maturity/caps, completion-before-queue order, live providers and you/idle/route/save integration.                                                                                                                                                                                                                                                                                                                                                                                            |
 | `market-materials`        | `server/game.ts`, `shared/rules.ts`                                                                                              | [v25.ts](../test/v25.ts), [v203.ts](../test/v203.ts), [ship-economy.ts](../test/ship-economy.ts), [core-actions.ts](../test/core-actions.ts), [network-systems.ts](../test/network-systems.ts)                                     | Trade buy/sell/depth/cargo/credit limits, material buy/sell and dock-only/insufficient-credit guards.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `missions-passengers`     | `server/game.ts`, `server/fronts.ts`                                                                                             | [v06.ts](../test/v06.ts), [v12.ts](../test/v12.ts), [passengers.ts](../test/passengers.ts), [passenger-quests.ts](../test/passenger-quests.ts), [eventide.ts](../test/eventide.ts)                                                 | Cargo/bounty/patrol/convoy/rescue/survey/smuggling/rush/Syndicate/passenger jobs, acceptance/capacity/deadline/reward/failure behavior.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `flight-combat-weapons`   | `server/space.ts`, `shared/rules.ts`                                                                                             | [sim.ts](../test/sim.ts), [v03.ts](../test/v03.ts), [v21.ts](../test/v21.ts), [original-weapons.ts](../test/original-weapons.ts), [v08.ts](../test/v08.ts)                                                                         | Movement/fire/hit events, weapon damage/types, missiles/point defense/drone controls, ship-role interactions, disabled cleanup and respawn.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -365,7 +394,7 @@ operation value or malformed payload branch. Pre-dispatch `hello` is covered by
 | `outfit`    | [bot.ts](../test/bot.ts), [v203.ts](../test/v203.ts)                                                                                                                                                                                                                                                                                                                                     |
 | `accept`    | [bot.ts](../test/bot.ts), [v12.ts](../test/v12.ts), [v203.ts](../test/v203.ts), [v24.ts](../test/v24.ts), [v26.ts](../test/v26.ts)                                                                                                                                                                                                                                                       |
 | `abandon`   | [v203.ts](../test/v203.ts), [v24.ts](../test/v24.ts)                                                                                                                                                                                                                                                                                                                                     |
-| `station`   | [sim.ts](../test/sim.ts), [v04.ts](../test/v04.ts), [v05.ts](../test/v05.ts), [v07.ts](../test/v07.ts), [v203.ts](../test/v203.ts), [v21.ts](../test/v21.ts), [v26.ts](../test/v26.ts)                                                                                                                                                                                                   |
+| `station`   | [sim.ts](../test/sim.ts), [v04.ts](../test/v04.ts), [v05.ts](../test/v05.ts), [v07.ts](../test/v07.ts), [v203.ts](../test/v203.ts), [v21.ts](../test/v21.ts), [v26.ts](../test/v26.ts), [station-progress.ts](../test/station-progress.ts)                                                                                                                                               |
 | `buymat`    | [core-actions.ts](../test/core-actions.ts)                                                                                                                                                                                                                                                                                                                                               |
 | `rename`    | [v203.ts](../test/v203.ts)                                                                                                                                                                                                                                                                                                                                                               |
 | `note`      | [core-actions.ts](../test/core-actions.ts)                                                                                                                                                                                                                                                                                                                                               |
@@ -971,6 +1000,19 @@ blocked outgoing actions, canvas pointer and touch handlers, disabled/repeated
 boarding shortcuts, typing and callback cleanup on reset. It uses a synthetic
 absent boarding target and does not claim a successful authoritative boarding.
 
+Options and Controls share those priority and focus checks, including confirmation
+above either dialog, Controls above the galaxy map, and Change Keys returning to
+the cockpit trigger. The fixture exercises native checkbox, range, Reset and
+Close keyboard activation; binding-capture cancellation, reserved-key denial,
+duplicate-key swaps, Delete/Backspace unbinding and saved custom bindings. It
+checks that neither dialog sends Solo pause commands and held keyboard/gamepad
+input remains blocked after closing until release. A seeded navigation intent
+continues through real guidance in both dialogs; reset clears pending binding
+capture without changing the saved binding.
+Focus fallback checks cover a removed opener above Options and Controls closing
+above the still-open, independently owned map; focus cannot remain in the hidden
+dialog. Closing an underlay also preserves existing valid focus in the top dialog.
+
 `logout-browser.ts` retains real Solo and online-style login/logout, temporary
 pause restoration, account isolation and persistence. `input-audio-browser.ts`
 retains gamepad and touch activation outside dialogs. These tests emulate device
@@ -996,3 +1038,34 @@ through 1,800 production steering/physics ticks with footprint clearance and
 restore/health/budget checks. This accelerated 60-second fixture is not a
 wall-clock soak or proof of every combat interleaving. Existing story and faction
 regressions retain reward, equipment, neutrality and finite-source coverage.
+
+## `station-progression`: timer advancement
+
+`station-progress.ts` exercises the real `Game.checkStation` entry point with a
+fixed wall clock and isolated save directory. Hand-authored assertions cover
+unclaimed and Tier 0 denial, just-before and exact maturity, partial intervals,
+full-silo timer reset, research bonuses, accrual before research completion and
+once-only completion before starting the next queued project. Queue checks use
+the real hangar owner for prerequisite/tier denial, waiting for credits/materials
+and exact settlement; the progress owner does not implement those operations.
+
+The fixture replaces hangar and log providers after construction, checks real
+`you` projection and `idleCheck` dirty/notification behavior, denies collection
+at a foreign port after ordinary timer advancement, and reopens a flushed save
+without duplicate charges or completion logs. It records state and callback
+traces for before/after comparison. It does not certify every research node or
+transport. Native checkpoint recovery and network behavior remain separate suite
+contracts.
+
+## Save catalog and local restore rehearsal
+
+`save-migrations.ts` exercises detached cargo/storage migration, legacy/current
+synthetic fixtures, corrupt/unsupported rejection without source mutation,
+read-only disposable CLI restores and committed-journal precedence. It rejects
+malformed local snapshot envelopes and injected access errors without empty-state
+fallback, then checks five real journal fault boundaries, freeze and reopen/retry.
+Credits, unrelated goods, station ownership and progression remain unchanged.
+The existing cargo, import/login, generator and native checkpoint tests retain
+their separate coverage. This is not full feature-schema validation, native
+restore coverage or an old/new executable archive-matrix rehearsal; see
+[SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md).

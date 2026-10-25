@@ -1,0 +1,59 @@
+{
+  "players": {
+    "restore pilot": {
+      "name": "Restore Pilot",
+      "created": 1800000000000,
+      "credits": 4321,
+      "cargo": {
+        "ore": 7,
+        "gas": 3,
+        "food": 2
+      },
+      "storage": {
+        "shards": 4,
+        "medicine": 5
+      },
+      "story": {
+        "step": 3,
+        "done": ["synthetic-done"]
+      },
+      "station": {
+        "site": "synthetic-site",
+        "claimed": true
+      },
+      "cargoLots": {
+        "version": 1,
+        "byCommodity": {
+          "ore": {
+            "common": 3,
+            "rich": 3,
+            "pure": 1
+          },
+          "gas": {
+            "common": 0,
+            "rich": 1,
+            "pure": 2
+          }
+        }
+      },
+      "storageLots": {
+        "version": 1,
+        "byCommodity": {
+          "shards": {
+            "common": 0,
+            "rich": 2,
+            "pure": 9
+          }
+        }
+      }
+    }
+  },
+  "world": {
+    "sites": {
+      "synthetic-site": "restore pilot"
+    },
+    "syntheticProgress": {
+      "claimed": [1, 4, 7]
+    }
+  }
+}
