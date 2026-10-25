@@ -1101,6 +1101,7 @@ function renderCodex(): void {
       }));
   else
     items = Object.values(allOutfits2)
+      .filter((outfitAsset) => !outfitAsset.eff?.riftHarness)
       .filter((outfitAsset) =>
         codexCat === 'Weapons'
           ? outfitAsset.eff!.weapon || outfitAsset.eff!.ammo
@@ -1157,6 +1158,11 @@ function renderCodex(): void {
  * @param entryKey Item key prefix + ID (e.g. 's701' for ship, 'o50' for outfit)
  */
 function codexDetail(entryKey: string): void {
+  // Story equipment is not a discoverable catalog entry, even through a stale row.
+  if (entryKey[0] !== 's' && allOutfits(clientGameState.A!)[+entryKey.slice(1)]?.eff?.riftHarness) {
+    renderCodex();
+    return;
+  }
   clientGameState.views.capture(elementById2('clist'));
   delete elementById2('clist').dataset.viewKey;
   const identifier = +entryKey.slice(1);

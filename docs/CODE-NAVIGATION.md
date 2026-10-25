@@ -316,3 +316,23 @@ archive matrix and rollback limits. `tools/release-readiness.ts` owns fail-close
 lane evaluation; `tools/verify_archive.py` owns hash/inventory checks before
 extraction. `test/release-archive-smoke.ts` runs the built artifact without npm
 dependencies. Existing quality/server/browser/Windows check names remain intact.
+
+## Viewscreen fit and non-human contacts
+
+`client/cockpit.css` sizes ultrawide landed windows against the usable flight
+area, excluding the persistent Tray and console; child UI zoom does not enlarge
+them into those regions. Cockpit content starts inside the frame fastener gutter.
+Controls keeps key/description pairs together in two columns, falling back to one
+column when its own content area is narrow.
+
+`shared/hail-machine.ts` identifies ship-only Index and Nhal callers. The existing
+hail service retains the hull identity for incoming calls and archived messages;
+`client/hails_ui.ts` selects only trusted ship artwork for them, including failure
+fallbacks. `server/index-fleet.ts` gives neutral machines stable saved-roster
+berths sized for the largest deployed hull posture and separates overlapping
+neutral hull envelopes after movement. Combat, damage attribution and finite
+replacement/reward owners remain unchanged.
+
+`client/ui.ts` excludes the unique story harness from both Codex lists and detail
+navigation. The outfit definition, story rewards, fitting and owned inventory
+remain available to their existing gameplay owners.

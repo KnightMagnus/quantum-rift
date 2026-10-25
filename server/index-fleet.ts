@@ -122,6 +122,89 @@ function tell(
   const session = space.root(entity).player?.s;
   if (session) capabilities.toast(session, text);
 }
+/** Reserve the largest posture, including the diagonal of the rendered 1.25× hull. */
+function footprint(space: Space, actor: IndexFleetActor): number {
+  const forms =
+    actor.base === 912
+      ? [912, 913]
+      : actor.base === 919
+        ? [919, 920]
+        : actor.base === 921
+          ? [921, 922]
+          : actor.base === 923
+            ? [923, 924]
+            : [actor.hull];
+  return Math.max(...forms.map((hull) => space.A.ships[hull].size));
+}
+
+/** Saved roster slots, rather than wire IDs, own non-overlapping neutral berths. */
+function formationPoint(
+  space: Space,
+  world: IndexFleetWorld,
+  slot: number,
+): { x: number; y: number } {
+  const actor = world.actors[slot];
+  if (actor.parent !== undefined) {
+    const parent = world.actors[actor.parent];
+    const center = formationPoint(space, world, actor.parent);
+    const siblings = world.actors.filter(
+      (candidate) => candidate.parent === actor.parent && !candidate.dead && !candidate.hidden,
+    );
+    const angle =
+      (Math.PI * 2 * Math.max(0, siblings.indexOf(actor))) / Math.max(6, siblings.length);
+    const radius = footprint(space, parent) + footprint(space, actor) + 120;
+    return { x: center.x + Math.cos(angle) * radius, y: center.y + Math.sin(angle) * radius };
+  }
+  // Retain vacant parent berths after losses; survivors do not collapse toward the site.
+  const parents = world.actors.filter((candidate) => candidate.parent === undefined);
+  const angle = -Math.PI * 0.75 + (Math.PI * 2 * parents.indexOf(actor)) / parents.length;
+  const widest = Math.max(...parents.map((parent) => footprint(space, parent)));
+  const radius = Math.max(
+    800,
+    (widest * 2 + 180) / (2 * Math.sin(Math.PI / Math.max(2, parents.length))),
+  );
+  return { x: world.site.x + Math.cos(angle) * radius, y: world.site.y + Math.sin(angle) * radius };
+}
+
+/** Keep neutral machine hull envelopes apart after actual movement, never moving players. */
+function separateNeutralMachines(space: Space, world: IndexFleetWorld): boolean {
+  const machines = live(space).filter((entity) => !entity.target);
+  let changed = false;
+  for (let pass = 0; pass < 2; pass++) {
+    for (let leftIndex = 0; leftIndex < machines.length; leftIndex++) {
+      const left = machines[leftIndex];
+      const leftSlot = local(space).entities.get(left.id)!;
+      for (let rightIndex = leftIndex + 1; rightIndex < machines.length; rightIndex++) {
+        const right = machines[rightIndex];
+        const rightSlot = local(space).entities.get(right.id)!;
+        const deltaX = right.x - left.x;
+        const deltaY = right.y - left.y;
+        const distance = Math.hypot(deltaX, deltaY);
+        const clearance =
+          footprint(space, world.actors[leftSlot]) + footprint(space, world.actors[rightSlot]) + 80;
+        if (distance >= clearance) continue;
+        const angle = (leftSlot + 1) * 2.399963229728653 + rightSlot;
+        const normalX = distance ? deltaX / distance : Math.cos(angle);
+        const normalY = distance ? deltaY / distance : Math.sin(angle);
+        const correction = Math.min(12, (clearance - distance) / 2);
+        left.x -= normalX * correction;
+        left.y -= normalY * correction;
+        right.x += normalX * correction;
+        right.y += normalY * correction;
+        const closing = (right.vx - left.vx) * normalX + (right.vy - left.vy) * normalY;
+        if (closing < 0) {
+          left.vx += (normalX * closing) / 2;
+          left.vy += (normalY * closing) / 2;
+          right.vx -= (normalX * closing) / 2;
+          right.vy -= (normalY * closing) / 2;
+        }
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
 function createEntity(space: Space, actor: IndexFleetActor, slot: number): Entity {
   const entity = space.makeShip({
     loadout: makeLoadout(space.A, actor.hull),
@@ -171,6 +254,9 @@ function add(
     launched: 0,
   };
   const slot = world.actors.push(actor) - 1;
+  const berth = formationPoint(space, world, slot);
+  actor.x = berth.x;
+  actor.y = berth.y;
   if (parent !== undefined && !blade) world.actors[parent].launched++;
   capabilities.touch();
   return createEntity(space, actor, slot);
@@ -356,6 +442,14 @@ export const IndexFleetOperations = {
       }
       add(this, space, 909);
       add(this, space, indexFleetType(space.id));
+      // Only a newly issued roster takes fresh berths; saved encounters resume in place.
+      for (const [slot, actor] of world.actors.entries()) {
+        const entity = entityFor(space, slot);
+        if (!entity) continue;
+        const berth = formationPoint(space, world, slot);
+        actor.x = entity.x = berth.x;
+        actor.y = entity.y = berth.y;
+      }
       this.touch();
       return;
     }
@@ -490,8 +584,8 @@ export const IndexFleetOperations = {
     if (world.rebootUntil > now) {
       entity.name = `Index reboot · ${Math.ceil(world.rebootUntil - now)}s`;
       entity.target = null;
-      if (actor.parent !== undefined)
-        space.steer(entity, world.site.x - 400, world.site.y - 400, true);
+      const berth = formationPoint(space, world, local(space).entities.get(entity.id)!);
+      space.steer(entity, berth.x, berth.y, true);
       return true;
     }
     if (actor.transition) {
@@ -519,11 +613,12 @@ export const IndexFleetOperations = {
     if (actor.base === 919) {
       if (target) {
         if (Number(entity.hull) === 920) transition(this, space, entity, 919);
-        space.steer(entity, world.site.x - 500, world.site.y - 500, false);
+        const berth = formationPoint(space, world, local(space).entities.get(entity.id)!);
+        space.steer(entity, berth.x, berth.y, true);
       } else {
         if (Number(entity.hull) === 919) transition(this, space, entity, 920);
-        if (Number(entity.hull) === 919)
-          space.steer(entity, world.site.x + 500, world.site.y, true);
+        const berth = formationPoint(space, world, local(space).entities.get(entity.id)!);
+        space.steer(entity, berth.x, berth.y, true);
       }
       return true; // Mining emitters never become unannounced combat lasers.
     }
@@ -568,20 +663,9 @@ export const IndexFleetOperations = {
       space.fight(entity, target);
       entity.inp.fire1 = 1;
     } else {
-      const parent = actor.parent !== undefined ? world.actors[actor.parent] : undefined;
-      // Formation geometry belongs to the saved roster, not the process-wide wire ID allocator.
-      const formationSlot = local(space).entities.get(entity.id)!;
-      space.steer(
-        entity,
-        (parent?.x ?? world.site.x) + Math.cos(formationSlot) * 180,
-        (parent?.y ?? world.site.y) + Math.sin(formationSlot) * 180,
-        true,
-      );
+      const berth = formationPoint(space, world, local(space).entities.get(entity.id)!);
+      space.steer(entity, berth.x, berth.y, true);
       if (actor.base === 914) entity.target = null; // A neutral sampler scan cannot fire or trigger retaliation.
-    }
-    if (actor.blade && !target && actor.parent !== undefined) {
-      const parent = world.actors[actor.parent];
-      space.steer(entity, parent.x, parent.y, true);
     }
     return true;
   },
@@ -625,6 +709,7 @@ export const IndexFleetOperations = {
       target.vx *= 1 - 0.7 * DT;
       target.vy *= 1 - 0.7 * DT;
     }
+    if (separateNeutralMachines(space, world)) this.touch();
     for (const [slot, actor] of world.actors.entries()) {
       if (actor.dead) continue;
       if (actor.hidden) {

@@ -1,3 +1,4 @@
+import { hailMachineHull } from '../shared/hail-machine.ts';
 import { npcPortrait, genericPortrait } from '../shared/portraits.ts';
 export interface HailOperations {
   bribeCost(this: HailCapabilities, playerData: PlayerData): number;
@@ -102,11 +103,8 @@ export const HailOperations = {
       this.send(session, {
         t: 'hail',
         portraitId:
-          entity2.indexWorksite || entity2.faction === 'nhal'
-            ? undefined
-            : npcPortrait(entity2, playerData.sys),
-        machineHull:
-          entity2.indexWorksite || entity2.faction === 'nhal' ? Number(entity2.hull) : undefined,
+          hailMachineHull(entity2) === undefined ? npcPortrait(entity2, playerData.sys) : undefined,
+        machineHull: hailMachineHull(entity2),
         id: entity2.id,
         who: name,
         sub: factionDef.name || '',
@@ -258,11 +256,8 @@ export const HailOperations = {
       this.send(session, {
         t: 'hail',
         portraitId:
-          entity2.indexWorksite || entity2.faction === 'nhal'
-            ? undefined
-            : npcPortrait(entity2, playerData.sys),
-        machineHull:
-          entity2.indexWorksite || entity2.faction === 'nhal' ? Number(entity2.hull) : undefined,
+          hailMachineHull(entity2) === undefined ? npcPortrait(entity2, playerData.sys) : undefined,
+        machineHull: hailMachineHull(entity2),
         id: entity2.id,
         who: name,
         text,

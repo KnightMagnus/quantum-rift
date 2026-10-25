@@ -91,8 +91,15 @@ try {
       'Landed HAIL cannot open',
     );
     const landed = await contained(page, '#land .landbox');
-    assert.ok(Math.abs(landed.width - 1610) < 1, 'Landed width grows from 1400px by 15%');
-    assert.ok(Math.abs(landed.height - 856.75) < 1, 'Landed height grows from 745px by 15%');
+    const usable = await page.locator('#land').boundingBox();
+    assert.ok(
+      Math.abs(landed.width / usable!.width - 0.7) < 0.005,
+      'Ultrawide landing uses 70% of flight width',
+    );
+    assert.ok(
+      Math.abs(landed.height / usable!.height - 0.86) < 0.005,
+      'Ultrawide landing uses 86% of flight height',
+    );
     await capture(page, 'functional-landed-3440x1440');
     await page.click('#captainshortcut');
     await page.click('[data-it="profile"]');
@@ -194,6 +201,31 @@ try {
               .filter((gap) => gap !== null),
           };
         });
+        const frame = await page.evaluate(() => {
+          const controls = [
+            ...document.querySelectorAll(
+              '#functiondock .function-icon, #functiondock .function-label',
+            ),
+          ]
+            .filter((element) => element.getClientRects().length)
+            .map((element) => element.getBoundingClientRect());
+          return [...document.querySelectorAll('.console-screw')]
+            .filter((element) => element.getClientRects().length)
+            .every((element) => {
+              const screw = element.getBoundingClientRect();
+              return controls.every(
+                (control) =>
+                  screw.right <= control.left ||
+                  screw.left >= control.right ||
+                  screw.bottom <= control.top ||
+                  screw.top >= control.bottom,
+              );
+            });
+        });
+        assert(
+          frame,
+          'Frame fasteners never cover function controls or labels at ' + width + '/' + scale,
+        );
         assert.ok(
           gaps.controls.every((gap) => gap >= 28),
           'Utilities and vent stay inside inset frame: ' + JSON.stringify({ width, scale, gaps }),
@@ -275,7 +307,7 @@ try {
     JSON.stringify(measurements, null, 2),
   );
   console.log(
-    'Functional cockpit: centered labels, uniform button-only LEDs, ALERT above Captain, integrated profile, landscape settings/key reassignment, +15% ultrawide windows and narrow/scaled containment passed.',
+    'Functional cockpit: centered labels, uniform button-only LEDs, ALERT above Captain, integrated profile, landscape settings/key reassignment, flight-relative ultrawide landing and fastener-safe narrow/scaled containment passed.',
   );
 } catch (error) {
   await failureEvidence(browser, fixture.out, error);

@@ -1284,8 +1284,9 @@ body.tray-open #cockpit {
   width: auto;
   grid-template-columns: minmax(172px, 230px) minmax(100px, 590px) 156px;
   justify-content: start;
-  padding-left: 16px;
-  padding-right: 16px;
+  /* Keep controls inside the inset frame, beyond the fastener gutter. */
+  padding-left: 50px;
+  padding-right: 50px;
   gap: 10px;
   overflow: auto;
 }
@@ -1957,4 +1958,56 @@ body.tray-open #flightstatus {
 /* Captain details remain above an active hail when opened from the console. */
 #infobox {
   z-index: 25;
+}
+
+/* Size ultrawide landings against usable flight space, before child UI zoom. */
+@media (min-width: 2560px) {
+  #land .landbox {
+    width: calc((100vw - var(--hud)) * 0.7 / var(--ui, 1));
+    height: calc((100vh - var(--cbar)) * 0.86 / var(--ui, 1));
+  }
+}
+
+#ctrlbox .ctrlin > * {
+  flex-shrink: 0;
+  min-width: 0;
+}
+#ctrlbox .ctrlfoot {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#ctrlbox .ctrlin {
+  width: min(1040px, 94%);
+  container-type: inline-size;
+}
+.ctrlgrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 28px;
+}
+.ctrlbinding {
+  display: grid;
+  grid-template-columns: minmax(80px, max-content) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@container (max-width: 700px) {
+  .ctrlgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container (max-width: 260px) {
+  #ctrlbox h1 {
+    font-size: clamp(16px, 11cqw, 24px);
+    letter-spacing: 1px;
+  }
+  .ctrlbinding .k {
+    white-space: normal;
+  }
+  .ctrlbinding {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
 }

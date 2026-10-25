@@ -976,3 +976,23 @@ pause restoration, account isolation and persistence. `input-audio-browser.ts`
 retains gamepad and touch activation outside dialogs. These tests emulate device
 APIs; they do not certify physical hardware. Other overlays still have their
 existing dismissal/focus owners and are not claimed as controller migrations.
+
+## Ultrawide windows and Index presentation
+
+`ui-polish-browser.ts` drives real Solo login, the shipyard, Controls and Codex.
+At 3440×1440 and UI scales 0.8/1/1.4 it checks landed width/height against 70%/86%
+of usable flight space and verifies centering outside the Tray and console. It
+retains ordinary/narrow fitting, two-column Controls with paired descriptions and
+a one-column fallback, and hidden story equipment through Codex browse/search
+and stale detail navigation. `cockpit-layout-browser.ts` checks frame fasteners
+against every function control and label across 1920–5120 widths and those scales.
+
+The browser seeds a bounded mixed Index roster through the existing local game,
+then captures actual moving ships and an incoming ship-only hail. Intentional
+image failures check actual ship-art fallback and no humanoid substitution.
+`index-presentation.ts` checks outgoing/incoming/archive identities for every
+Index and Nhal hull, and advances a densely packed seven-large-hull fixture
+through 1,800 production steering/physics ticks with footprint clearance and
+restore/health/budget checks. This accelerated 60-second fixture is not a
+wall-clock soak or proof of every combat interleaving. Existing story and faction
+regressions retain reward, equipment, neutrality and finite-source coverage.
