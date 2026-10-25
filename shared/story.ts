@@ -78,11 +78,11 @@ export const STORY: StoryMission[] = [
     dest: 'inalumen',
     pay: 15000,
     rep: 8,
-    text: 'A watcher in dawn-colored robes is waiting on the pad when you land. She studies your ship for a long moment, then you.\n\n"You found our door," she says, in careful, bell-clear words. "The first outsider in a very long time. I am Sel\'ani, of the Que\'vari. We are the People of Light. Will you carry me home to Ina Lumen? The elders will want to see you with their own eyes."',
+    text: 'A watcher in dawn-colored robes is waiting on the pad when you land. She studies your ship for a long moment, then you.\n\n"You are called by the door," she says, in careful, bell-clear words. "Our ships sail to a hundred ports, but a watcher waits for only one captain. The light pointed to you. I am Sel\'ani, of the Que\'vari. We are the People of Light. Will you carry me home to Ina Lumen? The elders will want to see you with their own eyes."',
     brief: "Carry Sel'ani to Ina Lumen in the Que'var system.",
     acc: 'Take her home',
     ref: 'Not now',
-    done: 'Ina Lumen rises to meet you, white spires and rising light. The elders receive you in a hall roofed with sails. They ask a hundred questions about the wider Rift and answer almost none of yours. When they are done, Sel\'ani presses a light-token into your hand. "That was their way of saying welcome," she whispers.',
+    done: 'Ina Lumen rises to meet you, white spires and rising light. The elders receive you in a hall roofed with sails. They ask a hundred questions about you and answer almost none of yours. When they are done, Sel\'ani presses a light-token into your hand. "That was their way of saying welcome," she whispers.',
   },
   {
     id: 'qv2',

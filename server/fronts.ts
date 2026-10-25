@@ -1,3 +1,4 @@
+import { EXPEDITION_HULK } from '../shared/expeditions.ts';
 import type { SavedGoal } from './save-contracts.ts';
 import type { ServerEvent, ScheduledEvent } from '../shared/fronts.ts';
 import type { LivingPayloadState } from './world-contracts.ts';
@@ -693,8 +694,18 @@ export const FrontsOperations = {
         const entity = space.makeShip({
           hull: mission.hull,
           faction: mission.faction,
-          x: mission.eventide ? mission.rescuePoint![0] : Math.cos(angle) * 1300,
-          y: mission.eventide ? mission.rescuePoint![1] : Math.sin(angle) * 1300,
+          x:
+            mission.exp && space.sys.id === EXPEDITION_HULK.system
+              ? EXPEDITION_HULK.x + 1000
+              : mission.eventide
+                ? mission.rescuePoint![0]
+                : Math.cos(angle) * 1300,
+          y:
+            mission.exp && space.sys.id === EXPEDITION_HULK.system
+              ? EXPEDITION_HULK.y
+              : mission.eventide
+                ? mission.rescuePoint![1]
+                : Math.sin(angle) * 1300,
           name: mission.wreckName,
         });
         entity.disabled = true;

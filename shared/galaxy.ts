@@ -196,7 +196,7 @@ export type StarSystem = {
   arena?: boolean;
 
   /**
-   * True if located on the far side of the Sol Gateway.
+   * True if located on the far side of the Gateway.
    * Gateway far-side system, without ambient newcomer truce.
    */
   farside?: boolean;
@@ -1326,6 +1326,26 @@ addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded
     }
 }
 addEventide(SYSTEMS); // Append authored v2.9 content without consuming legacy generation RNG.
+// Preserve generated bodies, fields and IDs before moving the authored Gateway.
+{
+  const sol = SYSTEMS.find((system) => system.id === 'sol')!;
+  const concordia = SYSTEMS.find((system) => system.id === 'qgate')!;
+  const coldharbor = SYSTEMS.find((system) => system.id === 'coldharbor')!;
+  const gateway = sol.stellars.find((stellar) => stellar.id === 'sol-gateway')!;
+  sol.stellars = sol.stellars.filter((stellar) => stellar !== gateway);
+  delete sol.gate;
+  concordia.gate = 'coldharbor';
+  gateway.name = 'The Gateway';
+  gateway.x = 3400;
+  gateway.y = 400;
+  gateway.desc =
+    'A stable wormhole at the edge of the Concordia system, a short run from Quantum Station. For centuries the Concord studied it as the Concordia Anomaly, and every ship that went in came straight back out. A few generations ago, one finally crossed. On the far side are the Farside settlements.';
+  concordia.stellars.push(gateway);
+  coldharbor.gate = 'qgate';
+  const farGateway = coldharbor.stellars.find((stellar) => stellar.id === 'coldharbor-gate')!;
+  farGateway.wormhole = 'qgate';
+  farGateway.desc = 'The far mouth of the Gateway. Through it, faintly, the light of Concordia.';
+}
 // Move only the authored mouth AFTER generation so collision rejection and RNG stay stable.
 {
   const gate = SYSTEMS.find((starSystem) => starSystem.id === 'coldharbor')!.stellars.find(
@@ -1405,7 +1425,7 @@ export const FACTION_HULLS: Record<string, number[]> = {
   ylith: [775, 793, 794, 776, 777, 778, 779, 795],
   sarn: [780, 796, 781, 782, 797, 783, 784],
   thalassi: [798, 799, 800, 801, 802, 803, 804],
-  farside: COMMON_HULLS, // beyond the Sol Gateway: common hulls only, no racial designs
+  farside: COMMON_HULLS, // beyond the Gateway: common hulls only, no racial designs
 };
 
 /**

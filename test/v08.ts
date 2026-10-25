@@ -104,12 +104,12 @@ while (pendingSystemIds.length)
 assertCondition(fseen.size === 16, 'all sixteen Farside systems connect to each other');
 assertCondition(
   STELLARS['sol-gateway'].wormhole === 'coldharbor' &&
-    STELLARS['coldharbor-gate'].wormhole === 'sol',
-  'the wormhole joins Sol and Coldharbor in both directions',
+    STELLARS['coldharbor-gate'].wormhole === 'qgate',
+  'the wormhole joins Concordia and Coldharbor in both directions',
 );
 const route2 = route(systemsById, 'meridian', 'ninefold');
 assertCondition(
-  route2.includes('sol') &&
+  route2.includes('qgate') &&
     route2.includes('coldharbor') &&
     route2[route2.length - 1] === 'ninefold',
   `routes plot through the Gateway (${route2.length} legs)`,
@@ -137,8 +137,8 @@ assertCondition(
 // crossing
 const firstEntry = fake('Gate Runner'),
   playerData = requiredFixtureValue(firstEntry.s).data;
-playerData.sys = 'sol';
-playerData.stellar = 'earth';
+playerData.sys = 'qgate';
+playerData.stellar = 'qstation';
 game.depart(firstEntry.s);
 const weapon = STELLARS['sol-gateway'],
   entity = requiredFixtureValue(firstEntry.s).ent;
@@ -146,7 +146,7 @@ requiredFixtureValue(entity).x = weapon.x;
 requiredFixtureValue(entity).y = weapon.y;
 requiredFixtureValue(entity).vx = requiredFixtureValue(entity).vy = 0;
 const fuel = requiredFixtureValue(entity).fuel;
-game.spaces.sol.tick();
+game.spaces.qgate.tick();
 assertCondition(
   playerData.sys === 'coldharbor' &&
     requiredFixtureValue(firstEntry.s).ent &&
@@ -166,7 +166,7 @@ requiredFixtureValue(entity3).x = back.x;
 requiredFixtureValue(entity3).y = back.y;
 requiredFixtureValue(entity3).vx = requiredFixtureValue(entity3).vy = 0;
 game.spaces.coldharbor.tick();
-assertCondition(playerData.sys === 'sol', 'and the far mouth leads home to Sol');
+assertCondition(playerData.sys === 'qgate', 'and the far mouth leads home to Concordia');
 assertCondition(
   game.offers(STELLARS.earth, playerData).length > 0 && STELLARS.earth.svc.includes('Y'),
   'Earth has a full set of services',

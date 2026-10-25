@@ -1,6 +1,6 @@
 import type { Entity } from '../server/game.ts';
 import { mockSession, mockPlayerData, mockMission } from './helpers/mocks.ts';
-import type { StarSystem } from '../shared/galaxy.ts';
+import { legacyStorySystems } from './helpers/legacy-story-systems.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
 // Authored v2.9 topology, old-save compatibility and normal mission lifecycle.
 import assert from 'node:assert/strict';
@@ -24,9 +24,7 @@ assert.equal(
 );
 // Golden source: untouched v2.8.3 generation, normalized ONLY for intentional Terra display text.
 // Scenes and the one new Vesper branch are additions; every legacy generated property stays exact.
-const legacy: StarSystem[] = JSON.parse(
-  JSON.stringify(SYSTEMS.filter((starSystem) => !starSystem.eventide)),
-);
+const legacy = legacyStorySystems(SYSTEMS.filter((starSystem) => !starSystem.eventide));
 for (const starSystem of legacy) {
   // v3.0.4 changes only this display name; retain the strict legacy-world golden.
   if (starSystem.id === 'qgate') {
@@ -266,7 +264,7 @@ try {
   }
   pulseSpace.remove(requiredFixtureValue(shipEntity));
   session.ent = null;
-  // Existing save counts still select the same original ten-system expeditions.
+  // Existing save counts retain the survey order; new recoveries use the fixed hulk.
   playerData.sys = 'coldharbor';
   playerData.stellar = systemsById.coldharbor.stellars[0].id;
   playerData.expd.n = 0;
@@ -275,7 +273,7 @@ try {
     playerData,
   );
   assert.equal(requiredFixtureValue(previousState).sys, 'mirrorfall');
-  assert.equal(requiredFixtureValue(previousState).exp.b, 'quietude');
+  assert.equal(requiredFixtureValue(previousState).exp.b, 'aureole');
   console.log(
     JSON.stringify(
       {
