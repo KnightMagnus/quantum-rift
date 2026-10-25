@@ -292,11 +292,22 @@ so regenerating the broad sound library does not restore the retired sharp jingl
 ## Modal and manual-input ownership
 
 `client/overlay-controller.ts` owns priority, keyboard capture, native Tab wrapping
-and focus return for confirmation, quit and boarding dialogs. Their existing
-owners still render content and decide whether an action is allowed. Confirmation
-sits above quit, and quit above boarding. Enter and Space activate the focused
-native button; Cancel receives initial focus in confirmation and quit dialogs.
-Logout drops pending callbacks and focus references.
+and focus return for confirmation, quit, boarding, Options and Controls dialogs.
+Their existing owners still render content and decide whether an action is
+allowed. Confirmation sits above quit; Controls and Options retain their existing
+visual priorities below quit and above boarding. Enter and Space activate the
+focused native button; Cancel receives initial focus in confirmation and quit,
+and Close in Options and Controls. Logout drops pending callbacks, binding capture
+and focus references.
+
+Options owns rebinding and saved settings. Its policy handles pending key capture
+before default Escape dismissal: the first Escape cancels capture without closing
+Options. The controller otherwise leaves native settings controls and button
+activation intact. Rebuilding binding rows returns focus to the same action.
+Controls owns its reference content and Change Keys transition into Options.
+If a closing dialog cannot return focus to its opener, the surviving managed
+dialog receives its initial focus. An unmigrated overlay receives container focus
+without changing its action or keyboard owner.
 
 The controller's DOM-derived blocking context is passed into the engine input
 latch rather than importing another controller instance into the engine bundle.

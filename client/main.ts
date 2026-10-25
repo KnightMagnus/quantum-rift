@@ -2167,12 +2167,23 @@ function openControls(): void {
       ([entryKey, count]) => `<span class="k">${entryKey}</span><span>${count}</span>`,
     ).join('') +
     '</div>';
-  elementById2('ctrlbox').classList.remove('hidden');
+  overlays.open('ctrlbox');
 }
 /**
  * Closes the flight controls reference dialog modal.
  */
-const closeControls = (): void => elementById2('ctrlbox').classList.add('hidden');
+const closeControls = (): void => overlays.close('ctrlbox');
+overlays.register({
+  id: 'ctrlbox',
+  priority: 27,
+  dismiss: closeControls,
+  initialFocus: () => elementById2('ctrlclose'),
+  keyDown: (event) => {
+    if (event.key !== '?') return false;
+    if (!event.repeat) closeControls();
+    return true;
+  },
+});
 elementById2('cbhelp').onclick = openControls;
 elementById2('ctrlclose').onclick = closeControls;
 elementById2('ctrlkeys').onclick = () => {
@@ -2683,6 +2694,9 @@ const keyName = (component: string | null): string =>
  * Renders keybinding assignment rows in the options menu.
  */
 function renderKeys(): void {
+  const focusedBinding = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>(
+    '[data-bind]',
+  )?.dataset.bind;
   elementById2('optkeys').innerHTML = ACTIONS.map(
     ([firstValue, count]) =>
       `<div class="kb"><span>${count}</span><button class="btn sm${rebinding === firstValue ? ' on' : ''}" data-bind="${firstValue}">${rebinding === firstValue ? 'press a key…' : keyName(bound(firstValue))}</button></div>`,
@@ -2696,15 +2710,17 @@ function renderKeys(): void {
           renderKeys();
         }),
     );
+  if (focusedBinding)
+    elementById2('optkeys')
+      .querySelector<HTMLElement>(`[data-bind="${focusedBinding}"]`)
+      ?.focus({ preventScroll: true });
 }
 /**
  * Opens the settings modal dialog and populates current configuration values.
  * @param keysFirst Whether to scroll directly down to the keybinding section
  */
 function openOpts(keysFirst?: boolean | PointerEvent): void {
-  flightEngine.input.clear();
   audio.ui('open', 0.6);
-  elementById2('opts').classList.remove('hidden');
   for (const cHECKS of CHECKS)
     (elementById2('opt-' + cHECKS) as HTMLInputElement).checked = !!clientGameState.opts[cHECKS];
   elementById2('opt-scale').value = clientGameState.opts.scale;
@@ -2717,6 +2733,7 @@ function openOpts(keysFirst?: boolean | PointerEvent): void {
   rebinding = null;
   renderKeys();
   document.querySelectorAll<HTMLInputElement>('#opts input[type=range]').forEach(paintRange);
+  overlays.open('opts');
   if (keysFirst === true)
     setTimeout(() => elementById2('optkeys').scrollIntoView({ block: 'start' }), 0);
 }
@@ -2725,8 +2742,8 @@ function openOpts(keysFirst?: boolean | PointerEvent): void {
  */
 function closeOpts(): void {
   audio.ui('close', 0.6);
-  elementById2('opts').classList.add('hidden');
   rebinding = null;
+  overlays.close('opts');
 }
 elementById2('optclose').onclick = closeOpts;
 elementById2('optbtn').onclick = openOpts;
@@ -2838,60 +2855,51 @@ elementById2('optreset').onclick = () => {
   saveOpts();
   renderKeys();
 };
-window.addEventListener(
-  'keydown',
-  (keyboardEvent) => {
-    if (!elementById2('ctrlbox').classList.contains('hidden')) {
-      if (
-        keyboardEvent.key === 'Escape' ||
-        keyboardEvent.key === 'Enter' ||
-        keyboardEvent.key === '?'
-      ) {
-        closeControls();
-        keyboardEvent.preventDefault();
-      }
-      keyboardEvent.stopImmediatePropagation();
-      return;
-    }
-    if (!elementById2('storebox').classList.contains('hidden') && keyboardEvent.key === 'Escape') {
-      elementById2('storebox').classList.add('hidden');
-      keyboardEvent.stopImmediatePropagation();
-      return;
-    }
-    if (elementById2('opts').classList.contains('hidden')) return;
+overlays.register({
+  id: 'opts',
+  priority: 26,
+  dismiss: closeOpts,
+  initialFocus: () => elementById2('optclose'),
+  reset: () => {
+    rebinding = null;
+  },
+  keyDown: (event) => {
     if (rebinding) {
-      // the next key pressed becomes the binding (Escape cancels); a key used by another action is swapped off it
-      keyboardEvent.preventDefault();
-      keyboardEvent.stopImmediatePropagation();
-      if (RESERVED_KEYS.has(keyboardEvent.code) && keyboardEvent.code !== 'Escape') {
+      // Escape cancels capture, not the dialog. A duplicate binding swaps actions.
+      if (event.repeat) return true;
+      if (RESERVED_KEYS.has(event.code) && event.code !== 'Escape') {
         toast('This key is reserved for steering or a fixed interface control.');
         rebinding = null;
         renderKeys();
-        return;
-      } // 2.0.3
-      if (keyboardEvent.code === 'Backspace' || keyboardEvent.code === 'Delete') {
+        return true;
+      }
+      if (event.code === 'Backspace' || event.code === 'Delete') {
         clientGameState.opts.keys[rebinding] = null;
         saveOpts();
-      } else if (keyboardEvent.code !== 'Escape') {
-        for (const [firstValue] of ACTIONS)
-          if (firstValue !== rebinding && bound(firstValue) === keyboardEvent.code)
-            clientGameState.opts.keys[firstValue] = bound(rebinding);
-        clientGameState.opts.keys[rebinding] = keyboardEvent.code;
+      } else if (event.code !== 'Escape') {
+        for (const [action] of ACTIONS)
+          if (action !== rebinding && bound(action) === event.code)
+            clientGameState.opts.keys[action] = bound(rebinding);
+        clientGameState.opts.keys[rebinding] = event.code;
         saveOpts();
       }
       rebinding = null;
       renderKeys();
-      return;
+      return true;
     }
-    if (
-      keyboardEvent.key === 'Escape' ||
-      keyboardEvent.key === 'Enter' ||
-      keyboardEvent.code === 'KeyO'
-    ) {
-      closeOpts();
-      keyboardEvent.preventDefault();
+    if (event.code !== 'KeyO') return false;
+    if (!event.repeat) closeOpts();
+    return true;
+  },
+});
+// Store retains its independent Escape dismissal.
+window.addEventListener(
+  'keydown',
+  (event) => {
+    if (!elementById2('storebox').classList.contains('hidden') && event.key === 'Escape') {
+      elementById2('storebox').classList.add('hidden');
+      event.stopImmediatePropagation();
     }
-    keyboardEvent.stopImmediatePropagation(); // game keys are paused while options are open
   },
   true,
 );

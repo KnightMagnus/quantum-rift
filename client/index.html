@@ -301,9 +301,15 @@
         </section>
       </div>
     </div>
-    <div id="ctrlbox" class="overlay hidden">
+    <div
+      id="ctrlbox"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ctrltitle"
+    >
       <div class="loginbox metal ctrlin">
-        <h1>CONTROLS</h1>
+        <h1 id="ctrltitle">CONTROLS</h1>
         <div id="ctrllist"></div>
         <div class="ctrlfoot">
           <button class="btn" id="ctrlkeys">CHANGE KEYS</button
@@ -463,9 +469,15 @@
     </div>
 
     <!-- options -->
-    <div id="opts" class="overlay hidden">
+    <div
+      id="opts"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="optstitle"
+    >
       <div class="loginbox metal optbox">
-        <h1>SETTINGS &amp; KEY BINDINGS</h1>
+        <h1 id="optstitle">SETTINGS &amp; KEY BINDINGS</h1>
         <div class="options-body">
           <section class="options-section" aria-label="Flight and display">
             <div class="osect">FLIGHT</div>

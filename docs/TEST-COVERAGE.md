@@ -971,6 +971,19 @@ blocked outgoing actions, canvas pointer and touch handlers, disabled/repeated
 boarding shortcuts, typing and callback cleanup on reset. It uses a synthetic
 absent boarding target and does not claim a successful authoritative boarding.
 
+Options and Controls share those priority and focus checks, including confirmation
+above either dialog, Controls above the galaxy map, and Change Keys returning to
+the cockpit trigger. The fixture exercises native checkbox, range, Reset and
+Close keyboard activation; binding-capture cancellation, reserved-key denial,
+duplicate-key swaps, Delete/Backspace unbinding and saved custom bindings. It
+checks that neither dialog sends Solo pause commands and held keyboard/gamepad
+input remains blocked after closing until release. A seeded navigation intent
+continues through real guidance in both dialogs; reset clears pending binding
+capture without changing the saved binding.
+Focus fallback checks cover a removed opener above Options and Controls closing
+above the still-open, independently owned map; focus cannot remain in the hidden
+dialog. Closing an underlay also preserves existing valid focus in the top dialog.
+
 `logout-browser.ts` retains real Solo and online-style login/logout, temporary
 pause restoration, account isolation and persistence. `input-audio-browser.ts`
 retains gamepad and touch activation outside dialogs. These tests emulate device
