@@ -8,7 +8,10 @@ export interface OverlayPolicy {
   dismiss: () => void;
   /** Safe initial native control, resolved after the owner renders its content. */
   initialFocus: () => HTMLElement | null;
-  /** Optional dialog shortcut. Return true only when its default was handled. */
+  /**
+   * Optional owner shortcut or pending-edit cancellation, before default dismissal.
+   * Return true only when its native default was handled.
+   */
   keyDown?: (event: KeyboardEvent) => boolean;
   /** Clear pending owner callbacks on logout without submitting or restoring focus. */
   reset?: () => void;
@@ -109,7 +112,9 @@ export class OverlayController {
     // Unmigrated overlays keep their existing keyboard owners.
     if (!policy || !top) return;
     event.stopImmediatePropagation();
-    if (event.key === 'Escape') {
+    if (policy.keyDown?.(event)) {
+      event.preventDefault();
+    } else if (event.key === 'Escape') {
       event.preventDefault();
       if (!event.repeat) policy.dismiss();
     } else if (event.key === 'Tab') {
@@ -128,7 +133,7 @@ export class OverlayController {
         event.preventDefault();
         (event.shiftKey ? last : first)?.focus();
       }
-    } else if (policy.keyDown?.(event)) event.preventDefault();
+    }
   }
 }
 

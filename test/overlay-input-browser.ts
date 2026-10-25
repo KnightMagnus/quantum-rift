@@ -271,6 +271,173 @@ try {
   );
   assert.equal(await page.locator('#askbox').isVisible(), false);
 
+  await page.locator('#optbtn').focus();
+  await page.keyboard.press('Enter');
+  await page.locator('#opts').waitFor({ state: 'visible' });
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'optclose');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'opt-dmg');
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'optclose');
+
+  const damageChecked = await page.locator('#opt-dmg').isChecked();
+  await page.locator('#opt-dmg').focus();
+  await page.keyboard.press('Space');
+  assert.equal(await page.locator('#opt-dmg').isChecked(), !damageChecked);
+  assert.equal(await page.locator('#opts').isVisible(), true);
+  await page.locator('#opt-vol').focus();
+  await page.keyboard.press('Home');
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await page.locator('#opt-vol').inputValue(), '0.05');
+  await page.keyboard.press('Enter');
+  assert.equal(
+    await page.locator('#opts').isVisible(),
+    true,
+    'Range Enter is not dialog dismissal',
+  );
+
+  const thrustBinding = page.locator('#optkeys [data-bind="thrust"]');
+  const bindingValue = (action: string) => page.evaluate((name) => G.opts.keys[name], action);
+  await thrustBinding.focus();
+  await page.keyboard.press('Enter');
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.getAttribute('data-bind')),
+    'thrust',
+  );
+  await ask();
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#opts').isVisible(), true);
+  assert.equal(await page.locator('#quitbox').isVisible(), false);
+  assert.equal(await thrustBinding.textContent(), 'press a key…');
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.getAttribute('data-bind')),
+    'thrust',
+  );
+  await page.keyboard.press('Escape');
+  assert.equal(await bindingValue('thrust'), 'KeyV', 'Escape cancels capture without rebinding');
+  assert.equal(
+    await page.locator('#opts').isVisible(),
+    true,
+    'Capture cancellation keeps Options open',
+  );
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#opts').isVisible(), false);
+  assert.equal(await page.locator('#quitbox').isVisible(), false, 'One Escape does not open quit');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'optbtn');
+
+  await page.keyboard.press('Enter');
+  await thrustBinding.click();
+  await page.keyboard.press('ArrowUp');
+  assert.equal(await bindingValue('thrust'), 'KeyV', 'Reserved steering key is denied');
+  assert.equal(await thrustBinding.textContent(), 'V');
+  const jumpBefore = await page.locator('#optkeys [data-bind="jump"]').textContent();
+  await thrustBinding.click();
+  await page.keyboard.press('j');
+  assert.equal(await bindingValue('thrust'), 'KeyJ');
+  assert.equal(await bindingValue('jump'), 'KeyV', 'Duplicate binding swaps the previous key');
+  await thrustBinding.click();
+  await page.keyboard.press('Delete');
+  assert.equal(await bindingValue('thrust'), null);
+  await thrustBinding.click();
+  await page.keyboard.press('v');
+  assert.equal(await bindingValue('jump'), null, 'Swap preserves explicit unbound state');
+  await page.locator('#optkeys [data-bind="jump"]').click();
+  await page.keyboard.press('j');
+  assert.equal(await page.locator('#optkeys [data-bind="jump"]').textContent(), jumpBefore);
+  await thrustBinding.click();
+  await page.keyboard.press('Backspace');
+  assert.equal(await bindingValue('thrust'), null);
+  await thrustBinding.click();
+  await page.keyboard.press('v');
+  assert.equal(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('rift.opts')!).keys.thrust),
+    'KeyV',
+    'Custom binding is saved',
+  );
+  await page.locator('#optreset').focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await thrustBinding.textContent(), 'W', 'Native Reset button runs its own action');
+  assert.equal(await page.locator('#opts').isVisible(), true, 'Enter on Reset does not also close');
+  await thrustBinding.click();
+  await page.keyboard.press('v');
+  await page.locator('#optclose').focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#opts').isVisible(), false);
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'optbtn');
+
+  await page.keyboard.press('m');
+  await page.locator('#gmap').waitFor({ state: 'visible' });
+  await page.click('#cbhelp');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'ctrlclose');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'ctrlkeys');
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'ctrlclose');
+  await ask();
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#ctrlbox').isVisible(), true);
+  assert.equal(await page.locator('#gmap').isVisible(), true);
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'ctrlclose');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#ctrlbox').isVisible(), false);
+  assert.equal(
+    await page.locator('#gmap').isVisible(),
+    true,
+    'Controls consumes Escape before map',
+  );
+  await page.keyboard.press('Escape');
+  await page.locator('#gmap').waitFor({ state: 'hidden' });
+
+  await page.locator('#cbhelp').focus();
+  await page.keyboard.press('Enter');
+  await page.locator('#ctrlkeys').focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#ctrlbox').isVisible(), false);
+  assert.equal(await page.locator('#opts').isVisible(), true, 'Native Change Keys opens Options');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'optclose');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'cbhelp');
+  await page.keyboard.press('Enter');
+  await page.evaluate(() => {
+    window.modalProbe.packets = [];
+  });
+  await page.keyboard.down('v');
+  await page.evaluate(() => {
+    window.fixturePad = {
+      axes: [1, -1],
+      buttons: Array.from({ length: 16 }, (_, index) => ({ pressed: index === 0 })),
+    };
+  });
+  await clearInputs();
+  await neutralInputs();
+  await page.locator('#optbtn').evaluate((button) => (button as HTMLButtonElement).click());
+  assert.equal(
+    await page.locator('#opts').isVisible(),
+    false,
+    'Controls blocks outside HUD activation',
+  );
+  await page.keyboard.press('Enter');
+  assert.equal(
+    await page.locator('#ctrlbox').isVisible(),
+    false,
+    'Native Controls Close activates',
+  );
+  await clearInputs();
+  await neutralInputs();
+  assert.equal(await page.evaluate(() => G.paused), false, 'Controls does not pause Solo');
+  assert.equal(
+    await page.evaluate(() => window.modalProbe.packets.some((packet) => packet.t === 'pause')),
+    false,
+  );
+  await page.keyboard.up('v');
+  await page.evaluate(() => {
+    window.fixturePad = null;
+  });
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'cbhelp');
+
+  await page.evaluate(() => {
+    window.modalProbe.packets = [];
+  });
   await page.keyboard.press('o');
   await page.locator('#opts').waitFor({ state: 'visible' });
   await page.keyboard.down('v');
@@ -286,6 +453,12 @@ try {
   await clearInputs();
   await neutralInputs();
   await page.keyboard.up('v');
+  assert.equal(await page.evaluate(() => G.paused), false, 'Options does not pause Solo');
+  assert.equal(
+    await page.evaluate(() => window.modalProbe.packets.some((packet) => packet.t === 'pause')),
+    false,
+    'Options sends no temporary quit-pause action',
+  );
   await page.evaluate(() => {
     window.fixturePad = null;
   });
@@ -322,6 +495,53 @@ try {
     await page.locator('#gmap').waitFor({ state });
   }
 
+  // Seed an existing navigation intent, then exercise actual guidance while manual input is blocked.
+  await page.evaluate(async () => {
+    const { SYS: systemsById } = await import('/shared/galaxy.js');
+    const destination = [...systemsById[G.sys!].stellars]
+      .filter((body) => !body.wormhole)
+      .sort(
+        (left, right) =>
+          Math.hypot(right.x - G.view!.x, right.y - G.view!.y) -
+          Math.hypot(left.x - G.view!.x, left.y - G.view!.y),
+      )[0];
+    G.auto = { mode: 'land', id: destination.id, sys: G.sys };
+    window.fixtureInputs = [];
+    document.getElementById('optbtn')!.click();
+  });
+  await page.waitForFunction(() => window.fixtureInputs.some((packet) => packet.th || packet.tu));
+  assert.equal(
+    await page.evaluate(() => G.auto?.mode),
+    'land',
+    'Options preserves navigation guidance',
+  );
+  assert.equal(await page.locator('#opts').isVisible(), true);
+  await page.keyboard.press('Escape');
+  await page.click('#cbhelp');
+  await clearInputs();
+  await page.waitForFunction(() => window.fixtureInputs.some((packet) => packet.th || packet.tu));
+  assert.equal(
+    await page.evaluate(() => G.auto?.mode),
+    'land',
+    'Controls preserves navigation guidance',
+  );
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => {
+    G.auto = null;
+  });
+  await page.click('#optbtn');
+  await thrustBinding.click();
+  await page.evaluate(async () => (await import('/overlay-controller.js')).overlays.reset());
+  assert.equal(await page.locator('#opts').isVisible(), false);
+  await page.click('#optbtn');
+  await page.keyboard.press('Escape');
+  assert.equal(
+    await page.locator('#opts').isVisible(),
+    false,
+    'Reset clears former-account binding capture',
+  );
+  assert.equal(await bindingValue('thrust'), 'KeyV');
+
   await page.fill('#chatin', 'v j l');
   assert.equal(
     await page.locator('#chatin').inputValue(),
@@ -339,6 +559,11 @@ try {
         nestedEscape: true,
         focusReturn: true,
         nativeButtons: true,
+        optionsRebinding: true,
+        optionsControlsFocus: true,
+        nativeSettingsControls: true,
+        controlsMapPriority: true,
+        navigationContinues: true,
         heldKeyRelease: true,
         customBinding: true,
         manualInputIsolation: true,
@@ -350,7 +575,7 @@ try {
     ),
   );
   console.log(
-    'Nested dialog priority/focus/native activation and blocked keyboard/pointer/touch/gamepad inputs passed.',
+    'Dialog priority/focus, Options capture/native settings, Controls navigation and blocked keyboard/pointer/touch/gamepad inputs passed.',
   );
 } catch (error) {
   await failureEvidence(browser, output, error);
