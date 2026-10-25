@@ -101,7 +101,17 @@ while (pendingSystemIds.length)
       fseen.add(linkedSystemId4);
       pendingSystemIds.push(linkedSystemId4);
     }
-assertCondition(fseen.size === 16, 'all sixteen Farside systems connect to each other');
+assertCondition(
+  SYSTEMS.filter((system) => fseen.has(system.id)).length === 16,
+  'all sixteen generated Farside systems connect to each other',
+);
+assertCondition(
+  [...fseen]
+    .filter((id) => !SYSTEMS.some((system) => system.id === id))
+    .sort()
+    .join(',') === 'founding-vigil,quantum-rift,table',
+  'only the three gated personal story bearings extend the Farside lanes',
+);
 assertCondition(
   STELLARS['sol-gateway'].wormhole === 'coldharbor' &&
     STELLARS['coldharbor-gate'].wormhole === 'qgate',

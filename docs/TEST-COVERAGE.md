@@ -903,7 +903,7 @@ Kernel tactics, regional sorties and later story missions are not covered here.
 
 The `story-realities` contract uses `story-realities-browser.ts` to exercise the native actor registry with isolated viewer
 state: Act III ghost opacity, engine glow, friend-game precedence, different-ending
-ghosts, reduced effects, faded nameplates and opaque target outlines. Its helper
+ghosts, a persisted real Reduced effects options toggle, faded nameplates and opaque target outlines. Its helper
 checks ownership chains, cyclic owners, NPC faction lenses and private scenery
 visibility. The browser also denies selection of hidden story systems and captures
 a saved captain flying in Beyond the Rift with the supplied arrival backdrop and
@@ -927,7 +927,13 @@ generic bounty. Transforming Index checks cover neutral captain attribution,
 Mutable/Hive postures, Loom clearance and shared finite extraction, real Trident
 blades with persistent loss and one reward, bounded Kernel reboot and Talon escape.
 Browser checks cover supplied faction artwork and the actual private Vigil,
-prepared Dreamer witness route and player-ship ark departure. These are deterministic
+prepared Dreamer witness route and player-ship ark departure. The all-port job
+regression includes the real Table board, denies locked queries and hidden offer
+injection, and keeps encounter-only salvage out of public freight. Original graph,
+freight, arc and radio-tour goldens retain their baseline hashes after exact
+reviewed story-content reversals. Stock travelling hulls retain closed-loop landing
+and banking bounds; deployed NPC work postures keep all braking checks and have
+explicitly tested transit counterparts. These are deterministic
 fixtures, not an exhaustive balance, seed, hardware or human multiplayer playtest.
 
 ## Performance and operational health

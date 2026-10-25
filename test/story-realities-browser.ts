@@ -127,6 +127,23 @@ try {
   await page.waitForFunction(
     () => G.view && !G.landed && window.RiftEngine.scene.display.actors.has('ship:' + G.myId),
   );
+  await page.click('#optbtn');
+  await page.locator('#opt-reducedEffects').check();
+  assert.equal(
+    await page.evaluate(async () => {
+      const { reducedStoryEffects } = await import('/story-reality.js');
+      return (
+        reducedStoryEffects(G) && JSON.parse(localStorage.getItem('rift.opts')!).reducedEffects
+      );
+    }),
+    true,
+    'the real reduced-effects setting controls rendering and persists',
+  );
+  await page.click('#optclose');
+  await page.click('#optbtn');
+  assert.equal(await page.locator('#opt-reducedEffects').isChecked(), true);
+  await page.locator('#opt-reducedEffects').uncheck();
+  await page.click('#optclose');
   const visual = await page.evaluate(async () => {
     const { storyShipOpacity } = await import('/story-reality.js');
     const { mapHit, mapFit, drawShip } = await import('/render.js');

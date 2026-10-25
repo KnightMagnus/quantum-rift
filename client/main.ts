@@ -70,6 +70,8 @@ export interface ClientOptions {
   v21?: boolean;
   dmg: boolean;
   shake: boolean;
+  /** Disable story shimmer and flashing transitions without hiding targeting. */
+  reducedEffects?: boolean;
   mouseAim: boolean;
   notify: boolean;
   cb: boolean;
@@ -391,6 +393,7 @@ const clientGameState: ClientGameState = (window.G = {
     {
       dmg: true,
       shake: true,
+      reducedEffects: false,
       mouseAim: false,
       notify: false,
       cb: false,
@@ -2632,7 +2635,7 @@ elementById2('tutskip').onclick = () => {
 };
 
 // ------------------------------------------------------------------ options
-const CHECKS = ['dmg', 'shake', 'mouseAim', 'notify', 'cb', 'mute'];
+const CHECKS = ['dmg', 'shake', 'reducedEffects', 'mouseAim', 'notify', 'cb', 'mute'];
 let rebinding: string | null = null;
 /**
  * Formats a KeyboardEvent.code string into a readable label.

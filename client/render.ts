@@ -4127,7 +4127,11 @@ export function updateEffects(
     const elapsed = currentTime - sequence.began;
     if (elapsed > (sequence.kind === 'rift-crossing' ? 2800 : 12000))
       storySequences.delete(clientGameState);
-    else if (sequence.kind === 'rift-crossing' && !reducedStoryEffects(clientGameState))
+    else if (
+      sequence.kind === 'rift-crossing' &&
+      clientGameState.opts.shake &&
+      !reducedStoryEffects(clientGameState)
+    )
       shake = Math.max(shake, 16 * (1 - elapsed / 2800));
   }
   updateShipChat(clientGameState, currentTime);

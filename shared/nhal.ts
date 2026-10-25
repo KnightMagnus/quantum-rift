@@ -64,7 +64,13 @@ export const NHAL_HULLS: ShipHullAsset[] = [
   mass: Number(size) * 4,
   shield: 0,
   accel: 320,
-  turn: Number(id) >= 906 ? 0.6 : 2,
+  // Raw catalog turn is degrees per unit; shared physics applies its 3x scale.
+  turn: (
+    { 900: 60, 901: 45, 902: 18, 903: 14, 904: 70, 905: 24, 906: 14, 907: 10, 908: 9 } as Record<
+      number,
+      number
+    >
+  )[Number(id)],
   space: 0,
   cargo: 0,
   fuel: 0,

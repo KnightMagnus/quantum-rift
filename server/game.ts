@@ -1,3 +1,4 @@
+import { storySystemVisible } from '../shared/story-world.ts';
 import { utf8Bytes } from '../shared/health.ts';
 import type { HealthMonitor } from '../shared/health.ts';
 import { wireRecord } from '../shared/wire-actions.ts';
@@ -2533,7 +2534,11 @@ export class Game<Storage extends Database = Database> {
    */
   nearestBuyer(starSystem: string, captainId: string): { p: StellarBody; j: number } | null {
     // Keep authored tie order and the existing five-link search boundary.
-    for (const [systemId, jumps] of galaxyGraph.walk(starSystem, { maxDepth: 5 })) {
+    for (const [systemId, jumps] of galaxyGraph.walk(starSystem, {
+      maxDepth: 5,
+      // Global cargo advice cannot advertise another captain's hidden ending port.
+      canEnter: (id) => storySystemVisible(undefined, id),
+    })) {
       for (const port of systemsById[systemId].stellars) {
         const stellarBody = STELLARS[port.id];
         if (

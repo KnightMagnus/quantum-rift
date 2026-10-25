@@ -82,7 +82,7 @@ const flying = (session: Session | undefined): session is FlyingSession =>
   );
 const distance = (point: Point, point2: Point) =>
   Math.hypot(point.x - point2.x, point.y - point2.y);
-const silent = (entity: Entity) => ['umbral', 'eclipse', 'swarm'].includes(entity.faction);
+const silent = (entity: Entity) => ['umbral', 'eclipse', 'swarm', 'nhal'].includes(entity.faction);
 
 /** Ephemeral, server-owned calls. Persist only communication preferences and real accepted job rewards. */
 export class HailService {

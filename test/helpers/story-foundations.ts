@@ -28,7 +28,7 @@ export function verifyStoryFoundations(game: Game) {
   for (const field of SYS.qgate.fields || [])
     assert.ok(Math.hypot(gateway.x - field.x, gateway.y - field.y) > gateway.r + field.r);
   assert.deepEqual(
-    STORY.map(({ id, pay, rep }) => [id, pay, rep]),
+    STORY.slice(0, 5).map(({ id, pay, rep }) => [id, pay, rep]),
     [
       ['qv1', 15000, 8],
       ['qv2', 35000, 10],

@@ -6,6 +6,11 @@ import { GalaxyGraph } from '../shared/galaxy-graph.ts';
 import { SYSTEMS, SYS as systemsById, FACTIONS, START, COMMODITIES } from '../shared/galaxy.ts';
 import { route } from '../shared/rules.ts';
 
+// Alien salvage is earned from encounters, not supplied by public freight senders.
+const freightCommodities = COMMODITIES.filter(
+  ({ id }) => !['nhal_bone', 'nhal_ichor', 'nhal_eye', 'index_core', 'index_parts'].includes(id),
+);
+
 // Stable public board slots, independent of a captain's ship, money or combat rank.
 // Each band gives an existing class of hauler useful work without hiding smaller jobs.
 export const FREIGHT_BANDS = [
@@ -83,7 +88,7 @@ export function freightOffers(port: StellarBody, window: number): Mission[] {
         sys: starSystem,
         jumps,
       } = choices[Math.floor(radius() * choices.length)],
-      commodity = COMMODITIES[Math.floor(radius() * COMMODITIES.length)];
+      commodity = freightCommodities[Math.floor(radius() * freightCommodities.length)];
     missions.push({
       id: `${port.id}-${window}-freight-${slot}`,
       type: 'cargo',

@@ -33,7 +33,21 @@ export const INDEX_FLEET_HULLS: ShipHullAsset[] = [
   cost: 0,
   mass: Number(size) * 3,
   accel: 200,
-  turn: 1,
+  // Deployed forms turn slowly, but remain above the stock-capital banking rate.
+  turn: (
+    {
+      912: 18,
+      913: 9,
+      916: 32,
+      918: 60,
+      919: 28,
+      920: 9,
+      921: 30,
+      922: 12,
+      923: 18,
+      924: 9,
+    } as Record<number, number>
+  )[Number(id)],
   space: 0,
   cargo: 0,
   fuel: 0,

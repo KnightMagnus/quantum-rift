@@ -18,7 +18,18 @@ const assets = augmentAssets(
 let count = 0,
   maxSeconds = 0,
   maxLandingSpeed = 0;
+// These NPC-only work postures refold before travelling; deployed Loom speed
+// cannot cross a 3,000-unit approach inside the existing 300-second landing bound.
+// Their transit hulls remain covered here, and all forms retain braking checks below.
+const workingPostures = new Map([
+  [913, 912],
+  [920, 919],
+  [922, 921],
+  [924, 923],
+]);
+const closedLoopHullCoverage = new Set<number>();
 for (const hull of Object.keys(assets.ships)) {
+  if (workingPostures.has(Number(hull))) continue;
   const shipStats3 = requiredFixtureValue(shipStats(assets, makeLoadout(assets, hull)));
   for (const radius of [40, 70, 165, 330])
     for (const seed of [
@@ -111,7 +122,24 @@ for (const hull of Object.keys(assets.ships)) {
       maxSeconds = Math.max(maxSeconds, tick * simulationStepSeconds);
       maxLandingSpeed = Math.max(maxLandingSpeed, requiredFixtureValue(landSpeed));
       count++;
+      closedLoopHullCoverage.add(Number(hull));
     }
+}
+for (const [working, transit] of workingPostures) {
+  assert.equal(
+    assets.ships[working].npcOnly,
+    true,
+    'a non-travelling work posture is never a player hull',
+  );
+  assert.equal(
+    assets.ships[working].spr?.banks,
+    false,
+    'only the authored level-only work sheets skip the travelling approach',
+  );
+  assert.ok(
+    closedLoopHullCoverage.has(transit),
+    `work posture ${working} has its actual transit counterpart ${transit} covered by the full closed-loop landing matrix`,
+  );
 }
 // Reproduce a delayed/held retrograde thrust after the last partial pulse.
 // This previously reversed a near-stopped ship, causing another braking turn.

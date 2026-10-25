@@ -315,8 +315,13 @@ try {
         path.join(evidence, 'all-designs.png'),
         Buffer.from(audit.contact.split(',')[1], 'base64'),
       );
-      assert.equal(audit.stations, 110);
-      assert.equal(audit.rows.length, 245);
+      assert.equal(audit.stations, 111);
+      assert.equal(audit.rows.length, 246);
+      assert.equal(
+        audit.rows.filter((row) => row.id === 'table-station').length,
+        1,
+        'the authored Table port joins the complete real artwork/flight identity audit',
+      );
       assert.ok(
         audit.rows
           .filter((assetProbe) => assetProbe.kind === 'hub')

@@ -1420,6 +1420,7 @@ export const PERSONAL_SYSTEMS: StarSystem[] = [];
   edge.links.push('quantum-rift');
   const beyond: StarSystem = {
     id: 'beyond-rift',
+    farside: true,
     name: 'Beyond the Rift',
     faction: 'farside',
     x: edge.x - 25,
@@ -1445,6 +1446,7 @@ export const PERSONAL_SYSTEMS: StarSystem[] = [];
   };
   const vigil: StarSystem = {
     id: 'founding-vigil',
+    farside: true,
     name: 'The Founding Vigil',
     faction: 'farside',
     x: centreX,

@@ -744,7 +744,7 @@ export class Space {
     // asteroids and gas pockets in the system's mining fields: they break into ore that ships scoop up, and regrow
     this.rocks = [];
     this.game.features.mining.openSpace(this);
-    this.game.features.index.open(this);
+    this.game.features.index?.open(this);
   }
   /**
    * Generates compact serialized state array of asteroid field rocks for client rendering.
@@ -1176,11 +1176,12 @@ export class Space {
       if (!leftEntity.aggro.has(rightEntity.id) && !rightEntity.aggro.has(leftEntity.id))
         return false;
     }
-    const nhalHostility = this.game.features.nhal.allow(this, leftEntity, rightEntity);
+    const nhalHostility = this.game.features.nhal?.allow(this, leftEntity, rightEntity) ?? null;
     if (nhalHostility !== null) return nhalHostility;
-    const fleetHostility = this.game.features.indexFleet.allow(this, leftEntity, rightEntity);
+    const fleetHostility =
+      this.game.features.indexFleet?.allow(this, leftEntity, rightEntity) ?? null;
     if (fleetHostility !== null) return fleetHostility;
-    const indexHostility = this.game.features.index.allow(this, leftEntity, rightEntity);
+    const indexHostility = this.game.features.index?.allow(this, leftEntity, rightEntity) ?? null;
     if (indexHostility !== null) return indexHostility;
     const scoped =
       leftEntity.miningEncounter || rightEntity.miningEncounter
@@ -1239,7 +1240,19 @@ export class Space {
     const starSystem = this.sys;
     if (['table', 'quantum-rift', 'beyond-rift', 'founding-vigil'].includes(starSystem.id))
       return null;
-    if (starSystem.faction === 'deep') return this.game.features.nhal.spawnTraffic(this, initial);
+    if (starSystem.faction === 'deep') {
+      // An occasional, explicitly tagged Eclipse cell is an encounter exception,
+      // not a return to the Deep's former Umbral/Hollow population mix.
+      if (
+        !Array.from(this.ships.values()).some(
+          (entity) => entity.faction === 'eclipse' && !entity.dead,
+        ) &&
+        this.game.features.hostile?.eclipseChance &&
+        Math.random() < this.game.features.hostile.eclipseChance(starSystem, this.m)
+      )
+        return this.spawnEclipse(initial);
+      return this.game.features.nhal?.spawnTraffic(this, initial) ?? null;
+    }
     if (
       (starSystem.faction === 'vashari' || starSystem.faction === 'frontier') &&
       Math.random() < 0.14 * (this.m ? this.m.swarm : 1)
@@ -1671,9 +1684,9 @@ export class Space {
       this.steer(entity, entity.home!.x, entity.home!.y, false);
       return;
     }
-    if (this.game.features.nhal.ai(this, entity)) return;
-    if (this.game.features.indexFleet.ai(this, entity)) return;
-    if (this.game.features.index.ai(this, entity)) return;
+    if (this.game?.features?.nhal?.ai(this, entity)) return;
+    if (this.game?.features?.indexFleet?.ai(this, entity)) return;
+    if (this.game?.features?.index?.ai(this, entity)) return;
     entity.think -= tickDuration;
     const owner = entity.owner ? this.ships.get(entity.owner) : null;
     if (entity.ai === 'escort' && !owner)
@@ -2481,7 +2494,7 @@ export class Space {
     entity2?: Entity | null,
     _unusedIon?: number | boolean,
   ): [number, number, number] | void {
-    const fleetScale = this.game.features.indexFleet.damageScale(this, entity);
+    const fleetScale = this.game.features.indexFleet?.damageScale(this, entity) ?? 1;
     angleDelta *= fleetScale;
     shieldDamage *= fleetScale;
     if (entity.industrialRoot) return [0, 0, entity2?.id || 0]; // Utility collectors cannot tank combat or grant rewards.
@@ -2520,9 +2533,9 @@ export class Space {
     entity.hitT = this.t;
     if (entity2) entity.lastHitBy = entity2.id;
     const done = Math.max(0, shield2 - entity.shield) + Math.max(0, armor2 - entity.armor);
-    if (done > 0 && entity2) this.game.features.nhal.damaged(this, entity, entity2, done);
-    if (done > 0 && entity2) this.game.features.indexFleet.damaged(this, entity, entity2, done);
-    if (done > 0 && entity2) this.game.features.index.damaged(this, entity, entity2);
+    if (done > 0 && entity2) this.game?.features?.nhal?.damaged(this, entity, entity2, done);
+    if (done > 0 && entity2) this.game?.features?.indexFleet?.damaged(this, entity, entity2, done);
+    if (done > 0 && entity2) this.game?.features?.index?.damaged(this, entity, entity2);
     // Incidental NPC fire does not make an overlooked captain's wing initiate
     // retaliation and thereby attract the entire faction. Deliberate outgoing
     // damage still creates normal visit-local hostility and reputation costs.
@@ -2611,7 +2624,7 @@ export class Space {
       this.game.onPlayerDeath(entity.player, this, entity2);
       return;
     }
-    if (this.game.features.nhal.killed(this, entity, entity2)) {
+    if (this.game?.features?.nhal?.killed(this, entity, entity2)) {
       if (entity2?.player)
         this.game.onKill(
           entity2.player,
@@ -2621,7 +2634,7 @@ export class Space {
         );
       return;
     }
-    if (this.game.features.indexFleet.killed(this, entity, entity2)) return;
+    if (this.game?.features?.indexFleet?.killed(this, entity, entity2)) return;
     if (entity.indexWorksite) return; // Worksite machines never grant generic bounty or drone loot.
     if (entity.industrialRoot) return; // No farmable salvage, bounty or replacement ammo.
     if (entity.boss) this.game.features.fronts.onBossKilled(entity, this);
@@ -2874,12 +2887,12 @@ export class Space {
       this.game.features.industrial.industrialTick(this, tickDuration);
     this.game.features.mining.endTick(this);
     this.game.features.pressure.pressureTick(this);
-    this.game.features.index.indexTick(this);
-    this.game.features.indexFleet.fleetTick(this);
-    this.game.features.nhal.nhalTick(this);
+    this.game?.features?.index?.indexTick(this);
+    this.game?.features?.indexFleet?.fleetTick(this);
+    this.game?.features?.nhal?.nhalTick(this);
     for (const session of this.game.sessions.values())
       if (session.data?.sys === this.id)
-        this.game.features.story.storyTick(session, this, tickDuration);
+        this.game.features.story?.storyTick(session, this, tickDuration);
     for (const floatingLoot of this.loot) {
       floatingLoot.x += floatingLoot.vx * tickDuration;
       floatingLoot.y += floatingLoot.vy * tickDuration;

@@ -97,10 +97,55 @@ assert.equal(
   baseline.galaxy,
   'Generated topology, prices, bodies and fields match after reviewed story-only reversals',
 );
+// Reverse only the eight reviewed story tie-ins. The old golden still checks
+// every original objective, reward, ordering and narrative byte underneath them.
+const legacyArcs = structuredClone(ARCS);
+const storyTieIns = [
+  [
+    'Cleaning House',
+    'done',
+    ' One code opens the sealed lower decks of Quantum Station, where the Core sits. The Ledger Thief wanted to know what was down there.',
+  ],
+  ['Spare Parts', 'done', ' Their old drive coil burned out when the lane moved under them.'],
+  ['Gallows Jack', 'progress', ' His route log lists a system on no chart. Nobody comments on it.'],
+  [
+    'The Brood-Mother',
+    'text',
+    ' Her drones heard a song from the Deep, and passed it back to her.',
+  ],
+  [
+    'The Deep Core',
+    'done',
+    ' The sample is worked material, like scaffolding, not rock. Basalt Harrowmere keeps a piece.',
+  ],
+  [
+    'The Veil-Drinker',
+    'progress',
+    ' Its last transmission says: "You don’t know what we’re hiding you from."',
+  ],
+  [
+    'The Defaulter',
+    'progress',
+    ' His books list debts paid in events that never happened, in a hand that is not his. The broker files them without comment.',
+  ],
+  [
+    'Becalmed Singers',
+    'done',
+    ' Before the Wrecker found them, something sang back on their channel. Maren Deepcurrent keeps the recording.',
+  ],
+] as const;
+for (const [title, field, addition] of storyTieIns) {
+  const step = Object.values(legacyArcs)
+    .flatMap((arc) => arc.steps)
+    .find((step) => step.title === title)!;
+  assert.ok(step, `Reviewed tie-in ${title} exists`);
+  assert.equal(step[field]!.split(addition).length, 2, `Exact reviewed tie-in in ${title}`);
+  step[field] = step[field]!.replace(addition, '');
+}
 assert.equal(
-  sha256(ARCS),
+  sha256(legacyArcs),
   baseline.arcs,
-  'Arc discovery order and generated objectives are unchanged',
+  'Original arc objectives, ordering and prose preserve parity beneath reviewed tie-ins',
 );
 for (const [standing, expected] of Object.entries(baseline.tours)) {
   const reputationFixture = {
@@ -111,7 +156,7 @@ for (const [standing, expected] of Object.entries(baseline.tours)) {
       ]),
     ),
   };
-  const tours = Object.keys(systemsById).map((origin) => [
+  const tours = legacyStorySystems(Object.values(systemsById)).map(({ id: origin }) => [
     origin,
     tourRoute(origin, mockPlayerData(reputationFixture)),
   ]);
