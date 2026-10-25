@@ -74,7 +74,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 - [Dedicated server setup](docs/NAKAMA.md)
 - [Beta Solo save generator](test/Save%20Generator/README.md)
 - [Development tools](docs/DEVELOPMENT-TOOLS.md) and [code navigation](docs/CODE-NAVIGATION.md)
-- [Release notes](docs/RELEASE-3.4.1.md)
+- [Release notes](docs/RELEASE-3.4.2.md)
 
 ## Screenshots
 
