@@ -173,6 +173,7 @@ try {
     const panel = await page.locator('#chatprojection').boundingBox();
     const cockpit = await page.locator('#cockpit').boundingBox();
     const anchor = await page.locator('#consolechat').boundingBox();
+    assert.ok(anchor!.width >= 140, 'Chat keeps enough width to project history beside the Tray');
     assert.ok(
       panel!.x >= 0 && panel!.y >= 0 && panel!.x + panel!.width <= cockpit!.x + cockpit!.width + 1,
     );

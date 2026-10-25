@@ -2159,12 +2159,13 @@ function openControls(): void {
     '<div class="osect">FLIGHT AND COMBAT</div><div class="ctrlgrid">' +
     ACTIONS.map(
       ([firstValue, count]) =>
-        `<span class="k">${keyName(bound(firstValue))}${alternateBindings[firstValue] ? ' / ' + keyName(alternateBindings[firstValue]) : ''}</span><span>${count}</span>`,
+        `<div class="ctrlbinding"><span class="k">${keyName(bound(firstValue))}${alternateBindings[firstValue] ? ' / ' + keyName(alternateBindings[firstValue]) : ''}</span><span>${count}</span></div>`,
     ).join('') +
     '</div>' +
     '<div class="osect">MOUSE AND MENUS</div><div class="ctrlgrid">' +
     BASICS.map(
-      ([entryKey, count]) => `<span class="k">${entryKey}</span><span>${count}</span>`,
+      ([entryKey, count]) =>
+        `<div class="ctrlbinding"><span class="k">${entryKey}</span><span>${count}</span></div>`,
     ).join('') +
     '</div>';
   overlays.open('ctrlbox');

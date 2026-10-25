@@ -112,7 +112,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 
 **Landed services**
 
-![Landed service menu with system traffic behind it](docs/screenshots/responsive-landed.png)
+![Ultrawide landed shipyard inside the flight window, clear of the sidebar and console](docs/screenshots/responsive-landed.png)
 
 **Growing colonies**
 
@@ -125,6 +125,18 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 **Hails and caller portraits**
 
 ![Docking-control hail displaying the caller portrait over the landed colony view](docs/screenshots/docking-hail.png)
+
+**Index transmissions**
+
+![An Index machine's ship artwork in its incoming hail](docs/screenshots/index-ship-hail.png)
+
+**Index worksites**
+
+![Large Index machines keeping separate berths around a Glasswake worksite](docs/screenshots/index-fleet-spacing.png)
+
+**Controls reference**
+
+![Two-column flight and menu controls with paired key bindings](docs/screenshots/controls-reference.png)
 
 **Galaxy map**
 

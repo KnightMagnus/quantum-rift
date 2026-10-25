@@ -123,6 +123,7 @@
     "health.ts",
     "wire-contracts.ts",
     "story-continuation.ts",
+    "index-presentation.ts",
     "performance-native.ts"
   ],
   "browser": [
@@ -171,7 +172,8 @@
     "platform-browser-smoke.ts",
     "cockpit-layout-browser.ts",
     "story-realities-browser.ts",
-    "overlay-input-browser.ts"
+    "overlay-input-browser.ts",
+    "ui-polish-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -620,6 +622,16 @@
     "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
     "helpers/story-seeded-motion.ts": ["helpers/mocks.ts"],
     "overlay-input-browser.ts": ["helpers/browser-fixture.ts", "helpers/temp-data.ts"],
+    "index-presentation.ts": [
+      "helpers/legacy-fixture.ts",
+      "helpers/mocks.ts",
+      "helpers/temp-data.ts"
+    ],
+    "ui-polish-browser.ts": [
+      "helpers/temp-data.ts",
+      "helpers/browser-fixture.ts",
+      "fixtures/ui-polish-preload.ts"
+    ],
     "performance-native.ts": [
       "helpers/native-performance.ts",
       "helpers/native-packet-collector.ts",
@@ -724,10 +736,16 @@
     },
     {
       "id": "hailing",
-      "owners": ["server/hail.ts", "server/hail-service.ts"],
+      "owners": ["server/hail.ts", "server/hail-service.ts", "shared/hail-machine.ts"],
       "services": ["hail"],
-      "tests": ["v11.ts", "hailing.ts", "network-systems.ts"],
-      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls."
+      "tests": [
+        "v11.ts",
+        "hailing.ts",
+        "network-systems.ts",
+        "index-presentation.ts",
+        "ui-polish-browser.ts"
+      ],
+      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait."
     },
     {
       "id": "fleet-orders",
@@ -990,7 +1008,7 @@
         "radio-browser.ts",
         "radio-content.ts"
       ],
-      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Saved radio unlocks survive login without captain-name privileges; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1\u20134 and separate new login theme; original theme preserved."
+      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Saved radio unlocks survive login without captain-name privileges; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1–4 and separate new login theme; original theme preserved."
     },
     {
       "id": "economy-balance",
@@ -1255,9 +1273,10 @@
         "sidebar-sizing-browser.ts",
         "landing-feedback.ts",
         "landing-autopilot-browser.ts",
-        "sidebar-gauges-browser.ts"
+        "sidebar-gauges-browser.ts",
+        "ui-polish-browser.ts"
       ],
-      "asserts": "Per-captain remembered views and deliberate single objective pin survive reload without leaking between accounts; detail/back restores list focus/scroll, unavailable cargo links to Trade, native keyboard controls and narrow/scaled Tray stay usable without taking flight focus. Independent vertical map/menu pointer/touch/keyboard sizing, reload persistence, zoom-safe limits and automatic reset preserve backing geometry and reachability. The menu top divider reallocates available space without rewriting stored sizes. Collapsed flight meters track authoritative damage, shield regeneration and fuel changes. Repeated landing requests retain one live approach and one notice per unchanged situation."
+      "asserts": "Per-captain remembered views and deliberate single objective pin survive reload without leaking between accounts; detail/back restores list focus/scroll, unavailable cargo links to Trade, native keyboard controls and narrow/scaled Tray stay usable without taking flight focus. Independent vertical map/menu pointer/touch/keyboard sizing, reload persistence, zoom-safe limits and automatic reset preserve backing geometry and reachability. The menu top divider reallocates available space without rewriting stored sizes. Collapsed flight meters track authoritative damage, shield regeneration and fuel changes. Repeated landing requests retain one live approach and one notice per unchanged situation. Unique story equipment remains absent from Codex outfit browsing, search and stale detail navigation without removing it from gameplay."
     },
     {
       "id": "mission-choices",
@@ -1280,7 +1299,7 @@
       "owners": ["server/freight-offers.ts", "server/game.ts", "server/jobs.ts"],
       "services": [],
       "tests": ["cargo-couriers.ts", "mission-ui-browser.ts", "v203.ts", "cargo-flows.ts"],
-      "asserts": "Two lawful untimed 3\u20135t/6\u201310t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."
+      "asserts": "Two lawful untimed 3–5t/6–10t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."
     },
     {
       "id": "reusable-core",
@@ -1394,9 +1413,10 @@
         "attention-scan.ts",
         "attention-runtime.ts",
         "nakama-network.ts",
-        "cockpit-layout-browser.ts"
+        "cockpit-layout-browser.ts",
+        "ui-polish-browser.ts"
       ],
-      "asserts": "Recipient-only actual combat targeting, death/departure/cancel clearing, truthful recent patrol scan expiry, red precedence and reduced motion; 12.5% larger text, fixed widescreen button geometry, fluid center chat, sidebar gap, responsive landed/map/captain/settings surfaces and narrow preservation. Centered labels, consistent button-only LEDs, upper-right alert above Captain, landscape settings with real key reassignment and 15% larger ultrawide map/landing panels. Expanded cockpit utilities and vent clear the inset frame at 1920–5120px and 0.8×/1×/1.4× scale; sidebar panels clear the trim by at least 3px. HAIL remains visible and disabled while landed and re-enables on takeoff."
+      "asserts": "Recipient-only actual combat targeting, death/departure/cancel clearing, truthful recent patrol scan expiry, red precedence and reduced motion; 12.5% larger text, fixed widescreen button geometry, fluid center chat, sidebar gap, responsive landed/map/captain/settings surfaces and narrow preservation. Centered labels, consistent button-only LEDs, upper-right alert above Captain, landscape settings with real key reassignment and 15% larger ultrawide map and flight-relative 70% width/86% height landing panels. Expanded cockpit utilities and vent clear the inset frame at 1920–5120px and 0.8×/1×/1.4× scale; sidebar panels clear the trim by at least 3px. HAIL remains visible and disabled while landed and re-enables on takeoff. Frame fasteners never overlap function controls or labels; Controls uses paired two-column rows with narrow fallback."
     },
     {
       "id": "planet-portrait-art",
@@ -1448,7 +1468,12 @@
         "client/mining_render.ts"
       ],
       "services": ["index"],
-      "tests": ["eventide.ts", "gateway-browser.ts"],
+      "tests": [
+        "eventide.ts",
+        "gateway-browser.ts",
+        "index-presentation.ts",
+        "ui-polish-browser.ts"
+      ],
       "asserts": "Neutral worksite and unmarked resource safety; exact-rock warnings and captain-root provocation, innocent captain and NPC safety, bounded disengagement and persisted encounter health/claim/replacement budgets; shared finite mining allocations, passive salvage exclusion, explicit hail theft, parent cleanup, peaceful personal survey/recovery quest and real browser artwork/hail cues."
     },
     {
@@ -1479,8 +1504,14 @@
         "shared/index-fleet.ts"
       ],
       "services": ["story", "nhal", "indexFleet"],
-      "tests": ["story-continuation.ts", "eventide.ts", "story-realities-browser.ts"],
-      "asserts": "Captain-scoped decisions, finale availability branches, denial and persistence; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups."
+      "tests": [
+        "story-continuation.ts",
+        "eventide.ts",
+        "story-realities-browser.ts",
+        "index-presentation.ts",
+        "ui-polish-browser.ts"
+      ],
+      "asserts": "Captain-scoped decisions, finale availability branches, denial and persistence; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets."
     },
     {
       "id": "release-platform-gates",

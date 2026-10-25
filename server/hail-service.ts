@@ -1,3 +1,4 @@
+import { hailMachineHull } from '../shared/hail-machine.ts';
 import { playerPortrait, npcPortrait } from '../shared/portraits.ts';
 import type { Game, Session, Entity } from './game.ts';
 import type { Space } from './space.ts';
@@ -16,7 +17,9 @@ interface HailDetails {
 }
 interface HailEntry extends HailDetails {
   /** Captured sender identity survives archive and despawn. */
-  portraitId: string;
+  portraitId?: string;
+  /** Ship-only caller artwork survives archive and sender removal. */
+  machineHull?: number;
   key: string;
   kind: 'player' | 'npc';
   source: number;
@@ -141,6 +144,7 @@ export class HailService {
         key: hailEntry.key,
         who: hailEntry.who,
         portraitId: hailEntry.portraitId,
+        machineHull: hailEntry.machineHull,
         kind: hailEntry.kind,
         unread: !hailEntry.read,
         expires: hailEntry.expires,
@@ -325,6 +329,7 @@ export class HailService {
         t: 'hail',
         who: hailEntry.who,
         portraitId: hailEntry.portraitId,
+        machineHull: hailEntry.machineHull,
         text: `${hailEntry.text}\n\n[Archived transmission: this hail has expired or the sender is no longer available. No actions remain available.]`,
         opts: [],
       });
@@ -340,6 +345,7 @@ export class HailService {
         player: hailEntry.kind === 'player' ? entity.id : undefined,
         who: hailEntry.who,
         portraitId: hailEntry.portraitId,
+        machineHull: hailEntry.machineHull,
         sub: hailEntry.kind === 'player' ? 'Private hail' : hailEntry.reason,
         text: hailEntry.text,
         opts: hailEntry.opts || [],
@@ -375,7 +381,9 @@ export class HailService {
     hailState.queue.push({
       key: `h${++this.serial}`,
       kind: 'npc',
-      portraitId: npcPortrait(entity, session.data.sys),
+      portraitId:
+        hailMachineHull(entity) === undefined ? npcPortrait(entity, session.data.sys) : undefined,
+      machineHull: hailMachineHull(entity),
       source: entity.id,
       who: entity.name || `${this.game.A.ships[entity.hull].name} · transponder ${entity.id}`,
       sys: session.data.sys,
@@ -500,6 +508,7 @@ export class HailService {
         t: 'hail',
         who: hailEntry.who,
         portraitId: hailEntry.portraitId,
+        machineHull: hailEntry.machineHull,
         text,
         opts: [],
       });
@@ -526,6 +535,7 @@ export class HailService {
         key: hailEntry.key,
         who: hailEntry.who,
         portraitId: hailEntry.portraitId,
+        machineHull: hailEntry.machineHull,
         text: hailEntry.text,
         opts: hailEntry.opts,
       });

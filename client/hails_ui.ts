@@ -1,4 +1,4 @@
-import { INDEX_HULLS } from '../shared/index.ts';
+import { HAIL_MACHINE_HULLS } from '../shared/hail-machine.ts';
 import { portraitAsset } from '../shared/portraits.ts';
 import { artworkUrl } from './artwork.ts';
 interface HailEntry {
@@ -70,6 +70,7 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
   };
   const clearPortrait = () => {
     elementById('hailportraitwindow').classList.add('hidden');
+    (elementById('hailportrait') as HTMLImageElement).onerror = null;
     elementById('hailportrait').removeAttribute('src');
   };
   const close = () => {
@@ -113,12 +114,22 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
   function show(hailConversation: HailConversation) {
     active = hailConversation;
     const portrait = elementById('hailportrait') as HTMLImageElement;
-    const machine = INDEX_HULLS.find((hull) => hull.id === hailConversation.machineHull);
-    portrait.src = artworkUrl(
-      machine ? `ships/${machine.id}_yard.png` : portraitAsset(hailConversation.portraitId),
-    );
-    portrait.alt = machine
-      ? `${machine.name} survey machine`
+    const machineCaller = hailConversation.machineHull !== undefined;
+    const machine = HAIL_MACHINE_HULLS.find((hull) => hull.id === hailConversation.machineHull);
+    const fallback = artworkUrl('ships/910_yard.png');
+    portrait.onerror = machineCaller
+      ? () => {
+          if (portrait.getAttribute('src') !== fallback) portrait.src = fallback;
+          else clearPortrait();
+        }
+      : null;
+    portrait.src = machineCaller
+      ? machine
+        ? artworkUrl(`ships/${machine.id}_yard.png`)
+        : fallback
+      : artworkUrl(portraitAsset(hailConversation.portraitId));
+    portrait.alt = machineCaller
+      ? `${machine?.name || 'Index'} ship transmission`
       : `${hailConversation.who || 'Caller'} portrait`;
     elementById('hailportraitwindow').classList.remove('hidden');
     elementById('hailwho').textContent = hailConversation.who || '';
