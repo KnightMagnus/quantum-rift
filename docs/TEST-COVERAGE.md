@@ -952,7 +952,7 @@ accelerated soak does not establish wall-clock or multihour endurance.
 ## HUD containment and availability
 
 `cockpit-layout-browser.ts` checks expanded-tray utility buttons and vent against
-the inset cockpit frame at 1920, 2560, 3440 and 5120px widths, at 1× and 1.4× UI
+the inset cockpit frame at 1920, 2560, 3440 and 5120px widths, at 0.8×, 1× and 1.4× UI
 scale. Status, navigation and menu panels must clear the sidebar trim by at least
 3px. It also checks that HAIL stays visible and disabled while landed and becomes
 enabled after takeoff.

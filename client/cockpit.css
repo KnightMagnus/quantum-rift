@@ -181,6 +181,7 @@ body:not(.tray-open) #hud {
 }
 body.scaled #hud {
   zoom: var(--ui);
+  padding-left: calc(28px / var(--ui));
   width: calc(var(--hud) / var(--ui));
   height: calc((100vh - var(--cbar)) / var(--ui));
 }
@@ -1780,7 +1781,7 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
 
 /* Larger tab labels keep their readable size; recover room from chrome, not text. */
 #ctabs {
-  gap: 2px;
+  gap: 1px;
 }
 #ctabs button {
   padding-inline: 1px;

@@ -174,7 +174,7 @@ try {
     await page.click('#traytoggle');
     for (const width of [1920, 2560, 3440, 5120]) {
       await page.setViewportSize({ width, height: 1440 });
-      for (const scale of [1, 1.4]) {
+      for (const scale of [0.8, 1, 1.4]) {
         await page.evaluate((scale) => {
           document.documentElement.style.setProperty('--ui', String(scale));
           document.body.classList.toggle('scaled', scale !== 1);
