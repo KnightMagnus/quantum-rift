@@ -1,7 +1,9 @@
 /* A continuous chassis with separate live instrument wells. */
+:root {
+  --tray-width: clamp(520px, 18vw, 660px);
+}
 body.pressure-hull {
   --cbar: 220px;
-  --tray-width: clamp(520px, 18vw, 660px);
   --text: #c6e3f1;
   --dim: #a5beca;
   --well: #091820;
@@ -331,10 +333,10 @@ body.pressure-hull .overlay:not(#login) > .metal > :is(h1, h2) {
   background: #112e3c;
 }
 body.pressure-hull #land .landbox {
-  width: calc(100% - 150px);
-  height: calc(100% - 84px);
-  max-width: 2700px;
-  max-height: 1100px;
+  width: calc((100vw - var(--hud) - 150px) / var(--ui, 1));
+  height: calc((100vh - var(--cbar) - 84px) / var(--ui, 1));
+  max-width: calc(2700px / var(--ui, 1));
+  max-height: calc(1100px / var(--ui, 1));
   border-width: 70px;
   border-image-width: 70px;
   display: grid;
@@ -498,7 +500,7 @@ body.pressure-hull #land .landbody :is(.statecard, .barcard) {
 }
 body.pressure-hull
   :is(#cpanel, .landbody)
-  :is(input:not([type='checkbox']):not([type='range']), select, textarea) {
+  :is(input:not([type='checkbox']):not([type='range']), textarea) {
   color: #cdebfa;
   border: 2px solid;
   border-color: #061117 #4b7a91 #4b7a91 #061117;
@@ -801,7 +803,7 @@ body.pressure-hull :is(.osect, #optkeys, #optkeys .osect) {
     background-size: 52px 390px;
   }
   body.pressure-hull #land .landbox {
-    width: calc(100% - 100px);
+    width: calc((100vw - var(--hud) - 100px) / var(--ui, 1));
     border-width: 46px;
     border-image-width: 46px;
     gap: 8px 12px;
@@ -901,7 +903,7 @@ body.pressure-hull :is(.osect, #optkeys, #optkeys .osect) {
     border-image-width: 24px;
   }
   body.pressure-hull #land .landbox {
-    width: calc(100% - 24px);
+    width: calc((100vw - var(--hud) - 24px) / var(--ui, 1));
     display: flex;
     flex-direction: column;
     border-width: 28px;
@@ -1038,4 +1040,110 @@ body.pressure-hull #hudgrip {
 }
 body.pressure-hull #hudgrip:is(:hover, .drag) {
   background: linear-gradient(90deg, #0a2944, #5fb5e8 45%, #0a2944);
+}
+
+/* Leave flight and projected history usable on short, narrow screens. The console
+   remains scrollable so every function stays reachable. */
+@media (max-width: 1250px) and (max-height: 650px) {
+  body.pressure-hull {
+    --cbar: min(380px, 55vh);
+  }
+}
+/* Wide, short maps keep their chart area despite the sculpted outer frame. */
+@media (min-width: 1200px) and (min-aspect-ratio: 2/1) and (max-height: 1229px) {
+  body.pressure-hull #gmap > .gbox.metal {
+    border-width: 12px;
+    border-image-width: 12px;
+  }
+}
+
+/* Keep every tab reachable inside the narrower blue frame at enlarged UI scales. */
+body.pressure-hull #ctabs {
+  flex-wrap: wrap;
+}
+
+/* A narrow remaining flight area stacks console groups rather than squeezing chat. */
+body.pressure-hull #cockpit {
+  container-type: inline-size;
+}
+@container (max-width: 480px) {
+  body.pressure-hull #consolechat {
+    grid-column: 1 / -1;
+  }
+  body.pressure-hull #consoleutilities {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: 100%;
+    height: auto;
+  }
+  body.pressure-hull #consoleutilities .cbtns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Pinned guidance cannot consume the existing mission list. */
+body.pressure-hull #mlist {
+  min-height: 40px;
+}
+body.pressure-hull #cockpit {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Long dialog choices wrap inside the reading surface, never behind its frame. */
+body.pressure-hull .storybtns {
+  flex-wrap: wrap;
+}
+body.pressure-hull .storybtns .btn {
+  white-space: normal;
+  min-width: 0;
+}
+/* Compact dialogs may use the full screen while their contents remain scrollable. */
+@media (max-height: 650px), (max-width: 1100px) {
+  body.pressure-hull .overlay:not(#login):not(#land) {
+    bottom: 0;
+    width: 100vw;
+    height: 100dvh;
+  }
+  body.pressure-hull .overlay:not(#login):not(#land) > .metal {
+    max-height: calc((100dvh - 16px) / var(--ui, 1));
+    max-width: calc((100vw - 16px) / var(--ui, 1));
+    border-width: 16px;
+    border-image-width: 16px;
+  }
+}
+
+/* Native popup menus retain the same high-contrast palette on every surface. */
+body.pressure-hull :is(select, select option, select optgroup),
+body.pressure-hull :is(#cpanel, .landbody) :is(select, select option, select optgroup) {
+  background: #04182d;
+  color: #d5f3ff;
+}
+body.pressure-hull input[type='checkbox'],
+body.pressure-hull input[type='range'],
+body.pressure-hull :is(#cpanel, .landbody) input[type='checkbox'] {
+  accent-color: #68ccff;
+}
+
+/* Service details take priority over repeated scenery descriptions. */
+body.pressure-hull #land:not(:has(#ltabs [data-lt='overview'].on)) #landdesc {
+  display: none;
+}
+
+body.pressure-hull select:disabled,
+body.pressure-hull select:disabled :is(option, optgroup),
+body.pressure-hull select :is(option, optgroup):disabled {
+  color: #aaa;
+}
+
+@media (max-width: 1100px) {
+  body.pressure-hull #land {
+    width: 100vw;
+  }
+  body.pressure-hull #land > .landbox.metal {
+    width: calc((100vw - 24px) / var(--ui, 1));
+    max-width: calc((100vw - 16px) / var(--ui, 1));
+    border-width: 16px;
+    border-image-width: 16px;
+  }
 }

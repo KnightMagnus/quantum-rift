@@ -146,7 +146,7 @@ import {
 } from './frontier_ui.ts';
 
 import { ROLES_INFO, BEATS } from '../shared/roles.ts';
-import { levelOf, winOdds } from '../shared/hostile.ts';
+import { levelOf, winOdds, TIER3_TRUCE } from '../shared/hostile.ts';
 
 // ------------------------------------------------------------------ type definitions
 
@@ -712,9 +712,12 @@ export function hud(): void {
         !playerPayload.newcomer || !!(starSystem && starSystem.arena),
       ); // meaningless in the Crucible
       cachedElement.classList.toggle('off', !enabled);
-      cachedElement.textContent = enabled
-        ? '🛡 NEWCOMER TRUCE · PRE T-3'
-        : '🛡 NO NEWCOMER TRUCE: FARSIDE';
+      const truceLeft = playerPayload.truceLeft;
+      cachedElement.textContent = !enabled
+        ? '🛡 NO NEWCOMER TRUCE: FARSIDE'
+        : truceLeft
+          ? `🛡 TRUCE ENDING · ${truceLeft.kills} KILLS / ${truceLeft.jumps} JUMPS LEFT · ENDS AT ${TIER3_TRUCE.power} POWER`
+          : '🛡 NEWCOMER TRUCE · PRE T-3';
     }
   }
   elementById2('cr').textContent = credits(playerPayload.credits) + ' cr';
@@ -1630,7 +1633,6 @@ export function renderLanded(): void {
     : '';
   let height = '';
   let landingNews = '';
-  const pressureHull = document.body.classList.contains('pressure-hull');
   switch (clientGameState.ltab) {
     case 'refinery':
       height += refineryHtml(clientGameState);
@@ -1644,7 +1646,6 @@ export function renderLanded(): void {
           .slice(0, 4)
           .map((count) => `<div class="newsit">${escapeHtml2(count)}</div>`)
           .join('')}</div>`; // 1.1
-      if (!pressureHull) height += landingNews;
       if (playerPayload.shipless)
         height += `<div class="noship"><b>NO ACTIVE SHIP</b><div>You can't depart until you choose a ship. ${playerPayload.dock && playerPayload.dock.length ? 'Open STATION, then DOCKS, and choose a lead ship for your active dock.' : 'Buy one at a SHIPYARD.'}</div><div>${playerPayload.dock && playerPayload.dock.length ? '<button class="btn sm" data-act="gotodock">OPEN DRYDOCK</button> ' : ''}${length2.yard ? '<button class="btn sm" data-act="ltab" data-t="yard">SHIPYARD</button>' : ''}</div></div>`;
       if (!playerPayload.shipless)
@@ -1942,7 +1943,7 @@ export function renderLanded(): void {
     'land:' + length2.stellar + ':' + clientGameState.ltab,
   );
   const newsPanel = document.getElementById('landnews')!;
-  clientGameState.views.replace(newsPanel, pressureHull ? landingNews : '', 'landing-news');
+  clientGameState.views.replace(newsPanel, landingNews, 'landing-news');
   if (focusedRefinery) elementById(focusedRefinery)?.focus({ preventScroll: true });
   if (focusedAmount)
     [...body.querySelectorAll<HTMLInputElement>('.trade-amount')]
@@ -2314,9 +2315,9 @@ function onAct(mouseEvent: MouseEvent): void {
       );
       break;
     }
-    case 'st':
+    case 'st': {
       mouseEvent.preventDefault();
-      send({
+      const stationMessage = {
         t: 'station',
         op: domStringMap.op,
         id: domStringMap.id,
@@ -2326,8 +2327,21 @@ function onAct(mouseEvent: MouseEvent): void {
         mat: domStringMap.mat,
         g: domStringMap.g ? +domStringMap.g : undefined,
         n: domStringMap.n ? +domStringMap.n : undefined,
-      });
+      };
+      const playerPayload = clientGameState.you!;
+      if (
+        domStringMap.op === 'upgrade' &&
+        playerPayload.station?.ops === 2 &&
+        playerPayload.newcomer
+      )
+        ask(
+          `Build Station Tier 3? Newcomer protection then winds down: after ${TIER3_TRUCE.kills} kills, ${TIER3_TRUCE.jumps} jumps or once your ship reaches ${TIER3_TRUCE.power} power, raiders attack you in dangerous systems. Your ship power is ${Math.round(playerPayload.power || 0)}.`,
+          () => send(stationMessage),
+          { yes: 'BUILD T-3' },
+        );
+      else send(stationMessage);
       break;
+    }
     case 'rename':
       send({ t: 'rename', name: elementById2('rename').value });
       break;

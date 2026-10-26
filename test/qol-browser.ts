@@ -142,10 +142,20 @@ try {
       'A newly pinned objective starts at its heading',
     );
     if (width === 760) {
-      const head = await page.locator('.landhead').boundingBox(),
-        frame = await page.locator('.landbox').boundingBox();
+      const head = await page.locator('.landhead').boundingBox();
       assert.ok(
-        head!.width > frame!.width * 0.75,
+        head!.width >=
+          (await page.locator('.landbox').evaluate((element) => {
+            const style = getComputedStyle(element);
+            return (
+              element.getBoundingClientRect().width -
+              parseFloat(style.borderLeftWidth) -
+              parseFloat(style.borderRightWidth) -
+              parseFloat(style.paddingLeft) -
+              parseFloat(style.paddingRight) -
+              2
+            );
+          })),
         'Compact landing header uses the available width, not a clipped implicit column',
       );
     }

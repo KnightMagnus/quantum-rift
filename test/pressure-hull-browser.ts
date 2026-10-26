@@ -30,7 +30,7 @@ try {
     const page = await browser.newPage({ viewport: { width, height } });
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(String(error)));
-    await page.goto(fixture.origin + '/?cockpit=pressure-hull');
+    await page.goto(fixture.origin);
     await page.fill('#lname', 'Mining Alpha');
     await page.fill('#lpass', 'fixture');
     await page.click('#lbtn');
@@ -42,6 +42,7 @@ try {
     assert.equal(
       await page.locator('body').evaluate((body) => body.classList.contains('pressure-hull')),
       true,
+      'The blue cockpit is active at the ordinary game address',
     );
     await page.locator('[data-lt="overview"]').click();
     const displayTheme = await page.evaluate(() => {
@@ -450,23 +451,20 @@ try {
             requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
           ),
       );
-      assert.ok(
-        await page.locator('#cockpit').evaluate((cockpit) => {
-          const bounds = cockpit.getBoundingClientRect();
-          return [
-            ...cockpit.querySelectorAll('#functiondock, #consolechat, #consoleutilities'),
-          ].every((group) => {
-            const frame = group.getBoundingClientRect();
-            return (
-              frame.left >= bounds.left &&
-              frame.right <= bounds.right &&
-              frame.top >= bounds.top &&
-              frame.bottom <= bounds.bottom
-            );
-          });
-        }),
-        'Narrow stacked console keeps every group reachable inside its viewport',
-      );
+      for (const selector of ['#functiondock', '#consolechat', '#consoleutilities']) {
+        await page.locator(selector).scrollIntoViewIfNeeded();
+        const group = await page.locator(selector).boundingBox();
+        const cockpit = await page.locator('#cockpit').boundingBox();
+        assert.ok(
+          group &&
+            cockpit &&
+            group.x >= cockpit.x &&
+            group.x + group.width <= cockpit.x + cockpit.width + 1 &&
+            group.y >= cockpit.y &&
+            group.y + group.height <= cockpit.y + cockpit.height + 1,
+          'Each narrow console group remains reachable by scrolling: ' + selector,
+        );
+      }
       await capture(page, 'flight-narrow-1000x900');
     }
     await page.close();
