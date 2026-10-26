@@ -122,6 +122,22 @@ for (const size of [126, 65536]) {
   assert.equal(wire.writes.length, 2, 'no messages are written after close');
 }
 
+// A server close only half-closes TCP; frames the peer sends afterwards never dispatch.
+{
+  const { wire, socket, messages } = fixture();
+  wire.emit('data', clientFrame('before'));
+  socket.close();
+  assert.equal(wire.ended, true);
+  wire.emit('data', clientFrame('{"t":"buymat"}'));
+  wire.emit('data', Buffer.concat([clientFrame('late one'), clientFrame('late two')]));
+  assert.deepEqual(messages, ['before'], 'frames after close are discarded');
+}
+{
+  const { wire, messages } = fixture();
+  wire.emit('data', Buffer.concat([clientFrame('', { op: 8 }), clientFrame('same packet')]));
+  assert.deepEqual(messages, [] as typeof messages, 'a frame behind the close frame is discarded');
+}
+
 for (const aggregate of [false, true]) {
   const { wire, socket, messages } = fixture();
   if (aggregate) {
@@ -174,5 +190,5 @@ for (const aggregate of [false, true]) {
 }
 
 console.log(
-  'WebSocket transport: masking, TCP splits, fragments/control frames, lengths/UTF-8, limits, close/backpressure and handshake PASS',
+  'WebSocket transport: masking, TCP splits, fragments/control frames, lengths/UTF-8, limits, close/late frames/backpressure and handshake PASS',
 );

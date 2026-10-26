@@ -59,6 +59,7 @@
     "persistence-platform.ts",
     "core-actions.ts",
     "websocket-transport.ts",
+    "network-faults.ts",
     "http-api.ts",
     "network-systems.ts",
     "save-migrations.ts",
@@ -369,6 +370,11 @@
     ],
     "core-actions.ts": ["helpers/mocks.ts", "helpers/required.ts", "helpers/temp-data.ts"],
     "websocket-transport.ts": ["helpers/required.ts"],
+    "network-faults.ts": [
+      "helpers/legacy-fixture.ts",
+      "helpers/required.ts",
+      "helpers/temp-data.ts"
+    ],
     "http-api.ts": [
       "fixtures/preload-http-api.ts",
       "helpers/browser-fixture.ts",
@@ -685,6 +691,13 @@
       "services": [],
       "tests": ["websocket-transport.ts", "network-systems.ts"],
       "asserts": "Frame masking/fragmentation/control/limits, upgrade handshake and actual multiplayer client/server state transitions."
+    },
+    {
+      "id": "network-faults",
+      "owners": ["server/game.ts", "server/ws.ts"],
+      "services": [],
+      "tests": ["network-faults.ts", "websocket-transport.ts"],
+      "asserts": "Replayed goal claims, job accepts and landings settle once; an evicted or closed local connection cannot trade, accept, log, launch or steer after a replacement sign-in; late frames after a server close never dispatch; flight disconnect docks and reconnection starts without queued controls; restart restores only flushed credits, contracts and claims, and a replayed claim after restart cannot pay again."
     },
     {
       "id": "hangar",

@@ -283,11 +283,14 @@ try {
   const dispatched = [];
   game.messageHandlers = { types: routes.types, dispatch: (...args) => dispatched.push(args) };
   const session = mockSession({
+    id: 9001,
     data: null as unknown as Session['data'],
     msgs: 0,
     msgT: Date.now(),
     actT: 123,
   });
+  // Game.connect registers every live connection before its first packet.
+  game.sessions.set(session.id, session);
   game.onMessage(session, { t: 'order', o: 'hold' });
   assert.equal(dispatched.length, 0, 'unauthenticated action must not dispatch');
   session.data = mockPlayerData({});
@@ -298,6 +301,10 @@ try {
   session.msgs = 120;
   game.onMessage(session, { t: 'order', o: 'attack' });
   assert.equal(dispatched.length, 2, 'flooded action must not dispatch');
+  session.msgs = 0;
+  game.sessions.delete(session.id);
+  game.onMessage(session, { t: 'order', o: 'attack' });
+  assert.equal(dispatched.length, 2, 'unregistered session action must not dispatch');
   assert.ok(routes.types.includes('trade') && routes.types.includes('trade2'));
   assert.equal(new Set(routes.types).size, routes.types.length);
   assert.equal(Object.keys(game.features).length, 27);

@@ -58,7 +58,8 @@ export class Socket extends EventEmitter {
    * Enforces 1 MB frame size limit and responds to ping control frames automatically.
    */
   parse(): void {
-    while (this.buf.length >= 2) {
+    // Our close frame only half-closes TCP; bytes the peer sends afterwards are discarded.
+    while (this.open && this.buf.length >= 2) {
       const secondValue0 = this.buf[0],
         secondValue1 = this.buf[1],
         finalFrame = secondValue0 & 0x80,
