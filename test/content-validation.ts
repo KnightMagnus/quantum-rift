@@ -3,7 +3,12 @@ import { readFileSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { augmentAssets, type GameAssets } from '../shared/rules.ts';
-import { validateShipContent } from '../tools/content-validation.ts';
+import {
+  hullSources,
+  refitHullReferences,
+  validateContentReferences,
+  validateShipContent,
+} from '../tools/content-validation.ts';
 
 const assets: GameAssets = augmentAssets(
   JSON.parse(readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8')),
@@ -107,6 +112,59 @@ assert.deepEqual(
   'legacy omitted ammo remains valid',
 );
 
+// Diagnostics name the authoring file as well as the catalog key.
+const rawShipIds = Object.keys(
+  JSON.parse(readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8')).ships,
+);
+const sources = hullSources(rawShipIds);
+assert.equal(sources.get('703'), 'shared/assets.json');
+const authoredHull = [...sources].find(([, source]) => source === 'shared/ships23.ts')?.[0];
+assert.ok(authoredHull && assets.ships[authoredHull], 'composed catalog includes ships23 hulls');
+assert.equal(sources.size, Object.keys(assets.ships).length, 'every composed hull has a source');
+const sourced = fixture();
+sourced.ships[authoredHull] = structuredClone(assets.ships[authoredHull]);
+sourced.ships[authoredHull].cost = -5;
+sourced.ships[703].weapons = [[999999, 1]];
+assert.deepEqual(
+  validateShipContent(sourced, () => true, sources).map((entry) => [entry.source, entry.path]),
+  [
+    ['shared/assets.json', 'ships[703].weapons[0][0]'],
+    ['shared/ships23.ts', `ships[${authoredHull}].cost`],
+  ],
+  'hull diagnostics carry the file that authors each hull',
+);
+
+// Refit/Armada tables and weapon outfits must name real hulls and weapons.
+const references = refitHullReferences();
+assert.ok(references.some((entry) => entry.path.startsWith('MK2_OF[')));
+assert.ok(references.some((entry) => entry.path.startsWith('ARMADA_HULLS[')));
+assert.deepEqual(validateContentReferences(assets, references), [], 'shipped references resolve');
+const unreferenced = structuredClone(assets);
+const removedHull = references[0]!.hull;
+delete unreferenced.ships[removedHull];
+const weaponOutfit = Object.entries(unreferenced.outfits).find(
+  ([, outfit]) => outfit.eff?.weapon !== undefined,
+)!;
+weaponOutfit[1].eff!.weapon = 999998;
+assert.deepEqual(
+  validateContentReferences(unreferenced, references),
+  [
+    ...references
+      .filter((entry) => entry.hull === removedHull)
+      .map((entry) => ({
+        source: 'shared/galaxy.ts',
+        path: entry.path,
+        message: `unknown hull id ${removedHull}`,
+      })),
+    {
+      source: 'shared/assets.json',
+      path: `outfits[${weaponOutfit[0]}].eff.weapon`,
+      message: 'unknown weapon id 999998',
+    },
+  ],
+  'missing refit hulls and outfit weapons are reported at their table entries',
+);
+
 const command = fileURLToPath(new URL('../tools/validate-content.ts', import.meta.url));
 const run = (args: string[]) =>
   spawnSync(process.execPath, [command, ...args], { encoding: 'utf8', timeout: 10000 });
@@ -118,7 +176,10 @@ const failure = run([
   fileURLToPath(new URL('./content-validation.ts/not-a-directory', import.meta.url)),
 ]);
 assert.equal(failure.status, 1, failure.stderr);
-assert.match(failure.stderr, /ships\[703\]\.img: missing client\/assets\/ships\/703_yard.png/);
+assert.match(
+  failure.stderr,
+  /shared\/assets\.json ships\[703\]\.img: missing client\/assets\/ships\/703_yard.png/,
+);
 assert.match(failure.stderr, /Content validation failed/);
 const usage = run(['--asset-root']);
 assert.equal(usage.status, 2);

@@ -14,13 +14,21 @@ and the flight/glow files selected by the renderer. Artwork must use local
 `ships/*.png` or `ships/*.webp` paths and resolve to files under `client/assets`.
 Validation does not start a server, access saves or change the catalog.
 
+It also checks that every `MK2_OF`, `MK3_OF` and `ARMADA_HULLS` entry in
+`shared/galaxy.ts` names a hull in the composed catalog, and that every weapon
+outfit names a known weapon. The CI quality job runs `npm run validate:content`
+directly, so content errors fail before the regression shards start.
+
 To check a staged asset directory against the source catalog:
 
 ```sh
 node tools/validate-content.ts --asset-root /path/to/staged/client/assets
 ```
 
-Failures identify the catalog field and expected value or missing file. Exit
+Each failure names the authoring file (`shared/assets.json`, `shared/ships23.ts`,
+`shared/galaxy.ts` and so on), the catalog field and the expected value or
+missing file, for example
+`shared/ships23.ts ships[820].weapons[0][0]: unknown weapon id 999`. Exit
 status is 0 for valid content, 1 for content errors and 2 for invalid arguments.
 The registered unit regression runs the shipped catalog check and verifies
 positive and negative fixtures, including command-line failure reporting.

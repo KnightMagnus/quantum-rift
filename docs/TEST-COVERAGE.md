@@ -6,8 +6,10 @@
 ship catalog and local yard, flight and glow artwork references without starting
 a server or changing content. Negative fixtures cover mismatched IDs, invalid
 capacities, weapon references/counts/ammo, stock gun and turret overflow, missing
-files and nonlocal artwork paths. CLI checks exercise successful validation,
-failed staged-asset validation and invalid arguments.
+files and nonlocal artwork paths. Diagnostics carry the authoring file; refit and
+Armada hull references and outfit weapon references are checked against the
+composed catalog. CLI checks exercise successful validation, failed staged-asset
+validation and invalid arguments.
 
 NPC-only hulls retain the existing player-mount exception; unknown weapons still
 fail. Fixed weapons without corresponding outfits do not consume shop mounts,
