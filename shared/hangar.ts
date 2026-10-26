@@ -749,7 +749,7 @@ const BONUS_TEXT: Record<string, (amount: number) => string> = {
   shuttleYield: (amount) => `+${amount}% shuttle yield`,
   officerXp: (amount) => `+${amount}% officer XP`,
   scanPct: (amount) => `-${amount}% customs scan chance`,
-  tradePct: (amount) => `+${amount}% trade prices`,
+  tradePct: (amount) => `${amount}% better buy and sell prices`,
 };
 
 /**

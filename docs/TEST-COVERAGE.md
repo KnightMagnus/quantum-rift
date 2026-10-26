@@ -1002,8 +1002,12 @@ towing a load retain highlights. Both programs run in the canonical browser suit
 reads as words, such as "+10% shields", with no raw stat keys. It also checks the
 off-screen arrow placement against a 21:9 career card: the arrow keeps its
 bearing but stops before the card and its label room, and arrows on other
-edges are unchanged. The browser does not draw this case; the card rectangle is
-measured from the page at runtime.
+edges are unchanged. Overlapping cards are cleared regardless of their order.
+The card rectangle is measured from the page at runtime; the geometry checks
+use fixed rectangles. `cockpit-layout-browser.ts` checks map canvas height,
+reachable details and the narrow-screen fallback from 640×300 to 2560×1080.
+`radio-content.ts` also verifies that audio reimports preserve later uploads and
+reject missing supplemental recordings.
 
 ## `modal-input-ownership`: dialogs and manual controls
 

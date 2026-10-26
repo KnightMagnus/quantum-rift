@@ -999,7 +999,8 @@
         "client/radio.ts",
         "client/ui.ts",
         "client/audio.ts",
-        "server/jobs.ts"
+        "server/jobs.ts",
+        "tools/import_radio.py"
       ],
       "services": [],
       "tests": [
@@ -1009,7 +1010,7 @@
         "radio-browser.ts",
         "radio-content.ts"
       ],
-      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Saved radio unlocks survive login without captain-name privileges; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1–4 and separate new login theme; original theme preserved."
+      "asserts": "Five saved captain-specific stations; faction and Lost Signal arrival discoveries; authored scientist salvage story reward; rare stable-board three-passenger five-system tour with reload, seat/job limits, ordered stops, abandonment and once-only final payout; album order and loop, shuffle boundaries, actual browser ended events, empty-audio HUD, favorites/captain isolation; retired provider endpoints and local MP3 byte ranges. Browser audio uses test-only silent WAV fixtures, not owner recordings. Saved radio unlocks survive login without captain-name privileges; 33 owner recordings have checked hashes and real browser decodes, correct 8-track album order, no titles for stations1\u20134 and separate new login theme; original theme preserved. Later owner uploads survive archive reimports; missing or changed supplemental audio fails validation."
     },
     {
       "id": "economy-balance",
@@ -1300,7 +1301,7 @@
       "owners": ["server/freight-offers.ts", "server/game.ts", "server/jobs.ts"],
       "services": [],
       "tests": ["cargo-couriers.ts", "mission-ui-browser.ts", "v203.ts", "cargo-flows.ts"],
-      "asserts": "Two lawful untimed 3–5t/6–10t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."
+      "asserts": "Two lawful untimed 3\u20135t/6\u201310t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."
     },
     {
       "id": "reusable-core",
@@ -1417,7 +1418,7 @@
         "cockpit-layout-browser.ts",
         "ui-polish-browser.ts"
       ],
-      "asserts": "Recipient-only actual combat targeting, death/departure/cancel clearing, truthful recent patrol scan expiry, red precedence and reduced motion; 12.5% larger text, fixed widescreen button geometry, fluid center chat, sidebar gap, responsive landed/map/captain/settings surfaces and narrow preservation. Centered labels, consistent button-only LEDs, upper-right alert above Captain, landscape settings with real key reassignment and 15% larger ultrawide map and flight-relative 70% width/86% height landing panels. Expanded cockpit utilities and vent clear the inset frame at 1920–5120px and 0.8×/1×/1.4× scale; sidebar panels clear the trim by at least 3px. HAIL remains visible and disabled while landed and re-enables on takeoff. Frame fasteners never overlap function controls or labels; Controls uses paired two-column rows with narrow fallback."
+      "asserts": "Recipient-only actual combat targeting, death/departure/cancel clearing, truthful recent patrol scan expiry, red precedence and reduced motion; 12.5% larger text, fixed widescreen button geometry, fluid center chat, sidebar gap, responsive landed/map/captain/settings surfaces and narrow preservation. Centered labels, consistent button-only LEDs, upper-right alert above Captain, landscape settings with real key reassignment and 15% larger ultrawide map and flight-relative 70% width/86% height landing panels. Expanded cockpit utilities and vent clear the inset frame at 1920\u20135120px and 0.8\u00d7/1\u00d7/1.4\u00d7 scale; sidebar panels clear the trim by at least 3px. HAIL remains visible and disabled while landed and re-enables on takeoff. Frame fasteners never overlap function controls or labels; Controls uses paired two-column rows with narrow fallback."
     },
     {
       "id": "planet-portrait-art",
@@ -1567,11 +1568,12 @@
         "client/render.ts",
         "shared/hangar.ts",
         "client/hangar_ui.ts",
-        "client/syn_ui.ts"
+        "client/syn_ui.ts",
+        "client/cockpit.css"
       ],
       "services": [],
-      "tests": ["playtest-clarity.ts"],
-      "asserts": "Research lab and syndicate trait bonuses read as words with no raw camelCase stat keys. Off-screen edge arrows keep their bearing but stop short of the career card and its label room, while arrows elsewhere on the border are unchanged."
+      "tests": ["playtest-clarity.ts", "cockpit-layout-browser.ts"],
+      "asserts": "Research lab and syndicate trait bonuses read as words with no raw camelCase stat keys. Off-screen edge arrows keep their bearing but stop short of the career card and its label room, while arrows elsewhere on the border are unchanged. Overlapping card clearance is order-independent. Wide-short maps place details beside the canvas, with a usable full-width fallback on narrow landscape windows."
     }
   ],
   "routes": {

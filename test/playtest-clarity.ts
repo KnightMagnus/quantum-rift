@@ -11,6 +11,7 @@ assert.equal(
   '+12% shields, +10% shield recharge',
 );
 assert.equal(statBonusText({ speedPct: 5, fuel: 100 }), '+5% top speed, +100 fuel capacity');
+assert.equal(statBonusText({ tradePct: 2 }), '2% better buy and sell prices');
 assert.equal(statBonusText({ silo: 3 }), '+3 Workshop silo slots');
 assert.equal(statBonusText({ shuttleSafe: 40 }), '-40% shuttle damage risk');
 // Every research and trait bonus reads as words, never as a raw stat key.
@@ -55,4 +56,13 @@ const right = edgeArrowAnchor(width, height, width + 500, height / 2, [careerCar
 assert.ok(
   Math.abs(right.x - (width - EDGE_ARROW_MARGIN)) < 1e-6 && Math.abs(right.y - height / 2) < 1e-6,
 );
+// Overlapping padded cards must be cleared regardless of their DOM order.
+const cards = [
+  { left: 650, right: 850, top: 200, bottom: 400 },
+  { left: 800, right: 1000, top: 200, bottom: 400 },
+];
+for (const order of [cards, [...cards].reverse()]) {
+  const anchor = edgeArrowAnchor(1000, 600, 1500, 300, order, { x: 0, y: 0 })!;
+  assert.equal(anchor.x, 650, 'clear both cards independently of obstacle order');
+}
 console.log('PASS readable research/trait bonuses and HUD-clear edge arrows');

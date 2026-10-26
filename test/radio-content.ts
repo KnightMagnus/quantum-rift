@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { RADIO_STATIONS } from '../shared/radio-stations.ts';
 const manifest = JSON.parse(
   filesystem.readFileSync(new URL('../docs/RADIO-AUDIO.json', import.meta.url), 'utf8'),
@@ -12,7 +13,7 @@ assert.equal(
 );
 assert.deepEqual(
   RADIO_STATIONS.map((session) => session.tracks.length),
-  [7, 4, 7, 6, 8],
+  [9, 4, 7, 6, 8],
 );
 assert.deepEqual(
   RADIO_STATIONS.map((session) => session.playback),
@@ -42,8 +43,8 @@ const expected = [
   ),
   'client/assets/sfx/music_login33.mp3',
 ];
-assert.equal(expected.length, 33);
-assert.equal(new Set(expected).size, 33);
+assert.equal(expected.length, 35);
+assert.equal(new Set(expected).size, 35);
 assert.deepEqual(
   manifest.tracks.map((track3: { path: string }) => track3.path),
   expected,
@@ -76,5 +77,59 @@ assert.equal(
   'original login theme preserved separately',
 );
 console.log(
-  `PASS 33 owner-supplied MP3s/hashes and compressed sizes; exact 8-track published album order; hidden 1–4 titles; separate active new theme and preserved original`,
+  `PASS 35 owner-supplied MP3s/hashes and compressed sizes; exact 8-track published album order; hidden 1–4 titles; separate active new theme and preserved original`,
+);
+
+// Reimporting the original archive must retain later uploads and reject missing audio.
+const importCheck = spawnSync(
+  process.platform === 'win32' ? 'python' : 'python3',
+  [
+    '-c',
+    `
+import importlib.util, pathlib, tempfile, json, shutil
+spec = importlib.util.spec_from_file_location('radio_import', 'tools/import_radio.py')
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+root = pathlib.Path.cwd()
+extras = module.supplemental_tracks(root)
+assert [track['number'] for track in extras] == [8, 9]
+manifest = json.loads((root / 'docs/RADIO-AUDIO.json').read_text())
+base = [track for track in manifest['tracks'] if track not in extras]
+stations = [{'tracks': [{}] * count} for count in module.COUNTS]
+module.append_supplemental(stations, base, extras)
+assert base == manifest['tracks'], 'Reimport must preserve all output records and their order'
+assert [len(station['tracks']) for station in stations] == [9, 4, 7, 6, 8]
+assert stations[0]['tracks'][-1]['url'].endswith('/09.mp3')
+with tempfile.TemporaryDirectory(prefix='rift-radio-import-') as directory:
+    isolated = pathlib.Path(directory)
+    (isolated / 'docs').mkdir()
+    (isolated / 'docs/RADIO-AUDIO.json').write_text(json.dumps({'tracks': extras}))
+    try:
+        module.supplemental_tracks(isolated)
+    except FileNotFoundError:
+        pass
+    else:
+        raise AssertionError('Missing supplemental audio must stop a reimport')
+    for track in extras:
+        target = isolated / track['path']
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(root / track['path'], target)
+    changed = isolated / extras[0]['path']
+    data = bytearray(changed.read_bytes())
+    data[-1] ^= 1
+    changed.write_bytes(data)
+    try:
+        module.supplemental_tracks(isolated)
+    except AssertionError as error:
+        assert 'changed supplemental audio' in str(error)
+    else:
+        raise AssertionError('Changed supplemental audio must stop a reimport')
+`,
+  ],
+  { encoding: 'utf8', timeout: 10000 },
+);
+assert.equal(
+  importCheck.status,
+  0,
+  importCheck.stderr || importCheck.error?.message || 'Audio import check failed',
 );

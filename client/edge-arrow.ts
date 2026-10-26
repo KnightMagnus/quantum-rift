@@ -61,8 +61,13 @@ export function edgeArrowAnchor(
     (width / 2 - margin) / Math.abs(deltaX),
     (height / 2 - margin) / Math.abs(deltaY),
   );
-  for (const obstacle of obstacles) {
-    const entry = rayEntry(centerX, centerY, deltaX, deltaY, padded(obstacle, clearance));
+  // Clear the outermost entry first so overlapping padded cards cannot put
+  // the adjusted anchor back under a card visited earlier.
+  const entries = obstacles
+    .map((obstacle) => rayEntry(centerX, centerY, deltaX, deltaY, padded(obstacle, clearance)))
+    .filter((entry) => entry !== null)
+    .sort((first, second) => second.enter - first.enter);
+  for (const entry of entries) {
     if (entry && entry.enter > 0 && entry.enter < reach && entry.exit >= reach) reach = entry.enter;
   }
   return { x: centerX + deltaX * reach, y: centerY + deltaY * reach };
