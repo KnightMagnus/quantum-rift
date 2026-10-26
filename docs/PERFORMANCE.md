@@ -122,6 +122,57 @@ SLO. Optimize only a hot path established by those measurements, with separate
 authoritative parity coverage. Current instrumentation does not prove multihour
 stability, weak-device rendering, GC tail latency or production checkpoint speed.
 
+## Planet render caches
+
+Each world drawn in flight keeps per-pixel lighting arrays and canvases in one of two
+caches in `client/planets.ts`: procedural worlds, used while pre-rendered maps load or
+when planet artwork is missing or fails to decode, and worlds lit from pre-rendered
+maps. Before these budgets, neither cache evicted catalog worlds; only background
+worlds were trimmed, so both grew with every system visited. The shared surface-map
+cache is bounded separately at 18 texture sets, and evicting a set also drops the
+worlds lit from it.
+
+Reproduce with:
+
+```sh
+npm run build
+RIFT_PLANET_TOUR=24 node test/planet-cache-budget-browser.ts
+```
+
+The test tours the catalog worlds of the 24 busiest systems (12 in the registered
+regression run) in headless Chromium and
+writes per-system retention to `planet-cache-budget/results.json` under the
+regression artifact directory. Sizes are estimates of typed-array and canvas backing
+stores, not process memory: decoded images, GPU copies and browser overhead are
+excluded.
+
+| Measurement (MB)                          | Pre-rendered | Procedural |
+| ----------------------------------------- | -----------: | ---------: |
+| Busiest system (5 worlds)                 |         16.1 |       10.7 |
+| Unbounded after 24 systems                |        118.0 |      128.8 |
+| Budget                                    |           48 |         32 |
+| Highest bounded retention during the tour |         47.8 |       31.9 |
+| Shared surface maps after 24 systems      |         39.9 |          — |
+
+The unbounded pre-rendered figure levels off near 120 MB only because surface-map
+eviction drops worlds as a side effect; the procedural cache grows linearly with no
+limit. Each budget holds about three of the busiest systems, so moving between
+neighbouring systems does not rebuild worlds. Worlds drawn in the last two seconds
+are never evicted, so a system may exceed a budget by its own worlds rather than
+lose the sprites on screen.
+
+An evicted system is rebuilt on return. On the measurement host the five
+pre-rendered worlds of the busiest system came back in 25 to 130 ms across runs, built
+synchronously within one or a few frames, and the procedural fallback took 2.4 to 2.6 s
+spread over frames by its existing 8 ms
+per-frame build budget, during which those worlds are not drawn, as on a first visit.
+
+These figures come from one run on a shared Linux x64 container (4 logical CPUs,
+Intel Xeon 2.8 GHz, no GPU) using Chrome for Testing 153 headless and Node
+27.0.0-nightly20261020531d28fc36. Retention estimates depend only on the catalog and
+the cache code; rebuild times depend on the host. Neither is a device memory
+guarantee or a frame-time budget.
+
 ## Native wall-clock workload
 
 The separate native harness runs the built Goja match in disposable Nakama and
