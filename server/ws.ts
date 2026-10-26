@@ -36,6 +36,7 @@ export class Socket extends EventEmitter {
     this.frag = null;
     socket.setNoDelay(true);
     socket.on('data', (distance) => {
+      if (!this.open) return;
       this.buf = Buffer.concat([this.buf, distance as Buffer]);
       this.parse();
     });
@@ -49,6 +50,8 @@ export class Socket extends EventEmitter {
   closed(): void {
     if (this.open) {
       this.open = false;
+      this.buf = Buffer.alloc(0);
+      this.frag = null;
       this.emit('close');
     }
   }
@@ -58,7 +61,8 @@ export class Socket extends EventEmitter {
    * Enforces 1 MB frame size limit and responds to ping control frames automatically.
    */
   parse(): void {
-    while (this.buf.length >= 2) {
+    // Our close frame only half-closes TCP; bytes the peer sends afterwards are discarded.
+    while (this.open && this.buf.length >= 2) {
       const secondValue0 = this.buf[0],
         secondValue1 = this.buf[1],
         finalFrame = secondValue0 & 0x80,

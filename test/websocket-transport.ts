@@ -122,6 +122,37 @@ for (const size of [126, 65536]) {
   assert.equal(wire.writes.length, 2, 'no messages are written after close');
 }
 
+// A server close only half-closes TCP; frames the peer sends afterwards never dispatch.
+{
+  const { wire, socket, messages } = fixture();
+  wire.emit('data', clientFrame('before'));
+  socket.close();
+  assert.equal(wire.ended, true);
+  wire.emit('data', clientFrame('{"t":"buymat"}'));
+  wire.emit('data', Buffer.concat([clientFrame('late one'), clientFrame('late two')]));
+  assert.deepEqual(messages, ['before'], 'frames after close are discarded');
+  assert.equal(socket.buf.length, 0, 'late bytes are discarded rather than retained after close');
+}
+{
+  const { wire, socket, messages } = fixture();
+  wire.emit('data', Buffer.concat([clientFrame('', { op: 8 }), clientFrame('same packet')]));
+  assert.deepEqual(messages, [] as typeof messages, 'a frame behind the close frame is discarded');
+  assert.equal(socket.buf.length, 0, 'coalesced bytes behind a close frame are released');
+}
+for (const trigger of ['server', 'peer-close', 'peer-error']) {
+  const { wire, socket, messages } = fixture();
+  wire.emit('data', clientFrame('unfinished message', { fin: false }));
+  wire.emit('data', clientFrame('partial continuation', { op: 0 }).subarray(0, 3));
+  assert.ok(socket.frag?.length && socket.buf.length, 'fixture retains unfinished message data');
+  if (trigger === 'server') socket.close();
+  else wire.emit(trigger === 'peer-close' ? 'close' : 'error');
+  assert.equal(socket.frag, null, `${trigger} releases fragmented payloads`);
+  assert.equal(socket.buf.length, 0, `${trigger} releases partial frame data`);
+  for (let index = 0; index < 8; index++) wire.emit('data', Buffer.alloc(256 * 1024));
+  assert.equal(socket.buf.length, 0, `${trigger} never accumulates late traffic`);
+  assert.deepEqual(messages, []);
+}
+
 for (const aggregate of [false, true]) {
   const { wire, socket, messages } = fixture();
   if (aggregate) {
@@ -174,5 +205,5 @@ for (const aggregate of [false, true]) {
 }
 
 console.log(
-  'WebSocket transport: masking, TCP splits, fragments/control frames, lengths/UTF-8, limits, close/backpressure and handshake PASS',
+  'WebSocket transport: masking, TCP splits, fragments/control frames, lengths/UTF-8, limits, close/late frames/backpressure and handshake PASS',
 );

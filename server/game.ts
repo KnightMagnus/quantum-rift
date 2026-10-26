@@ -1745,6 +1745,8 @@ export class Game<Storage extends Database = Database> {
    * @param incoming Incoming decoded client value.
    */
   onMessage(session: Session, incoming: unknown): void {
+    // A closed or evicted connection keeps its captain reference; its late packets must not act.
+    if (this.sessions.get(session.id) !== session) return;
     if (session.compatibilityRejected) return;
     const currentTime = Date.now();
     if (currentTime - session.msgT > 1000) {
