@@ -61,7 +61,8 @@ body.pressure-hull :is(#functiondock, #consolechat, #consoleutilities) {
   min-width: 0;
   height: 164px;
   border: 12px solid transparent;
-  border-image: var(--hull-frame) 100 fill / 12px stretch;
+  /* No fill: the frame's grey center would paint over the blue display glass. */
+  border-image: var(--hull-frame) 100 / 12px stretch;
   background: #091921;
   background-clip: padding-box;
   border-radius: 10px;
@@ -578,7 +579,8 @@ body.pressure-hull
     .function-body,
     #hailtext,
     #infobody,
-    #chatlog
+    #chatlog,
+    .chat-projector-status
   ),
 body.pressure-hull
   :is(#cpanel, .overlay:not(#login), #shipfunctions)
@@ -741,6 +743,15 @@ body.pressure-hull
     #chatprojection .dim
   ) {
   color: var(--dim);
+}
+/* While history is projected, the parked console keeps blue glass instead of the teal finish. */
+body.pressure-hull .chat-projector-status {
+  color: var(--dim);
+  text-shadow: none;
+}
+body.pressure-hull :is(.chat-projector-status > span, .projection-light) {
+  color: #83d8ff;
+  text-shadow: 0 0 7px #34baff80;
 }
 body.pressure-hull #functiondock .function-icon img {
   filter: brightness(0) saturate(100%) invert(85%) sepia(19%) saturate(1200%) hue-rotate(165deg);
