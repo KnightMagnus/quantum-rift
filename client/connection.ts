@@ -288,7 +288,9 @@ export function createGameConnection(
           connection.onopen?.();
         };
         local.onmessage = (event: MessageEvent<string>) => receive(event.data);
-        local.onerror = () => connection.onerror?.();
+        local.onerror = () => {
+          if (state < 2) connection.onerror?.();
+        };
         local.onclose = () => {
           finishLocalClose?.();
           finish();

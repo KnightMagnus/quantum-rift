@@ -1096,7 +1096,9 @@ restore coverage or an old/new executable archive-matrix rehearsal; see
 The `protocol-compatibility` system checks the wire epoch independently of package
 versions. Local Game tests deny incompatible hello packets before account creation
 and preserve committed credits through a rejected reconnect. Native SDK tests
-check fresh preflight and RPC responses; the real Nakama network fixture checks
+check fresh preflight, RPC responses and an authoritative join rejection after
+valid preflight. Local connection tests keep compatibility guidance intact after
+buffered packets and late transport errors. The real Nakama network fixture checks
 join-metadata rejection and both current and legacy admission. The browser test
 uses an isolated Solo captain and controlled status responses to exercise a cached
 page, a server update during reconnect, manual refresh, and saved-progress recovery.

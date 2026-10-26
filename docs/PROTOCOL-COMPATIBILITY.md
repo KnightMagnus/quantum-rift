@@ -35,7 +35,8 @@ enter the authoritative gameplay action routes.
 On a mismatch, the browser stops reconnecting, clears stale controls and returns
 to sign-in with a Refresh Game Page button. Refresh happens only when selected.
 If refresh cannot resolve the mismatch, the message asks the player or host to
-update. The recovery action does not import, reset or replace a save. Ordinary
+update. Late transport errors cannot replace a terminal compatibility message.
+The recovery action does not import, reset or replace a save. Ordinary
 disconnect/checkpoint behavior still owns progress already committed to storage.
 
 An older browser does not have this recovery UI, but its legacy epoch remains

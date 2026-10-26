@@ -8,6 +8,7 @@ import { Session } from '@heroiclabs/nakama-js';
 import type { Match, MatchData } from '@heroiclabs/nakama-js';
 import { upgrade } from '../server/ws.ts';
 import { createGameConnection } from '../client/connection.ts';
+import { COMPATIBILITY_MESSAGE } from '../shared/protocol.ts';
 import type {
   ClientConnection,
   ConnectionConfig,
@@ -18,10 +19,12 @@ import type {
 
 function deferred<Value>() {
   let resolve!: (value: Value) => void;
-  const promise = new Promise<Value>((complete) => {
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<Value>((complete, fail) => {
     resolve = complete;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }
 const token = (kind: string) =>
   'header.' +
@@ -565,5 +568,78 @@ await test(
     await reconnect.closed;
     assert.equal(reads, 2, 'reconnect must not reuse a cached compatibility decision');
     assert.equal(reconnect.authCalls.length, 0);
+  },
+);
+
+await test(
+  'authoritative native join rejection remains a compatibility error after valid preflight',
+  { timeout: 2000 },
+  async () => {
+    const joined = deferred<Match>();
+    const subject = fixture({ status: { protocol: 1 }, protocol: 1, join: joined.promise });
+    await subject.joinEntered;
+    joined.reject({ code: 3, message: COMPATIBILITY_MESSAGE });
+    await subject.closed;
+    assert.deepEqual(subject.errors, [COMPATIBILITY_MESSAGE]);
+    assert.equal(subject.counts().opens, 0);
+    assert.equal(subject.counts().closes, 1);
+    await subject.connection.logout();
+    assert.equal(subject.revocations.length, 1);
+  },
+);
+
+await test(
+  'local compatibility denial ignores buffered packets and late transport errors',
+  { timeout: 2000 },
+  async () => {
+    const sent: string[] = [];
+    const local = {
+      readyState: 0,
+      onopen: null as (() => void) | null,
+      onmessage: null as ((event: MessageEvent<string>) => void) | null,
+      onerror: null as (() => void) | null,
+      onclose: null as (() => void) | null,
+      send(data: string) {
+        sent.push(data);
+      },
+      close() {
+        this.readyState = 3;
+        this.onclose?.();
+      },
+    };
+    const errors: Array<string | undefined> = [];
+    const packets: string[] = [];
+    let closes = 0;
+    const connection = createGameConnection({ ...config, solo: true }, credentials, {
+      readStatus: async () => ({ protocol: 1 }),
+      createNakamaClient: async () => {
+        throw new Error('Local compatibility fixture must not call Nakama');
+      },
+      createLocalSocket: () => local as unknown as WebSocket,
+    });
+    connection.onerror = (message) => errors.push(message);
+    connection.onmessage = (event) => packets.push(event.data);
+    connection.onclose = () => closes++;
+    await setImmediate();
+    assert.ok(local.onopen, 'preflight created the local transport');
+    local.readyState = 1;
+    local.onopen();
+    local.onmessage?.(
+      new MessageEvent('message', {
+        data: JSON.stringify({ t: 'error', code: 'UPDATE_REQUIRED' }),
+      }),
+    );
+    local.onmessage?.(
+      new MessageEvent('message', { data: JSON.stringify({ t: 'welcome', name: 'stale' }) }),
+    );
+    local.onerror?.();
+    local.onclose?.();
+    connection.send('stale action');
+    assert.deepEqual(errors, [COMPATIBILITY_MESSAGE], 'late error cannot replace update guidance');
+    assert.deepEqual(packets, [], 'buffered welcome cannot revive a rejected connection');
+    assert.deepEqual(sent, []);
+    assert.equal(closes, 1);
+    assert.equal(connection.readyState, 3);
+    await connection.logout();
   },
 );

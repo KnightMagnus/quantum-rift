@@ -1581,7 +1581,7 @@
         "nakama-client-connection.ts",
         "nakama-network.ts"
       ],
-      "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC checks, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
+      "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC and authoritative join rejection, terminal local denial despite buffered packets/late errors, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
     },
     {
       "id": "playtest-clarity",
