@@ -125,7 +125,8 @@
     "wire-contracts.ts",
     "story-continuation.ts",
     "index-presentation.ts",
-    "performance-native.ts"
+    "performance-native.ts",
+    "render-cache-budget.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -174,7 +175,8 @@
     "cockpit-layout-browser.ts",
     "story-realities-browser.ts",
     "overlay-input-browser.ts",
-    "ui-polish-browser.ts"
+    "ui-polish-browser.ts",
+    "planet-cache-budget-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -931,6 +933,13 @@
       "services": [],
       "tests": ["eventide.ts", "comet.ts", "stars.ts", "background-scale.ts", "v25.ts"],
       "asserts": "Authored scenery configuration, comets/stars/background scaling, atmosphere/artwork invariants."
+    },
+    {
+      "id": "planet-render-cache",
+      "owners": ["client/planets.ts", "client/render-cache-budget.ts"],
+      "services": [],
+      "tests": ["render-cache-budget.ts", "planet-cache-budget-browser.ts"],
+      "asserts": "Byte-budgeted least-recently-used eviction for procedural and pre-rendered planet caches, exact retained-size accounting, live worlds kept over budget, measured unbounded versus bounded retention over a 12-system tour with artwork loading and with planet artwork missing, on-screen sprite identity preserved through eviction and evicted worlds rebuilt on return."
     },
     {
       "id": "station-art-identity",

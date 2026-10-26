@@ -1,4 +1,5 @@
 import { planetType } from '../shared/planet-type.ts';
+import { ByteBudgetCache, retainedBytes } from './render-cache-budget.ts';
 export { planetType } from '../shared/planet-type.ts';
 export interface PlanetDef {
   /** World celestial identifier. */
@@ -581,7 +582,13 @@ const length2 = (() => {
     count = Math.hypot(...value);
   return value.map((positionX) => positionX / count);
 })(); // light from the upper left
-const cache = new Map<string, ProceduralPlanet>(),
+// Per-world render caches are bounded by retained bytes. The budgets hold roughly three of the
+// busiest systems' worlds; docs/PERFORMANCE.md records the measurements behind them. A world
+// drawn within LIVE_PLANET_MS is never evicted, so visible worlds stay valid over budget.
+const PROCEDURAL_BUDGET_BYTES = 32 * 1024 * 1024,
+  RENDERED_BUDGET_BYTES = 48 * 1024 * 1024,
+  LIVE_PLANET_MS = 2000;
+const cache = new ByteBudgetCache<ProceduralPlanet>(PROCEDURAL_BUDGET_BYTES, LIVE_PLANET_MS),
   building = new Map<string, { type: Biome; gen: Generator<void, ProceduralPlanet, unknown> }>();
 let workTime = 0,
   workMs = 0;
@@ -721,7 +728,7 @@ function* setup(planetDef: PlanetDef, time: ProceduralTexture, type: Biome) {
     lastC: -1,
     fresh: true,
   };
-  cache.set(planetDef.id, position);
+  cache.set(planetDef.id, position, retainedBytes(position, time), performance.now());
   return position;
 }
 // spend at most ~8 ms a frame (across all planets) building textures; until then the caller draws its old placeholder
@@ -913,7 +920,7 @@ function chooseRendered(planetDef: PlanetDef) {
 // ocean glint, cloud shadows, night lights and the atmosphere rim, as in the static renders. The halo and the rings are
 // fixed layers rendered with the planet (_back and _front).
 const textureCache = new Map<string, RenderedTextureBase>(),
-  RCACHE = new Map<string, RenderedPlanet>();
+  RCACHE = new ByteBudgetCache<RenderedPlanet>(RENDERED_BUDGET_BYTES, LIVE_PLANET_MS);
 function loadImg(source: string) {
   const htmlImageElement = new Image();
   let attempt = 0;
@@ -1207,7 +1214,7 @@ function setupRendered(planetDef: PlanetDef, renderedTexture: RenderedTexture) {
     lastC: -1,
     rendered: true,
   };
-  RCACHE.set(planetDef.id, position);
+  RCACHE.set(planetDef.id, position, retainedBytes(position, statistic), performance.now());
   return position;
 }
 function _cloudAt(
@@ -1401,7 +1408,7 @@ function renderRendered(position: RenderedPlanet, horizontalOffset: number, clou
 export function planetSprite(planetDef: PlanetDef, currentTime: number): PlanetSprite | null {
   const renderedDefinition = chooseRendered(planetDef);
   if (renderedDefinition) {
-    let position = RCACHE.get(planetDef.id);
+    let position = RCACHE.get(planetDef.id, performance.now());
     if (!position) {
       const renderedTexture = texFor(renderedDefinition);
       if (!renderedTexture) {
@@ -1424,13 +1431,6 @@ export function planetSprite(planetDef: PlanetDef, currentTime: number): PlanetS
       }
       position = setupRendered(planetDef, renderedTexture);
     } else texFor(renderedDefinition);
-    if (RCACHE.size > 90)
-      for (const entryKey of RCACHE.keys()) {
-        if (entryKey !== planetDef.id && entryKey.startsWith('bg:')) {
-          RCACHE.delete(entryKey);
-          break;
-        }
-      }
     const time = currentTime / 1000,
       unitOffset = (position.off + time * position.spin) % 1,
       radiusUnit = Math.floor(unitOffset * position.T.tw),
@@ -1452,15 +1452,8 @@ export function planetSprite(planetDef: PlanetDef, currentTime: number): PlanetS
   return procSprite(planetDef, currentTime);
 }
 function procSprite(planetDef: PlanetDef, currentTime: number) {
-  const position = cache.get(planetDef.id) || advance(planetDef, currentTime);
+  const position = cache.get(planetDef.id, performance.now()) || advance(planetDef, currentTime);
   if (!position) return null;
-  if (cache.size > 70)
-    for (const entryKey of cache.keys()) {
-      if (entryKey !== planetDef.id && entryKey.startsWith('bg:')) {
-        cache.delete(entryKey);
-        break;
-      }
-    } // forget old background worlds
   const radiusUnit =
       Math.floor(
         (position.T.spinLon / 6.283) * textWidth + (currentTime / 1000) * position.T.spin,
@@ -1484,4 +1477,48 @@ function procSprite(planetDef: PlanetDef, currentTime: number) {
     }
   }
   return position;
+}
+
+/** Retained size of one planet render cache. */
+export interface PlanetCacheUsage {
+  /** Cached worlds or texture sets. */
+  entries: number;
+
+  /** Estimated retained bytes; decoded image elements are not included. */
+  bytes: number;
+
+  /** Byte budget; texture sets are bounded by count instead. */
+  budgetBytes: number;
+}
+
+/**
+ * Reports the retained size of the planet render caches for diagnostics and regression tests.
+ * @returns Usage of the procedural, rendered and shared texture caches.
+ */
+export function planetCacheUsage(): Record<
+  'procedural' | 'rendered' | 'textures',
+  PlanetCacheUsage
+> {
+  let textureBytes = 0;
+  for (const texture of textureCache.values())
+    if (texture.ready) textureBytes += retainedBytes(texture);
+  return {
+    procedural: { entries: cache.size, bytes: cache.bytes, budgetBytes: cache.budgetBytes },
+    rendered: { entries: RCACHE.size, bytes: RCACHE.bytes, budgetBytes: RCACHE.budgetBytes },
+    textures: { entries: textureCache.size, bytes: textureBytes, budgetBytes: Infinity },
+  };
+}
+
+/**
+ * Replaces the planet cache budgets, evicting idle worlds if the caches are now over budget.
+ * Used by measurement runs; gameplay keeps the defaults.
+ * @param proceduralBytes Budget for procedural worlds.
+ * @param renderedBytes Budget for worlds lit from pre-rendered maps.
+ */
+export function setPlanetCacheBudgets(proceduralBytes: number, renderedBytes: number): void {
+  const now = performance.now();
+  cache.budgetBytes = proceduralBytes;
+  RCACHE.budgetBytes = renderedBytes;
+  cache.evict(now);
+  RCACHE.evict(now);
 }
