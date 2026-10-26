@@ -178,6 +178,13 @@ try {
       'Hail remains reachable in flight',
     );
     await capture(page, 'flight-' + width + 'x' + height);
+    assert.ok(
+      await page.locator('#cr').evaluate((credits) => {
+        const [red, , blue] = getComputedStyle(credits).color.match(/\d+/g)!.map(Number);
+        return red! > blue!;
+      }),
+      'Credits keep their gold accent on the blue display',
+    );
     const groups = await page.evaluate(() => {
       const rect = (id: string) => {
         const bounds = document.getElementById(id)!.getBoundingClientRect();

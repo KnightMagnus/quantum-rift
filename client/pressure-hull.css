@@ -543,7 +543,6 @@ body.pressure-hull #chatprojection {
 body.pressure-hull {
   --text: #d5f3ff;
   --dim: #8ebbd5;
-  --cr: #b7ecff;
   --red: #267caf;
   --red2: #79d7ff;
   --range-fill: #368fc5;
@@ -666,7 +665,7 @@ body.pressure-hull #functiondock button.function-icon::after {
 body.pressure-hull #functiondock #attentionindicator {
   background: #081f36;
 }
-body.pressure-hull :is(#land .landhead h2, .card .t, .landfoot .cr) {
+body.pressure-hull :is(#land .landhead h2, .card .t) {
   color: #d5f3ff;
 }
 body.pressure-hull :is(input, select, textarea, select option, select optgroup) {
@@ -993,4 +992,37 @@ body.pressure-hull #radarwrap {
   body.pressure-hull #consoleutilities .utility-label {
     letter-spacing: 0;
   }
+}
+/* A live alert overrides the blue key: red for combat targeting, orange after a scan. */
+body.pressure-hull #functiondock #attentionindicator[data-state='targeted'] {
+  background: #3a0f12;
+  box-shadow:
+    inset 0 0 0 2px #ff554c,
+    0 0 10px #ff554c80;
+}
+body.pressure-hull #functiondock #attentionindicator[data-state='scanned'] {
+  background: #3a240a;
+  box-shadow:
+    inset 0 0 0 2px #ffae42,
+    0 0 10px #ffae4280;
+}
+body.pressure-hull #functiondock #attentionindicator[data-state] .function-label {
+  color: currentColor;
+}
+body.pressure-hull #functiondock #attentionindicator[data-state='targeted'] img {
+  filter: brightness(0) saturate(100%) invert(45%) sepia(86%) saturate(1911%) hue-rotate(330deg);
+}
+body.pressure-hull #functiondock #attentionindicator[data-state='scanned'] img {
+  filter: brightness(0) saturate(100%) invert(77%) sepia(65%) saturate(1210%) hue-rotate(334deg);
+}
+/* Panels start clear of the resize grip, which takes the blue palette. */
+body.pressure-hull #hud {
+  padding-left: 9px;
+}
+body.pressure-hull #hudgrip {
+  background: linear-gradient(90deg, #071826, #2f6f96 45%, #071826);
+  border-right: 1px solid #031326;
+}
+body.pressure-hull #hudgrip:is(:hover, .drag) {
+  background: linear-gradient(90deg, #0a2944, #5fb5e8 45%, #0a2944);
 }
