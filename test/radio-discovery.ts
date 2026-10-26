@@ -39,7 +39,7 @@ assert.deepEqual(playerData.radioStations, ['wave-function-collapse']);
 assert.equal(RADIO_STATIONS[4].playback, 'album');
 assert.deepEqual(
   RADIO_STATIONS.map((session) => session.tracks.length),
-  [7, 4, 7, 6, 8],
+  [9, 4, 7, 6, 8],
 );
 assert.deepEqual(radioState(mockPlayerData({ name: 'kNiGhT', radioStations: [] })), [
   'wave-function-collapse',

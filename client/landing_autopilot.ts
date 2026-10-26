@@ -129,3 +129,54 @@ export function landingReady(
   state.sent = currentTime;
   return true;
 }
+
+/** A landable body that the L key can pick. */
+export interface LandingCandidate {
+  /** Stellar body ID. */
+  id: string;
+
+  /** World X position. */
+  x: number;
+
+  /** World Y position. */
+  y: number;
+}
+
+/** What the player has highlighted when L is pressed. */
+export interface LandingIntent {
+  /** Nav point the player clicked, or null when nav was set automatically. */
+  pickedNav: string | null;
+
+  /** Stellar body of the pinned objective, when it has one. */
+  pinnedStellar: string | null;
+
+  /** Stellar bodies named by any active mission objective. */
+  missionStellars: string[];
+}
+
+/**
+ * Chooses the body that L lands on. A clicked nav point wins, then the pinned
+ * objective, then the nearest mission destination, then the nearest landable body.
+ * @param candidates Landable bodies in the current system.
+ * @param ship Player position.
+ * @param intent Highlighted nav point and mission destinations.
+ * @returns The chosen body, or undefined when nothing here is landable.
+ */
+export function chooseLandingPort<Candidate extends LandingCandidate>(
+  candidates: Candidate[],
+  ship: { x: number; y: number },
+  intent: LandingIntent,
+): Candidate | undefined {
+  const byDistance = [...candidates].sort(
+    (first, second) =>
+      Math.hypot(first.x - ship.x, first.y - ship.y) -
+      Math.hypot(second.x - ship.x, second.y - ship.y),
+  );
+  const named = (id: string | null) => (id ? byDistance.find((body) => body.id === id) : undefined);
+  return (
+    named(intent.pickedNav) ??
+    named(intent.pinnedStellar) ??
+    byDistance.find((body) => intent.missionStellars.includes(body.id)) ??
+    byDistance[0]
+  );
+}

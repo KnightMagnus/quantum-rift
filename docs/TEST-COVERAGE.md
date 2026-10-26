@@ -809,8 +809,14 @@ sidebar, asset and gameplay assertions remain registered.
 Projectile pixels are compared with an uncropped production procedural reference at
 zoom 2, three headings and two same-weapon speeds in both iteration orders. Missing
 and extra visible tail pixels are bounded independently of registry/Sprite counts.
-Deferred canvas blob encoding also verifies that undecoded images cannot create
-zero-size Sprites that later expand to the wrong zoomed size.
+Projectile frames must be drawable on their first update without any canvas PNG
+blob encoding; that round trip previously stalled busy fights. Nearby speeds share
+a cached canvas at a fixed phase and zoom, while a different trail bucket gets its
+own canvas. Every catalog projectile look is checked across all 16 animation phases:
+static looks share one canvas, animated looks retain distinct frames with changing
+pixels, and wrapped phases reuse their cached canvas. Replacement snapshots retain
+Actors and refresh position, heading and opacity; shrinking and empty snapshots
+remove obsolete Actors.
 
 These checks do not establish cross-browser parity, every weapon animation, a
 frame-time improvement, or all lifecycle/network latency combinations. The Canvas
@@ -1006,6 +1012,19 @@ enabled after takeoff.
 `motherlode-art-browser.ts` checks that non-mining ships see the physical deposit
 without its targeting outline or label. Mining-capable ships and captains actively
 towing a load retain highlights. Both programs run in the canonical browser suite.
+
+## `playtest-clarity`: readable bonuses and HUD-clear arrows
+
+`playtest-clarity.ts` checks that every research node and syndicate trait bonus
+reads as words, such as "+10% shields", with no raw stat keys. It also checks the
+off-screen arrow placement against a 21:9 career card: the arrow keeps its
+bearing but stops before the card and its label room, and arrows on other
+edges are unchanged. Overlapping cards are cleared regardless of their order.
+The card rectangle is measured from the page at runtime; the geometry checks
+use fixed rectangles. `cockpit-layout-browser.ts` checks map canvas height,
+reachable details and the narrow-screen fallback from 640×300 to 2560×1080.
+`radio-content.ts` also verifies that audio reimports preserve later uploads and
+reject missing supplemental recordings.
 
 ## `modal-input-ownership`: dialogs and manual controls
 

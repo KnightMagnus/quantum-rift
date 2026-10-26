@@ -1283,7 +1283,7 @@ function unclaimedList(): string {
 const STATION_SECTIONS: Array<[string, string, number]> = [
   ['ops', 'STATION TIER', 0],
   ['docks', 'DOCKS', 0],
-  ['refinery', 'REFINERY', 1],
+  ['refinery', 'WORKSHOP', 1],
   ['research', 'RESEARCH LAB', 2],
   ['hangar', 'SHUTTLES', 2],
   ['defense', 'DEFENSE', 2],
@@ -1302,7 +1302,7 @@ function stationHtml(interactive?: boolean): string {
     here = length2 && length2.site;
   if (!stationState.site) {
     const canClaim = here && !here.owner;
-    return `<p>Derelict Concord station hulls drift in systems across the Rift. Land on one and claim it, and it becomes your Personal Station: build it up through five Station Tiers for a refinery that works while you fly, a research lab, wingmates and Exotic ships.</p>
+    return `<p>Derelict Concord station hulls drift in systems across the Rift. Land on one and claim it, and it becomes your Personal Station: build it up through five Station Tiers for a Workshop that works while you fly, a research lab, wingmates and Exotic ships.</p>
       ${stationState.claimed ? `<p style="color:var(--cr)">Your station progress (Station Tier ${stationState.ops}) is kept and moves to the hull you claim.</p>` : ''}
       ${canClaim ? '<button class="btn big" data-act="st" data-op="claim">CLAIM THIS HULL</button>' : '<p class="dim">Fly to an unclaimed hull (shown on your radar in grey-violet) and land on it.</p>'}${unclaimedList()}
       <div class="sect">SPECIALISTS</div>${specialistsHtml(clientGameState, false)}`;
@@ -1334,7 +1334,7 @@ function stationHtml(interactive?: boolean): string {
           '<div class="kv"><span>Status</span><span style="color:var(--ok)">Fully built</span></div>';
       height += '<div class="sect">AT A GLANCE</div>';
       if (stationState.ops >= 1)
-        height += `<div class="kv"><span>Refinery</span><span>${stationState.refUnits} / ${capacity} units${stationState.refUnits >= capacity ? ' · <b>full</b>' : ''}</span></div>`;
+        height += `<div class="kv"><span>Workshop</span><span>${stationState.refUnits} / ${capacity} units${stationState.refUnits >= capacity ? ' · <b>full</b>' : ''}</span></div>`;
       if (stationState.ops >= 2)
         height += `<div class="kv"><span>Research</span><span>${stationState.active ? escapeHtml2(RESEARCH.find((researchNode) => researchNode.id === stationState.active!.id)!.name) + ' · ' + Math.max(0, Math.ceil((stationState.active.ends - currentTime) / 60000)) + ' min' : 'idle'}${stationState.queue && stationState.queue.length ? ` (+${stationState.queue.length} queued)` : ''}</span></div>`;
       if (playerPayload.shuttles.length)
@@ -1353,7 +1353,7 @@ function stationHtml(interactive?: boolean): string {
           ),
           cost = relocateCost(stationState.ops),
           wait = (stationState.relocT || 0) + RELOCATE.cooldownH * 3600000 - currentTime;
-        height += `<div class="sect">RELOCATE STATION</div><div class="dim small">Warp your Personal Station to any unclaimed hull. Everything comes with it: Station Tier, research, refinery, docks and stored ships. The old hull is left for someone else to claim. Costs ${credits(cost)} cr + ${RELOCATE.mats.map(([message, game]) => message + ' ' + GRADES[game]).join(', ')}; once every ${RELOCATE.cooldownH} hours.</div>`;
+        height += `<div class="sect">RELOCATE STATION</div><div class="dim small">Warp your Personal Station to any unclaimed hull. Everything comes with it: Station Tier, research, Workshop, docks and stored ships. The old hull is left for someone else to claim. Costs ${credits(cost)} cr + ${RELOCATE.mats.map(([message, game]) => message + ' ' + GRADES[game]).join(', ')}; once every ${RELOCATE.cooldownH} hours.</div>`;
         height +=
           wait > 0
             ? `<p class="dim small">Warp core recharging: ${Math.ceil(wait / 3600000)} h.</p>`
@@ -1368,7 +1368,7 @@ function stationHtml(interactive?: boolean): string {
         stationState.refUnits < capacity && perUnit
           ? Math.max(0, Math.ceil((perUnit - (currentTime - stationState.refT)) / 60000))
           : 0;
-      height += `<div class="sect" style="margin-top:4px">REFINERY</div><div class="meter">${Array.from({ length: capacity }, (unused, index) => `<i class="${index < stationState.refUnits ? 'on' : ''}"></i>`).join('')}</div>
+      height += `<div class="sect" style="margin-top:4px">WORKSHOP</div><div class="meter">${Array.from({ length: capacity }, (unused, index) => `<i class="${index < stationState.refUnits ? 'on' : ''}"></i>`).join('')}</div>
         <div class="kv"><span>${stationState.refUnits} of ${capacity} units</span><span>${stationState.refUnits >= capacity ? 'Silos full' : `next in ~${estimatedTime} min`}</span></div>${interactive && stationState.refUnits ? '<button class="btn sm" data-act="st" data-op="collect">COLLECT</button>' : ''}`;
       const game = Math.min(
         4,
@@ -1478,7 +1478,7 @@ export function showLanded(): void {
   const landingDescription = (
     site
       ? site.own
-        ? 'Your Personal Station. Build it up through Station Tier 1-5: refinery, research lab, drydock, wingmates and the station shipyard.'
+        ? 'Your Personal Station. Build it up through Station Tier 1-5: Workshop, research lab, drydock, wingmates and the station shipyard.'
         : site.owner
           ? `A Personal Station claimed and run by Captain ${site.owner}. Visitors may refuel and trade here.`
           : stellarBody.desc

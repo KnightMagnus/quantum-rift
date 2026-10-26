@@ -78,6 +78,13 @@ export function legacyStorySystems(systems: StarSystem[]): StarSystem[] {
   legacyFarGateway.wormhole = 'sol';
   legacyFarGateway.desc =
     'The far mouth of the Sol Gateway. Through it, faintly, the light of home.';
+  // The station refinery is now called the Workshop; reverse only that word in derelict hull text.
+  for (const system of legacy)
+    for (const stellar of system.stellars)
+      if (stellar.site) {
+        assert.match(stellar.desc!, /dock, Workshop, lab/);
+        stellar.desc = stellar.desc!.replace('dock, Workshop, lab', 'dock, refinery, lab');
+      }
   for (const system of legacy)
     for (const stellar of system.stellars)
       if (
