@@ -697,7 +697,7 @@
       "owners": ["server/game.ts", "server/ws.ts"],
       "services": [],
       "tests": ["network-faults.ts", "websocket-transport.ts"],
-      "asserts": "Replayed goal claims, job accepts and landings settle once; an evicted or closed local connection cannot trade, accept, log, launch or steer after a replacement sign-in; late frames after a server close never dispatch; flight disconnect docks and reconnection starts without queued controls; restart restores only flushed credits, contracts and claims, and a replayed claim after restart cannot pay again."
+      "asserts": "Replayed goal claims, job accepts and landings settle once; an evicted or closed local connection cannot trade, accept, log, launch or steer after a replacement sign-in; late frames after a server close never dispatch or accumulate, and closed sockets release partial/fragmented buffers; flight disconnect docks and reconnection starts without queued controls; restart restores only flushed credits, contracts and claims, and a replayed claim after restart cannot pay again."
     },
     {
       "id": "hangar",

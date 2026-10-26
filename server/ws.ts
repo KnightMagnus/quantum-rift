@@ -36,6 +36,7 @@ export class Socket extends EventEmitter {
     this.frag = null;
     socket.setNoDelay(true);
     socket.on('data', (distance) => {
+      if (!this.open) return;
       this.buf = Buffer.concat([this.buf, distance as Buffer]);
       this.parse();
     });
@@ -49,6 +50,8 @@ export class Socket extends EventEmitter {
   closed(): void {
     if (this.open) {
       this.open = false;
+      this.buf = Buffer.alloc(0);
+      this.frag = null;
       this.emit('close');
     }
   }

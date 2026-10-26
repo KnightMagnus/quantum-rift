@@ -3,8 +3,10 @@ import { requiredFixtureValue } from './helpers/required.ts';
 // Deterministic network-fault regressions: replayed claims, evicted connections and restarts.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { DB as Database } from '../server/db.ts';
 import { Game, type Session } from '../server/game.ts';
+import type { GamePlatform } from '../server/game-platform.ts';
 import { STELLARS } from '../shared/galaxy.ts';
 import { tempDataDir } from './helpers/temp-data.ts';
 
@@ -13,12 +15,20 @@ const assets = JSON.parse(
 );
 const saveDirectory = tempDataDir('rift-network-faults-');
 const captainName = 'Fault Captain';
+const platform: GamePlatform = {
+  automaticClock: false,
+  seedDefinitions: [],
+  randomUUID,
+  defer: (callback) => callback(),
+};
 
 /** A fixture connection whose packets travel through Game.connect's socket listener. */
 interface FaultClient {
+  /** Controlled transport registered through Game.connect. */
   socket: LegacySocket;
   /** Whether Game asked this transport to close. */
   closeRequested: () => boolean;
+  /** Authoritative session associated with this transport. */
   session: Session;
   /** Deliver one packet as the transport would, including after the socket closed. */
   deliver: (packet: Record<string, unknown>) => void;
@@ -52,7 +62,7 @@ function signIn(game: Game): FaultClient {
   return client;
 }
 
-const firstGame = new Game(assets, new Database(saveDirectory));
+const firstGame = new Game(assets, new Database(saveDirectory), platform);
 const original = signIn(firstGame);
 const captain = original.session.data;
 captain.credits = 200000;
@@ -179,7 +189,7 @@ captain.credits += 777; // changed in memory but never flushed before the "crash
 firstGame.features.fronts.goalsFor(captain).daily[1].claimed = true;
 firstGame.db.touch();
 
-const restartedGame = new Game(assets, new Database(saveDirectory));
+const restartedGame = new Game(assets, new Database(saveDirectory), platform);
 const restored = signIn(restartedGame);
 const restoredCaptain = restored.session.data;
 assert.equal(restoredCaptain.credits, committedCredits, 'committed credits survive a restart');
@@ -201,4 +211,3 @@ assert.equal(
 console.log(
   'Network faults: replayed claims/accepts/landings settle once, evicted and closed connections cannot act or steer, reconnection has clean controls, restarts keep only committed progress.',
 );
-process.exit(0);

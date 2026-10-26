@@ -1101,6 +1101,8 @@ with isolated saves and no timers or waits. It covers these scenarios:
 `websocket-transport.ts` checks that frames the peer sends after the server's
 close frame, including ones in the same TCP chunk, are discarded. The close frame
 only half-closes TCP, so without this the parser could keep dispatching commands.
+Partial frame and fragmented-message buffers are released on server close, peer
+close or transport error; subsequent traffic cannot accumulate in a closed socket.
 
 Limits: these are in-process reference-backend checks. They do not inject packet
 delay or reordering on a real network, and native online replacement and restart
