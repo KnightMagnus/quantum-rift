@@ -996,6 +996,15 @@ enabled after takeoff.
 without its targeting outline or label. Mining-capable ships and captains actively
 towing a load retain highlights. Both programs run in the canonical browser suite.
 
+## `playtest-clarity`: readable bonuses and HUD-clear arrows
+
+`playtest-clarity.ts` checks that every research node and syndicate trait bonus
+reads as words, such as "+10% shields", with no raw stat keys. It also checks the
+off-screen arrow placement against a 21:9 career card: the arrow keeps its
+bearing but stops before the card and its label room, and arrows on other
+edges are unchanged. The browser does not draw this case; the card rectangle is
+measured from the page at runtime.
+
 ## `modal-input-ownership`: dialogs and manual controls
 
 `overlay-input-browser.ts` checks nested confirmation/quit and

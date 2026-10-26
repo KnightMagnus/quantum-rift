@@ -1663,6 +1663,26 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   min-width: 0;
   max-width: calc(100% - 20px);
 }
+/* Wide, short screens cap the map by height. Move system details beside the
+   canvas so the map keeps that height, and use some of the spare width. */
+@media (min-aspect-ratio: 2/1) and (max-height: 1229px) {
+  #gmap .gbox {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: clamp(320px, 80.5vw, 1708px);
+  }
+  #gmap .gbox > h2 {
+    grid-column: 1 / -1;
+  }
+  #gmap #gcanvas {
+    height: 100%;
+  }
+  #gmap #ginfo {
+    height: auto;
+    font-size: 15px;
+  }
+}
 #commsheader {
   min-width: 0;
 }

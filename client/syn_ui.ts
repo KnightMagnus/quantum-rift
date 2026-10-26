@@ -77,6 +77,7 @@ import { escapeDoubleQuotedHtml as escapeHtml } from './html.ts';
 // Screens: black market, bank, officer ranks and traits, lower decks, and faction-arc cards.
 import { occupiedPassengerSeats } from '../shared/passengers.ts';
 import { FACTIONS } from '../shared/galaxy.ts';
+import { statBonusText } from '../shared/hangar.ts';
 import { RANKS_OFF, PROMOTE, TRAITS, LOWER_DECK, LOWER_SLOTS, bunks } from '../shared/syndicate.ts';
 
 /**
@@ -162,9 +163,7 @@ export function rankLine(
     .map((time) =>
       TRAITS[time]
         ? `<span class="trait" title="${escapeHtml(
-            Object.entries(TRAITS[time].bonus)
-              .map(([entryKey, value]) => `${entryKey} +${value}`)
-              .join(', '),
+            statBonusText(TRAITS[time].bonus),
           )}">${escapeHtml(TRAITS[time].name)}</span>`
         : '',
     )

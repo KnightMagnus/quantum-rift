@@ -28,6 +28,7 @@
     "station-progress.ts",
     "balance.ts",
     "landing-autopilot.ts",
+    "playtest-clarity.ts",
     "faction-standing.ts",
     "gateway-navigation.ts",
     "eventide.ts",
@@ -908,7 +909,7 @@
         "wormhole-loop.ts",
         "landing-autopilot-browser.ts"
       ],
-      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input."
+      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body."
     },
     {
       "id": "ships-catalog-art",
@@ -1558,6 +1559,19 @@
       "services": [],
       "tests": ["overlay-input-browser.ts", "logout-browser.ts", "input-audio-browser.ts"],
       "asserts": "Confirmation, quit, boarding, Options and Controls have one keyboard owner, explicit priority and safe focus return. Options preserves native settings/button activation, pending-capture Escape cancellation, reserved-key denial, swaps, unbinding and saved bindings. Controls retains Change Keys and consumes Escape above the map. Blocking dialogs suppress manual keyboard/pointer/touch/gamepad commands and held input remains latched until release; other overlay owners remain unchanged."
+    },
+    {
+      "id": "playtest-clarity",
+      "owners": [
+        "client/edge-arrow.ts",
+        "client/render.ts",
+        "shared/hangar.ts",
+        "client/hangar_ui.ts",
+        "client/syn_ui.ts"
+      ],
+      "services": [],
+      "tests": ["playtest-clarity.ts"],
+      "asserts": "Research lab and syndicate trait bonuses read as words with no raw camelCase stat keys. Off-screen edge arrows keep their bearing but stop short of the career card and its label room, while arrows elsewhere on the border are unchanged."
     }
   ],
   "routes": {

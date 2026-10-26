@@ -223,7 +223,7 @@ export const BUILDINGS: Record<string, ColonyBuilding> = {
     name: 'Deep Mine',
     cost: 160000,
     produce: { ore: 5 },
-    desc: 'Raw ore, ready for your station refinery.',
+    desc: 'Raw ore, ready for your station Workshop.',
   },
   gas: {
     name: 'Gas Extractor',
