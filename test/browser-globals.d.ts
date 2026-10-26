@@ -1,6 +1,20 @@
 import type { ClientGameState } from '../client/main.ts';
 import type { PlanetDef, PlanetSprite } from '../client/planets.ts';
 
+type PlanetModule = typeof import('../client/planets.ts');
+type PlanetCacheProbe = {
+  /** The page's own planets module. */
+  planets: PlanetModule;
+
+  /** Worlds drawn every animation frame. */
+  worlds: PlanetDef[];
+
+  /** Latest sprite drawn for each world. */
+  sprites: Map<string, PlanetSprite>;
+
+  /** Original first-system sprites, retained only to verify replacement after eviction. */
+  firstSprites?: Map<string, PlanetSprite>;
+};
 type RecordedInput = { t: string; th?: number; tu?: number; f1?: number; [key: string]: unknown };
 type SceneEvidence = {
   draws: number;
@@ -64,6 +78,7 @@ declare global {
     polishArt: string;
     worlds: PlanetDef[];
     sprites: Record<string, PlanetSprite & { T?: { tw?: number; col?: unknown; R?: unknown } }>;
+    planetProbe?: PlanetCacheProbe;
     originalStarterTracks: (typeof import('../shared/radio-stations.ts').RADIO_STATIONS)[number]['tracks'];
     pointerTrace: { at: number; type: string; target?: string; x: number; y: number }[];
     __decorBefore: () => void;
