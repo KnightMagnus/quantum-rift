@@ -127,7 +127,8 @@
     "wire-contracts.ts",
     "story-continuation.ts",
     "index-presentation.ts",
-    "performance-native.ts"
+    "performance-native.ts",
+    "protocol-compatibility.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -177,7 +178,8 @@
     "story-realities-browser.ts",
     "overlay-input-browser.ts",
     "ui-polish-browser.ts",
-    "pressure-hull-browser.ts"
+    "pressure-hull-browser.ts",
+    "protocol-compatibility-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -1615,6 +1617,26 @@
       "services": [],
       "tests": ["difficulty-curve.ts", "main-map-protection.ts"],
       "asserts": "Building Station Tier 3 carries the newcomer truce over until 5 kills, 30 jumps or 150 ship power, then announces its end; saves already past Tier 3 and the protection opt-out stay unprotected. Ambient raids and war fleets stay within a power budget scaled to the strongest captain present, keeping the weakest raider as a floor, and Farside or empty systems are unscaled. Combat job danger compares hostile power with the captain's and shows both numbers, while non-combat jobs keep the system rating. The Clear a raider career goal sends one practice raider sized to the captain, never in Farside, the arena or the Deep. The Caravel ships with a Cinder Driver."
+    },
+    {
+      "id": "protocol-compatibility",
+      "owners": [
+        "shared/protocol.ts",
+        "client/connection.ts",
+        "client/main.ts",
+        "server/game.ts",
+        "server/nakama-world.ts",
+        "server/local-main.ts",
+        "server/nakama-host.ts"
+      ],
+      "services": [],
+      "tests": [
+        "protocol-compatibility.ts",
+        "protocol-compatibility-browser.ts",
+        "nakama-client-connection.ts",
+        "nakama-network.ts"
+      ],
+      "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC and authoritative join rejection, terminal local denial despite buffered packets/late errors, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
     }
   ],
   "routes": {

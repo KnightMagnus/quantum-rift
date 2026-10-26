@@ -1127,6 +1127,19 @@ their separate coverage. This is not full feature-schema validation, native
 restore coverage or an old/new executable archive-matrix rehearsal; see
 [SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md).
 
+## Client/server compatibility
+
+The `protocol-compatibility` system checks the wire epoch independently of package
+versions. Local Game tests deny incompatible hello packets before account creation
+and preserve committed credits through a rejected reconnect. Native SDK tests
+check fresh preflight, RPC responses and an authoritative join rejection after
+valid preflight. Local connection tests keep compatibility guidance intact after
+buffered packets and late transport errors. The real Nakama network fixture checks
+join-metadata rejection and both current and legacy admission. The browser test
+uses an isolated Solo captain and controlled status responses to exercise a cached
+page, a server update during reconnect, manual refresh, and saved-progress recovery.
+This is not coverage of arbitrary old client binaries or every mixed deployment.
+
 ## Pressure Hull console finish
 
 The `pressure-hull-ui` system's `pressure-hull-browser.ts` checks the standard
@@ -1151,5 +1164,5 @@ The standard blue HUD is also exercised through the existing cockpit, sidebar,
 mission-list, dropdown and live-landed browser regressions. Compact consoles keep
 chat and utilities in separate scroll-reachable tracks; enlarged Tray tabs wrap,
 and pinned guidance retains usable mission-list space. The live-landed fixture
-seeds one moving server-owned NPC near the dock camera so draw-motion coverage
+seeds ordinary moving server-owned traffic near the dock camera so draw-motion coverage
 does not depend on unrelated ambient traffic random rolls.

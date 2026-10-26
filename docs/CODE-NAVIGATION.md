@@ -365,3 +365,11 @@ replacement/reward owners remain unchanged.
 `client/ui.ts` excludes the unique story harness from both Codex lists and detail
 navigation. The outfit definition, story rewards, fitting and owned inventory
 remain available to their existing gameplay owners.
+
+## Client/server compatibility
+
+[shared/protocol.ts](../shared/protocol.ts) owns the wire epoch and explicit legacy
+policy. [client/connection.ts](../client/connection.ts) checks fresh HTTP status and
+the native world RPC before joining. Local Game hello and native join metadata
+are checked before Game login. [PROTOCOL-COMPATIBILITY.md](PROTOCOL-COMPATIBILITY.md)
+describes supported combinations and update recovery.

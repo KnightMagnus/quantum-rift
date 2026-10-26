@@ -1,3 +1,4 @@
+import { GAME_PROTOCOL, COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
 import { HealthMonitor } from '../shared/health.ts';
 export { denyUnsupportedIdentity, identityHooks } from './nakama-identity-gates.ts';
 import { Game } from './game.ts';
@@ -67,7 +68,7 @@ export const worldRpc: nkruntime.RpcFunction = function worldRpc(ctx, _logger, n
     uuid: () => nk.uuidv4(),
     now: Date.now,
   });
-  return JSON.stringify({ matchId });
+  return JSON.stringify({ matchId, protocol: GAME_PROTOCOL });
 };
 
 /** Native match presence adapts targeted sends; it never owns a timer or input queue. */
@@ -175,9 +176,12 @@ export const initializeWorld: nkruntime.MatchInitFunction<WorldHandle> = functio
   return { state: { world: () => world }, tickRate: 30, label: 'quantum-rift-world-v1' };
 };
 export const attemptWorldJoin: nkruntime.MatchJoinAttemptFunction<WorldHandle> =
-  function attemptWorldJoin(_ctx, _logger, nk, dispatcher, _tick, handle, presence) {
+  function attemptWorldJoin(_ctx, _logger, nk, dispatcher, _tick, handle, presence, metadata) {
     const state = handle.world();
     state.dispatcher = dispatcher;
+    const protocol = metadata?.protocol;
+    if (protocol === undefined ? !supportedProtocol(undefined) : protocol !== String(GAME_PROTOCOL))
+      return { state: handle, accept: false, rejectMessage: COMPATIBILITY_MESSAGE };
     if (
       state.database.economicFrozen ||
       state.connections.size >= MAX_PLAYERS ||
@@ -213,7 +217,12 @@ export const joinWorld: nkruntime.MatchJoinFunction<WorldHandle> = function join
     connection.session = session;
     session.inputScheduling = 'match';
     state.database.withAuthenticatedCaptain(name, () =>
-      state.game.onMessage(session, { t: 'hello', name, pass: 'verified-nakama' }),
+      state.game.onMessage(session, {
+        t: 'hello',
+        name,
+        pass: 'verified-nakama',
+        protocol: GAME_PROTOCOL,
+      }),
     );
     if (!session.data) connection.close();
   }
