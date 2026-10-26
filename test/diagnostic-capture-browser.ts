@@ -35,6 +35,7 @@ addLots(playerData.cargo, playerData.cargoLots, {
   grades: { common: 1, rich: 2, pure: 3 },
 });
 database.create('Support Pilot', 'fixture', playerData);
+database.create('Other Support Pilot', 'fixture', structuredClone(playerData));
 database.flush();
 const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
@@ -160,6 +161,28 @@ try {
   assert.equal(await recorded(), 0);
   assert.equal(await status.innerText(), 'Off. Nothing is being recorded.');
   assert.equal(await exportButton.isDisabled(), true);
+  await closeOptions();
+
+  // Opt-in and retained previews belong to one captain session, not the next sign-in.
+  await openOptions();
+  await toggle.check();
+  await closeOptions();
+  await amount.fill('4');
+  await estimate.getByText('Buy 4 t:', { exact: false }).waitFor();
+  assert.ok((await recorded()) > 0);
+  await amount.blur();
+  await page.keyboard.press('Escape');
+  await page.locator('#quitconfirm').click();
+  await page.waitForFunction(() => !G.you);
+  assert.equal(await recorded(), 0, 'logout clears retained account projections');
+  await page.locator('[data-slot="Other Support Pilot"]').click();
+  await page.waitForFunction(() => G.you?.name === 'Other Support Pilot' && G.landed);
+  for (let index = 0; index < 10 && (await page.locator('#storybox').isVisible()); index++)
+    await page.locator('#storyb button').first().click();
+  await openOptions();
+  assert.equal(await toggle.isChecked(), false, 'another captain must opt in separately');
+  assert.equal(await exportButton.isDisabled(), true);
+  assert.equal(await status.innerText(), 'Off. Nothing is being recorded.');
   await closeOptions();
 
   // Nothing persists in browser storage and nothing was uploaded.

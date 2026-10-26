@@ -1561,11 +1561,12 @@
       "id": "diagnostic-captures",
       "services": [],
       "tests": ["diagnostic-capture.ts", "diagnostic-capture-browser.ts"],
-      "asserts": "Trade-estimate captures are off by default and session-only; allowlisted copies keep only the previewed commodity and exclude chat, names, credentials and tokens. Count, age, entry and file byte limits; corrupt, oversized, unknown-field, unsupported-format and newer-version files are rejected without throwing. Version-1 fixture and real browser exports replay offline with exact results; tampered or inconsistent captures report mismatches. Options opt-in, stop, clear and local export with no upload or browser storage.",
+      "asserts": "Trade-estimate captures are off by default and session-only; allowlisted copies keep only the previewed commodity and exclude chat, names, credentials and tokens. Count, age, entry and file byte limits; corrupt, oversized, unknown-field, unsupported-format and newer-version files are rejected without throwing. Version-1 fixture and real browser exports replay offline with exact results; tampered or inconsistent captures report mismatches. Options opt-in, stop, clear, logout/account-switch reset and local export with no upload or browser storage. Full order-heavy exports remain reader-compatible; malformed required terms and non-file CLI inputs are rejected.",
       "owners": [
         "shared/diagnostic-capture.ts",
         "shared/diagnostic-replay.ts",
         "client/diagnostics.ts",
+        "client/main.ts",
         "client/economy-ui.ts",
         "client/index.html",
         "tools/replay-diagnostic-capture.ts"

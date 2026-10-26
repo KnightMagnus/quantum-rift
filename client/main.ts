@@ -3403,6 +3403,8 @@ function openQuit() {
 async function logOut(reason = '') {
   elementById2('quitconfirm').disabled = elementById2('quitcancel').disabled = true;
   clearTimeout(reconnectTimer!);
+  diagnostics.clear();
+  refreshDiagnosticControls();
   sessionEpoch++;
   const epoch = sessionEpoch;
   const socket = webSocket;

@@ -114,6 +114,31 @@ assert.deepEqual(replayDiagnosticCapture(reparsed.capture), {
   mismatches: [],
 });
 
+// A full, order-heavy recording must remain readable by the format's own reader.
+const denseInput = previewInput();
+denseInput.orders = Array.from({ length: DIAGNOSTIC_CAPTURE_LIMITS.maxOrders }, () => ({
+  cid: 'ore',
+  grade: 'pure',
+  qty: 123456789012345,
+}));
+const denseResult = tradePreview(denseInput);
+const denseRecorder = new DiagnosticRecorder(now);
+denseRecorder.start();
+for (let index = 0; index < DIAGNOSTIC_CAPTURE_LIMITS.maxEntries; index++)
+  assert.equal(denseRecorder.recordTradePreview(denseInput, denseResult, 1), true);
+const denseText = serializeDiagnosticCapture(denseRecorder.exportCapture());
+assert.ok(
+  Buffer.byteLength(denseText) <= DIAGNOSTIC_CAPTURE_LIMITS.maxCaptureBytes,
+  'a full supported recording cannot export an oversized file',
+);
+const denseParsed = parseDiagnosticCapture(denseText);
+assert.ok(denseParsed.ok);
+assert.equal(denseParsed.capture.entries.length, DIAGNOSTIC_CAPTURE_LIMITS.maxEntries);
+assert.equal(
+  replayDiagnosticCapture(denseParsed.capture).matched,
+  DIAGNOSTIC_CAPTURE_LIMITS.maxEntries,
+);
+
 // Invalid previews are captured too; unrecordable inputs are skipped without throwing.
 assert.equal(recorder.recordTradePreview(previewInput(0), tradePreview(previewInput(0)), 0), true);
 assert.equal(recorder.recordTradePreview(previewInput(Number.NaN), {}, 0), false);
@@ -174,7 +199,7 @@ assert.equal(recorder.recordTradePreview(input, observed, 0), false);
 clock += DIAGNOSTIC_CAPTURE_LIMITS.maxAgeMs;
 assert.equal(recorder.size, 0);
 
-// Build identifiers cannot carry free text.
+// Build labels have restricted syntax and length.
 assert.equal(captureBuild('3.4.2'), '3.4.2');
 assert.equal(captureBuild('27.0.0-nightly+abc'), '27.0.0-nightly+abc');
 for (const unsafe of ['<script>', 'Private Captain', '', 42, null, 'x'.repeat(40)])
@@ -209,6 +234,31 @@ assert.equal(
 assert.equal(rejection(mutated((capture) => (capture.version = 2))), 'unsupported-version');
 assert.equal(rejection(mutated((capture) => (capture.version = '1'))), 'unsupported-version');
 assert.equal(rejection(mutated((capture) => delete capture.version)), 'unsupported-version');
+for (const field of ['tradePct', 'sell', 'site', 'orders']) {
+  assert.equal(
+    rejection(mutated((capture) => delete capture.entries[0].input[field])),
+    'invalid',
+    `missing ${field} is not silently defaulted in an exported file`,
+  );
+  assert.equal(
+    rejection(mutated((capture) => (capture.entries[0].input[field] = null))),
+    'invalid',
+    `null ${field} is not silently defaulted in an exported file`,
+  );
+}
+const oversizedEntry = structuredClone(denseParsed.capture);
+oversizedEntry.entries = oversizedEntry.entries.slice(0, 1);
+oversizedEntry.entries[0].result.warnings = Array(4).fill('界'.repeat(160));
+assert.ok(
+  Buffer.byteLength(JSON.stringify(oversizedEntry.entries[0])) >
+    DIAGNOSTIC_CAPTURE_LIMITS.maxEntryBytes,
+  'otherwise allowed fields can exceed the per-entry limit',
+);
+assert.equal(
+  rejection(JSON.stringify(oversizedEntry)),
+  'invalid',
+  'reader enforces entry byte cap',
+);
 for (const [label, change] of [
   ['unknown root field', (capture) => (capture.chat = 'hello')],
   ['unknown input field', (capture) => (capture.entries[0].input.token = 'abc')],
@@ -232,7 +282,7 @@ for (const [label, change] of [
 ] as [string, (capture: Record<string, any>) => void][])
   assert.equal(rejection(mutated(change)), 'invalid', label);
 assert.equal(
-  rejection(exportedText.replace('"credits": 1000', '"credits": 1e309')),
+  rejection(exportedText.replace(/"credits":\s*1000/, '"credits":1e309')),
   'invalid',
   'JSON overflow to Infinity',
 );
@@ -293,6 +343,10 @@ const newer = replayTool(newerPath);
 assert.equal(newer.status, 2);
 assert.match(newer.stderr, /unsupported-version/);
 assert.equal(replayTool(path.join(scratch, 'missing.json')).status, 2);
+const directoryInput = replayTool(scratch);
+assert.equal(directoryInput.status, 2, 'non-file input is rejected instead of crashing');
+assert.match(directoryInput.stderr, /Cannot read/);
+assert.doesNotMatch(directoryInput.stderr, /Error:|at file:/);
 
 console.log(
   'Diagnostic captures: off by default, allowlisted, count/age/byte bounded, safe rejection, offline trade-preview replay and CLI exit codes PASS',

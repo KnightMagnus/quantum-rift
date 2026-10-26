@@ -79,7 +79,7 @@ export interface DiagnosticCapture {
   format: typeof DIAGNOSTIC_CAPTURE_FORMAT;
   /** Capture format version. */
   version: typeof DIAGNOSTIC_CAPTURE_VERSION;
-  /** Game build that recorded the capture. */
+  /** Game version advertised by the host; not a fingerprint of cached browser code. */
   build: { game: string };
   /** Milliseconds between the start of recording and export. */
   durationMs: number;
@@ -191,7 +191,7 @@ function captureInput(source: unknown, strict: boolean): TradePreviewCaptureInpu
   if (RAW_COMMODITIES.includes(id) && sourceLots?.[id] !== undefined)
     byCommodity[id] = gradeLots(sourceLots[id], 'input.cargoLots.byCommodity.' + id);
 
-  const sourceOrders = input.orders ?? [];
+  const sourceOrders = strict ? input.orders : (input.orders ?? []);
   if (!Array.isArray(sourceOrders)) fail('input.orders is not a list');
   const relevantOrders = sourceOrders.filter(
     (order) =>
@@ -222,9 +222,9 @@ function captureInput(source: unknown, strict: boolean): TradePreviewCaptureInpu
     cargoLots: { version: 1, byCommodity },
     credits: finite(input.credits, 'input.credits'),
     freeHold: finite(input.freeHold, 'input.freeHold'),
-    tradePct: finite(input.tradePct ?? 0, 'input.tradePct'),
-    sell: finite(input.sell ?? 1, 'input.sell'),
-    site: boolean(input.site ?? false, 'input.site'),
+    tradePct: finite(strict ? input.tradePct : (input.tradePct ?? 0), 'input.tradePct'),
+    sell: finite(strict ? input.sell : (input.sell ?? 1), 'input.sell'),
+    site: boolean(strict ? input.site : (input.site ?? false), 'input.site'),
     orders,
   };
 }
@@ -270,16 +270,19 @@ function captureEntry(source: unknown, index: number): TradePreviewCaptureEntry 
     'result',
   ]);
   if (entry.subsystem !== 'trade-preview') fail(`entries[${index}].subsystem is not supported`);
-  return {
+  const captured: TradePreviewCaptureEntry = {
     subsystem: 'trade-preview',
     atMs: nonNegative(entry.atMs, `entries[${index}].atMs`),
     elapsedMs: nonNegative(entry.elapsedMs, `entries[${index}].elapsedMs`),
     input: captureInput(entry.input, true),
     result: captureResult(entry.result),
   };
+  if (utf8Bytes(JSON.stringify(captured)) > DIAGNOSTIC_CAPTURE_LIMITS.maxEntryBytes)
+    fail(`entries[${index}] exceeds the entry byte limit`);
+  return captured;
 }
 
-/** Normalizes a build identifier so free text can never enter a capture. */
+/** Retains a bounded version label; other build values become unknown. */
 export function captureBuild(version: unknown): string {
   return typeof version === 'string' && BUILD_PATTERN.test(version) ? version : 'unknown';
 }
@@ -384,7 +387,8 @@ function roundMs(value: number): number {
 
 /** Serializes a capture for export. */
 export function serializeDiagnosticCapture(capture: DiagnosticCapture): string {
-  return JSON.stringify(capture, null, 2) + '\n';
+  // Entries are bounded in this compact encoding; indentation can exceed the file cap.
+  return JSON.stringify(capture) + '\n';
 }
 
 /** Reads a capture file, rejecting oversized, corrupt, unknown or newer files without throwing. */

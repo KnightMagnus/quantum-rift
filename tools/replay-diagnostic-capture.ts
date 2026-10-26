@@ -8,12 +8,17 @@ import { replayDiagnosticCapture } from '../shared/diagnostic-replay.ts';
 export const REPLAY_EXIT = Object.freeze({ matched: 0, mismatched: 1, rejected: 2 });
 
 export function replayCaptureFile(filePath: string): {
+  /** One of REPLAY_EXIT's matched, mismatched or rejected statuses. */
   status: number;
+  /** Bounded replay summary or file rejection guidance. */
   lines: string[];
 } {
   let size: number;
   try {
-    size = fileSystem.statSync(filePath).size;
+    const source = fileSystem.statSync(filePath);
+    if (!source.isFile())
+      return { status: REPLAY_EXIT.rejected, lines: [`Cannot read ${filePath}.`] };
+    size = source.size;
   } catch {
     return { status: REPLAY_EXIT.rejected, lines: [`Cannot read ${filePath}.`] };
   }
@@ -25,7 +30,13 @@ export function replayCaptureFile(filePath: string): {
         `Rejected (oversized): larger than ${DIAGNOSTIC_CAPTURE_LIMITS.maxCaptureBytes} bytes.`,
       ],
     };
-  const parsed = parseDiagnosticCapture(fileSystem.readFileSync(filePath, 'utf8'));
+  let text: string;
+  try {
+    text = fileSystem.readFileSync(filePath, 'utf8');
+  } catch {
+    return { status: REPLAY_EXIT.rejected, lines: [`Cannot read ${filePath}.`] };
+  }
+  const parsed = parseDiagnosticCapture(text);
   if (!parsed.ok)
     return {
       status: REPLAY_EXIT.rejected,
@@ -33,7 +44,7 @@ export function replayCaptureFile(filePath: string): {
     };
   const report = replayDiagnosticCapture(parsed.capture);
   const lines = [
-    `Capture from build ${report.recordedBuild}: ${report.matched} of ${report.entries} trade previews reproduced.`,
+    `Capture advertising game version ${report.recordedBuild}: ${report.matched} of ${report.entries} trade previews reproduced.`,
   ];
   for (const mismatch of report.mismatches)
     lines.push(

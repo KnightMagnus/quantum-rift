@@ -13,7 +13,9 @@ wrong. You choose when to record, and you decide whether to share the file.
    `quantum-rift-diagnostics-v1.json`. Attach it to your report if you want to.
 5. Untick the box to stop recording, or select **Clear** to discard everything.
 
-Recording is off every time the game starts. Nothing is uploaded or sent
+Recording is off every time the game starts or a captain logs out. Logging out
+also clears retained estimates; another captain must opt in separately.
+Nothing is uploaded or sent
 anywhere; the only copy is the file you export.
 
 ## What a capture contains
@@ -29,7 +31,8 @@ Each entry holds one market estimate for an amount you typed:
 - the estimate the game showed, and how long it took to compute.
 
 The file also records the game version and time offsets from the start of
-recording, not clock times.
+recording, not clock times. The version is advertised by the host; it is not a
+fingerprint of the browser code, which may be older in a cached page.
 
 A capture never includes chat, captain or player names, passwords, sign-in
 tokens, your other cargo or any other part of your save. The recorder copies
@@ -39,9 +42,12 @@ ignored.
 ## Limits
 
 - At most 50 estimates are kept. Older ones are dropped first.
+- Each estimate is limited to 2 KiB. Exports use compact JSON to stay within the
+  reader's 128 KiB file limit, including full recordings.
 - Recording stops by itself after 30 minutes, and entries older than 30 minutes
   are discarded.
-- Entries are held only in the open game tab and are lost when it closes.
+- Entries are held only in the current captain's session and are lost on logout
+  or when the game tab closes.
 - Only market trade estimates are recorded. Combat, flight, mining, missions and
   server-side settlement are not captured.
 

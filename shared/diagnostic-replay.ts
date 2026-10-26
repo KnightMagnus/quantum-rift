@@ -14,7 +14,7 @@ export interface DiagnosticReplayMismatch {
 }
 /** Summary of an offline replay. */
 export interface DiagnosticReplayReport {
-  /** Build that recorded the capture. */
+  /** Host-advertised game version retained in the capture. */
   recordedBuild: string;
   /** Entries replayed. */
   entries: number;
