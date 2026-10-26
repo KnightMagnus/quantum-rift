@@ -16,6 +16,9 @@ import { sheet, shipFrame, objImg, rockImage, drawShot } from './render.ts';
 import { storyShipOpacity } from './story-reality.ts';
 import { weaponColor, weaponLook } from '../shared/rules.ts';
 
+/** Projectile looks whose drawShot output changes with time; every other look is static. */
+const ANIMATED_SHOT_LOOKS = new Set(['torp', 'sing', 'mine', 'shard']);
+
 /**
  * Draws an already-rasterized canvas directly. `ImageSource.fromHtmlCanvasElement`
  * PNG-encodes and re-decodes its canvas, which stalls the frame when many new
@@ -283,7 +286,8 @@ export class WorldActors {
         const weapon = state.A!.weapons[shot.w];
         if (!weapon) return;
         // Cache local procedural weapon frames; the projectile itself is a native Graphic.
-        const phase = Math.floor(now / 45) % 16;
+        // Static looks share one frame instead of 16 identical cached phases.
+        const phase = ANIMATED_SHOT_LOOKS.has(weaponLook(weapon)) ? Math.floor(now / 45) % 16 : 0;
         const speed = Math.hypot(shot.vx, shot.vy);
         // drawShot varies only its colored trail with speed. Whole-pixel trail buckets keep
         // inherited ship velocity from making nearly every projectile a cache miss.
@@ -318,7 +322,7 @@ export class WorldActors {
             phase * 45,
           );
           this.shotGraphics.set(key, canvas);
-          if (this.shotGraphics.size > 512)
+          if (this.shotGraphics.size > 256)
             this.shotGraphics.delete(this.shotGraphics.keys().next().value!);
         }
         const graphic = new CanvasSprite(canvas, extent / state.zoom, extent / state.zoom);
