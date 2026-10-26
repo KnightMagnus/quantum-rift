@@ -902,29 +902,42 @@ body.pressure-hull :is(.osect, #optkeys, #optkeys .osect) {
   }
   body.pressure-hull #land .landbox {
     width: calc(100% - 24px);
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: column;
     border-width: 28px;
     border-image-width: 28px;
+  }
+  body.pressure-hull #land .landbox > * {
+    flex-shrink: 0;
   }
   body.pressure-hull #land .landhead,
   body.pressure-hull #land #ltabs {
     grid-column: 1 / -1;
   }
   body.pressure-hull #land #ltabs {
-    grid-row: 2;
+    order: 1;
+    align-self: stretch;
     justify-content: flex-start;
   }
   body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landscene {
+    display: contents;
+  }
+  body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landpic {
     display: none;
+  }
+  body.pressure-hull #land #landnews {
+    order: 3;
+    flex: 0 0 auto;
+    max-height: 100px;
   }
   body.pressure-hull #land .landbody,
   body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landbody {
-    grid-column: 1;
-    grid-row: 3;
+    order: 2;
+    flex: 0 0 auto;
+    max-height: 300px;
   }
   body.pressure-hull #land .landfoot {
-    grid-row: 4;
+    order: 4;
   }
 }
 /* The tutorial card and caller portrait share the blue display glass. */

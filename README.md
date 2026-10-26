@@ -30,12 +30,12 @@ Download the latest release, extract it, and follow the launch instructions belo
 ### Fly and fight
 
 - Choose from a wide range of ships, including specialty vessels, with guns, beams, missiles, point defense and drones.
-- Master momentum-based flight or use optional combat assist. Autopilot handles landing and plotted jump routes.
+- Master momentum-based flight or use optional combat assist. Autopilot handles landing and plotted jump routes. Press **L** to land at a selected world or mission destination, or the nearest port when neither is selected.
 - Face enemies that retreat, call for help or bring capital-ship firepower. Friendly fire has consequences.
 
 ### Build a station and crew
 
-- Turn a derelict hull into your own **Personal Station**, with refining, research, shipbuilding and defenses. Upgrade it or relocate to another hull.
+- Turn a derelict hull into your own **Personal Station**, with a Workshop, research, shipbuilding and defenses. Upgrade it or relocate to another hull.
 - Store ships in your hangar and organize docks around a lead ship and crewed wingmates that fly in formation and follow orders.
 - Hire and promote officers for your bridge and fleet, then defend your station in Holdout battles.
 
@@ -139,7 +139,7 @@ Add `?cockpit=pressure-hull` to the game address to use it.
 
 **Galaxy map**
 
-![In-game galaxy map menu](docs/screenshots/responsive-map.png)
+![In-game galaxy map with system details beside the canvas on a wide screen](docs/screenshots/responsive-map.png)
 
 **Settings and key bindings**
 

@@ -55,6 +55,7 @@ import {
   RESEARCH_QUEUE_MAX,
   REFINE_UP,
   SYNERGY,
+  statBonusText,
 } from '../shared/hangar.ts';
 import { officerStats, credits } from '../shared/rules.ts';
 
@@ -376,9 +377,7 @@ export function researchHtml(clientGameState: ClientGameState, interactive?: boo
         quantity.includes(researchNode.id) ||
         (stationState.active && stationState.active.id === researchNode.id),
       available = !done && stationState.ops >= researchNode.ops;
-    const join2 = Object.entries(researchNode.bonus)
-      .map(([entryKey, value]) => `${entryKey}+${value}`)
-      .join(' ');
+    const join2 = statBonusText(researchNode.bonus);
     height += `<div class="kv"><span style="color:${done ? '#8ff0ad' : available ? '#ddd' : '#555'}">${done ? '✓ ' : ''}${escapeHtml2(researchNode.name)}${researchNode.needs ? ` <span class="dim small">after ${escapeHtml2(RESEARCH.find((researchNode3) => researchNode3.id === researchNode.needs)!.name)}</span>` : ''}<div class="dim small">${escapeHtml2(join2)}</div></span><span class="small">${done ? 'done' : queued ? 'queued' : available ? `${credits(researchNode.cost)} + ${researchNode.mats.map(([message, game]) => message + ' ' + GRADES[game]).join(', ')} · ${researchNode.minutes}m ${interactive ? `<button class="btn sm" data-act="st" data-op="research" data-id="${researchNode.id}">${stationState.active || (researchNode.needs && !stationState.done.includes(researchNode.needs)) ? 'QUEUE' : 'START'}</button>` : ''}` : `Station Tier ${researchNode.ops}`}</span></div>`;
   }
   return height;

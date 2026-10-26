@@ -132,7 +132,7 @@ export const TUTORIAL: TutorialStep[] = [
   },
   {
     check: (playerData) => playerData.station!.ops >= 2,
-    title: 'Market and refinery (Station Tier 2)',
+    title: 'Market and Workshop (Station Tier 2)',
     text: 'Build Station Tier 2 at your station: it opens the research lab and the hangar.',
     reward: 20000,
   },

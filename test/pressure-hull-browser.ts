@@ -139,6 +139,42 @@ try {
     );
     await page.locator('#ctabs [data-tab="radio"]').click();
     await capture(page, 'landed-' + width + 'x' + height);
+    await page.setViewportSize({ width: 1000, height: 900 });
+    await page.waitForFunction(() => innerWidth === 1000);
+    assert.equal(
+      await page.locator('#landnews').isVisible(),
+      true,
+      'Spaceport news stays reachable on narrow screens',
+    );
+    assert.ok(
+      await page.locator('#landnews .newsit').count(),
+      'Narrow landing preserves the actual spaceport reports',
+    );
+    await page.locator('#landnews').scrollIntoViewIfNeeded();
+    assert.ok(
+      await page.locator('#landnews').evaluate((news) => {
+        const panel = news.getBoundingClientRect();
+        const shell = document.querySelector('#land .landbox')!.getBoundingClientRect();
+        news.scrollTop = news.scrollHeight;
+        return (
+          panel.height > 0 &&
+          panel.top < shell.bottom - 28 &&
+          panel.bottom > shell.top + 28 &&
+          news.scrollTop + news.clientHeight >= news.scrollHeight - 1
+        );
+      }),
+      'Narrow spaceport news can be reached and scrolled to its last report',
+    );
+    await page.locator('#depart').scrollIntoViewIfNeeded();
+    assert.ok(
+      await page.locator('#depart').evaluate((button) => {
+        const bounds = button.getBoundingClientRect();
+        return bounds.top >= 0 && bounds.bottom <= innerHeight;
+      }),
+      'Narrow landing keeps Depart reachable after scrolling through the overview',
+    );
+    await capture(page, 'landed-narrow-' + width);
+    await page.setViewportSize({ width, height });
     const serviceTabs = await page
       .locator('#ltabs button')
       .evaluateAll((buttons) => buttons.map((button) => (button as HTMLElement).dataset.lt!));

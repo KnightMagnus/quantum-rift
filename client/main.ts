@@ -151,6 +151,9 @@ export type ClientGameState = RefineryClientState & {
   /** Navigation target stellar ID. */
   navStellar: string | null;
 
+  /** Whether the player clicked navStellar themselves, so L lands there instead of the nearest body. */
+  navPicked: boolean;
+
   /** Ammunition counts. */
   ammo: Record<string, number>;
 
@@ -302,7 +305,8 @@ import { coronaRouteBlocked } from '../shared/industrial-rules.ts';
 import { initRefineryUI } from './refinery_ui.ts';
 import { binding, migrateBindings, RESERVED_KEYS } from './action-bindings.ts';
 import { initMiningUI, receiveMining } from './mining_ui.ts';
-import { landingGuidance, landingReady } from './landing_autopilot.ts';
+import { landingGuidance, landingReady, chooseLandingPort } from './landing_autopilot.ts';
+import { missionTargets } from './missions.ts';
 import { FlightEngine } from './engine.ts';
 import { advanceFlightClock } from './flight-clock.ts';
 import { initLoginScene } from './login_scene.ts';
@@ -385,6 +389,7 @@ const clientGameState: ClientGameState = (window.G = {
   spriteScale: 1.25,
   route: [],
   navStellar: null,
+  navPicked: false,
   ammo: {},
   FAC: factionColors,
   ctab: 'missions',
@@ -953,6 +958,7 @@ function onMessage(serverMessage: ServerMessage) {
       if (!clientGameState.landed) audio.ui('dock', 0.8);
       audio.setAmbience('station');
       setAuto(null);
+      clientGameState.navPicked = false;
       clientGameState.landed = serverMessage;
       clientGameState.sys = STELLARS[serverMessage.stellar]?.system || clientGameState.sys;
       clientGameState.view = null;
@@ -1042,6 +1048,7 @@ function onMessage(serverMessage: ServerMessage) {
         if (angle && ANOMALIES[angle])
           toast(`${ANOMALIES[angle].icon} ${ANOMALIES[angle].name}: ${ANOMALIES[angle].desc}`);
       }
+      clientGameState.navPicked = false;
       clientGameState.navStellar = systemsById[serverMessage.sys].stellars.find((rawStellarBody) =>
         rawStellarBody.svc!.includes('L'),
       )
@@ -2249,15 +2256,22 @@ function landRequest(pick?: {
   const clientView = clientGameState.view,
     starSystem = systemsById[clientGameState.sys!];
   if (!clientView || !starSystem) return;
-  const near = starSystem.stellars
-    .filter((rawStellarBody) => rawStellarBody.svc!.includes('L'))
-    .sort(
-      (rawStellarBody, rawStellarBody2) =>
-        Math.hypot(rawStellarBody.x - clientView.x, rawStellarBody.y - clientView.y) -
-        Math.hypot(rawStellarBody2.x - clientView.x, rawStellarBody2.y - clientView.y),
-    )[0];
-  // L always chooses the nearest landable body; explicit double-clicks keep their destination.
-  const position = pick || near;
+  const objectives = missionTargets(clientGameState);
+  const highlighted = chooseLandingPort(
+    starSystem.stellars.filter((rawStellarBody) => rawStellarBody.svc!.includes('L')),
+    clientView,
+    {
+      pickedNav: clientGameState.navPicked ? clientGameState.navStellar : null,
+      pinnedStellar:
+        objectives.find((objective) => objective.key === clientGameState.pinnedObjective)
+          ?.stellar ?? null,
+      missionStellars: objectives.flatMap((objective) =>
+        objective.stellar ? [objective.stellar] : [],
+      ),
+    },
+  );
+  // Double-click keeps its destination; L follows the highlighted nav point or mission.
+  const position = pick || highlighted;
   const towing = !!(clientGameState.towing || clientGameState.you?.towing)?.attached;
   const distance = position
     ? Math.hypot(position.x - clientView.x, position.y - clientView.y)
@@ -2466,8 +2480,9 @@ flightEngine.engine.input.pointers.on('down', (event) => {
   }
   if (pickAt2 && pickAt2.stellar) {
     clientGameState.navStellar = pickAt2.stellar.id;
+    clientGameState.navPicked = true;
     toast(
-      `Nav: ${pickAt2.stellar.name}${pickAt2.stellar.svc!.includes('L') ? ' (double-click to land; L chooses nearest)' : ''}`,
+      `Nav: ${pickAt2.stellar.name}${pickAt2.stellar.svc!.includes('L') ? ' (L or double-click to land)' : ''}`,
     );
     return;
   }
