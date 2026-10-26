@@ -102,6 +102,17 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 
 ![Ultrawide landed shipyard inside the flight window, clear of the sidebar and console](docs/screenshots/responsive-landed.png)
 
+**Pressure Hull cockpit**
+
+An optional physical-console finish for flight, station services and expanded chat.
+Add `?cockpit=pressure-hull` to the game address to use it.
+
+![Pressure Hull flight controls with the Tray expanded](docs/screenshots/pressure-hull-flight.png)
+
+![Pressure Hull station services in one sculpted window](docs/screenshots/pressure-hull-landed.png)
+
+![Expanded Pressure Hull chat with a populated, scrollable history](docs/screenshots/pressure-hull-expanded-chat.png)
+
 **Growing colonies**
 
 ![A level-five colony on Far Prime with its settlement-stage illustration](docs/screenshots/colony-stage3.png)

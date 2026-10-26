@@ -4523,9 +4523,10 @@ export function radar(
     height2 = canvasRenderingContext2D.canvas.height,
     clientView = clientGameState.view,
     diameter = Math.min(width2, height2);
-  canvasRenderingContext2D.fillStyle = '#020408';
+  const holographicDisplay = document.body.classList.contains('pressure-hull');
+  canvasRenderingContext2D.fillStyle = holographicDisplay ? '#031326' : '#020408';
   canvasRenderingContext2D.fillRect(0, 0, width2, height2);
-  canvasRenderingContext2D.strokeStyle = '#0d2a1a';
+  canvasRenderingContext2D.strokeStyle = holographicDisplay ? '#164f78' : '#0d2a1a';
   canvasRenderingContext2D.lineWidth = 1;
   for (let entryKey = 1; entryKey < 4; entryKey++) {
     canvasRenderingContext2D.beginPath();

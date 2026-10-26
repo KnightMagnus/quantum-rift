@@ -1629,6 +1629,8 @@ export function renderLanded(): void {
     ? 'Choose a ship first: a lead ship for your active dock (STATION, then DOCKS), or buy one at a shipyard'
     : '';
   let height = '';
+  let landingNews = '';
+  const pressureHull = document.body.classList.contains('pressure-hull');
   switch (clientGameState.ltab) {
     case 'refinery':
       height += refineryHtml(clientGameState);
@@ -1638,10 +1640,11 @@ export function renderLanded(): void {
       height += stateCard(stellarBody.system); // 2.4
       height += barCard(length2); // the contact at the bar, and what this world trades in
       if (length2.news && length2.news.length)
-        height += `<div class="newsbox"><div class="sect" style="margin-top:0">SPACEPORT NEWS</div>${length2.news
+        landingNews = `<div class="newsbox"><div class="sect" style="margin-top:0">SPACEPORT NEWS</div>${length2.news
           .slice(0, 4)
           .map((count) => `<div class="newsit">${escapeHtml2(count)}</div>`)
           .join('')}</div>`; // 1.1
+      if (!pressureHull) height += landingNews;
       if (playerPayload.shipless)
         height += `<div class="noship"><b>NO ACTIVE SHIP</b><div>You can't depart until you choose a ship. ${playerPayload.dock && playerPayload.dock.length ? 'Open STATION, then DOCKS, and choose a lead ship for your active dock.' : 'Buy one at a SHIPYARD.'}</div><div>${playerPayload.dock && playerPayload.dock.length ? '<button class="btn sm" data-act="gotodock">OPEN DRYDOCK</button> ' : ''}${length2.yard ? '<button class="btn sm" data-act="ltab" data-t="yard">SHIPYARD</button>' : ''}</div></div>`;
       if (!playerPayload.shipless)
@@ -1938,6 +1941,8 @@ export function renderLanded(): void {
     height,
     'land:' + length2.stellar + ':' + clientGameState.ltab,
   );
+  const newsPanel = document.getElementById('landnews')!;
+  clientGameState.views.replace(newsPanel, pressureHull ? landingNews : '', 'landing-news');
   if (focusedRefinery) elementById(focusedRefinery)?.focus({ preventScroll: true });
   if (focusedAmount)
     [...body.querySelectorAll<HTMLInputElement>('.trade-amount')]
