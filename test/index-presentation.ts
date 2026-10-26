@@ -131,6 +131,7 @@ let survey: Space = mixedSpace();
 IndexFleetOperations.open.call(capabilities, survey);
 const armor = [...survey.ships.values()].map((entity) => entity.armor);
 let minimumClearance = Infinity;
+let settledPositions = new Map<number, { x: number; y: number }>();
 for (let tick = 0; tick < 1800; tick++) {
   clock += DT;
   survey.t += DT;
@@ -139,6 +140,10 @@ for (let tick = 0; tick < 1800; tick++) {
     step(entity, entity.st, entity.inp);
   }
   IndexFleetOperations.fleetTick.call(capabilities, survey);
+  if (tick === 899)
+    settledPositions = new Map(
+      [...survey.ships.values()].map((entity) => [entity.id, { x: entity.x, y: entity.y }]),
+    );
   if (tick > 300) {
     const machines = [...survey.ships.values()];
     for (let left = 0; left < machines.length; left++)
@@ -160,6 +165,21 @@ assert.deepEqual(
   [...survey.ships.values()].map((entity) => entity.armor),
   armor,
 );
+// A settled neutral survey keeps circling its worksite instead of parking at fixed berths.
+for (const entity of survey.ships.values()) {
+  const settled = settledPositions.get(entity.id)!;
+  const travelled = Math.hypot(entity.x - settled.x, entity.y - settled.y);
+  assert(
+    travelled > 200,
+    `Neutral Index hull ${entity.hull} keeps moving after settling (moved ${Math.round(travelled)})`,
+  );
+  assert(
+    Math.hypot(entity.vx, entity.vy) > 5,
+    `Neutral Index hull ${entity.hull} is still under way at the end of the run`,
+  );
+  const fromSite = Math.hypot(entity.x - world.site.x, entity.y - world.site.y);
+  assert(fromSite < 1100, 'Circling hulls stay within the marked worksite radius');
+}
 assert.equal(world.remaining, 36, 'Spacing never reissues replacement budget');
 assert(
   world.actors.every((actor) => Math.hypot(actor.x, actor.y) > 300),
@@ -227,6 +247,52 @@ for (let tick = 0; tick < 2250; tick++) {
 assert(splitObserved, 'Actual damage starts a timed Trident split');
 assert(mergedAfterMotion, 'Peaceful blades naturally return and rejoin through real physics');
 assert.equal(mergeWorld.remaining, world.remaining, 'Natural rejoin spends no replacement budget');
+// Drones sweep around their moving parent rather than holding one fixed point beside it.
+const droneWorld: IndexFleetWorld = {
+  ...structuredClone(world),
+  actors: [910, 914, 914].map((hull, index) => ({
+    hull,
+    base: hull,
+    armor: game.A.ships[hull].armor,
+    shield: game.A.ships[hull].shield,
+    x: 0,
+    y: 0,
+    dead: false,
+    hidden: false,
+    parent: index ? 0 : undefined,
+    readyAt: 1e9,
+    hitAt: -100,
+    launched: 0,
+  })),
+};
+worlds.glasswake = droneWorld;
+survey = mixedSpace();
+IndexFleetOperations.open.call(capabilities, survey);
+const droneBearings: number[][] = [];
+for (let tick = 0; tick < 1800; tick++) {
+  clock += DT;
+  survey.t += DT;
+  for (const entity of survey.ships.values()) {
+    IndexFleetOperations.ai.call(capabilities, survey, entity);
+    step(entity, entity.st, entity.inp);
+  }
+  IndexFleetOperations.fleetTick.call(capabilities, survey);
+  if (tick === 899 || tick === 1799) {
+    const [quarry, ...drones] = [...survey.ships.values()]
+      .sort((left, right) => left.st.size - right.st.size)
+      .reverse();
+    droneBearings.push(drones.map((drone) => Math.atan2(drone.y - quarry.y, drone.x - quarry.x)));
+  }
+}
+for (const [index, before] of droneBearings[0].entries()) {
+  const turned = Math.abs(
+    Math.atan2(
+      Math.sin(droneBearings[1][index] - before),
+      Math.cos(droneBearings[1][index] - before),
+    ),
+  );
+  assert(turned > 0.3, 'Each drone sweeps around its parent during 30 seconds of neutral survey');
+}
 const output = path.resolve(
   process.env.RIFT_TEST_ARTIFACTS || '.artifacts/regression',
   'index-presentation',
