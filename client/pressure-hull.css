@@ -1,0 +1,1041 @@
+/* A continuous chassis with separate live instrument wells. */
+body.pressure-hull {
+  --cbar: 220px;
+  --tray-width: clamp(520px, 18vw, 660px);
+  --text: #c6e3f1;
+  --dim: #a5beca;
+  --well: #091820;
+  --hull-frame: url('assets/hud/pressure-hull/sculpted-frame.svg');
+  --hull-key: url('assets/hud/pressure-hull/sculpted-key.svg');
+}
+body.pressure-hull .metal {
+  color: var(--text);
+  background: #123241;
+}
+/* Rails and the deck share one perimeter; the controls remain live DOM. */
+body.pressure-hull #viewscreen-trim {
+  inset: 0 var(--hud) 0 0;
+  height: auto;
+  border: 0;
+  background:
+    url('assets/hud/pressure-hull/sculpted-rail.svg') left top / 80px 600px repeat-y,
+    url('assets/hud/pressure-hull/sculpted-rail.svg') right top / 80px 600px repeat-y;
+  box-shadow: none;
+  z-index: 4;
+  overflow: visible;
+}
+body.pressure-hull #viewscreen-trim::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: calc(var(--cbar) + 12px);
+  border: 80px solid transparent;
+  border-image: var(--hull-frame) 100 fill / 80px stretch;
+  background:
+    url('assets/hud/pressure-hull/chassis.webp') center 62% / cover,
+    #626d68;
+  background-clip: padding-box;
+  box-sizing: border-box;
+}
+body.pressure-hull #cockpit {
+  height: var(--cbar);
+  padding: 22px 84px 30px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  grid-template-columns: clamp(360px, 20vw, 620px) minmax(0, 1fr) clamp(264px, 12vw, 400px);
+  gap: 24px;
+  isolation: isolate;
+  overflow: visible;
+}
+body.pressure-hull #cockpit::before,
+body.pressure-hull .console-screw,
+body.pressure-hull .console-serial,
+body.pressure-hull .console-brand {
+  display: none;
+}
+body.pressure-hull :is(#functiondock, #consolechat, #consoleutilities) {
+  align-self: center;
+  min-width: 0;
+  height: 164px;
+  border: 12px solid transparent;
+  border-image: var(--hull-frame) 100 fill / 12px stretch;
+  background: #091921;
+  background-clip: padding-box;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px #000a;
+  transform: none;
+}
+body.pressure-hull #functiondock {
+  width: 100%;
+  padding: 2px 8px 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(2, 57px);
+  gap: 10px 8px;
+  align-content: center;
+  background-color: #12303f;
+}
+body.pressure-hull #functiondock .function-icon {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 57px;
+  padding: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  border: 8px solid transparent;
+  border-image: var(--hull-key) 14 fill / 8px stretch;
+  color: #cfeefd;
+  background: #0b1e27;
+  border-radius: 6px;
+  box-shadow: 0 2px 3px #000b;
+}
+body.pressure-hull #functiondock .function-icon img,
+body.pressure-hull #functiondock .function-icon svg {
+  width: 27px;
+  height: 27px;
+  flex-shrink: 0;
+}
+body.pressure-hull #functiondock .function-label {
+  left: -6px;
+  right: -6px;
+  bottom: -4px;
+  color: #c7e5f3;
+  text-align: center;
+  font-size: 12px;
+  line-height: 14px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+body.pressure-hull #functiondock button.function-icon::after {
+  top: -3px;
+  left: 4px;
+  bottom: auto;
+  width: 12px;
+  height: 3px;
+  background: #b2ccd9;
+  box-shadow: 0 0 4px #d1f0ff4d;
+}
+body.pressure-hull #functiondock button[aria-expanded='true'] {
+  background-color: #385b6c;
+}
+body.pressure-hull #functiondock button[aria-expanded='true']::after {
+  background: #d1f0ff;
+}
+body.pressure-hull #functiondock #attentionindicator {
+  background: #0d222d;
+}
+body.pressure-hull #functiondock #attentionindicator::after {
+  content: none;
+}
+body.pressure-hull #consolechat {
+  padding: 8px 14px;
+  background-color: #091921;
+}
+body.pressure-hull #consolechat::after {
+  opacity: 0.11;
+}
+body.pressure-hull #consolechat #chat {
+  flex: 1;
+  min-height: 0;
+  background: transparent;
+}
+body.pressure-hull #consolechat #chatlog {
+  visibility: visible;
+}
+body.pressure-hull #commsheader {
+  color: #a7c0cc;
+  letter-spacing: 1.4px;
+  font-size: 14px;
+  border-bottom: 1px solid #184257;
+  padding-bottom: 5px;
+}
+body.pressure-hull #consolechat #cbar {
+  flex-wrap: nowrap;
+}
+body.pressure-hull #consolechat #chatin {
+  flex-basis: auto;
+}
+body.pressure-hull #consoleutilities {
+  width: 100%;
+  padding: 20px 22px 30px;
+  position: relative;
+  background: #143647;
+  background-clip: padding-box;
+}
+body.pressure-hull #consoleutilities .cbtns {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+body.pressure-hull #consoleutilities .cb {
+  width: 100%;
+  min-width: 0;
+  height: 66px;
+  font-size: 25px;
+  padding: 0 0 14px;
+}
+body.pressure-hull #consoleutilities .utility-label {
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+body.pressure-hull #consoleutilities .console-vent {
+  display: block;
+  position: absolute;
+  bottom: 10px;
+  left: 24px;
+  right: 24px;
+  width: auto;
+  height: 12px;
+  margin: 0;
+  border: 2px solid #0a1b24;
+  background: repeating-linear-gradient(90deg, #070d0f 0 3px, #4a788f 4px, #102c3a 5px 7px);
+  border-radius: 6px;
+  box-shadow: 0 1px #5f9ab7;
+}
+/* A bank of recessed screens inside the same metalwork. */
+body.pressure-hull #hud {
+  border: 62px solid transparent;
+  border-image: var(--hull-frame) 100 fill / 62px stretch;
+  padding: 0 1px 2px;
+  gap: 9px;
+  background: #163b4d;
+  background-clip: padding-box;
+  overflow-x: hidden;
+  border-radius: 0;
+  box-shadow: none;
+}
+body.pressure-hull #radarwrap {
+  border: 5px solid;
+  border-color: #061117 #5990ab #5990ab #061117;
+  border-image: none;
+  border-radius: 10px;
+  background: #020b0e;
+  box-shadow:
+    0 0 0 3px #112f3d,
+    inset 0 2px 10px #000b;
+}
+body.pressure-hull #radar {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+}
+body.pressure-hull :is(#status, #target, #nav, #cpanel) {
+  border: 3px solid;
+  border-color: #08161d #5488a1 #5488a1 #08161d;
+  border-radius: 6px;
+  background: linear-gradient(120deg, #0e2531, #09171f);
+  box-shadow:
+    inset 0 2px 8px #000b,
+    0 0 0 1px #123241;
+}
+body.pressure-hull #status {
+  padding: 10px;
+}
+body.pressure-hull #cpanel {
+  padding: 10px;
+}
+body.pressure-hull #ctabs {
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 5px 0;
+  border-block: 1px solid #609cb94d;
+  margin: 0;
+}
+body.pressure-hull #ctabs button {
+  min-width: 0;
+  font-size: 13px;
+  padding: 2px 0;
+  height: 34px;
+}
+body.pressure-hull #traytrim {
+  width: 26px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body.pressure-hull #traytrim::before,
+body.pressure-hull #traytrim::after {
+  display: none;
+}
+body.pressure-hull #traytoggle {
+  width: 32px;
+  min-height: 100px;
+  left: -10px;
+  border: 7px solid transparent;
+  border-image: var(--hull-key) 14 fill / 7px;
+  background: #133444;
+  color: #ceedfc;
+  border-radius: 0;
+  font-size: 21px;
+}
+body.pressure-hull #traytoggle span {
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+body.pressure-hull #flightstatus {
+  right: calc(var(--hud) + 88px);
+  top: 30px;
+}
+/* Display controls retain native focus, disabled and selected states. */
+body.pressure-hull :is(.btn, .cb, #ctabs button, #ltabs button, .itabs button, .cchan button) {
+  border: 6px solid transparent;
+  border-image: var(--hull-key) 14 fill / 6px stretch;
+  border-radius: 4px;
+  color: #ceedfc;
+  background: #0a1b24;
+  text-shadow: 0 1px #000;
+  box-shadow: none;
+}
+body.pressure-hull
+  :is(.btn.on, #ctabs button.on, #ltabs button.on, .itabs button.on, .cchan button.on) {
+  background-color: #41697c;
+  color: #d1f0ff;
+  box-shadow: inset 0 0 0 1px #5e98b5;
+}
+body.pressure-hull :is(.btn.sm, #ctabs button, #ltabs button, .cchan button) {
+  border-width: 4px;
+  border-image-width: 4px;
+}
+body.pressure-hull :is(.btn, .cb, #ctabs button, #ltabs button):hover:not(:disabled) {
+  filter: brightness(1.22);
+}
+body.pressure-hull :is(button, input, select, textarea):focus-visible {
+  outline: 2px solid #cbe9f7;
+  outline-offset: 2px;
+}
+/* Service windows share authored corners, not a flattened whole-image backdrop. */
+body.pressure-hull .overlay:not(#login) > .metal,
+body.pressure-hull #chatprojection,
+body.pressure-hull #shipfunctions .function-panel {
+  border: 64px solid transparent;
+  border-image: var(--hull-frame) 100 / 64px stretch;
+  padding: 8px 12px;
+  border-radius: 0;
+  background: #091820;
+  background-clip: padding-box;
+  box-shadow: 0 8px 24px #000a;
+  color: var(--text);
+}
+body.pressure-hull .overlay:not(#login) > .metal::after,
+body.pressure-hull #chatprojection::after {
+  display: none;
+}
+body.pressure-hull .overlay:not(#login) > .metal > :is(h1, h2) {
+  color: #ceedfc;
+  border: 0;
+  border-bottom: 1px solid #3e6578;
+  padding: 8px 10px;
+  margin: 0;
+  background: #112e3c;
+}
+body.pressure-hull #land .landbox {
+  width: calc(100% - 150px);
+  height: calc(100% - 84px);
+  max-width: 2700px;
+  max-height: 1100px;
+  border-width: 70px;
+  border-image-width: 70px;
+  display: grid;
+  grid-template-columns: minmax(260px, 38%) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px 20px;
+  padding: 8px 12px;
+}
+.landscene {
+  display: contents;
+}
+#landnews:empty {
+  display: none;
+}
+body.pressure-hull #land .landhead {
+  grid-column: 1;
+  grid-row: 1;
+  padding: 0 6px 8px;
+  border-bottom: 1px solid #3a5e6f;
+  background: transparent;
+}
+body.pressure-hull #land .landhead h2 {
+  font-size: 27px;
+  line-height: 1.1;
+  letter-spacing: 2px;
+  margin: 0;
+  padding: 0;
+  color: #d1f0ff;
+}
+body.pressure-hull #land .landhead p {
+  margin: 5px 0 0;
+  font-size: 15px;
+  line-height: 1.3;
+}
+body.pressure-hull #land #ltabs {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  justify-content: flex-end;
+  align-content: start;
+  gap: 5px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  flex-wrap: wrap;
+}
+body.pressure-hull #land #ltabs button {
+  min-height: 34px;
+  padding-inline: 5px;
+  font-size: 14px;
+}
+body.pressure-hull #land .landscene {
+  display: none;
+}
+body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landscene {
+  display: grid;
+  grid-column: 1;
+  grid-row: 2;
+  grid-template-rows: minmax(140px, 340px) minmax(0, 1fr);
+  gap: 10px;
+  min-height: 0;
+}
+body.pressure-hull #land .landpic {
+  display: none;
+}
+body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landpic {
+  display: block;
+  position: relative;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background-size: cover;
+  background-position: center;
+  background-color: #071319;
+  border: 3px solid;
+  border-color: #061015 #4a788f #4a788f #061015;
+  border-radius: 7px;
+  box-shadow: inset 0 2px 5px #000b;
+}
+body.pressure-hull #landnews {
+  grid-row: 2;
+  min-height: 0;
+  overflow: auto;
+  font-size: 16px;
+}
+body.pressure-hull #landnews .newsbox {
+  margin: 0;
+  padding: 10px;
+  border: 0;
+  background: #0c202b;
+}
+body.pressure-hull #landnews .newsit {
+  font-size: 16px;
+  line-height: 1.4;
+}
+body.pressure-hull #land .landbody {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-height: 0;
+  padding: 12px;
+  font-size: 18px;
+}
+body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landbody {
+  grid-column: 2;
+}
+body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landbody .detail {
+  grid-template-columns: minmax(0, 1fr);
+}
+body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landbody .detail > img {
+  display: none;
+}
+body.pressure-hull #land .landbody .detail {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body.pressure-hull #land .landfoot {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+  border-top: 1px solid #3f677a;
+  padding-top: 8px;
+}
+body.pressure-hull #land .landfoot .cr {
+  font-size: 20px;
+}
+body.pressure-hull #depart {
+  min-width: 140px;
+  color: #d1f0ff;
+  background: #3c6072;
+}
+/* Inset fields and selections share the display palette. */
+body.pressure-hull :is(#cpanel, .landbody, #landnews) {
+  scrollbar-color: #53869f #0c2029;
+}
+body.pressure-hull :is(#cpanel, .landbody, #landnews) :is(h3, .mhead, .secthead, .sect) {
+  color: #b2ccd9;
+  padding: 8px 10px;
+  margin: 0 0 8px;
+  border-bottom: 1px solid #3c6072;
+  background: linear-gradient(90deg, #143849, #0d232e);
+  font-size: 15px;
+  letter-spacing: 1.2px;
+}
+body.pressure-hull
+  :is(#cpanel, .landbody)
+  :is(.list, .well, .mcard, .mission, .pinned-objective, .rnow, .statecard, .barcard) {
+  background: linear-gradient(130deg, #102b39, #091820);
+  border: 1px solid #3e6578;
+  border-radius: 5px;
+  box-shadow:
+    inset 0 2px 5px #0008,
+    0 1px #65a3c229;
+}
+body.pressure-hull #land .landbody :is(.statecard, .barcard) {
+  padding: 12px;
+  margin-bottom: 12px;
+}
+body.pressure-hull
+  :is(#cpanel, .landbody)
+  :is(input:not([type='checkbox']):not([type='range']), select, textarea) {
+  color: #cdebfa;
+  border: 2px solid;
+  border-color: #061117 #4b7a91 #4b7a91 #061117;
+  border-radius: 4px;
+  background: #0a1b23;
+  box-shadow: inset 0 2px 6px #000b;
+  accent-color: #a5beca;
+  min-height: 28px;
+}
+body.pressure-hull :is(#cpanel, .landbody) input[type='checkbox'] {
+  accent-color: #a5beca;
+}
+body.pressure-hull :is(#cpanel, .landbody) :is(.list .it, .job, .mitem) {
+  border-bottom: 1px solid #3a5e70;
+  background: linear-gradient(90deg, #112f3e, #0d222d);
+}
+body.pressure-hull :is(#cpanel, .landbody) :is(.list .it:hover, .list .it.on) {
+  background: linear-gradient(90deg, #163d50, #123140);
+  box-shadow: inset 3px 0 #b0cad7;
+}
+body.pressure-hull #cpanel .btn {
+  min-height: 28px;
+  padding: 3px 6px;
+}
+body.pressure-hull #cpanel .dim {
+  color: #aec8d5;
+}
+body.pressure-hull .options-section {
+  background: #0d242f;
+  border-color: #467287;
+}
+body.pressure-hull #gmap .gbox {
+  width: min(1800px, calc(100% - 64px));
+}
+body.pressure-hull #chatprojection {
+  border-width: 30px;
+  border-image-width: 30px;
+  backdrop-filter: none;
+}
+
+/* The glass layer is a background, never a hit-testing or text-obscuring overlay. */
+body.pressure-hull {
+  --text: #d5f3ff;
+  --dim: #8ebbd5;
+  --red: #267caf;
+  --red2: #79d7ff;
+  --range-fill: #368fc5;
+  --range-track: #0a2944;
+  --violet: #9fcfff;
+  --well: #031326;
+  --display-lines: repeating-linear-gradient(0deg, #73cfff09 0 1px, transparent 1px 4px);
+  --display-glass:
+    radial-gradient(ellipse at 35% 0%, #164e7955, transparent 70%),
+    linear-gradient(125deg, #071e38, #031020);
+}
+body.pressure-hull :is(#hud, #consolechat, #functiondock, #consoleutilities),
+body.pressure-hull .overlay:not(#login) > .metal,
+body.pressure-hull #chatprojection,
+body.pressure-hull #shipfunctions .function-panel {
+  background-image: var(--display-lines), var(--display-glass);
+  background-color: var(--well);
+  background-clip: padding-box;
+  color: var(--text);
+  text-shadow: 0 0 8px #55bbff20;
+}
+body.pressure-hull
+  :is(
+    #status,
+    #target,
+    #nav,
+    #cpanel,
+    .landbody,
+    #landnews .newsbox,
+    .options-section,
+    .function-body,
+    #hailtext,
+    #infobody,
+    #chatlog
+  ),
+body.pressure-hull
+  :is(#cpanel, .overlay:not(#login), #shipfunctions)
+  :is(
+    .tab,
+    .well,
+    .list,
+    .card,
+    .mcard,
+    .mission,
+    .pinned-objective,
+    .rnow,
+    .statecard,
+    .barcard,
+    .newsbox,
+    .detail,
+    .job,
+    .mitem,
+    .it
+  ) {
+  background: var(--display-lines), linear-gradient(120deg, #0a2944d9, #04172be8);
+  border-color: #327ca7;
+  box-shadow:
+    inset 0 0 18px #148cff08,
+    0 1px #83d5ff18;
+  color: var(--text);
+}
+body.pressure-hull
+  :is(#cpanel, .overlay:not(#login), #shipfunctions)
+  :is(h3, .mhead, .secthead, .sect),
+body.pressure-hull .overlay:not(#login) > .metal > :is(h1, h2) {
+  background: linear-gradient(90deg, #12517b, #0a2848);
+  color: #c2edff;
+  border-color: #358cc0;
+  text-shadow: 0 0 9px #55bcff50;
+}
+body.pressure-hull
+  :is(
+    .btn,
+    .cb,
+    #functiondock .function-icon,
+    #traytoggle,
+    #ctabs button,
+    #ltabs button,
+    .itabs button,
+    .cchan button,
+    .chip,
+    #chatexpand,
+    #chatclose
+  ) {
+  border-image: none;
+  border: 1px solid #387ea9;
+  background: var(--display-lines), linear-gradient(180deg, #123c61, #08223d);
+  color: #bcecff;
+  box-shadow:
+    inset 0 1px #93dcff30,
+    0 0 7px #249dff18;
+  text-shadow: 0 0 6px #6fcfff40;
+}
+body.pressure-hull
+  :is(
+    .btn.on,
+    #depart,
+    #ctabs button.on,
+    #ltabs button.on,
+    .itabs button.on,
+    .cchan button.on,
+    .chip.on,
+    #functiondock button[aria-expanded='true']
+  ) {
+  background: var(--display-lines), linear-gradient(180deg, #21699a, #10446d);
+  color: #effbff;
+  border-color: #86dbff;
+  box-shadow:
+    inset 0 -2px #66d8ff,
+    0 0 10px #3cbfff35;
+}
+body.pressure-hull #functiondock :is(.function-label, .utility-label),
+body.pressure-hull :is(#commsheader, .utility-label, #landdesc, #land .landhead p, #cpanel .dim) {
+  color: var(--dim);
+}
+body.pressure-hull #functiondock button.function-icon::after {
+  background: #75d8ff;
+  box-shadow: 0 0 5px #34baff80;
+}
+body.pressure-hull #functiondock #attentionindicator {
+  background: #081f36;
+}
+body.pressure-hull :is(#land .landhead h2, .card .t) {
+  color: #d5f3ff;
+}
+body.pressure-hull :is(input, select, textarea, select option, select optgroup) {
+  color-scheme: dark;
+  background: #04182d;
+  color: var(--text);
+  border-color: #438ab4;
+  accent-color: #68ccff;
+  box-shadow: inset 0 1px 6px #0008;
+}
+body.pressure-hull :is(button, input, select, textarea):focus-visible {
+  outline-color: #92e0ff;
+}
+body.pressure-hull :is(input, select, textarea):focus {
+  border-color: #92e0ff;
+}
+body.pressure-hull :is(.tbl th, .tbl td, #ctabs, #ltabs, .itabs, .landfoot, #commsheader) {
+  border-color: #2f6388;
+}
+body.pressure-hull .tbl th {
+  color: var(--dim);
+}
+body.pressure-hull :is(.tbl tr:hover td, .card:hover, .card.sel, .list .it:hover, .list .it.on) {
+  background: #13456a;
+  border-color: #75d4ff;
+  box-shadow: inset 3px 0 #7ad8ff;
+}
+body.pressure-hull * {
+  scrollbar-color: #449ed0 #04182d;
+}
+body.pressure-hull ::-webkit-scrollbar-thumb {
+  background: #449ed0;
+  border-color: #04182d;
+}
+body.pressure-hull ::-webkit-scrollbar-track,
+body.pressure-hull ::-webkit-scrollbar-corner {
+  background: #04182d;
+}
+body.pressure-hull .btn:disabled,
+body.pressure-hull #functiondock button:disabled {
+  filter: none;
+  opacity: 0.45;
+}
+/* Semantic signals stay distinct from blue decoration. */
+body.pressure-hull #functiondock #attentionindicator[data-state='targeted'] {
+  color: #ff554c;
+  border-color: currentColor;
+}
+body.pressure-hull #functiondock #attentionindicator[data-state='scanned'] {
+  color: #ffae42;
+  border-color: currentColor;
+}
+
+/* Shared chrome also includes small markers, sliders and projection controls. */
+body.pressure-hull :is(.sect, .landhead h2, #hailmarker)::before {
+  color: #83d8ff;
+  background-color: #67cfff;
+}
+body.pressure-hull #land .landhead h2 {
+  border-color: #327ca7;
+}
+body.pressure-hull
+  :is(
+    .qintro,
+    .rumor,
+    .journal,
+    .qname,
+    #chatlog .sys,
+    #chatprojection .sys,
+    #chatprojection header,
+    #chatprojection .dim
+  ) {
+  color: var(--dim);
+}
+body.pressure-hull #functiondock .function-icon img {
+  filter: brightness(0) saturate(100%) invert(85%) sepia(19%) saturate(1200%) hue-rotate(165deg);
+}
+body.pressure-hull :is(#chatexpand, #chatclose),
+body.pressure-hull :is(#chatexpand, #chatclose):hover {
+  color: #c5f0ff;
+  border-color: #438ab4;
+  background: #103b5d;
+}
+body.pressure-hull #hailmarker,
+body.pressure-hull .hail-marker-body {
+  background: var(--display-lines), var(--display-glass);
+  border-color: #438ab4;
+  color: var(--text);
+}
+body.pressure-hull
+  :is(#qvol, #rvol, .rng input[type='range'], input[type='range'])::-webkit-slider-runnable-track {
+  background: linear-gradient(#0a2944, #18527b);
+  border-color: #438ab4;
+}
+body.pressure-hull
+  :is(#qvol, #rvol, .rng input[type='range'], input[type='range'])::-webkit-slider-thumb {
+  background: radial-gradient(circle at 35% 35%, #d5f3ff, #409dcc 60%, #164e79);
+  border-color: #83d8ff;
+}
+body.pressure-hull
+  :is(#qvol, #rvol, .rng input[type='range'], input[type='range'])::-moz-range-track,
+body.pressure-hull
+  :is(#qvol, #rvol, .rng input[type='range'], input[type='range'])::-moz-range-progress {
+  background: #18527b;
+}
+body.pressure-hull
+  :is(#qvol, #rvol, .rng input[type='range'], input[type='range'])::-moz-range-thumb {
+  background: #83d8ff;
+  border-color: #438ab4;
+}
+body.pressure-hull .btn.dchip.on,
+body.pressure-hull .btn.dchip.on:disabled {
+  background: #21699a !important;
+  border-color: #86dbff !important;
+  color: #effbff !important;
+}
+body.pressure-hull :is(#qvol, #rvol, .rng input[type='range']) {
+  background: linear-gradient(#0a2944, #18527b);
+  border-color: #438ab4;
+  box-shadow: 0 0 6px #3cbfff30;
+}
+body.pressure-hull :is(.osect, #optkeys, #optkeys .osect) {
+  color: #bcecff;
+  border-color: #327ca7;
+}
+@media (max-width: 2100px) {
+  body.pressure-hull #cockpit {
+    padding-inline: 54px;
+    gap: 18px;
+    grid-template-columns: 384px minmax(0, 1fr) 264px;
+  }
+  body.pressure-hull #viewscreen-trim {
+    background-size: 52px 390px;
+  }
+  body.pressure-hull #land .landbox {
+    width: calc(100% - 100px);
+    border-width: 46px;
+    border-image-width: 46px;
+    gap: 8px 12px;
+  }
+  body.pressure-hull #land .landhead h2 {
+    font-size: 22px;
+  }
+  body.pressure-hull #land #ltabs button {
+    font-size: 12px;
+    padding-inline: 3px;
+    min-height: 30px;
+  }
+  body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landscene {
+    grid-template-rows: minmax(100px, 240px) minmax(0, 1fr);
+  }
+  body.pressure-hull #land .landbody {
+    font-size: 16px;
+  }
+  body.pressure-hull #landnews .newsit {
+    font-size: 14px;
+  }
+  body.pressure-hull #hud {
+    border-width: 42px;
+    border-image-width: 42px;
+  }
+  body.pressure-hull #ctabs button {
+    font-size: 12px;
+  }
+}
+@media (max-width: 1500px) {
+  body.pressure-hull #cockpit {
+    grid-template-columns: 320px minmax(0, 1fr) 210px;
+    padding-inline: 32px;
+    gap: 12px;
+  }
+  body.pressure-hull #consoleutilities {
+    padding-inline: 10px;
+  }
+  body.pressure-hull #consoleutilities .utility-label {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  body.pressure-hull #functiondock .function-label {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+}
+@media (max-width: 1250px) {
+  body.pressure-hull {
+    --cbar: 380px;
+  }
+  body.pressure-hull #cockpit {
+    grid-template-columns: minmax(0, 1fr) 126px;
+    grid-template-rows: 174px 166px;
+    padding: 8px 12px 18px;
+    gap: 8px;
+  }
+  body.pressure-hull #functiondock {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: min(384px, 100%);
+    height: 156px;
+  }
+  body.pressure-hull #consolechat {
+    grid-column: 1;
+    grid-row: 1;
+    height: 164px;
+    padding-inline: 6px;
+  }
+  body.pressure-hull #consoleutilities {
+    grid-column: 2;
+    grid-row: 1;
+    width: 126px;
+    height: 174px;
+    padding: 6px 8px;
+  }
+  body.pressure-hull #consoleutilities .cbtns {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  body.pressure-hull #consoleutilities .cb {
+    height: 42px;
+    font-size: 18px;
+    padding-bottom: 12px;
+  }
+  body.pressure-hull #consoleutilities .utility-label {
+    font-size: 8px;
+    bottom: 3px;
+  }
+  body.pressure-hull #consoleutilities .console-vent {
+    display: none;
+  }
+}
+@media (max-width: 1100px) {
+  body.pressure-hull #hud {
+    border-width: 24px;
+    border-image-width: 24px;
+  }
+  body.pressure-hull #land .landbox {
+    width: calc(100% - 24px);
+    display: flex;
+    flex-direction: column;
+    border-width: 28px;
+    border-image-width: 28px;
+  }
+  body.pressure-hull #land .landbox > * {
+    flex-shrink: 0;
+  }
+  body.pressure-hull #land .landhead,
+  body.pressure-hull #land #ltabs {
+    grid-column: 1 / -1;
+  }
+  body.pressure-hull #land #ltabs {
+    order: 1;
+    align-self: stretch;
+    justify-content: flex-start;
+  }
+  body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landscene {
+    display: contents;
+  }
+  body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landpic {
+    display: none;
+  }
+  body.pressure-hull #land #landnews {
+    order: 3;
+    flex: 0 0 auto;
+    max-height: 100px;
+  }
+  body.pressure-hull #land .landbody,
+  body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landbody {
+    order: 2;
+    flex: 0 0 auto;
+    max-height: 300px;
+  }
+  body.pressure-hull #land .landfoot {
+    order: 4;
+  }
+}
+/* The tutorial card and caller portrait share the blue display glass. */
+body.pressure-hull :is(#tut, .portrait-window) {
+  border: 1px solid #2f6f96;
+  background-image: var(--display-lines), var(--display-glass);
+  background-color: var(--well);
+  color: var(--text);
+  box-shadow:
+    0 0 0 1px #071826,
+    0 3px 12px #000a;
+}
+body.pressure-hull #tut b {
+  color: #9fdcff;
+}
+body.pressure-hull #tut .x {
+  border-color: #2f6f96;
+  background: #0a2944;
+  color: #ceedfc;
+}
+/* Console key labels sit in flow just below their icon, at one shared size. */
+body.pressure-hull {
+  --console-label: 12px;
+}
+body.pressure-hull #functiondock .function-icon,
+body.pressure-hull #consoleutilities .cb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+}
+body.pressure-hull #functiondock .function-label,
+body.pressure-hull #functiondock #industrialindicator .function-label,
+body.pressure-hull #consoleutilities .utility-label {
+  position: static;
+  inset: auto;
+  max-width: 100%;
+  font-size: var(--console-label);
+  font-weight: normal;
+  line-height: 13px;
+  letter-spacing: 0.5px;
+  color: var(--dim);
+  text-shadow: 0 1px #000;
+  text-align: center;
+  white-space: nowrap;
+}
+/* Map and Hail keep their always-visible block override; stack them like the other keys. */
+body.pressure-hull #functiondock #cbmap,
+body.pressure-hull #functiondock #hailindicator,
+body.pressure-hull #functiondock #hailindicator.hidden {
+  display: flex !important;
+}
+/* The radar well uses the same lit edge as the other sidebar panels. */
+body.pressure-hull #radarwrap {
+  border: 3px solid #327ca7;
+  border-radius: 6px;
+}
+@media (max-width: 1500px) {
+  body.pressure-hull {
+    --console-label: 10px;
+  }
+  body.pressure-hull #functiondock .function-label,
+  body.pressure-hull #consoleutilities .utility-label {
+    letter-spacing: 0;
+  }
+}
+/* A live alert overrides the blue key: red for combat targeting, orange after a scan. */
+body.pressure-hull #functiondock #attentionindicator[data-state='targeted'] {
+  background: #3a0f12;
+  box-shadow:
+    inset 0 0 0 2px #ff554c,
+    0 0 10px #ff554c80;
+}
+body.pressure-hull #functiondock #attentionindicator[data-state='scanned'] {
+  background: #3a240a;
+  box-shadow:
+    inset 0 0 0 2px #ffae42,
+    0 0 10px #ffae4280;
+}
+body.pressure-hull #functiondock #attentionindicator[data-state] .function-label {
+  color: currentColor;
+}
+body.pressure-hull #functiondock #attentionindicator[data-state='targeted'] img {
+  filter: brightness(0) saturate(100%) invert(45%) sepia(86%) saturate(1911%) hue-rotate(330deg);
+}
+body.pressure-hull #functiondock #attentionindicator[data-state='scanned'] img {
+  filter: brightness(0) saturate(100%) invert(77%) sepia(65%) saturate(1210%) hue-rotate(334deg);
+}
+/* Panels start clear of the resize grip, which takes the blue palette. */
+body.pressure-hull #hud {
+  padding-left: 9px;
+}
+body.pressure-hull #hudgrip {
+  background: linear-gradient(90deg, #071826, #2f6f96 45%, #071826);
+  border-right: 1px solid #031326;
+}
+body.pressure-hull #hudgrip:is(:hover, .drag) {
+  background: linear-gradient(90deg, #0a2944, #5fb5e8 45%, #0a2944);
+}

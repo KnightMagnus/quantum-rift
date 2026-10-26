@@ -1090,3 +1090,23 @@ The existing cargo, import/login, generator and native checkpoint tests retain
 their separate coverage. This is not full feature-schema validation, native
 restore coverage or an old/new executable archive-matrix rehearsal; see
 [SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md).
+
+## Pressure Hull console finish
+
+The `pressure-hull-ui` system's `pressure-hull-browser.ts` checks the optional
+physical-console finish at 1920×1080 and 3440×1440. It exercises flight with the
+Tray expanded, landed overview with one compact world illustration, every available
+landed-service tab, Captain/Profile, Settings and map, and checks that the
+galaxy chart itself is drawn on the blue display glass. It checks service-panel
+horizontal containment and scrolling to the last row, and sidebar containment after
+changing Interface size to 120%. It verifies nonoverlapping console
+groups, sidebar separation, an open-top viewport with side/bottom trim, a readable
+populated chat line and utility buttons contained within their housing. It opens
+the Hail inbox while landed and checks that Hail stays visible in flight and when
+the Tray closes. It projects 32 fixture messages through the real chat renderer at both sizes,
+checks keyboard and wheel scrolling, sends a message through the normal input
+route, checks channel reachability and shell containment, then restores that same history
+to the compact console. Captures use the actual game, including populated service menus.
+The default finish remains unchanged when the optional finish is not selected.
+At 1000×900, the landing overview keeps the real spaceport news visible in a
+scrollable panel below the service content.

@@ -174,7 +174,8 @@
     "cockpit-layout-browser.ts",
     "story-realities-browser.ts",
     "overlay-input-browser.ts",
-    "ui-polish-browser.ts"
+    "ui-polish-browser.ts",
+    "pressure-hull-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -602,6 +603,7 @@
       "helpers/dredge-fixture.ts"
     ],
     "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
+    "pressure-hull-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "helpers/story-foundations.ts": ["helpers/mocks.ts"],
     "helpers/index-worksite.ts": ["helpers/mocks.ts"],
     "story-realities-browser.ts": [
@@ -1560,6 +1562,21 @@
       "services": [],
       "tests": ["overlay-input-browser.ts", "logout-browser.ts", "input-audio-browser.ts"],
       "asserts": "Confirmation, quit, boarding, Options and Controls have one keyboard owner, explicit priority and safe focus return. Options preserves native settings/button activation, pending-capture Escape cancellation, reserved-key denial, swaps, unbinding and saved bindings. Controls retains Change Keys and consumes Escape above the map. Blocking dialogs suppress manual keyboard/pointer/touch/gamepad commands and held input remains latched until release; other overlay owners remain unchanged."
+    },
+    {
+      "id": "pressure-hull-ui",
+      "owners": [
+        "client/pressure-hull.css",
+        "client/assets/hud/pressure-hull/",
+        "client/hails_ui.ts",
+        "client/ui.ts",
+        "client/main.ts",
+        "client/sidebar-size.ts",
+        "client/render.ts"
+      ],
+      "services": [],
+      "tests": ["pressure-hull-browser.ts"],
+      "asserts": "Optional physical console finish preserves actual flight/landing/menus at 1920x1080 and 3440x1440, a single integrated landed shell and existing illustration, open-top side/bottom viewport trim, readable populated chat, contained utilities, Hail inbox access while landed/flying and with the Tray closed, original artwork and separated console/sidebar regions."
     },
     {
       "id": "playtest-clarity",

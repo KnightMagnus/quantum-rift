@@ -1823,6 +1823,10 @@ function hailTarget() {
   if (clientGameState.navStellar) return send({ t: 'hail', stellar: clientGameState.navStellar });
   toast('Target a ship (click or Tab) or select a planet (click it) to hail.');
 }
+document.body.classList.toggle(
+  'pressure-hull',
+  new URLSearchParams(location.search).get('cockpit') === 'pressure-hull',
+);
 const profileUI = initProfile(clientGameState, send);
 const hailUI = initHails({ G: clientGameState, send, toast, cam: camera });
 function showHail(hailConversation: HailConversation) {
@@ -2774,7 +2778,7 @@ function paintRange(htmlInputElement: HTMLInputElement): void {
     ((+htmlInputElement.value - +htmlInputElement.min) /
       (+htmlInputElement.max - +htmlInputElement.min || 1)) *
     100;
-  htmlInputElement.style.background = `linear-gradient(90deg,#e0362a ${position}%,#3a0808 ${position}%)`;
+  htmlInputElement.style.background = `linear-gradient(90deg,var(--range-fill, #e0362a) ${position}%,var(--range-track, #3a0808) ${position}%)`;
 } // red fill
 document.addEventListener('input', (event) => {
   if (
@@ -2937,7 +2941,7 @@ function resize(): void {
 window.addEventListener('resize', resize);
 // Sidebar reflow (including UI scale and persisted widths) also changes the radar.
 new ResizeObserver(resize).observe(elementById2('radar'));
-initSidebarSize(resize);
+initSidebarSize(resize, document.body.classList.contains('pressure-hull') ? 1.8 : 1);
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.
