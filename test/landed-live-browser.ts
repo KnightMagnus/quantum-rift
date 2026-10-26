@@ -35,7 +35,13 @@ for (const solo of [false, true]) {
     origin = 'http://127.0.0.1:' + port;
   const server = spawn(
     process.execPath,
-    ['--import', './test/seed-random.ts', 'server/local-main.ts'],
+    [
+      '--import',
+      './test/seed-random.ts',
+      '--import',
+      './test/fixtures/landed-live-preload.ts',
+      'server/local-main.ts',
+    ],
     {
       cwd: root,
       env: {

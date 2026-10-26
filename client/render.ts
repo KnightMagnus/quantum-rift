@@ -4546,9 +4546,9 @@ export function radar(
     height2 = canvasRenderingContext2D.canvas.height,
     clientView = clientGameState.view,
     diameter = Math.min(width2, height2);
-  canvasRenderingContext2D.fillStyle = '#020408';
+  canvasRenderingContext2D.fillStyle = '#031326';
   canvasRenderingContext2D.fillRect(0, 0, width2, height2);
-  canvasRenderingContext2D.strokeStyle = '#0d2a1a';
+  canvasRenderingContext2D.strokeStyle = '#164f78';
   canvasRenderingContext2D.lineWidth = 1;
   for (let entryKey = 1; entryKey < 4; entryKey++) {
     canvasRenderingContext2D.beginPath();
@@ -4726,16 +4726,18 @@ interface SystemLabel {
  * @param canvasRenderingContext2D Starmap canvas rendering context
  * @param labels Candidate labels
  * @param large Whether this is the full galaxy map
+ * @param background Chart background used to outline system names
  */
 function drawSystemLabels(
   canvasRenderingContext2D: CanvasRenderingContext2D,
   labels: SystemLabel[],
   large: boolean,
+  background: string,
 ): void {
   const placed: ScreenRect[] = [];
   canvasRenderingContext2D.textAlign = 'center';
   canvasRenderingContext2D.lineWidth = 3;
-  canvasRenderingContext2D.strokeStyle = '#02030a';
+  canvasRenderingContext2D.strokeStyle = background;
   for (const label of [...labels].sort((first, second) => second.priority - first.priority)) {
     canvasRenderingContext2D.font = label.font;
     const halfWidth = canvasRenderingContext2D.measureText(label.text).width / 2 + 2;
@@ -4776,7 +4778,15 @@ export function galaxy(
   const width2 = canvasRenderingContext2D.canvas.width,
     height2 = canvasRenderingContext2D.canvas.height,
     large = !!options.big;
-  canvasRenderingContext2D.fillStyle = '#02030a';
+  // Draw the chart on the cockpit's blue glass; faction colors retain their meaning.
+  const ink = {
+    space: '#031326',
+    lane: '#1f5c86',
+    faintLane: '#10324d',
+    names: ['#b9dcf0', '#7fa6c2'],
+    legend: 'rgba(3,19,38,.86)',
+  };
+  canvasRenderingContext2D.fillStyle = ink.space;
   canvasRenderingContext2D.fillRect(0, 0, width2, height2);
   let mapFit2: MapFit;
   if (large) {
@@ -4879,7 +4889,7 @@ export function galaxy(
           [component, distance] = position(systemsById[link]);
         if (!enabled(firstValue, secondValue, 400) && !enabled(component, distance, 400)) continue;
         const known = explored.has(starSystem.id) || explored.has(link);
-        canvasRenderingContext2D.strokeStyle = known ? '#34405a' : '#1c2232';
+        canvasRenderingContext2D.strokeStyle = known ? ink.lane : ink.faintLane;
         canvasRenderingContext2D.beginPath();
         canvasRenderingContext2D.moveTo(firstValue, secondValue);
         canvasRenderingContext2D.lineTo(component, distance);
@@ -4997,7 +5007,7 @@ export function galaxy(
         canvasRenderingContext2D.font = 'bold 13px "Pixelify Sans", sans-serif';
         canvasRenderingContext2D.textAlign = 'center';
         canvasRenderingContext2D.lineWidth = 3;
-        canvasRenderingContext2D.strokeStyle = '#02030a';
+        canvasRenderingContext2D.strokeStyle = ink.space;
         const time = `YOUR STATION · T-${(clientGameState.you!.station && clientGameState.you!.station.ops) || 0}`;
         canvasRenderingContext2D.strokeText(time, positionX, positionY - quantity - 6);
         canvasRenderingContext2D.fillStyle = '#ffd27a';
@@ -5021,7 +5031,7 @@ export function galaxy(
         canvasRenderingContext2D.font = '12px "Pixelify Sans", sans-serif';
         canvasRenderingContext2D.textAlign = 'right';
         canvasRenderingContext2D.lineWidth = 3;
-        canvasRenderingContext2D.strokeStyle = '#02030a';
+        canvasRenderingContext2D.strokeStyle = ink.space;
         const join2 = allySys[starSystem.id].join(', ');
         canvasRenderingContext2D.strokeText(join2, positionX - radius - 4, positionY + radius + 15);
         canvasRenderingContext2D.fillText(join2, positionX - radius - 4, positionY + radius + 15);
@@ -5057,7 +5067,7 @@ export function galaxy(
         font:
           (large ? (here || starSystem.anchor ? 'bold 12px' : '11px') : '9px') +
           ' "Pixelify Sans", sans-serif',
-        color: here ? '#fff' : seen ? '#c8ccd8' : '#80869a',
+        color: here ? '#fff' : seen ? ink.names[0] : ink.names[1],
         // Your system, the hovered system and your route always show; anchors before the rest.
         priority:
           here || clientGameState.hoverSys === starSystem.id || onRoute.has(starSystem.id)
@@ -5067,7 +5077,7 @@ export function galaxy(
               : 0,
       });
   }
-  drawSystemLabels(canvasRenderingContext2D, systemLabels, large);
+  drawSystemLabels(canvasRenderingContext2D, systemLabels, large, ink.space);
   // 0.6 overlays: the invasion, anomalies (2.6: territory claims removed)
   const width3: Partial<NonNullable<ClientGameState['world']>> = clientGameState.world || {},
     pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);
@@ -5140,7 +5150,7 @@ export function galaxy(
       canvasRenderingContext2D.font = 'bold 13px "Pixelify Sans", sans-serif';
       canvasRenderingContext2D.textAlign = 'left';
       canvasRenderingContext2D.lineWidth = 3;
-      canvasRenderingContext2D.strokeStyle = '#02030a';
+      canvasRenderingContext2D.strokeStyle = ink.space;
       canvasRenderingContext2D.strokeText(
         label.length > 38 ? label.slice(0, 36) + '…' : label,
         positionX + quantity + 4,
@@ -5170,7 +5180,7 @@ export function galaxy(
   }
   if (large && clientGameState.mapLegend === false) return; // the legend can be hidden
   if (large) {
-    canvasRenderingContext2D.fillStyle = 'rgba(2,3,10,.82)';
+    canvasRenderingContext2D.fillStyle = ink.legend;
     canvasRenderingContext2D.fillRect(
       0,
       height2 - (clientGameState.mapMode && clientGameState.mapMode !== 'factions' ? 26 : 42),

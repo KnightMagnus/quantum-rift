@@ -545,6 +545,7 @@ import { CombatAssist } from './combat-assist.ts';
 import { createGameMessageHandlers } from './game-message-handlers.ts';
 import { createFeatures } from './features.ts';
 import { TUTORIAL, tutMigrate, TUT_VERSION } from '../shared/tutorial.ts';
+import { TIER3_TRUCE, PRACTICE_RAIDER, fitRaidToBudget } from '../shared/hostile.ts';
 // Quantum Rift game server: sessions, the galaxy's systems, landing services, missions, Quantum Station.
 import {
   SYSTEMS,
@@ -1289,6 +1290,7 @@ export class Game<Storage extends Database = Database> {
     const playerData = session.data as PlayerData;
     this.features.docks.docksInit(playerData);
     this.checkStation(playerData);
+    this.checkTier3Truce(session);
     const computedShipStats = this.features.shipStats.stats(playerData);
     this.send(session, {
       t: 'you',
@@ -1318,6 +1320,7 @@ export class Game<Storage extends Database = Database> {
       shipless: !!playerData.shipless,
       docks: this.features.docks.docksPayload(playerData),
       newcomer: this.newcomer(playerData),
+      truceLeft: this.truceLeft(playerData),
       arcs: this.features.arcs.arcsPayload(playerData),
       expd: playerData.expd || { n: 0 },
       rank: this.features.fleetcmd.rankOf(playerData),
@@ -1448,7 +1451,7 @@ export class Game<Storage extends Database = Database> {
     this.db.touch();
     this.you(session);
   }
-  // newcomer protection lasts until your Personal Station reaches Station Tier 3 (see Space.spared)
+  // newcomer protection lasts until Station Tier 3, then winds down (see newcomer and Space.spared)
   // cargo carried for jobs takes up real hold space
   /**
    * Calculates total cargo tonnage allocated to active delivery and smuggling jobs.
@@ -1559,14 +1562,90 @@ export class Game<Storage extends Database = Database> {
     this.db.touch();
   }
   /**
-   * Checks whether a captain qualifies for newcomer protection (station below Station Tier 3).
+   * Checks whether a captain qualifies for newcomer protection: station below Station Tier 3,
+   * or the carried-over truce after Tier 3 has not yet run out of kills or jumps.
    * @param playerData Player save data.
    * @returns True if player qualifies for newcomer protection.
    */
   newcomer(playerData: PlayerData): boolean {
+    if (!playerData || playerData.noShield) return false;
+    const stationState = playerData.station;
+    if (!((stationState && stationState.ops) >= 3)) return true;
+    const truceEnds = stationState.truceEnds;
     return (
-      !!playerData && !playerData.noShield && !((playerData.station && playerData.station.ops) >= 3)
+      !!truceEnds &&
+      (playerData.stats.kills || 0) < truceEnds.kills &&
+      (playerData.stats.jumps || 0) < truceEnds.jumps
     );
+  }
+  /**
+   * Sends one weak Hollow raider after a captain whose career goal is "Clear a raider", so the
+   * first fight is a fair one wherever they are rather than a trip to dangerous space.
+   * @param session Player session that just arrived.
+   * @param space Space the captain arrived in.
+   */
+  practiceRaider(session: Session, space: Space): void {
+    const playerData = session.data,
+      entity = session.ent,
+      starSystem = space.sys;
+    if (!entity || playerData.tut == null || TUTORIAL[playerData.tut]?.ev !== 'kill') return;
+    if (starSystem.farside || starSystem.arena || starSystem.faction === 'deep') return;
+    if ([...space.ships.values()].some((ship) => !ship.dead && ship.practiceOf === session.id))
+      return;
+    const power = this.features.hostile.myPower(playerData),
+      [hull] = fitRaidToBudget(
+        [PRACTICE_RAIDER.hulls.at(-1)!],
+        PRACTICE_RAIDER.hulls,
+        (raiderHull) => this.A.ships[raiderHull]?.strength || 10,
+        power * PRACTICE_RAIDER.powerShare,
+      ),
+      angle = Math.random() * Math.PI * 2;
+    const raider = space.makeShip({
+      hull,
+      faction: 'hollow',
+      x: entity.x + Math.cos(angle) * 1400,
+      y: entity.y + Math.sin(angle) * 1400,
+      ai: 'raid',
+      name: 'Hollow straggler',
+    });
+    raider.huntOf = session.id;
+    raider.practiceOf = session.id;
+    raider.life = 300;
+    raider.target = entity;
+    space.events.push(['flash', Math.round(raider.x), Math.round(raider.y)]);
+    this.toast(session, 'Career: a lone Hollow straggler is coming for you. Press R to target it.');
+  }
+  /**
+   * Kills and jumps left before the newcomer truce carried over past Station Tier 3 ends.
+   * @param playerData Player save data.
+   * @returns Remaining kills and jumps, or null when no carried-over truce is running.
+   */
+  truceLeft(playerData: PlayerData): { kills: number; jumps: number } | null {
+    const truceEnds = playerData.station?.truceEnds;
+    if (!truceEnds || !this.newcomer(playerData)) return null;
+    return {
+      kills: truceEnds.kills - (playerData.stats.kills || 0),
+      jumps: truceEnds.jumps - (playerData.stats.jumps || 0),
+    };
+  }
+  /**
+   * Ends the newcomer truce carried over past Station Tier 3 once the captain has fought,
+   * travelled or upgraded enough, and tells them it has ended.
+   * @param session Player session.
+   */
+  checkTier3Truce(session: Session): void {
+    const playerData = session.data,
+      stationState = playerData?.station;
+    if (!stationState?.truceEnds) return;
+    if (this.newcomer(playerData) && this.features.hostile.myPower(playerData) < TIER3_TRUCE.power)
+      return;
+    delete stationState.truceEnds;
+    this.toast(
+      session,
+      "Newcomer protection has ended: factions across the main galaxy now treat you like any other captain. Check a job's Danger rating before you take it.",
+    );
+    this.log(playerData, 'Newcomer protection ended.');
+    this.db.touch();
   }
   /**
    * Warns protected captains when jumping into lawless or dangerous systems.
@@ -1928,6 +2007,7 @@ export class Game<Storage extends Database = Database> {
       miningHazards: this.features.pressure.hazards(space.id),
     });
     this.features.fronts.missionArrive(session, space);
+    this.practiceRaider(session, space);
     this.features.story.storyArrive(session, space);
     this.features.arcs.arcArrive(session, space);
     if (!this.solo) {
@@ -2956,6 +3036,7 @@ export class Game<Storage extends Database = Database> {
           return this.toast(session, 'You need the credits and materials listed.');
         playerData.credits -= opsLevelDef.cost;
         this.takeMats(playerData, opsLevelDef.mats);
+        const wasNewcomer = this.newcomer(playerData);
         stationState.ops++;
         stationState.refT = Date.now();
         this.log(
@@ -2963,11 +3044,16 @@ export class Game<Storage extends Database = Database> {
           `Quantum Station reached Station Tier ${stationState.ops}: ${opsLevelDef.title}.`,
         );
         this.toast(session, `Station Tier ${stationState.ops} complete: ${opsLevelDef.unlock}.`);
-        if (stationState.ops === 3)
+        if (stationState.ops === 3 && wasNewcomer) {
+          stationState.truceEnds = {
+            kills: (playerData.stats.kills || 0) + TIER3_TRUCE.kills,
+            jumps: (playerData.stats.jumps || 0) + TIER3_TRUCE.jumps,
+          };
           this.toast(
             session,
-            'Newcomer protection has ended at Station Tier 3: factions across the main galaxy now treat you like any other captain.',
+            `Newcomer protection now winds down: it ends after ${TIER3_TRUCE.kills} kills, ${TIER3_TRUCE.jumps} jumps or once your ship reaches ${TIER3_TRUCE.power} power, whichever comes first.`,
           );
+        }
         this.broadcast({
           t: 'chat',
           from: '',

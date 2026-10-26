@@ -74,70 +74,20 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 - [Dedicated server setup](docs/NAKAMA.md)
 - [Beta Solo save generator](test/Save%20Generator/README.md)
 - [Development tools](docs/DEVELOPMENT-TOOLS.md) and [code navigation](docs/CODE-NAVIGATION.md)
-- [Release notes](docs/RELEASE-3.4.2.md)
+- [Release notes](docs/RELEASE-3.4.3.md)
 
 ## Screenshots
 
-**The Gateway in Concordia**
+**Flight cockpit and system radar**
 
-![Flying past the Gateway near Quantum Station](docs/screenshots/concordia-gateway.png)
+The blue Pressure Hull cockpit is the standard interface for flight, station services and chat.
 
-**Login traffic**
-
-![A capital ship and its escorts crossing the login observation window](docs/screenshots/login-formation.png)
-
-**Flight cockpit**
-
-![Responsive flight cockpit in Meridian with the sidebar closed](docs/screenshots/responsive-flight.png)
-
-**Expanded chat projection**
-
-![Chat history projected upward from the flight console](docs/screenshots/responsive-chat.png)
-
-**System radar and sidebar**
-
-![Expanded sidebar with square system radar](docs/screenshots/responsive-sidebar.png)
+![Blue flight controls with the Tray and system radar expanded](docs/screenshots/pressure-hull-flight.png)
 
 **Landed services**
 
-![Ultrawide landed shipyard inside the flight window, clear of the sidebar and console](docs/screenshots/responsive-landed.png)
+![Station services and spaceport news beside the world illustration](docs/screenshots/pressure-hull-landed.png)
 
-**Growing colonies**
+**Expanded chat**
 
-![A level-five colony on Far Prime with its settlement-stage illustration](docs/screenshots/colony-stage3.png)
-
-**Captain portraits**
-
-![Captain profile with selectable portrait cards and the saved portrait preview](docs/screenshots/profile-chooser.png)
-
-**Hails and caller portraits**
-
-![Docking-control hail displaying the caller portrait over the landed colony view](docs/screenshots/docking-hail.png)
-
-**Index transmissions**
-
-![An Index machine's ship artwork in its incoming hail](docs/screenshots/index-ship-hail.png)
-
-**Index worksites**
-
-![Large Index machines keeping separate berths around a Glasswake worksite](docs/screenshots/index-fleet-spacing.png)
-
-**Controls reference**
-
-![Two-column flight and menu controls with paired key bindings](docs/screenshots/controls-reference.png)
-
-**Galaxy map**
-
-![In-game galaxy map with system details beside the canvas on a wide screen](docs/screenshots/responsive-map.png)
-
-**Settings and key bindings**
-
-![Horizontal flight, sound and key-binding control bays](docs/screenshots/cockpit-settings.png)
-
-**Local faction store**
-
-![The local Concord store with live faction standing while landed in Concord space](docs/screenshots/faction-store-local.png)
-
-**Friend-hosted universe**
-
-![Friend-hosted universe login with separate captain name and password fields](docs/screenshots/friend-host-login.png)
+![Blue chat display with a populated, scrollable history](docs/screenshots/pressure-hull-expanded-chat.png)
