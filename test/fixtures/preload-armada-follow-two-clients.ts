@@ -4,6 +4,7 @@ export interface PreloadConfig {
   captainNames: string[];
   leaderName: string;
   telemetryPath: string;
+  gestureControlPath: string;
 }
 const preloadConfig = preloadConfiguration<PreloadConfig>();
 
@@ -20,6 +21,7 @@ let game: Game | undefined,
       a: number;
       vx: number;
       vy: number;
+      maxSpeed: number;
       follow?: boolean;
       target: import('../../server/game.ts').Session['armadaFormationTarget'];
       inp: import('../../server/space.ts').Entity['inp'];
@@ -54,28 +56,41 @@ setInterval(() => {
   );
   if (sessions.length !== 2) return;
   const activeSpace = game.spaces[sessions[0].data.sys];
-  for (let acceleratedTickIndex = 0; acceleratedTickIndex < 8; acceleratedTickIndex++) {
+  // Real keyboard gestures use the normal Game timer; accelerate only the long coasts.
+  const ticksPerInterval = JSON.parse(
+    fileSystem.readFileSync(preloadConfig.gestureControlPath, 'utf8'),
+  ).nativeGestures
+    ? 0
+    : 8;
+  const record = () =>
+    trace.push({
+      t: ticks / 30,
+      ships: sessions.map((session) => ({
+        name: session.data.name,
+        x: session.ent!.x,
+        y: session.ent!.y,
+        a: session.ent!.a,
+        vx: session.ent!.vx,
+        vy: session.ent!.vy,
+        maxSpeed: session.ent!.st.maxSpeed,
+        follow: session.data.armadaFollow,
+        target: session.armadaFormationTarget,
+        inp: session.ent!.inp,
+      })),
+    });
+  for (
+    let acceleratedTickIndex = 0;
+    acceleratedTickIndex < ticksPerInterval;
+    acceleratedTickIndex++
+  ) {
     activeSpace.tick();
     ticks++;
-    if (ticks % 3 === 0)
-      trace.push({
-        t: ticks / 30,
-        ships: sessions.map((session) => ({
-          name: session.data.name,
-          x: session.ent!.x,
-          y: session.ent!.y,
-          a: session.ent!.a,
-          vx: session.ent!.vx,
-          vy: session.ent!.vy,
-          follow: session.data.armadaFollow,
-          target: session.armadaFormationTarget,
-          inp: session.ent!.inp,
-        })),
-      });
+    if (ticks % 3 === 0) record();
   }
+  if (!ticksPerInterval) record();
   fileSystem.writeFileSync(
     preloadConfig.telemetryPath + '.tmp',
-    JSON.stringify({ t: ticks / 30, trace: trace.slice(-1200) }),
+    JSON.stringify({ t: ticks / 30, ticksPerInterval, trace: trace.slice(-1200) }),
   );
   fileSystem.renameSync(preloadConfig.telemetryPath + '.tmp', preloadConfig.telemetryPath);
 }, 20).unref();

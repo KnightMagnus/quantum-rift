@@ -33,6 +33,15 @@ for (const name of names) {
 }
 database.flush();
 const telemetry = path.join(evidence, 'telemetry.json');
+const gestureControlPath = path.join(evidence, 'gesture-control.json');
+function nativeGestures(enabled: boolean) {
+  fileSystem.writeFileSync(
+    gestureControlPath + '.next',
+    JSON.stringify({ nativeGestures: enabled }),
+  );
+  fileSystem.renameSync(gestureControlPath + '.next', gestureControlPath);
+}
+nativeGestures(false);
 const fixture = resolvePreloadFile(
   new URL('./fixtures/preload-armada-follow-two-clients.ts', import.meta.url),
 );
@@ -59,6 +68,7 @@ const server = spawn(
         captainNames: names,
         leaderName: names[0],
         telemetryPath: telemetry,
+        gestureControlPath,
       } satisfies PreloadConfig),
       SOLO: '',
       PORT: String(port),
@@ -203,31 +213,56 @@ try {
   assert.ok(maxError < 65, `maintains formation: ${maxError}`);
   assert.ok(minSpeed > 76, 'does not stop during leader cruise');
   await follower.screenshot({ path: path.join(evidence, 'matched-cruise.png') });
+  // Keep key gestures on the native Game timer. Accelerated wall-clock holds varied
+  // by runner and could drive the leader to the identical follower speed ceiling.
+  nativeGestures(true);
+  await until(() => read().ticksPerInterval === 0, 'native gesture clock acknowledged');
   // Real browser keys, not a second socket/session, drive sharp turn and restart.
   const beforeKeys = read()
     .trace.at(-1)
     .ships.find((session: { name: string }) => session.name === names[0]);
   await leader.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await leader.keyboard.down('ArrowRight');
-  await delay(180);
-  await leader.keyboard.up('ArrowRight');
   await until(() => {
     const ship = read()
       .trace.at(-1)
       .ships.find((session: { name: string }) => session.name === names[0]);
     return (
-      Math.abs(Math.atan2(Math.sin(ship.a - beforeKeys.a), Math.cos(ship.a - beforeKeys.a))) > 0.3
+      Math.abs(Math.atan2(Math.sin(ship.a - beforeKeys.a), Math.cos(ship.a - beforeKeys.a))) > 0.7
     );
   }, 'real keyboard changes leader heading');
+  await leader.keyboard.up('ArrowRight');
+  await until(
+    () =>
+      read()
+        .trace.at(-1)
+        .ships.find((ship: { name: string }) => ship.name === names[0]).inp.turn === 0,
+    'turn release acknowledged',
+  );
   await leader.keyboard.down('ArrowUp');
-  await delay(100);
-  await leader.keyboard.up('ArrowUp');
   await until(() => {
     const ship = read()
       .trace.at(-1)
       .ships.find((session: { name: string }) => session.name === names[0]);
     return Math.hypot(ship.vx - beforeKeys.vx, ship.vy - beforeKeys.vy) > 10;
   }, 'real keyboard changes leader velocity');
+  await leader.keyboard.up('ArrowUp');
+  await until(
+    () =>
+      read()
+        .trace.at(-1)
+        .ships.find((ship: { name: string }) => ship.name === names[0]).inp.thrust === 0,
+    'thrust release acknowledged',
+  );
+  const turnedLeader = read()
+    .trace.at(-1)
+    .ships.find((ship: { name: string }) => ship.name === names[0]);
+  assert.ok(
+    Math.hypot(turnedLeader.vx, turnedLeader.vy) < turnedLeader.maxSpeed * 0.9,
+    'leader leaves physical catch-up speed headroom',
+  );
+  nativeGestures(false);
+  await until(() => read().ticksPerInterval === 8, 'accelerated coast clock acknowledged');
   const turnStart = read().t;
   // 180 simulated seconds need 13.5s even at the ideal accelerated tick rate.
   // Leave scheduling headroom on hosted runners; retain the same simulated
@@ -297,6 +332,7 @@ try {
           activeReconnectRevokesConsent: true,
         },
         cruise: cruiseResult,
+        turnGesture: turnedLeader,
         afterTurn,
         manualTakeover: true,
         pageErrors: errors,
