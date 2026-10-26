@@ -74,8 +74,12 @@ try {
     'realcapacity-limitedclaim',
   );
   await page.selectOption('#refmode', 'instant');
-  await page.fill('#refquantity', '3');
   await page.waitForFunction(() => G.refineryQuote?.mode === 'instant');
+  assert.equal(
+    await page.locator('#refquantity').inputValue(),
+    '3',
+    'Changing refining speed retains the quantity draft',
+  );
   await page.selectOption('#refgrade', 'pure');
   await page.waitForFunction(() => G.refineryQuote?.inputs[0].lots.pure === 3);
   await page
