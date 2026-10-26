@@ -3036,6 +3036,7 @@ export class Game<Storage extends Database = Database> {
           return this.toast(session, 'You need the credits and materials listed.');
         playerData.credits -= opsLevelDef.cost;
         this.takeMats(playerData, opsLevelDef.mats);
+        const wasNewcomer = this.newcomer(playerData);
         stationState.ops++;
         stationState.refT = Date.now();
         this.log(
@@ -3043,7 +3044,7 @@ export class Game<Storage extends Database = Database> {
           `Quantum Station reached Station Tier ${stationState.ops}: ${opsLevelDef.title}.`,
         );
         this.toast(session, `Station Tier ${stationState.ops} complete: ${opsLevelDef.unlock}.`);
-        if (stationState.ops === 3 && this.newcomer(playerData)) {
+        if (stationState.ops === 3 && wasNewcomer) {
           stationState.truceEnds = {
             kills: (playerData.stats.kills || 0) + TIER3_TRUCE.kills,
             jumps: (playerData.stats.jumps || 0) + TIER3_TRUCE.jumps,

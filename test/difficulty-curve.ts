@@ -122,6 +122,36 @@ const truceGame = (power: number) => {
   assert.equal(toasts.length, 1);
 }
 
+// Exercise the actual upgrade action, not only pre-seeded truce records.
+for (const noShield of [false, true]) {
+  const { game, toasts } = truceGame(72);
+  Object.assign(game, {
+    checkStation() {},
+    ownSite: () => true,
+    hasMats: () => true,
+    takeMats() {},
+    broadcast() {},
+    pushSites() {},
+    you() {},
+    landed() {},
+  });
+  const playerData = captain({ ops: 2, claimed: true, site: 'site-qgate' }, 2, 10);
+  Object.assign(playerData, { stellar: 'site-qgate', credits: 1e9, noShield });
+  const session = mockSession({ data: playerData, ent: null });
+  Game.prototype.station.call(game, session, { op: 'upgrade' });
+  assert.equal(playerData.station.ops, 3);
+  assert.deepEqual(
+    playerData.station.truceEnds,
+    noShield ? undefined : { kills: 2 + TIER3_TRUCE.kills, jumps: 10 + TIER3_TRUCE.jumps },
+    'building Tier 3 carries over protection unless the captain opted out',
+  );
+  assert.equal(game.newcomer(playerData), !noShield);
+  assert.equal(
+    toasts.some((message) => message.includes('winds down')),
+    !noShield,
+  );
+}
+
 // ------------------------------------------------------------------ raids sized to the captain present
 const raidSpace = (power: number, danger: number, faction = 'hollow') => {
   const spawned: number[][] = [];
