@@ -308,6 +308,8 @@ import { planetSprite } from './planets.ts';
 import { drawStar } from './stars.ts';
 import { drawExoticSky, drawPulseBoundary } from './exotic_scenery.ts';
 import { missionTargets } from './missions.ts';
+import { edgeArrowAnchor } from './edge-arrow.ts';
+import type { ScreenRect } from './edge-arrow.ts';
 import { drawShipChat, updateShipChat } from './chat_bubbles.ts';
 import { loopFrames } from './animation_frames.ts';
 import { WORMHOLE } from './wormhole_animation.ts';
@@ -3588,6 +3590,37 @@ export function draw(
   );
 }
 // ------------------------------------------------------------------ 2.0 screen-space feedback: edge arrows, damage, jumps
+// HUD cards over the flight view that edge arrows keep clear of: the career card and ship status.
+const EDGE_ARROW_OBSTACLE_IDS = ['tut', 'flightstatus'];
+let edgeArrowObstacles: ScreenRect[] = [];
+let edgeArrowObstaclesAt = 0;
+
+/**
+ * Re-reads the HUD card rectangles in drawing pixels, at most four times a second.
+ * The drawing layers are off-DOM canvases sized to the on-page flight view.
+ * @param width Drawing width.
+ * @param currentTime Timestamp in milliseconds.
+ */
+function refreshEdgeArrowObstacles(width: number, currentTime: number): void {
+  if (Math.abs(currentTime - edgeArrowObstaclesAt) < 250) return;
+  edgeArrowObstaclesAt = currentTime;
+  const canvasRect = document.getElementById('view')?.getBoundingClientRect();
+  if (!canvasRect?.width) return;
+  const scale = width / canvasRect.width;
+  edgeArrowObstacles = [];
+  for (const id of EDGE_ARROW_OBSTACLE_IDS) {
+    const element = document.getElementById(id);
+    if (!element || element.classList.contains('hidden')) continue;
+    const rect = element.getBoundingClientRect();
+    if (!rect.width || !rect.height) continue;
+    edgeArrowObstacles.push({
+      left: (rect.left - canvasRect.left) * scale,
+      top: (rect.top - canvasRect.top) * scale,
+      right: (rect.right - canvasRect.left) * scale,
+      bottom: (rect.bottom - canvasRect.top) * scale,
+    });
+  }
+}
 /**
  * Renders an off-screen pointing arrow and label at the viewport perimeter.
  * @param canvasRenderingContext2D 2D rendering context
@@ -3609,25 +3642,16 @@ function edgeArrow(
   label: string,
   distance: number,
 ): void {
-  const message = 46,
-    screenCenterX = width / 2,
-    screenCenterY = height / 2,
-    deltaX = positionX - screenCenterX,
-    deltaY = positionY - screenCenterY;
-  if (
-    positionX > message &&
-    positionY > message &&
-    positionX < width - message &&
-    positionY < height - message
-  )
-    return;
-  const entryKey = Math.min(
-      (width / 2 - message) / Math.abs(deltaX || 1e-6),
-      (height / 2 - message) / Math.abs(deltaY || 1e-6),
-    ),
-    velocityErrorX = screenCenterX + deltaX * entryKey,
-    velocityErrorY = screenCenterY + deltaY * entryKey,
-    atan = Math.atan2(deltaY, deltaX);
+  canvasRenderingContext2D.font = '13px "Pixelify Sans", sans-serif';
+  const time = `${label} · ${Math.round(distance)} km`;
+  const anchor = edgeArrowAnchor(width, height, positionX, positionY, edgeArrowObstacles, {
+    x: canvasRenderingContext2D.measureText(time).width / 2 + 30,
+    y: 30,
+  });
+  if (!anchor) return;
+  const velocityErrorX = anchor.x,
+    velocityErrorY = anchor.y,
+    atan = Math.atan2(positionY - height / 2, positionX - width / 2);
   canvasRenderingContext2D.save();
   canvasRenderingContext2D.translate(velocityErrorX, velocityErrorY);
   canvasRenderingContext2D.rotate(atan);
@@ -3641,7 +3665,6 @@ function edgeArrow(
   canvasRenderingContext2D.closePath();
   canvasRenderingContext2D.fill();
   canvasRenderingContext2D.restore();
-  canvasRenderingContext2D.font = '13px "Pixelify Sans", sans-serif';
   canvasRenderingContext2D.textAlign = 'center';
   canvasRenderingContext2D.fillStyle = column;
   canvasRenderingContext2D.globalAlpha = 0.85;
@@ -3649,7 +3672,6 @@ function edgeArrow(
     localY = velocityErrorY - Math.sin(atan) * 22 + 4;
   canvasRenderingContext2D.lineWidth = 3;
   canvasRenderingContext2D.strokeStyle = 'rgba(0,0,0,.7)';
-  const time = `${label} · ${Math.round(distance)} km`;
   canvasRenderingContext2D.strokeText(time, localX, localY);
   canvasRenderingContext2D.fillText(time, localX, localY);
   canvasRenderingContext2D.globalAlpha = 1;
@@ -3899,6 +3921,7 @@ function hudOverlay(
   if (!clientView) return;
   const starSystem = systemsById[clientGameState.sys!];
   if (!starSystem) return;
+  if (typeof document !== 'undefined') refreshEdgeArrowObstacles(width, currentTime);
   // mission objectives in this system, your nav point, and your target
   const seen = new Set();
   for (const missionTarget of missionTargets(clientGameState))
@@ -4676,6 +4699,66 @@ export function mapFit(
     fit: entryKey,
   };
 }
+/** A galaxy map system name waiting to be placed. */
+interface SystemLabel {
+  /** System name. */
+  text: string;
+
+  /** Canvas X of the label centre. */
+  x: number;
+
+  /** Canvas Y of the label baseline. */
+  y: number;
+
+  /** Canvas font. */
+  font: string;
+
+  /** Fill colour. */
+  color: string;
+
+  /** Higher priorities are placed first and always drawn. */
+  priority: number;
+}
+
+/**
+ * Draws galaxy map system names, skipping lower-priority names that would overlap
+ * one already drawn on the big map. Zooming in spreads systems out and reveals them.
+ * @param canvasRenderingContext2D Starmap canvas rendering context
+ * @param labels Candidate labels
+ * @param large Whether this is the full galaxy map
+ */
+function drawSystemLabels(
+  canvasRenderingContext2D: CanvasRenderingContext2D,
+  labels: SystemLabel[],
+  large: boolean,
+): void {
+  const placed: ScreenRect[] = [];
+  canvasRenderingContext2D.textAlign = 'center';
+  canvasRenderingContext2D.lineWidth = 3;
+  canvasRenderingContext2D.strokeStyle = '#02030a';
+  for (const label of [...labels].sort((first, second) => second.priority - first.priority)) {
+    canvasRenderingContext2D.font = label.font;
+    const halfWidth = canvasRenderingContext2D.measureText(label.text).width / 2 + 2;
+    const box = {
+      left: label.x - halfWidth,
+      right: label.x + halfWidth,
+      top: label.y - 12,
+      bottom: label.y + 3,
+    };
+    const overlaps = placed.some(
+      (other) =>
+        box.left < other.right &&
+        box.right > other.left &&
+        box.top < other.bottom &&
+        box.bottom > other.top,
+    );
+    if (large && overlaps && label.priority < 2) continue;
+    placed.push(box);
+    canvasRenderingContext2D.strokeText(label.text, label.x, label.y);
+    canvasRenderingContext2D.fillStyle = label.color;
+    canvasRenderingContext2D.fillText(label.text, label.x, label.y);
+  }
+}
 /**
  * Renders the 2D galaxy starmap or minimap including hyperspace lanes, faction territories, and route plots.
  * @param clientGameState Game state object
@@ -4851,6 +4934,7 @@ export function galaxy(
     [])
     if (message.sysId && message.name !== clientGameState.myName)
       (allySys[message.sysId] = allySys[message.sysId] || []).push(message.name); // where your Armada is
+  const systemLabels: SystemLabel[] = [];
   for (const starSystem of visibleSystems) {
     if (starSystem.id === 'founding-vigil') continue;
     const [positionX, positionY] = position(starSystem);
@@ -4965,18 +5049,25 @@ export function galaxy(
         ? zoom > 1.6 || (starSystem.anchor && zoom > 0.95)
         : systemsById[clientGameState.sys!] &&
           systemsById[clientGameState.sys!].links.includes(starSystem.id));
-    if (label) {
-      canvasRenderingContext2D.font =
-        (large ? (here || starSystem.anchor ? 'bold 12px' : '11px') : '9px') +
-        ' "Pixelify Sans", sans-serif';
-      canvasRenderingContext2D.textAlign = 'center';
-      canvasRenderingContext2D.lineWidth = 3;
-      canvasRenderingContext2D.strokeStyle = '#02030a';
-      canvasRenderingContext2D.strokeText(starSystem.name, positionX, positionY - radius - 5);
-      canvasRenderingContext2D.fillStyle = here ? '#fff' : seen ? '#c8ccd8' : '#80869a';
-      canvasRenderingContext2D.fillText(starSystem.name, positionX, positionY - radius - 5);
-    }
+    if (label)
+      systemLabels.push({
+        text: starSystem.name,
+        x: positionX,
+        y: positionY - radius - 5,
+        font:
+          (large ? (here || starSystem.anchor ? 'bold 12px' : '11px') : '9px') +
+          ' "Pixelify Sans", sans-serif',
+        color: here ? '#fff' : seen ? '#c8ccd8' : '#80869a',
+        // Your system, the hovered system and your route always show; anchors before the rest.
+        priority:
+          here || clientGameState.hoverSys === starSystem.id || onRoute.has(starSystem.id)
+            ? 2
+            : starSystem.anchor
+              ? 1
+              : 0,
+      });
   }
+  drawSystemLabels(canvasRenderingContext2D, systemLabels, large);
   // 0.6 overlays: the invasion, anomalies (2.6: territory claims removed)
   const width3: Partial<NonNullable<ClientGameState['world']>> = clientGameState.world || {},
     pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);

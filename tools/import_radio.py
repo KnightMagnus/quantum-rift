@@ -25,6 +25,33 @@ def digest(p):
 def probe(p):
     return json.loads(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration,size,bit_rate:format_tags=title,track', '-show_entries', 'stream=codec_name,sample_rate,channels', '-of', 'json', str(p)]))
 
+def supplemental_tracks(root):
+    """Keep verified later uploads when rebuilding the original archive."""
+    manifest_path = root / 'docs/RADIO-AUDIO.json'
+    if not manifest_path.exists():
+        return []
+    manifest = json.loads(manifest_path.read_text())
+    extras = [track for track in manifest['tracks'] if track['source'].startswith('Owner upload/')]
+    for track in extras:
+        assert track['station'] in IDS, 'Unknown supplemental station'
+        station_index = IDS.index(track['station'])
+        assert track['number'] > COUNTS[station_index], 'Supplement would replace archive audio'
+        expected = f'client/assets/radio/{track["station"]}/{track["number"]:02}.mp3'
+        assert track['path'] == expected, 'Unexpected supplemental path'
+        target = root / expected
+        assert target.stat().st_size == track['bytes'] and digest(target) == track['sha256'], 'Missing or changed supplemental audio'
+    assert len({track['path'] for track in extras}) == len(extras), 'Duplicate supplemental audio'
+    return sorted(extras, key=lambda track: (IDS.index(track['station']), track['number']))
+
+def append_supplemental(stations, converted, extras):
+    """Include later uploads in station playback and ordered provenance records."""
+    for track in extras:
+        station = stations[IDS.index(track['station'])]
+        assert track['number'] == len(station['tracks']) + 1, 'Gap in supplemental track order'
+        station['tracks'].append(dict(url='/' + track['path'].removeprefix('client/')))
+    converted.extend(extras)
+    converted.sort(key=lambda track: (IDS.index(track['station']) if track['station'] in IDS else len(IDS), track['number']))
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--archive', type=Path, required=True)
@@ -32,6 +59,7 @@ def main():
     parser.add_argument('--output-root', type=Path, default=Path(__file__).resolve().parents[1])
     args = parser.parse_args()
     root = args.output_root.resolve()
+    extras = supplemental_tracks(root)
     album = json.loads(args.album_order.read_text())
     assert [int(t['position']) for t in album] == list(range(1, 9)), 'Need all eight published album positions'
     stations = [dict(id=id, name=name, sub=sub, playback='album' if i == 4 else 'shuffle', tracks=[]) for i, (id, name, sub) in enumerate(zip(IDS, NAMES, SUBS))]
@@ -85,6 +113,7 @@ def main():
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
             converted = list(pool.map(convert, jobs))
+    append_supplemental(stations, converted, extras)
     registry = '// Owner-supplied audio. Stations 1–4 intentionally contain no song titles.\nexport const RADIO_STATIONS = ' + json.dumps(stations, ensure_ascii=False, indent=2) + ";\nexport const STARTER_RADIO = RADIO_STATIONS[0].id;\nexport const SCIENTIST_STORY = 'sideways-apology';\n"
     (root / 'shared/radio-stations.ts').write_text(registry)
     manifest = dict(sourceUrl='https://filebin.net/7ska2yl46u4c2pgl', archiveSha256=digest(args.archive), rights='Supplied by the game owner, who confirms commercial rights to all recordings and lyrics.', artist='Isekai Bum', albumOrderUrl='https://music.youtube.com/playlist?list=OLAK5uy_lkakAvDQ-FvwPtZQ6gkHf62lgkzycp-iI', conversion=dict(codec='MP3', bitrate=128000, sampleRate=44100, channels=2, edits='No trimming, stretching, gain changes or generated audio; metadata/artwork removed.'), sourceBytes=sum(t['sourceBytes'] for t in converted), bytes=sum(t['bytes'] for t in converted), tracks=converted)

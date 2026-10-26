@@ -2,6 +2,13 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### Unreleased
+
+- Make research and crew bonuses readable, and rename the Personal Station refinery to Workshop.
+- Land on selected worlds and mission destinations with L; keep flight arrows clear of HUD cards.
+- Give wide, short galaxy maps a side panel and prevent overlapping system labels.
+- Add two supplied Wave Function Collapse recordings and preserve them during audio reimports.
+
 ### 3.4.2
 
 - Fit ultrawide landed windows to usable flight space; keep cockpit screws clear of controls and preserve chat beside the open Tray.

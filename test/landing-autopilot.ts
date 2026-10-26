@@ -3,7 +3,12 @@ import { requiredFixtureValue } from './helpers/required.ts';
 // physics for every stock hull, with varied drift, headings and landing radii.
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
-import { landingGuidance, landingReady, type AutopilotState } from '../client/landing_autopilot.ts';
+import {
+  chooseLandingPort,
+  landingGuidance,
+  landingReady,
+  type AutopilotState,
+} from '../client/landing_autopilot.ts';
 import {
   augmentAssets,
   shipStats,
@@ -236,5 +241,49 @@ for (const authority of [
       false,
       'stale/outside/fast authority blocks landing',
     );
+}
+// L lands on what the player highlighted before falling back to the nearest body.
+{
+  const bodies = [
+    { id: 'near', x: 100, y: 0 },
+    { id: 'mission-far', x: 4000, y: 0 },
+    { id: 'mission-mid', x: 2000, y: 0 },
+    { id: 'pinned', x: 3000, y: 0 },
+  ];
+  const origin = { x: 0, y: 0 };
+  const noIntent = { pickedNav: null, pinnedStellar: null, missionStellars: [] };
+  assert.equal(chooseLandingPort(bodies, origin, noIntent)?.id, 'near', 'nearest without intent');
+  assert.equal(
+    chooseLandingPort(bodies, origin, {
+      ...noIntent,
+      missionStellars: ['mission-far', 'mission-mid', 'elsewhere'],
+    })?.id,
+    'mission-mid',
+    'nearest mission destination beats a closer non-mission body',
+  );
+  assert.equal(
+    chooseLandingPort(bodies, origin, {
+      ...noIntent,
+      pinnedStellar: 'pinned',
+      missionStellars: ['mission-mid', 'pinned'],
+    })?.id,
+    'pinned',
+    'pinned objective beats other missions',
+  );
+  assert.equal(
+    chooseLandingPort(bodies, origin, {
+      pickedNav: 'mission-far',
+      pinnedStellar: 'pinned',
+      missionStellars: ['pinned'],
+    })?.id,
+    'mission-far',
+    'a clicked nav point beats every objective',
+  );
+  assert.equal(
+    chooseLandingPort(bodies, origin, { ...noIntent, pickedNav: 'not-landable' })?.id,
+    'near',
+    'a clicked body that cannot be landed on falls back to the nearest',
+  );
+  assert.equal(chooseLandingPort([], origin, noIntent), undefined, 'nowhere to land');
 }
 console.log(JSON.stringify({ cases: count, maxSeconds, maxLandingSpeed }));

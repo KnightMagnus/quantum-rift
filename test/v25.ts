@@ -219,7 +219,7 @@ assertCondition(
       distance6.tut === 19 &&
       distance7.tut === 23 &&
       distance8.tut === 3 &&
-      TUTORIAL[14].title === 'Market and refinery (Station Tier 2)',
+      TUTORIAL[14].title === 'Market and Workshop (Station Tier 2)',
     'old saves keep their place in the longer career guide',
   );
 }
