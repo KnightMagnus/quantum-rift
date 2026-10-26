@@ -1,5 +1,25 @@
 # Game regression coverage inventory
 
+## Authored ship content
+
+`content-validation.ts` belongs to `ships-catalog-art`. It validates the composed
+ship catalog and local yard, flight and glow artwork references without starting
+a server or changing content. Negative fixtures cover mismatched IDs, invalid
+capacities, combat/movement stats and recharge rates, weapon references/counts/ammo,
+stock gun and turret overflow, missing
+files and nonlocal artwork paths. Diagnostics carry the authoring file; refit and
+Armada hull references and outfit weapon references are checked against the
+composed catalog. CLI checks exercise successful validation, failed staged-asset
+validation and invalid arguments.
+
+NPC-only hulls retain the existing player-mount exception; unknown weapons still
+fail. Fixed weapons without corresponding outfits do not consume shop mounts,
+matching `makeLoadout` and `shipStats`. This is an authoring check for the typed,
+composed ship catalog, not a schema for arbitrary untrusted JSON. Mission
+prerequisites, dialogue links, non-ship assets and decoded image integrity are
+outside this validator. Existing artwork/browser tests retain their image checks.
+See [CONTENT-VALIDATION.md](CONTENT-VALIDATION.md) for commands and scope.
+
 ## Economic wire boundary
 
 `shared/wire-actions.ts` owns trade, refinery, mining-order, towing and industrial request
@@ -217,7 +237,7 @@ coverage is not a measured credits-per-hour or all-career balance comparison.
 
 ## 3.2.1 cockpit QoL
 
-`cockpit-qol` covers per-captain view/search/scroll/subtab retention, a single explicitly pinned objective with other tracking retained, native detail/Back keyboard focus, unavailable cargo next-action links and narrow/scaled layouts. `qol-browser.ts` uses an isolated real server and actual accepted mission; existing refinery, logout, input and sidebar checks guard integrated behavior. `sidebar-sizing-browser.ts` additionally checks independent mouse/touch/keyboard minimap and lower-menu heights, canvas backing geometry, persistence, viewport/zoom limits and automatic reset. Default minimap square/fill coverage remains intact in `sidebar-browser.ts`. Presentation preferences never store passwords, execute actions, auto-accept work or modify authoritative saves.
+`cockpit-qol` covers per-captain view/search/scroll/subtab retention, a single explicitly pinned objective with other tracking retained, native detail/Back keyboard focus, unavailable cargo next-action links and narrow/scaled layouts. `qol-browser.ts` uses an isolated real server and actual accepted mission; existing refinery, logout, input and sidebar checks guard integrated behavior. `sidebar-sizing-browser.ts` additionally checks independent mouse/touch/keyboard minimap and lower-menu heights, canvas backing geometry, persistence, viewport/zoom limits and automatic reset. Default minimap aspect/fill coverage remains intact in `sidebar-browser.ts`. Presentation preferences never store passwords, execute actions, auto-accept work or modify authoritative saves.
 
 ## 3.2.1 economy verification
 
@@ -290,6 +310,7 @@ owner. Legacy `vNN` names are retained for traceability, and now run in CI.
 | `accounts-persistence`    | `server/db.ts`, `server/game.ts`                                                                                                 | [persistence-auth.ts](../test/persistence-auth.ts), [account-defaults.ts](../test/account-defaults.ts), [v03.ts](../test/v03.ts), [v202.ts](../test/v202.ts), [v203.ts](../test/v203.ts), [http-api.ts](../test/http-api.ts)       | Account authentication/save safety, atomic player/world persistence/backups, Windows directory-sync capability, checkpoint recovery and denied writes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `protocol-http`           | `server/main.ts`                                                                                                                 | [http-api.ts](../test/http-api.ts)                                                                                                                                                                                                 | Real HTTP static/MIME/cache/404/traversal checks and online-vs-solo API permissions.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `protocol-websocket`      | `server/ws.ts`                                                                                                                   | [websocket-transport.ts](../test/websocket-transport.ts), [network-systems.ts](../test/network-systems.ts)                                                                                                                         | Frame masking/fragmentation/control/limits, upgrade handshake and actual multiplayer client/server state transitions.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `network-faults`          | `server/game.ts`, `server/ws.ts`                                                                                                 | [network-faults.ts](../test/network-faults.ts), [websocket-transport.ts](../test/websocket-transport.ts)                                                                                                                           | Replayed claims, accepts and landings settle once; evicted or closed local connections cannot act or steer; late frames after close never dispatch; restart keeps only flushed progress.                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `hangar`                  | `server/hangar.ts`                                                                                                               | [v05.ts](../test/v05.ts), [v12.ts](../test/v12.ts), [v21.ts](../test/v21.ts)                                                                                                                                                       | Shuttle dispatch/resolution/repair, officer assignment/XP/ranks, research prerequisites/queue, refining, stored loadouts and boarding.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `fronts`                  | `server/fronts.ts`                                                                                                               | [v06.ts](../test/v06.ts), [v09.ts](../test/v09.ts), [faction-standing.ts](../test/faction-standing.ts)                                                                                                                             | Invasion start/damage/win, anomalies/events/goals, faction store standing and convoy/rescue/survey/smuggling jobs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `frontier`                | `server/frontier.ts`                                                                                                             | [v07.ts](../test/v07.ts)                                                                                                                                                                                                           | Colony ownership/accrual, station raid/defense waves, mastery, arena matchmaking/rating, exchange escrow/matching and profiles/leaderboards.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -323,7 +344,7 @@ owner. Legacy `vNN` names are retained for traceability, and now run in CI.
 | `world-scenery`           | `client/render.ts`, `client/exotic_scenery.ts`                                                                                   | [eventide.ts](../test/eventide.ts), [comet.ts](../test/comet.ts), [stars.ts](../test/stars.ts), [background-scale.ts](../test/background-scale.ts), [v25.ts](../test/v25.ts)                                                       | Authored scenery configuration, comets/stars/background scaling, atmosphere/artwork invariants.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `station-art-identity`    | `client/station_wheel.ts`, `client/exotic_scenery.ts`, `client/render.ts`                                                        | [station-landing-browser.ts](../test/station-landing-browser.ts)                                                                                                                                                                   | 14 real landing/departure sessions, 110 stations/245 tier variants, actual flight-source identity, transient load recovery and frozen original Luna wheel pixels.                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `login-scene`             | `client/login_scene.ts`                                                                                                          | [login-scene-browser.ts](../test/login-scene-browser.ts)                                                                                                                                                                           | Starting-system landmarks, six actual moving ship sheets, rotating/cloud planet frames, animated hub sheet and beacon pulses, 30% smaller planet disk, high-DPI resize, usable form, reduced motion (including dropped-change-event fallback) and rendering lifecycle.                                                                                                                                                                                                                                                                                                                                                     |
-| `sidebar-scrollbars`      | `client/style.css`, `client/cockpit.css`, `client/main.ts`, `client/ui.ts`                                                       | [sidebar-browser.ts](../test/sidebar-browser.ts)                                                                                                                                                                                   | 13 viewport/scale/unread cases; visible tabs, saved-width recovery, square radar, chat cap, utility spacing and centered group-anchored vent, invariant red trim pixels, keyboard/wheel and scrollbars.                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `sidebar-scrollbars`      | `client/style.css`, `client/cockpit.css`, `client/main.ts`, `client/ui.ts`                                                       | [sidebar-browser.ts](../test/sidebar-browser.ts)                                                                                                                                                                                   | 13 viewport/scale/unread cases; visible tabs, saved-width recovery, wide radar, chat cap, utility spacing and centered group-anchored vent, invariant blue rail pixels, keyboard/wheel and scrollbars.                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `client-options-map-save` | `client/main.ts`, `client/ui.ts`                                                                                                 | [client-systems-browser.ts](../test/client-systems-browser.ts)                                                                                                                                                                     | Real browser options/key remapping/scaling/palette, map routes and Solo pause/save workflows; see test assertions for exact exercised controls.                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `communications-log`      | `server/game.ts`, `client/ui.ts`                                                                                                 | [chat-bubbles.ts](../test/chat-bubbles.ts), [v26.ts](../test/v26.ts), [core-actions.ts](../test/core-actions.ts)                                                                                                                   | Chat channel scoping, plain-text transient ship bubbles, bounded captain notes and non-idle-resetting ping/pong.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `radio-discovery`         | `server/radio-discovery.ts`, `server/quests.ts`, `shared/radio-stations.ts`, `client/radio.ts`, `client/ui.ts`, `server/main.ts` | [radio-discovery.ts](../test/radio-discovery.ts), [radio-playlists.ts](../test/radio-playlists.ts), [radio-content.ts](../test/radio-content.ts), [radio-browser.ts](../test/radio-browser.ts), [http-api.ts](../test/http-api.ts) | Saved per-captain unlocks and actual faction/system arrivals; scientist salvage and return reward; rare stable five-stop tour, real save reload, three seats, limits/abandonment and once-only payout; shuffle/ordered album looping, real browser ended events with silent WAV fixtures, pending-audio UI and same-browser captain/favorite isolation; retired provider routes and MP3 byte ranges. All 33 owner recordings have hash/size checks and actual browser decoding; Saved radio unlocks survive login; captain names never grant stations. Stations 1–4 hide titles; the ordered eight-track album shows them. |
@@ -644,8 +665,10 @@ departure, explicit Follow off/on and real-key takeover. Leader-only guidance
 replaces the inapplicable self-follow control; followers retain explicit opt-in.
 The disclosed fixture starts an attainable matched cruise with small lateral
 velocity error; it accelerates production ticks without changing flight physics.
-It asserts sustained authoritative movement/heading, sharp-turn slot recovery and
-manual override. Existing formation/network tests retain fleet envelope, consent,
+Real key gestures run on the native timer and wait for authoritative release;
+only the long coasts are accelerated. The leader must retain catch-up speed
+headroom. It asserts sustained authoritative movement/heading, sharp-turn slot
+recovery and manual override. Existing formation/network tests retain fleet envelope, consent,
 combat/landing suspension and leader-jump coverage. The five-client network case
 also closes the actual leader WebSocket, asserts follower suspension, reconnects
 the same elected leader, departs again after logout safe-docking and checks
@@ -1035,6 +1058,20 @@ reachable details and the narrow-screen fallback from 640×300 to 2560×1080.
 `radio-content.ts` also verifies that audio reimports preserve later uploads and
 reject missing supplemental recordings.
 
+## `difficulty-curve`: Station Tier 3 and fair fights
+
+`difficulty-curve.ts` checks the truce carried over after Station Tier 3: it holds
+until 5 kills or 30 jumps from the build, ends early at 150 ship power, and posts
+one end notice. Saves already past Tier 3 and the protection opt-out stay
+unprotected. It runs 300 ambient raid spawns per case through `spawnTraffic` and
+checks every group stays within the power budget for the captain present, with
+the weakest raider as the floor. Farside and empty systems are unscaled. Mission
+danger labels are checked for patrols and bounties against a 72-power Caravel, and
+cargo jobs keep the system rating. The career practice raider is checked for size,
+one-at-a-time spawning and the systems it skips. The Caravel stock loadout is
+checked for its Cinder Driver. `main-map-protection.ts` keeps covering the truce's
+targeting rules. Raid balance across real multiplayer sessions is not simulated.
+
 ## `modal-input-ownership`: dialogs and manual controls
 
 `overlay-input-browser.ts` checks nested confirmation/quit and
@@ -1104,6 +1141,39 @@ traces for before/after comparison. It does not certify every research node or
 transport. Native checkpoint recovery and network behavior remain separate suite
 contracts.
 
+## Network faults on the local transport
+
+`network-faults.ts` drives one captain through `Game.connect`'s socket listener
+with isolated saves and no timers or waits. It covers these scenarios:
+
+- **Replayed rewards:** a completed daily goal claimed three times pays once. A
+  cargo job accepted twice is recorded once, and landing at its destination twice
+  pays it once.
+- **Evicted connection:** after a second sign-in replaces the first, packets that
+  still arrive on the old connection cannot buy materials, accept jobs, write the
+  log or depart. The replacement connection keeps trading normally.
+- **Input ownership:** flight controls sent on the evicted connection never reach
+  the live ship or its queue. After a flight disconnect the captain is docked,
+  packets on the closed connection are ignored, and the next sign-in starts docked
+  with no queued or latched controls.
+- **Restart:** progress flushed to disk survives a new `Game` on the same save
+  directory. Credits and a goal claim changed after the flush are absent, and
+  replaying the committed claim after restart pays nothing.
+
+`websocket-transport.ts` checks that frames the peer sends after the server's
+close frame, including ones in the same TCP chunk, are discarded. The close frame
+only half-closes TCP, so without this the parser could keep dispatching commands.
+Partial frame and fragmented-message buffers are released on server close, peer
+close or transport error; subsequent traffic cannot accumulate in a closed socket.
+
+Limits: these are in-process reference-backend checks. They do not inject packet
+delay or reordering on a real network, and native online replacement and restart
+remain covered by `nakama-network.ts`. Legacy purchases such as `buyship`,
+`buymat` and `trade` carry no request identifier, so a client that deliberately
+sends one twice buys twice; the browser client does not resend actions on
+reconnect. Refinery and towing operations keep their own settled-operation
+receipts and their existing tests.
+
 ## Save catalog and local restore rehearsal
 
 `save-migrations.ts` exercises detached cargo/storage migration, legacy/current
@@ -1116,3 +1186,43 @@ The existing cargo, import/login, generator and native checkpoint tests retain
 their separate coverage. This is not full feature-schema validation, native
 restore coverage or an old/new executable archive-matrix rehearsal; see
 [SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md).
+
+## Client/server compatibility
+
+The `protocol-compatibility` system checks the wire epoch independently of package
+versions. Local Game tests deny incompatible hello packets before account creation
+and preserve committed credits through a rejected reconnect. Native SDK tests
+check fresh preflight, RPC responses and an authoritative join rejection after
+valid preflight. Local connection tests keep compatibility guidance intact after
+buffered packets and late transport errors. The real Nakama network fixture checks
+join-metadata rejection and both current and legacy admission. The browser test
+uses an isolated Solo captain and controlled status responses to exercise a cached
+page, a server update during reconnect, manual refresh, and saved-progress recovery.
+This is not coverage of arbitrary old client binaries or every mixed deployment.
+
+## Pressure Hull console finish
+
+The `pressure-hull-ui` system's `pressure-hull-browser.ts` checks the standard
+blue physical-console interface at 1920×1080 and 3440×1440. It exercises flight with the
+Tray expanded, landed overview with one compact world illustration, every available
+landed-service tab, Captain/Profile, Settings and map, and checks that the
+galaxy chart itself is drawn on the blue display glass. It checks service-panel
+horizontal containment and scrolling to the last row, and sidebar containment after
+changing Interface size to 120%. It verifies nonoverlapping console
+groups, sidebar separation, an open-top viewport with side/bottom trim, a readable
+populated chat line and utility buttons contained within their housing. It opens
+the Hail inbox while landed and checks that Hail stays visible in flight and when
+the Tray closes. It projects 32 fixture messages through the real chat renderer at both sizes,
+checks keyboard and wheel scrolling, sends a message through the normal input
+route, checks channel reachability and shell containment, then restores that same history
+to the compact console. Captures use the actual game, including populated service menus.
+The blue cockpit loads at the ordinary game address without a URL option.
+At 1000×900, the landing overview keeps the real spaceport news visible in a
+scrollable panel below the service content.
+
+The standard blue HUD is also exercised through the existing cockpit, sidebar,
+mission-list, dropdown and live-landed browser regressions. Compact consoles keep
+chat and utilities in separate scroll-reachable tracks; enlarged Tray tabs wrap,
+and pinned guidance retains usable mission-list space. The live-landed fixture
+seeds ordinary moving server-owned traffic near the dock camera so draw-motion coverage
+does not depend on unrelated ambient traffic random rolls.

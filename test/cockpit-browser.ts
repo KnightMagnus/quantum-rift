@@ -133,7 +133,7 @@ try {
     /assets\/|blob:|data:image/.test(land.image),
     'Landed artwork remains selected by production renderer',
   );
-  assert.equal(land.border, '6px');
+  assert.equal(land.border, '3px');
   assert.match(land.scan, /repeating-linear-gradient/);
   await page.screenshot({ path: path.join(feature.out, 'landing.png') });
   await page.click('#depart');
@@ -259,13 +259,17 @@ try {
         const chat = await page.locator('#consolechat').boundingBox(),
           utility = await page.locator('#consoleutilities').boundingBox();
         assert.ok(
-          utility!.x >= chat!.x + chat!.width - 1 && utility!.x - chat!.x - chat!.width <= 100,
-          'Utilities stay in the reserved end track beside centered chat',
+          (utility!.x >= chat!.x + chat!.width - 1 && utility!.x - chat!.x - chat!.width <= 100) ||
+            utility!.y >= chat!.y + chat!.height - 1,
+          'Utilities occupy their own track beside or below chat without overlap',
         );
         const dock = await page.locator('#functiondock').boundingBox();
         if (width <= 1250)
           assert.ok(
-            dock!.y >= Math.max(chat!.y + chat!.height, utility!.y + utility!.height) - 1,
+            [chat!, utility!].every(
+              (group) =>
+                dock!.y >= group.y + group.height - 1 || group.y >= dock!.y + dock!.height - 1,
+            ),
             'Stacked function housing cannot overlap COMMS or utilities: ' +
               JSON.stringify({ width, scale, tray, dock, chat, utility }),
           );
@@ -402,8 +406,8 @@ try {
     });
     if (width === 1440)
       assert.ok(
-        Math.abs((rects.chat.left + rects.chat.right) / 2 - width / 2) < 1,
-        'Desktop chat is horizontally centered',
+        rects.chat.left >= rects.dock.right && rects.chat.right <= rects.cockpit.right,
+        'Desktop chat occupies the available center track beside the function dock',
       );
     assert.ok(
       Math.abs(rects.backing.width - rects.canvas.width * rects.backing.dpr) < 1,
@@ -416,7 +420,12 @@ try {
     assert.equal(rects.trim.right, width);
     assert.equal(rects.trim.height, height);
     assert.equal(rects.cockpit.bottom, height);
-    assert.ok(rects.chat.left >= rects.dock.right, 'Dock does not cover chat');
+    assert.ok(
+      rects.chat.left >= rects.dock.right ||
+        rects.chat.bottom <= rects.dock.top ||
+        rects.dock.bottom <= rects.chat.top,
+      'Dock does not cover chat',
+    );
     assert.ok(rects.canvas.bottom <= rects.cockpit.top + 1, 'Console does not cover flight view');
     await page.locator('#traytoggle').focus();
     await page.keyboard.press('Enter');
@@ -426,6 +435,9 @@ try {
       false,
     );
     if (width === 1440) {
+      await page.evaluate(() =>
+        document.documentElement.style.setProperty('--tray-width', '520px'),
+      );
       const hudBefore = await page.locator('#hud').boundingBox();
       const grip = await page.locator('#hudgrip').boundingBox();
       await page.mouse.move(grip!.x + 2, grip!.y + 40);
@@ -435,7 +447,17 @@ try {
       const hudAfter = await page.locator('#hud').boundingBox();
       assert.ok(
         hudAfter!.width >= hudBefore!.width + 30,
-        'Embedded trim does not block actual sidebar resize drag',
+        'Embedded trim does not block actual sidebar resize drag: ' +
+          JSON.stringify({
+            hudBefore,
+            hudAfter,
+            grip,
+            drag: await page.locator('#hudgrip').getAttribute('class'),
+            hit: await page.evaluate(
+              ({ x, y }) => document.elementFromPoint(x, y)?.outerHTML.slice(0, 150),
+              { x: grip!.x + 2, y: grip!.y + 40 },
+            ),
+          }),
       );
       const savedWidth = await page.evaluate(() => Number(localStorage.getItem('rift.hud')));
       assert.ok(Math.abs(savedWidth - hudAfter!.width) < 1, 'Drag persists the actual tray width');

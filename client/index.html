@@ -15,8 +15,9 @@
       crossorigin
     />
     <link rel="stylesheet" href="cockpit.css" />
+    <link rel="stylesheet" href="pressure-hull.css" />
   </head>
-  <body>
+  <body class="pressure-hull">
     <canvas id="view"></canvas>
 
     <!-- right-hand HUD column: status bar plus the built-in companion -->
@@ -452,7 +453,10 @@
     <!-- landed -->
     <div id="land" class="overlay hidden">
       <div class="landbox metal">
-        <div class="landpic" id="landpic"></div>
+        <div class="landscene">
+          <div class="landpic" id="landpic"></div>
+          <div id="landnews"></div>
+        </div>
         <div class="landhead">
           <h2 id="landname"></h2>
           <div id="landfac" class="dim"></div>

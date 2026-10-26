@@ -104,7 +104,7 @@ try {
     fg: getComputedStyle(entity).color,
     scheme: getComputedStyle(entity).colorScheme,
   }));
-  assert.deepEqual(style, { bg: 'rgb(0, 0, 0)', fg: 'rgb(255, 255, 255)', scheme: 'dark' });
+  assert.deepEqual(style, { bg: 'rgb(10, 27, 35)', fg: 'rgb(205, 235, 250)', scheme: 'dark' });
   // Invalid amounts never reach the wire or mutate cargo/wallet.
   const before = await page.evaluate(() => ({ cargo: G.you!.cargo.ore, credits: G.you!.credits }));
   for (const value of ['', '0', '-3', '2.5', '2147483648']) {

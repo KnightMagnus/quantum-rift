@@ -29,7 +29,9 @@ export function initChatProjection(game: { you?: unknown }) {
     const left = Math.max(12, Math.min(anchor.left, right - 160));
     const width = Math.max(0, Math.min(anchor.width, right - left));
     const bottom = Math.min(innerHeight - 90, anchor.top + 6);
-    const height = Math.max(0, Math.min(420, bottom - Math.max(12, innerHeight * 0.38)));
+    // Preserve readable history on compact consoles instead of reserving empty sky.
+    const top = Math.min(Math.max(12, innerHeight * 0.38), Math.max(12, bottom - 180));
+    const height = Math.max(0, Math.min(420, bottom - top));
     // A heavily scrolled/shrunken console must never strand an offscreen projection.
     if (
       width < 140 ||

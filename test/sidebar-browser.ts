@@ -202,12 +202,18 @@ try {
       };
     });
     assert.ok(
-      Math.abs(radar.width - radar.height) < 1,
-      'System radar remains square: ' + viewportScenario.name,
+      Math.abs(
+        radar.width + 6 * viewportScenario.s - (radar.height + 6 * viewportScenario.s) * 1.8,
+      ) < 1,
+      'System radar retains the blue cockpit aspect: ' +
+        JSON.stringify({ viewportScenario, radar }),
     );
-    assert.equal(radar.pixels[0], radar.pixels[1], 'Radar backing is square without distortion');
     assert.ok(
-      Math.abs(radar.width - radar.parentWidth + 10 * viewportScenario.s) < 2,
+      Math.abs(radar.pixels[0] / radar.pixels[1] - radar.width / radar.height) < 0.02,
+      'Radar backing preserves its display aspect without distortion',
+    );
+    assert.ok(
+      Math.abs(radar.width - radar.parentWidth + 6 * viewportScenario.s) < 2,
       'Radar fills sidebar frame width',
     );
     if (viewportScenario.name === 'default')
@@ -265,7 +271,8 @@ try {
         'scaled-down',
         'unread-99',
         'unread-99-scaled',
-      ].includes(viewportScenario.name)
+      ].includes(viewportScenario.name) &&
+      before.clientWidth >= 350
     )
       assert.equal(
         new Set(before.tabs.map((tabBounds) => tabBounds.top)).size,
@@ -294,7 +301,7 @@ try {
     results.push({ case: viewportScenario.name, before, wheel, keyboard });
   }
   // Check the actual shell in both states and after a real pointer drag. Chrome
-  // stays outside the scrolling cockpit: the continuous red rail cannot vanish
+  // stays outside the scrolling cockpit: the continuous sculpted rail cannot vanish
   // when the narrower console needs vertical scrolling. The decorative fin is removed.
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.evaluate(() => {
@@ -302,6 +309,7 @@ try {
     document.body.classList.remove('scaled');
     document.documentElement.style.setProperty('--tray-width', '520px');
   });
+  let expectedRailPixels: number[][] | undefined;
   for (const state of ['expanded', 'resized', 'closed']) {
     if (state === 'resized') {
       const grip = await page.locator('#hudgrip').boundingBox();
@@ -370,14 +378,14 @@ try {
       'Utility icons and labels are not squished',
     );
     if (state === 'resized') {
-      assert.ok(Math.abs(shell.radar.w - shell.radar.h) < 1);
+      assert.ok(Math.abs(shell.radar.w + 6 - (shell.radar.h + 6) * 1.8) < 1);
       assert.ok(
         shell.radar.w > shellResults[0].shell.radar.w + 100,
         'Radar grows with pointer drag',
       );
     }
     const frame = await page.screenshot({ path: output + '/shell-' + state + '.png' });
-    const redPixels = await page.evaluate(
+    const railPixels = await page.evaluate(
       async ({ png: pngImage, rail }) => {
         const image = new Image();
         image.src = 'data:image/png;base64,' + pngImage;
@@ -395,19 +403,25 @@ try {
             1,
           ).data,
         ];
-        return [0.1, 0.28, 0.31, 0.5, 0.7, 0.73, 0.9].map((feature) =>
-          pixel(rail.w * feature, rail.y + 2),
-        );
+        return [0.1, 0.28, 0.31, 0.5, 0.7].map((feature) => pixel(10, rail.y + rail.h * feature));
       },
       { png: frame.toString('base64'), rail: shell.rail },
     );
     assert.ok(
-      redPixels.every(
+      railPixels.some(
         ([result, referenceGreen, referenceBlue]) =>
-          result > referenceGreen * 1.2 && result > referenceBlue * 1.2,
+          referenceBlue > result * 1.2 && referenceGreen > result * 1.1,
       ),
-      'Actual continuous red rail pixels survive every Tray state',
+      'Actual continuous sculpted rail pixels survive every Tray state: ' +
+        JSON.stringify(railPixels),
     );
+    if (expectedRailPixels)
+      assert.deepEqual(
+        railPixels,
+        expectedRailPixels,
+        'The visible rail keeps identical artwork through Tray resize/collapse',
+      );
+    else expectedRailPixels = railPixels;
     if (state !== 'closed')
       await page
         .locator('#radarwrap')
@@ -489,11 +503,16 @@ try {
     };
   });
   for (const session of styles.menus) {
-    assert.equal(session.scrollbarColor, 'rgb(208, 42, 34) rgb(8, 20, 25)');
+    assert.equal(
+      session.scrollbarColor,
+      session.id === 'landbody'
+        ? 'rgb(83, 134, 159) rgb(12, 32, 41)'
+        : 'rgb(68, 158, 208) rgb(4, 24, 45)',
+    );
     assert.equal(session.scrollbarWidth, 'thin');
   }
-  assert.equal(styles.checkbox, 'rgb(208, 42, 34)');
-  assert.equal(styles.volume, 'rgb(208, 42, 34)');
+  assert.equal(styles.checkbox, 'rgb(104, 204, 255)');
+  assert.equal(styles.volume, 'rgb(104, 204, 255)');
   assert.deepEqual(errors, []);
   assert.deepEqual(stylesheetErrors, []);
   fileSystem.writeFileSync(
