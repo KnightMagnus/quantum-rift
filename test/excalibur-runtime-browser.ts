@@ -578,8 +578,17 @@ try {
         ],
       };
       runtime.scene.display.update(snapshot, 1000);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      runtime.scene.display.update(snapshot, 1000);
+      // Cold image decoding can outlast a fixed delay on shared CI runners.
+      const decodeDeadline = Date.now() + 5000;
+      while (
+        !/Sprite/.test(
+          runtime.scene.display.actors.get('loot:987654')?.graphics.current?.constructor.name || '',
+        ) &&
+        Date.now() < decodeDeadline
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        runtime.scene.display.update(snapshot, 1000);
+      }
       const keys = [...runtime.scene.display.actors.keys()];
       const rock =
         runtime.scene.display.actors.get('rock:987654')?.graphics.current?.constructor.name;

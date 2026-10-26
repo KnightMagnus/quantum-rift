@@ -75,7 +75,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 - [Beta Solo save generator](test/Save%20Generator/README.md)
 - [Support diagnostics](docs/DIAGNOSTICS.md)
 - [Development tools](docs/DEVELOPMENT-TOOLS.md) and [code navigation](docs/CODE-NAVIGATION.md)
-- [Release notes](docs/RELEASE-3.4.3.md)
+- [Release notes](docs/RELEASE-3.4.4.md)
 
 ## Screenshots
 
@@ -92,3 +92,7 @@ The blue Pressure Hull cockpit is the standard interface for flight, station ser
 **Expanded chat**
 
 ![Blue chat display with a populated, scrollable history](docs/screenshots/pressure-hull-expanded-chat.png)
+
+**Captain profile**
+
+![Captain Profile with the portrait chooser open](docs/screenshots/pressure-hull-profile.png)

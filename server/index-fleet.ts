@@ -137,35 +137,74 @@ function footprint(space: Space, actor: IndexFleetActor): number {
   return Math.max(...forms.map((hull) => space.A.ships[hull].size));
 }
 
-/** Saved roster slots, rather than wire IDs, own non-overlapping neutral berths. */
+/** One full circuit of the parent ring around its worksite, in simulation seconds. */
+const SURVEY_ORBIT_SECONDS = 360;
+/** One full sweep of a drone around its parent, in simulation seconds. */
+const DRONE_SWEEP_SECONDS = 180;
+
+/** A moving formation berth and the velocity a ship needs to keep station on it. */
+interface FormationBerth {
+  x: number;
+  y: number;
+  /** Berth velocity, so steering matches it instead of braking to a stop at each point. */
+  vx: number;
+  vy: number;
+}
+
+/**
+ * Saved roster slots, rather than wire IDs, own non-overlapping neutral berths. The whole
+ * parent ring turns slowly around the worksite and drones sweep around their parent, so
+ * relative spacing is preserved while the survey stays visibly in motion.
+ */
 function formationPoint(
   space: Space,
   world: IndexFleetWorld,
   slot: number,
-): { x: number; y: number } {
+  now: number,
+): FormationBerth {
   const actor = world.actors[slot];
   if (actor.parent !== undefined) {
     const parent = world.actors[actor.parent];
     // Split blades converge on their saved parent position so peaceful rejoin can finish.
-    if (actor.blade) return { x: parent.x, y: parent.y };
-    const center = formationPoint(space, world, actor.parent);
+    if (actor.blade) return { x: parent.x, y: parent.y, vx: 0, vy: 0 };
+    const center = formationPoint(space, world, actor.parent, now);
     const siblings = world.actors.filter(
       (candidate) => candidate.parent === actor.parent && !candidate.dead && !candidate.hidden,
     );
+    const sweepRate = (Math.PI * 2) / DRONE_SWEEP_SECONDS;
     const angle =
-      (Math.PI * 2 * Math.max(0, siblings.indexOf(actor))) / Math.max(6, siblings.length);
+      (Math.PI * 2 * Math.max(0, siblings.indexOf(actor))) / Math.max(6, siblings.length) +
+      sweepRate * now;
     const radius = footprint(space, parent) + footprint(space, actor) + 120;
-    return { x: center.x + Math.cos(angle) * radius, y: center.y + Math.sin(angle) * radius };
+    return {
+      x: center.x + Math.cos(angle) * radius,
+      y: center.y + Math.sin(angle) * radius,
+      vx: center.vx - Math.sin(angle) * radius * sweepRate,
+      vy: center.vy + Math.cos(angle) * radius * sweepRate,
+    };
   }
   // Retain vacant parent berths after losses; survivors do not collapse toward the site.
   const parents = world.actors.filter((candidate) => candidate.parent === undefined);
-  const angle = -Math.PI * 0.75 + (Math.PI * 2 * parents.indexOf(actor)) / parents.length;
+  const orbitRate = (Math.PI * 2) / SURVEY_ORBIT_SECONDS;
+  const angle =
+    -Math.PI * 0.75 + (Math.PI * 2 * parents.indexOf(actor)) / parents.length + orbitRate * now;
   const widest = Math.max(...parents.map((parent) => footprint(space, parent)));
   const radius = Math.max(
     800,
     (widest * 2 + 180) / (2 * Math.sin(Math.PI / Math.max(2, parents.length))),
   );
-  return { x: world.site.x + Math.cos(angle) * radius, y: world.site.y + Math.sin(angle) * radius };
+  return {
+    x: world.site.x + Math.cos(angle) * radius,
+    y: world.site.y + Math.sin(angle) * radius,
+    vx: -Math.sin(angle) * radius * orbitRate,
+    vy: Math.cos(angle) * radius * orbitRate,
+  };
+}
+
+/** Fly a neutral machine along its moving berth. */
+function keepStation(space: Space, world: IndexFleetWorld, entity: Entity, now: number): void {
+  const berth = formationPoint(space, world, local(space).entities.get(entity.id)!, now);
+  space.steer(entity, berth.x, berth.y, true, berth.vx, berth.vy);
 }
 
 /** Keep neutral machine hull envelopes apart after actual movement, never moving players. */
@@ -260,7 +299,7 @@ function add(
     launched: 0,
   };
   const slot = world.actors.push(actor) - 1;
-  const berth = formationPoint(space, world, slot);
+  const berth = formationPoint(space, world, slot, capabilities.clock());
   actor.x = berth.x;
   actor.y = berth.y;
   if (parent !== undefined && !blade) world.actors[parent].launched++;
@@ -452,7 +491,7 @@ export const IndexFleetOperations = {
       for (const [slot, actor] of world.actors.entries()) {
         const entity = entityFor(space, slot);
         if (!entity) continue;
-        const berth = formationPoint(space, world, slot);
+        const berth = formationPoint(space, world, slot, this.clock());
         actor.x = entity.x = berth.x;
         actor.y = entity.y = berth.y;
       }
@@ -590,8 +629,7 @@ export const IndexFleetOperations = {
     if (world.rebootUntil > now) {
       entity.name = `Index reboot · ${Math.ceil(world.rebootUntil - now)}s`;
       entity.target = null;
-      const berth = formationPoint(space, world, local(space).entities.get(entity.id)!);
-      space.steer(entity, berth.x, berth.y, true);
+      keepStation(space, world, entity, now);
       return true;
     }
     if (actor.transition) {
@@ -617,15 +655,9 @@ export const IndexFleetOperations = {
       } else return true;
     }
     if (actor.base === 919) {
-      if (target) {
-        if (Number(entity.hull) === 920) transition(this, space, entity, 919);
-        const berth = formationPoint(space, world, local(space).entities.get(entity.id)!);
-        space.steer(entity, berth.x, berth.y, true);
-      } else {
-        if (Number(entity.hull) === 919) transition(this, space, entity, 920);
-        const berth = formationPoint(space, world, local(space).entities.get(entity.id)!);
-        space.steer(entity, berth.x, berth.y, true);
-      }
+      if (target && Number(entity.hull) === 920) transition(this, space, entity, 919);
+      if (!target && Number(entity.hull) === 919) transition(this, space, entity, 920);
+      keepStation(space, world, entity, now);
       return true; // Mining emitters never become unannounced combat lasers.
     }
     if (actor.base === 923) {
@@ -669,8 +701,7 @@ export const IndexFleetOperations = {
       space.fight(entity, target);
       entity.inp.fire1 = 1;
     } else {
-      const berth = formationPoint(space, world, local(space).entities.get(entity.id)!);
-      space.steer(entity, berth.x, berth.y, true);
+      keepStation(space, world, entity, now);
       if (actor.base === 914) entity.target = null; // A neutral sampler scan cannot fire or trigger retaliation.
     }
     return true;

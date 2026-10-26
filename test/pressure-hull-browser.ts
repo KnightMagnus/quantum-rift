@@ -320,6 +320,30 @@ try {
       true,
       'Channel tabs remain reachable',
     );
+    const parkedConsole = await page.evaluate(() => {
+      const blue = (value: string) =>
+        (value.match(/rgba?\([^)]+\)/g) || []).every((color) => {
+          const [red, green, blueChannel] = color.match(/[\d.]+/g)!.map(Number);
+          return blueChannel! >= red! && blueChannel! >= green!;
+        });
+      const status = getComputedStyle(document.querySelector('.chat-projector-status')!);
+      const glyph = getComputedStyle(document.querySelector('.chat-projector-status > span')!);
+      return {
+        unfilled: ['#consolechat', '#functiondock', '#consoleutilities'].every(
+          (selector) =>
+            !getComputedStyle(document.querySelector(selector)!).borderImageSlice.includes('fill'),
+        ),
+        glass: status.backgroundImage.includes('repeating-linear-gradient'),
+        blue: blue(status.backgroundImage) && blue(status.color) && blue(glyph.color),
+      };
+    });
+    assert.equal(
+      parkedConsole.unfilled,
+      true,
+      'Console frames do not paint their grey center over the blue glass',
+    );
+    assert.equal(parkedConsole.glass, true, 'The parked chat well keeps the blue display glass');
+    assert.equal(parkedConsole.blue, true, 'Expanding chat does not switch the console to teal');
     assert.ok(
       await page.locator('#chatprojection #chatlog').evaluate((log) => {
         const bounds = log.getBoundingClientRect();
