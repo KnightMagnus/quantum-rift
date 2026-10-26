@@ -1569,7 +1569,8 @@
         "client/hails_ui.ts",
         "client/ui.ts",
         "client/main.ts",
-        "client/sidebar-size.ts"
+        "client/sidebar-size.ts",
+        "client/render.ts"
       ],
       "services": [],
       "tests": ["pressure-hull-browser.ts"],

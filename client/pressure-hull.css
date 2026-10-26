@@ -928,3 +928,21 @@ body.pressure-hull :is(.osect, #optkeys, #optkeys .osect) {
     grid-row: 4;
   }
 }
+/* The tutorial card and caller portrait share the blue display glass. */
+body.pressure-hull :is(#tut, .portrait-window) {
+  border: 1px solid #2f6f96;
+  background-image: var(--display-lines), var(--display-glass);
+  background-color: var(--well);
+  color: var(--text);
+  box-shadow:
+    0 0 0 1px #071826,
+    0 3px 12px #000a;
+}
+body.pressure-hull #tut b {
+  color: #9fdcff;
+}
+body.pressure-hull #tut .x {
+  border-color: #2f6f96;
+  background: #0a2944;
+  color: #ceedfc;
+}

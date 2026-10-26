@@ -1083,7 +1083,8 @@ restore coverage or an old/new executable archive-matrix rehearsal; see
 The `pressure-hull-ui` system's `pressure-hull-browser.ts` checks the optional
 physical-console finish at 1920×1080 and 3440×1440. It exercises flight with the
 Tray expanded, landed overview with one compact world illustration, every available
-landed-service tab, Captain/Profile, Settings and map. It checks service-panel
+landed-service tab, Captain/Profile, Settings and map, and checks that the
+galaxy chart itself is drawn on the blue display glass. It checks service-panel
 horizontal containment and scrolling to the last row, and sidebar containment after
 changing Interface size to 120%. It verifies nonoverlapping console
 groups, sidebar separation, an open-top viewport with side/bottom trim, a readable

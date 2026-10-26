@@ -4694,7 +4694,23 @@ export function galaxy(
   const width2 = canvasRenderingContext2D.canvas.width,
     height2 = canvasRenderingContext2D.canvas.height,
     large = !!options.big;
-  canvasRenderingContext2D.fillStyle = '#02030a';
+  // The optional Pressure Hull finish draws the chart on its blue holographic glass.
+  const ink = document.body.classList.contains('pressure-hull')
+    ? {
+        space: '#031326',
+        lane: '#1f5c86',
+        faintLane: '#10324d',
+        names: ['#b9dcf0', '#7fa6c2'],
+        legend: 'rgba(3,19,38,.86)',
+      }
+    : {
+        space: '#02030a',
+        lane: '#34405a',
+        faintLane: '#1c2232',
+        names: ['#c8ccd8', '#80869a'],
+        legend: 'rgba(2,3,10,.82)',
+      };
+  canvasRenderingContext2D.fillStyle = ink.space;
   canvasRenderingContext2D.fillRect(0, 0, width2, height2);
   let mapFit2: MapFit;
   if (large) {
@@ -4797,7 +4813,7 @@ export function galaxy(
           [component, distance] = position(systemsById[link]);
         if (!enabled(firstValue, secondValue, 400) && !enabled(component, distance, 400)) continue;
         const known = explored.has(starSystem.id) || explored.has(link);
-        canvasRenderingContext2D.strokeStyle = known ? '#34405a' : '#1c2232';
+        canvasRenderingContext2D.strokeStyle = known ? ink.lane : ink.faintLane;
         canvasRenderingContext2D.beginPath();
         canvasRenderingContext2D.moveTo(firstValue, secondValue);
         canvasRenderingContext2D.lineTo(component, distance);
@@ -4914,7 +4930,7 @@ export function galaxy(
         canvasRenderingContext2D.font = 'bold 13px "Pixelify Sans", sans-serif';
         canvasRenderingContext2D.textAlign = 'center';
         canvasRenderingContext2D.lineWidth = 3;
-        canvasRenderingContext2D.strokeStyle = '#02030a';
+        canvasRenderingContext2D.strokeStyle = ink.space;
         const time = `YOUR STATION · T-${(clientGameState.you!.station && clientGameState.you!.station.ops) || 0}`;
         canvasRenderingContext2D.strokeText(time, positionX, positionY - quantity - 6);
         canvasRenderingContext2D.fillStyle = '#ffd27a';
@@ -4938,7 +4954,7 @@ export function galaxy(
         canvasRenderingContext2D.font = '12px "Pixelify Sans", sans-serif';
         canvasRenderingContext2D.textAlign = 'right';
         canvasRenderingContext2D.lineWidth = 3;
-        canvasRenderingContext2D.strokeStyle = '#02030a';
+        canvasRenderingContext2D.strokeStyle = ink.space;
         const join2 = allySys[starSystem.id].join(', ');
         canvasRenderingContext2D.strokeText(join2, positionX - radius - 4, positionY + radius + 15);
         canvasRenderingContext2D.fillText(join2, positionX - radius - 4, positionY + radius + 15);
@@ -4972,9 +4988,9 @@ export function galaxy(
         ' "Pixelify Sans", sans-serif';
       canvasRenderingContext2D.textAlign = 'center';
       canvasRenderingContext2D.lineWidth = 3;
-      canvasRenderingContext2D.strokeStyle = '#02030a';
+      canvasRenderingContext2D.strokeStyle = ink.space;
       canvasRenderingContext2D.strokeText(starSystem.name, positionX, positionY - radius - 5);
-      canvasRenderingContext2D.fillStyle = here ? '#fff' : seen ? '#c8ccd8' : '#80869a';
+      canvasRenderingContext2D.fillStyle = here ? '#fff' : seen ? ink.names[0] : ink.names[1];
       canvasRenderingContext2D.fillText(starSystem.name, positionX, positionY - radius - 5);
     }
   }
@@ -5050,7 +5066,7 @@ export function galaxy(
       canvasRenderingContext2D.font = 'bold 13px "Pixelify Sans", sans-serif';
       canvasRenderingContext2D.textAlign = 'left';
       canvasRenderingContext2D.lineWidth = 3;
-      canvasRenderingContext2D.strokeStyle = '#02030a';
+      canvasRenderingContext2D.strokeStyle = ink.space;
       canvasRenderingContext2D.strokeText(
         label.length > 38 ? label.slice(0, 36) + '…' : label,
         positionX + quantity + 4,
@@ -5080,7 +5096,7 @@ export function galaxy(
   }
   if (large && clientGameState.mapLegend === false) return; // the legend can be hidden
   if (large) {
-    canvasRenderingContext2D.fillStyle = 'rgba(2,3,10,.82)';
+    canvasRenderingContext2D.fillStyle = ink.legend;
     canvasRenderingContext2D.fillRect(
       0,
       height2 - (clientGameState.mapMode && clientGameState.mapMode !== 'factions' ? 26 : 42),

@@ -383,6 +383,13 @@ try {
     await page.locator('#gmap').waitFor({ state: 'visible' });
     await capture(page, 'map-' + width + 'x' + height);
     assert.ok(
+      await page.locator('#gcanvas').evaluate((canvas: HTMLCanvasElement) => {
+        const [red, green, blue] = canvas.getContext('2d')!.getImageData(1, 1, 1, 1).data;
+        return blue! > red! + 20 && blue! > green!;
+      }),
+      'The galaxy chart is drawn on the blue display glass',
+    );
+    assert.ok(
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
       'No document overflow',
     );
