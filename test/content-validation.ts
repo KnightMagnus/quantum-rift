@@ -51,6 +51,34 @@ assert.deepEqual(
   ],
   'independent authoring errors retain exact catalog locations',
 );
+for (const field of [
+  'shield',
+  'armor',
+  'accel',
+  'speed',
+  'turn',
+  'shieldRe',
+  'armorRe',
+  'fuelRe',
+  'strength',
+] as const) {
+  for (const value of [NaN, Infinity, -1]) {
+    const catalog = fixture();
+    catalog.ships[703][field] = value;
+    assert.deepEqual(
+      validateShipContent(catalog, () => true).map((diagnostic) => diagnostic.path),
+      [`ships[703].${field}`],
+      `${field} rejects ${value} before it reaches physics or combat`,
+    );
+  }
+  const zero = fixture();
+  zero.ships[703][field] = 0;
+  assert.deepEqual(
+    validateShipContent(zero, () => true),
+    [],
+    `${field} permits zero`,
+  );
+}
 for (const path of ['/ships/703.png', 'https://example.com/ship.png', 'ships/../703.png']) {
   const catalog = fixture();
   catalog.ships[703].img = path;

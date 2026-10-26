@@ -8,7 +8,8 @@ npm run validate:content
 
 The command composes `shared/assets.json` with the same `augmentAssets` used by
 the game. It checks catalog keys against positive integer hull IDs, finite
-nonnegative capacities, integer mount limits, stock weapon references/counts/ammo,
+nonnegative capacities, combat/movement stats and recharge rates, integer mount
+limits, stock weapon references/counts/ammo,
 and player stock gun/turret fitting limits. It checks each hull's shipyard image
 and the flight/glow files selected by the renderer. Artwork must use local
 `ships/*.png` or `ships/*.webp` paths and resolve to files under `client/assets`.
@@ -17,7 +18,8 @@ Validation does not start a server, access saves or change the catalog.
 It also checks that every `MK2_OF`, `MK3_OF` and `ARMADA_HULLS` entry in
 `shared/galaxy.ts` names a hull in the composed catalog, and that every weapon
 outfit names a known weapon. The CI quality job runs `npm run validate:content`
-directly, so content errors fail before the regression shards start.
+directly, so content errors fail the quality gate. Regression shards run in
+parallel with that job.
 
 To check a staged asset directory against the source catalog:
 

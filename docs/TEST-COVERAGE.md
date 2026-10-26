@@ -5,7 +5,8 @@
 `content-validation.ts` belongs to `ships-catalog-art`. It validates the composed
 ship catalog and local yard, flight and glow artwork references without starting
 a server or changing content. Negative fixtures cover mismatched IDs, invalid
-capacities, weapon references/counts/ammo, stock gun and turret overflow, missing
+capacities, combat/movement stats and recharge rates, weapon references/counts/ammo,
+stock gun and turret overflow, missing
 files and nonlocal artwork paths. Diagnostics carry the authoring file; refit and
 Armada hull references and outfit weapon references are checked against the
 composed catalog. CLI checks exercise successful validation, failed staged-asset
