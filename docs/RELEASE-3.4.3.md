@@ -1,4 +1,6 @@
-# Quantum Rift 3.4.3
+# Quantum Rift 0.3.4.3
+
+Public release: **0.3.4.3**. The source package and release tag retain **3.4.3** and **v3.4.3**, respectively.
 
 ## Blue cockpit
 

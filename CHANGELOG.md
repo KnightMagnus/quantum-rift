@@ -2,7 +2,7 @@
 
 Every release, newest first. The main story is left out on purpose.
 
-### 3.4.3
+### 0.3.4.3
 
 - Make the blue Pressure Hull cockpit the standard interface; no special URL is needed. Preserve saved Tray widths, wrap enlarged menu tabs and long dialog choices, and keep compact chat and pinned mission guidance usable.
 

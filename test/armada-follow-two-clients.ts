@@ -102,7 +102,8 @@ async function until<Value>(
 }
 let browser;
 const pages = [],
-  errors: string[] = [];
+  errors: string[] = [],
+  networkErrors: string[] = [];
 try {
   await ready(server, origin);
   browser = await chromium.launch({
@@ -118,6 +119,12 @@ try {
     const page = await context.newPage();
     pages.push(page);
     page.on('pageerror', (entity) => errors.push(String(entity)));
+    page.on('requestfailed', (request) =>
+      networkErrors.push(`${request.url()}: ${request.failure()?.errorText}`),
+    );
+    page.on('response', (response) => {
+      if (response.status() >= 400) networkErrors.push(`${response.status()} ${response.url()}`);
+    });
     await page.goto(origin);
     await page.waitForFunction(
       () => typeof G !== 'undefined' && !!document.getElementById('lver')!.textContent,
@@ -346,6 +353,10 @@ try {
     cruiseResult,
   );
 } catch (error) {
+  fileSystem.writeFileSync(
+    path.join(evidence, 'client-errors.json'),
+    JSON.stringify({ errors, networkErrors }, null, 2),
+  );
   await failureEvidence(browser, evidence, error);
   throw error;
 } finally {

@@ -10,17 +10,24 @@ Game.prototype.landed = function (session) {
   const stellar = STELLARS[session.data.stellar!];
   if (!stellar) return;
   seeded.add(this);
-  // Keep one real moving NPC in the dock camera regardless of unrelated traffic RNG.
-  const ship = this.spaces[session.data.sys].makeShip({
-    hull: 704,
-    faction: 'quantum',
-    x: stellar.x + 450,
-    y: stellar.y,
-    a: Math.PI / 2,
-    vx: 60,
-    vy: 0,
-    ai: 'leave',
-    name: 'Dock traffic fixture',
-  });
-  ship.life = 120;
+  // A single departing NPC can leave the camera before a slow renderer reaches
+  // the last service tab. Seed a continuing stream, not a frozen/teleported ship:
+  // every actor still uses ordinary production AI, physics and draw handling.
+  const traffic = () => {
+    if (this.paused || !session.data.stellar) return;
+    const ship = this.spaces[session.data.sys].makeShip({
+      hull: 704,
+      faction: 'quantum',
+      x: stellar.x + 100,
+      y: stellar.y,
+      a: Math.PI / 2,
+      vx: 60,
+      vy: 0,
+      ai: 'leave',
+      name: 'Dock traffic fixture',
+    });
+    ship.life = 120;
+  };
+  traffic();
+  setInterval(traffic, 3000).unref();
 };
