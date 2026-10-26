@@ -235,7 +235,10 @@ export const SHIPS23: Ship23Hull[] = [
     crew: 14,
     strength: 70,
     size: 96,
-    weapons: [[130, 2, 0]],
+    weapons: [
+      [129, 1, 0],
+      [130, 2, 0],
+    ],
     desc: 'A long cargo spine racked with colourful containers, a bridge up front and a turret at each end. Free traders run them in pairs; raiders learn to leave them alone.',
   }),
   quantity({

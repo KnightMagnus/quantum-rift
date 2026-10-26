@@ -8,6 +8,10 @@ Every release, newest first. The main story is left out on purpose.
 - Land on selected worlds and mission destinations with L; keep flight arrows clear of HUD cards.
 - Give wide, short galaxy maps a side panel and prevent overlapping system labels.
 - Add two supplied Wave Function Collapse recordings and preserve them during audio reimports.
+- Keep newcomer protection after Station Tier 3 until 5 kills, 30 jumps or 150 ship power, and confirm the Tier 3 build first.
+- Size ambient raids and war fleets to the strongest captain in the system; Farside keeps full-strength raids.
+- Rate combat job danger by hostile power against yours, with a new Deadly tier and both numbers shown.
+- Send a lone practice raider for the Clear a raider career goal, and fit the Caravel Trader with a Cinder Driver.
 
 ### 3.4.2
 

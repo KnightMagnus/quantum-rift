@@ -1009,6 +1009,20 @@ reachable details and the narrow-screen fallback from 640×300 to 2560×1080.
 `radio-content.ts` also verifies that audio reimports preserve later uploads and
 reject missing supplemental recordings.
 
+## `difficulty-curve`: Station Tier 3 and fair fights
+
+`difficulty-curve.ts` checks the truce carried over after Station Tier 3: it holds
+until 5 kills or 30 jumps from the build, ends early at 150 ship power, and posts
+one end notice. Saves already past Tier 3 and the protection opt-out stay
+unprotected. It runs 300 ambient raid spawns per case through `spawnTraffic` and
+checks every group stays within the power budget for the captain present, with
+the weakest raider as the floor. Farside and empty systems are unscaled. Mission
+danger labels are checked for patrols and bounties against a 72-power Caravel, and
+cargo jobs keep the system rating. The career practice raider is checked for size,
+one-at-a-time spawning and the systems it skips. The Caravel stock loadout is
+checked for its Cinder Driver. `main-map-protection.ts` keeps covering the truce's
+targeting rules. Raid balance across real multiplayer sessions is not simulated.
+
 ## `modal-input-ownership`: dialogs and manual controls
 
 `overlay-input-browser.ts` checks nested confirmation/quit and

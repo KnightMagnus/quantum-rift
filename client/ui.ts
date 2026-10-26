@@ -146,7 +146,7 @@ import {
 } from './frontier_ui.ts';
 
 import { ROLES_INFO, BEATS } from '../shared/roles.ts';
-import { levelOf, winOdds } from '../shared/hostile.ts';
+import { levelOf, winOdds, TIER3_TRUCE } from '../shared/hostile.ts';
 
 // ------------------------------------------------------------------ type definitions
 
@@ -712,9 +712,12 @@ export function hud(): void {
         !playerPayload.newcomer || !!(starSystem && starSystem.arena),
       ); // meaningless in the Crucible
       cachedElement.classList.toggle('off', !enabled);
-      cachedElement.textContent = enabled
-        ? '🛡 NEWCOMER TRUCE · PRE T-3'
-        : '🛡 NO NEWCOMER TRUCE: FARSIDE';
+      const truceLeft = playerPayload.truceLeft;
+      cachedElement.textContent = !enabled
+        ? '🛡 NO NEWCOMER TRUCE: FARSIDE'
+        : truceLeft
+          ? `🛡 TRUCE ENDING · ${truceLeft.kills} KILLS / ${truceLeft.jumps} JUMPS LEFT`
+          : '🛡 NEWCOMER TRUCE · PRE T-3';
     }
   }
   elementById2('cr').textContent = credits(playerPayload.credits) + ' cr';
@@ -2309,9 +2312,9 @@ function onAct(mouseEvent: MouseEvent): void {
       );
       break;
     }
-    case 'st':
+    case 'st': {
       mouseEvent.preventDefault();
-      send({
+      const stationMessage = {
         t: 'station',
         op: domStringMap.op,
         id: domStringMap.id,
@@ -2321,8 +2324,21 @@ function onAct(mouseEvent: MouseEvent): void {
         mat: domStringMap.mat,
         g: domStringMap.g ? +domStringMap.g : undefined,
         n: domStringMap.n ? +domStringMap.n : undefined,
-      });
+      };
+      const playerPayload = clientGameState.you!;
+      if (
+        domStringMap.op === 'upgrade' &&
+        playerPayload.station?.ops === 2 &&
+        playerPayload.newcomer
+      )
+        ask(
+          `Build Station Tier 3? Newcomer protection then winds down: after ${TIER3_TRUCE.kills} kills, ${TIER3_TRUCE.jumps} jumps or once your ship reaches ${TIER3_TRUCE.power} power, raiders attack you in dangerous systems. Your ship power is ${Math.round(playerPayload.power || 0)}.`,
+          () => send(stationMessage),
+          { yes: 'BUILD T-3' },
+        );
+      else send(stationMessage);
       break;
+    }
     case 'rename':
       send({ t: 'rename', name: elementById2('rename').value });
       break;

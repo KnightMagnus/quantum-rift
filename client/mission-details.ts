@@ -14,6 +14,8 @@ import { route } from '../shared/rules.ts';
 import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.ts';
 import { contractShares } from '../shared/mission-payouts.ts';
 import { ShipCapacity, reservedCargoTonnes } from '../shared/ship-capacity.ts';
+import { dangerTier, raidBudget } from '../shared/hostile.ts';
+import type { DangerTier } from '../shared/hostile.ts';
 
 const kinds = [
   ['all', 'All types'],
@@ -38,6 +40,32 @@ export function missionKind(missionDetailsInput: MissionDetailsInput) {
   if (missionDetailsInput.type === 'passenger') return 'passenger';
   if (['bounty', 'assassinate', 'patrol'].includes(missionDetailsInput.type!)) return 'combat';
   return 'explore';
+}
+const DANGER_LABELS: Record<DangerTier, string> = {
+  low: '● Low',
+  moderate: '◆ Moderate',
+  high: '▲ High',
+  deadly: '☠ Deadly',
+};
+/**
+ * Estimates the hostile power a combat job puts against the captain.
+ * @param clientGameState Client game state.
+ * @param missionDetailsInput Job or mission offer.
+ * @param power Captain's effective combat power.
+ * @param danger The job system's own danger rating.
+ * @returns Expected hostile power, or null for jobs that are not straight fights.
+ */
+function combatThreat(
+  clientGameState: ClientGameState,
+  missionDetailsInput: MissionDetailsInput,
+  power: number,
+  danger: number | undefined,
+): number | null {
+  if (missionDetailsInput.hull)
+    return clientGameState.A!.ships[missionDetailsInput.hull]?.strength || null;
+  // Patrol kills come from ambient raids, which are sized to the strongest captain present.
+  if (missionDetailsInput.type === 'patrol' && danger != null) return raidBudget(power, danger);
+  return null;
 }
 export function missionDetails(
   clientGameState: ClientGameState,
@@ -95,14 +123,19 @@ export function missionDetails(
   if (missionDetailsInput.type === 'warband') danger = Math.max(4, danger || 0);
   if (['patrol', 'bounty', 'assassinate'].includes(missionDetailsInput.type!))
     danger = Math.max(2, danger || 0);
-  if (
-    missionDetailsInput.hull &&
-    clientGameState.A!.ships[missionDetailsInput.hull]?.strength >
-      (clientGameState.A!.ships[playerPayload.ship?.hull]?.strength || 10) * 1.6
-  )
-    danger = Math.max(4, danger || 0);
-  const risk =
+  let risk =
     danger == null ? 'See briefing' : danger >= 4 ? '▲ High' : danger >= 2 ? '◆ Moderate' : '● Low';
+  const power = Math.round(
+      playerPayload.power || clientGameState.A!.ships[playerPayload.ship?.hull]?.strength || 10,
+    ),
+    threat = combatThreat(
+      clientGameState,
+      missionDetailsInput,
+      power,
+      systemsById[system!]?.danger,
+    );
+  if (threat != null)
+    risk = `${DANGER_LABELS[dangerTier(power, threat)]} (threat ${Math.round(threat)} vs your ${power})`;
   const stellarBody = STELLARS[(missionDetailsInput.dest || missionDetailsInput.stellar)!];
   const turnIn = stellarBody
     ? `Land at ${stellarBody.name} (${systemsById[stellarBody.system].name})`

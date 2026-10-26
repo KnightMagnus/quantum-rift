@@ -29,6 +29,7 @@
     "balance.ts",
     "landing-autopilot.ts",
     "playtest-clarity.ts",
+    "difficulty-curve.ts",
     "faction-standing.ts",
     "gateway-navigation.ts",
     "eventide.ts",
@@ -1574,6 +1575,21 @@
       "services": [],
       "tests": ["playtest-clarity.ts", "cockpit-layout-browser.ts"],
       "asserts": "Research lab and syndicate trait bonuses read as words with no raw camelCase stat keys. Off-screen edge arrows keep their bearing but stop short of the career card and its label room, while arrows elsewhere on the border are unchanged. Overlapping card clearance is order-independent. Wide-short maps place details beside the canvas, with a usable full-width fallback on narrow landscape windows."
+    },
+    {
+      "id": "difficulty-curve",
+      "owners": [
+        "shared/hostile.ts",
+        "server/game.ts",
+        "server/space.ts",
+        "client/mission-details.ts",
+        "client/ui.ts",
+        "shared/ships23.ts",
+        "shared/tutorial.ts"
+      ],
+      "services": [],
+      "tests": ["difficulty-curve.ts", "main-map-protection.ts"],
+      "asserts": "Building Station Tier 3 carries the newcomer truce over until 5 kills, 30 jumps or 150 ship power, then announces its end; saves already past Tier 3 and the protection opt-out stay unprotected. Ambient raids and war fleets stay within a power budget scaled to the strongest captain present, keeping the weakest raider as a floor, and Farside or empty systems are unscaled. Combat job danger compares hostile power with the captain's and shows both numbers, while non-combat jobs keep the system rating. The Clear a raider career goal sends one practice raider sized to the captain, never in Farside, the arena or the Deep. The Caravel ships with a Cinder Driver."
     }
   ],
   "routes": {
