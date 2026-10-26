@@ -44,6 +44,11 @@ async function geometry(page: Page) {
       height: innerHeight,
       overflow: document.documentElement.scrollWidth,
       font: parseFloat(getComputedStyle(document.body).fontSize),
+      cockpit: rect('#cockpit'),
+      padding: [
+        parseFloat(getComputedStyle(document.querySelector('#cockpit')!).paddingLeft),
+        parseFloat(getComputedStyle(document.querySelector('#cockpit')!).paddingRight),
+      ],
       left: rect('#functiondock'),
       chat: rect('#consolechat'),
       right: rect('#consoleutilities'),
@@ -95,16 +100,17 @@ try {
       'Left / center / right never overlap',
     );
     assert.ok(
-      bounds.left.x < 80 && bounds.right.right > width - 100,
-      'Button groups remain at opposite ends',
+      Math.abs(bounds.left.x - bounds.cockpit.x - bounds.padding[0]) < 1 &&
+        Math.abs(bounds.right.right - bounds.cockpit.right + bounds.padding[1]) < 1,
+      'Button groups remain at opposite ends: ' + JSON.stringify(bounds),
     );
     assert.ok(bounds.chat.width > lastChatWidth, 'Chat absorbs extra width');
     lastChatWidth = bounds.chat.width;
     reference ??= bounds.buttons;
     assert.deepEqual(
-      bounds.buttons,
-      reference,
-      'Identical CSS button sizes across all large screens',
+      bounds.buttons.map(({ id, height }) => ({ id, height })),
+      reference.map(({ id, height }) => ({ id, height })),
+      'Consistent control heights while key widths adapt to the blue console',
     );
     await page.screenshot({ path: path.join(output, 'flight-' + width + 'x' + height + '.png') });
     await page.click('#captainshortcut');
@@ -185,8 +191,18 @@ try {
     const bounds = await geometry(page);
     assert.ok(bounds.overflow <= width);
     assert.ok(
-      bounds.left.right <= bounds.chat.x + 1 && bounds.chat.right <= bounds.right.x + 1,
-      'Narrow groups remain disjoint',
+      [
+        [bounds.left, bounds.chat],
+        [bounds.chat, bounds.right],
+        [bounds.left, bounds.right],
+      ].every(
+        ([first, second]) =>
+          first.right <= second.x + 1 ||
+          second.right <= first.x + 1 ||
+          first.bottom <= second.y + 1 ||
+          second.bottom <= first.y + 1,
+      ),
+      'Narrow groups remain disjoint when stacked or side by side',
     );
     await page.locator('#captainshortcut').click();
     await page.locator('#infobox').waitFor({ state: 'visible' });

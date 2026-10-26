@@ -1,3 +1,4 @@
+import { COMPATIBILITY_MESSAGE } from '../shared/protocol.ts';
 import { overlays } from './overlay-controller.ts';
 import { LandingFeedback, landingRefusal } from './landing-feedback.ts';
 import { initProfile } from './profile_ui.ts';
@@ -721,7 +722,14 @@ elementById2('lpass').onkeydown = (keyboardEvent) => {
 try {
   elementById2('lname').value = localStorage.getItem('rift.name') || '';
 } catch {}
-const statusRequest = fetch('/api/status')
+const compatibilityRefresh = document.createElement('button');
+compatibilityRefresh.id = 'compatibility-refresh';
+compatibilityRefresh.className = 'btn hidden';
+compatibilityRefresh.textContent = 'REFRESH GAME PAGE';
+compatibilityRefresh.onclick = () => location.reload();
+elementById2('lerr').setAttribute('role', 'alert');
+elementById2('lerr').after(compatibilityRefresh);
+const statusRequest = fetch('/api/status', { cache: 'no-store' })
   .then((response) => response.json())
   .then((state) => {
     nakamaConfig = state.nakama;
@@ -835,6 +843,7 @@ function openSocket(tries: number) {
     { name, pass },
   );
   webSocket = socket;
+  let compatibilityFailure = false;
   const current = () => webSocket === socket && sessionEpoch === epoch;
   socket.onopen = () => {
     if (!current()) {
@@ -860,6 +869,10 @@ function openSocket(tries: number) {
     clientGameState._lookT = null;
     elementById2('lbtn').disabled = false;
     if (!clientGameState.you) return;
+    if (compatibilityFailure) {
+      void logOut(COMPATIBILITY_MESSAGE);
+      return;
+    }
     if (!clientGameState._kicked && tries < 30) {
       if (!tries) toast('Connection lost. Reconnecting...');
       elementById2('lstat').textContent = 'Reconnecting to the server...';
@@ -878,6 +891,10 @@ function openSocket(tries: number) {
     void logOut(reason);
   };
   socket.onerror = (message) => {
+    if (current() && message === COMPATIBILITY_MESSAGE) {
+      compatibilityFailure = true;
+      compatibilityRefresh.classList.remove('hidden');
+    }
     if (current() && !clientGameState.you) {
       elementById2('lerr').textContent = message || 'Could not reach the Quantum Rift server.';
       elementById2('lbtn').disabled = false;
@@ -898,6 +915,7 @@ function onMessage(serverMessage: ServerMessage) {
       }
       break;
     case 'welcome':
+      compatibilityRefresh.classList.add('hidden');
       if (!clientGameState.solo && !localReferenceTransport && !friendHostTransport) {
         // Welcome establishes this native presence before its first controls, even if join/onopen is pending.
         sequence = 0;
@@ -2774,7 +2792,7 @@ function paintRange(htmlInputElement: HTMLInputElement): void {
     ((+htmlInputElement.value - +htmlInputElement.min) /
       (+htmlInputElement.max - +htmlInputElement.min || 1)) *
     100;
-  htmlInputElement.style.background = `linear-gradient(90deg,#e0362a ${position}%,#3a0808 ${position}%)`;
+  htmlInputElement.style.background = `linear-gradient(90deg,var(--range-fill, #e0362a) ${position}%,var(--range-track, #3a0808) ${position}%)`;
 } // red fill
 document.addEventListener('input', (event) => {
   if (
@@ -2937,7 +2955,7 @@ function resize(): void {
 window.addEventListener('resize', resize);
 // Sidebar reflow (including UI scale and persisted widths) also changes the radar.
 new ResizeObserver(resize).observe(elementById2('radar'));
-initSidebarSize(resize);
+initSidebarSize(resize, 1.8);
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.
@@ -2959,10 +2977,12 @@ try {
 elementById2('hudgrip').addEventListener('pointerdown', (pointerEvent) => {
   pointerEvent.preventDefault();
   const cachedElement = elementById2('hudgrip');
+  const initialPointerX = pointerEvent.clientX;
+  const initialWidth = elementById2('hud').getBoundingClientRect().width;
   cachedElement.classList.add('drag');
   const move = (pointerEvent: PointerEvent) => {
     const setHud2 = setHud(
-      Math.min(window.innerWidth * 0.6, window.innerWidth - pointerEvent.clientX),
+      Math.min(window.innerWidth * 0.6, initialWidth + initialPointerX - pointerEvent.clientX),
     );
     try {
       localStorage.setItem('rift.hud', String(setHud2));

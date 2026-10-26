@@ -33,3 +33,6 @@ client/assets/cursors/*.png -filter -diff -merge -text
 
 # Small deterministic purchase confirmation needs no separate LFS hydration.
 client/assets/sfx/ui_buy.wav -filter -diff -merge -text
+
+# Pressure Hull chassis texture ships directly in ordinary clones.
+client/assets/hud/pressure-hull/*.webp -filter -diff -merge -text

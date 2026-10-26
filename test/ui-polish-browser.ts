@@ -106,15 +106,20 @@ try {
       const cockpit = document.getElementById('cockpit')!.getBoundingClientRect();
       return {
         width: box.width / usable.width,
+        expectedWidth: Math.min(2700, usable.width - 150) / usable.width,
         height: box.height / usable.height,
+        expectedHeight: Math.min(1100, usable.height - 84) / usable.height,
         centeredX: Math.abs(box.x + box.width / 2 - usable.width / 2),
         centeredY: Math.abs(box.y + box.height / 2 - usable.height / 2),
         sidebarGap: sidebar.left - box.right,
         cockpitGap: cockpit.top - box.bottom,
       };
     });
-    assert(Math.abs(dimensions.width - 0.7) < 0.005);
-    assert(Math.abs(dimensions.height - 0.86) < 0.005);
+    assert(
+      Math.abs(dimensions.width - dimensions.expectedWidth) < 0.005,
+      JSON.stringify({ value, dimensions }),
+    );
+    assert(Math.abs(dimensions.height - dimensions.expectedHeight) < 0.005);
     assert(dimensions.centeredX < 2 && dimensions.centeredY < 2);
     assert(dimensions.sidebarGap > 0 && dimensions.cockpitGap > 0);
     measurements.push({ viewport: '3440x1440', scale: value, ...dimensions });

@@ -61,7 +61,7 @@ export const TUTORIAL: TutorialStep[] = [
   {
     ev: 'kill',
     title: 'Clear a raider',
-    text: 'Destroy a pirate or bounty target. Hollow raiders haunt Gloam and other dangerous systems; R targets the nearest hostile.',
+    text: 'Destroy a pirate or bounty target. After your next jump a lone Hollow straggler comes for you; R targets the nearest hostile.',
     reward: 6000,
   },
   {

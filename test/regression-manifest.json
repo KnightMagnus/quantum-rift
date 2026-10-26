@@ -29,6 +29,7 @@
     "balance.ts",
     "landing-autopilot.ts",
     "playtest-clarity.ts",
+    "difficulty-curve.ts",
     "faction-standing.ts",
     "gateway-navigation.ts",
     "eventide.ts",
@@ -42,6 +43,7 @@
     "passengers.ts",
     "outfitter-icons.ts",
     "catalog-artwork.ts",
+    "content-validation.ts",
     "ship-banking.ts",
     "animation-frames.ts",
     "wormhole-loop.ts",
@@ -126,7 +128,8 @@
     "wire-contracts.ts",
     "story-continuation.ts",
     "index-presentation.ts",
-    "performance-native.ts"
+    "performance-native.ts",
+    "protocol-compatibility.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -175,7 +178,9 @@
     "cockpit-layout-browser.ts",
     "story-realities-browser.ts",
     "overlay-input-browser.ts",
-    "ui-polish-browser.ts"
+    "ui-polish-browser.ts",
+    "pressure-hull-browser.ts",
+    "protocol-compatibility-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -513,6 +518,7 @@
     "polish-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "cursors-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "landed-live-browser.ts": [
+      "fixtures/landed-live-preload.ts",
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
       "seed-random.ts"
@@ -608,6 +614,7 @@
       "helpers/dredge-fixture.ts"
     ],
     "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
+    "pressure-hull-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "helpers/story-foundations.ts": ["helpers/mocks.ts"],
     "helpers/index-worksite.ts": ["helpers/mocks.ts"],
     "story-realities-browser.ts": [
@@ -926,17 +933,23 @@
     },
     {
       "id": "ships-catalog-art",
-      "owners": ["shared/rules.ts", "client/artwork.ts", "client/render.ts"],
+      "owners": [
+        "shared/rules.ts",
+        "client/artwork.ts",
+        "client/render.ts",
+        "tools/content-validation.ts"
+      ],
       "services": [],
       "tests": [
         "catalog-artwork.ts",
+        "content-validation.ts",
         "outfitter-icons.ts",
         "animation-frames.ts",
         "ship-banking.ts",
         "v25.ts",
         "ship-turning-assets-browser.ts"
       ],
-      "asserts": "Versioned catalog URL/cache semantics, shipped icon headers/dimensions and asset wiring, animation bounds and banked sprite selection. All 122 decoded hull sheets contain 108 distinct nonempty base frames with matched glow geometry; both runtime banks activate at actual stock turn rates."
+      "asserts": "Composed ship catalog IDs, finite capacities/combat/movement stats/recharge rates, weapon references/counts/ammo, player stock mount limits and local yard/flight/glow artwork existence, with malformed fixtures and CLI exit/diagnostic coverage. Versioned catalog URL/cache semantics, shipped icon headers/dimensions and asset wiring, animation bounds and banked sprite selection. All 122 decoded hull sheets contain 108 distinct nonempty base frames with matched glow geometry; both runtime banks activate at actual stock turn rates."
     },
     {
       "id": "world-scenery",
@@ -980,7 +993,7 @@
       ],
       "services": [],
       "tests": ["sidebar-browser.ts"],
-      "asserts": "Thirteen viewport/scale/width/unread cases: every menu tab fully visible without scrolling or overlap, single-row desktop defaults, narrow/scaled wrapping, wheel and keyboard reachability, old saved-width reload and viewport recovery, square full-width radar and backing geometry including real drag growth, capped COMMS/reserved utility widths, utility-anchored centered vent below controls across viewport/UI scales, invariant viewport trim in closed/expanded/resized states, red menu scrollbar/accent styles. All ten ordered component CSS imports load nonempty rules through the real server without failed stylesheet requests; existing viewport/trim/interaction assertions are retained."
+      "asserts": "Thirteen viewport/scale/width/unread cases: every menu tab fully visible without scrolling or overlap, single-row desktop defaults, narrow/scaled wrapping, wheel and keyboard reachability, old saved-width reload and viewport recovery, wide full-width radar and backing geometry including real drag growth, capped COMMS/reserved utility widths, utility-anchored centered vent below controls across viewport/UI scales, invariant viewport trim in closed/expanded/resized states, blue menu scrollbar/accent styles. All ten ordered component CSS imports load nonempty rules through the real server without failed stylesheet requests; existing viewport/trim/interaction assertions are retained."
     },
     {
       "id": "client-options-map-save",
@@ -1575,6 +1588,21 @@
       "asserts": "Confirmation, quit, boarding, Options and Controls have one keyboard owner, explicit priority and safe focus return. Options preserves native settings/button activation, pending-capture Escape cancellation, reserved-key denial, swaps, unbinding and saved bindings. Controls retains Change Keys and consumes Escape above the map. Blocking dialogs suppress manual keyboard/pointer/touch/gamepad commands and held input remains latched until release; other overlay owners remain unchanged."
     },
     {
+      "id": "pressure-hull-ui",
+      "owners": [
+        "client/pressure-hull.css",
+        "client/assets/hud/pressure-hull/",
+        "client/hails_ui.ts",
+        "client/ui.ts",
+        "client/main.ts",
+        "client/sidebar-size.ts",
+        "client/render.ts"
+      ],
+      "services": [],
+      "tests": ["pressure-hull-browser.ts"],
+      "asserts": "Standard blue physical console at the ordinary game address preserves actual flight/landing/menus at 1920x1080 and 3440x1440, a single integrated landed shell and existing illustration, open-top side/bottom viewport trim, readable populated chat, contained utilities, Hail inbox access while landed/flying and with the Tray closed, original artwork and separated console/sidebar regions."
+    },
+    {
       "id": "playtest-clarity",
       "owners": [
         "client/edge-arrow.ts",
@@ -1587,6 +1615,41 @@
       "services": [],
       "tests": ["playtest-clarity.ts", "cockpit-layout-browser.ts"],
       "asserts": "Research lab and syndicate trait bonuses read as words with no raw camelCase stat keys. Off-screen edge arrows keep their bearing but stop short of the career card and its label room, while arrows elsewhere on the border are unchanged. Overlapping card clearance is order-independent. Wide-short maps place details beside the canvas, with a usable full-width fallback on narrow landscape windows."
+    },
+    {
+      "id": "difficulty-curve",
+      "owners": [
+        "shared/hostile.ts",
+        "server/game.ts",
+        "server/space.ts",
+        "client/mission-details.ts",
+        "client/ui.ts",
+        "shared/ships23.ts",
+        "shared/tutorial.ts"
+      ],
+      "services": [],
+      "tests": ["difficulty-curve.ts", "main-map-protection.ts"],
+      "asserts": "Building Station Tier 3 carries the newcomer truce over until 5 kills, 30 jumps or 150 ship power, then announces its end; saves already past Tier 3 and the protection opt-out stay unprotected. Ambient raids and war fleets stay within a power budget scaled to the strongest captain present, keeping the weakest raider as a floor, and Farside or empty systems are unscaled. Combat job danger compares hostile power with the captain's and shows both numbers, while non-combat jobs keep the system rating. The Clear a raider career goal sends one practice raider sized to the captain, never in Farside, the arena or the Deep. The Caravel ships with a Cinder Driver."
+    },
+    {
+      "id": "protocol-compatibility",
+      "owners": [
+        "shared/protocol.ts",
+        "client/connection.ts",
+        "client/main.ts",
+        "server/game.ts",
+        "server/nakama-world.ts",
+        "server/local-main.ts",
+        "server/nakama-host.ts"
+      ],
+      "services": [],
+      "tests": [
+        "protocol-compatibility.ts",
+        "protocol-compatibility-browser.ts",
+        "nakama-client-connection.ts",
+        "nakama-network.ts"
+      ],
+      "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC and authoritative join rejection, terminal local denial despite buffered packets/late errors, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
     }
   ],
   "routes": {
