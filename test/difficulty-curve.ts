@@ -275,6 +275,19 @@ for (const [power, danger] of [
     '☠ Deadly (threat 440 vs your 72)',
     'assassination danger includes both bodyguards',
   );
+  state.you!.power = 4;
+  assert.equal(
+    missionDetails(state, { type: 'patrol', sys: 'emberlight', reward: 1 }).risk,
+    '☠ Deadly (estimated raid 30 vs your 4)',
+    'patrol estimates cannot fall below the minimum available raider',
+  );
+  const unscaledSystem = Object.values(systemsById).find((system) => system.farside)!;
+  assert.ok(unscaledSystem);
+  assert.doesNotMatch(
+    missionDetails(state, { type: 'patrol', sys: unscaledSystem.id, reward: 1 }).risk,
+    /estimated raid/,
+    'unscaled regions do not advertise a scaled raid estimate',
+  );
 }
 
 // ------------------------------------------------------------------ career practice raider

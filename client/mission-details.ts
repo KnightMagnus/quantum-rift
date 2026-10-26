@@ -9,7 +9,7 @@ export type MissionDetailsInput = Omit<Partial<Mission>, 'quest' | 'sys'> &
   } & { team?: unknown };
 
 import { escapeHtml as escapeHtml2 } from './html.ts';
-import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
+import { SYS as systemsById, STELLARS, TRAFFIC, FACTIONS } from '../shared/galaxy.ts';
 import { route } from '../shared/rules.ts';
 import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.ts';
 import { contractShares } from '../shared/mission-payouts.ts';
@@ -52,14 +52,14 @@ const DANGER_LABELS: Record<DangerTier, string> = {
  * @param clientGameState Client game state.
  * @param missionDetailsInput Job or mission offer.
  * @param power Captain's effective combat power.
- * @param danger The job system's own danger rating.
+ * @param systemId The job's destination system.
  * @returns Expected hostile power, or null for jobs that are not straight fights.
  */
 function combatThreat(
   clientGameState: ClientGameState,
   missionDetailsInput: MissionDetailsInput,
   power: number,
-  danger: number | undefined,
+  systemId: string | null | undefined,
 ): number | null {
   if (!['patrol', 'bounty', 'assassinate'].includes(missionDetailsInput.type!)) return null;
   if (missionDetailsInput.hull) {
@@ -71,8 +71,29 @@ function combatThreat(
         : 0;
     return targetPower + guardPower;
   }
-  // Patrol kills come from ambient raids, which are sized to the strongest captain present.
-  if (missionDetailsInput.type === 'patrol' && danger != null) return raidBudget(power, danger);
+  const system = systemsById[systemId!];
+  if (
+    missionDetailsInput.type === 'patrol' &&
+    system &&
+    !system.farside &&
+    !system.arena &&
+    system.faction !== 'deep'
+  ) {
+    // These are estimates for newly spawned raids, not existing traffic or special encounters.
+    const factions = FACTIONS[system.faction].pirate
+      ? [system.faction]
+      : system.danger >= 3
+        ? ['hollow', 'umbral']
+        : ['hollow'];
+    const minimumRaider = Math.max(
+      ...factions.map((faction) =>
+        Math.min(
+          ...TRAFFIC[faction].war.map((hull) => clientGameState.A!.ships[hull]?.strength || 10),
+        ),
+      ),
+    );
+    return Math.max(raidBudget(power, system.danger), minimumRaider);
+  }
   return null;
 }
 export function missionDetails(
@@ -136,12 +157,7 @@ export function missionDetails(
   const power = Math.round(
       playerPayload.power || clientGameState.A!.ships[playerPayload.ship?.hull]?.strength || 10,
     ),
-    threat = combatThreat(
-      clientGameState,
-      missionDetailsInput,
-      power,
-      systemsById[system!]?.danger,
-    );
+    threat = combatThreat(clientGameState, missionDetailsInput, power, system);
   if (threat != null)
     risk = `${DANGER_LABELS[dangerTier(power, threat)]} (${missionDetailsInput.type === 'patrol' ? 'estimated raid' : 'threat'} ${Math.round(threat)} vs your ${power})`;
   const stellarBody = STELLARS[(missionDetailsInput.dest || missionDetailsInput.stellar)!];
