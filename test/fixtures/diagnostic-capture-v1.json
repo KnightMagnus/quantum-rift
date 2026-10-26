@@ -1,0 +1,198 @@
+{
+  "format": "quantum-rift-diagnostic-capture",
+  "version": 1,
+  "build": {
+    "game": "3.4.2"
+  },
+  "durationMs": 5500,
+  "entries": [
+    {
+      "subsystem": "trade-preview",
+      "atMs": 1250,
+      "elapsedMs": 0.05,
+      "input": {
+        "market": {
+          "id": "ore",
+          "price": 40,
+          "sellCap": 100
+        },
+        "amount": 5,
+        "cargo": {
+          "ore": 6
+        },
+        "cargoLots": {
+          "version": 1,
+          "byCommodity": {
+            "ore": {
+              "common": 1,
+              "rich": 2,
+              "pure": 3
+            }
+          }
+        },
+        "credits": 1000,
+        "freeHold": 20,
+        "tradePct": 5,
+        "sell": 1,
+        "site": false,
+        "orders": [
+          {
+            "cid": "ore",
+            "grade": "pure",
+            "qty": 2
+          }
+        ]
+      },
+      "result": {
+        "valid": true,
+        "buy": {
+          "tonnes": 5,
+          "total": 190
+        },
+        "sale": {
+          "tonnes": 5,
+          "total": 284,
+          "grades": {
+            "common": 1,
+            "rich": 2,
+            "pure": 2
+          }
+        },
+        "warnings": [
+          "This amount includes higher-grade cargo. Common cargo sells first.",
+          "Some of this cargo is still needed for a delivery. Selling it means replacing it later."
+        ]
+      }
+    },
+    {
+      "subsystem": "trade-preview",
+      "atMs": 2500,
+      "elapsedMs": 0.05,
+      "input": {
+        "market": {
+          "id": "ore",
+          "price": 40
+        },
+        "amount": 50,
+        "cargo": {
+          "ore": 6
+        },
+        "cargoLots": {
+          "version": 1,
+          "byCommodity": {
+            "ore": {
+              "common": 1,
+              "rich": 2,
+              "pure": 3
+            }
+          }
+        },
+        "credits": 300,
+        "freeHold": 80,
+        "tradePct": 0,
+        "sell": 1,
+        "site": false,
+        "orders": []
+      },
+      "result": {
+        "valid": true,
+        "buy": {
+          "tonnes": 7,
+          "total": 280
+        },
+        "sale": {
+          "tonnes": 6,
+          "total": 334,
+          "grades": {
+            "common": 1,
+            "rich": 2,
+            "pure": 3
+          }
+        },
+        "warnings": ["This amount includes higher-grade cargo. Common cargo sells first."]
+      }
+    },
+    {
+      "subsystem": "trade-preview",
+      "atMs": 3750,
+      "elapsedMs": 0.05,
+      "input": {
+        "market": {
+          "id": "composite_plating",
+          "price": 210,
+          "sellCap": 12
+        },
+        "amount": 40,
+        "cargo": {
+          "composite_plating": 40
+        },
+        "cargoLots": {
+          "version": 1,
+          "byCommodity": {}
+        },
+        "credits": 1000000,
+        "freeHold": 10,
+        "tradePct": -3,
+        "sell": 0.9,
+        "site": true,
+        "orders": []
+      },
+      "result": {
+        "valid": true,
+        "buy": {
+          "tonnes": 10,
+          "total": 2160
+        },
+        "sale": {
+          "tonnes": 12,
+          "total": 2200,
+          "grades": {
+            "common": 12,
+            "rich": 0,
+            "pure": 0
+          }
+        },
+        "warnings": [
+          "Some of this cargo is still needed for a delivery. Selling it means replacing it later."
+        ]
+      }
+    },
+    {
+      "subsystem": "trade-preview",
+      "atMs": 5000,
+      "elapsedMs": 0.05,
+      "input": {
+        "market": {
+          "id": "ore",
+          "price": 40
+        },
+        "amount": 2.5,
+        "cargo": {
+          "ore": 6
+        },
+        "cargoLots": {
+          "version": 1,
+          "byCommodity": {
+            "ore": {
+              "common": 1,
+              "rich": 2,
+              "pure": 3
+            }
+          }
+        },
+        "credits": 1000,
+        "freeHold": 20,
+        "tradePct": 0,
+        "sell": 1,
+        "site": false,
+        "orders": []
+      },
+      "result": {
+        "valid": false,
+        "buy": null,
+        "sale": null,
+        "warnings": []
+      }
+    }
+  ]
+}

@@ -252,7 +252,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   Object.assign(game, { hello: () => events.push('hello') });
   Object.assign(game, { toast: (_session: unknown, text: string) => events.push(text) });
   Object.assign(game, { messageHandlers: { dispatch: (type: string) => events.push(type) } });
-  const session = { data: null, msgs: 0, msgT: Date.now(), actT: 0 } as unknown as Session;
+  const session = { id: 1, data: null, msgs: 0, msgT: Date.now(), actT: 0 } as unknown as Session;
+  // Game.connect registers each live connection before its first packet.
+  Object.assign(game, { sessions: new Map([[session.id, session]]) });
   game.onMessage(session, { t: 'trade' });
   assert.deepEqual(events, [], 'unauthenticated trade never reaches a route');
   game.onMessage(session, { t: 'hello' });

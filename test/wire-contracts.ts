@@ -93,13 +93,14 @@ for (const invalid of [
   { t: 'you', d: { ...projected, nested: Array(100001).fill(0) } },
 ])
   assert.equal(validEconomicPayload(invalid), false);
+const blocked = mockSession({ id: 1, data: {}, msgT: Date.now(), msgs: 0, actT: 17 });
 const gated = mockGame({
   db: { economicFrozen: true },
+  sessions: new Map([[blocked.id, blocked]]),
   toast() {
     calls.push(99);
   },
 });
-const blocked = mockSession({ data: {}, msgT: Date.now(), msgs: 0, actT: 17 });
 Game.prototype.onMessage.call(gated, blocked, { t: 'trade', qty: null });
 assert.equal(blocked.actT, 17, 'freeze denial precedes malformed economic validation/activity');
 assert.equal(calls.at(-1), 99);

@@ -45,7 +45,10 @@ try {
     { timeout: 3000 },
   );
   const initial = await radar.boundingBox();
-  assert.ok(Math.abs(initial!.width - initial!.height) < 1, 'Automatic minimap starts square');
+  assert.ok(
+    Math.abs(initial!.width + 6 - (initial!.height + 6) * 1.8) < 1,
+    'Automatic minimap starts at the blue cockpit’s 1.8 aspect',
+  );
   async function drag(identifier: string, verticalDelta: number) {
     const grip = page.locator(identifier);
     await grip.scrollIntoViewIfNeeded();
@@ -171,12 +174,12 @@ try {
   );
   await page.setViewportSize({ width: 1440, height: 1440 });
   await page.waitForFunction(() => {
-    const bounds = document.getElementById('radar')!.getBoundingClientRect();
-    return Math.abs(bounds.width - bounds.height) < 1;
+    const bounds = document.getElementById('radarwrap')!.getBoundingClientRect();
+    return Math.abs(bounds.width - bounds.height * 1.8) < 1;
   });
   assert.ok(
     (await radar.boundingBox())!.width > 0,
-    'Reset radar remains square with the saved custom menu after enlargement',
+    'Reset radar retains its 1.8 aspect with the saved custom menu after enlargement',
   );
   await page.locator('#menuheightgrip').focus();
   await page.keyboard.press('Home');
@@ -196,14 +199,23 @@ try {
       frame: [frame.width, frame.height],
       canvas: [canvas.width, canvas.height],
       bottom: menu.bottom,
-      floor: sidebarBounds.bottom - parseFloat(getComputedStyle(sidebar).paddingBottom) * scale,
+      floor:
+        sidebarBounds.bottom -
+        (parseFloat(getComputedStyle(sidebar).paddingBottom) +
+          parseFloat(getComputedStyle(sidebar).borderBottomWidth)) *
+          scale,
+      scale,
       preference: JSON.parse(localStorage.getItem('rift.hudHeights')!).menu,
     };
   });
   assert.ok(
-    Math.abs(resetGeometry.frame[0] - resetGeometry.frame[1]) < 1 &&
-      Math.abs(resetGeometry.canvas[0] - resetGeometry.canvas[1]) < 1,
-    'Automatic radar frame and canvas stay square with a small saved menu on a tall viewport',
+    Math.abs(resetGeometry.frame[0] - resetGeometry.frame[1] * 1.8) < 1 &&
+      Math.abs(
+        resetGeometry.canvas[0] +
+          6 * resetGeometry.scale -
+          (resetGeometry.canvas[1] + 6 * resetGeometry.scale) * 1.8,
+      ) < 1,
+    'Automatic radar frame and canvas retain their 1.8 aspect with a small saved menu on a tall viewport',
   );
   assert.ok(
     Math.abs(resetGeometry.bottom - resetGeometry.floor) < 2,
@@ -222,13 +234,19 @@ try {
     document.body.classList.remove('scaled');
   });
   await page.setViewportSize({ width: 1440, height: 1440 });
-  // Removing scale can leave the already-square radar unchanged while ResizeObserver
+  // Removing scale can leave the already-sized radar unchanged while ResizeObserver
   // has not yet allocated the menu. Await both actual layout outcomes before reading.
   await page.waitForFunction(
     () => {
-      const radar = document.getElementById('radar')!.getBoundingClientRect();
+      const radar = document.getElementById('radarwrap')!.getBoundingClientRect();
       const menu = document.getElementById('cpanel')!.getBoundingClientRect();
-      return Math.abs(radar.width - radar.height) < 1 && Math.abs(menu.bottom - 1431) < 2;
+      const sidebar = document.getElementById('hud')!;
+      const style = getComputedStyle(sidebar);
+      const floor =
+        sidebar.getBoundingClientRect().bottom -
+        parseFloat(style.paddingBottom) -
+        parseFloat(style.borderBottomWidth);
+      return Math.abs(radar.width - radar.height * 1.8) < 1 && Math.abs(menu.bottom - floor) < 2;
     },
     null,
     { timeout: 3000 },
@@ -248,7 +266,18 @@ try {
   );
   const bounds = await page.locator('#cpanel').boundingBox();
   assert.ok(
-    Math.abs(bounds!.y + bounds!.height - 1431) < 2,
+    Math.abs(
+      bounds!.y +
+        bounds!.height -
+        (await page.locator('#hud').evaluate((sidebar) => {
+          const style = getComputedStyle(sidebar);
+          return (
+            sidebar.getBoundingClientRect().bottom -
+            parseFloat(style.paddingBottom) -
+            parseFloat(style.borderBottomWidth)
+          );
+        })),
+    ) < 2,
     'Lower menu follows the sidebar floor rather than leaving blank space',
   );
   assert.deepEqual(errors, []);

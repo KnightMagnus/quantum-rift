@@ -466,6 +466,12 @@ export type StationState = {
   activeDoneT?: number;
   relocT?: number;
   waiting?: boolean;
+
+  /**
+   * Kill and jump totals (from the captain's stats) at which the newcomer truce ends after
+   * Station Tier 3. Present only while that carried-over truce is still running.
+   */
+  truceEnds?: { kills: number; jumps: number };
 };
 
 /** Officer data record structure. */

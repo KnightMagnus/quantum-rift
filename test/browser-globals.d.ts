@@ -11,6 +11,9 @@ type PlanetCacheProbe = {
 
   /** Latest sprite drawn for each world. */
   sprites: Map<string, PlanetSprite>;
+
+  /** Original first-system sprites, retained only to verify replacement after eviction. */
+  firstSprites?: Map<string, PlanetSprite>;
 };
 type RecordedInput = { t: string; th?: number; tu?: number; f1?: number; [key: string]: unknown };
 type SceneEvidence = {

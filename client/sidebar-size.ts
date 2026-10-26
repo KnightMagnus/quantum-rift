@@ -1,5 +1,5 @@
 // Device-level layout preferences, like the existing sidebar width preference.
-export function initSidebarSize(resized: () => void) {
+export function initSidebarSize(resized: () => void, defaultRadarAspect = 1) {
   const sidebar = document.getElementById('hud')!;
   let preferences: Record<string, number> = {};
   try {
@@ -62,7 +62,8 @@ export function initSidebarSize(resized: () => void) {
       sidebar.clientWidth -
       parseFloat(sidebarStyle.paddingLeft) -
       parseFloat(sidebarStyle.paddingRight);
-    const desiredRadar = preferences.radar ?? frameWidth;
+    const automaticRadar = frameWidth / defaultRadarAspect;
+    const desiredRadar = preferences.radar ?? automaticRadar;
     const desiredMenu = preferences.menu;
     const allocatedRadarHeight =
       preferences.radar === undefined && desiredMenu === undefined
@@ -72,7 +73,7 @@ export function initSidebarSize(resized: () => void) {
           : Math.max(96, Math.min(room - menuMinimum, room - Math.max(menuMinimum, desiredMenu)));
     const radarHeight =
       preferences.radar === undefined
-        ? Math.min(frameWidth, allocatedRadarHeight)
+        ? Math.min(automaticRadar, allocatedRadarHeight)
         : allocatedRadarHeight;
     const menuHeight =
       preferences.radar === undefined && desiredMenu !== undefined && allocation === 'menu'
@@ -82,7 +83,7 @@ export function initSidebarSize(resized: () => void) {
       Math.max(0, room - radarHeight - menuHeight) + 'px';
     radar.style.height = radarHeight + 'px';
     if (preferences.radar === undefined) {
-      radar.style.width = Math.min(frameWidth, radarHeight) + 'px';
+      radar.style.width = Math.min(frameWidth, radarHeight * defaultRadarAspect) + 'px';
       radar.style.alignSelf = 'center';
     } else {
       radar.style.removeProperty('width');

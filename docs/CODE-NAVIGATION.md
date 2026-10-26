@@ -93,6 +93,7 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 | Change                                          | Start with                                                  | Important companions                                                                                         |
 | ----------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Performance and operational diagnostics         | `shared/health.ts`, `docs/PERFORMANCE.md`                   | `tools/performance-baseline.ts`, `tools/performance-native.ts`, matching `test/helpers/` harnesses           |
+| Opt-in support captures and offline replay      | `shared/diagnostic-capture.ts`, `docs/DIAGNOSTICS.md`       | `shared/diagnostic-replay.ts`, `client/diagnostics.ts`, `tools/replay-diagnostic-capture.ts`                 |
 | Startup and static HTTP                         | `server/main.ts`, `server/nakama-host.ts`                   | `tools/start.ts`, `docs/NAKAMA.md`                                                                           |
 | Native sessions, match ingress and clock        | `server/nakama-world.ts`, `server/nakama-auth.ts`           | `server/nakama-identity-gates.ts`, `server/nakama-storage.ts`                                                |
 | Solo/friend endpoints and reference fixtures    | `server/local-main.ts`                                      | `server/ws.ts`, `server/db.ts`, `server/friend-host-config.ts`                                               |
@@ -111,6 +112,7 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 | Menus/HUD                                       | `client/ui.ts`, `client/style.css`, `client/cockpit.css`    | `client/cockpit-state.ts`, `client/sidebar-size.ts`, `client/chat-projection.ts`, `client/ship-functions.ts` |
 | Scene/ship drawing                              | `client/render.ts`                                          | `client/artwork.ts`, animation/ship-banking modules, `client/assets/`                                        |
 | Galaxy/hulls/loadouts/stats                     | `shared/galaxy.ts`, `shared/assets.json`, `shared/rules.ts` | Shared bonus/stats owners in `server/features.ts`                                                            |
+| Authored ship content checks                    | `tools/content-validation.ts`, `tools/validate-content.ts`  | `test/content-validation.ts`, `docs/CONTENT-VALIDATION.md`                                                   |
 
 ## Save compatibility checks
 
@@ -364,3 +366,11 @@ replacement/reward owners remain unchanged.
 `client/ui.ts` excludes the unique story harness from both Codex lists and detail
 navigation. The outfit definition, story rewards, fitting and owned inventory
 remain available to their existing gameplay owners.
+
+## Client/server compatibility
+
+[shared/protocol.ts](../shared/protocol.ts) owns the wire epoch and explicit legacy
+policy. [client/connection.ts](../client/connection.ts) checks fresh HTTP status and
+the native world RPC before joining. Local Game hello and native join metadata
+are checked before Game login. [PROTOCOL-COMPATIBILITY.md](PROTOCOL-COMPATIBILITY.md)
+describes supported combinations and update recovery.

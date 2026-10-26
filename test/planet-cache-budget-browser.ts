@@ -136,6 +136,11 @@ async function runTour(bounded: boolean, artwork: boolean): Promise<SystemVisit[
         return { worlds: worlds.length, usage: probe.planets.planetCacheUsage(), liveKept };
       }, worlds);
       visits.push({ system, ...visit });
+      if (visits.length === 1)
+        await page.evaluate(() => {
+          const probe = window.planetProbe!;
+          probe.firstSprites = new Map(probe.sprites);
+        });
     }
     if (bounded) {
       // Returning to the first system after it was evicted rebuilds its worlds.
@@ -147,7 +152,12 @@ async function runTour(bounded: boolean, artwork: boolean): Promise<SystemVisit[
         const started = performance.now();
         while (performance.now() - started < 30000) {
           await new Promise(requestAnimationFrame);
-          if (worlds.every((world) => probe.sprites.has(world.id)))
+          if (
+            worlds.every((world) => {
+              const sprite = probe.sprites.get(world.id);
+              return sprite && sprite !== probe.firstSprites!.get(world.id);
+            })
+          )
             return performance.now() - started;
         }
         return null;

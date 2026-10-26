@@ -379,6 +379,9 @@ export type Entity = EntityFeatureState & {
   /** Hunt mission identifier. */
   huntOf?: number;
 
+  /** Session ID of the captain this career practice raider was sent after. */
+  practiceOf?: number;
+
   /** Arena combat team designation ('A' or 'B'). */
   team?: string;
 
@@ -580,6 +583,7 @@ import { eventideDrain } from '../shared/eventide.ts';
 // One star system's live simulation: ships (players, their escorts, NPC traffic), shots, beams, loot.
 import { SYS as systemsById, TRAFFIC, FACTIONS, MATERIALS } from '../shared/galaxy.ts';
 import { roleMult } from '../shared/roles.ts';
+import { fitRaidToBudget, raidBudget } from '../shared/hostile.ts';
 import { STATES } from '../shared/living.ts';
 import {
   shipStats,
@@ -1366,17 +1370,25 @@ export class Space {
           ? 2 + (Math.random() < 0.4 ? 1 : 0)
           : 1
         : (Math.random() < 0.4 ? 2 : 1) + (kind === 'raid' && starSystem.danger > 3 ? 1 : 0); // some traders run in small convoys
+    let hulls = [hull];
+    for (let index = 1; index < count; index++)
+      hulls.push(
+        pick(
+          pool.filter(
+            (positionX) => (this.A.ships[positionX].cost || 0) <= (this.A.ships[hull].cost || 1e9),
+          ) || pool,
+        ),
+      );
+    const budget = kind === 'raid' ? this.raidBudget() : null;
+    if (budget != null)
+      hulls = fitRaidToBudget(
+        hulls,
+        pool.filter((poolHull) => this.A.ships[poolHull]),
+        (raidHull) => this.A.ships[raidHull]?.strength || 10,
+        budget,
+      );
     let lead = null;
-    for (let index = 0; index < count; index++) {
-      const height =
-        index === 0
-          ? hull
-          : pick(
-              pool.filter(
-                (positionX) =>
-                  (this.A.ships[positionX].cost || 0) <= (this.A.ships[hull].cost || 1e9),
-              ) || pool,
-            );
+    for (const [index, height] of hulls.entries()) {
       let positionX, positionY, firstValue, value;
       if (initial) {
         positionX = random2(-1800, 1800);
@@ -1416,6 +1428,20 @@ export class Space {
       }
     }
   }
+  /**
+   * Power budget for an ambient raid group, scaled to the strongest captain in the system.
+   * @returns Combined raider strength allowed, or null when raids are not scaled here.
+   */
+  raidBudget(): number | null {
+    if (this.sys.farside || this.sys.arena) return null;
+    let strongest = 0;
+    for (const entity of this.ships.values()) {
+      const playerData = entity.player?.s?.data;
+      if (entity.dead || !playerData || entity.player!.s.ent !== entity) continue;
+      strongest = Math.max(strongest, this.game.features.hostile.myPower(playerData));
+    }
+    return strongest ? raidBudget(strongest, this.sys.danger) : null;
+  }
   // a group of warships of one power (a border war's attackers)
   /**
    * Spawns a coordinated group of ships flying in formation.
@@ -1435,21 +1461,32 @@ export class Space {
     if (!hull) return;
     const angle = random2(-Math.PI, Math.PI),
       count = 1 + (Math.random() < 0.5 ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
+    let hulls = [hull];
+    for (let index = 1; index < count; index++)
+      hulls.push(
+        pick(
+          pool.filter(
+            (height) =>
+              this.A.ships[height] &&
+              (this.A.ships[height].cost || 0) <= (this.A.ships[hull].cost || 1e9),
+          ),
+        ) || hull,
+      );
+    const budget = this.raidBudget();
+    if (budget != null)
+      hulls = fitRaidToBudget(
+        hulls,
+        pool.filter((poolHull) => this.A.ships[poolHull]),
+        (groupHull) => this.A.ships[groupHull]?.strength || 10,
+        budget,
+      );
     let lead = null;
-    for (let index = 0; index < count; index++) {
+    for (const [index, groupHull] of hulls.entries()) {
       const positionX = initial ? random2(-1800, 1800) : Math.sin(angle) * 2600,
         positionY = initial ? random2(-1800, 1800) : -Math.cos(angle) * 2600,
         wrap2 = wrap(angle + Math.PI);
       const entity = this.makeShip({
-        hull: index
-          ? pick(
-              pool.filter(
-                (height) =>
-                  this.A.ships[height] &&
-                  (this.A.ships[height].cost || 0) <= (this.A.ships[hull].cost || 1e9),
-              ),
-            ) || hull
-          : hull,
+        hull: groupHull,
         faction: factionId,
         x: positionX + index * 70,
         y: positionY + index * 50,

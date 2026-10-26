@@ -82,12 +82,12 @@ try {
     inventory.push({ surface, styles });
     if (!baseline)
       for (const session of styles) {
-        assert.equal(session.background, 'rgb(0, 0, 0)', surface + ' closed background');
-        assert.equal(session.color, 'rgb(255, 255, 255)', surface + ' closed text');
+        assert.equal(session.background, 'rgb(4, 24, 45)', surface + ' closed background');
+        assert.equal(session.color, 'rgb(213, 243, 255)', surface + ' closed text');
         assert.equal(session.scheme, 'dark', surface + ' native popup scheme');
         for (const options of session.options) {
-          assert.equal(options.background, 'rgb(0, 0, 0)', surface + ' option background');
-          assert.equal(options.color, 'rgb(255, 255, 255)', surface + ' option text');
+          assert.equal(options.background, 'rgb(4, 24, 45)', surface + ' option background');
+          assert.equal(options.color, 'rgb(213, 243, 255)', surface + ' option text');
         }
       }
   }
@@ -298,11 +298,11 @@ try {
       };
     });
     assert.deepEqual(edge, {
-      bg: 'rgb(0, 0, 0)',
+      bg: 'rgb(4, 24, 45)',
       text: 'rgb(170, 170, 170)',
       option: 'rgb(170, 170, 170)',
       opacity: '1',
-      group: 'rgb(0, 0, 0)',
+      group: 'rgb(4, 24, 45)',
     });
   }
   assert.deepEqual(errors, []);

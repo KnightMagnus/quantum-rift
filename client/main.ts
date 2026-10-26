@@ -1,3 +1,4 @@
+import { COMPATIBILITY_MESSAGE } from '../shared/protocol.ts';
 import { overlays } from './overlay-controller.ts';
 import { LandingFeedback, landingRefusal } from './landing-feedback.ts';
 import { initProfile } from './profile_ui.ts';
@@ -312,6 +313,7 @@ import { advanceFlightClock } from './flight-clock.ts';
 import { initLoginScene } from './login_scene.ts';
 import { gatewayGuidance } from './gateway_autopilot.ts';
 import { setArtworkVersion } from './artwork.ts';
+import { diagnostics, initDiagnosticControls, refreshDiagnosticControls } from './diagnostics.ts';
 import { initHails } from './hails_ui.ts';
 import { receiveShipChat } from './chat_bubbles.ts';
 // Quantum Rift client: connection, input, client-side prediction, render loop.
@@ -721,7 +723,14 @@ elementById2('lpass').onkeydown = (keyboardEvent) => {
 try {
   elementById2('lname').value = localStorage.getItem('rift.name') || '';
 } catch {}
-const statusRequest = fetch('/api/status')
+const compatibilityRefresh = document.createElement('button');
+compatibilityRefresh.id = 'compatibility-refresh';
+compatibilityRefresh.className = 'btn hidden';
+compatibilityRefresh.textContent = 'REFRESH GAME PAGE';
+compatibilityRefresh.onclick = () => location.reload();
+elementById2('lerr').setAttribute('role', 'alert');
+elementById2('lerr').after(compatibilityRefresh);
+const statusRequest = fetch('/api/status', { cache: 'no-store' })
   .then((response) => response.json())
   .then((state) => {
     nakamaConfig = state.nakama;
@@ -729,6 +738,7 @@ const statusRequest = fetch('/api/status')
     friendHostTransport = state.mode === 'friends' && state.localTransport === true;
     clientGameState.friendGame = friendHostTransport;
     setArtworkVersion(state.version);
+    diagnostics.setBuild(state.version);
     elementById2('lstat').textContent = friendHostTransport
       ? 'Friend-hosted universe. Sign in with your own captain and password.'
       : state.players === null
@@ -835,6 +845,7 @@ function openSocket(tries: number) {
     { name, pass },
   );
   webSocket = socket;
+  let compatibilityFailure = false;
   const current = () => webSocket === socket && sessionEpoch === epoch;
   socket.onopen = () => {
     if (!current()) {
@@ -860,6 +871,10 @@ function openSocket(tries: number) {
     clientGameState._lookT = null;
     elementById2('lbtn').disabled = false;
     if (!clientGameState.you) return;
+    if (compatibilityFailure) {
+      void logOut(COMPATIBILITY_MESSAGE);
+      return;
+    }
     if (!clientGameState._kicked && tries < 30) {
       if (!tries) toast('Connection lost. Reconnecting...');
       elementById2('lstat').textContent = 'Reconnecting to the server...';
@@ -878,6 +893,10 @@ function openSocket(tries: number) {
     void logOut(reason);
   };
   socket.onerror = (message) => {
+    if (current() && message === COMPATIBILITY_MESSAGE) {
+      compatibilityFailure = true;
+      compatibilityRefresh.classList.remove('hidden');
+    }
     if (current() && !clientGameState.you) {
       elementById2('lerr').textContent = message || 'Could not reach the Quantum Rift server.';
       elementById2('lbtn').disabled = false;
@@ -898,6 +917,7 @@ function onMessage(serverMessage: ServerMessage) {
       }
       break;
     case 'welcome':
+      compatibilityRefresh.classList.add('hidden');
       if (!clientGameState.solo && !localReferenceTransport && !friendHostTransport) {
         // Welcome establishes this native presence before its first controls, even if join/onopen is pending.
         sequence = 0;
@@ -2748,6 +2768,7 @@ function openOpts(keysFirst?: boolean | PointerEvent): void {
   elementById2('opt-music').value = clientGameState.opts.music ?? 0.6;
   rebinding = null;
   renderKeys();
+  refreshDiagnosticControls();
   document.querySelectorAll<HTMLInputElement>('#opts input[type=range]').forEach(paintRange);
   overlays.open('opts');
   if (keysFirst === true)
@@ -2762,6 +2783,7 @@ function closeOpts(): void {
   overlays.close('opts');
 }
 elementById2('optclose').onclick = closeOpts;
+initDiagnosticControls();
 elementById2('optbtn').onclick = openOpts;
 // the quick volume control in the command bar: one master slider and a mute button
 /**
@@ -2774,7 +2796,7 @@ function paintRange(htmlInputElement: HTMLInputElement): void {
     ((+htmlInputElement.value - +htmlInputElement.min) /
       (+htmlInputElement.max - +htmlInputElement.min || 1)) *
     100;
-  htmlInputElement.style.background = `linear-gradient(90deg,#e0362a ${position}%,#3a0808 ${position}%)`;
+  htmlInputElement.style.background = `linear-gradient(90deg,var(--range-fill, #e0362a) ${position}%,var(--range-track, #3a0808) ${position}%)`;
 } // red fill
 document.addEventListener('input', (event) => {
   if (
@@ -2937,7 +2959,7 @@ function resize(): void {
 window.addEventListener('resize', resize);
 // Sidebar reflow (including UI scale and persisted widths) also changes the radar.
 new ResizeObserver(resize).observe(elementById2('radar'));
-initSidebarSize(resize);
+initSidebarSize(resize, 1.8);
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.
@@ -2959,10 +2981,12 @@ try {
 elementById2('hudgrip').addEventListener('pointerdown', (pointerEvent) => {
   pointerEvent.preventDefault();
   const cachedElement = elementById2('hudgrip');
+  const initialPointerX = pointerEvent.clientX;
+  const initialWidth = elementById2('hud').getBoundingClientRect().width;
   cachedElement.classList.add('drag');
   const move = (pointerEvent: PointerEvent) => {
     const setHud2 = setHud(
-      Math.min(window.innerWidth * 0.6, window.innerWidth - pointerEvent.clientX),
+      Math.min(window.innerWidth * 0.6, initialWidth + initialPointerX - pointerEvent.clientX),
     );
     try {
       localStorage.setItem('rift.hud', String(setHud2));
@@ -3399,6 +3423,8 @@ function openQuit() {
 async function logOut(reason = '') {
   elementById2('quitconfirm').disabled = elementById2('quitcancel').disabled = true;
   clearTimeout(reconnectTimer!);
+  diagnostics.clear();
+  refreshDiagnosticControls();
   sessionEpoch++;
   const epoch = sessionEpoch;
   const socket = webSocket;
