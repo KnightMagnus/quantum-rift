@@ -984,6 +984,28 @@ See [PERFORMANCE.md](PERFORMANCE.md) for interpretation, commands and limits.
 In-process memory-CAS measurements exclude production PostgreSQL/network latency;
 accelerated soak does not establish wall-clock or multihour endurance.
 
+## `diagnostic-captures`: opt-in support captures
+
+`diagnostic-capture.ts` checks that the recorder is off until started, copies
+only allowlisted fields for the previewed commodity and keeps chat, names,
+passwords, tokens and other cargo out of the exported text. It covers the
+entry-count, 30-minute lifetime, per-entry and file byte limits, stop/clear
+behavior and free-text build identifiers. Corrupt JSON, non-object roots,
+oversized text (measured in UTF-8 bytes), other formats, other versions, unknown
+fields, other-commodity data, unsupported subsystems and non-finite numbers are
+rejected without throwing. Exported captures and the committed
+`fixtures/diagnostic-capture-v1.json` replay with exact results; tampered results
+and internally inconsistent cargo report mismatches. The replay tool's exit
+statuses are checked for matching, mismatched, oversized, newer and missing files.
+
+`diagnostic-capture-browser.ts` uses the actual Settings controls and market in
+a Solo game: typed estimates are not recorded before opt-in, are recorded after
+it (market re-renders add nothing), export as a local download that parses and replays offline without the
+captain name, and stop being recorded after the box is cleared. Clear discards
+entries. No non-GET or cross-origin request is made while recording and nothing
+is written to browser storage. Only the trade-estimate subsystem is covered;
+whole-world, server settlement and other subsystem replay remain out of scope.
+
 ## HUD containment and availability
 
 `cockpit-layout-browser.ts` checks expanded-tray utility buttons and vent against

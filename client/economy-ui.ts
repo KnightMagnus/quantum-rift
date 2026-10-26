@@ -2,6 +2,7 @@ import type { ClientGameState } from './main.ts';
 import type { TradePreviewInput } from '../shared/economy-preview.ts';
 
 import { escapeHtml as escapeHtml2 } from './html.ts';
+import { diagnostics } from './diagnostics.ts';
 import { tradePreview } from '../shared/economy-preview.ts';
 import { STELLARS } from '../shared/galaxy.ts';
 import { ShipCapacity, reservedCargoTonnes } from '../shared/ship-capacity.ts';
@@ -11,6 +12,7 @@ export function tradeEstimateHtml(
   clientGameState: ClientGameState,
   market: TradePreviewInput['market'],
   rawAmount: string | number,
+  recordDiagnostics = false,
 ) {
   const playerPayload = clientGameState.you!,
     hold = new ShipCapacity(
@@ -20,7 +22,7 @@ export function tradeEstimateHtml(
     );
   let position;
   try {
-    position = tradePreview({
+    const previewInput: TradePreviewInput = {
       market,
       amount: Number(rawAmount),
       cargo: playerPayload.cargo,
@@ -29,7 +31,12 @@ export function tradeEstimateHtml(
       freeHold: hold.remaining,
       ...clientGameState.landed!.tradeTerms,
       orders: playerPayload.refinery?.orders || [],
-    });
+    };
+    const started = performance.now();
+    position = tradePreview(previewInput);
+    // Only amounts the player types are recorded; market re-renders would crowd them out.
+    if (recordDiagnostics)
+      diagnostics.recordTradePreview(previewInput, position, performance.now() - started);
   } catch {
     return '<span class="dim small">Cargo changed. Wait for the latest hold information.</span>';
   }
@@ -74,6 +81,7 @@ export function initEconomyUI(clientGameState: ClientGameState) {
         clientGameState,
         market,
         (event.target as HTMLInputElement).value,
+        true,
       );
   });
 }

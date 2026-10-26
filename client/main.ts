@@ -312,6 +312,7 @@ import { advanceFlightClock } from './flight-clock.ts';
 import { initLoginScene } from './login_scene.ts';
 import { gatewayGuidance } from './gateway_autopilot.ts';
 import { setArtworkVersion } from './artwork.ts';
+import { diagnostics, initDiagnosticControls, refreshDiagnosticControls } from './diagnostics.ts';
 import { initHails } from './hails_ui.ts';
 import { receiveShipChat } from './chat_bubbles.ts';
 // Quantum Rift client: connection, input, client-side prediction, render loop.
@@ -729,6 +730,7 @@ const statusRequest = fetch('/api/status')
     friendHostTransport = state.mode === 'friends' && state.localTransport === true;
     clientGameState.friendGame = friendHostTransport;
     setArtworkVersion(state.version);
+    diagnostics.setBuild(state.version);
     elementById2('lstat').textContent = friendHostTransport
       ? 'Friend-hosted universe. Sign in with your own captain and password.'
       : state.players === null
@@ -2748,6 +2750,7 @@ function openOpts(keysFirst?: boolean | PointerEvent): void {
   elementById2('opt-music').value = clientGameState.opts.music ?? 0.6;
   rebinding = null;
   renderKeys();
+  refreshDiagnosticControls();
   document.querySelectorAll<HTMLInputElement>('#opts input[type=range]').forEach(paintRange);
   overlays.open('opts');
   if (keysFirst === true)
@@ -2762,6 +2765,7 @@ function closeOpts(): void {
   overlays.close('opts');
 }
 elementById2('optclose').onclick = closeOpts;
+initDiagnosticControls();
 elementById2('optbtn').onclick = openOpts;
 // the quick volume control in the command bar: one master slider and a mute button
 /**

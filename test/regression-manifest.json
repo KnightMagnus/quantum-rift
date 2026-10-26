@@ -122,6 +122,7 @@
     "release-readiness.ts",
     "archive-verification.ts",
     "health.ts",
+    "diagnostic-capture.ts",
     "wire-contracts.ts",
     "story-continuation.ts",
     "index-presentation.ts",
@@ -149,6 +150,7 @@
     "landing-autopilot-browser.ts",
     "dropdowns-browser.ts",
     "trade-amount-browser.ts",
+    "diagnostic-capture-browser.ts",
     "motherlode-art-browser.ts",
     "ship-turning-assets-browser.ts",
     "ship-functions-browser.ts",
@@ -495,6 +497,12 @@
       "helpers/seed-random.ts"
     ],
     "dropdowns-browser.ts": ["helpers/browser-fixture.ts", "seed-random.ts"],
+    "diagnostic-capture.ts": ["helpers/temp-data.ts"],
+    "diagnostic-capture-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/temp-data.ts",
+      "seed-random.ts"
+    ],
     "trade-amount-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
@@ -1547,6 +1555,20 @@
         "test/helpers/native-performance.ts",
         "test/helpers/native-packet-collector.ts",
         "test/helpers/nakama-service.ts"
+      ]
+    },
+    {
+      "id": "diagnostic-captures",
+      "services": [],
+      "tests": ["diagnostic-capture.ts", "diagnostic-capture-browser.ts"],
+      "asserts": "Trade-estimate captures are off by default and session-only; allowlisted copies keep only the previewed commodity and exclude chat, names, credentials and tokens. Count, age, entry and file byte limits; corrupt, oversized, unknown-field, unsupported-format and newer-version files are rejected without throwing. Version-1 fixture and real browser exports replay offline with exact results; tampered or inconsistent captures report mismatches. Options opt-in, stop, clear and local export with no upload or browser storage.",
+      "owners": [
+        "shared/diagnostic-capture.ts",
+        "shared/diagnostic-replay.ts",
+        "client/diagnostics.ts",
+        "client/economy-ui.ts",
+        "client/index.html",
+        "tools/replay-diagnostic-capture.ts"
       ]
     },
     {

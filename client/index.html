@@ -525,6 +525,23 @@
               >Radio <input type="range" id="opt-radio" min="0" max="1" step="0.05"
             /></label>
             <label><input type="checkbox" id="opt-mute" /> Mute all sound, radio included</label>
+            <div class="osect">SUPPORT</div>
+            <div role="group" aria-label="Support diagnostics" class="diagnostics">
+              <label
+                ><input type="checkbox" id="opt-diagnostics" /> Record trade estimates for a support
+                report</label
+              >
+              <p class="dim small" id="diagstatus" aria-live="polite">
+                Off. Nothing is being recorded.
+              </p>
+              <p class="dim small">
+                Keeps up to 50 trade estimates for 30 minutes, only in this tab. It never records
+                chat, captain names, passwords or sign-in tokens, and nothing is sent anywhere.
+                Export saves a file you can choose to share.
+              </p>
+              <button class="btn sm" id="diagexport">EXPORT</button>
+              <button class="btn sm" id="diagclear">CLEAR</button>
+            </div>
           </section>
           <section class="options-section options-keys" aria-label="Key bindings">
             <div class="osect">
