@@ -254,6 +254,40 @@ try {
     assert.ok(Math.abs(map.width - 1380) < 1, 'Map width grows from 1200px by 15%');
     assert.ok(Math.abs(map.height - 989) < 1, 'Map height grows from 860px by 15%');
     await capture(page, 'functional-map-3440x1440');
+    // Side-by-side details help wide desktops, not small landscape windows.
+    for (const [width, height] of [
+      [2560, 1080],
+      [1280, 600],
+      [800, 400],
+      [640, 300],
+    ]) {
+      await page.setViewportSize({ width, height });
+      const panel = await contained(page, '#gmap .gbox');
+      const canvas = await page.locator('#gcanvas').boundingBox();
+      assert.ok(canvas && canvas.width > 200 && canvas.height >= 119, 'Map stays usable');
+      assert.equal(
+        await page.locator('#gmap .gbox').evaluate((element) => getComputedStyle(element).display),
+        width >= 1200 ? 'grid' : 'flex',
+        'Small landscapes retain full-width map and details',
+      );
+      await page.locator('#gcanvas').scrollIntoViewIfNeeded();
+      const visibleCanvas = await page.locator('#gcanvas').boundingBox();
+      assert.ok(visibleCanvas && visibleCanvas.y < panel.y + panel.height, 'Canvas is reachable');
+      await page.locator('#ginfo').scrollIntoViewIfNeeded();
+      if (width === 2560) {
+        const details = await page.locator('#ginfo').boundingBox();
+        assert.ok(details && details.x >= canvas.x + canvas.width, 'Details sit beside map');
+        assert.ok(canvas.height > 700, 'Wide-short screen preserves map height');
+        await page.evaluate(async () => {
+          G.mapView!.k *= 2;
+          (await import('/ui.js')).openMap('meridian');
+        });
+        await capture(page, 'functional-map-2560x1080');
+      }
+      measurements.push({ width, height, panel, canvas });
+    }
+    await page.setViewportSize({ width: 3440, height: 1440 });
+
     await page.evaluate(async () => (await import('/ui.js')).closeMap());
     await page.click('#optbtn');
     const settings = await contained(page, '#opts .optbox');

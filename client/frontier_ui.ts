@@ -240,7 +240,7 @@ export function defenseHtml(clientGameState: ClientGameState, interactive?: bool
   if (stationState.ops < DEFENSE.minOps) return '';
   const level = stationState.defense || 0,
     next = DEFENSE.levels[level + 1];
-  let height = `<div class="sect">DEFENSE</div><div class="kv"><span>Defense rating</span><span><b>${playerPayload.defense}</b> <span class="dim small">(turrets level ${level})</span></span></div><div class="dim small">Raiders hit Personal Stations every ${DEFENSE.everyH} hours. If you are in the system they attack live and you can fight them off; otherwise the turrets decide it. A lost raid loots the refinery and some low-grade crates.</div>`;
+  let height = `<div class="sect">DEFENSE</div><div class="kv"><span>Defense rating</span><span><b>${playerPayload.defense}</b> <span class="dim small">(turrets level ${level})</span></span></div><div class="dim small">Raiders hit Personal Stations every ${DEFENSE.everyH} hours. If you are in the system they attack live and you can fight them off; otherwise the turrets decide it. A lost raid loots the Workshop and some low-grade crates.</div>`;
   const height2: { best: number; lastT: number; active?: boolean; wave?: number } =
       playerPayload.holdout || {
         best: 0,

@@ -1301,7 +1301,7 @@ export const SITES: StellarBody[] = (
   svc: 'L',
   tech: 0,
   site: true,
-  desc: 'A gutted Concord station hull, adrift but sound. Claim it and it becomes your Personal Station: dock, refinery, lab and shipyard.',
+  desc: 'A gutted Concord station hull, adrift but sound. Claim it and it becomes your Personal Station: dock, Workshop, lab and shipyard.',
 }));
 for (const stellarBody of SITES)
   SYSTEMS.find((starSystem) => starSystem.id === stellarBody.system)!.stellars.push(stellarBody);
@@ -1951,17 +1951,17 @@ const opsLevelDefs: OpsLevelDef[] = [
     title: 'Restore Docking',
     cost: 10000,
     mats: [['alloy', 0, 1]],
-    unlock: 'Refinery and the station market',
+    unlock: 'Workshop and the station market',
   },
   {
     lv: 2,
-    title: 'Market & Refinery',
+    title: 'Market & Workshop',
     cost: 60000,
     mats: [
       ['alloy', 1, 1],
       ['crystal', 0, 1],
     ],
-    unlock: 'Research lab, faster refinery',
+    unlock: 'Research lab, faster Workshop',
   },
   {
     lv: 3,
@@ -1976,14 +1976,14 @@ const opsLevelDefs: OpsLevelDef[] = [
   },
   {
     lv: 4,
-    title: 'Academy & Refinery Mk II',
+    title: 'Academy & Workshop Mk II',
     cost: 400000,
     mats: [
       ['alloy', 3, 1],
       ['crystal', 2, 1],
       ['isotope', 1, 1],
     ],
-    unlock: 'Wingmates, refinery Mk II',
+    unlock: 'Wingmates, Workshop Mk II',
   },
   {
     lv: 5,

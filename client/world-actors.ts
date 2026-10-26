@@ -1,19 +1,60 @@
-import { Actor, Canvas, Circle, Color, GraphicsGroup, ImageSource, Sprite, vec } from 'excalibur';
-import type { Scene, Graphic, GraphicsGrouping, Material } from 'excalibur';
+import {
+  Actor,
+  Canvas,
+  Circle,
+  Color,
+  Graphic,
+  GraphicsGroup,
+  ImageSource,
+  Sprite,
+  vec,
+} from 'excalibur';
+import type { ExcaliburGraphicsContext, Scene, GraphicsGrouping, Material } from 'excalibur';
 import type { ClientGameState } from './main.ts';
 import type { RenderShip } from './render.ts';
 import { sheet, shipFrame, objImg, rockImage, drawShot } from './render.ts';
 import { storyShipOpacity } from './story-reality.ts';
 import { weaponColor, weaponLook } from '../shared/rules.ts';
 
+/** Projectile looks whose drawShot output changes with time; every other look is static. */
+const ANIMATED_SHOT_LOOKS = new Set(['torp', 'sing', 'mine', 'shard']);
+
+/**
+ * Draws an already-rasterized canvas directly. `ImageSource.fromHtmlCanvasElement`
+ * PNG-encodes and re-decodes its canvas, which stalls the frame when many new
+ * projectile frames appear in a busy fight.
+ */
+class CanvasSprite extends Graphic {
+  /** Source bitmap; the WebGL texture loader caches and collects its upload. */
+  readonly canvas: HTMLCanvasElement;
+  constructor(canvas: HTMLCanvasElement, width: number, height: number) {
+    super({ width, height });
+    this.canvas = canvas;
+  }
+  protected _drawImage(context: ExcaliburGraphicsContext, x: number, y: number): void {
+    context.drawImage(
+      this.canvas,
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height,
+      x,
+      y,
+      this.width / this.scale.x,
+      this.height / this.scale.y,
+    );
+  }
+  clone(): CanvasSprite {
+    return new CanvasSprite(this.canvas, this.width / this.scale.x, this.height / this.scale.y);
+  }
+}
+
 /** Display-only entity registry. Authoritative velocities never enter Actor motion. */
 export class WorldActors {
   readonly actors = new Map<string, Actor>();
   private embellishments = new Map<string, Canvas>();
   private images = new WeakMap<HTMLImageElement | HTMLCanvasElement, ImageSource>();
-  private shotSnapshot: ClientGameState['shots'] | undefined;
-  private shotGeneration = 0;
-  private shotGraphics = new Map<string, ImageSource>();
+  private shotGraphics = new Map<string, HTMLCanvasElement>();
   additive: Material | null = null;
   private scene: Scene;
   constructor(scene: Scene) {
@@ -207,10 +248,6 @@ export class WorldActors {
 
   update(state: ClientGameState, now: number): void {
     const live = new Set<string>();
-    if (this.shotSnapshot !== state.shots) {
-      this.shotSnapshot = state.shots;
-      this.shotGeneration++;
-    }
     if (state.sys && state.A) {
       for (const ship of state.ents.values()) this.ship(state, ship, now, live);
       if (state.view && !state.ents.has(state.view.id) && state.myHull)
@@ -248,11 +285,13 @@ export class WorldActors {
       state.shots.forEach((shot, index) => {
         const weapon = state.A!.weapons[shot.w];
         if (!weapon) return;
-        // Cache local procedural weapon frames; the projectile itself is a native Sprite.
-        const phase = Math.floor(now / 45) % 16;
+        // Cache local procedural weapon frames; the projectile itself is a native Graphic.
+        // Static looks share one frame instead of 16 identical cached phases.
+        const phase = ANIMATED_SHOT_LOOKS.has(weaponLook(weapon)) ? Math.floor(now / 45) % 16 : 0;
         const speed = Math.hypot(shot.vx, shot.vy);
-        // drawShot varies only its colored trail with speed; retain that exact identity.
-        const trail = Math.min(40, (speed || 1) * 0.03);
+        // drawShot varies only its colored trail with speed. Whole-pixel trail buckets keep
+        // inherited ship velocity from making nearly every projectile a cache miss.
+        const trail = Math.round(Math.min(40, (speed || 1) * 0.03));
         const identity = ':' + state.zoom + ':' + trail;
         const key = shot.w + ':' + phase + identity;
         // Cover the longest trail, torpedo/singularity pulse, flak and fixed-pixel blur.
@@ -262,16 +301,16 @@ export class WorldActors {
           Math.max(40 * state.zoom, 23 * effectZoom, 8 * 1.25 * 2.2 * effectZoom) + 32,
         );
         const extent = radius * 2;
-        let resource = this.shotGraphics.get(key);
-        if (!resource) {
-          const canvas = document.createElement('canvas');
+        let canvas = this.shotGraphics.get(key);
+        if (!canvas) {
+          canvas = document.createElement('canvas');
           canvas.width = canvas.height = extent;
           const context = canvas.getContext('2d')!;
           drawShot(
             context,
             {
               ...shot,
-              vx: speed,
+              vx: Math.max(1, trail / 0.03),
               vy: 0,
               W: weapon,
               col: weaponColor(weapon),
@@ -282,27 +321,14 @@ export class WorldActors {
             state.zoom,
             phase * 45,
           );
-          resource = ImageSource.fromHtmlCanvasElement(canvas);
-          this.shotGraphics.set(key, resource);
+          this.shotGraphics.set(key, canvas);
           if (this.shotGraphics.size > 256)
             this.shotGraphics.delete(this.shotGraphics.keys().next().value!);
         }
-        if (!this.imageReady(resource)) {
-          const prefix = shot.w + ':';
-          const suffix = identity;
-          const loaded = [...this.shotGraphics].find(
-            ([cachedKey, image]) =>
-              cachedKey.startsWith(prefix) && cachedKey.endsWith(suffix) && this.imageReady(image),
-          );
-          if (!loaded) return;
-          resource = loaded[1];
-        }
-        const graphic = new Sprite({
-          image: resource,
-          destSize: { width: resource.width / state.zoom, height: resource.height / state.zoom },
-        });
+        const graphic = new CanvasSprite(canvas, extent / state.zoom, extent / state.zoom);
+        // Index keys reuse Actors across snapshots instead of recreating every projectile.
         const actor = this.bind(
-          'shot:' + this.shotGeneration + ':' + index,
+          'shot:' + index,
           shot.rx ?? shot.x,
           shot.ry ?? shot.y,
           35,
@@ -327,6 +353,5 @@ export class WorldActors {
     this.actors.clear();
     this.shotGraphics.clear();
     this.embellishments.clear();
-    this.shotSnapshot = undefined;
   }
 }

@@ -551,7 +551,7 @@ export const RESEARCH2: ResearchNode[] = [
   {
     id: 'refine1',
     tree: 'Station',
-    name: 'Refinery Catalysts',
+    name: 'Workshop Catalysts',
     cost: 90000,
     mats: [['isotope', 0, 1]],
     minutes: 40,
@@ -730,6 +730,42 @@ export const RESEARCH2: ResearchNode[] = [
     bonus: { shuttlePct: 8, officerXp: 50 },
   },
 ];
+/**
+ * Player-facing descriptions for research and trait bonus keys, given the bonus amount.
+ * Keys without an entry fall back to the officer stat names in STAT_NAME.
+ */
+const BONUS_TEXT: Record<string, (amount: number) => string> = {
+  silo: (amount) => `+${amount} Workshop silo slots`,
+  refineSpeed: (amount) => `+${amount}% Workshop speed`,
+  refineGrade: () => 'chance of a higher-grade Workshop crate',
+  processGrade: (amount) => `+${amount} ore processing grade`,
+  dockSlots: (amount) => `+${amount} hangar dock slots`,
+  fuel: (amount) => `+${amount} fuel capacity`,
+  fuelRe: () => 'fuel regeneration',
+  jumpFast: () => 'faster jump charge',
+  bays: (amount) => `+${amount} shuttle bay`,
+  shuttleSpeed: (amount) => `+${amount}% shuttle speed`,
+  shuttleSafe: (amount) => `-${amount}% shuttle damage risk`,
+  shuttleYield: (amount) => `+${amount}% shuttle yield`,
+  officerXp: (amount) => `+${amount}% officer XP`,
+  scanPct: (amount) => `-${amount}% customs scan chance`,
+  tradePct: (amount) => `${amount}% better buy and sell prices`,
+};
+
+/**
+ * Formats a research or trait bonus map as readable text, for example "+10% shields".
+ * @param bonus Bonus amounts keyed by stat
+ * @returns Comma-separated bonus descriptions
+ */
+export function statBonusText(bonus: Record<string, number>): string {
+  return Object.entries(bonus)
+    .map(([statKey, amount]) => {
+      const describe = BONUS_TEXT[statKey];
+      if (describe) return describe(amount);
+      return `+${amount}% ${STAT_NAME[statKey] || statKey}`;
+    })
+    .join(', ');
+}
 /**
  * Maximum concurrent research project queue capacity.
  */

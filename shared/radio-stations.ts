@@ -27,6 +27,12 @@ export const RADIO_STATIONS = [
       {
         url: '/assets/radio/wave-function-collapse/07.mp3',
       },
+      {
+        url: '/assets/radio/wave-function-collapse/08.mp3',
+      },
+      {
+        url: '/assets/radio/wave-function-collapse/09.mp3',
+      },
     ],
   },
   {

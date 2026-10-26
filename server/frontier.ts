@@ -667,7 +667,7 @@ export const FrontierOperations = {
           }
         }
       playerData.station.refUnits = 0;
-      const message = `Raiders broke through your station's defenses (defense ${rating} vs ${strength}) and looted the refinery${lost.length ? ' and ' + lost.join(', ') : ''}. Upgrade the turrets.`;
+      const message = `Raiders broke through your station's defenses (defense ${rating} vs ${strength}) and looted the Workshop${lost.length ? ' and ' + lost.join(', ') : ''}. Upgrade the turrets.`;
       this.toast(session, message);
       this.log(playerData, message);
       this.notify(session, 'Station raided', message);

@@ -3031,7 +3031,7 @@ export class Game<Storage extends Database = Database> {
         break;
       }
       case 'collect': {
-        if (!stationState.refUnits) return this.toast(session, 'The refinery has nothing ready.');
+        if (!stationState.refUnits) return this.toast(session, 'The Workshop has nothing ready.');
         const refUnits2 = stationState.refUnits,
           credits2 = refUnits2 * (2500 + stationState.ops * 1500);
         playerData.credits += credits2;
@@ -3051,7 +3051,7 @@ export class Game<Storage extends Database = Database> {
         }
         this.toast(
           session,
-          `Collected ${refUnits2} refinery unit${refUnits2 > 1 ? 's' : ''}: ${credits(credits2)} credits and ${received.join(', ')}.`,
+          `Collected ${refUnits2} Workshop unit${refUnits2 > 1 ? 's' : ''}: ${credits(credits2)} credits and ${received.join(', ')}.`,
         );
         break;
       }

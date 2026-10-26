@@ -284,7 +284,7 @@ try {
     }
     return results;
   });
-  assert.equal(decoded.length, 33);
+  assert.equal(decoded.length, 35);
   fileSystem.writeFileSync(
     path.join(output, 'recording-decodes.json'),
     JSON.stringify(decoded, null, 2) + '\n',
@@ -353,7 +353,7 @@ try {
         screenshot:
           'Fixture captain has saved radio unlocks; real owner album playing in actual HUD',
         playback:
-          'all 33 owner recordings really decoded, actual station playback/title hiding; natural ended A B C A exercised with test-only short WAV responses',
+          'all 35 owner recordings really decoded, actual station playback/title hiding; natural ended A B C A exercised with test-only short WAV responses',
         errors,
         external,
       },
@@ -362,7 +362,7 @@ try {
     ) + '\n',
   );
   console.log(
-    'PASS actual jumps/discoveries, reconnect, locked/favorites isolation, saved station unlocks, owner audio/title rules and 33 real decodes, fixture album ended loop and OFF',
+    'PASS actual jumps/discoveries, reconnect, locked/favorites isolation, saved station unlocks, owner audio/title rules and 35 real decodes, fixture album ended loop and OFF',
   );
 } catch (error) {
   await failureEvidence(browser, output, error);
