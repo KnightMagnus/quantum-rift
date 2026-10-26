@@ -2,6 +2,12 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 0.3.4.4
+
+- Keep neutral Index survey groups moving: parent machines circle their worksite and drones sweep around their parent, with spacing preserved.
+- Fill the comms console with the blue display glass, and keep it blue while chat history is projected above instead of switching to teal.
+- Load captain portrait choices in the Profile tab under the current artwork version so stale browser caches cannot leave them blank. See the [release notes](docs/RELEASE-3.4.4.md).
+
 ### 0.3.4.3
 
 - Make the blue Pressure Hull cockpit the standard interface; no special URL is needed. Preserve saved Tray widths, wrap enlarged menu tabs and long dialog choices, and keep compact chat and pinned mission guidance usable.

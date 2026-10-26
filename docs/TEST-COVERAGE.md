@@ -907,7 +907,7 @@ comparisons, not physical midrange-laptop or audible-output certification.
 
 ## Planetary landscapes and portraits
 
-`planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation, bounded acknowledgement tokens and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser and hail windows, denied or unconfirmed save recovery, stale-reply isolation and Captain-tab controls at narrow/scaled and desktop sizes. `nakama-network.ts` verifies selected portraits through real Nakama authentication and match ingress, spoofed-target isolation, public lookup, PostgreSQL checkpoint storage and a native service restart. The adapter unit fixture remains a separate bounded persistence check. Main-story portrait coverage checks the five character identities, completion-specific faces, exclusion from player and generic pools, text-only fallback, decoded browser images and narrow-screen dialogue controls.
+`planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation, bounded acknowledgement tokens and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser (every choice icon decodes under the current artwork version) and hail windows, denied or unconfirmed save recovery, stale-reply isolation and Captain-tab controls at narrow/scaled and desktop sizes. `nakama-network.ts` verifies selected portraits through real Nakama authentication and match ingress, spoofed-target isolation, public lookup, PostgreSQL checkpoint storage and a native service restart. The adapter unit fixture remains a separate bounded persistence check. Main-story portrait coverage checks the five character identities, completion-specific faces, exclusion from player and generic pools, text-only fallback, decoded browser images and narrow-screen dialogue controls.
 
 ## Functional cockpit layout
 
@@ -1117,7 +1117,9 @@ image failures check actual ship-art fallback and no humanoid substitution.
 `index-presentation.ts` checks outgoing/incoming/archive identities for every
 Index and Nhal hull, and advances a densely packed seven-large-hull fixture
 through 1,800 production steering/physics ticks with footprint clearance and
-restore/health/budget checks. A separate damage-triggered split must naturally
+restore/health/budget checks. After the group settles, every neutral hull must
+keep moving around the worksite within its radius, and a Quarry's drones must
+sweep around it rather than hold fixed points. A separate damage-triggered split must naturally
 return and rejoin through production steering without restoring lost health or
 spending replacement budget. The mixed-hull accelerated 60-second fixture is not a
 wall-clock soak or proof of every combat interleaving. Existing story and faction
@@ -1214,7 +1216,8 @@ populated chat line and utility buttons contained within their housing. It opens
 the Hail inbox while landed and checks that Hail stays visible in flight and when
 the Tray closes. It projects 32 fixture messages through the real chat renderer at both sizes,
 checks keyboard and wheel scrolling, sends a message through the normal input
-route, checks channel reachability and shell containment, then restores that same history
+route, checks channel reachability and shell containment, checks that console frames do not
+paint over the blue glass and that the parked console stays blue rather than teal, then restores that same history
 to the compact console. Captures use the actual game, including populated service menus.
 The blue cockpit loads at the ordinary game address without a URL option.
 At 1000×900, the landing overview keeps the real spaceport news visible in a
