@@ -52,6 +52,11 @@ assert.equal(raidBudget(100, 5), 280);
     'a tiny budget still spawns the weakest raider',
   );
   assert.deepEqual(fitRaidToBudget([], hollowPool, strengthOf, 100), []);
+  assert.deepEqual(
+    fitRaidToBudget([708], [], strengthOf, 1),
+    [708],
+    'empty pool retains a valid lead',
+  );
 }
 
 // ------------------------------------------------------------------ danger tiers
@@ -235,11 +240,11 @@ for (const [power, danger] of [
   } as unknown as ClientGameState;
   assert.equal(
     missionDetails(state, { type: 'patrol', sys: 'emberlight', reward: 1 }).risk,
-    '◆ Moderate (threat 115 vs your 72)',
+    '◆ Moderate (estimated raid 115 vs your 72)',
   );
   assert.equal(
     missionDetails(state, { type: 'patrol', sys: 'gloam', reward: 1 }).risk,
-    '▲ High (threat 173 vs your 72)',
+    '▲ High (estimated raid 173 vs your 72)',
   );
   assert.equal(
     missionDetails(state, { type: 'bounty', hull: 711, sys: 'gloam', reward: 1 }).risk,
@@ -258,6 +263,17 @@ for (const [power, danger] of [
     missionDetails(state, { type: 'cargo', qty: 1, sys: 'gloam', reward: 1 }).risk,
     '▲ High',
     'non-combat jobs keep the system rating',
+  );
+  assert.equal(
+    missionDetails(state, { type: 'rescue', hull: 705, sys: 'gloam', reward: 1 }).risk,
+    '▲ High',
+    'a friendly rescue hull is not rated as the hostile target',
+  );
+  assert.equal(
+    missionDetails(state, { type: 'assassinate', hull: 708, guard: 711, sys: 'gloam', reward: 1 })
+      .risk,
+    '☠ Deadly (threat 440 vs your 72)',
+    'assassination danger includes both bodyguards',
   );
 }
 

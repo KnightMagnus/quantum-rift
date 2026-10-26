@@ -716,7 +716,7 @@ export function hud(): void {
       cachedElement.textContent = !enabled
         ? '🛡 NO NEWCOMER TRUCE: FARSIDE'
         : truceLeft
-          ? `🛡 TRUCE ENDING · ${truceLeft.kills} KILLS / ${truceLeft.jumps} JUMPS LEFT`
+          ? `🛡 TRUCE ENDING · ${truceLeft.kills} KILLS / ${truceLeft.jumps} JUMPS LEFT · ENDS AT ${TIER3_TRUCE.power} POWER`
           : '🛡 NEWCOMER TRUCE · PRE T-3';
     }
   }
@@ -1633,7 +1633,6 @@ export function renderLanded(): void {
     : '';
   let height = '';
   let landingNews = '';
-  const pressureHull = document.body.classList.contains('pressure-hull');
   switch (clientGameState.ltab) {
     case 'refinery':
       height += refineryHtml(clientGameState);
@@ -1647,7 +1646,6 @@ export function renderLanded(): void {
           .slice(0, 4)
           .map((count) => `<div class="newsit">${escapeHtml2(count)}</div>`)
           .join('')}</div>`; // 1.1
-      if (!pressureHull) height += landingNews;
       if (playerPayload.shipless)
         height += `<div class="noship"><b>NO ACTIVE SHIP</b><div>You can't depart until you choose a ship. ${playerPayload.dock && playerPayload.dock.length ? 'Open STATION, then DOCKS, and choose a lead ship for your active dock.' : 'Buy one at a SHIPYARD.'}</div><div>${playerPayload.dock && playerPayload.dock.length ? '<button class="btn sm" data-act="gotodock">OPEN DRYDOCK</button> ' : ''}${length2.yard ? '<button class="btn sm" data-act="ltab" data-t="yard">SHIPYARD</button>' : ''}</div></div>`;
       if (!playerPayload.shipless)
@@ -1945,7 +1943,7 @@ export function renderLanded(): void {
     'land:' + length2.stellar + ':' + clientGameState.ltab,
   );
   const newsPanel = document.getElementById('landnews')!;
-  clientGameState.views.replace(newsPanel, pressureHull ? landingNews : '', 'landing-news');
+  clientGameState.views.replace(newsPanel, landingNews, 'landing-news');
   if (focusedRefinery) elementById(focusedRefinery)?.focus({ preventScroll: true });
   if (focusedAmount)
     [...body.querySelectorAll<HTMLInputElement>('.trade-amount')]

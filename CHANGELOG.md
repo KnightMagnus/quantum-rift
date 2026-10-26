@@ -2,7 +2,9 @@
 
 Every release, newest first. The main story is left out on purpose.
 
-### Unreleased
+### 3.4.3
+
+- Make the blue Pressure Hull cockpit the standard interface; no special URL is needed. Preserve saved Tray widths, wrap enlarged menu tabs and long dialog choices, and keep compact chat and pinned mission guidance usable.
 
 - Make research and crew bonuses readable, and rename the Personal Station refinery to Workshop.
 - Land on selected worlds and mission destinations with L; keep flight arrows clear of HUD cards.

@@ -509,6 +509,7 @@
     "polish-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "cursors-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
     "landed-live-browser.ts": [
+      "fixtures/landed-live-preload.ts",
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
       "seed-random.ts"
@@ -970,7 +971,7 @@
       ],
       "services": [],
       "tests": ["sidebar-browser.ts"],
-      "asserts": "Thirteen viewport/scale/width/unread cases: every menu tab fully visible without scrolling or overlap, single-row desktop defaults, narrow/scaled wrapping, wheel and keyboard reachability, old saved-width reload and viewport recovery, square full-width radar and backing geometry including real drag growth, capped COMMS/reserved utility widths, utility-anchored centered vent below controls across viewport/UI scales, invariant viewport trim in closed/expanded/resized states, red menu scrollbar/accent styles. All ten ordered component CSS imports load nonempty rules through the real server without failed stylesheet requests; existing viewport/trim/interaction assertions are retained."
+      "asserts": "Thirteen viewport/scale/width/unread cases: every menu tab fully visible without scrolling or overlap, single-row desktop defaults, narrow/scaled wrapping, wheel and keyboard reachability, old saved-width reload and viewport recovery, wide full-width radar and backing geometry including real drag growth, capped COMMS/reserved utility widths, utility-anchored centered vent below controls across viewport/UI scales, invariant viewport trim in closed/expanded/resized states, blue menu scrollbar/accent styles. All ten ordered component CSS imports load nonempty rules through the real server without failed stylesheet requests; existing viewport/trim/interaction assertions are retained."
     },
     {
       "id": "client-options-map-save",
@@ -1577,7 +1578,7 @@
       ],
       "services": [],
       "tests": ["pressure-hull-browser.ts"],
-      "asserts": "Optional physical console finish preserves actual flight/landing/menus at 1920x1080 and 3440x1440, a single integrated landed shell and existing illustration, open-top side/bottom viewport trim, readable populated chat, contained utilities, Hail inbox access while landed/flying and with the Tray closed, original artwork and separated console/sidebar regions."
+      "asserts": "Standard blue physical console at the ordinary game address preserves actual flight/landing/menus at 1920x1080 and 3440x1440, a single integrated landed shell and existing illustration, open-top side/bottom viewport trim, readable populated chat, contained utilities, Hail inbox access while landed/flying and with the Tray closed, original artwork and separated console/sidebar regions."
     },
     {
       "id": "playtest-clarity",

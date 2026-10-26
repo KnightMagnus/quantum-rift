@@ -61,8 +61,16 @@ function combatThreat(
   power: number,
   danger: number | undefined,
 ): number | null {
-  if (missionDetailsInput.hull)
-    return clientGameState.A!.ships[missionDetailsInput.hull]?.strength || null;
+  if (!['patrol', 'bounty', 'assassinate'].includes(missionDetailsInput.type!)) return null;
+  if (missionDetailsInput.hull) {
+    const targetPower = clientGameState.A!.ships[missionDetailsInput.hull]?.strength;
+    if (!targetPower) return null;
+    const guardPower =
+      missionDetailsInput.type === 'assassinate'
+        ? (clientGameState.A!.ships[missionDetailsInput.guard!]?.strength || 0) * 2
+        : 0;
+    return targetPower + guardPower;
+  }
   // Patrol kills come from ambient raids, which are sized to the strongest captain present.
   if (missionDetailsInput.type === 'patrol' && danger != null) return raidBudget(power, danger);
   return null;
@@ -135,7 +143,7 @@ export function missionDetails(
       systemsById[system!]?.danger,
     );
   if (threat != null)
-    risk = `${DANGER_LABELS[dangerTier(power, threat)]} (threat ${Math.round(threat)} vs your ${power})`;
+    risk = `${DANGER_LABELS[dangerTier(power, threat)]} (${missionDetailsInput.type === 'patrol' ? 'estimated raid' : 'threat'} ${Math.round(threat)} vs your ${power})`;
   const stellarBody = STELLARS[(missionDetailsInput.dest || missionDetailsInput.stellar)!];
   const turnIn = stellarBody
     ? `Land at ${stellarBody.name} (${systemsById[stellarBody.system].name})`

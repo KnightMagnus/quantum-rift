@@ -4546,10 +4546,9 @@ export function radar(
     height2 = canvasRenderingContext2D.canvas.height,
     clientView = clientGameState.view,
     diameter = Math.min(width2, height2);
-  const holographicDisplay = document.body.classList.contains('pressure-hull');
-  canvasRenderingContext2D.fillStyle = holographicDisplay ? '#031326' : '#020408';
+  canvasRenderingContext2D.fillStyle = '#031326';
   canvasRenderingContext2D.fillRect(0, 0, width2, height2);
-  canvasRenderingContext2D.strokeStyle = holographicDisplay ? '#164f78' : '#0d2a1a';
+  canvasRenderingContext2D.strokeStyle = '#164f78';
   canvasRenderingContext2D.lineWidth = 1;
   for (let entryKey = 1; entryKey < 4; entryKey++) {
     canvasRenderingContext2D.beginPath();
@@ -4779,22 +4778,14 @@ export function galaxy(
   const width2 = canvasRenderingContext2D.canvas.width,
     height2 = canvasRenderingContext2D.canvas.height,
     large = !!options.big;
-  // The optional Pressure Hull finish draws the chart on its blue holographic glass.
-  const ink = document.body.classList.contains('pressure-hull')
-    ? {
-        space: '#031326',
-        lane: '#1f5c86',
-        faintLane: '#10324d',
-        names: ['#b9dcf0', '#7fa6c2'],
-        legend: 'rgba(3,19,38,.86)',
-      }
-    : {
-        space: '#02030a',
-        lane: '#34405a',
-        faintLane: '#1c2232',
-        names: ['#c8ccd8', '#80869a'],
-        legend: 'rgba(2,3,10,.82)',
-      };
+  // Draw the chart on the cockpit's blue glass; faction colors retain their meaning.
+  const ink = {
+    space: '#031326',
+    lane: '#1f5c86',
+    faintLane: '#10324d',
+    names: ['#b9dcf0', '#7fa6c2'],
+    legend: 'rgba(3,19,38,.86)',
+  };
   canvasRenderingContext2D.fillStyle = ink.space;
   canvasRenderingContext2D.fillRect(0, 0, width2, height2);
   let mapFit2: MapFit;

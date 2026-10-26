@@ -178,7 +178,7 @@ export function fitRaidToBudget(
       (firstHull, secondHull) => strengthOf(firstHull) - strengthOf(secondHull),
     );
     const affordable = byStrength.filter((hull) => strengthOf(hull) <= budget);
-    lead = affordable.length ? affordable[affordable.length - 1] : byStrength[0];
+    lead = affordable.length ? affordable[affordable.length - 1] : (byStrength[0] ?? lead);
   }
   const fitted = [lead];
   let total = strengthOf(lead);

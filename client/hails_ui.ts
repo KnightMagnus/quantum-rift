@@ -268,8 +268,7 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
         ? 'hidden'
         : 'visible';
     const hailButton = elementById('hailindicator') as HTMLButtonElement;
-    hailButton.disabled =
-      !hailState.you || (!!hailState.landed && !document.body.classList.contains('pressure-hull'));
+    hailButton.disabled = !hailState.you;
     elementById('hailindicator').setAttribute('aria-disabled', String(hailButton.disabled));
     requestAnimationFrame(frame);
   }
