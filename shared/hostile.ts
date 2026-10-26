@@ -122,6 +122,102 @@ export function playerPower(
   );
 }
 
+// ------------------------------------------------------------------ raid scaling and danger ratings
+
+/**
+ * Newcomer truce carry-over after Station Tier 3. Ambient hostiles keep overlooking the captain
+ * until any one of these limits is reached.
+ */
+export const TIER3_TRUCE = {
+  /** Hostile ships destroyed after building Station Tier 3. */
+  kills: 5,
+  /** Hyperspace jumps made after building Station Tier 3. */
+  jumps: 30,
+  /** Effective combat power (see playerPower) that ends the truce at once. */
+  power: 150,
+};
+
+/** How ambient raid groups scale with the strongest captain present. */
+export const RAID_BUDGET = {
+  /** Budget multiplier on the captain's power in a danger 0 system. */
+  base: 0.8,
+  /** Extra budget multiplier per point of system danger. */
+  perDanger: 0.4,
+};
+
+/**
+ * Total hostile power an ambient raid group may bring against a captain.
+ * @param power - Strongest captain's effective combat power in the system.
+ * @param danger - System danger rating.
+ * @returns Combined raider strength the group may not exceed (beyond its lead ship).
+ */
+export function raidBudget(power: number, danger: number): number {
+  return power * (RAID_BUDGET.base + RAID_BUDGET.perDanger * Math.max(0, danger || 0));
+}
+
+/**
+ * Trims a raid group to a power budget. The lead ship is swapped for the strongest pool hull
+ * within budget (or the weakest pool hull when none fits), and escorts are kept only while
+ * the group's combined strength stays within budget.
+ * @param hulls - Hull IDs as rolled, lead first.
+ * @param pool - Hull IDs the raid could draw from.
+ * @param strengthOf - Looks up a hull's base strength.
+ * @param budget - Maximum combined strength.
+ * @returns Hull IDs to spawn, lead first; never empty when `hulls` is not empty.
+ */
+export function fitRaidToBudget(
+  hulls: number[],
+  pool: number[],
+  strengthOf: (hull: number) => number,
+  budget: number,
+): number[] {
+  if (!hulls.length) return hulls;
+  let lead = hulls[0];
+  if (strengthOf(lead) > budget) {
+    const byStrength = [...pool].sort(
+      (firstHull, secondHull) => strengthOf(firstHull) - strengthOf(secondHull),
+    );
+    const affordable = byStrength.filter((hull) => strengthOf(hull) <= budget);
+    lead = affordable.length ? affordable[affordable.length - 1] : (byStrength[0] ?? lead);
+  }
+  const fitted = [lead];
+  let total = strengthOf(lead);
+  for (const escort of hulls.slice(1)) {
+    if (total + strengthOf(escort) > budget) continue;
+    fitted.push(escort);
+    total += strengthOf(escort);
+  }
+  return fitted;
+}
+
+/** The lone raider sent at a captain on the "Clear a raider" career goal. */
+export const PRACTICE_RAIDER = {
+  /** Candidate hulls, weakest first: Gnat Skiff, Dory Hauler, Kestrel Scout. */
+  hulls: [703, 704, 705],
+  /** Share of the captain's power the raider may have (the weakest hull is the floor). */
+  powerShare: 0.8,
+};
+
+/** Danger rating of a fight, from the hostile-to-captain power ratio. */
+export type DangerTier = 'low' | 'moderate' | 'high' | 'deadly';
+
+/** Upper hostile-to-captain power ratios for each danger tier below Deadly. */
+export const DANGER_RATIOS = { low: 0.8, moderate: 1.6, high: 2.6 };
+
+/**
+ * Rates how dangerous a fight is for a captain.
+ * @param power - Captain's effective combat power.
+ * @param threat - Combined hostile power expected.
+ * @returns Danger tier.
+ */
+export function dangerTier(power: number, threat: number): DangerTier {
+  const ratio = threat / Math.max(1, power);
+  if (ratio <= DANGER_RATIOS.low) return 'low';
+  if (ratio <= DANGER_RATIOS.moderate) return 'moderate';
+  if (ratio <= DANGER_RATIOS.high) return 'high';
+  return 'deadly';
+}
+
 // ------------------------------------------------------------------ loot chests: each hostile type drops its own
 
 /**

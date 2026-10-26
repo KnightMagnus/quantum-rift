@@ -111,6 +111,7 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 | Menus/HUD                                       | `client/ui.ts`, `client/style.css`, `client/cockpit.css`    | `client/cockpit-state.ts`, `client/sidebar-size.ts`, `client/chat-projection.ts`, `client/ship-functions.ts` |
 | Scene/ship drawing                              | `client/render.ts`                                          | `client/artwork.ts`, animation/ship-banking modules, `client/assets/`                                        |
 | Galaxy/hulls/loadouts/stats                     | `shared/galaxy.ts`, `shared/assets.json`, `shared/rules.ts` | Shared bonus/stats owners in `server/features.ts`                                                            |
+| Authored ship content checks                    | `tools/content-validation.ts`, `tools/validate-content.ts`  | `test/content-validation.ts`, `docs/CONTENT-VALIDATION.md`                                                   |
 
 ## Save compatibility checks
 

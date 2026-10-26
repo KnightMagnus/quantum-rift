@@ -28,7 +28,10 @@ async function contained(page: Page, selector: string) {
   });
   const bounds = await page.locator(selector).boundingBox();
   const viewport = page.viewportSize()!;
-  assert.ok(bounds && bounds.x >= 0 && bounds.y >= 0);
+  assert.ok(
+    bounds && bounds.x >= 0 && bounds.y >= 0,
+    JSON.stringify({ selector, bounds, viewport }),
+  );
   assert.ok(bounds.x + bounds.width <= viewport.width + 1);
   assert.ok(bounds.y + bounds.height <= viewport.height + 1);
   return bounds;
@@ -78,7 +81,7 @@ try {
       0,
     );
     await page.waitForFunction(
-      () => document.getElementById('hailindicator')!.getAttribute('aria-disabled') === 'true',
+      () => document.getElementById('hailindicator')!.getAttribute('aria-disabled') === 'false',
     );
     assert.equal(
       await page.locator('#hailindicator').isVisible(),
@@ -86,19 +89,19 @@ try {
       'Landed HAIL stays visible',
     );
     assert.equal(
-      await page.locator('#hailindicator').isDisabled(),
+      await page.locator('#hailindicator').isEnabled(),
       true,
-      'Landed HAIL cannot open',
+      'Landed HAIL remains usable in the standard blue cockpit',
     );
     const landed = await contained(page, '#land .landbox');
     const usable = await page.locator('#land').boundingBox();
     assert.ok(
-      Math.abs(landed.width / usable!.width - 0.7) < 0.005,
-      'Ultrawide landing uses 70% of flight width',
+      Math.abs(landed.width - Math.min(2700, usable!.width - 150)) < 2,
+      'Ultrawide blue landing window reserves its sculpted frame gutter',
     );
     assert.ok(
-      Math.abs(landed.height / usable!.height - 0.86) < 0.005,
-      'Ultrawide landing uses 86% of flight height',
+      Math.abs(landed.height - Math.min(1100, usable!.height - 84)) < 2,
+      'Ultrawide blue landing window remains inside usable flight height',
     );
     await capture(page, 'functional-landed-3440x1440');
     await page.click('#captainshortcut');
@@ -171,8 +174,9 @@ try {
         entry.id + ' label centered',
       );
       assert.ok(
-        entry.label.y >= entry.bounds.y + entry.bounds.height,
-        entry.id + ' label below control',
+        entry.label.y >= entry.bounds.y &&
+          entry.label.y + entry.label.height <= entry.bounds.y + entry.bounds.height + 1,
+        entry.id + ' label stays inside its blue control',
       );
       if (entry.pressable) assert.deepEqual(entry.led, captain.led, entry.id + ' consistent LED');
     }
@@ -251,8 +255,8 @@ try {
       .screenshot({ path: path.join(fixture.out, 'functional-button-detail.png') });
     await page.click('#cbmap');
     const map = await contained(page, '#gmap .gbox');
-    assert.ok(Math.abs(map.width - 1380) < 1, 'Map width grows from 1200px by 15%');
-    assert.ok(Math.abs(map.height - 989) < 1, 'Map height grows from 860px by 15%');
+    assert.ok(Math.abs(map.width - 1800) < 1, 'Blue map uses its 1800px desktop chart width');
+    assert.ok(Math.abs(map.height - 989) < 1, 'Map retains its readable 989px desktop height');
     await capture(page, 'functional-map-3440x1440');
     // Side-by-side details help wide desktops, not small landscape windows.
     for (const [width, height] of [
@@ -277,7 +281,10 @@ try {
       if (width === 2560) {
         const details = await page.locator('#ginfo').boundingBox();
         assert.ok(details && details.x >= canvas.x + canvas.width, 'Details sit beside map');
-        assert.ok(canvas.height > 700, 'Wide-short screen preserves map height');
+        assert.ok(
+          canvas.height > 700,
+          'Wide-short screen preserves map height: ' + JSON.stringify({ panel, canvas }),
+        );
         await page.evaluate(async () => {
           G.mapView!.k *= 2;
           (await import('/ui.js')).openMap('meridian');

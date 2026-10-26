@@ -2792,7 +2792,7 @@ function paintRange(htmlInputElement: HTMLInputElement): void {
     ((+htmlInputElement.value - +htmlInputElement.min) /
       (+htmlInputElement.max - +htmlInputElement.min || 1)) *
     100;
-  htmlInputElement.style.background = `linear-gradient(90deg,#e0362a ${position}%,#3a0808 ${position}%)`;
+  htmlInputElement.style.background = `linear-gradient(90deg,var(--range-fill, #e0362a) ${position}%,var(--range-track, #3a0808) ${position}%)`;
 } // red fill
 document.addEventListener('input', (event) => {
   if (
@@ -2955,7 +2955,7 @@ function resize(): void {
 window.addEventListener('resize', resize);
 // Sidebar reflow (including UI scale and persisted widths) also changes the radar.
 new ResizeObserver(resize).observe(elementById2('radar'));
-initSidebarSize(resize);
+initSidebarSize(resize, 1.8);
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.
@@ -2977,10 +2977,12 @@ try {
 elementById2('hudgrip').addEventListener('pointerdown', (pointerEvent) => {
   pointerEvent.preventDefault();
   const cachedElement = elementById2('hudgrip');
+  const initialPointerX = pointerEvent.clientX;
+  const initialWidth = elementById2('hud').getBoundingClientRect().width;
   cachedElement.classList.add('drag');
   const move = (pointerEvent: PointerEvent) => {
     const setHud2 = setHud(
-      Math.min(window.innerWidth * 0.6, window.innerWidth - pointerEvent.clientX),
+      Math.min(window.innerWidth * 0.6, initialWidth + initialPointerX - pointerEvent.clientX),
     );
     try {
       localStorage.setItem('rift.hud', String(setHud2));
