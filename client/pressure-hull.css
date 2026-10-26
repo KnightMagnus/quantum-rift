@@ -946,3 +946,51 @@ body.pressure-hull #tut .x {
   background: #0a2944;
   color: #ceedfc;
 }
+/* Console key labels sit in flow just below their icon, at one shared size. */
+body.pressure-hull {
+  --console-label: 12px;
+}
+body.pressure-hull #functiondock .function-icon,
+body.pressure-hull #consoleutilities .cb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+}
+body.pressure-hull #functiondock .function-label,
+body.pressure-hull #functiondock #industrialindicator .function-label,
+body.pressure-hull #consoleutilities .utility-label {
+  position: static;
+  inset: auto;
+  max-width: 100%;
+  font-size: var(--console-label);
+  font-weight: normal;
+  line-height: 13px;
+  letter-spacing: 0.5px;
+  color: var(--dim);
+  text-shadow: 0 1px #000;
+  text-align: center;
+  white-space: nowrap;
+}
+/* Map and Hail keep their always-visible block override; stack them like the other keys. */
+body.pressure-hull #functiondock #cbmap,
+body.pressure-hull #functiondock #hailindicator,
+body.pressure-hull #functiondock #hailindicator.hidden {
+  display: flex !important;
+}
+/* The radar well uses the same lit edge as the other sidebar panels. */
+body.pressure-hull #radarwrap {
+  border: 3px solid #327ca7;
+  border-radius: 6px;
+}
+@media (max-width: 1500px) {
+  body.pressure-hull {
+    --console-label: 10px;
+  }
+  body.pressure-hull #functiondock .function-label,
+  body.pressure-hull #consoleutilities .utility-label {
+    letter-spacing: 0;
+  }
+}
