@@ -214,6 +214,31 @@ try {
       await page.screenshot({ path: path.join(output, 'colony-stage3.png') });
       await openProfile(page);
       await page.locator('#portraitpreview').evaluate((image: HTMLImageElement) => image.decode());
+      // Every choice icon loads under the server's artwork revision, never a stale fallback URL.
+      const choiceIcons = await page
+        .locator('#portraitchoices img')
+        .evaluateAll(async (images: HTMLImageElement[]) => {
+          await Promise.all(
+            images.map((image) => {
+              image.loading = 'eager';
+              return image.decode().catch(() => undefined);
+            }),
+          );
+          return images.map((image) => ({
+            source: image.getAttribute('src') || '',
+            width: image.naturalWidth,
+          }));
+        });
+      const artworkVersion = await page.evaluate(() =>
+        new URL(document.querySelector<HTMLImageElement>('#portraitpreview')!.src).searchParams.get(
+          'v',
+        ),
+      );
+      assert.equal(choiceIcons.length, PLAYER_PORTRAITS.length);
+      for (const icon of choiceIcons) {
+        assert.ok(icon.width > 0, 'Captain portrait choice loads: ' + icon.source);
+        assert.equal(new URL(icon.source, page.url()).searchParams.get('v'), artworkVersion);
+      }
       await page.locator(`input[value="${PLAYER_PORTRAITS.at(-1)!.id}"]`).check();
       assert.match(await page.locator('#portraitstatus').innerText(), /not saved/);
       await page.click('#portraitsave');

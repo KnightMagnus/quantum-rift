@@ -31,7 +31,8 @@ export function initProfile(state: ProfileState, send: (message: object) => void
     radio.name = 'portrait';
     radio.value = portrait.id;
     const image = document.createElement('img');
-    image.src = artworkUrl(portraitAsset(portrait.id));
+    // The source is assigned on open, once the server's artwork revision is known.
+    image.dataset.portrait = portrait.id;
     image.alt = '';
     image.width = image.height = 80;
     image.loading = 'lazy';
@@ -48,6 +49,10 @@ export function initProfile(state: ProfileState, send: (message: object) => void
     visible = true;
     selected = playerPortrait(state.you.portraitId);
     showPreview();
+    for (const image of choices.querySelectorAll<HTMLImageElement>('img[data-portrait]')) {
+      const source = artworkUrl(portraitAsset(image.dataset.portrait));
+      if (image.getAttribute('src') !== source) image.src = source;
+    }
     document.getElementById('profilename')!.textContent = state.you.name;
     for (const radio of choices.querySelectorAll<HTMLInputElement>('input'))
       radio.checked = radio.value === selected;

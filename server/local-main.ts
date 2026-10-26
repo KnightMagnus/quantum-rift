@@ -230,7 +230,8 @@ const server: Server = http.createServer(async (incomingMessage, response) => {
   const catalog =
     (decodeURIComponent2.startsWith('/assets/ships/') &&
       decodeURIComponent2.endsWith('_yard.png')) ||
-    decodeURIComponent2.startsWith('/assets/icons/');
+    decodeURIComponent2.startsWith('/assets/icons/') ||
+    decodeURIComponent2.startsWith('/assets/portraits/');
   serve(
     response,
     file,
