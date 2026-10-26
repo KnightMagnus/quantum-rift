@@ -1,5 +1,25 @@
 # Game regression coverage inventory
 
+## Authored ship content
+
+`content-validation.ts` belongs to `ships-catalog-art`. It validates the composed
+ship catalog and local yard, flight and glow artwork references without starting
+a server or changing content. Negative fixtures cover mismatched IDs, invalid
+capacities, combat/movement stats and recharge rates, weapon references/counts/ammo,
+stock gun and turret overflow, missing
+files and nonlocal artwork paths. Diagnostics carry the authoring file; refit and
+Armada hull references and outfit weapon references are checked against the
+composed catalog. CLI checks exercise successful validation, failed staged-asset
+validation and invalid arguments.
+
+NPC-only hulls retain the existing player-mount exception; unknown weapons still
+fail. Fixed weapons without corresponding outfits do not consume shop mounts,
+matching `makeLoadout` and `shipStats`. This is an authoring check for the typed,
+composed ship catalog, not a schema for arbitrary untrusted JSON. Mission
+prerequisites, dialogue links, non-ship assets and decoded image integrity are
+outside this validator. Existing artwork/browser tests retain their image checks.
+See [CONTENT-VALIDATION.md](CONTENT-VALIDATION.md) for commands and scope.
+
 ## Economic wire boundary
 
 `shared/wire-actions.ts` owns trade, refinery, mining-order, towing and industrial request

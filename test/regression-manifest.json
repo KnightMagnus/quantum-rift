@@ -43,6 +43,7 @@
     "passengers.ts",
     "outfitter-icons.ts",
     "catalog-artwork.ts",
+    "content-validation.ts",
     "ship-banking.ts",
     "animation-frames.ts",
     "wormhole-loop.ts",
@@ -917,17 +918,23 @@
     },
     {
       "id": "ships-catalog-art",
-      "owners": ["shared/rules.ts", "client/artwork.ts", "client/render.ts"],
+      "owners": [
+        "shared/rules.ts",
+        "client/artwork.ts",
+        "client/render.ts",
+        "tools/content-validation.ts"
+      ],
       "services": [],
       "tests": [
         "catalog-artwork.ts",
+        "content-validation.ts",
         "outfitter-icons.ts",
         "animation-frames.ts",
         "ship-banking.ts",
         "v25.ts",
         "ship-turning-assets-browser.ts"
       ],
-      "asserts": "Versioned catalog URL/cache semantics, shipped icon headers/dimensions and asset wiring, animation bounds and banked sprite selection. All 122 decoded hull sheets contain 108 distinct nonempty base frames with matched glow geometry; both runtime banks activate at actual stock turn rates."
+      "asserts": "Composed ship catalog IDs, finite capacities/combat/movement stats/recharge rates, weapon references/counts/ammo, player stock mount limits and local yard/flight/glow artwork existence, with malformed fixtures and CLI exit/diagnostic coverage. Versioned catalog URL/cache semantics, shipped icon headers/dimensions and asset wiring, animation bounds and banked sprite selection. All 122 decoded hull sheets contain 108 distinct nonempty base frames with matched glow geometry; both runtime banks activate at actual stock turn rates."
     },
     {
       "id": "world-scenery",
