@@ -556,6 +556,80 @@ try {
   console.log(
     `Deterministic delayed/reordered receipt requests: ${interruptedScenarios} journal/native-CAS interruption/restart scenarios passed.`,
   );
+
+  for (const backend of ['journal', 'native-cas'] as const) {
+    const directory = tempDataDir('rift-reward-fault-');
+    const storage = backend === 'native-cas' ? new FaultStorage() : null;
+    const open = () => (storage ? new NakamaDatabase(storage) : new Database(directory));
+    const database = open();
+    const game = new Game(assets, database, platform);
+    let live = signIn(game, 'Reward Fault');
+    const player = live.session.data;
+    player.credits = 1e6;
+    player.tut = 999;
+    const goal = game.features.fronts.goalsFor(player).daily[0];
+    goal.got = goal.n;
+    database.touch();
+    database.flush();
+    const queue = new FaultQueue();
+    const original = live;
+    const claim = { t: 'goal', period: 'daily', i: 0 };
+    original.holdReplies();
+    queue.add(30, 'old-late-claim', () => original, claim);
+    queue.add(10, 'first-claim', () => original, claim);
+    queue.add(20, 'new-session-claim', () => live, claim);
+    const before = player.credits;
+    queue.next('first-claim');
+    const after = player.credits;
+    assert.ok(after > before, 'first completed goal pays');
+    assert.ok(original.heldReplies.length, 'reward update can be lost before the peer sees it');
+    original.socket.emit('close');
+    live = signIn(game, 'Reward Fault');
+    queue.next('new-session-claim');
+    queue.next('old-late-claim');
+    assert.equal(
+      player.credits,
+      after,
+      'delayed old and new-session reward replays cannot pay twice',
+    );
+    const rewardEntries = player.log.length;
+    database.flush();
+    game.sessions.clear();
+    database.economicFrozen = true;
+    const restarted = new Game(assets, open(), platform);
+    live = signIn(restarted, 'Reward Fault');
+    live.deliver(claim);
+    assert.equal(
+      live.session.data.credits,
+      after,
+      'committed reward remains claimed after restart',
+    );
+    assert.equal(
+      live.session.data.log.length,
+      rewardEntries,
+      'replayed reward cannot duplicate log history',
+    );
+
+    // Legacy actions have no retry token: two explicit live intents must stay distinct.
+    const port = STELLARS[requiredFixtureValue(live.session.data.stellar)];
+    const material = requiredFixtureValue(restarted.matsFor(port, live.session.data)[0]);
+    const purchase = { t: 'buymat', mat: material.mat, grade: material.grade, n: 1 };
+    const beforeMaterials = live.session.data.mats[material.mat][material.grade];
+    const beforePurchases = live.session.data.credits;
+    queue.add(60, 'purchase-intent-first-sent', () => live, purchase);
+    queue.add(50, 'purchase-intent-second-sent', () => live, purchase);
+    queue.next('purchase-intent-second-sent');
+    queue.next('purchase-intent-first-sent');
+    assert.equal(
+      live.session.data.mats[material.mat][material.grade],
+      beforeMaterials + 2,
+      'identical live material purchase intents both settle; they are not receipt retries',
+    );
+    assert.equal(live.session.data.credits, beforePurchases - 2 * material.price);
+  }
+  console.log(
+    'Delayed goal claims survive reconnect/restart once; two identical legacy purchase intents remain distinct on journal and native-CAS storage.',
+  );
 } finally {
   Date.now = originalClock;
 }

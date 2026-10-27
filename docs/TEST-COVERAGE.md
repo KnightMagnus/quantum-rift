@@ -1220,16 +1220,21 @@ scenarios use the real service receipts and checkpoint owners:
   single refinery batch/receipt or towing receipt, and clean input ownership are
   checked. Uncommitted towing delivery restores a detached object; its stale
   revision is denied, and a fresh attachment/delivery awards its cargo once.
-  Limits: packet delay/reordering is injected at the serialized `Game.connect`
-  listener boundary, not with a real TCP proxy. Native checkpoint faults use an
-  offline CAS fixture, not a PostgreSQL outage; actual native replacement/restart
-  and bounded flood behavior remain covered by `nakama-network.ts`. Crashes retire
-  the old sessions and disable their autosave without a graceful-disconnect flush.
-  These checks do not prove every action, arbitrary packet schedule or service
-  failure. Legacy `buyship`, `buymat` and `trade` carry no request identifier, so
-  two valid live deliveries remain two explicit purchase intents; the browser does
-  not resend them on reconnect. Retry-safe ordinary purchases would require a
-  separate request-identity contract, not generic suppression of identical packets.
+- **Rewards and intent:** delayed daily-goal claims on old/new connections remain
+  claimed across restart without another payout or log entry. Two separately
+  delivered, identical live material-purchase intents still debit twice and add
+  two items; legacy purchase semantics have not changed.
+
+Limits: packet delay/reordering is injected at the serialized `Game.connect`
+listener boundary, not with a real TCP proxy. Native checkpoint faults use an
+offline CAS fixture, not a PostgreSQL outage; actual native replacement/restart
+and bounded flood behavior remain covered by `nakama-network.ts`. Crashes retire
+the old sessions and disable their autosave without a graceful-disconnect flush.
+These checks do not prove every action, arbitrary packet schedule or service
+failure. Legacy `buyship`, `buymat` and `trade` carry no request identifier, so
+two valid live deliveries remain two explicit purchase intents; the browser does
+not resend them on reconnect. Retry-safe ordinary purchases would require a
+separate request-identity contract, not generic suppression of identical packets.
 
 ## Save catalog and local restore rehearsal
 
