@@ -15,7 +15,7 @@ type Guard<Value> = (value: unknown) => value is Value;
 const text: Guard<string> = (value): value is string =>
   typeof value === 'string' && value.length <= 200;
 const selector: Guard<string> = (value): value is string =>
-  text(value) && !['__proto__', 'constructor', 'prototype'].includes(value);
+  text(value) && value !== 'prototype' && !Object.hasOwn(Object.prototype, value);
 const prose: Guard<string> = (value): value is string =>
   typeof value === 'string' && value.length <= 4096;
 const numeric: Guard<number | string> = (value): value is number | string =>
@@ -57,10 +57,7 @@ function dictionary<Value>(value: unknown, guard: Guard<Value>): boolean {
   return (
     wireRecord(value) &&
     Object.keys(value).length <= 128 &&
-    Object.entries(value).every(
-      ([key, entry]) =>
-        text(key) && !['__proto__', 'prototype', 'constructor'].includes(key) && guard(entry),
-    )
+    Object.entries(value).every(([key, entry]) => selector(key) && guard(entry))
   );
 }
 const give: Guard<WireTradeOffer> = (value): value is WireTradeOffer =>

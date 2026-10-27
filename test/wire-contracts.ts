@@ -455,9 +455,17 @@ game.db.world.colonies[colonyPort] = {
   name: 'Wire fixture colony',
 };
 const colonyBefore = JSON.stringify({ player: session.data, world: game.db.world });
-for (const kind of ['__proto__', 'constructor', 'prototype']) {
+for (const kind of [...Object.getOwnPropertyNames(Object.prototype), 'prototype']) {
   session.msgs = 0;
+  assert.equal(parseClientAction({ t: 'colony', op: 'build', kind }), null);
+  assert.equal(parseClientAction({ t: 'lower', op: 'hire', kind }), null);
+  assert.equal(
+    parseClientAction({ t: 'trade2', op: 'offer', give: { items: { [kind]: 1 } } }),
+    null,
+  );
   game.onMessage(session, { t: 'colony', op: 'build', kind });
+  game.features.frontier.colonyOp(session, { op: 'build', kind });
+  game.features.syndicate.lowerDeck(session, { op: 'hire', i: 0, kind });
 }
 assert.equal(
   JSON.stringify({ player: session.data, world: game.db.world }),
