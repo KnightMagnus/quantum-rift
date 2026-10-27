@@ -1,3 +1,5 @@
+import { ByteBudgetCache } from './render-cache-budget.ts';
+import { assetFailure } from './asset-resources.ts';
 export interface AudioMixOptions {
   /** Master volume level (0..1) */
   vol?: number;
@@ -52,8 +54,25 @@ declare global {
 let audioContext: AudioContext | null = null,
   master: GainNode | null = null;
 const audioBus: Partial<Record<MixerBus, GainNode>> = {};
-const buffers = new Map<string | number, AudioBuffer>(),
-  loading = new Map<string | number, Promise<AudioBuffer | null>>();
+const buffers = new ByteBudgetCache<AudioBuffer>(64 * 1024 * 1024, 2000, 128);
+const loading = new Map<string, Promise<AudioBuffer | null>>();
+const retryAfter = new Map<string, number>();
+const activeSources = new Set<AudioBufferSourceNode>();
+let trimTimer: ReturnType<typeof setTimeout> | null = null;
+function trimAudioSoon(): void {
+  if (trimTimer || (buffers.bytes <= buffers.budgetBytes && buffers.size <= buffers.maxEntries))
+    return;
+  trimTimer = setTimeout(() => {
+    trimTimer = null;
+    buffers.evict(performance.now());
+    trimAudioSoon();
+  }, 2100);
+}
+
+function trackSource(source: AudioBufferSourceNode): void {
+  activeSources.add(source);
+  source.addEventListener('ended', () => activeSources.delete(source), { once: true });
+}
 export let volume = 0.6;
 let level2 = { sfx: 0.5, ui: 0.8, amb: 0.5, music: 0.6 },
   muted = false;
@@ -126,25 +145,75 @@ export function setMix(audioMixOptions: AudioMixOptions) {
  */
 // Retired upgrade cue is blocked even for stale or data-driven sound requests.
 const retiredSound = (identifier: string | number) => String(identifier) === '10110';
-function load(identifier: string | number) {
-  if (retiredSound(identifier)) return;
-  if (buffers.has(identifier) || loading.has(identifier) || !audioContext)
-    return loading.get(identifier);
+function load(identifier: string | number): Promise<AudioBuffer | null> {
+  if (retiredSound(identifier) || !audioContext) return Promise.resolve(null);
+  const key = String(identifier);
+  const cached = buffers.get(key, performance.now());
+  if (cached) return Promise.resolve(cached);
+  const pending = loading.get(key);
+  if (pending) return pending;
+  if (loading.size >= 64 || (retryAfter.get(key) || 0) > performance.now())
+    return Promise.resolve(null);
   const targetUrl =
     typeof identifier === 'string' && /^[a-z]/.test(identifier)
       ? `assets/sfx/${identifier}${identifier.startsWith('amb_') || identifier.startsWith('music_') ? '.mp3' : '.wav'}`
       : `assets/sounds/${identifier}.wav`;
-  const catch2 = fetch(targetUrl)
-    .then((response) => response.arrayBuffer())
+  const request = fetch(targetUrl)
+    .then((response) => {
+      if (!response.ok) throw Error(`HTTP ${response.status}`);
+      return response.arrayBuffer();
+    })
     .then((arrayBuffer) => audioContext!.decodeAudioData(arrayBuffer))
     .then((audioBuffer) => {
-      buffers.set(identifier, audioBuffer);
+      buffers.set(
+        key,
+        audioBuffer,
+        audioBuffer.length * audioBuffer.numberOfChannels * 4,
+        performance.now(),
+      );
+      retryAfter.delete(key);
+      trimAudioSoon();
       return audioBuffer;
     })
-    .catch(() => null);
-  loading.set(identifier, catch2);
-  return catch2;
+    .catch(() => {
+      assetFailure(targetUrl, 'missing or corrupt audio');
+      if (retryAfter.size >= 128) retryAfter.delete(retryAfter.keys().next().value!);
+      retryAfter.set(key, performance.now() + 30000);
+      return null;
+    })
+    .finally(() => loading.delete(key));
+  loading.set(key, request);
+  return request;
 }
+
+/** Decoded PCM owned by the cache; active sources keep their own buffers after eviction. */
+export function audioResourceUsage() {
+  buffers.evict(performance.now());
+  const cached = new Set([...buffers].map(([, buffer]) => buffer));
+  const active = new Set(
+    [...activeSources]
+      .map((source) => source.buffer)
+      .filter((buffer): buffer is AudioBuffer => !!buffer),
+  );
+  const size = (values: Set<AudioBuffer>) =>
+    [...values].reduce((bytes, buffer) => bytes + buffer.length * buffer.numberOfChannels * 4, 0);
+  return {
+    entries: buffers.size,
+    bytes: buffers.bytes,
+    budgetBytes: buffers.budgetBytes,
+    pending: loading.size,
+    activeBytes: size(active),
+    totalBytes: size(new Set([...cached, ...active])),
+  };
+}
+
+/** Override only cache ownership for measurement; never stop a live source. */
+export function setAudioResourceBudget(bytes: number): void {
+  buffers.budgetBytes = bytes;
+  audioResourceUsage();
+  trimAudioSoon();
+}
+
 let recent = 0,
   recentT = 0;
 // positional combat effects (combat sound pack)
@@ -159,7 +228,7 @@ let recent = 0,
 export function play(identifier: string | number, deltaX = 0, deltaY = 0, gain = 1) {
   if (!audioContext || !identifier || retiredSound(identifier)) return;
   void load(identifier);
-  const audioBuffer = buffers.get(identifier);
+  const audioBuffer = buffers.get(String(identifier), performance.now());
   if (!audioBuffer) return;
   const currentTime2 = audioContext!.currentTime;
   if (currentTime2 - recentT > 0.05) {
@@ -183,6 +252,7 @@ export function play(identifier: string | number, deltaX = 0, deltaY = 0, gain =
   }
   audioBufferSourceNode.connect(gainNode);
   node.connect((audioBus.sfx || master)!);
+  trackSource(audioBufferSourceNode);
   audioBufferSourceNode.start();
 }
 
@@ -218,7 +288,7 @@ export function ui(name: string, gain = 1, rate = 1) {
   if (!audioContext) return;
   const identifier = 'ui_' + name;
   void load(identifier);
-  const audioBuffer = buffers.get(identifier);
+  const audioBuffer = buffers.get(String(identifier), performance.now());
   if (!audioBuffer) return;
   const currentTime2 = audioContext!.currentTime;
   if (lastUi[name] != null && currentTime2 - lastUi[name] < (UI_GAP[name] || 0.05)) return;
@@ -230,6 +300,7 @@ export function ui(name: string, gain = 1, rate = 1) {
   gainNode.gain.value = gain;
   audioBufferSourceNode.connect(gainNode);
   gainNode.connect((audioBus.ui || master)!);
+  trackSource(audioBufferSourceNode);
   audioBufferSourceNode.start();
 }
 
@@ -298,6 +369,7 @@ function loopBed(identifier: string, gainNode: GainNode) {
       gainNode2.gain.linearRampToValueAtTime(1, when + transform);
       gainNode2.gain.setValueAtTime(1, when + duration2 - transform);
       gainNode2.gain.linearRampToValueAtTime(0, when + duration2);
+      trackSource(audioBufferSourceNode);
       audioBufferSourceNode.start(when);
       audioBufferSourceNode.stop(when + duration2 + 0.05);
       ambienceLoopState.srcs.push(audioBufferSourceNode);
@@ -433,6 +505,7 @@ export function startMusic() {
     musicSrc.connect(musicGain);
     musicStartedAt = audioContext!.currentTime;
     musicEpoch++;
+    trackSource(musicSrc);
     musicSrc.start();
   });
 }

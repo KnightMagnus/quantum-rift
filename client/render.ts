@@ -1,3 +1,5 @@
+import { assetImage } from './asset-resources.ts';
+import { ByteBudgetCache } from './render-cache-budget.ts';
 import { storyShipOpacity, storyScenery, reducedStoryEffects } from './story-reality.ts';
 import type { RealityEnding, RealityFlags } from './story-reality.ts';
 import { storySystemVisible } from '../shared/story-world.ts';
@@ -408,16 +410,6 @@ function viewColor(
 }
 
 const faction2 = Object.keys(FACTIONS);
-const wormImg = new Image();
-wormImg.src = 'assets/wormhole.png';
-const quantumRiftImg = new Image();
-quantumRiftImg.src = 'assets/quantum_rift.png';
-const arrivalBackdrop = new Image();
-arrivalBackdrop.src = 'assets/milky_way_arrival_backdrop.jpg';
-const dormantArkImage = new Image();
-dormantArkImage.src = 'assets/ships/925.webp';
-const awakeArkImage = new Image();
-awakeArkImage.src = 'assets/ships/926.webp';
 const riftBlend = document.createElement('canvas');
 riftBlend.width = riftBlend.height = WORMHOLE.frameSize;
 const riftBlendContext = riftBlend.getContext('2d')!;
@@ -429,6 +421,7 @@ function drawQuantumRift(
   size: number,
   now: number,
 ) {
+  const quantumRiftImg = assetImage('quantum_rift.png');
   if (!ready(quantumRiftImg)) return;
   const frames = loopFrames(now, WORMHOLE.frames, WORMHOLE.frameMs);
   riftBlendContext.clearRect(0, 0, WORMHOLE.frameSize, WORMHOLE.frameSize);
@@ -466,7 +459,6 @@ export function startStorySequence(
 ): void {
   storySequences.set(state, { kind, began: now });
 }
-const sheets = new Map<string, HTMLImageElement>();
 /**
  * Loads or retrieves a cached sprite sheet image for a given ship hull.
  * @param shipHullAsset Ship hull specification object
@@ -474,22 +466,10 @@ const sheets = new Map<string, HTMLImageElement>();
  * @returns Cached or newly requested HTML Image
  */
 export function sheet(shipHullAsset: ShipHull, glow?: boolean): HTMLImageElement {
-  // the sharper full-colour sheets (12 wide, with banking frames) where a hull has them
-  const entryKey = shipHullAsset.id + (glow ? 'g' : '');
-  if (!sheets.has(entryKey)) {
-    const htmlImageElement = new Image();
-    htmlImageElement.src = `assets/ships/${shipHullAsset.id}${glow ? '_glow' : ''}.${shipHullAsset.spr ? 'webp' : 'png'}`;
-    sheets.set(entryKey, htmlImageElement);
-  }
-  return sheets.get(entryKey)!;
+  return assetImage(
+    `ships/${shipHullAsset.id}${glow ? '_glow' : ''}.${shipHullAsset.spr ? 'webp' : 'png'}`,
+  );
 }
-const stationImgs = [0, 1, 2, 3, 4, 5].map((entryKey) => {
-  const htmlImageElement = new Image();
-  htmlImageElement.src = `assets/stations/${entryKey}.png`;
-  return htmlImageElement;
-});
-const hubImg = new Image();
-hubImg.src = 'assets/hub.png';
 const HUB_FRAMES = 18,
   HUB_PERIOD = 150; // seconds for one full turn
 
@@ -565,19 +545,13 @@ function stars(systemId: string): {
 // Far (barely moves): the system's star, galaxies, a black hole or pulsar, gas giants, megastructure arcs. Middle: gas clouds,
 // asteroid drifts, ion storms. Near (in the system itself): abandoned stations, ancient wrecks, ring ruins, crystal formations,
 // debris fields, comets, relay satellites, cargo pods and nav beacons.
-const decorImgs: Record<string, HTMLImageElement> = {};
 /**
  * Loads and caches background decor assets by filename.
  * @param count Asset filename key
  * @returns HTML Image instance
  */
 function decorImg(count: string): HTMLImageElement {
-  if (!decorImgs[count]) {
-    const htmlImageElement = new Image();
-    htmlImageElement.src = `assets/decor/${count}.webp`;
-    decorImgs[count] = htmlImageElement;
-  }
-  return decorImgs[count];
+  return assetImage(`decor/${count}.webp`);
 }
 /**
  * Checks whether an image has completely loaded and has positive natural dimensions.
@@ -607,19 +581,13 @@ const SUNS = [
   ['210,230,255', '140,180,255'],
   ['255,255,255', '200,220,255'],
 ];
-const objImgs: Record<string, HTMLImageElement> = {}; // rendered asteroids and loot (tools/rift_objects.py)
 /**
  * Loads and caches rendered 3D object images (asteroids, minerals, crates).
  * @param count Object name identifier
  * @returns Cached or newly created image
  */
 export function objImg(count: string): HTMLImageElement {
-  let htmlImageElement = objImgs[count];
-  if (!htmlImageElement) {
-    htmlImageElement = objImgs[count] = new Image();
-    htmlImageElement.src = `assets/objects/${count}.webp`;
-  }
-  return htmlImageElement;
+  return assetImage(`objects/${count}.webp`);
 }
 let rockSprites: HTMLCanvasElement[] | null = null;
 /**
@@ -1707,7 +1675,7 @@ function drawDecorNear(
     }
   }
 }
-const planetCache = new Map<string, HTMLCanvasElement>();
+const planetCache = new ByteBudgetCache<HTMLCanvasElement>(32 * 1024 * 1024, 2000, 128);
 /**
  * Converts a hexadecimal color string to an RGB number triplet.
  * @param height2 Hex color code (e.g. '#ff8800')
@@ -1718,8 +1686,7 @@ function hexToRgb(hexColor: string): [number, number, number] {
   return [(parseInt2 >> 16) & 255, (parseInt2 >> 8) & 255, parseInt2 & 255];
 }
 // rendered station designs (tools/rift_stations.py), chosen by who built the station and what it is
-const stImgs: Record<string, HTMLImageElement> = {},
-  stPick = new Map<string, string>();
+const stPick = new Map<string, string>();
 /**
  * Determines the architectural 3D station sprite model name for a station.
  * @param stellarBody Station stellar body definition
@@ -1774,11 +1741,7 @@ function stationSprite(stellarBody: StellarBody): HTMLImageElement | HTMLCanvasE
   // Luna keeps the original glowing wheel rather than inheriting the generic shipyard.
   if (stellarBody.id === 'luna') return stationWheel(stellarBody)!;
   const stationDesign2 = stationDesign(stellarBody);
-  let htmlImageElement = stImgs[stationDesign2];
-  if (!htmlImageElement) {
-    htmlImageElement = stImgs[stationDesign2] = new Image();
-    htmlImageElement.src = `assets/stations/s_${stationDesign2}.webp`;
-  }
+  const htmlImageElement = assetImage(`stations/s_${stationDesign2}.webp`);
   return htmlImageElement.complete && htmlImageElement.naturalWidth ? htmlImageElement : null;
 }
 /**
@@ -1787,7 +1750,8 @@ function stationSprite(stellarBody: StellarBody): HTMLImageElement | HTMLCanvasE
  * @returns Off-screen canvas containing the rendered body
  */
 function planetImage(stellarBody: StellarBody): HTMLCanvasElement {
-  if (planetCache.has(stellarBody.id)) return planetCache.get(stellarBody.id)!;
+  const cached = planetCache.get(stellarBody.id, performance.now());
+  if (cached) return cached;
   const radius = stellarBody.r,
     state = Math.ceil(radius * 2.6),
     htmlCanvasElement = document.createElement('canvas');
@@ -1960,7 +1924,7 @@ function planetImage(stellarBody: StellarBody): HTMLCanvasElement {
     canvasRenderingContext2D.arc(centerX, centerY, radius * 1.2, 0, Math.PI * 2);
     canvasRenderingContext2D.fill();
   }
-  planetCache.set(stellarBody.id, htmlCanvasElement);
+  planetCache.set(stellarBody.id, htmlCanvasElement, state * state * 4, performance.now());
   return htmlCanvasElement;
 }
 
@@ -1970,19 +1934,13 @@ function planetImage(stellarBody: StellarBody): HTMLCanvasElement {
  */
 const visualEffects: VisualEffect[] = [];
 export { visualEffects as fx };
-const fxImgs: Record<string, HTMLImageElement> = {}; // rendered effects (tools/rift_fx.py)
 /**
  * Loads or returns cached visual effect sprites.
  * @param count Effect sprite name
  * @returns Effect sprite image
  */
 function fxImg(count: string): HTMLImageElement {
-  let htmlImageElement = fxImgs[count];
-  if (!htmlImageElement) {
-    htmlImageElement = fxImgs[count] = new Image();
-    htmlImageElement.src = `assets/fx/${count}.webp`;
-  }
-  return htmlImageElement;
+  return assetImage(`fx/${count}.webp`);
 }
 for (const count of ['boom_a', 'boom_b', 'boom_big', 'shards', 'flare']) fxImg(count);
 /**
@@ -2228,14 +2186,14 @@ export function addShake(entryKey: number): void {
 }
 
 // projectile drawing by look
-const glowColor = new Map<string, HTMLCanvasElement>(); // a soft additive glow behind every bolt, and a fading trail
+const glowColor = new ByteBudgetCache<HTMLCanvasElement>(1024 * 1024, 2000, 64); // a soft additive glow behind every bolt, and a fading trail
 /**
  * Generates or retrieves a radial glow sprite for projectile weapons.
  * @param column Color hex string
  * @returns Radial glow canvas sprite
  */
 function glowSprite(column: string): HTMLCanvasElement {
-  let htmlCanvasElement = glowColor.get(column);
+  let htmlCanvasElement = glowColor.get(column, performance.now());
   if (!htmlCanvasElement) {
     htmlCanvasElement = document.createElement('canvas');
     htmlCanvasElement.width = htmlCanvasElement.height = 64;
@@ -2246,7 +2204,7 @@ function glowSprite(column: string): HTMLCanvasElement {
     canvasGradient.addColorStop(1, column + '00');
     canvasRenderingContext2D.fillStyle = canvasGradient;
     canvasRenderingContext2D.fillRect(0, 0, 64, 64);
-    glowColor.set(column, htmlCanvasElement);
+    glowColor.set(column, htmlCanvasElement, 64 * 64 * 4, performance.now());
   }
   return htmlCanvasElement;
 }
@@ -2480,15 +2438,16 @@ export function drawShot(
 }
 
 // ------------------------------------------------------------------ mining fields
-const rockCache = new Map<number, HTMLCanvasElement>();
+const rockCache = new ByteBudgetCache<HTMLCanvasElement>(32 * 1024 * 1024, 2000, 512);
 /**
  * Generates and caches an off-screen canvas sprite for a minable asteroid or gas deposit.
  * @param renderRock Mining rock or gas pocket definition
  * @returns Off-screen canvas sprite
  */
 export function rockImage(renderRock: RenderRock): HTMLCanvasElement {
-  const entryKey = renderRock.id;
-  if (rockCache.has(entryKey)) return rockCache.get(entryKey)!;
+  const entryKey = `${renderRock.id}:${renderRock.ore}:${renderRock.r}`;
+  const cached = rockCache.get(entryKey, performance.now());
+  if (cached) return cached;
   const radius = renderRock.r,
     state = Math.ceil(radius * 2.6),
     htmlCanvasElement = document.createElement('canvas');
@@ -2606,7 +2565,7 @@ export function rockImage(renderRock: RenderRock): HTMLCanvasElement {
       );
     }
   }
-  rockCache.set(entryKey, htmlCanvasElement);
+  rockCache.set(entryKey, htmlCanvasElement, state * state * 4, performance.now());
   return htmlCanvasElement;
 }
 const LOOT_COL = ['#ffd27a', '#7ad0ff', '#b0a090', '#8affc8', '#d0a0ff', '#ff5ae0']; // 5: hostile loot chest
@@ -2663,11 +2622,9 @@ export function draw(
     canvasRenderingContext2D.fillStyle = '#000';
     canvasRenderingContext2D.fillRect(0, 0, width2, height2);
     if (!starSystem) return;
-    if (
-      starSystem.id === 'beyond-rift' &&
-      arrivalBackdrop.complete &&
-      arrivalBackdrop.naturalWidth
-    ) {
+    const arrivalBackdrop =
+      starSystem.id === 'beyond-rift' ? assetImage('milky_way_arrival_backdrop.jpg') : null;
+    if (arrivalBackdrop && ready(arrivalBackdrop)) {
       const cover = Math.max(
         width2 / arrivalBackdrop.naturalWidth,
         height2 / arrivalBackdrop.naturalHeight,
@@ -2776,6 +2733,7 @@ export function draw(
       drawPulseBoundary(canvasRenderingContext2D, starSystem, screenX, screenY, zoom2);
     const reality = storyScenery(clientGameState.you?.story?.flags as RealityFlags | undefined);
     if (starSystem.id === EXPEDITION_HULK.system && reality.dormantArk) {
+      const dormantArkImage = assetImage('ships/925.webp');
       const frame = SPRITES[925],
         size = EXPEDITION_HULK.size * zoom2;
       if (dormantArkImage.complete && dormantArkImage.naturalWidth) {
@@ -2796,7 +2754,7 @@ export function draw(
       }
     }
     if (starSystem.id === 'dimmer' && reality.breachSetpieces) {
-      const station = stationImgs[0];
+      const station = assetImage('stations/0.png');
       const x = screenX(1600),
         y = screenY(-900),
         size = 450 * zoom2;
@@ -2825,6 +2783,7 @@ export function draw(
     }
     const sequence = storySequences.get(clientGameState);
     if (sequence?.kind === 'ark-departure' && clientView) {
+      const awakeArkImage = assetImage('ships/926.webp');
       const progress = Math.min(1, Math.max(0, (currentTime - sequence.began) / 12000));
       const extent = Math.min(width2, height2),
         worldSpan = extent / zoom2;
@@ -2867,7 +2826,7 @@ export function draw(
       let label = rawStellarBody.name;
       if (rawStellarBody.wormhole) {
         const quantum = starSystem.id === 'quantum-rift' || starSystem.id === 'beyond-rift';
-        const portalImage = quantum ? quantumRiftImg : wormImg;
+        const portalImage = assetImage(quantum ? 'quantum_rift.png' : 'wormhole.png');
         // Original periodic Gateway frames; interpolate only to smooth display cadence.
         if (quantum) {
           drawQuantumRift(
@@ -2929,7 +2888,8 @@ export function draw(
           );
         }
         // the Quantum Station hub turns slowly; neighbouring frames are cross-faded so the rotation is smooth
-        if (hubImg.complete && hubImg.naturalWidth) {
+        const hubImg = assetImage('hub.png');
+        if (ready(hubImg)) {
           const fileSystem = hubImg.naturalWidth / 6,
             state = rawStellarBody.r * 2.13 * zoom2,
             time = (currentTime / 1000 / HUB_PERIOD) * HUB_FRAMES,
@@ -2964,7 +2924,7 @@ export function draw(
       } else if (rawStellarBody.site) {
         const state = clientGameState.sites && clientGameState.sites[rawStellarBody.id],
           operations = state ? state.ops : 0,
-          htmlImageElement = stationImgs[operations];
+          htmlImageElement = assetImage(`stations/${operations}.png`);
         if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
           const state4 = rawStellarBody.r * (2.2 + operations * 0.25) * zoom2;
           canvasRenderingContext2D.globalCompositeOperation = 'lighter';
@@ -5362,4 +5322,13 @@ export function resetRenderSession() {
   shake = 0;
   tagRects = [];
   Object.assign(cameraState, { cx: 0, cy: 0, z: 1, W: 1, H: 1 });
+}
+
+/** Cache-owned legacy procedural pixels; active drawing references are never invalidated. */
+export function proceduralResourceUsage() {
+  const usage = (cache: ByteBudgetCache<HTMLCanvasElement>) => {
+    cache.evict(performance.now());
+    return { entries: cache.size, bytes: cache.bytes, budgetBytes: cache.budgetBytes };
+  };
+  return { rocks: usage(rockCache), bodies: usage(planetCache), glows: usage(glowColor) };
 }

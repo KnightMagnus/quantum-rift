@@ -4,6 +4,20 @@ import { ByteBudgetCache, retainedBytes } from '../client/render-cache-budget.ts
 
 const LIVE_MS = 2000;
 
+// Count limits also bound zero-byte failures/pending entries; clearing never mutates consumers.
+{
+  const cache = new ByteBudgetCache<{ alive: boolean }>(1000, LIVE_MS, 2);
+  const consumer = { alive: true };
+  cache.set('old', consumer, 0, 0);
+  cache.set('second', { alive: true }, 0, 1);
+  assert.deepEqual(cache.set('live', { alive: true }, 0, 3000), ['old']);
+  assert.equal(consumer.alive, true);
+  cache.clear();
+  assert.equal(cache.size, 0);
+  assert.equal(cache.bytes, 0);
+  assert.equal(consumer.alive, true);
+}
+
 // Idle entries are evicted least recently used first until the cache fits.
 {
   const cache = new ByteBudgetCache<string>(300, LIVE_MS);
