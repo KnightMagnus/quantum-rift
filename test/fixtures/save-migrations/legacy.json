@@ -20,7 +20,9 @@
       "station": {
         "site": "synthetic-site",
         "claimed": true
-      }
+      },
+      "tut": 12,
+      "tutV": 1
     }
   },
   "world": {

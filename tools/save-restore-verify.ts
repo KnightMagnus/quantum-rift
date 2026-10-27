@@ -4,7 +4,11 @@ import filesystem from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DB } from '../server/db.ts';
-import { previewCargoMigration } from '../server/save-migrations.ts';
+import {
+  previewSaveMigrations,
+  SAVE_MIGRATION_CATALOG_VERSION,
+  SAVE_REHEARSAL_PLAN,
+} from '../server/save-migrations.ts';
 
 /** Read a stopped local snapshot into a disposable restore; never open the source with DB. */
 export function verifySaveRestore(sourceDirectory: string, scratchDirectory: string) {
@@ -36,9 +40,9 @@ export function verifySaveRestore(sourceDirectory: string, scratchDirectory: str
       filesystem.writeFileSync(path.join(restoredDirectory, filename), bytes, { mode: 0o600 });
     const restored = new DB(restoredDirectory);
     const before = structuredClone(restored.world);
-    const migrated = previewCargoMigration(restored.players);
-    const again = previewCargoMigration(migrated.players);
-    assert.equal(again.changedAccounts, 0, 'Cargo migration must be idempotent');
+    const migrated = previewSaveMigrations(restored.players);
+    const again = previewSaveMigrations(migrated.players);
+    assert.equal(again.changedAccounts, 0, 'Rehearsed migrations must be idempotent');
     assert.deepEqual(again.players, migrated.players);
     restored.players = migrated.players;
     restored.touch();
@@ -46,7 +50,7 @@ export function verifySaveRestore(sourceDirectory: string, scratchDirectory: str
     const reopened = new DB(restoredDirectory);
     assert.deepEqual(reopened.players, Object.assign(Object.create(null), migrated.players));
     assert.deepEqual(reopened.world, before);
-    assert.equal(previewCargoMigration(reopened.players).changedAccounts, 0);
+    assert.equal(previewSaveMigrations(reopened.players).changedAccounts, 0);
     // Detect a concurrently changed source; operators must stop the source process first.
     for (const filename of files) {
       const fullPath = path.join(source, filename);
@@ -55,8 +59,9 @@ export function verifySaveRestore(sourceDirectory: string, scratchDirectory: str
       else assert.equal(filesystem.existsSync(fullPath), false, 'Source changed');
     }
     return {
-      schema: 1,
-      checkedMigration: 'cargo-ledger-v1',
+      schema: 2,
+      catalogVersion: SAVE_MIGRATION_CATALOG_VERSION,
+      checkedMigrations: SAVE_REHEARSAL_PLAN,
       accounts: Object.keys(reopened.players).length,
       changedAccounts: migrated.changedAccounts,
       journalRecovered: originals.has('checkpoint.json'),
@@ -67,13 +72,13 @@ export function verifySaveRestore(sourceDirectory: string, scratchDirectory: str
         ]),
       ),
       checks: [
-        'cargo-idempotence',
+        'cargo-and-tutorial-idempotence',
         'local-checkpoint-reopen',
         'world-preserved',
         'source-unchanged',
       ],
       limits: [
-        'Cargo/storage ledger only; no Game login or other feature migrations.',
+        'Cargo/storage ledger and tutorial only; no Game login or other feature migrations.',
         'Not a native Nakama restore, reverse migration or cross-version archive test.',
       ],
     };
