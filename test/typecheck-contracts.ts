@@ -34,6 +34,20 @@ try {
       { encoding: 'utf8' },
     );
   };
+  const purchaseType = modulePath('../shared/wire-actions.ts');
+  let purchaseResult = check(`import type { PortPurchaseAction } from '${purchaseType}';
+const request: PortPurchaseAction = {t:'buymat',mat:'alloy',grade:'2',n:'3.9'}; void request;`);
+  assert.equal(purchaseResult.status, 0, purchaseResult.stdout + purchaseResult.stderr);
+  for (const request of [
+    "{t:'buyship',hull:[]}",
+    "{t:'buyship',hull:201,store:'true'}",
+    "{t:'outfit',id:5,n:null}",
+    "{t:'buymat',mat:'alloy',grade:0,n:1,price:0}",
+  ]) {
+    purchaseResult = check(`import type { PortPurchaseAction } from '${purchaseType}';
+const request: PortPurchaseAction = ${request}; void request;`);
+    assert.notEqual(purchaseResult.status, 0, 'purchase shape and authority fields are checked');
+  }
   const bindingPath = modulePath('feature-service.js');
   const bindingFixture = `import {bindOperations} from '${bindingPath}';
 function run(this: {required: number}): number{return this.required;}

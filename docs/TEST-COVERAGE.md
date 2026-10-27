@@ -22,8 +22,9 @@ See [CONTENT-VALIDATION.md](CONTENT-VALIDATION.md) for commands and scope.
 
 ## Economic wire boundary
 
-`shared/wire-actions.ts` owns trade, refinery, mining-order, towing and industrial request
-shapes. Both local sockets and native matches reach the same Game routes and
+`shared/wire-actions.ts` owns trade, refinery, mining-order, towing, industrial and
+ordinary port-purchase (`buyship`, `outfit`, `buymat`) request shapes. Both local
+sockets and native matches reach the same Game routes and
 service validators. Auth, flood, checkpoint freeze and activity gates remain in
 Game; ownership, pricing, location, receipts and settlement remain in services.
 Trade still accepts finite numeric text and uses signed 32-bit truncation.
@@ -51,6 +52,18 @@ flight/economic denials. `dredge-network.ts` follows malformed local packets wit
 successful harvest/off commands. `nakama-network.ts` sends malformed industrial
 packets from an ordinary fresh captain; this covers native denial/continued
 service, not successful native Dredge controls or complete transport parity.
+
+Port purchases validate required finite numeric values, bounded identifiers and the
+optional boolean hangar selector before invoking port services. Finite numeric
+text, signed 32-bit wrapping/truncation and empty numeric text retain their old
+conversion; null, arrays, objects, booleans in numeric fields and forged price or
+credit fields are rejected. Prices, inventory, fitting and location checks still
+belong to port services. `wire-contracts.ts` checks unchanged player/world state
+on malformed requests, route coercion and real material purchases and sales.
+The existing local/native economic denial fixtures also check malformed purchase
+packets and unchanged ship/material projections. These transport cases prove
+denial and continued service, not successful ship purchases on both transports.
+Compiler fixtures reject malformed purchase shapes and forged prices.
 
 `shared/refinery-wire.ts` contains implementation-independent refinery payload
 types. `shared/wire-payloads.ts` validates complete quote field shapes and the

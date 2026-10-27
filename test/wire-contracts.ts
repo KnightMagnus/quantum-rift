@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   parseTradeAction,
+  parsePortPurchaseAction,
   parseRefineryAction,
   parseTowingAction,
   parseIndustrialAction,
@@ -219,4 +220,111 @@ for (const gate of ['frozen', 'paused', 'dead', 'docked', 'wrong-hull'] as const
 }
 console.log(
   'Industrial parser, direct/routed no-mutation denials, optional discriminator and all-off selectors passed.',
+);
+
+// Port requests share one schema before either transport reaches settlement.
+const purchases = [
+  { t: 'buyship', hull: '201.9', store: true },
+  { t: 'outfit', id: '5.9', n: '-2.9' },
+  { t: 'buymat', mat: 'alloy', grade: '2.9', n: '3.9' },
+];
+const purchaseDenials: unknown[] = [
+  null,
+  [],
+  3,
+  { t: 'buyship' },
+  { t: 'outfit' },
+  { t: 'buymat' },
+];
+for (const purchase of purchases) {
+  assert.equal(parsePortPurchaseAction(purchase), purchase, 'preserve numeric text verbatim');
+  purchaseDenials.push({ ...purchase, price: 0 }, { ...purchase, credits: 999 });
+  for (const field of purchase.t === 'buyship'
+    ? ['hull']
+    : purchase.t === 'outfit'
+      ? ['id', 'n']
+      : ['grade', 'n'])
+    for (const invalid of [null, [], {}, true, Infinity, NaN, 'Infinity', 'x'.repeat(201)])
+      purchaseDenials.push({ ...purchase, [field]: invalid });
+}
+purchaseDenials.push(
+  { t: 'buyship', hull: 201, store: [] },
+  { t: 'buyship', hull: 201, store: 'true' },
+  { t: 'buymat', mat: [], grade: 0, n: 1 },
+  { t: 'buymat', mat: '__proto__', grade: 0, n: 1 },
+  { t: 'buymat', mat: 'x'.repeat(201), grade: 0, n: 1 },
+  Object.assign(Object.create({ inherited: true }), purchases[0]),
+);
+const purchaseGame = refineryGame();
+const purchaser = refineryPilot(purchaseGame, 'Port Purchaser');
+for (const incoming of purchaseDenials) {
+  assert.equal(parsePortPurchaseAction(incoming), null);
+  const beforePurchase = JSON.stringify({ player: purchaser.data, world: purchaseGame.db.world });
+  purchaser.msgs = 0;
+  purchaseGame.onMessage(purchaser, incoming);
+  assert.equal(
+    JSON.stringify({ player: purchaser.data, world: purchaseGame.db.world }),
+    beforePurchase,
+  );
+}
+const purchaseCalls: unknown[][] = [];
+purchaseGame.buyShip = (_session, hull) => {
+  purchaseCalls.push(['ship', hull]);
+};
+purchaseGame.features.docks.buyToHangar = (_session, hull) => {
+  purchaseCalls.push(['hangar', hull]);
+};
+purchaseGame.outfit = (_session, id, quantity) => {
+  purchaseCalls.push(['outfit', id, quantity]);
+};
+const buyMaterial = purchaseGame.buyMat.bind(purchaseGame);
+purchaseGame.buyMat = (_session, mat, grade, quantity) => {
+  purchaseCalls.push(['material', mat, grade, quantity]);
+};
+for (const incoming of [
+  ...purchases,
+  { t: 'buyship', hull: 4294967497 },
+  { t: 'outfit', id: 5, n: '' },
+])
+  purchaseGame.onMessage(purchaser, incoming);
+assert.deepEqual(
+  purchaseCalls,
+  [
+    ['hangar', 201],
+    ['outfit', 5, -2],
+    ['material', 'alloy', 2, 3],
+    ['ship', 201],
+    ['outfit', 5, 0],
+  ],
+  'purchase routes retain signed-int wrapping, truncation, numeric text, empty text and hangar selection',
+);
+purchaseGame.buyMat = buyMaterial;
+const { STELLARS } = await import('../shared/galaxy.ts');
+const materialPort = STELLARS[purchaser.data.stellar!];
+assert.ok(materialPort, 'purchase fixture is docked at an ordinary port');
+const materialOffer = purchaseGame.matsFor(materialPort, purchaser.data)[0];
+assert.ok(materialOffer, 'ordinary port offers engineering material');
+const materialBefore = purchaser.data.mats[materialOffer.mat][materialOffer.grade];
+const creditsBefore = purchaser.data.credits;
+purchaseGame.onMessage(purchaser, {
+  t: 'buymat',
+  mat: materialOffer.mat,
+  grade: String(materialOffer.grade),
+  n: '3.9',
+});
+assert.equal(purchaser.data.mats[materialOffer.mat][materialOffer.grade], materialBefore + 3);
+assert.equal(purchaser.data.credits, creditsBefore - 3 * materialOffer.price);
+purchaseGame.onMessage(purchaser, {
+  t: 'buymat',
+  mat: materialOffer.mat,
+  grade: materialOffer.grade,
+  n: -2.9,
+});
+assert.equal(purchaser.data.mats[materialOffer.mat][materialOffer.grade], materialBefore + 1);
+assert.equal(
+  purchaser.data.credits,
+  creditsBefore - 3 * materialOffer.price + Math.round(2 * materialOffer.price * 0.6),
+);
+console.log(
+  'Port purchase schemas, malformed no-mutation denials, legacy routing and authoritative material buy/sell passed.',
 );

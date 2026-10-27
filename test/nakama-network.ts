@@ -107,6 +107,8 @@ try {
   const economicBefore = JSON.stringify({
     credits: first.latest('you')!.d.credits,
     cargo: first.latest('you')!.d.cargo,
+    ship: first.latest('you')!.d.ship,
+    mats: first.latest('you')!.d.mats,
   });
   for (const packet of [
     null,
@@ -115,6 +117,13 @@ try {
     { t: 'industrial', op: 'recipe', recipe: [], grade: 'common' },
     { t: 'industrial', op: 'recipe', recipe: 'alloy', grade: null },
     { t: 'industrial', op: 'recipe', recipe: 'x'.repeat(201), grade: 'common' },
+    { t: 'buyship', hull: null },
+    { t: 'buyship', hull: '201', store: [] },
+    { t: 'outfit', id: [], n: 1 },
+    { t: 'outfit', id: 5, n: null },
+    { t: 'buymat', mat: 'alloy', grade: [], n: 1 },
+    { t: 'buymat', mat: '__proto__', grade: 0, n: 1 },
+    { t: 'buymat', mat: 'x'.repeat(201), grade: 0, n: 1 },
     { t: 'trade', cid: 'food', qty: null },
     { t: 'trade', cid: 'food', qty: [] },
     { t: 'trade', cid: 'x'.repeat(201), qty: 3 },
@@ -131,6 +140,8 @@ try {
     JSON.stringify({
       credits: first.latest('you')!.d.credits,
       cargo: first.latest('you')!.d.cargo,
+      ship: first.latest('you')!.d.ship,
+      mats: first.latest('you')!.d.mats,
     }),
     economicBefore,
   );

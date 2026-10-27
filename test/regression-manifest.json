@@ -1763,7 +1763,14 @@
       "message-routing.ts",
       "wire-contracts.ts"
     ],
-    "buyship": ["sim.ts", "v21.ts", "message-routing.ts"],
+    "buyship": [
+      "sim.ts",
+      "v21.ts",
+      "message-routing.ts",
+      "wire-contracts.ts",
+      "refinery-network.ts",
+      "nakama-network.ts"
+    ],
     "docks": [
       "outfitter-wing-repairs.ts",
       "sim.ts",
@@ -1772,7 +1779,14 @@
       "message-routing.ts"
     ],
     "questdrop": ["core-actions.ts", "message-routing.ts"],
-    "outfit": ["bot.ts", "v203.ts", "message-routing.ts"],
+    "outfit": [
+      "bot.ts",
+      "v203.ts",
+      "message-routing.ts",
+      "wire-contracts.ts",
+      "refinery-network.ts",
+      "nakama-network.ts"
+    ],
     "accept": [
       "bot.ts",
       "v12.ts",
@@ -1798,7 +1812,13 @@
       "v26.ts",
       "message-routing.ts"
     ],
-    "buymat": ["core-actions.ts", "message-routing.ts"],
+    "buymat": [
+      "core-actions.ts",
+      "message-routing.ts",
+      "wire-contracts.ts",
+      "refinery-network.ts",
+      "nakama-network.ts"
+    ],
     "rename": ["v203.ts", "message-routing.ts"],
     "note": ["core-actions.ts", "message-routing.ts"],
     "chat": ["bot.ts", "v06.ts", "v26.ts", "chat-projection-browser.ts", "message-routing.ts"],

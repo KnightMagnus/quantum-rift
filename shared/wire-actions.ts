@@ -74,8 +74,43 @@ export type IndustrialAction = {
   /** Exact input grade selector; the service checks supported grades. */
   grade?: string;
 };
+/** Legacy finite numeric value; routes retain their signed 32-bit coercion. */
+export type PurchaseNumber = number | string;
+/** Ordinary port purchases; prices, stock and ownership remain server-owned. */
+export type PortPurchaseAction =
+  | {
+      /** Shipyard purchase route. */
+      t: 'buyship';
+      /** Catalog hull, converted by the route. */
+      hull: PurchaseNumber;
+      /** Store the purchase in the hangar instead of replacing the flagship. */
+      store?: boolean;
+    }
+  | {
+      /** Outfitter buy/sell route. */
+      t: 'outfit';
+      /** Catalog outfit, converted by the route. */
+      id: PurchaseNumber;
+      /** Signed buy/sell quantity, converted by the route. */
+      n: PurchaseNumber;
+    }
+  | {
+      /** Engineering material buy/sell route. */
+      t: 'buymat';
+      /** Catalog material identifier. */
+      mat: string;
+      /** Material grade, converted by the route. */
+      grade: PurchaseNumber;
+      /** Signed buy/sell quantity, converted by the route. */
+      n: PurchaseNumber;
+    };
 /** Migrated economic request families; not a claim that all routes are validated. */
-export type EconomicAction = TradeAction | RefineryAction | TowingAction | IndustrialAction;
+export type EconomicAction =
+  | TradeAction
+  | RefineryAction
+  | TowingAction
+  | IndustrialAction
+  | PortPurchaseAction;
 
 /** Plain decoded JSON object, excluding arrays and custom prototypes. */
 export function wireRecord(value: unknown): value is Record<string, unknown> {
@@ -219,4 +254,31 @@ export function parseIndustrialAction(value: unknown): IndustrialAction | null {
   return wireRecord(value) && value.t === 'industrial' && validIndustrialRequest(value)
     ? (value as IndustrialAction)
     : null;
+}
+
+/** Reject malformed purchase envelopes without normalizing legacy numeric text. */
+export function parsePortPurchaseAction(value: unknown): PortPurchaseAction | null {
+  if (!wireRecord(value)) return null;
+  const numeric = (entry: unknown): entry is PurchaseNumber =>
+    (typeof entry === 'number' || text(entry)) && Number.isFinite(Number(entry));
+  if (value.t === 'buyship')
+    return fields(value, ['t', 'hull', 'store']) &&
+      numeric(value.hull) &&
+      (value.store === undefined || typeof value.store === 'boolean')
+      ? (value as PortPurchaseAction)
+      : null;
+  if (value.t === 'outfit')
+    return fields(value, ['t', 'id', 'n']) && numeric(value.id) && numeric(value.n)
+      ? (value as PortPurchaseAction)
+      : null;
+  if (value.t === 'buymat')
+    return fields(value, ['t', 'mat', 'grade', 'n']) &&
+      text(value.mat) &&
+      !!value.mat &&
+      !['__proto__', 'constructor', 'prototype'].includes(value.mat) &&
+      numeric(value.grade) &&
+      numeric(value.n)
+      ? (value as PortPurchaseAction)
+      : null;
+  return null;
 }
