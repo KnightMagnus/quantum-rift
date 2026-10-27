@@ -140,6 +140,8 @@ for (const noShield of [false, true]) {
     you() {},
     landed() {},
   });
+  // Prototype-only fixtures must assemble the same delegated owner as the constructor.
+  game.stationService = Game.prototype.createStationService.call(game);
   const playerData = captain({ ops: 2, claimed: true, site: 'site-qgate' }, 2, 10);
   Object.assign(playerData, { stellar: 'site-qgate', credits: 1e9, noShield });
   const session = mockSession({ data: playerData, ent: null });
