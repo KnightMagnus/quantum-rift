@@ -117,8 +117,10 @@ rg -n 'cargo-courier-progression|robustness-wiring' test/regression-manifest.jso
 ## Save compatibility checks
 
 `server/save-migrations.ts` catalogs existing migration owners without changing
-live lifecycle order. `tools/save-restore-verify.ts` rehearses only the existing
-cargo/storage-ledger migration on disposable local copies. See
+live lifecycle order. Its versioned rehearsal plan runs cargo/storage-ledger and
+tutorial migration owners on detached accounts. `tools/save-restore-verify.ts`
+checks those migrations on disposable local copies; the registered save tests
+also exercise native CAS/restart and legacy co-op refund recovery. See
 [SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md) for commands and limits. `server/db.ts`
 rejects corrupt or unreadable local snapshots instead of silently resetting them;
 feature validation and native CAS authority remain with their existing owners.
@@ -383,3 +385,13 @@ policy. [client/connection.ts](../client/connection.ts) checks fresh HTTP status
 the native world RPC before joining. Local Game hello and native join metadata
 are checked before Game login. [PROTOCOL-COMPATIBILITY.md](PROTOCOL-COMPATIBILITY.md)
 describes supported combinations and update recovery.
+
+## Save compatibility boundaries
+
+`server/save-migrations.ts` catalogs existing migration/default owners and the
+explicit cargo/tutorial rehearsal order. `server/save-validation.ts` checks
+present compatibility fields before local/native load, local journal recovery,
+Solo import and account login. Feature owners still perform migrations; no
+second store or startup scheduler is introduced. `docs/SAVE-MIGRATIONS.md` lists
+supported synthetic shape fixtures, native fault evidence and the disposable
+PostgreSQL backup/restore procedure.

@@ -1,0 +1,35 @@
+{
+  "players": {
+    "old admiral": {
+      "name": "Old Admiral",
+      "created": 1800000000000,
+      "credits": 1000,
+      "log": [],
+      "fleet": "OLD",
+      "directives": { "1": 2, "2": 0, "3": 1 }
+    },
+    "old wing": {
+      "name": "Old Wing",
+      "created": 1800000000000,
+      "credits": 1000,
+      "log": [],
+      "fleet": "OLD"
+    }
+  },
+  "world": {
+    "sites": {},
+    "fleets": {
+      "OLD": {
+        "tag": "OLD",
+        "name": "Old Guard",
+        "leader": "Old Admiral",
+        "members": ["Old Admiral", "Old Wing"],
+        "bank": 400000,
+        "pending": [],
+        "open": true
+      }
+    },
+    "claims": {},
+    "cooldown": {}
+  }
+}

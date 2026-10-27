@@ -1,0 +1,129 @@
+[
+  {
+    "label": "unmarked first flight",
+    "before": {
+      "tut": 3
+    },
+    "after": {
+      "tut": 3,
+      "tutV": 2
+    }
+  },
+  {
+    "label": "last unchanged legacy goal",
+    "before": {
+      "tut": 8,
+      "tutV": 1
+    },
+    "after": {
+      "tut": 8,
+      "tutV": 2
+    }
+  },
+  {
+    "label": "first middle legacy goal",
+    "before": {
+      "tut": 9,
+      "tutV": 1
+    },
+    "after": {
+      "tut": 11,
+      "tutV": 2
+    }
+  },
+  {
+    "label": "last middle legacy goal",
+    "before": {
+      "tut": 15,
+      "tutV": 1
+    },
+    "after": {
+      "tut": 17,
+      "tutV": 2
+    }
+  },
+  {
+    "label": "first late legacy goal",
+    "before": {
+      "tut": 16,
+      "tutV": 1
+    },
+    "after": {
+      "tut": 19,
+      "tutV": 2
+    }
+  },
+  {
+    "label": "completed legacy guide",
+    "before": {
+      "tut": 20,
+      "tutV": 1
+    },
+    "after": {
+      "tut": 23,
+      "tutV": 2
+    }
+  },
+  {
+    "label": "already current guide",
+    "before": {
+      "tut": 14,
+      "tutV": 2
+    },
+    "after": {
+      "tut": 14,
+      "tutV": 2
+    }
+  },
+  {
+    "label": "completed sentinel retained",
+    "before": {
+      "tut": 999,
+      "tutV": 2
+    },
+    "after": {
+      "tut": 999,
+      "tutV": 2
+    }
+  },
+  {
+    "label": "missing legacy progression",
+    "before": {},
+    "after": {
+      "tutV": 2
+    }
+  },
+  {
+    "label": "zero legacy marker",
+    "before": {
+      "tut": 9,
+      "tutV": 0
+    },
+    "after": {
+      "tut": 11,
+      "tutV": 2
+    }
+  },
+  {
+    "label": "null legacy marker",
+    "before": {
+      "tut": 16,
+      "tutV": null
+    },
+    "after": {
+      "tut": 19,
+      "tutV": 2
+    }
+  },
+  {
+    "label": "null progression retained",
+    "before": {
+      "tut": null,
+      "tutV": 1
+    },
+    "after": {
+      "tut": null,
+      "tutV": 2
+    }
+  }
+]
