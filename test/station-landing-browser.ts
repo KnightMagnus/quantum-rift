@@ -96,7 +96,7 @@ try {
         contentType: 'text/javascript',
         body:
           fileSystem.readFileSync(path.join(root, 'dist/client/render.js'), 'utf8') +
-          '\nexport {stationSprite, stationImgs, hubImg};\n',
+          '\nexport {stationSprite};\n',
       }),
     );
     await page.goto(origin);
@@ -224,9 +224,10 @@ try {
       assert.equal(retry.second, true, 'transient station-art failures can recover');
       const audit = await page.evaluate(async () => {
         const { STELLARS, SYS: systemsById2 } = await import('/shared/galaxy.js');
-        const { stationDesign, stationSprite, stationImgs, hubImg } =
+        const { stationDesign, stationSprite } =
           (await import('/regression-render.js')) as typeof import('./helpers/render-probe.d.ts');
         const { stationLanding, stationLandingSource } = await import('/exotic_scenery.js');
+        const { assetImage } = await import('/asset-resources.js');
         const stations = Object.values(STELLARS).filter(
           (player) =>
             player.svc?.includes('L') && (player.hub || player.site || player.kind === 'station'),
@@ -239,9 +240,9 @@ try {
             const design = stationDesign(player);
             const source = stationLandingSource(player, design, site as StationSite);
             let sprite = player.hub
-              ? hubImg
+              ? assetImage('hub.png')
               : player.site
-                ? stationImgs[tier!]
+                ? assetImage(`stations/${tier}.png`)
                 : stationSprite(player);
             const deadline = Date.now() + 3000;
             while (!sprite && Date.now() < deadline) {

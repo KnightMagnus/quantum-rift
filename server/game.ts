@@ -1,3 +1,9 @@
+import {
+  createStationService,
+  type StationService,
+  type StationServiceCapabilities,
+} from './station-service.ts';
+
 import { validateFeaturePlayerSave } from './save-validation.ts';
 import { COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
 import { storySystemVisible } from '../shared/story-world.ts';
@@ -543,8 +549,6 @@ import { createJobService } from './jobs.ts';
 import { beginEconomyTrip, arriveEconomyTrip, economyReceipt } from '../shared/economy-receipt.ts';
 import {
   migrateCargoLots,
-  planTake,
-  applyTake,
   addLots,
   clearLots,
   commonLots,
@@ -573,17 +577,12 @@ import {
   MATERIALS,
   GRADES,
   START,
-  OPS as operationLevels,
   RESEARCH,
-  ORE_PROCESS,
-  RELOCATE,
-  relocateCost,
   SITES,
 } from '../shared/galaxy.ts';
 import {
   augmentAssets,
   shipStats,
-  researchBonus,
   price,
   allOutfits,
   makeLoadout,
@@ -643,6 +642,9 @@ export class Game<Storage extends Database = Database> {
 
   /** Ordinary market, material, shipyard and outfitter owner. */
   declare portService: PortService;
+
+  /** Personal Station authorized actions and settlement owner. */
+  declare stationService: StationService;
 
   /** Personal Station refinery accrual and research-completion owner. */
   declare stationProgress: StationProgress;
@@ -784,6 +786,7 @@ export class Game<Storage extends Database = Database> {
     this.features = createFeatures(this);
     this.jobService = this.createJobService();
     this.portService = this.createPortService();
+    this.stationService = this.createStationService();
     this.stationProgress = createStationProgress({
       hangarInit: (playerData) => this.features.hangar.hangarInit(playerData),
       startQueued: (playerData) => this.features.hangar.startQueued(playerData),
@@ -3034,252 +3037,39 @@ export class Game<Storage extends Database = Database> {
    * @param message Station operation payload.
    */
   station(session: Session, message: NetworkMessage): void {
-    const playerData = session.data,
-      stellarBody2 = STELLARS[playerData.stellar!],
-      stationState = playerData.station;
-    if (!stellarBody2 || session.ent) return;
-    this.checkStation(playerData);
-    if (message.op === 'claim') {
-      if (!stellarBody2.site)
-        return this.toast(
-          session,
-          'Find a derelict station hull to claim. They drift in systems across the galaxy.',
-        );
-      if (this.siteOwner(stellarBody2.id))
-        return this.toast(session, 'Another captain has already claimed this hull.');
-      if (stationState.site)
-        return this.toast(
-          session,
-          `You already have a Personal Station in ${systemsById[STELLARS[stationState.site!].system].name}.`,
-        );
-      const first = !stationState.claimed;
-      stationState.site = stellarBody2.id;
-      stationState.claimed = true;
-      stationState.refT = Date.now();
-      this.db.world.sites[stellarBody2.id] = this.db.key(playerData.name);
-      if (first) playerData.mats.alloy[0] += 1;
-      this.log(
-        playerData,
-        `Claimed a derelict station hull in ${systemsById[stellarBody2.system].name}.${first ? ' Its last crew left an Alloy I crate aboard.' : ' Your station progress moved with you.'}`,
-      );
-      this.toast(session, 'This hull is yours. Start Station Tier 1 when ready.');
-      this.broadcast({
-        t: 'chat',
-        from: '',
-        msg: `${session.name} claimed a station hull in ${systemsById[stellarBody2.system].name}.`,
-      });
-      this.db.touch();
-      this.pushSites();
-      this.you(session);
-      this.landed(session);
-      return;
-    }
-    if (!this.ownSite(playerData, stellarBody2))
-      return this.toast(session, 'Land at your Personal Station for that.');
-    switch (message.op) {
-      case 'upgrade': {
-        const opsLevelDef = operationLevels[stationState.ops];
-        if (!stationState.claimed || !opsLevelDef) break;
-        if (playerData.credits < opsLevelDef.cost || !this.hasMats(playerData, opsLevelDef.mats))
-          return this.toast(session, 'You need the credits and materials listed.');
-        playerData.credits -= opsLevelDef.cost;
-        this.takeMats(playerData, opsLevelDef.mats);
-        const wasNewcomer = this.newcomer(playerData);
-        stationState.ops++;
-        stationState.refT = Date.now();
-        this.log(
-          playerData,
-          `${session.name}'s Personal Station reached Station Tier ${stationState.ops}: ${opsLevelDef.title}.`,
-        );
-        this.toast(session, `Station Tier ${stationState.ops} complete: ${opsLevelDef.unlock}.`);
-        if (stationState.ops === 3 && wasNewcomer) {
-          stationState.truceEnds = {
-            kills: (playerData.stats.kills || 0) + TIER3_TRUCE.kills,
-            jumps: (playerData.stats.jumps || 0) + TIER3_TRUCE.jumps,
-          };
-          this.toast(
-            session,
-            `Newcomer protection now winds down: it ends after ${TIER3_TRUCE.kills} kills, ${TIER3_TRUCE.jumps} jumps or once your ship reaches ${TIER3_TRUCE.power} power, whichever comes first.`,
-          );
-        }
-        this.broadcast({
-          t: 'chat',
-          from: '',
-          msg: `${session.name}'s Personal Station reached Station Tier ${stationState.ops}.`,
-        });
-        this.pushSites();
-        break;
-      }
-      case 'process': {
-        // ore -> material crates
-        if (stationState.ops < 1) return this.toast(session, 'Build Station Tier 1 first.');
-        const oreCommodity = message.id as string,
-          material = ORE_PROCESS.to[oreCommodity];
-        if (!material) break;
-        const have = playerData.cargo[oreCommodity] || 0,
-          count = Math.min(
-            Math.floor(have / ORE_PROCESS.per),
-            Math.floor(playerData.credits / ORE_PROCESS.cost),
-            message.all ? 99 : 1,
-          );
-        if (count <= 0)
-          return this.toast(
-            session,
-            `You need ${ORE_PROCESS.per} t of ${COMMODITIES.find((commodityDef) => commodityDef.id === oreCommodity)!.name} and ${credits(ORE_PROCESS.cost)} credits per crate.`,
-          );
-        const game = Math.min(
-          4,
-          ORE_PROCESS.grade[stationState.ops] + (researchBonus(stationState).processGrade || 0),
-        );
-        let take;
-        try {
-          take = planTake(
-            playerData.cargo,
-            playerData.cargoLots,
-            oreCommodity,
-            count * ORE_PROCESS.per,
-            message.lots,
-          );
-        } catch {
-          return this.toast(session, 'Those cargo grades are unavailable.');
-        }
-        applyTake(playerData.cargo, playerData.cargoLots, take);
-        playerData.credits -= count * ORE_PROCESS.cost;
-        playerData.mats[material][game] += count;
-        this.toast(
-          session,
-          `Processed ${count * ORE_PROCESS.per} t into ${count} ${material} ${GRADES[game]} crate${count > 1 ? 's' : ''}.`,
-        );
-        break;
-      }
-      case 'collect': {
-        if (!stationState.refUnits) return this.toast(session, 'The Workshop has nothing ready.');
-        const refUnits2 = stationState.refUnits,
-          credits2 = refUnits2 * (2500 + stationState.ops * 1500);
-        playerData.credits += credits2;
-        stationState.refUnits = 0;
-        stationState.refT = Date.now();
-        const received = [];
-        for (let index = 0; index < refUnits2; index++) {
-          const materials = MATERIALS[Math.floor(Math.random() * 3)],
-            game = Math.min(
-              4,
-              Math.floor(
-                Math.random() * (stationState.ops >= 4 ? 4 : stationState.ops >= 2 ? 3 : 2),
-              ) + (researchBonus(stationState).refineGrade && Math.random() < 0.5 ? 1 : 0),
-            );
-          playerData.mats[materials][game]++;
-          received.push(`${materials} ${GRADES[game]}`);
-        }
-        this.toast(
-          session,
-          `Collected ${refUnits2} Workshop unit${refUnits2 > 1 ? 's' : ''}: ${credits(credits2)} credits and ${received.join(', ')}.`,
-        );
-        break;
-      }
-      case 'research': {
-        if (
-          stationState.active ||
-          ((RESEARCH.find((researchNode) => researchNode.id === message.id) || {}).needs &&
-            !stationState.done.includes(
-              RESEARCH.find((researchNode) => researchNode.id === message.id)!.needs!,
-            ))
-        ) {
-          this.features.hangar.queueResearch(session, message.id as string);
-          break;
-        }
-        const researchNode = RESEARCH.find((researchNode) => researchNode.id === message.id);
-        if (
-          !researchNode ||
-          stationState.done.includes(researchNode.id) ||
-          stationState.ops < researchNode.ops
-        )
-          break;
-        if (playerData.credits < researchNode.cost || !this.hasMats(playerData, researchNode.mats))
-          return this.toast(session, 'You need the credits and materials listed.');
-        playerData.credits -= researchNode.cost;
-        this.takeMats(playerData, researchNode.mats);
-        stationState.active = {
-          id: researchNode.id,
-          ends: Date.now() + researchNode.minutes * 60000,
-        };
-        this.toast(
-          session,
-          `Research started: ${researchNode.name} (${researchNode.minutes} minutes).`,
-        );
-        break;
-      }
-      case 'hire':
-      case 'dismiss':
-        return this.toast(
-          session,
-          'Wingmates are ships now: buy them at your station shipyard and assign them to a dock (STATION, then DOCKS).',
-        ); // 2.1
-      case 'unqueue':
-        stationState.queue = stationState.queue!.filter((positionX) => positionX !== message.id);
-        break;
-      case 'defense':
-        this.features.frontier.defenseUpgrade(session);
-        break;
-      case 'refine':
-        this.features.hangar.refineUp(session, message.mat!, message.g! | 0, message.n! | 0);
-        break;
-      case 'refit':
-        return this.toast(session, 'Refits were retired in 2.6.');
-      case 'relocate': {
-        // warp the station to another unclaimed hull; you ride along
-        const stellarBody = STELLARS[message.site!],
-          cost = relocateCost(stationState.ops),
-          wait = (stationState.relocT || 0) + RELOCATE.cooldownH * 3600000 - Date.now();
-        if (!stellarBody || !stellarBody.site || stellarBody.id === stationState.site)
-          return this.toast(session, 'Choose an unclaimed station hull.');
-        if (this.siteOwner(stellarBody.id))
-          return this.toast(session, 'Another captain has claimed that hull.');
-        if (wait > 0)
-          return this.toast(
-            session,
-            `The station's warp core is recharging: ${Math.ceil(wait / 3600000)} h left.`,
-          );
-        if (playerData.holdout && playerData.holdout.active)
-          return this.toast(session, 'Not during a Holdout.');
-        if (playerData.credits < cost || !this.hasMats(playerData, RELOCATE.mats))
-          return this.toast(
-            session,
-            `Relocating needs ${credits(cost)} credits and ${RELOCATE.mats.map(([firstValue, game]) => firstValue + ' ' + GRADES[game]).join(', ')}.`,
-          );
-        if (session.trade)
-          this.features.coop.tradeCancel(session.trade, 'The station is warping away.');
-        const from = STELLARS[stationState.site!];
-        playerData.credits -= cost;
-        this.takeMats(playerData, RELOCATE.mats);
-        delete this.db.world.sites[stationState.site!];
-        stationState.site = stellarBody.id;
-        stationState.relocT = Date.now();
-        this.db.world.sites[stellarBody.id] = this.db.key(playerData.name);
-        playerData.stellar = stellarBody.id;
-        playerData.sys = stellarBody.system;
-        if (from.system !== stellarBody.system) session.retaliationVisit = undefined;
-        this.log(
-          playerData,
-          `Warped your Personal Station from ${systemsById[from.system].name} to ${systemsById[stellarBody.system].name}. Everything came along.`,
-        );
-        this.toast(
-          session,
-          `Station warp complete: welcome to ${systemsById[stellarBody.system].name}.`,
-        );
-        if (!this.solo)
-          this.broadcast({
-            t: 'chat',
-            from: '',
-            msg: `${playerData.name}'s Personal Station warped from ${systemsById[from.system].name} to ${systemsById[stellarBody.system].name}. The old hull is free to claim.`,
-          });
-        this.pushSites();
-        break;
-      }
-    }
-    this.db.touch();
-    this.you(session);
-    this.landed(session);
+    return this.stationService.operate(session, message);
+  }
+
+  /** Assemble station-only live dependencies without exposing Game to the service. */
+  createStationService(): StationService {
+    // oxlint-disable-next-line typescript/no-this-alias -- Capability getters retain the coordinator receiver.
+    const game = this;
+    const capabilities: StationServiceCapabilities = {
+      get db() {
+        return game.db;
+      },
+      get solo() {
+        return game.solo;
+      },
+      checkStation: (player) => game.checkStation(player),
+      siteOwner: (site) => game.siteOwner(site),
+      ownSite: (player, site) => game.ownSite(player, site),
+      newcomer: (player) => game.newcomer(player),
+      hasMats: (player, materials) => game.hasMats(player, materials),
+      takeMats: (player, materials) => game.takeMats(player, materials),
+      log: (player, text) => game.log(player, text),
+      toast: (session, text) => game.toast(session, text),
+      broadcast: (message) => game.broadcast(message),
+      pushSites: () => game.pushSites(),
+      you: (session) => game.you(session),
+      landed: (session) => game.landed(session),
+      queueResearch: (session, id) => game.features.hangar.queueResearch(session, id),
+      defenseUpgrade: (session) => game.features.frontier.defenseUpgrade(session),
+      refineUp: (session, material, grade, count) =>
+        game.features.hangar.refineUp(session, material, grade, count),
+      tradeCancel: (trade, reason) => game.features.coop.tradeCancel(trade, reason),
+    };
+    return createStationService(Object.freeze(capabilities));
   }
 
   // ------------------------------------------------------------------ chat

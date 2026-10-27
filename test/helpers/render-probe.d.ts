@@ -152,5 +152,3 @@ export { decorFor, drawDecorFar, drawDecorNear };
 export declare function stationSprite(
   stellarBody: StellarBody,
 ): HTMLImageElement | HTMLCanvasElement | null;
-export declare const stationImgs: HTMLImageElement[];
-export declare const hubImg: HTMLImageElement;
