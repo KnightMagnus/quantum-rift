@@ -30,12 +30,12 @@ Download the latest release, extract it, and follow the launch instructions belo
 ### Fly and fight
 
 - Choose from a wide range of ships, including specialty vessels, with guns, beams, missiles, point defense and drones.
-- Master momentum-based flight or use optional combat assist. Autopilot handles landing and plotted jump routes. Press **L** to land at a selected world or mission destination, or the nearest port when neither is selected.
+- Master momentum-based flight or use optional combat assist. Autopilot handles landing and plotted jump routes. Use **J** or the on-screen **JUMP** button to follow a plotted route. Press **L** to land at a selected world or mission destination, or the nearest port when neither is selected.
 - Face enemies that retreat, call for help or bring capital-ship firepower. Friendly fire has consequences.
 
 ### Build a station and crew
 
-- Turn a derelict hull into your own **Personal Station**, with a Workshop, research, shipbuilding and defenses. Upgrade it or relocate to another hull.
+- Turn a derelict hull into your own **Personal Station**, with a Workshop, research, shipbuilding and defenses. Upgrade it or relocate to another hull. Your own station grants you docking clearance even when the local faction is hostile; visitors use a guest dock without access to your private station services.
 - Store ships in your hangar and organize docks around a lead ship and crewed wingmates that fly in formation and follow orders.
 - Hire and promote officers for your bridge and fleet, then defend your station in Holdout battles.
 
@@ -75,9 +75,13 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 - [Beta Solo save generator](test/Save%20Generator/README.md)
 - [Support diagnostics](docs/DIAGNOSTICS.md)
 - [Development tools](docs/DEVELOPMENT-TOOLS.md) and [code navigation](docs/CODE-NAVIGATION.md)
-- [Release notes](docs/RELEASE-3.4.4.md)
+- [Release notes](docs/RELEASE-3.5.0.md)
 
 ## Screenshots
+
+**Captain login**
+
+![Blue captain login console with Solo save slots](docs/screenshots/pressure-hull-login.png)
 
 **Flight cockpit and system radar**
 

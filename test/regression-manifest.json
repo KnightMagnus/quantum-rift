@@ -131,7 +131,8 @@
     "index-presentation.ts",
     "performance-native.ts",
     "render-cache-budget.ts",
-    "protocol-compatibility.ts"
+    "protocol-compatibility.ts",
+    "station-docking.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -184,7 +185,8 @@
     "ui-polish-browser.ts",
     "planet-cache-budget-browser.ts",
     "pressure-hull-browser.ts",
-    "protocol-compatibility-browser.ts"
+    "protocol-compatibility-browser.ts",
+    "hud-controls-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -664,7 +666,14 @@
     ],
     "helpers/native-performance.ts": ["helpers/nakama-service.ts"],
     "helpers/nakama-service.ts": ["helpers/native-packet-collector.ts"],
-    "save-migrations.ts": ["helpers/temp-data.ts"]
+    "save-migrations.ts": ["helpers/temp-data.ts"],
+    "station-docking.ts": [
+      "helpers/legacy-fixture.ts",
+      "helpers/mocks.ts",
+      "helpers/required.ts",
+      "helpers/temp-data.ts"
+    ],
+    "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -774,9 +783,10 @@
         "hailing.ts",
         "network-systems.ts",
         "index-presentation.ts",
-        "ui-polish-browser.ts"
+        "ui-polish-browser.ts",
+        "station-docking.ts"
       ],
-      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait."
+      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait. A captain's own Personal Station always clears them to land, never asks for a bribe and keeps its home refinery open, whatever their record in that system."
     },
     {
       "id": "fleet-orders",
@@ -872,8 +882,8 @@
       "id": "station-progression",
       "owners": ["server/game.ts", "server/hangar.ts", "server/station-progress.ts"],
       "services": [],
-      "tests": ["sim.ts", "v05.ts", "v26.ts", "station-progress.ts"],
-      "asserts": "Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates. Station timers preserve exact maturity, partial/capped accrual, bonus/completion/queue ordering, live owner replacement, queued-project denial and once-only settlement, you/idle/route refresh and persistence across reopen."
+      "tests": ["sim.ts", "v05.ts", "v26.ts", "station-progress.ts", "station-docking.ts"],
+      "asserts": "Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates. Station timers preserve exact maturity, partial/capped accrual, bonus/completion/queue ordering, live owner replacement, queued-project denial and once-only settlement, you/idle/route refresh and persistence across reopen. Visitors to another captain's station berth at its guest dock, without the owner's shipyard, outfitter, refinery, docks or station internals."
     },
     {
       "id": "market-materials",
@@ -1631,8 +1641,8 @@
         "client/render.ts"
       ],
       "services": [],
-      "tests": ["pressure-hull-browser.ts"],
-      "asserts": "Standard blue physical console at the ordinary game address preserves actual flight/landing/menus at 1920x1080 and 3440x1440, a single integrated landed shell and existing illustration, open-top side/bottom viewport trim, readable populated chat, contained utilities, Hail inbox access while landed/flying and with the Tray closed, original artwork and separated console/sidebar regions."
+      "tests": ["pressure-hull-browser.ts", "hud-controls-browser.ts"],
+      "asserts": "Standard blue physical console at the ordinary game address preserves actual flight/landing/menus at 1920x1080 and 3440x1440, a single integrated landed shell and existing illustration, open-top side/bottom viewport trim, readable populated chat, contained utilities, Hail inbox access while landed/flying and with the Tray closed, original artwork and separated console/sidebar regions. The login console wears the blue hull frame; the landed service strip runs from the panel's left edge at 1.5x size; the gold viewscreen JUMP button sits bottom-right (bottom-left by setting), fades until a system is plotted and shares the J key's action; guest docks show limited services and no dock switcher."
     },
     {
       "id": "playtest-clarity",

@@ -542,7 +542,7 @@ import {
   commonLots,
   splitLots,
 } from '../shared/cargo-lots.ts';
-import { clampStanding } from '../shared/reputation.ts';
+import { clampStanding, landingRefused } from '../shared/reputation.ts';
 
 import { HailService } from './hail-service.ts';
 import { CombatAssist } from './combat-assist.ts';
@@ -2088,9 +2088,13 @@ export class Game<Storage extends Database = Database> {
     if (space2 > 80) return this.toast(session, 'Slow down to land.');
     const faction2 = systemsById[playerData.sys].faction;
     if (
-      !stellarBody.outlaw &&
-      (playerData.rep[faction2] || 0) <= -30 &&
-      !(playerData.landPass && playerData.landPass[stellarBody.id] > Date.now())
+      landingRefused({
+        standing: playerData.rep[faction2] || 0,
+        outlawPort: !!stellarBody.outlaw,
+        ownStation: this.ownSite(playerData, stellarBody),
+        passExpires: playerData.landPass?.[stellarBody.id] || 0,
+        now: Date.now(),
+      })
     )
       return this.toast(
         session,
@@ -2165,6 +2169,8 @@ export class Game<Storage extends Database = Database> {
             owner: playerData2 ? playerData2.name : null,
             ops: playerData2 ? playerData2.station.ops : 0,
             own: owner2,
+            /** Visitors to another captain's station berth at its guest dock. */
+            guest: !!playerData2 && !owner2,
           }
         : null,
       community: stellarBody.hub ? this.community() : null,

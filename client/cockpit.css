@@ -570,6 +570,65 @@ body:has(#login:not(.hidden)) #flightstatus,
 body:has(#land:not(.hidden)) #flightstatus {
   display: none;
 }
+/* Gold hologram JUMP button projected in a bottom corner of the viewscreen. */
+#jumpholo {
+  position: fixed;
+  right: calc(var(--hud) + 88px);
+  bottom: calc(var(--cbar) + 28px);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px 10px 24px;
+  font: inherit;
+  font-size: 24px;
+  letter-spacing: 4px;
+  color: #ffe7a3;
+  text-shadow:
+    0 0 6px #ffc94a,
+    0 0 16px #ff9f1a80;
+  background:
+    repeating-linear-gradient(0deg, #ffd56a14 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, #e9b0402e, #8a5a0f24);
+  border: 1px solid #f4c45acc;
+  border-radius: 4px;
+  box-shadow:
+    0 0 14px #f5b5304d,
+    inset 0 0 18px #ffcf5a33;
+  cursor: pointer;
+  transition:
+    opacity 0.25s,
+    box-shadow 0.2s;
+}
+#jumpholo kbd {
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 1px;
+  padding: 1px 6px;
+  border: 1px solid #f4c45a80;
+  border-radius: 3px;
+  color: #ffdf8a;
+}
+#jumpholo kbd:empty {
+  display: none;
+}
+#jumpholo:hover:not(:disabled) {
+  box-shadow:
+    0 0 22px #f5b530a0,
+    inset 0 0 22px #ffcf5a55;
+}
+#jumpholo:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+body.jump-left #jumpholo {
+  right: auto;
+  left: 72px;
+}
+body:has(#login:not(.hidden)) #jumpholo,
+body:has(#land:not(.hidden)) #jumpholo {
+  display: none;
+}
 /* Native select menus and trade quantity fields retain their high-contrast contract. */
 select,
 input.trade-amount[type='number'] {

@@ -376,6 +376,7 @@ import { RefineryOperations } from './refinery.ts';
 import { MiningPressureOperations } from './mining-pressure.ts';
 import { SYS as systemsById, STELLARS, SITE_PRICES, COMMODITIES } from '../shared/galaxy.ts';
 import { price } from '../shared/rules.ts';
+import { landingRefused } from '../shared/reputation.ts';
 import { purchaseUnit, saleValue } from './trade-pricing.ts';
 import { bindOperations } from './feature-service.ts';
 import { HangarOperations } from './hangar.ts';
@@ -1647,10 +1648,13 @@ export function createFeatures(core: Game): FeatureServices {
         eligible =
           home ||
           (!stellarBody.site && stellarBody.svc.includes('T') && stellarBody.svc.includes('O')),
-        allowed =
-          stellarBody.outlaw ||
-          (playerData.rep?.[faction] || 0) > -30 ||
-          (playerData.landPass?.[port] || 0) > Date.now(),
+        allowed = !landingRefused({
+          standing: playerData.rep?.[faction] || 0,
+          outlawPort: !!stellarBody.outlaw,
+          ownStation: core.ownSite(playerData, stellarBody),
+          passExpires: playerData.landPass?.[port] || 0,
+          now: Date.now(),
+        }),
         near =
           stellarBody.system === playerData.sys &&
           (playerData.stellar === port ||

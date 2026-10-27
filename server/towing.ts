@@ -11,6 +11,7 @@ export type Session = import('./towing-contracts.ts').Session;
 import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
 import { TOW as towingRules, towSpeed } from '../shared/towing-rules.ts';
 import { addLots, assertLots } from '../shared/cargo-lots.ts';
+import { landingRefused } from '../shared/reputation.ts';
 
 class DeliveryHoldFull extends Error {}
 
@@ -325,11 +326,14 @@ function deliver(
     crossesPort(stellarBody, previous, motherlode) > stellarBody.r + towingRules.deliveryApron
   )
     throw Error('Bring the motherlode into an accepted port collection zone');
-  const pass = (session.data as RefineryPlayer).landPass?.[stellarBody.id] || 0;
   if (
-    !stellarBody.outlaw &&
-    (session.data.rep?.[systemsById[motherlode.sys].faction] || 0) <= -30 &&
-    pass <= Date.now()
+    landingRefused({
+      standing: session.data.rep?.[systemsById[motherlode.sys].faction] || 0,
+      outlawPort: !!stellarBody.outlaw,
+      ownStation: !!stellarBody.site && session.data.station.site === stellarBody.id,
+      passExpires: (session.data as RefineryPlayer).landPass?.[stellarBody.id] || 0,
+      now: Date.now(),
+    })
   )
     throw Error('Port refuses delivery permission');
   if (capabilities.room(session.data) < motherlode.mass)

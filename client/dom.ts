@@ -44,11 +44,14 @@ type KnownControls = {
   miningclose: HTMLButtonElement;
   miningindicator: HTMLButtonElement;
   miningsurvey: HTMLButtonElement;
+  jumpholo: HTMLButtonElement;
+  jumpholokey: HTMLElement;
   musicbtn: HTMLButtonElement;
   ofit: InputControl;
   'opt-amb': InputControl;
   'opt-cb': InputControl;
   'opt-dmg': InputControl;
+  'opt-jumpLeft': InputControl;
   'opt-mouseAim': InputControl;
   'opt-music': InputControl;
   'opt-mute': InputControl;

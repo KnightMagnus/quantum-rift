@@ -76,6 +76,8 @@ export interface ClientOptions {
   /** Disable story shimmer and flashing transitions without hiding targeting. */
   reducedEffects?: boolean;
   mouseAim: boolean;
+  /** Place the viewscreen JUMP button in the bottom-left corner instead of bottom-right. */
+  jumpLeft?: boolean;
   notify: boolean;
   cb: boolean;
   scale: number;
@@ -405,6 +407,7 @@ const clientGameState: ClientGameState = (window.G = {
       shake: true,
       reducedEffects: false,
       mouseAim: false,
+      jumpLeft: false,
       notify: false,
       cb: false,
       scale: 1,
@@ -577,11 +580,13 @@ setInterval(() => {
   shipFunctions.refresh();
   chatProjection.refresh();
   refineryUI.refresh();
+  refreshJumpButton();
 }, 100);
 function applyOpts() {
   clientGameState.pal = PALETTES[clientGameState.opts.cb ? 'cb' : 'normal'];
   document.documentElement.style.setProperty('--ui', String(clientGameState.opts.scale));
   document.body.classList.toggle('scaled', clientGameState.opts.scale !== 1);
+  document.body.classList.toggle('jump-left', !!clientGameState.opts.jumpLeft);
   audio.setMix({
     vol: clientGameState.opts.vol,
     sfx: clientGameState.opts.sfx,
@@ -1806,6 +1811,33 @@ window.addEventListener('keydown', (keyboardEvent) => {
 window.addEventListener('blur', () => {
   clearManualFlightInput();
 });
+/**
+ * Shows the viewscreen JUMP button in flight and fades it until a destination is plotted.
+ * It runs the same hyperjump action as the bound key (J by default).
+ */
+function refreshJumpButton(): void {
+  const button = elementById2('jumpholo');
+  const flying = !!clientGameState.view && !clientGameState.landed;
+  button.classList.toggle('hidden', !flying);
+  if (!flying) return;
+  const plotted = clientGameState.route.length > 0;
+  const keyLabel = keyName(bound('jump'));
+  button.disabled = !plotted || overlays.blocksFlight();
+  button.title = plotted
+    ? `Jump to ${systemsById[clientGameState.route[0]]?.name || 'the next system'} (${keyLabel})`
+    : 'Plot a course on the map first (M)';
+  elementById2('jumpholokey').textContent = bound('jump') ? keyLabel : '';
+}
+elementById2('jumpholo').onclick = () => {
+  if (
+    clientGameState.you &&
+    clientGameState.view &&
+    !clientGameState.landed &&
+    !overlays.blocksFlight() &&
+    clientGameState.route.length
+  )
+    jumpNext();
+};
 function jumpNext() {
   if (!clientGameState.route.length) return toast('Plot a course on the map first (M).');
   clientGameState.autoRoute = clientGameState.route.length > 1; // J flies the whole plotted route, jump after jump
@@ -2691,7 +2723,7 @@ elementById2('tutskip').onclick = () => {
 };
 
 // ------------------------------------------------------------------ options
-const CHECKS = ['dmg', 'shake', 'reducedEffects', 'mouseAim', 'notify', 'cb', 'mute'];
+const CHECKS = ['dmg', 'shake', 'reducedEffects', 'mouseAim', 'jumpLeft', 'notify', 'cb', 'mute'];
 let rebinding: string | null = null;
 /**
  * Formats a KeyboardEvent.code string into a readable label.
