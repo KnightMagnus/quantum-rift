@@ -74,6 +74,10 @@ export class OverlayController {
     element.classList.add('hidden');
     const returnTo = this.returnFocus.get(id);
     this.returnFocus.delete(id);
+    // A surviving dialog must not restore focus into this now-hidden owner.
+    for (const [owner, opener] of this.returnFocus) {
+      if (opener && element.contains(opener)) this.returnFocus.set(owner, returnTo ?? null);
+    }
     const top = this.top();
     const active = document.activeElement;
     if (

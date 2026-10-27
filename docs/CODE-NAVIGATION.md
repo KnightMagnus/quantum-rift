@@ -339,8 +339,9 @@ the shared world. Solo quit keeps its existing temporary pause behavior.
 Story offers initially focus the defer button; Escape never accepts a choice or
 reward. Story notices and ship-loss notices focus Continue. Hails initially focus
 Close and retain native message typing and Enter submission. Priority follows the
-existing visual stack, including hails above ship/captain info. Map help and Options
-openers remain available outside the map; other outside clicks cannot activate
+existing visual stack, including ship/captain info above hails. Captain and Options
+openers remain available from hails; the Captain toggle and Options remain available
+from Captain. Map, help and Options controls remain available outside the map; other outside clicks cannot activate
 underlying commands. Storage loss of availability closes through the same owner.
 
 Login remains the session gate, not a dismissible game dialog. The landing screen

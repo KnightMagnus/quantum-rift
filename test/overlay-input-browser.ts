@@ -610,6 +610,19 @@ try {
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#hailbox').isVisible(), true);
   assert.equal(await page.locator('#infobox').isVisible(), true);
+  assert.equal(
+    await page.evaluate(() => document.getElementById('infobox')!.contains(document.activeElement)),
+    true,
+    'Incoming hails do not steal focus from the visually higher captain panel',
+  );
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#infobox').isVisible(), false);
+  assert.equal(await page.locator('#hailbox').isVisible(), true);
+  assert.equal(
+    await page.evaluate(() => document.getElementById('hailbox')!.contains(document.activeElement)),
+    true,
+    'Closing Captain restores focus to the surviving hail',
+  );
   await page.fill('#hailcompose', 'typing t i m');
   assert.equal(
     await page.locator('#hailbox').isVisible(),
@@ -628,9 +641,8 @@ try {
     'Compose Enter submits exactly once through its owner',
   );
   await page.keyboard.press('Escape');
-  assert.equal(await page.locator('#infobox').isVisible(), true);
+  assert.equal(await page.locator('#infobox').isVisible(), false);
   assert.equal(await page.locator('#hailbox').isVisible(), false);
-  await page.keyboard.press('Escape');
   assert.equal(await page.locator('#quitbox').isVisible(), false);
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'captainshortcut');
 

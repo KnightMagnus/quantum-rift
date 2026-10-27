@@ -1945,9 +1945,10 @@ elementById2('infobody').addEventListener('click', (pointerEvent) => {
 });
 overlays.register({
   id: 'infobox',
-  priority: 23,
+  priority: 25,
   dismiss: closeInfo,
   initialFocus: () => elementById2('itabs').querySelector<HTMLElement>('.on'),
+  allowOutsidePointer: (target) => !!target.closest('#captainshortcut,#optbtn'),
   keyDown: (event) => {
     if (event.code !== 'KeyI' || typing()) return false;
     if (!event.repeat) closeInfo();
@@ -2925,7 +2926,7 @@ overlays.register({
   priority: 10,
   dismiss: closeMap,
   initialFocus: () => elementById2('gmap'),
-  allowOutsidePointer: (target) => !!target.closest('#cbhelp,#optbtn'),
+  allowOutsidePointer: (target) => !!target.closest('#cbmap,#cbhelp,#optbtn'),
   keyDown: (event) => {
     if ((event.target as HTMLElement).id === 'gsearch') {
       if (event.key === 'Enter') {
