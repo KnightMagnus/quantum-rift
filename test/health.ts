@@ -136,3 +136,17 @@ for (const name of ['concentrated', 'distributed'] as const) {
   assert.ok(full.metrics.checkpointBytes!.max <= 512 * 1024);
 }
 assert.throws(() => runPerformanceScenario('concentrated', 1, true, 31));
+
+// The independent platform encoder covers all code units, paired/lone surrogates,
+// and long ASCII runs around Unicode names. No timing threshold depends on host speed.
+let unicode = '';
+for (let code = 0; code <= 0xffff; code++) unicode += String.fromCharCode(code);
+for (const value of [
+  unicode,
+  unicode.split('').reverse().join(''),
+  'x'.repeat(65536),
+  'x'.repeat(32768) + 'é🚀\ud800' + 'y'.repeat(32768),
+  '\ud800\ud800\udc00\udc00',
+  'a\udfffz\ud800',
+])
+  assert.equal(utf8Bytes(value), Buffer.byteLength(value));
