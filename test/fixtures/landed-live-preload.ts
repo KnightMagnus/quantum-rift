@@ -31,3 +31,19 @@ Game.prototype.landed = function (session) {
   traffic();
   setInterval(traffic, 3000).unref();
 };
+
+// This regression owns observer/flight scene transitions, not approach guidance.
+// Leave the real Depart and land handlers intact, but make the redock start
+// independent of random departure headings and the renderer's frame cadence.
+const originalDepart = Reflect.get(Game.prototype, 'depart') as typeof Game.prototype.depart;
+Game.prototype.depart = function (session) {
+  const stellar = session.data.stellar ? STELLARS[session.data.stellar] : undefined;
+  originalDepart.call(this, session);
+  if (session.data.name !== 'Dock Observer' || !stellar || !session.ent) return;
+  Object.assign(session.ent, {
+    x: stellar.x,
+    y: stellar.y + stellar.r * 0.5,
+    vx: 0,
+    vy: 0,
+  });
+};

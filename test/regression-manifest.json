@@ -1307,7 +1307,7 @@
     {
       "id": "landed-live-scene",
       "tests": ["landed-live-browser.ts"],
-      "asserts": "Docked observer snapshots keep real traffic moving across services without a controllable player entity; real canvas ship sprite displacement, flight-input isolation and explicit Solo pause/resume.",
+      "asserts": "Docked observer snapshots keep real traffic moving across services without a controllable player entity; real canvas ship sprite displacement, flight-input isolation, real depart/redock scene restoration from a deterministic in-range fixture and explicit Solo pause/resume.",
       "owners": ["server/game.ts", "client/main.ts", "client/render.ts", "client/mining_render.ts"],
       "services": []
     },

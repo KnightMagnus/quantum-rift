@@ -787,7 +787,11 @@ the unchanged 180-second enclosing process deadline. No flight physics changed.
   seeded servers in online and Solo modes. Verifies authoritative and interpolated
   real traffic displacement across Overview/Trade/Outfitter, nonblack canvas,
   no controllable landed entity or leaked flight input, and explicit Solo pause /
-  resume snapshot semantics. Paired actual frames and motion JSON are retained.
+  resume snapshot semantics. Depart/redock uses the real controls and authoritative
+  landing handler, with a stopped, in-range departure fixture so scene restoration
+  does not depend on a random flight approach. Varied approach/drift and delayed
+  input remain covered by `landing-autopilot-browser.ts`; this is not additional
+  autopilot coverage. Paired actual frames and motion JSON are retained.
 - Expanded cockpit column: test/cockpit-browser.ts verifies full-height Tray,
   utility reachability/non-overlap and adjacency at 1600/1440/1024/640 widths,
   default/max Tray widths and UI scales 0.8/1/1.4, alongside persistence/real drag.
