@@ -144,6 +144,13 @@ fs.writeFileSync(
   { mode: 0o600 },
 );
 assert.equal(result.status, 'passed', 'native scenario phase: ' + result.failedPhase);
+assert.match(result.metadata.runtimeSha256, /^[a-f0-9]{64}$/);
+assert.match(result.metadata.sourceFingerprint, /^[a-f0-9]{64}$/);
+assert.equal(
+  Object.hasOwn(result.metadata, 'runtimeBytes'),
+  false,
+  'numeric report excludes runtime source bytes',
+);
 assert(result.measuredElapsedMs >= 32000);
 assert.equal(result.restoredCaptains, options.captains);
 assert.equal(result.inputPackets, options.captains * options.durationSeconds * 10);

@@ -286,14 +286,37 @@ Native resident memory is the pre-restart Nakama sample, not a lifetime peak.
 Checkpoint bytes are the stored pre-restart checkpoint size, including database
 JSON encoding. These meanings differ from in-process fixture measurements.
 
-Every report must be from the same clean source commit and exact selected
-environment/workload. Repeated start timestamps are rejected. Each report must
+Every report must be from the same clean source commit, emitted runtime hash,
+source-input fingerprint and exact selected environment/workload. Repeated start timestamps are rejected. Each report must
 show its full measured duration, expected input count, restored captains, a real
 checkpoint, zero SDK/authority failures and successful process cleanup. Any
 missing requested metric or any run exceeding its limit fails; averaging cannot
 hide an outlier. The verifier prints a numeric summary and fixed failure codes,
 exits 0 on success and 1 on failure. It starts no services and changes no report.
 Input files must be ordinary JSON files no larger than 4 MiB.
+
+`npm run build` writes `dist/nakama/quantum-rift.provenance.json` next to the
+native runtime. The manifest records its SHA-256 and a fingerprint of sorted,
+portable input paths and digests. The build captures the exact bytes passed to
+esbuild, plus `tools/build-nakama.ts`, the provenance helper and `package-lock.json`;
+it rejects inputs changed during bundling. Symlink-resolved dependencies use
+portable `node_modules/` paths, not another checkout's absolute directory.
+
+Native performance preflight checks that manifest, every current input and the
+runtime before creating fixture directories or starting services. The CLI also
+checks before reserving its report file. Missing, changed or stale builds require
+`npm run build`; they are not measured with a current source label. Verified
+runtime bytes are pinned for the service copy, so a concurrent rebuild of ignored
+`dist` cannot silently change the measured artifact. Numeric reports include only
+`runtimeSha256` and `sourceFingerprint`, not the input inventory or source bytes.
+The budget verifier rejects missing/malformed hashes and mixed artifacts even
+when source commits match. Reports made before those fields existed need new
+measurements; hashes cannot be inferred retroactively.
+
+This is a local build-integrity check, not a signature or a trust boundary against
+someone able to rewrite both code and manifest. It fingerprints the declared
+build-tool source and lockfile, not every installed compiler byte or the operating
+system. The existing runtime/binary versions and environment checks still apply.
 
 A matching CPU model and logical CPU count do not establish exclusive access,
 CPU allocation, thermal conditions, network path or representative database load.

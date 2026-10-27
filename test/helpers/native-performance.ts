@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { verifyNativeBuildProvenance } from '../../tools/nakama-build-provenance.ts';
 import { INSTANCE_PLAYER_LIMIT } from '../../shared/world-capacity.ts';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -195,6 +196,7 @@ export async function runNativePerformance(
   hooks: NativePerformanceHooks = {},
 ) {
   validateNativePerformance(options);
+  const { runtimeBytes, ...buildProvenance } = verifyNativeBuildProvenance(repository);
   const started = new Date().toISOString();
   const wallStart = performance.now();
   const cpuStart = process.cpuUsage();
@@ -230,6 +232,7 @@ export async function runNativePerformance(
     return scheduleState / 4294967296;
   };
   const metadata = {
+    ...buildProvenance,
     sourceHead: execFileSync('git', ['rev-parse', 'HEAD'], {
       cwd: repository,
       encoding: 'utf8',
@@ -253,7 +256,7 @@ export async function runNativePerformance(
     totalMemoryBytes: os.totalmem(),
     loadBefore: os.loadavg(),
   };
-  const service = new NakamaService(undefined, {
+  const service = new NakamaService(runtimeBytes, {
     runtimeHealth: true,
     deadlineMs: options.durationSeconds * 1000 + 120000,
   });

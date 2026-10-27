@@ -1295,12 +1295,21 @@ navigation can escape the overlay; closing the map restores the plotted action.
 
 `performance-budgets.ts` is a fast `performance-health` unit regression. Synthetic
 reports prove inclusive per-metric limits, rejection of any failing repeat,
-exact environment/workload matching, same clean source build, distinct run
+exact environment/workload matching, same clean source build and runtime/input
+hashes, distinct run
 identities, sufficient repeats, measured duration, input/restoration/checkpoint
 evidence, and SDK/authority/cleanup failures. Missing and nonfinite metrics,
 unknown/malformed profiles, corrupt and oversized files, and CLI success/failure
 exit statuses are covered. Synthetic numbers are verifier fixtures, not measured
-budgets or supported capacity. Deployment profiles remain externally selected;
+budgets or supported capacity. Isolated provenance fixtures cover valid builds,
+stale source/build-driver/helper/lockfile bytes, inputs changed during bundling,
+missing/tampered manifests or runtimes, unsafe input paths and mixed-artifact
+reports. A guarded native constructor proves failed provenance is rejected before
+resource allocation without starting services; pinned runtime bytes remain stable
+when the ignored file changes. The registered native workload additionally checks
+that its numeric report contains valid hashes but no runtime source bytes.
+Packaging fixtures include the build helper, lockfile and generated manifest.
+Deployment profiles remain externally selected;
 see [PERFORMANCE.md](PERFORMANCE.md#deployment-owned-budget-profiles).
 
 ## Full-instance admission and performance fixtures

@@ -674,7 +674,8 @@
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"]
+    "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
+    "performance-budgets.ts": ["helpers/browser-fixture.ts", "helpers/native-performance.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1597,7 +1598,7 @@
         "performance-native.ts",
         "performance-budgets.ts"
       ],
-      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples. Real wall-clock native flight, bounded SDK packet retention, monotonic send drift and snapshot gaps, failure cleanup, authoritative reconnect, PostgreSQL checkpoint and process-restart continuity. Limits and numeric-only health parsing deny malformed input before resources. Deployment-owned budget profiles reject mixed hardware/builds, wrong workloads, duplicate or insufficient repeats, authority failures, absent metrics and each over-budget run. Concentrated/distributed 30-captain simulations retain authority and payload-growth bounds; native harness supports the 30-player instance limit. Exact UTF-8 sizes are compared with the independent platform encoder across every code unit; shared JSON encoding retains legacy wire bytes and private recipient fields.",
+      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples. Real wall-clock native flight, bounded SDK packet retention, monotonic send drift and snapshot gaps, failure cleanup, authoritative reconnect, PostgreSQL checkpoint and process-restart continuity. Limits and numeric-only health parsing deny malformed input before resources. Deployment-owned budget profiles reject mixed hardware/builds, wrong workloads, duplicate or insufficient repeats, authority failures, absent metrics and each over-budget run. Concentrated/distributed 30-captain simulations retain authority and payload-growth bounds; native harness supports the 30-player instance limit. Exact UTF-8 sizes are compared with the independent platform encoder across every code unit; shared JSON encoding retains legacy wire bytes and private recipient fields. Native builds fingerprint exact esbuild-loaded inputs plus build-driver/helper/lock bytes and emitted runtime SHA256; preflight rejects stale, missing or tampered artifacts before service resources, pins verified runtime bytes, reports hashes without source/path inventories, and budget verification rejects mixed artifact/input digests. Pure isolated fixtures exercise provenance failures without native startup.",
       "owners": [
         "shared/health.ts",
         "server/game.ts",
@@ -1609,7 +1610,9 @@
         "test/helpers/nakama-service.ts",
         "tools/performance-budgets.ts",
         "shared/world-capacity.ts",
-        "server/snapshot-encoding.ts"
+        "server/snapshot-encoding.ts",
+        "tools/build-nakama.ts",
+        "tools/nakama-build-provenance.ts"
       ]
     },
     {

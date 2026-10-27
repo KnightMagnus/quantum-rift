@@ -170,6 +170,7 @@ export function verifyPerformanceBudgets(profileInput: unknown, reports: unknown
   const failures: string[] = [];
   if (reports.length < profile.minimumRuns || reports.length > 100) failures.push('report-count');
   const builds = new Set<string>();
+  const artifacts = new Set<string>();
   const observations: Partial<Record<PerformanceBudgetMetric, number>> = {};
   const started = new Set<string>();
   reports.forEach((report, index) => {
@@ -198,6 +199,14 @@ export function verifyPerformanceBudgets(profileInput: unknown, reports: unknown
     )
       fail('source-provenance');
     else builds.add(report.metadata.sourceHead);
+    if (
+      typeof metadata.runtimeSha256 !== 'string' ||
+      !/^[a-f0-9]{64}$/.test(metadata.runtimeSha256) ||
+      typeof metadata.sourceFingerprint !== 'string' ||
+      !/^[a-f0-9]{64}$/.test(metadata.sourceFingerprint)
+    )
+      fail('artifact-provenance');
+    else artifacts.add(metadata.runtimeSha256 + ':' + metadata.sourceFingerprint);
     if (
       typeof report.started !== 'string' ||
       !Number.isFinite(Date.parse(report.started)) ||
@@ -256,6 +265,7 @@ export function verifyPerformanceBudgets(profileInput: unknown, reports: unknown
     }
   });
   if (builds.size !== 1) failures.push('same-build-required');
+  if (artifacts.size !== 1) failures.push('same-artifact-required');
   return {
     schema: 1,
     profile: profile.name,

@@ -1,4 +1,13 @@
 import assert from 'node:assert/strict';
+import {
+  nativeBuildDigest,
+  nativeBuildInputPath,
+  nativeBuildToolInputs,
+  writeNativeBuildProvenance,
+  verifyNativeBuildProvenance,
+  nativeRuntimeRelative,
+  nativeProvenanceRelative,
+} from '../tools/nakama-build-provenance.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -7,6 +16,7 @@ import {
   verifyPerformanceBudgets,
 } from '../tools/performance-budgets.ts';
 import type { HealthSummary } from '../shared/health.ts';
+import { runNativePerformance } from './helpers/native-performance.ts';
 import { evidenceDir } from './helpers/browser-fixture.ts';
 
 // Synthetic measurements test verifier semantics, not deployment performance.
@@ -52,7 +62,13 @@ const report = {
   status: 'passed',
   failedPhase: null,
   started: '2026-10-27T00:00:00.000Z',
-  metadata: { ...environment, sourceHead: 'a'.repeat(40), sourceDirty: false },
+  metadata: {
+    ...environment,
+    sourceHead: 'a'.repeat(40),
+    sourceDirty: false,
+    runtimeSha256: 'b'.repeat(64),
+    sourceFingerprint: 'c'.repeat(64),
+  },
   workload: { ...profile.workload, inputHz: 10 },
   measuredElapsedMs: 60000,
   restoredCaptains: 4,
@@ -74,6 +90,27 @@ assert(!verifyPerformanceBudgets(profile, [report, report]).passed, 'duplicate r
 const mixed = second();
 mixed.metadata.sourceHead = 'b'.repeat(40);
 assert(!verifyPerformanceBudgets(profile, [report, mixed]).passed, 'same build required');
+for (const field of ['runtimeSha256', 'sourceFingerprint'] as const) {
+  const different = second();
+  different.metadata[field] = 'd'.repeat(64);
+  assert(
+    verifyPerformanceBudgets(profile, [report, different]).failures.includes(
+      'same-artifact-required',
+    ),
+    field,
+  );
+  for (const invalid of ['', 'unavailable', 'F'.repeat(64), 'a'.repeat(63), null, undefined, 42]) {
+    const malformed = second();
+    Object.assign(malformed.metadata, { [field]: invalid });
+    assert(
+      verifyPerformanceBudgets(profile, [report, malformed]).failures.includes(
+        'run-2:artifact-provenance',
+      ),
+      field,
+    );
+  }
+}
+
 for (const mutate of [
   (value: typeof report) => {
     value.status = 'failed';
@@ -264,3 +301,136 @@ try {
 console.log(
   'Native budget profiles enforce repeats, exact provenance/workload, failures, thresholds, missing metrics and CLI exits.',
 );
+
+// Pure provenance checks use isolated fixture bytes; no native service is started.
+const provenanceRoot = fs.mkdtempSync(path.join(evidenceDir('performance-budgets'), 'provenance-'));
+try {
+  for (const directory of ['tools', 'server', 'dist/nakama'])
+    fs.mkdirSync(path.join(provenanceRoot, directory), { recursive: true });
+  for (const file of [
+    'tools/build-nakama.ts',
+    'tools/nakama-build-provenance.ts',
+    'package-lock.json',
+    'server/entry.ts',
+  ])
+    fs.writeFileSync(path.join(provenanceRoot, file), 'fixture bytes ' + file);
+  const runtime = path.join(provenanceRoot, nativeRuntimeRelative);
+  const manifest = path.join(provenanceRoot, nativeProvenanceRelative);
+  fs.writeFileSync(runtime, 'fixture runtime');
+  const captured = nativeBuildToolInputs(provenanceRoot);
+  captured.set(
+    'server/entry.ts',
+    nativeBuildDigest(fs.readFileSync(path.join(provenanceRoot, 'server/entry.ts'))),
+  );
+  const written = writeNativeBuildProvenance(provenanceRoot, captured);
+  const verified = verifyNativeBuildProvenance(provenanceRoot);
+  assert.equal(verified.runtimeSha256, written.runtimeSha256);
+  assert.equal(verified.sourceFingerprint, written.sourceFingerprint);
+  assert.equal(Buffer.from(verified.runtimeBytes).toString(), 'fixture runtime');
+  assert(
+    !JSON.stringify(written).includes(provenanceRoot),
+    'manifest paths are portable, never absolute private paths',
+  );
+  assert.equal(
+    nativeBuildInputPath(provenanceRoot, path.join(provenanceRoot, 'server/entry.ts')),
+    'server/entry.ts',
+  );
+  assert.equal(
+    nativeBuildInputPath(
+      provenanceRoot,
+      path.resolve(provenanceRoot, '../other-checkout/node_modules/package/source.js'),
+    ),
+    'node_modules/package/source.js',
+  );
+  assert.throws(() =>
+    nativeBuildInputPath(provenanceRoot, path.resolve(provenanceRoot, '../private-source.ts')),
+  );
+  const original = fs.readFileSync(manifest, 'utf8');
+  for (const file of [
+    'server/entry.ts',
+    'tools/build-nakama.ts',
+    'tools/nakama-build-provenance.ts',
+    'package-lock.json',
+  ]) {
+    const absolute = path.join(provenanceRoot, file);
+    const bytes = fs.readFileSync(absolute);
+    fs.appendFileSync(absolute, ' stale');
+    assert.throws(() => verifyNativeBuildProvenance(provenanceRoot), /missing, stale or invalid/);
+    assert.throws(
+      () => writeNativeBuildProvenance(provenanceRoot, captured),
+      /changed/,
+      'manifest cannot attest to bytes changed after bundler load',
+    );
+    fs.writeFileSync(absolute, bytes);
+  }
+  fs.writeFileSync(runtime, 'tampered runtime');
+  assert.throws(() => verifyNativeBuildProvenance(provenanceRoot));
+  assert.equal(
+    Buffer.from(verified.runtimeBytes).toString(),
+    'fixture runtime',
+    'verified bytes remain pinned even if ignored dist is concurrently rebuilt',
+  );
+  fs.writeFileSync(runtime, 'fixture runtime');
+  for (const mutate of [
+    (value: typeof written) => {
+      value.runtimeSha256 = 'a'.repeat(64);
+    },
+    (value: typeof written) => {
+      value.sourceFingerprint = 'a'.repeat(64);
+    },
+    (value: typeof written) => {
+      value.inputs.pop();
+    },
+    (value: typeof written) => {
+      value.inputs[0].path = '../private';
+    },
+    (value: typeof written) => {
+      value.inputs[0].path = '/absolute/private';
+    },
+    (value: typeof written) => {
+      value.inputs.push(value.inputs[0]);
+    },
+  ]) {
+    const changed = structuredClone(written);
+    mutate(changed);
+    fs.writeFileSync(manifest, JSON.stringify(changed));
+    assert.throws(() => verifyNativeBuildProvenance(provenanceRoot));
+  }
+  fs.writeFileSync(manifest, original);
+  assert.deepEqual(verifyNativeBuildProvenance(provenanceRoot), verified);
+  fs.unlinkSync(manifest);
+  assert.throws(() => verifyNativeBuildProvenance(provenanceRoot), /run npm run build/);
+} finally {
+  fs.rmSync(provenanceRoot, { recursive: true, force: true });
+}
+console.log(
+  'Native build provenance rejects stale inputs/build tools/lockfiles, tampered/missing artifacts and mixed-report runtime hashes without native startup.',
+);
+
+// A stale/missing receipt must fail before the native fixture constructor can allocate.
+const statBeforeProvenanceProbe = fs.statSync;
+const createBeforeProvenanceProbe = fs.mkdtempSync;
+let resourceAttempts = 0;
+try {
+  fs.statSync = ((filename: fs.PathLike, ...args: unknown[]) => {
+    if (String(filename).split(path.sep).join('/').endsWith(nativeProvenanceRelative))
+      throw Error('missing fixture receipt');
+    return Reflect.apply(statBeforeProvenanceProbe, fs, [filename, ...args]);
+  }) as typeof fs.statSync;
+  fs.mkdtempSync = (() => {
+    resourceAttempts++;
+    throw Error('native resources must not be created by provenance rejection');
+  }) as typeof fs.mkdtempSync;
+  await assert.rejects(
+    runNativePerformance({ durationSeconds: 32, captains: 1, seed: 1701 }),
+    /Native runtime provenance/,
+  );
+  assert.equal(
+    resourceAttempts,
+    0,
+    'provenance validation precedes native directory/process allocation',
+  );
+} finally {
+  fs.statSync = statBeforeProvenanceProbe;
+  fs.mkdtempSync = createBeforeProvenanceProbe;
+}
