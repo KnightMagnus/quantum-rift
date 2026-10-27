@@ -1220,6 +1220,12 @@ The existing cargo, import/login, generator and native checkpoint tests retain
 their separate coverage; see
 [SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md).
 
+`save-feature-validation.ts` uses committed synthetic absent-default,
+stored-escort and retained-progress shapes through real login and two reloads,
+checking exact refunds and stable inventory/progression. Corrupt compatibility
+fields reject at local/native load, journal recovery, import and login before
+state mutation.
+
 ## Client/server compatibility
 
 The `protocol-compatibility` system checks the wire epoch independently of package

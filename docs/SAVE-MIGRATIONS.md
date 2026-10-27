@@ -9,8 +9,9 @@ catalog nor the restore verifier introduces another live save store.
 [The migration catalog](../server/save-migrations.ts) identifies existing owners,
 markers and lifecycle boundaries. Its order is an inventory, not an execution
 schedule. Tutorial, hangar, co-op, dock, hostile, story, Syndicate and arc setup
-still run at their existing login or operation boundaries. Mining, refinery,
-industrial and towing retain their world/hull validation and initialization.
+still run at their existing login or operation boundaries. Social and specialist dictionaries initialize at their existing operation boundaries.
+Frontier, rival and living-world containers initialize during construction. Mining,
+refinery, industrial and towing retain their detailed world/hull validation and initialization.
 Co-op compatibility includes economic refunds; running it outside its existing
 marker checks can duplicate rewards.
 
@@ -32,14 +33,28 @@ is current. Legacy indices through 8 stay unchanged, 9–15 move forward two, an
 later indices move forward three. Missing progression stays missing. Completed
 guide sentinels above the current list length remain valid. The rehearsal rejects
 other versions, negative/fractional/nonfinite indices and legacy integer overflow
-before executing either owner. This bounded validation applies to the rehearsal;
-it does not add a new live import/login validator.
+before executing either owner. The same tutorial checks also run at local/native load, import and login boundaries.
 
 Local database startup rejects malformed JSON, invalid snapshot envelope shapes
 and read failures other than a missing file. Missing snapshot files retain the
 fresh-file defaults. A committed journal takes precedence over stale snapshots;
 both journal payloads must have valid envelope shapes before either is restored.
-This is structural validation, not full validation of every feature field.
+[Feature validation](../server/save-validation.ts) checks present compatibility fields
+before any owner can default them or pay refunds. It covers numeric economy fields,
+tutorial markers, hangar/dock containers, co-op directives and markers, social lists,
+Syndicate values, specialist resources, story/arc progress, holdout records and
+world container/version shapes. Fractional mastery progress remains supported.
+Collections are bounded at 100,000 entries; unknown append-only fields remain intact.
+Missing/null legacy default fields stay with their existing owner. Economy fields
+cannot be null or nonnumeric. This is bounded compatibility validation, not an
+exhaustive validator for every saved field. Detailed version-1 world validation
+remains with mining, refinery, industrial and towing.
+
+Local journal recovery checks these fields before rewriting either snapshot.
+Native checkpoint loads check them before Game construction. Solo import checks a
+detached copy before replacing a slot or claim; login checks before binding the
+account to the session or running migrations. Rejection does not repair balances,
+pay partial refunds or replace the original account.
 
 ## Rehearse a stopped local backup
 
@@ -74,7 +89,10 @@ Committed fixtures in `test/fixtures/save-migrations/` are synthetic compatibili
 shapes, not captures from historical release archives. They cover missing cargo
 ledgers, current mixed grades, corrupt totals, an unsupported ledger version and
 tutorial marker/index boundaries. A separate legacy co-op fixture combines old
-fleet/directive fields with current fresh-account defaults.
+fleet/directive fields with current fresh-account defaults. Committed feature cases
+also cover absent pre-feature defaults, retired stored-escort presets and retained
+story/arc/holdout/specialist progress. Real login and two save/reload cycles check
+exact dock refunds, unchanged inventories/progress and consumed markers.
 The registered regression checks original-byte preservation, late-account
 rejection, journal precedence, malformed/unreadable snapshots and five actual
 local journal fault boundaries followed by reopen and retry.

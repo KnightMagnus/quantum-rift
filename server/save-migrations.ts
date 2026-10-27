@@ -95,6 +95,41 @@ export const SAVE_MIGRATION_CATALOG: readonly SaveMigrationEntry[] = Object.free
     boundary: 'account login',
   },
   {
+    id: 'social-defaults',
+    owner: 'server/coop.ts#socialInit',
+    source: 'absent social lists/mail',
+    target: 'owner defaults; existing contacts retained',
+    boundary: 'social operations and payload',
+  },
+  {
+    id: 'specialist-defaults',
+    owner: 'server/specialists.ts#specInit',
+    source: 'absent resource/blueprint/component dictionaries',
+    target: 'owner defaults; owned resources retained',
+    boundary: 'specialist operations and payload',
+  },
+  {
+    id: 'frontier-world-defaults',
+    owner: 'server/frontier.ts#frontierInit',
+    source: 'absent colonies/orders/nextOrder',
+    target: 'owner defaults; existing orders retained',
+    boundary: 'Game construction',
+  },
+  {
+    id: 'rival-world-defaults',
+    owner: 'server/rivals.ts#rivalsInit',
+    source: 'absent rivals/news/flash',
+    target: 'missing rivals initialized; existing rivals retained',
+    boundary: 'Game construction',
+  },
+  {
+    id: 'living-world-defaults',
+    owner: 'server/living.ts#livingInit',
+    source: 'absent states/stateCool/tradeImpact',
+    target: 'owner defaults; existing effects retained',
+    boundary: 'Game construction and world operations',
+  },
+  {
     id: 'mining-v1',
     owner: 'server/mining.ts#MiningOperations.init',
     source: 'absent/version 1 mining state; reviewed append-only fields',
@@ -134,7 +169,7 @@ export function previewCargoMigration(players: Record<string, PlayerAccount>) {
 }
 
 /** Validate only tutorial marker/progress fields before invoking their existing owner. */
-export function validateTutorialSave(account: PlayerAccount): void {
+export function validateTutorialSave(account: Pick<PlayerAccount, 'tut' | 'tutV'>): void {
   const version = account.tutV;
   if (version != null && ![0, 1, TUT_VERSION].includes(version))
     throw new Error('Tutorial save: unsupported version');

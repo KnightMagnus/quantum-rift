@@ -376,3 +376,13 @@ policy. [client/connection.ts](../client/connection.ts) checks fresh HTTP status
 the native world RPC before joining. Local Game hello and native join metadata
 are checked before Game login. [PROTOCOL-COMPATIBILITY.md](PROTOCOL-COMPATIBILITY.md)
 describes supported combinations and update recovery.
+
+## Save compatibility boundaries
+
+`server/save-migrations.ts` catalogs existing migration/default owners and the
+explicit cargo/tutorial rehearsal order. `server/save-validation.ts` checks
+present compatibility fields before local/native load, local journal recovery,
+Solo import and account login. Feature owners still perform migrations; no
+second store or startup scheduler is introduced. `docs/SAVE-MIGRATIONS.md` lists
+supported synthetic shape fixtures, native fault evidence and the disposable
+PostgreSQL backup/restore procedure.

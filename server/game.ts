@@ -1,3 +1,4 @@
+import { validateFeaturePlayerSave } from './save-validation.ts';
 import { COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
 import { storySystemVisible } from '../shared/story-world.ts';
 import { utf8Bytes } from '../shared/health.ts';
@@ -838,6 +839,7 @@ export class Game<Storage extends Database = Database> {
       if (session.data && session.data.name.toLowerCase() === name.toLowerCase())
         throw new Error('That captain is playing right now.');
     const imported = structuredClone(playerData);
+    validateFeaturePlayerSave(imported);
     migrateCargoLots(imported); // validate before replacing any existing slot
     const ownerKey = this.db.key(name);
     const site = imported.station.claimed ? imported.station.site : null;
@@ -1825,12 +1827,13 @@ export class Game<Storage extends Database = Database> {
         this.disconnect(session2);
       }
     try {
+      validateFeaturePlayerSave(playerAccount);
       if (migrateCargoLots(playerAccount).changed) this.db.touch();
     } catch (error) {
-      console.error('Cargo save rejected:', name, (error as Error).message);
+      console.error('Save validation rejected:', (error as Error).message);
       return this.send(session, {
         t: 'error',
-        msg: 'Cargo save validation failed. Contact the server operator.',
+        msg: 'Save validation failed. Contact the server operator.',
       });
     }
     if (!session.isNew) this.health?.observe('returningLogins', 1);
