@@ -248,8 +248,18 @@ for (const solo of [false, true]) {
     // A normal landed service refresh must not leave a stale flight scene behind.
     await page.click('#depart');
     await page.waitForFunction(() => G.view && !G.landed);
+    await page.waitForFunction(() => {
+      const authority = G.ents.get(G.myId);
+      return authority && Math.hypot(authority.vx, authority.vy) <= 1;
+    });
+    const beforeRedock = sent.length;
     await page.keyboard.press('KeyL');
     await page.waitForFunction(() => G.landed && !G.view);
+    assert.equal(
+      sent.slice(beforeRedock).filter((message) => message.t === 'land').length,
+      1,
+      'redock uses one real authoritative landing request',
+    );
     await page.waitForFunction(() => G.ents.size > 0);
     assert.ok((await sample()).pixels > 5000, 'depart/redock restores the observer scene');
     const before = sent.length;
