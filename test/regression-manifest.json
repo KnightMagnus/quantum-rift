@@ -143,7 +143,8 @@
     "combat-jobs-playability.ts",
     "combat-balance-ratings.ts",
     "save-feature-validation.ts",
-    "save-postgres-restore.ts"
+    "save-postgres-restore.ts",
+    "trade-safety.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -199,7 +200,8 @@
     "protocol-compatibility-browser.ts",
     "hud-controls-browser.ts",
     "asset-recovery-browser.ts",
-    "browser-server-liveness.ts"
+    "browser-server-liveness.ts",
+    "browser-friend-liveness.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -487,78 +489,169 @@
     "deterministic-core.ts": ["helpers/mocks.ts", "helpers/legacy-story-systems.ts"],
     "galaxy-graph.ts": ["helpers/legacy-story-systems.ts"],
     "packaged-runtime.ts": ["helpers/browser-fixture.ts", "helpers/nakama-service.ts"],
-    "chat-projection-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "sidebar-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
+    "chat-projection-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "sidebar-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/seed-random.ts",
+      "helpers/chromium.ts"
+    ],
     "armada-formation-network.ts": [
       "fixtures/preload-armada-formation-network.ts",
       "helpers/browser-fixture.ts",
-      "helpers/seed-random.ts"
+      "helpers/seed-random.ts",
+      "helpers/chromium.ts"
     ],
     "armada-follow-two-clients.ts": [
       "fixtures/preload-armada-follow-two-clients.ts",
       "helpers/browser-fixture.ts",
-      "helpers/seed-random.ts"
+      "helpers/seed-random.ts",
+      "helpers/chromium.ts"
     ],
     "gateway-browser.ts": [
       "fixtures/preload-gateway-browser.ts",
       "helpers/browser-fixture.ts",
-      "helpers/seed-random.ts"
+      "helpers/seed-random.ts",
+      "helpers/chromium.ts"
     ],
-    "station-landing-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
-    "login-scene-browser.ts": ["helpers/browser-fixture.ts"],
+    "station-landing-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/seed-random.ts",
+      "helpers/chromium.ts"
+    ],
+    "login-scene-browser.ts": ["helpers/browser-fixture.ts", "helpers/chromium.ts"],
     "client-systems-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/cargo-fixture.ts",
-      "helpers/seed-random.ts"
+      "helpers/seed-random.ts",
+      "helpers/chromium.ts"
     ],
-    "input-audio-browser.ts": ["helpers/browser-fixture.ts"],
-    "cargo-ui-browser.ts": ["helpers/browser-fixture.ts", "helpers/temp-data.ts", "seed-random.ts"],
-    "mining-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "mining-ui-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "refinery-ui-browser.ts": ["helpers/browser-fixture.ts", "helpers/refinery-play-fixture.ts"],
-    "dredge-browser.ts": ["helpers/browser-fixture.ts", "helpers/dredge-play-fixture.ts"],
-    "towing-browser.ts": ["helpers/browser-fixture.ts", "helpers/towing-play-fixture.ts"],
-    "mining-panel-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "logout-browser.ts": ["helpers/browser-fixture.ts", "helpers/temp-data.ts", "seed-random.ts"],
-    "mining-keys-browser.ts": ["helpers/browser-fixture.ts", "helpers/towing-play-fixture.ts"],
+    "input-audio-browser.ts": ["helpers/browser-fixture.ts", "helpers/chromium.ts"],
+    "cargo-ui-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/temp-data.ts",
+      "seed-random.ts",
+      "helpers/chromium.ts"
+    ],
+    "mining-controls-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "mining-ui-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "refinery-ui-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/refinery-play-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "dredge-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/dredge-play-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "towing-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/towing-play-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "mining-panel-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "logout-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/temp-data.ts",
+      "seed-random.ts",
+      "helpers/chromium.ts"
+    ],
+    "mining-keys-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/towing-play-fixture.ts",
+      "helpers/chromium.ts"
+    ],
     "landing-autopilot-browser.ts": [
       "fixtures/preload-landing-autopilot-browser.ts",
       "helpers/browser-fixture.ts",
-      "helpers/seed-random.ts"
+      "helpers/seed-random.ts",
+      "helpers/chromium.ts"
     ],
-    "dropdowns-browser.ts": ["helpers/browser-fixture.ts", "seed-random.ts"],
+    "dropdowns-browser.ts": ["helpers/browser-fixture.ts", "seed-random.ts", "helpers/chromium.ts"],
     "diagnostic-capture.ts": ["helpers/temp-data.ts"],
     "diagnostic-capture-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
-      "seed-random.ts"
+      "seed-random.ts",
+      "helpers/chromium.ts"
     ],
     "trade-amount-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
-      "seed-random.ts"
+      "seed-random.ts",
+      "helpers/chromium.ts"
     ],
-    "motherlode-art-browser.ts": ["helpers/browser-fixture.ts", "helpers/towing-play-fixture.ts"],
-    "ship-turning-assets-browser.ts": ["helpers/browser-fixture.ts"],
-    "ship-functions-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "cockpit-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "polish-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "cursors-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
+    "motherlode-art-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/towing-play-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "ship-turning-assets-browser.ts": ["helpers/browser-fixture.ts", "helpers/chromium.ts"],
+    "ship-functions-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "cockpit-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "polish-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "cursors-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
     "landed-live-browser.ts": [
       "fixtures/landed-live-preload.ts",
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
-      "seed-random.ts"
+      "seed-random.ts",
+      "helpers/chromium.ts"
     ],
-    "qol-browser.ts": ["helpers/browser-fixture.ts", "helpers/refinery-play-fixture.ts"],
-    "sidebar-sizing-browser.ts": ["helpers/browser-fixture.ts", "helpers/refinery-play-fixture.ts"],
-    "mission-ui-browser.ts": ["helpers/browser-fixture.ts", "helpers/refinery-play-fixture.ts"],
+    "qol-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/refinery-play-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "sidebar-sizing-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/refinery-play-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "mission-ui-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/refinery-play-fixture.ts",
+      "helpers/chromium.ts"
+    ],
     "radio-browser.ts": [
       "fixtures/preload-radio-browser.ts",
       "helpers/browser-fixture.ts",
-      "seed-random.ts"
+      "seed-random.ts",
+      "helpers/chromium.ts"
     ],
-    "save-generator-browser.ts": ["helpers/browser-fixture.ts"],
+    "save-generator-browser.ts": ["helpers/browser-fixture.ts", "helpers/chromium.ts"],
     "helpers/refinery-fixture.ts": ["helpers/required.ts", "helpers/temp-data.ts"],
     "fixtures/preload-http-api.ts": ["helpers/preload-config.ts"],
     "combat-network.ts": ["helpers/required.ts"],
@@ -607,17 +700,18 @@
     "fixtures/dredge-preload.ts": ["helpers/required.ts"],
     "fixtures/towing-preload.ts": ["helpers/required.ts"],
     "nakama-network.ts": ["helpers/nakama-service.ts"],
-    "nakama-browser.ts": ["helpers/nakama-service.ts"],
+    "nakama-browser.ts": ["helpers/nakama-service.ts", "helpers/chromium.ts"],
     "nakama-diagnostics.ts": ["helpers/nakama-service.ts"],
     "friend-host-network.ts": ["helpers/friend-host.ts"],
-    "friend-host-browser.ts": ["helpers/friend-host.ts"],
+    "friend-host-browser.ts": ["helpers/friend-host.ts", "helpers/chromium.ts"],
     "helpers/friend-host.ts": ["helpers/browser-fixture.ts"],
-    "faction-stores-browser.ts": ["helpers/browser-fixture.ts"],
+    "faction-stores-browser.ts": ["helpers/browser-fixture.ts", "helpers/chromium.ts"],
     "attention.ts": ["helpers/mocks.ts"],
     "responsive-hud-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/mining-fixture.ts",
-      "fixtures/attention-preload.ts"
+      "fixtures/attention-preload.ts",
+      "helpers/chromium.ts"
     ],
     "attention-scan.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts", "helpers/required.ts"],
     "attention-runtime.ts": [
@@ -629,26 +723,44 @@
     "sidebar-gauges-browser.ts": [
       "helpers/refinery-play-fixture.ts",
       "helpers/browser-fixture.ts",
-      "fixtures/sidebar-gauges-preload.ts"
+      "fixtures/sidebar-gauges-preload.ts",
+      "helpers/chromium.ts"
     ],
     "login-traffic.ts": [],
     "purchase-audio.ts": ["helpers/temp-data.ts"],
-    "audio-flyby-browser.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
-    "audio-defaults-browser.ts": ["helpers/refinery-play-fixture.ts", "helpers/browser-fixture.ts"],
+    "audio-flyby-browser.ts": [
+      "helpers/temp-data.ts",
+      "helpers/browser-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "audio-defaults-browser.ts": [
+      "helpers/refinery-play-fixture.ts",
+      "helpers/browser-fixture.ts",
+      "helpers/chromium.ts"
+    ],
     "wire-contracts.ts": [
       "helpers/mocks.ts",
       "helpers/refinery-fixture.ts",
       "helpers/dredge-fixture.ts"
     ],
-    "cockpit-layout-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "pressure-hull-browser.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
+    "cockpit-layout-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "pressure-hull-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
     "helpers/story-foundations.ts": ["helpers/mocks.ts"],
     "helpers/index-worksite.ts": ["helpers/mocks.ts"],
     "story-realities-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/story-reality.ts",
       "fixtures/preload-story-browser.ts",
-      "helpers/story-witness.ts"
+      "helpers/story-witness.ts",
+      "helpers/chromium.ts"
     ],
     "story-continuation.ts": [
       "helpers/mocks.ts",
@@ -660,9 +772,17 @@
     "helpers/story-witness.ts": ["helpers/mocks.ts"],
     "helpers/story-integration-edge.ts": ["helpers/mocks.ts"],
     "archive-verification.ts": ["helpers/temp-data.ts"],
-    "platform-browser-smoke.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"],
+    "platform-browser-smoke.ts": [
+      "helpers/temp-data.ts",
+      "helpers/browser-fixture.ts",
+      "helpers/chromium.ts"
+    ],
     "helpers/story-seeded-motion.ts": ["helpers/mocks.ts"],
-    "overlay-input-browser.ts": ["helpers/browser-fixture.ts", "helpers/temp-data.ts"],
+    "overlay-input-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/temp-data.ts",
+      "helpers/chromium.ts"
+    ],
     "index-presentation.ts": [
       "helpers/legacy-fixture.ts",
       "helpers/mocks.ts",
@@ -671,7 +791,8 @@
     "ui-polish-browser.ts": [
       "helpers/temp-data.ts",
       "helpers/browser-fixture.ts",
-      "fixtures/ui-polish-preload.ts"
+      "fixtures/ui-polish-preload.ts",
+      "helpers/chromium.ts"
     ],
     "performance-native.ts": [
       "helpers/native-performance.ts",
@@ -688,13 +809,28 @@
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
+    "hud-controls-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/seed-random.ts",
+      "helpers/chromium.ts"
+    ],
     "performance-budgets.ts": ["helpers/browser-fixture.ts", "helpers/native-performance.ts"],
     "station-service.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
     "combat-playability.ts": ["helpers/combat-playability-simulation.ts"],
     "save-feature-validation.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
     "save-postgres-restore.ts": ["helpers/nakama-service.ts", "helpers/temp-data.ts"],
-    "browser-server-liveness.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"]
+    "browser-server-liveness.ts": [
+      "helpers/temp-data.ts",
+      "helpers/browser-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "browser-friend-liveness.ts": ["browser-server-liveness.ts"],
+    "trade-safety.ts": ["helpers/refinery-fixture.ts"],
+    "planet-cache-budget-browser.ts": ["helpers/chromium.ts"],
+    "asset-recovery-browser.ts": ["helpers/chromium.ts"],
+    "excalibur-runtime-browser.ts": ["helpers/chromium.ts"],
+    "planet-portrait-browser.ts": ["helpers/chromium.ts"],
+    "protocol-compatibility-browser.ts": ["helpers/chromium.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -757,7 +893,8 @@
         "network-faults.ts",
         "websocket-transport.ts",
         "network-faults-loopback.ts",
-        "browser-server-liveness.ts"
+        "browser-server-liveness.ts",
+        "browser-friend-liveness.ts"
       ],
       "asserts": "Replayed goal claims, job accepts and landings settle once; an evicted or closed local connection cannot trade, accept, log, launch or steer after a replacement sign-in; late frames after a server close never dispatch or accumulate, and closed sockets release partial/fragmented buffers; flight disconnect docks and reconnection starts without queued controls; restart restores only flushed credits, contracts and claims, and a replayed claim after restart cannot pay again. Deterministic queued/held-response fault schedules cover 16 refinery purchase/towing reward scenarios across clean/prejournal/postjournal/between-snapshot/final-sync local writes and clean/prewrite/lost-ack native-CAS storage; exact credits/cargo and one receipt survive replay, graceful reconnect and restart, known uncommitted settlement stays absent, native uncertainty freezes authority, stale tow revisions require fresh attachment, and delayed goal claims pay once while two explicit legacy material purchase intents still settle twice. Over real loopback TCP, byte-at-a-time delivery dispatches a purchase once, a purchase whose reply is lost is shown committed once after reconnect, a request lost in transit spends nothing, a high-latency link stays connected, and a silent half-open peer is pinged, dropped within its allowance and docked with clean controls on reconnect."
     },
@@ -822,7 +959,7 @@
         "ui-polish-browser.ts",
         "station-docking.ts"
       ],
-      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait. A captain's own Personal Station always clears them to land, never asks for a bribe and keeps its home refinery open, whatever their record in that system."
+      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait. A captain's own Personal Station always clears them to land, never asks for a bribe and keeps its home refinery open, whatever their record in that system. Landing bribes recheck current refusal through authoritative dispatch, reject docked/cleared/pass/home/outlaw/invalid targets without save mutations, and charge a genuinely refused captain once."
     },
     {
       "id": "fleet-orders",
@@ -1296,10 +1433,16 @@
     },
     {
       "id": "ship-function-stack",
-      "owners": ["client/ship-functions.ts", "client/mining_ui.ts", "client/style.css"],
+      "owners": [
+        "client/ship-functions.ts",
+        "client/mining_ui.ts",
+        "client/style.css",
+        "client/cockpit.css",
+        "client/index.html"
+      ],
       "services": [],
       "tests": ["ship-functions-browser.ts", "mining-panel-browser.ts"],
-      "asserts": "Accessible icon toggles, retained disabled mining, combat and survey message dispatch, fleet orders and secondary drone input, six-panel flow layout with long chat, keyboard/wheel reachability and desktop/narrow/scaled browser bounds."
+      "asserts": "Accessible icon toggles, retained disabled mining, combat and survey message dispatch, fleet orders and secondary drone input, six-panel flow layout with long chat, keyboard/wheel reachability and desktop/narrow/scaled browser bounds. JUMP has a reserved flow row in either corner: collapsed/single/multiple/all panels at five desktop resolutions plus narrow/scaled layouts, with clipped pointer intersections and real jump dispatch checked."
     },
     {
       "id": "cockpit-restyle",
@@ -1346,7 +1489,9 @@
         "client/economy-ui.ts",
         "client/refinery-controls.ts",
         "tools/economy-baseline.ts",
-        "server/port-services.ts"
+        "server/port-services.ts",
+        "shared/cargo-lots.ts",
+        "server/save-validation.ts"
       ],
       "services": ["refinery"],
       "tests": [
@@ -1354,9 +1499,10 @@
         "refinery-ui-browser.ts",
         "trade-amount-browser.ts",
         "refinery-network.ts",
-        "refinery-persistence.ts"
+        "refinery-persistence.ts",
+        "trade-safety.ts"
       ],
-      "asserts": "Automatic single-action refinery cost/output with retained authoritative settlement, stale/expired/duplicate denial, trip recap attribution and persistence, exact current-port order-size/grade estimates, reserved cargo warnings, malformed/full/poor requests and measurement report completeness without fabricated baseline data. The ordinary port boundary reads a replaced market provider through a receiver-preserving live core call and denies removed markets without changing credits or grade lots."
+      "asserts": "Automatic single-action refinery cost/output with retained authoritative settlement, stale/expired/duplicate denial, trip recap attribution and persistence, exact current-port order-size/grade estimates, reserved cargo warnings, malformed/full/poor requests and measurement report completeness without fabricated baseline data. The ordinary port boundary reads a replaced market provider through a receiver-preserving live core call and denies removed markets without changing credits or grade lots. Positive integrated market spreads, bonus caps, conservative rounding, all-commodity shared impact/saturation/split-order safety, production Fixer/multi-captain cycles, quote parity, proportional persisted purchase basis and forward-only sale-loss carryover prevent recycled volume from advancing trade income/goals."
     },
     {
       "id": "cockpit-qol",
@@ -1765,7 +1911,8 @@
         "connection-lifecycle.ts",
         "logout-browser.ts",
         "protocol-compatibility-browser.ts",
-        "browser-server-liveness.ts"
+        "browser-server-liveness.ts",
+        "browser-friend-liveness.ts"
       ],
       "asserts": "Independent pre-extraction traces preserve current-socket/epoch guards, native/local hello, packet dispatch, live credentials/configuration, bounded backoff, terminal compatibility/duplicate-login denial and account detach; existing browser tests cover actual sign-in/logout."
     },
@@ -1887,7 +2034,8 @@
       "trade-amount-browser.ts",
       "economy-32.ts",
       "message-routing.ts",
-      "wire-contracts.ts"
+      "wire-contracts.ts",
+      "trade-safety.ts"
     ],
     "buyship": [
       "sim.ts",
@@ -1979,7 +2127,7 @@
     "ping": ["core-actions.ts", "message-routing.ts"],
     "hail": ["hailing-network.ts", "v11.ts", "message-routing.ts"],
     "hailin": ["hailing-network.ts", "message-routing.ts"],
-    "hailopt": ["hailing-network.ts", "v11.ts", "message-routing.ts"],
+    "hailopt": ["hailing-network.ts", "v11.ts", "message-routing.ts", "station-docking.ts"],
     "order": [
       "combat-network.ts",
       "v11.ts",

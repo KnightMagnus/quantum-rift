@@ -65,3 +65,29 @@ The report only flags same-band/risk/seed comparisons with capital and hold with
 25%. Unequal prerequisites remain visible instead of being forced into equal pay.
 The reporting tool does not change reward, market-impact, fee, recovery, timing
 or grade multipliers. Tuning requires measured sessions.
+
+## Commodity settlement
+
+Port purchases and sales use one shared quote model for browser estimates and
+server settlement. A five-percent spread narrows with trade bonuses to a minimum
+half-percent spread. Purchases round up and sales round down. Bulk quotes
+integrate the shared market-impact curve through its saturation limits rather
+than multiplying the final spot price by the quantity. Personal Station markets
+keep their fixed reference prices but use the same positive spread. A system sale
+boost raises the reference for both sides; it cannot make the bid exceed the ask.
+These safeguards prevent immediate common-cargo round trips from creating credits;
+they are not evidence that career income rates are balanced.
+
+Purchase cost is tracked by commodity and grade, including proportional cost on
+partial withdrawals. Storage, jettisoned cargo and exchange escrow preserve that
+cost; acquired or mined cargo starts with zero purchase cost. Exchange buyers use
+their actual purchase payment as the new cost, not the seller's old cost. Refunds
+return principal without counting it as earnings.
+
+Trading goals and earned-credit statistics count realized sale margins after
+purchase cost. Realized trading losses offset future positive margins before
+those counters advance again. Inventory destruction does not create this loss
+carryover. Existing balances and historical earnings are not recalculated. For
+legacy saves, the old average-paid record seeds held common cargo once; missing
+historic costs for premium cargo or storage cannot be reconstructed and start at
+zero. Purchase cost stays server-side and is not needed by local trade previews.

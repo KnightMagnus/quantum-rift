@@ -1424,6 +1424,11 @@ lands without a refusal, docking control welcomes them home with no bribe option
 forced bribe request costs nothing and buys no pass, and the home refinery stays
 open. A hostile visitor is still refused; once cleared, the visitor's landed packet
 marks the guest dock and withholds the owner's shipyard, outfitter and refinery.
+The authoritative `hailopt` listener also rechecks clearance before payment. Docked,
+cleared, valid-pass, home/outlaw-exempt, wrong-system and unlandable requests leave
+credits, pass expiry and save-dirty state unchanged. A legitimately refused flying
+visitor pays once for a thirty-minute pass; replaying the card cannot charge again
+or extend it. Changed standing and insufficient funds are covered.
 At 1000×900, the landing overview keeps the real spaceport news visible in a
 scrollable panel below the service content.
 
@@ -1574,3 +1579,38 @@ loadout, faction, system or multiplayer combination.
 run in the unit regression lane through the canonical manifest; their supporting
 helper is registered under `combat-playability.ts`. Existing combat, difficulty
 and retaliation regressions remain in CI.
+
+## Playtest trade, JUMP and browser recovery checks
+
+`trade-safety.ts` checks shared integrated market-impact quotes and conservative
+rounding across commodity prices, market classes, bonuses, sale modifiers, impact
+limits and bulk/split orders. Production-dispatch cases cover an actual hired
+Fixer, repeated same-port trading, preview/settlement parity and legitimate
+inter-port profit. Grade-level purchase basis follows partial sales and cargo
+transfers; trading goals and earned-credit statistics count profit, not recycled
+sale volume. Realized sale losses offset later margins before those counters
+advance again. Legacy common-cargo basis seeding is idempotent; unknown historic
+premium/storage costs are not reconstructed. Existing balances and historical earnings are not rewritten.
+
+`ship-functions-browser.ts` checks both JUMP corners with collapsed, single,
+multiple and all available function panels. Its geometry matrix uses 1280×720,
+1920×1080, 2560×1080, 3440×1440 and 5120×1440, plus 800×600 and 640×480 at 1.4 UI
+scale. It measures visible clipped panel/control intersections, the reserved left
+flow gap and viewport bounds, and clicks the real JUMP button to check dispatch.
+The existing keyboard, wheel and long-chat cases remain.
+
+`ui-polish-browser.ts` forces a Codex row replacement before testing stale-row
+activation atomically on the same element. Protected detail content and story
+progress remain absent; separate ordinary pointer and keyboard detail/Back cases
+remain positive controls.
+
+`browser-friend-liveness.ts` runs the existing TCP blackhole fixture through an
+actual password-authenticated friend host. It checks bounded reconnect and held
+input reset without replaying gameplay commands. The Solo variant retains its
+healthy paused-host check. Neither variant predicts rendering performance.
+
+Chromium callers share `test/helpers/chromium.ts`. With no override they use the
+pinned Playwright browser; `CHROMIUM_EXECUTABLE` selects an explicit local binary.
+Firefox and WebKit keep their own launch paths. Default and explicit valid
+Chromium launches and Firefox override isolation were exercised locally; WebKit's
+local runtime check requires host libraries as well as its pinned browser.
