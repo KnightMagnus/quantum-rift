@@ -1485,7 +1485,7 @@ export function showLanded(): void {
       ? site.own
         ? 'Your Personal Station. Build it up through Station Tier 1-5: Workshop, research lab, drydock, wingmates and the station shipyard.'
         : site.owner
-          ? `A Personal Station claimed and run by Captain ${site.owner}. You are berthed at the guest dock: refuel, trade and take jobs here. The owner's docks and station internals are closed to visitors.`
+          ? `A Personal Station claimed and run by Captain ${site.owner}. You are berthed at the guest dock: refuel and trade here. The owner's docks and station internals are closed to visitors.`
           : stellarBody.desc
       : stellarBody.desc || ''
   )!;

@@ -20,7 +20,8 @@ faction is hostile. The same owner clearance applies to the home refinery. Docki
 asks you to buy an access pass for your own station.
 
 Visiting another captain's Personal Station shows its owner's name and a
-**Guest Dock** label. Guests can use OVERVIEW, TRADE, JOBS and their own CREW.
+**Guest Dock** label. Available guest tabs are limited to OVERVIEW, TRADE, JOBS
+and the visitor's own CREW. A guest dock does not add a new job board.
 The owner's docks, hangar, refinery and other station internals remain private.
 Ordinary faction clearance still applies to visitors.
 
