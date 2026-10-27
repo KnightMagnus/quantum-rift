@@ -62,6 +62,7 @@
     "core-actions.ts",
     "websocket-transport.ts",
     "network-faults.ts",
+    "network-faults-loopback.ts",
     "http-api.ts",
     "network-systems.ts",
     "save-migrations.ts",
@@ -191,7 +192,8 @@
     "planet-cache-budget-browser.ts",
     "pressure-hull-browser.ts",
     "protocol-compatibility-browser.ts",
-    "hud-controls-browser.ts"
+    "hud-controls-browser.ts",
+    "asset-recovery-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -392,6 +394,7 @@
       "helpers/temp-data.ts",
       "helpers/refinery-fixture.ts"
     ],
+    "network-faults-loopback.ts": ["helpers/required.ts", "helpers/temp-data.ts"],
     "http-api.ts": [
       "fixtures/preload-http-api.ts",
       "helpers/browser-fixture.ts",
@@ -728,7 +731,7 @@
       "owners": ["server/ws.ts"],
       "services": [],
       "tests": ["websocket-transport.ts", "network-systems.ts"],
-      "asserts": "Frame masking/fragmentation/control/limits, upgrade handshake and actual multiplayer client/server state transitions."
+      "asserts": "Frame masking/fragmentation/control/limits, quiet-peer ping and half-open close, upgrade handshake and actual multiplayer client/server state transitions."
     },
     {
       "id": "network-faults",
@@ -741,8 +744,8 @@
         "server/towing.ts"
       ],
       "services": ["refinery", "towing"],
-      "tests": ["network-faults.ts", "websocket-transport.ts"],
-      "asserts": "Replayed goal claims, job accepts and landings settle once; an evicted or closed local connection cannot trade, accept, log, launch or steer after a replacement sign-in; late frames after a server close never dispatch or accumulate, and closed sockets release partial/fragmented buffers; flight disconnect docks and reconnection starts without queued controls; restart restores only flushed credits, contracts and claims, and a replayed claim after restart cannot pay again. Deterministic queued/held-response fault schedules cover 16 refinery purchase/towing reward scenarios across clean/prejournal/postjournal/between-snapshot/final-sync local writes and clean/prewrite/lost-ack native-CAS storage; exact credits/cargo and one receipt survive replay, graceful reconnect and restart, known uncommitted settlement stays absent, native uncertainty freezes authority, stale tow revisions require fresh attachment, and delayed goal claims pay once while two explicit legacy material purchase intents still settle twice."
+      "tests": ["network-faults.ts", "websocket-transport.ts", "network-faults-loopback.ts"],
+      "asserts": "Replayed goal claims, job accepts and landings settle once; an evicted or closed local connection cannot trade, accept, log, launch or steer after a replacement sign-in; late frames after a server close never dispatch or accumulate, and closed sockets release partial/fragmented buffers; flight disconnect docks and reconnection starts without queued controls; restart restores only flushed credits, contracts and claims, and a replayed claim after restart cannot pay again. Deterministic queued/held-response fault schedules cover 16 refinery purchase/towing reward scenarios across clean/prejournal/postjournal/between-snapshot/final-sync local writes and clean/prewrite/lost-ack native-CAS storage; exact credits/cargo and one receipt survive replay, graceful reconnect and restart, known uncommitted settlement stays absent, native uncertainty freezes authority, stale tow revisions require fresh attachment, and delayed goal claims pay once while two explicit legacy material purchase intents still settle twice. Over real loopback TCP, byte-at-a-time delivery dispatches a purchase once, a purchase whose reply is lost is shown committed once after reconnect, a request lost in transit spends nothing, a high-latency link stays connected, and a silent half-open peer is pinged, dropped within its allowance and docked with clean controls on reconnect."
     },
     {
       "id": "hangar",
@@ -1712,6 +1715,19 @@
         "nakama-network.ts"
       ],
       "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC and authoritative join rejection, terminal local denial despite buffered packets/late errors, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
+    },
+    {
+      "id": "asset-recovery",
+      "owners": [
+        "client/asset-resources.ts",
+        "client/audio.ts",
+        "client/engine.ts",
+        "client/engine-input.ts",
+        "client/world-actors.ts"
+      ],
+      "services": [],
+      "tests": ["asset-recovery-browser.ts", "render-cache-budget.ts"],
+      "asserts": "Decoded image/audio ownership budgets and live-resource-safe eviction; missing/corrupt asset fallbacks and bounded failure cleanup; repeated actual graphics context loss/restoration preserves captain state and blocks held controls until release."
     },
     {
       "id": "combat-playability",

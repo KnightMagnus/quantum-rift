@@ -286,6 +286,7 @@ assert.ok(source2.units >= 0 && source2.units < INDUSTRIAL.sourceUnits);
     const context = virtualMachine.createContext({
       // This navigation fixture has no open browser dialog; modal denial has browser coverage.
       overlays: { blocksFlight: () => false },
+      flightEngine: { recovering: false },
       landingFeedback: new LandingFeedback(),
       clientGameState: game,
       systemsById,

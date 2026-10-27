@@ -2,7 +2,7 @@ import { requiredFixtureValue } from './helpers/required.ts';
 // Transport boundary regressions: real parser with a controlled duplex TCP surface.
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import { Socket, upgrade } from '../server/ws.ts';
+import { DEFAULT_LIVENESS, Socket, upgrade } from '../server/ws.ts';
 
 class Wire extends EventEmitter {
   writes: Buffer[] = [];
@@ -176,6 +176,53 @@ for (const aggregate of [false, true]) {
   assert.equal(closed, 1, 'write failures close the logical connection exactly once');
 }
 
+// A peer that goes silent without closing TCP is probed, then dropped; any traffic keeps it.
+{
+  const wire = new Wire();
+  let clock = 1000;
+  const timings = { pingAfterMs: 100, deadAfterMs: 300, checkEveryMs: 60000 };
+  const socket = new Socket(wire as unknown as import('node:net').Socket, timings, () => clock);
+  let closed = 0;
+  socket.on('close', () => closed++);
+  const ping = Buffer.from([0x89, 0]);
+
+  clock += 99;
+  socket.checkLiveness();
+  assert.equal(wire.writes.length, 0, 'a recently heard peer is not probed');
+  clock += 1;
+  socket.checkLiveness();
+  assert.deepEqual(wire.writes.at(-1), ping, 'a quiet peer receives an empty ping');
+  clock += 150;
+  wire.emit('data', clientFrame('', { op: 10 }));
+  clock += 299;
+  socket.checkLiveness();
+  assert.equal(socket.open, true, 'a pong restarts the quiet period');
+  assert.equal(wire.destroyed, false);
+
+  clock += 1;
+  socket.checkLiveness();
+  assert.equal(socket.open, false, 'a peer silent past the limit is treated as gone');
+  assert.equal(wire.destroyed, true, 'the half-open TCP socket is destroyed, not half-closed');
+  assert.equal(wire.ended, false, 'no close handshake waits on a dead link');
+  assert.equal(closed, 1, 'the game is told about the lost peer once');
+  const writesAfterClose = wire.writes.length;
+  clock += 10000;
+  socket.checkLiveness();
+  wire.emit('close');
+  assert.equal(closed, 1);
+  assert.equal(wire.writes.length, writesAfterClose, 'a closed socket sends no more pings');
+}
+{
+  const wire = new Wire();
+  let clock = 0;
+  const socket = new Socket(wire as unknown as import('node:net').Socket, undefined, () => clock);
+  clock += 3600000;
+  socket.checkLiveness();
+  assert.equal(socket.livenessTimer, undefined, 'a socket without timings schedules no probe');
+  assert.equal(socket.open, true, 'a socket without timings never times out');
+  assert.equal(wire.writes.length, 0);
+}
+
 {
   const wire = new Wire();
   let accepted: Socket | undefined;
@@ -187,6 +234,8 @@ for (const aggregate of [false, true]) {
     (socket) => (accepted = socket),
   );
   assert.ok(accepted instanceof Socket);
+  assert.equal(accepted.liveness, DEFAULT_LIVENESS, 'upgraded peers are probed by default');
+  accepted.close();
   assert.match(wire.writes[0].toString(), /^HTTP\/1\.1 101 Switching Protocols\r\n/);
   assert.match(
     wire.writes[0].toString(),
@@ -205,5 +254,5 @@ for (const aggregate of [false, true]) {
 }
 
 console.log(
-  'WebSocket transport: masking, TCP splits, fragments/control frames, lengths/UTF-8, limits, close/late frames/backpressure and handshake PASS',
+  'WebSocket transport: masking, TCP splits, fragments/control frames, lengths/UTF-8, limits, close/late frames/backpressure, quiet-peer liveness and handshake PASS',
 );

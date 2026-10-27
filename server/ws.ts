@@ -10,6 +10,27 @@ import { EventEmitter } from 'node:events';
  */
 const GUID: string = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
+/** Quiet-peer probing that detects connections whose peer vanished without closing TCP. */
+export interface LivenessTimings {
+  /** Milliseconds without inbound bytes before each liveness check sends a ping. */
+  pingAfterMs: number;
+  /** Milliseconds without inbound bytes before the peer is treated as gone and the socket closes. */
+  deadAfterMs: number;
+  /** Milliseconds between liveness checks. */
+  checkEveryMs: number;
+}
+
+/**
+ * Browsers answer pings without page code, so an idle docked captain stays connected.
+ * A half-open peer (dropped Wi-Fi, sleeping laptop, NAT timeout) is closed within
+ * about 50 seconds instead of waiting minutes for TCP retransmission to give up.
+ */
+export const DEFAULT_LIVENESS: LivenessTimings = {
+  pingAfterMs: 15000,
+  deadAfterMs: 45000,
+  checkEveryMs: 5000,
+};
+
 /**
  * Minimal RFC 6455 WebSocket connection wrapper built over Node's net.Socket.
  * Implements frame parsing, unmasking, fragmentation reassembly, and UTF-8 transmission.
@@ -19,15 +40,29 @@ export class Socket extends EventEmitter {
   declare buf: Buffer;
   declare open: boolean;
   declare frag: Buffer[] | null;
+  /** Clock reading when the peer last sent any bytes, including pongs. */
+  declare lastHeard: number;
+  /** Quiet-peer probe timings; absent for sockets without a remote peer to probe. */
+  declare liveness: LivenessTimings | undefined;
+  declare clock: () => number;
+  declare livenessTimer: ReturnType<typeof setInterval> | undefined;
 
   /**
    * Initializes a WebSocket connection around a raw TCP network socket.
    * @param socket Raw TCP network stream socket.
+   * @param liveness Quiet-peer probe timings; omitted, the socket never probes or times out.
+   * @param clock Millisecond clock used for quiet-peer checks.
    */
-  constructor(socket: NodeNetSocket) {
+  constructor(socket: NodeNetSocket, liveness?: LivenessTimings, clock: () => number = Date.now) {
     super();
 
     this.sock = socket;
+
+    this.liveness = liveness;
+
+    this.clock = clock;
+
+    this.lastHeard = clock();
 
     this.buf = Buffer.alloc(0);
 
@@ -37,11 +72,32 @@ export class Socket extends EventEmitter {
     socket.setNoDelay(true);
     socket.on('data', (distance) => {
       if (!this.open) return;
+      this.lastHeard = this.clock();
       this.buf = Buffer.concat([this.buf, distance as Buffer]);
       this.parse();
     });
     socket.on('close', () => this.closed());
     socket.on('error', () => this.closed());
+    if (liveness) {
+      this.livenessTimer = setInterval(() => this.checkLiveness(), liveness.checkEveryMs);
+      this.livenessTimer.unref?.();
+    }
+  }
+
+  /**
+   * Pings a quiet peer, and closes the connection once the peer has been silent too long.
+   * Closing emits 'close', so the game docks a flying captain and frees the session.
+   */
+  checkLiveness(): void {
+    if (!this.open || !this.liveness) return;
+    const quietMs = this.clock() - this.lastHeard;
+    if (quietMs >= this.liveness.deadAfterMs) {
+      // No close handshake: the peer cannot answer it, and end() would wait on the dead link.
+      this.sock.destroy();
+      this.closed();
+      return;
+    }
+    if (quietMs >= this.liveness.pingAfterMs) this.frame(0x9, Buffer.alloc(0));
   }
 
   /**
@@ -50,6 +106,7 @@ export class Socket extends EventEmitter {
   closed(): void {
     if (this.open) {
       this.open = false;
+      clearInterval(this.livenessTimer);
       this.buf = Buffer.alloc(0);
       this.frag = null;
       this.emit('close');
@@ -183,11 +240,13 @@ export class Socket extends EventEmitter {
  * @param incomingMessage Inbound HTTP upgrade request.
  * @param socket Underlying client network socket stream.
  * @param onSocket Callback invoked with the initialized WebSocket wrapper.
+ * @param liveness Quiet-peer probe timings for the upgraded connection.
  */
 export function upgrade(
   incomingMessage: IncomingMessage,
   socket: NodeNetSocket,
   onSocket: (socket: Socket) => void,
+  liveness: LivenessTimings = DEFAULT_LIVENESS,
 ): void {
   const header = incomingMessage.headers['sec-websocket-key'];
   if (!header || (incomingMessage.headers.upgrade || '').toLowerCase() !== 'websocket') {
@@ -203,5 +262,5 @@ export function upgrade(
       accept +
       '\r\n\r\n',
   );
-  onSocket(new Socket(socket));
+  onSocket(new Socket(socket, liveness));
 }
