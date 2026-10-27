@@ -1307,10 +1307,12 @@ Existing engine, input and logout browser fixtures exercise its real integration
 System contracts: `client-connection-lifecycle`, `client-player-projection` and
 `station-action-service`.
 
-`connection-lifecycle.ts`, `player-projection.ts` and `station-service.ts` compare
-the extracted owners with unmodified pre-extraction source fixtures captured at
-`4444b8a`. The reference code runs independently in an isolated VM with controlled
-time, random values and effects; it does not call the new owners as an oracle.
+`connection-lifecycle.ts` and `player-projection.ts` compare the extracted owners
+with unmodified pre-extraction source fixtures captured at `4444b8a`.
+`station-service.ts` uses the unmodified `Game.station` method at `4e4ecde`, which
+includes the Personal Station upgrade-log correction. Each reference runs
+independently in an isolated VM with controlled time, random values and effects;
+it does not call the new owners as an oracle.
 Connection traces cover local/native opening, packet delivery, bounded reconnect,
 changing credentials/configuration, stale sockets/epochs, absent credentials,
 compatibility denial and duplicate-login teardown. Projection traces compare
