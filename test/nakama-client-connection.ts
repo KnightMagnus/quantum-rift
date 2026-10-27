@@ -226,7 +226,7 @@ await test(
 );
 
 await test(
-  'economic packet headers are validated on native and local receive paths',
+  'shared economic and communication headers are validated on native and local receive paths',
   { timeout: 2000 },
   async () => {
     const valid = {
@@ -240,6 +240,12 @@ await test(
       { ...valid, d: { ...valid.d, credits: null } },
       { t: 'refineryQuote', quote: {} },
       { t: 'landed', stellar: 'earth', offers: null },
+      { t: 'dm', from: 'Captain', to: 'Other', msg: [] },
+      { t: 'paused', on: 'true' },
+      { t: 'story', id: 'fixture', title: 'Fixture', text: 'Hello', choices: [{}] },
+      { t: 'hail', text: 'Hello', opts: [{ label: 'Answer', k: [] }] },
+      { t: 'toast', msg: 'x'.repeat(65537) },
+      { t: 'unknown', msg: 'Ignored' },
       valid,
       { t: 'landed', stellar: 'earth', offers: [], yard: null, outfitter: null, mats: [] },
     ];

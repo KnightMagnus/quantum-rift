@@ -95,6 +95,14 @@ malformed rename, bank, station, trade-offer and mining requests before a valid
 refinery barrier; these prove denial and continued service, not every successful
 operation on each transport.
 
+All received server families have finite-number, depth, collection, string and
+total-node bounds. Communication/control headers additionally validate their
+required scalar fields and dialogue choice entries before reaching the UI.
+`nakama-client-connection.ts` checks malformed communication headers on Solo,
+friend and native receive paths. Snapshot tuples retain their existing precise
+checks. World, sites and arena content and nested feature state remain bounded
+but do not yet have complete runtime semantic schemas.
+
 ## Native wall-clock performance
 
 `performance-native.ts` belongs to `performance-health` and runs disposable native

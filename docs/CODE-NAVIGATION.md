@@ -223,7 +223,9 @@ player or offer schema.
 `shared/wire-commands.ts` owns the other authenticated command families and
 `ClientAction`, deriving discriminated types from executable field rules.
 `Game.onMessage` validates those commands after its existing entry gates;
-economic service parsers retain their existing denial replies.
+economic service parsers retain their existing denial replies. The shared
+receive envelope bounds all server payloads and checks communication headers;
+nested world/feature schemas remain with their owners.
 
 Action routing lives in `server/game-message-handlers.ts`; entry gates and service
 implementations retain their own owners. Ordinary jobs and port commerce have
