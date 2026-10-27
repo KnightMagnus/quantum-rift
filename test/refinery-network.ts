@@ -39,6 +39,11 @@ try {
   const denialPackets = [
     null,
     [],
+    { t: 'rename', name: [] },
+    { t: 'bank', op: 'borrow', amt: [] },
+    { t: 'station', op: 'upgrade', credits: 999999 },
+    { t: 'trade2', op: 'offer', give: { items: [] } },
+    { t: 'mining', op: 'survey', rewards: 999999 },
     { t: 'buyship', hull: null },
     { t: 'buyship', hull: '201', store: [] },
     { t: 'outfit', id: [], n: 1 },

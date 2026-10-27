@@ -328,3 +328,98 @@ assert.equal(
 console.log(
   'Port purchase schemas, malformed no-mutation denials, legacy routing and authoritative material buy/sell passed.',
 );
+
+// Remaining action families share their executable discriminants across transports.
+const { commandFields, parseClientAction } = await import('../shared/wire-commands.ts');
+const registryTypes = new Set(Object.create(Game.prototype).createMessageHandlers().types);
+assert.deepEqual(
+  new Set([
+    ...Object.keys(commandFields),
+    'trade',
+    'buyship',
+    'outfit',
+    'buymat',
+    'refinery',
+    'miningOrder',
+    'towing',
+    'industrial',
+  ]),
+  registryTypes,
+  'every authenticated route has exactly one shared family contract',
+);
+const dispatches: unknown[] = [];
+const commandPilot = refineryPilot(game, 'Command Denials');
+const commandGame = mockGame({
+  sessions: new Map([[commandPilot.id, commandPilot]]),
+  db: { economicFrozen: false },
+  messageHandlers: { dispatch: (...args: unknown[]) => dispatches.push(args) },
+});
+for (const [type, schema] of Object.entries(commandFields)) {
+  for (const [field, guard] of Object.entries(schema)) {
+    for (const invalid of [[], Infinity, NaN, 'x'.repeat(65537)]) {
+      assert.equal(
+        guard(invalid),
+        false,
+        `${type}.${field} rejects non-scalar/nonfinite/oversized values`,
+      );
+      commandPilot.msgs = 0;
+      Game.prototype.onMessage.call(commandGame, commandPilot, { t: type, [field]: invalid });
+    }
+  }
+  commandPilot.msgs = 0;
+  Game.prototype.onMessage.call(commandGame, commandPilot, { t: type, credits: 999999 });
+}
+assert.deepEqual(
+  dispatches,
+  [],
+  'malformed fields and unexpected authority never reach any service',
+);
+const commands = [
+  { t: 'portrait', portraitId: 'fixture', name: 'Other', target: 123 },
+  { t: 'input', seq: '7.9', th: 1, tu: '-99', nav: true },
+  { t: 'station', op: 'process', id: 'ore', all: 1, lots: { pure: 3 } },
+  { t: 'docks', op: 'assign', k: '1', slot: 'lead', uid: null },
+  { t: 'shuttle', op: 'crew', sid: 2, oid: null },
+  { t: 'armada', op: 'contractReady', id: 'plan', revision: 4 },
+  {
+    t: 'trade2',
+    op: 'offer',
+    give: { credits: '15.9', items: { food: '3' }, lots: { food: { pure: 3 } } },
+  },
+  { t: 'bank', op: 'pay', amt: '17.9' },
+  { t: 'hailin', op: 'answer', key: 'hail', k: 'repair' },
+  { t: 'jettison', cid: 'ore', n: '4', lots: { pure: 4 } },
+];
+for (const command of commands) {
+  assert.equal(parseClientAction(command), command, 'valid legacy selectors remain verbatim');
+  commandPilot.msgs = 0;
+  Game.prototype.onMessage.call(commandGame, commandPilot, command);
+}
+assert.equal(
+  dispatches.length,
+  commands.length,
+  'bounded commands reach the common local/native dispatcher',
+);
+for (const incoming of [
+  { t: 'trade2', op: 'offer', give: { credits: Infinity } },
+  { t: 'trade2', op: 'offer', give: { items: [] } },
+  { t: 'trade2', op: 'offer', give: { lots: { food: { pure: -1 } } } },
+  { t: 'trade2', op: 'offer', give: { items: { constructor: 9 } } },
+  { t: 'trade2', op: 'offer', give: { credits: 0, owner: 'Other' } },
+  { t: 'station', op: 'not-an-operation' },
+  { t: 'hailin', op: [] },
+  { t: 'bank', op: 'borrow', amt: null },
+]) {
+  assert.equal(parseClientAction(incoming), null);
+  const accountBefore = JSON.stringify({ player: session.data, world: game.db.world });
+  session.msgs = 0;
+  game.onMessage(session, incoming);
+  assert.equal(
+    JSON.stringify({ player: session.data, world: game.db.world }),
+    accountBefore,
+    'malformed non-economic commands cannot initialize/advance saved service state',
+  );
+}
+console.log(
+  'All authenticated action families, scalar bounds, nested trade offers and legacy selectors passed.',
+);

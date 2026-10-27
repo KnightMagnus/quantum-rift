@@ -20,7 +20,7 @@ prerequisites, dialogue links, non-ship assets and decoded image integrity are
 outside this validator. Existing artwork/browser tests retain their image checks.
 See [CONTENT-VALIDATION.md](CONTENT-VALIDATION.md) for commands and scope.
 
-## Economic wire boundary
+## Wire contracts and receive bounds
 
 `shared/wire-actions.ts` owns trade, refinery, mining-order, towing, industrial and
 ordinary port-purchase (`buyship`, `outfit`, `buymat`) request shapes. Both local
@@ -70,9 +70,30 @@ types. `shared/wire-payloads.ts` validates complete quote field shapes and the
 `you`/`landed` economic headers, with finite-number, depth, string, collection and
 total-node bounds across their nested data. These headers are not complete
 runtime schemas for player state or port offers. The client retains inferred
-application types for those nested structures; other action families and server
-payloads still need migration. Static typing and bounded traversal do not prove
-nested semantic validity or authorize client economic decisions.
+application types for those nested structures. Static typing and bounded traversal
+do not prove nested semantic validity or authorize client economic decisions.
+
+`shared/wire-commands.ts` covers the remaining authenticated command families,
+including flight, station/hangar management, co-op, social, jobs and hails.
+`ClientAction` is a discriminated union derived from the executable field rules;
+the economic variants reuse their existing contracts. Both transports validate at
+Game ingress after the unchanged auth, flood, freeze and activity gates.
+Economic validation stays inside the existing routes/services so malformed
+industrial requests retain their denial toasts. Pre-login `hello` remains with
+the login owner. Operation selectors, fields, nested trade offers and collection
+sizes are bounded; legacy numeric text and partial grade selections are not
+normalized. Missing optional fields retain their existing defaults or service
+denials. Hail's legacy `sender` and portrait's `name`/`target` fields are bounded
+but ignored: the server still owns sender and captain identity.
+
+`wire-contracts.ts` compares the contract families with all 57 registered routes,
+checks malformed field denial before dispatch, exercises nested trade offers and
+compares saved account/world state after malformed commands. The fuzzer sends a
+valid bounded probe to every route before malformed random sampling, retaining
+its complete route-coverage assertion. Local/native network fixtures send
+malformed rename, bank, station, trade-offer and mining requests before a valid
+refinery barrier; these prove denial and continued service, not every successful
+operation on each transport.
 
 ## Native wall-clock performance
 

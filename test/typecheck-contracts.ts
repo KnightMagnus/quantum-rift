@@ -34,6 +34,24 @@ try {
       { encoding: 'utf8' },
     );
   };
+  const commandType = modulePath('../shared/wire-commands.ts');
+  let commandResult = check(`import type { ClientAction } from '${commandType}';
+const command: ClientAction = {t:'armada',op:'contractReady',id:'plan',revision:4}; void command;`);
+  assert.equal(commandResult.status, 0, commandResult.stdout + commandResult.stderr);
+  for (const request of [
+    "{t:'bank',op:'borrow',amt:[]}",
+    "{t:'combat',op:'claim'}",
+    "{t:'social',op:'prefs',credits:1}",
+    "{t:'trade2',op:'offer',give:{items:{food:[]}}}",
+  ]) {
+    commandResult = check(`import type { ClientAction } from '${commandType}';
+const command: ClientAction = ${request}; void command;`);
+    assert.notEqual(
+      commandResult.status,
+      0,
+      'shared discriminant, numeric selector and authority checks',
+    );
+  }
   const purchaseType = modulePath('../shared/wire-actions.ts');
   let purchaseResult = check(`import type { PortPurchaseAction } from '${purchaseType}';
 const request: PortPurchaseAction = {t:'buymat',mat:'alloy',grade:'2',n:'3.9'}; void request;`);

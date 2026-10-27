@@ -220,6 +220,11 @@ implementation dependencies. `shared/wire-payloads.ts` bounds economic receive
 payloads and validates player/port headers and quote shapes, not every nested
 player or offer schema.
 
+`shared/wire-commands.ts` owns the other authenticated command families and
+`ClientAction`, deriving discriminated types from executable field rules.
+`Game.onMessage` validates those commands after its existing entry gates;
+economic service parsers retain their existing denial replies.
+
 Action routing lives in `server/game-message-handlers.ts`; entry gates and service
 implementations retain their own owners. Ordinary jobs and port commerce have
 separate services. Station timer advancement lives in `server/station-progress.ts`;
