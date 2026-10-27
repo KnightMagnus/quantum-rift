@@ -92,10 +92,20 @@ export function assertLots(totals: CargoTotals, ledger: CargoLedger) {
   for (const quantity of Object.values(totals)) count(quantity);
   if (
     ledger.version !== 1 ||
-    Object.keys(ledger).some((entryKey) => !['version', 'byCommodity'].includes(entryKey))
+    Object.keys(ledger).some((entryKey) => !['version', 'byCommodity', 'basis'].includes(entryKey))
   )
     throw new Error('Cargo ledger: unsupported version/schema');
   record(ledger.byCommodity);
+  if (ledger.basis !== undefined) {
+    record(ledger.basis);
+    for (const [commodityId, costs] of Object.entries(ledger.basis)) {
+      commodity(commodityId);
+      grades(costs);
+      const available = owned(totals, ledger, commodityId);
+      if (RAW_GRADES.some((grade) => costs[grade] > 0 && available[grade] === 0))
+        throw new Error('Cargo ledger: cost without inventory');
+    }
+  }
   for (const [captainId, lots] of Object.entries(ledger.byCommodity)) {
     if (!RAW_COMMODITIES.includes(captainId))
       throw new Error('Cargo ledger: unsupported graded commodity');
@@ -133,6 +143,17 @@ export function migrateCargoLots(player: CargoOwner): { changed: boolean } {
           };
       pending.push({ totalKey, lotKey, totals, ledger });
     }
+    if (totalKey === 'cargo' && ledger.basis === undefined && player.paid) {
+      ledger = { ...ledger, basis: {} };
+      for (const [commodityId, average] of Object.entries(player.paid)) {
+        const common = owned(totals, ledger, commodityId).common;
+        if (Number.isFinite(average) && average > 0 && common > 0)
+          ledger.basis![commodityId] = { common: Math.ceil(average * common), rich: 0, pure: 0 };
+      }
+      const existing = pending.find((entry) => entry.totalKey === totalKey);
+      if (existing) existing.ledger = ledger;
+      else pending.push({ totalKey, lotKey, totals, ledger });
+    }
     assertLots(totals, ledger);
   }
   for (const pending2 of pending) {
@@ -166,8 +187,10 @@ export function splitLots(available: GradeLots, quantity: number): GradeLots {
   return selected;
 }
 
-const plans: WeakMap<LotTransfer, { totals: CargoTotals; ledger: CargoLedger; before: GradeLots }> =
-  new WeakMap();
+const plans: WeakMap<
+  LotTransfer,
+  { totals: CargoTotals; ledger: CargoLedger; before: GradeLots; basis: GradeLots }
+> = new WeakMap();
 /**
  * Plans are immutable, process-local and single use. Explicit selection is never substituted.
  */
@@ -187,8 +210,18 @@ export function planTake(
   grades(selected);
   if (sumValues(selected) !== quantity || RAW_GRADES.some((game) => selected[game] > before[game]))
     throw new Error('Cargo ledger: unavailable grade selection');
-  const plan = Object.freeze({ cid: captainId, qty: quantity, grades: Object.freeze(selected) });
-  plans.set(plan, { totals, ledger, before });
+  const basis = empty();
+  for (const grade of RAW_GRADES) {
+    const cost = ledger.basis?.[captainId]?.[grade] || 0;
+    basis[grade] = before[grade] ? Math.floor((cost * selected[grade]) / before[grade]) : 0;
+  }
+  const plan = Object.freeze({
+    cid: captainId,
+    qty: quantity,
+    grades: Object.freeze(selected),
+    basis: Object.freeze(basis),
+  });
+  plans.set(plan, { totals, ledger, before, basis: { ...(ledger.basis?.[captainId] || empty()) } });
   return plan;
 }
 
@@ -210,7 +243,13 @@ export function applyTake(
     throw new Error('Cargo ledger: stale or untrusted withdrawal plan');
   assertLots(totals, ledger);
   const current = owned(totals, ledger, plan.cid);
-  if (RAW_GRADES.some((game) => current[game] !== saved.before[game]))
+  if (
+    RAW_GRADES.some(
+      (game) =>
+        current[game] !== saved.before[game] ||
+        (ledger.basis?.[plan.cid]?.[game] || 0) !== saved.basis[game],
+    )
+  )
     throw new Error('Cargo ledger: stale or untrusted withdrawal plan');
   if (plan.qty === 0) {
     plans.delete(plan);
@@ -219,7 +258,14 @@ export function applyTake(
   const next = empty();
   for (const rAW_GRADES of RAW_GRADES)
     next[rAW_GRADES] = current[rAW_GRADES] - plan.grades[rAW_GRADES];
+  const nextBasis = ledger.basis ? structuredClone(ledger.basis) : undefined;
+  if (nextBasis) writable(ledger, 'basis');
+  if (nextBasis?.[plan.cid]) {
+    writable(ledger, 'basis');
+    for (const grade of RAW_GRADES) nextBasis[plan.cid][grade] -= plan.basis?.[grade] || 0;
+  }
   write(totals, ledger, plan.cid, next);
+  if (nextBasis) ledger.basis = nextBasis;
   plans.delete(plan);
   return plan;
 }
@@ -229,6 +275,11 @@ function validateTransfer(transfer: LotTransfer) {
   commodity(transfer.cid);
   count(transfer.qty);
   grades(transfer.grades);
+  if (transfer.basis) {
+    grades(transfer.basis);
+    if (RAW_GRADES.some((grade) => transfer.basis![grade] > 0 && transfer.grades[grade] === 0))
+      throw new Error('Cargo ledger: cost without transferred inventory');
+  }
   if (
     sumValues(transfer.grades) !== transfer.qty ||
     (!RAW_COMMODITIES.includes(transfer.cid) && (transfer.grades.rich || transfer.grades.pure))
@@ -257,7 +308,18 @@ export function addLots(
     count(next[rAW_GRADES]);
   }
   count(sumValues(next));
+  let nextBasis = ledger.basis;
+  if (transfer.basis && sumValues(transfer.basis)) {
+    writable(ledger, 'basis');
+    nextBasis = structuredClone(ledger.basis || {});
+    const costs = (nextBasis[transfer.cid] ??= empty());
+    for (const grade of RAW_GRADES) {
+      costs[grade] += transfer.basis[grade];
+      count(costs[grade]);
+    }
+  }
   write(totals, ledger, transfer.cid, next);
+  if (nextBasis !== ledger.basis) ledger.basis = nextBasis;
 }
 /**
  * Preflight quantities on copies and real destinations before debiting source; no await/callback in commit.
@@ -286,9 +348,11 @@ export function moveLots(
   if (quantity !== 0) {
     writableLots(source, sourceLedger, captainId);
     writableLots(target, targetLedger, captainId);
+    if (trialLedger.basis) writable(targetLedger, 'basis');
   }
   applyTake(source, sourceLedger, plan);
   if (quantity === 0) return plan;
+  if (trialLedger.basis) targetLedger.basis = trialLedger.basis;
   write(target, targetLedger, captainId, owned(trialTotals, trialLedger, captainId));
   return plan;
 }
@@ -300,8 +364,10 @@ export function clearLots(totals: CargoTotals, ledger: CargoLedger) {
       throw new Error('Cargo ledger: destination is not configurable');
   }
   writable(ledger, 'byCommodity');
+  if (ledger.basis) writable(ledger, 'basis');
   for (const captainId of Object.keys(totals)) delete totals[captainId];
   ledger.byCommodity = {};
+  if (ledger.basis) ledger.basis = {};
 }
 /**
  * Legacy new production (not a reconstruction of a premium withdrawal).

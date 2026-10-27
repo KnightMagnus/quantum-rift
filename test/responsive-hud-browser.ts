@@ -1,8 +1,9 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium, type Page } from 'playwright';
+import { type Page } from 'playwright';
 import { miningFixture } from './helpers/mining-fixture.ts';
 import { evidenceDir, failureEvidence } from './helpers/browser-fixture.ts';
 const output = evidenceDir('responsive-hud');
@@ -65,7 +66,7 @@ async function geometry(page: Page) {
   });
 }
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(String(error)));

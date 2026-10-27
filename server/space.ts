@@ -502,6 +502,8 @@ export type LootItem = {
   /** Captain who explicitly chose to take this parcel. */
   indexTakenBy?: string;
   lots?: GradeLots;
+  /** Purchase costs carried by recoverable cargo. */
+  basis?: GradeLots;
   lvl?: number;
 
   /** Credits salvage value. */

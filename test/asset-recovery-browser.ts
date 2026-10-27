@@ -1,8 +1,9 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import {
@@ -47,7 +48,7 @@ server.stderr.pipe(log);
 let browser;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
     args: [
       '--no-sandbox',

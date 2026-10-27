@@ -1,8 +1,9 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import type { Buffer } from 'node:buffer';
 import fileSystem from 'node:fs';
-import { chromium, type Page } from 'playwright';
+import { type Page } from 'playwright';
 import { refineryFixture } from './helpers/refinery-play-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const feature = await refineryFixture('mission-board', { stableJobWindow: true });
@@ -11,7 +12,7 @@ const diagnosticPages: Page[] = [];
 const events: { at: number; captain: number; direction: string; message: unknown }[] = [];
 const errors: string[] = [];
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({ viewport: { width: 1500, height: 1050 } });
   await context.addInitScript(() => {
     window.pointerTrace = [];

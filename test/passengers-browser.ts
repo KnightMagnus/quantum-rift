@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Disposable browser integration check. PLAYWRIGHT_MODULE may point to an installed Playwright.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
@@ -64,10 +65,8 @@ try {
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  const { chromium } = (await import(
-    process.env.PLAYWRIGHT_MODULE || 'playwright'
-  )) as typeof import('playwright');
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const errors: string[] = [],
     results = [];
   for (const user of users) {

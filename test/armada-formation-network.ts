@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 import type { PreloadConfig } from './fixtures/preload-armada-formation-network.ts';
 import { fileURLToPath as resolvePreloadFile } from 'node:url';
 import type { NetworkClient } from './helpers/network-client-types.ts';
@@ -141,8 +142,8 @@ try {
     path.join(evidence, 'ws-stationary.json'),
     JSON.stringify(first, null, 2),
   );
-  const { chromium } = await import('playwright');
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1600, height: 1050 } });
   const errors: string[] = [];
   page.on('pageerror', (entity) => errors.push(String(entity)));

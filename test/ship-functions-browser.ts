@@ -1,13 +1,14 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
-import { chromium } from 'playwright';
-import { miningFixture } from './helpers/mining-fixture.ts';
+
+import { miningFixture, until } from './helpers/mining-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const feature = await miningFixture('ship-functions');
 let browser;
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors: string[] = [],
     sent: {
@@ -190,6 +191,109 @@ try {
     });
     results.push({ width, height, scale, ...bounds });
   }
+  // JUMP shares the left flow slot but remains fixed in its default right corner.
+  const jumpBounds = [];
+  for (const [width, height, scale] of [
+    [1280, 720, 1],
+    [1920, 1080, 1],
+    [2560, 1080, 1],
+    [3440, 1440, 1],
+    [5120, 1440, 1],
+    [800, 600, 1.4],
+    [640, 480, 1.4],
+  ]) {
+    await page.setViewportSize({ width, height });
+    for (const left of [false, true]) {
+      await page.evaluate(
+        ({ left, scale }) => {
+          G.opts.jumpLeft = left;
+          G.opts.scale = scale;
+          document.documentElement.style.setProperty('--ui', String(scale));
+          document.body.classList.toggle('scaled', scale !== 1);
+          document.body.classList.toggle('jump-left', left);
+        },
+        { left, scale },
+      );
+      for (const open of [
+        [],
+        ['combat'],
+        ['combat', 'mining'],
+        ['combat', 'mining', 'towing', 'industrial', 'fleet', 'drones'],
+      ]) {
+        for (const identifier of ['combat', 'mining', 'towing', 'industrial', 'fleet', 'drones']) {
+          const button = page.locator('#' + identifier + 'indicator');
+          if (
+            ((await button.getAttribute('aria-expanded')) === 'true') !==
+            open.includes(identifier)
+          )
+            await button.click();
+        }
+        const bounds = await page.evaluate(() => {
+          const jump = document.getElementById('jumpholo')!.getBoundingClientRect();
+          const stack = document.getElementById('functionstack')!.getBoundingClientRect();
+          const intersections = [
+            ...document.querySelectorAll(
+              '#functionstack .function-panel:not(.hidden), #functionstack button, #functionstack input, #functionstack select',
+            ),
+          ]
+            .filter((element) => {
+              const rect = element.getBoundingClientRect();
+              // Only the visible, clipped portion can obscure a pointer target.
+              return (
+                Math.min(rect.right, stack.right, jump.right) >
+                  Math.max(rect.left, stack.left, jump.left) &&
+                Math.min(rect.bottom, stack.bottom, jump.bottom) >
+                  Math.max(rect.top, stack.top, jump.top)
+              );
+            })
+            .map((element) => element.id);
+          return {
+            jump: { x: jump.x, y: jump.y, right: jump.right, bottom: jump.bottom },
+            stackBottom: stack.bottom,
+            intersections,
+          };
+        });
+        assert.deepEqual(
+          bounds.intersections,
+          [],
+          `JUMP clear at ${width}×${height}/${scale}, left=${String(left)}, ${open.join(',')}`,
+        );
+        assert.ok(
+          bounds.jump.x >= 0 &&
+            bounds.jump.right <= width &&
+            bounds.jump.y >= 0 &&
+            bounds.jump.bottom <= height,
+        );
+        if (left)
+          assert.ok(
+            bounds.stackBottom + 8 <= bounds.jump.y,
+            'one reserved gap beneath the scrolling stack',
+          );
+        jumpBounds.push({ width, height, scale, left, open, ...bounds });
+      }
+    }
+  }
+  // Move only the display view clear of planets; the server still owns jump legality.
+  await page.evaluate(() => {
+    G.route = ['sol'];
+    if (G.view) {
+      G.view.x = 1e7;
+      G.view.y = 1e7;
+    }
+  });
+  await page.waitForFunction(
+    () => !(document.getElementById('jumpholo') as HTMLButtonElement).disabled,
+  );
+  await page.click('#jumpholo');
+  await until(() => sent.some((message) => message.t === 'jump'), 'JUMP dispatch');
+  assert.ok(
+    sent.some((message) => message.t === 'jump'),
+    'real pointer click retains the existing JUMP action',
+  );
+  fileSystem.writeFileSync(
+    path.join(feature.out, 'jump-bounds.json'),
+    JSON.stringify(jumpBounds, null, 2),
+  );
   fileSystem.writeFileSync(path.join(feature.out, 'bounds.json'), JSON.stringify(results, null, 2));
   assert.deepEqual(errors, []);
   console.log(

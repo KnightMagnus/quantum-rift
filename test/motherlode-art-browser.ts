@@ -1,12 +1,13 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { chromium } from 'playwright';
+
 import { towingFixture } from './helpers/towing-play-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const feature = await towingFixture('motherlode-art-browser');
 let browser;
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   for (const broken of [false, true]) {
     const page = await browser.newPage({
       viewport: { width: 1100, height: 850 },

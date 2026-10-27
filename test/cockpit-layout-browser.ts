@@ -1,7 +1,8 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import path from 'node:path';
-import { chromium, type Page } from 'playwright';
+import { type Page } from 'playwright';
 import { miningFixture } from './helpers/mining-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const fixture = await miningFixture('cockpit-layout');
@@ -63,7 +64,7 @@ async function dockGeometry(page: Page) {
   });
 }
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   {
     const context = await browser.newContext({ viewport: { width: 3440, height: 1440 } });
     const page = await context.newPage();

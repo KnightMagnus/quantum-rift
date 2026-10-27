@@ -91,7 +91,7 @@ import {
   stockOutfitLimit,
   outfitSaleValue,
 } from '../shared/rules.ts';
-import { purchaseUnit, saleValue } from './trade-pricing.ts';
+import { purchaseValue, saleValue, realizedTradeProfit } from './trade-pricing.ts';
 import { assertLots, addLots, commonLots, planTake, applyTake } from '../shared/cargo-lots.ts';
 import { recordEconomy } from '../shared/economy-receipt.ts';
 import { WING_ONLY } from '../shared/docks.ts';
@@ -151,6 +151,14 @@ const PortOperations: PortOperations = {
                   this.features.rivals.flashMult(stellarBody.id, commodity.id) *
                   marketMultiplier,
               ),
+        quoteBase:
+          basePrice === null
+            ? undefined
+            : (basePrice *
+                this.features.rivals.flashMult(stellarBody.id, commodity.id) *
+                marketMultiplier) /
+              (1 - this.features.living.impact(stellarBody.id, commodity.id)),
+        impact: this.features.living.impact(stellarBody.id, commodity.id),
         flash: this.features.rivals.flashMult(stellarBody.id, commodity.id) !== 1,
         moved: Math.round((marketMultiplier - 1) * 100),
       };
@@ -185,36 +193,40 @@ const PortOperations: PortOperations = {
       pricingTime,
     );
     if (basePrice === null || !quantity || !this.market(port)) return;
+    const impact = port.site ? 0 : this.features.living.impact(port.id, commodityId);
     const unitPrice = port.site
       ? basePrice
-      : Math.round(
-          basePrice *
-            this.features.rivals.flashMult(port.id, commodityId) *
-            this.features.living.livingMult(port, commodityId),
-        );
+      : (basePrice *
+          this.features.rivals.flashMult(port.id, commodityId) *
+          this.features.living.livingMult(port, commodityId)) /
+        (1 - impact);
+    const tradeBonus = this.features.bonuses.bonus(playerData).tradePct || 0;
+    const sell = this.features.fronts.mods(port.system).sell;
     const shipStats = this.features.shipStats!.stats(playerData),
       usedHold = this.holdUsed(playerData);
     if (quantity > 0) {
-      const tradeBonusFraction = (this.features.bonuses.bonus(playerData).tradePct || 0) / 100;
       quantity = Math.min(quantity, shipStats!.cargo - usedHold);
-      while (
-        quantity > 0 &&
-        quantity * purchaseUnit(unitPrice, quantity, tradeBonusFraction * 100, !!port.site) >
+      let lower = 0,
+        upper = quantity;
+      while (lower < upper) {
+        const candidate = Math.ceil((lower + upper) / 2);
+        if (
+          purchaseValue(unitPrice, candidate, tradeBonus, !!port.site, sell, impact) <=
           playerData.credits
-      )
-        quantity = Math.min(
-          quantity - 1,
-          Math.floor(
-            playerData.credits /
-              purchaseUnit(unitPrice, quantity, tradeBonusFraction * 100, !!port.site),
-          ),
-        );
-      const purchasePrice = purchaseUnit(
+        )
+          lower = candidate;
+        else upper = candidate - 1;
+      }
+      quantity = lower;
+      const purchaseTotal = purchaseValue(
         unitPrice,
         quantity,
-        tradeBonusFraction * 100,
+        tradeBonus,
         !!port.site,
+        sell,
+        impact,
       );
+      const purchasePrice = purchaseTotal / Math.max(1, quantity);
       if (quantity <= 0) return this.toast(session, 'No room or no money for that.');
       playerData.paid = playerData.paid || {};
       playerData.paid[commodityId] = Math.round(
@@ -225,11 +237,14 @@ const PortOperations: PortOperations = {
       addLots(
         playerData.cargo,
         playerData.cargoLots,
-        commonLots(commodityId, quantity),
+        {
+          ...commonLots(commodityId, quantity),
+          basis: { common: purchaseTotal, rich: 0, pure: 0 },
+        },
         Math.max(0, shipStats!.cargo - usedHold),
       );
-      playerData.credits -= quantity * purchasePrice;
-      recordEconomy(playerData, port.id, 'purchases', quantity * purchasePrice);
+      playerData.credits -= purchaseTotal;
+      recordEconomy(playerData, port.id, 'purchases', purchaseTotal);
       if (!port.site) this.features.living.addImpact(port.id, commodityId, -quantity); // buying raises the local price
     } else {
       const availableQuantity = playerData.cargo[commodityId] || 0;
@@ -255,20 +270,26 @@ const PortOperations: PortOperations = {
         withdrawalPlan.grades,
         this.features.bonuses.bonus(playerData).tradePct || 0,
         !!port.site,
-        this.features.fronts.mods(port.system).sell,
+        sell,
+        impact,
       );
       applyTake(playerData.cargo, playerData.cargoLots, withdrawalPlan);
       if (commodityId === 'composite_plating')
         this.features.refinery.sold(port.id, quantity, pricingTime);
-      this.features.fronts.goal(session, 'trade', saleProceeds);
-      playerData.credits += saleProceeds - quantity * unitPrice;
-      playerData.credits += quantity * unitPrice;
+      const cost = withdrawalPlan.basis!;
+      const profit = realizedTradeProfit(
+        playerData,
+        saleProceeds,
+        cost.common + cost.rich + cost.pure,
+      );
+      this.features.fronts.goal(session, 'trade', profit);
+      playerData.credits += saleProceeds;
       recordEconomy(playerData, port.id, 'sales', saleProceeds);
       if (!playerData.cargo[commodityId]) {
         delete playerData.cargo[commodityId];
         if (playerData.paid) delete playerData.paid[commodityId];
       }
-      playerData.stats.earned += quantity * unitPrice;
+      playerData.stats.earned += profit;
       this.tut(session, 'sell');
       if (!port.site) {
         this.features.living.addImpact(port.id, commodityId, quantity);

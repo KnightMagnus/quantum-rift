@@ -83,7 +83,7 @@ function connect(name: string) {
   game.connect(socket, '7.7.8.' + name.length);
   socket.emit('message', JSON.stringify({ t: 'hello', name, pass: 'secret' }));
   const session: Session = requiredFixtureValue([...game.sessions.values()].pop());
-  return { session, output };
+  return { session, output, socket };
 }
 
 /** Depart, then hover over the station slowly enough to land. */
@@ -165,5 +165,74 @@ assert.equal(
   "the owner's refinery is closed to guests",
 );
 
-console.log('ok - station docking: owner always cleared, visitors use the guest dock');
+// Dispatch stale and replayed hail cards through the production message listener.
+let touches = 0;
+const originalTouch = game.db.touch.bind(game.db);
+game.db.touch = () => {
+  touches++;
+  originalTouch();
+};
+function bribe(target = siteId) {
+  visitor.socket.emit('message', JSON.stringify({ t: 'hailopt', stellar: target, k: 'bribe' }));
+}
+function rejectedBribe(label: string, target = siteId) {
+  const before = {
+    credits: visitor.session.data.credits,
+    passes: structuredClone(visitor.session.data.landPass),
+    touches,
+  };
+  bribe(target);
+  assert.deepEqual(
+    { credits: visitor.session.data.credits, passes: visitor.session.data.landPass, touches },
+    before,
+    label,
+  );
+}
+visitor.session.data.credits = 100000;
+visitor.session.data.rep[faction] = -80;
+rejectedBribe('already docked: no charge, pass or save mutation');
+hoverAtSite(visitor.session);
+visitor.session.data.rep[faction] = 10;
+rejectedBribe('normal clearance: no charge');
+visitor.session.data.rep[faction] = -80;
+visitor.output.length = 0;
+game.features.hail.hailPlanet(visitor.session, siteId);
+assert.ok(requiredFixtureValue(lastOf(visitor.output, 'hail')).opts);
+visitor.session.data.rep[faction] = 10;
+rejectedBribe('standing changed since hail: old option cannot charge');
+visitor.session.data.rep[faction] = -80;
+const beforePayment = visitor.session.data.credits;
+const beforeTouch = touches;
+const beforeTime = Date.now();
+bribe();
+const expires = requiredFixtureValue(visitor.session.data.landPass?.[siteId]);
+assert.equal(visitor.session.data.credits, beforePayment - (2000 + 80 * 200));
+assert.ok(expires >= beforeTime + 30 * 60000 && expires <= Date.now() + 30 * 60000);
+assert.equal(touches, beforeTouch + 1, 'legitimate payment marks save dirty once');
+rejectedBribe('replayed card with valid pass: no second charge or pass extension');
+visitor.session.data.landPass![siteId] = Date.now() - 1;
+visitor.session.data.credits = 0;
+rejectedBribe('insufficient funds: no charge, pass or save mutation');
+visitor.session.data.credits = 100000;
+const otherSystemPort = requiredFixtureValue(
+  Object.values(STELLARS).find((port) => port.system !== site.system && port.svc.includes('L')),
+);
+rejectedBribe('wrong-system target: no charge', otherSystemPort.id);
+const unlandable = requiredFixtureValue(
+  Object.values(STELLARS).find((port) => !port.svc.includes('L')),
+);
+visitor.session.data.sys = unlandable.system;
+rejectedBribe('unlandable target: no charge', unlandable.id);
+const outlaw = requiredFixtureValue(Object.values(STELLARS).find((port) => port.outlaw));
+visitor.session.data.sys = outlaw.system;
+visitor.session.data.rep[systemsById[outlaw.system].faction] = -80;
+rejectedBribe('outlaw exemption: no charge', outlaw.id);
+visitor.session.data.sys = site.system;
+visitor.session.data.station.site = siteId;
+rejectedBribe('home exemption: no charge');
+visitor.session.data.station.site = undefined;
+visitor.session.ent = null;
+rejectedBribe('no flying ship: no charge');
+game.db.touch = originalTouch;
+console.log('ok - station docking: owner/guest clearance and authoritative one-time bribe guards');
 process.exit(0);

@@ -137,6 +137,8 @@ export interface FeaturePlayerState {
   armorNow?: number;
   landPass?: Record<string, number>;
   paid?: Record<string, number>;
+  /** Realized commodity sale losses offset future trading income, never other rewards. */
+  tradeLoss?: number;
   arena?: { rating: number; w: number; l: number };
   arenaReturn?: string | null;
   chains?: Record<string, number>;

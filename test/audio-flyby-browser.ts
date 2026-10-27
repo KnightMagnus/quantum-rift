@@ -1,7 +1,8 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import path from 'node:path';
-import { chromium } from 'playwright';
+
 import { spawn } from 'node:child_process';
 import { tempDataDir } from './helpers/temp-data.ts';
 import {
@@ -55,7 +56,7 @@ server.stderr.pipe(serverLog);
 let browser;
 try {
   await ready(server, fixture.origin);
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
     args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
   });

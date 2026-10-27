@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 import { checkPreparedWitness } from './helpers/story-witness.ts';
 import { checkStoryReality } from './helpers/story-reality.ts';
 import assert from 'node:assert/strict';
@@ -97,13 +98,12 @@ const server = spawn(
 const serverLog = fileSystem.createWriteStream(path.join(evidence, 'server.log'));
 server.stdout.pipe(serverLog);
 server.stderr.pipe(serverLog);
-const { chromium } = await import('playwright');
+
 let browser;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
-    executablePath: process.env.CHROMIUM_EXECUTABLE,
     args: ['--no-sandbox'],
   });
   const page = await browser.newPage({

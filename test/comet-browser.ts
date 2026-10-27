@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Actual Chromium canvas rendering of the production comet helper.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
@@ -37,10 +38,8 @@ const server = http.createServer((request, response) => {
   response.end(fileSystem.readFileSync(file));
 });
 await new Promise<void>((resolve2) => server.listen(0, '127.0.0.1', () => resolve2()));
-const { chromium } = (await import(
-  process.env.PLAYWRIGHT_MODULE || ('playwright' as string)
-)) as typeof import('playwright');
-const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+
+const browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
 try {
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } }),
     errors: string[] = [];

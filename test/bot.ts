@@ -17,7 +17,7 @@ interface BotState {
 }
 import { requiredFixtureValue } from './helpers/required.ts';
 // Headless test: two captains log in, trade, depart, fly, fight, jump and land. Run with the server up: node test/bot.ts [url]
-import { TRADE_IMPACT } from '../shared/living.ts';
+import { purchaseValue, saleValue } from '../shared/trade-pricing.ts';
 const URL_ = process.argv[2] || 'ws://localhost:8080/ws';
 const sleep = (milliseconds: number | undefined) =>
   new Promise((result) => setTimeout(result, milliseconds));
@@ -92,25 +92,23 @@ const assertCondition = (condition: unknown, message: string) => {
   const equipment = requiredFixtureValue(requiredFixtureValue(firstEntry.landed).market).find(
     (captain: { id: string }) => captain.id === 'equipment',
   );
-  // Since v2.5, the quoted single-ton price also has a bulk-buy depth premium.
-  const buyUnit = Math.max(
-    1,
-    Math.round(
-      requiredFixtureValue(requiredFixtureValue(equipment).price) *
-        (1 -
-          (requiredFixtureValue(requiredFixtureValue(firstEntry.you).bonus).tradePct || 0) / 100),
-    ),
-  );
-  const bulkUnit = Math.round(
-    buyUnit * (1 + Math.min(TRADE_IMPACT.max, 5 * TRADE_IMPACT.perTon) / 2),
+  const purchaseMarket = requiredFixtureValue(equipment);
+  const purchaseTerms = requiredFixtureValue(firstEntry.landed).tradeTerms;
+  const purchaseTotal = purchaseValue(
+    purchaseMarket.quoteBase ?? requiredFixtureValue(purchaseMarket.price),
+    5,
+    purchaseTerms.tradePct,
+    purchaseTerms.site,
+    purchaseTerms.sell,
+    purchaseMarket.impact ?? 0,
   );
   const creditsBeforeTrade = requiredFixtureValue(firstEntry.you).credits;
   firstEntry.send({ t: 'trade', cid: 'equipment', qty: 5 });
   await sleep(300);
   assertCondition(
     requiredFixtureValue(firstEntry.you).cargo.equipment === 5 &&
-      requiredFixtureValue(firstEntry.you).credits === creditsBeforeTrade - 5 * bulkUnit,
-    'bought 5 tons of equipment at the bulk-adjusted price',
+      requiredFixtureValue(firstEntry.you).credits === creditsBeforeTrade - purchaseTotal,
+    'bought 5 tons of equipment at the integrated shared-market quote',
   );
   // outfit
   firstEntry.send({ t: 'outfit', id: 9001, n: 1 });
@@ -244,9 +242,26 @@ const assertCondition = (condition: unknown, message: string) => {
       requiredFixtureValue(requiredFixtureValue(firstEntry.you).shipStats).fuel,
     'refuelled on landing',
   );
+  const saleMarket = requiredFixtureValue(
+    requiredFixtureValue(firstEntry.landed).market?.find((item) => item.id === 'equipment'),
+  );
+  const saleTerms = requiredFixtureValue(firstEntry.landed).tradeTerms;
+  const saleTotal = saleValue(
+    saleMarket.quoteBase ?? requiredFixtureValue(saleMarket.price),
+    { common: 5, rich: 0, pure: 0 },
+    saleTerms.tradePct,
+    saleTerms.site,
+    saleTerms.sell,
+    saleMarket.impact ?? 0,
+  );
+  const creditsBeforeSale = requiredFixtureValue(firstEntry.you).credits;
   firstEntry.send({ t: 'trade', cid: 'equipment', qty: -5 });
   await sleep(300);
-  assertCondition(!requiredFixtureValue(firstEntry.you).cargo.equipment, 'sold the equipment');
+  assertCondition(
+    !requiredFixtureValue(firstEntry.you).cargo.equipment &&
+      requiredFixtureValue(firstEntry.you).credits === creditsBeforeSale + saleTotal,
+    'sold the equipment at the integrated destination-market quote',
+  );
   // accept a job
   const mission =
     requiredFixtureValue(firstEntry.landed).offers.find(

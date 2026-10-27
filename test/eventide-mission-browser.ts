@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 import { fileURLToPath as resolvePreloadFile } from 'node:url';
 // Actual Solo board acceptance, exported save/reload, jump authority and delivery payout.
 // A test-only server preload positions the disposable captain clear of departure mass-lock,
@@ -11,9 +12,7 @@ import { spawn } from 'node:child_process';
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets } from '../shared/rules.ts';
-const { chromium } = (await import(
-  process.env.PLAYWRIGHT_MODULE || ('playwright' as string)
-)) as typeof import('playwright');
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
   directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-eventide-ui-'));
 const evidence = process.env.RIFT_BROWSER_EVIDENCE || path.join(directory, 'evidence');
@@ -47,7 +46,7 @@ const server = spawn(process.execPath, ['--import', fixture, 'server/local-main.
 const serverLog = fileSystem.createWriteStream(path.join(evidence, 'server.log'));
 server.stdout.pipe(serverLog);
 server.stderr.pipe(serverLog);
-const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+const browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
 try {
   for (let index = 0; index < 100; index++) {
     try {

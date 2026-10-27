@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 import { seedCargo } from './helpers/cargo-fixture.ts';
 // Real Solo UI contracts: save round-trip, settings persistence, map input, pause.
 import assert from 'node:assert/strict';
@@ -5,7 +6,7 @@ import fileSystem from 'node:fs';
 import operatingSystem from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets } from '../shared/rules.ts';
@@ -61,7 +62,7 @@ const errors: string[] = [];
 const results: Record<string, unknown> = {};
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   page.on('pageerror', (error) => errors.push(String(error)));
   await page.goto(origin);

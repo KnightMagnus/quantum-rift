@@ -572,9 +572,10 @@ body:has(#land:not(.hidden)) #flightstatus {
 }
 /* Gold hologram JUMP button projected in a bottom corner of the viewscreen. */
 #jumpholo {
-  position: fixed;
-  right: calc(var(--hud) + 88px);
-  bottom: calc(var(--cbar) + 28px);
+  flex: 0 0 auto;
+  align-self: flex-end;
+  margin: 12px 64px 0 0;
+  pointer-events: auto;
   z-index: 5;
   display: flex;
   align-items: center;
@@ -622,8 +623,8 @@ body:has(#land:not(.hidden)) #flightstatus {
   cursor: default;
 }
 body.jump-left #jumpholo {
-  right: auto;
-  left: 72px;
+  align-self: flex-start;
+  margin: 12px 0 0 8px;
 }
 body:has(#login:not(.hidden)) #jumpholo,
 body:has(#land:not(.hidden)) #jumpholo {
@@ -993,8 +994,12 @@ input.trade-amount[type='number'] {
 }
 #shipfunctions {
   left: 64px;
-  width: min(390px, calc(100vw - var(--hud) - 82px));
-  bottom: calc(var(--cbar) + 64px);
+  right: calc(var(--hud) + 24px);
+  width: auto;
+  bottom: calc(var(--cbar) + 28px);
+}
+#functionstack {
+  width: min(390px, 100%);
 }
 #shipfunctions .function-panel {
   padding: 10px;
@@ -1140,8 +1145,6 @@ input.trade-amount[type='number'] {
   }
   #shipfunctions {
     left: 16px;
-    bottom: calc(var(--cbar) + 16px);
-    width: min(390px, calc(100vw - var(--hud) - 36px));
   }
 }
 @media (max-width: 760px) {

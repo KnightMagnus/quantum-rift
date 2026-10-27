@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Measures planet render-cache memory over a multi-system tour in real Chromium and checks that
 // the byte budgets evict idle worlds without invalidating the worlds currently on screen.
 // Does not need accounts or a game server.
@@ -5,7 +6,7 @@ import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
-import { chromium } from 'playwright';
+
 import { STELLARS } from '../shared/galaxy.ts';
 import type { PlanetDef, PlanetCacheUsage } from '../client/planets.ts';
 import { root, evidenceDir } from './helpers/browser-fixture.ts';
@@ -75,7 +76,7 @@ const server = http.createServer((request, response) => {
 });
 await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
 const origin = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
-const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+const browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
 
 /**
  * Tours the systems in one fresh page and records cache usage after each system settles.

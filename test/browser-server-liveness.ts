@@ -1,10 +1,11 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Production browser timers and UI over a real TCP link that loses server replies.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets } from '../shared/rules.ts';
@@ -18,7 +19,9 @@ import {
   failureEvidence,
 } from './helpers/browser-fixture.ts';
 
-const output = evidenceDir('browser-server-liveness');
+const friends = process.env.RIFT_LIVENESS_MODE === 'friends';
+const password = 'synthetic-liveness-password';
+const output = evidenceDir(friends ? 'browser-friend-liveness' : 'browser-server-liveness');
 const directory = tempDataDir('rift-browser-liveness-');
 const data = path.join(directory, 'data');
 const assets = augmentAssets(
@@ -30,22 +33,29 @@ const captain = Game.prototype.fresh.call({ A: assets }) as ReturnType<Game['fre
 };
 captain.tut = 999;
 captain.story = { done: ['start'], active: null, step: 0 };
-database.create('Liveness Captain', '', captain);
+database.create('Liveness Captain', friends ? password : '', captain);
 database.flush();
 const port = await availablePort();
 const backend = 'http://127.0.0.1:' + port;
+const proxyPort = await availablePort();
+const origin = 'http://127.0.0.1:' + proxyPort;
 const server = spawn(
   process.execPath,
-  ['--import', './test/seed-random.ts', 'server/local-main.ts'],
+  friends ? ['server/main.ts'] : ['--import', './test/seed-random.ts', 'server/local-main.ts'],
   {
     cwd: root,
     env: {
       ...process.env,
       HOST: '127.0.0.1',
-      SOLO: '1',
+      HOST_BIND: '127.0.0.1',
+      HOST_FRIENDS: friends ? '1' : '',
+      HOST_PUBLIC_ORIGIN: origin,
+      SOLO: friends ? '' : '1',
       PORT: String(port),
-      DATA_DIR: data,
-      SEEDS_FILE: '/nonexistent',
+      DATA_DIR: friends ? '' : data,
+      FRIEND_DATA_DIR: friends ? data : '',
+      SEEDS_FILE: friends ? '' : '/nonexistent',
+      INVASION_NOW: '',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   },
@@ -82,9 +92,11 @@ const proxy = net.createServer((client) => {
 let browser;
 try {
   await ready(server, backend);
-  await new Promise<void>((resolve) => proxy.listen(0, '127.0.0.1', resolve));
-  const origin = 'http://127.0.0.1:' + (proxy.address() as net.AddressInfo).port;
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  await new Promise<void>((resolve) => proxy.listen(proxyPort, '127.0.0.1', resolve));
+  const status = await (await fetch(origin + '/api/status')).json();
+  if (friends) assert.equal(status.mode, 'friends');
+  assert.equal(status.solo, !friends);
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const sent: { socket: number; t: string; th?: number; qty?: number }[] = [];
   const received: { socket: number; t: string; name?: string }[] = [];
@@ -119,19 +131,24 @@ try {
   await page.goto(origin);
   await page.waitForFunction(() => document.querySelector('#lver')?.textContent);
   await page.fill('#lname', 'Liveness Captain');
+  if (friends) {
+    assert.equal(await page.locator('#lpass').isVisible(), true);
+    await page.fill('#lpass', password);
+  }
   await page.click('#lbtn');
   await page.waitForFunction(() => G.you?.name === 'Liveness Captain' && G.landed);
   for (let index = 0; index < 8 && (await page.locator('#storybox').isVisible()); index++)
     await page.locator('#storyb button').first().click();
-  // Pause simulation through the ordinary Solo quit dialog. A healthy idle peer
-  // must answer the application probe even when no new snapshot is being sent.
-  await page.keyboard.press('Escape');
-  await page.waitForSelector('#quitbox', { state: 'visible' });
-  await page.waitForTimeout(27000);
-  assert.equal(connections, 1, 'paused Solo does not falsely reconnect');
-  assert.ok(sent.some((packet) => packet.t === 'ping'));
-  assert.ok(received.some((packet) => packet.t === 'pong'));
-  await page.keyboard.press('Escape');
+  if (!friends) {
+    // Paused Solo remains healthy without simulation snapshots.
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#quitbox', { state: 'visible' });
+    await page.waitForTimeout(27000);
+    assert.equal(connections, 1, 'paused Solo does not falsely reconnect');
+    assert.ok(sent.some((packet) => packet.t === 'ping'));
+    assert.ok(received.some((packet) => packet.t === 'pong'));
+    await page.keyboard.press('Escape');
+  }
   await page.click('#depart');
   await page.waitForFunction(() => G.view && !G.landed);
   await page.keyboard.down('ArrowUp');
@@ -179,6 +196,7 @@ try {
     path.join(output, 'results.json'),
     JSON.stringify(
       {
+        mode: friends ? 'friends' : 'solo',
         connections,
         elapsedMs: Date.now() - lostAt,
         sent,
@@ -189,7 +207,7 @@ try {
     ),
   );
   console.log(
-    'PASS browser idle/pause probes, silent TCP reply loss, bounded reconnect and held-input reset',
+    `PASS ${friends ? 'friend' : 'Solo'} browser silent TCP reply loss, bounded reconnect and held-input reset`,
   );
 } catch (error) {
   await failureEvidence(browser, output, error);

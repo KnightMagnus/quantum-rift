@@ -1,7 +1,8 @@
+import { launchChromium } from './helpers/chromium.ts';
 /** Real host/join UI and physical flight controls against the production friends host. */
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { chromium } from 'playwright';
+
 import type { Browser, Page } from 'playwright';
 import type { SnapshotMessage } from '../client/protocol.ts';
 import { FriendHost, until, password } from './helpers/friend-host.ts';
@@ -37,7 +38,7 @@ try {
     ['Browser Friend One', 'Browser Friend Two'].map((name) => host.connect(name)),
   );
   for (const friend of friends) friend.send({ t: 'depart' });
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
   pages.push(page);

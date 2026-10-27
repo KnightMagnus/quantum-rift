@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Real Solo login, landing UI, departure and complete production flight renderer.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
@@ -9,9 +10,7 @@ import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets } from '../shared/rules.ts';
 import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
-const { chromium } = (await import(
-  process.env.PLAYWRIGHT_MODULE || ('playwright' as string)
-)) as typeof import('playwright');
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-exotic-solo-'));
 const evidence = process.env.RIFT_BROWSER_EVIDENCE || '/tmp/rift-exotic-solo';
@@ -53,7 +52,7 @@ const server = spawn(process.execPath, ['server/local-main.ts'], {
 const serverLog = fileSystem.createWriteStream(path.join(evidence, 'server.log'));
 server.stdout.pipe(serverLog);
 server.stderr.pipe(serverLog);
-const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+const browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
 try {
   for (let index = 0; index < 100; index++) {
     try {

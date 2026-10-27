@@ -465,9 +465,27 @@ export const HailOperations = {
   hailPlanetOpt(this: HailCapabilities, session: Session, message: NetworkMessage) {
     const playerData = session.data,
       stellarBody = STELLARS[message.stellar!];
-    if (!stellarBody || stellarBody.system !== playerData.sys || message.k !== 'bribe') return;
-    // Your own station never asks for a "donation".
-    if (stellarBody.site && playerData.station.site === stellarBody.id) return;
+    if (
+      !stellarBody ||
+      stellarBody.system !== playerData.sys ||
+      !stellarBody.svc.includes('L') ||
+      message.k !== 'bribe' ||
+      playerData.stellar ||
+      !session.ent
+    )
+      return;
+    const now = Date.now();
+    // Old hail cards cannot charge for clearance the captain already has.
+    if (
+      !landingRefused({
+        standing: playerData.rep[systemsById[stellarBody.system].faction] || 0,
+        outlawPort: !!stellarBody.outlaw,
+        ownStation: !!stellarBody.site && playerData.station.site === stellarBody.id,
+        passExpires: playerData.landPass?.[stellarBody.id] || 0,
+        now,
+      })
+    )
+      return;
     const reputation = playerData.rep[systemsById[stellarBody.system].faction] || 0,
       cost = 2000 + Math.abs(reputation) * 200;
     if (playerData.credits < cost)
@@ -484,7 +502,7 @@ export const HailOperations = {
       });
     playerData.credits -= cost;
     playerData.landPass = playerData.landPass || {};
-    playerData.landPass[stellarBody.id] = Date.now() + 30 * 60000;
+    playerData.landPass[stellarBody.id] = now + 30 * 60000;
     this.you(session);
     this.db.touch();
     this.send(session, {

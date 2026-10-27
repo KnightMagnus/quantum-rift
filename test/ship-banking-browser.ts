@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 import type { PreloadConfig } from './fixtures/preload-ship-banking-browser.ts';
 import { fileURLToPath as resolvePreloadFile } from 'node:url';
 import type { RenderEntity } from '../client/render.ts';
@@ -80,10 +81,8 @@ try {
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  const { chromium } = (await import(
-    process.env.PLAYWRIGHT_MODULE || 'playwright'
-  )) as typeof import('playwright');
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1600, height: 1050 } });
   const errors: string[] = [],
     messages = [];

@@ -18,7 +18,7 @@ import { Game, type Session, type PlayerData } from '../server/game.ts';
 import { STELLARS, COMMODITIES, ORE_PROCESS } from '../shared/galaxy.ts';
 import { makeLoadout } from '../shared/rules.ts';
 import { JETTISON_OWNER_GRACE_SECONDS } from '../server/fleetcmd.ts';
-import { TRADE_IMPACT } from '../shared/living.ts';
+import { saleValue } from '../shared/trade-pricing.ts';
 import { assertLots, addLots, clearLots } from '../shared/cargo-lots.ts';
 import { type CargoTotals, type CargoLedger } from '../shared/cargo-contracts.ts';
 
@@ -172,14 +172,14 @@ for (const commodityId of ['ore', 'gas', 'shards']) {
       playerReference = requiredFixtureValue(
         requiredFixtureValue(game.market(port)).find((marketItem) => marketItem.id === commodityId),
       ).price;
-    const multiplier = grade === 'pure' ? 1.6 : grade === 'rich' ? 1.3 : 1;
-    const expected = Math.round(
-      10 *
-        multiplier *
-        requiredFixtureValue(playerReference) *
-        (1 - Math.min(TRADE_IMPACT.max, 10 * TRADE_IMPACT.perTon) / 2) *
-        game.features.fronts.mods(playerData.sys).sell *
-        (1 + (game.features.bonuses.bonus(playerData).tradePct || 0) / 100),
+    const market = game.market(port)!.find((item) => item.id === commodityId)!;
+    const expected = saleValue(
+      market.quoteBase ?? playerReference!,
+      { common: 0, rich: 0, pure: 0, [grade]: 10 },
+      game.features.bonuses.bonus(playerData).tradePct || 0,
+      !!port.site,
+      game.features.fronts.mods(playerData.sys).sell,
+      market.impact ?? 0,
     );
     const credits = playerData.credits;
     game.onMessage(session, {
@@ -211,6 +211,7 @@ console.log(
 
 // Jettison exact grades into multiple real parcels; job cargo constrains recollection.
 seed(playerData, 0, 2, 8);
+playerData.cargoLots.basis = { ore: { common: 0, rich: 0, pure: 800 } };
 game.depart(session);
 assert.ok(requiredFixtureValue(session).ent);
 const space = game.spaces[playerData.sys],
@@ -237,6 +238,11 @@ playerData.missions = [];
 for (const lootItem of parcels) game.onLoot(game.pref(session), lootItem);
 assert.deepEqual(lots(playerData), { common: 0, rich: 2, pure: 8 });
 assert.ok(parcels.every((entry) => entry.n === 0));
+assert.equal(
+  playerData.cargoLots.basis!.ore.pure,
+  800,
+  'Jettison and partial recollection retain acquisition cost',
+);
 game.features.fleetcmd.lootCargo(session, requiredFixtureValue(parcels[0]) as CargoLoot);
 assert.equal(playerData.cargo.ore, 10);
 console.log(
@@ -435,6 +441,7 @@ playerData.stellar = entity.stellar = 'qstation';
 playerData.sys = entity.sys = 'qgate';
 entity.credits = 1e7;
 seed(playerData, 0, 3, 7);
+playerData.cargoLots.basis = { ore: { common: 0, rich: 150, pure: 350 } };
 seed(entity);
 game.onMessage(session, {
   t: 'exchange',
@@ -458,10 +465,20 @@ game.onMessage(session2, {
   price: 100,
 });
 assert.deepEqual(entity.storageLots.byCommodity.ore, { common: 0, rich: 3, pure: 2 });
+assert.deepEqual(
+  entity.storageLots.basis!.ore,
+  { common: 0, rich: 300, pure: 200 },
+  'Exchange buyer receives actual-price basis',
+);
 assert.deepEqual(requiredFixtureValue(order).lots, { common: 0, rich: 0, pure: 5 });
 invariant(entity);
 game.onMessage(session, { t: 'exchange', op: 'cancel', id: requiredFixtureValue(order).id });
 assert.deepEqual(playerData.storageLots.byCommodity.ore, { common: 0, rich: 0, pure: 5 });
+assert.equal(
+  playerData.storageLots.basis!.ore.pure,
+  250,
+  'Cancelled sale escrow retains original basis',
+);
 invariant(playerData);
 const bcap = requiredFixtureValue(game.features.shipStats.stats(entity)).cargo;
 entity.missions = [mockMission({ type: 'cargo', qty: bcap - 1 })];

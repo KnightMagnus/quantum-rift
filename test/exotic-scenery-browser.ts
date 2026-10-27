@@ -1,15 +1,14 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Production flight-scenery rendering and station landing artwork, under Chromium.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-const { chromium } = (await import(
-  process.env.PLAYWRIGHT_MODULE || ('playwright' as string)
-)) as typeof import('playwright');
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const evidence = process.env.RIFT_BROWSER_EVIDENCE || '/tmp/rift-exotic-scenery';
 await fileSystem.mkdir(evidence, { recursive: true });
-const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+const browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
 try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 760 } }),
     errors: string[] = [];

@@ -1,6 +1,7 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { type Browser, chromium } from 'playwright';
+import { type Browser } from 'playwright';
 import { towingFixture, until } from './helpers/towing-play-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const feature = await towingFixture('towing-browser');
@@ -8,7 +9,7 @@ let browser: Browser | undefined;
 const errors: string[] = [],
   missing: string[] = [];
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   async function pilot(name: string, keys: { fire2: string; towToggle: string | null }) {
     const page = await browser!.newPage({
       viewport: { width: 1500, height: 1100 },

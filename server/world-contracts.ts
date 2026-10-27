@@ -42,6 +42,8 @@ export interface ExchangeOrder {
   qty: number;
   price: number;
   lots?: GradeLots;
+  /** Original purchase costs retained while sale inventory is in escrow. */
+  basis?: GradeLots;
   t: number;
 }
 export interface LivingState {

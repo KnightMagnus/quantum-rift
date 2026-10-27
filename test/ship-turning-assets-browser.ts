@@ -1,10 +1,11 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Decode every shipped hull and exercise real runtime bank signals against its sheet.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import operatingSystem from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import {
   root,
   availablePort,
@@ -34,7 +35,7 @@ server.stderr.pipe(serverLog);
 let browser;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1200, height: 1000 } });
   await page.goto(origin);
   const result = await page.evaluate(async () => {
