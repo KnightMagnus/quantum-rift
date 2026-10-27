@@ -29,7 +29,13 @@ export type DiagnosticSubsystem = 'trade-preview';
 /** Allowlisted trade preview inputs, limited to the previewed commodity. */
 export interface TradePreviewCaptureInput {
   /** Market row being previewed: commodity id, listed price and remaining buyer demand. */
-  market: { id: string; price: number | null; sellCap?: number };
+  market: {
+    id: string;
+    price: number | null;
+    quoteBase?: number;
+    impact?: number;
+    sellCap?: number;
+  };
   /** Entered trade amount in tonnes. */
   amount: number;
   /** Hold total for the previewed commodity only. */
@@ -165,12 +171,16 @@ function captureInput(source: unknown, strict: boolean): TradePreviewCaptureInpu
     ? plainRecord(source, 'input', inputKeys)
     : (source as Record<string, unknown>);
   const market = strict
-    ? plainRecord(input.market, 'input.market', ['id', 'price', 'sellCap'])
+    ? plainRecord(input.market, 'input.market', ['id', 'price', 'sellCap', 'quoteBase', 'impact'])
     : (input.market as Record<string, unknown>);
   if (!market) fail('input.market is missing');
   const id = commodityId(market.id, 'input.market.id');
   const price = market.price === null ? null : finite(market.price, 'input.market.price');
   const capturedMarket: TradePreviewCaptureInput['market'] = { id, price };
+  if (market.quoteBase !== undefined)
+    capturedMarket.quoteBase = finite(market.quoteBase, 'input.market.quoteBase');
+  if (market.impact !== undefined)
+    capturedMarket.impact = finite(market.impact, 'input.market.impact');
   if (market.sellCap !== undefined)
     capturedMarket.sellCap = nonNegative(market.sellCap, 'input.market.sellCap');
 

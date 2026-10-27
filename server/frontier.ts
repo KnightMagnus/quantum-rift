@@ -1,3 +1,4 @@
+import { realizedTradeProfit } from '../shared/trade-pricing.ts';
 import { playerPortrait } from '../shared/portraits.ts';
 import type {
   ArenaMatch,
@@ -85,8 +86,9 @@ export interface FrontierOperations {
     exchangeItem: ExchangeItem,
     quantity: number,
     lots?: GradeLots,
+    basis?: GradeLots,
   ): void;
-  pay(this: FrontierCapabilities, name: string, count: number): void;
+  pay(this: FrontierCapabilities, name: string, count: number, earned?: number): void;
   refundOrder(this: FrontierCapabilities, exchangeOrder: ExchangeOrder): void;
   matchOrder(this: FrontierCapabilities, order: ExchangeOrder, reserve: () => void): void;
   exchangePayload(
@@ -1044,6 +1046,7 @@ export const FrontierOperations = {
           qty: quantity,
           price,
           lots: escrow ? { ...escrow.grades } : undefined,
+          basis: escrow?.basis ? { ...escrow.basis } : undefined,
           t: Date.now(),
         };
         let committed = false;
@@ -1170,6 +1173,7 @@ export const FrontierOperations = {
     exchangeItem: ExchangeItem,
     quantity: number,
     lots?: GradeLots,
+    basis?: GradeLots,
   ) {
     // goods to a buyer: crates straight in, commodities to exchange storage
     const playerAccount = this.db.get(name);
@@ -1182,6 +1186,7 @@ export const FrontierOperations = {
         cid: exchangeItem.cid,
         qty: quantity,
         grades: lots === undefined ? commonLots(exchangeItem.cid, quantity).grades : lots,
+        basis,
       });
     }
   },
@@ -1190,11 +1195,11 @@ export const FrontierOperations = {
    * @param name - Captain name.
    * @param count - Credit amount.
    */
-  pay(this: FrontierCapabilities, name: string, count: number) {
+  pay(this: FrontierCapabilities, name: string, count: number, earned = count) {
     const playerAccount = this.db.get(name);
     if (playerAccount) {
       playerAccount.credits += count;
-      playerAccount.stats.earned += count;
+      playerAccount.stats.earned += earned;
     }
   },
   /**
@@ -1203,8 +1208,14 @@ export const FrontierOperations = {
    */
   refundOrder(this: FrontierCapabilities, exchangeOrder: ExchangeOrder) {
     if (exchangeOrder.side === 'sell')
-      this.deliver(exchangeOrder.owner, exchangeOrder.item, exchangeOrder.qty, exchangeOrder.lots);
-    else this.pay(exchangeOrder.owner, exchangeOrder.qty * exchangeOrder.price);
+      this.deliver(
+        exchangeOrder.owner,
+        exchangeOrder.item,
+        exchangeOrder.qty,
+        exchangeOrder.lots,
+        exchangeOrder.basis,
+      );
+    else this.pay(exchangeOrder.owner, exchangeOrder.qty * exchangeOrder.price, 0);
   },
   /**
    * Match an incoming exchange order against the open order book.
@@ -1261,8 +1272,15 @@ export const FrontierOperations = {
           grades: selected,
         });
         seller.lots = { ...available };
-        for (const game of ['common', 'rich', 'pure'] as const)
+        for (const game of ['common', 'rich', 'pure'] as const) {
+          if (seller.basis && seller.lots![game]) {
+            const recoveredCost = Math.floor(
+              (seller.basis[game] * selected[game]) / seller.lots![game],
+            );
+            seller.basis[game] -= recoveredCost;
+          }
           seller.lots![game] -= selected[game];
+        }
       }
       trialOrder.qty -= count;
     }
@@ -1281,15 +1299,37 @@ export const FrontierOperations = {
             : null
           : seller.lots;
       const selected = available ? splitLots(available, count) : undefined;
-      this.deliver(buyer.owner, order.item, count, selected);
+      const buyerBasis = selected
+        ? {
+            common: selected.common * price,
+            rich: selected.rich * price,
+            pure: selected.pure * price,
+          }
+        : undefined;
+      this.deliver(buyer.owner, order.item, count, selected, buyerBasis);
+      let saleCost = 0;
       if (selected) {
         seller.lots = available!;
-        for (const game of ['common', 'rich', 'pure'] as const)
+        for (const game of ['common', 'rich', 'pure'] as const) {
+          if (seller.basis && seller.lots![game]) {
+            const recoveredCost = Math.floor(
+              (seller.basis[game] * selected[game]) / seller.lots![game],
+            );
+            saleCost += recoveredCost;
+            seller.basis[game] -= recoveredCost;
+          }
           seller.lots![game] -= selected[game];
+        }
       }
-      this.pay(seller.owner, Math.round(count * price * (1 - EXCHANGE.fee)));
+      const proceeds = Math.round(count * price * (1 - EXCHANGE.fee));
+      const sellerAccount = this.db.get(seller.owner);
+      const profit =
+        sellerAccount && seller.item.kind === 'com'
+          ? realizedTradeProfit(sellerAccount, proceeds, saleCost)
+          : proceeds;
+      this.pay(seller.owner, proceeds, profit);
       if (buyer === order && order.price > price)
-        this.pay(order.owner, count * (order.price - price)); // the buyer escrowed at their own price
+        this.pay(order.owner, count * (order.price - price), 0); // the buyer escrowed at their own price
       order.qty -= count;
       exchangeOrder.qty -= count;
       fills.push({ buyer: buyer.owner, seller: seller.owner, n: count, price });

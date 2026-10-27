@@ -59,6 +59,7 @@ export const FleetCmdOperations = {
     }
     applyTake(playerData.cargo, playerData.cargoLots, take);
     const remaining = { ...take.grades };
+    const remainingBasis = { ...take.basis! };
     const space = this.spaces[playerData.sys],
       commodityDef = COMMODITIES.find((commodityDef) => commodityDef.id === captainId);
     for (let index = 0, entryKey = Math.min(4, Math.ceil(count / 5)); index < entryKey; index++) {
@@ -67,7 +68,14 @@ export const FleetCmdOperations = {
         (index === entryKey - 1 ? Math.ceil(count / entryKey) * entryKey - count : 0);
       if (part <= 0) continue;
       const lots = splitLots(remaining, part);
-      for (const rAW_GRADES of RAW_GRADES) remaining[rAW_GRADES] -= lots[rAW_GRADES];
+      const basis = { common: 0, rich: 0, pure: 0 };
+      for (const grade of RAW_GRADES) {
+        basis[grade] = remaining[grade]
+          ? Math.floor((remainingBasis[grade] * lots[grade]) / remaining[grade])
+          : 0;
+        remainingBasis[grade] -= basis[grade];
+        remaining[grade] -= lots[grade];
+      }
       space.loot.push({
         id: space.nextLootId(),
         x: entity.x - Math.sin(entity.a) * 40 + (Math.random() - 0.5) * 40,
@@ -78,6 +86,7 @@ export const FleetCmdOperations = {
           cargo: captainId,
           n: part,
           lots,
+          basis,
           jettisonPickup: {
             owner: playerData.name,
             sys: playerData.sys,
@@ -131,12 +140,18 @@ export const FleetCmdOperations = {
         ? commonLots(cargoLoot.cargo, cargoLoot.n).grades
         : cargoLoot.lots;
     const selected = splitLots(remaining, count);
+    const basis = { common: 0, rich: 0, pure: 0 };
+    for (const grade of RAW_GRADES)
+      basis[grade] = remaining[grade]
+        ? Math.floor(((cargoLoot.basis?.[grade] || 0) * selected[grade]) / remaining[grade])
+        : 0;
     addLots(
       playerData.cargo,
       playerData.cargoLots,
-      { cid: cargoLoot.cargo, qty: count, grades: selected },
+      { cid: cargoLoot.cargo, qty: count, grades: selected, basis },
       Math.max(0, stats2.cargo - used),
     );
+    if (cargoLoot.basis) for (const grade of RAW_GRADES) cargoLoot.basis[grade] -= basis[grade];
     cargoLoot.lots = remaining;
     for (const rAW_GRADES of RAW_GRADES) remaining[rAW_GRADES] -= selected[rAW_GRADES];
     cargoLoot.n -= count;

@@ -371,6 +371,12 @@ export type MarketItem = {
   /** Unit price in credits, or null if not traded. */
   price: number | null;
 
+  /** Unrounded reference before shared local inventory impact. */
+  quoteBase?: number;
+
+  /** Shared local inventory impact at quote time. */
+  impact?: number;
+
   /** Remaining finite Composite Plating buyer tonnes for this port/day. */
   sellCap?: number;
 
@@ -1333,7 +1339,10 @@ export class Game<Storage extends Database = Database> {
       stellar: playerData.stellar,
       ship: playerData.ship,
       cargo: playerData.cargo,
-      cargoLots: structuredClone(playerData.cargoLots),
+      cargoLots: {
+        version: 1 as const,
+        byCommodity: structuredClone(playerData.cargoLots.byCommodity),
+      },
       paid: playerData.paid || {},
       economyReceipt: economyReceipt(playerData),
       radioStations: discoverRadio(this, session),
@@ -1394,7 +1403,10 @@ export class Game<Storage extends Database = Database> {
       })),
       defense: this.features.frontier.defenseRating(playerData),
       storage: playerData.storage || {},
-      storageLots: structuredClone(playerData.storageLots),
+      storageLots: {
+        version: 1 as const,
+        byCommodity: structuredClone(playerData.storageLots.byCommodity),
+      },
       explored: playerData.explored,
       tut: playerData.tut ?? TUTORIAL.length,
       station: playerData.station,

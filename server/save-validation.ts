@@ -59,6 +59,7 @@ export function validateFeaturePlayerSave(value: unknown): void {
   const saved = record(value);
   for (const key of ['credits', 'syn', 'credit', 'shards']) if (key in saved) finite(saved[key]);
   optional(saved, 'v26', boolean);
+  optional(saved, 'tradeLoss', count);
   optional(saved, 'mastery', (value) => {
     for (const amount of Object.values(record(value))) {
       finite(amount);

@@ -2,7 +2,7 @@
   "format": "quantum-rift-diagnostic-capture",
   "version": 1,
   "build": {
-    "game": "3.4.2"
+    "game": "3.5.1"
   },
   "durationMs": 5500,
   "entries": [
@@ -47,11 +47,11 @@
         "valid": true,
         "buy": {
           "tonnes": 5,
-          "total": 190
+          "total": 202
         },
         "sale": {
           "tonnes": 5,
-          "total": 284,
+          "total": 269,
           "grades": {
             "common": 1,
             "rich": 2,
@@ -98,11 +98,11 @@
         "valid": true,
         "buy": {
           "tonnes": 7,
-          "total": 280
+          "total": 290
         },
         "sale": {
           "tonnes": 6,
-          "total": 334,
+          "total": 325,
           "grades": {
             "common": 1,
             "rich": 2,
@@ -141,11 +141,11 @@
         "valid": true,
         "buy": {
           "tonnes": 10,
-          "total": 2160
+          "total": 2153
         },
         "sale": {
           "tonnes": 12,
-          "total": 2200,
+          "total": 2211,
           "grades": {
             "common": 12,
             "rich": 0,

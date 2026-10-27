@@ -14,6 +14,8 @@ export type CargoLoot = {
   cargo: string;
   n: number;
   lots?: GradeLots;
+  /** Purchase costs carried by recoverable cargo. */
+  basis?: GradeLots;
   jettisonPickup?: { owner: string; sys: string; until: number };
 };
 export type FloatingCargo = {

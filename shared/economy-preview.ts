@@ -1,6 +1,12 @@
 import type { CargoLedger, CargoTotals, GradeLots } from './cargo-contracts.ts';
 export type TradePreviewInput = {
-  market: { id: string; price: number | null; sellCap?: number } | null;
+  market: {
+    id: string;
+    price: number | null;
+    quoteBase?: number;
+    impact?: number;
+    sellCap?: number;
+  } | null;
   amount: number;
   cargo: CargoTotals;
   cargoLots: CargoLedger;
@@ -13,7 +19,7 @@ export type TradePreviewInput = {
 };
 
 // Exact current-port formulas, never a guarantee about a later transaction or another port.
-import { purchaseUnit, saleValue } from './trade-pricing.ts';
+import { purchaseValue, saleValue } from './trade-pricing.ts';
 import { planTake } from './cargo-lots.ts';
 export function tradePreview({
   market,
@@ -35,29 +41,32 @@ export function tradePreview({
     market.price! <= 0
   )
     return { valid: false, buy: null, sale: null, warnings: [] };
+  const reference = market.quoteBase ?? market.price!;
+  const impact = market.impact ?? 0;
   let purchaseCount = Math.max(0, Math.min(amount, Math.floor(freeHold)));
-  while (
-    purchaseCount > 0 &&
-    purchaseCount * purchaseUnit(market.price!, purchaseCount, tradePct, site) > credits
-  )
-    purchaseCount = Math.min(
-      purchaseCount - 1,
-      Math.floor(credits / purchaseUnit(market.price!, purchaseCount, tradePct, site)),
-    );
+  let lower = 0,
+    upper = purchaseCount;
+  while (lower < upper) {
+    const candidate = Math.ceil((lower + upper) / 2);
+    if (purchaseValue(reference, candidate, tradePct, site, sell, impact) <= credits)
+      lower = candidate;
+    else upper = candidate - 1;
+  }
+  purchaseCount = lower;
   const saleCount = Math.max(
     0,
     Math.min(amount, cargo[market.id] || 0, market.sellCap ?? Infinity),
   );
   const purchase = {
     tonnes: purchaseCount,
-    total: purchaseCount * purchaseUnit(market.price!, purchaseCount, tradePct, site),
+    total: purchaseValue(reference, purchaseCount, tradePct, site, sell, impact),
   };
   let sale = { tonnes: 0, total: 0, grades: { common: 0, rich: 0, pure: 0 } };
   if (saleCount) {
     const take = planTake(cargo, cargoLots, market.id, saleCount);
     sale = {
       tonnes: saleCount,
-      total: saleValue(market.price!, take.grades, tradePct, site, sell),
+      total: saleValue(reference, take.grades, tradePct, site, sell, impact),
       grades: take.grades,
     };
   }

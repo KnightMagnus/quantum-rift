@@ -1679,12 +1679,20 @@ export function createFeatures(core: Game): FeatureServices {
       if (price2 === null && !fallback) throw Error('Unknown commodity.');
       const flash = stellarBody.site ? 1 : features.rivals.flashMult(stellarBody.id, captainId),
         living = stellarBody.site ? 1 : features.living.livingMult(stellarBody, captainId),
-        price3 = Math.round((price2 ?? fallback ?? 0) * flash * living),
+        impact = stellarBody.site ? 0 : features.living.impact(stellarBody.id, captainId),
+        price3 = ((price2 ?? fallback ?? 0) * flash * living) / (1 - impact),
         bonus = features.bonuses.bonus(playerData).tradePct || 0,
         sell = features.fronts.mods(stellarBody.system).sell;
       return {
-        ask: purchaseUnit(price3, 1, bonus, !!stellarBody.site),
-        bid: saleValue(price3, { common: 1, rich: 0, pure: 0 }, bonus, !!stellarBody.site, sell),
+        ask: purchaseUnit(price3, 1, bonus, !!stellarBody.site, sell, impact),
+        bid: saleValue(
+          price3,
+          { common: 1, rich: 0, pure: 0 },
+          bonus,
+          !!stellarBody.site,
+          sell,
+          impact,
+        ),
         fingerprint: JSON.stringify([price3, bonus, sell, flash, living, price2 === null]),
       };
     },
