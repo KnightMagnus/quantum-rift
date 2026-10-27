@@ -116,13 +116,43 @@ try {
   // oxlint-disable-next-line typescript/unbound-method -- Preserve the production method for receiver-bound fixture calls and exact restoration.
   const originalOffers = game.offers;
   let offerReads = 0;
-  game.offers = function () {
+  game.offers = function (requestedPort, requestedCaptain) {
     assert.equal(this, game, 'core forwarding keeps the Game receiver');
+    assert.equal(requestedPort, port, 'current provider receives the landed port');
+    assert.equal(requestedCaptain, playerData, 'current provider receives the current captain');
     offerReads++;
     return [];
   };
+  const messagesBeforeStaleAccept = session.sock.out.length;
+  const creditsBeforeStaleAccept = playerData.credits;
   game.accept(session, first.id);
-  assert.equal(offerReads, 1, 'acceptance reads the current offer provider, not a stale binding');
+  assert.equal(
+    offerReads,
+    2,
+    'stale acceptance checks the current provider, then refreshes the landed board from it',
+  );
+  const staleAcceptMessages = session.sock.out.slice(messagesBeforeStaleAccept);
+  assert.ok(
+    staleAcceptMessages.some(
+      (message) => message.t === 'toast' && /expired.*refreshed/.test(message.msg),
+    ),
+    'removed offers explain that the board was refreshed',
+  );
+  const refreshedBoards = staleAcceptMessages.filter((message) => message.t === 'landed');
+  assert.equal(refreshedBoards.length, 1, 'stale acceptance sends one new landed board');
+  const refreshedBoard = refreshedBoards[0];
+  assert.ok('stellar' in refreshedBoard && refreshedBoard.stellar === port.id);
+  assert.ok('offers' in refreshedBoard);
+  assert.deepEqual(
+    refreshedBoard.offers,
+    [],
+    'refreshed board contains only current-provider offers',
+  );
+  assert.equal(
+    playerData.credits,
+    creditsBeforeStaleAccept,
+    'removed offer does not charge credits',
+  );
   assert.equal(
     playerData.missions.length,
     0,

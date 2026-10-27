@@ -1994,7 +1994,7 @@ const opsLevelDefs: OpsLevelDef[] = [
       ['crystal', 3, 1],
       ['isotope', 2, 1],
     ],
-    unlock: 'Exotics, Constitution',
+    unlock: 'Exotics, Concordance',
   },
 ];
 export { opsLevelDefs as OPS };
@@ -2031,7 +2031,7 @@ export const REFINERY: { minutes: number[]; silo: number } = {
 /**
  * Special ship hulls unlocked for construction in the Personal Station shipyard by Ops level.
  */
-// Ships the station sells by Ops level (Halo Surveyor at 3; wingmates at 4; Exotics and the Constitution at 5)
+// Ships the station sells by Ops level (Halo Surveyor at 3; wingmates at 4; Exotics and the Concordance at 5)
 export const STATION_SHIPS: Record<number, number[]> = { 3: [735], 5: [736, 785, 786, 787] };
 
 /**

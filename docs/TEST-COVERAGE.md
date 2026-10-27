@@ -1335,3 +1335,28 @@ The registered `performance-budgets.ts` program also checks both retained 30-pla
 300-second native reports against `docs/performance-baselines/shared-host-30.json`
 offline. This validates artifact consistency and lab alarm thresholds, not live CI
 timing or production smoothness. See [performance measurements](PERFORMANCE.md).
+
+## Combat playability
+
+`combat-playability` covers fixed-seed arrivals and eight-minute fights in the real
+Game simulation, with normal traffic, damage and Combat Assist. The recorded
+early-game, Hollow and Umbral fleets exercise the same production rules as other
+ships. Each system uses seeds 1701, 1702 and 1703. At least two of its three runs
+must survive all 480 seconds, take positive damage and earn a production kill or
+cause a hostile ship to become disabled. Disable credit requires positive damage
+from the player or their wing to cross the production armor threshold, followed
+by the production AI setting its disabled state. Damage to neutral traffic and
+disables caused by unrelated NPCs do not count;
+uncontested survival does not count. Combat Assist stops attacking disabled ships,
+so a disable need not become a kill. Newcomer protection is explicitly disabled.
+The early-game lead uses its stock loadout; the larger fleets also receive all
+station research and Epic level-10, rank-3 combat officers. Combat Assist steers
+and fires, with nearest-hostile acquisition, but no retreat or manual bay launch.
+The simulation uses isolated in-memory storage and a virtual clock at the normal
+physics tick rate. It does not establish human win rates or test every
+loadout, faction, system or multiplayer combination.
+
+`combat-jobs-playability.ts` covers mission and reward behavior. The combat tests
+run in the unit regression lane through the canonical manifest; their supporting
+helper is registered under `combat-playability.ts`. Existing combat, difficulty
+and retaliation regressions remain in CI.

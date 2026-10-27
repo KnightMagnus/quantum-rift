@@ -54,7 +54,7 @@ assertCondition(
 );
 assertCondition(
   weaponColor(assets.weapons[132]) !== '#000000',
-  'Constitution heavy blaster turrets are coloured: ' + weaponColor(assets.weapons[132]),
+  'Concordance heavy blaster turrets are coloured: ' + weaponColor(assets.weapons[132]),
 );
 // hit events
 const firstEntry = fake('Tester');
