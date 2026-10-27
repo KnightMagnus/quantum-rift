@@ -1,6 +1,6 @@
 # Game regression coverage inventory
 
-## Authored ship content
+## Authored content
 
 `content-validation.ts` belongs to `ships-catalog-art`. It validates the composed
 ship catalog and local yard, flight and glow artwork references without starting
@@ -16,8 +16,14 @@ NPC-only hulls retain the existing player-mount exception; unknown weapons still
 fail. Fixed weapons without corresponding outfits do not consume shop mounts,
 matching `makeLoadout` and `shipStats`. This is an authoring check for the typed,
 composed ship catalog, not a schema for arbitrary untrusted JSON. Mission
-prerequisites, dialogue links, non-ship assets and decoded image integrity are
-outside this validator. Existing artwork/browser tests retain their image checks.
+prerequisites and dialogue destinations are checked against the composed narrative
+catalogs. Non-ship asset references and decoded image integrity remain outside
+this validator. Existing artwork/browser tests retain their image checks.
+Narrative fixtures cover duplicate IDs, unknown prerequisites and cycles,
+missing destinations, relative contact locators, decision/choice references,
+mission types, rewards and required dialogue. Diagnostics name source/key without
+printing dialogue or reward values. Dynamic dialogue and generated offers remain
+outside this offline check.
 See [CONTENT-VALIDATION.md](CONTENT-VALIDATION.md) for commands and scope.
 
 ## Economic wire boundary

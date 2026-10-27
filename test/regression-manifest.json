@@ -957,7 +957,8 @@
         "shared/rules.ts",
         "client/artwork.ts",
         "client/render.ts",
-        "tools/content-validation.ts"
+        "tools/content-validation.ts",
+        "tools/narrative-content-validation.ts"
       ],
       "services": [],
       "tests": [
@@ -969,7 +970,7 @@
         "v25.ts",
         "ship-turning-assets-browser.ts"
       ],
-      "asserts": "Composed ship catalog IDs, finite capacities/combat/movement stats/recharge rates, weapon references/counts/ammo, player stock mount limits and local yard/flight/glow artwork existence, with malformed fixtures and CLI exit/diagnostic coverage. Versioned catalog URL/cache semantics, shipped icon headers/dimensions and asset wiring, animation bounds and banked sprite selection. All 122 decoded hull sheets contain 108 distinct nonempty base frames with matched glow geometry; both runtime banks activate at actual stock turn rates."
+      "asserts": "Composed ship catalog IDs, finite capacities/combat/movement stats/recharge rates, weapon references/counts/ammo, player stock mount limits and local yard/flight/glow artwork existence, with malformed fixtures and CLI exit/diagnostic coverage. Versioned catalog URL/cache semantics, shipped icon headers/dimensions and asset wiring, animation bounds and banked sprite selection. All 122 decoded hull sheets contain 108 distinct nonempty base frames with matched glow geometry; both runtime banks activate at actual stock turn rates. Offline composed narrative validation covers IDs, prerequisite references/cycles, destinations, contact locators, decision choices, mission types, rewards and dialogue fields with source/key diagnostics and negative fixtures; dynamic dialogue and nonship assets remain documented limits."
     },
     {
       "id": "world-scenery",
