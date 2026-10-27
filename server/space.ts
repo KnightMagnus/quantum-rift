@@ -388,7 +388,7 @@ export type Entity = EntityFeatureState & {
   ambientGroup?: number;
 
   /** Recent unselected fire volleys per captain; lawful traffic tolerates isolated crossfire. */
-  incidentalHits?: Map<number, { count: number; last: number }>;
+  incidentalHits?: Map<number, { count: number; last: number; damage: number }>;
 
   /** Arena combat team designation ('A' or 'B'). */
   team?: string;
@@ -2663,14 +2663,17 @@ export class Space {
       ) {
         const hits = (victim.incidentalHits ||= new Map());
         let recent = hits.get(srcRoot.id);
-        if (!recent || this.t - recent.last > 10) recent = { count: 0, last: -Infinity };
+        if (!recent || this.t - recent.last > 10) recent = { count: 0, last: -Infinity, damage: 0 };
+        recent.damage += done;
         // Count separated volleys, not every pellet in one accidental broadside.
         if (this.t - recent.last >= 1.5) {
           recent.count++;
           recent.last = this.t;
         }
         hits.set(srcRoot.id, recent);
-        retaliate = recent.count >= 3;
+        // A few fighter hits must not provoke an undamaged carrier and its whole wing.
+        const durability = (victim.st.shield || 0) + victim.st.armor;
+        retaliate = recent.count >= 3 && recent.damage >= durability * 0.1;
       }
       if (retaliate) {
         if (srcRoot.player?.s && !victim.player && !this.sys.arena && first && deliberate)

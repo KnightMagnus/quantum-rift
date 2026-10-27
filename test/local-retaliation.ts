@@ -177,6 +177,8 @@ returned.damage(civilianAfter, 1, 1, session.ent);
 assert.equal(civilianAfter.aggro.size, 0);
 returned.t += 1.6;
 returned.damage(civilianAfter, 1, 1, session.ent);
+assert.equal(civilianAfter.aggro.size, 0, 'minor crossfire cannot mobilize a capital wing');
+returned.damage(civilianAfter, 100, 100, session.ent);
 assert.equal(
   civilianAfter.aggro.has(session.ent.id),
   true,
@@ -187,6 +189,30 @@ assert.equal(
   0,
   'sustained unselected fire still does not recruit the whole faction',
 );
+// Carrier-owned drones share a defense decision, but tiny clips cannot summon the entire wing.
+const carrier = ship('quantum', { st: { shield: 1000, armor: 1000 } });
+const drone = ship('quantum', { owner: carrier.id, shield: 100, armor: 100 });
+returned.ships.set(carrier.id, carrier);
+returned.ships.set(drone.id, drone);
+for (let volley = 0; volley < 3; volley++) {
+  returned.t += 1.6;
+  returned.damage(drone, 1, 1, session.ent);
+}
+assert.equal(carrier.aggro.size, 0, 'drone crossfire uses commanding hull durability');
+returned.damage(carrier, 200, 200, session.ent);
+assert.equal(carrier.aggro.has(session.ent.id), true, 'sustained damaging harassment is finite');
+const later = ship('quantum', { st: { shield: 1000, armor: 1000 } });
+returned.ships.set(later.id, later);
+returned.damage(later, 150, 150, session.ent);
+returned.t += 11;
+for (let volley = 0; volley < 3; volley++) {
+  returned.t += 1.6;
+  returned.damage(later, 1, 1, session.ent);
+}
+assert.equal(later.aggro.size, 0, 'old incidental damage expires with the volley window');
+session.ent.target = later;
+returned.damage(later, 1, 1, session.ent);
+assert.equal(later.aggro.has(session.ent.id), true, 'selected attacks bypass crossfire tolerance');
 console.log(
   'Local retaliation passed: actual hits, allied help, later arrivals, unhit factions, wingmate attribution, same-system relaunch, visit reset and normal reputation.',
 );
