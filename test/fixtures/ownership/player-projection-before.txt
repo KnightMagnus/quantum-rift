@@ -1,0 +1,16 @@
+    case 'you': {
+      const first = !clientGameState.you;
+      clientGameState.you = serverMessage.d;
+      setUnlockedStations(clientGameState.you!.radioStations);
+      const restoredViews = clientGameState.views.load();
+      clientGameState.sys = serverMessage.d.sys;
+      coopYou(); // 2.6
+      for (const [width, count] of Object.entries(serverMessage.d.ship.ammo || {}))
+        if (!clientGameState.view) clientGameState.ammo[width] = count;
+      if (clientGameState.landed) renderLanded();
+      refreshCompanion();
+      refreshStores();
+      if (first || restoredViews) ctab(clientGameState.ctab || 'missions', false);
+      renderTut();
+      break;
+    }
