@@ -76,6 +76,35 @@ try {
       (port) => !port.site && port.svc.includes('L') && port.system !== pickup.system,
     ),
   );
+  game.db.world.states[pickup.system] = {
+    kind: 'refugees',
+    start: Date.now(),
+    until: Date.now() + 600000,
+    got: 0,
+    need: 100,
+  };
+  const reliefOffer = requiredFixtureValue(
+    game.features.living
+      .stateOffers(
+        home,
+        captain,
+        () => 0,
+        [
+          [pickup.system, 1],
+          [destination.system, 2],
+        ],
+        1,
+      )
+      .find((offer) => offer.type === 'passenger'),
+  );
+  assert.equal(
+    STELLARS[reliefOffer.pickup!].system,
+    pickup.system,
+    'generated relief offer records its real source-system pickup',
+  );
+  assert.equal(reliefOffer.boarded, false);
+  assert.notEqual(reliefOffer.pickup, reliefOffer.dest);
+  assert.match(reliefOffer.text, /Collect.*at/);
   captain.missions = [
     mockMission({
       id: 'relief',

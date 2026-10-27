@@ -105,6 +105,13 @@ try {
       before + 1,
     lootOrdersBefore,
   );
+  await page.keyboard.press('KeyO');
+  assert.equal(
+    await page.locator('[data-bind="ordLoot"]').textContent(),
+    "'",
+    'Controls shows the actual loot key',
+  );
+  await page.locator('#optclose').click();
 
   const ask = async () =>
     page.evaluate(async () => {
