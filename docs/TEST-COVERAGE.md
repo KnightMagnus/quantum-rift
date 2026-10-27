@@ -1284,6 +1284,7 @@ does not depend on unrelated ambient traffic random rolls.
 The HUD JUMP regression also opens the galaxy map and attempts native button
 activation before the periodic disabled-state refresh. No jump packet or jump
 navigation can escape the overlay; closing the map restores the plotted action.
+
 ## Client prediction ownership
 
 `flight-prediction.ts` compares the extracted owner with an independent reference
