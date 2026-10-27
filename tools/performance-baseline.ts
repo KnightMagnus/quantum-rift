@@ -7,6 +7,8 @@ import {
 } from '../test/helpers/performance-scenarios.ts';
 const ticks = Number(process.env.RIFT_PERF_TICKS || 900);
 const soakTicks = Number(process.env.RIFT_PERF_SOAK_TICKS || 18000);
+const captains =
+  process.env.RIFT_PERF_CAPTAINS === undefined ? undefined : Number(process.env.RIFT_PERF_CAPTAINS);
 const output = process.env.RIFT_PERF_OUTPUT;
 if (!output) throw new Error('RIFT_PERF_OUTPUT must name a private baseline JSON file');
 const started = new Date().toISOString();
@@ -30,7 +32,7 @@ const result = {
     'Timing is observational; no user-hardware latency budget is established.',
   ],
   scenarios: performanceScenarios.map((name) =>
-    runPerformanceScenario(name, name === 'soak' ? soakTicks : ticks),
+    runPerformanceScenario(name, name === 'soak' ? soakTicks : ticks, true, captains),
   ),
   loadAfter: operatingSystem.loadavg(),
   finished: new Date().toISOString(),

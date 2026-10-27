@@ -1,4 +1,11 @@
-import { advanceWorld, attemptWorldJoin, signalWorld } from '../server/nakama-world.ts';
+import { GAME_PROTOCOL } from '../shared/protocol.ts';
+import {
+  advanceWorld,
+  attemptWorldJoin,
+  joinWorld,
+  leaveWorld,
+  signalWorld,
+} from '../server/nakama-world.ts';
 import assert from 'node:assert/strict';
 import {
   findOrCreateWorld,
@@ -264,3 +271,223 @@ assert.deepEqual(peer.received, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
 console.log(
   'Actual native ingress callback: eight-message per-session cap, peer fairness and next-tick reset passed.',
 );
+
+// Admission is checked again when a batch of successful attempts reaches join.
+const capacitySessions = new Map<number, { data: object; inputScheduling?: string }>();
+const capacityGame = {
+  nextSid: 1,
+  sessions: capacitySessions,
+  connect: (connection: { on: (event: 'close', callback: () => void) => void }) => {
+    assert.ok(capacityState.connections.size <= 30, 'native admission never exceeds 30 slots');
+    assert.ok(
+      capacitySessions.size < 30,
+      'retire the old Game session before replacement allocation',
+    );
+    const sessionId = capacityGame.nextSid++;
+    capacitySessions.set(sessionId, { data: {} });
+    connection.on('close', () => capacitySessions.delete(sessionId));
+  },
+  onMessage: () => {},
+};
+const deniedPrincipals = new Set(['denied-user']);
+const capacityState = {
+  ...callbackState,
+  leaseId: 'winner',
+  matchId: 'another-world',
+  connections: new Map(),
+  auth: {
+    captainForUser: (id: string) => {
+      if (deniedPrincipals.has(id)) throw Error('Denied principal');
+      return id;
+    },
+  },
+  database: {
+    economicFrozen: false,
+    withAuthenticatedCaptain: (_name: string, callback: () => void) => callback(),
+    flush: () => {},
+  },
+  game: capacityGame,
+};
+const capacityHandle = { world: () => capacityState };
+const kicked: string[] = [];
+const admissionEvents: Array<{ kind: string; session: string; data?: string }> = [];
+const capacityDispatcher = {
+  broadcastMessage: (_opcode: number, data: string, presences: Array<{ sessionId: string }>) => {
+    for (const presence of presences)
+      admissionEvents.push({ kind: 'message', session: presence.sessionId, data });
+  },
+  matchKick: (presences: Array<{ sessionId: string }>) => {
+    kicked.push(...presences.map((presence) => presence.sessionId));
+    for (const presence of presences)
+      admissionEvents.push({ kind: 'kick', session: presence.sessionId });
+  },
+};
+const capacityJoin = () =>
+  Reflect.apply(attemptWorldJoin, undefined, [
+    {},
+    {},
+    nativePorts,
+    capacityDispatcher,
+    1,
+    capacityHandle,
+    { userId: 'capacity-user' },
+    { protocol: String(GAME_PROTOCOL) },
+  ]);
+assert.equal(capacityJoin().accept, true);
+Reflect.apply(joinWorld, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  Array.from({ length: 31 }, (_, index) => ({
+    userId: 'capacity-user-' + index,
+    sessionId: 'capacity-session-' + index,
+  })),
+]);
+assert.equal(capacityState.connections.size, 30);
+assert.equal(capacitySessions.size, 30);
+assert.deepEqual(kicked, ['capacity-session-30']);
+assert.equal(capacityJoin().accept, false);
+assert.match(capacityJoin().rejectMessage, /full/);
+// Duplicate callbacks must not allocate another Game session.
+Reflect.apply(joinWorld, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  [{ userId: 'capacity-user-0', sessionId: 'capacity-session-0' }],
+]);
+assert.equal(capacitySessions.size, 30);
+console.log(
+  'Native admission: 30 accepted, 31st denied, batched joins capped, duplicate join inert.',
+);
+
+// A reconnect may arrive before its old half-open presence leaves a full world.
+const replacementPresence = { userId: 'capacity-user-0', sessionId: 'replacement-session' };
+const replacementAttempt = Reflect.apply(attemptWorldJoin, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  replacementPresence,
+  { protocol: String(GAME_PROTOCOL) },
+]);
+assert.equal(
+  replacementAttempt.accept,
+  true,
+  'same signed principal can replace itself at capacity',
+);
+const replacementEvents = admissionEvents.length;
+Reflect.apply(joinWorld, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  [replacementPresence],
+]);
+assert.equal(capacityState.connections.size, 30);
+assert.equal(capacitySessions.size, 30, 'old Game session retired before new allocation');
+assert.ok(!capacityState.connections.has('capacity-session-0'));
+assert.equal(
+  capacityState.connections.get('replacement-session')?.presence.userId,
+  'capacity-user-0',
+);
+assert.deepEqual(
+  admissionEvents.slice(replacementEvents),
+  [
+    {
+      kind: 'message',
+      session: 'capacity-session-0',
+      data: JSON.stringify({ t: 'error', msg: 'Signed in somewhere else.' }),
+    },
+    { kind: 'kick', session: 'capacity-session-0' },
+  ],
+  'displaced-login error precedes kick, preserving the no-auto-reconnect signal',
+);
+const nextSession = capacityGame.nextSid;
+Reflect.apply(joinWorld, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  [replacementPresence],
+]);
+assert.equal(capacityGame.nextSid, nextSession, 'duplicate replacement callback remains inert');
+Reflect.apply(leaveWorld, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  [{ userId: 'capacity-user-0', sessionId: 'capacity-session-0' }],
+]);
+assert.equal(capacityState.connections.size, 30, 'old delayed leave cannot delete the replacement');
+assert.equal(capacitySessions.size, 30);
+assert.ok(capacityState.connections.get('replacement-session')?.open);
+Reflect.apply(joinWorld, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  [
+    { userId: 'new-user', sessionId: 'new-session' },
+    { userId: 'denied-user', sessionId: 'denied-session' },
+  ],
+]);
+assert.deepEqual(kicked.slice(-2), ['new-session', 'denied-session']);
+assert.equal(
+  capacityState.connections.size,
+  30,
+  'new/unauthenticated batch presences cannot displace a captain',
+);
+assert.equal(capacitySessions.size, 30);
+console.log(
+  'Full native admission: authenticated replacement retains 30 slots, sends displacement error before close, rejects a new 31st captain, and ignores stale leave/duplicate callbacks.',
+);
+
+deniedPrincipals.add('capacity-user-0');
+const revoked = { userId: 'capacity-user-0', sessionId: 'revoked-replacement' };
+const deniedAttempt = Reflect.apply(attemptWorldJoin, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  revoked,
+  { protocol: String(GAME_PROTOCOL) },
+]);
+assert.equal(deniedAttempt.accept, false);
+assert.match(
+  deniedAttempt.rejectMessage,
+  /authentication/i,
+  'authentication is checked before capacity',
+);
+Reflect.apply(joinWorld, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  [revoked],
+]);
+assert.equal(kicked.at(-1), revoked.sessionId, 'join callback rechecks authenticated ownership');
+assert.ok(
+  capacityState.connections.get('replacement-session')?.open,
+  'revoked callback cannot evict the legitimate existing captain',
+);
+assert.equal(capacitySessions.size, 30);

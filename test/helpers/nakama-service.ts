@@ -58,7 +58,7 @@ export interface NakamaConnectionOptions {
 /** Native disposable services, without simulated game authority or a Node relay. */
 export class NakamaService {
   readonly run: string;
-  private readonly runtimeFile: string;
+  private readonly runtimeFile: string | Uint8Array;
   readonly children: Child[] = [];
   readonly sockets: Socket[] = [];
   client!: Client;
@@ -79,7 +79,7 @@ export class NakamaService {
     void this.cleanup().finally(() => process.exit(130));
   };
   constructor(
-    runtimeFile = path.join(repository, 'dist/nakama/quantum-rift.js'),
+    runtimeFile: string | Uint8Array = path.join(repository, 'dist/nakama/quantum-rift.js'),
     options: NakamaFixtureOptions = {},
   ) {
     const deadlineMs = options.deadlineMs ?? 180000;
@@ -88,7 +88,7 @@ export class NakamaService {
     if (options.runtimeHealth !== undefined && typeof options.runtimeHealth !== 'boolean')
       throw new Error('Native fixture runtimeHealth must be boolean');
     this.options = options;
-    this.runtimeFile = runtimeFile;
+    this.runtimeFile = typeof runtimeFile === 'string' ? runtimeFile : new Uint8Array(runtimeFile);
     process.umask(0o077);
     const temporary = path.join(privateRoot, 'temp');
     fs.mkdirSync(temporary, { recursive: true, mode: 0o700 });
@@ -236,7 +236,9 @@ export class NakamaService {
     }, 'Postgres startup');
     const modules = path.join(this.run, 'modules');
     fs.mkdirSync(modules, { mode: 0o700 });
-    fs.copyFileSync(this.runtimeFile, path.join(modules, 'quantum-rift.js'));
+    const targetRuntime = path.join(modules, 'quantum-rift.js');
+    if (typeof this.runtimeFile === 'string') fs.copyFileSync(this.runtimeFile, targetRuntime);
+    else fs.writeFileSync(targetRuntime, this.runtimeFile);
     const secret = () => randomBytes(24).toString('hex');
     const serverKey = secret();
     const config = {

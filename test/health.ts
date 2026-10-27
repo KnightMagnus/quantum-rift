@@ -1,3 +1,5 @@
+import { sharedSnapshotEncoder } from '../server/snapshot-encoding.ts';
+import type { SpaceSnapshot } from '../server/space.ts';
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import { Game } from '../server/game.ts';
@@ -125,3 +127,44 @@ for (const name of performanceScenarios) {
 console.log(
   'Bounded health, UTF-8 sizes, freeze privacy and six seeded workloads preserve enabled/disabled authority.',
 );
+
+// Full-instance concentrated and distributed fixtures retain real simulation and bounds.
+for (const name of ['concentrated', 'distributed'] as const) {
+  const full = runPerformanceScenario(name, 120, true, 30);
+  assert.equal(full.captains, 30);
+  assert.equal(full.outcome.sessions, 30);
+  assert.equal(full.metrics.tickFailures?.count ?? 0, 0);
+  assert.ok(full.metrics.snapshotBytes!.max <= 32 * 1024);
+  assert.ok(full.metrics.checkpointBytes!.max <= 512 * 1024);
+}
+assert.throws(() => runPerformanceScenario('concentrated', 1, true, 31));
+
+// The independent platform encoder covers all code units, paired/lone surrogates,
+// and long ASCII runs around Unicode names. No timing threshold depends on host speed.
+let unicode = '';
+for (let code = 0; code <= 0xffff; code++) unicode += String.fromCharCode(code);
+for (const value of [
+  unicode,
+  unicode.split('').reverse().join(''),
+  'x'.repeat(65536),
+  'x'.repeat(32768) + 'é🚀\ud800' + 'y'.repeat(32768),
+  '\ud800\ud800\udc00\udc00',
+  'a\udfffz\ud800',
+])
+  assert.equal(utf8Bytes(value), Buffer.byteLength(value));
+
+// Compare wire bytes with the pre-optimization JSON object expression, not another
+// cached encoder. Recipient flags, escaped names/events and empty arrays stay exact.
+for (const ships of [[], [[1, 703, 0, 'Unicode é🚀 and "quote"']]]) {
+  const shared: SpaceSnapshot = { ships, shots: [], beams: [], loot: [], ev: [] };
+  const encode = sharedSnapshotEncoder(shared);
+  for (let recipient = 0; recipient < 30; recipient++) {
+    const fields = {
+      attention: { targeted: recipient === 2, scanned: recipient === 3 },
+      mining: null,
+      me: [recipient, 0, -0, 1.25],
+      text: 'escaped\nline\t\ud800',
+    };
+    assert.equal(encode(fields), JSON.stringify({ t: 'snap', ...shared, ...fields }));
+  }
+}

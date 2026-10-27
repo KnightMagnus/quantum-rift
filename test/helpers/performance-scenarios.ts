@@ -36,7 +36,17 @@ export const performanceScenarios = [
 ] as const;
 export type PerformanceScenario = (typeof performanceScenarios)[number];
 /** Bounded in-process authoritative run, with deterministic RNG and wall-clock simulation time. */
-export function runPerformanceScenario(name: PerformanceScenario, ticks: number, enabled = true) {
+export function runPerformanceScenario(
+  name: PerformanceScenario,
+  ticks: number,
+  enabled = true,
+  requestedCaptains?: number,
+) {
+  if (
+    requestedCaptains !== undefined &&
+    (!Number.isInteger(requestedCaptains) || requestedCaptains < 2 || requestedCaptains > 30)
+  )
+    throw new Error('captains must be 2..30');
   if (!Number.isInteger(ticks) || ticks < 1 || ticks > 108000)
     throw new Error('ticks must be 1..108000');
   const originalRandom = Math.random;
@@ -94,7 +104,8 @@ export function runPerformanceScenario(name: PerformanceScenario, ticks: number,
       return session;
     }
     const systemIds = Object.keys(systemsById).sort();
-    const captainCount = name === 'concentrated' || name === 'distributed' ? 12 : 2;
+    const captainCount =
+      requestedCaptains ?? (name === 'concentrated' || name === 'distributed' ? 12 : 2);
     const captains = Array.from({ length: captainCount }, (_, index) => login(index));
     const space = game.spaces.meridian;
     let miningFrames = 0;

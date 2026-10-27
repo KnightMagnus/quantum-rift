@@ -1236,10 +1236,10 @@ traces for before/after comparison. It does not certify every research node or
 transport. Native checkpoint recovery and network behavior remain separate suite
 contracts.
 
-## Network faults on the local transport
+## Network faults and economic receipt recovery
 
 `network-faults.ts` drives one captain through `Game.connect`'s socket listener
-with isolated saves and no timers or waits. It covers these scenarios:
+with isolated saves and no wall-clock delay waits. It covers these scenarios:
 
 - **Replayed rewards:** a completed daily goal claimed three times pays once. A
   cargo job accepted twice is recorded once, and landing at its destination twice
@@ -1264,6 +1264,42 @@ It also checks quiet-peer liveness with an injected clock: a peer that sends not
 for 15 seconds is pinged, any inbound bytes (including the pong browsers send
 automatically) restart the quiet period, and a peer silent for 45 seconds is closed
 without a close handshake. Closing reports the disconnect to the game once.
+
+The same registered test also uses a fixed clock and a deterministic packet
+queue. Arrival times reorder requests without sleeps; outbound replies can be
+withheld even after settlement. Sixteen refinery-purchase and towing-reward
+scenarios use the real service receipts and checkpoint owners:
+
+- **Local journal:** clean commit, failure before journal installation, lost
+  acknowledgement after installation, interruption between player/world snapshots,
+  and failure at the final directory sync after journal removal.
+- **Native CAS:** the real `NakamaDatabase` runs against an offline versioned
+  storage backend. It covers clean writes, failure before the write and a
+  successful write whose acknowledgement is lost. Both native failure cases
+  freeze the old authority; a new database distinguishes committed and uncommitted
+  state without guessing from the error.
+- **Delivery and recovery:** the first reply is held, then a duplicate arrives
+  before recovery. Clean commits also exercise graceful disconnect/reconnect.
+  Restart replays the original request on a new session and releases a delayed
+  packet and flight controls on the retired session. Exact credits/cargo, a
+  single refinery batch/receipt or towing receipt, and clean input ownership are
+  checked. Uncommitted towing delivery restores a detached object; its stale
+  revision is denied, and a fresh attachment/delivery awards its cargo once.
+- **Rewards and intent:** delayed daily-goal claims on old/new connections remain
+  claimed across restart without another payout or log entry. Two separately
+  delivered, identical live material-purchase intents still debit twice and add
+  two items; legacy purchase semantics have not changed.
+
+Limits: packet delay/reordering is injected at the serialized `Game.connect`
+listener boundary, not with a real TCP proxy. Native checkpoint faults use an
+offline CAS fixture, not a PostgreSQL outage; actual native replacement/restart
+and bounded flood behavior remain covered by `nakama-network.ts`. Crashes retire
+the old sessions and disable their autosave without a graceful-disconnect flush.
+These checks do not prove every action, arbitrary packet schedule or service
+failure. Legacy `buyship`, `buymat` and `trade` carry no request identifier, so
+two valid live deliveries remain two explicit purchase intents; the browser does
+not resend them on reconnect. Retry-safe ordinary purchases would require a
+separate request-identity contract, not generic suppression of identical packets.
 
 `network-faults-loopback.ts` runs the real `upgrade` handler and Node's WebSocket
 client over loopback TCP, with a proxy between them that can delay, withhold,
@@ -1384,6 +1420,51 @@ does not depend on unrelated ambient traffic random rolls.
 The HUD JUMP regression also opens the galaxy map and attempts native button
 activation before the periodic disabled-state refresh. No jump packet or jump
 navigation can escape the overlay; closing the map restores the plotted action.
+
+## Native performance budget verification
+
+`performance-budgets.ts` is a fast `performance-health` unit regression. Synthetic
+reports prove inclusive per-metric limits, rejection of any failing repeat,
+exact environment/workload matching, same clean source build and runtime/input
+hashes, distinct run
+identities, sufficient repeats, measured duration, input/restoration/checkpoint
+evidence, and SDK/authority/cleanup failures. Missing and nonfinite metrics,
+unknown/malformed profiles, corrupt and oversized files, and CLI success/failure
+exit statuses are covered. Synthetic numbers are verifier fixtures, not measured
+budgets or supported capacity. Isolated provenance fixtures cover valid builds,
+stale source/build-driver/helper/lockfile bytes, inputs changed during bundling,
+missing/tampered manifests or runtimes, unsafe input paths and mixed-artifact
+reports. A guarded native constructor proves failed provenance is rejected before
+resource allocation without starting services; pinned runtime bytes remain stable
+when the ignored file changes. The registered native workload additionally checks
+that its numeric report contains valid hashes but no runtime source bytes.
+Packaging fixtures include the build helper, lockfile and generated manifest.
+Deployment profiles remain externally selected;
+see [PERFORMANCE.md](PERFORMANCE.md#explicit-budget-profiles).
+
+## Full-instance admission and performance fixtures
+
+`nakama-world-lease.ts` exercises the actual join callbacks at 30 connections,
+including a 31-presence batch, duplicate callbacks and a full-instance replacement
+for the same authenticated principal. The displaced connection receives the
+existing error before its kick, and its Game/native slots are retired before
+allocation. A stale leave cannot delete the replacement; join callbacks recheck
+authentication before displacing anyone. The first 30 join; the
+extra presence is kicked without creating a Game session. A full instance rejects
+additional captains while allowing same-captain replacements. Existing ownership
+and authentication gates remain enforced.
+
+`health.ts` runs real concentrated and distributed 30-captain simulations for
+120 ticks and checks authority failures, snapshot size and checkpoint growth.
+The native harness supports up to 30 real SDK connections, but CI's short native
+case remains a bounded continuity check rather than a full-instance capacity claim.
+See [PERFORMANCE.md](PERFORMANCE.md#thirty-player-instance-target) for reproduction
+and hardware limits.
+
+The registered `performance-budgets.ts` program also checks both retained 30-player,
+300-second native reports against `docs/performance-baselines/shared-host-30.json`
+offline. This validates artifact consistency and lab alarm thresholds, not live CI
+timing or production smoothness. See [performance measurements](PERFORMANCE.md).
 
 ## Client prediction ownership
 

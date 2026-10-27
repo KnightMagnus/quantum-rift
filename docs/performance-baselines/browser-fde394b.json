@@ -1,0 +1,149 @@
+{
+  "schema": 1,
+  "sourceHead": "fde394bd192868ba65bc878214ec0abe71741bed",
+  "sourceDirty": false,
+  "host": {
+    "runtime": "v27.0.0-nightly20261020531d28fc36",
+    "platform": "linux",
+    "arch": "x64",
+    "cpu": "AMD EPYC 4344P 8-Core Processor",
+    "logicalCpus": 16,
+    "totalMemory": 65933004800
+  },
+  "artifactHashes": {
+    "dist/client/engine.js": "6995c5bb80d9b44d5a88190b2d5f0de236f4076c88917f3dd51506d9ab16de79",
+    "dist/client/space-scene.js": "b9d733559e7d72a25ad3c864bcf4d30904b70cc4454dc493d5514423b5d5bd34",
+    "dist/client/main.js": "000303bfebe3c0e642ff8d8487a68a9be12a94254a40221b7d39268549be9ede"
+  },
+  "limits": [
+    "Shared headless Chromium host; no physical-device or hardware-GPU performance claim.",
+    "CPU scene hooks exclude GPU completion and work outside those hooks.",
+    "Mixed lifecycle fixture, not a sustained FPS or production latency benchmark."
+  ],
+  "reports": [
+    {
+      "browser": "156.0.8078.4",
+      "viewport": {
+        "width": 1050,
+        "height": 780
+      },
+      "ratio": 1,
+      "requestedRenderer": "webgl",
+      "actualRenderer": "ExcaliburGraphicsContextWebGL",
+      "workload": "existing Engine flight/input/camera/effects fixture, 1 captain, mixed lifecycle",
+      "health": {
+        "browserUpdateMs": {
+          "count": 182,
+          "total": 1126.3999967575073,
+          "max": 73.5,
+          "last": 0.5999994277954102,
+          "p50": 0.7999992370605469,
+          "p95": 32.30000019073486,
+          "retained": 182
+        },
+        "browserDrawMs": {
+          "count": 194,
+          "total": 684.5000038146973,
+          "max": 64.59999942779541,
+          "last": 0.5,
+          "p50": 0.9000005722045898,
+          "p95": 9,
+          "retained": 194
+        }
+      }
+    },
+    {
+      "browser": "156.0.8078.4",
+      "viewport": {
+        "width": 1050,
+        "height": 780
+      },
+      "ratio": 2,
+      "requestedRenderer": "webgl",
+      "actualRenderer": "ExcaliburGraphicsContextWebGL",
+      "workload": "existing Engine flight/input/camera/effects fixture, 1 captain, mixed lifecycle",
+      "health": {
+        "browserUpdateMs": {
+          "count": 136,
+          "total": 3333.9999980926514,
+          "max": 135.0999994277954,
+          "last": 0.6000003814697266,
+          "p50": 0.6999998092651367,
+          "p95": 96,
+          "retained": 136
+        },
+        "browserDrawMs": {
+          "count": 148,
+          "total": 1072.599988937378,
+          "max": 72.30000019073486,
+          "last": 0.39999961853027344,
+          "p50": 2.09999942779541,
+          "p95": 20.5,
+          "retained": 148
+        }
+      }
+    },
+    {
+      "browser": "156.0.8078.4",
+      "viewport": {
+        "width": 1050,
+        "height": 780
+      },
+      "ratio": 1,
+      "requestedRenderer": "canvas",
+      "actualRenderer": "ExcaliburGraphicsContext2DCanvas",
+      "workload": "existing Engine flight/input/camera/effects fixture, 1 captain, mixed lifecycle",
+      "health": {
+        "browserUpdateMs": {
+          "count": 329,
+          "total": 1030.4000062942505,
+          "max": 67.60000038146973,
+          "last": 0.5999994277954102,
+          "p50": 0.5,
+          "p95": 25.300000190734863,
+          "retained": 329
+        },
+        "browserDrawMs": {
+          "count": 341,
+          "total": 883.7999897003174,
+          "max": 55.69999980926514,
+          "last": 0.09999942779541016,
+          "p50": 0.2999992370605469,
+          "p95": 7.399999618530273,
+          "retained": 341
+        }
+      }
+    },
+    {
+      "browser": "156.0.8078.4",
+      "viewport": {
+        "width": 1050,
+        "height": 780
+      },
+      "ratio": 2,
+      "requestedRenderer": "auto",
+      "actualRenderer": "ExcaliburGraphicsContext2DCanvas",
+      "workload": "existing Engine flight/input/camera/effects fixture, 1 captain, mixed lifecycle",
+      "health": {
+        "browserUpdateMs": {
+          "count": 335,
+          "total": 3079.9999980926514,
+          "max": 125,
+          "last": 0.3000001907348633,
+          "p50": 0.5,
+          "p95": 79.09999942779541,
+          "retained": 335
+        },
+        "browserDrawMs": {
+          "count": 347,
+          "total": 3137.2000045776367,
+          "max": 163.70000076293945,
+          "last": 9.899999618530273,
+          "p50": 3,
+          "p95": 21.899999618530273,
+          "retained": 347
+        }
+      }
+    }
+  ]
+}

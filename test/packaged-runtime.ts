@@ -147,6 +147,7 @@ try {
   for (const relative of [
     '.gitignore',
     'package.json',
+    'package-lock.json',
     'tsconfig.json',
     'tsconfig.core.json',
     'tsconfig.build.json',
@@ -158,6 +159,7 @@ try {
     'client/style.css',
     'tools/build.ts',
     'tools/build-nakama.ts',
+    'tools/nakama-build-provenance.ts',
     'tools/typescript-scope.ts',
     'tools/start.ts',
     'tools/runtime/node27.json',
@@ -259,6 +261,7 @@ try {
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/server/seeds.json'));
   for (const required of [
     'dist/nakama/quantum-rift.js',
+    'dist/nakama/quantum-rift.provenance.json',
     'dist/client/connection.js',
     'dist/shared/assets.json',
     'dist/shared/landscape-worlds.json',
