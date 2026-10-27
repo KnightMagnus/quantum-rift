@@ -1290,6 +1290,7 @@ does not depend on unrelated ambient traffic random rolls.
 The HUD JUMP regression also opens the galaxy map and attempts native button
 activation before the periodic disabled-state refresh. No jump packet or jump
 navigation can escape the overlay; closing the map restores the plotted action.
+
 ## Native performance budget verification
 
 `performance-budgets.ts` is a fast `performance-health` unit regression. Synthetic
@@ -1301,3 +1302,17 @@ unknown/malformed profiles, corrupt and oversized files, and CLI success/failure
 exit statuses are covered. Synthetic numbers are verifier fixtures, not measured
 budgets or supported capacity. Deployment profiles remain externally selected;
 see [PERFORMANCE.md](PERFORMANCE.md#deployment-owned-budget-profiles).
+
+## Full-instance admission and performance fixtures
+
+`nakama-world-lease.ts` exercises the actual join callbacks at 30 connections,
+including a 31-presence batch and duplicate callbacks. The first 30 join; the
+extra presence is kicked without creating a Game session. A full instance rejects
+further attempts. The existing ownership/authentication gates remain separate.
+
+`health.ts` runs real concentrated and distributed 30-captain simulations for
+120 ticks and checks authority failures, snapshot size and checkpoint growth.
+The native harness supports up to 30 real SDK connections, but CI's short native
+case remains a bounded continuity check rather than a full-instance capacity claim.
+See [PERFORMANCE.md](PERFORMANCE.md#thirty-player-instance-target) for reproduction
+and hardware limits.

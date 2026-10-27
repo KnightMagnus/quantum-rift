@@ -125,3 +125,14 @@ for (const name of performanceScenarios) {
 console.log(
   'Bounded health, UTF-8 sizes, freeze privacy and six seeded workloads preserve enabled/disabled authority.',
 );
+
+// Full-instance concentrated and distributed fixtures retain real simulation and bounds.
+for (const name of ['concentrated', 'distributed'] as const) {
+  const full = runPerformanceScenario(name, 120, true, 30);
+  assert.equal(full.captains, 30);
+  assert.equal(full.outcome.sessions, 30);
+  assert.equal(full.metrics.tickFailures?.count ?? 0, 0);
+  assert.ok(full.metrics.snapshotBytes!.max <= 32 * 1024);
+  assert.ok(full.metrics.checkpointBytes!.max <= 512 * 1024);
+}
+assert.throws(() => runPerformanceScenario('concentrated', 1, true, 31));

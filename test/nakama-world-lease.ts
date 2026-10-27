@@ -1,4 +1,5 @@
-import { advanceWorld, attemptWorldJoin, signalWorld } from '../server/nakama-world.ts';
+import { GAME_PROTOCOL } from '../shared/protocol.ts';
+import { advanceWorld, attemptWorldJoin, joinWorld, signalWorld } from '../server/nakama-world.ts';
 import assert from 'node:assert/strict';
 import {
   findOrCreateWorld,
@@ -263,4 +264,77 @@ assert.deepEqual(
 assert.deepEqual(peer.received, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
 console.log(
   'Actual native ingress callback: eight-message per-session cap, peer fairness and next-tick reset passed.',
+);
+
+// Admission is checked again when a batch of successful attempts reaches join.
+const capacitySessions = new Map<number, { data: object; inputScheduling?: string }>();
+const capacityGame = {
+  nextSid: 1,
+  sessions: capacitySessions,
+  connect: () => {
+    capacitySessions.set(capacityGame.nextSid++, { data: {} });
+  },
+  onMessage: () => {},
+};
+const capacityState = {
+  ...callbackState,
+  leaseId: 'winner',
+  matchId: 'another-world',
+  connections: new Map(),
+  auth: { captainForUser: (id: string) => id },
+  database: {
+    economicFrozen: false,
+    withAuthenticatedCaptain: (_name: string, callback: () => void) => callback(),
+    flush: () => {},
+  },
+  game: capacityGame,
+};
+const capacityHandle = { world: () => capacityState };
+const kicked: string[] = [];
+const capacityDispatcher = {
+  matchKick: (presences: Array<{ sessionId: string }>) =>
+    kicked.push(...presences.map((presence) => presence.sessionId)),
+};
+const capacityJoin = () =>
+  Reflect.apply(attemptWorldJoin, undefined, [
+    {},
+    {},
+    nativePorts,
+    capacityDispatcher,
+    1,
+    capacityHandle,
+    { userId: 'capacity-user' },
+    { protocol: String(GAME_PROTOCOL) },
+  ]);
+assert.equal(capacityJoin().accept, true);
+Reflect.apply(joinWorld, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  Array.from({ length: 31 }, (_, index) => ({
+    userId: 'capacity-user-' + index,
+    sessionId: 'capacity-session-' + index,
+  })),
+]);
+assert.equal(capacityState.connections.size, 30);
+assert.equal(capacitySessions.size, 30);
+assert.deepEqual(kicked, ['capacity-session-30']);
+assert.equal(capacityJoin().accept, false);
+assert.match(capacityJoin().rejectMessage, /full/);
+// Duplicate callbacks must not allocate another Game session.
+Reflect.apply(joinWorld, undefined, [
+  {},
+  {},
+  nativePorts,
+  capacityDispatcher,
+  1,
+  capacityHandle,
+  [{ userId: 'capacity-user-0', sessionId: 'capacity-session-0' }],
+]);
+assert.equal(capacitySessions.size, 30);
+console.log(
+  'Native admission: 30 accepted, 31st denied, batched joins capped, duplicate join inert.',
 );

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { INSTANCE_PLAYER_LIMIT } from '../../shared/world-capacity.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -14,7 +15,7 @@ import { NakamaService, repository, until, sanitizedDiagnostic } from './nakama-
 export interface NativePerformanceOptions {
   /** Measured wall-clock flight duration, 32..300 seconds. */
   durationSeconds: number;
-  /** Fresh captains in one initial system, 1..12. */
+  /** Fresh captains in one initial system, 1..30. */
   captains: number;
   /** Unsigned 32-bit seed for client input selection only. */
   seed: number;
@@ -27,8 +28,12 @@ export function validateNativePerformance(options: NativePerformanceOptions): vo
     options.durationSeconds > 300
   )
     throw new Error('Native duration must be 32..300 integer seconds');
-  if (!Number.isInteger(options.captains) || options.captains < 1 || options.captains > 12)
-    throw new Error('Native captains must be 1..12');
+  if (
+    !Number.isInteger(options.captains) ||
+    options.captains < 1 ||
+    options.captains > INSTANCE_PLAYER_LIMIT
+  )
+    throw new Error('Native captains must be 1..30');
   if (!Number.isSafeInteger(options.seed) || options.seed < 0 || options.seed > 0xffffffff)
     throw new Error('Native seed must be an unsigned 32-bit integer');
 }

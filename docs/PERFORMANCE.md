@@ -191,7 +191,7 @@ node test/performance-native.ts
 
 The default workload lasts 60 measured wall-clock seconds with four fresh
 captains in their common initial system. Limits are 32–300 integer seconds,
-1–12 captains and an unsigned 32-bit client seed. Invalid or duplicate arguments
+1–30 captains and an unsigned 32-bit client seed. Invalid or duplicate arguments
 fail before creating services or an output file. Output must be an absolute path;
 the tool creates a new mode-0600 file and refuses to overwrite one. Setup and
 restart time are additional to the measured flight duration. The fixture watchdog
@@ -300,3 +300,29 @@ establish browser performance, distributed/combat/mining native capacity or
 multihour stability. No deployment latency profile is supplied while the intended
 hardware and workload remain unspecified. Shared-host CI tests verifier behavior
 with synthetic measurements and retains the existing payload-growth guards.
+
+## Thirty-player instance target
+
+A native game instance admits at most 30 simultaneous connections. The join-attempt
+callback rejects a full instance; the join callback checks again so a batch of
+accepted attempts cannot exceed the limit. Duplicate joins do not allocate extra
+Game sessions. Disconnected captains retain the existing docking and save rules.
+This is an admission limit, not evidence of smooth play on arbitrary hardware.
+
+A provisional single-instance host is four modern dedicated vCPUs, 8 GB RAM and
+SSD storage, including the database. The baseline host recorded in each report is
+a shared machine, not proof that this proposed allocation is sufficient. Choose a
+region near the players and repeat the workload on the intended host before deployment.
+No GPU is needed for the headless server; browser rendering must be measured separately.
+
+The native tool accepts `--captains=30` and exercises all 30 actual SDK connections,
+flight input, one reconnect and checkpoint/restart continuity. Use two independent
+300-second runs with the same clean build for a bounded full-instance baseline.
+The default short CI workload remains small; it does not impersonate a capacity test.
+
+Set `RIFT_PERF_CAPTAINS=30` for all six accelerated scenarios. Those runs cover
+concentrated/distributed captains, NPC combat, mining/towing and reconnects with
+production simulation, but use counting connections and memory CAS rather than
+native network/database latency. Thirty-player concentrated/distributed cases are
+also part of the registered health regression. Their 512 KiB checkpoint ceiling
+is a fixture growth guard, not a PostgreSQL latency or production save quota.

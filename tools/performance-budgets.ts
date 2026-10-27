@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { INSTANCE_PLAYER_LIMIT } from '../shared/world-capacity.ts';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { HealthSummary } from '../shared/health.ts';
@@ -80,7 +81,7 @@ export function parsePerformanceBudgetProfile(value: unknown): PerformanceBudget
     Number(value.workload.durationSeconds) > 300 ||
     !Number.isInteger(value.workload.captains) ||
     Number(value.workload.captains) < 1 ||
-    Number(value.workload.captains) > 12 ||
+    Number(value.workload.captains) > INSTANCE_PLAYER_LIMIT ||
     !Number.isSafeInteger(value.workload.seed) ||
     Number(value.workload.seed) < 0 ||
     Number(value.workload.seed) > 0xffffffff ||

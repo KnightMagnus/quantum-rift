@@ -12,7 +12,7 @@ import { installGameClone } from './portable-clone.ts';
 import { AuthorityCallbacks } from './authority-callbacks.ts';
 import { findOrCreateWorld, worldAuthority } from './nakama-world-lease.ts';
 
-const MAX_PLAYERS = 1024;
+import { INSTANCE_PLAYER_LIMIT } from '../shared/world-capacity.ts';
 /** State remains inside one Nakama authoritative match context. */
 export interface WorldState {
   game: Game<NakamaDatabase>;
@@ -184,10 +184,11 @@ export const attemptWorldJoin: nkruntime.MatchJoinAttemptFunction<WorldHandle> =
       return { state: handle, accept: false, rejectMessage: COMPATIBILITY_MESSAGE };
     if (
       state.database.economicFrozen ||
-      state.connections.size >= MAX_PLAYERS ||
       worldAuthority(nakamaStorageBackend(nk), state.leaseId, state.matchId) !== 'ready'
     )
       return { state: handle, accept: false, rejectMessage: 'The world is unavailable.' };
+    if (state.connections.size >= INSTANCE_PLAYER_LIMIT)
+      return { state: handle, accept: false, rejectMessage: 'This instance is full (30 players).' };
     try {
       state.auth.captainForUser(presence.userId, (id) => nk.accountGetId(id));
     } catch {
@@ -207,6 +208,12 @@ export const joinWorld: nkruntime.MatchJoinFunction<WorldHandle> = function join
   const state = handle.world();
   state.dispatcher = dispatcher;
   for (const presence of presences) {
+    if (state.connections.has(presence.sessionId)) continue;
+    // Several accepted attempts can arrive together before connections is updated.
+    if (state.connections.size >= INSTANCE_PLAYER_LIMIT) {
+      dispatcher.matchKick([presence]);
+      continue;
+    }
     const name = state.auth.captainForUser(presence.userId, (id) => nk.accountGetId(id));
     const connection = new MatchConnection(state, presence);
     state.connections.set(presence.sessionId, connection);
