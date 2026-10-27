@@ -1271,3 +1271,7 @@ chat and utilities in separate scroll-reachable tracks; enlarged Tray tabs wrap,
 and pinned guidance retains usable mission-list space. The live-landed fixture
 seeds ordinary moving server-owned traffic near the dock camera so draw-motion coverage
 does not depend on unrelated ambient traffic random rolls.
+
+The HUD JUMP regression also opens the galaxy map and attempts native button
+activation before the periodic disabled-state refresh. No jump packet or jump
+navigation can escape the overlay; closing the map restores the plotted action.

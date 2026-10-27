@@ -17,6 +17,12 @@ import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
 import { augmentAssets } from '../shared/rules.ts';
+declare global {
+  interface Window {
+    /** Outgoing gameplay packets in this isolated Solo fixture. */
+    hudJumpPackets: Record<string, unknown>[];
+  }
+}
 const { chromium } = await import('playwright');
 
 const directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-hud-controls-'));
@@ -79,6 +85,14 @@ try {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } }),
     errors: string[] = [];
   page.on('pageerror', (event) => errors.push(event.message));
+  await page.addInitScript(() => {
+    window.hudJumpPackets = [];
+    const send = Reflect.get(WebSocket.prototype, 'send') as typeof WebSocket.prototype.send;
+    WebSocket.prototype.send = function (data) {
+      if (typeof data === 'string') window.hudJumpPackets.push(JSON.parse(data));
+      return send.call(this, data);
+    };
+  });
 
   // Login console wears the blue hull frame, not the old grey panel with a red LED.
   await page.goto(origin);
@@ -153,6 +167,33 @@ try {
   });
   assert.match(String(await jump.getAttribute('title')), /\(J\)/, 'tooltip names the J key');
   await page.screenshot({ path: path.join(evidence, 'jump-right.png') });
+
+  // The map is not yet a managed dialog. Its presence still blocks the new button,
+  // including native keyboard activation and the interval before disabled refresh.
+  await page.keyboard.press('KeyM');
+  await page.locator('#gmap').waitFor({ state: 'visible' });
+  await page.evaluate(() => {
+    window.hudJumpPackets = [];
+    const button = document.getElementById('jumpholo') as HTMLButtonElement;
+    button.disabled = false; // Reproduce a click before the next 100ms refresh.
+    button.focus();
+    button.click();
+  });
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(
+    () => (document.getElementById('jumpholo') as HTMLButtonElement).disabled,
+  );
+  assert.equal(await page.evaluate(() => G.auto), null, 'A map cannot start jump navigation');
+  assert.equal(
+    await page.evaluate(() => window.hudJumpPackets.some((packet) => packet.t === 'jump')),
+    false,
+    'No jump escapes an open map',
+  );
+  await page.keyboard.press('Escape');
+  await page.locator('#gmap').waitFor({ state: 'hidden' });
+  await page.waitForFunction(
+    () => !(document.getElementById('jumpholo') as HTMLButtonElement).disabled,
+  );
 
   await page.evaluate(() => document.getElementById('opt-jumpLeft')!.click());
   await page.waitForFunction(() => document.body.classList.contains('jump-left'));

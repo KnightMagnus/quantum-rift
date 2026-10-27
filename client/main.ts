@@ -1822,14 +1822,21 @@ function refreshJumpButton(): void {
   if (!flying) return;
   const plotted = clientGameState.route.length > 0;
   const keyLabel = keyName(bound('jump'));
-  button.disabled = !plotted;
+  button.disabled = !plotted || overlays.blocksFlight();
   button.title = plotted
     ? `Jump to ${systemsById[clientGameState.route[0]]?.name || 'the next system'} (${keyLabel})`
     : 'Plot a course on the map first (M)';
   elementById2('jumpholokey').textContent = bound('jump') ? keyLabel : '';
 }
 elementById2('jumpholo').onclick = () => {
-  if (clientGameState.route.length) jumpNext();
+  if (
+    clientGameState.you &&
+    clientGameState.view &&
+    !clientGameState.landed &&
+    !overlays.blocksFlight() &&
+    clientGameState.route.length
+  )
+    jumpNext();
 };
 function jumpNext() {
   if (!clientGameState.route.length) return toast('Plot a course on the map first (M).');
