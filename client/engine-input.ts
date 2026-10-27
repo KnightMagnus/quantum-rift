@@ -5,6 +5,7 @@ const keyCodes = new Set<string>(Object.values(Keys));
 /** Saved browser key codes map directly to the engine's physical-key enum values. */
 export class FlightInput {
   private pointerButtons = 0;
+  private lifetime = new AbortController();
   get pointerHeld(): boolean {
     return !!(this.pointerButtons & 1);
   }
@@ -21,28 +22,37 @@ export class FlightInput {
       (event) => {
         this.pointerButtons = event.buttons;
       },
-      true,
+      { capture: true, signal: this.lifetime.signal },
     );
     window.addEventListener(
       'pointerup',
       (event) => {
         this.pointerButtons = event.buttons;
       },
-      true,
+      { capture: true, signal: this.lifetime.signal },
     );
     window.addEventListener(
       'pointercancel',
       () => {
         this.pointerButtons = 0;
       },
-      true,
+      { capture: true, signal: this.lifetime.signal },
     );
     const clear = () => this.clear();
-    window.addEventListener('blur', clear);
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) clear();
-    });
+    window.addEventListener('blur', clear, { signal: this.lifetime.signal });
+    document.addEventListener(
+      'visibilitychange',
+      () => {
+        if (document.hidden) clear();
+      },
+      { signal: this.lifetime.signal },
+    );
     engine.input.keyboard.on('press', (event) => {
+      // A held key first observed after a renderer/focus transition is not a fresh press.
+      if (event.originalEvent?.repeat) {
+        this.blocked.add(event.key);
+        return;
+      }
       const target = event.originalEvent?.target;
       const editing =
         target instanceof HTMLElement &&
@@ -74,6 +84,15 @@ export class FlightInput {
   }
   consumeTick(): void {
     this.pending.clear();
+  }
+  /** A replacement renderer must not treat autorepeat as a fresh manual press. */
+  blockUntilRelease(codes: readonly string[]): void {
+    for (const code of codes) this.blocked.add(code);
+  }
+  /** Remove browser safety-latch listeners when a presentation engine is replaced. */
+  dispose(): void {
+    this.clear();
+    this.lifetime.abort();
   }
   clear(): void {
     this.pointerButtons = 0;

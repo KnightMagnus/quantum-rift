@@ -191,7 +191,8 @@
     "planet-cache-budget-browser.ts",
     "pressure-hull-browser.ts",
     "protocol-compatibility-browser.ts",
-    "hud-controls-browser.ts"
+    "hud-controls-browser.ts",
+    "asset-recovery-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -1704,6 +1705,19 @@
         "nakama-network.ts"
       ],
       "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC and authoritative join rejection, terminal local denial despite buffered packets/late errors, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
+    },
+    {
+      "id": "asset-recovery",
+      "owners": [
+        "client/asset-resources.ts",
+        "client/audio.ts",
+        "client/engine.ts",
+        "client/engine-input.ts",
+        "client/world-actors.ts"
+      ],
+      "services": [],
+      "tests": ["asset-recovery-browser.ts", "render-cache-budget.ts"],
+      "asserts": "Decoded image/audio ownership budgets and live-resource-safe eviction; missing/corrupt asset fallbacks and bounded failure cleanup; repeated actual graphics context loss/restoration preserves captain state and blocks held controls until release."
     },
     {
       "id": "combat-playability",
