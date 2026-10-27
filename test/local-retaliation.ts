@@ -68,7 +68,22 @@ assert.equal(
   'zero actual damage does not authorize retaliation',
 );
 assert.equal(ally.target, null);
+// Incidental damage permits only the victim and its wing to defend themselves.
 first.damage(target, 1, 1, session.ent);
+assert.equal(first.spared(target, session.ent), false);
+assert.equal(first.spared(ally, session.ent), true, 'stray fire does not recruit the faction');
+assert.equal(ally.target, null);
+assert.equal(session.retaliationVisit!.factions.size, 0);
+// A deliberately selected attack still starts the normal faction fight.
+session.ent.target = target;
+first.damage(target, 1, 1, session.ent);
+assert.equal(
+  session.retaliationVisit!.factions.size,
+  0,
+  'defending against the accidental victim does not widen the fight',
+);
+session.ent.target = ally;
+first.damage(ally, 1, 1, session.ent);
 assert.equal(
   first.spared(target, session.ent),
   false,
@@ -116,6 +131,7 @@ const civilian = ship('quantum');
 relaunched.ships.set(wing.id, wing);
 relaunched.ships.set(civilian.id, civilian);
 const repBefore = session.data.rep.quantum;
+session.ent.target = civilian;
 relaunched.damage(civilian, 1, 1, wing);
 assert.equal(session.data.rep.quantum, repBefore - 1, 'ordinary reputation penalty still applies');
 assert.equal(
@@ -149,6 +165,27 @@ assert.equal(
   session.data.rep.quantum,
   repBefore - 1,
   'standing loss persists after temporary retaliation expires',
+);
+// Lawful ships tolerate one accidental broadside, but repeated separated volleys allow local defense.
+session.ent.target = null;
+returned.damage(civilianAfter, 1, 1, session.ent);
+assert.equal(civilianAfter.aggro.size, 0);
+for (let pellet = 0; pellet < 10; pellet++) returned.damage(civilianAfter, 1, 1, session.ent);
+assert.equal(civilianAfter.aggro.size, 0, 'one volley is not ten separate provocations');
+returned.t += 1.6;
+returned.damage(civilianAfter, 1, 1, session.ent);
+assert.equal(civilianAfter.aggro.size, 0);
+returned.t += 1.6;
+returned.damage(civilianAfter, 1, 1, session.ent);
+assert.equal(
+  civilianAfter.aggro.has(session.ent.id),
+  true,
+  'sustained unselected fire permits local defense',
+);
+assert.equal(
+  session.retaliationVisit!.factions.size,
+  0,
+  'sustained unselected fire still does not recruit the whole faction',
 );
 console.log(
   'Local retaliation passed: actual hits, allied help, later arrivals, unhit factions, wingmate attribution, same-system relaunch, visit reset and normal reputation.',

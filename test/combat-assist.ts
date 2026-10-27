@@ -239,10 +239,11 @@ shooter.combatTarget = enemyEntity;
 shooter.inp = { fire1: 1, fire2: 1 };
 shooter.guns = [
   { p: { range: 100, speed: 600, reload: 1 }, ammo: Infinity, cd: 0, sec: false },
-  { p: { range: 1000, rocket: true }, ammo: 10, cd: 0, sec: true },
+  { p: { range: 1000, speed: 600, rocket: true }, ammo: 10, cd: 0, sec: true },
   { p: { bay: true }, ammo: 3, cd: 0, sec: true },
 ].map(mockWeaponMount);
 enemyEntity.x = 500;
+shooter.a = Math.PI / 2;
 const fired: Parameters<Space['fire']>[] = [];
 const weaponSpace = mockSpace(
   Object.assign({}, space, {
@@ -254,17 +255,27 @@ const weaponSpace = mockSpace(
   }),
 );
 Space.prototype.weapons.call(weaponSpace, shooter);
-assert.equal(fired.length, 0, 'automated primary respects range and secondaries remain unused');
+assert.equal(
+  fired.length,
+  1,
+  'assist fires an aligned in-range secondary while primary is out of range',
+);
+assert.equal(
+  fired[0][1],
+  shooter.guns[1],
+  'the secondary mount fires, not the manual-only fighter bay',
+);
+fired.length = 0;
 enemyEntity.x = 50;
 shooter.a = Math.PI;
 Space.prototype.weapons.call(weaponSpace, shooter);
 assert.equal(fired.length, 0, 'fixed guns respect firing arc');
 shooter.a = Math.PI / 2;
 Space.prototype.weapons.call(weaponSpace, shooter);
-assert.equal(fired.length, 1, 'in-range aligned primary fires');
+assert.equal(fired.length, 2, 'in-range aligned primary and secondary fire');
 enemyEntity.disabled = true;
 Space.prototype.weapons.call(weaponSpace, shooter);
-assert.equal(fired.length, 1, 'disabled target gets no new intentional shot');
+assert.equal(fired.length, 2, 'disabled target gets no new intentional shot');
 // A target selected BEFORE enabling assist must initiate combat without being an attacker.
 const selectedLead = ship(),
   selectedFoe = ship();
@@ -575,5 +586,5 @@ assert.equal(
 selectionAssist.stop(selectedSession);
 assert.equal(selectedLead.autoCombat, false);
 console.log(
-  'Combat assist: fleet/group power, focus/handoff, authority revocation, stop orders, stale aggression, range/arc, preselected-target pursuit and primary-only firing passed.',
+  'Combat assist: fleet/group power, focus/handoff, authority revocation, stop orders, stale aggression, range/arc, preselected-target pursuit and secondary firing and manual-only bays passed.',
 );

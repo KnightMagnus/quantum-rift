@@ -197,6 +197,8 @@ export type Entity = EntityFeatureState & {
 
   /** Mission data object if this is a spawned mission target. */
   mission?: Pick<Mission, 'id' | 'owner'> | null;
+  /** Captains who dealt positive damage to their own accepted bounty target. */
+  bountyContributors?: Set<number>;
 
   /** Lifespan in seconds before departure. */
   life: number;
@@ -381,6 +383,12 @@ export type Entity = EntityFeatureState & {
 
   /** Session ID of the captain this career practice raider was sent after. */
   practiceOf?: number;
+
+  /** Ambient encounter identity, retained by surviving escorts after their leader leaves. */
+  ambientGroup?: number;
+
+  /** Recent unselected fire volleys per captain; lawful traffic tolerates isolated crossfire. */
+  incidentalHits?: Map<number, { count: number; last: number }>;
 
   /** Arena combat team designation ('A' or 'B'). */
   team?: string;
@@ -583,7 +591,12 @@ import { eventideDrain } from '../shared/eventide.ts';
 // One star system's live simulation: ships (players, their escorts, NPC traffic), shots, beams, loot.
 import { SYS as systemsById, TRAFFIC, FACTIONS, MATERIALS } from '../shared/galaxy.ts';
 import { roleMult } from '../shared/roles.ts';
-import { fitRaidToBudget, raidBudget } from '../shared/hostile.ts';
+import {
+  fitRaidToBudget,
+  raidBudget,
+  hullCombatPower,
+  shipCombatPower,
+} from '../shared/hostile.ts';
 import { STATES } from '../shared/living.ts';
 import {
   shipStats,
@@ -716,6 +729,9 @@ export class Space {
 
   /** Countdown until next background traffic spawn check. */
   declare spawnT: number;
+
+  /** Earliest simulation time when another ambient hostile group may arrive. */
+  declare nextRaidT?: number;
 
   /** Number of human player-piloted ships currently flying in this system. */
   declare players: number;
@@ -901,15 +917,7 @@ export class Space {
               ? 'steady'
               : 'reckless');
     } // how a captain fights
-    const statBonuses = entity.bonus || {};
-    currentEntity.pw = Math.round(
-      (shipHullAsset.strength || 10) *
-        (1 +
-          ((statBonuses.shieldPct || 0) +
-            (statBonuses.armorPct || 0) +
-            (statBonuses.damagePct || 0)) /
-            300),
-    ); // effective strength (levels)
+    currentEntity.pw = shipCombatPower(this.A, loadout, entity.bonus || {});
     const defAmmo: Record<string, number> = {};
     for (const [width, , firstValue] of shipHullAsset.weapons)
       defAmmo[width] = (defAmmo[width] || 0) + firstValue!;
@@ -1050,7 +1058,7 @@ export class Space {
     const entity = this.root(entity3),
       entity4 = this.root(entity2);
     if (!entity?.player || !entity4 || entity4.player) return false;
-    if (this.localRetaliation(entity4, entity)) return false;
+    if (this.localRetaliation(entity4, entity) || entity4.aggro.has(entity.id)) return false;
     return entity.graceT! > this.t || this.newcomerTruce(entity2, entity3);
   }
   // Idle wingmates must not turn a captain's protected passage into an unsolicited fight.
@@ -1062,6 +1070,41 @@ export class Space {
     )
       return false;
     if (this.spared(entity, entity3)) return false;
+    const sourceRoot = this.root(entity),
+      targetRoot = this.root(entity3);
+    if (
+      !sourceRoot.player &&
+      (sourceRoot.ai === 'raid' || sourceRoot.ambientGroup != null) &&
+      targetRoot.player &&
+      !sourceRoot.aggro.has(targetRoot.id) &&
+      !targetRoot.aggro.has(sourceRoot.id) &&
+      !sourceRoot.mission &&
+      !sourceRoot.huntOf &&
+      !sourceRoot.boss &&
+      !sourceRoot.kingpin &&
+      !sourceRoot.storyKill &&
+      !sourceRoot.arcOf &&
+      !sourceRoot.wave &&
+      !sourceRoot.combatOwners
+    ) {
+      const hunters = new Set(
+        [...this.ships.values()]
+          .filter(
+            (ship) =>
+              !ship.dead &&
+              (ship.ai === 'raid' || ship.ambientGroup != null) &&
+              ship.target &&
+              this.root(ship.target) === targetRoot,
+          )
+          .map((ship) => ship.ambientGroup ?? ship.id),
+      );
+      if (
+        !hunters.has(sourceRoot.ambientGroup ?? sourceRoot.id) &&
+        hunters.size >= (this.sys.danger >= 6 ? 3 : 2)
+      )
+        return false;
+    }
+
     const lead = this.root(entity);
     return !(
       !entity.player &&
@@ -1379,14 +1422,7 @@ export class Space {
           ) || pool,
         ),
       );
-    const budget = kind === 'raid' ? this.raidBudget() : null;
-    if (budget != null)
-      hulls = fitRaidToBudget(
-        hulls,
-        pool.filter((poolHull) => this.A.ships[poolHull]),
-        (raidHull) => this.A.ships[raidHull]?.strength || 10,
-        budget,
-      );
+    if (kind === 'raid') hulls = this.fitAmbientRaid(hulls, pool);
     let lead = null;
     for (const [index, height] of hulls.entries()) {
       let positionX, positionY, firstValue, value;
@@ -1421,6 +1457,7 @@ export class Space {
         owner: lead ? lead.id : null,
       });
       if (!initial) this.events.push(['flash', Math.round(entity.x), Math.round(entity.y)]);
+      if (kind === 'raid') entity.ambientGroup = lead?.id ?? entity.id;
       if (!lead) lead = entity;
       else {
         entity.ai = 'escort';
@@ -1428,19 +1465,66 @@ export class Space {
       }
     }
   }
-  /**
-   * Power budget for an ambient raid group, scaled to the strongest captain in the system.
-   * @returns Combined raider strength allowed, or null when raids are not scaled here.
-   */
+  /** Live ambient raiders, including escorts and special incursion cells. */
+  ambientRaiders(): Entity[] {
+    return [...this.ships.values()].filter((entity) => {
+      const root = this.root(entity);
+      return (
+        !entity.dead &&
+        !root.player &&
+        (entity.ambientGroup != null || root.ai === 'raid' || root.warFleet) &&
+        !root.mission &&
+        !root.huntOf &&
+        !root.practiceOf &&
+        !root.storyKill &&
+        !root.arcOf &&
+        !root.boss &&
+        !root.kingpin &&
+        !root.wave &&
+        !root.combatOwners
+      );
+    });
+  }
+
+  /** Remaining shared ambient threat allowance; unoccupied systems defer hostile wake spawns. */
   raidBudget(): number | null {
     if (this.sys.farside || this.sys.arena) return null;
-    let strongest = 0;
+    const powers: number[] = [];
     for (const entity of this.ships.values()) {
       const playerData = entity.player?.s?.data;
       if (entity.dead || !playerData || entity.player!.s.ent !== entity) continue;
-      strongest = Math.max(strongest, this.game.features.hostile.myPower(playerData));
+      powers.push(this.game.features.hostile.myPower(playerData));
     }
-    return strongest ? raidBudget(strongest, this.sys.danger) : null;
+    if (!powers.length) return 0;
+    const strongest = Math.max(...powers);
+    const fleetPower =
+      strongest + (powers.reduce((sum, power) => sum + power, 0) - strongest) * 0.6;
+    const raiders = this.ambientRaiders();
+    const roots = new Set(raiders.map((entity) => entity.ambientGroup ?? this.root(entity).id));
+    if (roots.size >= (this.sys.danger >= 5 ? 3 : 2)) return 0;
+    const present = raiders.reduce((sum, entity) => sum + entity.pw, 0);
+    const totalBudget = fleetPower * (0.4 + 0.2 * Math.max(0, this.sys.danger));
+    return Math.max(0, Math.min(raidBudget(strongest, this.sys.danger), totalBudget - present));
+  }
+
+  /** Fit every ambient encounter through one strict allowance, with no over-budget floor. */
+  fitAmbientRaid(hulls: number[], pool: number[]): number[] {
+    const budget = this.raidBudget();
+    if (budget == null) return hulls;
+    if ((this.nextRaidT ?? -Infinity) > this.t) return [];
+    const available = pool.filter(
+      (hull) => this.A.ships[hull] && hullCombatPower(this.A, hull) <= budget,
+    );
+    if (!available.length) return [];
+    const fitted = fitRaidToBudget(
+      hulls,
+      available,
+      (hull) => hullCombatPower(this.A, hull),
+      budget,
+    );
+    // A cleared encounter leaves time to recover shields before its replacement arrives.
+    this.nextRaidT = this.t + Math.max(12, 38 - this.sys.danger * 4);
+    return fitted;
   }
   // a group of warships of one power (a border war's attackers)
   /**
@@ -1472,14 +1556,7 @@ export class Space {
           ),
         ) || hull,
       );
-    const budget = this.raidBudget();
-    if (budget != null)
-      hulls = fitRaidToBudget(
-        hulls,
-        pool.filter((poolHull) => this.A.ships[poolHull]),
-        (groupHull) => this.A.ships[groupHull]?.strength || 10,
-        budget,
-      );
+    if (kind === 'raid' || kind === 'patrol') hulls = this.fitAmbientRaid(hulls, pool);
     let lead = null;
     for (const [index, groupHull] of hulls.entries()) {
       const positionX = initial ? random2(-1800, 1800) : Math.sin(angle) * 2600,
@@ -1497,6 +1574,8 @@ export class Space {
         owner: lead ? lead.id : null,
       });
       if (!initial) this.events.push(['flash', Math.round(entity.x), Math.round(entity.y)]);
+      if (kind === 'patrol') entity.warFleet = true;
+      entity.ambientGroup = lead?.id ?? entity.id;
       if (!lead) lead = entity;
     }
     return lead;
@@ -1508,66 +1587,45 @@ export class Space {
    * @returns Lead swarm entity, or null.
    */
   spawnSwarm(initial?: boolean): Entity | null {
-    const angle = Math.random() * Math.PI * 2,
-      distance = initial ? 600 + Math.random() * 1400 : 2400,
-      positionX = Math.cos(angle) * distance,
-      positionY = Math.sin(angle) * distance;
-    const lead = this.makeShip({
-      hull: 765,
-      faction: 'swarm',
-      x: positionX,
-      y: positionY,
-      a: angle + Math.PI,
-      ai: 'raid',
-      name: 'Swarm Brood-Leader',
-    });
+    if ([...this.ships.values()].some((entity) => !entity.dead && entity.faction === 'swarm'))
+      return null;
     const count = 4 + Math.floor(Math.random() * 4);
-    for (let index = 0; index < count; index++) {
-      const entity = this.makeShip({
-        hull: index % 3 ? 718 : 765,
-        faction: 'swarm',
-        x: positionX + (Math.random() - 0.5) * 160,
-        y: positionY + (Math.random() - 0.5) * 160,
-        a: angle + Math.PI,
-        ai: 'escort',
-        owner: lead.id,
-      });
-      entity.swarmling = true;
-    }
-    if (!initial) this.events.push(['flash', Math.round(positionX), Math.round(positionY)]);
-    return lead;
+    const hulls = this.fitAmbientRaid(
+      [765, ...Array.from({ length: count }, (_, index) => (index % 3 ? 718 : 765))],
+      [718, 765],
+    );
+    return this.spawnIncursion(hulls, 'swarm', initial);
   }
-  // an Umbral Eclipse cell, violet-lit and far from home
-  /**
-   * Spawns an Eclipse cultist strike group.
-   * @param initial True if spawning initial population.
-   * @returns Lead cultist entity, or null.
-   */
+  /** Spawns at most one Eclipse cell within the shared ambient threat allowance. */
   spawnEclipse(initial?: boolean): Entity | null {
-    const angle = Math.random() * Math.PI * 2,
-      distance = initial ? 700 + Math.random() * 1300 : 2400,
-      positionX = Math.cos(angle) * distance,
-      positionY = Math.sin(angle) * distance;
-    const lead = this.makeShip({
-      hull: Math.random() < 0.35 ? 763 : 762,
-      faction: 'eclipse',
-      x: positionX,
-      y: positionY,
-      a: angle + Math.PI,
-      ai: 'raid',
-      name: 'Eclipse Cell',
-    });
-    for (let index = 0; index < 2 + Math.floor(Math.random() * 2); index++)
-      this.makeShip({
-        hull: index ? 761 : 762,
-        faction: 'eclipse',
-        x: positionX + (index - 1) * 110,
-        y: positionY + 90,
+    if ([...this.ships.values()].some((entity) => !entity.dead && entity.faction === 'eclipse'))
+      return null;
+    const hulls = this.fitAmbientRaid(
+      [Math.random() < 0.35 ? 763 : 762, 762, 761, 761],
+      [761, 762, 763],
+    );
+    return this.spawnIncursion(hulls, 'eclipse', initial);
+  }
+  /** Materializes an already budgeted incursion without bypassing its fitted hull list. */
+  spawnIncursion(hulls: number[], faction: string, initial?: boolean): Entity | null {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = initial ? 1800 : 2600;
+    let lead: Entity | null = null;
+    for (const [index, hull] of hulls.entries()) {
+      const entity = this.makeShip({
+        hull,
+        faction,
+        x: Math.cos(angle) * distance + index * 80,
+        y: Math.sin(angle) * distance + index * 50,
         a: angle + Math.PI,
-        ai: 'escort',
-        owner: lead.id,
+        ai: index ? 'escort' : 'raid',
+        owner: lead?.id,
       });
-    if (!initial) this.events.push(['flash', Math.round(positionX), Math.round(positionY)]);
+      entity.ambientGroup = lead?.id ?? entity.id;
+      if (!lead) lead = entity;
+      else if (faction === 'swarm') entity.swarmling = true;
+    }
+    if (lead && !initial) this.events.push(['flash', Math.round(lead.x), Math.round(lead.y)]);
     return lead;
   }
   /**
@@ -2083,12 +2141,8 @@ export class Space {
    * @param entity2 Target enemy ship entity.
    */
   fight(entity: Entity, entity2: Entity): void {
-    const primaryOnly = entity.autoCombat || (entity.owner && this.root(entity).sharedCombat);
     const best = entity.guns
-      .filter(
-        (weaponMount) =>
-          !weaponMount.p.pd && weaponMount.ammo > 0 && (!primaryOnly || !weaponMount.sec),
-      )
+      .filter((weaponMount) => !weaponMount.p.pd && !weaponMount.p.bay && weaponMount.ammo > 0)
       .reduce((message, weaponMount) => Math.max(message, weaponMount.p.range), 300);
     const deltaX = entity2.x - entity.x,
       deltaY = entity2.y - entity.y,
@@ -2465,7 +2519,6 @@ export class Space {
         if (entity4) this.fire(entity, weaponMount, entity4, angleTo(entity, entity4.x, entity4.y));
         continue;
       }
-      if (automated && weaponMount.sec) continue;
       if (
         automated &&
         (!entity2 || !this.game.combatAssist.valid(this, this.root(entity), entity2))
@@ -2570,6 +2623,16 @@ export class Space {
     entity.hitT = this.t;
     if (entity2) entity.lastHitBy = entity2.id;
     const done = Math.max(0, shield2 - entity.shield) + Math.max(0, armor2 - entity.armor);
+    if (done > 0 && srcRoot?.player && entity.mission?.owner === srcRoot.player.id) {
+      const captain = srcRoot.player.s?.data;
+      if (
+        captain?.missions.some(
+          (mission) =>
+            mission.type === 'bounty' && !mission.done && mission.id === entity.mission!.id,
+        )
+      )
+        (entity.bountyContributors ||= new Set()).add(srcRoot.player.id);
+    }
     if (done > 0 && entity2) this.game?.features?.nhal?.damaged(this, entity, entity2, done);
     if (done > 0 && entity2) this.game?.features?.indexFleet?.damaged(this, entity, entity2, done);
     if (done > 0 && entity2) this.game?.features?.index?.damaged(this, entity, entity2);
@@ -2586,11 +2649,37 @@ export class Space {
     ) {
       const victim = this.root(entity),
         first = !victim.aggro.has(srcRoot.id);
-      if (srcRoot.player?.s && !victim.player && !this.sys.arena)
-        this.beginVisit(srcRoot.player.s).factions.add(victim.faction);
-      victim.aggro.add(srcRoot.id);
-      if (!entity.player && !entity.target && entity.ai !== 'flee') entity.target = srcRoot;
-      if (first && !entity.owner) this.callHelp(entity, srcRoot);
+      const deliberate =
+        (srcRoot.target && this.root(srcRoot.target) === victim) ||
+        (srcRoot.combatTarget && this.root(srcRoot.combatTarget) === victim);
+      let retaliate = true;
+      if (
+        srcRoot.player &&
+        !victim.player &&
+        first &&
+        !deliberate &&
+        !FACTIONS[victim.faction]?.pirate &&
+        !FACTIONS[victim.faction]?.alwaysHostile
+      ) {
+        const hits = (victim.incidentalHits ||= new Map());
+        let recent = hits.get(srcRoot.id);
+        if (!recent || this.t - recent.last > 10) recent = { count: 0, last: -Infinity };
+        // Count separated volleys, not every pellet in one accidental broadside.
+        if (this.t - recent.last >= 1.5) {
+          recent.count++;
+          recent.last = this.t;
+        }
+        hits.set(srcRoot.id, recent);
+        retaliate = recent.count >= 3;
+      }
+      if (retaliate) {
+        if (srcRoot.player?.s && !victim.player && !this.sys.arena && first && deliberate)
+          this.beginVisit(srcRoot.player.s).factions.add(victim.faction);
+        victim.aggro.add(srcRoot.id);
+        if (!entity.player && !entity.target && entity.ai !== 'flee') entity.target = srcRoot;
+        if (first && !entity.owner && (!srcRoot.player || deliberate))
+          this.callHelp(entity, srcRoot);
+      }
     }
     if (
       srcRoot &&
@@ -2653,6 +2742,7 @@ export class Space {
    * @param entity2 Killer root entity, if any.
    */
   kill(entity: Entity, entity2?: Entity | null): void {
+    if (entity.dead) return;
     this.events.push(['boom', Math.round(entity.x), Math.round(entity.y), entity.st.size]);
     this.remove(entity);
     for (const entity3 of this.ships.values())
@@ -2688,6 +2778,24 @@ export class Space {
         this,
         (entity.lastHitBy && entity.lastHitBy !== entity2.id) as boolean | undefined,
       );
+    if (entity.mission && entity.bountyContributors?.has(entity.mission.owner!)) {
+      const owner = [...this.game.sessions.values()].find(
+        (session) => session.id === entity.mission!.owner,
+      );
+      const mission = owner?.data?.missions.find(
+        (mission) =>
+          mission.type === 'bounty' && mission.id === entity.mission!.id && !mission.done,
+      );
+      if (owner && mission) {
+        mission.done = true;
+        this.game.toast(
+          owner,
+          `Bounty complete: ${mission.targetName} is dead. Land anywhere to collect your pay.`,
+        );
+        this.game.db.touch();
+        this.game.you(owner);
+      }
+    }
     if (!entity.fighterOf && Math.random() < (entity2 && entity2.hull === 810 ? 0.82 : 0.55))
       this.dropLoot(entity);
   }
