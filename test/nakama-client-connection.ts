@@ -299,7 +299,7 @@ await test(
 );
 
 await test(
-  'real completion notices and hail cancellation survive native, Solo and friend receive paths',
+  'real completion, hail and chat packets survive native, Solo and friend receive paths',
   { timeout: 10000 },
   async () => {
     const directory = filesystem.mkdtempSync(
@@ -383,7 +383,39 @@ await test(
         assert.equal(notice.id, undefined, 'Actual completion producers omit an action identifier');
       }
       assert.deepEqual(notices.at(-1), { t: 'hailmark', until: 0 });
+      const chat = (channel: string, message: string) => {
+        pilot.chatT = 0;
+        game.chat(pilot, { ch: channel, msg: message });
+      };
+      assert.equal(Boolean(pilot.ent), false, 'The real session starts docked');
+      chat('all', 'Global docked chat');
+      chat('sys', 'System docked chat');
+      game.features.coop.armadaOp(pilot, { op: 'form', name: 'Wire Armada' });
+      assert(game.features.coop.armadaOf(player), 'The real Armada owner forms the group');
+      chat('armada', 'Armada docked chat');
+      game.depart(pilot);
+      assert.equal(pilot.ent?.state, 'fly');
+      chat('sys', 'System flight chat');
+      chat('all', 'Global flight chat');
+      chat('armada', 'Armada flight chat');
+      const chats = produced.filter((packet) => packet.t === 'chat');
+      assert.deepEqual(
+        chats.map((packet) => [packet.ch, packet.ship, packet.msg]),
+        [
+          ['all', null, 'Global docked chat'],
+          ['sys', null, 'System docked chat'],
+          ['armada', null, 'Armada docked chat'],
+          ['sys', pilot.ent!.id, 'System flight chat'],
+          ['all', null, 'Global flight chat'],
+          ['armada', null, 'Armada flight chat'],
+        ],
+        'Real chat producer uses a finite ship only for system flight chat',
+      );
       const invalid = [
+        ...['7', [], {}, true].map((ship) => ({
+          ...chats[0],
+          ship,
+        })),
         { t: 'story', title: 'Offer', text: 'Hello' },
         { t: 'story', done: true, id: null, title: 'Notice', text: 'Hello' },
         { t: 'story', done: true, id: 7, title: 'Notice', text: 'Hello' },
@@ -413,8 +445,10 @@ await test(
         choices: [{ value: 'accept', label: 'Accept' }],
       };
       for (const packet of invalid) assert.equal(validServerEnvelope(packet), false);
-      const accepted = [...notices, activeMarker, offer];
+      const accepted = [...notices, ...chats, activeMarker, offer];
       for (const packet of accepted) assert.equal(validServerEnvelope(packet), true);
+      for (const ship of [NaN, Infinity, -Infinity])
+        assert.equal(validServerEnvelope({ ...chats[0], ship }), false);
       const packets = [...invalid, ...accepted];
       const native = fixture();
       await native.opened;

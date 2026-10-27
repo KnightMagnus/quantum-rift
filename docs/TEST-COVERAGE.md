@@ -111,7 +111,9 @@ All received server families have finite-number, depth, collection, string and
 total-node bounds. Communication/control headers additionally validate their
 required scalar fields and dialogue choice entries before reaching the UI.
 `nakama-client-connection.ts` checks malformed communication headers on Solo,
-friend and native receive paths. Snapshot tuples retain their existing precise
+friend and native receive paths, including actual global, system and Armada chat
+from docked and flying sessions. Null and finite ship markers reach the client;
+malformed markers are dropped. Snapshot tuples retain their existing precise
 checks. World, sites and arena content and nested feature state remain bounded
 but do not yet have complete runtime semantic schemas.
 

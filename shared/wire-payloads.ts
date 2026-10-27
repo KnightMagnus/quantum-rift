@@ -123,7 +123,7 @@ export function validServerEnvelope(value: unknown): boolean {
       return (
         prose(value.msg) &&
         optional('sys', (entry) => entry === null || text(entry)) &&
-        optional('ship', finite) &&
+        optional('ship', (entry) => entry === null || finite(entry)) &&
         optional('from', text) &&
         optional('ch', text)
       );

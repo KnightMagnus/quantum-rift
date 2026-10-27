@@ -1443,7 +1443,7 @@
         "nakama-diagnostics.ts",
         "nakama-world-lease.ts"
       ],
-      "asserts": "Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/replay denials. Native flood traffic retains peer progress and authoritative physics; deterministic actual-callback batches verify exactly eight admissions per session, independent peer budgets and next-tick reset. Legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency remain covered. Reference/Solo tests are separate and no full native-feature coverage is implied."
+      "asserts": "Actual Game.chat packets preserve null docked/global/Armada markers and finite system-flight markers through native, Solo and friend adapters, while malformed markers are rejected. Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/replay denials. Native flood traffic retains peer progress and authoritative physics; deterministic actual-callback batches verify exactly eight admissions per session, independent peer budgets and next-tick reset. Legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency remain covered. Reference/Solo tests are separate and no full native-feature coverage is implied."
     },
     {
       "id": "friend-hosting",
