@@ -1,3 +1,4 @@
+import { FlightPrediction } from '../client/flight-prediction.ts';
 import { LandingFeedback } from '../client/landing-feedback.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
 import assert from 'node:assert/strict';
@@ -300,8 +301,7 @@ assert.ok(source2.units >= 0 && source2.units < INDUSTRIAL.sourceUnits);
       gatewayGuidance,
       performance,
       mouse: {},
-      history: [],
-      seq: 0,
+      prediction: new FlightPrediction(),
       held: () => false,
       shipFunctions: { secondary: () => false },
       typing: () => false,
@@ -313,7 +313,6 @@ assert.ok(source2.units >= 0 && source2.units < INDUSTRIAL.sourceUnits);
       send: (message: { t: string; nav?: boolean }) => sent.push(message),
     });
     context.elementById2 = context.$;
-    context.sequence = context.seq;
     virtualMachine.runInContext(
       ['setAuto', 'autopilot', 'fixedTick'].map(productionFunction).join('\n'),
       context,

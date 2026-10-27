@@ -116,7 +116,7 @@ try {
       response,
       body:
         (await response.text()) +
-        "\nObject.defineProperty(window, 'testSequence', {get: () => sequence, set: (value) => { sequence = value; }});\n",
+        "\nObject.defineProperty(window, 'testSequence', {get: () => Reflect.get(prediction, 'sequence'), set: (value) => { Reflect.set(prediction, 'sequence', value); }});\n",
     });
   });
   page.on('response', (response) => {
