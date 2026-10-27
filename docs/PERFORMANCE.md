@@ -259,15 +259,17 @@ including initial page-to-music readiness and the six-sheet load/decode time.
 These elapsed times include network, scheduling and cache hits, not isolated decoder benchmarks.
 The local Chromium fixture loads the login theme, enters ordinary early-game
 flight and decodes six additional catalog ship sheets. On the shared Linux
-measurement host, the decoded ship working set retained about 132–188 MiB across runs and scenery
-about 16 MiB. Login music decoded to about 48 MiB of PCM. These are reproducible
+measurement host, one final run retained about 101 MiB of decoded ship sheets
+and 51 MiB of scenery. Traffic changes the exact working set between runs; the
+current JSON report is the measurement record. Login music decoded to about
+48 MiB of PCM. These are reproducible
 fixture observations, not total browser memory or universal device requirements.
 
 `imageResourceUsage()` in `client/asset-resources.ts` estimates decoded images at
 four bytes per natural pixel. Ship cache ownership is limited to 256 MiB, leaving
 room above the measured ship working set; scenery ownership is limited to 64 MiB,
-which accommodates the current approximately 60 MiB decoded object/decor/station/
-effect file inventory. Resources used in the last two seconds are retained even
+leaving headroom above the measured scenery set rather than retaining the whole
+catalog at once. Resources used in the last two seconds are retained even
 above budget. Idle zero-byte failures/loading records also have count limits.
 Image eviction removes cache ownership; it never clears an image still used by
 a Sprite. Two large scene-specific sheets are requested only in the scene that
