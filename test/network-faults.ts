@@ -481,6 +481,15 @@ try {
         const recoveredGame = new Game(assets, recoveredDatabase, platform);
         current = signIn(recoveredGame, name);
         const restoredPlayer = current.session.data;
+        const restoredProjection = requiredFixtureValue(
+          current.socket.out.filter((message) => message.t === 'you').at(-1),
+        ).d;
+        assert.equal(
+          restoredProjection.credits,
+          restoredPlayer.credits,
+          'reconnect sends current authoritative credits to the peer',
+        );
+        assert.equal(restoredProjection.cargo.ore || 0, restoredPlayer.cargo.ore || 0);
         assert.equal(
           restoredPlayer.cargo.ore || 0,
           committed ? expectedOre : beforeOre,
@@ -550,6 +559,15 @@ try {
         assert.equal(rejoined.session.data.cargo.ore || 0, expectedOre);
         assert.equal(rejoined.session.data.credits, expectedCredits);
         assert.equal(rejoined.session.inputs.length, 0);
+        const deliveredProjection = requiredFixtureValue(
+          rejoined.socket.out.filter((message) => message.t === 'you').at(-1),
+        ).d;
+        assert.equal(deliveredProjection.credits, expectedCredits);
+        assert.equal(
+          deliveredProjection.cargo.ore || 0,
+          expectedOre,
+          'the new peer receives the one settled inventory, not a stale withheld reply',
+        );
         interruptedScenarios++;
       }
   }
