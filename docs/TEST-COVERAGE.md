@@ -1124,6 +1124,15 @@ Focus fallback checks cover a removed opener above Options and Controls closing
 above the still-open, independently owned map; focus cannot remain in the hidden
 dialog. Closing an underlay also preserves existing valid focus in the top dialog.
 
+Map, ship/captain info, hails, story, storage and ship-loss notices use the same
+priority and focus owner. The fixture checks nested confirmation, hails above
+profile, native hail typing and exactly one Enter submission, profile Tab wrap,
+map search selection and two-stage search Escape. Story Escape defers without a
+story-accept packet, while a focused native Continue closes a notice. Storage and
+ship-loss dismissal cannot open quit or dismiss an underlying dialog. These
+receive packets and storage authorization are presentation fixtures, not proof of
+server-side dialogue rewards, caller identity or storage settlement.
+
 `logout-browser.ts` retains real Solo and online-style login/logout, temporary
 pause restoration, account isolation and persistence. `input-audio-browser.ts`
 retains gamepad and touch activation outside dialogs. These tests emulate device
