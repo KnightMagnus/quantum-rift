@@ -29,7 +29,15 @@ import type { Entity, Space } from './space.ts';
 // Quantum Rift: server feature operations: loot chests,
 // Station Holdout, and Umbral Eclipse cells. Hostile levels are computed in Space (e.pw) and shown by the client.
 import { STELLARS, MATERIALS, GRADES } from '../shared/galaxy.ts';
-import { CHESTS, CHEST_CHANCE, HOLDOUT, ECLIPSE, levelOf, playerPower } from '../shared/hostile.ts';
+import {
+  CHESTS,
+  CHEST_CHANCE,
+  HOLDOUT,
+  ECLIPSE,
+  levelOf,
+  playerPower,
+  shipCombatPower,
+} from '../shared/hostile.ts';
 import { SPEC_BY_KEY } from '../shared/specialty.ts';
 import { credits } from '../shared/rules.ts';
 import { COOP_HOLDOUT } from '../shared/coop.ts';
@@ -66,11 +74,13 @@ export const HostileOperations = {
    * @returns Player power rating.
    */
   myPower(this: HostileCapabilities, playerData: PlayerData) {
-    return playerPower(
-      this.A,
-      playerData.ship.hull,
-      this.bonus(playerData),
-      this.wingHulls ? this.wingHulls(playerData) : [],
+    return (
+      playerPower(this.A, playerData.ship, this.bonus(playerData)) +
+      this.activeWings(playerData).reduce(
+        (total, { w, x }) =>
+          total + shipCombatPower(this.A, x.ship, this.wingBonus(playerData, w)) * 0.6,
+        0,
+      )
     );
   },
 

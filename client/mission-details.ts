@@ -14,7 +14,7 @@ import { route } from '../shared/rules.ts';
 import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.ts';
 import { contractShares } from '../shared/mission-payouts.ts';
 import { ShipCapacity, reservedCargoTonnes } from '../shared/ship-capacity.ts';
-import { dangerTier, raidBudget } from '../shared/hostile.ts';
+import { dangerTier, raidBudget, hullCombatPower } from '../shared/hostile.ts';
 import type { DangerTier } from '../shared/hostile.ts';
 
 const kinds = [
@@ -63,11 +63,13 @@ function combatThreat(
 ): number | null {
   if (!['patrol', 'bounty', 'assassinate'].includes(missionDetailsInput.type!)) return null;
   if (missionDetailsInput.hull) {
-    const targetPower = clientGameState.A!.ships[missionDetailsInput.hull]?.strength;
+    const targetPower = hullCombatPower(clientGameState.A!, missionDetailsInput.hull);
     if (!targetPower) return null;
     const guardPower =
       missionDetailsInput.type === 'assassinate'
-        ? (clientGameState.A!.ships[missionDetailsInput.guard!]?.strength || 0) * 2
+        ? missionDetailsInput.guard
+          ? hullCombatPower(clientGameState.A!, missionDetailsInput.guard) * 2
+          : 0
         : 0;
     return targetPower + guardPower;
   }
@@ -87,12 +89,10 @@ function combatThreat(
         : ['hollow'];
     const minimumRaider = Math.max(
       ...factions.map((faction) =>
-        Math.min(
-          ...TRAFFIC[faction].war.map((hull) => clientGameState.A!.ships[hull]?.strength || 10),
-        ),
+        Math.min(...TRAFFIC[faction].war.map((hull) => hullCombatPower(clientGameState.A!, hull))),
       ),
     );
-    return Math.max(raidBudget(power, system.danger), minimumRaider);
+    return minimumRaider <= raidBudget(power, system.danger) ? raidBudget(power, system.danger) : 0;
   }
   return null;
 }
@@ -101,8 +101,13 @@ export function missionDetails(
   missionDetailsInput: MissionDetailsInput,
   active = false,
 ) {
+  const pickup =
+    missionDetailsInput.type === 'passenger' && !missionDetailsInput.boarded
+      ? STELLARS[missionDetailsInput.pickup!]
+      : undefined;
   const playerPayload = clientGameState.you!,
     system =
+      pickup?.system ||
       missionDetailsInput.sys ||
       STELLARS[(missionDetailsInput.dest || missionDetailsInput.stellar)!]?.system;
   const path =
@@ -160,9 +165,10 @@ export function missionDetails(
     threat = combatThreat(clientGameState, missionDetailsInput, power, system);
   if (threat != null)
     risk = `${DANGER_LABELS[dangerTier(power, threat)]} (${missionDetailsInput.type === 'patrol' ? 'estimated raid' : 'threat'} ${Math.round(threat)} vs your ${power})`;
-  const stellarBody = STELLARS[(missionDetailsInput.dest || missionDetailsInput.stellar)!];
+  const stellarBody =
+    pickup || STELLARS[(missionDetailsInput.dest || missionDetailsInput.stellar)!];
   const turnIn = stellarBody
-    ? `Land at ${stellarBody.name} (${systemsById[stellarBody.system].name})`
+    ? `${pickup ? 'Collect passengers at' : 'Land at'} ${stellarBody.name} (${systemsById[stellarBody.system].name})`
     : missionDetailsInput.type === 'warband' ||
         ['bounty', 'patrol', 'assassinate', 'survey', 'salvage', 'rescue'].includes(
           missionDetailsInput.type!,

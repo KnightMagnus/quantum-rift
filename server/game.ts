@@ -436,6 +436,12 @@ export type Mission = {
   /** Quantity of cargo/passengers. */
   qty?: number;
 
+  /** Relief passenger pickup port; ordinary passengers board on acceptance. */
+  pickup?: string;
+
+  /** Whether a relief passenger group has boarded at its pickup port. */
+  boarded?: boolean;
+
   /** Number of passengers. */
   pax?: number;
 
@@ -550,7 +556,12 @@ import { CombatAssist } from './combat-assist.ts';
 import { createGameMessageHandlers } from './game-message-handlers.ts';
 import { createFeatures } from './features.ts';
 import { TUTORIAL, tutMigrate, TUT_VERSION } from '../shared/tutorial.ts';
-import { TIER3_TRUCE, PRACTICE_RAIDER, fitRaidToBudget } from '../shared/hostile.ts';
+import {
+  TIER3_TRUCE,
+  PRACTICE_RAIDER,
+  fitRaidToBudget,
+  hullCombatPower,
+} from '../shared/hostile.ts';
 // Quantum Rift game server: sessions, the galaxy's systems, landing services, missions, Quantum Station.
 import {
   SYSTEMS,
@@ -1601,7 +1612,7 @@ export class Game<Storage extends Database = Database> {
       [hull] = fitRaidToBudget(
         [PRACTICE_RAIDER.hulls.at(-1)!],
         PRACTICE_RAIDER.hulls,
-        (raiderHull) => this.A.ships[raiderHull]?.strength || 10,
+        (raiderHull) => hullCombatPower(this.A, raiderHull),
         power * PRACTICE_RAIDER.powerShare,
       ),
       angle = Math.random() * Math.PI * 2;
@@ -1615,7 +1626,7 @@ export class Game<Storage extends Database = Database> {
     });
     raider.huntOf = session.id;
     raider.practiceOf = session.id;
-    raider.life = 300;
+    raider.life = 600;
     raider.target = entity;
     space.events.push(['flash', Math.round(raider.x), Math.round(raider.y)]);
     this.toast(session, 'Career: a lone Hollow straggler is coming for you. Press R to target it.');
@@ -2527,7 +2538,10 @@ export class Game<Storage extends Database = Database> {
         return (livingState && STATES[livingState.kind].bounty) || 1;
       })(); // a pirate scourge pays more
       const bounty = Math.round(
-        ((entity.strength || 10) * 25 + 500) *
+        Math.max(
+          (entity.strength || 10) * 50 + 500,
+          (this.A.ships[entity.hull]?.cost || 0) * 0.01,
+        ) *
           (1 + (this.features.bonuses.bonus(playerData).lootPct || 0) / 100) *
           this.features.fronts.mods(space.id).bounty *
           stateBountyMultiplier *
@@ -2557,7 +2571,12 @@ export class Game<Storage extends Database = Database> {
       );
     }
     for (const mission2 of playerData.missions) {
-      if (mission2.type === 'bounty' && entity.mission && entity.mission.id === mission2.id) {
+      if (
+        mission2.type === 'bounty' &&
+        !mission2.done &&
+        entity.mission?.owner === session.id &&
+        entity.mission.id === mission2.id
+      ) {
         mission2.done = true;
         this.toast(
           session,
@@ -3064,7 +3083,7 @@ export class Game<Storage extends Database = Database> {
         stationState.refT = Date.now();
         this.log(
           playerData,
-          `Quantum Station reached Station Tier ${stationState.ops}: ${opsLevelDef.title}.`,
+          `${session.name}'s Personal Station reached Station Tier ${stationState.ops}: ${opsLevelDef.title}.`,
         );
         this.toast(session, `Station Tier ${stationState.ops} complete: ${opsLevelDef.unlock}.`);
         if (stationState.ops === 3 && wasNewcomer) {

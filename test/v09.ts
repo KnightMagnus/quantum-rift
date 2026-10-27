@@ -203,8 +203,12 @@ const starSystem2 =
     SYSTEMS.find((starSystem3) => starSystem3.faction === 'deep' && starSystem3.danger >= 3) ||
     SYSTEMS.find((starSystem3) => starSystem3.faction === 'umbral'),
   message3 = game.spaces[requiredFixtureValue(starSystem2).id];
+const eclipsePatrol = fake('Eclipse Patrol');
+game.seedFleet(eclipsePatrol.s.data, { docks: [{ lead: 787, wings: [786, 736] }] });
+toSpace(eclipsePatrol, message3.id);
 let errorCount = false;
 for (let index = 0; index < 120 && !errorCount; index++) {
+  message3.t += 40;
   message3.spawnTraffic(false);
   errorCount = [...message3.ships.values()].some(
     (shipEntity2) => shipEntity2.faction === 'eclipse',
@@ -227,7 +231,9 @@ assertCondition(
   'native Nhal remain present beside the tagged event encounter',
 );
 assertCondition(
-  [...message3.ships.values()].every((ship) => ['nhal', 'eclipse'].includes(ship.faction)),
+  [...message3.ships.values()]
+    .filter((ship) => !message3.root(ship).player)
+    .every((ship) => ['nhal', 'eclipse'].includes(ship.faction)),
   'the tagged exception never restores ordinary Umbral or Hollow Deep traffic',
 );
 console.log('ALL 0.9 TESTS PASSED');
