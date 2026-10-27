@@ -787,7 +787,11 @@ the unchanged 180-second enclosing process deadline. No flight physics changed.
   seeded servers in online and Solo modes. Verifies authoritative and interpolated
   real traffic displacement across Overview/Trade/Outfitter, nonblack canvas,
   no controllable landed entity or leaked flight input, and explicit Solo pause /
-  resume snapshot semantics. Paired actual frames and motion JSON are retained.
+  resume snapshot semantics. Depart/redock uses the real controls and authoritative
+  landing handler, with a stopped, in-range departure fixture so scene restoration
+  does not depend on a random flight approach. Varied approach/drift and delayed
+  input remain covered by `landing-autopilot-browser.ts`; this is not additional
+  autopilot coverage. Paired actual frames and motion JSON are retained.
 - Expanded cockpit column: test/cockpit-browser.ts verifies full-height Tray,
   utility reachability/non-overlap and adjacency at 1600/1440/1024/640 widths,
   default/max Tray widths and UI scales 0.8/1/1.4, alongside persistence/real drag.
@@ -1182,10 +1186,10 @@ traces for before/after comparison. It does not certify every research node or
 transport. Native checkpoint recovery and network behavior remain separate suite
 contracts.
 
-## Network faults on the local transport
+## Network faults and economic receipt recovery
 
 `network-faults.ts` drives one captain through `Game.connect`'s socket listener
-with isolated saves and no timers or waits. It covers these scenarios:
+with isolated saves and no wall-clock delay waits. It covers these scenarios:
 
 - **Replayed rewards:** a completed daily goal claimed three times pays once. A
   cargo job accepted twice is recorded once, and landing at its destination twice
@@ -1210,6 +1214,42 @@ It also checks quiet-peer liveness with an injected clock: a peer that sends not
 for 15 seconds is pinged, any inbound bytes (including the pong browsers send
 automatically) restart the quiet period, and a peer silent for 45 seconds is closed
 without a close handshake. Closing reports the disconnect to the game once.
+
+The same registered test also uses a fixed clock and a deterministic packet
+queue. Arrival times reorder requests without sleeps; outbound replies can be
+withheld even after settlement. Sixteen refinery-purchase and towing-reward
+scenarios use the real service receipts and checkpoint owners:
+
+- **Local journal:** clean commit, failure before journal installation, lost
+  acknowledgement after installation, interruption between player/world snapshots,
+  and failure at the final directory sync after journal removal.
+- **Native CAS:** the real `NakamaDatabase` runs against an offline versioned
+  storage backend. It covers clean writes, failure before the write and a
+  successful write whose acknowledgement is lost. Both native failure cases
+  freeze the old authority; a new database distinguishes committed and uncommitted
+  state without guessing from the error.
+- **Delivery and recovery:** the first reply is held, then a duplicate arrives
+  before recovery. Clean commits also exercise graceful disconnect/reconnect.
+  Restart replays the original request on a new session and releases a delayed
+  packet and flight controls on the retired session. Exact credits/cargo, a
+  single refinery batch/receipt or towing receipt, and clean input ownership are
+  checked. Uncommitted towing delivery restores a detached object; its stale
+  revision is denied, and a fresh attachment/delivery awards its cargo once.
+- **Rewards and intent:** delayed daily-goal claims on old/new connections remain
+  claimed across restart without another payout or log entry. Two separately
+  delivered, identical live material-purchase intents still debit twice and add
+  two items; legacy purchase semantics have not changed.
+
+Limits: packet delay/reordering is injected at the serialized `Game.connect`
+listener boundary, not with a real TCP proxy. Native checkpoint faults use an
+offline CAS fixture, not a PostgreSQL outage; actual native replacement/restart
+and bounded flood behavior remain covered by `nakama-network.ts`. Crashes retire
+the old sessions and disable their autosave without a graceful-disconnect flush.
+These checks do not prove every action, arbitrary packet schedule or service
+failure. Legacy `buyship`, `buymat` and `trade` carry no request identifier, so
+two valid live deliveries remain two explicit purchase intents; the browser does
+not resend them on reconnect. Retry-safe ordinary purchases would require a
+separate request-identity contract, not generic suppression of identical packets.
 
 `network-faults-loopback.ts` runs the real `upgrade` handler and Node's WebSocket
 client over loopback TCP, with a proxy between them that can delay, withhold,
