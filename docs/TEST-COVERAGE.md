@@ -1580,7 +1580,7 @@ run in the unit regression lane through the canonical manifest; their supporting
 helper is registered under `combat-playability.ts`. Existing combat, difficulty
 and retaliation regressions remain in CI.
 
-## Playtest trade, JUMP and browser recovery checks
+## Trade settlement, JUMP and browser recovery checks
 
 `trade-safety.ts` checks shared integrated market-impact quotes and conservative
 rounding across commodity prices, market classes, bonuses, sale modifiers, impact
@@ -1611,6 +1611,6 @@ healthy paused-host check. Neither variant predicts rendering performance.
 
 Chromium callers share `test/helpers/chromium.ts`. With no override they use the
 pinned Playwright browser; `CHROMIUM_EXECUTABLE` selects an explicit local binary.
-Firefox and WebKit keep their own launch paths. Default and explicit valid
-Chromium launches and Firefox override isolation were exercised locally; WebKit's
-local runtime check requires host libraries as well as its pinned browser.
+Firefox and WebKit keep their own launch paths. Install the selected pinned
+browser or provide a valid Chromium executable before running the suite. WebKit
+also requires its platform libraries.
