@@ -1,3 +1,4 @@
+import { overlays } from './overlay-controller.ts';
 import { HAIL_MACHINE_HULLS } from '../shared/hail-machine.ts';
 import { portraitAsset } from '../shared/portraits.ts';
 import { artworkUrl } from './artwork.ts';
@@ -73,12 +74,42 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
     (elementById('hailportrait') as HTMLImageElement).onerror = null;
     elementById('hailportrait').removeAttribute('src');
   };
+  let submitHail: (() => void) | null = null;
   const close = () => {
+    submitHail = null;
     clearPortrait();
-    elementById('hailbox').classList.add('hidden');
+    overlays.close('hailbox');
     active = null;
   };
+  overlays.register({
+    id: 'hailbox',
+    priority: 24,
+    dismiss: close,
+    initialFocus: () => elementById('hailopts').querySelector<HTMLElement>('button:last-child'),
+    allowOutsidePointer: (target) => !!target.closest('#captainshortcut,#optbtn'),
+    keyDown: (event) => {
+      if (event.key === 'Enter' && (event.target as HTMLElement).id === 'hailcompose') {
+        submitHail?.();
+        return true;
+      }
+      if (
+        event.code === 'KeyT' &&
+        !(
+          event.target instanceof Element &&
+          event.target.closest('input,textarea,select,[contenteditable]')
+        )
+      ) {
+        if (!event.repeat) close();
+        return true;
+      }
+      return false;
+    },
+    reset: () => {
+      submitHail = null;
+    },
+  });
   function inbox() {
+    submitHail = null;
     clearPortrait();
     active = null;
     elementById('hailwho').textContent = 'Incoming hails';
@@ -109,10 +140,11 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
     );
     elementById('hailopts').append(label);
     button('CLOSE', close);
-    elementById('hailbox').classList.remove('hidden');
+    overlays.open('hailbox');
   }
   function show(hailConversation: HailConversation) {
     active = hailConversation;
+    submitHail = null;
     const portrait = elementById('hailportrait') as HTMLImageElement;
     const machineCaller = hailConversation.machineHull !== undefined;
     const machine = HAIL_MACHINE_HULLS.find((hull) => hull.id === hailConversation.machineHull);
@@ -157,6 +189,7 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
         input.value = '';
         count.textContent = '0/100';
       };
+      submitHail = submit;
       input.onkeydown = (keyboardEvent) => {
         keyboardEvent.stopPropagation();
         if (keyboardEvent.key === 'Enter') {
@@ -184,7 +217,7 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
       );
     button('INBOX', inbox);
     button('CLOSE', close);
-    elementById('hailbox').classList.remove('hidden');
+    overlays.open('hailbox');
   }
   elementById('hailindicator').onclick = () => {
     send({ t: 'hailin', op: 'list' });
