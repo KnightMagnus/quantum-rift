@@ -102,6 +102,26 @@ Canvas/WebGL and DPR combinations alongside its existing actual-game captures.
 
 ## Baseline and budgets
 
+The [accelerated baseline](performance-baselines/accelerated-fde394b.json) retains
+all six scenario results from clean source
+`fde394bd192868ba65bc878214ec0abe71741bed` on the shared EPYC host described below.
+Five scenarios measured 900 ticks each; the soak measured 108,000 ticks (one
+simulated hour, about 5.45 seconds of measured execution). The artifact includes
+seeds, warmup counts, hardware, stage timings, bounded metric windows and final
+fixture outcomes. Every scenario completed without a tick failure, space failure
+or checkpoint freeze. Reproduce it with `RIFT_PERF_SOAK_TICKS=108000` and the
+baseline command above. This is not a one-hour wall-clock stability result.
+
+The [browser baseline](performance-baselines/browser-fde394b.json) retains the
+four actual Engine fixture reports from the same source: requested WebGL at DPR 1
+and 2, Canvas at DPR 1, and automatic renderer selection at DPR 2. It records
+Chromium version, actual renderer, viewport, host and hashes of the served Engine,
+scene and entry modules. These are headless CPU-hook observations from mixed
+lifecycle activity, not GPU completion times, a frame-rate budget or evidence for
+physical-device performance. Run `node test/excalibur-runtime-browser.ts` after
+building to collect new reports; captures and server logs stay outside these
+numeric baseline files.
+
 The first bounded run used Node 27.0.0-nightly20261020531d28fc36 on a shared Linux
 x64 AMD EPYC 4344P host (16 logical CPUs). Five scenarios ran 900 measured ticks;
 the soak ran 18,000. The busiest observed snapshot was 18,063 bytes and largest
@@ -359,7 +379,13 @@ also part of the registered health regression. Their 512 KiB checkpoint ceiling
 is a fixture growth guard, not a PostgreSQL latency or production save quota.
 
 Native profiling at 30 captains identified snapshot processing, including the
-opt-in byte counter, as the dominant measured stage. UTF-8 measurement now skips
+opt-in byte counter, as the dominant measured stage. The
+[pre-optimization report](performance-baselines/native-preoptimization-30-300s.json)
+retains that observation at clean source
+`95722080fdf54c079e52f413621c3ceedd90bd1f`. It predates emitted-runtime digest
+receipts and cannot satisfy the current budget verifier. It documents the choice
+of hot path, not a controlled speedup comparison with later runs on the shared host.
+UTF-8 measurement now skips
 ASCII runs in the host regular-expression engine while preserving exact Unicode
 and lone-surrogate byte counts. Encoding the unrestricted public snapshot once
 per system avoids repeating the same array serialization for each captain.
