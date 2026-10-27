@@ -723,6 +723,11 @@ try {
     G.landed = oldLanded;
   });
   await page.locator('#storebox').waitFor({ state: 'visible' });
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.getAttribute('data-act')),
+    'sclose',
+    'Storage focuses its safe Close control',
+  );
   await ask();
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#storebox').isVisible(), true);

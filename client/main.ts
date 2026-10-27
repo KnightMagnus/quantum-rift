@@ -2912,7 +2912,7 @@ overlays.register({
   id: 'storebox',
   priority: 15,
   dismiss: () => overlays.close('storebox'),
-  initialFocus: () => elementById2('storein').querySelector<HTMLElement>('[data-a="sclose"]'),
+  initialFocus: () => elementById2('storein').querySelector<HTMLElement>('[data-act="sclose"]'),
 });
 overlays.register({
   id: 'deadbox',
