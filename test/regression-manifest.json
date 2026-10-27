@@ -132,7 +132,8 @@
     "performance-native.ts",
     "render-cache-budget.ts",
     "protocol-compatibility.ts",
-    "station-docking.ts"
+    "station-docking.ts",
+    "performance-budgets.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -1590,8 +1591,13 @@
     {
       "id": "performance-health",
       "services": [],
-      "tests": ["health.ts", "excalibur-runtime-browser.ts", "performance-native.ts"],
-      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples. Real wall-clock native flight, bounded SDK packet retention, monotonic send drift and snapshot gaps, failure cleanup, authoritative reconnect, PostgreSQL checkpoint and process-restart continuity. Limits and numeric-only health parsing deny malformed input before resources.",
+      "tests": [
+        "health.ts",
+        "excalibur-runtime-browser.ts",
+        "performance-native.ts",
+        "performance-budgets.ts"
+      ],
+      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples. Real wall-clock native flight, bounded SDK packet retention, monotonic send drift and snapshot gaps, failure cleanup, authoritative reconnect, PostgreSQL checkpoint and process-restart continuity. Limits and numeric-only health parsing deny malformed input before resources. Deployment-owned budget profiles reject mixed hardware/builds, wrong workloads, duplicate or insufficient repeats, authority failures, absent metrics and each over-budget run.",
       "owners": [
         "shared/health.ts",
         "server/game.ts",
@@ -1600,7 +1606,8 @@
         "tools/performance-native.ts",
         "test/helpers/native-performance.ts",
         "test/helpers/native-packet-collector.ts",
-        "test/helpers/nakama-service.ts"
+        "test/helpers/nakama-service.ts",
+        "tools/performance-budgets.ts"
       ]
     },
     {

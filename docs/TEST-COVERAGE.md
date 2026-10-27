@@ -1290,3 +1290,14 @@ does not depend on unrelated ambient traffic random rolls.
 The HUD JUMP regression also opens the galaxy map and attempts native button
 activation before the periodic disabled-state refresh. No jump packet or jump
 navigation can escape the overlay; closing the map restores the plotted action.
+## Native performance budget verification
+
+`performance-budgets.ts` is a fast `performance-health` unit regression. Synthetic
+reports prove inclusive per-metric limits, rejection of any failing repeat,
+exact environment/workload matching, same clean source build, distinct run
+identities, sufficient repeats, measured duration, input/restoration/checkpoint
+evidence, and SDK/authority/cleanup failures. Missing and nonfinite metrics,
+unknown/malformed profiles, corrupt and oversized files, and CLI success/failure
+exit statuses are covered. Synthetic numbers are verifier fixtures, not measured
+budgets or supported capacity. Deployment profiles remain externally selected;
+see [PERFORMANCE.md](PERFORMANCE.md#deployment-owned-budget-profiles).

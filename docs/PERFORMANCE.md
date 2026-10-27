@@ -245,3 +245,58 @@ These concentrated fresh-captain flight/reconnect/checkpoint runs do not measure
 distributed, combat or mining workloads, Internet latency, browser/GPU work,
 production player capacity, a latency SLO or multihour stability. The accelerated
 in-process scenarios remain separate measurements, not native workload ports.
+
+## Deployment-owned budget profiles
+
+`tools/performance-budgets.ts` checks repeated native numeric reports against an
+explicit JSON profile. It does not choose targets from the shared-host baseline.
+Run it after selecting the intended hardware, runtime versions, workload and
+acceptable limits:
+
+```sh
+node tools/performance-budgets.ts /private/deployment-profile.json \
+  /private/artifacts/native-run-1.json /private/artifacts/native-run-2.json
+```
+
+The profile has exactly these fields:
+
+- `schema`: `1`.
+- `name`: a nonempty deployment/hardware label, at most 120 characters.
+- `environment`: exact `platform`, `arch`, `cpuModel`, `logicalCpus`, `node`,
+  `sdk`, `nakama` and `postgres` values from the native report's `metadata`.
+  `logicalCpus` is a positive integer; the other fields are nonempty strings.
+  An `unavailable` runtime or hardware value is rejected.
+- `workload`: exact `durationSeconds`, `captains` and `seed`, within the native
+  harness's limits above.
+- `minimumRuns`: an integer from 2 to 100.
+- `budgets`: one or more positive, finite upper limits from the supported metrics
+  below. Unknown fields, misspelled metrics and newer schemas are rejected.
+
+Supported metrics are `tickP95Ms`, `tickMaxMs`, `checkpointP95Ms`,
+`snapshotGapP95Ms`, `sendDriftP95Ms`, `reconnectToFlightMs`, `restartToFlightMs`,
+`nativeResidentKiB` and `checkpointBytes`. Health metrics use the largest reported
+window percentile or lifetime maximum, not a percentile pooled across windows.
+Snapshot gaps use the largest connection's retained-window p95, including
+setup/reconnect/restart traffic. Connections with fewer than two snapshots have
+no interval and are excluded; at least one measured interval is required. Send drift uses its retained-window p95.
+Native resident memory is the pre-restart Nakama sample, not a lifetime peak.
+Checkpoint bytes are the stored pre-restart checkpoint size, including database
+JSON encoding. These meanings differ from in-process fixture measurements.
+
+Every report must be from the same clean source commit and exact selected
+environment/workload. Repeated start timestamps are rejected. Each report must
+show its full measured duration, expected input count, restored captains, a real
+checkpoint, zero SDK/authority failures and successful process cleanup. Any
+missing requested metric or any run exceeding its limit fails; averaging cannot
+hide an outlier. The verifier prints a numeric summary and fixed failure codes,
+exits 0 on success and 1 on failure. It starts no services and changes no report.
+Input files must be ordinary JSON files no larger than 4 MiB.
+
+A matching CPU model and logical CPU count do not establish exclusive access,
+CPU allocation, thermal conditions, network path or representative database load.
+Inspect report load and repeat on the intended deployment before adopting a
+profile. A passing profile covers only its measured native workload; it does not
+establish browser performance, distributed/combat/mining native capacity or
+multihour stability. No deployment latency profile is supplied while the intended
+hardware and workload remain unspecified. Shared-host CI tests verifier behavior
+with synthetic measurements and retains the existing payload-growth guards.
