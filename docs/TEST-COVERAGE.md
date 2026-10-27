@@ -1294,3 +1294,15 @@ snapping, travel clears and presence resets. A separate expected-physics check
 proves that only the last 90 unacknowledged controls replay. This is display
 prediction, not economic authority or a guarantee under every network fault.
 Existing engine, input and logout browser fixtures exercise its real integration.
+
+## Client connection lifecycle
+
+The `client-connection-lifecycle` system compares the extracted socket/reconnect
+owner with the unmodified pre-extraction `openSocket` body captured at `4444b8a`.
+The reference runs independently in an isolated VM with controlled timers/effects;
+it does not call the new owner as an oracle. Traces cover local/native opening,
+packet delivery, bounded reconnect, changing credentials/configuration, stale
+sockets/epochs, missing credentials, pending-timer cancellation, no action replay,
+compatibility denial and duplicate-login teardown. Existing login/logout and
+protocol browser regressions remain required. Account teardown, credentials and
+the shared UI epoch retain their composition-root owners.

@@ -1,6 +1,6 @@
+import { ConnectionLifecycle } from './connection-lifecycle.ts';
 import { FlightPrediction } from './flight-prediction.ts';
 import type { PredictionView as ClientView } from './flight-prediction.ts';
-import { COMPATIBILITY_MESSAGE } from '../shared/protocol.ts';
 import { overlays } from './overlay-controller.ts';
 import { LandingFeedback, landingRefusal } from './landing-feedback.ts';
 import { initProfile } from './profile_ui.ts';
@@ -17,7 +17,7 @@ import { startStorySequence } from './render.ts';
 import type { NetworkMessage } from '../server/message-registry.ts';
 import { elementById } from './dom.ts';
 import { createGameConnection } from './connection.ts';
-import type { ClientConnection, NakamaConfig } from './connection.ts';
+import type { NakamaConfig } from './connection.ts';
 import type { GameAssets } from '../shared/rules.ts';
 import type { RenderEntity, RenderShip } from './render.ts';
 import type { Game } from '../server/game.ts';
@@ -613,17 +613,16 @@ const canvas = elementById2('view'),
 const flightEngine = new FlightEngine(canvas, clientGameState, frame, () =>
   overlays.blocksFlight(),
 );
-let reconnectTimer: ReturnType<typeof setTimeout> | null = null,
-  sessionEpoch = 0,
+let sessionEpoch = 0,
   sessionDefaults: Record<string, unknown> | null = null;
 let nakamaConfig: NakamaConfig | undefined;
 let localReferenceTransport = false;
 let friendHostTransport = false;
 const prediction = new FlightPrediction();
-let webSocket: ClientConnection | null = null,
-  _lastSnapT = 0;
+
+let _lastSnapT = 0;
 function send(networkMessage: NetworkMessage) {
-  if (webSocket && webSocket.readyState === 1) webSocket.send(JSON.stringify(networkMessage));
+  connectionLifecycle.send(networkMessage);
 }
 
 // ------------------------------------------------------------------ login and connection
@@ -776,11 +775,9 @@ function soloLogin(state: { slots: import('../server/game.ts').SaveSlotSummary[]
 }
 async function login() {
   if (elementById2('lbtn').disabled) return;
-  clearTimeout(reconnectTimer!);
   sessionEpoch++;
   const loginEpoch = sessionEpoch;
-  const previous = webSocket;
-  webSocket = null;
+  const previous = connectionLifecycle.detach();
   void previous?.logout().catch(() => {});
   audio.unlock();
   elementById2('lbtn').disabled = true;
@@ -816,38 +813,27 @@ async function login() {
   if (loginEpoch !== sessionEpoch) return;
   clientGameState._cred = { name, pass };
   clientGameState._kicked = false;
-  openSocket(0);
+  connectionLifecycle.open(0);
 }
-// a dropped connection reconnects on its own, signing back in as the same captain
-function openSocket(tries: number) {
-  if (!clientGameState._cred) return;
-  const { name, pass } = clientGameState._cred;
-  const epoch = sessionEpoch;
-  const socket = createGameConnection(
-    {
-      solo: !!clientGameState.solo || (localReferenceTransport && !friendHostTransport),
-      ...(friendHostTransport ? { mode: 'friends' as const, localTransport: true } : {}),
-      localUrl: (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws',
-      nakama: nakamaConfig,
-    },
-    { name, pass },
-  );
-  webSocket = socket;
-  let compatibilityFailure = false;
-  const current = () => webSocket === socket && sessionEpoch === epoch;
-  socket.onopen = () => {
-    if (!current()) {
-      socket.close();
-      return;
-    }
-    if (clientGameState.solo || localReferenceTransport || friendHostTransport)
-      send({ t: 'hello', name, pass });
-  };
-  socket.onmessage = (event) => {
-    if (current()) onMessage(JSON.parse(event.data));
-  };
-  socket.onclose = () => {
-    if (!current()) return;
+// Transport callbacks read current composition state; account teardown stays below.
+const connectionLifecycle = new ConnectionLifecycle({
+  epoch: () => sessionEpoch,
+  credentials: () => clientGameState._cred,
+  createConnection: (credentials) =>
+    createGameConnection(
+      {
+        solo: !!clientGameState.solo || (localReferenceTransport && !friendHostTransport),
+        ...(friendHostTransport ? { mode: 'friends' as const, localTransport: true } : {}),
+        localUrl: (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws',
+        nakama: nakamaConfig,
+      },
+      credentials,
+    ),
+  sendsHello: () => !!clientGameState.solo || localReferenceTransport || friendHostTransport,
+  hasPlayer: () => !!clientGameState.you,
+  kicked: () => !!clientGameState._kicked,
+  receive: (data) => onMessage(JSON.parse(data)),
+  disconnected: () => {
     updateAttention();
     clearFlightStatus();
     landingFeedback.reset();
@@ -858,39 +844,21 @@ function openSocket(tries: number) {
     clientGameState._look = null;
     clientGameState._lookT = null;
     elementById2('lbtn').disabled = false;
-    if (!clientGameState.you) return;
-    if (compatibilityFailure) {
-      void logOut(COMPATIBILITY_MESSAGE);
-      return;
-    }
-    if (!clientGameState._kicked && tries < 30) {
-      if (!tries) toast('Connection lost. Reconnecting...');
-      elementById2('lstat').textContent = 'Reconnecting to the server...';
-      reconnectTimer = setTimeout(
-        () => {
-          if (sessionEpoch === epoch && clientGameState._cred) openSocket(tries + 1);
-        },
-        Math.min(8000, 1000 + tries * 700),
-      );
-      return;
-    }
-    const reason = clientGameState._kicked
-      ? 'Signed in somewhere else.'
-      : 'Disconnected from the server. Sign in again when it is back.';
-    // Terminal disconnect also returns a clean login, not a former captain's UI state.
+  },
+  incompatible: () => compatibilityRefresh.classList.remove('hidden'),
+  loginError: (message) => {
+    elementById2('lerr').textContent = message;
+    elementById2('lbtn').disabled = false;
+  },
+  reconnecting: (first) => {
+    if (first) toast('Connection lost. Reconnecting...');
+    elementById2('lstat').textContent = 'Reconnecting to the server...';
+  },
+  terminal: (reason) => {
     void logOut(reason);
-  };
-  socket.onerror = (message) => {
-    if (current() && message === COMPATIBILITY_MESSAGE) {
-      compatibilityFailure = true;
-      compatibilityRefresh.classList.remove('hidden');
-    }
-    if (current() && !clientGameState.you) {
-      elementById2('lerr').textContent = message || 'Could not reach the Quantum Rift server.';
-      elementById2('lbtn').disabled = false;
-    }
-  };
-}
+  },
+});
+
 function onMessage(serverMessage: ServerMessage) {
   if (profileUI.onMessage(serverMessage)) return;
   if (hailUI.onMessage(serverMessage)) return;
@@ -901,7 +869,7 @@ function onMessage(serverMessage: ServerMessage) {
       toast(serverMessage.msg);
       if (/somewhere else/.test(serverMessage.msg)) {
         clientGameState._kicked = true;
-        webSocket?.close();
+        connectionLifecycle.close();
       }
       break;
     case 'welcome':
@@ -3388,13 +3356,11 @@ function openQuit() {
 }
 async function logOut(reason = '') {
   elementById2('quitconfirm').disabled = elementById2('quitcancel').disabled = true;
-  clearTimeout(reconnectTimer!);
   diagnostics.clear();
   refreshDiagnosticControls();
   sessionEpoch++;
   const epoch = sessionEpoch;
-  const socket = webSocket;
-  webSocket = null;
+  const socket = connectionLifecycle.detach();
   delete clientGameState._cred;
   // The server's normal close path detaches, docks and saves the captain before closing.
   try {

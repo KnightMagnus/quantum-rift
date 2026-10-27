@@ -1,0 +1,72 @@
+function openSocket(tries: number) {
+  if (!clientGameState._cred) return;
+  const { name, pass } = clientGameState._cred;
+  const epoch = sessionEpoch;
+  const socket = createGameConnection(
+    {
+      solo: !!clientGameState.solo || (localReferenceTransport && !friendHostTransport),
+      ...(friendHostTransport ? { mode: 'friends' as const, localTransport: true } : {}),
+      localUrl: (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws',
+      nakama: nakamaConfig,
+    },
+    { name, pass },
+  );
+  webSocket = socket;
+  let compatibilityFailure = false;
+  const current = () => webSocket === socket && sessionEpoch === epoch;
+  socket.onopen = () => {
+    if (!current()) {
+      socket.close();
+      return;
+    }
+    if (clientGameState.solo || localReferenceTransport || friendHostTransport)
+      send({ t: 'hello', name, pass });
+  };
+  socket.onmessage = (event) => {
+    if (current()) onMessage(JSON.parse(event.data));
+  };
+  socket.onclose = () => {
+    if (!current()) return;
+    updateAttention();
+    clearFlightStatus();
+    landingFeedback.reset();
+    flightEngine.input.clear();
+    mouse.down = false;
+    touch.keys = {};
+    touch.stick = null;
+    clientGameState._look = null;
+    clientGameState._lookT = null;
+    elementById2('lbtn').disabled = false;
+    if (!clientGameState.you) return;
+    if (compatibilityFailure) {
+      void logOut(COMPATIBILITY_MESSAGE);
+      return;
+    }
+    if (!clientGameState._kicked && tries < 30) {
+      if (!tries) toast('Connection lost. Reconnecting...');
+      elementById2('lstat').textContent = 'Reconnecting to the server...';
+      reconnectTimer = setTimeout(
+        () => {
+          if (sessionEpoch === epoch && clientGameState._cred) openSocket(tries + 1);
+        },
+        Math.min(8000, 1000 + tries * 700),
+      );
+      return;
+    }
+    const reason = clientGameState._kicked
+      ? 'Signed in somewhere else.'
+      : 'Disconnected from the server. Sign in again when it is back.';
+    // Terminal disconnect also returns a clean login, not a former captain's UI state.
+    void logOut(reason);
+  };
+  socket.onerror = (message) => {
+    if (current() && message === COMPATIBILITY_MESSAGE) {
+      compatibilityFailure = true;
+      compatibilityRefresh.classList.remove('hidden');
+    }
+    if (current() && !clientGameState.you) {
+      elementById2('lerr').textContent = message || 'Could not reach the Quantum Rift server.';
+      elementById2('lbtn').disabled = false;
+    }
+  };
+}

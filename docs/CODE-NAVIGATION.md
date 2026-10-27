@@ -391,3 +391,13 @@ policy. [client/connection.ts](../client/connection.ts) checks fresh HTTP status
 the native world RPC before joining. Local Game hello and native join metadata
 are checked before Game login. [PROTOCOL-COMPATIBILITY.md](PROTOCOL-COMPATIBILITY.md)
 describes supported combinations and update recovery.
+
+## Client session and player projection
+
+`client/connection-lifecycle.ts` owns the current socket and reconnect timer,
+including stale-socket/epoch rejection, the existing bounded backoff and terminal
+disconnect decisions. `client/main.ts` retains the account epoch used by other UI
+work, memory-only credentials, transport configuration and full account teardown.
+The lifecycle reads these through callbacks; it never copies game state or queues
+and replays gameplay actions. Native authentication and transport cancellation
+remain in `client/connection.ts`.

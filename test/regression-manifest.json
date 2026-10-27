@@ -5,6 +5,7 @@
     "regression-runner-contracts.ts",
     "excalibur-contracts.ts",
     "flight-prediction.ts",
+    "connection-lifecycle.ts",
     "v03.ts",
     "v04.ts",
     "v05.ts",
@@ -1695,6 +1696,17 @@
         "nakama-network.ts"
       ],
       "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC and authoritative join rejection, terminal local denial despite buffered packets/late errors, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
+    },
+    {
+      "id": "client-connection-lifecycle",
+      "owners": ["client/connection-lifecycle.ts"],
+      "services": [],
+      "tests": [
+        "connection-lifecycle.ts",
+        "logout-browser.ts",
+        "protocol-compatibility-browser.ts"
+      ],
+      "asserts": "Independent pre-extraction traces preserve current-socket/epoch guards, native/local hello, packet dispatch, live credentials/configuration, bounded backoff, terminal compatibility/duplicate-login denial and account detach; existing browser tests cover actual sign-in/logout."
     }
   ],
   "routes": {
