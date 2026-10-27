@@ -44,6 +44,8 @@ interface CompatibilityShape {
   set: Record<string, unknown>;
   /** Retired hired escorts stored with a hull before dock migration. */
   storedEscortCount: number;
+  /** Historical hull IDs coexist with compatibility loadout records. */
+  storedEscortFormat?: 'hull-ids';
   /** Exact refund from the existing dock owner, never a verifier-issued reward. */
   refund: number;
 }
@@ -64,9 +66,9 @@ for (const shape of shapes) {
     saved.dock = [
       {
         ship: structuredClone(seed.ship),
-        escorts: Array.from({ length: shape.storedEscortCount }, () => ({
-          ship: structuredClone(seed.ship),
-        })),
+        escorts: Array.from({ length: shape.storedEscortCount }, () =>
+          shape.storedEscortFormat === 'hull-ids' ? 752 : { ship: structuredClone(seed.ship) },
+        ),
       },
     ];
   }
@@ -142,6 +144,9 @@ const invalidFields: Record<string, unknown>[] = [
   { directives: { '1': -1 } },
   { dock: [null] },
   { dock: [{ ship: null }] },
+  { dock: [{ ship: structuredClone(seed.ship), escorts: [-1] }] },
+  { dock: [{ ship: structuredClone(seed.ship), escorts: [752.5] }] },
+  { dock: [{ ship: structuredClone(seed.ship), escorts: [null] }] },
   { docks: [{ lead: 's1', wings: 'bad' }] },
   { story: { step: -1 } },
   { story: { done: 'bad' } },

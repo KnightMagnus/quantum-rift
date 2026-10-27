@@ -88,7 +88,10 @@ export function validateFeaturePlayerSave(value: unknown): void {
       record(entry.ship);
       optional(entry, 'bridge', record);
       optional(entry, 'escorts', (value) => {
-        for (const escort of list(value)) record(record(escort).ship);
+        for (const escort of list(value)) {
+          if (typeof escort === 'number') count(escort);
+          else record(record(escort).ship);
+        }
       });
     }
   });

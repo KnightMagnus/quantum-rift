@@ -26,15 +26,29 @@
       "blocks",
       "mail"
     ],
-    "set": { "v26": true },
+    "set": {
+      "v26": true
+    },
     "storedEscortCount": 0,
     "refund": 0
   },
   {
     "label": "pre-2.1-stored-escort-presets",
     "remove": ["docks", "activeDock"],
-    "set": { "v26": true },
+    "set": {
+      "v26": true
+    },
     "storedEscortCount": 2,
+    "refund": 1000
+  },
+  {
+    "label": "pre-2.1-numeric-stored-escort-presets",
+    "remove": ["docks", "activeDock"],
+    "set": {
+      "v26": true
+    },
+    "storedEscortCount": 2,
+    "storedEscortFormat": "hull-ids",
     "refund": 1000
   },
   {
@@ -46,13 +60,39 @@
         "step": 3,
         "active": null,
         "done": ["synthetic-completed"],
-        "flags": { "syntheticFlag": true }
+        "flags": {
+          "syntheticFlag": true
+        }
       },
-      "arcs": { "synthetic": { "step": 2, "active": { "got": 3, "ready": false }, "done": false } },
-      "holdout": { "best": 7, "lastT": 15 },
-      "parts": { "alloy": 4 },
-      "specState": { "synthetic": { "tier": 2, "comp": { "engine": 3 }, "upT": null } },
-      "mastery": { "703": 1.5 },
+      "arcs": {
+        "synthetic": {
+          "step": 2,
+          "active": {
+            "got": 3,
+            "ready": false
+          },
+          "done": false
+        }
+      },
+      "holdout": {
+        "best": 7,
+        "lastT": 15
+      },
+      "parts": {
+        "alloy": 4
+      },
+      "specState": {
+        "synthetic": {
+          "tier": 2,
+          "comp": {
+            "engine": 3
+          },
+          "upT": null
+        }
+      },
+      "mastery": {
+        "703": 1.5
+      },
       "syn": 13,
       "shards": 9,
       "credit": 650

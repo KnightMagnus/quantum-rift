@@ -22,7 +22,7 @@ export interface StoredShip {
   repairT?: number;
   ship: ShipLoadout;
   bridge?: Record<string, number | string | null>;
-  escorts?: Array<{ ship: ShipLoadout }>;
+  escorts?: Array<number | { ship: ShipLoadout }>;
 }
 /** Per-captain choices never mutate shared faction or market state. */
 export interface StoryFlags {
