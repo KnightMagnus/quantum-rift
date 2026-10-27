@@ -100,7 +100,7 @@ const milestones: [string, number][] = [
   ],
   ['Halberd Frigate', assets.ships[713].cost],
   ['Bastion Dreadnought', assets.ships[717].cost],
-  ['Constitution', assets.ships[736].cost],
+  ['Concordance', assets.ships[736].cost],
 ];
 console.log(`== hours to afford at ~${formatValue(typical)} cr/h`);
 for (const [quantity, upgradeCost] of milestones)

@@ -361,15 +361,25 @@ assertCondition(
   game.features.fleetcmd.rankOf(playerData6).name === 'Dangerous',
   'a captain with 50k combat score is rated Dangerous',
 );
-const offers = game.offers(land, playerData6);
+const contractPort = STELLARS['meridian-yards'];
+assertCondition(
+  !game.offers(contractPort, playerData6).some((mission) => mission.elite),
+  'Dangerous rank alone does not qualify an underpowered starter for elite contracts',
+);
+game.seedFleet(playerData6, { docks: [{ lead: 736, wings: [717, 717] }] });
+assertCondition(
+  !game.offers(land, playerData6).some((mission) => mission.elite),
+  'the starter hub does not offer elite contracts even to Dangerous captains',
+);
+const offers = game.offers(contractPort, playerData6);
 assertCondition(
   offers.some((mission) => mission.elite),
-  'Dangerous captains see elite contracts',
+  'Dangerous captains with an equipped combat fleet see elite contracts outside the starter hub',
 );
 playerData6.stats.combat = 0;
 assertCondition(
   !game
-    .offers(land, playerData6)
+    .offers(contractPort, playerData6)
     .some((mission) => mission.elite || mission.type === 'assassinate'),
   'Harmless captains see neither elite contracts nor Wanted targets',
 );

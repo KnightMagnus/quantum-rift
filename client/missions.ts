@@ -38,6 +38,10 @@ export type MissionTarget = {
   qty?: number;
   pax?: number;
   done?: boolean;
+  /** Relief passenger pickup port, before boarding. */
+  pickup?: string;
+  /** Whether relief passengers have boarded. */
+  boarded?: boolean;
   team?: string[];
   pendingQuest?: string;
 };
@@ -172,6 +176,14 @@ export function missionTargets(clientGameState: ClientGameState): MissionTarget[
     if (mission.done) {
       status = 'Complete: land anywhere to collect the reward.';
       starSystem = null;
+    } else if (
+      mission.type === 'passenger' &&
+      mission.pickup &&
+      !mission.boarded &&
+      STELLARS[mission.pickup]
+    ) {
+      status = `Collect passengers at ${placeName(mission.pickup)}.`;
+      starSystem = systemOf(mission.pickup);
     } else if (mission.dest && STELLARS[mission.dest]) {
       status = `Land at ${placeName(mission.dest)}.`;
       starSystem = systemOf(mission.dest);
@@ -205,10 +217,16 @@ export function missionTargets(clientGameState: ClientGameState): MissionTarget[
       type: mission.type,
       qty: mission.qty,
       pax: mission.pax,
+      pickup: mission.pickup,
+      boarded: mission.boarded,
       dest: mission.dest,
       done: mission.done,
       team: mission.team,
-      stellar: mission.done ? null : mission.dest || null,
+      stellar: mission.done
+        ? null
+        : mission.type === 'passenger' && mission.pickup && !mission.boarded
+          ? mission.pickup
+          : mission.dest || null,
       key: mission.id,
       kind: mission.exp || mission.quest ? 'arc' : 'job',
       quest: !!mission.quest,
