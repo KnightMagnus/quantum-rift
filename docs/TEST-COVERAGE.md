@@ -1284,3 +1284,13 @@ does not depend on unrelated ambient traffic random rolls.
 The HUD JUMP regression also opens the galaxy map and attempts native button
 activation before the periodic disabled-state refresh. No jump packet or jump
 navigation can escape the overlay; closing the map restores the plotted action.
+## Client prediction ownership
+
+`flight-prediction.ts` compares the extracted owner with an independent reference
+of the `e8c8c29` sequence/history/reconciliation blocks across four stock hulls.
+The traces cover delayed, repeated and reordered acknowledgements, neutral-release
+sequence gaps, disabled prediction, changed live stats, towing caps, large-correction
+snapping, travel clears and presence resets. A separate expected-physics check
+proves that only the last 90 unacknowledged controls replay. This is display
+prediction, not economic authority or a guarantee under every network fault.
+Existing engine, input and logout browser fixtures exercise its real integration.

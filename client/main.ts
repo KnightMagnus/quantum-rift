@@ -1,3 +1,5 @@
+import { FlightPrediction } from './flight-prediction.ts';
+import type { PredictionView as ClientView } from './flight-prediction.ts';
 import { COMPATIBILITY_MESSAGE } from '../shared/protocol.ts';
 import { overlays } from './overlay-controller.ts';
 import { LandingFeedback, landingRefusal } from './landing-feedback.ts';
@@ -49,24 +51,7 @@ export type ClientInput = {
   fire1: number;
   fire2: number;
 };
-export type ClientView = {
-  id: number;
-  rx: number;
-  ry: number;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  a: number;
-  shield: number;
-  armor: number;
-  fuel: number;
-  fl: number;
-  t?: number;
-  towCap?: number;
-  ox: number;
-  oy: number;
-};
+export type { PredictionView as ClientView } from './flight-prediction.ts';
 export interface ClientOptions {
   [preference: string]: unknown;
   miningKeysVersion?: number;
@@ -322,7 +307,6 @@ import { receiveShipChat } from './chat_bubbles.ts';
 import { SYS as systemsById, STELLARS, FACTIONS, FACTION_HULLS } from '../shared/galaxy.ts';
 import { TUTORIAL } from '../shared/tutorial.ts';
 import {
-  step,
   DT as tickDuration,
   weaponColor,
   augmentAssets,
@@ -635,9 +619,8 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null,
 let nakamaConfig: NakamaConfig | undefined;
 let localReferenceTransport = false;
 let friendHostTransport = false;
+const prediction = new FlightPrediction();
 let webSocket: ClientConnection | null = null,
-  sequence = 0,
-  history: Array<{ seq: number; inp: ClientInput }> = [],
   _lastSnapT = 0;
 function send(networkMessage: NetworkMessage) {
   if (webSocket && webSocket.readyState === 1) webSocket.send(JSON.stringify(networkMessage));
@@ -925,8 +908,7 @@ function onMessage(serverMessage: ServerMessage) {
       compatibilityRefresh.classList.add('hidden');
       if (!clientGameState.solo && !localReferenceTransport && !friendHostTransport) {
         // Welcome establishes this native presence before its first controls, even if join/onopen is pending.
-        sequence = 0;
-        history = [];
+        prediction.reset();
         clientGameState.view = null;
         _lastSnapT = 0;
       }
@@ -993,7 +975,7 @@ function onMessage(serverMessage: ServerMessage) {
       clientGameState.loot = [];
       clientGameState.target = 0;
       clientGameState.targetClearPending = false;
-      history = [];
+      prediction.clearPending();
       showLanded();
       refreshCompanion();
       break;
@@ -1024,7 +1006,7 @@ function onMessage(serverMessage: ServerMessage) {
       clientGameState.ents.clear();
       clientGameState.shots = [];
       clientGameState.beams = [];
-      history = [];
+      prediction.clearPending();
       clientGameState.rocks = (serverMessage.rocks || []).map(
         ([identifier, positionX, positionY, radius, oreCommodity, hullPoints]) => ({
           id: identifier,
@@ -1482,38 +1464,27 @@ function onSnap(snapshotMessage: SnapshotMessage) {
   // reconcile own ship: take the server state, replay inputs it has not seen yet
   const renderEntity2 = clientGameState.ents.get(identifier);
   if (renderEntity2) clientGameState.myHull = renderEntity2.hull;
-  const clientView =
-    clientGameState.view ||
-    ({ id: identifier, rx: positionX, ry: positionY, ox: 0, oy: 0 } as ClientView);
-  const previousX = clientGameState.view ? clientGameState.view.x : positionX,
-    previousY = clientGameState.view ? clientGameState.view.y : positionY;
-  Object.assign(clientView, {
-    id: identifier,
-    x: positionX,
-    y: positionY,
-    vx: velocityX,
-    vy: velocityY,
-    a: firstValue,
-    shield: ship,
-    armor: armor2,
-    fuel: fuel2,
-    fl: renderEntity2 ? renderEntity2.fl : 0,
-  });
-  history = history.filter((height) => height.seq > acknowledgement);
-  const computedShipStats = clientGameState.you && clientGameState.you!.shipStats;
-  if (
-    computedShipStats &&
-    renderEntity2 &&
-    !(renderEntity2.fl & 8) &&
-    !(clientGameState.combat.on || clientGameState.combat.delegated) &&
-    !(clientGameState.formation && !clientGameState.auto)
-  )
-    for (const history2 of history) step(clientView, computedShipStats!, history2.inp);
-  if (clientGameState.view) {
-    clientView.ox += previousX - clientView.x;
-    clientView.oy += previousY - clientView.y;
-    if (Math.hypot(clientView.ox, clientView.oy) > 300) clientView.ox = clientView.oy = 0;
-  }
+  const clientView = prediction.reconcile(
+    clientGameState.view,
+    {
+      id: identifier,
+      acknowledgement,
+      x: positionX,
+      y: positionY,
+      vx: velocityX,
+      vy: velocityY,
+      a: firstValue,
+      shield: ship,
+      armor: armor2,
+      fuel: fuel2,
+      fl: renderEntity2 ? renderEntity2.fl : 0,
+    },
+    clientGameState.you?.shipStats,
+    !!renderEntity2 &&
+      !(renderEntity2.fl & 8) &&
+      !(clientGameState.combat.on || clientGameState.combat.delegated) &&
+      !(clientGameState.formation && !clientGameState.auto),
+  );
   clientGameState.view = clientView;
   {
     // 2.0 audio feedback: low shields, target lock, jump
@@ -3167,7 +3138,7 @@ function clearManualFlightInput(): void {
   touch.stick = null;
   padding.blocked = true;
   if (clientGameState.view && !clientGameState.landed)
-    send({ t: 'input', seq: ++sequence, th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 });
+    send({ t: 'input', seq: prediction.nextSequence(), th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 });
 }
 let account = 0,
   last = performance.now();
@@ -3292,7 +3263,7 @@ function fixedTick(): void {
     if (!clientGameState.auto) input.thrust = input.turn = input.rev = input.ab = 0;
   } // the autopilot keeps flying while you chat
   audio.engine(input.thrust ? (input.ab ? 1.6 : 1) : input.rev ? 0.3 : 0); // the engine hum follows your throttle
-  sequence++;
+  const sequence = prediction.nextSequence();
   send({
     t: 'input',
     seq: sequence,
@@ -3304,17 +3275,20 @@ function fixedTick(): void {
     f2: input.fire2,
     nav: navigationRequested || !!clientGameState.auto,
   });
-  history.push({ seq: sequence, inp: input });
-  if (history.length > 90) history.shift();
   const renderEntity2 = clientGameState.ents.get(clientGameState.myId);
-  if (
-    clientGameState.you &&
-    !(renderEntity2 && renderEntity2.fl & 8) &&
-    !(clientGameState.combat && (clientGameState.combat.on || clientGameState.combat.delegated)) &&
-    !(clientGameState.formation && !clientGameState.auto)
-  )
-    step(clientGameState.view, clientGameState.you!.shipStats!, input);
-  clientGameState.view.fl = (input.thrust ? 1 : 0) | (input.ab ? 2 : 0);
+  prediction.record(
+    sequence,
+    input,
+    clientGameState.view,
+    clientGameState.you?.shipStats,
+    !!clientGameState.you &&
+      !(renderEntity2 && renderEntity2.fl & 8) &&
+      !(
+        clientGameState.combat &&
+        (clientGameState.combat.on || clientGameState.combat.delegated)
+      ) &&
+      !(clientGameState.formation && !clientGameState.auto),
+  );
 }
 /**
  * Presentation and prediction update driven exclusively by the Excalibur scene.
@@ -3446,8 +3420,8 @@ async function logOut(reason = '') {
   clearFlightStatus();
   landingFeedback.reset();
   flightEngine.input.clear();
-  history = [];
-  sequence = account = _lastSnapT = 0;
+  prediction.reset();
+  account = _lastSnapT = 0;
   mouse.down = mouse.in = false;
   padding.prev = [];
   touch.keys = {};

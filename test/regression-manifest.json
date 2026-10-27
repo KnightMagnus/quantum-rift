@@ -4,6 +4,7 @@
     "coverage-inventory.ts",
     "regression-runner-contracts.ts",
     "excalibur-contracts.ts",
+    "flight-prediction.ts",
     "v03.ts",
     "v04.ts",
     "v05.ts",
@@ -1384,12 +1385,14 @@
         "client/engine.ts",
         "client/space-scene.ts",
         "client/engine-input.ts",
+        "client/flight-prediction.ts",
         "client/graphics-backend.ts",
         "client/world-actors.ts"
       ],
       "tests": [
         "excalibur-runtime-browser.ts",
         "excalibur-contracts.ts",
+        "flight-prediction.ts",
         "input-audio-browser.ts",
         "logout-browser.ts",
         "sidebar-sizing-browser.ts"

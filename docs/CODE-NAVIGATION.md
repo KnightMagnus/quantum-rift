@@ -250,8 +250,16 @@ keep their existing document positions. No preprocessor or bundler is required.
 ## Flight engine
 
 Excalibur 0.32.0 owns the browser flight clock in `client/engine.ts` and the
-persistent `SpaceScene` in `client/space-scene.ts`. `client/main.ts` still owns
-networking, the original DT accumulator/prediction and DOM command routing.
+persistent `SpaceScene` in `client/space-scene.ts`. `client/main.ts` owns
+networking, the DT accumulator and DOM command routing. `client/flight-prediction.ts`
+owns sequence allocation, the last 90 pending controls, acknowledgement replay and
+reconciliation offsets. It mutates the caller's existing display view and uses the
+shared physics step; it has no timer, socket, account or copied game state.
+The composition layer passes current stats and jump/combat/formation policy on
+each call. Sending precedes history recording and prediction. Neutral release
+packets advance the sequence without entering replay history. Landing and travel
+clear pending inputs; a new native presence and logout also reset the sequence.
+Rendering still owns offset decay and smoothed drawing positions.
 `client/engine-input.ts` reads physical keys through Excalibur and queues short
 presses until a simulation tick. Typing and modal controls keep their DOM behavior.
 
