@@ -30,9 +30,12 @@ read a measurement clock, enumerate diagnostic entities or size payloads.
 - `tickMs` covers the authoritative tick; `featuresMs`, `spacesMs` and
   `snapshotsMs` divide its ordinary stages. Odd ticks do not send snapshots.
   Paused/frozen ticks still count as tick calls but do not advance simulation.
-- `snapshotBuildMs` measures shared system snapshot construction.
+- `snapshotBuildMs` measures shared system snapshot construction, visibility eligibility and
+  reusable public JSON encoding when the system has no private story entities.
   `snapshotSerializeMs` includes construction of each flying recipient's payload
-  and its existing JSON serialization. `snapshotBytes` counts UTF-8 JSON bytes
+  and recipient JSON serialization. Public arrays are encoded once only when
+  every recipient has the same visibility; private story systems retain individual
+  filtering and serialization. Total snapshot work remains in `snapshotsMs`. `snapshotBytes` counts UTF-8 JSON bytes
   before transport framing/compression. Docked `scene` packets are not included.
 - `systems`, `entities` and `shots` count awake systems, ships and projectiles
   after a tick, including quiet systems waiting to sleep. Rocks, loot, beams and
@@ -326,3 +329,11 @@ production simulation, but use counting connections and memory CAS rather than
 native network/database latency. Thirty-player concentrated/distributed cases are
 also part of the registered health regression. Their 512 KiB checkpoint ceiling
 is a fixture growth guard, not a PostgreSQL latency or production save quota.
+
+Native profiling at 30 captains identified snapshot processing, including the
+opt-in byte counter, as the dominant measured stage. UTF-8 measurement now skips
+ASCII runs in the host regular-expression engine while preserving exact Unicode
+and lone-surrogate byte counts. Encoding the unrestricted public snapshot once
+per system avoids repeating the same array serialization for each captain.
+Recipient fields and systems with private story entities retain their individual
+paths. These changes do not batch, reorder or defer network delivery.

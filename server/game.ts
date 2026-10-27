@@ -1,3 +1,4 @@
+import { sharedSnapshotEncoder } from './snapshot-encoding.ts';
 import { COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
 import { storySystemVisible } from '../shared/story-world.ts';
 import { utf8Bytes } from '../shared/health.ts';
@@ -3495,6 +3496,12 @@ export class Game<Storage extends Database = Database> {
     for (const [starSystem, list] of Object.entries(bySystem)) {
       const snapshotStarted = health?.now() ?? 0;
       const spaceSnapshot = this.spaces[starSystem].snapshot();
+      // Story visibility is recipient-specific. Reuse only the unrestricted
+      // public arrays; restricted systems keep the existing per-recipient path.
+      const privateEntities = [...this.spaces[starSystem].ships.values()].some(
+        (actor) => actor.story || actor.storySight,
+      );
+      const encodeShared = privateEntities ? null : sharedSnapshotEncoder(spaceSnapshot);
       if (health) health.observe('snapshotBuildMs', health.now() - snapshotStarted);
       for (const session of list) {
         const privateSpace = this.spaces[starSystem];
@@ -3523,9 +3530,7 @@ export class Game<Storage extends Database = Database> {
           continue;
         }
         const serializeStarted = health?.now() ?? 0;
-        const serialized = JSON.stringify({
-          t: 'snap',
-          ...personalSnapshot,
+        const recipientFields = {
           attention: attentionPayload(session, this.spaces[starSystem]),
           nhal: this.features.nhal.status(this.spaces[starSystem], entity),
           miningRocks: this.features.mining.rocksPayload(this.spaces[starSystem]),
@@ -3552,7 +3557,10 @@ export class Game<Storage extends Database = Database> {
               .filter((weaponMount) => weaponMount.ammo !== Infinity)
               .map((weaponMount) => [weaponMount.w, weaponMount.ammo]),
           ],
-        });
+        };
+        const serialized = encodeShared
+          ? encodeShared(recipientFields)
+          : JSON.stringify({ t: 'snap', ...personalSnapshot, ...recipientFields });
         if (health) {
           health.observe('snapshotSerializeMs', health.now() - serializeStarted);
           health.observe('snapshotBytes', utf8Bytes(serialized));

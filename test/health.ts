@@ -1,3 +1,5 @@
+import { sharedSnapshotEncoder } from '../server/snapshot-encoding.ts';
+import type { SpaceSnapshot } from '../server/space.ts';
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import { Game } from '../server/game.ts';
@@ -150,3 +152,19 @@ for (const value of [
   'a\udfffz\ud800',
 ])
   assert.equal(utf8Bytes(value), Buffer.byteLength(value));
+
+// Compare wire bytes with the pre-optimization JSON object expression, not another
+// cached encoder. Recipient flags, escaped names/events and empty arrays stay exact.
+for (const ships of [[], [[1, 703, 0, 'Unicode é🚀 and "quote"']]]) {
+  const shared: SpaceSnapshot = { ships, shots: [], beams: [], loot: [], ev: [] };
+  const encode = sharedSnapshotEncoder(shared);
+  for (let recipient = 0; recipient < 30; recipient++) {
+    const fields = {
+      attention: { targeted: recipient === 2, scanned: recipient === 3 },
+      mining: null,
+      me: [recipient, 0, -0, 1.25],
+      text: 'escaped\nline\t\ud800',
+    };
+    assert.equal(encode(fields), JSON.stringify({ t: 'snap', ...shared, ...fields }));
+  }
+}
