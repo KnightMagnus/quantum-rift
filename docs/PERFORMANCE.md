@@ -309,7 +309,11 @@ with synthetic measurements and retains the existing payload-growth guards.
 A native game instance admits at most 30 simultaneous connections. The join-attempt
 callback rejects a full instance; the join callback checks again so a batch of
 accepted attempts cannot exceed the limit. Duplicate joins do not allocate extra
-Game sessions. Disconnected captains retain the existing docking and save rules.
+Game sessions. A new connection for the same authenticated captain may replace
+its old presence even when the instance is full. The old presence receives the
+existing displaced-login message and is retired before the replacement is
+allocated; its delayed leave callback cannot remove the replacement.
+Disconnected captains retain the existing docking and save rules.
 This is an admission limit, not evidence of smooth play on arbitrary hardware.
 
 A provisional single-instance host is four modern dedicated vCPUs, 8 GB RAM and

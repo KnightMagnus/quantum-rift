@@ -1306,9 +1306,14 @@ see [PERFORMANCE.md](PERFORMANCE.md#deployment-owned-budget-profiles).
 ## Full-instance admission and performance fixtures
 
 `nakama-world-lease.ts` exercises the actual join callbacks at 30 connections,
-including a 31-presence batch and duplicate callbacks. The first 30 join; the
+including a 31-presence batch, duplicate callbacks and a full-instance replacement
+for the same authenticated principal. The displaced connection receives the
+existing error before its kick, and its Game/native slots are retired before
+allocation. A stale leave cannot delete the replacement; join callbacks recheck
+authentication before displacing anyone. The first 30 join; the
 extra presence is kicked without creating a Game session. A full instance rejects
-further attempts. The existing ownership/authentication gates remain separate.
+additional captains while allowing same-captain replacements. Existing ownership
+and authentication gates remain enforced.
 
 `health.ts` runs real concentrated and distributed 30-captain simulations for
 120 ticks and checks authority failures, snapshot size and checkpoint growth.
