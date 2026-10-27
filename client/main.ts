@@ -1217,6 +1217,18 @@ function onMessage(serverMessage: ServerMessage) {
 }
 
 const storyQ: StoryMessage[] = [];
+let dismissStory: (() => void) | null = null;
+overlays.register({
+  id: 'storybox',
+  priority: 22,
+  dismiss: () => dismissStory?.(),
+  initialFocus: () => elementById2('storyb').querySelector<HTMLElement>('button'),
+  reset: () => {
+    dismissStory = null;
+    storyQ.length = 0;
+    elementById2('storyb').replaceChildren();
+  },
+});
 function showStory(storyMessage: StoryMessage | undefined) {
   if (!clientGameState.you || !storyMessage) return;
   if (!elementById2('storybox').classList.contains('hidden')) {
@@ -1233,7 +1245,6 @@ function showStory(storyMessage: StoryMessage | undefined) {
   elementById2('storyb').innerHTML = storyMessage.done
     ? '<button class="btn" id="storyok">CONTINUE</button>'
     : `<button class="btn sm" id="storyno">${storyMessage.ref || 'Not now'}</button><button class="btn" id="storyyes">${storyMessage.acc || 'Accept'}</button>`;
-  elementById2('storybox').classList.remove('hidden');
   audio.ui(
     /QUEST|SIDE STORY/.test(storyMessage.tag || '')
       ? 'quest'
@@ -1243,7 +1254,8 @@ function showStory(storyMessage: StoryMessage | undefined) {
     0.7,
   ); // story beats have their own sting
   const close = () => {
-    elementById2('storybox').classList.add('hidden');
+    dismissStory = null;
+    overlays.close('storybox');
     if (storyQ.length) {
       const epoch = sessionEpoch;
       setTimeout(() => {
@@ -1251,6 +1263,7 @@ function showStory(storyMessage: StoryMessage | undefined) {
       }, 150);
     }
   };
+  dismissStory = close;
   if (storyMessage.choices?.length) {
     elementById2('storyb').replaceChildren();
     const deferChoice = document.createElement('button');
@@ -1268,6 +1281,7 @@ function showStory(storyMessage: StoryMessage | undefined) {
       };
       elementById2('storyb').append(button);
     }
+    overlays.open('storybox');
     return;
   }
   if (storyMessage.done) elementById2('storyok').onclick = close;
@@ -1282,6 +1296,7 @@ function showStory(storyMessage: StoryMessage | undefined) {
       close();
     };
   }
+  overlays.open('storybox');
 }
 window.addEventListener('rift-story', (event) => showStory((event as CustomEvent).detail));
 window.addEventListener('rift-toast-sound', (event) =>
@@ -1627,15 +1642,6 @@ const typing = () =>
     (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) ||
       (document.activeElement as HTMLElement).isContentEditable));
 window.addEventListener('keydown', (keyboardEvent) => {
-  if (
-    (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') &&
-    !elementById2('storybox').classList.contains('hidden') &&
-    elementById2('storyok')
-  ) {
-    keyboardEvent.preventDefault();
-    elementById2('storyok').click();
-    return;
-  } // Enter or Space continues a story pop-up
   // Native activation/focus keys belong to the focused control. Steering and
   // remapped actions still work after clicking a HUD button; separators consume
   // only their own sizing keys locally.
@@ -1662,16 +1668,7 @@ window.addEventListener('keydown', (keyboardEvent) => {
     return;
   }
   if (!clientGameState.you) return;
-  if (overlays.blocksFlight()) {
-    if (
-      !elementById2('gmap').classList.contains('hidden') &&
-      (keyboardEvent.code === 'Escape' || actionOf(keyboardEvent.code) === 'map')
-    ) {
-      keyboardEvent.preventDefault();
-      closeMap();
-    }
-    return;
-  }
+  if (overlays.blocksFlight()) return;
   audio.unlock();
   if (
     ['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(
@@ -1881,37 +1878,19 @@ function showHail(hailConversation: HailConversation) {
   hailUI.show(hailConversation);
 }
 
-window.addEventListener(
-  'keydown',
-  (keyboardEvent) => {
-    if (
-      !elementById2('hailbox').classList.contains('hidden') &&
-      elementById2('infobox').classList.contains('hidden') &&
-      (keyboardEvent.key === 'Escape' || (keyboardEvent.code === 'KeyT' && !typing()))
-    ) {
-      hailUI.close();
-      keyboardEvent.stopImmediatePropagation();
-      keyboardEvent.preventDefault();
-    }
-  },
-  true,
-);
-// ship and captain info (I)
-let infoReturnFocus: HTMLElement | null;
+// Ship and captain info shares the modal controller.
 function openInfo() {
-  infoReturnFocus = document.activeElement as HTMLElement | null;
   audio.ui('open', 0.6);
-  elementById2('infobox').classList.remove('hidden');
   send({ t: 'rivals' });
   renderInfo();
+  overlays.open('infobox');
 }
 elementById2('captainshortcut').onclick = () =>
   elementById2('infobox').classList.contains('hidden') ? openInfo() : closeInfo();
 function closeInfo() {
   profileUI.hide();
   audio.ui('close', 0.6);
-  elementById2('infobox').classList.add('hidden');
-  if (infoReturnFocus?.isConnected) infoReturnFocus.focus({ preventScroll: true });
+  overlays.close('infobox');
 }
 function renderInfo() {
   const profileSelected = clientGameState.itab === 'profile';
@@ -1964,50 +1943,17 @@ elementById2('infobody').addEventListener('click', (pointerEvent) => {
     if (epoch === sessionEpoch && clientGameState.you) renderInfo();
   }, 250);
 });
-window.addEventListener(
-  'keydown',
-  (keyboardEvent) => {
-    if (
-      keyboardEvent.key === 'Tab' &&
-      clientGameState.itab === 'profile' &&
-      !elementById2('infobox').classList.contains('hidden') &&
-      elementById2('opts').classList.contains('hidden') &&
-      elementById2('ctrlbox').classList.contains('hidden')
-    ) {
-      const controls = [
-        ...elementById2('infobox').querySelectorAll<HTMLElement>(
-          'button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex="0"]',
-        ),
-      ].filter(
-        (element) =>
-          element.offsetParent !== null &&
-          (!(element instanceof HTMLInputElement) || element.type !== 'radio' || element.checked),
-      );
-      const first = controls[0],
-        last = controls.at(-1);
-      if (keyboardEvent.shiftKey && document.activeElement === first) {
-        keyboardEvent.preventDefault();
-        last?.focus();
-      } else if (!keyboardEvent.shiftKey && document.activeElement === last) {
-        keyboardEvent.preventDefault();
-        first?.focus();
-      }
-      keyboardEvent.stopImmediatePropagation();
-      return;
-    }
-    if (
-      !elementById2('infobox').classList.contains('hidden') &&
-      elementById2('opts').classList.contains('hidden') &&
-      elementById2('ctrlbox').classList.contains('hidden') &&
-      (keyboardEvent.key === 'Escape' || (keyboardEvent.code === 'KeyI' && !typing()))
-    ) {
-      closeInfo();
-      keyboardEvent.stopImmediatePropagation();
-      keyboardEvent.preventDefault();
-    }
+overlays.register({
+  id: 'infobox',
+  priority: 23,
+  dismiss: closeInfo,
+  initialFocus: () => elementById2('itabs').querySelector<HTMLElement>('.on'),
+  keyDown: (event) => {
+    if (event.code !== 'KeyI' || typing()) return false;
+    if (!event.repeat) closeInfo();
+    return true;
   },
-  true,
-);
+});
 // ------------------------------------------------------------------ 1.0.3 autopilot: fly to a planet, turn, brake and land; or fly clear and jump
 clientGameState.startAutoJump = () => {
   const epoch = sessionEpoch;
@@ -2962,17 +2908,41 @@ overlays.register({
     return true;
   },
 });
-// Store retains its independent Escape dismissal.
-window.addEventListener(
-  'keydown',
-  (event) => {
-    if (!elementById2('storebox').classList.contains('hidden') && event.key === 'Escape') {
-      elementById2('storebox').classList.add('hidden');
-      event.stopImmediatePropagation();
+overlays.register({
+  id: 'storebox',
+  priority: 15,
+  dismiss: () => overlays.close('storebox'),
+  initialFocus: () => elementById2('storein').querySelector<HTMLElement>('[data-a="sclose"]'),
+});
+overlays.register({
+  id: 'deadbox',
+  priority: 10,
+  dismiss: () => overlays.close('deadbox'),
+  initialFocus: () => elementById2('deadok'),
+});
+overlays.register({
+  id: 'gmap',
+  priority: 10,
+  dismiss: closeMap,
+  initialFocus: () => elementById2('gmap'),
+  allowOutsidePointer: (target) => !!target.closest('#cbhelp,#optbtn'),
+  keyDown: (event) => {
+    if ((event.target as HTMLElement).id === 'gsearch') {
+      if (event.key === 'Enter') {
+        elementById2('gresults').querySelector<HTMLElement>('[data-sys]')?.click();
+        return true;
+      }
+      if (event.key === 'Escape') {
+        elementById2('gsearch').blur();
+        elementById2('gmap').focus();
+        return true;
+      }
     }
+    if (actionOf(event.code) !== 'map' || typing()) return false;
+    if (!event.repeat) closeMap();
+    return true;
   },
-  true,
-);
+});
 
 // Read-only diagnostic access is useful for support and browser regression assertions.
 Object.defineProperty(window, 'RiftEngine', { value: flightEngine });
@@ -3060,13 +3030,7 @@ function padInput(clientInput: ClientInput): void {
     padding.blocked = false;
     return;
   }
-  if (
-    gamepad.buttons[9]?.pressed &&
-    !padding.prev[9] &&
-    !typing() &&
-    !overlays.hasExclusiveDialog() &&
-    !elementById2('gmap').classList.contains('hidden')
-  ) {
+  if (gamepad.buttons[9]?.pressed && !padding.prev[9] && !typing() && overlays.isTop('gmap')) {
     closeMap();
     padding.prev = gamepad.buttons.map((button) => button.pressed);
     padding.blocked = true;
@@ -3169,12 +3133,7 @@ if (
       'touchstart',
       (touchEvent) => {
         touchEvent.preventDefault();
-        if (
-          htmlElement.dataset.tap === 'map' &&
-          !typing() &&
-          !overlays.hasExclusiveDialog() &&
-          !elementById2('gmap').classList.contains('hidden')
-        ) {
+        if (htmlElement.dataset.tap === 'map' && !typing() && overlays.isTop('gmap')) {
           closeMap();
           return;
         }

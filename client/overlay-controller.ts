@@ -13,6 +13,8 @@ export interface OverlayPolicy {
    * Return true only when its native default was handled.
    */
   keyDown?: (event: KeyboardEvent) => boolean;
+  /** Allow a specific non-flight opener outside this dialog, such as map help. */
+  allowOutsidePointer?: (target: Element) => boolean;
   /** Clear pending owner callbacks on logout without submitting or restoring focus. */
   reset?: () => void;
 }
@@ -40,7 +42,11 @@ export class OverlayController {
         top &&
         this.policies.has(top.id) &&
         event.target instanceof Node &&
-        !top.contains(event.target)
+        !top.contains(event.target) &&
+        !(
+          event.target instanceof Element &&
+          this.policies.get(top.id)?.allowOutsidePointer?.(event.target)
+        )
       ) {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -63,7 +69,9 @@ export class OverlayController {
   }
 
   close(id: string): void {
-    document.getElementById(id)!.classList.add('hidden');
+    const element = document.getElementById(id)!;
+    if (element.classList.contains('hidden')) return;
+    element.classList.add('hidden');
     const returnTo = this.returnFocus.get(id);
     this.returnFocus.delete(id);
     const top = this.top();
@@ -116,6 +124,11 @@ export class OverlayController {
     return !!document.querySelector('.overlay:not(.hidden):not(#land)');
   }
 
+  /** Only the visible top owner may use a non-keyboard dismissal shortcut. */
+  isTop(id: string): boolean {
+    return this.top()?.id === id;
+  }
+
   /** Migrated dialogs own all shortcuts, including closing a map underneath them. */
   hasExclusiveDialog(): boolean {
     const top = this.top();
@@ -154,7 +167,11 @@ export class OverlayController {
         ...top.querySelectorAll<HTMLElement>(
           'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]',
         ),
-      ].filter((element) => element.getClientRects().length > 0);
+      ].filter(
+        (element) =>
+          element.getClientRects().length > 0 &&
+          (!(element instanceof HTMLInputElement) || element.type !== 'radio' || element.checked),
+      );
       const first = controls[0],
         last = controls.at(-1);
       if (

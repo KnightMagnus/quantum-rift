@@ -311,7 +311,8 @@ so regenerating the broad sound library does not restore the retired sharp jingl
 ## Modal and manual-input ownership
 
 `client/overlay-controller.ts` owns priority, keyboard capture, native Tab wrapping
-and focus return for confirmation, quit, boarding, Options and Controls dialogs.
+and focus return for confirmation, quit, boarding, Options, Controls, map, ship/captain info, hails,
+story, storage and ship-loss dialogs.
 Their existing owners still render content and decide whether an action is
 allowed. Confirmation sits above quit; Controls and Options retain their existing
 visual priorities below quit and above boarding. Enter and Space activate the
@@ -325,8 +326,8 @@ Options. The controller otherwise leaves native settings controls and button
 activation intact. Rebuilding binding rows returns focus to the same action.
 Controls owns its reference content and Change Keys transition into Options.
 If a closing dialog cannot return focus to its opener, the surviving managed
-dialog receives its initial focus. An unmigrated overlay receives container focus
-without changing its action or keyboard owner.
+dialog receives its initial focus. The map receives container focus; map search keeps Enter selection and uses the
+first Escape to leave the search field. The next Escape closes the map.
 
 The controller's DOM-derived blocking context is passed into the engine input
 latch rather than importing another controller instance into the engine bundle.
@@ -335,9 +336,16 @@ context. Held keys and gamepad controls must release before resuming. Existing
 navigation can continue while a dialog is open; opening a dialog does not pause
 the shared world. Solo quit keeps its existing temporary pause behavior.
 
-Other overlays retain their existing dismissal and focus owners. The landing
-screen is not a flight-blocking modal in this context; its existing docked-state
-gates remain authoritative. Mining retains its additional landed-state denial.
+Story offers initially focus the defer button; Escape never accepts a choice or
+reward. Story notices and ship-loss notices focus Continue. Hails initially focus
+Close and retain native message typing and Enter submission. Priority follows the
+existing visual stack, including hails above ship/captain info. Map help and Options
+openers remain available outside the map; other outside clicks cannot activate
+underlying commands. Storage loss of availability closes through the same owner.
+
+Login remains the session gate, not a dismissible game dialog. The landing screen
+is not a flight-blocking modal in this context; its existing docked-state gates
+remain authoritative. Mining retains its additional landed-state denial.
 
 ## Release gates
 

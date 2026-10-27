@@ -18,7 +18,7 @@ import {
 declare global {
   interface Window {
     /** Outgoing actions and confirmation calls observed by this isolated fixture. */
-    modalProbe: { packets: Record<string, unknown>[]; confirmations: number };
+    modalProbe: { packets: Record<string, unknown>[]; confirmations: number; socket?: WebSocket };
   }
 }
 const output = evidenceDir('overlay-input');
@@ -66,6 +66,7 @@ try {
       window.fixturePad ? [window.fixturePad as unknown as Gamepad] : [];
     const original = Reflect.get(WebSocket.prototype, 'send') as typeof WebSocket.prototype.send;
     WebSocket.prototype.send = function (data) {
+      window.modalProbe.socket = this;
       try {
         if (typeof data !== 'string') return original.call(this, data);
         const packet = JSON.parse(data);
@@ -579,6 +580,137 @@ try {
   );
   assert.equal(await bindingValue('thrust'), 'KeyV');
 
+  // These are synthetic receive packets through the real connection and dialog owners,
+  // not evidence of server-side story rewards or storage settlement.
+  const receive = async (packet: Record<string, unknown>) =>
+    page.evaluate((packet) => {
+      window.modalProbe.socket!.dispatchEvent(
+        new MessageEvent('message', { data: JSON.stringify(packet) }),
+      );
+    }, packet);
+  await page.locator('#captainshortcut').focus();
+  await page.keyboard.press('Enter');
+  await page.locator('#infobox').waitFor({ state: 'visible' });
+  assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('data-it')), 'ship');
+  await page.click('[data-it="profile"]');
+  await page.locator('[data-it="ship"]').focus();
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'portraitsave');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('data-it')), 'ship');
+  await receive({
+    t: 'hail',
+    player: 987654,
+    who: 'Fixture caller',
+    text: 'Fixture conversation',
+    opts: [],
+  });
+  await page.locator('#hailbox').waitFor({ state: 'visible' });
+  await ask();
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#hailbox').isVisible(), true);
+  assert.equal(await page.locator('#infobox').isVisible(), true);
+  await page.fill('#hailcompose', 'typing t i m');
+  assert.equal(
+    await page.locator('#hailbox').isVisible(),
+    true,
+    'Typing does not run close shortcuts',
+  );
+  await page.keyboard.press('Enter');
+  assert.equal(
+    await page.evaluate(
+      () =>
+        window.modalProbe.packets.filter(
+          (p) => p.t === 'hailin' && p.op === 'send' && p.text === 'typing t i m',
+        ).length,
+    ),
+    1,
+    'Compose Enter submits exactly once through its owner',
+  );
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#infobox').isVisible(), true);
+  assert.equal(await page.locator('#hailbox').isVisible(), false);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#quitbox').isVisible(), false);
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'captainshortcut');
+
+  await page.keyboard.press('m');
+  await page.fill('#gsearch', 'Meridian');
+  await page.keyboard.press('Enter');
+  assert.equal(
+    await page.locator('#gsearch').inputValue(),
+    '',
+    'Map search keeps native text and Enter selection',
+  );
+  await page.fill('#gsearch', 'm');
+  await page.keyboard.press('Escape');
+  assert.equal(
+    await page.locator('#gmap').isVisible(),
+    true,
+    'First Escape leaves map search, not its overlay',
+  );
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'gmap');
+  await page.keyboard.press('Escape');
+  await page.locator('#gmap').waitFor({ state: 'hidden' });
+
+  await page.locator('#cbhelp').focus();
+  await receive({
+    t: 'story',
+    id: 'fixture-choice',
+    title: 'Fixture offer',
+    text: 'Choose later or accept.',
+    choices: [{ value: 'yes', label: 'Accept fixture' }],
+  });
+  assert.equal(await page.locator('#storyb button:focus').textContent(), 'Decide later');
+  await ask();
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#storybox').isVisible(), true);
+  await clearInputs();
+  await page.keyboard.down('v');
+  await neutralInputs();
+  await page.keyboard.up('v');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#storybox').isVisible(), false);
+  assert.equal(
+    await page.evaluate(() =>
+      window.modalProbe.packets.some((p) => p.t === 'storyacc' && p.id === 'fixture-choice'),
+    ),
+    false,
+    'Escape defers without accepting a reward',
+  );
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'cbhelp');
+  await receive({ t: 'story', title: 'Fixture notice', text: 'A harmless notice.', done: true });
+  await page.keyboard.press('Enter');
+  assert.equal(
+    await page.locator('#storybox').isVisible(),
+    false,
+    'Focused native Continue closes once',
+  );
+  await page.evaluate(async () =>
+    (await import('/ui.js')).showDead({ at: 'Fixture port', fee: 1 }),
+  );
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'deadok');
+  await ask();
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#deadbox').isVisible(), true);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#deadbox').isVisible(), false);
+
+  // Storage needs a landed authorization; use an isolated presentation payload only.
+  await page.evaluate(async () => {
+    const oldLanded = G.landed;
+    G.landed = { ...G.landed, stellar: G.you!.stellar, site: { own: true } } as typeof G.landed;
+    (await import('/ui.js')).openStores();
+    G.landed = oldLanded;
+  });
+  await page.locator('#storebox').waitFor({ state: 'visible' });
+  await ask();
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#storebox').isVisible(), true);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#storebox').isVisible(), false);
+  assert.equal(await page.locator('#quitbox').isVisible(), false);
+
   await page.fill('#chatin', 'v j l');
   assert.equal(
     await page.locator('#chatin').inputValue(),
@@ -600,6 +732,9 @@ try {
         optionsControlsFocus: true,
         nativeSettingsControls: true,
         controlsMapPriority: true,
+        remainingOverlayOwners: true,
+        safeStoryDeferral: true,
+        hailComposeAndMapSearch: true,
         survivingOverlayFocusFallback: true,
         navigationContinues: true,
         heldKeyRelease: true,
