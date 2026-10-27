@@ -287,6 +287,7 @@ export const SyndicateOperations = {
       index = message.i | 0;
     if (index < 0 || index >= LOWER_SLOTS) return;
     if (message.op === 'hire') {
+      if (!Object.hasOwn(LOWER_DECK, message.kind)) return;
       const lowerDeckRole = LOWER_DECK[message.kind];
       if (!lowerDeckRole || !playerData.stellar) return;
       if (playerData.lower.includes(message.kind))

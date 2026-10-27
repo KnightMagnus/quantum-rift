@@ -1,4 +1,6 @@
 import { requiredFixtureValue } from './helpers/required.ts';
+import { tempDataDir } from './helpers/temp-data.ts';
+import { parseClientAction } from '../shared/wire-commands.ts';
 // 2.0.2 fuzzer: many fake clients send every message type the server knows, with random and malformed fields, while
 // the systems tick. Any error the server logs is a bug. Run: node test/fuzz.ts [rounds] [seed]
 import filesystem from 'node:fs';
@@ -23,7 +25,7 @@ console.error = (...firstEntry) => {
       .join(' '),
   );
 };
-const game = new Game(assets, new Database('/tmp/rift-fuzz-' + Date.now()));
+const game = new Game(assets, new Database(tempDataDir('rift-fuzz-')));
 // The runtime registry is the authoritative source of message routes.
 const TYPES = [...game.messageHandlers.types];
 assert.ok(TYPES.length, 'the authenticated message registry must not be empty');
@@ -199,7 +201,49 @@ for (let index = 0; index < 12; index++) {
 }
 const rounds = +(process.argv[2] || 4000);
 // Guarantee every registered route reaches authenticated dispatch before random sampling.
-for (const [index, type] of TYPES.entries()) clients[index % clients.length].send(message(type));
+const coverageOperations: Record<string, string> = {
+  miningPressure: 'leave',
+  mining: 'survey',
+  combat: 'off',
+  docks: 'repair',
+  station: 'collect',
+  officer: 'dismiss',
+  shuttle: 'claim',
+  dock: 'sell',
+  spec: 'parts',
+  armada: 'leave',
+  social: 'prefs',
+  trade2: 'cancel',
+  duel: 'decline',
+  colony: 'collect',
+  arena: 'leave',
+  exchange: 'collect',
+  hailin: 'list',
+  lower: 'dismiss',
+  bank: 'pay',
+  industrial: 'off',
+  refinery: 'list',
+  miningOrder: 'cancelOrder',
+  towing: 'detach',
+};
+const coverageFields: Record<string, Record<string, unknown>> = {
+  trade: { cid: 'food', qty: '0' },
+  buyship: { hull: '0' },
+  outfit: { id: '0', n: '0' },
+  buymat: { mat: 'alloy', grade: '0', n: '0' },
+  towing: { id: -1, revision: 0 },
+  boards: { cat: 'earned' },
+  profile: { name: 'Missing Captain' },
+};
+for (const [index, type] of TYPES.entries()) {
+  const packet = {
+    t: type,
+    ...(coverageOperations[type] ? { op: coverageOperations[type] } : {}),
+    ...coverageFields[type],
+  };
+  assert.ok(parseClientAction(packet), type + ' coverage probe satisfies its shared contract');
+  clients[index % clients.length].send(packet);
+}
 assert.deepEqual(
   [...covered].sort((left, right) => String(left).localeCompare(String(right))),
   [...TYPES].sort(),

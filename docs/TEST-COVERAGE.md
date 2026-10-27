@@ -26,10 +26,11 @@ printing dialogue or reward values. Dynamic dialogue and generated offers remain
 outside this offline check.
 See [CONTENT-VALIDATION.md](CONTENT-VALIDATION.md) for commands and scope.
 
-## Economic wire boundary
+## Wire contracts and receive bounds
 
-`shared/wire-actions.ts` owns trade, refinery, mining-order, towing and industrial request
-shapes. Both local sockets and native matches reach the same Game routes and
+`shared/wire-actions.ts` owns trade, refinery, mining-order, towing, industrial and
+ordinary port-purchase (`buyship`, `outfit`, `buymat`) request shapes. Both local
+sockets and native matches reach the same Game routes and
 service validators. Auth, flood, checkpoint freeze and activity gates remain in
 Game; ownership, pricing, location, receipts and settlement remain in services.
 Trade still accepts finite numeric text and uses signed 32-bit truncation.
@@ -58,14 +59,63 @@ successful harvest/off commands. `nakama-network.ts` sends malformed industrial
 packets from an ordinary fresh captain; this covers native denial/continued
 service, not successful native Dredge controls or complete transport parity.
 
+Port purchases validate required finite numeric values, bounded identifiers and the
+optional boolean hangar selector before invoking port services. Finite numeric
+text, signed 32-bit wrapping/truncation and empty numeric text retain their old
+conversion; null, arrays, objects, booleans in numeric fields and forged price or
+credit fields are rejected. Prices, inventory, fitting and location checks still
+belong to port services. `wire-contracts.ts` checks unchanged player/world state
+on malformed requests, route coercion and real material purchases and sales.
+The existing local/native economic denial fixtures also check malformed purchase
+packets and unchanged ship/material projections. These transport cases prove
+denial and continued service, not successful ship purchases on both transports.
+Compiler fixtures reject malformed purchase shapes and forged prices.
+
 `shared/refinery-wire.ts` contains implementation-independent refinery payload
 types. `shared/wire-payloads.ts` validates complete quote field shapes and the
 `you`/`landed` economic headers, with finite-number, depth, string, collection and
 total-node bounds across their nested data. These headers are not complete
 runtime schemas for player state or port offers. The client retains inferred
-application types for those nested structures; other action families and server
-payloads still need migration. Static typing and bounded traversal do not prove
-nested semantic validity or authorize client economic decisions.
+application types for those nested structures. Static typing and bounded traversal
+do not prove nested semantic validity or authorize client economic decisions.
+
+`shared/wire-commands.ts` covers the remaining authenticated command families,
+including flight, station/hangar management, co-op, social, jobs and hails.
+`ClientAction` is a discriminated union derived from the executable field rules;
+the economic variants reuse their existing contracts. Both transports validate at
+Game ingress after the unchanged auth, flood, freeze and activity gates.
+Economic validation stays inside the existing routes/services so malformed
+industrial requests retain their denial toasts. Pre-login `hello` remains with
+the login owner. Operation selectors, fields, nested trade offers and collection
+sizes are bounded; command strings are limited to 4,096 characters, encoded
+commands to 8,192 UTF-8 bytes, and trade dictionaries to 128 entries, matching
+the native ingress envelope. Native scheduling additionally retains its
+existing sequence/flight-control checks and per-tick traffic limit; legacy numeric text and partial grade selections are not
+normalized. Missing optional fields retain their existing defaults or service
+denials. Hail's legacy `sender` and portrait's `name`/`target` fields are bounded
+but ignored. Flight
+position/credit/timestep echoes are also bounded and ignored; only the existing
+input controls affect flight. The server retains identity, money and clock
+authority.
+
+`wire-contracts.ts` compares the contract families with all 57 registered routes,
+checks malformed field denial before dispatch, exercises nested trade offers and
+compares saved account/world state after malformed commands. The fuzzer sends a
+valid bounded probe to every route before malformed random sampling, retaining
+its complete route-coverage assertion. Local/native network fixtures send
+malformed rename, bank, station, trade-offer and mining requests before a valid
+refinery barrier; these prove denial and continued service, not every successful
+operation on each transport.
+
+All received server families have finite-number, depth, collection, string and
+total-node bounds. Communication/control headers additionally validate their
+required scalar fields and dialogue choice entries before reaching the UI.
+`nakama-client-connection.ts` checks malformed communication headers on Solo,
+friend and native receive paths, including actual global, system and Armada chat
+from docked and flying sessions. Null and finite ship markers reach the client;
+malformed markers are dropped. Snapshot tuples retain their existing precise
+checks. World, sites and arena content and nested feature state remain bounded
+but do not yet have complete runtime semantic schemas.
 
 ## Native wall-clock performance
 

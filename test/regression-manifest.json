@@ -916,10 +916,24 @@
     },
     {
       "id": "market-materials",
-      "owners": ["server/game.ts", "shared/rules.ts", "server/port-services.ts"],
+      "owners": [
+        "server/game.ts",
+        "shared/rules.ts",
+        "server/port-services.ts",
+        "shared/wire-actions.ts"
+      ],
       "services": [],
-      "tests": ["v25.ts", "v203.ts", "ship-economy.ts", "core-actions.ts", "network-systems.ts"],
-      "asserts": "Trade buy/sell/depth/cargo/credit limits, material buy/sell and dock-only/insufficient-credit guards."
+      "tests": [
+        "v25.ts",
+        "v203.ts",
+        "ship-economy.ts",
+        "core-actions.ts",
+        "network-systems.ts",
+        "wire-contracts.ts",
+        "refinery-network.ts",
+        "nakama-network.ts"
+      ],
+      "asserts": "Trade buy/sell/depth/cargo/credit limits, material buy/sell and dock-only/insufficient-credit guards. Shared ordinary port-purchase envelope bounds, malformed no-mutation denials and legacy numeric coercion retain authoritative settlement."
     },
     {
       "id": "missions-passengers",
@@ -1111,11 +1125,12 @@
         "server/game-message-handlers.ts",
         "shared/wire-actions.ts",
         "shared/wire-payloads.ts",
-        "shared/refinery-wire.ts"
+        "shared/refinery-wire.ts",
+        "shared/wire-commands.ts"
       ],
       "services": [],
       "tests": ["fuzz.ts", "message-routing.ts", "wire-contracts.ts"],
-      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage. Fixed pre-extraction traces cover all 56 routes, argument coercion, call order, representative mutations and live dependencies; authenticated entry checks retain freeze/activity/flood order. This is routing parity, not complete delegated-rule coverage. Economic contracts bound trade/refinery/miningOrder/towing/industrial shape and preserve numeric-text trade coercion; real account/world malformed-request denials and bounded you/landed/quote headers are covered."
+      "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage. Fixed pre-extraction traces cover all 56 routes, argument coercion, call order, representative mutations and live dependencies; authenticated entry checks retain freeze/activity/flood order. This is routing parity, not complete delegated-rule coverage. Economic contracts bound trade/refinery/miningOrder/towing/industrial and ordinary port-purchase shapes and preserve numeric-text signed-int coercion; real account/world malformed-request denials and bounded you/landed/quote headers are covered. Shared command contracts cover all 57 authenticated routes; bounded scalar/nested trade-offer denial, preserved legacy selectors, complete bounded fuzz probes and communication receive-header transport parity are covered. Nested feature payload semantics remain owner-typed."
     },
     {
       "id": "input-audio",
@@ -1455,7 +1470,7 @@
         "nakama-diagnostics.ts",
         "nakama-world-lease.ts"
       ],
-      "asserts": "Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/replay denials. Native flood traffic retains peer progress and authoritative physics; deterministic actual-callback batches verify exactly eight admissions per session, independent peer budgets and next-tick reset. Legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency remain covered. Reference/Solo tests are separate and no full native-feature coverage is implied. Full-instance same-principal replacement retires old native/Game slots before allocating, sends the exact displaced-login error before kick, preserves the replacement under delayed old leave and duplicate callbacks, and denies new or revoked principals without evicting existing captains."
+      "asserts": "Actual Game.chat packets preserve null docked/global/Armada markers and finite system-flight markers through native, Solo and friend adapters, while malformed markers are rejected. Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/replay denials. Native flood traffic retains peer progress and authoritative physics; deterministic actual-callback batches verify exactly eight admissions per session, independent peer budgets and next-tick reset. Legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency remain covered. Reference/Solo tests are separate and no full native-feature coverage is implied. Full-instance same-principal replacement retires old native/Game slots before allocating, sends the exact displaced-login error before kick, preserves the replacement under delayed old leave and duplicate callbacks, and denies new or revoked principals without evicting existing captains."
     },
     {
       "id": "friend-hosting",
@@ -1866,7 +1881,14 @@
       "message-routing.ts",
       "wire-contracts.ts"
     ],
-    "buyship": ["sim.ts", "v21.ts", "message-routing.ts"],
+    "buyship": [
+      "sim.ts",
+      "v21.ts",
+      "message-routing.ts",
+      "wire-contracts.ts",
+      "refinery-network.ts",
+      "nakama-network.ts"
+    ],
     "docks": [
       "outfitter-wing-repairs.ts",
       "sim.ts",
@@ -1875,7 +1897,14 @@
       "message-routing.ts"
     ],
     "questdrop": ["core-actions.ts", "message-routing.ts"],
-    "outfit": ["bot.ts", "v203.ts", "message-routing.ts"],
+    "outfit": [
+      "bot.ts",
+      "v203.ts",
+      "message-routing.ts",
+      "wire-contracts.ts",
+      "refinery-network.ts",
+      "nakama-network.ts"
+    ],
     "accept": [
       "bot.ts",
       "v12.ts",
@@ -1901,7 +1930,14 @@
       "v26.ts",
       "message-routing.ts"
     ],
-    "buymat": ["core-actions.ts", "message-routing.ts", "network-faults.ts"],
+    "buymat": [
+      "core-actions.ts",
+      "message-routing.ts",
+      "wire-contracts.ts",
+      "refinery-network.ts",
+      "nakama-network.ts",
+      "network-faults.ts"
+    ],
     "rename": ["v203.ts", "message-routing.ts"],
     "note": ["core-actions.ts", "message-routing.ts"],
     "chat": ["bot.ts", "v06.ts", "v26.ts", "chat-projection-browser.ts", "message-routing.ts"],

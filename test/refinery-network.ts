@@ -33,10 +33,24 @@ try {
   const deniedBefore = JSON.stringify({
     credits: firstEntry.you.credits,
     cargo: firstEntry.you.cargo,
+    ship: firstEntry.you.ship,
+    mats: firstEntry.you.mats,
   });
   const denialPackets = [
     null,
     [],
+    { t: 'rename', name: [] },
+    { t: 'bank', op: 'borrow', amt: [] },
+    { t: 'station', op: 'upgrade', credits: 999999 },
+    { t: 'trade2', op: 'offer', give: { items: [] } },
+    { t: 'mining', op: 'survey', rewards: 999999 },
+    { t: 'buyship', hull: null },
+    { t: 'buyship', hull: '201', store: [] },
+    { t: 'outfit', id: [], n: 1 },
+    { t: 'outfit', id: 5, n: null },
+    { t: 'buymat', mat: 'alloy', grade: [], n: 1 },
+    { t: 'buymat', mat: '__proto__', grade: 0, n: 1 },
+    { t: 'buymat', mat: 'x'.repeat(201), grade: 0, n: 1 },
     { t: 'trade', cid: 'food', qty: null },
     { t: 'trade', cid: 'food', qty: [] },
     { t: 'trade', cid: 'x'.repeat(201), qty: 3 },
@@ -52,7 +66,12 @@ try {
     'denial barrier',
   );
   assert.equal(
-    JSON.stringify({ credits: firstEntry.you.credits, cargo: firstEntry.you.cargo }),
+    JSON.stringify({
+      credits: firstEntry.you.credits,
+      cargo: firstEntry.you.cargo,
+      ship: firstEntry.you.ship,
+      mats: firstEntry.you.mats,
+    }),
     deniedBefore,
     'real local transport malformed economic requests preserve inventory and credits',
   );

@@ -1,5 +1,5 @@
 import { GAME_PROTOCOL, COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
-import { validEconomicPayload } from '../shared/wire-payloads.ts';
+import { validServerEnvelope } from '../shared/wire-payloads.ts';
 import { customCaptainId } from '../shared/nakama-contracts.ts';
 import type { Client, Session, Socket } from '@heroiclabs/nakama-js';
 
@@ -94,8 +94,8 @@ function numbers(value: unknown, length: number): boolean {
 }
 /** Reject broken snapshot tuples before they can poison prediction or rendering. */
 function validPacket(value: unknown): boolean {
-  if (!record(value) || typeof value.t !== 'string') return false;
-  if (value.t !== 'snap' && value.t !== 'scene') return validEconomicPayload(value);
+  if (!validServerEnvelope(value) || !record(value)) return false;
+  if (value.t !== 'snap' && value.t !== 'scene') return true;
   if (
     !Array.isArray(value.ships) ||
     !value.ships.every(

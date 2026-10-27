@@ -11,6 +11,7 @@ import { storySystemVisible } from '../shared/story-world.ts';
 import { utf8Bytes } from '../shared/health.ts';
 import type { HealthMonitor } from '../shared/health.ts';
 import { wireRecord } from '../shared/wire-actions.ts';
+import { parseClientAction, economicActionTypes } from '../shared/wire-commands.ts';
 import { playerPortrait } from '../shared/portraits.ts';
 import { attentionPayload, type RecentPatrolScan } from './attention.ts';
 export interface SeedOfficer {
@@ -1780,6 +1781,8 @@ export class Game<Storage extends Database = Database> {
     if (this.db.economicFrozen && !['ping', 'input', 'chat'].includes(message.t!))
       return this.toast(session, 'Checkpoint recovery required; economic actions frozen.');
     if (message.t !== 'ping') session.actT = currentTime; // for Online / Away
+    // Economic service parsers retain their existing player-facing denial replies.
+    if (!economicActionTypes.includes(message.t!) && !parseClientAction(message)) return;
     this.messageHandlers.dispatch(message.t!, session, message);
   }
   /**
