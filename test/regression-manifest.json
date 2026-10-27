@@ -132,7 +132,10 @@
     "performance-native.ts",
     "render-cache-budget.ts",
     "protocol-compatibility.ts",
-    "station-docking.ts"
+    "station-docking.ts",
+    "combat-playability.ts",
+    "combat-jobs-playability.ts",
+    "combat-balance-ratings.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -673,7 +676,8 @@
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"]
+    "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
+    "combat-playability.ts": ["helpers/combat-playability-simulation.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1693,6 +1697,29 @@
         "nakama-network.ts"
       ],
       "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC and authoritative join rejection, terminal local denial despite buffered packets/late errors, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
+    },
+    {
+      "id": "combat-playability",
+      "owners": [
+        "shared/hostile.ts",
+        "server/space.ts",
+        "server/game.ts",
+        "server/hostile.ts",
+        "server/jobs.ts",
+        "server/living.ts",
+        "client/mission-details.ts",
+        "client/missions.ts"
+      ],
+      "services": [],
+      "tests": [
+        "combat-playability.ts",
+        "combat-jobs-playability.ts",
+        "combat-assist.ts",
+        "difficulty-curve.ts",
+        "local-retaliation.ts",
+        "combat-balance-ratings.ts"
+      ],
+      "asserts": "Fixed-seed actual Game arrivals and eight-minute combat runs across early, Hollow and Umbral encounters; fitted combat ratings, shared ambient raid and incursion budgets, bounded retaliation and secondary-assisted combat. Bounty suitability and participation, passenger pickup order, expired offer recovery and distinct default controls are checked at their production boundaries. Seeded bots are bounded regression evidence, not proof of human win rates."
     }
   ],
   "routes": {

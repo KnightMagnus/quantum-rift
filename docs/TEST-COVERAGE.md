@@ -1290,3 +1290,17 @@ does not depend on unrelated ambient traffic random rolls.
 The HUD JUMP regression also opens the galaxy map and attempts native button
 activation before the periodic disabled-state refresh. No jump packet or jump
 navigation can escape the overlay; closing the map restores the plotted action.
+
+## Combat playability
+
+`combat-playability` covers fixed-seed arrivals and eight-minute fights in the real
+Game simulation, with normal traffic, damage and Combat Assist. The recorded
+early-game, Hollow and Umbral fleets exercise the same production rules as other
+ships. The simulation uses isolated in-memory storage and a virtual clock at the
+normal physics tick rate. It does not establish human win rates or test every
+loadout, faction, system or multiplayer combination.
+
+`combat-jobs-playability.ts` covers mission and reward behavior. The combat tests
+run in the unit regression lane through the canonical manifest; their supporting
+helper is registered under `combat-playability.ts`. Existing combat, difficulty
+and retaliation regressions remain in CI.
