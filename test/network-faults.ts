@@ -9,6 +9,12 @@ import { Game, type Session } from '../server/game.ts';
 import type { GamePlatform } from '../server/game-platform.ts';
 import { STELLARS } from '../shared/galaxy.ts';
 import { tempDataDir } from './helpers/temp-data.ts';
+import { NakamaDatabase } from '../server/nakama-storage.ts';
+import type { StorageBackend } from '../shared/nakama-contracts.ts';
+import { makeLoadout } from '../shared/rules.ts';
+import { seed, lots } from './helpers/refinery-fixture.ts';
+import type { RefineryQuote } from '../shared/refinery-wire.ts';
+import type { Motherlode } from '../server/towing-contracts.ts';
 
 const assets = JSON.parse(
   fileSystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
@@ -30,6 +36,10 @@ interface FaultClient {
   closeRequested: () => boolean;
   /** Authoritative session associated with this transport. */
   session: Session;
+  /** Hold replies to model delivery loss after a server-side commit. */
+  holdReplies: () => void;
+  /** Replies withheld from the peer. */
+  heldReplies: unknown[];
   /** Deliver one packet as the transport would, including after the socket closed. */
   deliver: (packet: Record<string, unknown>) => void;
 }
@@ -41,8 +51,13 @@ function connect(game: Game): FaultClient {
   socket.open = true;
   socket.backlog = 0;
   socket.out = [];
-  socket.send = (message: string) =>
-    socket.out.push(typeof message === 'string' ? JSON.parse(message) : message);
+  let holdingReplies = false;
+  const heldReplies: unknown[] = [];
+  socket.send = (message: string) => {
+    const packet = typeof message === 'string' ? JSON.parse(message) : message;
+    if (holdingReplies) heldReplies.push(packet);
+    else socket.out.push(packet);
+  };
   socket.close = () => {
     closeRequested = true;
   };
@@ -51,13 +66,19 @@ function connect(game: Game): FaultClient {
   return {
     socket,
     session,
+    heldReplies,
+    holdReplies: () => {
+      holdingReplies = true;
+    },
     closeRequested: () => closeRequested,
     deliver: (packet) => socket.emit('message', JSON.stringify(packet)),
   };
 }
-function signIn(game: Game): FaultClient {
+function signIn(game: Game, name = captainName): FaultClient {
   const client = connect(game);
-  client.deliver({ t: 'hello', name: captainName, pass: 'fixture-pass' });
+  const login = () => client.deliver({ t: 'hello', name, pass: 'fixture-pass' });
+  if (game.db instanceof NakamaDatabase) game.db.withAuthenticatedCaptain(name, login);
+  else login();
   assert.ok(client.session.data, 'fixture captain signs in');
   return client;
 }
@@ -211,3 +232,330 @@ assert.equal(
 console.log(
   'Network faults: replayed claims/accepts/landings settle once, evicted and closed connections cannot act or steer, reconnection has clean controls, restarts keep only committed progress.',
 );
+
+/** Virtual delivery order is fixed by test data, without timers or random jitter. */
+class FaultQueue {
+  private pending: Array<{ at: number; label: string; deliver: () => void }> = [];
+  add(at: number, label: string, client: () => FaultClient, packet: Record<string, unknown>) {
+    const serialized = JSON.stringify(packet);
+    this.pending.push({ at, label, deliver: () => client().deliver(JSON.parse(serialized)) });
+  }
+  next(expected: string) {
+    this.pending.sort((left, right) => left.at - right.at);
+    const next = requiredFixtureValue(this.pending.shift());
+    assert.equal(next.label, expected, 'fault schedule delivers the intended reordered packet');
+    next.deliver();
+  }
+}
+
+/** Same optimistic write/acknowledgement seam used by NakamaDatabase in the match. */
+class FaultStorage implements StorageBackend {
+  private row: { value: object; version: string } | null = null;
+  private writes = 0;
+  failure: 'before-write' | 'lost-ack' | null = null;
+  injected = false;
+  read() {
+    return this.row && structuredClone(this.row);
+  }
+  write(_key: string, value: object, version: string) {
+    if (this.failure === 'before-write') {
+      this.injected = true;
+      throw Error('fixture before native checkpoint write');
+    }
+    assert.equal(version, this.row?.version ?? '*', 'the real checkpoint retains CAS ownership');
+    const next = String(++this.writes);
+    this.row = { value: structuredClone(value), version: next };
+    if (this.failure === 'lost-ack') {
+      this.injected = true;
+      throw Error('fixture native write committed but acknowledgement lost');
+    }
+    return next;
+  }
+}
+
+type FaultPoint =
+  | 'clean'
+  | 'before-journal'
+  | 'after-journal'
+  | 'between-snapshots'
+  | 'final-sync'
+  | 'before-write'
+  | 'lost-ack';
+/** Inject at the real journal boundaries; restore process-wide seams synchronously. */
+function interrupt(
+  database: Database | NakamaDatabase,
+  storage: FaultStorage | null,
+  point: FaultPoint,
+  deliver: () => void,
+) {
+  if (storage) {
+    if (point === 'before-write' || point === 'lost-ack') storage.failure = point;
+    try {
+      deliver();
+    } finally {
+      storage.failure = null;
+    }
+    if (point !== 'clean') assert.equal(storage.injected, true, point);
+    return;
+  }
+  assert.ok(database instanceof Database);
+  const rename = fileSystem.renameSync;
+  // oxlint-disable-next-line typescript/unbound-method -- Restore and call with the original database receiver.
+  const write = database.writeDurable;
+  // oxlint-disable-next-line typescript/unbound-method -- Restore and call with the original database receiver.
+  const sync = database.syncDirectory;
+  let injected = false;
+  let syncs = 0;
+  try {
+    database.writeDurable = function (file, text) {
+      if (point === 'before-journal' && file === this.journal + '.tmp') {
+        injected = true;
+        throw Error('fixture before journal installation');
+      }
+      return write.call(this, file, text);
+    };
+    fileSystem.renameSync = (from, to) => {
+      if (point === 'between-snapshots' && to === database.wfile) {
+        injected = true;
+        throw Error('fixture between player and world snapshots');
+      }
+      const result = rename(from, to);
+      if (point === 'after-journal' && to === database.journal) {
+        injected = true;
+        throw Error('fixture committed journal acknowledgement lost');
+      }
+      return result;
+    };
+    database.syncDirectory = function () {
+      if (point === 'final-sync' && ++syncs === 3) {
+        injected = true;
+        throw Error('fixture after journal unlink');
+      }
+      return sync.call(this);
+    };
+    deliver();
+  } finally {
+    fileSystem.renameSync = rename;
+    database.writeDurable = write;
+    database.syncDirectory = sync;
+  }
+  if (point !== 'clean') assert.equal(injected, true, point);
+}
+
+function prepareTow(game: Game, client: FaultClient, existing?: Motherlode) {
+  const player = client.session.data;
+  player.ship = makeLoadout(game.A, 815);
+  player.sys = 'meridian';
+  player.stellar = null;
+  game.spawnPlayer(client.session, 10000, 10000, 0, 0);
+  game.features.towing.ensure('meridian');
+  const load =
+    existing ??
+    requiredFixtureValue(
+      requiredFixtureValue(game.db.world.towing).slots.find((slot) => slot.sys === 'meridian')
+        ?.object,
+    );
+  const entity = requiredFixtureValue(client.session.ent);
+  Object.assign(entity, { x: load.x, y: load.y - 90, vx: 0, vy: 0 });
+  player.miningSurvey = {
+    version: 1,
+    sys: player.sys,
+    x: entity.x,
+    y: entity.y,
+    revealUntil: requiredFixtureValue(game.db.world.mining).clock + 6,
+    cooldownUntil: 0,
+  };
+  client.deliver({ t: 'towing', op: 'attach', id: load.id, revision: load.revision });
+  assert.equal(load.status, 'attached');
+  const port = STELLARS[load.acceptPorts[0]];
+  Object.assign(entity, { x: port.x, y: port.y + port.r + 30, vx: 0, vy: 0 });
+  Object.assign(load, { x: port.x, y: port.y + port.r + 90, vx: 0, vy: 0 });
+  return {
+    load,
+    packet: { t: 'towing', op: 'deliver', id: load.id, revision: load.revision, port: port.id },
+  };
+}
+
+const originalClock = Date.now;
+Date.now = () => 1800000000000;
+try {
+  let interruptedScenarios = 0;
+  for (const backend of ['journal', 'native-cas'] as const) {
+    const points: FaultPoint[] =
+      backend === 'journal'
+        ? ['clean', 'before-journal', 'after-journal', 'between-snapshots', 'final-sync']
+        : ['clean', 'before-write', 'lost-ack'];
+    for (const family of ['refinery', 'towing'] as const)
+      for (const point of points) {
+        const directory = tempDataDir('rift-economic-fault-');
+        const storage = backend === 'native-cas' ? new FaultStorage() : null;
+        const open = () => (storage ? new NakamaDatabase(storage) : new Database(directory));
+        const database = open();
+        const game = new Game(assets, database, platform);
+        const name = 'Fault ' + family + ' ' + points.indexOf(point);
+        const first = signIn(game, name);
+        const player = first.session.data;
+        player.tut = 999;
+        player.credits = 1e8;
+        let packet: Record<string, unknown>;
+        let bindingQuote: RefineryQuote | undefined;
+        let load: Motherlode | undefined;
+        if (family === 'refinery') {
+          player.ship = makeLoadout(game.A, 704);
+          seed(player, { ore: lots(6) });
+          first.deliver({
+            t: 'refinery',
+            op: 'quote',
+            recipe: 'alloy',
+            n: 3,
+            grade: 'common',
+            mode: 'stored',
+          });
+          bindingQuote = requiredFixtureValue(game.db.world.refinery?.quotes.at(-1));
+          packet = { t: 'refinery', op: 'submit', id: bindingQuote.id };
+        } else {
+          const prepared = prepareTow(game, first);
+          load = prepared.load;
+          packet = prepared.packet;
+        }
+        database.touch();
+        database.flush();
+        const beforeCredits = player.credits;
+        const beforeOre = player.cargo.ore || 0;
+        const queue = new FaultQueue();
+        let current = first;
+        // Enqueue in send order but deliver by chosen arrival order; replies disappear.
+        queue.add(40, 'stale-delayed', () => first, packet);
+        queue.add(10, 'first-arrival', () => first, packet);
+        queue.add(30, 'retry-after-restart', () => current, packet);
+        queue.add(20, 'replay-before-recovery', () => first, packet);
+        first.holdReplies();
+        interrupt(database, storage, point, () => queue.next('first-arrival'));
+        const committed = !['before-journal', 'before-write'].includes(point);
+        assert.equal(
+          database.economicFrozen,
+          !['clean', 'before-journal'].includes(point),
+          'uncertain/native commit failures freeze the original authority',
+        );
+        const expectedOre =
+          beforeOre + (family === 'refinery' ? -3 : requiredFixtureValue(load).mass);
+        const expectedCredits = beforeCredits - (bindingQuote?.fee ?? 0);
+        if (committed) {
+          assert.equal(player.cargo.ore || 0, expectedOre, 'memory retains committed settlement');
+          assert.equal(player.credits, expectedCredits);
+        } else if (backend === 'journal') {
+          assert.equal(
+            player.cargo.ore || 0,
+            beforeOre,
+            'known precommit journal failure rolls memory back',
+          );
+          assert.equal(player.credits, beforeCredits);
+        }
+        // A crash before journal installation must not accidentally turn its queued retry into a commit.
+        if (point === 'before-journal') game.sessions.clear();
+        const replayBefore = JSON.stringify({ player, world: database.world });
+        queue.next('replay-before-recovery');
+        assert.equal(
+          JSON.stringify({ player, world: database.world }),
+          replayBefore,
+          'receipt replay or frozen checkpoint cannot settle again',
+        );
+        assert.ok(first.heldReplies.length, 'at least one settlement/denial response was withheld');
+        if (point === 'clean') {
+          first.socket.emit('close');
+          const liveRetry = signIn(game, name);
+          liveRetry.deliver(packet);
+          assert.equal(
+            liveRetry.session.data.cargo.ore || 0,
+            expectedOre,
+            'lost response followed by graceful reconnect cannot replay receipt output',
+          );
+          assert.equal(liveRetry.session.data.credits, expectedCredits);
+          assert.equal(liveRetry.session.inputs.length, 0);
+          assert.equal(liveRetry.session.lastInput, null);
+        }
+        // Retire the crashed process without a graceful-disconnect flush or autosave.
+        game.sessions.clear();
+        database.economicFrozen = true;
+        const recoveredDatabase = open();
+        const recoveredGame = new Game(assets, recoveredDatabase, platform);
+        current = signIn(recoveredGame, name);
+        const restoredPlayer = current.session.data;
+        assert.equal(
+          restoredPlayer.cargo.ore || 0,
+          committed ? expectedOre : beforeOre,
+          'restart distinguishes durable settlement from an uncertain pre-write mutation',
+        );
+        assert.equal(restoredPlayer.credits, committed ? expectedCredits : beforeCredits);
+        assert.equal(current.session.inputs.length, 0);
+        assert.equal(current.session.lastInput, null);
+        queue.next('retry-after-restart');
+        const retiredState = JSON.stringify({ player, world: database.world });
+        queue.next('stale-delayed');
+        first.deliver({ t: 'input', seq: 887, th: 1, tu: 1 });
+        assert.equal(
+          current.session.inputs.length,
+          0,
+          'delayed old controls cannot enter the restored session',
+        );
+        assert.equal(current.session.lastInput, null);
+        assert.equal(
+          JSON.stringify({ player, world: database.world }),
+          retiredState,
+          'a delayed packet cannot act on a retired process/session',
+        );
+        if (family === 'towing' && !committed) {
+          assert.equal(
+            restoredPlayer.cargo.ore || 0,
+            beforeOre,
+            'stale revision cannot mint an uncommitted tow reward',
+          );
+          const restoredLoad = requiredFixtureValue(
+            recoveredDatabase.world.towing?.slots.find(
+              (slot) => slot.object?.id === requiredFixtureValue(load).id,
+            )?.object,
+          );
+          const prepared = prepareTow(recoveredGame, current, restoredLoad);
+          current.deliver(prepared.packet);
+        }
+        assert.equal(
+          restoredPlayer.cargo.ore || 0,
+          expectedOre,
+          'one settlement after replay/recovery',
+        );
+        assert.equal(restoredPlayer.credits, expectedCredits, 'one exact fee, no replay debit');
+        if (family === 'refinery') {
+          const state = requiredFixtureValue(recoveredDatabase.world.refinery);
+          assert.equal(
+            state.batches.filter((batch) => batch.quote.id === bindingQuote!.id).length,
+            1,
+          );
+          assert.equal(
+            state.operations.filter(
+              (receipt) => receipt.kind === 'submit' && receipt.id === bindingQuote!.id,
+            ).length,
+            1,
+          );
+        } else
+          assert.equal(
+            requiredFixtureValue(recoveredDatabase.world.towing).receipts.filter(
+              (receipt) => receipt.id === requiredFixtureValue(load).id,
+            ).length,
+            1,
+          );
+        // A successful reconnect must observe the same state, not retransmit held intents.
+        current.socket.emit('close');
+        const rejoined = signIn(recoveredGame, name);
+        rejoined.deliver(packet);
+        assert.equal(rejoined.session.data.cargo.ore || 0, expectedOre);
+        assert.equal(rejoined.session.data.credits, expectedCredits);
+        assert.equal(rejoined.session.inputs.length, 0);
+        interruptedScenarios++;
+      }
+  }
+  console.log(
+    `Deterministic delayed/reordered receipt requests: ${interruptedScenarios} journal/native-CAS interruption/restart scenarios passed.`,
+  );
+} finally {
+  Date.now = originalClock;
+}

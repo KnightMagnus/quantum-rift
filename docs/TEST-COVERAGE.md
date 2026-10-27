@@ -1175,10 +1175,10 @@ traces for before/after comparison. It does not certify every research node or
 transport. Native checkpoint recovery and network behavior remain separate suite
 contracts.
 
-## Network faults on the local transport
+## Network faults and economic receipt recovery
 
 `network-faults.ts` drives one captain through `Game.connect`'s socket listener
-with isolated saves and no timers or waits. It covers these scenarios:
+with isolated saves and no wall-clock delay waits. It covers these scenarios:
 
 - **Replayed rewards:** a completed daily goal claimed three times pays once. A
   cargo job accepted twice is recorded once, and landing at its destination twice
@@ -1200,13 +1200,36 @@ only half-closes TCP, so without this the parser could keep dispatching commands
 Partial frame and fragmented-message buffers are released on server close, peer
 close or transport error; subsequent traffic cannot accumulate in a closed socket.
 
-Limits: these are in-process reference-backend checks. They do not inject packet
-delay or reordering on a real network, and native online replacement and restart
-remain covered by `nakama-network.ts`. Legacy purchases such as `buyship`,
-`buymat` and `trade` carry no request identifier, so a client that deliberately
-sends one twice buys twice; the browser client does not resend actions on
-reconnect. Refinery and towing operations keep their own settled-operation
-receipts and their existing tests.
+The same registered test also uses a fixed clock and a deterministic packet
+queue. Arrival times reorder requests without sleeps; outbound replies can be
+withheld even after settlement. Sixteen refinery-purchase and towing-reward
+scenarios use the real service receipts and checkpoint owners:
+
+- **Local journal:** clean commit, failure before journal installation, lost
+  acknowledgement after installation, interruption between player/world snapshots,
+  and failure at the final directory sync after journal removal.
+- **Native CAS:** the real `NakamaDatabase` runs against an offline versioned
+  storage backend. It covers clean writes, failure before the write and a
+  successful write whose acknowledgement is lost. Both native failure cases
+  freeze the old authority; a new database distinguishes committed and uncommitted
+  state without guessing from the error.
+- **Delivery and recovery:** the first reply is held, then a duplicate arrives
+  before recovery. Clean commits also exercise graceful disconnect/reconnect.
+  Restart replays the original request on a new session and releases a delayed
+  packet and flight controls on the retired session. Exact credits/cargo, a
+  single refinery batch/receipt or towing receipt, and clean input ownership are
+  checked. Uncommitted towing delivery restores a detached object; its stale
+  revision is denied, and a fresh attachment/delivery awards its cargo once.
+  Limits: packet delay/reordering is injected at the serialized `Game.connect`
+  listener boundary, not with a real TCP proxy. Native checkpoint faults use an
+  offline CAS fixture, not a PostgreSQL outage; actual native replacement/restart
+  and bounded flood behavior remain covered by `nakama-network.ts`. Crashes retire
+  the old sessions and disable their autosave without a graceful-disconnect flush.
+  These checks do not prove every action, arbitrary packet schedule or service
+  failure. Legacy `buyship`, `buymat` and `trade` carry no request identifier, so
+  two valid live deliveries remain two explicit purchase intents; the browser does
+  not resend them on reconnect. Retry-safe ordinary purchases would require a
+  separate request-identity contract, not generic suppression of identical packets.
 
 ## Save catalog and local restore rehearsal
 

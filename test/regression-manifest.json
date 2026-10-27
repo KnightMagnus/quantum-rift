@@ -384,7 +384,8 @@
     "network-faults.ts": [
       "helpers/legacy-fixture.ts",
       "helpers/required.ts",
-      "helpers/temp-data.ts"
+      "helpers/temp-data.ts",
+      "helpers/refinery-fixture.ts"
     ],
     "http-api.ts": [
       "fixtures/preload-http-api.ts",
@@ -720,10 +721,17 @@
     },
     {
       "id": "network-faults",
-      "owners": ["server/game.ts", "server/ws.ts"],
-      "services": [],
+      "owners": [
+        "server/game.ts",
+        "server/ws.ts",
+        "server/db.ts",
+        "server/nakama-storage.ts",
+        "server/refinery.ts",
+        "server/towing.ts"
+      ],
+      "services": ["refinery", "towing"],
       "tests": ["network-faults.ts", "websocket-transport.ts"],
-      "asserts": "Replayed goal claims, job accepts and landings settle once; an evicted or closed local connection cannot trade, accept, log, launch or steer after a replacement sign-in; late frames after a server close never dispatch or accumulate, and closed sockets release partial/fragmented buffers; flight disconnect docks and reconnection starts without queued controls; restart restores only flushed credits, contracts and claims, and a replayed claim after restart cannot pay again."
+      "asserts": "Replayed goal claims, job accepts and landings settle once; an evicted or closed local connection cannot trade, accept, log, launch or steer after a replacement sign-in; late frames after a server close never dispatch or accumulate, and closed sockets release partial/fragmented buffers; flight disconnect docks and reconnection starts without queued controls; restart restores only flushed credits, contracts and claims, and a replayed claim after restart cannot pay again. Deterministic queued/held-response fault schedules cover 16 refinery purchase/towing reward scenarios across clean/prejournal/postjournal/between-snapshot/final-sync local writes and clean/prewrite/lost-ack native-CAS storage; exact credits/cargo and one receipt survive replay, graceful reconnect and restart, known uncommitted settlement stays absent, native uncertainty freezes authority, stale tow revisions require fresh attachment."
     },
     {
       "id": "hangar",
@@ -1798,7 +1806,7 @@
       "v26.ts",
       "message-routing.ts"
     ],
-    "buymat": ["core-actions.ts", "message-routing.ts"],
+    "buymat": ["core-actions.ts", "message-routing.ts", "network-faults.ts"],
     "rename": ["v203.ts", "message-routing.ts"],
     "note": ["core-actions.ts", "message-routing.ts"],
     "chat": ["bot.ts", "v06.ts", "v26.ts", "chat-projection-browser.ts", "message-routing.ts"],
@@ -1822,7 +1830,7 @@
     "social": ["hailing-network.ts", "v26.ts", "message-routing.ts"],
     "trade2": ["cargo-flows.ts", "v26.ts", "message-routing.ts"],
     "duel": ["v26.ts", "message-routing.ts"],
-    "goal": ["v06.ts", "message-routing.ts"],
+    "goal": ["v06.ts", "message-routing.ts", "network-faults.ts"],
     "store": ["faction-standing.ts", "v06.ts", "message-routing.ts", "faction-stores-browser.ts"],
     "colony": ["v07.ts", "message-routing.ts"],
     "arena": ["v07.ts", "message-routing.ts"],
@@ -1854,7 +1862,8 @@
       "refinery-ui-browser.ts",
       "economy-32.ts",
       "message-routing.ts",
-      "wire-contracts.ts"
+      "wire-contracts.ts",
+      "network-faults.ts"
     ],
     "miningOrder": [
       "refinery-network.ts",
@@ -1870,7 +1879,13 @@
       "wire-contracts.ts",
       "nakama-network.ts"
     ],
-    "towing": ["towing-network.ts", "towing-browser.ts", "message-routing.ts", "wire-contracts.ts"],
+    "towing": [
+      "towing-network.ts",
+      "towing-browser.ts",
+      "message-routing.ts",
+      "wire-contracts.ts",
+      "network-faults.ts"
+    ],
     "portrait": [
       "portrait-persistence.ts",
       "planet-portrait-browser.ts",
