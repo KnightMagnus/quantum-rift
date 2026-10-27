@@ -2,6 +2,15 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 0.3.5
+
+- Match the login console to the blue cockpit display and hull frame.
+- Put larger landed-service buttons across the top of the port panel.
+- Add a gold JUMP button in flight, with an optional left-corner position in Settings. Keep J and custom jump bindings available.
+- Keep faction hostility from blocking docking, the home refinery and motherlode deliveries at your own Personal Station.
+- Identify visits to another captain's Personal Station as a Guest Dock, with OVERVIEW, TRADE, JOBS and your own CREW while the owner's docks and internals remain private.
+- Refresh the beta Solo save generator catalog for source version 3.5.0. See the [release notes](docs/RELEASE-3.5.0.md).
+
 ### 0.3.4.4
 
 - Keep neutral Index survey groups moving: parent machines circle their worksite and drones sweep around their parent, with spacing preserved.
