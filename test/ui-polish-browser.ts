@@ -195,16 +195,50 @@ try {
   assert.equal(await page.locator('#clist .it').count(), 0);
   await page.fill('#cq', '');
   const ordinary = page.locator('#clist .it').first();
-  await ordinary.evaluate((row) => {
-    (row as HTMLElement).dataset.k = 'o9021';
+  const originalRow = await ordinary.elementHandle();
+  assert(originalRow);
+  await originalRow.evaluate((row) => {
+    row.dataset.staleProbe = 'original';
+    row.dataset.k = 'o9021';
   });
-  await ordinary.click();
+  // A controlled refresh replaces the marked row; a live locator resolves the new row.
+  await page.locator('#cq').dispatchEvent('input');
+  assert.equal(await originalRow.evaluate((row) => row.isConnected), false);
+  assert.equal(await ordinary.getAttribute('data-stale-probe'), null);
+  assert.notEqual(await ordinary.getAttribute('data-k'), 'o9021');
+  await originalRow.dispose();
+  const storyBefore = await page.evaluate(() => JSON.stringify(G.you!.story));
+  await ordinary.evaluate((row) => {
+    // Mutate and activate the exact same element in one browser task.
+    row.dataset.k = 'o9021';
+    (row as HTMLElement).click();
+  });
+  assert.equal(await page.locator('#clist [data-k="o9021"]').count(), 0);
   assert(
     !(await page.locator('#clist').innerText()).includes('Rift Harness'),
-    'Stale detail navigation cannot reveal story equipment',
+    'Stale detail navigation cannot reveal protected identity or content',
+  );
+  assert.equal(
+    await page.locator('#clist > div:not(.it) img').count(),
+    0,
+    'No protected detail artwork',
   );
   assert.equal(await page.locator('#cback').count(), 0);
-  assert.equal(await page.evaluate(() => G.you!.story.done.includes('harness')), false);
+  assert.equal(await page.evaluate(() => JSON.stringify(G.you!.story)), storyBefore);
+  // Real pointer and keyboard navigation remain functional for ordinary entries.
+  const ordinaryName = await ordinary.locator('.n > div').first().innerText();
+  await ordinary.click();
+  assert.equal(await page.locator('#cback').count(), 1);
+  assert((await page.locator('#clist').innerText()).includes(ordinaryName));
+  await page.click('#cback');
+  await ordinary.focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#cback').count(), 1);
+  assert((await page.locator('#clist').innerText()).includes(ordinaryName));
+  await page.locator('#cback').focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#cback').count(), 0);
+  assert.equal(await page.evaluate(() => JSON.stringify(G.you!.story)), storyBefore);
   await page.close();
 
   const index = await browser.newPage({ viewport: { width: 3440, height: 1440 } });
