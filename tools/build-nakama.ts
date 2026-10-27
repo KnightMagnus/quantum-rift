@@ -1,5 +1,11 @@
 import { BLOCKED_IDENTITY_HOOKS } from '../shared/nakama-contracts.ts';
 import { build } from 'esbuild';
+import {
+  nativeBuildDigest,
+  nativeBuildInputPath,
+  nativeBuildToolInputs,
+  writeNativeBuildProvenance,
+} from './nakama-build-provenance.ts';
 import { transformAsync } from '@babel/core';
 import presetEnv from '@babel/preset-env';
 import fileSystem from 'node:fs';
@@ -12,6 +18,7 @@ export async function buildNakamaRuntime(
 ): Promise<string> {
   const output = path.join(root, 'dist/nakama');
   fileSystem.mkdirSync(output, { recursive: true });
+  const loaded = nativeBuildToolInputs(root);
   const bundled = await build({
     absWorkingDir: root,
     entryPoints: ['server/nakama-world.ts'],
@@ -22,6 +29,26 @@ export async function buildNakamaRuntime(
     target: 'esnext',
     metafile: true,
     banner: { js: 'var module = { exports: {} };' },
+    plugins: [
+      {
+        name: 'capture-native-input-bytes',
+        setup(builder) {
+          builder.onLoad({ filter: /\.(?:ts|js|json)$/ }, (input) => {
+            const contents = fileSystem.readFileSync(input.path);
+            const relative = nativeBuildInputPath(root, input.path);
+            const digest = nativeBuildDigest(contents);
+            if (loaded.has(relative) && loaded.get(relative) !== digest)
+              throw Error('Native build input identity changed while bundling');
+            loaded.set(relative, digest);
+            const extension = path.extname(input.path);
+            return {
+              contents,
+              loader: extension === '.json' ? 'json' : extension === '.ts' ? 'ts' : 'js',
+            };
+          });
+        },
+      },
+    ],
   });
   const code = bundled.outputFiles[0]?.text;
   if (!code) throw new Error('Nakama bundle is empty');
@@ -77,6 +104,13 @@ export async function buildNakamaRuntime(
       registration +
       '\n',
   );
+  if (
+    !Object.keys(bundled.metafile.inputs).every((input) =>
+      loaded.has(nativeBuildInputPath(root, path.resolve(root, input))),
+    )
+  )
+    throw Error('Native bundler input bytes were not captured');
+  writeNativeBuildProvenance(root, loaded);
   fileSystem.mkdirSync(path.join(root, '.artifacts'), { recursive: true });
   fileSystem.writeFileSync(
     path.join(root, '.artifacts/nakama-bundle-inputs.json'),

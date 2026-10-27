@@ -1,0 +1,2313 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "failedPhase": null,
+  "started": "2026-10-27T04:30:03.819Z",
+  "finished": "2026-10-27T04:36:00.490Z",
+  "workload": {
+    "durationSeconds": 300,
+    "captains": 30,
+    "seed": 1701,
+    "inputHz": 10,
+    "retainedRecentPacketLimit": 64,
+    "retainedStatePacketLimit": 3,
+    "watchdogMs": 420000
+  },
+  "metadata": {
+    "sourceHead": "95722080fdf54c079e52f413621c3ceedd90bd1f",
+    "sourceDirty": false,
+    "node": "v27.0.0-nightly20261020531d28fc36",
+    "sdk": "2.8.0",
+    "nakama": "3.41.0+cab8af58",
+    "postgres": "18.6",
+    "platform": "linux",
+    "arch": "x64",
+    "cpuModel": "AMD EPYC 4344P 8-Core Processor",
+    "logicalCpus": 16,
+    "totalMemoryBytes": 65933004800,
+    "loadBefore": [9.79, 4.82, 2.77],
+    "loadAfter": [5.68, 6.92, 4.55]
+  },
+  "measuredElapsedMs": 300000.753783,
+  "totalElapsedMs": 356669.563107,
+  "driverCpuMs": {
+    "user": 17500.493,
+    "system": 2336.337
+  },
+  "driverMaxResidentKiB": 509836,
+  "resources": [
+    {
+      "role": "postgres-parent",
+      "cpuSeconds": 0,
+      "residentKiB": 32308
+    },
+    {
+      "role": "nakama",
+      "cpuSeconds": 412,
+      "residentKiB": 169652
+    }
+  ],
+  "inputPackets": 90000,
+  "inputBytes": 5366790,
+  "sendDriftMs": {
+    "count": 3000,
+    "total": 4011.8207490005298,
+    "max": 469.649304999999,
+    "last": 0.49838699999963865,
+    "p50": 0.7676489999867044,
+    "p95": 1.425293000007514,
+    "retained": 512
+  },
+  "reconnectMs": 124.8272279999801,
+  "reconnectToFlightMs": 567.4394159999792,
+  "restartToStateMs": 16484.335005,
+  "restartToFlightMs": 16766.042350000003,
+  "restoredCaptains": 30,
+  "checkpointRevision": 83,
+  "checkpointBytes": 109662,
+  "connections": [
+    {
+      "receivedPackets": 1400,
+      "receivedBytes": 7861622,
+      "errorCount": 0,
+      "snapshotCount": 1358,
+      "snapshotBytes": 7809984,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 1357,
+        "total": 174405.906858,
+        "max": 599.0900320000001,
+        "last": 133.46528999999282,
+        "p50": 103.25872800001525,
+        "p95": 166.00325700000394,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2776,
+      "receivedBytes": 16517901,
+      "errorCount": 0,
+      "snapshotCount": 2730,
+      "snapshotBytes": 16462838,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2729,
+        "total": 327601.733696,
+        "max": 587.4466530000027,
+        "last": 99.04230500000995,
+        "p50": 101.14589300000807,
+        "p95": 166.46824799996102,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2773,
+      "receivedBytes": 14661373,
+      "errorCount": 0,
+      "snapshotCount": 2723,
+      "snapshotBytes": 14600608,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2722,
+        "total": 327041.677172,
+        "max": 583.3733070000017,
+        "last": 104.65459200000623,
+        "p50": 102.92995299998438,
+        "p95": 166.84889000002295,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2760,
+      "receivedBytes": 16463240,
+      "errorCount": 0,
+      "snapshotCount": 2716,
+      "snapshotBytes": 16408123,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2715,
+        "total": 326264.74053,
+        "max": 580.8890170000013,
+        "last": 99.53814299998339,
+        "p50": 101.17786300001899,
+        "p95": 165.49678899999708,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2750,
+      "receivedBytes": 16436884,
+      "errorCount": 0,
+      "snapshotCount": 2709,
+      "snapshotBytes": 16382110,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2708,
+        "total": 325601.684413,
+        "max": 580.6349809999956,
+        "last": 100.09270100004505,
+        "p50": 101.40069999999832,
+        "p95": 165.14107300003525,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2744,
+      "receivedBytes": 16408821,
+      "errorCount": 0,
+      "snapshotCount": 2702,
+      "snapshotBytes": 16353486,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2701,
+        "total": 324695.94444899994,
+        "max": 579.8487179999938,
+        "last": 101.07079299999168,
+        "p50": 101.42581699998118,
+        "p95": 165.10175900004106,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2736,
+      "receivedBytes": 16378113,
+      "errorCount": 0,
+      "snapshotCount": 2695,
+      "snapshotBytes": 16322723,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2694,
+        "total": 323983.958897,
+        "max": 579.3308489999981,
+        "last": 101.03007599996636,
+        "p50": 101.4906979999505,
+        "p95": 164.85526700003538,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2726,
+      "receivedBytes": 16349405,
+      "errorCount": 0,
+      "snapshotCount": 2688,
+      "snapshotBytes": 16294373,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2687,
+        "total": 323297.28309000004,
+        "max": 583.2074659999998,
+        "last": 101.31175300001632,
+        "p50": 101.52826900000218,
+        "p95": 164.26586500002304,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2720,
+      "receivedBytes": 16318400,
+      "errorCount": 0,
+      "snapshotCount": 2680,
+      "snapshotBytes": 16259501,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2679,
+        "total": 322602.60924900003,
+        "max": 584.0976329999976,
+        "last": 101.76569300005212,
+        "p50": 101.62106299999868,
+        "p95": 164.18057499994757,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2708,
+      "receivedBytes": 16282532,
+      "errorCount": 0,
+      "snapshotCount": 2672,
+      "snapshotBytes": 16227431,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2671,
+        "total": 321788.924227,
+        "max": 583.936361,
+        "last": 102.37631600000896,
+        "p50": 101.56520800001454,
+        "p95": 164.07227200001944,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2702,
+      "receivedBytes": 16249315,
+      "errorCount": 0,
+      "snapshotCount": 2665,
+      "snapshotBytes": 16193735,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2664,
+        "total": 321101.829325,
+        "max": 583.868303999996,
+        "last": 104.22521799994865,
+        "p50": 101.55471799999941,
+        "p95": 164.00527600001078,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2692,
+      "receivedBytes": 16218363,
+      "errorCount": 0,
+      "snapshotCount": 2658,
+      "snapshotBytes": 16163114,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2657,
+        "total": 320292.44647900003,
+        "max": 581.0957730000009,
+        "last": 105.2163040000014,
+        "p50": 101.85644300002605,
+        "p95": 164.37678199994843,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2685,
+      "receivedBytes": 16178973,
+      "errorCount": 0,
+      "snapshotCount": 2650,
+      "snapshotBytes": 16123297,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2649,
+        "total": 319578.333935,
+        "max": 579.985225000004,
+        "last": 106.33414599997923,
+        "p50": 101.96646999998484,
+        "p95": 164.91854599997168,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2675,
+      "receivedBytes": 16145078,
+      "errorCount": 0,
+      "snapshotCount": 2643,
+      "snapshotBytes": 16089672,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2642,
+        "total": 318904.461297,
+        "max": 581.9729159999988,
+        "last": 106.64233400003286,
+        "p50": 101.98846099997172,
+        "p95": 163.70859100000234,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2668,
+      "receivedBytes": 16111460,
+      "errorCount": 0,
+      "snapshotCount": 2635,
+      "snapshotBytes": 16055641,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2634,
+        "total": 318209.518282,
+        "max": 581.3087620000006,
+        "last": 106.63843599997927,
+        "p50": 102.07119500002591,
+        "p95": 164.01122800004669,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2658,
+      "receivedBytes": 16075223,
+      "errorCount": 0,
+      "snapshotCount": 2628,
+      "snapshotBytes": 16019719,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2627,
+        "total": 317396.626546,
+        "max": 580.6326150000023,
+        "last": 106.65969500003848,
+        "p50": 102.15924000000814,
+        "p95": 162.9931219999562,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2651,
+      "receivedBytes": 16038274,
+      "errorCount": 0,
+      "snapshotCount": 2620,
+      "snapshotBytes": 15982316,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2619,
+        "total": 316445.030852,
+        "max": 579.4042160000026,
+        "last": 106.70693300000858,
+        "p50": 102.17198400001507,
+        "p95": 162.7670190000208,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2641,
+      "receivedBytes": 15998924,
+      "errorCount": 0,
+      "snapshotCount": 2613,
+      "snapshotBytes": 15943369,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2612,
+        "total": 315675.16733300005,
+        "max": 582.3310459999993,
+        "last": 105.35522299999138,
+        "p50": 102.44052699999884,
+        "p95": 163.87640499998815,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2633,
+      "receivedBytes": 15966486,
+      "errorCount": 0,
+      "snapshotCount": 2606,
+      "snapshotBytes": 15910899,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2605,
+        "total": 314826.026393,
+        "max": 581.6691770000034,
+        "last": 105.6604749999824,
+        "p50": 102.3995710000163,
+        "p95": 164.97455199999968,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2626,
+      "receivedBytes": 15938812,
+      "errorCount": 0,
+      "snapshotCount": 2600,
+      "snapshotBytes": 15883150,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2599,
+        "total": 313993.87098099996,
+        "max": 581.2873519999994,
+        "last": 105.36335899995174,
+        "p50": 102.42771300004097,
+        "p95": 163.63619500002824,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2619,
+      "receivedBytes": 15902149,
+      "errorCount": 0,
+      "snapshotCount": 2593,
+      "snapshotBytes": 15846306,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2592,
+        "total": 313077.191898,
+        "max": 581.2127919999984,
+        "last": 105.13160500000231,
+        "p50": 102.49476799997501,
+        "p95": 163.37040800001705,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2611,
+      "receivedBytes": 15868864,
+      "errorCount": 0,
+      "snapshotCount": 2587,
+      "snapshotBytes": 15813077,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2586,
+        "total": 312142.87617500004,
+        "max": 581.571222999999,
+        "last": 104.15259199996945,
+        "p50": 102.47055299999192,
+        "p95": 163.3871999999974,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2606,
+      "receivedBytes": 15837616,
+      "errorCount": 0,
+      "snapshotCount": 2581,
+      "snapshotBytes": 15781372,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2580,
+        "total": 311273.488689,
+        "max": 580.1676759999973,
+        "last": 104.10716700000921,
+        "p50": 102.5550509999739,
+        "p95": 164.47796200000448,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2596,
+      "receivedBytes": 15799758,
+      "errorCount": 0,
+      "snapshotCount": 2574,
+      "snapshotBytes": 15743862,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2573,
+        "total": 310281.312912,
+        "max": 579.6128269999972,
+        "last": 104.03850800002692,
+        "p50": 102.64336599997478,
+        "p95": 164.41525399999227,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2591,
+      "receivedBytes": 15768180,
+      "errorCount": 0,
+      "snapshotCount": 2568,
+      "snapshotBytes": 15711818,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2567,
+        "total": 309308.82726899994,
+        "max": 577.6161189999984,
+        "last": 104.16189899999881,
+        "p50": 102.79366700001992,
+        "p95": 164.2071650000289,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2582,
+      "receivedBytes": 15734245,
+      "errorCount": 0,
+      "snapshotCount": 2562,
+      "snapshotBytes": 15678204,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2561,
+        "total": 308371.18208299996,
+        "max": 575.961421,
+        "last": 104.98260599997593,
+        "p50": 102.90185999998357,
+        "p95": 167.18634200002998,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2576,
+      "receivedBytes": 15597228,
+      "errorCount": 0,
+      "snapshotCount": 2557,
+      "snapshotBytes": 15545720,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2556,
+        "total": 307503.920366,
+        "max": 573.3621439999988,
+        "last": 105.29528099996969,
+        "p50": 102.7997290000203,
+        "p95": 166.6194400000386,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2571,
+      "receivedBytes": 15674546,
+      "errorCount": 0,
+      "snapshotCount": 2552,
+      "snapshotBytes": 15618319,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2551,
+        "total": 306294.2521350001,
+        "max": 571.8312179999994,
+        "last": 105.45085300004575,
+        "p50": 102.73681199998828,
+        "p95": 167.56974000000628,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2566,
+      "receivedBytes": 15649886,
+      "errorCount": 0,
+      "snapshotCount": 2547,
+      "snapshotBytes": 15593363,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2546,
+        "total": 305191.794261,
+        "max": 570.2752049999981,
+        "last": 105.43044500000542,
+        "p50": 102.55715499998769,
+        "p95": 168.15328199998476,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 2557,
+      "receivedBytes": 15615137,
+      "errorCount": 0,
+      "snapshotCount": 2541,
+      "snapshotBytes": 15559006,
+      "retainedPackets": 64,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 67,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 2540,
+        "total": 303876.971111,
+        "max": 500.0535770000133,
+        "last": 105.4429179999861,
+        "p50": 102.75716999999713,
+        "p95": 165.8125299999956,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 1388,
+      "receivedBytes": 8608748,
+      "errorCount": 0,
+      "snapshotCount": 1379,
+      "snapshotBytes": 8567828,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 1378,
+        "total": 153321.995518,
+        "max": 244.54553199998918,
+        "last": 104.65892000001622,
+        "p50": 102.99482399999397,
+        "p95": 166.05321099999128,
+        "retained": 512
+      }
+    },
+    {
+      "receivedPackets": 82,
+      "receivedBytes": 253178,
+      "errorCount": 0,
+      "snapshotCount": 44,
+      "snapshotBytes": 211709,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 43,
+        "total": 8278.181127000018,
+        "max": 328.8754429999972,
+        "last": 328.8754429999972,
+        "p50": 241.29884299996775,
+        "p95": 292.45292299997527,
+        "retained": 43
+      }
+    },
+    {
+      "receivedPackets": 80,
+      "receivedBytes": 249427,
+      "errorCount": 0,
+      "snapshotCount": 43,
+      "snapshotBytes": 207960,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 42,
+        "total": 8049.064480000001,
+        "max": 329.55667800002266,
+        "last": 329.55667800002266,
+        "p50": 240.868107999966,
+        "p95": 292.6927719999803,
+        "retained": 42
+      }
+    },
+    {
+      "receivedPackets": 77,
+      "receivedBytes": 156431,
+      "errorCount": 0,
+      "snapshotCount": 41,
+      "snapshotBytes": 128379,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 40,
+        "total": 7685.945797999972,
+        "max": 305.52950499998406,
+        "last": 281.4089769999846,
+        "p50": 242.50465099996654,
+        "p95": 297.9700820000144,
+        "retained": 40
+      }
+    },
+    {
+      "receivedPackets": 76,
+      "receivedBytes": 241775,
+      "errorCount": 0,
+      "snapshotCount": 41,
+      "snapshotBytes": 200371,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 40,
+        "total": 7714.181359999988,
+        "max": 329.12663300003624,
+        "last": 329.12663300003624,
+        "p50": 241.93527499999618,
+        "p95": 292.9136259999941,
+        "retained": 40
+      }
+    },
+    {
+      "receivedPackets": 74,
+      "receivedBytes": 237826,
+      "errorCount": 0,
+      "snapshotCount": 40,
+      "snapshotBytes": 196441,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 39,
+        "total": 7469.674430000014,
+        "max": 328.5141060000169,
+        "last": 328.5141060000169,
+        "p50": 241.24434199999087,
+        "p95": 303.4768209999893,
+        "retained": 39
+      }
+    },
+    {
+      "receivedPackets": 72,
+      "receivedBytes": 233833,
+      "errorCount": 0,
+      "snapshotCount": 39,
+      "snapshotBytes": 192443,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 38,
+        "total": 7224.023538000009,
+        "max": 327.9892230000114,
+        "last": 327.9892230000114,
+        "p50": 240.68363200000022,
+        "p95": 303.20175599999493,
+        "retained": 38
+      }
+    },
+    {
+      "receivedPackets": 69,
+      "receivedBytes": 225789,
+      "errorCount": 0,
+      "snapshotCount": 37,
+      "snapshotBytes": 184391,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 36,
+        "total": 6947.896318999992,
+        "max": 322.7849999999744,
+        "last": 322.7849999999744,
+        "p50": 240.93978199997218,
+        "p95": 301.94611600000644,
+        "retained": 36
+      }
+    },
+    {
+      "receivedPackets": 67,
+      "receivedBytes": 221680,
+      "errorCount": 0,
+      "snapshotCount": 36,
+      "snapshotBytes": 180333,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 35,
+        "total": 6710.83333600004,
+        "max": 322.0315089999931,
+        "last": 322.0315089999931,
+        "p50": 247.60228500002995,
+        "p95": 301.9207179999794,
+        "retained": 35
+      }
+    },
+    {
+      "receivedPackets": 65,
+      "receivedBytes": 217478,
+      "errorCount": 0,
+      "snapshotCount": 35,
+      "snapshotBytes": 176164,
+      "retainedPackets": 64,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 66,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 34,
+        "total": 6471.768313999986,
+        "max": 322.35756999999285,
+        "last": 322.35756999999285,
+        "p50": 247.1658780000289,
+        "p95": 301.8881879999535,
+        "retained": 34
+      }
+    },
+    {
+      "receivedPackets": 63,
+      "receivedBytes": 213149,
+      "errorCount": 0,
+      "snapshotCount": 34,
+      "snapshotBytes": 171868,
+      "retainedPackets": 63,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 65,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 33,
+        "total": 6231.380946999998,
+        "max": 322.6774989999831,
+        "last": 322.6774989999831,
+        "p50": 251.7565230000182,
+        "p95": 301.81873800000176,
+        "retained": 33
+      }
+    },
+    {
+      "receivedPackets": 61,
+      "receivedBytes": 208838,
+      "errorCount": 0,
+      "snapshotCount": 33,
+      "snapshotBytes": 167534,
+      "retainedPackets": 61,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 63,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 32,
+        "total": 5984.9610770000145,
+        "max": 322.7742399999988,
+        "last": 322.7742399999988,
+        "p50": 251.80485299997963,
+        "p95": 302.3735159999924,
+        "retained": 32
+      }
+    },
+    {
+      "receivedPackets": 59,
+      "receivedBytes": 204517,
+      "errorCount": 0,
+      "snapshotCount": 32,
+      "snapshotBytes": 163227,
+      "retainedPackets": 59,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 61,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 31,
+        "total": 5727.649243000022,
+        "max": 323.0958020000253,
+        "last": 323.0958020000253,
+        "p50": 251.79483400000026,
+        "p95": 304.9867379999487,
+        "retained": 31
+      }
+    },
+    {
+      "receivedPackets": 56,
+      "receivedBytes": 192671,
+      "errorCount": 0,
+      "snapshotCount": 30,
+      "snapshotBytes": 154309,
+      "retainedPackets": 56,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 58,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 29,
+        "total": 5445.559501999989,
+        "max": 323.1621959999902,
+        "last": 323.1621959999902,
+        "p50": 251.88280899997335,
+        "p95": 303.972499000025,
+        "retained": 29
+      }
+    },
+    {
+      "receivedPackets": 54,
+      "receivedBytes": 191072,
+      "errorCount": 0,
+      "snapshotCount": 29,
+      "snapshotBytes": 149830,
+      "retainedPackets": 54,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 56,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 28,
+        "total": 5195.317255000002,
+        "max": 324.5472389999777,
+        "last": 324.5472389999777,
+        "p50": 249.42230199999176,
+        "p95": 303.627564000024,
+        "retained": 28
+      }
+    },
+    {
+      "receivedPackets": 51,
+      "receivedBytes": 181793,
+      "errorCount": 0,
+      "snapshotCount": 27,
+      "snapshotBytes": 140589,
+      "retainedPackets": 51,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 53,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 26,
+        "total": 4897.751349000027,
+        "max": 325.2657940000063,
+        "last": 325.2657940000063,
+        "p50": 255.03768500004662,
+        "p95": 303.4023829999496,
+        "retained": 26
+      }
+    },
+    {
+      "receivedPackets": 48,
+      "receivedBytes": 172364,
+      "errorCount": 0,
+      "snapshotCount": 25,
+      "snapshotBytes": 131162,
+      "retainedPackets": 48,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 50,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 24,
+        "total": 4595.316248000017,
+        "max": 325.1747140000225,
+        "last": 325.1747140000225,
+        "p50": 254.45602600002894,
+        "p95": 303.16711300000316,
+        "retained": 24
+      }
+    },
+    {
+      "receivedPackets": 45,
+      "receivedBytes": 162782,
+      "errorCount": 0,
+      "snapshotCount": 23,
+      "snapshotBytes": 121578,
+      "retainedPackets": 45,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 47,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 22,
+        "total": 4276.701905999973,
+        "max": 325.435232000018,
+        "last": 325.435232000018,
+        "p50": 254.2305940000224,
+        "p95": 303.18748000002233,
+        "retained": 22
+      }
+    },
+    {
+      "receivedPackets": 43,
+      "receivedBytes": 157873,
+      "errorCount": 0,
+      "snapshotCount": 22,
+      "snapshotBytes": 116701,
+      "retainedPackets": 43,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 45,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 21,
+        "total": 4018.224068999989,
+        "max": 326.50022599997465,
+        "last": 326.50022599997465,
+        "p50": 254.01844700000947,
+        "p95": 302.76197400002275,
+        "retained": 21
+      }
+    },
+    {
+      "receivedPackets": 40,
+      "receivedBytes": 148007,
+      "errorCount": 0,
+      "snapshotCount": 20,
+      "snapshotBytes": 106868,
+      "retainedPackets": 40,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 42,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 19,
+        "total": 3693.219434000028,
+        "max": 327.0559559999965,
+        "last": 327.0559559999965,
+        "p50": 259.26869599998463,
+        "p95": 327.0559559999965,
+        "retained": 19
+      }
+    },
+    {
+      "receivedPackets": 37,
+      "receivedBytes": 137967,
+      "errorCount": 0,
+      "snapshotCount": 18,
+      "snapshotBytes": 96840,
+      "retainedPackets": 37,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 39,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 17,
+        "total": 3328.7285830000183,
+        "max": 327.1196050000144,
+        "last": 327.1196050000144,
+        "p50": 260.30512700002873,
+        "p95": 327.1196050000144,
+        "retained": 17
+      }
+    },
+    {
+      "receivedPackets": 34,
+      "receivedBytes": 127898,
+      "errorCount": 0,
+      "snapshotCount": 16,
+      "snapshotBytes": 86778,
+      "retainedPackets": 34,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 36,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 15,
+        "total": 2984.719968999969,
+        "max": 326.4219179999782,
+        "last": 326.4219179999782,
+        "p50": 269.35484899999574,
+        "p95": 326.4219179999782,
+        "retained": 15
+      }
+    },
+    {
+      "receivedPackets": 30,
+      "receivedBytes": 95705,
+      "errorCount": 0,
+      "snapshotCount": 13,
+      "snapshotBytes": 71848,
+      "retainedPackets": 30,
+      "retainedStatePackets": 3,
+      "retainedPacketsTotal": 33,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 12,
+        "total": 2708.783548000036,
+        "max": 330.6782280000043,
+        "last": 330.6782280000043,
+        "p50": 278.3041840000078,
+        "p95": 330.6782280000043,
+        "retained": 12
+      }
+    },
+    {
+      "receivedPackets": 26,
+      "receivedBytes": 101921,
+      "errorCount": 0,
+      "snapshotCount": 11,
+      "snapshotBytes": 60900,
+      "retainedPackets": 26,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 28,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 10,
+        "total": 2347.5039390000165,
+        "max": 330.09914299997035,
+        "last": 330.09914299997035,
+        "p50": 279.5089400000288,
+        "p95": 330.09914299997035,
+        "retained": 10
+      }
+    },
+    {
+      "receivedPackets": 24,
+      "receivedBytes": 96599,
+      "errorCount": 0,
+      "snapshotCount": 10,
+      "snapshotBytes": 55603,
+      "retainedPackets": 24,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 26,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 9,
+        "total": 2054.0230409999494,
+        "max": 330.3363379999646,
+        "last": 330.3363379999646,
+        "p50": 279.28920800000196,
+        "p95": 330.3363379999646,
+        "retained": 9
+      }
+    },
+    {
+      "receivedPackets": 22,
+      "receivedBytes": 91240,
+      "errorCount": 0,
+      "snapshotCount": 9,
+      "snapshotBytes": 50234,
+      "retainedPackets": 22,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 24,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 8,
+        "total": 1752.9321760000312,
+        "max": 329.9995770000387,
+        "last": 329.9995770000387,
+        "p50": 278.07558599999174,
+        "p95": 329.9995770000387,
+        "retained": 8
+      }
+    },
+    {
+      "receivedPackets": 19,
+      "receivedBytes": 80391,
+      "errorCount": 0,
+      "snapshotCount": 7,
+      "snapshotBytes": 39394,
+      "retainedPackets": 19,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 21,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 6,
+        "total": 1388.7862120000063,
+        "max": 329.29755299998214,
+        "last": 329.29755299998214,
+        "p50": 280.24532799998997,
+        "p95": 329.29755299998214,
+        "retained": 6
+      }
+    },
+    {
+      "receivedPackets": 17,
+      "receivedBytes": 71326,
+      "errorCount": 0,
+      "snapshotCount": 6,
+      "snapshotBytes": 33901,
+      "retainedPackets": 17,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 19,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 5,
+        "total": 1093.8205029999954,
+        "max": 329.5940169999958,
+        "last": 329.5940169999958,
+        "p50": 280.7844880000339,
+        "p95": 329.5940169999958,
+        "retained": 5
+      }
+    },
+    {
+      "receivedPackets": 14,
+      "receivedBytes": 63669,
+      "errorCount": 0,
+      "snapshotCount": 4,
+      "snapshotBytes": 22757,
+      "retainedPackets": 14,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 16,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 3,
+        "total": 711.874272999994,
+        "max": 329.786587999959,
+        "last": 329.786587999959,
+        "p50": 280.01505700004054,
+        "p95": 329.786587999959,
+        "retained": 3
+      }
+    },
+    {
+      "receivedPackets": 11,
+      "receivedBytes": 48771,
+      "errorCount": 0,
+      "snapshotCount": 2,
+      "snapshotBytes": 11477,
+      "retainedPackets": 11,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 13,
+      "retainedErrors": 0,
+      "snapshotGapMs": {
+        "count": 1,
+        "total": 330.41464400000405,
+        "max": 330.41464400000405,
+        "last": 330.41464400000405,
+        "p50": 330.41464400000405,
+        "p95": 330.41464400000405,
+        "retained": 1
+      }
+    },
+    {
+      "receivedPackets": 9,
+      "receivedBytes": 46646,
+      "errorCount": 0,
+      "snapshotCount": 1,
+      "snapshotBytes": 5776,
+      "retainedPackets": 9,
+      "retainedStatePackets": 2,
+      "retainedPacketsTotal": 11,
+      "retainedErrors": 0,
+      "snapshotGapMs": null
+    }
+  ],
+  "health": [
+    {
+      "tickMs": {
+        "count": 1,
+        "total": 11,
+        "max": 11,
+        "last": 11,
+        "p50": 11,
+        "p95": 11,
+        "retained": 1
+      },
+      "featuresMs": {
+        "count": 1,
+        "total": 0,
+        "max": 0,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 1
+      },
+      "spacesMs": {
+        "count": 1,
+        "total": 11,
+        "max": 11,
+        "last": 11,
+        "p50": 11,
+        "p95": 11,
+        "retained": 1
+      },
+      "systems": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "entities": {
+        "count": 1,
+        "total": 8,
+        "max": 8,
+        "last": 8,
+        "p50": 8,
+        "p95": 8,
+        "retained": 1
+      },
+      "shots": {
+        "count": 1,
+        "total": 0,
+        "max": 0,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 1
+      },
+      "connections": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "checkpointMs": {
+        "count": 4,
+        "total": 30,
+        "max": 9,
+        "last": 9,
+        "p50": 7,
+        "p95": 9,
+        "retained": 4
+      },
+      "checkpointSerializeMs": {
+        "count": 4,
+        "total": 3,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 4
+      },
+      "checkpointBytes": {
+        "count": 4,
+        "total": 50797,
+        "max": 18699,
+        "last": 18699,
+        "p50": 10409,
+        "p95": 18699,
+        "retained": 4
+      }
+    },
+    {
+      "tickMs": {
+        "count": 901,
+        "total": 38462,
+        "max": 226,
+        "last": 6,
+        "p50": 13,
+        "p95": 144,
+        "retained": 512
+      },
+      "featuresMs": {
+        "count": 901,
+        "total": 73,
+        "max": 25,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "spacesMs": {
+        "count": 901,
+        "total": 2991,
+        "max": 27,
+        "last": 6,
+        "p50": 3,
+        "p95": 6,
+        "retained": 512
+      },
+      "snapshotsMs": {
+        "count": 450,
+        "total": 35366,
+        "max": 221,
+        "last": 155,
+        "p50": 81,
+        "p95": 142,
+        "retained": 450
+      },
+      "snapshotBuildMs": {
+        "count": 450,
+        "total": 174,
+        "max": 4,
+        "last": 1,
+        "p50": 0,
+        "p95": 1,
+        "retained": 450
+      },
+      "snapshotSerializeMs": {
+        "count": 10422,
+        "total": 13096,
+        "max": 16,
+        "last": 2,
+        "p50": 2,
+        "p95": 3,
+        "retained": 512
+      },
+      "snapshotBytes": {
+        "count": 10422,
+        "total": 59163693,
+        "max": 6025,
+        "last": 6001,
+        "p50": 5933,
+        "p95": 6020,
+        "retained": 512
+      },
+      "systems": {
+        "count": 901,
+        "total": 901,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 512
+      },
+      "entities": {
+        "count": 901,
+        "total": 29295,
+        "max": 41,
+        "last": 41,
+        "p50": 40,
+        "p95": 40,
+        "retained": 512
+      },
+      "shots": {
+        "count": 901,
+        "total": 0,
+        "max": 0,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "connections": {
+        "count": 30,
+        "total": 30,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 30
+      },
+      "checkpointMs": {
+        "count": 64,
+        "total": 1729,
+        "max": 80,
+        "last": 63,
+        "p50": 27,
+        "p95": 62,
+        "retained": 64
+      },
+      "checkpointSerializeMs": {
+        "count": 64,
+        "total": 219,
+        "max": 19,
+        "last": 6,
+        "p50": 3,
+        "p95": 6,
+        "retained": 64
+      },
+      "checkpointBytes": {
+        "count": 64,
+        "total": 3452292,
+        "max": 91594,
+        "last": 91594,
+        "p50": 53615,
+        "p95": 89873,
+        "retained": 64
+      }
+    },
+    {
+      "tickMs": {
+        "count": 1801,
+        "total": 95094,
+        "max": 286,
+        "last": 2,
+        "p50": 13,
+        "p95": 144,
+        "retained": 512
+      },
+      "featuresMs": {
+        "count": 1801,
+        "total": 141,
+        "max": 25,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "spacesMs": {
+        "count": 1801,
+        "total": 7151,
+        "max": 27,
+        "last": 2,
+        "p50": 4,
+        "p95": 8,
+        "retained": 512
+      },
+      "snapshotsMs": {
+        "count": 900,
+        "total": 87736,
+        "max": 275,
+        "last": 73,
+        "p50": 118,
+        "p95": 165,
+        "retained": 512
+      },
+      "snapshotBuildMs": {
+        "count": 900,
+        "total": 433,
+        "max": 4,
+        "last": 0,
+        "p50": 1,
+        "p95": 1,
+        "retained": 512
+      },
+      "snapshotSerializeMs": {
+        "count": 23922,
+        "total": 34447,
+        "max": 24,
+        "last": 1,
+        "p50": 1,
+        "p95": 2,
+        "retained": 512
+      },
+      "snapshotBytes": {
+        "count": 23922,
+        "total": 139991875,
+        "max": 6110,
+        "last": 5994,
+        "p50": 5995,
+        "p95": 6000,
+        "retained": 512
+      },
+      "systems": {
+        "count": 1801,
+        "total": 1801,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 512
+      },
+      "entities": {
+        "count": 1801,
+        "total": 65941,
+        "max": 42,
+        "last": 42,
+        "p50": 41,
+        "p95": 42,
+        "retained": 512
+      },
+      "shots": {
+        "count": 1801,
+        "total": 0,
+        "max": 0,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "connections": {
+        "count": 30,
+        "total": 30,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 30
+      },
+      "checkpointMs": {
+        "count": 66,
+        "total": 1809,
+        "max": 80,
+        "last": 39,
+        "p50": 27,
+        "p95": 62,
+        "retained": 66
+      },
+      "checkpointSerializeMs": {
+        "count": 66,
+        "total": 228,
+        "max": 19,
+        "last": 4,
+        "p50": 3,
+        "p95": 6,
+        "retained": 66
+      },
+      "checkpointBytes": {
+        "count": 66,
+        "total": 3635727,
+        "max": 91849,
+        "last": 91849,
+        "p50": 54801,
+        "p95": 91495,
+        "retained": 66
+      }
+    },
+    {
+      "tickMs": {
+        "count": 2701,
+        "total": 143140,
+        "max": 286,
+        "last": 3,
+        "p50": 28,
+        "p95": 145,
+        "retained": 512
+      },
+      "featuresMs": {
+        "count": 2701,
+        "total": 201,
+        "max": 25,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "spacesMs": {
+        "count": 2701,
+        "total": 10550,
+        "max": 28,
+        "last": 3,
+        "p50": 4,
+        "p95": 7,
+        "retained": 512
+      },
+      "snapshotsMs": {
+        "count": 1350,
+        "total": 132305,
+        "max": 275,
+        "last": 117,
+        "p50": 91,
+        "p95": 139,
+        "retained": 512
+      },
+      "snapshotBuildMs": {
+        "count": 1350,
+        "total": 685,
+        "max": 4,
+        "last": 1,
+        "p50": 0,
+        "p95": 1,
+        "retained": 512
+      },
+      "snapshotSerializeMs": {
+        "count": 37422,
+        "total": 51160,
+        "max": 24,
+        "last": 2,
+        "p50": 2,
+        "p95": 3,
+        "retained": 512
+      },
+      "snapshotBytes": {
+        "count": 37422,
+        "total": 220738161,
+        "max": 6175,
+        "last": 6007,
+        "p50": 6011,
+        "p95": 6015,
+        "retained": 512
+      },
+      "systems": {
+        "count": 2701,
+        "total": 2701,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 512
+      },
+      "entities": {
+        "count": 2701,
+        "total": 102468,
+        "max": 43,
+        "last": 41,
+        "p50": 40,
+        "p95": 41,
+        "retained": 512
+      },
+      "shots": {
+        "count": 2701,
+        "total": 0,
+        "max": 0,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "connections": {
+        "count": 30,
+        "total": 30,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 30
+      },
+      "checkpointMs": {
+        "count": 68,
+        "total": 1878,
+        "max": 80,
+        "last": 33,
+        "p50": 27,
+        "p95": 62,
+        "retained": 68
+      },
+      "checkpointSerializeMs": {
+        "count": 68,
+        "total": 236,
+        "max": 19,
+        "last": 4,
+        "p50": 3,
+        "p95": 6,
+        "retained": 68
+      },
+      "checkpointBytes": {
+        "count": 68,
+        "total": 3819431,
+        "max": 91899,
+        "last": 91899,
+        "p50": 56117,
+        "p95": 91594,
+        "retained": 68
+      }
+    },
+    {
+      "tickMs": {
+        "count": 3601,
+        "total": 189970,
+        "max": 286,
+        "last": 2,
+        "p50": 9,
+        "p95": 101,
+        "retained": 512
+      },
+      "featuresMs": {
+        "count": 3601,
+        "total": 263,
+        "max": 25,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "spacesMs": {
+        "count": 3601,
+        "total": 14176,
+        "max": 28,
+        "last": 2,
+        "p50": 3,
+        "p95": 6,
+        "retained": 512
+      },
+      "snapshotsMs": {
+        "count": 1800,
+        "total": 175430,
+        "max": 275,
+        "last": 63,
+        "p50": 90,
+        "p95": 143,
+        "retained": 512
+      },
+      "snapshotBuildMs": {
+        "count": 1800,
+        "total": 932,
+        "max": 7,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 512
+      },
+      "snapshotSerializeMs": {
+        "count": 50922,
+        "total": 67556,
+        "max": 33,
+        "last": 0,
+        "p50": 1,
+        "p95": 1,
+        "retained": 512
+      },
+      "snapshotBytes": {
+        "count": 50922,
+        "total": 302201410,
+        "max": 6209,
+        "last": 6084,
+        "p50": 6190,
+        "p95": 6195,
+        "retained": 512
+      },
+      "systems": {
+        "count": 3601,
+        "total": 3601,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 512
+      },
+      "entities": {
+        "count": 3601,
+        "total": 139727,
+        "max": 44,
+        "last": 43,
+        "p50": 41,
+        "p95": 44,
+        "retained": 512
+      },
+      "shots": {
+        "count": 3601,
+        "total": 0,
+        "max": 0,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "returningLogins": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "connections": {
+        "count": 31,
+        "total": 31,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 31
+      },
+      "disconnects": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "checkpointMs": {
+        "count": 71,
+        "total": 1988,
+        "max": 80,
+        "last": 30,
+        "p50": 28,
+        "p95": 62,
+        "retained": 71
+      },
+      "checkpointSerializeMs": {
+        "count": 71,
+        "total": 252,
+        "max": 19,
+        "last": 5,
+        "p50": 3,
+        "p95": 6,
+        "retained": 71
+      },
+      "checkpointBytes": {
+        "count": 71,
+        "total": 4095567,
+        "max": 92246,
+        "last": 92246,
+        "p50": 58617,
+        "p95": 91899,
+        "retained": 71
+      }
+    },
+    {
+      "tickMs": {
+        "count": 4501,
+        "total": 225240,
+        "max": 286,
+        "last": 3,
+        "p50": 11,
+        "p95": 98,
+        "retained": 512
+      },
+      "featuresMs": {
+        "count": 4501,
+        "total": 319,
+        "max": 25,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "spacesMs": {
+        "count": 4501,
+        "total": 16863,
+        "max": 28,
+        "last": 3,
+        "p50": 3,
+        "p95": 5,
+        "retained": 512
+      },
+      "snapshotsMs": {
+        "count": 2250,
+        "total": 207949,
+        "max": 275,
+        "last": 97,
+        "p50": 68,
+        "p95": 96,
+        "retained": 512
+      },
+      "snapshotBuildMs": {
+        "count": 2250,
+        "total": 1085,
+        "max": 7,
+        "last": 1,
+        "p50": 0,
+        "p95": 1,
+        "retained": 512
+      },
+      "snapshotSerializeMs": {
+        "count": 64422,
+        "total": 77033,
+        "max": 33,
+        "last": 1,
+        "p50": 1,
+        "p95": 2,
+        "retained": 512
+      },
+      "snapshotBytes": {
+        "count": 64422,
+        "total": 386450217,
+        "max": 6459,
+        "last": 6398,
+        "p50": 6427,
+        "p95": 6438,
+        "retained": 512
+      },
+      "systems": {
+        "count": 4501,
+        "total": 4501,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 512
+      },
+      "entities": {
+        "count": 4501,
+        "total": 180203,
+        "max": 48,
+        "last": 48,
+        "p50": 46,
+        "p95": 48,
+        "retained": 512
+      },
+      "shots": {
+        "count": 4501,
+        "total": 0,
+        "max": 0,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "returningLogins": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "connections": {
+        "count": 31,
+        "total": 31,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 31
+      },
+      "disconnects": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "checkpointMs": {
+        "count": 73,
+        "total": 2056,
+        "max": 80,
+        "last": 40,
+        "p50": 28,
+        "p95": 62,
+        "retained": 73
+      },
+      "checkpointSerializeMs": {
+        "count": 73,
+        "total": 258,
+        "max": 19,
+        "last": 3,
+        "p50": 3,
+        "p95": 6,
+        "retained": 73
+      },
+      "checkpointBytes": {
+        "count": 73,
+        "total": 4279995,
+        "max": 92246,
+        "last": 92213,
+        "p50": 59801,
+        "p95": 91949,
+        "retained": 73
+      }
+    },
+    {
+      "tickMs": {
+        "count": 5401,
+        "total": 270945,
+        "max": 286,
+        "last": 6,
+        "p50": 48,
+        "p95": 102,
+        "retained": 512
+      },
+      "featuresMs": {
+        "count": 5401,
+        "total": 378,
+        "max": 25,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 512
+      },
+      "spacesMs": {
+        "count": 5401,
+        "total": 23559,
+        "max": 48,
+        "last": 6,
+        "p50": 7,
+        "p95": 11,
+        "retained": 512
+      },
+      "snapshotsMs": {
+        "count": 2700,
+        "total": 246879,
+        "max": 275,
+        "last": 72,
+        "p50": 78,
+        "p95": 134,
+        "retained": 512
+      },
+      "snapshotBuildMs": {
+        "count": 3128,
+        "total": 1414,
+        "max": 10,
+        "last": 1,
+        "p50": 0,
+        "p95": 1,
+        "retained": 512
+      },
+      "snapshotSerializeMs": {
+        "count": 77922,
+        "total": 88712,
+        "max": 33,
+        "last": 0,
+        "p50": 1,
+        "p95": 1,
+        "retained": 512
+      },
+      "snapshotBytes": {
+        "count": 77922,
+        "total": 471874474,
+        "max": 6671,
+        "last": 2630,
+        "p50": 6444,
+        "p95": 6449,
+        "retained": 512
+      },
+      "systems": {
+        "count": 5401,
+        "total": 6257,
+        "max": 2,
+        "last": 2,
+        "p50": 2,
+        "p95": 2,
+        "retained": 512
+      },
+      "entities": {
+        "count": 5401,
+        "total": 240442,
+        "max": 71,
+        "last": 69,
+        "p50": 68,
+        "p95": 70,
+        "retained": 512
+      },
+      "shots": {
+        "count": 5401,
+        "total": 2018,
+        "max": 8,
+        "last": 0,
+        "p50": 3,
+        "p95": 6,
+        "retained": 512
+      },
+      "returningLogins": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "connections": {
+        "count": 31,
+        "total": 31,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 31
+      },
+      "disconnects": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "checkpointMs": {
+        "count": 75,
+        "total": 2127,
+        "max": 80,
+        "last": 33,
+        "p50": 29,
+        "p95": 62,
+        "retained": 75
+      },
+      "checkpointSerializeMs": {
+        "count": 75,
+        "total": 265,
+        "max": 19,
+        "last": 3,
+        "p50": 3,
+        "p95": 6,
+        "retained": 75
+      },
+      "checkpointBytes": {
+        "count": 75,
+        "total": 4471211,
+        "max": 96012,
+        "last": 96012,
+        "p50": 61114,
+        "p95": 92215,
+        "retained": 75
+      }
+    },
+    {
+      "tickMs": {
+        "count": 1,
+        "total": 2,
+        "max": 2,
+        "last": 2,
+        "p50": 2,
+        "p95": 2,
+        "retained": 1
+      },
+      "featuresMs": {
+        "count": 1,
+        "total": 0,
+        "max": 0,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 1
+      },
+      "spacesMs": {
+        "count": 1,
+        "total": 2,
+        "max": 2,
+        "last": 2,
+        "p50": 2,
+        "p95": 2,
+        "retained": 1
+      },
+      "systems": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "entities": {
+        "count": 1,
+        "total": 10,
+        "max": 10,
+        "last": 10,
+        "p50": 10,
+        "p95": 10,
+        "retained": 1
+      },
+      "shots": {
+        "count": 1,
+        "total": 0,
+        "max": 0,
+        "last": 0,
+        "p50": 0,
+        "p95": 0,
+        "retained": 1
+      },
+      "returningLogins": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "connections": {
+        "count": 1,
+        "total": 1,
+        "max": 1,
+        "last": 1,
+        "p50": 1,
+        "p95": 1,
+        "retained": 1
+      },
+      "checkpointMs": {
+        "count": 2,
+        "total": 67,
+        "max": 36,
+        "last": 31,
+        "p50": 31,
+        "p95": 36,
+        "retained": 2
+      },
+      "checkpointSerializeMs": {
+        "count": 2,
+        "total": 6,
+        "max": 3,
+        "last": 3,
+        "p50": 3,
+        "p95": 3,
+        "retained": 2
+      },
+      "checkpointBytes": {
+        "count": 2,
+        "total": 194493,
+        "max": 97250,
+        "last": 97243,
+        "p50": 97243,
+        "p95": 97250,
+        "retained": 2
+      }
+    }
+  ],
+  "cleanup": {
+    "processes": 6,
+    "exited": 6,
+    "allExited": true,
+    "succeeded": true
+  },
+  "limits": [
+    "Shared loopback host; not Internet latency, production capacity or a latency SLO.",
+    "Client input seed does not make native server RNG or wall-clock scheduling deterministic.",
+    "Concentrated fresh-captain flight and one reconnect; distributed, combat and mining workloads are not covered.",
+    "Snapshot gaps are client receive intervals, not round-trip latency; send drift includes harness scheduling and reconnect work.",
+    "Native CPU samples use ps integer CPU seconds; PostgreSQL parent excludes backend workers. Driver CPU is separate.",
+    "Bounded wall-clock run, not multihour soak or browser rendering evidence."
+  ]
+}

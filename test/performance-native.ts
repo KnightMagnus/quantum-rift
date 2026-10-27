@@ -19,7 +19,7 @@ for (const invalid of [
   { ...options, durationSeconds: 301 },
   { ...options, durationSeconds: NaN },
   { ...options, captains: 0 },
-  { ...options, captains: 13 },
+  { ...options, captains: 31 },
   { ...options, captains: 1.5 },
   { ...options, seed: -1 },
   { ...options, seed: Infinity },
@@ -40,6 +40,7 @@ assert.deepEqual(parseNativePerformanceArguments(['--output=/private/report.json
   captains: 4,
   seed: 1701,
 });
+validateNativePerformance({ ...options, captains: 30 });
 // Invalid CLI input must fail before touching an output path or starting services.
 const privateOutput = path.join(evidenceDir('performance-native'), 'invalid-output.json');
 fs.rmSync(privateOutput, { force: true });
@@ -143,6 +144,13 @@ fs.writeFileSync(
   { mode: 0o600 },
 );
 assert.equal(result.status, 'passed', 'native scenario phase: ' + result.failedPhase);
+assert.match(result.metadata.runtimeSha256, /^[a-f0-9]{64}$/);
+assert.match(result.metadata.sourceFingerprint, /^[a-f0-9]{64}$/);
+assert.equal(
+  Object.hasOwn(result.metadata, 'runtimeBytes'),
+  false,
+  'numeric report excludes runtime source bytes',
+);
 assert(result.measuredElapsedMs >= 32000);
 assert.equal(result.restoredCaptains, options.captains);
 assert.equal(result.inputPackets, options.captains * options.durationSeconds * 10);

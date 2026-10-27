@@ -12,7 +12,7 @@ import { installGameClone } from './portable-clone.ts';
 import { AuthorityCallbacks } from './authority-callbacks.ts';
 import { findOrCreateWorld, worldAuthority } from './nakama-world-lease.ts';
 
-const MAX_PLAYERS = 1024;
+import { INSTANCE_PLAYER_LIMIT } from '../shared/world-capacity.ts';
 /** State remains inside one Nakama authoritative match context. */
 export interface WorldState {
   game: Game<NakamaDatabase>;
@@ -184,7 +184,6 @@ export const attemptWorldJoin: nkruntime.MatchJoinAttemptFunction<WorldHandle> =
       return { state: handle, accept: false, rejectMessage: COMPATIBILITY_MESSAGE };
     if (
       state.database.economicFrozen ||
-      state.connections.size >= MAX_PLAYERS ||
       worldAuthority(nakamaStorageBackend(nk), state.leaseId, state.matchId) !== 'ready'
     )
       return { state: handle, accept: false, rejectMessage: 'The world is unavailable.' };
@@ -193,6 +192,11 @@ export const attemptWorldJoin: nkruntime.MatchJoinAttemptFunction<WorldHandle> =
     } catch {
       return { state: handle, accept: false, rejectMessage: 'Captain authentication required.' };
     }
+    const replacing = [...state.connections.values()].some(
+      (connection) => connection.presence.userId === presence.userId,
+    );
+    if (state.connections.size >= INSTANCE_PLAYER_LIMIT && !replacing)
+      return { state: handle, accept: false, rejectMessage: 'This instance is full (30 players).' };
     return { state: handle, accept: true };
   };
 export const joinWorld: nkruntime.MatchJoinFunction<WorldHandle> = function joinWorld(
@@ -207,7 +211,31 @@ export const joinWorld: nkruntime.MatchJoinFunction<WorldHandle> = function join
   const state = handle.world();
   state.dispatcher = dispatcher;
   for (const presence of presences) {
-    const name = state.auth.captainForUser(presence.userId, (id) => nk.accountGetId(id));
+    let name: string;
+    try {
+      name = state.auth.captainForUser(presence.userId, (id) => nk.accountGetId(id));
+    } catch {
+      dispatcher.matchKick([presence]);
+      continue;
+    }
+    const existing = state.connections.get(presence.sessionId);
+    if (existing) {
+      if (existing.presence.userId !== presence.userId) dispatcher.matchKick([presence]);
+      continue;
+    }
+    // Replace only the same authenticated principal. Retire the prior connection
+    // before admission so a full-instance reconnect never creates a 31st slot.
+    for (const [sessionId, previous] of state.connections) {
+      if (previous.presence.userId !== presence.userId) continue;
+      previous.send({ t: 'error', msg: 'Signed in somewhere else.' });
+      previous.close();
+      state.connections.delete(sessionId);
+    }
+    // Several accepted attempts can arrive together before connections is updated.
+    if (state.connections.size >= INSTANCE_PLAYER_LIMIT) {
+      dispatcher.matchKick([presence]);
+      continue;
+    }
     const connection = new MatchConnection(state, presence);
     state.connections.set(presence.sessionId, connection);
     const sessionId = state.game.nextSid;

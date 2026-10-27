@@ -87,21 +87,23 @@ export class HealthMonitor {
 }
 /** UTF-8 wire bytes without depending on Node or browser-only APIs (Nakama-compatible). */
 export function utf8Bytes(text: string): number {
-  let bytes = 0;
-  for (let index = 0; index < text.length; index++) {
-    const code = text.charCodeAt(index);
-    if (code < 128) bytes++;
-    else if (code < 2048) bytes += 2;
+  // Most snapshot characters are ASCII. Let the host regexp engine skip those
+  // runs instead of interpreting a JavaScript loop for every serialized byte.
+  const nonAscii = /[\u0080-\uffff]/g;
+  let bytes = text.length;
+  let match: RegExpExecArray | null;
+  while ((match = nonAscii.exec(text))) {
+    const code = match[0].charCodeAt(0);
+    if (code < 2048) bytes++;
     else if (
       code >= 0xd800 &&
       code <= 0xdbff &&
-      index + 1 < text.length &&
-      text.charCodeAt(index + 1) >= 0xdc00 &&
-      text.charCodeAt(index + 1) <= 0xdfff
+      text.charCodeAt(nonAscii.lastIndex) >= 0xdc00 &&
+      text.charCodeAt(nonAscii.lastIndex) <= 0xdfff
     ) {
-      bytes += 4;
-      index++;
-    } else bytes += 3;
+      bytes += 2;
+      nonAscii.lastIndex++;
+    } else bytes += 2;
   }
   return bytes;
 }

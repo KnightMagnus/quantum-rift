@@ -1371,6 +1371,51 @@ The HUD JUMP regression also opens the galaxy map and attempts native button
 activation before the periodic disabled-state refresh. No jump packet or jump
 navigation can escape the overlay; closing the map restores the plotted action.
 
+## Native performance budget verification
+
+`performance-budgets.ts` is a fast `performance-health` unit regression. Synthetic
+reports prove inclusive per-metric limits, rejection of any failing repeat,
+exact environment/workload matching, same clean source build and runtime/input
+hashes, distinct run
+identities, sufficient repeats, measured duration, input/restoration/checkpoint
+evidence, and SDK/authority/cleanup failures. Missing and nonfinite metrics,
+unknown/malformed profiles, corrupt and oversized files, and CLI success/failure
+exit statuses are covered. Synthetic numbers are verifier fixtures, not measured
+budgets or supported capacity. Isolated provenance fixtures cover valid builds,
+stale source/build-driver/helper/lockfile bytes, inputs changed during bundling,
+missing/tampered manifests or runtimes, unsafe input paths and mixed-artifact
+reports. A guarded native constructor proves failed provenance is rejected before
+resource allocation without starting services; pinned runtime bytes remain stable
+when the ignored file changes. The registered native workload additionally checks
+that its numeric report contains valid hashes but no runtime source bytes.
+Packaging fixtures include the build helper, lockfile and generated manifest.
+Deployment profiles remain externally selected;
+see [PERFORMANCE.md](PERFORMANCE.md#explicit-budget-profiles).
+
+## Full-instance admission and performance fixtures
+
+`nakama-world-lease.ts` exercises the actual join callbacks at 30 connections,
+including a 31-presence batch, duplicate callbacks and a full-instance replacement
+for the same authenticated principal. The displaced connection receives the
+existing error before its kick, and its Game/native slots are retired before
+allocation. A stale leave cannot delete the replacement; join callbacks recheck
+authentication before displacing anyone. The first 30 join; the
+extra presence is kicked without creating a Game session. A full instance rejects
+additional captains while allowing same-captain replacements. Existing ownership
+and authentication gates remain enforced.
+
+`health.ts` runs real concentrated and distributed 30-captain simulations for
+120 ticks and checks authority failures, snapshot size and checkpoint growth.
+The native harness supports up to 30 real SDK connections, but CI's short native
+case remains a bounded continuity check rather than a full-instance capacity claim.
+See [PERFORMANCE.md](PERFORMANCE.md#thirty-player-instance-target) for reproduction
+and hardware limits.
+
+The registered `performance-budgets.ts` program also checks both retained 30-player,
+300-second native reports against `docs/performance-baselines/shared-host-30.json`
+offline. This validates artifact consistency and lab alarm thresholds, not live CI
+timing or production smoothness. See [performance measurements](PERFORMANCE.md).
+
 ## Client prediction ownership
 
 `flight-prediction.ts` compares the extracted owner with an independent reference

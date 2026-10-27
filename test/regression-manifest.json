@@ -138,6 +138,7 @@
     "render-cache-budget.ts",
     "protocol-compatibility.ts",
     "station-docking.ts",
+    "performance-budgets.ts",
     "combat-playability.ts",
     "combat-jobs-playability.ts",
     "combat-balance-ratings.ts",
@@ -687,6 +688,7 @@
       "helpers/temp-data.ts"
     ],
     "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
+    "performance-budgets.ts": ["helpers/browser-fixture.ts", "helpers/native-performance.ts"],
     "station-service.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
     "combat-playability.ts": ["helpers/combat-playability-simulation.ts"],
     "save-feature-validation.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
@@ -1453,7 +1455,7 @@
         "nakama-diagnostics.ts",
         "nakama-world-lease.ts"
       ],
-      "asserts": "Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/replay denials. Native flood traffic retains peer progress and authoritative physics; deterministic actual-callback batches verify exactly eight admissions per session, independent peer budgets and next-tick reset. Legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency remain covered. Reference/Solo tests are separate and no full native-feature coverage is implied."
+      "asserts": "Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/replay denials. Native flood traffic retains peer progress and authoritative physics; deterministic actual-callback batches verify exactly eight admissions per session, independent peer budgets and next-tick reset. Legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency remain covered. Reference/Solo tests are separate and no full native-feature coverage is implied. Full-instance same-principal replacement retires old native/Game slots before allocating, sends the exact displaced-login error before kick, preserves the replacement under delayed old leave and duplicate callbacks, and denies new or revoked principals without evicting existing captains."
     },
     {
       "id": "friend-hosting",
@@ -1619,8 +1621,13 @@
     {
       "id": "performance-health",
       "services": [],
-      "tests": ["health.ts", "excalibur-runtime-browser.ts", "performance-native.ts"],
-      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples. Real wall-clock native flight, bounded SDK packet retention, monotonic send drift and snapshot gaps, failure cleanup, authoritative reconnect, PostgreSQL checkpoint and process-restart continuity. Limits and numeric-only health parsing deny malformed input before resources.",
+      "tests": [
+        "health.ts",
+        "excalibur-runtime-browser.ts",
+        "performance-native.ts",
+        "performance-budgets.ts"
+      ],
+      "asserts": "Bounded opt-in diagnostics preserve seeded authoritative outcomes and diagnose checkpoint freezes without payload retention; browser update/draw samples. Real wall-clock native flight, bounded SDK packet retention, monotonic send drift and snapshot gaps, failure cleanup, authoritative reconnect, PostgreSQL checkpoint and process-restart continuity. Limits and numeric-only health parsing deny malformed input before resources. Deployment-owned budget profiles reject mixed hardware/builds, wrong workloads, duplicate or insufficient repeats, authority failures, absent metrics and each over-budget run. Concentrated/distributed 30-captain simulations retain authority and payload-growth bounds; native harness supports the 30-player instance limit. Exact UTF-8 sizes are compared with the independent platform encoder across every code unit; shared JSON encoding retains legacy wire bytes and private recipient fields. Native builds fingerprint exact esbuild-loaded inputs plus build-driver/helper/lock bytes and emitted runtime SHA256; preflight rejects stale, missing or tampered artifacts before service resources, pins verified runtime bytes, reports hashes without source/path inventories, and budget verification rejects mixed artifact/input digests. Pure isolated fixtures exercise provenance failures without native startup. Retained sanitized 30-player, 300-second native repeat artifacts satisfy the exact-host lab alarm profile offline; this is not a live CI timing gate or deployment SLO.",
       "owners": [
         "shared/health.ts",
         "server/game.ts",
@@ -1629,7 +1636,12 @@
         "tools/performance-native.ts",
         "test/helpers/native-performance.ts",
         "test/helpers/native-packet-collector.ts",
-        "test/helpers/nakama-service.ts"
+        "test/helpers/nakama-service.ts",
+        "tools/performance-budgets.ts",
+        "shared/world-capacity.ts",
+        "server/snapshot-encoding.ts",
+        "tools/build-nakama.ts",
+        "tools/nakama-build-provenance.ts"
       ]
     },
     {

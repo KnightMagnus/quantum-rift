@@ -3,7 +3,7 @@
 Diagnostics are off by default. They collect numeric timings, sizes and counts,
 not captain names, packets, chat, passwords, save contents or exception messages.
 They do not change simulation order, storage authority, checkpoint recovery or
-transport admission rules. No gameplay optimization is included.
+transport admission rules. Snapshot optimizations are described separately below.
 
 ## Enable and read
 
@@ -30,9 +30,12 @@ read a measurement clock, enumerate diagnostic entities or size payloads.
 - `tickMs` covers the authoritative tick; `featuresMs`, `spacesMs` and
   `snapshotsMs` divide its ordinary stages. Odd ticks do not send snapshots.
   Paused/frozen ticks still count as tick calls but do not advance simulation.
-- `snapshotBuildMs` measures shared system snapshot construction.
+- `snapshotBuildMs` measures shared system snapshot construction, visibility eligibility and
+  reusable public JSON encoding when the system has no private story entities.
   `snapshotSerializeMs` includes construction of each flying recipient's payload
-  and its existing JSON serialization. `snapshotBytes` counts UTF-8 JSON bytes
+  and recipient JSON serialization. Public arrays are encoded once only when
+  every recipient has the same visibility; private story systems retain individual
+  filtering and serialization. Total snapshot work remains in `snapshotsMs`. `snapshotBytes` counts UTF-8 JSON bytes
   before transport framing/compression. Docked `scene` packets are not included.
 - `systems`, `entities` and `shots` count awake systems, ships and projectiles
   after a tick, including quiet systems waiting to sleep. Rocks, loot, beams and
@@ -98,6 +101,26 @@ location. The browser regression writes separate numeric health artifacts for
 Canvas/WebGL and DPR combinations alongside its existing actual-game captures.
 
 ## Baseline and budgets
+
+The [accelerated baseline](performance-baselines/accelerated-fde394b.json) retains
+all six scenario results from clean source
+`fde394bd192868ba65bc878214ec0abe71741bed` on the shared EPYC host described below.
+Five scenarios measured 900 ticks each; the soak measured 108,000 ticks (one
+simulated hour, about 5.45 seconds of measured execution). The artifact includes
+seeds, warmup counts, hardware, stage timings, bounded metric windows and final
+fixture outcomes. Every scenario completed without a tick failure, space failure
+or checkpoint freeze. Reproduce it with `RIFT_PERF_SOAK_TICKS=108000` and the
+baseline command above. This is not a one-hour wall-clock stability result.
+
+The [browser baseline](performance-baselines/browser-fde394b.json) retains the
+four actual Engine fixture reports from the same source: requested WebGL at DPR 1
+and 2, Canvas at DPR 1, and automatic renderer selection at DPR 2. It records
+Chromium version, actual renderer, viewport, host and hashes of the served Engine,
+scene and entry modules. These are headless CPU-hook observations from mixed
+lifecycle activity, not GPU completion times, a frame-rate budget or evidence for
+physical-device performance. Run `node test/excalibur-runtime-browser.ts` after
+building to collect new reports; captures and server logs stay outside these
+numeric baseline files.
 
 The first bounded run used Node 27.0.0-nightly20261020531d28fc36 on a shared Linux
 x64 AMD EPYC 4344P host (16 logical CPUs). Five scenarios ran 900 measured ticks;
@@ -191,7 +214,7 @@ node test/performance-native.ts
 
 The default workload lasts 60 measured wall-clock seconds with four fresh
 captains in their common initial system. Limits are 32–300 integer seconds,
-1–12 captains and an unsigned 32-bit client seed. Invalid or duplicate arguments
+1–30 captains and an unsigned 32-bit client seed. Invalid or duplicate arguments
 fail before creating services or an output file. Output must be an absolute path;
 the tool creates a new mode-0600 file and refuses to overwrite one. Setup and
 restart time are additional to the measured flight duration. The fixture watchdog
@@ -245,6 +268,187 @@ These concentrated fresh-captain flight/reconnect/checkpoint runs do not measure
 distributed, combat or mining workloads, Internet latency, browser/GPU work,
 production player capacity, a latency SLO or multihour stability. The accelerated
 in-process scenarios remain separate measurements, not native workload ports.
+
+## Explicit budget profiles
+
+`tools/performance-budgets.ts` checks repeated native numeric reports against an
+explicit JSON profile. It does not choose targets from a baseline. A profile may
+define intended deployment limits or a measured-host regression alarm; the latter
+is not evidence that deployment targets have been met. Select the hardware, runtime
+versions, workload and acceptable limits before using it:
+
+```sh
+node tools/performance-budgets.ts /private/deployment-profile.json \
+  /private/artifacts/native-run-1.json /private/artifacts/native-run-2.json
+```
+
+The profile has exactly these fields:
+
+- `schema`: `1`.
+- `name`: a nonempty hardware/workload label, at most 120 characters.
+- `environment`: exact `platform`, `arch`, `cpuModel`, `logicalCpus`, `node`,
+  `sdk`, `nakama` and `postgres` values from the native report's `metadata`.
+  `logicalCpus` is a positive integer; the other fields are nonempty strings.
+  An `unavailable` runtime or hardware value is rejected.
+- `workload`: exact `durationSeconds`, `captains` and `seed`, within the native
+  harness's limits above.
+- `minimumRuns`: an integer from 2 to 100.
+- `budgets`: one or more positive, finite upper limits from the supported metrics
+  below. Unknown fields, misspelled metrics and newer schemas are rejected.
+
+Supported metrics are `tickP95Ms`, `tickMaxMs`, `checkpointP95Ms`,
+`snapshotGapP95Ms`, `sendDriftP95Ms`, `reconnectToFlightMs`, `restartToFlightMs`,
+`nativeResidentKiB` and `checkpointBytes`. Health metrics use the largest reported
+window percentile or lifetime maximum, not a percentile pooled across windows.
+Snapshot gaps use the largest connection's retained-window p95, including
+setup/reconnect/restart traffic. Connections with fewer than two snapshots have
+no interval and are excluded; at least one measured interval is required. Send drift uses its retained-window p95.
+Native resident memory is the pre-restart Nakama sample, not a lifetime peak.
+Checkpoint bytes are the stored pre-restart checkpoint size, including database
+JSON encoding. These meanings differ from in-process fixture measurements.
+
+Every report must be from the same clean source commit, emitted runtime hash,
+source-input fingerprint and exact selected environment/workload. Repeated start timestamps are rejected. Each report must
+show its full measured duration, expected input count, restored captains, a real
+checkpoint, zero SDK/authority failures and successful process cleanup. Any
+missing requested metric or any run exceeding its limit fails; averaging cannot
+hide an outlier. The verifier prints a numeric summary and fixed failure codes,
+exits 0 on success and 1 on failure. It starts no services and changes no report.
+Input files must be ordinary JSON files no larger than 4 MiB.
+
+`npm run build` writes `dist/nakama/quantum-rift.provenance.json` next to the
+native runtime. The manifest records its SHA-256 and a fingerprint of sorted,
+portable input paths and digests. The build captures the exact bytes passed to
+esbuild, plus `tools/build-nakama.ts`, the provenance helper and `package-lock.json`;
+it rejects inputs changed during bundling. Symlink-resolved dependencies use
+portable `node_modules/` paths, not another checkout's absolute directory.
+
+Native performance preflight checks that manifest, every current input and the
+runtime before creating fixture directories or starting services. The CLI also
+checks before reserving its report file. Missing, changed or stale builds require
+`npm run build`; they are not measured with a current source label. Verified
+runtime bytes are pinned for the service copy, so a concurrent rebuild of ignored
+`dist` cannot silently change the measured artifact. Numeric reports include only
+`runtimeSha256` and `sourceFingerprint`, not the input inventory or source bytes.
+The budget verifier rejects missing/malformed hashes and mixed artifacts even
+when source commits match. Reports made before those fields existed need new
+measurements; hashes cannot be inferred retroactively.
+
+This is a local build-integrity check, not a signature or a trust boundary against
+someone able to rewrite both code and manifest. It fingerprints the declared
+build-tool source and lockfile, not every installed compiler byte or the operating
+system. The existing runtime/binary versions and environment checks still apply.
+
+A matching CPU model and logical CPU count do not establish exclusive access,
+CPU allocation, thermal conditions, network path or representative database load.
+Inspect report load and repeat on the intended deployment before adopting a
+profile. A passing profile covers only its measured native workload; it does not
+establish browser performance, distributed/combat/mining native capacity or
+multihour stability. No deployment latency profile is supplied while the intended
+hardware and workload remain unspecified. Shared-host CI tests verifier behavior
+with synthetic measurements and retains the existing payload-growth guards.
+
+## Thirty-player instance target
+
+A native game instance admits at most 30 simultaneous connections. The join-attempt
+callback rejects a full instance; the join callback checks again so a batch of
+accepted attempts cannot exceed the limit. Duplicate joins do not allocate extra
+Game sessions. A new connection for the same authenticated captain may replace
+its old presence even when the instance is full. The old presence receives the
+existing displaced-login message and is retired before the replacement is
+allocated; its delayed leave callback cannot remove the replacement.
+Disconnected captains retain the existing docking and save rules.
+This is an admission limit, not evidence of smooth play on arbitrary hardware.
+
+A provisional single-instance host is four modern dedicated vCPUs, 8 GB RAM and
+SSD storage, including the database. The baseline host recorded in each report is
+a shared machine, not proof that this proposed allocation is sufficient. Choose a
+region near the players and repeat the workload on the intended host before deployment.
+No GPU is needed for the headless server; browser rendering must be measured separately.
+
+The native tool accepts `--captains=30` and exercises all 30 actual SDK connections,
+flight input, one reconnect and checkpoint/restart continuity. Use two independent
+300-second runs with the same clean build for a bounded full-instance baseline.
+The default short CI workload remains small; it does not impersonate a capacity test.
+
+Set `RIFT_PERF_CAPTAINS=30` for all six accelerated scenarios. Those runs cover
+concentrated/distributed captains, NPC combat, mining/towing and reconnects with
+production simulation, but use counting connections and memory CAS rather than
+native network/database latency. Thirty-player concentrated/distributed cases are
+also part of the registered health regression. Their 512 KiB checkpoint ceiling
+is a fixture growth guard, not a PostgreSQL latency or production save quota.
+
+Native profiling at 30 captains identified snapshot processing, including the
+opt-in byte counter, as the dominant measured stage. The
+[pre-optimization report](performance-baselines/native-preoptimization-30-300s.json)
+retains that observation at clean source
+`95722080fdf54c079e52f413621c3ceedd90bd1f`. It predates emitted-runtime digest
+receipts and cannot satisfy the current budget verifier. It documents the choice
+of hot path, not a controlled speedup comparison with later runs on the shared host.
+UTF-8 measurement now skips
+ASCII runs in the host regular-expression engine while preserving exact Unicode
+and lone-surrogate byte counts. Encoding the unrestricted public snapshot once
+per system avoids repeating the same array serialization for each captain.
+Recipient fields and systems with private story entities retain their individual
+paths. These changes do not batch, reorder or defer network delivery.
+
+## Retained thirty-player lab baseline
+
+The two [numeric reports](performance-baselines/native-30-300s-1.json) and
+[repeat](performance-baselines/native-30-300s-2.json) were collected sequentially
+from clean source `0d28a12fc0342674aed77bd9de27378af1b65333`, built once after
+integration with main at `07c0876`. Both record identical emitted-runtime SHA-256 and
+source-input fingerprint. JSON whitespace is formatted for the repository; numeric
+values and fields are unchanged from the private originals. Only sanitized numeric
+reports are retained, not fixture logs, configuration, credentials or saves.
+
+Each run measured 300 wall-clock seconds, 30 actual SDK connections and 90,000
+scheduled inputs, restored all 30 captains after restart, and exited all six
+service/helper processes cleanly. Both passed the harness's continuity and error
+checks. The host was shared Linux x64, AMD EPYC 4344P, 16 logical CPUs and about
+61.4 GiB total memory; this is not an isolated four-vCPU/eight-GB allocation.
+The reports retain host load, runtime versions and bounded metric windows.
+
+The [shared-host profile](performance-baselines/shared-host-30.json) is an executable
+regression alarm for that exact environment and workload, not a deployment SLO.
+Run the offline check with:
+
+```sh
+node tools/performance-budgets.ts docs/performance-baselines/shared-host-30.json \
+  docs/performance-baselines/native-30-300s-1.json \
+  docs/performance-baselines/native-30-300s-2.json
+```
+
+| Metric                                         | Worst repeat observation |     Lab alarm |
+| ---------------------------------------------- | -----------------------: | ------------: |
+| Largest retained tick-window p95               |                    59 ms |         75 ms |
+| Lifetime tick maximum                          |                   116 ms |        150 ms |
+| Largest retained checkpoint-window p95         |                    16 ms |         20 ms |
+| Largest connection's retained snapshot-gap p95 |                283.15 ms |        375 ms |
+| Retained send-drift p95                        |                  1.73 ms |          3 ms |
+| Reconnect to flight                            |                556.81 ms |        700 ms |
+| Restart to all captains flying                 |             15,175.88 ms |     19,000 ms |
+| Sampled pre-restart Nakama resident memory     |              166,300 KiB |   212,992 KiB |
+| Stored checkpoint size                         |            115,184 bytes | 147,456 bytes |
+
+Each alarm starts at 125% of the worst observation across the two runs, rounded
+upward: tick p95/checkpoint p95 to 5 ms, tick max/snapshot gap to 25 ms, send drift
+to 1 ms, reconnect to 100 ms, restart to 1,000 ms, and memory/checkpoint size to
+16,384 of their stated units. This leaves explicit headroom for small workload and
+scheduling variation while flagging larger growth. Two runs do not characterize
+the shared host's noise distribution; an alarm needs investigation, not automatic
+threshold regeneration. Future comparisons must supply two new same-clean-build,
+same-artifact reports; the verifier must not mix the archived source with a new build.
+The registered budget regression verifies these retained artifacts offline, but
+ordinary CI does not rerun this five-minute workload or enforce live timing.
+
+The observed 59 ms tick-window p95 exceeds the 33.33 ms simulation cadence.
+Neither passing the 75 ms lab alarm nor completing the workload establishes smooth
+30-player play. Snapshot intervals also include setup, reconnect and restart and
+are not round-trip latency. No controlled percentage improvement is inferred from
+older runs with different sources, durations or competing host load. Dedicated-host
+repeats, representative combat/mining/distributed activity, browser rendering and
+longer soaks remain necessary before a production hardware or smoothness claim.
 
 ## Image, audio and procedural resource ownership
 
