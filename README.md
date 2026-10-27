@@ -89,6 +89,12 @@ The blue Pressure Hull cockpit is the standard interface for flight, station ser
 
 ![Blue flight controls with the Tray and system radar expanded](docs/screenshots/pressure-hull-flight.png)
 
+**Flight controls**
+
+Combat and mining controls open above the console. JUMP can sit in either bottom corner.
+
+![Combat and mining panels above the left-corner JUMP button](docs/screenshots/flight-functions.png)
+
 **Landed services**
 
 ![Station services and spaceport news beside the world illustration](docs/screenshots/pressure-hull-landed.png)
