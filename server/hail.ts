@@ -23,6 +23,7 @@ import { contextualHail } from './hail-dialogue.ts';
 import { SYS as systemsById, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
 import { RIVAL, MOOD } from '../shared/rivals.ts';
 import { credits } from '../shared/rules.ts';
+import { landingRefused } from '../shared/reputation.ts';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
@@ -419,8 +420,20 @@ export const HailOperations = {
       return announce('No reply. Nothing down there is listening.');
     const faction2 = systemsById[stellarBody.system].faction,
       reputation = playerData.rep[faction2] || 0,
-      pass = playerData.landPass && playerData.landPass[identifier] > Date.now();
-    if (!stellarBody.outlaw && reputation <= -30 && !pass)
+      passExpires = playerData.landPass?.[identifier] || 0,
+      pass = passExpires > Date.now(),
+      ownStation = !!stellarBody.site && playerData.station.site === identifier;
+    if (ownStation)
+      return announce('Welcome home, Captain. Your berth is clear and the pads are yours.');
+    if (
+      landingRefused({
+        standing: reputation,
+        outlawPort: !!stellarBody.outlaw,
+        ownStation,
+        passExpires,
+        now: Date.now(),
+      })
+    )
       return announce(
         `${stellarBody.name} docking control. Your record precedes you, Captain. Landing clearance denied.`,
         [
@@ -453,6 +466,8 @@ export const HailOperations = {
     const playerData = session.data,
       stellarBody = STELLARS[message.stellar!];
     if (!stellarBody || stellarBody.system !== playerData.sys || message.k !== 'bribe') return;
+    // Your own station never asks for a "donation".
+    if (stellarBody.site && playerData.station.site === stellarBody.id) return;
     const reputation = playerData.rep[systemsById[stellarBody.system].faction] || 0,
       cost = 2000 + Math.abs(reputation) * 200;
     if (playerData.credits < cost)

@@ -1451,6 +1451,8 @@ const TABS = [
   ['blackmarket', 'BLACK MARKET'],
   ['bank', 'BANK'],
 ];
+/** Services a visitor may use from the guest dock of another captain's Personal Station. */
+const GUEST_DOCK_TABS = new Set(['overview', 'trade', 'jobs', 'crew']);
 /**
  * Opens and populates the landed view for the current stellar body or personal station.
  */
@@ -1473,7 +1475,7 @@ export function showLanded(): void {
   refreshStores();
   elementById2('landname').textContent = site
     ? site.owner
-      ? `${site.owner}'s Personal Station`
+      ? `${site.owner}'s Personal Station${site.guest ? ' · Guest Dock' : ''}`
       : 'Derelict Station Hull'
     : stellarBody.name;
   elementById2('landfac').textContent =
@@ -1483,7 +1485,7 @@ export function showLanded(): void {
       ? site.own
         ? 'Your Personal Station. Build it up through Station Tier 1-5: Workshop, research lab, drydock, wingmates and the station shipyard.'
         : site.owner
-          ? `A Personal Station claimed and run by Captain ${site.owner}. Visitors may refuel and trade here.`
+          ? `A Personal Station claimed and run by Captain ${site.owner}. You are berthed at the guest dock: refuel, trade and take jobs here. The owner's docks and station internals are closed to visitors.`
           : stellarBody.desc
       : stellarBody.desc || ''
   )!;
@@ -1511,6 +1513,8 @@ export function showLanded(): void {
     });
   }
   const available2 = TABS.filter(
+    ([entryKey]) => !site?.guest || GUEST_DOCK_TABS.has(entryKey),
+  ).filter(
     ([entryKey]) =>
       (entryKey === 'refinery' && length2.refinery?.available) ||
       (entryKey === 'blackmarket' && length2.blackmarket) ||
@@ -1619,10 +1623,10 @@ export function renderLanded(): void {
   )
     ? document.activeElement.id
     : null;
-  elementById2('dockchips').innerHTML = dockChips(
-    clientGameState,
-    !!(clientGameState.landed && clientGameState.landed!.site && clientGameState.landed!.site.own),
-  ); // 2.1
+  // Guest docks show no dock switcher: dock changes happen only at your own station.
+  elementById2('dockchips').innerHTML = length2.site?.guest
+    ? ''
+    : dockChips(clientGameState, !!length2.site?.own); // 2.1
   elementById2('landcr').textContent = credits(playerPayload.credits) + ' credits';
   elementById2('landcargo').textContent = playerPayload.shipless
     ? 'No active ship: choose one to depart'
