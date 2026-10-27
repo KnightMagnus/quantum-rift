@@ -23,7 +23,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 ### Trade, mine and take jobs
 
 - Trade on markets shaped by shortages, local events and what captains buy and sell.
-- Earn your way through deliveries, passenger runs, bounties, patrols, rescues and smuggling. Compare travel, room needed, danger and your payout before choosing a job.
+- Earn your way through deliveries, passenger runs, bounties, patrols, rescues and smuggling. Compare travel, room needed, danger and your payout before choosing a job. Passenger relief runs show where to collect passengers before their destination.
 - Mine asteroid, gas and crystal fields; survey deposits, refine your haul and tow large finds home with specialized equipment.
 - Follow faction and Syndicate careers, develop colonies, earn combat ratings and climb the leaderboards.
 
@@ -75,7 +75,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 - [Beta Solo save generator](test/Save%20Generator/README.md)
 - [Support diagnostics](docs/DIAGNOSTICS.md)
 - [Development tools](docs/DEVELOPMENT-TOOLS.md) and [code navigation](docs/CODE-NAVIGATION.md)
-- [Release notes](docs/RELEASE-3.5.0.md)
+- [Release notes](docs/RELEASE-3.5.1.md)
 
 ## Screenshots
 
@@ -100,3 +100,7 @@ The blue Pressure Hull cockpit is the standard interface for flight, station ser
 **Captain profile**
 
 ![Captain Profile with the portrait chooser open](docs/screenshots/pressure-hull-profile.png)
+
+**Job board**
+
+![Early-game cargo offers with travel, danger, hold space and payout details](docs/screenshots/combat-jobs.png)
