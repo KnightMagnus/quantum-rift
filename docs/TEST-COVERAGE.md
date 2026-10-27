@@ -1201,15 +1201,23 @@ receipts and their existing tests.
 
 ## Save catalog and local restore rehearsal
 
-`save-migrations.ts` exercises detached cargo/storage migration, legacy/current
+`save-migrations.ts` exercises ordered detached cargo/storage and tutorial migration, legacy/current
 synthetic fixtures, corrupt/unsupported rejection without source mutation,
 read-only disposable CLI restores and committed-journal precedence. It rejects
 malformed local snapshot envelopes and injected access errors without empty-state
 fallback, then checks five real journal fault boundaries, freeze and reopen/retry.
-Credits, unrelated goods, station ownership and progression remain unchanged.
+Credits, unrelated goods and station ownership remain unchanged; tutorial progress
+moves only according to the existing version-2 mapping. Committed tutorial cases
+cover both remapping thresholds, completion and current sentinels. Unsupported
+markers and invalid progress reject without partially migrating earlier accounts.
+Production `NakamaDatabase` drills use an in-memory CAS backend for precommit,
+lost-acknowledgement, frozen retry, restart and stale-writer checks. They cover
+cargo/tutorial markers and real Game/co-op fleet-bank, founding-fee and directive
+refunds, including exact balances and repeat-restart log counts. Co-op account
+migration is called directly, not through native login. These are not PostgreSQL
+backup/restore, exhaustive feature-schema or old/new executable archive tests.
 The existing cargo, import/login, generator and native checkpoint tests retain
-their separate coverage. This is not full feature-schema validation, native
-restore coverage or an old/new executable archive-matrix rehearsal; see
+their separate coverage; see
 [SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md).
 
 ## Client/server compatibility

@@ -1,5 +1,6 @@
 import { migrateCargoLots } from '../shared/cargo-lots.ts';
 import type { PlayerAccount } from './db.ts';
+import { tutMigrate, TUT_VERSION } from '../shared/tutorial.ts';
 
 /** Existing owner and marker; catalog order does not schedule live migrations. */
 export interface SaveMigrationEntry {
@@ -15,7 +16,13 @@ export interface SaveMigrationEntry {
   boundary: string;
 }
 
-/** Inventory of compatibility owners; only cargo-ledger-v1 is rehearsed by this tool. */
+/** Version of this inventory/report format, not a global saved-game schema. */
+export const SAVE_MIGRATION_CATALOG_VERSION = 1;
+
+/** Explicit rehearsal order; live Game lifecycle ordering remains unchanged. */
+export const SAVE_REHEARSAL_PLAN = Object.freeze(['cargo-ledger-v1', 'tutorial-v2'] as const);
+
+/** Inventory of compatibility owners; the rehearsal plan names the executable subset. */
 export const SAVE_MIGRATION_CATALOG: readonly SaveMigrationEntry[] = Object.freeze([
   {
     id: 'cargo-ledger-v1',
@@ -123,5 +130,41 @@ export function previewCargoMigration(players: Record<string, PlayerAccount>) {
   let changedAccounts = 0;
   for (const account of Object.values(migrated))
     if (migrateCargoLots(account).changed) changedAccounts++;
+  return { players: migrated, changedAccounts };
+}
+
+/** Validate only tutorial marker/progress fields before invoking their existing owner. */
+export function validateTutorialSave(account: PlayerAccount): void {
+  const version = account.tutV;
+  if (version != null && ![0, 1, TUT_VERSION].includes(version))
+    throw new Error('Tutorial save: unsupported version');
+  // Completed-guide sentinels above the current list length remain valid. The old
+  // owner adds at most three; reject overflow instead of losing integer precision.
+  const maximum =
+    (version || 1) < TUT_VERSION ? Number.MAX_SAFE_INTEGER - 3 : Number.MAX_SAFE_INTEGER;
+  if (
+    account.tut != null &&
+    (!Number.isSafeInteger(account.tut) || account.tut < 0 || account.tut > maximum)
+  )
+    throw new Error('Tutorial save: invalid progression');
+}
+
+const REHEARSAL_OWNERS = Object.freeze({
+  'cargo-ledger-v1': migrateCargoLots,
+  'tutorial-v2': tutMigrate,
+});
+
+/** Rehearse the supported owner subset on detached accounts, never a live store. */
+export function previewSaveMigrations(players: Record<string, PlayerAccount>) {
+  // Check the whole batch before any owner executes, including a late rejection.
+  for (const account of Object.values(players)) validateTutorialSave(account);
+  const migrated = structuredClone(players);
+  for (const id of SAVE_REHEARSAL_PLAN)
+    for (const account of Object.values(migrated)) REHEARSAL_OWNERS[id](account);
+  let changedAccounts = 0;
+  for (const [key, account] of Object.entries(migrated)) {
+    validateTutorialSave(account);
+    if (JSON.stringify(account) !== JSON.stringify(players[key])) changedAccounts++;
+  }
   return { players: migrated, changedAccounts };
 }
