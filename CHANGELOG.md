@@ -2,6 +2,14 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 0.3.5.1
+
+- Share ambient hostile limits across arrival groups, reinforcements and incursions; rate fitted combat power rather than authored hull strength.
+- Correct weapon reach, scale ordinary bounty offers to the fleet, and recognize marked-target kills after player participation.
+- Require relief passenger pickup, explain expired offers and separate the loot-order key from the hail inbox.
+- Rename the Constitution-class hull to Concordance without changing hull IDs or custom ship names.
+- Refresh the beta Solo save generator catalog for source version 3.5.1. See the [release notes](docs/RELEASE-3.5.1.md).
+
 ### 0.3.5
 
 - Match the login console to the blue cockpit display and hull frame.

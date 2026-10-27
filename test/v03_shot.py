@@ -1,4 +1,4 @@
-"""0.3 browser test: first-login guide, click-to-target, KNIGHT's Constitution firing (coloured shots), tutorial panel. Server on :8090 with the KNIGHT seed."""
+"""0.3 browser test: first-login guide, click-to-target, KNIGHT's Concordance firing (coloured shots), tutorial panel. Server on :8090 with the KNIGHT seed."""
 import asyncio, sys
 from playwright.async_api import async_playwright
 OUT = sys.argv[1] if len(sys.argv) > 1 else '/tmp/'

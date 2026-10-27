@@ -82,7 +82,7 @@ function fake(name: string) {
   const yard = requiredFixtureValue(firstEntry.last('landed').yard);
   assertCondition(
     yard.includes(785) && yard.includes(736),
-    'Exotics and the Constitution are on sale at Ops 5',
+    'Exotics and the Concordance are on sale at Ops 5',
   );
   firstEntry.send({ t: 'station', op: 'research', id: 'shield1' });
   assertCondition(
