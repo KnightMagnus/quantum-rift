@@ -1284,6 +1284,7 @@ does not depend on unrelated ambient traffic random rolls.
 The HUD JUMP regression also opens the galaxy map and attempts native button
 activation before the periodic disabled-state refresh. No jump packet or jump
 navigation can escape the overlay; closing the map restores the plotted action.
+
 ## Asset cache and display recovery
 
 `asset-recovery` owns `asset-recovery-browser.ts` and the shared byte-cache unit
@@ -1314,4 +1315,3 @@ physical-device coverage. Audio checks source state, not audible output. The
 Canvas backend has context-event recovery handlers, but CI cannot force a real
 Canvas2D driver reset. A browser/driver that never restores its context still
 requires a reload; the world does not pause while graphics are unavailable.
-

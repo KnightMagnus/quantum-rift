@@ -245,6 +245,7 @@ These concentrated fresh-captain flight/reconnect/checkpoint runs do not measure
 distributed, combat or mining workloads, Internet latency, browser/GPU work,
 production player capacity, a latency SLO or multihour stability. The accelerated
 in-process scenarios remain separate measurements, not native workload ports.
+
 ## Image, audio and procedural resource ownership
 
 Reproduce the actual-browser loading, cache eviction and graphics recovery probe:
@@ -304,4 +305,3 @@ forceable by this fixture. A driver that does not restore still requires reload;
 physical GPUs, mobile devices and audible playback remain separate validation.
 Losses lasting over a second show a short recovery notice with a Reload button;
 it disappears automatically when drawing resumes.
-
