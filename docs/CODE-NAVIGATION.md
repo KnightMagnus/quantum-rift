@@ -407,3 +407,7 @@ refresh order. It writes the existing display-state object, retains payload
 identity, preserves flight-owned ammo and delegates radio, view preferences,
 co-op, landing, companion, storage, tab and tutorial rendering to their current
 owners. It has no socket, event listener, clock or persistence authority.
+
+`server/station-service.ts` owns authorized station action settlement on existing
+player/claim state. Start at `Game.station`, then follow the explicit station
+capabilities. `server/station-progress.ts` remains the timer-accrual owner.

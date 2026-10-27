@@ -270,3 +270,15 @@ lots, finite refined-goods demand, station access, job capacity and settlement
 remain the same existing authorities. No second inventory/save store, new route,
 feature namespace or lifecycle hook is introduced. Operation bodies are checked by strict TypeScript; positive/negative boundary
 types are not runtime wire validation.
+
+## Station action service
+
+`server/station-service.ts` owns Personal Station actions, including claim,
+upgrade, processing, collection, research and relocation. It mutates the existing
+captain/station and claim records. `Game.station` remains the public orchestration
+entry; dispatch authorization and persistence still use their existing owners.
+The service receives only station checks, inventory operations, claim storage and
+explicit feature callbacks. Database/Solo accessors and callback forwarding read
+current providers, including replacements after construction. Timer advancement,
+trade cancellation, spending, dirty marking and player/landed refresh order are
+unchanged. The service does not own a clock, account copy or checkpoint.

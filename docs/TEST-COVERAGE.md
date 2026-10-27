@@ -1295,23 +1295,25 @@ proves that only the last 90 unacknowledged controls replay. This is display
 prediction, not economic authority or a guarantee under every network fault.
 Existing engine, input and logout browser fixtures exercise its real integration.
 
-## Client connection lifecycle
+## Connection, player projection and station ownership
 
-The `client-connection-lifecycle` system compares the extracted socket/reconnect
-owner with the unmodified pre-extraction `openSocket` body captured at `4444b8a`.
-The reference runs independently in an isolated VM with controlled timers/effects;
-it does not call the new owner as an oracle. Traces cover local/native opening,
-packet delivery, bounded reconnect, changing credentials/configuration, stale
-sockets/epochs, missing credentials, pending-timer cancellation, no action replay,
-compatibility denial and duplicate-login teardown. Existing login/logout and
-protocol browser regressions remain required. Account teardown, credentials and
-the shared UI epoch retain their composition-root owners.
+System contracts: `client-connection-lifecycle`, `client-player-projection` and
+`station-action-service`.
 
-## Player payload projection
+`connection-lifecycle.ts`, `player-projection.ts` and `station-service.ts` compare
+the extracted owners with unmodified pre-extraction source fixtures captured at
+`4444b8a`. The reference code runs independently in an isolated VM with controlled
+time, random values and effects; it does not call the new owners as an oracle.
+Connection traces cover local/native opening, packet delivery, bounded reconnect,
+changing credentials/configuration, stale sockets/epochs, absent credentials,
+compatibility denial and duplicate-login teardown. Projection traces compare
+payload identity, effect order, docked refresh, flight ammo and initial/restored
+view tabs across sixteen combinations.
 
-The `client-player-projection` system compares the isolated display projector with
-the exact pre-extraction `you` switch branch captured at `4444b8a`, executed in an
-independent VM. Sixteen combinations compare payload identity, root-state
-mutation, radio/views/system/co-op/render ordering, flight-owned ammo and
-initial/restored tab behavior. The existing logout browser check verifies actual
-account changes. Projection has no transport, clock or persistence authority.
+Station traces compare nineteen action/denial scenarios, complete packets,
+balances, material/grade inventories, claim maps, dirty marking and effect order.
+They replace feature providers and the database after service construction, then
+reopen the same checkpoint to verify exact settlement. Existing station-progress,
+versioned feature, cargo, native network and login/logout browser regressions
+remain required. These traces establish behavior equivalence for the listed
+cases, not exhaustive seeds, device inputs or a performance improvement.

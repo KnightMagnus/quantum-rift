@@ -7,6 +7,7 @@
     "flight-prediction.ts",
     "connection-lifecycle.ts",
     "player-projection.ts",
+    "station-service.ts",
     "v03.ts",
     "v04.ts",
     "v05.ts",
@@ -676,7 +677,8 @@
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"]
+    "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
+    "station-service.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1715,6 +1717,13 @@
       "services": [],
       "tests": ["player-projection.ts", "logout-browser.ts"],
       "asserts": "Independent pre-extraction traces preserve player payload identity, root-state mutation, radio/views/system/co-op/render ordering, flight-owned ammo and first/restored tab behavior across sixteen combinations."
+    },
+    {
+      "id": "station-action-service",
+      "owners": ["server/station-service.ts"],
+      "services": [],
+      "tests": ["station-service.ts", "station-progress.ts", "cargo-flows.ts", "v26.ts"],
+      "asserts": "Independent pre-extraction traces preserve station claim/upgrade/process/collection/research/relocation and denial behavior, full packets, balances/grades, trade/spend/persistence/refresh order, live replaced providers/database and exact checkpoint reopen across nineteen scenarios."
     }
   ],
   "routes": {
