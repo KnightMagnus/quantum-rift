@@ -1330,3 +1330,8 @@ The native harness supports up to 30 real SDK connections, but CI's short native
 case remains a bounded continuity check rather than a full-instance capacity claim.
 See [PERFORMANCE.md](PERFORMANCE.md#thirty-player-instance-target) for reproduction
 and hardware limits.
+
+The registered `performance-budgets.ts` program also checks both retained 30-player,
+300-second native reports against `docs/performance-baselines/shared-host-30.json`
+offline. This validates artifact consistency and lab alarm thresholds, not live CI
+timing or production smoothness. See [performance measurements](PERFORMANCE.md).

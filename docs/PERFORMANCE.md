@@ -3,7 +3,7 @@
 Diagnostics are off by default. They collect numeric timings, sizes and counts,
 not captain names, packets, chat, passwords, save contents or exception messages.
 They do not change simulation order, storage authority, checkpoint recovery or
-transport admission rules. No gameplay optimization is included.
+transport admission rules. Snapshot optimizations are described separately below.
 
 ## Enable and read
 
@@ -249,12 +249,13 @@ distributed, combat or mining workloads, Internet latency, browser/GPU work,
 production player capacity, a latency SLO or multihour stability. The accelerated
 in-process scenarios remain separate measurements, not native workload ports.
 
-## Deployment-owned budget profiles
+## Explicit budget profiles
 
 `tools/performance-budgets.ts` checks repeated native numeric reports against an
-explicit JSON profile. It does not choose targets from the shared-host baseline.
-Run it after selecting the intended hardware, runtime versions, workload and
-acceptable limits:
+explicit JSON profile. It does not choose targets from a baseline. A profile may
+define intended deployment limits or a measured-host regression alarm; the latter
+is not evidence that deployment targets have been met. Select the hardware, runtime
+versions, workload and acceptable limits before using it:
 
 ```sh
 node tools/performance-budgets.ts /private/deployment-profile.json \
@@ -264,7 +265,7 @@ node tools/performance-budgets.ts /private/deployment-profile.json \
 The profile has exactly these fields:
 
 - `schema`: `1`.
-- `name`: a nonempty deployment/hardware label, at most 120 characters.
+- `name`: a nonempty hardware/workload label, at most 120 characters.
 - `environment`: exact `platform`, `arch`, `cpuModel`, `logicalCpus`, `node`,
   `sdk`, `nakama` and `postgres` values from the native report's `metadata`.
   `logicalCpus` is a positive integer; the other fields are nonempty strings.
@@ -364,3 +365,61 @@ and lone-surrogate byte counts. Encoding the unrestricted public snapshot once
 per system avoids repeating the same array serialization for each captain.
 Recipient fields and systems with private story entities retain their individual
 paths. These changes do not batch, reorder or defer network delivery.
+
+## Retained thirty-player lab baseline
+
+The two [numeric reports](performance-baselines/native-30-300s-1.json) and
+[repeat](performance-baselines/native-30-300s-2.json) were collected sequentially
+from clean source `0d28a12fc0342674aed77bd9de27378af1b65333`, built once after
+integration with current main. Both record identical emitted-runtime SHA-256 and
+source-input fingerprint. JSON whitespace is formatted for the repository; numeric
+values and fields are unchanged from the private originals. Only sanitized numeric
+reports are retained, not fixture logs, configuration, credentials or saves.
+
+Each run measured 300 wall-clock seconds, 30 actual SDK connections and 90,000
+scheduled inputs, restored all 30 captains after restart, and exited all six
+service/helper processes cleanly. Both passed the harness's continuity and error
+checks. The host was shared Linux x64, AMD EPYC 4344P, 16 logical CPUs and about
+61.4 GiB total memory; this is not an isolated four-vCPU/eight-GB allocation.
+The reports retain host load, runtime versions and bounded metric windows.
+
+The [shared-host profile](performance-baselines/shared-host-30.json) is an executable
+regression alarm for that exact environment and workload, not a deployment SLO.
+Run the offline check with:
+
+```sh
+node tools/performance-budgets.ts docs/performance-baselines/shared-host-30.json \
+  docs/performance-baselines/native-30-300s-1.json \
+  docs/performance-baselines/native-30-300s-2.json
+```
+
+| Metric                                         | Worst repeat observation |     Lab alarm |
+| ---------------------------------------------- | -----------------------: | ------------: |
+| Largest retained tick-window p95               |                    59 ms |         75 ms |
+| Lifetime tick maximum                          |                   116 ms |        150 ms |
+| Largest retained checkpoint-window p95         |                    16 ms |         20 ms |
+| Largest connection's retained snapshot-gap p95 |                283.15 ms |        375 ms |
+| Retained send-drift p95                        |                  1.73 ms |          3 ms |
+| Reconnect to flight                            |                556.81 ms |        700 ms |
+| Restart to all captains flying                 |             15,175.88 ms |     19,000 ms |
+| Sampled pre-restart Nakama resident memory     |              166,300 KiB |   212,992 KiB |
+| Stored checkpoint size                         |            115,184 bytes | 147,456 bytes |
+
+Each alarm starts at 125% of the worst observation across the two runs, rounded
+upward: tick p95/checkpoint p95 to 5 ms, tick max/snapshot gap to 25 ms, send drift
+to 1 ms, reconnect to 100 ms, restart to 1,000 ms, and memory/checkpoint size to
+16,384 of their stated units. This leaves explicit headroom for small workload and
+scheduling variation while flagging larger growth. Two runs do not characterize
+the shared host's noise distribution; an alarm needs investigation, not automatic
+threshold regeneration. Future comparisons must supply two new same-clean-build,
+same-artifact reports; the verifier must not mix the archived source with a new build.
+The registered budget regression verifies these retained artifacts offline, but
+ordinary CI does not rerun this five-minute workload or enforce live timing.
+
+The observed 59 ms tick-window p95 exceeds the 33.33 ms simulation cadence.
+Neither passing the 75 ms lab alarm nor completing the workload establishes smooth
+30-player play. Snapshot intervals also include setup, reconnect and restart and
+are not round-trip latency. No controlled percentage improvement is inferred from
+older runs with different sources, durations or competing host load. Dedicated-host
+repeats, representative combat/mining/distributed activity, browser rendering and
+longer soaks remain necessary before a production hardware or smoothness claim.

@@ -27,11 +27,11 @@ const metricNames = [
 ] as const;
 /** Metrics supported by the native numeric-report verifier. */
 export type PerformanceBudgetMetric = (typeof metricNames)[number];
-/** Deployment-owned thresholds; no latency target is inferred from a fixture run. */
+/** Explicit deployment targets or lab regression alarms, never inferred by the verifier. */
 export interface PerformanceBudgetProfile {
   /** Profile format; newer formats require an updated verifier. */
   schema: 1;
-  /** Human-chosen deployment/hardware profile label. */
+  /** Human-chosen hardware/workload label; lab alarms are not deployment promises. */
   name: string;
   /** Exact runtime and hardware identity from the native report. */
   environment: Record<(typeof environmentKeys)[number], string | number>;

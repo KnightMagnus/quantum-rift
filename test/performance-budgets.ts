@@ -434,3 +434,19 @@ try {
   fs.statSync = statBeforeProvenanceProbe;
   fs.mkdtempSync = createBeforeProvenanceProbe;
 }
+
+// Retained native measurements are data fixtures, not a live CI timing gate.
+const baselineDirectory = new URL('../docs/performance-baselines/', import.meta.url);
+const retainedProfile = JSON.parse(
+  fs.readFileSync(new URL('shared-host-30.json', baselineDirectory), 'utf8'),
+) as unknown;
+const retainedReports = [1, 2].map(
+  (run) =>
+    JSON.parse(
+      fs.readFileSync(new URL(`native-30-300s-${run}.json`, baselineDirectory), 'utf8'),
+    ) as unknown,
+);
+assert.equal(verifyPerformanceBudgets(retainedProfile, retainedReports).passed, true);
+console.log(
+  'Retained 30-player native repeats satisfy the exact-host lab regression profile offline.',
+);
