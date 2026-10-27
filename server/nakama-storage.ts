@@ -1,6 +1,7 @@
 // The official SDK is an ambient script, not an importable module.
 // oxlint-disable-next-line typescript/triple-slash-reference
 /// <reference path="./nakama-runtime.d.ts" />
+import { validateFeatureSnapshots } from './save-validation.ts';
 import { utf8Bytes } from '../shared/health.ts';
 import type { HealthMonitor } from '../shared/health.ts';
 import type { GameStorage } from './game-storage.ts';
@@ -47,6 +48,7 @@ export function validateCheckpoint(value: unknown): asserts value is NakamaCheck
     )
       throw new Error('Invalid Nakama player checkpoint');
   }
+  validateFeatureSnapshots(value.players, value.world);
 }
 /** Native API adapter: the zero UUID is system ownership, not a player principal. */
 export function nakamaStorageBackend(
