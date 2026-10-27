@@ -23,12 +23,16 @@ export class ByteBudgetCache<Value> {
   /** Entries used more recently than this many milliseconds are treated as live. */
   readonly liveMs: number;
 
+  /** Maximum idle entries, including failed or still-loading zero-byte resources. */
+  readonly maxEntries: number;
+
   private entries = new Map<string, BudgetedEntry<Value>>();
   private totalBytes = 0;
 
-  constructor(budgetBytes: number, liveMs: number) {
+  constructor(budgetBytes: number, liveMs: number, maxEntries = Infinity) {
     this.budgetBytes = budgetBytes;
     this.liveMs = liveMs;
+    this.maxEntries = maxEntries;
   }
 
   /** Number of cached entries. */
@@ -53,6 +57,7 @@ export class ByteBudgetCache<Value> {
     // Re-insert so iteration order stays least-recently-used first.
     this.entries.delete(key);
     this.entries.set(key, entry);
+    this.evict(now);
     return entry.value;
   }
 
@@ -84,6 +89,12 @@ export class ByteBudgetCache<Value> {
     return true;
   }
 
+  /** Drop cache ownership without modifying resources still used by live consumers. */
+  clear(): void {
+    this.entries.clear();
+    this.totalBytes = 0;
+  }
+
   /** Iterates cached keys and values, least recently used first, without touching them. */
   *[Symbol.iterator](): IterableIterator<[string, Value]> {
     for (const [key, entry] of this.entries) yield [key, entry.value];
@@ -97,7 +108,7 @@ export class ByteBudgetCache<Value> {
   evict(now: number): string[] {
     const evicted: string[] = [];
     for (const [key, entry] of this.entries) {
-      if (this.totalBytes <= this.budgetBytes) break;
+      if (this.totalBytes <= this.budgetBytes && this.entries.size <= this.maxEntries) break;
       // Iteration is least-recently-used first, so every later entry is live too.
       if (now - entry.usedAt < this.liveMs) break;
       this.delete(key);

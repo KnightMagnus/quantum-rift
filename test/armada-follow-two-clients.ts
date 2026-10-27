@@ -229,13 +229,16 @@ try {
     .trace.at(-1)
     .ships.find((session: { name: string }) => session.name === names[0]);
   await leader.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  // Turn beyond a right angle so the restart thrust initially brakes the old
+  // cruise velocity. This preserves catch-up headroom even when hosted browser
+  // key release is delayed; a shallow turn accelerates straight into the cap.
   await leader.keyboard.down('ArrowRight');
   await until(() => {
     const ship = read()
       .trace.at(-1)
       .ships.find((session: { name: string }) => session.name === names[0]);
     return (
-      Math.abs(Math.atan2(Math.sin(ship.a - beforeKeys.a), Math.cos(ship.a - beforeKeys.a))) > 0.7
+      Math.abs(Math.atan2(Math.sin(ship.a - beforeKeys.a), Math.cos(ship.a - beforeKeys.a))) > 2
     );
   }, 'real keyboard changes leader heading');
   await leader.keyboard.up('ArrowRight');
@@ -253,6 +256,8 @@ try {
       .ships.find((session: { name: string }) => session.name === names[0]);
     return Math.hypot(ship.vx - beforeKeys.vx, ship.vy - beforeKeys.vy) > 10;
   }, 'real keyboard changes leader velocity');
+  // Exercise a bounded delayed release instead of relying on a fast browser.
+  await delay(250);
   await leader.keyboard.up('ArrowUp');
   await until(
     () =>

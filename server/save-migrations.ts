@@ -1,5 +1,6 @@
 import { migrateCargoLots } from '../shared/cargo-lots.ts';
 import type { PlayerAccount } from './db.ts';
+import { tutMigrate, TUT_VERSION } from '../shared/tutorial.ts';
 
 /** Existing owner and marker; catalog order does not schedule live migrations. */
 export interface SaveMigrationEntry {
@@ -15,7 +16,13 @@ export interface SaveMigrationEntry {
   boundary: string;
 }
 
-/** Inventory of compatibility owners; only cargo-ledger-v1 is rehearsed by this tool. */
+/** Version of this inventory/report format, not a global saved-game schema. */
+export const SAVE_MIGRATION_CATALOG_VERSION = 1;
+
+/** Explicit rehearsal order; live Game lifecycle ordering remains unchanged. */
+export const SAVE_REHEARSAL_PLAN = Object.freeze(['cargo-ledger-v1', 'tutorial-v2'] as const);
+
+/** Inventory of compatibility owners; the rehearsal plan names the executable subset. */
 export const SAVE_MIGRATION_CATALOG: readonly SaveMigrationEntry[] = Object.freeze([
   {
     id: 'cargo-ledger-v1',
@@ -88,6 +95,41 @@ export const SAVE_MIGRATION_CATALOG: readonly SaveMigrationEntry[] = Object.free
     boundary: 'account login',
   },
   {
+    id: 'social-defaults',
+    owner: 'server/coop.ts#socialInit',
+    source: 'absent social lists/mail',
+    target: 'owner defaults; existing contacts retained',
+    boundary: 'social operations and payload',
+  },
+  {
+    id: 'specialist-defaults',
+    owner: 'server/specialists.ts#specInit',
+    source: 'absent resource/blueprint/component dictionaries',
+    target: 'owner defaults; owned resources retained',
+    boundary: 'specialist operations and payload',
+  },
+  {
+    id: 'frontier-world-defaults',
+    owner: 'server/frontier.ts#frontierInit',
+    source: 'absent colonies/orders/nextOrder',
+    target: 'owner defaults; existing orders retained',
+    boundary: 'Game construction',
+  },
+  {
+    id: 'rival-world-defaults',
+    owner: 'server/rivals.ts#rivalsInit',
+    source: 'absent rivals/news/flash',
+    target: 'missing rivals initialized; existing rivals retained',
+    boundary: 'Game construction',
+  },
+  {
+    id: 'living-world-defaults',
+    owner: 'server/living.ts#livingInit',
+    source: 'absent states/stateCool/tradeImpact',
+    target: 'owner defaults; existing effects retained',
+    boundary: 'Game construction and world operations',
+  },
+  {
     id: 'mining-v1',
     owner: 'server/mining.ts#MiningOperations.init',
     source: 'absent/version 1 mining state; reviewed append-only fields',
@@ -123,5 +165,41 @@ export function previewCargoMigration(players: Record<string, PlayerAccount>) {
   let changedAccounts = 0;
   for (const account of Object.values(migrated))
     if (migrateCargoLots(account).changed) changedAccounts++;
+  return { players: migrated, changedAccounts };
+}
+
+/** Validate only tutorial marker/progress fields before invoking their existing owner. */
+export function validateTutorialSave(account: Pick<PlayerAccount, 'tut' | 'tutV'>): void {
+  const version = account.tutV;
+  if (version != null && ![0, 1, TUT_VERSION].includes(version))
+    throw new Error('Tutorial save: unsupported version');
+  // Completed-guide sentinels above the current list length remain valid. The old
+  // owner adds at most three; reject overflow instead of losing integer precision.
+  const maximum =
+    (version || 1) < TUT_VERSION ? Number.MAX_SAFE_INTEGER - 3 : Number.MAX_SAFE_INTEGER;
+  if (
+    account.tut != null &&
+    (!Number.isSafeInteger(account.tut) || account.tut < 0 || account.tut > maximum)
+  )
+    throw new Error('Tutorial save: invalid progression');
+}
+
+const REHEARSAL_OWNERS = Object.freeze({
+  'cargo-ledger-v1': migrateCargoLots,
+  'tutorial-v2': tutMigrate,
+});
+
+/** Rehearse the supported owner subset on detached accounts, never a live store. */
+export function previewSaveMigrations(players: Record<string, PlayerAccount>) {
+  // Check the whole batch before any owner executes, including a late rejection.
+  for (const account of Object.values(players)) validateTutorialSave(account);
+  const migrated = structuredClone(players);
+  for (const id of SAVE_REHEARSAL_PLAN)
+    for (const account of Object.values(migrated)) REHEARSAL_OWNERS[id](account);
+  let changedAccounts = 0;
+  for (const [key, account] of Object.entries(migrated)) {
+    validateTutorialSave(account);
+    if (JSON.stringify(account) !== JSON.stringify(players[key])) changedAccounts++;
+  }
   return { players: migrated, changedAccounts };
 }
