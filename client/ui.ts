@@ -506,7 +506,7 @@ export function initUI(
     elementById2('gresults').innerHTML = '';
     elementById2('gsearch').value = '';
   };
-  elementById2('deadok').onclick = () => elementById2('deadbox').classList.add('hidden');
+  elementById2('deadok').onclick = () => overlays.close('deadbox');
   // radio
   elementById2('rgo').onclick = radioSearch;
   elementById2('rq').onkeydown = (keyboardEvent) => {
@@ -1575,14 +1575,14 @@ export function showLanded(): void {
 export function openStores(): void {
   if (!clientGameState.you || !availableStoreFactions(clientGameState, FACTIONS).length) return;
   elementById2('storein').innerHTML = storeMenuHtml(clientGameState, FACTIONS);
-  elementById2('storebox').classList.remove('hidden');
+  overlays.open('storebox');
 }
 /**
  * Refreshes the faction storehouse UI if it is currently open.
  */
 export function refreshStores(): void {
   if (!availableStoreFactions(clientGameState, FACTIONS).length) {
-    elementById2('storebox').classList.add('hidden');
+    overlays.close('storebox');
     elementById2('storein').replaceChildren();
     clientGameState.storeFac = undefined;
     return;
@@ -2492,7 +2492,7 @@ function onAct(mouseEvent: MouseEvent): void {
       openStores();
       break;
     case 'sclose':
-      elementById2('storebox').classList.add('hidden');
+      overlays.close('storebox');
       break;
     case 'col':
       {
@@ -2611,7 +2611,7 @@ function onAct(mouseEvent: MouseEvent): void {
  */
 export function openMap(focus?: number | string): void {
   window.dispatchEvent(new CustomEvent('rift-toast-sound', { detail: 'open' }));
-  elementById2('gmap').classList.remove('hidden');
+  overlays.open('gmap');
   const htmlCanvasElement = elementById2('gcanvas');
   htmlCanvasElement.width = htmlCanvasElement.clientWidth;
   htmlCanvasElement.height = htmlCanvasElement.clientHeight;
@@ -2691,7 +2691,7 @@ function searchMap(): void {
 export function closeMap(): void {
   if (!elementById2('gmap').classList.contains('hidden'))
     window.dispatchEvent(new CustomEvent('rift-toast-sound', { detail: 'close' }));
-  elementById2('gmap').classList.add('hidden');
+  overlays.close('gmap');
 }
 // Map views
 elementById2('gcid').innerHTML = COMMODITIES.filter(
@@ -2838,6 +2838,6 @@ export function plot(destination: number | string | undefined | null): void {
 export function showDead(message: { at: string; fee: number }): void {
   elementById2('deadmsg').textContent =
     `Your ship was destroyed. The insurers rebuilt it at ${message.at} for ${credits(message.fee)} credits. Your cargo was lost; your wingmates flew home.`;
-  elementById2('deadbox').classList.remove('hidden');
+  overlays.open('deadbox');
 }
 export { escapeHtml2 as esc };

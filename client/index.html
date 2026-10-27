@@ -273,7 +273,14 @@
       >
     </button>
     <div id="hailmarker" class="hidden" aria-live="polite"></div>
-    <div id="hailbox" class="overlay hidden">
+    <div
+      id="hailbox"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Hailing"
+      tabindex="-1"
+    >
       <div class="loginbox metal hailin">
         <div class="hailtag">HAILING <span id="hailsub"></span></div>
         <div id="hailportraitwindow" class="portrait-window metal hidden">
@@ -284,7 +291,14 @@
         <div class="hailbtns" id="hailopts"></div>
       </div>
     </div>
-    <div id="infobox" class="overlay hidden">
+    <div
+      id="infobox"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Ship and captain"
+      tabindex="-1"
+    >
       <div class="gbox metal infoin">
         <h2>SHIP AND CAPTAIN <span class="dim small">I or Esc to close</span></h2>
         <nav class="itabs" id="itabs">
@@ -574,7 +588,14 @@
     </div>
 
     <!-- galaxy map -->
-    <div id="gmap" class="overlay hidden">
+    <div
+      id="gmap"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Galaxy map"
+      tabindex="-1"
+    >
       <div class="gbox metal">
         <h2>
           GALAXY MAP
@@ -609,7 +630,14 @@
     <div id="pausebox" class="hidden">
       <b>PAUSED</b><span class="small">press P to resume</span>
     </div>
-    <div id="storybox" class="overlay hidden">
+    <div
+      id="storybox"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Story"
+      tabindex="-1"
+    >
       <div class="loginbox metal storyin">
         <div class="storytag">STORY</div>
         <h2 id="storyt"></h2>
@@ -621,7 +649,16 @@
         <div class="storybtns" id="storyb"></div>
       </div>
     </div>
-    <div id="storebox" class="overlay hidden"><div class="gbox metal" id="storein"></div></div>
+    <div
+      id="storebox"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Storage"
+      tabindex="-1"
+    >
+      <div class="gbox metal" id="storein"></div>
+    </div>
     <div
       id="boardbox"
       class="overlay hidden"
@@ -648,7 +685,14 @@
         </div>
       </div>
     </div>
-    <div id="deadbox" class="overlay hidden">
+    <div
+      id="deadbox"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Ship lost"
+      tabindex="-1"
+    >
       <div class="loginbox metal">
         <h1>SHIP <span>LOST</span></h1>
         <p id="deadmsg"></p>
