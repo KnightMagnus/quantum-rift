@@ -1614,3 +1614,42 @@ pinned Playwright browser; `CHROMIUM_EXECUTABLE` selects an explicit local binar
 Firefox and WebKit keep their own launch paths. Install the selected pinned
 browser or provide a valid Chromium executable before running the suite. WebKit
 also requires its platform libraries.
+
+### Reproducing bounded combat experiments
+
+`node test/combat-playability.ts --export combat-evidence.json` runs the normal
+haven checks and four controlled encounters, then saves their fixture parameters,
+initial positions and fitted weapon IDs, outcomes, exact Git build/runtime and up
+to 256 fire/damage/defeat events per encounter. Actor IDs in events are one-based
+indices into the initial actor list; zero means an actor outside that list. Extra
+events are counted, not retained. Captures contain synthetic captains only.
+
+`node test/combat-playability.ts --replay combat-evidence.json` requires a clean
+capture from the same build and runtime, reconstructs its scenarios and compares
+all deterministic outcomes/events. Timing samples are excluded from equality.
+This is an offline fixture replay, not a live-world recording, save importer or
+in-game diagnostic button. Do not feed it player support captures.
+
+The controlled encounters vary bearing, distance, initial lateral motion, hull and
+research/crew bonuses. They isolate two ships by removing traffic and suppressing
+new ambient spawns; ordinary haven checks retain traffic and reinforcement rules.
+Manual control is a scripted pursuit/fire policy, not human play. All encounters
+use production flight, weapon leading, damage and AI. The lead's primary discharge
+count measures participation. Beam hits divided by beam discharges gives beam hit
+rate; positive damage contacts also include projectile impacts and splash and
+must not be divided by all discharges as if they were projectile hit probability.
+The first defeat can be a disable rather than a kill; null means no defeat before
+the observation ended. Recovery sums positive lead-health changes after damage.
+
+Each run first settles an ordinary Cutlass purchase with production messages.
+The fixture then supplies its declared fleet and bonuses before arrival/combat.
+After combat it flushes and reopens the real in-memory Nakama checkpoint and
+compares the persisted captain data. This is not natural purchasing progression,
+live-entity restoration, transport disconnect coverage or a native-server restart;
+existing trade/network/native recovery suites cover those separate boundaries.
+
+Per-run `Game.tick` p95/max samples use the host's monotonic clock around the
+synchronous shared simulation only. They exclude construction, networking, Goja,
+PostgreSQL and browser rendering. They are useful for local before/after evidence,
+not a 30-player timing budget, GPU qualification or wall-clock soak. Dedicated-host
+and real-device qualification remain tracked in issue #82.
