@@ -8,13 +8,16 @@ import {
 } from './wire-actions.ts';
 import type { EconomicAction } from './wire-actions.ts';
 import type { GradeLots } from './cargo-contracts.ts';
+import { utf8Bytes } from './health.ts';
 
 /** A parser never normalizes a value; existing owners retain coercion and authority. */
 type Guard<Value> = (value: unknown) => value is Value;
 const text: Guard<string> = (value): value is string =>
   typeof value === 'string' && value.length <= 200;
+const selector: Guard<string> = (value): value is string =>
+  text(value) && !['__proto__', 'constructor', 'prototype'].includes(value);
 const prose: Guard<string> = (value): value is string =>
-  typeof value === 'string' && value.length <= 65536;
+  typeof value === 'string' && value.length <= 4096;
 const numeric: Guard<number | string> = (value): value is number | string =>
   (typeof value === 'number' || text(value)) && Number.isFinite(Number(value));
 const flag: Guard<boolean | number> = (value): value is boolean | number =>
@@ -53,7 +56,7 @@ export interface WireTradeOffer {
 function dictionary<Value>(value: unknown, guard: Guard<Value>): boolean {
   return (
     wireRecord(value) &&
-    Object.keys(value).length <= 256 &&
+    Object.keys(value).length <= 128 &&
     Object.entries(value).every(
       ([key, entry]) =>
         text(key) && !['__proto__', 'prototype', 'constructor'].includes(key) && guard(entry),
@@ -85,6 +88,10 @@ export const commandFields = {
     f1: flag,
     f2: flag,
     nav: boolean,
+    // Legacy prediction echoes are bounded but never used by the flight owner.
+    x: numeric,
+    credits: numeric,
+    dt: numeric,
   },
   target: { id: identifier },
   tutskip: {},
@@ -123,10 +130,10 @@ export const commandFields = {
     i: numeric,
     all: flag,
     lots,
-    mat: text,
+    mat: selector,
     g: numeric,
     n: numeric,
-    site: text,
+    site: selector,
   },
   rename: { name: prose },
   note: { text: prose },
@@ -140,13 +147,13 @@ export const commandFields = {
   shuttle: {
     op: choices('build', 'crew', 'send', 'claim', 'repair', 'scrap'),
     sid: identifier,
-    kind: text,
-    job: text,
+    kind: selector,
+    job: selector,
     oid: nullableIdentifier,
   },
   dock: { op: choices('store', 'sell'), i: nullableIdentifier, uid: nullableIdentifier },
   board: { id: identifier, act: choices('plunder', 'capture', 'rescue') },
-  spec: { op: choices('build', 'parts', 'comp', 'tierup'), id: numeric, c: text },
+  spec: { op: choices('build', 'parts', 'comp', 'tierup'), id: numeric, c: selector },
   armada: {
     op: choices(
       'form',
@@ -187,10 +194,10 @@ export const commandFields = {
   },
   duel: { op: choices('challenge', 'accept', 'decline', 'yield'), name: text, armada: boolean },
   goal: { period: choices('daily', 'weekly'), i: numeric },
-  store: { fac: text, id: text },
+  store: { fac: selector, id: text },
   colony: {
     op: choices('found', 'build', 'demolish', 'upgrade', 'collect', 'abandon'),
-    kind: text,
+    kind: selector,
     i: numeric,
   },
   arena: { op: choices('queue', 'leave'), mode: text },
@@ -199,10 +206,10 @@ export const commandFields = {
     side: text,
     qty: numeric,
     price: numeric,
-    kind: text,
-    mat: text,
+    kind: selector,
+    mat: selector,
     grade: numeric,
-    cid: text,
+    cid: selector,
     lots,
     id: identifier,
     to: text,
@@ -223,12 +230,12 @@ export const commandFields = {
   },
   hailopt: { stellar: text, id: numeric, k: identifier },
   order: { o: text },
-  jettison: { cid: text, n: numeric, lots },
+  jettison: { cid: selector, n: numeric, lots },
   rivals: {},
   bm: { id: identifier },
-  arcacc: { fac: text },
+  arcacc: { fac: selector },
   promote: { id: identifier },
-  lower: { op: choices('hire', 'dismiss'), i: numeric, kind: text },
+  lower: { op: choices('hire', 'dismiss'), i: numeric, kind: selector },
   bank: { op: choices('borrow', 'pay'), amt: numeric },
   pause: {},
 } as const;
@@ -285,5 +292,6 @@ export function parseClientAction(value: unknown): ClientAction | null {
     if (!Object.hasOwn(schema, key) || (value[key] !== undefined && !schema[key](value[key])))
       return null;
   }
+  if (utf8Bytes(JSON.stringify(value)) > 8192) return null;
   return value as CommandAction;
 }

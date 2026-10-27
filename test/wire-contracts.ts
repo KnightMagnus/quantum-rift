@@ -367,7 +367,7 @@ for (const [type, schema] of Object.entries(commandFields)) {
     }
   }
   commandPilot.msgs = 0;
-  Game.prototype.onMessage.call(commandGame, commandPilot, { t: type, credits: 999999 });
+  Game.prototype.onMessage.call(commandGame, commandPilot, { t: type, mintedCredits: 999999 });
 }
 assert.deepEqual(
   dispatches,
@@ -376,7 +376,7 @@ assert.deepEqual(
 );
 const commands = [
   { t: 'portrait', portraitId: 'fixture', name: 'Other', target: 123 },
-  { t: 'input', seq: '7.9', th: 1, tu: '-99', nav: true },
+  { t: 'input', seq: '7.9', th: 1, tu: '-99', nav: true, x: 999999, credits: 999999, dt: 99999 },
   { t: 'station', op: 'process', id: 'ore', all: 1, lots: { pure: 3 } },
   { t: 'docks', op: 'assign', k: '1', slot: 'lead', uid: null },
   { t: 'shuttle', op: 'crew', sid: 2, oid: null },
@@ -422,4 +422,49 @@ for (const incoming of [
 }
 console.log(
   'All authenticated action families, scalar bounds, nested trade offers and legacy selectors passed.',
+);
+
+for (const incoming of [
+  { t: 'note', text: 'x'.repeat(4097) },
+  { t: 'note', text: '😀'.repeat(2200) },
+  {
+    t: 'trade2',
+    op: 'offer',
+    give: {
+      items: Object.fromEntries(
+        Array.from({ length: 129 }, (_, index) => ['commodity' + index, 1]),
+      ),
+    },
+  },
+  { t: 'colony', op: 'build', kind: '__proto__' },
+  { t: 'colony', op: 'build', kind: 'constructor' },
+  { t: 'lower', op: 'hire', kind: 'constructor' },
+])
+  assert.equal(
+    parseClientAction(incoming),
+    null,
+    'shared text, UTF-8, dictionary and prototype-selector bounds',
+  );
+const colonyPort = session.data.stellar!;
+game.db.world.colonies[colonyPort] = {
+  owner: game.db.key(session.data.name),
+  lv: 1,
+  buildings: [],
+  store: {},
+  t: Date.now(),
+  name: 'Wire fixture colony',
+};
+const colonyBefore = JSON.stringify({ player: session.data, world: game.db.world });
+for (const kind of ['__proto__', 'constructor', 'prototype']) {
+  session.msgs = 0;
+  game.onMessage(session, { t: 'colony', op: 'build', kind });
+}
+assert.equal(
+  JSON.stringify({ player: session.data, world: game.db.world }),
+  colonyBefore,
+  'prototype catalog selectors cannot corrupt credits or append a colony building',
+);
+assert.ok(parseClientAction({ t: 'note', text: 'x'.repeat(4096) }));
+console.log(
+  'Common command text/UTF-8 envelope limits and real colony prototype-selector denials passed.',
 );

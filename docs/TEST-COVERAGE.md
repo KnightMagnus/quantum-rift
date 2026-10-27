@@ -81,10 +81,16 @@ Game ingress after the unchanged auth, flood, freeze and activity gates.
 Economic validation stays inside the existing routes/services so malformed
 industrial requests retain their denial toasts. Pre-login `hello` remains with
 the login owner. Operation selectors, fields, nested trade offers and collection
-sizes are bounded; legacy numeric text and partial grade selections are not
+sizes are bounded; command strings are limited to 4,096 characters, encoded
+commands to 8,192 UTF-8 bytes, and trade dictionaries to 128 entries, matching
+the native ingress envelope. Native scheduling additionally retains its
+existing sequence/flight-control checks and per-tick traffic limit; legacy numeric text and partial grade selections are not
 normalized. Missing optional fields retain their existing defaults or service
 denials. Hail's legacy `sender` and portrait's `name`/`target` fields are bounded
-but ignored: the server still owns sender and captain identity.
+but ignored. Flight
+position/credit/timestep echoes are also bounded and ignored; only the existing
+input controls affect flight. The server retains identity, money and clock
+authority.
 
 `wire-contracts.ts` compares the contract families with all 57 registered routes,
 checks malformed field denial before dispatch, exercises nested trade offers and
