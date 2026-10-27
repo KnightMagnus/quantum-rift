@@ -401,3 +401,9 @@ work, memory-only credentials, transport configuration and full account teardown
 The lifecycle reads these through callbacks; it never copies game state or queues
 and replays gameplay actions. Native authentication and transport cancellation
 remain in `client/connection.ts`.
+
+`client/player-projection.ts` owns the `you` payload's display projection and UI
+refresh order. It writes the existing display-state object, retains payload
+identity, preserves flight-owned ammo and delegates radio, view preferences,
+co-op, landing, companion, storage, tab and tutorial rendering to their current
+owners. It has no socket, event listener, clock or persistence authority.

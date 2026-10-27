@@ -1,3 +1,4 @@
+import { projectPlayer } from './player-projection.ts';
 import { ConnectionLifecycle } from './connection-lifecycle.ts';
 import { FlightPrediction } from './flight-prediction.ts';
 import type { PredictionView as ClientView } from './flight-prediction.ts';
@@ -619,7 +620,15 @@ let nakamaConfig: NakamaConfig | undefined;
 let localReferenceTransport = false;
 let friendHostTransport = false;
 const prediction = new FlightPrediction();
-
+const playerProjectionEffects = {
+  unlockedStations: setUnlockedStations,
+  coopYou: () => coopYou(),
+  renderLanded: () => renderLanded(),
+  refreshCompanion: () => refreshCompanion(),
+  refreshStores: () => refreshStores(),
+  tab: (name: ClientGameState['ctab'], persist: boolean) => ctab(name, persist),
+  tutorial: () => renderTut(),
+};
 let _lastSnapT = 0;
 function send(networkMessage: NetworkMessage) {
   connectionLifecycle.send(networkMessage);
@@ -910,22 +919,9 @@ function onMessage(serverMessage: ServerMessage) {
       if (clientGameState.landed && clientGameState.ltab === 'refinery') renderLanded();
       refreshCompanion();
       break;
-    case 'you': {
-      const first = !clientGameState.you;
-      clientGameState.you = serverMessage.d;
-      setUnlockedStations(clientGameState.you!.radioStations);
-      const restoredViews = clientGameState.views.load();
-      clientGameState.sys = serverMessage.d.sys;
-      coopYou(); // 2.6
-      for (const [width, count] of Object.entries(serverMessage.d.ship.ammo || {}))
-        if (!clientGameState.view) clientGameState.ammo[width] = count;
-      if (clientGameState.landed) renderLanded();
-      refreshCompanion();
-      refreshStores();
-      if (first || restoredViews) ctab(clientGameState.ctab || 'missions', false);
-      renderTut();
+    case 'you':
+      projectPlayer(clientGameState, serverMessage.d, playerProjectionEffects);
       break;
-    }
     case 'landed':
       updateAttention();
       elementById2('combatcontrols').classList.add('hidden');

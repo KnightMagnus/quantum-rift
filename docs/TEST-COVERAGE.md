@@ -1306,3 +1306,12 @@ sockets/epochs, missing credentials, pending-timer cancellation, no action repla
 compatibility denial and duplicate-login teardown. Existing login/logout and
 protocol browser regressions remain required. Account teardown, credentials and
 the shared UI epoch retain their composition-root owners.
+
+## Player payload projection
+
+The `client-player-projection` system compares the isolated display projector with
+the exact pre-extraction `you` switch branch captured at `4444b8a`, executed in an
+independent VM. Sixteen combinations compare payload identity, root-state
+mutation, radio/views/system/co-op/render ordering, flight-owned ammo and
+initial/restored tab behavior. The existing logout browser check verifies actual
+account changes. Projection has no transport, clock or persistence authority.
