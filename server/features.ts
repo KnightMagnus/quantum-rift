@@ -200,7 +200,7 @@ export type HostileCapabilities = Pick<
   Pick<BoundOperations<HostileOperations>, 'holdoutEnd' | 'hostInit' | 'myPower'> &
   Pick<BoundOperations<FrontsOperations>, 'mods'> &
   Pick<BoundOperations<FrontierOperations>, 'notify'> &
-  Pick<BoundOperations<DocksOperations>, 'wingHulls' | 'activeWings' | 'wingBonus'>;
+  Pick<BoundOperations<DocksOperations>, 'activeWings' | 'wingBonus'>;
 export type StoryCapabilities = Pick<
   Game,
   'A' | 'broadcast' | 'db' | 'landed' | 'depart' | 'log' | 'send' | 'toast' | 'tradeIn' | 'you'
@@ -936,9 +936,6 @@ export function createFeatures(core: Game): FeatureServices {
     },
     get wingBonus() {
       return features.docks.wingBonus;
-    },
-    get wingHulls() {
-      return features.docks.wingHulls;
     },
     you: core.you.bind(core),
   };

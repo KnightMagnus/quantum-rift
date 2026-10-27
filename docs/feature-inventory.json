@@ -333,6 +333,7 @@
       ],
       "uses": [
         "A",
+        "activeWings",
         "bonus",
         "db",
         "depart",
@@ -351,7 +352,7 @@
         "specInit",
         "toast",
         "tut",
-        "wingHulls",
+        "wingBonus",
         "you"
       ],
       "baselineExport": "HostileMixin",
