@@ -202,6 +202,7 @@ export function audioResourceUsage() {
     bytes: buffers.bytes,
     budgetBytes: buffers.budgetBytes,
     pending: loading.size,
+    activeSources: activeSources.size,
     activeBytes: size(active),
     totalBytes: size(new Set([...cached, ...active])),
   };

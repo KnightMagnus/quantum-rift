@@ -1284,3 +1284,34 @@ does not depend on unrelated ambient traffic random rolls.
 The HUD JUMP regression also opens the galaxy map and attempts native button
 activation before the periodic disabled-state refresh. No jump packet or jump
 navigation can escape the overlay; closing the map restores the plotted action.
+## Asset cache and display recovery
+
+`asset-recovery` owns `asset-recovery-browser.ts` and the shared byte-cache unit
+checks. It boots the real Solo server with an isolated captain, rejects missing
+and corrupt ship sheets with visible native fallback geometry, and tests four
+actual WebGL context loss/restoration cycles without reconnecting. Captain identity,
+credits and hull survive; an immediate neutral command is sent during loss, and
+captured outgoing controls remain neutral until the held
+key is released. A key released during loss responds to the first fresh press;
+a key newly pressed during loss must release before resuming. The existing
+right-click look controls still work. Captured renderer pixels verify the ship itself is visible. A final
+unrestored loss exercises the recovery notice's Reload button and saved progress
+on the new connection.
+
+Real image decoding measures cache-owned bytes, keeps a live image stable above
+a deliberately tiny budget, evicts idle sheets and rebuilds them on return
+without mutating consumer-held images. The clock is paused only during this
+isolated cache-eviction subcase so unrelated live NPC resources cannot change
+the controlled working set; the authoritative server keeps running. Real WebAudio
+decoding measures PCM ownership; removing cache ownership does not stop playing
+music. Three start/stop cycles return active music-source ownership to zero,
+with no accumulating ambience sources after renderer replacement. Missing/corrupt
+audio releases pending promises and uses bounded retry backoff. Byte-cache unit fixtures cover count limits for zero-byte resources and
+non-mutating cleanup.
+
+Limits: Chromium software WebGL on one Linux host, not GPU/process memory or
+physical-device coverage. Audio checks source state, not audible output. The
+Canvas backend has context-event recovery handlers, but CI cannot force a real
+Canvas2D driver reset. A browser/driver that never restores its context still
+requires a reload; the world does not pause while graphics are unavailable.
+
