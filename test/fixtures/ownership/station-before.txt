@@ -54,7 +54,7 @@
         stationState.refT = Date.now();
         this.log(
           playerData,
-          `Quantum Station reached Station Tier ${stationState.ops}: ${opsLevelDef.title}.`,
+          `${session.name}'s Personal Station reached Station Tier ${stationState.ops}: ${opsLevelDef.title}.`,
         );
         this.toast(session, `Station Tier ${stationState.ops} complete: ${opsLevelDef.unlock}.`);
         if (stationState.ops === 3 && wasNewcomer) {

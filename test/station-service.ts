@@ -14,7 +14,8 @@ import { planTake, applyTake } from '../shared/cargo-lots.ts';
 import { FixtureSocket } from './helpers/refinery-fixture.ts';
 import { tempDataDir } from './helpers/temp-data.ts';
 
-// Exact Game.station method at 4444b8a. It executes with the legacy receiver,
+// Exact Game.station method at 4e4ecde, including its Personal Station log correction.
+// It executes with the legacy receiver,
 // independent of the extracted factory's capability wiring and implementation.
 const source = filesystem.readFileSync(
   new URL('./fixtures/ownership/station-before.txt', import.meta.url),
