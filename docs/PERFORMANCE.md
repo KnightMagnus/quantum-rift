@@ -371,7 +371,7 @@ paths. These changes do not batch, reorder or defer network delivery.
 The two [numeric reports](performance-baselines/native-30-300s-1.json) and
 [repeat](performance-baselines/native-30-300s-2.json) were collected sequentially
 from clean source `0d28a12fc0342674aed77bd9de27378af1b65333`, built once after
-integration with current main. Both record identical emitted-runtime SHA-256 and
+integration with main at `07c0876`. Both record identical emitted-runtime SHA-256 and
 source-input fingerprint. JSON whitespace is formatted for the repository; numeric
 values and fields are unchanged from the private originals. Only sanitized numeric
 reports are retained, not fixture logs, configuration, credentials or saves.

@@ -1310,7 +1310,7 @@ when the ignored file changes. The registered native workload additionally check
 that its numeric report contains valid hashes but no runtime source bytes.
 Packaging fixtures include the build helper, lockfile and generated manifest.
 Deployment profiles remain externally selected;
-see [PERFORMANCE.md](PERFORMANCE.md#deployment-owned-budget-profiles).
+see [PERFORMANCE.md](PERFORMANCE.md#explicit-budget-profiles).
 
 ## Full-instance admission and performance fixtures
 
