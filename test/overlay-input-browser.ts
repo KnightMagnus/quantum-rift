@@ -81,6 +81,31 @@ try {
   await page.waitForFunction(() => G.you && G.landed);
   await page.click('#depart');
   await page.waitForFunction(() => G.view && !G.landed);
+  const defaultKeys = await page.evaluate(async () => {
+    const { ACTIONS } = await import('/main.js');
+    return ACTIONS.map(([action, , key]) => ({ action, key }));
+  });
+  assert.equal(
+    new Set(defaultKeys.map(({ key }) => key)).size,
+    defaultKeys.length,
+    'every default action has a distinct reachable key',
+  );
+  assert.equal(defaultKeys.find(({ action }) => action === 'ordLoot')?.key, 'Quote');
+  assert.equal(defaultKeys.find(({ action }) => action === 'hailInbox')?.key, 'KeyU');
+  const lootOrdersBefore = await page.evaluate(
+    () =>
+      window.modalProbe.packets.filter((packet) => packet.t === 'order' && packet.o === 'loot')
+        .length,
+  );
+  await page.keyboard.press('Quote');
+  await page.waitForFunction(
+    (before) =>
+      window.modalProbe.packets.filter((packet) => packet.t === 'order' && packet.o === 'loot')
+        .length ===
+      before + 1,
+    lootOrdersBefore,
+  );
+
   const ask = async () =>
     page.evaluate(async () => {
       (await import('/ui.js')).ask('A modal fixture', () => window.modalProbe.confirmations++);
