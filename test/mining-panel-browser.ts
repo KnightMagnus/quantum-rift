@@ -149,19 +149,35 @@ try {
       input.dispatchEvent(new Event('input', { bubbles: true }));
     }, scale);
     await page.click('#optclose');
-    const boundingBox2 = await page.locator('#miningcontrols').boundingBox();
+    const stack = page.locator('#functionstack');
+    await stack.evaluate((element) => {
+      element.scrollTop = 0;
+    });
+    const panelBounds = await page.locator('#miningcontrols').boundingBox();
+    const stackBounds = await stack.boundingBox();
+    assert.ok(panelBounds!.x >= 0 && panelBounds!.x + panelBounds!.width <= width);
     assert.ok(
-      boundingBox2!.x >= 0 &&
-        boundingBox2!.y >= 0 &&
-        boundingBox2!.x + boundingBox2!.width <= width &&
-        boundingBox2!.y + boundingBox2!.height <= height,
+      stackBounds!.y >= 0 && stackBounds!.y + stackBounds!.height <= height,
+      'the visible scrolling region stays inside the viewport',
+    );
+    assert.ok(
+      panelBounds!.y >= stackBounds!.y && panelBounds!.y < stackBounds!.y + stackBounds!.height,
+      'scrolling to the top reveals the panel heading',
     );
     await page.getByText('Group mining & help', { exact: true }).click();
     await page.locator('#miningconsent').focus();
     const visible = await page.locator('#miningconsent').evaluate((element) => {
       const firstCaptain = element.getBoundingClientRect(),
-        secondCaptain = document.querySelector('#miningcontrols')!.getBoundingClientRect();
-      return firstCaptain.top >= secondCaptain.top && firstCaptain.bottom <= secondCaptain.bottom;
+        secondCaptain = document.querySelector('#functionstack')!.getBoundingClientRect();
+      const pointerTarget = document.elementFromPoint(
+        firstCaptain.x + firstCaptain.width / 2,
+        firstCaptain.y + firstCaptain.height / 2,
+      );
+      return (
+        firstCaptain.top >= secondCaptain.top &&
+        firstCaptain.bottom <= secondCaptain.bottom &&
+        (pointerTarget === element || element.contains(pointerTarget))
+      );
     });
     assert.ok(visible, 'keyboard can reach final control');
     await page.screenshot({
