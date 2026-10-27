@@ -1,6 +1,7 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { chromium } from 'playwright';
+
 import { miningFixture, until } from './helpers/mining-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const feature = await miningFixture('mining-ui');
@@ -8,7 +9,7 @@ let browser;
 let other: WebSocket | undefined;
 const errors: string[] = [];
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({
       viewport: { width: 1500, height: 1050 },
       deviceScaleFactor: 2,

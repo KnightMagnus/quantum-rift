@@ -1,8 +1,9 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium, type Page } from 'playwright';
+import { type Page } from 'playwright';
 import { DB } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { tempDataDir } from './helpers/temp-data.ts';
@@ -87,7 +88,7 @@ async function capture(page: Page, name: string) {
 }
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 3440, height: 1440 } });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(String(error)));

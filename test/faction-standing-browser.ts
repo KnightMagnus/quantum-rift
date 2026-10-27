@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Optional Solo browser check against the actual standing panel and faction store.
 // PLAYWRIGHT_MODULE=/path/to/playwright-core/index.mjs CHROMIUM_EXECUTABLE=/path/to/chrome node test/faction-standing-browser.ts /evidence
 import assert from 'node:assert/strict';
@@ -8,9 +9,7 @@ import { spawn } from 'node:child_process';
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { STELLARS } from '../shared/galaxy.ts';
-const { chromium } = (await import(
-  process.env.PLAYWRIGHT_MODULE || ('playwright' as string)
-)) as typeof import('playwright');
+
 const evidence = path.resolve(process.argv[2] || 'artifacts/faction-standing');
 const directory = fileSystem.mkdtempSync(
   path.join(operatingSystem.tmpdir(), 'rift-standing-browser-'),
@@ -54,9 +53,8 @@ try {
     } catch {}
     await new Promise((resolve2) => setTimeout(resolve2, 100));
   }
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
-    executablePath: process.env.CHROMIUM_EXECUTABLE,
     args: ['--no-sandbox'],
   });
   const results = [];

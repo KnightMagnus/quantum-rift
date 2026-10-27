@@ -1,10 +1,11 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Native controls stay native: real station navigation, assignment and keyboard input.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import operatingSystem from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import {
   root,
   availablePort,
@@ -52,7 +53,7 @@ const errors: string[] = [],
 const baseline = process.env.RIFT_DROPDOWN_BASELINE === '1';
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({
     viewport: { width: 1500, height: 1050 },
     colorScheme: 'light',

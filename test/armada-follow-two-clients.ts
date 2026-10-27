@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 import type { PreloadConfig } from './fixtures/preload-armada-follow-two-clients.ts';
 import { fileURLToPath as resolvePreloadFile } from 'node:url';
 import assert from 'node:assert/strict';
@@ -5,7 +6,7 @@ import fileSystem from 'node:fs';
 import operatingSystem from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import {
   root,
   availablePort,
@@ -106,7 +107,7 @@ const pages = [],
   networkErrors: string[] = [];
 try {
   await ready(server, origin);
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
     args: [
       '--no-sandbox',

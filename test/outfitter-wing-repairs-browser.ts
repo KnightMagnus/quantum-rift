@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Optional actual Solo browser regression; isolated saves only.
 // PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs node test/outfitter-wing-repairs-browser.ts /evidence
 import assert from 'node:assert/strict';
@@ -10,10 +11,7 @@ import { Game } from '../server/game.ts';
 import { STELLARS } from '../shared/galaxy.ts';
 import { repairBasis } from '../shared/rules.ts';
 import { WING_REPAIR_COST } from '../shared/docks.ts';
-const { chromium } = (await import(
-    process.env.PLAYWRIGHT_MODULE || 'playwright'
-  )) as typeof import('playwright'),
-  evidence = path.resolve(process.argv[2] || 'artifacts/outfitter-wing-repairs'),
+const evidence = path.resolve(process.argv[2] || 'artifacts/outfitter-wing-repairs'),
   directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-wing-browser-')),
   assets = JSON.parse(
     fileSystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
@@ -74,7 +72,7 @@ try {
     } catch {}
     await new Promise((resolve2) => setTimeout(resolve2, 100));
   }
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const results = [];
   for (const [name, portId] of cases) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }),

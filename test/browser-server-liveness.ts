@@ -1,10 +1,11 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Production browser timers and UI over a real TCP link that loses server replies.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets } from '../shared/rules.ts';
@@ -84,7 +85,7 @@ try {
   await ready(server, backend);
   await new Promise<void>((resolve) => proxy.listen(0, '127.0.0.1', resolve));
   const origin = 'http://127.0.0.1:' + (proxy.address() as net.AddressInfo).port;
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const sent: { socket: number; t: string; th?: number; qty?: number }[] = [];
   const received: { socket: number; t: string; name?: string }[] = [];

@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 /** Browser acceptance against the actual disposable Nakama Game runtime. */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -5,7 +6,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
-import { chromium } from 'playwright';
+
 import type { Browser, Page } from 'playwright';
 import { sanitizedDiagnostic, NakamaService, repository, until } from './helpers/nakama-service.ts';
 import { availablePort, ready, evidenceDir } from './helpers/browser-fixture.ts';
@@ -105,7 +106,7 @@ try {
   const status = await (await fetch(origin + '/api/status')).json();
   assert.equal(status.solo, false);
   assert.equal(Number(status.nakama.port), service.apiPort);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   await context.grantPermissions(['local-network-access'], { origin });
   page = await context.newPage();

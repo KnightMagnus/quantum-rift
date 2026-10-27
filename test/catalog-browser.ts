@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Optional real Chromium regression (Playwright supplied separately).
 // PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs POISON_CACHE=1 EXPECT_FIXED=1 \
 //   node test/catalog-browser.ts "$PWD" /absolute/evidence/directory
@@ -9,9 +10,7 @@ import operatingSystem from 'node:os';
 import { pathToFileURL } from 'node:url';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
-const { chromium } = (await import(
-  process.env.PLAYWRIGHT_MODULE || ('playwright' as string)
-)) as typeof import('playwright');
+
 const root = process.argv[2],
   evidence = process.argv[3];
 fileSystem.mkdirSync(evidence, { recursive: true });
@@ -109,7 +108,7 @@ try {
       JSON.parse(fileSystem.readFileSync(path.join(root, 'package.json')).toString()).version,
   );
   assert.equal(status.solo, true);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } }),
     errors: string[] = [];
   page.on('pageerror', (event) => errors.push(String(event)));

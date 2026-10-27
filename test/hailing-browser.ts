@@ -1,13 +1,12 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Optional browser check against disposable server: PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs node test/hailing-browser.ts http://localhost:18766
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
-const { chromium } = (await import(
-  process.env.PLAYWRIGHT_MODULE || ('playwright' as string)
-)) as typeof import('playwright');
+
 const origin = process.argv[2] || 'http://localhost:18766',
   stamp = String(Date.now()).slice(-6);
-const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+const browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }),
   errors: string[] = [];
 page.on('pageerror', (event) => errors.push(String(event)));

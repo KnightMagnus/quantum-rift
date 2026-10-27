@@ -1,12 +1,13 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { chromium } from 'playwright';
+
 import { refineryFixture } from './helpers/refinery-play-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const feature = await refineryFixture('cockpit-qol');
 let browser;
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({ viewport: { width: 1500, height: 1050 } });
   const page = await context.newPage();
   await page.addInitScript(() =>

@@ -1,9 +1,10 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Actual production Engine, native entities, physical-pixel camera and input/lifecycle boundaries.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import type { Graphic, GraphicsGroup, GraphicsGrouping, Sprite } from 'excalibur';
 import { DB } from '../server/db.ts';
 import { Game } from '../server/game.ts';
@@ -54,7 +55,7 @@ server.stderr.pipe(serverLog);
 let browser;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   for (const [ratio, renderer] of [
     [1, 'webgl'],
     [2, 'webgl'],

@@ -1,8 +1,9 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import { DB } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { tempDataDir } from './helpers/temp-data.ts';
@@ -53,7 +54,7 @@ server.stderr.pipe(log);
 let browser;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, hasTouch: true });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(String(error)));

@@ -1,11 +1,12 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright';
+
 import { miningFixture } from './helpers/mining-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const feature = await miningFixture('cursors');
 let browser;
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage();
   await page.goto(feature.origin);
   const proof = await page.evaluate(async () => {

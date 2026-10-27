@@ -1,7 +1,8 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+
 import { refineryFixture } from './helpers/refinery-play-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const fixture = await refineryFixture('sidebar-gauges', {
@@ -9,7 +10,7 @@ const fixture = await refineryFixture('sidebar-gauges', {
 });
 let browser;
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(String(error)));

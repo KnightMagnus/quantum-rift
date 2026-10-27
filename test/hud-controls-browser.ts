@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Blue-HUD login console, landed service strip, guest dock and viewscreen JUMP button.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
@@ -23,7 +24,6 @@ declare global {
     hudJumpPackets: Record<string, unknown>[];
   }
 }
-const { chromium } = await import('playwright');
 
 const directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-hud-controls-'));
 const evidence = process.env.RIFT_BROWSER_EVIDENCE || evidenceDir('hud-controls');
@@ -76,9 +76,8 @@ const tabLabels = (page: Page) =>
 
 let browser;
 try {
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
-    executablePath: process.env.CHROMIUM_EXECUTABLE,
     args: ['--no-sandbox'],
   });
   await ready(server, origin);

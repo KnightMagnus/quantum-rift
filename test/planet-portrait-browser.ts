@@ -1,8 +1,9 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium, type Page } from 'playwright';
+import { type Page } from 'playwright';
 import { DB } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { STELLARS } from '../shared/galaxy.ts';
@@ -88,7 +89,7 @@ server.stderr.pipe(log);
 let browser;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   for (const [index, fixture] of fixtures.entries()) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const errors: string[] = [];

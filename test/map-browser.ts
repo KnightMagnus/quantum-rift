@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Actual Solo UI: system-detail hover must not resize the galaxy map.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
@@ -38,10 +39,8 @@ try {
     } catch {}
     await new Promise((resolve2) => setTimeout(resolve2, 100));
   }
-  const { chromium } = (await import(
-    process.env.PLAYWRIGHT_MODULE || 'playwright'
-  )) as typeof import('playwright');
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage();
   page.on('pageerror', (event) => errors.push(String(event)));
   await page.goto(origin);

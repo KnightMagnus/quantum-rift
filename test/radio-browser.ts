@@ -1,10 +1,11 @@
+import { launchChromium } from './helpers/chromium.ts';
 import { fileURLToPath as resolvePreloadFile } from 'node:url';
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import operatingSystem from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { RADIO_STATIONS } from '../shared/radio-stations.ts';
@@ -89,7 +90,7 @@ server.stderr.pipe(serverLog);
 let browser;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   await context.addInitScript(() => {
     const NativeSocket = window.WebSocket;

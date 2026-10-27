@@ -1,10 +1,11 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Real Solo landings, purchase routes and Personal Station store access.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import { DB } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import type { PlayerData } from '../server/game.ts';
@@ -75,7 +76,7 @@ let browser;
 const results = [];
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   for (const c of cases) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     const errors: string[] = [];

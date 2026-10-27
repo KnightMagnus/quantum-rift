@@ -1,6 +1,7 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { type Browser, chromium } from 'playwright';
+import { type Browser } from 'playwright';
 import { miningFixture, until } from './helpers/mining-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const feature = await miningFixture('mining-controls');
@@ -44,7 +45,7 @@ async function pageFor(
   return { context, page };
 }
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const firstCaptain = await pageFor('Mining Alpha');
   assert.equal(await firstCaptain.page.evaluate(() => G.opts.keys.surveyPulse), 'KeyV');
   await firstCaptain.page.keyboard.press('v');

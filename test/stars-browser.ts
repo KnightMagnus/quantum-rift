@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Actual SOLO login/depart/render integration with disposable Sol/Earth and Meridian saves.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
@@ -44,10 +45,8 @@ try {
     } catch {}
     await new Promise((resolve2) => setTimeout(resolve2, 100));
   }
-  const { chromium } = (await import(
-    process.env.PLAYWRIGHT_MODULE || 'playwright'
-  )) as typeof import('playwright');
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1600, height: 1050 } }),
     errors: string[] = [];
   page.on('pageerror', (event) => errors.push(String(event)));

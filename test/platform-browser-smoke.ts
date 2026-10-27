@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium, firefox, webkit } from 'playwright';
+import { firefox, webkit } from 'playwright';
+import { launchChromium } from './helpers/chromium.ts';
 import { DB } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets } from '../shared/rules.ts';
@@ -19,7 +20,7 @@ import {
 
 const engine = process.env.RIFT_BROWSER || 'chromium';
 assert(['chromium', 'firefox', 'webkit'].includes(engine), 'Unknown browser engine');
-const browserType = { chromium, firefox, webkit }[engine]!;
+
 const evidence = evidenceDir('platform-' + engine);
 const directory = tempDataDir('rift-platform-browser-');
 const assets = augmentAssets(
@@ -52,11 +53,17 @@ server.stderr.pipe(log);
 let browser;
 try {
   await ready(server, origin);
-  browser = await browserType.launch({
-    headless: true,
-    executablePath: process.env.RIFT_BROWSER_EXECUTABLE,
-    ...(engine === 'chromium' ? { args: ['--no-sandbox'] } : {}),
-  });
+  browser =
+    engine === 'chromium'
+      ? await launchChromium({
+          headless: true,
+          executablePath: process.env.RIFT_BROWSER_EXECUTABLE,
+          args: ['--no-sandbox'],
+        })
+      : await { firefox, webkit }[engine]!.launch({
+          headless: true,
+          executablePath: process.env.RIFT_BROWSER_EXECUTABLE,
+        });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));

@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Actual Game + WebSocket + production client check; temporary server/data only.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
@@ -9,9 +10,7 @@ import { Game } from '../server/game.ts';
 import { DB as Database } from '../server/db.ts';
 import { upgrade } from '../server/ws.ts';
 import { HAIL_LIMITS } from '../server/hail-service.ts';
-const { chromium } = (await import(
-  process.env.PLAYWRIGHT_MODULE || ('playwright' as string)
-)) as typeof import('playwright');
+
 const root = path.resolve(new URL('..', import.meta.url).pathname),
   directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-hails-browser-')),
   artifact = process.env.RIFT_BROWSER_ARTIFACT || path.join(directory, 'artifacts');
@@ -60,7 +59,7 @@ server.on('upgrade', (request3, sock) =>
 );
 await new Promise<void>((resolve2) => server.listen(0, '127.0.0.1', () => resolve2()));
 const origin = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
-const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+const browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }),
   errors: string[] = [];
 page.on('pageerror', (event) => errors.push(String(event)));

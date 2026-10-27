@@ -1,12 +1,13 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { chromium } from 'playwright';
+
 import { towingFixture } from './helpers/towing-play-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const feature = await towingFixture('mining-keys');
 let browser;
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1500, height: 1100 } }),
     errors: string[] = [];
   page.on('pageerror', (event) => errors.push(String(event)));

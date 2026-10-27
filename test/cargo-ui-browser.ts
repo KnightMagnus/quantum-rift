@@ -1,9 +1,10 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Grade-specific controls must deliver actual server-side changes, not DOM-only labels.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets, makeLoadout } from '../shared/rules.ts';
@@ -71,7 +72,7 @@ const errors: string[] = [],
 let diagnosticPage;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   diagnosticPage = page;
   page.on('websocket', (socket) => {

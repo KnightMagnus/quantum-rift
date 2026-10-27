@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 import type { PreloadConfig } from './fixtures/preload-landing-autopilot-browser.ts';
 import { fileURLToPath as resolvePreloadFile } from 'node:url';
 import {
@@ -135,13 +136,12 @@ const server = spawn(
 const serverLog = fileSystem.createWriteStream(path.join(evidence, 'server.log'));
 server.stdout.pipe(serverLog);
 server.stderr.pipe(serverLog);
-const { chromium } = await import('playwright');
+
 let browser;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
-    executablePath: process.env.CHROMIUM_EXECUTABLE,
     args: [
       '--no-sandbox',
       '--disable-background-timer-throttling',

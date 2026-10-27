@@ -1,7 +1,8 @@
+import { launchChromium } from './helpers/chromium.ts';
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import path from 'node:path';
-import { chromium, type Page } from 'playwright';
+import { type Page } from 'playwright';
 import { miningFixture } from './helpers/mining-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
 const fixture = await miningFixture('pressure-hull-revised');
@@ -22,7 +23,7 @@ async function capture(page: Page, name: string) {
   await page.screenshot({ path: path.join(fixture.out, name + '.png') });
 }
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   for (const [width, height] of [
     [1920, 1080],
     [3440, 1440],

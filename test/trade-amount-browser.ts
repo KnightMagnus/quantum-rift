@@ -1,9 +1,10 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Custom quantities exercise actual browser controls and authoritative market settlement.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { type Browser, chromium } from 'playwright';
+import { type Browser } from 'playwright';
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets, makeLoadout } from '../shared/rules.ts';
@@ -74,7 +75,7 @@ const events: {
   errors: string[] = [];
 try {
   await ready(server, origin);
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   async function login(name: string, width = 1440) {
     const page = await browser!.newPage({ viewport: { width, height: 1000 } });
     page.on('pageerror', (event) => errors.push(String(event)));

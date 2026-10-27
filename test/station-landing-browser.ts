@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 import type { StellarBody, StarSystem } from '../shared/galaxy.ts';
 type StationSite = Parameters<typeof import('../client/exotic_scenery.ts').stationLanding>[3];
 import { createHash } from 'node:crypto';
@@ -19,7 +20,7 @@ import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { augmentAssets } from '../shared/rules.ts';
 import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
-const { chromium } = await import('playwright');
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-exotic-solo-'));
 const evidence = process.env.RIFT_BROWSER_EVIDENCE || evidenceDir('stations');
@@ -80,9 +81,8 @@ server.stdout.pipe(serverLog);
 server.stderr.pipe(serverLog);
 let browser;
 try {
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
-    executablePath: process.env.CHROMIUM_EXECUTABLE,
     args: ['--no-sandbox'],
   });
   await ready(server, origin);

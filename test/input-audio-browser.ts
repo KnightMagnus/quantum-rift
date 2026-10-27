@@ -1,10 +1,11 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Device emulation checks actual outgoing controls; audio checks mixer state, not audibility.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import operatingSystem from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import {
@@ -48,7 +49,7 @@ server.stderr.pipe(serverLog);
 let browser;
 try {
   await ready(server, origin);
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
     args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
   });
@@ -81,7 +82,7 @@ try {
   );
   assert.deepEqual(autoplayErrors, []);
   await browser.close();
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
     args: ['--no-sandbox', '--autoplay-policy=document-user-activation-required'],
   });

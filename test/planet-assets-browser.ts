@@ -1,3 +1,4 @@
+import { launchChromium } from './helpers/chromium.ts';
 // Real Chromium decode/fallback/recovery checks. Does not need accounts or a game server.
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
@@ -10,10 +11,8 @@ import type { PlanetDef } from '../client/planets.ts';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const evidence = process.env.RIFT_BROWSER_EVIDENCE;
 if (evidence) fileSystem.mkdirSync(evidence, { recursive: true });
-const { chromium } = (await import(
-  process.env.PLAYWRIGHT_MODULE || 'playwright'
-)) as typeof import('playwright');
-const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+
+const browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
 const server = http.createServer((request2, response) => {
   const relativePath = new URL(request2.url!, 'http://localhost').pathname.slice(1);
   if (!relativePath) return response.end('<!doctype html><body></body>');

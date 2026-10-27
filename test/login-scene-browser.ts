@@ -1,9 +1,10 @@
+import { launchChromium } from './helpers/chromium.ts';
 import fileSystem from 'node:fs';
 import operatingSystem from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { chromium } from 'playwright';
+
 import {
   root,
   availablePort,
@@ -37,7 +38,7 @@ const errors: string[] = [],
   results = [];
 try {
   await ready(server, origin);
-  browser = await chromium.launch({
+  browser = await launchChromium({
     headless: true,
     args: ['--no-sandbox', '--autoplay-policy=document-user-activation-required'],
   });
