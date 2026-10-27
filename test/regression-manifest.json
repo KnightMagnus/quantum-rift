@@ -4,6 +4,10 @@
     "coverage-inventory.ts",
     "regression-runner-contracts.ts",
     "excalibur-contracts.ts",
+    "flight-prediction.ts",
+    "connection-lifecycle.ts",
+    "player-projection.ts",
+    "station-service.ts",
     "v03.ts",
     "v04.ts",
     "v05.ts",
@@ -66,8 +70,6 @@
     "http-api.ts",
     "network-systems.ts",
     "save-migrations.ts",
-    "save-feature-validation.ts",
-    "save-postgres-restore.ts",
     "cargo-lots.ts",
     "cargo-flows.ts",
     "mining.ts",
@@ -138,7 +140,9 @@
     "station-docking.ts",
     "combat-playability.ts",
     "combat-jobs-playability.ts",
-    "combat-balance-ratings.ts"
+    "combat-balance-ratings.ts",
+    "save-feature-validation.ts",
+    "save-postgres-restore.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -683,9 +687,10 @@
       "helpers/temp-data.ts"
     ],
     "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
+    "station-service.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
+    "combat-playability.ts": ["helpers/combat-playability-simulation.ts"],
     "save-feature-validation.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
-    "save-postgres-restore.ts": ["helpers/nakama-service.ts", "helpers/temp-data.ts"],
-    "combat-playability.ts": ["helpers/combat-playability-simulation.ts"]
+    "save-postgres-restore.ts": ["helpers/nakama-service.ts", "helpers/temp-data.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1407,12 +1412,14 @@
         "client/engine.ts",
         "client/space-scene.ts",
         "client/engine-input.ts",
+        "client/flight-prediction.ts",
         "client/graphics-backend.ts",
         "client/world-actors.ts"
       ],
       "tests": [
         "excalibur-runtime-browser.ts",
         "excalibur-contracts.ts",
+        "flight-prediction.ts",
         "input-audio-browser.ts",
         "logout-browser.ts",
         "sidebar-sizing-browser.ts"
@@ -1717,17 +1724,29 @@
       "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC and authoritative join rejection, terminal local denial despite buffered packets/late errors, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
     },
     {
-      "id": "asset-recovery",
-      "owners": [
-        "client/asset-resources.ts",
-        "client/audio.ts",
-        "client/engine.ts",
-        "client/engine-input.ts",
-        "client/world-actors.ts"
-      ],
+      "id": "client-connection-lifecycle",
+      "owners": ["client/connection-lifecycle.ts"],
       "services": [],
-      "tests": ["asset-recovery-browser.ts", "render-cache-budget.ts"],
-      "asserts": "Decoded image/audio ownership budgets and live-resource-safe eviction; missing/corrupt asset fallbacks and bounded failure cleanup; repeated actual graphics context loss/restoration preserves captain state and blocks held controls until release."
+      "tests": [
+        "connection-lifecycle.ts",
+        "logout-browser.ts",
+        "protocol-compatibility-browser.ts"
+      ],
+      "asserts": "Independent pre-extraction traces preserve current-socket/epoch guards, native/local hello, packet dispatch, live credentials/configuration, bounded backoff, terminal compatibility/duplicate-login denial and account detach; existing browser tests cover actual sign-in/logout."
+    },
+    {
+      "id": "client-player-projection",
+      "owners": ["client/player-projection.ts"],
+      "services": [],
+      "tests": ["player-projection.ts", "logout-browser.ts"],
+      "asserts": "Independent pre-extraction traces preserve player payload identity, root-state mutation, radio/views/system/co-op/render ordering, flight-owned ammo and first/restored tab behavior across sixteen combinations."
+    },
+    {
+      "id": "station-action-service",
+      "owners": ["server/station-service.ts"],
+      "services": [],
+      "tests": ["station-service.ts", "station-progress.ts", "cargo-flows.ts", "v26.ts"],
+      "asserts": "Independent pre-extraction traces preserve station claim/upgrade/process/collection/research/relocation and denial behavior, full packets, balances/grades, trade/spend/persistence/refresh order, live replaced providers/database and exact checkpoint reopen across nineteen scenarios."
     },
     {
       "id": "combat-playability",
@@ -1751,6 +1770,19 @@
         "combat-balance-ratings.ts"
       ],
       "asserts": "Fixed-seed actual Game arrivals and eight-minute combat runs across early, Hollow and Umbral encounters; fitted combat ratings, shared ambient raid and incursion budgets, bounded retaliation and secondary-assisted combat. Bounty suitability and participation, passenger pickup order, expired offer recovery and distinct default controls are checked at their production boundaries. Seeded bots are bounded regression evidence, not proof of human win rates."
+    },
+    {
+      "id": "asset-recovery",
+      "owners": [
+        "client/asset-resources.ts",
+        "client/audio.ts",
+        "client/engine.ts",
+        "client/engine-input.ts",
+        "client/world-actors.ts"
+      ],
+      "services": [],
+      "tests": ["asset-recovery-browser.ts", "render-cache-budget.ts"],
+      "asserts": "Decoded image/audio ownership budgets and live-resource-safe eviction; missing/corrupt asset fallbacks and bounded failure cleanup; repeated actual graphics context loss/restoration preserves captain state and blocks held controls until release."
     }
   ],
   "routes": {

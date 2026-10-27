@@ -1367,6 +1367,42 @@ The HUD JUMP regression also opens the galaxy map and attempts native button
 activation before the periodic disabled-state refresh. No jump packet or jump
 navigation can escape the overlay; closing the map restores the plotted action.
 
+## Client prediction ownership
+
+`flight-prediction.ts` compares the extracted owner with an independent reference
+of the `e8c8c29` sequence/history/reconciliation blocks across four stock hulls.
+The traces cover delayed, repeated and reordered acknowledgements, neutral-release
+sequence gaps, disabled prediction, changed live stats, towing caps, large-correction
+snapping, travel clears and presence resets. A separate expected-physics check
+proves that only the last 90 unacknowledged controls replay. This is display
+prediction, not economic authority or a guarantee under every network fault.
+Existing engine, input and logout browser fixtures exercise its real integration.
+
+## Connection, player projection and station ownership
+
+System contracts: `client-connection-lifecycle`, `client-player-projection` and
+`station-action-service`.
+
+`connection-lifecycle.ts` and `player-projection.ts` compare the extracted owners
+with unmodified pre-extraction source fixtures captured at `4444b8a`.
+`station-service.ts` uses the unmodified `Game.station` method at `4e4ecde`, which
+includes the Personal Station upgrade-log correction. Each reference runs
+independently in an isolated VM with controlled time, random values and effects;
+it does not call the new owners as an oracle.
+Connection traces cover local/native opening, packet delivery, bounded reconnect,
+changing credentials/configuration, stale sockets/epochs, absent credentials,
+compatibility denial and duplicate-login teardown. Projection traces compare
+payload identity, effect order, docked refresh, flight ammo and initial/restored
+view tabs across sixteen combinations.
+
+Station traces compare nineteen action/denial scenarios, complete packets,
+balances, material/grade inventories, claim maps, dirty marking and effect order.
+They replace feature providers and the database after service construction, then
+reopen the same checkpoint to verify exact settlement. Existing station-progress,
+versioned feature, cargo, native network and login/logout browser regressions
+remain required. These traces establish behavior equivalence for the listed
+cases, not exhaustive seeds, device inputs or a performance improvement.
+
 ## Asset cache and display recovery
 
 `asset-recovery` owns `asset-recovery-browser.ts` and the shared byte-cache unit
