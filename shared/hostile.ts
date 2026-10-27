@@ -1,4 +1,5 @@
-import type { GameAssets } from './rules.ts';
+import { shipStats, weaponParams, K as physicsConstants } from './rules.ts';
+import type { GameAssets, ShipStatsLoadout, ShipStatsBonus } from './rules.ts';
 
 /** Player stat bonuses affecting ship combat power calculations. */
 export type HostileBonus = {
@@ -102,23 +103,47 @@ export function winOdds(mine: number, theirs: number): number {
  * @param escorts - Hull IDs of escort / wingmate ships.
  * @returns Total effective combat power rating.
  */
-// a player's effective strength: hull strength scaled by their bonuses, plus a share of their escorts
+/** Combat rating from fitted durability and sustained weapon output, not purchase price. */
+export function shipCombatPower(
+  assets: GameAssets,
+  loadout: ShipStatsLoadout,
+  bonus: ShipStatsBonus = {},
+): number {
+  const stats = shipStats(assets, loadout, bonus);
+  if (!stats) return 10;
+  let damage = 0;
+  for (const [identifier, count] of Object.entries(stats.weapons)) {
+    const asset = assets.weapons[identifier];
+    if (!asset) continue;
+    const weapon = weaponParams(asset);
+    // Bays require a separate launch order; point defense is not offensive firepower.
+    if (weapon.bay || weapon.pd) continue;
+    const rate = weapon.continuous ? physicsConstants.beamDps : 1 / weapon.reload;
+    const reach = Math.max(0.75, Math.min(1.25, Math.sqrt(weapon.range / 900)));
+    damage += ((count * (weapon.dmgA + weapon.dmgS)) / 2) * rate * reach;
+  }
+  return Math.max(
+    1,
+    Math.round(
+      Math.sqrt((stats.shield + stats.armor) * Math.max(1, damage * stats.damageMul)) / 1.5,
+    ),
+  );
+}
+
+/** Rating of a stock hull, using the same calculation as fitted ships. */
+export function hullCombatPower(assets: GameAssets, hull: number | string): number {
+  return shipCombatPower(assets, { hull: Number(hull) });
+}
+
 export function playerPower(
   assets: GameAssets,
-  hull: number | string,
+  hull: number | string | ShipStatsLoadout,
   bonus: HostileBonus = {},
   escorts: Array<number | string> = [],
 ): number {
-  const shipHullAsset = assets.ships[hull];
-  if (!shipHullAsset) return 10;
-  const secondValue =
-    1 + ((bonus.damagePct || 0) + (bonus.shieldPct || 0) + (bonus.armorPct || 0)) / 300;
   return (
-    (shipHullAsset.strength || 10) * secondValue +
-    escorts.reduce<number>(
-      (time, height) => time + ((assets.ships[height] || {}).strength || 0) * 0.6,
-      0,
-    )
+    shipCombatPower(assets, typeof hull === 'object' ? hull : { hull: Number(hull) }, bonus) +
+    escorts.reduce<number>((total, escort) => total + hullCombatPower(assets, escort) * 0.6, 0)
   );
 }
 
@@ -140,9 +165,9 @@ export const TIER3_TRUCE = {
 /** How ambient raid groups scale with the strongest captain present. */
 export const RAID_BUDGET = {
   /** Budget multiplier on the captain's power in a danger 0 system. */
-  base: 0.8,
+  base: 0.35,
   /** Extra budget multiplier per point of system danger. */
-  perDanger: 0.4,
+  perDanger: 0.15,
 };
 
 /**
@@ -195,7 +220,7 @@ export const PRACTICE_RAIDER = {
   /** Candidate hulls, weakest first: Gnat Skiff, Dory Hauler, Kestrel Scout. */
   hulls: [703, 704, 705],
   /** Share of the captain's power the raider may have (the weakest hull is the floor). */
-  powerShare: 0.8,
+  powerShare: 0.55,
 };
 
 /** Danger rating of a fight, from the hostile-to-captain power ratio. */

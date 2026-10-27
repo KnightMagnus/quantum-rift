@@ -134,7 +134,10 @@
     "performance-native.ts",
     "render-cache-budget.ts",
     "protocol-compatibility.ts",
-    "station-docking.ts"
+    "station-docking.ts",
+    "combat-playability.ts",
+    "combat-jobs-playability.ts",
+    "combat-balance-ratings.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -677,7 +680,8 @@
     ],
     "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
     "save-feature-validation.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
-    "save-postgres-restore.ts": ["helpers/nakama-service.ts", "helpers/temp-data.ts"]
+    "save-postgres-restore.ts": ["helpers/nakama-service.ts", "helpers/temp-data.ts"],
+    "combat-playability.ts": ["helpers/combat-playability-simulation.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -964,7 +968,8 @@
         "shared/rules.ts",
         "client/artwork.ts",
         "client/render.ts",
-        "tools/content-validation.ts"
+        "tools/content-validation.ts",
+        "tools/narrative-content-validation.ts"
       ],
       "services": [],
       "tests": [
@@ -976,7 +981,7 @@
         "v25.ts",
         "ship-turning-assets-browser.ts"
       ],
-      "asserts": "Composed ship catalog IDs, finite capacities/combat/movement stats/recharge rates, weapon references/counts/ammo, player stock mount limits and local yard/flight/glow artwork existence, with malformed fixtures and CLI exit/diagnostic coverage. Versioned catalog URL/cache semantics, shipped icon headers/dimensions and asset wiring, animation bounds and banked sprite selection. All 122 decoded hull sheets contain 108 distinct nonempty base frames with matched glow geometry; both runtime banks activate at actual stock turn rates."
+      "asserts": "Composed ship catalog IDs, finite capacities/combat/movement stats/recharge rates, weapon references/counts/ammo, player stock mount limits and local yard/flight/glow artwork existence, with malformed fixtures and CLI exit/diagnostic coverage. Versioned catalog URL/cache semantics, shipped icon headers/dimensions and asset wiring, animation bounds and banked sprite selection. All 122 decoded hull sheets contain 108 distinct nonempty base frames with matched glow geometry; both runtime banks activate at actual stock turn rates. Offline composed narrative validation covers IDs, prerequisite references/cycles, destinations, contact locators, decision choices, mission types, rewards and dialogue fields with source/key diagnostics and negative fixtures; dynamic dialogue and nonship assets remain documented limits."
     },
     {
       "id": "world-scenery",
@@ -1699,6 +1704,29 @@
         "nakama-network.ts"
       ],
       "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC and authoritative join rejection, terminal local denial despite buffered packets/late errors, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
+    },
+    {
+      "id": "combat-playability",
+      "owners": [
+        "shared/hostile.ts",
+        "server/space.ts",
+        "server/game.ts",
+        "server/hostile.ts",
+        "server/jobs.ts",
+        "server/living.ts",
+        "client/mission-details.ts",
+        "client/missions.ts"
+      ],
+      "services": [],
+      "tests": [
+        "combat-playability.ts",
+        "combat-jobs-playability.ts",
+        "combat-assist.ts",
+        "difficulty-curve.ts",
+        "local-retaliation.ts",
+        "combat-balance-ratings.ts"
+      ],
+      "asserts": "Fixed-seed actual Game arrivals and eight-minute combat runs across early, Hollow and Umbral encounters; fitted combat ratings, shared ambient raid and incursion budgets, bounded retaliation and secondary-assisted combat. Bounty suitability and participation, passenger pickup order, expired offer recovery and distinct default controls are checked at their production boundaries. Seeded bots are bounded regression evidence, not proof of human win rates."
     }
   ],
   "routes": {

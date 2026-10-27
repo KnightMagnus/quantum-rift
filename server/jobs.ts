@@ -41,6 +41,7 @@ import {
   GRADES,
 } from '../shared/galaxy.ts';
 import { credits } from '../shared/rules.ts';
+import { hullCombatPower } from '../shared/hostile.ts';
 import { eventideOffers } from '../shared/eventide.ts';
 import { clampStanding } from '../shared/reputation.ts';
 import { applyTake, planTake } from '../shared/cargo-lots.ts';
@@ -123,6 +124,7 @@ const JobOperations: JobOperations = {
         systemsById[systemId].faction !== 'umbral',
     );
     const usedNames = new Set();
+    const captainPower = this.features.hostile.myPower(playerData);
     for (let index = 0; index < 5 && nearbySystems.length; index++) {
       const roll = random(),
         [destinationSystemId, jumps] = nearbySystems[Math.floor(random() * nearbySystems.length)],
@@ -152,8 +154,12 @@ const JobOperations: JobOperations = {
             destinationSystem.danger >= 3 || random() < 0.6 || destinationSystem.farside
               ? 'hollow'
               : 'umbral',
-          hull = TRAFFIC[factionId].war[Math.floor(random() * TRAFFIC[factionId].war.length)],
+          eligibleHulls = TRAFFIC[factionId].war.filter(
+            (hullId) => hullCombatPower(this.A, hullId) <= captainPower * 0.75,
+          ),
+          hull = eligibleHulls[Math.floor(random() * eligibleHulls.length)],
           hullDefinition = this.A.ships[hull];
+        if (!hullDefinition) continue;
         let nameIndex = Math.floor(random() * BOUNTY_NAMES.length);
         while (usedNames.has(nameIndex)) nameIndex = (nameIndex + 1) % BOUNTY_NAMES.length;
         usedNames.add(nameIndex);
@@ -167,7 +173,9 @@ const JobOperations: JobOperations = {
           hull,
           faction: factionId,
           targetName: targetName,
-          reward: Math.round(4000 + (hullDefinition.strength || 20) * 60),
+          reward: Math.round(
+            Math.max(4000 + hullCombatPower(this.A, hull) * 80, (hullDefinition.cost || 0) * 0.025),
+          ),
           text: `${targetName} has been raiding the lanes in a ${hullDefinition.name}. Find and destroy them in the ${destinationSystem.name} system.`,
         });
       } else {
@@ -232,11 +240,14 @@ const JobOperations: JobOperations = {
     for (const offer of offers)
       if (offer.type === 'bounty' || offer.type === 'assassinate')
         offer.reward = Math.round(offer.reward * (1 + 0.06 * rank));
-    if (rank >= 5 && nearbySystems.length) {
+    if (rank >= 5 && nearbySystems.length && stellarBody.id !== 'qstation') {
       const [starSystem] = nearbySystems[Math.floor(random() * nearbySystems.length)],
         destinationSystem = systemsById[starSystem],
         eliteHullIds = [...TRAFFIC.umbral.war, ...TRAFFIC.hollow.war]
-          .filter((hullId) => this.A.ships[hullId])
+          .filter(
+            (hullId) =>
+              this.A.ships[hullId] && hullCombatPower(this.A, hullId) <= captainPower * 1.25,
+          )
           .sort(
             (leftHullId, rightHullId) =>
               (this.A.ships[rightHullId].strength || 0) - (this.A.ships[leftHullId].strength || 0),
@@ -246,18 +257,19 @@ const JobOperations: JobOperations = {
         targetName =
           'the ' +
           ['Ashen Admiral', 'Red Widow', 'Quiet Knife', 'Last Lantern'][Math.floor(random() * 4)];
-      offers.push({
-        id: `${stellarBody.id}-${offerWindow}-elite`,
-        type: 'bounty',
-        elite: true,
-        title: `ELITE CONTRACT: ${targetName}`,
-        sys: starSystem,
-        hull,
-        faction: TRAFFIC.umbral.war.includes(hull) ? 'umbral' : 'hollow',
-        targetName: targetName,
-        reward: Math.round(45000 + (hullDefinition.strength || 200) * 160),
-        text: `Only captains rated Dangerous or better are offered this one. ${targetName} flies a ${hullDefinition.name} out of ${destinationSystem.name}. The Concord wants it gone.`,
-      });
+      if (hullDefinition)
+        offers.push({
+          id: `${stellarBody.id}-${offerWindow}-elite`,
+          type: 'bounty',
+          elite: true,
+          title: `ELITE CONTRACT: ${targetName}`,
+          sys: starSystem,
+          hull,
+          faction: TRAFFIC.umbral.war.includes(hull) ? 'umbral' : 'hollow',
+          targetName: targetName,
+          reward: Math.round(45000 + (hullDefinition.strength || 200) * 160),
+          text: `Only captains rated Dangerous or better are offered this one. ${targetName} flies a ${hullDefinition.name} out of ${destinationSystem.name}. The Concord wants it gone.`,
+        });
     }
     offers.push(...freightOffers(stellarBody, offerWindow));
     const radioTour = radioTourOffer(stellarBody, playerData);
@@ -288,7 +300,14 @@ const JobOperations: JobOperations = {
     if (!port) return;
     if (playerData.missions.length >= 6) return this.toast(session, 'You already have six jobs.');
     const mission = this.offers(port, playerData).find((offer) => offer.id === missionId);
-    if (!mission) return;
+    if (!mission) {
+      this.toast(
+        session,
+        'That offer has expired or is no longer available. The job board has been refreshed.',
+      );
+      this.landed(session);
+      return;
+    }
     if (mission.type === 'quest') return this.features.quests.questStart(session, mission); // 2.4
     if (mission.type === 'warband') return this.features.coop.warbandAccept(session, mission); // Armada contracts go to the whole Armada
     if (mission.type === 'cargo' || mission.type === 'smuggle') {
@@ -321,6 +340,13 @@ const JobOperations: JobOperations = {
     // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
     for (const mission of [...playerData.missions]) {
       if (mission.type === 'miningOrder' || mission.paid) continue;
+      if (mission.type === 'passenger' && mission.pickup && !mission.boarded) {
+        if (mission.pickup === stellarBody.id) {
+          mission.boarded = true;
+          this.toast(session, `${mission.title}: passengers boarded. Continue to the destination.`);
+        }
+        continue;
+      }
       if (mission.radioTour && advanceRadioTour(this, session, mission, stellarBody)) continue;
       // a snapshot: follow-up jobs added on this landing wait for the next one
       if (

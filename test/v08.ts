@@ -408,11 +408,19 @@ await import('../shared/roles.ts').then(async ({ ROLES_INFO, roleMult }) => {
   // the swarm turns up in Vashari space
   const vsys = SYSTEMS.find((starSystem2) => starSystem2.faction === 'vashari' && starSystem2.gen),
     message3 = game.spaces[requiredFixtureValue(vsys).id];
-  let found = false;
-  for (let index = 0; index < 60 && !found; index++) {
+  const swarmPatrol = fake('Swarm Patrol');
+  game.seedFleet(swarmPatrol.s.data, { docks: [{ lead: 787, wings: [786, 736] }] });
+  swarmPatrol.s.data.sys = message3.id;
+  swarmPatrol.s.data.stellar = null;
+  game.spawnPlayer(swarmPatrol.s, 0, 0, 0, 0);
+  const originalRandom = Math.random;
+  try {
+    Math.random = () => 0; // Select the Vashari swarm traffic branch deterministically.
     message3.spawnTraffic(false);
-    found = [...message3.ships.values()].some((shipEntity5) => shipEntity5.faction === 'swarm');
+  } finally {
+    Math.random = originalRandom;
   }
+  const found = [...message3.ships.values()].some((ship) => ship.faction === 'swarm');
   assertCondition(
     found,
     `Feral Swarm clusters appear in Vashari space (${requiredFixtureValue(vsys).name})`,
