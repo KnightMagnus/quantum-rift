@@ -93,7 +93,10 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
       }
       if (
         event.code === 'KeyT' &&
-        !(event.target as HTMLElement).closest('input,textarea,select,[contenteditable]')
+        !(
+          event.target instanceof Element &&
+          event.target.closest('input,textarea,select,[contenteditable]')
+        )
       ) {
         if (!event.repeat) close();
         return true;

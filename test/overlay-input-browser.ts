@@ -696,6 +696,25 @@ try {
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#deadbox').isVisible(), false);
 
+  await page.keyboard.down('v');
+  await page.waitForFunction(() => window.fixtureInputs.some((packet) => packet.th === 1));
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await clearInputs();
+  await neutralInputs();
+  await page.evaluate(() => {
+    Reflect.deleteProperty(document, 'hidden');
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await clearInputs();
+  await neutralInputs();
+  await page.keyboard.up('v');
+  await page.keyboard.down('v');
+  await page.waitForFunction(() => window.fixtureInputs.some((packet) => packet.th === 1));
+  await page.keyboard.up('v');
+
   // Storage needs a landed authorization; use an isolated presentation payload only.
   await page.evaluate(async () => {
     const oldLanded = G.landed;
