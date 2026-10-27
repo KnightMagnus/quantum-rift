@@ -431,3 +431,9 @@ Solo import and account login. Feature owners still perform migrations; no
 second store or startup scheduler is introduced. `docs/SAVE-MIGRATIONS.md` lists
 supported synthetic shape fixtures, native fault evidence and the disposable
 PostgreSQL backup/restore procedure.
+
+`client/connection-liveness.ts` probes silent peers through the existing game
+`ping`/`pong` route. `client/connection.ts` owns its per-transport lifetime and
+closes an unresponsive peer through the ordinary disconnect/reconnect owner;
+it never queues gameplay commands. The timer does not depend on simulation
+snapshots, so pausing Solo does not imply disconnection.

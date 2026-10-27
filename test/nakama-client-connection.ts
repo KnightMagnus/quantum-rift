@@ -19,6 +19,8 @@ import { radioTourOffer } from '../server/radio-discovery.ts';
 import { validServerEnvelope } from '../shared/wire-payloads.ts';
 import { createGameConnection } from '../client/connection.ts';
 import { COMPATIBILITY_MESSAGE } from '../shared/protocol.ts';
+import { ConnectionLiveness } from '../client/connection-liveness.ts';
+import type { LivenessClock } from '../client/connection-liveness.ts';
 import type {
   ClientConnection,
   ConnectionConfig,
@@ -78,6 +80,7 @@ function fixture(
     protocol?: unknown;
     status?: { protocol?: unknown };
     freshStatus?: () => Promise<{ protocol?: unknown }>;
+    livenessClock?: LivenessClock;
   } = {},
 ) {
   const authEntered = deferred<void>();
@@ -150,6 +153,7 @@ function fixture(
     },
   };
   const services: ConnectionDependencies = {
+    livenessClock: options.livenessClock,
     readStatus: options.freshStatus ?? (async () => options.status ?? {}),
     async createNakamaClient(value) {
       assert.deepEqual(value, config.nakama);
@@ -194,6 +198,154 @@ function fixture(
     counts: () => ({ opens, closes, disconnects, socketCreations }),
   };
 }
+
+/** Advance production watchdog decisions without sleeping through timeout tests. */
+function watchdogClock() {
+  let now = 0;
+  let nextId = 0;
+  const pending = new Map<number, () => void>();
+  const clock: LivenessClock = {
+    now: () => now,
+    schedule(callback) {
+      pending.set(++nextId, callback);
+      return nextId as unknown as ReturnType<typeof setTimeout>;
+    },
+    cancel(timer) {
+      pending.delete(timer as unknown as number);
+    },
+  };
+  const tick = (milliseconds = 1000) => {
+    now += milliseconds;
+    const callbacks = [...pending.values()];
+    pending.clear();
+    for (const callback of callbacks) callback();
+  };
+  return {
+    clock,
+    tick,
+    advance: (seconds: number) => {
+      for (let index = 0; index < seconds; index++) tick();
+    },
+    pending,
+  };
+}
+
+await test('browser watchdog probes idle native matches and fences silent peers once', async () => {
+  const time = watchdogClock();
+  const subject = fixture({ livenessClock: time.clock });
+  await subject.opened;
+  time.advance(10);
+  assert.deepEqual(
+    subject.sends.map((packet) => JSON.parse(String(packet.data))),
+    [{ t: 'ping', c: 0 }],
+  );
+  subject.emit({ t: 'pong', c: 0 });
+  time.advance(10);
+  assert.equal(subject.sends.length, 2, 'healthy idle peers get another probe, not a disconnect');
+  time.advance(14);
+  subject.connection.send('{"t":"input","th":1}');
+  subject.emit('{invalid-json');
+  time.tick();
+  assert.equal(
+    subject.connection.readyState,
+    3,
+    'outbound controls and malformed replies do not mask loss',
+  );
+  assert.equal(subject.counts().closes, 1);
+  assert.equal(subject.counts().disconnects, 1);
+  const before = subject.sends.length;
+  subject.connection.send('{"t":"trade","cid":"food","qty":1}');
+  subject.emit({ t: 'pong', c: 0 });
+  subject.socket.ondisconnect(new Event('close'));
+  time.advance(60);
+  assert.equal(subject.sends.length, before, 'no queued gameplay or orphaned probe after closure');
+  assert.equal(subject.counts().closes, 1);
+  assert.equal(time.pending.size, 0);
+  await subject.connection.logout();
+});
+
+await test('watchdog gives suspended pages a fresh probe and stops cleanly on teardown', () => {
+  const time = watchdogClock();
+  let probes = 0,
+    expired = 0;
+  const watch = new ConnectionLiveness(
+    () => probes++,
+    () => expired++,
+    time.clock,
+  );
+  time.advance(10);
+  time.tick(120000);
+  assert.equal(expired, 0, 'a late browser timer is not proof that the peer is dead');
+  assert.equal(probes, 2, 'resume sends a fresh probe');
+  watch.received();
+  time.advance(24);
+  assert.equal(expired, 0);
+  watch.stop();
+  time.advance(60);
+  assert.equal(expired, 0);
+  assert.equal(time.pending.size, 0);
+});
+
+await test('Solo and friend watchdogs fence a socket even if its close handshake never finishes', async () => {
+  for (const solo of [true, false]) {
+    const time = watchdogClock();
+    const sent: string[] = [];
+    let closes = 0;
+    let attempts = 0;
+    const local = {
+      readyState: 1,
+      onopen: null as (() => void) | null,
+      onmessage: null as ((event: { data: string }) => void) | null,
+      onclose: null as (() => void) | null,
+      send: (data: string) => sent.push(data),
+      close: () => {
+        attempts++;
+      },
+    };
+    const connection = createGameConnection(
+      {
+        solo,
+        mode: solo ? undefined : 'friends',
+        localTransport: true,
+        localUrl: 'ws://fixture.invalid',
+      },
+      credentials,
+      {
+        livenessClock: time.clock,
+        createLocalSocket: () => local as unknown as WebSocket,
+        createNakamaClient: async () => {
+          throw Error('Unexpected native adapter');
+        },
+      },
+    );
+    connection.onclose = () => {
+      closes++;
+    };
+    await setImmediate();
+    local.onopen!();
+    time.advance(10);
+    time.advance(14);
+    local.onmessage!({ data: '{"t":"pong","c":0}' });
+    time.advance(10);
+    assert.equal(closes, 0, 'a reply inside the grace window keeps a quiet peer alive');
+    time.advance(15);
+    assert.equal(closes, 1);
+    assert.equal(attempts, 1);
+    assert.equal(local.readyState, 1, 'fixture withholds raw close/error notification');
+    assert.equal(connection.readyState, 3, 'adapter state fences the still-open raw transport');
+    const before = sent.length;
+    connection.send('{"t":"trade","cid":"food","qty":1}');
+    local.onopen!();
+    local.onmessage!({ data: '{"t":"pong","c":0}' });
+    local.onclose!();
+    time.advance(60);
+    assert.equal(connection.readyState, 3, 'late open cannot resurrect the retired adapter');
+    assert.equal(sent.length, before);
+    assert.equal(closes, 1);
+    assert.equal(time.pending.size, 0);
+    await connection.logout();
+  }
+});
 
 await test(
   'native custom auth joins authoritative world; game commands keep opcode 1 without hello/password',

@@ -1,6 +1,8 @@
 import { GAME_PROTOCOL, COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
 import { validServerEnvelope } from '../shared/wire-payloads.ts';
 import { customCaptainId } from '../shared/nakama-contracts.ts';
+import { ConnectionLiveness } from './connection-liveness.ts';
+import type { LivenessClock } from './connection-liveness.ts';
 import type { Client, Session, Socket } from '@heroiclabs/nakama-js';
 
 /** Public client endpoint returned by /api/status; serverKey is not a server secret. */
@@ -63,6 +65,8 @@ export interface NakamaClient {
   createSocket(useSSL: boolean): NakamaSocket;
 }
 export interface ConnectionDependencies {
+  /** Optional monotonic timer seam; production uses the browser clock. */
+  livenessClock?: LivenessClock;
   createNakamaClient(config: NakamaConfig): Promise<NakamaClient>;
   createLocalSocket(url: string): WebSocket;
   /** Fresh authority advertisement on every connection, including reconnect. */
@@ -191,12 +195,14 @@ export function createGameConnection(
   let matchId = '';
   let logoutPromise: Promise<void> | undefined;
   let finishLocalClose: (() => void) | undefined;
+  let liveness: ConnectionLiveness | undefined;
   const localClosed = new Promise<void>((resolve) => {
     finishLocalClose = resolve;
   });
   const finish = () => {
     if (state === 3) return;
     state = 3;
+    liveness?.stop();
     connection.onclose?.();
   };
   const fail = (message?: string) => {
@@ -217,11 +223,21 @@ export function createGameConnection(
       fail(COMPATIBILITY_MESSAGE);
       return;
     }
-    if (validPacket(packet) && state < 2) connection.onmessage?.({ data });
+    if (validPacket(packet) && state < 2) {
+      liveness?.received();
+      connection.onmessage?.({ data });
+    }
+  };
+  const watch = () => {
+    liveness = new ConnectionLiveness(
+      () => connection.send(JSON.stringify({ t: 'ping', c: 0 })),
+      () => fail(),
+      services.livenessClock,
+    );
   };
   const connection: ClientConnection = {
     get readyState() {
-      return local?.readyState ?? state;
+      return state >= 2 ? state : (local?.readyState ?? state);
     },
     onopen: null,
     onmessage: null,
@@ -251,6 +267,7 @@ export function createGameConnection(
       if (socket) void socket.sendMatchState(matchId, 1, data).catch(() => fail());
     },
     close(code, reason) {
+      liveness?.stop();
       if (local) {
         if (state < 2) {
           state = 2;
@@ -284,7 +301,12 @@ export function createGameConnection(
       if (config.solo || (config.mode === 'friends' && config.localTransport === true)) {
         local = services.createLocalSocket(config.localUrl);
         local.onopen = () => {
+          if (state >= 2) {
+            local?.close();
+            return;
+          }
           state = 1;
+          watch();
           connection.onopen?.();
         };
         local.onmessage = (event: MessageEvent<string>) => receive(event.data);
@@ -334,6 +356,7 @@ export function createGameConnection(
         return;
       }
       state = 1;
+      watch();
       connection.onopen?.();
     })
     .catch((error: unknown) => {
