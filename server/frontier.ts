@@ -388,6 +388,7 @@ export const FrontierOperations = {
       }
       case 'build': {
         if (!owner2) return;
+        if (!Object.hasOwn(BUILDINGS, message.kind!)) return;
         const colonyBuilding = BUILDINGS[message.kind!];
         if (!colonyBuilding) return;
         if (colonyState.buildings.length >= COLONY_LEVELS[colonyState.lv]!.slots)

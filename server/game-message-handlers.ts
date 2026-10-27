@@ -1,4 +1,4 @@
-import { parseTradeAction } from '../shared/wire-actions.ts';
+import { parseTradeAction, parsePortPurchaseAction } from '../shared/wire-actions.ts';
 import { isPlayerPortrait } from '../shared/portraits.ts';
 import type { Game } from './game.ts';
 import type { MessageRegistry, NetworkMessage } from './message-registry.ts';
@@ -262,8 +262,11 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
        * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
-        if (message.store) capabilities.features.docks.buyToHangar(session, message.hull! | 0);
-        else capabilities.buyShip(session, message.hull! | 0);
+        const request = parsePortPurchaseAction(message);
+        if (!request || request.t !== 'buyship') return;
+        if (request.store)
+          capabilities.features.docks.buyToHangar(session, Number(request.hull) | 0);
+        else capabilities.buyShip(session, Number(request.hull) | 0);
         return;
       },
     ],
@@ -307,7 +310,9 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
        * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
-        capabilities.outfit(session, (message.id as number) | 0, message.n! | 0);
+        const request = parsePortPurchaseAction(message);
+        if (request?.t === 'outfit')
+          capabilities.outfit(session, Number(request.id) | 0, Number(request.n) | 0);
         return;
       },
     ],
@@ -384,7 +389,14 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
        * @param message Message payload.
        */
       (session: Session, message: NetworkMessage) => {
-        capabilities.buyMat(session, message.mat!, (message.grade as number) | 0, message.n! | 0);
+        const request = parsePortPurchaseAction(message);
+        if (request?.t === 'buymat')
+          capabilities.buyMat(
+            session,
+            request.mat,
+            Number(request.grade) | 0,
+            Number(request.n) | 0,
+          );
         return;
       },
     ],

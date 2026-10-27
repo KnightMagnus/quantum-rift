@@ -58,6 +58,16 @@ try {
   );
   const owner = object(firstEntry)!.owner === 'tow alpha' ? firstEntry : secondEntry;
   let other = owner === firstEntry ? secondEntry : firstEntry;
+  // Telemetry is sampled on its own timer, independently of WebSocket snapshots.
+  await until(
+    () =>
+      feature
+        .read()
+        ?.world.slots.some(
+          (entry: { object: { status: string } }) => entry.object?.status === 'attached',
+        ),
+    'authoritative attach telemetry',
+  );
   assert.equal(
     feature
       .read()

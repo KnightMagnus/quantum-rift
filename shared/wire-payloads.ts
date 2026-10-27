@@ -92,3 +92,136 @@ export function validEconomicPayload(value: unknown): boolean {
     )
   );
 }
+
+/** Common non-economic receive headers. Nested feature state remains owner-typed. */
+export function validServerEnvelope(value: unknown): boolean {
+  if (!wireRecord(value) || !text(value.t) || !boundedTree(value, { remaining: 100000 }))
+    return false;
+  if (!validEconomicPayload(value)) return false;
+  const optional = (key: string, check: (entry: unknown) => boolean) =>
+    value[key] === undefined || check(value[key]);
+  const prose = (entry: unknown) => typeof entry === 'string' && entry.length <= 65536;
+  const array = Array.isArray;
+  const recordOrNull = (entry: unknown) => entry === null || wireRecord(entry);
+  switch (value.t) {
+    case 'welcome':
+      return text(value.name);
+    case 'error':
+    case 'toast':
+      return prose(value.msg);
+    case 'paused':
+      return typeof value.on === 'boolean';
+    case 'portrait':
+      return (
+        typeof value.ok === 'boolean' &&
+        optional('portraitId', text) &&
+        optional('portraitRequestId', text)
+      );
+    case 'space':
+      return finite(value.id) && text(value.sys) && optional('rocks', array);
+    case 'chat':
+      return (
+        prose(value.msg) &&
+        optional('sys', (entry) => entry === null || text(entry)) &&
+        optional('ship', (entry) => entry === null || finite(entry)) &&
+        optional('from', text) &&
+        optional('ch', text)
+      );
+    case 'story':
+      // Completed job/quest notices have no action ID; choices still need one.
+      return (
+        (text(value.id) ||
+          (value.id === undefined &&
+            value.done === true &&
+            (value.choices === undefined ||
+              (Array.isArray(value.choices) && value.choices.length === 0)))) &&
+        prose(value.title) &&
+        prose(value.text) &&
+        optional(
+          'choices',
+          (entry) =>
+            Array.isArray(entry) &&
+            entry.length <= 64 &&
+            entry.every(
+              (choice) => wireRecord(choice) && text(choice.value) && prose(choice.label),
+            ),
+        )
+      );
+    case 'hail':
+      return (
+        optional('who', prose) &&
+        optional('text', prose) &&
+        optional(
+          'opts',
+          (entry) =>
+            Array.isArray(entry) &&
+            entry.length <= 64 &&
+            entry.every((choice) => wireRecord(choice) && text(choice.k) && prose(choice.label)),
+        )
+      );
+    case 'dm':
+      return text(value.from) && text(value.to) && prose(value.msg);
+    case 'dms':
+      return (
+        Array.isArray(value.list) &&
+        value.list.every(
+          (entry) =>
+            wireRecord(entry) &&
+            text(entry.from) &&
+            prose(entry.msg) &&
+            (entry.at === undefined || finite(entry.at)),
+        )
+      );
+    case 'social':
+      return optional('social', recordOrNull) && optional('armada', recordOrNull);
+    case 'trade2':
+      return recordOrNull(value.trade);
+    case 'armadaContract':
+      return recordOrNull(value.plan);
+    case 'rally':
+      return text(value.sys) && text(value.from);
+    case 'follow':
+      return text(value.to) && text(value.leader);
+    case 'order':
+      return text(value.o);
+    case 'rivals':
+      return Array.isArray(value.list);
+    case 'boards':
+      return text(value.cat) && Array.isArray(value.list);
+    case 'profile':
+      return recordOrNull(value.p);
+    case 'notify':
+      return prose(value.title) && prose(value.body);
+    case 'dead':
+      return text(value.at) && finite(value.fee);
+    case 'hailmark':
+      // The hail owner clears an active marker with only { until: 0 }.
+      return (
+        finite(value.until) &&
+        (value.until === 0
+          ? optional('x', finite) && optional('y', finite) && optional('label', text)
+          : finite(value.x) && finite(value.y) && text(value.label))
+      );
+    case 'hailinbox':
+      return optional('entries', array) && optional('allow', (entry) => typeof entry === 'boolean');
+    case 'refinery':
+      return optional('op', text) && wireRecord(value.data);
+    case 'refineryError':
+      return text(value.op);
+    // Snapshot tuple schemas are checked by the connection's prediction boundary.
+    // These owners retain their nested feature schemas and compatibility fields.
+    case 'snap':
+    case 'scene':
+    case 'world':
+    case 'sites':
+    case 'arena':
+    case 'pong':
+    case 'you':
+    case 'landed':
+    case 'refineryQuote':
+    case 'refineryFuelQuote':
+      return true;
+    default:
+      return false;
+  }
+}
