@@ -16,9 +16,8 @@ default jump key, and custom jump bindings still work.
 ## Personal Stations
 
 Your own Personal Station always grants docking clearance, even when the local
-faction is hostile. The same owner clearance applies to refinery access and
-motherlode delivery; docking control no longer asks you to buy an access pass
-for your own station.
+faction is hostile. The same owner clearance applies to the home refinery. Docking control no longer
+asks you to buy an access pass for your own station.
 
 Visiting another captain's Personal Station shows its owner's name and a
 **Guest Dock** label. Guests can use OVERVIEW, TRADE, JOBS and their own CREW.
