@@ -1833,7 +1833,10 @@ export class Game<Storage extends Database = Database> {
       console.error('Save validation rejected:', (error as Error).message);
       return this.send(session, {
         t: 'error',
-        msg: 'Save validation failed. Contact the server operator.',
+        msg:
+          error instanceof Error && error.message.startsWith('Cargo ledger:')
+            ? 'Cargo save validation failed. Contact the server operator.'
+            : 'Save validation failed. Contact the server operator.',
       });
     }
     if (!session.isNew) this.health?.observe('returningLogins', 1);
