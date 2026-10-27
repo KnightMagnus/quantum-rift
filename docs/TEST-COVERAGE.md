@@ -1269,9 +1269,26 @@ trickle or black-hole each direction. Probe timings are shortened for the test.
 
 Limits: the in-process checks above use the reference backend. The loopback proxy
 delays and drops whole TCP streams; it does not reorder packets inside TCP, which
-TCP itself prevents. The browser client has no matching watchdog, so a client whose
-server vanishes silently waits for the browser's own socket timeout. Native online
-replacement and restart remain covered by `nakama-network.ts`.
+TCP itself prevents. Native online replacement and restart remain covered by
+`nakama-network.ts`.
+
+`browser-server-liveness.ts` runs the built browser and real Solo server through a
+TCP proxy. It pauses the simulation through the ordinary quit dialog and checks
+that idle application probes receive replies without reconnecting. In flight, the
+proxy then drops all server bytes and FIN while allowing outbound controls. The
+browser must detect loss, reconnect on a new link, restore authoritative state and
+clear held controls without replaying gameplay requests. Timings are the production
+10-second idle probe and 15-second reply window, not shortened test settings.
+
+`nakama-client-connection.ts` also advances a deterministic monotonic clock through
+native-match reply loss, healthy idle replies, malformed packets, teardown and
+page suspension. Accepted inbound game packets renew liveness; outbound traffic
+does not. Both native and local adapters use the same watchdog. A browser timer
+delayed by more than the reply window starts a fresh probe rather than treating
+page suspension as proof of server failure. Detection is bounded while browser
+JavaScript is scheduled, not while the OS or browser suspends it. The TCP browser
+fixture is local/Solo; native watchdog decisions use the SDK adapter fixture, not
+a live Nakama network blackhole.
 
 Legacy purchases such as `buyship`, `buymat` and `trade` carry no request
 identifier, so a client that deliberately sends one twice buys twice; the browser

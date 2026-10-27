@@ -198,7 +198,8 @@
     "pressure-hull-browser.ts",
     "protocol-compatibility-browser.ts",
     "hud-controls-browser.ts",
-    "asset-recovery-browser.ts"
+    "asset-recovery-browser.ts",
+    "browser-server-liveness.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -692,7 +693,8 @@
     "station-service.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
     "combat-playability.ts": ["helpers/combat-playability-simulation.ts"],
     "save-feature-validation.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
-    "save-postgres-restore.ts": ["helpers/nakama-service.ts", "helpers/temp-data.ts"]
+    "save-postgres-restore.ts": ["helpers/nakama-service.ts", "helpers/temp-data.ts"],
+    "browser-server-liveness.ts": ["helpers/temp-data.ts", "helpers/browser-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -751,7 +753,12 @@
         "server/towing.ts"
       ],
       "services": ["refinery", "towing"],
-      "tests": ["network-faults.ts", "websocket-transport.ts", "network-faults-loopback.ts"],
+      "tests": [
+        "network-faults.ts",
+        "websocket-transport.ts",
+        "network-faults-loopback.ts",
+        "browser-server-liveness.ts"
+      ],
       "asserts": "Replayed goal claims, job accepts and landings settle once; an evicted or closed local connection cannot trade, accept, log, launch or steer after a replacement sign-in; late frames after a server close never dispatch or accumulate, and closed sockets release partial/fragmented buffers; flight disconnect docks and reconnection starts without queued controls; restart restores only flushed credits, contracts and claims, and a replayed claim after restart cannot pay again. Deterministic queued/held-response fault schedules cover 16 refinery purchase/towing reward scenarios across clean/prejournal/postjournal/between-snapshot/final-sync local writes and clean/prewrite/lost-ack native-CAS storage; exact credits/cargo and one receipt survive replay, graceful reconnect and restart, known uncommitted settlement stays absent, native uncertainty freezes authority, stale tow revisions require fresh attachment, and delayed goal claims pay once while two explicit legacy material purchase intents still settle twice. Over real loopback TCP, byte-at-a-time delivery dispatches a purchase once, a purchase whose reply is lost is shown committed once after reconnect, a request lost in transit spends nothing, a high-latency link stays connected, and a silent half-open peer is pinged, dropped within its allowance and docked with clean controls on reconnect."
     },
     {
@@ -1737,12 +1744,13 @@
     },
     {
       "id": "client-connection-lifecycle",
-      "owners": ["client/connection-lifecycle.ts"],
+      "owners": ["client/connection-lifecycle.ts", "client/connection-liveness.ts"],
       "services": [],
       "tests": [
         "connection-lifecycle.ts",
         "logout-browser.ts",
-        "protocol-compatibility-browser.ts"
+        "protocol-compatibility-browser.ts",
+        "browser-server-liveness.ts"
       ],
       "asserts": "Independent pre-extraction traces preserve current-socket/epoch guards, native/local hello, packet dispatch, live credentials/configuration, bounded backoff, terminal compatibility/duplicate-login denial and account detach; existing browser tests cover actual sign-in/logout."
     },
