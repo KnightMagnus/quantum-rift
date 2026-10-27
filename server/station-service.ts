@@ -135,7 +135,7 @@ export function createStationService(capabilities: StationServiceCapabilities): 
           stationState.refT = Date.now();
           capabilities.log(
             playerData,
-            `Quantum Station reached Station Tier ${stationState.ops}: ${opsLevelDef.title}.`,
+            `${session.name}'s Personal Station reached Station Tier ${stationState.ops}: ${opsLevelDef.title}.`,
           );
           capabilities.toast(
             session,

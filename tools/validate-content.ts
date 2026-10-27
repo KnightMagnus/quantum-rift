@@ -2,6 +2,7 @@ import { readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { augmentAssets } from '../shared/rules.ts';
+import { validateNarrativeContent } from './narrative-content-validation.ts';
 import {
   hullSources,
   refitHullReferences,
@@ -33,6 +34,7 @@ const diagnostics = [
     sources,
   ),
   ...validateContentReferences(assets, refitHullReferences()),
+  ...validateNarrativeContent(assets),
 ];
 for (const diagnostic of diagnostics)
   console.error(
@@ -41,4 +43,7 @@ for (const diagnostic of diagnostics)
 if (diagnostics.length) {
   console.error(`Content validation failed: ${diagnostics.length} error(s).`);
   process.exitCode = 1;
-} else console.log(`Content validation passed: ${Object.keys(assets.ships).length} ships.`);
+} else
+  console.log(
+    `Content validation passed: ${Object.keys(assets.ships).length} ships and composed narrative catalogs.`,
+  );

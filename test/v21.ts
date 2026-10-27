@@ -304,7 +304,7 @@ assertCondition(
     game.features.docks.activeWings(captainFixture2.d).length === 0,
   'a captain without a station has Dock A and no hangar',
 );
-// your own guns hit any ship now (EV-style): a friendly trader takes damage, turns hostile, and you lose standing
+// Deliberately attacking a selected friendly trader causes damage, hostility and standing loss.
 {
   const captainFixture3 = fake('Trigger Happy');
   captainFixture3.send({ t: 'depart' });
@@ -318,6 +318,7 @@ assertCondition(
     a: 0,
     ai: 'trade',
   });
+  captainFixture3.send({ t: 'target', id: shipEntity.id });
   shipEntity.dest = { x: shipEntity.x, y: shipEntity.y, out: true };
   const initialAngle0 = shipEntity.armor + shipEntity.shield,
     quantum2 = captainFixture3.d.rep.quantum;
@@ -337,7 +338,7 @@ assertCondition(
     shipEntity.armor + shipEntity.shield < initialAngle0 &&
       captainFixture3.d.rep.quantum < quantum2 &&
       message.isHostile(shipEntity, requiredFixtureValue(entity8)),
-    'your guns hit a friendly trader: it turns hostile and you lose standing',
+    'selected friendly trader takes damage, turns hostile and costs standing',
   );
   const shipEntity2 = message.makeShip({
     hull: 704,

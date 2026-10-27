@@ -239,7 +239,9 @@ assertCondition(
   !playerData.officers.some((options) => options.rarity === 3),
   'Epic contracts need Exalted standing',
 );
-// jobs
+// jobs: broad inventory uses a suitably armed, experienced captain rather than a starter.
+playerData.stats.combat = 50000;
+game.seedFleet(playerData, { docks: [{ lead: 736, wings: [717, 717] }] });
 const offers = SYSTEMS.flatMap((starSystem3) =>
   starSystem3.stellars
     .filter(
@@ -251,7 +253,7 @@ const offers = SYSTEMS.flatMap((starSystem3) =>
   .flatMap((stellarBody3) => game.offers(STELLARS[stellarBody3.id], playerData));
 const kinds = new Set(offers.map((mission7) => mission7.type));
 assertCondition(
-  ['convoy', 'smuggle', 'rescue', 'survey', 'assassinate'].every((propertyKey2) =>
+  ['bounty', 'convoy', 'smuggle', 'rescue', 'survey', 'assassinate'].every((propertyKey2) =>
     kinds.has(propertyKey2),
   ),
   `job boards post the new jobs: ${[...kinds].join(', ')}`,

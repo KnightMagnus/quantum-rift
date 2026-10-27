@@ -491,7 +491,7 @@ export const ACTIONS: Array<[string, string, string]> = [
   ['ordGather', 'Fleet: form up', 'KeyG'],
   ['ordHold', 'Fleet: hold position', 'KeyH'],
   ['ordFire', 'Fleet: hold fire', 'KeyY'],
-  ['ordLoot', 'Fleet: collect loot', 'KeyU'],
+  ['ordLoot', 'Fleet: collect loot', 'Quote'],
   ['companion', 'Next companion tab', 'KeyC'],
   ['surveyPulse', 'Scan nearby rocks', 'KeyV'],
   ['dredgeSweep', 'Dredge Sweep', 'BracketLeft'],
@@ -2617,6 +2617,7 @@ const keyName = (component: string | null): string =>
     ? 'assign key'
     : {
         Backquote: '`',
+        Quote: "'",
         BracketLeft: '[',
         BracketRight: ']',
         Semicolon: ';',

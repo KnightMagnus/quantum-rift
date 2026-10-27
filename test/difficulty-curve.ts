@@ -17,6 +17,7 @@ import {
   dangerTier,
   fitRaidToBudget,
   raidBudget,
+  hullCombatPower,
 } from '../shared/hostile.ts';
 import { missionDetails } from '../client/mission-details.ts';
 
@@ -26,9 +27,9 @@ const assets = augmentAssets(
 const strengthOf = (hull: number) => assets.ships[hull]?.strength || 10;
 
 // ------------------------------------------------------------------ raid budget
-assert.equal(raidBudget(100, 0), 80);
-assert.equal(raidBudget(72, 2), 72 * 1.6);
-assert.equal(raidBudget(100, 5), 280);
+assert.equal(raidBudget(100, 0), 35);
+assert.equal(raidBudget(72, 2), 72 * (0.35 + 0.15 * 2));
+assert.equal(raidBudget(100, 5), 110.00000000000001);
 {
   const hollowPool = TRAFFIC.hollow.war; // Kestrel 30, Cutlass 80, Bramble 180, Tempest 520
   assert.deepEqual(
@@ -197,11 +198,14 @@ for (const [power, danger] of [
   [300, 5],
 ] as const) {
   const { space, spawned } = raidSpace(power, danger);
-  for (let index = 0; index < 300; index++) space.spawnTraffic(false);
+  for (let index = 0; index < 300; index++) {
+    space.t = index * 40;
+    space.spawnTraffic(false);
+  }
   const budget = raidBudget(power, danger);
   assert.ok(spawned.length > 50, 'pirate havens keep spawning raids');
   for (const group of spawned) {
-    const total = group.reduce((sum, hull) => sum + strengthOf(hull), 0);
+    const total = group.reduce((sum, hull) => sum + hullCombatPower(assets, hull), 0);
     assert.ok(
       total <= budget || (group.length === 1 && group[0] === 705),
       `raid ${group.join(',')} (${total}) fits a ${budget} budget`,
@@ -216,7 +220,7 @@ for (const [power, danger] of [
 {
   const { space } = raidSpace(72, 4);
   space.ships.clear();
-  assert.equal(space.raidBudget(), null, 'raids are not scaled when no captain is present');
+  assert.equal(space.raidBudget(), 0, 'unoccupied wake defers ambient threats');
   const farside = raidSpace(72, 4).space;
   farside.sys = { ...farside.sys, farside: true };
   assert.equal(farside.raidBudget(), null, 'Farside keeps full-strength raids');
@@ -242,23 +246,23 @@ for (const [power, danger] of [
   } as unknown as ClientGameState;
   assert.equal(
     missionDetails(state, { type: 'patrol', sys: 'emberlight', reward: 1 }).risk,
-    '◆ Moderate (estimated raid 115 vs your 72)',
+    '● Low (estimated raid 47 vs your 72)',
   );
   assert.equal(
     missionDetails(state, { type: 'patrol', sys: 'gloam', reward: 1 }).risk,
-    '▲ High (estimated raid 173 vs your 72)',
+    '◆ Moderate (estimated raid 68 vs your 72)',
   );
   assert.equal(
     missionDetails(state, { type: 'bounty', hull: 711, sys: 'gloam', reward: 1 }).risk,
-    '▲ High (threat 180 vs your 72)',
+    '▲ High (threat 150 vs your 72)',
   );
   assert.equal(
     missionDetails(state, { type: 'bounty', hull: 716, sys: 'emberlight', reward: 1 }).risk,
-    '☠ Deadly (threat 520 vs your 72)',
+    '☠ Deadly (threat 320 vs your 72)',
   );
   assert.equal(
     missionDetails(state, { type: 'bounty', hull: 705, sys: 'gloam', reward: 1 }).risk,
-    '● Low (threat 30 vs your 72)',
+    '● Low (threat 25 vs your 72)',
     'a weak target is Low even in a dangerous system',
   );
   assert.equal(
@@ -274,14 +278,14 @@ for (const [power, danger] of [
   assert.equal(
     missionDetails(state, { type: 'assassinate', hull: 708, guard: 711, sys: 'gloam', reward: 1 })
       .risk,
-    '☠ Deadly (threat 440 vs your 72)',
+    '☠ Deadly (threat 369 vs your 72)',
     'assassination danger includes both bodyguards',
   );
   state.you!.power = 4;
   assert.equal(
     missionDetails(state, { type: 'patrol', sys: 'emberlight', reward: 1 }).risk,
-    '☠ Deadly (estimated raid 30 vs your 4)',
-    'patrol estimates cannot fall below the minimum available raider',
+    '● Low (estimated raid 0 vs your 4)',
+    'patrols do not promise unbudgeted minimum raiders',
   );
   const unscaledSystem = Object.values(systemsById).find((system) => system.farside)!;
   assert.ok(unscaledSystem);
@@ -336,7 +340,10 @@ const practiceFixture = (power: number, tut: number, sys: FixtureShape<Space['sy
 {
   const { game, space, session, spawned } = practiceFixture(72, killStep);
   Game.prototype.practiceRaider.call(game, session, space);
-  assert.equal(spawned[0].hull, 705, 'a Caravel meets a Kestrel Scout');
+  assert.ok(
+    hullCombatPower(assets, spawned[0].hull) <= 72 * PRACTICE_RAIDER.powerShare,
+    'practice raider fits its measured power allowance',
+  );
 }
 for (const [tut, sys] of [
   [killStep + 1, {}],
