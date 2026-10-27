@@ -94,6 +94,21 @@ assert.equal(
 );
 hunter.target = null;
 assert.equal(space.canAcquire(fourth, captain), true, 'a vacant hunt slot is immediately reusable');
+// A fragile lead cannot borrow an unlimited encounter budget from expensive wings.
+const raiderMap = space.ships;
+space.ships = new Map([[captain.id, captain]]);
+const originalDurability = captain.st.shield + captain.st.armor;
+captain.st.shield = 60;
+captain.st.armor = 40;
+assert.ok(
+  space.raidBudget()! <= 160,
+  '100-HP lead caps danger-six total threat at 160 despite 2000 fleet power',
+);
+captain.shield = 1;
+captain.armor = 1;
+assert.ok(space.raidBudget()! > 0, 'current damage does not suppress encounters');
+captain.st.armor = originalDurability - 60;
+space.ships = raiderMap;
 console.log(
   'Combat playability: fitted ratings, strict wake/ongoing shared budgets, incursion caps and hunt-slot reuse passed.',
 );
