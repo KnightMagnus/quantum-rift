@@ -723,8 +723,9 @@ replaces the inapplicable self-follow control; followers retain explicit opt-in.
 The disclosed fixture starts an attainable matched cruise with small lateral
 velocity error; it accelerates production ticks without changing flight physics.
 Real key gestures run on the native timer and wait for authoritative release;
-only the long coasts are accelerated. The leader must retain catch-up speed
-headroom. It asserts sustained authoritative movement/heading, sharp-turn slot
+only the long coasts are accelerated. A turn beyond a right angle and a bounded
+250ms thrust-release delay exercise restart input without relying on immediate
+browser delivery. The leader must retain catch-up speed headroom. It asserts sustained authoritative movement/heading, sharp-turn slot
 recovery and manual override. Existing formation/network tests retain fleet envelope, consent,
 combat/landing suspension and leader-jump coverage. The five-client network case
 also closes the actual leader WebSocket, asserts follower suspension, reconnects
