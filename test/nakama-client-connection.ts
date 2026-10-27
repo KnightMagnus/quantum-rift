@@ -6,7 +6,17 @@ import { once } from 'node:events';
 import { setImmediate } from 'node:timers/promises';
 import { Session } from '@heroiclabs/nakama-js';
 import type { Match, MatchData } from '@heroiclabs/nakama-js';
-import { upgrade } from '../server/ws.ts';
+import filesystem from 'node:fs';
+import path from 'node:path';
+import operatingSystem from 'node:os';
+import { upgrade, Socket } from '../server/ws.ts';
+import { Game } from '../server/game.ts';
+import { DB } from '../server/db.ts';
+import { STELLARS } from '../shared/galaxy.ts';
+import { CHAINS } from '../shared/quests.ts';
+import type { QuestRecord } from '../shared/quests.ts';
+import { radioTourOffer } from '../server/radio-discovery.ts';
+import { validServerEnvelope } from '../shared/wire-payloads.ts';
 import { createGameConnection } from '../client/connection.ts';
 import { COMPATIBILITY_MESSAGE } from '../shared/protocol.ts';
 import type {
@@ -284,6 +294,175 @@ await test(
       for (const packet of packets)
         local.onmessage?.({ data: JSON.stringify(packet) } as MessageEvent);
       assert.deepEqual(received, packets.slice(-2), mode + ' uses identical receive validation');
+    }
+  },
+);
+
+await test(
+  'real completion notices and hail cancellation survive native, Solo and friend receive paths',
+  { timeout: 10000 },
+  async () => {
+    const directory = filesystem.mkdtempSync(
+      path.join(operatingSystem.tmpdir(), 'wire-notice-producer-'),
+    );
+    try {
+      const database = new DB(directory);
+      const game = new Game(
+        JSON.parse(
+          filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
+        ),
+        database,
+        {
+          seedDefinitions: [],
+          automaticClock: false,
+          defer: () => {},
+          randomUUID: () => 'wire-notice-fixture',
+        },
+      );
+      const produced: Record<string, unknown>[] = [];
+      const socket = new Socket(new NetSocket());
+      socket.send = (raw) =>
+        produced.push(JSON.parse(typeof raw === 'string' ? raw : JSON.stringify(raw)));
+      socket.close = () => {};
+      game.connect(socket, 'fixture');
+      const pilot = [...game.sessions.values()][0];
+      game.onMessage(pilot, { t: 'hello', name: 'Notice Captain', pass: 'fixture' });
+      const player = pilot.data;
+      assert(player);
+      produced.length = 0;
+      const port = STELLARS['meridian-yards'];
+      let tour: ReturnType<typeof radioTourOffer> = null;
+      for (let attempt = 0; attempt < 1000 && !tour; attempt++) {
+        player.stats.jumps = attempt;
+        tour = radioTourOffer(port, player);
+      }
+      assert(tour?.radioTour, 'Find the deterministic ordinary tour offer');
+      player.missions.push(tour);
+      const beforeCredits = player.credits;
+      for (const stop of tour.radioTour.stops) {
+        const destination = STELLARS[stop];
+        player.sys = destination.system;
+        player.stellar = destination.id;
+        game.completeOnLanding(pilot, destination);
+      }
+      assert.equal(player.credits, beforeCredits + 60000, 'Real job owner completes the tour');
+      assert.equal(produced.filter((packet) => packet.t === 'story').length, 1);
+
+      const quest: QuestRecord = {
+        qid: 'wire-notice-quest',
+        name: 'Fixture quest',
+        giver: 'Fixture contact',
+        at: 'qstation',
+        plan: {},
+        steps: [],
+        step: 0,
+        started: Date.now(),
+        tries: 0,
+        chain: CHAINS[0].id,
+        contact: 'fixture-contact',
+        lvl: 0,
+      };
+      const quests = game.features.quests.questInit(player);
+      quests.active[quest.qid] = quest;
+      game.features.quests.questFinish(pilot, quest);
+      assert.equal(
+        quests.active[quest.qid],
+        undefined,
+        'Real quest owner completes its saved record',
+      );
+      assert.equal(produced.filter((packet) => packet.t === 'story').length, 2);
+
+      const hailState = game.hails.state(pilot);
+      hailState.escort = { source: 99999, sys: player.sys, expires: Date.now() + 60000 };
+      game.hails.cancelEscort(pilot, hailState);
+      assert.equal(hailState.escort, null, 'Real hail owner cancels the escort');
+      const notices = produced.filter((packet) => packet.t === 'story' || packet.t === 'hailmark');
+      assert.equal(notices.length, 3);
+      for (const notice of notices.filter((packet) => packet.t === 'story')) {
+        assert.equal(notice.done, true);
+        assert.equal(notice.id, undefined, 'Actual completion producers omit an action identifier');
+      }
+      assert.deepEqual(notices.at(-1), { t: 'hailmark', until: 0 });
+      const invalid = [
+        { t: 'story', title: 'Offer', text: 'Hello' },
+        { t: 'story', done: true, id: null, title: 'Notice', text: 'Hello' },
+        { t: 'story', done: true, id: 7, title: 'Notice', text: 'Hello' },
+        {
+          t: 'story',
+          done: true,
+          title: 'Notice',
+          text: 'Hello',
+          choices: [{ value: 'accept', label: 'Accept' }],
+        },
+        { t: 'hailmark', until: Date.now() + 10000 },
+        { t: 'hailmark', until: 0, x: [] },
+        { t: 'hailmark', until: '0' },
+      ];
+      const activeMarker = {
+        t: 'hailmark',
+        until: Date.now() + 10000,
+        x: 1,
+        y: 2,
+        label: 'Fixture',
+      };
+      const offer = {
+        t: 'story',
+        id: 'fixture-offer',
+        title: 'Offer',
+        text: 'Hello',
+        choices: [{ value: 'accept', label: 'Accept' }],
+      };
+      for (const packet of invalid) assert.equal(validServerEnvelope(packet), false);
+      const accepted = [...notices, activeMarker, offer];
+      for (const packet of accepted) assert.equal(validServerEnvelope(packet), true);
+      const packets = [...invalid, ...accepted];
+      const native = fixture();
+      await native.opened;
+      for (const packet of packets) native.emit(packet);
+      assert.deepEqual(
+        native.received.map((packet) => JSON.parse(packet)),
+        accepted,
+      );
+      await native.connection.logout();
+      for (const mode of ['solo', 'friends'] as const) {
+        let local!: WebSocket;
+        const received: unknown[] = [];
+        const connection = createGameConnection(
+          {
+            solo: mode === 'solo',
+            mode: mode === 'friends' ? 'friends' : undefined,
+            localTransport: true,
+            localUrl: 'ws://fixture.invalid',
+          },
+          credentials,
+          {
+            async createNakamaClient() {
+              throw new Error('unexpected native connection');
+            },
+            createLocalSocket() {
+              local = {
+                close() {
+                  local.onclose?.({} as CloseEvent);
+                },
+              } as WebSocket;
+              return local;
+            },
+          },
+        );
+        connection.onmessage = (event) => received.push(JSON.parse(event.data));
+        await setImmediate();
+        local.onopen?.({} as Event);
+        for (const packet of packets)
+          local.onmessage?.({ data: JSON.stringify(packet) } as MessageEvent);
+        assert.deepEqual(
+          received,
+          accepted,
+          mode + ': real producer notices survive identical receive validation',
+        );
+        await connection.logout();
+      }
+    } finally {
+      filesystem.rmSync(directory, { recursive: true, force: true });
     }
   },
 );

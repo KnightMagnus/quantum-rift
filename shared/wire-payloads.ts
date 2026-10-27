@@ -128,8 +128,13 @@ export function validServerEnvelope(value: unknown): boolean {
         optional('ch', text)
       );
     case 'story':
+      // Completed job/quest notices have no action ID; choices still need one.
       return (
-        text(value.id) &&
+        (text(value.id) ||
+          (value.id === undefined &&
+            value.done === true &&
+            (value.choices === undefined ||
+              (Array.isArray(value.choices) && value.choices.length === 0)))) &&
         prose(value.title) &&
         prose(value.text) &&
         optional(
@@ -190,7 +195,13 @@ export function validServerEnvelope(value: unknown): boolean {
     case 'dead':
       return text(value.at) && finite(value.fee);
     case 'hailmark':
-      return finite(value.until) && finite(value.x) && finite(value.y) && text(value.label);
+      // The hail owner clears an active marker with only { until: 0 }.
+      return (
+        finite(value.until) &&
+        (value.until === 0
+          ? optional('x', finite) && optional('y', finite) && optional('label', text)
+          : finite(value.x) && finite(value.y) && text(value.label))
+      );
     case 'hailinbox':
       return optional('entries', array) && optional('allow', (entry) => typeof entry === 'boolean');
     case 'refinery':
