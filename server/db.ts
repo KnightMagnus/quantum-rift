@@ -1,3 +1,4 @@
+import { validateFeatureSnapshots } from './save-validation.ts';
 import type { IndexFleetWorld } from './index-fleet.ts';
 import type { NhalPopulation } from './nhal.ts';
 import type { IndexWorld } from './index-worksite.ts';
@@ -82,12 +83,13 @@ function savedRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-/** Only envelope shape is checked here; feature owners retain their validators. */
+/** Validate envelopes and bounded compatibility fields before journal recovery writes. */
 function validateLocalSnapshots(players: unknown, world: unknown): void {
   if (!savedRecord(players) || Object.values(players).some((account) => !savedRecord(account)))
     throw new Error('Invalid local player snapshot');
   if (!savedRecord(world) || !savedRecord(world.sites))
     throw new Error('Invalid local world snapshot');
+  validateFeatureSnapshots(players, world);
 }
 
 /**

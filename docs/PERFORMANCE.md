@@ -423,3 +423,63 @@ are not round-trip latency. No controlled percentage improvement is inferred fro
 older runs with different sources, durations or competing host load. Dedicated-host
 repeats, representative combat/mining/distributed activity, browser rendering and
 longer soaks remain necessary before a production hardware or smoothness claim.
+
+## Image, audio and procedural resource ownership
+
+Reproduce the actual-browser loading, cache eviction and graphics recovery probe:
+
+```sh
+npm run build
+node test/asset-recovery-browser.ts
+```
+
+It writes `asset-recovery/results.json` under the regression artifact directory,
+including initial page-to-music readiness and the six-sheet load/decode time.
+These elapsed times include network, scheduling and cache hits, not isolated decoder benchmarks.
+The local Chromium fixture loads the login theme, enters ordinary early-game
+flight and decodes six additional catalog ship sheets. On the shared Linux
+measurement host, one final run retained about 101 MiB of decoded ship sheets
+and 51 MiB of scenery. Traffic changes the exact working set between runs; the
+current JSON report is the measurement record. Login music decoded to about
+48 MiB of PCM. These are reproducible
+fixture observations, not total browser memory or universal device requirements.
+
+`imageResourceUsage()` in `client/asset-resources.ts` estimates decoded images at
+four bytes per natural pixel. Ship cache ownership is limited to 256 MiB, leaving
+room above the measured ship working set; scenery ownership is limited to 64 MiB,
+leaving headroom above the measured scenery set rather than retaining the whole
+catalog at once. Resources used in the last two seconds are retained even
+above budget. Idle zero-byte failures/loading records also have count limits.
+Image eviction removes cache ownership; it never clears an image still used by
+a Sprite. Two large scene-specific sheets are requested only in the scene that
+uses them rather than retained eagerly for every captain.
+
+`audioResourceUsage()` reports cached PCM bytes, active-source bytes and their
+deduplicated union. The 64 MiB decoded audio cache accommodates the measured
+48 MiB login track plus short effects. Playing music, ambience and sound effects
+retain their own buffers after eviction. Radio HTMLMediaElement buffering is
+browser-owned and is not part of this PCM cache. Pending loads are capped at 64, settle
+on both success and failure, and failed requests back off for 30 seconds. Failure
+diagnostics retain at most 128 resource keys. Audio falls back to silence, while
+missing/corrupt ship sheets retain a visible neutral shape and existing controls.
+
+Procedural resources have separate ownership ceilings: 32 MiB each for legacy
+body and mining-rock canvases, 1 MiB for colored glow canvases, 32 MiB for native
+ship embellishments and 16 MiB for native projectile frames. These limits replace
+unbounded or count-only policies; all use the same two-second live-resource
+protection. `proceduralResourceUsage()` and the scene display's `resourceUsage()`
+expose their retained canvas estimates. The existing planet-lighting budgets
+remain separate. These are cache-growth guardrails, not a promise to hold the
+whole browser below their sum: active consumers, decoded image copies, GPU
+textures, browser overhead and audio mixer internals can retain additional data.
+
+On a restored graphics context the client disposes the old Excalibur display
+engine, including its texture collector, and rebuilds the scene on the same
+canvas. It preserves the connection and authoritative client state, sends neutral
+manual input and requires held controls to release before resuming. Four real
+WebGL loss/restoration cycles and renderer pixel checks run in Chromium CI.
+Canvas2D handlers use its native context events, but a real 2D driver reset is not
+forceable by this fixture. A driver that does not restore still requires reload;
+physical GPUs, mobile devices and audible playback remain separate validation.
+Losses lasting over a second show a short recovery notice with a Reload button;
+it disappears automatically when drawing resumes.

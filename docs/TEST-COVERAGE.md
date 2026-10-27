@@ -673,8 +673,9 @@ replaces the inapplicable self-follow control; followers retain explicit opt-in.
 The disclosed fixture starts an attainable matched cruise with small lateral
 velocity error; it accelerates production ticks without changing flight physics.
 Real key gestures run on the native timer and wait for authoritative release;
-only the long coasts are accelerated. The leader must retain catch-up speed
-headroom. It asserts sustained authoritative movement/heading, sharp-turn slot
+only the long coasts are accelerated. A turn beyond a right angle and a bounded
+250ms thrust-release delay exercise restart input without relying on immediate
+browser delivery. The leader must retain catch-up speed headroom. It asserts sustained authoritative movement/heading, sharp-turn slot
 recovery and manual override. Existing formation/network tests retain fleet envelope, consent,
 combat/landing suspension and leader-jump coverage. The five-client network case
 also closes the actual leader WebSocket, asserts follower suspension, reconnects
@@ -1216,15 +1217,31 @@ receipts and their existing tests.
 
 ## Save catalog and local restore rehearsal
 
-`save-migrations.ts` exercises detached cargo/storage migration, legacy/current
+`save-migrations.ts` exercises ordered detached cargo/storage and tutorial migration, legacy/current
 synthetic fixtures, corrupt/unsupported rejection without source mutation,
 read-only disposable CLI restores and committed-journal precedence. It rejects
 malformed local snapshot envelopes and injected access errors without empty-state
 fallback, then checks five real journal fault boundaries, freeze and reopen/retry.
-Credits, unrelated goods, station ownership and progression remain unchanged.
+Credits, unrelated goods and station ownership remain unchanged; tutorial progress
+moves only according to the existing version-2 mapping. Committed tutorial cases
+cover both remapping thresholds, completion and current sentinels. Unsupported
+markers and invalid progress reject without partially migrating earlier accounts.
+Production `NakamaDatabase` drills use an in-memory CAS backend for precommit,
+lost-acknowledgement, frozen retry, restart and stale-writer checks. They cover
+cargo/tutorial markers and real Game/co-op fleet-bank, founding-fee and directive
+refunds, including exact balances and repeat-restart log counts. Co-op account
+migration in that fault fixture is called directly, not through native login.
+`save-feature-validation.ts` uses committed synthetic pre-feature/default,
+stored-escort and retained-progress shapes through real login and two reloads,
+checking exact refunds and stable inventory/progression. Corrupt compatibility
+fields reject at local/native load, journal recovery, import and login before
+state mutation. `save-postgres-restore.ts` exercises native authentication and
+migration refunds, stopped-source `pg_dump`, `pg_restore` into a separate disposable
+database, storage/CAS/permission equality, restored login and a second native
+restart without duplicate refunds or log entries. These are not exhaustive
+feature-schema or old/new executable archive tests.
 The existing cargo, import/login, generator and native checkpoint tests retain
-their separate coverage. This is not full feature-schema validation, native
-restore coverage or an old/new executable archive-matrix rehearsal; see
+their separate coverage; see
 [SAVE-MIGRATIONS.md](SAVE-MIGRATIONS.md).
 
 ## Client/server compatibility
@@ -1335,6 +1352,37 @@ The registered `performance-budgets.ts` program also checks both retained 30-pla
 300-second native reports against `docs/performance-baselines/shared-host-30.json`
 offline. This validates artifact consistency and lab alarm thresholds, not live CI
 timing or production smoothness. See [performance measurements](PERFORMANCE.md).
+
+## Asset cache and display recovery
+
+`asset-recovery` owns `asset-recovery-browser.ts` and the shared byte-cache unit
+checks. It boots the real Solo server with an isolated captain, rejects missing
+and corrupt ship sheets with visible native fallback geometry, and tests four
+actual WebGL context loss/restoration cycles without reconnecting. Captain identity,
+credits and hull survive; an immediate neutral command is sent during loss, and
+captured outgoing controls remain neutral until the held
+key is released. A key released during loss responds to the first fresh press;
+a key newly pressed during loss must release before resuming. The existing
+right-click look controls still work. Captured renderer pixels verify the ship itself is visible. A final
+unrestored loss exercises the recovery notice's Reload button and saved progress
+on the new connection.
+
+Real image decoding measures cache-owned bytes, keeps a live image stable above
+a deliberately tiny budget, evicts idle sheets and rebuilds them on return
+without mutating consumer-held images. The clock is paused only during this
+isolated cache-eviction subcase so unrelated live NPC resources cannot change
+the controlled working set; the authoritative server keeps running. Real WebAudio
+decoding measures PCM ownership; removing cache ownership does not stop playing
+music. Three start/stop cycles return active music-source ownership to zero,
+with no accumulating ambience sources after renderer replacement. Missing/corrupt
+audio releases pending promises and uses bounded retry backoff. Byte-cache unit fixtures cover count limits for zero-byte resources and
+non-mutating cleanup.
+
+Limits: Chromium software WebGL on one Linux host, not GPU/process memory or
+physical-device coverage. Audio checks source state, not audible output. The
+Canvas backend has context-event recovery handlers, but CI cannot force a real
+Canvas2D driver reset. A browser/driver that never restores its context still
+requires a reload; the world does not pause while graphics are unavailable.
 
 ## Combat playability
 

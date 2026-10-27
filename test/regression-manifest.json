@@ -65,6 +65,8 @@
     "http-api.ts",
     "network-systems.ts",
     "save-migrations.ts",
+    "save-feature-validation.ts",
+    "save-postgres-restore.ts",
     "cargo-lots.ts",
     "cargo-flows.ts",
     "mining.ts",
@@ -190,7 +192,8 @@
     "planet-cache-budget-browser.ts",
     "pressure-hull-browser.ts",
     "protocol-compatibility-browser.ts",
-    "hud-controls-browser.ts"
+    "hud-controls-browser.ts",
+    "asset-recovery-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -679,6 +682,8 @@
     ],
     "hud-controls-browser.ts": ["helpers/browser-fixture.ts", "helpers/seed-random.ts"],
     "performance-budgets.ts": ["helpers/browser-fixture.ts", "helpers/native-performance.ts"],
+    "save-feature-validation.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
+    "save-postgres-restore.ts": ["helpers/nakama-service.ts", "helpers/temp-data.ts"],
     "combat-playability.ts": ["helpers/combat-playability-simulation.ts"]
   },
   "characterization": ["features.ts"],
@@ -692,7 +697,8 @@
         "client/main.ts",
         "client/hails_ui.ts",
         "client/render.ts",
-        "server/save-migrations.ts"
+        "server/save-migrations.ts",
+        "server/save-validation.ts"
       ],
       "services": [],
       "tests": [
@@ -706,9 +712,11 @@
         "logout-browser.ts",
         "save-generator.ts",
         "save-generator-browser.ts",
-        "save-migrations.ts"
+        "save-migrations.ts",
+        "save-feature-validation.ts",
+        "save-postgres-restore.ts"
       ],
-      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Empty default seeds in online/Solo startup, preserved existing accounts/credentials and claims, explicit operator fixtures, no name-based radio unlocks; Python-generated saves across every hull/site/tier/port, real import/login and file-picker UI, invalid settings and overwrite denial, station-claim conflict/release/reload safety. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect. Cargo-only detached migration and disposable restore rehearsal preserve source bytes, reject corrupt/unsupported ledgers and malformed/unreadable local snapshots, and retain journal freeze/reopen behavior."
+      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Empty default seeds in online/Solo startup, preserved existing accounts/credentials and claims, explicit operator fixtures, no name-based radio unlocks; Python-generated saves across every hull/site/tier/port, real import/login and file-picker UI, invalid settings and overwrite denial, station-claim conflict/release/reload safety. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect. Ordered detached cargo/tutorial migration and disposable restore rehearsal preserve source bytes, reject corrupt/unsupported ledgers, tutorial state and malformed/unreadable local snapshots, and retain journal freeze/reopen behavior; production native CAS fixture drills cover frozen retries, pre/postcommit restart, stale writers and exact co-op fleet/directive refunds without duplicate balances or log entries. Present-field feature validation rejects corrupt compatibility state before local/native load, journal recovery, import and login mutations; committed synthetic default/dock/progress fixtures exercise real login and repeat reloads. Disposable native PostgreSQL pg_dump/pg_restore preserves storage permissions/CAS versions and authenticated identity, exact refunds and restart logs in a separate database."
     },
     {
       "id": "protocol-http",
@@ -1709,6 +1717,19 @@
         "nakama-network.ts"
       ],
       "asserts": "Protocol epoch one and missing legacy identifiers retain supported behavior independently of package versions; malformed and unsupported local hello/native join identifiers are rejected before Game login. Uncached preflight, RPC and authoritative join rejection, terminal local denial despite buffered packets/late errors, reconnect mismatch, manual refresh without loops and committed captain recovery are exercised."
+    },
+    {
+      "id": "asset-recovery",
+      "owners": [
+        "client/asset-resources.ts",
+        "client/audio.ts",
+        "client/engine.ts",
+        "client/engine-input.ts",
+        "client/world-actors.ts"
+      ],
+      "services": [],
+      "tests": ["asset-recovery-browser.ts", "render-cache-budget.ts"],
+      "asserts": "Decoded image/audio ownership budgets and live-resource-safe eviction; missing/corrupt asset fallbacks and bounded failure cleanup; repeated actual graphics context loss/restoration preserves captain state and blocks held controls until release."
     },
     {
       "id": "combat-playability",

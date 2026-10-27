@@ -5,7 +5,7 @@ import path from 'node:path';
 import net from 'node:net';
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
-import { randomBytes, randomUUID, createHmac } from 'node:crypto';
+import { randomBytes, randomUUID, createHmac, createHash } from 'node:crypto';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Client, Session } from '@heroiclabs/nakama-js';
 import type { Socket } from '@heroiclabs/nakama-js';
@@ -64,6 +64,7 @@ export class NakamaService {
   client!: Client;
   apiPort = 0;
   private pgPort = 0;
+  private databaseName = 'nakama';
   private configPath = '';
   private nakama?: Child;
   private binary = '';
@@ -293,6 +294,11 @@ export class NakamaService {
     return this;
   }
   private async startNakama() {
+    // No caller uses the private console endpoint. Releasing a writer can make
+    // its old console port available to another concurrent fixture or connection.
+    const config = JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
+    config.console.port = await port();
+    fs.writeFileSync(this.configPath, JSON.stringify(config), { mode: 0o600 });
     const child = this.start(
       this.binary,
       ['--config', this.configPath],
@@ -325,6 +331,79 @@ export class NakamaService {
     assert(this.nakama);
     await this.stop(this.nakama);
     await this.startNakama();
+  }
+  /**
+   * Stop the disposable writer, dump its database, restore into a new fixture
+   * database and start the same runtime against that copy. The source is retained.
+   * No caller-supplied connection or backup path can reach a player database.
+   */
+  async restoreDisposableBackup() {
+    assert(this.nakama);
+    await this.stop(this.nakama);
+    const pg = process.env.POSTGRES_BIN!;
+    const sourceDatabase = this.databaseName;
+    const restoredDatabase = 'qr_restore_' + randomBytes(6).toString('hex');
+    const archive = path.join(this.run, 'disposable-backup.dump');
+    const environment = { ...process.env, PGPASSWORD: this.password };
+    const connection = ['-h', '127.0.0.1', '-p', String(this.pgPort), '-U', 'postgres'];
+    const digestSql = `SELECT md5(COALESCE(jsonb_agg(to_jsonb(saved) ORDER BY collection,key,user_id)::text,'[]')) FROM storage saved`;
+    const sourceDigest = await this.query(digestSql, sourceDatabase);
+    await this.finish(
+      this.start(
+        path.join(pg, 'pg_dump'),
+        [...connection, '-Fc', '-f', archive, sourceDatabase],
+        'backup-dump',
+        environment,
+      ),
+    );
+    assert(fs.statSync(archive).size > 0, 'Empty PostgreSQL backup');
+    await this.finish(
+      this.start(
+        path.join(pg, 'createdb'),
+        [...connection, restoredDatabase],
+        'backup-create-copy',
+        environment,
+      ),
+    );
+    await this.finish(
+      this.start(
+        path.join(pg, 'pg_restore'),
+        [
+          ...connection,
+          '--exit-on-error',
+          '--no-owner',
+          '--no-privileges',
+          '-d',
+          restoredDatabase,
+          archive,
+        ],
+        'backup-restore-copy',
+        environment,
+      ),
+    );
+    assert.equal(
+      await this.query(digestSql, restoredDatabase),
+      sourceDigest,
+      'Restored storage rows, permissions and CAS versions match the stopped source',
+    );
+    assert.equal(
+      await this.query(digestSql, sourceDatabase),
+      sourceDigest,
+      'Dump/restore never changes the source database',
+    );
+    const config = JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
+    config.database.address = config.database.address.map((address: string) =>
+      address.replace('/' + sourceDatabase + '?', '/' + restoredDatabase + '?'),
+    );
+    fs.writeFileSync(this.configPath, JSON.stringify(config), { mode: 0o600 });
+    this.databaseName = restoredDatabase;
+    await this.startNakama();
+    return {
+      sourceDatabase,
+      restoredDatabase,
+      storageDigest: sourceDigest,
+      archiveSha256: createHash('sha256').update(fs.readFileSync(archive)).digest('hex'),
+    };
   }
   /** Trusted test issuer for a real, unmapped account in this disposable database only. */
   async unmappedSession(reference: Session): Promise<Session> {
@@ -394,7 +473,7 @@ export class NakamaService {
     };
   }
   /** Connection is fixed to the disposable fixture database, never an external URL. */
-  async query(sql: string): Promise<string> {
+  async query(sql: string, database = this.databaseName): Promise<string> {
     const name = 'query-' + this.children.length;
     const child = this.start(
       path.join(process.env.POSTGRES_BIN!, 'psql'),
@@ -406,7 +485,7 @@ export class NakamaService {
         '-U',
         'postgres',
         '-d',
-        'nakama',
+        database,
         '-At',
         '-v',
         'ON_ERROR_STOP=1',

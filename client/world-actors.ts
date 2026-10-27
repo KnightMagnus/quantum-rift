@@ -15,6 +15,7 @@ import type { RenderShip } from './render.ts';
 import { sheet, shipFrame, objImg, rockImage, drawShot } from './render.ts';
 import { storyShipOpacity } from './story-reality.ts';
 import { weaponColor, weaponLook } from '../shared/rules.ts';
+import { ByteBudgetCache } from './render-cache-budget.ts';
 
 /** Projectile looks whose drawShot output changes with time; every other look is static. */
 const ANIMATED_SHOT_LOOKS = new Set(['torp', 'sing', 'mine', 'shard']);
@@ -52,9 +53,11 @@ class CanvasSprite extends Graphic {
 /** Display-only entity registry. Authoritative velocities never enter Actor motion. */
 export class WorldActors {
   readonly actors = new Map<string, Actor>();
-  private embellishments = new Map<string, Canvas>();
+  private embellishments = new ByteBudgetCache<Canvas>(32 * 1024 * 1024, 2000, 256);
   private images = new WeakMap<HTMLImageElement | HTMLCanvasElement, ImageSource>();
-  private shotGraphics = new Map<string, HTMLCanvasElement>();
+  private shotGraphics = new ByteBudgetCache<HTMLCanvasElement>(16 * 1024 * 1024, 2000, 256);
+  /** Ship IDs currently using a display-only missing-sheet silhouette. */
+  readonly fallbackShips = new Set<number>();
   additive: Material | null = null;
   private scene: Scene;
   constructor(scene: Scene) {
@@ -122,7 +125,25 @@ export class WorldActors {
       height: frame.fileSystem,
     };
     const sprite = this.sprite(sheet(hull), size, source);
-    if (!sprite) return;
+    if (!sprite) {
+      this.fallbackShips.add(ship.id);
+      const actor = this.bind(
+        'ship:' + ship.id,
+        ship.rx,
+        ship.ry,
+        40,
+        new Circle({
+          radius: Math.max(4, size / 3),
+          color: Color.Gray,
+          strokeColor: Color.White,
+          lineWidth: 2,
+        }),
+        live,
+      );
+      actor.graphics.opacity = realityOpacity;
+      return;
+    }
+    this.fallbackShips.delete(ship.id);
     const members: GraphicsGrouping[] = [{ graphic: sprite, offset: vec(-size / 2, -size / 2) }];
     if (ship.fl & 8) {
       for (let index = 6; index >= 1; index--) {
@@ -140,7 +161,7 @@ export class WorldActors {
     }
     if (ship.fl & (8 | 32)) {
       const key = ship.hull + ':' + frame.fraction + ':' + size + ':' + (ship.fl & (8 | 32));
-      let effect = this.embellishments.get(key);
+      let effect = this.embellishments.get(key, now);
       if (!effect) {
         const extent = size * 2 + 64;
         effect = new Canvas({
@@ -187,9 +208,7 @@ export class WorldActors {
             }
           },
         });
-        this.embellishments.set(key, effect);
-        if (this.embellishments.size > 256)
-          this.embellishments.delete(this.embellishments.keys().next().value!);
+        this.embellishments.set(key, effect, effect.width * effect.height * 4, now);
       }
       members.splice(members.length - 1, 0, {
         graphic: effect,
@@ -248,6 +267,7 @@ export class WorldActors {
 
   update(state: ClientGameState, now: number): void {
     const live = new Set<string>();
+    this.fallbackShips.clear();
     if (state.sys && state.A) {
       for (const ship of state.ents.values()) this.ship(state, ship, now, live);
       if (state.view && !state.ents.has(state.view.id) && state.myHull)
@@ -301,7 +321,7 @@ export class WorldActors {
           Math.max(40 * state.zoom, 23 * effectZoom, 8 * 1.25 * 2.2 * effectZoom) + 32,
         );
         const extent = radius * 2;
-        let canvas = this.shotGraphics.get(key);
+        let canvas = this.shotGraphics.get(key, now);
         if (!canvas) {
           canvas = document.createElement('canvas');
           canvas.width = canvas.height = extent;
@@ -321,9 +341,7 @@ export class WorldActors {
             state.zoom,
             phase * 45,
           );
-          this.shotGraphics.set(key, canvas);
-          if (this.shotGraphics.size > 256)
-            this.shotGraphics.delete(this.shotGraphics.keys().next().value!);
+          this.shotGraphics.set(key, canvas, extent * extent * 4, now);
         }
         const graphic = new CanvasSprite(canvas, extent / state.zoom, extent / state.zoom);
         // Index keys reuse Actors across snapshots instead of recreating every projectile.
@@ -348,9 +366,18 @@ export class WorldActors {
       }
   }
 
+  /** Cache-owned procedural pixels; live Actor graphics may retain resources independently. */
+  resourceUsage() {
+    this.embellishments.evict(performance.now());
+    this.shotGraphics.evict(performance.now());
+    return { embellishments: this.embellishments.bytes, shots: this.shotGraphics.bytes };
+  }
+
   clear(): void {
     for (const actor of this.actors.values()) actor.kill();
     this.actors.clear();
+    this.images = new WeakMap();
+    this.fallbackShips.clear();
     this.shotGraphics.clear();
     this.embellishments.clear();
   }

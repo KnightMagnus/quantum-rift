@@ -626,8 +626,15 @@ applyOpts();
 })();
 const canvas = elementById2('view'),
   canvasRenderingContext2D2 = elementById2('radar').getContext('2d')!;
-const flightEngine = new FlightEngine(canvas, clientGameState, frame, () =>
-  overlays.blocksFlight(),
+const flightEngine = new FlightEngine(
+  canvas,
+  clientGameState,
+  frame,
+  () => overlays.blocksFlight(),
+  () => {
+    clearManualFlightInput();
+    audio.engine(0);
+  },
 );
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null,
   sessionEpoch = 0,
@@ -3178,6 +3185,7 @@ let account = 0,
 function fixedTick(): void {
   if (
     !clientGameState.view ||
+    flightEngine.recovering ||
     clientGameState.landed ||
     clientGameState.paused ||
     clientGameState.quitting
