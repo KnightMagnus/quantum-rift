@@ -1,5 +1,5 @@
 {
-  "version": "3.5.0",
+  "version": "3.5.1",
   "template": {
     "credits": 30000,
     "sys": "qgate",
@@ -271,14 +271,14 @@
     },
     {
       "id": 736,
-      "name": "Constitution",
+      "name": "Concordance",
       "loadout": {
         "hull": 736,
         "outfits": { "598": 6, "611": 4, "9005": 8 },
         "ammo": { "335": 60 },
         "fixed": [[143, 4, 0]],
         "bonusSpace": 182,
-        "name": "Constitution",
+        "name": "Concordance",
         "stockOutfits": { "598": 6, "611": 4, "9005": 8 }
       }
     },
@@ -827,7 +827,7 @@
         "ammo": {},
         "fixed": [
           [350, 1, 0],
-          [349, 4, 0]
+          [349, 8, 0]
         ],
         "bonusSpace": 0,
         "name": "Event Horizon",

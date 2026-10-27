@@ -444,24 +444,26 @@ export const LivingOperations = {
         const other = near.filter(([secondState]) => secondState !== starSystem)[
           Math.floor(radius() * Math.max(1, near.length - 1))
         ];
-        const rawStellarBody =
+        const destinationPort =
           other &&
           systemsById[other[0]].stellars.find(
             (rawStellarBody3) =>
               rawStellarBody3.svc && rawStellarBody3.svc.includes('L') && !rawStellarBody3.site,
           );
-        if (rawStellarBody) {
+        if (destinationPort) {
           const passengers2 = 2 + (Math.floor(radius() * 4) * systemState.passengers) / 2;
           result.push({
             id: identifier + 'x',
             type: 'passenger',
             state: livingState.kind,
             sys: other[0],
-            dest: rawStellarBody.id,
+            dest: destinationPort.id,
+            pickup: rawStellarBody.id,
+            boarded: false,
             pax: Math.round(passengers2),
             reward: Math.round(2500 + other[1] * 1600 + passengers2 * 1300),
-            title: `${systemState.icon} Passage for ${Math.round(passengers2)} from ${starSystem2.name} to ${rawStellarBody.name}`,
-            text: `${livingState.kind === 'refugees' ? 'Refugees' : 'Festival-goers'} need passage to ${rawStellarBody.name}. Each passenger needs a bunk.`,
+            title: `${systemState.icon} Passage for ${Math.round(passengers2)} from ${starSystem2.name} to ${destinationPort.name}`,
+            text: `Collect ${livingState.kind === 'refugees' ? 'refugees' : 'festival-goers'} at ${rawStellarBody.name} in ${starSystem2.name}, then carry them to ${destinationPort.name}. Each passenger needs a bunk.`,
           });
         }
       }
