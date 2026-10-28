@@ -85,7 +85,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 
 **Flight cockpit and system radar**
 
-The blue Pressure Hull cockpit is the standard interface for flight, station services and chat. The system radar starts at its maximum available height. Drag its divider to leave more room for the Tray menu.
+The blue Pressure Hull cockpit is the standard interface for flight, station services and chat. The system radar starts square and follows the Tray width, shrinking to fit short screens. Drag its divider to choose a different height.
 
 ![Blue flight controls with the Tray and system radar expanded](docs/screenshots/pressure-hull-flight.png)
 

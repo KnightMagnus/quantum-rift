@@ -202,14 +202,9 @@ try {
         dpr: devicePixelRatio,
       };
     });
-    const grip = page.locator('#radarheightgrip');
     assert.ok(
-      Math.abs(
-        Number(await grip.getAttribute('aria-valuenow')) -
-          Number(await grip.getAttribute('aria-valuemax')),
-      ) <= 1,
-      'System radar starts with its vertical divider fully extended: ' +
-        JSON.stringify({ viewportScenario, radar }),
+      Math.abs(radar.width - radar.height) < 1,
+      'Automatic system radar remains square: ' + JSON.stringify({ viewportScenario, radar }),
     );
     assert.ok(
       Math.abs(radar.pixels[0] / radar.pixels[1] - radar.width / radar.height) < 0.02,
@@ -384,16 +379,14 @@ try {
       'Utility icons and labels are not squished',
     );
     if (state === 'resized') {
-      const grip = page.locator('#radarheightgrip');
+      const frame = await page.locator('#radarwrap').boundingBox();
       assert.ok(
-        Math.abs(
-          Number(await grip.getAttribute('aria-valuenow')) -
-            Number(await grip.getAttribute('aria-valuemax')),
-        ) <= 1,
+        Math.abs(frame!.width - frame!.height) < 1,
+        'Dragging the sidebar wider preserves an automatic square map',
       );
       assert.ok(
         shell.radar.w >= shellResults[0].shell.radar.w - 1,
-        'Full-width radar does not shrink when the tray is dragged wider',
+        'Automatic square radar does not shrink when the tray is dragged wider',
       );
     }
     const frame = await page.screenshot({ path: output + '/shell-' + state + '.png' });

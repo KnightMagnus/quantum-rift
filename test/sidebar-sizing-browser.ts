@@ -45,33 +45,15 @@ try {
     undefined,
     { timeout: 3000 },
   );
-  // Both ARIA values can still describe the previous viewport. Compare them
-  // with the room in the current layout before using the allocation as a baseline.
-  async function assertMaximumRadar() {
+  async function assertSquareRadar() {
     await page.waitForFunction(
       () => {
-        const grip = document.getElementById('radarheightgrip')!;
-        const sidebar = document.getElementById('hud')!;
-        const radar = document.getElementById('radarwrap')!;
-        const menu = document.getElementById('cpanel')!;
-        const style = getComputedStyle(sidebar);
-        const chrome = [...sidebar.children].filter(
-          (child) =>
-            child !== radar && child !== menu && getComputedStyle(child).position !== 'absolute',
-        );
-        const maximum = Math.max(
-          96,
-          sidebar.clientHeight -
-            chrome.reduce((height, child) => height + (child as HTMLElement).offsetHeight, 0) -
-            parseFloat(style.paddingTop) -
-            parseFloat(style.paddingBottom) -
-            parseFloat(style.rowGap) * (chrome.length + 1) -
-            200,
-        );
+        const frame = document.getElementById('radarwrap')!.getBoundingClientRect();
+        const canvas = document.getElementById('radar')!.getBoundingClientRect();
         return (
-          Math.abs(Number(grip.getAttribute('aria-valuenow')) - maximum) <= 1 &&
-          Math.abs(Number(grip.getAttribute('aria-valuemax')) - maximum) <= 1 &&
-          Math.abs(radar.offsetHeight - maximum) <= 1
+          frame.width > 90 &&
+          Math.abs(frame.width - frame.height) < 1 &&
+          Math.abs(canvas.width - canvas.height) < 1
         );
       },
       undefined,
@@ -80,6 +62,7 @@ try {
   }
   for (const [width, height, zoom] of [
     [1920, 1080, 1],
+    [3440, 1440, 1],
     [760, 680, 1],
     [1920, 1080, 1.4],
   ]) {
@@ -88,10 +71,10 @@ try {
       document.documentElement.style.setProperty('--ui', String(zoom));
       document.body.classList.toggle('scaled', zoom !== 1);
     }, zoom);
-    await assertMaximumRadar();
+    await assertSquareRadar();
     const bounds = await page.locator('#radarwrap').boundingBox();
     assert(bounds && bounds.width > 90 && bounds.height > 90, 'Default minimap remains usable');
-    assert((await menu.boundingBox())!.height >= 180, 'Maximum map reserves the lower menu');
+    assert((await menu.boundingBox())!.height >= 180, 'Square map reserves the lower menu');
     if (width === 1920 && zoom === 1) {
       await page.screenshot({ path: path.join(feature.out, 'sidebar-minimap-default.png') });
       await page
@@ -109,7 +92,26 @@ try {
     document.documentElement.style.removeProperty('--ui');
     document.body.classList.remove('scaled');
   });
-  await assertMaximumRadar();
+  await assertSquareRadar();
+  const defaultWidth = (await radar.boundingBox())!.width;
+  await page.evaluate(() => document.documentElement.style.setProperty('--tray-width', '650px'));
+  await assertSquareRadar();
+  await page.waitForFunction(
+    (width) => document.getElementById('radar')!.getBoundingClientRect().width > width + 80,
+    defaultWidth,
+  );
+  assert.equal(
+    await page.evaluate(() => localStorage.getItem('rift.hudHeights')),
+    null,
+    'Changing sidebar width preserves automatic square sizing without saving a height',
+  );
+  await page.evaluate(() => document.documentElement.style.removeProperty('--tray-width'));
+  await assertSquareRadar();
+  await page.waitForFunction(
+    (width) =>
+      Math.abs(document.getElementById('radar')!.getBoundingClientRect().width - width) < 1,
+    defaultWidth,
+  );
   const initial = await radar.boundingBox();
   async function drag(identifier: string, verticalDelta: number) {
     const grip = page.locator(identifier);
@@ -302,12 +304,8 @@ try {
         sidebar.getBoundingClientRect().bottom -
         parseFloat(style.paddingBottom) -
         parseFloat(style.borderBottomWidth);
-      const grip = document.getElementById('radarheightgrip')!;
-      return (
-        Math.abs(
-          Number(grip.getAttribute('aria-valuenow')) - Number(grip.getAttribute('aria-valuemax')),
-        ) <= 1 && Math.abs(menu.bottom - floor) < 2
-      );
+      const frame = document.getElementById('radarwrap')!.getBoundingClientRect();
+      return Math.abs(frame.width - frame.height) < 1 && Math.abs(menu.bottom - floor) < 2;
     },
     null,
     { timeout: 3000 },

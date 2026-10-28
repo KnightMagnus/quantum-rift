@@ -293,7 +293,7 @@ coverage is not a measured credits-per-hour or all-career balance comparison.
 
 ## 3.2.1 cockpit QoL
 
-`cockpit-qol` covers per-captain view/search/scroll/subtab retention, a single explicitly pinned objective with other tracking retained, native detail/Back keyboard focus, unavailable cargo next-action links and narrow/scaled layouts. `qol-browser.ts` uses an isolated real server and actual accepted mission; existing refinery, logout, input and sidebar checks guard integrated behavior. `sidebar-sizing-browser.ts` additionally checks independent mouse/touch/keyboard minimap and lower-menu heights, canvas backing geometry, persistence, viewport/zoom limits and automatic reset. Fresh minimaps start with their vertical divider at its maximum across normal, narrow and scaled viewports; `sidebar-browser.ts` also checks full-width fill and correct canvas backing aspect. `ui-polish-browser.ts` checks fresh-captain Overview, deliberate Community persistence, and long hail options wrapping within wider desktop and narrow/scaled windows. `cockpit-browser.ts` closes combat controls by pointer and keyboard, then verifies native Space sends primary-fire packets without reopening the panel. Presentation preferences never store passwords, execute actions, auto-accept work or modify authoritative saves.
+`cockpit-qol` covers per-captain view/search/scroll/subtab retention, a single explicitly pinned objective with other tracking retained, native detail/Back keyboard focus, unavailable cargo next-action links and narrow/scaled layouts. `qol-browser.ts` uses an isolated real server and actual accepted mission; existing refinery, logout, input and sidebar checks guard integrated behavior. `sidebar-sizing-browser.ts` additionally checks independent mouse/touch/keyboard minimap and lower-menu heights, canvas backing geometry, persistence, viewport/zoom limits and automatic reset. Fresh minimaps stay square across desktop, ultrawide, narrow and scaled viewports and sidebar width changes; `sidebar-browser.ts` also checks real sidebar dragging and correct canvas backing aspect. `ui-polish-browser.ts` checks fresh-captain Overview, deliberate Community persistence, and long hail options wrapping within wider desktop and narrow/scaled windows. `cockpit-browser.ts` closes combat controls by pointer and keyboard, then verifies native Space sends primary-fire packets without reopening the panel. Presentation preferences never store passwords, execute actions, auto-accept work or modify authoritative saves.
 
 ## 3.2.1 economy verification
 
@@ -956,7 +956,7 @@ The responsive browser test also opens the tray at 1100/1101/1200/1250/1251 px, 
 `sidebar-sizing-browser.ts` exercises the lower menu's top divider with mouse,
 touch and keyboard input, saved desired heights, UI scaling, viewport limits and
 independent resets. The lower menu fills the space below its divider; the minimap
-uses the remaining space. Temporary viewport limits do not rewrite saved sizes.
+starts square and follows sidebar width until its height is explicitly resized. Short screens shrink the automatic square while preserving lower-menu space. Temporary viewport limits do not rewrite saved sizes.
 
 `sidebar-gauges-browser.ts` reads actual server snapshots after fixture damage and
 fuel changes, then checks production shield regeneration, meter fill, visibility,

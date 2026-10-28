@@ -5,7 +5,7 @@ A beta maintenance update for cockpit defaults, navigation and ship encounters.
 ## Changes
 
 - New captains open the Overview tab when docked.
-- The sidebar minimap starts at its largest available slider setting.
+- The sidebar minimap starts square, follows sidebar width changes and shrinks to fit short screens. Manual sizing preferences are preserved.
 - Landing approaches keep the engine glow active on straight flight, and wormhole
   approaches avoid unnecessary heading-frame oscillation.
 - Index ships defend themselves when attacked and spread their investigations
