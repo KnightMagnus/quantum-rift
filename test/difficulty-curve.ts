@@ -186,6 +186,7 @@ const raidSpace = (power: number, danger: number, faction = 'hollow') => {
   });
   const player = mockEntity({
     id: 1,
+    st: { shield: power, armor: 0 },
     player: { id: 1, s: mockSession({ data: captain({ ops: 3 }) }) },
   });
   player.player!.s.ent = player;
