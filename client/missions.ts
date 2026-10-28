@@ -58,7 +58,7 @@ import { refineryJobsHtml } from './refinery_ui.ts';
 // companion tab and the gold target markers on the galaxy map.
 import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
 import { STORY } from '../shared/story.ts';
-import { route } from '../shared/rules.ts';
+import { captainRoute } from './map-fog.ts';
 import { TUTORIAL } from '../shared/tutorial.ts';
 
 /**
@@ -311,7 +311,7 @@ export function missionsHtml(clientGameState: ClientGameState): string {
           if (missionTarget.sys === clientGameState.sys)
             jumps = '<span style="color:var(--ok)">in this system</span>';
           else {
-            const route2 = route(systemsById, clientGameState.sys, missionTarget.sys);
+            const route2 = captainRoute(clientGameState, missionTarget.sys);
             jumps =
               route2 && route2.length
                 ? `${route2.length} jump${route2.length > 1 ? 's' : ''}`

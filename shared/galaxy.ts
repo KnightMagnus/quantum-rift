@@ -16,6 +16,7 @@ export type SceneDefinition = {
 };
 import { NHAL_SALVAGE } from './nhal.ts';
 import type { OutfitAsset, WeaponAsset } from './rules.ts';
+import { FACTION_STORE_OUTFITS, FACTION_STORE_WEAPONS } from './faction-outfits.ts';
 
 /** Faction organization attributes and diplomatic relationships. */
 export type FactionDef = {
@@ -1872,6 +1873,7 @@ export const EXTRA_OUTFITS: Array<OutfitAsset> = [
     desc: 'Five dedicated passenger seats with restraint and life-support fittings. Uses three tons of outfit space; bridge officers and working crew do not occupy passenger seats.',
   },
 ];
+EXTRA_OUTFITS.push(...FACTION_STORE_OUTFITS);
 for (const outfit of EXTRA_OUTFITS) outfit.icon = outfit.icon || `icons/${outfit.id}.png`; // rendered outfitter pictures (tools/rift_icons.py)
 
 // weapons added by Quantum Rift (merged into the asset weapons by augmentAssets)
@@ -1919,6 +1921,8 @@ export const EXTRA_WEAPONS: Array<WeaponAsset> = [
     mining: true,
   },
 ];
+
+EXTRA_WEAPONS.push(...FACTION_STORE_WEAPONS);
 
 /**
  * Weapon IDs with specialized high damage efficiency against asteroid rocks.

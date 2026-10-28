@@ -69,7 +69,7 @@ export function validateFeaturePlayerSave(value: unknown): void {
   optional(saved, 'nextUid', count);
   validateTutorialSave(saved as Pick<PlayerAccount, 'tut' | 'tutV'>);
   for (const key of ['directives', 'parts', 'spec', 'bp']) optional(saved, key, numbers);
-  for (const key of ['friends', 'freqIn', 'freqOut', 'blocks', 'explored'])
+  for (const key of ['friends', 'freqIn', 'freqOut', 'blocks', 'explored', 'charted'])
     optional(saved, key, strings);
   optional(saved, 'lower', (value) => {
     for (const member of list(value)) if (member !== null) text(member);

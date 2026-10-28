@@ -119,6 +119,8 @@ export interface FeaturePlayerState {
   lastSeen?: number;
   duels?: { w: number; l: number; d: number };
   explored: string[];
+  /** Systems revealed by purchased faction star charts: map lanes and economy, not visits. */
+  charted?: string[];
   shipless?: boolean;
   docks: SavedDock[];
   activeDock: number;

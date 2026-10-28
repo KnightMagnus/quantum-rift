@@ -212,7 +212,13 @@ export type ClientGameState = RefineryClientState & {
   towing?: PlayerPayload['towing'] | null;
   towTarget?: number;
   views: ReturnType<typeof initCockpitState>;
-  mapView?: MapFit & { W: number; H: number; prevFit?: number };
+  mapView?: MapFit & {
+    W: number;
+    H: number;
+    prevFit?: number;
+    /** Visible-system count the zoom range was fitted to, under fog of war. */
+    fogKey?: number;
+  };
   mapXform?: MapTransform;
   miniXform?: MapTransform;
   mapLegend?: boolean;
@@ -288,6 +294,7 @@ export type ClientGameState = RefineryClientState & {
 };
 
 import { initSidebarSize } from './sidebar-size.ts';
+import { jumpClearHeading } from '../shared/hyperspace-arrival.ts';
 import { initShipFunctions } from './ship-functions.ts';
 import { initChatProjection } from './chat-projection.ts';
 import { coronaRouteBlocked } from '../shared/industrial-rules.ts';
@@ -1960,7 +1967,12 @@ function autopilot(input: Record<string, number>): void {
         : (() => {
             const starSystem2 = systemsById[clientGameState.route[0]];
             if (!starSystem2) return null;
-            const atan = Math.atan2(starSystem2.x - starSystem.x, -(starSystem2.y - starSystem.y));
+            const atan = jumpClearHeading(
+              starSystem,
+              clientView.x,
+              clientView.y,
+              Math.atan2(starSystem2.x - starSystem.x, -(starSystem2.y - starSystem.y)),
+            );
             return {
               x: clientView.x + Math.sin(atan) * (physicsConstants.jumpClear + 1000),
               y: clientView.y - Math.cos(atan) * (physicsConstants.jumpClear + 1000),
@@ -2040,7 +2052,13 @@ function autopilot(input: Record<string, number>): void {
       clientGameState.autoRoute = autoRoute2 && clientGameState.route.length > 1;
       return;
     }
-    const atan = Math.atan2(starSystem2.x - starSystem.x, -(starSystem2.y - starSystem.y)),
+    // Leave by the nearest open side rather than crossing the system toward the next star.
+    const atan = jumpClearHeading(
+        starSystem,
+        clientView.x,
+        clientView.y,
+        Math.atan2(starSystem2.x - starSystem.x, -(starSystem2.y - starSystem.y)),
+      ),
       wrap3 = wrap(atan - clientView.a);
     input.turn = Math.abs(wrap3) < computedShipStats.turn * tickDuration ? 0 : Math.sign(wrap3);
     input.thrust = Math.abs(wrap3) < 0.5 ? 1 : 0;
@@ -2882,8 +2900,12 @@ overlays.register({
         return true;
       }
     }
-    if (actionOf(event.code) !== 'map' || typing()) return false;
-    if (!event.repeat) closeMap();
+    const action = actionOf(event.code);
+    if ((action !== 'map' && action !== 'jump') || typing()) return false;
+    if (event.repeat) return true;
+    closeMap();
+    // Clicking a system already plots the course, so the jump key leaves the map and goes.
+    if (action === 'jump' && clientGameState.view && !clientGameState.landed) jumpNext();
     return true;
   },
 });
@@ -2905,7 +2927,7 @@ function resize(): void {
 window.addEventListener('resize', resize);
 // Sidebar reflow (including UI scale and persisted widths) also changes the radar.
 new ResizeObserver(resize).observe(elementById2('radar'));
-initSidebarSize(resize, 1.8);
+initSidebarSize(resize);
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.

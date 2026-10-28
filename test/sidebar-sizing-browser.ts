@@ -47,8 +47,8 @@ try {
   );
   const initial = await radar.boundingBox();
   assert.ok(
-    Math.abs(initial!.width + 6 - (initial!.height + 6) * 1.8) < 1,
-    'Automatic minimap starts at the blue cockpit’s 1.8 aspect',
+    Math.abs(initial!.width + 6 - (initial!.height + 6)) < 1,
+    'Automatic minimap starts at a square aspect',
   );
   async function drag(identifier: string, verticalDelta: number) {
     const grip = page.locator(identifier);
@@ -176,11 +176,11 @@ try {
   await page.setViewportSize({ width: 1440, height: 1440 });
   await page.waitForFunction(() => {
     const bounds = document.getElementById('radarwrap')!.getBoundingClientRect();
-    return Math.abs(bounds.width - bounds.height * 1.8) < 1;
+    return Math.abs(bounds.width - bounds.height) < 1;
   });
   assert.ok(
     (await radar.boundingBox())!.width > 0,
-    'Reset radar retains its 1.8 aspect with the saved custom menu after enlargement',
+    'Reset radar retains its square aspect with the saved custom menu after enlargement',
   );
   await page.locator('#menuheightgrip').focus();
   await page.keyboard.press('Home');
@@ -210,13 +210,13 @@ try {
     };
   });
   assert.ok(
-    Math.abs(resetGeometry.frame[0] - resetGeometry.frame[1] * 1.8) < 1 &&
+    Math.abs(resetGeometry.frame[0] - resetGeometry.frame[1]) < 1 &&
       Math.abs(
         resetGeometry.canvas[0] +
           6 * resetGeometry.scale -
-          (resetGeometry.canvas[1] + 6 * resetGeometry.scale) * 1.8,
+          (resetGeometry.canvas[1] + 6 * resetGeometry.scale),
       ) < 1,
-    'Automatic radar frame and canvas retain their 1.8 aspect with a small saved menu on a tall viewport',
+    'Automatic radar frame and canvas retain their square aspect with a small saved menu on a tall viewport',
   );
   assert.ok(
     Math.abs(resetGeometry.bottom - resetGeometry.floor) < 2,
@@ -247,7 +247,7 @@ try {
         sidebar.getBoundingClientRect().bottom -
         parseFloat(style.paddingBottom) -
         parseFloat(style.borderBottomWidth);
-      return Math.abs(radar.width - radar.height * 1.8) < 1 && Math.abs(menu.bottom - floor) < 2;
+      return Math.abs(radar.width - radar.height) < 1 && Math.abs(menu.bottom - floor) < 2;
     },
     null,
     { timeout: 3000 },

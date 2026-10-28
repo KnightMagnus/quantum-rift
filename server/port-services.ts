@@ -28,6 +28,12 @@ export interface PortOperations {
     playerData?: PlayerData,
   ): number[] | null;
   outfit(this: PortCapabilities, session: Session, outfitId: number, quantity: number): void;
+  outfitInstallProblem(
+    this: PortCapabilities,
+    playerData: PlayerData,
+    outfitId: number,
+    quantity: number,
+  ): string | null;
 }
 import type { GradeLots } from '../shared/cargo-contracts.ts';
 import type { Game } from './game.ts';
@@ -68,6 +74,7 @@ export type PortService = Pick<
   | 'buyShip'
   | 'outfitter'
   | 'outfit'
+  | 'outfitInstallProblem'
 >;
 
 import { bindOperations } from './feature-service.ts';
@@ -471,7 +478,7 @@ const PortOperations: PortOperations = {
     const factionId = stellarBody.site ? 'quantum' : systemsById[stellarBody.system].faction,
       outfitIds = [];
     for (const outfit of Object.values(this.O)) {
-      if (outfit.id === 9021) continue;
+      if (outfit.id === 9021 || outfit.storeOnly) continue;
       if (outfit.faction && outfit.faction !== factionId) continue;
       const factionExclusive =
         FACTION_OUTFITS[factionId] && FACTION_OUTFITS[factionId].includes(outfit.id);
@@ -493,6 +500,36 @@ const PortOperations: PortOperations = {
     return outfitIds.sort(
       (leftOutfitId, rightOutfitId) => this.O[leftOutfitId].cost - this.O[rightOutfitId].cost,
     );
+  },
+  /**
+   * Checks whether the active ship can take more of a non-ammunition outfit.
+   * Shared by outfitters and faction stores, which install store outfits directly.
+   * @param playerData Player data.
+   * @param outfitId Outfit ID.
+   * @param quantity Number to install.
+   * @returns A player-facing reason, or null when it fits.
+   */
+  outfitInstallProblem(
+    this: PortCapabilities,
+    playerData: PlayerData,
+    outfitId: number,
+    quantity: number,
+  ): string | null {
+    const outfit = this.O[outfitId];
+    if (!outfit) return 'Unknown outfit.';
+    if (playerData.shipless)
+      return 'You have no active ship. Choose FLY THIS in your drydock, or buy one at a shipyard.';
+    const shipStats = this.features.shipStats!.stats(playerData)!;
+    ensureStockOutfits(this.A, playerData.ship);
+    const installedQuantity = playerData.ship.outfits[outfitId] || 0;
+    const limit = stockOutfitLimit(this.A, playerData.ship, outfitId);
+    if (installedQuantity + quantity > limit) return `You can carry at most ${limit}.`;
+    if ((outfit.mass || 0) * quantity > shipStats.free) return 'Not enough free space.';
+    if (outfit.eff!.weapon && outfit.turret && shipStats.turrets + quantity > shipStats.maxTurrets)
+      return 'No free turret mounts.';
+    if (outfit.eff!.weapon && !outfit.turret && shipStats.guns + quantity > shipStats.maxGuns)
+      return 'No free gun mounts.';
+    return null;
   },
   /**
    * Purchases or sells a ship outfit or ammunition batch.
@@ -541,21 +578,14 @@ const PortOperations: PortOperations = {
         playerData.ship.ammo[weaponId] = loadedAmmo + transferQuantity;
         playerData.credits -= transferQuantity * outfit.cost;
       } else {
-        ensureStockOutfits(this.A, playerData.ship);
+        const problem = PortOperations.outfitInstallProblem.call(
+          this,
+          playerData,
+          outfitId,
+          quantity,
+        );
+        if (problem) return this.toast(session, problem);
         const installedQuantity = playerData.ship.outfits[outfitId] || 0;
-        const limit = stockOutfitLimit(this.A, playerData.ship, outfitId);
-        if (installedQuantity + quantity > limit)
-          return this.toast(session, `You can carry at most ${limit}.`);
-        if ((outfit.mass || 0) * quantity > shipStats!.free)
-          return this.toast(session, 'Not enough free space.');
-        if (
-          outfit.eff!.weapon &&
-          outfit.turret &&
-          shipStats!.turrets + quantity > shipStats!.maxTurrets
-        )
-          return this.toast(session, 'No free turret mounts.');
-        if (outfit.eff!.weapon && !outfit.turret && shipStats!.guns + quantity > shipStats!.maxGuns)
-          return this.toast(session, 'No free gun mounts.');
         if (playerData.credits < outfit.cost * quantity)
           return this.toast(session, 'Not enough credits.');
         playerData.credits -= outfit.cost * quantity;

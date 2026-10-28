@@ -231,6 +231,8 @@ export function verifyIndexFleet(): void {
     lootBeforeBlade + 1,
     'the complete logical Trident pays once',
   );
+  // A fresh group starts its survey tour dwelling at the worksite, where the Loom deploys.
+  clock = 0;
   const loomSpace = fixture(919);
   const loom = find(loomSpace, 919);
   const obstacle = human(loomSpace, 91);
@@ -257,6 +259,26 @@ export function verifyIndexFleet(): void {
   assert.ok(extracts.length > 0 && extracts.every((amount) => amount === 12));
   assert.equal(loomSpace.beams.filter((beam) => beam.id === loom.id).length, 6);
   assert.ok(loomSpace.loot.some((parcel) => parcel.it.indexClaim));
+  // A travelling Loom must fold; a deployed miner elsewhere cannot extract remotely.
+  const previousClock = clock;
+  clock = 100;
+  IndexFleetOperations.ai.call(capabilities, loomSpace, loom);
+  advance(loomSpace, 2.1);
+  IndexFleetOperations.ai.call(capabilities, loomSpace, loom);
+  assert.equal(loom.hull, 919, 'Loom folds while travelling between stops');
+  const extractedBeforeTravel = extracts.length;
+  for (const machine of loomSpace.ships.values()) {
+    machine.x += 10000;
+    machine.y += 10000;
+  }
+  advance(loomSpace, 10);
+  IndexFleetOperations.fleetTick.call(capabilities, loomSpace);
+  assert.equal(
+    extracts.length,
+    extractedBeforeTravel,
+    'distant miners cannot extract a claimed rock',
+  );
+  clock = previousClock;
   selectedRock = 999;
   assert.equal(
     worlds[loomSpace.id].claim,

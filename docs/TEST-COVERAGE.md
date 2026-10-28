@@ -385,6 +385,7 @@ owner. Legacy `vNN` names are retained for traceability, and now run in CI.
 | `consensual-pvp`          | `server/coop.ts`, `server/frontier.ts`                                                                                           | [v26.ts](../test/v26.ts), [v07.ts](../test/v07.ts)                                                                                                                                                                                 | Open-galaxy friendly-fire prevention, solo/Armada duel consent/nonlethal outcomes and arena team matching.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `station-trading`         | `server/coop.ts`                                                                                                                 | [v26.ts](../test/v26.ts)                                                                                                                                                                                                           | Two-party credits/cargo/crates/blueprint/part escrow, accept/cancel and location guards.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `galaxy-navigation`       | `shared/galaxy.ts`, `shared/gen.ts`, `shared/rules.ts`                                                                           | [v04.ts](../test/v04.ts), [v08.ts](../test/v08.ts), [v23.ts](../test/v23.ts), [eventide.ts](../test/eventide.ts)                                                                                                                   | Seeded galaxy generation, reachable routes, Sol/Farside gates, authored Eventide landmarks, and Concordia display naming with stable home-system/station IDs.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `map-fog-of-war`          | `shared/map-knowledge.ts`, `client/map-fog.ts`, `client/render.ts`, `client/ui.ts`, `client/missions.ts`                         | [faction-store-catalog.ts](../test/faction-store-catalog.ts), [fog-of-war-browser.ts](../test/fog-of-war-browser.ts)                                                                                                               | Visited systems in full, neighbours by name only, routes through known space only, the Gateway lane after flying through, and star charts revealing faction space.                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `sleep-traffic-ai`        | `server/space.ts`                                                                                                                | [v04.ts](../test/v04.ts), [v201.ts](../test/v201.ts), [v23.ts](../test/v23.ts), [v24.ts](../test/v24.ts), [sim.ts](../test/sim.ts)                                                                                                 | Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `cargo-grade-ledger`      | `shared/cargo-lots.ts`, `shared/cargo-contracts.ts`                                                                              | [cargo-lots.ts](../test/cargo-lots.ts)                                                                                                                                                                                             | Versioned/idempotent cargo + storage migration, exact grade denial, immutable single-use withdrawals, atomic bounded transfers, fixed partial pickups, seeded per-grade conservation and real DB roundtrip. Pure prerequisite; production writer integration is separate.                                                                                                                                                                                                                                                                                                                                                  |
 | `mining-existing`         | `server/space.ts`, `server/game.ts`                                                                                              | [v04.ts](../test/v04.ts), [v05.ts](../test/v05.ts), [v252.ts](../test/v252.ts)                                                                                                                                                     | Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Staged cutting/survey coverage is listed separately under `mining-cutting`.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -922,6 +923,15 @@ purchases. The selected faction’s standing appears above the store on open and
 updates from the server’s player payload after buying a standing writ.
 `faction-standing.ts` checks every landable public port and resource-preserving
 foreign-faction, unclaimed station and flight denials through store messages.
+`faction-store-catalog.ts` checks that every store sells three store-only outfits
+with real assets and icons that no outfitter stocks. Purchases through the store
+message install the outfit at once, refuse a second copy or an under-standing
+weapon before charging, keep other factions' outfits in their own stores and sell
+back at an ordinary outfitter. All 33 outfits are purchased through the message route,
+with exact credit/token charges and weapon fitting checked. Full outfit-space and
+turret-mount refusals preserve inventory and currencies. Reserve cells add their
+advertised fuel. A star chart adds exactly the faction's systems to the save and
+payload, is not sold twice and survives a database reopen.
 
 `input-audio-browser.ts` checks login music before activation under explicit
 allowed and blocked autoplay policies, real-interaction recovery and stopping
@@ -1040,6 +1050,27 @@ unload-safe health and finite replacement counts, conserved extraction, delibera
 salvage theft and the peaceful per-captain Last Survey quest. The browser checks
 live sprite decoding, claim data and the real hail controls. Transformations,
 Kernel tactics, regional sorties and later story missions are not covered here.
+`index-survey-tour.ts` advances the Index clock in a system without asteroid fields
+and checks that parents visit real bodies with cataloguing labels while drones
+stay leashed to their live parent. Scanning passes ease in and out rather than
+changing radial velocity abruptly. The registered `eventide.ts` Index helper
+checks that the Loom folds while travelling and distant miners cannot extract
+a claimed rock; existing nearby extraction and finite-budget assertions remain.
+
+## `map-fog-of-war`: what captains know of the galaxy
+
+`faction-store-catalog.ts` checks the shared map rules: a fresh captain knows only
+visited systems and names their neighbours, lanes beyond neighbours stay hidden,
+routes take one hop into the unknown but never chain through unvisited systems,
+a star chart opens routes through faction space, and the Gateway's far mouth and
+dashed lane appear only after flying through. `fog-of-war-browser.ts` starts a new
+Solo pilot in Concordia and captures the real map. It checks that distant systems
+are neither drawn nor searchable, that neighbour details show the name only without port markers or event overlays, and
+that plotting reaches a neighbour but is refused two jumps out. Search results do not expose a name-only neighbour’s faction. The existing `story-realities-browser.ts` checks retain selectable mission bearings only for the captain whose saved story flags authorize them. A second pilot
+holding the Concord chart sees distant Concord systems drawn.
+`hyperspace-arrival.ts` checks that arrival points sit clear of every body's jump
+radius, that a real jump into a crowded system lands clear enough to chain the
+next jump, and that the chained heading turns away from a nearby blocker.
 
 ## Personal story realities and endgame artwork
 
@@ -1657,6 +1688,10 @@ and real-device qualification remain tracked in issue #82.
 ## Launcher runtime bootstrap
 
 `launcher-runtime.ts` runs the real launcher in isolated directories with an offline installer fixture. It checks first-launch installation, second-launch reuse, existing local and pinned PATH runtimes, unsupported platforms, and failed installs that leave a binary behind. A rejected binary is removed so the next launch cannot use it. These fixtures do not verify network downloads or archive extraction.
+
+## Client art download budgets
+
+`v25.ts` caps miscellaneous client assets at 26 MB, landscapes at 25 MB and portraits at 35 MB. Ship sheets and radio tracks have separate inventories. The 33 faction-store icons use compressed 256-pixel PNGs; their combined size is 594,413 bytes. The miscellaneous cap retains a finite allowance for these assets without raising the landscape or portrait limits.
 
 ## Rival roster compatibility
 

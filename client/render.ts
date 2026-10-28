@@ -61,6 +61,8 @@ type DecorModel = {
   arena?: { R: number };
 };
 import type { ClientGameState, ClientView } from './main.ts';
+import { captainMap } from './map-fog.ts';
+import { laneKnown } from '../shared/map-knowledge.ts';
 export type StellarBody = import('../shared/galaxy.ts').RawStellarBody & {
   /** Station visual design index */
   station?: number;
@@ -4641,16 +4643,33 @@ export function mapFit(
   width: number,
   height: number,
   flags?: RealityFlags,
+  visible?: ReadonlySet<string>,
 ): MapFit & { cx: number; cy: number; fit: number } {
-  const visibleSystems = SYS_LIST.filter((system) => storySystemVisible(flags || {}, system.id));
-  const bounds = flags
-      ? {
-          x0: Math.min(...visibleSystems.map((system) => system.x)) - 60,
-          x1: Math.max(...visibleSystems.map((system) => system.x)) + 60,
-          y0: Math.min(...visibleSystems.map((system) => system.y)) - 60,
-          y1: Math.max(...visibleSystems.map((system) => system.y)) + 60,
-        }
-      : BOUNDS,
+  const visibleSystems = SYS_LIST.filter(
+    (system) => storySystemVisible(flags || {}, system.id) && (!visible || visible.has(system.id)),
+  );
+  // Under fog of war, fit the space the captain knows, never closer than a small region.
+  const knownSpan = 900;
+  const knownBounds = () => {
+    const xs = visibleSystems.map((system) => system.x),
+      ys = visibleSystems.map((system) => system.y);
+    const centreX = (Math.min(...xs) + Math.max(...xs)) / 2,
+      centreY = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const halfX = Math.max(knownSpan, Math.max(...xs) - Math.min(...xs) + 240) / 2,
+      halfY = Math.max(knownSpan, Math.max(...ys) - Math.min(...ys) + 240) / 2;
+    return { x0: centreX - halfX, x1: centreX + halfX, y0: centreY - halfY, y1: centreY + halfY };
+  };
+  const bounds =
+      visible && visibleSystems.length
+        ? knownBounds()
+        : flags
+          ? {
+              x0: Math.min(...visibleSystems.map((system) => system.x)) - 60,
+              x1: Math.max(...visibleSystems.map((system) => system.x)) + 60,
+              y0: Math.min(...visibleSystems.map((system) => system.y)) - 60,
+              y1: Math.max(...visibleSystems.map((system) => system.y)) + 60,
+            }
+          : BOUNDS,
     entryKey = Math.min(width / (bounds.x1 - bounds.x0), height / (bounds.y1 - bounds.y0));
   return {
     cx: (bounds.x0 + bounds.x1) / 2,
@@ -4733,7 +4752,13 @@ export function galaxy(
   options: { big?: boolean } = {},
 ): void {
   const flags = clientGameState.you?.story?.flags as RealityFlags | undefined;
-  const visibleSystems = SYS_LIST.filter((system) => storySystemVisible(flags || {}, system.id));
+  // Fog of war: only visited/charted systems and neighbours of visited systems are drawn.
+  const knowledge = captainMap(clientGameState);
+  const visibleSystems = SYS_LIST.filter(
+    (system) =>
+      storySystemVisible(flags || {}, system.id) &&
+      (!knowledge || knowledge.visible.has(system.id) || system.id === clientGameState.sys),
+  );
   const visibleIds = new Set(visibleSystems.map((system) => system.id));
   const width2 = canvasRenderingContext2D.canvas.width,
     height2 = canvasRenderingContext2D.canvas.height,
@@ -4750,25 +4775,33 @@ export function galaxy(
   canvasRenderingContext2D.fillRect(0, 0, width2, height2);
   let mapFit2: MapFit;
   if (large) {
+    const fogKey = knowledge ? knowledge.visible.size : 0;
     if (
       !clientGameState.mapView ||
       clientGameState.mapView.W !== width2 ||
       clientGameState.mapView.H !== height2
     ) {
-      const mapFit3 = mapFit(width2, height2, flags),
+      const mapFit3 = mapFit(width2, height2, flags, knowledge?.visible),
         mapView2 = clientGameState.mapView;
       clientGameState.mapView = Object.assign(mapView2 || {}, {
         W: width2,
         H: height2,
         fit: mapFit3.fit,
+        fogKey,
       }) as MapFit & {
         W: number;
         H: number;
         prevFit?: number;
+        fogKey?: number;
       };
       if (!clientGameState.mapView.k) Object.assign(clientGameState.mapView, mapFit3);
       else if (mapView2!.prevFit) clientGameState.mapView.k *= mapFit3.fit / mapView2!.prevFit;
       clientGameState.mapView.prevFit = mapFit3.fit;
+    } else if (clientGameState.mapView.fogKey !== fogKey) {
+      // Newly revealed space widens the zoom range; the current view stays where it is.
+      const mapFit3 = mapFit(width2, height2, flags, knowledge?.visible);
+      clientGameState.mapView.fit = clientGameState.mapView.prevFit = mapFit3.fit;
+      clientGameState.mapView.fogKey = fogKey;
     }
     mapFit2 = clientGameState.mapView!;
   } // keep the zoom when the canvas is resized
@@ -4791,8 +4824,7 @@ export function galaxy(
     W: width2,
     H: height2,
   };
-  const explored = new Set((clientGameState.you && clientGameState.you.explored) || []),
-    zoom = large ? mapFit2.k / mapFit2.fit : 3;
+  const zoom = large ? mapFit2.k / mapFit2.fit : 3;
   const enabled = (positionX: number, positionY: number, message = 40) =>
     positionX > -message &&
     positionY > -message &&
@@ -4848,8 +4880,8 @@ export function galaxy(
         const [firstValue, secondValue] = position(starSystem),
           [component, distance] = position(systemsById[link]);
         if (!enabled(firstValue, secondValue, 400) && !enabled(component, distance, 400)) continue;
-        const known = explored.has(starSystem.id) || explored.has(link);
-        canvasRenderingContext2D.strokeStyle = known ? ink.lane : ink.faintLane;
+        if (knowledge && !laneKnown(knowledge, clientGameState.you, starSystem.id, link)) continue;
+        canvasRenderingContext2D.strokeStyle = ink.lane;
         canvasRenderingContext2D.beginPath();
         canvasRenderingContext2D.moveTo(firstValue, secondValue);
         canvasRenderingContext2D.lineTo(component, distance);
@@ -4857,7 +4889,12 @@ export function galaxy(
       }
   // the Gateway: a dashed, glowing link between Concordia and the far mouth
   for (const starSystem of visibleSystems)
-    if (starSystem.gate && starSystem.id < starSystem.gate && visibleIds.has(starSystem.gate)) {
+    if (
+      starSystem.gate &&
+      starSystem.id < starSystem.gate &&
+      visibleIds.has(starSystem.gate) &&
+      (!knowledge || laneKnown(knowledge, clientGameState.you, starSystem.id, starSystem.gate))
+    ) {
       const [firstValue, secondValue] = position(starSystem),
         [component, distance] = position(systemsById[starSystem.gate]);
       canvasRenderingContext2D.strokeStyle = 'rgba(154,200,255,.55)';
@@ -4911,7 +4948,7 @@ export function galaxy(
     if (!enabled(positionX, positionY)) continue;
     const factionDef = FACTIONS[starSystem.faction],
       here = starSystem.id === clientGameState.sys,
-      seen = explored.has(starSystem.id) || !clientGameState.you,
+      seen = !knowledge || knowledge.known.has(starSystem.id),
       radius = large ? Math.max(3, Math.min(8, 3.2 * Math.sqrt(zoom))) : 4;
     if (seen || (large && clientGameState.mapMode && clientGameState.mapMode !== 'factions')) {
       canvasRenderingContext2D.fillStyle = large
@@ -4921,7 +4958,7 @@ export function galaxy(
       canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
       canvasRenderingContext2D.fill();
     } else {
-      canvasRenderingContext2D.strokeStyle = factionDef.color;
+      canvasRenderingContext2D.strokeStyle = seen ? factionDef.color : ink.names[1];
       canvasRenderingContext2D.globalAlpha = 0.7;
       canvasRenderingContext2D.lineWidth = 1.5;
       canvasRenderingContext2D.beginPath();
@@ -4930,7 +4967,7 @@ export function galaxy(
       canvasRenderingContext2D.globalAlpha = 1;
     }
     const site = starSystem.stellars.find((rawStellarBody) => rawStellarBody.site);
-    if (site && (large ? zoom > 0.9 : true)) {
+    if (seen && site && (large ? zoom > 0.9 : true)) {
       const site2 = sites[site.id];
       canvasRenderingContext2D.fillStyle = site2 ? '#c0a0ff' : '#8a70b0';
       const quantity = radius + 2;
@@ -4974,7 +5011,7 @@ export function galaxy(
         canvasRenderingContext2D.fillText(time, positionX, positionY - quantity - 6);
       }
     }
-    if (allySys[starSystem.id]) {
+    if (seen && allySys[starSystem.id]) {
       canvasRenderingContext2D.fillStyle = clientGameState.pal.ally;
       for (let entryKey = 0; entryKey < Math.min(5, allySys[starSystem.id].length); entryKey++) {
         canvasRenderingContext2D.beginPath();
@@ -5044,7 +5081,13 @@ export function galaxy(
   for (const [sessionId, angle] of Object.entries(width3.anomalies || {})) {
     const starSystem = systemsById[sessionId],
       spaceAnomaly = ANOMALIES[angle];
-    if (!starSystem || !spaceAnomaly) continue;
+    if (
+      !starSystem ||
+      !spaceAnomaly ||
+      !visibleIds.has(starSystem.id) ||
+      (knowledge && !knowledge.known.has(starSystem.id))
+    )
+      continue;
     const [positionX, positionY] = position(starSystem);
     if (!enabled(positionX, positionY)) continue;
     canvasRenderingContext2D.font = (large ? 'bold 15px' : '12px') + ' "Pixelify Sans", sans-serif';
@@ -5059,7 +5102,13 @@ export function galaxy(
   for (const [sessionId, livingPayloadState] of Object.entries(width3.states || {})) {
     const starSystem = systemsById[sessionId],
       systemState = STATES[livingPayloadState.k];
-    if (!starSystem || !systemState) continue;
+    if (
+      !starSystem ||
+      !systemState ||
+      !visibleIds.has(starSystem.id) ||
+      (knowledge && !knowledge.known.has(starSystem.id))
+    )
+      continue;
     const [positionX, positionY] = position(starSystem);
     if (!enabled(positionX, positionY)) continue; // system states
     canvasRenderingContext2D.strokeStyle = systemState.color + 'aa';
@@ -5073,7 +5122,12 @@ export function galaxy(
       canvasRenderingContext2D.fillText(systemState.icon, positionX - 13, positionY + 4);
     }
   }
-  if (width3.invasion && systemsById[width3.invasion.sys]) {
+  if (
+    width3.invasion &&
+    systemsById[width3.invasion.sys] &&
+    visibleIds.has(width3.invasion.sys) &&
+    (!knowledge || knowledge.known.has(width3.invasion.sys))
+  ) {
     const [positionX, positionY] = position(systemsById[width3.invasion.sys]);
     canvasRenderingContext2D.strokeStyle = `rgba(255,60,40,${0.4 + 0.6 * pulse})`;
     canvasRenderingContext2D.lineWidth = 3;
@@ -5122,11 +5176,18 @@ export function galaxy(
         positionX + quantity + 4,
         positionY + 4,
       );
+      // An uncharted destination is a name on the map, with no lanes leading to it.
+      if (!visibleIds.has(state.id)) {
+        canvasRenderingContext2D.font = '11px "Pixelify Sans", sans-serif';
+        canvasRenderingContext2D.strokeText(state.name, positionX + quantity + 4, positionY + 18);
+        canvasRenderingContext2D.fillStyle = ink.names[1];
+        canvasRenderingContext2D.fillText(state.name, positionX + quantity + 4, positionY + 18);
+      }
     }
   }
   if (large) {
     const starSystem = systemsById.coldharbor;
-    if (starSystem) {
+    if (starSystem && visibleIds.has(starSystem.id)) {
       const [positionX, positionY] = position(starSystem);
       canvasRenderingContext2D.font = 'italic 14px "Pixelify Sans", sans-serif';
       canvasRenderingContext2D.textAlign = 'center';
@@ -5269,8 +5330,11 @@ export function mapHit(
   if (!mapTransform) return null;
   let best = null,
     body = 14;
+  const knowledge = captainMap(clientGameState);
   for (const starSystem of SYS_LIST) {
     if (!storySystemVisible(clientGameState.you?.story?.flags || {}, starSystem.id)) continue;
+    if (knowledge && !knowledge.visible.has(starSystem.id) && starSystem.id !== clientGameState.sys)
+      continue;
     const positionX = mapTransform.W / 2 + (starSystem.x - mapTransform.cx) * mapTransform.k,
       positionY = mapTransform.H / 2 + (starSystem.y - mapTransform.cy) * mapTransform.k,
       distance = Math.hypot(mouseX - positionX, mouseY - positionY);

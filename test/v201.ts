@@ -168,5 +168,85 @@ assertCondition(
   entitys.length === 2 && dists.every((value) => value < 600),
   `escorts keep up with a manoeuvring leader (max ${Math.round(Math.max(...dists))} units behind)`,
 );
+// Landing traffic keeps its nose within ~57 degrees of the port while it closes from far
+// out, instead of turning sideways and coasting in on a small velocity error.
+{
+  const portalSpace = game.spaces.meridian;
+  for (const entity of portalSpace.ships.values()) portalSpace.remove(entity);
+  let samples = 0,
+    sideways = 0;
+  for (let index = 0; index < 16; index++) {
+    const stellarBody = planets[index % planets.length],
+      angle = (index / 16) * 6.283,
+      distance = 2600;
+    const trader = portalSpace.makeShip({
+      hull: hulls[index % hulls.length],
+      faction: 'spacer',
+      x: stellarBody.x + Math.cos(angle) * distance,
+      y: stellarBody.y + Math.sin(angle) * distance,
+      a: angle + 1.4,
+      vx: Math.cos(angle + 1.4) * 120,
+      vy: Math.sin(angle + 1.4) * 120,
+      ai: 'trade',
+    });
+    trader.dest = stellarBody;
+    trader.life = 1e9;
+    for (let tick = 0; tick < 90 * 30 && portalSpace.ships.has(trader.id); tick++) {
+      portalSpace.ai(trader);
+      if (!portalSpace.ships.has(trader.id)) break;
+      step(trader, trader.st, trader.inp);
+      const deltaX = stellarBody.x - trader.x,
+        deltaY = stellarBody.y - trader.y,
+        range = Math.hypot(deltaX, deltaY),
+        closing = (trader.vx * deltaX + trader.vy * deltaY) / range,
+        offset = Math.abs(wrap(Math.atan2(deltaX, -deltaY) - trader.a));
+      // Ignore the first second of turning in and the committed retrograde brake.
+      if (tick < 30 || range < 300 || closing < 40 || offset > 2.2) continue;
+      samples++;
+      if (offset > 1.05 && !trader.inp.thrust) sideways++;
+    }
+    portalSpace.remove(trader);
+  }
+  assertCondition(
+    samples > 500 && sideways / samples < 0.03,
+    `landing approach rarely coasts side-on (${sideways}/${samples} samples)`,
+  );
+  // An NPC convoy wing matches its leader's heading without shimmying every tick.
+  const leader = portalSpace.makeShip({ hull: 704, faction: 'spacer', x: 0, y: 4000, ai: 'trade' });
+  leader.dest = { x: 0, y: -8000, out: true } as typeof leader.dest;
+  leader.life = 1e9;
+  const wing = portalSpace.makeShip({
+    hull: 704,
+    faction: 'spacer',
+    x: 60,
+    y: 4050,
+    ai: 'escort',
+    owner: leader.id,
+  });
+  wing.tradeMate = true;
+  wing.life = 1e9;
+  let previousTurn = 0,
+    reversals = 0;
+  for (let tick = 0; tick < 20 * 30; tick++) {
+    portalSpace.ai(leader);
+    portalSpace.ai(wing);
+    step(leader, leader.st, leader.inp);
+    step(wing, wing.st, wing.inp);
+    const turn = wing.inp.turn || 0;
+    if (turn && previousTurn && turn !== previousTurn) reversals++;
+    if (turn) previousTurn = turn;
+  }
+  assertCondition(reversals < 20, `convoy wing holds formation without shimmying (${reversals})`);
+  // When the leader lands, its wing follows it to the same port.
+  const port = planets[0];
+  leader.x = port.x;
+  leader.y = port.y;
+  leader.vx = leader.vy = 0;
+  leader.dest = port;
+  portalSpace.ai(leader);
+  assert.ok(!portalSpace.ships.has(leader.id), 'convoy leader lands');
+  assert.equal(wing.dest, port, 'convoy wing inherits the leader’s port');
+  portalSpace.remove(wing);
+}
 console.log('ALL 2.0.1 TESTS PASSED');
 process.exit(0);

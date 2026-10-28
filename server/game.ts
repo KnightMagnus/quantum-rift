@@ -598,6 +598,7 @@ import {
   credits,
 } from '../shared/rules.ts';
 import { Space } from './space.ts';
+import { hyperspaceArrivalRadius } from '../shared/hyperspace-arrival.ts';
 import { synTier } from '../shared/syndicate.ts';
 import { STATES } from '../shared/living.ts';
 import { ARCS } from '../shared/arcs.ts';
@@ -1408,6 +1409,7 @@ export class Game<Storage extends Database = Database> {
         byCommodity: structuredClone(playerData.storageLots.byCommodity),
       },
       explored: playerData.explored,
+      charted: playerData.charted || [],
       tut: playerData.tut ?? TUTORIAL.length,
       station: playerData.station,
       stats: playerData.stats,
@@ -2353,10 +2355,11 @@ export class Game<Storage extends Database = Database> {
     }
     const atan = Math.atan2(from.x - starSystem.x, -(from.y - starSystem.y)); // arrive from the direction we came
     const firstValue = atan + Math.PI;
+    const arrivalRadius = hyperspaceArrivalRadius(starSystem, atan);
     this.spawnPlayer(
       session,
-      Math.sin(atan) * 2200,
-      -Math.cos(atan) * 2200,
+      Math.sin(atan) * arrivalRadius,
+      -Math.cos(atan) * arrivalRadius,
       firstValue,
       entity.st.maxSpeed,
     );
@@ -2961,6 +2964,16 @@ export class Game<Storage extends Database = Database> {
    */
   outfit(session: Session, identifier: number, count: number): void {
     return this.portService.outfit(session, identifier, count);
+  }
+  /**
+   * Checks whether the active ship can take more of an outfit, without buying it.
+   * @param playerData Player data.
+   * @param identifier Outfit ID.
+   * @param count Number to install.
+   * @returns Player-facing reason, or null when it fits.
+   */
+  outfitInstallProblem(playerData: PlayerData, identifier: number, count: number): string | null {
+    return this.portService.outfitInstallProblem(playerData, identifier, count);
   }
 
   /**

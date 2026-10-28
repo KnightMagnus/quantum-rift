@@ -213,6 +213,28 @@ try {
     { timeout: 10000 },
   );
 
+  // With a course plotted, J on the open map closes it and starts the jump.
+  await page.waitForFunction((start) => G.sys !== start && G.view && !G.landed, startSystem, {
+    timeout: 15000,
+  });
+  await page.evaluate(async () => {
+    const ship = G.view!;
+    ship.x += 6000;
+    ship.y += 6000;
+    const { SYS } = await import('/shared/galaxy.js');
+    G.route = [SYS[G.sys!].links[0]];
+  });
+  const mapSystem = await page.evaluate(() => G.sys);
+  await page.keyboard.press('KeyM');
+  await page.locator('#gmap').waitFor({ state: 'visible' });
+  await page.keyboard.press('KeyJ');
+  await page.locator('#gmap').waitFor({ state: 'hidden' });
+  await page.waitForFunction(
+    (start) => G._jumping || G.auto?.mode === 'jump' || G.sys !== start,
+    mapSystem,
+    { timeout: 10000 },
+  );
+
   // The owner sees their station; a visitor gets the guest dock only.
   const ownerPage = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   ownerPage.on('pageerror', (event) => errors.push(event.message));
