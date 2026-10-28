@@ -1688,3 +1688,7 @@ and real-device qualification remain tracked in issue #82.
 ## Launcher runtime bootstrap
 
 `launcher-runtime.ts` runs the real launcher in isolated directories with an offline installer fixture. It checks first-launch installation, second-launch reuse, existing local and pinned PATH runtimes, unsupported platforms, and failed installs that leave a binary behind. A rejected binary is removed so the next launch cannot use it. These fixtures do not verify network downloads or archive extraction.
+
+## Client art download budgets
+
+`v25.ts` caps miscellaneous client assets at 26 MB, landscapes at 25 MB and portraits at 35 MB. Ship sheets and radio tracks have separate inventories. The 33 faction-store icons use compressed 256-pixel PNGs; their combined size is 594,413 bytes. The miscellaneous cap retains a finite allowance for these assets without raising the landscape or portrait limits.

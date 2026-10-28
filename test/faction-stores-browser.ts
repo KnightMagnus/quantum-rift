@@ -82,6 +82,23 @@ try {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(String(e)));
     await page.goto(origin);
+    if (c === cases[0]) {
+      const decoded = await page.evaluate(async () => {
+        return Promise.all(
+          Array.from({ length: 33 }, async (_, index) => {
+            const image = new Image();
+            image.src = `/assets/icons/${9201 + index}.png`;
+            await image.decode();
+            return [image.naturalWidth, image.naturalHeight];
+          }),
+        );
+      });
+      assert.equal(decoded.length, 33);
+      assert.ok(
+        decoded.every(([width, height]) => width === 256 && height === 256),
+        'all 33 shipped store icons decode at their native resolution',
+      );
+    }
     await page.locator(`[data-slot="${c.name}"]`).click();
     await page.waitForFunction(() => G.you && G.landed);
     for (let i = 0; i < 8 && (await page.locator('#storybox').isVisible()); i++)
