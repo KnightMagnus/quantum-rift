@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import operatingSystem from 'node:os';
 import path from 'node:path';
-import type { GameAssets } from '../shared/rules.ts';
+import { makeLoadout, shipStats, type GameAssets } from '../shared/rules.ts';
 import { FACTIONS, STELLARS, SYS, SYSTEMS } from '../shared/galaxy.ts';
 import { FACTION_STORE_OUTFITS } from '../shared/faction-outfits.ts';
 import { factionStoreListings, starChartListing } from '../shared/faction-store-catalog.ts';
@@ -131,6 +131,88 @@ credits = playerData.credits;
 game.outfit(session, plating.id, -1);
 assert.ok(!playerData.ship.outfits[plating.id], 'store outfit sells at an outfitter');
 assert.ok(playerData.credits > credits);
+
+// Every faction's three outfits are bought through the real message route.
+for (const faction of storeFactions) {
+  const port = Object.values(STELLARS).find(
+    (body) => game.features.fronts.storeFor(body) === faction,
+  )!;
+  playerData.stellar = port.id;
+  playerData.sys = port.system;
+  playerData.rep[faction] = 100;
+  playerData.tokens![faction] = 200;
+  for (const outfit of FACTION_STORE_OUTFITS.filter((entry) => entry.faction === faction)) {
+    playerData.ship = {
+      ...makeLoadout(game.A, 736),
+      outfits: {},
+      stockOutfits: {},
+      fixed: [],
+      bonusSpace: 0,
+    };
+    playerData.credits = 5_000_000;
+    const tokenBalance: number = playerData.tokens![faction];
+    send({ t: 'store', fac: faction, id: 'outfit-' + outfit.id });
+    assert.equal(playerData.ship.outfits[outfit.id], 1, outfit.name + ' installs');
+    assert.equal(playerData.credits, 5_000_000 - outfit.cost, outfit.name + ' credit price');
+    assert.equal(
+      playerData.tokens![faction],
+      tokenBalance - outfit.tokens,
+      outfit.name + ' token price',
+    );
+    if (outfit.eff?.weapon) {
+      assert.equal(
+        game.features.shipStats.stats(playerData)!.weapons[outfit.eff.weapon],
+        1,
+        outfit.name + ' equips its weapon',
+      );
+    }
+  }
+}
+// Reserve cells advertise their actual fuel effect, not the unused legacy multiJump field.
+const plainHauler = { ...makeLoadout(game.A, 704), outfits: {}, stockOutfits: {}, fixed: [] };
+const baseFuel = shipStats(game.A, plainHauler)!.fuel;
+for (const [id, extraFuel] of [
+  [9203, 100],
+  [9233, 150],
+]) {
+  const fitted = shipStats(game.A, { ...plainHauler, outfits: { [id]: 1 } })!;
+  assert.equal(fitted.fuel, baseFuel + extraFuel);
+}
+// Full outfit space and full turret mounts refuse before spending either currency.
+playerData.stellar = 'meridian-yards';
+playerData.sys = STELLARS[playerData.stellar].system;
+playerData.rep.quantum = 100;
+playerData.tokens!.quantum = 100;
+playerData.credits = 5_000_000;
+playerData.ship = {
+  ...makeLoadout(game.A, 704),
+  outfits: {},
+  stockOutfits: {},
+  fixed: [],
+  bonusSpace: 0,
+};
+playerData.ship.bonusSpace = -game.features.shipStats.stats(playerData)!.free;
+for (const blocked of ['space', 'turret']) {
+  if (blocked === 'turret') playerData.ship = makeLoadout(game.A, 704);
+  const before: string = JSON.stringify({
+    ship: playerData.ship,
+    credits: playerData.credits,
+    tokens: playerData.tokens,
+  });
+  send({ t: 'store', fac: 'quantum', id: 'outfit-' + lance.id });
+  assert.equal(
+    JSON.stringify({
+      ship: playerData.ship,
+      credits: playerData.credits,
+      tokens: playerData.tokens,
+    }),
+    before,
+    blocked + ' denial preserves resources',
+  );
+}
+game.db.flush();
+const restored = new Database(directory).get('Store Pilot')!;
+assert.deepEqual(restored.charted, playerData.charted, 'purchased chart survives a real DB reopen');
 
 // ---- fog of war rules
 const start = 'qgate';
