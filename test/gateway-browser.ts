@@ -19,11 +19,32 @@ import { SYS } from '../shared/galaxy.ts';
 const directory = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-gate-browser-'));
 const evidence = path.resolve(process.argv[2] || evidenceDir('gateway'));
 fileSystem.mkdirSync(evidence, { recursive: true });
-const database = new Database(path.join(directory, 'data')),
+// Seed synchronously, then leave the spawned server as the only save/clock owner.
+// A second Game keeps ticking and dirties this same database after the handoff.
+const nativeInterval = globalThis.setInterval,
+  nativeTimeout = globalThis.setTimeout;
+let database: Database;
+let game: Game;
+try {
+  globalThis.setInterval = Object.assign(() => {
+    const timer = nativeInterval(() => {}, 2147483647);
+    clearInterval(timer);
+    return timer;
+  }, nativeInterval);
+  globalThis.setTimeout = Object.assign(() => {
+    const timer = nativeTimeout(() => {}, 2147483647);
+    clearTimeout(timer);
+    return timer;
+  }, nativeTimeout);
+  database = new Database(path.join(directory, 'data'));
   game = new Game(
     JSON.parse(fileSystem.readFileSync(path.join(root, 'shared/assets.json')).toString()),
     database,
   );
+} finally {
+  globalThis.setInterval = nativeInterval;
+  globalThis.setTimeout = nativeTimeout;
+}
 for (const systemId of ['qgate', 'coldharbor', 'aureole', 'glasswake']) {
   const playerData = database.create('Gate ' + systemId, '', game.fresh());
   playerData.sys = systemId;
