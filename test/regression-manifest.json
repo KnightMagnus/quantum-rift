@@ -140,6 +140,7 @@
     "protocol-compatibility.ts",
     "station-docking.ts",
     "performance-budgets.ts",
+    "combat-maneuver.ts",
     "combat-playability.ts",
     "combat-jobs-playability.ts",
     "combat-balance-ratings.ts",
@@ -1972,6 +1973,7 @@
       ],
       "services": [],
       "tests": [
+        "combat-maneuver.ts",
         "combat-playability.ts",
         "combat-jobs-playability.ts",
         "combat-assist.ts",
