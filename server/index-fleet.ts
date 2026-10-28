@@ -79,6 +79,8 @@ interface FleetLocal {
   stops?: SurveyStop[];
   /** Smooth independent tour centres across route changes and passing-ship investigations. */
   centres?: Map<number, { x: number; y: number; at: number }>;
+  /** Drones recovering their parent leash after a turn or local separation. */
+  returningDrones?: Set<number>;
 }
 const locals = new WeakMap<Space, FleetLocal>();
 function local(space: Space): FleetLocal {
@@ -327,6 +329,25 @@ function formationPoint(
       (candidate) => local(space).entities.get(candidate.id) === actor.parent,
     );
     const center = parentEntity || formationPoint(space, world, actor.parent, now);
+    const drone = entityFor(space, slot);
+    if (drone && parentEntity) {
+      const range = Math.hypot(drone.x - center.x, drone.y - center.y);
+      const returning = (local(space).returningDrones ||= new Set());
+      const outwardSpeed = Math.max(
+        0,
+        ((drone.vx - center.vx) * (drone.x - center.x) +
+          (drone.vy - center.vy) * (drone.y - center.y)) /
+          (range || 1),
+      );
+      const turningDrift = (outwardSpeed * Math.PI) / drone.st.turn;
+      if (range > 800 || range + turningDrift > 1000) returning.add(slot);
+      else if (range < 600 && Math.hypot(drone.vx - center.vx, drone.vy - center.vy) < 40)
+        returning.delete(slot);
+      // A lagging drone must recover its live parent before resuming an outward
+      // scan. Otherwise a route reversal can leave it chasing the far side of
+      // the orbit while its parent continues in the opposite direction.
+      if (returning.has(slot)) return { x: center.x, y: center.y, vx: center.vx, vy: center.vy };
+    }
     const siblings = world.actors.filter(
       (candidate) => candidate.parent === actor.parent && !candidate.dead && !candidate.hidden,
     );
@@ -397,7 +418,8 @@ function surveyActivity(
 /** Fly a neutral machine along its moving berth. */
 function keepStation(space: Space, world: IndexFleetWorld, entity: Entity, now: number): void {
   const berth = formationPoint(space, world, local(space).entities.get(entity.id)!, now);
-  space.steer(entity, berth.x, berth.y, true, berth.vx, berth.vy);
+  const returning = local(space).returningDrones?.has(local(space).entities.get(entity.id)!);
+  space.steer(entity, berth.x, berth.y, true, berth.vx, berth.vy, false, returning ? 60 : Infinity);
 }
 
 /** Keep neutral machine hull envelopes apart after actual movement, never moving players. */

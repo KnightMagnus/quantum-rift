@@ -1054,7 +1054,9 @@ Kernel tactics, regional sorties and later story missions are not covered here.
 and checks that parents take different simultaneous survey assignments, visit real
 bodies and investigate passing ships while drones stay leashed to their live parent.
 `index-presentation.ts` checks actual approach toward a stationary ship beyond the
-home orbit, without combat targeting, weapon fire or damage. Scanning passes ease in and out rather than
+home orbit, without combat targeting, weapon fire or damage. A separate outbound
+drone fixture checks physical leash recovery without teleporting; the system tour
+retains its 1,300-unit maximum leash assertion. Scanning passes ease in and out rather than
 changing radial velocity abruptly. The registered `eventide.ts` Index helper
 checks that the Loom folds while travelling and distant miners cannot extract
 a claimed rock. Direct attackers remain defensive targets outside the original

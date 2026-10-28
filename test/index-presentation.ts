@@ -353,6 +353,43 @@ assert.equal(
   initialVisitorArmor,
   'peaceful investigation does not damage the visitor',
 );
+// A lagging outbound drone recovers its live parent before resuming its scanning orbit.
+clock = 0;
+worlds.glasswake = {
+  ...structuredClone(world),
+  actors: [
+    { ...structuredClone(droneWorld.actors[0]), x: 0, y: 0 },
+    { ...structuredClone(droneWorld.actors[1]), x: 500, y: 0 },
+  ],
+};
+survey = mixedSpace();
+IndexFleetOperations.open.call(capabilities, survey);
+const [recoveringParent, recoveringDrone] = [...survey.ships.values()];
+recoveringDrone.a = Math.PI / 2;
+// Match the outbound drift observed at the seeded route-reversal regression.
+recoveringDrone.vx = 80;
+let greatestRecoveryRange = 0;
+let recoveredLeash = false;
+for (let tick = 0; tick < 1800; tick++) {
+  clock += DT;
+  survey.t += DT;
+  for (const entity of survey.ships.values()) {
+    const before = { x: entity.x, y: entity.y };
+    IndexFleetOperations.ai.call(capabilities, survey, entity);
+    assert.equal(entity.x, before.x, 'leash guidance never teleports ships');
+    assert.equal(entity.y, before.y);
+    step(entity, entity.st, entity.inp);
+  }
+  IndexFleetOperations.fleetTick.call(capabilities, survey);
+  const range = Math.hypot(
+    recoveringDrone.x - recoveringParent.x,
+    recoveringDrone.y - recoveringParent.y,
+  );
+  greatestRecoveryRange = Math.max(greatestRecoveryRange, range);
+  if (range < 600) recoveredLeash = true;
+}
+assert.ok(greatestRecoveryRange < 1300, `outbound drone stays leashed (${greatestRecoveryRange})`);
+assert.ok(recoveredLeash, 'lagging outbound drone physically recovers its parent');
 const output = path.resolve(
   process.env.RIFT_TEST_ARTIFACTS || '.artifacts/regression',
   'index-presentation',

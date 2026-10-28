@@ -1683,6 +1683,7 @@ export class Space {
    * @param targetVelocityX Target velocity X for formation matching.
    * @param targetVelocityY Target velocity Y for formation matching.
    * @param landing Keep landing cruise pointed toward its destination.
+   * @param approachSpeed Optional relative speed ceiling for precise rendezvous.
    * @returns Distance remaining to target coordinates.
    */
   steer(
@@ -1693,6 +1694,7 @@ export class Space {
     targetVelocityX: number = 0,
     targetVelocityY: number = 0,
     landing: boolean = false,
+    approachSpeed: number = Infinity,
   ): number {
     const computedShipStats = entity.st,
       deltaX = targetX - entity.x,
@@ -1707,6 +1709,7 @@ export class Space {
         unitX = distance > 1 ? deltaX / distance : 0,
         unitY = distance > 1 ? deltaY / distance : 0;
       const vAllow = Math.min(
+        approachSpeed,
         landing ? computedShipStats.maxSpeed : computedShipStats.maxSpeed * 0.95,
         Math.sqrt(
           2 * computedShipStats.accel * Math.max(0, distance - 10 - space * flipTime * 0.6),
