@@ -44,8 +44,25 @@ try {
   await page.waitForFunction(() => G.you && G.landed);
   for (let index = 0; index < 8 && (await page.locator('#storybox').isVisible()); index++)
     await page.locator('#storyb button').first().click();
+  await page.locator('#traytoggle').click();
+  await page.locator('#ctabs [data-tab="missions"]').click();
+  assert.equal(
+    await page.locator('#mlist .refineryjobs, #mlist [data-refinery]').count(),
+    0,
+    'Missions excludes refinery jobs and fuel controls even with active batches and ready goods',
+  );
+  assert.equal(
+    await page.locator('#mlist [data-mission-filter="missionType"]').count(),
+    1,
+    'Mission browsing controls remain available',
+  );
   await page.locator('[data-lt="refinery"]').click();
   await page.waitForSelector('#refrecipe');
+  assert.equal(
+    await page.locator('#landbody .refineryjobs').count(),
+    1,
+    'The station Refinery tab retains jobs, collection and fuel controls',
+  );
   // The first quote can replace this form between separate Playwright calls.
   // Observe the live control's geometry atomically rather than a detached handle.
   const quantityHeight = await page.waitForFunction(
