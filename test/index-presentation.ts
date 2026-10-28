@@ -306,6 +306,53 @@ for (const [index, before] of droneBearings[0].entries()) {
   );
   assert(turned > 0.3, 'Each drone sweeps around its parent during 30 seconds of neutral survey');
 }
+// Isolate a stationary visitor so a changing label alone cannot pass the investigation check.
+clock = 90;
+worlds.glasswake = {
+  ...structuredClone(world),
+  actors: [{ ...structuredClone(droneWorld.actors[0]), x: 0, y: 0 }],
+};
+survey = mixedSpace();
+IndexFleetOperations.open.call(capabilities, survey);
+const investigator = [...survey.ships.values()][0];
+const visitor = survey.makeShip({
+  hull: 704,
+  faction: 'spacer',
+  x: 20000,
+  y: 0,
+  name: 'Stationary survey fixture',
+});
+const initialVisitorDistance = Math.hypot(investigator.x - visitor.x, investigator.y - visitor.y);
+const initialVisitorArmor = visitor.armor;
+for (let tick = 0; tick < 2400; tick++) {
+  clock += DT;
+  survey.t += DT;
+  IndexFleetOperations.ai.call(capabilities, survey, investigator);
+  step(investigator, investigator.st, investigator.inp);
+  IndexFleetOperations.fleetTick.call(capabilities, survey);
+  assert.match(investigator.name!, /investigating ship Stationary survey fixture/);
+  assert.equal(
+    investigator.target,
+    null,
+    'peaceful investigation does not acquire a combat target',
+  );
+  assert.ok(
+    !investigator.inp.fire1 && !investigator.inp.fire2,
+    'investigation does not fire weapons',
+  );
+}
+const finalVisitorDistance = Math.hypot(investigator.x - visitor.x, investigator.y - visitor.y);
+assert.ok(
+  initialVisitorDistance - finalVisitorDistance > 1000,
+  `investigator physically approaches the stationary ship beyond its 800-unit home orbit (${initialVisitorDistance - finalVisitorDistance})`,
+);
+assert.equal(visitor.x, 20000, 'visitor stays fixed while the investigator moves');
+assert.equal(visitor.y, 0);
+assert.equal(
+  visitor.armor,
+  initialVisitorArmor,
+  'peaceful investigation does not damage the visitor',
+);
 const output = path.resolve(
   process.env.RIFT_TEST_ARTIFACTS || '.artifacts/regression',
   'index-presentation',
