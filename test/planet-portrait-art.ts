@@ -7,7 +7,7 @@ import inventory from '../tools/landscape-inventory.json' with { type: 'json' };
 import portraits from '../tools/portrait-inventory.json' with { type: 'json' };
 import { landscapeScene, colonyStage } from '../shared/landscapes.ts';
 import { STELLARS } from '../shared/galaxy.ts';
-import { RIVALS } from '../shared/rivals.ts';
+import { RIVALS, HAIL_SPECIAL } from '../shared/rivals.ts';
 import { storyCharacter } from '../client/story-portraits.ts';
 import {
   PORTRAITS,
@@ -125,6 +125,42 @@ for (const rival of RIVALS)
     npcPortrait({ rival: rival.id, faction: rival.fac, hull: 1 }, 'sol'),
     'npc-' + rival.id,
   );
+assert.equal(
+  new Set(RIVALS.map((rival) => rival.name)).size,
+  30,
+  'every captain has a unique name',
+);
+assert.equal(
+  new Set(RIVALS.map((rival) => rival.ship)).size,
+  30,
+  'every captain flies a unique ship',
+);
+for (const entry of named)
+  assert.equal(
+    entry.label,
+    RIVALS.find((rival) => rival.id === entry.npcId)?.name,
+    'portrait label matches the captain name for ' + entry.npcId,
+  );
+const rivalNames = new Set(RIVALS.map((rival) => rival.name));
+for (const captainName of Object.keys(HAIL_SPECIAL))
+  assert.ok(
+    rivalNames.has(captainName),
+    'custom hail lines belong to a current captain: ' + captainName,
+  );
+assert.equal(RIVALS.find((rival) => rival.id === 'r7')?.name, 'Twelve Glint');
+assert.equal(RIVALS.find((rival) => rival.id === 'r21')?.name, '"Brick" Mulgrew');
+for (const rival of RIVALS)
+  assert.ok(rival.luck >= 0.7 && rival.luck <= 1.3, 'no captain gets a luck bonus: ' + rival.id);
+assert.equal(
+  RIVALS.find((rival) => rival.id === 'r7')!.luck,
+  0.7523146456107497,
+  'r7 keeps its original seeded luck without the former 1.15 floor',
+);
+assert.equal(
+  RIVALS.find((rival) => rival.id === 'r21')!.luck,
+  1.0521297982428222,
+  'r21 keeps its original seeded luck without the former 1.15 floor',
+);
 for (const item of portraits.entries) {
   const bytes = fs.readFileSync(
     new URL('../client/assets/portraits/' + item.id + '.png', import.meta.url),

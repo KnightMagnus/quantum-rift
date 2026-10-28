@@ -75,6 +75,36 @@ const toSpace = (
   return requiredFixtureValue<FixtureEntity>(requiredFixtureValue(captain.s).ent);
 };
 const worldData = game.db.world;
+// Fresh rivals use the same wealth rule, including the two formerly boosted captains.
+// Fixed RNG isolates the production initializer from unrelated world-generation draws.
+{
+  const previousWorld = game.db.world;
+  const previousEntities = game.rivalEnts;
+  game.db.world = { ...worldData, rivals: {}, news: [{ text: 'fixture headline', t: 0 }] };
+  const previousRandom = Math.random;
+  try {
+    Math.random = () => 0.5;
+    game.features.rivals.rivalsInit();
+    for (const rival of RIVALS) {
+      assertCondition(
+        game.db.world.rivals[rival.id].credits === Math.round(740000 * rival.luck),
+        `${rival.id} starts with ordinary career wealth`,
+      );
+    }
+    game.db.world.rivals.r7.credits = 123456;
+    game.db.world.rivals.r21.credits = 654321;
+    const preserved = JSON.stringify(game.db.world.rivals);
+    game.features.rivals.rivalsInit();
+    assertCondition(
+      JSON.stringify(game.db.world.rivals) === preserved,
+      'reload preserves existing rival wealth, hulls, locations and relationships',
+    );
+  } finally {
+    Math.random = previousRandom;
+    game.db.world = previousWorld;
+    game.rivalEnts = previousEntities;
+  }
+}
 // rivals exist with careers
 assertCondition(
   RIVALS.length === 30 && Object.keys(worldData.rivals).length === 30,
