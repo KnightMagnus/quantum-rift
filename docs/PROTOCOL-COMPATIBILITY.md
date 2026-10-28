@@ -1,7 +1,7 @@
 # Client/server compatibility
 
 Compatibility uses the numeric `GAME_PROTOCOL` epoch in `shared/protocol.ts`,
-not the package version shown on the title screen or the artwork cache version.
+not the public beta release label shown on the title screen or the artwork cache version.
 Different builds can connect when their wire contract is the same.
 
 ## Supported combinations

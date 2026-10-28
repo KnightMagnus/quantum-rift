@@ -1551,10 +1551,10 @@ export function showLanded(): void {
       available2.some(([entryKey]) => entryKey === clientGameState.lastTab[length2.stellar])
     )
       clientGameState.ltab = clientGameState.lastTab[length2.stellar];
+    else clientGameState.ltab = 'overview';
   } // each world remembers your last tab
   if (!available2.some(([entryKey]) => entryKey === clientGameState.ltab))
-    clientGameState.ltab =
-      site && (site.own || !site.owner) ? 'station' : length2.community ? 'community' : 'overview';
+    clientGameState.ltab = 'overview';
   clientGameState.lastTab[length2.stellar] = clientGameState.ltab!;
   clientGameState._ltabs = available2.map(([entryKey]) => entryKey);
   elementById2('ltabs').innerHTML = available2

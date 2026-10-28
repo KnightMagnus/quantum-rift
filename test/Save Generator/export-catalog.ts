@@ -11,7 +11,7 @@ augmentAssets(assets);
 const template = Game.prototype.fresh.call({ A: assets });
 template.station.refT = 0;
 const catalog = {
-  version: JSON.parse(fileSystem.readFileSync('package.json', 'utf8')).version,
+  version: JSON.parse(fileSystem.readFileSync('package.json', 'utf8')).publicVersion,
   template,
   ships: Object.values(assets.ships)
     .filter((hull) => !hull.npcOnly)

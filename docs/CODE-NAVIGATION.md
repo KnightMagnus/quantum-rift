@@ -6,7 +6,8 @@ or fully typed. For running the game, use the public README.
 
 ## Entry points
 
-1. Read `package.json` for startup, test commands and the current version.
+1. Read `package.json` for startup and test commands. Its `publicVersion` is the in-game and
+   archive release label; `version` is the npm-compatible package version.
 2. Read [server/main.ts](../server/main.ts): default dedicated startup selects the static
    [Nakama web host](../server/nakama-host.ts); Solo and explicit `HOST_FRIENDS=1`
    select [the local platform](../server/local-main.ts). The dedicated web host has no Game,
@@ -303,8 +304,13 @@ a rendering cost, not evidence of a general performance improvement.
 ### Sidebar sizing and landing notices
 
 `client/sidebar-size.ts` owns device-local desired heights under
-`rift.hudHeights`. It allocates the lower menu and minimap against measured sidebar
+`rift.hudHeights`. A fresh layout keeps the minimap square as sidebar width changes,
+shrinking it on short screens while reserving usable lower-menu space. It allocates the lower menu and minimap against measured sidebar
 chrome, preserving desired values when the viewport temporarily clamps them.
+Landing destinations without a remembered service tab open Overview.
+Closing a ship-function panel returns focus to the flight canvas so Space resumes
+manual fire instead of activating the panel opener. Hail options wrap inside
+content-height buttons in a wider, viewport-bounded window.
 `client/ui.ts` renders expanded and collapsed gauges from the same player/view
 state. Connection teardown clears the collapsed readout before another snapshot.
 

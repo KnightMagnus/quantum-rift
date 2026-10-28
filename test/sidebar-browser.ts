@@ -203,8 +203,8 @@ try {
       };
     });
     assert.ok(
-      Math.abs(radar.width + 6 * viewportScenario.s - (radar.height + 6 * viewportScenario.s)) < 1,
-      'System radar defaults to a square: ' + JSON.stringify({ viewportScenario, radar }),
+      Math.abs(radar.width - radar.height) < 1,
+      'Automatic system radar remains square: ' + JSON.stringify({ viewportScenario, radar }),
     );
     assert.ok(
       Math.abs(radar.pixels[0] / radar.pixels[1] - radar.width / radar.height) < 0.02,
@@ -217,7 +217,7 @@ try {
     if (viewportScenario.name === 'default')
       assert.ok(
         radar.width > 260,
-        'Desktop square radar takes the room above the menu: ' + JSON.stringify(radar),
+        'Desktop radar fills the room above the menu: ' + JSON.stringify(radar),
       );
     await page.locator('#ctabs').scrollIntoViewIfNeeded();
     const ventLayout = await page.evaluate(() => {
@@ -379,10 +379,14 @@ try {
       'Utility icons and labels are not squished',
     );
     if (state === 'resized') {
-      assert.ok(Math.abs(shell.radar.w + 6 - (shell.radar.h + 6)) < 1);
+      const frame = await page.locator('#radarwrap').boundingBox();
+      assert.ok(
+        Math.abs(frame!.width - frame!.height) < 1,
+        'Dragging the sidebar wider preserves an automatic square map',
+      );
       assert.ok(
         shell.radar.w >= shellResults[0].shell.radar.w - 1,
-        'Square radar does not shrink when the tray is dragged wider',
+        'Automatic square radar does not shrink when the tray is dragged wider',
       );
     }
     const frame = await page.screenshot({ path: output + '/shell-' + state + '.png' });

@@ -97,6 +97,16 @@ for (const kind of ['planet', 'station']) {
       assert.equal(shipEntity.fuel, beforeFuel, 'NPC approach does not use afterburner fuel');
     }
 }
+// At maximum speed the ordinary landing engine remains visibly on until a turn is needed.
+for (const hull of [704, 706, 712]) {
+  const trader = space.makeShip({ hull, faction: 'spacer', x: 0, y: 20000, a: 0, ai: 'trade' });
+  trader.vy = -trader.st.maxSpeed;
+  trader.dest = { x: 0, y: 0, r: 70 } as typeof trader.dest;
+  space.ai(trader);
+  assert.equal(trader.inp.thrust, 1, 'NPC landing cruise keeps thrust at its speed cap');
+  assert.ok(!trader.inp.ab, 'NPC landing cruise never forces afterburner');
+  space.remove(trader);
+}
 console.log('Planet/station NPC cruise alignment and actual landing events passed (18 cases).');
 let landed = 0,
   worst = 0;

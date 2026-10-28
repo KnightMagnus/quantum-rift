@@ -242,8 +242,12 @@ try {
     'test: exclude private save',
   ]);
   command(python, ['tools/package_archive.py', '--output', output]);
-  const manifest: { files: { path: string }[]; archives: { name: string }[]; root: string } =
-    JSON.parse(fileSystem.readFileSync(path.join(output, 'package-manifest.json'), 'utf8'));
+  const manifest: {
+    version: string;
+    files: { path: string }[];
+    archives: { name: string }[];
+    root: string;
+  } = JSON.parse(fileSystem.readFileSync(path.join(output, 'package-manifest.json'), 'utf8'));
   for (const launcher of [
     'tools/start-friends.ts',
     'Start Friend Game.bat',
@@ -256,6 +260,16 @@ try {
       );
     }
   }
+  const publicVersion = JSON.parse(
+    fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8'),
+  ).publicVersion;
+  assert.equal(
+    manifest.version,
+    publicVersion,
+    'archive manifest uses the public beta release label',
+  );
+  assert.equal(manifest.root, 'Quantum Rift v' + publicVersion);
+  assert.equal(manifest.archives[0].name, 'Quantum Rift v' + publicVersion + '.zip');
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/server/main.js'));
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/client/html.js'));
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/server/seeds.json'));

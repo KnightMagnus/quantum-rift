@@ -64,10 +64,18 @@ try {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(String(error)));
   await page.goto(origin);
+  const publicVersion = JSON.parse(
+    fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8'),
+  ).publicVersion;
+  await page.waitForFunction(
+    (expected) => document.querySelector('#lver')?.textContent === 'Quantum Rift v' + expected,
+    publicVersion,
+  );
   await page.locator('#limport').setInputFiles(saveFile);
   const slot = page.locator('[data-slot="Custom Browser"]');
   await slot.waitFor();
   const imported = await (await fetch(`${origin}/api/export?name=Custom%20Browser`)).json();
+  assert.equal(imported.rift, publicVersion, 'Solo HTTP exports match the displayed beta label');
   assert.equal(imported.save.credits, 12345678);
   assert.equal(imported.save.ship.hull, 736);
   assert.equal(imported.save.station.ops, 5);

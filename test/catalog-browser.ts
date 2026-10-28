@@ -105,7 +105,7 @@ try {
   assert.equal(
     status.version,
     process.env.EXPECT_VERSION ||
-      JSON.parse(fileSystem.readFileSync(path.join(root, 'package.json')).toString()).version,
+      JSON.parse(fileSystem.readFileSync(path.join(root, 'package.json')).toString()).publicVersion,
   );
   assert.equal(status.solo, true);
   browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
@@ -143,6 +143,10 @@ try {
     served = [];
   }
   await page.goto(origin);
+  await page.waitForFunction(
+    (expected) => document.querySelector('#lver')?.textContent === 'Quantum Rift v' + expected,
+    status.version,
+  );
 
   await page.locator('[data-slot="Release Smoke"]').click();
   await page.waitForFunction(() => G.you && G.landed && G.solo);

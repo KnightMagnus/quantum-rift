@@ -124,7 +124,17 @@ select:focus-visible {
   width: min(620px, 94%);
 }
 .hailin {
-  width: min(520px, 94%);
+  width: min(760px, 94%);
+}
+#hailopts .btn {
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 30px;
+  padding-block: 6px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  flex-shrink: 0;
 }
 .landbox {
   height: min(745px, 96%);
@@ -1616,7 +1626,7 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   }
 }
 
-/* Independent vertical handles keep the square/automatic layout until adjusted. */
+/* Independent vertical handles preserve automatic allocation until adjusted. */
 .heightgrip {
   flex: 0 0 10px;
   min-height: 10px;

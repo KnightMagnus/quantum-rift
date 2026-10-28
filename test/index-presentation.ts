@@ -132,6 +132,7 @@ IndexFleetOperations.open.call(capabilities, survey);
 const armor = [...survey.ships.values()].map((entity) => entity.armor);
 let minimumClearance = Infinity;
 let settledPositions = new Map<number, { x: number; y: number }>();
+const travelledPaths = new Map<number, number>();
 for (let tick = 0; tick < 1800; tick++) {
   clock += DT;
   survey.t += DT;
@@ -144,6 +145,17 @@ for (let tick = 0; tick < 1800; tick++) {
     settledPositions = new Map(
       [...survey.ships.values()].map((entity) => [entity.id, { x: entity.x, y: entity.y }]),
     );
+  if (tick >= 900) {
+    for (const entity of survey.ships.values()) {
+      const previous = settledPositions.get(entity.id)!;
+      travelledPaths.set(
+        entity.id,
+        (travelledPaths.get(entity.id) || 0) +
+          Math.hypot(entity.x - previous.x, entity.y - previous.y),
+      );
+      settledPositions.set(entity.id, { x: entity.x, y: entity.y });
+    }
+  }
   if (tick > 300) {
     const machines = [...survey.ships.values()];
     for (let left = 0; left < machines.length; left++)
@@ -165,10 +177,9 @@ assert.deepEqual(
   [...survey.ships.values()].map((entity) => entity.armor),
   armor,
 );
-// A settled neutral survey keeps circling its worksite instead of parking at fixed berths.
+// A settled neutral survey keeps moving on independent tours instead of parking at fixed berths.
 for (const entity of survey.ships.values()) {
-  const settled = settledPositions.get(entity.id)!;
-  const travelled = Math.hypot(entity.x - settled.x, entity.y - settled.y);
+  const travelled = travelledPaths.get(entity.id)!;
   assert(
     travelled > 200,
     `Neutral Index hull ${entity.hull} keeps moving after settling (moved ${Math.round(travelled)})`,
@@ -178,12 +189,14 @@ for (const entity of survey.ships.values()) {
     `Neutral Index hull ${entity.hull} is still under way at the end of the run`,
   );
   const fromSite = Math.hypot(entity.x - world.site.x, entity.y - world.site.y);
-  assert(fromSite < 1100, 'Circling hulls stay within the marked worksite radius');
+  assert(fromSite < 2100, 'Independent survey centres move at bounded cruise speed');
 }
 assert.equal(world.remaining, 36, 'Spacing never reissues replacement budget');
 assert(
-  world.actors.every((actor) => Math.hypot(actor.x, actor.y) > 300),
-  'Formation is not a shared center target',
+  world.actors.some((actor) =>
+    world.actors.some((other) => Math.hypot(actor.x - other.x, actor.y - other.y) > 1000),
+  ),
+  'Independent surveys stay spatially distributed rather than sharing a centre',
 );
 const stored = structuredClone(world);
 worlds.glasswake = stored;
@@ -293,6 +306,93 @@ for (const [index, before] of droneBearings[0].entries()) {
   );
   assert(turned > 0.3, 'Each drone sweeps around its parent during 30 seconds of neutral survey');
 }
+// Isolate a stationary visitor so a changing label alone cannot pass the investigation check.
+clock = 90;
+worlds.glasswake = {
+  ...structuredClone(world),
+  actors: [{ ...structuredClone(droneWorld.actors[0]), x: 0, y: 0 }],
+};
+survey = mixedSpace();
+IndexFleetOperations.open.call(capabilities, survey);
+const investigator = [...survey.ships.values()][0];
+const visitor = survey.makeShip({
+  hull: 704,
+  faction: 'spacer',
+  x: 20000,
+  y: 0,
+  name: 'Stationary survey fixture',
+});
+const initialVisitorDistance = Math.hypot(investigator.x - visitor.x, investigator.y - visitor.y);
+const initialVisitorArmor = visitor.armor;
+for (let tick = 0; tick < 2400; tick++) {
+  clock += DT;
+  survey.t += DT;
+  IndexFleetOperations.ai.call(capabilities, survey, investigator);
+  step(investigator, investigator.st, investigator.inp);
+  IndexFleetOperations.fleetTick.call(capabilities, survey);
+  assert.match(investigator.name!, /investigating ship Stationary survey fixture/);
+  assert.equal(
+    investigator.target,
+    null,
+    'peaceful investigation does not acquire a combat target',
+  );
+  assert.ok(
+    !investigator.inp.fire1 && !investigator.inp.fire2,
+    'investigation does not fire weapons',
+  );
+}
+const finalVisitorDistance = Math.hypot(investigator.x - visitor.x, investigator.y - visitor.y);
+assert.ok(
+  initialVisitorDistance - finalVisitorDistance > 1000,
+  `investigator physically approaches the stationary ship beyond its 800-unit home orbit (${initialVisitorDistance - finalVisitorDistance})`,
+);
+assert.equal(visitor.x, 20000, 'visitor stays fixed while the investigator moves');
+assert.equal(visitor.y, 0);
+assert.equal(
+  visitor.armor,
+  initialVisitorArmor,
+  'peaceful investigation does not damage the visitor',
+);
+// A lagging outbound drone recovers its live parent before resuming its scanning orbit.
+clock = 0;
+worlds.glasswake = {
+  ...structuredClone(world),
+  actors: [
+    { ...structuredClone(droneWorld.actors[0]), x: 0, y: 0 },
+    { ...structuredClone(droneWorld.actors[1]), x: 500, y: 0 },
+  ],
+};
+survey = mixedSpace();
+IndexFleetOperations.open.call(capabilities, survey);
+const [recoveringParent, recoveringDrone] = [...survey.ships.values()];
+recoveringDrone.a = Math.PI / 2;
+// Match the outbound drift observed at the seeded route-reversal regression.
+recoveringDrone.vx = 80;
+let greatestRecoveryRange = 0;
+let observedOutboundExcursion = false;
+let recoveredLeash = false;
+for (let tick = 0; tick < 1800; tick++) {
+  clock += DT;
+  survey.t += DT;
+  for (const entity of survey.ships.values()) {
+    const before = { x: entity.x, y: entity.y };
+    IndexFleetOperations.ai.call(capabilities, survey, entity);
+    assert.equal(entity.x, before.x, 'leash guidance never teleports ships');
+    assert.equal(entity.y, before.y);
+    step(entity, entity.st, entity.inp);
+  }
+  IndexFleetOperations.fleetTick.call(capabilities, survey);
+  const range = Math.hypot(
+    recoveringDrone.x - recoveringParent.x,
+    recoveringDrone.y - recoveringParent.y,
+  );
+  greatestRecoveryRange = Math.max(greatestRecoveryRange, range);
+  if (range >= 600) observedOutboundExcursion = true;
+  else if (observedOutboundExcursion) recoveredLeash = true;
+}
+assert.ok(greatestRecoveryRange < 1300, `outbound drone stays leashed (${greatestRecoveryRange})`);
+assert.ok(observedOutboundExcursion, 'outbound drone first leaves the recovery radius');
+assert.ok(recoveredLeash, 'lagging outbound drone physically returns inside the recovery radius');
 const output = path.resolve(
   process.env.RIFT_TEST_ARTIFACTS || '.artifacts/regression',
   'index-presentation',

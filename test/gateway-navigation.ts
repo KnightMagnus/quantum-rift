@@ -13,6 +13,27 @@ import { gatewayGuidance } from '../client/gateway_autopilot.ts';
 import { makeLoadout, shipStats, step } from '../shared/rules.ts';
 const directory = filesystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-gateway-'));
 try {
+  for (const offset of [-0.001, 0.001]) {
+    const input: Record<string, number> = {};
+    gatewayGuidance(
+      { x: 0, y: 3000, vx: 0, vy: -150, a: offset },
+      { accel: 150, turn: 2, maxSpeed: 150 },
+      { x: 0, y: 0, r: 100 },
+      input,
+    );
+    assert.equal(input.turn, 0, 'sub-degree bearing noise does not alternate bank frames');
+    assert.equal(input.thrust, 1, 'steady gateway approach keeps its engine lit');
+  }
+  for (const offset of [-0.03, 0.03]) {
+    const input: Record<string, number> = {};
+    gatewayGuidance(
+      { x: 0, y: 3000, vx: 0, vy: -150, a: offset },
+      { accel: 150, turn: 2, maxSpeed: 150 },
+      { x: 0, y: 0, r: 100 },
+      input,
+    );
+    assert.equal(Math.sign(input.turn), -Math.sign(offset), 'real bearing errors still steer');
+  }
   const game = new Game(
     JSON.parse(filesystem.readFileSync('shared/assets.json', 'utf8')),
     new Database(directory),

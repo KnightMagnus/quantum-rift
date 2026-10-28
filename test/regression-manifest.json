@@ -877,7 +877,7 @@
       "owners": ["server/main.ts"],
       "services": [],
       "tests": ["http-api.ts"],
-      "asserts": "Real HTTP static/MIME/cache/404/traversal checks and online-vs-solo API permissions."
+      "asserts": "Real HTTP public beta version/static/MIME/cache/404/traversal checks and online-vs-solo API permissions."
     },
     {
       "id": "protocol-websocket",
@@ -967,7 +967,7 @@
         "ui-polish-browser.ts",
         "station-docking.ts"
       ],
-      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait. A captain's own Personal Station always clears them to land, never asks for a bribe and keeps its home refinery open, whatever their record in that system. Landing bribes recheck current refusal through authoritative dispatch, reject docked/cleared/pass/home/outlaw/invalid targets without save mutations, and charge a genuinely refused captain once."
+      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Rescue rendezvous marking is free; repair requires range and affordable supplies, settles once, and Index machines never request rescue. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait. A captain's own Personal Station always clears them to land, never asks for a bribe and keeps its home refinery open, whatever their record in that system. Landing bribes recheck current refusal through authoritative dispatch, reject docked/cleared/pass/home/outlaw/invalid targets without save mutations, and charge a genuinely refused captain once."
     },
     {
       "id": "fleet-orders",
@@ -1157,7 +1157,7 @@
         "wormhole-loop.ts",
         "landing-autopilot-browser.ts"
       ],
-      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body."
+      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading with sustained ordinary thrust and no afterburner, wormhole steering-noise deadband, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body."
     },
     {
       "id": "ships-catalog-art",
@@ -1550,7 +1550,7 @@
         "sidebar-gauges-browser.ts",
         "ui-polish-browser.ts"
       ],
-      "asserts": "Per-captain remembered views and deliberate single objective pin survive reload without leaking between accounts; detail/back restores list focus/scroll, unavailable cargo links to Trade, native keyboard controls and narrow/scaled Tray stay usable without taking flight focus. Independent vertical map/menu pointer/touch/keyboard sizing, reload persistence, zoom-safe limits and automatic reset preserve backing geometry and reachability. The menu top divider reallocates available space without rewriting stored sizes. Collapsed flight meters track authoritative damage, shield regeneration and fuel changes. Repeated landing requests retain one live approach and one notice per unchanged situation. Unique story equipment remains absent from Codex outfit browsing, search and stale detail navigation without removing it from gameplay."
+      "asserts": "Per-captain remembered views and deliberate single objective pin survive reload without leaking between accounts; detail/back restores list focus/scroll, unavailable cargo links to Trade, native keyboard controls and narrow/scaled Tray stay usable without taking flight focus. Fresh captains open Overview and retain deliberate service-tab choices. The minimap starts at maximum available divider height; independent vertical map/menu pointer/touch/keyboard sizing, reload persistence, zoom-safe limits and automatic reset preserve backing geometry and reachability. Wider hails wrap long option labels at normal, narrow and scaled sizes. Combat panel pointer/keyboard dismissal returns flight focus and native Space sends primary-fire packets without reopening the panel. The menu top divider reallocates available space without rewriting stored sizes. Collapsed flight meters track authoritative damage, shield regeneration and fuel changes. Repeated landing requests retain one live approach and one notice per unchanged situation. Unique story equipment remains absent from Codex outfit browsing, search and stale detail navigation without removing it from gameplay."
     },
     {
       "id": "mission-choices",
@@ -1597,7 +1597,7 @@
         "deterministic-core.ts",
         "packaged-runtime.ts"
       ],
-      "asserts": "Preserves ordered graph traversal, freight and nearest-buyer parity; signed cargo capacity, mission reservations and HTML escaping compatibility across original consumers. Exact original random streams, hashes, galaxy, rivals, arcs and radio tours remain unchanged. Offline launcher fixtures verify install-once, existing/pinned runtime reuse, unsupported-platform denial and failed/partial installer rejection; download/extraction itself is outside these fixtures. Source and compiled online/Solo startup serve executable browser modules; release archives rebuild and include compiled output, exclude private/stale files and launch without dependencies."
+      "asserts": "Preserves ordered graph traversal, freight and nearest-buyer parity; signed cargo capacity, mission reservations and HTML escaping compatibility across original consumers. Exact original random streams, hashes, galaxy, rivals, arcs and radio tours remain unchanged. Offline launcher fixtures verify install-once, existing/pinned runtime reuse, unsupported-platform denial and failed/partial installer rejection; download/extraction itself is outside these fixtures. Source and compiled online/Solo startup preserve public beta labels and serve executable browser modules; release archives rebuild and include compiled output, exclude private/stale files and launch without dependencies."
     },
     {
       "id": "excalibur-runtime",
@@ -1757,7 +1757,7 @@
         "ui-polish-browser.ts",
         "index-survey-tour.ts"
       ],
-      "asserts": "Neutral worksite and unmarked resource safety; exact-rock warnings and captain-root provocation, innocent captain and NPC safety, bounded disengagement and persisted encounter health/claim/replacement budgets; shared finite mining allocations, passive salvage exclusion, explicit hail theft, parent cleanup, peaceful personal survey/recovery quest and real browser artwork/hail cues. Index parents tour real bodies and fields with cataloguing labels while drones fly leashed scanning sorties."
+      "asserts": "Neutral worksite and unmarked resource safety; exact-rock warnings and captain-root provocation, innocent captain and NPC safety, bounded disengagement and persisted encounter health/claim/replacement budgets; shared finite mining allocations, passive salvage exclusion, explicit hail theft, parent cleanup, peaceful personal survey/recovery quest and real browser artwork/hail cues. Index parents take distinct body/field tours and investigate passing ships while drones fly leashed scanning sorties; direct attackers provoke bounded self-defense outside the original worksite."
     },
     {
       "id": "story-realities",

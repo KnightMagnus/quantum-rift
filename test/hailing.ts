@@ -207,6 +207,8 @@ assert.equal(session.data.credits, 0);
 session.data.credits = 2000;
 service.request(session, { op: 'answer', key: requiredFixtureValue(fixtureState).key, k: 'gift' });
 assert.equal(session.data.credits, 1900);
+const machine = nonPlayerShip(1001, { faction: 'index', armor: 10, disabled: true });
+assert.equal(service.offer(session, machine, 'distress'), false, 'Index never requests rescue');
 const damaged = nonPlayerShip(13, { armor: 20, disabled: true });
 assert.ok(service.offer(session, damaged, 'distress'));
 fixtureState = station.queue.at(-1);
@@ -217,6 +219,25 @@ service.request(session, {
   k: 'rendezvous',
 });
 assert.ok(sent.some((message2) => message2.t === 'hailmark' && message2.id === damaged.id));
+assert.equal(session.data.credits, 1900, 'marking a rescue rendezvous costs nothing');
+damaged.x = session.ent!.x + 181;
+service.request(session, {
+  op: 'answer',
+  key: requiredFixtureValue(fixtureState).key,
+  k: 'repair',
+});
+assert.equal(damaged.disabled, true, 'rescue cannot repair outside rendezvous range');
+assert.equal(session.data.credits, 1900, 'out-of-range rescue does not debit credits');
+damaged.x = session.ent!.x;
+session.data.credits = 249;
+service.request(session, {
+  op: 'answer',
+  key: requiredFixtureValue(fixtureState).key,
+  k: 'repair',
+});
+assert.equal(damaged.disabled, true, 'insufficient emergency supplies payment cannot repair');
+assert.equal(session.data.credits, 249);
+session.data.credits = 1900;
 service.request(session, {
   op: 'answer',
   key: requiredFixtureValue(fixtureState).key,
@@ -225,6 +246,13 @@ service.request(session, {
 assert.equal(damaged.disabled, false);
 assert.equal(damaged.armor, 55.00000000000001);
 assert.equal(session.data.credits, 1650);
+service.request(session, {
+  op: 'answer',
+  key: requiredFixtureValue(fixtureState).key,
+  k: 'repair',
+});
+assert.equal(session.data.credits, 1650, 'replayed rescue cannot charge twice');
+assert.equal(damaged.armor, 55.00000000000001, 'replayed rescue cannot add repair health');
 // Exercise the real disable path: Space.ai deliberately retains its old target.
 const survivor = nonPlayerShip(34, { armor: 10, target: session2.ent, think: 1 });
 Space.prototype.ai.call(mockSpace(Object.assign({}, message, { t: 5 })), survivor);

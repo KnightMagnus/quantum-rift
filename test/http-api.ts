@@ -11,7 +11,16 @@ import { root, availablePort, ready, cleanup, evidenceDir } from './helpers/brow
 import { tempDataDir } from './helpers/temp-data.ts';
 const version = JSON.parse(
   fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8'),
+).publicVersion;
+assert.match(version, /^0\.\d+\.\d+\.\d+$/, 'beta hotfixes use four-part public labels');
+const packageVersion = JSON.parse(
+  fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8'),
 ).version;
+assert.equal(
+  packageVersion,
+  version.replace(/\.(\d+)$/, '-$1'),
+  'npm metadata retains a valid three-part prerelease version',
+);
 for (const solo of [false, true]) {
   const directory = tempDataDir('rift-http-'),
     output = evidenceDir(solo ? 'http-solo' : 'http-online');

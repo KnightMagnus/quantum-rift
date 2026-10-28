@@ -77,6 +77,10 @@ interface FleetLocal {
   lootId: number;
   /** Survey tour for this system, derived from its authored bodies and fields. */
   stops?: SurveyStop[];
+  /** Smooth independent tour centres across route changes and passing-ship investigations. */
+  centres?: Map<number, { x: number; y: number; at: number }>;
+  /** Drones recovering their parent leash after a turn or local separation. */
+  returningDrones?: Set<number>;
 }
 const locals = new WeakMap<Space, FleetLocal>();
 function local(space: Space): FleetLocal {
@@ -208,9 +212,15 @@ function surveyStops(space: Space, world: IndexFleetWorld): SurveyStop[] {
   return (local(space).stops = [home, ...others]);
 }
 
-/** Deterministic position on the tour, so reloads resume where the clock says. */
-function surveyLeg(space: Space, world: IndexFleetWorld, now: number): SurveyLeg {
-  const stops = surveyStops(space, world);
+/** Choose a parent’s body tour or its current passing-ship investigation. */
+function surveyLeg(space: Space, world: IndexFleetWorld, now: number, slot = 0): SurveyLeg {
+  const baseStops = surveyStops(space, world);
+  const actor = world.actors[slot];
+  const parents = world.actors.filter((candidate) => candidate.parent === undefined);
+  const parent = actor.parent === undefined ? actor : world.actors[actor.parent];
+  const group = Math.max(0, parents.indexOf(parent));
+  const start = group % baseStops.length;
+  const stops = [...baseStops.slice(start), ...baseStops.slice(0, start)];
   const transit = stops.map((stop, index) => {
     const next = stops[(index + 1) % stops.length];
     return Math.hypot(next.x - stop.x, next.y - stop.y) / SURVEY_CRUISE_SPEED;
@@ -219,6 +229,23 @@ function surveyLeg(space: Space, world: IndexFleetWorld, now: number): SurveyLeg
     (total, _stop, index) => total + SURVEY_DWELL_SECONDS + transit[index],
     0,
   );
+  const visitors = [...space.ships.values()]
+    .filter(
+      (candidate) => !candidate.dead && candidate.state === 'fly' && candidate.faction !== 'index',
+    )
+    .sort((left, right) => left.id - right.id);
+  // Each parent owns a different tour phase. Alternate short ship investigations with
+  // the static circuit; drones retain their own parent's leash and never acquire a combat target.
+  if (visitors.length && Math.floor(now / SURVEY_DWELL_SECONDS + group) % 3 === 1) {
+    const visitor = visitors[group % visitors.length];
+    const stop = {
+      x: visitor.x,
+      y: visitor.y,
+      clearance: visitor.st.size + 450,
+      label: `ship ${visitor.name || visitor.id}`,
+    };
+    return { ...stop, vx: visitor.vx, vy: visitor.vy, stop, travelling: true };
+  }
   let elapsed = ((now % cycle) + cycle) % cycle;
   for (const [index, stop] of stops.entries()) {
     if (elapsed < SURVEY_DWELL_SECONDS)
@@ -282,8 +309,8 @@ interface FormationBerth {
 
 /**
  * Saved roster slots, rather than wire IDs, own non-overlapping neutral berths. The whole
- * parent ring turns slowly around the worksite and drones sweep around their parent, so
- * relative spacing is preserved while the survey stays visibly in motion.
+ * parent follows its own slowly moving survey centre; drones sweep around their live
+ * parent without turning a peaceful investigation into combat.
  */
 function formationPoint(
   space: Space,
@@ -302,6 +329,25 @@ function formationPoint(
       (candidate) => local(space).entities.get(candidate.id) === actor.parent,
     );
     const center = parentEntity || formationPoint(space, world, actor.parent, now);
+    const drone = entityFor(space, slot);
+    if (drone && parentEntity) {
+      const range = Math.hypot(drone.x - center.x, drone.y - center.y);
+      const returning = (local(space).returningDrones ||= new Set());
+      const outwardSpeed = Math.max(
+        0,
+        ((drone.vx - center.vx) * (drone.x - center.x) +
+          (drone.vy - center.vy) * (drone.y - center.y)) /
+          (range || 1),
+      );
+      const turningDrift = (outwardSpeed * Math.PI) / drone.st.turn;
+      if (range > 800 || range + turningDrift > 1000) returning.add(slot);
+      else if (range < 600 && Math.hypot(drone.vx - center.vx, drone.vy - center.vy) < 40)
+        returning.delete(slot);
+      // A lagging drone must recover its live parent before resuming an outward
+      // scan. Otherwise a route reversal can leave it chasing the far side of
+      // the orbit while its parent continues in the opposite direction.
+      if (returning.has(slot)) return { x: center.x, y: center.y, vx: center.vx, vy: center.vy };
+    }
     const siblings = world.actors.filter(
       (candidate) => candidate.parent === actor.parent && !candidate.dead && !candidate.hidden,
     );
@@ -327,17 +373,30 @@ function formationPoint(
   const angle =
     -Math.PI * 0.75 + (Math.PI * 2 * parents.indexOf(actor)) / parents.length + orbitRate * now;
   const widest = Math.max(...parents.map((parent) => footprint(space, parent)));
-  const leg = surveyLeg(space, world, now);
+  const leg = surveyLeg(space, world, now, slot);
+  const centres = (local(space).centres ||= new Map());
+  const centre = centres.get(slot) || { ...world.site, at: now };
+  const deltaX = leg.x - centre.x,
+    deltaY = leg.y - centre.y;
+  const distance = Math.hypot(deltaX, deltaY);
+  const elapsed = Math.max(0, now - centre.at);
+  const travel = Math.min(distance, elapsed * SURVEY_CRUISE_SPEED);
+  centre.x += distance ? (deltaX / distance) * travel : 0;
+  centre.y += distance ? (deltaY / distance) * travel : 0;
+  centre.at = now;
+  centres.set(slot, centre);
+  const velocityX = distance > 1 ? (deltaX / distance) * SURVEY_CRUISE_SPEED : leg.vx;
+  const velocityY = distance > 1 ? (deltaY / distance) * SURVEY_CRUISE_SPEED : leg.vy;
   const radius = Math.max(
     800,
     leg.clearance,
     (widest * 2 + 180) / (2 * Math.sin(Math.PI / Math.max(2, parents.length))),
   );
   return {
-    x: leg.x + Math.cos(angle) * radius,
-    y: leg.y + Math.sin(angle) * radius,
-    vx: leg.vx - Math.sin(angle) * radius * orbitRate,
-    vy: leg.vy + Math.cos(angle) * radius * orbitRate,
+    x: centre.x + Math.cos(angle) * radius,
+    y: centre.y + Math.sin(angle) * radius,
+    vx: velocityX - Math.sin(angle) * radius * orbitRate,
+    vy: velocityY + Math.cos(angle) * radius * orbitRate,
   };
 }
 
@@ -349,16 +408,18 @@ function surveyActivity(
   slot: number,
   now: number,
 ): string {
-  const leg = surveyLeg(space, world, now);
+  const leg = surveyLeg(space, world, now, slot);
   if (actor.parent !== undefined && !actor.blade && droneSortie(slot, now).reach > 0.5)
     return `scanning ${leg.stop.label}`;
+  if (leg.stop.label.startsWith('ship ')) return `investigating ${leg.stop.label}`;
   return leg.travelling ? `en route to ${leg.stop.label}` : `cataloguing ${leg.stop.label}`;
 }
 
 /** Fly a neutral machine along its moving berth. */
 function keepStation(space: Space, world: IndexFleetWorld, entity: Entity, now: number): void {
   const berth = formationPoint(space, world, local(space).entities.get(entity.id)!, now);
-  space.steer(entity, berth.x, berth.y, true, berth.vx, berth.vy);
+  const returning = local(space).returningDrones?.has(local(space).entities.get(entity.id)!);
+  space.steer(entity, berth.x, berth.y, true, berth.vx, berth.vy, false, returning ? 60 : Infinity);
 }
 
 /** Keep neutral machine hull envelopes apart after actual movement, never moving players. */
@@ -686,8 +747,8 @@ export const IndexFleetOperations = {
     const owner = this.key(visitor);
     return !!(
       owner &&
-      near(world, visitor) &&
-      ((world.offenders[owner] || 0) > this.clock() || this.provoked(space, visitor))
+      ((world.offenders[owner] || 0) > this.clock() ||
+        (near(world, visitor) && this.provoked(space, visitor)))
     );
   },
   /** Shared engine applies this before damage, not by healing the victim afterward. */
@@ -811,7 +872,12 @@ export const IndexFleetOperations = {
     if (actor.base === 919) {
       if (target && Number(entity.hull) === 920) transition(this, space, entity, 919);
       // The Loom unfolds its emitters only while dwelling at a stop; it folds to travel.
-      const travelling = surveyLeg(space, world, now).travelling;
+      const travelling = surveyLeg(
+        space,
+        world,
+        now,
+        local(space).entities.get(entity.id)!,
+      ).travelling;
       if (!target && !travelling && Number(entity.hull) === 919)
         transition(this, space, entity, 920);
       if (!target && travelling && Number(entity.hull) === 920)

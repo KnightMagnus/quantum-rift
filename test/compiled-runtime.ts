@@ -46,7 +46,7 @@ for (const entry of ['server/main.ts', 'dist/server/main.js', 'tools/start.ts'])
       }
       assert.equal(
         status.version,
-        JSON.parse(fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8')).version,
+        JSON.parse(fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8')).publicVersion,
       );
       const page = await fetch(origin + '/');
       assert.equal(page.status, 200);

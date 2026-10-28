@@ -1,6 +1,6 @@
 // Device-level layout preferences, like the existing sidebar width preference.
-// The minimap starts square (aspect 1) until the player drags its height.
-export function initSidebarSize(resized: () => void, defaultRadarAspect = 1) {
+// The minimap starts square until the player explicitly resizes its height.
+export function initSidebarSize(resized: () => void) {
   const sidebar = document.getElementById('hud')!;
   let preferences: Record<string, number> = {};
   try {
@@ -63,18 +63,17 @@ export function initSidebarSize(resized: () => void, defaultRadarAspect = 1) {
       sidebar.clientWidth -
       parseFloat(sidebarStyle.paddingLeft) -
       parseFloat(sidebarStyle.paddingRight);
-    const automaticRadar = frameWidth / defaultRadarAspect;
-    const desiredRadar = preferences.radar ?? automaticRadar;
+    const desiredRadar = preferences.radar ?? frameWidth;
     const desiredMenu = preferences.menu;
-    // The automatic square shrinks to leave the menu its minimum instead of
-    // pushing the sidebar into scrolling on short screens.
+    // Keep the automatic map square and reserve a usable menu on short screens.
+    // Explicit height preferences survive temporary viewport limits.
     const allocatedRadarHeight =
       desiredMenu === undefined || allocation === 'radar'
         ? Math.max(96, Math.min(room - menuMinimum, desiredRadar))
         : Math.max(96, Math.min(room - menuMinimum, room - Math.max(menuMinimum, desiredMenu)));
     const radarHeight =
       preferences.radar === undefined
-        ? Math.min(automaticRadar, allocatedRadarHeight)
+        ? Math.min(frameWidth, allocatedRadarHeight)
         : allocatedRadarHeight;
     const menuHeight =
       preferences.radar === undefined && desiredMenu !== undefined && allocation === 'menu'
@@ -84,7 +83,7 @@ export function initSidebarSize(resized: () => void, defaultRadarAspect = 1) {
       Math.max(0, room - radarHeight - menuHeight) + 'px';
     radar.style.height = radarHeight + 'px';
     if (preferences.radar === undefined) {
-      radar.style.width = Math.min(frameWidth, radarHeight * defaultRadarAspect) + 'px';
+      radar.style.width = Math.min(frameWidth, radarHeight) + 'px';
       radar.style.alignSelf = 'center';
     } else {
       radar.style.removeProperty('width');

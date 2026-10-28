@@ -43,11 +43,11 @@ const PORT: number = friendConfig?.port ?? (Number(process.env.PORT) || 8080);
 const SOLO: boolean = !!process.env.SOLO; // solo mode: a private game on this computer only, no passwords, save slots
 
 /**
- * Server version string parsed from package.json.
+ * Public beta release label from package.json; independent of protocol/save versions.
  */
 const VERSION: string = JSON.parse(
   fileSystem.readFileSync(path.join(ROOT, 'package.json'), 'utf8'),
-).version;
+).publicVersion;
 
 /**
  * Static game asset catalog loaded from shared/assets.json.

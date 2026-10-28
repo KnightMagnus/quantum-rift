@@ -92,9 +92,39 @@ try {
   const page = await browser.newPage({ viewport: { width: 3440, height: 1440 } });
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(String(error)));
+  await page.addInitScript(() => {
+    const NativeSocket = window.WebSocket;
+    window.WebSocket = class extends NativeSocket {
+      constructor(...args: ConstructorParameters<typeof WebSocket>) {
+        super(...args);
+        window.uiPolishSocket = this;
+      }
+    };
+  });
   await page.goto(origin);
   await page.locator('[data-slot="Polish Pilot"]').click();
   await page.waitForFunction(() => G.you && G.landed);
+  if (!(await page.locator('body').evaluate((body) => body.classList.contains('tray-open'))))
+    await page.click('#traytoggle');
+  assert.equal(
+    await page.locator('#ltabs [data-lt="overview"]').getAttribute('class'),
+    'btn sm on',
+    'Fresh captain opens Overview even at a port offering Community',
+  );
+  await page.click('[data-lt="community"]');
+  await page.waitForFunction(() =>
+    Object.values(JSON.parse(localStorage.getItem('rift.cockpit.polish pilot')!).lastTab).includes(
+      'community',
+    ),
+  );
+  await page.reload();
+  await page.locator('[data-slot="Polish Pilot"]').click();
+  await page.waitForFunction(() => G.you && G.landed);
+  assert.equal(
+    await page.locator('#ltabs [data-lt="community"]').getAttribute('class'),
+    'btn sm on',
+    'A deliberate saved landing tab survives reload',
+  );
   if (!(await page.locator('body').evaluate((body) => body.classList.contains('tray-open'))))
     await page.click('#traytoggle');
   await page.click('[data-lt="yard"]');
@@ -184,6 +214,55 @@ try {
     assert(bounds && bounds.y + bounds.height <= height);
     await capture(page, `controls-${width}-scale-${value}`);
     await close.click();
+  }
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await scale(page, 1);
+  for (const [width, height, zoom] of [
+    [1920, 1080, 1],
+    [640, 780, 1],
+    [640, 780, 1.4],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await scale(page, zoom);
+    await page.evaluate(() =>
+      window.uiPolishSocket!.dispatchEvent(
+        new MessageEvent('message', {
+          data: JSON.stringify({
+            t: 'hail',
+            who: 'Meridian Traffic Control',
+            text: 'Synthetic landing clearance layout fixture.',
+            opts: [
+              {
+                k: 'clearance',
+                label:
+                  'Request landing clearance and pay the outstanding docking fee of 123,456 credits',
+              },
+              { k: 'fuel', label: 'Request emergency fuel transfer' },
+            ],
+          }),
+        }),
+      ),
+    );
+    await page.waitForSelector('#hailbox:not(.hidden)');
+    const panel = await page.locator('.hailin').boundingBox();
+    assert(panel && panel.x >= 0 && panel.y >= 0 && panel.x + panel.width <= width);
+    if (width === 1920)
+      assert(panel!.width >= 700, 'Desktop hail window has room for long options');
+    for (const button of await page.locator('#hailopts button').all()) {
+      await button.scrollIntoViewIfNeeded();
+      assert(
+        await button.evaluate(
+          (element) =>
+            element.scrollWidth <= element.clientWidth + 1 &&
+            element.scrollHeight <= element.clientHeight + 1,
+        ),
+        'Every hail option label wraps inside its native button',
+      );
+      const bounds = await button.boundingBox();
+      assert(bounds && bounds.x >= panel!.x && bounds.x + bounds.width <= panel!.x + panel!.width);
+    }
+    await capture(page, `hail-options-${width}-${zoom}`);
+    await page.locator('#hailopts button').filter({ hasText: 'CLOSE' }).last().click();
   }
   await page.setViewportSize({ width: 1920, height: 1080 });
   await scale(page, 1);

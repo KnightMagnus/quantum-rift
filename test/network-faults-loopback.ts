@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
+import { Writable } from 'node:stream';
 import { randomUUID } from 'node:crypto';
 import { DB as Database } from '../server/db.ts';
 import { Game, type Session } from '../server/game.ts';
@@ -56,7 +57,30 @@ const gamePort = (gameServer.address() as net.AddressInfo).port;
 
 const links: ProxyLink[] = [];
 const allSockets = new Set<net.Socket>();
-function relay(link: ProxyLink, direction: 'upstream' | 'downstream', to: net.Socket) {
+function relay(
+  link: ProxyLink,
+  direction: 'upstream' | 'downstream',
+  to: Pick<net.Socket, 'destroyed' | 'write'>,
+) {
+  const pending: Array<{ bytes: Buffer; readyAt: number }> = [];
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  function drain() {
+    timer = undefined;
+    while (pending.length) {
+      if (to.destroyed) {
+        pending.length = 0;
+        return;
+      }
+      const next = pending[0];
+      const delay = next.readyAt - performance.now();
+      if (delay > 0) {
+        timer = setTimeout(drain, delay);
+        return;
+      }
+      pending.shift();
+      to.write(next.bytes);
+    }
+  }
   return (chunk: Buffer) => {
     const mode = link[direction];
     if (mode === 'blackhole') return;
@@ -64,14 +88,18 @@ function relay(link: ProxyLink, direction: 'upstream' | 'downstream', to: net.So
       (direction === 'upstream' ? link.heldUpstream : link.heldDownstream).push(chunk);
       return;
     }
-    const write = (bytes: Buffer) => {
-      if (!to.destroyed) to.write(bytes);
-    };
+    const now = performance.now();
     const pieces =
       mode === 'trickle' ? [...chunk].map((byte) => Buffer.from([byte])) : [Buffer.from(chunk)];
-    pieces.forEach((piece, index) =>
-      setTimeout(() => write(piece), link.latencyMs + (mode === 'trickle' ? index : 0)),
+    // One head-of-queue timer owns delivery. Independent per-byte timers can
+    // overtake one another when CPU work delays callbacks or timer delays round.
+    pieces.forEach((bytes, index) =>
+      pending.push({
+        bytes,
+        readyAt: now + link.latencyMs + (mode === 'trickle' ? index : 0),
+      }),
     );
+    if (timer === undefined) drain();
   };
 }
 const proxy = net.createServer((clientSide) => {
@@ -144,7 +172,72 @@ async function signIn(): Promise<LoopbackClient> {
   return { socket, link, session, received, send, latestYou };
 }
 
+// TCP may split one frame across data events, or deliver a Pong during a slow
+// application frame. The proxy must preserve stream order across those events.
+async function verifyProxyByteOrder() {
+  for (const direction of ['upstream', 'downstream'] as const) {
+    const observed: Buffer[] = [];
+    const target = new Writable({
+      write(chunk: Buffer, _encoding, callback) {
+        observed.push(Buffer.from(chunk));
+        callback();
+      },
+    });
+    const link: ProxyLink = {
+      upstream: 'trickle',
+      downstream: 'trickle',
+      heldUpstream: [],
+      heldDownstream: [],
+      latencyMs: 0,
+      cut: () => {},
+    };
+    const receive = relay(link, direction, target);
+    receive(Buffer.from('abc'));
+    receive(Buffer.from('123'));
+    link[direction] = 'forward';
+    receive(Buffer.from('XYZ'));
+    // Stall while successive data events are queued, as CPU-heavy server work does.
+    for (let index = 0; index < 24; index++) {
+      link[direction] = index % 3 === 0 ? 'forward' : 'trickle';
+      receive(Buffer.from('abcdefghijklmnopqrstuvwx'));
+      const busyUntil = performance.now() + 1.1;
+      while (performance.now() < busyUntil) {}
+    }
+    try {
+      await waitFor(() => Buffer.concat(observed).length === 9 + 24 * 24, 'ordered proxy delivery');
+      assert.equal(
+        Buffer.concat(observed).toString(),
+        'abc123XYZ' + 'abcdefghijklmnopqrstuvwx'.repeat(24),
+        direction + ' preserves byte order across chunks and mode changes',
+      );
+      link[direction] = 'blackhole';
+      receive(Buffer.from('lost'));
+      link[direction] = 'hold';
+      receive(Buffer.from('held'));
+      assert.equal(
+        Buffer.concat(
+          direction === 'upstream' ? link.heldUpstream : link.heldDownstream,
+        ).toString(),
+        'held',
+      );
+      link[direction] = 'forward';
+      link.latencyMs = 20;
+      receive(Buffer.from('discarded on reset'));
+      target.destroy();
+      await pause(30);
+      assert.equal(
+        Buffer.concat(observed).toString(),
+        'abc123XYZ' + 'abcdefghijklmnopqrstuvwx'.repeat(24),
+        direction + ' withholds held/black-holed bytes and drops pending output after reset',
+      );
+    } finally {
+      target.destroy();
+    }
+  }
+}
+
 try {
+  await verifyProxyByteOrder();
   // Byte-at-a-time TCP delivery still dispatches each command exactly once.
   const first = await signIn();
   const captain = first.session.data;

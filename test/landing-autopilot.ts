@@ -86,6 +86,8 @@ for (const hull of Object.keys(assets.ships)) {
         if (tick % 3 === 0) authority = { ...ship, t: currentTime };
         landingGuidance(state, ship, shipStats3, port, input);
         assert.equal(input.ab, 0, 'landing must not burn afterburner fuel');
+        if (state.phase === 'approach' && !input.turn)
+          assert.equal(input.thrust, 1, 'straight approach keeps the ordinary engine lit');
         if (state.phase === 'brake') {
           braking = true;
           assert.equal(input.turn, 0, 'committed braking does not alternate approach headings');
@@ -196,13 +198,85 @@ for (const hull of Object.keys(assets.ships)) {
     );
   }
 }
+// Sustained cruise keeps the engine lit, without engaging fuel-burning afterburners.
+for (const fraction of [0.9, 1]) {
+  const input: Record<string, number> = {};
+  landingGuidance(
+    {},
+    { x: 0, y: 10000, vx: 0, vy: -150 * fraction, a: 0 },
+    { accel: 150, turn: 2, maxSpeed: 150 },
+    { x: 0, y: 0, r: 70 },
+    input,
+  );
+  assert.equal(input.thrust, 1, 'cruise thrust stays on at the speed cap');
+  assert.equal(input.ab, 0, 'continuous plume does not spend afterburner fuel');
+}
+// Matching the approach envelope is not a reason to extinguish a straight engine.
+for (const distance of [180, 200, 260]) {
+  const input: Record<string, number> = {};
+  landingGuidance(
+    {},
+    {
+      x: 0,
+      y: distance,
+      vx: 0,
+      vy: -(distance - 28) / (Math.PI / 2 + 0.6),
+      a: 0,
+    },
+    { accel: 150, turn: 2, maxSpeed: 150 },
+    { x: 0, y: 0, r: 70 },
+    input,
+  );
+  assert.equal(input.turn, 0, 'matched approach envelope retains the port bearing');
+  assert.equal(input.thrust, 1, 'straight approach does not coast inside the velocity deadband');
+  assert.equal(input.ab, 0, 'approach engine still uses no afterburner');
+}
+// Small lateral drift left by delayed steering must not rotate a capped cruise sideways.
+for (const lateralSpeed of [-7, 7]) {
+  const input: Record<string, number> = {};
+  landingGuidance(
+    {},
+    { x: 0, y: 2200, vx: lateralSpeed, vy: -171, a: 0 },
+    { accel: 150, turn: 2.2, maxSpeed: 171 },
+    { x: 0, y: 0, r: 70 },
+    input,
+  );
+  assert.equal(input.turn, 0, 'small delayed lateral drift retains the targetward cruise bearing');
+  assert.equal(input.thrust, 1, 'small delayed lateral drift does not extinguish cruise thrust');
+}
+for (const lateralSpeed of [-40, 40]) {
+  const input: Record<string, number> = {};
+  landingGuidance(
+    {},
+    { x: 0, y: 2200, vx: lateralSpeed, vy: -171, a: 0 },
+    { accel: 150, turn: 2.2, maxSpeed: 171 },
+    { x: 0, y: 0, r: 70 },
+    input,
+  );
+  assert.equal(
+    Math.sign(input.turn),
+    -Math.sign(lateralSpeed),
+    'real lateral drift still corrects',
+  );
+  assert.equal(input.thrust, 0, 'large drift correction turns before applying thrust');
+}
+const turningInput: Record<string, number> = {};
+landingGuidance(
+  {},
+  { x: 0, y: 10000, vx: 0, vy: -150, a: Math.PI / 2 },
+  { accel: 150, turn: 2, maxSpeed: 150 },
+  { x: 0, y: 0, r: 70 },
+  turningInput,
+);
+assert.equal(turningInput.thrust, 0, 'cruise thrust pauses while turning toward the port');
+assert.notEqual(turningInput.turn, 0, 'misaligned cruise turns toward the port');
 // Far-field heading must not follow tiny residual acceleration or speed overshoot.
 for (const hull of [703, 704, 714, 821]) {
   const shipStats2 = requiredFixtureValue(shipStats(assets, makeLoadout(assets, hull)));
   for (const fraction of [0.9, 1]) {
     const ship = {
       x: 0,
-      y: 3000,
+      y: 10000,
       vx: 1,
       vy: -requiredFixtureValue(shipStats2).maxSpeed * fraction,
       a: Math.PI / 2,

@@ -34,7 +34,7 @@ screens, not replaced by decorative concept art.
 
 ## Tray capacity
 
-- System radar defaults to square and fills its inset frame. Players can resize
+- System radar starts at its maximum available height and fills its inset frame. Players can resize
   its height independently of the lower tabbed menu; backing pixels and target
   math follow both dimensions after resizing, UI scaling and viewport changes.
 - COMMS is capped at 590px. Desktop expanded utilities retain a 156px track
