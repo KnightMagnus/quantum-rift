@@ -150,7 +150,7 @@ const SURVEY_CRUISE_SPEED = 16;
 /** Extra distance a drone flies out from its orbit on a scanning pass. */
 const DRONE_SORTIE_REACH = 320;
 /** One scanning pass out and back, in simulation seconds. */
-const DRONE_SORTIE_SECONDS = 40;
+const DRONE_SORTIE_SECONDS = 120;
 
 /** Something in the system the survey visits and catalogues. */
 interface SurveyStop {
@@ -264,7 +264,10 @@ function droneSortie(slot: number, now: number): { reach: number; rate: number }
   const phase = (Math.PI * 2 * now) / DRONE_SORTIE_SECONDS + slot * 1.7;
   const wave = Math.sin(phase);
   return wave > 0
-    ? { reach: wave, rate: (Math.cos(phase) * Math.PI * 2) / DRONE_SORTIE_SECONDS }
+    ? {
+        reach: wave * wave,
+        rate: (2 * wave * Math.cos(phase) * Math.PI * 2) / DRONE_SORTIE_SECONDS,
+      }
     : { reach: 0, rate: 0 };
 }
 
@@ -293,7 +296,12 @@ function formationPoint(
     const parent = world.actors[actor.parent];
     // Split blades converge on their saved parent position so peaceful rejoin can finish.
     if (actor.blade) return { x: parent.x, y: parent.y, vx: 0, vy: 0 };
-    const center = formationPoint(space, world, actor.parent, now);
+    // Follow the live parent, not its ideal berth: heavy parents can lag behind
+    // the moving tour and their drones must not leave them to chase that berth.
+    const parentEntity = live(space).find(
+      (candidate) => local(space).entities.get(candidate.id) === actor.parent,
+    );
+    const center = parentEntity || formationPoint(space, world, actor.parent, now);
     const siblings = world.actors.filter(
       (candidate) => candidate.parent === actor.parent && !candidate.dead && !candidate.hidden,
     );
