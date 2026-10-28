@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
+import { Writable } from 'node:stream';
 import { randomUUID } from 'node:crypto';
 import { DB as Database } from '../server/db.ts';
 import { Game, type Session } from '../server/game.ts';
@@ -56,7 +57,12 @@ const gamePort = (gameServer.address() as net.AddressInfo).port;
 
 const links: ProxyLink[] = [];
 const allSockets = new Set<net.Socket>();
-function relay(link: ProxyLink, direction: 'upstream' | 'downstream', to: net.Socket) {
+function relay(
+  link: ProxyLink,
+  direction: 'upstream' | 'downstream',
+  to: Pick<net.Socket, 'destroyed' | 'write'>,
+) {
+  let nextWriteAt = 0;
   return (chunk: Buffer) => {
     const mode = link[direction];
     if (mode === 'blackhole') return;
@@ -69,9 +75,15 @@ function relay(link: ProxyLink, direction: 'upstream' | 'downstream', to: net.So
     };
     const pieces =
       mode === 'trickle' ? [...chunk].map((byte) => Buffer.from([byte])) : [Buffer.from(chunk)];
+    // Delaying/chunking a TCP stream must not reorder adjacent data events.
+    // Keep each direction's next chunk behind every byte already scheduled,
+    // including when a mode change removes its artificial latency.
+    const now = performance.now();
+    const startsAt = Math.max(now + link.latencyMs, nextWriteAt);
     pieces.forEach((piece, index) =>
-      setTimeout(() => write(piece), link.latencyMs + (mode === 'trickle' ? index : 0)),
+      setTimeout(() => write(piece), startsAt - now + (mode === 'trickle' ? index : 0)),
     );
+    nextWriteAt = startsAt + (mode === 'trickle' ? pieces.length : 0);
   };
 }
 const proxy = net.createServer((clientSide) => {
@@ -144,7 +156,45 @@ async function signIn(): Promise<LoopbackClient> {
   return { socket, link, session, received, send, latestYou };
 }
 
+// TCP may split one frame across data events, or deliver a Pong during a slow
+// application frame. The proxy must preserve stream order across those events.
+async function verifyProxyByteOrder() {
+  for (const direction of ['upstream', 'downstream'] as const) {
+    const observed: Buffer[] = [];
+    const target = new Writable({
+      write(chunk: Buffer, _encoding, callback) {
+        observed.push(Buffer.from(chunk));
+        callback();
+      },
+    });
+    const link: ProxyLink = {
+      upstream: 'trickle',
+      downstream: 'trickle',
+      heldUpstream: [],
+      heldDownstream: [],
+      latencyMs: 0,
+      cut: () => {},
+    };
+    const receive = relay(link, direction, target);
+    receive(Buffer.from('abc'));
+    receive(Buffer.from('123'));
+    link[direction] = 'forward';
+    receive(Buffer.from('XYZ'));
+    try {
+      await waitFor(() => Buffer.concat(observed).length === 9, 'ordered proxy delivery');
+      assert.equal(
+        Buffer.concat(observed).toString(),
+        'abc123XYZ',
+        direction + ' preserves byte order across chunks and mode changes',
+      );
+    } finally {
+      target.destroy();
+    }
+  }
+}
+
 try {
+  await verifyProxyByteOrder();
   // Byte-at-a-time TCP delivery still dispatches each command exactly once.
   const first = await signIn();
   const captain = first.session.data;
