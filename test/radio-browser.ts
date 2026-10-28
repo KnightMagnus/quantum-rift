@@ -246,9 +246,7 @@ try {
   );
   assert.doesNotMatch(await page.locator('#rnow').innerText(), /in order|album loop|shuffle/i);
   assert.equal(await page.locator('#commsheader .comms-live').count(), 0);
-  // Use the actual QoL keyboard handles for a readable five-station screenshot.
-  await page.locator('#radarheightgrip').focus();
-  await page.keyboard.press('Home');
+  // Keep the lower menu's keyboard sizing independent of the square minimap.
   await page.locator('#menuheightgrip').focus();
   for (let index = 0; index < 19; index++) await page.keyboard.press('ArrowDown');
   await page.locator('#rnow').scrollIntoViewIfNeeded();
