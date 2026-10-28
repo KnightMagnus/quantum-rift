@@ -132,6 +132,7 @@ IndexFleetOperations.open.call(capabilities, survey);
 const armor = [...survey.ships.values()].map((entity) => entity.armor);
 let minimumClearance = Infinity;
 let settledPositions = new Map<number, { x: number; y: number }>();
+const travelledPaths = new Map<number, number>();
 for (let tick = 0; tick < 1800; tick++) {
   clock += DT;
   survey.t += DT;
@@ -144,6 +145,17 @@ for (let tick = 0; tick < 1800; tick++) {
     settledPositions = new Map(
       [...survey.ships.values()].map((entity) => [entity.id, { x: entity.x, y: entity.y }]),
     );
+  if (tick >= 900) {
+    for (const entity of survey.ships.values()) {
+      const previous = settledPositions.get(entity.id)!;
+      travelledPaths.set(
+        entity.id,
+        (travelledPaths.get(entity.id) || 0) +
+          Math.hypot(entity.x - previous.x, entity.y - previous.y),
+      );
+      settledPositions.set(entity.id, { x: entity.x, y: entity.y });
+    }
+  }
   if (tick > 300) {
     const machines = [...survey.ships.values()];
     for (let left = 0; left < machines.length; left++)
@@ -165,10 +177,9 @@ assert.deepEqual(
   [...survey.ships.values()].map((entity) => entity.armor),
   armor,
 );
-// A settled neutral survey keeps circling its worksite instead of parking at fixed berths.
+// A settled neutral survey keeps moving on independent tours instead of parking at fixed berths.
 for (const entity of survey.ships.values()) {
-  const settled = settledPositions.get(entity.id)!;
-  const travelled = Math.hypot(entity.x - settled.x, entity.y - settled.y);
+  const travelled = travelledPaths.get(entity.id)!;
   assert(
     travelled > 200,
     `Neutral Index hull ${entity.hull} keeps moving after settling (moved ${Math.round(travelled)})`,
@@ -178,12 +189,14 @@ for (const entity of survey.ships.values()) {
     `Neutral Index hull ${entity.hull} is still under way at the end of the run`,
   );
   const fromSite = Math.hypot(entity.x - world.site.x, entity.y - world.site.y);
-  assert(fromSite < 1100, 'Circling hulls stay within the marked worksite radius');
+  assert(fromSite < 2100, 'Independent survey centres move at bounded cruise speed');
 }
 assert.equal(world.remaining, 36, 'Spacing never reissues replacement budget');
 assert(
-  world.actors.every((actor) => Math.hypot(actor.x, actor.y) > 300),
-  'Formation is not a shared center target',
+  world.actors.some((actor) =>
+    world.actors.some((other) => Math.hypot(actor.x - other.x, actor.y - other.y) > 1000),
+  ),
+  'Independent surveys stay spatially distributed rather than sharing a centre',
 );
 const stored = structuredClone(world);
 worlds.glasswake = stored;

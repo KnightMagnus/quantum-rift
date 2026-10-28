@@ -427,6 +427,7 @@ export class HailService {
       // That stale combat pointer must not suppress a friendly survivor's distress.
       if (hostile || (entity.target && !(reason === 'distress' && entity.disabled))) return false;
       if (reason === 'distress') {
+        if (entity.faction === 'index' || entity.indexWorksite) return false;
         if (entity.armor >= entity.st.armor * 0.5 || entity.rescueOf || entity.boss || entity.dread)
           return false;
         text =

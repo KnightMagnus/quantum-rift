@@ -33,11 +33,18 @@ try {
   const leash = new Map<number, { min: number; max: number }>();
   const bodies = SYS[systemId].stellars;
   let visitedBody = false;
+  let diverseAssignments = false;
+  let investigatedShip = false;
   for (let tick = 0; tick < Math.round(900 / DT); tick++) {
     game.features.mining.advanceClock(DT);
     space.tick();
     if (tick % 15) continue;
     const machines = index();
+    const assignments = machines
+      .filter((entity) => (entity.indexState?.[1] ?? -1) < 0)
+      .map((entity) => String(entity.name).split(' · ')[1]);
+    if (new Set(assignments).size > 1) diverseAssignments = true;
+    if (assignments.some((label) => label?.includes('ship '))) investigatedShip = true;
     for (const entity of machines) {
       const activity = String(entity.name).split(' · ')[1];
       if (activity) labels.add(activity);
@@ -64,6 +71,8 @@ try {
         visitedBody = true;
     }
   }
+  assert.ok(diverseAssignments, 'parents receive different simultaneous survey assignments');
+  assert.ok(investigatedShip, 'peaceful survey includes passing ships');
   const catalogued = [...labels].filter((label) => label.startsWith('cataloguing '));
   assert.ok(
     catalogued.some((label) => bodies.some((body) => label === 'cataloguing ' + body.name)),

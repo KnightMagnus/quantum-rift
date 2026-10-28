@@ -1051,11 +1051,18 @@ salvage theft and the peaceful per-captain Last Survey quest. The browser checks
 live sprite decoding, claim data and the real hail controls. Transformations,
 Kernel tactics, regional sorties and later story missions are not covered here.
 `index-survey-tour.ts` advances the Index clock in a system without asteroid fields
-and checks that parents visit real bodies with cataloguing labels while drones
-stay leashed to their live parent. Scanning passes ease in and out rather than
+and checks that parents take different simultaneous survey assignments, visit real
+bodies and investigate passing ships while drones stay leashed to their live parent. Scanning passes ease in and out rather than
 changing radial velocity abruptly. The registered `eventide.ts` Index helper
 checks that the Loom folds while travelling and distant miners cannot extract
-a claimed rock; existing nearby extraction and finite-budget assertions remain.
+a claimed rock. Direct attackers remain defensive targets outside the original
+worksite until their provocation timer expires; innocent captains stay neutral.
+`hailing.ts` checks rescue marking without payment, range and affordability denial,
+one-time repair/payment and exclusion of Index distress requests.
+`landing-autopilot.ts` and `v201.ts` check continuous ordinary engine thrust at
+cruise speed, unchanged afterburner fuel and real landing completion.
+`gateway-navigation.ts` checks a small steering deadband against alternating bank
+inputs while retaining both directions of actual wormhole travel.
 
 ## `map-fog-of-war`: what captains know of the galaxy
 

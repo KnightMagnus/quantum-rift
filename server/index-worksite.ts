@@ -163,8 +163,7 @@ export const IndexOperations = {
     return !!(
       owner &&
       !machine.dead &&
-      near(visitor) &&
-      (visitor.player?.s.data.story?.flags?.index_ending === 'silence' ||
+      ((near(visitor) && visitor.player?.s.data.story?.flags?.index_ending === 'silence') ||
         (saved(this).offenders[owner]?.until || 0) > clock(this))
     );
   },

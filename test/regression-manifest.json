@@ -967,7 +967,7 @@
         "ui-polish-browser.ts",
         "station-docking.ts"
       ],
-      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait. A captain's own Personal Station always clears them to land, never asks for a bribe and keeps its home refinery open, whatever their record in that system. Landing bribes recheck current refusal through authoritative dispatch, reject docked/cleared/pass/home/outlaw/invalid targets without save mutations, and charge a genuinely refused captain once."
+      "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Rescue rendezvous marking is free; repair requires range and affordable supplies, settles once, and Index machines never request rescue. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait. A captain's own Personal Station always clears them to land, never asks for a bribe and keeps its home refinery open, whatever their record in that system. Landing bribes recheck current refusal through authoritative dispatch, reject docked/cleared/pass/home/outlaw/invalid targets without save mutations, and charge a genuinely refused captain once."
     },
     {
       "id": "fleet-orders",
@@ -1157,7 +1157,7 @@
         "wormhole-loop.ts",
         "landing-autopilot-browser.ts"
       ],
-      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body."
+      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading with sustained ordinary thrust and no afterburner, wormhole steering-noise deadband, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body."
     },
     {
       "id": "ships-catalog-art",
@@ -1757,7 +1757,7 @@
         "ui-polish-browser.ts",
         "index-survey-tour.ts"
       ],
-      "asserts": "Neutral worksite and unmarked resource safety; exact-rock warnings and captain-root provocation, innocent captain and NPC safety, bounded disengagement and persisted encounter health/claim/replacement budgets; shared finite mining allocations, passive salvage exclusion, explicit hail theft, parent cleanup, peaceful personal survey/recovery quest and real browser artwork/hail cues. Index parents tour real bodies and fields with cataloguing labels while drones fly leashed scanning sorties."
+      "asserts": "Neutral worksite and unmarked resource safety; exact-rock warnings and captain-root provocation, innocent captain and NPC safety, bounded disengagement and persisted encounter health/claim/replacement budgets; shared finite mining allocations, passive salvage exclusion, explicit hail theft, parent cleanup, peaceful personal survey/recovery quest and real browser artwork/hail cues. Index parents take distinct body/field tours and investigate passing ships while drones fly leashed scanning sorties; direct attackers provoke bounded self-defense outside the original worksite."
     },
     {
       "id": "story-realities",

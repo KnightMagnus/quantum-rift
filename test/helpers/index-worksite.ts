@@ -75,8 +75,8 @@ export function verifyIndexWorksite(directory: string): void {
   offender.ent!.x = 3000;
   assert.equal(
     space.isHostile(quarry, offender.ent!),
-    false,
-    'defenders do not pursue outside the marked worksite',
+    true,
+    'direct attackers remain defensive targets outside the marked worksite',
   );
   offender.ent!.x = 1200;
   db.world.mining!.clock += 46;

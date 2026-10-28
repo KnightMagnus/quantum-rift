@@ -133,6 +133,8 @@ export function verifyIndexFleet(): void {
     false,
     'neutral worksite ignores faction standing',
   );
+  offender.x = mutable.x + 100;
+  offender.y = mutable.y;
   const health = mutable.armor;
   const shield = mutable.shield;
   mutable.guns[0].cd = 1.5;
@@ -155,6 +157,21 @@ export function verifyIndexFleet(): void {
   assert.equal(mutable.shield, shield);
   assert.equal(mutable.guns[0].cd, 1.5, 'form changes preserve weapon cooldowns');
   assert.equal(IndexFleetOperations.damageScale.call(capabilities, mutableSpace, mutable), 0.65);
+  offender.x = worlds[mutableSpace.id].site.x + INDEX_FLEET_LIMITS.radius + 2000;
+  assert.equal(
+    IndexFleetOperations.allow.call(capabilities, mutableSpace, mutable, offender),
+    true,
+    'direct attackers remain defensive targets outside the original worksite',
+  );
+  assert.equal(
+    IndexFleetOperations.allow.call(capabilities, mutableSpace, mutable, bystander),
+    false,
+    'remote self-defense does not implicate innocent captains',
+  );
+  IndexFleetOperations.ai.call(capabilities, mutableSpace, mutable);
+  assert.equal(mutable.target, offender, 'armed machines acquire their remote direct attacker');
+  assert.equal(mutable.fireAt, offender, 'self-defense enters the real combat steering path');
+  assert.equal(mutable.inp.fire1, 1, 'self-defense requests weapon fire');
   const oldSpeed = mutable.st.maxSpeed;
   advance(mutableSpace, 46);
   IndexFleetOperations.ai.call(capabilities, mutableSpace, mutable);
