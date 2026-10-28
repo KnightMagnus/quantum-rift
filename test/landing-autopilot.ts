@@ -231,6 +231,35 @@ for (const distance of [180, 200, 260]) {
   assert.equal(input.thrust, 1, 'straight approach does not coast inside the velocity deadband');
   assert.equal(input.ab, 0, 'approach engine still uses no afterburner');
 }
+// Small lateral drift left by delayed steering must not rotate a capped cruise sideways.
+for (const lateralSpeed of [-7, 7]) {
+  const input: Record<string, number> = {};
+  landingGuidance(
+    {},
+    { x: 0, y: 2200, vx: lateralSpeed, vy: -171, a: 0 },
+    { accel: 150, turn: 2.2, maxSpeed: 171 },
+    { x: 0, y: 0, r: 70 },
+    input,
+  );
+  assert.equal(input.turn, 0, 'small delayed lateral drift retains the targetward cruise bearing');
+  assert.equal(input.thrust, 1, 'small delayed lateral drift does not extinguish cruise thrust');
+}
+for (const lateralSpeed of [-40, 40]) {
+  const input: Record<string, number> = {};
+  landingGuidance(
+    {},
+    { x: 0, y: 2200, vx: lateralSpeed, vy: -171, a: 0 },
+    { accel: 150, turn: 2.2, maxSpeed: 171 },
+    { x: 0, y: 0, r: 70 },
+    input,
+  );
+  assert.equal(
+    Math.sign(input.turn),
+    -Math.sign(lateralSpeed),
+    'real lateral drift still corrects',
+  );
+  assert.equal(input.thrust, 0, 'large drift correction turns before applying thrust');
+}
 const turningInput: Record<string, number> = {};
 landingGuidance(
   {},

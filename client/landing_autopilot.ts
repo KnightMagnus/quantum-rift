@@ -77,10 +77,11 @@ export function landingGuidance(
     lateral = (ship.vx * deltaY - ship.vy * deltaX) / (distance || 1),
     // Cruise orientation is a policy, not the direction of a near-zero velocity
     // error. At the speed ceiling that error can point sideways or backwards.
-    // Keep real lateral correction and the existing turn-time/stopping envelope.
+    // Small drift from delayed steering decays under capped targetward thrust;
+    // larger drift still uses velocity correction and the existing stopping envelope.
     cruise =
       speedLimit === stats.maxSpeed &&
-      Math.abs(lateral) < deadband &&
+      Math.abs(lateral) < Math.max(deadband, stats.maxSpeed * 0.1) &&
       ship.vx * deltaX + ship.vy * deltaY >= 0,
     correcting = Math.hypot(velocityErrorX, velocityErrorY) >= deadband,
     heading =
