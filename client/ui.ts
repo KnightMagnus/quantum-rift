@@ -2685,7 +2685,13 @@ function searchMap(): void {
     if (!storySystemVisible(clientGameState.you?.story?.flags, starSystem.id)) continue;
     if (knowledge && !knowledge.visible.has(starSystem.id)) continue;
     if (starSystem.name.toLowerCase().includes(toLowerCase2))
-      hits.push([starSystem.id, starSystem.name, FACTIONS[starSystem.faction].short]);
+      hits.push([
+        starSystem.id,
+        starSystem.name,
+        knowledge && !knowledge.known.has(starSystem.id)
+          ? 'Unvisited system'
+          : FACTIONS[starSystem.faction].short,
+      ]);
     // Worlds are only listed for systems you know in full.
     if (knowledge && !knowledge.known.has(starSystem.id)) continue;
     for (const rawStellarBody of starSystem.stellars)

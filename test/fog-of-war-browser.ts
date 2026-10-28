@@ -105,6 +105,16 @@ try {
     new RegExp(systemsById[hidden].name),
     'search does not list hidden systems',
   );
+  await page.fill('#gsearch', systemsById[neighbour].name);
+  await page.waitForFunction(
+    (name) => document.getElementById('gresults')!.textContent!.includes(name),
+    systemsById[neighbour].name,
+  );
+  assert.match(
+    await page.locator('#gresults').innerText(),
+    /unvisited system/i,
+    'name-only search results do not reveal the neighbouring faction',
+  );
   await page.fill('#gsearch', '');
   // Neighbours show their name only.
   await page.evaluate(

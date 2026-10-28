@@ -1066,7 +1066,7 @@ a star chart opens routes through faction space, and the Gateway's far mouth and
 dashed lane appear only after flying through. `fog-of-war-browser.ts` starts a new
 Solo pilot in Concordia and captures the real map. It checks that distant systems
 are neither drawn nor searchable, that neighbour details show the name only without port markers or event overlays, and
-that plotting reaches a neighbour but is refused two jumps out. A second pilot
+that plotting reaches a neighbour but is refused two jumps out. Search results do not expose a name-only neighbour’s faction. The existing `story-realities-browser.ts` checks retain selectable mission bearings only for the captain whose saved story flags authorize them. A second pilot
 holding the Concord chart sees distant Concord systems drawn.
 `hyperspace-arrival.ts` checks that arrival points sit clear of every body's jump
 radius, that a real jump into a crowded system lands clear enough to chain the

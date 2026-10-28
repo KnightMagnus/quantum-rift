@@ -1055,8 +1055,8 @@
         "client/missions.ts"
       ],
       "services": [],
-      "tests": ["faction-store-catalog.ts", "fog-of-war-browser.ts"],
-      "asserts": "Captains see visited systems in full and neighbours by name only; routes and autojump cross only known space; the Gateway lane appears after flying through; star charts make faction space known; a fresh Concordia pilot's real map hides distant systems and economy details."
+      "tests": ["faction-store-catalog.ts", "fog-of-war-browser.ts", "story-realities-browser.ts"],
+      "asserts": "Captains see visited systems in full and neighbours by name only; routes and autojump cross only known space; the Gateway lane appears after flying through; star charts make faction space known; a fresh Concordia pilot's real map hides distant systems and economy details. Search results reveal no faction for name-only neighbours; captain-local story unlocks retain selectable mission bearings without unlocking them for other captains."
     },
     {
       "id": "sleep-traffic-ai",
