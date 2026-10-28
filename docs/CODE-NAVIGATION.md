@@ -176,6 +176,11 @@ feature validation and native CAS authority remain with their existing owners.
   after construction. Do not snapshot mutable dependencies or bind stale methods.
 - **Browser presentation:** panels and local cockpit preferences belong to the
   client. The server still validates and performs any previewed operation.
+- **Combat movement:** `server/combat-maneuver.ts` owns the shared NPC/Assist
+  approach, retreat and capital-broadside policy. `Space.fight` remains the caller
+  entry point and supplies its current `steer` method. Maneuvering changes the
+  existing input and `fireAt` references; target acquisition, consent, weapon
+  discharge, damage and persistence retain their existing owners.
 - **Shared calculations/content:** these supply definitions, not permissions.
   Avoid duplicating authoritative arithmetic in a panel.
 

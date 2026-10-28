@@ -1707,3 +1707,20 @@ and real-device qualification remain tracked in issue #82.
 ## Rival roster compatibility
 
 `planet-portrait-art.ts` checks unique captain and ship names, stable portrait labels, valid custom-hail keys and the original seeded luck of the two formerly boosted captains. `v11.ts` runs the production rival initializer with fixed randomness to verify the ordinary starting-wealth rule for all thirty rivals, then checks that reinitialization preserves existing wealth, hulls, locations and relationships. The rename does not reset accumulated save progress.
+
+## Shared combat maneuvering
+
+`combat-maneuver.ts` calls the existing `Space.fight` entry point with a live
+steering fixture. Thirty hand-authored cases check primary/secondary battery
+selection, empty ammo and point-defense/bay exclusion, the unarmed fallback,
+relative-velocity lead, approach/retreat thresholds, capital circling parity and
+speed cutoffs. Assertions preserve attacker input, mount and target identities,
+trigger fields and assignment order. NPC and player-owned attackers use the same
+policy. The fixture replaces steering without constructing another simulation.
+
+The same assertions pass before and after the move to
+`server/combat-maneuver.ts`. The existing registered `combat-playability.ts`
+encounters retain real NPC/Assist stepping, fitted weapons, damage, defeat and
+checkpoint reopen coverage. These bounded cases do not establish a performance
+improvement, human win rate or compatibility with every combat interleaving.
+No save schema, wire payload or caller signature changes.

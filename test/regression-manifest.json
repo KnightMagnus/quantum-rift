@@ -140,6 +140,7 @@
     "protocol-compatibility.ts",
     "station-docking.ts",
     "performance-budgets.ts",
+    "combat-maneuver.ts",
     "combat-playability.ts",
     "combat-jobs-playability.ts",
     "combat-balance-ratings.ts",
@@ -1109,9 +1110,16 @@
     },
     {
       "id": "flight-combat-weapons",
-      "owners": ["server/space.ts", "shared/rules.ts"],
+      "owners": ["server/space.ts", "server/combat-maneuver.ts", "shared/rules.ts"],
       "services": [],
-      "tests": ["sim.ts", "v03.ts", "v21.ts", "original-weapons.ts", "v08.ts"],
+      "tests": [
+        "combat-maneuver.ts",
+        "sim.ts",
+        "v03.ts",
+        "v21.ts",
+        "original-weapons.ts",
+        "v08.ts"
+      ],
       "asserts": "Movement/fire/hit events, weapon damage/types, missiles/point defense/drone controls, ship-role interactions, disabled cleanup and respawn."
     },
     {
@@ -1961,6 +1969,7 @@
     {
       "id": "combat-playability",
       "owners": [
+        "server/combat-maneuver.ts",
         "shared/hostile.ts",
         "server/space.ts",
         "server/game.ts",
@@ -1972,6 +1981,7 @@
       ],
       "services": [],
       "tests": [
+        "combat-maneuver.ts",
         "combat-playability.ts",
         "combat-jobs-playability.ts",
         "combat-assist.ts",
@@ -1979,7 +1989,7 @@
         "local-retaliation.ts",
         "combat-balance-ratings.ts"
       ],
-      "asserts": "Fixed-seed actual Game arrivals and eight-minute combat runs across early, Hollow and Umbral encounters; fitted combat ratings, shared ambient raid and incursion budgets, bounded retaliation and secondary-assisted combat. Bounty suitability and participation, passenger pickup order, expired offer recovery and distinct default controls are checked at their production boundaries. Seeded bots are bounded regression evidence, not proof of human win rates. Distinct initial bearings, distances, target motion, fitted bonuses and Assist/scripted-manual policies exercise primary participation, beam hit rate, damage contacts, defeat timing and recovery. Shipyard settlement precedes fixture loadouts, arrival/combat and exact checkpoint reopen. Bounded offline captures reproduce outcomes on the exact build/runtime. Shared-host synchronous tick samples are not native or hardware qualification."
+      "asserts": "Thirty hand-authored Space.fight maneuver traces retain battery choice, thresholds, relative lead, capital parity, thrust and live reference/steering behavior. Fixed-seed actual Game arrivals and eight-minute combat runs across early, Hollow and Umbral encounters; fitted combat ratings, shared ambient raid and incursion budgets, bounded retaliation and secondary-assisted combat. Bounty suitability and participation, passenger pickup order, expired offer recovery and distinct default controls are checked at their production boundaries. Seeded bots are bounded regression evidence, not proof of human win rates. Distinct initial bearings, distances, target motion, fitted bonuses and Assist/scripted-manual policies exercise primary participation, beam hit rate, damage contacts, defeat timing and recovery. Shipyard settlement precedes fixture loadouts, arrival/combat and exact checkpoint reopen. Bounded offline captures reproduce outcomes on the exact build/runtime. Shared-host synchronous tick samples are not native or hardware qualification."
     },
     {
       "id": "asset-recovery",

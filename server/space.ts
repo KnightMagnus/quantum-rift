@@ -1,3 +1,4 @@
+import { maneuverCombat } from './combat-maneuver.ts';
 import type { IndexWorksite } from './index-worksite.ts';
 import type { RawStellarBody } from '../shared/galaxy.ts';
 import type { GradeLots } from '../shared/cargo-contracts.ts';
@@ -2175,47 +2176,7 @@ export class Space {
    * @param entity2 Target enemy ship entity.
    */
   fight(entity: Entity, entity2: Entity): void {
-    const available = entity.guns.filter((mount) => !mount.p.pd && !mount.p.bay && mount.ammo > 0);
-    const primary = available.filter((mount) => !mount.sec);
-    // Both NPCs and Assist close for their primary battery. A long-range
-    // secondary must not keep the ship outside its main guns' effective range.
-    const battery = primary.length ? primary : available;
-    const best = battery.length ? Math.max(...battery.map((mount) => mount.p.range)) : 300;
-    const deltaX = entity2.x - entity.x,
-      deltaY = entity2.y - entity.y,
-      distance = Math.hypot(deltaX, deltaY);
-    const lead = Math.min(1.2, distance / 600);
-    const localX = entity2.x + (entity2.vx - entity.vx) * lead,
-      localY = entity2.y + (entity2.vy - entity.vy) * lead;
-    if (
-      entity.st.size >= 110 &&
-      entity.st.turrets >= 2 &&
-      distance < best * 1.1 &&
-      distance > Math.max(140, entity.st.size)
-    ) {
-      // capitals with turrets circle and fire broadsides instead of ramming
-      const side = entity.id % 2 ? 1 : -1,
-        targetAngle =
-          Math.atan2(deltaX, -deltaY) +
-          side * (Math.PI / 2 - (distance > best * 0.8 ? 0.35 : distance < best * 0.5 ? -0.35 : 0));
-      this.steer(
-        entity,
-        entity.x + Math.sin(targetAngle) * 300,
-        entity.y - Math.cos(targetAngle) * 300,
-        false,
-      );
-      entity.inp.thrust =
-        Math.hypot(entity.vx, entity.vy) < entity.st.maxSpeed * 0.6 ? entity.inp.thrust : 0;
-    } else if (distance > best * 0.75) this.steer(entity, localX, localY, false);
-    else if (distance < Math.max(120, entity.st.size * 0.9)) {
-      const away = Math.atan2(-deltaX, deltaY) + 0.8;
-      this.steer(entity, entity.x + Math.sin(away) * 300, entity.y - Math.cos(away) * 300, false);
-    } else {
-      this.steer(entity, localX, localY, false);
-      entity.inp.thrust =
-        Math.hypot(entity.vx, entity.vy) < entity.st.maxSpeed * 0.5 ? entity.inp.thrust : 0;
-    }
-    entity.fireAt = entity2;
+    maneuverCombat(this, entity, entity2);
   }
 
   // ------------------------------------------------------------------ combat
