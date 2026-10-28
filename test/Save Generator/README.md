@@ -1,6 +1,6 @@
 # Quantum Rift Save Generator
 
-Create custom **Solo-mode** saves for Quantum Rift 0.3.6. Choose a player name,
+Create custom **Solo-mode** saves for Quantum Rift 0.3.6.1. Choose a player name,
 starting credits, ship, personal station location and station tier. The game does
 not need to be running. The generator never edits your installed game or saves.
 `Example Captain.rift.json` is an optional ready-made T5 test save.
@@ -53,8 +53,8 @@ station map after importing, even though the captain can use the station. The
 accompanying game change repairs import ownership and rejects another captain's
 claimed location. Use a fresh Solo data folder for isolated tests on older builds.
 
-The catalog matches package version 3.6.0; future game versions may need a refreshed catalog. Online
-servers do not accept Solo save imports.
+The catalog matches public beta version 0.3.6.1; future game versions may need a
+refreshed catalog. Online servers do not accept Solo save imports.
 
 ## Command line
 

@@ -6,7 +6,8 @@ or fully typed. For running the game, use the public README.
 
 ## Entry points
 
-1. Read `package.json` for startup, test commands and the current version.
+1. Read `package.json` for startup and test commands. Its `publicVersion` is the in-game and
+   archive release label; `version` is the npm-compatible package version.
 2. Read [server/main.ts](../server/main.ts): default dedicated startup selects the static
    [Nakama web host](../server/nakama-host.ts); Solo and explicit `HOST_FRIENDS=1`
    select [the local platform](../server/local-main.ts). The dedicated web host has no Game,

@@ -25,7 +25,7 @@ def main():
     # dist is intentionally untracked. Rebuild it rather than packaging stale
     # output or leaving players with a source-only archive that cannot launch.
     subprocess.run(['node',str(ROOT/'tools/build.ts')],cwd=ROOT,check=True)
-    version = json.loads((ROOT/'package.json').read_text())['version']
+    version = json.loads((ROOT/'package.json').read_text())['publicVersion']
     name = 'Quantum Rift v' + version
     out = args.output.resolve()
     out.mkdir(parents=True,exist_ok=True)

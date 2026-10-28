@@ -43,7 +43,15 @@ print(json.dumps(cases))
   { cwd: root, encoding: 'utf8', maxBuffer: 8e6 },
 );
 assert.equal(generated.status, 0, generated.stderr);
-const cases: { save: import('../server/game.ts').PlayerData }[] = JSON.parse(generated.stdout);
+const cases: { rift: string; save: import('../server/game.ts').PlayerData }[] = JSON.parse(
+  generated.stdout,
+);
+for (const generatedSave of cases)
+  assert.equal(
+    generatedSave.rift,
+    JSON.parse(fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8')).publicVersion,
+    'generated Solo exports carry the public beta release label',
+  );
 const game = refineryGame();
 game.solo = true;
 const catalog: {
@@ -60,7 +68,7 @@ const catalog: {
 );
 assert.equal(
   catalog.version,
-  JSON.parse(fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8')).version,
+  JSON.parse(fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8')).publicVersion,
   'refresh generator version for each release',
 );
 assert.deepEqual(

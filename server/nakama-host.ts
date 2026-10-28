@@ -23,11 +23,11 @@ const compiledRoot = path.join(ROOT, 'dist');
 const PORT: number = Number(process.env.PORT) || 8080;
 
 /**
- * Server version string parsed from package.json.
+ * Public beta release label from package.json; independent of protocol/save versions.
  */
 const VERSION: string = JSON.parse(
   fileSystem.readFileSync(path.join(ROOT, 'package.json'), 'utf8'),
-).version;
+).publicVersion;
 
 /**
  * MIME content-type lookup table indexed by file extension.

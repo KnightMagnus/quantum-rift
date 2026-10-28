@@ -75,7 +75,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 - [Beta Solo save generator](test/Save%20Generator/README.md)
 - [Support diagnostics](docs/DIAGNOSTICS.md)
 - [Development tools](docs/DEVELOPMENT-TOOLS.md) and [code navigation](docs/CODE-NAVIGATION.md)
-- [Release notes](docs/RELEASE-3.6.0.md)
+- [Release notes](docs/RELEASE-0.3.6.1.md)
 
 ## Screenshots
 

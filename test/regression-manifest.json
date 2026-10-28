@@ -877,7 +877,7 @@
       "owners": ["server/main.ts"],
       "services": [],
       "tests": ["http-api.ts"],
-      "asserts": "Real HTTP static/MIME/cache/404/traversal checks and online-vs-solo API permissions."
+      "asserts": "Real HTTP public beta version/static/MIME/cache/404/traversal checks and online-vs-solo API permissions."
     },
     {
       "id": "protocol-websocket",
@@ -1597,7 +1597,7 @@
         "deterministic-core.ts",
         "packaged-runtime.ts"
       ],
-      "asserts": "Preserves ordered graph traversal, freight and nearest-buyer parity; signed cargo capacity, mission reservations and HTML escaping compatibility across original consumers. Exact original random streams, hashes, galaxy, rivals, arcs and radio tours remain unchanged. Offline launcher fixtures verify install-once, existing/pinned runtime reuse, unsupported-platform denial and failed/partial installer rejection; download/extraction itself is outside these fixtures. Source and compiled online/Solo startup serve executable browser modules; release archives rebuild and include compiled output, exclude private/stale files and launch without dependencies."
+      "asserts": "Preserves ordered graph traversal, freight and nearest-buyer parity; signed cargo capacity, mission reservations and HTML escaping compatibility across original consumers. Exact original random streams, hashes, galaxy, rivals, arcs and radio tours remain unchanged. Offline launcher fixtures verify install-once, existing/pinned runtime reuse, unsupported-platform denial and failed/partial installer rejection; download/extraction itself is outside these fixtures. Source and compiled online/Solo startup preserve public beta labels and serve executable browser modules; release archives rebuild and include compiled output, exclude private/stale files and launch without dependencies."
     },
     {
       "id": "excalibur-runtime",
