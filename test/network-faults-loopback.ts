@@ -62,7 +62,25 @@ function relay(
   direction: 'upstream' | 'downstream',
   to: Pick<net.Socket, 'destroyed' | 'write'>,
 ) {
-  let nextWriteAt = 0;
+  const pending: Array<{ bytes: Buffer; readyAt: number }> = [];
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  function drain() {
+    timer = undefined;
+    while (pending.length) {
+      if (to.destroyed) {
+        pending.length = 0;
+        return;
+      }
+      const next = pending[0];
+      const delay = next.readyAt - performance.now();
+      if (delay > 0) {
+        timer = setTimeout(drain, delay);
+        return;
+      }
+      pending.shift();
+      to.write(next.bytes);
+    }
+  }
   return (chunk: Buffer) => {
     const mode = link[direction];
     if (mode === 'blackhole') return;
@@ -70,20 +88,18 @@ function relay(
       (direction === 'upstream' ? link.heldUpstream : link.heldDownstream).push(chunk);
       return;
     }
-    const write = (bytes: Buffer) => {
-      if (!to.destroyed) to.write(bytes);
-    };
+    const now = performance.now();
     const pieces =
       mode === 'trickle' ? [...chunk].map((byte) => Buffer.from([byte])) : [Buffer.from(chunk)];
-    // Delaying/chunking a TCP stream must not reorder adjacent data events.
-    // Keep each direction's next chunk behind every byte already scheduled,
-    // including when a mode change removes its artificial latency.
-    const now = performance.now();
-    const startsAt = Math.max(now + link.latencyMs, nextWriteAt);
-    pieces.forEach((piece, index) =>
-      setTimeout(() => write(piece), startsAt - now + (mode === 'trickle' ? index : 0)),
+    // One head-of-queue timer owns delivery. Independent per-byte timers can
+    // overtake one another when CPU work delays callbacks or timer delays round.
+    pieces.forEach((bytes, index) =>
+      pending.push({
+        bytes,
+        readyAt: now + link.latencyMs + (mode === 'trickle' ? index : 0),
+      }),
     );
-    nextWriteAt = startsAt + (mode === 'trickle' ? pieces.length : 0);
+    if (timer === undefined) drain();
   };
 }
 const proxy = net.createServer((clientSide) => {
@@ -180,12 +196,39 @@ async function verifyProxyByteOrder() {
     receive(Buffer.from('123'));
     link[direction] = 'forward';
     receive(Buffer.from('XYZ'));
+    // Stall while successive data events are queued, as CPU-heavy server work does.
+    for (let index = 0; index < 24; index++) {
+      link[direction] = index % 3 === 0 ? 'forward' : 'trickle';
+      receive(Buffer.from('abcdefghijklmnopqrstuvwx'));
+      const busyUntil = performance.now() + 1.1;
+      while (performance.now() < busyUntil) {}
+    }
     try {
-      await waitFor(() => Buffer.concat(observed).length === 9, 'ordered proxy delivery');
+      await waitFor(() => Buffer.concat(observed).length === 9 + 24 * 24, 'ordered proxy delivery');
       assert.equal(
         Buffer.concat(observed).toString(),
-        'abc123XYZ',
+        'abc123XYZ' + 'abcdefghijklmnopqrstuvwx'.repeat(24),
         direction + ' preserves byte order across chunks and mode changes',
+      );
+      link[direction] = 'blackhole';
+      receive(Buffer.from('lost'));
+      link[direction] = 'hold';
+      receive(Buffer.from('held'));
+      assert.equal(
+        Buffer.concat(
+          direction === 'upstream' ? link.heldUpstream : link.heldDownstream,
+        ).toString(),
+        'held',
+      );
+      link[direction] = 'forward';
+      link.latencyMs = 20;
+      receive(Buffer.from('discarded on reset'));
+      target.destroy();
+      await pause(30);
+      assert.equal(
+        Buffer.concat(observed).toString(),
+        'abc123XYZ' + 'abcdefghijklmnopqrstuvwx'.repeat(24),
+        direction + ' withholds held/black-holed bytes and drops pending output after reset',
       );
     } finally {
       target.destroy();
