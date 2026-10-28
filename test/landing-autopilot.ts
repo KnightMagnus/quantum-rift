@@ -1,3 +1,4 @@
+import { botLandingInput, type BotLandingState } from './helpers/bot-landing.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
 // Closed-loop regression: production guidance drives the actual shared flight
 // physics for every stock hull, with varied drift, headings and landing radii.
@@ -359,5 +360,53 @@ for (const authority of [
     'a clicked body that cannot be landed on falls back to the nearest',
   );
   assert.equal(chooseLandingPort([], origin, noIntent), undefined, 'nowhere to land');
+}
+// The network bot receives delayed snapshots and sends quantized turn packets.
+// Replay both hosted failure states and long approaches without extending its
+// 40-second deadline or relaxing the bot's landing radius/speed assertions.
+{
+  const stats = requiredFixtureValue(shipStats(assets, makeLoadout(assets, 703)));
+  const port = { x: 500, y: 300, r: 60 };
+  const starts = [
+    [545.75, 320, 39.12, 166.46, 1.3394],
+    [363.34, 156.81, -31.44, -35.03, 2.4101],
+    [3500, -1500, 160, -80, 2.5],
+    [-2500, 1800, -160, 80, -1],
+  ];
+  for (const initial of starts) {
+    for (const snapshotTicks of [3, 6]) {
+      for (const delayTicks of [0, 3, 6]) {
+        const [x, y, vx, vy, a] = initial;
+        const ship = { x, y, vx, vy, a, fuel: stats.fuel };
+        const state: BotLandingState = {};
+        const history: number[][] = [];
+        let snapshot = [0, 0, x, y, vx, vy, a];
+        let landed = false;
+        for (let tick = 0; tick < 30 * 40; tick++) {
+          history.push([0, 0, ship.x, ship.y, ship.vx, ship.vy, ship.a]);
+          if (tick % snapshotTicks === 0) snapshot = history[Math.max(0, tick - delayTicks)];
+          if (
+            Math.hypot(port.x - ship.x, port.y - ship.y) < 90 &&
+            Math.hypot(ship.vx, ship.vy) < 60
+          ) {
+            landed = true;
+            break;
+          }
+          const packet = botLandingInput(state, snapshot, stats, port);
+          assert([-1, 0, 1].includes(packet.tu), 'wire turn is quantized');
+          step(ship, stats, {
+            thrust: packet.th,
+            turn: packet.tu,
+            rev: packet.rv,
+            navigation: packet.nav,
+          });
+        }
+        assert(
+          landed,
+          `network pilot lands from ${initial.join(',')}, snapshots ${snapshotTicks}, delay ${delayTicks}`,
+        );
+      }
+    }
+  }
 }
 console.log(JSON.stringify({ cases: count, maxSeconds, maxLandingSpeed }));

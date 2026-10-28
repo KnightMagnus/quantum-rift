@@ -1,3 +1,5 @@
+import { botLandingInput, type BotLandingState } from './helpers/bot-landing.ts';
+import { STELLARS } from '../shared/galaxy.ts';
 import type { ClientGameState } from '../client/main.ts';
 interface BotState {
   ws: WebSocket;
@@ -13,7 +15,7 @@ interface BotState {
   send: (message: { t: string; [propertyKey: string]: unknown }) => void;
   open: Promise<Event>;
   seq: number;
-  input: (options: { th?: number; tu?: number; rv?: number; f1?: number }) => void;
+  input: (options: { th?: number; tu?: number; rv?: number; f1?: number; nav?: boolean }) => void;
 }
 import { requiredFixtureValue } from './helpers/required.ts';
 // Headless test: two captains log in, trade, depart, fly, fight, jump and land. Run with the server up: node test/bot.ts [url]
@@ -192,37 +194,25 @@ const assertCondition = (condition: unknown, message: string) => {
     'jumping used fuel',
   );
   // land at Meridian Yards
-  const player = { x: 500, y: 300 };
+  const port = STELLARS['meridian-yards'];
+  const landingState: BotLandingState = {};
   for (let index = 0; index < 30 * 40; index++) {
-    const playerEntity = requiredFixtureValue(firstEntry.snap).me,
-      deltaX = player.x - playerEntity[2],
-      deltaY = player.y - playerEntity[3],
-      targetDistance = Math.hypot(deltaX, deltaY),
-      space = Math.hypot(playerEntity[4], playerEntity[5]);
-    const want = Math.atan2(deltaX, -deltaY),
-      diff = ((want - playerEntity[6] + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-    const retro = Math.atan2(playerEntity[4], -playerEntity[5]) + Math.PI,
-      rdiff = Math.abs(((retro - playerEntity[6] + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
-    if (targetDistance < 90) {
-      if (space < 60) {
-        firstEntry.send({ t: 'land', stellar: 'meridian-yards' });
-        await sleep(300);
-        if (firstEntry.landed) break;
-      }
-      firstEntry.input({ rv: 1, th: space > 50 && rdiff < 0.3 ? 1 : 0 });
-    } else {
-      const stop =
-        (space * space) /
-          (2 * requiredFixtureValue(requiredFixtureValue(firstEntry.you).shipStats).accel) +
-        80;
-      if (targetDistance < stop || space > 160)
-        firstEntry.input({ rv: 1, th: rdiff < 0.3 ? 1 : 0 });
-      else
-        firstEntry.input({
-          tu: Math.abs(diff) < 0.05 ? 0 : Math.sign(diff),
-          th: Math.abs(diff) < 0.4 ? 1 : 0,
-        });
+    const ship = requiredFixtureValue(firstEntry.snap).me;
+    if (Math.hypot(port.x - ship[2], port.y - ship[3]) < 90 && Math.hypot(ship[4], ship[5]) < 60) {
+      firstEntry.send({ t: 'land', stellar: port.id });
+      await sleep(300);
+      if (firstEntry.landed) break;
     }
+    // Use the same approach/braking policy as the browser, including its
+    // navigation-brake flag. The old hand-written pilot could orbit the port.
+    firstEntry.input(
+      botLandingInput(
+        landingState,
+        ship,
+        requiredFixtureValue(requiredFixtureValue(firstEntry.you).shipStats),
+        port,
+      ),
+    );
     await sleep(33);
   }
   if (!firstEntry.landed)
