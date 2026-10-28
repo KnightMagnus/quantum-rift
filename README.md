@@ -51,7 +51,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 - Solo mode includes pause, save slots and save-file import and export. A newcomer truce limits ambient hostility while you establish your station; missions and deliberate aggression can still lead to combat.
 - Remap controls, adjust interface scale, use a colour-blind palette, or play with a gamepad or touch controls.
 - Choose a captain portrait under **Captain → Profile** while flying or landed. Your face appears in public profiles and player hails.
-- Resize the Tray, minimap and tabbed menu to suit your screen. Keep browsing positions and filters, and pin one next objective without hiding your other missions.
+- Resize the Tray and tabbed menu to suit your screen; the system radar stays square. Keep browsing positions and filters, and pin one next objective without hiding your other missions.
 - Discover radio stations through exploration and special jobs.
 
 ## Start playing
@@ -85,7 +85,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 
 **Flight cockpit and system radar**
 
-The blue Pressure Hull cockpit is the standard interface for flight, station services and chat. The system radar starts square and follows the Tray width, shrinking to fit short screens. Drag its divider to choose a different height.
+The blue Pressure Hull cockpit is the standard interface for flight, station services and chat. The system radar always stays square and follows the Tray width. On short screens, scroll the Tray to reach the lower panels. The tabbed menu keeps its own height divider.
 
 ![Blue flight controls with the Tray and system radar expanded](docs/screenshots/pressure-hull-flight.png)
 

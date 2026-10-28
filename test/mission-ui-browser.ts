@@ -250,9 +250,8 @@ try {
   assert.equal(await firstCaptain.evaluate(() => G.you!.missions.length), 0);
   assert.equal(await secondCaptain.evaluate(() => G.you!.missions.length), 0);
   await tray(firstCaptain);
-  await firstCaptain.locator('#radarheightgrip').focus();
-  await firstCaptain.keyboard.press('Home');
-  for (let index = 0; index < 6; index++) await firstCaptain.keyboard.press('ArrowDown');
+  await firstCaptain.locator('#menuheightgrip').focus();
+  await firstCaptain.keyboard.press('End');
   await tray(secondCaptain);
   await secondCaptain.click('#ctabs [data-tab="missions"]');
   await firstCaptain.locator('.contract-plan').scrollIntoViewIfNeeded();

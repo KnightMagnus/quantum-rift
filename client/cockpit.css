@@ -1626,7 +1626,7 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   }
 }
 
-/* Independent vertical handles preserve automatic allocation until adjusted. */
+/* The lower menu keeps its own height control beneath the square minimap. */
 .heightgrip {
   flex: 0 0 10px;
   min-height: 10px;
@@ -1639,13 +1639,6 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
 .heightgrip:is(:hover, :focus-visible, .drag) {
   border-color: #e8bd76;
   outline: 1px solid #e8bd76;
-}
-#radarwrap.custom-height {
-  flex: 0 0 auto;
-}
-#radarwrap.custom-height #radar {
-  height: 100%;
-  aspect-ratio: auto;
 }
 #cpanel {
   min-height: 200px;
@@ -1906,6 +1899,9 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
    space against the minimap while status and navigation remain in normal flow. */
 #radarwrap {
   flex: 0 0 auto;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 1;
 }
 #cpanel,
 #cpanel.custom-height {

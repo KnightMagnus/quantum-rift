@@ -53,7 +53,6 @@ import {
   missionFiltersHtml,
   contractPlanHtml,
 } from './mission-details.ts';
-import { refineryJobsHtml } from './refinery_ui.ts';
 // active mission tracking. Works out where each mission (and the main story) wants you to go, for the MISSIONS
 // companion tab and the gold target markers on the galaxy map.
 import { SYS as systemsById, STELLARS } from '../shared/galaxy.ts';
@@ -289,18 +288,16 @@ function journalHtml(clientGameState: ClientGameState): string {
 export function missionsHtml(clientGameState: ClientGameState): string {
   const missionTargets2 = missionTargets(clientGameState),
     shown = filterMissions(clientGameState, missionTargets2, 'mission', true),
-    refinery =
-      contractPlanHtml(clientGameState) +
-      missionFiltersHtml(clientGameState, 'mission') +
-      refineryJobsHtml(clientGameState);
+    missionControls =
+      contractPlanHtml(clientGameState) + missionFiltersHtml(clientGameState, 'mission');
   if (!missionTargets2.length)
     return (
-      refinery +
+      missionControls +
       '<div class="dim small" style="padding:6px">No active missions. Mission boards (the JOBS tab when landed) post new work every ten minutes, and the contact at each spaceport bar has a story for you.</div>' +
       journalHtml(clientGameState)
     );
   return (
-    refinery +
+    missionControls +
     (!shown.length
       ? '<p class="dim small">No missions match these filters. Your other objectives are still tracked.</p>'
       : '') +
