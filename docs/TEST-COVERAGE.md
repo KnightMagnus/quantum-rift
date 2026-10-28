@@ -927,8 +927,11 @@ foreign-faction, unclaimed station and flight denials through store messages.
 with real assets and icons that no outfitter stocks. Purchases through the store
 message install the outfit at once, refuse a second copy or an under-standing
 weapon before charging, keep other factions' outfits in their own stores and sell
-back at an ordinary outfitter. A star chart adds exactly the faction's systems to
-the save and payload and is not sold twice.
+back at an ordinary outfitter. All 33 outfits are purchased through the message route,
+with exact credit/token charges and weapon fitting checked. Full outfit-space and
+turret-mount refusals preserve inventory and currencies. Reserve cells add their
+advertised fuel. A star chart adds exactly the faction's systems to the save and
+payload, is not sold twice and survives a database reopen.
 
 `input-audio-browser.ts` checks login music before activation under explicit
 allowed and blocked autoplay policies, real-interaction recovery and stopping
@@ -1047,10 +1050,12 @@ unload-safe health and finite replacement counts, conserved extraction, delibera
 salvage theft and the peaceful per-captain Last Survey quest. The browser checks
 live sprite decoding, claim data and the real hail controls. Transformations,
 Kernel tactics, regional sorties and later story missions are not covered here.
-`index-survey-tour.ts` advances the Index clock in Coldharbor and checks that the
-parent visits real bodies and fields with cataloguing labels, its drones stay on
-their leash while sweeping, the Loom deploys only while dwelling and extraction
-needs the Loom or quarry near the claimed rock.
+`index-survey-tour.ts` advances the Index clock in a system without asteroid fields
+and checks that parents visit real bodies with cataloguing labels while drones
+stay leashed to their live parent. Scanning passes ease in and out rather than
+changing radial velocity abruptly. The registered `eventide.ts` Index helper
+checks that the Loom folds while travelling and distant miners cannot extract
+a claimed rock; existing nearby extraction and finite-budget assertions remain.
 
 ## `map-fog-of-war`: what captains know of the galaxy
 
@@ -1060,7 +1065,7 @@ routes take one hop into the unknown but never chain through unvisited systems,
 a star chart opens routes through faction space, and the Gateway's far mouth and
 dashed lane appear only after flying through. `fog-of-war-browser.ts` starts a new
 Solo pilot in Concordia and captures the real map. It checks that distant systems
-are neither drawn nor searchable, that neighbour details show the name only, and
+are neither drawn nor searchable, that neighbour details show the name only without port markers or event overlays, and
 that plotting reaches a neighbour but is refused two jumps out. A second pilot
 holding the Concord chart sees distant Concord systems drawn.
 `hyperspace-arrival.ts` checks that arrival points sit clear of every body's jump

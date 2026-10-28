@@ -138,7 +138,7 @@ try {
       fillText(...args);
     };
     context.fill = () => {
-      fills.push(String(context.fillStyle));
+      if (typeof context.fillStyle === 'string') fills.push(context.fillStyle);
       fill();
     };
     try {
