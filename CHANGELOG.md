@@ -2,6 +2,16 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 0.3.6.2
+
+- Keep the system radar square at every Tray width and remove its manual height divider.
+- Remove refinery information from Missions.
+- Reorganize combat code without changing gameplay. See the [release notes](docs/RELEASE-0.3.6.2.md).
+
+### 0.3.6.1
+
+- Open Overview for new captains while docked; refine minimap defaults, landing and wormhole approaches, ship investigations, manual fire and hailing dialogs. See the [release notes](docs/RELEASE-0.3.6.1.md).
+
 ### 0.3.6
 
 - Add visited/charted map knowledge, faction star charts and 33 store-only outfits with checked installation and compressed icons.
