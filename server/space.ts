@@ -1707,7 +1707,7 @@ export class Space {
         unitX = distance > 1 ? deltaX / distance : 0,
         unitY = distance > 1 ? deltaY / distance : 0;
       const vAllow = Math.min(
-        computedShipStats.maxSpeed * 0.95,
+        landing ? computedShipStats.maxSpeed : computedShipStats.maxSpeed * 0.95,
         Math.sqrt(
           2 * computedShipStats.accel * Math.max(0, distance - 10 - space * flipTime * 0.6),
         ) * 0.8,
@@ -1737,11 +1737,7 @@ export class Space {
           aligned = Math.abs(offset) < computedShipStats.turn * tickDuration;
         entity.inp = {
           turn: aligned ? 0 : Math.sign(offset),
-          thrust:
-            Math.abs(offset) < (drifting ? 0.3 : 0.15) &&
-            (entity.landBrake || drifting || closing < vAllow - 8)
-              ? 1
-              : 0,
+          thrust: Math.abs(offset) < (drifting ? 0.3 : 0.15) ? 1 : 0,
         };
         if (aligned) entity.a = heading;
         return distance;

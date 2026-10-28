@@ -196,13 +196,36 @@ for (const hull of Object.keys(assets.ships)) {
     );
   }
 }
+// Sustained cruise keeps the engine lit, without engaging fuel-burning afterburners.
+for (const fraction of [0.9, 1]) {
+  const input: Record<string, number> = {};
+  landingGuidance(
+    {},
+    { x: 0, y: 10000, vx: 0, vy: -150 * fraction, a: 0 },
+    { accel: 150, turn: 2, maxSpeed: 150 },
+    { x: 0, y: 0, r: 70 },
+    input,
+  );
+  assert.equal(input.thrust, 1, 'cruise thrust stays on at the speed cap');
+  assert.equal(input.ab, 0, 'continuous plume does not spend afterburner fuel');
+}
+const turningInput: Record<string, number> = {};
+landingGuidance(
+  {},
+  { x: 0, y: 10000, vx: 0, vy: -150, a: Math.PI / 2 },
+  { accel: 150, turn: 2, maxSpeed: 150 },
+  { x: 0, y: 0, r: 70 },
+  turningInput,
+);
+assert.equal(turningInput.thrust, 0, 'cruise thrust pauses while turning toward the port');
+assert.notEqual(turningInput.turn, 0, 'misaligned cruise turns toward the port');
 // Far-field heading must not follow tiny residual acceleration or speed overshoot.
 for (const hull of [703, 704, 714, 821]) {
   const shipStats2 = requiredFixtureValue(shipStats(assets, makeLoadout(assets, hull)));
   for (const fraction of [0.9, 1]) {
     const ship = {
       x: 0,
-      y: 3000,
+      y: 10000,
       vx: 1,
       vy: -requiredFixtureValue(shipStats2).maxSpeed * fraction,
       a: Math.PI / 2,

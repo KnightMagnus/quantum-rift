@@ -17,9 +17,11 @@ export function gatewayGuidance(
 ) {
   const wrap2 = wrap(Math.atan2(gate.x - ship.x, -(gate.y - ship.y)) - ship.a);
   input.turn =
-    Math.abs(wrap2) <= stats.turn * tickDuration
-      ? wrap2 / (stats.turn * tickDuration)
-      : Math.sign(wrap2);
+    Math.abs(wrap2) < 0.02
+      ? 0
+      : Math.abs(wrap2) <= stats.turn * tickDuration
+        ? wrap2 / (stats.turn * tickDuration)
+        : Math.sign(wrap2);
   input.thrust = Math.abs(wrap2) < 0.5 ? 1 : 0;
   input.rev = input.ab = 0;
 }

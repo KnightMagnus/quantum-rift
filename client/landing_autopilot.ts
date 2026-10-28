@@ -67,7 +67,7 @@ export function landingGuidance(
   state.phase = 'approach';
   const remaining = Math.max(0, distance - port.r * 0.4),
     speedLimit = Math.min(
-      stats.maxSpeed * 0.9,
+      stats.maxSpeed,
       Math.sqrt(2 * stats.accel * remaining) * 0.65,
       remaining / (Math.PI / stats.turn + 0.6),
     ),
@@ -79,16 +79,20 @@ export function landingGuidance(
     // error. At the speed ceiling that error can point sideways or backwards.
     // Keep real lateral correction and the existing turn-time/stopping envelope.
     cruise =
-      speedLimit === stats.maxSpeed * 0.9 &&
+      speedLimit === stats.maxSpeed &&
       Math.abs(lateral) < deadband &&
       ship.vx * deltaX + ship.vy * deltaY >= 0,
     correcting = Math.hypot(velocityErrorX, velocityErrorY) >= deadband,
     heading = cruise ? Math.atan2(deltaX, -deltaY) : Math.atan2(velocityErrorX, -velocityErrorY),
     wrap3 = wrap(heading - ship.a);
   if (!cruise && !correcting) return;
-  input.turn = Math.abs(wrap3) < stats.turn * tickDuration ? 0 : Math.sign(wrap3);
-  input.thrust =
-    Math.abs(wrap3) < 0.15 && (cruise ? speed < speedLimit - deadband : correcting) ? 1 : 0;
+  input.turn =
+    Math.abs(wrap3) < 0.002
+      ? 0
+      : Math.abs(wrap3) < stats.turn * tickDuration
+        ? wrap3 / (stats.turn * tickDuration)
+        : Math.sign(wrap3);
+  input.thrust = Math.abs(wrap3) < 0.15 && (cruise || correcting) ? 1 : 0;
 }
 
 /**
