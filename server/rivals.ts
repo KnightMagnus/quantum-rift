@@ -108,10 +108,7 @@ export const RivalsOperations = {
             (rivalDefinition.fac === 'farside' && starSystem.farside)),
       );
       const wealth = Math.round(
-        40000 *
-          rivalDefinition.luck *
-          (1 + Math.pow(Math.random(), 2) * 70) *
-          (rivalDefinition.special ? 4 : 1),
+        40000 * rivalDefinition.luck * (1 + Math.pow(Math.random(), 2) * 70),
       ); // most start modest, a few are rich veterans
       worldData.rivals[rivalDefinition.id] = {
         id: rivalDefinition.id,

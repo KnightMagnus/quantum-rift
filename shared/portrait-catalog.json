@@ -2,7 +2,7 @@
   {
     "id": "npc-r0",
     "faction": "lamp",
-    "label": "Soren Ironside",
+    "label": "Ottoline Wickmere",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r0"
@@ -10,7 +10,7 @@
   {
     "id": "npc-r1",
     "faction": "spacer",
-    "label": "Wade Calloway",
+    "label": "Corin Ashby",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r1"
@@ -18,7 +18,7 @@
   {
     "id": "npc-r2",
     "faction": "spacer",
-    "label": "Lysa Moreau",
+    "label": "Nell Varga",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r2"
@@ -26,7 +26,7 @@
   {
     "id": "npc-r3",
     "faction": "sarn",
-    "label": "Juno Marlowe",
+    "label": "Ilsabet Vaun",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r3"
@@ -34,7 +34,7 @@
   {
     "id": "npc-r4",
     "faction": "spacer",
-    "label": "Mags Brannigan",
+    "label": "Bettany \"Bet\" Crowe",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r4"
@@ -42,7 +42,7 @@
   {
     "id": "npc-r5",
     "faction": "sarn",
-    "label": "Esme Strand",
+    "label": "Odile Brass",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r5"
@@ -50,7 +50,7 @@
   {
     "id": "npc-r6",
     "faction": "thalassi",
-    "label": "Greta Reyes",
+    "label": "Ysolde Undertow",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r6"
@@ -58,7 +58,7 @@
   {
     "id": "npc-r7",
     "faction": "vashari",
-    "label": "Six Flash",
+    "label": "Twelve Glint",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r7"
@@ -66,7 +66,7 @@
   {
     "id": "npc-r8",
     "faction": "ylith",
-    "label": "Bram Quill",
+    "label": "Lior Of-The-Bell",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r8"
@@ -74,7 +74,7 @@
   {
     "id": "npc-r9",
     "faction": "vashari",
-    "label": "Vera Hollow-Eye",
+    "label": "Last Hum",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r9"
@@ -82,7 +82,7 @@
   {
     "id": "npc-r10",
     "faction": "quantum",
-    "label": "Hale Nakamura",
+    "label": "Idris Calder",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r10"
@@ -90,7 +90,7 @@
   {
     "id": "npc-r11",
     "faction": "spacer",
-    "label": "Anya Rourke",
+    "label": "Kit Delacroix",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r11"
@@ -98,7 +98,7 @@
   {
     "id": "npc-r12",
     "faction": "spacer",
-    "label": "Ulric Duskwater",
+    "label": "Ambrose Kettle",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r12"
@@ -106,7 +106,7 @@
   {
     "id": "npc-r13",
     "faction": "korrund",
-    "label": "Oona Thorne",
+    "label": "Garnet Deepdelve",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r13"
@@ -114,7 +114,7 @@
   {
     "id": "npc-r14",
     "faction": "spacer",
-    "label": "Dorian Kestrel",
+    "label": "Silas Mabry",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r14"
@@ -122,7 +122,7 @@
   {
     "id": "npc-r15",
     "faction": "farside",
-    "label": "Tamsin Vance",
+    "label": "Juniper Stroud",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r15"
@@ -130,7 +130,7 @@
   {
     "id": "npc-r16",
     "faction": "korrund",
-    "label": "Xan Okonkwo",
+    "label": "Cinder Vaultmaw",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r16"
@@ -138,7 +138,7 @@
   {
     "id": "npc-r17",
     "faction": "quantum",
-    "label": "Ines Okafor",
+    "label": "Theodora Lune",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r17"
@@ -146,7 +146,7 @@
   {
     "id": "npc-r18",
     "faction": "quantum",
-    "label": "Quint Marsh",
+    "label": "Rafe Oduya",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r18"
@@ -154,7 +154,7 @@
   {
     "id": "npc-r19",
     "faction": "spacer",
-    "label": "Rhea Kell",
+    "label": "Tess Mallory",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r19"
@@ -162,7 +162,7 @@
   {
     "id": "npc-r20",
     "faction": "ylith",
-    "label": "Jory Achterberg",
+    "label": "Ansa Of-The-Far-Note",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r20"
@@ -170,7 +170,7 @@
   {
     "id": "npc-r21",
     "faction": "hollow",
-    "label": "Madcow Soul",
+    "label": "\"Brick\" Mulgrew",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r21"
@@ -178,7 +178,7 @@
   {
     "id": "npc-r22",
     "faction": "hollow",
-    "label": "Yara Galloway",
+    "label": "Yasmin \"Jinx\" Torres",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r22"
@@ -186,7 +186,7 @@
   {
     "id": "npc-r23",
     "faction": "hollow",
-    "label": "Delphine Sato",
+    "label": "Delia Ravensworth",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r23"
@@ -194,7 +194,7 @@
   {
     "id": "npc-r24",
     "faction": "hollow",
-    "label": "Ezra Voss",
+    "label": "Cormac Drane",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r24"
@@ -202,7 +202,7 @@
   {
     "id": "npc-r25",
     "faction": "hollow",
-    "label": "Zed Vashti",
+    "label": "Teague Malloy",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r25"
@@ -210,7 +210,7 @@
   {
     "id": "npc-r26",
     "faction": "ylith",
-    "label": "Fenn Fairweather",
+    "label": "Cael Of-The-Glass",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r26"
@@ -218,7 +218,7 @@
   {
     "id": "npc-r27",
     "faction": "korrund",
-    "label": "Pell Lindqvist",
+    "label": "Flint Coldhearth",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r27"
@@ -226,7 +226,7 @@
   {
     "id": "npc-r28",
     "faction": "lamp",
-    "label": "Cassia Petrov",
+    "label": "Liesl Embersby",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r28"
@@ -234,7 +234,7 @@
   {
     "id": "npc-r29",
     "faction": "hollow",
-    "label": "Nico Abara",
+    "label": "Sal \"Lucky\" Abernathy",
     "playerSelectable": false,
     "poolEligible": false,
     "npcId": "r29"
