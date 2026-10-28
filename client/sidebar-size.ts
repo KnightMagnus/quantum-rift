@@ -51,7 +51,7 @@ export function initSidebarSize(resized: () => void) {
     menu.style.height = menuHeight + 'px';
     menu.classList.toggle('custom-height', preferredMenu !== undefined);
     grip.setAttribute('aria-valuemin', String(minimum));
-    grip.setAttribute('aria-valuemax', String(Math.floor(limit())));
+    grip.setAttribute('aria-valuemax', String(Math.floor(Math.max(limit(), menu.offsetHeight))));
     grip.setAttribute('aria-valuenow', String(Math.round(menu.offsetHeight)));
     grip.setAttribute(
       'aria-valuetext',

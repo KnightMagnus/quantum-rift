@@ -73,6 +73,15 @@ try {
     }, zoom);
     await assertSquareRadar();
     assert((await menu.boundingBox())!.height >= 180, 'Square map preserves a usable lower menu');
+    const menuRange = await grip.evaluate((element) => ({
+      minimum: Number(element.getAttribute('aria-valuemin')),
+      maximum: Number(element.getAttribute('aria-valuemax')),
+      current: Number(element.getAttribute('aria-valuenow')),
+    }));
+    assert(
+      menuRange.current >= menuRange.minimum && menuRange.current <= menuRange.maximum,
+      'Menu height remains inside its accessible range even when the sidebar must scroll',
+    );
     if (width === 1920 && zoom === 1) {
       await page.screenshot({ path: path.join(feature.out, 'sidebar-minimap-default.png') });
       await page
