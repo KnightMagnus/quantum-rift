@@ -104,6 +104,7 @@
     "ship-capacity.ts",
     "html-presentation.ts",
     "compiled-runtime.ts",
+    "launcher-runtime.ts",
     "deterministic-core.ts",
     "packaged-runtime.ts",
     "tooling-contracts.ts",
@@ -1583,17 +1584,20 @@
         "client/html.ts",
         "shared/deterministic-random.ts",
         "tools/build.ts",
-        "tools/package_archive.py"
+        "tools/package_archive.py",
+        "tools/start.ts",
+        "tools/runtime/install-node.ts"
       ],
       "tests": [
         "galaxy-graph.ts",
         "ship-capacity.ts",
         "html-presentation.ts",
         "compiled-runtime.ts",
+        "launcher-runtime.ts",
         "deterministic-core.ts",
         "packaged-runtime.ts"
       ],
-      "asserts": "Preserves ordered graph traversal, freight and nearest-buyer parity; signed cargo capacity, mission reservations and HTML escaping compatibility across original consumers. Exact original random streams, hashes, galaxy, rivals, arcs and radio tours remain unchanged. Source and compiled online/Solo startup serve executable browser modules; release archives rebuild and include compiled output, exclude private/stale files and launch without dependencies."
+      "asserts": "Preserves ordered graph traversal, freight and nearest-buyer parity; signed cargo capacity, mission reservations and HTML escaping compatibility across original consumers. Exact original random streams, hashes, galaxy, rivals, arcs and radio tours remain unchanged. Offline launcher fixtures verify install-once, existing/pinned runtime reuse, unsupported-platform denial and failed/partial installer rejection; download/extraction itself is outside these fixtures. Source and compiled online/Solo startup serve executable browser modules; release archives rebuild and include compiled output, exclude private/stale files and launch without dependencies."
     },
     {
       "id": "excalibur-runtime",
@@ -1975,7 +1979,7 @@
         "local-retaliation.ts",
         "combat-balance-ratings.ts"
       ],
-      "asserts": "Fixed-seed actual Game arrivals and eight-minute combat runs across early, Hollow and Umbral encounters; fitted combat ratings, shared ambient raid and incursion budgets, bounded retaliation and secondary-assisted combat. Bounty suitability and participation, passenger pickup order, expired offer recovery and distinct default controls are checked at their production boundaries. Seeded bots are bounded regression evidence, not proof of human win rates."
+      "asserts": "Fixed-seed actual Game arrivals and eight-minute combat runs across early, Hollow and Umbral encounters; fitted combat ratings, shared ambient raid and incursion budgets, bounded retaliation and secondary-assisted combat. Bounty suitability and participation, passenger pickup order, expired offer recovery and distinct default controls are checked at their production boundaries. Seeded bots are bounded regression evidence, not proof of human win rates. Distinct initial bearings, distances, target motion, fitted bonuses and Assist/scripted-manual policies exercise primary participation, beam hit rate, damage contacts, defeat timing and recovery. Shipyard settlement precedes fixture loadouts, arrival/combat and exact checkpoint reopen. Bounded offline captures reproduce outcomes on the exact build/runtime. Shared-host synchronous tick samples are not native or hardware qualification."
     },
     {
       "id": "asset-recovery",

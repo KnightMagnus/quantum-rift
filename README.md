@@ -56,9 +56,9 @@ Download the latest release, extract it, and follow the launch instructions belo
 
 ## Start playing
 
-You need a modern browser. The computer running a downloaded game also needs the [supported runtime](docs/TYPESCRIPT-RUNTIME.md#install-the-local-runtime); the setup guide lists compatible systems. Friends joining your game only need a browser.
+You need a modern browser. The computer running a downloaded game also needs Node.js 22.18 or newer and a [compatible system](docs/TYPESCRIPT-RUNTIME.md#install-the-local-runtime). The launcher downloads the game’s required runtime on first launch, so connect to the internet for that step. Friends joining your game only need a browser.
 
-After completing that one-time setup, open the extracted game folder:
+With Node.js installed, open the extracted game folder:
 
 - **Windows:** double-click **`Start Solo Game.bat`** for a private game, or **`Start Friend Game.bat`** to host friends.
 - **macOS / Linux:** open a terminal in the extracted folder and run `sh start-solo.command` for a private game, or `sh start-friends.command` to host friends.

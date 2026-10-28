@@ -1498,7 +1498,15 @@ export class Space {
     for (const entity of this.ships.values()) {
       const playerData = entity.player?.s?.data;
       if (entity.dead || !playerData || entity.player!.s.ent !== entity) continue;
-      powers.push(this.game.features.hostile.myPower(playerData));
+      // Until escorts reliably screen the lead, strong wings must not buy threats
+      // that the captain's own fitted defenses cannot withstand. Use maximum
+      // durability, not current health, so taking damage cannot erase encounter risk.
+      powers.push(
+        Math.min(
+          this.game.features.hostile.myPower(playerData),
+          entity.st.shield + entity.st.armor,
+        ),
+      );
     }
     if (!powers.length) return 0;
     const strongest = Math.max(...powers);
@@ -2168,9 +2176,12 @@ export class Space {
    * @param entity2 Target enemy ship entity.
    */
   fight(entity: Entity, entity2: Entity): void {
-    const best = entity.guns
-      .filter((weaponMount) => !weaponMount.p.pd && !weaponMount.p.bay && weaponMount.ammo > 0)
-      .reduce((message, weaponMount) => Math.max(message, weaponMount.p.range), 300);
+    const available = entity.guns.filter((mount) => !mount.p.pd && !mount.p.bay && mount.ammo > 0);
+    const primary = available.filter((mount) => !mount.sec);
+    // Both NPCs and Assist close for their primary battery. A long-range
+    // secondary must not keep the ship outside its main guns' effective range.
+    const battery = primary.length ? primary : available;
+    const best = battery.length ? Math.max(...battery.map((mount) => mount.p.range)) : 300;
     const deltaX = entity2.x - entity.x,
       deltaY = entity2.y - entity.y,
       distance = Math.hypot(deltaX, deltaY);
@@ -2574,7 +2585,7 @@ export class Space {
       }
       if (entity5) {
         const distance = Math.hypot(entity5.x - entity.x, entity5.y - entity.y);
-        if ((!entity.player || automated) && distance > weapon.range * 1.05) continue;
+        if ((!entity.player || automated) && distance > weapon.range) continue;
         const travelTime = weapon.beam ? 0 : distance / weapon.speed;
         const angleTo2 = angleTo(
           entity,
@@ -2582,7 +2593,7 @@ export class Space {
           entity5.y + (entity5.vy - entity.vy) * travelTime,
         );
         if (weapon.turret) {
-          if (distance < weapon.range * 1.1 || (entity.player && !automated))
+          if (distance <= weapon.range || (entity.player && !automated))
             this.fire(entity, weaponMount, entity5, angleTo2);
           continue;
         }

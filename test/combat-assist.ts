@@ -588,3 +588,43 @@ assert.equal(selectedLead.autoCombat, false);
 console.log(
   'Combat assist: fleet/group power, focus/handoff, authority revocation, stop orders, stale aggression, range/arc, preselected-target pursuit and secondary firing and manual-only bays passed.',
 );
+
+// Both NPCs and Assist use the shared primary-range flight policy.
+const pursuit = ship();
+pursuit.guns = [
+  mockWeaponMount({ p: { range: 360 }, ammo: Infinity, sec: false }),
+  mockWeaponMount({ p: { range: 1800 }, ammo: 12, sec: true }),
+];
+pursuit.vx = 90;
+const pursuitTarget = ship();
+pursuitTarget.y = -900;
+const pursuitSpace = mockSpace({
+  steer: (actor) => {
+    actor.inp.thrust = 1;
+    return 0;
+  },
+});
+Space.prototype.fight.call(pursuitSpace, pursuit, pursuitTarget);
+assert.equal(
+  pursuit.inp.thrust,
+  1,
+  'long-range secondary does not prevent closing to primary range',
+);
+// Kiln-style turret shells are not wasted outside nominal reach. Manual fire remains unrestricted.
+shooter.guns = [
+  mockWeaponMount({ p: { range: 100, speed: 600, turret: true }, ammo: Infinity, cd: 0 }),
+];
+enemyEntity.disabled = false;
+enemyEntity.x = 103;
+shooter.autoCombat = true;
+fired.length = 0;
+Space.prototype.weapons.call(weaponSpace, shooter);
+assert.equal(fired.length, 0, 'automated turret refuses a 103%-range shot');
+enemyEntity.x = 100;
+Space.prototype.weapons.call(weaponSpace, shooter);
+assert.equal(fired.length, 1, 'automated turret can fire at nominal range');
+shooter.autoCombat = false;
+shooter.target = enemyEntity;
+enemyEntity.x = 110;
+Space.prototype.weapons.call(weaponSpace, shooter);
+assert.equal(fired.length, 2, 'manual fire remains available beyond range');
