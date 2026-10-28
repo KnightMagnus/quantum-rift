@@ -369,6 +369,7 @@ recoveringDrone.a = Math.PI / 2;
 // Match the outbound drift observed at the seeded route-reversal regression.
 recoveringDrone.vx = 80;
 let greatestRecoveryRange = 0;
+let observedOutboundExcursion = false;
 let recoveredLeash = false;
 for (let tick = 0; tick < 1800; tick++) {
   clock += DT;
@@ -386,10 +387,12 @@ for (let tick = 0; tick < 1800; tick++) {
     recoveringDrone.y - recoveringParent.y,
   );
   greatestRecoveryRange = Math.max(greatestRecoveryRange, range);
-  if (range < 600) recoveredLeash = true;
+  if (range >= 600) observedOutboundExcursion = true;
+  else if (observedOutboundExcursion) recoveredLeash = true;
 }
 assert.ok(greatestRecoveryRange < 1300, `outbound drone stays leashed (${greatestRecoveryRange})`);
-assert.ok(recoveredLeash, 'lagging outbound drone physically recovers its parent');
+assert.ok(observedOutboundExcursion, 'outbound drone first leaves the recovery radius');
+assert.ok(recoveredLeash, 'lagging outbound drone physically returns inside the recovery radius');
 const output = path.resolve(
   process.env.RIFT_TEST_ARTIFACTS || '.artifacts/regression',
   'index-presentation',
