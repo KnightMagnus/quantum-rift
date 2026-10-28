@@ -202,9 +202,14 @@ try {
         dpr: devicePixelRatio,
       };
     });
+    const grip = page.locator('#radarheightgrip');
     assert.ok(
-      Math.abs(radar.width + 6 * viewportScenario.s - (radar.height + 6 * viewportScenario.s)) < 1,
-      'System radar defaults to a square: ' + JSON.stringify({ viewportScenario, radar }),
+      Math.abs(
+        Number(await grip.getAttribute('aria-valuenow')) -
+          Number(await grip.getAttribute('aria-valuemax')),
+      ) <= 1,
+      'System radar starts with its vertical divider fully extended: ' +
+        JSON.stringify({ viewportScenario, radar }),
     );
     assert.ok(
       Math.abs(radar.pixels[0] / radar.pixels[1] - radar.width / radar.height) < 0.02,
@@ -217,7 +222,7 @@ try {
     if (viewportScenario.name === 'default')
       assert.ok(
         radar.width > 260,
-        'Desktop square radar takes the room above the menu: ' + JSON.stringify(radar),
+        'Desktop radar fills the room above the menu: ' + JSON.stringify(radar),
       );
     await page.locator('#ctabs').scrollIntoViewIfNeeded();
     const ventLayout = await page.evaluate(() => {
@@ -379,10 +384,16 @@ try {
       'Utility icons and labels are not squished',
     );
     if (state === 'resized') {
-      assert.ok(Math.abs(shell.radar.w + 6 - (shell.radar.h + 6)) < 1);
+      const grip = page.locator('#radarheightgrip');
+      assert.ok(
+        Math.abs(
+          Number(await grip.getAttribute('aria-valuenow')) -
+            Number(await grip.getAttribute('aria-valuemax')),
+        ) <= 1,
+      );
       assert.ok(
         shell.radar.w >= shellResults[0].shell.radar.w - 1,
-        'Square radar does not shrink when the tray is dragged wider',
+        'Full-width radar does not shrink when the tray is dragged wider',
       );
     }
     const frame = await page.screenshot({ path: output + '/shell-' + state + '.png' });

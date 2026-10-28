@@ -112,7 +112,11 @@ export function initShipFunctions(
       };
       close.onclick = () => {
         setOpen(false);
-        button.focus();
+        // Closing a flight panel resumes piloting, not native Space activation
+        // of its opener. The icon remains reachable through normal Tab navigation.
+        const flightView = document.getElementById('view')!;
+        flightView.tabIndex = -1;
+        flightView.focus({ preventScroll: true });
       };
       panel.addEventListener('keydown', (keyboardEvent) => {
         if (keyboardEvent.key === 'Escape') {

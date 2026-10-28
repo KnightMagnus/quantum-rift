@@ -1,6 +1,6 @@
 // Device-level layout preferences, like the existing sidebar width preference.
-// The minimap starts square (aspect 1) until the player drags its height.
-export function initSidebarSize(resized: () => void, defaultRadarAspect = 1) {
+// The minimap starts at its largest available height until the player sizes a panel.
+export function initSidebarSize(resized: () => void) {
   const sidebar = document.getElementById('hud')!;
   let preferences: Record<string, number> = {};
   try {
@@ -58,24 +58,15 @@ export function initSidebarSize(resized: () => void, defaultRadarAspect = 1) {
   function apply() {
     const room = available();
     const menuMinimum = preferences.menu === undefined ? 200 : 180;
-    const sidebarStyle = getComputedStyle(sidebar);
-    const frameWidth =
-      sidebar.clientWidth -
-      parseFloat(sidebarStyle.paddingLeft) -
-      parseFloat(sidebarStyle.paddingRight);
-    const automaticRadar = frameWidth / defaultRadarAspect;
-    const desiredRadar = preferences.radar ?? automaticRadar;
+    const desiredRadar = preferences.radar ?? room - menuMinimum;
     const desiredMenu = preferences.menu;
-    // The automatic square shrinks to leave the menu its minimum instead of
-    // pushing the sidebar into scrolling on short screens.
+    // Reserve the menu minimum before extending the minimap. Saved desired
+    // heights survive temporary viewport limits without being overwritten.
     const allocatedRadarHeight =
       desiredMenu === undefined || allocation === 'radar'
         ? Math.max(96, Math.min(room - menuMinimum, desiredRadar))
         : Math.max(96, Math.min(room - menuMinimum, room - Math.max(menuMinimum, desiredMenu)));
-    const radarHeight =
-      preferences.radar === undefined
-        ? Math.min(automaticRadar, allocatedRadarHeight)
-        : allocatedRadarHeight;
+    const radarHeight = allocatedRadarHeight;
     const menuHeight =
       preferences.radar === undefined && desiredMenu !== undefined && allocation === 'menu'
         ? Math.max(menuMinimum, Math.min(room - radarHeight, desiredMenu))
@@ -83,13 +74,6 @@ export function initSidebarSize(resized: () => void, defaultRadarAspect = 1) {
     document.getElementById('menuheightgrip')!.style.marginTop =
       Math.max(0, room - radarHeight - menuHeight) + 'px';
     radar.style.height = radarHeight + 'px';
-    if (preferences.radar === undefined) {
-      radar.style.width = Math.min(frameWidth, radarHeight * defaultRadarAspect) + 'px';
-      radar.style.alignSelf = 'center';
-    } else {
-      radar.style.removeProperty('width');
-      radar.style.removeProperty('align-self');
-    }
     radar.classList.toggle(
       'custom-height',
       preferences.radar !== undefined || desiredMenu !== undefined || radarHeight < desiredRadar,

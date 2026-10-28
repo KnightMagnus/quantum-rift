@@ -303,8 +303,13 @@ a rendering cost, not evidence of a general performance improvement.
 ### Sidebar sizing and landing notices
 
 `client/sidebar-size.ts` owns device-local desired heights under
-`rift.hudHeights`. It allocates the lower menu and minimap against measured sidebar
+`rift.hudHeights`. A fresh layout extends the minimap divider to its maximum
+while reserving usable lower-menu space. It allocates the lower menu and minimap against measured sidebar
 chrome, preserving desired values when the viewport temporarily clamps them.
+Landing destinations without a remembered service tab open Overview.
+Closing a ship-function panel returns focus to the flight canvas so Space resumes
+manual fire instead of activating the panel opener. Hail options wrap inside
+content-height buttons in a wider, viewport-bounded window.
 `client/ui.ts` renders expanded and collapsed gauges from the same player/view
 state. Connection teardown clears the collapsed readout before another snapshot.
 

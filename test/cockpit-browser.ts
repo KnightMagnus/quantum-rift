@@ -14,6 +14,13 @@ try {
     deviceScaleFactor: Number(process.env.COCKPIT_TEST_DPR || 1),
   });
   const errors: string[] = [];
+  const manualPackets: Array<{ t: string; f1?: number }> = [];
+  page.on('websocket', (socket) =>
+    socket.on('framesent', ({ payload }) => {
+      const packet = JSON.parse(String(payload));
+      if (packet.t === 'input') manualPackets.push(packet);
+    }),
+  );
   page.on('pageerror', (event) => errors.push(String(event)));
   await page.addInitScript(() => {
     const NativeSocket = window.WebSocket;
@@ -476,6 +483,34 @@ try {
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('#combatcontrols').isVisible(), true);
     await page.locator('[aria-label="Close combat controls"]').click();
+    assert.equal(await page.locator('#combatcontrols').isVisible(), false);
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.id),
+      'view',
+      'Closing combat controls returns focus to flight, not the Space-activated opener',
+    );
+    manualPackets.length = 0;
+    await page.keyboard.down('Space');
+    await page.waitForFunction(() => window.RiftEngine.input.held('Space'));
+    await page.waitForTimeout(150);
+    await page.keyboard.up('Space');
+    assert(
+      manualPackets.some((packet) => packet.f1 === 1),
+      'Native Space sends manual primary fire',
+    );
+    assert.equal(
+      await page.locator('#combatcontrols').isVisible(),
+      false,
+      'Manual Space never reopens combat controls',
+    );
+    await page.locator('#combatindicator').focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Escape');
+    assert.equal(
+      await page.evaluate(() => document.activeElement?.id),
+      'view',
+      'Keyboard dismissal also resumes flight',
+    );
     assert.equal(await page.locator('#combatcontrols').isVisible(), false);
     await page.screenshot({ path: path.join(feature.out, `flight-${width}-${scale}.png`) });
     layouts.push({ width, height, scale, ...rects });

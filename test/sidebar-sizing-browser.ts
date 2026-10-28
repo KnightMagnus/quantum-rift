@@ -45,11 +45,53 @@ try {
     undefined,
     { timeout: 3000 },
   );
+  async function assertMaximumRadar() {
+    await page.waitForFunction(
+      () => {
+        const grip = document.getElementById('radarheightgrip')!;
+        return (
+          Math.abs(
+            Number(grip.getAttribute('aria-valuenow')) - Number(grip.getAttribute('aria-valuemax')),
+          ) <= 1
+        );
+      },
+      undefined,
+      { timeout: 3000 },
+    );
+  }
+  for (const [width, height, zoom] of [
+    [1920, 1080, 1],
+    [760, 680, 1],
+    [1920, 1080, 1.4],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate((zoom) => {
+      document.documentElement.style.setProperty('--ui', String(zoom));
+      document.body.classList.toggle('scaled', zoom !== 1);
+    }, zoom);
+    await assertMaximumRadar();
+    const bounds = await page.locator('#radarwrap').boundingBox();
+    assert(bounds && bounds.width > 90 && bounds.height > 90, 'Default minimap remains usable');
+    assert((await menu.boundingBox())!.height >= 180, 'Maximum map reserves the lower menu');
+    if (width === 1920 && zoom === 1) {
+      await page.screenshot({ path: path.join(feature.out, 'sidebar-minimap-default.png') });
+      await page
+        .locator('#hud')
+        .screenshot({ path: path.join(feature.out, 'sidebar-minimap-detail.png') });
+    }
+    assert.equal(
+      await page.evaluate(() => localStorage.getItem('rift.hudHeights')),
+      null,
+      'Automatic allocation never becomes a saved deliberate size',
+    );
+  }
+  await page.setViewportSize({ width: 1440, height: 1440 });
+  await page.evaluate(() => {
+    document.documentElement.style.removeProperty('--ui');
+    document.body.classList.remove('scaled');
+  });
+  await assertMaximumRadar();
   const initial = await radar.boundingBox();
-  assert.ok(
-    Math.abs(initial!.width + 6 - (initial!.height + 6)) < 1,
-    'Automatic minimap starts at a square aspect',
-  );
   async function drag(identifier: string, verticalDelta: number) {
     const grip = page.locator(identifier);
     await grip.scrollIntoViewIfNeeded();
@@ -175,12 +217,12 @@ try {
   );
   await page.setViewportSize({ width: 1440, height: 1440 });
   await page.waitForFunction(() => {
-    const bounds = document.getElementById('radarwrap')!.getBoundingClientRect();
-    return Math.abs(bounds.width - bounds.height) < 1;
+    const grip = document.getElementById('radarheightgrip')!;
+    return Number(grip.getAttribute('aria-valuenow')) > 200;
   });
   assert.ok(
     (await radar.boundingBox())!.width > 0,
-    'Reset radar retains its square aspect with the saved custom menu after enlargement',
+    'Reset radar remains visible with the saved custom menu after enlargement',
   );
   await page.locator('#menuheightgrip').focus();
   await page.keyboard.press('Home');
@@ -210,13 +252,8 @@ try {
     };
   });
   assert.ok(
-    Math.abs(resetGeometry.frame[0] - resetGeometry.frame[1]) < 1 &&
-      Math.abs(
-        resetGeometry.canvas[0] +
-          6 * resetGeometry.scale -
-          (resetGeometry.canvas[1] + 6 * resetGeometry.scale),
-      ) < 1,
-    'Automatic radar frame and canvas retain their square aspect with a small saved menu on a tall viewport',
+    resetGeometry.frame[1] > 200 && resetGeometry.canvas[1] > 190,
+    'Automatic radar expands above a small saved menu on a tall viewport',
   );
   assert.ok(
     Math.abs(resetGeometry.bottom - resetGeometry.floor) < 2,
@@ -239,7 +276,6 @@ try {
   // has not yet allocated the menu. Await both actual layout outcomes before reading.
   await page.waitForFunction(
     () => {
-      const radar = document.getElementById('radarwrap')!.getBoundingClientRect();
       const menu = document.getElementById('cpanel')!.getBoundingClientRect();
       const sidebar = document.getElementById('hud')!;
       const style = getComputedStyle(sidebar);
@@ -247,7 +283,12 @@ try {
         sidebar.getBoundingClientRect().bottom -
         parseFloat(style.paddingBottom) -
         parseFloat(style.borderBottomWidth);
-      return Math.abs(radar.width - radar.height) < 1 && Math.abs(menu.bottom - floor) < 2;
+      const grip = document.getElementById('radarheightgrip')!;
+      return (
+        Math.abs(
+          Number(grip.getAttribute('aria-valuenow')) - Number(grip.getAttribute('aria-valuemax')),
+        ) <= 1 && Math.abs(menu.bottom - floor) < 2
+      );
     },
     null,
     { timeout: 3000 },
