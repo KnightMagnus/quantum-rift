@@ -7,7 +7,6 @@ export type RivalDefinition = {
   ship: string;
   temper: number;
   luck: number;
-  special?: boolean;
 };
 export type CombatRankInfo = { i: number; name: string; next: number | null; score: number };
 
@@ -16,101 +15,38 @@ import { linearRandom32 } from './deterministic-random.ts';
 // raid across the Rift, buy better ships, show up in the systems you visit, and remember how you treated them.
 import { FACTION_HULLS } from './galaxy.ts';
 
-const FIRST = [
-  'Anya',
-  'Bram',
-  'Cassia',
-  'Dorian',
-  'Esme',
-  'Fenn',
-  'Greta',
-  'Hale',
-  'Ines',
-  'Jory',
-  'Kaito',
-  'Lysa',
-  'Mags',
-  'Nico',
-  'Oona',
-  'Pell',
-  'Quint',
-  'Rhea',
-  'Soren',
-  'Tamsin',
-  'Ulric',
-  'Vera',
-  'Wade',
-  'Xan',
-  'Yara',
-  'Zed',
-  'Corwin',
-  'Delphine',
-  'Ezra',
-  'Juno',
-];
-const LAST = [
-  'Calloway',
-  'Vance',
-  'Okafor',
-  'Reyes',
-  'Thorne',
-  'Marsh',
-  'Kestrel',
-  'Abara',
-  'Lindqvist',
-  'Hollow-Eye',
-  'Sato',
-  'Brannigan',
-  'Voss',
-  'Achterberg',
-  'Moreau',
-  'Quill',
-  'Ironside',
-  'Drummond',
-  'Ashgrove',
-  'Petrov',
-  'Nakamura',
-  'Fairweather',
-  'Okonkwo',
-  'Strand',
-  'Galloway',
-  'Rourke',
-  'Vashti',
-  'Kell',
-  'Duskwater',
-  'Marlowe',
-];
-const SHIPNAMES = [
-  'Long Odds',
-  'Second Wind',
-  'Gilded Shrike',
-  'Far Thunder',
-  'Patient Knife',
-  'Copper Saint',
-  'Nine Lives',
-  'Red Ledger',
-  'Dawn Chorus',
-  'Old Grudge',
-  'Quiet Margin',
-  'Bright Debt',
-  'Salt Crown',
-  'Last Laugh',
-  'Grey Mercy',
-  'Wandering Star',
-  'Iron Psalm',
-  'Lucky Thirteen',
-  'Night Heron',
-  'Hard Bargain',
-  'Cold Comfort',
-  'Ember Queen',
-  'Vagabond',
-  'Slow Burn',
-  'Kingfisher',
-  'Rust Dancer',
-  'Sunward',
-  'Winter Coin',
-  'Black Lantern',
-  'Tall Tale',
+// Names and ships of the thirty captains, indexed by rival id (r0 to r29).
+const ROSTER: readonly { name: string; ship: string }[] = [
+  { name: 'Ottoline Wickmere', ship: "Leavitt's Candle" }, // r0
+  { name: 'Corin Ashby', ship: 'Fair Wind' }, // r1
+  { name: 'Nell Varga', ship: 'Second Helping' }, // r2
+  { name: 'Ilsabet Vaun', ship: "Fuchs's Wager" }, // r3
+  { name: 'Bettany "Bet" Crowe', ship: 'Sharp Practice' }, // r4
+  { name: 'Odile Brass', ship: 'Closing Cadence' }, // r5
+  { name: 'Ysolde Undertow', ship: "Doppler's Song" }, // r6
+  { name: 'Twelve Glint', ship: 'Stinging Answer' }, // r7
+  { name: 'Lior Of-The-Bell', ship: "Everett's Choir" }, // r8
+  { name: 'Last Hum', ship: 'Long Memory' }, // r9
+  { name: 'Idris Calder', ship: 'Due Process' }, // r10
+  { name: 'Kit Delacroix', ship: "Halley's Return" }, // r11
+  { name: 'Ambrose Kettle', ship: 'Writ of Salt' }, // r12
+  { name: 'Garnet Deepdelve', ship: 'Chandrasekhar Limit' }, // r13
+  { name: 'Silas Mabry', ship: 'Long Shot' }, // r14
+  { name: 'Juniper Stroud', ship: 'Homestead' }, // r15
+  { name: 'Cinder Vaultmaw', ship: 'Anvil Hymn' }, // r16
+  { name: 'Theodora Lune', ship: "Herschel's Daughter" }, // r17
+  { name: 'Rafe Oduya', ship: "Mermin's Moon" }, // r18
+  { name: 'Tess Mallory', ship: 'Far Ledger' }, // r19
+  { name: 'Ansa Of-The-Far-Note', ship: "Schack's Ledger" }, // r20
+  { name: '"Brick" Mulgrew', ship: 'Mother of Wolves' }, // r21
+  { name: 'Yasmin "Jinx" Torres', ship: 'Unpaid' }, // r22
+  { name: 'Delia Ravensworth', ship: 'Slow Fuse' }, // r23
+  { name: 'Cormac Drane', ship: 'Stolen Thunder' }, // r24
+  { name: 'Teague Malloy', ship: "Schrödinger's Cat" }, // r25
+  { name: 'Cael Of-The-Glass', ship: "Zwirn's Courtesy" }, // r26
+  { name: 'Flint Coldhearth', ship: 'Tithe of Iron' }, // r27
+  { name: 'Liesl Embersby', ship: 'Ninth Wick' }, // r28
+  { name: 'Sal "Lucky" Abernathy', ship: "Dead Man's Credit" }, // r29
 ];
 
 // careers: what they do, which powers they fly for, and how they earn
@@ -189,41 +125,30 @@ export const RIVALS = (() => {
     rivalDefinitions: RivalDefinition[] = [],
     usedFirstNames = new Set<number>(),
     usedLastNames = new Set<number>();
-  const take = (entries: readonly string[], used: Set<number>) => {
+  // Names used to be drawn at random from 30-entry pools. The draws are kept so each captain's
+  // faction, temper and luck stay the same now that names come from ROSTER.
+  const skipLegacyNameDraw = (used: Set<number>) => {
     let index;
     do {
-      index = Math.floor(randomGenerator() * entries.length);
+      index = Math.floor(randomGenerator() * ROSTER.length);
     } while (used.has(index));
     used.add(index);
-    return entries[index];
   };
   for (let index = 0; index < 30; index++) {
     const kind = KIND_LIST[index],
       kinds = KINDS[kind],
       faction = kinds.facs[Math.floor(randomGenerator() * kinds.facs.length)];
+    skipLegacyNameDraw(usedFirstNames);
+    skipLegacyNameDraw(usedLastNames);
     rivalDefinitions.push({
       id: 'r' + index,
-      name: `${take(FIRST, usedFirstNames)} ${take(LAST, usedLastNames)}`,
+      name: ROSTER[index].name,
       kind,
       fac: faction,
-      ship: SHIPNAMES[index],
+      ship: ROSTER[index].ship,
       temper: Math.min(1, kinds.temper + (randomGenerator() - 0.5) * 0.3),
       luck: 0.7 + randomGenerator() * 0.6,
     });
-  }
-  // Additional named captains
-  const named = [
-    ['pirate', 'Madcow Soul', 'Stampede'],
-    ['hunter', 'Six Flash', 'Quickdraw'],
-  ];
-  for (const [kind, name, ship] of named) {
-    const rivalDefinition = rivalDefinitions.find(
-      (rivalDefinition) => rivalDefinition.kind === kind && !rivalDefinition.special,
-    )!;
-    rivalDefinition.name = name;
-    rivalDefinition.ship = ship;
-    rivalDefinition.special = true;
-    rivalDefinition.luck = Math.max(rivalDefinition.luck, 1.15);
   }
   return rivalDefinitions;
 })();
@@ -396,21 +321,21 @@ export function combatRank(score: number): CombatRankInfo {
 
 // Captain-specific hail dialogue
 /**
- * Custom hailing dialogue for specially-named captains.
+ * Custom hailing dialogue for captains with their own voice, keyed by name.
  */
 export const HAIL_SPECIAL: Record<string, Record<string, string>> = {
-  'Madcow Soul': {
-    nemesis: 'MOOOO-ve aside, Captain, or I go straight through you. The Stampede does not brake.',
-    rival: 'You hear that rumble? That is the Stampede. Get off my range.',
-    neutral: 'Easy now. The herd is grazing today. Today.',
-    friendly: 'Ha! You got a little madcow in you, Captain. I like that.',
-    ally: 'Ride with the herd, partner. Nobody touches my people.',
+  '"Brick" Mulgrew': {
+    nemesis: 'The Mother of Wolves remembers your scent, Captain. The pack is already running.',
+    rival: 'Hear the howling? That is my pack. Get off our hunting ground.',
+    neutral: 'Easy. The wolves are fed today. Today.',
+    friendly: 'Ha! You have some wolf in you, Captain. I like that.',
+    ally: 'Run with the pack, friend. Nobody touches my people.',
   },
-  'Six Flash': {
-    nemesis: 'Six shots. You will not see the first five.',
-    rival: 'Draw slower, Captain. It is healthier.',
-    neutral: 'Quickdraw, out of Vashari space. Hunting, as always.',
-    friendly: 'Not bad shooting. Not Six Flash shooting, but not bad.',
+  'Twelve Glint': {
+    nemesis: 'Twelve shots. You will not see the first eleven.',
+    rival: 'Ask slower questions, Captain. The Stinging Answer is faster.',
+    neutral: 'Stinging Answer, out of Vashari space. Hunting, as always.',
+    friendly: 'Not bad shooting. Not Twelve Glint shooting, but not bad.',
     ally: 'Call it in, partner. I will be there before you finish the sentence.',
   },
 };

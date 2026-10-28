@@ -943,10 +943,10 @@
     },
     {
       "id": "rivals",
-      "owners": ["server/rivals.ts"],
+      "owners": ["server/rivals.ts", "shared/rivals.ts"],
       "services": ["rivals"],
-      "tests": ["v11.ts", "core-actions.ts"],
-      "asserts": "Named career population, relationships, hunters, damage/death/bounty, news/market flashes and status route."
+      "tests": ["v11.ts", "core-actions.ts", "planet-portrait-art.ts"],
+      "asserts": "Named career population, unique captain/ship names and matching stable portrait IDs; original seeded luck without the former floors; equal fresh-world wealth rules for all thirty rivals and preservation of existing rival careers on reload. Relationships, hunters, damage/death/bounty, news/market flashes and status route remain covered."
     },
     {
       "id": "hailing",
