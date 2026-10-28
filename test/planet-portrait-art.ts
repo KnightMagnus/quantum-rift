@@ -151,6 +151,16 @@ assert.equal(RIVALS.find((rival) => rival.id === 'r7')?.name, 'Twelve Glint');
 assert.equal(RIVALS.find((rival) => rival.id === 'r21')?.name, '"Brick" Mulgrew');
 for (const rival of RIVALS)
   assert.ok(rival.luck >= 0.7 && rival.luck <= 1.3, 'no captain gets a luck bonus: ' + rival.id);
+assert.equal(
+  RIVALS.find((rival) => rival.id === 'r7')!.luck,
+  0.7523146456107497,
+  'r7 keeps its original seeded luck without the former 1.15 floor',
+);
+assert.equal(
+  RIVALS.find((rival) => rival.id === 'r21')!.luck,
+  1.0521297982428222,
+  'r21 keeps its original seeded luck without the former 1.15 floor',
+);
 for (const item of portraits.entries) {
   const bytes = fs.readFileSync(
     new URL('../client/assets/portraits/' + item.id + '.png', import.meta.url),
