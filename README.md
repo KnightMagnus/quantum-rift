@@ -14,7 +14,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 
 ### Explore the galaxy
 
-- Travel between distinctive star systems, rendered planets and stations, from busy trade routes to the remote Eventide frontier.
+- Travel between distinctive star systems, rendered planets and stations, from busy trade routes to the remote Eventide frontier. Build your map as you explore, or buy faction star charts to reveal more systems and markets.
 - Meet traders, convoys, patrols, pirates and rival captains with their own personalities and careers.
 - Visit illustrated worlds and see colonies grow through three settlement stages.
 - Discover new places and follow faction stories and spaceport questlines. Your captain's choices shape the main story.
@@ -25,7 +25,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 - Trade on markets shaped by shortages, local events and what captains buy and sell.
 - Earn your way through deliveries, passenger runs, bounties, patrols, rescues and smuggling. Compare travel, room needed, danger and your payout before choosing a job. Passenger relief runs show where to collect passengers before their destination.
 - Mine asteroid, gas and crystal fields; survey deposits, refine your haul and tow large finds home with specialized equipment.
-- Follow faction and Syndicate careers, develop colonies, earn combat ratings and climb the leaderboards.
+- Follow faction and Syndicate careers, earn standing for specialized faction equipment, develop colonies, earn combat ratings and climb the leaderboards.
 
 ### Fly and fight
 
@@ -85,15 +85,15 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 
 **Flight cockpit and system radar**
 
-The blue Pressure Hull cockpit is the standard interface for flight, station services and chat.
+The blue Pressure Hull cockpit is the standard interface for flight, station services and chat. The square system radar leaves room for the Tray menu.
 
 ![Blue flight controls with the Tray and system radar expanded](docs/screenshots/pressure-hull-flight.png)
 
 **Flight controls**
 
-Combat and mining controls open above the console. JUMP can sit in either bottom corner.
+Ship-function controls open above the console. JUMP can sit in either bottom corner.
 
-![Combat and mining panels above the left-corner JUMP button](docs/screenshots/flight-functions.png)
+![Combat assist controls above the console beside the square system radar](docs/screenshots/flight-functions.png)
 
 **Landed services**
 
