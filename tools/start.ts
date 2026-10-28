@@ -24,7 +24,17 @@ const installerPath = fileURLToPath(new URL('./runtime/install-node.ts', import.
 // Launchers start with whatever Node is on PATH; fetch the pinned runtime on first run.
 if (localBinary && !fileSystem.existsSync(localBinary) && process.version !== manifest.version) {
   console.log(`Installing the pinned Node runtime (${manifest.version}); this happens once.`);
-  spawnSync(process.execPath, [installerPath], { cwd: rootDirectory, stdio: 'inherit' });
+  const installation = spawnSync(process.execPath, [installerPath], {
+    cwd: rootDirectory,
+    stdio: 'inherit',
+  });
+  if (installation.error || installation.status !== 0) {
+    // Extraction can leave a binary behind even when the installer rejects it.
+    fileSystem.rmSync(localBinary, { force: true });
+    if (installation.error) console.error(installation.error.message);
+    console.error('Install the project-local Node 27 runtime: node tools/runtime/install-node.ts');
+    process.exit(1);
+  }
 }
 const binary = localBinary && fileSystem.existsSync(localBinary) ? localBinary : process.execPath;
 if (binary === process.execPath && process.version !== manifest.version) {

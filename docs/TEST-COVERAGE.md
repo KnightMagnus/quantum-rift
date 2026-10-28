@@ -1614,3 +1614,7 @@ pinned Playwright browser; `CHROMIUM_EXECUTABLE` selects an explicit local binar
 Firefox and WebKit keep their own launch paths. Install the selected pinned
 browser or provide a valid Chromium executable before running the suite. WebKit
 also requires its platform libraries.
+
+## Launcher runtime bootstrap
+
+`launcher-runtime.ts` runs the real launcher in isolated directories with an offline installer fixture. It checks first-launch installation, second-launch reuse, existing local and pinned PATH runtimes, unsupported platforms, and failed installs that leave a binary behind. A rejected binary is removed so the next launch cannot use it. These fixtures do not verify network downloads or archive extraction.
