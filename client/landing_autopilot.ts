@@ -83,16 +83,18 @@ export function landingGuidance(
       Math.abs(lateral) < deadband &&
       ship.vx * deltaX + ship.vy * deltaY >= 0,
     correcting = Math.hypot(velocityErrorX, velocityErrorY) >= deadband,
-    heading = cruise ? Math.atan2(deltaX, -deltaY) : Math.atan2(velocityErrorX, -velocityErrorY),
+    heading =
+      cruise || !correcting
+        ? Math.atan2(deltaX, -deltaY)
+        : Math.atan2(velocityErrorX, -velocityErrorY),
     wrap3 = wrap(heading - ship.a);
-  if (!cruise && !correcting) return;
   input.turn =
     Math.abs(wrap3) < 0.002
       ? 0
       : Math.abs(wrap3) < stats.turn * tickDuration
         ? wrap3 / (stats.turn * tickDuration)
         : Math.sign(wrap3);
-  input.thrust = Math.abs(wrap3) < 0.15 && (cruise || correcting) ? 1 : 0;
+  input.thrust = Math.abs(wrap3) < 0.15 ? 1 : 0;
 }
 
 /**

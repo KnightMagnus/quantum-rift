@@ -86,6 +86,8 @@ for (const hull of Object.keys(assets.ships)) {
         if (tick % 3 === 0) authority = { ...ship, t: currentTime };
         landingGuidance(state, ship, shipStats3, port, input);
         assert.equal(input.ab, 0, 'landing must not burn afterburner fuel');
+        if (state.phase === 'approach' && !input.turn)
+          assert.equal(input.thrust, 1, 'straight approach keeps the ordinary engine lit');
         if (state.phase === 'brake') {
           braking = true;
           assert.equal(input.turn, 0, 'committed braking does not alternate approach headings');
@@ -208,6 +210,26 @@ for (const fraction of [0.9, 1]) {
   );
   assert.equal(input.thrust, 1, 'cruise thrust stays on at the speed cap');
   assert.equal(input.ab, 0, 'continuous plume does not spend afterburner fuel');
+}
+// Matching the approach envelope is not a reason to extinguish a straight engine.
+for (const distance of [180, 200, 260]) {
+  const input: Record<string, number> = {};
+  landingGuidance(
+    {},
+    {
+      x: 0,
+      y: distance,
+      vx: 0,
+      vy: -(distance - 28) / (Math.PI / 2 + 0.6),
+      a: 0,
+    },
+    { accel: 150, turn: 2, maxSpeed: 150 },
+    { x: 0, y: 0, r: 70 },
+    input,
+  );
+  assert.equal(input.turn, 0, 'matched approach envelope retains the port bearing');
+  assert.equal(input.thrust, 1, 'straight approach does not coast inside the velocity deadband');
+  assert.equal(input.ab, 0, 'approach engine still uses no afterburner');
 }
 const turningInput: Record<string, number> = {};
 landingGuidance(
