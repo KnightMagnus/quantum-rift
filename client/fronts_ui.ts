@@ -54,16 +54,12 @@ export type CalendarEvent = {
 import { escapeHtml as escapeHtml2 } from './html.ts';
 // Quantum Rift: interface pieces: the OPS companion tab (event, invasion, anomaly, goals, Armada), and the faction STORE menu.
 import { SYS as systemsById, FACTIONS, GRADES } from '../shared/galaxy.ts';
-import {
-  ANOMALIES,
-  GOAL_TYPES,
-  GOAL_REWARD,
-  STORE_ITEMS,
-  STORE_TIERS,
-  STORE_MAT,
-} from '../shared/fronts.ts';
+import { ANOMALIES, GOAL_TYPES, GOAL_REWARD, STORE_TIERS, STORE_MAT } from '../shared/fronts.ts';
 import { credits, route } from '../shared/rules.ts';
 import { STATES } from '../shared/living.ts';
+import { factionStoreListings } from '../shared/faction-store-catalog.ts';
+import { FACTION_STORE_OUTFITS } from '../shared/faction-outfits.ts';
+import { chartSystems } from '../shared/map-knowledge.ts';
 
 /**
  * Formats time remaining until a timestamp into days, hours, or minutes.
@@ -259,16 +255,29 @@ export function storeHtml(clientGameState: ClientGameState, facArg?: string): st
   let height = `<div class="sect" style="margin-top:0">${escapeHtml2(factionDef.name.toUpperCase())} QUARTERMASTER</div><div class="kv"><span>Your standing</span><span style="color:${factionDef.color}">${reputation} ${tier ? '· ' + tier.name : ''}</span></div>
     <div class="kv"><span>${factionDef.short} tokens</span><span>${token}</span></div><div class="kv"><span>Rift scrip <span class="dim small">(any store)</span></span><span>${scrip}</span></div>
     <div class="dim small">Earn ${factionDef.short} tokens by finishing jobs in ${factionDef.short} space and their commissions. Daily and weekly goals pay Rift scrip, which any store accepts.</div><table class="tbl"><tr><th>ITEM</th><th>STANDING</th><th>TOKENS</th><th>CREDITS</th><th></th></tr>`;
-  for (const factionStoreItem of STORE_ITEMS) {
+  const charted = new Set(playerPayload.charted || []);
+  for (const factionStoreItem of factionStoreListings(faction)) {
     const name2 = factionStoreItem.give.crate
       ? `${STORE_MAT[faction]} crate (grade ${GRADES[factionStoreItem.give.crate as number]})`
       : factionStoreItem.name;
+    const storeOutfit = FACTION_STORE_OUTFITS.find(
+      (outfit) => outfit.id === factionStoreItem.give.outfit,
+    );
+    const chartOwned =
+      !!factionStoreItem.give.chart &&
+      chartSystems(systemsById, faction).every((id) => charted.has(id));
+    const detail = storeOutfit
+      ? `<div class="dim small">${escapeHtml2(storeOutfit.desc || '')} Installs on your current ship.</div>`
+      : factionStoreItem.give.chart
+        ? `<div class="dim small">${chartOwned ? 'Already on your map.' : `Reveals every ${escapeHtml2(factionDef.short)} system, lane and market on your map.`}</div>`
+        : '';
     const allowed =
       landed &&
+      !chartOwned &&
       reputation >= factionStoreItem.rep &&
       token + scrip >= factionStoreItem.tokens &&
       playerPayload.credits >= factionStoreItem.credits;
-    height += `<tr><td>${escapeHtml2(name2)}</td><td style="color:${reputation >= factionStoreItem.rep ? '#8ff0ad' : '#ff9a8a'}">${factionStoreItem.rep}</td><td>${factionStoreItem.tokens}</td><td>${factionStoreItem.credits ? credits(factionStoreItem.credits) : '-'}</td><td style="text-align:right"><button class="btn sm" data-act="buystore" data-f="${faction}" data-id="${factionStoreItem.id}" ${allowed ? '' : 'disabled'}>BUY</button></td></tr>`;
+    height += `<tr><td>${escapeHtml2(name2)}${detail}</td><td style="color:${reputation >= factionStoreItem.rep ? '#8ff0ad' : '#ff9a8a'}">${factionStoreItem.rep}</td><td>${factionStoreItem.tokens}</td><td>${factionStoreItem.credits ? credits(factionStoreItem.credits) : '-'}</td><td style="text-align:right"><button class="btn sm" data-act="buystore" data-f="${faction}" data-id="${factionStoreItem.id}" ${allowed ? '' : 'disabled'}>BUY</button></td></tr>`;
   }
   return height + '</table>';
 }

@@ -96,7 +96,6 @@ import {
   ANOMALIES,
   GOAL_TYPES,
   GOAL_REWARD,
-  STORE_ITEMS,
   STORE_MAT,
   SCAN,
   CHAIN_STEPS,
@@ -107,6 +106,8 @@ import {
   weekKey,
 } from '../shared/fronts.ts';
 import { ROLES, RARITY, RACE_ROLES, OFFICER_NAMES, ROSTER_MAX } from '../shared/hangar.ts';
+import { factionStoreListings } from '../shared/faction-store-catalog.ts';
+import { chartSystems } from '../shared/map-knowledge.ts';
 import { captainBonus, shipStats, credits } from '../shared/rules.ts';
 
 /**
@@ -573,10 +574,24 @@ export const FrontsOperations = {
         session,
         'Visit this faction’s system or your Personal Station for that store.',
       );
-    const factionStoreItem = STORE_ITEMS.find(
+    const factionStoreItem = factionStoreListings(faction).find(
       (factionStoreItem) => factionStoreItem.id === message.id,
     );
     if (!factionStoreItem) return;
+    // Refuse before charging: a chart that reveals nothing new, or an outfit that will not fit.
+    const chartFaction = factionStoreItem.give.chart as string | undefined;
+    const newlyCharted = chartFaction
+      ? chartSystems(systemsById, chartFaction).filter(
+          (id) => !(playerData.charted || []).includes(id),
+        )
+      : [];
+    if (chartFaction && !newlyCharted.length)
+      return this.toast(session, 'You already hold this star chart.');
+    const storeOutfit = factionStoreItem.give.outfit as number | undefined;
+    if (storeOutfit) {
+      const problem = this.outfitInstallProblem(playerData, storeOutfit, 1);
+      if (problem) return this.toast(session, problem + ' The store outfit was not bought.');
+    }
     if ((playerData.rep[faction] || 0) < factionStoreItem.rep)
       return this.toast(
         session,
@@ -604,6 +619,22 @@ export const FrontsOperations = {
       xp?: number;
       rep?: number;
     };
+    if (chartFaction) {
+      playerData.charted = [...(playerData.charted || []), ...newlyCharted];
+      this.toast(
+        session,
+        `${FACTIONS[chartFaction].short} star chart: ${newlyCharted.length} systems added to your map.`,
+      );
+      this.log(playerData, `Bought the ${FACTIONS[chartFaction].short} star chart.`);
+    }
+    if (storeOutfit) {
+      playerData.ship.outfits[storeOutfit] = (playerData.ship.outfits[storeOutfit] || 0) + 1;
+      this.toast(session, `${factionStoreItem.name} installed on your ship.`);
+      this.log(
+        playerData,
+        `Bought a ${factionStoreItem.name} from the ${FACTIONS[faction].short} store.`,
+      );
+    }
     if (game.crate) {
       const materialType = STORE_MAT[faction] || 'alloy';
       playerData.mats[materialType][game.crate]++;

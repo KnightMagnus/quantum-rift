@@ -1,5 +1,5 @@
 """Original outfitter models rendered through the game's lit, panelled 3D pipeline.
-All 73 active outfits, including the five-seat passenger pack, have source geometry.
+All 106 active outfits, including the five-seat passenger pack and the faction store outfits, have source geometry.
 Output: client/assets/icons/<id>.png, 256 x 256 by default (not raster upscaling).
 Usage: python3 tools/rift_icons.py client/assets/icons [--size 256] [--only 9020]
 Requires numpy and Pillow. Existing numeric icon routes stay compatible.
@@ -198,6 +198,21 @@ ICONS.update({
     608: capacitor(4, glow((0.8, 0.45, 1))), 609: armor(4),
     610: navigation(2), 611: launcher(), 612: missile(),
     613: bay(), 614: mine(), 615: mining(1), 9020: seating(),
+})
+
+# Faction store outfits: each power's signature weapon, defence or drive part, and utility.
+ICONS.update({
+    9201: resonance() + [sphere((-0.1, 0, 0.22), 0.06, glow((0.6, 0.8, 1)))], 9202: armor(3) + capacitor(1), 9203: navigation(2),
+    9204: blaster(1, (1, 0.82, 0.45)), 9205: thruster(2), 9206: cargo(2),
+    9207: pulse((1, 0.75, 0.4)), 9208: capacitor(2, glow((1, 0.75, 0.35))), 9209: fuel(2) + [sphere((0, 0, 0.4), 0.1, AMBER)],
+    9210: railgun(2, (0.8, 0.35, 0.25)), 9211: thruster(1) + [sphere((0.75, 0, 0), 0.12, glow((1, 0.35, 0.15)))], 9212: armor(1),
+    9213: turret(2, (0.9, 0.96, 1)), 9214: capacitor(3, glow((0.75, 0.9, 1))), 9215: solar(),
+    9216: spitter(), 9217: armor(2) + [sphere((0, 0, 0.3), 0.1, GREEN)], 9218: solar() + [sphere((0, 0, 0.2), 0.09, glow((0.6, 1, 0.35)))],
+    9219: magma(), 9220: armor(4), 9221: cargo(1),
+    9222: resonance(), 9223: capacitor(4, glow((0.9, 0.6, 1))), 9224: gyro(2),
+    9225: flak(), 9226: armor(3), 9227: thruster(1),
+    9228: stinger(), 9229: armor(2) + capacitor(0, glow((1, 0.85, 0.3))), 9230: gyro(1),
+    9231: railgun(0, (0.85, 0.78, 0.55)), 9232: capacitor(2, glow((0.85, 0.78, 0.55))), 9233: navigation(1),
 })
 
 def bg(S):

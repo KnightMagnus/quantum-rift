@@ -127,6 +127,9 @@ export type Entity = EntityFeatureState & {
   /** AI behavior mode ('patrol', 'trade', 'raid', 'escort', 'flee', 'leave'). */
   ai: string | null;
 
+  /** Landing approach is in its retrograde braking pass (kept until speed is back under the limit). */
+  landBrake?: boolean;
+
   /**
    * Player reference if this is a player-controlled ship.
    * Session reference if this is a player-controlled ship.
@@ -1708,17 +1711,31 @@ export class Space {
       // leave a cruising ship sideways. Keep actual lateral correction and the
       // existing turn-time/braking envelope; formation steering is unchanged.
       const lateral = (entity.vx * deltaY - entity.vy * deltaX) / (distance || 1);
-      if (
-        landing &&
-        vAllow === computedShipStats.maxSpeed * 0.95 &&
-        Math.abs(lateral) < 8 &&
-        entity.vx * deltaX + entity.vy * deltaY >= 0
-      ) {
+      if (landing) {
+        // Landing traffic flies nose-on to its port and turns retrograde for one committed
+        // braking pass. Sideways drift is trimmed within 57 degrees of the port bearing:
+        // aiming straight along a small velocity error left ships turned 90 degrees, coasting in.
+        const closing = (entity.vx * deltaX + entity.vy * deltaY) / (distance || 1);
+        if (closing > vAllow + 15) entity.landBrake = true;
+        else if (closing <= vAllow) entity.landBrake = false;
+        const drifting = Math.abs(lateral) > Math.max(8, Math.abs(closing) * 0.25);
+        let heading = want;
+        if (entity.landBrake) heading = Math.atan2(-entity.vx, entity.vy);
+        else if (drifting) {
+          const correction = angDiff(Math.atan2(velocityErrorX, -velocityErrorY), want);
+          heading = want + Math.max(-1, Math.min(1, correction));
+        }
+        const offset = angDiff(heading, entity.a),
+          aligned = Math.abs(offset) < computedShipStats.turn * tickDuration;
         entity.inp = {
-          turn: Math.abs(diff) < computedShipStats.turn * tickDuration ? 0 : Math.sign(diff),
-          thrust: Math.abs(diff) < 0.15 && space < vAllow - 8 ? 1 : 0,
+          turn: aligned ? 0 : Math.sign(offset),
+          thrust:
+            Math.abs(offset) < (drifting ? 0.3 : 0.15) &&
+            (entity.landBrake || drifting || closing < vAllow - 8)
+              ? 1
+              : 0,
         };
-        if (Math.abs(diff) < computedShipStats.turn * tickDuration) entity.a = want;
+        if (aligned) entity.a = heading;
         return distance;
       }
       if (errorMagnitude < 8) {
@@ -1927,6 +1944,10 @@ export class Space {
           if (entity.rival && this.game.features.rivals.rivalDocked)
             this.game.features.rivals.rivalDocked(entity);
           this.game.hails?.landed(entity, this);
+          // Convoy wings follow their leader down to the same port instead of each
+          // picking a fresh random world and peeling off mid-approach.
+          for (const member of this.ships.values())
+            if (member.owner === entity.id && member.tradeMate) member.dest = entity.dest;
           this.remove(entity);
         }
         if (entity.dest.out && steer2 < 200) entity.ai = 'leave';
@@ -2029,9 +2050,13 @@ export class Space {
         if (steer5 < 120) {
           const space = Math.hypot(owner.vx, owner.vy);
           if (space > 30) {
-            const angDiff2 = angDiff(owner.a, entity.a);
+            // Match the leader's heading with the same snap deadband as steer(); a bare
+            // sign() overshoots every tick and the wing visibly shimmies left and right.
+            const angDiff2 = angDiff(owner.a, entity.a),
+              aligned = Math.abs(angDiff2) < entity.st.turn * tickDuration;
+            if (aligned) entity.a = owner.a;
             entity.inp = {
-              turn: Math.sign(angDiff2),
+              turn: aligned ? 0 : Math.sign(angDiff2),
               thrust: Math.hypot(entity.vx, entity.vy) < space ? 1 : 0,
             };
           }

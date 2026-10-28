@@ -86,6 +86,7 @@ export type HangarCapabilities = Pick<
 export type FrontsCapabilities = Pick<
   Game,
   | 'ownSite'
+  | 'outfitInstallProblem'
   | 'A'
   | 'platform'
   | '_an'
@@ -568,6 +569,7 @@ export function createFeatures(core: Game): FeatureServices {
 
   const frontsCapabilities: FrontsCapabilities = {
     ownSite: core.ownSite.bind(core),
+    outfitInstallProblem: core.outfitInstallProblem.bind(core),
     get platform() {
       return core.platform;
     },

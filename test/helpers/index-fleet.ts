@@ -231,6 +231,8 @@ export function verifyIndexFleet(): void {
     lootBeforeBlade + 1,
     'the complete logical Trident pays once',
   );
+  // A fresh group starts its survey tour dwelling at the worksite, where the Loom deploys.
+  clock = 0;
   const loomSpace = fixture(919);
   const loom = find(loomSpace, 919);
   const obstacle = human(loomSpace, 91);

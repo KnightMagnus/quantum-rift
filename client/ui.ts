@@ -128,6 +128,7 @@ import {
   price,
 } from '../shared/rules.ts';
 import { galaxy, mapHit, mapFit, stationDesign } from './render.ts';
+import { captainMap, captainRoute } from './map-fog.ts';
 import { crewHtml, hangarHtml, researchHtml, materialsHtml } from './hangar_ui.ts';
 import { specialistsHtml } from './spec_ui.ts';
 import { docksHtml, dockChips, dockLine, outfitterRepairsHtml } from './docks_ui.ts';
@@ -467,7 +468,12 @@ export function initUI(
     { passive: false },
   );
   elementById2('gfit').onclick = () => {
-    const mapFit2 = mapFit(htmlCanvasElement.width, htmlCanvasElement.height);
+    const mapFit2 = mapFit(
+      htmlCanvasElement.width,
+      htmlCanvasElement.height,
+      clientGameState.you?.story?.flags as Parameters<typeof mapFit>[2],
+      captainMap(clientGameState)?.visible,
+    );
     Object.assign(clientGameState.mapView!, mapFit2);
     drawGMap();
   };
@@ -2617,12 +2623,18 @@ export function openMap(focus?: number | string): void {
   htmlCanvasElement.height = htmlCanvasElement.clientHeight;
   if (!clientGameState.mapView) {
     clientGameState.mapView = {
-      ...mapFit(htmlCanvasElement.width, htmlCanvasElement.height),
+      ...mapFit(
+        htmlCanvasElement.width,
+        htmlCanvasElement.height,
+        clientGameState.you?.story?.flags as Parameters<typeof mapFit>[2],
+        captainMap(clientGameState)?.visible,
+      ),
       W: htmlCanvasElement.width,
       H: htmlCanvasElement.height,
     };
     clientGameState.mapView!.prevFit = clientGameState.mapView!.fit;
-    centerOn(focus || clientGameState.sys!, 2.2);
+    // Known space is already fitted under fog of war; the open galaxy starts zoomed in.
+    centerOn(focus || clientGameState.sys!, captainMap(clientGameState) ? 1 : 2.2);
   } else if (focus) {
     clientGameState.mapView!.k = Math.max(
       clientGameState.mapView!.k,
@@ -2668,10 +2680,14 @@ function searchMap(): void {
     return;
   }
   const hits = [];
+  const knowledge = captainMap(clientGameState);
   for (const starSystem of Object.values(systemsById)) {
     if (!storySystemVisible(clientGameState.you?.story?.flags, starSystem.id)) continue;
+    if (knowledge && !knowledge.visible.has(starSystem.id)) continue;
     if (starSystem.name.toLowerCase().includes(toLowerCase2))
       hits.push([starSystem.id, starSystem.name, FACTIONS[starSystem.faction].short]);
+    // Worlds are only listed for systems you know in full.
+    if (knowledge && !knowledge.known.has(starSystem.id)) continue;
     for (const rawStellarBody of starSystem.stellars)
       if (rawStellarBody.name.toLowerCase().includes(toLowerCase2) && !rawStellarBody.site)
         hits.push([starSystem.id, rawStellarBody.name, starSystem.name]);
@@ -2739,8 +2755,8 @@ function drawGMap(): void {
         clientGameState.sys)!
     ];
   if (starSystem) {
-    const seen =
-        !clientGameState.you || (clientGameState.you!.explored || []).includes(starSystem.id),
+    const knowledge = captainMap(clientGameState);
+    const seen = !knowledge || knowledge.known.has(starSystem.id),
       fields = (starSystem.fields || [])
         .map(
           (factionId) =>
@@ -2791,6 +2807,12 @@ function drawGMap(): void {
       clientGameState.you!.station.claimed &&
       STELLARS[clientGameState.you!.station.site!] &&
       STELLARS[clientGameState.you!.station.site!].system === starSystem.id;
+    if (!seen) {
+      // Neighbouring systems you have not visited or charted are known by name only.
+      elementById2('ginfo').innerHTML =
+        `<b>${escapeHtml2(starSystem.name)}</b>${jumps} · <i>not yet visited</i> · <span class="dim">Jump in, or buy a faction star chart, to learn more.</span>`;
+      return;
+    }
     elementById2('ginfo').innerHTML =
       `${myHome ? '<span style="color:#ffd27a">◎ YOUR STATION · </span>' : ''}<b style="color:${FACTIONS[starSystem.faction].color}">${escapeHtml2(starSystem.name)}</b> · ${FACTIONS[starSystem.faction].name}${stateOfSys(starSystem.id) ? ' · ' + stateLine(starSystem.id) : ''} · danger <span class="dgr">${Array.from({ length: 7 }, (unused, index) => `<i class="${index < starSystem.danger ? 'on' : ''}"></i>`).join('')}</span> ${starSystem.danger}${lawfulness}${jumps}${seen ? '' : ' · <i>not yet visited</i>'}${extra}<br><span class="dim">${starSystem.stellars.map((rawStellarBody) => (rawStellarBody.site ? `${rawStellarBody.name}${clientGameState.sites && clientGameState.sites[rawStellarBody.id] ? ' (' + escapeHtml2(clientGameState.sites[rawStellarBody.id].owner) + ', Station Tier ' + clientGameState.sites[rawStellarBody.id].ops + ')' : ' (unclaimed)'}` : `${rawStellarBody.name} (${[rawStellarBody.svc!.includes('Y') && 'shipyard', rawStellarBody.svc!.includes('O') && 'outfitter', rawStellarBody.svc!.includes('T') && 'market', rawStellarBody.svc!.includes('B') && 'jobs'].filter(Boolean).join(', ') || 'no services'})`)).join(' · ') || 'No inhabited worlds.'}${fields ? ' · Mining: ' + fields : ''}${(() => {
         const cargo2 = Object.keys(
@@ -2823,7 +2845,13 @@ export function plot(destination: number | string | undefined | null): void {
     drawGMap();
     return;
   }
-  const route2 = route(systemsById, clientGameState.sys!, destination as string);
+  const route2 = captainRoute(clientGameState, destination as string);
+  if (!route2.length) {
+    toast(
+      `No known route to ${systemsById[destination!]?.name || 'that system'}. Explore toward it or buy a star chart.`,
+    );
+    return;
+  }
   clientGameState.route = route2;
   drawGMap();
   drawMini();

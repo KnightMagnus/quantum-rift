@@ -75,6 +75,8 @@ interface FleetLocal {
   savedAt: number;
   /** Unique local negative loot identifiers. */
   lootId: number;
+  /** Survey tour for this system, derived from its authored bodies and fields. */
+  stops?: SurveyStop[];
 }
 const locals = new WeakMap<Space, FleetLocal>();
 function local(space: Space): FleetLocal {
@@ -137,10 +139,134 @@ function footprint(space: Space, actor: IndexFleetActor): number {
   return Math.max(...forms.map((hull) => space.A.ships[hull].size));
 }
 
-/** One full circuit of the parent ring around its worksite, in simulation seconds. */
+/** One full circuit of the parent ring around its survey stop, in simulation seconds. */
 const SURVEY_ORBIT_SECONDS = 360;
 /** One full sweep of a drone around its parent, in simulation seconds. */
-const DRONE_SWEEP_SECONDS = 180;
+const DRONE_SWEEP_SECONDS = 120;
+/** Time the group spends cataloguing each stop before moving on. */
+const SURVEY_DWELL_SECONDS = 90;
+/** Ring-centre speed between stops; slow enough for a Quarry to hold its berth. */
+const SURVEY_CRUISE_SPEED = 16;
+/** Extra distance a drone flies out from its orbit on a scanning pass. */
+const DRONE_SORTIE_REACH = 320;
+/** One scanning pass out and back, in simulation seconds. */
+const DRONE_SORTIE_SECONDS = 40;
+
+/** Something in the system the survey visits and catalogues. */
+interface SurveyStop {
+  x: number;
+  y: number;
+  /** Ring radius that keeps parent hulls off the body and out of its docking lane. */
+  clearance: number;
+  /** Shown in ship labels: "cataloguing Coldharbor I". */
+  label: string;
+}
+/** Where the ring is centred now, and what the group is doing there. */
+interface SurveyLeg {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  clearance: number;
+  stop: SurveyStop;
+  travelling: boolean;
+}
+
+/**
+ * The tour starts at the worksite, then visits every world, station, wormhole and other
+ * asteroid field in turn by bearing, so systems without rocks still have real things to study.
+ */
+function surveyStops(space: Space, world: IndexFleetWorld): SurveyStop[] {
+  const cached = local(space).stops;
+  if (cached) return cached;
+  const fields = space.sys.fields || [];
+  const fieldLabel = (field: (typeof fields)[number]) => `the ${field.ore} field`;
+  const siteField = fields.find(
+    (field) => Math.hypot(field.x - world.site.x, field.y - world.site.y) <= field.r + 400,
+  );
+  const home: SurveyStop = {
+    x: world.site.x,
+    y: world.site.y,
+    clearance: 0,
+    label: siteField ? fieldLabel(siteField) : 'the marked worksite',
+  };
+  const others: SurveyStop[] = [
+    ...space.sys.stellars.map((body) => ({
+      x: body.x,
+      y: body.y,
+      clearance: body.r + (body.svc?.includes('L') ? 900 : 500),
+      label: body.name,
+    })),
+    ...fields
+      .filter((field) => field !== siteField)
+      .map((field) => ({ x: field.x, y: field.y, clearance: 0, label: fieldLabel(field) })),
+  ].sort(
+    (left, right) =>
+      Math.atan2(left.x - home.x, -(left.y - home.y)) -
+      Math.atan2(right.x - home.x, -(right.y - home.y)),
+  );
+  return (local(space).stops = [home, ...others]);
+}
+
+/** Deterministic position on the tour, so reloads resume where the clock says. */
+function surveyLeg(space: Space, world: IndexFleetWorld, now: number): SurveyLeg {
+  const stops = surveyStops(space, world);
+  const transit = stops.map((stop, index) => {
+    const next = stops[(index + 1) % stops.length];
+    return Math.hypot(next.x - stop.x, next.y - stop.y) / SURVEY_CRUISE_SPEED;
+  });
+  const cycle = stops.reduce(
+    (total, _stop, index) => total + SURVEY_DWELL_SECONDS + transit[index],
+    0,
+  );
+  let elapsed = ((now % cycle) + cycle) % cycle;
+  for (const [index, stop] of stops.entries()) {
+    if (elapsed < SURVEY_DWELL_SECONDS)
+      return {
+        x: stop.x,
+        y: stop.y,
+        vx: 0,
+        vy: 0,
+        clearance: stop.clearance,
+        stop,
+        travelling: false,
+      };
+    elapsed -= SURVEY_DWELL_SECONDS;
+    const next = stops[(index + 1) % stops.length];
+    if (elapsed < transit[index]) {
+      const progress = elapsed / transit[index];
+      return {
+        x: stop.x + (next.x - stop.x) * progress,
+        y: stop.y + (next.y - stop.y) * progress,
+        vx: (next.x - stop.x) / transit[index],
+        vy: (next.y - stop.y) / transit[index],
+        clearance: stop.clearance + (next.clearance - stop.clearance) * progress,
+        stop: next,
+        travelling: true,
+      };
+    }
+    elapsed -= transit[index];
+  }
+  const home = stops[0];
+  return {
+    x: home.x,
+    y: home.y,
+    vx: 0,
+    vy: 0,
+    clearance: home.clearance,
+    stop: home,
+    travelling: false,
+  };
+}
+
+/** How far out a drone is on its scanning pass, from 0 (in orbit) to 1 (full reach). */
+function droneSortie(slot: number, now: number): { reach: number; rate: number } {
+  const phase = (Math.PI * 2 * now) / DRONE_SORTIE_SECONDS + slot * 1.7;
+  const wave = Math.sin(phase);
+  return wave > 0
+    ? { reach: wave, rate: (Math.cos(phase) * Math.PI * 2) / DRONE_SORTIE_SECONDS }
+    : { reach: 0, rate: 0 };
+}
 
 /** A moving formation berth and the velocity a ship needs to keep station on it. */
 interface FormationBerth {
@@ -175,12 +301,16 @@ function formationPoint(
     const angle =
       (Math.PI * 2 * Math.max(0, siblings.indexOf(actor))) / Math.max(6, siblings.length) +
       sweepRate * now;
-    const radius = footprint(space, parent) + footprint(space, actor) + 120;
+    // Drones keep a fixed orbit slot around their parent and swing out on scanning passes.
+    const sortie = droneSortie(slot, now);
+    const radius =
+      footprint(space, parent) + footprint(space, actor) + 120 + DRONE_SORTIE_REACH * sortie.reach;
+    const radialSpeed = DRONE_SORTIE_REACH * sortie.rate;
     return {
       x: center.x + Math.cos(angle) * radius,
       y: center.y + Math.sin(angle) * radius,
-      vx: center.vx - Math.sin(angle) * radius * sweepRate,
-      vy: center.vy + Math.cos(angle) * radius * sweepRate,
+      vx: center.vx - Math.sin(angle) * radius * sweepRate + Math.cos(angle) * radialSpeed,
+      vy: center.vy + Math.cos(angle) * radius * sweepRate + Math.sin(angle) * radialSpeed,
     };
   }
   // Retain vacant parent berths after losses; survivors do not collapse toward the site.
@@ -189,16 +319,32 @@ function formationPoint(
   const angle =
     -Math.PI * 0.75 + (Math.PI * 2 * parents.indexOf(actor)) / parents.length + orbitRate * now;
   const widest = Math.max(...parents.map((parent) => footprint(space, parent)));
+  const leg = surveyLeg(space, world, now);
   const radius = Math.max(
     800,
+    leg.clearance,
     (widest * 2 + 180) / (2 * Math.sin(Math.PI / Math.max(2, parents.length))),
   );
   return {
-    x: world.site.x + Math.cos(angle) * radius,
-    y: world.site.y + Math.sin(angle) * radius,
-    vx: -Math.sin(angle) * radius * orbitRate,
-    vy: Math.cos(angle) * radius * orbitRate,
+    x: leg.x + Math.cos(angle) * radius,
+    y: leg.y + Math.sin(angle) * radius,
+    vx: leg.vx - Math.sin(angle) * radius * orbitRate,
+    vy: leg.vy + Math.cos(angle) * radius * orbitRate,
   };
+}
+
+/** Plain description of what a neutral machine is doing right now. */
+function surveyActivity(
+  space: Space,
+  world: IndexFleetWorld,
+  actor: IndexFleetActor,
+  slot: number,
+  now: number,
+): string {
+  const leg = surveyLeg(space, world, now);
+  if (actor.parent !== undefined && !actor.blade && droneSortie(slot, now).reach > 0.5)
+    return `scanning ${leg.stop.label}`;
+  return leg.travelling ? `en route to ${leg.stop.label}` : `cataloguing ${leg.stop.label}`;
 }
 
 /** Fly a neutral machine along its moving berth. */
@@ -625,7 +771,7 @@ export const IndexFleetOperations = {
       )[0] || null;
     const target = entity.target;
     const baseName = space.A.ships[entity.hull].name;
-    entity.name = `Index ${baseName} · ${target ? 'defending marked work' : 'neutral survey'}`;
+    entity.name = `Index ${baseName} · ${target ? 'defending marked work' : surveyActivity(space, world, actor, local(space).entities.get(entity.id)!, now)}`;
     if (world.rebootUntil > now) {
       entity.name = `Index reboot · ${Math.ceil(world.rebootUntil - now)}s`;
       entity.target = null;
@@ -656,7 +802,12 @@ export const IndexFleetOperations = {
     }
     if (actor.base === 919) {
       if (target && Number(entity.hull) === 920) transition(this, space, entity, 919);
-      if (!target && Number(entity.hull) === 919) transition(this, space, entity, 920);
+      // The Loom unfolds its emitters only while dwelling at a stop; it folds to travel.
+      const travelling = surveyLeg(space, world, now).travelling;
+      if (!target && !travelling && Number(entity.hull) === 919)
+        transition(this, space, entity, 920);
+      if (!target && travelling && Number(entity.hull) === 920)
+        transition(this, space, entity, 919);
       keepStation(space, world, entity, now);
       return true; // Mining emitters never become unannounced combat lasers.
     }
@@ -823,8 +974,15 @@ export const IndexFleetOperations = {
       const rock = space.rocks.find((candidate) => candidate.id === world.claim && !candidate.down);
       if (!rock) world.claim = undefined;
       if (rock && world.rebootUntil <= now) {
-        const loom = live(space).find((entity) => Number(entity.hull) === 920 && !entity.target);
-        const quarry = live(space).find((entity) => Number(entity.hull) === 910 && !entity.target);
+        // Extraction pauses while the survey is cataloguing elsewhere on its tour.
+        const atRock = (entity: Entity) =>
+          Math.hypot(entity.x - rock.x, entity.y - rock.y) <= INDEX_FLEET_LIMITS.radius + 600;
+        const loom = live(space).find(
+          (entity) => Number(entity.hull) === 920 && !entity.target && atRock(entity),
+        );
+        const quarry = live(space).find(
+          (entity) => Number(entity.hull) === 910 && !entity.target && atRock(entity),
+        );
         if (loom || quarry) {
           this.extract(space, rock, 12);
           for (let emitter = 0; loom && emitter < 6; emitter++)

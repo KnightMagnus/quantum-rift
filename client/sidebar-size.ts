@@ -1,4 +1,5 @@
 // Device-level layout preferences, like the existing sidebar width preference.
+// The minimap starts square (aspect 1) until the player drags its height.
 export function initSidebarSize(resized: () => void, defaultRadarAspect = 1) {
   const sidebar = document.getElementById('hud')!;
   let preferences: Record<string, number> = {};
@@ -65,12 +66,12 @@ export function initSidebarSize(resized: () => void, defaultRadarAspect = 1) {
     const automaticRadar = frameWidth / defaultRadarAspect;
     const desiredRadar = preferences.radar ?? automaticRadar;
     const desiredMenu = preferences.menu;
+    // The automatic square shrinks to leave the menu its minimum instead of
+    // pushing the sidebar into scrolling on short screens.
     const allocatedRadarHeight =
-      preferences.radar === undefined && desiredMenu === undefined
-        ? desiredRadar
-        : desiredMenu === undefined || allocation === 'radar'
-          ? Math.max(96, Math.min(room - menuMinimum, desiredRadar))
-          : Math.max(96, Math.min(room - menuMinimum, room - Math.max(menuMinimum, desiredMenu)));
+      desiredMenu === undefined || allocation === 'radar'
+        ? Math.max(96, Math.min(room - menuMinimum, desiredRadar))
+        : Math.max(96, Math.min(room - menuMinimum, room - Math.max(menuMinimum, desiredMenu)));
     const radarHeight =
       preferences.radar === undefined
         ? Math.min(automaticRadar, allocatedRadarHeight)

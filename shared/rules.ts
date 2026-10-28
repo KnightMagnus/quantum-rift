@@ -162,6 +162,9 @@ export type OutfitAsset = {
   icon?: string;
   faction?: string;
 
+  /** Sold only in its faction's store, never stocked by an outfitter. */
+  storeOnly?: boolean;
+
   /** Space requirement. */
   space?: number;
 };
