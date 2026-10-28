@@ -333,7 +333,7 @@
       "helpers/temp-data.ts"
     ],
     "balance.ts": ["helpers/required.ts"],
-    "landing-autopilot.ts": ["helpers/required.ts"],
+    "landing-autopilot.ts": ["helpers/required.ts", "helpers/bot-landing.ts"],
     "faction-standing.ts": ["helpers/legacy-fixture.ts", "helpers/mocks.ts", "helpers/required.ts"],
     "gateway-navigation.ts": [
       "helpers/mocks.ts",
@@ -662,7 +662,7 @@
     "fixtures/preload-http-api.ts": ["helpers/preload-config.ts"],
     "combat-network.ts": ["helpers/required.ts"],
     "hailing-network.ts": ["helpers/required.ts"],
-    "bot.ts": ["helpers/required.ts"],
+    "bot.ts": ["helpers/bot-landing.ts"],
     "helpers/mining-fixture.ts": [
       "fixtures/mining-preload.ts",
       "helpers/browser-fixture.ts",

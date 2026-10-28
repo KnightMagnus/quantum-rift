@@ -1,5 +1,11 @@
 # Game regression coverage inventory
 
+## Headless network landing
+
+The two-captain network bot uses the production landing guidance with per-tick prediction between authoritative snapshots, quantized turn packets and the navigation-braking flag. It still flies through the real WebSocket server and must land at Meridian Yards within its existing 40-second approach deadline, inside 90 units and below 60 speed, before checking refuelling and destination trade. Manual thrust, firing and jumping remain part of the same scenario.
+
+`landing-autopilot.ts` also replays the two hosted bot failure states and long approaches against the actual flight physics, with 10/5 Hz snapshots and up to six ticks of snapshot delay. These cases cover the bot's packet adapter; they do not replace the full real-server network test.
+
 ## Authored content
 
 `content-validation.ts` belongs to `ships-catalog-art`. It validates the composed
