@@ -69,16 +69,19 @@ assert.equal(
   4,
   'different geometry/motion/fittings produce genuinely distinct initial states',
 );
-const repeated = simulateCombatPlayability(experimentResults[0].capture.scenario);
-const deterministic = (result: typeof repeated) => {
+const deterministic = (result: (typeof experimentResults)[number]) => {
   const { tickP95Ms: _p95, tickMaxMs: _max, ...outcomes } = result;
   return outcomes;
 };
-assert.deepEqual(
-  deterministic(repeated),
-  deterministic(experimentResults[0]),
-  'capture parameters reproduce outcomes and bounded events',
-);
+for (const original of experimentResults) {
+  const saved = JSON.parse(JSON.stringify(original)) as typeof original;
+  const repeated = simulateCombatPlayability(saved.capture.scenario);
+  assert.deepEqual(
+    deterministic(repeated),
+    deterministic(saved),
+    'serialized capture parameters reproduce every outcome and bounded event',
+  );
+}
 const exportAt = process.argv.indexOf('--export');
 if (exportAt >= 0) {
   assert.ok(process.argv[exportAt + 1], '--export requires an output file');

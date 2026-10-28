@@ -212,7 +212,7 @@ export function simulateCombatPlayability(
       space.raidBudget = () => 0;
       lead.x = lead.y = lead.vx = lead.vy = 0;
       lead.a = options.experiment.angle;
-      space.makeShip({
+      const opponent = space.makeShip({
         hull: options.experiment.opponent,
         faction: 'umbral',
         ai: 'raid',
@@ -222,6 +222,15 @@ export function simulateCombatPlayability(
         vy: Math.sin(options.experiment.angle) * options.experiment.lateralSpeed,
         a: options.experiment.angle + Math.PI,
       });
+      // Capital broadside direction uses entity-ID parity. Give isolated actors
+      // stable fixture IDs so preceding scenarios cannot change their maneuvers.
+      space.ships.clear();
+      lead.id = 1000000000;
+      opponent.id = 1000000001;
+      lead.aggro.clear();
+      opponent.aggro.clear();
+      space.ships.set(lead.id, lead);
+      space.ships.set(opponent.id, opponent);
     }
     const power = game.features.hostile.myPower(data);
     let ticks = 0;
