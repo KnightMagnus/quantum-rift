@@ -4958,7 +4958,7 @@ export function galaxy(
       canvasRenderingContext2D.arc(positionX, positionY, radius, 0, 6.283);
       canvasRenderingContext2D.fill();
     } else {
-      canvasRenderingContext2D.strokeStyle = factionDef.color;
+      canvasRenderingContext2D.strokeStyle = seen ? factionDef.color : ink.names[1];
       canvasRenderingContext2D.globalAlpha = 0.7;
       canvasRenderingContext2D.lineWidth = 1.5;
       canvasRenderingContext2D.beginPath();
@@ -4967,7 +4967,7 @@ export function galaxy(
       canvasRenderingContext2D.globalAlpha = 1;
     }
     const site = starSystem.stellars.find((rawStellarBody) => rawStellarBody.site);
-    if (site && (large ? zoom > 0.9 : true)) {
+    if (seen && site && (large ? zoom > 0.9 : true)) {
       const site2 = sites[site.id];
       canvasRenderingContext2D.fillStyle = site2 ? '#c0a0ff' : '#8a70b0';
       const quantity = radius + 2;
@@ -5011,7 +5011,7 @@ export function galaxy(
         canvasRenderingContext2D.fillText(time, positionX, positionY - quantity - 6);
       }
     }
-    if (allySys[starSystem.id]) {
+    if (seen && allySys[starSystem.id]) {
       canvasRenderingContext2D.fillStyle = clientGameState.pal.ally;
       for (let entryKey = 0; entryKey < Math.min(5, allySys[starSystem.id].length); entryKey++) {
         canvasRenderingContext2D.beginPath();
@@ -5081,7 +5081,13 @@ export function galaxy(
   for (const [sessionId, angle] of Object.entries(width3.anomalies || {})) {
     const starSystem = systemsById[sessionId],
       spaceAnomaly = ANOMALIES[angle];
-    if (!starSystem || !spaceAnomaly || !visibleIds.has(starSystem.id)) continue;
+    if (
+      !starSystem ||
+      !spaceAnomaly ||
+      !visibleIds.has(starSystem.id) ||
+      (knowledge && !knowledge.known.has(starSystem.id))
+    )
+      continue;
     const [positionX, positionY] = position(starSystem);
     if (!enabled(positionX, positionY)) continue;
     canvasRenderingContext2D.font = (large ? 'bold 15px' : '12px') + ' "Pixelify Sans", sans-serif';
@@ -5096,7 +5102,13 @@ export function galaxy(
   for (const [sessionId, livingPayloadState] of Object.entries(width3.states || {})) {
     const starSystem = systemsById[sessionId],
       systemState = STATES[livingPayloadState.k];
-    if (!starSystem || !systemState || !visibleIds.has(starSystem.id)) continue;
+    if (
+      !starSystem ||
+      !systemState ||
+      !visibleIds.has(starSystem.id) ||
+      (knowledge && !knowledge.known.has(starSystem.id))
+    )
+      continue;
     const [positionX, positionY] = position(starSystem);
     if (!enabled(positionX, positionY)) continue; // system states
     canvasRenderingContext2D.strokeStyle = systemState.color + 'aa';
@@ -5110,7 +5122,12 @@ export function galaxy(
       canvasRenderingContext2D.fillText(systemState.icon, positionX - 13, positionY + 4);
     }
   }
-  if (width3.invasion && systemsById[width3.invasion.sys] && visibleIds.has(width3.invasion.sys)) {
+  if (
+    width3.invasion &&
+    systemsById[width3.invasion.sys] &&
+    visibleIds.has(width3.invasion.sys) &&
+    (!knowledge || knowledge.known.has(width3.invasion.sys))
+  ) {
     const [positionX, positionY] = position(systemsById[width3.invasion.sys]);
     canvasRenderingContext2D.strokeStyle = `rgba(255,60,40,${0.4 + 0.6 * pulse})`;
     canvasRenderingContext2D.lineWidth = 3;

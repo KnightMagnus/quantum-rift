@@ -117,6 +117,47 @@ try {
   const neighbourInfo = await page.locator('#ginfo').innerText();
   assert.match(neighbourInfo, /not yet visited/);
   assert.doesNotMatch(neighbourInfo, /danger|shipyard|market/, 'no detail before visiting');
+  // The rendered map must not leak neighbour port markers or world-event details.
+  const unknownOverlays = await page.evaluate(async (neighbourId) => {
+    const { galaxy } = await import('/render.js');
+    const { ANOMALIES } = await import('/shared/fronts.js');
+    const { SYS } = await import('/shared/galaxy.js');
+    const originalWorld = G.world;
+    const anomaly = Object.keys(ANOMALIES)[0];
+    G.world = { ...G.world!, anomalies: { [neighbourId]: anomaly }, states: {}, invasion: null };
+    const canvas = document.createElement('canvas');
+    canvas.width = 1920;
+    canvas.height = 1080;
+    const context = canvas.getContext('2d')!;
+    const texts: string[] = [];
+    const fills: string[] = [];
+    const fillText = context.fillText.bind(context);
+    const fill = context.fill.bind(context);
+    context.fillText = (...args: Parameters<typeof context.fillText>) => {
+      texts.push(args[0]);
+      fillText(...args);
+    };
+    context.fill = () => {
+      fills.push(String(context.fillStyle));
+      fill();
+    };
+    try {
+      galaxy(G, context, { big: true });
+      return {
+        eventVisible: texts.includes(ANOMALIES[anomaly].icon),
+        stationMarkers: fills.filter((color) => color === '#8a70b0').length,
+        expectedStations: SYS[G.sys!].stellars.some((body) => body.site) ? 1 : 0,
+      };
+    } finally {
+      G.world = originalWorld;
+    }
+  }, neighbour);
+  assert.equal(unknownOverlays.eventVisible, false, 'name-only neighbours hide event details');
+  assert.equal(
+    unknownOverlays.stationMarkers,
+    unknownOverlays.expectedStations,
+    'port markers appear only for known systems',
+  );
   // Plotting into hidden space is refused; one hop out is fine.
   await page.evaluate(async (id) => (await import('/ui.js')).plot(id), hidden);
   assert.deepEqual(await page.evaluate(() => G.route), [], 'no route through unvisited space');
