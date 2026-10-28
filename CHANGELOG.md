@@ -2,6 +2,16 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 0.3.6
+
+- Add visited/charted map knowledge, faction star charts and 33 store-only outfits with checked installation and compressed icons.
+- Start the minimap square, support J from the galaxy map and keep jump arrivals clear of nearby bodies.
+- Steady NPC landing and formation flight, keep convoy followers with their leader and improve survey-drone tours.
+- Rename the thirty rival captains while preserving saved careers; remove the two former starting luck and wealth advantages.
+- Close combat ships to primary-weapon range, correct clearance charging and close local trade loops.
+- Install the pinned runtime from launchers when needed; improve connection-loss detection, save checks and graphics recovery.
+- Refresh gameplay screenshots and the beta Solo save generator catalog. See the [release notes](docs/RELEASE-3.6.0.md).
+
 ### 0.3.5.1
 
 - Share ambient hostile limits across arrival groups, reinforcements and incursions; rate fitted combat power rather than authored hull strength.
