@@ -1,7 +1,7 @@
 import type { RuntimeManifest } from './runtime/contracts.ts';
 import fileSystem from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { friendHostConfig } from '../server/friend-host-config.ts';
 
@@ -20,6 +20,12 @@ const localDirectory = artifact
 const localBinary = localDirectory
   ? path.join(localDirectory, process.platform === 'win32' ? 'node.exe' : 'bin/node')
   : null;
+const installerPath = fileURLToPath(new URL('./runtime/install-node.ts', import.meta.url));
+// Launchers start with whatever Node is on PATH; fetch the pinned runtime on first run.
+if (localBinary && !fileSystem.existsSync(localBinary) && process.version !== manifest.version) {
+  console.log(`Installing the pinned Node runtime (${manifest.version}); this happens once.`);
+  spawnSync(process.execPath, [installerPath], { cwd: rootDirectory, stdio: 'inherit' });
+}
 const binary = localBinary && fileSystem.existsSync(localBinary) ? localBinary : process.execPath;
 if (binary === process.execPath && process.version !== manifest.version) {
   console.error('Install the project-local Node 27 runtime: node tools/runtime/install-node.ts');

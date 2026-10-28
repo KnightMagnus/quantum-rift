@@ -24,10 +24,11 @@ different runtime silently. Windows extraction explicitly uses the native
 `System32/tar.exe`, avoiding Git Bash’s GNU tar, which cannot read ZIP archives.
 macOS and Linux extraction requires `tar` on `PATH`.
 
-Launch scripts use the project-local binary when installed, otherwise they
-require the exact pinned version on `PATH`. For development commands, put its
-`bin/` directory first on `PATH` on Unix, or its installation directory first on
-Windows. The installer prints this directory. CI adds it to `GITHUB_PATH`.
+Launch scripts use the project-local binary when installed. If it is missing and
+the Node on `PATH` is not the pinned version, `tools/start.ts` runs this installer
+automatically before starting the server, so the launchers only need some Node
+22.18 or newer on `PATH`. For development commands, put its `bin/` directory first
+on `PATH` on Unix, or its installation directory first on Windows. The installer prints this directory. CI adds it to `GITHUB_PATH`.
 
 The nightly bundles npm 12.1.0. That npm version emits a supported-Node warning
 because its semver range excludes prereleases; the warning does not prevent the
