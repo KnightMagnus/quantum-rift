@@ -1,3 +1,4 @@
+import { OPS } from './galaxy.ts';
 import type { PlayerData } from '../server/game.ts';
 import type { GameAssets } from './rules.ts';
 
@@ -109,7 +110,7 @@ export const TUTORIAL: TutorialStep[] = [
   {
     check: (playerData) => (playerData.stats!.stateHelp || 0) >= 1,
     title: 'Help a troubled system',
-    text: 'The OPS tab lists famines, wars and other troubles near you. Sell what a troubled system needs there, take one of its jobs, or fight its raiders.',
+    text: 'The BULLETIN tab lists famines, wars and other troubles near you. Sell what a troubled system needs there, take one of its jobs, or fight its raiders.',
     reward: 10000,
   },
   {
@@ -132,8 +133,8 @@ export const TUTORIAL: TutorialStep[] = [
   },
   {
     check: (playerData) => playerData.station!.ops >= 2,
-    title: 'Market and Workshop (Station Tier 2)',
-    text: 'Build Station Tier 2 at your station: it opens the research lab and the hangar.',
+    title: `${OPS.find((tier) => tier.lv === 2)!.title} (Station Tier 2)`,
+    text: `Build Station Tier 2 at your station: ${OPS.find((tier) => tier.lv === 2)!.unlock}.`,
     reward: 20000,
   },
   {
@@ -142,7 +143,7 @@ export const TUTORIAL: TutorialStep[] = [
         (savedShuttle) => savedShuttle.runs > 0 || savedShuttle.state === 'out',
       ),
     title: 'Launch a shuttle',
-    text: 'Build a shuttle in your station HANGAR and send it on a job from the hangar board.',
+    text: 'Build a shuttle in your station SHUTTLES tab and send it on a job from the shuttle board.',
     reward: 15000,
   },
   {
@@ -160,7 +161,7 @@ export const TUTORIAL: TutorialStep[] = [
   {
     check: (playerData) => !!(playerData.quests && (playerData.quests.done || []).length),
     title: 'Finish a story',
-    text: "See a contact's story through to its end. Your progress is on the CAREER page of the ship and captain panel (I).",
+    text: "See a contact's story through to its end. Open Captain, then CAREER, to see your progress.",
     reward: 20000,
   },
   {
@@ -172,8 +173,8 @@ export const TUTORIAL: TutorialStep[] = [
   },
   {
     check: (playerData) => playerData.station!.ops >= 3,
-    title: 'Shipyard and lab (Station Tier 3)',
-    text: 'Build Station Tier 3: the drydock, the station shipyard and specialist building.',
+    title: `${OPS.find((tier) => tier.lv === 3)!.title} (Station Tier 3)`,
+    text: `Build Station Tier 3 at your station: ${OPS.find((tier) => tier.lv === 3)!.unlock}.`,
     reward: 40000,
     mat: ['crystal', 1, 1],
   },

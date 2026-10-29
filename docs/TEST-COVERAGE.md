@@ -1819,3 +1819,5 @@ Assist missile policy uses the existing persisted Settings preferences. `combat-
 `syndicate-safety.ts` kills a real contract target and checks illegal-hit faction consequences, no lawful bounty/tokens, once-only contract pay and Syndicate standing. Forged papers preview and settlement share the same eligible worst-grudge selector, preserving other factions and refusing unnecessary purchases without charging.
 
 Faction-store catalogue checks cover eligibility-before-fitting, exact standing labels, shared client/server fitting reasons, consistent material defaults, and credit-only/token-nonrefundable sale previews in the existing equipped-item cards.
+
+`quest-directions.ts` renders every authored optional-story objective through the production job builder, checks structured system/destination display names and copied-save presentation, and verifies that Station Tier 2/3 guidance uses the current unlock definitions rather than stale menu or key names.

@@ -623,15 +623,23 @@ export const QuestOperations = {
     const starSystem2 = systemsById[starSystem],
       jumps = 2,
       dangerMultiplier = starSystem2.danger || 1;
-    const factionId = (time: string) =>
-      this.fill(time, { ...questPlan, target: questStep.target || questPlan.target });
+    const authoredStep = quest.side
+      ? SIDE_STORIES.find((story) => story.id === quest.side)?.steps[index]
+      : undefined;
+    const factionId = (text: string) =>
+      this.fill(text, {
+        ...questPlan,
+        target: questStep.target || questPlan.target,
+        system: starSystem2.name,
+        destination: STELLARS[questStep.dest || port]?.name || '',
+      });
     const mission = {
       id: `${quest.qid}#${index}`,
       quest: { qid: quest.qid, step: index, of: quest.steps.length, name: quest.name },
       type: questStep.type,
       sys: starSystem,
-      title: factionId(questStep.title),
-      text: factionId(questStep.brief),
+      title: factionId(authoredStep?.title || questStep.title),
+      text: factionId(authoredStep?.brief || questStep.brief),
       taken: Date.now(),
       owner: null,
     } as Mission;
@@ -1003,8 +1011,20 @@ export const QuestOperations = {
   questReconcile(this: QuestsCapabilities, session: Session) {
     for (const quest of Object.values(this.questInit(session.data).active)) {
       const definition = SIDE_STORIES.find((story) => story.id === quest.side);
-      if (definition && !sideStoryCompatible(definition, session.data.story?.flags))
+      if (definition && !sideStoryCompatible(definition, session.data.story?.flags)) {
         this.questFail(session, quest.qid, 'no longer available after your story choice');
+        continue;
+      }
+      if (definition)
+        for (const mission of session.data.missions) {
+          if (mission.quest?.qid !== quest.qid || !quest.steps[mission.quest.step]) continue;
+          const display = this.questStepJob(session.data, quest, mission.quest.step);
+          if (mission.title !== display.title || mission.text !== display.text) {
+            mission.title = display.title;
+            mission.text = display.text;
+            this.db.touch();
+          }
+        }
     }
   },
   // every two seconds: a step lost with your ship, a missed deadline or a destroyed convoy gets one more chance

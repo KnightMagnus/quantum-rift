@@ -11,7 +11,7 @@ export const CONTINUATION: StoryMission[] = [
     pay: 50000,
     rep: 0,
     text: 'The survey clerk has a core on the desk. Your name is written inside it. Not scratched on the casing: inside the crystal. "We found it yesterday. It has been down there a very long time. I would rather you asked the machines about that." The coordinates point to Glasswake.',
-    brief: 'Carry the invitation to the Index Archive at Glasswake Foundry.',
+    brief: 'Carry the invitation to the Index Archive at Shardwright Foundry.',
     acc: 'Follow the invitation',
     ref: 'Not yet',
     done: 'The Archive reads your name, then goes still. "Not our transmission. Address verified. Please remain available." Somewhere behind its armour, a relay starts counting.',
