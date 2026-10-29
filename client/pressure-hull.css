@@ -1287,6 +1287,32 @@ body.pressure-hull #land .landbody {
   body.pressure-hull:has(#land:not(.hidden)) {
     --cbar: 140px;
   }
+  body.pressure-hull:has(#land:not(.hidden)) #cockpit {
+    padding: 6px 12px;
+  }
+  body.pressure-hull:has(#land:not(.hidden)) #functiondock {
+    height: 128px;
+    padding: 2px 8px;
+    grid-template-rows: repeat(2, 48px);
+    gap: 4px 8px;
+  }
+  body.pressure-hull:has(#land:not(.hidden)) #functiondock .function-icon {
+    height: 48px;
+    gap: 1px;
+  }
+  body.pressure-hull:has(#land:not(.hidden)) #functiondock .function-icon img,
+  body.pressure-hull:has(#land:not(.hidden)) #functiondock .function-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+  body.pressure-hull:has(#land:not(.hidden)) #functiondock .function-label {
+    font-size: 10px;
+    line-height: 11px;
+  }
+  body.pressure-hull:has(#land:not(.hidden)) #consolechat,
+  body.pressure-hull:has(#land:not(.hidden)) #consoleutilities {
+    height: 128px;
+  }
   body.pressure-hull #land > .landbox.metal {
     height: calc((100vh - var(--cbar) - 16px) / var(--ui, 1));
     max-height: calc((100vh - var(--cbar) - 16px) / var(--ui, 1));
@@ -1322,6 +1348,26 @@ body.pressure-hull #land .landbody {
   }
   body.pressure-hull #land .landbody {
     padding: 6px;
+  }
+}
+
+@media (max-height: 850px) and (max-width: 1250px) {
+  /* Keep the function keys visible; the existing console scrolls to chat below. */
+  body.pressure-hull:has(#land:not(.hidden)) #cockpit {
+    grid-template-rows: 128px 174px;
+  }
+  body.pressure-hull:has(#land:not(.hidden)) #functiondock {
+    grid-row: 1;
+  }
+  body.pressure-hull:has(#land:not(.hidden)) #consolechat,
+  body.pressure-hull:has(#land:not(.hidden)) #consoleutilities {
+    grid-row: 2;
+    height: 174px;
+  }
+  @container (max-width: 480px) {
+    body.pressure-hull:has(#land:not(.hidden)) #consoleutilities {
+      grid-row: 3;
+    }
   }
 }
 
