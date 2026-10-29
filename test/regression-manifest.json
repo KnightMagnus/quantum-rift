@@ -151,7 +151,8 @@
     "index-survey-tour.ts",
     "faction-store-catalog.ts",
     "local-login.ts",
-    "native-recovery.ts"
+    "native-recovery.ts",
+    "gameplay-safety.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -869,7 +870,8 @@
       "helpers/chromium.ts"
     ],
     "landed-responsive-browser.ts": ["helpers/landed-responsive.ts"],
-    "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"]
+    "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"],
+    "gameplay-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1003,7 +1005,8 @@
         "network-systems.ts",
         "index-presentation.ts",
         "ui-polish-browser.ts",
-        "station-docking.ts"
+        "station-docking.ts",
+        "gameplay-safety.ts"
       ],
       "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Rescue rendezvous marking is free; repair requires range and affordable supplies, settles once, and Index machines never request rescue. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait. A captain's own Personal Station always clears them to land, never asks for a bribe and keeps its home refinery open, whatever their record in that system. Landing bribes recheck current refusal through authoritative dispatch, reject docked/cleared/pass/home/outlaw/invalid targets without save mutations, and charge a genuinely refused captain once."
     },
