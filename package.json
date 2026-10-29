@@ -1,7 +1,7 @@
 {
   "name": "quantum-rift",
-  "version": "0.3.6-2",
-  "publicVersion": "0.3.6.2",
+  "version": "0.4.0",
+  "publicVersion": "0.4",
   "description": "Quantum Rift: an online multiplayer space trading and combat game.",
   "type": "module",
   "main": "dist/server/main.js",
