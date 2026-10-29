@@ -58,9 +58,10 @@ async function checkDockedLayout(page: Page, label: string, tab: string) {
   if (tab === 'crew') {
     await page.locator('#landbody').hover();
     await page.mouse.wheel(0, 10000);
+    // Finish the wheel scroll before keyboard focus scrolls back to the last action.
     await page.waitForFunction(() => {
       const body = document.querySelector<HTMLElement>('#landbody')!;
-      return body.scrollHeight <= body.clientHeight || body.scrollTop > 0;
+      return body.scrollHeight - body.clientHeight - body.scrollTop <= 1;
     });
     const last = page.locator('#landbody button:not([disabled])').last();
     const controls = page.locator(
