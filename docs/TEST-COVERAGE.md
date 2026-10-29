@@ -8,6 +8,10 @@
 
 `cargo-flows.ts` sends offers, locks and confirmations through `Game.onMessage` and separately injects alias offers before final confirmation. Alternate grade spellings and trailing cargo/blueprint/part components cannot spend one holding twice. Missing receiver containers and credit overflow leave both players unchanged; a valid mixed transfer persists and reloads. Settlement stages all credit, cargo and item changes before publishing either player.
 
+## Solo import checkpoint safety
+
+`save-feature-validation.ts` checks malformed core fields, hull/outfit/ammunition references, locations, station levels, mission containers, balances and inventories without replacing good slots. Historical feature markers and cargo ledgers remain optional for their migration owners; continuous balances, reputation, fuel and progress retain valid fractions. Local writes reject invalid inventory before installing a journal. The registered `fixtures/import-checkpoint-crash.ts` child kills a real process before/after journal installation, after player replacement and after account creation returns: restart retains either the original account/ownership or the complete replacement, never an empty intermediate slot. An uncertain attempted commit remains fail-closed rather than rolling memory back over a possibly installed checkpoint.
+
 ## Equipped outfits and mining filter (`equipped-outfits`)
 
 `equipped-outfits-browser.ts` checks the MINING filter against combat weapons, real equipped-item previews, outfitter sales of modular and built-in weapons, refunds, live panel refresh, reconnect persistence, flight denial, narrow cards, and default/reassigned Ship and Captain shortcuts. `ship-economy.ts` checks every player hull with built-in banks for once-only refunds and conservation of sale proceeds plus trade-in, along with flight/no-outfitter/unknown-weapon and purchase denial. `wire-contracts.ts` validates the optional built-in sale selector. Equipment sales still require an outfitter; previews are available in flight.

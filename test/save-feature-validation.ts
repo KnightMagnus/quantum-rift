@@ -1,3 +1,5 @@
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import path from 'node:path';
@@ -240,3 +242,203 @@ validateFeaturePlayerSave({
 console.log(
   'Feature save validation: real legacy login/reloads, exact dock refunds, source preservation and local/native/import/login denial passed.',
 );
+
+// Core import validation cannot replace a good slot with malformed original fields.
+{
+  const instance = game();
+  const existing = instance.db.create('Core Import Pilot', 'fixture', instance.fresh());
+  existing.credits = 9911;
+  instance.db.touch();
+  instance.db.flush();
+  const source = structuredClone(existing);
+  const malformed = [
+    { name: 'constructor' },
+    { name: 'A captain name beyond twenty characters' },
+    { ship: { ...source.ship, hull: 99999 } },
+    { ship: { ...source.ship, outfits: { '99999': 1 } } },
+    { ship: { ...source.ship, ammo: { '99999': 1 } } },
+    { ship: { ...source.ship, fixed: [[99999, 1]] } },
+    { ship: { ...source.ship, outfits: null } },
+    { sys: 'not-a-system' },
+    { stellar: 'not-a-port' },
+    { station: { ...source.station, ops: 90 } },
+    { station: { ...source.station, done: null } },
+    { station: { ...source.station, claimed: null } },
+    { station: { ...source.station, refUnits: 'many' } },
+    { mats: { ...source.mats, alloy: [-1, 0, 0, 0, 0] } },
+    { mats: { ...source.mats, alloy: 'bad' } },
+    { rep: { quantum: 'lots' } },
+    { missions: [{}, null, 5] },
+    { missions: [{ id: 'x', type: 'cargo', qty: 'lots' }] },
+    { stats: [] },
+    { stats: {} },
+    { credits: 1e300 },
+    { credits: -1 },
+    { cargo: { food: -1 } },
+  ];
+  const beforePlayers = filesystem.readFileSync(instance.db.file),
+    beforeWorld = filesystem.readFileSync(instance.db.wfile);
+  for (const patch of malformed) {
+    const replacement = Object.assign(structuredClone(source), patch);
+    assert.throws(() => instance.importSave(replacement));
+    assert.deepEqual(
+      instance.db.get(existing.name),
+      source,
+      'Invalid import preserves the old account',
+    );
+    assert.deepEqual(filesystem.readFileSync(instance.db.file), beforePlayers);
+    assert.deepEqual(filesystem.readFileSync(instance.db.wfile), beforeWorld);
+    assert.equal(filesystem.existsSync(instance.db.journal), false);
+  }
+  const compatible = structuredClone(source);
+  compatible.credits = 12.5;
+  compatible.rep.quantum = -2.5;
+  compatible.mastery = { '703': 1.5 };
+  compatible.station.refUnits = 0.25;
+  compatible.fuel = 2.5;
+  // These markers/containers belong to their established historical migration owners.
+  for (const key of [
+    'v26',
+    'cargoLots',
+    'storageLots',
+    'tutV',
+    'docks',
+    'story',
+    'shuttles',
+  ] as const)
+    delete (compatible as Partial<PlayerAccount>)[key];
+  instance.importSave(compatible);
+  const restored = new DB(instance.db.dir).get(compatible.name)!;
+  assert.equal(restored.credits, 12.5);
+  assert.equal(restored.rep.quantum, -2.5);
+  assert.equal(restored.fuel, 2.5);
+  assert.equal(restored.station.refUnits, 0.25);
+  assert.equal(restored.mastery!['703'], 1.5);
+  const durable = filesystem.readFileSync(instance.db.file);
+  const reopened = new DB(instance.db.dir);
+  reopened.get(compatible.name)!.mats.alloy[0] = -1;
+  reopened.touch();
+  assert.throws(() => reopened.flush(), /Invalid feature save/);
+  assert.deepEqual(
+    filesystem.readFileSync(reopened.file),
+    durable,
+    'Invalid live inventory cannot poison next startup',
+  );
+  assert.equal(filesystem.existsSync(reopened.journal), false);
+}
+
+// Actual process deaths cover each side of the single replacement checkpoint.
+for (const boundary of ['before-journal', 'after-journal', 'after-players', 'after-create']) {
+  const instance = game();
+  const existing = instance.db.create('Crash Import Pilot', 'fixture', instance.fresh());
+  existing.credits = 9911;
+  existing.station = { ...existing.station, claimed: true, ops: 1, site: 'site-qgate' };
+  instance.db.world.sites['site-qgate'] = instance.db.key(existing.name);
+  instance.db.touch();
+  instance.db.flush();
+  const replacement = structuredClone(existing);
+  replacement.credits = 12345;
+  replacement.station.site = 'site-meridian';
+  const replacementFile = path.join(instance.db.dir, 'replacement.json');
+  filesystem.writeFileSync(replacementFile, JSON.stringify(replacement));
+  const child = spawnSync(
+    process.execPath,
+    [
+      fileURLToPath(new URL('./fixtures/import-checkpoint-crash.ts', import.meta.url)),
+      instance.db.dir,
+      replacementFile,
+      boundary,
+    ],
+    { encoding: 'utf8', timeout: 15000 },
+  );
+  assert.equal(
+    filesystem.readFileSync(path.join(instance.db.dir, 'crash-boundary.txt'), 'utf8'),
+    boundary,
+  );
+  assert.ok(
+    child.signal === 'SIGKILL' ||
+      (process.platform === 'win32' && child.status !== null && child.status !== 0),
+    boundary +
+      ': expected forced termination, received ' +
+      child.status +
+      '/' +
+      child.signal +
+      ': ' +
+      child.stderr,
+  );
+  const restored = new DB(instance.db.dir),
+    captain = restored.get(existing.name)!;
+  const committed = boundary !== 'before-journal';
+  assert.equal(captain.credits, committed ? 12345 : 9911, boundary);
+  assert.deepEqual(captain.ship, replacement.ship, 'Never a credential-only intermediate record');
+  assert.equal(
+    restored.world.sites[committed ? 'site-meridian' : 'site-qgate'],
+    restored.key(captain.name),
+  );
+  assert.equal(restored.world.sites[committed ? 'site-qgate' : 'site-meridian'], undefined);
+  assert.equal(filesystem.existsSync(restored.journal), false);
+}
+
+// An attempted journal installation stays fail-closed even if the fixture rejects its rename.
+{
+  const instance = game(),
+    existing = instance.db.create('Failed Import Pilot', 'fixture', instance.fresh());
+  const previousSites = instance.db.world.sites,
+    replacement = structuredClone(existing);
+  replacement.credits = 12345;
+  replacement.station = { ...replacement.station, claimed: true, ops: 1, site: 'site-meridian' };
+  const previous = filesystem.readFileSync(instance.db.file),
+    rename = filesystem.renameSync;
+  try {
+    filesystem.renameSync = (source, target) => {
+      if (target === instance.db.journal) throw new Error('fixture denied journal installation');
+      return rename(source, target);
+    };
+    assert.throws(() => instance.importSave(replacement), /denied journal installation/);
+  } finally {
+    filesystem.renameSync = rename;
+  }
+  // The journal install was attempted, so DB deliberately marks its outcome uncertain.
+  assert.equal(instance.db.economicFrozen, true);
+  assert.equal(
+    instance.db.get(existing.name)!.credits,
+    12345,
+    'Uncertain commit does not roll memory back over a possible durable write',
+  );
+  assert.deepEqual(filesystem.readFileSync(instance.db.file), previous);
+  assert.equal(instance.db.world.sites['site-meridian'], instance.db.key(existing.name));
+  assert.notEqual(instance.db.world.sites, previousSites);
+  assert.equal(new DB(instance.db.dir).get(existing.name)!.credits, existing.credits);
+}
+console.log(
+  'Core imports reject malformed state, preserve historical fractions/defaults and atomically recover complete slots/ownership across four SIGKILL boundaries.',
+);
+
+// Failure while preparing a journal is unambiguously precommit and restores live ownership too.
+{
+  const instance = game(),
+    existing = instance.db.create('Prepare Import Pilot', 'fixture', instance.fresh());
+  const sites = instance.db.world.sites,
+    replacement = structuredClone(existing);
+  replacement.credits = 12345;
+  replacement.station = { ...replacement.station, claimed: true, ops: 1, site: 'site-meridian' };
+  const players = filesystem.readFileSync(instance.db.file),
+    write = instance.db.writeDurable.bind(instance.db);
+  instance.db.writeDurable = (filename, contents) => {
+    if (filename === instance.db.journal + '.tmp')
+      throw new Error('fixture cannot prepare journal');
+    return write(filename, contents);
+  };
+  assert.throws(() => instance.importSave(replacement), /cannot prepare journal/);
+  assert.equal(instance.db.get(existing.name), existing);
+  assert.equal(instance.db.world.sites, sites);
+  assert.equal(instance.db.economicFrozen, false);
+  assert.deepEqual(filesystem.readFileSync(instance.db.file), players);
+  instance.db.economicFrozen = true;
+  const frozen = JSON.stringify({ players: instance.db.players, sites: instance.db.world.sites });
+  assert.throws(() => instance.importSave(replacement), /Checkpoint recovery required/);
+  assert.equal(
+    JSON.stringify({ players: instance.db.players, sites: instance.db.world.sites }),
+    frozen,
+  );
+}

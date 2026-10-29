@@ -312,6 +312,8 @@ export class DB implements GameStorage {
     // Never overwrite a committed journal after a failed flush: require restart/recovery.
     if (fileSystem.existsSync(this.journal))
       throw new Error('Pending database checkpoint requires recovery');
+    // Reject invalid live mutations before installing a journal that startup cannot load.
+    validateLocalSnapshots(this.players, this.world);
     const players = JSON.stringify(this.players),
       world = JSON.stringify(this.world);
     this.writeDurable(this.journal + '.tmp', JSON.stringify({ version: 1, players, world }));
