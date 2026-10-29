@@ -1762,3 +1762,18 @@ is not an end-to-end station visit; existing bank authority remains in `v12.ts`.
 ## Landed responsive services (`landed-responsive`)
 
 `landed-responsive-browser.ts` runs a real isolated friend host with synthetic hub, Tier 5 Personal Station, colony-owner and colony-visitor accounts. It checks every available service tab and station department at 800×650, 1280×720, 1920×1080, 2560×1440 3440×1440 and portrait 390×844, each at UI scale 1 and 1.4. Assertions cover retained navigation/footer, a bounded outer frame, working content height, no page-level horizontal overflow and no whole-body horizontal scrolling in Crew, Outfitter or Community. Crew's final action receives native keyboard focus and a pointer hit test after wheel scrolling. Captures are failure evidence and selected narrow views, not layout snapshots. This does not exercise native Nakama transport, every transaction, every station tier or full assistive-technology navigation.
+
+### Colony and Exchange layout
+
+`colony-exchange-layout` runs `colony-exchange-layout-browser.ts` against an isolated
+friends host. Synthetic owner, visitor and unsettled landings retain their stage
+artwork and actions at 800×650 through 3440×1440, including 1.4 UI scale. The test
+checks side-by-side management on wide content, short-screen thumbnails, decoded
+images, stockpile wheel and keyboard reachability, labeled Exchange fields and
+local order-book scrolling without whole-menu horizontal overflow. Two logged-in
+captains place and cancel orders through the real controls; missing goods remain
+a denial. The Captains trade view states the own-Personal-Station requirement and
+keeps trade opening unavailable away from home. Authoritative settlement and trade
+permissions remain covered by `v07.ts`, `cargo-flows.ts` and `trade-safety.ts`.
+This browser test does not cover every colony level, order-matching permutation
+or native transport; `planet-portrait-browser.ts` covers the stage-art matrix.

@@ -515,3 +515,50 @@ body.solo #cchan {
   line-height: 1.45;
   margin: 10px 0 16px;
 }
+
+.exchange-layout {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.exchange-layout .kv {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.exchange-form {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0;
+  max-width: 620px;
+}
+.exchange-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.exchange-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 140px;
+  min-width: 0;
+}
+.exchange-fields input,
+.exchange-fields select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.exchange-book {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.exchange-book .tbl {
+  min-width: 460px;
+}
+.exchange-book caption {
+  text-align: left;
+  font-size: 12px;
+  color: var(--dim);
+  padding-bottom: 5px;
+}

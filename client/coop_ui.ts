@@ -611,7 +611,7 @@ function tradeHtml() {
       clientGameState.landed && clientGameState.landed!.site && clientGameState.landed!.site.own;
   if (!tradeState) {
     return (
-      `<div class="dim small" style="margin:6px 0">Trade credits, goods, crates, blueprints and parts with friends and Armada members. Both captains must be docked at their <b>own</b> Personal Station; nobody docks at anyone else's.</div>` +
+      `<div class="dim small" style="margin:6px 0">Trade credits, goods, crates, blueprints and parts with friends and Armada members. Both captains must be at their own Personal Station to trade.</div>` +
       (atHome
         ? `<div class="rrow"><input id="tname" placeholder="Captain to trade with" maxlength="20"><button class="btn sm" data-cact="topen2">OPEN TRADE</button></div>`
         : '<p class="dim small">Dock at your own Personal Station to trade.</p>')

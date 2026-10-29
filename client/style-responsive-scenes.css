@@ -696,22 +696,57 @@ body.solo .mp {
   line-height: 1.5;
 }
 
+/* Size against the landed content width, including the player's UI scale. */
+.colony-layout {
+  container-type: inline-size;
+}
+.colony-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.colony-management {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.colony-management .kv {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.colony-management .kv > span {
+  min-width: 0;
+}
 .colony-illustration {
   position: relative;
-  display: block;
   overflow: hidden;
   border: 5px solid #192730;
   box-sizing: border-box;
-  margin-bottom: 12px;
-  height: auto;
-  aspect-ratio: 612 / 285;
-  width: 100%;
-  max-width: 612px;
+  margin: 0;
+  width: min(100%, 320px);
+  height: 110px;
 }
 .colony-illustration img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+}
+@container (min-width: 720px) {
+  .colony-content {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+  .colony-illustration {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 612 / 285;
+  }
+}
+@media (max-height: 760px) {
+  .colony-illustration {
+    height: 90px;
+    aspect-ratio: auto;
+  }
 }
 
 .portrait-window {

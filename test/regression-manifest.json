@@ -212,7 +212,8 @@
     "onboarding-browser.ts",
     "equipped-outfits-browser.ts",
     "bank-panel-browser.ts",
-    "landed-responsive-browser.ts"
+    "landed-responsive-browser.ts",
+    "colony-exchange-layout-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -223,8 +224,14 @@
       "helpers/temp-data.ts",
       "seed-random.ts"
     ],
-    "coverage-inventory.ts": ["helpers/temp-data.ts"],
-    "v03.ts": ["helpers/legacy-fixture.ts", "helpers/required.ts", "helpers/temp-data.ts"],
+    "coverage-inventory.ts": [
+      "helpers/temp-data.ts"
+    ],
+    "v03.ts": [
+      "helpers/legacy-fixture.ts",
+      "helpers/required.ts",
+      "helpers/temp-data.ts"
+    ],
     "v04.ts": [
       "helpers/cargo-fixture.ts",
       "helpers/legacy-fixture.ts",
@@ -256,7 +263,11 @@
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "v09.ts": ["helpers/legacy-fixture.ts", "helpers/required.ts", "helpers/temp-data.ts"],
+    "v09.ts": [
+      "helpers/legacy-fixture.ts",
+      "helpers/required.ts",
+      "helpers/temp-data.ts"
+    ],
     "v10.ts": [
       "helpers/legacy-fixture.ts",
       "helpers/mocks.ts",
@@ -289,7 +300,10 @@
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "v202.ts": ["helpers/legacy-fixture.ts", "helpers/temp-data.ts"],
+    "v202.ts": [
+      "helpers/legacy-fixture.ts",
+      "helpers/temp-data.ts"
+    ],
     "v203.ts": [
       "helpers/cargo-fixture.ts",
       "helpers/legacy-fixture.ts",
@@ -304,7 +318,11 @@
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "v23.ts": ["helpers/mocks.ts", "helpers/required.ts", "helpers/temp-data.ts"],
+    "v23.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts",
+      "helpers/temp-data.ts"
+    ],
     "v24.ts": [
       "helpers/legacy-fixture.ts",
       "helpers/mocks.ts",
@@ -337,9 +355,18 @@
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "balance.ts": ["helpers/required.ts"],
-    "landing-autopilot.ts": ["helpers/required.ts", "helpers/bot-landing.ts"],
-    "faction-standing.ts": ["helpers/legacy-fixture.ts", "helpers/mocks.ts", "helpers/required.ts"],
+    "balance.ts": [
+      "helpers/required.ts"
+    ],
+    "landing-autopilot.ts": [
+      "helpers/required.ts",
+      "helpers/bot-landing.ts"
+    ],
+    "faction-standing.ts": [
+      "helpers/legacy-fixture.ts",
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
     "gateway-navigation.ts": [
       "helpers/mocks.ts",
       "helpers/required.ts",
@@ -353,29 +380,62 @@
       "helpers/nhal.ts",
       "helpers/index-fleet.ts"
     ],
-    "companion-fixes.ts": ["helpers/mocks.ts"],
-    "hailing.ts": ["helpers/mocks.ts", "helpers/required.ts"],
-    "chat-bubbles.ts": ["helpers/mocks.ts", "helpers/required.ts"],
-    "original-weapons.ts": ["helpers/required.ts"],
-    "combat-assist.ts": ["helpers/mocks.ts", "helpers/required.ts"],
-    "ship-economy.ts": ["helpers/mocks.ts", "helpers/required.ts"],
-    "passengers.ts": ["helpers/legacy-fixture.ts", "helpers/mocks.ts", "helpers/required.ts"],
-    "ship-banking.ts": ["helpers/required.ts"],
-    "wormhole-loop.ts": ["helpers/required.ts"],
+    "companion-fixes.ts": [
+      "helpers/mocks.ts"
+    ],
+    "hailing.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
+    "chat-bubbles.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
+    "original-weapons.ts": [
+      "helpers/required.ts"
+    ],
+    "combat-assist.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
+    "ship-economy.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
+    "passengers.ts": [
+      "helpers/legacy-fixture.ts",
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
+    "ship-banking.ts": [
+      "helpers/required.ts"
+    ],
+    "wormhole-loop.ts": [
+      "helpers/required.ts"
+    ],
     "passenger-quests.ts": [
       "helpers/cargo-fixture.ts",
       "helpers/legacy-fixture.ts",
       "helpers/mocks.ts",
       "helpers/required.ts"
     ],
-    "local-retaliation.ts": ["helpers/mocks.ts", "helpers/required.ts"],
-    "main-map-protection.ts": ["helpers/mocks.ts", "helpers/required.ts"],
+    "local-retaliation.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
+    "main-map-protection.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
     "outfitter-wing-repairs.ts": [
       "helpers/mocks.ts",
       "helpers/refinery-fixture.ts",
       "helpers/required.ts"
     ],
-    "fuzz.ts": ["helpers/refinery-fixture.ts", "helpers/required.ts"],
+    "fuzz.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/required.ts"
+    ],
     "armada-formation.ts": [
       "helpers/mocks.ts",
       "helpers/refinery-fixture.ts",
@@ -405,21 +465,33 @@
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "core-actions.ts": ["helpers/mocks.ts", "helpers/required.ts", "helpers/temp-data.ts"],
-    "websocket-transport.ts": ["helpers/required.ts"],
+    "core-actions.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts",
+      "helpers/temp-data.ts"
+    ],
+    "websocket-transport.ts": [
+      "helpers/required.ts"
+    ],
     "network-faults.ts": [
       "helpers/legacy-fixture.ts",
       "helpers/required.ts",
       "helpers/temp-data.ts",
       "helpers/refinery-fixture.ts"
     ],
-    "network-faults-loopback.ts": ["helpers/required.ts", "helpers/temp-data.ts"],
+    "network-faults-loopback.ts": [
+      "helpers/required.ts",
+      "helpers/temp-data.ts"
+    ],
     "http-api.ts": [
       "fixtures/preload-http-api.ts",
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts"
     ],
-    "cargo-lots.ts": ["helpers/mocks.ts", "helpers/required.ts"],
+    "cargo-lots.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
     "cargo-flows.ts": [
       "helpers/cargo-fixture.ts",
       "helpers/legacy-fixture.ts",
@@ -433,17 +505,36 @@
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "mining-renewal.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts", "helpers/required.ts"],
-    "mining-network.ts": ["helpers/browser-fixture.ts", "helpers/mining-fixture.ts"],
-    "refinery.ts": ["helpers/refinery-fixture.ts", "helpers/required.ts"],
-    "refinery-economy.ts": ["helpers/refinery-fixture.ts", "helpers/required.ts"],
-    "refinery-persistence.ts": ["helpers/refinery-fixture.ts", "helpers/required.ts"],
+    "mining-renewal.ts": [
+      "helpers/mocks.ts",
+      "helpers/refinery-fixture.ts",
+      "helpers/required.ts"
+    ],
+    "mining-network.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts"
+    ],
+    "refinery.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/required.ts"
+    ],
+    "refinery-economy.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/required.ts"
+    ],
+    "refinery-persistence.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/required.ts"
+    ],
     "mining-pressure.ts": [
       "helpers/mocks.ts",
       "helpers/refinery-fixture.ts",
       "helpers/required.ts"
     ],
-    "refinery-network.ts": ["helpers/browser-fixture.ts", "helpers/refinery-play-fixture.ts"],
+    "refinery-network.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/refinery-play-fixture.ts"
+    ],
     "dredge.ts": [
       "helpers/dredge-fixture.ts",
       "helpers/mocks.ts",
@@ -455,7 +546,10 @@
       "helpers/refinery-fixture.ts",
       "helpers/required.ts"
     ],
-    "dredge-corona.ts": ["helpers/dredge-fixture.ts", "helpers/required.ts"],
+    "dredge-corona.ts": [
+      "helpers/dredge-fixture.ts",
+      "helpers/required.ts"
+    ],
     "dredge-economy.ts": [
       "helpers/browser-fixture.ts",
       "helpers/dredge-fixture.ts",
@@ -463,22 +557,42 @@
       "helpers/refinery-fixture.ts",
       "helpers/required.ts"
     ],
-    "dredge-network.ts": ["helpers/browser-fixture.ts", "helpers/dredge-play-fixture.ts"],
-    "towing.ts": ["helpers/mocks.ts", "helpers/required.ts", "helpers/towing-fixture.ts"],
+    "dredge-network.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/dredge-play-fixture.ts"
+    ],
+    "towing.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts",
+      "helpers/towing-fixture.ts"
+    ],
     "towing-persistence.ts": [
       "helpers/refinery-fixture.ts",
       "helpers/required.ts",
       "helpers/towing-fixture.ts"
     ],
-    "field-evolution.ts": ["helpers/required.ts", "helpers/towing-fixture.ts"],
-    "towing-network.ts": ["helpers/browser-fixture.ts", "helpers/towing-play-fixture.ts"],
+    "field-evolution.ts": [
+      "helpers/required.ts",
+      "helpers/towing-fixture.ts"
+    ],
+    "towing-network.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/towing-play-fixture.ts"
+    ],
     "towing-auto-delivery.ts": [
       "helpers/mocks.ts",
       "helpers/required.ts",
       "helpers/towing-fixture.ts"
     ],
-    "motherlode-art.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts", "helpers/required.ts"],
-    "economy-32.ts": ["helpers/refinery-fixture.ts", "helpers/required.ts"],
+    "motherlode-art.ts": [
+      "helpers/mocks.ts",
+      "helpers/refinery-fixture.ts",
+      "helpers/required.ts"
+    ],
+    "economy-32.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/required.ts"
+    ],
     "mission-consent.ts": [
       "helpers/mocks.ts",
       "helpers/refinery-fixture.ts",
@@ -489,17 +603,34 @@
       "helpers/refinery-fixture.ts",
       "helpers/required.ts"
     ],
-    "cargo-couriers.ts": ["helpers/mocks.ts", "helpers/refinery-fixture.ts", "helpers/required.ts"],
-    "message-routing.ts": ["helpers/mocks.ts", "helpers/required.ts"],
+    "cargo-couriers.ts": [
+      "helpers/mocks.ts",
+      "helpers/refinery-fixture.ts",
+      "helpers/required.ts"
+    ],
+    "message-routing.ts": [
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
     "save-generator.ts": [
       "helpers/refinery-fixture.ts",
       "helpers/required.ts",
       "helpers/temp-data.ts"
     ],
-    "compiled-runtime.ts": ["helpers/browser-fixture.ts"],
-    "deterministic-core.ts": ["helpers/mocks.ts", "helpers/legacy-story-systems.ts"],
-    "galaxy-graph.ts": ["helpers/legacy-story-systems.ts"],
-    "packaged-runtime.ts": ["helpers/browser-fixture.ts", "helpers/nakama-service.ts"],
+    "compiled-runtime.ts": [
+      "helpers/browser-fixture.ts"
+    ],
+    "deterministic-core.ts": [
+      "helpers/mocks.ts",
+      "helpers/legacy-story-systems.ts"
+    ],
+    "galaxy-graph.ts": [
+      "helpers/legacy-story-systems.ts"
+    ],
+    "packaged-runtime.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/nakama-service.ts"
+    ],
     "chat-projection-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/mining-fixture.ts",
@@ -533,14 +664,20 @@
       "helpers/seed-random.ts",
       "helpers/chromium.ts"
     ],
-    "login-scene-browser.ts": ["helpers/browser-fixture.ts", "helpers/chromium.ts"],
+    "login-scene-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/chromium.ts"
+    ],
     "client-systems-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/cargo-fixture.ts",
       "helpers/seed-random.ts",
       "helpers/chromium.ts"
     ],
-    "input-audio-browser.ts": ["helpers/browser-fixture.ts", "helpers/chromium.ts"],
+    "input-audio-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/chromium.ts"
+    ],
     "cargo-ui-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
@@ -594,8 +731,14 @@
       "helpers/seed-random.ts",
       "helpers/chromium.ts"
     ],
-    "dropdowns-browser.ts": ["helpers/browser-fixture.ts", "seed-random.ts", "helpers/chromium.ts"],
-    "diagnostic-capture.ts": ["helpers/temp-data.ts"],
+    "dropdowns-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "seed-random.ts",
+      "helpers/chromium.ts"
+    ],
+    "diagnostic-capture.ts": [
+      "helpers/temp-data.ts"
+    ],
     "diagnostic-capture-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
@@ -613,7 +756,10 @@
       "helpers/towing-play-fixture.ts",
       "helpers/chromium.ts"
     ],
-    "ship-turning-assets-browser.ts": ["helpers/browser-fixture.ts", "helpers/chromium.ts"],
+    "ship-turning-assets-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/chromium.ts"
+    ],
     "ship-functions-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/mining-fixture.ts",
@@ -667,12 +813,26 @@
       "seed-random.ts",
       "helpers/chromium.ts"
     ],
-    "save-generator-browser.ts": ["helpers/browser-fixture.ts", "helpers/chromium.ts"],
-    "helpers/refinery-fixture.ts": ["helpers/required.ts", "helpers/temp-data.ts"],
-    "fixtures/preload-http-api.ts": ["helpers/preload-config.ts"],
-    "combat-network.ts": ["helpers/required.ts"],
-    "hailing-network.ts": ["helpers/required.ts"],
-    "bot.ts": ["helpers/bot-landing.ts"],
+    "save-generator-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "helpers/refinery-fixture.ts": [
+      "helpers/required.ts",
+      "helpers/temp-data.ts"
+    ],
+    "fixtures/preload-http-api.ts": [
+      "helpers/preload-config.ts"
+    ],
+    "combat-network.ts": [
+      "helpers/required.ts"
+    ],
+    "hailing-network.ts": [
+      "helpers/required.ts"
+    ],
+    "bot.ts": [
+      "helpers/bot-landing.ts"
+    ],
     "helpers/mining-fixture.ts": [
       "fixtures/mining-preload.ts",
       "helpers/browser-fixture.ts",
@@ -689,7 +849,10 @@
       "helpers/temp-data.ts",
       "seed-random.ts"
     ],
-    "helpers/dredge-fixture.ts": ["helpers/refinery-fixture.ts", "helpers/required.ts"],
+    "helpers/dredge-fixture.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/required.ts"
+    ],
     "helpers/dredge-play-fixture.ts": [
       "fixtures/dredge-preload.ts",
       "helpers/browser-fixture.ts",
@@ -698,7 +861,10 @@
       "helpers/temp-data.ts",
       "seed-random.ts"
     ],
-    "helpers/towing-fixture.ts": ["helpers/refinery-fixture.ts", "helpers/required.ts"],
+    "helpers/towing-fixture.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/required.ts"
+    ],
     "helpers/towing-play-fixture.ts": [
       "fixtures/towing-preload.ts",
       "helpers/browser-fixture.ts",
@@ -708,28 +874,65 @@
       "helpers/temp-data.ts",
       "seed-random.ts"
     ],
-    "fixtures/preload-armada-formation-network.ts": ["helpers/preload-config.ts"],
-    "fixtures/preload-armada-follow-two-clients.ts": ["helpers/preload-config.ts"],
-    "fixtures/preload-landing-autopilot-browser.ts": ["helpers/preload-config.ts"],
-    "fixtures/mining-preload.ts": ["helpers/required.ts"],
-    "fixtures/refinery-preload.ts": ["helpers/required.ts"],
-    "fixtures/dredge-preload.ts": ["helpers/required.ts"],
-    "fixtures/towing-preload.ts": ["helpers/required.ts"],
-    "nakama-network.ts": ["helpers/nakama-service.ts"],
-    "nakama-browser.ts": ["helpers/nakama-service.ts", "helpers/chromium.ts"],
-    "nakama-diagnostics.ts": ["helpers/nakama-service.ts"],
-    "friend-host-network.ts": ["helpers/friend-host.ts"],
-    "friend-host-browser.ts": ["helpers/friend-host.ts", "helpers/chromium.ts"],
-    "helpers/friend-host.ts": ["helpers/browser-fixture.ts"],
-    "faction-stores-browser.ts": ["helpers/browser-fixture.ts", "helpers/chromium.ts"],
-    "attention.ts": ["helpers/mocks.ts"],
+    "fixtures/preload-armada-formation-network.ts": [
+      "helpers/preload-config.ts"
+    ],
+    "fixtures/preload-armada-follow-two-clients.ts": [
+      "helpers/preload-config.ts"
+    ],
+    "fixtures/preload-landing-autopilot-browser.ts": [
+      "helpers/preload-config.ts"
+    ],
+    "fixtures/mining-preload.ts": [
+      "helpers/required.ts"
+    ],
+    "fixtures/refinery-preload.ts": [
+      "helpers/required.ts"
+    ],
+    "fixtures/dredge-preload.ts": [
+      "helpers/required.ts"
+    ],
+    "fixtures/towing-preload.ts": [
+      "helpers/required.ts"
+    ],
+    "nakama-network.ts": [
+      "helpers/nakama-service.ts"
+    ],
+    "nakama-browser.ts": [
+      "helpers/nakama-service.ts",
+      "helpers/chromium.ts"
+    ],
+    "nakama-diagnostics.ts": [
+      "helpers/nakama-service.ts"
+    ],
+    "friend-host-network.ts": [
+      "helpers/friend-host.ts"
+    ],
+    "friend-host-browser.ts": [
+      "helpers/friend-host.ts",
+      "helpers/chromium.ts"
+    ],
+    "helpers/friend-host.ts": [
+      "helpers/browser-fixture.ts"
+    ],
+    "faction-stores-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "attention.ts": [
+      "helpers/mocks.ts"
+    ],
     "responsive-hud-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/mining-fixture.ts",
       "fixtures/attention-preload.ts",
       "helpers/chromium.ts"
     ],
-    "attention-scan.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts", "helpers/required.ts"],
+    "attention-scan.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/mocks.ts",
+      "helpers/required.ts"
+    ],
     "attention-runtime.ts": [
       "helpers/refinery-fixture.ts",
       "helpers/mocks.ts",
@@ -743,7 +946,9 @@
       "helpers/chromium.ts"
     ],
     "login-traffic.ts": [],
-    "purchase-audio.ts": ["helpers/temp-data.ts"],
+    "purchase-audio.ts": [
+      "helpers/temp-data.ts"
+    ],
     "audio-flyby-browser.ts": [
       "helpers/temp-data.ts",
       "helpers/browser-fixture.ts",
@@ -774,8 +979,12 @@
       "helpers/mining-fixture.ts",
       "helpers/chromium.ts"
     ],
-    "helpers/story-foundations.ts": ["helpers/mocks.ts"],
-    "helpers/index-worksite.ts": ["helpers/mocks.ts"],
+    "helpers/story-foundations.ts": [
+      "helpers/mocks.ts"
+    ],
+    "helpers/index-worksite.ts": [
+      "helpers/mocks.ts"
+    ],
     "story-realities-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/story-reality.ts",
@@ -788,17 +997,29 @@
       "helpers/story-integration-edge.ts",
       "helpers/story-seeded-motion.ts"
     ],
-    "helpers/nhal.ts": ["helpers/mocks.ts"],
-    "helpers/index-fleet.ts": ["helpers/mocks.ts"],
-    "helpers/story-witness.ts": ["helpers/mocks.ts"],
-    "helpers/story-integration-edge.ts": ["helpers/mocks.ts"],
-    "archive-verification.ts": ["helpers/temp-data.ts"],
+    "helpers/nhal.ts": [
+      "helpers/mocks.ts"
+    ],
+    "helpers/index-fleet.ts": [
+      "helpers/mocks.ts"
+    ],
+    "helpers/story-witness.ts": [
+      "helpers/mocks.ts"
+    ],
+    "helpers/story-integration-edge.ts": [
+      "helpers/mocks.ts"
+    ],
+    "archive-verification.ts": [
+      "helpers/temp-data.ts"
+    ],
     "platform-browser-smoke.ts": [
       "helpers/temp-data.ts",
       "helpers/browser-fixture.ts",
       "helpers/chromium.ts"
     ],
-    "helpers/story-seeded-motion.ts": ["helpers/mocks.ts"],
+    "helpers/story-seeded-motion.ts": [
+      "helpers/mocks.ts"
+    ],
     "overlay-input-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
@@ -821,9 +1042,15 @@
       "helpers/nakama-service.ts",
       "helpers/browser-fixture.ts"
     ],
-    "helpers/native-performance.ts": ["helpers/nakama-service.ts"],
-    "helpers/nakama-service.ts": ["helpers/native-packet-collector.ts"],
-    "save-migrations.ts": ["helpers/temp-data.ts"],
+    "helpers/native-performance.ts": [
+      "helpers/nakama-service.ts"
+    ],
+    "helpers/nakama-service.ts": [
+      "helpers/native-packet-collector.ts"
+    ],
+    "save-migrations.ts": [
+      "helpers/temp-data.ts"
+    ],
     "station-docking.ts": [
       "helpers/legacy-fixture.ts",
       "helpers/mocks.ts",
@@ -835,34 +1062,75 @@
       "helpers/seed-random.ts",
       "helpers/chromium.ts"
     ],
-    "performance-budgets.ts": ["helpers/browser-fixture.ts", "helpers/native-performance.ts"],
-    "station-service.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
-    "combat-playability.ts": ["helpers/combat-playability-simulation.ts"],
-    "save-feature-validation.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
-    "save-postgres-restore.ts": ["helpers/nakama-service.ts", "helpers/temp-data.ts"],
+    "performance-budgets.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/native-performance.ts"
+    ],
+    "station-service.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/temp-data.ts"
+    ],
+    "combat-playability.ts": [
+      "helpers/combat-playability-simulation.ts"
+    ],
+    "save-feature-validation.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/temp-data.ts"
+    ],
+    "save-postgres-restore.ts": [
+      "helpers/nakama-service.ts",
+      "helpers/temp-data.ts"
+    ],
     "browser-server-liveness.ts": [
       "helpers/temp-data.ts",
       "helpers/browser-fixture.ts",
       "helpers/chromium.ts"
     ],
-    "browser-friend-liveness.ts": ["browser-server-liveness.ts"],
-    "trade-safety.ts": ["helpers/refinery-fixture.ts"],
-    "planet-cache-budget-browser.ts": ["helpers/chromium.ts"],
-    "asset-recovery-browser.ts": ["helpers/chromium.ts"],
-    "excalibur-runtime-browser.ts": ["helpers/chromium.ts"],
-    "planet-portrait-browser.ts": ["helpers/chromium.ts"],
-    "protocol-compatibility-browser.ts": ["helpers/chromium.ts"],
-    "hyperspace-arrival.ts": ["helpers/legacy-fixture.ts", "helpers/required.ts"],
-    "faction-store-catalog.ts": ["helpers/legacy-fixture.ts", "helpers/required.ts"],
-    "fog-of-war-browser.ts": ["helpers/chromium.ts", "helpers/seed-random.ts"],
+    "browser-friend-liveness.ts": [
+      "browser-server-liveness.ts"
+    ],
+    "trade-safety.ts": [
+      "helpers/refinery-fixture.ts"
+    ],
+    "planet-cache-budget-browser.ts": [
+      "helpers/chromium.ts"
+    ],
+    "asset-recovery-browser.ts": [
+      "helpers/chromium.ts"
+    ],
+    "excalibur-runtime-browser.ts": [
+      "helpers/chromium.ts"
+    ],
+    "planet-portrait-browser.ts": [
+      "helpers/chromium.ts"
+    ],
+    "protocol-compatibility-browser.ts": [
+      "helpers/chromium.ts"
+    ],
+    "hyperspace-arrival.ts": [
+      "helpers/legacy-fixture.ts",
+      "helpers/required.ts"
+    ],
+    "faction-store-catalog.ts": [
+      "helpers/legacy-fixture.ts",
+      "helpers/required.ts"
+    ],
+    "fog-of-war-browser.ts": [
+      "helpers/chromium.ts",
+      "helpers/seed-random.ts"
+    ],
     "bank-panel-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
       "helpers/chromium.ts"
     ]
   },
-  "characterization": ["features.ts"],
-  "contracts": ["typecheck-contracts.ts"],
+  "characterization": [
+    "features.ts"
+  ],
+  "contracts": [
+    "typecheck-contracts.ts"
+  ],
   "systems": [
     {
       "id": "accounts-persistence",
@@ -895,16 +1163,25 @@
     },
     {
       "id": "protocol-http",
-      "owners": ["server/main.ts"],
+      "owners": [
+        "server/main.ts"
+      ],
       "services": [],
-      "tests": ["http-api.ts"],
+      "tests": [
+        "http-api.ts"
+      ],
       "asserts": "Real HTTP public beta version/static/MIME/cache/404/traversal checks and online-vs-solo API permissions."
     },
     {
       "id": "protocol-websocket",
-      "owners": ["server/ws.ts"],
+      "owners": [
+        "server/ws.ts"
+      ],
       "services": [],
-      "tests": ["websocket-transport.ts", "network-systems.ts"],
+      "tests": [
+        "websocket-transport.ts",
+        "network-systems.ts"
+      ],
       "asserts": "Frame masking/fragmentation/control/limits, quiet-peer ping and half-open close, upgrade handshake and actual multiplayer client/server state transitions."
     },
     {
@@ -917,7 +1194,10 @@
         "server/refinery.ts",
         "server/towing.ts"
       ],
-      "services": ["refinery", "towing"],
+      "services": [
+        "refinery",
+        "towing"
+      ],
       "tests": [
         "network-faults.ts",
         "websocket-transport.ts",
@@ -929,57 +1209,113 @@
     },
     {
       "id": "hangar",
-      "owners": ["server/hangar.ts"],
-      "services": ["hangar"],
-      "tests": ["v05.ts", "v12.ts", "v21.ts"],
+      "owners": [
+        "server/hangar.ts"
+      ],
+      "services": [
+        "hangar"
+      ],
+      "tests": [
+        "v05.ts",
+        "v12.ts",
+        "v21.ts"
+      ],
       "asserts": "Shuttle dispatch/resolution/repair, officer assignment/XP/ranks, research prerequisites/queue, refining, stored loadouts and boarding."
     },
     {
       "id": "fronts",
-      "owners": ["server/fronts.ts"],
-      "services": ["fronts"],
-      "tests": ["v06.ts", "v09.ts", "faction-standing.ts"],
+      "owners": [
+        "server/fronts.ts"
+      ],
+      "services": [
+        "fronts"
+      ],
+      "tests": [
+        "v06.ts",
+        "v09.ts",
+        "faction-standing.ts"
+      ],
       "asserts": "Invasion start/damage/win, anomalies/events/goals, faction store standing and convoy/rescue/survey/smuggling jobs."
     },
     {
       "id": "frontier",
-      "owners": ["server/frontier.ts"],
-      "services": ["frontier"],
-      "tests": ["v07.ts"],
+      "owners": [
+        "server/frontier.ts"
+      ],
+      "services": [
+        "frontier"
+      ],
+      "tests": [
+        "v07.ts"
+      ],
       "asserts": "Colony ownership/accrual, station raid/defense waves, mastery, arena matchmaking/rating, exchange escrow/matching and profiles/leaderboards."
     },
     {
       "id": "specialists",
-      "owners": ["server/specialists.ts"],
-      "services": ["specialists"],
-      "tests": ["v08.ts"],
+      "owners": [
+        "server/specialists.ts"
+      ],
+      "services": [
+        "specialists"
+      ],
+      "tests": [
+        "v08.ts"
+      ],
       "asserts": "Specialty roles, blueprint/part requirements, construction, tiers/upgrades and gameplay bonuses."
     },
     {
       "id": "hostile",
-      "owners": ["server/hostile.ts"],
-      "services": ["hostile"],
-      "tests": ["v09.ts", "v26.ts"],
+      "owners": [
+        "server/hostile.ts"
+      ],
+      "services": [
+        "hostile"
+      ],
+      "tests": [
+        "v09.ts",
+        "v26.ts"
+      ],
       "asserts": "Hostile levels/chest loot, Station Holdout wave/rewards and co-op helpers, weekly events/Eclipse."
     },
     {
       "id": "story",
-      "owners": ["server/story.ts"],
-      "services": ["story"],
-      "tests": ["v10.ts"],
+      "owners": [
+        "server/story.ts"
+      ],
+      "services": [
+        "story"
+      ],
+      "tests": [
+        "v10.ts"
+      ],
       "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock."
     },
     {
       "id": "rivals",
-      "owners": ["server/rivals.ts", "shared/rivals.ts"],
-      "services": ["rivals"],
-      "tests": ["v11.ts", "core-actions.ts", "planet-portrait-art.ts"],
+      "owners": [
+        "server/rivals.ts",
+        "shared/rivals.ts"
+      ],
+      "services": [
+        "rivals"
+      ],
+      "tests": [
+        "v11.ts",
+        "core-actions.ts",
+        "planet-portrait-art.ts"
+      ],
       "asserts": "Named career population, unique captain/ship names and matching stable portrait IDs; original seeded luck without the former floors; equal fresh-world wealth rules for all thirty rivals and preservation of existing rival careers on reload. Relationships, hunters, damage/death/bounty, news/market flashes and status route remain covered."
     },
     {
       "id": "hailing",
-      "owners": ["server/hail.ts", "server/hail-service.ts", "shared/hail-machine.ts"],
-      "services": ["hail"],
+      "owners": [
+        "server/hail.ts",
+        "server/hail-service.ts",
+        "shared/hail-machine.ts"
+      ],
+      "services": [
+        "hail"
+      ],
       "tests": [
         "v11.ts",
         "hailing.ts",
@@ -992,29 +1328,55 @@
     },
     {
       "id": "fleet-orders",
-      "owners": ["server/fleetcmd.ts"],
-      "services": ["fleetcmd"],
-      "tests": ["v11.ts", "v21.ts"],
+      "owners": [
+        "server/fleetcmd.ts"
+      ],
+      "services": [
+        "fleetcmd"
+      ],
+      "tests": [
+        "v11.ts",
+        "v21.ts"
+      ],
       "asserts": "Escort target/formation/hold/fire orders, jettison/loot limits and combat rating."
     },
     {
       "id": "syndicate",
-      "owners": ["server/syndicate.ts"],
-      "services": ["syndicate"],
-      "tests": ["v12.ts", "v203.ts", "ship-banking.ts", "bank-panel-browser.ts"],
+      "owners": [
+        "server/syndicate.ts"
+      ],
+      "services": [
+        "syndicate"
+      ],
+      "tests": [
+        "v12.ts",
+        "v203.ts",
+        "ship-banking.ts",
+        "bank-panel-browser.ts"
+      ],
       "asserts": "Black market/Syndicate career, officer promotion/lower decks, bank loans/interest, timed delivery contracts. Compact loan dialog replaces the landed Bank tab, retains authoritative borrowing/repayment and denial, live credit/loan refresh, visitor/flight availability, modal focus/Escape and native keyboard/wheel reachability at ordinary and scaled viewports."
     },
     {
       "id": "faction-arcs",
-      "owners": ["server/arcs.ts"],
-      "services": ["arcs"],
-      "tests": ["v12.ts"],
+      "owners": [
+        "server/arcs.ts"
+      ],
+      "services": [
+        "arcs"
+      ],
+      "tests": [
+        "v12.ts"
+      ],
       "asserts": "Faction story acceptance/progression/rewards and Farside expedition stages."
     },
     {
       "id": "docks",
-      "owners": ["server/docks.ts"],
-      "services": ["docks"],
+      "owners": [
+        "server/docks.ts"
+      ],
+      "services": [
+        "docks"
+      ],
       "tests": [
         "v21.ts",
         "outfitter-wing-repairs.ts",
@@ -1026,44 +1388,86 @@
     },
     {
       "id": "living-galaxy",
-      "owners": ["server/living.ts"],
-      "services": ["living"],
-      "tests": ["v24.ts", "v25.ts", "v252.ts"],
+      "owners": [
+        "server/living.ts"
+      ],
+      "services": [
+        "living"
+      ],
+      "tests": [
+        "v24.ts",
+        "v25.ts",
+        "v252.ts"
+      ],
       "asserts": "Living-state timers/resolution, trade impact/depth, supply jobs and war/newcomer behavior."
     },
     {
       "id": "quests",
-      "owners": ["server/quests.ts"],
-      "services": ["quests"],
-      "tests": ["v24.ts", "passenger-quests.ts", "core-actions.ts"],
+      "owners": [
+        "server/quests.ts"
+      ],
+      "services": [
+        "quests"
+      ],
+      "tests": [
+        "v24.ts",
+        "passenger-quests.ts",
+        "core-actions.ts"
+      ],
       "asserts": "Generated contacts and handcrafted chains, per-step completion, failure/retry/salvage, passenger capacity and explicit abandonment isolation."
     },
     {
       "id": "cooperative-social",
-      "owners": ["server/coop.ts"],
-      "services": ["coop"],
-      "tests": ["v26.ts", "network-systems.ts"],
+      "owners": [
+        "server/coop.ts"
+      ],
+      "services": [
+        "coop"
+      ],
+      "tests": [
+        "v26.ts",
+        "network-systems.ts"
+      ],
       "asserts": "Friends/offline DM/blocking, Armada formation/leadership/chat/buffs/shared bounties, rescue, contracts and co-op Holdout."
     },
     {
       "id": "consensual-pvp",
-      "owners": ["server/coop.ts", "server/frontier.ts"],
+      "owners": [
+        "server/coop.ts",
+        "server/frontier.ts"
+      ],
       "services": [],
-      "tests": ["v26.ts", "v07.ts"],
+      "tests": [
+        "v26.ts",
+        "v07.ts"
+      ],
       "asserts": "Open-galaxy friendly-fire prevention, solo/Armada duel consent/nonlethal outcomes and arena team matching."
     },
     {
       "id": "station-trading",
-      "owners": ["server/coop.ts"],
+      "owners": [
+        "server/coop.ts"
+      ],
       "services": [],
-      "tests": ["v26.ts"],
+      "tests": [
+        "v26.ts"
+      ],
       "asserts": "Two-party credits/cargo/crates/blueprint/part escrow, accept/cancel and location guards."
     },
     {
       "id": "galaxy-navigation",
-      "owners": ["shared/galaxy.ts", "shared/gen.ts", "shared/rules.ts"],
+      "owners": [
+        "shared/galaxy.ts",
+        "shared/gen.ts",
+        "shared/rules.ts"
+      ],
       "services": [],
-      "tests": ["v04.ts", "v08.ts", "v23.ts", "eventide.ts"],
+      "tests": [
+        "v04.ts",
+        "v08.ts",
+        "v23.ts",
+        "eventide.ts"
+      ],
       "asserts": "Seeded galaxy generation, reachable routes, Sol/Farside gates and authored Eventide landmarks."
     },
     {
@@ -1076,28 +1480,58 @@
         "client/missions.ts"
       ],
       "services": [],
-      "tests": ["faction-store-catalog.ts", "fog-of-war-browser.ts", "story-realities-browser.ts"],
+      "tests": [
+        "faction-store-catalog.ts",
+        "fog-of-war-browser.ts",
+        "story-realities-browser.ts"
+      ],
       "asserts": "Captains see visited systems in full and neighbours by name only; routes and autojump cross only known space; the Gateway lane appears after flying through; star charts make faction space known; a fresh Concordia pilot's real map hides distant systems and economy details. Search results reveal no faction for name-only neighbours; captain-local story unlocks retain selectable mission bearings without unlocking them for other captains."
     },
     {
       "id": "sleep-traffic-ai",
-      "owners": ["server/space.ts"],
+      "owners": [
+        "server/space.ts"
+      ],
       "services": [],
-      "tests": ["v04.ts", "v201.ts", "v23.ts", "v24.ts", "sim.ts", "hyperspace-arrival.ts"],
+      "tests": [
+        "v04.ts",
+        "v201.ts",
+        "v23.ts",
+        "v24.ts",
+        "sim.ts",
+        "hyperspace-arrival.ts"
+      ],
       "asserts": "Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn. NPC planet/station landing cruise remains target-facing at the speed ceiling, with real landing events, settled arrival, unchanged fuel and escort formation. Landing approaches do not coast side-on, wing headings do not shimmy, and hyperspace arrivals land clear of every body's jump radius."
     },
     {
       "id": "mining-existing",
-      "owners": ["server/space.ts", "server/game.ts"],
+      "owners": [
+        "server/space.ts",
+        "server/game.ts"
+      ],
       "services": [],
-      "tests": ["v04.ts", "v05.ts", "v252.ts"],
+      "tests": [
+        "v04.ts",
+        "v05.ts",
+        "v252.ts"
+      ],
       "asserts": "Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Staged cutting/survey behavior is mapped separately under mining-cutting."
     },
     {
       "id": "station-progression",
-      "owners": ["server/game.ts", "server/hangar.ts", "server/station-progress.ts"],
+      "owners": [
+        "server/game.ts",
+        "server/hangar.ts",
+        "server/station-progress.ts"
+      ],
       "services": [],
-      "tests": ["sim.ts", "v05.ts", "v26.ts", "station-progress.ts", "station-docking.ts"],
+      "tests": [
+        "sim.ts",
+        "v05.ts",
+        "v26.ts",
+        "station-progress.ts",
+        "station-docking.ts"
+      ],
       "asserts": "Claim/build tiers, refinery/research/shipyard, prerequisites and station relocation ownership/material gates. Station timers preserve exact maturity, partial/capped accrual, bonus/completion/queue ordering, live owner replacement, queued-project denial and once-only settlement, you/idle/route refresh and persistence across reopen. Visitors to another captain's station berth at its guest dock, without the owner's shipyard, outfitter, refinery, docks or station internals."
     },
     {
@@ -1123,14 +1557,28 @@
     },
     {
       "id": "missions-passengers",
-      "owners": ["server/game.ts", "server/fronts.ts", "server/port-services.ts"],
+      "owners": [
+        "server/game.ts",
+        "server/fronts.ts",
+        "server/port-services.ts"
+      ],
       "services": [],
-      "tests": ["v06.ts", "v12.ts", "passengers.ts", "passenger-quests.ts", "eventide.ts"],
+      "tests": [
+        "v06.ts",
+        "v12.ts",
+        "passengers.ts",
+        "passenger-quests.ts",
+        "eventide.ts"
+      ],
       "asserts": "Cargo/bounty/patrol/convoy/rescue/survey/smuggling/rush/Syndicate/passenger jobs, acceptance/capacity/deadline/reward/failure behavior."
     },
     {
       "id": "flight-combat-weapons",
-      "owners": ["server/space.ts", "server/combat-maneuver.ts", "shared/rules.ts"],
+      "owners": [
+        "server/space.ts",
+        "server/combat-maneuver.ts",
+        "shared/rules.ts"
+      ],
       "services": [],
       "tests": [
         "combat-maneuver.ts",
@@ -1144,14 +1592,22 @@
     },
     {
       "id": "combat-assist",
-      "owners": ["server/combat-assist.ts"],
+      "owners": [
+        "server/combat-assist.ts"
+      ],
       "services": [],
-      "tests": ["combat-assist.ts", "network-systems.ts"],
+      "tests": [
+        "combat-assist.ts",
+        "network-systems.ts"
+      ],
       "asserts": "Consent-only autopilot/delegation, group odds, independent isolation, manual takeover and Hold Fire."
     },
     {
       "id": "newcomer-standing",
-      "owners": ["server/game.ts", "server/space.ts"],
+      "owners": [
+        "server/game.ts",
+        "server/space.ts"
+      ],
       "services": [],
       "tests": [
         "main-map-protection.ts",
@@ -1164,7 +1620,11 @@
     },
     {
       "id": "armada-follow",
-      "owners": ["server/armada-formation.ts", "client/main.ts", "client/coop_ui.ts"],
+      "owners": [
+        "server/armada-formation.ts",
+        "client/main.ts",
+        "client/coop_ui.ts"
+      ],
       "services": [],
       "tests": [
         "armada-formation.ts",
@@ -1176,7 +1636,11 @@
     },
     {
       "id": "landing-gateway",
-      "owners": ["client/landing_autopilot.ts", "client/gateway_autopilot.ts", "server/game.ts"],
+      "owners": [
+        "client/landing_autopilot.ts",
+        "client/gateway_autopilot.ts",
+        "server/game.ts"
+      ],
       "services": [],
       "tests": [
         "landing-autopilot.ts",
@@ -1210,30 +1674,58 @@
     },
     {
       "id": "world-scenery",
-      "owners": ["client/render.ts", "client/exotic_scenery.ts"],
+      "owners": [
+        "client/render.ts",
+        "client/exotic_scenery.ts"
+      ],
       "services": [],
-      "tests": ["eventide.ts", "comet.ts", "stars.ts", "background-scale.ts", "v25.ts"],
+      "tests": [
+        "eventide.ts",
+        "comet.ts",
+        "stars.ts",
+        "background-scale.ts",
+        "v25.ts"
+      ],
       "asserts": "Authored scenery configuration, comets/stars/background scaling, atmosphere/artwork invariants."
     },
     {
       "id": "planet-render-cache",
-      "owners": ["client/planets.ts", "client/render-cache-budget.ts"],
+      "owners": [
+        "client/planets.ts",
+        "client/render-cache-budget.ts"
+      ],
       "services": [],
-      "tests": ["render-cache-budget.ts", "planet-cache-budget-browser.ts"],
+      "tests": [
+        "render-cache-budget.ts",
+        "planet-cache-budget-browser.ts"
+      ],
       "asserts": "Byte-budgeted least-recently-used eviction for procedural and pre-rendered planet caches, exact retained-size accounting, live worlds kept over budget, measured unbounded versus bounded retention over a 12-system tour with artwork loading and with planet artwork missing, on-screen sprite identity preserved through eviction and evicted worlds rebuilt on return."
     },
     {
       "id": "station-art-identity",
-      "owners": ["client/station_wheel.ts", "client/exotic_scenery.ts", "client/render.ts"],
+      "owners": [
+        "client/station_wheel.ts",
+        "client/exotic_scenery.ts",
+        "client/render.ts"
+      ],
       "services": [],
-      "tests": ["station-landing-browser.ts"],
+      "tests": [
+        "station-landing-browser.ts"
+      ],
       "asserts": "14 real landing/departure sessions, 110 stations/245 tier variants, actual flight-source identity, transient load recovery and frozen original Luna wheel pixels."
     },
     {
       "id": "login-scene",
-      "owners": ["client/login_scene.ts", "client/login-traffic.ts"],
+      "owners": [
+        "client/login_scene.ts",
+        "client/login-traffic.ts"
+      ],
       "services": [],
-      "tests": ["login-scene-browser.ts", "login-traffic.ts", "audio-flyby-browser.ts"],
+      "tests": [
+        "login-scene-browser.ts",
+        "login-traffic.ts",
+        "audio-flyby-browser.ts"
+      ],
       "asserts": "Starting-system landmarks, six actual moving ship sheets, high-DPI resize, usable form, reduced-motion static pose/no recurring draws despite suppressed native change delivery, normal resume and rendering lifecycle. Actual hub sprite cross-fade and navigation-light pulses, shared rotating/cloud planet pixels, 30% smaller apparent planet diameter. Displayed lamp pixel brightness changes; real logout resumes shared planet motion and reduced-motion freezes again after gameplay. Actual WebAudio source/context time stages real catalog-strength formations, bounds traffic to eleven sprites and resets on natural loop without another source; suspension freezes playback position."
     },
     {
@@ -1256,14 +1748,21 @@
         "client/style-responsive-scenes.css"
       ],
       "services": [],
-      "tests": ["sidebar-browser.ts"],
+      "tests": [
+        "sidebar-browser.ts"
+      ],
       "asserts": "Thirteen viewport/scale/width/unread cases: every menu tab fully visible without scrolling or overlap, single-row desktop defaults, narrow/scaled wrapping, wheel and keyboard reachability, old saved-width reload and viewport recovery, wide full-width radar and backing geometry including real drag growth, capped COMMS/reserved utility widths, utility-anchored centered vent below controls across viewport/UI scales, invariant viewport trim in closed/expanded/resized states, blue menu scrollbar/accent styles. All ten ordered component CSS imports load nonempty rules through the real server without failed stylesheet requests; existing viewport/trim/interaction assertions are retained."
     },
     {
       "id": "client-options-map-save",
-      "owners": ["client/main.ts", "client/ui.ts"],
+      "owners": [
+        "client/main.ts",
+        "client/ui.ts"
+      ],
       "services": [],
-      "tests": ["client-systems-browser.ts"],
+      "tests": [
+        "client-systems-browser.ts"
+      ],
       "asserts": "Real browser options/key remapping/scaling/palette, map routes and Solo pause/save workflows; see test assertions for exact exercised controls."
     },
     {
@@ -1275,7 +1774,12 @@
         "client/cockpit.css"
       ],
       "services": [],
-      "tests": ["chat-bubbles.ts", "v26.ts", "core-actions.ts", "chat-projection-browser.ts"],
+      "tests": [
+        "chat-bubbles.ts",
+        "v26.ts",
+        "core-actions.ts",
+        "chat-projection-browser.ts"
+      ],
       "asserts": "Chat channel scoping, plain-text transient ship bubbles, bounded captain notes and non-idle-resetting ping/pong; live single-log hologram expansion, real sending, retained scroll and bounded history, escaped text, accessible collapse/Escape and modal priority, sidebar drag, narrow/scaled viewport bounds and reduced motion."
     },
     {
@@ -1304,9 +1808,15 @@
     },
     {
       "id": "economy-balance",
-      "owners": ["shared/galaxy.ts", "shared/rules.ts"],
+      "owners": [
+        "shared/galaxy.ts",
+        "shared/rules.ts"
+      ],
       "services": [],
-      "tests": ["balance.ts", "ship-economy.ts"],
+      "tests": [
+        "balance.ts",
+        "ship-economy.ts"
+      ],
       "asserts": "Price/strength ladder thresholds, progression-income bounds, Holdout reward floor and real loadout transaction arithmetic."
     },
     {
@@ -1322,7 +1832,11 @@
         "shared/wire-commands.ts"
       ],
       "services": [],
-      "tests": ["fuzz.ts", "message-routing.ts", "wire-contracts.ts"],
+      "tests": [
+        "fuzz.ts",
+        "message-routing.ts",
+        "wire-contracts.ts"
+      ],
       "asserts": "Malformed/flooded gameplay messages preserve server invariants; feature/type checks separately verify composition and characterization, not full behavior coverage. Fixed pre-extraction traces cover all 56 routes, argument coercion, call order, representative mutations and live dependencies; authenticated entry checks retain freeze/activity/flood order. This is routing parity, not complete delegated-rule coverage. Economic contracts bound trade/refinery/miningOrder/towing/industrial and ordinary port-purchase shapes and preserve numeric-text signed-int coercion; real account/world malformed-request denials and bounded you/landed/quote headers are covered. Shared command contracts cover all 57 authenticated routes; bounded scalar/nested trade-offer denial, preserved legacy selectors, complete bounded fuzz probes and communication receive-header transport parity are covered. Nested feature payload semantics remain owner-typed."
     },
     {
@@ -1358,12 +1872,18 @@
         "client/main.ts",
         "server/port-services.ts"
       ],
-      "tests": ["cargo-lots.ts", "cargo-flows.ts", "cargo-ui-browser.ts"],
+      "tests": [
+        "cargo-lots.ts",
+        "cargo-flows.ts",
+        "cargo-ui-browser.ts"
+      ],
       "asserts": "Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, owner/fleet simulation-time grace with foreign partial pickup and expiry, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
     },
     {
       "id": "mining-cutting",
-      "services": ["mining"],
+      "services": [
+        "mining"
+      ],
       "owners": [
         "server/mining.ts",
         "server/mining-contracts.ts",
@@ -1395,7 +1915,9 @@
         "shared/refinery-rules.ts",
         "client/refinery_ui.ts"
       ],
-      "services": ["refinery"],
+      "services": [
+        "refinery"
+      ],
       "tests": [
         "refinery.ts",
         "refinery-economy.ts",
@@ -1407,14 +1929,27 @@
     },
     {
       "id": "mining-pressure",
-      "owners": ["server/mining-pressure.ts", "server/space.ts", "client/mining_render.ts"],
-      "services": ["pressure"],
-      "tests": ["mining-pressure.ts", "mining.ts", "refinery-network.ts", "refinery-ui-browser.ts"],
+      "owners": [
+        "server/mining-pressure.ts",
+        "server/space.ts",
+        "client/mining_render.ts"
+      ],
+      "services": [
+        "pressure"
+      ],
+      "tests": [
+        "mining-pressure.ts",
+        "mining.ts",
+        "refinery-network.ts",
+        "refinery-ui-browser.ts"
+      ],
       "asserts": "Real useful contact noise and persisted local recovery; delayed once-only volatile hazards, scoped two-hull pressure encounters, shared/captain cooldown and damage/acquisition/projectile allowlists preserving neutral, wing, Armada and newcomer protection."
     },
     {
       "id": "industrial-dredge",
-      "services": ["industrial"],
+      "services": [
+        "industrial"
+      ],
       "owners": [
         "server/industrial.ts",
         "server/industrial-contracts.ts",
@@ -1445,7 +1980,9 @@
         "client/towing_render.ts",
         "client/audio.ts"
       ],
-      "services": ["towing"],
+      "services": [
+        "towing"
+      ],
       "tests": [
         "towing.ts",
         "towing-persistence.ts",
@@ -1461,23 +1998,36 @@
     },
     {
       "id": "native-dropdown-theme",
-      "owners": ["client/style.css"],
+      "owners": [
+        "client/style.css"
+      ],
       "services": [],
-      "tests": ["dropdowns-browser.ts"],
+      "tests": [
+        "dropdowns-browser.ts"
+      ],
       "asserts": "Black/white native selects/options across dynamic docks, hangar, shipyard, refinery, map and initialized mining/towing controls; real dock assignment/re-render, keyboard sort/focus and disabled/group styling. OS popup painting remains platform-owned."
     },
     {
       "id": "shipyard-selection-scroll",
-      "owners": ["client/ui.ts"],
+      "owners": [
+        "client/ui.ts"
+      ],
       "services": [],
-      "tests": ["dropdowns-browser.ts"],
+      "tests": [
+        "dropdowns-browser.ts"
+      ],
       "asserts": "Explicit ship selection resets the actual landing scroll container after rendering; selected details and purchase controls visible, background renderer preserves scroll, no purchase or wallet change."
     },
     {
       "id": "trade-custom-amount",
-      "owners": ["client/ui.ts", "client/style.css"],
+      "owners": [
+        "client/ui.ts",
+        "client/style.css"
+      ],
       "services": [],
-      "tests": ["trade-amount-browser.ts"],
+      "tests": [
+        "trade-amount-browser.ts"
+      ],
       "asserts": "Accessible native dark numeric quantities; invalid/empty/overflow denial before wire, real buy/sell settlement, common-first grades, hold/inventory and authoritative funds limits, preset compatibility, async draft/focus retention, narrow viewport interaction."
     },
     {
@@ -1490,7 +2040,10 @@
         "client/index.html"
       ],
       "services": [],
-      "tests": ["ship-functions-browser.ts", "mining-panel-browser.ts"],
+      "tests": [
+        "ship-functions-browser.ts",
+        "mining-panel-browser.ts"
+      ],
       "asserts": "Accessible icon toggles, retained disabled mining, combat and survey message dispatch, fleet orders and secondary drone input, six-panel flow layout with long chat, keyboard/wheel reachability and desktop/narrow/scaled browser bounds. JUMP has a reserved flow row in either corner: collapsed/single/multiple/all panels at five desktop resolutions plus narrow/scaled layouts, with clipped pointer intersections and real jump dispatch checked."
     },
     {
@@ -1503,28 +2056,50 @@
         "client/hails_ui.ts"
       ],
       "services": [],
-      "tests": ["cockpit-browser.ts", "ship-functions-browser.ts", "sidebar-browser.ts"],
+      "tests": [
+        "cockpit-browser.ts",
+        "ship-functions-browser.ts",
+        "sidebar-browser.ts"
+      ],
       "asserts": "Bundled Pixelify font, original login scene/title and landing imagery, ship name/chat renderer font, nine-button cockpit with recipient-only attention, real Map/Hail activation, connected collapsed tray with actual pointer resize drag, scale-aware 520px menu-fitting default and wrapping compact tabs, scale-invariant maximum, saved-width reload and viewport-shrink recovery, literal framed-hail edge containment, first-login canvas pixel sizing, keyboard tab/popup reachability and normal/narrow/scaled layout."
     },
     {
       "id": "presentation-polish",
-      "owners": ["client/render.ts", "client/towing_render.ts", "client/audio.ts"],
-      "tests": ["polish-browser.ts"],
+      "owners": [
+        "client/render.ts",
+        "client/towing_render.ts",
+        "client/audio.ts"
+      ],
+      "tests": [
+        "polish-browser.ts"
+      ],
       "asserts": "Three hulls/four headings: aft engine masks, longer boost, idle. Neutral texture concealment, music restart/cancel, ambience teardown, mute.",
       "services": []
     },
     {
       "id": "cockpit-cursors",
-      "owners": ["client/style.css", "tools/cursors.py"],
+      "owners": [
+        "client/style.css",
+        "tools/cursors.py"
+      ],
       "services": [],
-      "tests": ["cursors-browser.ts"],
+      "tests": [
+        "cursors-browser.ts"
+      ],
       "asserts": "Decoded transparent cursor artwork, consistent dimensions and hotspots, CSS state mapping, disabled and ARIA denial, input, resize, map and busy precedence."
     },
     {
       "id": "landed-live-scene",
-      "tests": ["landed-live-browser.ts"],
+      "tests": [
+        "landed-live-browser.ts"
+      ],
       "asserts": "Docked observer snapshots keep real traffic moving across services without a controllable player entity; real canvas ship sprite displacement, flight-input isolation, real depart/redock scene restoration from a deterministic in-range fixture and explicit Solo pause/resume.",
-      "owners": ["server/game.ts", "client/main.ts", "client/render.ts", "client/mining_render.ts"],
+      "owners": [
+        "server/game.ts",
+        "client/main.ts",
+        "client/render.ts",
+        "client/mining_render.ts"
+      ],
       "services": []
     },
     {
@@ -1542,7 +2117,9 @@
         "shared/cargo-lots.ts",
         "server/save-validation.ts"
       ],
-      "services": ["refinery"],
+      "services": [
+        "refinery"
+      ],
       "tests": [
         "economy-32.ts",
         "refinery-ui-browser.ts",
@@ -1593,14 +2170,28 @@
         "server/jobs.ts"
       ],
       "services": [],
-      "tests": ["mission-consent.ts", "mission-ui-browser.ts", "v26.ts", "qol-browser.ts"],
+      "tests": [
+        "mission-consent.ts",
+        "mission-ui-browser.ts",
+        "v26.ts",
+        "qol-browser.ts"
+      ],
       "asserts": "Plain travel/capacity/risk/turn-in/personal-payout details and remembered optional type/feasible/nearby filters retain inaccessible offers with reasons. Expired team-offer IDs are rejected across the ten-minute boundary without changing jobs or credits; a current replacement creates a plan but cannot bypass consent. Real Ready/Start consent assigns only the frozen roster; exact pool conservation, stale/duplicate/full/refused/disconnected denial, offline completion and saved accepted rewards survive reconnect without automatic late enrollment."
     },
     {
       "id": "cargo-courier-progression",
-      "owners": ["server/freight-offers.ts", "server/game.ts", "server/jobs.ts"],
+      "owners": [
+        "server/freight-offers.ts",
+        "server/game.ts",
+        "server/jobs.ts"
+      ],
       "services": [],
-      "tests": ["cargo-couriers.ts", "mission-ui-browser.ts", "v203.ts", "cargo-flows.ts"],
+      "tests": [
+        "cargo-couriers.ts",
+        "mission-ui-browser.ts",
+        "v203.ts",
+        "cargo-flows.ts"
+      ],
       "asserts": "Two lawful untimed 3\u20135t/6\u201310t inner-board freight slots across deterministic windows and real fresh-starter HUD acceptance; five public ship-independent freight bands through1800t, stock-hauler fit, cargo/slot and duplicate/forged denial, wrong-port and exact once-only payout, persisted accepted cargo and rewards. Acceptance uses the current offer provider and retains the Game receiver across the ordinary-job service boundary."
     },
     {
@@ -1708,13 +2299,23 @@
         "shared/faction-outfits.ts",
         "shared/faction-store-catalog.ts"
       ],
-      "services": ["fronts"],
-      "tests": ["faction-standing.ts", "faction-stores-browser.ts", "faction-store-catalog.ts"],
+      "services": [
+        "fronts"
+      ],
+      "tests": [
+        "faction-standing.ts",
+        "faction-stores-browser.ts",
+        "faction-store-catalog.ts"
+      ],
       "asserts": "Every landable public faction port offers only its faction store, including ports without trade service. Actual local purchases, foreign request resource-preserving denial, own Personal Station all-store selection and purchases, visitor/neutral/flight denial, stale selection recovery, decoded faction crests and no Bulletin store or chat Live label. Store button is absent from the DOM at neutral and visitor landings; selected faction standing is visible on open and refreshes from authoritative purchase payloads. Each store sells three standing-gated store-only outfits that never stock at outfitters, install on purchase, refuse before charging when they do not fit, and sell back at outfitters; star charts reveal the faction's systems once."
     },
     {
       "id": "responsive-hud-attention",
-      "owners": ["server/attention.ts", "client/cockpit.css", "client/main.ts"],
+      "owners": [
+        "server/attention.ts",
+        "client/cockpit.css",
+        "client/main.ts"
+      ],
       "services": [],
       "tests": [
         "attention.ts",
@@ -1777,7 +2378,9 @@
         "client/mining_render.ts",
         "server/index-fleet.ts"
       ],
-      "services": ["index"],
+      "services": [
+        "index"
+      ],
       "tests": [
         "eventide.ts",
         "gateway-browser.ts",
@@ -1796,7 +2399,9 @@
         "client/ui.ts",
         "client/info_ui.ts"
       ],
-      "tests": ["story-realities-browser.ts"],
+      "tests": [
+        "story-realities-browser.ts"
+      ],
       "services": [],
       "asserts": "Viewer-only Act III and permanent Unsettling faction ghosts, owner chains, friend/group precedence, native hull/glow/name opacity with opaque targets, reduced effects, hidden chart picking and supplied endgame atlas/backdrop artwork."
     },
@@ -1814,7 +2419,11 @@
         "server/index-fleet.ts",
         "shared/index-fleet.ts"
       ],
-      "services": ["story", "nhal", "indexFleet"],
+      "services": [
+        "story",
+        "nhal",
+        "indexFleet"
+      ],
       "tests": [
         "story-continuation.ts",
         "eventide.ts",
@@ -1871,7 +2480,10 @@
     {
       "id": "diagnostic-captures",
       "services": [],
-      "tests": ["diagnostic-capture.ts", "diagnostic-capture-browser.ts"],
+      "tests": [
+        "diagnostic-capture.ts",
+        "diagnostic-capture-browser.ts"
+      ],
       "asserts": "Trade-estimate captures are off by default and session-only; allowlisted copies keep only the previewed commodity and exclude chat, names, credentials and tokens. Count, age, entry and file byte limits; corrupt, oversized, unknown-field, unsupported-format and newer-version files are rejected without throwing. Version-1 fixture and real browser exports replay offline with exact results; tampered or inconsistent captures report mismatches. Options opt-in, stop, clear, logout/account-switch reset and local export with no upload or browser storage. Full order-heavy exports remain reader-compatible; malformed required terms and non-file CLI inputs are rejected.",
       "owners": [
         "shared/diagnostic-capture.ts",
@@ -1892,7 +2504,11 @@
         "client/engine-input.ts"
       ],
       "services": [],
-      "tests": ["overlay-input-browser.ts", "logout-browser.ts", "input-audio-browser.ts"],
+      "tests": [
+        "overlay-input-browser.ts",
+        "logout-browser.ts",
+        "input-audio-browser.ts"
+      ],
       "asserts": "Confirmation, quit, boarding, Options, Controls, map, info, hails, story, storage and ship-loss dialogs have one keyboard owner, explicit priority and safe focus return. Options preserves native settings/button activation, pending-capture Escape cancellation, reserved-key denial, swaps, unbinding and saved bindings. Controls retains Change Keys and consumes Escape above the map. Blocking dialogs suppress manual keyboard/pointer/touch/gamepad commands and held input remains latched until release. Native hail composition and map search retain Enter behavior; story Escape defers without acceptance."
     },
     {
@@ -1925,7 +2541,10 @@
         "client/cockpit.css"
       ],
       "services": [],
-      "tests": ["playtest-clarity.ts", "cockpit-layout-browser.ts"],
+      "tests": [
+        "playtest-clarity.ts",
+        "cockpit-layout-browser.ts"
+      ],
       "asserts": "Research lab and syndicate trait bonuses read as words with no raw camelCase stat keys. Off-screen edge arrows keep their bearing but stop short of the career card and its label room, while arrows elsewhere on the border are unchanged. Overlapping card clearance is order-independent. Wide-short maps place details beside the canvas, with a usable full-width fallback on narrow landscape windows."
     },
     {
@@ -1940,7 +2559,10 @@
         "shared/tutorial.ts"
       ],
       "services": [],
-      "tests": ["difficulty-curve.ts", "main-map-protection.ts"],
+      "tests": [
+        "difficulty-curve.ts",
+        "main-map-protection.ts"
+      ],
       "asserts": "Building Station Tier 3 carries the newcomer truce over until 5 kills, 30 jumps or 150 ship power, then announces its end; saves already past Tier 3 and the protection opt-out stay unprotected. Ambient raids and war fleets stay within a power budget scaled to the strongest captain present, keeping the weakest raider as a floor, and Farside or empty systems are unscaled. Combat job danger compares hostile power with the captain's and shows both numbers, while non-combat jobs keep the system rating. The Clear a raider career goal sends one practice raider sized to the captain, never in Farside, the arena or the Deep. The Caravel ships with a Cinder Driver."
     },
     {
@@ -1965,7 +2587,10 @@
     },
     {
       "id": "client-connection-lifecycle",
-      "owners": ["client/connection-lifecycle.ts", "client/connection-liveness.ts"],
+      "owners": [
+        "client/connection-lifecycle.ts",
+        "client/connection-liveness.ts"
+      ],
       "services": [],
       "tests": [
         "connection-lifecycle.ts",
@@ -1978,16 +2603,28 @@
     },
     {
       "id": "client-player-projection",
-      "owners": ["client/player-projection.ts"],
+      "owners": [
+        "client/player-projection.ts"
+      ],
       "services": [],
-      "tests": ["player-projection.ts", "logout-browser.ts"],
+      "tests": [
+        "player-projection.ts",
+        "logout-browser.ts"
+      ],
       "asserts": "Independent pre-extraction traces preserve player payload identity, root-state mutation, radio/views/system/co-op/render ordering, flight-owned ammo and first/restored tab behavior across sixteen combinations."
     },
     {
       "id": "station-action-service",
-      "owners": ["server/station-service.ts"],
+      "owners": [
+        "server/station-service.ts"
+      ],
       "services": [],
-      "tests": ["station-service.ts", "station-progress.ts", "cargo-flows.ts", "v26.ts"],
+      "tests": [
+        "station-service.ts",
+        "station-progress.ts",
+        "cargo-flows.ts",
+        "v26.ts"
+      ],
       "asserts": "Independent pre-extraction traces preserve station claim/upgrade/process/collection/research/relocation and denial behavior, full packets, balances/grades, trade/spend/persistence/refresh order, live replaced providers/database and exact checkpoint reopen across nineteen scenarios."
     },
     {
@@ -2025,7 +2662,10 @@
         "client/world-actors.ts"
       ],
       "services": [],
-      "tests": ["asset-recovery-browser.ts", "render-cache-budget.ts"],
+      "tests": [
+        "asset-recovery-browser.ts",
+        "render-cache-budget.ts"
+      ],
       "asserts": "Decoded image/audio ownership budgets and live-resource-safe eviction; missing/corrupt asset fallbacks and bounded failure cleanup; repeated actual graphics context loss/restoration preserves captain state and blocks held controls until release."
     },
     {
@@ -2037,7 +2677,9 @@
         "client/cockpit.css"
       ],
       "services": [],
-      "tests": ["onboarding-browser.ts"],
+      "tests": [
+        "onboarding-browser.ts"
+      ],
       "asserts": "Title Case tour headings; INFO and REFINE labels; twelve-key HUD containment; EJECT opens quit without logout, cancellation restores Solo play and focus, and Escape remains available."
     },
     {
@@ -2068,8 +2710,24 @@
         "client/ui.ts"
       ],
       "services": [],
-      "tests": ["landed-responsive-browser.ts"],
+      "tests": [
+        "landed-responsive-browser.ts"
+      ],
       "asserts": "Landed services retain their navigation and footer while a bounded content row scrolls at five landscape viewport sizes, a portrait fallback and two UI scales. Real friend-host fixtures cover hub, owned Tier 5 station departments, colony owner and visitor; narrow Crew, Outfitter and Community avoid body-level horizontal overflow. Crew final actions remain keyboard-focusable and hit-testable after native wheel scrolling."
+    },
+    {
+      "id": "colony-exchange-layout",
+      "owners": [
+        "client/frontier_ui.ts",
+        "client/coop_ui.ts",
+        "client/style-responsive-scenes.css",
+        "client/style-late-components.css"
+      ],
+      "services": [],
+      "tests": [
+        "colony-exchange-layout-browser.ts"
+      ],
+      "asserts": "Real friends-host colony owner/visitor/unsettled branches retain decoded stage art and actions; responsive side art and short thumbnails, stockpile wheel/keyboard reachability, labeled Exchange place/send controls without menu horizontal overflow, two-captain order placement/cancellation and missing-goods denial, exact own-station trade guidance."
     }
   ],
   "routes": {
@@ -2096,8 +2754,15 @@
       "overlay-input-browser.ts",
       "performance-native.ts"
     ],
-    "target": ["v03.ts", "mining-ui-browser.ts", "message-routing.ts"],
-    "tutskip": ["v03.ts", "message-routing.ts"],
+    "target": [
+      "v03.ts",
+      "mining-ui-browser.ts",
+      "message-routing.ts"
+    ],
+    "tutskip": [
+      "v03.ts",
+      "message-routing.ts"
+    ],
     "land": [
       "bot.ts",
       "v11.ts",
@@ -2157,7 +2822,10 @@
       "dropdowns-browser.ts",
       "message-routing.ts"
     ],
-    "questdrop": ["core-actions.ts", "message-routing.ts"],
+    "questdrop": [
+      "core-actions.ts",
+      "message-routing.ts"
+    ],
     "outfit": [
       "equipped-outfits-browser.ts",
       "ship-economy.ts",
@@ -2180,7 +2848,12 @@
       "cargo-couriers.ts",
       "message-routing.ts"
     ],
-    "abandon": ["v203.ts", "v24.ts", "radio-discovery.ts", "message-routing.ts"],
+    "abandon": [
+      "v203.ts",
+      "v24.ts",
+      "radio-discovery.ts",
+      "message-routing.ts"
+    ],
     "station": [
       "station-progress.ts",
       "cargo-flows.ts",
@@ -2201,14 +2874,49 @@
       "nakama-network.ts",
       "network-faults.ts"
     ],
-    "rename": ["v203.ts", "message-routing.ts"],
-    "note": ["core-actions.ts", "message-routing.ts"],
-    "chat": ["bot.ts", "v06.ts", "v26.ts", "chat-projection-browser.ts", "message-routing.ts"],
-    "officer": ["v05.ts", "v21.ts", "message-routing.ts"],
-    "shuttle": ["v05.ts", "message-routing.ts"],
-    "dock": ["v05.ts", "v101.ts", "v203.ts", "v21.ts", "message-routing.ts"],
-    "board": ["cargo-flows.ts", "v05.ts", "v06.ts", "v10.ts", "v26.ts", "message-routing.ts"],
-    "spec": ["v08.ts", "message-routing.ts"],
+    "rename": [
+      "v203.ts",
+      "message-routing.ts"
+    ],
+    "note": [
+      "core-actions.ts",
+      "message-routing.ts"
+    ],
+    "chat": [
+      "bot.ts",
+      "v06.ts",
+      "v26.ts",
+      "chat-projection-browser.ts",
+      "message-routing.ts"
+    ],
+    "officer": [
+      "v05.ts",
+      "v21.ts",
+      "message-routing.ts"
+    ],
+    "shuttle": [
+      "v05.ts",
+      "message-routing.ts"
+    ],
+    "dock": [
+      "v05.ts",
+      "v101.ts",
+      "v203.ts",
+      "v21.ts",
+      "message-routing.ts"
+    ],
+    "board": [
+      "cargo-flows.ts",
+      "v05.ts",
+      "v06.ts",
+      "v10.ts",
+      "v26.ts",
+      "message-routing.ts"
+    ],
+    "spec": [
+      "v08.ts",
+      "message-routing.ts"
+    ],
     "armada": [
       "armada-formation-network.ts",
       "combat-network.ts",
@@ -2219,22 +2927,82 @@
       "mission-ui-browser.ts",
       "message-routing.ts"
     ],
-    "holdout": ["v09.ts", "v26.ts", "message-routing.ts"],
-    "storyacc": ["v10.ts", "message-routing.ts"],
-    "social": ["hailing-network.ts", "v26.ts", "message-routing.ts"],
-    "trade2": ["cargo-flows.ts", "v26.ts", "message-routing.ts"],
-    "duel": ["v26.ts", "message-routing.ts"],
-    "goal": ["v06.ts", "message-routing.ts", "network-faults.ts"],
-    "store": ["faction-standing.ts", "v06.ts", "message-routing.ts", "faction-stores-browser.ts"],
-    "colony": ["v07.ts", "message-routing.ts"],
-    "arena": ["v07.ts", "message-routing.ts"],
-    "exchange": ["cargo-flows.ts", "v07.ts", "message-routing.ts"],
-    "boards": ["v07.ts", "message-routing.ts"],
-    "profile": ["v07.ts", "message-routing.ts"],
-    "ping": ["core-actions.ts", "message-routing.ts"],
-    "hail": ["hailing-network.ts", "v11.ts", "message-routing.ts"],
-    "hailin": ["hailing-network.ts", "message-routing.ts"],
-    "hailopt": ["hailing-network.ts", "v11.ts", "message-routing.ts", "station-docking.ts"],
+    "holdout": [
+      "v09.ts",
+      "v26.ts",
+      "message-routing.ts"
+    ],
+    "storyacc": [
+      "v10.ts",
+      "message-routing.ts"
+    ],
+    "social": [
+      "hailing-network.ts",
+      "v26.ts",
+      "message-routing.ts"
+    ],
+    "trade2": [
+      "cargo-flows.ts",
+      "v26.ts",
+      "message-routing.ts"
+    ],
+    "duel": [
+      "v26.ts",
+      "message-routing.ts"
+    ],
+    "goal": [
+      "v06.ts",
+      "message-routing.ts",
+      "network-faults.ts"
+    ],
+    "store": [
+      "faction-standing.ts",
+      "v06.ts",
+      "message-routing.ts",
+      "faction-stores-browser.ts"
+    ],
+    "colony": [
+      "v07.ts",
+      "message-routing.ts",
+      "colony-exchange-layout-browser.ts"
+    ],
+    "arena": [
+      "v07.ts",
+      "message-routing.ts"
+    ],
+    "exchange": [
+      "cargo-flows.ts",
+      "v07.ts",
+      "message-routing.ts",
+      "colony-exchange-layout-browser.ts"
+    ],
+    "boards": [
+      "v07.ts",
+      "message-routing.ts"
+    ],
+    "profile": [
+      "v07.ts",
+      "message-routing.ts"
+    ],
+    "ping": [
+      "core-actions.ts",
+      "message-routing.ts"
+    ],
+    "hail": [
+      "hailing-network.ts",
+      "v11.ts",
+      "message-routing.ts"
+    ],
+    "hailin": [
+      "hailing-network.ts",
+      "message-routing.ts"
+    ],
+    "hailopt": [
+      "hailing-network.ts",
+      "v11.ts",
+      "message-routing.ts",
+      "station-docking.ts"
+    ],
     "order": [
       "combat-network.ts",
       "v11.ts",
@@ -2242,15 +3010,47 @@
       "ship-functions-browser.ts",
       "message-routing.ts"
     ],
-    "jettison": ["cargo-flows.ts", "v11.ts", "cargo-ui-browser.ts", "message-routing.ts"],
-    "rivals": ["core-actions.ts", "message-routing.ts"],
-    "bm": ["v12.ts", "message-routing.ts"],
-    "arcacc": ["v12.ts", "message-routing.ts"],
-    "promote": ["v12.ts", "message-routing.ts"],
-    "lower": ["v12.ts", "v203.ts", "message-routing.ts"],
-    "bank": ["v12.ts", "message-routing.ts", "bank-panel-browser.ts"],
-    "pause": ["v10.ts", "message-routing.ts"],
-    "mining": ["mining-network.ts", "mining-controls-browser.ts", "message-routing.ts"],
+    "jettison": [
+      "cargo-flows.ts",
+      "v11.ts",
+      "cargo-ui-browser.ts",
+      "message-routing.ts"
+    ],
+    "rivals": [
+      "core-actions.ts",
+      "message-routing.ts"
+    ],
+    "bm": [
+      "v12.ts",
+      "message-routing.ts"
+    ],
+    "arcacc": [
+      "v12.ts",
+      "message-routing.ts"
+    ],
+    "promote": [
+      "v12.ts",
+      "message-routing.ts"
+    ],
+    "lower": [
+      "v12.ts",
+      "v203.ts",
+      "message-routing.ts"
+    ],
+    "bank": [
+      "v12.ts",
+      "message-routing.ts",
+      "bank-panel-browser.ts"
+    ],
+    "pause": [
+      "v10.ts",
+      "message-routing.ts"
+    ],
+    "mining": [
+      "mining-network.ts",
+      "mining-controls-browser.ts",
+      "message-routing.ts"
+    ],
     "refinery": [
       "refinery-network.ts",
       "refinery-ui-browser.ts",
@@ -2265,7 +3065,11 @@
       "message-routing.ts",
       "wire-contracts.ts"
     ],
-    "miningPressure": ["mining-pressure.ts", "refinery-ui-browser.ts", "message-routing.ts"],
+    "miningPressure": [
+      "mining-pressure.ts",
+      "refinery-ui-browser.ts",
+      "message-routing.ts"
+    ],
     "industrial": [
       "dredge-network.ts",
       "dredge-browser.ts",
