@@ -174,6 +174,11 @@ try {
   await page.evaluate(() => {
     G.rivals = [];
   });
+  await page.locator('#captainshortcut').click();
+  await page.waitForFunction(() => G.rivals && G.rivals.length > 0);
+  await page.evaluate(() => {
+    G.rivals = [];
+  });
   await page.locator('[data-it="captains"]').click();
   assert.equal(await page.locator('#infobody table tr').count(), 1);
   await page.evaluate(() => window.fixtureSocket.send(JSON.stringify({ t: 'rivals' })));

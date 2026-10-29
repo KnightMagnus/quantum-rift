@@ -436,7 +436,11 @@ try {
   await page.click('#cbhelp');
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'ctrlclose');
   await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'introreplay');
+  await page.keyboard.press('Tab');
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'ctrlkeys');
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'introreplay');
   await page.keyboard.press('Shift+Tab');
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'ctrlclose');
   await ask();
