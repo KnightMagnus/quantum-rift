@@ -1131,7 +1131,7 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
         tech: 0,
         wormhole: 'sol',
         exit: 'sol-gateway',
-        desc: 'The far mouth of the Sol Gateway. Through it, faintly, the light of home.',
+        desc: 'The far mouth of the Sol Minor Gateway. Through it, faintly, the light of home.',
       });
     }
     for (const rawStellarBody of starSystem.stellars) rawStellarBody.outlaw = false;

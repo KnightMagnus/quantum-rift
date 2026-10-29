@@ -1,3 +1,4 @@
+import { SYS } from '../shared/galaxy.ts';
 interface ShipFunctionState {
   you?: {
     name: string;
@@ -276,7 +277,10 @@ export function initShipFunctions(
         sector = shipFunctionState.sys;
         document.getElementById('commssector')!.textContent =
           'COMMS / ' +
-          (shipFunctionState.sys || 'SHIP NETWORK').toUpperCase() +
+          (shipFunctionState.sys
+            ? SYS[shipFunctionState.sys]?.name || 'Unknown system'
+            : 'SHIP NETWORK'
+          ).toUpperCase() +
           (shipFunctionState.sys ? ' SECTOR' : '');
       }
       const logged =
