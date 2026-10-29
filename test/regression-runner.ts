@@ -19,6 +19,12 @@ const inventory = group === 'all' ? [...manifest.unit, ...manifest.browser] : ma
 const cases = selectShard(inventory, shard);
 const runner = evidenceDir(`runner/${group}-${shard.index}-of-${shard.count}`);
 const results = [];
+// The full dock matrix covers two destinations, nine viewports, two scales and
+// every station department; hosted runners can exceed the ordinary three minutes.
+const programTimeouts: Record<string, number> = {
+  'network-systems.ts': 240000,
+  'landed-responsive-browser.ts': 360000,
+};
 const cancellation = new AbortController();
 const cancel = () => cancellation.abort();
 process.once('SIGINT', cancel);
@@ -35,7 +41,7 @@ try {
       cwd: root,
       args: ['--import', './test/seed-random.ts', 'test/' + test],
       evidence: runner,
-      timeout: test === 'network-systems.ts' ? 240000 : 180000,
+      timeout: programTimeouts[test] ?? 180000,
       signal: cancellation.signal,
     });
     results.push(record);
