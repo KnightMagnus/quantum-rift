@@ -389,8 +389,8 @@ export const SyndicateOperations = {
       this.toast(session, `Paid ${credits(amount)} toward your loan.`);
       if (playerData.loan.bal <= 0) {
         playerData.loan = null;
-        playerData.credit = clamp(playerData.credit + 15, BANK.creditMin, BANK.creditMax);
-        this.toast(session, 'Loan paid off. Your credit rating improves.');
+        // Credit history comes from scheduled payments, not repeat borrow/pay cycles.
+        this.toast(session, 'Loan paid off.');
       }
     }
     this.db.touch();

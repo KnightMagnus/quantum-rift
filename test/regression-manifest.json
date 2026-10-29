@@ -1021,7 +1021,13 @@
       "id": "syndicate",
       "owners": ["server/syndicate.ts"],
       "services": ["syndicate"],
-      "tests": ["v12.ts", "v203.ts", "ship-banking.ts", "bank-panel-browser.ts"],
+      "tests": [
+        "v12.ts",
+        "v203.ts",
+        "ship-banking.ts",
+        "bank-panel-browser.ts",
+        "gameplay-safety.ts"
+      ],
       "asserts": "Black market/Syndicate career, officer promotion/lower decks, bank loans/interest, timed delivery contracts. Compact loan dialog replaces the landed Bank tab, retains authoritative borrowing/repayment and denial, live credit/loan refresh, visitor/flight availability, modal focus/Escape and native keyboard/wheel reachability at ordinary and scaled viewports."
     },
     {

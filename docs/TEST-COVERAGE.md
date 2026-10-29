@@ -1799,3 +1799,5 @@ Friend lifecycle coverage includes clean occupied-port failure/retry and SIGHUP 
 [Native recovery](../test/native-recovery.ts) stops the complete disposable PostgreSQL cluster and verifies frozen-authority retirement, lease-fenced replacement and exact durable market restoration without a Nakama restart. The fixture does not simulate a successful write whose reply is lost; in-memory CAS tests cover that separate uncertainty boundary.
 
 `gameplay-safety.ts` checks pirate tolls against the 800-credit minimum, cargo value and hundred-credit rounding through the production hail calculation.
+
+`gameplay-safety.ts` also exercises repeated borrow/partial-pay/full-pay cycles without rating gains, unchanged early repayment costs, and rating gains from scheduled payments.
